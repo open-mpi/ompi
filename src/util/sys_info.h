@@ -10,6 +10,7 @@
 
 #include <stdbool.h>
 #include <sys/utsname.h>
+#include <sys/types.h>
 
 /**
  * System information structure
