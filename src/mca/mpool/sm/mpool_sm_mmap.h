@@ -16,7 +16,7 @@ typedef struct mca_mpool_sm_segment_t mca_mpool_sm_segment_t;
 struct mca_mpool_sm_mmap_t {
     ompi_list_item_t map_item;
     mca_mpool_sm_segment_t* map_seg;
-    unsigned char* map_addr;
+    unsigned char  *map_addr;
     size_t map_size;
     char map_path[PATH_MAX];
 };

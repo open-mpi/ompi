@@ -18,11 +18,7 @@ struct mca_mpool_sm_component_t {
     mca_mpool_base_component_t super;
     mca_allocator_t* sm_allocator;
     char*  sm_allocator_name;
-    size_t sm_min_size;
-    size_t sm_max_size;
     size_t sm_size;
-    size_t sm_segment;
-    ompi_list_t sm_mmaps;
     struct mca_mpool_sm_mmap_t *sm_mmap;
 };
 typedef struct mca_mpool_sm_component_t mca_mpool_sm_component_t;
@@ -30,7 +26,9 @@ typedef struct mca_mpool_sm_component_t mca_mpool_sm_component_t;
 extern mca_mpool_sm_component_t mca_mpool_sm_module;
 
 /**
-  * allocate function typedef
+  * returns a pointer to an mca_mpool_sm_allocation_t - the allocation
+  * will always be increased by the size of mca_mpool_sm_allocation_t - 
+  * the allocated block follows this header
   */
 void* mca_mpool_sm_alloc(size_t size, size_t align);
                                                                                                                          

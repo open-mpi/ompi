@@ -25,8 +25,8 @@
  * Global variables
  */
 int mca_mpool_base_output = -1;
-ompi_list_t mca_mpool_base_modules_available;
-ompi_list_t mca_mpool_base_modules_initialized;
+ompi_list_t mca_mpool_base_components;
+ompi_list_t mca_mpool_base_modules;
 
 
 /**
@@ -39,7 +39,7 @@ int mca_mpool_base_open(void)
 
   if (OMPI_SUCCESS != 
       mca_base_modules_open("mpool", 0, mca_mpool_base_static_modules, 
-                            &mca_mpool_base_modules_available)) {
+                            &mca_mpool_base_components)) {
     return OMPI_ERROR;
   }
 
@@ -47,7 +47,7 @@ int mca_mpool_base_open(void)
      iterate over it (even if it's empty, as in the case of
      ompi_info) */
 
-  OBJ_CONSTRUCT(&mca_mpool_base_modules_initialized, ompi_list_t);
+  OBJ_CONSTRUCT(&mca_mpool_base_modules, ompi_list_t);
 
   /* All done */
 
