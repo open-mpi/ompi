@@ -60,20 +60,46 @@ int test_verify(char *expected_result, char *test_result){
     size_t len_expect,len_result;
     int return_value;
 
-    return_value=1;
-    len_expect=strlen(expected_result);
-    len_result=strlen(test_result);
+    return_value = 1;
+    len_expect = strlen(expected_result);
+    len_result = strlen(test_result);
 
     if( (!(len_expect == len_result)) ||
             ( 0 != strcmp(expected_result,test_result)) ) {
-        fprintf(stderr," Comparison failure: \n");
-        fprintf(stderr," Expected result: %s \n",expected_result);
-        fprintf(stderr," Test result: %s \n",test_result);
+        test_failure("Comparison failure");
+        fprintf(stderr," Expected result: %s \n", expected_result);
+        fprintf(stderr," Test result: %s \n", test_result);
         fflush(stderr);
-        return_value=0;
+        return_value = 0;
+    }
+    else
+    {
+        test_success();
     }
 
     return return_value;
+}
+
+int test_verify_int(int expected_result, int test_result)
+{
+    /* local variables */
+    int return_value;
+    
+    return_value = 1;
+    if( expected_result != test_result ) 
+    {
+        test_failure("Comparison failure");
+        fprintf(stderr," Expected result: %d \n", expected_result);
+        fprintf(stderr," Test result: %d \n", test_result);
+        fflush(stderr);
+        return_value = 0;
+    }
+    else
+    {
+        test_success();
+    }
+        
+    return return_value;    
 }
 
 int test_finalize(void)
