@@ -267,9 +267,9 @@ int convertor_unpack_homogeneous( convertor_t* pConv, struct iovec* iov, unsigne
    return 0;
 }
 
-int convertor_unpack( convertor_t* pConvertor,
-                      struct iovec* pInputv,
-                      unsigned int inputCount )
+int lam_convertor_unpack( convertor_t* pConvertor,
+                          struct iovec* pInputv,
+                          unsigned int inputCount )
 {
    dt_desc_t *pData = pConvertor->pDesc;
    char* pOutput = pConvertor->pBaseBuf;
@@ -308,10 +308,10 @@ int convertor_unpack( convertor_t* pConvertor,
  *                basic datatype.
  */
 #define COPY_TYPE( TYPENAME, TYPE ) \
-int copy_##TYPENAME( unsigned int count, \
-                     char* from, unsigned int from_len, long from_extent, \
-                     char* to, unsigned int to_len, long to_extent,      \
-                     int* used ) \
+static int copy_##TYPENAME( unsigned int count, \
+                            char* from, unsigned int from_len, long from_extent, \
+                            char* to, unsigned int to_len, long to_extent, \
+                            int* used )                                 \
 { \
    int i, res = 1; \
    unsigned int remote_TYPE_size = sizeof(TYPE); /* TODO */ \
@@ -353,10 +353,10 @@ COPY_TYPE( long_double, long double );
 COPY_TYPE( complex_float, complex_float_t );
 COPY_TYPE( complex_double, complex_double_t );
 
-int copy_double( unsigned int count,
-                 char* from, unsigned int from_len, long from_extent,
-                 char* to, unsigned int to_len, long to_extent,
-                 int* used )
+static int copy_double( unsigned int count,
+                        char* from, unsigned int from_len, long from_extent,
+                        char* to, unsigned int to_len, long to_extent,
+                        int* used )
 {
    int i, res = 1;
    unsigned int remote_double_size = sizeof(double); /* TODO */
@@ -415,10 +415,11 @@ int convertor_need_buffers( convertor_t* pConvertor )
    return 1;
 }
 
-int convertor_init_for_recv( convertor_t* pConv, unsigned int flags,
-                             dt_desc_t* pData, int count, void* pUserBuf )
+int lam_convertor_init_for_recv( convertor_t* pConv, unsigned int flags,
+                                 dt_desc_t* pData, int count,
+                                 void* pUserBuf, int starting_point )
 {
-   dt_increase_ref( pData );
+   OBJ_RETAIN( pData );
    pConv->pDesc = pData;
    pConv->flags = CONVERTOR_RECV;
    if( pConv->pStack != NULL ) free( pConv->pStack );
@@ -441,7 +442,7 @@ int convertor_init_for_recv( convertor_t* pConv, unsigned int flags,
    return 0;
 }
 
-convertor_t* convertor_get_copy( convertor_t* pConvertor )
+convertor_t* lam_convertor_get_copy( convertor_t* pConvertor )
 {
    convertor_t* pConv = (convertor_t*)calloc( 1, sizeof(convertor_t) );
    MEMCPY( pConv, pConvertor, sizeof(convertor_t) );
@@ -454,11 +455,11 @@ convertor_t* convertor_get_copy( convertor_t* pConvertor )
    return pConv;
 }
 
-int convertor_destroy( convertor_t** ppConv )
+int lam_convertor_destroy( convertor_t** ppConv )
 {
    if( (*ppConv) == NULL ) return 0;
    if( (*ppConv)->pStack != NULL ) free( (*ppConv)->pStack );
-   if( (*ppConv)->pDesc != NULL ) dt_decrease_ref( (*ppConv)->pDesc );
+   if( (*ppConv)->pDesc != NULL ) OBJ_RELEASE( (*ppConv)->pDesc );
    if( (*ppConv)->freebuf != NULL ) free( (*ppConv)->freebuf );
    free( (*ppConv) );
    *ppConv = NULL;
@@ -474,7 +475,7 @@ int convertor_destroy( convertor_t** ppConv )
  *   positive = number of basic elements inside
  *   negative = some error occurs
  */
-int dt_get_element_count( dt_desc_t* pData, size_t iSize )
+int lam_ddt_get_element_count( dt_desc_t* pData, size_t iSize )
 {
    dt_stack_t* pStack;   /* pointer to the position on the stack */
    int pos_desc;         /* actual position in the description of the derived datatype */
@@ -540,8 +541,8 @@ int dt_get_element_count( dt_desc_t* pData, size_t iSize )
    return nbElems;
 }
 
-int dt_copy_content_same_dt( dt_desc_t* pData, int count,
-                             char* pDestBuf, char* pSrcBuf )
+int lam_ddt_copy_content_same_ddt( dt_desc_t* pData, int count,
+                                   char* pDestBuf, char* pSrcBuf )
 {
    dt_stack_t* pStack;   /* pointer to the position on the stack */
    int pos_desc;         /* actual position in the description of the derived datatype */

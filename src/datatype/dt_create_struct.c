@@ -2,8 +2,8 @@
 
 #include "datatype.h"
 
-int dt_create_struct( size_t count, size_t* pBlockLength, long* pDisp,
-                      dt_desc_t** pTypes, dt_desc_t** newType )
+int lam_ddt_create_struct( size_t count, size_t* pBlockLength, long* pDisp,
+                           dt_desc_t** pTypes, dt_desc_t** newType )
 {
    int i;
    long disp, endto, lastExtent, lastDisp;
@@ -22,14 +22,14 @@ int dt_create_struct( size_t count, size_t* pBlockLength, long* pDisp,
    lastDisp = pDisp[0];
    endto = pDisp[0] + lastExtent * lastBlock;
 
-   pdt = dt_create( disp );
+   pdt = lam_ddt_create( disp );
 
    for( i = 1; i < count; i++ ) {
       if( (pTypes[i] == lastType) && (pDisp[i] == endto) ) {
          lastBlock += pBlockLength[i];
          endto = lastDisp + lastBlock * lastExtent;
       } else {
-         dt_add( pdt, lastType, lastBlock, lastDisp, lastExtent );
+         lam_ddt_add( pdt, lastType, lastBlock, lastDisp, lastExtent );
          lastType = pTypes[i];
          lastExtent = lastType->ub - lastType->lb;
          lastBlock = pBlockLength[i];
@@ -37,7 +37,7 @@ int dt_create_struct( size_t count, size_t* pBlockLength, long* pDisp,
          endto = lastDisp + lastExtent * lastBlock;
       }
    }
-   dt_add( pdt, lastType, lastBlock, lastDisp, lastExtent );
+   lam_ddt_add( pdt, lastType, lastBlock, lastDisp, lastExtent );
 
    *newType = pdt;
    return 0;

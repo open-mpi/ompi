@@ -2,9 +2,9 @@
 
 #include "datatype.h"
 
-int dt_duplicate( dt_desc_t* oldType, dt_desc_t** newType )
+int lam_ddt_duplicate( dt_desc_t* oldType, dt_desc_t** newType )
 {
-   dt_desc_t* pdt = dt_create( oldType->desc.used );
+   dt_desc_t* pdt = lam_ddt_create( oldType->desc.used );
    void* temp = pdt->desc.desc; /* temporary copy of the desc pointer */
 
    memcpy( pdt, oldType, sizeof(dt_desc_t) );
@@ -16,10 +16,10 @@ int dt_duplicate( dt_desc_t* oldType, dt_desc_t** newType )
    return 0;
 }
 
-int dt_create_contiguous( size_t count, dt_desc_t* oldType, dt_desc_t** newType )
+int lam_ddt_create_contiguous( size_t count, dt_desc_t* oldType, dt_desc_t** newType )
 {
-   dt_desc_t* pdt = dt_create( oldType->desc.used + 2 );
-   dt_add( pdt, oldType, count, 0, (oldType->ub - oldType->lb) );
+   dt_desc_t* pdt = lam_ddt_create( oldType->desc.used + 2 );
+   lam_ddt_add( pdt, oldType, count, 0, (oldType->ub - oldType->lb) );
    *newType = pdt;
    return 0;
 }

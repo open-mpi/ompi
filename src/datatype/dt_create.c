@@ -7,24 +7,24 @@
 #define EMPTY_DATA NULL, "", {0, 0, NULL}, {0, 0, NULL}, NULL, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
 #define BASEOBJ_DATA { NULL, 1 }
 dt_desc_t basicDatatypes[] = {
-         /*super         size                 true_lb  true_ub              align                lb ub                    flags                           id                 nbElems  bdt_used                others fields */
-/*0x00*/ { BASEOBJ_DATA, 0,                   0,       0,                   0,                   0, 0,                   DT_FLAG_BASIC,                   DT_LOOP,           1,       (1<<DT_LOOP),           EMPTY_DATA },
-/*0x01*/ { BASEOBJ_DATA, 0,                   0,       0,                   0,                   0, 0,                   DT_FLAG_BASIC | DT_FLAG_USER_LB, DT_LB,             1,       (1<<DT_LB),             EMPTY_DATA },
-/*0x02*/ { BASEOBJ_DATA, 0,                   0,       0,                   0,                   0, 0,                   DT_FLAG_BASIC | DT_FLAG_USER_UB, DT_UB,             1,       (1<<DT_UB),             EMPTY_DATA },
+         /*super         size                 true_lb  true_ub              align                      lb ub                    flags                           id                 nbElems  bdt_used                others fields */
+/*0x00*/ { BASEOBJ_DATA, 0,                   0,       0,                   0,                         0, 0,                   DT_FLAG_BASIC,                   DT_LOOP,           1,       (1<<DT_LOOP),           EMPTY_DATA },
+/*0x01*/ { BASEOBJ_DATA, 0,                   0,       0,                   0,                         0, 0,                   DT_FLAG_BASIC | DT_FLAG_USER_LB, DT_LB,             1,       (1<<DT_LB),             EMPTY_DATA },
+/*0x02*/ { BASEOBJ_DATA, 0,                   0,       0,                   0,                         0, 0,                   DT_FLAG_BASIC | DT_FLAG_USER_UB, DT_UB,             1,       (1<<DT_UB),             EMPTY_DATA },
 /* now the real basic datatypes */                                                                                                                                           
-/*0x03*/ { BASEOBJ_DATA, 1,                   0,       1,                   1,                   0, 1,                   DT_FLAG_BASIC | DT_FLAG_DATA,    DT_SPACE,          1,       (1<<DT_SPACE),          EMPTY_DATA },
-/*0x04*/ { BASEOBJ_DATA, 1,                   0,       1,                   1,                   0, 1,                   DT_FLAG_BASIC | DT_FLAG_DATA,    DT_CHAR,           1,       (1<<DT_CHAR),           EMPTY_DATA },
-/*0x05*/ { BASEOBJ_DATA, 1,                   0,       1,                   1,                   0, 1,                   DT_FLAG_BASIC | DT_FLAG_DATA,    DT_BYTE,           1,       (1<<DT_BYTE),           EMPTY_DATA },
-/*0x06*/ { BASEOBJ_DATA, sizeof(short),       0,       sizeof(short),       sizeof(short),       0, sizeof(short),       DT_FLAG_BASIC | DT_FLAG_DATA,    DT_SHORT,          1,       (1<<DT_SHORT),          EMPTY_DATA },
-/*0x07*/ { BASEOBJ_DATA, sizeof(int),         0,       sizeof(int),         sizeof(int),         0, sizeof(int),         DT_FLAG_BASIC | DT_FLAG_DATA,    DT_INT,            1,       (1<<DT_INT),            EMPTY_DATA },
-/*0x08*/ { BASEOBJ_DATA, sizeof(float),       0,       sizeof(float),       sizeof(float),       0, sizeof(float),       DT_FLAG_BASIC | DT_FLAG_DATA,    DT_FLOAT,          1,       (1<<DT_FLOAT),          EMPTY_DATA },
-/*0x09*/ { BASEOBJ_DATA, sizeof(long),        0,       sizeof(long),        sizeof(long),        0, sizeof(long),        DT_FLAG_BASIC | DT_FLAG_DATA,    DT_LONG,           1,       (1<<DT_LONG),           EMPTY_DATA },
-/*0x0A*/ { BASEOBJ_DATA, sizeof(double),      0,       sizeof(double),      sizeof(double),      0, sizeof(double),      DT_FLAG_BASIC | DT_FLAG_DATA,    DT_DOUBLE,         1,       (1<<DT_DOUBLE),         EMPTY_DATA },
-/*0x0B*/ { BASEOBJ_DATA, sizeof(long long),   0,       sizeof(long long),   sizeof(long long),   0, sizeof(long long),   DT_FLAG_BASIC | DT_FLAG_DATA,    DT_LONG_LONG,      1,       (1<<DT_LONG_LONG),      EMPTY_DATA },
-/*0x0C*/ { BASEOBJ_DATA, sizeof(long double), 0,       sizeof(long double), sizeof(long double), 0, sizeof(long double), DT_FLAG_BASIC | DT_FLAG_DATA,    DT_LONG_DOUBLE,    1,       (1<<DT_LONG_DOUBLE),    EMPTY_DATA },
-/*0x0D*/ { BASEOBJ_DATA, 2 * sizeof(float),   0,       2 * sizeof(float),   2 * sizeof(float),   0, 2 * sizeof(float),   DT_FLAG_BASIC | DT_FLAG_DATA,    DT_COMPLEX_FLOAT,  1,       (1<<DT_COMPLEX_FLOAT),  EMPTY_DATA },
-/*0x0E*/ { BASEOBJ_DATA, 2 * sizeof(double),  0,       2 * sizeof(double),  2 * sizeof(double),  0, 2 * sizeof(double),  DT_FLAG_BASIC | DT_FLAG_DATA,    DT_COMPLEX_DOUBLE, 1,       (1<<DT_COMPLEX_DOUBLE), EMPTY_DATA },
-/*0x0F*/ { BASEOBJ_DATA, 0,                   0,       0,                   0,                   0, 0,                   DT_FLAG_BASIC,                   DT_END_LOOP,       1,       (1<<DT_END_LOOP),       EMPTY_DATA },
+/*0x03*/ { BASEOBJ_DATA, 1,                   0,       1,                   1,                         0, 1,                   DT_FLAG_BASIC | DT_FLAG_DATA,    DT_SPACE,          1,       (1<<DT_SPACE),          EMPTY_DATA },
+/*0x04*/ { BASEOBJ_DATA, 1,                   0,       1,                   LAM_ALIGNMENT_CHAR,        0, 1,                   DT_FLAG_BASIC | DT_FLAG_DATA,    DT_CHAR,           1,       (1<<DT_CHAR),           EMPTY_DATA },
+/*0x05*/ { BASEOBJ_DATA, 1,                   0,       1,                   LAM_ALIGNMENT_CHAR,        0, 1,                   DT_FLAG_BASIC | DT_FLAG_DATA,    DT_BYTE,           1,       (1<<DT_BYTE),           EMPTY_DATA },
+/*0x06*/ { BASEOBJ_DATA, sizeof(short),       0,       sizeof(short),       LAM_ALIGNMENT_SHORT,       0, sizeof(short),       DT_FLAG_BASIC | DT_FLAG_DATA,    DT_SHORT,          1,       (1<<DT_SHORT),          EMPTY_DATA },
+/*0x07*/ { BASEOBJ_DATA, sizeof(int),         0,       sizeof(int),         LAM_ALIGNMENT_INT,         0, sizeof(int),         DT_FLAG_BASIC | DT_FLAG_DATA,    DT_INT,            1,       (1<<DT_INT),            EMPTY_DATA },
+/*0x08*/ { BASEOBJ_DATA, sizeof(float),       0,       sizeof(float),       LAM_ALIGNMENT_FLOAT,       0, sizeof(float),       DT_FLAG_BASIC | DT_FLAG_DATA,    DT_FLOAT,          1,       (1<<DT_FLOAT),          EMPTY_DATA },
+/*0x09*/ { BASEOBJ_DATA, sizeof(long),        0,       sizeof(long),        LAM_ALIGNMENT_LONG,        0, sizeof(long),        DT_FLAG_BASIC | DT_FLAG_DATA,    DT_LONG,           1,       (1<<DT_LONG),           EMPTY_DATA },
+/*0x0A*/ { BASEOBJ_DATA, sizeof(double),      0,       sizeof(double),      LAM_ALIGNMENT_DOUBLE,      0, sizeof(double),      DT_FLAG_BASIC | DT_FLAG_DATA,    DT_DOUBLE,         1,       (1<<DT_DOUBLE),         EMPTY_DATA },
+/*0x0B*/ { BASEOBJ_DATA, sizeof(long long),   0,       sizeof(long long),   LAM_ALIGNMENT_LONG_LONG,   0, sizeof(long long),   DT_FLAG_BASIC | DT_FLAG_DATA,    DT_LONG_LONG,      1,       (1<<DT_LONG_LONG),      EMPTY_DATA },
+/*0x0C*/ { BASEOBJ_DATA, sizeof(long double), 0,       sizeof(long double), LAM_ALIGNMENT_LONG_DOUBLE, 0, sizeof(long double), DT_FLAG_BASIC | DT_FLAG_DATA,    DT_LONG_DOUBLE,    1,       (1<<DT_LONG_DOUBLE),    EMPTY_DATA },
+/*0x0D*/ { BASEOBJ_DATA, 2 * sizeof(float),   0,       2 * sizeof(float),   2 * LAM_ALIGNMENT_FLOAT,   0, 2 * sizeof(float),   DT_FLAG_BASIC | DT_FLAG_DATA,    DT_COMPLEX_FLOAT,  1,       (1<<DT_COMPLEX_FLOAT),  EMPTY_DATA },
+/*0x0E*/ { BASEOBJ_DATA, 2 * sizeof(double),  0,       2 * sizeof(double),  2 * LAM_ALIGNMENT_DOUBLE,  0, 2 * sizeof(double),  DT_FLAG_BASIC | DT_FLAG_DATA,    DT_COMPLEX_DOUBLE, 1,       (1<<DT_COMPLEX_DOUBLE), EMPTY_DATA },
+/*0x0F*/ { BASEOBJ_DATA, 0,                   0,       0,                   0,                         0, 0,                   DT_FLAG_BASIC,                   DT_END_LOOP,       1,       (1<<DT_END_LOOP),       EMPTY_DATA },
 };
 
 static char* basicDatatypeNames[] = { "loop", "lb", "ub", "space", "char", "byte", "short", "int", "float",
@@ -59,9 +59,9 @@ static void __get_free_dt_struct(  dt_desc_t* pData )
    pData->lb              = LONG_MAX;
    pData->ub              = LONG_MIN;
 }
-OBJ_CLASS_INSTANCE(lam_datatype_t, lam_object_t, __get_free_dt_struct, dt_destroy );
+OBJ_CLASS_INSTANCE(lam_datatype_t, lam_object_t, __get_free_dt_struct, lam_ddt_destroy );
 
-dt_desc_t* dt_create( int expectedSize )
+dt_desc_t* lam_ddt_create( int expectedSize )
 {
    dt_desc_t* pdt = (dt_desc_t*)OBJ_NEW(lam_datatype_t);
 
@@ -72,15 +72,15 @@ dt_desc_t* dt_create( int expectedSize )
    return pdt;
 }
 
-int dt_create_resized( dt_desc_t* oldType, long lb, long extent, dt_desc_t** newType )
+int lam_ddt_create_resized( dt_desc_t* oldType, long lb, long extent, dt_desc_t** newType )
 {
-   dt_duplicate( oldType, newType );
+   lam_ddt_duplicate( oldType, newType );
    (*newType)->lb = lb;
    (*newType)->ub = lb + extent;
    return 0;
 }
 
-int dt_commit( dt_desc_t** data )
+int lam_ddt_commit( dt_desc_t** data )
 {
    dt_desc_t* pData = (dt_desc_t*)*data;
 
@@ -144,7 +144,7 @@ void __dt_contain_basic_datatypes( dt_desc_t* pData )
    }
 }
 
-void dt_dump( dt_desc_t* data )
+void lam_ddt_dump( dt_desc_t* data )
 {
    dt_desc_t* pData = (dt_desc_t*)data;
 
@@ -171,10 +171,10 @@ void dt_dump( dt_desc_t* data )
    }
 }
 #define DUMP_TYPE( TYPENAME, TYPE ) \
-int dump_##TYPENAME( unsigned int count, \
-                     char* from, unsigned int from_len, long from_extent,  \
-                     char* to, unsigned int to_len, long to_extent,      \
-                     int* used ) \
+static int dump_##TYPENAME( unsigned int count, \
+                            char* from, unsigned int from_len, long from_extent, \
+                            char* to, unsigned int to_len, long to_extent, \
+                            int* used )                                 \
 { \
    int remote_type_size = sizeof(TYPE), res = 1; \
    if( (remote_type_size * count) > from_len ) { \
@@ -225,7 +225,7 @@ static conversion_fct_t dump_functions[] = {
    (conversion_fct_t)dump_complex_double,  /* DT_COMPLEX_DOUBLE */
 };
 
-void dt_dump_complete( dt_desc_t* data )
+void lam_ddt_dump_complete( dt_desc_t* data )
 {
    dt_desc_t* pData = (dt_desc_t*)data;
    struct iovec fake = { (void*)0, 0 };
@@ -249,7 +249,7 @@ void dt_dump_complete( dt_desc_t* data )
    printf( ")\n   contain " ); __dt_contain_basic_datatypes( pData );
    printf( "\n{\n" );
    if( pDumpConv == NULL ) {
-      pDumpConv = convertor_create( 0, 0 );
+      pDumpConv = lam_convertor_create( 0, 0 );
    }
    convertor_init_for_recv( pDumpConv, 0, pData, 1, NULL );
    pDumpConv->pFunctions = dump_functions;

@@ -34,7 +34,7 @@ static inline long GET_LOOP_DISP( dt_elem_desc_t* _pElem )
    return _pElem->disp;
 }
 
-int dt_optimize_short( dt_desc_t* pData, int count, dt_type_desc_t* pTypeDesc )
+int lam_ddt_optimize_short( dt_desc_t* pData, int count, dt_type_desc_t* pTypeDesc )
 {
    dt_elem_desc_t* pElemDesc;
    long lastDisp = 0;
