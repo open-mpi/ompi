@@ -146,7 +146,7 @@ mca_pcm_cofs_init(int *priority, bool *allow_multi_user_threads,
   /*
    * See if we can write in our directory...
    */
-  tmp = malloc(strlen(mca_pcm_cofs_comm_loc) + 5);
+  tmp = malloc(strlen(mca_pcm_cofs_comm_loc) + 32);
   if (tmp == NULL) return NULL;
   sprintf(tmp, "%s/pcm.%d", mca_pcm_cofs_comm_loc, mca_pcm_cofs_my_vpid);
   fp = fopen(tmp, "w");
