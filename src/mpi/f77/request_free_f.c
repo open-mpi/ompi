@@ -7,6 +7,7 @@
 #include <stdio.h>
 
 #include "mpi.h"
+#include "request/request.h"
 #include "mpi/f77/bindings.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
@@ -48,11 +49,13 @@ OMPI_GENERATE_F77_BINDINGS (MPI_REQUEST_FREE,
 
 void mpi_request_free_f(MPI_Fint *request, MPI_Fint *ierr)
 {
+    int err;
+
     MPI_Request c_req = MPI_Request_f2c( *request ); 
-    *ierr = OMPI_INT_2_FINT(MPI_Request_free( &c_req ));
+    err = MPI_Request_free(&c_req);
+    *ierr = OMPI_INT_2_FINT(err);
 
-    /* This value comes from the MPI_REQUEST_NULL value in mpif.h.
-       Do not change without consulting mpif.h! */
-
-    *request = -1;
+    if (MPI_SUCCESS == err) {
+        *request = OMPI_INT_2_FINT(MPI_REQUEST_NULL->req_f_to_c_index);
+    }
 }
