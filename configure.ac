@@ -863,6 +863,5 @@ AC_CONFIG_FILES([
     test/threads/Makefile
     test/util/Makefile
     test/rte/Makefile
-    test/mem/Makefile
 ])
 AC_OUTPUT
