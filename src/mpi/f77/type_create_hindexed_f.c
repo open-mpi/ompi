@@ -48,5 +48,25 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_CREATE_HINDEXED,
 
 void mpi_type_create_hindexed_f(MPI_Fint *count, MPI_Fint *array_of_blocklengths, MPI_Fint *array_of_displacements, MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr)
 {
+    MPI_Datatype c_old = MPI_Type_f2c(*oldtype);
+    MPI_Datatype c_new = MPI_Type_f2c(*newtype);
+    MPI_Aint *c_disp_array;
+    int i;
 
+    c_disp_array = malloc(*count * sizeof(MPI_Aint));
+    if (c_disp_array == (MPI_Aint *) NULL) {
+        *ierr = MPI_ERR_INTERN;
+        return;
+    }
+    for (i = 0; i < *count; i++) {
+        c_disp_array[i] = (MPI_Aint) array_of_displacements[i];
+    }
+
+    *ierr = MPI_Type_create_hindexed(*count, array_of_blocklengths, 
+                                     c_disp_array, c_old, &c_new);
+    
+    if (*ierr == MPI_SUCCESS)
+      *newtype = MPI_Type_c2f(c_new);
+
+    free(c_disp_array);
 }

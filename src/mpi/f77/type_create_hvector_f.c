@@ -48,5 +48,14 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_CREATE_HVECTOR,
 
 void mpi_type_create_hvector_f(MPI_Fint *count, MPI_Fint *blocklength, MPI_Fint *stride, MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr)
 {
+    MPI_Datatype c_old = MPI_Type_f2c(*oldtype);
+    MPI_Datatype c_new;
+    MPI_Aint c_stride = (MPI_Aint)*stride;
 
+    *ierr = MPI_Type_hvector(*count, *blocklength, c_stride,
+                             c_old, &c_new);
+
+    if (*ierr == MPI_SUCCESS){
+        *newtype = MPI_Type_c2f(c_new);
+    }
 }

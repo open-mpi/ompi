@@ -48,5 +48,10 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_MATCH_SIZE,
 
 void mpi_type_match_size_f(MPI_Fint *typeclass, MPI_Fint *size, MPI_Fint *type, MPI_Fint *ierr)
 {
+    MPI_Datatype c_type;
 
+    *ierr = MPI_Type_match_size(*typeclass, *size, &c_type);
+
+    if (*ierr == MPI_SUCCESS)
+      *type = MPI_Type_c2f(c_type);
 }
