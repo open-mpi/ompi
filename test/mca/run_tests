@@ -27,8 +27,8 @@ if ("x$1" == "x") then
   cd gpr; ./run_tests all; cd ..;
   cd llm; ./run_tests all; cd ..;
 #  cd ../ns;  ./run_tests all; cd ..;
-  cd ../oob; ./run_tests all; cd ..;
-  cd ../pcm; ./run_tests all; cd ..;
+  cd oob; ./run_tests all; cd ..;
+  cd pcm; ./run_tests all; cd ..;
 else
 
   foreach target ($argv)
@@ -36,9 +36,9 @@ else
     case "all":
       cd gpr; ./run_tests all; cd ..;
       cd llm; ./run_tests all; cd ..;
-#      cd ../ns;  ./run_tests all; cd ..;
-      cd ../oob; ./run_tests all; cd ..;
-      cd ../pcm; ./run_tests all; cd ..;
+#      cd ns;  ./run_tests all; cd ..;
+      cd oob; ./run_tests all; cd ..;
+      cd pcm; ./run_tests all; cd ..;
       breaksw
     case "gpr":
     case "llm":
