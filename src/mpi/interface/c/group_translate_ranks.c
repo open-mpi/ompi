@@ -15,24 +15,19 @@
 int MPI_Group_translate_ranks(MPI_Group group1, int n_ranks, int *ranks1,
                               MPI_Group group2, int *ranks2) {
 
-    int i, rank, proc, proc2;
+    int rank, proc, proc2;
     lam_proc_t *proc1_pointer, *proc2_pointer;
     lam_group_t *group1_pointer, *group2_pointer;
 
     group1_pointer=(lam_group_t *)group1;
     group2_pointer=(lam_group_t *)group2;
 
-    /* return an error if the source group is the empty group... */
-    if (MPI_GROUP_EMPTY == group1) {
-        return MPI_ERR_GROUP;
-    }
-
-    /* if group 2 is empty, fill the rank list with MPI_UNDEFINED */
-    if ( MPI_GROUP_EMPTY == group2) {
-        for (i = 0; i < n_ranks; i++) {
-            ranks2[i] = MPI_UNDEFINED;
+    /* check for errors */
+    if( MPI_PARAM_CHECK ) {
+        if( n_ranks > group1_pointer->grp_proc_count ){
+            return MPI_ERR_GROUP;
         }
-        return MPI_SUCCESS;
+    
     }
 
     /* loop over all ranks */

@@ -24,10 +24,11 @@ int MPI_Group_range_excl(MPI_Group group, int n_triplets, int ranges[][3],
     return_value = MPI_SUCCESS;
     group_pointer=(lam_group_t *)group;
 
-    /* excluding anything from the empty group gives the empty group */
-    if ( MPI_GROUP_EMPTY == group ) {
-        *new_group = MPI_GROUP_EMPTY;
-        return return_value;
+    /* can't act on NULL group */
+    if( MPI_PARAM_CHECK ) {
+        if ( MPI_GROUP_NULL == group ) {
+            return MPI_ERR_GROUP;
+        }
     }
 
     /* special case: nothing to exclude... */
@@ -117,6 +118,13 @@ int MPI_Group_range_excl(MPI_Group group, int n_triplets, int ranges[][3],
             new_group_size++;
         }
     }  /* end triplet loop */
+
+    /* check for empty group */
+    if( 0 == new_group_size ) {
+        *new_group = MPI_GROUP_EMPTY;
+        free(elements_int_list);
+        return MPI_SUCCESS;
+    }
 
     /* we have counted the procs to exclude from the list */
     new_group_size=group_pointer->grp_proc_count-new_group_size;

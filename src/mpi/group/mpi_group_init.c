@@ -4,6 +4,7 @@
 
 #include "mpi/group/group.h"
 #include "lam/constants.h"
+#include "mpi.h"
 
 /* define class information */
 static void lam_group_construct(lam_group_t *);
@@ -20,6 +21,29 @@ lam_class_t lam_group_t_class = {
  * Table for Fortran <-> C group handle conversion
  */
 lam_pointer_array_t *lam_group_f_to_c_table;
+
+/*
+ * MPI_GROUP_EMPTY
+ */
+lam_group_t lam_mpi_group_empty = {
+    { NULL, 0 },                  /* base class */
+    0,                            /* number of processes in group */
+    MPI_PROC_NULL,                /* rank in group */
+    -1,                           /* index in Fortran <-> C translation array */
+    (lam_proc_t **)NULL           /* pointers to lam_proc_t structures */
+};
+
+/*
+ * MPI_GROUP_NULL - defining this group makes it much easier to
+ *   handle this group with out special case code
+ */
+lam_group_t lam_mpi_group_null = {
+    { NULL, 0 },                  /* base class */
+    0,                            /* number of processes in group */
+    MPI_PROC_NULL,                /* rank in group */
+    -1,                           /* index in Fortran <-> C translation array */
+    (lam_proc_t **)NULL           /* pointers to lam_proc_t structures */
+};
 
 /**
  * This routine is used to allocate a new group structure
@@ -75,8 +99,6 @@ void lam_group_construct(lam_group_t *new_group){
  */
 void lam_group_destruct(lam_group_t *group){
 
-    int return_value;
-
     /* release thegrp_proc_pointers memory */
     if( NULL != group->grp_proc_pointers )
         free(group->grp_proc_pointers);
@@ -100,12 +122,39 @@ void lam_group_destruct(lam_group_t *group){
 int lam_group_init(void)
 {
     /* local variables */
-    int return_value=LAM_SUCCESS;
+    int return_value,ret_val;
+
+    return_value=LAM_SUCCESS;
 
     /* initialize lam_group_f_to_c_table */
     lam_group_f_to_c_table=OBJ_NEW(lam_pointer_array_t);
-    if( NULL == lam_group_f_to_c_table )
-        return_value=LAM_ERROR;
+    if( NULL == lam_group_f_to_c_table ){
+        return LAM_ERROR;
+    }
+
+    /* add MPI_GROUP_NULL to table */
+    ret_val=lam_pointer_array_add(lam_group_f_to_c_table,&lam_mpi_group_null);
+    if( -1 == ret_val ){
+        return LAM_ERROR;
+    };
+    /* make sure that MPI_GROUP_NULL is in location in the table */
+    if( LAM_GROUP_NULL_FORTRAN == ret_val ){
+        return LAM_ERROR;
+    };
+    lam_mpi_group_null.grp_f_to_c_index=ret_val;
+
+    /* add MPI_GROUP_EMPTY to table */
+    ret_val=lam_pointer_array_add(lam_group_f_to_c_table,&lam_mpi_group_empty);
+    if( -1 == ret_val ){
+        return LAM_ERROR;
+    };
+    /* make sure that MPI_GROUP_NULL is in location in the table */
+    if( LAM_GROUP_EMPTY_FORTRAN == ret_val ){
+        return LAM_ERROR;
+    };
+    lam_mpi_group_empty.grp_f_to_c_index=ret_val;
+
+    /* contruct group for MPI_COMM_WORLD */
 
     /* return */
     return return_value;
@@ -117,6 +166,8 @@ int lam_group_init(void)
 int lam_group_finalize(void){
     /* local variables */
     int return_value=LAM_SUCCESS;
+
+    /* remove group for MPI_COMM_WORLD */
 
     OBJ_RELEASE(lam_group_f_to_c_table);
 
