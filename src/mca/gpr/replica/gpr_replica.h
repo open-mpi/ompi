@@ -37,6 +37,8 @@ struct mca_gpr_replica_t {
 };
 typedef struct mca_gpr_replica_t mca_gpr_replica_t;
 
+OBJ_CLASS_DECLARATION(mca_gpr_replica_t);
+
 /** Dictionary of token-key pairs.
  * This structure is used to create a linked list of token-key pairs. All calls to
  * registry functions pass character string tokens for programming clarity - the ompi_keytable
@@ -148,7 +150,7 @@ struct mca_gpr_replica_core_t {
     mca_gpr_replica_key_t num_keys;                /**< Number of keys in array */
     mca_gpr_replica_key_t *keys;                   /**< Array of keys that define stored object */
     ompi_registry_object_size_t object_size;       /**< Size of stored object, in bytes */
-    ompi_registry_object_t *object;                /**< Pointer to stored object */
+    ompi_registry_object_t object;                /**< Pointer to stored object */
     ompi_list_t replicas;                          /**< Linked list of replicas that also contain this object */
     mca_gpr_replica_write_invalidate_t write_invalidate;   /**< Structure containing write invalidate info */
 };
