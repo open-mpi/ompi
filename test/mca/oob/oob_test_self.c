@@ -77,7 +77,6 @@ void callback(int status, const ompi_process_name_t * peer,
 void callback(int status, const ompi_process_name_t * peer,
               const struct iovec * msg, int count, int tag, void * cbdata)
 {
-    fprintf(stderr, "caqllback called on num %d.\n", (int) cbdata);
     if(0 != tag) {
         test_failure("Bad tag.");
     }
@@ -155,8 +154,8 @@ int main(int argc, char ** argv)
             } else {
                 test_success();
             }
-            if(!compare_iovec(recv_msg1, send_msg1, 3)) {
-                test_failure("compare 1 is wrong");
+            if(!compare_iovec(recv_msg1, send_msg1, 4)) {
+                test_failure("compare 2 is wrong");
              }
             break;
         case MSG_TYPE_2:
@@ -165,8 +164,8 @@ int main(int argc, char ** argv)
             } else {
                 test_success();
             }
-            if(!compare_iovec(recv_msg1, send_msg1, 3)) {
-                 test_failure("compare 1 is wrong");
+            if(!compare_iovec(recv_msg2, send_msg2, 3)) {
+                 test_failure("compare 3 is wrong");
             }
             break;
         default:
