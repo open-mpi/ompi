@@ -32,6 +32,10 @@ ompi_rte_allocate_resources(ompi_rte_spawn_handle_t *handle,
         errno = OMPI_ERR_BAD_PARAM;
         return NULL;
     }
+    if (nodes != 0 && procs == 0) {
+        errno = OMPI_ERR_BAD_PARAM;
+        return NULL;
+    }
 
     /* remove for multi-cell */
     assert(1 == handle->modules_len);

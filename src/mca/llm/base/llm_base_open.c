@@ -89,6 +89,9 @@ void
 llm_base_int_hostfile_node_construct(ompi_object_t *obj)
 {
     mca_llm_base_hostfile_node_t *node = (mca_llm_base_hostfile_node_t*) obj;
+    (node->hostname)[0] = '\0';
+    node->count = 0;
+    node->given_count = 0;
     node->info = OBJ_NEW(ompi_list_t);
 }
 
