@@ -65,8 +65,27 @@ int ompi_show_help_finish_parsing(void)
     return YY_NULL;
 }
 
+
 static int ompi_show_help_yywrap(void)
 {
     ompi_show_help_parse_done = true;
     return 1;
+}
+
+
+/*
+ * Ensure that we have a valid yybuffer to use.  Specifically, if this
+ * scanner is invoked a second time, finish_parsing() (above) will
+ * have been executed, and the current buffer will have been freed.
+ * Flex doesn't recognize this fact because as far as it's concerned,
+ * its internal state was already initialized, so it thinks it should
+ * have a valid buffer.  Hence, here we ensure to give it a valid
+ * buffer.
+ */
+int ompi_show_help_init_buffer(FILE *file)
+{
+    YY_BUFFER_STATE buf = yy_create_buffer(file, YY_BUF_SIZE);
+    yy_switch_to_buffer(buf);
+
+    return 0;
 }

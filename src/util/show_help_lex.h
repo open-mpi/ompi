@@ -19,7 +19,8 @@
 
 #include <stdio.h>
 
-extern int ompi_show_help_yylex(void);
+int ompi_show_help_yylex(void);
+int ompi_show_help_init_buffer(FILE *file);
 
 extern FILE *ompi_show_help_yyin;
 extern bool ompi_show_help_parse_done;
