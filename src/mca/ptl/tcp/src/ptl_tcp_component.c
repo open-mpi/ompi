@@ -576,8 +576,6 @@ static void mca_ptl_tcp_component_recv_handler(int sd, short flags, void* user)
     /* recv the process identifier */
     retval = recv(sd, &guid, sizeof(guid), 0);
     if(retval != sizeof(guid)) {
-        ompi_output(0, "mca_ptl_tcp_component_recv_handler: recv() return value %d != %d, errno = %d", 
-            retval, sizeof(guid), errno);
         close(sd);
         return;
     }
