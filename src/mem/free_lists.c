@@ -63,7 +63,7 @@ void lam_free_lists_construct(lam_free_lists_t *flist)
     flist->fl_nevents = NULL;
     flist->fl_chunks_req = NULL;
     flist->fl_chunks_returned = NULL;
-#endif
+#endif  /* LAM_ENABLE_MEM_PROFILE */
 }
 
 
@@ -96,7 +96,7 @@ void lam_free_lists_destruct(lam_free_lists_t *flist)
     
     if ( flist->fl_chunks_returned )
         free(flist->fl_chunks_returned);
-#endif
+#endif  /* LAM_ENABLE_MEM_PROFILE */
 }
 
 

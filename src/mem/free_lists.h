@@ -36,15 +36,15 @@ struct lam_free_lists_t
     lam_class_t   *fl_elt_cls;   /* this will be used to create new free list elements. */
     lam_mutex_t         fl_lock;
     
+#if LAM_ENABLE_MEM_PROFILE
     /* for mem profiling */
     int           *fl_elt_out;
     int           *fl_elt_max;
     int           *fl_elt_sum;
     int           *fl_nevents;
-#if LAM_ENABLE_DEBUG
     int           *fl_chunks_req;
     int           *fl_chunks_returned;
-#endif
+#endif  /* LAM_ENABLE_MEM_PROFILE */
 };
 typedef struct lam_free_lists_t lam_free_lists_t;
 
