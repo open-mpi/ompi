@@ -9,7 +9,7 @@
 #endif
 #include <stdlib.h>
 
-void ompi_ddt_dump_stack( dt_stack_t* pStack, int stack_pos, dt_elem_desc_t* pDesc, char* name )
+void ompi_ddt_dump_stack( const dt_stack_t* pStack, int stack_pos, const dt_elem_desc_t* pDesc, const char* name )
 {
     printf( "\nStack %p stack_pos %d name %s\n", (void*)pStack, stack_pos, name );
     for( ;stack_pos >= 0; stack_pos-- ) {
@@ -592,25 +592,25 @@ int ompi_convertor_need_buffers( ompi_convertor_t* pConvertor )
 
 extern int ompi_ddt_local_sizes[DT_MAX_PREDEFINED];
 int ompi_convertor_init_for_recv( ompi_convertor_t* pConv, uint32_t flags,
-				  dt_desc_t* pData, int count,
-				  void* pUserBuf, int starting_point,
+				  const dt_desc_t* datatype, int count,
+				  const void* pUserBuf, int starting_point,
 				  memalloc_fct_t allocfn )
 {
-    OBJ_RETAIN( pData );
-    if( pConv->pDesc != pData ) {
-        pConv->pDesc = pData;
+    OBJ_RETAIN( datatype );
+    if( pConv->pDesc != datatype ) {
+        pConv->pDesc = (dt_desc_t*)datatype;
         pConv->flags = CONVERTOR_RECV;
         if( pConv->pStack != NULL ) free( pConv->pStack );
         pConv->pStack = NULL;
     }
     if( pConv->pStack == NULL ) {
-        pConv->pStack = (dt_stack_t*)malloc(sizeof(dt_stack_t) * (pData->btypes[DT_LOOP] + 3) );
+        pConv->pStack = (dt_stack_t*)malloc(sizeof(dt_stack_t) * (datatype->btypes[DT_LOOP] + 3) );
         pConv->stack_pos = 0;
     }
 
     pConv->flags = CONVERTOR_RECV | CONVERTOR_HOMOGENEOUS;
-    pConv->pBaseBuf = pUserBuf;
-    pConv->available_space = count * (pData->ub - pData->lb);
+    pConv->pBaseBuf = (void*)pUserBuf;
+    pConv->available_space = count * (datatype->ub - datatype->lb);
     pConv->count = count;
     pConv->pFunctions = ompi_ddt_copy_functions;
     pConv->converted = 0;
@@ -620,7 +620,7 @@ int ompi_convertor_init_for_recv( ompi_convertor_t* pConv, uint32_t flags,
     pConv->memAlloc_fn = allocfn;
 
     /* TODO: work only on homogeneous architectures */
-    if( pData->flags & DT_FLAG_CONTIGUOUS ) {
+    if( datatype->flags & DT_FLAG_CONTIGUOUS ) {
         pConv->flags |= DT_FLAG_CONTIGUOUS;
         pConv->fAdvance = ompi_convertor_unpack_homogeneous_contig;
     }
@@ -638,7 +638,7 @@ int ompi_convertor_init_for_recv( ompi_convertor_t* pConv, uint32_t flags,
  *   positive = number of basic elements inside
  *   negative = some error occurs
  */
-int ompi_ddt_get_element_count( dt_desc_t* pData, int iSize )
+int ompi_ddt_get_element_count( const dt_desc_t* datatype, int iSize )
 {
     dt_stack_t* pStack;   /* pointer to the position on the stack */
     int pos_desc;         /* actual position in the description of the derived datatype */
@@ -646,22 +646,22 @@ int ompi_ddt_get_element_count( dt_desc_t* pData, int iSize )
     int rc, nbElems = 0;
     int stack_pos = 0;
 
-    DUMP( "dt_count_elements( %p, %d )\n", (void*)pData, iSize );
-    pStack = alloca( sizeof(pStack) * (pData->btypes[DT_LOOP] + 2) );
+    DUMP( "dt_count_elements( %p, %d )\n", (void*)datatype, iSize );
+    pStack = alloca( sizeof(pStack) * (datatype->btypes[DT_LOOP] + 2) );
     pStack->count = 1;
     pStack->index = -1;
-    pStack->end_loop = pData->desc.used;
+    pStack->end_loop = datatype->desc.used;
     pStack->disp = 0;
     pos_desc  = 0;
 
-    DUMP_STACK( pStack, stack_pos, pData->desc.desc, "starting" );
+    DUMP_STACK( pStack, stack_pos, datatype->desc.desc, "starting" );
     DUMP( "remember position on stack %d last_elem at %d\n", stack_pos, pos_desc );
     DUMP( "top stack info {index = %d, count = %d}\n", 
           pStack->index, pStack->count );
 
  next_loop:
     while( pos_desc >= 0 ) {
-        if( pData->desc.desc[pos_desc].type == DT_END_LOOP ) { /* end of the current loop */
+        if( datatype->desc.desc[pos_desc].type == DT_END_LOOP ) { /* end of the current loop */
             if( --(pStack->count) == 0 ) { /* end of loop */
                 stack_pos--;
                 pStack--;
@@ -670,29 +670,29 @@ int ompi_ddt_get_element_count( dt_desc_t* pData, int iSize )
             }
             pos_desc = pStack->index;
             if( pos_desc == -1 )
-                pStack->disp += (pData->ub - pData->lb);
+                pStack->disp += (datatype->ub - datatype->lb);
             else
-                pStack->disp += pData->desc.desc[pos_desc].extent;
+                pStack->disp += datatype->desc.desc[pos_desc].extent;
             pos_desc++;
             goto next_loop;
         }
-        if( pData->desc.desc[pos_desc].type == DT_LOOP ) {
+        if( datatype->desc.desc[pos_desc].type == DT_LOOP ) {
             do {
-                PUSH_STACK( pStack, stack_pos, pos_desc, pData->desc.desc[pos_desc].count,
-                            0, pos_desc + pData->desc.desc[pos_desc].disp );
+                PUSH_STACK( pStack, stack_pos, pos_desc, datatype->desc.desc[pos_desc].count,
+                            0, pos_desc + datatype->desc.desc[pos_desc].disp );
                 pos_desc++;
-            } while( pData->desc.desc[pos_desc].type == DT_LOOP ); /* let's start another loop */
-            DUMP_STACK( pStack, stack_pos, pData->desc.desc, "advance loops" );
+            } while( datatype->desc.desc[pos_desc].type == DT_LOOP ); /* let's start another loop */
+            DUMP_STACK( pStack, stack_pos, datatype->desc.desc, "advance loops" );
             goto next_loop;
         }
         /* now here we have a basic datatype */
-        type = pData->desc.desc[pos_desc].type;
-        rc = pData->desc.desc[pos_desc].count * ompi_ddt_basicDatatypes[type]->size;
+        type = datatype->desc.desc[pos_desc].type;
+        rc = datatype->desc.desc[pos_desc].count * ompi_ddt_basicDatatypes[type]->size;
         if( rc >= iSize ) {
             nbElems += iSize / ompi_ddt_basicDatatypes[type]->size;
             break;
         }
-        nbElems += pData->desc.desc[pos_desc].count;
+        nbElems += datatype->desc.desc[pos_desc].count;
         iSize -= rc;
 
         pos_desc++;  /* advance to the next data */
@@ -702,8 +702,8 @@ int ompi_ddt_get_element_count( dt_desc_t* pData, int iSize )
     return nbElems;
 }
 
-int ompi_ddt_copy_content_same_ddt( dt_desc_t* pData, int count,
-                                    char* pDestBuf, char* pSrcBuf )
+int ompi_ddt_copy_content_same_ddt( const dt_desc_t* datatype, int count,
+                                    char* pDestBuf, const char* pSrcBuf )
 {
     dt_stack_t* pStack;   /* pointer to the position on the stack */
     int pos_desc;         /* actual position in the description of the derived datatype */
@@ -720,15 +720,15 @@ int ompi_ddt_copy_content_same_ddt( dt_desc_t* pData, int count,
     /* If we have to copy a contiguous datatype then simply
      * do a memcpy.
      */
-    if( (pData->flags & DT_FLAG_CONTIGUOUS) == DT_FLAG_CONTIGUOUS ) {
-        long extent = (pData->ub - pData->lb);
-        if( (long)pData->size == extent ) {  /* all contiguous */
-            int total_length = pData->size * count;
+    if( (datatype->flags & DT_FLAG_CONTIGUOUS) == DT_FLAG_CONTIGUOUS ) {
+        long extent = (datatype->ub - datatype->lb);
+        if( (long)datatype->size == extent ) {  /* all contiguous */
+            int total_length = datatype->size * count;
             lastLength = 128 * 1024;
             if( lastLength > total_length ) lastLength = total_length;
             while( total_length > 0 ) {
                 OMPI_DDT_SAFEGUARD_POINTER( pDestBuf, lastLength,
-                                            pDestBuf, pData, count );
+                                            pDestBuf, datatype, count );
                 MEMCPY( pDestBuf, pSrcBuf, lastLength );
                 pDestBuf += lastLength;
                 pSrcBuf += lastLength;
@@ -737,9 +737,9 @@ int ompi_ddt_copy_content_same_ddt( dt_desc_t* pData, int count,
             }
         } else {
             for( pos_desc = 0; pos_desc < count; pos_desc++ ) {
-                OMPI_DDT_SAFEGUARD_POINTER( pDestBuf, pData->size,
-                                            pDestBuf, pData, count );
-                MEMCPY( pDestBuf, pSrcBuf, pData->size );
+                OMPI_DDT_SAFEGUARD_POINTER( pDestBuf, datatype->size,
+                                            pDestBuf, datatype, count );
+                MEMCPY( pDestBuf, pSrcBuf, datatype->size );
                 pDestBuf += extent;
                 pSrcBuf += extent;
             }
@@ -747,18 +747,18 @@ int ompi_ddt_copy_content_same_ddt( dt_desc_t* pData, int count,
         return 0;
     }
 
-    pStack = alloca( sizeof(pStack) * (pData->btypes[DT_LOOP] + 1) );
+    pStack = alloca( sizeof(pStack) * (datatype->btypes[DT_LOOP] + 1) );
     pStack->count = count;
     pStack->index = -1;
     pStack->disp = 0;
     pos_desc  = 0;
 
-    if( pData->opt_desc.desc != NULL ) {
-        pElems = pData->opt_desc.desc;
-        pStack->end_loop = pData->opt_desc.used;
+    if( datatype->opt_desc.desc != NULL ) {
+        pElems = datatype->opt_desc.desc;
+        pStack->end_loop = datatype->opt_desc.used;
     } else {
-        pElems = pData->desc.desc;
-        pStack->end_loop = pData->desc.used;
+        pElems = datatype->desc.desc;
+        pStack->end_loop = datatype->desc.used;
     }
 
     DUMP_STACK( pStack, stack_pos, pElems, "starting" );
@@ -774,7 +774,7 @@ int ompi_ddt_copy_content_same_ddt( dt_desc_t* pData, int count,
             }
             pos_desc = pStack->index;
             if( pos_desc == -1 )
-                pStack->disp += (pData->ub - pData->lb);
+                pStack->disp += (datatype->ub - datatype->lb);
             else
                 pStack->disp += pElems[pos_desc].extent;
             pos_desc++;
@@ -794,7 +794,7 @@ int ompi_ddt_copy_content_same_ddt( dt_desc_t* pData, int count,
                 lastLength += pElems[pos_desc].count * ompi_ddt_basicDatatypes[type]->size;
             } else {
                 OMPI_DDT_SAFEGUARD_POINTER( pDestBuf + lastDisp, lastLength,
-                                            pDestBuf, pData, count );
+                                            pDestBuf, datatype, count );
                 MEMCPY( pDestBuf + lastDisp, pSrcBuf + lastDisp, lastLength );
                 lastDisp = pStack->disp + pElems[pos_desc].disp;
                 lastLength = pElems[pos_desc].count * ompi_ddt_basicDatatypes[type]->size;
@@ -805,7 +805,7 @@ int ompi_ddt_copy_content_same_ddt( dt_desc_t* pData, int count,
  end_loop:
     if( lastLength != 0 ) {
         OMPI_DDT_SAFEGUARD_POINTER( pDestBuf + lastDisp, lastLength,
-                                    pDestBuf, pData, count );
+                                    pDestBuf, datatype, count );
         MEMCPY( pDestBuf + lastDisp, pSrcBuf + lastDisp, lastLength );
     }
     /* cleanup the stack */

@@ -105,60 +105,60 @@ int ompi_ddt_finalize( void );
 dt_desc_t* ompi_ddt_create( int expectedSize );
 int ompi_ddt_commit( dt_desc_t** );
 int ompi_ddt_destroy( dt_desc_t** );
-static inline int ompi_ddt_is_committed( ompi_datatype_t* type ) 
+static inline int ompi_ddt_is_committed( const ompi_datatype_t* type ) 
 { return ((type->flags & DT_FLAG_COMMITED) == DT_FLAG_COMMITED); }
-static inline int ompi_ddt_is_overlapped( ompi_datatype_t* type )
+static inline int ompi_ddt_is_overlapped( const ompi_datatype_t* type )
 { return ((type->flags & DT_FLAG_OVERLAP) == DT_FLAG_OVERLAP); }
-static inline int ompi_ddt_is_acceptable_for_one_sided( ompi_datatype_t* type )
+static inline int ompi_ddt_is_acceptable_for_one_sided( const ompi_datatype_t* type )
 { return ((type->flags & DT_FLAG_ONE_SIDED) == DT_FLAG_ONE_SIDED); }
-void ompi_ddt_dump( dt_desc_t* pData );
+void ompi_ddt_dump( const dt_desc_t* pData );
 /* data creation functions */
-OMPI_DECLSPEC int ompi_ddt_duplicate( dt_desc_t* oldType, dt_desc_t** newType );
-OMPI_DECLSPEC int ompi_ddt_create_contiguous( int count, dt_desc_t* oldType, dt_desc_t** newType );
+OMPI_DECLSPEC int ompi_ddt_duplicate( const dt_desc_t* oldType, dt_desc_t** newType );
+OMPI_DECLSPEC int ompi_ddt_create_contiguous( int count, const dt_desc_t* oldType, dt_desc_t** newType );
 OMPI_DECLSPEC int ompi_ddt_create_vector( int count, int bLength, long stride,
-                                          dt_desc_t* oldType, dt_desc_t** newType );
+                                          const dt_desc_t* oldType, dt_desc_t** newType );
 OMPI_DECLSPEC int ompi_ddt_create_hvector( int count, int bLength, long stride,
-                                           dt_desc_t* oldType, dt_desc_t** newType );
-OMPI_DECLSPEC int ompi_ddt_create_indexed( int count, int* pBlockLength, int* pDisp,
-                                           dt_desc_t* oldType, dt_desc_t** newType );
-OMPI_DECLSPEC int ompi_ddt_create_hindexed( int count, int* pBlockLength, long* pDisp,
-                                            dt_desc_t* oldType, dt_desc_t** newType );
-OMPI_DECLSPEC int ompi_ddt_create_indexed_block( int count, int bLength, int* pDisp,
-                                                 dt_desc_t* oldType, dt_desc_t** newType );
-OMPI_DECLSPEC int ompi_ddt_create_struct( int count, int* pBlockLength, long* pDisp,
-                                          dt_desc_t** pTypes, dt_desc_t** newType );
-OMPI_DECLSPEC int ompi_ddt_create_resized( dt_desc_t* oldType, long lb, long extent, dt_desc_t** newType );
-OMPI_DECLSPEC int ompi_ddt_create_subarray( int ndims, int* pSizes, int* pSubSizes, int* pStarts,
-                                            int order, dt_desc_t* oldType, dt_desc_t** newType );
-OMPI_DECLSPEC int ompi_ddt_create_darray( int size, int rank, int ndims, int* pGSizes, int *pDistrib,
-                                          int* pDArgs, int* pPSizes, int order, dt_desc_t* oldType,
+                                           const dt_desc_t* oldType, dt_desc_t** newType );
+OMPI_DECLSPEC int ompi_ddt_create_indexed( int count, const int* pBlockLength, const int* pDisp,
+                                           const dt_desc_t* oldType, dt_desc_t** newType );
+OMPI_DECLSPEC int ompi_ddt_create_hindexed( int count, const int* pBlockLength, const long* pDisp,
+                                            const dt_desc_t* oldType, dt_desc_t** newType );
+OMPI_DECLSPEC int ompi_ddt_create_indexed_block( int count, int bLength, const int* pDisp,
+                                                 const dt_desc_t* oldType, dt_desc_t** newType );
+OMPI_DECLSPEC int ompi_ddt_create_struct( int count, const int* pBlockLength, const long* pDisp,
+                                          const dt_desc_t** pTypes, dt_desc_t** newType );
+OMPI_DECLSPEC int ompi_ddt_create_resized( const dt_desc_t* oldType, long lb, long extent, dt_desc_t** newType );
+OMPI_DECLSPEC int ompi_ddt_create_subarray( int ndims, const int* pSizes, const int* pSubSizes, const int* pStarts,
+                                            int order, const dt_desc_t* oldType, dt_desc_t** newType );
+OMPI_DECLSPEC int ompi_ddt_create_darray( int size, int rank, int ndims, const int* pGSizes, const int *pDistrib,
+                                          const int* pDArgs, const int* pPSizes, int order, const dt_desc_t* oldType,
                                           dt_desc_t** newType );
 
-OMPI_DECLSPEC int ompi_ddt_add( dt_desc_t* pdtBase, dt_desc_t* pdtNew, unsigned int count, long disp, long extent );
+OMPI_DECLSPEC int ompi_ddt_add( dt_desc_t* pdtBase, const dt_desc_t* pdtAdd, unsigned int count, long disp, long extent );
 
-static inline int ompi_ddt_type_lb( dt_desc_t* pData, long* disp )
+static inline int ompi_ddt_type_lb( const dt_desc_t* pData, long* disp )
 { *disp = pData->lb; return 0; }
-static inline int ompi_ddt_type_ub( dt_desc_t* pData, long* disp )
+static inline int ompi_ddt_type_ub( const dt_desc_t* pData, long* disp )
 { *disp = pData->ub; return 0; }
-static inline int ompi_ddt_type_size ( dt_desc_t* pData, int *size )
+static inline int ompi_ddt_type_size ( const dt_desc_t* pData, int *size )
 { *size = pData->size; return 0; }
-static inline int ompi_ddt_type_extent( dt_desc_t* pData, long* extent )
+static inline int ompi_ddt_type_extent( const dt_desc_t* pData, long* extent )
 { *extent = (pData->ub - pData->lb); return 0; }
 
-static inline int ompi_ddt_get_extent( dt_desc_t* pData, long* lb, long* extent)
+static inline int ompi_ddt_get_extent( const dt_desc_t* pData, long* lb, long* extent)
 { *lb = pData->lb; *extent = pData->ub - pData->lb; return 0; }
-static inline int ompi_ddt_get_true_extent( dt_desc_t* pData, long* true_lb, long* true_extent)
+static inline int ompi_ddt_get_true_extent( const dt_desc_t* pData, long* true_lb, long* true_extent)
 { *true_lb = pData->true_lb; *true_extent = (pData->true_ub - pData->true_lb); return 0; }
 
-OMPI_DECLSPEC int ompi_ddt_get_element_count( dt_desc_t* pData, int iSize );
-OMPI_DECLSPEC int ompi_ddt_copy_content_same_ddt( dt_desc_t* pData, int count, char* pDestBuf, char* pSrcBuf );
+OMPI_DECLSPEC int ompi_ddt_get_element_count( const dt_desc_t* pData, int iSize );
+OMPI_DECLSPEC int ompi_ddt_copy_content_same_ddt( const dt_desc_t* pData, int count, char* pDestBuf, const char* pSrcBuf );
 
 OMPI_DECLSPEC int ompi_ddt_optimize_short( dt_desc_t* pData, int count, dt_type_desc_t* pTypeDesc );
 
 /* flags for the datatypes */
 
 typedef int (*conversion_fct_t)( unsigned int count,
-                                 void* from, uint32_t from_len, long from_extent,
+                                 const void* from, uint32_t from_len, long from_extent,
                                  void* to, uint32_t in_length, long to_extent );
 
 typedef struct __dt_stack dt_stack_t;
@@ -242,22 +242,22 @@ static inline int ompi_convertor_unpack( ompi_convertor_t* pConv,
 
 /* and finally the convertor functions */
 OMPI_DECLSPEC ompi_convertor_t* ompi_convertor_create( int remote_arch, int mode );
-OMPI_DECLSPEC ompi_convertor_t* ompi_convertor_get_copy( ompi_convertor_t* pConvertor );
-OMPI_DECLSPEC int ompi_convertor_copy( ompi_convertor_t* pSrcConv, ompi_convertor_t* pDestConv );
+OMPI_DECLSPEC ompi_convertor_t* ompi_convertor_get_copy( const ompi_convertor_t* pConvertor );
+OMPI_DECLSPEC int ompi_convertor_copy( const ompi_convertor_t* pSrcConv, ompi_convertor_t* pDestConv );
 OMPI_DECLSPEC int ompi_convertor_init_for_send( ompi_convertor_t* pConv, unsigned int flags,
-                                                dt_desc_t* pData, int count,
-                                                void* pUserBuf, int local_starting_point,
+                                                const dt_desc_t* pData, int count,
+                                                const void* pUserBuf, int local_starting_point,
                                                 memalloc_fct_t allocfn );
 OMPI_DECLSPEC int ompi_convertor_init_for_recv( ompi_convertor_t* pConv, unsigned int flags,
-                                                dt_desc_t* pData, int count,
-                                                void* pUserBuf, int remote_starting_point,
+                                                const dt_desc_t* pData, int count,
+                                                const void* pUserBuf, int remote_starting_point,
                                                 memalloc_fct_t allocfn );
 OMPI_DECLSPEC int ompi_convertor_need_buffers( ompi_convertor_t* pConvertor );
-OMPI_DECLSPEC int ompi_convertor_get_packed_size( ompi_convertor_t* pConv, unsigned int* pSize );
-OMPI_DECLSPEC int ompi_convertor_get_unpacked_size( ompi_convertor_t* pConv, unsigned int* pSize );
+OMPI_DECLSPEC int ompi_convertor_get_packed_size( const ompi_convertor_t* pConv, unsigned int* pSize );
+OMPI_DECLSPEC int ompi_convertor_get_unpacked_size( const ompi_convertor_t* pConv, unsigned int* pSize );
 
 /* temporary function prototypes. They should move in other place later. */
-OMPI_DECLSPEC int ompi_ddt_get_args( dt_desc_t* pData, int which,
+OMPI_DECLSPEC int ompi_ddt_get_args( const dt_desc_t* pData, int which,
                       int * ci, int * i,
                       int * ca, long* a,
                       int * cd, ompi_datatype_t** d, int * type);
@@ -265,11 +265,10 @@ OMPI_DECLSPEC int ompi_ddt_set_args( dt_desc_t* pData,
                       int ci, int ** i, 
                       int ca, long* a,
                       int cd, ompi_datatype_t** d,int type);
-OMPI_DECLSPEC int ompi_ddt_sndrcv( void *sbuf, int scount, ompi_datatype_t* sdtype, void *rbuf,
-		     int rcount, ompi_datatype_t* rdtype, int tag, MPI_Comm comm);
+OMPI_DECLSPEC int ompi_ddt_sndrcv( void *sbuf, int scount, const ompi_datatype_t* sdtype, void *rbuf,
+		     int rcount, const ompi_datatype_t* rdtype, int tag, MPI_Comm comm);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
 #endif  /* DATATYPE_H_HAS_BEEN_INCLUDED */
-

@@ -140,7 +140,7 @@ ompi_datatype_t ompi_mpi_complex32 = INIT_BASIC_TYPE( DT_UNAVAILABLE, COMPLEX32 
  * NOTE: The order of this array *MUST* match what is listed in
  * datatype_internal.h
  */
-ompi_datatype_t* ompi_ddt_basicDatatypes[DT_MAX_PREDEFINED] = {
+const ompi_datatype_t* ompi_ddt_basicDatatypes[DT_MAX_PREDEFINED] = {
     &ompi_mpi_loop,
     &ompi_mpi_end_loop,
     &ompi_mpi_lb,
@@ -214,12 +214,13 @@ int ompi_ddt_local_sizes[DT_MAX_PREDEFINED];
 #define DECLARE_MPI2_COMPOSED_STRUCT_DDT( PDATA, MPIDDT, MPIDDTNAME, type1, type2, MPIType1, MPIType2 ) \
     do {                                                                \
         struct { type1 v1; type2 v2; } s[2];                            \
-        ompi_datatype_t *types[2], *ptype;                              \
+        const dt_desc_t* types[2];                                      \
+        dt_desc_t* ptype;                                               \
         int bLength[2] = {1, 1};                                        \
         long base, displ[2];                                            \
                                                                         \
-        types[0] = ompi_ddt_basicDatatypes[MPIType1];                           \
-        types[1] = ompi_ddt_basicDatatypes[MPIType2];                           \
+        types[0] = (dt_desc_t*)ompi_ddt_basicDatatypes[MPIType1];       \
+        types[1] = (dt_desc_t*)ompi_ddt_basicDatatypes[MPIType2];       \
         base = (long)(&(s[0]));                                         \
         displ[0] = (long)(&(s[0].v1));                                  \
         displ[0] -= base;                                               \
@@ -267,7 +268,7 @@ int ompi_ddt_init( void )
     int i;
 
     for( i = DT_CHAR; i < DT_MAX_PREDEFINED; i++ ) {
-        ompi_datatype_t* datatype = ompi_ddt_basicDatatypes[i];
+        dt_desc_t* datatype = (dt_desc_t*)ompi_ddt_basicDatatypes[i];
 
         datatype->desc.desc         = (dt_elem_desc_t*)malloc(2*sizeof(dt_elem_desc_t));
         datatype->desc.desc[0].flags  = DT_FLAG_BASIC | DT_FLAG_CONTIGUOUS | DT_FLAG_DATA;
@@ -499,7 +500,7 @@ static int __dump_data_desc( dt_elem_desc_t* pDesc, int nbElems )
     return OMPI_SUCCESS;
 }
 
-static void __dt_contain_basic_datatypes( dt_desc_t* pData )
+static inline void __dt_contain_basic_datatypes( const dt_desc_t* pData )
 {
    int i;
    unsigned long long mask = 1;
@@ -513,12 +514,10 @@ static void __dt_contain_basic_datatypes( dt_desc_t* pData )
    }
 }
 
-void ompi_ddt_dump( dt_desc_t* data )
+void ompi_ddt_dump( const dt_desc_t* pData )
 {
-    dt_desc_t* pData = (dt_desc_t*)data;
-
     printf( "Datatype %p size %ld align %d id %d length %d used %d\n\
-   true_lb %ld true_ub %ld (true_extent %ld) lb %ld ub %ld (extent %ld)\n\
+   true_lb %ld true_ub %ld (true_extent %ld) lb %ld ub %ld (extent %ld)\n \
    nbElems %d loops %d flags %X (",
             (void*)pData, pData->size, pData->align, pData->id, pData->desc.length, pData->desc.used,
             pData->true_lb, pData->true_ub, pData->true_ub - pData->true_lb,

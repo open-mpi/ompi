@@ -4,8 +4,8 @@
 #include "datatype.h"
 
 /* We try to merge together data that are contiguous */
-int ompi_ddt_create_indexed( int count, int* pBlockLength, int* pDisp,
-			     dt_desc_t* oldType, dt_desc_t** newType )
+int ompi_ddt_create_indexed( int count, const int* pBlockLength, const int* pDisp,
+			     const dt_desc_t* oldType, dt_desc_t** newType )
 {
     dt_desc_t* pdt;
     int i, dLength, endat, disp;
@@ -40,8 +40,8 @@ int ompi_ddt_create_indexed( int count, int* pBlockLength, int* pDisp,
     return OMPI_SUCCESS;
 }
 
-int ompi_ddt_create_hindexed( int count, int* pBlockLength, long* pDisp,
-                              dt_desc_t* oldType, dt_desc_t** newType )
+int ompi_ddt_create_hindexed( int count, const int* pBlockLength, const long* pDisp,
+                              const dt_desc_t* oldType, dt_desc_t** newType )
 {
     dt_desc_t* pdt;
     int i, dLength;
@@ -76,8 +76,8 @@ int ompi_ddt_create_hindexed( int count, int* pBlockLength, long* pDisp,
     return OMPI_SUCCESS;
 }
 
-int ompi_ddt_create_indexed_block( int count, int bLength, int* pDisp,
-                                  dt_desc_t* oldType, dt_desc_t** newType )
+int ompi_ddt_create_indexed_block( int count, int bLength, const int* pDisp,
+                                   const dt_desc_t* oldType, dt_desc_t** newType )
 {
    dt_desc_t* pdt;
    int i, dLength, endat, disp;
