@@ -8,6 +8,8 @@
 #include "lam_config.h"
 #include "mpi.h"
 
+#include "mca/mpi/topo/topo.h"
+
 /*
  * All stuff goes in here
  */
@@ -21,8 +23,8 @@ extern "C" {
                              bool *have_hidden_threads);
 
 
-    int mca_topo_base_init_comm (lam_comm_t *comm);
-    int mca_topo_base_get_param (lam_comm_t *comm, int keyval);
+    int mca_topo_base_init_comm (lam_communicator_t *comm);
+    int mca_topo_base_get_param (lam_communicator_t *comm, int keyval);
 
     const mca_topo_1_0_0_t *
         mca_topo_unity_query(int *priority,
@@ -34,63 +36,64 @@ extern "C" {
      * for graph_map() and cart_map() for their topology modules.
      * But they can implement these glue functions if they want.
      */
-    int topo_base_cart_coords (lam_comm_t *comm, 
+    int topo_base_cart_coords (lam_communicator_t *comm, 
                                int rank, 
                                int maxdims,
                                int *coords);
 
-    int topo_base_cart_create (lam_comm_t *old_comm, 
+    int topo_base_cart_create (lam_communicator_t *old_comm, 
                                int ndims, 
                                int *dims,
-                               int *peroids, 
+                               int *periods, 
                                int reorder, 
-                               lam_comm_t *comm_cart);
+                               lam_communicator_t *comm_cart);
 
-    int topo_base_cartdim_get (lam_comm_t *comm, 
+    int topo_base_cartdim_get (lam_communicator_t *comm, 
                                int *ndims);
 
-    int topo_base_cart_get (lam_comm_t *comm, 
+    int topo_base_cart_get (lam_communicator_t *comm, 
                             int maxdims, 
                             int *dims,
                             int *periods, 
                             int *coords);
 
-    int topo_base_cart_rank (lam_comm_t *comm, 
+    int topo_base_cart_rank (lam_communicator_t *comm, 
                              int *coords, 
                              int *rank);
 
-    int topo_base_cart_shift (lam_comm_t *comm, 
+    int topo_base_cart_shift (lam_communicator_t *comm, 
                               int direction, 
                               int disp,
                               int *rank_source, 
                               int *rank_dest);
 
-    int topo_base_cart_sub (lam_comm_t *comm, 
+    int topo_base_cart_sub (lam_communicator_t *comm, 
                             int *remain_dims,
-                            lam_comm_t **new_comm);
+                            lam_communicator_t **new_comm);
 
-    int topo_base_graph_create (lam_comm_t *comm_old, 
+    int topo_base_graph_create (lam_communicator_t *comm_old, 
                                 int nnodes,
                                 int *index, 
+                                int *edges,
                                 int reorder,
-                                lam_comm_t **comm_graph);
+                                lam_communicator_t **comm_graph);
 
-    int topo_base_graph_dims_get (lam_comm_t *comm, 
+    int topo_base_graph_dims_get (lam_communicator_t *comm, 
                                   int *nodes,
                                   int *nedges);
 
-    int topo_base_graph_get (lam_comm_t *comm, 
+    int topo_base_graph_get (lam_communicator_t *comm, 
                              int maxindex, 
                              int maxedges, 
                              int *index, 
                              int *edges);
 
-    int topo_base_graph_neighbors (lam_comm_t *comm, 
+    int topo_base_graph_neighbors (lam_communicator_t *comm, 
                                    int rank,
                                    int maxneighbors, 
                                    int *neighbors);
 
-    int topo_base_graph_neighbors_count (lam_comm_t *comm, 
+    int topo_base_graph_neighbors_count (lam_communicator_t *comm, 
                                          int rank,
                                          int *nneighbors);
 
