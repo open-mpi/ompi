@@ -24,6 +24,7 @@
 
 #include <sys/types.h>
 #include <netinet/in.h>
+#include <string.h>
 
 #include "include/orte_constants.h"
 #include "include/orte_types.h"
