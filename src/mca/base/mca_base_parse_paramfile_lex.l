@@ -1,6 +1,8 @@
 %{ /* -*- C -*- */
 
 #include <stdio.h>
+#include <unistd.h>
+
 #include "mca/base/mca_base_parse_paramfile_lex.h"
 
 /*
