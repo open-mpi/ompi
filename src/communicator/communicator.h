@@ -239,7 +239,7 @@ extern "C" {
      * and sets all other elements to zero.
      */
     ompi_communicator_t* ompi_comm_allocate ( int local_group_size, 
-                                            int remote_group_size );
+                                              int remote_group_size );
 
     /**
      * allocate new communicator ID
@@ -276,15 +276,16 @@ extern "C" {
      * This is THE routine, where all the communicator stuff
      * is really set.
      */
-    ompi_communicator_t* ompi_comm_set ( ompi_communicator_t* oldcomm,
-                                         int local_size, 
-                                         ompi_proc_t **local_procs,
-                                         int remote_size,
-                                         ompi_proc_t **remote_procs,
-                                         ompi_hash_table_t *attr,
-                                         ompi_errhandler_t *errh, 
-                                         mca_base_component_t *collcomponent, 
-                                         mca_base_component_t *topocomponent );
+    int ompi_comm_set ( ompi_communicator_t* newcomm,
+                        ompi_communicator_t* oldcomm,
+                        int local_size, 
+                        ompi_proc_t **local_procs,
+                        int remote_size,
+                        ompi_proc_t **remote_procs,
+                        ompi_hash_table_t *attr,
+                        ompi_errhandler_t *errh, 
+                        mca_base_component_t *collcomponent, 
+                        mca_base_component_t *topocomponent );
     /**
      * This is a short-hand routine used in intercomm_create.
      * The routine makes sure, that all processes have afterwards
