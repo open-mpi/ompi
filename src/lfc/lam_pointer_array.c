@@ -57,7 +57,7 @@ void lam_pointer_array_destruct(lam_pointer_array_t *array){
  * @param table Pointer to lam_pointer_array_t object (IN)
  * @param ptr Pointer to be added to table    (IN)
  *
- * @return Array index where ptr is inserted
+ * @return Array index where ptr is inserted or LAM_ERROR if it fails
  */
 size_t lam_pointer_array_add(lam_pointer_array_t *table, void *ptr)
 {
@@ -90,7 +90,7 @@ size_t lam_pointer_array_add(lam_pointer_array_t *table, void *ptr)
 	p = malloc(TABLE_INIT * sizeof(void *));
 	if (p == NULL) {
         THREAD_UNLOCK(&(table->lock));
-        return -1;
+        return LAM_ERROR;
 	}
 	table->lowest_free = 0;
 	table->number_free = TABLE_INIT;
@@ -114,7 +114,7 @@ size_t lam_pointer_array_add(lam_pointer_array_t *table, void *ptr)
 	p = realloc(table->addr, TABLE_GROW * table->size * sizeof(void *));
 	if (p == NULL) {
         THREAD_UNLOCK(&(table->lock));
-	    return -1;
+	    return LAM_ERROR;
 	}
 	table->lowest_free = table->size;
 	table->number_free = (TABLE_GROW - 1) * table->size;
@@ -196,7 +196,7 @@ int lam_pointer_array_set_item(lam_pointer_array_t *table, size_t index,
 	void *p = realloc(table->addr, new_size * sizeof(void *));
 	if (p == NULL) {
             THREAD_UNLOCK(&(table->lock));
-	    return -1;
+	    return LAM_ERROR;
 	}
 	table->number_free += new_size - table->size;
 	table->addr = p;
