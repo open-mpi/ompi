@@ -86,8 +86,8 @@ int mca_topo_base_cart_shift (MPI_Comm comm,
     } else {
        srcord %= thisdirection;
        if (srcord < 0) srcord += thisdirection;
-       *rank_dest = ompi_comm_rank(comm);
-       *rank_dest += ((srcord - ord) * factor);
+       *rank_source= ompi_comm_rank(comm);
+       *rank_source += ((srcord - ord) * factor);
     }
 
     return MPI_SUCCESS;
