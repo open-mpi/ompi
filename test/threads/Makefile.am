@@ -26,13 +26,13 @@ TESTS = \
 
 ompi_thread_SOURCES = ompi_thread.c
 ompi_thread_LDADD = \
-        $(top_builddir)/test/support/libsupport.la \
+        $(top_builddir)/test/support/libsupport.a \
         $(top_builddir)/src/libmpi.la
 ompi_thread_DEPENDENCIES = $(ompi_thread_LDADD)
 
 ompi_condition_SOURCES = ompi_condition.c
 ompi_condition_LDADD = \
-        $(top_builddir)/test/support/libsupport.la \
+        $(top_builddir)/test/support/libsupport.a \
         $(top_builddir)/src/libmpi.la
 ompi_condition_DEPENDENCIES = $(ompi_condition_LDADD)
 

@@ -14,7 +14,6 @@
 
 #include "ompi_config.h"
 
-#if 0
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -24,12 +23,10 @@
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #endif
-#endif
 
 #include "runtime/runtime.h"
 #include "util/if.h"
 #include "support.h"
-#include "util/bufpack.h"
 #include "include/constants.h"
 
 
@@ -54,7 +51,7 @@ main(int argc, char *argv[])
 {
     char hostname[MAXHOSTNAMELEN];
 
-    ompi_init(argc, argv);
+    orte_init();
     test_init("ompi_if");
 
     /* 127.0.0.1 */
@@ -119,7 +116,7 @@ main(int argc, char *argv[])
     }
 
     test_finalize();
-    ompi_finalize();
+    orte_finalize();
 
     return 0;
 }

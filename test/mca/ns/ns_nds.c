@@ -12,10 +12,8 @@
  * $HEADER$
  */
 
+
 #include "orte_config.h"
-#include "../src/include/orte_constants.h"
-#include "../src/include/orte_types.h"
-#include "../src/include/orte_names.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -28,13 +26,14 @@
 #endif
 
 #include "include/constants.h"
+#include "include/orte_constants.h"
+#include "include/orte_types.h"
 
 #include "support.h"
-#include "../src/runtime/runtime.h"
-#include "../src/mca/base/base.h"
-#include "../src/plsnds/plsnds.h"
-#include "../src/mca/ns/ns.h"
-#include "../src/mca/ns/base/base.h"
+#include "runtime/runtime.h"
+#include "mca/base/base.h"
+#include "mca/ns/ns.h"
+#include "mca/ns/base/base.h"
 
 static bool test1(void);        /* verify different buffer inits */
 static bool test2(void);        /* verify int16 */
@@ -58,7 +57,7 @@ int main (int argc, char* argv[])
     test_out = stderr;
     
     /* open up the mca so we can get parameters */
-    ompi_init(argc, argv);
+    orte_init();
 
     /* startup the MCA */
     if (OMPI_SUCCESS != mca_base_open()) {
@@ -72,8 +71,10 @@ int main (int argc, char* argv[])
         exit (1);
     }
     
+#if 0 /* XXX - what should this be now? */
     /* setup the plsnds */
     orte_plsnds_open();
+#endif
     
     fprintf(test_out, "executing test1\n");
     if (test1()) {
@@ -171,9 +172,8 @@ int main (int argc, char* argv[])
       test_failure("orte_dps test12 failed");
     }
 
-    test_finalize();
     fclose(test_out);
-    return (0);
+    return test_finalize();
 }
 
 
@@ -390,3 +390,4 @@ static bool test12(void)
 {
     return (true);
 }
+

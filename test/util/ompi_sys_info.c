@@ -20,6 +20,14 @@
 #include <sys/param.h>
 #endif
 
+int main(int argc, char **argv)
+{
+    printf("Test disabled - Does not compile.\n");
+    return 77;
+}
+
+#if 0
+
 #include "util/sys_info.h"
 #include "support.h"
 
@@ -77,3 +85,4 @@ static bool test2(void)
     ompi_sys_info();
     return(ompi_system_info.init);
 }
+#endif

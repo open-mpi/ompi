@@ -75,9 +75,7 @@ int main(int argc, char* argv[])
   }
   
   /* All done */
-  test_finalize();
-
-  return 0;
+  return test_finalize();
 }
 
 
@@ -365,7 +363,7 @@ static bool test9(void)
 
     /* bozo cases */
     
-    if (OMPI_SUCCESS != ompi_argv_delete(NULL, 0, 0)) {
+    if (OMPI_SUCCESS != ompi_argv_delete(NULL, NULL, 0, 0)) {
         return false;
     } 
 

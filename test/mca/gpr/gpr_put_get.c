@@ -63,8 +63,11 @@ int main(int argc, char **argv)
     
     test_init("test_gpr_replica");
 
-   /*  test_out = fopen( "test_gpr_replica_out", "w+" ); */
-    test_out = stderr;
+    if (getenv("TEST_WRITE_TO_FILE") != NULL) {
+        test_out = fopen( "test_gpr_replica_out", "w+" );
+    } else {
+        test_out = stderr;
+    }
     if( test_out == NULL ) {
       test_failure("gpr_test couldn't open test file failed");
       test_finalize();

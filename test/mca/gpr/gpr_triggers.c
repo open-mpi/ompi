@@ -72,8 +72,11 @@ int main(int argc, char **argv)
 
     test_init("test_gpr_replica_trigs");
 
-   /*  test_out = fopen( "test_gpr_replica_out", "w+" ); */
-    test_out = stderr;
+    if (getenv("TEST_WRITE_TO_FILE") != NULL) {
+        test_out = fopen( "test_gpr_replica_out", "w+" );
+    } else {
+        test_out = stderr;
+    }
     if( test_out == NULL ) {
       test_failure("gpr_test couldn't open test file failed");
       test_finalize();
@@ -154,7 +157,7 @@ int main(int argc, char **argv)
     subscription->cbfunc = test_cbfunc;
     subscription->user_tag = NULL;
     
-    fprintf(stderr, "register subscription on segment\n");
+    fprintf(test_out, "register subscription on segment\n");
     if (ORTE_SUCCESS != (rc = orte_gpr_replica_subscribe(
                                     ORTE_GPR_NOTIFY_ADD_ENTRY,
                                     1, &subscription,
