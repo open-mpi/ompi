@@ -36,8 +36,8 @@ struct iovec send_msg2[3] = {{(void *) &msg_type_2, sizeof(msg_type_2)},
 /* if we want the send/ recieve functions to do the packing for us,
  * we have to provide an array that describes our data types
  */
-mca_oob_base_type_t types[] = {MCA_OOB_BASE_INT32, MCA_OOB_BASE_BYTE,
-    MCA_OOB_BASE_INT32, MCA_OOB_BASE_INT16};
+/* mca_oob_base_type_t types[] = {MCA_OOB_BASE_INT32, MCA_OOB_BASE_BYTE, */
+/*     MCA_OOB_BASE_INT32, MCA_OOB_BASE_INT16}; */
     
 /* we'll pass the array an identical iovec */
 uint32_t msg_type;
