@@ -128,7 +128,7 @@
        integer MPI_INFO_NULL
 
        parameter (MPI_GROUP_NULL=-1)
-       parameter (MPI_COMM_NULL=-1)
+       parameter (MPI_COMM_NULL=2)
        parameter (MPI_DATATYPE_NULL=-1)
        parameter (MPI_REQUEST_NULL=-1)
        parameter (MPI_OP_NULL=-1)
