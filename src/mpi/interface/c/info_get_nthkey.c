@@ -25,8 +25,8 @@
  *   @retval MPI_ERR_ARG
  */
 int MPI_Info_get_nthkey(MPI_Info info, int n, char *key) {
-    lam_info_entry_t *iterator;
     int nkeys;
+    int err;
 
     /*
      * 1. Check if info is a valid handle
@@ -45,19 +45,14 @@ int MPI_Info_get_nthkey(MPI_Info info, int n, char *key) {
         return MPI_ERR_ARG;
     } else {
         /*
-         * Iterate over and over till we get to the nth key
+         * Everything seems alright. Call the back end key copy
          */
-        iterator = (lam_info_entry_t *)lam_list_get_first(&(info->super));
-        for ( ; n > 0; n--) {
-            iterator = (lam_info_entry_t *)
-                        iterator->super.lam_list_next;
-        }
-        /*
-         * iterator is of the type lam_list_item_t. We have to 
-         * cast it to lam_info_entry_t before we can use it to
-         * access the value
-         */
-        strcpy(key, iterator->ie_key);
+        err = lam_info_get_nthkey (info, n, key);
     }
+
+    /*
+     * Have to check whether there are any error condditions. It appears
+     * that there are not too many error conditions from the look of it
+     */
     return MPI_SUCCESS;
 }

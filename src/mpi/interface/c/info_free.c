@@ -24,8 +24,6 @@
  *   Upon successful completion, 'info' will be set to 'MPI_INFO_NULL'.
  */
 int MPI_Info_free(MPI_Info *info) {
-    lam_info_entry_t *iterator;
-    int nkeys;
     int err;
     /*
      * Free all the alloced items from MPI_Info info.
@@ -40,30 +38,11 @@ int MPI_Info_free(MPI_Info *info) {
     }
 
     /*
-     * Now to actually free all the values
+     * Now call the back end. Once again, it does not look like 
+     * there can be any error from this, but then who knows. Have
+     * to recheck this part too.
      */
-    err = MPI_Info_get_nkeys(*info, &nkeys);
-
-    /*
-     * We could just get each element from the list and then call
-     * MPI_Info_delete. But this causes unnecessary delay because 
-     * MPI_Info_delete has extra logic to it. So, do the simple 
-     * remove operation to save time.
-     */
-    for (iterator = (lam_info_entry_t *)lam_list_get_first(&((*info)->super));
-         nkeys > 0;
-         nkeys--) {
-        iterator = (lam_info_entry_t *)iterator->super.lam_list_next;
-        OBJ_RELEASE(iterator->super.lam_list_prev);
-    }
-
-    /*
-     * Anju:
-     * Add things to remove the fortran handle from the mapping table
-     */
-    
-    OBJ_RELEASE(*info);
-    *info = MPI_INFO_NULL;
+    err = lam_info_free (info);
     
     return MPI_SUCCESS;
 }

@@ -27,9 +27,8 @@
  * @retval MPI_ERR_NOKEY
  */
 int MPI_Info_delete(MPI_Info info, char *key) {
-    lam_info_entry_t *search;
-    lam_info_entry_t *found;
     int key_length;
+    int err;
     /**
      * This function merely deletes the (key,val) pair in info
      */
@@ -44,21 +43,11 @@ int MPI_Info_delete(MPI_Info info, char *key) {
         return MPI_ERR_INFO_KEY;
     }
 
-    search = lam_info_find_key (info, key);
+    err = lam_info_delete (info, key);
 
-    if (NULL == search){
-        printf ("Invalid key given\n");
-        return MPI_ERR_INFO_NOKEY;
-    } else {
-        /*
-         * An entry with this key value was found. Remove the item
-         * and free the memory allocated to it
-         */
-        found = (lam_info_entry_t *)
-                lam_list_remove_item (&(info->super),
-                                      (lam_list_item_t *)search);
-        OBJ_RELEASE(search);
+    if (MPI_ERR_INFO_NOKEY == err) {
+        printf ("Invalid Key given\n");
+        return err;
     }
-
-    return MPI_SUCCESS;
+    return err;
 }
