@@ -16,6 +16,7 @@
 #include "include/constants.h"
 #include "mca/pcm/pcm.h"
 #include "mca/pcm/base/base.h"
+#include "runtime/runtime.h"
 #include "event/event.h"
 #include "class/ompi_list.h"
 #include "mca/ns/ns.h"
@@ -23,6 +24,7 @@
 #include "util/argv.h"
 #include "util/numtostr.h"
 #include "runtime/ompi_rte_wait.h"
+#include "util/show_help.h"
 
 
 static void internal_wait_cb(pid_t pid, int status, void *data);
@@ -65,9 +67,10 @@ mca_pcm_rms_allocate_resources(struct mca_pcm_base_module_1_0_0_t* me,
 
 
 int
-mca_pcm_rms_spawn_procs(struct mca_pcm_base_module_1_0_0_t* me,
+mca_pcm_rms_spawn_procs(struct mca_pcm_base_module_1_0_0_t* me_super,
                         mca_ns_base_jobid_t jobid, ompi_list_t *schedlist)
 {
+    mca_pcm_rms_module_t *me = (mca_pcm_rms_module_t*) me_super;
     ompi_rte_node_allocation_t *nodes;
     ompi_rte_node_schedule_t *sched;
     char **argv = NULL;
@@ -77,17 +80,17 @@ mca_pcm_rms_spawn_procs(struct mca_pcm_base_module_1_0_0_t* me,
     int ret;
     char *tmp;
     pid_t child;
+    char **prun_args;
+    char *printable;
 
     /* quick sanity check */
     if (ompi_list_get_size(schedlist) > 1) {
-        /* BWB: show_help */
-        printf("RMS pcm can not cope with multiple schedlist items at this time\n");
+        ompi_show_help("help-mca-pcm-rms.txt", "spawn:multiple-apps", true);
         return OMPI_ERROR;
     }
     sched = (ompi_rte_node_schedule_t*) ompi_list_get_first(schedlist);
     if (ompi_list_get_size(sched->nodelist) > 1) {
-        /* BWB: show_help */
-        printf("RMS pcm can not cope with multiple nodelists at this time\n");
+        ompi_show_help("help-mca-pcm-rms.txt", "spawn:multiple-nodelists", true);
         return OMPI_ERROR;
     }
 
@@ -113,16 +116,36 @@ mca_pcm_rms_spawn_procs(struct mca_pcm_base_module_1_0_0_t* me,
         free(num);
     }
 
+    if (NULL != me->partition) {
+        ompi_argv_append(&argc, &argv, "-p");
+        ompi_argv_append(&argc, &argv, me->partition); 
+    }
+
+    if (NULL != me->prun_args) {
+        prun_args = ompi_argv_split(me->prun_args, ' ');
+        if (NULL != prun_args) {
+            for (i = 0 ; prun_args[i] != NULL ; ++i) {
+                ompi_argv_append(&argc, &argv, prun_args[i]);
+            }
+            ompi_argv_free(prun_args);
+        }
+    }
+
     /* copy over the command line arguments */
     for (i = 0 ; i < sched->argc ; ++i) {
         ompi_argv_append(&argc, &argv, (sched->argv)[i]);
     }
 
-    /*ok, fork! */
+    printable = ompi_argv_join(argv, ' ');
+    ompi_output_verbose(5, mca_pcm_base_output,
+                        "attempting to execute: %s", printable);
+    free(printable);
+
+    /* ok, fork! */
     child = fork();
     if (child < 0) {
-        /* show_help */
-        printf("RMS pcm unable to fork\n");
+        ompi_show_help("help-mca-pcm-rms.txt", "spawn:fork-failure", true,
+                       strerror(errno));
         return OMPI_ERR_OUT_OF_RESOURCE;
     } else if (0 == child) {
         /* set up environment */
@@ -142,13 +165,15 @@ mca_pcm_rms_spawn_procs(struct mca_pcm_base_module_1_0_0_t* me,
         /* set cwd */
         ret = chdir(sched->cwd);
         if (0 != ret) {
-            /* BWB show_help */
-            printf("RMS pcm can not chdir to %s\n", sched->cwd);
+            ompi_show_help("help-mca-pcm-rms.txt", "spawn:chdir", true,
+                           sched->cwd, strerror(errno));
             exit(1);
         }
 
         /* go, go, go! */
         ret = execvp(argv[0], argv);
+        ompi_show_help("help-mca-pcm-rms.txt", "spawn:exec-prun", true,
+                       argv[0], strerror(errno));
         exit(1);
     } 
 
@@ -158,15 +183,13 @@ mca_pcm_rms_spawn_procs(struct mca_pcm_base_module_1_0_0_t* me,
                                         nodes->count : 
                                         nodes->nodes * nodes->count);
     if (OMPI_SUCCESS != ret) {
-        /* BWB show_help */
-        printf("show_help: unable to record child pid\n");
         kill(child, SIGKILL);
+        return ret;
     }
     ret = ompi_rte_wait_cb(child, internal_wait_cb, NULL);
     if (OMPI_SUCCESS != ret) {
-      /* BWB - show_help */
-      printf("show_help: unable to register callback\n");
       kill(child, SIGKILL);
+      return ret;
     }
 
     return OMPI_SUCCESS;
@@ -196,8 +219,8 @@ mca_pcm_rms_kill_job(struct mca_pcm_base_module_1_0_0_t* me,
                      mca_ns_base_jobid_t jobid, int flags)
 {
     pid_t *doomed;
-    size_t doomed_len;
-    int ret, i;
+    size_t doomed_len, i;
+    int ret;
 
     ret = mca_pcm_base_get_started_pid_list(jobid, &doomed, &doomed_len, true);
     if (OMPI_SUCCESS != ret) return ret;
@@ -236,27 +259,25 @@ internal_wait_cb(pid_t pid, int status, void *data)
     mca_ns_base_vpid_t lower = 0;
     mca_ns_base_vpid_t i = 0;
     int ret;
-    char *test;
-    ompi_process_name_t *proc_name;
+    char *proc_name;
 
-    printf("pcm_rms was notified that process %d exited with status %d\n",
-           pid, status);
+    ompi_output_verbose(10, mca_pcm_base_output, 
+                        "process %d exited with status %d", pid, status);
 
     ret = mca_pcm_base_get_job_info(pid, &jobid, &lower, &upper);
     if (ret != OMPI_SUCCESS) {
-        printf("Unfortunately, we could not find the associated job info\n");
-    } else {
-        printf("  It appears that this starter was assocated with jobid %d\n"
-               "  vpids %d to %d\n\n",
-               jobid, lower, upper);
+        ompi_show_help("help-mca-pcm-rms.txt",
+                       "spawn:no-process-record", true, pid, status);
+        return;
     }
 
     /* unregister all the procs */
-#if 0
-    /* BWB - fix me when deadlock in gpr is fixed */
     for (i = lower ; i <= upper ; ++i) {
-        test = ns_base_get_proc_name_string(ns_base_create_process_name(0, jobid, i));
-        ompi_registry.rte_unregister(test);
+        proc_name = ns_base_get_proc_name_string(
+                                ns_base_create_process_name(0, jobid, i));
+        ompi_registry.rte_unregister(proc_name);
     }
-#endif
+
+    /* BWB - fix me - should only remove this range */
+    mca_pcm_base_remove_job(jobid);
 }
