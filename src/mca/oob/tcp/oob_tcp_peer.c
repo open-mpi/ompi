@@ -552,3 +552,12 @@ static void mca_oob_tcp_peer_dump(mca_oob_tcp_peer_t* peer, const char* msg)
     ompi_output(0, buff);
 }
 
+/* JMS Added these so that we can link successfully */
+bool mca_oob_tcp_msg_send_handler(mca_oob_tcp_msg_t* msg, int sd) 
+{ return true; }
+bool mca_oob_tcp_msg_recv_handler(mca_oob_tcp_msg_t* msg, int sd)
+{ return true; }
+void mca_oob_tcp_msg_init(mca_oob_tcp_msg_t* msg, struct mca_oob_tcp_peer_t*b)
+{ }
+
+
