@@ -2,6 +2,7 @@
  * $HEADER$
  */
 #include <errno.h>
+
 #include "lam/constants.h"
 #include "lam/util/if.h"
 #include "lam/util/argv.h"
@@ -9,7 +10,7 @@
 #include "lam/mem/malloc.h"
 #include "mca/mpi/pml/pml.h"
 #include "mca/mpi/ptl/ptl.h"
-#include "mca/lam/base/param.h"
+#include "mca/lam/base/mca_lam_param.h"
 #include "mca/lam/base/module_exchange.h"
 #include "ptl_tcp.h"
 
