@@ -57,4 +57,25 @@ int lam_group_init(void);
  */
 int lam_group_finalize(void);
 
+/**
+ * Get group size
+ *
+ * @param group Pointer to lam_group_t structute (IN)
+ *
+ * @return Group size
+ */
+static inline int lam_group_size(lam_group_t *group){
+    return group->grp_proc_count;
+}
+
+/**
+ * Get group rank
+ *
+ * @param group Pointer to lam_group_t structute (IN)
+ *
+ * @return Group rank
+ */
+static inline int lam_group_rank(lam_group_t *group){
+    return group->grp_proc_count;
+}
 #endif /* LAM_GROUP_H */

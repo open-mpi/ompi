@@ -6,11 +6,13 @@
 
 #include "mpi.h"
 #include "mpi/interface/c/bindings.h"
+#include "mpi/group/group.h"
 
 #if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILING_DEFINES
 #pragma weak MPI_Group_size = PMPI_Group_size
 #endif
 
 int MPI_Group_size(MPI_Group group, int *size) {
+    *size=lam_group_size((lam_group_t *)group);
     return MPI_SUCCESS;
 }
