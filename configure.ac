@@ -516,7 +516,6 @@ LAM_MCA
 ############################################################################
 
 lam_show_title "Final top-level LAM configuration"
-liblam_third_party_subdirs=
 
 ############################################################################
 # Libevent setup
@@ -525,15 +524,8 @@ liblam_third_party_subdirs=
 lam_show_subtitle "Libevent 3rd party event handler"
 CFLAGS_save="$CFLAGS"
 CFLAGS="$LAM_CFLAGS_BEFORE_PICKY"
-LAM_CONFIG_SUBDIR(src/event, [$lam_subdir_args], [HAPPY=1], [HAPPY=0])
-if test "$HAPPY" = "0"; then
-    AC_MSG_WARN([*** libevent failed to configure properly])
-    AC_MSG_ERROR([*** Cannot continue])
-fi
+LAM_SETUP_LIBEVENT
 CFLAGS="$CFLAGS_save"
-liblam_third_party_subdirs="event $liblam_third_party_subdirs"
-
-AC_SUBST(liblam_third_party_subdirs)
 
 
 ############################################################################
@@ -727,6 +719,8 @@ AC_CONFIG_FILES([
     src/runtime/Makefile
     src/threads/Makefile
     src/util/Makefile
+
+    src/event/Makefile
 
     src/attribute/Makefile
     src/communicator/Makefile

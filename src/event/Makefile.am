@@ -5,7 +5,9 @@ AUTOMAKE_OPTIONS = foreign no-dependencies
 # of the header files in this directory get included elsewhere in LAM.
 # #@%@#$...
 AM_CPPFLAGS = \
-        -I$(top_builddir)/../include -I$(top_srcdir)/../include \
+        -I$(top_srcdir)/src/event/compat \
+        -I$(top_srcdir)/../include \
+        -I$(top_builddir)/../include \
         -I$(top_builddir)/..
 
 CFLAGS = -Wall @CFLAGS@
@@ -31,17 +33,13 @@ EXTRA_DIST = acconfig.h err.c event.h evsignal.h event.3 kqueue.c \
 # LAM: Changed to noinst and libevent.la
 noinst_LTLIBRARIES = libevent.la
 
-# LAM: Get LIBOBJS and convert them to .lo (vs. .o)
-libobj = @LIBOBJS@
-lt_libobj = $(libobj:.o=.lo)
+# LAM: Automake sillyness so that we can have variable sources
+objects = $(LAM_LIBEVENT_SOURCES:.c=.lo)
 
 # LAM: Changed to libevent_la_*
-libevent_la_SOURCES = event.c
-libevent_la_LIBADD = $(lt_libobj)
-# LAM: Had to add the .lo's as dependencies to force them to be
-# compiled as .lo
-libevent_la_DEPENDENCIES = $(lt_libobj)
-
+libevent_la_SOURCES = event.c 
+libevent_la_LIBADD = $(objects)
+libevent_la_DEPENDENCIES = $(objects)
 include_HEADERS = event.h
 
 man_MANS = event.3
