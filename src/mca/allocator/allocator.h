@@ -32,7 +32,7 @@ typedef void(*mca_allocator_base_module_free_fn_t)(struct mca_allocator_base_mod
  * compact/return memory to higher level allocator
  */
 
-typedef int (*mca_allocator_base_module_return_fn_t)(
+typedef int (*mca_allocator_base_module_compact_fn_t)(
     struct mca_allocator_base_module_t* allocator 
 );
  
@@ -55,7 +55,7 @@ struct mca_allocator_base_module_t {
     /**< Reallocate memory */
     mca_allocator_base_module_free_fn_t alc_free;       
     /**< Free memory */
-    mca_allocator_base_module_return_fn_t alc_return;   
+    mca_allocator_base_module_compact_fn_t alc_compact;   
     /**< Return memory */
     mca_allocator_base_module_finalize_fn_t alc_finalize; 
     /**< Finalize and free everything */

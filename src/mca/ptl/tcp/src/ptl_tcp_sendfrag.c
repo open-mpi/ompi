@@ -104,9 +104,9 @@ int mca_ptl_tcp_send_frag_init(
        ompi_convertor_init_for_send( 
 				    convertor,
 				    0, 
-				    sendreq->req_base.req_datatype,
-				    sendreq->req_base.req_count,
-				    sendreq->req_base.req_addr,
+				    sendreq->req_datatype,
+				    sendreq->req_count,
+				    sendreq->req_addr,
 				    offset,
 				    ptl_tcp_memalloc );
 

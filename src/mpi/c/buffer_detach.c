@@ -24,7 +24,7 @@ int MPI_Buffer_detach(void *buffer, int *size)
 {
   if (MPI_PARAM_CHECK) {
     OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-    if (NULL == buffer || NULL == size || *size < 0) {
+    if (NULL == buffer || NULL == size) {
       return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
     }
   }

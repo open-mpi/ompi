@@ -83,8 +83,7 @@ finished:
         }
     
         /* return request to pool */ 
-        rc = request->req_free(request);
-        *rptr = MPI_REQUEST_NULL;
+        rc = request->req_fini(rptr);
         *index = completed;
     }
     return rc;
@@ -143,10 +142,7 @@ int ompi_request_wait_all(
             int rc;
             request = *rptr;
             statuses[i] = request->req_status;
-            rc = request->req_free(request);
-            if(rc != OMPI_SUCCESS)
-                return rc;
-            *rptr = MPI_REQUEST_NULL;
+            rc = request->req_fini(rptr);
             rptr++;
         }
     } else {
@@ -155,10 +151,7 @@ int ompi_request_wait_all(
         for (i = 0; i < count; i++) {
             int rc;
             request = *rptr;
-            rc = request->req_free(request);
-            if(rc != OMPI_SUCCESS)
-                return rc;
-            *rptr = MPI_REQUEST_NULL;
+            rc = request->req_fini(rptr);
             rptr++;
         }
     }

@@ -63,7 +63,7 @@ typedef int (*ompi_request_query_fn_t)(
 /*
  * Required function to free the request and any associated resources.
  */
-typedef int (*ompi_request_free_fn_t)(struct ompi_request_t* request);
+typedef int (*ompi_request_free_fn_t)(struct ompi_request_t** rptr);
 
 /*
  * Optional function to cancel a pending request.
@@ -82,7 +82,8 @@ struct ompi_request_t {
     volatile ompi_request_state_t req_state;   /**< enum indicate state of the request */
     int req_f_to_c_index;                      /**< Index in Fortran <-> C translation array */
     ompi_request_query_fn_t req_query;         /**< Optional query function to retrieve status */
-    ompi_request_free_fn_t req_free;           /**< Required function to free request */
+    ompi_request_free_fn_t req_fini;           /**< Called by test/wait */
+    ompi_request_free_fn_t req_free;           /**< Called by free */
     ompi_request_cancel_fn_t req_cancel;       /**< Optional function to cancel the request */
 };
 
@@ -180,10 +181,7 @@ int ompi_request_complete(ompi_request_t* request);
 
 static inline int ompi_request_free(ompi_request_t** request)
 {
-    int rc = (*request)->req_free(*request);
-    if(rc == OMPI_SUCCESS)
-        *request = MPI_REQUEST_NULL;
-    return rc;
+    return (*request)->req_free(request);
 }
 
 /**
@@ -243,7 +241,6 @@ static inline int ompi_request_wait(
     ompi_request_t ** req_ptr,
     ompi_status_public_t * status)
 {
-    int rc;
     ompi_request_t *req = *req_ptr;
 
 #if OMPI_HAVE_THREADS
@@ -291,9 +288,7 @@ static inline int ompi_request_wait(
     }
 
     /* return request to pool */
-    rc = req->req_free(req);
-    *req_ptr = MPI_REQUEST_NULL;
-    return rc;
+    return req->req_fini(req_ptr);
 }
 
 

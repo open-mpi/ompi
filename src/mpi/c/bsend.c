@@ -52,12 +52,16 @@ int MPI_Bsend(void *buf, int count, MPI_Datatype type, int dest, int tag, MPI_Co
         goto error_return;
 
     rc = mca_pml_base_bsend_request_init(request, false);
-    if(OMPI_SUCCESS != rc)
+    if(OMPI_SUCCESS != rc) {
+        ompi_request_free(&request);
         goto error_return;
+    }
 
     rc = mca_pml.pml_start(1, &request);
-    if(OMPI_SUCCESS != rc)
+    if(OMPI_SUCCESS != rc) {
+        ompi_request_free(&request);
         goto error_return;
+    }
 
     rc = ompi_request_wait(&request, MPI_STATUS_IGNORE);
     if(OMPI_SUCCESS != rc) {

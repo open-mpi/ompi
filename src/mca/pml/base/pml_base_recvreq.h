@@ -45,10 +45,11 @@ typedef struct mca_pml_base_recv_request_t mca_pml_base_recv_request_t;
     comm,                                                 \
     persistent)                                           \
 {                                                         \
+    /* increment reference count on communicator */       \
+    OBJ_RETAIN(comm);                                     \
+                                                          \
     OMPI_REQUEST_INIT(&(request)->req_base.req_ompi);     \
     (request)->req_bytes_packed = 0;                      \
-    (request)->req_bytes_received = 0;                    \
-    (request)->req_bytes_delivered = 0;                   \
     (request)->req_base.req_sequence = 0;                 \
     (request)->req_base.req_addr = addr;                  \
     (request)->req_base.req_count = count;                \
@@ -61,8 +62,6 @@ typedef struct mca_pml_base_recv_request_t mca_pml_base_recv_request_t;
     (request)->req_base.req_pml_complete = false;         \
     (request)->req_base.req_free_called = false;          \
                                                           \
-    /* increment reference count on communicator */       \
-    OBJ_RETAIN(comm);                                     \
 }
 
 #endif
