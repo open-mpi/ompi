@@ -31,8 +31,10 @@ int MPI_Status_f2c(MPI_Fint *f_status, MPI_Status *c_status)
         
         if (NULL == f_status || 
 #if OMPI_WANT_F77_BINDINGS || OMPI_WANT_F90_BINDINGS
-            /* JMS HACKAROUND: these macros need to move out of the
-               fortran bindings */
+            /* This section is #if'ed out if we are not building the
+               fortran bindings because these macros check values
+               against constants that only exist if the fortran
+               bindings exist. */
             OMPI_IS_FORTRAN_STATUS_IGNORE(f_status) ||
             OMPI_IS_FORTRAN_STATUSES_IGNORE(f_status) ||
 #endif
