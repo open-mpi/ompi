@@ -489,7 +489,7 @@ lam_convertor_t* lam_convertor_get_copy( lam_convertor_t* pConvertor )
 }
 
 /* Actually we suppose that we can only do receiver side conversion */
-int lam_convertor_get_packed_size( lam_convertor_t* pConv, unsigned int* pSize )
+int lam_convertor_get_packed_size( lam_convertor_t* pConv, int* pSize )
 {
    if( lam_ddt_type_size( pConv->pDesc, pSize ) != 0 )
       return -1;
@@ -498,7 +498,7 @@ int lam_convertor_get_packed_size( lam_convertor_t* pConv, unsigned int* pSize )
    return 0;
 }
 
-int lam_convertor_get_unpacked_size( lam_convertor_t* pConv, unsigned int* pSize )
+int lam_convertor_get_unpacked_size( lam_convertor_t* pConv, int* pSize )
 {
    int i;
    dt_desc_t* pData = pConv->pDesc;
