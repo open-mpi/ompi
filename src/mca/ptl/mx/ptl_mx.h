@@ -28,6 +28,7 @@ struct mca_ptl_mx_component_t {
     int mx_debug;                          /**< debug level */
     uint32_t mx_filter;                    /**< filter assigned to application */
     uint32_t mx_num_ptls;                  /**< number of MX NICs available to app */
+    uint32_t mx_max_ptls;                  /**< max number  of MX NICs to use */
     struct mca_ptl_mx_module_t** mx_ptls;  /**< array of available PTL moduless */
     ompi_free_list_t mx_send_frags;        /**< free list of mx send fragments */
     ompi_free_list_t mx_recv_frags;        /**< free list of mx recv fragments */

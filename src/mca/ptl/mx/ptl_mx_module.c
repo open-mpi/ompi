@@ -42,7 +42,7 @@ int mca_ptl_mx_module_init(void)
         ompi_output(0, "mca_ptl_mx_init: mx_get_info(MX_NIC_COUNT) failed with status=%d\n", status);
         return OMPI_ERR_INIT;
     }
-                                                                                                                      
+
     /* determine the NIC ids */
     size = sizeof(uint64_t) * (mca_ptl_mx_component.mx_num_ptls+1);
     if(NULL == (nic_addrs = (uint64_t*)malloc(size)))
@@ -55,6 +55,10 @@ int mca_ptl_mx_module_init(void)
         free(nic_addrs);
         return OMPI_ERR_INIT;
     }
+
+    /* check for limit on number of ptls */
+    if(mca_ptl_mx_component.mx_num_ptls > mca_ptl_mx_component.mx_max_ptls)
+       mca_ptl_mx_component.mx_num_ptls = mca_ptl_mx_component.mx_max_ptls;
 
     /* allocate an array of pointers to ptls */
     mca_ptl_mx_component.mx_ptls = (mca_ptl_mx_module_t**)malloc(
