@@ -223,7 +223,7 @@ sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 top_ompi_builddir = @top_ompi_builddir@
 top_ompi_srcdir = @top_ompi_srcdir@
-noinst_HEADERS = mpio.h mpio.h
+noinst_HEADERS = mpio.h mpio.h io_romio_conv.h
 all: all-am
 
 .SUFFIXES:

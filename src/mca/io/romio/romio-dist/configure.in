@@ -1723,6 +1723,7 @@ AC_CONFIG_FILES([
 	adio/ad_hfs/Makefile
 	adio/ad_sfs/Makefile
 	adio/ad_pfs/Makefile
+	adio/ad_ntfs/Makefile
 	adio/ad_testfs/Makefile
 	adio/ad_pvfs/Makefile
 	adio/ad_piofs/Makefile

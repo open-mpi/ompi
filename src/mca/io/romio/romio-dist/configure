@@ -23373,7 +23373,7 @@ CFLAGS="$CFLAGS $OMPI_CFLAGS "'-I$(top_builddir)/include'
 # Create makefiles for all of the adio devices.  Only the ones that
 # are active will be called by the top level ROMIO make
 # Open MPI: revamped the AC_OUTPUT lines to fit our Makefile.am's
-                                                                                                                                                                                                                                      ac_config_files="$ac_config_files Makefile adio/Makefile adio/ad_nfs/Makefile adio/ad_ufs/Makefile adio/ad_xfs/Makefile adio/ad_hfs/Makefile adio/ad_sfs/Makefile adio/ad_pfs/Makefile adio/ad_testfs/Makefile adio/ad_pvfs/Makefile adio/ad_piofs/Makefile adio/common/Makefile adio/include/Makefile doc/Makefile include/Makefile include/mpio.h include/mpiof.h mpi-io/Makefile test/Makefile test/misc.c test/large_file.c test/runtests util/Makefile"
+                                                                                                                                                                                                                                                ac_config_files="$ac_config_files Makefile adio/Makefile adio/ad_nfs/Makefile adio/ad_ufs/Makefile adio/ad_xfs/Makefile adio/ad_hfs/Makefile adio/ad_sfs/Makefile adio/ad_pfs/Makefile adio/ad_ntfs/Makefile adio/ad_testfs/Makefile adio/ad_pvfs/Makefile adio/ad_piofs/Makefile adio/common/Makefile adio/include/Makefile doc/Makefile include/Makefile include/mpio.h include/mpiof.h mpi-io/Makefile test/Makefile test/misc.c test/large_file.c test/runtests util/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -24002,6 +24002,7 @@ do
   "adio/ad_hfs/Makefile" ) CONFIG_FILES="$CONFIG_FILES adio/ad_hfs/Makefile" ;;
   "adio/ad_sfs/Makefile" ) CONFIG_FILES="$CONFIG_FILES adio/ad_sfs/Makefile" ;;
   "adio/ad_pfs/Makefile" ) CONFIG_FILES="$CONFIG_FILES adio/ad_pfs/Makefile" ;;
+  "adio/ad_ntfs/Makefile" ) CONFIG_FILES="$CONFIG_FILES adio/ad_ntfs/Makefile" ;;
   "adio/ad_testfs/Makefile" ) CONFIG_FILES="$CONFIG_FILES adio/ad_testfs/Makefile" ;;
   "adio/ad_pvfs/Makefile" ) CONFIG_FILES="$CONFIG_FILES adio/ad_pvfs/Makefile" ;;
   "adio/ad_piofs/Makefile" ) CONFIG_FILES="$CONFIG_FILES adio/ad_piofs/Makefile" ;;

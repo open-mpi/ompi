@@ -220,7 +220,7 @@ sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 top_ompi_builddir = @top_ompi_builddir@
 top_ompi_srcdir = @top_ompi_srcdir@
-EXTRA_DIST = users-build.bbl users-guide.ps.gz users-guide.tex
+EXTRA_DIST = users-guide.bbl users-guide.ps.gz users-guide.tex
 all: all-am
 
 .SUFFIXES:
