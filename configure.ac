@@ -418,6 +418,8 @@ AC_CONFIG_FILES([
     src/mpi/Makefile
     src/mpi/communicator/Makefile
     src/mpi/datatype/Makefile
+    src/mpi/group/Makefile
+    src/mpi/info/Makefile
     src/mpi/interface/Makefile
     src/mpi/interface/c/Makefile
     src/mpi/interface/c/profile/Makefile
@@ -425,8 +427,12 @@ AC_CONFIG_FILES([
     src/mpi/interface/f77/Makefile
     src/mpi/interface/f77/profile/Makefile
     src/mpi/interface/f90/Makefile
+    src/mpi/op/Makefile
+    src/mpi/proc/Makefile
+    src/mpi/request/Makefile
 
     src/mca/Makefile
+    src/mca/base/Makefile
     src/mca/common/Makefile
     src/mca/lam/Makefile
     src/mca/lam/oob/Makefile
