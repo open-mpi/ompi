@@ -11,27 +11,27 @@
 
 
 #ifdef HAVE_SMP
-#define LOCK "lock; "
+#define SMPLOCK "lock; "
 #define MB() __asm__ __volatile__("": : :"memory")
 #else
-#define LOCK
+#define SMPLOCK
 #define MB()
 #endif
 
 
-static inline ompi_atomic_mb(void)
+static inline void ompi_atomic_mb(void)
 {
     MB();
 }
 
 
-static inline ompi_atomic_rmb(void)
+static inline void ompi_atomic_rmb(void)
 {
     MB();
 }
 
 
-static inline ompi_atomic_wmb(void)
+static inline void ompi_atomic_wmb(void)
 {
     MB();
 }
@@ -44,7 +44,7 @@ static inline int ompi_atomic_cmpset_32(volatile uint32_t *addr,
     uint32_t ret = old;
 
     __asm__ __volatile (
-LOCK "cmpxchgl %1,%2   \n\
+SMPLOCK "cmpxchgl %1,%2   \n\
       setz     %%al    \n\
       movzbl   %%al,%0 \n"
     : "+a" (ret)
@@ -81,14 +81,15 @@ static inline int ompi_atomic_cmpset_64(volatile uint64_t *addr,
      */
 
     uint64_t ret = old;
+#if 0
     struct { uint32_t lo; uint32_t hi; } *p = (struct lwords *) &new;
 
     __asm__ __volatile(
-LOCK "cmpxchg8b %1\n"
+SMPLOCK "cmpxchg8b %1\n"
     : "+A" (ret) 
     : "m" (*addr), "b" (p->lo), "c" (p->hi)
     : "memory");
-
+#endif
     return (ret == old);
 }
 
@@ -97,7 +98,7 @@ static inline int ompi_atomic_cmpset_acq_64(volatile uint64_t *addr,
                                            uint64_t old,
                                            uint64_t new)
 {
-    return ompi_atomic_cpmset_64(addr, old, new);
+    return ompi_atomic_cmpset_64(addr, old, new);
 }
 
 
@@ -105,7 +106,7 @@ static inline int ompi_atomic_cmpset_rel_64(volatile uint64_t *addr,
                                            uint64_t old,
                                            uint64_t new)
 {
-    return ompi_atomic_cpmset_64(addr, old, new);
+    return ompi_atomic_cmpset_64(addr, old, new);
 }
 
 #endif /* ! OMPI_SYS_ATOMIC_H_INCLUDED */

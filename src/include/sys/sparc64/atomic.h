@@ -16,19 +16,19 @@
 #endif
 
 
-static inline ompi_atomic_mb(void)
+static inline void ompi_atomic_mb(void)
 {
     MEMBAR("#LoadLoad | #LoadStore | #StoreStore | #StoreLoad");
 }
 
 
-static inline ompi_atomic_rmb(void)
+static inline void ompi_atomic_rmb(void)
 {
     MEMBAR("#LoadLoad");
 }
 
 
-static inline ompi_atomic_wmb(void)
+static inline void ompi_atomic_wmb(void)
 {
     MEMBAR("#StoreStore");
 }
