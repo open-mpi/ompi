@@ -91,7 +91,7 @@ int ompi_ddt_set_args( ompi_datatype_t* pData,
    case MPI_COMBINER_HINDEXED_INTEGER:
    case MPI_COMBINER_HINDEXED:
       pArgs->i[0] = i[0][0];
-      memcpy( pArgs->i + 1, i, i[0][0] * sizeof(int) );
+      memcpy( pArgs->i + 1, i[1], i[0][0] * sizeof(int) );
       break;
       /******************************************************************/
    case MPI_COMBINER_INDEXED_BLOCK:
