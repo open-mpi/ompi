@@ -140,7 +140,7 @@ static inline lam_list_item_t *lam_list_remove_item
         }
     }
     if (!found) {
-        fprintf(stderr," Warning :: lam_list_remove_item - the item %p is not on the list %p \n",item,list);
+        fprintf(stderr," Warning :: lam_list_remove_item - the item %p is not on the list %p \n",(void*) item, (void*) list);
         fflush(stderr);
         return (lam_list_item_t *)NULL;
     }
