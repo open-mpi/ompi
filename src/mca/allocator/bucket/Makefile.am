@@ -17,7 +17,7 @@ else
 module_noinst = libmca_allocator_bucket.la
 module_install =
 endif
-                                                                                                          
+
 mcamoduledir = $(libdir)/openmpi
 mcamodule_LTLIBRARIES = $(module_install)
 mca_allocator_bucket_la_SOURCES = $(sources)

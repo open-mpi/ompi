@@ -4,6 +4,9 @@
 
 include $(top_srcdir)/config/Makefile.options
 
+# Need this so that the base knows where to load dynamic modules from
+# (by default)
+
 AM_CPPFLAGS = -DOMPI_PKGLIBDIR=\"$(pkglibdir)\"
 
 noinst_LTLIBRARIES = libmca_base.la
