@@ -118,6 +118,11 @@ void mca_gpr_replica_triggers_active_nl(mca_ns_base_jobid_t jobid)
     mca_gpr_replica_segment_t *seg;
     mca_gpr_replica_notify_off_t *ptr, *nextptr;
 
+	if (mca_gpr_replica_debug) {
+		ompi_output(0, "[%d,%d,%d] setting triggers active for job %d",
+					OMPI_NAME_ARGS(*ompi_rte_get_self()), (int)jobid);
+	}
+
     /* traverse the registry */
     /* enable triggers on segments from this jobid */
     for (seg = (mca_gpr_replica_segment_t*)ompi_list_get_first(&mca_gpr_replica_head.registry);
@@ -125,6 +130,11 @@ void mca_gpr_replica_triggers_active_nl(mca_ns_base_jobid_t jobid)
 	 seg = (mca_gpr_replica_segment_t*)ompi_list_get_next(seg)) {
 
 	if (seg->owning_job == jobid) {
+		if (mca_gpr_replica_debug) {
+			ompi_output(0, "[%d,%d,%d] setting triggers active for segment %s",
+						OMPI_NAME_ARGS(*ompi_rte_get_self()), seg->name);
+		}
+		
 	    seg->triggers_active = true;
 	}
     }

@@ -84,8 +84,6 @@ main(int argc, char *argv[])
 
     /* setup to read common command line options that span all Open
        MPI programs */
-    cmd_line = OBJ_NEW(ompi_cmd_line_t);
-
     ompi_cmd_line_make_opt(cmd_line, 'v', "version", 0,
 			   "Show version of Open MPI and this program");
 

@@ -32,6 +32,10 @@ ompi_buffer_t mca_gpr_proxy_get_startup_msg(mca_ns_base_jobid_t jobid,
     int recv_tag=MCA_OOB_TAG_GPR;
 
     if (mca_gpr_proxy_compound_cmd_mode) {
+    		if (mca_gpr_proxy_debug) {
+    			ompi_output(0, "[%d,%d,%d] gpr_proxy: getting startup msg - compound cmd",
+    						OMPI_NAME_ARGS(*ompi_rte_get_self()));
+    		}
 	mca_gpr_base_pack_get_startup_msg(mca_gpr_proxy_compound_cmd, jobid);
 	return NULL;
     }
@@ -45,6 +49,11 @@ ompi_buffer_t mca_gpr_proxy_get_startup_msg(mca_ns_base_jobid_t jobid,
     if (OMPI_SUCCESS != mca_gpr_base_pack_get_startup_msg(cmd, jobid)) {
 	goto CLEANUP;
     }
+
+	if (mca_gpr_proxy_debug) {
+		ompi_output(0, "[%d,%d,%d] gpr_proxy: getting startup msg",
+					OMPI_NAME_ARGS(*ompi_rte_get_self()));
+	}
 
     if (0 > mca_oob_send_packed(mca_gpr_my_replica, cmd, MCA_OOB_TAG_GPR, 0)) {
 	goto CLEANUP;
@@ -70,6 +79,11 @@ ompi_buffer_t mca_gpr_proxy_get_shutdown_msg(mca_ns_base_jobid_t jobid,
     int recv_tag=MCA_OOB_TAG_GPR;
 
     if (mca_gpr_proxy_compound_cmd_mode) {
+    	    	if (mca_gpr_proxy_debug) {
+    			ompi_output(0, "[%d,%d,%d] gpr_proxy: getting shutdown msg - compound cmd",
+    						OMPI_NAME_ARGS(*ompi_rte_get_self()));
+    		}
+    	
 	mca_gpr_base_pack_get_shutdown_msg(mca_gpr_proxy_compound_cmd, jobid);
 	return NULL;
     }
@@ -79,6 +93,11 @@ ompi_buffer_t mca_gpr_proxy_get_shutdown_msg(mca_ns_base_jobid_t jobid,
     }
 
     msg = NULL;
+
+	if (mca_gpr_proxy_debug) {
+		ompi_output(0, "[%d,%d,%d] gpr_proxy: getting shutdown msg",
+					OMPI_NAME_ARGS(*ompi_rte_get_self()));
+	}
 
     if (OMPI_SUCCESS != mca_gpr_base_pack_get_shutdown_msg(cmd, jobid)) {
 	goto CLEANUP;
@@ -94,6 +113,11 @@ ompi_buffer_t mca_gpr_proxy_get_shutdown_msg(mca_ns_base_jobid_t jobid,
 
     msg = mca_gpr_base_unpack_get_shutdown_msg(answer, recipients);
     ompi_buffer_free(answer);
+
+	if (mca_gpr_proxy_debug) {
+		ompi_output(0, "[%d,%d,%d] gpr_proxy: got shutdown msg for %d recipients",
+					OMPI_NAME_ARGS(*ompi_rte_get_self()), ompi_list_get_size(recipients));
+	}
 
  CLEANUP:
     ompi_buffer_free(cmd);

@@ -338,9 +338,12 @@ void mca_gpr_proxy_notify_recv(int status, ompi_process_name_t* sender,
     for (trackptr = (mca_gpr_proxy_notify_request_tracker_t*)ompi_list_get_first(&mca_gpr_proxy_notify_request_tracker);
          trackptr != (mca_gpr_proxy_notify_request_tracker_t*)ompi_list_get_end(&mca_gpr_proxy_notify_request_tracker) && !found;
          trackptr = (mca_gpr_proxy_notify_request_tracker_t*)ompi_list_get_next(trackptr)) {
-	if (trackptr->local_idtag == id_tag) {
-	    found = true;
-	}
+     	if (mca_gpr_proxy_debug) {
+     		ompi_output(0, "\tchecking idtag %d for segment %s\n", trackptr->local_idtag, trackptr->segment);
+     	}
+		if (trackptr->local_idtag == id_tag) {
+		    found = true;
+		}
     }
 
     OMPI_THREAD_UNLOCK(&mca_gpr_proxy_mutex);

@@ -45,6 +45,10 @@ int ompi_rte_job_shutdown(mca_ns_base_jobid_t jobid)
 	mca_oob_xcast(ompi_rte_get_self(), recipients, shutdown_msg, NULL);
 	return_code = OMPI_SUCCESS;
     } else {
+    		if (ompi_rte_debug_flag) {
+    			ompi_output(0, "[%d,%d,%d] job_shutdown: no recipients for message",
+    				OMPI_NAME_ARGS(*ompi_rte_get_self()));
+    		}
 	return_code = OMPI_ERROR;
     }
 
