@@ -18,8 +18,9 @@ int mca_registry_cofs_close(void);
 /*
  * Startup / Shutdown
  */
-int mca_registry_cofs_query(int *priority);
-struct mca_registry_1_0_0_t* mca_registry_cofs_init(void);
+struct mca_registry_1_0_0_t* 
+  mca_registry_cofs_init(int *priority, bool *allow_multi_user_threads,
+                         bool *have_hidden_user_threads);
 int mca_registry_cofs_finalize(void);
 
 

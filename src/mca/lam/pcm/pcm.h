@@ -87,7 +87,9 @@ typedef struct mca_pcm_proc_t mca_pcm_proc_t;
  * functions every module must provide
  */
 
-typedef struct mca_pcm_1_0_0_t* (*mca_pcm_base_init_fn_t)(int *priority);
+typedef struct mca_pcm_1_0_0_t* 
+  (*mca_pcm_base_init_fn_t)(int *priority, bool *allow_multi_user_threads, 
+                            bool *have_hidden_threads);
 
   /**
    * \func mca_pcm_query_get_nodes
@@ -422,7 +424,8 @@ typedef mca_pcm_1_0_0_t mca_pcm_t;
 extern "C" {
 #endif
   int mca_pcm_base_open(void);
-  int mca_pcm_base_select(void);
+  int mca_pcm_base_select(bool *allow_multi_user_threads, 
+                          bool *have_hidden_threads);
   int mca_pcm_base_close(void);
 
   bool mca_pcm_base_is_checkpointable(void);

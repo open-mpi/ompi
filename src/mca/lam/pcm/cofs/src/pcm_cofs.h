@@ -17,7 +17,9 @@ int mca_pcm_cofs_close(void);
 /*
  * Startup / Shutdown
  */
-struct mca_pcm_1_0_0_t* mca_pcm_cofs_init(int *priority);
+struct mca_pcm_1_0_0_t* mca_pcm_cofs_init(int *priority, 
+                                          bool *allow_multi_user_threads,
+                                          bool *have_hidden_threads);
 int mca_pcm_cofs_finalize(void);
 
 

@@ -71,6 +71,8 @@ size_t mca_pcm_cofs_nprocs = 0;
 int
 mca_pcm_cofs_open(void)
 {
+  /* JMS/BWB: Register MCA params in here -- see
+     src/mca/lam/base/mca_base_param.h */
   return LAM_SUCCESS;
 }
 
@@ -83,7 +85,8 @@ mca_pcm_cofs_close(void)
 
 
 struct mca_pcm_1_0_0_t*
-mca_pcm_cofs_init(int *priority)
+mca_pcm_cofs_init(int *priority, bool *allow_multi_user_threads, 
+                  bool *have_hidden_threads)
 {
   char *tmp;
   FILE *fp;
@@ -91,8 +94,11 @@ mca_pcm_cofs_init(int *priority)
   char *test_ret;
 
   *priority = 0;
+  *allow_multi_user_threads = true;
+  *have_hidden_threads = false;
 
   /* BWB - remove printfs once things settle down some... */
+  /* JMS: Look in src/mca/lam/base/mca_base_param.h */
   test_ret = getenv("MCA_common_lam_cofs_my_vpid");
   if (test_ret == NULL) {
     printf("COFS PCM will not be running because MCA_common_lam_cofs_my_vpid not set\n");
