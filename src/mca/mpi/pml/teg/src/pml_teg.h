@@ -52,10 +52,26 @@ extern mca_pml_1_0_0_t* mca_pml_teg_init(
 
 struct mca_pml_teg_1_0_0_t {
     mca_pml_1_0_0_t super;
-    lam_free_list_t teg_send_requests;
-    lam_free_list_t teg_recv_requests;
+
+    /* send request free list and parameters */
+    lam_free_list_t teg_send_free_list;
+    int teg_send_free_list_min_pages;
+    int teg_send_free_list_max_pages;
+    int teg_send_free_list_inc_pages;
+
+    /* recv request free list and parameters */
+    lam_free_list_t teg_recv_free_list;
+    int teg_recv_free_list_min_pages;
+    int teg_recv_free_list_max_pages;
+    int teg_recv_free_list_inc_pages;
+
+    /* incomplete posted sends */
+    lam_list_t  teg_incomplete_sends;
+    lam_mutex_t teg_lock;
 };
 typedef struct mca_pml_teg_1_0_0_t mca_pml_teg_1_0_0_t;
+
+extern mca_pml_teg_1_0_0_t mca_pml_teg;
 
 /*
  * PML interface functions.
