@@ -38,6 +38,7 @@ int gpr_replica_delete_segment(char *segment)
     OMPI_THREAD_LOCK(&mca_gpr_replica_mutex);
     rc = gpr_replica_delete_segment_nl(segment);
     OMPI_THREAD_UNLOCK(&mca_gpr_replica_mutex);
+    gpr_replica_process_callbacks();
     return rc;
 }
 
@@ -73,6 +74,7 @@ int gpr_replica_put(ompi_registry_mode_t addr_mode, char *segment,
     OMPI_THREAD_LOCK(&mca_gpr_replica_mutex);
     rc = gpr_replica_put_nl(addr_mode, segment, tokens, object, size);
     OMPI_THREAD_UNLOCK(&mca_gpr_replica_mutex);
+    gpr_replica_process_callbacks();
     return rc;
 }
 
@@ -230,6 +232,7 @@ int gpr_replica_delete_object(ompi_registry_mode_t addr_mode,
     OMPI_THREAD_LOCK(&mca_gpr_replica_mutex);
     rc = gpr_replica_delete_object_nl(addr_mode, segment, tokens);
     OMPI_THREAD_UNLOCK(&mca_gpr_replica_mutex);
+    gpr_replica_process_callbacks();
     return rc;
 }
 
@@ -422,6 +425,8 @@ int gpr_replica_subscribe(ompi_registry_mode_t addr_mode,
     rc = gpr_replica_subscribe_nl(addr_mode,action,segment,tokens,local_idtag);
 
     OMPI_THREAD_UNLOCK(&mca_gpr_replica_mutex);
+
+    gpr_replica_process_callbacks();
     return rc;
 }
 
@@ -530,6 +535,8 @@ int gpr_replica_synchro(ompi_registry_synchro_mode_t synchro_mode,
 				segment, tokens, trigger, local_idtag);
 
     OMPI_THREAD_UNLOCK(&mca_gpr_replica_mutex);
+
+    gpr_replica_process_callbacks();
     return rc;
 }
 
@@ -643,6 +650,8 @@ int gpr_replica_rte_register(char *contact_info, size_t num_procs,
 				      local_idtag1, local_idtag2);
 
     OMPI_THREAD_UNLOCK(&mca_gpr_replica_mutex);
+
+    gpr_replica_process_callbacks();
     return ret;
 }
 
@@ -712,6 +721,7 @@ int gpr_replica_rte_unregister(char *proc_name_string)
     ret = gpr_replica_rte_unregister_nl(proc_name_string);
     OMPI_THREAD_UNLOCK(&mca_gpr_replica_mutex);
 
+    gpr_replica_process_callbacks();
     return ret;
 }
 
@@ -745,7 +755,7 @@ ompi_list_t* gpr_replica_get(ompi_registry_mode_t addr_mode,
     ompi_list_t* list;
     OMPI_THREAD_LOCK(&mca_gpr_replica_mutex);
     list = gpr_replica_get_nl(addr_mode, segment, tokens);
-	OMPI_THREAD_UNLOCK(&mca_gpr_replica_mutex);
+    OMPI_THREAD_UNLOCK(&mca_gpr_replica_mutex);
     return list;
 }
 

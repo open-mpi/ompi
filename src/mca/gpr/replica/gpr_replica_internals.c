@@ -693,10 +693,8 @@ bool gpr_replica_process_triggers(char *segment,
 {
     mca_gpr_replica_segment_t *seg;
     mca_gpr_notify_request_tracker_t *trackptr;
-    ompi_registry_object_t *data;
-    char **tokptr;
-    int i;
     bool found;
+    mca_gpr_replica_callbacks_t *cb;
 
     if (mca_gpr_replica_debug) {
 	ompi_output(0, "[%d,%d,%d] gpr replica: process_trig entered", ompi_process_info.name->cellid,
@@ -738,40 +736,18 @@ bool gpr_replica_process_triggers(char *segment,
     }
 
     /* process request */
-    if (NULL == trackptr->requestor) {  /* local request - callback fn with their tag */
-	if (mca_gpr_replica_debug) {
-	    ompi_output(0, "[%d,%d,%d] gpr replica-process_trig: local callback", ompi_process_info.name->cellid,
-			ompi_process_info.name->jobid, ompi_process_info.name->vpid);
-	}
-	trackptr->callback(message, trackptr->user_tag);
-	/* dismantle message and free memory */
-	while (NULL != (data = (ompi_registry_object_t*)ompi_list_remove_first(&message->data))) {
-	    OBJ_RELEASE(data);
+    cb = OBJ_NEW(mca_gpr_replica_callbacks_t);
+    if (NULL == trackptr->requestor) {  /* local request - queue callback fn with their tag */
+	cb->cb_func = trackptr->callback;
+	cb->message = message;
+	cb->user_tag = trackptr->user_tag;
 
-	}
-	for (i=0, tokptr=message->tokens; i < message->num_tokens; i++, tokptr++) {
-	    free(*tokptr);
-	    *tokptr = NULL;
-	}
-	if (NULL != message->tokens) {
-	    free(message->tokens);
-	    message->tokens = NULL;
-	}
-	free(message);
-	message = NULL;
-	if (mca_gpr_replica_debug) {
-	    ompi_output(0, "[%d,%d,%d] gpr replica-process_trig: data released", ompi_process_info.name->cellid,
-			ompi_process_info.name->jobid, ompi_process_info.name->vpid);
-	}
-
-    } else {  /* remote request - send message back */
-	gpr_replica_remote_notify(trackptr->requestor, trackptr->req_tag, message);
-	if (mca_gpr_replica_debug) {
-	    ompi_output(0, "[%d,%d,%d] gpr replica-process_trig: remote message sent", ompi_process_info.name->cellid,
-			ompi_process_info.name->jobid, ompi_process_info.name->vpid);
-	}
-
+    } else {  /* remote request - queue remote callback */
+	cb->requestor = ompi_name_server.copy_process_name(trackptr->requestor);
+	cb->remote_idtag = trackptr->req_tag;
+	cb->message = message;
     }
+    ompi_list_append(&mca_gpr_replica_callbacks, &cb->item);
 
     /* if one-shot, remove request from tracking system */
     if (OMPI_REGISTRY_SYNCHRO_MODE_ONE_SHOT & trig->synch_mode) {
@@ -791,6 +767,29 @@ bool gpr_replica_process_triggers(char *segment,
 
 
 }
+
+
+void gpr_replica_process_callbacks(void)
+{
+    mca_gpr_replica_callbacks_t *cb;
+
+    while (NULL != (cb = (mca_gpr_replica_callbacks_t*)ompi_list_remove_first(&mca_gpr_replica_callbacks))) {
+	if (NULL == cb->requestor) {  /* local callback */
+	    if (mca_gpr_replica_debug) {
+		ompi_output(0, "process_callbacks: local");
+	    }
+	    cb->cb_func(cb->message, cb->user_tag);
+	} else {  /* remote request - send message back */
+	    if (mca_gpr_replica_debug) {
+		ompi_output(0, "process_callbacks: remote to [%d,%d,%d]", cb->requestor->cellid,
+			    cb->requestor->jobid, cb->requestor->vpid);
+	    }
+	    gpr_replica_remote_notify(cb->requestor, cb->remote_idtag, cb->message);
+	}
+	OBJ_RELEASE(cb);
+    }
+}
+
 
 mca_gpr_notify_id_t gpr_replica_enter_notify_request(ompi_process_name_t *requestor,
 						     mca_gpr_notify_id_t idtag,

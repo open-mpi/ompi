@@ -39,6 +39,21 @@ typedef struct mca_gpr_replica_t mca_gpr_replica_t;
 
 OBJ_CLASS_DECLARATION(mca_gpr_replica_t);
 
+/*
+ * Callback list "head"
+ */
+struct mca_gpr_replica_callbacks_t {
+    ompi_list_item_t item;
+    ompi_registry_notify_cb_fn_t cb_func;
+    ompi_registry_notify_message_t *message;
+    ompi_process_name_t *requestor;
+    int remote_idtag;
+    void *user_tag;
+};
+typedef struct mca_gpr_replica_callbacks_t mca_gpr_replica_callbacks_t;
+
+OBJ_CLASS_DECLARATION(mca_gpr_replica_callbacks_t);
+
 /** Dictionary of token-key pairs.
  * This structure is used to create a linked list of token-key pairs. All calls to
  * registry functions pass character string tokens for programming clarity - the ompi_keytable
@@ -177,6 +192,7 @@ OBJ_CLASS_DECLARATION(mca_gpr_replica_segment_t);
  */
 extern mca_gpr_replica_t mca_gpr_replica_head;
 extern ompi_list_t mca_gpr_replica_notify_request_tracker;
+extern ompi_list_t mca_gpr_replica_callbacks;
 extern mca_gpr_notify_id_t mca_gpr_replica_last_notify_id_tag;
 extern ompi_list_t mca_gpr_replica_free_notify_id_tags;
 extern int mca_gpr_replica_debug;

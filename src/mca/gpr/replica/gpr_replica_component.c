@@ -81,6 +81,7 @@ static bool initialized = false;
  */
 mca_gpr_replica_t mca_gpr_replica_head;
 ompi_list_t mca_gpr_replica_notify_request_tracker;
+ompi_list_t mca_gpr_replica_callbacks;
 mca_gpr_notify_id_t mca_gpr_replica_last_notify_id_tag;
 ompi_list_t mca_gpr_replica_free_notify_id_tags;
 int mca_gpr_replica_debug;
@@ -124,6 +125,34 @@ OBJ_CLASS_INSTANCE(
 		   ompi_list_item_t,            /* parent "class" name */
 		   mca_gpr_replica_keylist_construct,   /* constructor */
 		   mca_gpr_replica_keylist_destructor); /* destructor */
+
+
+/* constructor - used to initialize state of callback list instance */
+static void mca_gpr_replica_callbacks_construct(mca_gpr_replica_callbacks_t* cb)
+{
+    cb->cb_func = NULL;
+    cb->message = NULL;
+    cb->requestor = NULL;
+    cb->remote_idtag = 0;
+    cb->user_tag = NULL;
+}
+
+/* destructor - used to free any resources held by instance */
+static void mca_gpr_replica_callbacks_destructor(mca_gpr_replica_callbacks_t* cb)
+{
+    if (NULL != cb->requestor) {
+	free(cb->requestor);
+    }
+}
+
+/* define instance of ompi_class_t */
+OBJ_CLASS_INSTANCE(
+		   mca_gpr_replica_callbacks_t,           /* type name */
+		   ompi_list_item_t,            /* parent "class" name */
+		   mca_gpr_replica_callbacks_construct,   /* constructor */
+		   mca_gpr_replica_callbacks_destructor); /* destructor */
+
+
 
 
 /* constructor - used to initialize state of trigger list instance */
@@ -364,6 +393,9 @@ mca_gpr_base_module_t *mca_gpr_replica_init(bool *allow_multi_user_threads, bool
 	if (mca_gpr_replica_debug) {
 	    ompi_output(0, "req tracker setup");
 	}
+
+	/* initialize the callback list head */
+	OBJ_CONSTRUCT(&mca_gpr_replica_callbacks, ompi_list_t);
 
  	/* issue the non-blocking receive */ 
 	rc = mca_oob_recv_packed_nb(MCA_OOB_NAME_ANY, MCA_OOB_TAG_GPR, 0, mca_gpr_replica_recv, NULL);
@@ -773,6 +805,8 @@ void mca_gpr_replica_recv(int status, ompi_process_name_t* sender,
 	    /* RHC -- not sure what to do if the return send fails */
 	}
 
+	/* process any resulting callbacks */
+	gpr_replica_process_callbacks();
 
 	/*****     UNSUBSCRIBE     *****/
     } else if (MCA_GPR_UNSUBSCRIBE_CMD == command) {
@@ -906,6 +940,10 @@ void mca_gpr_replica_recv(int status, ompi_process_name_t* sender,
 	if (0 > mca_oob_send_packed(sender, answer, tag, 0)) {
 	    /* RHC -- not sure what to do if the return send fails */
 	}
+
+	/* process any resulting callbacks */
+	gpr_replica_process_callbacks();
+
 
 	/*****     CANCEL SYNCHRO    *****/
     } else if (MCA_GPR_CANCEL_SYNCHRO_CMD == command) {
@@ -1042,6 +1080,9 @@ void mca_gpr_replica_recv(int status, ompi_process_name_t* sender,
 	    /* RHC -- not sure what to do if the return send fails */
 	}
 
+	/* process any resulting callbacks */
+	gpr_replica_process_callbacks();
+
 
 
 	/*****     UNREGISTER     *****/
@@ -1071,6 +1112,10 @@ void mca_gpr_replica_recv(int status, ompi_process_name_t* sender,
 	if (0 > mca_oob_send_packed(sender, answer, tag, 0)) {
 	    /* RHC -- not sure what to do if the return send fails */
 	}
+
+	/* process any resulting callbacks */
+	gpr_replica_process_callbacks();
+
 
 
 	/*****     TEST INTERNALS     *****/
