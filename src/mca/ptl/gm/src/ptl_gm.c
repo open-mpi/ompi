@@ -243,6 +243,7 @@ mca_ptl_gm_send (struct mca_ptl_base_module_t *ptl,
     }
     
     ((struct mca_ptl_gm_send_request_t *)sendreq)->req_frag =sendfrag;
+    ((struct mca_ptl_gm_send_request_t *)sendreq)->need_ack = flags;
     rc = mca_ptl_gm_send_frag_init (sendfrag, (mca_ptl_gm_peer_t*)ptl_peer, sendreq, offset,
                             &size, flags);
 
@@ -271,7 +272,62 @@ mca_ptl_gm_put (struct mca_ptl_base_module_t *ptl,
                 struct mca_pml_base_send_request_t *sendreq,
                 size_t offset, size_t size, int flags)
 {
-    return OMPI_SUCCESS;
+   int rc;
+   mca_ptl_gm_send_frag_t *sendfrag, *putfrag;
+   mca_ptl_gm_peer_t *gm_ptl_peer;
+   mca_ptl_gm_module_t * gm_ptl;
+   void* destination_buffer;
+   char * buffer_ptr;
+   int status, bytes_reg;
+
+   gm_ptl= (mca_ptl_gm_module_t *)ptl;
+   buffer_ptr = ((char *) (sendreq->req_base.req_addr)) + offset ;
+   bytes_reg = size;
+
+   destination_buffer =(void *)( (sendreq->req_peer_addr).pval);
+
+   /* register the user buffer */
+   if (offset > 0)
+   {
+       status = gm_register_memory(gm_ptl->my_port, buffer_ptr, bytes_reg);
+       if(GM_SUCCESS != status)
+       {
+          ompi_output(0,"[%s:%d] Unable to register memory\n",__FILE__,__LINE__);
+       } 
+
+   }
+
+   putfrag = mca_ptl_gm_alloc_send_frag (ptl,sendreq); /*alloc_put_frag */
+   putfrag->registered_buf = (void *)buffer_ptr;
+   putfrag->peer = (mca_ptl_gm_peer_t *)ptl_peer;
+
+   rc = mca_ptl_gm_put_frag_init(putfrag ,
+                            (mca_ptl_gm_peer_t*)ptl_peer,gm_ptl, 
+                                    sendreq, offset, &size, flags);
+
+   rc =
+        mca_ptl_gm_peer_put((mca_ptl_gm_peer_t *)ptl_peer, putfrag,
+                                sendreq, offset, &size, flags,
+                                destination_buffer, bytes_reg);
+ 
+ 
+
+   gm_ptl->num_send_tokens--;
+
+   /*do a send to notify completion */
+   /*sendfrag = mca_ptl_gm_alloc_send_frag (ptl,sendreq);*/
+
+   /*rc = mca_ptl_gm_send_fini_init (sendfrag,gm_ptl, */
+            /*(mca_ptl_gm_peer_t*)ptl_peer, sendreq);*/
+
+   /*gm_ptl_peer = (mca_ptl_gm_peer_t *)ptl_peer;*/
+   /*rc = mca_ptl_gm_peer_send (gm_ptl_peer,sendfrag,sendreq,*/
+                                /*offset,&size,flags);*/
+
+   /*gm_ptl->num_send_tokens--;*/
+   sendreq->req_offset += size;
+
+   return OMPI_SUCCESS;
 }
 
 
@@ -299,46 +355,78 @@ mca_ptl_gm_get (struct mca_ptl_base_module_t *ptl,
  *  ack back to the peer and process the fragment.
  */
 
+
 void
 mca_ptl_gm_matched( mca_ptl_base_module_t * ptl,
                     mca_ptl_base_recv_frag_t * frag )
 {
     mca_pml_base_recv_request_t *request;
-    /*mca_ptl_base_recv_request_t *request;*/
+    mca_pml_base_send_request_t *srequest;
     mca_ptl_base_header_t *header;
-    int bytes_recv, rc;
-    mca_ptl_gm_module_t *gm_ptl;   
+    int bytes_recv, rc,rc1, total_bytes, bytes_reg;
+    mca_ptl_gm_module_t *gm_ptl;
     struct iovec iov[1];
+    mca_ptl_gm_send_frag_t *ack;
+    mca_ptl_gm_recv_frag_t *recv_frag;
+    char *buffer_ptr;
+    gm_status_t status;
+    size_t size = 0;
 
     header = &frag->frag_base.frag_header;
     request = frag->frag_request;
+    gm_ptl = (mca_ptl_gm_module_t *)ptl;
+
     if (header->hdr_common.hdr_flags & MCA_PTL_FLAGS_ACK_MATCHED) {
-#if 0
+#if 1
         /* might need to send an ack back */
-        int         rc;
-        mca_ptl_gm_send_frag_t *ack;
         recv_frag = (mca_ptl_gm_recv_frag_t *) frag;
         ack = mca_ptl_gm_alloc_send_frag(ptl,NULL);
 
         if (NULL == ack) {
             ompi_output(0,"[%s:%d] unable to alloc a gm fragment\n",
-                        __FILE__,___LINE__);
-            OMPI_THREAD_LOCK (&mca_ptl_gm_module.gm_lock);
+                        __FILE__,__LINE__);
+            OMPI_THREAD_LOCK (&mca_ptl_gm_component.gm_lock);
             recv_frag->frag_ack_pending = true;
             ompi_list_append (&mca_ptl_gm_module.gm_pending_acks,
                               (ompi_list_item_t *) frag);
-            OMPI_THREAD_UNLOCK (&mca_ptl_gm_module.gm_lock);
-        } else {
-            mca_ptl_gm_send_frag_init_ack (ack, ptl,
-                                           recv_frag->super.super.
-                                           frag_peer, recv_frag);
+            OMPI_THREAD_UNLOCK (&mca_ptl_gm_component.gm_lock);
+        }
+         else 
+        {
+
+             buffer_ptr = (char *)( request->req_base.req_addr );
+             total_bytes = (request->req_base.req_datatype->size) *
+                                        (request->req_base.req_count);
+             bytes_recv = frag->frag_base.frag_size - header->hdr_common.hdr_size;
+             bytes_reg = total_bytes - bytes_recv;
+             buffer_ptr += bytes_recv;
+             status = gm_register_memory(gm_ptl->my_port, buffer_ptr, bytes_reg);
+             if(GM_SUCCESS != status)
+             {
+                 ompi_output(0,"[%s:%d] Unable to register memory\n",__FILE__,__LINE__);
+             }
+
+             /* send the registered memory information, send recv request * ptr */
+            rc1 = mca_ptl_gm_send_ack_init (ack, gm_ptl,
+                  (mca_ptl_gm_peer_t *)(recv_frag->frag_recv.frag_base.frag_peer)
+                    , recv_frag, buffer_ptr, bytes_reg);
+
+            /*XXX : put the registered memory in pin-down cache */
+
             /*XXX: check this*/
-            mca_ptl_gm_peer_send (ack->super.super.frag_peer, ack,0,0,0 );
+            rc1 = mca_ptl_gm_peer_send ((mca_ptl_gm_peer_t *)
+                            (ack->send_frag.frag_base.frag_peer),
+                                            ack,srequest,0,&size,0 );
+
+            gm_ptl->num_send_tokens--;
+            ompi_list_append (&(gm_ptl->gm_send_frags_queue),
+                      (ompi_list_item_t *) ack);
+
         }
 #endif
     }
 
-    /* Here we expect that frag_addr is the beging of the buffer header included */
+    /* Here we expect that frag_addr is the begin of the buffer header  included */
     iov[0].iov_base = ((char*)frag->frag_base.frag_addr) + header->hdr_common.hdr_size;
     bytes_recv = frag->frag_base.frag_size - header->hdr_common.hdr_size;
     iov[0].iov_len = bytes_recv;
@@ -361,7 +449,7 @@ mca_ptl_gm_matched( mca_ptl_base_module_t * ptl,
                                      header->hdr_frag.hdr_frag_offset);
         rc = ompi_convertor_unpack(&frag->frag_base.frag_convertor, &(iov[0]), 1);
         assert( rc == 1 );
-    } 
+}
 
     /*update progress*/   /* XXX : check this */
     ptl->ptl_recv_progress( ptl, request, bytes_recv, iov[0].iov_len );
@@ -374,5 +462,8 @@ mca_ptl_gm_matched( mca_ptl_base_module_t * ptl,
     }
     /*return to free list   */
     gm_ptl = (mca_ptl_gm_module_t *)ptl;
-    OMPI_FREE_LIST_RETURN(&(gm_ptl->gm_recv_frags_free), (ompi_list_item_t*)frag); 
+    OMPI_FREE_LIST_RETURN(&(gm_ptl->gm_recv_frags_free), (ompi_list_item_t*)frag);
 }
+
+
+

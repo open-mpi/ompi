@@ -36,8 +36,21 @@ mca_ptl_gm_peer_send(mca_ptl_gm_peer_t *ptl_peer,
                      size_t *size,
                      int flags);
 
+int
+mca_ptl_gm_peer_put(mca_ptl_gm_peer_t *ptl_peer,
+                     mca_ptl_gm_send_frag_t *fragment,
+                     struct mca_pml_base_send_request_t *sendreq,
+                     size_t offset,
+                     size_t *size,
+                     int flags,
+                     void *target_buffer,
+                     int bytes);
+
 
 
 void send_callback(struct gm_port *port,void * context, gm_status_t
+status);
+
+void put_callback(struct gm_port *port,void * context, gm_status_t
 status);
 
