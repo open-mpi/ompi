@@ -1,7 +1,7 @@
 /*
  * $HEADER$
  */ 
-#include "mca/topo/unity/topo_unity.h"
+#include "mca/topo/unity/src/topo_unity.h"
 
 /*
  * function - mca_topo_unity_cart_map
@@ -19,7 +19,7 @@
  *  @retval MPI_ERR_DIMS               
  */
 
-int mca_topo_unity_cart_map (lam_communicator_t *comm,
+int mca_topo_unity_cart_map (MPI_Comm comm,
                              int ndims,
                              int *dims,
                              int *periods,
@@ -45,7 +45,9 @@ int mca_topo_unity_cart_map (lam_communicator_t *comm,
     /*
      * Check that number of processes <= size of communicator.
      */
+#if 0
     errcode = lam_comm_size (comm, &size);
+#endif
     if (errcode != MPI_SUCCESS) {
         return errcode;
     }
@@ -57,7 +59,9 @@ int mca_topo_unity_cart_map (lam_communicator_t *comm,
     /*
      * Compute my new rank.
      */
+#if 0
     errcode = lam_comm_rank (comm, &rank);
+#endif
     if (errcode != MPI_SUCCESS) {
         printf ("failed to get a comm rank\n");
         return errcode;

@@ -1,7 +1,7 @@
 /*
  * $HEADER$
  */ 
-#include "mca/topo/unity/topo_unity.h"
+#include "mca/topo/unity/src/topo_unity.h"
 
 /*
  * function - mca_topo_unity_graph_map
@@ -18,7 +18,7 @@
  *  @retval MPI_UNDEFINED
  */ 
 
-int mca_topo_unity_graph_map (lam_communicator_t *comm,
+int mca_topo_unity_graph_map (MPI_Comm comm,
                               int nnodes,
                               int *index,
                               int *edges,
@@ -27,14 +27,16 @@ int mca_topo_unity_graph_map (lam_communicator_t *comm,
     int errcode;
     int myrank;
 
+#if 0
     errcode = lam_comm_rank (comm, &myrank);
-    if (MPI_SUCCESS != errcode) {
+#endif
+    if (LAM_SUCCESS != errcode) {
         printf ("failed to get a comm rank\n");
-        return MPI_ERROR;
+        return LAM_ERROR;
     }
 
     *newrank = 
         ((0 > myrank) || (myrank >= nnodes)) ? MPI_UNDEFINED : myrank;
     
-    return MPI_SUCCESS;
+    return LAM_SUCCESS;
 }
