@@ -55,6 +55,7 @@ static mca_gpr_base_module_t mca_gpr_replica = {
     gpr_replica_delete_segment,
     gpr_replica_subscribe,
     gpr_replica_unsubscribe,
+    gpr_replica_synchro,
     gpr_replica_delete_object,
     gpr_replica_index,
     gpr_replica_test_internals
@@ -118,6 +119,7 @@ OBJ_CLASS_INSTANCE(
 static void mca_gpr_subscriber_list_construct(mca_gpr_subscriber_list_t* subscriber)
 {
     subscriber->subscriber = NULL;
+    subscriber->tag = 0;
     subscriber->action = 0x00;
 }
 
@@ -135,6 +137,31 @@ OBJ_CLASS_INSTANCE(
 		   ompi_list_item_t,                    /* parent "class" name */
 		   mca_gpr_subscriber_list_construct,   /* constructor */
 		   mca_gpr_subscriber_list_destructor); /* destructor */
+
+
+/* constructor - used to initialize state of synchro list instance */
+static void mca_gpr_synchro_list_construct(mca_gpr_synchro_list_t* synchro)
+{
+    OBJ_CONSTRUCT(&synchro->subscribers, ompi_list_t);
+    OBJ_CONSTRUCT(&synchro->keys, ompi_list_t);
+    synchro->mode = 0x00;
+    synchro->trigger = 0;
+    synchro->present = 0;
+}
+
+/* destructor - used to free any resources held by instance */
+static void mca_gpr_synchro_list_destructor(mca_gpr_synchro_list_t* synchro)
+{
+    OBJ_DESTRUCT(&synchro->subscribers);
+    OBJ_DESTRUCT(&synchro->keys);
+}
+
+/* define instance of ompi_class_t */
+OBJ_CLASS_INSTANCE(
+		   mca_gpr_synchro_list_t,           /* type name */
+		   ompi_list_item_t,                 /* parent "class" name */
+		   mca_gpr_synchro_list_construct,   /* constructor */
+		   mca_gpr_synchro_list_destructor); /* destructor */
 
 
 /* constructor - used to initialize state of replica list instance */
@@ -196,6 +223,7 @@ static void mca_gpr_registry_segment_construct(mca_gpr_registry_segment_t* seg)
     seg->segment = 0;
     seg->lastkey = 0;
     OBJ_CONSTRUCT(&seg->registry_entries, ompi_list_t);
+    OBJ_CONSTRUCT(&seg->synchros, ompi_list_t);
     OBJ_CONSTRUCT(&seg->keytable, ompi_list_t);
     OBJ_CONSTRUCT(&seg->freekeys, ompi_list_t);
 }
@@ -204,6 +232,7 @@ static void mca_gpr_registry_segment_construct(mca_gpr_registry_segment_t* seg)
 static void mca_gpr_registry_segment_destructor(mca_gpr_registry_segment_t* seg)
 {
     OBJ_DESTRUCT(&seg->registry_entries);
+    OBJ_DESTRUCT(&seg->synchros);
     OBJ_DESTRUCT(&seg->keytable);
     OBJ_DESTRUCT(&seg->freekeys);
 }
@@ -235,7 +264,6 @@ int mca_gpr_replica_close(void)
 
 mca_gpr_base_module_t *mca_gpr_replica_init(bool *allow_multi_user_threads, bool *have_hidden_threads, int *priority)
 {
-    int response;
 
     /* If we're the seed, then we want to be selected, so do all the
        setup and return the module */
@@ -262,12 +290,6 @@ mca_gpr_base_module_t *mca_gpr_replica_init(bool *allow_multi_user_threads, bool
 	OBJ_CONSTRUCT(&mca_gpr_replica_head.segment_dict, ompi_list_t);
 	OBJ_CONSTRUCT(&mca_gpr_replica_head.freekeys, ompi_list_t);
 	mca_gpr_replica_head.lastkey = 0;
-
-	/* define the "universe" segment */
-	response = gpr_replica_define_segment("universe");
-	if (0 > response) { /* got error code */
-	    exit(response);
-	}
 
 	/* issue the non-blocking receive */
 /*       	mca_oob_recv_packed_nb(MCA_OOB_NAME_ANY, MCA_OOB_TAG_GPR, 0, mca_gpr_replica_recv, NULL); */
@@ -316,10 +338,10 @@ void mca_gpr_replica_recv(int status, ompi_process_name_t* sender,
     ompi_registry_internal_test_results_t *testval;
     ompi_registry_index_value_t *indexval;
     char **tokens, **tokptr;
-    int32_t num_tokens, test_level, i;
+    int32_t num_tokens, test_level, i, trigger;
     mca_gpr_cmd_flag_t command;
     char *segment;
-    int32_t response;
+    int32_t response, target_tag;
 
     if (OMPI_SUCCESS != ompi_buffer_init(&answer, 0)) {
 	/* RHC -- not sure what to do if this fails */
@@ -521,8 +543,56 @@ void mca_gpr_replica_recv(int status, ompi_process_name_t* sender,
     } else if (MCA_GPR_SUBSCRIBE_CMD == command) {
 	action = OMPI_REGISTRY_NOTIFY_ALL;
 	goto RETURN_ERROR;
+
     } else if (MCA_GPR_UNSUBSCRIBE_CMD == command) {
 	goto RETURN_ERROR;
+
+    } else if (MCA_GPR_SYNCHRO_CMD == command) {
+	if (OMPI_SUCCESS != ompi_unpack(buffer, &target_tag, 1, OMPI_INT32)) {
+	    goto RETURN_ERROR;
+	}
+
+	if (OMPI_SUCCESS != ompi_unpack(buffer, &mode, 1, MCA_GPR_OOB_PACK_MODE)) {
+	    goto RETURN_ERROR;
+	}
+
+	if (0 > ompi_unpack_string(buffer, &segment)) {
+	    goto RETURN_ERROR;
+	}
+
+	if (OMPI_SUCCESS != ompi_unpack(buffer, &num_tokens, 1, OMPI_INT32)) {
+	    goto RETURN_ERROR;
+	}
+
+	tokens = (char**)malloc((num_tokens+1)*sizeof(char*));
+	tokptr = tokens;
+	for (i=0; i<num_tokens; i++) {
+	    if (0 > ompi_unpack_string(buffer, tokptr)) {
+		goto RETURN_ERROR;
+	    }
+	    tokptr++;
+	}
+	*tokptr = NULL;
+
+	if (OMPI_SUCCESS != ompi_unpack(buffer, &trigger, 1, OMPI_INT32)) {
+	    goto RETURN_ERROR;
+	}
+
+	response = (int32_t)ompi_registry.synchro(sender, (int)target_tag, mode, segment, tokens, (int)trigger);
+
+	if (OMPI_SUCCESS != ompi_pack(answer, &command, 1, MCA_GPR_OOB_PACK_CMD)) {
+	    goto RETURN_ERROR;
+	}
+
+	if (OMPI_SUCCESS != ompi_pack(answer, &response, 1, OMPI_INT32)) {
+	    goto RETURN_ERROR;
+	}
+
+	if (0 > mca_oob_send_packed(sender, answer, tag, 0)) {
+	    /* RHC -- not sure what to do if the return send fails */
+	}
+
+
     } else if (MCA_GPR_TEST_INTERNALS_CMD == command) {
 
 	if ((OMPI_SUCCESS != ompi_unpack(buffer, &test_level, 1, OMPI_INT32)) ||
@@ -572,4 +642,37 @@ void mca_gpr_replica_recv(int status, ompi_process_name_t* sender,
 
     /* reissue the non-blocking receive */
     mca_oob_recv_packed_nb(MCA_OOB_NAME_ANY, MCA_OOB_TAG_GPR, 0, mca_gpr_replica_recv, NULL);
+}
+
+
+void gpr_replica_notify(ompi_list_t *subscribers, ompi_registry_notify_action_t flag)
+{
+    mca_gpr_subscriber_list_t *subs;
+    ompi_buffer_t msg;
+    ompi_registry_notify_action_t command;
+
+    command = OMPI_REGISTRY_NOTIFY_MESSAGE;
+
+    for (subs = (mca_gpr_subscriber_list_t*)ompi_list_get_first(subscribers);
+	 subs != (mca_gpr_subscriber_list_t*)ompi_list_get_end(subscribers);
+	 subs = (mca_gpr_subscriber_list_t*)ompi_list_get_next(subs)) {
+
+	if (OMPI_SUCCESS != ompi_buffer_init(&msg, 0)) {
+	    return;
+	}
+
+	if (OMPI_SUCCESS != ompi_pack(msg, &command, 1, MCA_GPR_OOB_PACK_ACTION)) {
+	    return;
+	}
+
+	if (OMPI_SUCCESS != ompi_pack(msg, &flag, 1, MCA_GPR_OOB_PACK_ACTION)) {
+	    return;
+	}
+
+	if (0 > mca_oob_send_packed(subs->subscriber, msg, subs->tag, 0)) {
+	    return;
+	}
+
+	ompi_buffer_free(msg);
+    }
 }

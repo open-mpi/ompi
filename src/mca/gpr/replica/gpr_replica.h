@@ -63,12 +63,30 @@ OBJ_CLASS_DECLARATION(mca_gpr_keylist_t);
  */
 struct mca_gpr_subscriber_list_t {
     ompi_list_item_t item;                 /**< Allows this item to be placed on a list */
-    ompi_process_name_t *subscriber;       /**< ID of the subscriber */
+    ompi_process_name_t *subscriber;       /**< Name of the subscribing process */
+    int tag;                               /**< OOB tag of the subscriber */
     ompi_registry_notify_action_t action;  /**< Bit-mask of actions that trigger notification */
 };
 typedef struct mca_gpr_subscriber_list_t mca_gpr_subscriber_list_t;
 
-OBJ_CLASS_DECLARATION(mca_gpr_subscribe_list_t);
+OBJ_CLASS_DECLARATION(mca_gpr_subscriber_list_t);
+
+/** List of synchro actions for a segment.
+ * Each object can have an arbitrary number of subscribers desiring notification
+ * upon specified actions being performed against the object. This structure is
+ * used to create a linked list of subscribers for objects.
+ */
+struct mca_gpr_synchro_list_t {
+    ompi_list_item_t item;                 /**< Allows this item to be placed on a list */
+    ompi_list_t subscribers;       /**< List of subscribers to be notified upon synchro */
+    ompi_list_t keys;              /**< List of keys describing the objects being counted*/
+    ompi_registry_mode_t mode;     /**< Mode for selecting objects using keys */
+    int trigger;                   /**< Number of objects that trigger notification */
+    int present;                   /**< Number of qualifying objects currently in segment */
+};
+typedef struct mca_gpr_synchro_list_t mca_gpr_synchro_list_t;
+
+OBJ_CLASS_DECLARATION(mca_gpr_synchro_list_t);
 
 /** List of replicas that hold a stored object.
  * Each object can have an arbitrary number of replicas that hold a copy
@@ -138,6 +156,7 @@ struct mca_gpr_registry_segment_t {
     mca_gpr_replica_key_t segment;     /**< Key corresponding to name of registry segment */
     mca_gpr_replica_key_t lastkey;     /**< Highest key value used */
     ompi_list_t registry_entries;      /**< Linked list of stored objects within this segment */
+    ompi_list_t synchros;              /**< List of synchro requests on this segment */
     ompi_list_t keytable;              /**< Token-key dictionary for this segment */
     ompi_list_t freekeys;              /**< List of keys that have been made available */
 };
@@ -176,11 +195,15 @@ int gpr_replica_put(ompi_registry_mode_t mode, char *segment,
 int gpr_replica_delete_object(ompi_registry_mode_t mode,
 			      char *segment, char **tokens);
 ompi_list_t* gpr_replica_index(char *segment);
-int gpr_replica_subscribe(ompi_process_name_t *caller, ompi_registry_mode_t mode,
+int gpr_replica_subscribe(ompi_process_name_t *subscriber, int tag,
+			  ompi_registry_mode_t mode,
 			  ompi_registry_notify_action_t action,
 			  char *segment, char **tokens);
-int gpr_replica_unsubscribe(ompi_process_name_t *caller, ompi_registry_mode_t mode,
+int gpr_replica_unsubscribe(ompi_process_name_t *subscriber, ompi_registry_mode_t mode,
 			    char *segment, char **tokens);
+int gpr_replica_synchro(ompi_process_name_t *subscriber, int tag,
+			ompi_registry_mode_t mode,
+			char *segment, char **tokens, int num);
 ompi_list_t* gpr_replica_get(ompi_registry_mode_t mode,
 			     char *segment, char **tokens);
 ompi_list_t* gpr_replica_test_internals(int level);
@@ -188,5 +211,7 @@ ompi_list_t* gpr_replica_test_internals(int level);
 void mca_gpr_replica_recv(int status, ompi_process_name_t* sender,
 			  ompi_buffer_t buffer, int tag,
 			  void* cbdata);
+
+void gpr_replica_notify(ompi_list_t *subscribers, ompi_registry_notify_action_t flag);
 
 #endif

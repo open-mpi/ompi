@@ -38,6 +38,8 @@
 #define OMPI_REGISTRY_NOTIFY_MODIFICATION   0x0001   /**< Notifies subscriber when object modified */
 #define OMPI_REGISTRY_NOTIFY_ADD_SUBSCRIBER 0x0002   /**< Notifies subscriber when another subscriber added */
 #define OMPI_REGISTRY_NOTIFY_DELETE         0x0004   /**< Notifies subscriber when object deleted */
+#define OMPI_REGISTRY_NOTIFY_SYNCHRO        0x0008   /**< Indicate that synchro trigger occurred - not valid for subscribe command */
+#define OMPI_REGISTRY_NOTIFY_MESSAGE        0x0010   /**< Indicates a notify message */
 #define OMPI_REGISTRY_NOTIFY_ALL            0xffff   /**< Notifies subscriber upon any action */
 
 typedef uint16_t ompi_registry_notify_action_t;
@@ -64,8 +66,9 @@ typedef uint16_t ompi_registry_mode_t;
 #define MCA_GPR_INDEX_CMD              0x0008
 #define MCA_GPR_SUBSCRIBE_CMD          0x0010
 #define MCA_GPR_UNSUBSCRIBE_CMD        0x0020
-#define MCA_GPR_GET_CMD                0x0040
-#define MCA_GPR_TEST_INTERNALS_CMD     0x0080
+#define MCA_GPR_SYNCHRO_CMD            0x0040
+#define MCA_GPR_GET_CMD                0x0080
+#define MCA_GPR_TEST_INTERNALS_CMD     0x0100
 #define MCA_GPR_ERROR                  0xffff
 
 typedef uint16_t mca_gpr_cmd_flag_t;
@@ -145,13 +148,16 @@ typedef ompi_list_t* (*mca_gpr_base_module_get_fn_t)(ompi_registry_mode_t mode,
 typedef int (*mca_gpr_base_module_delete_fn_t)(ompi_registry_mode_t mode,
 					char *segment, char **tokens);
 typedef ompi_list_t* (*mca_gpr_base_module_index_fn_t)(char *segment);
-typedef int (*mca_gpr_base_module_subscribe_fn_t)(ompi_process_name_t* subscriber,
+typedef int (*mca_gpr_base_module_subscribe_fn_t)(ompi_process_name_t *subscriber, int tag,
 						  ompi_registry_mode_t mode,
 						  ompi_registry_notify_action_t action,
 						  char *segment, char **tokens);
-typedef int (*mca_gpr_base_module_unsubscribe_fn_t)(ompi_process_name_t* subscriber,
+typedef int (*mca_gpr_base_module_unsubscribe_fn_t)(ompi_process_name_t *subscriber,
 						    ompi_registry_mode_t mode,
 						    char *segment, char **tokens);
+typedef int (*mca_gpr_base_module_synchro_fn_t)(ompi_process_name_t *subscriber, int tag,
+						ompi_registry_mode_t mode,
+						char *segment, char **tokens, int num);
 
 /*
  * test interface for internal functions - optional to provide
@@ -168,6 +174,7 @@ struct mca_gpr_base_module_1_0_0_t {
     mca_gpr_base_module_delete_segment_fn_t delete_segment;
     mca_gpr_base_module_subscribe_fn_t subscribe;
     mca_gpr_base_module_unsubscribe_fn_t unsubscribe;
+    mca_gpr_base_module_synchro_fn_t synchro;
     mca_gpr_base_module_delete_fn_t delete_object;
     mca_gpr_base_module_index_fn_t index;
     mca_gpr_base_module_test_internals_fn_t test_internals;
