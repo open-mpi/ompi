@@ -5,8 +5,10 @@
 
 /** @file 
  *
- *  A hash table that may be indexed with either fixed length (e.g. uint32_t/uint64_t) or arbitrary 
- *  size binary key values. However, only one key type may be used in a given table concurrently.
+ *  A hash table that may be indexed with either fixed length
+ *  (e.g. uint32_t/uint64_t) or arbitrary size binary key
+ *  values. However, only one key type may be used in a given table
+ *  concurrently.
  */
 
 #ifndef LAM_HASH_TABLE_H
@@ -18,19 +20,21 @@
 
 
 extern lam_class_t lam_hash_table_t_class;
-                                                                                                                     
+                           
+
 struct lam_hash_table_t
 {
     lam_object_t        super;          /**< subclass of lam_object_t */
     lam_list_t          ht_nodes;       /**< free list of hash nodes */
-    lam_list_t         *ht_table;       /**< each item is an array of lam_fhnode_t nodes */
+    lam_list_t         *ht_table;       /**< each item is an array of 
+					   lam_fhnode_t nodes */
     size_t              ht_table_size;  /**< size of table */
     size_t              ht_size;        /**< number of values on table */
     size_t              ht_mask;
 };
 typedef struct lam_hash_table_t lam_hash_table_t;
-                                                                                                                     
 
+                           
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
@@ -173,6 +177,88 @@ int lam_hash_table_set_value_ptr(lam_hash_table_t *table, const void* key, size_
  */
 
 int lam_hash_table_remove_value_ptr(lam_hash_table_t *table, const void* key, size_t keylen);
+
+
+/** The following functions are only for allowing iterating through
+    the hash table. The calls return along with a key, a pointer to
+    the hash node with the current key, so that subsequent calls do
+    not have to traverse all over again to the key (although it may
+    just be a simple thing - to go to the array element and then
+    traverse through the individual list). But lets take out this
+    inefficiency too. This is similar to having an STL iterator in
+    functionality */
+
+/**
+ *  Get the first 32 bit key from the hash table, which can be used later to
+ *  get the next key
+ *  @param  table   The hash table pointer (IN)
+ *  @param  key     The first key (OUT)
+ *  @param  value   The value corresponding to this key (OUT)
+ *  @param  node    The pointer to the hash table internal node which stores
+ *                  the key-value pair (this is required for subsequent calls
+ *                  to get_next_key) (OUT)
+ *  @return LAM error code
+ *
+ */
+
+int lam_hash_table_get_first_key_uint32(lam_hash_table_t *table, uint32_t *key,
+					void *value, void **node);
+
+
+/**
+ *  Get the next 32 bit key from the hash table, knowing the current key 
+ *  @param  table    The hash table pointer (IN)
+ *  @param  key      The key (OUT)
+ *  @param  value    The value corresponding to this key (OUT)
+ *  @param  in_node  The node pointer from previous call to either get_first 
+                     or get_next (IN)
+ *  @param  out_node The pointer to the hash table internal node which stores
+ *                   the key-value pair (this is required for subsequent calls
+ *                   to get_next_key) (OUT)
+ *  @return LAM error code
+ *
+ */
+
+int lam_hash_table_get_next_key_uint32(lam_hash_table_t *table, uint32_t *key,
+				       void *value, void *in_node,
+				       void **out_node);
+
+
+/**
+ *  Get the first 64 key from the hash table, which can be used later to
+ *  get the next key
+ *  @param  table   The hash table pointer (IN)
+ *  @param  key     The first key (OUT)
+ *  @param  value   The value corresponding to this key (OUT)
+ *  @param  node    The pointer to the hash table internal node which stores
+ *                  the key-value pair (this is required for subsequent calls
+ *                  to get_next_key) (OUT)
+ *  @return LAM error code
+ *
+ */
+
+int lam_hash_table_get_first_key_uint64(lam_hash_table_t *table, uint64_t *key,
+				       void *value, void **node);
+
+
+/**
+ *  Get the next 64 bit key from the hash table, knowing the current key 
+ *  @param  table    The hash table pointer (IN)
+ *  @param  key      The key (OUT)
+ *  @param  value    The value corresponding to this key (OUT)
+ *  @param  in_node  The node pointer from previous call to either get_first 
+                     or get_next (IN)
+ *  @param  out_node The pointer to the hash table internal node which stores
+ *                   the key-value pair (this is required for subsequent calls
+ *                   to get_next_key) (OUT)
+ *  @return LAM error code
+ *
+ */
+    
+int lam_hash_table_get_next_key_uint64(lam_hash_table_t *table, uint64_t *key,
+				       void *value, void *in_node,
+				       void **out_node);
+
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
