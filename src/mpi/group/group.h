@@ -50,4 +50,11 @@ lam_group_t *group_allocate(int group_size);
  */
 int lam_group_init(void);
 
+/**
+ * Clean up LAM group infrastructure
+ *
+ * @return Error code
+ */
+int lam_group_finalize(void);
+
 #endif /* LAM_GROUP_H */

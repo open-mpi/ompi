@@ -89,7 +89,22 @@ int lam_group_init()
 
     /* initialize lam_group_f_to_c_table */
     lam_group_f_to_c_table=OBJ_NEW(lam_pointer_array_t);
+    if( (-1) == lam_group_f_to_c_table )
+        return_value=LAM_ERROR;
 
     /* return */
     return return_value;
 }
+
+/**
+ * Clean up group infrastructure
+ */
+int lam_group_finalize(){
+    /* local variables */
+    int return_value=LAM_SUCCESS;
+
+    OBJ_RELEASE(lam_group_f_to_c_table);
+
+    /* return */
+    return return_value;
+};
