@@ -1,5 +1,13 @@
 AUTOMAKE_OPTIONS = foreign no-dependencies
 
+# LAM Get the dirs where lam_config.h and lam_config_bottom.h live.
+# Also specify where we can find this package's config.h because some
+# of the header files in this directory get included elsewhere in LAM.
+# #@%@#$...
+AM_CPPFLAGS = \
+        -I$(top_builddir)/../../include -I$(top_srcdir)/../../include \
+        -I$(top_builddir)/../..
+
 CFLAGS = -Wall @CFLAGS@
 # LAM: No need to build the sample or test
 #SUBDIRS = . sample test
