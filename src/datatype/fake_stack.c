@@ -131,7 +131,7 @@ int ompi_convertor_create_stack_with_pos_general( ompi_convertor_t* pConvertor,
      */
   next_loop:
     loop_length = remoteLength[pConvertor->stack_pos];
-    while( pos_desc >= 0 ) {
+    while( pos_desc < pConvertor->pStack[0].end_loop ) {  /* protect in case when the starting_pos is bigger than the total size */
         if( pElems->type == DT_END_LOOP ) { /* end of the current loop */
             dt_endloop_desc_t* end_loop = (dt_endloop_desc_t*)pElems;
             long extent;
