@@ -318,6 +318,7 @@ extern struct lam_datatype_t *lam_mpi_long_long, *lam_mpi_unsigned_long_long;
 extern struct lam_datatype_t *lam_mpi_cxx_cplex, *lam_mpi_cxx_dblcplex;
 extern struct lam_datatype_t *lam_mpi_cxx_ldblcplex;
 extern struct lam_datatype_t *lam_mpi_cxx_bool;
+extern struct lam_datatype_t *lam_mpi_2cplex, *lam_mpi_2dblcplex;
 
 extern struct lam_errhandler_t lam_mpi_errors_null;
 extern struct lam_errhandler_t lam_mpi_errors_are_fatal;
