@@ -5,7 +5,6 @@
 #include <stdio.h>
 
 #include "mpi.h"
-#include "runtime/runtime.h"
 #include "mpi/c/bindings.h"
 #include "mca/pml/pml.h"
 #include "communicator/communicator.h"

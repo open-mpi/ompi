@@ -6,7 +6,6 @@
 
 #include "mpi.h"
 #include "mpi/c/bindings.h"
-#include "runtime/runtime.h"
 #include "errhandler/errcode.h"
 #include "errhandler/errclass.h"
 #include "communicator/communicator.h"
