@@ -54,6 +54,7 @@ int   lam_fh_set_value_for_skey(lam_fast_hash_t *htbl, void *val, const char *ke
 
 
 /* returns the number of items in the table */
+uint32_t lam_fh_count(lam_fast_hash_t *htbl);
 inline uint32_t lam_fh_count(lam_fast_hash_t *htbl) {return htbl->fh_count;}
 
 #endif  /* LAM_HASH_TABLE_H */
