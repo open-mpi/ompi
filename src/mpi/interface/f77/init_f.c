@@ -20,7 +20,7 @@ LAM_GENERATE_F77_BINDINGS (PMPI_INIT,
         pmpi_init,
         pmpi_init_,
         pmpi_init__,
-        mpi_init_f,
+        pmpi_init_f,
         (MPI_Fint *ierror),
         (ierror))
 #endif

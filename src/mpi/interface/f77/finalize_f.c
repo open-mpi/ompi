@@ -20,7 +20,7 @@ LAM_GENERATE_F77_BINDINGS (PMPI_FINALIZE,
             pmpi_finalize,
             pmpi_finalize_,
             pmpi_finalize__,
-            mpi_finalize_f,
+            pmpi_finalize_f,
             (MPI_Fint *ierror),
             (ierror))
 #endif
