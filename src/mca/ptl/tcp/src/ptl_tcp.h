@@ -172,7 +172,7 @@ extern int mca_ptl_tcp_del_procs(
  * @param request (IN)   Pointer to allocated request.
  *
  */
-extern void mca_ptl_tcp_request_init(
+extern int mca_ptl_tcp_request_init(
     struct mca_ptl_t* ptl,
     struct mca_pml_base_send_request_t*
 );
