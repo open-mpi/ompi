@@ -73,11 +73,22 @@ AC_DEFUN([MCA_CONFIGURE_STUB],[
         fi
     fi
 
-    # Try to find libvapi
+    # Try to find libvapi.  In some versions of Mellanox (v3.1), we
+    # need to expliitly link in the thread libraries.  #$%#@$%@%#$!!!
 
     LDFLAGS="$LDFLAGS $EXTRA_LDFLAGS"
-    AC_CHECK_LIB([vapi], [VAPI_open_hca], [],
-        AC_MSG_ERROR([*** Cannot find libvapi]), [-lmtl_common -lmpga -lmosal])
+    AC_CHECK_LIB([vapi], [EVAPI_list_hcas], [], [vapi_badness=true],
+	 [-lmtl_common -lmpga -lmosal])
+    if test -n "$vapi_badness"; then
+         AC_CHECK_LIB([pthread], [pthread_create], 
+		      [pthread=yes LIBS="$LIBS -lpthread"],
+		      [pthread=no])
+	 if test "$pthread" = "yes"; then
+	     AC_CHECK_LIB([vapi], [EVAPI_open_hca], [],
+                          [AC_MSG_ERROR([*** Cannot find libvapi])],
+                          [-lmtl_common -lmpga -lmosal])
+	fi
+    fi    
     LIBS="$LIBS -lmtl_common -lmpga"
 
     #
