@@ -44,7 +44,7 @@ mca_ptl_gm_component_t mca_ptl_gm_component = {
         ,
         /* Next the MCA v1.0.0 component meta data */
         {
-            /* Whether the component is checkpointable or not */
+           /* Whether the component is checkpointable or not */
             false
         },
         mca_ptl_gm_component_init,
@@ -71,6 +71,8 @@ mca_ptl_gm_param_register_string (const char *param_name,
     return param_value;
 }
 
+
+
 static inline int
 mca_ptl_gm_param_register_int (const char *param_name, int default_value)
 {
@@ -82,6 +84,8 @@ mca_ptl_gm_param_register_int (const char *param_name, int default_value)
     return param_value;
 }
 
+
+
 /*
  *
  */
@@ -91,6 +95,9 @@ ompi_mca_ptl_gm_finalize (mca_ptl_gm_module_t * gm)
     /* add code */
     return OMPI_SUCCESS;
 }
+
+
+
 
 /*
  *  Called by MCA framework to open the module, registers
@@ -125,6 +132,7 @@ mca_ptl_gm_component_open (void)
 
     return OMPI_SUCCESS;
 }
+
 
 /*
  * component close 
@@ -174,6 +182,8 @@ mca_ptl_gm_create (int i)
     return OMPI_SUCCESS;
 }
 
+
+
 /*
  *  Register GM component addressing information. The MCA framework
  *  will make this available to all peers. 
@@ -188,7 +198,7 @@ mca_ptl_gm_module_store_data_toexchange (void)
     mca_ptl_gm_addr_t *addrs;
 
     size = mca_ptl_gm_component.gm_num_ptl_modules * sizeof (mca_ptl_gm_addr_t);
-    addrs = (mca_ptl_gm_addr_t *)malloc (size);/*XXX: check this out */
+    addrs = (mca_ptl_gm_addr_t *)malloc (size);
 
     if (NULL == addrs) {
         return OMPI_ERR_OUT_OF_RESOURCE;
@@ -231,18 +241,19 @@ ompi_mca_ptl_gm_init (mca_ptl_gm_component_t * gm)
 
         /* open the first available gm port for this board  */
         board_no = i;
-        for (port_no = 2; port_no < MAX_GM_PORTS; port_no++) { 
-	    GM_DBG(PTL_GM_DBG_COMM,"about to call open port\n");
-	    if (port_no == 3) continue;
-	    /* port 0,1,3 reserved  */
-	    status = gm_open (&(ptl->my_port), board_no, 
+        for (port_no = 2; port_no < MAX_GM_PORTS; port_no++) 
+        { 
+	        GM_DBG(PTL_GM_DBG_COMM,"about to call open port\n");
+	        if (port_no == 3) continue;
+	        /* port 0,1,3 reserved  */
+	        status = gm_open (&(ptl->my_port), board_no, 
                               port_no, "OMPI-GM", GM_API_VERSION_2_0);  
 
-	    if (GM_SUCCESS == status) {
-	       	ptl->my_port_id = port_no;
+	        if (GM_SUCCESS == status) {
+	       	    ptl->my_port_id = port_no;
                 mca_ptl_gm_component.gm_num_ptl_modules++;
-	       	break;
-	    }
+	       	    break;
+	        }
        	}
 
 #if 1
@@ -316,11 +327,13 @@ ompi_mca_ptl_gm_init_sendrecv (mca_ptl_gm_component_t * gm)
             sfragment->send_buf = gm_send_reg_memory;
             item = (ompi_list_item_t *) sfragment;
             OMPI_FREE_LIST_RETURN( fslist, item );
-
             gm_send_reg_memory = ((char *)gm_send_reg_memory) + GM_SEND_BUF_SIZE;
             sfragment++;
 
         }
+        A_PRINT("recv_tokens = %d send_tokens = %d, allocted free lis =
+                %d\n",ptl->num_recv_tokens,ptl->num_send_tokens,fslist->fl_num_allocated);
+
 
         /*****************RECEIVE*****************************/
         /*allow remote memory access */
@@ -355,13 +368,16 @@ ompi_mca_ptl_gm_init_sendrecv (mca_ptl_gm_component_t * gm)
 
         /*allocate the registered memory */
         gm_recv_reg_memory =
-            gm_dma_malloc (ptl->my_port,
-                           (GM_RECV_BUF_SIZE * ptl->num_recv_tokens ) );
-        if( NULL == gm_recv_reg_memory ) {
+            gm_dma_malloc (ptl->my_port, (GM_RECV_BUF_SIZE * ptl->num_recv_tokens ) );
+
+        if( NULL == gm_recv_reg_memory ) 
+        {
             ompi_output( 0, "unable to allocate registered memory for receive\n" );
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
-        for (i = 0; i < ptl->num_recv_tokens ; i++) {
+
+        for (i = 0; i < ptl->num_recv_tokens ; i++)
+        {
             gm_provide_receive_buffer( ptl->my_port, gm_recv_reg_memory,
                                        GM_SIZE, GM_LOW_PRIORITY );
             gm_recv_reg_memory = ((char *)gm_recv_reg_memory) + GM_RECV_BUF_SIZE;
@@ -440,11 +456,11 @@ mca_ptl_gm_component_progress (mca_ptl_tstamp_t tstamp)
 {
     int rc;
     /* XXX: Do all the following inside a dispatcher, either in this routine
-     *      or mca_ptl_gm_incoming_recv(), YUW
-     * i) check the send queue to see if any pending send can proceed 
-     * ii) check for recieve and , call ptl_match to send it to the upper level
-     * BTW, ptl_matced is invoked inside ptl_match() via PML.
+     *      or mca_ptl_gm_incoming_recv()
+     *  i) check the send queue to see if any pending send can proceed 
+     *  ii) check for recieve and , call ptl_match to send it to the upper level
+     *  BTW, ptl_matched is invoked inside ptl_match() via PML.
      */
      rc = mca_ptl_gm_incoming_recv(&mca_ptl_gm_component);
-    return OMPI_SUCCESS;
+     return OMPI_SUCCESS;
 }

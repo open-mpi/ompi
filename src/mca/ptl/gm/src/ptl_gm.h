@@ -26,7 +26,7 @@
 #define PTL_GM_ADMIN_RECV_TOKENS 0
 #define GM_SEND_BUF_SIZE 16384
 #define GM_RECV_BUF_SIZE 16384 
-#define NUM_RECV_FRAGS 100
+#define NUM_RECV_FRAGS 256 
 #define MCA_PTL_GM_FRAG_CACHED
 
 /**
@@ -48,8 +48,8 @@ struct mca_ptl_gm_component_t {
 };
 
 typedef struct mca_ptl_gm_component_t mca_ptl_gm_component_t;
-
 extern mca_ptl_gm_component_t mca_ptl_gm_component;
+
 
 
 /**
@@ -78,7 +78,6 @@ struct mca_ptl_gm_module_t {
 };
 
 typedef struct mca_ptl_gm_module_t mca_ptl_gm_module_t;
-
 extern mca_ptl_gm_module_t mca_ptl_gm_module;
 
 
@@ -142,6 +141,7 @@ extern int  mca_ptl_gm_put (struct mca_ptl_base_module_t *ptl,
                             size_t offset, size_t size, int flags);
 
 
+
 /**
  *  GM get
  */
@@ -185,6 +185,7 @@ extern int  mca_ptl_gm_del_procs (struct mca_ptl_base_module_t *ptl,
                                   size_t nprocs,
                                   struct ompi_proc_t **procs,
                                   struct mca_ptl_base_peer_t **peers);
+
 
 /**
  * PML->PTL Allocate a send request from the PTL modules free list.
