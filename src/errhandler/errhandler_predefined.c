@@ -19,8 +19,8 @@
 /*
  * Local functions
  */
-static void backend_fatal(char *type, char *name, int *error_code, 
-                          va_list arglist);
+static void backend_fatal(char *type, struct ompi_communicator_t *comm, 
+                          char *name, int *error_code, va_list arglist);
 static void out(char *str, char *arg);
 
 
@@ -28,16 +28,19 @@ void ompi_mpi_errors_are_fatal_comm_handler(struct ompi_communicator_t **comm,
 					    int *error_code, ...)
 {
   char *name;
+  struct ompi_communicator_t *abort_comm;
   va_list arglist;
 
   va_start(arglist, error_code);
 
   if (NULL != comm) {
       name = (*comm)->c_name;
+      abort_comm = *comm;
   } else {
       name = NULL;
+      abort_comm = NULL;
   }
-  backend_fatal("communicator", name, error_code, arglist);
+  backend_fatal("communicator", abort_comm, name, error_code, arglist);
 }
 
 
@@ -45,16 +48,19 @@ void ompi_mpi_errors_are_fatal_file_handler(struct ompi_file_t **file,
 					    int *error_code, ...)
 {
   char *name;
+  struct ompi_communicator_t *abort_comm;
   va_list arglist;
 
   va_start(arglist, error_code);
 
   if (NULL != file) {
       name = (*file)->f_filename;
+      abort_comm = (*file)->f_comm;
   } else {
       name = NULL;
+      abort_comm = NULL;
   }
-  backend_fatal("file", name, error_code, arglist);
+  backend_fatal("file", abort_comm, name, error_code, arglist);
 }
 
 
@@ -62,6 +68,7 @@ void ompi_mpi_errors_are_fatal_win_handler(struct ompi_win_t **win,
 					   int *error_code, ...)
 {
   char *name;
+  struct ompi_communicator_t *abort_comm = NULL;
   va_list arglist;
 
   va_start(arglist, error_code);
@@ -71,7 +78,7 @@ void ompi_mpi_errors_are_fatal_win_handler(struct ompi_win_t **win,
   } else {
       name = NULL;
   }
-  backend_fatal("win", name, error_code, arglist);
+  backend_fatal("win", abort_comm, name, error_code, arglist);
 }
 
 
@@ -113,7 +120,8 @@ static void out(char *str, char *arg)
     }
 }
 
-static void backend_fatal(char *type, char *name, int *error_code, 
+static void backend_fatal(char *type, struct ompi_communicator_t *comm,
+                          char *name, int *error_code, 
                           va_list arglist)
 {
     char *arg;
@@ -152,6 +160,9 @@ static void backend_fatal(char *type, char *name, int *error_code,
     va_end(arglist);
 
     /* Should we do something more intelligent here? */
-    
-    abort();
+    if (comm == NULL) {
+        comm = &ompi_mpi_comm_self;
+    }
+
+    ompi_mpi_abort(comm, 1, false);
 }

@@ -82,7 +82,7 @@ get_pids_entry(mca_pcm_base_job_item_t *job_item, mca_ns_base_vpid_t vpid)
          item != ompi_list_get_end(job_item->pids) ;
          item = ompi_list_get_next(item) ) {
         mca_pcm_base_pids_t *pids = (mca_pcm_base_pids_t*) item;
-        if (pids->lower < vpid && pids->upper > vpid) {
+        if (pids->lower <= vpid && pids->upper >= vpid) {
             return pids;
         }
     }

@@ -8,7 +8,7 @@
 #include "mca/base/base.h"
 #include "mca/pcm/pcm.h"
 #include "mca/pcm/base/base.h"
-#include "mca/pcm/base/base_job_track.h"
+#include "mca/pcm/base/base_kill_track.h"
 #include "util/output.h"
 #include "event/event.h"
 
@@ -46,6 +46,8 @@ int mca_pcm_base_open(void)
                           "pcm: error opening components");
     return OMPI_ERROR;
   }
+
+  mca_pcm_base_kill_init();
 
   /* All done */
 

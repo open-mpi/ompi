@@ -11,10 +11,13 @@
 #include "mca/base/base.h"
 #include "mca/pcm/pcm.h"
 #include "mca/pcm/base/base.h"
-#include "mca/pcm/base/base_job_track.h"
+#include "mca/pcm/base/base_kill_track.h"
 
 int mca_pcm_base_close(void)
 {
+
+    mca_pcm_base_kill_fini();
+
   /* Close all remaining available modules (may be one if this is a
      OMPI RTE program, or [possibly] multiple if this is ompi_info) */
 

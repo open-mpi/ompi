@@ -24,6 +24,7 @@
 #include "mca/pcm/pcm.h"
 #include "mca/pcm/base/base.h"
 #include "mca/pcm/base/base_job_track.h"
+#include "mca/pcm/base/base_kill_track.h"
 #include "runtime/runtime.h"
 #include "runtime/runtime_types.h"
 #include "runtime/ompi_rte_wait.h"
@@ -451,7 +452,11 @@ proc_cleanup:
         mca_pcm_base_job_list_add_job_info(me->jobs,
                                            jobid, pid, my_start_vpid,
                                            my_start_vpid + num_procs - 1);
+        ret = mca_pcm_base_kill_register(me, jobid, my_start_vpid,
+                                         my_start_vpid + num_procs - 1);
+        if (ret != OMPI_SUCCESS) goto cleanup;
         ret = ompi_rte_wait_cb(pid, internal_wait_cb, me);
+        if (ret != OMPI_SUCCESS) goto cleanup;
     } else {
         /* Wait for the command to exit.  */
         while (1) {
@@ -509,4 +514,6 @@ internal_wait_cb(pid_t pid, int status, void *data)
                              ns_base_create_process_name(0, jobid, i));
         ompi_registry.rte_unregister(proc_name);
     }
+
+    mca_pcm_base_kill_unregister(me, jobid, lower, upper);
 }

@@ -24,7 +24,7 @@ mca_pcm_rsh_kill_proc(struct mca_pcm_base_module_1_0_0_t* me_super,
     pid_t pid;
     mca_pcm_rsh_module_t *me = (mca_pcm_rsh_module_t*) me_super;
 
-    if (0 != (OMPI_RTE_SPAWN_HIGH_QOS &me->constraints)) {
+    if (0 != (OMPI_RTE_SPAWN_HIGH_QOS & me->constraints)) {
         pid = mca_pcm_base_job_list_get_starter(me->jobs,
                                                 ns_base_get_jobid(name),
                                                 ns_base_get_vpid(name),
