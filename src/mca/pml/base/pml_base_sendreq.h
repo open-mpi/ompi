@@ -28,6 +28,7 @@ struct mca_pml_base_send_request_t {
     ompi_ptr_t req_peer_match;               /**< matched receive at peer */
     ompi_ptr_t req_peer_addr;                /**< peers remote buffer address */
     size_t req_peer_size;                    /**< size of peers remote buffer */
+    bool req_cached;                         /**< has this request been obtained from the ptls cache */
     ompi_convertor_t req_convertor;          /**< convertor that describes this datatype */
 };
 typedef struct mca_pml_base_send_request_t mca_pml_base_send_request_t;
