@@ -64,6 +64,13 @@ int MPI_Group_intersection(MPI_Group group1, MPI_Group group2,
         }  /* end proc2 loop */
     }  /* end proc1 loop */
 
+    if ( 0 == group_size ) {
+	*new_group = MPI_GROUP_EMPTY;
+	OBJ_RETAIN(MPI_GROUP_EMPTY);
+	return MPI_SUCCESS;
+    }
+
+
     /* fill in new group */
     new_group_pointer=ompi_group_allocate(group_size);
     if( NULL == new_group_pointer ) {
