@@ -39,11 +39,12 @@
 /* constants defining runtime-related segment naming conventions for the
  * registry
  */
-#define OMPI_RTE_JOB_STATUS_SEGMENT "ompi-job-status"
-#define OMPI_RTE_OOB_SEGMENT        "ompi-oob"
-#define OMPI_RTE_VM_STATUS_SEGMENT  "ompi-vm-status"
-#define OMPI_RTE_SCHED_SEGMENT      "ompi-sched"
-#define OMPI_RTE_MODEX_SEGMENT      "ompi_modex"
+#define OMPI_RTE_JOB_STATUS_SEGMENT     "ompi-job-status"
+#define OMPI_RTE_OOB_SEGMENT            "ompi-oob"
+#define OMPI_RTE_VM_STATUS_SEGMENT      "ompi-vm-status"
+#define OMPI_RTE_CELL_STATUS_SEGMENT    "ompi-cell-status"
+#define OMPI_RTE_SCHED_SEGMENT          "ompi-sched"
+#define OMPI_RTE_MODEX_SEGMENT          "ompi_modex"
 
 /* constants for spawn constraints */
 
@@ -102,6 +103,9 @@ OMPI_DECLSPEC extern ompi_universe_t ompi_universe_info;
 
 
     struct ompi_rte_process_status_t {
+    	int32_t rank;
+    	int32_t local_pid;
+    	char *nodename;
 	ompi_status_key_t status_key;
 	ompi_exit_code_t exit_code;
     };
@@ -109,18 +113,31 @@ OMPI_DECLSPEC extern ompi_universe_t ompi_universe_info;
 
 
     struct ompi_rte_vm_status_t {
-	char *nodename;
-	ompi_list_t processes;
+    mca_ns_base_cellid_t cell;  /* cell id for this vm */
+	char *nodename;             /* name of the node */
+    uint32_t node_address;      /* node address */
+    uint16_t num_cpus;          /* number of CPU's in this node */
+    uint32_t mem_size;          /* size of memory, in MB */
+    char *arch;                 /* architecture of the CPU's */
+    char *op_sys;               /* operating system */
+    char *release;              /* operating system release */
+    char *user;                 /* userid of the owner of this node */
+    char *group;                /* name of the owning group */
+    uint32_t permission;        /* Unix-style permissions for the node */
+    ompi_node_state_t state;    /* state of this node */
     };
     typedef struct ompi_rte_vm_status_t ompi_rte_vm_status_t;
 
-    struct ompi_rte_vm_process_t {
-	ompi_list_item_t *item;
-	ompi_process_name_t *name;
-	int32_t local_pid;
+    struct ompi_rte_cell_status_t {
+        mca_ns_base_cellid_t cell;      /* cellid for this cell */
+        char *cell_name;                /* name for this cell */
+        char *system_type;              /* cluster, grid, SMP, etc. */
+        char *launch_mech;              /* launch mechanism for this cell */
+        uint32_t num_nodes;             /* number of nodes in cell */
+        ompi_node_state_t state;        /* state of the cell */
     };
-    typedef struct ompi_rte_vm_process_t ompi_rte_vm_process_t;
-
+    typedef struct ompi_rte_cell_status_t ompi_rte_cell_status_t;
+    
     /**
      * Initialize the Open MPI support code
      *
@@ -314,6 +331,21 @@ OMPI_DECLSPEC    int ompi_rte_set_process_status(ompi_rte_process_status_t *stat
      * Unpack the process status structure stored on the registry
      */
 OMPI_DECLSPEC    ompi_rte_process_status_t *ompi_rte_unpack_process_status(ompi_registry_value_t *value);
+
+    /**
+     * Get virtual machine node status
+     */
+OMPI_DECLSPEC   ompi_rte_vm_status_t *ompi_rte_get_vm_status(mca_ns_base_cellid_t cellid, char *nodename);
+
+    /**
+     * Set virtual machine node status
+     */
+OMPI_DECLSPEC   int ompi_rte_set_vm_status(ompi_rte_vm_status_t *status);
+
+    /**
+     * Upack the virtual machine node status stored on the registry
+     */
+OMPI_DECLSPEC   ompi_rte_vm_status_t *ompi_rte_unpack_vm_status(ompi_registry_value_t *value);
 
     /**
      * Hold for startup message to arrive, then decode it.

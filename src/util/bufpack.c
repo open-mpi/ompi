@@ -395,6 +395,9 @@ return (OMPI_SUCCESS);
     switch(type) {
         case OMPI_BYTE:
         case OMPI_INT8:
+        case OMPI_NODE_STATE:
+        case OMPI_PROCESS_STATUS:
+        case OMPI_EXIT_CODE:
 	    op_size = n;
 	    break;
         case OMPI_STRING:
@@ -415,14 +418,17 @@ return (OMPI_SUCCESS);
             if (OMPI_ERROR==rc) { return OMPI_ERROR; }
             break;
         case OMPI_INT16:
-	    op_size = n*sizeof(uint16_t);
-	    break;
+	       op_size = n*sizeof(uint16_t);
+	       break;
         case OMPI_INT32:
-	    op_size = n*sizeof(uint32_t);
-	    break;
+	       op_size = n*sizeof(uint32_t);
+	       break;
         case OMPI_JOBID:
-	    op_size = n*sizeof(mca_ns_base_jobid_t);
-	    break;
+	       op_size = n*sizeof(mca_ns_base_jobid_t);
+	       break;
+        case OMPI_CELLID:
+            op_size = n*sizeof(mca_ns_base_cellid_t);
+            break;
         case OMPI_NAME:
             op_size = n*sizeof(ompi_process_name_t);
             break;
@@ -442,6 +448,9 @@ return (OMPI_SUCCESS);
     switch(type) {
         case OMPI_BYTE:
         case OMPI_INT8:
+        case OMPI_NODE_STATE:
+        case OMPI_PROCESS_STATUS:
+        case OMPI_EXIT_CODE:
             memcpy(dest, src, n);
             break;
         case OMPI_PACKED:
@@ -468,10 +477,13 @@ return (OMPI_SUCCESS);
             *((char *) dest + n - 1) = '\0';
             break;
         case OMPI_JOBID:
-	    mca_ns_base_pack_jobid(dest, src, n);
-	    break;
+	       mca_ns_base_pack_jobid(dest, src, n);
+	       break;
+        case OMPI_CELLID:
+            mca_ns_base_pack_cellid(dest, src, n);
+            break;
         case OMPI_NAME:
-	    mca_ns_base_pack_name(dest, src, n);
+	       mca_ns_base_pack_name(dest, src, n);
             break;
         default:
             return OMPI_ERROR;
@@ -523,6 +535,9 @@ ompi_unpack(ompi_buffer_t buffer, void * dest, size_t n, ompi_pack_type_t type)
         case OMPI_BYTE:
         case OMPI_STRING:
         case OMPI_INT8:
+        case OMPI_NODE_STATE:
+        case OMPI_PROCESS_STATUS:
+        case OMPI_EXIT_CODE:
 	    op_size = n;
 	    break;
 	case OMPI_PACKED:
@@ -536,8 +551,11 @@ ompi_unpack(ompi_buffer_t buffer, void * dest, size_t n, ompi_pack_type_t type)
 	    op_size = n*sizeof(uint32_t);
 	    break;
         case OMPI_JOBID:
-	    op_size = n*sizeof(mca_ns_base_jobid_t);
-	    break;
+	       op_size = n*sizeof(mca_ns_base_jobid_t);
+	       break;
+        case OMPI_CELLID:
+            op_size = n*sizeof(mca_ns_base_cellid_t);
+            break;
         case OMPI_NAME:
             op_size = n*sizeof(ompi_process_name_t);
             break;
@@ -559,6 +577,9 @@ ompi_unpack(ompi_buffer_t buffer, void * dest, size_t n, ompi_pack_type_t type)
     switch(type) {
         case OMPI_BYTE:
         case OMPI_INT8:
+        case OMPI_NODE_STATE:
+        case OMPI_PROCESS_STATUS:
+        case OMPI_EXIT_CODE:
             memcpy(dest, src, n);
 	    break;
         case OMPI_PACKED:
@@ -584,10 +605,13 @@ ompi_unpack(ompi_buffer_t buffer, void * dest, size_t n, ompi_pack_type_t type)
             *((char *) dest + n - 1) = '\0';
             break;
         case OMPI_JOBID:
-	    mca_ns_base_unpack_jobid(dest, src, n);
-	    break;
+	       mca_ns_base_unpack_jobid(dest, src, n);
+	       break;
+        case OMPI_CELLID:
+            mca_ns_base_unpack_cellid(dest, src, n);
+            break;
         case OMPI_NAME:
-	    mca_ns_base_unpack_name(dest, src, n);
+	        mca_ns_base_unpack_name(dest, src, n);
             break;
         default:
             return OMPI_ERROR;

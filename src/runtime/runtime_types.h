@@ -42,6 +42,7 @@ extern "C" {
  */
     typedef int8_t ompi_exit_code_t;
     typedef int8_t ompi_status_key_t;
+    typedef int8_t ompi_node_state_t;
 
 
 /**

@@ -343,6 +343,40 @@ typedef char* (*mca_ns_base_module_get_proc_name_string_fn_t)(const ompi_process
 typedef char* (*mca_ns_base_module_get_vpid_string_fn_t)(const ompi_process_name_t *name);
 
 /**
+ * Convert vpid to character string
+ * Returns the vpid in a character string representation. The string is created
+ * by expressing the provided vpid in hexadecimal. Memory for the string is
+ * allocated by the function - releasing that allocation is the responsibility of
+ * the calling program.
+ * 
+ * @param vpid The vpid to be converted.
+ * 
+ * @retval *vpid_string A pointer to a character string representation of the vpid.
+ * @retval NULL Indicates an error occurred - probably no memory could be allocated.
+ * 
+ * @code
+ * vpid-string = ompi_name_server.convert_vpid_to_string(vpid);
+ * @endcode
+ */
+ typedef char* (*mca_ns_base_module_convert_vpid_to_string_fn_t)(const mca_ns_base_vpid_t vpid);
+ 
+ /**
+  * Convert a string to a vpid.
+  * Converts a characters string into a vpid. The character string must be a
+  * hexadecimal representation of a valid vpid.
+  * 
+  * @param vpidstring The string to be converted.
+  * 
+  * @retval vpid The resulting vpid
+  * @retval MCA_NS_BASE_VPID_MAX String could not be converted.
+  * 
+  * @code
+  * vpid = ompi_name_server.convert_string_to_vpid(vpidstring);
+  * @endcode
+  */
+typedef mca_ns_base_vpid_t (*mca_ns_base_module_convert_string_to_vpid_fn_t)(const char *vpidstring);
+
+/**
  * Get the job id as a character string.
  * The get_jobid_string() function returns the job id in a character string
  * representation. The string is created by expressing the field in hexadecimal. Memory
@@ -419,6 +453,40 @@ typedef mca_ns_base_jobid_t (*mca_ns_base_module_convert_string_to_jobid_fn_t)(c
  * @endcode
  */
 typedef char* (*mca_ns_base_module_get_cellid_string_fn_t)(const ompi_process_name_t *name);
+
+/**
+ * Convert cellid to character string
+ * Returns the cellid in a character string representation. The string is created
+ * by expressing the provided cellid in hexadecimal. Memory for the string is
+ * allocated by the function - releasing that allocation is the responsibility of
+ * the calling program.
+ * 
+ * @param cellid The cellid to be converted.
+ * 
+ * @retval *cellid_string A pointer to a character string representation of the cellid.
+ * @retval NULL Indicates an error occurred - probably no memory could be allocated.
+ * 
+ * @code
+ * cellid-string = ompi_name_server.convert_cellid_to_string(cellid);
+ * @endcode
+ */
+ typedef char* (*mca_ns_base_module_convert_cellid_to_string_fn_t)(const mca_ns_base_cellid_t cellid);
+ 
+ /**
+  * Convert a string to a cellid.
+  * Converts a characters string into a cellid. The character string must be a
+  * hexadecimal representation of a valid cellid.
+  * 
+  * @param cellidstring The string to be converted.
+  * 
+  * @retval cellid The resulting cellid
+  * @retval MCA_NS_BASE_CELLID_MAX String could not be converted.
+  * 
+  * @code
+  * cellid = ompi_name_server.convert_string_to_cellid(cellidstring);
+  * @endcode
+  */
+typedef mca_ns_base_cellid_t (*mca_ns_base_module_convert_string_to_cellid_fn_t)(const char *cellidstring);
 
 /**
  * Get the virtual process id as a numeric value.
@@ -543,6 +611,48 @@ typedef int (*mca_ns_base_module_pack_name_fn_t)(void *dest, void *src, int n);
 typedef int (*mca_ns_base_module_unpack_name_fn_t)(void *dest, void *src, int n);
 
 /*
+ * Pack a cellid for transmission and/or registry storage
+ * Given a source location and the number of contiguous cellids stored there,
+ * this function packs those values into the given destination, converting
+ * each value into network byte order.
+ *
+ * @param dest A void* pointing to the starting location for the destination
+ * memory. Note that this memory MUST be preallocated and adequately sized.
+ * @param src A void* pointing to the starting location of the source data.
+ * @param n The number of cellids to be packed.
+ *
+ * @retval OMPI_SUCCESS Indicates that the cellids were successfully packed.
+ *
+ * @code
+ * status_code = ompi_name_server.pack_cellid(&dest, &src, n);
+ * @endcode
+ *
+ */
+typedef int (*mca_ns_base_module_pack_cellid_fn_t)(void *dest, void *src, int n);
+
+/*
+ * Unpack a cellid
+ * Given a source location and the number of contiguous cellids stored there,
+ * this function unpacks those values into the given destination, converting
+ * each jobid from network byte order to the host environment.
+ *
+ * @param dest A void* pointing to the starting location for the destination
+ * memory. Note that this memory MUST be preallocated and adequately sized.
+ * @param src A void* pointing to the starting location of the source data.
+ * @param n The number of cellids to be unpacked.
+ *
+ * @retval OMPI_SUCCESS Indicates that the jobids were successfully unpacked.
+ *
+ * @code
+ * status_code = ompi_name_server.unpack_cellid(&dest, &src, n);
+ * @endcode
+ *
+ */
+typedef int (*mca_ns_base_module_unpack_cellid_fn_t)(void *dest, void *src, int n);
+
+
+
+/*
  * Pack a jobid for transmission and/or registry storage
  * Given a source location and the number of contiguous jobids stored there,
  * this function packs those values into the given destination, converting
@@ -598,16 +708,22 @@ struct mca_ns_base_module_1_0_0_t {
     mca_ns_base_module_free_name_fn_t free_name;
     mca_ns_base_module_get_proc_name_string_fn_t get_proc_name_string;
     mca_ns_base_module_get_vpid_string_fn_t get_vpid_string;
+    mca_ns_base_module_convert_vpid_to_string_fn_t convert_vpid_to_string;
+    mca_ns_base_module_convert_string_to_vpid_fn_t convert_string_to_vpid;
     mca_ns_base_module_get_jobid_string_fn_t get_jobid_string;
     mca_ns_base_module_convert_jobid_to_string_fn_t convert_jobid_to_string;
     mca_ns_base_module_convert_string_to_jobid_fn_t convert_string_to_jobid;
     mca_ns_base_module_get_cellid_string_fn_t get_cellid_string;
+    mca_ns_base_module_convert_cellid_to_string_fn_t convert_cellid_to_string;
+    mca_ns_base_module_convert_string_to_cellid_fn_t convert_string_to_cellid;
     mca_ns_base_module_get_vpid_fn_t get_vpid;
     mca_ns_base_module_get_jobid_fn_t get_jobid;
     mca_ns_base_module_get_cellid_fn_t get_cellid;
     mca_ns_base_module_compare_fn_t compare;
     mca_ns_base_module_pack_name_fn_t pack_name;
     mca_ns_base_module_unpack_name_fn_t unpack_name;
+    mca_ns_base_module_pack_cellid_fn_t pack_cellid;
+    mca_ns_base_module_unpack_cellid_fn_t unpack_cellid;
     mca_ns_base_module_pack_jobid_fn_t pack_jobid;
     mca_ns_base_module_unpack_jobid_fn_t unpack_jobid;
 };

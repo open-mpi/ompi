@@ -35,7 +35,7 @@ int ompi_rte_job_startup(mca_ns_base_jobid_t jobid)
     ompi_list_t *recipients;
     ompi_buffer_t startup_msg;
     ompi_name_server_namelist_t *ptr;
-    ompi_rte_process_status_t proc_status;
+    ompi_rte_process_status_t *proc_status;
     int num_procs;
 
     if (ompi_rte_debug_flag) {
@@ -59,10 +59,13 @@ int ompi_rte_job_startup(mca_ns_base_jobid_t jobid)
 	mca_oob_xcast(ompi_rte_get_self(), recipients, startup_msg, NULL);
 
         /* for each recipient, set process status to "running" */
-	proc_status.status_key = OMPI_PROC_RUNNING;
-	proc_status.exit_code = 0;
+
 	while (NULL != (ptr = (ompi_name_server_namelist_t*)ompi_list_remove_first(recipients))) {
-	    ompi_rte_set_process_status(&proc_status, ptr->name);
+		proc_status = ompi_rte_get_process_status(ptr->name);
+		proc_status->status_key = OMPI_PROC_RUNNING;
+		proc_status->exit_code = 0;
+		ompi_rte_set_process_status(proc_status, ptr->name);
+		free(proc_status);
 	}
     }
 

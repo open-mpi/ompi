@@ -271,6 +271,9 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     ompi_registry.assume_ownership(segment);
     free(segment);
 
+    my_status.rank = mca_ns_base_get_vpid(ompi_rte_get_self());
+    my_status.local_pid = (int32_t)ompi_process_info.pid;
+    my_status.nodename = strdup(ompi_system_info.nodename);
     my_status.status_key = OMPI_PROC_STARTING;
     my_status.exit_code = 0;
     if (OMPI_SUCCESS != (ret = ompi_rte_set_process_status(&my_status, ompi_rte_get_self()))) {
