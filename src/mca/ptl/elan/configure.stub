@@ -24,20 +24,16 @@ AC_DEFUN([MCA_CONFIGURE_STUB],[
         PTL_ELAN_LIBS="$PTL_ELAN_LIBS -l$lib"
     done
 
-    AC_CHECK_LIB([elan3], [elan3_create],  
-	[ompi_elan_have_libelan3=yes], 
-	[ompi_elan_nolibelan3=1])
+    # We only need one of elanctrl or elan3
 
     AC_CHECK_LIB([elanctrl], [elanctrl_open], 
-	[ompi_elan_have_libelanctrl=yes], 
-	[ompi_elan_nolibelanctrl=1])
-
-    if test "$ompi_elan_have_libelan3" = "yes"; then
-	PTL_ELAN_LIBS="$PTL_ELAN_LIBS -lelan3"
-    elif test "$ompi_elan_have_libelanctrl" = "yes"; then
-	PTL_ELAN_LIBS="$PTL_ELAN_LIBS -lelanctrl"
-    else
-	AC_MSG_WARN([*** Cannot find libelan3 or libelanctrl ])
+        [happy=yes PTL_ELAN_LIBS="$PTL_ELAN_LIBS -lelanctrl"], [happy=])
+    if test -z "$happy"; then
+        AC_CHECK_LIB([elan3], [elan3_create],  
+            [happy=yes PTL_ELAN_LIBS="$PTL_ELAN_LIBS -lelan3"], [happy=])
+    fi
+    if test -z "$happy"; then
+	AC_MSG_WARN([*** Cannot find libelan3 or libelanctrl])
 	AC_MSG_ERROR([Cannot continue])
     fi 
 
