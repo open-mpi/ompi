@@ -19,6 +19,7 @@ libmca_registry_la_SOURCES = $(headers)
 libmca_registry_la_LIBADD = \
         $(MCA_registry_STATIC_LTLIBS) \
         base/libmca_registry_base.la
+libmca_registry_la_DEPENDENCIES = $(libmca_registry_la_LIBADD)
 
 # Conditionally install the header files
 
