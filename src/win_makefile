@@ -6,6 +6,7 @@
 #
 
 topdir = `echo $(CURDIR) | sed 's/^\//C:\/cygwin\//g' | sed 's/\/src//g'`
+install-dir = "C:\cygwin\home\pkambadu\local"
 
 # list of components to build with the c compiler
 C_SUBDIRS =  \
@@ -92,7 +93,8 @@ LINK = link
 LINKFLAGS = \
         /DLL \
         /IMPLIB:libmpi.lib\
-        /nologo
+        /nologo \
+        /OUT:libmpi.dll
 
 ADDLIBS = \
         ws2_32.lib \
@@ -109,7 +111,7 @@ ADDLIBS = \
         odbc32.lib \
         odbccp32.lib 
 
-all: clibs
+all: clibs libmpi
 
 temp:
 	@echo ${FILES}
@@ -132,6 +134,18 @@ clibs: prebuild ${FILES}
 
 libmpi:
 	${LINK} ${LINKFLAGS} ${ADDLIBS} Debug/*.obj
+
+install:
+	@echo "Installing libmpi and include file ................"
+	@install -c ${topdir}/src/libmpi.lib ${install-dir}/lib/libmpi.lib
+	@install -c ${topdir}/src/libmpi.exp ${install-dir}/lib/libmpi.exp
+	@install -c ${topdir}/src/libmpi.dll ${install-dir}/lib/libmpi.dll
+	@install -c ${topdir}/include/ompi_config_bottom.h \
+                                    ${install-dir}/include/ompi_config_bottom.h 
+	@install -c ${topdir}/src/win32/generated_include/ompi_config.h \
+                                    ${install-dir}/include/ompi_config.h 
+	@install -c ${topdir}/include/mpi.h ${install-dir}/include/mpi.h
+	@install -c ${topdir}/include/ompi_stdint.h ${install-dir}/include/ompi_stdint.h
 
 .PHONY: clean
 
