@@ -59,3 +59,14 @@ int ompi_process_name_free_range(ompi_process_name_t name, ompi_process_name_t r
 {
     return OMPI_SUCCESS;
 }
+
+char *ompi_convert_process_name_to_string(ompi_process_name_t name)
+{
+    char * name_string;
+    uint32_t *name32;
+
+    name32 = (uint32_t*) &name;
+    sprintf(name_string, "%x%x", name32[0], name32[1]);
+    return(name_string);
+}
+ 
