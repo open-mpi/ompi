@@ -15,7 +15,7 @@ ompi_thread_SOURCES = ompi_thread.c
 ompi_thread_LDADD = \
         $(top_builddir)/src/threads/thread.lo \
         $(top_builddir)/src/class/ompi_object.lo \
-        $(top_builddir)/src/mem/malloc.lo \
+        $(top_builddir)/src/util/malloc.lo \
         $(top_builddir)/src/util/output.lo \
         $(top_builddir)/src/threads/mutex.lo \
         $(top_builddir)/src/threads/mutex_pthread.lo \
@@ -38,7 +38,7 @@ ompi_condition_LDADD = \
         $(top_builddir)/src/threads/thread.lo \
         $(top_builddir)/src/class/ompi_object.lo \
         $(top_builddir)/src/runtime/ompi_progress.lo \
-        $(top_builddir)/src/mem/malloc.lo \
+        $(top_builddir)/src/util/malloc.lo \
         $(top_builddir)/src/util/output.lo \
         $(top_builddir)/src/event/libevent.la \
         $(top_builddir)/test/support/libsupport.la 

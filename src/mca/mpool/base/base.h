@@ -16,8 +16,8 @@
 
 struct mca_mpool_base_selected_module_t {
   ompi_list_item_t super;
-  mca_mpool_base_module_t *pbsm_module;
-  mca_mpool_t *pbsm_actions;
+  mca_mpool_base_module_t *mbsm_module;
+  mca_mpool_t *mbsm_actions;
 };
 typedef struct mca_mpool_base_selected_module_t mca_mpool_base_selected_module_t;
 
