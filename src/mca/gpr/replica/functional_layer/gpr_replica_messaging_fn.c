@@ -80,11 +80,14 @@ int orte_gpr_replica_process_callbacks(void)
                     processed = false;
                     for (k=0; k < (trig->subscribed_data)->size && !processed; k++) {
                         if (NULL != sdata[k] && sdata[k]->index == data[i]->cb_num) {
+                            OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
                             sdata[k]->callback(data[i], sdata[k]->user_tag);
+                            OMPI_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
                             processed = true;
                         }
                     }
                 }
+                OBJ_RELEASE(msg);
             }
     	} else {  /* remote request - send messages back */
     	       if (orte_gpr_replica_globals.debug) {

@@ -171,7 +171,7 @@ int main(int argc, char **argv)
     mca_base_close();
     ompi_malloc_finalize();
     ompi_output_finalize();
-    
+    ompi_class_finalize();
 
     fclose( test_out );
 /*    result = system( cmd_str );
@@ -190,7 +190,7 @@ int main(int argc, char **argv)
 
 static int test1(void) 
 {
-    int rc, i;
+    int rc, i, k;
     orte_gpr_value_t *values, value, trig, *trigs;
     orte_gpr_subscription_t *subscriptions[5];
     orte_gpr_notify_id_t sub[5];
@@ -319,121 +319,124 @@ static int test1(void)
     }
     OBJ_DESTRUCT(&value); /* clean up */
     
-    /* setup the subscriptions, each defining a set of data that is to be
-     * returned to the corresponding callback function
-     */
-    for (i=0; i < 5; i++) {
-        subscriptions[i] = OBJ_NEW(orte_gpr_subscription_t);
-        subscriptions[i]->addr_mode = ORTE_GPR_TOKENS_OR;
-        subscriptions[i]->segment = strdup("test-segment");
-        subscriptions[i]->user_tag = NULL;
-    }
-    /* sub-0 asks for the stupid-value-one data from the first
-     * container ONLY
-     */
-    subscriptions[0]->num_tokens = 2;
-    subscriptions[0]->tokens = (char**)malloc(2*sizeof(char*));
-    for (i=0; i < 2; i++) {
-        asprintf(&(subscriptions[0]->tokens[i]), "dummy%d", i);
-    }
-    subscriptions[0]->num_keys = 1;
-    subscriptions[0]->keys =(char**)malloc(sizeof(char*));
-    subscriptions[0]->keys[0] = strdup("stupid-value-one");
-    subscriptions[0]->cbfunc = test_cbfunc1;
-
-    /* sub-1 asks for the stupid-value-one data from ALL containers
-     */
-    subscriptions[1]->num_tokens = 0;
-    subscriptions[1]->tokens = NULL;
-    subscriptions[1]->num_keys = 1;
-    subscriptions[1]->keys =(char**)malloc(sizeof(char*));
-    subscriptions[1]->keys[0] = strdup("stupid-value-one");
-    subscriptions[1]->cbfunc = test_cbfunc2;
-
-    /* sub-2 asks for the stupid-value-multi data from the first
-     * container ONLY
-     */
-    subscriptions[2]->num_tokens = 2;
-    subscriptions[2]->tokens = (char**)malloc(2*sizeof(char*));
-    for (i=0; i < 2; i++) {
-        asprintf(&(subscriptions[2]->tokens[i]), "dummy%d", i);
-    }
-    subscriptions[2]->num_keys = 1;
-    subscriptions[2]->keys =(char**)malloc(sizeof(char*));
-    subscriptions[2]->keys[0] = strdup("stupid-value-multi");
-    subscriptions[2]->cbfunc = test_cbfunc3;
-
-    /* sub-3 asks for the stupid-value-three data from ALL containers */
-    subscriptions[3]->num_tokens = 0;
-    subscriptions[3]->tokens = NULL;
-    subscriptions[3]->num_keys = 1;
-    subscriptions[3]->keys =(char**)malloc(sizeof(char*));
-    subscriptions[3]->keys[0] = strdup("stupid-value-three");
-    subscriptions[3]->cbfunc = test_cbfunc4;
-
-    /* sub-4 asks for ALL data from ALL containers */
-    subscriptions[4]->num_tokens = 0;
-    subscriptions[4]->tokens = NULL;
-    subscriptions[4]->num_keys = 0;
-    subscriptions[4]->keys = NULL;
-    subscriptions[4]->cbfunc = test_cbfunc5;
-
-    /* setup the trigger information - initialize the common elements */
-    OBJ_CONSTRUCT(&trig, orte_gpr_value_t);
-    trig.addr_mode = ORTE_GPR_TOKENS_XAND;
-    trig.segment = strdup("test-segment");
-    trig.tokens = (char**)malloc(sizeof(char*));
-    if (NULL == trig.tokens) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+    for (k=0; k < 10; k++) {
+        /* setup the subscriptions, each defining a set of data that is to be
+         * returned to the corresponding callback function
+         */
+        for (i=0; i < 5; i++) {
+            subscriptions[i] = OBJ_NEW(orte_gpr_subscription_t);
+            subscriptions[i]->addr_mode = ORTE_GPR_TOKENS_OR;
+            subscriptions[i]->segment = strdup("test-segment");
+            subscriptions[i]->user_tag = NULL;
+        }
+        /* sub-0 asks for the stupid-value-one data from the first
+         * container ONLY
+         */
+        subscriptions[0]->num_tokens = 2;
+        subscriptions[0]->tokens = (char**)malloc(2*sizeof(char*));
+        for (i=0; i < 2; i++) {
+            asprintf(&(subscriptions[0]->tokens[i]), "dummy%d", i);
+        }
+        subscriptions[0]->num_keys = 1;
+        subscriptions[0]->keys =(char**)malloc(sizeof(char*));
+        subscriptions[0]->keys[0] = strdup("stupid-value-one");
+        subscriptions[0]->cbfunc = test_cbfunc1;
+    
+        /* sub-1 asks for the stupid-value-one data from ALL containers
+         */
+        subscriptions[1]->num_tokens = 0;
+        subscriptions[1]->tokens = NULL;
+        subscriptions[1]->num_keys = 1;
+        subscriptions[1]->keys =(char**)malloc(sizeof(char*));
+        subscriptions[1]->keys[0] = strdup("stupid-value-one");
+        subscriptions[1]->cbfunc = test_cbfunc2;
+    
+        /* sub-2 asks for the stupid-value-multi data from the first
+         * container ONLY
+         */
+        subscriptions[2]->num_tokens = 2;
+        subscriptions[2]->tokens = (char**)malloc(2*sizeof(char*));
+        for (i=0; i < 2; i++) {
+            asprintf(&(subscriptions[2]->tokens[i]), "dummy%d", i);
+        }
+        subscriptions[2]->num_keys = 1;
+        subscriptions[2]->keys =(char**)malloc(sizeof(char*));
+        subscriptions[2]->keys[0] = strdup("stupid-value-multi");
+        subscriptions[2]->cbfunc = test_cbfunc3;
+    
+        /* sub-3 asks for the stupid-value-three data from ALL containers */
+        subscriptions[3]->num_tokens = 0;
+        subscriptions[3]->tokens = NULL;
+        subscriptions[3]->num_keys = 1;
+        subscriptions[3]->keys =(char**)malloc(sizeof(char*));
+        subscriptions[3]->keys[0] = strdup("stupid-value-three");
+        subscriptions[3]->cbfunc = test_cbfunc4;
+    
+        /* sub-4 asks for ALL data from ALL containers */
+        subscriptions[4]->num_tokens = 0;
+        subscriptions[4]->tokens = NULL;
+        subscriptions[4]->num_keys = 0;
+        subscriptions[4]->keys = NULL;
+        subscriptions[4]->cbfunc = test_cbfunc5;
+    
+        /* setup the trigger information - initialize the common elements */
+        OBJ_CONSTRUCT(&trig, orte_gpr_value_t);
+        trig.addr_mode = ORTE_GPR_TOKENS_XAND;
+        trig.segment = strdup("test-segment");
+        trig.tokens = (char**)malloc(sizeof(char*));
+        if (NULL == trig.tokens) {
+            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+            for (i=0; i < 5; i++) OBJ_RELEASE(subscriptions[i]);
+            OBJ_DESTRUCT(&trig);
+            return ORTE_ERR_OUT_OF_RESOURCE;
+        }
+        trig.tokens[0] = strdup("test-container");
+        trig.num_tokens = 1;
+        trig.cnt = 2;
+        trig.keyvals = (orte_gpr_keyval_t**)malloc(2*sizeof(orte_gpr_keyval_t*));
+        trig.keyvals[0] = OBJ_NEW(orte_gpr_keyval_t);
+        trig.keyvals[0]->key = strdup(keys[0]);
+        trig.keyvals[0]->type = ORTE_NULL;
+    
+        trig.keyvals[1] = OBJ_NEW(orte_gpr_keyval_t);
+        trig.keyvals[1]->key = strdup(keys[1]);
+        trig.keyvals[1]->type = ORTE_NULL;
+        
+       fprintf(test_out, "setting trigger\n");
+       
+       trigs = &trig;
+       
+       /* enter things as three different subscriptions */
+       rc = orte_gpr.subscribe(
+             ORTE_GPR_TRIG_CMP_LEVELS | ORTE_GPR_TRIG_MONITOR_ONLY,
+             2, subscriptions,
+             1, &trigs,
+             sub);
+    
+    
+       rc = orte_gpr.subscribe(
+             ORTE_GPR_TRIG_CMP_LEVELS | ORTE_GPR_TRIG_MONITOR_ONLY,
+             2, &(subscriptions[2]),
+             1, &trigs,
+             sub);
+    
+       rc = orte_gpr.subscribe(
+             ORTE_GPR_TRIG_CMP_LEVELS | ORTE_GPR_TRIG_MONITOR_ONLY,
+             1, &(subscriptions[4]),
+             1, &trigs,
+             sub);
+    
         for (i=0; i < 5; i++) OBJ_RELEASE(subscriptions[i]);
         OBJ_DESTRUCT(&trig);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    trig.tokens[0] = strdup("test-container");
-    trig.num_tokens = 1;
-    trig.cnt = 2;
-    trig.keyvals = (orte_gpr_keyval_t**)malloc(2*sizeof(orte_gpr_keyval_t*));
-    trig.keyvals[0] = OBJ_NEW(orte_gpr_keyval_t);
-    trig.keyvals[0]->key = strdup(keys[0]);
-    trig.keyvals[0]->type = ORTE_NULL;
-
-    trig.keyvals[1] = OBJ_NEW(orte_gpr_keyval_t);
-    trig.keyvals[1]->key = strdup(keys[1]);
-    trig.keyvals[1]->type = ORTE_NULL;
     
-   fprintf(test_out, "setting trigger\n");
-   
-   trigs = &trig;
-   
-   /* enter things as three different subscriptions */
-   rc = orte_gpr.subscribe(
-         ORTE_GPR_TRIG_CMP_LEVELS | ORTE_GPR_TRIG_MONITOR_ONLY,
-         2, subscriptions,
-         1, &trigs,
-         sub);
-
-
-   rc = orte_gpr.subscribe(
-         ORTE_GPR_TRIG_CMP_LEVELS | ORTE_GPR_TRIG_MONITOR_ONLY,
-         2, &(subscriptions[2]),
-         1, &trigs,
-         sub);
-
-   rc = orte_gpr.subscribe(
-         ORTE_GPR_TRIG_CMP_LEVELS | ORTE_GPR_TRIG_MONITOR_ONLY,
-         1, &(subscriptions[4]),
-         1, &trigs,
-         sub);
-
-    for (i=0; i < 5; i++) OBJ_RELEASE(subscriptions[i]);
-    OBJ_DESTRUCT(&trig);
-
-    if(ORTE_SUCCESS != rc) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
+        if(ORTE_SUCCESS != rc) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
     }
 
     orte_gpr.dump_triggers(0);
+    return ORTE_SUCCESS;
     
     fprintf(test_out, "incrementing until trigger\n");
     /* increment the value in keys[1] until the trig fires */

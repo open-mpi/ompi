@@ -100,14 +100,12 @@ CLEANUP:
     if (NULL != itags) {
 	   free(itags);
     }
-
-    OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
-
   
     if (ORTE_SUCCESS == rc) {
-        return orte_gpr_replica_process_callbacks();
+        rc = orte_gpr_replica_process_callbacks();
     }
 
+    OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
 
     return rc;
 

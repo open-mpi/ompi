@@ -394,7 +394,7 @@ static void orte_gpr_replica_dump_trigger(orte_buffer_t *buffer, int cnt,
     
         }  /* if data[i] not NULL */
     }  /* for i */
-    
+        
     if (0 < trig->num_counters) {
         if (ORTE_GPR_TRIG_AT_LEVEL & trig->action) {
             asprintf(&tmp_out, "\tTrigger monitoring %d counters for level", trig->num_counters);

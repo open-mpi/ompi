@@ -43,8 +43,6 @@ int orte_gpr_replica_recv_delete_segment_cmd(orte_buffer_t *buffer, orte_buffer_
         return rc;
     }
     
-    OMPI_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
-
     n = 1;
     if (ORTE_SUCCESS != (ret = orte_dps.unpack(buffer, &segment, &n, ORTE_STRING))) {
         ORTE_ERROR_LOG(ret);
@@ -63,12 +61,9 @@ int orte_gpr_replica_recv_delete_segment_cmd(orte_buffer_t *buffer, orte_buffer_
  RETURN_ERROR:
     if (ORTE_SUCCESS != (rc = orte_dps.pack(answer, &ret, 1, ORTE_INT))) {
         ORTE_ERROR_LOG(rc);
-        OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
         return rc;
     }
     
-    OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
-
     return ret;
 }
 
@@ -87,8 +82,6 @@ int orte_gpr_replica_recv_delete_entries_cmd(orte_buffer_t *buffer, orte_buffer_
         return rc;
     }
     
-    OMPI_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
-
     n = 1;
     if (ORTE_SUCCESS != (ret = orte_dps.unpack(buffer, &addr_mode, &n, ORTE_GPR_ADDR_MODE))) {
         ORTE_ERROR_LOG(ret);
@@ -197,12 +190,9 @@ int orte_gpr_replica_recv_delete_entries_cmd(orte_buffer_t *buffer, orte_buffer_
 
     if (ORTE_SUCCESS != (rc = orte_dps.pack(answer, &ret, 1, ORTE_INT))) {
         ORTE_ERROR_LOG(rc);
-        OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
         return rc;
     }
     
-    OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
-
     return ret;
 }
 
@@ -221,8 +211,6 @@ int orte_gpr_replica_recv_index_cmd(orte_buffer_t *buffer,
         return rc;
     }
     
-    OMPI_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
-
     if (ORTE_SUCCESS != (ret = orte_dps.peek(buffer, &type, &n))) {
         ORTE_ERROR_LOG(ret);
         goto RETURN_ERROR;
@@ -283,11 +271,8 @@ RETURN_PACK_ERROR:
     
     if (ORTE_SUCCESS != (rc = orte_dps.pack(answer, &ret, 1, ORTE_INT))) {
         ORTE_ERROR_LOG(rc);
-        OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
         return rc;
     }
     
-    OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
-
     return ret;
 }

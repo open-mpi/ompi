@@ -85,10 +85,14 @@ int orte_gpr_replica_remote_notify(orte_process_name_t *recipient, ompi_list_t *
         OBJ_RELEASE(msg);
     }
 
+    OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
+    
     if (0 > orte_rml.send_buffer(recipient, &buffer, ORTE_RML_TAG_GPR_NOTIFY, 0)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+        OMPI_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
         return ORTE_ERR_COMM_FAILURE;
     }
+    OMPI_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
 
     return ORTE_SUCCESS;
 }

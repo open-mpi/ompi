@@ -187,9 +187,25 @@ int main(int argc, char **argv)
     } else {
         fprintf(test_out, "gpr_test: put 1 value/multiple keyval passed\n");
     }
-
+    OBJ_RELEASE(val);
+    
     fprintf(stderr, "put 1 value/multiple keyvals - second container\n");
+    val = OBJ_NEW(orte_gpr_value_t);
+    val->addr_mode = ORTE_GPR_NO_OVERWRITE | ORTE_GPR_TOKENS_XAND;
+    val->segment = strdup("test-put-segment");
     val->num_tokens = 10;
+    val->tokens = (char**)malloc(val->num_tokens * sizeof(char*));
+    for (i=0; i < val->num_tokens; i++) {
+        asprintf(&(val->tokens[i]), "dummy%d", i);
+    }
+    val->cnt = 20;
+    val->keyvals = (orte_gpr_keyval_t**)malloc(val->cnt * sizeof(orte_gpr_keyval_t*));
+    for (i=0; i<val->cnt; i++) {
+        val->keyvals[i] = OBJ_NEW(orte_gpr_keyval_t);
+        asprintf(&((val->keyvals[i])->key), "stupid-test-%d", i);
+        (val->keyvals[i])->type = ORTE_UINT32;
+        (val->keyvals[i])->value.ui32 = (uint32_t)i;
+    }
     if (ORTE_SUCCESS != (rc = orte_gpr_replica_put(1, &val))) {
         fprintf(test_out, "gpr_test: put 1 value/multiple keyval in second container failed with error code %s\n",
                     ORTE_ERROR_NAME(rc));
@@ -199,8 +215,6 @@ int main(int argc, char **argv)
     } else {
         fprintf(test_out, "gpr_test: put 1 value/multiple keyval in second container passed\n");
     }
-    /* reset the num_tokens so we cleanup properly */
-    val->num_tokens = 14;
     OBJ_RELEASE(val);
     
     fprintf(stderr, "dump\n");
@@ -339,6 +353,7 @@ int main(int argc, char **argv)
     
     orte_gpr.dump_all(0);
     
+
     fprintf(stderr, "now finalize and see if all memory cleared\n");
     orte_dps_close();
     orte_gpr_base_close();
@@ -347,6 +362,7 @@ int main(int argc, char **argv)
     mca_base_close();
     ompi_malloc_finalize();
     ompi_output_finalize();
+    ompi_class_finalize();
 
     fclose( test_out );
 /*    result = system( cmd_str );

@@ -123,12 +123,11 @@ int orte_gpr_replica_exec_compound_cmd(void)
 	   ompi_condition_signal(&orte_gpr_replica_globals.compound_cmd_condition);
     }
 
-    OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.wait_for_compound_mutex);
-
-    if (ORTE_SUCCESS != rc) {
-        return rc;
+    if (ORTE_SUCCESS == rc) {
+        rc = orte_gpr_replica_process_callbacks();
     }
     
-    return orte_gpr_replica_process_callbacks();
+    OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.wait_for_compound_mutex);
 
+    return rc;
 }

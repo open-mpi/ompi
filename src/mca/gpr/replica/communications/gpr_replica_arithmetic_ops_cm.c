@@ -51,11 +51,9 @@ int orte_gpr_replica_recv_increment_value_cmd(orte_buffer_t *cmd, orte_buffer_t 
         goto RETURN_ERROR;
     }
 
-    OMPI_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
     /* find the segment */
     if (ORTE_SUCCESS != (rc = orte_gpr_replica_find_seg(&seg, true, value->segment))) {
         ORTE_ERROR_LOG(rc);
-        OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
         ret = rc;
         goto RETURN_ERROR;
     }
@@ -64,7 +62,7 @@ int orte_gpr_replica_recv_increment_value_cmd(orte_buffer_t *cmd, orte_buffer_t 
     if (ORTE_SUCCESS != (rc = orte_gpr_replica_get_itag_list(&itags, seg,
                                         value->tokens, &(value->num_tokens)))) {
         ORTE_ERROR_LOG(rc);
-         ret = rc;
+        ret = rc;
         goto RETURN_ERROR;
     }
     
@@ -82,7 +80,6 @@ int orte_gpr_replica_recv_increment_value_cmd(orte_buffer_t *cmd, orte_buffer_t 
         if (ORTE_SUCCESS != 
             (rc = orte_gpr_replica_check_subscriptions(seg, ORTE_GPR_REPLICA_VALUE_INCREMENTED))) {
             ORTE_ERROR_LOG(rc);
-            OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
             return rc;
         }
     }
@@ -90,11 +87,8 @@ int orte_gpr_replica_recv_increment_value_cmd(orte_buffer_t *cmd, orte_buffer_t 
  RETURN_ERROR:
     if (ORTE_SUCCESS != (rc = orte_dps.pack(answer, &ret, 1, ORTE_INT))) {
         ORTE_ERROR_LOG(rc);
-        OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
         return rc;
     }
-    
-    OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
 
     return ret;
 }
@@ -120,11 +114,9 @@ int orte_gpr_replica_recv_decrement_value_cmd(orte_buffer_t *cmd, orte_buffer_t 
         goto RETURN_ERROR;
     }
 
-    OMPI_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
     /* find the segment */
     if (ORTE_SUCCESS != (rc = orte_gpr_replica_find_seg(&seg, true, value->segment))) {
         ORTE_ERROR_LOG(rc);
-        OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
         ret = rc;
         goto RETURN_ERROR;
     }
@@ -133,7 +125,6 @@ int orte_gpr_replica_recv_decrement_value_cmd(orte_buffer_t *cmd, orte_buffer_t 
     if (ORTE_SUCCESS != (rc = orte_gpr_replica_get_itag_list(&itags, seg,
                                         value->tokens, &(value->num_tokens)))) {
         ORTE_ERROR_LOG(rc);
-        OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
         ret = rc;
         goto RETURN_ERROR;
     }
@@ -152,7 +143,6 @@ int orte_gpr_replica_recv_decrement_value_cmd(orte_buffer_t *cmd, orte_buffer_t 
         if (ORTE_SUCCESS != 
             (rc = orte_gpr_replica_check_subscriptions(seg, ORTE_GPR_REPLICA_VALUE_DECREMENTED))) {
             ORTE_ERROR_LOG(rc);
-            OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
             return rc;
         }
     }
@@ -160,11 +150,8 @@ int orte_gpr_replica_recv_decrement_value_cmd(orte_buffer_t *cmd, orte_buffer_t 
  RETURN_ERROR:
     if (ORTE_SUCCESS != (rc = orte_dps.pack(answer, &ret, 1, ORTE_INT))) {
         ORTE_ERROR_LOG(rc);
-        OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
         return rc;
     }
     
-    OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
-
     return ret;
 }

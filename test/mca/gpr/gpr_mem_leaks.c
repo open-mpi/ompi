@@ -220,7 +220,8 @@ int main(int argc, char **argv)
     mca_base_close();
     ompi_malloc_finalize();
     ompi_output_finalize();
-    
+    ompi_class_finalize();
+
     fclose( test_out );
 /*    result = system( cmd_str );
     if( result == 0 ) {
