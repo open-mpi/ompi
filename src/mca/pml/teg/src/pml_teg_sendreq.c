@@ -147,24 +147,23 @@ void mca_pml_teg_send_request_progress(
             MCA_PML_TEG_FREE((ompi_request_t**)&req);
         } 
         OMPI_THREAD_UNLOCK(&ompi_request_lock);
-
-        /* check for pending requests that need to be progressed */
-        while(ompi_list_get_size(&mca_pml_teg.teg_send_pending) != 0) {
-            OMPI_THREAD_LOCK(&mca_pml_teg.teg_lock); 
-            req = (mca_pml_base_send_request_t*)ompi_list_remove_first(&mca_pml_teg.teg_send_pending);
-            OMPI_THREAD_UNLOCK(&mca_pml_teg.teg_lock);
-            if(req == NULL)
-                break;
-            if(mca_pml_teg_send_request_schedule(req) != OMPI_SUCCESS)
-                break;
-        }
-        return;
     } 
     OMPI_THREAD_UNLOCK(&ompi_request_lock);
 
     /* if first fragment - schedule remaining fragments */
     if(first_frag == true) {
         mca_pml_teg_send_request_schedule(req);
+    }
+
+    /* check for pending requests that need to be progressed */
+    while(ompi_list_get_size(&mca_pml_teg.teg_send_pending) != 0) {
+        OMPI_THREAD_LOCK(&mca_pml_teg.teg_lock); 
+        req = (mca_pml_base_send_request_t*)ompi_list_remove_first(&mca_pml_teg.teg_send_pending);
+        OMPI_THREAD_UNLOCK(&mca_pml_teg.teg_lock);
+        if(req == NULL)
+            break;
+        if(mca_pml_teg_send_request_schedule(req) != OMPI_SUCCESS)
+            break;
     }
 }
 
