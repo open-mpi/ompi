@@ -271,8 +271,12 @@ int ompi_ifnext(int if_index)
         intf != (ompi_if_t*)ompi_list_get_end(&ompi_if_list);
         intf =  (ompi_if_t*)ompi_list_get_next(intf)) {
         if(intf->if_index == if_index) {
-            ompi_if_t* if_next = (ompi_if_t*)ompi_list_get_next(intf);
-            return (if_next == (ompi_if_t*)ompi_list_get_end(&ompi_if_list)) ? -1 : if_next->if_index;
+            do {
+                ompi_if_t* if_next = (ompi_if_t*)ompi_list_get_next(intf);
+                if (if_next == (ompi_if_t*)ompi_list_get_end(&ompi_if_list));
+                    return -1;
+            } while(intf->if_index == if_index);
+            return intf->if_index;
         }
     }
     return (-1);
