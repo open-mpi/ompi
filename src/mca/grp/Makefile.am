@@ -18,21 +18,7 @@ AM_CPPFLAGS = \
 
 libs = $(top_builddir)/src/libmpi.la
 
-bin_PROGRAMS = \
-        registry
-
-registry_SOURCES = \
-        registry.h \
-        registry.c
-
-registry_LDADD = \
-        $(libs) \
-        $(LIBMPI_EXTRA_LIBS) \
-        $(LIBOMPI_EXTRA_LIBS)
-
-registry__DFLAGS = $(LIBMPI_EXTRA_LDFLAGS) $(LIBOMPI_EXTRA_LDFLAGS)
-registry_DEPENDENCIES = $(libs) \
-                       $(registry_LDADD)
+bin_PROGRAMS = 
 
 clean-local:
 	test -z "$(OMPI_CXX_TEMPLATE_REPOSITORY)" || $(RM) -rf $(OMPI_CXX_TEMPLATE_REPOSITORY)
