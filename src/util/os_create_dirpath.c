@@ -124,7 +124,7 @@ int ompi_os_create_dirpath(const char *path, const mode_t mode)
            Create it if it doesn't exist. */
 
         if (0 != stat(tmp, &buf)) {
-            if (0 != mkdir(tmp, mode) || 0 != stat(tmp, &buf)) { 
+            if (0 != mkdir(tmp, mode) && 0 != stat(tmp, &buf)) { 
                 ompi_argv_free(parts);
                 free(tmp);
                 return OMPI_ERROR;
