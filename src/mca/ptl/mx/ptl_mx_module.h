@@ -17,7 +17,7 @@
  *  Post a receive for short messages (<32 K)
  */
                                                                                                   
-#define MCA_PTL_MX_POST(ptl) \
+#define MCA_PTL_MX_POST(ptl, match, header_size) \
 do { \
     mca_ptl_mx_recv_frag_t *frag; \
     mx_return_t mx_return; \
@@ -26,23 +26,24 @@ do { \
     MCA_PTL_MX_RECV_FRAG_ALLOC(frag, rc); \
     if(rc != OMPI_SUCCESS) { \
         ompi_output(0, "mca_ptl_mx_match: unable to allocate resources.\n"); \
-        return; \
+        break; \
     } \
+    frag->frag_size = 0; \
     frag->frag_recv.frag_base.frag_owner = &ptl->super; \
     frag->frag_recv.frag_base.frag_peer = NULL; \
- \
-    frag->frag_size = 0; \
     frag->frag_recv.frag_base.frag_size = 0; \
     frag->frag_recv.frag_base.frag_addr = frag->frag_data; \
     frag->frag_recv.frag_is_buffered = true; \
     frag->frag_recv.frag_request = NULL; \
+    frag->frag_segments[0].segment_length = header_size; \
+    frag->frag_segments[1].segment_ptr = frag->frag_data; \
+    frag->frag_segments[1].segment_length = sizeof(frag->frag_data); \
     frag->frag_segment_count = 2; \
-    OMPI_THREAD_ADD32(&ptl->mx_recvs_posted, 1); \
     mx_return = mx_irecv( \
         ptl->mx_endpoint, \
         frag->frag_segments, \
         frag->frag_segment_count, \
-        0, \
+        match, \
         MX_MATCH_MASK_NONE, \
         frag, \
         &frag->frag_request); \
@@ -76,8 +77,17 @@ do {                                                                            
             switch(hdr->hdr_common.hdr_type) {                                      \
                 case MCA_PTL_HDR_TYPE_MATCH:                                        \
                 {                                                                   \
+                    recvfrag->frag_size = hdr->hdr_match.hdr_msg_length;            \
                     MCA_PTL_MX_RECV_FRAG_MATCH(recvfrag,hdr);                       \
                     OMPI_THREAD_ADD32(&ptl->mx_recvs_posted, -1);                   \
+                    break;                                                          \
+                }                                                                   \
+                case MCA_PTL_HDR_TYPE_RNDV:                                         \
+                {                                                                   \
+                    recvfrag->frag_size = hdr->hdr_rndv.hdr_frag_length;            \
+                    MCA_PTL_MX_RECV_FRAG_MATCH(recvfrag,hdr);                       \
+                    MCA_PTL_MX_POST(ptl, MCA_PTL_HDR_TYPE_RNDV,                     \
+                        sizeof(mca_ptl_base_rendezvous_header_t));                  \
                     break;                                                          \
                 }                                                                   \
                 case MCA_PTL_HDR_TYPE_FRAG:                                         \
@@ -95,7 +105,8 @@ do {                                                                            
                     sendreq->req_peer_match = hdr->hdr_ack.hdr_dst_match;           \
                     MCA_PTL_MX_SEND_FRAG_PROGRESS(sendfrag);                        \
                     MCA_PTL_MX_RECV_FRAG_RETURN(recvfrag);                          \
-                    OMPI_THREAD_ADD32(&ptl->mx_recvs_posted, -1);                   \
+                    MCA_PTL_MX_POST(ptl, MCA_PTL_HDR_TYPE_ACK,                      \
+                        sizeof(mca_ptl_base_ack_header_t));                         \
                     break;                                                          \
                 }                                                                   \
             }                                                                       \
@@ -103,7 +114,7 @@ do {                                                                            
         }                                                                           \
         default:                                                                    \
         {                                                                           \
-            ompi_output(0, "mca_ptl_mx_progress: invalid request type: %dn",        \
+            ompi_output(0, "mca_ptl_mx_progress: invalid request type: %d",         \
                 frag->frag_type);                                                   \
             break;                                                                  \
         }                                                                           \

@@ -22,7 +22,7 @@ OBJ_CLASS_INSTANCE(
 static void mca_ptl_mx_peer_construct(mca_ptl_base_peer_t* ptl_peer)
 {
     ptl_peer->peer_ptl = NULL;
-    ptl_peer->peer_byte_swap = false;
+    ptl_peer->peer_nbo = false;
 }
 
 /*

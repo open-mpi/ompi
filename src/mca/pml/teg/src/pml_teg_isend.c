@@ -49,9 +49,6 @@ int mca_pml_teg_isend(void *buf,
     int rc;
     mca_pml_base_send_request_t *sendreq;
     MCA_PML_TEG_SEND_REQUEST_ALLOC(comm, dst, sendreq, rc);
-#if MCA_PML_TEG_STATISTICS
-    mca_pml_teg.teg_isends++;
-#endif
     if (rc != OMPI_SUCCESS)
         return rc;
     MCA_PML_BASE_SEND_REQUEST_INIT(sendreq,
@@ -79,9 +76,6 @@ int mca_pml_teg_send(void *buf,
     int rc;
     mca_pml_base_send_request_t *sendreq;
     MCA_PML_TEG_SEND_REQUEST_ALLOC(comm, dst, sendreq, rc);
-#if MCA_PML_TEG_STATISTICS
-    mca_pml_teg.teg_sends++;
-#endif
     if (rc != OMPI_SUCCESS)
         return rc;
 

@@ -33,7 +33,7 @@ struct mca_pml_base_send_request_t {
     struct mca_ptl_base_peer_t* req_peer;    /**< PTL peer instance that will be used for first fragment */
     ompi_ptr_t req_peer_match;               /**< matched receive at peer */
     ompi_ptr_t req_peer_addr;                /**< peers remote buffer address */
-    size_t req_peer_size;                    /**< size of peers remote buffer */
+    uint64_t req_peer_size;                    /**< size of peers remote buffer */
     bool req_cached;                         /**< has this request been obtained from the ptls cache */
     ompi_convertor_t req_convertor;          /**< convertor that describes this datatype */
     volatile int32_t req_lock;               /**< lock used by the scheduler */
@@ -135,10 +135,7 @@ static inline void mca_pml_base_send_request_offset(
     mca_pml_base_send_request_t* request,
     size_t offset)
 {
-    if(ompi_using_threads())
-        ompi_atomic_add( &(request->req_offset), offset );
-    else
-        request->req_offset += offset;
+    OMPI_THREAD_ADD32((int32_t*)(&request->req_offset), offset);
 }
 
 #if defined(c_plusplus) || defined(__cplusplus)

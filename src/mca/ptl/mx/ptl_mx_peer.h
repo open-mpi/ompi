@@ -18,7 +18,7 @@ struct mca_ptl_base_peer_t {
     mx_endpoint_addr_t peer_addr;
     struct mca_ptl_mx_module_t* peer_ptl;
     struct mca_ptl_mx_proc_t* peer_proc;
-    bool peer_byte_swap;
+    bool peer_nbo; 
 };
 typedef struct mca_ptl_base_peer_t mca_ptl_base_peer_t;
 typedef struct mca_ptl_base_peer_t mca_ptl_mx_peer_t;

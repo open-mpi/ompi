@@ -65,11 +65,14 @@ bool mca_ptl_tcp_recv_frag_handler(mca_ptl_tcp_recv_frag_t* frag, int sd)
             return false;
 
         /* convert this to host byte order if required */
-        if(frag->frag_recv.frag_base.frag_peer->peer_byte_swap) {
+        if(frag->frag_recv.frag_base.frag_peer->peer_nbo) {
             /* note this field is only a byte - so doesn't matter what the byte ordering is */
             switch(frag->frag_recv.frag_base.frag_header.hdr_common.hdr_type) {
                 case MCA_PTL_HDR_TYPE_MATCH:
                     MCA_PTL_BASE_MATCH_HDR_NTOH(frag->frag_recv.frag_base.frag_header.hdr_match);
+                    break;
+                case MCA_PTL_HDR_TYPE_RNDV:
+                    MCA_PTL_BASE_RNDV_HDR_NTOH(frag->frag_recv.frag_base.frag_header.hdr_rndv);
                     break;
                 case MCA_PTL_HDR_TYPE_FRAG:
                     MCA_PTL_BASE_FRAG_HDR_NTOH(frag->frag_recv.frag_base.frag_header.hdr_frag);
@@ -88,6 +91,7 @@ bool mca_ptl_tcp_recv_frag_handler(mca_ptl_tcp_recv_frag_t* frag, int sd)
 
     switch(frag->frag_recv.frag_base.frag_header.hdr_common.hdr_type) {
     case MCA_PTL_HDR_TYPE_MATCH:
+    case MCA_PTL_HDR_TYPE_RNDV:
          return mca_ptl_tcp_recv_frag_match(frag, sd);
     case MCA_PTL_HDR_TYPE_FRAG:
         return mca_ptl_tcp_recv_frag_frag(frag, sd);
@@ -170,15 +174,18 @@ static bool mca_ptl_tcp_recv_frag_match(mca_ptl_tcp_recv_frag_t* frag, int sd)
             ptl,
             &frag->frag_recv, 
             &frag->frag_recv.frag_base.frag_header.hdr_match)) {
-            mca_ptl_tcp_recv_frag_matched(frag);
+            mca_ptl_tcp_recv_frag_matched(frag, 0, frag->frag_recv.frag_base.frag_header.hdr_rndv.hdr_frag_length);
         } else {
             /* match was not made - so allocate buffer for eager send */
-            if(frag->frag_recv.frag_base.frag_header.hdr_frag.hdr_frag_length > 0) {
-                frag->frag_recv.frag_base.frag_addr = 
-                    malloc(frag->frag_recv.frag_base.frag_header.hdr_frag.hdr_frag_length);
-                frag->frag_recv.frag_base.frag_size = 
-                    frag->frag_recv.frag_base.frag_header.hdr_frag.hdr_frag_length;
+            if(frag->frag_recv.frag_base.frag_header.hdr_match.hdr_msg_length > 0) {
+                frag->frag_size = frag->frag_recv.frag_base.frag_header.hdr_rndv.hdr_frag_length;
+                frag->frag_recv.frag_base.frag_addr = malloc(frag->frag_size);
+                frag->frag_recv.frag_base.frag_size = frag->frag_size;
                 frag->frag_recv.frag_is_buffered = true;
+            } else {
+                frag->frag_recv.frag_base.frag_size = 0;
+                frag->frag_recv.frag_is_buffered = false;
+                frag->frag_size = 0;
             }
         }
     } 
@@ -191,14 +198,13 @@ static bool mca_ptl_tcp_recv_frag_match(mca_ptl_tcp_recv_frag_t* frag, int sd)
     }
 
     /* discard any data that exceeds the posted receive */
-    if(frag->frag_msg_cnt < frag->frag_recv.frag_base.frag_header.hdr_frag.hdr_frag_length)
+    if(frag->frag_msg_cnt < frag->frag_size) {
         if(mca_ptl_tcp_recv_frag_discard(frag, sd) == false) {
             return false;
+        }
     }
 
-    /* if fragment has already been matched - go ahead and process */
-    if (NULL != frag->frag_recv.frag_request) 
-        mca_ptl_tcp_recv_frag_progress(frag);
+    mca_ptl_tcp_recv_frag_progress(frag);
     return true;
 }
 
@@ -212,7 +218,9 @@ static bool mca_ptl_tcp_recv_frag_frag(mca_ptl_tcp_recv_frag_t* frag, int sd)
     /* get request from header */
     if(frag->frag_msg_cnt == 0) {
         frag->frag_recv.frag_request = (mca_pml_base_recv_request_t *)frag->frag_recv.frag_base.frag_header.hdr_frag.hdr_dst_ptr.pval;
-        mca_ptl_tcp_recv_frag_matched(frag);
+        mca_ptl_tcp_recv_frag_matched(frag, 
+            frag->frag_recv.frag_base.frag_header.hdr_frag.hdr_frag_offset,
+            frag->frag_recv.frag_base.frag_header.hdr_frag.hdr_frag_length);
     }
 
     /* continue to receive user data */
@@ -221,9 +229,10 @@ static bool mca_ptl_tcp_recv_frag_frag(mca_ptl_tcp_recv_frag_t* frag, int sd)
             return false;
     }
 
-    if(frag->frag_msg_cnt < frag->frag_recv.frag_base.frag_header.hdr_frag.hdr_frag_length)
+    if(frag->frag_msg_cnt < frag->frag_size) {
         if(mca_ptl_tcp_recv_frag_discard(frag, sd) == false)
             return false;
+    }
 
     /* indicate completion status */
     mca_ptl_tcp_recv_frag_progress(frag);
@@ -275,8 +284,8 @@ static bool mca_ptl_tcp_recv_frag_data(mca_ptl_tcp_recv_frag_t* frag, int sd)
 
 static bool mca_ptl_tcp_recv_frag_discard(mca_ptl_tcp_recv_frag_t* frag, int sd)
 {
-    while(frag->frag_msg_cnt < frag->frag_recv.frag_base.frag_header.hdr_frag.hdr_frag_length) {
-        size_t count = frag->frag_recv.frag_base.frag_header.hdr_frag.hdr_frag_length - frag->frag_msg_cnt;
+    while(frag->frag_msg_cnt < frag->frag_size) {
+        size_t count = frag->frag_size - frag->frag_msg_cnt;
         void *rbuf = malloc(count);
         int cnt = recv(sd, (char *)rbuf, count, 0);
         free(rbuf);

@@ -164,20 +164,33 @@ static void mca_ptl_mx_match(void* context, uint64_t match_value, int size)
     ompi_convertor_t* convertor;
     int rc;
 
-    if(match_value == 0)
+    /* use of the sizeof of the header as the match value */
+    if(match_value <= MCA_PTL_HDR_TYPE_MAX)
         return;
 
+    /* otherwise extract request pointer and offset */
+    match.lval = match_value;
     request = (mca_pml_base_recv_request_t*)match.sval.uval;
     offset = match.sval.lval;
     proc = ompi_comm_peer_lookup(request->req_base.req_comm,
     	request->req_base.req_ompi.req_status.MPI_SOURCE);
-    convertor = &frag->frag_recv.frag_base.frag_convertor;
+
+    /* allocate a fragment for receive */
+    MCA_PTL_MX_RECV_FRAG_ALLOC(frag, rc); 
+    if(rc != OMPI_SUCCESS) { 
+        ompi_output(0, "mca_ptl_mx_match: unable to allocate resources.\n");
+        return;
+    }
 
     frag->frag_size = size;
-    frag->frag_recv.frag_base.frag_size = size;
-    frag->frag_recv.frag_base.frag_header.hdr_common.hdr_type =
-    	MCA_PTL_HDR_TYPE_FRAG;
     frag->frag_recv.frag_request = request;
+    frag->frag_recv.frag_base.frag_peer = NULL; 
+    frag->frag_recv.frag_base.frag_owner = &ptl->super; 
+    frag->frag_recv.frag_base.frag_size = frag->frag_size;
+    frag->frag_recv.frag_base.frag_header.hdr_common.hdr_type = 
+        MCA_PTL_HDR_TYPE_FRAG;
+    frag->frag_recv.frag_base.frag_header.hdr_common.hdr_flags = 0;
+    convertor = &frag->frag_recv.frag_base.frag_convertor;
 
     /* initialize convertor */
     ompi_convertor_copy(proc->proc_convertor, convertor);
@@ -200,16 +213,16 @@ static void mca_ptl_mx_match(void* context, uint64_t match_value, int size)
     	frag->frag_recv.frag_is_buffered = true;
     	frag->frag_recv.frag_base.frag_addr = malloc(frag->frag_size);
     	if( NULL == frag->frag_recv.frag_base.frag_addr ) {
-        ompi_output(0, "mca_ptl_mx_match: unable to allocate buffer (%d)\n", frag->frag_size);
-        MCA_PTL_MX_RECV_FRAG_RETURN(frag);
-        return;
+            ompi_output(0, "mca_ptl_mx_match: unable to allocate buffer (%d)\n", frag->frag_size);
+            MCA_PTL_MX_RECV_FRAG_RETURN(frag);
+            return;
     	}
 
     	/* check for sending more than receiving */
     	if( offset > request->req_bytes_packed ) {
-        frag->frag_recv.frag_base.frag_size = 0;
+            frag->frag_recv.frag_base.frag_size = 0;
     	} else if (offset + frag->frag_size > request->req_bytes_packed ) {
-        frag->frag_recv.frag_base.frag_size = request->req_bytes_packed - offset;
+            frag->frag_recv.frag_base.frag_size = request->req_bytes_packed - offset;
     	}
     /* calculate offset into users buffer */
     } else {
@@ -296,8 +309,10 @@ static mca_ptl_mx_module_t* mca_ptl_mx_create(uint64_t addr)
     }
 
     /* prepost a receive buffer */
-    ptl->mx_recvs_posted = 0;
-    MCA_PTL_MX_POST(ptl);
+    ptl->mx_recvs_posted = 1;
+    MCA_PTL_MX_POST(ptl, MCA_PTL_HDR_TYPE_MATCH, sizeof(mca_ptl_base_match_header_t));
+    MCA_PTL_MX_POST(ptl, MCA_PTL_HDR_TYPE_RNDV, sizeof(mca_ptl_base_rendezvous_header_t));
+    MCA_PTL_MX_POST(ptl, MCA_PTL_HDR_TYPE_ACK, sizeof(mca_ptl_base_ack_header_t));
 
     /* register a callback function for matching */
     mx_register_match_callback(ptl->mx_endpoint, mca_ptl_mx_match, ptl);
@@ -406,8 +421,9 @@ int mca_ptl_mx_add_procs(
             return rc;
         }
         /* do we need to convert to/from network byte order */
-        if(procs[n]->proc_arch != proc_self->proc_arch)
-            ptl_peer->peer_byte_swap = true;
+        if(procs[n]->proc_arch != proc_self->proc_arch) {
+            ptl_peer->peer_nbo = true;
+        }
 
         /* set peer as reachable */
         ompi_bitmap_set_bit(reachable, n);

@@ -59,6 +59,19 @@ do {                                                                       \
 
 
 /**
+ *  Callback on receipt of a rendezvous fragment.
+ */
+
+#define MCA_PTL_MX_RECV_FRAG_RNDV(frag, hdr)                               \
+do {                                                                       \
+    if(hdr->hdr_common.hdr_flags & MCA_PTL_FLAGS_NBO) {                    \
+         MCA_PTL_BASE_MATCH_HDR_NTOH(hdr->hdr_match);                      \
+    }                                                                      \
+    ptl->super.ptl_match(&ptl->super, &frag->frag_recv, &hdr->hdr_match);  \
+} while(0) 
+
+
+/**
  * Process a fragment that completed.
  */
 
@@ -89,23 +102,6 @@ do { \
  \
     MCA_PTL_MX_RECV_FRAG_RETURN(frag); \
 } while(0)
-
-/**
- * Process an acknowledgment.
- */
-
-static inline void MCA_PTL_MX_RECV_FRAG_ACK(
-    mca_ptl_mx_recv_frag_t* frag,
-    mca_ptl_base_header_t* hdr)
-{
-    mca_ptl_mx_send_frag_t* sendfrag;
-    mca_pml_base_send_request_t* sendreq;
-    sendfrag = (mca_ptl_mx_send_frag_t*)frag->frag_recv.frag_base.frag_header.hdr_ack.hdr_src_ptr.pval;
-    sendreq = sendfrag->frag_send.frag_request;
-    sendreq->req_peer_match = frag->frag_recv.frag_base.frag_header.hdr_ack.hdr_dst_match;
-    MCA_PTL_MX_SEND_FRAG_PROGRESS(sendfrag);
-    MCA_PTL_MX_RECV_FRAG_RETURN(frag);
-}
 
 
 #endif

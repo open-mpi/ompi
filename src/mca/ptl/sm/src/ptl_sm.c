@@ -652,6 +652,7 @@ int mca_ptl_sm_send(
     int flags)
 {
     mca_ptl_sm_send_request_t *sm_request;
+    mca_ptl_sm_frag_t *send_frag;
     int my_local_smp_rank, peer_local_smp_rank;
     int return_status=OMPI_SUCCESS;
     ompi_fifo_t *send_fifo;
@@ -667,6 +668,7 @@ int mca_ptl_sm_send(
         /* in this ptl, we will only use the cache, or fail */
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
+    send_frag = sm_request->req_frag;
 
     /* if needed, pack data in payload buffer */
     if( 0 < size ) {
@@ -687,7 +689,7 @@ int mca_ptl_sm_send(
 
         /* set up the shared memory iovec */
         address.iov_base=sm_data_ptr;
-        address.iov_len=sm_request->req_frag->buff_length;
+        address.iov_len= (size < send_frag->buff_length) ? size : send_frag->buff_length;
 
         convertor = &sendreq->req_convertor;
         iov_count=1;
@@ -697,19 +699,15 @@ int mca_ptl_sm_send(
         if( 0 > return_status ) {
             return OMPI_ERROR;
         }
+        size = max_data;
     }
 
     /* fill in the fragment descriptor */
     /* get pointer to the fragment header */
-    hdr = &(sm_request->req_frag->super.frag_base.frag_header);
+    hdr = &(send_frag->super.frag_base.frag_header);
 
     hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_MATCH;
     hdr->hdr_common.hdr_flags = flags;
-    
-    hdr->hdr_common.hdr_size = sizeof(mca_ptl_base_match_header_t);
-    hdr->hdr_frag.hdr_frag_seq = 0;
-    hdr->hdr_frag.hdr_src_ptr.pval = sendreq;
-    hdr->hdr_frag.hdr_dst_ptr.lval = 0;
     hdr->hdr_match.hdr_contextid = sendreq->req_base.req_comm->c_contextid;
     hdr->hdr_match.hdr_src = sendreq->req_base.req_comm->c_my_rank;
     hdr->hdr_match.hdr_dst = sendreq->req_base.req_peer;
@@ -722,7 +720,9 @@ int mca_ptl_sm_send(
     /* 
      * update the fragment descriptor 
      */
-    sm_request->req_frag->super.frag_base.frag_size=size;
+    send_frag->send_req = sendreq;
+    send_frag->send_offset = offset;
+    send_frag->super.frag_base.frag_size=size;
 
     /* 
      * post the descriptor in the queue - post with the relative
@@ -768,6 +768,10 @@ int mca_ptl_sm_send(
     if( ompi_using_threads() ) {
         ompi_atomic_unlock(&(send_fifo->head_lock));
     }
+
+    if(sendreq->req_bytes_packed == size)
+        ompi_request_complete(sendreq);
+
     /* return */
     return return_status;
 }
@@ -825,7 +829,7 @@ int mca_ptl_sm_send_continue(
 
     /* set up the shared memory iovec */
     address.iov_base=sm_data_ptr;
-    address.iov_len=send_frag->buff_length;
+    address.iov_len=(size < send_frag->buff_length) ? size : send_frag->buff_length;
 
     convertor = &sendreq->req_convertor;
     iov_count=1;
@@ -835,6 +839,7 @@ int mca_ptl_sm_send_continue(
     if( 0 > return_status ) {
         return OMPI_ERROR;
     }
+    size = max_data;
 
     /* fill in the fragment descriptor */
     /* get pointer to the fragment header */
@@ -842,10 +847,6 @@ int mca_ptl_sm_send_continue(
 
     hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_FRAG;
     hdr->hdr_frag.hdr_src_ptr.pval = sendreq;
-    /* set the pointer to the recv descriptor - this is valid only
-     * at the peer.  Get this value from the first fragment */
-    hdr->hdr_frag.hdr_dst_ptr.pval =
-        sm_request->req_frag->super.frag_request;
     /* set offset into the "packed" user send buffer */
     hdr->hdr_frag.hdr_frag_offset=offset;
     send_frag->super.frag_request=
@@ -858,6 +859,8 @@ int mca_ptl_sm_send_continue(
     /* 
      * update the fragment descriptor 
      */
+    send_frag->send_req = sendreq;
+    send_frag->send_offset = offset;
     send_frag->super.frag_base.frag_size=size;
 
     /* 

@@ -362,19 +362,16 @@ int mca_ptl_sm_component_progress(mca_ptl_tstamp_t tstamp)
                      *   so that MPI_Wait/Test on the send can complete
                      *   as soon as the data is copied intially into
                      *   the shared memory buffers */
-                    base_send_req=header_ptr->super.frag_base.frag_header.
-                        hdr_frag.hdr_src_ptr.pval;
 
                     header_ptr->send_ptl->ptl_send_progress(
                                 (mca_ptl_base_module_t *)&mca_ptl_sm,
-                                base_send_req,
+                                header_ptr->send_req,
                                 header_ptr->super.frag_base.frag_size);
 
                     /* if this is not the first fragment, recycle
                      * resources.  The first fragment is handled by
                      * the PML */
-                    if( 0 < header_ptr->super.frag_base.frag_header.
-                            hdr_frag.hdr_frag_offset ) {
+                    if( 0 < header_ptr->send_offset ) {
                         OMPI_FREE_LIST_RETURN(&mca_ptl_sm_component.sm_second_frags,
                                 (ompi_list_item_t *)header_ptr);
                     } 
@@ -473,7 +470,7 @@ int mca_ptl_sm_component_progress(mca_ptl_tstamp_t tstamp)
                      *   as soon as the data is copied intially into
                      *   the shared memory buffers */
                     base_send_req=header_ptr->super.frag_base.frag_header.
-                        hdr_frag.hdr_src_ptr.pval;
+                        hdr_rndv.hdr_src_ptr.pval;
 
                     header_ptr->send_ptl->ptl_send_progress(
                                 (mca_ptl_base_module_t *)&mca_ptl_sm,
@@ -483,8 +480,7 @@ int mca_ptl_sm_component_progress(mca_ptl_tstamp_t tstamp)
                     /* if this is not the first fragment, recycle
                      * resources.  The first fragment is handled by
                      * the PML */
-                    if( 0 < header_ptr->super.frag_base.frag_header.
-                            hdr_frag.hdr_frag_offset ) {
+                    if( 0 < header_ptr->send_offset ) {
                         OMPI_FREE_LIST_RETURN(&mca_ptl_sm_component.sm_second_frags,
                                 (ompi_list_item_t *)header_ptr);
                     } 

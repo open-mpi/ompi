@@ -20,7 +20,7 @@
 mca_ptl_mx_module_t mca_ptl_mx_module = {
     {
     &mca_ptl_mx_component.super,
-    8, /* ptl_cache_size */
+    16, /* ptl_cache_size */
     sizeof(mca_ptl_mx_send_frag_t), /* ptl_cache_bytes */
     (32 * 1024) - sizeof(mca_ptl_base_header_t), /* ptl_frag_first_size */
     0, /* ptl_frag_min_size */
@@ -138,7 +138,9 @@ int mca_ptl_mx_send(
     mca_ptl_mx_module_t* mx_ptl = (mca_ptl_mx_module_t*)ptl;
     mca_ptl_mx_send_frag_t* sendfrag;
     mca_ptl_base_header_t* hdr;
+    mx_segment_t *segments;
     mx_return_t mx_return;
+    ompi_ptr_t match;
     int rc;
 
     if (sendreq->req_cached) {
@@ -149,23 +151,6 @@ int mca_ptl_mx_send(
         if(NULL == (sendfrag = (mca_ptl_mx_send_frag_t*)item))
             return rc;
     }
-
-    /* setup message header */
-    hdr = &sendfrag->frag_send.frag_base.frag_header;
-    hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_MATCH;
-    hdr->hdr_common.hdr_flags = flags;
-    hdr->hdr_frag.hdr_frag_offset = offset;
-    hdr->hdr_common.hdr_size = sizeof(mca_ptl_base_match_header_t);
-    hdr->hdr_frag.hdr_frag_seq = 0;
-    hdr->hdr_frag.hdr_src_ptr.lval = 0; /* for VALGRIND/PURIFY - REPLACE WITH MACRO */
-    hdr->hdr_frag.hdr_src_ptr.pval = sendfrag;
-    hdr->hdr_frag.hdr_dst_ptr.lval = 0;
-    hdr->hdr_match.hdr_contextid = sendreq->req_base.req_comm->c_contextid;
-    hdr->hdr_match.hdr_src = sendreq->req_base.req_comm->c_my_rank;
-    hdr->hdr_match.hdr_dst = sendreq->req_base.req_peer;
-    hdr->hdr_match.hdr_tag = sendreq->req_base.req_tag;
-    hdr->hdr_match.hdr_msg_length = sendreq->req_bytes_packed;
-    hdr->hdr_match.hdr_msg_seq = sendreq->req_base.req_sequence;
 
     /* setup iovec */
     sendfrag->frag_progress = 0;
@@ -208,21 +193,78 @@ int mca_ptl_mx_send(
         }
         sendfrag->frag_segments[1].segment_ptr = iov.iov_base;
         sendfrag->frag_segments[1].segment_length = iov.iov_len;
-        sendfrag->frag_send.frag_base.frag_size = iov.iov_len;
-        sendfrag->frag_segment_count = 2;
         sendfrag->frag_send.frag_base.frag_addr = iov.iov_base;
+        sendfrag->frag_send.frag_base.frag_size = iov.iov_len;
     } else {
         sendfrag->frag_send.frag_base.frag_addr = NULL;
         sendfrag->frag_send.frag_base.frag_size = 0;
-        sendfrag->frag_segment_count = 1;
-        ompi_request_complete(&sendreq->req_base.req_ompi);
     }
-    hdr->hdr_frag.hdr_frag_length = sendfrag->frag_send.frag_base.frag_size;
-    
-    /* convert header to network byte order if required */
-    if(ptl_peer->peer_byte_swap) {
-        hdr->hdr_common.hdr_flags |= MCA_PTL_FLAGS_NBO;
-        MCA_PTL_BASE_MATCH_HDR_HTON(hdr->hdr_match);
+
+    /* setup message header */
+    hdr = &sendfrag->frag_send.frag_base.frag_header;
+
+    /* first fragment - need to try and match at the receiver */
+    if(offset == 0) {
+        hdr->hdr_common.hdr_flags = flags;
+        hdr->hdr_match.hdr_src = (uint16_t)sendreq->req_base.req_comm->c_my_rank;
+        hdr->hdr_match.hdr_dst = (uint16_t)sendreq->req_base.req_peer;
+        hdr->hdr_match.hdr_tag = sendreq->req_base.req_tag;
+        hdr->hdr_match.hdr_msg_length = sendreq->req_bytes_packed;
+        hdr->hdr_match.hdr_msg_seq = sendreq->req_base.req_sequence;
+
+        /* for the first 32K - send header for matching + data */
+        segments = sendfrag->frag_segments;
+        sendfrag->frag_segment_count = 2;
+
+        /* if an acknoweldgment is not required - can get by with a shorter header */
+        if((flags & MCA_PTL_FLAGS_ACK) == 0) {
+            hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_MATCH;
+            sendfrag->frag_segments[0].segment_length = sizeof(mca_ptl_base_match_header_t);
+            match.lval = MCA_PTL_HDR_TYPE_MATCH;
+
+            /* convert header to network byte order if required */
+            if(ptl_peer->peer_nbo) {
+                hdr->hdr_common.hdr_flags |= MCA_PTL_FLAGS_NBO;
+                MCA_PTL_BASE_MATCH_HDR_HTON(hdr->hdr_match);
+            }
+        } else {
+            hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_RNDV;
+            hdr->hdr_rndv.hdr_frag_length = sendfrag->frag_send.frag_base.frag_size;
+            hdr->hdr_rndv.hdr_src_ptr.lval = 0; /* for VALGRIND/PURIFY - REPLACE WITH MACRO */
+            hdr->hdr_rndv.hdr_src_ptr.pval = sendfrag;
+            sendfrag->frag_segments[0].segment_length = sizeof(mca_ptl_base_rendezvous_header_t);
+            match.lval = MCA_PTL_HDR_TYPE_RNDV;
+
+            /* convert header to network byte order if required */
+            if(ptl_peer->peer_nbo) {
+                hdr->hdr_common.hdr_flags |= MCA_PTL_FLAGS_NBO;
+                MCA_PTL_BASE_RNDV_HDR_HTON(hdr->hdr_rndv);
+            }
+        }
+
+    /* non-zero offset - fragment of a previously started message */
+    } else {
+        hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_FRAG;
+        hdr->hdr_common.hdr_flags = flags;
+        hdr->hdr_frag.hdr_frag_offset = offset;
+        hdr->hdr_frag.hdr_frag_length = sendfrag->frag_send.frag_base.frag_size;
+        hdr->hdr_frag.hdr_src_ptr.lval = 0; /* for VALGRIND/PURIFY - REPLACE WITH MACRO */
+        hdr->hdr_frag.hdr_src_ptr.pval = sendfrag;
+        hdr->hdr_frag.hdr_dst_ptr = sendreq->req_peer_match;
+        match.sval.uval = sendreq->req_peer_match.ival;
+        match.sval.lval = offset;
+
+        /* dont send a header for after the first 32K - MX currently doesn't
+         * support DMA of more than one segment.
+        */
+        segments = sendfrag->frag_segments+1;
+        sendfrag->frag_segment_count = 1;
+
+        /* convert header to network byte order if required */
+        if(ptl_peer->peer_nbo) {
+            hdr->hdr_common.hdr_flags |= MCA_PTL_FLAGS_NBO;
+            MCA_PTL_BASE_FRAG_HDR_HTON(hdr->hdr_frag);
+        }
     }
  
     /* fragment state */
@@ -233,15 +275,16 @@ int mca_ptl_mx_send(
     /* must update the offset after actual fragment size is determined 
      * before attempting to send the fragment
      */
-    mca_pml_base_send_request_offset(sendreq, size);
+    mca_pml_base_send_request_offset(sendreq,
+        sendfrag->frag_send.frag_base.frag_size);
 
     /* start the fragment */
     mx_return = mx_isend(
         mx_ptl->mx_endpoint,
-        sendfrag->frag_segments,  
+        segments,
         sendfrag->frag_segment_count,
         ptl_peer->peer_addr,
-        0,
+        match.lval,
         sendfrag,
         &sendfrag->frag_request);
     if(mx_return != MX_SUCCESS) {
@@ -290,7 +333,6 @@ int mca_ptl_mx_send_continue(
         return rc;
     }
     sendfrag->frag_free = 0;
-    sendfrag->frag_send.frag_base.frag_header.hdr_frag.hdr_frag_offset = offset;
 
     /* initialize convertor */
     convertor = &sendfrag->frag_send.frag_base.frag_convertor;
@@ -321,10 +363,15 @@ int mca_ptl_mx_send_continue(
         return OMPI_ERROR;
     }
 
+    sendfrag->frag_segments[0].segment_length = sizeof(mca_ptl_base_frag_header_t);
     sendfrag->frag_segments[1].segment_ptr = iov.iov_base;
     sendfrag->frag_segments[1].segment_length = iov.iov_len;
     sendfrag->frag_segment_count = 1;
     sendfrag->frag_send.frag_base.frag_addr = iov.iov_base;
+    sendfrag->frag_send.frag_base.frag_header.hdr_common.hdr_type = MCA_PTL_HDR_TYPE_FRAG;
+    sendfrag->frag_send.frag_base.frag_header.hdr_common.hdr_flags = 0;
+    sendfrag->frag_send.frag_base.frag_header.hdr_frag.hdr_frag_length = iov.iov_len;
+    sendfrag->frag_send.frag_base.frag_header.hdr_frag.hdr_frag_offset = offset;
 
     /* fragment state */
     sendfrag->frag_send.frag_base.frag_owner = &ptl_peer->peer_ptl->super;
@@ -385,7 +432,7 @@ void mca_ptl_mx_matched(
     mca_pml_base_recv_request_t* request = frag->frag_request;
     mca_ptl_mx_module_t* mx_ptl = (mca_ptl_mx_module_t*)ptl;
     mca_ptl_mx_recv_frag_t* mx_frag = (mca_ptl_mx_recv_frag_t*)frag;
-    unsigned int bytes_delivered = hdr->hdr_frag.hdr_frag_length;
+    unsigned int bytes_delivered = mx_frag->frag_size;
     bool ack_pending = false;
 
     /* generate an acknowledgment if required */
@@ -411,7 +458,7 @@ void mca_ptl_mx_matched(
                 ack->frag_segments,
                 ack->frag_segment_count,
                 ack->frag_send.frag_base.frag_peer->peer_addr,
-                0,
+                MCA_PTL_HDR_TYPE_ACK,
                 ack,
                 &ack->frag_request);
             if(mx_return != MX_SUCCESS) {
@@ -425,7 +472,7 @@ void mca_ptl_mx_matched(
     }
 
     /* copy data into users buffer */
-    if(hdr->hdr_frag.hdr_frag_length > 0) {
+    if(mx_frag->frag_size > 0) {
         struct iovec iov;
         unsigned int iov_count = 1;
         int free_after = 0;
@@ -441,12 +488,12 @@ void mca_ptl_mx_matched(
             request->req_base.req_datatype, /* datatype */
             request->req_base.req_count,    /* count elements */
             request->req_base.req_addr,     /* users buffer */
-            hdr->hdr_frag.hdr_frag_offset,  /* offset in bytes into packed buffer */
+            0,                              /* offset in bytes into packed buffer */
             NULL );                         /* not allocating memory */
         ompi_convertor_get_packed_size(convertor, &request->req_bytes_packed);
 
         iov.iov_base = mx_frag->frag_data;
-        iov.iov_len = hdr->hdr_frag.hdr_frag_length;
+        iov.iov_len = mx_frag->frag_size;
         ompi_convertor_unpack(convertor, &iov, &iov_count, &bytes_delivered, &free_after );
     }
 
@@ -454,7 +501,7 @@ void mca_ptl_mx_matched(
     ptl->ptl_recv_progress(
         ptl,
         request,
-        hdr->hdr_frag.hdr_frag_length,
+        mx_frag->frag_size,
         bytes_delivered);
 
     /* release resources */

@@ -35,6 +35,7 @@ struct mca_ptl_tcp_recv_frag_t {
     mca_ptl_base_recv_frag_t frag_recv;  /**< base receive fragment descriptor */
     size_t frag_hdr_cnt;                 /**< number of header bytes received */
     size_t frag_msg_cnt;                 /**< number of message bytes received */
+    size_t frag_size;                    /**< size of the fragment on the wire */
     bool frag_ack_pending;               /**< is an ack pending for this fragment */
     volatile int frag_progressed;        /**< flag used to atomically progress fragment */
 };
@@ -71,13 +72,15 @@ bool mca_ptl_tcp_recv_frag_send_ack(mca_ptl_tcp_recv_frag_t* frag);
 
 extern void* mca_ptl_tcp_memalloc( size_t* length );
 
-static inline void mca_ptl_tcp_recv_frag_matched(mca_ptl_tcp_recv_frag_t* frag)
+static inline void mca_ptl_tcp_recv_frag_matched(
+    mca_ptl_tcp_recv_frag_t* frag, 
+    size_t frag_offset, 
+    size_t frag_length)
 {
     mca_pml_base_recv_request_t* request = frag->frag_recv.frag_request;
-    mca_ptl_base_frag_header_t* header = &frag->frag_recv.frag_base.frag_header.hdr_frag;
   
     /* if there is data associated with the fragment -- setup to receive */
-    if(header->hdr_frag_length > 0) {
+    if(frag_length > 0) {
         /* initialize receive convertor */
         ompi_proc_t *proc =
             ompi_comm_peer_lookup(request->req_base.req_comm, 
@@ -89,25 +92,30 @@ static inline void mca_ptl_tcp_recv_frag_matched(mca_ptl_tcp_recv_frag_t* frag)
             request->req_base.req_datatype, /* datatype */
             request->req_base.req_count,    /* count elements */
             request->req_base.req_addr,     /* users buffer */
-            header->hdr_frag_offset,        /* offset in bytes into packed buffer */
+            0,                              /* offset in bytes into packed buffer */
             mca_ptl_tcp_memalloc );         /* not allocating memory */
 
         /* non-contiguous - allocate buffer for receive */
         if( 1 == ompi_convertor_need_buffers( &frag->frag_recv.frag_base.frag_convertor ) ) {
-            frag->frag_recv.frag_base.frag_addr = malloc(header->hdr_frag_length);
+            frag->frag_recv.frag_base.frag_addr = malloc(frag_length);
             frag->frag_recv.frag_is_buffered = true;
 	    /* determine offset into users buffer */
         } else {
             frag->frag_recv.frag_base.frag_addr = ((unsigned char*)request->req_base.req_addr) + 
-                header->hdr_frag_offset;
+                frag_offset;
         }
-	    frag->frag_recv.frag_base.frag_size = header->hdr_frag_length;
-        if(header->hdr_frag_offset + frag->frag_recv.frag_base.frag_size > request->req_bytes_packed) {
-            if(header->hdr_frag_offset > request->req_bytes_packed)
+	frag->frag_size = frag_length;
+        if(frag_offset + frag_length > request->req_bytes_packed) {
+            if(frag_offset > request->req_bytes_packed)
                 frag->frag_recv.frag_base.frag_size = 0;
             else
-                frag->frag_recv.frag_base.frag_size = request->req_bytes_packed - header->hdr_frag_offset;
+                frag->frag_recv.frag_base.frag_size = request->req_bytes_packed - frag_offset;
+        } else {
+            frag->frag_recv.frag_base.frag_size = frag_length;
         }
+    } else {
+        frag->frag_size = 0;
+        frag->frag_recv.frag_base.frag_size = 0;
     }
 }
 
@@ -116,51 +124,60 @@ static inline void mca_ptl_tcp_recv_frag_progress(mca_ptl_tcp_recv_frag_t* frag)
 {
     unsigned int iov_count, max_data;
     int freeAfter;
+    int32_t frag_progressed = ompi_atomic_add_32(&frag->frag_progressed,1);
 
-    if((frag)->frag_msg_cnt >= frag->frag_recv.frag_base.frag_header.hdr_frag.hdr_frag_length) { 
-        /* make sure this only happens once for threaded case */ 
-        if(ompi_atomic_cmpset(&frag->frag_progressed, 0, 1) == 1) {
-            mca_pml_base_recv_request_t* request = frag->frag_recv.frag_request; 
-            if(frag->frag_recv.frag_is_buffered) { 
-                mca_ptl_base_match_header_t* header = &(frag)->frag_recv.frag_base.frag_header.hdr_match; 
- 
-                /* 
-                 * Initialize convertor and use it to unpack data  
-                 */ 
-                struct iovec iov; 
-                ompi_proc_t *proc = 
-                        ompi_comm_peer_lookup(request->req_base.req_comm, 
-                                              request->req_base.req_ompi.req_status.MPI_SOURCE); 
-                ompi_convertor_copy(proc->proc_convertor, &frag->frag_recv.frag_base.frag_convertor); 
-                ompi_convertor_init_for_recv( 
-                        &frag->frag_recv.frag_base.frag_convertor,  /* convertor */ 
-                        0,                                 /* flags */ 
-                        request->req_base.req_datatype,    /* datatype */ 
-                        request->req_base.req_count,       /* count elements */ 
-                        request->req_base.req_addr,        /* users buffer */ 
-                        header->hdr_frag.hdr_frag_offset,  /* offset in bytes into packed buffer */ 
-                        NULL );                            /* dont allocate memory */
-		
-                iov.iov_base = frag->frag_recv.frag_base.frag_addr; 
-                iov.iov_len = frag->frag_recv.frag_base.frag_size;
-                iov_count = 1;
-                max_data = iov.iov_len;
-                ompi_convertor_unpack( &frag->frag_recv.frag_base.frag_convertor,
-                                       &iov, &iov_count, &max_data, &freeAfter ); 
-            } 
+    /* For a match/rendezvous packet - we need to progress the fragment after
+     * the match has been made and all data has arrived. So this routine is
+     * called twice for this case.  Otherwise, progress a fragment as soon as
+     * all of the data has been received.
+    */
+    if((frag->frag_recv.frag_base.frag_header.hdr_common.hdr_type == MCA_PTL_HDR_TYPE_FRAG &&
+        frag_progressed == 1 ) || 
+       (frag->frag_recv.frag_base.frag_header.hdr_common.hdr_type != MCA_PTL_HDR_TYPE_FRAG &&
+        frag_progressed == 2 )) {
 
-            /* progress the request */ 
-            frag->frag_recv.frag_base.frag_owner->ptl_recv_progress(
-                frag->frag_recv.frag_base.frag_owner, 
-                request, 
-                frag->frag_recv.frag_base.frag_header.hdr_frag.hdr_frag_length,
-                frag->frag_recv.frag_base.frag_size);
+        mca_pml_base_recv_request_t* request = frag->frag_recv.frag_request; 
+        if(frag->frag_recv.frag_is_buffered) { 
+	    mca_ptl_base_frag_header_t* header = &(frag)->frag_recv.frag_base.frag_header.hdr_frag; 
+	    size_t offset = (header->hdr_common.hdr_type == MCA_PTL_HDR_TYPE_FRAG) ?
+	        header->hdr_frag_offset : 0;
 
-            if((frag)->frag_ack_pending == false) { 
-                mca_ptl_tcp_recv_frag_return(frag->frag_recv.frag_base.frag_owner, (frag)); 
-            }  
-        }
-    } 
+	    /* 
+	     * Initialize convertor and use it to unpack data  
+	     */ 
+	    struct iovec iov; 
+	    ompi_proc_t *proc = 
+		    ompi_comm_peer_lookup(request->req_base.req_comm, 
+				          request->req_base.req_ompi.req_status.MPI_SOURCE); 
+	    ompi_convertor_copy(proc->proc_convertor, &frag->frag_recv.frag_base.frag_convertor); 
+	    ompi_convertor_init_for_recv( 
+		    &frag->frag_recv.frag_base.frag_convertor,  /* convertor */ 
+		    0,                                 /* flags */ 
+		    request->req_base.req_datatype,    /* datatype */ 
+		    request->req_base.req_count,       /* count elements */ 
+		    request->req_base.req_addr,        /* users buffer */ 
+		    offset,                            /* offset in bytes into packed buffer */ 
+		NULL );                            /* dont allocate memory */
+	
+	    iov.iov_base = frag->frag_recv.frag_base.frag_addr; 
+	    iov.iov_len = frag->frag_recv.frag_base.frag_size;
+	    iov_count = 1;
+	    max_data = iov.iov_len;
+	    ompi_convertor_unpack( &frag->frag_recv.frag_base.frag_convertor,
+			           &iov, &iov_count, &max_data, &freeAfter ); 
+        } 
+
+        /* progress the request */ 
+        frag->frag_recv.frag_base.frag_owner->ptl_recv_progress(
+	    frag->frag_recv.frag_base.frag_owner, 
+	    request, 
+	    frag->frag_size,
+	    frag->frag_recv.frag_base.frag_size);
+    
+         if((frag)->frag_ack_pending == false) { 
+	    mca_ptl_tcp_recv_frag_return(frag->frag_recv.frag_base.frag_owner, (frag)); 
+        }  
+    }
 }
 #if defined(c_plusplus) || defined(__cplusplus)
 }

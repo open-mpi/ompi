@@ -56,7 +56,6 @@ void mca_ptl_sm_matched(
 {
     mca_pml_base_recv_request_t* recv_desc;
     mca_ptl_sm_frag_t *sm_frag_desc;
-    mca_ptl_base_match_header_t* header;
     struct iovec iov; 
     ompi_convertor_t frag_convertor;
     ompi_proc_t *proc;
@@ -75,7 +74,6 @@ void mca_ptl_sm_matched(
     /* copy, only if there is data to copy */
     max_data=0;
     if( 0 <  sm_frag_desc->super.frag_base.frag_size ) {
-        header = &((frag)->frag_base.frag_header.hdr_match);
  
         /* 
          * Initialize convertor and use it to unpack data  
@@ -91,7 +89,7 @@ void mca_ptl_sm_matched(
                 recv_desc->req_base.req_datatype,  /* datatype */ 
                 recv_desc->req_base.req_count,     /* count elements */ 
                 recv_desc->req_base.req_addr,      /* users buffer */ 
-                header->hdr_frag.hdr_frag_offset,  /* offset in bytes into packed buffer */ 
+                sm_frag_desc->send_offset,         /* offset in bytes into packed buffer */ 
                 NULL );                            /* dont allocate memory */
                 
         /* convert address from sender's address space to my virtual

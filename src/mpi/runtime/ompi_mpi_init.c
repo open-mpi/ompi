@@ -8,6 +8,7 @@
 #include "mpi/runtime/mpiruntime.h"
 #include "mpi/runtime/params.h"
 #include "runtime/runtime.h"
+#include "runtime/ompi_progress.h"
 #include "util/sys_info.h"
 #include "util/proc_info.h"
 #include "util/session_dir.h"
@@ -315,8 +316,8 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         goto error;
     }
 
-#if OMPI_HAVE_THREADS == 0
-    ompi_progress_events(OMPI_EVLOOP_NONBLOCK);
+#if OMPI_HAVE_THREADS
+    ompi_progress_events(0);
 #endif
 
  error:
