@@ -333,7 +333,7 @@ if test "$HAPPY" = "1"; then
 	    "src/mca/dynamic/$type/$m"
 	ls -l "src/mca/dynamic/$type/$m"
     else
-	static_ltlibs="$m/libmca_${library}_${type}_${m}.la $static_ltlibs"
+	static_ltlibs="$m/libmca_${type}_${m}.la $static_ltlibs"
 	echo "extern const mca_base_module_t mca_${type}_${m}_module;" >> $outfile.extern
 	echo "  &mca_${type}_${m}_module, " >> $outfile.struct
 	compile_mode="static"
