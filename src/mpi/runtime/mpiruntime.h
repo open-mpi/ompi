@@ -16,6 +16,9 @@
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
+    /* forward type declarations */
+    struct ompi_communicator_t;
+
 /*
  * Global variables and symbols for the MPI layer
  */
