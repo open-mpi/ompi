@@ -6,11 +6,11 @@
 
 #include <string.h>
 
+#include "lam/util/strncpy.h"
+#include "lam/totalview.h"
 #include "mpi.h"
 #include "mpi/interface/c/bindings.h"
-#include "lam/util/strncpy.h"
-#include "lam/communicator.h"
-#include "lam/totalview.h"
+#include "mpi/communicator/communicator.h"
 
 #if LAM_WANT_MPI_PROFILING && LAM_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_Comm_get_name = MPI_Comm_get_name
