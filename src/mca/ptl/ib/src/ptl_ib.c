@@ -324,7 +324,6 @@ static void mca_ptl_ib_start_ack(mca_ptl_base_module_t *module,
 
     hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_ACK;
     hdr->hdr_common.hdr_flags = 0;
-    hdr->hdr_common.hdr_size = sizeof(mca_ptl_base_ack_header_t);
 
     /* Remote side send descriptor */
     hdr->hdr_ack.hdr_src_ptr =
