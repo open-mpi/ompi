@@ -1,0 +1,35 @@
+#
+# Don't really need anything in here -- we just want a configure
+# script so that this can be a standalone component.
+#
+
+# Hackaround until bug 1015 fixed
+
+AC_DEFUN([MCA_CONFIGURE_STUB],[
+
+dnl Generate the version header template
+
+AC_CONFIG_FILES([coll-demo-version.h.template])
+
+dnl After config.status has run, compare the version header template to
+dnl the version header.  If the version header does not exist, create it
+dnl from the template.  If it does already exist, diff it and see if
+dnl they're different.  If they're different, copy the template over the
+dnl old version.  If they're the same, leave the original alone so that
+dnl we don't distrub any dependencies.
+
+AC_CONFIG_COMMANDS([COLL-DEMO],
+[if test -f "coll-demo-version.h"; then
+  diff "coll-demo-version.h" "coll-demo-version.h.template" > /dev/null 2>&1
+  if test "$?" != "0"; then
+    cp "coll-demo-version.h.template" "coll-demo-version.h"
+    echo "config.status: regenerating coll-demo-version.h"
+  else
+    echo "config.state: coll-demo-version.h unchanged"
+  fi
+else
+  cp "coll-demo-version.h.template" "coll-demo-version.h"
+  echo "config.status: creating coll-demo-version.h"
+fi
+rm coll-demo-version.h.template])
+])
