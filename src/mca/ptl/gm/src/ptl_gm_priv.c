@@ -151,13 +151,9 @@ int mca_ptl_gm_peer_send_continue( mca_ptl_gm_peer_t *ptl_peer,
     } else {
 	/* Large set of data => we have to setup a rendez-vous protocol. Here we can
 	 * use the match header already filled in by the upper level and just complete it
-	 * with the others informations.
+	 * with the others informations. When we reach this point the rendez-vous protocol
+         * has already been realized so we know that the receiver expect our message.
 	 */
-        /* For large messages I prefer to use the read semantics. It does not work well
-         * if the receiver does not post the message shortly after it receive the
-         * rdv (as the memory on the sender will be still locked). But the protocol
-         * is easier to implement.
-         */
         gm_status_t status;
 	ompi_ptr_t* local_address;
 
