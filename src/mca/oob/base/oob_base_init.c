@@ -236,7 +236,7 @@ int mca_oob_base_module_init(void)
   ompi_list_item_t* item;
 
   /* setup self to point to actual process name */
-  mca_oob_name_self = *mca_pcmclient.pcmclient_get_self();
+  mca_oob_name_self = *ompi_process_info.name;
 
   /* Initialize all modules after oob/gpr/ns have initialized */
   for (item =  ompi_list_get_first(&mca_oob_base_modules);
