@@ -22,19 +22,14 @@
  */
 struct mca_ptl_sm_module_1_0_0_t {
     mca_ptl_base_module_1_0_0_t super;   /**< base PTL module */
-    int sm_min_alloc;                    /**< min size of shared memory allocation */
-    int sm_max_alloc;                    /**< max size of shared memory allocation */
     int sm_free_list_num;                /**< initial size of free lists */
     int sm_free_list_max;                /**< maximum size of free lists */
     int sm_free_list_inc;                /**< number of elements to alloc when growing free lists */
     int sm_max_procs;                    /**< upper limit on the number of processes using the shared memory pool */
-    void* sm_base_addr;                  /**< base address of mmaped region */
     ompi_free_list_t sm_send_requests;    /**< free list of sm send requests -- sendreq + sendfrag */
     ompi_free_list_t sm_send_frags;       /**< free list of sm send fragments */
     ompi_free_list_t sm_recv_frags;       /**< free list of sm recv fragments */
     ompi_allocator_t sm_allocator;        /**< shared memory allocator */
-    char sm_mmap_file[PATH_MAX];         /**< full path to backing file */
-    mca_ptl_sm_mmap_t *sm_mmap;
     ompi_mutex_t sm_lock;
 };
 typedef struct mca_ptl_sm_module_1_0_0_t mca_ptl_sm_module_1_0_0_t;

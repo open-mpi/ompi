@@ -29,7 +29,7 @@ int mca_mpool_base_close(void)
        anyway?  This module is going away, so errors don't matter
        anymore) */
 
-    sm->mbsm_actions->mpool_finalize(sm->mbsm_actions);
+    sm->mpool_module->mpool_finalize(sm->mpool_module);
     free(sm);
   }
 
