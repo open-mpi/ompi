@@ -178,14 +178,16 @@ int mca_ptl_tcp_module_close(void)
  *  Create a ptl instance and add to modules list.
  */
 
-static int mca_ptl_tcp_create(int if_index)
+static int mca_ptl_tcp_create(int if_index, const char* if_name)
 {
     mca_ptl_tcp_t* ptl = malloc(sizeof(mca_ptl_tcp_t));
+    char param[256];
+    char *value;
     if(NULL == ptl)
         return LAM_ERR_OUT_OF_RESOURCE;
     memcpy(ptl, &mca_ptl_tcp, sizeof(mca_ptl_tcp));
     mca_ptl_tcp_module.tcp_ptls[mca_ptl_tcp_module.tcp_num_ptls++] = ptl;
-                                                                                                                                
+
     /* initialize the ptl */
     ptl->ptl_ifindex = if_index;
 #if MCA_PTL_TCP_STATISTICS
@@ -195,6 +197,19 @@ static int mca_ptl_tcp_create(int if_index)
 #endif
     lam_ifindextoaddr(if_index, (struct sockaddr*)&ptl->ptl_ifaddr, sizeof(ptl->ptl_ifaddr));
     lam_ifindextomask(if_index, (struct sockaddr*)&ptl->ptl_ifmask, sizeof(ptl->ptl_ifmask));
+
+    /* allow user to specify interface bandwidth */
+    sprintf(param, "bandwidth_%s", if_name);
+    ptl->super.ptl_bandwidth = mca_ptl_tcp_param_register_int(param, 0);
+
+    /* allow user to override/specify latency ranking */
+    sprintf(param, "latency_%s", if_name);
+    ptl->super.ptl_latency = mca_ptl_tcp_param_register_int(param, 0);
+
+#if LAM_ENABLE_DEBUG
+    lam_output(0,"interface: %s bandwidth %d latency %d\n", 
+        if_name, ptl->super.ptl_bandwidth, ptl->super.ptl_latency);
+#endif
     return LAM_SUCCESS;
 }
                                                                                                                                 
@@ -232,8 +247,7 @@ static int mca_ptl_tcp_module_create_instances(void)
         if(if_index < 0) {
             lam_output(0,"mca_ptl_tcp_module_init: invalid interface \"%s\"", if_name);
         } else {
-            lam_output(0,"interface: %s\n", if_name);
-            mca_ptl_tcp_create(if_index);
+            mca_ptl_tcp_create(if_index, if_name);
         }
         argv++;
     }
@@ -258,8 +272,7 @@ static int mca_ptl_tcp_module_create_instances(void)
         }
         /* if this interface was not found in the excluded list - create a PTL */
         if(argv == 0 || *argv == 0) {
-            lam_output(0,"interface: %s\n", if_name);
-            mca_ptl_tcp_create(if_index);
+            mca_ptl_tcp_create(if_index, if_name);
         }
     }
     lam_argv_free(exclude);
@@ -282,6 +295,7 @@ static int mca_ptl_tcp_module_create_listen(void)
         lam_output(0,"mca_ptl_tcp_module_init: socket() failed with errno=%d", errno);
         return LAM_ERROR;
     }
+    mca_ptl_tcp_set_socket_options(mca_ptl_tcp_module.tcp_listen_sd);
                                                                                                       
     /* bind to all addresses and dynamically assigned port */
     memset(&inaddr, 0, sizeof(inaddr));
@@ -307,7 +321,7 @@ static int mca_ptl_tcp_module_create_listen(void)
         lam_output(0, "mca_ptl_tcp_module_init: listen() failed with errno=%d", errno);
         return LAM_ERROR;
     }
-                                                                                                                   
+
     /* set socket up to be non-blocking, otherwise accept could block */
     if((flags = fcntl(mca_ptl_tcp_module.tcp_listen_sd, F_GETFL, 0)) < 0) {
         lam_output(0, "mca_ptl_tcp_module_init: fcntl(F_GETFL) failed with errno=%d", errno);
@@ -368,7 +382,7 @@ mca_ptl_t** mca_ptl_tcp_module_init(int *num_ptls,
 
     *num_ptls = 0;
     *allow_multi_user_threads = true;
-    *have_hidden_threads = true;
+    *have_hidden_threads = LAM_HAVE_THREADS;
 
     if((rc = lam_event_init()) != LAM_SUCCESS) {
         lam_output(0, "mca_ptl_tcp_module_init: unable to initialize event dispatch thread: %d\n", rc);

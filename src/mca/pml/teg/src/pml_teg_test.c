@@ -19,7 +19,7 @@ int mca_pml_teg_test(
             if (NULL != status)
                 *status = pml_request->req_status;
             if(false == pml_request->req_persistent)
-                mca_pml_teg_free(requests+i);
+                MCA_PML_TEG_FREE(requests+i);
         }
     }
 
@@ -60,7 +60,7 @@ int mca_pml_teg_test_all(
             } else {
                 statuses[i] = pml_request->req_status;
                 if(false == pml_request->req_persistent)
-                    mca_pml_teg_free(requests+i);
+                    MCA_PML_TEG_FREE(requests+i);
             }
         }
     } else {
@@ -68,7 +68,7 @@ int mca_pml_teg_test_all(
         for(i=0; i<count; i++) {
             mca_pml_base_request_t* pml_request = (mca_pml_base_request_t*)requests[i];
             if(NULL != pml_request && false == pml_request->req_persistent)
-                mca_pml_teg_free(requests+i);
+                MCA_PML_TEG_FREE(requests+i);
         }
     }
     return LAM_SUCCESS;

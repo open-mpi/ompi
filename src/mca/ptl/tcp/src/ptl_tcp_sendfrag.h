@@ -28,14 +28,13 @@ struct mca_ptl_tcp_send_frag_t {
    struct iovec *frag_vec_ptr;      /**< pointer into iovec array */
    size_t frag_vec_cnt;             /**< number of iovec structs left to process */
    struct iovec frag_vec[2];        /**< array of iovecs for send */
+   volatile int frag_progressed;    /**< for threaded case - has request status been updated */
 };
 typedef struct mca_ptl_tcp_send_frag_t mca_ptl_tcp_send_frag_t;
 
 
-static inline mca_ptl_tcp_send_frag_t* mca_ptl_tcp_send_frag_alloc(int* rc) 
-{
-    return (mca_ptl_tcp_send_frag_t*)lam_free_list_get(&mca_ptl_tcp_module.tcp_send_frags, rc);
-}
+#define MCA_PTL_TCP_SEND_FRAG_ALLOC(item, rc)  \
+    LAM_FREE_LIST_GET(&mca_ptl_tcp_module.tcp_send_frags, item, rc);
 
 
 bool mca_ptl_tcp_send_frag_handler(mca_ptl_tcp_send_frag_t*, int sd);
@@ -49,26 +48,45 @@ int mca_ptl_tcp_send_frag_init(
     int flags);
 
 
-static inline void mca_ptl_tcp_send_frag_progress(mca_ptl_tcp_send_frag_t* frag)
-{
-    mca_ptl_base_send_request_t* request = frag->super.frag_request;
+/*
+ * For fragments that require an acknowledgment, this routine will be called
+ * twice, once when the send completes, and again when the acknowledgment is 
+ * returned. Only the last caller should update the request status, so we
+ * add a lock w/ the frag_progressed flag.
+ */
 
-    /* if this is an ack - simply return to pool */
-    if(request == NULL) {
-        mca_ptl_tcp_send_frag_return(frag->super.super.frag_owner, frag);
+static inline void mca_ptl_tcp_send_frag_progress(mca_ptl_tcp_send_frag_t* frag) 
+{ 
+    mca_ptl_base_send_request_t* request = frag->super.frag_request; 
 
-    /* otherwise, if an ack is not required or has already been received, update request status */
-    } else if ((frag->super.super.frag_header.hdr_common.hdr_flags & MCA_PTL_FLAGS_ACK_MATCHED) == 0 ||
-               mca_ptl_base_send_request_matched(request) == true) {
-        frag->super.super.frag_owner->ptl_send_progress(request, &frag->super);
+    /* if this is an ack - simply return to pool */ 
+    if(request == NULL) { 
+        mca_ptl_tcp_send_frag_return(frag->super.super.frag_owner, frag); 
+
+    /* otherwise, if the message has been sent, and an ack has already been 
+     * received, go ahead and update the request status 
+     */ 
+    } else if (frag->frag_vec_cnt == 0 &&  
+         ((frag->super.super.frag_header.hdr_common.hdr_flags & MCA_PTL_FLAGS_ACK_MATCHED) == 0 || 
+          mca_ptl_base_send_request_matched(request))) { 
+
+        /* make sure this only happens once in threaded case */ 
+        if (lam_using_threads() && fetchNset(&frag->frag_progressed, 1) == 1) {
+            return;
+        } else {
+            frag->frag_progressed = 1;
+        }
+
+        /* update request status */ 
+        frag->super.super.frag_owner->ptl_send_progress(request, &frag->super); 
 
         /* the first fragment is allocated with the request, 
-         * all others need to be returned to free list 
-         */
-        if(frag->super.super.frag_header.hdr_frag.hdr_frag_offset != 0)
-            mca_ptl_tcp_send_frag_return(frag->super.super.frag_owner, frag);
-    }
-}
+         * all others need to be returned to free list  
+         */ 
+        if(frag->super.super.frag_header.hdr_frag.hdr_frag_offset != 0) 
+            mca_ptl_tcp_send_frag_return(frag->super.super.frag_owner, frag); 
+    } 
+} 
 
 
 static inline void mca_ptl_tcp_send_frag_init_ack(

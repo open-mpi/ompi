@@ -40,27 +40,29 @@ int lam_free_list_init(
 int lam_free_list_grow(lam_free_list_t* flist, size_t num_elements);
     
 
-static inline lam_list_item_t *lam_free_list_get(lam_free_list_t * fl, int *rc)
-{
-    lam_list_item_t* item;
-    THREAD_LOCK(&fl->fl_lock);
-    item = lam_list_remove_first(&fl->super);
-    if(NULL == item) {
-        lam_free_list_grow(fl, fl->fl_num_per_alloc);
-        item = lam_list_remove_first(&fl->super);
-    }
-    THREAD_UNLOCK(&fl->fl_lock);
-    *rc = (NULL != item) ? LAM_SUCCESS : LAM_ERR_TEMP_OUT_OF_RESOURCE;
-    return item;
-}
+#define LAM_FREE_LIST_GET(fl, item, rc) \
+{ \
+    if(lam_using_threads()) { \
+        lam_mutex_lock(&((fl)->fl_lock)); \
+        item = lam_list_remove_first(&((fl)->super)); \
+        if(NULL == item) { \
+            lam_free_list_grow((fl), (fl)->fl_num_per_alloc); \
+            item = lam_list_remove_first(&((fl)->super)); \
+        } \
+        lam_mutex_unlock(&((fl)->fl_lock)); \
+    } else { \
+        item = lam_list_remove_first(&((fl)->super)); \
+        if(NULL == item) { \
+            lam_free_list_grow((fl), (fl)->fl_num_per_alloc); \
+            item = lam_list_remove_first(&((fl)->super)); \
+        } \
+    }  \
+    rc = (NULL == item) ?  LAM_ERR_TEMP_OUT_OF_RESOURCE : LAM_SUCCESS; \
+} 
 
-static inline int lam_free_list_return(lam_free_list_t *fl, lam_list_item_t *item)
-{
-    THREAD_LOCK(&fl->fl_lock);
-    lam_list_append(&fl->super, item);
-    THREAD_UNLOCK(&fl->fl_lock);
-    return LAM_SUCCESS;
-}
+
+#define LAM_FREE_LIST_RETURN(fl, item) \
+    THREAD_SCOPED_LOCK(&((fl)->fl_lock), lam_list_append(&((fl)->super), (item))); 
 
 #endif 
 

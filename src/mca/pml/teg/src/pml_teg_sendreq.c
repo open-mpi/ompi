@@ -47,9 +47,7 @@ void mca_pml_teg_send_request_schedule(mca_ptl_base_send_request_t* req)
          * previously assigned)
          */
         else {
-            bytes_to_frag = (ptl_proc->ptl_weight * req->req_bytes_msg) / 100;
-            if(bytes_to_frag > bytes_remaining)
-                bytes_to_frag = bytes_remaining;
+            bytes_to_frag = (ptl_proc->ptl_weight * bytes_remaining) / 100;
         }
 
         rc = ptl->ptl_send(ptl, ptl_proc->ptl_peer, req, bytes_to_frag, 0);
@@ -59,12 +57,12 @@ void mca_pml_teg_send_request_schedule(mca_ptl_base_send_request_t* req)
 
     /* unable to complete send - signal request failed */
     if(bytes_remaining > 0) {
-        lam_mutex_lock(&mca_pml_teg.teg_request_lock);
+        THREAD_LOCK(&mca_pml_teg.teg_request_lock);
         req->super.req_mpi_done = true;
         /* FIX - set status correctly */
         if(mca_pml_teg.teg_request_waiting)
             lam_condition_broadcast(&mca_pml_teg.teg_request_cond);
-        lam_mutex_unlock(&mca_pml_teg.teg_request_lock);
+        THREAD_UNLOCK(&mca_pml_teg.teg_request_lock);
     }
 }
 
@@ -73,7 +71,7 @@ void mca_pml_teg_send_request_progress(
     mca_ptl_base_send_request_t* req,
     mca_ptl_base_send_frag_t* frag)
 {
-    lam_mutex_lock(&mca_pml_teg.teg_request_lock);
+    THREAD_LOCK(&mca_pml_teg.teg_request_lock);
     req->req_bytes_sent += frag->super.frag_size;
     if (req->req_bytes_sent >= req->req_bytes_msg) {
         req->super.req_pml_done = true;
@@ -87,11 +85,11 @@ void mca_pml_teg_send_request_progress(
                 lam_condition_broadcast(&mca_pml_teg.teg_request_cond);
             }
         } else if (req->super.req_free_called)
-            mca_pml_teg_free((lam_request_t**)&req);
-        lam_mutex_unlock(&mca_pml_teg.teg_request_lock);
+            MCA_PML_TEG_FREE((lam_request_t**)&req);
+        THREAD_UNLOCK(&mca_pml_teg.teg_request_lock);
         return;
     } 
-    lam_mutex_unlock(&mca_pml_teg.teg_request_lock);
+    THREAD_UNLOCK(&mca_pml_teg.teg_request_lock);
 
     /* if first fragment - schedule remaining fragments */
     if(req->req_frags == 1) {

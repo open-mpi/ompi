@@ -5,6 +5,7 @@
 #define LAM_CONDITION_SPINLOCK_H
 
 #include "threads/condition.h"
+#include "threads/mutex.h"
 #include "threads/mutex_spinlock.h"
 #include "runtime/lam_progress.h"
 
@@ -21,10 +22,16 @@ OBJ_CLASS_DECLARATION(lam_condition_t);
 static inline int lam_condition_wait(lam_condition_t* c, lam_mutex_t* m)
 {
     c->c_waiting++;
-    while(c->c_signaled == 0) {
-        lam_mutex_unlock(m);
-        lam_progress();
-        lam_mutex_lock(m);
+    if(lam_using_threads()) {
+        while(c->c_signaled == 0) {
+            lam_mutex_unlock(m);
+            lam_progress();
+            lam_mutex_lock(m);
+        }
+    } else {
+        while(c->c_signaled == 0) {
+            lam_progress();
+        }
     }
     c->c_signaled--;
     c->c_waiting--;

@@ -98,8 +98,9 @@ int mca_ptl_tcp_request_alloc(struct mca_ptl_t* ptl, struct mca_ptl_base_send_re
 {
     int rc;
     mca_ptl_base_send_request_t* sendreq;
-    sendreq = (mca_ptl_base_send_request_t*)lam_free_list_get(&mca_ptl_tcp_module.tcp_send_requests, &rc);
-    if(NULL != sendreq)
+    lam_list_item_t* item;
+    LAM_FREE_LIST_GET(&mca_ptl_tcp_module.tcp_send_requests, item, rc);
+    if(NULL != (sendreq = (mca_ptl_base_send_request_t*)item))
         sendreq->req_owner = ptl;
     *request = sendreq;
     return rc;
@@ -109,7 +110,7 @@ int mca_ptl_tcp_request_alloc(struct mca_ptl_t* ptl, struct mca_ptl_base_send_re
 void mca_ptl_tcp_request_return(struct mca_ptl_t* ptl, struct mca_ptl_base_send_request_t* request)
 {
     /* OBJ_DESTRUCT(&request->req_convertor); */
-    lam_free_list_return(&mca_ptl_tcp_module.tcp_send_requests, (lam_list_item_t*)request);
+    LAM_FREE_LIST_RETURN(&mca_ptl_tcp_module.tcp_send_requests, (lam_list_item_t*)request);
 }
 
 
@@ -118,7 +119,7 @@ void mca_ptl_tcp_recv_frag_return(struct mca_ptl_t* ptl, struct mca_ptl_tcp_recv
     if(frag->super.frag_is_buffered) 
         free(frag->super.super.frag_addr);
     /* OBJ_DESTRUCT(&frag->super.super.frag_convertor); */
-    lam_free_list_return(&mca_ptl_tcp_module.tcp_recv_frags, (lam_list_item_t*)frag);
+    LAM_FREE_LIST_RETURN(&mca_ptl_tcp_module.tcp_recv_frags, (lam_list_item_t*)frag);
 }
 
 
@@ -130,7 +131,7 @@ void mca_ptl_tcp_send_frag_return(struct mca_ptl_t* ptl, struct mca_ptl_tcp_send
         pending = (mca_ptl_tcp_recv_frag_t*)lam_list_remove_first(&mca_ptl_tcp_module.tcp_pending_acks);
         if(NULL == pending) {
             THREAD_UNLOCK(&mca_ptl_tcp_module.tcp_lock);
-            lam_free_list_return(&mca_ptl_tcp_module.tcp_send_frags, (lam_list_item_t*)frag);
+            LAM_FREE_LIST_RETURN(&mca_ptl_tcp_module.tcp_send_frags, (lam_list_item_t*)frag);
             return;
         }
         THREAD_UNLOCK(&mca_ptl_tcp_module.tcp_lock);
@@ -138,7 +139,7 @@ void mca_ptl_tcp_send_frag_return(struct mca_ptl_t* ptl, struct mca_ptl_tcp_send
         mca_ptl_tcp_peer_send(pending->super.super.frag_peer, frag);
         mca_ptl_tcp_recv_frag_return(ptl, pending);
     } else {
-        lam_free_list_return(&mca_ptl_tcp_module.tcp_send_frags, (lam_list_item_t*)frag);
+        LAM_FREE_LIST_RETURN(&mca_ptl_tcp_module.tcp_send_frags, (lam_list_item_t*)frag);
     }
 }
 
@@ -161,8 +162,9 @@ int mca_ptl_tcp_send(
         sendfrag = &((mca_ptl_tcp_send_request_t*)sendreq)->req_frag;
     } else {
         int rc;
-        sendfrag = (mca_ptl_tcp_send_frag_t*)lam_free_list_get(&mca_ptl_tcp_module.tcp_send_frags, &rc);
-        if(NULL == sendfrag)
+        lam_list_item_t* item;
+        LAM_FREE_LIST_GET(&mca_ptl_tcp_module.tcp_send_frags, item, rc);
+        if(NULL == (sendfrag = (mca_ptl_tcp_send_frag_t*)item))
             return rc;
     }
     mca_ptl_tcp_send_frag_init(sendfrag, ptl_peer, sendreq, size, flags);
@@ -183,8 +185,12 @@ void mca_ptl_tcp_recv(
     mca_ptl_base_header_t* header = &frag->super.frag_header;
     if(header->hdr_common.hdr_flags & MCA_PTL_FLAGS_ACK_MATCHED) {
         int rc;
-        mca_ptl_tcp_send_frag_t* ack = mca_ptl_tcp_send_frag_alloc(&rc);
+        mca_ptl_tcp_send_frag_t* ack;
         mca_ptl_tcp_recv_frag_t* recv_frag = (mca_ptl_tcp_recv_frag_t*)frag;
+        lam_list_item_t* item;
+        MCA_PTL_TCP_SEND_FRAG_ALLOC(item, rc);
+        ack = (mca_ptl_tcp_send_frag_t*)item;
+
         if(NULL == ack) {
             THREAD_LOCK(&mca_ptl_tcp_module.tcp_lock);
             recv_frag->frag_ack_pending = true;

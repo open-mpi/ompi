@@ -52,7 +52,9 @@
 #endif
 
 #include "event.h"
+#if LAM_EVENT_USE_SIGNALS
 #include "evsignal.h"
+#endif
 #include "threads/mutex.h"
 
 
@@ -64,7 +66,9 @@ struct pollop {
 	int event_count;		/* Highest number alloc */
 	struct pollfd *event_set;
 	struct lam_event **event_back;
+#if LAM_EVENT_USE_SIGNALS
 	sigset_t evsigmask;
+#endif
 } pollop;
 
 static void *poll_init	(void);
@@ -78,7 +82,7 @@ const struct lam_eventop lam_pollops = {
 	poll_init,
 	poll_add,
 	poll_del,
-	poll_recalc,
+	NULL,
 	poll_dispatch
 };
 
@@ -90,9 +94,9 @@ poll_init(void)
 		return (NULL);
 
 	memset(&pollop, 0, sizeof(pollop));
-
+#if LAM_EVENT_USE_SIGNALS
 	lam_evsignal_init(&pollop.evsigmask);
-
+#endif
 	return (&pollop);
 }
 
@@ -104,9 +108,12 @@ poll_init(void)
 static int
 poll_recalc(void *arg, int max)
 {
+#if LAM_EVENT_USE_SIGNALS
 	struct pollop *pop = arg;
-
 	return (lam_evsignal_recalc(&pop->evsigmask));
+#else
+	return (0);
+#endif
 }
 
 static int
@@ -163,16 +170,24 @@ poll_dispatch(void *arg, struct timeval *tv)
 		}
 	}
 
+#if LAM_EVENT_USE_SIGNALS
 	if (lam_evsignal_deliver(&pop->evsigmask) == -1)
 		return (-1);
+#endif
 
 	sec = tv->tv_sec * 1000 + tv->tv_usec / 1000;
-        lam_mutex_unlock(&lam_event_lock);
-	res = poll(pop->event_set, nfds, sec);
-        lam_mutex_lock(&lam_event_lock);
+        if(lam_using_threads()) {
+            lam_mutex_unlock(&lam_event_lock);
+	    res = poll(pop->event_set, nfds, sec);
+            lam_mutex_lock(&lam_event_lock);
+        } else {
+	    res = poll(pop->event_set, nfds, sec);
+        }
 
+#if LAM_EVENT_USE_SIGNALS
 	if (lam_evsignal_recalc(&pop->evsigmask) == -1)
 		return (-1);
+#endif
 
 	if (res == -1) {
 		if (errno != EINTR) {
@@ -180,10 +195,16 @@ poll_dispatch(void *arg, struct timeval *tv)
 			return (-1);
 		}
 
+#if LAM_EVENT_USE_SIGNALS
 		lam_evsignal_process();
+#endif
 		return (0);
-	} else if (lam_evsignal_caught)
+	} 
+
+#if LAM_EVENT_USE_SIGNALS
+	else if (lam_evsignal_caught)
 		lam_evsignal_process();
+#endif
 
 	LOG_DBG((LOG_MISC, 80, "%s: poll reports %d", __func__, res));
 
@@ -223,11 +244,11 @@ poll_dispatch(void *arg, struct timeval *tv)
 static int
 poll_add(void *arg, struct lam_event *ev)
 {
+#if LAM_EVENT_USE_SIGNALS
 	struct pollop *pop = arg;
-
 	if (ev->ev_events & LAM_EV_SIGNAL)
 		return (lam_evsignal_add(&pop->evsigmask, ev));
-
+#endif
 	return (0);
 }
 
@@ -238,10 +259,15 @@ poll_add(void *arg, struct lam_event *ev)
 static int
 poll_del(void *arg, struct lam_event *ev)
 {
+#if LAM_EVENT_USE_SIGNALS
 	struct pollop *pop = arg;
-
+#endif
 	if (!(ev->ev_events & LAM_EV_SIGNAL))
 		return (0);
-
+#if LAM_EVENT_USE_SIGNALS
 	return (lam_evsignal_del(&pop->evsigmask, ev));
+#else
+	return (0);
+#endif
 }
+

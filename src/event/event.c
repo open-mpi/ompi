@@ -117,13 +117,12 @@ int (*lam_event_sigcb)(void);    /* Signal callback when gotsig is set */
 int lam_event_gotsig;        /* Set in signal handler */
 
 /* Prototypes */
+static void lam_event_process_active(void);
+static void lam_timeout_correct(struct timeval *off);
+static void lam_timeout_insert(struct lam_event *);
 static void lam_event_queue_insert(struct lam_event *, int);
 static void lam_event_queue_remove(struct lam_event *, int);
-static void lam_event_process_active(void);
-static int  lam_timeout_next(struct timeval *tv);
-static void lam_timeout_correct(struct timeval *off);
 static void lam_timeout_process(void);
-static void lam_timeout_insert(struct lam_event *);
 int lam_event_haveevents(void);
 
 static RB_HEAD(lam_event_tree, lam_event) lam_timetree;
@@ -152,6 +151,29 @@ compare(struct lam_event *a, struct lam_event *b)
 static RB_PROTOTYPE(lam_event_tree, lam_event, ev_timeout_node, compare)
 
 static RB_GENERATE(lam_event_tree, lam_event, ev_timeout_node, compare)
+
+static int lam_timeout_next(struct timeval *tv) 
+{ 
+    struct timeval dflt = LAM_TIMEOUT_DEFAULT; 
+    struct timeval now; 
+    struct lam_event *ev; 
+
+    if ((ev = RB_MIN(lam_event_tree, &lam_timetree)) == NULL) { 
+        *tv = dflt; 
+        return(0);
+    } 
+
+    if (gettimeofday(&now, NULL) == -1) 
+        return (-1); 
+
+    if (timercmp(&ev->ev_timeout, &now, <=)) { 
+        timerclear(tv); 
+        return (0); 
+    } 
+ 
+    timersub(&ev->ev_timeout, &now, tv); 
+    return (0); 
+} 
 
 /* run loop for dispatch thread */
 static void* lam_event_run(lam_object_t* arg)
@@ -258,9 +280,13 @@ lam_event_process_active(void)
         while (ncalls) {
             ncalls--;
             ev->ev_ncalls = ncalls;
-            lam_mutex_unlock(&lam_event_lock);
-            (*ev->ev_callback)((int)ev->ev_fd, ev->ev_res, ev->ev_arg);
-            lam_mutex_lock(&lam_event_lock);
+            if(lam_using_threads()) {
+                lam_mutex_unlock(&lam_event_lock);
+                (*ev->ev_callback)((int)ev->ev_fd, ev->ev_res, ev->ev_arg);
+                lam_mutex_lock(&lam_event_lock);
+            } else {
+                (*ev->ev_callback)((int)ev->ev_fd, ev->ev_res, ev->ev_arg);
+            }
         }
     }
 }
@@ -277,12 +303,12 @@ lam_event_loop(int flags)
     struct timeval tv;
     int res, done;
 
-    lam_mutex_lock(&lam_event_lock);
+    THREAD_LOCK(&lam_event_lock);
 
     /* Calculate the initial events that we are waiting for */
-    if (lam_evsel->recalc(lam_evbase, 0) == -1) {
+    if (lam_evsel->recalc && lam_evsel->recalc(lam_evbase, 0) == -1) {
         lam_output(0, "lam_event_loop: lam_evsel->recalc() failed.");
-        lam_mutex_unlock(&lam_event_lock);
+        THREAD_UNLOCK(&lam_event_lock);
         return (-1);
     }
 
@@ -295,28 +321,16 @@ lam_event_loop(int flags)
                 if (res == -1) {
                     lam_output(0, "lam_event_loop: lam_event_sigcb() failed.");
                     errno = EINTR;
-                    lam_mutex_unlock(&lam_event_lock);
+                    THREAD_UNLOCK(&lam_event_lock);
                     return (-1);
                 }
             }
         }
 
-        /* Check if time is running backwards */
-        gettimeofday(&tv, NULL);
-        if (timercmp(&tv, &lam_event_tv, <)) {
-            struct timeval off;
-            LOG_DBG((LOG_MISC, 10,
-                    "%s: time is running backwards, corrected",
-                    __func__));
-
-            timersub(&lam_event_tv, &tv, &off);
-            lam_timeout_correct(&off);
-        }
-        lam_event_tv = tv;
-
-        if (!(flags & LAM_EVLOOP_NONBLOCK))
-            lam_timeout_next(&tv);
-        else
+        if (!(flags & LAM_EVLOOP_NONBLOCK)) {
+            static struct timeval dflt = LAM_TIMEOUT_DEFAULT;
+            tv = dflt;
+        } else
             timerclear(&tv);
         
 #if LAM_HAVE_THREADS
@@ -328,11 +342,25 @@ lam_event_loop(int flags)
 #endif
         if (res == -1) {
             lam_output(0, "lam_event_loop: lam_evesel->dispatch() failed.");
-            lam_mutex_unlock(&lam_event_lock);
+            THREAD_UNLOCK(&lam_event_lock);
             return (-1);
         }
 
-        lam_timeout_process();
+        if(NULL != RB_MIN(lam_event_tree, &lam_timetree)) {
+            /* Check if time is running backwards */
+            gettimeofday(&tv, NULL);
+            if (timercmp(&tv, &lam_event_tv, <)) {
+                struct timeval off;
+                LOG_DBG((LOG_MISC, 10,
+                        "%s: time is running backwards, corrected",
+                        __func__));
+    
+                timersub(&lam_event_tv, &tv, &off);
+                lam_timeout_correct(&off);
+            }
+            lam_event_tv = tv;
+            lam_timeout_process();
+        }
 
         if (TAILQ_FIRST(&lam_activequeue)) {
             lam_event_process_active();
@@ -341,58 +369,16 @@ lam_event_loop(int flags)
         } else if (flags & (LAM_EVLOOP_NONBLOCK|LAM_EVLOOP_ONCE))
             done = 1;
 
-        if (lam_evsel->recalc(lam_evbase, 0) == -1) {
+        if (lam_evsel->recalc && lam_evsel->recalc(lam_evbase, 0) == -1) {
             lam_output(0, "lam_event_loop: lam_evesel->recalc() failed.");
-            lam_mutex_unlock(&lam_event_lock);
+            THREAD_UNLOCK(&lam_event_lock);
             return (-1);
         }
     }
-    lam_mutex_unlock(&lam_event_lock);
+    THREAD_UNLOCK(&lam_event_lock);
     return (0);
 }
 
-void
-lam_event_set(struct lam_event *ev, int fd, short events,
-      void (*callback)(int, short, void *), void *arg)
-{
-    ev->ev_callback = callback;
-    ev->ev_arg = arg;
-#ifdef WIN32
-    ev->ev_fd = (HANDLE)fd;
-    ev->overlap.hEvent = ev;
-#else
-    ev->ev_fd = fd;
-#endif
-    ev->ev_events = events;
-    ev->ev_flags = LAM_EVLIST_INIT;
-    ev->ev_ncalls = 0;
-    ev->ev_pncalls = NULL;
-}
-
-/*
- * Checks if a specific event is pending or scheduled.
- */
-
-int
-lam_event_pending(struct lam_event *ev, short event, struct timeval *tv)
-{
-    int flags = 0;
-
-    if (ev->ev_flags & LAM_EVLIST_INSERTED)
-        flags |= (ev->ev_events & (LAM_EV_READ|LAM_EV_WRITE));
-    if (ev->ev_flags & LAM_EVLIST_ACTIVE)
-        flags |= ev->ev_res;
-    if (ev->ev_flags & LAM_EVLIST_TIMEOUT)
-        flags |= LAM_EV_TIMEOUT;
-
-    event &= (LAM_EV_TIMEOUT|LAM_EV_READ|LAM_EV_WRITE);
-
-    /* See if there is a timeout that we should report */
-    if (tv != NULL && (flags & event & LAM_EV_TIMEOUT))
-        *tv = ev->ev_timeout;
-
-    return (flags & event);
-}
 
 int
 lam_event_add_i(struct lam_event *ev, struct timeval *tv)
@@ -461,15 +447,6 @@ lam_event_add_i(struct lam_event *ev, struct timeval *tv)
     return rc;
 }
 
-int
-lam_event_add(struct lam_event *ev, struct timeval *tv)
-{
-    int rc;
-    lam_mutex_lock(&lam_event_lock);
-    rc = lam_event_add_i(ev, tv);
-    lam_mutex_unlock(&lam_event_lock);
-    return rc;
-}
 
 int lam_event_del_i(struct lam_event *ev)
 {
@@ -506,72 +483,6 @@ int lam_event_del_i(struct lam_event *ev)
         lam_event_pipe_signalled++;
     }
 #endif
-    return (0);
-}
-
-int lam_event_del(struct lam_event *ev)
-{
-    int rc;
-    lam_mutex_lock(&lam_event_lock);
-    rc = lam_event_del_i(ev);
-
-    lam_mutex_unlock(&lam_event_lock);
-    return rc;
-}
-
-void
-lam_event_active_i(struct lam_event *ev, int res, short ncalls)
-{
-    /* We get different kinds of events, add them together */
-    if (ev->ev_flags & LAM_EVLIST_ACTIVE) {
-        ev->ev_res |= res;
-        return;
-    }
-
-    ev->ev_res = res;
-    ev->ev_ncalls = ncalls;
-    ev->ev_pncalls = NULL;
-    lam_event_queue_insert(ev, LAM_EVLIST_ACTIVE);
-}
-
-
-void 
-lam_event_active(struct lam_event* ev, int res, short ncalls)
-{
-    lam_mutex_lock(&lam_event_lock);
-    lam_event_active_i(ev, res, ncalls);
-    lam_mutex_unlock(&lam_event_lock);
-}
-
-
-
-static int
-lam_timeout_next(struct timeval *tv)
-{
-    struct timeval dflt = LAM_TIMEOUT_DEFAULT;
-
-    struct timeval now;
-    struct lam_event *ev;
-
-    if ((ev = RB_MIN(lam_event_tree, &lam_timetree)) == NULL) {
-        *tv = dflt;
-        return (0);
-    }
-
-    if (gettimeofday(&now, NULL) == -1)
-        return (-1);
-
-    if (timercmp(&ev->ev_timeout, &now, <=)) {
-        timerclear(tv);
-        return (0);
-    }
-
-    timersub(&ev->ev_timeout, &now, tv);
-
-    assert(tv->tv_sec >= 0);
-    assert(tv->tv_usec >= 0);
-
-    LOG_DBG((LOG_MISC, 60, "timeout_next: in %d seconds", tv->tv_sec));
     return (0);
 }
 
@@ -689,4 +600,19 @@ lam_event_queue_insert(struct lam_event *ev, int queue)
         errx(1, "%s: unknown queue %x", __func__, queue);
     }
 }
+
+void lam_event_active_i(struct lam_event * ev, int res, short ncalls)
+{
+    /* We get different kinds of events, add them together */
+    if (ev->ev_flags & LAM_EVLIST_ACTIVE) {
+        ev->ev_res |= res;
+        return;
+    }
+                                                                                              
+    ev->ev_res = res;
+    ev->ev_ncalls = ncalls;
+    ev->ev_pncalls = NULL;
+    lam_event_queue_insert(ev, LAM_EVLIST_ACTIVE);
+}
+                                                                                              
 

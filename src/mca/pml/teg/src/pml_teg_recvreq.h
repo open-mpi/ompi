@@ -19,20 +19,20 @@
  *  @param rc (OUT)  LAM_SUCCESS or error status on failure.
  *  @return          Receive request.
  */
-static inline mca_ptl_base_recv_request_t* mca_pml_teg_recv_request_alloc(int *rc)
-{
-    return (mca_ptl_base_recv_request_t*)lam_free_list_get(&mca_pml_teg.teg_recv_requests, rc);
-}
+#define MCA_PML_TEG_RECV_REQUEST_ALLOC(recvreq, rc) \
+    { \
+    lam_list_item_t* item; \
+    LAM_FREE_LIST_GET(&mca_pml_teg.teg_recv_requests, item, rc); \
+    recvreq = (mca_ptl_base_recv_request_t*)item; \
+    }
 
 /**
  *  Return a recv request to the modules free list.
  *
  *  @param request (IN)  Receive request.
  */
-static inline void mca_pml_teg_recv_request_return(mca_ptl_base_recv_request_t* request)
-{
-    lam_free_list_return(&mca_pml_teg.teg_recv_requests, (lam_list_item_t*)request);
-}
+#define MCA_PML_TEG_RECV_REQUEST_RETURN(request) \
+    LAM_FREE_LIST_RETURN(&mca_pml_teg.teg_recv_requests, (lam_list_item_t*)request);
 
 /**
  * Start an initialized request.

@@ -64,7 +64,16 @@ int lam_pointer_array_set_item(lam_pointer_array_t *array,
  *
  * @return Error code.  NULL indicates an error.
  */
-void *lam_pointer_array_get_item(lam_pointer_array_t *array, size_t index);
+
+static inline void *lam_pointer_array_get_item(lam_pointer_array_t *table, size_t index)
+{
+    void *p;
+    THREAD_LOCK(&(table->lock));
+    p = table->addr[index];
+    THREAD_UNLOCK(&(table->lock));
+    return p;
+}
+
 
 /**
  * Get the size of the pointer array

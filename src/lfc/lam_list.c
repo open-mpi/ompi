@@ -69,33 +69,6 @@ static void lam_list_destruct(lam_list_t *list)
     lam_list_construct(list);
 }
 
-    
-/**
- * Adds item to the end of the list. 
- *
- * @param list List accepting new item (IN/OUT)
- *
- * @param item Item being put on the new list (IN)
- *
- */
-void lam_list_append(lam_list_t *list, lam_list_item_t *item)
-{
-    /* set new element's previous pointer */
-    item->lam_list_prev=list->lam_list_tail.lam_list_prev;
-
-    /* reset previous pointer on current last element */
-    list->lam_list_tail.lam_list_prev->lam_list_next=item;
-
-    /* reset new element's next pointer */
-    item->lam_list_next=&(list->lam_list_tail);
-
-    /* reset the list's tail element previous pointer */
-    list->lam_list_tail.lam_list_prev = item;
-
-    /* increment list element counter */
-    list->lam_list_length++;
-}
-
 int lam_list_insert(lam_list_t *list, lam_list_item_t *item, long long idx)
 {
     /* Adds item to list at index and retains item. */
@@ -125,93 +98,5 @@ int lam_list_insert(lam_list_t *list, lam_list_item_t *item, long long idx)
     
     list->lam_list_length++;    
     return 1;
-}
-
-/* 
- * Adds item to the front of the list and retains item.
- *
- * @param list List accepting new item (IN/OUT)
- *
- * @param item Item being put on the new list (IN)
- *
- */
-void lam_list_prepend(lam_list_t *list, lam_list_item_t *item)
-{
-    /* reset item's next pointer */
-    item->lam_list_next = list->lam_list_head.lam_list_next;
-
-    /* reset item's previous pointer */
-    item->lam_list_prev = &(list->lam_list_head);
-
-    /* reset previous first element's previous poiner */
-    list->lam_list_head.lam_list_next->lam_list_prev = item;
-
-    /* reset head's next pointer */
-    list->lam_list_head.lam_list_next = item;
-
-    /* increment list element counter */
-    list->lam_list_length++;    
-}
-
-lam_list_item_t *lam_list_remove_first(lam_list_t *list)
-{
-    /*  Removes and returns first item on list.
-        Caller now owns the item and should release the item
-        when caller is done with it.
-    */
-    volatile lam_list_item_t *item;
-    if ( 0 == list->lam_list_length )
-        return (lam_list_item_t *)NULL;
-    
-    /* reset list length counter */
-    list->lam_list_length--;
-
-    /* get pointer to first element on the list */
-    item = list->lam_list_head.lam_list_next;
-
-    /* reset previous pointer of next item on the list */
-    item->lam_list_next->lam_list_prev=item->lam_list_prev;
-
-    /* reset the head next pointer */
-    list->lam_list_head.lam_list_next=item->lam_list_next;
-
-#if LAM_ENABLE_DEBUG
-    /* debug code */
-    item->lam_list_prev=(lam_list_item_t *)NULL;
-    item->lam_list_next=(lam_list_item_t *)NULL;
-#endif
-
-    return (lam_list_item_t *) item;
-}
-
-lam_list_item_t *lam_list_remove_last(lam_list_t *list)
-{
-    /*  Removes, releases and returns last item on list.
-    Caller now owns the item and should release the item
-    when caller is done with it.
-    */
-    volatile lam_list_item_t  *item;
-    
-    if ( 0 == list->lam_list_length )
-        return (lam_list_item_t *)NULL;
-    
-    /* reset list length counter */
-    list->lam_list_length--;
-
-    /* get item */
-    item = list->lam_list_tail.lam_list_prev;
-
-    /* reset previous pointer on next to last pointer */
-    item->lam_list_prev->lam_list_next=item->lam_list_next;
-
-    /* reset tail's previous pointer */
-    list->lam_list_tail.lam_list_prev=item->lam_list_prev;
-    
-#if LAM_ENABLE_DEBUG
-    /* debug code */
-    item->lam_list_next = item->lam_list_prev = (lam_list_item_t *)NULL;
-#endif
-
-    return (lam_list_item_t *) item;
 }
 

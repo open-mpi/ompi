@@ -39,6 +39,7 @@ extern "C" {
      unqualified name for a header file.  :-) */
 #include "lam_config.h"
 #endif
+#include "threads/mutex.h"
 
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
@@ -62,6 +63,10 @@ extern "C" {
 #define LAM_EV_WRITE	0x04
 #define LAM_EV_SIGNAL	0x08
 #define LAM_EV_PERSIST	0x10	/* Persistant event */
+
+#ifndef LAM_EVENT_USE_SIGNALS
+#define LAM_EVENT_USE_SIGNALS 0
+#endif
 
 /* Fix so that ppl dont have to run with <sys/queue.h> */
 #ifndef TAILQ_ENTRY
@@ -160,22 +165,100 @@ int lam_event_loop(int);
 #define lam_signal_pending(ev, tv)	lam_event_pending(ev, LAM_EV_SIGNAL, tv)
 #define lam_signal_initialized(ev)	((ev)->ev_flags & LAM_EVLIST_INIT)
 
-void lam_event_set(struct lam_event *, int, short, void (*)(int, short, void *), void *);
-int  lam_event_add(struct lam_event *, struct timeval *);
-int  lam_event_del(struct lam_event *);
-int  lam_event_pending(struct lam_event *, short, struct timeval *);
-void lam_event_active(struct lam_event *, int, short);
+/* for internal use only */
+int   lam_event_add_i(struct lam_event *, struct timeval *);
+int   lam_event_del_i(struct lam_event *);
+void  lam_event_active_i(struct lam_event*, int, short);
+
+/* public functions */
+static inline void
+lam_event_set(struct lam_event *ev, int fd, short events,
+      void (*callback)(int, short, void *), void *arg)
+{
+    ev->ev_callback = callback;
+    ev->ev_arg = arg;
+#ifdef WIN32
+    ev->ev_fd = (HANDLE)fd;
+    ev->overlap.hEvent = ev;
+#else
+    ev->ev_fd = fd;
+#endif
+    ev->ev_events = events;
+    ev->ev_flags = LAM_EVLIST_INIT;
+    ev->ev_ncalls = 0;
+    ev->ev_pncalls = NULL;
+}
+
+static inline int
+lam_event_add(struct lam_event *ev, struct timeval *tv)
+{
+    extern lam_mutex_t lam_event_lock;
+    int rc;
+    if(lam_using_threads()) {
+        lam_mutex_lock(&lam_event_lock);
+        rc = lam_event_add_i(ev, tv);
+        lam_mutex_unlock(&lam_event_lock);
+    } else {
+        rc = lam_event_add_i(ev, tv);
+    }
+    return rc;
+}
+
+static inline int 
+lam_event_del(struct lam_event *ev)
+{
+    extern lam_mutex_t lam_event_lock;
+    int rc;
+    if(lam_using_threads()) {
+        lam_mutex_lock(&lam_event_lock);
+        rc = lam_event_del_i(ev);
+        lam_mutex_unlock(&lam_event_lock);
+    } else {
+        rc = lam_event_del_i(ev);
+    }
+    return rc;
+}
+                                                                                          
+static inline void 
+lam_event_active(struct lam_event* ev, int res, short ncalls)
+{
+    extern lam_mutex_t lam_event_lock;
+    if(lam_using_threads()) {
+        lam_mutex_lock(&lam_event_lock);
+        lam_event_active_i(ev, res, ncalls);
+        lam_mutex_unlock(&lam_event_lock);
+    } else {
+        lam_event_active_i(ev, res, ncalls);
+    }
+}
+                                                                                          
+static inline int
+lam_event_pending(struct lam_event *ev, short event, struct timeval *tv)
+{
+    int flags = 0;
+                                                                                          
+    if (ev->ev_flags & LAM_EVLIST_INSERTED)
+        flags |= (ev->ev_events & (LAM_EV_READ|LAM_EV_WRITE));
+    if (ev->ev_flags & LAM_EVLIST_ACTIVE)
+        flags |= ev->ev_res;
+    if (ev->ev_flags & LAM_EVLIST_TIMEOUT)
+        flags |= LAM_EV_TIMEOUT;
+                                                                                          
+    event &= (LAM_EV_TIMEOUT|LAM_EV_READ|LAM_EV_WRITE);
+                                                                                          
+    /* See if there is a timeout that we should report */
+    if (tv != NULL && (flags & event & LAM_EV_TIMEOUT))
+        *tv = ev->ev_timeout;
+                                                                                          
+    return (flags & event);
+}
+
 
 #ifdef WIN32
 #define lam_event_initialized(ev)	((ev)->ev_flags & LAM_EVLIST_INIT && (ev)->ev_fd != INVALID_HANDLE_VALUE)
 #else
 #define lam_event_initialized(ev)	((ev)->ev_flags & LAM_EVLIST_INIT)
 #endif
-
-/* for internal use only */
-int  lam_event_add_i(struct lam_event *, struct timeval *);
-int  lam_event_del_i(struct lam_event *);
-void lam_event_active_i(struct lam_event *, int, short);
 
 #ifdef __cplusplus
 }
