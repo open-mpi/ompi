@@ -29,7 +29,7 @@ ompi_process_id_t ns_replica_create_cellid(void)
 	mca_ns_replica_last_used_cellid = mca_ns_replica_last_used_cellid + 1;
 	return(mca_ns_replica_last_used_cellid);
     } else {
-	return(0);
+	return(1);
     }
 }
 

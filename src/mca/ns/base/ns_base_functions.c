@@ -6,6 +6,7 @@
  */
 
 #include "ompi_config.h"
+#include "util/output.h"
 #include "mca/mca.h"
 #include "mca/ns/base/base.h"
 
@@ -21,6 +22,8 @@ ompi_process_name_t* ns_base_create_process_name(ompi_process_id_t cell,
 		             ompi_process_id_t job, ompi_process_id_t vpid)
 {
     ompi_process_name_t *newname;
+
+    ompi_output(mca_ns_base_output, "create_process_name\n");
 
     newname = OBJ_NEW(ompi_process_name_t);
     if (NULL == newname) { /* got an error */

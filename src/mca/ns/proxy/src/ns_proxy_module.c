@@ -19,6 +19,7 @@
 
 #include "include/constants.h"
 #include "util/proc_info.h"
+#include "util/output.h"
 #include "mca/mca.h"
 #include "mca/ns/base/base.h"
 #include "ns_proxy.h"
@@ -91,7 +92,7 @@ mca_ns_t* mca_ns_proxy_init(bool *allow_multi_user_threads, bool *have_hidden_th
 {
     /* If we're NOT the seed, then we want to be selected, so do all
        the setup and return the module */
-    fprintf(stderr, "ns_proxy: entered init\n");
+    ompi_output(mca_ns_base_output, "ns_proxy: entered init\n");
     if (!ompi_process_info.seed) {
 
       /* Return a module (choose an arbitrary, positive priority --
@@ -99,7 +100,7 @@ mca_ns_t* mca_ns_proxy_init(bool *allow_multi_user_threads, bool *have_hidden_th
          we're not the seed, then we don't want to be selected, so
          return NULL. */
 
-      *priority = 50;
+      *priority = 10;
 
       /* We allow multi user threads but don't have any hidden threads */
 
