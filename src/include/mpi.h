@@ -439,7 +439,7 @@ extern "C" {
   int MPI_Comm_accept(char *port_name, MPI_Info info, int root, 
                       MPI_Comm comm, MPI_Comm *newcomm);
   MPI_Fint MPI_Comm_c2f(MPI_Comm comm);
-  int MPI_Comm_call_error_handler(MPI_Comm comm, int errorcode);
+  int MPI_Comm_call_errhandler(MPI_Comm comm, int errorcode);
   int MPI_Comm_compare(MPI_Comm comm1, MPI_Comm comm2, int *result);
   int MPI_Comm_connect(char *port_name, MPI_Info info, int root, 
                        MPI_Comm comm, MPI_Comm *newcomm);
@@ -950,7 +950,7 @@ extern "C" {
   int PMPI_Comm_accept(char *port_name, MPI_Info info, int root, 
                       MPI_Comm comm, MPI_Comm *newcomm);
   MPI_Fint PMPI_Comm_c2f(MPI_Comm comm);
-  int PMPI_Comm_call_error_handler(MPI_Comm comm, int errorcode);
+  int PMPI_Comm_call_errhandler(MPI_Comm comm, int errorcode);
   int PMPI_Comm_compare(MPI_Comm comm1, MPI_Comm comm2, int *result);
   int PMPI_Comm_connect(char *port_name, MPI_Info info, int root, 
                        MPI_Comm comm, MPI_Comm *newcomm);

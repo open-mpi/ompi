@@ -12,6 +12,6 @@
 #endif
     
 
-int MPI_Comm_call_error_handler(MPI_Comm comm, int errorcode) {
+int MPI_Comm_call_errhandler(MPI_Comm comm, int errorcode) {
     return MPI_SUCCESS;
 }
