@@ -1,0 +1,24 @@
+# -*- makefile -*-
+#
+# $HEADER$
+#
+
+include $(top_srcdir)/config/Makefile.options
+
+libs = $(top_builddir)/src/libmpi.la 
+
+bin_PROGRAMS = mca_pcm_rsh_bootproxy
+
+mca_pcm_rsh_bootproxy_SOURCES = \
+	bootproxy.c	
+mca_pcm_rsh_bootproxy_LDADD = \
+	$(libs) \
+	$(LIBMPI_EXTRA_LIBS) \
+	$(LIBOMPI_EXTRA_LIBS) \
+	-lm
+mca_pcm_rsh_bootproxy_LDFLAGS = \
+	$(LIBMPI_EXTRA_LDFLAGS) \
+	$(LIBOMPI_EXTRA_LDFLAGS)
+mca_pcm_rsh_bootproxy_DEPENDENCIES = \
+	$(libs)
+
