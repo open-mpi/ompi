@@ -73,6 +73,9 @@ void lam_list_destroy(lam_list_t *list);
 #define lam_list_get_size(list) \
     ((lam_list_t*)list)->lam_list_length
 
+    /* set list size */
+#define lam_list_set_size(list,size) \
+    ((lam_list_t*)list)->lam_list_length=(int)size;
 
 /* 
  * Returns first item on list, but does not remove it from the list. 
