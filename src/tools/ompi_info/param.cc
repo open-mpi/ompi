@@ -13,6 +13,7 @@
 
 #include "class/ompi_value_array.h"
 #include "mca/base/mca_base_param.h"
+#include "mca/base/mca_base_param_internal.h"
 #include "tools/ompi_info/ompi_info.h"
 
 using namespace std;
@@ -23,7 +24,7 @@ using namespace ompi_info;
 // Public variables
 //
 
-string ompi_info::module_all = "all";
+string ompi_info::component_all = "all";
 string ompi_info::param_all = "all";
 
 string ompi_info::path_prefix = "prefix";
@@ -46,11 +47,11 @@ extern ompi_value_array_t mca_base_params;
 void ompi_info::do_params()
 {
   unsigned int count;
-  string type, module;
+  string type, component;
   bool found, want_all;
   ompi_info::type_vector_t::size_type i;
 
-  ompi_info::open_modules();
+  ompi_info::open_components();
 
   // See if the special param "all" was givin to --param; that
   // superceeds any individual type
@@ -69,12 +70,12 @@ void ompi_info::do_params()
 
   if (want_all) {
     for (i = 0; i < mca_types.size(); ++i) {
-      show_mca_params(mca_types[i], module_all, param_all);
+      show_mca_params(mca_types[i], component_all, param_all);
     }
   } else {
     for (i = 0; i < count; ++i) {
       type = ompi_cmd_line_get_param(cmd_line, "param", i, 0);
-      module = ompi_cmd_line_get_param(cmd_line, "param", i, 1);
+      component = ompi_cmd_line_get_param(cmd_line, "param", i, 1);
 
       for (found = false, i = 0; i < mca_types.size(); ++i) {
         if (mca_types[i] == type) {
@@ -90,13 +91,13 @@ void ompi_info::do_params()
         exit(1);
       }
 
-      show_mca_params(type, module, param_all);
+      show_mca_params(type, component, param_all);
     }
   }
 }
 
 
-void ompi_info::show_mca_params(const string& type, const string& module, 
+void ompi_info::show_mca_params(const string& type, const string& component, 
                               const string& param)
 {
   size_t i, size;
@@ -112,10 +113,10 @@ void ompi_info::show_mca_params(const string& type, const string& module,
   for (i = 0; i < size; ++i) {
     item = &(OMPI_VALUE_ARRAY_GET_ITEM(&mca_base_params, mca_base_param_t, i));
     if (type == item->mbp_type_name) {
-      if (module == module_all || 
-          NULL == item->mbp_module_name ||
-          (NULL != item->mbp_module_name &&
-           module == item->mbp_module_name)) {
+      if (component == component_all || 
+          NULL == item->mbp_component_name ||
+          (NULL != item->mbp_component_name &&
+           component == item->mbp_component_name)) {
         if (param == param_all || param == item->mbp_param_name) {
 
           // Make a string for the default value
@@ -162,8 +163,8 @@ void ompi_info::show_mca_params(const string& type, const string& module,
             message += item->mbp_type_name;
             message += ":";
 
-            if (item->mbp_module_name != NULL) {
-              message += item->mbp_module_name;
+            if (item->mbp_component_name != NULL) {
+              message += item->mbp_component_name;
             } else {
               message += "base";
             }

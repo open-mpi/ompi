@@ -35,14 +35,14 @@ const string ompi_info::ver_svn = "svn";
 static const string ver_all = "all";
 static const string ver_mca = "mca";
 static const string ver_type = "type";
-static const string ver_module = "module";
+static const string ver_component = "component";
 
 
 //
 // Private functions
 //
 
-static void show_mca_version(const mca_base_module_t *module,
+static void show_mca_version(const mca_base_module_t *component,
                              const string& scope, const string& ver_type);
 static string make_version_str(const string& scope,
                                int major, int minor, int release, int alpha, 
@@ -51,25 +51,25 @@ static string make_version_str(const string& scope,
 //
 // do_version
 //
-// Determines the version information related to the ompi modules
+// Determines the version information related to the ompi components
 // being used.
 // Accepts: 
-//	- want_all: True if all modules' info is required.
+//	- want_all: True if all components' info is required.
 //	- cmd_line: The constructed command line argument
 //
 void ompi_info::do_version(bool want_all, ompi_cmd_line_t *cmd_line)
 {
   unsigned int count;
   ompi_info::type_vector_t::size_type i;
-  string arg1, scope, type, module;
+  string arg1, scope, type, component;
   string::size_type pos;
 
-  open_modules();
+  open_components();
 
   if (want_all) {
     show_ompi_version(ver_full);
     for (i = 0; i < mca_types.size(); ++i) {
-      show_module_version(mca_types[i], module_all, ver_full, type_all);
+      show_component_version(mca_types[i], component_all, ver_full, type_all);
     }
   } else {
     count = ompi_cmd_line_get_ninsts(cmd_line, "version");
@@ -83,19 +83,19 @@ void ompi_info::do_version(bool want_all, ompi_cmd_line_t *cmd_line)
         show_ompi_version(scope);
       } 
 
-      // Specific type and module
+      // Specific type and component
 
       else if (string::npos != (pos = arg1.find(':'))) {
         type = arg1.substr(0, pos - 1);
-        module = arg1.substr(pos);
+        component = arg1.substr(pos);
 
-        show_module_version(type, module, scope, ver_all);
+        show_component_version(type, component, scope, ver_all);
       }
 
-      // All modules of a specific type
+      // All components of a specific type
 
       else {
-        show_module_version(arg1, module_all, scope, ver_all);
+        show_component_version(arg1, component_all, scope, ver_all);
       }
     }
   }
@@ -117,20 +117,20 @@ void ompi_info::show_ompi_version(const string& scope)
 
 
 //
-// Show all the modules of a specific type/module combo (module may be
+// Show all the components of a specific type/component combo (component may be
 // a wildcard)
 //
-void ompi_info::show_module_version(const string& type_name, 
-                                  const string& module_name,
+void ompi_info::show_component_version(const string& type_name, 
+                                  const string& component_name,
                                   const string& scope, const string& ver_type)
 {
   ompi_info::type_vector_t::size_type i;
-  bool want_all_modules = (type_all == module_name);
+  bool want_all_components = (type_all == component_name);
   bool found;
   ompi_list_item *item;
   mca_base_module_list_item_t *mli;
-  const mca_base_module_t *module;
-  ompi_list_t *modules;
+  const mca_base_module_t *component;
+  ompi_list_t *components;
 
   // Check to see if the type is valid
 
@@ -148,17 +148,18 @@ void ompi_info::show_module_version(const string& type_name,
     exit(1);
   }
 
-  // Now that we have a valid type, find the right module list
+  // Now that we have a valid type, find the right component list
 
-  modules = module_map[type_name];
-  if (NULL != modules) {
-    for (item = ompi_list_get_first(modules);
-         ompi_list_get_end(modules) != item;
+  components = component_map[type_name];
+  if (NULL != components) {
+    for (item = ompi_list_get_first(components);
+         ompi_list_get_end(components) != item;
          item = ompi_list_get_next(item)) {
       mli = (mca_base_module_list_item_t *) item;
-      module = mli->mli_module;
-      if (want_all_modules || module->mca_module_name == module_name) {
-        show_mca_version(module, scope, ver_type);
+      component = mli->mli_module;
+      if (want_all_components || 
+          component->mca_module_name == component_name) {
+        show_mca_version(component, scope, ver_type);
       }
     }
   }
@@ -166,38 +167,38 @@ void ompi_info::show_module_version(const string& type_name,
 
 
 //
-// Given a module, display its relevant version(s)
+// Given a component, display its relevant version(s)
 //
-static void show_mca_version(const mca_base_module_t* module,
+static void show_mca_version(const mca_base_module_t* component,
                              const string& scope, const string& ver_type)
 {
   bool printed;
   bool want_mca = (ver_all == ver_type || ver_type == ver_mca);
   bool want_type = (ver_all == ver_type || ver_type == ver_type);
-  bool want_module = (ver_all == ver_type || ver_type == ver_module);
+  bool want_component = (ver_all == ver_type || ver_type == ver_component);
   string message, content;
   string mca_version;
   string api_version;
-  string module_version;
+  string component_version;
   string empty;
 
-  mca_version = make_version_str(scope, module->mca_major_version,
-                                 module->mca_minor_version,
-                                 module->mca_release_version, 0, 0, "");
-  api_version = make_version_str(scope, module->mca_type_major_version,
-                                 module->mca_type_minor_version,
-                                 module->mca_type_release_version, 0, 0, "");
-  module_version = make_version_str(scope, module->mca_module_major_version,
-                                    module->mca_module_minor_version,
-                                    module->mca_module_release_version, 
+  mca_version = make_version_str(scope, component->mca_major_version,
+                                 component->mca_minor_version,
+                                 component->mca_release_version, 0, 0, "");
+  api_version = make_version_str(scope, component->mca_type_major_version,
+                                 component->mca_type_minor_version,
+                                 component->mca_type_release_version, 0, 0, "");
+  component_version = make_version_str(scope, component->mca_module_major_version,
+                                    component->mca_module_minor_version,
+                                    component->mca_module_release_version, 
                                     0, 0, "");
 
   if (pretty) {
     message = "MCA ";
-    message += module->mca_type_name;
+    message += component->mca_type_name;
     printed = false;
 
-    content = module->mca_module_name + string(" (");
+    content = component->mca_module_name + string(" (");
     if (want_mca) {
       content += "MCA v" + mca_version;
       printed = true;
@@ -208,25 +209,25 @@ static void show_mca_version(const mca_base_module_t* module,
       content += "API v" + api_version;
       printed = true;
     }
-    if (want_module) {
+    if (want_component) {
       if (printed)
         content += ", ";
-      content += "Module v" + module_version;
+      content += "Component v" + component_version;
       printed = true;
     }
     out(message, empty, content + ")");
   } else {
     message = "mca:";
-    message += module->mca_type_name;
+    message += component->mca_type_name;
     message += ":";
-    message += module->mca_module_name;
+    message += component->mca_module_name;
     message += ":version";
     if (want_mca)
       out(empty, message, "mca:" + mca_version);
     if (want_type)
       out(empty, message, "api:" + api_version);
-    if (want_module)
-      out(empty, message, "module:" + module_version);
+    if (want_component)
+      out(empty, message, "component:" + component_version);
   }
 }
 

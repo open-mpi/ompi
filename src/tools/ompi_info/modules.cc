@@ -37,30 +37,30 @@ using namespace ompi_info;
 // Public variables
 //
 
-ompi_info::module_map_t ompi_info::module_map;
+ompi_info::component_map_t ompi_info::component_map;
 
 
 //
 // Private variables
 //
 
-static bool opened_modules = false;
+static bool opened_components = false;
 
 
 //
-// Open all MCA modules so that they can register their MCA
+// Open all MCA components so that they can register their MCA
 // parameters.  Take a shotgun approach here and indiscriminately open
-// all modules -- don't be selective.  To this end, we need to clear
+// all components -- don't be selective.  To this end, we need to clear
 // out the environment of all OMPI_MPI_mca_<type> variables to ensure
-// that the open algorithms don't try to only open one module.
+// that the open algorithms don't try to only open one component.
 //
-void ompi_info::open_modules()
+void ompi_info::open_components()
 {
   ompi_info::type_vector_t::size_type i;
   string env;
   char *target;
 
-  if (opened_modules)
+  if (opened_components)
     return;
 
   // Clear out the environment.  Use strdup() to orphan the resulting
@@ -79,89 +79,89 @@ void ompi_info::open_modules()
   // Find / open all components
 
   mca_base_open();
-  module_map["base"] = NULL;
+  component_map["base"] = NULL;
 
   mca_allocator_base_open();
-  module_map["allocator"] = &mca_allocator_base_components;
+  component_map["allocator"] = &mca_allocator_base_components;
 
   mca_coll_base_open();
-  module_map["coll"] = &mca_coll_base_components_opened;
+  component_map["coll"] = &mca_coll_base_components_opened;
 
 #if 0
   // common component framework not implemented yet
   mca_common_base_open();
-  module_map["common"] = &mca_common_base_components_opened;
+  component_map["common"] = &mca_common_base_components_opened;
 #else
-  module_map["common"] = NULL;
+  component_map["common"] = NULL;
 #endif
 
 #if 0
   // waiting for gpr to be implemented
   mca_gpr_base_open();
-  module_map["gpr"] = &mca_ns_base_components_available;
+  component_map["gpr"] = &mca_ns_base_components_available;
 #else
-  module_map["gpr"] = NULL;
+  component_map["gpr"] = NULL;
 #endif
 
 #if 0
-  // io module opening not implemented yet
+  // io component opening not implemented yet
   mca_io_base_open();
-  module_map["io"] = &mca_io_base_modules_available;
+  component_map["io"] = &mca_io_base_components_available;
 #else
-  module_map["io"] = NULL;
+  component_map["io"] = NULL;
 #endif
 
   mca_ns_base_open();
-  module_map["ns"] = &mca_ns_base_components_available;
+  component_map["ns"] = &mca_ns_base_components_available;
 
   mca_mpool_base_open();
-  module_map["mpool"] = &mca_mpool_base_components;
+  component_map["mpool"] = &mca_mpool_base_components;
 
 #if 0
-  // one module opening not implemented yet
+  // one component opening not implemented yet
   mca_one_base_open();
-  module_map["one"] = &mca_one_base_modules_available;
+  component_map["one"] = &mca_one_base_components_available;
 #else
-  module_map["one"] = NULL;
+  component_map["one"] = NULL;
 #endif
 
   mca_oob_base_open();
-  module_map["oob"] = &mca_oob_base_components;
+  component_map["oob"] = &mca_oob_base_components;
 
 #if 0
   // op component framework not yet implemented
   mca_op_base_open();
-  module_map["op"] = &mca_oob_base_components;
+  component_map["op"] = &mca_oob_base_components;
 #else
-  module_map["op"] = NULL;
+  component_map["op"] = NULL;
 #endif
 
   mca_pcm_base_open();
-  module_map["pcm"] = &mca_pcm_base_modules_available;
+  component_map["pcm"] = &mca_pcm_base_modules_available;
 
   mca_pml_base_open();
-  module_map["pml"] = &mca_pml_base_modules_available;
+  component_map["pml"] = &mca_pml_base_modules_available;
 
   mca_ptl_base_open();
-  module_map["ptl"] = &mca_ptl_base_modules_available;
+  component_map["ptl"] = &mca_ptl_base_modules_available;
 
 #if 0
-  // topo module opening not implemented yet
+  // topo component opening not implemented yet
   mca_topo_base_open();
-  module_map["topo"] = &mca_topo_base_modules_available;
+  component_map["topo"] = &mca_topo_base_components_available;
 #else
-  module_map["topo"] = NULL;
+  component_map["topo"] = NULL;
 #endif
 
   // All done
 
-  opened_modules = true;
+  opened_components = true;
 }
 
 
-void ompi_info::close_modules()
+void ompi_info::close_components()
 {
-  if (opened_modules) {
+  if (opened_components) {
     mca_pcm_base_close();
     mca_oob_base_close();
     mca_ns_base_close();
@@ -170,8 +170,8 @@ void ompi_info::close_modules()
     mca_ptl_base_close();
 
     mca_base_close();
-    module_map.clear();
+    component_map.clear();
   }
 
-  opened_modules = false;
+  opened_components = false;
 }
