@@ -21,6 +21,7 @@
 #include "mca/iof/iof.h"
 #include "mca/oob/oob.h"
 #include "mca/iof/iof.h"
+#include "mca/iof/base/base.h"
 #include "mca/iof/base/iof_base_endpoint.h"
 #include "iof_proxy.h"
 #include "iof_proxy_svc.h"
@@ -32,7 +33,8 @@ mca_iof_base_module_t mca_iof_proxy_module = {
     mca_iof_proxy_push,
     mca_iof_proxy_pull,
     mca_iof_proxy_subscribe,
-    mca_iof_proxy_unsubscribe
+    mca_iof_proxy_unsubscribe,
+    mca_iof_base_flush
 };
 
 

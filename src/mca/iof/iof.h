@@ -154,6 +154,13 @@ typedef int (*mca_iof_base_unsubscribe_fn_t)(
     mca_iof_base_tag_t src_tag
 );
 
+
+/*
+ * Flush all output and block until output is delivered.
+ */
+
+typedef int (*mca_iof_base_flush_fn_t)(void);
+
 /**
  *  IOF module.
  */
@@ -165,6 +172,7 @@ struct mca_iof_base_module_1_0_0_t {
     mca_iof_base_pull_fn_t iof_pull;
     mca_iof_base_subscribe_fn_t iof_subscribe;
     mca_iof_base_unsubscribe_fn_t iof_unsubscribe;
+    mca_iof_base_flush_fn_t iof_flush;
 };
 
 typedef struct mca_iof_base_module_1_0_0_t mca_iof_base_module_1_0_0_t;

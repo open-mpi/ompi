@@ -198,6 +198,7 @@ int ompi_rte_init(ompi_cmd_line_t *cmd_line, bool *allow_multi_user_threads, boo
 	return ret;
     }
 
+#if 0
     /*
      * Open I/O forwarding components.
      */
@@ -206,7 +207,7 @@ int ompi_rte_init(ompi_cmd_line_t *cmd_line, bool *allow_multi_user_threads, boo
 	printf("show_help: ompi_rte_init failed in mca_iof_base_open\n");
 	return ret;
     }
-
+#endif
     printname("component open");
 
     /*
@@ -409,6 +410,7 @@ int ompi_rte_init(ompi_cmd_line_t *cmd_line, bool *allow_multi_user_threads, boo
 	exit(-1);
     }
 
+#if 0
     /* setup I/O forwarding */
     if (OMPI_SUCCESS != (ret = mca_iof_base_select(&user_threads, &hidden_threads))) {
 	/* JMS show_help */
@@ -417,6 +419,7 @@ int ompi_rte_init(ompi_cmd_line_t *cmd_line, bool *allow_multi_user_threads, boo
     }
     *allow_multi_user_threads &= user_threads;
     *have_hidden_threads |= hidden_threads;
+#endif
 
      /* 
      * All done 
