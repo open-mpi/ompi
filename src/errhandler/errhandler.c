@@ -44,6 +44,16 @@ ompi_errhandler_t ompi_mpi_errhandler_null;
 ompi_errhandler_t ompi_mpi_errors_are_fatal;
 ompi_errhandler_t ompi_mpi_errors_return;
 
+
+/*
+ * Local state to know when the three intrinsics have been freed; see
+ * the errhandler destructor for more info.
+ */
+static bool null_freed = false;
+static bool fatal_freed = false;
+static bool return_freed = false;
+
+
 /*
  * Initialize OMPI errhandler infrastructure
  */
@@ -105,13 +115,34 @@ int ompi_errhandler_init(void)
  */
 int ompi_errhandler_finalize(void)
 {
-  /* Remove errhandler F2C table */
-  
-  OBJ_RELEASE(ompi_errhandler_f_to_c_table);
-  
-  /* All done */
+    /* Forcibly release the intrinsic error handlers because in order
+       to be safe, we increase the refcount on error handlers in
+       MPI_*_GET_ERRHANDLER and MPI_ERRHANDLER_GET.  If these handles
+       are never ERRHANDLER_FREEd, then the refcount will not be
+       decremented and they will not naturally get to 0 during
+       FINALIZE.  Hence, we RELEASE on the intrinsics until they are
+       freed. */
 
-  return OMPI_SUCCESS;
+    while (!null_freed) {
+        OBJ_DESTRUCT(&ompi_mpi_errhandler_null);
+    }
+    while (!fatal_freed) {
+        OBJ_DESTRUCT(&ompi_mpi_errors_are_fatal);
+    }
+    while (!return_freed) {
+        OBJ_DESTRUCT(&ompi_mpi_errors_return);
+    }
+  
+    /* JMS Add stuff here checking for unreleased errorhandlers,
+       similar to communicators, info handles, etc. */
+
+    /* Remove errhandler F2C table */
+  
+    OBJ_RELEASE(ompi_errhandler_f_to_c_table);
+
+    /* All done */
+
+    return OMPI_SUCCESS;
 }
 
 
@@ -206,6 +237,15 @@ static void ompi_errhandler_destruct(ompi_errhandler_t *errhandler)
     ompi_pointer_array_set_item(ompi_errhandler_f_to_c_table,
                                errhandler->eh_f_to_c_index, NULL);
   }
+
+  /* Reset the static state if we're releasing one of the
+     intrinsics */
+
+  if (&ompi_mpi_errhandler_null == errhandler) {
+      null_freed = true;
+  } else if (&ompi_mpi_errors_are_fatal == errhandler) {
+      fatal_freed = true;
+  } else if (&ompi_mpi_errors_return == errhandler) {
+      return_freed = true;
+  }
 }
-
-
