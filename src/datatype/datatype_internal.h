@@ -69,7 +69,8 @@
 #define DT_WCHAR                   0x26
 #define DT_2COMPLEX                0x27
 #define DT_2DOUBLE_COMPLEX         0x28
-#define DT_UNAVAILABLE             0x29
+#define DT_CXX_BOOL                0x29
+#define DT_UNAVAILABLE             0x2A
 /* If the number of basic datatype should change update
  * DT_MAX_PREDEFINED in datatype.h
  */
