@@ -10,6 +10,7 @@ SUBDIRS = \
         common \
         io \
         mpool \
+	llm \
         ns \
         one \
         oob \

@@ -5,6 +5,4 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-SUBDIRS		= oob llm
-
-DIST_SUBDIRS = $(SUBDIRS) ns 
+SUBDIRS		= base

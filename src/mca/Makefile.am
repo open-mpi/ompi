@@ -10,6 +10,7 @@ SUBDIRS = \
         coll \
         common \
         io \
+	llm \
         mpool \
         ns \
         one \
@@ -35,6 +36,7 @@ libmca_la_LIBADD = \
         allocator/libmca_allocator.la \
         base/libmca_base.la \
         coll/libmca_coll.la \
+	llm/libmca_llm.la \
         mpool/libmca_mpool.la \
         ns/libmca_ns.la \
         oob/libmca_oob.la \

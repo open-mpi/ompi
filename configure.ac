@@ -603,6 +603,11 @@ WRAPPER_EXTRA_LIBS="$WRAPPER_EXTRA_LIBS $THREAD_LIBS"
 AC_PROG_LN_S
 
 #
+# We need lex
+#
+AM_PROG_LEX
+
+#
 # File system case sensitivity
 #
 
@@ -879,6 +884,9 @@ AC_CONFIG_FILES([
     src/mca/pcm/Makefile
     src/mca/pcm/base/Makefile
 
+    src/mca/llm/Makefile
+    src/mca/llm/base/Makefile
+
     src/mca/allocator/Makefile
     src/mca/allocator/base/Makefile
     src/mca/coll/Makefile
@@ -904,6 +912,7 @@ AC_CONFIG_FILES([
 
     src/dynamic-mca/oob/Makefile
     src/dynamic-mca/pcm/Makefile
+    src/dynamic-mca/llm/Makefile
 
     src/dynamic-mca/Makefile
     src/dynamic-mca/allocator/Makefile
@@ -938,6 +947,8 @@ AC_CONFIG_FILES([
     test/mca/Makefile
     test/mca/oob/Makefile
     test/mca/ns/Makefile
+    test/mca/llm/Makefile
+    test/mca/llm/base/Makefile
     test/threads/Makefile
     test/util/Makefile
     test/rte/Makefile
