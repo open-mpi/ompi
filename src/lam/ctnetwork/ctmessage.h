@@ -99,13 +99,13 @@ void lam_pk_ctc_set_info(uint8_t *buffer, uint8_t *info);
  * Accessor functions
  */
 
-lam_bool_t lam_ctc_get_is_user_msg(lam_ct_ctrl_t *ctrl);
-inline lam_bool_t lam_ctc_get_is_user_msg(lam_ct_ctrl_t *ctrl)
+bool lam_ctc_get_is_user_msg(lam_ct_ctrl_t *ctrl);
+inline bool lam_ctc_get_is_user_msg(lam_ct_ctrl_t *ctrl)
 {
   return ctrl->ctc_is_user_msg;
 }
-void lam_ctc_set_is_user_msg(lam_ct_ctrl_t *ctrl, lam_bool_t yn);
-inline void lam_ctc_set_is_user_msg(lam_ct_ctrl_t *ctrl, lam_bool_t yn)
+void lam_ctc_set_is_user_msg(lam_ct_ctrl_t *ctrl, bool yn);
+inline void lam_ctc_set_is_user_msg(lam_ct_ctrl_t *ctrl, bool yn)
 {
     ctrl->ctc_is_user_msg = yn;
 }
