@@ -1,0 +1,47 @@
+# -*- shell-script -*-
+#
+# $HEADER$
+#
+
+#
+# Main function.  This will be invoked in the middle of the templated
+# configure script.
+#
+AC_DEFUN([MCA_CONFIGURE_STUB],[
+#
+# gm ptl configure.stub
+#
+
+#
+# ...do whatever you need to do here, like look for the Elan4
+# libraries and header files.  Built-in tests such as AC_CHECK_LIBS
+# and AC_CHECK_HEADERS may be useful here.  See the Autoconf docs ...
+#
+echo "Hello from gm configure.stub:MCA-CONFIGURE-STUB!"
+
+#
+# done with gm ptl configure.stub
+#
+])dnl
+
+
+#
+# Since MCA_CONFIGURE_STUB is not invoked when we are configured with
+# --enable dist, we provide this alternate macro is that invoked
+# instead.  Not all modules will need this -- probably only modules
+# thaty use AM_CONDITIONALS will require doing anything here.  If you
+# don't need it, you can remove this whole AC_DEFUN.
+#
+AC_DEFUN([MCA_CONFIGURE_DIST_STUB],[
+#
+# gm ptl configure-dist.stub
+#
+
+# ...probably only need this if have AM_CONDITIONALs in the
+# MCA_CONFIGURE_STUB.
+echo "Hello from gm configure.stub:MCA-CONFIGURE-DIST-STUB!"
+
+#
+# done with gm ptl configure-dist.stub
+#
+])dnl
