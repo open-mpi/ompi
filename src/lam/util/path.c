@@ -176,7 +176,7 @@ lam_path_env_findv(char *fname, int mode, char **envv, char *wrkdir)
      * the wrkdir to the end of the path
      */
     if (!found_dot && wrkdir) {
-        lam_argv_add(&dirc, &dirv, wrkdir);
+        lam_argv_append(&dirc, &dirv, wrkdir);
     }
 
     fullpath = lam_path_findv(fname, dirv, mode, envv);
@@ -283,7 +283,7 @@ path_env_load(char *path, int *pargc, char ***pargv)
         if (p != path) {
             saved = *p;
             *p = '\0';
-            lam_argv_add(pargc, pargv, path);
+            lam_argv_append(pargc, pargv, path);
             *p = saved;
             path = p;
         }
