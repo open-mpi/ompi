@@ -36,7 +36,7 @@ struct lam_communicator_t {
 
     /* Hooks for collectives to hang things */
 
-    mca_coll_module_1_0_0_t c_coll;
+    mca_coll_1_0_0_t c_coll;
     struct mca_coll_comm_t* c_coll_comm;
 };
 typedef struct lam_communicator_t lam_communicator_t;
