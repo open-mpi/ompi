@@ -1,0 +1,7 @@
+# -*- shell-script -*-
+#
+# $HEADER$
+#
+PARAM_INIT_FILE=src/ptl_tcp.c
+PARAM_CONFIG_HEADER_FILE="src/tcp_config.h"
+PARAM_CONFIG_FILES="Makefile src/Makefile"
