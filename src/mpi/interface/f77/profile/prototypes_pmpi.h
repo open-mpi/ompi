@@ -37,7 +37,7 @@ void PMPI_ALLOC_MEM(MPI_Fint *size, MPI_Fint *info, char *baseptr, MPI_Fint *ier
 void PMPI_COMM_GET_NAME(MPI_Fint *comm, char *name, MPI_Fint *l, MPI_Fint *ierror, 
                        MPI_Fint charlen);
 void PMPI_COMM_SET_NAME(MPI_Fint *comm, char *name, MPI_Fint *ierror, MPI_Fint charlen);
-void PMPI_INIT(void *ierror);
+void PMPI_INIT(MPI_Fint *ierror);
 void PMPI_FINALIZE(MPI_Fint *ierror);
 void PMPI_FREE_MEM(char *baseptr, MPI_Fint *ierr);
 
