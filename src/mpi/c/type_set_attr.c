@@ -27,7 +27,7 @@ MPI_Type_set_attr (MPI_Datatype type,
 
     if (MPI_PARAM_CHECK) {
 	if (MPI_DATATYPE_NULL == type) {
-	    return LAM_ERRHANDLER_INVOKE((lam_communicator_t *)NULL,
+	    return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD,
 					 MPI_ERR_TYPE, 
 					 FUNC_NAME);
 	}
@@ -36,7 +36,7 @@ MPI_Type_set_attr (MPI_Datatype type,
     ret = lam_attr_set(TYPE_ATTR, type, type->d_keyhash, 
 		       type_keyval, attribute_val, 0);
 
-    LAM_ERRHANDLER_RETURN(ret, (lam_communicator_t *) NULL,
+    LAM_ERRHANDLER_RETURN(ret, MPI_COMM_WORLD,
 			  MPI_ERR_OTHER, FUNC_NAME);  
 
 }

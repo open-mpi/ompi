@@ -25,7 +25,7 @@ MPI_Type_delete_attr (MPI_Datatype type, int type_keyval)
 
     if (MPI_PARAM_CHECK) {
 	if (MPI_DATATYPE_NULL == type) {
-	    return LAM_ERRHANDLER_INVOKE((lam_communicator_t *)NULL, 
+	    return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, 
 					 MPI_ERR_TYPE, 
 					 FUNC_NAME);
 	}
@@ -33,6 +33,6 @@ MPI_Type_delete_attr (MPI_Datatype type, int type_keyval)
   
     ret = lam_attr_delete(TYPE_ATTR, type, type->d_keyhash, type_keyval, 0);
 
-    LAM_ERRHANDLER_RETURN(ret, (lam_communicator_t *)NULL,
+    LAM_ERRHANDLER_RETURN(ret, MPI_COMM_WORLD,
 			  MPI_ERR_OTHER, FUNC_NAME);  
 }
