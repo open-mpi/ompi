@@ -7,6 +7,7 @@
 #include "ompi_config.h"
 
 #include <errno.h>
+#include <signal.h>
 #include <sys/types.h>
 #include <unistd.h>
 
