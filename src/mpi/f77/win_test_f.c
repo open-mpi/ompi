@@ -48,5 +48,11 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WIN_TEST,
 
 void mpi_win_test_f(MPI_Fint *win, MPI_Fint *flag, MPI_Fint *ierr)
 {
-  /* This function not yet implemented */
+    MPI_Win c_win = MPI_Win_f2c(*win);
+    OMPI_SINGLE_NAME_DECL(flag);
+
+    *ierr = OMPI_INT_2_FINT(MPI_Win_test(c_win,
+					 OMPI_SINGLE_NAME_CONVERT(flag)));
+    
+    OMPI_SINGLE_INT_2_FINT(flag);
 }
