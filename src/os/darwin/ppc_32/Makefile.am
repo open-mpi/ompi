@@ -1,12 +1,3 @@
-#
-# $HEADER$
-#
-
-include $(top_srcdir)/config/Makefile.options
-
-headers = \
-	atomic.h \
-	smp_dev_params.h
 
 # Conditionally install the header files
 
