@@ -279,9 +279,11 @@ int ompi_argv_delete(int *argc, char ***argv, int start, int num_to_delete)
     char **tmp;
 
     /* Check for the bozo cases */
-
+    if (NULL == argv || NULL == *argv || 0 == num_to_delete) {
+        return OMPI_SUCCESS;
+    }
     count = ompi_argv_count(*argv);
-    if (NULL == argv || NULL == *argv || start > count || 0 == num_to_delete) {
+    if (start > count) {
         return OMPI_SUCCESS;
     } else if (start < 0 || num_to_delete < 0) {
         return OMPI_ERR_BAD_PARAM;

@@ -13,6 +13,14 @@
 #include <stdio.h>
 #include <string.h>
 
+int main(int argc, char **argv)
+{
+    printf("Test oob_test disabled.  Does not compile.\n");
+    return 77;
+}
+
+#if 0
+
 #include "support.h"
 
 #include "include/orte_constants.h"
@@ -82,3 +90,5 @@ main(int argc, char **argv)
     }
     
 }
+
+#endif

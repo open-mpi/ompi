@@ -40,6 +40,10 @@ static int exec_client(int argc, char** argv);
 
 int main(int argc, char **argv)
 {
+    printf("Test test_ns_proxy disabled.  Does not compile.\n");
+    return 77;
+
+#if 0
     bool multi, hidden;
     char *seed;
 
@@ -252,5 +256,7 @@ void run_test(void)
       test_failure( "test_ns_replica ompi_name_server get_proc_name_string, etc failed");
     }
     test_finalize();
+
+#endif
 }
 

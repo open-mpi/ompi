@@ -18,7 +18,8 @@ AM_CPPFLAGS = -I$(top_srcdir)/test/support -DOMPI_ENABLE_DEBUG_OVERRIDE=1
 
 check_PROGRAMS = \
 	test_ns_replica \
-	test_ns_proxy
+	test_ns_proxy \
+	ns_nds
 
 TESTS = \
 	$(check_PROGRAMS)
@@ -34,3 +35,9 @@ test_ns_proxy_LDADD = \
         $(top_builddir)/test/support/libsupport.a \
         $(top_builddir)/src/libmpi.la 
 test_ns_proxy_DEPENDENCIES = $(test_ns_proxy_LDADD)
+
+ns_nds_SOURCES = ns_nds.c
+ns_nds_LDADD = \
+        $(top_builddir)/test/support/libsupport.a \
+        $(top_builddir)/src/libmpi.la 
+ns_nds_DEPENDENCIES = $(ns_nds_LDADD)

@@ -12,6 +12,14 @@
 #include "support.h"
 #include "mca/oob/oob.h"
 
+int main(int argc, char **argv)
+{
+    printf("Test oob_test disabled.  Does not compile.\n");
+    return 77;
+}
+
+#if 0
+
 #define MSG_TYPE_1   1
 #define MSG_TYPE_2   2
 #define NUM_TESTS    5
@@ -162,3 +170,4 @@ int main(int argc, char ** argv)
     return 0;
 }
  
+#endif

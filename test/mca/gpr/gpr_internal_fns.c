@@ -317,6 +317,7 @@ int main(int argc, char **argv)
 
     fprintf(stderr, "update multiple keyvals in a container\n");
     if(ORTE_SUCCESS != orte_gpr_replica_find_seg(&seg, false, "test-put-segment")) {
+        fprintf(test_out, "Failure in orte_gpr_replica_find_seg\n");
         return -1;
     }
     
@@ -404,5 +405,5 @@ int main(int argc, char **argv)
 */
     test_finalize();
 
-    return(0);
+    return 0;
 }

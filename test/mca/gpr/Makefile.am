@@ -16,6 +16,8 @@
 include $(top_srcdir)/config/Makefile.options
 AM_CPPFLAGS = -I$(top_srcdir)/test/support -DOMPI_ENABLE_DEBUG_OVERRIDE=1 -g
 
+TESTS_ENVIRONMENT = TEST_WRITE_TO_FILE=1
+
 check_PROGRAMS = \
     gpr_internal_fns \
     gpr_mem_leaks \
