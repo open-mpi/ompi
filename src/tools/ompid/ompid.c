@@ -86,7 +86,9 @@ int main(int argc, char *argv[])
     }
 
     /* daemonize myself */
+#ifndef WIN32
     ompi_daemon_init(NULL);
+#endif
 
     /* setup the thread lock and condition variable */
     OBJ_CONSTRUCT(&ompi_daemon_mutex, ompi_mutex_t);
