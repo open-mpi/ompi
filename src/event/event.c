@@ -164,6 +164,9 @@ static RB_PROTOTYPE(ompi_event_tree, ompi_event, ev_timeout_node, compare)
 
 static RB_GENERATE(ompi_event_tree, ompi_event, ev_timeout_node, compare)
 
+#if 0
+     /* Open MPI: JMS As far as I can tell, this function is not used
+        anywhere */
 static int ompi_timeout_next(struct timeval *tv) 
 { 
     struct timeval dflt = OMPI_TIMEOUT_DEFAULT; 
@@ -186,6 +189,7 @@ static int ompi_timeout_next(struct timeval *tv)
     timersub(&ev->ev_timeout, &now, tv); 
     return (0); 
 } 
+#endif
 
 /* run loop for dispatch thread */
 static void* ompi_event_run(ompi_object_t* arg)
