@@ -57,7 +57,7 @@ do {                                                                            
  */
                                                                                                   
 #define MCA_PTL_MX_PROGRESS(ptl, mx_request)                                        \
-{                                                                                   \
+do {                                                                                \
     mx_return_t mx_return;                                                          \
     mx_status_t mx_status;                                                          \
     uint32_t mx_result;                                                             \
@@ -121,7 +121,7 @@ do {                                                                            
             break;                                                                  \
         }                                                                           \
     }                                                                               \
-}
+} while(0)
 
 #endif
 
