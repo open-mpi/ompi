@@ -36,11 +36,17 @@ static inline void ompi_atomic_wmb(void)
     MB();
 }
 
-
 static inline int ompi_atomic_cmpset_32(volatile uint32_t *addr,
                                        uint32_t oldval,
                                        uint32_t newval)
 {
+   unsigned long prev;
+   __asm__ __volatile__(SMPLOCK "cmpxchgl %k1,%2"
+                 : "=a"(prev)
+                 : "q"(newval), "m"(*addr), "0"(oldval)
+                 : "memory");
+   return prev == oldval;
+#if 0
     uint32_t ret = oldval;
 
     __asm__ __volatile (
@@ -52,6 +58,7 @@ SMPLOCK "cmpxchgl %1,%2   \n\
     : "memory");
 
     return (ret == oldval);
+#endif
 }
 
 
