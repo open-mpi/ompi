@@ -17,6 +17,9 @@
 #if defined(malloc)
 #undef malloc
 #endif
+#if defined(calloc)
+#undef calloc
+#endif
 #if defined(free)
 #undef free
 #endif
@@ -90,6 +93,32 @@ void *lam_malloc(size_t size, char *file, int line)
             lam_output(lam_malloc_output, 
                        "Request for %ld bytes failed (%s, %d)",
                        (long) size, file, line);
+        }
+    }
+
+    return addr;
+}
+
+
+/*
+ * Debug version of calloc
+ */
+void *lam_calloc(size_t nmembers, size_t size, char *file, int line)
+{
+    void *addr;
+    if (lam_malloc_debug_level > 1) {
+        if (size <= 0) {
+          lam_output(lam_malloc_output,
+                     "Request for %ld zeroed elements of size %ld (%s, %d)", 
+                     (long) nmembers, (long) size, file, line);
+        }
+    }
+    addr = calloc(nmembers, size);
+    if (lam_malloc_debug_level > 0) {
+        if (NULL == addr) {
+            lam_output(lam_malloc_output, 
+                       "Request for %ld zeroed elements of size %ld failed (%s, %d)",
+                       (long) nmembers, (long) size, file, line);
         }
     }
 
