@@ -52,38 +52,35 @@ extern "C" {
     };
     typedef struct mca_ptl_gm_rdv_header_t mca_ptl_gm_rdv_header_t;
 
-    /*struct mca_ptl_base_peer_t;*/
+    struct mca_ptl_gm_peer_t;
 
     /**
      * GM send fragment derived type.
      */
     struct mca_ptl_gm_send_frag_t {
         mca_ptl_base_send_frag_t send_frag; /**< base send fragment descriptor */
-        void * send_buf;
-        void * registered_buf;
         struct mca_pml_base_send_request_t *req;
-        struct mca_ptl_gm_module_t *ptl;
-        struct mca_ptl_gm_peer_t *peer;
-    
-        uint32_t already_send;  /**< data sended so far */
+        void* send_buf;
+        ompi_ptr_t* registered_buf;
+	
+        size_t   frag_bytes_processed;  /**< data sended so far */
+	size_t   frag_offset;
         int      status;
         int      type;
         int      wait_for_ack; 
         int      put_sent;
-        int      send_complete;
     };
     typedef struct mca_ptl_gm_send_frag_t mca_ptl_gm_send_frag_t;
-
+    
     struct mca_ptl_gm_recv_frag_t {
         mca_ptl_base_recv_frag_t frag_recv;
-        size_t frag_hdr_cnt;
-        size_t frag_msg_cnt;
+	struct mca_pml_base_recv_request_t* req;
+        size_t frag_bytes_processed;
+	size_t frag_offset;
         volatile int frag_progressed;
         bool frag_ack_pending;
         void *alloc_recv_buffer;
-        void *unex_recv_buffer;
         void * registered_buf;
-        struct mca_ptl_gm_module_t *ptl;
         bool matched;
         bool have_allocated_buffer;
         bool have_registered_buffer;
@@ -94,12 +91,12 @@ extern "C" {
     mca_ptl_gm_send_frag_t *
     mca_ptl_gm_alloc_send_frag ( struct mca_ptl_gm_module_t* ptl,
                                  struct mca_pml_base_send_request_t* sendreq );
-
+    
     int mca_ptl_gm_send_ack_init( struct mca_ptl_gm_send_frag_t* ack,
                                   struct mca_ptl_gm_module_t *ptl,
                                   struct mca_ptl_gm_peer_t* ptl_peer,
                                   struct mca_ptl_gm_recv_frag_t* frag,
-                                  char * buffer,
+                                  char* buffer,
                                   int size );
 
     int
