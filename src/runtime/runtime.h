@@ -94,6 +94,9 @@ OMPI_DECLSPEC    int orte_abort(int status, char *fmt, ...);
      */
 OMPI_DECLSPEC    int orte_init(void);
 
+OMPI_DECLSPEC    int orte_init_stage1(void);
+OMPI_DECLSPEC    int orte_init_stage2(void);
+
     /**
      * Re-init the Open run time environment.
      *

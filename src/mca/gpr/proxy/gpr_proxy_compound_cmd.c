@@ -30,6 +30,7 @@
 #include "util/proc_info.h"
 
 #include "mca/ns/ns_types.h"
+#include "mca/errmgr/errmgr.h"
 #include "mca/oob/oob_types.h"
 #include "mca/rml/rml.h"
 
@@ -58,12 +59,14 @@ int orte_gpr_proxy_begin_compound_cmd(void)
 
     orte_gpr_proxy_globals.compound_cmd = OBJ_NEW(orte_buffer_t);
     if (NULL == orte_gpr_proxy_globals.compound_cmd) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         orte_gpr_proxy_globals.compound_cmd_mode = false;
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
     
     if (ORTE_SUCCESS != (rc = orte_dps.pack(orte_gpr_proxy_globals.compound_cmd, &command,
                                             1, ORTE_GPR_CMD))) {
+        ORTE_ERROR_LOG(rc);
         orte_gpr_proxy_globals.compound_cmd_mode = false;
         OBJ_RELEASE(orte_gpr_proxy_globals.compound_cmd);
         return rc;
@@ -97,8 +100,7 @@ int orte_gpr_proxy_exec_compound_cmd(void)
     orte_buffer_t *answer;
     orte_gpr_cmd_flag_t command;
     size_t n;
-    int rc;
-    int32_t response;
+    int rc, response;
     
     if (orte_gpr_proxy_globals.debug) {
 	   ompi_output(0, "[%d,%d,%d] transmitting compound command",
@@ -109,17 +111,20 @@ int orte_gpr_proxy_exec_compound_cmd(void)
     rc = ORTE_SUCCESS;
     
     if (0 > orte_rml.send_buffer(orte_process_info.gpr_replica, orte_gpr_proxy_globals.compound_cmd, ORTE_RML_TAG_GPR, 0)) {
+        ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         rc = ORTE_ERR_COMM_FAILURE;
 	    goto CLEANUP;
     }
 
     answer = OBJ_NEW(orte_buffer_t);
     if (NULL == answer) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         rc = ORTE_ERR_OUT_OF_RESOURCE;
         goto CLEANUP;
     }
     
 	if (0 > orte_rml.recv_buffer(orte_process_info.gpr_replica, answer, ORTE_RML_TAG_GPR)) {
+        ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         OBJ_RELEASE(answer);
         rc = ORTE_ERR_COMM_FAILURE;
 	    goto CLEANUP;
@@ -127,18 +132,22 @@ int orte_gpr_proxy_exec_compound_cmd(void)
 
     n = 1;
     if (ORTE_SUCCESS != (rc = orte_dps.unpack(answer, &command, &n, ORTE_GPR_CMD))) {
+        ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(answer);
         goto CLEANUP;
     }
     
     if (ORTE_GPR_COMPOUND_CMD != command) {
+        ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         OBJ_RELEASE(answer);
         rc = ORTE_ERR_COMM_FAILURE;
         goto CLEANUP;
     }
     
     n = 1;
-    rc = orte_dps.unpack(answer, &response, &n, ORTE_INT32);
+    if (ORTE_SUCCESS != (rc = orte_dps.unpack(answer, &response, &n, ORTE_INT))) {
+        ORTE_ERROR_LOG(rc);
+    }
     
     if (ORTE_SUCCESS == rc) {
         rc = (int)response;

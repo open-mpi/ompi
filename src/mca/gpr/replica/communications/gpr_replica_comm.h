@@ -72,6 +72,8 @@ int orte_gpr_replica_remote_notify(orte_process_name_t *recipient, int recipient
 /*
  * define the local functions for processing commands
  */
+int orte_gpr_replica_recv_compound_cmd(orte_buffer_t *output_buffer);
+
 int orte_gpr_replica_recv_delete_segment_cmd(orte_buffer_t *input_buffer,
                                              orte_buffer_t *output_buffer);
                                              
