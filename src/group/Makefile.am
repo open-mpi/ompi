@@ -14,6 +14,7 @@ headers = \
 
 libgroup_la_SOURCES = \
 	$(headers) \
+	group.c    \
         mpi_group_init.c \
         mpi_set_group_rank.c
 
