@@ -145,6 +145,14 @@ static inline int mca_ptl_tcp_param_register_int(
 
 int mca_ptl_tcp_component_open(void)
 {
+#ifdef WIN32
+    WSADATA win_sock_data;
+    if (WSAStartup(MAKEWORD(2,2), &win_sock_data) != 0) {
+        ompi_output (0, "mca_ptl_tcp_component_init: failed to initialise windows sockets:%d\n", WSAGetLastError());
+        return OMPI_ERROR;
+    }
+#endif
+
     /* initialize state */
     mca_ptl_tcp_component.tcp_listen_sd = -1;
     mca_ptl_tcp_component.tcp_ptl_modules = NULL;
@@ -200,6 +208,9 @@ int mca_ptl_tcp_component_open(void)
 int mca_ptl_tcp_component_close(void)
 {
     ompi_list_item_t* item;
+#ifdef WIN32
+    WSACleanup();
+#endif
     if (mca_ptl_tcp_component.tcp_send_frags.fl_num_allocated != 
         mca_ptl_tcp_component.tcp_send_frags.super.ompi_list_length) {
         ompi_output(0, "tcp send frags: %d allocated %d returned\n",

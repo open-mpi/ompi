@@ -46,7 +46,7 @@ int ompi_sys_info(void)
     #define INFO_BUF_SIZE 32768
     TCHAR info_buf[INFO_BUF_SIZE];
     DWORD info_buf_length = INFO_BUF_SIZE;
-	char sep[] = "\\0";
+	char *sep = "\\";
 #endif
 
 	if (ompi_system_info.init) {

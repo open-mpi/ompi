@@ -7,6 +7,15 @@ $HEADER$
 
 #define _SC_PAGESIZE 0
 
+static __inline char* getenv (const char *name) {
+    /* currently, this is a memory leak */
+    int ret;
+    char *buffer = (char *)malloc(sizeof(char) * 100);
+    ret = GetEnvironmentVariable(name, buffer, 100);
+    return (ret > 0) ? buffer: NULL;
+}
+
+
 static __inline int setenv (const char *name, const char *value, int rewrite) {
 
     /* just push it back to the windows thingy */

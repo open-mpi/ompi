@@ -18,7 +18,7 @@
 			CharacterSet="2">
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalOptions="/I&quot;../generated_include&quot; /I&quot;../../src/win32/generated_include&quot; /I&quot;../../include&quot; /I&quot;../../src&quot; /D&quot;__i386__&quot;  /D&quot;HAVE_CONFIG_H&quot; /D&quot;OMPI_PKGDATADIR&quot; /D&quot;OMPI_PKGLIBDIR&quot; /D&quot;OMPI_SYSCONFDIR&quot; /DOMPI_BUILDING_LIBRARY "
+				AdditionalOptions="/I&quot;../generated_include&quot; /I&quot;../../src/win32/generated_include&quot; /I&quot;../../include&quot; /I&quot;../../src&quot; /I&quot;../../src/event/compat/&quot; /I&quot;../../src/event/WIN32-Code&quot; /D&quot;__i386__&quot;  /D&quot;HAVE_CONFIG_H&quot; /DOMPI_PKGDATADIR=&quot;\&quot;C:/cygwin/ompi-new/vcproj/ompi/Debug\&quot;&quot; /DOMPI_PKGLIBDIR=&quot;\&quot;C:/cygwin/ompi-new/vcpro/ompi/Debug\&quot;&quot; /DOMPI_SYSCONFDIR=&quot;\&quot;C:/cygwin/ompi-new/vcproj/ompi/Debug\&quot;&quot; /DOMPI_BUILDING"
 				Optimization="0"
 				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE"
 				GeneratePreprocessedFile="0"
@@ -124,6 +124,9 @@
 			Name="Source Files"
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
+			<File
+				RelativePath="..\..\src\util\show_help_lex.c">
+			</File>
 			<Filter
 				Name="src"
 				Filter="">
@@ -184,6 +187,12 @@
 					</File>
 					<File
 						RelativePath="..\..\src\class\ompi_pointer_array.h">
+					</File>
+					<File
+						RelativePath="..\..\src\class\ompi_proc_table.c">
+					</File>
+					<File
+						RelativePath="..\..\src\class\ompi_proc_table.h">
 					</File>
 					<File
 						RelativePath="..\..\src\class\ompi_rb_tree.c">
@@ -290,7 +299,7 @@
 							RelativePath="..\..\src\mca\base\mca_base_parse_paramfile.c">
 						</File>
 						<File
-							RelativePath="..\..\src\win32\generated_source\mca_base_parse_paramfile_lex.c">
+							RelativePath="..\..\src\mca\base\mca_base_parse_paramfile_lex.c">
 						</File>
 						<File
 							RelativePath="..\..\src\win32\generated_source\mca_base_parse_paramfile_lex.h">
@@ -409,9 +418,6 @@
 								RelativePath="..\..\src\mca\llm\base\llm_base_parse_hostfile.c">
 							</File>
 							<File
-								RelativePath="..\..\src\win32\generated_source\llm_base_parse_hostfile_lex.c">
-							</File>
-							<File
 								RelativePath="..\..\src\mca\llm\base\llm_base_parse_hostfile_lex.h">
 							</File>
 							<File
@@ -419,6 +425,9 @@
 							</File>
 							<File
 								RelativePath="..\..\src\mca\llm\base\llm_base_util.c">
+							</File>
+							<File
+								RelativePath="..\..\src\mca\llm\base\mca_llm_base_parse_hostfile_lex.c">
 							</File>
 						</Filter>
 					</Filter>
@@ -550,16 +559,19 @@
 								RelativePath="..\..\src\mca\pcm\base\base_job_track.h">
 							</File>
 							<File
+								RelativePath="..\..\src\mca\pcm\base\base_kill_track.h">
+							</File>
+							<File
 								RelativePath="..\..\src\mca\pcm\base\pcm_base_close.c">
 							</File>
 							<File
 								RelativePath="..\..\src\mca\pcm\base\pcm_base_comm.c">
 							</File>
 							<File
-								RelativePath="..\..\src\mca\pcm\base\pcm_base_ioexecvp.c">
+								RelativePath="..\..\src\mca\pcm\base\pcm_base_job_track.c">
 							</File>
 							<File
-								RelativePath="..\..\src\mca\pcm\base\pcm_base_job_track.c">
+								RelativePath="..\..\src\mca\pcm\base\pcm_base_kill_track.c">
 							</File>
 							<File
 								RelativePath="..\..\src\mca\pcm\base\pcm_base_open.c">
@@ -760,6 +772,41 @@
 							</File>
 							<File
 								RelativePath="..\..\src\mca\topo\base\topo_base_open.c">
+							</File>
+						</Filter>
+					</Filter>
+					<Filter
+						Name="io"
+						Filter="">
+						<File
+							RelativePath="..\..\src\mca\io\io.h">
+						</File>
+						<Filter
+							Name="base"
+							Filter="">
+							<File
+								RelativePath="..\..\src\mca\io\base\base.h">
+							</File>
+							<File
+								RelativePath="..\..\src\mca\io\base\io_base_close.c">
+							</File>
+							<File
+								RelativePath="..\..\src\mca\io\base\io_base_delete.c">
+							</File>
+							<File
+								RelativePath="..\..\src\mca\io\base\io_base_file_select.c">
+							</File>
+							<File
+								RelativePath="..\..\src\mca\io\base\io_base_find_available.c">
+							</File>
+							<File
+								RelativePath="..\..\src\mca\io\base\io_base_open.c">
+							</File>
+							<File
+								RelativePath="..\..\src\mca\io\base\io_base_request.c">
+							</File>
+							<File
+								RelativePath="..\..\src\mca\io\base\io_base_request.h">
 							</File>
 						</Filter>
 					</Filter>
@@ -1958,6 +2005,9 @@
 							RelativePath="..\..\src\mpi\runtime\mpiruntime.h">
 						</File>
 						<File
+							RelativePath="..\..\src\mpi\runtime\ompi_mpi_abort.c">
+						</File>
+						<File
 							RelativePath="..\..\src\mpi\runtime\ompi_mpi_finalize.c">
 						</File>
 						<File
@@ -2298,9 +2348,6 @@
 						RelativePath="..\..\src\util\proc_info.h">
 					</File>
 					<File
-						RelativePath="..\..\src\util\pty.c">
-					</File>
-					<File
 						RelativePath="..\..\src\util\session_dir.c">
 					</File>
 					<File
@@ -2311,9 +2358,6 @@
 					</File>
 					<File
 						RelativePath="..\..\src\util\show_help.h">
-					</File>
-					<File
-						RelativePath="..\..\src\win32\generated_source\show_help_lex.c">
 					</File>
 					<File
 						RelativePath="..\..\src\util\show_help_lex.h">
@@ -2403,6 +2447,325 @@
 				</File>
 				<File
 					RelativePath="..\..\include\ompi_stdint.h">
+				</File>
+			</Filter>
+			<Filter
+				Name="components"
+				Filter="">
+				<File
+					RelativePath="..\..\src\mca\allocator\bucket\allocator_bucket.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\allocator\bucket\allocator_bucket_alloc.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\allocator\bucket\allocator_bucket_alloc.h">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\coll\basic\coll-basic-version.h">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\coll\basic\coll_basic.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\coll\basic\coll_basic.h">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\coll\basic\coll_basic_allgather.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\coll\basic\coll_basic_allgatherv.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\coll\basic\coll_basic_allreduce.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\coll\basic\coll_basic_alltoall.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\coll\basic\coll_basic_alltoallv.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\coll\basic\coll_basic_alltoallw.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\coll\basic\coll_basic_barrier.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\coll\basic\coll_basic_bcast.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\coll\basic\coll_basic_component.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\coll\basic\coll_basic_exscan.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\coll\basic\coll_basic_gather.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\coll\basic\coll_basic_gatherv.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\coll\basic\coll_basic_reduce.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\coll\basic\coll_basic_reduce_scatter.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\coll\basic\coll_basic_scan.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\coll\basic\coll_basic_scatter.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\coll\basic\coll_basic_scatterv.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\gpr\proxy\gpr_proxy.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\gpr\proxy\gpr_proxy.h">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\gpr\proxy\gpr_proxy_component.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\gpr\replica\gpr_replica.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\gpr\replica\gpr_replica.h">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\gpr\replica\gpr_replica_component.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\gpr\replica\gpr_replica_internals.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\gpr\replica\gpr_replica_internals.h">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\llm\hostfile\src\llm_hostfile.h">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\llm\hostfile\src\llm_hostfile_allocate.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\llm\hostfile\src\llm_hostfile_component.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\llm\hostfile\src\llm_hostfile_deallocate.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\ns\proxy\src\ns_proxy.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\ns\proxy\src\ns_proxy.h">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\ns\proxy\src\ns_proxy_component.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\ns\replica\src\ns_replica.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\ns\replica\src\ns_replica.h">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\ns\replica\src\ns_replica_component.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\oob\tcp\oob_tcp.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\oob\tcp\oob_tcp.h">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\oob\tcp\oob_tcp_addr.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\oob\tcp\oob_tcp_addr.h">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\oob\tcp\oob_tcp_hdr.h">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\oob\tcp\oob_tcp_msg.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\oob\tcp\oob_tcp_msg.h">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\oob\tcp\oob_tcp_peer.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\oob\tcp\oob_tcp_peer.h">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\oob\tcp\oob_tcp_ping.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\oob\tcp\oob_tcp_recv.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\oob\tcp\oob_tcp_send.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\pcmclient\env\pcmclient-env-version.h">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\pcmclient\seed\pcmclient-seed-version.h">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\pcmclient\singleton\pcmclient-singleton-version.h">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\pcmclient\env\pcmclient_env.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\pcmclient\env\pcmclient_env.h">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\pcmclient\env\pcmclient_env_component.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\pcmclient\seed\pcmclient_seed.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\pcmclient\seed\pcmclient_seed.h">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\pcmclient\seed\pcmclient_seed_component.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\pcmclient\singleton\pcmclient_singleton.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\pcmclient\singleton\pcmclient_singleton.h">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\pcmclient\singleton\pcmclient_singleton_component.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\pml\teg\src\pml_ptl_array.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\pml\teg\src\pml_ptl_array.h">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\pml\teg\src\pml_teg.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\pml\teg\src\pml_teg.h">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\pml\teg\src\pml_teg_cancel.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\pml\teg\src\pml_teg_component.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\pml\teg\src\pml_teg_iprobe.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\pml\teg\src\pml_teg_irecv.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\pml\teg\src\pml_teg_isend.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\pml\teg\src\pml_teg_proc.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\pml\teg\src\pml_teg_proc.h">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\pml\teg\src\pml_teg_progress.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\pml\teg\src\pml_teg_ptl.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\pml\teg\src\pml_teg_ptl.h">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\pml\teg\src\pml_teg_recvfrag.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\pml\teg\src\pml_teg_recvfrag.h">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\pml\teg\src\pml_teg_recvreq.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\pml\teg\src\pml_teg_recvreq.h">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\pml\teg\src\pml_teg_sendreq.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\pml\teg\src\pml_teg_sendreq.h">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\pml\teg\src\pml_teg_start.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\ptl\tcp\src\ptl_tcp.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\ptl\tcp\src\ptl_tcp.h">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\ptl\tcp\src\ptl_tcp_addr.h">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\ptl\tcp\src\ptl_tcp_component.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\ptl\tcp\src\ptl_tcp_peer.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\ptl\tcp\src\ptl_tcp_peer.h">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\ptl\tcp\src\ptl_tcp_proc.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\ptl\tcp\src\ptl_tcp_proc.h">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\ptl\tcp\src\ptl_tcp_recvfrag.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\ptl\tcp\src\ptl_tcp_recvfrag.h">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\ptl\tcp\src\ptl_tcp_sendfrag.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\ptl\tcp\src\ptl_tcp_sendfrag.h">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\ptl\tcp\src\ptl_tcp_sendreq.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\ptl\tcp\src\ptl_tcp_sendreq.h">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\topo\unity\src\topo_unity.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\topo\unity\src\topo_unity.h">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\topo\unity\src\topo_unity_cart_map.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\topo\unity\src\topo_unity_component.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\topo\unity\src\topo_unity_graph_map.c">
 				</File>
 			</Filter>
 		</Filter>

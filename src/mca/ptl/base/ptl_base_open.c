@@ -19,11 +19,7 @@
  * component's public mca_base_component_t struct.
  */
 
-#ifdef WIN32
-    const mca_base_component_t *mca_ptl_base_static_components[] = {NULL};
-#else 
 #include "mca/ptl/base/static-components.h"
-#endif
 
 
 /*
