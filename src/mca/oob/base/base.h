@@ -46,6 +46,7 @@ extern ompi_process_name_t mca_oob_name_self;
 #define MCA_OOB_TAG_RTE         4
 #define MCA_OOB_TAG_EXEC        5
 #define MCA_OOB_TAG_DAEMON      6
+#define MCA_OOB_TAG_STDIO       7
 
 /*
  * OOB API 
