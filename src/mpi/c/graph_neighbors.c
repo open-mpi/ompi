@@ -48,7 +48,7 @@ int MPI_Graph_neighbors(MPI_Comm comm, int rank, int maxneighbors,
         }
     }
     /* neighbors the function pointer to do the right thing */
-    func = comm->c_topo.topo_graph_neighbors;
+    func = comm->c_topo->topo_graph_neighbors;
     if (NULL == func) {
         return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER, 
                                      "MPI_Graph_neighbors");

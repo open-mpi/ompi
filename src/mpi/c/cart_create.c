@@ -22,7 +22,7 @@ int MPI_Cart_create(MPI_Comm old_comm, int ndims, int *dims,
                     int *periods, int reorder, MPI_Comm *comm_cart) {
 
     int err;
-    mca_topo_base_cart_create_fn_t func;
+    bool re_order = false;
 
     /* check the arguments */
     if (MPI_PARAM_CHECK) {
@@ -42,17 +42,47 @@ int MPI_Cart_create(MPI_Comm old_comm, int ndims, int *dims,
             return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_ARG,
                                           "MPI_Cart_create");
         }
-    }
-    /* get the function pointer to do the right thing */
-    func = old_comm->c_topo.topo_cart_create;
-    if (NULL == func) {
-        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER, 
-                                     "MPI_Cart_create");
+        if (0 > reorder || 1 < reorder) {
+            return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_ARG,
+                                          "MPI_Cart_create");
+        }
+
+        /* check if the number of processes on the grid are corrct */
+        {
+           int i;
+           int *p = dims;
+           int count_nodes = 1;
+           int parent_procs = ompi_comm_size(old_comm);
+
+           for (i=0; i < ndims; i++) {
+               count_nodes *= *p;
+               p++;
+           }
+
+           if (parent_procs < count_nodes) {
+               return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_ARG,
+                                              "MPI_Cart_create");
+           }
+        }
     }
 
-    /* call the function */
-    if ( MPI_SUCCESS != 
-            (err = func(old_comm, ndims, dims, periods, reorder, comm_cart))) {
+    /* everything seems to be alright with the communicator, we can go 
+     * ahead and select a topology module for this purpose and create 
+     * the new cartesian communicator
+     */
+
+    re_order = (1 == reorder)? true :false;
+
+    err = ompi_topo_create (old_comm,
+                            ndims,
+                            dims,
+                            periods,
+                            re_order,
+                            comm_cart,
+                            OMPI_COMM_CART);
+
+    /* check the error status */
+    if (MPI_SUCCESS != err) {
         return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, err, "MPI_Cart_create");
     }
     

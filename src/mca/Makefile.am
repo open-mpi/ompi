@@ -40,6 +40,7 @@ libmca_la_LIBADD = \
         oob/libmca_oob.la \
         pcm/libmca_pcm.la \
         pml/libmca_pml.la \
+        topo/libmca_topo.la \
         ptl/libmca_ptl.la
 libmca_la_DEPENDENCIES = $(libmca_la_LIBADD)
 

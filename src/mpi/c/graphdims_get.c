@@ -42,7 +42,7 @@ int MPI_Graphdims_get(MPI_Comm comm, int *nnodes, int *nedges) {
         }
     }
     /* get the function pointer to do the right thing */
-    func = comm->c_topo.topo_graphdims_get;
+    func = comm->c_topo->topo_graphdims_get;
     if (NULL == func) {
         return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER, 
                                      "MPI_Graphdims_get");

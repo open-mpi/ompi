@@ -46,7 +46,7 @@ int MPI_Graph_neighbors_count(MPI_Comm comm, int rank, int *nneighbors) {
         }
     }
     /* get the function pointer to do the right thing */
-    func = comm->c_topo.topo_graph_neighbors_count;
+    func = comm->c_topo->topo_graph_neighbors_count;
     if (NULL == func) {
         return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER, 
                                      "MPI_Graph_neighbors_count");

@@ -39,7 +39,7 @@ int MPI_Graph_map(MPI_Comm comm, int nnodes, int *index, int *edges,
         }
     }
     /* map the function pointer to do the right thing */
-    func = comm->c_topo.topo_graph_map;
+    func = comm->c_topo->topo_graph_map;
     if (NULL == func) {
         return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER, 
                                      "MPI_Graph_map");

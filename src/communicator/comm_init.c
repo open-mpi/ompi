@@ -14,6 +14,8 @@
 #include "mca/pml/pml.h"
 #include "mca/coll/coll.h"
 #include "mca/coll/base/base.h"
+#include "mca/topo/topo.h"
+#include "mca/topo/base/base.h"
 #include "mca/ns/base/base.h"
 
 
@@ -202,6 +204,7 @@ static void ompi_comm_construct(ompi_communicator_t* comm)
     comm->error_handler  = NULL;
     comm->c_pml_comm     = NULL;
     comm->c_topo_comm    = NULL; 
+    comm->c_topo_module = NULL;
 
     comm->c_coll_selected_module = NULL;
     comm->c_coll_selected_data   = NULL;
@@ -219,12 +222,44 @@ static void ompi_comm_destruct(ompi_communicator_t* comm)
 
     /* Release topology information */
 
-    /* ...Anju add more here... */
+    mca_topo_base_comm_unselect(comm);
 
-    OBJ_RELEASE ( comm->c_local_group );
-    OBJ_RELEASE ( comm->c_remote_group );
+    /*  Check if the communicator is a topology */
     
-    OBJ_RELEASE ( comm->error_handler );
+    if (OMPI_COMM_IS_CART(comm) || OMPI_COMM_IS_GRAPH(comm)) {
+
+        /* check and free individual things */
+        
+        if (NULL != comm->c_topo_comm) {
+
+            /* check for all pointers and free them */
+
+            if (NULL != comm->c_topo_comm->mtc_dims_or_index) {
+                free(comm->c_topo_comm->mtc_dims_or_index);
+            }
+        
+            if (NULL != comm->c_topo_comm->mtc_dims_or_index) {
+                free(comm->c_topo_comm->mtc_periods_or_edges);
+            }
+
+            if (NULL != comm->c_topo_comm->mtc_dims_or_index) {
+                free(comm->c_topo_comm->mtc_coords);
+            }
+
+            free(comm->c_topo_comm);
+        }
+
+    }
+
+    if (NULL != comm->c_local_group) {
+        OBJ_RELEASE ( comm->c_local_group );
+    }
+    if (NULL != comm->c_remote_group) {
+        OBJ_RELEASE ( comm->c_remote_group );
+    }
+    if (NULL != comm->c_remote_group) {
+        OBJ_RELEASE ( comm->error_handler );
+    }
 
     /* reset the ompi_comm_f_to_c_table entry */
     if ( NULL != ompi_pointer_array_get_item ( &ompi_mpi_communicators,
@@ -236,7 +271,3 @@ static void ompi_comm_destruct(ompi_communicator_t* comm)
 
     return;
 }
-
-
-
-
