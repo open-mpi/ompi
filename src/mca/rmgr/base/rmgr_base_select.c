@@ -59,7 +59,7 @@ int orte_rmgr_base_select(void)
 
             /* If there was a previous best one, finalize */
 
-            if (NULL != best_module) {
+            if (NULL != best_module && NULL != best_module->finalize) {
                  best_module->finalize();
             }
 
