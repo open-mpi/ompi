@@ -16,7 +16,7 @@
 
 /* private list functions */
 
-#if RB_HASNT_FINISHED_THIS_YET
+#if ROB_HASNT_FINISHED_THIS_YET
 static lam_list_item_t *lam_free_lists_request_elt(lam_free_lists_t *flist, 
                                             int pool_idx);
 #endif
