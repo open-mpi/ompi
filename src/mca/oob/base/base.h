@@ -15,6 +15,9 @@
 #endif
 #include "util/bufpack.h"
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 
 /*
  * Well known address
@@ -78,9 +81,6 @@ OMPI_DECLSPEC extern ompi_process_name_t mca_oob_name_self;
                               * size for the receive and return the allocated buffer and size in the first
                               * element of the iovec array. */
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
         
 /**
 *  Obtain a string representation of the OOB contact information for
