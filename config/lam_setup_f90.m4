@@ -25,13 +25,13 @@ AC_DEFUN([LAM_SETUP_F90],[
 lam_show_subtitle "Fortran 90/95 compiler" 
 
 if test "$LAM_WANT_F77_BINDINGS" = "0" ; then
-    AC_MSG_WARN([*** Fortran 90/95 disabled (Fortran 77 was disabled)])
+    AC_MSG_WARN([*** Fortran 90/95 bindings disabled (Fortran 77 was disabled)])
     LAM_WANT_F90_BINDINGS=0
     FC="none"
     F90="$FC"
     BASEF90="none"
 elif test "$LAM_WANT_F90_BINDINGS" = "0" ; then
-    AC_MSG_WARN([*** Fortran 90/95 disabled by user])
+    AC_MSG_WARN([*** Fortran 90/95 bindings disabled by user])
     LAM_WANT_F90_BINDINGS=0
     FC="none"
     F90="$FC"
@@ -51,7 +51,7 @@ else
     AC_PROG_FC
     FCFLAGS="$lam_fcflags_save"
     if test -z "$FC"; then
-        AC_MSG_WARN([*** Could not find Fortran 90/95 compiler])
+        AC_MSG_WARN([*** Fortran 90/95 bindings disabled (could not find compiler)])
         LAM_WANT_F90_BINDINGS=0
         FC=none
         F90=none
@@ -59,7 +59,7 @@ else
     elif test "$FC" = "$F77"; then
         AC_MSG_WARN([*** Found same compiler for Fortran 77 and 90/95.])
         AC_MSG_WARN([*** Assuming no Fortran 90/95 compiler; disabling])
-        AC_MSG_WARN([*** Fortran 90 MPI bindings.])
+        AC_MSG_WARN([*** Fortran 90/95 MPI bindings.])
         LAM_WANT_F90_BINDINGS=0
         FC=none
         F90=none
@@ -79,7 +79,7 @@ else
         if test "$fortran_goodness" = "0" ; then
             AC_MSG_RESULT([no])
             AC_MSG_WARN([*** Fortran 77 and Fortran 90 compilers are not link compatible])
-            AC_MSG_WARN([*** Disabling Fortran 90 module])
+            AC_MSG_WARN([*** Disabling Fortran 90/95 bindings])
             LAM_WANT_F90_BINDINGS=0
         else
             AC_MSG_RESULT([yes])
