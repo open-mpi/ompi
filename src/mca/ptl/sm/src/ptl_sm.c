@@ -14,12 +14,13 @@
 #include "mca/ptl/base/ptl_base_recvfrag.h"
 #include "mca/base/mca_base_module_exchange.h"
 #include "ptl_sm.h"
+#include "util/sys_info.h"
 
 
 mca_ptl_sm_t mca_ptl_sm = {
     {
     &mca_ptl_sm_module.super,
-    0, /* ptl_exclusivity */
+    1, /* ptl_exclusivity */
     0, /* ptl_latency */
     0, /* ptl_andwidth */
     0, /* ptl_frag_first_size */
@@ -46,8 +47,10 @@ int mca_ptl_sm_add_procs(
     ompi_bitmap_t* reachability)
 {
     int proc,rc;
-    size_t size;
+    bool same_host;
+    size_t size,len,my_len;
     mca_ptl_sm_exchange_t **sm_proc_info;
+    ompi_proc_t* my_proc; /* pointer to caller's proc structure */
 
     /* allocate array to hold setup shared memory from all
      * other procs */
@@ -58,19 +61,57 @@ int mca_ptl_sm_add_procs(
         goto CLEANUP;
     }
 
+    /* get pointer to my proc structure */
+    my_proc=ompi_proc_local();
+    if( NULL == my_proc ) {
+        rc=OMPI_ERR_OUT_OF_RESOURCE;
+        goto CLEANUP;
+    }
+    my_len=strlen(ompi_system_info.nodename);
+
     /* get unique host identifier for each process in the list */
     for( proc=0 ; proc < nprocs; proc++ ) {
+        /* don't compare with self */
+        if( my_proc == procs[proc] ) {
+            continue;
+        }
         rc = mca_base_modex_recv(
-                &mca_ptl_sm_module.super.ptlm_version, proc,
-                (void**)(sm_proc_info+proc), &size);
+                &mca_ptl_sm_module.super.ptlm_version, procs[proc],
+                (void**)(&(sm_proc_info[proc])), &size);
         if(rc != OMPI_SUCCESS) {
             ompi_output(0, "mca_ptl_sm_add_procs: mca_base_modex_recv: failed with return value=%d", rc);
             goto CLEANUP;
         }
+       /* for zero length, just continue - comparison is meaningless*/
+       if( 0 >= size ) {
+           continue;
+       }
+       /* check to see if this proc is on my host */
+       len=strlen((char *)(sm_proc_info[proc]));
+       same_host=false;
+       if( len == my_len ) {
+           if( 0 == strncmp(ompi_system_info.nodename,
+                            (char *)(sm_proc_info[proc]),len) ) {
+               same_host=true;
+           }
+       }
+
+       /* add this proc to shared memory accessability list */
+       rc=ompi_bitmap_set_bit(reachability,proc);
+      if( OMPI_SUCCESS != rc ){
+          goto CLEANUP;
+      }
+
     }
 
     /* free local memory */
     if(sm_proc_info){
+       /* free the memory allocated by mca_base_modex_recv */
+        for( proc=0 ; proc < nprocs; proc++ ) {
+            if(sm_proc_info[proc]){
+                free(sm_proc_info[proc]);
+            }
+        }
         free(sm_proc_info);
     }
 
@@ -80,6 +121,8 @@ CLEANUP:
     if(sm_proc_info){
         free(sm_proc_info);
     }
+
+    return rc;
 }
 
 
