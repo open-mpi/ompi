@@ -210,7 +210,7 @@ int ompi_ddt_local_sizes[DT_MAX_PREDEFINED];
 #define DECLARE_MPI2_COMPOSED_STRUCT_DDT( PDATA, MPIDDT, MPIDDTNAME, type1, type2, MPIType1, MPIType2 ) \
     do {                                                                \
         struct { type1 v1; type2 v2; } s[2];                            \
-        ompi_datatype_t *types[2], *ptype;                               \
+        ompi_datatype_t *types[2], *ptype;                              \
         int bLength[2] = {1, 1};                                        \
         long base, displ[2];                                            \
                                                                         \
@@ -222,14 +222,14 @@ int ompi_ddt_local_sizes[DT_MAX_PREDEFINED];
         displ[1] = (long)(&(s[0].v2));                                  \
         displ[1] -= base;                                               \
                                                                         \
-        ompi_ddt_create_struct( 2, bLength, displ, types, &ptype );      \
+        ompi_ddt_create_struct( 2, bLength, displ, types, &ptype );     \
         displ[0] = (long)(&(s[1]));                                     \
         displ[0] -= base;                                               \
         if( displ[0] != sizeof(s[0]) )                                  \
             ptype->ub = displ[0];  /* force a new extent for the datatype */ \
         ptype->flags |= DT_FLAG_FOREVER;                                \
         ptype->id = MPIDDT;                                             \
-        ompi_ddt_commit( &ptype );                                       \
+        ompi_ddt_commit( &ptype );                                      \
         COPY_DATA_DESC( PDATA, ptype );                                 \
         ptype->desc.desc = NULL;                                        \
         ptype->opt_desc.desc = NULL;                                    \
@@ -251,20 +251,29 @@ int ompi_ddt_local_sizes[DT_MAX_PREDEFINED];
         strncpy( (PDATA)->name, (MPIDDTNAME), MPI_MAX_OBJECT_NAME );	\
     } while(0)
 
+#define DECLARE_MPI_SYNONYM_DDT( PDATA, MPIDDTNAME, PORIGDDT)           \
+    do {                                                                \
+        /* just memcpy as it's easier this way */                       \
+        memcpy( (PDATA), (PORIGDDT), sizeof(ompi_datatype_t) );         \
+        strncpy( (PDATA)->name, MPIDDTNAME, MPI_MAX_OBJECT_NAME );      \
+    } while(0)
+
 int ompi_ddt_init( void )
 {
     int i;
 
     for( i = 0; i < DT_MAX_PREDEFINED; i++ ) {
-        ompi_ddt_basicDatatypes[i]->desc.desc = (dt_elem_desc_t*)malloc(sizeof(dt_elem_desc_t));
-        ompi_ddt_basicDatatypes[i]->desc.desc->flags  = DT_FLAG_BASIC | DT_FLAG_CONTIGUOUS;
-        ompi_ddt_basicDatatypes[i]->desc.desc->type   = i;
-        ompi_ddt_basicDatatypes[i]->desc.desc->count  = 1;
-        ompi_ddt_basicDatatypes[i]->desc.desc->disp   = 0;
-        ompi_ddt_basicDatatypes[i]->desc.desc->extent = ompi_ddt_basicDatatypes[i]->size;
-        ompi_ddt_basicDatatypes[i]->desc.length       = 1;
-        ompi_ddt_basicDatatypes[i]->desc.used         = 1;
-        ompi_ddt_basicDatatypes[i]->btypes[i]         = 1;
+        ompi_datatype_t* datatype = ompi_ddt_basicDatatypes[i];
+
+        datatype->desc.desc         = (dt_elem_desc_t*)malloc(sizeof(dt_elem_desc_t));
+        datatype->desc.desc->flags  = DT_FLAG_BASIC | DT_FLAG_CONTIGUOUS;
+        datatype->desc.desc->type   = i;
+        datatype->desc.desc->count  = 1;
+        datatype->desc.desc->disp   = 0;
+        datatype->desc.desc->extent = datatype->size;
+        datatype->desc.length       = 1;
+        datatype->desc.used         = 1;
+        datatype->btypes[i]         = 1;
     }
 
     /* Create the f2c translation table */
@@ -272,14 +281,18 @@ int ompi_ddt_init( void )
     if (NULL == ompi_datatype_f_to_c_table) {
         return OMPI_ERROR;
     }
-    
+    /* All temporary datatypes created on the following statement will get registered
+     * on the f2c table. But as they get destroyed they will (hopefully) get unregistered
+     * so later when we start registering the real datatypes they will get the index
+     * in mpif.h
+     */
+
     /* the 2 complex datatypes (float and double) */
     DECLARE_MPI2_COMPOSED_STRUCT_DDT( &ompi_mpi_cplex, DT_COMPLEX_FLOAT, "MPI_COMPLEX", float, float, DT_FLOAT, DT_FLOAT );
     DECLARE_MPI2_COMPOSED_STRUCT_DDT( &ompi_mpi_dblcplex, DT_COMPLEX_DOUBLE, "MPI_DOUBLE_COMPLEX", double, double, DT_DOUBLE, DT_DOUBLE );
-    /* C++ complex types */
-    DECLARE_MPI2_COMPOSED_STRUCT_DDT( &ompi_mpi_cxx_cplex, DT_COMPLEX_FLOAT, "MPI_CXX_COMPLEX", float, float, DT_FLOAT, DT_FLOAT );
-    DECLARE_MPI2_COMPOSED_STRUCT_DDT( &ompi_mpi_cxx_dblcplex, DT_COMPLEX_DOUBLE, "MPI_CXX_DOUBLE_COMPLEX", double, double, DT_DOUBLE, DT_DOUBLE );
-    DECLARE_MPI2_COMPOSED_STRUCT_DDT( &ompi_mpi_cxx_ldblcplex, DT_COMPLEX_LONG_DOUBLE, "MPI_CXX_LONG_DOUBLE_COMPLEX", long double, long double, DT_LONG_DOUBLE, DT_LONG_DOUBLE );
+#if HAVE_LONG_DOUBLE
+    DECLARE_MPI2_COMPOSED_STRUCT_DDT( &ompi_mpi_ldblcplex, DT_COMPLEX_LONG_DOUBLE, "MPI_LONG_DOUBLE_COMPLEX", long double, long double, DT_LONG_DOUBLE, DT_LONG_DOUBLE );
+#endif  /* HAVE_LONG_DOUBLE */
 
     /* Now the predefined MPI2 datatypes (they should last forever!) */
     DECLARE_MPI2_COMPOSED_STRUCT_DDT( &ompi_mpi_float_int, DT_FLOAT_INT, "MPI_FLOAT_INT", float, int, DT_FLOAT, DT_INT );
@@ -302,25 +315,23 @@ int ompi_ddt_init( void )
     /* Copy the desc pointer from the <DT_MAX_PREDEFINED datatypes to
        the synonym types */
 
-    ompi_mpi_cxx_cplex.desc = ompi_mpi_cplex.desc;
-    ompi_mpi_cxx_dblcplex.desc = ompi_mpi_dblcplex.desc;
-    ompi_mpi_cxx_ldblcplex.desc = ompi_mpi_ldblcplex.desc;
-    /* JMS this doesn't look right */
-    ompi_mpi_cxx_bool.desc = ompi_mpi_int.desc;
-    ompi_mpi_real4.desc = ompi_mpi_float.desc;
-    ompi_mpi_real8.desc = ompi_mpi_double.desc;
-    ompi_mpi_real16.desc = ompi_mpi_longdbl_int.desc;
-    ompi_mpi_integer1.desc = ompi_mpi_char.desc;
-    ompi_mpi_integer2.desc = ompi_mpi_short.desc;
-    ompi_mpi_integer4.desc = ompi_mpi_int.desc;
-    ompi_mpi_integer8.desc = ompi_mpi_long_long.desc;
-    ompi_mpi_integer16.desc = ompi_mpi_unavailable.desc;
-    /* JMS this doesn't looks right */
-    ompi_mpi_complex8.desc = ompi_mpi_cplex.desc;
-    /* JMS this doesn't looks right */
-    ompi_mpi_complex16.desc = ompi_mpi_dblcplex.desc;
-    /* JMS this doesn't looks right */
-    ompi_mpi_complex32.desc = ompi_mpi_ldblcplex.desc;
+    /* C++ complex types */
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_cxx_cplex, "MPI_CXX_COMPLEX", &ompi_mpi_cplex );
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_cxx_dblcplex, "MPI_CXX_DOUBLE_COMPLEX", &ompi_mpi_dblcplex );
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_cxx_ldblcplex, "MPI_CXX_LONG_DOUBLE_COMPLEX", &ompi_mpi_ldblcplex );
+
+    /* FORTRAN types */
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_real4, "MPI_REAL4", &ompi_mpi_float );
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_real8, "MPI_REAL8", &ompi_mpi_double );
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_real16, "MPI_REAL16", &ompi_mpi_long_double );
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_integer1, "MPI_INTEGER1", &ompi_mpi_char );
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_integer2, "MPI_INTEGER2", &ompi_mpi_short );
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_integer4, "MPI_INTEGER4", &ompi_mpi_int );
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_integer8, "MPI_INTEGER8", &ompi_mpi_long_long );
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_integer16, "MPI_INTEGER16", &ompi_mpi_unavailable );
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_complex8, "MPI_COMPLEX8", &ompi_mpi_cplex );
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_complex16, "MPI_COMPLEX16", &ompi_mpi_dblcplex );
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_complex32, "MPI_COMPLEX32", &ompi_mpi_ldblcplex );
 
     /* Start to populate the f2c index translation table */
 
@@ -402,36 +413,21 @@ int ompi_ddt_finalize( void )
 {
     int i;
 
-    /* Remove all synonym desc copied pointers so that they don't get
-       freed twice */
+    /* As the synonyms are just copies of the internal data we should not free them.
+     * Anyway they are over the limit of DT_MAX_PREDEFINED so they will never get freed.
+     */
 
-    ompi_mpi_cxx_cplex.desc.desc = NULL;
-    ompi_mpi_cxx_dblcplex.desc.desc = NULL;
-    ompi_mpi_cxx_ldblcplex.desc.desc = NULL;
-    ompi_mpi_cxx_bool.desc.desc = NULL;
-    ompi_mpi_real4.desc.desc = NULL;
-    ompi_mpi_real8.desc.desc = NULL;
-    ompi_mpi_real16.desc.desc = NULL;
-    ompi_mpi_integer1.desc.desc = NULL;
-    ompi_mpi_integer2.desc.desc = NULL;
-    ompi_mpi_integer4.desc.desc = NULL;
-    ompi_mpi_integer8.desc.desc = NULL;
-    ompi_mpi_integer16.desc.desc = NULL;
-    ompi_mpi_complex8.desc.desc = NULL;
-    ompi_mpi_complex16.desc.desc = NULL;
-    ompi_mpi_complex32.desc.desc = NULL;
-
-   /* As they are statically allocated they cannot be released. But we 
-    * can call OBJ_DESTRUCT, just to free all internally allocated ressources.
-    */
-   for( i = 0; i < DT_MAX_PREDEFINED; i++ ) {
-       OBJ_DESTRUCT( ompi_ddt_basicDatatypes[i] );
-   }
-
-   /* Get rid of the Fortran2C translation table */
-   OBJ_RELEASE(ompi_datatype_f_to_c_table);
-
-   return OMPI_SUCCESS;
+    /* As they are statically allocated they cannot be released. But we 
+     * can call OBJ_DESTRUCT, just to free all internally allocated ressources.
+     */
+    for( i = 0; i < DT_MAX_PREDEFINED; i++ ) {
+        OBJ_DESTRUCT( ompi_ddt_basicDatatypes[i] );
+    }
+    
+    /* Get rid of the Fortran2C translation table */
+    OBJ_RELEASE(ompi_datatype_f_to_c_table);
+    
+    return OMPI_SUCCESS;
 }
 
 /********************************************************
