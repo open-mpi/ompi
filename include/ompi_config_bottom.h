@@ -42,6 +42,12 @@ typedef enum { false, true } bool;
  * Do we have <stdint.h>?
  */
 #ifdef HAVE_STDINT_H
+#if defined(__cplusplus) && !defined(__STDC_LIMIT_MACROS)
+/* When using a C++ compiler, the max / min value #defines for std
+   types are only included if __STDC_LIMIT_MACROS is set before
+   including stdint.h */
+#define __STDC_LIMIT_MACROS
+#endif
 #include <stdint.h>
 #else
 #include "ompi_stdint.h"
