@@ -6,10 +6,12 @@
 
 #include "include/constants.h"
 #include "runtime/runtime.h"
+#include "util/sys_info.h"
 #include "mpi.h"
 #include "runtime/runtime.h"
 #include "communicator/communicator.h"
 #include "group/group.h"
+#include "util/common_cmd_line.h"
 #include "errhandler/errhandler.h"
 #include "op/op.h"
 #include "mca/base/base.h"
@@ -49,6 +51,15 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     bool have_hidden_threads;
     ompi_proc_t** procs;
     size_t nprocs;
+
+
+    /* Save command line parameters */
+    if (OMPI_SUCCESS != (ret = ompi_common_cmd_line_init(argc, argv))) {
+        return ret;
+    }
+
+    /* Get the local system information and populate the ompi_system_info structure */
+    ompi_sys_info();
 
     /* Become a OMPI process */
 

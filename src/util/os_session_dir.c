@@ -58,7 +58,7 @@ static int ompi_check_dir(bool create, char *directory)
 char *ompi_find_session_dir(bool create, char *prefix)
 {
     char *tmpprefix=NULL, *tmp=NULL;
-    char *sessions=NULL;
+    char sessions[PATH_MAX];
 
     sprintf(sessions, "openmpi-sessions-%s", ompi_system_info.user);
 

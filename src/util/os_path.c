@@ -45,6 +45,7 @@ char *ompi_os_path(bool relative, ...)
 
     if (0 == num_elements) { /* must be looking for a simple answer */
 	path = (char *)malloc(2);
+        path[0] = 0;
 	if (relative) {
 	    strcpy(path, ".");
 	}
@@ -65,6 +66,7 @@ char *ompi_os_path(bool relative, ...)
     if (NULL == path) {
 	return(NULL);
     }
+    path[0] = 0;
 
     if (relative) {
 	strcpy(path, ".");

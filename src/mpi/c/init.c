@@ -9,7 +9,6 @@
 #include "mpi.h"
 #include "mpi/c/bindings.h"
 #include "runtime/runtime.h"
-#include "util/sys_info.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Init = PMPI_Init
@@ -38,9 +37,6 @@ int MPI_Init(int *argc, char ***argv)
     }
   } 
 
-  /* Get the local system information and populate the ompi_system_info structure */
-  ompi_sys_info();
-    
   /* Call the back-end initialization function (we need to put as
      little in this function as possible so that if it's profiled, we
      don't lose anything) */
