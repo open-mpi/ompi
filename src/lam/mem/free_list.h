@@ -5,6 +5,7 @@
 #ifndef LAM_FREE_LIST
 #define LAM_FREE_LIST
 
+#include "lam_config.h"
 #include "lam/lfc/list.h"
 #include "lam/threads/mutex.h"
 #include "lam/mem/seg_list.h"
@@ -77,9 +78,9 @@ int lam_frl_init_with(lam_free_list_t *flist,
                   int max_pages_per_list,
                   int max_consec_req_fail,
                   const char *description,
-                  lam_bool_t retry_for_more_resources,
+                  bool retry_for_more_resources,
                   lam_affinity_t *affinity,
-                  lam_bool_t enforce_affinity,
+                  bool enforce_affinity,
                   lam_mem_pool_t *pool);
 
 
