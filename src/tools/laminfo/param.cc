@@ -11,6 +11,7 @@
 #include <unistd.h>
 #include <sys/param.h>
 
+#include "lam/lfc/lam_value_array.h"
 #include "mca/lam/base/mca_base_param.h"
 #include "tools/laminfo/laminfo.h"
 
@@ -39,7 +40,7 @@ string laminfo::path_sysconfdir = "sysconfdir";
 // in mca_base_param.h so that no one else will use it.
 //
 
-extern lam_array_t mca_base_params;
+extern lam_value_array_t mca_base_params;
 
 
 void laminfo::do_params()
@@ -103,13 +104,13 @@ void laminfo::show_mca_params(const string& type, const string& module,
   string message, content;
   mca_base_param_t *item;
 
-  size = lam_arr_get_size(&mca_base_params);
+  size = lam_value_array_get_size(&mca_base_params);
   if (0 == size) {
     return;
   }
 
   for (i = 0; i < size; ++i) {
-    item = (mca_base_param_t *) lam_arr_get_item(&mca_base_params, i);
+    item = &(LAM_VALUE_ARRAY_GET_ITEM(&mca_base_params, mca_base_param_t, i));
     if (type == item->mbp_type_name) {
       if (module == module_all || 
           NULL == item->mbp_module_name ||
