@@ -946,7 +946,8 @@ AC_CHECK_HEADERS([alloca.h aio.h arpa/inet.h dirent.h dlfcn.h execinfo.h \
     sys/stat.h poll.h pthread.h pwd.h sched.h stdint.h string.hstrings.h stropts.h \
     sys/types.h sys/ipc.h sys/mman.h sys/resource.h sys/select.h sys/socket.h \
     sys/ioctl.h err.h sys/statvfs.h sys/time.h sys/uio.h sys/utsname.h sys/wait.h \
-    syslog.h termios.h ulimit.h unistd.h sys/param.h sys/tree.h sys/queue.h])
+    syslog.h termios.h ulimit.h unistd.h sys/param.h sys/tree.h sys/queue.h \
+    sys/sockio.h])
 
 # snprintf declaration
 # gethostname declaration
@@ -972,6 +973,15 @@ AC_TRY_COMPILE([#include <sys/types.h>
 [MSG=yes VALUE=1], [MSG=no VALUE=0])
 AC_DEFINE_UNQUOTED(OMPI_HAVE_SA_LEN, $VALUE,
     [Whether we have the sa_len struct in <sys/socket.h> or not])
+AC_MSG_RESULT([$MSG])
+
+# IFADDR_NONE
+AC_MSG_CHECKING([for INADDR_NONE])
+AC_COMPILE_IFELSE(AC_LANG_PROGRAM([[AC_INCLUDES_DEFAULT]],
+[[unsigned long inaddr = INADDR_NONE;]]),
+[MSG=yes VALUE=1], [MSG=no VALUE=0])
+AC_DEFINE_UNQUOTED(OMPI_HAVE_INADDR_NONE, $VALUE,
+    [Whether we have INADDR_NONE constant or not])
 AC_MSG_RESULT([$MSG])
 
 # union semun in sys/sem.h

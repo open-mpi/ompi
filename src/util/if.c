@@ -26,6 +26,9 @@
 #ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
 #endif
+#ifdef HAVE_SYS_SOCKIO_H
+#include <sys/sockio.h>
+#endif
 #ifdef HAVE_SYS_IOCTL_H
 #include <sys/ioctl.h>
 #endif
@@ -424,12 +427,19 @@ int ompi_ifaddrtoname(const char* if_addr, char* if_name, int length)
     inaddr = inet_addr(if_addr);
 
     rc = ompi_ifinit();
-    if(rc != OMPI_SUCCESS)
+    if (OMPI_SUCCESS != rc) {
         return rc;
+    }
 
-    if(inaddr == INADDR_NONE) {
+    if(
+#if OMPI_HAVE_INADDR_NONE
+       INADDR_NONE == inaddr
+#else
+       -1 == inaddr
+#endif
+       ) {
         h = gethostbyname(if_addr);
-        if(h == 0) {
+        if(0 == h) {
             ompi_output(0,"ompi_ifaddrtoname: unable to resolve %s\n", if_addr);
             return OMPI_ERR_NOT_FOUND;
         }
