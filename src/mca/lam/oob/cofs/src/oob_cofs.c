@@ -9,6 +9,7 @@
 #include "mca/lam/oob/oob.h"
 #include "mca/lam/oob/cofs/src/oob_cofs.h"
 #include "lam/util/malloc.h"
+#include "lam/types.h"
 
 #include <stdio.h>
 #include <sys/types.h>
@@ -30,9 +31,9 @@ mca_oob_cofs_send(lam_job_handle_t job_handle, int vpid, int tag,
   char msg_file_tmp[LAM_PATH_MAX];
 
   /* create the file and open it... */
-  snprintf(msg_file, LAM_PATH_MAX, "%s/%s_%d_%d_%d_%d.msg", mca_oob_cofs_comm_loc,
+  snprintf(msg_file, LAM_PATH_MAX, "%s/%s_%d_%d_%d_%lld.msg", mca_oob_cofs_comm_loc,
            job_handle, mca_oob_cofs_my_vpid, vpid, tag, mca_oob_cofs_serial);
-  snprintf(msg_file_tmp, LAM_PATH_MAX, "%s/.%s_%d_%d_%d_%d.msg", mca_oob_cofs_comm_loc,
+  snprintf(msg_file_tmp, LAM_PATH_MAX, "%s/.%s_%d_%d_%d_%lld.msg", mca_oob_cofs_comm_loc,
            job_handle, mca_oob_cofs_my_vpid, vpid, tag, mca_oob_cofs_serial);
 
   fp = fopen(msg_file_tmp, "w");
@@ -107,12 +108,14 @@ find_match(lam_job_handle_t job_handle, int* tag, int* vpid)
   DIR* dir;
   struct dirent *ent;
   char tmp_handle[LAM_PATH_MAX];
-  int tmp_tag, tmp_vpid, tmp_myvpid, tmp_serial;
+  uint64_t tmp_serial;
+  int tmp_tag, tmp_vpid, tmp_myvpid;
   int ret;
   bool found = false;
   char best_name[LAM_PATH_MAX];
   int best_tag, best_vpid;
-  
+  uint64_t best_serial = ((1ULL << 63) - 1);
+
   dir = opendir(mca_oob_cofs_comm_loc);
   if (dir == NULL) {
     return NULL;
@@ -121,7 +124,7 @@ find_match(lam_job_handle_t job_handle, int* tag, int* vpid)
   while ((ent = readdir(dir)) != NULL) {
     if (ent->d_name[0] == '.') continue;
 
-    ret = sscanf(ent->d_name, "%[^_]_%d_%d_%d_%d.msg", tmp_handle, &tmp_vpid, 
+    ret = sscanf(ent->d_name, "%[^_]_%d_%d_%d_%lld.msg", tmp_handle, &tmp_vpid, 
                  &tmp_myvpid, &tmp_tag, &tmp_serial);
     if (ret != 5) {
       continue;
@@ -139,10 +142,12 @@ find_match(lam_job_handle_t job_handle, int* tag, int* vpid)
 
     /* do best one here... */
     found = true;
-    strcpy(best_name, ent->d_name);
-    best_tag = tmp_tag;
-    best_vpid = tmp_vpid;
-    break;
+    if (tmp_serial < best_serial) {
+      strcpy(best_name, ent->d_name);
+      best_tag = tmp_tag;
+      best_vpid = tmp_vpid;
+      best_serial = tmp_serial;
+    }
   }
 
   closedir(dir);
