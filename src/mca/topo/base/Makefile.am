@@ -13,7 +13,7 @@ libmca_topo_base_la_SOURCES = \
         $(headers) \
         topo_base_cart_coords.c \
         topo_base_cart_create.c \
-        topo_base_cart_dim_get.c \
+        topo_base_cartdim_get.c \
         topo_base_cart_get.c \
         topo_base_cart_rank.c \
         topo_base_cart_shift.c \
