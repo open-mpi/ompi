@@ -14,6 +14,8 @@
 
 #include <sys/types.h>
 
+#include "mca/gpr/base/base.h"
+
 #include "runtime/runtime_types.h"
 #include "mca/ns/ns.h"
 
@@ -238,18 +240,26 @@ extern "C" {
     int ompi_rte_get_peers(ompi_process_name_t **peers, size_t *npeers);
 
     /**
-     * Setup process info in the registry.
+     * "Hold" until all procs registered, or timeout occurs
      */
 
-    int ompi_rte_register(void);
+    int ompi_rte_monitor_procs_registered(void);
 
     /**
-     * Monitor a job - currently implemented by monitoring process 
-     * registration/deregistration to/from the GPR.
+     * "Hold" until all procs unregistered - no timeout.
      */
     
-    int ompi_rte_notify(mca_ns_base_jobid_t job, int num_procs);
-    int ompi_rte_monitor(void);
+    int ompi_rte_monitor_procs_unregistered(void);
+
+    /**
+     * Callback function for all procs registered
+     */
+    void ompi_rte_all_procs_registered(ompi_registry_notify_message_t* match, void* cbdata);
+
+    /**
+     * Callback function for all procs unregistered
+     */
+    void ompi_rte_all_procs_unregistered(ompi_registry_notify_message_t* match, void* cbdata);
 
     /**
      * Remove process registration.
