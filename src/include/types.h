@@ -78,13 +78,13 @@ typedef union {
 /*
  * handle differences in iovec
  */
-                                                                                                                           
+
 #if defined(__APPLE__)
 typedef char* ompi_iov_base_ptr_t;
 #else
 typedef void* ompi_iov_base_ptr_t;
 #endif
-                                                                                                                           
+
 /*
  * handle differences in socklen_t
  */
@@ -95,3 +95,10 @@ typedef socklen_t ompi_socklen_t;
 typedef int ompi_socklen_t;
 #endif
 #endif
+
+/* Predefine some internal types so we dont need all the include dependencies. */
+struct ompi_communicator_t;
+struct ompi_datatype_t;
+struct ompi_convertor_t;
+struct ompi_bitmap_t;
+

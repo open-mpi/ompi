@@ -7,11 +7,8 @@
 
 #include "mpi.h"
 #include "errhandler/errhandler.h"
-#include "communicator/communicator.h"
 #include "threads/mutex.h"
-#include "info/info.h"
 #include "mca/io/io.h"
-
 
 /*
  * Flags
@@ -31,7 +28,7 @@ struct ompi_file_t {
     ompi_object_t super;
 
     /** Communicator that this file was created with */
-    ompi_communicator_t *f_comm;
+    struct ompi_communicator_t *f_comm;
 
     /** Filename that this file was created with */
     char *f_filename;
@@ -40,7 +37,7 @@ struct ompi_file_t {
     int f_amode;
 
     /** MPI_Info that this file was created with */
-    ompi_info_t *f_info;
+    struct ompi_info_t *f_info;
 
     /** Bit flags */
     int32_t f_flags;
@@ -51,7 +48,7 @@ struct ompi_file_t {
     /** Error handler.  This field does not have the "f_" prefix so
         that the OMPI_ERRHDL_* macros can find it, regardless of
         whether it's a comm, window, or file. */
-    ompi_errhandler_t *error_handler;
+    struct ompi_errhandler_t *error_handler;
 
     /** Type of the error handler.  This field does not have the "f_"
         prefix for the same reason as the field error_handler. */
@@ -115,8 +112,8 @@ OMPI_DECLSPEC extern ompi_pointer_array_t ompi_file_f_to_c_table;
      * mainly calls OBJ_RELEASE() but also does some other error
      * handling as well.
      */
-    int ompi_file_open(ompi_communicator_t *comm, char *filename, 
-                       int amode, ompi_info_t *info, 
+    int ompi_file_open(struct ompi_communicator_t *comm, char *filename, 
+                       int amode, struct ompi_info_t *info, 
                        ompi_file_t **fh);
     
     /** 

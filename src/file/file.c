@@ -8,7 +8,8 @@
 #include "class/ompi_list.h"
 #include "mpi/runtime/params.h"
 #include "mca/io/base/base.h"
-
+#include "info/info.h"
+#include "util/output.h"
 
 /*
  * Table for Fortran <-> C file handle conversion
@@ -65,8 +66,8 @@ int ompi_file_init(void)
 /*
  * Back end to MPI_FILE_OPEN
  */
-int ompi_file_open(ompi_communicator_t *comm, char *filename, 
-                   int amode, ompi_info_t *info, ompi_file_t **fh)
+int ompi_file_open(struct ompi_communicator_t *comm, char *filename, 
+                   int amode, struct ompi_info_t *info, ompi_file_t **fh)
 {
     int ret;
     ompi_file_t *file;
@@ -178,7 +179,7 @@ int ompi_file_finalize(void)
            we're destroying everything, it isn't worth it */
     }
     if (num_unnamed > 0) {
-        ompi_output(0, "WANRING: %d unnamed MPI_File handles still allocated at MPI_FINALIZE", num_unnamed);
+        ompi_output(0, "WARNING: %d unnamed MPI_File handles still allocated at MPI_FINALIZE", num_unnamed);
     }
     OBJ_DESTRUCT(&ompi_file_f_to_c_table);
   

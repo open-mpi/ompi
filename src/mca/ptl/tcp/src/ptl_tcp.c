@@ -4,6 +4,7 @@
 
 #include "ompi_config.h"
 #include <string.h>
+#include "class/ompi_bitmap.h"
 #include "util/output.h"
 #include "util/if.h"
 #include "mca/pml/pml.h"

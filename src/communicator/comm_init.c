@@ -8,17 +8,15 @@
 
 #include "mpi.h"
 
-#include "communicator/communicator.h"
 #include "util/bit_ops.h"
 #include "include/constants.h"
 #include "mca/pml/pml.h"
-#include "mca/coll/coll.h"
 #include "mca/coll/base/base.h"
-#include "mca/topo/topo.h"
 #include "mca/topo/base/base.h"
 #include "mca/ns/base/base.h"
 #include "mpi/runtime/params.h"
-
+#include "communicator/communicator.h"
+#include "attribute/attribute.h"
 
 /*
 ** Table for Fortran <-> C communicator handle conversion

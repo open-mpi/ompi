@@ -6,12 +6,10 @@
 
 #include <stdio.h>
 
-#include "mpi.h"
+#include "mpi/f77/strings.h"
 #include "mpi/f77/bindings.h"
 #include "mpi/f77/constants.h"
-#include "errhandler/errhandler.h"
 #include "communicator/communicator.h"
-#include "mpi/f77/strings.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_ADD_ERROR_STRING = mpi_add_error_string_f

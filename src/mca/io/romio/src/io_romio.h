@@ -53,212 +53,212 @@ typedef struct mca_io_romio_data_t mca_io_romio_data_t;
  *    ROMIO_PREFIX(MPI_File_XXX)
  */
 /* Section 9.2 */
-int         mca_io_romio_file_open (ompi_communicator_t *comm,
+int         mca_io_romio_file_open (struct ompi_communicator_t *comm,
                                     char *filename,
                                     int amode,
-                                    ompi_info_t *info,
+                                    struct ompi_info_t *info,
                                     ompi_file_t *fh);
-int         mca_io_romio_file_close (ompi_file_t *fh);
+int         mca_io_romio_file_close (struct ompi_file_t *fh);
 int         mca_io_romio_file_delete (char *filename,
-                                      ompi_info_t *info);
-int         mca_io_romio_file_set_size (ompi_file_t *fh,
+                                      struct ompi_info_t *info);
+int         mca_io_romio_file_set_size (struct ompi_file_t *fh,
                                         MPI_Offset size);
-int         mca_io_romio_file_preallocate (ompi_file_t *fh,
+int         mca_io_romio_file_preallocate (struct ompi_file_t *fh,
                                            MPI_Offset size);
-int         mca_io_romio_file_get_size (ompi_file_t *fh,
+int         mca_io_romio_file_get_size (struct ompi_file_t *fh,
                                         MPI_Offset * size);
-int         mca_io_romio_file_get_amode (ompi_file_t *fh,
+int         mca_io_romio_file_get_amode (struct ompi_file_t *fh,
                                          int *amode);
-int         mca_io_romio_file_set_info (ompi_file_t *fh,
-                                        ompi_info_t *info);
-int         mca_io_romio_file_get_info (ompi_file_t *fh,
-                                        ompi_info_t ** info_used);
+int         mca_io_romio_file_set_info (struct ompi_file_t *fh,
+                                        struct ompi_info_t *info);
+int         mca_io_romio_file_get_info (struct ompi_file_t *fh,
+                                        struct ompi_info_t ** info_used);
 
 /* Section 9.3 */
-int         mca_io_romio_file_set_view (ompi_file_t *fh,
+int         mca_io_romio_file_set_view (struct ompi_file_t *fh,
                                         MPI_Offset disp,
-                                        ompi_datatype_t *etype,
-                                        ompi_datatype_t *filetype,
+                                        struct ompi_datatype_t *etype,
+                                        struct ompi_datatype_t *filetype,
                                         char *datarep,
-                                        ompi_info_t *info);
-int         mca_io_romio_file_get_view (ompi_file_t *fh,
+                                        struct ompi_info_t *info);
+int         mca_io_romio_file_get_view (struct ompi_file_t *fh,
                                         MPI_Offset * disp,
-                                        ompi_datatype_t ** etype,
-                                        ompi_datatype_t ** filetype,
+                                        struct ompi_datatype_t ** etype,
+                                        struct ompi_datatype_t ** filetype,
                                         char *datarep);
 
 /* Section 9.4.2 */
-int         mca_io_romio_file_read_at (ompi_file_t *fh,
+int         mca_io_romio_file_read_at (struct ompi_file_t *fh,
                                        MPI_Offset offset,
                                        void *buf,
                                        int count,
-                                       ompi_datatype_t *datatype,
+                                       struct ompi_datatype_t *datatype,
                                        ompi_status_public_t * status);
-int         mca_io_romio_file_read_at_all (ompi_file_t *fh,
+int         mca_io_romio_file_read_at_all (struct ompi_file_t *fh,
                                            MPI_Offset offset,
                                            void *buf,
                                            int count,
-                                           ompi_datatype_t *datatype,
+                                           struct ompi_datatype_t *datatype,
                                            ompi_status_public_t * status);
-int         mca_io_romio_file_write_at (ompi_file_t *fh,
+int         mca_io_romio_file_write_at (struct ompi_file_t *fh,
                                         MPI_Offset offset,
                                         void *buf,
                                         int count,
-                                        ompi_datatype_t *datatype,
+                                        struct ompi_datatype_t *datatype,
                                         ompi_status_public_t * status);
-int         mca_io_romio_file_write_at_all (ompi_file_t *fh,
+int         mca_io_romio_file_write_at_all (struct ompi_file_t *fh,
                                             MPI_Offset offset,
                                             void *buf,
                                             int count,
-                                            ompi_datatype_t *datatype,
+                                            struct ompi_datatype_t *datatype,
                                             ompi_status_public_t * status);
-int         mca_io_romio_file_iread_at (ompi_file_t *fh,
+int         mca_io_romio_file_iread_at (struct ompi_file_t *fh,
                                         MPI_Offset offset,
                                         void *buf,
                                         int count,
-                                        ompi_datatype_t *datatype,
+                                        struct ompi_datatype_t *datatype,
                                         mca_io_base_request_t * request);
-int         mca_io_romio_file_iwrite_at (ompi_file_t *fh,
+int         mca_io_romio_file_iwrite_at (struct ompi_file_t *fh,
                                          MPI_Offset offset,
                                          void *buf,
                                          int count,
-                                         ompi_datatype_t *datatype,
+                                         struct ompi_datatype_t *datatype,
                                          mca_io_base_request_t * request);
 
 /* Section 9.4.3 */
-int         mca_io_romio_file_read (ompi_file_t *fh,
+int         mca_io_romio_file_read (struct ompi_file_t *fh,
                                     void *buf,
                                     int count,
-                                    ompi_datatype_t *datatype,
+                                    struct ompi_datatype_t *datatype,
                                     ompi_status_public_t * status);
-int         mca_io_romio_file_read_all (ompi_file_t *fh,
+int         mca_io_romio_file_read_all (struct ompi_file_t *fh,
                                         void *buf,
                                         int count,
-                                        ompi_datatype_t *datatype,
+                                        struct ompi_datatype_t *datatype,
                                         ompi_status_public_t * status);
-int         mca_io_romio_file_write (ompi_file_t *fh,
+int         mca_io_romio_file_write (struct ompi_file_t *fh,
                                      void *buf,
                                      int count,
-                                     ompi_datatype_t *datatype,
+                                     struct ompi_datatype_t *datatype,
                                      ompi_status_public_t * status);
-int         mca_io_romio_file_write_all (ompi_file_t *fh,
+int         mca_io_romio_file_write_all (struct ompi_file_t *fh,
                                          void *buf,
                                          int count,
-                                         ompi_datatype_t *datatype,
+                                         struct ompi_datatype_t *datatype,
                                          ompi_status_public_t * status);
-int         mca_io_romio_file_iread (ompi_file_t *fh,
+int         mca_io_romio_file_iread (struct ompi_file_t *fh,
                                      void *buf,
                                      int count,
-                                     ompi_datatype_t *datatype,
+                                     struct ompi_datatype_t *datatype,
                                      mca_io_base_request_t * request);
-int         mca_io_romio_file_iwrite (ompi_file_t *fh,
+int         mca_io_romio_file_iwrite (struct ompi_file_t *fh,
                                       void *buf,
                                       int count,
-                                      ompi_datatype_t *datatype,
+                                      struct ompi_datatype_t *datatype,
                                       mca_io_base_request_t * request);
-int         mca_io_romio_file_seek (ompi_file_t *fh,
+int         mca_io_romio_file_seek (struct ompi_file_t *fh,
                                     MPI_Offset offset,
                                     int whence);
-int         mca_io_romio_file_get_position (ompi_file_t *fh,
+int         mca_io_romio_file_get_position (struct ompi_file_t *fh,
                                             MPI_Offset * offset);
-int         mca_io_romio_file_get_byte_offset (ompi_file_t *fh,
+int         mca_io_romio_file_get_byte_offset (struct ompi_file_t *fh,
                                                MPI_Offset offset,
                                                MPI_Offset * disp);
 
 /* Section 9.4.4 */
-int         mca_io_romio_file_read_shared (ompi_file_t *fh,
+int         mca_io_romio_file_read_shared (struct ompi_file_t *fh,
                                            void *buf,
                                            int count,
-                                           ompi_datatype_t *datatype,
+                                           struct ompi_datatype_t *datatype,
                                            ompi_status_public_t * status);
-int         mca_io_romio_file_write_shared (ompi_file_t *fh,
+int         mca_io_romio_file_write_shared (struct ompi_file_t *fh,
                                             void *buf,
                                             int count,
-                                            ompi_datatype_t *datatype,
+                                            struct ompi_datatype_t *datatype,
                                             ompi_status_public_t * status);
-int         mca_io_romio_file_iread_shared (ompi_file_t *fh,
+int         mca_io_romio_file_iread_shared (struct ompi_file_t *fh,
                                             void *buf,
                                             int count,
-                                            ompi_datatype_t *datatype,
+                                            struct ompi_datatype_t *datatype,
                                             mca_io_base_request_t * request);
-int         mca_io_romio_file_iwrite_shared (ompi_file_t *fh,
+int         mca_io_romio_file_iwrite_shared (struct ompi_file_t *fh,
                                              void *buf,
                                              int count,
-                                             ompi_datatype_t *datatype,
+                                             struct ompi_datatype_t *datatype,
                                              mca_io_base_request_t * request);
-int         mca_io_romio_file_read_ordered (ompi_file_t *fh,
+int         mca_io_romio_file_read_ordered (struct ompi_file_t *fh,
                                             void *buf,
                                             int count,
-                                            ompi_datatype_t *datatype,
+                                            struct ompi_datatype_t *datatype,
                                             ompi_status_public_t * status);
-int         mca_io_romio_file_write_ordered (ompi_file_t *fh,
+int         mca_io_romio_file_write_ordered (struct ompi_file_t *fh,
                                              void *buf,
                                              int count,
-                                             ompi_datatype_t *datatype,
+                                             struct ompi_datatype_t *datatype,
                                              ompi_status_public_t * status);
-int         mca_io_romio_file_seek_shared (ompi_file_t *fh,
+int         mca_io_romio_file_seek_shared (struct ompi_file_t *fh,
                                            MPI_Offset offset,
                                            int whence);
-int         mca_io_romio_file_get_position_shared (ompi_file_t *fh,
+int         mca_io_romio_file_get_position_shared (struct ompi_file_t *fh,
                                                    MPI_Offset * offset);
 
 /* Section 9.4.5 */
-int         mca_io_romio_file_read_at_all_begin (ompi_file_t *fh,
+int         mca_io_romio_file_read_at_all_begin (struct ompi_file_t *fh,
                                                  MPI_Offset offset,
                                                  void *buf,
                                                  int count,
-                                                 ompi_datatype_t *datatype);
-int         mca_io_romio_file_read_at_all_end (ompi_file_t *fh,
+                                                 struct ompi_datatype_t *datatype);
+int         mca_io_romio_file_read_at_all_end (struct ompi_file_t *fh,
                                                void *buf,
                                                ompi_status_public_t * status);
-int         mca_io_romio_file_write_at_all_begin (ompi_file_t *fh,
+int         mca_io_romio_file_write_at_all_begin (struct ompi_file_t *fh,
                                                   MPI_Offset offset,
                                                   void *buf,
                                                   int count,
-                                                  ompi_datatype_t *datatype);
-int         mca_io_romio_file_write_at_all_end (ompi_file_t *fh,
+                                                  struct ompi_datatype_t *datatype);
+int         mca_io_romio_file_write_at_all_end (struct ompi_file_t *fh,
                                                 void *buf,
                                                 ompi_status_public_t * status);
-int         mca_io_romio_file_read_all_begin (ompi_file_t *fh,
+int         mca_io_romio_file_read_all_begin (struct ompi_file_t *fh,
                                               void *buf,
                                               int count,
-                                              ompi_datatype_t *datatype);
-int         mca_io_romio_file_read_all_end (ompi_file_t *fh,
+                                              struct ompi_datatype_t *datatype);
+int         mca_io_romio_file_read_all_end (struct ompi_file_t *fh,
                                             void *buf,
                                             ompi_status_public_t * status);
-int         mca_io_romio_file_write_all_begin (ompi_file_t *fh,
+int         mca_io_romio_file_write_all_begin (struct ompi_file_t *fh,
                                                void *buf,
                                                int count,
-                                               ompi_datatype_t *datatype);
-int         mca_io_romio_file_write_all_end (ompi_file_t *fh,
+                                               struct ompi_datatype_t *datatype);
+int         mca_io_romio_file_write_all_end (struct ompi_file_t *fh,
                                              void *buf,
                                              ompi_status_public_t * status);
-int         mca_io_romio_file_read_ordered_begin (ompi_file_t *fh,
+int         mca_io_romio_file_read_ordered_begin (struct ompi_file_t *fh,
                                                   void *buf,
                                                   int count,
-                                                  ompi_datatype_t *datatype);
-int         mca_io_romio_file_read_ordered_end (ompi_file_t *fh,
+                                                  struct ompi_datatype_t *datatype);
+int         mca_io_romio_file_read_ordered_end (struct ompi_file_t *fh,
                                                 void *buf,
                                                 ompi_status_public_t * status);
-int         mca_io_romio_file_write_ordered_begin (ompi_file_t *fh,
+int         mca_io_romio_file_write_ordered_begin (struct ompi_file_t *fh,
                                                    void *buf,
                                                    int count,
-                                                   ompi_datatype_t *datatype);
-int         mca_io_romio_file_write_ordered_end (ompi_file_t *fh,
+                                                   struct ompi_datatype_t *datatype);
+int         mca_io_romio_file_write_ordered_end (struct ompi_file_t *fh,
                                                  void *buf,
-                                                 ompi_status_public_t * status);
+                                                 struct ompi_status_public_t * status);
 
 /* Section 9.5.1 */
-int         mca_io_romio_file_get_type_extent (ompi_file_t *fh,
-                                               ompi_datatype_t *datatype,
+int         mca_io_romio_file_get_type_extent (struct ompi_file_t *fh,
+                                               struct ompi_datatype_t *datatype,
                                                MPI_Aint * extent);
 
 /* Section 9.6.1 */
-int         mca_io_romio_file_set_atomicity (ompi_file_t *fh,
+int         mca_io_romio_file_set_atomicity (struct ompi_file_t *fh,
                                              int flag);
-int         mca_io_romio_file_get_atomicity (ompi_file_t *fh,
+int         mca_io_romio_file_get_atomicity (struct ompi_file_t *fh,
                                              int *flag);
-int         mca_io_romio_file_sync (ompi_file_t *fh);
+int         mca_io_romio_file_sync (struct ompi_file_t *fh);
 
 /* End Prototypes */
 

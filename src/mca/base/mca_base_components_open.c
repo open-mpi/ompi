@@ -14,7 +14,7 @@
 #include "util/output.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
-
+#include "include/constants.h"
 
 struct component_name_t {
   ompi_list_item_t super;

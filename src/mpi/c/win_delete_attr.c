@@ -7,6 +7,7 @@
 #include "mpi.h"
 #include "mpi/c/bindings.h"
 #include "attribute/attribute.h"
+#include "win/win.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Win_delete_attr = PMPI_Win_delete_attr

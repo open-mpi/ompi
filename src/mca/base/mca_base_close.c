@@ -7,7 +7,7 @@
 #include "util/output.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
-
+#include "include/constants.h"
 
 /*
  * Main MCA shutdown.

@@ -7,14 +7,13 @@
 #include "include/constants.h"
 #include "mpi.h"
 
-
 int ompi_group_translate_ranks ( ompi_group_t *group1, 
                                  int n_ranks, int *ranks1,
                                  ompi_group_t *group2, 
                                  int *ranks2) 
 {
     int rank, proc, proc2;
-    ompi_proc_t *proc1_pointer, *proc2_pointer;
+    struct ompi_proc_t *proc1_pointer, *proc2_pointer;
     
     /* loop over all ranks */
     for (proc = 0; proc < n_ranks; proc++) {

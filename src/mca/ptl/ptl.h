@@ -232,9 +232,8 @@
 
 #include "mca/mca.h"
 #include "include/ompi.h"
-#include "class/ompi_list.h"
-#include "proc/proc.h"
 #include "mca/pml/pml.h"
+#include "include/types.h"
 
 /*
  * PTL types
@@ -251,7 +250,7 @@ struct mca_ptl_base_match_header_t;
 
 typedef uint64_t mca_ptl_sequence_t;
 typedef uint64_t mca_ptl_tstamp_t;
-typedef ompi_list_t mca_ptl_queue_t;
+typedef struct ompi_list_t mca_ptl_queue_t;
 
 typedef enum { 
     MCA_PTL_ENABLE 
@@ -395,7 +394,7 @@ typedef int (*mca_ptl_base_module_add_procs_fn_t)(
     size_t nprocs,
     struct ompi_proc_t** procs, 
     struct mca_ptl_base_peer_t** peer,
-    ompi_bitmap_t* reachable
+    struct ompi_bitmap_t* reachable
 );
 
 /**

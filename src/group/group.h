@@ -13,7 +13,6 @@
 
 #include "util/output.h"
 #include "mpi.h"
-#include "proc/proc.h"
 #include "class/ompi_pointer_array.h"
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -27,7 +26,7 @@ struct ompi_group_t {
     int grp_my_rank;        /**< rank in group */
     int grp_f_to_c_index;   /**< index in Fortran <-> C translation array */
     uint32_t grp_flags;     /**< flags, e.g. freed, cannot be freed etc.*/
-    ompi_proc_t **grp_proc_pointers;
+    struct ompi_proc_t **grp_proc_pointers;
                             /**< list of pointers to ompi_proc_t structures
                                  for each process in the group */
 };
@@ -44,7 +43,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_group_t);
 /**
  * Table for Fortran <-> C group handle conversion
  */
-OMPI_DECLSPEC extern ompi_pointer_array_t *ompi_group_f_to_c_table;
+OMPI_DECLSPEC extern struct ompi_pointer_array_t *ompi_group_f_to_c_table;
 OMPI_DECLSPEC extern ompi_group_t ompi_mpi_group_null;
 
 
@@ -123,7 +122,7 @@ static inline int ompi_group_rank(ompi_group_t *group)
  *
  * @return Error code
  */
-void ompi_set_group_rank(ompi_group_t *group, ompi_proc_t *proc_pointer);
+void ompi_set_group_rank(ompi_group_t *group, struct ompi_proc_t *proc_pointer);
 
 /**
  * Abstracting MPI_Group_translate_ranks to an ompi function for internal use

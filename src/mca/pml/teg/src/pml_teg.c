@@ -6,6 +6,8 @@
 
 #include <stdlib.h>
 #include <string.h>
+
+#include "class/ompi_bitmap.h"
 #include "mca/pml/pml.h"
 #include "mca/ptl/ptl.h"
 #include "mca/ptl/base/base.h"

@@ -10,14 +10,13 @@
 
 #include "mpi.h"
 #include "file/file.h"
-#include "util/argv.h"
 #include "class/ompi_list.h"
-#include "class/ompi_object.h"
+#include "util/argv.h"
+#include "util/output.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
 #include "mca/io/io.h"
 #include "mca/io/base/base.h"
-
 
 /*
  * Local types
@@ -37,19 +36,19 @@ typedef struct avail_io_t avail_io_t;
  * Local functions
  */
 static ompi_list_t *check_components(ompi_list_t *components, 
-                                     char *filename, ompi_info_t *info,
+                                     char *filename, struct ompi_info_t *info,
                                      char **names, int num_names);
 static avail_io_t *check_one_component(const mca_base_component_t *component,
-                                       char *filename, ompi_info_t *info);
+                                       char *filename, struct ompi_info_t *info);
 
 static avail_io_t *query(const mca_base_component_t *component,
-                         char *filename, ompi_info_t *info);
+                         char *filename, struct ompi_info_t *info);
 static avail_io_t *query_1_0_0(const mca_io_base_component_1_0_0_t *io_component, 
-                               char *filename, ompi_info_t *info);
+                               char *filename, struct ompi_info_t *info);
 
-static void unquery(avail_io_t *avail, char *filename, ompi_info_t *info);
+static void unquery(avail_io_t *avail, char *filename, struct ompi_info_t *info);
 
-static int delete_file(avail_io_t *avail, char *filename, ompi_info_t *info);
+static int delete_file(avail_io_t *avail, char *filename, struct ompi_info_t *info);
 
 
 /*
@@ -60,7 +59,7 @@ static OBJ_CLASS_INSTANCE(avail_io_t, ompi_list_item_t, NULL, NULL);
 
 /*
  */
-int mca_io_base_delete(char *filename, ompi_info_t *info)
+int mca_io_base_delete(char *filename, struct ompi_info_t *info)
 {
     int err, num_names;
     char *names, **name_array;
@@ -172,7 +171,7 @@ int mca_io_base_delete(char *filename, ompi_info_t *info)
  * priority order.
  */
 static ompi_list_t *check_components(ompi_list_t *components, 
-                                     char *filename, ompi_info_t *info,
+                                     char *filename, struct ompi_info_t *info,
                                      char **names, int num_names)
 {
     int i;
@@ -265,7 +264,7 @@ static ompi_list_t *check_components(ompi_list_t *components,
  * Check a single component
  */
 static avail_io_t *check_one_component(const mca_base_component_t *component,
-                                       char *filename, ompi_info_t *info)
+                                       char *filename, struct ompi_info_t *info)
 {
     avail_io_t *avail;
 
@@ -298,7 +297,7 @@ static avail_io_t *check_one_component(const mca_base_component_t *component,
  * module struct
  */
 static avail_io_t *query(const mca_base_component_t *component, 
-                         char *filename, ompi_info_t *info)
+                         char *filename, struct ompi_info_t *info)
 {
     const mca_io_base_component_1_0_0_t *ioc_100;
 
@@ -319,7 +318,7 @@ static avail_io_t *query(const mca_base_component_t *component,
 
 
 static avail_io_t *query_1_0_0(const mca_io_base_component_1_0_0_t *component,
-                               char *filename, ompi_info_t *info)
+                               char *filename, struct ompi_info_t *info)
 {
     bool usable;
     int priority, ret;
@@ -349,7 +348,7 @@ static avail_io_t *query_1_0_0(const mca_io_base_component_1_0_0_t *component,
  * Unquery functions
  **************************************************************************/
 
-static void unquery(avail_io_t *avail, char *filename, ompi_info_t *info)
+static void unquery(avail_io_t *avail, char *filename, struct ompi_info_t *info)
 {
     const mca_io_base_component_1_0_0_t *ioc_100;
 
@@ -374,7 +373,7 @@ static void unquery(avail_io_t *avail, char *filename, ompi_info_t *info)
 /*
  * Invoke the component's delete function
  */
-static int delete_file(avail_io_t *avail, char *filename, ompi_info_t *info)
+static int delete_file(avail_io_t *avail, char *filename, struct ompi_info_t *info)
 {
     const mca_io_base_component_1_0_0_t *ioc_100;
 

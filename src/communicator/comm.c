@@ -7,26 +7,18 @@
 #include <stdio.h>
 #include "mpi.h"
 
-#include "communicator/communicator.h"
-#include "datatype/datatype.h"
+#include "include/constants.h"
 #include "proc/proc.h"
 #include "threads/mutex.h"
 #include "util/bit_ops.h"
-#include "include/constants.h"
-#include "mca/pcm/pcm.h"
-#include "mca/pml/pml.h"
-#include "mca/coll/coll.h"
-#include "mca/coll/base/base.h"
 #include "mca/topo/topo.h"
 #include "mca/topo/base/base.h"
 #include "mca/ns/base/base.h"
 
-#include "mca/pml/pml.h"
-#include "mca/ptl/ptl.h"
+#include "attribute/attribute.h"
+#include "communicator/communicator.h"
+
 #include "mca/ptl/base/ptl_base_comm.h"
-#include "mca/ptl/base/ptl_base_recvfrag.h"
-#include "mca/ptl/base/ptl_base_header.h"
-#include "mca/ptl/base/ptl_base_match.h"
 
 
 /*

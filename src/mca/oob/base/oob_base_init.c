@@ -5,6 +5,7 @@
 #include "ompi_config.h"
 
 #include <stdio.h>
+#include <string.h>
 
 #include "runtime/runtime.h"
 #include "util/output.h"

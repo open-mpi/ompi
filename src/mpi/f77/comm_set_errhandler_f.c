@@ -6,7 +6,6 @@
 
 #include <stdio.h>
 
-#include "mpi.h"
 #include "errhandler/errhandler.h"
 #include "mpi/f77/bindings.h"
 

@@ -8,6 +8,9 @@
 
 #include "ompi_config.h"
 
+#include <sys/types.h>
+#include <unistd.h>
+
 #include "include/constants.h"
 #include "event/event.h"
 #include "util/output.h"

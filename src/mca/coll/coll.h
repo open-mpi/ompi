@@ -39,7 +39,7 @@ typedef int (*mca_coll_base_module_allgather_fn_t)
    void *rbuf, int rcount, struct ompi_datatype_t *rdtype, 
    struct ompi_communicator_t *comm);
 typedef int (*mca_coll_base_module_allgatherv_fn_t)
-  (void *sbuf, int scount, ompi_datatype_t *sdtype, 
+  (void *sbuf, int scount, struct ompi_datatype_t *sdtype, 
    void * rbuf, int *rcounts, int *disps,  struct ompi_datatype_t *rdtype, 
    struct ompi_communicator_t *comm);
 typedef int (*mca_coll_base_module_allreduce_fn_t)

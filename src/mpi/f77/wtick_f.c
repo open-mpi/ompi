@@ -6,7 +6,6 @@
 
 #include <stdio.h>
 
-#include "mpi.h"
 #include "mpi/f77/bindings.h"
 
 /* As the standard allow us to define this function as a macro, it cannot

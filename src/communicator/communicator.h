@@ -6,17 +6,16 @@
 #define OMPI_COMMUNICATOR_H
 
 #include "class/ompi_object.h"
+#include "class/ompi_hash_table.h"
 #include "errhandler/errhandler.h"
+#include "threads/mutex.h"
 #include "threads/mutex.h"
 #include "util/output.h"
 #include "mpi.h"
 #include "group/group.h"
 #include "mca/coll/coll.h"
 #include "mca/topo/topo.h"
-#include "class/ompi_hash_table.h"
-#include "attribute/attribute.h"
 #include "request/request.h"
-#include "threads/mutex.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
