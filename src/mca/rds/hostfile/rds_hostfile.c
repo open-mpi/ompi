@@ -111,7 +111,7 @@ static int orte_rds_hostfile_parse_line(int token, ompi_list_t* existing, ompi_l
                 update++;
             }
             /* Ensure that node_slots_max >= node_slots */
-            if (node->node_slots_max < node->node_slots) {
+            if (node->node_slots_max != 0 && node->node_slots_max < node->node_slots) {
                 node->node_slots_max = node->node_slots;
             }
             break;
