@@ -14,7 +14,7 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-EXTRA_DIST = win_makefile op/base/static-components.h op/op.h
+EXTRA_DIST = win_makefile
 
 SUBDIRS = \
         allocator \
