@@ -46,6 +46,9 @@ struct mca_pml_teg_t {
     ompi_free_list_t teg_send_requests;
     ompi_free_list_t teg_recv_requests;
 
+    /* list of pending send requests */
+    ompi_list_t teg_send_pending;
+
 #if MCA_PML_TEG_STATISTICS
     long teg_isends;
     long teg_irecvs;
