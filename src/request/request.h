@@ -286,34 +286,6 @@ static inline int ompi_request_wait(
     ompi_status_public_t * status)
 {
     ompi_request_t *req = *req_ptr;
-
-#if OMPI_HAVE_THREADS
-
-    if(req->req_complete == false) {
-        int i;
-
-        /* poll for completion */
-        ompi_atomic_mb();
-        for (i = 0; i < ompi_request_poll_iterations; i++) {
-            if (req->req_complete == true) {
-                break;
-            }
-        }
-                                                                                                                    
-        /* give up and sleep until completion */
-        if(req->req_complete == false) {
-            OMPI_THREAD_LOCK(&ompi_request_lock);
-            ompi_request_waiting++;
-            while (req->req_complete == false) {
-                ompi_condition_wait(&ompi_request_cond, &ompi_request_lock);
-            }
-            ompi_request_waiting--;
-            OMPI_THREAD_UNLOCK(&ompi_request_lock);
-        }
-    }
-
-#else
-
     if(req->req_complete == false) {
         /* give up and sleep until completion */
         OMPI_THREAD_LOCK(&ompi_request_lock);
@@ -325,7 +297,6 @@ static inline int ompi_request_wait(
         OMPI_THREAD_UNLOCK(&ompi_request_lock);
     }
 
-#endif
     /* return status */
     if (MPI_STATUS_IGNORE != status) {
         *status = req->req_status;
