@@ -23,6 +23,18 @@ extern "C" {
   int mca_pcm_base_select(bool *allow_multi_user_threads, 
                           bool *have_hidden_threads);
   int mca_pcm_base_close(void);
+
+    char* mca_pcm_base_no_unique_name(void);
+
+
+    int mca_pcm_base_send_schedule(FILE *fd, 
+                                   ompi_rte_node_schedule_t *sched,
+                                   ompi_list_t *nodelist);
+
+    int  mca_pcm_base_recv_schedule(FILE *fd, 
+                                    ompi_rte_node_schedule_t *sched,
+                                    ompi_list_t *nodelist);
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

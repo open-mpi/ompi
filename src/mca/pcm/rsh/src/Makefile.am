@@ -17,7 +17,6 @@ libmca_pcm_rsh_la_SOURCES = \
 	pcm_rsh_deallocate_resources.c \
 	pcm_rsh_get_peers.c \
 	pcm_rsh_get_self.c \
-	pcm_rsh_get_unique_name.c \
 	pcm_rsh_kill_job.c \
 	pcm_rsh_kill_proc.c \
 	pcm_rsh_register_monitor.c \
