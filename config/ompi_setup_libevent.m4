@@ -123,6 +123,35 @@ fi
 haveepoll=no
 AC_CHECK_FUNCS(epoll_ctl, [haveepoll=yes], )
 if test "x$haveepoll" = "xyes" ; then
+
+	# OMPI: Unfortunately, this test is not sufficient on some
+	# Linux distros (e.g., RH 9), where the function is defined
+	# and you can link against it, but it's hardwired to return
+	# ENOSYS -- and /usr/include/gnu/stubs.h fails to define
+	# __stub_epoll_ctl (the usual mechanism in glibc to indicate
+	# that a function is a stub and isn't really implemented).
+	# Hence, the test succeeds because it thinks it can use
+	# epoll_ctl (and friends).  So we have to do a better test
+	# after we determine that epoll_ctl is linkable.  Grumble.
+
+	AC_MSG_CHECKING([for epoll_ctl on broken Linux distros])
+        rm -f conftest.out
+        AC_RUN_IFELSE(AC_LANG_PROGRAM([[
+AC_INCLUDES_DEFAULT
+#include <sys/epoll.h>]], 
+[[int i = epoll_create(2);
+FILE *fp = fopen("conftest.out", "w");
+fprintf(fp, "%d", i);
+fclose(fp);]]))
+	haveepoll=no
+        if test -f conftest.out -a "`cat conftest.out`" = "0"; then
+            haveepoll=yes
+        fi
+        rm -f conftest.out
+	AC_MSG_RESULT([$haveepoll])
+fi
+
+if test "x$haveepoll" = "xyes" ; then
 	AC_DEFINE(HAVE_EPOLL, 1,
 		[Define if your system supports the epoll system calls])
 	# OMPI: Don't use AC_LIBOBJ
