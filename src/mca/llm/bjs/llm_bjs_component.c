@@ -15,6 +15,8 @@
 
 #include "ompi_config.h"
 
+#include <string.h>
+
 #include "mca/llm/bjs/llm-bjs-version.h"
 #include "llm_bjs.h"
 #include "include/constants.h"
