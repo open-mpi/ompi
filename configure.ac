@@ -132,14 +132,29 @@ LAM_SETUP_CC
 # force ANSI prototypes
 # check for STDC
 # check for some types
+AC_CHECK_TYPES(long long)
+AC_CHECK_TYPES(int8_t)
+AC_CHECK_TYPES(uint8_t)
+AC_CHECK_TYPES(int16_t)
+AC_CHECK_TYPES(uint16_t)
+AC_CHECK_TYPES(int32_t)
+AC_CHECK_TYPES(uint32_t)
+AC_CHECK_TYPES(int64_t)
+AC_CHECK_TYPES(uint64_t)
+AC_CHECK_TYPES(intptr_t)
+AC_CHECK_TYPES(uintptr_t)
 # check for type sizes
+AC_CHECK_SIZEOF(char)
+AC_CHECK_SIZEOF(short)
+AC_CHECK_SIZEOF(int)
+AC_CHECK_SIZEOF(long)
+AC_CHECK_SIZEOF(long long)
+AC_CHECK_SIZEOF(void *)
 # check for type alignments
 
 AC_C_INLINE
 AC_CHECK_HEADERS(stdbool.h)
 LAM_C_WEAK_SYMBOLS
-# JMS This macro will be re-written by Dave for licensing reasons
-AX_CREATE_STDINT_H([src/include/lam_stdint.h])
 
 # If we want the profiling layer:
 # - If the C compiler has weak symbols, use those.
