@@ -114,10 +114,6 @@ static inline int ompi_cb_fifo_init(int size_of_fifo, int lazy_free_freq,
 
     /* set fifo size */
     fifo->size = ompi_round_up_to_nearest_pow2(size_of_fifo);
-    /* debug */
-    fprintf(stderr," BBB lazy %d size %d\n",lazy_free_freq,fifo->size);
-    fflush(stderr);
-    /* end debug */
 
     /* set lazy free frequence */
     if( ( 0 >= lazy_free_freq ) || 
@@ -128,21 +124,17 @@ static inline int ompi_cb_fifo_init(int size_of_fifo, int lazy_free_freq,
     
     /* this will be used to mask off the higher order bits,
      * and use the & operator for the wrap-around */
-    fifo->mask = (size_of_fifo - 1);
+    fifo->mask = (fifo->size - 1);
 
-    /* debug */
-    fprintf(stderr," AAA \n");
-    fflush(stderr);
-    /* end debug */
     /* allocate fifo array */
-    len_to_allocate = sizeof(void *) * size_of_fifo;
+    len_to_allocate = sizeof(void *) * fifo->size;
     fifo->queue=memory_allocator->mpool_alloc(len_to_allocate,CACHE_LINE_SIZE);
     if ( NULL == fifo->queue) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
     /* initialize the queue entries */
-    for (i = 0; i < size_of_fifo; i++) {
+    for (i = 0; i < fifo->size; i++) {
         fifo->queue[i] = OMPI_CB_FREE;
     }
 
@@ -469,4 +461,19 @@ static inline int ompi_cb_fifo_read_from_tail_no_lock(void** data, ompi_cb_fifo_
     /* return */
     return read_from_tail;
 }
+
+
+/**
+ * Return the fifo size
+ *
+ * @param fifo Pointer to data structure defining this fifo (IN)
+ *
+ * @returncode fifo size
+ *
+ */
+static inline int ompi_cb_fifo_size(ompi_cb_fifo_t *fifo) {
+
+    return fifo->size;
+}
+
 #endif				/* !_OMPI_CIRCULAR_BUFFER_FIFO */
