@@ -68,6 +68,15 @@ int ompi_mpi_register_params(void)
      */
     mca_base_param_register_string("mpi", NULL, "signal", NULL, NULL);
     
+
+    /*
+     * ompi_progress: decide whether to yield and the event library
+     * tick rate
+     */
+    mca_base_param_register_int("mpi", NULL, "yield_when_idle", NULL, 1);
+    mca_base_param_register_int("mpi", NULL, "event_tick_rate", NULL, 1);
+
+
     /* Whether or not to show MPI handle leaks */
     
     show_leaks_param = 

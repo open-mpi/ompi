@@ -53,6 +53,8 @@ int orte_finalize(void)
     orte_gpr_base_close();
     mca_oob_base_close();
 
+    ompi_progress_finalize();
+
     ompi_event_fini();
 
 #ifndef WIN32
