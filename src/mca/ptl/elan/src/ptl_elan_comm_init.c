@@ -551,8 +551,7 @@ ompi_init_elan_putget (mca_ptl_elan_component_t * emp,
 	/* construct the lock variable */
         OBJ_CONSTRUCT (&putget->pg_lock, ompi_mutex_t);
 
-	cqp = elan4_probe_cmdq(ctx, 
-		rail->r_alloc, 
+	cqp = OMPI_PTL_ELAN_PROBE_CMDQ (ctx, rail->r_alloc, 
 		0x10, CQ_AutoCtrlFlowOn);
 
 	putget->put_cmdq = OMPI_PTL_ELAN_ALLOC_CMDQ(ctx,
