@@ -27,13 +27,12 @@ int MPI_Comm_get_attr(MPI_Comm comm, int comm_keyval,
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 	if ((NULL == attribute_val) || (NULL == flag)) {
-	    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, 
-					 FUNC_NAME);
+	    return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
 	}
     }
 
     ret = ompi_attr_get(comm->c_keyhash, comm_keyval, 
-		       attribute_val, flag);
+                        attribute_val, flag);
 
     OMPI_ERRHANDLER_RETURN(ret, comm, MPI_ERR_OTHER, FUNC_NAME);  
 }
