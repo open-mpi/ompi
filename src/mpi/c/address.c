@@ -7,6 +7,9 @@
 
 #include "mpi.h"
 #include "mpi/c/bindings.h"
+#include "runtime/runtime.h"
+#include "errhandler/errhandler.h"
+#include "communicator/communicator.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Address = PMPI_Address
