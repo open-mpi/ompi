@@ -28,7 +28,9 @@ int mca_coll_base_output = -1;
 int mca_coll_base_crossover = 4;
 int mca_coll_base_associative = 1;
 int mca_coll_base_reduce_crossover = 4;
-lam_list_t mca_coll_base_modules_available;
+int mca_coll_base_bcast_collmaxlin = 4;
+int mca_coll_base_bcast_collmaxdim = 64;
+lam_list_t mca_coll_base_modules_opened;
 
 
 /**
@@ -41,7 +43,7 @@ int mca_coll_base_open(void)
 
   if (LAM_SUCCESS != 
       mca_base_modules_open("coll", 0, mca_coll_base_static_modules, 
-                            &mca_coll_base_modules_available)) {
+                            &mca_coll_base_modules_opened)) {
     return LAM_ERROR;
   }
 
