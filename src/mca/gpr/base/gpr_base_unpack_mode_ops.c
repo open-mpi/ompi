@@ -20,7 +20,7 @@ int mca_gpr_base_unpack_triggers_active_cmd(ompi_buffer_t cmd)
     return OMPI_SUCCESS;
 }
 
-int mca_gpr_base_unpack_triggers_inactive(ompi_buffer_t cmd)
+int mca_gpr_base_unpack_triggers_inactive_cmd(ompi_buffer_t cmd)
 {
     return OMPI_SUCCESS;
 

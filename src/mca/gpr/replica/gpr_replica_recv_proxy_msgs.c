@@ -52,8 +52,8 @@ void mca_gpr_replica_recv(int status, ompi_process_name_t* sender,
 {
     ompi_buffer_t answer;
     size_t buf_size=0;
-    bool return_requested;
-    bool compound_cmd_detected;
+    bool return_requested=true;
+    bool compound_cmd_detected=false;
 
     if (mca_gpr_replica_debug) {
 	ompi_output(0, "gpr replica: received message");
@@ -102,7 +102,7 @@ ompi_buffer_t mca_gpr_replica_process_command_buffer(ompi_buffer_t buffer,
     int32_t test_level=0;
     mca_gpr_cmd_flag_t command;
     int32_t response=0;
-    int8_t tmp_bool;
+    int8_t tmp_bool=0;
 
 
     if (OMPI_SUCCESS != ompi_buffer_init(&answer, 0)) {
@@ -540,7 +540,7 @@ ompi_buffer_t mca_gpr_replica_process_command_buffer(ompi_buffer_t buffer,
 static int32_t mca_gpr_replica_recv_delete_segment_cmd(ompi_buffer_t buffer)
 {
     char *segment=NULL;
-    mca_gpr_replica_segment_t *seg;
+    mca_gpr_replica_segment_t *seg=NULL;
 
     if (0 > ompi_unpack_string(buffer, &segment)) {
 	return OMPI_ERROR;
@@ -561,15 +561,15 @@ static int32_t mca_gpr_replica_recv_put_cmd(ompi_buffer_t buffer)
 {
     ompi_registry_mode_t mode;
     char *segment=NULL, **tokens=NULL, **tokptr=NULL;
-    int32_t num_tokens, response=(int32_t)OMPI_ERROR;
-    ompi_registry_object_size_t object_size;
+    int32_t num_tokens=0, response=(int32_t)OMPI_ERROR;
+    ompi_registry_object_size_t object_size=0;
     ompi_registry_object_t *object=NULL;
-    mca_gpr_replica_segment_t *seg;
-    mca_gpr_replica_key_t *keys;
-    mca_ns_base_jobid_t jobid;
-    int num_keys;
-    int8_t action_taken;
-    int i;
+    mca_gpr_replica_segment_t *seg=NULL;
+    mca_gpr_replica_key_t *keys=NULL;
+    mca_ns_base_jobid_t jobid=0;
+    int num_keys=0;
+    int8_t action_taken=0;
+    int i=0;
 
     if (OMPI_SUCCESS != ompi_unpack(buffer, &mode, 1, MCA_GPR_OOB_PACK_MODE)) {
 	goto RETURN_ERROR;
@@ -663,13 +663,13 @@ static int32_t mca_gpr_replica_recv_put_cmd(ompi_buffer_t buffer)
 static ompi_list_t* mca_gpr_replica_recv_get_cmd(ompi_buffer_t buffer)
 {
     ompi_registry_mode_t mode;
-    mca_gpr_replica_segment_t *seg;
-    mca_gpr_replica_key_t *keys;
-    int num_keys;
+    mca_gpr_replica_segment_t *seg=NULL;
+    mca_gpr_replica_key_t *keys=NULL;
+    int num_keys=0;
     char *segment=NULL, **tokens=NULL, **tokptr=NULL;
     int32_t num_tokens=0;
     ompi_list_t *returned_list=NULL;
-    int i;
+    int i=0;
 
     returned_list = OBJ_NEW(ompi_list_t);
 
@@ -739,11 +739,11 @@ static ompi_list_t* mca_gpr_replica_recv_get_cmd(ompi_buffer_t buffer)
 static int32_t mca_gpr_replica_recv_delete_object_cmd(ompi_buffer_t buffer)
 {
     ompi_registry_mode_t mode;
-    mca_gpr_replica_key_t *keys;
-    mca_gpr_replica_segment_t *seg;
+    mca_gpr_replica_key_t *keys=NULL;
+    mca_gpr_replica_segment_t *seg=NULL;
     char *segment=NULL, **tokens=NULL, **tokptr=NULL;
-    int32_t num_tokens, response=(int32_t)OMPI_ERROR;
-    int i, num_keys;
+    int32_t num_tokens=0, response=(int32_t)OMPI_ERROR;
+    int i=0, num_keys=0;
 
     if (OMPI_SUCCESS != ompi_unpack(buffer, &mode, 1, MCA_GPR_OOB_PACK_MODE)) {
 	goto RETURN_ERROR;
@@ -813,8 +813,8 @@ static int32_t mca_gpr_replica_recv_delete_object_cmd(ompi_buffer_t buffer)
 static ompi_list_t* mca_gpr_replica_recv_index_cmd(ompi_buffer_t buffer)
 {
     ompi_registry_mode_t mode;
-    mca_gpr_replica_segment_t *seg;
-    char *segment;
+    mca_gpr_replica_segment_t *seg=NULL;
+    char *segment=NULL;
     ompi_list_t *returned_list=NULL;
 
     if (OMPI_SUCCESS != ompi_unpack(buffer, &mode, 1, MCA_GPR_OOB_PACK_MODE)) {
@@ -859,12 +859,12 @@ static ompi_registry_notify_id_t mca_gpr_replica_recv_subscribe_cmd(ompi_process
     ompi_registry_mode_t mode;
     char *segment=NULL, **tokens=NULL, **tokptr=NULL;
     ompi_registry_notify_action_t action;
-    ompi_registry_notify_id_t local_idtag1, id_tag, return_tag;
-    mca_gpr_replica_segment_t *seg;
-    mca_gpr_replica_key_t *keys;
-    int num_keys;
-    int32_t num_tokens, response=(int32_t)OMPI_ERROR;
-    int i;
+    ompi_registry_notify_id_t local_idtag1=0, id_tag=0, return_tag=0;
+    mca_gpr_replica_segment_t *seg=NULL;
+    mca_gpr_replica_key_t *keys=NULL;
+    int num_keys=0;
+    int32_t num_tokens=0, response=(int32_t)OMPI_ERROR;
+    int i=0;
 
     return_tag = OMPI_REGISTRY_NOTIFY_ID_MAX;
 
@@ -960,7 +960,7 @@ static ompi_registry_notify_id_t mca_gpr_replica_recv_subscribe_cmd(ompi_process
 
 static int32_t mca_gpr_replica_recv_unsubscribe_cmd(ompi_buffer_t buffer)
 {
-    ompi_registry_notify_id_t sub_number;
+    ompi_registry_notify_id_t sub_number=0;
     int32_t response=(int32_t)OMPI_ERROR;
 
     if (OMPI_SUCCESS != ompi_unpack(buffer, &sub_number, 1, MCA_GPR_OOB_PACK_NOTIFY_ID)) {
@@ -984,12 +984,12 @@ static ompi_registry_notify_id_t mca_gpr_replica_recv_synchro_cmd(ompi_process_n
 {
     ompi_registry_mode_t mode;
     char *segment=NULL, **tokens=NULL, **tokptr=NULL;
-    ompi_registry_notify_id_t local_idtag1, id_tag, return_tag;
-    mca_gpr_replica_segment_t *seg;
-    mca_gpr_replica_key_t *keys;
-    int num_keys;
-    int32_t num_tokens, response=(int32_t)OMPI_ERROR, synchro_mode, trigger;
-    int i;
+    ompi_registry_notify_id_t local_idtag1=0, id_tag=0, return_tag=0;
+    mca_gpr_replica_segment_t *seg=NULL;
+    mca_gpr_replica_key_t *keys=NULL;
+    int num_keys=0;
+    int32_t num_tokens=0, response=(int32_t)OMPI_ERROR, synchro_mode=0, trigger=0;
+    int i=0;
 
     return_tag = OMPI_REGISTRY_NOTIFY_ID_MAX;
 
@@ -1099,7 +1099,7 @@ static ompi_registry_notify_id_t mca_gpr_replica_recv_synchro_cmd(ompi_process_n
 
 static int32_t mca_gpr_replica_recv_cancel_synchro_cmd(ompi_buffer_t buffer)
 {
-    ompi_registry_notify_id_t synch_number;
+    ompi_registry_notify_id_t synch_number=0;
     int32_t response=(int32_t)OMPI_ERROR;
 
     if (OMPI_SUCCESS != ompi_unpack(buffer, &synch_number, 1, MCA_GPR_OOB_PACK_NOTIFY_ID)) {
@@ -1128,13 +1128,13 @@ static void mca_gpr_replica_recv_dump_cmd(ompi_buffer_t answer)
 
 static void mca_gpr_replica_recv_get_startup_msg_cmd(ompi_buffer_t buffer, ompi_buffer_t answer)
 {
-    char *jobidstring;
-    mca_ns_base_jobid_t jobid;
-    ompi_list_t *recipients;
+    char *jobidstring=NULL;
+    mca_ns_base_jobid_t jobid=0;
+    ompi_list_t *recipients=NULL;
     ompi_buffer_t msg;
-    ompi_name_server_namelist_t *recip;
-    void *addr;
-    int32_t size, num_recipients, i;
+    ompi_name_server_namelist_t *recip=NULL;
+    void *addr=NULL;
+    int32_t size=0, num_recipients=0, i=0;
 
     if (OMPI_SUCCESS != ompi_unpack_string(buffer, &jobidstring)) {
 	return;
@@ -1169,13 +1169,13 @@ static void mca_gpr_replica_recv_get_startup_msg_cmd(ompi_buffer_t buffer, ompi_
 
 static void mca_gpr_replica_recv_get_shutdown_msg_cmd(ompi_buffer_t buffer, ompi_buffer_t answer)
 {
-    char *jobidstring;
-    mca_ns_base_jobid_t jobid;
-    ompi_list_t *recipients;
+    char *jobidstring=NULL;
+    mca_ns_base_jobid_t jobid=0;
+    ompi_list_t *recipients=NULL;
     ompi_buffer_t msg;
-    ompi_name_server_namelist_t *recip;
-    void *addr;
-    int32_t size, num_recipients, i;
+    ompi_name_server_namelist_t *recip=NULL;
+    void *addr=NULL;
+    int32_t size=0, num_recipients=0, i=0;
 
     if (OMPI_SUCCESS != ompi_unpack_string(buffer, &jobidstring)) {
 	return;
@@ -1208,7 +1208,7 @@ static void mca_gpr_replica_recv_get_shutdown_msg_cmd(ompi_buffer_t buffer, ompi
 
 static void mca_gpr_replica_recv_triggers_active_cmd(ompi_buffer_t cmd)
 {
-    mca_ns_base_jobid_t jobid;
+    mca_ns_base_jobid_t jobid=0;
 
     if (OMPI_SUCCESS != ompi_unpack(cmd, &jobid, 1, MCA_GPR_OOB_PACK_JOBID)) {
 	return;
@@ -1221,7 +1221,7 @@ static void mca_gpr_replica_recv_triggers_active_cmd(ompi_buffer_t cmd)
 
 static void mca_gpr_replica_recv_triggers_inactive_cmd(ompi_buffer_t cmd)
 {
-    mca_ns_base_jobid_t jobid;
+    mca_ns_base_jobid_t jobid=0;
 
     if (OMPI_SUCCESS != ompi_unpack(cmd, &jobid, 1, MCA_GPR_OOB_PACK_JOBID)) {
 	return;
@@ -1234,7 +1234,7 @@ static void mca_gpr_replica_recv_triggers_inactive_cmd(ompi_buffer_t cmd)
 
 static void mca_gpr_replica_recv_cleanup_job_cmd(ompi_buffer_t cmd)
 {
-    mca_ns_base_jobid_t jobid;
+    mca_ns_base_jobid_t jobid=0;
 
     if (OMPI_SUCCESS != ompi_unpack(cmd, &jobid, 1, MCA_GPR_OOB_PACK_JOBID)) {
 	return;
@@ -1249,8 +1249,8 @@ static void mca_gpr_replica_recv_cleanup_job_cmd(ompi_buffer_t cmd)
 static void mca_gpr_replica_recv_cleanup_proc_cmd(ompi_buffer_t cmd)
 {
     ompi_process_name_t proc;
-    bool purge;
-    int8_t tmp;
+    bool purge=false;
+    int8_t tmp=0;
 
     if (OMPI_SUCCESS != ompi_unpack(cmd, &tmp, 1, MCA_GPR_OOB_PACK_BOOL)) {
 	return;
@@ -1269,10 +1269,10 @@ static void mca_gpr_replica_recv_cleanup_proc_cmd(ompi_buffer_t cmd)
 
 static void mca_gpr_replica_recv_notify_on_cmd(ompi_buffer_t cmd)
 {
-    ompi_process_name_t *proc;
+    ompi_process_name_t proc;
     ompi_registry_notify_id_t sub_number;
 
-    if (OMPI_SUCCESS != ompi_unpack(cmd, proc, 1, MCA_GPR_OOB_PACK_NAME)) {
+    if (OMPI_SUCCESS != ompi_unpack(cmd, &proc, 1, MCA_GPR_OOB_PACK_NAME)) {
 	return;
     }
 
@@ -1281,16 +1281,16 @@ static void mca_gpr_replica_recv_notify_on_cmd(ompi_buffer_t cmd)
     }
 
     OMPI_THREAD_LOCK(&mca_gpr_replica_mutex);
-    mca_gpr_replica_notify_on_nl(proc, sub_number);
+    mca_gpr_replica_notify_on_nl(&proc, sub_number);
     OMPI_THREAD_UNLOCK(&mca_gpr_replica_mutex);
 }
 
 static void mca_gpr_replica_recv_notify_off_cmd(ompi_buffer_t cmd)
 {
-    ompi_process_name_t *proc;
+    ompi_process_name_t proc;
     ompi_registry_notify_id_t sub_number;
 
-    if (OMPI_SUCCESS != ompi_unpack(cmd, proc, 1, MCA_GPR_OOB_PACK_NAME)) {
+    if (OMPI_SUCCESS != ompi_unpack(cmd, &proc, 1, MCA_GPR_OOB_PACK_NAME)) {
 	return;
     }
 
@@ -1299,17 +1299,17 @@ static void mca_gpr_replica_recv_notify_off_cmd(ompi_buffer_t cmd)
     }
 
     OMPI_THREAD_LOCK(&mca_gpr_replica_mutex);
-    mca_gpr_replica_notify_off_nl(proc, sub_number);
+    mca_gpr_replica_notify_off_nl(&proc, sub_number);
     OMPI_THREAD_UNLOCK(&mca_gpr_replica_mutex);
 }
 
 
 static int32_t mca_gpr_replica_recv_assume_ownership_cmd(ompi_buffer_t cmd)
 {
-    mca_ns_base_jobid_t jobid;
-    mca_gpr_replica_segment_t *seg;
-    char *segment;
-    int32_t rc;
+    mca_ns_base_jobid_t jobid=0;
+    mca_gpr_replica_segment_t *seg=NULL;
+    char *segment=NULL;
+    int32_t rc=0;
 
     if (OMPI_SUCCESS != ompi_unpack(cmd, &jobid, 1, MCA_GPR_OOB_PACK_JOBID)) {
 	return OMPI_ERROR;
@@ -1339,7 +1339,7 @@ static int32_t mca_gpr_replica_recv_assume_ownership_cmd(ompi_buffer_t cmd)
 
 static bool mca_gpr_replica_recv_silent_mode(ompi_buffer_t buffer)
 {
-    int8_t tmp;
+    int8_t tmp=0;
 
     if (OMPI_SUCCESS != ompi_unpack(buffer, &tmp, 1, MCA_GPR_OOB_PACK_BOOL)) {
 	return false;

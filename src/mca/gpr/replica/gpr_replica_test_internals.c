@@ -19,16 +19,16 @@
 
 ompi_list_t *mca_gpr_replica_test_internals(int level)
 {
-    ompi_list_t *test_results;
-    ompi_registry_internal_test_results_t *result;
+    ompi_list_t *test_results=NULL;
+    ompi_registry_internal_test_results_t *result=NULL;
     char name[30], name2[30];
     char *name3[30];
     int i, j, num_keys;
-    mca_gpr_replica_key_t segkey, key, *keys;
-    mca_gpr_replica_segment_t *seg;
-    mca_gpr_replica_keytable_t *dict_entry;
-    bool success;
-    mca_ns_base_jobid_t test_jobid;
+    mca_gpr_replica_key_t segkey, key, *keys=NULL;
+    mca_gpr_replica_segment_t *seg=NULL;
+    mca_gpr_replica_keytable_t *dict_entry=NULL;
+    bool success=false;
+    mca_ns_base_jobid_t test_jobid=0;
 
 
     test_results = OBJ_NEW(ompi_list_t);
