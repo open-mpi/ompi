@@ -473,7 +473,7 @@ int ompi_ddt_finalize( void )
 
 static int _dump_data_flags( unsigned short usflags, char* ptr )
 {
-    sprintf( ptr, "-----------" );  /* set everything to - */
+    sprintf( ptr, "-----------[   ][   ]" );  /* set everything to - */
     if( usflags & DT_FLAG_DESTROYED )                ptr[0]  = 'd';
     if( usflags & DT_FLAG_COMMITED )                 ptr[1]  = 'c';
     if( usflags & DT_FLAG_CONTIGUOUS )               ptr[2]  = 'C';
@@ -483,8 +483,32 @@ static int _dump_data_flags( unsigned short usflags, char* ptr )
     if( usflags & DT_FLAG_FOREVER )                  ptr[6]  = 'F';
     if( usflags & DT_FLAG_IN_LOOP )                  ptr[7]  = 'L';
     if( usflags & DT_FLAG_DATA )                     ptr[8]  = 'D';
-    if( usflags & DT_FLAG_INITIAL )                  ptr[9]  = 'I';
+    if( usflags & DT_FLAG_INITIAL )                  ptr[9]  = '*';
     if( (usflags & DT_FLAG_BASIC) == DT_FLAG_BASIC ) ptr[10] = 'B';
+    if( usflags & DT_FLAG_INITIAL ) {
+        /* Which kind of datatype is that */
+        switch( usflags & DT_FLAG_DATA_LANGUAGE ) {
+        case DT_FLAG_DATA_C:
+            ptr[13] = 'C'; break;
+        case DT_FLAG_DATA_CPP:
+            ptr[12] = 'C'; ptr[13] = 'P'; ptr[14] = 'P'; break;
+        case DT_FLAG_DATA_FORTRAN:
+            ptr[12] = 'F'; ptr[13] = '7'; ptr[14] = '7'; break;
+        default: 
+            ptr[12] = 'E'; ptr[13] = 'R'; ptr[14] = 'R'; break;
+        }
+        switch( usflags & DT_FLAG_DATA_TYPE ) {
+        case DT_FLAG_DATA_INT:
+            ptr[17] = 'I'; ptr[18] = 'N'; ptr[19] = 'T'; break;
+        case DT_FLAG_DATA_FLOAT:
+            ptr[17] = 'F'; ptr[18] = 'L'; ptr[19] = 'T'; break;
+        case DT_FLAG_DATA_COMPLEX:
+            ptr[17] = 'C'; ptr[18] = 'P'; ptr[19] = 'L'; break;
+        default:
+            ptr[17] = 'E'; ptr[18] = 'R'; ptr[19] = 'R'; break;
+        }
+        return 20;
+    }
     return 11;
 }
 
