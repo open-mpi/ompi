@@ -34,6 +34,7 @@
 #include "mca/ns/base/base.h"
 #include "util/proc_info.h"
 #include "util/show_help.h"
+#include "util/if.h"
 
 /*
  * Internal constants
@@ -306,7 +307,7 @@ internal_spawn_proc(mca_pcm_rsh_module_t *me,
     int cmdc = 0;
     char *printable = NULL;
     int stderr_is_error = me->ignore_stderr == 0 ? 1 : 0;
-    char *username = NULL;
+    char *start_username = NULL;
     int ret;
     pid_t pid;
     FILE *fp;
@@ -314,37 +315,43 @@ internal_spawn_proc(mca_pcm_rsh_module_t *me,
     int i;
     char *tmp;
     bool high_qos = (0 != (me->constraints & OMPI_RTE_SPAWN_HIGH_QOS));
+    bool is_local;
 
     start_node = (mca_llm_base_hostfile_node_t*) ompi_list_get_first(hostlist);
+    start_username = mca_pcm_base_get_username(start_node);
 
-    /*
-     * Check to see if we need to do the .profile thing
-     */
-    ret = internal_need_profile(me, start_node, stderr_is_error,
-                                &needs_profile);
-    if (OMPI_SUCCESS != ret) {
-        goto cleanup;
-    }
-    
+    /* add all the startup stuff if needed */
+    is_local = ompi_ifislocal(start_node->hostname) && 
+        start_username == NULL;
 
-    /*
-     * Build up start array
-     */
+    if (!is_local) {
+        /*
+         * Check to see if we need to do the .profile thing
+         */
+        ret = internal_need_profile(me, start_node, stderr_is_error,
+                                    &needs_profile);
+        if (OMPI_SUCCESS != ret) {
+            goto cleanup;
+        }
 
-    /* build up the rsh command part */
-    cmdv = ompi_argv_split(me->rsh_agent, ' ');
-    cmdc = ompi_argv_count(cmdv);
+        /*
+         * Build up start array
+         */
 
-    ompi_argv_append(&cmdc, &cmdv, start_node->hostname);
-    username = mca_pcm_base_get_username(start_node);
-    if (NULL != username) {
-        ompi_argv_append(&cmdc, &cmdv, "-l");
-        ompi_argv_append(&cmdc, &cmdv, username);
-    }
+        /* build up the rsh command part */
+        cmdv = ompi_argv_split(me->rsh_agent, ' ');
+        cmdc = ompi_argv_count(cmdv);
 
-    /* add the start of .profile thing if required */
-    if (needs_profile) {
-        ompi_argv_append(&cmdc, &cmdv, "( ! [ -e ./.profile ] || . ./.profile;");
+        ompi_argv_append(&cmdc, &cmdv, start_node->hostname);
+        if (NULL != start_username) {
+            ompi_argv_append(&cmdc, &cmdv, "-l");
+            ompi_argv_append(&cmdc, &cmdv, start_username);
+        }
+
+        /* add the start of .profile thing if required */
+        if (needs_profile) {
+            ompi_argv_append(&cmdc, &cmdv, "( ! [ -e ./.profile ] || . ./.profile;");
+        }
     }
 
     /* build the command to start */
@@ -374,7 +381,7 @@ internal_spawn_proc(mca_pcm_rsh_module_t *me,
     }
 
     /* add the end of the .profile thing if required */
-    if (needs_profile) {
+    if (!is_local && needs_profile) {
         ompi_argv_append(&cmdc, &cmdv, ")");
     }
 
@@ -464,7 +471,7 @@ proc_cleanup:
     /* free up everything we used on the way */
     if (NULL != printable) free(printable);
     if (NULL != cmd0) free(cmd0);
-    if (NULL != username) free(username);
+    if (NULL != start_username) free(start_username);
     ompi_argv_free(cmdv);
     cmdv = NULL;
     cmdc = 0;

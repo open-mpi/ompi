@@ -99,13 +99,7 @@ parse_line(int first, mca_llm_base_hostfile_node_t *node)
     int ret;
 
     if (MCA_LLM_BASE_STRING == first) {
-        /* don't allow localhost or 127.0.0.1 */
-        if ((strncmp("localhost", mca_llm_base_string, strlen("localhost")) == 0) ||
-            (strcmp("127.0.0.1", mca_llm_base_string) == 0)) {
-            gethostname(node->hostname, MAXHOSTNAMELEN);
-        } else {
-            strncpy(node->hostname, mca_llm_base_string, MAXHOSTNAMELEN);
-        }
+        strncpy(node->hostname, mca_llm_base_string, MAXHOSTNAMELEN);
         node->given_count = 1;
     } else {
         parse_error();

@@ -365,11 +365,11 @@ int ompi_ifaddrtoname(const char* if_addr, char* if_name, int length)
     if(rc != OMPI_SUCCESS)
         return rc;
 
-    if(inaddr == INADDR_ANY) {
+    if(inaddr == INADDR_NONE) {
         h = gethostbyname(if_addr);
         if(h == 0) {
             ompi_output(0,"ompi_ifaddrtoname: unable to resolve %s\n", if_addr);
-            return OMPI_ERROR;
+            return OMPI_ERR_NOT_FOUND;
         }
         memcpy(&inaddr, h->h_addr, sizeof(inaddr));
     }
@@ -379,10 +379,10 @@ int ompi_ifaddrtoname(const char* if_addr, char* if_name, int length)
         intf =  (ompi_if_t*)ompi_list_get_next(intf)) {
         if(intf->if_addr.sin_addr.s_addr == inaddr) {
             strncpy(if_name, intf->if_name, length);
-            return OMPI_ERROR;
+            return OMPI_SUCCESS;
         }
     }
-    return OMPI_SUCCESS;
+    return OMPI_ERR_NOT_FOUND;
 }
 
 /*
@@ -515,4 +515,18 @@ int ompi_ifindextoname(int if_index, char* if_name, int length)
         }
     }
     return OMPI_ERROR;
+}
+
+
+bool
+ompi_ifislocal(char *hostname)
+{
+    const int len = 100;
+    char addrname[len - 1];
+    int ret;
+
+    ret = ompi_ifaddrtoname(hostname, addrname, len);
+    if (OMPI_SUCCESS == ret) return true;
+
+    return false;
 }

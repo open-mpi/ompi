@@ -88,6 +88,15 @@ OMPI_DECLSPEC int ompi_ifindextoaddr(int if_index, struct sockaddr*, int);
  *  @param size (IN)      Interface address buffer size
  */
 OMPI_DECLSPEC int ompi_ifindextomask(int if_index, struct sockaddr*, int);
+
+/**
+ * Determine if given hostname / IP address is a local address
+ *
+ * @param hostname (IN)    Hostname (or stringified IP address)
+ * @return                 true if \c hostname is local, false otherwise
+ */
+OMPI_DECLSPEC bool ompi_ifislocal(char *hostname);
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
