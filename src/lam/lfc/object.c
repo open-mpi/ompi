@@ -13,6 +13,6 @@ void lam_obj_init(lam_object_t *obj)
 
 void lam_obj_destroy(lam_object_t *obj)
 {
-    free(obj);
+    /* Move along, nothing to see here! */
 }
 
