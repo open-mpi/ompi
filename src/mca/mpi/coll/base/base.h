@@ -9,7 +9,6 @@
 
 #include "mpi.h"
 #include "lam/lfc/list.h"
-#include "lam/util/cmd_line.h"
 #include "mca/mpi/coll/coll.h"
 
 
@@ -20,8 +19,10 @@
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
-  int mca_coll_base_open(lam_cmd_line_t *cmd);
-  int mca_coll_base_query(void);
+  int mca_coll_base_open(void);
+  int mca_coll_base_select(lam_list_t *available);
+  const mca_coll_1_0_0_t *
+    mca_coll_basic_query(MPI_Comm comm, int *priority);
   int mca_coll_base_close(void);
 
   int mca_coll_base_init_comm(MPI_Comm comm);
@@ -32,24 +33,12 @@ extern "C" {
 
 
 /*
- * Public variables
+ * Globals
  */
-
-extern int mca_coll_base_verbose;
-extern int mca_coll_base_did;
+extern int mca_coll_base_output;
 extern int mca_coll_base_crossover;
 extern int mca_coll_base_associative;
 extern int mca_coll_base_reduce_crossover;
-extern lam_list_t *mca_coll_base_opened;
-extern lam_list_t *mca_coll_base_available;
+extern lam_list_t mca_coll_base_modules_available;
 
-
-/*
- * Global instance of array of pointers to statically-linked coll
- * modules.  Will be filled in by configure.
- */
-
-extern const mca_base_module_t **mca_coll_base_static_modules;
-
-
-#endif /* MCA_COLL_H */
+#endif /* MCA_BASE_COLL_H */
