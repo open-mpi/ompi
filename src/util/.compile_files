@@ -18,5 +18,4 @@ show_help.c
 show_help_lex.c
 strncpy.c
 sys_info.c
-temp.c
 universe_setup_file_io.c
