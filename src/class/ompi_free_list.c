@@ -27,6 +27,7 @@ static void ompi_free_list_construct(ompi_free_list_t* fl)
     fl->fl_max_to_alloc = 0;
     fl->fl_num_allocated = 0;
     fl->fl_num_per_alloc = 0;
+    fl->fl_num_waiting = 0;
     fl->fl_elem_size = 0;
     fl->fl_elem_class = 0;
     fl->fl_mpool = 0;
