@@ -19,4 +19,33 @@
 
 extern bool ompi_mpi_param_check;
 
+/* These macros have to be used to check the corectness of the datatype depending on the
+ * operations that we have to do with them. They can be used on all functions, not only
+ * on the top level MPI functions, as they does not trigger the error handler. Is the user
+ * responsability to do it.
+ */
+#define OMPI_CHECK_DATATYPE_FOR_SEND( RC, DDT, COUNT ) \
+do { \
+   if( (DDT) == MPI_DATATYPE_NULL ) (RC) = MPI_ERR_TYPE; \
+   else if( (COUNT) < 0 ) (RC) = MPI_ERR_COUNT; \
+   else if( !ompi_ddt_is_committed((DDT)) ) (RC) = MPI_ERR_TYPE; \
+} while (0)
+
+#define OMPI_CHECK_DATATYPE_FOR_RECV( RC, DDT, COUNT ) \
+do { \
+   if( (DDT) == MPI_DATATYPE_NULL ) (RC) = MPI_ERR_TYPE; \
+   else if( (COUNT) < 0 ) (RC) = MPI_ERR_COUNT; \
+   else if( !ompi_ddt_is_committed((DDT)) ) (RC) = MPI_ERR_TYPE; \
+   else if( ompi_ddt_is_overerlapped((DDT)) ) (RC) = MPI_ERR_TYPE; \
+} while (0)
+
+#define OMPI_CHECK_DATATYPE_FOR_ONE_SIDED( RC, DDT, COUNT ) \
+do { \
+   if( (DDT) == MPI_DATATYPE_NULL ) (RC) = MPI_ERR_TYPE; \
+   else if( (COUNT) < 0 ) (RC) = MPI_ERR_COUNT; \
+   else if( !ompi_ddt_is_committed((DDT)) ) (RC) = MPI_ERR_TYPE; \
+   else if( ompi_ddt_is_overerlapped((DDT)) ) (RC) = MPI_ERR_TYPE; \
+   else if( !ompi_ddt_is_acceptable_for_one_sided((DDT)) ) (RC) = MPI_ERR_TYPE; \
+} while(0)
+
 #endif /* OMPI_C_BINDINGS_H */
