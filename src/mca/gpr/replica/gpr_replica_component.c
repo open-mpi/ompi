@@ -91,24 +91,6 @@ static void mca_gpr_replica_keytable_construct(mca_gpr_replica_keytable_t* keyta
 /* destructor - used to free any resources held by instance */
 static void mca_gpr_replica_keytable_destructor(mca_gpr_replica_keytable_t* keytable)
 {
-    mca_gpr_replica_keytable_t *keyptr;
-
-    if (mca_gpr_replica_debug) {
-	ompi_output(0, "entered keytable destructor");
-    }
-
-/*     if (NULL != keytable) { */
-/* 	while (NULL != (keyptr = (mca_gpr_replica_keytable_t*)ompi_list_remove_first((ompi_list_t*)keytable))) { */
-/* 	    if (NULL != keyptr->token) { */
-/* 		free(keyptr->token); */
-/* 	    } */
-/* 	    OBJ_RELEASE(keyptr); */
-/* 	} */
-/*     } */
-
-    if (mca_gpr_replica_debug) {
-	ompi_output(0, "exiting keytable destructor");
-    }
 }
 
 /* define instance of ompi_class_t */
@@ -368,14 +350,12 @@ mca_gpr_base_module_t *mca_gpr_replica_init(bool *allow_multi_user_threads, bool
 	}
 
  	/* issue the non-blocking receive */ 
-	if (!mca_gpr_replica_debug) {
 	    rc = mca_oob_recv_packed_nb(MCA_OOB_NAME_ANY, MCA_OOB_TAG_GPR, 0, mca_gpr_replica_recv, NULL);
 	    if(rc != OMPI_SUCCESS && rc != OMPI_ERR_NOT_IMPLEMENTED) { 
 		return NULL;
 	    }
-	}
 
-	if (!mca_gpr_replica_debug) {
+	if (mca_gpr_replica_debug) {
 	    ompi_output(0, "nb receive setup");
 	}
 
@@ -393,44 +373,48 @@ mca_gpr_base_module_t *mca_gpr_replica_init(bool *allow_multi_user_threads, bool
  */
 int mca_gpr_replica_finalize(void)
 {
-    mca_gpr_replica_segment_t *seg;
-    mca_gpr_replica_keytable_t *kt;
-    mca_gpr_replica_keylist_t *kl;
-    mca_gpr_notify_request_tracker_t *tk;
-    mca_gpr_idtag_list_t *id;
-
-    /* free all storage, but only if this component was initialized */
-
-    if (initialized) {
-
-	while (NULL != (seg = (mca_gpr_replica_segment_t*)ompi_list_remove_first(&mca_gpr_replica_head.registry))) {
-	    OBJ_RELEASE(seg);
-	}
-	OBJ_DESTRUCT(&mca_gpr_replica_head.registry);
-
-	while (NULL != (kt = (mca_gpr_replica_keytable_t*)ompi_list_remove_first(&mca_gpr_replica_head.segment_dict))) {
-	    OBJ_RELEASE(kt);
-	}
-	OBJ_DESTRUCT(&mca_gpr_replica_head.segment_dict);
-
-	while (NULL != (kl = (mca_gpr_replica_keylist_t*)ompi_list_remove_first(&mca_gpr_replica_head.freekeys))) {
-	    OBJ_RELEASE(kl);
-	}
-	OBJ_DESTRUCT(&mca_gpr_replica_head.freekeys);
-
-
-	while (NULL != (tk = (mca_gpr_notify_request_tracker_t*)ompi_list_remove_first(&mca_gpr_replica_notify_request_tracker))) {
-	    OBJ_RELEASE(tk);
-	}
-	OBJ_DESTRUCT(&mca_gpr_replica_notify_request_tracker);
-
-
-	while (NULL != (id = (mca_gpr_idtag_list_t*)ompi_list_remove_first(&mca_gpr_replica_free_notify_id_tags))) {
-	    OBJ_RELEASE(id);
-	}
-	OBJ_DESTRUCT(&mca_gpr_replica_free_notify_id_tags);
-	initialized = false;
+    if (mca_gpr_replica_debug) {
+	ompi_output(0, "finalizing gpr replica");
     }
+
+/*     mca_gpr_replica_segment_t *seg; */
+/*     mca_gpr_replica_keytable_t *kt; */
+/*     mca_gpr_replica_keylist_t *kl; */
+/*     mca_gpr_notify_request_tracker_t *tk; */
+/*     mca_gpr_idtag_list_t *id; */
+
+/*     /\* free all storage, but only if this component was initialized *\/ */
+
+/*     if (initialized) { */
+
+/* 	while (NULL != (seg = (mca_gpr_replica_segment_t*)ompi_list_remove_first(&mca_gpr_replica_head.registry))) { */
+/* 	    OBJ_RELEASE(seg); */
+/* 	} */
+/* 	OBJ_DESTRUCT(&mca_gpr_replica_head.registry); */
+
+/* 	while (NULL != (kt = (mca_gpr_replica_keytable_t*)ompi_list_remove_first(&mca_gpr_replica_head.segment_dict))) { */
+/* 	    OBJ_RELEASE(kt); */
+/* 	} */
+/* 	OBJ_DESTRUCT(&mca_gpr_replica_head.segment_dict); */
+
+/* 	while (NULL != (kl = (mca_gpr_replica_keylist_t*)ompi_list_remove_first(&mca_gpr_replica_head.freekeys))) { */
+/* 	    OBJ_RELEASE(kl); */
+/* 	} */
+/* 	OBJ_DESTRUCT(&mca_gpr_replica_head.freekeys); */
+
+
+/* 	while (NULL != (tk = (mca_gpr_notify_request_tracker_t*)ompi_list_remove_first(&mca_gpr_replica_notify_request_tracker))) { */
+/* 	    OBJ_RELEASE(tk); */
+/* 	} */
+/* 	OBJ_DESTRUCT(&mca_gpr_replica_notify_request_tracker); */
+
+
+/* 	while (NULL != (id = (mca_gpr_idtag_list_t*)ompi_list_remove_first(&mca_gpr_replica_free_notify_id_tags))) { */
+/* 	    OBJ_RELEASE(id); */
+/* 	} */
+/* 	OBJ_DESTRUCT(&mca_gpr_replica_free_notify_id_tags); */
+/* 	initialized = false; */
+/*     } */
 
     /* All done */
 
@@ -1097,6 +1081,10 @@ void gpr_replica_remote_notify(ompi_process_name_t *recipient, int recipient_tag
     ompi_registry_value_t *regval;
     char **tokptr;
     int recv_tag;
+
+    if (mca_gpr_replica_debug) {
+	ompi_output(0, "sending trigger message");
+    }
 
     command = MCA_GPR_NOTIFY_CMD;
     recv_tag = MCA_OOB_TAG_GPR_NOTIFY;

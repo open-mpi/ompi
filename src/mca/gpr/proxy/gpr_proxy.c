@@ -8,6 +8,9 @@
 #include "ompi_config.h"
 
 #include <string.h>
+
+#include "util/output.h"
+
 #include "mca/mca.h"
 #include "mca/gpr/base/base.h"
 #include "gpr_proxy.h"
@@ -78,9 +81,13 @@ int gpr_proxy_put(ompi_registry_mode_t mode, char *segment,
     ompi_buffer_t answer;
     mca_gpr_cmd_flag_t command;
     char **tokptr;
-    int recv_tag, i;
+    int recv_tag, i, ret;
     int32_t num_tokens, object_size;
     int16_t response;
+
+    if (mca_gpr_proxy_debug) {
+	ompi_output(0, "gpr_proxy_put: entered for segment %s 1st token %s", segment, *tokens);
+    }
 
     command = MCA_GPR_PUT_CMD;
     recv_tag = MCA_OOB_TAG_GPR;
@@ -131,7 +138,14 @@ int gpr_proxy_put(ompi_registry_mode_t mode, char *segment,
 	return OMPI_ERROR;
     }
 
-    if (0 > mca_oob_send_packed(mca_gpr_my_replica, cmd, MCA_OOB_TAG_GPR, 0)) {
+    if (mca_gpr_proxy_debug) {
+	ompi_output(0, "gpr_proxy_put: initiating send");
+    }
+
+    if (0 > (ret = mca_oob_send_packed(mca_gpr_my_replica, cmd, MCA_OOB_TAG_GPR, 0))) {
+	if (mca_gpr_proxy_debug) {
+	    ompi_output(0, "gpr_proxy_put: send failed with return %d", ret);
+	}
 	return OMPI_ERROR;
     }
 

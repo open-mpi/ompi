@@ -610,6 +610,10 @@ ompi_registry_notify_message_t *gpr_replica_construct_notify_message(ompi_regist
     char **tokptr, **tokptr2;
     int num_tokens, i;
 
+    if (mca_gpr_replica_debug) {
+	ompi_output(0, "trigger fired on segment %s", segment);
+    }
+
     /* protect against errors */
     if (NULL == segment) {
 	return NULL;

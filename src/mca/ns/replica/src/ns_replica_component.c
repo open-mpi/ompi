@@ -21,6 +21,7 @@
 #include "util/proc_info.h"
 #include "util/output.h"
 #include "mca/mca.h"
+#include "mca/base/mca_base_param.h"
 #include "mca/oob/base/base.h"
 #include "mca/ns/base/base.h"
 #include "ns_replica.h"
@@ -100,6 +101,7 @@ OBJ_CLASS_INSTANCE(
 mca_ns_base_cellid_t mca_ns_replica_last_used_cellid;
 mca_ns_base_jobid_t mca_ns_replica_last_used_jobid;
 ompi_list_t mca_ns_replica_name_tracker;
+int mca_ns_replica_debug;
 
 /*
  * don't really need this function - could just put NULL in the above structure
@@ -107,6 +109,11 @@ ompi_list_t mca_ns_replica_name_tracker;
  */
 int mca_ns_replica_open(void)
 {
+    int id;
+
+    id = mca_base_param_register_int("ns", "replica", "debug", NULL, 0);
+    mca_base_param_lookup_int(id, &mca_ns_replica_debug);
+
     return OMPI_SUCCESS;
 }
 
@@ -145,11 +152,7 @@ mca_ns_base_module_t* mca_ns_replica_init(bool *allow_multi_user_threads, bool *
 
       OBJ_CONSTRUCT(&mca_ns_replica_name_tracker, ompi_list_t);
 
-      /* set my_replica to point to myself */
-
-      /* mca_ns_my_replica = mca_ns_replica.copy_process_name(ompi_process_info.name); */
-
-      /* Return the module */
+     /* Return the module */
 
       initialized = true;
 
@@ -171,13 +174,17 @@ mca_ns_base_module_t* mca_ns_replica_init(bool *allow_multi_user_threads, bool *
  */
 int mca_ns_replica_finalize(void)
 {
+    if (mca_ns_replica_debug) {
+	ompi_output(0, "finalizing ns replica");
+    }
+
   /* free all tracking storage, but only if this component was initialized */
 
-  if (initialized) {
-    OBJ_DESTRUCT(&mca_ns_replica_name_tracker);
+/*   if (initialized) { */
+/*     OBJ_DESTRUCT(&mca_ns_replica_name_tracker); */
 
     initialized = false;
-  }
+/*   } */
 
   /* All done */
 

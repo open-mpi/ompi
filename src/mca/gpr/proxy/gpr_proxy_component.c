@@ -101,9 +101,17 @@ mca_gpr_base_module_t* mca_gpr_proxy_init(bool *allow_multi_user_threads, bool *
 {
     int rc;
 
+    if (mca_gpr_proxy_debug) {
+	ompi_output(0, "gpr_proxy_init called");
+    }
+
     /* If we're NOT the seed, then we want to be selected, so do all
        the setup and return the module */
     if (!ompi_process_info.seed) {
+
+	if (mca_gpr_proxy_debug) {
+	    ompi_output(0, "gpr_proxy_init: proxy selected");
+	}
 
     /* Return a module (choose an arbitrary, positive priority --
        it's only relevant compared to other ns components).  If
@@ -146,6 +154,10 @@ mca_gpr_base_module_t* mca_gpr_proxy_init(bool *allow_multi_user_threads, bool *
 int mca_gpr_proxy_finalize(void)
 {
 
+    if (mca_gpr_proxy_debug) {
+	ompi_output(0, "finalizing gpr proxy");
+    }
+
   if (initialized) {
     initialized = false;
   }
@@ -170,6 +182,10 @@ void mca_gpr_proxy_notify_recv(int status, ompi_process_name_t* sender,
     ompi_registry_notify_message_t *message;
     bool found;
     mca_gpr_notify_request_tracker_t *trackptr;
+
+    if (mca_gpr_proxy_debug) {
+	ompi_output(0, "gpr proxy: received trigger message");
+    }
 
     message = OBJ_NEW(ompi_registry_notify_message_t);
 
