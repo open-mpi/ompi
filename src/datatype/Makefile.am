@@ -9,19 +9,13 @@ noinst_LTLIBRARIES = libdatatype.la
 
 # Source code files
 
-headers = \
-        datatype.h
+headers = datatype.h datatype_internal.h
 
 libdatatype_la_SOURCES = \
         $(headers) \
-	datatype.c \
-	datatype_copy.c \
-	datatype_crc32.c \
-	datatype_create.c \
-	datatype_delete.c \
-	datatype_memcpy.c \
-	datatype_pack.c \
-	datatype_sum32.c
+	dt_add.c dt_create.c dt_create_array.c dt_create_dup.c dt_create_indexed.c \
+	dt_create_struct.c dt_create_vector.c dt_destroy.c dt_module.c dt_old_limits.c \
+	dt_optimize.c dt_pack.c dt_unpack.c
 
 # Conditionally install the header files
 

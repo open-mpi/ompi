@@ -1,664 +1,263 @@
-/*
- * $HEADER$
- */
+/* -*- Mode: C; c-basic-offset:3 ; -*- */
 
-/** @file
- *
- * lam_datatype_t interface for LAM internal data type representation
- *
- * lam_datatype_t is a class which represents contiguous or
- * non-contiguous datat together with constituent type-related
- * information.  It is the LAM's-eye view of MPI_Datatype.
- */
-
-#ifndef LAM_DATATYPE_H_INCLUDED
-#define LAM_DATATYPE_H_INCLUDED 1
-
-#include <assert.h>
-#include <sys/types.h>
-#include <sys/uio.h>
-#include <string.h>
-#include <stdlib.h>
+#ifndef DATATYPE_H_HAS_BEEN_INCLUDED
+#define DATATYPE_H_HAS_BEEN_INCLUDED
 
 #include "lam_config.h"
 #include "constants.h"
 #include "lfc/lam_object.h"
 #include "lfc/lam_hash_table.h"
 #include "types.h"
-
 #include "mpi.h"
 
-
-/* fortran sizes and alignments ***************************************/
-
-extern int lam_sizeof_f77_integer;
-extern int lam_sizeof_f77_real;
-extern int lam_sizeof_f77_dblprec;
-extern int lam_sizeof_f77_complex;
-extern int lam_sizeof_f77_dblcomplex;
-
-extern int lam_alignment_f77_integer;
-extern int lam_alignment_f77_real;
-extern int lam_alignment_f77_dblprec;
-extern int lam_alignment_f77_complex;
-extern int lam_alignment_f77_dblcomplex;
-
-
-/* enums **************************************************************/
-
-/**
- * Datatype state flags
+#define DT_LOOP            0x00
+#define DT_LB              0x01
+#define DT_UB              0x02
+#define DT_SPACE           0x03
+#define DT_CHAR            0x04
+#define DT_BYTE            0x05
+#define DT_SHORT           0x06
+#define DT_INT             0x07
+#define DT_FLOAT           0x08
+#define DT_LONG            0x09
+#define DT_DOUBLE          0x0A
+#define DT_LONG_LONG       0x0B
+#define DT_LONG_DOUBLE     0x0C
+#define DT_COMPLEX_FLOAT   0x0D
+#define DT_COMPLEX_DOUBLE  0x0E
+#define DT_END_LOOP        0x0F
+/* if there are more basic datatypes than the number of bytes in the int type
+ * the bdt_used field of the data description struct should be changed to long.
  */
-enum lam_datatype_state_t {
-    LAM_DATATYPE_STATE_COMMITTED = 1 << 0,
-    LAM_DATATYPE_STATE_CONTIGUOUS = 1 << 1,
-    LAM_DATATYPE_STATE_FORTRAN = 1 << 2,
-    LAM_DATATYPE_STATE_OPTIMIZED = 1 << 3,
-    LAM_DATATYPE_STATE_DONT_OPTIMIZE = 1 << 4,
-    LAM_DATATYPE_STATE_XDR = 1 << 5,
-    /* etc. */
+#define DT_MAX_PREDEFINED  0x10
+
+/* flags for the datatypes. */
+#define DT_FLAG_DESTROYED  0x0001  /* user destroyed but some other layers still have a reference */
+#define DT_FLAG_COMMITED   0x0002  /* ready to be used for a send/recv operation */
+#define DT_FLAG_CONTIGUOUS 0x0004  /* contiguous datatype */
+#define DT_FLAG_OVERLAP    0x0008  /* datatype is unpropper for a recv operation */
+#define DT_FLAG_USER_LB    0x0010  /* has a user defined LB */
+#define DT_FLAG_USER_UB    0x0020  /* has a user defined UB */
+#define DT_FLAG_FOREVER    0x0040  /* cannot be removed: initial and predefined datatypes */
+#define DT_FLAG_IN_LOOP    0x0080  /* we are inside a loop */
+#define DT_FLAG_INITIAL    0x0100  /* one of the initial datatype */
+#define DT_FLAG_DATA       0x0200  /* data or control structure */
+#define DT_FLAG_BASIC      (DT_FLAG_INITIAL | DT_FLAG_COMMITED | DT_FLAG_FOREVER | DT_FLAG_CONTIGUOUS)
+
+#define DT_INCREASE_STACK  32
+
+/* the basic element. A data description is composed
+ * by a set of basic elements.
+ */
+typedef struct __dt_elem_desc {
+      unsigned short flags;  /* flags for the record */
+      unsigned short type;   /* the basic data type id */
+      unsigned int   count;  /* number of elements */
+      long           disp;   /* displacement of the first element */
+      unsigned int   extent; /* extent of each element */
+} dt_elem_desc_t;
+
+typedef struct {
+      float r;
+      float i;
+} complex_float_t;
+
+typedef struct {
+      double r;
+      double i;
+} complex_double_t;
+
+/* The basic memory zone description. The idea is to be able to represent the
+ * data as a array of zones, thus allowing us to simply find when concatenating
+ * several data leads to merging contiguous zones of memory.
+ */
+typedef struct __dt_zone_desc {
+  int useless;
+} dt_zone_desc_t;
+
+typedef struct __dt_struct_desc {
+   int length;  /* the maximum number of elements in the description array */
+   int used;    /* the number of used elements in the description array */
+   dt_elem_desc_t* desc;
+} dt_type_desc_t;
+
+/* the data description.
+ */
+typedef struct __dt_desc {
+   lam_object_t super;
+   unsigned int size;     /* total size in bytes of the memory used by the data if
+                           * the data is put on a contiguous buffer */
+   long true_lb;
+   long true_ub;          /* the true ub of the data without user defined lb and ub */
+   unsigned int align;    /* data should be aligned to */
+   long lb;               /* lower bound in memory */
+   long ub;               /* upper bound in memory */
+   unsigned short flags;  /* the flags */
+   unsigned short id;     /* data id, normally the index in the data array. */
+   unsigned int nbElems;  /* total number of elements inside the datatype */
+   unsigned int bdt_used; /* which basic datatypes are used in the data description */
+
+   /* Attribute fields */
+   lam_hash_table_t *keyhash;
+   char name[MPI_MAX_OBJECT_NAME];
+
+   dt_type_desc_t desc;   /* the data description */
+   dt_type_desc_t opt_desc; /* short description of the data used when conversion is useless
+                             * or in the send case (without conversion) */
+   void*        args;     /* data description for the user */
+
+   /* basic elements count used to compute the size of the datatype for
+    * remote nodes */
+   unsigned int btypes[DT_MAX_PREDEFINED];
+} dt_desc_t, lam_datatype_t;
+
+OBJ_CLASS_DECLARATION( lam_datatype_t );
+
+extern dt_desc_t basicDatatypes[];
+
+#if defined(__GNUC__)
+#define LMAX(A,B)  ({ long _a = (A), _b = (B); (_a < _b ? _b : _a); })
+#define LMIN(A,B)  ({ long _a = (A), _b = (B); (_a < _b ? _a : _b); })
+#define IMAX(A,B)  ({ int _a = (A), _b = (B); (_a < _b ? _b : _a); })
+#define IMIN(A,B)  ({ int _a = (A), _b = (B); (_a < _b ? _a : _b); })
+#else
+static long LMAX( long a, long b ) { return ( a < b ? b : a ); }
+static long LMIN( long a, long b ) { return ( a < b ? a : b ); }
+static int  IMAX( int a, int b ) { return ( a < b ? b : a ); }
+static int  IMIN( int a, int b ) { return ( a < b ? a : b ); }
+#endif  /* __GNU__ */
+
+typedef struct __dt_stack {
+      int index;
+      int count;
+      int end_loop;
+      long disp;
+} dt_stack_t;
+
+typedef struct __dt_convert {
+  char* buf;
+  unsigned int length;
+  dt_stack_t* pStack;
+  dt_desc_t* pDesc;
+} dt_convert_t;
+
+int dt_load( void );
+int dt_unload( void );
+dt_desc_t* dt_create( int expectedSize );
+int dt_commit( dt_desc_t** );
+#define dt_free dt_destroy
+int dt_free( dt_desc_t** );
+int dt_destroy( dt_desc_t** );
+void dt_dump( dt_desc_t* pData );
+void dt_dump_complete( dt_desc_t* pData );
+/* data creation functions */
+int dt_duplicate( dt_desc_t* oldType, dt_desc_t** newType );
+int dt_create_contiguous( size_t count, dt_desc_t* oldType, dt_desc_t** newType );
+int dt_create_vector( size_t count, int bLength, long stride,
+                      dt_desc_t* oldType, dt_desc_t** newType );
+int dt_create_hvector( size_t count, int bLength, long stride,
+                       dt_desc_t* oldType, dt_desc_t** newType );
+int dt_create_indexed( size_t count, int* pBlockLength, int* pDisp,
+                       dt_desc_t* oldType, dt_desc_t** newType );
+int dt_create_hindexed( size_t count, int* pBlockLength, long* pDisp,
+                        dt_desc_t* oldType, dt_desc_t** newType );
+int dt_create_indexed_block( size_t count, int bLength, int* pDisp,
+                             dt_desc_t* oldType, dt_desc_t** newType );
+int dt_create_struct( size_t count, size_t* pBlockLength, long* pDisp,
+                      dt_desc_t** pTypes, dt_desc_t** newType );
+int dt_create_resized( dt_desc_t* oldType, long lb, long extent, dt_desc_t** newType );
+int dt_create_subarray( int ndims, int* pSizes, int* pSubSizes, int* pStarts,
+                        int order, dt_desc_t* oldType, dt_desc_t** newType );
+int dt_create_darray( int size, int rank, int ndims, int* pGSizes, int *pDistrib,
+                      int* pDArgs, int* pPSizes, int order, dt_desc_t* oldType,
+                      dt_desc_t** newType );
+
+int dt_add( dt_desc_t* pdtBase, dt_desc_t* pdtNew, unsigned int count, long disp, long extent );
+
+int dt_type_lb( dt_desc_t* pData, long* disp );
+int dt_type_ub( dt_desc_t* pData, long* disp );
+int dt_type_size ( dt_desc_t* pData, int *size );
+int dt_type_extent( dt_desc_t* pData, long* extent );
+
+int dt_type_resize( dt_desc_t* pOld, long lb, long extent, dt_desc_t** pNew );
+int dt_get_extent( dt_desc_t* datatype, long* lb, long* extent);
+int dt_get_true_extent( dt_desc_t* datatype, long* true_lb, long* true_extent);
+int dt_get_element_count( dt_desc_t* datatype, size_t iSize );
+int dt_copy_content_same_dt( dt_desc_t* pData, int count, char* pDestBuf, char* pSrcBuf );
+
+#define dt_increase_ref(PDT) OBJ_RETAIN( PDT )
+#define dt_decrease_ref(PDT) OBJ_RELEASE( PDT )
+
+int dt_optimize_short( dt_desc_t* pData, int count, dt_type_desc_t* pTypeDesc );
+
+#define REMOVE_FLAG( INT_VALUE, FLAG )  (INT_VALUE) = (INT_VALUE) ^ (FLAG)
+#define SET_FLAG( INT_VALUE, FLAG )     (INT_VALUE) = (INT_VALUE) | (FLAG)
+#define UNSET_FLAG( INT_VALUE, FLAG)    (INT_VALUE) = (INT_VALUE) & (~(FLAG))
+
+#define REMOVE_CONTIGUOUS_FLAG( INT_VALUE )  REMOVE_FLAG(INT_VALUE, DT_FLAG_CONTIGUOUS)
+#define SET_CONTIGUOUS_FLAG( INT_VALUE )     SET_FLAG(INT_VALUE, DT_FLAG_CONTIGUOUS)
+#define UNSET_CONTIGUOUS_FLAG( INT_VALUE )   UNSET_FLAG(INT_VALUE, DT_FLAG_CONTIGUOUS)
+
+/* flags for the datatypes */
+
+typedef int (*conversion_fct_t)( unsigned int count,
+                                 void* from, unsigned int from_len, long from_extent,
+                                 void* to, unsigned int in_length, long to_extent,
+                                 unsigned int* used );
+
+/* keep the last 16 bits free for data flags */
+#define CONVERTOR_USELESS 0x00010000
+#define CONVERTOR_RECV    0x00020000
+#define CONVERTOR_SEND    0x00040000
+
+#define CONVERTOR_STATE_MASK       0xFF000000
+#define CONVERTOR_STATE_START      0x01000000
+#define CONVEROTR_STATE_COMPLETE   0x02000000
+#define CONVERTOR_STATE_ALLOC      0x04000000
+
+typedef struct __struct_convertor convertor_t;
+typedef int (*convertor_advance_fct_t)( convertor_t* pConvertor,
+                                        struct iovec* pInputv,
+                                        unsigned int inputCount );
+
+/* and now the convertor stuff */
+struct __struct_convertor {
+   dt_desc_t* pDesc;
+   long remoteArch;
+   dt_stack_t* pStack;
+   /* the convertor functions pointer */
+   /* the local stack for the actual conversion */
+   int converted;   /* the number of already converted elements */
+   int bConverted;  /* the size of already converted elements in bytes */
+   unsigned int flags;
+   unsigned int count;
+   unsigned int stack_pos;
+   char* pBaseBuf;
+   unsigned int available_space;
+   void* freebuf;
+   convertor_advance_fct_t fAdvance;
+   conversion_fct_t* pFunctions;
 };
 
+extern conversion_fct_t copy_functions[DT_MAX_PREDEFINED];
+
+/* some convertor flags */
+#define convertor_progress( PCONV, IOVEC, COUNT ) \
+  (PCONV)->fAdvance( (PCONV), (IOVEC), (COUNT) );
+
+/* and finally the convertor functions */
+convertor_t* convertor_create( int remote_arch, int mode );
+int convertor_init_for_send( convertor_t* pConv, unsigned int flags,
+                             dt_desc_t* pData, int count, void* pUserBuf );
+int convertor_init_for_recv( convertor_t* pConv, unsigned int flags,
+                             dt_desc_t* pData, int count, void* pUserBuf );
+convertor_t* convertor_get_copy( convertor_t* pConvertor );
+int convertor_need_buffers( convertor_t* pConvertor );
+int convertor_pack( convertor_t* pConv, struct iovec* in, unsigned int in_size );
+int convertor_unpack( convertor_t* pConv, struct iovec* out, unsigned int out_size );
+int convertor_destroy( convertor_t** ppConv );
+int convertor_get_packed_size( convertor_t* pConv, unsigned int* pSize );
+int convertor_get_unpacked_size( convertor_t* pConv, unsigned int* pSize );
+
+#endif  /* DATATYPE_H_HAS_BEEN_INCLUDED */
 
-enum {
-    LAM_DATATYPE_PACK = 0,
-    LAM_DATATYPE_UNPACK,
-    LAM_DATATYPE_PACK_COMPLETE = 0,
-    LAM_DATATYPE_PACK_INCOMPLETE,
-    TYPE_PACK_INCOMPLETE_VECTOR,
-    TYPE_PACK_INCOMPLETE_DATAVEC_REPEAT,
-    TYPE_PACK_INCOMPLETE_DATAVEC_ELEMENT,
-    TYPE_PACK_ERROR = -1
-};
-
-
-/**
- * Enumeration of datatype creation functions
- */
-enum lam_datatype_kind_t {
-
-    LAM_DATATYPE_KIND_BASIC = 0,
-
-    LAM_DATATYPE_KIND_CONTIG,
-    LAM_DATATYPE_KIND_DUP,
-    LAM_DATATYPE_KIND_HINDEXED,
-    LAM_DATATYPE_KIND_HVECTOR,
-    LAM_DATATYPE_KIND_INDEXED,
-    LAM_DATATYPE_KIND_LB,
-    LAM_DATATYPE_KIND_PACKED,
-    LAM_DATATYPE_KIND_STRUCT,
-    LAM_DATATYPE_KIND_UB,
-    LAM_DATATYPE_KIND_VECTOR,
-
-    LAM_DATATYPE_KIND_CONTIG_FORTRAN,
-    LAM_DATATYPE_KIND_HINDEXED_FORTRAN,
-    LAM_DATATYPE_KIND_HVECTOR_FORTRAN,
-    LAM_DATATYPE_KIND_INDEXED_FORTRAN,
-    LAM_DATATYPE_KIND_STRUCT_FORTRAN,
-    LAM_DATATYPE_KIND_VECTOR_FORTRAN
-};
-
-
-typedef enum lam_datatype_state_t lam_datatype_state_t;
-typedef enum lam_datatype_kind_t lam_datatype_kind_t;
-
-
-/* types **************************************************************/
-
-typedef struct lam_datatype_t lam_datatype_t;
-typedef struct lam_datavec_element_t lam_datavec_element_t;
-typedef struct lam_datavec_t lam_datavec_t;
-typedef struct lam_dataxdr_t lam_dataxdr_t;
-typedef struct lam_pack_state_t lam_pack_state_t;
-typedef struct lam_memcpy_state_t lam_memcpy_state_t;
-
-/**
- * Function prototype for a generalized memcpy()
- */
-typedef void *(lam_memcpy_fn_t) (void *restrict dst,
-                                 const void *restrict src,
-                                 size_t size, lam_memcpy_state_t *check);
-
-
-/**
- * Internal representation of MPI datatype
- */
-struct lam_datatype_t {
-
-    lam_object_t super;             /**< object super class */
-    char name[MPI_MAX_OBJECT_NAME]; /**< object name */
-    int flags;                      /**< bit flags */
-
-    /* Attributes */
-  
-    lam_hash_table_t *keyhash;
-
-    /* cached information */
-
-    ssize_t lower_bound;
-    size_t extent;
-    size_t packed_size;         /**< size in bytes, ignoring gaps */
-    int nbasic;                 /**< number of basic elements */
-
-    /* optimized representation */
-
-    size_t datavec_size;        /**< size of optimized representation */
-    lam_datavec_t *datavec;     /**< optimized representation (may be null) */
-
-    /* XDR representation */
-
-    size_t dataxdr_size;        /**< size of XDR representation */
-    lam_dataxdr_t *dataxdr;     /**< XDR representation (may be null) */
-
-    /* full representation (c.f. MPI_Type_create_struct) */
-
-    struct {
-        lam_datatype_kind_t c_kind;   /**< creation function */
-        int c_count;              /**< number of blocks */
-        int *c_blocklengths;      /**< number of elements in each block */
-        MPI_Aint *c_offset;       /**< stride/displacement as appropriate */
-        lam_datatype_t **c_types; /**< array of types (array) */
-    } creator;
-};
-
-OBJ_CLASS_DECLARATION(lam_datatype_t);
-
-
-/**
- * An optimized representation of noncontiguous data used by packing
- * routines
- */
-struct lam_datavec_t {
-    size_t nrepeat;
-    ssize_t repeat_offset;
-    size_t nelement;
-    lam_datavec_element_t *element;
-};
-
-
-/**
- * An element of a data type in optimized form
- */
-struct lam_datavec_element_t {
-    size_t size;            /**< size in bytes of element */
-    ssize_t offset;         /**< offset from start of data type */
-    ssize_t seq_offset;     /**< offset from start of packed data type */
-};
-
-
-/**
- * XDR representation of a datatype
- */
-struct lam_dataxdr_element_t {
-    /* to be done */
-    void *xdrs;             /**< XDR stream */
-};
-
-
-/**
- * State of incremental memcpy with checksum or CRC
- */
-struct lam_memcpy_state_t {
-    size_t size;           /**< total size in bytes of the object being checksummed / CRCed */
-    size_t partial_size;   /**< size of non- uint32_t to be carried over to next call */
-    uint32_t partial_int;  /**< value of non- uint32_t to be carried over to next call */
-    uint32_t sum;          /**< current value of the CRC or checksum */
-    bool first_call;       /**< is this the first call for this checksum/CRC? */
-};
-
-
-/**
- * Pack state
- *
- * Structure to store the state of an incremental pack/unpack of a
- * datatype.
- */
-struct lam_pack_state_t {
-    size_t type_index;     /**< current index of datatype */
-    size_t repeat_index;   /**< current index of datavec repeat */
-    size_t element_index;  /**< current index of datavec element */
-    size_t datavec_offset; /**< current offset into datavec element */
-    size_t packed_offset;  /**< current offset into packed buffer */
-};
-
-
-/* interface **********************************************************/
-
-BEGIN_C_DECLS
-
-/**
- * Test 32-bit alignment of an address
- *
- * @param address   An address
- * @return          true if the address is 32-bit aligned
- */
-static inline bool lam_aligned32(void *addr)
-{
-    if (((uintptr_t) addr & (uintptr_t) 3) == (uintptr_t) 0) {
-        return true;
-    } else {
-        return false;
-    }
-}
-
-
-/**
- * Test 64-bit alignment of an address
- *
- * @param address   An address
- * @return          true if the address is 64-bit aligned
- */
-static inline bool lam_aligned64(void *addr)
-{
-    if (((uintptr_t) addr & (uintptr_t) 7) == (uintptr_t) 0) {
-        return true;
-    } else {
-        return false;
-    }
-}
-
-
-/**
- * Return a 32-bit checksum of (the contents of) an array of data
- * types
- *
- * @param addr          Data type array
- * @param count         Size of array
- * @param datatype      Datatype descriptor
- * @return              Checksum
- */
-uint32_t lam_datatype_sum32(const void *addr,
-                            size_t count,
-                            lam_datatype_t *datatype);
-
-
-/**
- * Copy (the contents of) an array of data types
- *
- * @param dst           Output data type array
- * @param src           Input data type array
- * @param count         Size of array
- * @param datatype      Datatype descriptor
- * @param check         Pointer to checksum or CRC
- * @return              0 on success, -1 on error
- */
-int lam_datatype_copy(void *dst,
-                      const void *src,
-                      size_t count,
-                      lam_datatype_t *datatype,
-                      lam_memcpy_fn_t *memcpy_fn,
-                      lam_memcpy_state_t *check);
-
-/**
- * Copy (the contents of) an array of data types, and convert to
- * another datatype
- *
- * @param dst           Output data type array
- * @param dst_count     Size of output array
- * @param dst_datatype  Output datatype descriptor
- * @param src           Input data type array
- * @param src_count     Size of input array
- * @param src_datatype  Input datatype descriptor
- * @param checksum      Checksum
- * @return              0 on success, -1 on error
- */
-int lam_datatype_convert(void *dst,
-                         lam_datatype_t *dst_datatype,
-                         size_t dst_count,
-                         const void *src,
-                         lam_datatype_t *src_datatype,
-                         size_t src_count,
-                         lam_memcpy_fn_t *memcpy_fn,
-                         lam_memcpy_state_t *check);
-
-
-/**
- * Initialize pack state structure
- *
- * @param state         Pointer to state structure
- * @return              LAM return code
- */
-static inline int lam_pack_state_init(lam_pack_state_t *state)
-{
-    assert(state);
-
-    state->type_index = 0;
-    state->repeat_index = 0;
-    state->element_index = 0;
-    state->datavec_offset = 0;
-    state->packed_offset = 0;
-}
-
-
-/**
- * Incrementally pack or unpack a buffer to/from an array of
- * datatypes.
- *
- * DO NOT USE THIS FUNCTION DIRECTLY: lam_datatype_pack or
- * lam_datatype_unpack instead.
- *
- * @param direction     0 for pack , non-zero for unpack
- * @param state         current state of the incremental pack/unpack
- * @param typebuf       array of types
- * @param ntype         size of type array
- * @param buf           buffer to pack into/unpack from
- * @param bufsize       size of buffer
- * @param datatype      type descriptor
- * @param memcpy_fn     pointer to memcpy function
- * @param check         pointer to checksum
- * @return              0 complete, non-zero otherwise
- *
- * Incrementally copy data type arrays to/from a packed buffer by
- * iterating over the type and type_map until we finish or run out of
- * room.
- *
- * The state (all members) should be initialized to 0 before the first
- * call.
- */
-int lam_datatype_packer(lam_pack_state_t *state,
-                        void *buf,
-                        size_t bufsize,
-                        void *typebuf,
-                        size_t ntype,
-                        lam_datatype_t *datatype,
-                        lam_memcpy_fn_t *memcpy_fn,
-                        lam_memcpy_state_t *check,
-                        int pack_direction);
-
-
-/**
- * Incrementally pack a buffer from an array of datatypes.
- *
- * The arguments for this function are the same as for
- * lam_datatype_packer except that the last argument (pack_direction)
- * is not required.
- */
-static inline int lam_datatype_pack(lam_pack_state_t *state,
-                                    void *buf,
-                                    size_t bufsize,
-                                    const void *typebuf,
-                                    size_t ntype,
-                                    lam_datatype_t *datatype,
-                                    lam_memcpy_fn_t *memcpy_fn,
-                                    lam_memcpy_state_t *check)
-{
-    return lam_datatype_packer(state, buf, bufsize, (void *) typebuf,
-                               ntype, datatype, memcpy_fn, check,
-                               LAM_DATATYPE_PACK);
-}
-
-
-/**
- * Incrementally unpack a buffer to an array of datatypes.
- *
- * The arguments for this function are the same as for
- * lam_datatype_packer except that the last argument (pack_direction)
- * is not required.
- */
-static inline int lam_datatype_unpack(lam_pack_state_t *state,
-                                      const void *buf,
-                                      size_t bufsize,
-                                      void *typebuf,
-                                      size_t ntype,
-                                      lam_datatype_t *datatype,
-                                      lam_memcpy_fn_t *memcpy_fn,
-                                      lam_memcpy_state_t *check)
-{
-    return lam_datatype_packer(state, (void *) buf, bufsize, typebuf,
-                               ntype, datatype, memcpy_fn, check,
-                               LAM_DATATYPE_UNPACK);
-}
-
-
-/**
- * Incrementally generate an iovec for gathering from an array of
- * datatypes
- *
- * @param state         current state of the incremental pack/unpack
- * @param base_addr     base address for iovec offsets
- * @param vec           iovec buffer
- * @param vec_count     maximum length of iovec buffer
- * @param max_bytes     maximum bytes addressed by iovec
- * @param buf           buffer to pack into/unpack from
- * @param bufsize       size of buffer
- * @param typebuf       array of types
- * @param ntype         size of type array
- * @param type          type descriptor
- * @return              0 if complete, non-zero otherwise
- *
- * Incrementally traverse an array of datatypes and generate an iovec
- * of at most length vec_count and addressing at most max_bytes.  This
- * can be used to do a (partial) RDMA gather of the datatype array.
- *
- * The state (all members) should be initialized to 0 before the first
- * call.
- */
-int lam_datatype_gather_iovec(lam_pack_state_t *state,
-                              void *base_addr,
-                              struct iovec *vec,
-                              size_t vec_count,
-                              size_t max_bytes,
-                              const void *typebuf,
-                              size_t ntype,
-                              lam_datatype_t *datatype,
-                              lam_memcpy_fn_t *memcpy_fn,
-                              lam_memcpy_state_t *);
-
-/**
- * Incrementally generate an iovec for scattering from a packed array
- * of datatypes
- *
- * @param state         current state of the incremental pack/unpack
- * @param base_addr     base address for iovec offsets
- * @param vec           iovec buffer
- * @param vec_count     maximum length of iovec buffer
- * @param max_bytes     maximum bytes addressed by iovec
- * @param buf           packed buffer
- * @param bufsize       size of buffer
- * @param typebuf       array of types
- * @param ntype         size of type array
- * @param type          type descriptor
- * @return              0 if complete, non-zero otherwise
- *
- * Incrementally copy data type arrays to/from a packed buffer.  by
- * iterating over the type and type_map until we finish or run out of
- * room.
- *
- * Incrementally traverse a packed array of datatypes and generate an
- * iovec of at most length vec_count and addressing at most max_bytes.
- * This can be used to do a (partial) RDMA scatter of the datatype
- * array.
- *
- * The state (all members) should be initialized to 0 before the first
- * call.
- */
-int lam_datatype_scatter_iovec(lam_pack_state_t *state,
-                               void *base_addr,
-                               struct iovec *vec,
-                               size_t vec_count,
-                               size_t max_bytes,
-                               const void *buf,
-                               size_t bufsize,
-                               lam_datatype_t *datatype,
-                               lam_memcpy_fn_t *memcpy_fn,
-                               lam_memcpy_state_t *check);
-
-
-
-
-
-/*
- * incremental memcpy with checksum / CRC functions
- */
-
-
-/**
- * initialize the state for an incremental memcpy with checksum / CRC
- *
- * @param state     pointer to state object for the current sequence of copies
- * @param sum_size  the length of the entire buffer to be checksummed
- */
-static inline void
-lam_memcpy_init(lam_memcpy_state_t *state, size_t sum_size)
-{
-    state->size = sum_size;
-    state->first_call = true;
-}
-
-
-/**
- * Copy data from one buffer to another
- *
- * @param dst      pointer to the destination buffer
- * @param src      pointer to the source buffer
- * @param size     size of the buffer
- * @param check    unused
- * @return         the original value of dst
- */
-static inline void *lam_memcpy(void *dst, const void *src, size_t size,
-                               void *check)
-{
-    return memcpy(dst, src, size);
-}
-
-
-/**
- * An alternative version of memcpy that may out-perform the system
- * version on some (silly) systems.
- *
- * @param dst      pointer to the destination buffer
- * @param src      pointer to the source buffer
- * @param size     size of the buffer
- * @param state    unused
- * @return         the original value of dst
- */
-void *lam_memcpy_alt(void *dst, const void *src, size_t size,
-                     lam_memcpy_state_t *state);
-
-
-/**
- * Generate a 32-bit CRC for a buffer
- *
- * @param buffer      Data buffer
- * @param size        Size of buffer
- * @param initial_crc Initial value of the CRC register
- * @return            The CRC
- *
- * Generate a 32-bit for a data buffer starting from a given CRC
- * value.
- */
-uint32_t lam_crc32(const void *buffer, size_t size,
-                   uint32_t initial_crc);
-
-
-/**
- * Generate a 32-bit checksum for a buffer
- *
- * @param buffer      Data buffer
- * @param size        Size of buffer
- * @return            The CRC
- *
- * Generate a 32-bit for a data buffer starting from a given CRC
- * value.
- */
-uint32_t lam_sum32(const void *buffer, size_t size);
-
-
-/**
- * Copy data from one buffer to another and calculate a 32-bit CRC
- *
- * @param dst      pointer to the destination buffer
- * @param src      pointer to the source buffer
- * @param size     size of the buffer
- * @param state    pointer to a memcpy with checksum/CRC state structure
- * @return         the original value of dst
- *
- * This handles cumulative CRCs for for arbitrary lengths and address
- * alignments as best as it can. The initial contents of state->sum is
- * used as the starting value of the CRC.  The final CRC is placed
- * back in state->sum.
- */
-void *lam_memcpy_crc32(void *dst,
-                       const void *src,
-                       size_t size,
-                       lam_memcpy_state_t *check);
-
-
-/**
- * Copy data from one buffer to another and calculate a 32-bit checksum
- *
- * @param dst      pointer to the destination buffer
- * @param src      pointer to the source buffer
- * @param size     size of the buffer
- * @param state    pointer to a memcpy with checksum/CRC state structure
- * @return         the original value of dst
- *
- * This handles cumulative checksumming for arbitrary lengths and
- * address alignments as best as it can; the contents of
- * lastPartialLong and lastPartialLength are updated to reflected the
- * last partial word's value and length (in bytes) -- this should
- * allow proper handling of checksumming contiguous or noncontiguous
- * buffers via multiple calls of bcopy_csum() - Mitch
- */
-void *lam_memcpy_sum32(void *dst,
-                       const void *src,
-                       size_t size,
-                       lam_memcpy_state_t *check);
-
-
-/**
- * Copy data from one buffer to another and calculate a 32-bit checksum
- *
- * @param dst      pointer to the destination buffer
- * @param src      pointer to the source buffer
- * @param size     size of the buffer
- * @param state    pointer to a memcpy with checksum/CRC state structure
- * @return         the original value of dst
- */
-void *lam_memcpy_sum64(void *dst,
-                       const void *src,
-                       size_t size,
-                       lam_memcpy_state_t *check);
-
-
-/**
- * Create a LAM/MPI datatype
- *
- * @param combiner   integer identifying the kind of MPI create function
- * @param ninteger   number of integers passed to the create function
- * @param integer    array of integers passed to the create function
- * @param naddress   number of addresses passed to the create function
- * @param address    array of addresses passed to the create function
- * @param ntype      number of data types passed to the create function
- * @param type       array of data types passed to the create function
- * @param newtype    pointer to address of new type
- * @return           LAM_SUCCESS on successful creation, LAM_ERROR otherwise
- *
- * This is the central location for creation of data types in LAM/MPI.
- * All MPI_Type_create functions rely upon this to do the actual type
- * creation.
- */
-int lam_datatype_create(int combiner,
-                        int nintegers,
-                        int integers[],
-                        int naddresses,
-                        ssize_t addresses[],
-                        int ntypes,
-                        lam_datatype_t *types[], lam_datatype_t **newtype);
-
-
-/**
- * Delete a LAM/MPI datatype (actually, just mark it for deletion)
- *
- * @param type       datatype
- * @return           LAM_SUCCESS on success, LAM_ERROR otherwise
- *
- * This is the central location for creation of data types in LAM/MPI.
- * All MPI_Type_create functions rely upon this to do the actual type
- * creation.
- */
-int lam_datatype_delete(lam_datatype_t *type);
-
-END_C_DECLS
-
-#endif                          /* LAM_DATATYPE_H_INCLUDED */
