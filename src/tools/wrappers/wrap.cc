@@ -18,6 +18,7 @@
 #include <unistd.h>
 #include <errno.h>
 
+#include "lam/util/path.h"
 #include "tools/wrappers/lamwrap.h"
 #include "lam/util/argv.h"
 #include "lam/util/few.h"
@@ -25,17 +26,6 @@
 
 using namespace std;
 
-//
-// External functions
-//
-
-extern "C" {
-	extern char   *lam_path_find (char *fname, char **pathv, int mode);
-	extern char   *lam_path_env_find (char *fname, int mode);
-	extern char   *lam_path_findv (char *fname, char **pathv, int mode, char **envv);
-	extern char   *lam_path_env_findv (char *fname, int mode, char **envv, char *wrkdir);
-	extern char **environ;
-}
 
 //
 // Global variables
@@ -57,6 +47,8 @@ bool showme_link(false);
 
 static string cmd_name("<unknown>");
 
+///
+/// \internal
 ///
 /// Parse the command line arguments of the wrapper compiler
 ///
@@ -128,6 +120,8 @@ lam_wrap_parse_args(int argc, char* argv[], bool& want_flags)
 
 
 ///
+/// \internal
+///
 /// Figure out what the back-end compiler is (even if it's multiple
 /// tokens)
 ///
@@ -197,6 +191,8 @@ lam_wrap_get_compiler(const lam_sv_t& env_list, const string& default_comp,
 
 
 ///
+/// \internal
+///
 /// Build up a list of arguments for CFLAGS (a bit of a misnomer,
 /// because it may actually be CXXFLAGS or FFLAGS, depending on what
 /// the front-end wrapper compiler is).
@@ -221,6 +217,8 @@ lam_wrap_build_cflags(bool want_f77_includes, lam_sv_t& cflags)
 }
 
 
+///
+/// \internal
 ///
 /// Build up a list of user arguments (from argc/argv) that will be
 /// plugged into the command line that will invoke the back-end
@@ -252,6 +250,8 @@ lam_wrap_build_user_args(int argc, char* argv[], lam_sv_t& user_args)
 }
 
 
+///
+/// \internal
 ///
 /// Build up a list of LDFLAGS that will be given to the back-end
 /// compiler.
@@ -303,6 +303,8 @@ lam_wrap_build_ldflags(lam_sv_t& ldflags)
 }
 
 
+///
+/// \internal
 ///
 /// Build up a list of LIBS that will be given to the back-end
 /// compiler.
@@ -391,6 +393,8 @@ lam_wrap_build_libs(bool want_cxx_libs, lam_sv_t& libs)
 
 
 ///
+/// \internal
+///
 /// Build of a list of extra flags to go to the back-end compiler.
 /// These are typically extra flags that come from the configure
 /// script.
@@ -408,6 +412,8 @@ lam_wrap_build_extra_flags(const string& extra_string, lam_sv_t& extra_flags)
 
 
 ///
+/// \internal
+///
 /// Print out a vector of strings
 ///
 /// \param sv Vector of strings to be printed out
@@ -420,6 +426,8 @@ lam_wrap_print_sv(const lam_sv_t& sv)
 }
 
 
+///
+/// \internal
 ///
 /// Execute a vector of strings (ultimately results down to a call to
 /// some flavor of exec()).
@@ -466,6 +474,8 @@ lam_wrap_exec_sv(const lam_sv_t& sv)
 
 
 ///
+/// \internal
+///
 /// Remove leading and trailing white space from a given string.
 /// Must be sent a null-terminated string.
 ///
@@ -497,6 +507,8 @@ lam_wrap_strip_white(string& str)
 }
 
 
+///
+/// \internal
 ///
 /// Split a string into a vector of strings
 //
@@ -538,6 +550,8 @@ lam_wrap_split(const string& str, char c, lam_sv_t& out)
 
 
 ///
+/// \internal
+///
 /// Take a string, split it into tokens, and append it to an existing
 /// vector of strings
 ///
@@ -558,6 +572,8 @@ lam_wrap_split_append_sv(const string& str, lam_sv_t& out)
 
 
 ///
+/// \internal
+///
 /// Append one vector of strings onto the end of another.
 ///
 /// \param in Vector of strings to be appended
@@ -573,6 +589,8 @@ lam_wrap_append_sv(const lam_sv_t& in, lam_sv_t& out)
 }
 
 
+///
+/// \internal
 ///
 /// Check for the presence of a file
 ///
