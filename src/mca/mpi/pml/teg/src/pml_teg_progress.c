@@ -4,6 +4,18 @@
 
 int mca_pml_teg_progress(void)
 {
+    mca_ptl_base_tstamp_t tstamp;
+    size_t i;
+
+    /*
+     * Progress each of the PTL modules
+     */
+    for(i=0; i<mca_pml_teg.teg_num_ptl_modules; i++)
+        mca_pml_teg.teg_ptl_modules[i]->ptlm_progress(tstamp);
+
+    /*
+     * Complete any pending send requests. 
+     */
     THREAD_LOCK(&mca_pml_teg.teg_lock);
     mca_ptl_base_send_request_t* req;
     for(req =  (mca_ptl_base_send_request_t*)lam_list_get_first(&mca_pml_teg.teg_incomplete_sends);
@@ -13,8 +25,7 @@ int mca_pml_teg_progress(void)
         bool complete;
         int rc = mca_pml_teg_send_request_schedule(req, &complete);
         if(rc != LAM_SUCCESS) {
-             THREAD_UNLOCK(&mca_pml_teg.teg_lock);
-             return rc;
+             continue;
         }
         if(complete) {
             req = (mca_ptl_base_send_request_t*)lam_list_remove(
