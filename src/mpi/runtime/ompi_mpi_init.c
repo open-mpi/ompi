@@ -87,8 +87,10 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     /* Join the run-time environment */
     allow_multi_user_threads = true;
     have_hidden_threads = false;
-    if (OMPI_SUCCESS != (ret = ompi_rte_init(&allow_multi_user_threads,
-                                             &have_hidden_threads))) {
+    if ((OMPI_SUCCESS != (ret = ompi_rte_init_stage1(&allow_multi_user_threads,
+						    &have_hidden_threads))) ||
+       (OMPI_SUCCESS != (ret = ompi_rte_init_stage2(&allow_multi_user_threads,
+						    &have_hidden_threads)))) {
         /* JMS show_help */
         printf("show_help: ompi_mpi_init failed in mca_rte_init\n");
         return ret;

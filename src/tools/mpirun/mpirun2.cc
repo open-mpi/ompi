@@ -107,7 +107,8 @@ main(int argc, char *argv[])
         return ret;
     }
 
-    if (OMPI_SUCCESS != ompi_rte_init(&multi_thread, &hidden_thread)) {
+    if (OMPI_SUCCESS != ompi_rte_init_stage1(&multi_thread, &hidden_thread) ||
+	OMPI_SUCCESS != ompi_rte_init_stage2(&multi_thread, &hidden_thread)) {
         /* BWB show_help */
         printf("show_help: ompi_rte_init failed\n");
         return ret;

@@ -65,9 +65,13 @@ int ompi_rte_universe_exists(char *host, char *name, char *tmpdir, char *oob_con
 	    return OMPI_ERR_FATAL;
 	}
 
-/* 	/\* ...and ping to verify it's alive *\/ */
-/* 	if (OMPI_SUCCESS != mca_oob_ping(&seed)) { */
-/* 	    return OMPI_ERR_CONNECTION_FAILED; */
-/* 	} */
+	/* 	/\* ...and ping to verify it's alive *\/ */
+	/* 	if (OMPI_SUCCESS != mca_oob_ping(&seed)) { */
+	/* 	    return OMPI_ERR_CONNECTION_FAILED; */
+	/* 	} */
+
+	/* set the my_universe field */
+	ompi_process_info.my_universe = strdup(ompi_universe_info.name);
+	return OMPI_SUCCESS;
     }
 }
