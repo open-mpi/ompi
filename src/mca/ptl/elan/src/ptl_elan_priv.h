@@ -337,8 +337,8 @@ ELAN_SLEEP *ompi_init_elan_sleepdesc (mca_ptl_elan_state_t * ems,
                                       RAIL * rail);
 
 /* Initialization and finalization routines */
-int         mca_ptl_elan_init (mca_ptl_elan_component_t * emp);
-int         mca_ptl_elan_finalize (mca_ptl_elan_component_t * emp);
+int         mca_ptl_elan_state_init(mca_ptl_elan_component_t * emp);
+int         mca_ptl_elan_state_finalize(mca_ptl_elan_component_t * emp);
 int         mca_ptl_elan_thread_init(mca_ptl_elan_component_t * emp);
 int         mca_ptl_elan_thread_close(mca_ptl_elan_component_t * emp);
 

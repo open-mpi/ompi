@@ -308,7 +308,7 @@ ompi_init_elan_sleepdesc (mca_ptl_elan_state_t * ems,
 }
 
 int
-mca_ptl_elan_init (mca_ptl_elan_component_t * emp)
+mca_ptl_elan_state_init (mca_ptl_elan_component_t * emp)
 {
     int         i;
     int        *rails;
@@ -543,7 +543,7 @@ mca_ptl_elan_init (mca_ptl_elan_component_t * emp)
 }
 
 int
-mca_ptl_elan_finalize (mca_ptl_elan_component_t * emp)
+mca_ptl_elan_state_finalize (mca_ptl_elan_component_t * emp)
 {
     int     i;
     int     num_rails;
