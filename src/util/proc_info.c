@@ -24,6 +24,7 @@ ompi_proc_info_t ompi_process_info = {
     /*  .seed =                 */   false,
     /*  .my_universe =          */   "default-universe",
     /*  .tmpdir_base =          */   NULL,
+    /*  .top_session_dir =      */   NULL,
     /*  .universe_session_dir = */   NULL,
     /*  .job_session_dir =      */   NULL,
     /*  .proc_session_dir =     */   NULL,

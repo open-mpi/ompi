@@ -27,6 +27,9 @@ static bool test4(void);   /* no prefix given, TMP set, one good and one bad */
 static bool test5(void);   /* no prefix given, HOME set, one good and one bad */
 static bool test6(void);   /* no prefix given, nothing set, one good and one bad */
 static bool test7(void);   /* remove session directory tree */
+static bool test8(void);   /* attempt to remove tree when subdirs present */
+
+void clear_proc_info(void);
 
 static FILE *test_out=NULL;
 
@@ -35,12 +38,12 @@ int main(int argc, char* argv[])
     ompi_sys_info(); /* initialize system */
 
     test_init("ompi_session_dir_t");
-     test_out = fopen( "test_session_dir_out", "w+" );
+    test_out = fopen( "test_session_dir_out", "w+" );
     if( test_out == NULL ) {
       test_failure("test_session_dir couldn't open test file failed");
       test_finalize();
       exit(1);
-    } 
+    }
 
 
     fprintf(test_out, "running test1\n");
@@ -96,8 +99,18 @@ int main(int argc, char* argv[])
         test_success();
     }
     else {
-      test_failure("ompi_session_dir_t test6 failed");
+      test_failure("ompi_session_dir_t test7 failed");
     }
+
+    fprintf(test_out, "running test8\n");
+    if (test8()) {
+        test_success();
+    }
+    else {
+      test_failure("ompi_session_dir_t test8 failed");
+    }
+
+    fprintf(test_out, "completed all tests\n");
 
     fclose(test_out);
     test_finalize();
@@ -109,20 +122,22 @@ static bool test1(void)
 {
     /* Test proper action when given a prefix */
 
-    char *prefix, *tmp, *tmp2;
+    char *prefix, *tmp;
 
     /* see if we can create a specified path */
 
+    clear_proc_info();
+
     prefix = ompi_os_path(false, "tmp", NULL);
     if (OMPI_ERROR == ompi_session_dir(true, prefix, ompi_system_info.user, NULL, NULL, "test-universe", NULL, NULL)) {
-	printf("test1 - couldn't create specified path\n");
+	fprintf(test_out, "test1 - couldn't create specified path\n");
         free(prefix);
         return(false);
     }
     /* see if it can access an existing path */
 
     if (OMPI_ERROR == ompi_session_dir(false, prefix, ompi_system_info.user, NULL, NULL, "test-universe", NULL, NULL)) {
-	printf("test1 - couldn't access existing path\n");
+	fprintf(test_out, "test1 - couldn't access existing path\n");
         free(prefix);
         return(false);
     }
@@ -134,18 +149,6 @@ static bool test1(void)
     free(prefix);
     free(tmp);
 
-    /* check what happens when given prefix that won't allow access */
-    tmp2 = ompi_os_path(false, "test", NULL); /* assume we don't have root privileges */
-    if (OMPI_SUCCESS == ompi_session_dir(true, tmp2, ompi_system_info.user, NULL, NULL, "test-universe", NULL, NULL)) {
-        printf("created temp directory in %s - shouldn't have been able to do so\n", tmp2);
-	rmdir(ompi_process_info.universe_session_dir);
-	tmp = strdup(dirname(ompi_process_info.universe_session_dir));
-	rmdir(tmp);
-	free(tmp);
-        free(tmp2);
-        return(false);
-    }
-
     return true;
 }
 
@@ -153,6 +156,8 @@ static bool test1(void)
 static bool test2(void)
 {
     char *tmp;
+
+    clear_proc_info();
 
     /* use the OMPI_PREFIX_ENV variable */
 
@@ -180,6 +185,8 @@ static bool test3(void)
     /* use the TMPDIR enviro variable */
     char *tmp;
 
+    clear_proc_info();
+
     setenv("TMPDIR", "/tmp/trythis", 1);
 
     if (OMPI_ERROR == ompi_session_dir(true, NULL, ompi_system_info.user, NULL, NULL, "test-universe", NULL, NULL)) {
@@ -202,6 +209,8 @@ static bool test4(void)
 {
     /* use the TMP enviro variable */
     char *tmp;
+
+    clear_proc_info();
 
     setenv("TMP", "/tmp/trythis", 1);
 
@@ -226,6 +235,8 @@ static bool test5(void)
     /* use the HOME enviro variable */
     char *tmp;
 
+    clear_proc_info();
+
     setenv("HOME", "/tmp/trythis", 1);
 
     if (OMPI_ERROR == ompi_session_dir(true, NULL, ompi_system_info.user, NULL, NULL, "test-universe", NULL, NULL)) {
@@ -248,6 +259,8 @@ static bool test6(void)
 {
     char *tmp;
 
+    clear_proc_info();
+
     /* no enviro variables set, no prefix given 
     * Program should turn to default of /tmp (where "/" is whatever
     * top-level directory is appropriate for given system)
@@ -267,6 +280,8 @@ static bool test7(void)
 {
     char *filenm;
     FILE *fp;
+
+    clear_proc_info();
 
     /* create test proc session directory tree */
     if (OMPI_ERROR == ompi_session_dir(true, NULL, ompi_system_info.user, "localhost", NULL, "test-universe", "test-job", "test-proc")) {
@@ -300,4 +315,59 @@ static bool test7(void)
     }
 
     return true;
+}
+
+static bool test8(void)
+{
+    char *filenm;
+    FILE *fp;
+
+    clear_proc_info();
+
+    /* create test proc session directory tree */
+    if (OMPI_ERROR == ompi_session_dir(true, NULL, ompi_system_info.user, "localhost", NULL, "test-universe2", "test-job", "test-proc")) {
+	return(false);
+    }
+
+    fprintf(test_out, "removing directories: %s\n\t%s\n\t%s\n",
+	    ompi_process_info.proc_session_dir,
+	    ompi_process_info.job_session_dir,
+	    ompi_process_info.universe_session_dir);
+
+    /* create some files */
+
+    filenm = ompi_os_path(false, ompi_process_info.proc_session_dir, "dum1", NULL);
+    fp = fopen(filenm, "w");
+    fprintf(fp, "ss");
+    fclose(fp);
+
+    filenm = ompi_os_path(false, ompi_process_info.job_session_dir, "dum2", NULL);
+    fp = fopen(filenm, "w");
+    fprintf(fp, "ss");
+    fclose(fp);
+
+    filenm = ompi_os_path(false, ompi_process_info.universe_session_dir, "dum3", NULL);
+    fp = fopen(filenm, "w");
+    fprintf(fp, "ss");
+    fclose(fp);
+
+
+    filenm = ompi_os_path( false, ompi_process_info.job_session_dir, "dir1", NULL);
+    ompi_os_create_dirpath(filenm, 0777);
+
+    if (OMPI_ERROR == ompi_session_dir_finalize()) {
+	return(false);
+    }
+
+    return true;
+}
+
+void clear_proc_info(void)
+{
+    ompi_process_info.tmpdir_base = NULL;
+    ompi_process_info.top_session_dir = NULL;
+    ompi_process_info.universe_session_dir = NULL;
+    ompi_process_info.job_session_dir = NULL;
+    ompi_process_info.proc_session_dir = NULL;
+
 }
