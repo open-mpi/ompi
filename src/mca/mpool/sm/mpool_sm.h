@@ -12,7 +12,9 @@
 #include "event/event.h"
 #include "mca/mpool/mpool.h"
 #include "mca/allocator/allocator.h"
-
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 
 struct mca_mpool_sm_component_t {
     mca_mpool_base_component_t super;
@@ -47,5 +49,8 @@ void* mca_mpool_sm_realloc(void* addr, size_t size);
 void mca_mpool_sm_free(void *);
 
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 #endif

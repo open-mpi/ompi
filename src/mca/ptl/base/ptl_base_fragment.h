@@ -12,6 +12,9 @@
 #include "datatype/datatype.h"
 #include "mca/ptl/base/ptl_base_header.h"
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 extern ompi_class_t mca_ptl_base_frag_t_class;
 
 /**
@@ -28,6 +31,9 @@ struct mca_ptl_base_frag_t {
 };
 typedef struct mca_ptl_base_frag_t mca_ptl_base_frag_t;
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 #endif
 

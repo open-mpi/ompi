@@ -14,6 +14,9 @@
 #include "util/output.h"
 #endif
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 /*
  *  @file  Array of elements maintained by value.
  */
@@ -32,9 +35,6 @@ struct ompi_value_array_t
 typedef struct ompi_value_array_t ompi_value_array_t;
 
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
 
 /**
  *  Initialize the array to hold items by value. This routine must 

@@ -8,6 +8,9 @@
 #include "threads/mutex.h"
 #include "class/ompi_object.h"
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 /*
  * typedefs
  */
@@ -106,5 +109,7 @@ static inline size_t ompi_pointer_array_get_size(ompi_pointer_array_t *array)
  */
 int ompi_pointer_array_test_and_set_item (ompi_pointer_array_t *table, size_t index,
                                          void *value);
-
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 #endif /* OMPI_POINTER_ARRAY_H */

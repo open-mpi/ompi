@@ -15,6 +15,9 @@
 #include "class/ompi_object.h"
 #include "proc/proc.h"
 #include "ptl_gm.h"
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 
 extern ompi_class_t mca_ptl_gm_proc_t_class;
 
@@ -35,4 +38,7 @@ mca_ptl_gm_proc_t *mca_ptl_gm_proc_create (mca_ptl_gm_module_t * ptl,
                                            ompi_proc_t * ompi_proc);
 mca_ptl_gm_proc_t *mca_ptl_gm_proc_lookup (void *guid, size_t size);
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 #endif

@@ -12,6 +12,9 @@
 #include "mca/llm/llm.h"
 #include "mca/ns/ns.h"
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 /*
  * Globally exported variable
  */
@@ -20,9 +23,6 @@ extern const mca_llm_base_component_1_0_0_t mca_llm_hostfile_component;
 /*
  * llm API functions
  */
-#ifdef __cplusplus
-extern "C" {
-#endif
 
     int mca_llm_hostfile_component_open(void);
     int mca_llm_hostfile_component_close(void);
@@ -50,7 +50,7 @@ extern "C" {
     };
     typedef struct mca_llm_hostfile_module_t mca_llm_hostfile_module_t;
 
-#ifdef __cplusplus
+#if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
 

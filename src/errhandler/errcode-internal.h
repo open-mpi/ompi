@@ -14,6 +14,9 @@
 #include "class/ompi_pointer_array.h"
 
 #define OMPI_MAX_ERROR_STRING 64
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 /**
  * Back-end type for MPI error codes
  */
@@ -49,9 +52,6 @@ static inline int ompi_errcode_get_mpi_code(int errcode)
 }
 
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
 
     /**
      * Initialize the error codes

@@ -15,7 +15,7 @@
 #include <stdarg.h>
 #include <stdlib.h>
 
-#ifdef __cplusplus
+#if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -114,7 +114,7 @@ int ompi_asprintf(char **ptr, const char *fmt, ...);
 int ompi_vasprintf(char **ptr, const char *fmt, va_list ap);
 
 
-#ifdef __cplusplus
+#if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
 

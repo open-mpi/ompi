@@ -29,6 +29,9 @@
 #include "ptl_ib_sendreq.h"
 #include "ptl_ib_recvfrag.h"
 #include "ptl_ib_sendfrag.h"
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 
 /**
  * IB PTL component.
@@ -314,4 +317,7 @@ extern void mca_ptl_ib_send_frag_return(
     struct mca_ptl_ib_send_frag_t*
 );
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 #endif

@@ -184,9 +184,6 @@ extern "C" {
    * It must be the last function invoked on the coll MCA framework.
    */
   int mca_coll_base_close(void);
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
 
 
 /*
@@ -256,4 +253,7 @@ extern ompi_list_t mca_coll_base_components_available;
  */
 extern const mca_coll_base_component_1_0_0_t *mca_coll_base_basic_component;
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 #endif /* MCA_BASE_COLL_H */

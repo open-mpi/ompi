@@ -4,7 +4,7 @@
 
 #ifndef OMPI_FEW_H
 #define OMPI_FEW_H
-#ifdef __cplusplus
+#if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
 	
@@ -40,7 +40,7 @@ extern "C" {
  */
 int ompi_few(char *argv[], int *status);
 
-#ifdef __cplusplus
+#if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
 #endif /* OMPI_FEW_H */

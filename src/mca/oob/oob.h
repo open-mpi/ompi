@@ -15,6 +15,9 @@
 #include "mca/mca.h"
 #include "mca/oob/base/base.h"
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 struct mca_oob_1_0_0_t;
 
 /**
@@ -247,16 +250,10 @@ OBJ_CLASS_DECLARATION(mca_oob_base_info_t);
 /*
  * Global functions for MCA overall collective open and close
  */
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
     int mca_oob_base_open(void);
     int mca_oob_base_init(bool *allow_multi_user_threads, bool *have_hidden_threads);
     int mca_oob_base_module_init(void);
     int mca_oob_base_close(void);
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
 
 
 /*
@@ -268,4 +265,7 @@ extern char* mca_oob_base_exclude;
 extern ompi_list_t mca_oob_base_components;
 extern ompi_list_t mca_oob_base_modules;
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 #endif

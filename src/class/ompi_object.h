@@ -116,7 +116,7 @@
  */
 #undef BEGIN_C_DECLS
 #undef END_C_DECLS
-#ifdef __cplusplus
+#if defined(c_plusplus) || defined(__cplusplus)
 # define BEGIN_C_DECLS extern "C" {
 # define END_C_DECLS }
 #else

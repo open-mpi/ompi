@@ -82,9 +82,6 @@ extern "C" {
 
     int ns_base_free_name(ompi_process_name_t* name);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
 
 
 /*
@@ -101,4 +98,7 @@ extern mca_ns_base_component_t mca_ns_base_selected_component;
  * external API functions will be documented in the mca/ns/ns.h file
  */
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 #endif

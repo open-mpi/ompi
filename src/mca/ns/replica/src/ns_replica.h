@@ -13,7 +13,9 @@
 #include "class/ompi_list.h"
 #include "mca/oob/oob.h"
 #include "mca/ns/ns.h"
-
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 /*
  * list class for tracking vpids/jobid
  * This structure is used to create a linked list of jobid-max vpid pairs. Basically, we
@@ -87,4 +89,7 @@ int ns_replica_compare(ompi_ns_cmp_bitmask_t fields,
 		       const ompi_process_name_t* name1,
 		       const ompi_process_name_t* name2);
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 #endif

@@ -8,7 +8,9 @@
 #ifdef HAVE_CONFIG_H
 #include "ompi_config.h"
 #endif
-
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 /**
  * @file:
  *
@@ -254,6 +256,9 @@ static inline bool ompi_set_using_threads(bool have)
         ompi_mutex_unlock(mutex);               \
     } while (0)
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 #ifdef __WINDOWS__
 #error Windows code is untested

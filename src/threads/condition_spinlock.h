@@ -12,6 +12,9 @@
 #include "threads/mutex.h"
 #include "runtime/ompi_progress.h"
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 struct ompi_condition_t {
     ompi_object_t super;
     volatile int c_waiting;
@@ -88,5 +91,8 @@ static inline int ompi_condition_broadcast(ompi_condition_t *c)
     return 0;
 }
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 #endif
 

@@ -51,6 +51,9 @@
 
 #include <stdarg.h>
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 
 /**
  * \class ompi_output_stream_t 
@@ -185,9 +188,6 @@ struct ompi_output_stream_t {
 typedef struct ompi_output_stream_t ompi_output_stream_t;
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
   /**
    * Initializes the output stream system and opens a default
    * "verbose" stream.
@@ -381,7 +381,7 @@ extern "C" {
    */
 #define OMPI_OUTPUT(a)
 #endif
-#ifdef __cplusplus
+#if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
 

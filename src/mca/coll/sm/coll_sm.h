@@ -11,6 +11,9 @@
 #include "mca/mca.h"
 #include "mca/coll/coll.h"
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 
 #define PUB(foo) mca_coll_sm##foo
 
@@ -35,9 +38,6 @@ typedef struct mca_coll_base_module_comm_t {
 
 extern const mca_coll_base_component_1_0_0_t mca_coll_sm_component;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
     /*
      * coll API functions
@@ -87,7 +87,7 @@ extern "C" {
 
     /* VPS: Any other module utility function prototypes can go in here */
 
-#ifdef __cplusplus
+#if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
 

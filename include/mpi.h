@@ -28,6 +28,9 @@
 #define MPIO_Wait MPI_Wait
 #endif
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 /*
  * Typedefs
  */
@@ -57,9 +60,6 @@ typedef struct ompi_status_public_t ompi_status_public_t;
 /*
  * User typedefs
  */
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
   typedef int (MPI_Copy_function)(MPI_Comm, int, void *,
                                   void *, void *, int *);
   typedef int (MPI_Delete_function)(MPI_Comm, int, void *, void *);
@@ -86,9 +86,6 @@ extern "C" {
   typedef int (MPI_Grequest_query_function)(void *, MPI_Status *);
   typedef int (MPI_Grequest_free_function)(void *);
   typedef int (MPI_Grequest_cancel_function)(void *, int); 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
 
 /*
  * Miscellaneous constants
@@ -340,9 +337,6 @@ enum {
 #define MPI_WIN_DUP_FN OMPI_C_MPI_WIN_DUP_FN
 #endif
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
 int OMPI_C_MPI_TYPE_NULL_DELETE_FN( MPI_Datatype datatype, int type_keyval,
                                     void* attribute_val_out, void* flag );
 int OMPI_C_MPI_TYPE_NULL_COPY_FN( MPI_Datatype datatype, int type_keyval, 
@@ -377,9 +371,6 @@ int OMPI_C_MPI_WIN_DUP_FN( MPI_Win window, int win_keyval, void* extra_state,
                            void* attribute_val_in, void* attribute_val_out,
                            int* flag );
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
 
 /*
  * External variables
@@ -519,9 +510,6 @@ extern MPI_Fint *MPI_F_STATUSES_IGNORE;
 #define MPI_ERRORS_RETURN (&ompi_mpi_errors_return)
 
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
 
   /*
    * MPI API

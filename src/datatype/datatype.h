@@ -27,7 +27,9 @@
 #include "class/ompi_hash_table.h"
 #include "class/ompi_pointer_array.h"
 #include "mpi.h"
-
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 extern ompi_pointer_array_t *ompi_datatype_f_to_c_table;
 
 /* if there are more basic datatypes than the number of bytes in the int type
@@ -243,6 +245,8 @@ void* allocate_memory_for_ddt( unsigned int* pSize )
     if( *pSize == 0 ) return NULL;
     return malloc( *pSize );
 }
-
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 #endif  /* DATATYPE_H_HAS_BEEN_INCLUDED */
 

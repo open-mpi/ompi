@@ -13,6 +13,9 @@
 #include "mca/mca.h"
 #include "mca/ptl/ptl.h"
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 
 struct mca_ptl_base_selected_module_t {
   ompi_list_item_t super;
@@ -27,16 +30,10 @@ typedef struct mca_ptl_base_selected_module_t mca_ptl_base_selected_module_t;
  * Global functions for MCA: overall PTL open and close
  */
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
   int mca_ptl_base_open(void);
   int mca_ptl_base_select(bool *allow_multi_user_threads, 
                           bool *have_hidden_threads);
   int mca_ptl_base_close(void);
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
 
 
 /*
@@ -48,4 +45,7 @@ extern char* mca_ptl_base_exclude;
 extern ompi_list_t mca_ptl_base_components_opened;
 extern ompi_list_t mca_ptl_base_modules_initialized;
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 #endif /* MCA_PTL_BASE_H */

@@ -9,6 +9,9 @@
 
 #include "mca/svc/svc.h"
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 struct mca_svc_sched_node_t {
     ompi_list_item_t node_item;
     ompi_process_name_t node_name;
@@ -31,5 +34,8 @@ void mca_svc_sched_node_set(
     const char* contactinfo,
     int32_t proc_slots);
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 #endif
 

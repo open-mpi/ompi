@@ -93,6 +93,9 @@
 #include "class/ompi_list.h"
 #include "threads/mutex.h"
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 /**
  * \internal
  *
@@ -149,9 +152,6 @@ typedef struct ompi_cmd_line_t ompi_cmd_line_t;
 OBJ_CLASS_DECLARATION(ompi_cmd_line_t);
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
   /**
    * Create a command line option.
@@ -406,7 +406,7 @@ extern "C" {
    */
   int ompi_cmd_line_get_tail(ompi_cmd_line_t *cmd, int *tailc, 
                              char ***tailv);
-#ifdef __cplusplus
+#if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
 

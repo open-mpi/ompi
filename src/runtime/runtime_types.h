@@ -22,6 +22,9 @@
 #include <netdb.h>
 #endif
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 /**
  * Spawn Handle
  *
@@ -180,4 +183,7 @@ typedef int (*ompi_rte_monitor_fn_t)(ompi_process_name_t* name,
                                      int newstate, 
                                      int status);
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 #endif /* OMPI_RUNTIME_TYPES_H */

@@ -3,6 +3,9 @@
 
 #include "mca/ptl/ptl.h"
 #include "threads/condition.h"
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 
 
 struct mca_pml_base_ptl_t {
@@ -16,6 +19,9 @@ typedef struct mca_pml_base_ptl_t mca_pml_base_ptl_t;
 
 OBJ_CLASS_DECLARATION(mca_pml_base_ptl_t);
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 #endif
 

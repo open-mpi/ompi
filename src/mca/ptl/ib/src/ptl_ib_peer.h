@@ -9,6 +9,9 @@
 #include "ptl_ib_sendfrag.h"
 #include "ptl_ib_priv.h"
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 OBJ_CLASS_DECLARATION(mca_ptl_ib_peer_t);
 
 /**
@@ -96,4 +99,7 @@ void mca_ptl_ib_progress_send_frags(mca_ptl_ib_peer_t*);
             peer_ptr->peer_conn->rres->lid);                        \
 }
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 #endif

@@ -15,7 +15,9 @@
 #include "class/ompi_object.h"
 #include "util/bufpack.h"
 #include "mca/ns/ns.h"
-
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 /**
  * Address info published to registry
  */
@@ -56,5 +58,8 @@ int mca_oob_tcp_addr_insert(mca_oob_tcp_addr_t*, const struct sockaddr_in*);
 
 int mca_oob_tcp_addr_get_next(mca_oob_tcp_addr_t*, struct sockaddr_in*);
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 #endif 
 

@@ -50,7 +50,7 @@
     will follow the semantics of the MPI_COMM_SPAWN_* functions. */
 #define OMPI_RTE_SPAWN_FROM_MPI   0x0008
 
-#ifdef __cplusplus
+#if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -404,7 +404,7 @@ extern "C" {
     int ompi_vm_register(void);
 
 
-#ifdef __cplusplus
+#if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
 

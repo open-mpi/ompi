@@ -16,7 +16,7 @@
 #include "mca/ns/ns.h"
 
 
-#ifdef __cplusplus
+#if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -90,6 +90,6 @@ extern ompi_proc_info_t ompi_process_info;
 
 int ompi_proc_info(void);
 
-#ifdef __cplusplus
+#if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

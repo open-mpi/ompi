@@ -79,7 +79,7 @@
 #include <stdarg.h>
 
 
-#ifdef __cplusplus
+#if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
     /**
@@ -112,7 +112,7 @@ extern "C" {
      * function automatically.
      */
     int ompi_show_help_finish_parsing(void);
-#ifdef __cplusplus
+#if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
 

@@ -16,6 +16,9 @@
 #include "class/ompi_object.h"
 #include "class/ompi_free_list.h"
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 /*
  * Data structures and datatypes
  */
@@ -181,6 +184,8 @@ int ompi_rb_tree_traverse(ompi_rb_tree_t *tree,
   */
 int ompi_rb_tree_size(ompi_rb_tree_t *tree);
 
-
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 #endif /* OMPI_RB_TREE_H */
 

@@ -11,7 +11,7 @@
  * http://www-3.ibm.com/chips/techlib/techlib.nsf/techdocs/852569B20050FF778525699600719DF2
  */
 
-#ifdef __cplusplus
+#if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -194,7 +194,7 @@ static inline void setBigAtomicUnsignedInt(bigAtomicUnsignedInt *addr,
     *addr = value;
 }
 
-#ifdef __cplusplus
+#if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
 

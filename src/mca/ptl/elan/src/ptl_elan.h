@@ -18,6 +18,9 @@
 #include "elan.h"
 #include "init.h"
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 struct mca_ptl_elan_state_t;
 struct ompi_ptl_elan_queue_ctrl_t;
 extern struct mca_ptl_elan_state_t mca_ptl_elan_global_state;
@@ -274,4 +277,7 @@ extern void mca_ptl_elan_send_frag_return (struct mca_ptl_base_module_t *ptl,
                                            struct mca_ptl_elan_send_frag_t
                                            *frag);
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 #endif

@@ -107,9 +107,6 @@ extern "C" {
                                              int rank,
                                              int *nneighbors);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
 
 /*
  * Globals
@@ -123,4 +120,7 @@ extern ompi_list_t mca_topo_base_components_opened;
 extern bool mca_topo_base_components_opened_valid;
 extern bool mca_topo_base_components_available_valid;
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 #endif /* MCA_BASE_TOPO_H */

@@ -29,6 +29,9 @@
 #define OMPI_KEYVAL_PREDEFINED 1
 #define OMPI_KEYVAL_F77 2
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 enum ompi_attribute_type_t{
     COMM_ATTR = 1, /**< The attribute belongs to a comm object. Starts
 		      with 1 so that we can have it initialized to 0
@@ -92,9 +95,6 @@ typedef struct ompi_attrkey_item_t ompi_attrkey_item_t;
 /* Functions */
 
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
 
 /** 
  * Convenient way to initialize the attribute hash table per MPI-Object 

@@ -9,6 +9,9 @@
 #endif
 #include "threads/mutex.h"
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 struct ompi_condition_t {
     ompi_object_t super;
     pthread_cond_t c_cond;
@@ -40,5 +43,8 @@ static inline int ompi_condition_broadcast(ompi_condition_t *c)
     return pthread_cond_broadcast(&c->c_cond);
 }
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 #endif
 

@@ -12,6 +12,9 @@
 #include "include/constants.h"
 #include "mca/mpool/mpool.h"
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 extern ompi_class_t ompi_free_list_t_class;
 struct mca_mem_pool_t;
 
@@ -138,6 +141,8 @@ int ompi_free_list_grow(ompi_free_list_t* flist, size_t num_elements);
     }                                                                      \
     OMPI_THREAD_UNLOCK(&(fl)->fl_lock);                                    \
 }
-
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 #endif 
 

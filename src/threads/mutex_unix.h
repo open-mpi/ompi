@@ -26,6 +26,9 @@
 #include "class/ompi_object.h"
 #include "include/sys/atomic.h"
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 struct ompi_mutex_t {
     ompi_object_t super;
 #if OMPI_HAVE_POSIX_THREADS
@@ -159,4 +162,7 @@ static inline void ompi_mutex_atomic_unlock(ompi_mutex_t *m)
 
 #endif
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 #endif                          /* OMPI_MUTEX_UNIX_H */

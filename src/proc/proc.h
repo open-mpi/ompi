@@ -11,7 +11,9 @@
 #include "threads/mutex.h"
 #include "mca/ns/ns.h"
 #include "util/bufpack.h"
-
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 extern ompi_class_t ompi_proc_t_class;
 
 
@@ -114,5 +116,8 @@ int ompi_proc_get_namebuf ( ompi_proc_t **proclist, int proclistsize,
 int ompi_proc_get_proclist (ompi_buffer_t buf, int proclistsize, ompi_proc_t ***proclist);
 
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 #endif /* OMPI_PROC */
 

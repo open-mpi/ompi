@@ -22,6 +22,9 @@
 #define OMPI_COLL_TAG_ALLREDUCE 31000
 #define OMPI_MAX_COMM 32768
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 /**
  * These functions make sure, that we determine the global result over 
  * an intra communicators (simple), an inter-communicator and a
@@ -670,3 +673,6 @@ static int ompi_comm_allreduce_intra_oob (int *inbuf, int *outbuf,
 
     return (rc);
 }
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif

@@ -15,7 +15,9 @@
 #include "mpi.h"
 #include "proc/proc.h"
 #include "class/ompi_pointer_array.h"
-
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 /**
  * Group structure
  */
@@ -130,5 +132,7 @@ int ompi_group_translate_ranks ( ompi_group_t *group1,
                                  ompi_group_t *group2, 
                                  int *ranks2);
 
-
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 #endif /* OMPI_GROUP_H */

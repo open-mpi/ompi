@@ -130,7 +130,7 @@ typedef struct {
 #include <stdlib.h>
 #endif
 
-#ifdef __cplusplus
+#if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -150,7 +150,7 @@ extern "C" {
 # define vsnprintf ompi_vsnprintf
 #endif
 
-#ifdef __cplusplus
+#if defined(c_plusplus) || defined(__cplusplus)
 }
         
 #endif

@@ -26,6 +26,9 @@
 #define ACK 2
 #define PUT 3 
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 OBJ_CLASS_DECLARATION (mca_ptl_gm_send_frag_t);
 OBJ_CLASS_DECLARATION (mca_ptl_gm_recv_frag_t);
 
@@ -112,4 +115,7 @@ int mca_ptl_gm_send_frag_done(
 mca_ptl_gm_recv_frag_t *
 mca_ptl_gm_alloc_recv_frag(struct mca_ptl_base_module_t *ptl);
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 #endif

@@ -14,6 +14,9 @@
 #include "mca/pml/base/pml_base_recvreq.h"
 #include "mca/ptl/base/ptl_base_recvfrag.h"
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 typedef struct mca_ptl_prof mca_ptl_prof_t;
 typedef struct mca_ptl_prof_module_1_0_0 mca_ptl_prof_module_1_0_0_t;
 
@@ -38,5 +41,8 @@ struct mca_ptl_prof {
    u_int32_t             prof_complete_id;
 };
 OBJ_CLASS_DECLARATION(mca_ptl_prof_t);
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 #endif  /* PTL_PROF_H_HAS_BEEN_INCLUDED */

@@ -14,6 +14,9 @@
 #include "pml_teg_proc.h"
 #include "pml_teg_ptl.h"
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 typedef mca_pml_base_send_request_t mca_pml_teg_send_request_t;
 
 OBJ_CLASS_DECLARATION(mca_pml_teg_send_request_t);
@@ -167,5 +170,8 @@ void mca_pml_teg_send_request_progress(
     size_t bytes_sent
 );
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 #endif
 

@@ -16,6 +16,9 @@
 #include <errno.h>
 #include "util/output.h"
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 struct mca_oob_tcp_peer_t;
 
 #define MCA_OOB_TCP_IOV_MAX  16
@@ -193,5 +196,8 @@ static inline void mca_oob_tcp_msg_iov_return(mca_oob_tcp_msg_t* msg, struct iov
         free(iov);
 }
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 #endif /* _MCA_OOB_TCP_MESSAGE_H_ */
 

@@ -12,7 +12,9 @@
 #include "include/constants.h"
 #include "class/ompi_list.h"
 #include "mca/ns/ns.h"
-
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 /*
  * Module open / close
  */
@@ -43,5 +45,8 @@ mca_ns_base_jobid_t ns_proxy_create_jobid(void);
 mca_ns_base_vpid_t ns_proxy_reserve_range(mca_ns_base_jobid_t job, mca_ns_base_vpid_t range);
 
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 #endif

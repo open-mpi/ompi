@@ -21,6 +21,9 @@
 #include "ptl_gm_proc.h"
 #include "ptl_gm_addr.h"
 #include "ptl_gm.h"
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 /**
  *  An abstraction that represents a connection to a peer process.
  */
@@ -43,4 +46,7 @@ typedef struct mca_ptl_gm_peer_t mca_ptl_gm_peer_t;
 OBJ_CLASS_DECLARATION(mca_ptl_gm_peer_t);
 
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 #endif

@@ -6,7 +6,9 @@
 #include "ompi_config.h"
 #include "mca/pcm/pcm.h"
 #include "runtime/runtime_types.h"
-                                                                                                                 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 /*
  * Module open / close
  */
@@ -80,3 +82,6 @@ int mca_pcm_ompid_spawn_procs(
     mca_ns_base_jobid_t jobid,
     ompi_list_t *schedule_list);
                                                                                                          
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif

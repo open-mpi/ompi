@@ -28,14 +28,14 @@ extern "C" {
                           mca_llm_base_module_t **selected, 
                           bool have_threads);
   int mca_llm_base_close(void);
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
 
 /*
  * Globals
  */
 extern int mca_llm_base_output;
 extern ompi_list_t mca_llm_base_components_available;
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 #endif /* MCA_LLM_BASE_H */

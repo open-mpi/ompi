@@ -9,6 +9,9 @@
 
 #include "util/output.h"
 #include "mca/ptl/ptl.h"
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 
 extern ompi_class_t mca_pml_teg_ptl_array_t_class;
 
@@ -123,6 +126,9 @@ static inline mca_ptl_proc_t* mca_ptl_array_get_next(mca_ptl_array_t* array)
     return ptl_proc;
 }
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 #endif
 

@@ -15,6 +15,9 @@
 #include "mca/ptl/base/ptl_base_recvfrag.h"
 #include "ptl_sm.h"
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 
 OBJ_CLASS_DECLARATION(mca_ptl_sm_recv_frag_t);
 
@@ -27,5 +30,8 @@ struct mca_ptl_sm_recv_frag_t {
 };
 typedef struct mca_ptl_sm_recv_frag_t mca_ptl_sm_recv_frag_t;
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 #endif
 

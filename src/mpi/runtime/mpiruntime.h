@@ -13,6 +13,9 @@
 
 #include "ompi_config.h"
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 /*
  * Global variables and symbols for the MPI layer
  */
@@ -30,9 +33,6 @@ extern int ompi_mpi_thread_requested;
 extern int ompi_mpi_thread_provided;
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
   /**
    * Initialize the Open MPI MPI environment
@@ -65,7 +65,7 @@ extern "C" {
    */
   int ompi_mpi_finalize(void);
 
-#ifdef __cplusplus
+#if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
 

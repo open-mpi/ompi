@@ -60,9 +60,6 @@ extern "C" {
      */
     char *mca_pcm_base_get_unique_id(void);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
 
 
 /*
@@ -71,4 +68,7 @@ extern "C" {
 extern int mca_pcm_base_output;
 extern ompi_list_t mca_pcm_base_components_available;
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 #endif /* MCA_PCM_BASE_H */

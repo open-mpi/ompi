@@ -17,6 +17,9 @@
 #include "mca/base/mca_base_module_exchange.h"
 #include "mca/base/mca_base_msgbuf.h"
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 
 /*
  * Structure for making plain lists of components
@@ -54,9 +57,6 @@ extern int mca_base_param_component_path;
 /*
  * Public functions
  */
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
 
   /**
    * First function called in the MCA.

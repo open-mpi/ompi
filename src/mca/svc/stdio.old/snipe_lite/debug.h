@@ -3,6 +3,9 @@
 
 #include <stdio.h>
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 /* AIX requires this to be the first thing in the file.  */
 #ifdef HAVE_ALLOCA
 #  ifndef __GNUC__
@@ -55,4 +58,7 @@ extern void ftmpi_display_memory_usage( void );
 #define DUMP_ALLOCATED_MEMORY()
 #endif  /* NDEBUG */
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 #endif  /* DEBUG_H_HAS_BEEN_INCLUDED */

@@ -31,6 +31,9 @@
 
 #include "bufpack.h"
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 typedef struct ompi_buffer_internal_t {
 	 /* first member must be the objects parent */
 	ompi_object_t parent;
@@ -691,4 +694,7 @@ ompi_unpack(ompi_buffer_t buffer, void * dest, size_t n, ompi_pack_type_t type)
  }
 
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 

@@ -19,6 +19,9 @@
 #define OMPI_FILE_ISCLOSED     0x00000001
 #define OMPI_FILE_HIDDEN       0x00000002
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 
 /**
  * Back-end structure for MPI_File
@@ -85,9 +88,6 @@ extern ompi_pointer_array_t ompi_file_f_to_c_table;
 
 
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
     /**
      * Initialize MPI_File handling.
      *
@@ -159,9 +159,6 @@ extern "C" {
      */
     int ompi_file_finalize(void);
     
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
 
 
 /**
@@ -182,4 +179,7 @@ static inline bool ompi_file_invalid(ompi_file_t *file)
             0 != (file->f_flags & OMPI_FILE_ISCLOSED));
 }
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 #endif /* OMPI_FILE_H */

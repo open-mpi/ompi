@@ -14,6 +14,9 @@
 #include "event/event.h"
 #include "mca/pml/pml.h"
 #include "mca/ptl/ptl.h"
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 
 /**
  * State of TCP peer connection.
@@ -63,5 +66,8 @@ int  mca_ptl_tcp_peer_send(mca_ptl_base_peer_t*, struct mca_ptl_tcp_send_frag_t*
 bool mca_ptl_tcp_peer_accept(mca_ptl_base_peer_t*, struct sockaddr_in*, int);
 void mca_ptl_tcp_peer_shutdown(mca_ptl_base_peer_t*);
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 #endif
 

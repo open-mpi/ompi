@@ -9,6 +9,9 @@
 #include "ptl_ib_addr.h"
 #include "ptl_ib_peer.h"
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 OBJ_CLASS_DECLARATION(mca_ptl_ib_proc_t);
 
 /**
@@ -44,4 +47,7 @@ typedef struct mca_ptl_ib_proc_t mca_ptl_ib_proc_t;
 mca_ptl_ib_proc_t* mca_ptl_ib_proc_create(ompi_proc_t* ompi_proc);
 int mca_ptl_ib_proc_insert(mca_ptl_ib_proc_t*, mca_ptl_base_peer_t*);
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 #endif

@@ -13,6 +13,9 @@
 #include "communicator/communicator.h"
 #include "mca/ptl/ptl.h"
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 extern ompi_class_t mca_pml_base_request_t_class;
 
 /**
@@ -48,5 +51,8 @@ struct mca_pml_base_request_t {
 typedef struct mca_pml_base_request_t mca_pml_base_request_t;
 
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 #endif
 

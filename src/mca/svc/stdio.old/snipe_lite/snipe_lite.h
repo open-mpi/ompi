@@ -49,6 +49,9 @@
 
 /* Syslog facility for snipe_lite */
 #include "syslog.h"
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 extern syslog_t* slsyslog;
 
 /* 
@@ -107,4 +110,7 @@ double sec_time(void);
 
 int get_my_addr( char** pdefault_name );
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 #endif /* _SNIPE_LITE_H */

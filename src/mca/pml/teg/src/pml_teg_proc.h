@@ -13,6 +13,9 @@
 #include "proc/proc.h"
 #include "pml_ptl_array.h"
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 /**
  *  Structure associated w/ ompi_proc_t that contains data specific
  *  to the PML. Note that this name is not PML specific.
@@ -85,5 +88,8 @@ static inline struct mca_ptl_base_peer_t* mca_pml_teg_proc_lookup_remote_peer(
     return NULL;
 }
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 #endif
 

@@ -14,7 +14,7 @@
 
 #include "include/types.h"
 
-#ifdef __cplusplus
+#if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
   /**
@@ -182,7 +182,7 @@ extern "C" {
      * target).
      */
     int ompi_argv_insert(char ***target, int start, char **source);
-#ifdef __cplusplus
+#if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
 
