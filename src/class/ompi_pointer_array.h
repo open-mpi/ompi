@@ -63,7 +63,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_pointer_array_t);
  * @return Index of inserted array element.  Return value of
  *  (-1) indicates an error.
  */
-int ompi_pointer_array_add(ompi_pointer_array_t *array, void *ptr);
+OMPI_DECLSPEC int ompi_pointer_array_add(ompi_pointer_array_t *array, void *ptr);
 
 /**
  * Set the value of an element in array
@@ -74,7 +74,7 @@ int ompi_pointer_array_add(ompi_pointer_array_t *array, void *ptr);
  *
  * @return Error code.  (-1) indicates an error.
  */
-int ompi_pointer_array_set_item(ompi_pointer_array_t *array, 
+OMPI_DECLSPEC int ompi_pointer_array_set_item(ompi_pointer_array_t *array, 
                                 int index, void *value);
 
 /**
@@ -127,7 +127,7 @@ static inline int ompi_pointer_array_get_size(ompi_pointer_array_t *array)
  * In contrary to array_set, this function does not allow to overwrite 
  * a value, unless the previous value is NULL ( equiv. to free ).
  */
-bool ompi_pointer_array_test_and_set_item (ompi_pointer_array_t *table, 
+OMPI_DECLSPEC bool ompi_pointer_array_test_and_set_item (ompi_pointer_array_t *table, 
                                           int index,
                                           void *value);
 #if defined(c_plusplus) || defined(__cplusplus)

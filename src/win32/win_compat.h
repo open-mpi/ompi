@@ -29,30 +29,31 @@
 #include <winperf.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>
+#include <process.h>
 #include <io.h>
+#include "win32/ompi_declspec.h"
 #include "win32/ompi_uio.h"
 #include "win32/ompi_time.h"
 #include "win32/ompi_utsname.h"
 #include "win32/ompi_util.h"
 #include "win32/ompi_misc.h"
+#include "win32/ompi_get_error.h"
+#include "util/printf.h"
 
 #define MAXPATHLEN MAX_PATH
 #define MAXHOSTNAMELEN MAX_PATH
 typedef unsigned short mode_t;
 typedef long ssize_t;
+typedef DWORD in_port_t;
 
 /* Anju: some random #defines which I know offhand, but need to configure it */
 #define OMPI_ALIGNMENT_CXX_BOOL OMPI_ALIGNMENT_INT
 #define SIZEOF_BOOL SIZEOF_INT
 #define __func__ __FUNCTION__
+#define getpid _getpid
+#define getcwd _getcwd
+#define mkdir _mkdir
 
-#ifdef OMPI_BUILDING_LIBRARY
-#define OMPI_DECLSPEC __declspec(dllexport)
-#else
-#define OMPI_DECLSPEC __declspec(dllimport)
-#endif
-#define OMPI_COMP_EXPORT __declspec(dllexport)
-#define OMPI_WINDOWS
 #define UINT32_MAX _UI32_MAX
 
 #endif /* compat */

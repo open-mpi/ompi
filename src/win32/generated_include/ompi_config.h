@@ -528,6 +528,15 @@
 /* Define to `unsigned char' if <sys/types.h> does not define. */
 #define u_int8_t unsigned char
 
+/* defining OMPI_NEED_C_BOOL to 1 since this is used as a check in configure
+   to do the right magic for windows. please FIXME */
+#define OMPI_NEED_C_BOOL 1
+
+/* the maximum size to which the fortran to C translation table can grow
+   this is the minimum of _I32_MAX and max fortran integer value. Defining
+   this to be _I32_MAX for now FIXME */
+#define OMPI_FORTRAN_HANDLE_MAX _I32_MAX
+
 #include "ompi_config_bottom.h"
 #endif /* OMPI_CONFIG_H */
 

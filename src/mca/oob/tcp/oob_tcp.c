@@ -211,10 +211,10 @@ static void mca_oob_tcp_accept(void)
  
         sd = accept(mca_oob_tcp_component.tcp_listen_sd, (struct sockaddr*)&addr, &addrlen);
         if(sd < 0) {
-            if(errno == EINTR)
+            if(ompi_errno == EINTR)
                 continue;
-            if(errno != EAGAIN || errno != EWOULDBLOCK)
-                ompi_output(0, "mca_oob_tcp_accept: accept() failed with errno %d.", errno);
+            if(ompi_errno != EAGAIN || ompi_errno != EWOULDBLOCK)
+                ompi_output(0, "mca_oob_tcp_accept: accept() failed with ompi_errno %d.", ompi_errno);
             return;
         }
                                                                                                                    
@@ -239,14 +239,14 @@ static int mca_oob_tcp_create_listen(void)
     /* create a listen socket for incoming connections */
     mca_oob_tcp_component.tcp_listen_sd = socket(AF_INET, SOCK_STREAM, 0);
     if(mca_oob_tcp_component.tcp_listen_sd < 0) {
-        ompi_output(0,"mca_oob_tcp_component_init: socket() failed with errno=%d", errno);
+        ompi_output(0,"mca_oob_tcp_component_init: socket() failed with ompi_errno=%d", ompi_errno);
         return OMPI_ERROR;
     }
     /* allow port to be re-used - for temporary fixed port numbers */
     if (setsockopt(
-        mca_oob_tcp_component.tcp_listen_sd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) < 0) {
-        ompi_output(0, "mca_oob_tcp_create_listen: setsockopt(SO_REUSEADDR) failed with errno=%d\n", 
-            errno);
+        mca_oob_tcp_component.tcp_listen_sd, SOL_SOCKET, SO_REUSEADDR, (char *)&optval, sizeof(optval)) < 0) {
+        ompi_output(0, "mca_oob_tcp_create_listen: setsockopt(SO_REUSEADDR) failed with ompi_errno=%d\n", 
+            ompi_errno);
     }
 
     memset(&inaddr, 0, sizeof(inaddr));
@@ -255,32 +255,32 @@ static int mca_oob_tcp_create_listen(void)
     inaddr.sin_port = 0;
 
     if(bind(mca_oob_tcp_component.tcp_listen_sd, (struct sockaddr*)&inaddr, sizeof(inaddr)) < 0) {
-        ompi_output(0,"mca_oob_tcp_create_listen: bind() failed with errno=%d", errno);
+        ompi_output(0,"mca_oob_tcp_create_listen: bind() failed with ompi_errno=%d", ompi_errno);
         return OMPI_ERROR;
     }
 
     /* resolve system assigned port */
     addrlen = sizeof(struct sockaddr_in);
     if(getsockname(mca_oob_tcp_component.tcp_listen_sd, (struct sockaddr*)&inaddr, &addrlen) < 0) {
-        ompi_output(0, "mca_oob_tcp_create_listen: getsockname() failed with errno=%d", errno);
+        ompi_output(0, "mca_oob_tcp_create_listen: getsockname() failed with ompi_errno=%d", ompi_errno);
         return OMPI_ERROR;
     }
     mca_oob_tcp_component.tcp_listen_port = inaddr.sin_port;
                                                                                                                    
     /* setup listen backlog to maximum allowed by kernel */
     if(listen(mca_oob_tcp_component.tcp_listen_sd, SOMAXCONN) < 0) {
-        ompi_output(0, "mca_oob_tcp_component_init: listen() failed with errno=%d", errno);
+        ompi_output(0, "mca_oob_tcp_component_init: listen() failed with ompi_errno=%d", ompi_errno);
         return OMPI_ERROR;
     }
                                                                                                                    
     /* set socket up to be non-blocking, otherwise accept could block */
     if((flags = fcntl(mca_oob_tcp_component.tcp_listen_sd, F_GETFL, 0)) < 0) {
-        ompi_output(0, "mca_oob_tcp_component_init: fcntl(F_GETFL) failed with errno=%d", errno);
+        ompi_output(0, "mca_oob_tcp_component_init: fcntl(F_GETFL) failed with ompi_errno=%d", ompi_errno);
         return OMPI_ERROR;
     } else {
         flags |= O_NONBLOCK;
         if(fcntl(mca_oob_tcp_component.tcp_listen_sd, F_SETFL, flags) < 0) {
-            ompi_output(0, "mca_oob_tcp_component_init: fcntl(F_SETFL) failed with errno=%d", errno);
+            ompi_output(0, "mca_oob_tcp_component_init: fcntl(F_SETFL) failed with ompi_errno=%d", ompi_errno);
             return OMPI_ERROR;
         }
     }
@@ -307,7 +307,7 @@ static void mca_oob_tcp_recv_handler(int sd, short flags, void* user)
     ompi_process_name_t guid[2];
     mca_oob_tcp_peer_t* peer;
     int rc;
-    mca_oob_tcp_event_t* event = user;
+    mca_oob_tcp_event_t* event = (mca_oob_tcp_event_t *)user;
 
     /* accept new connections on the listen socket */
     if(mca_oob_tcp_component.tcp_listen_sd == sd) {
@@ -317,7 +317,7 @@ static void mca_oob_tcp_recv_handler(int sd, short flags, void* user)
     OBJ_RELEASE(event);
 
     /* recv the process identifier */
-    while((rc = recv(sd, guid, sizeof(guid), 0)) != sizeof(guid)) {
+    while((rc = recv(sd, (char *)guid, sizeof(guid), 0)) != sizeof(guid)) {
         if(rc >= 0) {
             if(mca_oob_tcp_component.tcp_debug > 3) {
                 ompi_output(0, "[%d,%d,%d] mca_oob_tcp_recv_handler: peer closed connection",
@@ -326,9 +326,9 @@ static void mca_oob_tcp_recv_handler(int sd, short flags, void* user)
             close(sd);
             return;
         }
-        if(errno != EINTR) {
-            ompi_output(0, "[%d,%d,%d] mca_oob_tcp_recv_handler: recv() failed with errno=%d\n", 
-                OMPI_NAME_ARGS(mca_oob_name_self), errno);
+        if(ompi_errno != EINTR) {
+            ompi_output(0, "[%d,%d,%d] mca_oob_tcp_recv_handler: recv() failed with ompi_errno=%d\n", 
+                OMPI_NAME_ARGS(mca_oob_name_self), ompi_errno);
             close(sd);
             return;
         }
@@ -338,13 +338,13 @@ static void mca_oob_tcp_recv_handler(int sd, short flags, void* user)
 
     /* now set socket up to be non-blocking */
     if((flags = fcntl(sd, F_GETFL, 0)) < 0) {
-        ompi_output(0, "[%d,%d,%d] mca_oob_tcp_recv_handler: fcntl(F_GETFL) failed with errno=%d", 
-                OMPI_NAME_ARGS(mca_oob_name_self), errno);
+        ompi_output(0, "[%d,%d,%d] mca_oob_tcp_recv_handler: fcntl(F_GETFL) failed with ompi_errno=%d", 
+                OMPI_NAME_ARGS(mca_oob_name_self), ompi_errno);
     } else {
         flags |= O_NONBLOCK;
         if(fcntl(sd, F_SETFL, flags) < 0) {
-            ompi_output(0, "[%d,%d,%d] mca_oob_tcp_recv_handler: fcntl(F_SETFL) failed with errno=%d", 
-                OMPI_NAME_ARGS(mca_oob_name_self), errno);
+            ompi_output(0, "[%d,%d,%d] mca_oob_tcp_recv_handler: fcntl(F_SETFL) failed with ompi_errno=%d", 
+                OMPI_NAME_ARGS(mca_oob_name_self), ompi_errno);
         }
     }
 
@@ -471,7 +471,7 @@ static void mca_oob_tcp_registry_callback(
         }
 
         /* check for existing cache entry */
-        existing = ompi_rb_tree_find(&mca_oob_tcp_component.tcp_peer_names, &addr->addr_name);
+        existing = (mca_oob_tcp_addr_t *)ompi_rb_tree_find(&mca_oob_tcp_component.tcp_peer_names, &addr->addr_name);
         if(NULL != existing) {
             /* TSW - need to update existing entry */
             OBJ_RELEASE(addr);
@@ -480,7 +480,7 @@ static void mca_oob_tcp_registry_callback(
 
         /* insert into cache and notify peer */
         ompi_rb_tree_insert(&mca_oob_tcp_component.tcp_peer_names, &addr->addr_name, addr);
-        peer = ompi_rb_tree_find(&mca_oob_tcp_component.tcp_peer_tree, &addr->addr_name);
+        peer = (mca_oob_tcp_peer_t *)ompi_rb_tree_find(&mca_oob_tcp_component.tcp_peer_tree, &addr->addr_name);
         if(NULL != peer)
             mca_oob_tcp_peer_resolved(peer, addr);
 
@@ -503,7 +503,7 @@ int mca_oob_tcp_resolve(mca_oob_tcp_peer_t* peer)
   
      /* if the address is already cached - simply return it */
      OMPI_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
-     addr = ompi_rb_tree_find(&mca_oob_tcp_component.tcp_peer_names, &peer->peer_name);
+     addr = (mca_oob_tcp_addr_t *)ompi_rb_tree_find(&mca_oob_tcp_component.tcp_peer_names, &peer->peer_name);
      if(NULL != addr) {
          OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
          mca_oob_tcp_peer_resolved(peer, addr);
@@ -715,7 +715,7 @@ int mca_oob_tcp_process_name_compare(const ompi_process_name_t* n1, const ompi_p
 char* mca_oob_tcp_get_addr(void)
 {
     int i;
-    char *contact_info = malloc((ompi_ifcount()+1) * 32);
+    char *contact_info = (char *)malloc((ompi_ifcount()+1) * 32);
     char *ptr = contact_info;
     *ptr = 0;
 

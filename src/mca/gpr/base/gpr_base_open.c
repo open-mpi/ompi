@@ -20,7 +20,12 @@
  * component's public mca_base_module_t struct.
  */
 
+#ifndef WIN32
+/*FIXME*/
 #include "mca/gpr/base/static-components.h"
+#else
+	mca_gpr_base_static_components = NULL;
+#endif
 
 /*
  * globals

@@ -4,7 +4,7 @@ $HEADER$
 
 #ifndef OMPI_TIME_H
 #define OMPI_TIME_H
-
+#include "win32/ompi_declspec.h"
 #ifdef WIN32
 #define WIN32_LEAN_AND_MEAN
 #include<windows.h>
@@ -164,7 +164,7 @@ extern "C"
 {
 #endif
 
-  int gettimeofday (struct timeval *tv, struct timezone *tz);
+OMPI_DECLSPEC int gettimeofday (struct timeval *tv, struct timezone *tz);
 
 #if defined(c_plusplus) || defined (__cplusplus)
 }

@@ -59,22 +59,22 @@
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
-    int mca_gpr_base_open(void);
-    int mca_gpr_base_select(bool *allow_multi_user_threads,
-			    bool *have_hidden_threads);
-    int mca_gpr_base_close(void);
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+OMPI_DECLSPEC     int mca_gpr_base_open(void);
+OMPI_DECLSPEC     int mca_gpr_base_select(bool *allow_multi_user_threads,
+             			    bool *have_hidden_threads);
+OMPI_DECLSPEC     int mca_gpr_base_close(void);
 
 /*
  * globals that might be needed
  */
-extern int mca_gpr_base_output;
-extern mca_gpr_base_module_t ompi_registry; /* holds selected module's function pointers */
-extern bool mca_gpr_base_selected;
-extern ompi_list_t mca_gpr_base_components_available;
-extern mca_gpr_base_component_t mca_gpr_base_selected_component;
+OMPI_DECLSPEC extern int mca_gpr_base_output;
+OMPI_DECLSPEC extern mca_gpr_base_module_t ompi_registry; /* holds selected module's function pointers */
+OMPI_DECLSPEC extern bool mca_gpr_base_selected;
+OMPI_DECLSPEC extern ompi_list_t mca_gpr_base_components_available;
+OMPI_DECLSPEC extern mca_gpr_base_component_t mca_gpr_base_selected_component;
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 #endif

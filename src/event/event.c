@@ -28,12 +28,6 @@
  */
 #include "ompi_config.h"
 
-#ifdef WIN32
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#undef WIN32_LEAN_AND_MEAN
-#include "misc.h"
-#endif
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
@@ -137,7 +131,7 @@ static struct ompi_event_list ompi_activequeue;
 struct ompi_event_list ompi_signalqueue;
 struct ompi_event_list ompi_eventqueue;
 static struct timeval ompi_event_tv;
-ompi_mutex_t ompi_event_lock;
+OMPI_DECLSPEC ompi_mutex_t ompi_event_lock;
 static int  ompi_event_inited = 0;
 static bool ompi_event_enabled = false;
 #if OMPI_HAVE_THREADS

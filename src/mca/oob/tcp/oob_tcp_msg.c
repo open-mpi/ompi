@@ -156,15 +156,15 @@ bool mca_oob_tcp_msg_send_handler(mca_oob_tcp_msg_t* msg, struct mca_oob_tcp_pee
     while(1) {
         rc = writev(peer->peer_sd, msg->msg_rwptr, msg->msg_rwnum);
         if(rc < 0) {
-            if(errno == EINTR)
+            if(ompi_errno == EINTR)
                 continue;
-            else if (errno == EAGAIN)
+            else if (ompi_errno == EAGAIN)
                 return false;
             else {
-                ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_msg_send_handler: writev failed with errno=%d", 
+                ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_msg_send_handler: writev failed with ompi_errno=%d", 
                     OMPI_NAME_ARGS(mca_oob_name_self), 
                     OMPI_NAME_ARGS(peer->peer_name), 
-                    errno);
+                    ompi_errno);
                 mca_oob_tcp_peer_close(peer);
                 return false;
             }
@@ -246,15 +246,15 @@ static bool mca_oob_tcp_msg_recv(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* pee
     while(1) {
         rc = readv(peer->peer_sd, msg->msg_rwptr, msg->msg_rwnum);
         if(rc < 0) {
-            if(errno == EINTR)
+            if(ompi_errno == EINTR)
                 continue;
-            else if (errno == EAGAIN)
+            else if (ompi_errno == EAGAIN)
                 return false;
             else {
-                ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_msg_recv: readv failed with errno=%d", 
+                ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_msg_recv: readv failed with ompi_errno=%d", 
                     OMPI_NAME_ARGS(mca_oob_name_self),
                     OMPI_NAME_ARGS(peer->peer_name),
-                    errno);
+                    ompi_errno);
                 mca_oob_tcp_peer_close(peer);
                 return false;
             }
@@ -263,7 +263,7 @@ static bool mca_oob_tcp_msg_recv(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* pee
                 ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_msg_recv: peer closed connection", 
                    OMPI_NAME_ARGS(mca_oob_name_self),
                    OMPI_NAME_ARGS(peer->peer_name),
-                   errno);
+                   ompi_errno);
             }
             mca_oob_tcp_peer_close(peer);
             return false;

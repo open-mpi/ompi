@@ -95,14 +95,14 @@ typedef void (*ompi_rb_tree_action_fn_t)(void *, void *);
   *
   * @retval NONE
   */
-void ompi_rb_tree_construct(ompi_object_t * object);
+OMPI_DECLSPEC void ompi_rb_tree_construct(ompi_object_t * object);
 
 /**
   * the destruct function. tries to free the tree and destroys the free list
   *
   * @param object the tree object
   */
-void ompi_rb_tree_destruct(ompi_object_t * object);
+OMPI_DECLSPEC void ompi_rb_tree_destruct(ompi_object_t * object);
 
 /**
   * the function creates a new tree
@@ -114,7 +114,7 @@ void ompi_rb_tree_destruct(ompi_object_t * object);
   * @retval OMPI_SUCCESS if it is successful
   * @retval OMPI_ERR_TEMP_OUT_OF_RESOURCE if unsuccessful
   */
-int ompi_rb_tree_init(ompi_rb_tree_t * tree, ompi_rb_tree_comp_fn_t comp);
+OMPI_DECLSPEC int ompi_rb_tree_init(ompi_rb_tree_t * tree, ompi_rb_tree_comp_fn_t comp);
 
 
 /**
@@ -127,7 +127,7 @@ int ompi_rb_tree_init(ompi_rb_tree_t * tree, ompi_rb_tree_comp_fn_t comp);
   * @retval OMPI_SUCCESS
   * @retval OMPI_ERR_TEMP_OUT_OF_RESOURCE if unsuccessful
   */
-int ompi_rb_tree_insert(ompi_rb_tree_t *tree, void * key, void * value);
+OMPI_DECLSPEC int ompi_rb_tree_insert(ompi_rb_tree_t *tree, void * key, void * value);
 
 /**
   * finds a value in the tree based on the passed key
@@ -138,7 +138,7 @@ int ompi_rb_tree_insert(ompi_rb_tree_t *tree, void * key, void * value);
   * @retval pointer to the value if found
   * @retval NULL if not found
   */
-void * ompi_rb_tree_find(ompi_rb_tree_t *tree, void *key);
+OMPI_DECLSPEC void * ompi_rb_tree_find(ompi_rb_tree_t *tree, void *key);
 
 /**
   * deletes a node based on its key
@@ -149,7 +149,7 @@ void * ompi_rb_tree_find(ompi_rb_tree_t *tree, void *key);
   * @retval OMPI_SUCCESS if the node is found and deleted
   * @retval OMPI_ERR_NOT_FOUND if the node is not found
   */
-int ompi_rb_tree_delete(ompi_rb_tree_t *tree, void *key);
+OMPI_DECLSPEC int ompi_rb_tree_delete(ompi_rb_tree_t *tree, void *key);
 
 /**
   * frees all the nodes on the tree
@@ -158,7 +158,7 @@ int ompi_rb_tree_delete(ompi_rb_tree_t *tree, void *key);
   *
   * @retval OMPI_SUCCESS
   */
-int ompi_rb_tree_destroy(ompi_rb_tree_t *tree);
+OMPI_DECLSPEC int ompi_rb_tree_destroy(ompi_rb_tree_t *tree);
 
 /**
   * traverses the entire tree, performing the cond function on each of the
@@ -171,7 +171,7 @@ int ompi_rb_tree_destroy(ompi_rb_tree_t *tree);
   * @retval OMPI_SUCCESS
   * @retval OMPI_FAILURE if there is an error
   */
-int ompi_rb_tree_traverse(ompi_rb_tree_t *tree,
+OMPI_DECLSPEC int ompi_rb_tree_traverse(ompi_rb_tree_t *tree,
                           ompi_rb_tree_condition_fn_t cond,
                           ompi_rb_tree_action_fn_t action);
 
@@ -182,7 +182,7 @@ int ompi_rb_tree_traverse(ompi_rb_tree_t *tree,
   *
   * @retval int the nuber of items on the tree
   */
-int ompi_rb_tree_size(ompi_rb_tree_t *tree);
+OMPI_DECLSPEC int ompi_rb_tree_size(ompi_rb_tree_t *tree);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

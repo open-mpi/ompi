@@ -6,6 +6,7 @@
 #define OMPI_UIO_H
 
 #define RETRIES 2 /* ft-mpi defines it this way */
+#include "ompi_declspec.h"
 
 /* define the iovec structure */
 struct iovec{
@@ -24,7 +25,7 @@ extern "C" {
    buffers  are  used  in  the  order specified.  Operates just like write
    except that data is taken from iov instead of a contiguous buffer.
  */
-int writev (int fd, struct iovec *iov, int cnt);
+OMPI_DECLSPEC int writev (int fd, struct iovec *iov, int cnt);
 
 /* 
    readv  reads  data  from file descriptor fd, and puts the result in the
@@ -33,7 +34,7 @@ int writev (int fd, struct iovec *iov, int cnt);
    like read except that data is put in iov  instead  of  a  contiguous
    buffer.
  */
-int readv (int fd, struct iovec *iov, int cnt);
+OMPI_DECLSPEC int readv (int fd, struct iovec *iov, int cnt);
 
 /* static inlined helper functions to push the write through. 
    This was almost completely lifted from ft-mpi code. please
@@ -41,9 +42,9 @@ int readv (int fd, struct iovec *iov, int cnt);
    The only difference being that harness code was implemented 
    for blocking operations only */
 
-int writeconn (int s,char * data,int len);
+OMPI_DECLSPEC int writeconn (int s,char * data,int len);
 
-int readconn (int s,char * data,int len);
+OMPI_DECLSPEC int readconn (int s,char * data,int len);
 
    
 #if defined(c_plusplus) || defined (__cplusplus)

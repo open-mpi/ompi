@@ -31,6 +31,7 @@ struct ompi_proc_t {
   */
 };
 typedef struct ompi_proc_t ompi_proc_t;
+OMPI_DECLSPEC extern ompi_proc_t* ompi_proc_local_proc;
 
 
 /**
@@ -57,8 +58,8 @@ ompi_proc_t** ompi_proc_self(size_t* size);
  * Returns the proc instance corresponding to the local proc.
  */
 static inline ompi_proc_t* ompi_proc_local(void) 
-{
-    OMPI_DECLSPEC extern ompi_proc_t* ompi_proc_local_proc;
+{   
+    extern ompi_proc_t* ompi_proc_local_proc;
     return ompi_proc_local_proc;
 }
 

@@ -365,8 +365,8 @@ static int do_open(int output_id, ompi_output_stream_t *lds)
   info[i].ldi_verbose_level = lds->lds_verbose_level;
 
   info[i].ldi_syslog = lds->lds_want_syslog;
-#ifndef WIN32
   if (lds->lds_want_syslog) {
+#ifndef WIN32
     if (NULL != lds->lds_syslog_ident) {
       info[i].ldi_syslog_ident = strdup(lds->lds_syslog_ident);
 	  openlog(lds->lds_syslog_ident, LOG_PID, LOG_USER);
@@ -375,7 +375,8 @@ static int do_open(int output_id, ompi_output_stream_t *lds)
       openlog("ompi", LOG_PID, LOG_USER);
     }
 #else
-  if (NULL == (info[i].ldi_syslog_ident = RegisterEventSource(NULL, TEXT("To be determined: OMPI")))) {
+    if (NULL == (info[i].ldi_syslog_ident = 
+                RegisterEventSource(NULL, TEXT("To be determined: OMPI")))) {
         /* handle the error */
         return OMPI_ERROR;
     }
@@ -449,7 +450,7 @@ static int open_file(int i)
         /* Make the file be close-on-exec to prevent child inheritance
            problems */
 #ifndef WIN32
-		/* ANJU: Need to find out the equivalent in windows */
+		/* TODO: Need to find out the equivalent in windows */
         fcntl(info[i].ldi_fd, F_SETFD, 1);
 #endif
         free(filename);

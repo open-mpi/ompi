@@ -7,11 +7,13 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-#include <sys/errno.h>
+#include <errno.h>
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
+#ifdef HAVE_SYS_FCNTL_H
 #include <sys/fcntl.h>
+#endif
 #ifdef HAVE_NETINET_TCP_H
 #include <netinet/tcp.h>
 #endif
@@ -125,7 +127,7 @@ static void mca_ptl_tcp_peer_dump(mca_ptl_base_peer_t* ptl_peer, const char* msg
 #endif
 #if defined(TCP_NODELAY)
     optlen = sizeof(nodelay);
-    if(getsockopt(ptl_peer->peer_sd, IPPROTO_TCP, TCP_NODELAY, &nodelay, &optlen) < 0) {
+    if(getsockopt(ptl_peer->peer_sd, IPPROTO_TCP, TCP_NODELAY, (char *)&nodelay, &optlen) < 0) {
         ompi_output(0, "mca_ptl_tcp_peer_dump: TCP_NODELAY option: errno %d\n", errno);
     }
 #else
@@ -216,7 +218,7 @@ static int mca_ptl_tcp_peer_send_blocking(mca_ptl_base_peer_t* ptl_peer, void* d
     unsigned char* ptr = (unsigned char*)data;
     size_t cnt = 0;
     while(cnt < size) {
-        int retval = send(ptl_peer->peer_sd, ptr+cnt, size-cnt, 0);
+        int retval = send(ptl_peer->peer_sd, (const char *)ptr+cnt, size-cnt, 0);
         if(retval < 0) {
             if(errno != EINTR && errno != EAGAIN && errno != EWOULDBLOCK) {
                 ompi_output(0, "mca_ptl_tcp_peer_send_blocking: send() failed with errno=%d\n",errno);
@@ -354,7 +356,7 @@ static int mca_ptl_tcp_peer_recv_blocking(mca_ptl_base_peer_t* ptl_peer, void* d
     unsigned char* ptr = (unsigned char*)data;
     size_t cnt = 0;
     while(cnt < size) {
-        int retval = recv(ptl_peer->peer_sd, ptr+cnt, size-cnt, 0);
+        int retval = recv(ptl_peer->peer_sd, (char *)ptr+cnt, size-cnt, 0);
 
         /* remote closed connection */
         if(retval == 0) {
@@ -416,7 +418,7 @@ void mca_ptl_tcp_set_socket_options(int sd)
     int optval;
 #if defined(TCP_NODELAY)
     optval = 1;
-    if(setsockopt(sd, IPPROTO_TCP, TCP_NODELAY, &optval, sizeof(optval)) < 0) {
+    if(setsockopt(sd, IPPROTO_TCP, TCP_NODELAY, (char *)&optval, sizeof(optval)) < 0) {
         ompi_output(0, 
             "mca_ptl_tcp_set_socket_options: setsockopt(TCP_NODELAY) failed with errno=%d\n", 
             errno);
@@ -518,7 +520,7 @@ static void mca_ptl_tcp_peer_complete_connect(mca_ptl_base_peer_t* ptl_peer)
     ompi_event_del(&ptl_peer->peer_send_event);
 
     /* check connect completion status */
-    if(getsockopt(ptl_peer->peer_sd, SOL_SOCKET, SO_ERROR, &so_error, &so_length) < 0) {
+    if(getsockopt(ptl_peer->peer_sd, SOL_SOCKET, SO_ERROR, (char *)&so_error, &so_length) < 0) {
         ompi_output(0, "mca_ptl_tcp_peer_complete_connect: getsockopt() failed with errno=%d\n", errno);
         mca_ptl_tcp_peer_close(ptl_peer);
         return;
@@ -549,7 +551,7 @@ static void mca_ptl_tcp_peer_complete_connect(mca_ptl_base_peer_t* ptl_peer)
 
 static void mca_ptl_tcp_peer_recv_handler(int sd, short flags, void* user)
 {
-    mca_ptl_base_peer_t* ptl_peer = user;
+    mca_ptl_base_peer_t* ptl_peer = (mca_ptl_base_peer_t *)user;
     OMPI_THREAD_LOCK(&ptl_peer->peer_recv_lock);
     switch(ptl_peer->peer_state) {
     case MCA_PTL_TCP_CONNECT_ACK:
@@ -599,7 +601,7 @@ static void mca_ptl_tcp_peer_recv_handler(int sd, short flags, void* user)
 
 static void mca_ptl_tcp_peer_send_handler(int sd, short flags, void* user)
 {
-    mca_ptl_tcp_peer_t* ptl_peer = user;
+    mca_ptl_tcp_peer_t* ptl_peer = (mca_ptl_tcp_peer_t *)user;
     OMPI_THREAD_LOCK(&ptl_peer->peer_send_lock);
     switch(ptl_peer->peer_state) {
     case MCA_PTL_TCP_CONNECTING:

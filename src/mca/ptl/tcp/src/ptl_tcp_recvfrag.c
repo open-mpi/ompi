@@ -8,7 +8,7 @@
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
-#include <sys/errno.h>
+#include <errno.h>
 #include "mca/pml/base/pml_base_sendreq.h"
 #include "ptl_tcp.h"
 #include "ptl_tcp_peer.h"
@@ -110,7 +110,7 @@ static bool mca_ptl_tcp_recv_frag_header(mca_ptl_tcp_recv_frag_t* frag, int sd, 
     /* non-blocking read - continue if interrupted, otherwise wait until data available */
     unsigned char* ptr = (unsigned char*)&frag->frag_recv.frag_base.frag_header;
     while(frag->frag_hdr_cnt < size) {
-        int cnt = recv(sd, ptr + frag->frag_hdr_cnt, size - frag->frag_hdr_cnt, 0);
+        int cnt = recv(sd, (char *)(ptr + frag->frag_hdr_cnt), size - frag->frag_hdr_cnt, 0);
         if(cnt == 0) {
             mca_ptl_tcp_peer_close(frag->frag_recv.frag_base.frag_peer);
             OMPI_FREE_LIST_RETURN(&mca_ptl_tcp_component.tcp_recv_frags, (ompi_list_item_t*)frag);
@@ -211,7 +211,7 @@ static bool mca_ptl_tcp_recv_frag_frag(mca_ptl_tcp_recv_frag_t* frag, int sd)
 {
     /* get request from header */
     if(frag->frag_msg_cnt == 0) {
-        frag->frag_recv.frag_request = frag->frag_recv.frag_base.frag_header.hdr_frag.hdr_dst_ptr.pval;
+        frag->frag_recv.frag_request = (mca_pml_base_recv_request_t *)frag->frag_recv.frag_base.frag_header.hdr_frag.hdr_dst_ptr.pval;
         mca_ptl_tcp_recv_frag_matched(frag);
     }
 
@@ -239,7 +239,7 @@ static bool mca_ptl_tcp_recv_frag_frag(mca_ptl_tcp_recv_frag_t* frag, int sd)
 static bool mca_ptl_tcp_recv_frag_data(mca_ptl_tcp_recv_frag_t* frag, int sd)
 {
     while(frag->frag_msg_cnt < frag->frag_recv.frag_base.frag_size) {
-        int cnt = recv(sd, (unsigned char*)frag->frag_recv.frag_base.frag_addr+frag->frag_msg_cnt,  
+        int cnt = recv(sd, (char*)frag->frag_recv.frag_base.frag_addr+frag->frag_msg_cnt,  
             frag->frag_recv.frag_base.frag_size-frag->frag_msg_cnt, 0);
         if(cnt == 0) {
             mca_ptl_tcp_peer_close(frag->frag_recv.frag_base.frag_peer);
@@ -278,7 +278,7 @@ static bool mca_ptl_tcp_recv_frag_discard(mca_ptl_tcp_recv_frag_t* frag, int sd)
     while(frag->frag_msg_cnt < frag->frag_recv.frag_base.frag_header.hdr_frag.hdr_frag_length) {
         size_t count = frag->frag_recv.frag_base.frag_header.hdr_frag.hdr_frag_length - frag->frag_msg_cnt;
         void *rbuf = malloc(count);
-        int cnt = recv(sd, rbuf, count, 0);
+        int cnt = recv(sd, (char *)rbuf, count, 0);
         free(rbuf);
         if(cnt == 0) {
             mca_ptl_tcp_peer_close(frag->frag_recv.frag_base.frag_peer);

@@ -254,7 +254,7 @@ int mca_ptl_tcp_component_close(void)
 
 static int mca_ptl_tcp_create(int if_index, const char* if_name)
 {
-    mca_ptl_tcp_module_t* ptl = malloc(sizeof(mca_ptl_tcp_module_t));
+    mca_ptl_tcp_module_t* ptl = (mca_ptl_tcp_module_t *)malloc(sizeof(mca_ptl_tcp_module_t));
     char param[256];
     if(NULL == ptl)
         return OMPI_ERR_OUT_OF_RESOURCE;
@@ -307,7 +307,7 @@ static int mca_ptl_tcp_component_create_instances(void)
 
     /* allocate memory for ptls */
     mca_ptl_tcp_component.tcp_max_ptl_modules = if_count;
-    mca_ptl_tcp_component.tcp_ptl_modules = malloc(if_count * sizeof(mca_ptl_tcp_module_t*));
+    mca_ptl_tcp_component.tcp_ptl_modules = (mca_ptl_tcp_module_t **)malloc(if_count * sizeof(mca_ptl_tcp_module_t*));
     if(NULL == mca_ptl_tcp_component.tcp_ptl_modules)
         return OMPI_ERR_OUT_OF_RESOURCE;
 
@@ -431,7 +431,7 @@ static int mca_ptl_tcp_component_exchange(void)
      size_t i;
      size_t size = mca_ptl_tcp_component.tcp_num_ptl_modules * sizeof(mca_ptl_tcp_addr_t);
      if(mca_ptl_tcp_component.tcp_num_ptl_modules != 0) {
-         mca_ptl_tcp_addr_t *addrs = malloc(size);
+         mca_ptl_tcp_addr_t *addrs = (mca_ptl_tcp_addr_t *)malloc(size);
          for(i=0; i<mca_ptl_tcp_component.tcp_num_ptl_modules; i++) {
              mca_ptl_tcp_module_t* ptl = mca_ptl_tcp_component.tcp_ptl_modules[i];
              addrs[i].addr_inet = ptl->ptl_ifaddr.sin_addr;
@@ -488,7 +488,7 @@ mca_ptl_base_module_t** mca_ptl_tcp_component_init(int *num_ptl_modules,
     if(mca_ptl_tcp_component_exchange() != OMPI_SUCCESS)
         return 0;
 
-    ptls = malloc(mca_ptl_tcp_component.tcp_num_ptl_modules * 
+    ptls = (mca_ptl_base_module_t **)malloc(mca_ptl_tcp_component.tcp_num_ptl_modules * 
                   sizeof(mca_ptl_base_module_t*));
     if(NULL == ptls)
         return NULL;
@@ -571,7 +571,7 @@ static void mca_ptl_tcp_component_recv_handler(int sd, short flags, void* user)
     int retval;
     mca_ptl_tcp_proc_t* ptl_proc;
     ompi_socklen_t addr_len = sizeof(addr);
-    mca_ptl_tcp_event_t *event = user;
+    mca_ptl_tcp_event_t *event = (mca_ptl_tcp_event_t *)user;
 
     /* accept new connections on the listen socket */
     if(mca_ptl_tcp_component.tcp_listen_sd == sd) {
@@ -581,7 +581,7 @@ static void mca_ptl_tcp_component_recv_handler(int sd, short flags, void* user)
     OBJ_RELEASE(event);
 
     /* recv the process identifier */
-    retval = recv(sd, &guid, sizeof(guid), 0);
+    retval = recv(sd, (char *)&guid, sizeof(guid), 0);
     if(retval != sizeof(guid)) {
         close(sd);
         return;

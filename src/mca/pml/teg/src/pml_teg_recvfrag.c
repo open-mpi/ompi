@@ -12,7 +12,7 @@
 #include "pml_teg_proc.h"
 
 
-extern ompi_class_t mca_ptl_base_recv_frag_t_class;
+OMPI_DECLSPEC extern ompi_class_t mca_ptl_base_recv_frag_t_class;
 
 
 /**

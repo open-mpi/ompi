@@ -178,7 +178,7 @@ static inline struct iovec* mca_oob_tcp_msg_iov_alloc(mca_oob_tcp_msg_t* msg, in
 {
     if(count <= MCA_OOB_TCP_IOV_MAX) 
         return msg->msg_iov;
-    return malloc(sizeof(struct iovec) * count);
+    return (struct iovec *)malloc(sizeof(struct iovec) * count);
 }
 
 

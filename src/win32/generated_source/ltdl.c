@@ -25,9 +25,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
 
 */
 
-#if HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include "../generated_include/config.h"
 
 #if HAVE_UNISTD_H
 #include <unistd.h>
