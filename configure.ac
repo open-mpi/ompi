@@ -1059,19 +1059,6 @@ AC_CONFIG_FILES([
     src/include/sys/sparc64/Makefile
 
     src/class/Makefile
-    src/os/Makefile
-    src/os/cygwin/Makefile
-    src/os/darwin/Makefile
-    src/os/darwin/ppc_32/Makefile
-    src/os/darwin/ppc_64/Makefile
-    src/os/irix/Makefile
-    src/os/irix/sn0/Makefile
-    src/os/linux/Makefile
-    src/os/linux/alpha/Makefile
-    src/os/linux/i686/Makefile
-    src/os/linux/ia64/Makefile
-    src/os/linux/x86_64/Makefile
-    src/os/tru64/Makefile
     src/runtime/Makefile
     src/threads/Makefile
     src/util/Makefile
