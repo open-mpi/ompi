@@ -14,6 +14,7 @@
  */
 #include "mca/base/mca_base_param.h"
 #include "mca/base/mca_base_module_exchange.h"
+#include "mca/base/mca_base_msgbuf.h"
 
 
 /*

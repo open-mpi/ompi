@@ -13,7 +13,9 @@ noinst_LTLIBRARIES = libmca_base.la
 headers = \
         base.h \
         mca_base_module_exchange.h \
-        mca_base_param.h
+        mca_base_param.h \
+        mca_base_msgbuf.h \
+        mca_base_msgbuf_internal.h
 
 # Library
 
@@ -29,7 +31,8 @@ libmca_base_la_SOURCES = \
         mca_base_modules_open.c \
         mca_base_modules_close.c \
         mca_base_open.c \
-        mca_base_param.c
+        mca_base_param.c \
+        mca_base_msgbuf.c 
 
 
 # Conditionally install the header files
