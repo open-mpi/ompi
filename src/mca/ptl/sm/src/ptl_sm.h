@@ -38,6 +38,11 @@ struct mca_ptl_sm_component_t {
     char* sm_mpool_name;                  /**< name of shared memory pool module */
     mca_mpool_base_module_t* sm_mpool; /**< shared memory pool */
     void* sm_mpool_base;                  /**< base address of shared memory pool */
+    char* sm_resouce_ctl_file;     /**< name of shared memory file used 
+                                            to coordinate resource usage */
+    mca_ptl_sm_module_resource_t *resource_ctl;
+                                          /**< shared memory coordination data.
+                                            Resides in shared memory */
     ompi_free_list_t sm_send_requests;    /**< free list of sm send requests -- sendreq + sendfrag */
     ompi_free_list_t sm_send_frags;       /**< free list of sm send fragments */
     ompi_free_list_t sm_recv_frags;       /**< free list of sm recv fragments */
