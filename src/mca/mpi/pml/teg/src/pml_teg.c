@@ -65,12 +65,22 @@ static int ptl_exclusivity_compare(const void* arg1, const void* arg2)
 }
 
 
-int mca_pml_teg_add_ptls(struct mca_ptl_t** ptls, size_t nptls)
+int mca_pml_teg_add_ptls(lam_list_t *ptls)
 {
     /* sort the ptls by exclusivity */
+#if TIM_HASNT_IMPLEMENTED_THIS_YET
+
+  /* Tim: you now get a lam_list_t of
+     (mca_ptl_base_selected_module_t*)'s (see
+     mca/mpi/ptl/base/base.h).
+
+     You do not own this memory, and therefore do not need to free
+     anything in the lam_list_t that you receive here. */
+
     qsort(ptls, nptls, sizeof(struct mca_ptl_t*), ptl_exclusivity_compare);
     mca_pml_teg.teg_ptls = ptls;
     mca_pml_teg.teg_num_ptls = nptls;
+#endif
     return LAM_SUCCESS;
 }
 

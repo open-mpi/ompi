@@ -35,15 +35,19 @@ typedef enum {
 /**
  * MCA->PML Called by MCA framework to initialize the module.
  * 
- * @param priority (OUT)   Relative priority or ranking used by MCA to selected a module.
- * @param thread_min (OUT) Minimum thread level supported by the module.
- * @param thread_max (OUT) Maximum thread level supported by the module.
+ * @param priority (OUT) Relative priority or ranking used by MCA to
+ * selected a module.
+ *
+ * @param allow_multi_user_threads (OUT) Whether this module can run
+ * at MPI_THREAD_MULTIPLE or not.
+ *
+ * @param have_hidden_threads (OUT) Whether this module may use
+ * hidden threads (e.g., progress threads) or not.
  */
-
 typedef struct mca_pml_1_0_0_t * (*mca_pml_base_module_init_fn_t)(
-    int* priority, 
-    int* min_thread, 
-    int* max_thread);
+    int *priority, 
+    bool *allow_multi_user_threads,
+    bool *have_hidden_threads);
 
 /**
  * PML module version and interface functions.
@@ -66,8 +70,8 @@ typedef int (*mca_pml_base_add_comm_fn_t)(struct lam_communicator_t*);
 typedef int (*mca_pml_base_del_comm_fn_t)(struct lam_communicator_t*);
 typedef int (*mca_pml_base_add_procs_fn_t)(struct lam_proc_t **procs, size_t nprocs);
 typedef int (*mca_pml_base_del_procs_fn_t)(struct lam_proc_t **procs, size_t nprocs);
-typedef int (*mca_pml_base_add_ptls_fn_t)(struct mca_ptl_t **ptls, size_t nptls);
-typedef int (*mca_pml_base_fini_fn_t)(void);
+typedef int (*mca_pml_base_add_ptls_fn_t)(lam_list_t *ptls);
+typedef int (*mca_pml_base_finalize_fn_t)(void);
 typedef int (*mca_pml_base_progress_fn_t)(void);
 
 typedef int (*mca_pml_base_irecv_init_fn_t)(
@@ -142,7 +146,7 @@ struct mca_pml_1_0_0_t {
     mca_pml_base_add_procs_fn_t    pml_add_procs;
     mca_pml_base_del_procs_fn_t    pml_del_procs;
     mca_pml_base_add_ptls_fn_t     pml_add_ptls;
-    mca_pml_base_fini_fn_t         pml_fini;
+    mca_pml_base_finalize_fn_t     pml_finalize;
     mca_pml_base_progress_fn_t     pml_progress;
 
     /* downcalls from MPI to PML */

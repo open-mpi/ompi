@@ -74,11 +74,13 @@ int mca_pml_teg_module_close(void)
 }
 
 
-mca_pml_t* mca_pml_teg_module_init(int* priority, int* min_thread, int* max_thread)
+mca_pml_t* mca_pml_teg_module_init(int* priority, 
+                                   bool *allow_multi_user_threads,
+                                   bool *have_hidden_threads)
 {
     *priority = 0;
-    *min_thread = MPI_THREAD_SINGLE;
-    *max_thread = MPI_THREAD_MULTIPLE;
+    *allow_multi_user_threads = true;
+    *have_hidden_threads = false;
 
     mca_pml_teg.teg_ptl_modules = 0;
     mca_pml_teg.teg_num_ptl_modules = 0;
