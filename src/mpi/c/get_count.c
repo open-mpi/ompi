@@ -22,11 +22,22 @@ static const char FUNC_NAME[] = "MPI_Get_count";
 
 int MPI_Get_count(MPI_Status *status, MPI_Datatype datatype, int *count) 
 {
-  if (MPI_PARAM_CHECK) {
-    OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-  }
+   int size;
 
-  /* This function is not yet implemented */
+   if (MPI_PARAM_CHECK) {
+      OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+   }
 
-  return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INTERN, FUNC_NAME);
+   if( ompi_ddt_type_size( datatype, &size ) == MPI_SUCCESS ) {
+      if( size == 0 ) {
+         *count = 0;
+         return MPI_SUCCESS;
+      }
+      
+      *count = status->_count / size;
+      if( (status->_count * size) == status->_count )
+         return MPI_SUCCESS;
+      *count = MPI_UNDEFINED;
+   }
+   return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
 }
