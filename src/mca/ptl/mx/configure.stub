@@ -50,13 +50,10 @@ AC_DEFUN([MCA_CONFIGURE_STUB],[
 
     EXTRA_LDFLAGS=
     if test -n "$with_ptl_mx_libdir"; then
-        if test -d "$with_ptl_mx_libdir/lib"; then
-            EXTRA_LDFLAGS="-L$with_ptl_mx_libdir/lib"
-        elif test -d "$with_ptl_mx_libdir/binary/lib"; then
-            EXTRA_LDFLAGS="-L$with_ptl_mx_libdir/binary/lib"
+        if test -d "$with_ptl_mx_libdir"; then
+            EXTRA_LDFLAGS="-L$with_ptl_mx_libdir"
         else
-            AC_MSG_WARN([*** Warning: cannot find $with_ptl_mx_libdir/lib])
-            AC_MSG_WARN([*** or $with_ptl_mx_libdir/binary/lib])
+            AC_MSG_WARN([*** Warning: cannot find $with_ptl_mx_libdir])
             AC_MSG_WARN([*** Will still try to configure mx ptl anyway...])
         fi
     elif test -n "$with_ptl_mx"; then
