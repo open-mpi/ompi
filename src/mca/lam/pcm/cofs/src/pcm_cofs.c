@@ -42,13 +42,13 @@ mca_pcm_cofs_handle_new(lam_job_handle_t parent)
 
   pid = getpid();
 
-  ret_len = sizeof(pid_t) * 8 + strlen("pcm_cofs") + sizeof(int) * 8 + 5;
+  ret_len = sizeof(pid_t) * 8 + strlen("pcm_cofs_job_handle") + sizeof(int) * 8 + 5;
   ret = LAM_MALLOC(ret_len);
   if (ret == NULL) {
     return NULL;
   }
 
-  snprintf(ret, ret_len, "pcm_cofs_%d_%d", (int) pid, handle_new_count);
+  snprintf(ret, ret_len, "pcm_cofs_job_handle_%d_%d", (int) pid, handle_new_count);
   handle_new_count++;
 
   return ret;
