@@ -176,6 +176,8 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
 		pgraph_neighbors_count.c \
 		pgraph_neighbors.c \
 		pgraphdims_get.c \
+		pgrequest_complete.c \
+		pgrequest_start.c \
 		pgroup_c2f.c \
 		pgroup_compare.c \
 		pgroup_difference.c \
@@ -233,11 +235,8 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         ptype_size.c \
         ptype_struct.c \
         ptype_ub.c \
-        ptype_vector.c 
+        ptype_vector.c  
 
-bogus_stuff= \
-		pgrequest_complete.c \
-		pgrequest_start.c 
 #
 # Sym link in the sources from the real MPI directory
 #
