@@ -21,7 +21,7 @@ struct avail_module_t {
     int priority;
 };
 typedef struct avail_module_t avail_module_t;
-OBJ_CLASS_INSTANCE(avail_module_t, ompi_list_item_t, NULL, NULL);
+static OBJ_CLASS_INSTANCE(avail_module_t, ompi_list_item_t, NULL, NULL);
 
 
 /* insert into the list sorted on priority */
