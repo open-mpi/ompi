@@ -27,7 +27,7 @@ mca_allocator_bucket_t * mca_allocator_bucket_init(mca_allocator_base_module_t *
     int i;
     size_t size;
     /* if a bad value is used for the number of buckets, default to 30 */
-    if(i <= 0) {
+    if(num_buckets <= 0) {
         num_buckets = 30;
     }
     /* initialize the array of buckets */

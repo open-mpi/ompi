@@ -14,6 +14,44 @@
 #define MSG_TYPE_2   2
 #define NUM_TESTS    5
 
+
+/* setup message */
+uint32_t msg_type_1 = MSG_TYPE_1;
+uint32_t msg_type_2 = MSG_TYPE_2;
+char send1[] = "hello";
+uint32_t send2[] = {3, 5, 5, 9, 20};
+uint16_t send3[] = {32, 4, 23};
+
+/* now we set up the send iovect */
+struct iovec send_msg1[4] = {{(void *) &msg_type_1, sizeof(msg_type_1)},  
+                             {(void *) &send1, sizeof(send1)},
+                             {(void *) &send2, sizeof(send2)},
+                             {(void *) &send3, sizeof(send3)}};
+
+struct iovec send_msg2[3] = {{(void *) &msg_type_2, sizeof(msg_type_2)},
+                             {(void *) &send2, sizeof(send2)},
+                             {(void *) &send3, sizeof(send3)}};
+
+/* if we want the send/ recieve functions to do the packing for us,
+ * we have to provide an array that describes our data types
+ */
+mca_oob_base_type_t types[] = {MCA_OOB_BASE_INT32, MCA_OOB_BASE_BYTE,
+    MCA_OOB_BASE_INT32, MCA_OOB_BASE_INT16};
+    
+/* we'll pass the array an identical iovec */
+uint32_t msg_type;
+char     recv1[6];
+uint32_t recv2[5];
+uint16_t recv3[3];
+struct iovec recv_msg1[4] = {{(void *) &msg_type, sizeof(msg_type)},
+                             {(void *) &recv1, sizeof(recv1)},
+                             {(void *) &recv2, sizeof(recv2)},
+                             {(void *) &recv3, sizeof(recv3)}};
+
+struct iovec recv_msg2[3] = {{(void *) &msg_type, sizeof(msg_type)},
+                             {(void *) &recv2, sizeof(recv2)},
+                             {(void *) &recv3, sizeof(recv3)}};
+
 bool testdone[NUM_TESTS];
 
 bool compare_iovec(const struct iovec * msg1, const struct iovec * msg2, int n);
@@ -38,6 +76,7 @@ void callback(int status, const ompi_process_name_t * peer,
 void callback(int status, const ompi_process_name_t * peer,
               const struct iovec * msg, int count, int tag, void * cbdata)
 {
+    fprintf(stderr, "caqllback called on num %d.\n", (int) cbdata);
     if(0 != tag) {
         test_failure("Bad tag.");
     }
@@ -53,44 +92,8 @@ void callback(int status, const ompi_process_name_t * peer,
 
 int main(int argc, char ** argv)
 {
-    int rc;
     ompi_process_name_t  peer;
-    /* setup message */
-    uint32_t msg_type_1 = MSG_TYPE_1;
-    uint32_t msg_type_2 = MSG_TYPE_2;
-    char send1[] = "hello";
-    uint32_t send2[] = {3, 5, 5, 9, 20};
-    uint16_t send3[] = {32, 4, 23};
 
-    /* now we set up the send iovect */
-    struct iovec send_msg1[4] = {{(void *) &msg_type_1, sizeof(msg_type_1)}, 
-                                 {(void *) &send1, sizeof(send1)}, 
-                                 {(void *) &send2, sizeof(send2)},
-                                 {(void *) &send3, sizeof(send3)}};
-
-    struct iovec send_msg2[3] = {{(void *) &msg_type_2, sizeof(msg_type_2)}, 
-                                 {(void *) &send2, sizeof(send2)},
-                                 {(void *) &send3, sizeof(send3)}};
-
-    /* if we want the send/ recieve functions to do the packing for us,
-     * we have to provide an array that describes our data types
-     */
-    mca_oob_base_type_t types[] = {MCA_OOB_BASE_INT32, MCA_OOB_BASE_BYTE,
-MCA_OOB_BASE_INT32, MCA_OOB_BASE_INT16};
-
-    /* we'll pass the array an identical iovec */
-    uint32_t msg_type;
-    char     recv1[5];
-    uint32_t recv2[5];
-    uint16_t recv3[3]; 
-    struct iovec recv_msg1[4] = {{(void *) &msg_type, sizeof(msg_type)},
-                                 {(void *) &recv1, sizeof(recv1)},
-                                 {(void *) &recv2, sizeof(recv2)},
-                                 {(void *) &recv3, sizeof(recv3)}};
-
-    struct iovec recv_msg2[3] = {{(void *) &msg_type, sizeof(msg_type)},
-                                 {(void *) &recv2, sizeof(recv2)},
-                                 {(void *) &recv3, sizeof(recv3)}};
     MPI_Init(&argc, &argv);
 
     /* setup peer address */
@@ -101,60 +104,70 @@ MCA_OOB_BASE_INT32, MCA_OOB_BASE_INT16};
     test_init("oob self");
     /* do a non blocking send without packing followed by a
      * non blocking recieve */
-    if( 0 > (rc = mca_oob_send_nb(&peer, send_msg1, 4, 0, 0, &callback, (void *) 0))){
+    if( 0 > mca_oob_send_nb(&peer, send_msg1, 4, 0, 0, &callback, (void *) 0)){
         test_failure("mca_oob_send_nb.");
     } else {
         test_success();
     }
-    if( 0 > (rc = mca_oob_recv_nb(&peer, recv_msg1, 4, 0, 0, &callback, (void *) 2))) {
+    if( 0 > mca_oob_recv_nb(&peer, recv_msg1, 4, 0, 0, &callback, (void *) 2)) {
         test_failure("mca_oob_recv_nb.");
     } else {
         test_success();
     }
 
     /* Nonblocking send followed by a blocking recieve with packing */
-    if( 0 > (rc = mca_oob_send_hton_nb(&peer, send_msg1, types, 4, 0, 0, &callback,
-(void *) 1))) {
+    if( 0 > mca_oob_send_hton_nb(&peer, send_msg1, types, 4, 0, 0, &callback,
+(void *) 1)) {
         test_failure("mca_oob_send_hton_nb.");
     } else {
         test_success();
     }
-    if( 0 > mca_oob_recv_ntoh_nb(&peer, recv_msg1, types, 4, 0, 0, &callback, (void
-*) 3)) {
-        test_failure("mca_oob_recv_ntoh_nb.");
+    if( 0 > mca_oob_recv_ntoh(&peer, recv_msg1, types, 4, 0, 0)) {
+        test_failure("mca_oob_recv_ntoh.");
     } else {
         test_success();
     }
-
-    /* non blocking send of message type 2 */
-    if( 0 > (rc = mca_oob_send_nb(&peer, send_msg2, 3, 0, 0, &callback, 
-                                  (void *) 4))) {
+    if(!compare_iovec(recv_msg1, send_msg1, 4)) {
+        test_failure("compare 1 is wrong");
+    }
+    
+    /* non blocking send of message type 2  followed by blocking recieve*/
+    if( 0 > mca_oob_send_nb(&peer, send_msg2, 3, 0, 0, &callback, 
+                            (void *) 4)) {
         test_failure("mca_oob_send.");
     } else {
         test_success();
     }
-    if( 0 > (rc = mca_oob_recv(&peer, recv_msg1, 1, 0, MCA_OOB_PEEK))) {
+
+
+    /* check the type of message - before doing the actual receive */
+    if( 0 > mca_oob_recv(&peer, recv_msg1, 1, 0, MCA_OOB_PEEK)) {
         test_failure("mca_oob_recv w/peek.");
     } else {
         test_success();
     }
 
-    /* check the type of message - before doing the actual receive */
     switch(msg_type) {
         case MSG_TYPE_1:
-            if( 0 > (rc = mca_oob_recv(&peer, recv_msg1, 4, 0, 0))) {
+            if( 0 > mca_oob_recv(&peer, recv_msg1, 4, 0, 0)) {
                 test_failure("mca_oob_recv_nb of peeked message.");
             } else {
                 test_success();
             }
+            if(!compare_iovec(recv_msg1, send_msg1, 3)) {
+                test_failure("compare 1 is wrong");
+             }
             break;
         case MSG_TYPE_2:
-            if( 0 > (rc = mca_oob_recv(&peer, recv_msg2, 3, 0, 0))) {
+            if( 0 > mca_oob_recv(&peer, recv_msg2, 3, 0, 0)) {
                 test_failure("mca_oob_recv_nb of peeked message.");
             } else {
                 test_success();
             }
-               break;
+            if(!compare_iovec(recv_msg1, send_msg1, 3)) {
+                 test_failure("compare 1 is wrong");
+            }
+            break;
         default:
             test_failure("Message peek did not return a valid type number.");
             break;

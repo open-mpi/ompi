@@ -89,6 +89,7 @@ bool mca_oob_tcp_msg_send_handler(mca_oob_tcp_msg_t* msg, struct mca_oob_tcp_pee
             else if (errno == EAGAIN)
                 return false;
             else {
+                ompi_output(0, "mca_oob_tcp_msg_send_handler: bad return from writev. errno=%d", errno);
                 mca_oob_tcp_peer_close(peer);
                 return false;
             }
@@ -130,6 +131,7 @@ bool mca_oob_tcp_msg_recv_handler(mca_oob_tcp_msg_t* msg, struct mca_oob_tcp_pee
             else if (errno == EAGAIN)
                 return false;
             else {
+                ompi_output(0, "mca_oob_tcp_msg_recv_handler: bad return from writev. errno=%d", errno);
                 mca_oob_tcp_peer_close(peer);
                 return false;
             }

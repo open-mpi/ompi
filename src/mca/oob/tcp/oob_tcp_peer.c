@@ -160,7 +160,9 @@ mca_oob_tcp_peer_t * mca_oob_tcp_peer_lookup(const ompi_process_name_t* name, bo
     peer->peer_name = *name;
     peer->peer_sd = -1;
     peer->peer_state = MCA_OOB_TCP_CLOSED;
-    
+    peer->peer_recv_msg = NULL;
+    peer->peer_send_msg = NULL;
+    peer->peer_retries = 0;
     /******
      * need to add the peer's address to the structure
      ******/
@@ -243,6 +245,7 @@ static int mca_oob_tcp_peer_start_connect(mca_oob_tcp_peer_t* peer)
             ompi_event_add(&peer->peer_send_event, 0);
             return OMPI_SUCCESS;
         }
+        ompi_output(0, "mca_oob_tcp_msg_peer_start_connect: unable to connect to peer. errno=%d", errno);
         mca_oob_tcp_peer_close(peer);
         peer->peer_retries++;
         return OMPI_ERR_UNREACH;
@@ -253,6 +256,7 @@ static int mca_oob_tcp_peer_start_connect(mca_oob_tcp_peer_t* peer)
         peer->peer_state = MCA_OOB_TCP_CONNECT_ACK;
         ompi_event_add(&peer->peer_recv_event, 0);
     } else {
+        ompi_output(0, "mca_oob_tcp_peer_start_connect: unable to send connect ack to peer. errno=%d", errno);
         mca_oob_tcp_peer_close(peer);
     }
     return rc;
@@ -301,6 +305,7 @@ static void mca_oob_tcp_peer_complete_connect(mca_oob_tcp_peer_t* peer)
         peer->peer_state = MCA_OOB_TCP_CONNECT_ACK;
         ompi_event_add(&peer->peer_recv_event, 0);
     } else {
+         ompi_output(0, "mca_oob_tcp_peer_complete_connect: unable to send connect ack.");
         mca_oob_tcp_peer_close(peer);
     }
 }
@@ -395,6 +400,7 @@ static int mca_oob_tcp_peer_recv_blocking(mca_oob_tcp_peer_t* peer, void* data, 
 
         /* remote closed connection */
         if(retval == 0) {
+            ompi_output(0, "mca_oob_tcp_peer_recv_blocking: remote connection closed");
             mca_oob_tcp_peer_close(peer);
             return -1;
         }

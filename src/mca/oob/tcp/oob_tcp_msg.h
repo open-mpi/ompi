@@ -14,6 +14,7 @@
 #include "oob_tcp_peer.h"
 #include "oob_tcp_hdr.h"
 #include <errno.h>
+#include "util/output.h"
 
 struct mca_oob_tcp_peer_t;
 
