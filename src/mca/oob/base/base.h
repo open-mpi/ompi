@@ -11,6 +11,7 @@
 #include "mca/mca.h"
 #include "mca/ns/ns.h"
 #include <sys/uio.h>
+#include "util/pack.h"
 
 
 /*
@@ -62,7 +63,7 @@ typedef enum {
 * 
 *   An example of usage - to determine the size of the next available message w/out receiving it:
 *
-*   int size = mca_oob_recv(name, 0, 0, MSG_OOB_PEEK|MSG_OOB_TRUNC);
+*   int size = mca_oob_recv(name, 0, 0, MCA_OOB_TRUNC|MCA_OOB_PEEK);
 */
 
 #define MCA_OOB_PEEK  0x01   /**< flag to oob_recv to allow caller to peek a portion of the next available
@@ -198,6 +199,31 @@ int mca_oob_recv_ntoh(
    int tag,
    int flags);
 
+
+/**
+* Similiar to unix read(2)
+*
+* @param peer (IN)    Opaque name of peer process or MCA_OOB_NAME_ANY for wildcard receive.
+* @param buf (OUT)     Array of iovecs describing user buffers and lengths.
+* @param tag (IN)     User defined tag for matching send/recv.
+* @return             OMPI error code (<0) on error or number of bytes actually received.
+*
+*
+* This version of oob_recv is as above except it does NOT take a iovec list
+* but instead hands back a ompi_buffer_t buffer with the message in it. 
+* The user is responsible for freeing this buffer with ompi_buffer_free()
+* when finished.
+*
+*
+*/
+
+int mca_oob_recv_packed (
+	ompi_process_name_t* peer, 
+	ompi_buffer_t *buf, 
+	int tag);
+
+
+
 /*
  * Non-blocking versions of send/recv.
 */
@@ -329,6 +355,11 @@ int mca_oob_recv_ntoh_nb(
     int flags, 
     mca_oob_callback_fn_t cbfunc,
     void* cbdata);
+
+
+
+
+
 
 
 /*
