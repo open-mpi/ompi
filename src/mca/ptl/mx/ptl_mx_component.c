@@ -105,7 +105,8 @@ int mca_ptl_mx_component_open(void)
     mca_ptl_mx_module.super.ptl_exclusivity =
         mca_ptl_mx_param_register_int("exclusivity", 0);
     mca_ptl_mx_module.super.ptl_first_frag_size =
-        mca_ptl_mx_param_register_int("first_frag_size", 32*1024);
+        mca_ptl_mx_param_register_int("first_frag_size", 
+        (32*1024) - sizeof(mca_ptl_base_header_t));
     mca_ptl_mx_module.super.ptl_min_frag_size = 
         mca_ptl_mx_param_register_int("min_frag_size", 32*1024);
     mca_ptl_mx_module.super.ptl_max_frag_size =
