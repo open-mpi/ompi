@@ -35,8 +35,8 @@ static bool initialized = false;
 /*
  * local functions
  */
-static int param_register(char *type_name, char *module_name, char *param_name,
-                          char *mca_param_name,
+static int param_register(const char *type_name, const char *module_name, const char *param_name,
+                          const char *mca_param_name,
                           mca_base_param_type_t type,
                           mca_base_param_storage_t *default_value);
 static bool param_lookup(int index, mca_base_param_storage_t *storage);
@@ -66,8 +66,8 @@ static void param_free(mca_base_param_t *p);
  * In most cases, mca_param_name should be NULL.  Only in rare cases
  * is it necessary (or advisable) to override the default name.
  */
-int mca_base_param_register_int(char *type_name, char *module_name,
-                                char *param_name, char *mca_param_name, 
+int mca_base_param_register_int(const char *type_name, const char *module_name,
+                                const char *param_name, const char *mca_param_name, 
                                 int default_value)
 {
   mca_base_param_storage_t storage;
@@ -101,13 +101,13 @@ int mca_base_param_register_int(char *type_name, char *module_name,
  * In most cases, mca_param_name should be NULL.  Only in rare cases
  * is it necessary (or advisable) to override the default name.
  */
-int mca_base_param_register_string(char *type_name, char *module_name,
-                                   char *param_name, char *mca_param_name,
-                                   char *default_value)
+int mca_base_param_register_string(const char *type_name, const char *module_name,
+                                   const char *param_name, const char *mca_param_name,
+                                   const char *default_value)
 {
   mca_base_param_storage_t storage;
-
-  storage.stringval = default_value;
+  /* TSW - need to fix this cast - make stringval const */
+  storage.stringval = (char*)default_value;
   return param_register(type_name, module_name, param_name, mca_param_name,
                         MCA_BASE_PARAM_TYPE_STRING, &storage);
 }
@@ -188,7 +188,7 @@ int mca_base_param_lookup_string(int index, char **value)
  * can be used with mca_base_param_lookup_int() and
  * mca_base_param_lookup_string().
  */
-int mca_base_param_find(char *type_name, char *module_name, char *param_name) 
+int mca_base_param_find(const char *type_name, const char *module_name, const char *param_name) 
 {
   size_t i, size;
   mca_base_param_t **array;
@@ -254,8 +254,8 @@ int mca_base_param_finalize(void)
 /*************************************************************************/
 
 static int 
-param_register(char *type_name, char *module_name, char *param_name,
-               char *mca_param_name,
+param_register(const char *type_name, const char *module_name, const char *param_name,
+               const char *mca_param_name,
                mca_base_param_type_t type,
                mca_base_param_storage_t *default_value)
 {
