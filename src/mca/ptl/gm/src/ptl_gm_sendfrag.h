@@ -31,11 +31,16 @@ OBJ_CLASS_DECLARATION (mca_ptl_gm_recv_frag_t);
 struct mca_ptl_gm_send_frag_t {
     mca_ptl_base_send_frag_t send_frag; /**< base send fragment descriptor */
     void * send_buf;
+    void * registered_buf;
     mca_pml_base_send_request_t *req;
     mca_ptl_gm_module_t *ptl;
-    /*mca_ptl_gm_peer_t *peer;*/
+    mca_ptl_gm_peer_t *peer;
+
     int status;
     int type;
+    int wait_for_ack; 
+    int put_sent;
+    int send_complete;
 };
 typedef struct mca_ptl_gm_send_frag_t mca_ptl_gm_send_frag_t;
 
@@ -65,6 +70,32 @@ mca_ptl_gm_alloc_send_frag ( struct mca_ptl_base_module_t *ptl,
                         struct mca_pml_base_send_request_t *sendreq);
 
 
+
+int mca_ptl_gm_send_ack_init(
+    struct mca_ptl_gm_send_frag_t* ack,
+    mca_ptl_gm_module_t *ptl,
+    mca_ptl_gm_peer_t* ptl_peer,
+    struct mca_ptl_gm_recv_frag_t* frag,
+    char * buffer,
+    int size);
+
+/*  int mca_ptl_gm_send_fini_init(
+    mca_ptl_gm_send_frag_t* fini,
+    mca_ptl_gm_module_t *ptl,
+    mca_ptl_gm_peer_t* ptl_peer,
+    mca_pml_base_send_request_t * sendreq);
+  */  
+
+int
+ mca_ptl_gm_put_frag_init( mca_ptl_gm_send_frag_t* sendfrag,
+                                mca_ptl_gm_peer_t * ptl_peer,
+                                mca_ptl_gm_module_t *ptl,
+                                mca_pml_base_send_request_t * sendreq,
+                                size_t offset,
+                                size_t* size,
+                                int flags);
+
+
 int
  mca_ptl_gm_send_frag_init( mca_ptl_gm_send_frag_t* sendfrag,
                                 mca_ptl_gm_peer_t * ptl_peer,
@@ -73,6 +104,10 @@ int
                                 size_t* size,
                                 int flags);
 
+
+int mca_ptl_gm_send_frag_done(
+        mca_ptl_gm_send_frag_t * frag,
+        mca_pml_base_send_request_t * req);
 
 
 mca_ptl_gm_recv_frag_t *

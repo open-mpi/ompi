@@ -114,6 +114,9 @@ mca_ptl_gm_component_open (void)
         mca_ptl_gm_param_register_int ("first_frag_size", 16 * 1024);
     mca_ptl_gm_module.super.ptl_min_frag_size =
         mca_ptl_gm_param_register_int ("min_frag_size", 1<<16);
+    mca_ptl_gm_module.super.ptl_max_frag_size =
+        mca_ptl_gm_param_register_int ("max_frag_size", 256 * 1024);
+    
     mca_ptl_gm_component.gm_free_list_num =
         mca_ptl_gm_param_register_int ("free_list_num", 32);
     mca_ptl_gm_component.gm_free_list_inc =

@@ -22,6 +22,7 @@ struct mca_ptl_gm_send_request_t {
     mca_pml_base_send_request_t super;
     /* add stuff here */
     mca_ptl_gm_send_frag_t *req_frag;
+    int need_ack;
 };
 typedef struct mca_ptl_gm_send_request_t mca_ptl_gm_send_request_t;
 
