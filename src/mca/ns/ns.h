@@ -17,11 +17,12 @@
 /*
  * includes
  */
-#include <sys/types.h>
-#include <stdint.h>
-#include <limits.h>
 
 #include "ompi_config.h"
+
+#include <sys/types.h>
+#include <limits.h>
+
 #include "include/types.h"
 #include "class/ompi_list.h"
 
