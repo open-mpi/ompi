@@ -90,7 +90,6 @@ mca_ptl_gm_alloc_send_frag( struct mca_ptl_gm_module_t *ptl,
     return sendfrag;
 }
 
-
 int mca_ptl_gm_send_frag_done( mca_ptl_gm_send_frag_t * frag,
                                mca_pml_base_send_request_t * req )
 {
@@ -140,7 +139,6 @@ int mca_ptl_gm_send_ack_init( struct mca_ptl_gm_send_frag_t* ack,
 
     return OMPI_SUCCESS;
 }
-
 
 int mca_ptl_gm_put_frag_init( struct mca_ptl_gm_send_frag_t* putfrag,
 			      struct mca_ptl_gm_peer_t* ptl_peer,
@@ -203,10 +201,13 @@ mca_ptl_gm_alloc_recv_frag( struct mca_ptl_base_module_t *ptl )
 {
     int rc;
     ompi_list_item_t* item;
+    mca_ptl_gm_recv_frag_t* frag;
 
     OMPI_FREE_LIST_GET( &(((mca_ptl_gm_module_t *)ptl)->gm_recv_frags_free), item, rc );
 
-    return (mca_ptl_gm_recv_frag_t *)item;
+    frag = (mca_ptl_gm_recv_frag_t*)item;
+    frag->frag_recv.frag_base.frag_owner = (struct mca_ptl_base_module_t*)ptl;
+    return frag;
 
 }
 

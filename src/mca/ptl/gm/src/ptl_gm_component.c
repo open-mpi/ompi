@@ -480,7 +480,6 @@ mca_ptl_gm_component_init (int *num_ptl_modules,
     memcpy (ptls, mca_ptl_gm_component.gm_ptl_modules,
             mca_ptl_gm_component.gm_num_ptl_modules * sizeof(mca_ptl_gm_module_t *));
     *num_ptl_modules = mca_ptl_gm_component.gm_num_ptl_modules;
-
     return ptls;
 }
 
@@ -494,6 +493,15 @@ mca_ptl_gm_component_control (int param, void *value, size_t size)
     return OMPI_SUCCESS;
 }
 
+char* gm_get_local_buffer( void )
+{
+    return malloc( sizeof(char) * GM_BUF_SIZE );
+}
+
+void gm_release_local_buffer( char* ptr )
+{
+    free(ptr);
+}
 
 /*
  *  GM module progress.
