@@ -1,4 +1,3 @@
-
 /*   
  * Copyright (c) 2004-2005 The Trustees of Indiana University.
  *                         All rights reserved.
@@ -50,9 +49,12 @@ int main(int argc, char **argv) {
     /* local variables */
     ompi_fifo_t fifo;
     int i,j,size_of_fifo,lazy_free,return_status,error_cnt,loop_cnt;
-	void *ptr;
     cb_slot_t *slot_data;
     size_t cnt;
+    union {
+        int ivalue;
+        void *vvalue;
+    } value;
 
 #if 0
     /* get queue size */
@@ -71,8 +73,7 @@ int main(int argc, char **argv) {
     test_init("ompi_circular_buffer_fifo");
 
     /* init fifo */
-    return_status=ompi_fifo_init(size_of_fifo,lazy_free,0,0,0,&fifo,
-            &pool);
+    return_status=ompi_fifo_init(size_of_fifo,lazy_free,0,0,0,&fifo,&pool);
     /* check to see that retrun status is success */
     if( OMPI_SUCCESS == return_status ) {
         test_success();
@@ -84,7 +85,8 @@ int main(int argc, char **argv) {
     error_cnt=0;
     for( i=0 ; i < loop_cnt*ompi_cb_fifo_size( (ompi_cb_fifo_t *)
                                                &(fifo.head->cb_fifo)); i++ ) {
-        return_status=ompi_fifo_write_to_head((void *)(i+5),
+        value.ivalue = i + 5;
+        return_status=ompi_fifo_write_to_head(value.vvalue, 
                                               (ompi_fifo_t *)&(fifo), &pool, (size_t)pool.mpool_base());
         if( OMPI_CB_ERROR == return_status ) {
             test_failure(" ompi_cb_fifo_write_to_head\n");
@@ -98,8 +100,9 @@ int main(int argc, char **argv) {
     error_cnt=0;
     for( i=0 ; i < loop_cnt*ompi_cb_fifo_size( (ompi_cb_fifo_t *)
                                                &(fifo.head->cb_fifo)); i++ ) {
-        ptr=ompi_fifo_read_from_tail(&fifo, (size_t)pool.mpool_base());
-        if( (void *)(i+5) != ptr ) {
+        value.vvalue = ompi_fifo_read_from_tail(&fifo, 
+                                                (size_t)pool.mpool_base());
+        if( (i+5) != value.ivalue ) {
             test_failure(" ompi_cb_fifo_read_from_tail\n");
             error_cnt++;
         }
@@ -117,8 +120,7 @@ int main(int argc, char **argv) {
     }
 
     /* init fifo */
-    return_status=ompi_fifo_init(size_of_fifo,lazy_free,0,0,0,&fifo,
-            &pool);
+    return_status=ompi_fifo_init(size_of_fifo,lazy_free,0,0,0,&fifo,&pool);
     /* check to see that retrun status is success */
     if( OMPI_SUCCESS == return_status ) {
         test_success();
@@ -155,8 +157,10 @@ int main(int argc, char **argv) {
     error_cnt=0;
     for( i=0 ; i < loop_cnt*ompi_cb_fifo_size( (ompi_cb_fifo_t *)
                                                &(fifo.head->cb_fifo)); i++ ) {
+        value.ivalue = i + 5;
         return_status=ompi_fifo_write_to_slot(&(slot_data[i]),
-                                              (void *)(i+5), (size_t)pool.mpool_base());
+                                              value.vvalue,
+                                              (size_t)pool.mpool_base());
         if( OMPI_CB_ERROR == return_status ) {
             test_failure(" ompi_fifo_write_to_slot \n");
             error_cnt++;
@@ -170,8 +174,9 @@ int main(int argc, char **argv) {
     error_cnt=0;
     for( i=0 ; i < loop_cnt*ompi_cb_fifo_size( (ompi_cb_fifo_t *)
                                                &(fifo.head->cb_fifo)); i++ ) {
-        ptr=ompi_fifo_read_from_tail(&fifo, (size_t)pool.mpool_base());
-        if( (void *)(i+5) != ptr ) {
+        value.vvalue = ompi_fifo_read_from_tail(&fifo, 
+                                                (size_t)pool.mpool_base());
+        if( (i+5) != value.ivalue ) {
             test_failure(" ompi_cb_fifo_read_from_tail II\n");
             error_cnt++;
         }
@@ -192,8 +197,7 @@ int main(int argc, char **argv) {
      * re-use slots 
      */
     /* init fifo */
-    return_status=ompi_fifo_init(size_of_fifo,lazy_free,0,0,0,&fifo,
-            &pool);
+    return_status=ompi_fifo_init(size_of_fifo,lazy_free,0,0,0,&fifo,&pool);
     /* check to see that retrun status is success */
     if( OMPI_SUCCESS == return_status ) {
         test_success();
@@ -206,7 +210,8 @@ int main(int argc, char **argv) {
         error_cnt=0;
         for( i=0 ; i < ompi_cb_fifo_size( (ompi_cb_fifo_t *)
                                           &(fifo.head->cb_fifo)); i++ ) {
-            return_status=ompi_fifo_write_to_head((void *)((i+5)*(j+1)),
+            value.ivalue = (i + 5) * (j + 1);
+            return_status=ompi_fifo_write_to_head(value.vvalue,
                                                   (ompi_fifo_t *)&(fifo), &pool,
                                                   (size_t)pool.mpool_base());
             if( OMPI_CB_ERROR == return_status ) {
@@ -222,9 +227,9 @@ int main(int argc, char **argv) {
         error_cnt=0;
         for( i=0 ; i < ompi_cb_fifo_size( (ompi_cb_fifo_t *)
                                           &(fifo.head->cb_fifo)); i++ ) {
-            ptr=ompi_fifo_read_from_tail(&fifo,
-                                         (size_t)pool.mpool_base());
-            if( (void *)((i+5)*(j+1)) != ptr ) {
+            value.vvalue = ompi_fifo_read_from_tail(&fifo,
+                                                    (size_t)pool.mpool_base());
+            if( ((i+5)*(j+1)) != value.ivalue ) {
                 test_failure(" ompi_cb_fifo_read_from_tail\n");
                 error_cnt++;
             }
