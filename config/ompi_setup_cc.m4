@@ -67,13 +67,21 @@ if test "$GCC" = "yes" -a "$WANT_PICKY_COMPILER" = 1; then
     unset add
 fi
 
-# See if this version of gcc allows -finline-functions
+# See if this version of gcc allows -finline-functions and/or
+# -fno-strict-aliasing
 if test "$GCC" = "yes"; then
     CFLAGS_orig="$CFLAGS"
-    CFLAGS="$CFLAGS -finline-functions"
+
+    CFLAGS="$CFLAGS_orig -finline-functions"
     add=
     AC_TRY_COMPILE([], [], add=" -finline-functions")
     CFLAGS="$CFLAGS_orig$add"
+
+    CFLAGS="$CFLAGS_orig -fno-strict-aliasing"
+    add=
+    AC_TRY_COMPILE([], [], add=" -fno-strict-aliasing")
+    CFLAGS="$CFLAGS_orig$add"
+
     OMPI_UNIQ(CFLAGS)
     AC_MSG_WARN([$add has been added to CFLAGS])
     unset add
