@@ -710,7 +710,7 @@ int ompi_comm_free ( ompi_communicator_t **comm )
        to set our internal handle to the parent to be equal to
        COMM_NULL.  This is according to MPI-2:88-89. */
 
-    if (*comm == ompi_mpi_comm_parent && comm != &ompi_comm_parent) {
+    if (*comm == ompi_mpi_comm_parent && comm != &ompi_mpi_comm_parent) {
         ompi_mpi_comm_parent = &ompi_mpi_comm_null;
     }
 
