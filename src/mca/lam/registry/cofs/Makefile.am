@@ -29,7 +29,7 @@ mcamodule_LTLIBRARIES = $(module_install)
 mca_registry_cofs_la_SOURCES =
 mca_registry_cofs_la_LIBADD = \
         src/libmca_registry_cofs.la \
-        $(top_lam_builddir)/src/lam/liblam.la
+        $(LIBLAM_LA)
 mca_registry_cofs_la_LDFLAGS = -module -avoid-version
 
 noinst_LTLIBRARIES = $(module_noinst)

@@ -29,8 +29,7 @@ mcamodule_LTLIBRARIES = $(module_install)
 mca_coll_basic_la_SOURCES =
 mca_coll_basic_la_LIBADD = \
         src/libmca_coll_basic.la \
-        $(top_lam_builddir)/src/mpi/libmpi.la \
-        $(top_lam_builddir)/src/lam/liblam.la
+        $(LIBMPI_LA)
 mca_coll_basic_la_LDFLAGS = -module -avoid-version
 
 noinst_LTLIBRARIES = $(module_noinst)

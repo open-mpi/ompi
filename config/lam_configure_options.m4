@@ -165,10 +165,16 @@ AC_ARG_ENABLE(single-lib,
 if test "$enable_single_lib" != "yes"; then
     AC_MSG_RESULT([no])
     WANT_SINGLE_MPI_LIBRARY=0
+    LIBLAM_LA='$(top_builddir)/src/lam/liblam.la'
+    LIBMPI_LA='$(top_builddir)/src/mpi/libmpi.la'" $LIBLAM_LA"
 else
     AC_MSG_RESULT([yes])
     WANT_SINGLE_MPI_LIBRARY=1
+    LIBLAM_LA='$(top_builddir)/src/libmpi.la'
+    LIBMPI_LA="$LIBLAM_LA"
 fi
+AC_SUBST(LIBLAM_LA)
+AC_SUBST(LIBMPI_LA)
 AM_CONDITIONAL(WANT_SINGLE_MPI_LIBRARY, test "$WANT_SINGLE_MPI_LIBRARY" = 1)
 
 #

@@ -29,7 +29,7 @@ mcamodule_LTLIBRARIES = $(module_install)
 mca_pcm_cofs_la_SOURCES =
 mca_pcm_cofs_la_LIBADD = \
         src/libmca_pcm_cofs.la \
-        $(top_lam_builddir)/src/lam/liblam.la
+        $(LIBLAM_LA)
 mca_pcm_cofs_la_LDFLAGS = -module -avoid-version
 
 noinst_LTLIBRARIES = $(module_noinst)
