@@ -46,7 +46,7 @@ void lam_frl_init(lam_free_list_t *flist)
     flist->fl_affinity = NULL;
     flist->fl_threshold_grow = 0;
 
-#if LAM_ENABLE_DEBUG
+#if LAM_ENABLE_MEM_PROFILE
     flist->fl_elt_out = NULL;
     flist->fl_elt_max = NULL;
     flist->fl_elt_sum = NULL;
@@ -68,7 +68,7 @@ void lam_frl_destroy(lam_free_list_t *flist)
     if ( flist->fl_affinity )
         free(flist->fl_affinity);
 
-#if LAM_ENABLE_DEBUG    
+#if LAM_ENABLE_MEM_PROFILE    
     if ( flist->fl_elt_out )
         free(flist->fl_elt_out);
     
@@ -316,7 +316,7 @@ static void *lam_frl_get_mem_chunk(lam_free_list_t *flist, int index, size_t *le
        exceed the amount allowed */
     sz_to_add = lam_mp_get_chunk_size(flist->fl_pool);
 
-#if LAM_ENABLE_DEBUG
+#if LAM_ENABLE_MEM_PROFILE
     flist->fl_chunks_req[index]++;
 #endif
     
@@ -373,7 +373,7 @@ static void *lam_frl_get_mem_chunk(lam_free_list_t *flist, int index, size_t *le
        this far in the code. */
     lam_sgl_set_consec_fail(flist->fl_free_lists[index], 0);
     
-#if LAM_ENABLE_DEBUG
+#if LAM_ENABLE_MEM_PROFILE
     flist->fl_chunks_returned[index]++;
 #endif
 
@@ -493,7 +493,7 @@ lam_flist_elt_t *lam_frl_get_elt(lam_free_list_t *flist, int index, int *error)
             return 0;
         }
     }
-#if LAM_ENABLE_DEBUG
+#if LAM_ENABLE_MEM_PROFILE
     flist->fl_elt_out[index]++;
     flist->fl_elt_sum[index] += flist->fl_elt_out[index];
     flist->fl_nevents[index]++;
@@ -516,7 +516,7 @@ int lam_frl_return_elt(lam_free_list_t *flist, int index, lam_flist_elt_t *item)
     lam_dbl_append(&(flist->fl_free_lists[index]->sgl_list), item);
     mb();
     
-#if LAM_ENABLE_DEBUG
+#if LAM_ENABLE_MEM_PROFILE
     flist->fl_elt_out[index]--;
 #endif
     
