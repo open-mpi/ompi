@@ -16,5 +16,9 @@
 #endif
 
 int MPI_Get_version(int *version, int *subversion) {
+    /* According to the MPI-2 specification */
+    *version = 2;
+    *subversion = 0;
+
     return MPI_SUCCESS;
 }
