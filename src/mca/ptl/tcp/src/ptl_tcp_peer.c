@@ -52,6 +52,11 @@ static void mca_ptl_tcp_peer_connected(mca_ptl_base_peer_t*);
 static void mca_ptl_tcp_peer_recv_handler(int sd, short flags, void* user);
 static void mca_ptl_tcp_peer_send_handler(int sd, short flags, void* user);
 
+/*
+ * Diagnostics: change this to "1" to enable the function
+ * mca_ptl_tcp_peer_dump(), below
+ */
+#define WANT_PEER_DUMP 0
 
 
 ompi_class_t  mca_ptl_tcp_peer_t_class = {
@@ -100,6 +105,7 @@ static void mca_ptl_tcp_peer_destruct(mca_ptl_base_peer_t* ptl_peer)
  * diagnostics
  */
 
+#if WANT_PEER_DUMP
 static void mca_ptl_tcp_peer_dump(mca_ptl_base_peer_t* ptl_peer, const char* msg)
 {
     char src[64];
@@ -148,6 +154,7 @@ static void mca_ptl_tcp_peer_dump(mca_ptl_base_peer_t* ptl_peer, const char* msg
         msg, src, dst, nodelay, sndbuf, rcvbuf, flags);
     ompi_output(0, buff);
 }
+#endif
 
 /*
  * Initialize events to be used by the peer instance for TCP select/poll callbacks.
@@ -295,7 +302,7 @@ bool mca_ptl_tcp_peer_accept(mca_ptl_base_peer_t* ptl_peer, struct sockaddr_in* 
             mca_ptl_tcp_peer_event_init(ptl_peer, sd);
             ompi_event_add(&ptl_peer->peer_recv_event, 0);
             mca_ptl_tcp_peer_connected(ptl_peer);
-#if OMPI_ENABLE_DEBUG && 0
+#if OMPI_ENABLE_DEBUG && WANT_PEER_DUMP
             mca_ptl_tcp_peer_dump(ptl_peer, "accepted");
 #endif
             OMPI_THREAD_UNLOCK(&ptl_peer->peer_send_lock);
@@ -416,7 +423,7 @@ static int mca_ptl_tcp_peer_recv_connect_ack(mca_ptl_base_peer_t* ptl_peer)
 
     /* connected */
     mca_ptl_tcp_peer_connected(ptl_peer);
-#if OMPI_ENABLE_DEBUG && 0
+#if OMPI_ENABLE_DEBUG && WANT_PEER_DUMP
     mca_ptl_tcp_peer_dump(ptl_peer, "connected");
 #endif
     return OMPI_SUCCESS;
