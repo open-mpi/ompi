@@ -19,7 +19,9 @@
 #include "mpi/runtime/params.h"
 #include "util/output.h"
 #include "mca/base/mca_base_param.h"
-
+#include "mca/base/mca_base_param_internal.h"
+#include "class/ompi_value_array.h"
+#include <time.h>
 
 /*
  * Global variables
@@ -33,13 +35,16 @@
 bool ompi_mpi_param_check = true;
 bool ompi_debug_show_handle_leaks = false;
 bool ompi_debug_no_free_handles = false;
-
+bool ompi_mpi_show_mca_params = false;
+char *ompi_mpi_show_mca_params_file = NULL;
 
 int ompi_mpi_register_params(void)
 {
     int param_check_param;
     int show_leaks_param;
     int no_free_param;
+    int show_mca_params;
+    int show_mca_params_file;
     int value;
 
     /* Whether we want MPI API function parameter checking or not */
@@ -96,8 +101,86 @@ int ompi_mpi_register_params(void)
         }
     }
     
-    /* All done */
+    /* Whether or not to print all MCA parameters in MPI_INIT */
 
+    show_mca_params = 
+        mca_base_param_register_int("mpi", NULL, "show_mca_params", NULL, 
+                                    (int) ompi_mpi_show_mca_params);
+    mca_base_param_lookup_int(show_mca_params, &value);
+    ompi_mpi_show_mca_params = (bool) value;
+    mca_base_param_set_internal(show_mca_params, false);
+
+    /* File to use when dumping the parameters */
+    ompi_mpi_show_mca_params_file = strdup("");
+    show_mca_params_file =
+        mca_base_param_register_string("mpi", NULL, "show_mca_params_file", NULL,
+                                       ompi_mpi_show_mca_params_file);
+    mca_base_param_lookup_string(show_mca_params_file, &ompi_mpi_show_mca_params_file);
+    mca_base_param_set_internal(show_mca_params_file, false);
+
+    /* All done */
+    
     return OMPI_SUCCESS;
 }
 
+int ompi_show_all_mca_params(int32_t rank, int requested, char *nodename) {
+    ompi_list_t *info;
+    ompi_list_item_t *i;
+    mca_base_param_info_t *item;
+    char *value_string;
+    int value_int;
+    FILE *fp;
+    time_t timestamp;
+
+    if (rank != 0) {
+        return OMPI_SUCCESS;
+    }
+
+    timestamp = time(NULL);
+
+    /* Open the file if one is specified */
+    if (0 != strlen(ompi_mpi_show_mca_params_file)) {
+        if ( NULL == (fp = fopen(ompi_mpi_show_mca_params_file, "w")) ) {
+            ompi_output(0, "Unable to open file <%s> to write MCA parameters", ompi_mpi_show_mca_params_file);
+            return MPI_ERR_BAD_FILE;
+        }
+        fprintf(fp, "#\n");
+        fprintf(fp, "# This file was automatically generated on %s", ctime(&timestamp));
+        fprintf(fp, "# by MPI_COMM_WORLD rank %d (out of a total of %d) on %s\n", rank, requested, nodename );
+        fprintf(fp, "#\n");
+    }
+
+    mca_base_param_dump(&info, false);
+    for (i = ompi_list_get_first(info); i != ompi_list_get_last(info);
+         i = ompi_list_get_next(i)) {
+        item = (mca_base_param_info_t*) i;
+
+        /* Get the parameter name, and convert it to a printable string */
+        if (MCA_BASE_PARAM_TYPE_STRING == item->mbpp_type) {
+            mca_base_param_lookup_string(item->mbpp_index, &value_string);
+            if (NULL == value_string) {
+                value_string = strdup("");
+            }
+        } else {
+            mca_base_param_lookup_int(item->mbpp_index, &value_int);
+            asprintf(&value_string, "%d", value_int);
+        }
+
+        /* Print the parameter */
+        if (0 != strlen(ompi_mpi_show_mca_params_file)) {
+            fprintf(fp, "%s=%s\n", item->mbpp_full_name, value_string);
+        } else {
+            ompi_output(0, "%s=%s", item->mbpp_full_name, value_string);
+        }
+        
+        free(value_string);
+    }
+    
+    /* Close file, cleanup allocated memory*/
+    if (0 != strlen(ompi_mpi_show_mca_params_file)) {
+        fclose(fp);
+    }
+    mca_base_param_dump_release(info);
+
+    return OMPI_SUCCESS;
+}

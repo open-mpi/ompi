@@ -78,6 +78,7 @@ mca_pcmclient_env_open(void)
 {
     param_cellid = mca_base_param_register_int("pcmclient", "env", "cellid",
                                                NULL, -1);
+    mca_base_param_set_internal(param_cellid, true);
     param_jobid = mca_base_param_register_int("pcmclient", "env", "jobid",
                                                NULL, -1);
     param_procid = mca_base_param_register_int("pcmclient", "env", "procid",

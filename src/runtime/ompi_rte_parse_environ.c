@@ -70,6 +70,7 @@ void ompi_rte_parse_environ(void)
 
     id = mca_base_param_register_string("gpr", "base", "replica", NULL, NULL);
     mca_base_param_lookup_string(id, &ompi_universe_info.gpr_replica);
+    mca_base_param_set_internal(id, true);
     if (NULL != ompi_universe_info.gpr_replica) {
 	mca_oob_set_contact_info(ompi_universe_info.gpr_replica);
 	ompi_process_info.gpr_replica = mca_ns_base_create_process_name(0,0,0);
@@ -84,6 +85,7 @@ void ompi_rte_parse_environ(void)
 
     id = mca_base_param_register_string("ns", "base", "replica", NULL, NULL);
     mca_base_param_lookup_string(id, &ompi_universe_info.ns_replica);
+    mca_base_param_set_internal(id, true);
     if (NULL != ompi_universe_info.ns_replica) {
 	mca_oob_set_contact_info(ompi_universe_info.ns_replica);
 	ompi_process_info.ns_replica = mca_ns_base_create_process_name(0,0,0);

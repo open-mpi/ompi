@@ -359,13 +359,20 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 
 #if OMPI_ENABLE_PROGRESS_THREADS /* BWB - XXX - FIXME - is this actually correct? */
     /* setup I/O forwarding */
-    if(ompi_process_info.seed == false) {
+    if (ompi_process_info.seed == false) {
         if (OMPI_SUCCESS != (ret = ompi_mpi_init_io())) {
 	        error = "ompi_rte_init_io failed";
 	        goto error;
         }
     }
 #endif
+
+    /*
+     * Dump all MCA parameters if requested
+     */
+    if (ompi_mpi_show_mca_params) {
+        ompi_show_all_mca_params(my_status.rank, nprocs, my_status.nodename);
+    }
 
     /* Wait for everyone to initialize */
     mca_oob_barrier();
