@@ -80,29 +80,29 @@
 #define DT_INCREASE_STACK  32
 
 struct __dt_stack {
-    int32_t index;
-    int32_t count;
-    int32_t end_loop;
-    long    disp;
+    int32_t index;    /**< index in the element description */
+    int32_t count;    /**< number of times we still have to do it */
+    int32_t end_loop; /**< for loops the end of the loop, otherwise useless */
+    long    disp;     /**< actual displacement depending on the count field */
 };
 
 /* These 2 typedefs are the same as the dt_elem_desc_t except
  * for the name of the fields.
  */
 typedef struct __dt_loop_desc {
-      u_int16_t flags;  /**< flags for the record */
-      u_int16_t type;   /**< the basic data type id */
-      u_int32_t count;  /**< number of elements */
-      long      disp;   /**< displacement of the first element */
-      u_int32_t extent; /**< extent of each element */
+    u_int16_t flags;  /**< flags for the record */
+    u_int16_t type;   /**< the basic data type id */
+    u_int32_t loops;  /**< number of times the loop have to be done */
+    long      items;  /**< number of items in the loop */
+    u_int32_t extent; /**< extent of the whole loop */
 } dt_loop_desc_t;
 
 typedef struct __dt_endloop_desc {
-      u_int16_t flags;  /**< flags for the record */
-      u_int16_t type;   /**< the basic data type id */
-      u_int32_t count;  /**< number of elements */
-      long      disp;   /**< displacement of the first element */
-      u_int32_t extent; /**< extent of each element */
+    u_int16_t flags;        /**< flags for the record */
+    u_int16_t type;         /**< the basic data type id */
+    u_int32_t items;        /**< number of items in the loop */
+    long      total_extent; /**< total extent of the loop taking in account the repetitions */
+    u_int32_t size;         /**< real size of the data in the loop */
 } dt_endloop_desc_t;
 
 /* keep the last 16 bits free for data flags */
@@ -176,6 +176,30 @@ do { \
     /*printf( "memcpy dest = %p src = %p length = %d\n", (void*)(DST), (void*)(SRC), (int)(BLENGTH) );*/ \
     memcpy( (DST), (SRC), (BLENGTH) ); }
 
+#define OMPI_DDT_SAFEGUARD_POINTER( ACTPTR, LENGTH, INITPTR, PDATA, COUNT ) \
+    ompi_ddt_safeguard_pointer( (ACTPTR), (LENGTH), (INITPTR), (PDATA), (COUNT) )
+
+static inline void ompi_ddt_safeguard_pointer( void* actual_ptr, int length,
+                                               void* initial_ptr,
+                                               ompi_datatype_t* pData,
+                                               int count )
+{
+    char* lower_bound = (char*)initial_ptr;
+    char* upper_bound = (char*)initial_ptr;
+
+    if( (length == 0) || (count == 0) ) return;
+    lower_bound += pData->lb;
+    upper_bound += pData->ub * (count - 1) + pData->true_ub;
+
+    if( (char*)actual_ptr >= lower_bound )
+        /* Im up from the lower bound */
+        if( ((char*)actual_ptr + length) <= upper_bound )
+            return;
+    printf( "Pointer %p size %d is outside [%p,%p] for data \n", actual_ptr, length,
+            lower_bound, upper_bound );
+    ompi_ddt_dump( pData );
+}
+
 #ifdef USELESS
 #define MEMCPY_LIMIT 1
 
@@ -207,16 +231,35 @@ do { \
 } while(0)
 #endif  /* USELESS */
 
+static inline int GET_FIRST_NON_LOOP( dt_elem_desc_t* _pElem )
+{
+    int index = 0;
+
+    /* We dont have to check for the end as we always put an END_LOOP
+     * at the end of all datatype descriptions.
+     */
+    while( _pElem->type == DT_LOOP ) {
+        ++_pElem; index++;
+    }
+    return index;
+}
+
 static inline
 int ompi_convertor_create_stack_at_begining( ompi_convertor_t* pConvertor, int* sizes )
 {
     ompi_datatype_t* pData = pConvertor->pDesc;
     dt_elem_desc_t* pElems;
+    int index;
 
-    pConvertor->stack_pos = 2;
+    pConvertor->stack_pos = 1;
+    /* Fill the first position on the stack. This one correspond to the
+     * last fake DT_END_LOOP that we add to the data representation and
+     * allow us to move quickly inside the datatype when we have a count.
+     */
     pConvertor->pStack[0].index = -1;
     pConvertor->pStack[0].count = pConvertor->count;
-    pConvertor->pStack[0].disp  = 0;
+    index = GET_FIRST_NON_LOOP(pData->desc.desc);
+    pConvertor->pStack[0].disp  = pElems[index].disp;
     /* first here we should select which data representation will be used for
      * this operation: normal one or the optimized version ? */
     if( pData->opt_desc.used > 0 ) {
@@ -228,13 +271,8 @@ int ompi_convertor_create_stack_at_begining( ompi_convertor_t* pConvertor, int* 
     }
     pConvertor->pStack[1].index    = 0;
     pConvertor->pStack[1].count    = pElems->count;
-    pConvertor->pStack[1].disp     = pElems->disp;
+    pConvertor->pStack[1].disp     = pConvertor->pStack[0].disp;
     pConvertor->pStack[1].end_loop = pConvertor->pStack[0].end_loop;
-    /* always fill with ZEROS on the begining */
-    pConvertor->pStack[2].index    = 0;
-    pConvertor->pStack[2].count    = 0;
-    pConvertor->pStack[2].disp     = 0;
-    pConvertor->pStack[2].end_loop = 0;
     /* And set the correct status */
     pConvertor->converted          = 0;
     pConvertor->bConverted         = 0;

@@ -66,30 +66,30 @@ typedef struct __dt_struct_desc {
  */
 typedef struct ompi_datatype_t {
    ompi_object_t super;    /**< basic superclass */
-   u_int32_t    size;     /**< total size in bytes of the memory used by the data if
-                           * the data is put on a contiguous buffer */
-   long         true_lb;
-   long         true_ub;  /**< the true ub of the data without user defined lb and ub */
-   u_int32_t    align;    /**< data should be aligned to */
-   long         lb;       /**< lower bound in memory */
-   long         ub;       /**< upper bound in memory */
-   u_int16_t    flags;    /**< the flags */
-   u_int16_t    id;       /**< data id, normally the index in the data array. */
-   u_int32_t    nbElems;  /**< total number of elements inside the datatype */
-   u_int64_t    bdt_used; /**< which basic datatypes are used in the data description */
+   unsigned long size;     /**< total size in bytes of the memory used by the data if
+                            * the data is put on a contiguous buffer */
+   u_int32_t     align;    /**< data should be aligned to */
+   long          true_lb;
+   long          true_ub;  /**< the true ub of the data without user defined lb and ub */
+   long          lb;       /**< lower bound in memory */
+   long          ub;       /**< upper bound in memory */
+   u_int16_t     flags;    /**< the flags */
+   u_int16_t     id;       /**< data id, normally the index in the data array. */
+   u_int32_t     nbElems;  /**< total number of elements inside the datatype */
+   u_int64_t     bdt_used; /**< which basic datatypes are used in the data description */
 
    /* Attribute fields */
    ompi_hash_table_t *d_keyhash;
-   int d_f_to_c_index;
-   char name[MPI_MAX_OBJECT_NAME];
-   dt_type_desc_t desc;     /**< the data description */
-   dt_type_desc_t opt_desc; /**< short description of the data used when conversion is useless
-                             * or in the send case (without conversion) */
-   void*          args;     /**< data description for the user */
+   size_t             d_f_to_c_index;
+   char               name[MPI_MAX_OBJECT_NAME];
+   dt_type_desc_t     desc;     /**< the data description */
+   dt_type_desc_t     opt_desc; /**< short description of the data used when conversion is useless
+                                 * or in the send case (without conversion) */
+   void*              args;     /**< data description for the user */
 
    /* basic elements count used to compute the size of the datatype for
     * remote nodes */
-   u_int32_t      btypes[DT_MAX_PREDEFINED];
+   u_int32_t          btypes[DT_MAX_PREDEFINED];
 } dt_desc_t, ompi_datatype_t;
 
 OBJ_CLASS_DECLARATION( ompi_datatype_t );
@@ -174,8 +174,8 @@ struct ompi_convertor_t {
     dt_stack_t*             pStack;
     /* the convertor functions pointer */
     /* the local stack for the actual conversion */
-    int32_t                 converted;   /* the number of already converted elements */
-    int32_t                 bConverted;  /* the size of already converted elements in bytes */
+    u_int32_t               converted;   /* the number of already converted elements */
+    u_int32_t               bConverted;  /* the size of already converted elements in bytes */
     u_int32_t               flags;
     u_int32_t               count;
     u_int32_t               stack_pos;

@@ -51,91 +51,70 @@ static int ompi_convertor_unpack_general( ompi_convertor_t* pConvertor,
     unsigned int advance; /* number of bytes that we should advance the buffer */
     int rc;
     long disp_desc = 0;   /* compute displacement for truncated data */
-    long disp;            /* displacement at the beging of the last loop */
     int bConverted = 0;   /* number of bytes converted this time */
-    dt_desc_t *pData = pConvertor->pDesc;
     dt_elem_desc_t* pElems;
-    char* pOutput = pConvertor->pBaseBuf;
-    int oCount = (pData->ub - pData->lb) * pConvertor->count;
+    int oCount = (pConvertor->pDesc->ub - pConvertor->pDesc->lb) * pConvertor->count;
     char* pInput = iov[0].iov_base;
     int iCount = iov[0].iov_len;
 
-    if( pData->opt_desc.desc != NULL ) pElems = pData->opt_desc.desc;
-    else                               pElems = pData->desc.desc;
+    /* For the general case always use the user data description */
+    pElems = pConvertor->pDesc->desc.desc;
 
     pStack = pConvertor->pStack + pConvertor->stack_pos;
-    pos_desc  = pStack->index;
-    disp = 0;
-    if( pos_desc == -1 ) {
-        pos_desc = 0;
-        count_desc = pElems[0].count;
-        disp_desc = pElems[0].disp;
-    } else {
-        count_desc = pStack->count;
-        if( pElems[pos_desc].type != DT_LOOP ) {
-            pConvertor->stack_pos--;
-            pStack--;
-            disp = pStack->disp;
-            disp_desc = ( pElems[pos_desc].disp +
-                          (pElems[pos_desc].count - count_desc) * pElems[pos_desc].extent);
-        }
-    }
+    pos_desc   = pStack->index;
+    count_desc = pStack->count;
+    disp_desc  = pStack->disp;
+    pStack--;
+    pConvertor->stack_pos--;
+
     DUMP_STACK( pConvertor->pStack, pConvertor->stack_pos, pElems, "starting" );
     DUMP( "remember position on stack %d last_elem at %d\n", pConvertor->stack_pos, pos_desc );
     DUMP( "top stack info {index = %d, count = %d}\n", 
           pStack->index, pStack->count );
 
- next_loop:
-    while( pos_desc >= 0 ) {
+    while( 1 ) {
         if( pElems[pos_desc].type == DT_END_LOOP ) { /* end of the current loop */
             if( --(pStack->count) == 0 ) { /* end of loop */
+                if( pConvertor->stack_pos == 0 )
+                    goto save_and_return;  /* completed */
                 pConvertor->stack_pos--;
                 pStack--;
-                if( pConvertor->stack_pos == -1 )
-                    return 1;  /* completed */
             }
             pos_desc = pStack->index;
             if( pos_desc == -1 )
-                pStack->disp += (pData->ub - pData->lb);
+                pStack->disp += (pConvertor->pDesc->ub - pConvertor->pDesc->lb);
             else
                 pStack->disp += pElems[pos_desc].extent;
             pos_desc++;
-            disp = pStack->disp;
             count_desc = pElems[pos_desc].count;
             disp_desc = pElems[pos_desc].disp;
-            goto next_loop;
         }
         if( pElems[pos_desc].type == DT_LOOP ) {
             do {
                 PUSH_STACK( pStack, pConvertor->stack_pos,
                             pos_desc, pElems[pos_desc].count,
-                            disp, pos_desc + pElems[pos_desc].disp + 1 );
+                            pStack->disp, pos_desc + pElems[pos_desc].disp + 1 );
                 pos_desc++;
             } while( pElems[pos_desc].type == DT_LOOP ); /* let's start another loop */
             DUMP_STACK( pConvertor->pStack, pConvertor->stack_pos, pElems, "advance loops" );
             /* update the current state */
             count_desc = pElems[pos_desc].count;
             disp_desc = pElems[pos_desc].disp;
-            goto next_loop;
         }
         while( pElems[pos_desc].flags & DT_FLAG_DATA ) {
             /* now here we have a basic datatype */
             type = pElems[pos_desc].type;
             rc = pConvertor->pFunctions[type]( count_desc,
                                                pInput, iCount, pElems[pos_desc].extent,
-                                               pOutput + disp + disp_desc, oCount, pElems[pos_desc].extent,
-                                               &advance );
-            if( rc <= 0 ) {
-                printf( "trash in the input buffer\n" );
-                return OMPI_ERROR;
-            }
+                                               pConvertor->pBaseBuf + pStack->disp + disp_desc, oCount,
+                                               pElems[pos_desc].extent, &advance );
             iCount -= advance;      /* decrease the available space in the buffer */
             pInput += advance;      /* increase the pointer to the buffer */
             bConverted += advance;
             if( rc != count_desc ) {
                 /* not all data has been converted. Keep the state */
                 count_desc -= rc;
-                disp += rc * pElems[pos_desc].extent;
+                disp_desc += rc * pElems[pos_desc].extent;
                 if( iCount != 0 )
                     printf( "there is still room in the input buffer %d bytes\n", iCount );
                 goto save_and_return;
@@ -144,7 +123,8 @@ static int ompi_convertor_unpack_general( ompi_convertor_t* pConvertor,
             pos_desc++;  /* advance to the next data */
             count_desc = pElems[pos_desc].count;
             disp_desc = pElems[pos_desc].disp;
-            if( iCount == 0 ) break;  /* break if there is no more data in the buffer */
+            if( iCount == 0 )
+                goto save_and_return;  /* break if there is no more data in the buffer */
         }
     }
  save_and_return:
@@ -157,9 +137,9 @@ static int ompi_convertor_unpack_general( ompi_convertor_t* pConvertor,
 
     /* I complete an element, next step I should go to the next one */
     PUSH_STACK( pStack, pConvertor->stack_pos, pos_desc,
-                count_desc, disp, pos_desc );
+                count_desc, disp_desc, pos_desc );
 
-    return (pConvertor->bConverted == (pConvertor->count * pData->size));
+    return (pConvertor->bConverted == (pConvertor->count * pConvertor->pDesc->size));
 }
 
 static int ompi_convertor_unpack_homogeneous( ompi_convertor_t* pConv,
@@ -173,7 +153,7 @@ static int ompi_convertor_unpack_homogeneous( ompi_convertor_t* pConv,
     int i;                /* counter for basic datatype with extent */
     int bConverted = 0;   /* number of bytes converted this time */
     long lastDisp = 0, last_count = 0;
-    int space = iov[0].iov_len, last_blength = 0;
+    size_t space = iov[0].iov_len, last_blength = 0;
     char* pSrcBuf;
     dt_desc_t* pData = pConv->pDesc;
     dt_elem_desc_t* pElems;
@@ -198,12 +178,13 @@ static int ompi_convertor_unpack_homogeneous( ompi_convertor_t* pConv,
     while( pos_desc >= 0 ) {
         if( pElems[pos_desc].type == DT_END_LOOP ) { /* end of the current loop */
             if( --(pStack->count) == 0 ) { /* end of loop */
-                pStack--;
-                if( --(pConv->stack_pos) == -1 ) {
+                if( pConv->stack_pos == 0 ) {
                     last_count = 0;
                     pos_desc = -1;
                     goto end_loop;
                 }
+                pStack--;
+                pConv->stack_pos--;
             } else {
                 pos_desc = pStack->index;
                 if( pos_desc == -1 )
@@ -212,9 +193,6 @@ static int ompi_convertor_unpack_homogeneous( ompi_convertor_t* pConv,
                     pStack->disp += pElems[pos_desc].extent;
             }
             pos_desc++;
-            lastDisp = pStack->disp + pElems[pos_desc].disp;
-            last_count = pElems[pos_desc].count;
-            last_blength = last_count;
             goto next_loop;
         }
         while( pElems[pos_desc].type == DT_LOOP ) {
@@ -227,6 +205,8 @@ static int ompi_convertor_unpack_homogeneous( ompi_convertor_t* pConv,
                     last_count = space / pLast->extent;
                 }
                 for( i = 0; i < last_count; i++ ) {
+                    OMPI_DDT_SAFEGUARD_POINTER( pConv->pBaseBuf + lastDisp, pLast->extent,
+                                                pConv->pBaseBuf, pData, pConv->count );
                     MEMCPY( pConv->pBaseBuf + lastDisp, pSrcBuf, pLast->extent );
                     pSrcBuf += pLast->extent;
                     lastDisp += pElems[pos_desc].extent;
@@ -245,11 +225,12 @@ static int ompi_convertor_unpack_homogeneous( ompi_convertor_t* pConv,
             PUSH_STACK( pStack, pConv->stack_pos, pos_desc, last_count,
                         pStack->disp, pos_desc + pElems[pos_desc].disp );
             pos_desc++;
-            last_count = pElems[pos_desc].count;
-            lastDisp = pStack->disp + pElems[pos_desc].disp;
         }
         /* now here we have a basic datatype */
         while( pElems[pos_desc].flags & DT_FLAG_DATA ) {
+            lastDisp = pStack->disp + pElems[pos_desc].disp;
+            last_count = pElems[pos_desc].count;
+
             /* do we have enough space in the buffer ? */
             last_blength = last_count * ompi_ddt_basicDatatypes[pElems[pos_desc].type]->size;
             if( space < last_blength ) {
@@ -259,18 +240,20 @@ static int ompi_convertor_unpack_homogeneous( ompi_convertor_t* pConv,
                 last_blength -= last_count;
                 goto end_loop;  /* or break whatever but go out of this while */
             }
+            OMPI_DDT_SAFEGUARD_POINTER( pConv->pBaseBuf + lastDisp, last_blength,
+                                        pConv->pBaseBuf, pData, pConv->count );
             MEMCPY( pConv->pBaseBuf + lastDisp, pSrcBuf, last_blength );
             bConverted += last_blength;
             space -= last_blength;
             pSrcBuf += last_blength;
             pos_desc++;  /* advance to the next data */
-            lastDisp = pStack->disp + pElems[pos_desc].disp;
-            last_count = pElems[pos_desc].count;
         }
     }
     last_count = 0;  /* complete the data */
  end_loop:
     if( last_count != 0 ) { /* save the internal state */
+        OMPI_DDT_SAFEGUARD_POINTER( pConv->pBaseBuf + lastDisp, last_blength,
+                                    pConv->pBaseBuf, pData, pConv->count );
         MEMCPY( pConv->pBaseBuf + lastDisp, pSrcBuf, last_count );
         bConverted += last_count;
         lastDisp += last_count;
@@ -294,31 +277,46 @@ static int ompi_convertor_unpack_homogeneous_contig( ompi_convertor_t* pConv,
 						     int* freeAfter )
 {
     dt_desc_t *pData = pConv->pDesc;
-    char* pDstBuf = pConv->pBaseBuf + pData->true_lb + pConv->bConverted;
+    char* pDstBuf = pConv->pBaseBuf;
     char* pSrcBuf = iov[0].iov_base;
     int bConverted = 0;
-    long extent = pData->ub - pData->lb;
-    int length, i;
+    long jump, extent = pData->ub - pData->lb;
+    unsigned int length, remaining, i;
+    dt_stack_t* stack = &(pConv->pStack[1]);
 
     *out_size = 1;
     if( iov[0].iov_base != NULL ) {
-        if( pData->size == extent ) {
+        if( (long)pData->size == extent ) {
+            pDstBuf += pData->true_lb + pConv->bConverted;
             length = pConv->count * pData->size - pConv->bConverted;
 
             if( length > iov[0].iov_len )
                 length = iov[0].iov_len;
             /* contiguous data or basic datatype with count */
+            OMPI_DDT_SAFEGUARD_POINTER( pDstBuf, length,
+                                        pConv->pBaseBuf, pData, pConv->count );
             MEMCPY( pDstBuf, pSrcBuf, length );
+            bConverted += length;
         } else {
-            length = iov[0].iov_len;
-            for( i = 0; i < pConv->count; i++ ) {
-                MEMCPY( pDstBuf, pSrcBuf, pData->size );
-                pSrcBuf += pData->size;
-                pDstBuf += extent;
-                length -= pData->size;
+            pDstBuf += stack->disp;
+
+            length = pConv->bConverted / pData->size;
+            length = pConv->bConverted - length * pData->size;
+            jump = extent - length;
+            remaining = iov[0].iov_len;
+
+            for( i = 0; remaining < length; i++ ) {
+                OMPI_DDT_SAFEGUARD_POINTER( pDstBuf, length, pConv->pBaseBuf, pData, pConv->count );
+                MEMCPY( pDstBuf, pSrcBuf, length );
+                pSrcBuf += length;
+                pDstBuf += jump;
+                remaining -= length;
+                length = pData->size;
+                jump = extent;
             }
+            bConverted += iov[0].iov_len;
+            stack->disp = pDstBuf - pConv->pBaseBuf;  /* save the position */
         }
-        bConverted += length;
     }
     iov[0].iov_len = bConverted;
     pConv->bConverted += bConverted;
@@ -333,7 +331,7 @@ int ompi_convertor_unpack( ompi_convertor_t* pConvertor,
 			   int* freeAfter )
 {
    dt_desc_t *pData = pConvertor->pDesc;
-   int rc;
+   unsigned int length;
 
    *freeAfter = 0;
    if( pConvertor->bConverted == (pData->size * pConvertor->count) ) {
@@ -344,15 +342,15 @@ int ompi_convertor_unpack( ompi_convertor_t* pConvertor,
 
    if( pConvertor->flags & DT_FLAG_CONTIGUOUS ) {
       if( iov[0].iov_base == NULL ) {
-         rc = pConvertor->count * pData->size - pConvertor->bConverted;
+         length = pConvertor->count * pData->size - pConvertor->bConverted;
          iov[0].iov_base = pConvertor->pBaseBuf + pData->true_lb + pConvertor->bConverted;
          if( iov[0].iov_len == 0 ) {  /* give me the whole buffer */
          } else {  /* what about the next chunk ? */
-             if( iov[0].iov_len < rc )
-                 rc = iov[0].iov_len;
+             if( iov[0].iov_len < length )
+                 length = iov[0].iov_len;
          }
-         iov[0].iov_len = rc;
-         pConvertor->bConverted += rc;
+         iov[0].iov_len = length;
+         pConvertor->bConverted += length;
          return (pConvertor->bConverted == (pData->size * pConvertor->count));
       }
    }
@@ -366,39 +364,38 @@ int ompi_convertor_unpack( ompi_convertor_t* pConvertor,
  *                and there are less data than the size on the remote host of the
  *                basic datatype.
  */
-#define COPY_TYPE( TYPENAME, TYPE ) \
-static int copy_##TYPENAME( unsigned int count, \
-			    char* from, unsigned int from_len, long from_extent, \
-			    char* to, unsigned int to_len, long to_extent, \
-			    int* used )					\
-{ \
-   int i, res = 1; \
-   unsigned int remote_TYPE_size = sizeof(TYPE); /* TODO */ \
-\
-   if( (remote_TYPE_size * count) > from_len ) { \
-      count = from_len / remote_TYPE_size; \
-      if( (count * remote_TYPE_size) != from_len ) { \
-         DUMP( "oops should I keep this data somewhere (excedent %d bytes)?\n", \
-               from_len - (count * remote_TYPE_size) ); \
-         res = -1; \
-      } \
-      DUMP( "correct: copy %s count %d from buffer %p with length %d to %p space %d\n", \
-            #TYPE, count, from, from_len, to, to_len ); \
-   } else \
-      DUMP( "         copy %s count %d from buffer %p with length %d to %p space %d\n", \
-            #TYPE, count, from, from_len, to, to_len ); \
-\
-   if( (from_extent == sizeof(TYPE)) && (to_extent == sizeof(TYPE)) ) { \
-      MEMCPY( to, from, count * sizeof(TYPE) ); \
-   } else { \
-      for( i = 0; i < count; i++ ) { \
-         MEMCPY( to, from, sizeof(TYPE) ); \
-         to += to_extent; \
-         from += from_extent; \
-      } \
-   } \
-   *used = count * sizeof(TYPE) ; \
-   return res * count; \
+#define COPY_TYPE( TYPENAME, TYPE )                                     \
+static int copy_##TYPENAME( unsigned int count,                     \
+                            char* from, unsigned int from_len, long from_extent, \
+                            char* to, unsigned int to_len, long to_extent, \
+                            int* used )                                 \
+{                                                                       \
+    unsigned int i;                                                     \
+    unsigned int remote_TYPE_size = sizeof(TYPE); /* TODO */            \
+                                                                        \
+    if( (remote_TYPE_size * count) > from_len ) {                       \
+        count = from_len / remote_TYPE_size;                            \
+        if( (count * remote_TYPE_size) != from_len ) {                  \
+            DUMP( "oops should I keep this data somewhere (excedent %d bytes)?\n", \
+                  from_len - (count * remote_TYPE_size) );              \
+        }                                                               \
+        DUMP( "correct: copy %s count %d from buffer %p with length %d to %p space %d\n", \
+              #TYPE, count, from, from_len, to, to_len );               \
+    } else                                                              \
+        DUMP( "         copy %s count %d from buffer %p with length %d to %p space %d\n", \
+              #TYPE, count, from, from_len, to, to_len );               \
+                                                                        \
+    if( (from_extent == sizeof(TYPE)) && (to_extent == sizeof(TYPE)) ) { \
+        MEMCPY( to, from, count * sizeof(TYPE) );                       \
+    } else {                                                            \
+        for( i = 0; i < count; i++ ) {                                  \
+            MEMCPY( to, from, sizeof(TYPE) );                           \
+            to += to_extent;                                            \
+            from += from_extent;                                        \
+        }                                                               \
+    }                                                                   \
+    *used = count * sizeof(TYPE) ;                                      \
+    return count;                                                       \
 }
 
 COPY_TYPE( char, char )
@@ -406,11 +403,12 @@ COPY_TYPE( short, short )
 COPY_TYPE( int, int )
 COPY_TYPE( float, float )
 COPY_TYPE( long, long )
-/*COPY_TYPE( double, double );*/
+/*COPY_TYPE( double, double )*/
 COPY_TYPE( long_long, long long )
 COPY_TYPE( long_double, long double )
 COPY_TYPE( complex_float, ompi_complex_float_t )
 COPY_TYPE( complex_double, ompi_complex_double_t )
+COPY_TYPE( complex_long_double, ompi_complex_long_double_t )
 
 static
 int copy_double( unsigned int count,
@@ -418,52 +416,78 @@ int copy_double( unsigned int count,
                  char* to, unsigned int to_len, long to_extent,
                  int* used )
 {
-   int i, res = 1;
-   unsigned int remote_double_size = sizeof(double); /* TODO */
-
-   if( (remote_double_size * count) > from_len ) {
-      count = from_len / remote_double_size;
-      if( (count * remote_double_size) != from_len ) {
-         DUMP( "oops should I keep this data somewhere (excedent %d bytes)?\n",
-               from_len - (count * remote_double_size) );
-         res = -1;
-      }
-      DUMP( "correct: copy %s count %d from buffer %p with length %d to %p space %d\n",
-            "double", count, from, from_len, to, to_len );
-   } else
-      DUMP( "         copy %s count %d from buffer %p with length %d to %p space %d\n",
-            "double", count, from, from_len, to, to_len );
+    unsigned int i;
+    unsigned int remote_double_size = sizeof(double); /* TODO */
+    
+    if( (remote_double_size * count) > from_len ) {
+        count = from_len / remote_double_size;
+        if( (count * remote_double_size) != from_len ) {
+            DUMP( "oops should I keep this data somewhere (excedent %d bytes)?\n",
+                  from_len - (count * remote_double_size) );
+        }
+        DUMP( "correct: copy %s count %d from buffer %p with length %d to %p space %d\n",
+              "double", count, from, from_len, to, to_len );
+    } else
+        DUMP( "         copy %s count %d from buffer %p with length %d to %p space %d\n",
+              "double", count, from, from_len, to, to_len );
 
    
-   if( (from_extent == sizeof(double)) && (to_extent == sizeof(double)) ) {
-      MEMCPY( to, from, count * sizeof(double) );
-   } else {
-      for( i = 0; i < count; i++ ) {      
-         MEMCPY( to, from, sizeof(double) );     
-         to += to_extent;
-         from += from_extent;
-      }
-   }
-   *used = count * sizeof(double) ;
-   return res * count;
+    if( (from_extent == sizeof(double)) && (to_extent == sizeof(double)) ) {
+        MEMCPY( to, from, count * sizeof(double) );
+    } else {
+        for( i = 0; i < count; i++ ) {      
+            MEMCPY( to, from, sizeof(double) );     
+            to += to_extent;
+            from += from_extent;
+        }
+    }
+    *used = count * sizeof(double) ;
+    return count;
 }
 
 conversion_fct_t ompi_ddt_copy_functions[DT_MAX_PREDEFINED] = {
-   (conversion_fct_t)NULL,                 /*    DT_LOOP           */ 
-   (conversion_fct_t)NULL,                 /*    DT_LB             */ 
-   (conversion_fct_t)NULL,                 /*    DT_UB             */ 
-   (conversion_fct_t)NULL,                 /*    DT_SPACE          */ 
-   (conversion_fct_t)copy_char,            /*    DT_CHAR           */ 
-   (conversion_fct_t)copy_char,            /*    DT_BYTE           */ 
-   (conversion_fct_t)copy_short,           /*    DT_SHORT          */ 
-   (conversion_fct_t)copy_int,             /*    DT_INT            */ 
-   (conversion_fct_t)copy_float,           /*    DT_FLOAT          */ 
-   (conversion_fct_t)copy_long,            /*    DT_LONG           */ 
-   (conversion_fct_t)copy_double,          /*    DT_DOUBLE         */ 
-   (conversion_fct_t)copy_long_long,       /*    DT_LONG_LONG      */ 
-   (conversion_fct_t)copy_long_double,     /*    DT_LONG_DOUBLE    */ 
-   (conversion_fct_t)copy_complex_float,   /*    DT_COMPLEX_FLOAT  */ 
-   (conversion_fct_t)copy_complex_double,  /*    DT_COMPLEX_DOUBLE */ 
+   (conversion_fct_t)NULL,                      /* DT_LOOP                */ 
+   (conversion_fct_t)NULL,                      /* DT_END_LOOP            */ 
+   (conversion_fct_t)NULL,                      /* DT_LB                  */ 
+   (conversion_fct_t)NULL,                      /* DT_UB                  */ 
+   (conversion_fct_t)copy_char,                 /* DT_CHAR                */ 
+   (conversion_fct_t)copy_char,                 /* DT_CHARACTER           */ 
+   (conversion_fct_t)copy_char,                 /* DT_UNSIGNED_CHAR       */ 
+   (conversion_fct_t)copy_char,                 /* DT_BYTE                */ 
+   (conversion_fct_t)copy_short,                /* DT_SHORT               */ 
+   (conversion_fct_t)copy_short,                /* DT_UNSIGNED_SHORT      */ 
+   (conversion_fct_t)copy_int,                  /* DT_INT                 */ 
+   (conversion_fct_t)copy_int,                  /* DT_UNSIGNED_INT        */ 
+   (conversion_fct_t)copy_long,                 /* DT_LONG                */ 
+   (conversion_fct_t)copy_long,                 /* DT_UNSIGNED_LONG       */ 
+   (conversion_fct_t)copy_long_long,            /* DT_LONG_LONG           */ 
+   (conversion_fct_t)copy_long_long,            /* DT_LONG_LONG_INT       */ 
+   (conversion_fct_t)copy_long_long,            /* DT_UNSIGNED_LONG_LONG  */ 
+   (conversion_fct_t)copy_float,                /* DT_FLOAT               */ 
+   (conversion_fct_t)copy_double,               /* DT_DOUBLE              */ 
+   (conversion_fct_t)copy_long_double,          /* DT_LONG_DOUBLE         */ 
+   (conversion_fct_t)copy_complex_float,        /* DT_COMPLEX_FLOAT       */ 
+   (conversion_fct_t)copy_complex_double,       /* DT_COMPLEX_DOUBLE      */ 
+   (conversion_fct_t)copy_complex_long_double,  /* DT_COMPLEX_LONG_DOUBLE */ 
+   (conversion_fct_t)NULL,                      /* DT_PACKED              */ 
+   (conversion_fct_t)NULL,                      /* DT_LOGIC               */ 
+   (conversion_fct_t)NULL,                      /* DT_FLOAT_INT           */ 
+   (conversion_fct_t)NULL,                      /* DT_DOUBLE_INT          */ 
+   (conversion_fct_t)NULL,                      /* DT_LONG_DOUBLE_INT     */ 
+   (conversion_fct_t)NULL,                      /* DT_LONG_INT            */ 
+   (conversion_fct_t)NULL,                      /* DT_2INT                */ 
+   (conversion_fct_t)NULL,                      /* DT_SHORT_INT           */ 
+   (conversion_fct_t)copy_int,                  /* DT_INTEGER             */ 
+   (conversion_fct_t)copy_float,                /* DT_REAL                */ 
+   (conversion_fct_t)copy_double,               /* DT_DBLPREC             */ 
+   (conversion_fct_t)NULL,                      /* DT_2REAL               */ 
+   (conversion_fct_t)NULL,                      /* DT_2DBLPREC            */ 
+   (conversion_fct_t)NULL,                      /* DT_2INTEGER            */ 
+   (conversion_fct_t)NULL,                      /* DT_WCHAR               */ 
+   (conversion_fct_t)NULL,                      /* DT_2COMPLEX            */ 
+   (conversion_fct_t)NULL,                      /* DT_2DOUBLE_COMPLEX     */ 
+   (conversion_fct_t)NULL,                      /* DT_CXX_BOOL            */ 
+   (conversion_fct_t)NULL,                      /* DT_UNAVAILABLE         */ 
 };
 
 /* Should we supply buffers to the convertor or can we use directly
@@ -499,8 +523,8 @@ int ompi_convertor_init_for_recv( ompi_convertor_t* pConv, unsigned int flags,
     pConv->pFunctions = ompi_ddt_copy_functions;
     pConv->converted = 0;
     pConv->bConverted = 0;
-    pConv->fAdvance = ompi_convertor_unpack_general;     /* TODO: just stop complaining */
     pConv->fAdvance = ompi_convertor_unpack_homogeneous; /* default behaviour */
+    pConv->fAdvance = ompi_convertor_unpack_general;     /* TODO: just stop complaining */
     pConv->memAlloc_fn = allocfn;
 
     /* TODO: work only on homogeneous architectures */
@@ -587,7 +611,118 @@ int ompi_ddt_get_element_count( dt_desc_t* pData, int iSize )
 }
 
 int ompi_ddt_copy_content_same_ddt( dt_desc_t* pData, int count,
-                                   char* pDestBuf, char* pSrcBuf )
+                                    char* pDestBuf, char* pSrcBuf )
+{
+    dt_stack_t* pStack;   /* pointer to the position on the stack */
+    int pos_desc;         /* actual position in the description of the derived datatype */
+    int type;             /* type at current position */
+    int stack_pos = 0;
+    long lastDisp = 0, lastLength = 0;
+    dt_elem_desc_t* pElems;
+
+    /* empty data ? then do nothing. This should normally be trapped
+     * at a higher level.
+     */
+    if( count == 0 ) return 0;
+
+    /* If we have to copy a contiguous datatype then simply
+     * do a memcpy.
+     */
+    if( (pData->flags & DT_FLAG_CONTIGUOUS) == DT_FLAG_CONTIGUOUS ) {
+        long extent = (pData->ub - pData->lb);
+        if( (long)pData->size == extent ) {  /* all contiguous */
+            int total_length = pData->size * count;
+            lastLength = 128 * 1024;
+            if( lastLength > total_length ) lastLength = total_length;
+            while( total_length > 0 ) {
+                OMPI_DDT_SAFEGUARD_POINTER( pDestBuf, lastLength,
+                                            pDestBuf, pData, count );
+                MEMCPY( pDestBuf, pSrcBuf, lastLength );
+                pDestBuf += lastLength;
+                pSrcBuf += lastLength;
+                total_length -= lastLength;
+                if( lastLength > total_length ) lastLength = total_length;
+            }
+        } else {
+            for( pos_desc = 0; pos_desc < count; pos_desc++ ) {
+                OMPI_DDT_SAFEGUARD_POINTER( pDestBuf, pData->size,
+                                            pDestBuf, pData, count );
+                MEMCPY( pDestBuf, pSrcBuf, pData->size );
+                pDestBuf += extent;
+                pSrcBuf += extent;
+            }
+        }
+        return 0;
+    }
+
+    pStack = alloca( sizeof(pStack) * (pData->btypes[DT_LOOP] + 1) );
+    pStack->count = count;
+    pStack->index = -1;
+    pStack->disp = 0;
+    pos_desc  = 0;
+
+    if( pData->opt_desc.desc != NULL ) {
+        pElems = pData->opt_desc.desc;
+        pStack->end_loop = pData->opt_desc.used;
+    } else {
+        pElems = pData->desc.desc;
+        pStack->end_loop = pData->desc.used;
+    }
+
+    DUMP_STACK( pStack, stack_pos, pElems, "starting" );
+    DUMP( "remember position on stack %d last_elem at %d\n", stack_pos, pos_desc );
+    DUMP( "top stack info {index = %d, count = %d}\n", 
+          pStack->index, pStack->count );
+
+    while( 1 ) {
+        if( pElems[pos_desc].type == DT_END_LOOP ) { /* end of the current loop */
+            if( --(pStack->count) == 0 ) { /* end of loop */
+                pStack--;
+                if( --stack_pos == -1 ) goto end_loop;
+            }
+            pos_desc = pStack->index;
+            if( pos_desc == -1 )
+                pStack->disp += (pData->ub - pData->lb);
+            else
+                pStack->disp += pElems[pos_desc].extent;
+            pos_desc++;
+        }
+        if( pElems[pos_desc].type == DT_LOOP ) {
+            do {
+                PUSH_STACK( pStack, stack_pos, pos_desc, pElems[pos_desc].count,
+                            pStack->disp, pos_desc + pElems[pos_desc].disp );
+                pos_desc++;
+            } while( pElems[pos_desc].type == DT_LOOP ); /* let's start another loop */
+            DUMP_STACK( pStack, stack_pos, pElems, "advance loops" );
+        }
+        while( pElems[pos_desc].flags & DT_FLAG_DATA ) {
+            /* now here we have a basic datatype */
+            type = pElems[pos_desc].type;
+            if( (lastDisp + lastLength) == (pStack->disp + pElems[pos_desc].disp) ) {
+                lastLength += pElems[pos_desc].count * ompi_ddt_basicDatatypes[type]->size;
+            } else {
+                OMPI_DDT_SAFEGUARD_POINTER( pDestBuf + lastDisp, lastLength,
+                                            pDestBuf, pData, count );
+                MEMCPY( pDestBuf + lastDisp, pSrcBuf + lastDisp, lastLength );
+                lastDisp = pStack->disp + pElems[pos_desc].disp;
+                lastLength = pElems[pos_desc].count * ompi_ddt_basicDatatypes[type]->size;
+            }
+            pos_desc++;  /* advance to the next data */
+        }
+    }
+ end_loop:
+    if( lastLength != 0 ) {
+        OMPI_DDT_SAFEGUARD_POINTER( pDestBuf + lastDisp, lastLength,
+                                    pDestBuf, pData, count );
+        MEMCPY( pDestBuf + lastDisp, pSrcBuf + lastDisp, lastLength );
+    }
+    /* cleanup the stack */
+    return 0;
+}
+
+#if defined(USELESS_CODE)
+int ompi_ddt_copy_content_same_ddt2( dt_desc_t* pData, int count,
+                                     char* pDestBuf, char* pSrcBuf )
 {
     dt_stack_t* pStack;   /* pointer to the position on the stack */
     int pos_desc;         /* actual position in the description of the derived datatype */
@@ -607,10 +742,14 @@ int ompi_ddt_copy_content_same_ddt( dt_desc_t* pData, int count,
     if( (pData->flags & DT_FLAG_CONTIGUOUS) == DT_FLAG_CONTIGUOUS ) {
         int extent = (pData->ub - pData->lb);
         if( pData->size == extent ) {  /* all contiguous */
+            OMPI_DDT_SAFEGUARD_POINTER( pDestBuf, pData->size * count,
+                                        pDestBuf, pData, count );
             MEMCPY( pDestBuf, pSrcBuf, pData->size * count );
         } else {
             for( pos_desc = 0; pos_desc < count; pos_desc++ ) {
-                memcpy( pDestBuf, pSrcBuf, pData->size );
+                OMPI_DDT_SAFEGUARD_POINTER( pDestBuf, pData->size,
+                                            pDestBuf, pData, count );
+                MEMCPY( pDestBuf, pSrcBuf, pData->size );
                 pDestBuf += extent;
                 pSrcBuf += extent;
             }
@@ -618,7 +757,7 @@ int ompi_ddt_copy_content_same_ddt( dt_desc_t* pData, int count,
         return 0;
     }
 
-    pStack = alloca( sizeof(pStack) * (pData->btypes[DT_LOOP]+1) );
+    pStack = alloca( sizeof(pStack) * (pData->btypes[DT_LOOP] + 1) );
     pStack->count = count;
     pStack->index = -1;
     pStack->disp = 0;
@@ -667,15 +806,21 @@ int ompi_ddt_copy_content_same_ddt( dt_desc_t* pData, int count,
         if( (lastDisp + lastLength) == (pStack->disp + pElems[pos_desc].disp) ) {
             lastLength += pElems[pos_desc].count * ompi_ddt_basicDatatypes[type]->size;
         } else {
+            OMPI_DDT_SAFEGUARD_POINTER( pDestBuf + lastDisp, lastLength,
+                                        pDestBuf, pData, count );
             MEMCPY( pDestBuf + lastDisp, pSrcBuf + lastDisp, lastLength );
             lastDisp = pStack->disp + pElems[pos_desc].disp;
             lastLength = pElems[pos_desc].count * ompi_ddt_basicDatatypes[type]->size;
         }
         pos_desc++;  /* advance to the next data */
     }
-  end_loop:
-    if( lastLength != 0 )
+ end_loop:
+    if( lastLength != 0 ) {
+        OMPI_DDT_SAFEGUARD_POINTER( pDestBuf + lastDisp, lastLength,
+                                    pDestBuf, pData, count );
         MEMCPY( pDestBuf + lastDisp, pSrcBuf + lastDisp, lastLength );
+    }
     /* cleanup the stack */
     return 0;
 }
+#endif  /* USELESS_CODE */

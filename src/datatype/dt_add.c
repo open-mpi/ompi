@@ -82,7 +82,7 @@ int ompi_ddt_add( dt_desc_t* pdtBase, dt_desc_t* pdtAdd,
       pdtBase->desc.used++;
       pdtBase->btypes[pdtAdd->id] += count;
       pLast->flags  = pdtAdd->flags & ~(DT_FLAG_FOREVER | DT_FLAG_COMMITED | DT_FLAG_CONTIGUOUS);
-      if( extent == pdtAdd->size )
+      if( extent == (int)pdtAdd->size )
          pLast->flags |= DT_FLAG_CONTIGUOUS;
    } else {
       /* now we add a complex datatype */
@@ -91,9 +91,9 @@ int ompi_ddt_add( dt_desc_t* pdtBase, dt_desc_t* pdtAdd,
       }
       /* keep trace of the total number of basic datatypes in the datatype definition */
       pdtBase->btypes[DT_LOOP] += pdtAdd->btypes[DT_LOOP];
-      for( i = 3; i < DT_MAX_PREDEFINED; i++ )
-         if( pdtAdd->btypes[i] != 0 ) pdtBase->btypes[i] += (count * pdtAdd->btypes[i]);
       pdtBase->btypes[DT_END_LOOP] += pdtAdd->btypes[DT_END_LOOP];
+      for( i = 4; i < DT_MAX_PREDEFINED; i++ )
+         if( pdtAdd->btypes[i] != 0 ) pdtBase->btypes[i] += (count * pdtAdd->btypes[i]);
 
       /* if the extent of the datatype if the same as the extent of the loop
        * description of the datatype then we simply have to update the main loop.
@@ -118,7 +118,7 @@ int ompi_ddt_add( dt_desc_t* pdtBase, dt_desc_t* pdtAdd,
          pLast->extent = pdtAdd->desc.desc[i].extent;
          pLast->disp   = pdtAdd->desc.desc[i].disp;
          if( pdtAdd->desc.desc[i].type != DT_LOOP )
-            pLast->disp += disp/*  + pdtAdd->lb */;
+            pLast->disp += disp /* + pdtAdd->lb */;
          pLast++;
       }
       pdtBase->desc.used += pdtAdd->desc.used;
@@ -183,7 +183,7 @@ int ompi_ddt_add( dt_desc_t* pdtBase, dt_desc_t* pdtAdd,
     * The only way for the data to be contiguous is to have the true extent equal to his size.
     * In other words to avoid having internal gaps between elements.
     */
-   if( (pdtBase->size != (pdtBase->true_ub - pdtBase->true_lb)) ||
+   if( ((int)pdtBase->size != (pdtBase->true_ub - pdtBase->true_lb)) ||
        !(pdtBase->flags & DT_FLAG_CONTIGUOUS) || !(pdtAdd->flags & DT_FLAG_CONTIGUOUS) )
       UNSET_CONTIGUOUS_FLAG(pdtBase->flags);
 

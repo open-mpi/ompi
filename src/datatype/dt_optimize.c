@@ -31,12 +31,6 @@ do { \
   nbElems++; \
 } while(0)
 
-static inline long GET_LOOP_DISP( dt_elem_desc_t* _pElem )
-{
-   while( _pElem->type == DT_LOOP ) ++_pElem;
-   return _pElem->disp;
-}
-
 int ompi_ddt_optimize_short( dt_desc_t* pData, int count, 
 			     dt_type_desc_t* pTypeDesc )
 {
@@ -64,42 +58,45 @@ int ompi_ddt_optimize_short( dt_desc_t* pData, int count,
    
     while( stack_pos >= 0 ) {
         if( pData->desc.desc[pos_desc].type == DT_END_LOOP ) { /* end of the current loop */
-            dt_elem_desc_t* pStartLoop;
+            dt_loop_desc_t* pStartLoop;
             if( lastLength != 0 ) {
                 SAVE_DESC( pElemDesc, lastDisp, lastLength );
                 lastDisp += lastLength;
                 lastLength = 0;
             }
-            pStartLoop = &(pTypeDesc->desc[pStack->index - 1]);
+            pStartLoop = (dt_loop_desc_t*)&(pTypeDesc->desc[pStack->index - 1]);
             SAVE_ELEM( pElemDesc, DT_END_LOOP, pData->desc.desc[pos_desc].flags,
                        nbElems - pStack->index + 1,  /* # of elems in this loop */
                        pData->desc.desc[pos_desc].disp,
                        pData->desc.desc[pos_desc].extent );
             pStack--;  /* go down one position on the stack */
             if( --stack_pos >= 0 ) {  /* still something to do ? */
-                pStartLoop->disp = (pElemDesc - 1)->count;
+                pStartLoop->loops = (pElemDesc - 1)->count;
                 totalDisp = pStack->disp;  /* update the displacement position */
             }
             pos_desc++;
             continue;
         }
         if( pData->desc.desc[pos_desc].type == DT_LOOP ) {
-            dt_elem_desc_t* pEndLoop = &(pData->desc.desc[pos_desc + pData->desc.desc[pos_desc].disp]);
-            long loop_disp = GET_LOOP_DISP( &(pData->desc.desc[pos_desc]) );
-            if( pData->desc.desc[pos_desc].flags & DT_FLAG_CONTIGUOUS ) {
+            dt_loop_desc_t* loop = (dt_loop_desc_t*)&(pData->desc.desc[pos_desc]);
+            dt_endloop_desc_t* end_loop = (dt_endloop_desc_t*)&(pData->desc.desc[pos_desc + loop->items + 1]);
+            int index = GET_FIRST_NON_LOOP( &(pData->desc.desc[pos_desc]) );
+            long loop_disp = pData->desc.desc[pos_desc + index].disp;
+
+            if( loop->flags & DT_FLAG_CONTIGUOUS ) {
                 /* the loop is contiguous or composed by contiguous elements with a gap */
-                if( pData->desc.desc[pos_desc].extent == pEndLoop->extent ) {
+                if( loop->extent == end_loop->size ) {
                     /* the whole loop is contiguous */
                     if( (lastDisp + lastLength) != (totalDisp + loop_disp) ) {
                         SAVE_DESC( pElemDesc, lastDisp, lastLength );
                         lastLength = 0;
                         lastDisp = totalDisp + loop_disp;
                     }
-                    lastLength += pData->desc.desc[pos_desc].count * pEndLoop->extent;
+                    lastLength += loop->loops * end_loop->size;
                 } else {
-                    int counter = pData->desc.desc[pos_desc].count;
+                    int counter = loop->loops;
                     if( (lastDisp + lastLength) == (totalDisp + loop_disp) ) {
-                        lastLength += pEndLoop->extent;
+                        lastLength += end_loop->size;
                         counter--;
                     }
                     if( lastLength != 0 ) {
@@ -112,9 +109,9 @@ int ompi_ddt_optimize_short( dt_desc_t* pData, int count,
                      */
                     SAVE_ELEM( pElemDesc, DT_LOOP, pData->desc.desc[pos_desc].flags,
                                counter, (long)2, pData->desc.desc[pos_desc].extent );
-                    SAVE_DESC( pElemDesc, loop_disp, pEndLoop->extent );
-                    SAVE_ELEM( pElemDesc, DT_END_LOOP, pEndLoop->flags,
-                               2, pEndLoop->disp, pEndLoop->extent );
+                    SAVE_DESC( pElemDesc, loop_disp, end_loop->size );
+                    SAVE_ELEM( pElemDesc, DT_END_LOOP, end_loop->flags,
+                               2, end_loop->total_extent, end_loop->size );
                 }
                 pos_desc += pData->desc.desc[pos_desc].disp + 1;
                 changes++;
@@ -283,7 +280,7 @@ static int ompi_ddt_unroll( dt_desc_t* pData, int count )
 int ompi_ddt_commit( dt_desc_t** data )
 {
     dt_desc_t* pData = (dt_desc_t*)*data;
-    dt_elem_desc_t* pLast = &(pData->desc.desc[pData->desc.used]);
+    dt_endloop_desc_t* pLast = (dt_endloop_desc_t*)&(pData->desc.desc[pData->desc.used]);
 
     if( pData->flags & DT_FLAG_COMMITED ) return OMPI_SUCCESS;
     pData->flags |= DT_FLAG_COMMITED;
@@ -291,24 +288,24 @@ int ompi_ddt_commit( dt_desc_t** data )
     /* let's add a fake element at the end just to avoid useless comparaisons
      * in pack/unpack functions.
      */
-    pLast->type   = DT_END_LOOP;
-    pLast->flags  = 0;
-    pLast->count  = pData->desc.used;
-    pLast->disp   = pData->ub - pData->lb;
-    pLast->extent = pData->size;
+    pLast->type         = DT_END_LOOP;
+    pLast->flags        = 0;
+    pLast->items        = pData->desc.used;
+    pLast->total_extent = pData->ub - pData->lb;
+    pLast->size         = pData->size;
 
     /* If the data is contiguous is useless to generate an optimized version. */
-    if( pData->size != (pData->true_ub - pData->true_lb) ) {
+    if( (long)pData->size != (pData->true_ub - pData->true_lb) ) {
         (void)ompi_ddt_optimize_short( pData, 1, &(pData->opt_desc) );
         /* let's add a fake element at the end just to avoid useless comparaisons
          * in pack/unpack functions.
          */
-        pLast = &(pData->opt_desc.desc[pData->opt_desc.used]);
-        pLast->type   = DT_END_LOOP;
-        pLast->flags  = 0;
-        pLast->count  = pData->opt_desc.used;
-        pLast->disp   = pData->ub - pData->lb;
-        pLast->extent = pData->size;
+        pLast = (dt_endloop_desc_t*)&(pData->opt_desc.desc[pData->opt_desc.used]);
+        pLast->type         = DT_END_LOOP;
+        pLast->flags        = 0;
+        pLast->items        = pData->opt_desc.used;
+        pLast->total_extent = pData->ub - pData->lb;
+        pLast->size         = pData->size;
     }
     return OMPI_SUCCESS;
 }

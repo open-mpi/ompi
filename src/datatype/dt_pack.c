@@ -23,7 +23,6 @@ int ompi_convertor_pack_general( ompi_convertor_t* pConvertor,
     unsigned int advance; /* number of bytes that we should advance the buffer */
     int rc;
     long disp_desc = 0;   /* compute displacement for truncated data */
-    long disp;            /* displacement at the beging of the last loop */
     int bConverted = 0;   /* number of bytes converted this time */
     dt_desc_t *pData = pConvertor->pDesc;
     dt_elem_desc_t* pElem;
@@ -34,40 +33,29 @@ int ompi_convertor_pack_general( ompi_convertor_t* pConvertor,
 
     DUMP( "convertor_decode( %p, {%p, %d}, %d )\n", pConvertor,
           iov[0].iov_base, iov[0].iov_len, *out_size );
-    pStack = pConvertor->pStack + pConvertor->stack_pos;
-    pos_desc  = pStack->index;
-    disp = 0;
 
     if( pData->opt_desc.desc != NULL )    pElem = pData->opt_desc.desc;
     else                                  pElem = pData->desc.desc;
 
-    if( pos_desc == -1 ) {
-        pos_desc = 0;
-        count_desc = pElem[0].count;
-        disp_desc = pElem[0].disp;
-    } else {
-        count_desc = pStack->count;
-        if( pElem[pos_desc].type != DT_LOOP ) {
-            pConvertor->stack_pos--;
-            pStack--;
-            disp = pStack->disp;
-            disp_desc = ( pElem[pos_desc].disp +
-                          (pElem[pos_desc].count - count_desc) * pElem[pos_desc].extent);
-        }
-    }
+    pStack = pConvertor->pStack + pConvertor->stack_pos;
+    pos_desc   = pStack->index;
+    disp_desc  = pStack->disp;
+    count_desc = pStack->count;
+    pStack--;
+    pConvertor->stack_pos--;
+
     DUMP_STACK( pConvertor->pStack, pConvertor->stack_pos, pElem, "starting" );
     DUMP( "remember position on stack %d last_elem at %d\n", pConvertor->stack_pos, pos_desc );
     DUMP( "top stack info {index = %d, count = %d}\n", 
           pStack->index, pStack->count );
 
- next_loop:
     while( pos_desc >= 0 ) {
 	if( pElem[pos_desc].type == DT_END_LOOP ) { /* end of the current loop */
 	    if( --(pStack->count) == 0 ) { /* end of loop */
+		if( pConvertor->stack_pos == 0 )
+		    goto complete_loop;  /* completed */
 		pConvertor->stack_pos--;
 		pStack--;
-		if( pConvertor->stack_pos == -1 )
-		    return 1;  /* completed */
 	    }
 	    pos_desc = pStack->index;
 	    if( pos_desc == -1 )
@@ -75,42 +63,37 @@ int ompi_convertor_pack_general( ompi_convertor_t* pConvertor,
 	    else
 		pStack->disp += pElem[pos_desc].extent;
 	    pos_desc++;
-	    disp = pStack->disp;
 	    count_desc = pElem[pos_desc].count;
 	    disp_desc = pElem[pos_desc].disp;
-	    goto next_loop;
+	    continue;
 	}
 	if( pElem[pos_desc].type == DT_LOOP ) {
 	    do {
 		PUSH_STACK( pStack, pConvertor->stack_pos,
 			    pos_desc, pElem[pos_desc].count,
-			    disp, pos_desc + pElem[pos_desc].disp + 1);
+			    pStack->disp, pos_desc + pElem[pos_desc].disp + 1);
 		pos_desc++;
 	    } while( pElem[pos_desc].type == DT_LOOP ); /* let's start another loop */
 	    DUMP_STACK( pConvertor->pStack, pConvertor->stack_pos, pElem, "advance loops" );
 	    /* update the current state */
 	    count_desc = pElem[pos_desc].count;
 	    disp_desc = pElem[pos_desc].disp;
-	    goto next_loop;
+	    continue;
 	}
 	while( pElem[pos_desc].flags & DT_FLAG_DATA ) {
 	    /* now here we have a basic datatype */
 	    type = pElem[pos_desc].type;
 	    rc = pConvertor->pFunctions[type]( count_desc,
-					       pOutput + disp + disp_desc, oCount, pElem[pos_desc].extent,
+					       pOutput + pStack->disp + disp_desc, oCount, pElem[pos_desc].extent,
 					       pInput, iCount, pElem[pos_desc].extent,
 					       &advance );
-	    if( rc <= 0 ) {
-		printf( "trash in the input buffer\n" );
-		return -1;
-	    }
 	    iCount -= advance;      /* decrease the available space in the buffer */
 	    pInput += advance;      /* increase the pointer to the buffer */
 	    bConverted += advance;
 	    if( rc != count_desc ) {
 		/* not all data has been converted. Keep the state */
 		count_desc -= rc;
-		disp += rc * pElem[pos_desc].extent;
+		disp_desc += rc * pElem[pos_desc].extent;
 		if( iCount != 0 )
 		    printf( "there is still room in the input buffer %d bytes\n", iCount );
 		goto complete_loop;
@@ -133,7 +116,7 @@ int ompi_convertor_pack_general( ompi_convertor_t* pConvertor,
 
     /* I complete an element, next step I should go to the next one */
     PUSH_STACK( pStack, pConvertor->stack_pos, pos_desc, count_desc,
-		disp, pos_desc );
+		disp_desc, pos_desc );
 
     return (pConvertor->bConverted == (pData->size * pConvertor->count));
 }
@@ -148,12 +131,12 @@ int ompi_convertor_pack_homogeneous_with_memcpy( ompi_convertor_t* pConv,
 						 int* freeAfter )
 {
     dt_stack_t* pStack;   /* pointer to the position on the stack */
-    int pos_desc;         /* actual position in the description of the derived datatype */
+    u_int32_t pos_desc;   /* actual position in the description of the derived datatype */
     int type;             /* type at current position */
     int i;                /* index for basic elements with extent */
     int bConverted = 0;   /* number of bytes converted/moved this time */
     long lastDisp = 0, last_count = 0;
-    int space = iov[0].iov_len, last_blength = 0;
+    u_int32_t space = iov[0].iov_len, last_blength = 0;
     char* pDestBuf;
     dt_desc_t* pData = pConv->pDesc;
     dt_elem_desc_t* pElems;
@@ -161,20 +144,22 @@ int ompi_convertor_pack_homogeneous_with_memcpy( ompi_convertor_t* pConv,
     pDestBuf = iov[0].iov_base;
    
     if( pData->flags & DT_FLAG_CONTIGUOUS ) {
-	long extent = pData->ub - pData->lb;
+	long true_extent = pData->true_ub - pData->true_lb;
 	char* pSrcBuf = pConv->pBaseBuf + pData->true_lb + pConv->bConverted;
       
 	type = pConv->count * pData->size;
-	if( pData->size == extent /* true extent at this point */ ) {
+	if( (long)pData->size == true_extent ) {
 	    /* we can do it with just one memcpy */
+            OMPI_DDT_SAFEGUARD_POINTER( pSrcBuf, iov[0].iov_len, pConv->pBaseBuf, pData, pConv->count );
 	    MEMCPY( pDestBuf, pSrcBuf, iov[0].iov_len );
 	    space -= iov[0].iov_len;
 	    bConverted += iov[0].iov_len;
 	} else {
 	    for( pos_desc = 0; pos_desc < pConv->count; pos_desc++ ) {
+                OMPI_DDT_SAFEGUARD_POINTER( pSrcBuf, pData->size, pConv->pBaseBuf, pData, pConv->count );
 		MEMCPY( pDestBuf, pSrcBuf, pData->size );
 		space -= pData->size;
-		pSrcBuf += extent;
+		pSrcBuf += true_extent;
 		pDestBuf += pData->size;
 	    }
 	    bConverted += type;
@@ -202,12 +187,13 @@ int ompi_convertor_pack_homogeneous_with_memcpy( ompi_convertor_t* pConv,
     while( pos_desc >= 0 ) {
 	if( pElems[pos_desc].type == DT_END_LOOP ) { /* end of the current loop */
 	    if( --(pStack->count) == 0 ) { /* end of loop */
-		pStack--;
-		if( --(pConv->stack_pos) == -1 ) {  /* finish everything */
+		if( pConv->stack_pos == 0 ) {  /* finish everything */
 		    last_count = 0;
 		    pos_desc = -1;
 		    goto end_loop;
 		}
+		pStack--;
+                pConv->stack_pos--;
 	    } else {
 		pos_desc = pStack->index;  /* DT_LOOP index */
 		if( pos_desc == -1 )
@@ -230,6 +216,8 @@ int ompi_convertor_pack_homogeneous_with_memcpy( ompi_convertor_t* pConv,
 		    last_count = space / pLast->extent;
 		}
 		for( i = 0; i < last_count; i++ ) {
+                    OMPI_DDT_SAFEGUARD_POINTER( pConv->pBaseBuf + lastDisp, pLast->extent,
+                                                pConv->pBaseBuf, pData, pConv->count );
 		    MEMCPY( pDestBuf, pConv->pBaseBuf + lastDisp, pLast->extent );
 		    pDestBuf += pLast->extent;  /* size of the contiguous data */
 		    lastDisp += pElems[pos_desc].extent;
@@ -262,6 +250,8 @@ int ompi_convertor_pack_homogeneous_with_memcpy( ompi_convertor_t* pConv,
 		last_blength -= last_count;
 		goto end_loop;  /* or break whatever but go out of this while */
 	    }
+            OMPI_DDT_SAFEGUARD_POINTER( pConv->pBaseBuf + lastDisp, last_count,
+                                        pConv->pBaseBuf, pData, pConv->count );
 	    MEMCPY( pDestBuf, pConv->pBaseBuf + lastDisp, last_count );
 	    bConverted += last_blength;
 	    space -= last_blength;
@@ -274,6 +264,8 @@ int ompi_convertor_pack_homogeneous_with_memcpy( ompi_convertor_t* pConv,
     last_count = 0;  /* complete the data */
  end_loop:
     if( last_count != 0 ) {  /* save the internal state */
+        OMPI_DDT_SAFEGUARD_POINTER( pConv->pBaseBuf + lastDisp, last_count,
+                                    pConv->pBaseBuf, pData, pConv->count );
         MEMCPY( pDestBuf, pConv->pBaseBuf + lastDisp, last_count );
         bConverted += last_count;
         lastDisp += last_count;
@@ -304,14 +296,14 @@ int ompi_convertor_pack_homogeneous( ompi_convertor_t* pConv,
 				     unsigned int* max_data,
 				     int* freeAfter )
 {
-    dt_stack_t* pStack;   /* pointer to the position on the stack */
-    int pos_desc;         /* actual position in the description of the derived datatype */
-    int i;                /* index for basic elements with extent */
-    int iov_pos = 0;      /* index in the iovec that we put data inside */
-    int bConverted = 0;   /* number of bytes converted/moved this time */
-    int space_on_iovec;   /* amount of free space on the current iovec */
+    dt_stack_t* pStack;       /* pointer to the position on the stack */
+    int pos_desc;             /* actual position in the description of the derived datatype */
+    int i;                    /* index for basic elements with extent */
+    u_int32_t iov_pos = 0;    /* index in the iovec that we put data inside */
+    int bConverted = 0;       /* number of bytes converted/moved this time */
+    u_int32_t space_on_iovec; /* amount of free space on the current iovec */
     long lastDisp = 0, last_count = 0;
-    int space = *max_data, last_blength = 0, saveLength;
+    u_int32_t space = *max_data, last_blength = 0, saveLength;
     char *pDestBuf, *savePos;
     dt_desc_t* pData = pConv->pDesc;
     dt_elem_desc_t* pElems;
@@ -342,11 +334,10 @@ int ompi_convertor_pack_homogeneous( ompi_convertor_t* pConv,
 
  next_loop:
     while( pos_desc >= 0 ) {
-	if( pElems[pos_desc].type == DT_END_LOOP ) { /* end of the current loop */
+        if( pElems[pos_desc].type == DT_END_LOOP ) { /* end of the current loop */
 	    if( --(pStack->count) == 0 ) { /* end of loop */
-		pStack--;
-		if( --(pConv->stack_pos) == -1 ) {  /* finish everything */
-		    if( saveLength != 0 ) { 
+		if( pConv->stack_pos == 0 ) {  /* finish everything */
+		    if( saveLength != 0 ) {
 			/* there is still a chunk of memory to be handled, but here we dont allocate more
 			 * memory. We just copy what we can in the right place and update the values to be
 			 * saved on the next round.
@@ -363,6 +354,8 @@ int ompi_convertor_pack_homogeneous( ompi_convertor_t* pConv,
 				/* let's go out of here */
 			    } else {
 				if( space_on_iovec > saveLength ) {
+                                    OMPI_DDT_SAFEGUARD_POINTER( savePos, saveLength,
+                                                                pConv->pBaseBuf, pData, pConv->count );
 				    MEMCPY( pDestBuf, savePos, saveLength );
 				    savePos += saveLength;
 				    pDestBuf += saveLength;
@@ -370,6 +363,8 @@ int ompi_convertor_pack_homogeneous( ompi_convertor_t* pConv,
 				    space_on_iovec -= saveLength;
 				    saveLength = 0;
 				} else {
+                                    OMPI_DDT_SAFEGUARD_POINTER( savePos, space_on_iovec,
+                                                                pConv->pBaseBuf, pData, pConv->count );
 				    MEMCPY( pDestBuf, savePos, space_on_iovec );
 				    savePos += space_on_iovec;
 				    pDestBuf += space_on_iovec;
@@ -385,6 +380,8 @@ int ompi_convertor_pack_homogeneous( ompi_convertor_t* pConv,
 		    pos_desc = -1;
 		    goto end_loop;
 		}
+                pConv->stack_pos--;
+                pStack--;
 	    } else {
 		pos_desc = pStack->index;  /* DT_LOOP index */
 		if( pos_desc == -1 )
@@ -393,13 +390,11 @@ int ompi_convertor_pack_homogeneous( ompi_convertor_t* pConv,
 		    pStack->disp += pElems[pos_desc].extent;
 	    }
 	    pos_desc++;  /* go to the next element */
-	    last_count = pElems[pos_desc].count;
-	    last_blength = last_count;
-	    lastDisp = pStack->disp + pElems[pos_desc].disp;
 	    goto next_loop;
 	}
 	while( pElems[pos_desc].type == DT_LOOP ) {
 	    int stop_in_loop = 0;
+
 	    /* If the loop container is contiguous then we can do some
 	     * optimizations.
 	     */
@@ -419,6 +414,8 @@ int ompi_convertor_pack_homogeneous( ompi_convertor_t* pConv,
 		}
 		/* Now let's do it */
 		for( i = 0; i < last_count; i++ ) {
+                    OMPI_DDT_SAFEGUARD_POINTER( pConv->pBaseBuf + lastDisp, pLast->extent,
+                                                pConv->pBaseBuf, pData, pConv->count );
 		    MEMCPY( pDestBuf, pConv->pBaseBuf + lastDisp, pLast->extent );
 		    lastDisp += pElems[pos_desc].extent;
 		    pDestBuf += pLast->extent;
@@ -442,11 +439,12 @@ int ompi_convertor_pack_homogeneous( ompi_convertor_t* pConv,
 	    PUSH_STACK( pStack, pConv->stack_pos, pos_desc, last_count,
 			pStack->disp, pos_desc + pElems[pos_desc].disp );
 	    pos_desc++;
-	    last_count = pElems[pos_desc].count;
-	    lastDisp = pStack->disp + pElems[pos_desc].disp;
-	}
+        }
 	/* now here we have a basic datatype */
 	while( pElems[pos_desc].flags & DT_FLAG_DATA ) {
+	    lastDisp = pStack->disp + pElems[pos_desc].disp;
+	    last_count = pElems[pos_desc].count;
+
 	    /* do we have enough space in the buffer ? */
 	    last_blength = last_count * ompi_ddt_basicDatatypes[pElems[pos_desc].type]->size;
 
@@ -492,6 +490,8 @@ int ompi_convertor_pack_homogeneous( ompi_convertor_t* pConv,
 		    }
 		    /* In all the others cases we simply copy as much data as possible */
 		    if( space_on_iovec > saveLength ) {
+                        OMPI_DDT_SAFEGUARD_POINTER( savePos, saveLength,
+                                                    pConv->pBaseBuf, pData, pConv->count );
 			MEMCPY( pDestBuf, savePos, saveLength );
 			pDestBuf += saveLength;
 			/* update the pack counters values */
@@ -502,6 +502,8 @@ int ompi_convertor_pack_homogeneous( ompi_convertor_t* pConv,
 			saveLength = last_blength;
 			break;
 		    } else {
+                        OMPI_DDT_SAFEGUARD_POINTER( savePos, space_on_iovec,
+                                                    pConv->pBaseBuf, pData, pConv->count );
 			MEMCPY( pDestBuf, savePos, space_on_iovec );
 			/* let's prepare for the next round. As I keep trace of the amount that I still
 			 * have to pack, the next time when I came here, I'll try to append something.
@@ -532,8 +534,6 @@ int ompi_convertor_pack_homogeneous( ompi_convertor_t* pConv,
 	    if( iov_pos == (*out_size) ) goto end_loop;
 
 	    pos_desc++;  /* advance to the next data */
-	    lastDisp = pStack->disp + pElems[pos_desc].disp;
-	    last_count = pElems[pos_desc].count;
 	}
     }
     last_count = 0;  /* complete the data */
@@ -564,15 +564,17 @@ int ompi_convertor_pack_homogeneous_contig( ompi_convertor_t* pConv,
 {
     dt_desc_t* pData = pConv->pDesc;
     char* pSrc = pConv->pBaseBuf + pData->true_lb;
+    dt_stack_t* pStack = &(pConv->pStack[pConv->stack_pos]);
     char* pDest;
     size_t length = pData->size * pConv->count;
     long extent;
-    unsigned int max_allowed = *max_data;
-    int i, index;
+    u_int32_t max_allowed = *max_data;
+    u_int32_t i, index;
 
     i = pConv->bConverted / pData->size;  /* how many we already pack */
     extent = pData->ub - pData->lb;
-    pSrc += i * extent;  /* the real starting point */
+    pSrc = pConv->pBaseBuf + pStack->disp + pStack->count;  /* actual starting point for the conversion */
+    
     *freeAfter = 0;
     /* There are some optimizations that can be done if the upper level
      * does not provide a buffer.
@@ -587,6 +589,7 @@ int ompi_convertor_pack_homogeneous_contig( ompi_convertor_t* pConv,
 		iov[index].iov_base = pSrc;
 		iov[index].iov_len = pData->size;
 		pSrc += extent;
+                pConv->bConverted += pData->size;
 	    }
 	    *out_size = index;
 	    *max_data = index * pData->size;
@@ -619,7 +622,7 @@ int ompi_convertor_pack_homogeneous_contig( ompi_convertor_t* pConv,
 	}
     }
 
-    if( pData->size == extent ) {  /* that really contiguous */
+    if( (long)pData->size == extent ) {  /* that really contiguous */
 	if( iov[0].iov_base == NULL ) {
 	    iov[0].iov_base = pSrc; /* + pConv->bConverted; */
 	    if( (pConv->bConverted + iov[0].iov_len) > length )
@@ -627,11 +630,13 @@ int ompi_convertor_pack_homogeneous_contig( ompi_convertor_t* pConv,
 	} else {
 	    /* contiguous data just memcpy the smallest data in the user buffer */
 	    iov[0].iov_len = IMIN( iov[0].iov_len, length );
+            OMPI_DDT_SAFEGUARD_POINTER( pSrc, iov[0].iov_len,
+                                        pConv->pBaseBuf, pData, pConv->count );
 	    MEMCPY( iov[0].iov_base, pSrc, iov[0].iov_len);
 	}
 	*max_data = iov[0].iov_len;
     } else {
-	int done, counter;
+	u_int32_t done, counter;
 
 	if( iov[0].iov_base == NULL ) {
 	    iov[0].iov_base = pConv->memAlloc_fn( &(iov[0].iov_len) );
@@ -646,6 +651,7 @@ int ompi_convertor_pack_homogeneous_contig( ompi_convertor_t* pConv,
 	pSrc += done;
 	if( done != 0 ) {  /* still some data to copy from the last time */
 	    done = pData->size - done;
+            OMPI_DDT_SAFEGUARD_POINTER( pSrc, done, pConv->pBaseBuf, pData, pConv->count );
 	    MEMCPY( pDest, pSrc, done );
 	    pDest += done;
 	    max_allowed -= done;
@@ -655,6 +661,7 @@ int ompi_convertor_pack_homogeneous_contig( ompi_convertor_t* pConv,
 	counter = max_allowed / pData->size;
 	if( counter > pConv->count ) counter = pConv->count;
 	for( i = 0; i < counter; i++ ) {
+            OMPI_DDT_SAFEGUARD_POINTER( pSrc, pData->size, pConv->pBaseBuf, pData, pConv->count );
 	    MEMCPY( pDest, pSrc, pData->size );
 	    pDest += pData->size;
 	    pSrc += extent;
@@ -698,7 +705,7 @@ int ompi_convertor_pack( ompi_convertor_t* pConv,
 			 int* freeAfter )
 {
     dt_desc_t* pData = pConv->pDesc;
-    int done = 0, index = 0;
+    u_int32_t done = 0, index = 0;
 
     *freeAfter = 0;  /* nothing to free yet */
     /* TODO should use the remote size */
@@ -772,13 +779,13 @@ int ompi_convertor_init_for_send( ompi_convertor_t* pConv,
 	pConv->fAdvance = ompi_convertor_pack_homogeneous_contig;
     } else {
 	/* TODO handle the sender convert case */
-	pConv->fAdvance = ompi_convertor_pack_general;
 	pConv->fAdvance = ompi_convertor_pack_homogeneous_with_memcpy;
 	pConv->fAdvance = ompi_convertor_pack_homogeneous;
 #if defined(ONE_STEP)
 	pConv->fAdvance = ompi_convertor_pack_homogeneous_with_memcpy;
 #endif  /* ONE_STEP */
     }
+    pConv->fAdvance = ompi_convertor_pack_general;
     if( starting_pos != 0 ) {
 	return ompi_convertor_create_stack_with_pos( pConv, starting_pos, ompi_ddt_local_sizes );
     }
