@@ -34,6 +34,8 @@
 #include "mca/ns/base/base.h"
 #include "runtime/runtime.h"
 
+extern char **environ;
+
 static int
 internal_spawn_procs(mca_pcm_bproc_module_t *me,
                      mca_ns_base_jobid_t jobid, 
@@ -69,6 +71,8 @@ mca_pcm_bproc_spawn_procs(struct mca_pcm_base_module_1_0_0_t* me_super,
     mca_ns_base_vpid_t base_vpid;
     char *base_proc_name_string, *tmp;
     ompi_process_name_t *base_proc_name;
+    char **env;
+    int envc;
 
     /* figure out how many procs we have been allocated */
     for (sched_item = ompi_list_get_first(schedlist) ;
@@ -131,29 +135,37 @@ mca_pcm_bproc_spawn_procs(struct mca_pcm_base_module_1_0_0_t* me_super,
          sched_item = ompi_list_get_next(sched_item)) {
         sched = (ompi_rte_node_schedule_t*) sched_item;
 
+
+        env = ompi_argv_copy(environ);
+        envc = ompi_argv_count(env);
+        printf("pcm: bproc: environ size: %d\n", envc);
+        ompi_argv_insert(&env, envc, sched->env);
+        envc = ompi_argv_count(env);
+        printf("pcm: bproc: environ + sched->env size: %d\n", envc);
+
         /* BWB - this has to go ...  need to figure out env in bproc */
         asprintf(&tmp, "LD_LIBRARY_PATH=%s", getenv("LD_LIBRARY_PATH"));
-        ompi_argv_append(&(sched->envc), &(sched->env), tmp);
+        ompi_argv_append(&envc, &env, tmp);
         free(tmp);
         /* add the base process name & num procs */
         asprintf(&tmp, "OMPI_MCA_pcmclient_bproc_base_name=%s", base_proc_name_string);
-        ompi_argv_append(&(sched->envc), &(sched->env), tmp);
+        ompi_argv_append(&envc, &env, tmp);
         free(tmp);
         asprintf(&tmp, "OMPI_MCA_pcmclient_bproc_num_procs=%d", num_procs);
-        ompi_argv_append(&(sched->envc), &(sched->env), tmp);
+        ompi_argv_append(&envc, &env, tmp);
         free(tmp);
-        asprintf(&tmp, "BPROC_RANK=XXXXXXXX");
-        ompi_argv_append(&(sched->envc), &(sched->env), tmp);
+        asprintf(&tmp, "BPROC_RANK=XXXXXXX");
+        ompi_argv_append(&envc, &env, tmp);
         free(tmp);
 
         printf("pcm: bproc: spawning procs: %s %s\n", sched->argv[0], base_proc_name_string);
         ret = internal_spawn_procs(me, jobid, base_vpid,
                                    sched->argv[0], sched->argv,
-                                   &(sched->env), &(sched->envc),
+                                   &env, &envc,
                                    sched->nodelist, io, iolen, &offset);
         /* remove the base process name */
 #if 0
-        ompi_argv_shrink(&(sched->envc), &(sched->env), sched->envc - 3, 3);
+        ompi_argv_shrink(&envc, &env, sched->envc - 3, 3);
 #endif
         printf("pcm: bproc: internal_spawn_procs returned %d\n", ret);
 
