@@ -340,7 +340,7 @@ int ompi_comm_create ( ompi_communicator_t *comm, ompi_group_t *group,
 ** Counterpart to MPI_Comm_split. To be used within OMPI (e.g. MPI_Cart_sub).
 */
 int ompi_comm_split ( ompi_communicator_t* comm, int color, int key, 
-                     ompi_communicator_t **newcomm )
+                     ompi_communicator_t **newcomm, bool pass_on_topo )
 {
     int myinfo[2];
     int size, my_size;
@@ -508,8 +508,10 @@ int ompi_comm_split ( ompi_communicator_t* comm, int color, int key,
                          rprocs,             /* remote_procs */
                          NULL,               /* attrs */
                          comm->error_handler,/* error handler */
-                         (mca_base_component_t *)comm->c_topo_component  /* topo component */
-                         );
+                         (pass_on_topo)?  
+                            (mca_base_component_t *)comm->c_topo_component:
+                            NULL);                /* topo component */
+
     if ( OMPI_SUCCESS != rc  ) {
         goto exit;
     }
