@@ -18,7 +18,7 @@ lam_autoconf_search="autoconf"
 lam_libtoolize_search="libtoolize glibtoolize"
 lam_automake_search="automake"
 
-lam_automake_version="1.6"
+lam_automake_version="1.7"
 lam_autoconf_version="2.58"
 lam_libtool_version="1.5"
 
