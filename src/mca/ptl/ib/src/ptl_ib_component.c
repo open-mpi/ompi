@@ -14,6 +14,8 @@
  * $HEADER$
  */
 
+#include <hh_common.h>
+
 /* Open MPI includes */
 #include "ompi_config.h"
 #include "include/constants.h"
@@ -164,12 +166,14 @@ mca_ptl_base_module_t** mca_ptl_ib_component_init(int *num_ptl_modules,
         bool *have_hidden_threads)
 {
     mca_ptl_base_module_t **modules;
+    VAPI_ret_t vapi_ret;
     int i, ret;
 
-    uint32_t  num_hcas;
     mca_ptl_ib_module_t* ib_modules = NULL;
-    *num_ptl_modules = 0;
 
+    /* initialization */
+    *num_ptl_modules = 0;
+    mca_ptl_ib_component.ib_num_hcas=0;
     *allow_multi_user_threads = true;
     *have_hidden_threads = OMPI_HAVE_THREADS;
 
@@ -177,12 +181,6 @@ mca_ptl_base_module_t** mca_ptl_ib_component_init(int *num_ptl_modules,
      * will spawn a thread if supported */
     if(OMPI_HAVE_THREADS) {
         ompi_set_using_threads(true);
-    }
-
-    if((ret = ompi_event_init()) != OMPI_SUCCESS) {
-        ompi_output(0, "mca_ptl_ib_component_init: "
-                "unable to initialize event dispatch thread: %d\n", ret);
-        return NULL;
     }
 
     /* Initialize Receive fragments */
@@ -194,17 +192,21 @@ mca_ptl_base_module_t** mca_ptl_ib_component_init(int *num_ptl_modules,
             mca_ptl_ib_component.ib_free_list_inc, NULL);
 
 
-    ret = mca_ptl_ib_get_num_hcas(&num_hcas);
-
-    if ((0 == num_hcas) || (OMPI_SUCCESS != ret)) {
+    /* figure out how many HCA's are available for use - don't allocate
+     * any resrouces at this stage. */
+    vapi_ret=EVAPI_list_hcas(0,&(mca_ptl_ib_component.ib_num_hcas),
+            NULL);
+    if( HH_EAGAIN != vapi_ret ) {
+        ompi_output(0, "mca_ptl_ib_component_init: "
+                "Unexpect return from EVAPI_list_hcas - %s\n",
+                VAPI_strerror(vapi_ret));
         return NULL;
     }
-
-    /* HACK: To avoid confusion, right now open only 
-     * one IB PTL */
-
-    /*mca_ptl_ib_component.ib_num_hcas = num_hcas;*/
-    mca_ptl_ib_component.ib_num_hcas = 1;
+    if( 0 == mca_ptl_ib_component.ib_num_hcas )  {
+        ompi_output(0,"Warniing :: mca_ptl_ib_component_init: "
+                "  No IB devices found \n");
+        return NULL;
+    }
 
     /* Number of InfiniBand PTLs is equal to
      * number of physical HCAs. Is this always the
