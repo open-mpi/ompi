@@ -44,7 +44,7 @@ static void mca_ptl_tcp_send_frag_destruct(mca_ptl_tcp_send_frag_t* frag)
 {
 }
 
-void* ptl_tcp_memalloc( unsigned int* length )
+void* mca_ptl_tcp_memalloc( unsigned int* length )
 {
   return malloc( *length );
 }
@@ -109,7 +109,7 @@ int mca_ptl_tcp_send_frag_init(
 				    sendreq->req_count,
 				    sendreq->req_addr,
 				    offset,
-				    ptl_tcp_memalloc );
+				    mca_ptl_tcp_memalloc );
 
         /* if data is contigous convertor will return an offset
          * into users buffer - otherwise will return an allocated buffer 

@@ -57,7 +57,6 @@ bool mca_ptl_tcp_recv_frag_handler(mca_ptl_tcp_recv_frag_t* frag, int sd)
 {
     /* read common header */
     if(frag->frag_hdr_cnt < sizeof(mca_ptl_base_header_t)) {
-        mca_ptl_tcp_peer_t* ptl_peer;
         if(mca_ptl_tcp_recv_frag_header(frag, sd, sizeof(mca_ptl_base_header_t)) == false)
             return false;
 
