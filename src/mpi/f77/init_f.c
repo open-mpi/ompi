@@ -50,5 +50,6 @@ void mpi_init_f( MPI_Fint *ierr )
 {
     int argc = 0;
     char **argv = NULL;
-    *ierr = MPI_Init( &argc, &argv );
+
+    *ierr = OMPI_INT_2_FINT(MPI_Init( &argc, &argv ));
 }

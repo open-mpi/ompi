@@ -46,13 +46,15 @@ OMPI_GENERATE_F77_BINDINGS (MPI_RECV,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-void mpi_recv_f(char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *source, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *status, MPI_Fint *ierr)
+void mpi_recv_f(char *buf, MPI_Fint *count, MPI_Fint *datatype, 
+                MPI_Fint *source, MPI_Fint *tag, MPI_Fint *comm, 
+                MPI_Fint *status, MPI_Fint *ierr)
 {
-    MPI_Comm c_comm;
-    MPI_Datatype c_type = MPI_Type_f2c(*datatype);
+    MPI_Comm c_comm = MPI_Comm_f2c(OMPI_FINT_2_INT(*comm));
+    MPI_Datatype c_type = MPI_Type_f2c(OMPI_FINT_2_INT(*datatype));
 
-    c_comm = MPI_Comm_f2c (*comm);
-
-    *ierr = MPI_Recv( buf, *count, c_type, *source, *tag, c_comm,
-                      (MPI_Status*)status );
+    *ierr = OMPI_INT_2_FINT(MPI_Recv( buf, OMPI_FINT_2_INT(*count), c_type, 
+                                      OMPI_FINT_2_INT(*source), 
+                                      OMPI_FINT_2_INT(*tag), c_comm,
+                                      (MPI_Status*) status));
 }
