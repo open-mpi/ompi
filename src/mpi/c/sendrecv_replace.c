@@ -56,8 +56,8 @@ int MPI_Sendrecv_replace(void * buf, int count, MPI_Datatype datatype,
         ompi_convertor_t convertor;
         struct iovec iov;
         unsigned char recv_data[2048];
-        size_t packed_size;
-        size_t iov_count, max_data;
+        uint32_t packed_size;
+        uint32_t iov_count, max_data;
         int free_after;
         ompi_status_public_t recv_status;
         ompi_proc_t* proc = ompi_comm_peer_lookup(comm,dest);
@@ -69,14 +69,13 @@ int MPI_Sendrecv_replace(void * buf, int count, MPI_Datatype datatype,
         /* initialize convertor to unpack recv buffer */
         OBJ_CONSTRUCT(&convertor, ompi_convertor_t);
         ompi_convertor_copy(proc->proc_convertor, &convertor);
-        ompi_convertor_init_for_recv(
-            &convertor,
-            0,
-            datatype,
-            count,
-            buf,
-            0,
-            NULL);
+        ompi_convertor_init_for_recv( &convertor,
+                                      0,
+                                      datatype,
+                                      count,
+                                      buf,
+                                      0,
+                                      NULL );
 
         /* setup a buffer for recv */
         ompi_convertor_get_packed_size(&convertor, &packed_size);
@@ -90,8 +89,8 @@ int MPI_Sendrecv_replace(void * buf, int count, MPI_Datatype datatype,
         }
 
         /* recv into temporary buffer */
-        rc = MPI_Sendrecv(buf, count, datatype, dest, sendtag, iov.iov_base, packed_size, 
-             MPI_BYTE, source, recvtag, comm, &recv_status);
+        rc = MPI_Sendrecv( buf, count, datatype, dest, sendtag, iov.iov_base, packed_size, 
+                           MPI_BYTE, source, recvtag, comm, &recv_status );
         if (rc != MPI_SUCCESS) {
             if(packed_size > sizeof(recv_data))
                 free(iov.iov_base);
