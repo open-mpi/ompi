@@ -5,7 +5,7 @@
 include $(top_ompi_srcdir)/config/Makefile.options
 
 AM_CPPFLAGS = \
-            -DOMPI_SYSCONFDIR="\"$(sysconfdir)\""
+            -DOMPI_PKGDATADIR="\"$(pkgdatadir)\""
 
 noinst_LTLIBRARIES = libmca_llm_hostfile.la
 libmca_llm_hostfile_la_SOURCES = \

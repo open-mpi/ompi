@@ -6,7 +6,7 @@
 
 include $(top_ompi_srcdir)/config/Makefile.options
 
-SUBDIRS = src etc
+SUBDIRS = src
 
 EXTRA_DIST = VERSION
 
