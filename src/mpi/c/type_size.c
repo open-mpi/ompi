@@ -24,7 +24,7 @@ int
 MPI_Type_size(MPI_Datatype type, int *size)
 {
     if( type == MPI_DATATYPE_NULL ) {
-        OMPI_ERRHANDLER_RETURN( MPI_ERR_TYPE, (ompi_communicator_t*)NULL,
+        OMPI_ERRHANDLER_RETURN( MPI_ERR_TYPE, MPI_COMM_WORLD,
                                MPI_ERR_TYPE, FUNC_NAME );
 	}
     *size = type->size;

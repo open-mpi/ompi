@@ -27,7 +27,10 @@ int MPI_Wait(MPI_Request *request, MPI_Status *status)
         } else if (request == NULL) {
             rc = MPI_ERR_REQUEST;
         }
-        OMPI_ERRHANDLER_CHECK(rc, (ompi_communicator_t*)NULL, rc, "MPI_Wait");
+        /* JMS: Tim will fix to invoke on the communicator/window/file
+           on the request (i.e., not COMM_WORLD), if the request is
+           available/valid */
+        OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, "MPI_Wait");
     }
 
     if (NULL == *request) {
@@ -40,6 +43,8 @@ int MPI_Wait(MPI_Request *request, MPI_Status *status)
         return MPI_SUCCESS;
     }
     rc = mca_pml.pml_wait(1, request, &index, status);
-    OMPI_ERRHANDLER_RETURN(rc, (ompi_communicator_t*)NULL, rc, "MPI_Wait");
+    /* JMS: Tim will fix to invoke on the communicator/window/file on
+       the request (i.e., not COMM_WORLD) */
+    OMPI_ERRHANDLER_RETURN(rc, MPI_COMM_WORLD, rc, "MPI_Wait");
 }
 

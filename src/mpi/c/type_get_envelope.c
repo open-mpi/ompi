@@ -32,7 +32,7 @@ MPI_Type_get_envelope(MPI_Datatype type,
 
    if( MPI_PARAM_CHECK ) {
       if( OMPI_MPI_INVALID_STATE ) {
-         OMPI_ERRHANDLER_RETURN( MPI_ERR_INTERN, (ompi_communicator_t*)NULL,
+         OMPI_ERRHANDLER_RETURN( MPI_ERR_INTERN, MPI_COMM_WORLD,
                                 MPI_ERR_INTERN, FUNC_NAME );
       }
    }
@@ -40,5 +40,5 @@ MPI_Type_get_envelope(MPI_Datatype type,
    rc = ompi_ddt_get_args( type, 0, num_integers, NULL, num_addresses, NULL, num_datatypes,
                           NULL, combiner );
 
-   OMPI_ERRHANDLER_RETURN( rc, (ompi_communicator_t*)NULL, rc, FUNC_NAME );
+   OMPI_ERRHANDLER_RETURN( rc, MPI_COMM_WORLD, rc, FUNC_NAME );
 }

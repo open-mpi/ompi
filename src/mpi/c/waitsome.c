@@ -33,12 +33,12 @@ int MPI_Waitsome(int incount, MPI_Request *requests,
         } else if (requests == NULL) {
             rc = MPI_ERR_REQUEST;
         }
-        OMPI_ERRHANDLER_CHECK(rc, (ompi_communicator_t*)NULL, rc, "MPI_Waitsome");
+        OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, "MPI_Waitsome");
     }
 
     /* optimize this in the future */
     rc = mca_pml.pml_wait(incount, requests, &index, statuses);
-    OMPI_ERRHANDLER_CHECK(rc, (ompi_communicator_t*)NULL, rc, "MPI_Waitsome");
+    OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, "MPI_Waitsome");
     *outcount = 1;
     indices[0] = index;
     return MPI_SUCCESS;

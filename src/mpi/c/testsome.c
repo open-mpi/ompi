@@ -31,12 +31,12 @@ int MPI_Testsome(int incount, MPI_Request requests[],
         } else if (NULL == indices) {
             rc = MPI_ERR_ARG;
         }
-        OMPI_ERRHANDLER_CHECK(rc, (ompi_communicator_t*)NULL, rc, "MPI_Testsome");
+        OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, "MPI_Testsome");
     }
-                                                                                                                        
+
     /* optimize this in the future */
     rc = mca_pml.pml_test(incount, requests, &index, &completed, statuses);
-    OMPI_ERRHANDLER_CHECK(rc, (ompi_communicator_t*)NULL, rc, "MPI_Testsome");
+    OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, "MPI_Testsome");
     if(completed) {
         *outcount = 1;
         indices[0] = index;

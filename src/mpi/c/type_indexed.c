@@ -32,16 +32,16 @@ MPI_Type_indexed(int count,
 
    if( MPI_PARAM_CHECK ) {
       if( OMPI_MPI_INVALID_STATE ) {
-         OMPI_ERRHANDLER_RETURN( MPI_ERR_INTERN, (ompi_communicator_t*)NULL,
+         OMPI_ERRHANDLER_RETURN( MPI_ERR_INTERN, MPI_COMM_WORLD,
                                 MPI_ERR_INTERN, FUNC_NAME );
       }
       if( count < 0 ) {
-         OMPI_ERRHANDLER_RETURN( MPI_ERR_COUNT, (ompi_communicator_t*)NULL,
+         OMPI_ERRHANDLER_RETURN( MPI_ERR_COUNT, MPI_COMM_WORLD,
                                 MPI_ERR_COUNT, FUNC_NAME );
       }
       for( i = 0; i < count; i++ ) {
          if( array_of_blocklengths[i] < 0 ) {
-            OMPI_ERRHANDLER_RETURN( MPI_ERR_ARG, (ompi_communicator_t*)NULL,
+            OMPI_ERRHANDLER_RETURN( MPI_ERR_ARG, MPI_COMM_WORLD,
                                    MPI_ERR_ARG, FUNC_NAME );
          }
       }
@@ -52,7 +52,7 @@ MPI_Type_indexed(int count,
                                  oldtype, newtype );
    if( rc != MPI_SUCCESS ) {
       ompi_ddt_destroy( newtype );
-      OMPI_ERRHANDLER_RETURN( rc, (ompi_communicator_t*)NULL,
+      OMPI_ERRHANDLER_RETURN( rc, MPI_COMM_WORLD,
                              rc, FUNC_NAME );
    }
 

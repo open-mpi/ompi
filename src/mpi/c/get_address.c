@@ -23,7 +23,7 @@ int MPI_Get_address(void *location, MPI_Aint *address)
 {
     if( MPI_PARAM_CHECK ) {
         if( OMPI_MPI_INVALID_STATE ) {
-            OMPI_ERRHANDLER_RETURN( MPI_ERR_INTERN, (ompi_communicator_t*)NULL,
+            OMPI_ERRHANDLER_RETURN( MPI_ERR_INTERN, MPI_COMM_WORLD,
                                    MPI_ERR_INTERN, FUNC_NAME );
         }
     }
