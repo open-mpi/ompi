@@ -60,3 +60,12 @@ typedef enum { false, true } bool;
 #define realloc(ptr, size) lam_realloc((ptr), (size), __FILE__, __LINE__)
 #define free(ptr) lam_free((ptr), __FILE__, __LINE__)
 #endif
+
+
+/*
+ * Do we want to override debugging controls?
+ */
+#if defined(LAM_ENABLE_DEBUG_OVERRIDE) && LAM_ENABLE_DEBUG_OVERRIDE
+#undef LAM_ENABLE_DEBUG
+#define LAM_ENABLE_DEBUG 1
+#endif
