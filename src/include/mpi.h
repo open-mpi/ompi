@@ -72,6 +72,9 @@ extern "C" {
   typedef int (MPI_Win_copy_attr_function)(MPI_Win, int, void *,
                                            void *, void *, int *);
   typedef int (MPI_Win_delete_attr_function)(MPI_Win, int, void *, void *);
+  typedef int (MPI_Grequest_query_function)(void *, MPI_Status *);
+  typedef int (MPI_Grequest_free_function)(void *);
+  typedef int (MPI_Grequest_cancel_function)(void *, int); 
 #endif
 #if defined(c_plusplus) || defined(__cplusplus)
 }
@@ -581,37 +584,59 @@ extern "C" {
   int MPI_Finalize(void);
   int MPI_Finalized(int *flag);
   int MPI_Free_mem(void *base);
-  int MPI_Gather(void *, int, MPI_Datatype, void *, int, 
-                 MPI_Datatype, int, MPI_Comm);
-  int MPI_Gatherv(void *, int, MPI_Datatype, void *, int *, 
-                  int *, MPI_Datatype, int, MPI_Comm);
-  int MPI_Get_address(void *, MPI_Aint *);
-  int MPI_Get(void *, int, MPI_Datatype, int, MPI_Aint, int, 
-              MPI_Datatype, MPI_Win);
-  int MPI_Get_count(MPI_Status *, MPI_Datatype, int *);
-  int MPI_Get_elements(MPI_Status *, MPI_Datatype, int *);
-  int MPI_Get_processor_name(char *, int *);
-  int MPI_Get_version(int *, int *);
-  int MPI_Graph_create(MPI_Comm, int, int *, int *, int, MPI_Comm *);
-  int MPI_Graphdims_get(MPI_Comm, int *, int *);
-  int MPI_Graph_get(MPI_Comm, int, int, int *, int *);
-  int MPI_Graph_map(MPI_Comm, int, int *, int *, int *);
-  int MPI_Graph_neighbors(MPI_Comm, int, int, int *);
-  int MPI_Graph_neighbors_count(MPI_Comm, int, int *);
-  MPI_Fint MPI_Group_c2f(MPI_Group);
-  int MPI_Group_compare(MPI_Group, MPI_Group, int *);
-  int MPI_Group_difference(MPI_Group, MPI_Group, MPI_Group *);
-  int MPI_Group_excl(MPI_Group, int, int *, MPI_Group *);
-  MPI_Group MPI_Group_f2c(MPI_Fint);
-  int MPI_Group_free(MPI_Group *);
-  int MPI_Group_incl(MPI_Group, int, int *, MPI_Group *);
-  int MPI_Group_intersection(MPI_Group, MPI_Group, MPI_Group *);
-  int MPI_Group_range_excl(MPI_Group, int, int [][3], MPI_Group *);
-  int MPI_Group_range_incl(MPI_Group, int, int [][3], MPI_Group *);
-  int MPI_Group_rank(MPI_Group, int *);
-  int MPI_Group_size(MPI_Group, int *);
-  int MPI_Group_translate_ranks(MPI_Group, int, int *, MPI_Group, int *);
-  int MPI_Group_union(MPI_Group, MPI_Group, MPI_Group *);
+  int MPI_Gather(void *sendbuf, int sendcount, MPI_Datatype sendtype, 
+		         void *recvbuf, int recvcount, MPI_Datatype recvtype, 
+                 int root, MPI_Comm comm);
+  int MPI_Gatherv(void *sendbuf, int sendcount, MPI_Datatype sendtype, 
+		          void *recvbuf, int *recvcounts, int *displs, 
+                  MPI_Datatype recvtype, int root, MPI_Comm comm);
+  int MPI_Get_address(void *location, MPI_Aint *address);
+  int MPI_Get_count(MPI_Status *status, MPI_Datatype datatype, int *count);
+  int MPI_Get_elements(MPI_Status *status, MPI_Datatype datatype, 
+		               int *count);
+  int MPI_Get(void *origin_addr, int origin_count, 
+		      MPI_Datatype origin_datatype, int target_rank, 
+			  MPI_Aint target_disp, int target_count, 
+              MPI_Datatype target_datatype, MPI_Win win);
+  int MPI_Get_processor_name(char *name, int *resultlen);
+  int MPI_Get_version(int *version, int *subversion);
+  int MPI_Graph_create(MPI_Comm comm_old, int nnodes, int *index, 
+		              int *edges, int reorder, MPI_Comm *comm_graph);
+  int MPI_Graph_get(MPI_Comm comm, int maxindex, int maxedges, 
+		            int *index, int *edges);
+  int MPI_Graph_map(MPI_Comm comm, int nnodes, int *index, int *edges, 
+		            int *newrank);
+  int MPI_Graph_neighbors_count(MPI_Comm comm, int rank, int *nneighbors);
+  int MPI_Graph_neighbors(MPI_Comm comm, int rank, int maxneighbors, 
+		                  int *neighbors);
+  int MPI_Graphdims_get(MPI_Comm comm, int *nnodes, int *nedges);
+  int MPI_Grequest_complete(MPI_Request request);
+  int MPI_Grequest_start(MPI_Grequest_query_function *query_fn,
+		                 MPI_Grequest_free_function *free_fn,
+						 MPI_Grequest_cancel_function *cancel_fn,
+						 void *extra_state, MPI_Request *request);
+  MPI_Fint MPI_Group_c2f(MPI_Group group);
+  int MPI_Group_compare(MPI_Group group1, MPI_Group group2, int *result);
+  int MPI_Group_difference(MPI_Group group1, MPI_Group group2, 
+		                   MPI_Group *newgroup);
+  int MPI_Group_excl(MPI_Group group, int n, int *ranks, 
+		                  MPI_Group *newgroup);
+  MPI_Group MPI_Group_f2c(MPI_Fint group);
+  int MPI_Group_free(MPI_Group *group);
+  int MPI_Group_incl(MPI_Group group, int n, int *ranks, 
+		                  MPI_Group *newgroup);
+  int MPI_Group_intersection(MPI_Group group1, MPI_Group group2, 
+		                     MPI_Group *newgroup);
+  int MPI_Group_range_excl(MPI_Group group, int n, int ranges[][3], 
+		                   MPI_Group *newgroup);
+  int MPI_Group_range_incl(MPI_Group group, int n, int ranges[][3], 
+		                   MPI_Group *newgroup);
+  int MPI_Group_rank(MPI_Group group, int *rank);
+  int MPI_Group_size(MPI_Group group, int *size);
+  int MPI_Group_translate_ranks(MPI_Group group1, int n, int *ranks1, 
+		                        MPI_Group group2, int *ranks2);
+  int MPI_Group_union(MPI_Group group1, MPI_Group group2, 
+		              MPI_Group *newgroup);
   int MPI_Ibsend(void *, int, MPI_Datatype, int, int, MPI_Comm, 
                  MPI_Request *);
   MPI_Fint MPI_Info_c2f(MPI_Info);
@@ -1012,37 +1037,59 @@ extern "C" {
   int PMPI_Finalize(void);
   int PMPI_Finalized(int *flag);
   int PMPI_Free_mem(void *base);
-  int PMPI_Gather(void *, int, MPI_Datatype, void *, int, 
-                  MPI_Datatype, int, MPI_Comm);
-  int PMPI_Gatherv(void *, int, MPI_Datatype, void *, int *, 
-                   int *, MPI_Datatype, int, MPI_Comm);
-  int PMPI_Get_address(void *, MPI_Aint *);
-  int PMPI_Get(void *, int, MPI_Datatype, int, MPI_Aint, int, 
-               MPI_Datatype, MPI_Win);
-  int PMPI_Get_count(MPI_Status *, MPI_Datatype, int *);
-  int PMPI_Get_elements(MPI_Status *, MPI_Datatype, int *);
-  int PMPI_Get_processor_name(char *, int *);
-  int PMPI_Get_version(int *, int *);
-  int PMPI_Graph_create(MPI_Comm, int, int *, int *, int, MPI_Comm *);
-  int PMPI_Graphdims_get(MPI_Comm, int *, int *);
-  int PMPI_Graph_get(MPI_Comm, int, int, int *, int *);
-  int PMPI_Graph_map(MPI_Comm, int, int *, int *, int *);
-  int PMPI_Graph_neighbors(MPI_Comm, int, int, int *);
-  int PMPI_Graph_neighbors_count(MPI_Comm, int, int *);
-  MPI_Fint PMPI_Group_c2f(MPI_Group);
-  int PMPI_Group_compare(MPI_Group, MPI_Group, int *);
-  int PMPI_Group_difference(MPI_Group, MPI_Group, MPI_Group *);
-  int PMPI_Group_excl(MPI_Group, int, int *, MPI_Group *);
-  MPI_Group PMPI_Group_f2c(MPI_Fint);
-  int PMPI_Group_free(MPI_Group *);
-  int PMPI_Group_incl(MPI_Group, int, int *, MPI_Group *);
-  int PMPI_Group_intersection(MPI_Group, MPI_Group, MPI_Group *);
-  int PMPI_Group_range_excl(MPI_Group, int, int [][3], MPI_Group *);
-  int PMPI_Group_range_incl(MPI_Group, int, int [][3], MPI_Group *);
-  int PMPI_Group_rank(MPI_Group, int *);
-  int PMPI_Group_size(MPI_Group, int *);
-  int PMPI_Group_translate_ranks(MPI_Group, int, int *, MPI_Group, int *);
-  int PMPI_Group_union(MPI_Group, MPI_Group, MPI_Group *);
+  int PMPI_Gather(void *sendbuf, int sendcount, MPI_Datatype sendtype, 
+		         void *recvbuf, int recvcount, MPI_Datatype recvtype, 
+                 int root, MPI_Comm comm);
+  int PMPI_Gatherv(void *sendbuf, int sendcount, MPI_Datatype sendtype, 
+		          void *recvbuf, int *recvcounts, int *displs, 
+                  MPI_Datatype recvtype, int root, MPI_Comm comm);
+  int PMPI_Get_address(void *location, MPI_Aint *address);
+  int PMPI_Get_count(MPI_Status *status, MPI_Datatype datatype, int *count);
+  int PMPI_Get_elements(MPI_Status *status, MPI_Datatype datatype, 
+		               int *count);
+  int PMPI_Get(void *origin_addr, int origin_count, 
+		      MPI_Datatype origin_datatype, int target_rank, 
+			  MPI_Aint target_disp, int target_count, 
+              MPI_Datatype target_datatype, MPI_Win win);
+  int PMPI_Get_processor_name(char *name, int *resultlen);
+  int PMPI_Get_version(int *version, int *subversion);
+  int PMPI_Graph_create(MPI_Comm comm_old, int nnodes, int *index, 
+		              int *edges, int reorder, MPI_Comm *comm_graph);
+  int PMPI_Graph_get(MPI_Comm comm, int maxindex, int maxedges, 
+		            int *index, int *edges);
+  int PMPI_Graph_map(MPI_Comm comm, int nnodes, int *index, int *edges, 
+		            int *newrank);
+  int PMPI_Graph_neighbors_count(MPI_Comm comm, int rank, int *nneighbors);
+  int PMPI_Graph_neighbors(MPI_Comm comm, int rank, int maxneighbors, 
+		                  int *neighbors);
+  int PMPI_Graphdims_get(MPI_Comm comm, int *nnodes, int *nedges);
+  int PMPI_Grequest_complete(MPI_Request request);
+  int PMPI_Grequest_start(MPI_Grequest_query_function *query_fn,
+		                 MPI_Grequest_free_function *free_fn,
+						 MPI_Grequest_cancel_function *cancel_fn,
+						 void *extra_state, MPI_Request *request);
+  MPI_Fint PMPI_Group_c2f(MPI_Group group);
+  int PMPI_Group_compare(MPI_Group group1, MPI_Group group2, int *result);
+  int PMPI_Group_difference(MPI_Group group1, MPI_Group group2, 
+		                   MPI_Group *newgroup);
+  int PMPI_Group_excl(MPI_Group group, int n, int *ranks, 
+		                  MPI_Group *newgroup);
+  MPI_Group PMPI_Group_f2c(MPI_Fint group);
+  int PMPI_Group_free(MPI_Group *group);
+  int PMPI_Group_incl(MPI_Group group, int n, int *ranks, 
+		                  MPI_Group *newgroup);
+  int PMPI_Group_intersection(MPI_Group group1, MPI_Group group2, 
+		                     MPI_Group *newgroup);
+  int PMPI_Group_range_excl(MPI_Group group, int n, int ranges[][3], 
+		                   MPI_Group *newgroup);
+  int PMPI_Group_range_incl(MPI_Group group, int n, int ranges[][3], 
+		                   MPI_Group *newgroup);
+  int PMPI_Group_rank(MPI_Group group, int *rank);
+  int PMPI_Group_size(MPI_Group group, int *size);
+  int PMPI_Group_translate_ranks(MPI_Group group1, int n, int *ranks1, 
+		                        MPI_Group group2, int *ranks2);
+  int PMPI_Group_union(MPI_Group group1, MPI_Group group2, 
+		              MPI_Group *newgroup);
   int PMPI_Ibsend(void *, int, MPI_Datatype, int, int, MPI_Comm, 
                   MPI_Request *);
   MPI_Fint PMPI_Info_c2f(MPI_Info);
