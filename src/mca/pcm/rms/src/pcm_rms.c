@@ -206,8 +206,9 @@ mca_pcm_rms_kill_proc(struct mca_pcm_base_module_1_0_0_t* me_super,
     pid_t doomed;
 
     doomed = mca_pcm_base_job_list_get_starter(me->jobs, 
-                                               ns_base_get_jobid(name), 
-                                               ns_base_get_vpid(name), true);
+                                               mca_ns_base_get_jobid(name), 
+                                               mca_ns_base_get_vpid(name),
+					       true);
     if (doomed > 0) {
         kill(doomed, SIGTERM);
     } else {
@@ -267,7 +268,8 @@ internal_wait_cb(pid_t pid, int status, void *data)
     mca_ns_base_vpid_t lower = 0;
     mca_ns_base_vpid_t i = 0;
     int ret;
-    char *proc_name;
+    ompi_process_name_t *proc_name;
+    ompi_rte_process_status_t proc_status;
 
     ompi_output_verbose(10, mca_pcm_base_output, 
                         "process %d exited with status %d", pid, status);
@@ -281,9 +283,11 @@ internal_wait_cb(pid_t pid, int status, void *data)
     }
 
     /* unregister all the procs */
+    proc_status.status_key = OMPI_PROC_KILLED;
+    proc_status.exit_code = (ompi_exit_code_t) status;
     for (i = lower ; i <= upper ; ++i) {
-        proc_name = ns_base_get_proc_name_string(
-                                ns_base_create_process_name(0, jobid, i));
-        ompi_registry.rte_unregister(proc_name);
+	proc_name = mca_ns_base_create_process_name(0, jobid, i);
+	ompi_rte_set_process_status(&proc_status, proc_name);
+        free(proc_name);
     }
 }
