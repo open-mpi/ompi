@@ -372,7 +372,7 @@ static bool test9(void)
     a = NULL;
     argc = 0;
     ompi_argv_append(&argc, &a, "foo");
-    if (OMPI_SUCCESS != ompi_argv_delete(a, 7, 1) ||
+    if (OMPI_SUCCESS != ompi_argv_delete(&argc, &a, 7, 1) ||
         1 != ompi_argv_count(a)) {
         return false;
     } 
@@ -381,7 +381,7 @@ static bool test9(void)
     a = NULL;
     argc = 0;
     ompi_argv_append(&argc, &a, "foo");
-    if (OMPI_SUCCESS != ompi_argv_delete(a, 0, 0) ||
+    if (OMPI_SUCCESS != ompi_argv_delete(&argc, &a, 0, 0) ||
         1 != ompi_argv_count(a)) {
         return false;
     }
@@ -398,7 +398,7 @@ static bool test9(void)
     ompi_argv_append(&argc, &a, "d");
     ompi_argv_append(&argc, &a, "e");
     ompi_argv_append(&argc, &a, "f");
-    if (OMPI_SUCCESS != ompi_argv_delete(a, 0, 1) ||
+    if (OMPI_SUCCESS != ompi_argv_delete(&argc, &a, 0, 1) ||
         5 != ompi_argv_count(a) ||
         0 != strcmp(a[0], "b") ||
         0 != strcmp(a[1], "c") ||
@@ -419,7 +419,7 @@ static bool test9(void)
     ompi_argv_append(&argc, &a, "d");
     ompi_argv_append(&argc, &a, "e");
     ompi_argv_append(&argc, &a, "f");
-    if (OMPI_SUCCESS != ompi_argv_delete(a, 0, 2) ||
+    if (OMPI_SUCCESS != ompi_argv_delete(&argc, &a, 0, 2) ||
         4 != ompi_argv_count(a) ||
         0 != strcmp(a[0], "c") ||
         0 != strcmp(a[1], "d") ||
@@ -439,7 +439,7 @@ static bool test9(void)
     ompi_argv_append(&argc, &a, "d");
     ompi_argv_append(&argc, &a, "e");
     ompi_argv_append(&argc, &a, "f");
-    if (OMPI_SUCCESS != ompi_argv_delete(a, 1, 1) ||
+    if (OMPI_SUCCESS != ompi_argv_delete(&argc, &a, 1, 1) ||
         5 != ompi_argv_count(a) ||
         0 != strcmp(a[0], "a") ||
         0 != strcmp(a[1], "c") ||
@@ -460,7 +460,7 @@ static bool test9(void)
     ompi_argv_append(&argc, &a, "d");
     ompi_argv_append(&argc, &a, "e");
     ompi_argv_append(&argc, &a, "f");
-    if (OMPI_SUCCESS != ompi_argv_delete(a, 1, 2) ||
+    if (OMPI_SUCCESS != ompi_argv_delete(&argc, &a, 1, 2) ||
         4 != ompi_argv_count(a) ||
         0 != strcmp(a[0], "a") ||
         0 != strcmp(a[1], "d") ||
@@ -476,7 +476,7 @@ static bool test9(void)
     argc = 0;
     ompi_argv_append(&argc, &a, "a");
     ompi_argv_append(&argc, &a, "b");
-    if (OMPI_SUCCESS != ompi_argv_delete(a, 0, 99) ||
+    if (OMPI_SUCCESS != ompi_argv_delete(&argc, &a, 0, 99) ||
         0 != ompi_argv_count(a)) {
         return false;
     }
@@ -488,7 +488,7 @@ static bool test9(void)
     argc = 0;
     ompi_argv_append(&argc, &a, "a");
     ompi_argv_append(&argc, &a, "b");
-    if (OMPI_SUCCESS != ompi_argv_delete(a, 1, 99) ||
+    if (OMPI_SUCCESS != ompi_argv_delete(&argc, &a, 1, 99) ||
         1 != ompi_argv_count(a) ||
         0 != strcmp(a[0], "a")) {
         return false;
