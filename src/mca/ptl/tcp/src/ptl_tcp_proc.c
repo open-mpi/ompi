@@ -178,8 +178,12 @@ int mca_ptl_tcp_proc_insert(mca_ptl_tcp_proc_t* ptl_proc, mca_ptl_base_peer_t* p
         } else if(ptl_peer->peer_addr != 0)
             ptl_peer->peer_addr = peer_addr;
     }
-    ptl_peer->peer_addr->addr_inuse++;
-    return OMPI_SUCCESS;
+    /* Make sure there is a common interface */
+    if( NULL != ptl_peer->peer_addr ) {
+        ptl_peer->peer_addr->addr_inuse++;
+        return OMPI_SUCCESS;
+    }
+    return OMPI_ERR_UNREACH;
 }
 
 /*
