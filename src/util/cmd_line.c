@@ -735,6 +735,7 @@ static int split_shorts(ompi_cmd_line_t *cmd, bool ignore_unknown)
         return OMPI_ERR_BAD_PARAM;
       } else {
         ompi_argv_append(&argc, &argv, token);
+        ++i;
       }
     }
   }
