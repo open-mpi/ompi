@@ -54,7 +54,6 @@ void mpi_group_intersection_f(MPI_Fint *group1, MPI_Fint *group2, MPI_Fint *newg
   /* Make the fortran to c representation conversion */
   c_group1 = MPI_Group_f2c(*group1);
   c_group2 = MPI_Group_f2c(*group2);
-  c_newgroup = MPI_Group_f2c(*newgroup);
   
   *ierr = MPI_Group_intersection(c_group1, c_group2, &c_newgroup);
 

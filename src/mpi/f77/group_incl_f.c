@@ -54,7 +54,6 @@ void mpi_group_incl_f(MPI_Fint *group, MPI_Fint *n, MPI_Fint *ranks, MPI_Fint *n
 
     /* make the fortran to c representation conversion */
     c_group = MPI_Group_f2c(*group);
-    c_newgroup = MPI_Group_f2c(*newgroup);
 
     *ierr = MPI_Group_incl(c_group, *ranks, n, &c_newgroup);
 

@@ -53,7 +53,6 @@ void mpi_group_range_excl_f(MPI_Fint *group, MPI_Fint *n, MPI_Fint ranges[][3], 
 
   /* Make the fortran to c representation conversion */
   c_group = MPI_Group_f2c(*group);
-  c_newgroup = MPI_Group_f2c(*newgroup);
   
   *ierr = MPI_Group_range_excl(c_group, *n, ranges, &c_newgroup);
 
