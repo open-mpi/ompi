@@ -94,7 +94,7 @@ mca_pcm_slurm_spawn_procs(struct mca_pcm_base_module_1_0_0_t* me,
     nodes = (ompi_rte_node_allocation_t*) ompi_list_get_first(sched->nodelist);
 
     /* start building up the argv array */
-    ompi_argv_append(&argc, &argv, "prun");
+    ompi_argv_append(&argc, &argv, "srun");
     if (nodes->nodes > 0) {
         /* copy over the number of nodes */
         num = ompi_ltostr(nodes->nodes);
@@ -149,6 +149,8 @@ mca_pcm_slurm_spawn_procs(struct mca_pcm_base_module_1_0_0_t* me,
 
         /* go, go, go! */
         ret = execvp(argv[0], argv);
+        /* BWB show_help */
+        printf("SLURM pcm can not exec srun");
         exit(1);
     } 
 
