@@ -191,7 +191,7 @@ static int ompi_timeout_next(struct timeval *tv)
 static void* ompi_event_run(ompi_object_t* arg)
 {
     int rc = ompi_event_loop(0);
-    assert(rc == 0);
+    assert(rc >= 0);
     return NULL;
 }
 
@@ -355,6 +355,7 @@ ompi_event_loop(int flags)
 {
     struct timeval tv;
     int res, done;
+    int num_active = 0;
 
     if (ompi_event_inited == false)
         return(0);
@@ -421,6 +422,7 @@ ompi_event_loop(int flags)
         }
 
         if (TAILQ_FIRST(&ompi_activequeue)) {
+            num_active++;
             ompi_event_process_active();
             if (flags & OMPI_EVLOOP_ONCE)
                 done = 1;
@@ -434,7 +436,7 @@ ompi_event_loop(int flags)
         }
     }
     OMPI_THREAD_UNLOCK(&ompi_event_lock);
-    return (0);
+    return (num_active);
 }
 
 
