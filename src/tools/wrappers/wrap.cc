@@ -439,7 +439,7 @@ lam_wrap_exec_sv(const lam_sv_t& sv)
   // Build up a C array of the args
 
   for (i = 0; (string::size_type) i < sv.size(); ++i)
-    lam_argv_add(&ac, &av, (char*) sv[i].c_str());
+    lam_argv_append(&ac, &av, (char*) sv[i].c_str());
 
   // There is no way to tell whether lam_few returned non-zero because
   // the called app returned non-zero or if there was a failure in the
