@@ -48,5 +48,10 @@ OMPI_GENERATE_F77_BINDINGS (MPI_UNPACK_EXTERNAL,
 
 void mpi_unpack_external_f (char *datarep, char *inbuf, MPI_Fint *insize, MPI_Fint *position, char *outbuf, MPI_Fint *outcount, MPI_Fint *datatype, MPI_Fint *ierr)
 {
+    MPI_Datatype c_type;
+    c_type = MPI_Type_f2c(*datatype);
+
+    *ierr = MPI_Unpack_external(datarep, inbuf, *insize, (MPI_Aint *)*position,
+                                outbuf, *outcount, c_type);
 
 }

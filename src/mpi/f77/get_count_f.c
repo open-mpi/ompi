@@ -48,5 +48,11 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GET_COUNT,
 
 void mpi_get_count_f(MPI_Fint *status, MPI_Fint *datatype, MPI_Fint *count, MPI_Fint *ierr)
 {
+    MPI_Datatype c_type = MPI_Type_f2c(*datatype);
+    MPI_Status   c_status;
 
+    *ierr = MPI_Status_f2c(status, &c_status);
+
+    if (*ierr == MPI_SUCCESS)
+      *ierr = MPI_Get_count(&c_status, c_type, count);
 }
