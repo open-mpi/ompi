@@ -10,13 +10,16 @@ main(int argc, char* argv[])
 {
   int ret;
   char *tmp;
-  int priority = 0;
   struct mca_oob_1_0_0_t *init_ret;
   int target_vpid, source_vpid, source_tag;
   size_t source_len;
   char *source_data;
   char buffer[2048];
   int msg_count = 0;
+  int priority = 0;
+  bool allow_threads = false;
+  bool have_hidden_threads = false;
+
 
   if (argc != 3) {
     printf("usage: %s my_vpid target_vpid\n", argv[0]);
@@ -29,24 +32,18 @@ main(int argc, char* argv[])
 
   target_vpid = atoi(argv[2]);
   
-  ret = mca_oob_cofs_open(NULL);
+  ret = mca_oob_cofs_open();
   if (ret != LAM_SUCCESS) {
     printf("mca_oob_cofs_open returned %d\n", ret);
     exit(1);
   }
 
-  ret = mca_oob_cofs_query(&priority);
-  if (ret != LAM_SUCCESS) {
-    printf("mca_oob_cofs_query returned %d\n", ret);
-    exit(1);
-  } else {
-    printf("mca_oob_cofs_query said \"go\" with priority %d\n", priority);
-  }
-
-  init_ret = mca_oob_cofs_init();
+  init_ret = mca_oob_cofs_init(&priority, &allow_threads, &have_hidden_threads);
   if (init_ret == NULL) {
     printf("mca_oob_cofs_init returned NULL\n");
     exit(1);
+  } else {
+    printf("mca_oob_cofs_query said \"go\" with priority %d\n", priority);
   }
 
   printf("#\n# Sending Messages\n#\n\n");
