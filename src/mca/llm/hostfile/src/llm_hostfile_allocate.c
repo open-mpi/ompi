@@ -9,17 +9,18 @@
 #include "mca/llm/llm.h"
 #include "mca/llm/base/base.h"
 #include "mca/llm/base/base_internal.h"
+#include "mca/ns/ns.h"
 
 #include <stdio.h>
 
 extern char *mca_llm_hostfile_filename;
 
 ompi_list_t*
-mca_llm_hostfile_allocate_resources(int jobid, int nodes, int procs)
+mca_llm_hostfile_allocate_resources(mca_ns_base_jobid_t jobid, 
+                                    int nodes, int procs)
 {
     ompi_list_t *hostlist = NULL;
     ompi_list_t *nodelist = NULL;
-    ompi_list_item_t *nodeitem;
     int ret;
 
     /* start by getting the full list of available resources */
