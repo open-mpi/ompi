@@ -27,7 +27,7 @@ int mca_oob_tcp_recv(
     OMPI_THREAD_LOCK(&mca_oob_tcp_component.tcp_match_lock);
 
     /* check to see if a matching receive is on the list */
-    msg = mca_oob_tcp_msg_match_recv(peer, tag);
+    msg = mca_oob_tcp_msg_match_recv(peer, htonl(tag));
     if(NULL != msg) {
 
         if(msg->msg_rc < 0)  {
@@ -132,7 +132,7 @@ int mca_oob_tcp_recv_nb(
     OMPI_THREAD_LOCK(&mca_oob_tcp_component.tcp_match_lock);
 
     /* check to see if a matching receive is on the list */
-    msg = mca_oob_tcp_msg_match_recv(peer, tag);
+    msg = mca_oob_tcp_msg_match_recv(peer, htonl(tag));
     if(NULL != msg) {
 
         if(msg->msg_rc < 0) 

@@ -6,6 +6,7 @@
 
 #include "mca/mca.h"
 #include "mca/base/base.h"
+#include "mca/base/mca_base_param.h"
 #include "mca/oob/oob.h"
 
 
@@ -23,9 +24,10 @@
  */
 mca_oob_t mca_oob;
 int mca_oob_base_output = -1;
+char* mca_oob_base_include = NULL;
+char* mca_oob_base_exclude = NULL;
 ompi_list_t mca_oob_base_components;
 ompi_list_t mca_oob_base_modules;
-
 
 /**
  * Function for finding and opening either all MCA components, or the one
@@ -44,8 +46,13 @@ int mca_oob_base_open(void)
     return OMPI_ERROR;
   }
 
-  /* All done */
+  /* register parameters */
+  mca_base_param_lookup_string(
+      mca_base_param_register_string("oob","base","include",NULL,NULL), &mca_oob_base_include);
+  mca_base_param_lookup_string(
+      mca_base_param_register_string("oob","base","exclude",NULL,NULL), &mca_oob_base_exclude);
 
+  /* All done */
   return OMPI_SUCCESS;
 }
 

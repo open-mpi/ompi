@@ -170,8 +170,7 @@ mca_oob_tcp_peer_t * mca_oob_tcp_peer_lookup(ompi_process_name_t* name, bool get
     peer->peer_addr.sin_port = htons(5000+peer->peer_name.vpid);
     peer->peer_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
 
-    if(OMPI_SUCCESS != ompi_rb_tree_insert(&mca_oob_tcp_component.tcp_peer_tree, 
-                       (ompi_process_name_t *) name, peer)) {
+    if(OMPI_SUCCESS != ompi_rb_tree_insert(&mca_oob_tcp_component.tcp_peer_tree, &peer->peer_name, peer)) {
         MCA_OOB_TCP_PEER_RETURN(peer);
         if(get_lock) {
             OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
@@ -458,7 +457,20 @@ static void mca_oob_tcp_peer_recv_progress(mca_oob_tcp_peer_t* peer, mca_oob_tcp
 {
     /* was this a posted recv? */
     if(msg->msg_type == MCA_OOB_TCP_POSTED) {
+
+        if(msg->msg_flags & MCA_OOB_ALLOC) {
+            /* set the users iovec struct to point to pre-allocated buffer */
+            if(NULL == msg->msg_uiov || 0 == msg->msg_ucnt) {
+                msg->msg_rc = OMPI_ERR_BAD_PARAM;
+            } else {
+                msg->msg_uiov[0].iov_base = msg->msg_rwiov->iov_base;
+                msg->msg_uiov[0].iov_len = msg->msg_rwiov->iov_len;
+                msg->msg_rwbuf = NULL;
+                msg->msg_rc = msg->msg_rwiov->iov_len;
+            }
+         }
          mca_oob_tcp_msg_complete(msg, &peer->peer_name);
+
      } else {
         /* if not attempt to match unexpected message to a posted recv */
         mca_oob_tcp_msg_t* post;
@@ -541,18 +553,24 @@ static void mca_oob_tcp_peer_recv_start(mca_oob_tcp_peer_t* peer)
             posted_size += msg->msg_uiov[i].iov_len;
 
         /* allocate an additional buffer to receive entire message */
-        if(posted_size < size) {
+        if(msg->msg_flags & MCA_OOB_ALLOC) {
+            msg->msg_rwiov = mca_oob_tcp_msg_iov_alloc(msg,1);
+            msg->msg_rwbuf = malloc(size);
+            msg->msg_rwiov[0].iov_base = msg->msg_rwbuf;
+            msg->msg_rwiov[0].iov_len = size;
+            msg->msg_rwcnt = msg->msg_rwnum = 1;
+        } else if (posted_size < size) {
             uint32_t alloc_size = size - posted_size;
             msg->msg_rwiov = mca_oob_tcp_msg_iov_alloc(msg,msg->msg_ucnt+1);
             memcpy(msg->msg_rwiov, msg->msg_uiov, msg->msg_ucnt * sizeof(struct iovec));
             msg->msg_rwbuf = malloc(alloc_size);
             msg->msg_rwiov[msg->msg_ucnt].iov_base = msg->msg_rwbuf;
             msg->msg_rwiov[msg->msg_ucnt].iov_len = alloc_size;
-            msg->msg_rwnum = msg->msg_ucnt+1;
+            msg->msg_rwcnt = msg->msg_rwnum = msg->msg_ucnt+1;
         } else {
             msg->msg_rwiov = mca_oob_tcp_msg_iov_alloc(msg,msg->msg_ucnt);
             memcpy(msg->msg_rwiov, msg->msg_uiov, msg->msg_ucnt * sizeof(struct iovec));
-            msg->msg_rwnum = msg->msg_ucnt;
+            msg->msg_rwcnt = msg->msg_rwnum = msg->msg_ucnt;
         }
 
     } else {

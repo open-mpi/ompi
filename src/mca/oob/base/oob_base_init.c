@@ -25,6 +25,7 @@ OBJ_CLASS_INSTANCE(
     NULL,
     NULL
 );
+
 OBJ_CLASS_INSTANCE(
     mca_oob_base_info_t,
     ompi_list_item_t,
@@ -78,6 +79,9 @@ int mca_oob_base_init(bool *user_threads, bool *hidden_threads)
     char* seed;
     char** uri = NULL;
 
+    char** include = ompi_argv_split(mca_oob_base_include, ',');
+    char** exclude = ompi_argv_split(mca_oob_base_exclude, ',');
+
     /* setup local name */
     self = mca_pcmclient.pcmclient_get_self();
     if(NULL == self) {
@@ -115,6 +119,38 @@ int mca_oob_base_init(bool *user_threads, bool *hidden_threads)
 
         cli = (mca_base_component_list_item_t *) item;
         component = (mca_oob_base_component_t *) cli->cli_component;
+
+        /* if there is an include list - item must be in the list to be included */
+        if ( NULL != include ) {
+            char** argv = include;
+            bool found = false;
+            while(argv && *argv) {
+                if(strcmp(component->oob_base.mca_component_name,*argv) == 0) {
+                    found = true;
+                    break;
+                }
+                argv++;
+            }
+            if(found == false) {
+                continue;
+            }
+                                                                                                                     
+        /* otherwise - check the exclude list to see if this item has been specifically excluded */
+        } else if ( NULL != exclude ) {
+            char** argv = exclude;
+            bool found = false;
+            while(argv && *argv) {
+                if(strcmp(component->oob_base.mca_component_name,*argv) == 0) {
+                    found = true;
+                    break;
+                }
+                argv++;
+            }
+            if(found == true) {
+                continue;
+            }
+        }
+                                                                                                                     
 
         if (NULL == component->oob_init) {
             ompi_output_verbose(10, mca_oob_base_output, "mca_oob_base_init: no init function; ignoring component");
