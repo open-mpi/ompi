@@ -17,6 +17,9 @@
 #include "threads/mutex.h"
 #include "threads/condition.h"
                                                                                                                             
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 /**
  * Request class
  */
@@ -127,9 +130,6 @@ extern int                   ompi_request_poll_iterations;
 extern ompi_request_t        ompi_request_null;
 
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
 
 /**
  * Initialize the MPI_Request subsystem; invoked during MPI_INIT.
