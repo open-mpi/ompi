@@ -67,14 +67,10 @@ static inline int mca_mpool_sm_param_register_int(
 int mca_mpool_sm_open(void)
 {
     /* register SM module parameters */
-    mca_mpool_sm_module.sm_min_size =
-        mca_mpool_sm_param_register_int("min_size", 64*1024*1024);
-    mca_mpool_sm_module.sm_max_size =
-        mca_mpool_sm_param_register_int("max_size", 512*1024*1024);
+    mca_mpool_sm_module.sm_size =
+        mca_mpool_sm_param_register_int("size", 512*1024*1024);
     mca_mpool_sm_module.sm_allocator_name =
         mca_mpool_sm_param_register_string("allocator", "bucket");
-    mca_mpool_sm_module.sm_segment = 1;
-    mca_mpool_sm_module.sm_size = 0;
     return OMPI_SUCCESS;
 }
 
@@ -106,11 +102,10 @@ mca_mpool_t* mca_mpool_sm_init(bool *allow_multi_user_threads)
     }
     
     /* create initial shared memory mapping */
-    if(NULL == (mca_mpool_sm_module.sm_mmap = mca_mpool_sm_mmap_init(mca_mpool_sm_module.sm_min_size))) {
+    if(NULL == (mca_mpool_sm_module.sm_mmap = mca_mpool_sm_mmap_init(mca_mpool_sm_module.sm_size))) {
         ompi_output(0, "mca_mpool_sm_init: unable to create shared memory mapping");
         return NULL;
     }
-    ompi_list_append(&mca_mpool_sm_module.sm_mmaps, &mca_mpool_sm_module.sm_mmap);
 
     /* setup allocator */
     mca_mpool_sm_module.sm_allocator = allocator_component->allocator_init(

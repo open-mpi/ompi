@@ -19,7 +19,8 @@ libmca_mpool_base_la_SOURCES = \
         $(headers) \
         mpool_base_open.c \
         mpool_base_close.c \
-        mpool_base_init.c 
+        mpool_base_init.c \
+	mpool_base_lookup.c
 
 # Conditionally install the header files
 

@@ -10,6 +10,7 @@
 
 #include "constants.h"
 #include "util/output.h"
+#include "util/sys_info.h"
 #include "mca/pcm/pcm.h"
 #include "mpool_sm.h"
 #include "mpool_sm_mmap.h"
@@ -66,16 +67,12 @@ static mca_mpool_sm_mmap_t* mca_mpool_sm_mmap_open(char* path)
 
 mca_mpool_sm_mmap_t* mca_mpool_sm_mmap_init(size_t size)
 {
-    ompi_job_handle_t job_handle = mca_pcm.pcm_handle_get();
-    char hostname[64];
     int fd;
     mca_mpool_sm_segment_t* seg;
     mca_mpool_sm_mmap_t* map;
     char path[PATH_MAX];
 
-    gethostname(hostname, sizeof(hostname));
-    sprintf(path, "/tmp/%s.%s.%d", hostname, job_handle, 
-        ompi_list_get_size(&mca_mpool_sm_module.sm_mmaps)+1);
+    sprintf(path, "%s/mmap.%s", ompi_system_info.session_dir, ompi_system_info.nodename);
     fd = open(path, O_CREAT|O_RDWR, 0000); 
     if(fd < 0) {
         if(errno == EACCES)
@@ -104,7 +101,7 @@ mca_mpool_sm_mmap_t* mca_mpool_sm_mmap_init(size_t size)
     map = OBJ_NEW(mca_mpool_sm_mmap_t);
     strncpy(map->map_path, path, PATH_MAX);
     map->map_seg = seg;
-    map->map_addr = (unsigned char*)(seg + 1);
+    map->map_addr = (unsigned char*)(seg+1);
     map->map_size = size - sizeof(mca_mpool_sm_segment_t);
 
     /* enable access by other processes on this host */
@@ -126,7 +123,7 @@ void* mca_mpool_sm_mmap_alloc(size_t* size)
     void* addr;
 
     spinlock(&seg->seg_lock);
-    if(seg->seg_offset + *size > seg->seg_size) {
+    if(seg->seg_offset + *size > map->map_size) {
         addr = NULL;
     } else {
         addr = map->map_addr + seg->seg_offset;

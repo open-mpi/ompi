@@ -18,8 +18,8 @@ OBJ_CLASS_INSTANCE(mca_mpool_base_selected_module_t, ompi_list_item_t, NULL, NUL
 /**
  * Function for weeding out mpool modules that don't want to run.
  *
- * Call the init function on all available modules to find out if they
- * want to run.  Select all modules that don't fail.  Failing modules
+ * Call the init function on all available components to find out if they
+ * want to run.  Select all components that don't fail.  Failing modules
  * will be closed and unloaded.  The selected modules will be returned
  * to the caller in a ompi_list_t.
  */
@@ -35,8 +35,8 @@ int mca_mpool_base_init(bool *allow_multi_user_threads)
   /* Traverse the list of available modules; call their init
      functions. */
 
-  for (item = ompi_list_get_first(&mca_mpool_base_modules_available);
-       ompi_list_get_end(&mca_mpool_base_modules_available) != item;
+  for (item = ompi_list_get_first(&mca_mpool_base_components);
+       ompi_list_get_end(&mca_mpool_base_components) != item;
        item = ompi_list_get_next(item)) {
     mli = (mca_base_module_list_item_t *) item;
     component = (mca_mpool_base_component_t *) mli->mli_module;
@@ -66,18 +66,18 @@ int mca_mpool_base_init(bool *allow_multi_user_threads)
       /* Otherwise, it initialized properly.  Save it. */
 
       else {
-        *allow_multi_user_threads &= user_threads;
-
-        ompi_output_verbose(10, mca_mpool_base_output,
+         *allow_multi_user_threads &= user_threads;
+          ompi_output_verbose(10, mca_mpool_base_output,
                            "select: init returned success");
 
           sm = OBJ_NEW(mca_mpool_base_selected_module_t);
           sm->mpool_component = component;
           sm->mpool_module = module;
-          ompi_list_append(&mca_mpool_base_modules_initialized, (ompi_list_item_t*) sm);
+          ompi_list_append(&mca_mpool_base_modules, (ompi_list_item_t*) sm);
         }
       }
   }
   return OMPI_SUCCESS;
 }
+
 

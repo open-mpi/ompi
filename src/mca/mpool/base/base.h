@@ -33,8 +33,8 @@ extern "C" {
   int mca_mpool_base_open(void);
   int mca_mpool_base_init(bool *allow_multi_user_threads);
   int mca_mpool_base_close(void);
-  mca_mpool_t* mca_mpool_lookup(const char* name);
-  void* mca_mpool_base_is_registered(void* addr, size_t size);
+  mca_mpool_base_component_t* mca_mpool_component_lookup(const char* name);
+  mca_mpool_t* mca_mpool_module_lookup(const char* name);
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
@@ -44,7 +44,7 @@ extern "C" {
  * Globals
  */
 extern int mca_mpool_base_output;
-extern ompi_list_t mca_mpool_base_modules_available;
-extern ompi_list_t mca_mpool_base_modules_initialized;
+extern ompi_list_t mca_mpool_base_components;
+extern ompi_list_t mca_mpool_base_modules;
 
 #endif /* MCA_MEM_BASE_H */
