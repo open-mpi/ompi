@@ -6,8 +6,10 @@
 include $(top_srcdir)/config/Makefile.options
 AM_CPPFLAGS = -I$(top_srcdir)/test/support -DLAM_ENABLE_DEBUG=1
 
-noinst_PROGRAMS = list_test \
-                  test_lam_pointer_array
+noinst_PROGRAMS = \
+	hash_table \
+	list_test \
+	test_lam_pointer_array
 
 list_test_SOURCES = list_test.c 
 list_test_LDADD = \
