@@ -117,6 +117,7 @@ AC_MSG_RESULT([$result])
 # Check and see if the user wants this module built as a run-time
 # loadable module.  Acceptable combinations:
 #
+# [default -- no option]
 # --with-modules
 # --with-modules=[.+,]*MODULE_TYPE[.+,]*
 # --with-modules=[.+,]*MODULE_TYPE-MODULE_NAME[.+,]*
@@ -169,8 +170,8 @@ unset msg
 # Part one of libtool magic
 #
 
-AM_ENABLE_STATIC
-AM_DISABLE_SHARED
+AM_ENABLE_SHARED
+AM_DISABLE_STATIC
 
 
 #
@@ -231,7 +232,7 @@ AC_SUBST(CPPFLAGS)
 ompi_show_subtitle "GNU libtool setup" 
 
 AM_PROG_LIBTOOL
-AM_CONDITIONAL(OMPI_BUILD_@MCA_TYPE@_@MCA_MODULE_NAME@_LOADABLE_MODULE, 
+AM_CONDITIONAL(OMPI_BUILD_@MCA_TYPE@_@MCA_MODULE_NAME@_DSO, 
     test "$BUILD_@MCA_TYPE@_@MCA_MODULE_NAME@_LOADABLE_MODULE" = "1")
 
 
