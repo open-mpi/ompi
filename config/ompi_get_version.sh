@@ -29,13 +29,13 @@ option="$2"
 if test "$srcfile" = ""; then
     option="--help"
 else
-    OMPI_MAJOR_VERSION="`cat $srcfile | egrep ^major= | cut -d= -f2`"
-    OMPI_MINOR_VERSION="`cat $srcfile | egrep ^minor= | cut -d= -f2`"
-    OMPI_RELEASE_VERSION="`cat $srcfile | egrep ^release= | cut -d= -f2`"
-    OMPI_ALPHA_VERSION="`cat $srcfile | egrep ^alpha= | cut -d= -f2`"
-    OMPI_BETA_VERSION="`cat $srcfile | egrep ^beta= | cut -d= -f2`"
-    OMPI_WANT_SVN="`cat $srcfile | egrep ^want_svn= | cut -d= -f2`"
-    OMPI_SVN_R="`cat $srcfile | egrep ^svn_r= | cut -d= -f2`"
+    OMPI_MAJOR_VERSION="`cat $srcfile | egrep '^major=' | cut -d= -f2`"
+    OMPI_MINOR_VERSION="`cat $srcfile | egrep '^minor=' | cut -d= -f2`"
+    OMPI_RELEASE_VERSION="`cat $srcfile | egrep '^release=' | cut -d= -f2`"
+    OMPI_ALPHA_VERSION="`cat $srcfile | egrep '^alpha=' | cut -d= -f2`"
+    OMPI_BETA_VERSION="`cat $srcfile | egrep '^beta=' | cut -d= -f2`"
+    OMPI_WANT_SVN="`cat $srcfile | egrep '^want_svn=' | cut -d= -f2`"
+    OMPI_SVN_R="`cat $srcfile | egrep '^svn_r=' | cut -d= -f2`"
     if test "$OMPI_RELEASE_VERSION" != "0" -a "$OMPI_RELEASE_VERSION" != ""; then
 	OMPI_VERSION="$OMPI_MAJOR_VERSION.$OMPI_MINOR_VERSION.$OMPI_RELEASE_VERSION"
     else
@@ -49,7 +49,7 @@ else
     fi
 
     if test "$OMPI_WANT_SVN" = "1"; then
-        if "$OMPI_SVN_R" = "-1"; then
+        if test "$OMPI_SVN_R" = "-1"; then
             if test -d .svn; then
                 ver="r`svnversion .`"
             else
