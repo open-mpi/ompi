@@ -1,6 +1,5 @@
 // 
 // $HEADER$
-//	Function:	- wrapper for C program compilation
 //
 
 #include "ompi_config.h"
@@ -10,19 +9,38 @@
 int
 main(int argc, char *argv[])
 {
-  // The four wrapper compilers are extremely similar.  So similar,
-  // in fact, that they can be parameterized on what is different.
-  // Hence, we call the "wrapper compiler engine" to do all the work,
-  // and pass in just a few arguments to customize for the language of
-  // this wrapper compiler.
+    // The four wrapper compilers are extremely similar.  So similar,
+    // in fact, that they can be parameterized on what is different.
+    // Hence, we call the "wrapper compiler engine" to do all the
+    // work, and pass in just a few arguments to customize for the
+    // language of this wrapper compiler.
 
-  ompi_sv_t str_vec;
+    ompi_sv_t compiler;
+    ompi_sv_t cppflags;
+    ompi_sv_t cflags;
+    ompi_sv_t ldflags;
+    ompi_sv_t libs;
 
-  str_vec.clear();
-  str_vec.push_back("OMPI_MPICC");
-  str_vec.push_back("OMPI_CC");
+    compiler.clear();
+    compiler.push_back("OMPI_MPICC");
 
-  return ompi_wrap_engine(argc, argv,
-			 str_vec, OMPI_CC, false, false, 
-			 WRAPPER_EXTRA_CFLAGS);
+    cppflags.clear();
+    cppflags.push_back("OMPI_MPICC_CPPFLAGS");
+    cppflags.push_back("OMPI_CPPFLAGS");
+
+    cflags.clear();
+    cflags.push_back("OMPI_MPICC_CFLAGS");
+    cflags.push_back("OMPI_CFLAGS");
+
+    ldflags.clear();
+    ldflags.push_back("OMPI_MPICC_LDFLAGS");
+    ldflags.push_back("OMPI_LDFLAGS");
+
+    libs.clear();
+    libs.push_back("OMPI_MPICC_LIBS");
+    libs.push_back("OMPI_LIBS");
+
+    return ompi_wrap_engine(argc, argv, compiler, cppflags, cflags,
+			    ldflags, libs, OMPI_CC, WRAPPER_EXTRA_CFLAGS,
+			    false, false);
 }
