@@ -318,9 +318,9 @@ extern struct lam_datatype_t *lam_mpi_cxx_cplex, *lam_mpi_cxx_dblcplex;
 extern struct lam_datatype_t *lam_mpi_cxx_ldblcplex;
 extern struct lam_datatype_t *lam_mpi_cxx_bool;
 
-extern struct lam_errhandler_t lam_mpi_errors_null;
-extern struct lam_errhandler_t lam_mpi_errors_are_fatal;
-extern struct lam_errhandler_t lam_mpi_errors_return;
+extern struct lam_errhandler_t *lam_mpi_errors_null;
+extern struct lam_errhandler_t *lam_mpi_errors_are_fatal;
+extern struct lam_errhandler_t *lam_mpi_errors_return;
 
 extern MPI_Fint *MPI_F_STATUS_IGNORE;
 extern MPI_Fint *MPI_F_STATUSES_IGNORE;
