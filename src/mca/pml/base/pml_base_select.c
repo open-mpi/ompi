@@ -42,15 +42,15 @@ int mca_pml_base_select(mca_pml_base_module_t *selected,
                         bool *allow_multi_user_threads,
                         bool *have_hidden_threads)
 {
-  int priority, best_priority;
-  bool user_threads, hidden_threads;
-  bool best_user_threads, best_hidden_threads;
-  ompi_list_item_t *item;
-  mca_base_component_list_item_t *cli;
-  mca_pml_base_component_t *component, *best_component;
-  mca_pml_base_module_t *modules;
+  int priority=0, best_priority=0;
+  bool user_threads=false, hidden_threads=false;
+  bool best_user_threads=false, best_hidden_threads=false;
+  ompi_list_item_t *item=NULL;
+  mca_base_component_list_item_t *cli=NULL;
+  mca_pml_base_component_t *component=NULL, *best_component=NULL;
+  mca_pml_base_module_t *modules=NULL;
   ompi_list_t opened;
-  opened_component_t *om;  
+  opened_component_t *om=NULL;  
 
   /* Traverse the list of available components; call their init
      functions. */

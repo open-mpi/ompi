@@ -323,9 +323,9 @@ mca_pcm_base_job_list_get_job_info(mca_pcm_base_job_list_t *me,
                                    bool remove_started_pids)
 {
     int ret = OMPI_ERR_NOT_FOUND;
-    ompi_list_item_t *job_item, *pid_item;
-    mca_pcm_base_pids_t *pids;
-    mca_pcm_base_job_item_t *jobs;
+    ompi_list_item_t *job_item=NULL, *pid_item=NULL;
+    mca_pcm_base_pids_t *pids=NULL;
+    mca_pcm_base_job_item_t *jobs=NULL;
 
     OMPI_LOCK(me->jobs_mutex);
 

@@ -237,7 +237,7 @@ mca_pcm_base_kill_cb(int status, ompi_process_name_t *peer,
 static int
 kill_start_recv(void)
 {
-    int rc;
+    int rc=0;
 
     if (! have_initialized_recv) {
         OMPI_LOCK(&mutex);

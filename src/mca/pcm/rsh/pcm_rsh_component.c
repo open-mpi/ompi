@@ -122,7 +122,7 @@ mca_pcm_rsh_init(int *priority,
     mca_base_param_lookup_string(mca_pcm_rsh_param_agent,
                                  &(me->rsh_agent));
     mca_base_param_lookup_int(mca_pcm_rsh_param_delay_time,
-                              &(me->delay_time));
+                              (int*)&(me->delay_time));
 
     ret = mca_llm_base_select("rsh", &(me->llm), have_threads);
 

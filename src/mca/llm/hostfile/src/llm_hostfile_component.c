@@ -61,7 +61,7 @@ const mca_llm_base_component_1_0_0_t mca_llm_hostfile_component = {
  * component variables handles
  */
 static int param_filename;
-static int param_filename_deprecated;
+/* static int param_filename_deprecated; */
 static int param_priority;
 
 int

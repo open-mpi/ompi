@@ -450,8 +450,8 @@ static int mca_ptl_tcp_component_create_listen(void)
 
 static int mca_ptl_tcp_component_exchange(void)
 {
-     int rc;
-     size_t i;
+     int rc=0;
+     size_t i=0;
      size_t size = mca_ptl_tcp_component.tcp_num_ptl_modules * sizeof(mca_ptl_tcp_addr_t);
      if(mca_ptl_tcp_component.tcp_num_ptl_modules != 0) {
          mca_ptl_tcp_addr_t *addrs = (mca_ptl_tcp_addr_t *)malloc(size);
