@@ -375,7 +375,7 @@ int dt_unroll( dt_desc_t* pData, int count )
  *        1 if everything went fine and the data was completly converted
  *       -1 something wrong occurs.
  */
-int convertor_pack( convertor_t* pConv, struct iovec* out, unsigned int out_size )
+int lam_convertor_pack( convertor_t* pConv, struct iovec* out, unsigned int out_size )
 {
    dt_desc_t* pData = pConv->pDesc;
    int extent;
@@ -400,13 +400,14 @@ int convertor_pack( convertor_t* pConv, struct iovec* out, unsigned int out_size
       out[0].iov_base = (void*)malloc( out[0].iov_len );
       pConv->freebuf = out[0].iov_base;
    }
-   return convertor_progress( pConv, out, out_size );
+   return lam_convertor_progress( pConv, out, out_size );
 }
 
-int convertor_init_for_send( convertor_t* pConv, unsigned int flags,
-                             dt_desc_t* dt, int count, void* pUserBuf )
+int lam_convertor_init_for_send( convertor_t* pConv, unsigned int flags,
+                                 dt_desc_t* dt, int count,
+                                 void* pUserBuf, int starting_point )
 {
-   dt_increase_ref( dt );
+   OBJ_RETAIN( dt );
    pConv->pDesc = dt;
    pConv->flags = CONVERTOR_SEND;
    if( pConv->pStack != NULL ) free( pConv->pStack );
@@ -434,7 +435,7 @@ int convertor_init_for_send( convertor_t* pConv, unsigned int flags,
    return 0;
 }
 
-convertor_t* convertor_create( int remote_arch, int mode )
+convertor_t* lam_convertor_create( int remote_arch, int mode )
 {
    convertor_t* pConv = (convertor_t*)calloc( 1, sizeof(convertor_t) );
 
@@ -445,15 +446,15 @@ convertor_t* convertor_create( int remote_arch, int mode )
 }
 
 /* Actually we suppose that we can only do receiver side conversion */
-int convertor_get_packed_size( convertor_t* pConv, unsigned int* pSize )
+int lam_convertor_get_packed_size( convertor_t* pConv, unsigned int* pSize )
 {
-   if( dt_type_size( pConv->pDesc, pSize ) != 0 )
+   if( lam_ddt_type_size( pConv->pDesc, pSize ) != 0 )
       return -1;
    *pSize = (*pSize) * pConv->count;
    return 0;
 }
 
-int convertor_get_unpacked_size( convertor_t* pConv, unsigned int* pSize )
+int lam_convertor_get_unpacked_size( convertor_t* pConv, unsigned int* pSize )
 {
    int i;
    dt_desc_t* pData = pConv->pDesc;

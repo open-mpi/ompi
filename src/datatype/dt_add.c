@@ -13,7 +13,7 @@
  * the second is the internal representation using extents
  * the last is the representation used for send operations
  */
-int dt_add( dt_desc_t* pdtBase, dt_desc_t* pdtAdd, unsigned int count, long disp, long extent )
+int lam_ddt_add( dt_desc_t* pdtBase, dt_desc_t* pdtAdd, unsigned int count, long disp, long extent )
 {
    int newLength, place_needed = 0, i;
    short localFlags;
@@ -55,7 +55,7 @@ int dt_add( dt_desc_t* pdtBase, dt_desc_t* pdtAdd, unsigned int count, long disp
       if( count != 1 ) place_needed += 2;
    }
 
-   dt_increase_ref( pdtAdd );
+   OBJ_RETAIN( pdtAdd );
       
    /* compute the new memory alignement */
    pdtBase->align = IMAX( pdtBase->align, pdtAdd->align );
@@ -184,7 +184,7 @@ int dt_add( dt_desc_t* pdtBase, dt_desc_t* pdtAdd, unsigned int count, long disp
        !(pdtBase->flags & DT_FLAG_CONTIGUOUS) || !(pdtAdd->flags & DT_FLAG_CONTIGUOUS) )
       UNSET_CONTIGUOUS_FLAG(pdtBase->flags);
 
-   dt_decrease_ref( pdtAdd );
+   OBJ_RELEASE( pdtAdd );
 
    return 0;
 }

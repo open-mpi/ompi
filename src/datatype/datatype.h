@@ -129,10 +129,10 @@ extern dt_desc_t basicDatatypes[];
 #define IMAX(A,B)  ({ int _a = (A), _b = (B); (_a < _b ? _b : _a); })
 #define IMIN(A,B)  ({ int _a = (A), _b = (B); (_a < _b ? _a : _b); })
 #else
-static long LMAX( long a, long b ) { return ( a < b ? b : a ); }
-static long LMIN( long a, long b ) { return ( a < b ? a : b ); }
-static int  IMAX( int a, int b ) { return ( a < b ? b : a ); }
-static int  IMIN( int a, int b ) { return ( a < b ? a : b ); }
+static inline long LMAX( long a, long b ) { return ( a < b ? b : a ); }
+static inline long LMIN( long a, long b ) { return ( a < b ? a : b ); }
+static inline int  IMAX( int a, int b ) { return ( a < b ? b : a ); }
+static inline int  IMIN( int a, int b ) { return ( a < b ? a : b ); }
 #endif  /* __GNU__ */
 
 typedef struct __dt_stack {
@@ -149,62 +149,60 @@ typedef struct __dt_convert {
   dt_desc_t* pDesc;
 } dt_convert_t;
 
-int dt_load( void );
-int dt_unload( void );
-dt_desc_t* dt_create( int expectedSize );
-int dt_commit( dt_desc_t** );
-#define dt_free dt_destroy
-int dt_free( dt_desc_t** );
-int dt_destroy( dt_desc_t** );
-void dt_dump( dt_desc_t* pData );
-void dt_dump_complete( dt_desc_t* pData );
+int lam_ddt_init( void );
+int lam_ddt_finalize( void );
+dt_desc_t* lam_ddt_create( int expectedSize );
+int lam_ddt_commit( dt_desc_t** );
+int lam_ddt_destroy( dt_desc_t** );
+void lam_ddt_dump( dt_desc_t* pData );
+void lam_ddt_dump_complete( dt_desc_t* pData );
 /* data creation functions */
-int dt_duplicate( dt_desc_t* oldType, dt_desc_t** newType );
-int dt_create_contiguous( size_t count, dt_desc_t* oldType, dt_desc_t** newType );
-int dt_create_vector( size_t count, int bLength, long stride,
-                      dt_desc_t* oldType, dt_desc_t** newType );
-int dt_create_hvector( size_t count, int bLength, long stride,
-                       dt_desc_t* oldType, dt_desc_t** newType );
-int dt_create_indexed( size_t count, int* pBlockLength, int* pDisp,
-                       dt_desc_t* oldType, dt_desc_t** newType );
-int dt_create_hindexed( size_t count, int* pBlockLength, long* pDisp,
-                        dt_desc_t* oldType, dt_desc_t** newType );
-int dt_create_indexed_block( size_t count, int bLength, int* pDisp,
+int lam_ddt_duplicate( dt_desc_t* oldType, dt_desc_t** newType );
+int lam_ddt_create_contiguous( size_t count, dt_desc_t* oldType, dt_desc_t** newType );
+int lam_ddt_create_vector( size_t count, int bLength, long stride,
+                           dt_desc_t* oldType, dt_desc_t** newType );
+int lam_ddt_create_hvector( size_t count, int bLength, long stride,
+                            dt_desc_t* oldType, dt_desc_t** newType );
+int lam_ddt_create_indexed( size_t count, int* pBlockLength, int* pDisp,
+                            dt_desc_t* oldType, dt_desc_t** newType );
+int lam_ddt_create_hindexed( size_t count, int* pBlockLength, long* pDisp,
                              dt_desc_t* oldType, dt_desc_t** newType );
-int dt_create_struct( size_t count, size_t* pBlockLength, long* pDisp,
-                      dt_desc_t** pTypes, dt_desc_t** newType );
-int dt_create_resized( dt_desc_t* oldType, long lb, long extent, dt_desc_t** newType );
-int dt_create_subarray( int ndims, int* pSizes, int* pSubSizes, int* pStarts,
-                        int order, dt_desc_t* oldType, dt_desc_t** newType );
-int dt_create_darray( int size, int rank, int ndims, int* pGSizes, int *pDistrib,
-                      int* pDArgs, int* pPSizes, int order, dt_desc_t* oldType,
-                      dt_desc_t** newType );
+int lam_ddt_create_indexed_block( size_t count, int bLength, int* pDisp,
+                                  dt_desc_t* oldType, dt_desc_t** newType );
+int lam_ddt_create_struct( size_t count, size_t* pBlockLength, long* pDisp,
+                           dt_desc_t** pTypes, dt_desc_t** newType );
+int lam_ddt_create_resized( dt_desc_t* oldType, long lb, long extent, dt_desc_t** newType );
+int lam_ddt_create_subarray( int ndims, int* pSizes, int* pSubSizes, int* pStarts,
+                             int order, dt_desc_t* oldType, dt_desc_t** newType );
+int lam_ddt_create_darray( int size, int rank, int ndims, int* pGSizes, int *pDistrib,
+                           int* pDArgs, int* pPSizes, int order, dt_desc_t* oldType,
+                           dt_desc_t** newType );
 
-int dt_add( dt_desc_t* pdtBase, dt_desc_t* pdtNew, unsigned int count, long disp, long extent );
+int lam_ddt_add( dt_desc_t* pdtBase, dt_desc_t* pdtNew, unsigned int count, long disp, long extent );
 
-static inline int dt_type_lb( dt_desc_t* pData, long* disp )
+static inline int lam_ddt_type_lb( dt_desc_t* pData, long* disp )
 { *disp = pData->lb; return 0; };
-static inline int dt_type_ub( dt_desc_t* pData, long* disp )
+static inline int lam_ddt_type_ub( dt_desc_t* pData, long* disp )
 { *disp = pData->ub; return 0; };
-static inline int dt_type_size ( dt_desc_t* pData, int *size )
+static inline int lam_ddt_type_size ( dt_desc_t* pData, int *size )
 { *size = pData->size; return 0; };
-static inline int dt_type_extent( dt_desc_t* pData, long* extent )
+static inline int lam_ddt_type_extent( dt_desc_t* pData, long* extent )
 { *extent = (pData->ub - pData->lb); return 0; };
 
-static inline int dt_type_resize( dt_desc_t* pOld, long lb, long extent, dt_desc_t** pNew )
+static inline int lam_ddt_type_resize( dt_desc_t* pOld, long lb, long extent, dt_desc_t** pNew )
 { /* empty function */ return -1; };
-static inline int dt_get_extent( dt_desc_t* pData, long* lb, long* extent)
+static inline int lam_ddt_get_extent( dt_desc_t* pData, long* lb, long* extent)
 { *lb = pData->lb; *extent = pData->ub - pData->lb; return 0; };
-static inline int dt_get_true_extent( dt_desc_t* pData, long* true_lb, long* true_extent)
+static inline int lam_ddt_get_true_extent( dt_desc_t* pData, long* true_lb, long* true_extent)
 { *true_lb = pData->true_lb; *true_extent = (pData->true_ub - pData->true_lb); return 0; };
 
-int dt_get_element_count( dt_desc_t* pData, size_t iSize );
-int dt_copy_content_same_dt( dt_desc_t* pData, int count, char* pDestBuf, char* pSrcBuf );
+int lam_ddt_get_element_count( dt_desc_t* pData, size_t iSize );
+int lam_ddt_copy_content_same_ddt( dt_desc_t* pData, int count, char* pDestBuf, char* pSrcBuf );
 
-#define dt_increase_ref(PDT) OBJ_RETAIN( PDT )
-#define dt_decrease_ref(PDT) OBJ_RELEASE( PDT )
+#define lam_ddt_increase_ref(PDT) OBJ_RETAIN( PDT )
+#define lam_ddt_decrease_ref(PDT) OBJ_RELEASE( PDT )
 
-int dt_optimize_short( dt_desc_t* pData, int count, dt_type_desc_t* pTypeDesc );
+int lam_ddt_optimize_short( dt_desc_t* pData, int count, dt_type_desc_t* pTypeDesc );
 
 #define REMOVE_FLAG( INT_VALUE, FLAG )  (INT_VALUE) = (INT_VALUE) ^ (FLAG)
 #define SET_FLAG( INT_VALUE, FLAG )     (INT_VALUE) = (INT_VALUE) | (FLAG)
@@ -258,22 +256,24 @@ struct __struct_convertor {
 extern conversion_fct_t copy_functions[DT_MAX_PREDEFINED];
 
 /* some convertor flags */
-#define convertor_progress( PCONV, IOVEC, COUNT ) \
+#define lam_convertor_progress( PCONV, IOVEC, COUNT ) \
   (PCONV)->fAdvance( (PCONV), (IOVEC), (COUNT) );
 
 /* and finally the convertor functions */
-convertor_t* convertor_create( int remote_arch, int mode );
-int convertor_init_for_send( convertor_t* pConv, unsigned int flags,
-                             dt_desc_t* pData, int count, void* pUserBuf );
-int convertor_init_for_recv( convertor_t* pConv, unsigned int flags,
-                             dt_desc_t* pData, int count, void* pUserBuf );
-convertor_t* convertor_get_copy( convertor_t* pConvertor );
-int convertor_need_buffers( convertor_t* pConvertor );
-int convertor_pack( convertor_t* pConv, struct iovec* in, unsigned int in_size );
-int convertor_unpack( convertor_t* pConv, struct iovec* out, unsigned int out_size );
-int convertor_destroy( convertor_t** ppConv );
-int convertor_get_packed_size( convertor_t* pConv, unsigned int* pSize );
-int convertor_get_unpacked_size( convertor_t* pConv, unsigned int* pSize );
+convertor_t* lam_convertor_create( int remote_arch, int mode );
+int lam_convertor_init_for_send( convertor_t* pConv, unsigned int flags,
+                                 dt_desc_t* pData, int count,
+                                 void* pUserBuf, int starting_point );
+int lam_convertor_init_for_recv( convertor_t* pConv, unsigned int flags,
+                                 dt_desc_t* pData, int count,
+                                 void* pUserBuf, int starting_point );
+convertor_t* lam_convertor_get_copy( convertor_t* pConvertor );
+int lam_convertor_need_buffers( convertor_t* pConvertor );
+int lam_convertor_pack( convertor_t* pConv, struct iovec* in, unsigned int in_size );
+int lam_convertor_unpack( convertor_t* pConv, struct iovec* out, unsigned int out_size );
+int lam_convertor_destroy( convertor_t** ppConv );
+int lam_convertor_get_packed_size( convertor_t* pConv, unsigned int* pSize );
+int lam_convertor_get_unpacked_size( convertor_t* pConv, unsigned int* pSize );
 
 #endif  /* DATATYPE_H_HAS_BEEN_INCLUDED */
 
