@@ -21,6 +21,7 @@
 #include "util/argv.h"
 #include "util/numtostr.h"
 
+
 static mca_pcm_rms_job_item_t *
 get_job_item(mca_ns_base_jobid_t jobid)
 {
@@ -52,7 +53,6 @@ get_pids_entry(mca_pcm_rms_job_item_t *job_item, mca_ns_base_vpid_t vpid)
 
     return NULL;
 }
-
 
 
 static int
@@ -147,9 +147,8 @@ mca_pcm_rms_allocate_resources(mca_ns_base_jobid_t jobid,
 
     /* For now, just punt on whether we can actually fullfill the request or not */
     total_procs = (nodes == 0) ? procs : nodes * procs;
-#if 0 /* BWB - fix me */
-    node_alloc->start = (int) ns_base_reserve_range(jobid, total_procs);
-#endif
+    node_alloc->start = 
+        (int) ompi_name_server.reserve_range(jobid, total_procs);
     node_alloc->nodes = nodes;
     node_alloc->count = procs;
 
