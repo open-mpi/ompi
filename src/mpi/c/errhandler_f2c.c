@@ -21,7 +21,8 @@ MPI_Errhandler MPI_Errhandler_f2c(MPI_Fint errhandler_f)
   /* Error checking */
 
   if (MPI_PARAM_CHECK) {
-    if (0 > eh_index || eh_index >= lam_errhandler_f_to_c_table->size) {
+    if (0 > eh_index || 
+        eh_index >= lam_pointer_array_get_size(lam_errhandler_f_to_c_table)) {
       return MPI_ERRHANDLER_NULL;
     }
   }

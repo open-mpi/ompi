@@ -25,7 +25,7 @@ MPI_Group MPI_Group_f2c(MPI_Fint group_f)
         if (0 > group_index) {
             return MPI_GROUP_NULL;
         }
-        if (group_index >= lam_group_f_to_c_table->size) {
+        if (group_index >= lam_pointer_array_get_size(lam_group_f_to_c_table)) {
             return MPI_GROUP_NULL;
         }
     }
