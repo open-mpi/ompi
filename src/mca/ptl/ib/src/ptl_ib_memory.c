@@ -129,6 +129,33 @@ static int mca_ptl_ib_mem_registry_info_compare(void *request, void *treenode)
     return result;
 }
 
+void mca_ptl_ib_mem_registry_clean_evictables(
+    mca_ptl_ib_mem_registry_t *registry, 
+    mca_ptl_ib_mem_registry_info_t *info) 
+{
+    mca_ptl_ib_mem_registry_info_t *tmp = registry->evictable;
+    mca_ptl_ib_mem_registry_info_t *prev = NULL;
+
+    while (NULL != tmp) {
+        if (tmp == info) {
+            if (NULL == prev) {
+                /* no more entries left -- no evictable list */
+                registry->evictable = NULL;
+            }
+            else {
+                /* remove this entry from the evictable list */
+                prev->next = tmp->next;
+            }
+            /* clear this entry's evictable link */
+            tmp->next = NULL;
+            break;
+        }
+        prev = tmp;
+        tmp = tmp->next;
+    }
+    return;
+}
+
 mca_ptl_ib_mem_registry_info_t *mca_ptl_ib_mem_registry_register(
     mca_ptl_ib_mem_registry_t *registry, VAPI_mr_t *mr)
 {
@@ -176,6 +203,10 @@ mca_ptl_ib_mem_registry_info_t *mca_ptl_ib_mem_registry_register(
         mca_ptl_ib_mem_registry_insert_hint(registry, &(info->reply), info);
     }
     else {
+        if (0 == info->ref_cnt) {
+            /* make sure we're not on the evictable list */
+            mca_ptl_ib_mem_registry_clean_evictables(registry, info);
+        }
         (info->ref_cnt)++;
     }
     
