@@ -374,7 +374,7 @@ lam_wrap_build_libs(bool want_cxx_libs, lam_sv_t& libs)
 #endif
 #endif
   // Next comes the MPI library
-#if WANT_MPI_SINGLE_LIBRARY
+#if WANT_SINGLE_MPI_LIBRARY
   libs.push_back("-lmpi");
 #else
   libs.push_back("-lmpi");
