@@ -16,6 +16,7 @@
 
 #include "mpi.h"
 #include "mpi/c/bindings.h"
+#include "request/request.h"
 #include "communicator/communicator.h"
 #include "errhandler/errhandler.h"
 
@@ -29,15 +30,38 @@
 
 static const char FUNC_NAME[] = "MPI_Request_get_status";
 
-
+/* Non blocking test for the request status. Upon completion, the request will
+ * not be freed (unlike the test function). A subsequent call to test, wait
+ * or free should be executed on the request.
+ */
 int MPI_Request_get_status(MPI_Request request, int *flag,
                            MPI_Status *status) 
 {
-  if (MPI_PARAM_CHECK) {
-    OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-  }
+    if( MPI_PARAM_CHECK ) {
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+        if( NULL == flag ) {
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
+        }
+    }
 
-  /* This function is not yet implemented */
-
-  return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER, FUNC_NAME);
+    ompi_atomic_mb();
+    if( (request == MPI_REQUEST_NULL) || (request->req_state == OMPI_REQUEST_INACTIVE) ) {
+        *flag = true;
+        if( MPI_STATUS_IGNORE != status ) {
+            *status = ompi_status_empty;
+        }
+        return MPI_SUCCESS;
+    }
+    if( request->req_complete ) { 
+        *flag = true; 
+        if (MPI_STATUS_IGNORE != status) {
+            *status = request->req_status;
+        }
+        return MPI_SUCCESS;
+    }
+    *flag = false;
+#if OMPI_ENABLE_PROGRESS_THREADS == 0
+    ompi_progress();
+#endif
+    return MPI_SUCCESS;
 }
