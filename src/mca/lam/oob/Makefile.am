@@ -19,6 +19,7 @@ libmca_oob_la_SOURCES = $(headers)
 libmca_oob_la_LIBADD = \
         $(MCA_oob_STATIC_LTLIBS) \
         base/libmca_oob_base.la
+libmca_oob_la_DEPENDENCIES = $(libmca_oob_la_LIBADD)
 
 # Conditionally install the header files
 
