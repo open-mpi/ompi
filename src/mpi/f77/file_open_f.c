@@ -46,7 +46,16 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_OPEN,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-void mpi_file_open_f(MPI_Fint *comm, char *filename, MPI_Fint *amode, MPI_Fint *info, MPI_Fint *fh, MPI_Fint *ierr)
+void mpi_file_open_f(MPI_Fint *comm, char *filename, MPI_Fint *amode,
+		     MPI_Fint *info, MPI_Fint *fh, MPI_Fint *ierr)
 {
-  /* This function not yet implemented */
+    MPI_Comm c_comm = MPI_Comm_f2c(*comm);
+    MPI_Info c_info = MPI_Info_f2c(*info);
+    MPI_File c_fh;
+
+    *ierr = OMPI_INT_2_FINT(MPI_File_open(c_comm, filename, 
+					  OMPI_FINT_2_INT(*amode),
+					  c_info, &c_fh));
+    
+    *fh = MPI_File_c2f(c_fh);
 }
