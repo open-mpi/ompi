@@ -53,7 +53,7 @@ static int finish_parsing(void)
 {
     if (NULL != YY_CURRENT_BUFFER) {
         yy_delete_buffer(YY_CURRENT_BUFFER); 
-        YY_CURRENT_BUFFER = NULL;
+        YY_CURRENT_BUFFER_LVALUE = NULL;
     }
     return YY_NULL;
 }
