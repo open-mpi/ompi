@@ -11,4 +11,5 @@ autom4te.cache
 .libs
 .deps
 *.la
+*.lo
 .lam*
