@@ -53,7 +53,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_SET_NAME,
 void mpi_comm_set_name_f(MPI_Fint *comm, char *comm_name, MPI_Fint *ierr, 
                          int name_len)
 {
-    int ret;
+    int ret, c_err;
     char *c_name;
     MPI_Comm c_comm = MPI_Comm_f2c(*comm);
 
@@ -61,8 +61,9 @@ void mpi_comm_set_name_f(MPI_Fint *comm, char *comm_name, MPI_Fint *ierr,
 
     if (OMPI_SUCCESS != (ret = ompi_fortran_string_f2c(comm_name, name_len,
                                                        &c_name))) {
-        *ierr = OMPI_INT_2_FINT(OMPI_ERRHANDLER_INVOKE(c_comm, ret,
-                                                       "MPI_COMM_SET_NAME"));
+        c_err = OMPI_ERRHANDLER_INVOKE(c_comm, ret,
+				       "MPI_COMM_SET_NAME");
+	*ierr = OMPI_INT_2_FINT(c_err);
         return;
     }
 

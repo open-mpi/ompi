@@ -54,6 +54,7 @@ void mpi_recv_f(char *buf, MPI_Fint *count, MPI_Fint *datatype,
                 MPI_Fint *status, MPI_Fint *ierr)
 {
     MPI_Status *c_status;
+    int c_err;
 #if OMPI_SIZEOF_FORTRAN_INT != SIZEOF_INT
     MPI_Status c_status2;
 #endif
@@ -64,8 +65,9 @@ void mpi_recv_f(char *buf, MPI_Fint *count, MPI_Fint *datatype,
 
     if (MPI_PARAM_CHECK) {
         if (OMPI_IS_FORTRAN_STATUSES_IGNORE(status)) {
-            *ierr = OMPI_INT_2_FINT(OMPI_ERRHANDLER_INVOKE(c_comm, MPI_ERR_ARG,
-                                                           "MPI_RECV"));
+            c_err = OMPI_ERRHANDLER_INVOKE(c_comm, MPI_ERR_ARG,
+					   "MPI_RECV");
+	    *ierr = OMPI_INT_2_FINT(c_err);
             return;
         }
     }

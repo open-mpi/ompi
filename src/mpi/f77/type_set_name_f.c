@@ -53,7 +53,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_SET_NAME,
 void mpi_type_set_name_f(MPI_Fint *type, char *type_name, MPI_Fint *ierr,
 			 int name_len)
 {
-    int ret;
+    int ret, c_err;
     char *c_name;
     MPI_Datatype c_type;
 
@@ -63,8 +63,9 @@ void mpi_type_set_name_f(MPI_Fint *type, char *type_name, MPI_Fint *ierr,
 
     if (OMPI_SUCCESS != (ret = ompi_fortran_string_f2c(type_name, name_len,
                                                        &c_name))) {
-        *ierr = OMPI_INT_2_FINT(OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, ret,
-                                                       "MPI_TYPE_SET_NAME"));
+        c_err = OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, ret,
+				       "MPI_TYPE_SET_NAME");
+	*ierr = OMPI_INT_2_FINT(c_err);
         return;
     }
 
