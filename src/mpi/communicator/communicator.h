@@ -11,6 +11,7 @@
 #include "mpi/group/group.h"
 #include "mca/mpi/coll/coll.h"
 
+
 struct lam_communicator_t {
     char c_name[MPI_MAX_OBJECT_NAME];
     uint32_t c_contextid;
@@ -69,10 +70,12 @@ static inline lam_proc_t* lam_comm_lookup_peer(lam_communicator_t* comm, size_t 
     return comm->c_remote_group->g_procs[peer_id];
 }
 
+
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
   int lam_comm_init(lam_communicator_t *comm);
+  int lam_comm_link_function(void);
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

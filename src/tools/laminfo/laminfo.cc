@@ -19,6 +19,7 @@
 #include "lam/runtime/runtime.h"
 #include "lam/util/output.h"
 #include "lam/util/cmd_line.h"
+#include "mpi/communicator/communicator.h"
 #include "mca/lam/base/base.h"
 #include "tools/laminfo/laminfo.h"
 
@@ -224,14 +225,15 @@ laminfo::type_vector_t laminfo::mca_types;
 
 int main(int argc, char *argv[])
 {
-  int ret;
+  int ret = 0;
   bool acted = false;
   bool want_all = false;
 
   // Start LAM process
 
-  if (LAM_SUCCESS != lam_init(argc, argv))
+  if (LAM_SUCCESS != lam_init(argc, argv)) {
     return -1;
+  }
 
   // Initialize the argv parsing handle
 
@@ -264,6 +266,17 @@ int main(int argc, char *argv[])
                         "and built on");
   lam_cmd_line_make_opt(cmd_line, 'a', "all", 0, 
                         "Show all configuration options and MCA parameters");
+
+  // Call some useless functions in order to guarantee to link in some
+  // global variables.  Only check the return value so that the
+  // compiler doesn't optimize out the useless function.
+
+  if (LAM_SUCCESS != lam_comm_link_function()) {
+    // Stop .. or I'll say stop again!
+    ++ret;
+  } else {
+    --ret;
+  }
 
   // Get MCA parameters, if any */
   
