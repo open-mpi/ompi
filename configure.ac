@@ -568,70 +568,97 @@ else
     # If we want modern Fortran support, then get supported types and sizes
 
     OMPI_F90_CHECK_TYPE(selected_int_kind(2),  OMPI_HAVE_F90_INTEGER1)
+    if test "$OMPI_HAVE_F90_INTEGER1" = "1"; then
+        OMPI_F90_GET_SIZEOF(integer(selected_int_kind(2)), 
+                            OMPI_SIZEOF_F90_INT1)
+        OMPI_F90_GET_ALIGNMENT(integer(selected_int_kind(2)),
+                               OMPI_ALIGNMENT_F90_INT1)
+    fi
+
     OMPI_F90_CHECK_TYPE(selected_int_kind(4),  OMPI_HAVE_F90_INTEGER2)
+    if test "$OMPI_HAVE_F90_INTEGER2" = "1"; then
+        OMPI_F90_GET_SIZEOF(integer(selected_int_kind(4)), 
+                            OMPI_SIZEOF_F90_INT2)
+        OMPI_F90_GET_ALIGNMENT(integer(selected_int_kind(4)),
+                               OMPI_ALIGNMENT_F90_INT2)
+    fi
+
     OMPI_F90_CHECK_TYPE(selected_int_kind(9),  OMPI_HAVE_F90_INTEGER4)
+    if test "$OMPI_HAVE_F90_INTEGER4" = "1"; then
+        OMPI_F90_GET_SIZEOF(integer(selected_int_kind(9)),
+                            OMPI_SIZEOF_F90_INT4)
+        OMPI_F90_GET_ALIGNMENT(integer(selected_int_kind(9)),
+                               OMPI_ALIGNMENT_F90_INT4)
+    fi
+
     OMPI_F90_CHECK_TYPE(selected_int_kind(18), OMPI_HAVE_F90_INTEGER8)
+    if test "$OMPI_HAVE_F90_INTEGER8" = "1"; then
+        OMPI_F90_GET_SIZEOF(integer(selected_int_kind(18)), 
+                            OMPI_SIZEOF_F90_INT8)
+        OMPI_F90_GET_ALIGNMENT(integer(selected_int_kind(18)),
+                               OMPI_ALIGNMENT_F90_INT8)
+    fi
+
     OMPI_F90_CHECK_TYPE(selected_int_kind(19), OMPI_HAVE_F90_INTEGER16)
+    if test "$OMPI_HAVE_F90_INTEGER16" = "1"; then
+        OMPI_F90_GET_SIZEOF(integer(selected_int_kind(19)), 
+                            OMPI_SIZEOF_F90_INT16)
+        OMPI_F90_GET_ALIGNMENT(integer(selected_int_kind(19)),
+                               OMPI_ALIGNMENT_F90_INT16)
+    fi
 
     OMPI_F90_CHECK_TYPE(selected_real_kind(6), OMPI_HAVE_F90_REAL4)
+    if test "$OMPI_HAVE_F90_REAL4" = "1"; then
+        OMPI_F90_GET_SIZEOF(real(selected_real_kind(6)), OMPI_SIZEOF_F90_REAL4)
+        OMPI_F90_GET_SIZEOF(complex(selected_real_kind(6)),
+                            OMPI_SIZEOF_F90_COMPLEX8)
+        OMPI_F90_GET_ALIGNMENT(real(selected_real_kind(6)),
+                               OMPI_ALIGNMENT_F90_REAL4)
+        OMPI_F90_GET_ALIGNMENT(complex(selected_real_kind(6)),
+                               OMPI_ALIGNMENT_F90_COMPLEX8)
+    fi
+
     OMPI_F90_CHECK_TYPE(selected_real_kind(15), OMPI_HAVE_F90_REAL8)
+    if test "$OMPI_HAVE_F90_REAL8" = "1"; then
+        OMPI_F90_GET_SIZEOF(real(selected_real_kind(15)), 
+                            OMPI_SIZEOF_F90_REAL8)
+        OMPI_F90_GET_SIZEOF(complex(selected_real_kind(15)),
+                            OMPI_SIZEOF_F90_COMPLEX16)
+        OMPI_F90_GET_ALIGNMENT(real(selected_real_kind(15)),
+                               OMPI_ALIGNMENT_F90_REAL8)
+        OMPI_F90_GET_ALIGNMENT(complex(selected_real_kind(15)),
+                               OMPI_ALIGNMENT_F90_COMPLEX16)
+    fi
+
     OMPI_F90_CHECK_TYPE(selected_real_kind(31), OMPI_HAVE_F90_REAL16)
+    if test "$OMPI_HAVE_F90_REAL16" = "1"; then
+        OMPI_F90_GET_SIZEOF(real(selected_real_kind(31)), 
+                            OMPI_SIZEOF_F90_REAL16)
+        OMPI_F90_GET_SIZEOF(complex(selected_real_kind(31)),
+                            OMPI_SIZEOF_F90_COMPLEX32)
+        OMPI_F90_GET_ALIGNMENT(real(selected_real_kind(31)),
+                               OMPI_ALIGNMENT_F90_REAL16)
+        OMPI_F90_GET_ALIGNMENT(complex(selected_real_kind(31)),
+                               OMPI_ALIGNMENT_F90_COMPLEX32)
+    fi
 
     OMPI_F90_GET_SIZEOF(logical, OMPI_SIZEOF_F90_LOGICAL)
-    OMPI_F90_GET_SIZEOF(integer, OMPI_SIZEOF_F90_INT)
-    OMPI_F90_GET_SIZEOF(real, OMPI_SIZEOF_F90_REAL)
-    OMPI_F90_GET_SIZEOF(real(kind(1.D0)), OMPI_SIZEOF_F90_DBLPREC)
-    OMPI_F90_GET_SIZEOF(complex, OMPI_SIZEOF_F90_COMPLEX)
-    OMPI_F90_GET_SIZEOF(complex(kind(1.D0)), OMPI_SIZEOF_F90_DBLCOMPLEX)
-
-    OMPI_F90_GET_SIZEOF(integer(selected_int_kind(2)), OMPI_SIZEOF_F90_INT1)
-    OMPI_F90_GET_SIZEOF(integer(selected_int_kind(4)), OMPI_SIZEOF_F90_INT2)
-    OMPI_F90_GET_SIZEOF(integer(selected_int_kind(9)), OMPI_SIZEOF_F90_INT4)
-    OMPI_F90_GET_SIZEOF(integer(selected_int_kind(18)), OMPI_SIZEOF_F90_INT8)
-    OMPI_F90_GET_SIZEOF(integer(selected_int_kind(19)), OMPI_SIZEOF_F90_INT16)
-
-    OMPI_F90_GET_SIZEOF(real(selected_real_kind(6)), OMPI_SIZEOF_F90_REAL4)
-    OMPI_F90_GET_SIZEOF(real(selected_real_kind(15)), OMPI_SIZEOF_F90_REAL8)
-    OMPI_F90_GET_SIZEOF(real(selected_real_kind(31)), OMPI_SIZEOF_F90_REAL16)
-
-    OMPI_F90_GET_SIZEOF(complex(selected_real_kind(6)),
-                        OMPI_SIZEOF_F90_COMPLEX8)
-    OMPI_F90_GET_SIZEOF(complex(selected_real_kind(15)),
-                        OMPI_SIZEOF_F90_COMPLEX16)
-    OMPI_F90_GET_SIZEOF(complex(selected_real_kind(31)),
-                        OMPI_SIZEOF_F90_COMPLEX32)
-
     OMPI_F90_GET_ALIGNMENT(logical, OMPI_ALIGNMENT_F90_LOGICAL)
+
+    OMPI_F90_GET_SIZEOF(integer, OMPI_SIZEOF_F90_INT)
     OMPI_F90_GET_ALIGNMENT(integer, OMPI_ALIGNMENT_F90_INT)
+
+    OMPI_F90_GET_SIZEOF(real, OMPI_SIZEOF_F90_REAL)
     OMPI_F90_GET_ALIGNMENT(real, OMPI_ALIGNMENT_F90_REAL)
+
+    OMPI_F90_GET_SIZEOF(real(kind(1.D0)), OMPI_SIZEOF_F90_DBLPREC)
     OMPI_F90_GET_ALIGNMENT(real(kind(1.D0)), OMPI_ALIGNMENT_F90_DBLPREC)
+
+    OMPI_F90_GET_SIZEOF(complex, OMPI_SIZEOF_F90_COMPLEX)
     OMPI_F90_GET_ALIGNMENT(complex, OMPI_ALIGNMENT_F90_COMPLEX)
+
+    OMPI_F90_GET_SIZEOF(complex(kind(1.D0)), OMPI_SIZEOF_F90_DBLCOMPLEX)
     OMPI_F90_GET_ALIGNMENT(complex(kind(1.D0)), OMPI_ALIGNMENT_F90_DBLCOMPLEX)
-
-    OMPI_F90_GET_ALIGNMENT(integer(selected_int_kind(2)),
-                           OMPI_ALIGNMENT_F90_INT1)
-    OMPI_F90_GET_ALIGNMENT(integer(selected_int_kind(4)),
-                           OMPI_ALIGNMENT_F90_INT2)
-    OMPI_F90_GET_ALIGNMENT(integer(selected_int_kind(9)),
-                           OMPI_ALIGNMENT_F90_INT4)
-    OMPI_F90_GET_ALIGNMENT(integer(selected_int_kind(18)),
-                           OMPI_ALIGNMENT_F90_INT8)
-    OMPI_F90_GET_ALIGNMENT(integer(selected_int_kind(19)),
-                           OMPI_ALIGNMENT_F90_INT16)
-
-    OMPI_F90_GET_ALIGNMENT(real(selected_real_kind(6)),
-                           OMPI_ALIGNMENT_F90_REAL4)
-    OMPI_F90_GET_ALIGNMENT(real(selected_real_kind(15)),
-                           OMPI_ALIGNMENT_F90_REAL8)
-    OMPI_F90_GET_ALIGNMENT(real(selected_real_kind(31)),
-                           OMPI_ALIGNMENT_F90_REAL16)
-
-    OMPI_F90_GET_ALIGNMENT(complex(selected_real_kind(6)),
-                           OMPI_ALIGNMENT_F90_COMPLEX8)
-    OMPI_F90_GET_ALIGNMENT(complex(selected_real_kind(15)),
-                           OMPI_ALIGNMENT_F90_COMPLEX16)
-    OMPI_F90_GET_ALIGNMENT(complex(selected_real_kind(31)),
-                           OMPI_ALIGNMENT_F90_COMPLEX32)
 fi
 
 #
@@ -1050,7 +1077,6 @@ AC_DEFINE_UNQUOTED(MPI_Offset, $MPI_OFFSET_TYPE, [Type of MPI_Offset])
 
 AC_MSG_CHECKING([checking for an MPI datatype for MPI_Offset])
 if test "$MPI_OFFSET_DATATYPE" = "not found"; then
-    echo mpi_offset_type is "$MPI_OFFSET_TYPE"
     if test "$MPI_OFFSET_TYPE" = "int64_t"; then
         if test "$ac_cv_type_long_long" = "yes" -a "$ac_cv_sizeof_long_long" = 8; then
             MPI_OFFSET_DATATYPE=MPI_LONG_LONG
