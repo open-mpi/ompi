@@ -34,7 +34,7 @@ start_time="`date`"
 # Sanity checks
 if test -z "$scratch_root" -o -z "$email" -o -z "$svnroot" \
     -o -z "$destdir"; then
-    echo "Must specify scratch root directory, e-mail address, and SVN root"
+    echo "Must specify scratch root directory, e-mail address, SVN root, and destination directory"
     exit 1
 fi
 
