@@ -169,7 +169,7 @@ int mca_pml_teg_add_procs(ompi_proc_t** procs, size_t nprocs)
     ompi_bitmap_t reachable;
     struct mca_ptl_base_peer_t** ptl_peers = NULL;
     int rc;
-    int p_index;
+    size_t p_index;
 
     OBJ_CONSTRUCT(&reachable, ompi_bitmap_t);
     rc = ompi_bitmap_init(&reachable, nprocs);
