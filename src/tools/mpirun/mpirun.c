@@ -318,7 +318,7 @@ main(int argc, char *argv[])
      */
     if (OMPI_SUCCESS != (ret = ompi_rte_spawn_procs(spawn_handle, new_jobid, &schedlist))) {
         ompi_show_help("help-mpirun.txt", "mpirun:error-spawning",
-                       true, ret);
+                       true, argv[0], ret);
 	return 1;
     }
     
