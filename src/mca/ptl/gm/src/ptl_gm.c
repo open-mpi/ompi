@@ -199,7 +199,6 @@ mca_ptl_gm_finalize (struct mca_ptl_base_module_t *base_ptl)
     OBJ_DESTRUCT( &(ptl->gm_recv_outstanding_queue) );
 
     /* And finally release the PTL itself */
-    OMPI_OUTPUT((0, "GM ptl %p succesfully finalized\n", (void*)ptl));
     free( ptl );
 
     return OMPI_SUCCESS;
@@ -275,11 +274,9 @@ mca_ptl_gm_send (struct mca_ptl_base_module_t *ptl,
     
     /* initiate the send */
     gm_ptl_peer = (mca_ptl_gm_peer_t *)ptl_peer;
-    rc = mca_ptl_gm_send_frag_init( sendfrag, gm_ptl_peer, sendreq, offset, &size, flags );
+    rc = mca_ptl_gm_init_header_match( sendfrag, sendreq, flags );
     rc = mca_ptl_gm_peer_send( gm_ptl_peer, sendfrag, sendreq, offset, &size, flags );
 
-    ompi_atomic_sub( &(gm_ptl->num_send_tokens), 1 );
-    assert( gm_ptl->num_send_tokens >= 0 );
     sendreq->req_offset += size;
     return OMPI_SUCCESS;
 }
