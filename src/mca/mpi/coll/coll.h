@@ -98,18 +98,15 @@ typedef int (*mca_coll_scatterv_fn_t)(void *sbuf, int *scounts,
  * Ver 1.0.0
  */
 
-typedef struct mca_coll_module_1_0_0 {
+typedef struct mca_coll_module_1_0_0_t {
   mca_1_0_0_t super;
 
   /* Initialization / querying functions */
 
   mca_coll_thread_query_fn_t collm_thread_query;
   mca_coll_query_1_0_0_fn_t collm_query;
-
-  /* Flags */
-
-  int collm_has_checkpoint;
-} mca_coll_module_1_0_0_t;
+};
+typedef struct mca_coll_module_1_0_0_t mca_coll_module_1_0_0_t;
 
 
 /*
@@ -119,7 +116,7 @@ typedef struct mca_coll_module_1_0_0 {
  * communicator is freed.
  */
 
-typedef struct mca_coll_1_0_0 {
+struct mca_coll_1_0_0_t {
 
   /* Per-communicator initialization and finalization functions */
 
@@ -132,6 +129,11 @@ typedef struct mca_coll_1_0_0 {
   mca_coll_continue_fn_t coll_continue;
   mca_coll_restart_fn_t coll_restart;
   mca_coll_interrupt_fn_t coll_interrupt;
+
+  /* Memory allocation / freeing */
+
+  mca_alloc_mem_fn_t coll_alloc_mem;
+  mca_free_mem_fn_t coll_free_mem;
 
   /* Collective function pointers */
 
@@ -156,7 +158,7 @@ typedef struct mca_coll_1_0_0 {
   mca_coll_barrier_fn_t coll_barrier_intra;
   mca_coll_barrier_fn_t coll_barrier_inter;
 
-  int coll_bcast_optimization;
+  bool coll_bcast_optimization;
   mca_coll_bcast_fn_t coll_bcast_intra;
   mca_coll_bcast_fn_t coll_bcast_inter;
 
@@ -169,7 +171,7 @@ typedef struct mca_coll_1_0_0 {
   mca_coll_gatherv_fn_t coll_gatherv_intra;
   mca_coll_gatherv_fn_t coll_gatherv_inter;
   
-  int coll_reduce_optimization;
+  bool coll_reduce_optimization;
   mca_coll_reduce_fn_t coll_reduce_intra;
   mca_coll_reduce_fn_t coll_reduce_inter;
 
@@ -184,7 +186,8 @@ typedef struct mca_coll_1_0_0 {
 
   mca_coll_scatterv_fn_t coll_scatterv_intra;
   mca_coll_scatterv_fn_t coll_scatterv_inter;
-} mca_coll_1_0_0_t;
+};
+struct mca_coll_1_0_0_t mca_coll_1_0_0_t;
 
 
 /*
@@ -200,11 +203,6 @@ extern "C" {
   int mca_coll_base_open(lam_cmd_line_t *cmd);
   int mca_coll_base_query(void);
 
-  int mca_coll_base_empty_checkpoint(MPI_Comm comm);
-  int mca_coll_base_empty_continue(MPI_Comm comm);
-  int mca_coll_base_empty_restart(MPI_Comm comm);
-  int mca_coll_base_empty_interrupt(void);
-
   /*
    * This is technically part of the basic module, but since it ships
    * with LAM, and other modules may use the basic module for
@@ -212,7 +210,7 @@ extern "C" {
    */
 
   const mca_coll_1_0_0_t *
-    mca_coll_lam_basic_query(MPI_Comm comm, int *priority);
+    mca_coll_basic_query(MPI_Comm comm, int *priority);
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
@@ -236,7 +234,7 @@ extern lam_list_t *mca_coll_base_available;
  * effectively be filled in by configure.
  */
 
-extern const mca_t **mca_coll_modules;
+extern const mca_module_t **mca_coll_modules;
 
 
 #endif /* MCA_COLL_H */
