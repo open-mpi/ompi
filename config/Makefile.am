@@ -6,12 +6,15 @@
 include $(top_srcdir)/config/Makefile.options
 
 EXTRA_DIST = \
+        c_get_alignment.m4 \
         c_weak_symbols.m4 \
         cxx_find_template_parameters.m4 \
         cxx_find_template_repository.m4 \
         cxx_find_exception_flags.m4 \
         cxx_have_exceptions.m4 \
         f77_find_ext_symbol_convention.m4 \
+        f77_get_alignment.m4 \
+        f77_get_sizeof.m4 \
         lam_case_sensitive_fs_setup.m4 \
         lam_check_optflags.m4 \
         lam_check_pthread_pids.m4 \
@@ -22,7 +25,6 @@ EXTRA_DIST = \
         lam_config_threads.m4 \
         lam_configure_options.m4 \
         lam_functions.m4 \
-        lam_get_sizeof_fortran_type.m4 \
         lam_get_version.m4 \
         lam_get_version.sh \
         lam_mca.m4 \

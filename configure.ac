@@ -132,9 +132,10 @@ AM_ENABLE_STATIC
 
 LAM_SETUP_CC
 
-# force ANSI prototypes
-# check for STDC
-# check for some types
+#
+# Check for some types
+#
+
 AC_CHECK_TYPES(long long)
 AC_CHECK_TYPES(int8_t)
 AC_CHECK_TYPES(uint8_t)
@@ -146,14 +147,36 @@ AC_CHECK_TYPES(int64_t)
 AC_CHECK_TYPES(uint64_t)
 AC_CHECK_TYPES(intptr_t)
 AC_CHECK_TYPES(uintptr_t)
-# check for type sizes
+
+#
+# Check for type sizes
+#
+
 AC_CHECK_SIZEOF(char)
 AC_CHECK_SIZEOF(short)
 AC_CHECK_SIZEOF(int)
 AC_CHECK_SIZEOF(long)
 AC_CHECK_SIZEOF(long long)
 AC_CHECK_SIZEOF(void *)
-# check for type alignments
+
+#
+# Check for type alignments
+#
+
+LAM_C_GET_ALIGNMENT(char, LAM_ALIGNMENT_CHAR)
+LAM_C_GET_ALIGNMENT(short, LAM_ALIGNMENT_SHORT)
+LAM_C_GET_ALIGNMENT(wchar_t, LAM_ALIGNMENT_WCHAR)
+LAM_C_GET_ALIGNMENT(int, LAM_ALIGNMENT_INT)
+LAM_C_GET_ALIGNMENT(long, LAM_ALIGNMENT_LONG)
+LAM_C_GET_ALIGNMENT(long long, LAM_ALIGNMENT_LONG_LONG)
+LAM_C_GET_ALIGNMENT(float, LAM_ALIGNMENT_FLOAT)
+LAM_C_GET_ALIGNMENT(double, LAM_ALIGNMENT_DOUBLE)
+LAM_C_GET_ALIGNMENT(long double, LAM_ALIGNMENT_LONG_DOUBLE)
+LAM_C_GET_ALIGNMENT(void *, LAM_ALIGNMENT_VOID_P)
+
+#
+# Check for other compiler characteristics
+#
 
 AC_C_INLINE
 AC_C_RESTRICT
@@ -210,12 +233,16 @@ AC_DEFINE_UNQUOTED(LAM_HAVE_WEAK_SYMBOLS, $LAM_C_HAVE_WEAK_SYMBOLS,
 
 LAM_SETUP_CXX
 
-# check for STL
-# check for bool (and corresponding C type)
-# check for true/false
 # check for type sizes
+
+AC_LANG_SAVE
+AC_LANG_CPLUSPLUS
+AC_CHECK_SIZEOF(bool)
+
 # check for type alignments
-# check for template repository
+
+LAM_C_GET_ALIGNMENT(bool, LAM_ALIGNMENT_CXX_BOOL)
+AC_LANG_RESTORE
 
 
 ##################################
@@ -230,9 +257,29 @@ if test "$F77" != "none" ; then
     # MPI_Fint. This is needed for C bindings and hence there is no
     # bearing of --enable-fortran flag on this test.
 
-    LAM_SIZEOF_FORTRAN_INT=0
-    LAM_GET_SIZEOF_FORTRAN_TYPE(INTEGER, LAM_SIZEOF_FORTRAN_INT)
+    LAM_F77_GET_SIZEOF(INTEGER, LAM_SIZEOF_FORTRAN_INT)
 fi
+
+# If we want fortran support, then get the sizes and alignments of all
+# the rest of the fortran types
+
+if test "$F77" != "none" -a "$WANT_MPI_F77" = "1"; then
+    # INTEGER is already done, per above
+    LAM_F77_GET_SIZEOF(REAL, LAM_SIZEOF_FORTRAN_REAL)
+    LAM_F77_GET_SIZEOF(DOUBLE PRECISION, LAM_SIZEOF_FORTRAN_DBLPREC)
+    LAM_F77_GET_SIZEOF(COMPLEX, LAM_SIZEOF_FORTRAN_COMPLEX)
+    LAM_F77_GET_SIZEOF(DOUBLE COMPLEX, LAM_SIZEOF_FORTRAN_DBLCOMPLEX)
+
+    LAM_F77_GET_ALIGNMENT(INTEGER, LAM_ALIGNMENT_FORTRAN_INT)
+    LAM_F77_GET_ALIGNMENT(REAL, LAM_ALIGNMENT_FORTRAN_REAL)
+    LAM_F77_GET_ALIGNMENT(DOUBLE PRECISION, LAM_ALIGNMENT_FORTRAN_DBLPREC)
+    LAM_F77_GET_ALIGNMENT(COMPLEX, LAM_ALIGNMENT_FORTRAN_COMPLEX)
+    LAM_F77_GET_ALIGNMENT(DOUBLE COMPLEX, LAM_ALIGNMENT_FORTRAN_DBLCOMPLEX)
+fi
+
+#
+# Fortran 90 setup
+#
 
 LAM_SETUP_F90
 
