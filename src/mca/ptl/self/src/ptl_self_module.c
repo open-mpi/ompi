@@ -114,9 +114,10 @@ int mca_ptl_self_module_close(void)
             mca_ptl_self_module.self_send_requests.super.ompi_list_length);
     }
 
-    if (NULL != mca_ptl_self_module.self_ptls)
+    if (NULL != mca_ptl_self_module.self_ptls) {
         free(mca_ptl_self_module.self_ptls);
-    OBJ_DESTRUCT( &(mca_ptl_self_module.self_send_requests) );
+        OBJ_DESTRUCT( &(mca_ptl_self_module.self_send_requests) );
+    }
     return OMPI_SUCCESS;
 }
 
