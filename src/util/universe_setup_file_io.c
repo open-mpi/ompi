@@ -19,7 +19,9 @@
 #include "tools/openmpi/openmpi.h"
 #include "util/universe_setup_file_io.h"
 
-char *ompi_getline_buffer(FILE *fp);
+#define OMPI_UNIV_SETUP_FILE_MAX_LINE_LENGTH 1024
+
+char *ompi_getline(FILE *fp);
 
 int ompi_write_universe_setup_file(char *filename, ompi_universe_t *universe)
 {
@@ -27,37 +29,63 @@ int ompi_write_universe_setup_file(char *filename, ompi_universe_t *universe)
 
     fp = fopen(filename, "w");
     if (NULL == fp) {
-	ompi_output(0, "cannot open file to save contact info");
 	return OMPI_ERROR;
     }
-    fprintf(fp, "%d name: %s\n", (int)strlen(universe->name), universe->name);
-    fprintf(fp, "%d host: %s\n", (int)strlen(universe->host), universe->host);
-    fprintf(fp, "%d user: %s\n", (int)strlen(universe->uid), universe->uid);
+
+    if (NULL == universe->name) {
+	goto CLEANUP;
+    }
+    fprintf(fp, "%s\n", universe->name);
+
+    if (NULL == universe->host) {
+	goto CLEANUP;
+    }
+    fprintf(fp, "%s\n", universe->host);
+
+    if (NULL == universe->uid) {
+	goto CLEANUP;
+    }
+    fprintf(fp, "%s\n", universe->uid);
+
     if (universe->persistence) {
-	fprintf(fp, "state: persistent\n");
+	fprintf(fp, "persistent\n");
     } else {
-	fprintf(fp, "state: non-persistent\n");
+	fprintf(fp, "non-persistent\n");
     }
+
+    if (NULL == universe->scope) {
+	goto CLEANUP;
+    }
+    fprintf(fp, "%s\n", universe->scope);
+
     if (universe->silent_mode) {
-	fprintf(fp, "mode: silent\n");
+	fprintf(fp, "silent\n");
     } else {
-	fprintf(fp, "mode: console\n");
+	fprintf(fp, "console\n");
     }
-    if (universe->web_server) {
-	fprintf(fp, "%d socket: %s\n", (int)strlen(universe->socket_contact_info),
-		universe->socket_contact_info);
+
+    if (universe->web_server && NULL != universe->socket_contact_info) {
+	fprintf(fp, "%s\n", universe->socket_contact_info);
     } else {
-	fprintf(fp, "4 socket: none\n");
+	fprintf(fp, "none\n");
     }
-    fprintf(fp, "%d oob: %s\n", (int)strlen(universe->oob_contact_info),
-	    universe->oob_contact_info);
+
+    if (NULL == universe->oob_contact_info) {
+	goto CLEANUP;
+    }
+    fprintf(fp, "%s\n", universe->oob_contact_info);
     fclose(fp);
+
     return OMPI_SUCCESS;
+
+ CLEANUP:
+    fclose(fp);
+    return OMPI_ERROR;
 }
 
 int ompi_read_universe_setup_file(char *filename, ompi_universe_t *universe)
 {
-    char persist[20], mode[10];
+    char *input;
     FILE *fp;
 
     fp = fopen(filename, "r");
@@ -69,66 +97,88 @@ int ompi_read_universe_setup_file(char *filename, ompi_universe_t *universe)
 	}
     }
 
-    universe->name = ompi_getline_buffer(fp);
-    fscanf(fp, "name: %s\n", universe->name);
+    universe->name = ompi_getline(fp);
+    if (NULL == universe->name) {
+	goto CLEANUP;
+    }
 
-    universe->host = ompi_getline_buffer(fp);
-    fscanf(fp, "host: %s\n", universe->host);
+    universe->host = ompi_getline(fp);
+    if (NULL == universe->host) {
+	goto CLEANUP;
+    }
 
-    universe->uid = ompi_getline_buffer(fp);
-    fscanf(fp, "user: %s\n", universe->uid);
+    universe->uid = ompi_getline(fp);
+    if (NULL == universe->uid) {
+	goto CLEANUP;
+    }
 
-    fscanf(fp, "state: %s", persist);
-    if (0 == strncmp(persist, "persistent", strlen("persistent"))) {
+    input = ompi_getline(fp);
+    if (NULL == input) {
+	goto CLEANUP;
+    }
+    if (0 == strncmp(input, "persistent", strlen("persistent"))) {
 	universe->persistence = true;
-    } else if (0 == strncmp(persist, "non-persistent", strlen("non-persistent"))) {
+    } else if (0 == strncmp(input, "non-persistent", strlen("non-persistent"))) {
 	universe->persistence = false;
     } else {
-	return OMPI_ERROR;
+	free(input);
+	goto CLEANUP;
     }
+    free(input);
 
-    fscanf(fp, "mode: %s", mode);
-    if (0 == strncmp(mode, "silent", strlen("silent"))) {
+    universe->scope = ompi_getline(fp);
+    if (NULL == universe->scope) {
+	goto CLEANUP;
+    }
+ 
+    input = ompi_getline(fp);
+    if (NULL == input) {
+	goto CLEANUP;
+    }
+    if (0 == strncmp(input, "silent", strlen("silent"))) {
 	universe->silent_mode = true;
-    } else if (0 == strncmp(mode, "console", strlen("console"))) {
+    } else if (0 == strncmp(input, "console", strlen("console"))) {
 	universe->silent_mode = false;
     } else {
-	return OMPI_ERROR;
+	free(input);
+	goto CLEANUP;
     }
+    free(input);
 
-    universe->socket_contact_info = ompi_getline_buffer(fp);
-    fscanf(fp, "socket: %s", universe->socket_contact_info);
-    if (0 == strcmp("none", universe->socket_contact_info)) {
+    universe->socket_contact_info = ompi_getline(fp);
+    if (NULL == universe->socket_contact_info) {
+	goto CLEANUP;
+    }
+    if (0 == strncmp(universe->socket_contact_info, "none", strlen("none"))) {
 	universe->web_server = false;
     } else {
 	universe->web_server = true;
     }
 
-    universe->oob_contact_info = ompi_getline_buffer(fp);
-    fscanf(fp, "oob: %s", universe->oob_contact_info);
+    universe->oob_contact_info = ompi_getline(fp);
+    if (NULL == universe->oob_contact_info) {
+	goto CLEANUP;
+    }
 
     fclose(fp);
-
     return OMPI_SUCCESS;
+
+ CLEANUP:
+    fclose(fp);
+    return OMPI_ERROR;
 }
 
-char *ompi_getline_buffer(FILE *fp)
+char *ompi_getline(FILE *fp)
 {
-    int len, i, in_val;
-    char in_buf[100], in_char, *buffer;
+    char *ret, *buff;
+    char input[OMPI_UNIV_SETUP_FILE_MAX_LINE_LENGTH];
 
-    i = 0;
-    while ((EOF != (in_val = fgetc(fp))) && (' ' != (in_char = (char)in_val))) {
-	in_buf[i] = in_char;
-	i++;
+    ret = fgets(input, OMPI_UNIV_SETUP_FILE_MAX_LINE_LENGTH, fp);
+    if (NULL != ret) {
+	input[strlen(input)-1] = '\0';  /* remove newline */
+	buff = strdup(input);
+	return buff;
     }
-    in_buf[i] = '\0';
-    len = atoi(in_buf);
-    if (len > 0) {
-	buffer = (char*)malloc((len+1)*sizeof(char));
-    } else {
-	buffer = NULL;
-    }
-
-    return buffer;
+    return NULL;
 }
+

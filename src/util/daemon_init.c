@@ -13,7 +13,7 @@
 #include "include/constants.h"
 #include "util/daemon_init.h"
 
-int daemon_init(char *working_dir)
+int ompi_daemon_init(char *working_dir)
 {
     pid_t pid;
 
