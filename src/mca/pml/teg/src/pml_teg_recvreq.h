@@ -42,9 +42,6 @@ static inline void mca_pml_teg_recv_request_return(mca_ptl_base_recv_request_t* 
  */
 static inline int mca_pml_teg_recv_request_start(mca_ptl_base_recv_request_t* request)
 {
-    THREAD_SCOPED_LOCK(&mca_pml_teg.teg_lock,
-        (request->req_sequence = mca_pml_teg.teg_recv_sequence++));
-
     if(request->super.req_peer == LAM_ANY_SOURCE) {
         mca_ptl_base_recv_request_match_wild(request);
     } else {

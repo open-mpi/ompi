@@ -349,7 +349,7 @@ typedef void (*mca_ptl_base_recv_fn_t)(
  * not made, the matching code will copy the supplied header into the 
  * recv fragment so that the match can be made when the receive is posted.
  */
-typedef int (*mca_ptl_base_match_fn_t)(
+typedef bool (*mca_ptl_base_match_fn_t)(
     struct mca_ptl_base_recv_frag_t* recv_frag,
     struct mca_ptl_base_match_header_t* header
 );

@@ -102,7 +102,7 @@ mca_pml_t* mca_pml_teg_module_init(int* priority,
 {
     *priority = 0;
     *allow_multi_user_threads = true;
-    *have_hidden_threads = true;
+    *have_hidden_threads = false;
 
     OBJ_CONSTRUCT(&mca_pml_teg.teg_lock, lam_mutex_t);
     mca_pml_teg.teg_ptl_modules = NULL;
@@ -120,9 +120,6 @@ mca_pml_t* mca_pml_teg_module_init(int* priority,
         mca_pml_teg.teg_free_list_inc,
         NULL);
         
-    /* recv sequence */
-    mca_pml_teg.teg_recv_sequence = 0;
-
     /* request completion */
     OBJ_CONSTRUCT(&mca_pml_teg.teg_request_lock, lam_mutex_t);
     OBJ_CONSTRUCT(&mca_pml_teg.teg_request_cond, lam_condition_t);

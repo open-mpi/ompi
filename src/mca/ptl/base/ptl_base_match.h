@@ -15,12 +15,11 @@ struct mca_ptl_base_recv_frag_t;
  * @param frag_header (IN)          Header of received fragment.
  * @param frag_desc (IN)            Received fragment descriptor.
  * @param match_made (OUT)          Flag indicating wether a match was made.
- * @param additional_matches (OUT)  List of additional matches if a match was made.
+ * @param additional_matches (OUT)  List of additional matches 
  * @return                          LAM_SUCCESS or error status on failure.
  */
-int mca_ptl_base_match(mca_ptl_base_match_header_t *frag_header,
-    struct mca_ptl_base_recv_frag_t *frag_desc, bool *match_made,
-    lam_list_t *additional_matches);
+bool mca_ptl_base_match(mca_ptl_base_match_header_t *frag_header,
+    struct mca_ptl_base_recv_frag_t *frag_desc, lam_list_t *additional_matches);
 
 #endif /* MCA_PTL_BASE_MATCH_H */
 

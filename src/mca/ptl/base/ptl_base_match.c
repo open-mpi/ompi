@@ -73,9 +73,10 @@ static void mca_ptl_base_check_cantmatch_for_match(
  *   - fragments may be corrupt
  *   - this routine may be called simoultaneously by more than one thread
  */
-int mca_ptl_base_match(mca_ptl_base_match_header_t *frag_header,
-        mca_ptl_base_recv_frag_t *frag_desc, bool* match_made, 
-        lam_list_t *additional_matches)
+bool mca_ptl_base_match(
+    mca_ptl_base_match_header_t *frag_header,
+    mca_ptl_base_recv_frag_t *frag_desc, 
+    lam_list_t *additional_matches)
 {
     /* local variables */
     mca_ptl_base_sequence_t frag_msg_seq,next_msg_seq_expected;
@@ -83,9 +84,7 @@ int mca_ptl_base_match(mca_ptl_base_match_header_t *frag_header,
     mca_ptl_base_recv_request_t *matched_receive;
     mca_pml_ptl_comm_t *pml_comm;
     int frag_src;
-
-    /* initialization */
-    *match_made=false;
+    bool match_made=false;
 
     /* communicator pointer */
     comm_ptr=lam_comm_lookup(frag_header->hdr_contextid);
@@ -104,7 +103,7 @@ int mca_ptl_base_match(mca_ptl_base_match_header_t *frag_header,
      * end points) from being processed, and potentially "loosing"
      * the fragment.
      */
-    THREAD_LOCK((pml_comm->c_matching_lock)+frag_src);
+    THREAD_LOCK(&pml_comm->c_matching_lock);
 
     /* get sequence number of next message that can be processed */
     next_msg_seq_expected = *((pml_comm->c_next_msg_seq)+frag_src);
@@ -128,7 +127,7 @@ int mca_ptl_base_match(mca_ptl_base_match_header_t *frag_header,
         if (matched_receive) {
 
             /* set flag indicating the input fragment was matched */
-            *match_made=true;
+            match_made=true;
             /* associate the receive descriptor with the fragment
              * descriptor */
             frag_desc->frag_request=matched_receive;
@@ -139,13 +138,9 @@ int mca_ptl_base_match(mca_ptl_base_match_header_t *frag_header,
              */
 
         } else {
-            /* if no match found, place on unexpected queue - need to
-             * lock to prevent probe from interfering with updating
-             * the list */
-            THREAD_LOCK((pml_comm->c_unexpected_frags_lock)+frag_src);
+            /* if no match found, place on unexpected queue */
             lam_list_append( ((pml_comm->c_unexpected_frags)+frag_src),
                     (lam_list_item_t *)frag_desc);
-            THREAD_UNLOCK((pml_comm->c_unexpected_frags_lock)+frag_src);
 
         }
 
@@ -160,16 +155,6 @@ int mca_ptl_base_match(mca_ptl_base_match_header_t *frag_header,
 
         }
 
-            
-        /* 
-         * if threaded, ok to release lock, since the posted
-         * receive is not on any queue, so it won't be
-         * matched again, and the fragment can be processed
-         * w/o any conflict from other threads - locks will
-         * be used where concurent access needs to be managed.
-         */
-        THREAD_UNLOCK((pml_comm->c_matching_lock)+frag_src);
-
     } else {
         /*
          * This message comes after the next expected, so it
@@ -177,13 +162,10 @@ int mca_ptl_base_match(mca_ptl_base_match_header_t *frag_header,
          */
         lam_list_append( ((pml_comm->c_frags_cant_match)+frag_src),
                     (lam_list_item_t *)frag_desc);
-
-        /* now that the fragment is on the list, ok to
-         * release match - other matches may be attempted */
-        THREAD_UNLOCK((pml_comm->c_matching_lock)+frag_src);
     }
 
-    return LAM_SUCCESS;
+    THREAD_UNLOCK(&pml_comm->c_matching_lock);
+    return match_made;
 }
 
 /**
@@ -224,9 +206,7 @@ static mca_ptl_base_recv_request_t *mca_ptl_base_check_receives_for_match
         /*
          * There are only wild irecvs, so specialize the algorithm.
          */
-        THREAD_LOCK(&pml_comm->c_wild_lock);
         return_match = mca_ptl_base_check_wild_receives_for_match(frag_header, pml_comm);
-        THREAD_UNLOCK(&pml_comm->c_wild_lock);
 
     } else if (lam_list_get_size(&(pml_comm->c_wild_receives)) == 0 ) {
         /*
@@ -238,10 +218,8 @@ static mca_ptl_base_recv_request_t *mca_ptl_base_check_receives_for_match
         /*
          * There are some of each.
          */
-        THREAD_LOCK(&pml_comm->c_wild_lock);
         return_match = mca_ptl_base_check_specific_and_wild_receives_for_match(frag_header, 
                 pml_comm);
-        THREAD_UNLOCK(&pml_comm->c_wild_lock);
     }
 
     return return_match;
@@ -413,8 +391,8 @@ static mca_ptl_base_recv_request_t *mca_ptl_base_check_specific_and_wild_receive
     wild_recv = (mca_ptl_base_recv_request_t *) 
             lam_list_get_first(&(pml_comm->c_wild_receives));
 
-    specific_recv_seq = specific_recv->req_sequence;
-    wild_recv_seq = wild_recv->req_sequence;
+    specific_recv_seq = specific_recv->super.req_sequence;
+    wild_recv_seq = wild_recv->super.req_sequence;
 
     while (true) {
         if (wild_recv_seq < specific_recv_seq) {
@@ -463,7 +441,7 @@ static mca_ptl_base_recv_request_t *mca_ptl_base_check_specific_and_wild_receive
              * Get the sequence number for this recv, and go
              * back to the top of the loop.
              */
-            wild_recv_seq = wild_recv->req_sequence;
+            wild_recv_seq = wild_recv->super.req_sequence;
 
         } else {
             /*
@@ -508,7 +486,7 @@ static mca_ptl_base_recv_request_t *mca_ptl_base_check_specific_and_wild_receive
              * Get the sequence number for this recv, and go
              * back to the top of the loop.
              */
-            specific_recv_seq = specific_recv->req_sequence;
+            specific_recv_seq = specific_recv->super.req_sequence;
         }
     }
 }
@@ -603,13 +581,9 @@ static void mca_ptl_base_check_cantmatch_for_match(lam_list_t *additional_matche
 
                 } else {
     
-                    /* if no match found, place on unexpected queue - need to
-                     * lock to prevent probe from interfering with updating
-                     * the list */
-                    THREAD_LOCK((pml_comm->c_unexpected_frags_lock)+frag_src);
+                    /* if no match found, place on unexpected queue */
                     lam_list_append( ((pml_comm->c_unexpected_frags)+frag_src),
                             (lam_list_item_t *)frag_desc);
-                    THREAD_UNLOCK((pml_comm->c_unexpected_frags_lock)+frag_src);
 
                 }
 

@@ -67,14 +67,15 @@ int mca_ptl_tcp_send_frag_init(
         hdr->hdr_match.hdr_src = sendreq->super.req_comm->c_my_rank;
         hdr->hdr_match.hdr_dst = sendreq->super.req_peer;
         hdr->hdr_match.hdr_tag = sendreq->super.req_tag;
-        hdr->hdr_match.hdr_msg_length = sendreq->req_packed_size;
-        hdr->hdr_match.hdr_msg_seq = sendreq->req_msg_seq;
+        hdr->hdr_match.hdr_msg_length = sendreq->req_bytes_msg;
+        hdr->hdr_match.hdr_msg_seq = sendreq->super.req_sequence;
     } else {
         hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_FRAG;
         hdr->hdr_common.hdr_flags = flags;
         hdr->hdr_common.hdr_size = sizeof(mca_ptl_base_frag_header_t);
         hdr->hdr_frag.hdr_frag_offset = sendreq->req_offset;
         hdr->hdr_frag.hdr_frag_seq = 0;
+        hdr->hdr_frag.hdr_src_ptr.lval = 0; /* for VALGRIND/PURIFY - REPLACE WITH MACRO */
         hdr->hdr_frag.hdr_src_ptr.pval = sendfrag;
         hdr->hdr_frag.hdr_dst_ptr = sendreq->req_peer_request;
     }

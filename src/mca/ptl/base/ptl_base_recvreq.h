@@ -17,9 +17,10 @@ struct mca_ptl_base_recv_frag_t;
  * Base type for receive requests.
  */
 struct mca_ptl_base_recv_request_t {
-   mca_pml_base_request_t super;          /**< base request */
-   mca_ptl_base_sequence_t req_sequence;  /**< request sequence number */
-   size_t req_bytes_recvd;                /**< number of bytes delivered to user */
+   mca_pml_base_request_t super;  /**< base request */
+   size_t req_bytes_msg;          /**< size of message being received */
+   size_t req_bytes_received;     /**< number of bytes received from network */
+   size_t req_bytes_delivered;    /**< number of bytes delivered to user */
 };
 typedef struct mca_ptl_base_recv_request_t mca_ptl_base_recv_request_t;
 
@@ -46,8 +47,10 @@ static inline void mca_ptl_base_recv_request_init(
     lam_communicator_t* comm,
     bool persistent)
 {
-    request->req_sequence = 0;
-    request->req_bytes_recvd = 0;
+    request->req_bytes_msg = 0;
+    request->req_bytes_received = 0;
+    request->req_bytes_delivered = 0;
+    request->super.req_sequence = 0;
     request->super.req_addr = addr;
     request->super.req_count = count;
     request->super.req_datatype = datatype;
@@ -55,7 +58,6 @@ static inline void mca_ptl_base_recv_request_init(
     request->super.req_tag = tag;
     request->super.req_comm = comm;
     request->super.req_proc = NULL;
-    request->super.req_type = MCA_PML_REQUEST_RECV;
     request->super.req_persistent = persistent;
     request->super.req_mpi_done = false;
     request->super.req_pml_done = false;

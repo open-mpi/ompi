@@ -25,6 +25,10 @@ static void mca_ptl_tcp_peer_recv_handler(int sd, short flags, void* user);
 static void mca_ptl_tcp_peer_send_handler(int sd, short flags, void* user);
 
 
+#define PROGRESS_THREAD_LOCK   THREAD_LOCK
+#define PROGRESS_THREAD_UNLOCK THREAD_UNLOCK
+
+
 lam_class_t  mca_ptl_tcp_peer_t_class = {
     "mca_tcp_ptl_peer_t", 
     OBJ_CLASS(lam_list_item_t),
@@ -49,7 +53,8 @@ static void mca_ptl_tcp_peer_construct(mca_ptl_base_peer_t* ptl_peer)
     ptl_peer->peer_state = MCA_PTL_TCP_CLOSED;
     ptl_peer->peer_retries = 0;
     OBJ_CONSTRUCT(&ptl_peer->peer_frags, lam_list_t);
-    OBJ_CONSTRUCT(&ptl_peer->peer_lock,  lam_mutex_t);
+    OBJ_CONSTRUCT(&ptl_peer->peer_send_lock, lam_mutex_t);
+    OBJ_CONSTRUCT(&ptl_peer->peer_recv_lock, lam_mutex_t);
 }
 
 
@@ -88,7 +93,7 @@ static void mca_ptl_tcp_peer_destruct(mca_ptl_base_peer_t* ptl_peer)
 int mca_ptl_tcp_peer_send(mca_ptl_base_peer_t* ptl_peer, mca_ptl_tcp_send_frag_t* frag)
 {
     int rc = LAM_SUCCESS;
-    THREAD_LOCK(&ptl_peer->peer_lock);
+    THREAD_LOCK(&ptl_peer->peer_send_lock);
     switch(ptl_peer->peer_state) {
     case MCA_PTL_TCP_CONNECTING:
     case MCA_PTL_TCP_CONNECT_ACK:
@@ -113,7 +118,7 @@ int mca_ptl_tcp_peer_send(mca_ptl_base_peer_t* ptl_peer, mca_ptl_tcp_send_frag_t
         }
         break;
     }
-    THREAD_UNLOCK(&ptl_peer->peer_lock);
+    THREAD_UNLOCK(&ptl_peer->peer_send_lock);
     return rc;
 }
 
@@ -174,7 +179,8 @@ bool mca_ptl_tcp_peer_accept(mca_ptl_base_peer_t* ptl_peer, struct sockaddr_in* 
 {
     mca_ptl_tcp_addr_t* ptl_addr;
     mca_ptl_tcp_proc_t* this_proc = mca_ptl_tcp_proc_local();
-    THREAD_LOCK(&ptl_peer->peer_lock);
+    PROGRESS_THREAD_LOCK(&ptl_peer->peer_recv_lock);
+    THREAD_LOCK(&ptl_peer->peer_send_lock);
     if((ptl_addr = ptl_peer->peer_addr) != NULL  &&
         ptl_addr->addr_inet.s_addr == addr->sin_addr.s_addr) {
         mca_ptl_tcp_proc_t *peer_proc = ptl_peer->peer_proc;
@@ -185,16 +191,20 @@ bool mca_ptl_tcp_peer_accept(mca_ptl_base_peer_t* ptl_peer, struct sockaddr_in* 
             ptl_peer->peer_sd = sd;
             if(mca_ptl_tcp_peer_send_connect_ack(ptl_peer) != LAM_SUCCESS) {
                  mca_ptl_tcp_peer_close_i(ptl_peer);
+                 THREAD_UNLOCK(&ptl_peer->peer_send_lock);
+                 PROGRESS_THREAD_UNLOCK(&ptl_peer->peer_recv_lock);
                  return false;
             }
             mca_ptl_tcp_peer_event_init(ptl_peer, sd);
             lam_event_add(&ptl_peer->peer_recv_event, 0);
             mca_ptl_tcp_peer_connected(ptl_peer);
-            THREAD_UNLOCK(&ptl_peer->peer_lock);
+            THREAD_UNLOCK(&ptl_peer->peer_send_lock);
+            PROGRESS_THREAD_UNLOCK(&ptl_peer->peer_recv_lock);
             return true;
         }
     }
-    THREAD_UNLOCK(&ptl_peer->peer_lock);
+    THREAD_UNLOCK(&ptl_peer->peer_send_lock);
+    PROGRESS_THREAD_UNLOCK(&ptl_peer->peer_recv_lock);
     return false;
 }
 
@@ -206,9 +216,11 @@ bool mca_ptl_tcp_peer_accept(mca_ptl_base_peer_t* ptl_peer, struct sockaddr_in* 
 
 void mca_ptl_tcp_peer_close(mca_ptl_base_peer_t* ptl_peer)
 {
-    THREAD_LOCK(&ptl_peer->peer_lock);
+    THREAD_LOCK(&ptl_peer->peer_recv_lock);
+    THREAD_LOCK(&ptl_peer->peer_send_lock);
     mca_ptl_tcp_peer_close_i(ptl_peer);
-    THREAD_UNLOCK(&ptl_peer->peer_lock);
+    THREAD_UNLOCK(&ptl_peer->peer_send_lock);
+    THREAD_UNLOCK(&ptl_peer->peer_recv_lock);
 }
 
 /*
@@ -427,7 +439,7 @@ static void mca_ptl_tcp_peer_complete_connect(mca_ptl_base_peer_t* ptl_peer)
 static void mca_ptl_tcp_peer_recv_handler(int sd, short flags, void* user)
 {
     mca_ptl_base_peer_t* ptl_peer = user;
-    THREAD_LOCK(&ptl_peer->peer_lock);
+    PROGRESS_THREAD_LOCK(&ptl_peer->peer_recv_lock);
     switch(ptl_peer->peer_state) {
     case MCA_PTL_TCP_CONNECT_ACK:
         {
@@ -440,8 +452,8 @@ static void mca_ptl_tcp_peer_recv_handler(int sd, short flags, void* user)
         if(NULL == recv_frag) {
             int rc;
             recv_frag = mca_ptl_tcp_recv_frag_alloc(&rc);
-            if(recv_frag == 0) {
-                THREAD_UNLOCK(&ptl_peer->peer_lock);
+            if(NULL == recv_frag) {
+                PROGRESS_THREAD_UNLOCK(&ptl_peer->peer_recv_lock);
                 return;
             }
             mca_ptl_tcp_recv_frag_init(recv_frag, ptl_peer);
@@ -461,7 +473,7 @@ static void mca_ptl_tcp_peer_recv_handler(int sd, short flags, void* user)
         break;
         }
     }
-    THREAD_UNLOCK(&ptl_peer->peer_lock);
+    PROGRESS_THREAD_UNLOCK(&ptl_peer->peer_recv_lock);
 }
 
 
@@ -473,7 +485,7 @@ static void mca_ptl_tcp_peer_recv_handler(int sd, short flags, void* user)
 static void mca_ptl_tcp_peer_send_handler(int sd, short flags, void* user)
 {
     mca_ptl_tcp_peer_t* ptl_peer = user;
-    THREAD_LOCK(&ptl_peer->peer_lock);
+    THREAD_LOCK(&ptl_peer->peer_send_lock);
     switch(ptl_peer->peer_state) {
     case MCA_PTL_TCP_CONNECTING:
         mca_ptl_tcp_peer_complete_connect(ptl_peer);
@@ -506,7 +518,7 @@ static void mca_ptl_tcp_peer_send_handler(int sd, short flags, void* user)
         lam_event_del(&ptl_peer->peer_send_event);
         break;
     }
-    THREAD_UNLOCK(&ptl_peer->peer_lock);
+    THREAD_UNLOCK(&ptl_peer->peer_send_lock);
 }
 
 
