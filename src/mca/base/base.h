@@ -2,8 +2,8 @@
  * $HEADER$
  */
 
-#ifndef MCA_LAM_BASE_H
-#define MCA_LAM_BASE_H
+#ifndef MCA_BASE_H
+#define MCA_BASE_H
 
 #include "mca/ltdl.h"
 
@@ -51,58 +51,81 @@ extern int mca_base_param_module_path;
 extern "C" {
 #endif
 
-  /* mca_base_open.c */
+    /* mca_base_open.c */
 
-  int mca_base_open(void);
+    int mca_base_open(void);
 
-  /* mca_base_close.c */
+    /* mca_base_close.c */
 
-  int mca_base_close(void);
+    int mca_base_close(void);
 
-  /* mca_base_cmd_line.c */
+    /* mca_base_cmd_line.c */
 
-  int mca_base_cmd_line_setup(lam_cmd_line_t *cmd);
-  int mca_base_cmd_line_process_args(lam_cmd_line_t *cmd);
-  int mca_base_cmd_line_process_arg(const char *param, const char *value);
+    int mca_base_cmd_line_setup(lam_cmd_line_t *cmd);
+    int mca_base_cmd_line_process_args(lam_cmd_line_t *cmd);
+    int mca_base_cmd_line_process_arg(const char *param, const char *value);
 
-  /* mca_base_module_compare.c */
+    /* mca_base_module_compare.c */
 
-  int mca_base_module_compare_priority(mca_base_module_priority_list_item_t *a,
-                              mca_base_module_priority_list_item_t *b);
-  int mca_base_module_compare(mca_base_module_t *a,
-                              mca_base_module_t *b);
+    int mca_base_module_compare_priority(mca_base_module_priority_list_item_t *a,
+                                         mca_base_module_priority_list_item_t *b);
+    int mca_base_module_compare(mca_base_module_t *a,
+                                mca_base_module_t *b);
 
-  /* mca_base_module_find.c */
+    /* mca_base_module_find.c */
 
-  int mca_base_module_find(const char *directory, const char *type,
-                           const mca_base_module_t *static_modules[],
-                           lam_list_t *found_modules);
+    int mca_base_module_find(const char *directory, const char *type,
+                             const mca_base_module_t *static_modules[],
+                             lam_list_t *found_modules);
 
-  /* mca_base_module_register.c */
+    /* mca_base_module_register.c */
 
-  int mca_base_module_registry_construct(void);
-  int mca_base_module_registry_retain(char *type, lt_dlhandle module_handle, 
-                                      const mca_base_module_t *module_struct);
-  int mca_base_module_registry_link(const char *src_type, 
-                                    const char *src_name,
-                                    const char *depend_type,
-                                    const char *depend_name);
-  void mca_base_module_registry_release(const mca_base_module_t *module);
-  void mca_base_module_registry_finalize(void);
+    int mca_base_module_registry_construct(void);
+    int mca_base_module_registry_retain(char *type, lt_dlhandle module_handle, 
+                                        const mca_base_module_t *module_struct);
+    int mca_base_module_registry_link(const char *src_type, 
+                                      const char *src_name,
+                                      const char *depend_type,
+                                      const char *depend_name);
+    void mca_base_module_registry_release(const mca_base_module_t *module);
+    void mca_base_module_registry_finalize(void);
 
-  /* mca_base_modules_open.c */
+    /* mca_base_modules_open.c */
 
-  int mca_base_modules_open(const char *type_name, int output_id,
-                            const mca_base_module_t **static_modules,
-                            lam_list_t *modules_available);
+    int mca_base_modules_open(const char *type_name, int output_id,
+                              const mca_base_module_t **static_modules,
+                              lam_list_t *modules_available);
 
-  /* mca_base_modules_close.c */
+    /* mca_base_modules_close.c */
 
-  int mca_base_modules_close(int output_id, lam_list_t *modules_available, 
-                             const mca_base_module_t *skip);
+    int mca_base_modules_close(int output_id, lam_list_t *modules_available, 
+                               const mca_base_module_t *skip);
+
+
+    /* mca_base_mem.c */
+
+    int mca_base_alloc_mem(MPI_Aint size, MPI_Info info, void *baseptr);
+    int mca_base_free_mem(void *baseptr);
+
+    /* mca_base_init_select_modules.c */
+
+    int mca_base_init_select_modules(int requested, 
+                                     bool allow_multi_user_threads,
+                                     bool have_hidden_threads, int *provided);
+
+#if 0
+    /* JMS Not implemented yet */
+    int mca_base_init_callback(mca_base_init_cb_t func);
+    int mca_base_init_callbacks_invoke(void);
+    int mca_base_module_select(int requested);
+
+    int mca_base_param_associate(int index, int keyval);
+    int mca_base_param_lookup_int(int index, MPI_Comm comm);
+    char *mca_base_param_lookup_string(int index, MPI_Comm comm);
+#endif
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
 
-#endif /* MCA_LAM_BASE_H */
+#endif /* MCA_BASE_H */
