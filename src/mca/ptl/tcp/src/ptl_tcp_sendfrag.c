@@ -60,8 +60,9 @@ int mca_ptl_tcp_send_frag_init(
         hdr->hdr_common.hdr_size = sizeof(mca_ptl_base_match_header_t);
         hdr->hdr_frag.hdr_frag_offset = sendreq->req_offset;
         hdr->hdr_frag.hdr_frag_seq = 0;
+        hdr->hdr_frag.hdr_src_ptr.lval = 0; /* for VALGRIND/PURIFY - REPLACE WITH MACRO */
         hdr->hdr_frag.hdr_src_ptr.pval = sendfrag;
-        hdr->hdr_frag.hdr_dst_ptr.pval = 0;
+        hdr->hdr_frag.hdr_dst_ptr.lval = 0;
         hdr->hdr_match.hdr_contextid = sendreq->super.req_comm->c_contextid;
         hdr->hdr_match.hdr_src = sendreq->super.req_comm->c_my_rank;
         hdr->hdr_match.hdr_dst = sendreq->super.req_peer;
