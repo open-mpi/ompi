@@ -13,7 +13,8 @@
 #include <unistd.h>
 
 #include "lam/mem/sharedmem_util.h"
-#include "lam/util/lam_log.h"
+#include "lam/util/output.h"
+
 
 void *lam_zero_alloc(size_t len, int mem_prot, int mem_flags)
 {
@@ -37,7 +38,7 @@ void *lam_zero_alloc(size_t len, int mem_prot, int mem_flags)
     ptr = mmap(NULL, len, mem_prot, flags, fd, 0);
     if ( ptr == MAP_FAILED )
     {
-        lam_err(("Error: mmap failed (%s)\n", strerror(errno)));
+        lam_output(0, "Error: mmap failed (%s)", strerror(errno));
         close(fd);
         return (void *)0;
     }

@@ -11,6 +11,7 @@
 #include "lam_config.h"
 #include "lam/util/reactor.h"
 #include "lam/util/malloc.h"
+#include "lam/util/output.h"
 
 
 const int LAM_NOTIFY_RECV = 1;
@@ -54,9 +55,8 @@ static inline lam_reactor_descriptor_t* lam_reactor_get_descriptor(lam_reactor_t
         descriptor = (lam_reactor_descriptor_t*)LAM_MALLOC(sizeof(lam_reactor_descriptor_t));
         lam_reactor_descriptor_init(descriptor);
     }
-    if(descriptor == 0) {
-        lam_err(("lam_reactor_get_descriptor(): malloc(%d) failed.", sizeof(lam_reactor_descriptor_t)));
-        return 0;
+    if (NULL == descriptor) {
+      return 0;
     }
     descriptor->rd = sd;
     descriptor->rd_flags = 0;
@@ -103,8 +103,8 @@ bool lam_reactor_insert(lam_reactor_t* r, int sd, lam_reactor_listener_t* listen
 {
 #ifndef NDEBUG
     if(sd < 0 || sd > LAM_FD_SETSIZE) {
-        lam_err(("Reactor::insertListener(%d) invalid descriptor.\n", sd));
-        return false;
+      lam_output(0, "lam_reactor_insert(%d) invalid descriptor", sd);
+      return false;
     }
 #endif
 
@@ -143,17 +143,17 @@ bool lam_reactor_remove(lam_reactor_t* r, int sd, lam_reactor_listener_t* rl, in
 {
 #ifndef NDEBUG
     if(sd < 0 || sd > LAM_FD_SETSIZE) {
-        lam_err(("lam_reactor_remove(%d) invalid descriptor.\n", sd));
-        return false;
+      lam_output(0, "lam_reactor_remove(%d) invalid descriptor", sd);
+      return false;
     }
 #endif
 
     lam_mutex_lock(&r->r_mutex);
     lam_reactor_descriptor_t* descriptor = (lam_reactor_descriptor_t*)lam_fh_get_value_for_ikey(&r->r_hash, sd);
-    if(descriptor == 0) {
-        lam_err(("lam_reactor_remove(%d): descriptor not registered.\n", sd));
-        lam_mutex_unlock(&r->r_mutex);
-        return false;
+    if (NULL == descriptor) {
+      lam_output(0, "lam_reactor_remove(%d): descriptor not registered", sd);
+      lam_mutex_unlock(&r->r_mutex);
+      return false;
     }
     descriptor->rd_flags &= ~flags;
     if(flags & LAM_NOTIFY_RECV) {
@@ -261,10 +261,19 @@ void lam_reactor_poll(lam_reactor_t* r)
     int rc = select(r->r_max+1, (fd_set*)&rset, (fd_set*)&sset, (fd_set*)&eset, &tm);
     if(rc < 0) {
 #ifndef WIN32
-        if(errno != EINTR)
+      if(EINTR != errno) {
 #endif
-           lam_exit((-1, "lam_reactor_poll: select() failed with errno=%d\n", errno));
-        return;
+        lam_output(0, "lam_reactor_poll: select() failed with errno=%d",
+                   errno);
+#if NEED_TO_IMPLEMENT_LAM_EXIT
+        lam_exit(1);
+#else
+        exit(1);
+#endif
+#ifndef WIN32
+      }
+#endif
+      return;
     }
     lam_reactor_dispatch(r, rc, &rset, &sset, &eset);
 }
@@ -279,9 +288,18 @@ void lam_reactor_run(lam_reactor_t* r)
         int rc = select(r->r_max+1, (fd_set*)&rset, (fd_set*)&sset, (fd_set*)&eset, 0);
         if(rc < 0) {
 #ifndef WIN32
-            if(errno != EINTR)
+          if (EINTR != errno) {
 #endif
-                lam_exit((-1, "lam_reactor_run: select() failed with errno=%d\n", errno));
+            lam_output(0, "lam_reactor_run: select() failed with errno=%d",
+                       errno);
+#if NEED_TO_IMPLEMENT_LAM_EXIT
+            lam_exit(1);
+#else
+            exit(1);
+#endif
+#ifndef WIN32
+          }
+#endif
             continue;
         }
         lam_reactor_dispatch(r, rc, &rset, &sset, &eset);

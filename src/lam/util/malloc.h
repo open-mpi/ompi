@@ -9,7 +9,6 @@
 
 #include <stdlib.h>
 #include "lam_config.h"
-#include "lam/util/lam_log.h"
 
 /*
  * Set LAM_MALLOC_DEBUG_LEVEL to
