@@ -81,22 +81,29 @@ sub test_abort {
 
 # run a command and save the stdout / stderr
 sub do_command {
-    my ($cmd) = @_;
+    my ($merge_output, $cmd) = @_;
 
     print "*** Running command: $cmd\n" if ($debug);
     pipe OUTread, OUTwrite;
-    pipe ERRread, ERRwrite;
+    pipe ERRread, ERRwrite
+        if (!$merge_output);
 
     # Child
 
     my $pid;
     if (($pid = fork()) == 0) {
         close OUTread;
-        close ERRread;
+        close ERRread
+            if (!$merge_output);
 
         close(STDERR);
-        open STDERR, ">&ERRwrite" ||
-            die "Can't redirect stderr\n";
+        if ($merge_output) {
+            open STDERR, ">&OUTwrite" ||
+                die "Can't redirect stderr\n";
+        } else {
+            open STDERR, ">&ERRwrite" ||
+                die "Can't redirect stderr\n";
+        }
         select STDERR;
         $| = 1;
 
@@ -106,21 +113,56 @@ sub do_command {
         select STDOUT;
         $| = 1;
 
-        exec(split(' ', $cmd)) || 
+        # Turn shell-quoted words ("foo bar baz") into individual tokens
+
+        my @tokens;
+        while ($cmd =~ /\".*\"/) {
+            my $prefix;
+            my $middle;
+            my $suffix;
+            
+            $cmd =~ /(.*?)\"(.*?)\"(.*)/;
+            $prefix = $1;
+            $middle = $2;
+            $suffix = $3;
+            
+            if ($prefix) {
+                foreach my $token (split(' ', $prefix)) {
+                    push(@tokens, $token);
+                }
+            }
+            if ($middle) {
+                push(@tokens, $middle);
+            } else {
+                push(@tokens, "");
+            }
+            $cmd = $suffix;
+        }
+        if ($cmd) {
+            push(@tokens, split(' ', $cmd));
+        }
+
+        # Run it!
+
+        exec(@tokens) ||
             die "Can't execute command: $cmd\n";
     }
     close OUTwrite;
-    close ERRwrite;
+    close ERRwrite
+        if (!$merge_output);
 
     # Parent
 
     my (@out, @err);
     my ($rin, $rout);
-    my $done = 2;
+    my $done = $merge_output ? 1 : 2;
+
+    # Keep watching over the pipe(s)
 
     $rin = '';
     vec($rin, fileno(OUTread), 1) = 1;
-    vec($rin, fileno(ERRread), 1) = 1;
+    vec($rin, fileno(ERRread), 1) = 1
+        if (!$merge_output);
 
     while ($done > 0) {
         my $nfound = select($rout = $rin, undef, undef, undef);
@@ -135,7 +177,7 @@ sub do_command {
             }
         }
 
-        if (vec($rout, fileno(ERRread), 1) == 1) {
+        if (!$merge_output && vec($rout, fileno(ERRread), 1) == 1) {
             my $data = <ERRread>;
             if (!defined($data)) {
                 vec($rin, fileno(ERRread), 1) = 0;
@@ -147,7 +189,10 @@ sub do_command {
         }
     }
     close OUTerr;
-    close OUTread;
+    close OUTread
+        if (!$merge_output);
+
+    # The pipes are closed, so the process should be dead.  Reap it.
 
     waitpid($pid, 0);
     my $status = $?;
@@ -155,11 +200,16 @@ sub do_command {
 
     # Return an anonymous hash containing the relevant data
 
-    return {
+    my $ret = {
         stdout => \@out,
-        stderr => \@err,
         status => $status
         };
+
+    # If we had stderr, return that, too
+
+    $ret->{stderr} = \@err
+        if (!$merge_output);
+    return $ret;
 }
 
 #--------------------------------------------------------------------------
@@ -206,11 +256,13 @@ sub trim {
 
 # subroutine for building a single configuration
 sub try_build {
-    my ($tarball, $srcroot, $installdir, $vpath_mode, $confargs) = @_;
+    my ($name, $merge_output, $tarball, $srcroot, $installdir,
+        $vpath_mode, $confargs) = @_;
     my $ret;
     my $startdir = `pwd`;
     our $version;
     our $scratch_root_arg;
+    our $leave_install_arg;
 
     chomp($startdir);
 
@@ -219,11 +271,6 @@ sub try_build {
         mkdir($srcroot);
     }
     chdir($srcroot);
-
-    # save what we're testing
-    my $name = "[default]";
-    $name = $confargs
-        if ($confargs);
 
     # expand the tarball (do NOT assume GNU tar).  don't use
     # do_command here because we need to use a pipe.  This isn't an
@@ -251,14 +298,14 @@ sub try_build {
             $config_command = "$srcroot/openmpi-$version/configure";
         }
     }
-    $ret = do_command("$config_command --prefix=$installdir $confargs");
+    $ret = do_command(1, "$config_command $confargs --prefix=$installdir");
     if ($ret->{status} != 0) {
         $ret->{message} = "Failed to unzip the tarball";
         return $ret;
     }
 
     # build it
-    $ret = do_command("make all");
+    $ret = do_command($merge_output, "make all");
     if ($ret->{status} != 0) {
         $ret->{message} = "Failed to \"make all\"";
         return $ret;
@@ -268,7 +315,7 @@ sub try_build {
     my $make_all_stderr = $ret->{stderr};
 
     # install it
-    $ret = do_command("make install");
+    $ret = do_command(1, "make install");
     if ($ret->{status} != 0) {
         $ret->{make_all_stderr} = $make_all_stderr;
         $ret->{message} = "Failed to \"make install\"";
@@ -288,7 +335,7 @@ int main(int argc, char* argv[]) {
   MPI_Finalize();
   return 0;
 }\n";
-    $ret = do_command("$installdir/bin/mpicc hello.c -o hello");
+    $ret = do_command(1, "$installdir/bin/mpicc hello.c -o hello");
     if ($ret->{status} != 0) {
         $ret->{make_all_stderr} = $make_all_stderr;
         $ret->{message} = "Failed to compile/link C \"hello world\" MPI app";
@@ -311,7 +358,7 @@ int main(int argc, char* argv[]) {
   MPI::Finalize();
   return 0;
 }\n";
-        do_command("$installdir/bin/mpic++ hello.cc -o hello");
+        do_command(1, "$installdir/bin/mpic++ hello.cc -o hello");
         if ($ret->{status} != 0) {
             $ret->{make_all_stderr} = $make_all_stderr;
             $ret->{message} =
@@ -337,7 +384,7 @@ int main(int argc, char* argv[]) {
         call MPI_FINALIZE(ierr)
         stop
         end\n";
-        do_command("$installdir/bin/mpif77 hello.f -o hello");
+        do_command(1, "$installdir/bin/mpif77 hello.f -o hello");
         if ($ret->{status} != 0) {
             $ret->{make_all_stderr} = $make_all_stderr;
             $ret->{message} = 
@@ -348,9 +395,14 @@ int main(int argc, char* argv[]) {
         print "COMPILE: F77 ok\n";
     }
 
-    # all done -- clean up
+    # all done -- clean up (unless user specified --leave-install)
     chdir($startdir);
-    system("rm -rf $srcroot");
+    if ($leave_install_arg) {
+        system("rm -rf $srcroot/openmpi* $srcroot/test");
+    } else {
+        system("rm -rf $srcroot");
+    }
+
     return {
         make_all_stderr => $make_all_stderr,
         status => 0,
@@ -370,6 +422,7 @@ our $url_arg;
 our $config_arg;
 our $debug_arg;
 our $file_arg;
+our $leave_install_arg;
 my $help_arg;
 
 &Getopt::Long::Configure("bundling", "require_order");
@@ -379,6 +432,7 @@ my $ok = Getopt::Long::GetOptions("url|u=s" => \$url_arg,
                                   "config|c=s" => \$config_arg,
                                   "file|f=s" => \$file_arg,
                                   "debug|d" => \$debug_arg,
+                                  "leave-install|l" => \$leave_install_arg,
                                   "help|h" => \$help_arg,
                                   );
 
@@ -481,26 +535,25 @@ our $version;
 if ($url_arg) {
     chdir("downloads");
     unlink($latest_name);
-    do_command("$download $url_arg/$latest_name");
+    do_command(1, "$download $url_arg/$latest_name");
     test_abort("Could not download latest snapshot number -- aborting")
         if (! -f $latest_name);
     $version = `cat $latest_name`;
     chomp($version);
-    push(@email_output, "Snapshot: $version\n\n");
     
     # see if we need to download the tarball
     $tarball_name = "openmpi-$version.tar.gz";
     if (! -f $tarball_name) {
-        do_command("$download $url_arg/$tarball_name");
+        do_command(1, "$download $url_arg/$tarball_name");
         test_abort "Could not download tarball -- aborting"
             if (! -f $tarball_name);
         
         # get the checksums
         unlink($md5_checksums);
-        do_command("$download $url_arg/$md5_checksums");
+        do_command(1, "$download $url_arg/$md5_checksums");
         
         unlink($sha1_checksums);
-        do_command("$download $url_arg/$sha1_checksums");
+        do_command(1, "$download $url_arg/$sha1_checksums");
     }
 
     # compare the md5sum
@@ -555,6 +608,7 @@ WARNING: checksums.  Proceeding anyway...\n\n");
     $version = $tarball_name;
     $version =~ s/.*openmpi-(.+).tar.gz/$1/;
 } 
+push(@email_output, "Snapshot: $version\n\n");
 
 # Make a root for this build to play in (scratch_root_arg is absolute, so
 # root will be absolute)
@@ -572,7 +626,8 @@ if (! $config_arg || ! -f $config_arg) {
     my $dir = "$root/default";
     my $name = "[default]";
     my $config = "CFLAGS=-g --disable-f77 --enable-debug";
-    $ret = try_build($tarball_name, $dir, "$dir/install", "", $config);
+    $ret = try_build($name, 0, $tarball_name,
+                     $dir, "$dir/install", "", $config);
     $results->{$name} = $ret;
     $results->{$name}->{config} = $config;
     $results->{$name}->{want_stderr} = 1;
@@ -583,23 +638,35 @@ if (! $config_arg || ! -f $config_arg) {
     while (<CONF>) {
         my $line = $_;
         chomp($line);
-        my ($name, $want_stderr, $vpath_mode, $config) = split(/:/, $line);
-        if (! $config) {
-            $config = $name;
-        }
-        if (! $config && ! $name) {
-            $name = "[default]";
-            $config = "CFLAGS=-g";
-        }
 
-        my $dir = "$root/config-$i";
-        $ret = try_build($tarball_name, $dir, "$dir/install",
-                         $vpath_mode, $config);
-        $results->{$name} = $ret;
-        $results->{$name}->{config} = $config;
-        $results->{$name}->{want_stderr} = $want_stderr;
-        $results->{$name}->{vpath_mode} = $vpath_mode;
-        ++$i;
+        # skip comments and blank lines
+
+        if ($line && ! ($line =~ /[ \t]*\#/) && ! ($line =~ /^[ \t]+$/)) {
+
+            # Parse out the parts
+
+            my ($name, $want_stderr, $vpath_mode, $config) = split(/:/, $line);
+            if (! $config) {
+                $config = $name;
+            }
+            if (! $config && ! $name) {
+                $name = "[build-$i]";
+                $config = "CFLAGS=-g";
+            }
+
+            # try to actually build it
+
+            my $dir = "$root/config-$i";
+            my $merge_output = $want_stderr ? 0 : 1;
+            $ret = try_build($name, $merge_output, $tarball_name,
+                             $dir, "$dir/install",
+                             $vpath_mode, $config);
+            $results->{$name} = $ret;
+            $results->{$name}->{config} = $config;
+            $results->{$name}->{want_stderr} = $want_stderr;
+            $results->{$name}->{vpath_mode} = $vpath_mode;
+            ++$i;
+        }
     }
     close CONF;
 }
@@ -643,17 +710,18 @@ push(@email_output,
 # Include additional details if relevant
 my $header = 0;
 my $displayed = 0;
+push(@email_output, "DETAILED RESULTS (as necessary):\n\n");
 foreach my $config (keys(%$results)) {
     my $output = 0;
     my $str;
 
-    $str .= "DETAILED RESULTS (as necessary):\n\n"
-        if (! $header);
-
-    $str .= "Build: " . $config . "
-Config options: " . $results->{$config}->{config} . "
-Result: " . ($results->{$config}->{status} == 0 ?
-                     "Success" : "FAILURE") . "\n";
+    $str .= "==> Build: " . $config . "
+==> Config options: " . $results->{$config}->{config} . "
+==> Result: " . ($results->{$config}->{status} == 0 ?
+             "Success" : "FAILURE") . "
+==> Output: " . ($results->{$config}->{want_stderr} ? 
+             "stderr and stdout shown separately below" : 
+             "stdout and stderr merged below") . "\n";
 
     if ($results->{$config}->{status} != 0 &&
         $results->{$config}->{stdout} &&
@@ -661,12 +729,22 @@ Result: " . ($results->{$config}->{status} == 0 ?
         push(@email_output, $str);
         $header = $displayed = $output = 1;
 
-        push(@email_output, 
+        if ($results->{$config}->{want_stderr}) {
+            push(@email_output, 
 "--Standard output---------------------------------------------------------\n");
+        } else {
+            push(@email_output, 
+"--Standard output and standard error--------------------------------------\n");
+        }
         my $tmp = trim($max_log_len, $results->{$config}->{stdout});
         push(@email_output, @$tmp);
-        push(@email_output, 
+        if ($results->{$config}->{want_stderr}) {
+            push(@email_output, 
 "--Standard output end-----------------------------------------------------\n");
+        } else {
+            push(@email_output, 
+"--Standard output and standard error end----------------------------------\n");
+        }
     }
     if ($results->{$config}->{stderr} &&
         $#{$results->{$config}->{stderr}} >= 0) {
