@@ -128,20 +128,30 @@ EOF
     rm -f "$logfile"
 }
 
-find_exec() {
+# find a program from a list and load it into the target variable
+find_program() {
     var=$1
     shift
 
+    # first zero out the target variable
+    str="$var="
+    eval $str
+
+    # loop through the list and save the first one that we find
     am_done=
-    while test -z "$am_done"; do
+    while test -z "$am_done" -a -n "$1"; do
         prog=$1
         shift
 
         if test -z "$prog"; then
             am_done=1
         else
+            which $prog
+            echo status: $?
             not_found="`which $prog 2>&1 | egrep '^no'`"
-            if test -z "$not_found"; then
+            which $prog > /dev/null 2>&1
+            if test "$?" = "0" -a -z "$not_found"; then
+                echo found: $prog
                 str="$var=$prog"
                 eval $str
                 am_done=1
@@ -151,14 +161,14 @@ find_exec() {
 }
 
 # Find a mail program
-find_exec mail Mail mailx mail
+find_program mail Mail mailx mail
 if test -z "$mail"; then
     echo "Could not find mail program; aborting in despair"
     exit 1
 fi
 
 # figure out what download command to use
-find_exec download wget lynx curl
+find_program download wget lynx curl
 if test -z "$download"; then
     echo "cannot find downloading program -- aborting in despair"
     exit 1
@@ -209,23 +219,31 @@ fi
 
 # verify the checksums
 md5_file="`grep $version.tar.gz $md5_checksums`"
-find_exec md5sum md5sum
-if test -z "$md5_file"; then
+find_program md5sum md5sum
+if test -z "$md5sum"; then
+    echo "WARNING: could not find md5sum executable"
+    echo "WARNING: proceeding anyway..."
+elif test -z "$md5_file"; then
     echo "WARNING: could not find md5sum in checksum file!"
     echo "WARNING: proceeding anyway..."
 else
-    md5_actual="`md5sum $tarball_name 2>&1`"
+    md5_actual="`$md5sum $tarball_name 2>&1`"
     if test "$md5_file" != "$md5_actual"; then
         die "md5sum from checksum file does not match actual ($md5_file != $md5_actual)"
     fi
 fi
 
 sha1_file="`grep $version.tar.gz $sha1_checksums`"
-if test -z "$sha1_file"; then
+find_program sha1sum sha1sum
+echo found sha1sum: $sha1sum
+if test -z "$sha1sum"; then
+    echo "WARNING: could not find sha1sum executable"
+    echo "WARNING: proceeding anyway..."
+elif test -z "$sha1_file"; then
     echo "WARNING: could not find sha1sum in checksum file!"
     echo "WARNING: proceeding anyway..."
 else
-    sha1_actual="`sha1sum $tarball_name 2>&1`"
+    sha1_actual="`$sha1sum $tarball_name 2>&1`"
     if test "$sha1_file" != "$sha1_actual"; then
         die "sha1sum from checksum file does not match actual ($sha1_file != $sha1_actual)"
     fi
