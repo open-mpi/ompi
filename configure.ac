@@ -408,6 +408,7 @@ LAM_MCA
 ############################################################################
 
 lam_show_title "Final top-level LAM configuration"
+liblam_third_party_subdirs=
 
 ############################################################################
 # Libevent setup
@@ -422,6 +423,9 @@ if test "$HAPPY" = "0"; then
     AC_MSG_ERROR([*** Cannot continue])
 fi
 CFLAGS="$CFLAGS_save"
+liblam_third_party_subdirs="event $liblam_third_party_subdirs"
+
+AC_SUBST(liblam_third_party_subdirs)
 
 
 ############################################################################
