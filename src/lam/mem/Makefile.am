@@ -12,6 +12,7 @@ noinst_LTLIBRARIES = libmem.la
 headers = \
 	allocator.h \
 	free_lists.h \
+        malloc.h \
 	mem_globals.h \
 	mem_pool.h \
 	seg_list.h \

@@ -3,7 +3,7 @@
  */
 
 #include <string.h>
-#include "lam/util/malloc.h"
+#include "lam/mem/malloc.h"
 #include "pml_ptl_array.h"
 
 

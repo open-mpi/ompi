@@ -17,7 +17,7 @@
 #include <unistd.h>
 
 #include "lam/constants.h"
-#include "lam/util/malloc.h"
+#include "lam/mem/malloc.h"
 #include "lam/util/output.h"
 #include "lam/threads/mutex.h"
 

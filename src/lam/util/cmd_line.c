@@ -11,7 +11,7 @@
 
 #include "lam/lfc/object.h"
 #include "lam/lfc/list.h"
-#include "lam/util/malloc.h"
+#include "lam/mem/malloc.h"
 #include "lam/util/argv.h"
 #include "lam/util/cmd_line.h"
 #include "lam/util/strncpy.h"

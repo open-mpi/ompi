@@ -10,7 +10,7 @@
 
 #include "lam/constants.h"
 #include "mpi.h"
-#include "lam/util/malloc.h"
+#include "lam/mem/malloc.h"
 #include "mpi/datatype/datatype.h"
 #include "mca/mpi/coll/coll.h"
 #include "coll_basic.h"

@@ -2,16 +2,16 @@
  * $HEADER$
  */
 
+/** @file **/
+
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
 #include "lam_config.h"
+#include "lam/mem/malloc.h"
 #include "lam/util/path.h"
 #include "lam/util/argv.h"
-#include "lam/util/malloc.h"
-
-/** @file **/
 
 /**
  * PATH environment variable separator

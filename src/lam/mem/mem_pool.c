@@ -8,8 +8,8 @@
 #include "lam/constants.h"
 #include "lam/mem/mem_pool.h"
 #include "lam/mem/sharedmem_util.h"
+#include "lam/mem/malloc.h"
 #include "lam/util/output.h"
-#include "lam/util/malloc.h"
 #include "lam/os/numa.h"
 
 lam_class_info_t mem_pool_cls = {"lam_mem_pool_t", &lam_object_cls, 

@@ -9,7 +9,7 @@
 #include <errno.h>
 
 #include "lam/constants.h"
-#include "lam/util/malloc.h"
+#include "lam/mem/malloc.h"
 #include "mpi.h"
 #include "mca/mpi/coll/coll.h"
 #include "coll_basic.h"

@@ -14,7 +14,6 @@ headers = \
     cmd_line.h \
     few.h \
     if.h \
-    malloc.h \
     output.h \
     path.h \
     reactor.h \
