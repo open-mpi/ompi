@@ -160,10 +160,12 @@ AC_MSG_CHECKING([for size of $1])
 dnl Check for existing size or for CROSS_SIZEOF_name
 /bin/rm -f conftestval
 AC_TEST_PROGRAM([#include <stdio.h>
-main() { 
+#include <stdlib.h>
+int
+main(int argc, char *argv[]) { 
   FILE *f=fopen("conftestval","w");
   if (!f) exit(1);
-  fprintf( f, "%d\n", sizeof($1));
+  fprintf( f, "%ld\n", sizeof($1));
   exit(0);
 }],Pac_CV_NAME=`cat conftestval`,Pac_CV_NAME="")
 /bin/rm -f conftestval
