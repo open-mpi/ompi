@@ -21,7 +21,7 @@ install-data-hook:
 	sed -e 's/define PACKAGE/define OMPI_MPI_PACKAGE/' \
 		$(DESTDIR)$(includedir)/ompi_config.h \
 		> $(DESTDIR)$(includedir)/ompi_config.h.install
-	$(CP) $(DESTDIR)$(includedir)/ompi_config.h.install \
+	cp $(DESTDIR)$(includedir)/ompi_config.h.install \
 		$(DESTDIR)$(includedir)/ompi_config.h
-	$(RM) -f $(DESTDIR)$(includedir)/ompi_config.h.install
+	rm -f $(DESTDIR)$(includedir)/ompi_config.h.install
 	chmod 0644 $(DESTDIR)$(includedir)/ompi_config.h
