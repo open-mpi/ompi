@@ -652,7 +652,7 @@ else
 	MPI_FORTRAN_INT_TYPE=int
         MPI_FORTRAN_REAL_TYPE=float
         MPI_FORTRAN_DBLPREC_TYPE=double
-	AC_MSG_WARN([*** WARNING: Did not detect a f77 compiler.  Assuming default corresponding types])
+	AC_MSG_WARN([*** Did not detect a f77 compiler.  Assuming default corresponding types])
         AC_MSG_WARN([*** Fortran LOGICAL = C $MPI_FORTRAN_LOGICAL_TYPE])
         AC_MSG_WARN([*** Fortran INTEGER = C $MPI_FORTRAN_INT_TYPE])
         AC_MSG_WARN([*** Fortran REAL = C $MPI_FORTRAN_REAL_TYPE])
@@ -676,31 +676,82 @@ AC_DEFINE_UNQUOTED(ompi_fortran_dblprec_t, $MPI_FORTRAN_DBLPREC_TYPE,
 # search for int32_t, long long, long, int.
 #
 MPI_OFFSET_TYPE="not found"
+MPI_OFFSET_DATATYPE="not found"
 AC_MSG_CHECKING([checking for type of MPI_Offset])
 if test "$ac_cv_type_int64_t" == "yes"; then
 	MPI_OFFSET_TYPE=int64_t
-elif test "$ac_cv_type_long_long_t" == "yes" -a "$ac_cv_sizeof_long_long" == 8; then
+        # Need to figure out MPI_OFFSET_DATATYPE below
+        MPI_OFFSET_SIZE=8
+elif test "$ac_cv_type_long_long" == "yes" -a "$ac_cv_sizeof_long_long" == 8; then
 	MPI_OFFSET_TYPE="long long"
-elif test "$ac_cv_type_long_t" == "yes" -a "$ac_cv_sizeof_long" == 8; then
+        MPI_OFFSET_DATATYPE=MPI_LONG_LONG
+        MPI_OFFSET_SIZE=8
+elif test "$ac_cv_type_long" == "yes" -a "$ac_cv_sizeof_long" == 8; then
 	MPI_OFFSET_TYPE="long"
+        MPI_OFFSET_DATATYPE=MPI_LONG
+        MPI_OFFSET_SIZE=8
 elif test "ac_cv_sizeof_int" == 8; then
 	MPI_OFFSET_TYPE=int
+        MPI_OFFSET_DATATYPE=MPI_INT
+        MPI_OFFSET_SIZE=8
 elif test "$ac_cv_type_int32_t" == "yes"; then
 	MPI_OFFSET_TYPE=int32_t
-elif test "$ac_cv_type_long_long_t" == "yes" -a "$ac_cv_sizeof_long_long" == 4; then
+        # Need to figure out MPI_OFFSET_DATATYPE below
+        MPI_OFFSET_SIZE=4
+elif test "$ac_cv_type_long_long" == "yes" -a "$ac_cv_sizeof_long_long" == 4; then
 	MPI_OFFSET_TYPE="long long"
-elif test "$ac_cv_type_long_t" == "yes" -a "$ac_cv_sizeof_long" == 4; then
+        MPI_OFFSET_DATATYPE=MPI_LONG_LONG
+        MPI_OFFSET_SIZE=4
+elif test "$ac_cv_type_long" == "yes" -a "$ac_cv_sizeof_long" == 4; then
 	MPI_OFFSET_TYPE="long"
+        MPI_OFFSET_DATATYPE=MPI_LONG
+        MPI_OFFSET_SIZE=4
 elif test "ac_cv_sizeof_int" == 4; then
 	MPI_OFFSET_TYPE=int
+        MPI_OFFSET_DATATYPE=MPI_INT
+        MPI_OFFSET_SIZE=4
 fi
 AC_MSG_RESULT([$MPI_OFFSET_TYPE])
-if test "$MPI_FINT_TYPE" = "not found"; then
-	AC_MSG_WARN([*** WARNING: Unable to find the right definition for MPI_Offset])
+if test "$MPI_OFFSET_TYPE" = "not found"; then
+	AC_MSG_WARN([*** Unable to find the right definition for MPI_Offset])
 	AC_MSG_ERROR([Cannot continue])
 fi
 AC_DEFINE_UNQUOTED(MPI_Offset, $MPI_OFFSET_TYPE, [Type of MPI_Offset])
 
+#
+# If we haven't already, figure out an MPI datatype that corresponds
+# to the back-end C type of MPI_Offset.  We'll only not have figured
+# this out already if the type of MPI_Offset is int32_t or int64_t.
+#
+
+AC_MSG_CHECKING([checking for an MPI datatype for MPI_Offset])
+if test "$MPI_OFFSET_DATATYPE" = "not found"; then
+    echo mpi_offset_type is "$MPI_OFFSET_TYPE"
+    if test "$MPI_OFFSET_TYPE" = "int64_t"; then
+        if test "$ac_cv_type_long_long" == "yes" -a "$ac_cv_sizeof_long_long" == 8; then
+            MPI_OFFSET_DATATYPE=MPI_LONG_LONG
+        elif test "$ac_cv_type_long" == "yes" -a "$ac_cv_sizeof_long" == 8; then
+            MPI_OFFSET_DATATYPE=MPI_LONG
+        elif test "ac_cv_sizeof_int" == 8; then
+            MPI_OFFSET_DATATYPE=MPI_INT
+        fi
+    elif test "$MPI_OFFSET_TYPE" = "int32_t"; then
+        echo in int32_t if block
+        if test "$ac_cv_type_long_long" == "yes" -a "$ac_cv_sizeof_long_long" == 4; then
+            MPI_OFFSET_DATATYPE=MPI_LONG_LONG
+        elif test "$ac_cv_type_long" == "yes" -a "$ac_cv_sizeof_long" == 4; then
+            MPI_OFFSET_DATATYPE=MPI_LONG
+        elif test "ac_cv_sizeof_int" == 4; then
+            MPI_OFFSET_DATATYPE=MPI_INT
+        fi
+    fi
+fi
+AC_MSG_RESULT([$MPI_OFFSET_DATATYPE])
+if test "$MPI_OFFSET_DATATYPE" = "not found"; then
+	AC_MSG_WARN([*** Unable to find an MPI datatype corresponding to MPI_Offset])
+	AC_MSG_ERROR([Cannot continue])
+fi
+AC_DEFINE_UNQUOTED(OMPI_OFFSET_DATATYPE, $MPI_OFFSET_DATATYPE, [MPI datatype corresponding to MPI_Offset])
 
 # all: endian
 
@@ -787,7 +838,7 @@ OMPI_CASE_SENSITIVE_FS_SETUP
 # MCA
 ##################################
 
-ompi_show_title "MPI Component Architecture (MCA) setup" 
+ompi_show_title "Modular Component Architecture (MCA) setup" 
 
 AC_MSG_CHECKING([for subdir args])
 OMPI_CONFIG_SUBDIR_ARGS([ompi_subdir_args])
