@@ -33,7 +33,7 @@ mca_ptl_elan_data_frag (struct mca_ptl_elan_module_t *ptl,
                         item, rc);
 
     while (OMPI_SUCCESS != rc) {
-	/* TODO: progress the recv state machine */
+	/* FIXME: progress the recv state machine */
         ompi_output (0,
                      "[%s:%d] Retry to allocate a recv fragment",
                      __FILE__, __LINE__);
@@ -203,8 +203,7 @@ mca_ptl_elan_ctrl_frag (struct mca_ptl_elan_module_t *ptl,
 	    req->req_peer_addr.pval, 
 	    req->req_peer_size);
 
-     /* FIXME: 
-      * This sort of synchronized fragment release will lead
+     /* XXX: This sort of synchronized fragment release will lead
       * to race conditions, also see the note insize the follwoing routine */
      mca_ptl_elan_send_desc_done (desc, req); 
      END_FUNC(PTL_ELAN_DEBUG_ACK);
@@ -315,7 +314,7 @@ mca_ptl_elan_init_qdma_desc (struct mca_ptl_elan_send_frag_t *frag,
     *size = size_out;
     hdr->hdr_frag.hdr_frag_length = size_out;
 
-    /* FIXME: change this ugly fix for get */
+    /* TODO: change this ugly fix for get */
     hdr->hdr_frag.hdr_dst_ptr.lval = elan4_main2elan(
 	    ctx, (char *)pml_req->req_base.req_addr + size_out);
 
@@ -325,10 +324,7 @@ mca_ptl_elan_init_qdma_desc (struct mca_ptl_elan_send_frag_t *frag,
     frag->frag_base.frag_header = *hdr; 
 
 #if OMPI_PTL_ELAN_COMP_QUEUE
-    /* XXX: Chain a QDMA to each queue and 
-     * Have all the srcEvent fired to the Queue 
-     *
-     * XXX: The chain dma will go directly into a command stream
+    /* XXX: The chain dma will go directly into a command stream
      * so we need addend the command queue control bits.
      * Allocate space from command queues hanged off the CTX.
      */
@@ -449,8 +445,7 @@ mca_ptl_elan_init_put_desc (struct mca_ptl_elan_send_frag_t *frag,
                 offset);
         }
 
-	/* 
-         * TODO: 
+	/* TODO: 
 	 *   For now, eager sends are always packed into the descriptor
 	 *   Inline up to 256 bytes (including the header), then
 	 *   do a chained send for mesg < first_frag_size */
@@ -546,8 +541,6 @@ mca_ptl_elan_init_put_desc (struct mca_ptl_elan_send_frag_t *frag,
     /* Chain an event */
     desc->main_dma.dma_srcEvent= elan4_main2elan(ctx, desc->chain_event);
 
-    /* FIXME: no additional flags for the DMA, remote, shmem, qwrite, 
-     *        broadcast, etc. Be sure to correctly setup a chained DMA. */
     flags = 0;
     desc->main_dma.dma_typeSize = E4_DMA_TYPE_SIZE (size_out, 
 	    DMA_DataTypeByte, flags, ptl->putget->pg_retryCount);
@@ -605,13 +598,12 @@ mca_ptl_elan_init_get_desc (mca_ptl_elan_module_t *ptl,
     desc->dst_elan_addr = hdr->hdr_ack.hdr_dst_addr.lval;
     desc->desc_buff = hdr;
 
-    /* FIXME: 
-     *   initialize convertor and get the fragment copied out 
-     *   use the convertor hanged over request */
+    /* FIXME: initialize convertor and get the fragment 
+     * copied with the convertor hanged over request */
     size_out = size_in;
     *size = size_out;
 
-    /* FIXME: hdr_frag and hdr_ack overlap partially, please be aware */
+    /* XXX: hdr_frag and hdr_ack overlap partially, please be aware */
     desc->chain_dma.dma_typeSize = E4_DMA_TYPE_SIZE (
 	    sizeof(mca_ptl_base_frag_header_t), 
 	    DMA_DataTypeByte, DMA_QueueWrite, 8);
@@ -687,8 +679,6 @@ mca_ptl_elan_init_get_desc (mca_ptl_elan_module_t *ptl,
     desc->main_dma.dma_dstEvent= elan4_main2elan(ctx, 
 	    (E4_Event *)desc->chain_event);
 
-    /* FIXME: no additional flags for the DMA, remote, shmem, qwrite, 
-     *        broadcast, etc. Be sure to correctly setup a chained DMA. */
     flags = 0;
     desc->main_dma.dma_typeSize = E4_DMA_TYPE_SIZE (size_out, 
 	    DMA_DataTypeByte, flags, ptl->putget->pg_retryCount);
@@ -725,7 +715,6 @@ mca_ptl_elan_wait_queue(mca_ptl_elan_module_t * ptl,
     ready = rxq->qr_qEvent;
     readyWord = &rxq->qr_doneWord;
 
-    /* FIXME: Make sure the event and doneWord are correctly initialized */
     LOG_PRINT(PTL_ELAN_DEBUG_NONE,
 	    "rail %p ctx %p ready %p readyWord %p\n",
 	    rail, ctx, ready, readyWord);
@@ -986,10 +975,6 @@ mca_ptl_elan_start_ack ( mca_ptl_base_module_t * ptl,
     hdr->hdr_ack.hdr_dst_match.lval = 0; 
     hdr->hdr_ack.hdr_dst_match.pval = request;
 
-    /* FIXME: this needs to be some offsete from the base addr 
-     *        posted buffer size is the leftover. Length is 
-     * recv_frag->frag_recv.frag_base.frag_header.hdr_frag.hdr_frag_length;
-     */
     hdr->hdr_ack.hdr_dst_addr.pval = 0; 
     hdr->hdr_ack.hdr_dst_addr.lval = elan4_main2elan(ctx, 
 	    (char *)request->req_base.req_addr + recv_len);
@@ -999,10 +984,9 @@ mca_ptl_elan_start_ack ( mca_ptl_base_module_t * ptl,
 	    desc, hdr, request->req_bytes_packed, recv_len);
 
 #if OMPI_PTL_ELAN_COMP_QUEUE
-    /* FIXME: save frag descriptor somewhere in the header */
-    ((mca_ptl_elan_ack_header_t *) hdr)->frag = desc; 
 
     /* XXX: Need to have a way to differentiate different frag */
+    ((mca_ptl_elan_ack_header_t *) hdr)->frag = desc; 
     qdma->comp_event->ev_Params[1] = elan4_alloccq_space (ctx, 8, CQ_Size8K);
     qdma->comp_event->ev_CountAndType = E4_EVENT_INIT_VALUE(-32,
 	    E4_EVENT_COPY, E4_EVENT_DTYPE_LONG, 8);

@@ -167,8 +167,8 @@ mca_ptl_elan_component_close (void)
     if (elan_mp->elan_recv_frags_free.fl_num_allocated !=
         elan_mp->elan_recv_frags_free.super.ompi_list_length) {
         ompi_output (0, 
-		     "[proc%s:%s:%d] recv_frags : %d allocated %d returned\n",
-		     getenv("RMS_RANK"), __FILE__, __LINE__,
+		     "[%s:%d] recv_frags : %d allocated %d returned\n",
+		     __FILE__, __LINE__,
                      elan_mp->elan_recv_frags_free.fl_num_allocated,
                      elan_mp->elan_recv_frags_free.super.ompi_list_length);
     }

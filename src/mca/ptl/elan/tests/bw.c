@@ -13,7 +13,7 @@
 MPI_Request request[MAX_REQ_NUM];
 MPI_Status  tmp_stat[MAX_REQ_NUM];
 
-int         skip = 0;
+int         skip = 40;
 
 int
 main (int argc,
@@ -28,7 +28,7 @@ main (int argc,
     r_buf = (char *) malloc (sizeof(char)*MYBUFSIZE);
 
     /* Get some environmental variables set for Open MPI, OOB */
-    env_init_for_elan();
+    /*env_init_for_elan();*/
 
     MPI_Init (&argc, &argv);
     MPI_Comm_size (MPI_COMM_WORLD, &numprocs);
