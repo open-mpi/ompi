@@ -877,6 +877,7 @@ AC_CONFIG_FILES([
     src/rte/universe/Makefile
 
     test/Makefile
+    test/include/Makefile
     test/support/Makefile
     test/class/Makefile
     test/threads/Makefile

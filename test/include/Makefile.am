@@ -10,6 +10,6 @@ noinst_PROGRAMS = \
         atomic
 
 atomic_SOURCES = atomic.c 
-ompi_bitmap_LDADD = \
+atomic_LDADD = \
         $(top_builddir)/test/support/libsupport.la
-ompi_bitmap_DEPENDENCIES = $(ompi_bitmap_LDADD)
+atomic_DEPENDENCIES = $(ompi_bitmap_LDADD)
