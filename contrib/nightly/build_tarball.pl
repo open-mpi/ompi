@@ -83,6 +83,7 @@ sub test_abort {
 sub do_command {
     my ($merge_output, $cmd) = @_;
 
+    print "*** Running command: $cmd\n" if ($debug);
     pipe OUTread, OUTwrite;
     pipe ERRread, ERRwrite
         if (!$merge_output);
@@ -488,10 +489,10 @@ our @email_output;
 my $ret;
 
 # prefix the e-mail
-my $unamen = `uname -n`;
-my $unameo = `uname -o`;
-my $unamer = `uname -r`;
-my $unamem = `uname -m`;
+my $unamen = `uname -n 2>/dev/null`;
+my $unameo = `uname -o 2>/dev/null`;
+my $unamer = `uname -r 2>/dev/null`;
+my $unamem = `uname -m 2>/dev/null`;
 chomp($unamen);
 chomp($unameo);
 chomp($unamer);
