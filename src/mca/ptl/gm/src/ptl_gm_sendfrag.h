@@ -48,7 +48,7 @@ extern "C" {
     OBJ_CLASS_DECLARATION (mca_ptl_gm_recv_frag_t);
 
     /* specific header for GM rendezvous protocol. It will be filled up by the sender
-     * and should be ab;e to hold a pointer to the last registered memory location.
+     * and should be able to hold a pointer to the last registered memory location.
      */
     struct mca_ptl_gm_frag_header_t {
         mca_ptl_base_frag_header_t hdr_frag;
