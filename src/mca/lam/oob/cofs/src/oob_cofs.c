@@ -61,6 +61,8 @@ mca_oob_cofs_send(lam_job_handle_t job_handle, int vpid, int tag,
   fclose(fp);
   rename(msg_file_tmp, msg_file);
 
+  mca_oob_cofs_serial++;
+
   return LAM_SUCCESS;
 }
 
@@ -117,14 +119,23 @@ find_match(lam_job_handle_t job_handle, int* tag, int* vpid)
   }
 
   while ((ent = readdir(dir)) != NULL) {
-    if (ent->d_name[0] = '.') continue;
-    ret = sscanf(ent->d_name, "%s_%d_%d_%d_%d.msg", tmp_handle, &tmp_myvpid, 
-                 &tmp_vpid, &tmp_tag, &tmp_serial);
-    if (ret != 5) continue;
+    if (ent->d_name[0] == '.') continue;
 
-    if (strcmp(tmp_handle, job_handle)) continue;
-    if (tmp_myvpid != mca_oob_cofs_my_vpid) continue;
-    if (*tag != MCA_OOB_ANY_TAG && tmp_tag != *tag) continue;
+    ret = sscanf(ent->d_name, "%[^_]_%d_%d_%d_%d.msg", tmp_handle, &tmp_vpid, 
+                 &tmp_myvpid, &tmp_tag, &tmp_serial);
+    if (ret != 5) {
+      continue;
+    }
+    
+    if (strcmp(tmp_handle, job_handle)) {
+      continue;
+    }
+    if (tmp_myvpid != mca_oob_cofs_my_vpid) {
+      continue;
+    }
+    if (*tag != MCA_OOB_ANY_TAG && tmp_tag != *tag) {
+      continue;
+    }
 
     /* do best one here... */
     found = true;
@@ -150,6 +161,7 @@ do_recv(lam_job_handle_t job_handle, int* tag, int* vpid,
         void** data, size_t* data_len)
 {
   char *fname;
+  char full_fname[LAM_PATH_MAX];
   FILE *fp;
   size_t rlen;
 
@@ -157,25 +169,24 @@ do_recv(lam_job_handle_t job_handle, int* tag, int* vpid,
   if (fname == NULL) {
     return LAM_ERR_WOULD_BLOCK;
   }
+  snprintf(full_fname, LAM_PATH_MAX, "%s/%s", mca_oob_cofs_comm_loc, fname);
+  free(fname);
 
-  fp = fopen(fname, "r");
+  fp = fopen(full_fname, "r");
   if (fp == NULL) {
-    free(fname);
     return LAM_ERROR;
   }
 
-  unlink(fname);
+  unlink(full_fname);
 
   rlen = fread(data_len, sizeof(size_t), 1, fp);
   if (rlen != 1) {
-    free(fname);
     fclose(fp);
     return LAM_ERROR;
   }
 
   *data = (void*) malloc(*data_len);
-  if (*data_len == NULL) {
-    free(fname);
+  if (*data == NULL) {
     fclose(fp);
     *data_len = 0;
     return LAM_ERROR;
@@ -183,14 +194,12 @@ do_recv(lam_job_handle_t job_handle, int* tag, int* vpid,
 
   rlen = fread(*data, 1, *data_len, fp);
   if (rlen != *data_len) {
-    free(fname);
     fclose(fp);
     free(*data);
     *data_len = 0;
     return LAM_ERROR;
   }
 
-  free(fname);
   fclose(fp);
 
   return LAM_SUCCESS;
