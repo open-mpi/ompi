@@ -23,6 +23,7 @@ sources = \
         ctnetwork/libctnetwork.la \
         lfc/liblfc.la \
         mem/libmem.la \
+        runtime/libruntime.la \
         threads/libthreads.la \
         util/libutil.la 
 
