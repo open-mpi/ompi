@@ -802,6 +802,8 @@ AC_CONFIG_FILES([
     src/mca/registry/Makefile
     src/mca/registry/base/Makefile
 
+    src/mca/allocator/Makefile
+    src/mca/allocator/base/Makefile
     src/mca/coll/Makefile
     src/mca/coll/base/Makefile
     src/mca/topo/Makefile
@@ -814,8 +816,6 @@ AC_CONFIG_FILES([
     src/mca/pml/base/Makefile
     src/mca/ptl/Makefile
     src/mca/ptl/base/Makefile
-    src/mca/mem/Makefile
-    src/mca/mem/base/Makefile
     src/mca/gpr/Makefile
 
     src/mpi/Makefile
