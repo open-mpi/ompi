@@ -194,8 +194,13 @@ static int ompi_timeout_next(struct timeval *tv)
 /* run loop for dispatch thread */
 static void* ompi_event_run(ompi_object_t* arg)
 {
+    /* Open MPI: Prevent compiler warnings about unused variables */
+#if defined(NDEBUG)
+    ompi_event_loop(0);
+#else
     int rc = ompi_event_loop(0);
     assert(rc >= 0);
+#endif
     return NULL;
 }
 
@@ -616,7 +621,7 @@ ompi_event_queue_remove(struct ompi_event *ev, int queue)
 {
     if (!(ev->ev_flags & queue))
         errx(1, "%s: %p(fd %d) not on queue %x", __func__,
-            ev, ev->ev_fd, queue);
+             (void *) ev, ev->ev_fd, queue);
 
     ev->ev_flags &= ~queue;
     switch (queue) {
@@ -642,7 +647,7 @@ ompi_event_queue_insert(struct ompi_event *ev, int queue)
 {
     if (ev->ev_flags & queue)
         errx(1, "%s: %p(fd %d) already on queue %x", __func__,
-            ev, ev->ev_fd, queue);
+             (void *) ev, ev->ev_fd, queue);
 
     ev->ev_flags |= queue;
     switch (queue) {

@@ -81,7 +81,11 @@ static struct pollop {
 static void *poll_init	(void);
 static int poll_add		(void *, struct ompi_event *);
 static int poll_del		(void *, struct ompi_event *);
+#if 0
+/* Open MPI: JMS As far as I can tell, this function is not used
+   anywhere */
 static int poll_recalc	(void *, int);
+#endif
 static int poll_dispatch	(void *, struct timeval *);
 
 const struct ompi_eventop ompi_pollops = {
@@ -112,6 +116,9 @@ poll_init(void)
  * recalculate everything.
  */
 
+#if 0
+/* Open MPI: JMS As far as I can tell, this function is not used
+   anywhere. */
 static int
 poll_recalc(void *arg, int max)
 {
@@ -122,6 +129,7 @@ poll_recalc(void *arg, int max)
 	return (0);
 #endif
 }
+#endif
 
 static int
 poll_dispatch(void *arg, struct timeval *tv)
