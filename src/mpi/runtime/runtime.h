@@ -21,8 +21,11 @@ extern "C" {
  * Global variables and symbols for the MPI layer
  */
 
-extern int lam_mpi_initialized;
-extern int lam_mpi_finalized;
+extern bool lam_mpi_initialized;
+extern bool lam_mpi_finalized;
 
+extern bool lam_mpi_thread_multiple;
+extern int lam_mpi_thread_requested;
+extern int lam_mpi_thread_provided;
 
 #endif /* LAM_MPI_INIT_H */
