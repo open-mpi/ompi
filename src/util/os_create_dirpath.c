@@ -19,7 +19,7 @@ int ompi_os_create_dirpath(const char *path, const mode_t mode)
     char *pth, *bottom_up;
     struct stat buf;
 
-    if (NULL == path) { /* protect ourselves from fools */
+    if (NULL == path) { /* protect ourselves from errors */
 	return(OMPI_ERROR);
     }
 
@@ -65,7 +65,9 @@ int ompi_os_create_dirpath(const char *path, const mode_t mode)
     while (strlen(bottom_up) > 1) {
 	strcat(pth, ompi_system_info.path_sep);
 	strcat(pth, basename(bottom_up));
-	if (0 != mkdir(pth, mode)) { /* try to make the next layer - return error if can't */
+	/* try to make the next layer - return error if can't & directory doesn't exist */
+	/* if directory already exists, then that means somebody beat us to it - not an error */
+	if ((0 != mkdir(pth, mode)) && (stat(pth, &buf) != 0)) { 
 	    free(pth);
 	    free(bottom_up);
 	    return(OMPI_ERROR);

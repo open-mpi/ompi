@@ -9,8 +9,13 @@
 #include <pwd.h>
 #include <sys/stat.h>
 
+#include "ompi_config.h"
+
 #include "include/constants.h"
 #include "util/sys_info.h"
+#include "util/os_session_dir.h"
+#include "util/cmd_line.h"
+#include "util/common_cmd_line.h"
 
 ompi_sys_info_t ompi_system_info = {
                  /* .init =        */     false,
@@ -30,14 +35,16 @@ ompi_sys_info_t ompi_system_info = {
                  /* .sock_stderr = */     NULL};
 
 
-void ompi_sys_info(void)
+int ompi_sys_info(void)
 {
     struct utsname sys_info;
     char *path_name, sep[2];
+    char *universe = NULL;
+    char *tmpdir = NULL;
     struct passwd *pwdent;
 
     if (ompi_system_info.init) {
-	return;
+	return OMPI_SUCCESS;
     }
 
     if (0 > uname(&sys_info)) {  /* have an error - set utsname values to indicate */
@@ -61,6 +68,7 @@ void ompi_sys_info(void)
             free(ompi_system_info.machine);
             ompi_system_info.machine = NULL;
         }
+        return OMPI_ERROR;
     } else {
         ompi_system_info.sysname = strdup(sys_info.sysname);
         ompi_system_info.nodename = strdup(sys_info.nodename);
@@ -90,5 +98,30 @@ void ompi_sys_info(void)
     /* get the process id */
     ompi_system_info.pid = getpid();
 
+    /* set the init flag so that session_dir_init knows not to come back here */
     ompi_system_info.init = true;  /* only indicates that we have been through here once - still have to test for NULL values */
+
+    /* see if user specified universe name */
+    if (ompi_cmd_line_is_taken(ompi_common_cmd_line, "universe")) {
+	if (NULL == ompi_cmd_line_get_param(ompi_common_cmd_line, "universe", 0, 0)) {
+	    return(OMPI_ERROR);
+	}
+	universe = strdup(ompi_cmd_line_get_param(ompi_common_cmd_line, "universe", 0, 0));
+    }
+
+    /* see if user specified session directory prefix */
+    if (ompi_cmd_line_is_taken(ompi_common_cmd_line, "tmpdir")) {
+	if (NULL == ompi_cmd_line_get_param(ompi_common_cmd_line, "tmpdir", 0, 0)) {
+	    return(OMPI_ERROR);
+	}
+	tmpdir = strdup(ompi_cmd_line_get_param(ompi_common_cmd_line, "tmpdir", 0, 0));
+    }
+
+    /* get the session directory setup */
+    if (OMPI_ERROR == ompi_session_dir_init(tmpdir, universe)) {
+    /* this is a serious error, so return the error condition */
+        return(OMPI_ERROR);
+    }
+
+    return(OMPI_SUCCESS);
 }
