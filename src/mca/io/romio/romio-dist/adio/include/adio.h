@@ -83,6 +83,15 @@
 #define FDTYPE int
 #endif
 
+/* Open MPI: MPI_Offset is defined by ompi_config.h.  Also, taking a
+   little liberty with the fact that we know ROMIO is a component
+   included in the Open MPI distribution, we've already figured out an
+   MPI datatype corresponding to MPI_Offset. */
+#if 1
+    typedef MPI_Offset ADIO_Offset;
+#   define ADIO_OFFSET OMPI_OFFSET_DATATYPE
+#else
+/* Open MPI: ignores all this stuff */
 #ifdef MPI_OFFSET_IS_INT
    typedef int ADIO_Offset;
 #  define ADIO_OFFSET MPI_INT
@@ -99,6 +108,8 @@
 #else
    typedef long ADIO_Offset;
 #  define ADIO_OFFSET MPI_LONG
+#endif
+/* Open MPI: end of section of ignored stuff */
 #endif
 
 #ifndef SX4
