@@ -6,8 +6,6 @@
 #ifndef NS_REPLICA_H
 #define NS_REPLICA_H
 
-#include <pthread.h>
-
 #include "ompi_config.h"
 #include "include/types.h"
 #include "include/constants.h"
@@ -35,7 +33,6 @@ OBJ_CLASS_DECLARATION(mca_ns_replica_name_tracker_t);
 extern mca_ns_base_cellid_t mca_ns_replica_last_used_cellid;
 extern mca_ns_base_jobid_t mca_ns_replica_last_used_jobid;
 extern ompi_list_t mca_ns_replica_name_tracker;
-extern pthread_t *mca_ns_replica_thread;
 
 /*
  * Module open / close
@@ -53,10 +50,10 @@ int mca_ns_replica_finalize(void);
 /*
  * oob interface
  */
-/*
-void *mca_ns_replica_recv_thread(void*);
+mca_oob_callback_packed_fn_t mca_ns_replica_recv(int status, ompi_process_name_t* sender,
+						 ompi_buffer_t* buffer, int tag,
+						 void* cbdata);
 
-*/
 /*
  * Implementation of create_cellid().
  */

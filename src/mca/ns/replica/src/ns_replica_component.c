@@ -146,11 +146,14 @@ mca_ns_base_module_t* mca_ns_replica_init(bool *allow_multi_user_threads, bool *
 
       /* set my_replica to point to myself */
 
-      mca_ns_my_replica = mca_ns_replica.copy_process_name(&ompi_process_info.name);
+      mca_ns_my_replica = mca_ns_replica.copy_process_name(ompi_process_info.name);
 
       /* Return the module */
 
       initialized = true;
+
+      /* issue non-blocking receive for call_back function */
+
       return &mca_ns_replica;
     } else {
       return NULL;
@@ -174,29 +177,69 @@ int mca_ns_replica_finalize(void)
 
   return OMPI_SUCCESS;
 }
-/*
-mca_oob_callback_fn_t mca_ns_replica_recv(int status, const ompi_process_name_t *sender,
-					  const struct iovec *msg, size_t count,
-					  void *cbdata)
+
+mca_oob_callback_packed_fn_t mca_ns_replica_recv(int status, ompi_process_name_t* sender,
+						 ompi_buffer_t* buffer, int tag,
+						 void* cbdata)
 {
-    ompi_ns_msg_buffer_t *cmd, answer;
-    mca_ns_base_cellid_t tmp1;
-    struct iovec reply;
-    int i;
+    ompi_buffer_t answer, error_answer;
+    mca_ns_cmd_flag_t command;
+    mca_ns_base_cellid_t cell;
+    mca_ns_base_jobid_t job;
+    mca_ns_base_vpid_t vpid, range;
 
-    for (i=0; i<count; i++) {  loop through all included commands
-	cmd = (ompi_ns_msg_buffer_t*)msg->iov_base;
-	if (OMPI_NS_CREATE_CELLID == cmd->command) { got create_cellid command
-	    tmp1 = ompi_name_server.create_cellid();
-	    answer.command = cmd->command;
-	    answer.buflen = sizeof(tmp1);
-	    answer.buf = (uint8_t*)&tmp1;
-
-	    reply.iov_base = (char*)&answer;
-	    reply.iov_len = sizeof(answer);
-	    mca_oob_send(sender, &reply, 1, MCA_OOB_TAG_ANY, 0);
-	}
+    if (OMPI_SUCCESS != ompi_unpack(*buffer, (void*)&command, 1, MCA_NS_OOB_PACK_CMD)) {
+	goto RETURN_ERROR;
     }
-    return OMPI_SUCCESS;
+
+    if (MCA_NS_CREATE_CELLID_CMD == command) {   /* got a command to create a cellid */
+	if (OMPI_SUCCESS != ompi_pack(answer, (void*)&command, 1, MCA_NS_OOB_PACK_CMD)) {
+	    goto RETURN_ERROR;
+	}
+	cell = ompi_name_server.create_cellid();
+	if (OMPI_SUCCESS != ompi_pack(answer, (void*)&cell, 1, MCA_NS_OOB_PACK_CELLID)) {
+	    goto RETURN_ERROR;
+	}
+	if (0 > mca_oob_send_packed(sender, answer, tag, 0)) {
+	    /* RHC -- not sure what to do if the return send fails */
+	}
+    } else if (MCA_NS_CREATE_JOBID_CMD == command) {   /* got command to create jobid */
+	if (OMPI_SUCCESS != ompi_pack(answer, (void*)&command, 1, MCA_NS_OOB_PACK_CMD)) {
+	    goto RETURN_ERROR;
+	}
+	job = ompi_name_server.create_jobid();
+	if (OMPI_SUCCESS != ompi_pack(answer, (void*)&job, 1, MCA_NS_OOB_PACK_JOBID)) {
+	    goto RETURN_ERROR;
+	}
+	if (0 > mca_oob_send_packed(sender, answer, tag, 0)) {
+	    /* RHC -- not sure what to do if the return send fails */
+	}
+    } else if (MCA_NS_RESERVE_RANGE_CMD == command) {  /* got command to reserve vpid range */
+	if (OMPI_SUCCESS != ompi_unpack(*buffer, (void*)&job, 1, MCA_NS_OOB_PACK_JOBID)) {
+	    goto RETURN_ERROR;
+	}
+
+	if (OMPI_SUCCESS != ompi_unpack(*buffer, (void*)&range, 1, MCA_NS_OOB_PACK_VPID)) {
+	    goto RETURN_ERROR;
+	}
+
+	vpid = ompi_name_server.reserve_range(job, range);
+	if (OMPI_SUCCESS != ompi_pack(answer, (void*)&command, 1, MCA_NS_OOB_PACK_CMD)) {
+	    goto RETURN_ERROR;
+	}
+
+	if (OMPI_SUCCESS != ompi_pack(answer, (void*)&vpid, 1, MCA_NS_OOB_PACK_VPID)) {
+	    goto RETURN_ERROR;
+	}
+	if (0 > mca_oob_send_packed(sender, answer, tag, 0)) {
+	    /* RHC -- not sure what to do if the return send fails */
+	}
+    } else {  /* got an unrecognized command */
+    RETURN_ERROR:
+	command = MCA_NS_ERROR;
+	ompi_pack(error_answer, (void*)&command, 1, MCA_NS_OOB_PACK_CMD);
+	mca_oob_send_packed(sender, error_answer, tag, 0);
+    }
+
+    /* reissue the non-blocking receive */
 }
-*/
