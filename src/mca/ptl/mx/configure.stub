@@ -63,7 +63,7 @@ AC_DEFUN([MCA_CONFIGURE_STUB],[
 
     # Try to find libmyriexpress
 
-    LDFLAGS="$LDFLAGS $EXTRA_LDFLAGS"
+    LDFLAGS="$LDFLAGS $EXTRA_LDFLAGS -lpthread"
     AC_CHECK_LIB([myriexpress], [main], [],
         AC_MSG_ERROR([*** Cannot find libmyriexpress]))
 
@@ -73,5 +73,5 @@ AC_DEFUN([MCA_CONFIGURE_STUB],[
     #
 
     WRAPPER_EXTRA_LDFLAGS="$EXTRA_LDFLAGS"
-    WRAPPER_EXTRA_LIBS="-lmyriexpress"
+    WRAPPER_EXTRA_LIBS="-lmyriexpress -lpthread"
 ])dnl

@@ -74,45 +74,38 @@ OBJ_CLASS_DECLARATION(mca_ptl_mx_send_frag_t);
     (ack)->frag_free = 0; \
 }
                                                                                                                   
-
-static inline void MCA_PTL_MX_SEND_FRAG_PROGRESS(mca_ptl_mx_send_frag_t* frag)
-{
-   mca_pml_base_send_request_t* request = frag->frag_send.frag_request;
-   bool frag_ack;
-   int32_t frag_progress;
-
-    /* if this is an ack - simply return to pool */
-    if(request == NULL) {
-        MCA_PTL_MX_SEND_FRAG_RETURN(frag);
-        return;
-    }
-
-    /* Done when:
-     * (1) send completes and ack is received
-     * (2) send completes and ack is not required
-     */
-    frag_ack = (frag->frag_send.frag_base.frag_header.
-        hdr_common.hdr_flags & MCA_PTL_FLAGS_ACK) ? true : false;
-    frag_progress = ompi_atomic_add_32(&frag->frag_progress, 1); 
-
-    if((frag_ack == true && frag_progress == 2) ||  
-       (frag_ack == false && frag_progress == 1)) {
-
-        /* update request status */
-        frag->frag_send.frag_base.frag_owner->ptl_send_progress(
-            frag->frag_send.frag_base.frag_owner,
-            request,
-            frag->frag_send.frag_base.frag_size);
-
-        /* return any fragment that didnt come from the cache */
-        if (request->req_cached == false || 
-            frag->frag_send.frag_base.frag_header.hdr_frag.hdr_frag_offset != 0) {
-            MCA_PTL_MX_SEND_FRAG_RETURN(frag);
-        }
-    }
-}
-
-
+#define MCA_PTL_MX_SEND_FRAG_PROGRESS(frag) \
+do { \
+    mca_pml_base_send_request_t* request = frag->frag_send.frag_request; \
+    bool frag_ack; \
+ \
+    /* if this is an ack - simply return to pool */ \
+    if(request == NULL) { \
+        MCA_PTL_MX_SEND_FRAG_RETURN(frag); \
+        return; \
+    } \
+ \
+    /* Done when: \
+     * (1) ack is not required and send completes \
+     * (2) ack is received and send has completed \
+     */ \
+    frag_ack = (frag->frag_send.frag_base.frag_header. \
+        hdr_common.hdr_flags & MCA_PTL_FLAGS_ACK) ? true : false; \
+    if(frag_ack == false || ompi_atomic_add_32(&frag->frag_progress,1) == 2) { \
+ \
+        /* update request status */ \
+        frag->frag_send.frag_base.frag_owner->ptl_send_progress( \
+            frag->frag_send.frag_base.frag_owner, \
+            request, \
+            frag->frag_send.frag_base.frag_size); \
+ \
+        /* return any fragment that didnt come from the cache */ \
+        if (request->req_cached == false ||  \
+            frag->frag_send.frag_base.frag_header.hdr_frag.hdr_frag_offset != 0) { \
+            MCA_PTL_MX_SEND_FRAG_RETURN(frag); \
+        } \
+    } \
+} while (0)
 
 #endif
 

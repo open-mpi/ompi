@@ -156,7 +156,7 @@ mca_ptl_base_module_t** mca_ptl_mx_component_init(
     mca_ptl_base_module_t** ptls;
     *num_ptls = 0;
     *allow_multi_user_threads = true;
-    *have_hidden_threads = true; /* MX driver/callbacks are multi-threaded */
+    *have_hidden_threads = false; /* MX driver/callbacks are multi-threaded */
 
     ompi_free_list_init(&mca_ptl_mx_component.mx_send_frags, 
         sizeof(mca_ptl_mx_send_frag_t),
@@ -223,11 +223,12 @@ int mca_ptl_mx_component_progress(mca_ptl_tstamp_t tstamp)
     size_t i;
     for(i=0; i<mca_ptl_mx_component.mx_num_ptls; i++) {
         mca_ptl_mx_module_t* ptl = mca_ptl_mx_component.mx_ptls[i];
-        mx_request_t mx_request;
+        mx_status_t mx_status;
         mx_return_t mx_return;
         uint32_t mx_result;
 
-        /* poll for completion */
+#if HAVE_MX_ICOMPLETED == 0
+        mx_request_t mx_request;
         mx_return = mx_ipeek(
             ptl->mx_endpoint,
             &mx_request,
@@ -237,9 +238,35 @@ int mca_ptl_mx_component_progress(mca_ptl_tstamp_t tstamp)
                 mx_return);
             return OMPI_ERROR;
         }
-        if(mx_result > 0) {
-            MCA_PTL_MX_PROGRESS(ptl, mx_request);
+        if(mx_result < 0)
+            continue;
+
+        mx_return = mx_test(
+            ptl->mx_endpoint,
+            &mx_request,
+            &mx_status,
+            &mx_result);
+        if(mx_return == MX_SUCCESS) {
+             MCA_PTL_MX_PROGRESS(ptl, mx_status);
+        } else {
+             ompi_output(0, "mca_ptl_mx_progress: mx_test() failed with status=%dn",
+                mx_return);
         }
+#else
+        /* poll for completion */
+        mx_return = mx_icompleted(
+            ptl->mx_endpoint,
+            &mx_status,
+            &mx_result);
+        if(mx_return != MX_SUCCESS) {
+            ompi_output(0, "mca_ptl_mx_component_progress: mx_ipeek() failed with status %d\n",
+                mx_return);
+            return OMPI_ERROR;
+        }
+        if(mx_result > 0) {
+            MCA_PTL_MX_PROGRESS(ptl, mx_status);
+        }
+#endif
     }
     return OMPI_SUCCESS;
 }

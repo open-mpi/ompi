@@ -111,6 +111,7 @@ static void* mca_ptl_mx_thread(ompi_object_t *arg)
     while(ptl->mx_enabled) {
         mx_request_t mx_request;
         mx_return_t mx_return;
+        mx_status_t mx_status;
         uint32_t mx_result;
 
         /* block waiting for status */
@@ -129,8 +130,17 @@ static void* mca_ptl_mx_thread(ompi_object_t *arg)
             break;
         }
         
-        /* process the pending request */
-        MCA_PTL_MX_PROGRESS(ptl, mx_request);
+        mx_return = mx_test(
+            ptl->mx_endpoint,
+            &mx_request,
+            &mx_status,
+            &mx_result);
+        if(mx_return == MX_SUCCESS) {
+            MCA_PTL_MX_PROGRESS(ptl, mx_status);
+        } else {
+            ompi_output(0, "mca_ptl_mx_progress: mx_test() failed with status=%dn",
+                mx_return);
+        }
     }
     return NULL;
 }
