@@ -11,8 +11,12 @@
 
 #include "mca/ns/ns.h"
 #include "class/ompi_list.h"
+#include "class/ompi_rb_tree.h"
 #include <netinet/in.h>
 #include "threads/mutex.h"
+#include <string.h>
+#include "mca/oob/tcp/oob_tcp.h"
+
 /**
  * the state of the connection
  */
@@ -46,10 +50,34 @@ struct mca_oob_tcp_peer_t {
     mca_oob_tcp_addr_t peer_addr;   /**< the address of the peer process */
     ompi_mutex_t peer_lock;         /**< make sure only one thread accesses it at a time */
     ompi_list_t peer_send;            /**< list of items to send */
-    ompi_list_t peer_recieved;        /**< list of items to recieve */
+    ompi_list_t peer_recv;        /**< list of items to recieve */
 };
 typedef struct mca_oob_tcp_peer_t mca_oob_tcp_peer_t;
-    
+
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
+
+/**
+ * This is the constructor function for the mca_oob_tcp_peer
+ * struct. Note that this function and OBJ_NEW should NEVER
+ * be called directly. Instead, use mca_oob_tcp_add_peer
+ *
+ * @param peer a pointer to the mca_oob_tcp_peer_t struct to be initialized
+ * @retval none
+ */
+void mca_oob_tcp_peer_construct(mca_oob_tcp_peer_t* peer);
+
+/**
+ * This is the destructor function for the mca_oob_tcp_peer
+ * struct. Note that this function and OBJ_RELEASE should NEVER
+ * be called directly. Instead, use mca_oob_tcp_del_peer
+ *
+ * @param peer a pointer to the mca_oob_tcp_peer_t struct to be destroyed
+ * @retval none
+ */
+void mca_oob_tcp_peer_destruct(mca_oob_tcp_peer_t * peer);
+ 
 /**
  * The function to compare 2 peers. Used for the rb tree
  *
@@ -78,9 +106,12 @@ mca_oob_tcp_peer_t * mca_oob_tcp_add_peer(ompi_process_name_t peer_name);
  * @param peer_name the name of the peer
  *
  * @retval OMPI_SUCCESS
- * @retval OMPI_ERROR
  */
 int mca_oob_tcp_del_peer(ompi_process_name_t peer_name);
+
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 #endif /* _MCA_OOB_TCP_PEER_H */
 
