@@ -48,7 +48,7 @@ headers = \
         errhandler_inln.h \
         status_inln.h
 
-ompidir = $(includedir)/ompi/mpi/cxx
+ompidir = $(includedir)/openmpi/mpi/cxx
 ompi_HEADERS = \
 	$(headers)
 else

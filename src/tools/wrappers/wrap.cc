@@ -223,7 +223,7 @@ ompi_wrap_build_cflags(bool want_f77_includes, ompi_sv_t& cflags)
   }
 
 #if OMPI_WANT_CXX_BINDINGS
-  cflags.push_back("-I" + incdir + "/ompi");
+  cflags.push_back("-I" + incdir + "/openmpi");
 #endif
 
 #if defined(WIN32) && WIN32
