@@ -20,21 +20,11 @@
 extern ompi_class_t mca_ptl_elan_recv_frag_t_class;
 
 struct mca_ptl_elan_peer_t;
-struct ompi_ptl_elan_qdma_frag_t;
-struct ompi_ptl_elan_putget_frag_t;
-
-/**
- * ELAN descriptor for send
- */
-union mca_ptl_elan_send_desc_t {
-   struct ompi_ptl_elan_qdma_desc_t   *qdma;
-   struct ompi_ptl_elan_putget_desc_t *putget;
-};
-typedef union mca_ptl_elan_send_desc_t mca_ptl_elan_send_desc_t;
+struct ompi_ptl_elan_base_desc_t;
 
 struct mca_ptl_elan_desc_item_t {
     ompi_list_item_t   super;
-    mca_ptl_elan_send_desc_t item;
+    struct ompi_ptl_elan_base_desc_t *desc;
 };
 typedef struct mca_ptl_elan_desc_item_t mca_ptl_elan_desc_item_t;
 
@@ -45,6 +35,7 @@ struct mca_ptl_elan_recv_frag_t {
     mca_ptl_base_recv_frag_t super; 
     size_t          frag_hdr_cnt;  
     size_t          frag_msg_cnt; 
+    int             frag_progressed;
     union {
        struct ompi_ptl_elan_qdma_frag_t   *qdma;
        struct ompi_ptl_elan_putget_frag_t *putget;
@@ -55,7 +46,8 @@ struct mca_ptl_elan_recv_frag_t {
 typedef struct mca_ptl_elan_recv_frag_t mca_ptl_elan_recv_frag_t;
 
 mca_ptl_elan_desc_item_t *
-mca_ptl_elan_alloc_send_desc(struct mca_pml_base_send_request_t *req);
+mca_ptl_elan_alloc_send_desc( struct mca_ptl_t *ptl,
+                  struct mca_pml_base_send_request_t *sendreq);
 
 mca_ptl_elan_recv_frag_t *
 mca_ptl_elan_alloc_recv_desc(struct mca_pml_base_recv_request_t *req);
@@ -63,16 +55,23 @@ mca_ptl_elan_alloc_recv_desc(struct mca_pml_base_recv_request_t *req);
 static inline void 
 mca_ptl_elan_recv_frag_progress(mca_ptl_elan_recv_frag_t* frag) 
 { 
-    /* make sure this only happens once for threaded case */ 
-    mca_pml_base_recv_request_t* request;
-    mca_ptl_base_recv_progress_fn_t  progress;
+    /* Upto this point, this only means the fragment has been 
+       matched with a posted receive descriptor */
+    if (fetchNset (&frag->frag_progressed, 1) == 0) {
+#if 1
+	/* make sure this only happens once for threaded case */ 
+	mca_pml_base_recv_request_t* request;
+	mca_ptl_base_recv_progress_fn_t  progress;
 
-    progress = (frag)->super.super.frag_owner->ptl_recv_progress;
-    request = (frag)->super.frag_request; 
-    
-    /* progress the request */ 
-    progress((frag)->super.super.frag_owner, request, &(frag)->super); 
-    mca_ptl_elan_recv_frag_return((frag)->super.super.frag_owner, (frag)); 
+	progress = (frag)->super.super.frag_owner->ptl_recv_progress;
+	request = (frag)->super.frag_request; 
+	
+	/* progress the request */ 
+	progress((frag)->super.super.frag_owner, request, &(frag)->super); 
+	mca_ptl_elan_recv_frag_return((frag)->super.super.frag_owner, (frag)); 
+#endif
+    }
+
 }
 
 

@@ -45,10 +45,8 @@ static inline mca_ptl_elan_proc_t* mca_ptl_elan_proc_local(void)
     return NULL;
 }
 
-int  mca_ptl_elan_proc_insert(mca_ptl_elan_proc_t *, mca_ptl_elan_peer_t *);
 int  mca_ptl_elan_proc_remove(mca_ptl_elan_proc_t *, mca_ptl_elan_peer_t *);
 bool mca_ptl_elan_proc_accept(mca_ptl_elan_proc_t *, 
 	struct sockaddr_in *, int sd);
-
 
 #endif

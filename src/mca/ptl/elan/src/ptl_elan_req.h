@@ -40,7 +40,6 @@ OBJ_CLASS_DECLARATION(mca_ptl_elan_recv_request_t);
  */
 struct mca_ptl_elan_send_request_t {
     mca_pml_base_send_request_t super;
-    int    desc_type;
     mca_ptl_elan_desc_item_t *req_frag; 
 };
 typedef struct mca_ptl_elan_send_request_t mca_ptl_elan_send_request_t;

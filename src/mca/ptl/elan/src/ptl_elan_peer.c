@@ -15,13 +15,12 @@ mca_ptl_elan_peer_construct (mca_ptl_elan_peer_t * ptl_peer)
 {
     ptl_peer->peer_ptl = NULL;
     ptl_peer->peer_proc = NULL;
-    ptl_peer->peer_addr = NULL;
-    ptl_peer->peer_state = MCA_PTL_ELAN_CLOSED;
+    ptl_peer->peer_vp = -1;
+    ptl_peer->peer_rails = 0;
     ptl_peer->num_credits = 0;  /* Number of credits for the local PTL */
     ptl_peer->max_credits = 0;  /* Number of credits for the local PTL */
     ptl_peer->resending = 0;    /* A resending stage, no more new dma's */
-    ptl_peer->num_resend = 0;   /* How many times I have retried */
-    ptl_peer->known_alive_time = 0;
+    ptl_peer->num_resends = 0;   /* How many times I have retried */
 }
 
 /* Cleanup any resources held by the peer. */

@@ -3,9 +3,6 @@
 #include <unistd.h>
 #include <stdio.h>
 
-#define _ELAN4
-#define __elan4__
-
 #include "ptl_elan.h"
 #include "ptl_elan_priv.h"
 
@@ -33,9 +30,10 @@ ompi_init_elan_queue_events (mca_ptl_elan_t * ptl,
     ompi_ptl_elan_qdma_desc_t *ptr;
     ompi_elan_event_t *elan_ptr;
 
+    START_FUNC();
+
     rail = (RAIL *) ptl->ptl_elan_rail;
     ctx = (ELAN4_CTX *) ptl->ptl_elan_ctx;
-
 
     /* initialize list */
     OBJ_CONSTRUCT (&queue->tx_desc, ompi_list_t);
@@ -78,8 +76,9 @@ ompi_init_elan_queue_events (mca_ptl_elan_t * ptl,
         ompi_list_item_t *item;
 
         ptr->rail  = rail;
+        ptr->ptl   = ptl;
         ptr->elan_data_event = elan_ptr;
-        desc->item = (mca_ptl_elan_send_desc_t)ptr;
+        desc->desc = (ompi_ptl_elan_base_desc_t *)ptr;
 
         /* Initialize some of the dma structures */
         {
@@ -103,6 +102,7 @@ ompi_init_elan_queue_events (mca_ptl_elan_t * ptl,
     }
     flist->fl_num_allocated += flist->fl_num_per_alloc;
 
+    END_FUNC();
     return OMPI_SUCCESS;
 }
 
@@ -124,6 +124,8 @@ ompi_init_elan_qdma (mca_ptl_elan_module_1_0_0_t * emp,
     RAIL       *rail;
     ELAN4_CTX  *ctx;
     struct mca_ptl_elan_t *ptl;
+
+    START_FUNC();
 
     /* Init the Transmit Queue structure */
     for (i = 0; i < num_rails; i++) {
@@ -152,6 +154,7 @@ ompi_init_elan_qdma (mca_ptl_elan_module_1_0_0_t * emp,
                                            CQ_WriteEnableBit |
                                            CQ_DmaStartEnableBit |
                                            CQ_STENEnableBit, NULL);
+
         OMPI_PTL_ELAN_CHECK_UNEX (queue->tx_cmdq, NULL, OMPI_ERROR, 0);
 
         /* 
@@ -193,6 +196,7 @@ ompi_init_elan_qdma (mca_ptl_elan_module_1_0_0_t * emp,
 
         /* Set the top et al */
         rxq->qr_efitem = (E4_uint64) elan4_main2elan (ctx, rxq->qr_fptr);
+	assert(rxq->qr_efitem != ELAN_BAD_ADDR); 
         rxq->qr_base = rxq->qr_fptr;
         rxq->qr_top = (void *) ((uintptr_t) rxq->qr_base
                                 + (queue->rx_slotsize * (nslots - 1)));
@@ -200,11 +204,11 @@ ompi_init_elan_qdma (mca_ptl_elan_module_1_0_0_t * emp,
         rxq->qr_elitem =
             rxq->qr_efitem + (queue->rx_slotsize * (nslots - 1));
 
-        /* Event to wait/block on */
-        rxq->qr_qEvent = &rxq->qr_elanDone;
+        /* Event to wait/block on, Bug here for the event */
+        rxq->qr_qEvent = rxq->qr_elanDone;
 
         queue->input->q_event =
-            SDRAM2ELAN (ctx, (void *) &rxq->qr_elanDone);
+            SDRAM2ELAN (ctx, (void *) rxq->qr_elanDone);
         queue->input->q_fptr = rxq->qr_efitem;
         queue->input->q_bptr = rxq->qr_efitem;
         queue->input->q_control =
@@ -212,15 +216,17 @@ ompi_init_elan_qdma (mca_ptl_elan_module_1_0_0_t * emp,
                                   queue->rx_slotsize);
 
         /* The event */
-        INITEVENT_WORD (ctx, (EVENT *) & rxq->qr_elanDone,
+        INITEVENT_WORD (ctx, (EVENT *) rxq->qr_elanDone,
                         &rxq->qr_doneWord);
         RESETEVENT_WORD (&rxq->qr_doneWord);
-        PRIMEEVENT_WORD (ctx, (EVENT *) & rxq->qr_elanDone, 1);
+        PRIMEEVENT_WORD (ctx, (EVENT *) rxq->qr_elanDone, 1);
 
         rxq->qr_cmdq = elan4_alloc_cmdq (ctx, rail->r_alloc,
                                          CQ_Size1K,
                                          CQ_WriteEnableBit |
                                          CQ_WaitEventEnableBit, NULL);
+
+	/*elan4_disp_cmdq_params (rxq->qr_cmdq);*/
         OMPI_PTL_ELAN_CHECK_UNEX (rxq->qr_cmdq, NULL, OMPI_ERROR, 0);
 
         /* Allocate a sleepDesc for threads to block on */
@@ -231,6 +237,7 @@ ompi_init_elan_qdma (mca_ptl_elan_module_1_0_0_t * emp,
         OBJ_CONSTRUCT (&queue->rx_lock, ompi_mutex_t);
     }
 
+    END_FUNC();
     return (OMPI_SUCCESS);
 }
 

@@ -13,7 +13,6 @@ void
 mca_ptl_elan_send_request_construct (mca_ptl_elan_send_request_t * request)
 {
     OBJ_CONSTRUCT (&request->super, mca_pml_base_send_request_t);
-    request->desc_type = 0;
     request->req_frag = NULL;
 }
 
@@ -22,7 +21,6 @@ void
 mca_ptl_elan_send_request_destruct (mca_ptl_elan_send_request_t * request)
 {
     OBJ_DESTRUCT (&request->super);
-    request->desc_type = 0;
     request->req_frag = NULL;
 }
 
