@@ -11,6 +11,7 @@ headers = \
 
 libmca_mpi_base_la_SOURCES = \
         $(headers) \
+        mca_mpi_base_open.c \
         mca_mpi_init_select_modules.c \
         mca_mpi_mem.c
 

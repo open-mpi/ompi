@@ -75,6 +75,7 @@ void laminfo::open_modules()
   // Open all modules
 
   mca_base_open();
+  mca_mpi_open();
   module_map["base"] = NULL;
 
   mca_pcm_base_open();

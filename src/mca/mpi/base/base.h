@@ -22,6 +22,13 @@ typedef int (*mca_mpi_free_mem_fn_t)(void *base);
 
 
 /*
+ * Public variables
+ */
+
+extern int mca_base_mpi_param_check_param;
+
+
+/*
  * Global functions for MPI MCA modules
  */
 
@@ -31,6 +38,7 @@ extern "C" {
   int mca_mpi_alloc_mem(MPI_Aint size, MPI_Info info, void *baseptr);
   int mca_mpi_free_mem(void *baseptr);
 
+  int mca_mpi_open(void);
   int mca_mpi_init_select_modules(int requested, 
                                   bool allow_multi_user_threads,
                                   bool have_hidden_threads, int *provided);
