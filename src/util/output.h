@@ -184,17 +184,163 @@ typedef struct lam_output_stream_t lam_output_stream_t;
 #ifdef __cplusplus
 extern "C" {
 #endif
+  /**
+   * Initializes the output stream system and opens a default
+   * "verbose" stream.
+   *
+   * @retval true Upon success.
+   * @retval false Upon failure.
+   *
+   * This should be the first function invoked in the output
+   * subsystem.  After this call, the default "verbose" stream is open
+   * and can be written to via calls to lam_output_verbose() and
+   * lam_output_error().
+   *
+   * By definition, the default verbose stream has a handle ID of 0,
+   * and has a verbose level of 0.
+   */
   bool lam_output_init(void);
+
+  /**
+   * Shut down the output stream system.
+   *
+   * Shut down the output stream system, including the default verbose
+   * stream.
+   */
   void lam_output_finalize(void);
 
+  /**
+   * Opens an output stream.
+   *
+   * @param lds A pointer to lam_output_stream_t describing what the
+   * characteristics of the output stream should be.
+   *
+   * This function opens an output stream and returns an integer
+   * handle.  The caller is responsible for maintaining the handle and
+   * using it in successive calls to LAM_OUTPUT(), lam_output(),
+   * lam_output_switch(), and lam_output_close().
+   *
+   * It is safe to have multiple threads invoke this function
+   * simultaneously; their execution will be serialized in an
+   * unspecified manner.
+   */
   int lam_output_open(lam_output_stream_t *lds);
+
+  /**
+   * Re-opens / redirects an output stream.
+   *
+   * @param output_id Stream handle to reopen
+   * @param lds A pointer to lam_output_stream_t describing what the
+   * characteristics of the reopened output stream should be.
+   *
+   * This function redirects an existing stream into a new [set of]
+   * location[s], as specified by the lds parameter.  If the output_is
+   * passed is invalid, this call is effectively the same as opening a
+   * new stream with a specific stream handle.
+   */
   int lam_output_reopen(int output_id, lam_output_stream_t *lds);
+
+  /**
+   * Enables and disables output streams.
+   *
+   * @param output_id Stream handle to switch
+   * @param enable Boolean indicating whether to enable the stream
+   * output or not.
+   *
+   * @returns The previous enable state of the stream (true == enabled,
+   * false == disabled).
+   *
+   * The output of a stream can be temporarily disabled by passing an
+   * enable value to false, and later resumed by passing an enable
+   * value of true.  This does not close the stream -- it simply tells
+   * the lam_output subsystem to intercept and discard any output sent
+   * to the stream via LAM_OUTPUT() or lam_output() until the output
+   * is re-enabled.
+   */
   bool lam_output_switch(int output_id, bool enable);
+
+  /**
+   * \internal
+   *
+   * Reopens all existing output streams.
+   *
+   * This function should never be called by user applications; it is
+   * typically only invoked after a restart (i.e., in a new process)
+   * where output streams need to be re-initialized.
+   */
   void lam_output_reopen_all(void);
+
+  /**
+   * Close an output stream.
+   *
+   * @param output_id Handle of the stream to close.
+   *
+   * Close an output stream.  No output will be sent to the stream
+   * after it is closed.  Be aware that output handles tend to be
+   * re-used; it is possible that after a stream is closed, if another
+   * stream is opened, it will get the same handle value.
+   */
   void lam_output_close(int output_id);
 
+  /**
+   * Main function to send output to a stream.
+   *
+   * @param output_id Stream id returned from lam_output_open().
+   * @param format printf-style format string.
+   * @param varargs printf-style varargs list to fill the string
+   * specified by the format parameter.
+   *
+   * This is the main function to send output to custom streams (note
+   * that output to the default "verbose" stream is handled through
+   * lam_output_verbose() and lam_output_error()).
+   *
+   * It is never necessary to send a trailing "\n" in the strings to
+   * this function; some streams requires newlines, others do not --
+   * this function will append newlines as necessary.
+   *
+   * Verbosity levels are ignored in this function.
+   */
   void lam_output(int output_id, char *format, ...);
+
+  /**
+   * Send output to a stream only if the passed verbosity level is
+   * high enough.
+   *
+   * @param output_id Stream id returned from lam_output_open().
+   * @param level Target verbosity level.
+   * @param format printf-style format string.
+   * @param varargs printf-style varargs list to fill the string
+   * specified by the format parameter.
+   *
+   * Output is only sent to the stream if the current verbosity level
+   * is greater than or equal to the level parameter.  This mechanism
+   * can be used to send "information" kinds of output to user
+   * applications, but only when the user has asked for a high enough
+   * verbosity level.
+   *
+   * It is never necessary to send a trailing "\n" in the strings to
+   * this function; some streams requires newlines, others do not --
+   * this function will append newlines as necessary.
+   *
+   * This function is really a convenience wrapper around checking the
+   * current verbosity level set on the stream, and if the passed
+   * level is less than or equal to the stream's verbosity level, this
+   * function will effectively invoke lam_output to send the output to
+   * the stream.
+   *
+   * @see lam_output_set_verbosity()
+   */
   void lam_output_verbose(int output_id, int verbose_level, char *format, ...);
+
+  /**
+   * Set the verbosity level for a stream.
+   *
+   * @param output_id Stream id returned from lam_output_open().
+   * @param level New verbosity level
+   *
+   * This function sets the verbosity level on a given stream.  It
+   * will be used for all future invocations of lam_output_verbose().
+   */
   void lam_output_set_verbosity(int output_id, int level);
 
 #if LAM_ENABLE_DEBUG
