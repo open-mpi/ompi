@@ -35,7 +35,7 @@ int mca_oob_tcp_finalize(void);
 
 
 /**
- *  Similiar to unix send(2).
+ *  Similiar to unix writev(2).
  *
  * @param peer (IN)   Opaque name of peer process.
  * @param msg (IN)    Array of iovecs describing user buffers and lengths.
@@ -47,7 +47,7 @@ int mca_oob_tcp_finalize(void);
 int mca_oob_tcp_send(const ompi_process_name_t* peer, const struct iovec *msg, int count, int flags);
 
 /**
- * Similiar to unix recv(2)
+ * Similiar to unix readv(2)
  *
  * @param peer (IN)    Opaque name of peer process or OOB_NAME_ANY for wildcard receive.
  * @param msg (IN)     Array of iovecs describing user buffers and lengths.

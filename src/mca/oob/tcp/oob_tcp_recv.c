@@ -1,7 +1,7 @@
 #include "mca/oob/tcp/oob_tcp.h"
 
 /*
- * Similiar to unix recv(2)
+ * Similiar to unix readv(2)
  *
  * @param peer (IN)    Opaque name of peer process or OOB_NAME_ANY for wildcard receive.
  * @param msg (IN)     Array of iovecs describing user buffers and lengths.
