@@ -85,7 +85,7 @@ void mca_ptl_tcp_send_frag_init(
     /* fragment state */
     sendfrag->frag_owner = &ptl_peer->peer_ptl->super;
     sendfrag->super.frag_request = sendreq;
-    sendfrag->super.super.frag_addr = sendreq->super.req_addr + hdr->hdr_frag.hdr_frag_offset;
+    sendfrag->super.super.frag_addr = ((char*) sendreq->super.req_addr) + hdr->hdr_frag.hdr_frag_offset;
     sendfrag->super.super.frag_size = size;
 
     sendfrag->frag_peer = ptl_peer;

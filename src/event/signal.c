@@ -59,6 +59,8 @@ static short lam_evsigcaught[NSIG];
 static int lam_needrecalc;
 volatile sig_atomic_t lam_evsignal_caught = 0;
 
+void lam_evsignal_handler(int sig);
+
 void
 lam_evsignal_init(sigset_t *evsigmask)
 {

@@ -191,4 +191,4 @@ int lam_group_finalize(void){
 
     /* return */
     return return_value;
-};
+}

@@ -81,7 +81,7 @@ mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_create(lam_proc_t* lam_proc)
         return 0;
     }
     memcpy(ptl_proc->proc_guid, lam_proc->proc_job, size);
-    memcpy(ptl_proc->proc_guid+size, &vpid, sizeof(uint32_t));
+    memcpy(((char*) ptl_proc->proc_guid) + size, &vpid, sizeof(uint32_t));
 
     /* lookup tcp parameters exported by this proc */
     rc = mca_base_modex_recv(

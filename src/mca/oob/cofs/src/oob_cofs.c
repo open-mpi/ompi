@@ -123,7 +123,7 @@ find_match(lam_job_handle_t job_handle, int vpid, int* tag)
   while ((ent = readdir(dir)) != NULL) {
     if (ent->d_name[0] == '.') continue;
 
-    ret = sscanf(ent->d_name, "%[^_]_%d_%d_%d_%lld.msg", tmp_handle, &tmp_vpid, 
+    ret = sscanf(ent->d_name, "%[^_]_%d_%d_%d_%llu.msg", tmp_handle, &tmp_vpid, 
                  &tmp_myvpid, &tmp_tag, &tmp_serial);
     if (ret != 5) {
       continue;

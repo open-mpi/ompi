@@ -31,7 +31,7 @@
 enum lam_consts{
     LAM_PREDEFINED = 1,
     MPI_ERROR, 
-    MPI_INVALID_ATTR_KEYVAL,
+    MPI_INVALID_ATTR_KEYVAL
 };
 
 /* *******************************************************************  */
