@@ -5,7 +5,7 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-AM_CPPFLAGS = -I$(top_builddir)/src/lam/event
+AM_CPPFLAGS = -I$(top_builddir)/src/event
 
 noinst_LTLIBRARIES = libruntime.la
 
@@ -25,7 +25,7 @@ libruntime_la_SOURCES = \
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-lamdir = $(includedir)/lam/lam/runtime
+lamdir = $(includedir)/lam/runtime
 lam_HEADERS = $(headers)
 else
 lamdir = $(includedir)

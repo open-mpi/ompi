@@ -33,7 +33,7 @@ libutil_la_SOURCES = \
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-lamdir = $(includedir)/lam/lam/util
+lamdir = $(includedir)/lam/util
 lam_HEADERS = $(headers)
 else
 lamdir = $(includedir)

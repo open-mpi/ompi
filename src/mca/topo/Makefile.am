@@ -14,7 +14,7 @@ headers = topo.h
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-lamdir = $(includedir)/lam/mca/mpi/topo
+lamdir = $(includedir)/lam/mca/topo
 lam_HEADERS = $(headers)
 else
 lamdir = $(includedir)

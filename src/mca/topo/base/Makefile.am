@@ -4,16 +4,12 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-noinst_LTLIBRARIES = libmca_mpi_topo_base.la
-
-# For VPATH builds, have to specify where static-modules.h will be found
-
-AM_CPPFLAGS = -I$(top_builddir)/src
+noinst_LTLIBRARIES = libmca_topo_base.la
 
 headers = \
          base.h
 
-libmca_mpi_topo_base_la_SOURCES = \
+libmca_topo_base_la_SOURCES = \
         $(headers) \
         topo_base_cart_coords.c \
         topo_base_cart_create.c \
@@ -34,9 +30,9 @@ libmca_mpi_topo_base_la_SOURCES = \
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-	lamdir = $(includedir)/lam/mca/mpi/topo/base
-	lam_HEADERS = $(headers)
+lamdir = $(includedir)/lam/mca/topo/base
+lam_HEADERS = $(headers)
 else
-	lamdir = $(includedir)
+lamdir = $(includedir)
 endif
 

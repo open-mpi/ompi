@@ -10,7 +10,7 @@
 
 # Init autoconf
 
-AC_INIT(./src/mpi/interface/c/init.c)
+AC_INIT(./src/mpi/c/init.c)
 AC_PREREQ(2.58)
 AC_CONFIG_AUX_DIR(./config)
 
@@ -525,7 +525,7 @@ liblam_third_party_subdirs=
 lam_show_subtitle "Libevent 3rd party event handler"
 CFLAGS_save="$CFLAGS"
 CFLAGS="$LAM_CFLAGS_BEFORE_PICKY"
-LAM_CONFIG_SUBDIR(src/lam/event, [$lam_subdir_args], [HAPPY=1], [HAPPY=0])
+LAM_CONFIG_SUBDIR(src/event, [$lam_subdir_args], [HAPPY=1], [HAPPY=0])
 if test "$HAPPY" = "0"; then
     AC_MSG_WARN([*** libevent failed to configure properly])
     AC_MSG_ERROR([*** Cannot continue])
@@ -548,7 +548,7 @@ lam_show_subtitle "Libtool configuration"
 # 1.5) because it has support for a lot more things than older
 # versions of libtool (which are generally installed by default).
 
-AC_LIBLTDL_CONVENIENCE(src/mca/libltdl)
+AC_LIBLTDL_CONVENIENCE(src/libltdl)
 AC_SUBST(LTDLINCL)
 AC_SUBST(LIBLTDL)
 AC_LIBTOOL_DLOPEN
@@ -587,7 +587,7 @@ fi
 
 CFLAGS_save="$CFLAGS"
 CFLAGS="$LAM_CFLAGS_BEFORE_PICKY"
-LAM_CONFIG_SUBDIR(src/mca/libltdl, [$lam_subdir_args], [HAPPY=1], [HAPPY=0])
+LAM_CONFIG_SUBDIR(src/libltdl, [$lam_subdir_args], [HAPPY=1], [HAPPY=0])
 if test "$HAPPY" = "1"; then
     LIBLTDL_SUBDIR=libltdl
     LIBLTDL_LTLIB=libltdl/libltdlc.la
@@ -596,8 +596,8 @@ if test "$HAPPY" = "1"; then
     # Arrgh.  This is gross.  But I can't think of any other way to do
     # it.  :-(
 
-    flags="`egrep ^LIBADD_DL src/mca/libltdl/Makefile | cut -d= -f2-`"
-    LAM_CHECK_LINKER_FLAGS([src/mca/libltdl/libtool], [-export-dynamic $flags])
+    flags="`egrep ^LIBADD_DL src/libltdl/Makefile | cut -d= -f2-`"
+    LAM_CHECK_LINKER_FLAGS([src/libltdl/libtool], [-export-dynamic $flags])
     WRAPPER_EXTRA_LIBS="$WRAPPER_EXTRA_LIBS $extra_ldflags"
     LDFLAGS="-export-dynamic $LDFLAGS"
 else
@@ -708,78 +708,69 @@ AC_CONFIG_FILES([
     src/Makefile
     src/include/Makefile
 
-    src/lam/Makefile
-    src/lam/ctnetwork/Makefile
-    src/lam/lfc/Makefile
-    src/lam/mem/Makefile
+    src/ctnetwork/Makefile
+    src/lfc/Makefile
+    src/mem/Makefile
+    src/os/Makefile
+    src/os/cygwin/Makefile
+    src/os/darwin/Makefile
+    src/os/darwin/ppc_32/Makefile
+    src/os/darwin/ppc_64/Makefile
+    src/os/irix/Makefile
+    src/os/irix/sn0/Makefile
+    src/os/linux/Makefile
+    src/os/linux/alpha/Makefile
+    src/os/linux/i686/Makefile
+    src/os/linux/ia64/Makefile
+    src/os/linux/x86_64/Makefile
+    src/os/tru64/Makefile
+    src/runtime/Makefile
+    src/threads/Makefile
+    src/util/Makefile
 
-    src/lam/os/Makefile
-    src/lam/os/cygwin/Makefile
-    src/lam/os/darwin/Makefile
-    src/lam/os/darwin/ppc_32/Makefile
-    src/lam/os/darwin/ppc_64/Makefile
-    src/lam/os/irix/Makefile
-    src/lam/os/irix/sn0/Makefile
-    src/lam/os/linux/Makefile
-    src/lam/os/linux/alpha/Makefile
-    src/lam/os/linux/i686/Makefile
-    src/lam/os/linux/ia64/Makefile
-    src/lam/os/linux/x86_64/Makefile
-    src/lam/os/tru64/Makefile
-
-    src/lam/runtime/Makefile
-    src/lam/threads/Makefile
-    src/lam/util/Makefile
-
-    src/mpi/Makefile
-    src/mpi/attribute/Makefile
-    src/mpi/communicator/Makefile
-    src/mpi/datatype/Makefile
-    src/mpi/errhandler/Makefile
-    src/mpi/group/Makefile
-    src/mpi/info/Makefile
-    src/mpi/interface/Makefile
-    src/mpi/interface/c/Makefile
-    src/mpi/interface/c/profile/Makefile
-    src/mpi/interface/cxx/Makefile
-    src/mpi/interface/f77/Makefile
-    src/mpi/interface/f77/profile/Makefile
-    src/mpi/interface/f90/Makefile
-    src/mpi/op/Makefile
-    src/mpi/proc/Makefile
-    src/mpi/request/Makefile
-    src/mpi/runtime/Makefile
-    src/mpi/win/Makefile
+    src/attribute/Makefile
+    src/communicator/Makefile
+    src/datatype/Makefile
+    src/errhandler/Makefile
+    src/group/Makefile
+    src/info/Makefile
+    src/op/Makefile
+    src/proc/Makefile
+    src/request/Makefile
+    src/win/Makefile
 
     src/mca/Makefile
+    src/mca/base/Makefile
+    src/mca/common/Makefile
+    src/mca/common/base/Makefile
 
-    src/mca/lam/Makefile
-    src/mca/lam/base/Makefile
-    src/mca/lam/common_lam/Makefile
-    src/mca/lam/common_lam/base/Makefile
-    src/mca/lam/oob/Makefile
-    src/mca/lam/oob/base/Makefile
-    src/mca/lam/pcm/Makefile
-    src/mca/lam/pcm/base/Makefile
-    src/mca/lam/registry/Makefile
-    src/mca/lam/registry/base/Makefile
+    src/mca/oob/Makefile
+    src/mca/oob/base/Makefile
+    src/mca/pcm/Makefile
+    src/mca/pcm/base/Makefile
+    src/mca/registry/Makefile
+    src/mca/registry/base/Makefile
 
-    src/mca/mpi/Makefile
-    src/mca/mpi/base/Makefile
-    src/mca/mpi/coll/Makefile
-    src/mca/mpi/coll/base/Makefile
-    src/mca/mpi/common_mpi/Makefile
-    src/mca/mpi/common_mpi/base/Makefile
-    src/mca/mpi/io/Makefile
-    src/mca/mpi/io/base/Makefile
-    src/mca/mpi/one/Makefile
-    src/mca/mpi/one/base/Makefile
-    src/mca/mpi/pml/Makefile
-    src/mca/mpi/pml/base/Makefile
-    src/mca/mpi/ptl/Makefile
-    src/mca/mpi/ptl/base/Makefile
-    src/mca/mpi/topo/Makefile
-    src/mca/mpi/topo/base/Makefile
+    src/mca/coll/Makefile
+    src/mca/coll/base/Makefile
+    src/mca/io/Makefile
+    src/mca/io/base/Makefile
+    src/mca/one/Makefile
+    src/mca/one/base/Makefile
+    src/mca/pml/Makefile
+    src/mca/pml/base/Makefile
+    src/mca/ptl/Makefile
+    src/mca/ptl/base/Makefile
+    src/mca/topo/Makefile
+    src/mca/topo/base/Makefile
+
+    src/mpi/Makefile
+    src/mpi/c/Makefile
+    src/mpi/c/profile/Makefile
+    src/mpi/cxx/Makefile
+    src/mpi/f77/Makefile
+    src/mpi/f77/profile/Makefile
+    src/mpi/f90/Makefile
 
     src/tools/Makefile
     src/tools/laminfo/Makefile

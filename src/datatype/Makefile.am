@@ -5,14 +5,14 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-noinst_LTLIBRARIES = libmpi_datatype.la
+noinst_LTLIBRARIES = libdatatype.la
 
 # Source code files
 
 headers = \
         datatype.h
 
-libmpi_datatype_la_SOURCES = \
+libdatatype_la_SOURCES = \
         $(headers) \
 	datatype.c \
 	datatype_copy.c \
@@ -26,7 +26,7 @@ libmpi_datatype_la_SOURCES = \
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-lamdir = $(includedir)/lam/mpi/datatype
+lamdir = $(includedir)/lam/datatype
 lam_HEADERS = $(headers)
 else
 lamdir = $(includedir)

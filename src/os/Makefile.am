@@ -15,7 +15,7 @@ headers = \
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-lamdir = $(includedir)/lam/lam/os
+lamdir = $(includedir)/lam/os
 lam_HEADERS = $(headers)
 else
 lamdir = $(includedir)

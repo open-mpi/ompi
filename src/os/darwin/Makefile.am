@@ -12,7 +12,7 @@ headers = ulm_os.h
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-lamdir = $(includedir)/lam/lam/os/darwin
+lamdir = $(includedir)/lam/os/darwin
 lam_HEADERS = $(headers)
 else
 lamdir = $(includedir)

@@ -6,9 +6,8 @@ include $(top_srcdir)/config/Makefile.options
 
 SUBDIRS = \
         base \
-        common_lam \
-        common_mpi \
         coll \
+        common \
         io \
         one \
         oob \
@@ -39,8 +38,7 @@ libmca_la_LIBADD = $(LIBLTDL_LTLIB) \
         ptl/libmca_ptl.la \
         registry/libmca_registry.la \
         topo/libmca_topo.la
-
-libmca_la_DEPENDENCIES = $(libmca_lam_la_LIBADD)
+libmca_la_DEPENDENCIES = $(libmca_la_LIBADD)
 
 # Conditionally install the header files
 

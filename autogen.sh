@@ -336,20 +336,16 @@ EOF
     # configure, not any of the MCA modules.
 
     if test -f src/include/mpi.h; then
-	rm -rf libltdl src/mca/libltdl src/mca/ltdl.h
+	rm -rf libltdl src/libltdl src/ltdl.h
 	run_and_check $lam_libtoolize --automake --copy --ltdl
-	mv libltdl src/mca
+	mv libltdl src
 
 	echo "Adjusting libltdl for LAM :-("
 
-	echo "  -- adding sym link for src/mca/ltdl.h"
-        cd src/mca
-	ln -s libltdl/ltdl.h ltdl.h
-        cd ../..
-
 	echo "  -- patching for argz bugfix in libtool 1.5"
-	cd src/mca/libltdl
-	patch -N -p0 <<EOF
+	cd src/libltdl
+        if test "`grep 'while ((before >= *pargz) && (before[-1] != LT_EOS_CHAR))' ltdl.c`" != ""; then
+            patch -N -p0 <<EOF
 --- ltdl.c.old  2003-11-26 16:42:17.000000000 -0500
 +++ ltdl.c      2003-12-03 17:06:27.000000000 -0500
 @@ -682,7 +682,7 @@
@@ -362,7 +358,10 @@ EOF
 
    {
 EOF
-	cd ../../..
+        else
+            echo "     ==> your libtool doesn't need this! yay!"
+        fi
+	cd ../..
 	echo "  -- patching configure for broken -c/-o compiler test"
 	sed -e 's/chmod -w \./#LAM\/MPI FIX: chmod -w ./' \
 	    configure > configure.new
@@ -466,7 +465,7 @@ EOF
                 pd_module_name="`basename $pd_dir`"
                 pd_module_type="`dirname $pd_dir`"
                 pd_module_type="`basename $pd_module_type`"
-                pd_get_ver="../../../../../config/lam_get_version.sh"
+                pd_get_ver="../../../../config/lam_get_version.sh"
                 pd_ver_file="`grep PARAM_VERSION_FILE configure.params`"
                 if test -z "$pd_ver_file"; then
                     pd_ver_file="VERSION"
@@ -592,12 +591,12 @@ run_global() {
     touch "$mca_no_configure_modules_file" "$mca_no_config_list_file" \
         "$mca_no_config_amc_file"
 
-    # Now run the config in every directory in src/mca/[lam|mpi]/*/*
+    # Now run the config in every directory in src/mca/*/*
     # that has a configure.in or configure.ac script
 
     rg_cwd="`pwd`"
     echo $rg_cwd
-    for type in src/mca/lam/* src/mca/mpi/*; do
+    for type in src/mca/*; do
 	if test -d "$type"; then
 	    for module in "$type"/*; do
 		if test -d "$module"; then
@@ -707,7 +706,7 @@ elif test -f configure.in -o -f configure.ac -o -f configure.params ; then
     # Top level of a module directory
     want_local=yes
     if test -z "$lamdir"; then
-        lamdir="../../../../.."
+        lamdir="../../../.."
     fi
 else
     cat <<EOF

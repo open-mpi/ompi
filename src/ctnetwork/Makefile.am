@@ -33,7 +33,7 @@ bogus = \
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-lamdir = $(includedir)/lam/lam/ctnetwork
+lamdir = $(includedir)/lam/ctnetwork
 lam_HEADERS = $(headers)
 else
 lamdir = $(includedir)
