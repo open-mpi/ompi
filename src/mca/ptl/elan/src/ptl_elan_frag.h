@@ -4,8 +4,8 @@
 /**
  * @file
  */
-#ifndef MCA_PTL_ELAN_FRAG_H
-#define MCA_PTL_ELAN_FRAG_H
+#ifndef _MCA_PTL_ELAN_FRAG_H
+#define _MCA_PTL_ELAN_FRAG_H
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -18,7 +18,7 @@
 #include "ptl_elan.h"
 
 extern ompi_class_t mca_ptl_elan_send_frag_t_class;
-struct mca_ptl_base_peer_t;
+struct mca_ptl_elan_peer_t;
 
 /**
  * ELAN send fragment derived type.
@@ -48,7 +48,7 @@ mca_ptl_elan_send_frag_handler (mca_ptl_elan_send_frag_t *, int sd);
 
 int 
 mca_ptl_elan_send_frag_init (mca_ptl_elan_send_frag_t *,
-                             struct mca_ptl_base_peer_t *,
+                             struct mca_ptl_elan_peer_t *,
                              struct mca_ptl_base_send_request_t *,
                              size_t offset, size_t * size, int flags);
 
@@ -71,7 +71,7 @@ mca_ptl_elan_recv_frag_handler (mca_ptl_elan_recv_frag_t *, int sd);
 
 void 
 mca_ptl_elan_recv_frag_init (mca_ptl_elan_recv_frag_t * frag,
-                              struct mca_ptl_base_peer_t *peer);
+                              struct mca_ptl_elan_peer_t *peer);
 
 bool 
 mca_ptl_elan_recv_frag_send_ack (mca_ptl_elan_recv_frag_t * frag); 
@@ -124,7 +124,7 @@ mca_ptl_elan_send_frag_progress (mca_ptl_elan_send_frag_t * frag)
 static inline void
 mca_ptl_elan_send_frag_init_ack (mca_ptl_elan_send_frag_t * ack,
                                  struct mca_ptl_t *ptl,
-                                 struct mca_ptl_base_peer_t *ptl_peer,
+                                 struct mca_ptl_elan_peer_t *ptl_peer,
                                  mca_ptl_elan_recv_frag_t * frag)
 {
     return;
