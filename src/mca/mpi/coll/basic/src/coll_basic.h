@@ -26,10 +26,10 @@ extern const mca_coll_base_module_1_0_0_t mca_coll_basic_module;
 extern "C" {
 #endif
 
-  /* basic's query function is prototyped in <mca/mpi/coll/coll.h>
-     because other modules may invoke it. */
+  /* basic's comm_query function is prototyped in
+     <mca/mpi/coll/coll.h> because other modules may invoke it. */
 
-  int mca_coll_basic_thread_query(int *thread_min, int *thread_max);
+  int mca_coll_basic_init_query(int *thread_min, int *thread_max);
 
   int mca_coll_basic_init(MPI_Comm comm, const mca_coll_1_0_0_t **new_coll);
   int mca_coll_basic_finalize(MPI_Comm comm);

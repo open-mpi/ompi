@@ -60,6 +60,6 @@ const mca_coll_base_module_1_0_0_t mca_coll_basic_module = {
 
   /* Initialization / querying functions */
 
-  mca_coll_basic_thread_query,
-  mca_coll_basic_query
+  mca_coll_basic_init_query,
+  mca_coll_basic_comm_query
 };

@@ -171,7 +171,7 @@ static const mca_coll_1_0_0_t log = {
  * Initial query function that is invoked during MPI_INIT, allowing
  * this module to indicate what level of thread support it provides.
  */
-int mca_coll_basic_thread_query(int *thread_min, int *thread_max)
+int mca_coll_basic_init_query(int *thread_min, int *thread_max)
 {
   *thread_min = MPI_THREAD_SINGLE;
   *thread_max = MPI_THREAD_MULTIPLE;
@@ -185,7 +185,7 @@ int mca_coll_basic_thread_query(int *thread_min, int *thread_max)
  * Look at the communicator and decide which set of functions and
  * priority we want to return.
  */
-const mca_coll_1_0_0_t *mca_coll_basic_query(MPI_Comm comm, int *priority)
+const mca_coll_1_0_0_t *mca_coll_basic_comm_query(MPI_Comm comm, int *priority)
 {
   int size;
 
