@@ -24,7 +24,7 @@ int ompi_universe_connect(char *tmpdir)
 	return(OMPI_ERROR);
     }
 
-    oob_info_path = ompi_os_path(tmpdir, "oob", NULL);
+    oob_info_path = ompi_os_path(false, tmpdir, "oob", NULL);
     fp = fopen(oob_info_path, "r");
     if (NULL == fp) {
 	return(OMPI_ERROR);

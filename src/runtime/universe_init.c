@@ -27,7 +27,7 @@ char *ompi_universe_init(char *tmpdir, char *user, char *universe)
 
     ompi_process_info.job_session_dir = strdup(tmp);
     ompi_process_info.universe_session_dir = dirname(tmp);
-    oob_info_path = ompi_os_path(ompi_process_info.job_session_dir, "oob", NULL);
+    oob_info_path = ompi_os_path(false, ompi_process_info.job_session_dir, "oob", NULL);
     fp = fopen(oob_info_path, "w"); /* must be a new file - fail if one already exists */
     if (NULL == fp) {
 	return(NULL);
