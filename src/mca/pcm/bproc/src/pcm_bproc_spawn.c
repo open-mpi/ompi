@@ -26,10 +26,10 @@
 #include "pcm_bproc.h"
 #include "mca/pcm/pcm.h"
 #include "mca/pcm/base/base.h"
+#include "mca/pcm/base/base_kill_track.h"
+#include "mca/pcm/base/base_data_store.h"
 #include "class/ompi_list.h"
 #include "util/argv.h"
-#include "mca/pcm/base/base_job_track.h"
-#include "mca/pcm/base/base_kill_track.h"
 #include "runtime/ompi_rte_wait.h"
 #include "mca/ns/ns.h"
 #include "mca/ns/base/base.h"
@@ -107,14 +107,12 @@ mca_pcm_bproc_spawn_procs(struct mca_pcm_base_module_1_0_0_t* me_super,
 
     io[0].fd = 0;
     io[0].type = BPROC_IO_FILE;
-    io[0].flags = 0;
     io[0].d.file.offset = 0;
     strcpy(io[0].d.file.name, "/dev/null");
     io[0].d.file.flags = O_RDONLY;
 
     io[1].fd = 1;
     io[1].type = BPROC_IO_FILE;
-    io[1].flags = 0;
     io[1].d.file.offset = 0;
     strcpy(io[1].d.file.name, "/tmp/stdout");
     io[1].d.file.flags = O_WRONLY|O_CREAT|O_TRUNC;
@@ -122,7 +120,6 @@ mca_pcm_bproc_spawn_procs(struct mca_pcm_base_module_1_0_0_t* me_super,
 
     io[2].fd = 2;
     io[2].type = BPROC_IO_FILE;
-    io[2].flags = 0;
     io[2].d.file.offset = 0;
     strcpy(io[2].d.file.name, "/tmp/stderr");
     io[2].d.file.flags = O_WRONLY|O_CREAT|O_TRUNC;
@@ -139,10 +136,8 @@ mca_pcm_bproc_spawn_procs(struct mca_pcm_base_module_1_0_0_t* me_super,
 
         env = ompi_argv_copy(environ);
         envc = ompi_argv_count(env);
-        printf("pcm: bproc: environ size: %d\n", envc);
         ompi_argv_insert(&env, envc, sched->env);
         envc = ompi_argv_count(env);
-        printf("pcm: bproc: environ + sched->env size: %d\n", envc);
 
         /* BWB - this has to go ...  need to figure out env in bproc */
         asprintf(&tmp, "LD_LIBRARY_PATH=%s", getenv("LD_LIBRARY_PATH"));
@@ -156,17 +151,14 @@ mca_pcm_bproc_spawn_procs(struct mca_pcm_base_module_1_0_0_t* me_super,
         ompi_argv_append(&envc, &env, tmp);
         free(tmp);
 
-        printf("pcm: bproc: spawning procs: %s %s\n", sched->argv[0], base_proc_name_string);
         ret = internal_spawn_procs(me, jobid, base_vpid,
                                    sched->argv[0], sched->argv,
                                    &env, &envc,
                                    sched->nodelist, io, iolen, &offset);
-        printf("pcm: bproc: internal_spawn_procs returned %d\n", ret);
 
         ompi_argv_free(env);
 
         if (ret != OMPI_SUCCESS) {
-            mca_pcm_bproc_kill_job(me_super, jobid, 0);
             return ret;
         }
     }
@@ -196,9 +188,8 @@ internal_set_nodelist(ompi_list_t *host_list,
     ompi_list_item_t *host_item;
     mca_llm_base_hostfile_node_t *host;
     int growlen = 0;
-    int i, j, k, resolved_node;
+    int i, j, resolved_node;
     struct hostent *hent;
-    struct bproc_node_set_t nodeset;
     struct sockaddr_in master_in;
     int master_in_len;
 
@@ -213,9 +204,6 @@ internal_set_nodelist(ompi_list_t *host_list,
 
     *nodelist = realloc(*nodelist, (*nodelist_len + growlen) * sizeof(int));
     if (*nodelist == NULL) return -1;
-
-    /* get the list of host entries in the cluster */
-    if (bproc_nodelist(&nodeset) == -1) return -1;
 
     /* get the master entry */
     master_in_len = sizeof(master_in);
@@ -269,26 +257,6 @@ internal_set_nodelist(ompi_list_t *host_list,
             }
         }
 
-        if (BPROC_NODE_NONE == resolved_node && NULL != hent) {
-            /* we aren't the master.  Look in bproc list for host entry */
-            for (j = 0 ; hent->h_addr_list[j] != NULL ; ++j) {
-                for (k = 0 ; k < nodeset.size ; ++k) {
-                    struct sockaddr_in *sin =
-                       (struct sockaddr_in*) &nodeset.node[k].addr;
-                    if (0 == memcmp(hent->h_addr_list[j],
-                                    &sin->sin_addr,
-                                    hent->h_length)) {
-                        resolved_node = nodeset.node[k].node;
-                        /* yeah, i don't like gotos either, but it is
-                           the easiest way to jump out of both for
-                           loops */
-                        goto have_node_list_entry;
-                    }
-                }
-            }
-        }
-have_node_list_entry:
-
         /* last ditch, see if we have a localhost entry */
         if (strncmp("localhost", host->hostname, strlen("localhost")) == 0 ||
             strcmp("127.0.0.1", host->hostname) == 0) {
@@ -302,8 +270,6 @@ have_node_list_entry:
   
         for (j = 0 ; j < host->count ; ++j) {
             (*nodelist)[i] = resolved_node;
-            printf("pcm: bproc: %s has node number %d (%d) \n", 
-                   host->hostname, (*nodelist)[i], i);
             i++;
         }
     }
@@ -334,7 +300,6 @@ internal_spawn_procs(mca_pcm_bproc_module_t *me,
     int *pids;
     int i, ret;
 
-    printf("pcm: bproc: converting hosts -> bproc ids\n");
     /* convert into bproc node list */
     for (node_item = ompi_list_get_first(node_alloc) ;
          node_item != ompi_list_get_end(node_alloc) ;
@@ -349,42 +314,25 @@ internal_spawn_procs(mca_pcm_bproc_module_t *me,
         }
     }
 
-    printf("pcm: bproc: allocating space for returned pids (%d)\n", nodelist_len);
     /* allocate space for the returned pids */
     pids = (int*) malloc(nodelist_len * sizeof(int));
     if (NULL == pids) return OMPI_ERR_OUT_OF_RESOURCE;
-
-    printf("pcm: bproc: starting %d procs (%s) with offset %d\n", 
-           nodelist_len,cmd, *offset);
     ret = internal_bproc_vexecmove_io(nodelist_len, nodelist, pids,
                                       io, iolen, cmd, argv,
                                       env, envc, *offset);
-    printf("pcm: bproc: vexecmove returned %d\n", ret);
 
     /* register the returned pids */
     for (i = 0 ; i < nodelist_len ; ++i) {
-        printf("pcm: bproc: registering proc %d, pid %d\n", i, pids[i]);
-
+        ompi_process_name_t *name;
         if (pids[i] < 0) {
-            printf("pcm: bproc: invalid pid\n");
-            mca_pcm_bproc_kill_job((mca_pcm_base_module_t*) me, jobid, 0);
             errno = pids[i];
             return OMPI_ERR_IN_ERRNO;
         }
 
-        ret = mca_pcm_base_job_list_add_job_info(me->jobs,
-                                                 jobid,
-                                                 pids[i],
-                                                 base_vpid + *offset + i,
-                                                 base_vpid + *offset + i);
-        if (OMPI_SUCCESS != ret) {
-            mca_pcm_bproc_kill_job((mca_pcm_base_module_t*) me, jobid, 0);
-            return ret;
-        }
-
+        name = ompi_name_server.create_process_name(0, jobid, base_vpid+i);
+        mca_pcm_base_data_store_add_pid(me->data_store, name, pids[i]);
         ret = ompi_rte_wait_cb(pids[i], mca_pcm_bproc_monitor_cb, me);
         if (OMPI_SUCCESS != ret) {
-            mca_pcm_bproc_kill_job((mca_pcm_base_module_t*) me, jobid, 0);
             return ret;
         }
     }
