@@ -19,8 +19,7 @@ sources 		= \
 			lfc/liblfc.la \
 			mem/libmem.la \
 			threads/libthreads.la \
-			util/libutil.la \
-			runtime/libruntime.la
+			util/libutil.la 
 
 # List the names of the output libraries here
 
