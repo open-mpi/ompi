@@ -59,7 +59,7 @@ main(int argc, char *argv[])
      */
     cmd_line = OBJ_NEW(ompi_cmd_line_t);
 
-    if (OMPI_SUCCESS != ompi_init(argc, argv)) {
+    if (OMPI_SUCCESS != (ret = ompi_init(argc, argv))) {
         /* BWB show_help */
         printf("show_help: ompi_init failed\n");
         return ret;

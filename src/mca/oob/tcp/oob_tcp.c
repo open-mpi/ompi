@@ -145,6 +145,14 @@ static inline char* mca_oob_tcp_param_register_str(
  */
 int mca_oob_tcp_component_open(void)
 {
+#ifdef WIN32
+    WSADATA win_sock_data;
+    if (WSAStartup(MAKEWORD(2,2), &win_sock_data) != 0) {
+        ompi_output (0, "mca_oob_tcp_component_init: failed to initialise windows sockets: error %d\n", WSAGetLastError());
+        return OMPI_ERROR;
+    }
+#endif
+    
     OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_subscriptions, ompi_list_t);
     OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_peer_list,     ompi_list_t);
     OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_peer_tree,     ompi_rb_tree_t);
@@ -179,6 +187,10 @@ int mca_oob_tcp_component_open(void)
 
 int mca_oob_tcp_component_close(void)
 {
+#ifdef WIN32
+    WSACleanup();
+#endif
+    
     /* cleanup resources */
     OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_peer_list);
     OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_peer_tree);
@@ -390,6 +402,7 @@ mca_oob_t* mca_oob_tcp_component_init(int* priority, bool *allow_multi_user_thre
     *priority = 1;
     *allow_multi_user_threads = true;
     *have_hidden_threads = OMPI_HAVE_THREADS;
+
 
     /* are there any interfaces? */
     if(ompi_ifcount() == 0)

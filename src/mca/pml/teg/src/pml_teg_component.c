@@ -61,6 +61,13 @@ static inline int mca_pml_teg_param_register_int(
 
 int mca_pml_teg_component_open(void)
 {
+#ifdef WIN32
+     WSADATA win_sock_data;
+     if (WSAStartup(MAKEWORD(2,2), &win_sock_data) != 0) {
+         ompi_output (0, "mca_oob_tcp_component_init: failed to initialise windows sockets: %d\n", WSAGetLastError());
+         return OMPI_ERROR;
+      }
+#endif
     OBJ_CONSTRUCT(&mca_pml_teg.teg_lock, ompi_mutex_t);
     OBJ_CONSTRUCT(&mca_pml_teg.teg_send_requests, ompi_free_list_t);
     OBJ_CONSTRUCT(&mca_pml_teg.teg_recv_requests, ompi_free_list_t);
@@ -88,6 +95,9 @@ int mca_pml_teg_component_open(void)
 
 int mca_pml_teg_component_close(void)
 {
+#ifdef WIN32
+    WSACleanup();
+#endif
 #if MCA_PML_TEG_STATISTICS && OMPI_ENABLE_DEBUG
     ompi_output(0, "mca_pml_teg.teg_sends = %d\n", 
         mca_pml_teg.teg_sends);

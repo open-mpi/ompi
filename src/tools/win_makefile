@@ -32,14 +32,14 @@ INCL = \
 CFLAGS = \
         /DWIN32 \
         /DOMPI_SYSCONFDIR="\"${prefix}/share\"" \
-        /nologo \
-        /c 
+        /nologo 
 
 CPPFLAGS = \
         /DWIN32 \
         /DOMPI_SYSCONFDIR="\"${prefix}/share\"" \
         /c \
         /TP \
+        /Zi  \
         /nologo \
         /EHsc
 
@@ -72,7 +72,7 @@ ADD_INCL = \
 
 # link with ompi.lib to resolve external symbols
 OMPILIB = \
-        "${topdir}/vcproj/ompi/Debug/ompi.lib"
+        "${topdir}/src/libmpi.lib"
 
 LINK = link
 
@@ -81,23 +81,19 @@ LINKFLAGS = \
         /DEFAULTLIB:${OMPILIB}
 
 all: \
-    clibs \
-    cpplibs
+    cexes
 
-clibs: ${C_SUBDIRS}
+cexes: ${C_SUBDIRS}
 	@for dirs in ${C_SUBDIRS}; do \
-	    (echo "Entering $$dirs"; cd $$dirs; ${CC} ${CFLAGS} ${INCL} *.c; ${LINK} ${LINKFLAGS} *.obj); \
+	    (echo "Entering $$dirs"; cd $$dirs; ${CC} ${CFLAGS} ${INCL} *.c ${OMPILIB};); \
 	done
 
 cpplibs: ${CPP_SUBDIRS}
 	@for dirs in ${CPP_SUBDIRS}; do \
-	    (echo "Entering $$dirs"; cd $$dirs; ${CC} ${CPPFLAGS} ${INCL} ${ADD_INCL} *.cc; ${LINK} ${LINKFLAGS} *.obj); \
+	    (echo "Entering $$dirs"; cd $$dirs; ${CC} ${CPPFLAGS} ${INCL} ${ADD_INCL} *.cc ${OMPILIB};); \
 	done
 
 install:
-	@for dirs in ${CPP_SUBDIRS}; do \
-	    (${CC} ${CPPFLAGS} ${INCL} ${ADD_INCL} *.cc; ${LINK} ${LINKFLAGS} *.obj); \
-	done
 
 .PHONY: clean
 

@@ -18,8 +18,9 @@
 			CharacterSet="2">
 			<Tool
 				Name="VCCLCompilerTool"
+				AdditionalOptions="/I&quot;../../src/win32/generated_include&quot; /I&quot;../../include&quot; /DOMPI_WINDOWS"
 				Optimization="0"
-				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE"
+				PreprocessorDefinitions="_DEBUG;_CONSOLE"
 				MinimalRebuild="TRUE"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="5"
@@ -117,9 +118,6 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
 			<File
 				RelativePath="..\..\src\tools\openmpi\openmpi.c">
-			</File>
-			<File
-				RelativePath="..\..\src\tools\openmpi\openmpi.h">
 			</File>
 		</Filter>
 	</Files>

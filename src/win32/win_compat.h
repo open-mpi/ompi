@@ -31,7 +31,6 @@
 #include <ws2tcpip.h>
 #include <process.h>
 #include <io.h>
-#include "win32/ompi_declspec.h"
 #include "win32/ompi_uio.h"
 #include "win32/ompi_time.h"
 #include "win32/ompi_utsname.h"

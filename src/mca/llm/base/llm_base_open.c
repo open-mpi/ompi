@@ -18,11 +18,7 @@
  * module's public mca_base_module_t struct.
  */
 
-#ifdef WIN32
-    const mca_base_component_t *mca_llm_base_static_components[] = {NULL};
-#else 
 #include "mca/llm/base/static-components.h"
-#endif
 
 /*
  * Global variables

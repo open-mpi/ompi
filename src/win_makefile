@@ -49,7 +49,38 @@ C_SUBDIRS =  \
         mca/topo/base \
         win32/generated_source \
         win \
-        win32
+        win32 \
+        mca/allocator/bucket \
+        mca/coll/basic \
+        mca/llm/hostfile/src \
+        mca/ns/proxy/src \
+        mca/gpr/proxy/ \
+        mca/pcmclient/env \
+        mca/pcmclient/seed \
+        mca/pcmclient/singleton \
+        mca/topo/unity/src \
+        mca/ptl/tcp/src \
+        mca/oob/tcp/ \
+        mca/pml/teg/src \
+        mca/ns/replica/src \
+        mca/gpr/replica/
+
+EXTRA_DIRS = \
+
+
+STATIC_LIBS = \
+        allocator \
+        coll\
+        llm\
+        ns\
+        gpr \
+        pcmclient\
+        topo\
+        ptl\
+        oob\
+        pml\
+        ns\
+        gpr
 
 #
 # A small function to extract the list of all files in these directories
@@ -69,22 +100,23 @@ INCL = \
 
 CFLAGS = \
         /DWIN32 \
+        /DOMPI_BUILDING=1 \
         /DOMPI_SYSCONFDIR="\"${sysconfdir}\"" \
         /DOMPI_PKGLIBDIR="\"${pkglibdir}\"" \
         /DOMPI_PKGDATADIR="\"${pkgdatadir}\"" \
         /DHAVE_CONFIG_H \
-        /DOMPI_BUILDING_LIBRARY \
         /D_WINDLL \
         /EHsc \
         /MLd \
         /W0 \
         /Wp64 \
         /ZI \
+        /Zi \
         /TC \
         /D_MBCS \
         /Gm \
         /Od \
-        /LD \
+        /LDd \
         /Fo"${topdir}/src/Debug/" \
         /nologo \
         /c
@@ -124,6 +156,12 @@ prebuild:
 	@echo "Creating show_help_lex.c"
 	@/usr/bin/flex -t -Pompi_show_help_yy "${topdir}/src/util/show_help_lex.l" \
                 > "${topdir}/src/util/show_help_lex.c" 2>/dev/null
+	@echo -n "Copying static-components.h to the right directories ......"
+	@for dirs in ${STATIC_LIBS}; do \
+        (dir=mca/$${dirs}/base; comp_name=$${dirs}_static-components.h; cp ${topdir}/src/win32/generated_include/$${comp_name} $${dir}/static-components.h;); \
+     done
+	@echo "done"
+
 
 clibs: prebuild ${FILES}
 	@for dirs in ${C_SUBDIRS}; do \
@@ -134,7 +172,7 @@ libmpi:
 	${LINK} ${LINKFLAGS} ${ADDLIBS} Debug/*.obj
 
 install:
-	@echo "Installing libmpi and include file ................"
+	@echo -n "Installing libmpi and include file ................"
 	@install -c ${topdir}/src/libmpi.lib ${install-dir}/lib/libmpi.lib
 	@install -c ${topdir}/src/libmpi.exp ${install-dir}/lib/libmpi.exp
 	@install -c ${topdir}/src/libmpi.dll ${install-dir}/lib/libmpi.dll
@@ -144,7 +182,8 @@ install:
                                     ${install-dir}/include/ompi_config.h 
 	@install -c ${topdir}/include/mpi.h ${install-dir}/include/mpi.h
 	@install -c ${topdir}/include/ompi_stdint.h ${install-dir}/include/ompi_stdint.h
-	@install -c ${topdir}/src/win32/win_compat.h/ ${install-dir}/include/win32/win_compat.h
+	@install -c ${topdir}/src/win32/win_compat.h ${install-dir}/include/win32/win_compat.h
+	@echo "done"
 
 .PHONY: clean
 

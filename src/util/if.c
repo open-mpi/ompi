@@ -196,7 +196,6 @@ static int ompi_ifinit(void)
 
     #define MAX_INTERFACES 10 /* Anju: for now assume there are no more than this */
     int ret;
-    WSADATA win_sock_data;
     SOCKET sd; 
     INTERFACE_INFO if_list[MAX_INTERFACES];
     int num_interfaces;
@@ -212,12 +211,6 @@ static int ompi_ifinit(void)
         return OMPI_SUCCESS;
     }
   
-    /* else initialise the use of Winsock2.DLL */
-    if (WSAStartup (MAKEWORD (2, 2), &win_sock_data) != 0) {
-        ompi_output(0, "ompi_ifinit: WSAStartup failed with errno=%d\n",WSAGetLastError());
-        return OMPI_ERROR;
-    }
-
     /* create a socket */
     sd = WSASocket (AF_INET, SOCK_DGRAM, IPPROTO_UDP, NULL, 0, 0);
     if (sd == SOCKET_ERROR) {
@@ -288,9 +281,6 @@ static int ompi_ifinit(void)
         }
     }
     
-    /* this takes care of the cleanup for us :-D */
-    WSACleanup ();
-
 #endif
     return OMPI_SUCCESS;
 }
