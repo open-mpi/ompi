@@ -22,7 +22,6 @@ static const char FUNC_NAME[] = "MPI_Wait";
 int MPI_Wait(MPI_Request *request, MPI_Status *status) 
 {
     int rc;
-    int index;
     if ( MPI_PARAM_CHECK ) {
         rc = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -42,7 +41,7 @@ int MPI_Wait(MPI_Request *request, MPI_Status *status)
         return MPI_SUCCESS;
     }
 
-    rc = ompi_request_wait(1, request, &index, status);
+    rc = ompi_request_wait(request, status);
     OMPI_ERRHANDLER_RETURN(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
 }
 

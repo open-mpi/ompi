@@ -7,7 +7,7 @@
 #include "request/request.h"
 
 
-int ompi_request_wait(
+int ompi_request_wait_any(
     size_t count,
     ompi_request_t ** requests,
     int *index, 
@@ -16,7 +16,7 @@ int ompi_request_wait(
 #if OMPI_HAVE_THREADS
     int c;
 #endif
-    int i, rc;
+    int i, rc, null_requests;
     int completed = -1;
     ompi_request_t **rptr;
     ompi_request_t *request;
@@ -26,48 +26,67 @@ int ompi_request_wait(
     ompi_atomic_mb();
     for (c = 0; completed < 0 && c < ompi_request_poll_iterations; c++) {
         rptr = requests;
+        null_requests = 0;
         for (i = 0; i < count; i++) {
             request = *rptr;
-            if (request->req_complete == true) {
+            if (MPI_REQUEST_NULL == request) {
+                if(++null_requests == count)
+                    goto finished;
+                continue;
+            }
+            if (true == request->req_complete) {
                 completed = i;
-                break;
+                goto finished;
             } 
             rptr++;
         }
     }
 #endif
 
-    if (completed < 0) {
-        /* give up and sleep until completion */
-        OMPI_THREAD_LOCK(&ompi_request_lock);
-        do {
-            ompi_request_waiting++;
-            rptr = requests;
-            for (i = 0; i < count; i++) {
-                request = *rptr;
-                if (request->req_complete == true) {
-                    completed = i;
-                    break;
-                }
-                rptr++;
+    /* give up and sleep until completion */
+    OMPI_THREAD_LOCK(&ompi_request_lock);
+    do {
+        ompi_request_waiting++;
+        rptr = requests;
+        null_requests = 0;
+        for (i = 0; i < count; i++) {
+            request = *rptr;
+            if (MPI_REQUEST_NULL == request) {
+                null_requests++;
+                continue;
             }
-            if (completed < 0) {
-                ompi_condition_wait(&ompi_request_cond, &ompi_request_lock);
+            if (request->req_complete == true) {
+                completed = i;
+                break;
             }
-        } while (completed < 0);
-        ompi_request_waiting--;
-        OMPI_THREAD_UNLOCK(&ompi_request_lock);
-    }
+            rptr++;
+        }
+        if(null_requests == count)
+            break;
+        if (completed < 0) {
+            ompi_condition_wait(&ompi_request_cond, &ompi_request_lock);
+        }
+    } while (completed < 0);
+    ompi_request_waiting--;
+    OMPI_THREAD_UNLOCK(&ompi_request_lock);
 
-    /* return status */
-    if (NULL != status) {
-        *status = request->req_status;
-    }
+finished:
+
+    if(null_requests == count) {
+        *index = MPI_UNDEFINED;
+        *status = ompi_request_null.req_status;
+    } else {
+
+        /* return status */
+        if (MPI_STATUS_IGNORE != status) {
+            *status = request->req_status;
+        }
     
-    /* return request to pool */ 
-    rc = request->req_free(request);
-    *rptr = NULL;
-    *index = completed;
+        /* return request to pool */ 
+        rc = request->req_free(request);
+        *rptr = NULL;
+        *index = completed;
+    }
     return rc;
 }
 
@@ -84,7 +103,7 @@ int ompi_request_wait_all(
     rptr = requests;
     for (i = 0; i < count; i++) {
         request = *rptr;
-        if (request == NULL || request->req_complete == true) {
+        if (request->req_complete == true) {
             completed++;
         }
         rptr++;
@@ -119,36 +138,32 @@ int ompi_request_wait_all(
         OMPI_THREAD_UNLOCK(&ompi_request_lock);
     }
 
-    if (NULL != statuses) {
+    if (MPI_STATUS_IGNORE != statuses) {
         /* fill out status and free request if required */
         rptr = requests;
         for (i = 0; i < count; i++) {
+            int rc;
             request = *rptr;
-            if (NULL == request) {
-                statuses[i] = ompi_request_null.req_status;
-            } else {
-                int rc;
-                statuses[i] = request->req_status;
-                rc = request->req_free(request);
-                if(rc != OMPI_SUCCESS)
-                    return rc;
-                *rptr = NULL;
-            } 
+            statuses[i] = request->req_status;
+            rc = request->req_free(request);
+            if(rc != OMPI_SUCCESS)
+                return rc;
+            *rptr = NULL;
             rptr++;
         }
     } else {
         /* free request if required */
         rptr = requests;
         for (i = 0; i < count; i++) {
+            int rc;
             request = *rptr;
-            if (NULL != request) {
-                int rc = request->req_free(request);
-                if(rc != OMPI_SUCCESS)
-                    return rc;
-                *rptr = NULL;
-            }
+            rc = request->req_free(request);
+            if(rc != OMPI_SUCCESS)
+                return rc;
+            *rptr = NULL;
             rptr++;
         }
     }
     return OMPI_SUCCESS;
 }
+

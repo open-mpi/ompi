@@ -234,6 +234,73 @@ int ompi_request_test_all(
 
 
 /**
+ * Wait (blocking-mode) for one requests to complete.
+ *
+ * @param request (IN)    Pointer to request.
+ * @param status (OUT)    Status of completed request.
+ * @return                OMPI_SUCCESS or failure status.
+ *
+ */
+
+static inline int ompi_request_wait(
+    ompi_request_t ** req_ptr,
+    ompi_status_public_t * status)
+{
+    int rc;
+    ompi_request_t *req = *req_ptr;
+
+#if OMPI_HAVE_THREADS
+
+    if(req->req_complete == false) {
+        int i;
+
+        /* poll for completion */
+        ompi_atomic_mb();
+        for (i = 0; i < ompi_request_poll_iterations; i++) {
+            if (req->req_complete == true) {
+                break;
+            }
+        }
+                                                                                                                    
+        /* give up and sleep until completion */
+        if(req->req_complete == false) {
+            OMPI_THREAD_LOCK(&ompi_request_lock);
+            ompi_request_waiting++;
+            while (req->req_complete == false) {
+                ompi_condition_wait(&ompi_request_cond, &ompi_request_lock);
+            }
+            ompi_request_waiting--;
+            OMPI_THREAD_UNLOCK(&ompi_request_lock);
+        }
+    }
+
+#else
+
+    if(req->req_complete == false) {
+        /* give up and sleep until completion */
+        OMPI_THREAD_LOCK(&ompi_request_lock);
+        ompi_request_waiting++;
+        while (req->req_complete == false) {
+            ompi_condition_wait(&ompi_request_cond, &ompi_request_lock);
+        }
+        ompi_request_waiting--;
+        OMPI_THREAD_UNLOCK(&ompi_request_lock);
+    }
+
+#endif
+    /* return status */
+    if (MPI_STATUS_IGNORE != status) {
+        *status = req->req_status;
+    }
+
+    /* return request to pool */
+    rc = req->req_free(req);
+    *req_ptr = NULL;
+    return rc;
+}
+
+
+/**
  * Wait (blocking-mode) for one of N requests to complete.
  *
  * @param count (IN)      Number of requests
@@ -244,7 +311,7 @@ int ompi_request_test_all(
  *
  */
 
-int ompi_request_wait(
+int ompi_request_wait_any(
     size_t count,
     ompi_request_t ** requests,
     int *index,
@@ -264,7 +331,6 @@ int ompi_request_wait_all(
     size_t count,
     ompi_request_t ** requests,
     ompi_status_public_t * statuses);
-
 
 
 #if defined(c_plusplus) || defined(__cplusplus)
