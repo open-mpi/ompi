@@ -42,7 +42,7 @@ LAM_CFLAGS_BEFORE_PICKY="$CFLAGS"
 if test "$GCC" = "yes" -a "$WANT_PICKY_COMPILER" = 1; then
     add="-Wall -Wundef -Wno-long-long"
     add="$add -Wmissing-prototypes -Wstrict-prototypes"
-    add="$add -Wcomment -pedantic -ansi"
+    add="$add -Wcomment -pedantic"
 
     # see if -Wno-long-double works...
     CFLAGS_orig="$CFLAGS"
