@@ -95,7 +95,7 @@ int mca_ptl_base_match(mca_ptl_base_match_header_t *frag_header,
     frag_msg_seq = frag_header->hdr_msg_seq;
 
     /* get fragment communicator source rank */
-    frag_src = frag_header->hdr_src_rank;
+    frag_src = frag_header->hdr_src;
 
     /* get next expected message sequence number - if threaded
      * run, lock to make sure that if another thread is processing 
@@ -218,7 +218,7 @@ static mca_ptl_base_recv_request_t *mca_ptl_base_check_receives_for_match
      *   look only at "specific" receives, or "wild" receives,
      *   or if we need to traverse both sets at the same time.
      */
-    frag_src = frag_header->hdr_src_rank;
+    frag_src = frag_header->hdr_src;
 
     if (lam_list_get_size((pml_comm->c_specific_receives)+frag_src) == 0 ){
         /*
@@ -268,11 +268,11 @@ static mca_ptl_base_recv_request_t *mca_ptl_base_check_wild_receives_for_match(
 {
     /* local parameters */
     mca_ptl_base_recv_request_t *return_match, *wild_recv;
-    int frag_user_tag,recv_user_tag;
+    int frag_tag,recv_tag;
 
     /* initialization */
     return_match=(mca_ptl_base_recv_request_t *)NULL;
-    frag_user_tag=frag_header->hdr_user_tag;
+    frag_tag=frag_header->hdr_tag;
 
     /*
      * Loop over the wild irecvs - no need to lock, the upper level
@@ -286,14 +286,14 @@ static mca_ptl_base_recv_request_t *mca_ptl_base_check_wild_receives_for_match(
             wild_recv = (mca_ptl_base_recv_request_t *) 
             ((lam_list_item_t *)wild_recv)->lam_list_next) {
 
-        recv_user_tag = wild_recv->super.req_tag;
+        recv_tag = wild_recv->super.req_tag;
         if ( 
                 /* exact tag match */
-                (frag_user_tag == recv_user_tag) ||
+                (frag_tag == recv_tag) ||
                 /* wild tag match - negative tags (except for
                  * LAM_ANY_TAG) are reserved for internal use, and will
                  * not be matched with LAM_ANY_TAG */
-                ( (recv_user_tag == LAM_ANY_TAG) && (0 <= frag_user_tag) )  )
+                ( (recv_tag == LAM_ANY_TAG) && (0 <= frag_tag) )  )
 
         {
             /*
@@ -335,13 +335,13 @@ static mca_ptl_base_recv_request_t *mca_ptl_base_check_specific_receives_for_mat
 {
     /* local variables */
     mca_ptl_base_recv_request_t *specific_recv, *return_match;
-    int frag_src,recv_user_tag,frag_user_tag;
+    int frag_src,recv_tag,frag_tag;
 
 
     /* initialization */
     return_match=(mca_ptl_base_recv_request_t *)NULL;
-    frag_src = frag_header->hdr_src_rank;
-    frag_user_tag=frag_header->hdr_user_tag;
+    frag_src = frag_header->hdr_src;
+    frag_tag=frag_header->hdr_tag;
 
     /*
      * Loop over the specific irecvs.
@@ -355,9 +355,9 @@ static mca_ptl_base_recv_request_t *mca_ptl_base_check_specific_receives_for_mat
         /*
          * Check for a match
          */
-        recv_user_tag = specific_recv->super.req_tag;
-        if ( (frag_user_tag == recv_user_tag) ||
-             ( (recv_user_tag == LAM_ANY_TAG) && (0 <= frag_user_tag) ) ) {
+        recv_tag = specific_recv->super.req_tag;
+        if ( (frag_tag == recv_tag) ||
+             ( (recv_tag == LAM_ANY_TAG) && (0 <= frag_tag) ) ) {
 
             /*
              * Match made
@@ -398,12 +398,12 @@ static mca_ptl_base_recv_request_t *mca_ptl_base_check_specific_and_wild_receive
     /* local variables */
     mca_ptl_base_recv_request_t *specific_recv, *wild_recv, *return_match;
     mca_ptl_base_sequence_t wild_recv_seq, specific_recv_seq;
-    int frag_src,frag_user_tag, wild_recv_tag, specific_recv_tag;
+    int frag_src,frag_tag, wild_recv_tag, specific_recv_tag;
 
     /* initialization */
     return_match=(mca_ptl_base_recv_request_t *)NULL;
-    frag_src = frag_header->hdr_src_rank;
-    frag_user_tag=frag_header->hdr_user_tag;
+    frag_src = frag_header->hdr_src;
+    frag_tag=frag_header->hdr_tag;
 
     /*
      * We know that when this is called, both specific and wild irecvs
@@ -426,8 +426,8 @@ static mca_ptl_base_recv_request_t *mca_ptl_base_check_specific_and_wild_receive
              * try and match
              */
             wild_recv_tag = wild_recv->super.req_tag;
-            if ( (frag_user_tag == wild_recv_tag) ||
-                 ( (wild_recv_tag == LAM_ANY_TAG) && (0 <= frag_user_tag) ) ) {
+            if ( (frag_tag == wild_recv_tag) ||
+                 ( (wild_recv_tag == LAM_ANY_TAG) && (0 <= frag_tag) ) ) {
                     
                 /*
                  * Match made
@@ -471,8 +471,8 @@ static mca_ptl_base_recv_request_t *mca_ptl_base_check_specific_and_wild_receive
              * specific recv is earlier than the wild one.
              */
             specific_recv_tag=specific_recv->super.req_tag;
-            if ( (frag_user_tag == specific_recv_tag) ||
-                 ( (specific_recv_tag == LAM_ANY_TAG) && (0<=frag_user_tag)) ) 
+            if ( (frag_tag == specific_recv_tag) ||
+                 ( (specific_recv_tag == LAM_ANY_TAG) && (0<=frag_tag)) ) 
             {
 
                 /*
@@ -541,12 +541,6 @@ static void mca_ptl_base_check_cantmatch_for_match(lam_list_t *additional_matche
     mca_ptl_base_recv_request_t *matched_receive;
 
     /*
-     * Initialize list size - assume that most of the time this search
-     * will come up empty, so just initialize count - not pointers
-     */
-    lam_list_set_size(additional_matches,0);
-
-    /*
      * Loop over all the out of sequence messages.  No ordering is assumed
      * in the c_frags_cant_match list.
      */
@@ -576,16 +570,6 @@ static void mca_ptl_base_check_cantmatch_for_match(lam_list_t *additional_matche
              */
             frag_seqber=frag_desc->super.frag_header.hdr_match.hdr_msg_seq;
             if (frag_seqber == next_msg_seq_expected) {
-
-                /* initialize list on first entry - assume that most
-                 * of the time nothing is found, so initially we just
-                 * set the count to zero, and don't initialize any
-                 * other parameters
-                 */
-                if(0 == lam_list_get_size(additional_matches))
-                {
-                        OBJ_CONSTRUCT(additional_matches, lam_list_t);
-                }
 
                 /* We're now expecting the next sequence number. */
                 (pml_comm->c_next_msg_seq[frag_src])++;

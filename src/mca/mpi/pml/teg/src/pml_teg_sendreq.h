@@ -36,7 +36,6 @@ static inline mca_ptl_base_send_request_t* mca_pml_teg_send_request_alloc(
 static inline void mca_ptl_base_send_request_return(
     mca_ptl_base_send_request_t* request)
 {
-    request->super.req_status = MCA_PML_STATUS_INVALID;
     request->req_owner->ptl_request_return(request->req_owner, request);
 }
 
@@ -48,8 +47,8 @@ static inline int mca_pml_teg_send_request_start(
     int rc;
 
     // start the first fragment
-    if(req->req_length < first_fragment_size)
-        first_fragment_size = req->req_length;
+    if(req->super.req_length < first_fragment_size)
+        first_fragment_size = req->super.req_length;
     rc = ptl->ptl_send(ptl, req->req_peer, req, first_fragment_size);
     if(rc != LAM_SUCCESS)
         return rc;

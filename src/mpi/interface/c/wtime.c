@@ -3,6 +3,7 @@
  */
 #include "lam_config.h"
 #include <stdio.h>
+#include <sys/time.h>
 
 #include "mpi.h"
 #include "mpi/interface/c/bindings.h"
@@ -12,5 +13,10 @@
 #endif
 
 double MPI_Wtime(void) {
-    return (double)0;
+    struct timeval tv;
+    double wtime;
+    gettimeofday(&tv, NULL);
+    wtime = tv.tv_sec;
+    wtime += (double)tv.tv_usec / 1000000.0;
+    return wtime;
 }

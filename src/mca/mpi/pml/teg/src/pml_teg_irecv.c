@@ -12,6 +12,11 @@ int mca_pml_teg_irecv_init(
     struct lam_request_t **request)
 {
     int rc;
+
+#if 0
+    lam_output(0, "mca_pml_teg_irecv_init: src=%d tag=%d comm=%d\n", src, tag, comm->c_contextid);
+#endif
+    
     mca_ptl_base_recv_request_t *recvreq = mca_pml_teg_recv_request_alloc(&rc);
     if(NULL == recvreq)
         return rc;
@@ -40,10 +45,15 @@ int mca_pml_teg_irecv(
     struct lam_request_t **request)
 {
     int rc;
+
+#if 0
+    lam_output(0, "mca_pml_teg_irecv: src=%d tag=%d comm=%d\n", src, tag, comm->c_contextid);
+#endif
+    
     mca_ptl_base_recv_request_t *recvreq = mca_pml_teg_recv_request_alloc(&rc);
     if(NULL == recvreq)
         return rc;
-    
+
     mca_ptl_base_recv_request_reinit(
         recvreq,
         addr,
@@ -73,6 +83,11 @@ int mca_pml_teg_recv(
     lam_status_public_t* status)
 {
     int rc;
+
+#if 0
+    lam_output(0, "mca_pml_teg_recv: src=%d tag=%d comm=%d\n", src, tag, comm->c_contextid);
+#endif
+    
     mca_ptl_base_recv_request_t *recvreq = mca_pml_teg_recv_request_alloc(&rc);
     if(NULL == recvreq)
         return rc;

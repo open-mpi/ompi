@@ -3,8 +3,8 @@
  */
 /*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
 
-#ifndef MCA_PML_BASE_RECVFRAG_H
-#define MCA_PML_BASE_RECVFRAG_H
+#ifndef MCA_PTL_BASE_RECVFRAG_H
+#define MCA_PTL_BASE_RECVFRAG_H
 
 #include "mca/mpi/ptl/ptl.h"
 #include "mca/mpi/ptl/base/ptl_base_fragment.h"
@@ -60,8 +60,10 @@ static inline int mca_ptl_base_recv_frag_match(
 {
     bool matched;
     lam_list_t matched_frags;
-    int rc = mca_ptl_base_match(header, frag, &matched, &matched_frags);
-    if(rc != LAM_SUCCESS)
+    int rc;
+
+    OBJ_CONSTRUCT(&matched_frags, lam_list_t);
+    if((rc = mca_ptl_base_match(header, frag, &matched, &matched_frags)) != LAM_SUCCESS)
         return rc;
 
     if(matched) {

@@ -26,8 +26,8 @@ struct mca_pml_comm_t {
 
     /* unexpected fragments queues */
     lam_list_t *c_unexpected_frags;
-    /* these locks are needed to avoid a probe interfering with a match
-     */
+
+    /* these locks are needed to avoid a probe interfering with a match */
     lam_mutex_t *c_unexpected_frags_lock;
 
     /* out-of-order fragments queues */
@@ -47,7 +47,16 @@ struct mca_pml_comm_t {
 typedef struct mca_pml_comm_t mca_pml_comm_t;
 
 
-extern int  mca_pml_ptl_comm_init_size(struct mca_pml_comm_t*, size_t);
+extern int mca_pml_ptl_comm_init_size(struct mca_pml_comm_t*, size_t);
+
+static inline mca_ptl_base_sequence_t mca_pml_ptl_comm_send_sequence(struct mca_pml_comm_t* comm, int dst)
+{
+   mca_ptl_base_sequence_t sequence;
+   lam_mutex_lock(comm->c_matching_lock+dst);
+   sequence = comm->c_msg_seq[dst]++;
+   lam_mutex_unlock(comm->c_matching_lock+dst);
+   return sequence;
+}
 
 #endif
 

@@ -248,10 +248,10 @@ kq_dispatch(void *arg, struct timeval *tv)
 
 		if (!(ev->ev_events & LAM_EV_PERSIST)) {
 			ev->ev_flags &= ~EVLIST_X_KQINKERNEL;
-			lam_event_del(ev);
+			lam_event_del_i(ev);
 		}
 
-		lam_event_active(ev, which,
+		lam_event_active_i(ev, which,
 		    ev->ev_events & LAM_EV_SIGNAL ? events[i].data : 1);
 	}
 

@@ -11,6 +11,7 @@
 #include "ptl_tcp_addr.h"
 #include "ptl_tcp_peer.h"
 #include "ptl_tcp_proc.h"
+#include "ptl_tcp_sendfrag.h"
 
 
 static void mca_ptl_tcp_peer_construct(mca_ptl_base_peer_t* ptl_peer);
@@ -50,6 +51,22 @@ static void mca_ptl_tcp_peer_construct(mca_ptl_base_peer_t* ptl_peer)
 }
 
 
+static inline void mca_ptl_tcp_peer_event_init(mca_ptl_base_peer_t* ptl_peer, int sd)
+{
+    lam_event_set(
+        &ptl_peer->peer_recv_event, 
+        ptl_peer->peer_sd, 
+        LAM_EV_READ|LAM_EV_PERSIST, 
+        mca_ptl_tcp_peer_recv_handler,
+        ptl_peer);
+    lam_event_set(
+        &ptl_peer->peer_send_event, 
+        ptl_peer->peer_sd, 
+        LAM_EV_WRITE|LAM_EV_PERSIST, 
+        mca_ptl_tcp_peer_send_handler,
+        ptl_peer);
+}
+
 /*
  * Cleanup any resources held by the peer.
  */
@@ -88,12 +105,58 @@ int mca_ptl_tcp_peer_send(mca_ptl_base_peer_t* ptl_peer, mca_ptl_tcp_send_frag_t
             if(mca_ptl_tcp_send_frag_handler(frag, ptl_peer->peer_sd) == false) {
                 ptl_peer->peer_send_frag = frag;
                 lam_event_add(&mca_ptl_tcp_module.tcp_send_event, 0);
+            } else {
+                ptl_peer->peer_ptl->super.ptl_send_progress(frag->super.frag_request, &frag->super);
             }
         }
         break;
     }
     THREAD_UNLOCK(&ptl_peer->peer_lock);
     return rc;
+}
+
+
+/*
+ * A blocking send on a non-blocking socket. Used to send the small amount of connection
+ * information that identifies the peers endpoint.
+ */
+static int mca_ptl_tcp_peer_send_blocking(mca_ptl_base_peer_t* ptl_peer, void* data, size_t size)
+{
+    unsigned char* ptr = (unsigned char*)data;
+    size_t cnt = 0;
+    while(cnt < size) {
+        int retval = send(ptl_peer->peer_sd, ptr+cnt, size-cnt, 0);
+        if(retval < 0) {
+            if(errno == EINTR)
+                continue;
+            if(errno != EAGAIN && errno != EWOULDBLOCK) {
+                lam_output(0, "mca_ptl_tcp_peer_send_blocking: send() failed with errno=%d\n",errno);
+                mca_ptl_tcp_peer_close_i(ptl_peer);
+                return -1;
+            }
+        }
+        cnt += retval;
+    }
+    return cnt;
+}
+
+
+/*
+ * Send the globally unique identifier for this process to a peer on 
+ * a newly connected socket.
+ */
+
+static int mca_ptl_tcp_peer_send_connect_ack(mca_ptl_base_peer_t* ptl_peer)
+{
+    /* send process identifier to remote peer */
+    mca_ptl_tcp_proc_t* ptl_proc = mca_ptl_tcp_proc_local();
+    uint32_t size_n = htonl(ptl_proc->proc_guid_size);
+    if(mca_ptl_tcp_peer_send_blocking(ptl_peer, &size_n, sizeof(size_n)) != sizeof(size_n) ||
+       mca_ptl_tcp_peer_send_blocking(ptl_peer, ptl_proc->proc_guid, ptl_proc->proc_guid_size) != 
+          ptl_proc->proc_guid_size) {
+        return LAM_ERR_UNREACH;
+    }
+    return LAM_SUCCESS;
 }
 
 /*
@@ -118,6 +181,12 @@ bool mca_ptl_tcp_peer_accept(mca_ptl_base_peer_t* ptl_peer, struct sockaddr_in* 
             peer_proc->proc_lam->proc_vpid < this_proc->proc_lam->proc_vpid)) {
             mca_ptl_tcp_peer_close_i(ptl_peer);
             ptl_peer->peer_sd = sd;
+            if(mca_ptl_tcp_peer_send_connect_ack(ptl_peer) != LAM_SUCCESS) {
+                 mca_ptl_tcp_peer_close_i(ptl_peer);
+                 return false;
+            }
+            mca_ptl_tcp_peer_event_init(ptl_peer, sd);
+            lam_event_add(&ptl_peer->peer_recv_event, 0);
             mca_ptl_tcp_peer_connected(ptl_peer);
             THREAD_UNLOCK(&ptl_peer->peer_lock);
             return true;
@@ -172,19 +241,6 @@ static void mca_ptl_tcp_peer_connected(mca_ptl_base_peer_t* ptl_peer)
                 lam_list_remove_first(&ptl_peer->peer_frags);
         lam_event_add(&ptl_peer->peer_send_event, 0);
     }
-    lam_event_set(
-        &ptl_peer->peer_recv_event, 
-        ptl_peer->peer_sd, 
-        LAM_EV_READ|LAM_EV_PERSIST, 
-        mca_ptl_tcp_peer_recv_handler,
-        ptl_peer);
-    lam_event_set(
-        &ptl_peer->peer_send_event, 
-        ptl_peer->peer_sd, 
-        LAM_EV_WRITE|LAM_EV_PERSIST, 
-        mca_ptl_tcp_peer_send_handler,
-        ptl_peer);
-    lam_event_add(&ptl_peer->peer_recv_event, 0);
 }
 
 
@@ -221,30 +277,6 @@ static int mca_ptl_tcp_peer_recv_blocking(mca_ptl_base_peer_t* ptl_peer, void* d
 }
 
 
-/*
- * A blocking send on a non-blocking socket. Used to send the small amount of connection
- * information that identifies the peers endpoint.
- */
-static int mca_ptl_tcp_peer_send_blocking(mca_ptl_base_peer_t* ptl_peer, void* data, size_t size)
-{
-    unsigned char* ptr = (unsigned char*)data;
-    size_t cnt = 0;
-    while(cnt < size) {
-        int retval = send(ptl_peer->peer_sd, ptr+cnt, size-cnt, 0);
-        if(retval < 0) {
-            if(errno == EINTR)
-                continue;
-            if(errno != EAGAIN && errno != EWOULDBLOCK) {
-                lam_output(0, "mca_ptl_tcp_peer_send_blocking: send() failed with errno=%d\n",errno);
-                mca_ptl_tcp_peer_close_i(ptl_peer);
-                return -1;
-            }
-        }
-        cnt += retval;
-    }
-    return cnt;
-}
-
 
 /*
  *  Receive the peers globally unique process identification from a newly
@@ -258,7 +290,7 @@ static int mca_ptl_tcp_peer_recv_connect_ack(mca_ptl_base_peer_t* ptl_peer)
     void* guid;
     mca_ptl_tcp_proc_t* ptl_proc = ptl_peer->peer_proc;
 
-    if(mca_ptl_tcp_peer_recv_blocking(ptl_peer, &size_n, sizeof(size_n)) != size_n)
+    if(mca_ptl_tcp_peer_recv_blocking(ptl_peer, &size_n, sizeof(size_n)) != sizeof(size_n))
         return LAM_ERR_UNREACH;
     size_h = ntohl(size_n);
     guid = malloc(size_h);
@@ -283,24 +315,6 @@ static int mca_ptl_tcp_peer_recv_connect_ack(mca_ptl_base_peer_t* ptl_peer)
 }
 
 
-/*
- * Send the globally unique identifier for this process to a peer on 
- * a newly connected socket.
- */
-
-static int mca_ptl_tcp_peer_send_connect_ack(mca_ptl_base_peer_t* ptl_peer)
-{
-    /* send process identifier to remote peer */
-    mca_ptl_tcp_proc_t* ptl_proc = mca_ptl_tcp_proc_local();
-    uint32_t size_n = htonl(ptl_proc->proc_guid_size);
-    if(mca_ptl_tcp_peer_send_blocking(ptl_peer, &size_n, sizeof(size_n)) != sizeof(size_n) ||
-       mca_ptl_tcp_peer_send_blocking(ptl_peer, ptl_proc->proc_guid, ptl_proc->proc_guid_size) != 
-          ptl_proc->proc_guid_size) {
-        return LAM_ERR_UNREACH;
-    }
-    return LAM_SUCCESS;
-}
-
 
 /*
  *  Start a connection to the peer. This will likely not complete,
@@ -319,6 +333,9 @@ static int mca_ptl_tcp_peer_start_connect(mca_ptl_base_peer_t* ptl_peer)
         return LAM_ERR_UNREACH;
     }
 
+    /* setup event callbacks */
+    mca_ptl_tcp_peer_event_init(ptl_peer, ptl_peer->peer_sd);
+
     /* setup the socket as non-blocking */
     int flags;
     if((flags = fcntl(ptl_peer->peer_sd, F_GETFL, 0)) < 0) {
@@ -330,13 +347,16 @@ static int mca_ptl_tcp_peer_start_connect(mca_ptl_base_peer_t* ptl_peer)
     }
                                                                                                               
     /* start the connect - will likely fail with EINPROGRESS */
-    if(connect(ptl_peer->peer_sd, (struct sockaddr*)&ptl_peer->peer_addr->addr_inet, 
-       sizeof(struct sockaddr_in)) < 0) {
+    struct sockaddr_in peer_addr;
+    peer_addr.sin_family = AF_INET;
+    peer_addr.sin_addr = ptl_peer->peer_addr->addr_inet;
+    peer_addr.sin_port = ptl_peer->peer_addr->addr_port;
+    if(connect(ptl_peer->peer_sd, (struct sockaddr*)&peer_addr, sizeof(peer_addr)) < 0) {
         /* non-blocking so wait for completion */
         if(errno == EINPROGRESS) {
             ptl_peer->peer_state = MCA_PTL_TCP_CONNECTING;
             lam_event_add(&ptl_peer->peer_send_event, 0);
-            return rc;
+            return LAM_SUCCESS;
         }
         mca_ptl_tcp_peer_close_i(ptl_peer);
         ptl_peer->peer_retries++;
@@ -379,7 +399,7 @@ static void mca_ptl_tcp_peer_complete_connect(mca_ptl_base_peer_t* ptl_peer)
         return;
     }
     if(so_error != 0) {
-        lam_output(0, "mca_ptl_tcp_peer_complete_connect: connect() failedd with errno=%d\n", so_error);
+        lam_output(0, "mca_ptl_tcp_peer_complete_connect: connect() failed with errno=%d\n", so_error);
         mca_ptl_tcp_peer_close_i(ptl_peer);
         return;
     }
@@ -452,11 +472,16 @@ static void mca_ptl_tcp_peer_send_handler(int sd, short flags, void* user)
     case MCA_PTL_TCP_CONNECTING:
         mca_ptl_tcp_peer_complete_connect(ptl_peer);
         break;
-    case MCA_PTL_TCP_CONNECTED:
+    case MCA_PTL_TCP_CONNECTED: 
+        {
         /* complete the current send */
+        mca_ptl_t *ptl = (mca_ptl_t*)ptl_peer->peer_ptl;
         do {
-            if(mca_ptl_tcp_send_frag_handler(ptl_peer->peer_send_frag, ptl_peer->peer_sd) == false)
+            mca_ptl_tcp_send_frag_t* send_frag = ptl_peer->peer_send_frag;
+            if(mca_ptl_tcp_send_frag_handler(send_frag, ptl_peer->peer_sd) == false)
                 break;
+            ptl->ptl_send_progress(send_frag->super.frag_request, &send_frag->super);
+
             /* progress any pending sends */
             ptl_peer->peer_send_frag = (mca_ptl_tcp_send_frag_t*)
                 lam_list_remove_first(&ptl_peer->peer_frags);
@@ -467,6 +492,7 @@ static void mca_ptl_tcp_peer_send_handler(int sd, short flags, void* user)
             lam_event_del(&ptl_peer->peer_send_event);
         }
         break;
+        }
     default:
         lam_output(0, "mca_ptl_tcp_peer_send_handler: invalid connection state (%d)", 
             ptl_peer->peer_state);

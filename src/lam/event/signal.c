@@ -147,8 +147,8 @@ lam_evsignal_process(void)
 		ncalls = lam_evsigcaught[LAM_EVENT_SIGNAL(ev)];
 		if (ncalls) {
 			if (!(ev->ev_events & LAM_EV_PERSIST))
-				lam_event_del(ev);
-			lam_event_active(ev, LAM_EV_SIGNAL, ncalls);
+				lam_event_del_i(ev);
+			lam_event_active_i(ev, LAM_EV_SIGNAL, ncalls);
 		}
 	}
 

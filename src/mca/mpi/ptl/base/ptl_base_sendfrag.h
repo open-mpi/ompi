@@ -1,8 +1,8 @@
 /* 
  * $HEADER$
  */
-#ifndef MCA_PML_BASE_SEND_FRAG_H
-#define MCA_PML_BASE_SEND_FRAG_H
+#ifndef MCA_PTL_BASE_SEND_FRAG_H
+#define MCA_PTL_BASE_SEND_FRAG_H
 
 #include "mca/mpi/ptl/ptl.h"
 #include "mca/mpi/ptl/base/ptl_base_fragment.h"

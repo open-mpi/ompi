@@ -10,6 +10,10 @@
 #include "ptl_tcp_peer.h"
 #include "ptl_tcp_sendfrag.h"
 
+#define frag_header super.super.frag_header
+#define frag_owner  super.super.frag_owner
+#define frag_peer   super.super.frag_peer
+
 
 static void mca_ptl_tcp_send_frag_construct(mca_ptl_tcp_send_frag_t* frag);
 static void mca_ptl_tcp_send_frag_destruct(mca_ptl_tcp_send_frag_t* frag);
@@ -54,12 +58,12 @@ void mca_ptl_tcp_send_frag_reinit(
         hdr->hdr_frag.hdr_frag_seq = 0;
         hdr->hdr_frag.hdr_src_ptr.pval = sendfrag;
         hdr->hdr_frag.hdr_dst_ptr.pval = 0;
-        hdr->hdr_match.hdr_contextid = sendreq->super.req_communicator->c_contextid;
-        hdr->hdr_match.hdr_src_rank = sendreq->super.req_communicator->c_my_rank;
-        hdr->hdr_match.hdr_dst_rank = sendreq->super.req_peer;
-        hdr->hdr_match.hdr_user_tag = sendreq->super.req_tag;
-        hdr->hdr_match.hdr_msg_length = sendreq->req_length;
-        hdr->hdr_match.hdr_msg_seq = 0;
+        hdr->hdr_match.hdr_contextid = sendreq->super.req_comm->c_contextid;
+        hdr->hdr_match.hdr_src = sendreq->super.req_comm->c_my_rank;
+        hdr->hdr_match.hdr_dst = sendreq->super.req_peer;
+        hdr->hdr_match.hdr_tag = sendreq->super.req_tag;
+        hdr->hdr_match.hdr_msg_length = sendreq->super.req_length;
+        hdr->hdr_match.hdr_msg_seq = sendreq->req_msg_seq;
     } else {
         hdr->hdr_type = MCA_PTL_HDR_TYPE_FRAG;
         hdr->hdr_flags = 0;
@@ -71,8 +75,8 @@ void mca_ptl_tcp_send_frag_reinit(
     }
 
     /* update request */
-    if(sendreq->req_offset + size > sendreq->req_length)
-        size = sendreq->req_length = sendreq->req_offset;
+    if(sendreq->req_offset + size > sendreq->super.req_length)
+        size = sendreq->super.req_length = sendreq->req_offset;
     hdr->hdr_frag.hdr_frag_length = size;
     sendreq->req_offset += size;
     sendreq->req_frags++;

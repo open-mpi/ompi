@@ -222,7 +222,7 @@ libevent_la_DEPENDENCIES = $(lt_libobj)
 include_HEADERS = event.h
 
 # LAM: Make it work in a VPATH environment
-INCLUDES = -I$(top_srcdir)/compat
+INCLUDES = -I$(top_srcdir)/compat -I$(top_srcdir)/../.. -I$(top_srcdir)/../../include
 man_MANS = event.3
 DISTCLEANFILES = *~
 all: config.h

@@ -24,8 +24,8 @@ struct mca_ptl_tcp_module_1_0_0_t {
     struct mca_ptl_tcp_t** tcp_ptls;
     size_t tcp_num_ptls;         /**< number of ptls actually used */
     size_t tcp_max_ptls;         /**< maximum number of ptls - available kernel ifs */
-    int tcp_listen;
-    unsigned short tcp_port;
+    int tcp_listen_sd;
+    unsigned short tcp_listen_port;
     char* tcp_if_include;        /**< comma seperated list of interface to include */
     char* tcp_if_exclude;        /**< comma seperated list of interface to exclude */
     int   tcp_free_list_num;     /**< initial size of free lists */

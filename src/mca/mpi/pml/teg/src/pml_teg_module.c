@@ -2,6 +2,7 @@
  * $HEADER$
  */
 
+#include "lam/event/event.h"
 #include "mpi.h"
 #include "mca/mpi/pml/pml.h"
 #include "mca/mpi/ptl/ptl.h"
@@ -85,13 +86,20 @@ int mca_pml_teg_module_close(void)
 }
 
 
+static void* mca_pml_teg_thread(lam_object_t* thread)
+{
+    lam_event_dispatch();
+    return NULL;
+}
+
+
 mca_pml_t* mca_pml_teg_module_init(int* priority, 
                                    bool *allow_multi_user_threads,
                                    bool *have_hidden_threads)
 {
     *priority = 0;
     *allow_multi_user_threads = true;
-    *have_hidden_threads = false;
+    *have_hidden_threads = true;
 
     OBJ_CONSTRUCT(&mca_pml_teg.teg_lock, lam_mutex_t);
     mca_pml_teg.teg_ptl_modules = NULL;
@@ -108,6 +116,11 @@ mca_pml_t* mca_pml_teg_module_init(int* priority,
         mca_pml_teg.teg_free_list_inc,
         NULL);
         
+    OBJ_CONSTRUCT(&mca_pml_teg.teg_thread, lam_thread_t);
+    mca_pml_teg.teg_thread.t_run = mca_pml_teg_thread;
+    if(lam_thread_start(&mca_pml_teg.teg_thread) != LAM_SUCCESS)
+        return NULL;
+
     mca_pml_teg.teg_recv_sequence = 0;
     return &mca_pml_teg.super;
 }

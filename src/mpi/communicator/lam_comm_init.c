@@ -15,11 +15,9 @@
  * Global variables
  */
 
-lam_communicator_t **lam_mpi_comm_array;
-size_t lam_mpi_comm_array_size;
-
-lam_communicator_t lam_mpi_comm_world;
-lam_communicator_t lam_mpi_comm_self;
+lam_pointer_array_t lam_mpi_communicators;
+lam_communicator_t  lam_mpi_comm_world;
+lam_communicator_t  lam_mpi_comm_self;
 
 
 static void lam_comm_construct(lam_communicator_t* comm)
@@ -62,6 +60,9 @@ int lam_comm_init(void)
     lam_group_t *group;
     size_t size;
 
+    /* Setup communicator array */
+    OBJ_CONSTRUCT(&lam_mpi_communicators, lam_pointer_array_t);
+
     /* Setup MPI_COMM_WORLD */
     OBJ_CONSTRUCT(&lam_mpi_comm_world, lam_communicator_t);
     group = OBJ_NEW(lam_group_t);
@@ -75,6 +76,7 @@ int lam_comm_init(void)
     lam_mpi_comm_world.c_local_group = group;
     lam_mpi_comm_world.c_remote_group = group;
     mca_pml.pml_add_comm(&lam_mpi_comm_world);
+    lam_pointer_array_set_item(&lam_mpi_communicators, 0, &lam_mpi_comm_world);
 
     /* Setup MPI_COMM_SELF */
     OBJ_CONSTRUCT(&lam_mpi_comm_self, lam_communicator_t);
@@ -89,6 +91,7 @@ int lam_comm_init(void)
     lam_mpi_comm_self.c_local_group = group;
     lam_mpi_comm_self.c_remote_group = group;
     mca_pml.pml_add_comm(&lam_mpi_comm_self);
+    lam_pointer_array_set_item(&lam_mpi_communicators, 1, &lam_mpi_comm_self);
     return LAM_SUCCESS;
 }
 

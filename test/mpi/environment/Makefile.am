@@ -12,6 +12,7 @@ noinst_PROGRAMS = chello
 chello_SOURCES = chello.c
 chello_LDADD = \
 	$(top_builddir)/src/libmpi.la \
-	$(top_builddir)/src/liblam.la
+	$(top_builddir)/src/liblam.la \
+	-lpthread
 chello_DEPENDENCIES = $(chello_LDADD)
 

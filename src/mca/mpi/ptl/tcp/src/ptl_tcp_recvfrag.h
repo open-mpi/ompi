@@ -20,14 +20,10 @@ extern lam_class_t mca_ptl_tcp_recv_frag_t_class;
 struct mca_ptl_tcp_recv_frag_t {
     mca_ptl_base_recv_frag_t super;
     mca_ptl_base_ack_header_t frag_ack;
-    unsigned char* frag_addr;
-    size_t frag_size;
+    unsigned char* frag_buff;
     size_t frag_hdr_cnt;
     size_t frag_msg_cnt;
     bool frag_acked;
-#define frag_peer super.super.frag_peer
-#define frag_owner super.super.frag_owner
-#define frag_header super.super.frag_header
 };
 typedef struct mca_ptl_tcp_recv_frag_t mca_ptl_tcp_recv_frag_t;
 
@@ -39,8 +35,8 @@ static inline mca_ptl_tcp_recv_frag_t* mca_ptl_tcp_recv_frag_alloc(int* rc)
 
 static inline void mca_ptl_tcp_recv_frag_return(mca_ptl_tcp_recv_frag_t* frag)
 {
-    if(frag->frag_addr != frag->super.super.frag_addr)
-        free(frag->frag_addr);
+    if(frag->frag_buff != frag->super.super.frag_addr)
+        free(frag->frag_buff);
     lam_free_list_return(&mca_ptl_tcp_module.tcp_recv_frags, (lam_list_item_t*)frag);
 }
 

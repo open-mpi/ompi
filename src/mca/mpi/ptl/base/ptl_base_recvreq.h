@@ -14,7 +14,10 @@ struct mca_ptl_base_recv_frag_t;
 
 struct mca_ptl_base_recv_request_t {
    mca_pml_base_request_t super;
+   /* request sequence number */
    mca_ptl_base_sequence_t req_sequence;
+   /* number of bytes delivered */
+   size_t req_bytes_recvd;
 };
 typedef struct mca_ptl_base_recv_request_t mca_ptl_base_recv_request_t;
 
@@ -34,18 +37,17 @@ static inline void mca_ptl_base_recv_request_reinit(
     bool persistent)
 {
     request->req_sequence = 0;
+    request->req_bytes_recvd = 0;
     request->super.req_addr = addr;
     request->super.req_length = length;
     request->super.req_datatype = datatype;
     request->super.req_peer = src;
     request->super.req_tag = tag;
-    request->super.req_communicator = comm;
+    request->super.req_comm = comm;
     request->super.req_type = MCA_PML_REQUEST_RECV;
-    request->super.req_status = MCA_PML_STATUS_INITED;
     request->super.req_persistent = persistent;
     request->super.req_mpi_done = false;
-    request->super.req_pml_layer_done = false;
+    request->super.req_pml_done = false;
 }
-
 #endif
 
