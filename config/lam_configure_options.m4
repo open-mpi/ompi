@@ -133,7 +133,8 @@ else
     AC_MSG_RESULT([no])
     WANT_MPI_PROFILE=0
 fi
-# Anju: continue here...
+AC_DEFINE_UNQUOTED(WANT_MPI_PROFILING, $WANT_MPI_PROFILE,
+    [Do we want MPI profiling or not?])
 
 
 #
@@ -175,6 +176,8 @@ else
 fi
 AC_SUBST(LIBLAM_LA)
 AC_SUBST(LIBMPI_LA)
+AC_DEFINE_UNQUOTED(WANT_SINGLE_MPI_LIBRARY, $WANT_SINGLE_MPI_LIBRARY,
+    [Do we want libmpi or libmpi and liblam?])
 AM_CONDITIONAL(WANT_SINGLE_MPI_LIBRARY, test "$WANT_SINGLE_MPI_LIBRARY" = 1)
 
 #
