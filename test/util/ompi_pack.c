@@ -6,6 +6,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <sys/param.h>
+#include <netinet/in.h>
+
 
 #include "ompi_config.h"
 #include "util/sys_info.h"
@@ -26,7 +28,8 @@ static bool test2(void);        /* verify we can pack ok */
 static bool test3(void);  		/* verify we can pack expanding buf */
 static bool test4(void);        /* verify pack a packed buffer */
 static bool test5(void);        /* verify unpack */
-static bool test6(void);        /* verity free */
+static bool test6(void);        /* verify free */
+static bool test7(void);        /* verify preallocated buffer init, pack and unpack */
 
 int main ()
 {
@@ -74,6 +77,14 @@ int main ()
     else {
       test_failure("ompi_pack test6 failed");
 	}
+
+	if (test7()) {
+        test_success();
+    }
+    else {
+      test_failure("ompi_pack test7 failed");
+	}
+
 
 /* 	if (testN()) { */
 /*         test_success(); */
@@ -192,7 +203,7 @@ static bool test5(void)        /* verify unpack */
 	return (true);
 }
 
-static bool test6(void)        /* verity free */
+static bool test6(void)        /* verify free */
 {
 	int rc;
 
@@ -206,6 +217,53 @@ static bool test6(void)        /* verity free */
 	return (true);
 }
 
+static bool test7(void)        /* verify preallocated buffer init, pack and unpack */
+{
+
+	int rc;
+    int results[6];
+	int i, j, out;
+	char *mybuf;
+	int *p;
+
+
+    /* we cannot use heap/static memory for a buffer as it cannot be realloced as needed for this test */
+    mybuf = (char*) malloc (sizeof(int)*5);
+	p = (int*) mybuf;
+	for(i=0;i<5;i++) {
+		*p++ = htonl (i);		/* the data must be in network byte order for this test to be valid */
+		                        /* as the test is emulating prepacked data recvd from the network (OOB) */
+	}
+
+
+    rc = ompi_buffer_init_preallocated (&bufA, mybuf, sizeof(int)*5);
+	if (OMPI_ERROR==rc) { test_comment ("ompi_buffer_init_preallocated failed"); return(false);}
+
+	i = 5;
+	rc = ompi_pack (bufA, &i, 1, OMPI_INT32);
+    if (OMPI_ERROR==rc) { test_comment ("ompi_pack failed"); return(false);}
+
+	/* ok, now check its contents */
+	for (i=0;i<6;i++) {
+	    j = i; /* for bufA */
+		rc = ompi_unpack (bufA, &out, 1, OMPI_INT32);
+		if (OMPI_ERROR==rc) { test_comment ("ompi_unpack failed"); return(false);}
+
+		if (out!=j) { 
+			test_comment ("bufA packed != unpacked data"); 
+			printf("iteration %d expected %d have %d\n", i, j, out);
+			return(false);
+		}
+	}
+
+	
+    /* I do not free mybuf as ompi_buffer_free() will */	
+
+	rc = ompi_buffer_free (bufA);
+	if (OMPI_ERROR==rc) { test_comment ("ompi_buffer_free failed"); return(false);}
+
+	return (true);
+}
 
 /* int dump_buf (ompi_buffer_t buf) */
 /* { */
