@@ -146,7 +146,7 @@ void mca_pml_teg_send_request_progress(
         /* check for pending requests that need to be progressed */
         while(ompi_list_get_size(&mca_pml_teg.teg_send_pending) != 0) {
             OMPI_THREAD_LOCK(&mca_pml_teg.teg_lock); 
-            req = ompi_list_remove_first(&mca_pml_teg.teg_lock);
+            req = (mca_pml_base_send_request_t*)ompi_list_remove_first(&mca_pml_teg.teg_send_pending);
             OMPI_THREAD_UNLOCK(&mca_pml_teg.teg_lock);
             if(req == NULL)
                 break;
