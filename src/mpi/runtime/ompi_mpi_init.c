@@ -60,6 +60,8 @@ int ompi_mpi_thread_provided = MPI_THREAD_SINGLE;
 int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 {
     int ret, param;
+    mca_ns_base_jobid_t jobid;
+    mca_ns_base_vpid_t vpid;
     bool allow_multi_user_threads;
     bool have_hidden_threads;
     ompi_proc_t** procs;
@@ -72,6 +74,9 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         error = "ompi_init() failed";
         goto error;
     }
+
+    /* parse environmental variables and fill corresponding info structures */
+    ompi_rte_parse_environ();
 
     /* Open up the MCA */
 
@@ -88,8 +93,12 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 	goto error;
     }
 
-    /* parse environmental variables and fill corresponding info structures */
-    ompi_rte_parse_environ();
+    /* check for existing universe to join */
+    if (OMPI_SUCCESS != (ret = ompi_rte_universe_exists())) {
+	if (ompi_rte_debug_flag) {
+	    ompi_output(0, "ompi_mpi_init: could not join existing universe");
+	}
+    }
 
     /* start the rest of the rte */
     if (OMPI_SUCCESS != (ret = ompi_rte_init_stage2(&allow_multi_user_threads,
@@ -102,7 +111,17 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     if (NULL != ompi_process_info.name) {  /* should NOT have been previously set */
 	free(ompi_process_info.name);
     }
-    ompi_process_info.name = ompi_rte_get_self();
+    if (NULL == ompi_rte_get_self()) {  /* no name set in environment - must be singleton */
+	if (NULL == ompi_process_info.ns_replica) { /* couldn't join existing univ */
+	    ompi_process_info.name = ompi_name_server.create_process_name(0,0,0);
+	} else {  /* name server exists elsewhere - get a name for me */
+	    jobid = ompi_name_server.create_jobid();
+	    vpid = ompi_name_server.reserve_range(jobid, 1);
+	    ompi_process_info.name = ompi_name_server.create_process_name(0, jobid, vpid);
+	}
+    } else {  /* name set in environment - record it */
+	ompi_process_info.name = ompi_rte_get_self();
+    }
 
     /* setup my session directory */
     jobid_str = ompi_name_server.get_jobid_string(ompi_process_info.name);

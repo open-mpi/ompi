@@ -45,7 +45,7 @@ main(int argc, char *argv[])
     ompi_rte_node_schedule_t *sched;
     char cwd[MAXPATHLEN];
     char *my_contact_info, *tmp, *jobid_str, *procid_str;
-    char *contact_file;
+    char *contact_file, *filenm;
 
     /*
      * Intialize our Open MPI environment
@@ -328,6 +328,15 @@ main(int argc, char *argv[])
      */
     if (NULL != nodelist) ompi_rte_deallocate_resources(new_jobid, nodelist);
     if (NULL != cmd_line) OBJ_RELEASE(cmd_line);
+
+    /* eventually, mpirun won't be the seed and so won't have to do this.
+     * for now, though, remove the universe-setup.txt file so the directories
+     * can cleanup
+     */
+    filenm = ompi_os_path(false, ompi_process_info.universe_session_dir, "universe-setup.txt", NULL);
+    unlink(filenm);
+
+    /* finalize the system */
     ompi_rte_finalize();
     mca_base_close();
     ompi_finalize();

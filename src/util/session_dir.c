@@ -347,7 +347,8 @@ ompi_dir_empty(char *pathname)
 		if ((0 != strcmp(ep->d_name, ".")) &&
 		    (0 != strcmp(ep->d_name, "..")) &&
 		    (DT_DIR != ep->d_type) &&
-		    (0 != strncmp(ep->d_name, "output-", strlen("output-")))) {
+		    (0 != strncmp(ep->d_name, "output-", strlen("output-"))) &&
+		    (0 != strcmp(ep->d_name, "universe-setup.txt"))) {
 		    filenm = ompi_os_path(false, pathname, ep->d_name, NULL);
 		    unlink(filenm);
 		}
