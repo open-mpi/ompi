@@ -281,8 +281,8 @@
        parameter (MPI_COMM_WORLD=0)
        parameter (MPI_COMM_SELF=1)
        parameter (MPI_GROUP_EMPTY=1)
-       parameter (MPI_ERRORS_ARE_FATAL=0)
-       parameter (MPI_ERRORS_RETURN=1)
+       parameter (MPI_ERRORS_ARE_FATAL=1)
+       parameter (MPI_ERRORS_RETURN=2)
 
        integer MPI_INTEGER, MPI_INTEGER1, MPI_INTEGER2, MPI_INTEGER4
        integer MPI_INTEGER8, MPI_REAL, MPI_REAL2, MPI_REAL4, MPI_REAL8
