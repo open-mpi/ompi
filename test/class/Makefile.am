@@ -11,7 +11,8 @@ noinst_PROGRAMS = \
 	ompi_hash_table \
 	ompi_list \
 	ompi_value_array \
-	ompi_pointer_array
+	ompi_pointer_array \
+	ompi_rb_tree
 
 ompi_bitmap_SOURCES = ompi_bitmap.c 
 ompi_bitmap_LDADD = \
@@ -76,4 +77,16 @@ ompi_value_array_LDADD = \
         $(top_builddir)/test/support/libsupport.la
 ompi_value_array_DEPENDENCIES = $(ompi_value_array_LDADD)
 
-
+ompi_rb_tree_SOURCES = ompi_rb_tree.c
+ompi_rb_tree_LDADD = \
+	$(top_builddir)/test/support/libsupport.la \
+	$(top_builddir)/src/class/ompi_free_list.lo \
+	$(top_builddir)/src/class/ompi_rb_tree.lo \
+	$(top_builddir)/src/class/ompi_object.lo \
+	$(top_builddir)/src/class/ompi_list.lo \
+        $(top_builddir)/src/threads/mutex.lo \
+        $(top_builddir)/src/threads/mutex_pthread.lo \
+        $(top_builddir)/src/threads/mutex_spinlock.lo \
+        $(top_builddir)/src/util/output.lo \
+        $(top_builddir)/src/util/malloc.lo 
+ompi_rb_tree_DEPENDENCIES = $(ompi_rb_tree_LDADD)

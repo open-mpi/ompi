@@ -16,7 +16,8 @@ headers = \
 	ompi_list.h \
 	ompi_object.h \
 	ompi_pointer_array.h \
-	ompi_value_array.h 
+	ompi_value_array.h \
+	ompi_rb_tree.h
 
 liblfc_la_SOURCES = \
 	$(headers) \
@@ -26,7 +27,8 @@ liblfc_la_SOURCES = \
 	ompi_object.c \
 	ompi_pointer_array.c \
 	ompi_bitmap.c \
-	ompi_value_array.c 
+	ompi_value_array.c \
+	ompi_rb_tree.c
 
 # Conditionally install the header files
 
