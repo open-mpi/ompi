@@ -777,6 +777,7 @@ int ompi_comm_determine_first ( ompi_communicator_t *intercomm, int high )
     int scount=0;
     int rc;
     ompi_proc_t *ourproc, *theirproc;
+    ompi_ns_cmp_bitmask_t mask;
 
     rank = ompi_comm_rank        (intercomm);
     rsize= ompi_comm_remote_size (intercomm);
@@ -817,24 +818,11 @@ int ompi_comm_determine_first ( ompi_communicator_t *intercomm, int high )
         ourproc   = intercomm->c_local_group->grp_proc_pointers[0];
         theirproc = intercomm->c_remote_group->grp_proc_pointers[0];
 
-        /* Later we should use something like name_service.compare().
-           I will have to check, whether it returns a reasonable and 
-           identical value on both sides of the group.
-           For the moment I am just comparing the vpids and jobids
-        */
-        if ( ourproc->proc_name.vpid > theirproc->proc_name.vpid ) {
+        mask = OMPI_NS_CMP_CELLID | OMPI_NS_CMP_JOBID | OMPI_NS_CMP_VPID;
+        rc = ompi_name_server.compare (mask, &(ourproc->proc_name), 
+                                       &(theirproc->proc_name));
+        if ( 0 > rc ) {
             flag = true;
-        }
-        else if ( ourproc->proc_name.vpid == theirproc->proc_name.vpid ) {
-            /* it is impossible to have identical vpids and jobids, so 
-               I do not have to compare for == here ) 
-            */
-            if ( ourproc->proc_name.jobid > theirproc->proc_name.jobid ) {
-                flag = true;
-            }
-            else {
-                flag = false;
-            }
         }
         else {
             flag = false;
