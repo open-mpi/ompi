@@ -23,10 +23,10 @@ bin_PROGRAMS = \
 
 openmpi_SOURCES = \
         openmpi.h \
-        ompi_init.h \
         os_session_dir.c \
-        ompi_init.c \
         openmpi.c 
+
+old_sources = ompi_init.h ompi_init.c
 
 openmpi_LDADD = \
         $(libs) \
