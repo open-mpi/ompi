@@ -52,7 +52,6 @@ mca_ptl_ib_module_1_0_0_t mca_ptl_ib_module = {
     }
 };
 
-
 /*
  * functions for receiving event callbacks
  */
@@ -150,8 +149,8 @@ static int mca_ptl_ib_module_send(void)
         ud_qp_addr[i].lid = ptl->port.lid;
     }
 
-    D_PRINT("ud_qp_addr[0].ud_qp = %d\n", ud_qp_addr[0].ud_qp);
-    D_PRINT("ud_qp_addr[0].lid = %d\n", ud_qp_addr[0].lid);
+    D_PRINT("ud_qp_addr[0].ud_qp = %d\n",(int)ud_qp_addr[0].ud_qp);
+    D_PRINT("ud_qp_addr[0].lid = %d\n", (int)ud_qp_addr[0].lid);
 
     rc =  mca_base_modex_send(&mca_ptl_ib_module.super.ptlm_version, 
             ud_qp_addr, size);
@@ -278,21 +277,69 @@ mca_ptl_t** mca_ptl_ib_module_init(int *num_ptls,
             return NULL;
         }
 
-        D_PRINT("Protection Domain: %d\n", ptl_ib[i].ptag);
+        D_PRINT("Protection Domain: %d\n", (int)ptl_ib[i].ptag);
 
         if(mca_ptl_ib_create_cq(ptl_ib[i].nic, &ptl_ib[i].cq_hndl)
                 != OMPI_SUCCESS) {
             return NULL;
         }
 
-        D_PRINT("CQ handle: %d\n", ptl_ib[i].cq_hndl);
+        D_PRINT("CQ handle: %d\n", (int)ptl_ib[i].cq_hndl);
 
-
-        if(mca_ptl_ib_ud_cq_init(&ptl_ib[i]) != OMPI_SUCCESS) {
+        if(mca_ptl_ib_ud_cq_init(ptl_ib[i].nic, &ptl_ib[i].ud_scq_hndl,
+                    &ptl_ib[i].ud_rcq_hndl)
+                != OMPI_SUCCESS) {
             return NULL;
         }
 
-        if(mca_ptl_ib_ud_qp_init(&ptl_ib[i]) != OMPI_SUCCESS) {
+        if(mca_ptl_ib_ud_qp_init(ptl_ib[i].nic, ptl_ib[i].ud_rcq_hndl,
+                    ptl_ib[i].ud_scq_hndl, ptl_ib[i].ptag,
+                    ptl_ib[i].ud_qp_hndl, ptl_ib[i].ud_qp_prop)
+                != OMPI_SUCCESS) {
+            return NULL;
+        }
+
+        /* Attach asynchronous handler */
+        if(mca_ptl_ib_set_async_handler(ptl_ib[i].nic, 
+                    ptl_ib[i].async_handler) 
+                != OMPI_SUCCESS) {
+            return NULL;
+        }
+
+        /* Prepare the UD buffers for communication:
+         *
+         * 1. register
+         * 2. fill up descriptors
+         */
+        if(mca_ptl_ib_prep_ud_bufs(ptl_ib[i].nic, ptl_ib[i].ud_buf) 
+                != OMPI_SUCCESS) {
+            return NULL;
+        }
+
+        /* Post the UD recv descriptors */
+        if(mca_ptl_ib_post_ud_recv(ptl_ib[i].nic, ptl_ib[i].ud_qp_hndl, 
+                    ptl_ib[i].ud_buf)
+                != OMPI_SUCCESS) {
+            return NULL;
+        }
+
+        if(mca_ptl_ib_get_comp_ev_hndl(&ptl_ib[i].ud_comp_ev_handler)
+                != OMPI_SUCCESS) {
+            return NULL;
+        }
+
+        /* Set the completion event handler for the UD recv queue */
+        if(mca_ptl_ib_set_comp_ev_hndl(ptl_ib[i].nic, 
+                    ptl_ib[i].ud_rcq_hndl,
+                    ptl_ib[i].ud_comp_ev_handler, 
+                    (void*)NULL, &ptl_ib[i].ud_comp_ev_hndl) 
+                != OMPI_SUCCESS) {
+            return NULL;
+        }
+
+        /* Request for interrupts on the UD recv queue */
+        if(mca_ptl_ib_req_comp_notif(ptl_ib[i].nic, ptl_ib[i].ud_rcq_hndl)
+                != OMPI_SUCCESS) {
             return NULL;
         }
     }
