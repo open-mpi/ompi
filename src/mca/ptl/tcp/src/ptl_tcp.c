@@ -255,7 +255,7 @@ void mca_ptl_tcp_matched(
 {
     /* send ack back to peer? */
     mca_ptl_base_header_t* header = &frag->frag_base.frag_header;
-    if(header->hdr_common.hdr_flags & MCA_PTL_FLAGS_ACK_MATCHED) {
+    if(header->hdr_common.hdr_flags & MCA_PTL_FLAGS_ACK) {
         int rc;
         mca_ptl_tcp_send_frag_t* ack;
         mca_ptl_tcp_recv_frag_t* recv_frag = (mca_ptl_tcp_recv_frag_t*)frag;

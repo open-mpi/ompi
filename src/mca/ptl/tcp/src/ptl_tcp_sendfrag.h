@@ -90,7 +90,7 @@ static inline void mca_ptl_tcp_send_frag_progress(mca_ptl_tcp_send_frag_t* frag)
      * received, go ahead and update the request status 
      */ 
     } else if (frag->frag_vec_cnt == 0 &&  
-         ((frag->frag_send.frag_base.frag_header.hdr_common.hdr_flags & MCA_PTL_FLAGS_ACK_MATCHED) == 0 || 
+         ((frag->frag_send.frag_base.frag_header.hdr_common.hdr_flags & MCA_PTL_FLAGS_ACK) == 0 || 
           mca_pml_base_send_request_matched(request))) { 
 
         /* make sure this only happens once in threaded case */ 

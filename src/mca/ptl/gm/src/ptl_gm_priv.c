@@ -252,7 +252,7 @@ void send_callback(struct gm_port *port,void * context, gm_status_t status)
                OMPI_FREE_LIST_RETURN(&(ptl->gm_send_frags), ((ompi_list_item_t *) frag));
                } */
 
-              else if (0 == (header->hdr_common.hdr_flags & MCA_PTL_FLAGS_ACK_MATCHED)
+              else if (0 == (header->hdr_common.hdr_flags & MCA_PTL_FLAGS_ACK)
                             || mca_pml_base_send_request_matched(gm_send_req)) 
               {
                     A_PRINT(" send callback : match not required\n");

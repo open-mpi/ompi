@@ -364,7 +364,7 @@ mca_ptl_gm_matched( mca_ptl_base_module_t * ptl,
     A_PRINT("inside match, the matched request is %p\n", request);
     gm_ptl = (mca_ptl_gm_module_t *)ptl;
 
-    if (header->hdr_common.hdr_flags & MCA_PTL_FLAGS_ACK_MATCHED) 
+    if (header->hdr_common.hdr_flags & MCA_PTL_FLAGS_ACK) 
     {
         /* need to send an ack back */
         recv_frag = (mca_ptl_gm_recv_frag_t *) frag;

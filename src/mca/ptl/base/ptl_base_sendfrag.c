@@ -19,6 +19,7 @@ ompi_class_t mca_ptl_base_send_frag_t_class = {
 
 static void mca_ptl_base_send_frag_construct(mca_ptl_base_send_frag_t* frag)
 {
+    frag->frag_base.frag_type = MCA_PTL_FRAGMENT_SEND;
 }
 
 static void mca_ptl_base_send_frag_destruct(mca_ptl_base_send_frag_t* frag)

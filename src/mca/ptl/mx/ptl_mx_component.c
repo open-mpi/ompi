@@ -4,6 +4,7 @@
 #include "ompi_config.h"
 #include "include/constants.h"
 #include "util/output.h"
+#include "threads/thread.h"
 #include "ptl_mx.h"
 #include "ptl_mx_recvfrag.h"
 #include "ptl_mx_sendfrag.h"
@@ -86,10 +87,14 @@ int mca_ptl_mx_component_open(void)
     OBJ_CONSTRUCT(&mca_ptl_mx_component.mx_lock, ompi_mutex_t);
     OBJ_CONSTRUCT(&mca_ptl_mx_component.mx_send_frags, ompi_free_list_t);
     OBJ_CONSTRUCT(&mca_ptl_mx_component.mx_recv_frags, ompi_free_list_t);
+    OBJ_CONSTRUCT(&mca_ptl_mx_component.mx_procs, ompi_hash_table_t);
+    OBJ_CONSTRUCT(&mca_ptl_mx_component.mx_pending_acks, ompi_hash_table_t);
 
     /* register MX module parameters */
-    mca_ptl_mx_module.mx_filter =
+    mca_ptl_mx_component.mx_filter =
         (uint32_t)mca_ptl_mx_param_register_int("filter", 0xdeadbeef);
+    mca_ptl_mx_component.mx_prepost =
+        mca_ptl_mx_param_register_int("prepost", 16);
     mca_ptl_mx_component.mx_free_list_num =
         mca_ptl_mx_param_register_int("free_list_num", 256);
     mca_ptl_mx_component.mx_free_list_max =
@@ -130,6 +135,7 @@ int mca_ptl_mx_component_close(void)
     OBJ_DESTRUCT(&mca_ptl_mx_component.mx_send_frags);
     OBJ_DESTRUCT(&mca_ptl_mx_component.mx_recv_frags);
     OBJ_DESTRUCT(&mca_ptl_mx_component.mx_lock);
+    OBJ_DESTRUCT(&mca_ptl_mx_component.mx_pending_acks);
     return OMPI_SUCCESS;
 }
 
@@ -162,6 +168,9 @@ mca_ptl_base_module_t** mca_ptl_mx_component_init(
         mca_ptl_mx_component.mx_free_list_max,
         mca_ptl_mx_component.mx_free_list_inc,
         NULL); /* use default allocator */
+
+    /* intialize process hash table */
+    ompi_hash_table_init(&mca_ptl_mx_component.mx_procs, 256);
 
     /* initialize mx ptls */
     if(OMPI_SUCCESS != mca_ptl_mx_module_init())

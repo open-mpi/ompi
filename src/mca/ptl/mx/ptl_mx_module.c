@@ -3,6 +3,8 @@
 #include "util/output.h"
 #include "ptl_mx_peer.h"
 #include "ptl_mx_proc.h"
+#include "ptl_mx_recvfrag.h"
+#include "ptl_mx_sendfrag.h"
 
 
 static mca_ptl_mx_module_t* mca_ptl_mx_create(uint64_t addr);
@@ -43,13 +45,13 @@ int mca_ptl_mx_module_init(void)
         return OMPI_ERR_OUT_OF_RESOURCE;
     if((status = mx_get_info(
         NULL,
-        MX_NIC_COUNT,
+        MX_NIC_IDS,
         nic_addrs,
         size)) != MX_SUCCESS) {
         free(nic_addrs);
         return OMPI_ERR_INIT;
     }
-                                                                                                                      
+
     /* allocate an array of pointers to ptls */
     mca_ptl_mx_component.mx_ptls = (mca_ptl_mx_module_t**)malloc(
         sizeof(mca_ptl_mx_module_t*) * mca_ptl_mx_component.mx_num_ptls);
@@ -57,7 +59,7 @@ int mca_ptl_mx_module_init(void)
         ompi_output(0, "mca_ptl_mx_init: malloc() failed\n");
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
-                                                                                                                      
+
     /* create a ptl for each NIC */
     for(i=0; i<mca_ptl_mx_component.mx_num_ptls; i++) {
         mca_ptl_mx_module_t* ptl = mca_ptl_mx_create(nic_addrs[i]);
@@ -84,10 +86,120 @@ int mca_ptl_mx_module_init(void)
         endpoint_addrs, 
         mca_ptl_mx_component.mx_num_ptls * sizeof(mx_endpoint_addr_t))) != OMPI_SUCCESS)
         return rc;
-
     return OMPI_SUCCESS;
 }
 
+
+/**
+ * Prepost recv buffers
+ */
+
+static inline int mca_ptl_mx_post(mca_ptl_mx_module_t* ptl)
+{
+    mca_ptl_mx_recv_frag_t* frag;
+    mx_return_t status;
+    int rc;
+    /* post an additional recv */
+    MCA_PTL_MX_RECV_FRAG_ALLOC(frag, rc);
+    if(rc != OMPI_SUCCESS) {
+        ompi_output(0, "mca_ptl_mx_thread: unable to allocate recv frag\n");
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+    mca_ptl_mx_recv_frag_init(frag, ptl);
+    status = mx_irecv(
+        ptl->mx_endpoint,
+        frag->frag_segments,
+        frag->frag_segment_count,
+        1,
+        MX_MATCH_MASK_NONE,
+        frag,
+        &frag->frag_request);
+    if(status != MX_SUCCESS) {
+        ompi_output(0, "mca_ptl_mx_post: mx_irecv() failed with status=%d\n", status);
+        return OMPI_ERROR;
+    }
+    return OMPI_SUCCESS;
+}
+
+
+/**
+ *  Routine to process complete request(s).
+ */
+
+static void mca_ptl_mx_progress(mca_ptl_mx_module_t* ptl, mx_request_t mx_request)
+{
+    mx_return_t mx_return;
+    mx_status_t mx_status;
+    uint32_t mx_result;
+    mca_ptl_base_frag_t* frag;
+
+    mx_return = mx_test(
+        ptl->mx_endpoint, 
+        &mx_request, 
+        &mx_status,
+        &mx_result);
+    if(mx_return != MX_SUCCESS) {
+        ompi_output(0, "mca_ptl_mx_progress: mx_test() failed with status=%d\n", mx_return);
+        return;
+    }
+
+    frag = (mca_ptl_base_frag_t*)mx_status.context;
+    switch(frag->frag_type) {
+        case MCA_PTL_FRAGMENT_SEND: 
+        {
+            mca_ptl_mx_send_frag_handler((mca_ptl_mx_send_frag_t*)frag, ptl);
+            break;
+        }
+        case MCA_PTL_FRAGMENT_RECV:
+        {
+            mca_ptl_mx_recv_frag_handler((mca_ptl_mx_recv_frag_t*)frag, ptl);
+            mca_ptl_mx_post(ptl);
+            break;
+        }
+        default:
+        {
+            ompi_output(0, "mca_ptl_mx_progress: invalid request type: %d\n", frag->frag_type);
+            break;
+        }
+    }
+}
+
+/**
+ * Thread to progress outstanding requests.
+ */
+
+#if OMPI_HAVE_THREADS
+
+static void* mca_ptl_mx_thread(ompi_object_t *arg)
+{
+    ompi_thread_t* thr = (ompi_thread_t*)arg;
+    mca_ptl_mx_module_t* ptl = thr->t_arg;
+    while(ptl->mx_thread_run) {
+        mx_request_t mx_request;
+        mx_return_t mx_return;
+        uint32_t mx_result;
+
+        /* block waiting for status */
+        mx_return = mx_peek(
+            ptl->mx_endpoint, 
+            UINT_MAX,
+            &mx_request,
+            &mx_result);
+        if(mx_return == MX_TIMEOUT)
+            continue;
+        if(mx_return != MX_SUCCESS) {
+            ompi_output(0, "mca_ptl_mx_thread: mx_probe() failed with status %d\n", 
+                mx_return);
+            break;
+        }
+
+        /* process the pending request */
+        mca_ptl_mx_progress(ptl, mx_request);
+    }
+    return NULL;
+}
+
+#endif
                                         
 /*
  * Create and intialize an MX PTL module, where each module
@@ -98,11 +210,13 @@ static mca_ptl_mx_module_t* mca_ptl_mx_create(uint64_t addr)
 {
     mca_ptl_mx_module_t* ptl = malloc(sizeof(mca_ptl_mx_module_t));
     mx_return_t status;
+    int i;
     if(NULL == ptl)
         return NULL;
 
     /* copy over default settings */
     memcpy(ptl, &mca_ptl_mx_module, sizeof(mca_ptl_mx_module_t));
+    OBJ_CONSTRUCT(&ptl->mx_peers, ompi_list_t);
 													    
     /* open local endpoint */
     status = mx_open_endpoint(
@@ -114,7 +228,7 @@ static mca_ptl_mx_module_t* mca_ptl_mx_create(uint64_t addr)
         &ptl->mx_endpoint);
     if(status != MX_SUCCESS) {
         ompi_output(0, "mca_ptl_mx_init: mx_open_endpoint() failed with status=%d\n", status);
-        free(ptl);
+        mca_ptl_mx_finalize(&ptl->super);
         return NULL;
     }
 													    
@@ -123,7 +237,7 @@ static mca_ptl_mx_module_t* mca_ptl_mx_create(uint64_t addr)
         ptl->mx_endpoint,
         &ptl->mx_endpoint_addr)) != MX_SUCCESS) {
         ompi_output(0, "mca_ptl_mx_init: mx_get_endpoint_addr() failed with status=%d\n", status);
-        free(ptl);
+        mca_ptl_mx_finalize(&ptl->super);
         return NULL;
     }
 													    
@@ -134,9 +248,30 @@ static mca_ptl_mx_module_t* mca_ptl_mx_create(uint64_t addr)
         &ptl->mx_endpoint_id,
         &ptl->mx_filter)) != MX_SUCCESS) {
         ompi_output(0, "mca_ptl_mx_init: mx_decompose_endpoint_addr() failed with status=%d\n", status);
+        mca_ptl_mx_finalize(&ptl->super);
+        return NULL;
+    }
+
+    /* pre-post receive buffers */
+    for(i=0; i<mca_ptl_mx_component.mx_prepost; i++) {
+        if(mca_ptl_mx_post(ptl) != OMPI_SUCCESS) {
+            mca_ptl_mx_finalize(&ptl->super);
+            return NULL;
+        }
+    }
+
+#if OMPI_HAVE_THREADS
+    /* create a thread to progress requests */
+    OBJ_CONSTRUCT(&ptl->mx_thread, ompi_thread_t);
+    ptl->mx_thread.t_run = mca_ptl_mx_thread;
+    ptl->mx_thread.t_arg = ptl; 
+    ptl->mx_thread_run = true;
+    if(ompi_thread_start(&ptl->mx_thread) != OMPI_SUCCESS) {
+        ompi_output(0, "mca_ptl_mx_create: unable to start progress thread.\n");
         free(ptl);
         return NULL;
     }
+#endif
     return ptl;
 }
 
@@ -148,6 +283,11 @@ static mca_ptl_mx_module_t* mca_ptl_mx_create(uint64_t addr)
 int mca_ptl_mx_finalize(struct mca_ptl_base_module_t* ptl)
 {
     mca_ptl_mx_module_t* ptl_mx = (mca_ptl_mx_module_t*)ptl;
+#if OMPI_HAVE_THREADS
+    ptl_mx->mx_thread_run = false;
+    ompi_thread_join(&ptl_mx->mx_thread, NULL);
+#endif
+    free(ptl_mx);
     return OMPI_SUCCESS;
 }
                                                                                                                     

@@ -184,8 +184,7 @@ mca_ptl_elan_send_desc_done (
     if(NULL == req) { /* An ack descriptor */
 	OMPI_FREE_LIST_RETURN (&ptl->queue->tx_desc_free,
 		(ompi_list_item_t *) frag);
-    } else if (0 == (header->hdr_common.hdr_flags 
-		& MCA_PTL_FLAGS_ACK_MATCHED)
+    } else if (0 == (header->hdr_common.hdr_flags & MCA_PTL_FLAGS_ACK)
 	    || mca_pml_base_send_request_matched(req)) {
 	if(ompi_atomic_fetch_and_set_int (&frag->frag_progressed, 1) == 0) 
 	{

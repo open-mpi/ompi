@@ -141,10 +141,10 @@ static inline int mca_pml_teg_send_request_start(
     if(first_fragment_size == 0 || req->req_bytes_packed <= first_fragment_size) {
         first_fragment_size = req->req_bytes_packed;
         flags = (req->req_send_mode == MCA_PML_BASE_SEND_SYNCHRONOUS) ?
-        MCA_PTL_FLAGS_ACK_MATCHED : 0;
+        MCA_PTL_FLAGS_ACK : 0;
     } else {
         /* require match for first fragment of a multi-fragment */
-        flags = MCA_PTL_FLAGS_ACK_MATCHED;
+        flags = MCA_PTL_FLAGS_ACK;
     }
     rc = ptl->ptl_send(ptl, req->req_peer, req, 0, first_fragment_size, flags);
     if(rc != OMPI_SUCCESS)

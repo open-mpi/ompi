@@ -383,7 +383,7 @@ void mca_ptl_ib_matched(mca_ptl_base_module_t* module,
 
     D_PRINT("Matched frag\n");
 
-    if (header->hdr_common.hdr_flags & MCA_PTL_FLAGS_ACK_MATCHED) {
+    if (header->hdr_common.hdr_flags & MCA_PTL_FLAGS_ACK) {
         mca_ptl_ib_send_frag_t *send_frag;
 
         send_frag = mca_ptl_ib_alloc_send_frag(module, NULL);
