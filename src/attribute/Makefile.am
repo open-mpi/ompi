@@ -1,4 +1,3 @@
-# -*- makefile -*-
 #
 # $HEADER$
 #
@@ -14,7 +13,8 @@ headers = \
 
 libattribute_la_SOURCES = \
         $(headers) \
-        attribute.c 
+        attribute.c \
+        attribute_predefined.c
 
 # Conditionally install the header files
 
