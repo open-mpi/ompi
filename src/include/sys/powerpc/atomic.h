@@ -51,7 +51,8 @@
 #define OMPI_HAVE_ATOMIC_ADD_32 1
 #define OMPI_HAVE_ATOMIC_SUB_32 1
 
-#if (OMPI_ASSEMBLY_ARCH == OMPI_POWERPC64) || OMPI_POWERPC_SUPPORT_64BIT
+
+#if (OMPI_ASSEMBLY_ARCH == OMPI_POWERPC64) || OMPI_ASM_SUPPORT_64BIT
 #define OMPI_HAVE_ATOMIC_CMPSET_64 1
 #endif
 
@@ -229,7 +230,7 @@ int ompi_atomic_cmpset_rel_64(volatile int64_t *addr,
 
 #endif /* OMPI_GCC_INLINE_ASSEMBLY */
 
-#elif (OMPI_ASSEMBLY_ARCH == OMPI_POWERPC32) && OMPI_POWERPC_SUPPORT_64BIT
+#elif (OMPI_ASSEMBLY_ARCH == OMPI_POWERPC32) && OMPI_ASM_SUPPORT_64BIT
 
 #ifndef ll_low /* GLIBC provides these somewhere, so protect */
 #define ll_low(x)       *(((unsigned int*)&(x))+0)
@@ -237,29 +238,39 @@ int ompi_atomic_cmpset_rel_64(volatile int64_t *addr,
 #endif
 
 #if  OMPI_GCC_INLINE_ASSEMBLY
+
 static inline int ompi_atomic_cmpset_64(volatile int64_t *addr,
                                         int64_t oldval, int64_t newval)
 {
     int ret;
 
+    /*
+     * We force oldval and newval into memory because PPC doesn't
+     * appear to have a way to do a move register with offset.  Since
+     * this is 32-bit code, a 64 bit integer will be loaded into two
+     * registers (assuming no inlining, addr will be in r3, oldval
+     * will be in r4 and r5, and newval will be r6 and r7.  We need
+     * to load the whole thing into one register.  So we have the
+     * compiler push the values into memory and load the double word
+     * into registers.  We use r4,r5 so that the main block of code
+     * is very similar to the pure 64 bit version.
+     */
    __asm__ __volatile__ (
-                         "stw r4, -32(r1)       \n\t"
-                         "stw r5, -28(r1)       \n\t"
-                         "stw r6, -24(r1)       \n\t"
-                         "stw r7, -20(r1)       \n\t"
-                         "ld r5,-32(r1)         \n\t"
-                         "ld r6,-24(r1)         \n\t"
-                         "1: ldarx   r9, 0, r3  \n\t"
-                         "   cmpd    0, r9, r5  \n\t"
+                         "ld r4,%2         \n\t"
+                         "ld r5,%3        \n\t"
+                         "1: ldarx   r9, 0, %1  \n\t"
+                         "   cmpd    0, r9, r4  \n\t"
                          "   bne-    2f         \n\t"
-                         "   stdcx.  r7, 0, r3  \n\t"
+                         "   stdcx.  r5, 0, %1  \n\t"
                          "   bne-    1b         \n\t"
                          "2:                    \n\t"
-                         "xor r3,r5,r9          \n\t"
-                         "subfic r2,r3,0        \n\t"
-                         "adde %0,r2,r3         \n\t"
+                         "xor r5,r4,r9          \n\t"
+                         "subfic r9,r5,0        \n\t"
+                         "adde %0,r9,r5         \n\t"
                          : "=&r" (ret)
-                         : : "r2", "r9", "cc", "memory");
+                         : "r"(addr), 
+                           "m"(oldval), "m"(newval)
+                         : "r4", "r5", "r9", "cc", "memory");
     
      return ret;
 }
@@ -299,7 +310,7 @@ int ompi_atomic_cmpset_rel_64(volatile int64_t *addr,
 
 #endif /* OMPI_GCC_INLINE_ASSEMBLY */
 
-#endif /* OMPI_ASM_ARCHITECTURE == PPC64 || OMPI_POWERPC_SUPPORT_64BIT */
+#endif /* OMPI_ASM_SUPPORT_64BIT */
 
 
 #if OMPI_GCC_INLINE_ASSEMBLY

@@ -30,6 +30,5 @@ cat > $CFILE<<EOF
 #include "atomic.h"
 EOF
 
-gcc -O1 -mcpu=970 -DOMPI_POWERPC_SUPPORT_64BIT=1 -I. -S $CFILE -o atomic-32-64.s
-gcc -O1 -DOMPI_POWERPC_SUPPORT_64BIT=0 -I. -S $CFILE -o atomic-32.s
-# gcc -m64 -DOMPI_POWERPC_SUPPORT_64BIT=1 -I. -S $CFILE -o atomic-64.s
+gcc -O1 -mpowerpc64 -mcpu=970 -DOMPI_ASM_SUPPORT_64BIT=1 -I. -S $CFILE -o atomic-32-64.s
+gcc -O1 -DOMPI_ASM_SUPPORT_64BIT=0 -I. -S $CFILE -o atomic-32.s

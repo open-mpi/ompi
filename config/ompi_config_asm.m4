@@ -394,7 +394,7 @@ AC_DEFUN([OMPI_CHECK_POWERPC_64BIT],[
     if test "$ompi_cv_asm_powerpc_r_reg" = "1" ; then
         ldarx_asm="        ldarx r1,r1,r1";
     else
-        ldarx_asm="        ldarx1,1,1";
+        ldarx_asm="        ldarx 1,1,1";
     fi
     OMPI_TRY_ASSEMBLE([$ompi_cv_asm_text
         $ldarx_asm],
@@ -582,7 +582,7 @@ AC_DEFINE_UNQUOTED([OMPI_WANT_SMP_LOCKS], [$want_smp_locks],
 # find our architecture for purposes of assembly stuff
 ompi_cv_asm_arch="UNSUPPORTED"
 OMPI_GCC_INLINE_ASSIGN=""
-OMPI_POWERPC_SUPPORT_64BIT=0
+OMPI_ASM_SUPPORT_64BIT=0
 case "${host}" in
     *-winnt*)
         ompi_cv_asm_arch="WINDOWS"
@@ -590,21 +590,25 @@ case "${host}" in
 
     i?86-*)
         ompi_cv_asm_arch="IA32"
+        OMPI_ASM_SUPPORT_64BIT=1
         OMPI_GCC_INLINE_ASSIGN='"movl [$]0, %0" : "=&r"(ret)'
     ;;
 
     x86_64*)
         ompi_cv_asm_arch="AMD64"
+        OMPI_ASM_SUPPORT_64BIT=1
         OMPI_GCC_INLINE_ASSIGN='"movl [$]0, %0" : "=&r"(ret)'
     ;;
 
     ia64-*)
         ompi_cv_asm_arch="IA64"
+        OMPI_ASM_SUPPORT_64BIT=1
         OMPI_GCC_INLINE_ASSIGN='"mov %0=r0\n;;\n" : "=&r"(ret)'
     ;;
 
     alpha-*)
         ompi_cv_asm_arch="ALPHA"
+        OMPI_ASM_SUPPORT_64BIT=1
         OMPI_GCC_INLINE_ASSIGN='"bis zero,zero,%0" : "=&r"(ret)'
     ;;
 
@@ -617,9 +621,9 @@ case "${host}" in
             # compiling in 32 bit more (and therefore should assume
             # sizeof(long) == 4), we can use the 64 bit test and set
             # operations.
-            OMPI_CHECK_POWERPC_64BIT(OMPI_POWERPC_SUPPORT_64BIT=1)
+            OMPI_CHECK_POWERPC_64BIT(OMPI_ASM_SUPPORT_64BIT=1)
         elif test "$ac_cv_sizeof_long" = "8" ; then
-            OMPI_POWERPC_SUPPORT_64BIT=1
+            OMPI_ASM_SUPPORT_64BIT=1
             ompi_cv_asm_arch="POWERPC64"
         else
             AC_MSG_ERROR([Could not determine PowerPC word size: $ac_cv_sizeof_long])
@@ -635,6 +639,7 @@ case "${host}" in
         else
           AC_MSG_ERROR([Could not determine Sparc word size: $ac_cv_sizeof_long])
         fi
+        OMPI_ASM_SUPPORT_64BIT=1
         OMPI_GCC_INLINE_ASSIGN='"mov 0,%0" : : "=&r"(ret)'
     ;;
 
@@ -643,10 +648,10 @@ case "${host}" in
     ;;
 esac
 
-AC_DEFINE_UNQUOTED([OMPI_POWERPC_SUPPORT_64BIT],
-                   [$OMPI_POWERPC_SUPPORT_64BIT],
-                   [Non-zero if safe to call PPC64 ops, even in PPC32 code])
-AC_SUBST([OMPI_POWERPC_SUPPORT_64BIT])
+AC_DEFINE_UNQUOTED([OMPI_ASM_SUPPORT_64BIT],
+                   [$OMPI_ASM_SUPPORT_64BIT],
+                   [Whether we can do 64bit assembly operations or not.  Should not be used outside of the assembly header files])
+AC_SUBST([OMPI_ASM_SUPPORT_64BIT])
 
 # now that we know our architecture, try to inline assemble
 OMPI_CHECK_INLINE_GCC([$OMPI_GCC_INLINE_ASSIGN])
@@ -666,7 +671,7 @@ if test "$ompi_cv_asm_arch" = "POWERPC32" -o "$ompi_cv_asm_arch" = "POWERPC64" ;
 else
     asm_format="${asm_format}-1"
 fi
-ompi_cv_asm_format="${asm_format}-${OMPI_POWERPC_SUPPORT_64BIT}"
+ompi_cv_asm_format="${asm_format}-${OMPI_ASM_SUPPORT_64BIT}"
 OMPI_ASSEMBLY_FORMAT="$ompi_cv_asm_format"
 
 AC_MSG_CHECKING([for assembly format])
