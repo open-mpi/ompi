@@ -5,6 +5,9 @@
 #include "group/group.h"
 #include "include/constants.h"
 
+/*
+ * Set group rank in a group structure.
+ */
 void lam_set_group_rank(lam_group_t *group, lam_proc_t *proc_pointer)
 {
     /* local variables */
@@ -14,15 +17,15 @@ void lam_set_group_rank(lam_group_t *group, lam_proc_t *proc_pointer)
      *   in this group
      */
     group->grp_my_rank = MPI_PROC_NULL;
-    if( NULL != proc_pointer ) {
+    if (NULL != proc_pointer) {
         /* loop over all procs in the group */
-        for ( proc=0 ; proc < group->grp_proc_count ; proc++ ){
+        for (proc = 0; proc < group->grp_proc_count; proc++) {
             /* check and see if this proc pointer matches proc_pointer
              */
-            if( group->grp_proc_pointers[proc] == proc_pointer ) {
+            if (group->grp_proc_pointers[proc] == proc_pointer) {
                 group->grp_my_rank = proc;
             }
-        }  /* end proc loop */
+        }                       /* end proc loop */
     }
 
     /* return */
