@@ -51,7 +51,7 @@
 #define OMPI_HAVE_ATOMIC_ADD_32 1
 #define OMPI_HAVE_ATOMIC_SUB_32 1
 
-#if (OMPI_ASSEMBLY_ARCH == OMPI_POWERPC64) || (OMPI_POWERPC_SUPPORT_64BIT && OMPI_GCC_INLINE_ASSEMBLY)
+#if (OMPI_ASSEMBLY_ARCH == OMPI_POWERPC64) || OMPI_POWERPC_SUPPORT_64BIT
 #define OMPI_HAVE_ATOMIC_CMPSET_64 1
 #endif
 
@@ -172,7 +172,7 @@ int ompi_atomic_cmpset_rel_32(volatile int32_t *addr,
 #endif /* OMPI_GCC_INLINE_ASSEMBLY */
 
 
-#if OMPI_POWERPC_SUPPORT_64BIT
+#if (OMPI_ASSEMBLY_ARCH == OMPI_POWERPC64)
 
 #if  OMPI_GCC_INLINE_ASSEMBLY
 static inline int ompi_atomic_cmpset_64(volatile int64_t *addr,
@@ -193,7 +193,6 @@ static inline int ompi_atomic_cmpset_64(volatile int64_t *addr,
     
    return (ret == oldval);
 }
-
 
 /* these two functions aren't inlined in the non-gcc case because then
    there would be two function calls (since neither cmpset_64 nor
@@ -219,8 +218,7 @@ static inline int ompi_atomic_cmpset_rel_64(volatile int64_t *addr,
     return ompi_atomic_cmpset_64(addr, oldval, newval);
 }
 
-#elif OMPI_ASSEMBLY_ARCH == OMPI_POWERPC64
-/* currently, don't have 64 bit apps for non-inline assembly */
+#else /* OMPI_GCC_INLINE_ASSEMBLY */
 
 int ompi_atomic_cmpset_64(volatile int64_t *addr,
                           int64_t oldval, int64_t newval);
@@ -231,7 +229,77 @@ int ompi_atomic_cmpset_rel_64(volatile int64_t *addr,
 
 #endif /* OMPI_GCC_INLINE_ASSEMBLY */
 
-#endif /* OMPI_POWERPC_SUPPORT_64BIT */
+#elif (OMPI_ASSEMBLY_ARCH == OMPI_POWERPC32) && OMPI_POWERPC_SUPPORT_64BIT
+
+#ifndef ll_low /* GLIBC provides these somewhere, so protect */
+#define ll_low(x)       *(((unsigned int*)&(x))+0)
+#define ll_high(x)      *(((unsigned int*)&(x))+1)
+#endif
+
+#if  OMPI_GCC_INLINE_ASSEMBLY
+static inline int ompi_atomic_cmpset_64(volatile int64_t *addr,
+                                        int64_t oldval, int64_t newval)
+{
+    int ret;
+
+   __asm__ __volatile__ (
+                         "stw r4, -32(r1)       \n\t"
+                         "stw r5, -28(r1)       \n\t"
+                         "stw r6, -24(r1)       \n\t"
+                         "stw r7, -20(r1)       \n\t"
+                         "ld r5,-32(r1)         \n\t"
+                         "ld r6,-24(r1)         \n\t"
+                         "1: ldarx   r9, 0, r3  \n\t"
+                         "   cmpd    0, r9, r5  \n\t"
+                         "   bne-    2f         \n\t"
+                         "   stdcx.  r7, 0, r3  \n\t"
+                         "   bne-    1b         \n\t"
+                         "2:                    \n\t"
+                         "xor r3,r5,r9          \n\t"
+                         "subfic r2,r3,0        \n\t"
+                         "adde %0,r2,r3         \n\t"
+                         : "=&r" (ret)
+                         : : "r2", "r9", "cc", "memory");
+    
+     return ret;
+}
+
+/* these two functions aren't inlined in the non-gcc case because then
+   there would be two function calls (since neither cmpset_64 nor
+   atomic_?mb can be inlined).  Instead, we "inline" them by hand in
+   the assembly, meaning there is one function call overhead instead
+   of two */
+static inline int ompi_atomic_cmpset_acq_64(volatile int64_t *addr,
+                                            int64_t oldval, int64_t newval)
+{
+    int rc;
+
+    rc = ompi_atomic_cmpset_64(addr, oldval, newval);
+    ompi_atomic_rmb();
+
+    return rc;
+}
+
+
+static inline int ompi_atomic_cmpset_rel_64(volatile int64_t *addr,
+                                            int64_t oldval, int64_t newval)
+{
+    ompi_atomic_wmb();
+    return ompi_atomic_cmpset_64(addr, oldval, newval);
+}
+
+#else /* OMPI_GCC_INLINE_ASSEMBLY */
+
+int ompi_atomic_cmpset_64(volatile int64_t *addr,
+                          int64_t oldval, int64_t newval);
+int ompi_atomic_cmpset_acq_64(volatile int64_t *addr,
+                              int64_t oldval, int64_t newval);
+int ompi_atomic_cmpset_rel_64(volatile int64_t *addr,
+                              int64_t oldval, int64_t newval);
+
+#endif /* OMPI_GCC_INLINE_ASSEMBLY */
+
+#endif /* OMPI_ASM_ARCHITECTURE == PPC64 || OMPI_POWERPC_SUPPORT_64BIT */
 
 
 #if OMPI_GCC_INLINE_ASSEMBLY
