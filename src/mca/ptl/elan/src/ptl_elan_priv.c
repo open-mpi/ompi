@@ -878,194 +878,175 @@ mca_ptl_elan_start_ack ( mca_ptl_base_module_t * ptl,
 }
 
 int
-mca_ptl_elan_drain_recv (mca_ptl_elan_component_t * emp)
+mca_ptl_elan_drain_recv (struct mca_ptl_elan_module_t *ptl)
 {
     struct ompi_ptl_elan_queue_ctrl_t *queue;
     ompi_ptl_elan_recv_queue_t *rxq;
-    struct mca_ptl_elan_module_t *ptl;
     ELAN_CTX   *ctx;
-
-    int         no_ptls;
-    int         i;
     int         rc;
 
     START_FUNC(PTL_ELAN_DEBUG_RECV);
-    no_ptls = emp->num_modules;
 
-    /* Iterate over all the PTL input Queues */
-    for (i = 0; i < no_ptls; i++) {
+    queue = ptl->queue;
+    rxq   = queue->rxq;
+    ctx   = ptl->ptl_elan_ctx;
 
-        ptl = emp->modules[i];
-        queue = emp->modules[i]->queue;
-        rxq = queue->rxq;
-        ctx = ptl->ptl_elan_ctx;
-        OMPI_LOCK (&queue->rx_lock);
+    OMPI_LOCK (&queue->rx_lock);
 #if 1
-        rc = (*(int *) (&rxq->qr_doneWord));
+    rc = (*(int *) (&rxq->qr_doneWord));
 #else
-        rc = elan4_pollevent_word (ctx, &rxq->qr_doneWord, 1);
+    rc = elan4_pollevent_word (ctx, &rxq->qr_doneWord, 1);
 #endif
- 
-        if (rc) {
-            mca_ptl_base_header_t *header;
 
-            header = (mca_ptl_base_header_t *) rxq->qr_fptr;
+    if (rc) {
+	mca_ptl_base_header_t *header;
 
-	    LOG_PRINT(PTL_ELAN_DEBUG_MAC,
-			"[recv...] type %d flag %d size %d\n",
-			header->hdr_common.hdr_type,
-			header->hdr_common.hdr_flags,
-			header->hdr_common.hdr_size);
-	
-            switch (header->hdr_common.hdr_type) {
-            case MCA_PTL_HDR_TYPE_MATCH:
-            case MCA_PTL_HDR_TYPE_FRAG:
-                /* a data fragment */
-                mca_ptl_elan_data_frag (ptl, header);
-                break;
-            case MCA_PTL_HDR_TYPE_ACK:
-            case MCA_PTL_HDR_TYPE_NACK:
-                /* a control fragment for a message */
-                mca_ptl_elan_ctrl_frag (ptl, header);
-                break;
-            case MCA_PTL_HDR_TYPE_FIN:
-                /* a control fragment for a message */
-                mca_ptl_elan_last_frag (ptl, header);
-		break;
-            default:
-                fprintf(stderr, "[%s:%d] unknow fragment type %d\n",
-		       	__FILE__, __LINE__,
-		       	header->hdr_common.hdr_type);
-		fflush(stderr);
-                break;
-            }
+	header = (mca_ptl_base_header_t *) rxq->qr_fptr;
 
-            /* Work out the new front pointer */
-            if (rxq->qr_fptr == rxq->qr_top) {
-                rxq->qr_fptr = rxq->qr_base;
-                rxq->qr_efptr = rxq->qr_efitem;
-            } else {
-                rxq->qr_fptr = (void *) ((uintptr_t) rxq->qr_fptr
-                                         + queue->rx_slotsize);
-                rxq->qr_efptr += queue->rx_slotsize;
-            }
+	LOG_PRINT(PTL_ELAN_DEBUG_MAC,
+		    "[recv...] type %d flag %d size %d\n",
+		    header->hdr_common.hdr_type,
+		    header->hdr_common.hdr_flags,
+		    header->hdr_common.hdr_size);
+    
+	switch (header->hdr_common.hdr_type) {
+	case MCA_PTL_HDR_TYPE_MATCH:
+	case MCA_PTL_HDR_TYPE_FRAG:
+	    /* a data fragment */
+	    mca_ptl_elan_data_frag (ptl, header);
+	    break;
+	case MCA_PTL_HDR_TYPE_ACK:
+	case MCA_PTL_HDR_TYPE_NACK:
+	    /* a control fragment for a message */
+	    mca_ptl_elan_ctrl_frag (ptl, header);
+	    break;
+	case MCA_PTL_HDR_TYPE_FIN:
+	    /* a control fragment for a message */
+	    mca_ptl_elan_last_frag (ptl, header);
+	    break;
+	default:
+	    fprintf(stderr, "[%s:%d] unknow fragment type %d\n",
+		    __FILE__, __LINE__,
+		    header->hdr_common.hdr_type);
+	    fflush(stderr);
+	    break;
+	}
 
-            /* PCI Write, Reset the event 
-	     * Order RESETEVENT wrt to wait_event_cmd */
-            queue->input->q_fptr = rxq->qr_efptr;
-            RESETEVENT_WORD (&rxq->qr_doneWord);
-            MEMBAR_STORESTORE ();
+	/* Work out the new front pointer */
+	if (rxq->qr_fptr == rxq->qr_top) {
+	    rxq->qr_fptr = rxq->qr_base;
+	    rxq->qr_efptr = rxq->qr_efitem;
+	} else {
+	    rxq->qr_fptr = (void *) ((uintptr_t) rxq->qr_fptr
+				     + queue->rx_slotsize);
+	    rxq->qr_efptr += queue->rx_slotsize;
+	}
 
-            /* Re-prime queue event by issuing a waitevent(1) on it */
-            elan4_wait_event_cmd (rxq->qr_cmdq,
-                    /* Is qr_elanDone really a main memory address? */
-                    MAIN2ELAN (ctx, rxq->qr_elanDone),
-                    E4_EVENT_INIT_VALUE (-32, E4_EVENT_WRITE,
-                        E4_EVENT_DTYPE_LONG, 0), 
-                    MAIN2ELAN (ctx, (void *) &rxq->qr_doneWord),
-                    0xfeedfacedeadbeef);
-	    elan4_flush_cmdq_reorder (rxq->qr_cmdq);
-        }
-        OMPI_UNLOCK (&queue->rx_lock);
+	/* PCI Write, Reset the event 
+	 * Order RESETEVENT wrt to wait_event_cmd */
+	queue->input->q_fptr = rxq->qr_efptr;
+	RESETEVENT_WORD (&rxq->qr_doneWord);
+	MEMBAR_STORESTORE ();
+
+	/* Re-prime queue event by issuing a waitevent(1) on it */
+	elan4_wait_event_cmd (rxq->qr_cmdq,
+		/* Is qr_elanDone really a main memory address? */
+		MAIN2ELAN (ctx, rxq->qr_elanDone),
+		E4_EVENT_INIT_VALUE (-32, E4_EVENT_WRITE,
+		    E4_EVENT_DTYPE_LONG, 0), 
+		MAIN2ELAN (ctx, (void *) &rxq->qr_doneWord),
+		0xfeedfacedeadbeef);
+	elan4_flush_cmdq_reorder (rxq->qr_cmdq);
     }
+    OMPI_UNLOCK (&queue->rx_lock);
 
     END_FUNC(PTL_ELAN_DEBUG_RECV);
     return OMPI_SUCCESS;
 }
 
 int
-mca_ptl_elan_update_desc (mca_ptl_elan_component_t * emp)
+mca_ptl_elan_update_desc (struct mca_ptl_elan_module_t *ptl)
 {
-    struct mca_ptl_elan_module_t *ptl;
-    mca_ptl_elan_send_frag_t   *frag;
     struct ompi_ptl_elan_comp_queue_t  *comp;
+    mca_ptl_elan_send_frag_t   *frag;
     ELAN4_CTX  *ctx;
+    int         rc = 0;
 
-    int         i, no_ptls, rc = 0;
-
-    no_ptls = emp->num_modules;
-
-    /* Update the send request if any of send's is completed */
-    for (i = 0; i < no_ptls; i++) {
-
-        ptl = emp->modules[i];
-        ctx = ptl->ptl_elan_ctx;
+    ctx = ptl->ptl_elan_ctx;
 
 #if OMPI_PTL_ELAN_COMP_QUEUE 
-        comp = emp->modules[i]->comp;
-        rxq = comp->rxq;
-
+    comp = ptl->comp;
+    rxq  = comp->rxq;
 #if 1
-	/* XXX: Just test and go */
-        rc = (*(int *) (&rxq->qr_doneWord));
+    /* XXX: Just test and go */
+    rc = (*(int *) (&rxq->qr_doneWord));
 
 #else
-	/* XXX: block on the event without holding a lock */
-        rc = elan4_pollevent_word (ctx, &rxq->qr_doneWord, 1);
+    /* XXX: block on the event without holding a lock */
+    rc = elan4_pollevent_word (ctx, &rxq->qr_doneWord, 1);
 #endif
-        if (rc) {
+    if (rc) {
 
-            mca_ptl_base_header_t *header;
- 
-	    OMPI_LOCK (&comp->rx_lock);
-            header = (mca_ptl_base_header_t *) rxq->qr_fptr;
+	mca_ptl_base_header_t *header;
 
-	    /* FIXME: please fix this completion queue processing */
+	OMPI_LOCK (&comp->rx_lock);
+	header = (mca_ptl_base_header_t *) rxq->qr_fptr;
 
-	    /* FIXME: please reorganize this into a common routine */
+	/* FIXME: please fix this completion queue processing */
 
-            /* Work out the new front pointer */
-            if (rxq->qr_fptr == rxq->qr_top) {
-                rxq->qr_fptr = rxq->qr_base;
-                rxq->qr_efptr = rxq->qr_efitem;
-            } else {
-                rxq->qr_fptr = (void *) ((uintptr_t) rxq->qr_fptr
-                                         + comp->rx_slotsize);
-                rxq->qr_efptr += comp->rx_slotsize;
-            }
+	/* FIXME: please reorganize this into a common routine */
 
-            /* PCI Write, Reset the event 
-	     * Order RESETEVENT wrt to wait_event_cmd */
-            comp->input->q_fptr = rxq->qr_efptr;
-            RESETEVENT_WORD (&rxq->qr_doneWord);
-            MEMBAR_STORESTORE ();
+	/* Work out the new front pointer */
+	if (rxq->qr_fptr == rxq->qr_top) {
+	    rxq->qr_fptr = rxq->qr_base;
+	    rxq->qr_efptr = rxq->qr_efitem;
+	} else {
+	    rxq->qr_fptr = (void *) ((uintptr_t) rxq->qr_fptr
+				     + comp->rx_slotsize);
+	    rxq->qr_efptr += comp->rx_slotsize;
+	}
 
-            /* Re-prime comp event by issuing a waitevent(1) on it */
-            elan4_wait_event_cmd (rxq->qr_cmdq,
-                    /* Is qr_elanDone really a main memory address? */
-                    MAIN2ELAN (ctx, rxq->qr_elanDone),
-                    E4_EVENT_INIT_VALUE (-32, E4_EVENT_WRITE,
-                        E4_EVENT_DTYPE_LONG, 0), 
-                    MAIN2ELAN (ctx, (void *) &rxq->qr_doneWord),
-                    0xfeedfacedeadbeef);
-	    elan4_flush_cmdq_reorder (rxq->qr_cmdq);
-	    OMPI_UNLOCK (&comp->rx_lock);
-        }
+	/* PCI Write, Reset the event 
+	 * Order RESETEVENT wrt to wait_event_cmd */
+	comp->input->q_fptr = rxq->qr_efptr;
+	RESETEVENT_WORD (&rxq->qr_doneWord);
+	MEMBAR_STORESTORE ();
+
+	/* Re-prime comp event by issuing a waitevent(1) on it */
+	elan4_wait_event_cmd (rxq->qr_cmdq,
+		/* Is qr_elanDone really a main memory address? */
+		MAIN2ELAN (ctx, rxq->qr_elanDone),
+		E4_EVENT_INIT_VALUE (-32, E4_EVENT_WRITE,
+		    E4_EVENT_DTYPE_LONG, 0), 
+		MAIN2ELAN (ctx, (void *) &rxq->qr_doneWord),
+		0xfeedfacedeadbeef);
+	elan4_flush_cmdq_reorder (rxq->qr_cmdq);
+	OMPI_UNLOCK (&comp->rx_lock);
+    }
 #else
-	while (ompi_list_get_size (&ptl->send_frags) > 0) {
-            frag = (mca_ptl_elan_send_frag_t *)
-                ompi_list_get_first (&ptl->send_frags);
-            rc = * ((int *) (&frag->desc->main_doneWord));
-	    if (rc) {
-		ompi_ptl_elan_base_desc_t *basic;
+    while (ompi_list_get_size (&ptl->send_frags) > 0) {
+	frag = (mca_ptl_elan_send_frag_t *)
+	    ompi_list_get_first (&ptl->send_frags);
+	rc = * ((int *) (&frag->desc->main_doneWord));
+	if (rc) {
+	    ompi_ptl_elan_base_desc_t *basic;
 
-                /* Remove the desc, update the request, return to free list */
-                frag = (mca_ptl_elan_send_frag_t *)
-                    ompi_list_remove_first (&ptl->send_frags);
-		basic = (ompi_ptl_elan_base_desc_t*)frag->desc;
+	    /* Remove the desc, update the request, return to free list */
+	    frag = (mca_ptl_elan_send_frag_t *)
+		ompi_list_remove_first (&ptl->send_frags);
+	    basic = (ompi_ptl_elan_base_desc_t*)frag->desc;
 
- 		mca_ptl_elan_send_desc_done (
-			frag, (mca_pml_base_send_request_t *) basic->req);
-		INITEVENT_WORD (ctx, basic->elan_event, &basic->main_doneWord);
-		RESETEVENT_WORD (&basic->main_doneWord);
-		PRIMEEVENT_WORD (ctx, basic->elan_event, 1);
- 	    } else {
- 		/* XXX: Stop at any incomplete send desc */
-		break;
-	    }
+	    mca_ptl_elan_send_desc_done (frag, 
+		    (mca_pml_base_send_request_t *) basic->req);
+	    INITEVENT_WORD (ctx, basic->elan_event, &basic->main_doneWord);
+	    RESETEVENT_WORD (&basic->main_doneWord);
+	    PRIMEEVENT_WORD (ctx, basic->elan_event, 1);
+	} else {
+	    /* XXX: Stop at any incomplete send desc */
+	    break;
+	}
 #endif 
-	} /* end of the while loop */
-    } /* end of the for loop */
+    } /* end of the while loop */
 
     return OMPI_SUCCESS;
 }
