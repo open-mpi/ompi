@@ -16,8 +16,8 @@ int ompi_request_wait_any(
 #if OMPI_HAVE_THREADS
     int c;
 #endif
-    int i, rc, null_requests;
-    int completed = -1;
+    unsigned int i, null_requests;
+    int rc, completed = -1;
     ompi_request_t **rptr;
     ompi_request_t *request;
 
