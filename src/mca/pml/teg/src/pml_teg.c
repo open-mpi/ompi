@@ -219,6 +219,10 @@ int mca_pml_teg_add_procs(ompi_proc_t** procs, size_t nprocs)
         size_t n_index;
         size_t n_size;
 
+        /* skip over procs w/ no ptls registered */
+        if(NULL == proc_pml)
+            continue;
+
         /* (1) determine the total bandwidth available across all ptls
          *     note that we need to do this here, as we may already have ptls configured
          * (2) determine the highest priority ranking for latency
