@@ -35,8 +35,8 @@ int mca_iof_base_select(bool *allow_multi_user_threads, bool* have_hidden_thread
     int selected_priority = -1;
     mca_iof_base_component_t *selected_component = NULL;
     mca_iof_base_module_t *selected_module = NULL;
-    bool selected_allow_user;
-    bool selected_have_hidden;
+    bool selected_allow_user = true;
+    bool selected_have_hidden = false;
  
     /* Traverse the list of opened modules; call their init functions. */
     for(item = ompi_list_get_first(&mca_iof_base.iof_components_opened);
