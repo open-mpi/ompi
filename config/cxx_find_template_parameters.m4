@@ -2,8 +2,6 @@ dnl -*- shell-script -*-
 dnl
 dnl $HEADER$
 dnl
-dnl $Id: cxx_find_template_parameters.m4,v 1.1 2004/01/07 07:40:48 jsquyres Exp $
-dnl
 
 define(LAM_CXX_FIND_TEMPLATE_PARAMETERS,[
 #

@@ -2,8 +2,6 @@ dnl -*- shell-script -*-
 dnl
 dnl $HEADER$
 dnl
-dnl $Id: lam_functions.m4,v 1.2 2004/01/07 07:46:37 jsquyres Exp $
-dnl
 
 AC_DEFUN(LAM_CONFIGURE_SETUP,[
 

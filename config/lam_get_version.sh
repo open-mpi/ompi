@@ -2,8 +2,6 @@
 #
 # $HEADER$
 #
-# $Id: lam_get_version.sh,v 1.2 2004/01/07 07:47:13 jsquyres Exp $
-#
 # Since we do this in multiple places, it's worth putting in a
 # separate shell script.  Very primitive script to get the version
 # number of LAM into a coherent variable.  Can query for any of the

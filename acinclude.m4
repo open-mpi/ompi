@@ -2,8 +2,6 @@ dnl -*- shell-script -*-
 dnl
 dnl $HEADER$
 dnl
-dnl $Id: acinclude.m4,v 1.3 2004/01/07 07:49:52 jsquyres Exp $
-dnl
 
 #
 # LAM/MPI-specific tests
