@@ -46,5 +46,3 @@ mca_ptl_gm_peer_send_continue( struct mca_ptl_gm_peer_t *ptl_peer,
 			       size_t offset,
 			       size_t *size,
 			       int flags );
-
-void send_callback(struct gm_port *port,void * context, gm_status_t status);
