@@ -20,7 +20,7 @@ if LAM_BUILD_LOADABLE_MODULE
 module_noinst =
 module_install = mca_topo_unity.la
 else
-module_noinst = libmca_mpi_topo_unity.la
+module_noinst = libmca_topo_unity.la
 module_install =
 endif
 
@@ -33,7 +33,7 @@ mca_topo_unity_la_LIBADD = \
 mca_topo_unity_la_LDFLAGS = -module -avoid-version
 
 noinst_LTLIBRARIES = $(module_noinst)
-libmca_mpi_topo_unity_la_SOURCES =
-libmca_mpi_topo_unity_la_LIBADD = src/libmca_topo_unity.la
-libmca_mpi_topo_unity_la_LDFLAGS = -module -avoid-version
+libmca_topo_unity_la_SOURCES =
+libmca_topo_unity_la_LIBADD = src/libmca_topo_unity.la
+libmca_topo_unity_la_LDFLAGS = -module -avoid-version
 

@@ -14,8 +14,7 @@ SUBDIRS = \
         pcm \
         pml \
         ptl \
-        registry \
-        topo
+        registry
 
 # Source code files
 
@@ -36,8 +35,7 @@ libmca_la_LIBADD = $(LIBLTDL_LTLIB) \
         pcm/libmca_pcm.la \
         pml/libmca_pml.la \
         ptl/libmca_ptl.la \
-        registry/libmca_registry.la \
-        topo/libmca_topo.la
+        registry/libmca_registry.la
 libmca_la_DEPENDENCIES = $(libmca_la_LIBADD)
 
 # Conditionally install the header files

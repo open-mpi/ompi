@@ -19,7 +19,7 @@ if LAM_BUILD_pcm_cofs_LOADABLE_MODULE
 module_noinst =
 module_install = mca_pcm_cofs.la
 else
-module_noinst = libmca_lam_pcm_cofs.la
+module_noinst = libmca_pcm_cofs.la
 module_install =
 endif
 
@@ -32,6 +32,6 @@ mca_pcm_cofs_la_LIBADD = \
 mca_pcm_cofs_la_LDFLAGS = -module -avoid-version
 
 noinst_LTLIBRARIES = $(module_noinst)
-libmca_lam_pcm_cofs_la_SOURCES =
-libmca_lam_pcm_cofs_la_LIBADD = src/libmca_pcm_cofs.la
-libmca_lam_pcm_cofs_la_LDFLAGS = -module -avoid-version
+libmca_pcm_cofs_la_SOURCES =
+libmca_pcm_cofs_la_LIBADD = src/libmca_pcm_cofs.la
+libmca_pcm_cofs_la_LDFLAGS = -module -avoid-version

@@ -19,7 +19,7 @@ if LAM_BUILD_coll_basic_LOADABLE_MODULE
 module_noinst =
 module_install = mca_coll_basic.la
 else
-module_noinst = libmca_mpi_coll_basic.la
+module_noinst = libmca_coll_basic.la
 module_install =
 endif
 
@@ -32,6 +32,6 @@ mca_coll_basic_la_LIBADD = \
 mca_coll_basic_la_LDFLAGS = -module -avoid-version
 
 noinst_LTLIBRARIES = $(module_noinst)
-libmca_mpi_coll_basic_la_SOURCES =
-libmca_mpi_coll_basic_la_LIBADD = src/libmca_coll_basic.la
-libmca_mpi_coll_basic_la_LDFLAGS = -module -avoid-version
+libmca_coll_basic_la_SOURCES =
+libmca_coll_basic_la_LIBADD = src/libmca_coll_basic.la
+libmca_coll_basic_la_LDFLAGS = -module -avoid-version
