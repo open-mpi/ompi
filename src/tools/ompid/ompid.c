@@ -58,7 +58,7 @@ int main(int argc, char *argv[])
                         "Show version of this application");
   ompi_cmd_line_make_opt(cmd_line, 'h', "help", 0, 
                         "Show this help message");
-  ompi_cmd_line_make_opt(cmd_line, "seed", "seed", 0, 
+  ompi_cmd_line_make_opt(cmd_line, 's', "seed", 0, 
                         "Set the daemon seed to true.");
 
   /* Get MCA parameters, if any */
