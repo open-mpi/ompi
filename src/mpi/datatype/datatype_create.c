@@ -4,9 +4,6 @@
 
 /** @file datatype creation function */
 
-#include "lam_config.h"
-#include "lam/constants.h"
-#include "mpi.h"
 #include "datatype.h"
 
 /**
