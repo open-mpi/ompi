@@ -129,7 +129,7 @@
 #include "lam/mem/malloc.h"
 
 /*
- * Class definition
+ * typedefs
  */
 
 typedef struct lam_object_t lam_object_t;
@@ -139,13 +139,15 @@ typedef void (*lam_destruct_t) (lam_object_t *);
 
 
 /**
- * Class descriptor.  This structure should be instantiated once for each class.  
+ * Class descriptor.  This structure should be instantiated once for
+ * each class, and provides both the inheritance mechanism, and the
+ * "vtable" for the class.
  */
 struct lam_class_info_t {
-    const char *cls_name;
-    lam_class_info_t *cls_parent;
-    lam_construct_t cls_construct;
-    lam_destruct_t cls_destruct;
+    const char *cls_name;	   /**< symbolic name of class */
+    lam_class_info_t *cls_parent;  /**< pointer to parent class descriptor */
+    lam_construct_t cls_construct; /**< class constructor */
+    lam_destruct_t cls_destruct;   /**< class destructor */
 };
 
 extern lam_class_info_t lam_object_t_class_info;
