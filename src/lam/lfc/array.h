@@ -20,19 +20,34 @@ extern lam_class_info_t    lam_array_cls;
 
 /*
  *
- *      Arrray interface
+ *      Array item interface
+ *
+ */
+
+struct lam_array_item_t
+{
+    lam_object_t            super;
+};
+typedef struct lam_array_item_t lam_array_item_t;
+
+void lam_arr_item_init(lam_array_item_t *item);
+
+/*
+ *
+ *      Array interface
  *
  */
 
 typedef int     (*lam_arr_cmp_fn)(lam_object_t *, lam_object_t *);
 
-typedef struct lam_array
+struct lam_array_t
 {
     lam_object_t    super;
     lam_object_t    **arr_items;
     size_t          arr_length;
     size_t          arr_size;
-} lam_array_t;
+};
+typedef struct lam_array_t lam_array_t;
 
 
 void lam_arr_init(lam_array_t *arr);
