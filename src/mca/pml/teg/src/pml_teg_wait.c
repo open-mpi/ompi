@@ -59,11 +59,53 @@ int mca_pml_teg_wait(
 }
 
 
-int mca_pml_teg_waitall(
+int mca_pml_teg_wait_all(
     int count,
-    lam_request_t** request,
-    lam_status_public_t* status)
+    lam_request_t** requests,
+    lam_status_public_t* statuses)
 {
+    int completed, i;
+
+    /*
+     * acquire lock and test for completion - if all requests are not completed
+     * pend on condition variable until a request completes 
+     */
+    lam_mutex_lock(&mca_pml_teg.teg_request_lock);
+    mca_pml_teg.teg_request_waiting++;
+    do {
+        completed = 0;
+        for(i=0; i<count; i++) {
+            mca_pml_base_request_t* pml_request = (mca_pml_base_request_t*)requests[i];
+            if(pml_request == NULL || pml_request->req_mpi_done == true) {
+                completed++;
+                continue;
+            }
+        } 
+        if(completed != count)
+            lam_condition_wait(&mca_pml_teg.teg_request_cond, &mca_pml_teg.teg_request_lock);
+    } while (completed != count);
+    mca_pml_teg.teg_request_waiting--;
+    lam_mutex_unlock(&mca_pml_teg.teg_request_lock);
+
+    /* 
+     * fill out completion status and free request if required 
+     */
+    for(i=0; i<count; i++) {
+        mca_pml_base_request_t* pml_request = (mca_pml_base_request_t*)requests[i];
+        if (NULL == pml_request) {
+            if(NULL != statuses)
+                statuses[i] = mca_pml_teg.teg_null.req_status;
+            continue;
+        }
+
+        if (NULL != statuses) {
+            statuses[i] = pml_request->req_status;
+        }
+        if (false == pml_request->req_persistent) {
+            /* return request to pool */
+            mca_pml_teg_free(&requests[i]);
+        }
+    }
     return LAM_SUCCESS;
 }
 
