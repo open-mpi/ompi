@@ -116,12 +116,11 @@ int mca_pml_teg_add_procs(lam_proc_t** procs, size_t nprocs)
         if(proc_pml == 0) {
 
             /* allocate pml specific proc data */
-            proc_pml = malloc(sizeof(mca_pml_proc_t));
-            if(NULL == proc_pml) {
+            proc_pml = OBJ_NEW(mca_pml_teg_proc_t);
+            if (NULL == proc_pml) {
                 lam_output(0, "mca_pml_teg_add_procs: unable to allocate resources");
                 return LAM_ERR_OUT_OF_RESOURCE;
             }
-            mca_pml_teg_proc_init(proc_pml);
 
             /* preallocate space in array for max number of ptls */
             mca_ptl_array_reserve(&proc_pml->proc_ptl_first, mca_pml_teg.teg_num_ptls);
@@ -256,7 +255,7 @@ int mca_pml_teg_del_procs(lam_proc_t** procs, size_t nprocs)
     return LAM_SUCCESS;
 }
 
-int mca_pml_teg_module_destruct(void)
+int mca_pml_teg_module_fini(void)
 {
     /* FIX */
     return LAM_SUCCESS;

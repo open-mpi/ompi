@@ -101,6 +101,8 @@ int lam_mpi_init(int argc, char **argv, int requested, int *provided)
   /* Setup MPI_COMM_SELF */
 
   lam_comm_init(MPI_COMM_SELF);
+#else
+  lam_comm_link_function();
 #endif
 
   /* All done */

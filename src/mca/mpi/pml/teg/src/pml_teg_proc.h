@@ -11,8 +11,6 @@
 #include "mpi/proc/proc.h"
 #include "pml_ptl_array.h"
 
-extern lam_class_info_t mca_pml_teg_proc_t_class_info;
-
 /*
  *  Structure associated w/ lam_proc_t that contains data specific
  *  to the PML. Note that this name is not PML specific.
@@ -26,6 +24,10 @@ struct mca_pml_proc_t {
    mca_ptl_array_t proc_ptl_next;
 };
 typedef struct mca_pml_proc_t mca_pml_proc_t;
+
+
+extern lam_class_info_t mca_pml_teg_proc_t_class_info;
+typedef struct mca_pml_proc_t mca_pml_teg_proc_t;
 
 
 void mca_pml_teg_proc_construct(mca_pml_proc_t*);
