@@ -32,15 +32,15 @@
  */
 int ompi_rte_finalize(void)
 {
+  ompi_rte_wait_finalize();
+  ompi_rte_internal_fini_spawn();
+
   mca_pcm_base_close();
   mca_llm_base_close();
   mca_pcmclient_base_close();
   mca_ns_base_close();
   mca_gpr_base_close();
   mca_oob_base_close();
-
-  ompi_rte_wait_finalize();
-  ompi_rte_internal_fini_spawn();
 
   ompi_event_fini();
 
