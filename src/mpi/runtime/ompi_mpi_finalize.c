@@ -12,8 +12,10 @@
 #include "communicator/communicator.h"
 #include "datatype/datatype.h"
 #include "op/op.h"
+#include "file/file.h"
 #include "info/info.h"
 #include "runtime/runtime.h"
+
 #include "mca/base/base.h"
 #include "mca/ptl/ptl.h"
 #include "mca/ptl/base/base.h"
@@ -21,6 +23,10 @@
 #include "mca/pml/base/base.h"
 #include "mca/coll/coll.h"
 #include "mca/coll/base/base.h"
+#include "mca/topo/topo.h"
+#include "mca/topo/base/base.h"
+#include "mca/io/io.h"
+#include "mca/io/base/base.h"
 
 
 int ompi_mpi_finalize(void)
@@ -34,14 +40,17 @@ int ompi_mpi_finalize(void)
 
   /* Free communication objects */
 
+  /* free window resources */
+
+  /* free file resources */
+  if (OMPI_SUCCESS != (ret = ompi_file_finalize())) {
+    return ret;
+  }
+
   /* free communicator resources */
   if (OMPI_SUCCESS != (ret = ompi_comm_finalize())) {
       return ret;
   }
-
-  /* free window resources */
-
-  /* free file resources */
 
   /* Free secondary resources */
 
@@ -76,6 +85,12 @@ int ompi_mpi_finalize(void)
 
   /* Close down MCA modules */
 
+  if (OMPI_SUCCESS != (ret = mca_io_base_close())) {
+    return ret;
+  }
+  if (OMPI_SUCCESS != (ret = mca_topo_base_close())) {
+    return ret;
+  }
   if (OMPI_SUCCESS != (ret = mca_coll_base_close())) {
     return ret;
   }

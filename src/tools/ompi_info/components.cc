@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "mpi/runtime/params.h"
 #include "mca/base/base.h"
 #include "mca/allocator/allocator.h"
 #include "mca/allocator/base/base.h"
@@ -79,6 +80,10 @@ void ompi_info::open_components()
       putenv(target);
     }
   }
+
+  // Register the MPI layer's MCA parameters
+
+  ompi_mpi_register_params();
 
   // Find / open all components
 

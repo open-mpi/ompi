@@ -30,15 +30,20 @@ static const char FUNC_NAME[] = "MPI_Info_f2c";
  */
 MPI_Info MPI_Info_f2c(MPI_Fint info) 
 {
+    size_t info_index = (size_t) info;
+
     /* check the arguments */
+
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-        if (0 > info || 
-            info >= ompi_pointer_array_get_size(ompi_info_f_to_c_table)) {
+        if (info_index < 0 || 
+            info_index >= ompi_pointer_array_get_size(&ompi_info_f_to_c_table)) {
+            (void) OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INFO,
+                                          FUNC_NAME);
             return MPI_INFO_NULL;
         }
     }
 
     /* return the index */ 
-    return ompi_info_f_to_c_table->addr[info];
+    return ompi_info_f_to_c_table.addr[info_index];
 }

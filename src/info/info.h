@@ -23,7 +23,7 @@ struct ompi_info_t {
   ompi_list_t super; 
   /**< generic list pointer which is the container for (key,value)
        pairs */
-  int i_fhandle; 
+  int i_f_to_c_index; 
   /**< fortran handle for info. This is needed for translation from
        fortran to C and vice versa */
   ompi_mutex_t *i_lock;
@@ -59,7 +59,7 @@ typedef struct ompi_info_entry_t ompi_info_entry_t;
 /**
  * Table for Fortran <-> C translation table
  */ 
-extern ompi_pointer_array_t *ompi_info_f_to_c_table;
+extern ompi_pointer_array_t ompi_info_f_to_c_table;
 
 /**
  * Global instance for MPI_INFO_NULL

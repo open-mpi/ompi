@@ -89,12 +89,14 @@ libmpi_la_LIBADD = \
         datatype/libdatatype.la \
         errhandler/liberrhandler.la \
         event/libevent.la \
+        file/libfile.la \
         group/libgroup.la \
         info/libinfo.la \
         mca/base/libmca_base.la \
         mca/allocator/base/libmca_allocator_base.la $(MCA_allocator_STATIC_LTLIBS) \
         mca/coll/base/libmca_coll_base.la $(MCA_coll_STATIC_LTLIBS) \
         $(MCA_common_STATIC_LTLIBS) \
+        mca/io/base/libmca_io_base.la $(MCA_coll_STATIC_LTLIBS) \
         mca/llm/base/libmca_llm_base.la $(MCA_llm_STATIC_LTLIBS) \
         mca/mpool/base/libmca_mpool_base.la $(MCA_mpool_STATIC_LTLIBS) \
         mca/ns/base/libmca_ns_base.la $(MCA_ns_STATIC_LTLIBS) \
@@ -114,8 +116,3 @@ libmpi_la_LIBADD = \
         threads/libthreads.la \
         util/libutil.la
 libmpi_la_DEPENDENCIES = $(libmpi_la_LIBADD)
-
-not_implemented_yet =\
-        ctnetwork/libctnetwork.la \
-        file/libfile.la \
-        win/libwin.la

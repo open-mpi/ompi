@@ -5,11 +5,12 @@
 #include "ompi_config.h"
 
 #include "include/constants.h"
+#include "mpi/runtime/mpiruntime.h"
+#include "mpi/runtime/params.h"
 #include "runtime/runtime.h"
 #include "util/sys_info.h"
 #include "util/proc_info.h"
 #include "mpi.h"
-#include "runtime/runtime.h"
 #include "communicator/communicator.h"
 #include "group/group.h"
 #include "info/info.h"
@@ -19,6 +20,8 @@
 #include "errhandler/errclass.h"
 #include "errhandler/errcode-internal.h"
 #include "op/op.h"
+#include "file/file.h"
+
 #include "mca/base/base.h"
 #include "mca/base/base.h"
 #include "mca/allocator/base/base.h"
@@ -33,6 +36,8 @@
 #include "mca/coll/base/base.h"
 #include "mca/topo/topo.h"
 #include "mca/topo/base/base.h"
+#include "mca/io/io.h"
+#include "mca/io/base/base.h"
 
 
 /*
@@ -42,13 +47,6 @@
 bool ompi_mpi_initialized = false;
 bool ompi_mpi_finalized = false;
 
-/* As a deviation from the norm, ompi_mpi_param_check is extern'ed in
-   src/mpi/interface/c/bindings.h because it is already included in
-   all MPI function imlementation files */
-bool ompi_mpi_param_check = true;
-bool ompi_debug_show_handle_leaks = false;
-bool ompi_debug_handle_never_free = false;
-
 bool ompi_mpi_thread_multiple = false;
 int ompi_mpi_thread_requested = MPI_THREAD_SINGLE;
 int ompi_mpi_thread_provided = MPI_THREAD_SINGLE;
@@ -56,7 +54,7 @@ int ompi_mpi_thread_provided = MPI_THREAD_SINGLE;
 
 int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 {
-    int ret, param, value;
+    int ret, param;
     bool allow_multi_user_threads;
     bool have_hidden_threads;
     ompi_proc_t** procs;
@@ -94,6 +92,15 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         return ret;
     }
 
+    /* Once we've joined the RTE, see if any MCA parameters were
+       passed to the MPI level */
+
+    if (OMPI_SUCCESS != (ret = ompi_mpi_register_params())) {
+        /* JMS show_help */
+        printf("show_help: ompi_mpi_init failed in mca_mpi_register_params\n");
+        return ret;
+    }
+
     /* initialize ompi procs */
     if (OMPI_SUCCESS != (ret = ompi_proc_init())) {
         /* JMS show_help */
@@ -101,36 +108,41 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         return ret;
     }
 
-    /* Open up relevant MCA modules.    Do not open io, topo, or one
-         module types here -- they are loaded upon demand (i.e., upon
-         relevant constructors). */
+    /* Open up relevant MCA modules. */
+
     if (OMPI_SUCCESS != (ret = mca_allocator_base_open())) {
         /* JMS show_help */
-        printf("show_help: ompi_mpi_init failed in mca_allocator_base_init\n");
+        printf("show_help: ompi_mpi_init failed in mca_allocator_base_open\n");
         return ret;
     }
     if (OMPI_SUCCESS != (ret = mca_mpool_base_open())) {
         /* JMS show_help */
-        printf("show_help: ompi_mpi_init failed in mca_mpool_base_init\n");
+        printf("show_help: ompi_mpi_init failed in mca_mpool_base_open\n");
         return ret;
     }
     if (OMPI_SUCCESS != (ret = mca_pml_base_open())) {
         /* JMS show_help */
-        printf("show_help: ompi_mpi_init failed in mca_pml_base_init\n");
+        printf("show_help: ompi_mpi_init failed in mca_pml_base_open\n");
         return ret;
     }
     if (OMPI_SUCCESS != (ret = mca_ptl_base_open())) {
         /* JMS show_help */
-        printf("show_help: ompi_mpi_init failed in mca_ptl_base_init\n");
+        printf("show_help: ompi_mpi_init failed in mca_ptl_base_open\n");
         return ret;
     }
     if (OMPI_SUCCESS != (ret = mca_coll_base_open())) {
         /* JMS show_help */
-        printf("show_help: ompi_mpi_init failed in mca_coll_base_init\n");
+        printf("show_help: ompi_mpi_init failed in mca_coll_base_open\n");
         return ret;
     }
     if (OMPI_SUCCESS != (ret = mca_topo_base_open())) {
         /* JMS show_help */
+        printf("show_help: ompi_mpi_init failed in mca_topo_base_open\n");
+        return ret;
+    }
+    if (OMPI_SUCCESS != (ret = mca_io_base_open())) {
+        /* JMS show_help */
+        printf("show_help: ompi_mpi_init failed in mca_io_base_open\n");
         return ret;
     }
 
@@ -216,12 +228,12 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
          return ret;
      }
 
-     /* If we have run-time MPI parameter checking possible, register
-        an MCA paramter to find out if the user wants it on or off by
-        default */
-     param = mca_base_param_register_int("mpi", NULL, "error_check", NULL, 1);
-     mca_base_param_lookup_int(param, &value);
-     ompi_mpi_param_check = (bool) value; 
+     /* initialize file handles */
+     if (OMPI_SUCCESS != (ret = ompi_file_init())) {
+         /* JMS show_help */
+         printf("show_help: ompi_mpi_init failed in ompi_file_init\n");
+         return ret;
+     }
 
      /* do module exchange */
      if (OMPI_SUCCESS != (ret = mca_base_modex_exchange())) {

@@ -278,7 +278,7 @@ enum {
 #define MPI_ERRHANDLER_NULL (&ompi_mpi_errhandler_null)
 #define MPI_INFO_NULL (&ompi_mpi_info_null)
 #define MPI_WIN_NULL ((MPI_Win) 0)
-#define MPI_FILE_NULL ((MPI_File) 0)
+#define MPI_FILE_NULL (&ompi_mpi_file_null)
 
 #define MPI_STATUS_IGNORE ((MPI_Status *) 0)
 #define MPI_STATUSES_IGNORE ((MPI_Status *) 0)
@@ -398,6 +398,8 @@ extern struct ompi_datatype_t *ompi_mpi_2cplex, *ompi_mpi_2dblcplex;
 extern struct ompi_errhandler_t ompi_mpi_errhandler_null;
 extern struct ompi_errhandler_t ompi_mpi_errors_are_fatal;
 extern struct ompi_errhandler_t ompi_mpi_errors_return;
+
+extern struct ompi_file_t ompi_file_null;
 
 extern struct ompi_info_t ompi_mpi_info_null;
 
