@@ -29,14 +29,12 @@ int MPI_Waitsome(int incount, MPI_Request *requests,
         } else if (requests == NULL) {
             rc = MPI_ERR_REQUEST;
         }
-        if (rc != MPI_SUCCESS) {
-            return rc;
-        }
+        LAM_ERRHANDLER_CHECK(rc, (lam_communicator_t*)NULL, rc, "MPI_Waitsome");
     }
 
     /* optimize this in the future */
-    if((rc = mca_pml.pml_wait(incount, requests, &index, statuses)) != LAM_SUCCESS)
-        return rc;
+    rc = mca_pml.pml_wait(incount, requests, &index, statuses);
+    LAM_ERRHANDLER_CHECK(rc, (lam_communicator_t*)NULL, rc, "MPI_Waitsome");
     *outcount = 1;
     indices[0] = index;
     return MPI_SUCCESS;

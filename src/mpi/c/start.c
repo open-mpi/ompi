@@ -27,6 +27,6 @@ int MPI_Start(MPI_Request *request)
             return rc;
         }
     }
-    return mca_pml.pml_start(request);
+    return mca_pml.pml_start(1, request);
 }
 

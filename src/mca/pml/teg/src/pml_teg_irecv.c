@@ -3,7 +3,7 @@
                                                                                                              
 int mca_pml_teg_irecv_init(
     void *addr,
-    size_t length,
+    size_t count,
     lam_datatype_t *datatype,
     int src,
     int tag,
@@ -18,7 +18,7 @@ int mca_pml_teg_irecv_init(
     mca_ptl_base_recv_request_init(
         recvreq,
         addr,
-        length,
+        count,
         datatype,
         src,
         tag,
@@ -31,7 +31,7 @@ int mca_pml_teg_irecv_init(
                                                                                                                               
 int mca_pml_teg_irecv(
     void *addr,
-    size_t length,
+    size_t count,
     lam_datatype_t *datatype,
     int src,
     int tag,
@@ -40,10 +40,6 @@ int mca_pml_teg_irecv(
 {
     int rc;
 
-#if 0
-    lam_output(0, "mca_pml_teg_irecv: src=%d tag=%d comm=%d\n", src, tag, comm->c_contextid);
-#endif
-    
     mca_ptl_base_recv_request_t *recvreq = mca_pml_teg_recv_request_alloc(&rc);
     if(NULL == recvreq)
         return rc;
@@ -51,7 +47,7 @@ int mca_pml_teg_irecv(
     mca_ptl_base_recv_request_init(
         recvreq,
         addr,
-        length,
+        count,
         datatype,
         src,
         tag,
@@ -69,16 +65,14 @@ int mca_pml_teg_irecv(
 
 int mca_pml_teg_recv(
     void *addr,
-    size_t length,
+    size_t count,
     lam_datatype_t *datatype,
     int src,
     int tag,
     struct lam_communicator_t* comm,
     lam_status_public_t* status)
 {
-    int rc;
-    int index;
-
+    int rc, index;
     mca_ptl_base_recv_request_t *recvreq = mca_pml_teg_recv_request_alloc(&rc);
     if(NULL == recvreq)
         return rc;
@@ -86,7 +80,7 @@ int mca_pml_teg_recv(
     mca_ptl_base_recv_request_init(
         recvreq,
         addr,
-        length,
+        count,
         datatype,
         src,
         tag,

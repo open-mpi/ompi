@@ -1,7 +1,9 @@
 /*
  * $HEADER$
  */
-
+/**
+ * @file
+ */
 #ifndef LAM_PML_TEG_SEND_REQUEST_H
 #define LAM_PML_TEG_SEND_REQUEST_H
 
@@ -47,8 +49,8 @@ static inline int mca_pml_teg_send_request_start(
     int flags, rc;
 
     /* start the first fragment */
-    if(req->super.req_length <= first_fragment_size) {
-        first_fragment_size = req->super.req_length;
+    if(req->req_packed_size <= first_fragment_size) {
+        first_fragment_size = req->req_packed_size;
         flags = (req->req_send_mode == MCA_PML_BASE_SEND_SYNCHRONOUS) ? MCA_PTL_FLAGS_ACK_MATCHED : 0;
     } else {
         /* require match for first fragment of a multi-fragment message or if synchronous send */

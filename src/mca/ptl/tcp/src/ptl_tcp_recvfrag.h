@@ -1,6 +1,8 @@
-/* @file
- *
+/* 
  * $HEADER$
+ */
+/**
+ * @file
  */
 
 #ifndef MCA_PTL_TCP_RECV_FRAG_H
@@ -18,13 +20,14 @@
 extern lam_class_t mca_ptl_tcp_recv_frag_t_class;
 
 
+/**
+ *  TCP received fragment derived type.
+ */
 struct mca_ptl_tcp_recv_frag_t {
-    mca_ptl_base_recv_frag_t super;
-    mca_ptl_base_ack_header_t frag_ack;
-    unsigned char* frag_buff;
-    size_t frag_hdr_cnt;
-    size_t frag_msg_cnt;
-    bool frag_ack_pending;
+    mca_ptl_base_recv_frag_t super; /**< base receive fragment descriptor */
+    size_t frag_hdr_cnt;            /**< number of header bytes received */
+    size_t frag_msg_cnt;            /**< number of msg bytes received */
+    bool frag_ack_pending;          /**< is an ack pending for this fragment */
 };
 typedef struct mca_ptl_tcp_recv_frag_t mca_ptl_tcp_recv_frag_t;
 
@@ -42,8 +45,11 @@ bool mca_ptl_tcp_recv_frag_send_ack(mca_ptl_tcp_recv_frag_t* frag);
 static inline void mca_ptl_tcp_recv_frag_progress(mca_ptl_tcp_recv_frag_t* frag)
 {
     if(frag->frag_msg_cnt >= frag->super.super.frag_header.hdr_frag.hdr_frag_length) {
-        if(frag->frag_buff != frag->super.super.frag_addr) {
-            memcpy(frag->super.super.frag_addr, frag->frag_buff, frag->super.super.frag_size);
+        if(frag->super.frag_is_buffered) {
+            struct iovec iov;
+            iov.iov_base = frag->super.super.frag_addr;
+            iov.iov_len = frag->super.super.frag_size;
+            lam_convertor_unpack(&frag->super.super.frag_convertor, &iov, 1);
         }
         frag->super.super.frag_owner->ptl_recv_progress(frag->super.frag_request, &frag->super);
         if(frag->frag_ack_pending == false) {

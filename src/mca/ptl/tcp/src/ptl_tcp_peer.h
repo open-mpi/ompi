@@ -1,8 +1,9 @@
-/* @file
- *
+/*
  * $HEADER$
  */
-
+/**
+ * @file
+ */
 #ifndef MCA_PTL_TCP_PEER_H
 #define MCA_PTL_TCP_PEER_H
 
@@ -26,7 +27,6 @@ typedef enum {
 } mca_ptl_tcp_state_t;
     
 
-
 /**
  *  An abstraction that represents a connection to a peer process.
  *  An instance of mca_ptl_base_peer_t is associated w/ each process 
@@ -36,18 +36,18 @@ typedef enum {
                                                                                                                             
 struct mca_ptl_base_peer_t {
     lam_list_item_t            super;
-    struct mca_ptl_tcp_t*      peer_ptl;
-    struct mca_ptl_tcp_proc_t* peer_proc;
-    struct mca_ptl_tcp_addr_t* peer_addr;
-    int                        peer_sd;
-    mca_ptl_tcp_send_frag_t*   peer_send_frag;
-    mca_ptl_tcp_recv_frag_t*   peer_recv_frag;
-    mca_ptl_tcp_state_t        peer_state;
-    size_t                     peer_retries;
-    lam_list_t                 peer_frags;   /* list of pending frags to send */
-    lam_mutex_t                peer_lock;
-    lam_event_t                peer_send_event;
-    lam_event_t                peer_recv_event;
+    struct mca_ptl_tcp_t*      peer_ptl;         /**< PTL instance that created this connection */
+    struct mca_ptl_tcp_proc_t* peer_proc;        /**< proc structure corresponding to peer */
+    struct mca_ptl_tcp_addr_t* peer_addr;        /**< address of peer */
+    int                        peer_sd;          /**< socket connection to peer */
+    mca_ptl_tcp_send_frag_t*   peer_send_frag;   /**< current send frag being processed */
+    mca_ptl_tcp_recv_frag_t*   peer_recv_frag;   /**< current recv frag being processed */
+    mca_ptl_tcp_state_t        peer_state;       /**< current state of the connection */
+    size_t                     peer_retries;     /**< number of connection retries attempted */
+    lam_list_t                 peer_frags;       /**< list of pending frags to send */
+    lam_mutex_t                peer_lock;        /**< lock for concurrent access to peer state */
+    lam_event_t                peer_send_event;  /**< event for async processing of send frags */
+    lam_event_t                peer_recv_event;  /**< event for async processing of recv frags */
 };
 typedef struct mca_ptl_base_peer_t mca_ptl_base_peer_t;
 

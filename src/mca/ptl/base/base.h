@@ -1,7 +1,9 @@
 /*
  * $HEADER$
  */
-
+/**
+ * @file
+ */
 #ifndef MCA_PTL_BASE_H
 #define MCA_PTL_BASE_H
 

@@ -535,7 +535,7 @@ static void mca_ptl_base_check_cantmatch_for_match(lam_list_t *additional_matche
 {
     /* local parameters */
     int match_found;
-    mca_ptl_base_sequence_t next_msg_seq_expected, frag_seqber;
+    mca_ptl_base_sequence_t next_msg_seq_expected, frag_seq;
     mca_ptl_base_recv_frag_t *frag_desc;
     mca_ptl_base_recv_request_t *matched_receive;
 
@@ -567,8 +567,8 @@ static void mca_ptl_base_check_cantmatch_for_match(lam_list_t *additional_matche
             /*
              * If the message has the next expected seq from that proc...
              */
-            frag_seqber=frag_desc->super.frag_header.hdr_match.hdr_msg_seq;
-            if (frag_seqber == next_msg_seq_expected) {
+            frag_seq=frag_desc->super.frag_header.hdr_match.hdr_msg_seq;
+            if (frag_seq == next_msg_seq_expected) {
 
                 /* We're now expecting the next sequence number. */
                 (pml_comm->c_next_msg_seq[frag_src])++;
@@ -617,7 +617,7 @@ static void mca_ptl_base_check_cantmatch_for_match(lam_list_t *additional_matche
                  * and re-start search for next sequence number */
                 break;
 
-            } /* end if (frag_seqber == next_msg_seq_expected) */
+            } /* end if (frag_seq == next_msg_seq_expected) */
             
         } /* end for (frag_desc) loop */
         

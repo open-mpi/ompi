@@ -8,7 +8,9 @@ noinst_LTLIBRARIES = libmca_pml_base.la
 
 # For VPATH builds, have to specify where static-modules.h will be found
 
-AM_CPPFLAGS = -I$(top_builddir)/src
+AM_CPPFLAGS = \
+	-pedantic \
+	-I$(top_builddir)/src
 
 # Source code files
 

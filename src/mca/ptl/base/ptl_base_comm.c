@@ -23,6 +23,7 @@ static void mca_pml_ptl_comm_construct(mca_pml_ptl_comm_t* comm)
     OBJ_CONSTRUCT(&comm->c_wild_lock, lam_mutex_t);
 }
 
+
 static void mca_pml_ptl_comm_destruct(mca_pml_ptl_comm_t* comm)
 {
     free(comm->c_msg_seq);

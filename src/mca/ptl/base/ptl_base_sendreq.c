@@ -1,6 +1,7 @@
 /*
  * $HEADER$
  */
+#include <string.h>
 #include "mca/ptl/base/ptl_base_sendreq.h"
 #include "mca/ptl/base/ptl_base_sendfrag.h"
 
@@ -18,11 +19,9 @@ lam_class_t mca_ptl_base_send_request_t_class = {
 
 static void mca_ptl_base_send_request_construct(mca_ptl_base_send_request_t* req)
 {
-    OBJ_CONSTRUCT(&req->req_unacked_frags, lam_list_t);
 }
 
 static void mca_ptl_base_send_request_destruct(mca_ptl_base_send_request_t* req)
 {
-    OBJ_DESTRUCT(&req->req_unacked_frags);
 }
 

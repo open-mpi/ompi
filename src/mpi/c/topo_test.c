@@ -11,6 +11,7 @@
 #pragma weak MPI_Topo_test = PMPI_Topo_test
 #endif
 
-int MPI_Topo_test(MPI_Comm comm, int *status) {
+int MPI_Topo_test(MPI_Comm comm, int *status) 
+{
     return MPI_SUCCESS;
 }

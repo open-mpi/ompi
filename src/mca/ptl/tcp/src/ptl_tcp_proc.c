@@ -1,6 +1,7 @@
 /*
  * $HEADER$
  */
+#include <string.h>
 #include "atomic.h"
 #include "lfc/lam_hash_table.h"
 #include "mca/base/mca_base_module_exchange.h"
@@ -81,7 +82,7 @@ mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_create(lam_proc_t* lam_proc)
         return 0;
     }
     memcpy(ptl_proc->proc_guid, lam_proc->proc_job, size);
-    memcpy(((char*) ptl_proc->proc_guid) + size, &vpid, sizeof(uint32_t));
+    memcpy(((unsigned char*)ptl_proc->proc_guid)+size, &vpid, sizeof(uint32_t));
 
     /* lookup tcp parameters exported by this proc */
     rc = mca_base_modex_recv(
