@@ -118,7 +118,6 @@ int mca_gpr_replica_empty_segment(mca_gpr_replica_segment_t *seg)
 
     /* now remove segment from global registry */
     ompi_list_remove_item(&mca_gpr_replica_head.registry, &seg->item);
-    OBJ_RELEASE(seg);
 
 
     return OMPI_SUCCESS;

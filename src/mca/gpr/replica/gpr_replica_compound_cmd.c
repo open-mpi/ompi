@@ -45,6 +45,7 @@ int mca_gpr_replica_begin_compound_cmd(void)
         if (0 < size) {
 	    ompi_buffer_free(mca_gpr_replica_compound_cmd);
         }
+        mca_gpr_replica_compound_cmd = NULL;
     }
     ompi_buffer_init(&mca_gpr_replica_compound_cmd, 0);
 
@@ -64,6 +65,7 @@ int mca_gpr_replica_stop_compound_cmd(void)
         ompi_buffer_size(mca_gpr_replica_compound_cmd, &size);
         if (0 < size) {
 	    ompi_buffer_free(mca_gpr_replica_compound_cmd);
+	    mca_gpr_replica_compound_cmd = NULL;
         }
     }
 
@@ -102,12 +104,14 @@ ompi_list_t* mca_gpr_replica_exec_compound_cmd(bool return_requested)
     }
 
     ompi_buffer_free(results);
+    results = NULL;
 
     mca_gpr_replica_compound_cmd_mode = false;
     if (NULL != mca_gpr_replica_compound_cmd) {  /* shouldn't be any way this could be true, but just to be safe... */
         ompi_buffer_size(mca_gpr_replica_compound_cmd, &size);
         if (0 < size) {
 	    ompi_buffer_free(mca_gpr_replica_compound_cmd);
+	    mca_gpr_replica_compound_cmd = NULL;
         }
     }
 
