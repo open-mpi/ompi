@@ -764,6 +764,7 @@ static int split_shorts(ompi_cmd_line_t *cmd, bool ignore_unknown)
                pass it through unmodified to the new argv */
 
             if (NULL == option) {
+                ++i;
                 if (!ignore_unknown) {
                     ompi_output(0, "Unrecognized option: '%s'", token);
                     return OMPI_ERR_BAD_PARAM;
