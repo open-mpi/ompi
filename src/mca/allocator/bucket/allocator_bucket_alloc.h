@@ -189,6 +189,17 @@ extern "C" {
    */
     int mca_allocator_bucket_cleanup(mca_allocator_t * mem);
 
+/**
+   * Cleanup all resources held by this allocator.
+   *
+   * @param mem_options A pointer to the appropriate struct for the area of
+   * memory.
+   *
+   * @retval None
+   *
+   */
+    int mca_allocator_bucket_finalize(mca_allocator_t * mem);
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

@@ -22,7 +22,9 @@ int mca_pml_teg_wait(
 #endif
 
 #if OMPI_HAVE_THREADS
+
     /* poll for completion */
+    ompi_atomic_mb();
     for(c=0; completed < 0 && c < mca_pml_teg.teg_poll_iterations; c++) {
         for(i=0; i<count; i++) {
             pml_request = (mca_pml_base_request_t*)request[i];
@@ -59,13 +61,13 @@ int mca_pml_teg_wait(
         THREAD_UNLOCK(&mca_pml_teg.teg_request_lock);
     }
 
-    /* return request to pool */
-    if(false == pml_request->req_persistent) {
-        MCA_PML_TEG_FREE(request);
-    }
+    /* return status */
     if (NULL != status) {
        *status = pml_request->req_status;
     }
+
+    /* return request to pool */
+    MCA_PML_TEG_FINI(request);
     *index = completed;
     return OMPI_SUCCESS;
 }
@@ -116,17 +118,15 @@ int mca_pml_teg_wait_all(
                 statuses[i] = mca_pml_teg.teg_request_null.req_status;
             } else {
                 statuses[i] = pml_request->req_status;
-                if (false == pml_request->req_persistent) {
-                    MCA_PML_TEG_FREE(&requests[i]);
-                }
+                MCA_PML_TEG_FINI(requests+i);
             }
         }
     } else {
         /* free request if required */
         for(i=0; i<count; i++) {
             mca_pml_base_request_t* pml_request = (mca_pml_base_request_t*)requests[i];
-            if (NULL != pml_request && false == pml_request->req_persistent) {
-                    MCA_PML_TEG_FREE(&requests[i]);
+            if (NULL != pml_request) {
+                MCA_PML_TEG_FINI(requests+i);
             }
         }
     }

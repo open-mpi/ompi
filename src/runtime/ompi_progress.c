@@ -6,5 +6,6 @@
 void ompi_progress(void)
 {
     ompi_event_loop(OMPI_EVLOOP_ONCE);
+    mca_pml.pml_progress();
 }
 

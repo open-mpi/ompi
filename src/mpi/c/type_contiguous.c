@@ -19,7 +19,7 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
-static char FUNC_NAME[] = "MPI_Type_contiguous";
+static const char FUNC_NAME[] = "MPI_Type_contiguous";
 
 int
 MPI_Type_contiguous(int count,

@@ -17,7 +17,7 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
-static char FUNC_NAME[] = "MPI_Attr_delete";
+static const char FUNC_NAME[] = "MPI_Attr_delete";
 
 int MPI_Attr_delete(MPI_Comm comm, int keyval)
 {

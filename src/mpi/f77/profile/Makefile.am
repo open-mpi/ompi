@@ -26,6 +26,7 @@ endif
 noinst_LTLIBRARIES = $(pmpi_lib)
 
 nodist_libmpi_f77_pmpi_la_SOURCES = \
+        pattr_fn_f.c \
         pabort_f.c \
         paccumulate_f.c \
         padd_error_class_f.c \

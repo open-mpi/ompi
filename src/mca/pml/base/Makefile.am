@@ -14,10 +14,12 @@ AM_CPPFLAGS = -I$(top_builddir)/src
 
 headers = \
         base.h \
+	pml_base_bsend.h \
 	pml_base_request.h
 
 libmca_pml_base_la_SOURCES = \
         $(headers) \
+	pml_base_bsend.c \
 	pml_base_close.c \
 	pml_base_request.c \
 	pml_base_open.c \

@@ -18,6 +18,9 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
+static const char FUNC_NAME[] = "MPI_Sendrecv";
+
+
 int MPI_Sendrecv(void *sendbuf, int sendcount, MPI_Datatype recvtype,
                  int dest, int sendtag, void *recvbuf, int recvcount,
                  MPI_Datatype sendtype, int source, int recvtag,
@@ -28,10 +31,9 @@ int MPI_Sendrecv(void *sendbuf, int sendcount, MPI_Datatype recvtype,
 
     if ( MPI_PARAM_CHECK ) {
         rc = MPI_SUCCESS;
-        if ( OMPI_MPI_INVALID_STATE ) {
-            rc = MPI_ERR_INTERN;
-        } else if (ompi_comm_invalid(comm)) {
-            rc = MPI_ERR_COMM;
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+        if (ompi_comm_invalid(comm)) {
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, FUNC_NAME);
         } else if (sendcount < 0) {
             rc = MPI_ERR_COUNT;
         } else if (sendtype == MPI_DATATYPE_NULL) {
@@ -49,19 +51,19 @@ int MPI_Sendrecv(void *sendbuf, int sendcount, MPI_Datatype recvtype,
         } else if (((recvtag < 0) && (recvtag !=  MPI_ANY_TAG)) || (recvtag > MPI_TAG_UB_VALUE)) {
             rc = MPI_ERR_TAG;
         }
-        OMPI_ERRHANDLER_CHECK(rc, comm, rc, "MPI_Sendrecv");
+        OMPI_ERRHANDLER_CHECK(rc, comm, rc, FUNC_NAME);
     }
 
     if (source != MPI_PROC_NULL) { /* post recv */
         rc = mca_pml.pml_irecv(recvbuf, recvcount, recvtype,
                            source, recvtag, comm, &req);
-        OMPI_ERRHANDLER_CHECK(rc, comm, rc, "MPI_Sendrecv");
+        OMPI_ERRHANDLER_CHECK(rc, comm, rc, FUNC_NAME);
     }
 
     if (dest != MPI_PROC_NULL) { /* send */
         rc = mca_pml.pml_send(sendbuf, sendcount, sendtype, dest,
                            sendtag, MCA_PML_BASE_SEND_STANDARD, comm);
-        OMPI_ERRHANDLER_CHECK(rc, comm, rc, "MPI_Sendrecv");
+        OMPI_ERRHANDLER_CHECK(rc, comm, rc, FUNC_NAME);
     }
 
     if (source != MPI_PROC_NULL) { /* wait for recv */
@@ -76,5 +78,5 @@ int MPI_Sendrecv(void *sendbuf, int sendcount, MPI_Datatype recvtype,
         status->_count = 0;
         rc = MPI_SUCCESS;
     }
-    OMPI_ERRHANDLER_RETURN(rc, comm, rc, "MPI_Sendrecv");
+    OMPI_ERRHANDLER_RETURN(rc, comm, rc, FUNC_NAME);
 }

@@ -22,7 +22,7 @@
 /* VPS: Just for now, to be removed later */
 extern ompi_convertor_t *ompi_convertor;
 
-static char FUNC_NAME[] = "MPI_Pack";
+static const char FUNC_NAME[] = "MPI_Pack";
 
 
 int MPI_Pack(void *inbuf, int incount, MPI_Datatype datatype,

@@ -62,13 +62,13 @@ typedef struct mca_ptl_base_send_request_t mca_ptl_base_send_request_t;
     mode,\
     persistent) \
 { \
+    OMPI_REQUEST_INIT(&(request)->super.super); \
     request->req_offset = 0; \
     request->req_bytes_sent = 0; \
     request->req_send_mode = mode; \
     request->req_peer_match.lval = 0; \
     request->req_peer_addr.lval = 0; \
     request->req_peer_size = 0; \
-    request->super.req_sequence = mca_pml_ptl_comm_send_sequence(comm->c_pml_comm, peer); \
     request->super.req_addr = addr; \
     request->super.req_count = count; \
     request->super.req_datatype = datatype; \

@@ -23,22 +23,24 @@ typedef enum {
     OMPI_REQUEST_INACTIVE,
     OMPI_REQUEST_ACTIVE,
     OMPI_REQUEST_CANCELLED
-} ompi_request_mode_t;
+} ompi_request_state_t;
 
 struct ompi_request_t {
     ompi_list_item_t super;
     ompi_request_type_t req_type;
-    ompi_request_mode_t req_mode;
+    volatile int req_state;
 };
 typedef struct ompi_request_t ompi_request_t;
 
 
 #define OMPI_REQUEST_INIT(request) \
     do { \
+        (request)->req_state = OMPI_REQUEST_INACTIVE; \
     } while(0); 
 
 #define OMPI_REQUEST_FINI(request) \
     do { \
+       (request)->req_state = OMPI_REQUEST_INVALID; \
     } while(0); 
 
 

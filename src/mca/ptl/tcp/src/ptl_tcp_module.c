@@ -174,7 +174,7 @@ int mca_ptl_tcp_module_close(void)
     OBJ_DESTRUCT(&mca_ptl_tcp_module.tcp_send_frags);
     OBJ_DESTRUCT(&mca_ptl_tcp_module.tcp_recv_frags);
     OBJ_DESTRUCT(&mca_ptl_tcp_module.tcp_lock);
-    return OMPI_SUCCESS;
+    return ompi_event_fini();
 }
 
 

@@ -18,6 +18,13 @@ static int mca_allocator_num_buckets;
 
 
 
+int mca_allocator_bucket_finalize(struct mca_allocator_t* allocator)
+{
+    mca_allocator_bucket_cleanup(allocator);
+    free(allocator);
+    return(OMPI_SUCCESS);
+}
+
 struct mca_allocator_t* mca_allocator_bucket_module_init(
     bool *allow_multi_user_threads,
     mca_allocator_segment_alloc_fn_t segment_alloc,
@@ -38,7 +45,8 @@ struct mca_allocator_t* mca_allocator_bucket_module_init(
     allocator->super.alc_alloc =  mca_allocator_bucket_alloc_wrapper;
     allocator->super.alc_realloc = mca_allocator_bucket_realloc;
     allocator->super.alc_free =  mca_allocator_bucket_free;
-    allocator->super.alc_finalize = mca_allocator_bucket_cleanup;
+    allocator->super.alc_return = mca_allocator_bucket_cleanup;
+    allocator->super.alc_finalize = mca_allocator_bucket_finalize;
 
     return((mca_allocator_t *) allocator);
 }

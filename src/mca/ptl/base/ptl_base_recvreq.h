@@ -47,6 +47,7 @@ typedef struct mca_ptl_base_recv_request_t mca_ptl_base_recv_request_t;
     comm, \
     persistent) \
 { \
+    OMPI_REQUEST_INIT(&(request)->super.super); \
     (request)->req_bytes_packed = 0; \
     (request)->req_bytes_received = 0; \
     (request)->req_bytes_delivered = 0; \

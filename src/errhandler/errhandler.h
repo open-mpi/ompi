@@ -225,7 +225,7 @@ extern "C" {
    * may not return (e.g., for MPI_ERRORS_ARE_FATAL).
    */
   int ompi_errhandler_invoke(ompi_errhandler_t *errhandler, void *mpi_object, 
-                            int err_code, char *message);
+                            int err_code, const char *message);
 
 
   /**

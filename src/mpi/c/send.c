@@ -18,7 +18,7 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
-static char FUNC_NAME[] = "MPI_Send";
+static const char FUNC_NAME[] = "MPI_Send";
 
 
 int MPI_Send(void *buf, int count, MPI_Datatype type, int dest,
@@ -33,8 +33,7 @@ int MPI_Send(void *buf, int count, MPI_Datatype type, int dest,
         int rc = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (ompi_comm_invalid(comm)) {
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM,
-                                          FUNC_NAME);
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, FUNC_NAME);
         } else if (count < 0) {
             rc = MPI_ERR_COUNT;
         } else if (type == MPI_DATATYPE_NULL) {

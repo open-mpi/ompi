@@ -13,9 +13,6 @@
 #include "mca/ptl/base/ptl_base_sendfrag.h"
 
 
-void mca_pml_teg_send_request_schedule(mca_ptl_base_send_request_t* req);
-
-
 #define MCA_PML_TEG_SEND_REQUEST_ALLOC( \
     comm, \
     dst, \
@@ -37,6 +34,7 @@ void mca_pml_teg_send_request_schedule(mca_ptl_base_send_request_t* req);
 #define MCA_PML_TEG_SEND_REQUEST_RETURN(request) \
     request->req_owner->ptl_request_return(request->req_owner, request);
 
+
 static inline int mca_pml_teg_send_request_start(
     mca_ptl_base_send_request_t* req)
 {
@@ -45,21 +43,30 @@ static inline int mca_pml_teg_send_request_start(
     size_t offset = req->req_offset;
     int flags, rc;
 
+    /* initialize request state and message sequence number */
+    req->super.super.req_state = OMPI_REQUEST_ACTIVE;
+    req->super.req_sequence = mca_pml_ptl_comm_send_sequence(
+        req->super.req_comm->c_pml_comm,
+        req->super.req_peer);
+
     /* start the first fragment */
     if(first_fragment_size == 0 || req->req_bytes_packed <= first_fragment_size) {
         first_fragment_size = req->req_bytes_packed;
-        flags = (req->req_send_mode == MCA_PML_BASE_SEND_SYNCHRONOUS) ? 
-            MCA_PTL_FLAGS_ACK_MATCHED : 0;
+        flags = (req->req_send_mode == MCA_PML_BASE_SEND_SYNCHRONOUS) ?
+        MCA_PTL_FLAGS_ACK_MATCHED : 0;
     } else {
         /* require match for first fragment of a multi-fragment */
         flags = MCA_PTL_FLAGS_ACK_MATCHED;
     }
-
     rc = ptl->ptl_put(ptl, req->req_peer, req, offset, first_fragment_size, flags);
     if(rc != OMPI_SUCCESS)
         return rc;
     return OMPI_SUCCESS;
 }
+
+
+void mca_pml_teg_send_request_schedule(mca_ptl_base_send_request_t* req);
+
 
 void mca_pml_teg_send_request_progress(
     struct mca_ptl_t* ptl,

@@ -17,7 +17,7 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
-static char FUNC_NAME[] = "MPI_Bcast";
+static const char FUNC_NAME[] = "MPI_Bcast";
 
 
 int MPI_Bcast(void *buffer, int count, MPI_Datatype datatype,

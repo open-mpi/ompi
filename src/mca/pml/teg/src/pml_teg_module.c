@@ -7,6 +7,7 @@
 #include "mca/pml/pml.h"
 #include "mca/ptl/ptl.h"
 #include "mca/base/mca_base_param.h"
+#include "mca/pml/base/pml_base_bsend.h"
 #include "mca/ptl/base/ptl_base_sendreq.h"
 #include "mca/ptl/base/ptl_base_recvreq.h"
 #include "pml_teg.h"
@@ -135,7 +136,6 @@ mca_pml_t* mca_pml_teg_module_init(int* priority,
                                    bool *have_hidden_threads)
 {
     *priority = 0;
-    *allow_multi_user_threads = true;
     *have_hidden_threads = false;
 
     OBJ_CONSTRUCT(&mca_pml_teg.teg_lock, ompi_mutex_t);
@@ -158,6 +158,13 @@ mca_pml_t* mca_pml_teg_module_init(int* priority,
     OBJ_CONSTRUCT(&mca_pml_teg.teg_request_lock, ompi_mutex_t);
     OBJ_CONSTRUCT(&mca_pml_teg.teg_request_cond, ompi_condition_t);
     mca_pml_teg.teg_request_waiting = 0;
+
+    /* buffered send */
+    if(mca_pml_base_bsend_init(allow_multi_user_threads) != OMPI_SUCCESS) {
+        ompi_output(0, "mca_pml_teg_module_init: mca_pml_bsend_init failed\n");
+        return NULL;
+    }
+    *allow_multi_user_threads &= true;
     return &mca_pml_teg.super;
 }
 

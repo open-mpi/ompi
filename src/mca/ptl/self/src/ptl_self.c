@@ -147,8 +147,13 @@ void mca_ptl_self_matched( mca_ptl_t* ptl,
 
     /* Did you have the same datatype or not ? If yes we can use an optimized version
      * for the copy function, if not we have to use a temporary buffer to pack/unpack
+     * 
+     * Note that if this is a buffered send - the data has already been packed into
+     * a contigous buffer and the convertor on the send request initialized to point
+     * into this buffer.
      */
-    if( sendreq->super.super.req_datatype == recvreq->super.req_datatype ) {
+    if( sendreq->super.super.req_datatype == recvreq->super.req_datatype &&
+        sendreq->super.req_send_mode != MCA_PML_BASE_SEND_BUFFERED) {
         ompi_ddt_copy_content_same_ddt( recvreq->super.req_datatype, recvreq->super.req_count,
                                         recvreq->super.req_addr, sendreq->super.super.req_addr );
     } else {

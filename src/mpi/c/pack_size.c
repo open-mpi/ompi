@@ -19,7 +19,7 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
-static char FUNC_NAME[] = "MPI_Pack_size";
+static const char FUNC_NAME[] = "MPI_Pack_size";
 
 int MPI_Pack_size(int incount, MPI_Datatype datatype, MPI_Comm comm,
                   int *size) 

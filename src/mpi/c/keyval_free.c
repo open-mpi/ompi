@@ -16,7 +16,7 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
-static char FUNC_NAME[] = "MPI_Keyval_free";
+static const char FUNC_NAME[] = "MPI_Keyval_free";
 
 int MPI_Keyval_free(int *keyval) 
 {

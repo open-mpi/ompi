@@ -10,7 +10,6 @@
 #include "pml_teg_sendreq.h"
 
 
-
 /**
  *  Schedule message delivery across potentially multiple PTLs. 
  *
@@ -100,8 +99,9 @@ void mca_pml_teg_send_request_progress(
             if(mca_pml_teg.teg_request_waiting) {
                 ompi_condition_broadcast(&mca_pml_teg.teg_request_cond);
             }
-        } else if (req->super.req_free_called)
+        } else if (req->super.req_free_called) {
             MCA_PML_TEG_FREE((ompi_request_t**)&req);
+        }
         THREAD_UNLOCK(&mca_pml_teg.teg_request_lock);
         return;
     } 

@@ -18,22 +18,21 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
+static const char FUNC_NAME[] = "MPI_Test";
+
+
 int MPI_Test(MPI_Request *request, int *completed, MPI_Status *status) 
 {
     int rc, index;
     if ( MPI_PARAM_CHECK ) {
         rc = MPI_SUCCESS;
-        if ( OMPI_MPI_INVALID_STATE ) {
-            rc = MPI_ERR_INTERN;
-        } else if (request == NULL) {
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+        if (request == NULL) {
             rc = MPI_ERR_REQUEST;
         } else if (completed == NULL) {
             rc = MPI_ERR_ARG;
         }
-        /* JMS: Tim will fix to invoke on the communicator/window/file
-           on the request (i.e., not COMM_WORLD), if the request is
-           available/valid */
-        OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, "MPI_Test");
+        OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
     }
 
     if(*request == NULL) {
@@ -50,6 +49,6 @@ int MPI_Test(MPI_Request *request, int *completed, MPI_Status *status)
     }
     /* JMS: Tim will fix to invoke on the communicator/window/file on
        the request (i.e., not COMM_WORLD) */
-    OMPI_ERRHANDLER_RETURN(rc, MPI_COMM_WORLD, rc, "MPI_Test");
+    OMPI_ERRHANDLER_RETURN(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
 }
 

@@ -19,6 +19,9 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
+static const char FUNC_NAME[] = "MPI_Issend";
+
+
 int MPI_Issend(void *buf, int count, MPI_Datatype type, int dest,
                int tag, MPI_Comm comm, MPI_Request *request) 
 {
@@ -29,25 +32,24 @@ int MPI_Issend(void *buf, int count, MPI_Datatype type, int dest,
 
     if ( MPI_PARAM_CHECK ) {
         rc = MPI_SUCCESS;
-        if ( OMPI_MPI_INVALID_STATE ) {
-            rc = MPI_ERR_INTERN;
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+        if (ompi_comm_invalid(comm)) {
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, FUNC_NAME);
         } else if (count < 0) {
             rc = MPI_ERR_COUNT;
         } else if (type == MPI_DATATYPE_NULL) {
             rc = MPI_ERR_TYPE;
         } else if (tag < 0 || tag > MPI_TAG_UB_VALUE) {
             rc = MPI_ERR_TAG;
-        } else if (ompi_comm_invalid(comm)) {
-            rc = MPI_ERR_COMM;
         } else if (ompi_comm_peer_invalid(comm, dest)) {
             rc = MPI_ERR_RANK;
         } else if (request == NULL) {
             rc = MPI_ERR_REQUEST;
         }
-        OMPI_ERRHANDLER_CHECK(rc, comm, rc, "MPI_Issend");
+        OMPI_ERRHANDLER_CHECK(rc, comm, rc, FUNC_NAME);
     }
 
     rc = mca_pml.pml_isend(buf,count,type,dest,tag,MCA_PML_BASE_SEND_SYNCHRONOUS,comm,request);
-    OMPI_ERRHANDLER_RETURN(rc, comm, rc, "MPI_Issend");
+    OMPI_ERRHANDLER_RETURN(rc, comm, rc, FUNC_NAME);
 }
 

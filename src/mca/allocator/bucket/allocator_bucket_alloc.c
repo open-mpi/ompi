@@ -317,7 +317,8 @@ int mca_allocator_bucket_cleanup(mca_allocator_t * mem)
                 segment = *segment_header;
                 *segment_header = segment->next_segment;
                 /* free the memory */
-                mem_options->free_mem_fn(segment);
+                if(mem_options->free_mem_fn)
+                    mem_options->free_mem_fn(segment);
             } else {
                 /* go to next segment */
                 segment_header = &((*segment_header)->next_segment);

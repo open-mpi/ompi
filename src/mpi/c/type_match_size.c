@@ -19,7 +19,7 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
-static char FUNC_NAME[] = "MPI_Type_match_size";
+static const char FUNC_NAME[] = "MPI_Type_match_size";
 
 int
 MPI_Type_match_size(int typeclass, int size, MPI_Datatype *type)

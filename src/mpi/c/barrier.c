@@ -18,7 +18,7 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
-static char FUNC_NAME[] = "MPI_Barrier";
+static const char FUNC_NAME[] = "MPI_Barrier";
 
 
 int MPI_Barrier(MPI_Comm comm)

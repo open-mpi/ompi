@@ -16,7 +16,7 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
-static char FUNC_NAME[] = "MPI_Keyval_create";
+static const char FUNC_NAME[] = "MPI_Keyval_create";
 
 int MPI_Keyval_create(MPI_Copy_function *copy_attr_fn,
                       MPI_Delete_function *delete_attr_fn,

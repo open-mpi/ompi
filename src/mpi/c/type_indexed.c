@@ -19,7 +19,7 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
-static char FUNC_NAME[] = "MPI_Type_indexed";
+static const char FUNC_NAME[] = "MPI_Type_indexed";
 
 int
 MPI_Type_indexed(int count,

@@ -15,6 +15,9 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
+static const char FUNC_NAME[] = "MPI_Win_wait";
+
+
 int MPI_Win_wait(MPI_Win win) {
     return MPI_SUCCESS;
 }

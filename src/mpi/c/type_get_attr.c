@@ -16,7 +16,7 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
-static char FUNC_NAME[] = "MPI_Type_get_attr";
+static const char FUNC_NAME[] = "MPI_Type_get_attr";
 
 int
 MPI_Type_get_attr (MPI_Datatype type,

@@ -18,6 +18,8 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
+static const char FUNC_NAME[] = "MPI_Waitsome";
+
 
 int MPI_Waitsome(int incount, MPI_Request *requests,
                  int *outcount, int *indices,
@@ -28,17 +30,16 @@ int MPI_Waitsome(int incount, MPI_Request *requests,
 
     if ( MPI_PARAM_CHECK ) {
         int rc = MPI_SUCCESS;
-        if (ompi_mpi_finalized) {
-            rc = MPI_ERR_INTERN;
-        } else if (requests == NULL) {
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+        if (requests == NULL) {
             rc = MPI_ERR_REQUEST;
         }
-        OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, "MPI_Waitsome");
+        OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
     }
 
     /* optimize this in the future */
     rc = mca_pml.pml_wait(incount, requests, &index, statuses);
-    OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, "MPI_Waitsome");
+    OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
     *outcount = 1;
     indices[0] = index;
     return MPI_SUCCESS;
