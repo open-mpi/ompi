@@ -1007,26 +1007,17 @@ int ompi_topo_create (ompi_communicator_t *old_comm,
     ompi_proc_t **topo_procs;
     int num_procs;
     int ret;
-
-    /* 
-     * Allocate a comm structure. This structure is used later to pass
-     * down to topo_base_comm_select so that the actions structure
-     * pertaining to the selected topology component can be used to
-     * re-aarange the procs.
-     */
-    *comm_topo = MPI_COMM_NULL; 
-    new_comm = OBJ_NEW (ompi_communicator_t);
+    mca_topo_base_comm_t *topo_comm=NULL;
 
     /* allocate the data for the common good */
-    new_comm->c_topo_comm = (mca_topo_base_comm_t *)malloc(sizeof(mca_topo_base_comm_t));
+    topo_comm = (mca_topo_base_comm_t *)malloc(sizeof(mca_topo_base_comm_t));
 
-    if (NULL == new_comm->c_topo_comm) {
+    if (NULL == topo_comm) {
         OBJ_RELEASE(new_comm);
         return OMPI_ERROR;
     }
 
-    /* select the topology component on the communicator */
-
+    /* select the topology compo nent on the communicator */
     if (OMPI_SUCCESS != (ret = mca_topo_base_comm_select (new_comm, NULL))) {
         free(new_comm->c_topo_comm); 
         OBJ_RELEASE(new_comm);

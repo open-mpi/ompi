@@ -60,7 +60,7 @@ struct ompi_if_t {
 typedef struct ompi_if_t ompi_if_t;
 
 static ompi_list_t ompi_if_list;
-
+static bool already_done = false;
 
 /*
  *  Discover the list of configured interfaces. Don't care about any
@@ -76,15 +76,17 @@ static int ompi_ifinit(void)
     int sd;
     ifconf.ifc_len = sizeof(buff);
     ifconf.ifc_buf = buff;
-                                                                                
-    if (ompi_list_get_size(&ompi_if_list) > 0)
+
+    if (already_done) {
         return OMPI_SUCCESS;
+    }
+    already_done = true;
 
     if((sd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
         ompi_output(0, "ompi_ifinit: socket() failed with errno=%d\n", errno);
         return OMPI_ERROR;
     }
-                                                                                
+
     if(ioctl(sd, SIOCGIFCONF, &ifconf) < 0) {
         ompi_output(0, "ompi_ifinit: ioctl(SIOCGIFCONF) failed with errno=%d", errno);
         close(sd);
@@ -207,9 +209,10 @@ static int ompi_ifinit(void)
     ompi_if_t *intf_ptr;
 
     /* return if this has been done before */
-    if (0 > ompi_list_get_size(&ompi_if_list)) {
+    if (already_done) {
         return OMPI_SUCCESS;
     }
+    already_done = true;
   
     /* create a socket */
     sd = WSASocket (AF_INET, SOCK_DGRAM, IPPROTO_UDP, NULL, 0, 0);
@@ -379,7 +382,7 @@ int ompi_ifaddrtoname(const char* if_addr, char* if_name, int length)
  *  Return the number of discovered interface.
  */
 
-int ompi_ifcount()
+int ompi_ifcount(void)
 {
     if(ompi_ifinit() != OMPI_SUCCESS)
         return (-1);
@@ -392,7 +395,7 @@ int ompi_ifcount()
  *  interface in our list.
  */
 
-int ompi_ifbegin()
+int ompi_ifbegin(void)
 {
     ompi_if_t *intf;
     if(ompi_ifinit() != OMPI_SUCCESS)
