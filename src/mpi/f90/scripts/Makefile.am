@@ -67,8 +67,10 @@ noinst_SCRIPTS = \
      mpi_ssend_f90.f90.sh \
      mpi_ssend_init_f90.f90.sh
 
-noinst_SCRIPTS += \
+onesided_scripts = \
      mpi_accumulate_f90.f90.sh \
      mpi_get_f90.f90.sh \
      mpi_put_f90.f90.sh \
      mpi_win_create_f90.f90.sh
+
+EXTRA_DIST = $(noinst_SCRIPTS) $(onesided_scripts)
