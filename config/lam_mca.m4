@@ -3,7 +3,7 @@ dnl
 dnl $HEADER$
 dnl
 
-AC_DEFUN(LAM_MCA,[
+AC_DEFUN([LAM_MCA],[
 
 # Find which modules should be built as run-time loadable modules
 # Acceptable combinations:
