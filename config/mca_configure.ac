@@ -143,11 +143,11 @@ crlam)
 ;;
 esac
 
-BUILD_LOADABLE_MODULE=0
+BUILD_@MCA_TYPE@_@MCA_MODULE_NAME@_LOADABLE_MODULE=0
 msg=no
 if test "$with_modules" = "yes" -o \
     "$with_modules" = "@MCA_TYPE@" -o "$with_modules" = "$generic_type"; then
-    BUILD_LOADABLE_MODULE=1
+    BUILD_@MCA_TYPE@_@MCA_MODULE_NAME@_LOADABLE_MODULE=1
     msg=yes
 elif test "$with_modules" != "no"; then
     ifs_save="$IFS"
@@ -155,7 +155,7 @@ elif test "$with_modules" != "no"; then
     for module in $with_modules; do
 	if test "$module" = "@MCA_TYPE@-@MCA_MODULE_NAME@" -o \
 	    "$module" = "@MCA_TYPE@" -o "$module" = "$generic_type"; then
-	    BUILD_LOADABLE_MODULE=1
+            BUILD_@MCA_TYPE@_@MCA_MODULE_NAME@_LOADABLE_MODULE=1
 	    msg=yes
 	fi
     done
@@ -178,7 +178,7 @@ AM_DISABLE_SHARED
 # defaults and reset them to shared=yes, static=no.
 #
 
-if test "$BUILD_LOADABLE_MODULE" = "1"; then
+if test "$BUILD_@MCA_TYPE@_@MCA_MODULE_NAME@_LOADABLE_MODULE" = "1"; then
     enable_shared=yes
     enable_static=no
 fi
@@ -229,7 +229,8 @@ AC_SUBST(CPPFLAGS)
 lam_show_subtitle "GNU libtool setup" 
 
 AM_PROG_LIBTOOL
-AM_CONDITIONAL(LAM_BUILD_LOADABLE_MODULE, test "$BUILD_LOADABLE_MODULE" = "1")
+AM_CONDITIONAL(LAM_BUILD_@MCA_TYPE@_@MCA_MODULE_NAME@_LOADABLE_MODULE, 
+    test "$BUILD_@MCA_TYPE@_@MCA_MODULE_NAME@_LOADABLE_MODULE" = "1")
 
 
 ############################################################################

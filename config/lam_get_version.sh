@@ -65,6 +65,9 @@ case "$option" in
     --cvs)
 	echo $LAM_CVS_VERSION
 	;;
+    --all)
+        echo ${LAM_VERSION}:${LAM_MAJOR_VERSION}:${LAM_MINOR_VERSION}:${LAM_RELEASE_VERSION}:${LAM_ALPHA_VERSION}:${LAM_BETA_VERSION}:${LAM_CVS_VERSION}
+        ;;
     -h|--help)
 	cat <<EOF
 $0 <srcfile> [<option>]
@@ -78,6 +81,7 @@ $0 <srcfile> [<option>]
     --alpha   - Alpha version number
     --beta    - Beta version nmumber
     --cvs     - CVS date stamp
+    --all     - Show all version numbers, separated by :
     --help    - This message
 EOF
 esac

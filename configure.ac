@@ -91,6 +91,10 @@ AH_BOTTOM([
 
 LAM_BASIC_SETUP
 
+top_lam_srcdir="$LAM_TOP_SRCDIR"
+AC_SUBST(top_lam_srcdir)
+top_lam_builddir="$LAM_TOP_BUILDDIR"
+AC_SUBST(top_lam_builddir)
 
 ############################################################################
 # Configuration options
@@ -381,6 +385,12 @@ AC_DEFINE_UNQUOTED(MPI_Offset, $MPI_OFFSET_TYPE, [Type of MPI_Offset])
 LAM_CONFIG_THREADS
 
 #
+# What is the local equivalent of "ln -s"
+#
+
+AC_PROG_LN_S
+
+#
 # File system case sensitivity
 #
 
@@ -433,7 +443,7 @@ AC_SUBST(liblam_third_party_subdirs)
 # (after C compiler setup)
 ############################################################################
 
-lam_show_subtitle "Libtool / libltdl configuration"
+lam_show_subtitle "Libtool configuration"
 
 # Use convenience libltdl for the moment, because we need to force the
 # use of the newest libltdl (i.e., the one that ships with libtool
