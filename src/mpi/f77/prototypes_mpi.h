@@ -167,8 +167,8 @@ void mpi_group_excl_f(MPI_Fint *group, MPI_Fint *n, MPI_Fint *ranks, MPI_Fint *n
 void mpi_group_free_f(MPI_Fint *group, MPI_Fint *ierr);
 void mpi_group_incl_f(MPI_Fint *group, MPI_Fint *n, MPI_Fint *ranks, MPI_Fint *newgroup, MPI_Fint *ierr);
 void mpi_group_intersection_f(MPI_Fint *group1, MPI_Fint *group2, MPI_Fint *newgroup, MPI_Fint *ierr);
-void mpi_group_range_excl_f(MPI_Fint *group, MPI_Fint *n, MPI_Fint *ranges3, MPI_Fint *newgroup, MPI_Fint *ierr);
-void mpi_group_range_incl_f(MPI_Fint *group, MPI_Fint *n, MPI_Fint *ranges3, MPI_Fint *newgroup, MPI_Fint *ierr);
+void mpi_group_range_excl_f(MPI_Fint *group, MPI_Fint *n, MPI_Fint ranges[][3], MPI_Fint *newgroup, MPI_Fint *ierr);
+void mpi_group_range_incl_f(MPI_Fint *group, MPI_Fint *n, MPI_Fint ranges[][3], MPI_Fint *newgroup, MPI_Fint *ierr);
 void mpi_group_rank_f(MPI_Fint *group, MPI_Fint *rank, MPI_Fint *ierr);
 void mpi_group_size_f(MPI_Fint *group, MPI_Fint *size, MPI_Fint *ierr);
 void mpi_group_translate_ranks_f(MPI_Fint *group1, MPI_Fint *n, MPI_Fint *ranks1, MPI_Fint *group2, MPI_Fint *ranks2, MPI_Fint *ierr);
@@ -456,8 +456,8 @@ void mpi_group_excl(MPI_Fint *group, MPI_Fint *n, MPI_Fint *ranks, MPI_Fint *new
 void mpi_group_free(MPI_Fint *group, MPI_Fint *ierr);
 void mpi_group_incl(MPI_Fint *group, MPI_Fint *n, MPI_Fint *ranks, MPI_Fint *newgroup, MPI_Fint *ierr);
 void mpi_group_intersection(MPI_Fint *group1, MPI_Fint *group2, MPI_Fint *newgroup, MPI_Fint *ierr);
-void mpi_group_range_excl(MPI_Fint *group, MPI_Fint *n, MPI_Fint *ranges3, MPI_Fint *newgroup, MPI_Fint *ierr);
-void mpi_group_range_incl(MPI_Fint *group, MPI_Fint *n, MPI_Fint *ranges3, MPI_Fint *newgroup, MPI_Fint *ierr);
+void mpi_group_range_excl(MPI_Fint *group, MPI_Fint *n, MPI_Fint ranges[][3], MPI_Fint *newgroup, MPI_Fint *ierr);
+void mpi_group_range_incl(MPI_Fint *group, MPI_Fint *n, MPI_Fint ranges[][3], MPI_Fint *newgroup, MPI_Fint *ierr);
 void mpi_group_rank(MPI_Fint *group, MPI_Fint *rank, MPI_Fint *ierr);
 void mpi_group_size(MPI_Fint *group, MPI_Fint *size, MPI_Fint *ierr);
 void mpi_group_translate_ranks(MPI_Fint *group1, MPI_Fint *n, MPI_Fint *ranks1, MPI_Fint *group2, MPI_Fint *ranks2, MPI_Fint *ierr);
@@ -743,8 +743,8 @@ void mpi_group_excl_(MPI_Fint *group, MPI_Fint *n, MPI_Fint *ranks, MPI_Fint *ne
 void mpi_group_free_(MPI_Fint *group, MPI_Fint *ierr);
 void mpi_group_incl_(MPI_Fint *group, MPI_Fint *n, MPI_Fint *ranks, MPI_Fint *newgroup, MPI_Fint *ierr);
 void mpi_group_intersection_(MPI_Fint *group1, MPI_Fint *group2, MPI_Fint *newgroup, MPI_Fint *ierr);
-void mpi_group_range_excl_(MPI_Fint *group, MPI_Fint *n, MPI_Fint *ranges3, MPI_Fint *newgroup, MPI_Fint *ierr);
-void mpi_group_range_incl_(MPI_Fint *group, MPI_Fint *n, MPI_Fint *ranges3, MPI_Fint *newgroup, MPI_Fint *ierr);
+void mpi_group_range_excl_(MPI_Fint *group, MPI_Fint *n, MPI_Fint ranges[][3], MPI_Fint *newgroup, MPI_Fint *ierr);
+void mpi_group_range_incl_(MPI_Fint *group, MPI_Fint *n, MPI_Fint ranges[][3], MPI_Fint *newgroup, MPI_Fint *ierr);
 void mpi_group_rank_(MPI_Fint *group, MPI_Fint *rank, MPI_Fint *ierr);
 void mpi_group_size_(MPI_Fint *group, MPI_Fint *size, MPI_Fint *ierr);
 void mpi_group_translate_ranks_(MPI_Fint *group1, MPI_Fint *n, MPI_Fint *ranks1, MPI_Fint *group2, MPI_Fint *ranks2, MPI_Fint *ierr);
@@ -1030,8 +1030,8 @@ void mpi_group_excl__(MPI_Fint *group, MPI_Fint *n, MPI_Fint *ranks, MPI_Fint *n
 void mpi_group_free__(MPI_Fint *group, MPI_Fint *ierr);
 void mpi_group_incl__(MPI_Fint *group, MPI_Fint *n, MPI_Fint *ranks, MPI_Fint *newgroup, MPI_Fint *ierr);
 void mpi_group_intersection__(MPI_Fint *group1, MPI_Fint *group2, MPI_Fint *newgroup, MPI_Fint *ierr);
-void mpi_group_range_excl__(MPI_Fint *group, MPI_Fint *n, MPI_Fint *ranges3, MPI_Fint *newgroup, MPI_Fint *ierr);
-void mpi_group_range_incl__(MPI_Fint *group, MPI_Fint *n, MPI_Fint *ranges3, MPI_Fint *newgroup, MPI_Fint *ierr);
+void mpi_group_range_excl__(MPI_Fint *group, MPI_Fint *n, MPI_Fint ranges[][3], MPI_Fint *newgroup, MPI_Fint *ierr);
+void mpi_group_range_incl__(MPI_Fint *group, MPI_Fint *n, MPI_Fint ranges[][3], MPI_Fint *newgroup, MPI_Fint *ierr);
 void mpi_group_rank__(MPI_Fint *group, MPI_Fint *rank, MPI_Fint *ierr);
 void mpi_group_size__(MPI_Fint *group, MPI_Fint *size, MPI_Fint *ierr);
 void mpi_group_translate_ranks__(MPI_Fint *group1, MPI_Fint *n, MPI_Fint *ranks1, MPI_Fint *group2, MPI_Fint *ranks2, MPI_Fint *ierr);
@@ -1317,8 +1317,8 @@ void MPI_GROUP_EXCL(MPI_Fint *group, MPI_Fint *n, MPI_Fint *ranks, MPI_Fint *new
 void MPI_GROUP_FREE(MPI_Fint *group, MPI_Fint *ierr);
 void MPI_GROUP_INCL(MPI_Fint *group, MPI_Fint *n, MPI_Fint *ranks, MPI_Fint *newgroup, MPI_Fint *ierr);
 void MPI_GROUP_INTERSECTION(MPI_Fint *group1, MPI_Fint *group2, MPI_Fint *newgroup, MPI_Fint *ierr);
-void MPI_GROUP_RANGE_EXCL(MPI_Fint *group, MPI_Fint *n, MPI_Fint *ranges3, MPI_Fint *newgroup, MPI_Fint *ierr);
-void MPI_GROUP_RANGE_INCL(MPI_Fint *group, MPI_Fint *n, MPI_Fint *ranges3, MPI_Fint *newgroup, MPI_Fint *ierr);
+void MPI_GROUP_RANGE_EXCL(MPI_Fint *group, MPI_Fint *n, MPI_Fint ranges[][3], MPI_Fint *newgroup, MPI_Fint *ierr);
+void MPI_GROUP_RANGE_INCL(MPI_Fint *group, MPI_Fint *n, MPI_Fint ranges[][3], MPI_Fint *newgroup, MPI_Fint *ierr);
 void MPI_GROUP_RANK(MPI_Fint *group, MPI_Fint *rank, MPI_Fint *ierr);
 void MPI_GROUP_SIZE(MPI_Fint *group, MPI_Fint *size, MPI_Fint *ierr);
 void MPI_GROUP_TRANSLATE_RANKS(MPI_Fint *group1, MPI_Fint *n, MPI_Fint *ranks1, MPI_Fint *group2, MPI_Fint *ranks2, MPI_Fint *ierr);
