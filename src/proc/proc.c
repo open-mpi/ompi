@@ -35,12 +35,6 @@ ompi_class_t ompi_proc_t_class = {
 
 void ompi_proc_construct(ompi_proc_t* proc)
 {
-    static int init = 0;
-    if(ompi_atomic_fetch_and_set_int(&init,1) == 0) {
-        OBJ_CONSTRUCT(&ompi_proc_list, ompi_list_t);
-        OBJ_CONSTRUCT(&ompi_proc_lock, ompi_mutex_t);
-    }
-
     proc->proc_pml = NULL;
     proc->proc_modex = NULL;
     OBJ_CONSTRUCT(&proc->proc_lock, ompi_mutex_t);
@@ -57,6 +51,8 @@ void ompi_proc_construct(ompi_proc_t* proc)
 
 void ompi_proc_destruct(ompi_proc_t* proc)
 {
+    if(proc->proc_modex != NULL)
+        OBJ_RELEASE(proc->proc_modex);
     OMPI_THREAD_LOCK(&ompi_proc_lock);
     ompi_list_remove_item(&ompi_proc_list, (ompi_list_item_t*)proc);
     OMPI_THREAD_UNLOCK(&ompi_proc_lock);
@@ -70,6 +66,9 @@ int ompi_proc_init(void)
     ompi_process_name_t *self;
     size_t i, npeers;
     int rc;
+
+    OBJ_CONSTRUCT(&ompi_proc_list, ompi_list_t);
+    OBJ_CONSTRUCT(&ompi_proc_lock, ompi_mutex_t);
 
     if(OMPI_SUCCESS != (rc = mca_pcmclient.pcmclient_get_peers(&peers, 
                                                                &npeers))) {

@@ -19,7 +19,7 @@ struct ompi_proc_t {
     ompi_list_item_t          super;       /* allow proc to be placed on a list */
     ompi_process_name_t       proc_name;
     struct mca_pml_proc_t*    proc_pml;    /* PML specific proc data */
-    struct mca_base_modex_t*  proc_modex;  /* MCA module exchange data */
+    ompi_object_t*            proc_modex;  /* MCA module exchange data */
     uint32_t                  proc_arch;
     ompi_convertor_t*         proc_convertor;
     ompi_mutex_t              proc_lock;
