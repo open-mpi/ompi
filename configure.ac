@@ -907,6 +907,7 @@ AC_CONFIG_FILES([
     test/class/Makefile
     test/mca/Makefile
     test/mca/oob/Makefile
+    test/mca/ns/Makefile
     test/threads/Makefile
     test/util/Makefile
     test/rte/Makefile
