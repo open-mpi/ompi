@@ -17,6 +17,7 @@ test_ns_replica_LDADD = \
         $(top_builddir)/src/util/argv.lo \
         $(top_builddir)/src/util/strncpy.lo \
         $(top_builddir)/src/mca/ns/base/libmca_ns_base.la \
+        $(top_builddir)/src/mca/ns/replica/src/libmca_ns_replica.la \
         $(top_builddir)/src/libmpi.la \
         $(top_builddir)/src/threads/mutex.lo \
         $(top_builddir)/src/threads/mutex_pthread.lo \
