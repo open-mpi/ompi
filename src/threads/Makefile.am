@@ -13,22 +13,16 @@ headers = \
 	condition.h \
 	condition_pthread.h \
 	condition_spinlock.h \
-	condition_spinwait.h \
 	mutex.h \
-	mutex_pthread.h \
-	mutex_spinlock.h \
-	mutex_spinwait.h \
+	mutex_unix.h \
+	mutex_windows.h \
 	thread.h
 
 libthreads_la_SOURCES = \
 	$(headers) \
 	condition_pthread.c \
 	condition_spinlock.c \
-	condition_spinwait.c \
 	mutex.c \
-	mutex_pthread.c \
-	mutex_spinlock.c \
-	mutex_spinwait.c \
 	thread.c
 
 # Conditionally install the header files
