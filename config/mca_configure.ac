@@ -118,7 +118,7 @@ AM_DISABLE_STATIC
 AC_MSG_CHECKING([if want component to be a DSO])
 AC_ARG_ENABLE(mca-dso,
     AC_HELP_STRING([--enable-mca-dso=LIST],
-		   [comma-separated list of types and/or type-component pairs that will be built as run-time loadable components (as opposed to statically linked in), if supported on this platform.  The default is to build all components as DSOs; the --disable-mca-dso[=LIST] form can be used to disable building all or some types/components as DSOs].  If LIST is "@MCA_TYPE@-@MCA_COMPONENT_NAME@" or "@MCA_COMPONENTNAME@", then @MCA_COMPONENT_NAME@ will be compiled as a DSO (if supported on this platform).))
+		   [comma-separated list of types and/or type-component pairs that will be built as run-time loadable components (as opposed to statically linked in), if supported on this platform.  The default is to build all components as DSOs; the --disable-mca-dso(=LIST) form can be used to disable building all or some types/components as DSOs.  If LIST is "@MCA_TYPE@-@MCA_COMPONENT_NAME@" or "@MCA_COMPONENT_NAME@", then @MCA_COMPONENT_NAME@ will be compiled as a DSO (if supported on this platform).]))
 
 # Manual conversion of $kind to its generic name (e.g., crmpi->cr,
 # crompi->cr).
