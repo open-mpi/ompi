@@ -31,6 +31,8 @@ extern "C" {
      * Base functions that are common to all implementations - can be overridden
      */
 
+    int ns_base_assign_cellid_to_process(ompi_process_name_t* name);
+
     ompi_process_name_t* ns_base_create_process_name(mca_ns_base_cellid_t cell,
 						     mca_ns_base_jobid_t job,
 						     mca_ns_base_vpid_t vpid);

@@ -52,6 +52,7 @@
 #define MCA_NS_CREATE_JOBID_CMD    0x02
 #define MCA_NS_RESERVE_RANGE_CMD   0x04
 #define MCA_NS_FREE_NAME_CMD       0x08
+#define MCA_NS_GET_MY_CELLID_CMD   0x10
 #define MCA_NS_ERROR               0xff
 
 
@@ -96,6 +97,7 @@ typedef struct ompi_process_name_t ompi_process_name_t;
 #define OMPI_NS_CREATE_JOBID      0x02
 #define OMPI_NS_RESERVE_RANGE     0x04
 #define OMPI_NS_FREE_NAME         0x08
+#define OMPI_NS_GET_MY_CELLID     0x10
 
 typedef uint8_t ompi_ns_cmd_bitmask_t;
 
@@ -124,6 +126,34 @@ typedef uint8_t ompi_ns_cmd_bitmask_t;
  * @endcode
  */
 typedef mca_ns_base_cellid_t (*mca_ns_base_module_create_cellid_fn_t)(void);
+
+/**
+ * Get the cell id for a process.
+ * The cellid designator represents the physical location of the process - it is associated with
+ * the hardware/system where the process is executing. Each process name contains this identifier
+ * so that the system can issue commands (e.g., "die") to a collection of processes that are
+ * executing on a common platform.
+ *
+ * Given that usage, it is necessary that the system have a way of telling a process its cellid.
+ * The create_cellid() function is used by the system to associate a "cellid" identifier with
+ * each platform. This function - assign_cellid_to_process() - is used to inform the process
+ * of its cellid.
+ *
+ * Given a process name, this function will lookup its current platform and update the name with the
+ * cellid.
+ *
+ * @param name Pointer to an ompi_process_name structure. The function will update the cellid
+ * entry in the structure.
+ *
+ * @retval OMPI_SUCCESS Update was successful.
+ * @retval OMPI_ERROR Update failed, most likely due to either a NULL process name pointer or the
+ * inability to locate the process name in the lookup table.
+ *
+ * @code
+ * return_value = ompi_name_server.assign_cellid_to_process(ompi_process_name_t* name);
+ * @endcode
+ */
+typedef int (*mca_ns_base_module_assign_cellid_to_process_fn_t)(ompi_process_name_t* name);
 
 /**
  * Create a new job id.
@@ -436,6 +466,7 @@ typedef int (*mca_ns_base_module_init_fn_t)(void);
  */
 struct mca_ns_base_module_1_0_0_t {
     mca_ns_base_module_create_cellid_fn_t create_cellid;
+    mca_ns_base_module_assign_cellid_to_process_fn_t assign_cellid_to_process;
     mca_ns_base_module_create_jobid_fn_t create_jobid;
     mca_ns_base_module_create_proc_name_fn_t create_process_name;
     mca_ns_base_module_copy_proc_name_fn_t copy_process_name;

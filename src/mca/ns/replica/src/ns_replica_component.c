@@ -53,6 +53,7 @@ mca_ns_base_component_t mca_ns_replica_component = {
  */
 static mca_ns_base_module_t mca_ns_replica = {
     ns_replica_create_cellid,
+    ns_base_assign_cellid_to_process,
     ns_replica_create_jobid,
     ns_base_create_process_name,
     ns_base_copy_process_name,
