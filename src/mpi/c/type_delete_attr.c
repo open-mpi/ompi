@@ -21,18 +21,18 @@ static char FUNC_NAME[] = "MPI_Type_delete_attr";
 int
 MPI_Type_delete_attr (MPI_Datatype type, int type_keyval)
 {
-    int ret;
+   int ret;
 
-    if (MPI_PARAM_CHECK) {
-	if (MPI_DATATYPE_NULL == type) {
-	    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, 
-					 MPI_ERR_TYPE, 
-					 FUNC_NAME);
-	}
-    }
+   if (MPI_PARAM_CHECK) {
+      if (MPI_DATATYPE_NULL == type) {
+         return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, 
+                                       MPI_ERR_TYPE, 
+                                       FUNC_NAME);
+      }
+   }
   
-    ret = ompi_attr_delete(TYPE_ATTR, type, type->d_keyhash, type_keyval, 0);
+   ret = ompi_attr_delete(TYPE_ATTR, type, type->d_keyhash, type_keyval, 0);
 
-    OMPI_ERRHANDLER_RETURN(ret, MPI_COMM_WORLD,
+   OMPI_ERRHANDLER_RETURN(ret, MPI_COMM_WORLD,
 			  MPI_ERR_OTHER, FUNC_NAME);  
 }
