@@ -29,10 +29,17 @@
 
 
 /*
+ * useful defines for bit-masks
+ */
+#define OMPI_NS_CMP_CELLID     0x01
+#define OMPI_NS_CMP_JOBID      0x02
+#define OMPI_NS_CMP_PROCID     0x04
+
+/*
  * general typedefs & structures
  */
 typedef uint32_t ompi_process_id_t;  /**< Set the allowed range for id's in each space */
-                                                                                                                      
+typedef uint8_t ompi_ns_cmp_bitmask_t;  /**< Bit mask for comparing process names */                                                                                                                      
 
 struct ompi_process_name_t {
     ompi_process_id_t cellid;  /**< Cell number */
@@ -280,28 +287,36 @@ typedef ompi_process_id_t (*mca_ns_get_cellid_t)(ompi_process_name_t *name);
 
 /**
  * Compare two name values.
- * The compare() function checks the value of the process id fields ONLY in the two
+ * The compare() function checks the value of the fields in the two
  * provided names, and returns a value indicating if the first one is less than, greater
- * than, or equal to the second.
+ * than, or equal to the second. The value of each field is compared in a hierarchical
+ * fashion, with cellid first, followed by jobid and process id in sequence. The bit-mask
+ * indicates which fields are to be included in the comparison. Fields not included via the
+ * bit-mask are ignored. Thus, the caller may request that any combination of the three fields
+ * be included in the comparison.
  *
+ * @param fields A bit-mask indicating which fields are to be included in the comparison. The
+ * comparison is performed on a hierarchical basis, with cellid being first, followed by
+ * jobid and then process id. Each field can be included separately, thus allowing the caller
+ * to configure the comparison to meet their needs.
  * @param *name1 A pointer to the first name structure.
  * @param *name2 A pointer to the second name structure.
  *
- * @retval -1 The process id field of the first provided name is less than the process id
- * field of the second provided name.
- * @retval 0 The process id fields of the two provided names are equal.
- * @retval +1 The process id field of the first provided name is greater than the process id
- * field of the second provided name.
+ * @retval -1 The indicated fields of the first provided name are less than the same
+ * fields of the second provided name.
+ * @retval 0 The indicated fields of the two provided names are equal.
+ * @retval +1 The indicated fields of the first provided name is greater than the same
+ * fields of the second provided name.
  *
  * There currently
  * is no error indication that this function failed.
  * Some means of returning a value indicative of an error will be devised in the future.
  *
  * @code
- * result = ompi_name_server.compare(&name1, &name2)
+ * result = ompi_name_server.compare(bit_mask, &name1, &name2)
  * @endcode
  */
-typedef int (*mca_ns_compare_t)(ompi_process_name_t *name1, ompi_process_name_t *name2);
+typedef int (*mca_ns_compare_t)(ompi_ns_cmp_bitmask_t fields, ompi_process_name_t *name1, ompi_process_name_t *name2);
 
 /*
  * Ver 1.0.0
