@@ -97,12 +97,13 @@ ompi_init_elan_queue_events (mca_ptl_elan_module_t * ptl,
         {
             desc->main_dma.dma_dstAddr = 0;
             desc->main_dma.dma_srcEvent =
-                SDRAM2ELAN (ctx, &elan_ptr->event32);
+                SDRAM2ELAN (ctx, &desc->elan_data_event->event32);
             desc->main_dma.dma_dstEvent = SDRAM2ELAN (ctx, queue->input);
-            INITEVENT_WORD (ctx, (EVENT *) & elan_ptr->event32,
+            INITEVENT_WORD (ctx, (EVENT *) & desc->elan_data_event->event32,
                             &desc->main_doneWord);
             RESETEVENT_WORD (&desc->main_doneWord);
-            PRIMEEVENT_WORD (ctx, (EVENT *) & elan_ptr->event32, 1);
+            PRIMEEVENT_WORD (ctx, 
+		    (EVENT *) & desc->elan_data_event->event32, 1);
         }
 
         item = (ompi_list_item_t *) frag;
