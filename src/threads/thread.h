@@ -24,6 +24,7 @@ typedef void *(*ompi_thread_fn_t) (ompi_object_t *);
 struct ompi_thread_t {
     ompi_object_t super;
     ompi_thread_fn_t t_run;
+    void* t_arg;
 #ifdef WIN32
     HANDLE t_handle;
 #elif OMPI_HAVE_POSIX_THREADS
