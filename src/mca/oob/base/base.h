@@ -61,7 +61,6 @@ OMPI_DECLSPEC extern ompi_process_name_t mca_oob_name_self;
 /**
  * Service tags
  */
-#define MCA_OOB_TAG_XCAST      -1
 #define MCA_OOB_TAG_NS          1
 #define MCA_OOB_TAG_GPR         2
 #define MCA_OOB_TAG_GPR_NOTIFY  3
@@ -71,6 +70,7 @@ OMPI_DECLSPEC extern ompi_process_name_t mca_oob_name_self;
 #define MCA_OOB_TAG_STDIO       7
 #define MCA_OOB_TAG_SCHED       8
 #define MCA_OOB_TAG_PCM_KILL    9
+#define MCA_OOB_TAG_XCAST       10
 #define MCA_OOB_TAG_USER        1000 /* user defined tags should be assigned above this level */
 
 /*

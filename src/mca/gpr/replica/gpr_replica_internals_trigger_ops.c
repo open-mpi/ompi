@@ -34,7 +34,8 @@ mca_gpr_replica_construct_trigger(ompi_registry_synchro_mode_t synchro_mode,
 				  mca_gpr_replica_key_t *keys,
 				  int num_keys,
 				  int trigger,
-				  ompi_registry_notify_id_t id_tag)
+				  ompi_registry_notify_id_t id_tag,
+                   mca_ns_base_jobid_t owning_jobid)
 {
     mca_gpr_replica_core_t *reg;
     mca_gpr_replica_trigger_list_t *trig;
@@ -47,6 +48,7 @@ mca_gpr_replica_construct_trigger(ompi_registry_synchro_mode_t synchro_mode,
     trig->synch_mode = synchro_mode;
     trig->action = action;
     trig->addr_mode = addr_mode;
+    trig->owning_job = owning_jobid;
     trig->trigger = trigger;
     trig->count = 0;
     trig->local_idtag = id_tag;

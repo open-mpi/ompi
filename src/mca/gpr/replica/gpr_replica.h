@@ -367,7 +367,8 @@ int mca_gpr_replica_subscribe_nl(ompi_registry_mode_t addr_mode,
 				 mca_gpr_replica_segment_t *seg,
 				 mca_gpr_replica_key_t *keys,
 				 int num_keys,
-				 ompi_registry_notify_id_t id_tag);
+				 ompi_registry_notify_id_t id_tag,
+                  mca_ns_base_jobid_t owning_jobid);
 
 int mca_gpr_replica_unsubscribe(ompi_registry_notify_id_t sub_number);
 ompi_registry_notify_id_t mca_gpr_replica_unsubscribe_nl(ompi_registry_notify_id_t sub_number);
@@ -385,7 +386,8 @@ int mca_gpr_replica_synchro_nl(ompi_registry_synchro_mode_t synchro_mode,
 			       mca_gpr_replica_key_t *keys,
 			       int num_keys,
 			       int trigger,
-			       ompi_registry_notify_id_t id_tag);
+			       ompi_registry_notify_id_t id_tag,
+                    mca_ns_base_jobid_t owning_jobid);
 
 int mca_gpr_replica_cancel_synchro(ompi_registry_notify_id_t synch_number);
 ompi_registry_notify_id_t mca_gpr_replica_cancel_synchro_nl(ompi_registry_notify_id_t synch_number);
