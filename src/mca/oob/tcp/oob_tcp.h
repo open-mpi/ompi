@@ -12,6 +12,7 @@
 #include "mca/oob/oob.h"
 #include "mca/oob/base/base.h"
 #include "mca/base/base.h"
+#include "mca/ns/base/base.h"
 #include "class/ompi_free_list.h"
 #include "class/ompi_rb_tree.h"
 #include "event/event.h"
@@ -25,8 +26,6 @@
 extern "C" {
 #endif
 
-
-#define OMPI_NAME_ARGS(n)  (n).cellid,(n).jobid,(n).vpid
 
 
 /*

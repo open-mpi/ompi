@@ -16,6 +16,9 @@
 #include "mca/ns/ns.h"
 
 
+#define OMPI_NAME_ARGS(n)  (n).cellid,(n).jobid,(n).vpid
+
+
 /*
  * Global functions for MCA overall collective open and close
  */
