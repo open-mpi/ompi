@@ -28,10 +28,10 @@
  */
 /*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
 
-#ifndef _LIST_H_
-#define _LIST_H_
+#ifndef LAM_LIST_H
+#define LAM_LIST_H
 
-#include "lam/base/object.h"
+#include "lam/lfc/object.h"
 
 /*
  *
@@ -160,5 +160,4 @@ lam_dbl_item_t *lam_dbl_remove_first(lam_dbl_list_t *list);
  */
 lam_dbl_item_t *lam_dbl_remove_last(lam_dbl_list_t *list);
 
-#endif  
-
+#endif /* LAM_LIST_H */

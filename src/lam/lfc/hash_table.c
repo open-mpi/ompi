@@ -1,4 +1,6 @@
 /*
+ * $HEADER$
+ *
  * Copyright 2002-2003. The Regents of the University of California. This material
  * was produced under U.S. Government contract W-7405-ENG-36 for Los Alamos
  * National Laboratory, which is operated by the University of California for
@@ -27,12 +29,13 @@
  * GNU Lesser General Public License for more details.
  */
 /*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
+
 #include <string.h>
 #include <stdlib.h>
 
-#include "lam_config.h"
-#include "lam_constants.h"
-#include "lam/base/hash_table.h"
+#include "include/lam_config.h"
+#include "include/lam_constants.h"
+#include "lam/lfc/hash_table.h"
 
 #define     BUCKET_ALLOC_SZ         5
 

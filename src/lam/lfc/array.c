@@ -1,4 +1,6 @@
 /*
+ * $HEADER$
+ *
  * Copyright 2002-2003. The Regents of the University of California. This material
  * was produced under U.S. Government contract W-7405-ENG-36 for Los Alamos
  * National Laboratory, which is operated by the University of California for
@@ -27,8 +29,9 @@
  * GNU Lesser General Public License for more details.
  */
 /*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
+
 #include <string.h>
-#include "lam/base/array.h"
+#include "lam/lfc/array.h"
 
 lam_class_info_t array_cls = {"lam_array_t", &object_cls, 
     (class_init_t) lam_arr_init, (class_destroy_t)lam_arr_destroy};

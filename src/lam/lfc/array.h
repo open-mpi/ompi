@@ -1,4 +1,6 @@
 /*
+ * $HEADER$
+ *
  * Copyright 2002-2003. The Regents of the University of California. This material
  * was produced under U.S. Government contract W-7405-ENG-36 for Los Alamos
  * National Laboratory, which is operated by the University of California for
@@ -28,11 +30,11 @@
  */
 /*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
 
-#ifndef ARRAY_H
-#define ARRAY_H
+#ifndef LAM_ARRAY_H
+#define LAM_ARRAY_H
 
-#include "lam_types.h"
-#include "lam/base/object.h"
+#include "include/lam_types.h"
+#include "lam/lfc/object.h"
 
 typedef struct lam_array
 {
@@ -64,6 +66,6 @@ void lam_arr_remove_item(lam_array_t *arr, int index);
 void lam_arr_set_item(lam_array_t *arr, lam_object_t *item, int index);
 
 
-#endif  /* ARRAY_H */
+#endif  /* LAM_ARRAY_H */
 
 

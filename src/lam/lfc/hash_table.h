@@ -27,11 +27,12 @@
  * GNU Lesser General Public License for more details.
  */
 /*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
-#ifndef HASH_TABLE_H
-#define HASH_TABLE_H
 
-#include "lam_stdint.h"
-#include "lam/base/object.h"
+#ifndef LAM_HASH_TABLE_H
+#define LAM_HASH_TABLE_H
+
+#include "include/lam_stdint.h"
+#include "lam/lfc/object.h"
 
 typedef struct lam_fhnode
 {
@@ -80,5 +81,4 @@ int   lam_fh_set_value_for_skey(lam_fast_hash_t *htbl, void *val, const char *ke
 /* returns the number of items in the table */
 static inline uint32_t lam_fh_count(lam_fast_hash_t *htbl) {return htbl->fh_count;}
 
-#endif  /* HASH_TABLE_H */
-
+#endif  /* LAM_HASH_TABLE_H */
