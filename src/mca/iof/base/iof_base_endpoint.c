@@ -34,6 +34,7 @@ static void mca_iof_base_endpoint_construct(mca_iof_base_endpoint_t* endpoint)
 
 static void mca_iof_base_endpoint_destruct(mca_iof_base_endpoint_t* endpoint)
 {
+    mca_iof_base_endpoint_close(endpoint);
     OBJ_DESTRUCT(&endpoint->ep_frags);
 }
 

@@ -349,11 +349,13 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         goto error;
     }
 
-#if 0
+#if OMPI_HAVE_THREADS 
     /* setup I/O forwarding */
-    if (OMPI_SUCCESS != (ret = ompi_mpi_init_io())) {
-	error = "ompi_rte_init_io failed";
-	goto error;
+    if(ompi_process_info.seed == false) {
+        if (OMPI_SUCCESS != (ret = ompi_mpi_init_io())) {
+	        error = "ompi_rte_init_io failed";
+	        goto error;
+        }
     }
 #endif
 
