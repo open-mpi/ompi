@@ -221,16 +221,11 @@ mca_coll_basic_comm_query(struct ompi_communicator_t *comm, int *priority)
     
     /* Intracommunicators */
 
-#if 1
-    /* Until the log functions are properly tested... */
-    return &intra_linear;
-#else
     if (ompi_comm_size(comm) <= mca_coll_base_crossover) {
       return &intra_linear;
     } else {
       return &intra_log;
     }
-#endif
   }
 
   /* Never reach here */
