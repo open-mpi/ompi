@@ -839,7 +839,7 @@ ompi_convertor_t* ompi_convertor_get_copy( ompi_convertor_t* pConvertor )
 }
 
 /* Actually we suppose that we can only do receiver side conversion */
-int ompi_convertor_get_packed_size( ompi_convertor_t* pConv, int* pSize )
+int ompi_convertor_get_packed_size( ompi_convertor_t* pConv, unsigned int* pSize )
 {
    if( ompi_ddt_type_size( pConv->pDesc, pSize ) != 0 )
       return OMPI_ERROR;
@@ -848,7 +848,7 @@ int ompi_convertor_get_packed_size( ompi_convertor_t* pConv, int* pSize )
    return OMPI_SUCCESS;
 }
 
-int ompi_convertor_get_unpacked_size( ompi_convertor_t* pConv, int* pSize )
+int ompi_convertor_get_unpacked_size( ompi_convertor_t* pConv, unsigned int* pSize )
 {
    int i;
    dt_desc_t* pData = pConv->pDesc;

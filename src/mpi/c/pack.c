@@ -27,10 +27,10 @@ static const char FUNC_NAME[] = "MPI_Pack";
 int MPI_Pack(void *inbuf, int incount, MPI_Datatype datatype,
              void *outbuf, int outsize, int *position, MPI_Comm comm)
 {
-  int size, rc, freeAfter;
+  int rc, freeAfter;
   ompi_convertor_t *local_convertor;
   struct iovec invec;
-  unsigned int max_data, iov_count;
+  unsigned int size, iov_count;
 
   if (MPI_PARAM_CHECK) {
     OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -67,9 +67,8 @@ int MPI_Pack(void *inbuf, int incount, MPI_Datatype datatype,
   /* Do the actual packing */
 
   iov_count = 1;
-  max_data = invec.iov_len;
   rc = ompi_convertor_pack( local_convertor, &invec, &iov_count,
-			    &max_data, &freeAfter );
+			    &size, &freeAfter );
   *position += local_convertor->bConverted;
   OBJ_RELEASE(local_convertor);
 
