@@ -10,7 +10,7 @@ AM_CPPFLAGS = \
         -I$(top_builddir)/../include \
         -I$(top_builddir)/..
 
-CFLAGS = -Wall @CFLAGS@
+CFLAGS = @CFLAGS@
 # LAM: No need to build the sample or test
 #SUBDIRS = . sample test
 SUBDIRS = compat
