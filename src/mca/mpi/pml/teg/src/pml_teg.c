@@ -21,7 +21,7 @@ mca_pml_teg_t mca_pml_teg = {
     mca_pml_teg_del_procs,
     mca_pml_teg_fini,
     mca_pml_teg_progress,
-#if 0
+#if TIM_HASNT_IMPLEMENTED_THIS_YET
     mca_pml_teg_irecv_init,
     mca_pml_teg_irecv,
 #else
@@ -30,7 +30,7 @@ mca_pml_teg_t mca_pml_teg = {
 #endif
     mca_pml_teg_isend_init,
     mca_pml_teg_isend,
-#if 0
+#if TIM_HASNT_IMPLEMENTED_YET
     mca_pml_teg_start,
     mca_pml_teg_test,
     mca_pml_teg_wait,
