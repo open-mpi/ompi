@@ -466,7 +466,7 @@ my $ok = Getopt::Long::GetOptions("url|u=s" => \$url_arg,
                                   "config|c=s" => \$config_arg,
                                   "file|f=s" => \$file_arg,
                                   "debug|d" => \$debug_arg,
-                                  "leave-install|l" => \$leave_install_arg,
+                                  "leave-install|l=s" => \$leave_install_arg,
                                   "help|h" => \$help_arg,
                                   "force" => \$force_arg,
                                   );
@@ -475,8 +475,9 @@ if (!$ok || $help_arg) {
     print("Command line error\n") 
         if (!$ok);
     print "Usage: $0 [--scratch|-s scratch_directory_root] [--email|-e address]\n";
-    print "[--config|-c config_file] [--help|-h] [--debug|-d]\n";
-    print "[[--file|-f local_ompi_tarball] [--url|-u URL_base]]\n";
+    print "  [--config|-c config_file] [--help|-h] [--debug|-d]\n";
+    print "  [[--file|-f local_ompi_tarball] [--url|-u URL_base]]\n";
+    print "  [--leave-install output_filename]\n";
     exit(0);
 }
 
@@ -687,6 +688,7 @@ if (! $config_arg || ! -f $config_arg) {
     $results->{$name}->{config} = $config;
     $results->{$name}->{want_stderr} = 1;
     $results->{$name}->{vpath_mode} = "";
+    $results->{$name}->{installdir} = "$dir/install";
 } else {
     open CONF, "$config_arg";
     my $i = 1;
@@ -716,6 +718,7 @@ if (! $config_arg || ! -f $config_arg) {
             $results->{$name}->{config} = $config;
             $results->{$name}->{want_stderr} = $want_stderr;
             $results->{$name}->{vpath_mode} = $vpath_mode;
+            $results->{$name}->{installdir} = "$dir/install";
             ++$i;
         }
     }
@@ -759,7 +762,12 @@ open LAST, ">$last_test_version_name";
 print LAST "$version\n";
 close LAST;
 
-# send success mail
+# if we're leaving the installdirs, output their names into the file
+# indicated by the --leave-install arg
+open LEAVE, ">$leave_install_arg"
+    if ($leave_install_arg);
+
+# send results mail
 my $email_subject;
 push(@email_output,
 "SUMMARY OF RESULTS:
@@ -769,6 +777,8 @@ foreach my $config (keys(%$results)) {
     my $str;
     if ($results->{$config}->{status} == 0) {
         $str = "Success   ";
+        print LEAVE "$results->{$config}->{installdir}\n"
+            if ($leave_install_arg);
     } else {
         $str = "FAILURE   ";
         $email_subject = $fail_subject;
@@ -776,6 +786,8 @@ foreach my $config (keys(%$results)) {
     $str .= $config . "\n";
     push(@email_output, $str);
 }
+close(LEAVE)
+    if ($leave_install_arg);
 $email_subject = $success_subject
     if (!$email_subject);
 
@@ -865,5 +877,7 @@ if (!$displayed) {
 
 push(@email_output, "Your friendly server,\nCyrador\n");
 send_mail($email_subject, $email_arg, @email_output);
+
+# All done
 
 exit(0);
