@@ -24,8 +24,8 @@
 
 /* error code */
 #define OMPI_CB_ERROR             -1
-#define OMPI_CB_FREE      (void *) 0
-#define OMPI_CB_RESERVED  (void *) 1
+#define OMPI_CB_FREE      (void *)-2
+#define OMPI_CB_RESERVED  (void *)-3
 
 /*
  * Structure used to keep track of the fifo status
