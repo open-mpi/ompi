@@ -35,11 +35,11 @@ typedef struct ompi_request_t ompi_request_t;
 
 #define OMPI_REQUEST_INIT(request) \
     do { \
-    while(0); 
+    } while(0); 
 
 #define OMPI_REQUEST_FINI(request) \
     do { \
-    while(0); 
+    } while(0); 
 
 
 #endif
