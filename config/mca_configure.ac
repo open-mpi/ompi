@@ -25,6 +25,7 @@ if test -n "@PARAM_VERSION_FILE@" -a -f "@PARAM_VERSION_FILE@"; then
     AC_SUBST(@PARAM_VAR_PREFIX@_ALPHA_VERSION)
     AC_SUBST(@PARAM_VAR_PREFIX@_BETA_VERSION)
     AC_SUBST(@PARAM_VAR_PREFIX@_SVN_VERSION)
+    AC_SUBST(@PARAM_VAR_PREFIX@_FULL_VERSION)
     AC_SUBST(@PARAM_VAR_PREFIX@_VERSION)
     version_string="version $@PARAM_VAR_PREFIX@_VERSION"
 else
@@ -226,7 +227,7 @@ fi
 # building within the Open MPI source tree.
 
 if test -z "$found_ompi_headers"; then
-    top_ompi_srcdir="unused -- building outside of Open MPI source tree"
+    top_ompi_srcdir=""
     top_ompi_builddir="$top_ompi_srcdir"
 fi
 
@@ -239,14 +240,19 @@ if test -z "$found_ompi_headers"; then
     # a top-level directory where the header files live.
 
     if test -n "$with_openmpi"; then
-        if -d "$with_opemnpi"; then
-            if test -d "$with_openmpi/openmpi" -a \
+        if test -d $with_opemnpi ; then
+            if test -d "$with_openmpi/include/openmpi" -a \
+                -f "$with_openmpi/include/openmpi/include/ompi.h"; then
+                INCFLAGS="-I$with_openmpi/include/openmpi -I$with_openmpi/include"
+                found_ompi_headers=1
+                AC_MSG_RESULT([$with_openmpi/include/openmpi])
+            elif test -d "$with_openmpi/openmpi" -a \
                 -f "$with_openmpi/openmpi/include/ompi.h"; then
-                INCFLAGS="-I$with_openmpi/openmpi"
+                INCFLAGS="-I$with_openmpi/openmpi I$with_openmpi/openmpi"
                 found_ompi_headers=1
                 AC_MSG_RESULT([$with_openmpi/openmpi])
             elif test -f "$with_openmpi/include/ompi.h"; then
-                INCFLAGS="-I$with_openmpi"
+                INCFLAGS="-I$with_openmpi -I$with_openmpi/.."
                 found_ompi_headers=1
                 AC_MSG_RESULT([$with_openmpi])
             else
