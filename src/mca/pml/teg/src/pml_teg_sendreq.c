@@ -14,9 +14,6 @@
 #include "pml_teg_recvreq.h"
 
 
-#define OMPI_THREAD_ADD(x,y) \
-   (ompi_using_threads() ? ompi_atomic_add_32(x,y) : (*x += y))
-
                                                                                                          
 static int mca_pml_teg_send_request_fini(struct ompi_request_t** request)
 {
@@ -76,7 +73,13 @@ int mca_pml_teg_send_request_schedule(mca_pml_base_send_request_t* req)
     size_t num_ptl_avail;
     size_t num_ptl;
 
-    if(OMPI_THREAD_ADD(&req->req_lock,1) == 1) {
+    /*
+     * Only allow one thread can be in this routine for a given request. 
+     * However, we cannot block callers on a mutex, so simply keep track 
+     * of the number of times the routine has been called and run through
+     * the scheduling logic once for every call.
+    */
+    if(OMPI_THREAD_ADD32(&req->req_lock,1) == 1) {
         do {
             /* allocate remaining bytes to PTLs */
             bytes_remaining = req->req_bytes_packed - req->req_offset;
@@ -125,7 +128,7 @@ int mca_pml_teg_send_request_schedule(mca_pml_base_send_request_t* req)
             }
 
         /* fragments completed while scheduling - so retry */
-        } while(OMPI_THREAD_ADD(&req->req_lock,-1) > 0);
+        } while(OMPI_THREAD_ADD32(&req->req_lock,-1) > 0);
     }
     return OMPI_SUCCESS;
 }
