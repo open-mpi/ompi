@@ -74,8 +74,7 @@ typedef struct ompi_registry_notify_message_t ompi_registry_notify_message_t;
 
 OBJ_CLASS_DECLARATION(ompi_registry_notify_message_t);
 
-/** Notify callback function
- */
+/** Notify callback function */
 typedef void (*ompi_registry_notify_cb_fn_t)(ompi_registry_notify_message_t *notify_msg, void *user_tag);
 
 

@@ -331,6 +331,7 @@ int gpr_proxy_subscribe(ompi_registry_mode_t mode,
     mca_gpr_idtag_list_t *ptr_free_id;
 
     trackptr = NULL;
+    recv_tag = MCA_OOB_TAG_GPR;
 
     /* need to protect against errors */
     if (NULL == segment) {
@@ -574,6 +575,7 @@ int gpr_proxy_synchro(ompi_registry_synchro_mode_t synchro_mode,
     }
 
     command = MCA_GPR_SYNCHRO_CMD;
+    recv_tag = MCA_OOB_TAG_GPR;
 
     if (OMPI_REGISTRY_SYNCHRO_MODE_NONE == synchro_mode) {  /* not allowed */
 	return OMPI_ERROR;
@@ -651,7 +653,7 @@ int gpr_proxy_synchro(ompi_registry_synchro_mode_t synchro_mode,
     if (0 > mca_oob_send_packed(mca_gpr_my_replica, cmd, MCA_OOB_TAG_GPR, 0)) {
 	goto CLEANUP;
     }
-
+ 
     if (0 > mca_oob_recv_packed(mca_gpr_my_replica, &answer, &recv_tag)) {
 	goto CLEANUP;
     }

@@ -105,38 +105,38 @@ mca_gpr_base_module_t* mca_gpr_proxy_init(bool *allow_multi_user_threads, bool *
        the setup and return the module */
     if (!ompi_process_info.seed) {
 
-	/* Return a module (choose an arbitrary, positive priority --
-	   it's only relevant compared to other ns components).  If
-	   we're not the seed, then we don't want to be selected, so
-	   return NULL. */
+    /* Return a module (choose an arbitrary, positive priority --
+       it's only relevant compared to other ns components).  If
+       we're not the seed, then we don't want to be selected, so
+       return NULL. */
 
-	*priority = 10;
+    *priority = 10;
 
-	/* We allow multi user threads but don't have any hidden threads */
+    /* We allow multi user threads but don't have any hidden threads */
 
-	*allow_multi_user_threads = true;
-	*have_hidden_threads = false;
+    *allow_multi_user_threads = true;
+    *have_hidden_threads = false;
 
-	/* define the replica for us to use - for now, use only the seed */
-	mca_gpr_my_replica = ompi_name_server.create_process_name(0,0,0);
+    /* define the replica for us to use - for now, use only the seed */
+    mca_gpr_my_replica = ompi_name_server.create_process_name(0,0,0);
 
-	/* initialize the notify list */
-	OBJ_CONSTRUCT(&mca_gpr_proxy_notify_request_tracker, ompi_list_t);
-	mca_gpr_proxy_last_notify_id_tag = 0;
-	OBJ_CONSTRUCT(&mca_gpr_proxy_free_notify_id_tags, ompi_list_t);
+    /* initialize the notify list */
+    OBJ_CONSTRUCT(&mca_gpr_proxy_notify_request_tracker, ompi_list_t);
+    mca_gpr_proxy_last_notify_id_tag = 0;
+    OBJ_CONSTRUCT(&mca_gpr_proxy_free_notify_id_tags, ompi_list_t);
 
-	/* issue the non-blocking receive */
-	rc = mca_oob_recv_packed_nb(MCA_OOB_NAME_ANY, MCA_OOB_TAG_GPR_NOTIFY, 0, mca_gpr_proxy_notify_recv, NULL);
-	if(rc != OMPI_SUCCESS && rc != OMPI_ERR_NOT_IMPLEMENTED) {
-	    return NULL;
-	}
+    /* issue the non-blocking receive */
+    rc = mca_oob_recv_packed_nb(MCA_OOB_NAME_ANY, MCA_OOB_TAG_GPR_NOTIFY, 0, mca_gpr_proxy_notify_recv, NULL);
+    if(rc != OMPI_SUCCESS && rc != OMPI_ERR_NOT_IMPLEMENTED) {
+        return NULL;
+    }
 
-	/* Return the module */
+    /* Return the module */
 
-	initialized = true;
-	return &mca_gpr_proxy;
+    initialized = true;
+    return &mca_gpr_proxy;
     } else {
-	return NULL;
+    return NULL;
     }
 }
 
@@ -160,8 +160,8 @@ int mca_gpr_proxy_finalize(void)
  */
 
 void mca_gpr_proxy_notify_recv(int status, ompi_process_name_t* sender,
-			       ompi_buffer_t buffer, int tag,
-			       void* cbdata)
+                   ompi_buffer_t buffer, int tag,
+                   void* cbdata)
 {
     char **tokptr;
     mca_gpr_cmd_flag_t command;
@@ -174,12 +174,12 @@ void mca_gpr_proxy_notify_recv(int status, ompi_process_name_t* sender,
     message = OBJ_NEW(ompi_registry_notify_message_t);
 
     if ((OMPI_SUCCESS != ompi_unpack(buffer, &command, 1, MCA_GPR_OOB_PACK_CMD)) ||
-	(MCA_GPR_NOTIFY_CMD != command)) {
-	goto RETURN_ERROR;
+    (MCA_GPR_NOTIFY_CMD != command)) {
+    goto RETURN_ERROR;
     }
 
     if (OMPI_SUCCESS != ompi_unpack(buffer, &id_tag, 1, OMPI_INT32)) {
-	goto RETURN_ERROR;
+    goto RETURN_ERROR;
     }
 
     if (OMPI_SUCCESS != ompi_unpack(buffer, &message->trig_action, 1, MCA_GPR_OOB_PACK_ACTION)) {
@@ -191,44 +191,51 @@ void mca_gpr_proxy_notify_recv(int status, ompi_process_name_t* sender,
     }
 
     if (OMPI_SUCCESS != ompi_unpack(buffer, &num_items, 1, OMPI_INT32)) {
-	goto RETURN_ERROR;
+    goto RETURN_ERROR;
     }
 
     for (i=0; i < num_items; i++) {
-	regval = OBJ_NEW(ompi_registry_value_t);
-	if (OMPI_SUCCESS != ompi_unpack(buffer, &regval->object_size, 1, MCA_GPR_OOB_PACK_OBJECT_SIZE)) {
-	    goto RETURN_ERROR;
-	}
-	if (OMPI_SUCCESS != ompi_unpack(buffer, regval->object, regval->object_size, OMPI_BYTE)) {
-	    goto RETURN_ERROR;
-	}
-	ompi_list_append(&message->data, &regval->item);
+    regval = OBJ_NEW(ompi_registry_value_t);
+    if (OMPI_SUCCESS != ompi_unpack(buffer, &regval->object_size, 1, MCA_GPR_OOB_PACK_OBJECT_SIZE)) {
+        OBJ_RELEASE(regval);
+        goto RETURN_ERROR;
+    }
+    if((regval->object = malloc(regval->object_size)) == NULL) {
+        OBJ_RELEASE(regval);
+        goto RETURN_ERROR;
+    }
+    if (OMPI_SUCCESS != ompi_unpack(buffer, regval->object, regval->object_size, OMPI_BYTE)) {
+        OBJ_RELEASE(regval);
+        goto RETURN_ERROR;
+    }
+    ompi_list_append(&message->data, &regval->item);
     }
 
     if (OMPI_SUCCESS != ompi_unpack(buffer, &message->num_tokens, 1, OMPI_INT32)) {
-	goto RETURN_ERROR;
+    goto RETURN_ERROR;
     }
 
     message->tokens = (char**)malloc(message->num_tokens*sizeof(char*));
     for (i=0, tokptr=message->tokens; i < message->num_tokens; i++, tokptr++) {
-	if (OMPI_SUCCESS != ompi_unpack_string(buffer, tokptr)) {
-	    goto RETURN_ERROR;
-	}
+    if (ompi_unpack_string(buffer, tokptr) < 0) {
+        goto RETURN_ERROR;
+    }
     }
 
     /* find the request corresponding to this notify */
     found = false;
     for (trackptr = (mca_gpr_notify_request_tracker_t*)ompi_list_get_first(&mca_gpr_proxy_notify_request_tracker);
-	 trackptr != (mca_gpr_notify_request_tracker_t*)ompi_list_get_end(&mca_gpr_proxy_notify_request_tracker) && !found;
-	 trackptr = (mca_gpr_notify_request_tracker_t*)ompi_list_get_next(trackptr)) {
-	if (trackptr->id_tag == id_tag) {
-	    found = true;
-	}
+         trackptr != (mca_gpr_notify_request_tracker_t*)ompi_list_get_end(&mca_gpr_proxy_notify_request_tracker);
+         trackptr = (mca_gpr_notify_request_tracker_t*)ompi_list_get_next(trackptr)) {
+    if (trackptr->id_tag == id_tag) {
+        found = true;
+        break;
+    }
     }
 
     if (!found) {  /* didn't find request */
-	ompi_output(0, "Proxy notification error - received request not found");
-	return;
+    ompi_output(0, "Proxy notification error - received request not found");
+    return;
     }
 
     /* process request */
@@ -238,6 +245,5 @@ void mca_gpr_proxy_notify_recv(int status, ompi_process_name_t* sender,
 
  RETURN_ERROR:
     OBJ_RELEASE(message);
-    ompi_buffer_free(buffer);
-    return;
 }
+
