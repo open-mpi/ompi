@@ -173,13 +173,10 @@ OMPI_DECLSPEC int32_t ompi_ddt_copy_content_same_ddt( const dt_desc_t* pData, in
 
 OMPI_DECLSPEC int32_t ompi_ddt_optimize_short( dt_desc_t* pData, int32_t count, dt_type_desc_t* pTypeDesc );
 
-/* flags for the datatypes */
-
 typedef int32_t (*conversion_fct_t)( uint32_t count,
                                      const void* from, uint32_t from_len, long from_extent,
                                      void* to, uint32_t in_length, long to_extent );
 
-typedef struct __dt_stack dt_stack_t;
 typedef struct ompi_convertor_t ompi_convertor_t;
 typedef int32_t (*convertor_advance_fct_t)( ompi_convertor_t* pConvertor,
                                             struct iovec* pInputv,
@@ -188,21 +185,31 @@ typedef int32_t (*convertor_advance_fct_t)( ompi_convertor_t* pConvertor,
                                             int32_t* freeAfter );
 typedef void*(*memalloc_fct_t)( size_t* pLength );
 
+typedef struct __dt_stack {
+    int32_t index;    /**< index in the element description */
+    int32_t count;    /**< number of times we still have to do it */
+    int32_t end_loop; /**< for loops the end of the loop, otherwise useless */
+    long    disp;     /**< actual displacement depending on the count field */
+} dt_stack_t;
+#define DT_STATIC_STACK_SIZE   5
+
 struct ompi_convertor_t {
-    ompi_object_t           super;    /**< basic superclass */
-    dt_desc_t*              pDesc;    /**< the datatype description associated with the convertor */
-    uint32_t                remoteArch;  /**< the remote architecture */
-    dt_stack_t*             pStack;  /**< the local stack for the actual conversion */
-    uint32_t                converted;   /**< the number of already converted elements */
-    uint32_t                bConverted;  /**< the size of already converted elements in bytes */
-    uint32_t                flags;  /**< the properties of this convertor */
-    uint32_t                count;  /**< the total number of full datatype elements */
-    uint32_t                stack_pos;  /**< the actual position on the stack */
-    char*                   pBaseBuf;  /**< initial buffer as supplied by the user */
-    uint32_t                available_space;  /**< total available space */
-    convertor_advance_fct_t fAdvance;  /**< pointer to the pack/unpack functions */
-    memalloc_fct_t          memAlloc_fn;  /**< pointer to the memory allocation function */
-    conversion_fct_t*       pFunctions;  /**< the convertor functions pointer */
+    ompi_object_t           super;              /**< basic superclass */
+    dt_desc_t*              pDesc;              /**< the datatype description associated with the convertor */
+    uint32_t                remoteArch;         /**< the remote architecture */
+    uint32_t                converted;          /**< the number of already converted elements */
+    uint32_t                bConverted;         /**< the size of already converted elements in bytes */
+    uint32_t                flags;              /**< the properties of this convertor */
+    uint32_t                count;              /**< the total number of full datatype elements */
+    dt_stack_t*             pStack;             /**< the local stack for the actual conversion */
+    uint32_t                stack_pos;          /**< the actual position on the stack */
+    uint32_t                stack_size;         /**< size of the allocated stack */
+    char*                   pBaseBuf;           /**< initial buffer as supplied by the user */
+    uint32_t                available_space;    /**< total available space */
+    convertor_advance_fct_t fAdvance;           /**< pointer to the pack/unpack functions */
+    memalloc_fct_t          memAlloc_fn;        /**< pointer to the memory allocation function */
+    conversion_fct_t*       pFunctions;         /**< the convertor functions pointer */
+    dt_stack_t              static_stack[DT_STATIC_STACK_SIZE];  /**< local stack to be used for contiguous data */
 };
 OBJ_CLASS_DECLARATION( ompi_convertor_t );
 
@@ -260,8 +267,6 @@ static inline int32_t ompi_convertor_unpack( ompi_convertor_t* pConv,
 
 /* and finally the convertor functions */
 OMPI_DECLSPEC ompi_convertor_t* ompi_convertor_create( int32_t remote_arch, int32_t mode );
-OMPI_DECLSPEC ompi_convertor_t* ompi_convertor_get_copy( const ompi_convertor_t* pConvertor );
-OMPI_DECLSPEC int32_t ompi_convertor_copy( const ompi_convertor_t* pSrcConv, ompi_convertor_t* pDestConv );
 OMPI_DECLSPEC int32_t ompi_convertor_init_for_send( ompi_convertor_t* pConv, uint32_t flags,
                                                 const dt_desc_t* pData, int32_t count,
                                                 const void* pUserBuf, int32_t local_starting_point,
@@ -273,6 +278,30 @@ OMPI_DECLSPEC int32_t ompi_convertor_init_for_recv( ompi_convertor_t* pConv, uin
 OMPI_DECLSPEC int32_t ompi_convertor_need_buffers( ompi_convertor_t* pConvertor );
 OMPI_DECLSPEC int32_t ompi_convertor_get_packed_size( const ompi_convertor_t* pConv, uint32_t* pSize );
 OMPI_DECLSPEC int32_t ompi_convertor_get_unpacked_size( const ompi_convertor_t* pConv, uint32_t* pSize );
+
+static inline int ompi_convertor_copy( const ompi_convertor_t* pSrcConv, ompi_convertor_t* pDestConv )
+{
+    pDestConv->pDesc           = NULL;
+    pDestConv->remoteArch      = pSrcConv->remoteArch;
+    /* Cleanup the old stack if any */
+    if( pDestConv->stack_size > DT_STATIC_STACK_SIZE ) {
+        free( pDestConv->pStack );
+    }
+    pDestConv->pStack          = pDestConv->static_stack;
+    pDestConv->stack_size      = DT_STATIC_STACK_SIZE;
+    pDestConv->stack_pos       = 0;
+    pDestConv->available_space = 0;
+    pDestConv->pFunctions      = pSrcConv->pFunctions;
+
+   return OMPI_SUCCESS;
+}
+
+static inline ompi_convertor_t* ompi_convertor_get_copy( const ompi_convertor_t* pConvertor )
+{
+    ompi_convertor_t* pDestConv = OBJ_NEW(ompi_convertor_t);
+    (void)ompi_convertor_copy( pConvertor, pDestConv );
+    return pDestConv;
+}
 
 /* temporary function prototypes. They should move in other place later. */
 OMPI_DECLSPEC int32_t ompi_ddt_get_args( const dt_desc_t* pData, int32_t which,
