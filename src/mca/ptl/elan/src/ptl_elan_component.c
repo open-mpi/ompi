@@ -71,11 +71,11 @@ static int mca_ptl_elan_addr_put (mca_ptl_elan_component_t  *emp)
          
      mca_ptl_elan_addr_t *addrs;
     
-     size  = emp->elan_num_ptl_modules * sizeof(mca_ptl_elan_addr_t);
+     size  = emp->num_modules * sizeof(mca_ptl_elan_addr_t);
      addrs = (mca_ptl_elan_addr_t *) malloc(size);
 
-     for(i=0; i< emp->elan_num_ptl_modules; i++) {
-         mca_ptl_elan_module_t * ptl = emp->elan_ptl_modules[i];
+     for(i=0; i< emp->num_modules; i++) {
+         mca_ptl_elan_module_t * ptl = emp->modules[i];
          addrs[i].elan_vp    = ptl->elan_vp;
          addrs[i].inuse      = 0;
          addrs[i].gid        = ompi_proc_local_proc->proc_name;
@@ -101,20 +101,26 @@ mca_ptl_elan_component_open (void)
     mca_ptl_elan_module.super.ptl_exclusivity =
         mca_ptl_elan_param_register_int ("exclusivity", 0);
 
-    length = PTL_ELAN_INPUT_QUEUE_MAX - sizeof(mca_ptl_base_header_t);
+    length = OMPI_PTL_ELAN_MAX_QSIZE - sizeof(mca_ptl_base_header_t);
     param1 = mca_ptl_elan_param_register_int ("first_frag_size", length);
     param2 = mca_ptl_elan_param_register_int ("min_frag_size", length);
     param3 = mca_ptl_elan_param_register_int ("max_frag_size", 2<<31);
 
     /* Correct these if user give violent parameters */
-    mca_ptl_elan_module.super.ptl_first_frag_size = GET_MIN(param1, length);
-    mca_ptl_elan_module.super.ptl_min_frag_size =  GET_MAX(param2, length);
-    mca_ptl_elan_module.super.ptl_max_frag_size =  GET_MIN(param3, 2<<31);
+    mca_ptl_elan_module.super.ptl_first_frag_size = 
+	OMPI_PTL_ELAN_GET_MIN(param1, length);
+    mca_ptl_elan_module.super.ptl_min_frag_size =  
+	OMPI_PTL_ELAN_GET_MAX(param2, length);
+    mca_ptl_elan_module.super.ptl_max_frag_size =  
+	OMPI_PTL_ELAN_GET_MIN(param3, 2<<31);
 
     /* initialize state */
     elan_mp->elan_local = NULL; 
     elan_mp->num_modules = 0;
     elan_mp->modules = NULL;
+    elan_mp->free_list_num = 32;
+    elan_mp->free_list_max = 128;
+    elan_mp->free_list_inc = 32;
 
     /* initialize objects*/
     OBJ_CONSTRUCT (&elan_mp->elan_procs, ompi_list_t);
@@ -136,12 +142,12 @@ mca_ptl_elan_component_close (void)
 	    free (elan_mp->elan_local);
 	}
 
-	if (NULL != elan_mp->elan_ptl_modules) {
+	if (NULL != elan_mp->modules) {
 	    int         i;
-	    for (i = elan_mp->elan_num_ptl_modules; i > 0; i--) {
-		free (elan_mp->elan_ptl_modules[i - 1]);
+	    for (i = elan_mp->num_modules; i > 0; i--) {
+		free (elan_mp->modules[i - 1]);
 	    }
-	    free (elan_mp->elan_ptl_modules);
+	    free (elan_mp->modules);
 	}
     }
 
@@ -174,7 +180,7 @@ mca_ptl_elan_component_close (void)
  *  (3) register the list of PTL parameters with the MCA
  */
 mca_ptl_base_module_t **
-mca_ptl_elan_component_init (int *num_ptl_modules,
+mca_ptl_elan_component_init (int *num_ptls,
 			     bool * allow_multi_user_threads,
 			     bool * have_hidden_threads)
 {
@@ -183,16 +189,17 @@ mca_ptl_elan_component_init (int *num_ptl_modules,
     START_FUNC(PTL_ELAN_DEBUG_INIT);
 
     /* TODO: support multiple threads */
-    *num_ptl_modules = 0;
+    *num_ptls = 0;
     *allow_multi_user_threads = true;
     *have_hidden_threads = OMPI_HAVE_THREADS;
 
     ompi_free_list_init (&(elan_mp->elan_recv_frags_free),
                          sizeof (mca_ptl_elan_recv_frag_t),
                          OBJ_CLASS (mca_ptl_elan_recv_frag_t),
-                         elan_mp->elan_free_list_num,
-                         elan_mp->elan_free_list_max,
-                         elan_mp->elan_free_list_inc, NULL);
+			 /*32, 128, 32, */
+                         elan_mp->free_list_num,
+                         elan_mp->free_list_max,
+                         elan_mp->free_list_inc, NULL);
 
     /* open basic elan device */
     if (OMPI_SUCCESS != ompi_mca_ptl_elan_init(&mca_ptl_elan_component)) {
@@ -209,7 +216,7 @@ mca_ptl_elan_component_init (int *num_ptl_modules,
         return NULL;
     }
 
-    ptls = (mca_ptl_base_module_t **) malloc (elan_mp->elan_num_ptl_modules *
+    ptls = (mca_ptl_base_module_t **) malloc (elan_mp->num_modules *
                                               sizeof (mca_ptl_elan_module_t *));
     if (NULL == ptls) {
         ompi_output(0, 
@@ -218,9 +225,9 @@ mca_ptl_elan_component_init (int *num_ptl_modules,
         return NULL;
     }
 
-    memcpy (ptls, elan_mp->elan_ptl_modules,
+    memcpy (ptls, elan_mp->modules,
             elan_mp->num_modules * sizeof (mca_ptl_elan_module_t *));
-    *num_ptl_modules = elan_mp->elan_num_ptl_modules;
+    *num_ptls = elan_mp->num_modules;
     mca_ptl_elan_component_initialized = true;
 
     END_FUNC(PTL_ELAN_DEBUG_INIT);

@@ -576,7 +576,7 @@ mca_ptl_elan_start_ack ( mca_ptl_base_module_t * ptl,
     elan4_flush_cmdq_reorder (elan_ptl->queue->tx_cmdq);
 
     /* Insert desc into the list of outstanding DMA's */
-    ompi_list_append (&elan_ptl->queue->tx_desc, (ompi_list_item_t *) desc);
+    ompi_list_append (&elan_ptl->send_frags, (ompi_list_item_t *) desc);
 
     /* fragment state */
     desc->desc->req = NULL;
@@ -714,16 +714,14 @@ mca_ptl_elan_update_desc (mca_ptl_elan_component_t * emp)
             rc = elan4_pollevent_word(ctx, &frag->desc->main_doneWord, 1);
 #endif
 	    if (rc) {
-                mca_ptl_elan_send_request_t *req;
 		struct ompi_ptl_elan_base_desc_t *basic;
 
                 /* Remove the desc, update the request, put back to free list */
                 frag = (mca_ptl_elan_send_frag_t *)
                     ompi_list_remove_first (&ptl->send_frags);
 		basic = (ompi_ptl_elan_qdma_desc_t*)frag->desc;
-                req = (mca_ptl_elan_send_request_t *)basic->req;
 
- 		mca_ptl_elan_send_desc_done (frag, req);
+ 		mca_ptl_elan_send_desc_done (frag, basic->req);
 		INITEVENT_WORD (ctx, basic->elan_event, &basic->main_doneWord);
 		RESETEVENT_WORD (&basic->main_doneWord);
 		PRIMEEVENT_WORD (ctx, basic->elan_event, 1);
