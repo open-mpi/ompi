@@ -286,13 +286,14 @@ extern struct lam_communicator_t lam_mpi_comm_null;
 extern struct lam_group_t lam_mpi_group_empty;
 extern struct lam_group_t lam_mpi_group_null;
 
-extern struct lam_op_t lam_mpi_max, lam_mpi_min;
-extern struct lam_op_t lam_mpi_sum, lam_mpi_prod;
-extern struct lam_op_t lam_mpi_land, lam_mpi_band;
-extern struct lam_op_t lam_mpi_lor, lam_mpi_bor;
-extern struct lam_op_t lam_mpi_lxor, lam_mpi_bxor;
-extern struct lam_op_t lam_mpi_maxloc, lam_mpi_minloc;
-extern struct lam_op_t lam_mpi_replace;
+extern struct lam_op_t lam_mpi_op_null;
+extern struct lam_op_t lam_mpi_op_max, lam_mpi_op_min;
+extern struct lam_op_t lam_mpi_op_sum, lam_mpi_op_prod;
+extern struct lam_op_t lam_mpi_op_land, lam_mpi_op_band;
+extern struct lam_op_t lam_mpi_op_lor, lam_mpi_op_bor;
+extern struct lam_op_t lam_mpi_op_lxor, lam_mpi_op_bxor;
+extern struct lam_op_t lam_mpi_op_maxloc, lam_mpi_op_minloc;
+extern struct lam_op_t lam_mpi_op_replace;
 
 extern struct lam_datatype_t *lam_mpi_char, *lam_mpi_byte;
 extern struct lam_datatype_t *lam_mpi_int, *lam_mpi_logic;
