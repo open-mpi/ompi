@@ -22,7 +22,10 @@
 #include "mca/ns/base/base.h"
 #include "util/argv.h"
 #include "util/numtostr.h"
+#include "runtime/ompi_rte_wait.h"
 
+
+static void internal_wait_cb(pid_t pid, int status, void *data);
 
 
 /* ok, this is fairly simple in the RMS world */
@@ -159,6 +162,12 @@ mca_pcm_rms_spawn_procs(struct mca_pcm_base_module_1_0_0_t* me,
         printf("show_help: unable to record child pid\n");
         kill(child, SIGKILL);
     }
+    ret = ompi_rte_wait_cb(child, internal_wait_cb, NULL);
+    if (OMPI_SUCCESS != ret) {
+      /* BWB - show_help */
+      printf("show_help: unable to register callback\n");
+      kill(child, SIGKILL);
+    }
 
     return OMPI_SUCCESS;
 }
@@ -215,4 +224,39 @@ mca_pcm_rms_deallocate_resources(struct mca_pcm_base_module_1_0_0_t* me,
     mca_pcm_base_remove_job(jobid);
 
     return OMPI_SUCCESS;
+}
+
+
+
+static void
+internal_wait_cb(pid_t pid, int status, void *data)
+{
+    mca_ns_base_jobid_t jobid = 0;
+    mca_ns_base_vpid_t upper = 0;
+    mca_ns_base_vpid_t lower = 0;
+    mca_ns_base_vpid_t i = 0;
+    int ret;
+    char *test;
+    ompi_process_name_t *proc_name;
+
+    printf("pcm_rms was notified that process %d exited with status %d\n",
+           pid, status);
+
+    ret = mca_pcm_base_get_job_info(pid, &jobid, &lower, &upper);
+    if (ret != OMPI_SUCCESS) {
+        printf("Unfortunately, we could not find the associated job info\n");
+    } else {
+        printf("  It appears that this starter was assocated with jobid %d\n"
+               "  vpids %d to %d\n\n",
+               jobid, lower, upper);
+    }
+
+    /* unregister all the procs */
+#if 0
+    /* BWB - fix me when deadlock in gpr is fixed */
+    for (i = lower ; i <= upper ; ++i) {
+        test = ns_base_get_proc_name_string(ns_base_create_process_name(0, jobid, i));
+        ompi_registry.rte_unregister(test);
+    }
+#endif
 }
