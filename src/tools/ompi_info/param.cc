@@ -8,8 +8,12 @@
 #include <string>
 #include <map>
 
+#if HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+#if HAVE_SYS_PARAM_H
 #include <sys/param.h>
+#endif
 
 #include "class/ompi_value_array.h"
 #include "util/printf.h"
