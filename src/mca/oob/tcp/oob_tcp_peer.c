@@ -26,6 +26,7 @@ static int  mca_oob_tcp_peer_recv_blocking(mca_oob_tcp_peer_t* peer, void* data,
 static int  mca_oob_tcp_peer_send_blocking(mca_oob_tcp_peer_t* peer, void* data, size_t size);
 static void mca_oob_tcp_peer_recv_handler(int sd, short flags, void* user);
 static void mca_oob_tcp_peer_send_handler(int sd, short flags, void* user);
+static void mca_oob_tcp_peer_timer_handler(int sd, short flags, void* user);
 static void mca_oob_tcp_peer_dump(mca_oob_tcp_peer_t* peer, const char* msg);
 
 
@@ -48,6 +49,8 @@ static void mca_oob_tcp_peer_construct(mca_oob_tcp_peer_t* peer)
 { 
     OBJ_CONSTRUCT(&(peer->peer_send_queue), ompi_list_t);
     OBJ_CONSTRUCT(&(peer->peer_lock), ompi_mutex_t);
+    memset(&peer->peer_timer_event, 0, sizeof(peer->peer_timer_event));
+    ompi_evtimer_set(&peer->peer_timer_event, mca_oob_tcp_peer_timer_handler, peer);
 }
 
 /*
@@ -102,8 +105,9 @@ int mca_oob_tcp_peer_send(mca_oob_tcp_peer_t* peer, mca_oob_tcp_msg_t* msg)
          * queue the message and start the connection to the peer
          */
         ompi_list_append(&peer->peer_send_queue, (ompi_list_item_t*)msg);
-        if(peer->peer_state == MCA_OOB_TCP_CLOSED)
+        if(peer->peer_state == MCA_OOB_TCP_CLOSED) {
             rc = mca_oob_tcp_peer_start_connect(peer);
+        }
         break;
     case MCA_OOB_TCP_FAILED:
         rc = OMPI_ERR_UNREACH;
@@ -153,6 +157,7 @@ mca_oob_tcp_peer_t * mca_oob_tcp_peer_lookup(ompi_process_name_t* name, bool get
         return peer;
     }
 
+    /* allocate from free list */
     MCA_OOB_TCP_PEER_ALLOC(peer, rc);
     if(NULL == peer) {
         if(get_lock) {
@@ -169,6 +174,7 @@ mca_oob_tcp_peer_t * mca_oob_tcp_peer_lookup(ompi_process_name_t* name, bool get
     peer->peer_send_msg = NULL;
     peer->peer_retries = 0;
 
+    /* add to lookup table */
     if(OMPI_SUCCESS != ompi_rb_tree_insert(&mca_oob_tcp_component.tcp_peer_tree, &peer->peer_name, peer)) {
         MCA_OOB_TCP_PEER_RETURN(peer);
         if(get_lock) {
@@ -237,8 +243,13 @@ static int mca_oob_tcp_peer_start_connect(mca_oob_tcp_peer_t* peer)
 
     /* resolve the peer address */
     if ((rc = mca_oob_tcp_peer_name_lookup(peer)) != OMPI_SUCCESS) {
+        struct timeval tv = { 1, 0 };
         mca_oob_tcp_peer_close(peer);
-        return OMPI_ERR_UNREACH;
+        if(peer->peer_retries > mca_oob_tcp_component.tcp_peer_retries) {
+           return OMPI_ERR_UNREACH;
+        }
+        ompi_evtimer_add(&peer->peer_timer_event, &tv);
+        return OMPI_SUCCESS;
     }
 
     /* start the connect - will likely fail with EINPROGRESS */
@@ -289,14 +300,12 @@ static void mca_oob_tcp_peer_complete_connect(mca_oob_tcp_peer_t* peer)
         ompi_event_add(&peer->peer_send_event, 0);
         return;
     } else if (so_error == ECONNREFUSED) {
-        if(peer->peer_retries++ > mca_oob_tcp_component.tcp_peer_retries) {
-           ompi_output(0, "mca_oob_tcp_peer_complete_connect: unable to contact peer after %d retries\n", peer->peer_retries);
-           mca_oob_tcp_peer_close(peer);
+        struct timeval tv = { 1,0 };
+        mca_oob_tcp_peer_close(peer);
+        if(peer->peer_retries > mca_oob_tcp_component.tcp_peer_retries) {
            return;
         }
-        mca_oob_tcp_peer_close(peer);
-        sleep(1);
-        mca_oob_tcp_peer_start_connect(peer);
+        ompi_evtimer_add(&peer->peer_timer_event, &tv);
         return;
     } else if(so_error != 0) {
         ompi_output(0, "mca_oob_tcp_peer_complete_connect: connect() failed with errno=%d\n", so_error);
@@ -336,6 +345,17 @@ static void mca_oob_tcp_peer_connected(mca_oob_tcp_peer_t* peer)
  */
 void mca_oob_tcp_peer_close(mca_oob_tcp_peer_t* peer)
 {
+    /* giving up and cleanup any pending messages */
+    if(peer->peer_retries++ > mca_oob_tcp_component.tcp_peer_retries) {
+        mca_oob_tcp_msg_t *msg = peer->peer_send_msg;
+        while(msg != NULL) {
+            msg->msg_rc = OMPI_ERR_UNREACH;
+            mca_oob_tcp_msg_complete(msg, &peer->peer_name);
+            msg = (mca_oob_tcp_msg_t*)ompi_list_remove_first(&peer->peer_send_queue);
+        }
+        peer->peer_send_msg = NULL;
+    }
+
     if(peer->peer_state != MCA_OOB_TCP_CLOSED &&
        peer->peer_sd >= 0) {
         ompi_event_del(&peer->peer_recv_event);
@@ -344,7 +364,6 @@ void mca_oob_tcp_peer_close(mca_oob_tcp_peer_t* peer)
         peer->peer_sd = -1;
     }
     peer->peer_state = MCA_OOB_TCP_CLOSED;
-    peer->peer_retries++;
 }
 
 /*
@@ -396,7 +415,7 @@ static int mca_oob_tcp_peer_recv_connect_ack(mca_oob_tcp_peer_t* peer)
 
     /* connected */
     mca_oob_tcp_peer_connected(peer);
-#if OMPI_ENABLE_DEBUG
+#if OMPI_ENABLE_DEBUG && 0
     mca_oob_tcp_peer_dump(peer, "connected");
 #endif
     return OMPI_SUCCESS;
@@ -415,7 +434,6 @@ static int mca_oob_tcp_peer_recv_blocking(mca_oob_tcp_peer_t* peer, void* data, 
 
         /* remote closed connection */
         if(retval == 0) {
-            ompi_output(0, "mca_oob_tcp_peer_recv_blocking: remote connection closed");
             mca_oob_tcp_peer_close(peer);
             return -1;
         }
@@ -537,7 +555,7 @@ static void mca_oob_tcp_peer_recv_progress(mca_oob_tcp_peer_t* peer, mca_oob_tcp
  * (3) if a posted receive is available - receive into users buffer
  * (4) otherwise, allocate a new message and buffer for receive
  */
-static void mca_oob_tcp_peer_recv_start(mca_oob_tcp_peer_t* peer)
+static mca_oob_tcp_msg_t* mca_oob_tcp_peer_recv_start(mca_oob_tcp_peer_t* peer)
 {
     mca_oob_tcp_msg_t* msg;
     mca_oob_tcp_hdr_t  hdr;
@@ -545,7 +563,7 @@ static void mca_oob_tcp_peer_recv_start(mca_oob_tcp_peer_t* peer)
 
     /* blocking receive of the message header */
     if(mca_oob_tcp_peer_recv_blocking(peer, &hdr, sizeof(hdr)) != sizeof(hdr))
-        return;
+        return NULL;
     size = ntohl(hdr.msg_size);
 
     /* attempt to match posted receive 
@@ -589,7 +607,7 @@ static void mca_oob_tcp_peer_recv_start(mca_oob_tcp_peer_t* peer)
         int rc;
         MCA_OOB_TCP_MSG_ALLOC(msg, rc);
         if(NULL == msg) {
-            return;
+            return NULL;
         } 
         msg->msg_type = MCA_OOB_TCP_UNEXPECTED;
         msg->msg_rc = 0;
@@ -604,14 +622,8 @@ static void mca_oob_tcp_peer_recv_start(mca_oob_tcp_peer_t* peer)
 
     msg->msg_rwptr = msg->msg_rwiov;
     msg->msg_hdr = hdr;
+    return msg;
 
-    /* if receive of message data completed - queue the receive message */
-    if(mca_oob_tcp_msg_recv_handler(msg, peer)) {
-       mca_oob_tcp_peer_recv_progress(peer, msg);
-    } else {
-       /* continue processing until complete */
-       peer->peer_recv_msg = msg;
-    }
 }
 
 
@@ -633,10 +645,15 @@ static void mca_oob_tcp_peer_recv_handler(int sd, short flags, void* user)
         case MCA_OOB_TCP_CONNECTED: 
         {
             if(NULL == peer->peer_recv_msg) {
-                mca_oob_tcp_peer_recv_start(peer);
-            } else if (mca_oob_tcp_msg_recv_handler(peer->peer_recv_msg, peer)) {
-               mca_oob_tcp_peer_recv_progress(peer, peer->peer_recv_msg);
+                peer->peer_recv_msg = mca_oob_tcp_peer_recv_start(peer);
+            }
+            if (peer->peer_recv_msg && 
+                mca_oob_tcp_msg_recv_handler(peer->peer_recv_msg, peer)) {
+               mca_oob_tcp_msg_t* msg = peer->peer_recv_msg;
                peer->peer_recv_msg = NULL;
+               OMPI_THREAD_UNLOCK(&peer->peer_lock);
+               mca_oob_tcp_peer_recv_progress(peer, msg);
+               return;
             }
             break;
         }
@@ -768,7 +785,7 @@ bool mca_oob_tcp_peer_accept(mca_oob_tcp_peer_t* peer, int sd)
         }
         ompi_event_add(&peer->peer_recv_event, 0);
         mca_oob_tcp_peer_connected(peer);
-#if OMPI_ENABLE_DEBUG
+#if OMPI_ENABLE_DEBUG && 0
         mca_oob_tcp_peer_dump(peer, "accepted");
 #endif
         OMPI_THREAD_UNLOCK(&peer->peer_lock);
@@ -799,13 +816,15 @@ int mca_oob_tcp_peer_name_lookup(mca_oob_tcp_peer_t* peer)
         keys[1] = ompi_name_server.get_proc_name_string(&peer->peer_name);
         keys[2] = NULL;
         items = ompi_registry.get(OMPI_REGISTRY_AND, "oob", keys);
-        if(items == NULL || ompi_list_get_size(items) == 0)
+        if(items == NULL || ompi_list_get_size(items) == 0) {
             return OMPI_ERR_UNREACH;
+        }
 
         /* unpack the results into a uri string */
         item = (ompi_registry_value_t*)ompi_list_remove_first(items);
-        if((uri = item->object) == NULL) 
+        if((uri = item->object) == NULL) {
             return OMPI_ERR_UNREACH;
+        } 
 
         /* validate the result */
         if(mca_oob_tcp_parse_uri(uri, &peer->peer_addr) != OMPI_SUCCESS) {
@@ -817,4 +836,12 @@ int mca_oob_tcp_peer_name_lookup(mca_oob_tcp_peer_t* peer)
     }
 }
 
+/*
+ * Callback on timeout - retry connection attempt.
+ */
+
+static void mca_oob_tcp_peer_timer_handler(int sd, short flags, void* user)
+{
+    mca_oob_tcp_peer_start_connect((mca_oob_tcp_peer_t*)user);
+}
 

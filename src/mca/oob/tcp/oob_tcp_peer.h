@@ -41,6 +41,7 @@ struct mca_oob_tcp_peer_t {
     int peer_sd;                      /**< socket descriptor of the connection */
     ompi_event_t peer_send_event;     /**< registration with event thread for send events */
     ompi_event_t peer_recv_event;     /**< registration with event thread for recv events */
+    ompi_event_t peer_timer_event;    /**< used for timer callback */
     ompi_mutex_t peer_lock;           /**< protect critical data structures */
     ompi_list_t peer_send_queue;      /**< list of messages to send */
     mca_oob_tcp_msg_t *peer_send_msg; /**< current send in progress */

@@ -30,7 +30,7 @@ extern "C" {
  */
 int        mca_oob_tcp_component_open(void);
 int        mca_oob_tcp_component_close(void);
-mca_oob_t* mca_oob_tcp_component_init(bool *allow_multi_user_threads, bool *have_hidden_threads);
+mca_oob_t* mca_oob_tcp_component_init(int* priority, bool *allow_multi_user_threads, bool *have_hidden_threads);
 
 /**
  * Hook function to allow the selected oob components

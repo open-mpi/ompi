@@ -253,6 +253,19 @@ ompi_buffer_internal_t* bptr;
 	return (OMPI_SUCCESS);
 }
 
+
+int ompi_buffer_get(ompi_buffer_t buffer, void**  baseptr, int *size)
+{
+	/* check that buffer is not null */
+	if (!buffer) { return (OMPI_ERROR); }
+
+	/* deref and pass back */
+	if (baseptr) { *baseptr = buffer->base_ptr; }
+	if (size) { *size = buffer->len; }
+
+	return (OMPI_SUCCESS);
+}
+
 /**
  * This function frees a given buffer
  * If the buffer has data still, it is lost

@@ -20,12 +20,43 @@
 
 #include "mca/pml/base/static-components.h"
 
+static int mca_pml_base_progress(void) 
+{
+    return OMPI_SUCCESS;
+}
+
 
 /*
  * Global variables
  */
 int mca_pml_base_output = -1;
-mca_pml_base_module_t mca_pml;
+mca_pml_base_module_t mca_pml = {
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    mca_pml_base_progress,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL
+};
+
 ompi_list_t mca_pml_base_components_available;
 mca_pml_base_component_t mca_pml_base_selected_component;
 

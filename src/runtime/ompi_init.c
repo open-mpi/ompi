@@ -47,11 +47,11 @@ int ompi_init(int argc, char *argv[])
   if (!ompi_output_init())
     return OMPI_ERROR;
 
-  /* For the moment, the OMPI library is not multi-threaded.  MPI_INIT
-     may reset this value later, but for now, we say that we are not
-     using threads. */
+  /* If threads are supported - assume that we are using threads - and reset
+   * otherwise.
+   */
 
-  ompi_set_using_threads(false);
+  ompi_set_using_threads(OMPI_HAVE_THREADS);
 
   /* For malloc debugging */
 

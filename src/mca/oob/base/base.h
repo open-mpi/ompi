@@ -48,6 +48,9 @@ extern ompi_process_name_t mca_oob_name_self;
 #define MCA_OOB_TAG_NS          1
 #define MCA_OOB_TAG_GPR         2
 #define MCA_OOB_TAG_GPR_NOTIFY  3
+#define MCA_OOB_TAG_GPR_NOTIFY 3
+#define MCA_OOB_TAG_RTE 4
+#define MCA_OOB_TAG_EXEC 5
 
 
 /*
@@ -111,6 +114,24 @@ int mca_oob_set_contact_info(const char*);
 */
 
 char* mca_oob_get_contact_info(void);
+
+/**
+ * Temporary routine to aid in debugging. Don't attempt to use TCP
+ * and/or register w/ the GPR if the contact info for the seed daemon
+ * is not available.
+ */
+
+bool mca_oob_has_seed(void);
+
+/**
+ *  Set the contact info for the seed daemon.
+ *
+ *  Note that this can also be passed to the application as an
+ *  MCA parameter (OMPI_MCA_oob_base_seed). The contact info (of the seed)
+ *  must currently be set before calling mca_oob_base_init().
+ */
+
+int mca_oob_set_contact_info(const char*);
 
 /**
 *  Similiar to unix writev(2).

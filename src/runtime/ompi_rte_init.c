@@ -92,13 +92,9 @@ int ompi_rte_init(bool *allow_multi_user_threads, bool *have_hidden_threads)
     *allow_multi_user_threads = true;
     *have_hidden_threads = false;
 
-    ompi_output(0, "entered rte_init");
-
     /*
      * Out of Band Messaging
      */
-    ompi_output(0, "starting oob");
-
     if (OMPI_SUCCESS != (ret = mca_oob_base_open())) {
 	/* JMS show_help */
 	printf("show_help: ompi_rte_init failed in oob_base_open\n");
@@ -116,8 +112,6 @@ int ompi_rte_init(bool *allow_multi_user_threads, bool *have_hidden_threads)
     /*
      * Name Server
      */
-    ompi_output(0, "starting name server");
-
     if (OMPI_SUCCESS != (ret = mca_ns_base_open())) {
 	/* JMS show_help */
 	printf("show_help: ompi_rte_init failed in ns_base_open\n");
@@ -135,8 +129,6 @@ int ompi_rte_init(bool *allow_multi_user_threads, bool *have_hidden_threads)
     /*
      * Process Control and Monitoring Client
      */
-    ompi_output(0, "starting pcm-client");
-
     if (OMPI_SUCCESS != (ret = mca_pcmclient_base_open())) {
 	/* JMS show_help */
 	printf("show_help: ompi_rte_init failed in pcmclient_base_open\n");
@@ -151,8 +143,6 @@ int ompi_rte_init(bool *allow_multi_user_threads, bool *have_hidden_threads)
     *allow_multi_user_threads &= user_threads;
     *have_hidden_threads |= hidden_threads;
 
-    ompi_output(0, "starting llm");
-
     /*
      * Allocation code - open only.  pcm will init if needed
      */
@@ -161,8 +151,6 @@ int ompi_rte_init(bool *allow_multi_user_threads, bool *have_hidden_threads)
 	printf("show_help: ompi_rte_init failed in llm_base_open\n");
 	return ret;
     }
-
-    ompi_output(0, "starting pcm");
 
     /*
      * Process Control and Monitoring
@@ -181,8 +169,6 @@ int ompi_rte_init(bool *allow_multi_user_threads, bool *have_hidden_threads)
     *allow_multi_user_threads &= user_threads;
     *have_hidden_threads |= hidden_threads;
 
-    ompi_output(0, "starting gpr");
-
     /*
      * Registry 
      */
@@ -200,15 +186,11 @@ int ompi_rte_init(bool *allow_multi_user_threads, bool *have_hidden_threads)
     *allow_multi_user_threads &= user_threads;
     *have_hidden_threads |= hidden_threads;
 
-    ompi_output(0, "calling proc_info");
-
     /*
      * Fill in the various important structures
      */
     /* proc structure startup */
     ompi_proc_info();  
-
-    ompi_output(0, "doing session_dir");
 
     /* session directory */
     jobid_str = ompi_name_server.get_jobid_string(ompi_process_info.name);
@@ -223,6 +205,14 @@ int ompi_rte_init(bool *allow_multi_user_threads, bool *have_hidden_threads)
 	if (procid_str != NULL) free(procid_str);
 	return OMPI_ERROR;
     }
+
+   /*
+    *  Register process info we/ seed daemon.
+    */
+   if (OMPI_SUCCESS != (ret = ompi_rte_register())) {
+       ompi_output(0, "ompi_rte_init: failed in ompi_rte_register()\n");
+       return ret;
+   }
 
     /*
      * Call back into OOB to allow do any final initialization

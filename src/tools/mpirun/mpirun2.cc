@@ -5,7 +5,9 @@
 
 #include "ompi_config.h"
 
+#include "util/proc_info.h"
 #include "mca/ns/ns.h"
+#include "mca/ns/base/base.h"
 #include "mca/pcm/base/base.h"
 #include "runtime/runtime.h"
 #include "mca/base/base.h"
@@ -90,6 +92,13 @@ main(int argc, char *argv[])
     }
 
     /*
+     * TSW - temporarily force to be a seed - and to use tcp oob.
+     * 
+     */
+    ompi_process_info.seed = true;
+    setenv("OMPI_MCA_oob_base_include", "tcp", 1);
+
+    /*
      * Start the Open MPI Run Time Environment
      */
     if (OMPI_SUCCESS != (ret = mca_base_open())) {
@@ -104,13 +113,12 @@ main(int argc, char *argv[])
         return ret;
     }
 
-
     /*
      *  Prep for starting a new job
      */
 
     /* BWB - ompi_rte_get_new_jobid() */
-    new_jobid = getpid();
+    new_jobid = ompi_name_server.create_jobid();
 
     /* BWB - fix jobid, procs, and nodes */
     nodelist = ompi_rte_allocate_resources(new_jobid, 0, num_procs);
@@ -142,6 +150,7 @@ main(int argc, char *argv[])
      * register the monitor
      */
 
+    ompi_rte_notify(new_jobid,num_procs);
 
     /*
      * spawn procs
@@ -151,9 +160,13 @@ main(int argc, char *argv[])
         return -1;
     }
 
+    /*
+     * 
+     */
+   
+    ompi_rte_monitor();
 
     /*
-     *   - ompi_rte_monitor()
      *   - ompi_rte_kill_job()
      */
 
@@ -167,6 +180,6 @@ main(int argc, char *argv[])
     ompi_finalize();
 
     OBJ_DESTRUCT(&schedlist);
-
     return 0;
 }
+

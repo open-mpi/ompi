@@ -24,6 +24,7 @@
 #include "mca/pcm/base/base.h"
 #include "mca/pcm/rsh/src/pcm_rsh.h"
 #include "runtime/runtime_types.h"
+#include "event/event.h"
 #include "util/output.h"
 #include "util/argv.h"
 #include "util/numtostr.h"
@@ -387,10 +388,24 @@ internal_spawn_proc(int jobid, ompi_rte_node_schedule_t *sched,
     ret = OMPI_SUCCESS;
 
  proc_cleanup:
+
+   /* TSW - this needs to be fixed - however, ssh is not existing - and for
+    * now this at least gives us stdout/stderr.
+   */
+    
     /* Wait for the command to exit.  */
   do {
-    if (waitpid(pid, &status, 0) < 0) {
-        ret = OMPI_ERROR;
+#if OMPI_HAVE_THREADS
+    int rc = waitpid(pid, &status, 0);
+#else
+    int rc = waitpid(pid, &status, WNOHANG);
+    if(rc == 0) {
+        ompi_event_loop(OMPI_EVLOOP_ONCE);
+    }
+#endif
+    if (rc < 0) {
+        ret = OMPI_ERROR; 
+        break;
     }
   } while (!WIFEXITED(status));
 

@@ -126,6 +126,7 @@ static void ompi_event_queue_insert(struct ompi_event *, int);
 static void ompi_event_queue_remove(struct ompi_event *, int);
 static void ompi_timeout_process(void);
 int ompi_event_haveevents(void);
+bool ompi_event_progress_thread(void);
 
 static RB_HEAD(ompi_event_tree, ompi_event) ompi_timetree;
 static struct ompi_event_list ompi_activequeue;
@@ -140,6 +141,15 @@ static ompi_event_t ompi_event_pipe_event;
 static int ompi_event_pipe[2];
 static int ompi_event_pipe_signalled;
 #endif
+
+bool ompi_event_progress_thread(void)
+{
+#if OMPI_HAVE_THREADS
+    return ompi_thread_self(&ompi_event_thread);
+#else
+    return false;
+#endif
+}
 
 static int
 compare(struct ompi_event *a, struct ompi_event *b)

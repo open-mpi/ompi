@@ -164,6 +164,7 @@ struct mca_oob_1_0_0_t {
  * OOB Component
  */
 typedef mca_oob_t* (*mca_oob_base_component_init_fn_t)(
+    int  *priority,
     bool *allow_multi_user_threads,
     bool *have_hidden_threads);
 

@@ -116,6 +116,15 @@ extern "C" {
 
 
 /**
+ * This function returns the base pointer and size of the 
+ * packed region - suitable for use by oob_send/gpr_put/etc.
+ * Note the memory is still owned by the buffer.
+ *
+ */
+
+   int ompi_buffer_get(ompi_buffer_t buffer, void** base, int* size);
+
+/**
  * This function frees a given buffer
  * If the buffer has data still, it is lost
  *

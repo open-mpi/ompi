@@ -139,6 +139,25 @@ extern "C" {
      */
     int ompi_rte_get_peers(ompi_process_name_t **peers, size_t *npeers);
 
+    /**
+     * Setup process info in the registry.
+    */
+
+    int ompi_rte_register(void);
+
+    /**
+     * Monitor a job - currently implemented by monitoring process 
+     * registration/deregistration to/from the GPR.
+    */
+    
+    int ompi_rte_notify(mca_ns_base_jobid_t job, int num_procs);
+    int ompi_rte_monitor(void);
+
+    /**
+     * Remove process registration.
+     */
+
+    int ompi_rte_unregister(void);
 
     /**
      * Kill a specific process in this cell

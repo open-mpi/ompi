@@ -104,6 +104,10 @@ int ompi_thread_join(ompi_thread_t *t, void **thr_return)
     return (rc == 0) ? OMPI_SUCCESS : OMPI_ERROR;
 }
 
+bool ompi_thread_self(ompi_thread_t *t)
+{
+    return t->t_handle == pthread_self();
+}
 
 #else
 
@@ -117,6 +121,11 @@ int ompi_thread_start(ompi_thread_t *t)
 int ompi_thread_join(ompi_thread_t *t, void **thr_return)
 {
     return OMPI_ERROR;
+}
+
+bool ompi_thread_self(ompi_thread_t *t)
+{
+    return true;
 }
 
 #endif

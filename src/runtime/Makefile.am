@@ -14,19 +14,20 @@ noinst_LTLIBRARIES = libruntime.la
 headers = \
 	runtime.h \
 	runtime_types.h \
-        universe_connect.h \
+    universe_connect.h \
 	ompi_progress.h
 
 libruntime_la_SOURCES = \
 	$(headers) \
-        ompi_abort.c \
-        ompi_finalize.c \
-        ompi_init.c \
-        ompi_universe.c \
+    ompi_abort.c \
+    ompi_finalize.c \
+    ompi_init.c \
+    ompi_universe.c \
 	ompi_progress.c \
-        ompi_rte_finalize.c \
-        ompi_rte_init.c \
+    ompi_rte_finalize.c \
+    ompi_rte_init.c \
 	ompi_rte_llm.c \
+    ompi_rte_monitor.c \
 	ompi_rte_pcm.c
 
 # Conditionally install the header files
