@@ -17,6 +17,7 @@
 #include "util/proc_info.h"
 #include "util/output.h"
 #include "mca/mca.h"
+#include "mca/base/mca_base_param.h"
 #include "mca/gpr/base/base.h"
 #include "gpr_proxy.h"
 
@@ -70,6 +71,7 @@ ompi_process_name_t *mca_gpr_my_replica;
 ompi_list_t mca_gpr_proxy_notify_request_tracker;
 mca_gpr_notify_id_t mca_gpr_proxy_last_notify_id_tag;
 ompi_list_t mca_gpr_proxy_free_notify_id_tags;
+int mca_gpr_proxy_debug;
 
 
 /*
@@ -78,6 +80,11 @@ ompi_list_t mca_gpr_proxy_free_notify_id_tags;
  */
 int mca_gpr_proxy_open(void)
 {
+    int id;
+
+    id = mca_base_param_register_int("gpr", "proxy", "debug", NULL, 0);
+    mca_base_param_lookup_int(id, &mca_gpr_proxy_debug);
+
     return OMPI_SUCCESS;
 }
 

@@ -21,6 +21,7 @@
 #include "util/pack.h"
 
 #include "mca/mca.h"
+#include "mca/base/mca_base_param.h"
 #include "mca/oob/base/base.h"
 #include "mca/gpr/base/base.h"
 #include "gpr_replica.h"
@@ -76,6 +77,7 @@ mca_gpr_replica_t mca_gpr_replica_head;
 ompi_list_t mca_gpr_replica_notify_request_tracker;
 mca_gpr_notify_id_t mca_gpr_replica_last_notify_id_tag;
 ompi_list_t mca_gpr_replica_free_notify_id_tags;
+int mca_gpr_replica_debug;
 
 
 /* constructor - used to initialize state of keytable instance */
@@ -88,8 +90,17 @@ static void mca_gpr_replica_keytable_construct(mca_gpr_replica_keytable_t* keyta
 /* destructor - used to free any resources held by instance */
 static void mca_gpr_replica_keytable_destructor(mca_gpr_replica_keytable_t* keytable)
 {
-    if (NULL != keytable->token) {
-	free(keytable->token);
+    mca_gpr_replica_keytable_t *keyptr;
+
+    if (mca_gpr_replica_debug) {
+	ompi_output(0, "entered keytable destructor");
+    }
+
+    while (NULL != (keyptr = (mca_gpr_replica_keytable_t*)ompi_list_remove_first((ompi_list_t*)keytable))) {
+	if (NULL != keyptr->token) {
+	    free(keyptr->token);
+	}
+	OBJ_RELEASE(keyptr);
     }
 }
 
@@ -120,56 +131,32 @@ OBJ_CLASS_INSTANCE(
 		   mca_gpr_replica_keylist_destructor); /* destructor */
 
 
-/* constructor - used to initialize state of subscriber list instance */
-static void mca_gpr_replica_subscriber_list_construct(mca_gpr_replica_subscriber_list_t* subscriber)
+/* constructor - used to initialize state of trigger list instance */
+static void mca_gpr_replica_trigger_list_construct(mca_gpr_replica_trigger_list_t* trig)
 {
-    subscriber->addr_mode = OMPI_REGISTRY_NONE;
-    subscriber->action = OMPI_REGISTRY_NOTIFY_NONE;
-    subscriber->keys = NULL;
-    subscriber->id_tag = MCA_GPR_NOTIFY_ID_MAX;
+    trig->synch_mode = OMPI_REGISTRY_SYNCHRO_MODE_NONE;
+    trig->action = OMPI_REGISTRY_NOTIFY_NONE;
+    trig->addr_mode = OMPI_REGISTRY_NONE;
+    trig->keys = NULL;
+    trig->trigger = 0;
+    trig->count = 0;
+    trig->id_tag = MCA_GPR_NOTIFY_ID_MAX;
 }
 
 /* destructor - used to free any resources held by instance */
-static void mca_gpr_replica_subscriber_list_destructor(mca_gpr_replica_subscriber_list_t* subscriber)
+static void mca_gpr_replica_trigger_list_destructor(mca_gpr_replica_trigger_list_t* trig)
 {
-    if (NULL != subscriber->keys) {
-	free(subscriber->keys);
+    if (NULL != trig->keys) {
+	free(trig->keys);
     }
 }
 
 /* define instance of ompi_class_t */
 OBJ_CLASS_INSTANCE(
-		   mca_gpr_replica_subscriber_list_t,           /* type name */
-		   ompi_list_item_t,                    /* parent "class" name */
-		   mca_gpr_replica_subscriber_list_construct,   /* constructor */
-		   mca_gpr_replica_subscriber_list_destructor); /* destructor */
-
-
-/* constructor - used to initialize state of synchro list instance */
-static void mca_gpr_replica_synchro_list_construct(mca_gpr_replica_synchro_list_t* synchro)
-{
-    synchro->synch_mode = OMPI_REGISTRY_SYNCHRO_MODE_NONE;
-    synchro->addr_mode = OMPI_REGISTRY_NONE;
-    synchro->keys = NULL;
-    synchro->trigger = 0;
-    synchro->count = 0;
-    synchro->id_tag = MCA_GPR_NOTIFY_ID_MAX;
-}
-
-/* destructor - used to free any resources held by instance */
-static void mca_gpr_replica_synchro_list_destructor(mca_gpr_replica_synchro_list_t* synchro)
-{
-    if (NULL != synchro->keys) {
-	free(synchro->keys);
-    }
-}
-
-/* define instance of ompi_class_t */
-OBJ_CLASS_INSTANCE(
-		   mca_gpr_replica_synchro_list_t,           /* type name */
+		   mca_gpr_replica_trigger_list_t,           /* type name */
 		   ompi_list_item_t,                 /* parent "class" name */
-		   mca_gpr_replica_synchro_list_construct,   /* constructor */
-		   mca_gpr_replica_synchro_list_destructor); /* destructor */
+		   mca_gpr_replica_trigger_list_construct,   /* constructor */
+		   mca_gpr_replica_trigger_list_destructor); /* destructor */
 
 
 /* constructor - used to initialize state of replica list instance */
@@ -246,8 +233,7 @@ static void mca_gpr_replica_segment_construct(mca_gpr_replica_segment_t* seg)
     seg->segment = 0;
     seg->lastkey = 0;
     OBJ_CONSTRUCT(&seg->registry_entries, ompi_list_t);
-    OBJ_CONSTRUCT(&seg->subscriber, ompi_list_t);
-    OBJ_CONSTRUCT(&seg->synchros, ompi_list_t);
+    OBJ_CONSTRUCT(&seg->triggers, ompi_list_t);
     OBJ_CONSTRUCT(&seg->keytable, ompi_list_t);
     OBJ_CONSTRUCT(&seg->freekeys, ompi_list_t);
 }
@@ -256,25 +242,23 @@ static void mca_gpr_replica_segment_construct(mca_gpr_replica_segment_t* seg)
 static void mca_gpr_replica_segment_destructor(mca_gpr_replica_segment_t* seg)
 {
     mca_gpr_replica_core_t *reg;
-    mca_gpr_replica_subscriber_list_t *sub;
-    mca_gpr_replica_synchro_list_t *syn;
+    mca_gpr_replica_trigger_list_t *tr;
     mca_gpr_replica_keytable_t *kt;
     mca_gpr_replica_keylist_t *kl;
+
+    if (mca_gpr_replica_debug) {
+	ompi_output(0, "entered segment destructor");
+    }
 
     while (NULL != (reg = (mca_gpr_replica_core_t*)ompi_list_remove_first(&seg->registry_entries))) {
 	OBJ_RELEASE(reg);
     }
     OBJ_DESTRUCT(&seg->registry_entries);
 
-    while (NULL != (sub = (mca_gpr_replica_subscriber_list_t*)ompi_list_remove_first(&seg->subscriber))) {
-	OBJ_RELEASE(sub);
+    while (NULL != (tr = (mca_gpr_replica_trigger_list_t*)ompi_list_remove_first(&seg->triggers))) {
+	OBJ_RELEASE(tr);
     }
-    OBJ_DESTRUCT(&seg->subscriber);
-
-    while (NULL != (syn = (mca_gpr_replica_synchro_list_t*)ompi_list_remove_first(&seg->synchros))) {
-	OBJ_RELEASE(syn);
-    }
-    OBJ_DESTRUCT(&seg->synchros);
+    OBJ_DESTRUCT(&seg->triggers);
 
     while (NULL != (kt = (mca_gpr_replica_keytable_t*)ompi_list_remove_first(&seg->keytable))) {
 	OBJ_RELEASE(kt);
@@ -301,6 +285,11 @@ OBJ_CLASS_INSTANCE(
  */
 int mca_gpr_replica_open(void)
 {
+    int id;
+
+    id = mca_base_param_register_int("gpr", "replica", "debug", NULL, 0);
+    mca_base_param_lookup_int(id, &mca_gpr_replica_debug);
+
     return OMPI_SUCCESS;
 }
 
@@ -731,10 +720,10 @@ void mca_gpr_replica_recv(int status, ompi_process_name_t* sender,
 	    ptr_free_id = (mca_gpr_idtag_list_t*)ompi_list_remove_first(&mca_gpr_replica_free_notify_id_tags);
 	    trackptr->id_tag = ptr_free_id->id_tag;
 	}
-	trackptr->synchro = synchro_mode;
 	ompi_list_append(&mca_gpr_replica_notify_request_tracker, &trackptr->item);
 
-	response = (int32_t)gpr_replica_construct_synchro(synchro_mode, mode, segment, tokens,
+	response = (int32_t)gpr_replica_construct_trigger(synchro_mode, OMPI_REGISTRY_NOTIFY_NONE,
+							  mode, segment, tokens,
 							  trigger, trackptr->id_tag);
 
 	if (OMPI_SUCCESS != ompi_pack(answer, &command, 1, MCA_GPR_OOB_PACK_CMD)) {

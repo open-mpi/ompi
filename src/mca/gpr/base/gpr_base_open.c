@@ -101,7 +101,6 @@ static void mca_gpr_notify_request_tracker_construct(mca_gpr_notify_request_trac
     req->callback = NULL;
     req->user_tag = NULL;
     req->id_tag = MCA_GPR_NOTIFY_ID_MAX;
-    req->synchro = OMPI_REGISTRY_SYNCHRO_MODE_NONE;
 }
 
 /* destructor - used to free any resources held by instance */
