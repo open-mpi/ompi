@@ -185,5 +185,16 @@ int lam_convertor_get_unpacked_size( lam_convertor_t* pConv, int* pSize );
 int lam_create_stack_with_pos( lam_convertor_t* pConv,
                                int local_starting_point,
                                int* local_sizes );
+
+/* temporary function prototypes. They should move in other place later. */
+int lam_ddt_get_args( dt_desc_t* pData, int which,
+                      int * ci, int * i,
+                      int * ca, MPI_Aint * a,
+                      int * cd, MPI_Datatype * d, int * type);
+int lam_ddt_set_args( dt_desc_t* pData,
+                      int ci, int ** i, 
+                      int ca, MPI_Aint* a,
+                      int cd, MPI_Datatype* d,int type);
+
 #endif  /* DATATYPE_H_HAS_BEEN_INCLUDED */
 

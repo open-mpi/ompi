@@ -10,7 +10,8 @@
 #endif
 #include <stdlib.h>
 
-static int convertor_pack_general( lam_convertor_t* pConvertor, struct iovec* out, unsigned int outCount )
+static int lam_convertor_pack_general( lam_convertor_t* pConvertor,
+                                       struct iovec* out, unsigned int outCount )
 {
    dt_stack_t* pStack;   /* pointer to the position on the stack */
    int pos_desc;         /* actual position in the description of the derived datatype */
@@ -134,8 +135,8 @@ static int convertor_pack_general( lam_convertor_t* pConvertor, struct iovec* ou
 
 /* We suppose here that we work with an already optimized version of the data
  */
-static int convertor_pack_homogeneous( lam_convertor_t* pConv,
-                                       struct iovec* iov, unsigned int out_size )
+static int lam_convertor_pack_homogeneous( lam_convertor_t* pConv,
+                                           struct iovec* iov, unsigned int out_size )
 {
     dt_stack_t* pStack;   /* pointer to the position on the stack */
     int pos_desc;         /* actual position in the description of the derived datatype */
@@ -272,6 +273,30 @@ static int convertor_pack_homogeneous( lam_convertor_t* pConv,
     return 0;
 }
 
+static int lam_convertor_pack_homogeneous_contig( lam_convertor_t* pConv,
+                                                  struct iovec* out, unsigned int out_size )
+{
+    lam_datatype_t* pData = pConv->pDesc;
+    char* pSrc = pConv->pBaseBuf + pData->true_lb + pConv->bConverted;
+    size_t length = pData->size * pConv->count;
+    long extent;
+
+    if( pData->size == (extent = (pData->ub - pData->lb)) ) {
+        if( out[0].iov_base == NULL ) {
+            out[0].iov_base = pSrc;
+            if( (pConv->bConverted + out[0].iov_len) > length )
+                out[0].iov_len = length - pConv->bConverted;
+        } else {
+            /* contiguous data just memcpy the smallest data in the user buffer */
+            out[0].iov_len = IMIN( out[0].iov_len, length );
+            MEMCPY( out[0].iov_base, pSrc, out[0].iov_len);
+        }
+        pConv->bConverted += out[0].iov_len;
+        return (pConv->bConverted == length);
+    }
+    return -1;  /* not yet implemented */
+}
+
 /* The pack routines should do 2 things:
  * - first if the provided iovec contains NULL pointers then they should provide
  *   buffer space. If the data is contiguous the it should provide directly pointers
@@ -288,35 +313,17 @@ static int convertor_pack_homogeneous( lam_convertor_t* pConv,
 int lam_convertor_pack( lam_convertor_t* pConv, struct iovec* out, unsigned int out_size )
 {
     dt_desc_t* pData = pConv->pDesc;
-    int extent;
 
-    if( pConv->count == 0 ) return 1;  /* nothing to do */
-    if( pData->flags & DT_FLAG_CONTIGUOUS ) {
-        if( pData->size == (extent = (pData->ub - pData->lb)) ) {
-            size_t length = pData->size * pConv->count;
-            char* pSrc = pConv->pBaseBuf + pData->true_lb + pConv->bConverted;
-
-            if( out[0].iov_base == NULL ) {
-                out[0].iov_base = pSrc;
-                if( (pConv->bConverted + out[0].iov_len) > length )
-                    out[0].iov_len = length - pConv->bConverted;
-            } else {
-                /* contiguous data just memcpy the smallest data in the user buffer */
-                out[0].iov_len = IMIN( out[0].iov_len, pData->size * pConv->count );
-                MEMCPY( out[0].iov_base, pSrc, out[0].iov_len);
-            }
-            pConv->bConverted += out[0].iov_len;
-            return (pConv->bConverted == length);
-        } else {  /* datatype is contiguous but there are gap inbetween elements */
-            if( out[0].iov_base != NULL ) {
-                return -1;
-            }
-        }        
+    if( pConv->bConverted == (pData->size * pConv->count) ) {  /* conversion completed or nothing to do */
+        out[0].iov_len = 0;
+        return 1;
     }
-    if( out[0].iov_base == NULL ) {
-        out[0].iov_len = pConv->count * pData->size;
-        out[0].iov_base = (void*)malloc( out[0].iov_len );
-        pConv->freebuf = out[0].iov_base;
+    if( !(pData->flags & DT_FLAG_CONTIGUOUS) ) {  /* TODO REMOVE ME */
+        if( out[0].iov_base == NULL ) {
+            out[0].iov_len = pConv->count * pData->size;
+            out[0].iov_base = (void*)malloc( out[0].iov_len );
+            pConv->freebuf = out[0].iov_base;
+        }
     }
     return lam_convertor_progress( pConv, out, out_size );
 }
@@ -345,9 +352,14 @@ int lam_convertor_init_for_send( lam_convertor_t* pConv, unsigned int flags,
     pConv->pFunctions = copy_functions;
     pConv->converted = 0;
     pConv->bConverted = 0;
-    if( (dt->flags & DT_FLAG_CONTIGUOUS) && (dt->size == (dt->ub - dt->lb)) )
+    if( dt->flags & DT_FLAG_CONTIGUOUS ) {
         pConv->flags |= DT_FLAG_CONTIGUOUS;
-    pConv->fAdvance = convertor_pack_homogeneous;
+        pConv->fAdvance = lam_convertor_pack_homogeneous_contig;
+    } else {
+        /* TODO handle the sender convert case */
+        pConv->fAdvance = lam_convertor_pack_general;
+        pConv->fAdvance = lam_convertor_pack_homogeneous;
+    }
     if( pConv->freebuf != NULL ) {
         free( pConv->freebuf );
         pConv->freebuf = NULL;
@@ -361,7 +373,7 @@ lam_convertor_t* lam_convertor_create( int remote_arch, int mode )
 
    pConv->pStack = NULL;
    pConv->remoteArch = remote_arch;
-   pConv->fAdvance = convertor_pack_homogeneous;
+   pConv->fAdvance = NULL;
    return pConv;
 }
 
@@ -384,6 +396,7 @@ inline int lam_convertor_copy( lam_convertor_t* pSrcConv, lam_convertor_t* pDest
    pDestConv->count      = 0;
    pDestConv->converted  = 0;
    pDestConv->bConverted = 0;
+   pDestConv->fAdvance   = NULL;
    pDestConv->freebuf    = NULL;
    return LAM_SUCCESS;
 }
