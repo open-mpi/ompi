@@ -167,7 +167,7 @@ mca_ptl_gm_recv_frag_destruct (mca_ptl_gm_recv_frag_t *frag)
 }
 
 mca_ptl_gm_recv_frag_t *
-mca_ptl_gm_alloc_recv_frag(struct mca_ptl_base_module_t *ptl)
+mca_ptl_gm_alloc_recv_frag( struct mca_ptl_base_module_t *ptl )
 {
 
     ompi_free_list_t *flist;
@@ -178,10 +178,9 @@ mca_ptl_gm_alloc_recv_frag(struct mca_ptl_base_module_t *ptl)
     flist =&( ((mca_ptl_gm_module_t *)ptl)->gm_recv_frags_free);
     item = ompi_list_remove_first(&((flist)->super));
 
-    while(NULL == item)
-    {
-         ptl->ptl_component->ptlm_progress(tstamp);
-         item = ompi_list_remove_first (&((flist)->super));
+    while(NULL == item) {
+        ptl->ptl_component->ptlm_progress(tstamp);
+        item = ompi_list_remove_first (&((flist)->super));
     }
 
     frag = (mca_ptl_gm_recv_frag_t *)item;
