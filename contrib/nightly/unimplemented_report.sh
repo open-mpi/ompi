@@ -273,13 +273,22 @@ cd "$unzip_root"
 
 # expand the tarball (do NOT assume GNU tar)
 do_command "gunzip -c $scratch_root_arg/downloads/$tarball_name | tar xf -"
-cd openmpi-$version/src/mpi/c
+cd openmpi-$version/src/mpi
 
 # count
-report="$logdir/report.$$.txt"
-rm -f "$report"
-grep -s implemented *.c | grep not > "$report"
-num="`wc -l $report | awk '{ print $1 }'`"
+report_c="$logdir/report_c.$$.txt"
+report_f77="$logdir/report_f77.$$.txt"
+rm -f "$report_c" "$report_f77"
+
+cd c
+grep -s implemented *.c | grep not > "$report_c"
+total_c="`ls -1 *.c | wc -l | awk '{ print $1 }'`"
+num_c="`wc -l $report_c | awk '{ print $1 }'`"
+
+cd ../f77
+grep -s implemented *.c | grep not > "$report_f77"
+total_f77="`ls -1 *.c | wc -l | awk '{ print $1 }'`"
+num_f77="`wc -l $report_f77 | awk '{ print $1 }'`"
 
 # trim the downloads dir to $max_snapshots
 cd "$scratch_root_arg/downloads"
@@ -298,9 +307,20 @@ Unimplemented MPI function report
 
 Snapshot:   $version
 
-Total number of functions unimplemented: $num
+Total C functions: $total_c
+Unimplemented C functions: $num_c
+
+Total F77 functions: $total_f77
+Unimplemented F77 functions: $num_f77
+
+Unimplemented C functions:
 ---------------------------------------------------------------------------
-`cat $report`
+`cat $report_c`
+---------------------------------------------------------------------------
+
+Unimplemented F77 functions:
+---------------------------------------------------------------------------
+`cat $report_f77`
 ---------------------------------------------------------------------------
 
 Your friendly daemon,
