@@ -7,8 +7,6 @@
 #include "io_romio.h"
 
 
-int         mca_io_romio_module_open (void);
-int         mca_io_romio_module_close (void);
 mca_io_1_0_0_t *mca_io_romio_module_init (int *priority,
                                           int *min_thread,
                                           int *max_thread);
@@ -25,8 +23,8 @@ mca_io_base_module_1_0_0_t mca_io_romio_module = {
         1,                         /* MCA module major version */
         0,                         /* MCA module minor version */
         0,                         /* MCA module release version */
-        mca_io_romio_module_open,  /* module open */
-        mca_io_romio_module_close  /* module close */
+        NULL,
+        NULL
     },
 
     /* Next the MCA v1.0.0 module meta data */
@@ -38,21 +36,6 @@ mca_io_base_module_1_0_0_t mca_io_romio_module = {
 
     mca_io_romio_module_init    /* module init */
 };
-
-
-int
-mca_io_romio_module_open (void)
-{
-    return OMPI_SUCCESS;
-    /* register all mca parameters */
-}
-
-
-int
-mca_io_romio_module_close (void)
-{
-    return OMPI_SUCCESS;
-}
 
 
 mca_io_1_0_0_t *
