@@ -202,11 +202,11 @@ int ompi_comm_finalize(void)
     /* Check whether we have some communicators left */
     max = ompi_pointer_array_get_size(&ompi_mpi_communicators);
     for ( i=3; i<max; i++ ) {
-        comm = ompi_pointer_array_get_item(&ompi_mpi_communicators, i);
+        comm = (ompi_communicator_t *)ompi_pointer_array_get_item(&ompi_mpi_communicators, i);
         if ( NULL != comm ) {
             /* Communicator has not been freed before finalize */
             OBJ_RELEASE(comm);
-            comm=ompi_pointer_array_get_item(&ompi_mpi_communicators, i);
+            comm=(ompi_communicator_t *)ompi_pointer_array_get_item(&ompi_mpi_communicators, i);
             if ( NULL != comm ) {
                 /* Still here ? */
                 if ( ompi_debug_show_handle_leaks && !(OMPI_COMM_IS_FREED(comm)) ){

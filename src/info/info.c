@@ -286,7 +286,7 @@ int ompi_info_finalize(void)
     
     max = ompi_pointer_array_get_size(&ompi_info_f_to_c_table);
     for (i = 0; i < max; ++i) {
-        info = ompi_pointer_array_get_item(&ompi_info_f_to_c_table, i);
+        info = (ompi_info_t *)ompi_pointer_array_get_item(&ompi_info_f_to_c_table, i);
         
         /* If the info was freed but still exists because the user
            told us to never free handles, then do an OBJ_RELEASE it
@@ -295,7 +295,7 @@ int ompi_info_finalize(void)
         
         if (NULL != info && ompi_debug_no_free_handles && info->i_freed) {
             OBJ_RELEASE(info);
-            info = ompi_pointer_array_get_item(&ompi_info_f_to_c_table, i);
+            info = (ompi_info_t *)ompi_pointer_array_get_item(&ompi_info_f_to_c_table, i);
         } 
         
         /* If it still exists here and was never freed, then it's an

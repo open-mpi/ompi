@@ -19,7 +19,7 @@
 struct ompi_mpi_errcode_t {
     ompi_object_t                      super;
     int                                 code;
-    int                                class;
+    int                                cls;
     char     errstring[MPI_MAX_ERROR_STRING];
 };
 typedef struct ompi_mpi_errcode_t ompi_mpi_errcode_t;
@@ -45,8 +45,8 @@ static inline int ompi_mpi_errcode_get_class (int errcode)
 {
     ompi_mpi_errcode_t *err;
 
-    err = ompi_pointer_array_get_item(&ompi_mpi_errcodes, errcode);
-    return err->class;
+    err = (ompi_mpi_errcode_t *)ompi_pointer_array_get_item(&ompi_mpi_errcodes, errcode);
+    return err->cls;
 }
 /** 
  * Return the error string 
@@ -55,7 +55,7 @@ static inline char* ompi_mpi_errcode_get_string (int errcode)
 {
     ompi_mpi_errcode_t *err;
     
-    err = ompi_pointer_array_get_item(&ompi_mpi_errcodes, errcode);
+    err = (ompi_mpi_errcode_t *)ompi_pointer_array_get_item(&ompi_mpi_errcodes, errcode);
     return err->errstring;
 }
 

@@ -149,7 +149,7 @@ int ompi_file_finalize(void)
 
     max = ompi_pointer_array_get_size(&ompi_file_f_to_c_table);
     for (num_unnamed = i = 0; i < max; ++i) {
-        file = ompi_pointer_array_get_item(&ompi_file_f_to_c_table, i);
+        file = (ompi_file_t *)ompi_pointer_array_get_item(&ompi_file_f_to_c_table, i);
         
         /* If the file was closed but still exists because the user
            told us to never free handles, then do an OBJ_RELEASE it
@@ -159,7 +159,7 @@ int ompi_file_finalize(void)
         if (NULL != file && ompi_debug_no_free_handles && 
             0 == (file->f_flags & OMPI_FILE_ISCLOSED)) {
             OBJ_RELEASE(file);
-            file = ompi_pointer_array_get_item(&ompi_file_f_to_c_table, i);
+            file = (ompi_file_t *)ompi_pointer_array_get_item(&ompi_file_f_to_c_table, i);
         } 
         
         if (NULL != file) {
