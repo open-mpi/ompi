@@ -2,12 +2,19 @@
  * $HEADER$
  */
 
+#include "lam_config.h"
+
 #include <string.h>
 
 #include "mpi.h"
+#include "mpi/c/profiling.h"
+#include "lam/util/strncpy.h"
 #include "communicator.h"
 #include "totalview.h"
 
+#if LAM_WANT_MPI_PROFILING && LAM_HAVE_WEAK_SYMBOLS
+#pragma weak PMPI_Comm_set_name = MPI_Comm_set_name
+#endif
 
 int
 MPI_Comm_set_name(MPI_Comm comm, char *name)
@@ -24,7 +31,7 @@ MPI_Comm_set_name(MPI_Comm comm, char *name)
 
   /* Copy in the name */
   
-  strncpy(comm->c_name, name, MPI_MAX_OBJECT_NAME);
+  lam_strncpy(comm->c_name, name, MPI_MAX_OBJECT_NAME);
   comm->c_name[MPI_MAX_OBJECT_NAME - 1] = 0;
 
   /* -- Tracing information for new communicator name -- */
