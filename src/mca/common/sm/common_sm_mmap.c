@@ -81,10 +81,10 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
     mca_common_sm_mmap_t* map;
     struct stat s_stat;
     unsigned char *addr;
-    size_t tmp;
+    size_t tmp,mem_offset;
 
     /* input parameter error checks */
-    if( (size <= sizeof(mca_common_sm_segment_t) ) ||
+    if( (size < sizeof(mca_common_sm_segment_t) ) ||
                 ( file_name == NULL ) || 
                 ( size_ctl_structure < sizeof(mca_common_sm_segment_t ) ) ||
                 ( data_seg_alignment == 0 ) ) {
@@ -141,26 +141,34 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
     /* set up the map object */
     map = OBJ_NEW(mca_common_sm_mmap_t);
     strncpy(map->map_path, file_name, PATH_MAX);
+    /* the first entry in the file is the control strcuture.  the first
+       entry in the control structure is an mca_common_sm_segment_t
+       element */
     map->map_seg = seg;
+
     /* allign start of data segment */
     addr=(unsigned char *)seg+size_ctl_structure;
-    tmp=(size_t)(addr+1+data_seg_alignment);
+    tmp=(size_t)(addr+1);
     addr=(unsigned char *)( (tmp/data_seg_alignment)*data_seg_alignment);
     /* is addr past end of file ? */
     if( (unsigned char*)seg+size < addr ){
-        ompi_output(0, "mca_common_sm_mmap_init: memory region too small len %d \n",size);
+        ompi_output(0, "mca_common_sm_mmap_init: memory region too small len %d  addr %p\n",
+                size,addr);
+        fchmod(fd, 0600);
         close(fd);
         munmap(seg,size);
         return NULL;
     }
-    map->map_addr = addr;
-    map->map_size = size - (addr-(unsigned char *)seg);
+    mem_offset=addr-(unsigned char *)seg;
+    map->map_addr = seg;
+    map->data_addr = addr;
+    map->map_size = size;
 
     /* initialize the segment - only the first process to open the file */
     if( !file_previously_opened ) {
         spinunlock(&seg->seg_lock);
         seg->seg_inited = false;
-        seg->seg_offset = 0;
+        seg->seg_offset = mem_offset;
         seg->seg_size = size;
     }
 
@@ -178,6 +186,14 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
 }
 
 
+/**
+ *  allocate memory from a previously allocated shared memory
+ *  block.
+ *
+ *  @param size size of request, in bytes (IN)
+ * 
+ *  @retval addr virtual address
+ */
 void* mca_common_sm_mmap_alloc(size_t* size)
 {
     mca_common_sm_mmap_t* map = mca_common_sm_mmap;
@@ -188,7 +204,8 @@ void* mca_common_sm_mmap_alloc(size_t* size)
     if(seg->seg_offset + *size > map->map_size) {
         addr = NULL;
     } else {
-        addr = map->map_addr + seg->seg_offset;
+        /* add base address to segment offset */
+        addr = map->data_addr + seg->seg_offset;
         seg->seg_offset += *size;
     }
     spinunlock(&seg->seg_lock);

@@ -25,6 +25,7 @@
 #include "ptl_sm_sendreq.h"
 #include "ptl_sm_sendfrag.h"
 #include "ptl_sm_recvfrag.h"
+#include "mca/common/sm/common_sm_mmap.h"
 
 
 
@@ -152,17 +153,9 @@ mca_ptl_base_module_t** mca_ptl_sm_component_init(
     *have_hidden_threads = OMPI_HAVE_THREADS;
 
     /* lookup shared memory pool */
-    sm_mpool_component = mca_mpool_component_lookup(mca_ptl_sm_component.sm_mpool_name);
-
     mca_ptl_sm_component.sm_mpool =
-        sm_mpool_component->mpool_init(allow_multi_user_threads); /* RLG */
-    /*mca_ptl_sm_component.sm_mpool =
-     * mca_mpool_component_lookup(mca_ptl_sm_component.sm_mpool_name);  RLG */
-    if(NULL == mca_ptl_sm_component.sm_mpool) {
-        ompi_output(0, "mca_ptl_sm_component_init: unable to locate shared memory pool: %s\n",
-            mca_ptl_sm_component.sm_mpool_name);
-        return NULL;
-    }
+        mca_mpool_module_lookup(mca_ptl_sm_component.sm_mpool_name);
+
     mca_ptl_sm_component.sm_mpool_base = mca_ptl_sm_component.sm_mpool->mpool_base();
 
     /* initialize free lists */

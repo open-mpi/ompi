@@ -35,7 +35,8 @@ ompi_list_t mca_mpool_base_modules;
  */
 int mca_mpool_base_open(void)
 {
-  /* Open up all available components */
+  /* Open up all available components - and populate the
+     mca_mpool_base_components list */
 
   if (OMPI_SUCCESS != 
       mca_base_components_open("mpool", 0, mca_mpool_base_static_components, 
