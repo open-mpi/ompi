@@ -51,13 +51,13 @@ mca_ns_base_component_t mca_ns_proxy_component = {
  * setup the function pointers for the module
  */
 static mca_ns_base_module_t mca_ns_proxy = {
-    ns_base_create_cellid,
+    ns_proxy_create_cellid,
     ns_base_assign_cellid_to_process,
-    ns_base_create_jobid,
+    ns_proxy_create_jobid,
     ns_base_create_process_name,
     ns_base_copy_process_name,
     ns_base_convert_string_to_process_name,
-    ns_base_reserve_range,
+    ns_proxy_reserve_range,
     ns_base_free_name,
     ns_base_get_proc_name_string,
     ns_base_get_vpid_string,
@@ -79,12 +79,18 @@ static bool initialized = false;
  */
 
 ompi_process_name_t *mca_ns_my_replica;
+int mca_ns_proxy_debug;
 
 /*
  * Open the proxy component and obtain the name of my replica.
  */
 int mca_ns_proxy_open(void)
 {
+    int id;
+
+    id = mca_base_param_register_int("ns", "proxy", "debug", NULL, 0);
+    mca_base_param_lookup_int(id, &mca_ns_proxy_debug);
+
     return OMPI_SUCCESS;
 }
 
@@ -136,6 +142,10 @@ mca_ns_base_module_t* mca_ns_proxy_init(bool *allow_multi_user_threads, bool *ha
  */
 int mca_ns_proxy_finalize(void)
 {
+    if (mca_ns_proxy_debug) {
+	ompi_output(0, "finalizing ns proxy");
+    }
+
   /* free all tracking storage, but only if this component was initialized */
 
   if (initialized) {

@@ -65,7 +65,7 @@ int gpr_replica_put(ompi_registry_mode_t addr_mode, char *segment,
 
 
     if (mca_gpr_replica_debug) {
-	ompi_output(0, "gpr replica: put entered");
+	ompi_output(0, "gpr replica: put entered on segment %s 1st token %s", segment, *tokens);
     }
 
     /* protect ourselves against errors */
@@ -441,7 +441,7 @@ int gpr_replica_synchro(ompi_registry_synchro_mode_t synchro_mode,
     ompi_registry_notify_message_t *notify_msg;
 
     if (mca_gpr_replica_debug) {
-	ompi_output(0, "gpr replica: synchro entered");
+	ompi_output(0, "gpr replica: synchro entered on segment %s trigger %d", segment, trigger);
     }
 
     /* protect against errors */
