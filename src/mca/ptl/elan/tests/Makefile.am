@@ -28,6 +28,9 @@ qsnet_rdma: qsnet_rdma.c
 mpitest: mpi_test.c
 	${HOME}/installs/openmpi/bin/mpicc -g -o mpitest mpi_test.c 
 
+check: % : %.c
+	${HOME}/installs/openmpi/bin/mpicc -g -o $@ check.c
+
 lat: % : %.c
 	${HOME}/installs/openmpi/bin/mpicc -g -o lat lat.c
 
