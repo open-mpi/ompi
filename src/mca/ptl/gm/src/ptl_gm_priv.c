@@ -81,9 +81,8 @@ static void send_continue_short_callback( struct gm_port* port, void* context, g
     ompi_atomic_add( &(gm_ptl->num_send_tokens), 1 );
 }
 
-static
+static inline
 int mca_ptl_gm_send_next_long_segment( mca_ptl_gm_send_frag_t* frag,
-				       mca_ptl_base_header_t* hdr,
 				       int flags )
 {
     struct mca_ptl_gm_peer_t* ptl_peer;
@@ -92,6 +91,7 @@ int mca_ptl_gm_send_next_long_segment( mca_ptl_gm_send_frag_t* frag,
     char* pointer;
     uint64_t length;
     int32_t hdr_flags = 0;
+    mca_ptl_base_header_t* hdr;
 
     ptl_peer = (struct mca_ptl_gm_peer_t*)frag->send_frag.frag_base.frag_peer;
 
@@ -103,24 +103,12 @@ int mca_ptl_gm_send_next_long_segment( mca_ptl_gm_send_frag_t* frag,
     }
     pointer = (char*)frag->send_frag.frag_base.frag_addr + frag->frag_offset + frag->frag_bytes_processed;
 
-    if( flags & GM_PTL_REGISTER_MEMORY ) {
-	status = gm_register_memory( ptl_peer->peer_ptl->gm_port,
-				     pointer, length );
-	if( status != GM_SUCCESS ) {
-	    ompi_output( 0, "Cannot register sender memory (%p, %lld) bytes offset %d\n",
-			 pointer, length, frag->frag_bytes_processed );
-	    return OMPI_ERROR;
-	}
-    }
-    
     if( flags & GM_PTL_SEND_MESSAGE ) {
-	if( NULL == hdr ) {
-	    ompi_list_item_t* item;
-	    int32_t rc;
-
-	    OMPI_FREE_LIST_GET( &(ptl_peer->peer_ptl->gm_send_dma_frags), item, rc );
-	    hdr = (mca_ptl_base_header_t*)item;
-	}
+	ompi_list_item_t* item;
+	int32_t rc;
+	
+	OMPI_FREE_LIST_GET( &(ptl_peer->peer_ptl->gm_send_dma_frags), item, rc );
+	hdr = (mca_ptl_base_header_t*)item;
 
 	hdr->hdr_frag.hdr_common.hdr_type = MCA_PTL_HDR_TYPE_FRAG;
 	hdr->hdr_frag.hdr_common.hdr_flags = frag->send_frag.frag_base.frag_header.hdr_common.hdr_flags | hdr_flags;
@@ -139,8 +127,21 @@ int mca_ptl_gm_send_next_long_segment( mca_ptl_gm_send_frag_t* frag,
 				       GM_LOW_PRIORITY, ptl_peer->local_id,
 				       send_continue_callback, (void*)hdr );
 	frag->frag_bytes_processed += length;
+	pointer += length;
+	length = frag->send_frag.frag_base.frag_size - frag->frag_bytes_processed;
+	if( length > mca_ptl_gm_component.gm_rdma_frag_size )
+	    length = mca_ptl_gm_component.gm_rdma_frag_size;
     }
 
+    if( (flags & GM_PTL_REGISTER_MEMORY) && (0 != length) ) {
+	status = gm_register_memory( ptl_peer->peer_ptl->gm_port, pointer, length );
+	if( status != GM_SUCCESS ) {
+	    ompi_output( 0, "Cannot register sender memory (%p, %lld) bytes offset %d\n",
+			 pointer, length, frag->frag_bytes_processed );
+	    return OMPI_ERROR;
+	}
+    }
+    
     return OMPI_SUCCESS;
 }
 
@@ -246,7 +247,7 @@ int mca_ptl_gm_peer_send_continue( mca_ptl_gm_peer_t *ptl_peer,
     /* Now we are waiting for the ack message. Meanwhile we can register the sender first piece
      * of data. In this way we have a recovery between the expensive registration on both sides.
      */
-    return mca_ptl_gm_send_next_long_segment( fragment, NULL, GM_PTL_REGISTER_MEMORY );
+    return mca_ptl_gm_send_next_long_segment( fragment, GM_PTL_REGISTER_MEMORY );
 }
 
 static void send_match_callback( struct gm_port* port, void* context, gm_status_t status )
@@ -768,12 +769,12 @@ mca_ptl_gm_recv_frag_fin( struct mca_ptl_gm_module_t* ptl,
 
     if( 0 == frag->frag_bytes_processed ) {
 	/* I just receive the ack for the first fragment => setup the pipeline */
-	mca_ptl_gm_send_next_long_segment( frag, NULL, GM_PTL_SEND_MESSAGE );
+	mca_ptl_gm_send_next_long_segment( frag, GM_PTL_SEND_MESSAGE | GM_PTL_REGISTER_MEMORY );
     }
     /* continue the pipeline ... send the next segment */
     if( frag->frag_bytes_processed != frag->send_frag.frag_base.frag_size ) {
 	/* If there is still something pending ... */
-	mca_ptl_gm_send_next_long_segment( frag, NULL, GM_PTL_SEND_MESSAGE | GM_PTL_REGISTER_MEMORY );
+	mca_ptl_gm_send_next_long_segment( frag, GM_PTL_SEND_MESSAGE | GM_PTL_REGISTER_MEMORY );
     }
 
     if( 0 != hdr->hdr_ack.hdr_dst_size ) {
