@@ -57,9 +57,9 @@ send_error_mail() {
         fi
     done
     if test -n "$version"; then
-        Mail -s "=== CREATE ERROR ($version) ===" "$email" < "$outfile"
+        Mail -s "=== CREATE FAILURE ($version) ===" "$email" < "$outfile"
     else
-        Mail -s "=== CREATE ERROR ===" "$email" < "$outfile"
+        Mail -s "=== CREATE FAILURE ===" "$email" < "$outfile"
     fi
     rm -f "$outfile"
 }
