@@ -25,7 +25,6 @@
  * Global variables
  */
 ompi_list_t mca_allocator_base_components;
-ompi_list_t mca_allocator_base_modules;
 int mca_allocator_base_output = -1;
 
 /**
@@ -35,13 +34,8 @@ int mca_allocator_base_output = -1;
 int mca_allocator_base_open(void)
 {
   /* Open up all available modules */
-
-  if (OMPI_SUCCESS != 
-      mca_base_modules_open("allocator", 0, mca_allocator_base_static_modules, 
-                            &mca_allocator_base_components)) {
-    return OMPI_ERROR;
-  }
-  /* All done */
-  return OMPI_SUCCESS;
+  return mca_base_modules_open("allocator", 0, mca_allocator_base_static_modules, 
+                            &mca_allocator_base_components);
 }
+
 

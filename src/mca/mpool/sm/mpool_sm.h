@@ -22,7 +22,8 @@ struct mca_mpool_sm_component_t {
     size_t sm_max_size;
     size_t sm_size;
     size_t sm_segment;
-    ompi_list_t sm_mmap;
+    ompi_list_t sm_mmaps;
+    struct mca_mpool_sm_mmap_t *sm_mmap;
 };
 typedef struct mca_mpool_sm_component_t mca_mpool_sm_component_t;
 

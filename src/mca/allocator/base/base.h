@@ -32,9 +32,8 @@ OBJ_CLASS_DECLARATION(mca_mpool_base_selected_module_t);
 extern "C" {
 #endif
   int mca_allocator_base_open(void);
-  int mca_allocator_base_init(bool *allow_multi_user_threads);
   int mca_allocator_base_close(void);
-  mca_allocator_base_module_t* mca_allocator_module_lookup(const char* name);
+  mca_allocator_base_module_t* mca_allocator_component_lookup(const char* name);
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
@@ -44,8 +43,6 @@ extern "C" {
  * Globals
  */
 
-
 extern ompi_list_t mca_allocator_base_components;
-extern ompi_list_t mca_allocator_base_modules;
 
 #endif /* MCA_ALLOCATOR_BASE_H */

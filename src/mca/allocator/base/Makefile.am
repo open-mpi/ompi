@@ -18,8 +18,7 @@ headers = \
 libmca_allocator_base_la_SOURCES = \
         $(headers) \
         allocator_base_open.c \
-        allocator_base_close.c \
-        allocator_base_init.c 
+        allocator_base_close.c 
 
 # Conditionally install the header files
 
