@@ -17,7 +17,7 @@ struct mca_llm_base_module_1_0_0_t mca_llm_hostfile_module = {
 
 char *mca_llm_hostfile_filename = NULL;
 
-struct mca_llm_module_1_0_0_t* 
+struct mca_llm_base_module_1_0_0_t* 
 mca_llm_hostfile_component_init(const char *active_pcm,
                                 int *priority, 
                                 bool *allow_multiple_user_threads,
