@@ -1,0 +1,27 @@
+CC          = @CC@
+AR          = @AR@
+LIBNAME     = @LIBNAME@
+srcdir      = @srcdir@
+
+INCLUDE_DIR = -I@MPI_INCLUDE_DIR@ -I${srcdir}/../include -I../include
+CFLAGS      = @CFLAGS@ $(INCLUDE_DIR)
+
+@VPATH@
+
+AD_TESTFS_OBJECTS = ad_testfs_close.o ad_testfs_read.o ad_testfs_rdcoll.o \
+	ad_testfs_wrcoll.o ad_testfs_open.o ad_testfs_write.o \
+	ad_testfs_done.o ad_testfs_fcntl.o ad_testfs_iread.o \
+	ad_testfs_iwrite.o ad_testfs_wait.o ad_testfs_flush.o \
+	ad_testfs_seek.o ad_testfs_resize.o ad_testfs_hints.o \
+	ad_testfs_delete.o ad_testfs.o
+
+default: $(LIBNAME)
+
+.c.o:
+	$(CC) $(CFLAGS) -c $<
+
+$(LIBNAME): $(AD_TESTFS_OBJECTS)
+	$(AR) $(LIBNAME) $(AD_TESTFS_OBJECTS)
+
+clean:
+	@rm -f *.o

@@ -1,0 +1,5273 @@
+#! /bin/sh
+# Guess values for system-dependent variables and create Makefiles.
+# Generated automatically using autoconf.
+# Copyright (C) 1991, 1992, 1993 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2, or (at your option)
+# any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+#
+progname="`echo $0 | sed 's:^\./\./:\./:'`"
+print_error() {
+    echo "*# $*" 2>&1 ;
+    }
+usage_msg="
+Usage: ${progname} [-file_system=FILE_SYSTEM] [-arch=ARCH_TYPE] [-mpi=MPI_IMPL]
+                [-mpiincdir=MPI_INCLUDE_DIR] [-mpilib=MPI_LIBRARY]
+		[-mpibindir=MPI_BIN_DIR]
+                [-cc=C_COMPILER] [-fc=FORTRAN_COMPILER] [-nof77] 
+                [-cflags=CFLAGS] [-fflags=FFLAGS] [-f90=F90_COMPILER] [-debug] 
+                [-make=MAKEPGM] [-mpiolib=MPIO_LIBRARY] [-ar_nolocal] 
+                [-noranlib] [-ar=AR_COMMAND] [-prefix=INSTALL_DIR]  
+                [-intsize=INTSIZE] [-ptrsize=PTRSIZE] [-longsize=LONGSIZE]
+                [-longlongsize=LONGLONGSIZE] [-f90nag] [-disable-weak-symbols]
+
+where
+   FILE_SYSTEM  = the file system(s) for which ROMIO is to be configured.
+                  Valid values are pfs, piofs, hfs, xfs, sfs, pvfs, ufs,
+                  and nfs (case-sensitive). They correspond to Intel's PFS, 
+                  IBM's PIOFS, HP/Convex's HFS, SGI's XFS, NEC's SFS, 
+                  Clemson University's PVFS (for Linux clusters), any Unix 
+                  file system, and NFS. 
+                  To configure for multiple file systems, use "+" as a 
+                  separator; e.g., ufs+nfs
+   ARCH_TYPE    = the type of machine for which ROMIO is to be configured.
+                  Not needed on most machines, because ROMIO can usually
+                  find the arch_type on its own. Needed if you are 
+                  cross-compiling for a different architecture.
+                  Valid values are sun4, solaris, solaris86, rs6000,
+                  paragon, hpux, sppux, IRIX, IRIX32, IRIXN32, IRIX64, SX4, 
+                  alpha, freebsd, LINUX, and LINUX_ALPHA.  (case-sensitive)
+   MPI_IMPL     = the MPI implementation with which ROMIO will be used
+                  Valid values are mpich, sgi, hp. (case-sensitive)
+                  Valid implementations are MPICH 1.1.1 or higher,
+                  SGI's MPI 3.1 or higher, HP MPI 1.3 or higher, LAM, 
+                  and Cray MPI.
+   MPI_INCLUDE_DIR = the full path of the directory where mpi.h is located.
+                  Not needed if the directory is in the compiler's 
+                  default include path
+   MPI_LIBRARY  = name of the file containing the MPI library (full path).
+                  Not needed if the library is in the compiler's default
+                  list of libraries
+   MPI_BIN_DIR  = the full path of the directory that contains the MPI
+                  versions of the compilers, such as mpicc and mpif77.
+                  Use only if the ROMIO configure cannot find the
+                  necessary commands
+   C_COMPILER   = the C compiler to use. If not specified, ROMIO uses a 
+                  default compiler depending on the machine.
+   FORTRAN_COMPILER = the Fortran compiler to use. If not specified, ROMIO 
+                  uses a default compiler depending on the machine.
+   CFLAGS       = flags to give to the C compiler
+   FFLAGS       = flags to give to the Fortran compiler
+   F90_COMPILER = the Fortran 90 compiler to use. If not specified, 
+                  ROMIO uses f90.
+   MPIO_LIBRARY = name of the MPI-IO library to be built (full path).
+                  Default is "this_directory"/lib/ARCH_TYPE/libmpio.a.
+   MAKEPGM      = name of the make program to use
+   AR_COMMAND   = an alternate archiver (ar) command to use.
+   INSTALL_DIR  = directory where ROMIO is to be installed
+   INTSIZE      = size of int in bytes.
+   PTRSIZE      = size of pointers in bytes.
+   LONGSIZE     = size of long in bytes.
+   LONGLONGSIZE = size of long long in bytes.
+ 
+The options '-mpiincdir' and '-mpilib' may be needed if the MPI include file
+and MPI library are not in the compiler's default path.
+
+The option '-nof77' prevents the compilation of routines that require a
+Fortran compiler.  If you select this option, you cannot use the
+Fortran interface of MPI-IO.
+
+The option '-f90nag' allows you to use the NAG Fortran 90 compiler 
+instead of Fortran 77.
+
+The option '-make' may be used to select an alternate make program. ROMIO
+uses "make" by default.
+
+If '-debug' is used, ROMIO will be configured with the '-g' compiler option
+for debugging.
+
+The option '-ar_nolocal' prevents the library archive command from
+attempting to use the local directory for temporary space.  This option
+should be used when (a) there isn't much space (less than 10 MB)
+available in the partition where ROMIO resides and (b) there is enough
+space in /tmp (or wherever ar places temporary files by default).
+
+The option '-noranlib' causes the 'ranlib' step (needed on some systems
+to build an object library) to be skipped.  This is particularly useful
+on systems where 'ranlib' is optional (allowed but not needed; because it
+is allowed, configure chooses to use it just in case) but can fail (some
+'ranlib's are implemented as scripts using 'ar'; if they don't use the
+local directory, they can fail (destroying the library in the process) if
+the temporary directory (usually '/tmp') does not have enough space.
+
+The option -disable-weak-symbols disables the use of weak symbols, even if 
+available, for building the profiling interface.
+"
+#
+echo " "
+echo "Configuring ROMIO Version 1.2.3"
+echo " "
+CONFIGURE_ARGS="$*"
+if test -n "$CONFIGURE_ARGS" ; then
+    echo "Configuring with args $CONFIGURE_ARGS"
+fi
+#
+# rm -f include/*.h
+#
+NOF77=0
+ARCH=""
+arch_IRIX=""
+MPI=""
+MPI_INCLUDE_DIR=""
+ROMIO_INCLUDE=""
+MPI_LIB=""
+LIBNAME=""
+TEST_LIBNAME=""
+FILE_SYSTEM=""
+PREFIX=""
+DEBUG=no
+MIPS=0
+BITS=0
+FROM_MPICH=0
+CFLAGS=${CFLAGS:-""}
+LL="\%lld"
+AR_LOCAL=l
+HAVE_MPI_INFO=""
+BUILD_MPI_INFO=""
+MPI_FINFO1=""
+MPI_FINFO2=""
+MPI_FINFO3=""
+MPI_FINFO4=""
+MPI_FARRAY1=""
+MPI_FARRAY2=""
+MPI_FARRAY3=""
+MPI_FARRAY4=""
+MPI_FARRAY5=""
+MPI_FARRAY6=""
+MPI_FARRAY7=""
+DEFS=""
+ROMIO_LFLAGS=""
+ROMIO_LIBLIST=""
+ROMIO_TCFLAGS=""
+ROMIO_TCPPFLAGS=""
+ROMIO_TFFLAGS=""
+NOPROFILE=0
+MPIRUN=""
+FORTRAN_TEST=""
+MAKE=${MAKE:-"make"}
+# foll. needed for f77 test programs
+F77GETARG="call getarg(i,str)"
+F77IARGC="iargc()"
+FTESTDEFINE=""
+FORTRAN_MPI_OFFSET=""
+MPIOF_H_INCLUDED=0
+MPI_OFFSET_KIND1="!"
+MPI_OFFSET_KIND2="!"
+F90=""
+TEST_CC=""
+TEST_F77=""
+TRY_WEAK_SYMBOLS=1
+#
+known_filesystems="nfs ufs pfs piofs pvfs testfs xfs hfs sfs"
+known_mpi_impls="mpich_mpi sgi_mpi hp_mpi cray_mpi lam_mpi"
+#
+# Defaults
+enable_aio=notgiven
+#
+for arg
+do
+case $arg in
+  -arch=* | --arch=*)
+     ARCH=`echo $arg|sed 's/-*arch=//'`
+     eval "arch_`echo $ARCH`=1"
+     ;;
+
+  -with-file-system=* | --with-file-system=* )
+     FILE_SYSTEM=`echo $arg|sed 's/-*with-file-system=//' | sed -e 's/\+/ /g'`
+     for x in $FILE_SYSTEM
+     do
+        eval "file_system_`echo $x`=1"
+     done
+     ;;
+  -file_system=* | --file_system=* )
+     # DEPRECATED FORMAT
+     FILE_SYSTEM=`echo $arg|sed 's/-*file_system=//' | sed -e 's/\+/ /g'`
+     for x in $FILE_SYSTEM
+     do
+        eval "file_system_`echo $x`=1"
+     done
+     ;;
+
+  --enable-aio | -enable-aio)
+  enable_aio=yes
+  ;;
+  --disable-aio | -disable-aio)
+  enable_aio=no
+  ;;
+  -with-mpi=* | --with-mpi=*)
+     MPI=`echo $arg|sed 's/-*with-mpi=//'`
+     eval "mpi_`echo $MPI`=1"
+     ;;
+  -mpi=* | --mpi=*)
+     # DEPRECATED FORMAT
+     MPI=`echo $arg|sed 's/-*mpi=//'`
+     eval "mpi_`echo $MPI`=1"
+     ;;
+    # OTHER ARGS ARE DEPRECATED AND SHOULD BE PROVIDED THROUGH ENV VARIABLES
+  -mpiincdir=* | --mpiincdir=*)  
+     MPI_INCLUDE_DIR=`echo $arg|sed 's/-*mpiincdir=//'`
+     ;;
+  -mpibindir=* | --mpibindir=*)  
+     MPI_BIN_DIR=`echo $arg|sed 's/-*mpibindir=//'`
+     ;;
+  -mpilib=* | --mpilib=*)  
+     MPI_LIB=`echo $arg|sed 's/-*mpilib=//'`
+     ;;
+  -mpiolib=* | --mpiolib=*)  
+     LIBNAME=`echo $arg|sed 's/-*mpiolib=//'`
+     ;;
+
+     # THE FOLLOWING SHOULD BE PROVIDED THROUGH ENV VARIABLES
+  -cc=* | --cc=*)
+     CC=`echo $arg|sed 's/-*cc=//'`
+     ;;
+  -fc=* | --fc=*)
+     FC=`echo $arg|sed 's/-*fc=//'`
+     ;;
+  -f90=* | --f90=*)
+     F90=`echo A$arg|sed 's/A-*f90=//'`
+     ;;
+  -f90nag | --f90nag)
+     FC=f90
+     F77GETARG="call f90_unix_MP_getarg(i,str)"
+     F77IARGC="f90_unix_MP_iargc()"
+     ;;
+  -cflags=* | --cflags=*)
+     package="`echo $arg|sed 's/-*cflags=//'`"
+     USER_CFLAGS="$package"
+     CFLAGS="$package $CFLAGS"
+     ;;
+  -fflags=* | --fflags=*)
+     package="`echo $arg|sed 's/-*fflags=//'`"
+     FFLAGS="$FFLAGS $package"
+     ;;
+  -make=* | --make=*)
+     package=`echo $arg|sed 's/-*make=//'`
+     MAKE="$package"
+     ;;
+   # END OF VALUES THAT SHOULD BE PROVIDED THROUGH ENV VARIABLES
+
+     -nof77 | --nof77 | -disable-f77 | --disable-f77 )
+     echo "Fortran interface will not be built"
+     NOF77=1
+     ;;
+
+  -debug | --debug | --enable-g | -enable-g)
+     echo "Configuring for a debugging version"
+     DEBUG=yes
+     ;;
+  -ar_nolocal | --ar_nolocal)
+     AR_LOCAL=''
+     ;;
+  -noranlib | --noranlib)
+     RANLIB=':'
+     ;;
+
+  -prefix=* | --prefix=*)
+     PREFIX=`echo $arg|sed 's/-*prefix=//'`
+     # Use new variable name for prefix
+     prefix=$PREFIX
+     ;;
+
+  -from_mpich | --from_mpich)
+     FROM_MPICH=1
+     ;;
+
+   -ar=* | --ar=*)
+     package=`echo $arg|sed 's/-*ar=//'`
+     AR="$package"
+     ;;
+
+     # THESE SHOULD USE CROSS_SIZE_XXX
+  -intsize=* | --intsize=*)
+     package=`echo $arg|sed 's/-*intsize=//'`
+     intsize="$package"
+     ;;
+  -ptrsize=* | --ptrsize=*)
+     package=`echo $arg|sed 's/-*ptrsize=//'`
+     pointersize="$package"
+     ;;
+  -longsize=* | --longsize=*)
+     package=`echo $arg|sed 's/-*longsize=//'`
+     longsize="$package"
+     ;;
+  -longlongsize=* | --longlongsize=*)
+     package=`echo $arg|sed 's/-*longlongsize=//'`
+     longlongsize="$package"
+     ;;
+   # END OF VARIABLE SIZES
+
+  -noprofile | --noprofile | --disable-profile | -disable-profile )
+     echo "profiling interface will not be built"
+     NOPROFILE=1
+     ;;
+
+  -echo | --enable-echo | -enable-echo )
+     set -x
+     ;;
+  -disable-weak-symbols|--disable-weak-symbols)
+     TRY_WEAK_SYMBOLS=0
+     ;;
+  -enable-* | --enable-* | -disable-* | --disable-* )
+     # ignore
+  ;;
+  -with-* | --with-* | -without-* | --without-* )
+     # ignore
+  ;;
+  -h | -help | --h | --help | -u | --u)
+    (echo "${usage_msg}") >& 2
+    exit 1 ;;
+  *)
+  if test -n "$arg" ; then
+     echo "Error: Invalid configure option $arg"
+     exit 1;
+  fi
+  ;;
+esac
+done
+
+#
+rm -f config.log
+trap 'rm -fr conftest* confdefs* core; exit 1' 1 3 15
+trap 'rm -f confdefs*' 0
+
+# NLS nuisances.
+# These must not be set unconditionally because not all systems understand
+# e.g. LANG=C (notably SCO).
+if test "${LC_ALL+set}" = 'set' ; then LC_ALL=C; export LC_ALL; fi
+if test "${LANG+set}"   = 'set' ; then LANG=C;   export LANG;   fi
+
+rm -f conftest* confdefs.h
+# AIX cpp loses on an empty file, so make sure it contains at least a newline.
+echo > confdefs.h
+compile='${CC-cc} $CFLAGS conftest.c -o conftest $LIBS >/dev/null 2>&1'
+
+# A filename unique to this package, relative to the directory that
+# configure is in, which we can look for to find out if srcdir is correct.
+unique_file=
+
+# Find the source files, if location was not specified.
+if test -z "$srcdir"; then
+  srcdirdefaulted=yes
+  # Try the directory containing this script, then `..'.
+  prog=$0
+  confdir=`echo $prog|sed 's%/[^/][^/]*$%%'`
+  test "X$confdir" = "X$prog" && confdir=.
+  srcdir=$confdir
+  if test ! -r $srcdir/$unique_file; then
+    srcdir=..
+  fi
+fi
+if test ! -r $srcdir/$unique_file; then
+  if test x$srcdirdefaulted = xyes; then
+    echo "configure: Can not find sources in \`${confdir}' or \`..'." 1>&2
+  else
+    echo "configure: Can not find sources in \`${srcdir}'." 1>&2
+  fi
+  exit 1
+fi
+# Preserve a srcdir of `.' to avoid automounter screwups with pwd.
+# But we can't avoid them for `..', to make subdirectories work.
+case $srcdir in
+  .|/*|~*) ;;
+  *) srcdir=`cd $srcdir; pwd` ;; # Make relative path absolute.
+esac
+
+
+# Save the original args to write them into config.status later.
+configure_args="$*"
+
+#
+
+#
+
+# Find the source files, if location was not specified.
+if test "$srcdirdefaulted" = "yes" ; then
+  srcdir=""
+  # Try the directory containing this script, then `..'.
+  prog=$0
+  confdir=`echo $prog|sed 's%/[^/][^/]*$%%'`
+  # Remove all trailing /'s 
+  confdir=`echo $confdir|sed 's%[/*]$%%'`
+  test "X$confdir" = "X$prog" && confdir=.
+  srcdir=$confdir
+  if test ! -r $srcdir/$unique_file; then
+    srcdir=..
+  fi
+fi
+if test ! -r $srcdir/$unique_file; then
+  if test x$srcdirdefaulted = xyes; then
+    echo "configure: Cannot find sources in \`${confdir}' or \`..'." 1>&2
+  else
+    echo "configure: Cannot find sources in \`${srcdir}'." 1>&2
+  fi
+  exit 1
+fi
+# Preserve a srcdir of `.' to avoid automounter screwups with pwd.
+# (and preserve ./ and .//)
+# But we can't avoid them for `..', to make subdirectories work.
+case $srcdir in
+  .|./|.//|/*|~*) ;;
+  *) srcdir=`cd $srcdir; pwd` ;; # Make relative path absolute.
+esac
+
+# Get top_srcdir
+if test -z "$top_srcdir" ; then
+    top_srcdir=$srcdir
+fi
+#
+
+
+if test -z "$ac_echo_n" ; then
+ac_echo_n=yes
+if (echo "testing\c"; echo 1,2,3) | grep c >/dev/null; then
+  if (echo -n testing; echo 1,2,3) | sed s/-n/xn/ | grep xn >/dev/null; then
+    ac_n= ac_c='
+' ac_t='	'
+  else
+    ac_n=-n ac_c= ac_t=
+  fi
+else
+  ac_n= ac_c='\c' ac_t=
+fi
+ac_echo_test=`echo foo 1>&1`
+if test -z "$ac_echo_test" ; then
+     print_error "Your sh shell does not handle the output redirection"
+     print_error "1>&1 correctly.  Configure will work around this problem,"
+     print_error "but you should report the problem to your vendor."
+fi
+
+fi
+if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo $ac_n "checking for virtual path format""... $ac_c"
+else
+echo $ac_n "checking for virtual path format""... $ac_c" 1>&1
+fi
+rm -rf conftest*
+mkdir conftestdir
+cat >conftestdir/a.c <<EOF
+A sample file
+EOF
+cat > conftest <<EOF
+all: a.o
+VPATH=.:conftestdir
+.c.o:
+	@echo \$<
+EOF
+ac_out=`$MAKE -f conftest 2>&1 | grep 'conftestdir/a.c'`
+if test -n "$ac_out" ; then 
+    if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo "$ac_t""VPATH"
+else
+echo "$ac_t""VPATH" 1>&1
+fi
+    VPATH='VPATH=.:$(srcdir)'
+else
+    rm -f conftest
+    cat > conftest <<EOF
+all: a.o
+.PATH: . conftestdir
+.c.o:
+	@echo \$<
+EOF
+    ac_out=`$MAKE -f conftest 2>&1 | grep 'conftestdir/a.c'`
+    if test -n "$ac_out" ; then 
+        if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo "$ac_t"".PATH"
+else
+echo "$ac_t"".PATH" 1>&1
+fi
+        VPATH='.PATH: . $(srcdir)'
+    else
+	if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo "$ac_t""neither VPATH nor .PATH works"
+else
+echo "$ac_t""neither VPATH nor .PATH works" 1>&1
+fi
+    fi
+fi
+rm -rf conftest*
+
+#
+# Check that an arch was set
+# If it wasn't set, try to guess using "util/tarch"
+#
+if test -z "$ARCH" -a -x $srcdir/util/tarch ; then
+    if test -z "$ac_echo_n" ; then
+ac_echo_n=yes
+if (echo "testing\c"; echo 1,2,3) | grep c >/dev/null; then
+  if (echo -n testing; echo 1,2,3) | sed s/-n/xn/ | grep xn >/dev/null; then
+    ac_n= ac_c='
+' ac_t='	'
+  else
+    ac_n=-n ac_c= ac_t=
+  fi
+else
+  ac_n= ac_c='\c' ac_t=
+fi
+ac_echo_test=`echo foo 1>&1`
+if test -z "$ac_echo_test" ; then
+     print_error "Your sh shell does not handle the output redirection"
+     print_error "1>&1 correctly.  Configure will work around this problem,"
+     print_error "but you should report the problem to your vendor."
+fi
+
+fi
+if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo $ac_n "checking for architecture""... $ac_c"
+else
+echo $ac_n "checking for architecture""... $ac_c" 1>&1
+fi
+    ARCH=`$srcdir/util/tarch | sed s/-/_/g`
+    if test -z "$ARCH" ; then
+       if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo "$ac_t""Unknown!"
+else
+echo "$ac_t""Unknown!" 1>&1
+fi
+       print_error "Error: Couldn't guess target architecture, you must"
+       print_error "       set an architecture type with -arch=<value>"
+       exit 1
+    fi
+    eval "arch_$ARCH=1"
+    if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo "$ac_t""$ARCH"
+else
+echo "$ac_t""$ARCH" 1>&1
+fi
+fi
+#
+# check for valid architecture.  Use __ so that _ALPHA_ does not match
+# LINUX_ALPHA_
+#### WE SHOULD REMOVE THIS SOON
+grep __"$ARCH"_ $srcdir/.config_params > /dev/null 2>&1
+if test $? != 0 ; then
+   echo "Unknown architecture $arch... proceeding anyway"
+fi
+#
+#
+#
+# Find the home directory if not specified
+if test "X$srcdir" != "X." -a -s $srcdir/mpi-io/Makefile.in ; then 
+    ROMIO_HOME_TRIAL=$srcdir
+else
+    
+ROMIO_HOME_TRIAL=$PWD
+if test "${ROMIO_HOME_TRIAL}" != "" -a -d "${ROMIO_HOME_TRIAL}" ; then 
+    if test -r ${ROMIO_HOME_TRIAL}/.foo$$ ; then
+        /bin/rm -f ${ROMIO_HOME_TRIAL}/.foo$$
+        /bin/rm -f .foo$$
+    fi
+    if test -r ${ROMIO_HOME_TRIAL}/.foo$$ -o -r .foo$$ ; then
+        ROMIO_HOME_TRIAL=
+    else
+        echo "test" > ${ROMIO_HOME_TRIAL}/.foo$$
+        if test ! -r .foo$$ ; then
+            /bin/rm -f ${ROMIO_HOME_TRIAL}/.foo$$
+            ROMIO_HOME_TRIAL=
+        else
+            /bin/rm -f ${ROMIO_HOME_TRIAL}/.foo$$
+        fi
+    fi
+fi
+if test "${ROMIO_HOME_TRIAL}" = "" ; then
+    ROMIO_HOME_TRIAL=`pwd | sed -e 's%/tmp_mnt/%/%g'`
+fi
+if test ! -r ${ROMIO_HOME_TRIAL}/mpi-io/Makefile.in ; then
+        ROMIO_HOME_TRIAL=`pwd`
+    if test ! -r ${ROMIO_HOME_TRIAL}/mpi-io/Makefile.in ; then
+        print_error "Cannot determine the root directory!" 
+        exit 1
+    fi
+    ROMIO_HOME_TRIAL=`pwd | sed -e 's%/tmp_mnt/%/%g'`
+    if test ! -d ${ROMIO_HOME_TRIAL} ; then 
+        print_error "Warning: your default path uses the automounter; this may"
+        print_error "cause some problems if you use other NFS-connected systems.
+"
+        ROMIO_HOME_TRIAL=`pwd`
+    fi
+fi
+if test -z "${ROMIO_HOME_TRIAL}" ; then
+    ROMIO_HOME_TRIAL=`pwd | sed -e 's%/tmp_mnt/%/%g'`
+    if test ! -d ${ROMIO_HOME_TRIAL} ; then 
+        print_error "Warning: your default path uses the automounter; this may"
+        print_error "cause some problems if you use other NFS-connected systems.
+"
+        ROMIO_HOME_TRIAL=`pwd`
+    fi
+fi
+
+fi
+echo "ROMIO home directory is $ROMIO_HOME_TRIAL"
+ROMIO_HOME=$ROMIO_HOME_TRIAL
+#
+# Create the "autoconf" style directory names...
+#
+if test -z "$prefix" ; then prefix=$PREFIX ; fi
+if test -z "$prefix" ; then
+    prefix=$ROMIO_HOME
+fi
+
+if test -z "$exec_prefix" ; then exec_prefix='${prefix}' ; fi
+# exec_prefix is the prefix for directories containing machine-specific
+# files such as libraries and executables.  For the USER
+
+includedir="${prefix}/include"
+
+# bindir is for executable programs for the USER
+if test -z "$bindir" ; then bindir='${exec_prefix}/bin' ; fi
+
+# sbindir is for executable programs for the ADMINISTRATOR
+if test -z "$sbindir" ; then sbindir='${exec_prefix}/sbin' ; fi
+
+# libdir is for libraries for the USER
+if test -z "$libdir" ; then libdir='${exec_prefix}/lib' ; fi
+
+# mandir is the root for the man pages
+if test -z "$mandir" ; then mandir='${prefix}/man' ; fi
+
+if test -z "$docdir" ; then docdir='${prefix}/doc' ; fi
+
+if test -z "$htmldir" ; then htmldir='${prefix}/www' ; fi
+ 
+#
+# check for valid file system
+if test -n "$FILE_SYSTEM" ; then
+   for x in $FILE_SYSTEM
+   do
+      found=no
+      for y in $known_filesystems ; do 
+          if test $x = $y ; then
+	      found=yes
+	      break
+	  fi
+      done
+      if test "$found" = "no" ; then
+         echo "Unknown file system $x... proceeding anyway"
+      fi
+   done
+fi
+#
+# check for valid MPI implementation
+if test -n "$MPI" ; then
+   found=no
+   for mpi in $known_mpi_impls ; do
+      if test "${MPI}_mpi" = "$mpi" ; then
+          found=yes
+	  break
+      fi
+   done
+   if test $found = no ; then
+      echo "Unknown MPI implementation $MPI... proceeding anyway"
+   fi
+fi
+#
+# check for valid MPI include directory if specified
+if test $FROM_MPICH = 0 ; then
+   if test -n "$MPI_INCLUDE_DIR"; then
+      if test ! -f "$MPI_INCLUDE_DIR/mpi.h" ; then
+         echo "Error: Include file $MPI_INCLUDE_DIR/mpi.h not found"
+         exit 1
+      fi
+   else
+#     assume that mpi.h is in the default path
+#     set MPI_INCLUDE_DIR to ".", so that it translates to -I. in the
+#     compile command. Some compilers complain if it's only -I
+      MPI_INCLUDE_DIR=.
+   fi
+fi
+#
+# check for valid MPI library if specified
+if test $FROM_MPICH = 0 ; then
+   if test -n "$MPI_LIB" ; then
+      if test ! -f "$MPI_LIB" ; then
+         echo "Error: MPI library $MPI_LIB not found"
+         exit 1
+      fi
+   fi
+fi
+#
+#
+AR="${AR:-ar} cr$AR_LOCAL"
+if test -z "$RANLIB" ; then
+    if test -z "$RANLIB"; then
+  # Extract the first word of `ranlib', so it can be a program name with args.
+  set dummy ranlib; word=$2
+  echo checking for $word
+  IFS="${IFS= 	}"; saveifs="$IFS"; IFS="${IFS}:"
+  for dir in $PATH; do
+    test -z "$dir" && dir=.
+    if test -f $dir/$word; then
+      RANLIB="ranlib"
+      break
+    fi
+  done
+  IFS="$saveifs"
+fi
+test -z "$RANLIB" && RANLIB=":"
+test -n "$RANLIB" && test -n "$verbose" && echo "	setting RANLIB to $RANLIB"
+
+fi
+MAKE=${MAKE:-make}
+#
+# USER_CFLAGS and USER_FFLAGS are used only in test/Makefile.in
+if test $DEBUG = "yes"; then
+    USER_CFLAGS="$CFLAGS -g"
+    USER_FFLAGS="$FFLAGS -g"
+else
+    USER_CFLAGS="$CFLAGS -O"
+    USER_FFLAGS="$FFLAGS -O"
+fi
+#
+if test -n "$arch_sun4" ; then 
+    CC=${CC:-gcc}
+    F77=${FC:-f77}
+    if test $DEBUG = "yes"; then
+	if test "$CC" = "gcc"; then
+                      CFLAGS="$CFLAGS -g -O -Wall -Wstrict-prototypes -Wmissing-prototypes"
+	else
+                      CFLAGS="$CFLAGS -g"
+        fi
+    else 
+                CFLAGS="$CFLAGS -O"
+    fi
+    if test "$enable_aio" = "no" ; then
+        
+{
+test -n "$verbose" && \
+echo "	defining NO_AIO"
+echo "#define" NO_AIO 1 >> confdefs.h
+DEFS="$DEFS -DNO_AIO=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}NO_AIO\${SEDdB}NO_AIO\${SEDdC}1\${SEDdD}
+\${SEDuA}NO_AIO\${SEDuB}NO_AIO\${SEDuC}1\${SEDuD}
+\${SEDeA}NO_AIO\${SEDeB}NO_AIO\${SEDeC}1\${SEDeD}
+"
+}
+
+    else
+        
+{
+test -n "$verbose" && \
+echo "	defining AIO_SUN"
+echo "#define" AIO_SUN 1 >> confdefs.h
+DEFS="$DEFS -DAIO_SUN=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}AIO_SUN\${SEDdB}AIO_SUN\${SEDdC}1\${SEDdD}
+\${SEDuA}AIO_SUN\${SEDuB}AIO_SUN\${SEDuC}1\${SEDuD}
+\${SEDeA}AIO_SUN\${SEDeB}AIO_SUN\${SEDeC}1\${SEDeD}
+"
+}
+
+    fi
+    if test -z "$MPI" ; then
+        MPI=mpich
+        mpi_mpich=1
+    fi
+    if test -z "$FILE_SYSTEM" ; then
+        file_system_ufs=1
+        file_system_nfs=1
+        FILE_SYSTEM="ufs nfs"
+        echo "configuring for file systems ufs and nfs"
+    fi
+fi
+#
+if test -n "$arch_solaris" || test -n "$arch_solaris86" ; then
+    CC=${CC:-cc}
+    F77=${FC:-f77}
+    if test $DEBUG = "yes"; then
+        if test "$CC" = "gcc" ; then
+                        CFLAGS="$CFLAGS -g -O -Wall -Wstrict-prototypes -Wmissing-prototypes"
+        else 
+                        CFLAGS="$CFLAGS -g -v"
+        fi
+    else 
+                CFLAGS="$CFLAGS -O"
+    fi
+    if test "$enable_aio" = "no" ; then
+        
+{
+test -n "$verbose" && \
+echo "	defining NO_AIO"
+echo "#define" NO_AIO 1 >> confdefs.h
+DEFS="$DEFS -DNO_AIO=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}NO_AIO\${SEDdB}NO_AIO\${SEDdC}1\${SEDdD}
+\${SEDuA}NO_AIO\${SEDuB}NO_AIO\${SEDuC}1\${SEDuD}
+\${SEDeA}NO_AIO\${SEDeB}NO_AIO\${SEDeC}1\${SEDeD}
+"
+}
+
+    else
+        
+{
+test -n "$verbose" && \
+echo "	defining AIO_SUN"
+echo "#define" AIO_SUN 1 >> confdefs.h
+DEFS="$DEFS -DAIO_SUN=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}AIO_SUN\${SEDdB}AIO_SUN\${SEDdC}1\${SEDdD}
+\${SEDuA}AIO_SUN\${SEDuB}AIO_SUN\${SEDuC}1\${SEDuD}
+\${SEDeA}AIO_SUN\${SEDeB}AIO_SUN\${SEDeC}1\${SEDeD}
+"
+}
+
+    fi
+    if test -z "$MPI" ; then
+        MPI=mpich
+        mpi_mpich=1
+    fi
+    if test -z "$FILE_SYSTEM" ; then
+        file_system_ufs=1
+        file_system_nfs=1
+        FILE_SYSTEM="ufs nfs"
+        echo "configuring for file systems ufs and nfs"
+    fi
+        
+{
+test -n "$verbose" && \
+echo "	defining SOLARIS"
+echo "#define" SOLARIS 1 >> confdefs.h
+DEFS="$DEFS -DSOLARIS=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}SOLARIS\${SEDdB}SOLARIS\${SEDdC}1\${SEDdD}
+\${SEDuA}SOLARIS\${SEDuB}SOLARIS\${SEDuC}1\${SEDuD}
+\${SEDeA}SOLARIS\${SEDeB}SOLARIS\${SEDeC}1\${SEDeD}
+"
+}
+
+    if test $MPI = "mpich" ; then
+        TEST_CC=mpicc
+        TEST_F77=mpif77
+    else
+        TEST_CC="$CC"
+        TEST_F77="$F77"
+    fi
+    if test "$enable_aio" != "no" ; then
+        MPI_LIB="$MPI_LIB -laio"
+        ROMIO_LIBLIST="-laio"
+    fi
+    AR="ar cr"
+# solaris does not have l option to ar
+# solaris f90 does not have 8-byte integer type
+# (it does now!!!! 11/29/01)
+fi
+#
+if test -n "$arch_rs6000"; then
+    F77=$FC
+    if test -z "$CC"; then
+       for p in mpcc
+do
+if test -z "$CC"; then
+  # Extract the first word of `$p', so it can be a program name with args.
+  set dummy $p; word=$2
+  echo checking for $word
+  IFS="${IFS= 	}"; saveifs="$IFS"; IFS="${IFS}:"
+  for dir in $PATH; do
+    test -z "$dir" && dir=.
+    if test -f $dir/$word; then
+      CC="$p"
+      break
+    fi
+  done
+  IFS="$saveifs"
+fi
+
+test -n "$CC" && test -n "$verbose" && echo "	setting CC to $CC"
+
+test -n "$CC" && break
+done
+test -n "$CC" || CC="cc"
+
+       echo "Using $CC"
+    fi
+    if test $NOF77 = 0 && test -z "$FC"; then 
+       for p in mpxlf
+do
+if test -z "$F77"; then
+  # Extract the first word of `$p', so it can be a program name with args.
+  set dummy $p; word=$2
+  echo checking for $word
+  IFS="${IFS= 	}"; saveifs="$IFS"; IFS="${IFS}:"
+  for dir in $PATH; do
+    test -z "$dir" && dir=.
+    if test -f $dir/$word; then
+      F77="$p"
+      break
+    fi
+  done
+  IFS="$saveifs"
+fi
+
+test -n "$F77" && test -n "$verbose" && echo "	setting F77 to $F77"
+
+test -n "$F77" && break
+done
+test -n "$F77" || F77="f77"
+
+       echo "Using $F77"
+    fi
+    if test $DEBUG = "yes"; then
+                CFLAGS="$CFLAGS -g"
+    else 
+                CFLAGS="$CFLAGS -O"
+    fi
+    # Check that aio is available (many systems appear to have aio
+    # either installed improperly or turned off).
+    # The test is the following: if not cross compiling, try to run a 
+    # program that includes a *reference* to aio_write but does not call it
+    # If the libraries are not set up correctly, then this will fail.
+    if test -z "$ac_echo_n" ; then
+ac_echo_n=yes
+if (echo "testing\c"; echo 1,2,3) | grep c >/dev/null; then
+  if (echo -n testing; echo 1,2,3) | sed s/-n/xn/ | grep xn >/dev/null; then
+    ac_n= ac_c='
+' ac_t='	'
+  else
+    ac_n=-n ac_c= ac_t=
+  fi
+else
+  ac_n= ac_c='\c' ac_t=
+fi
+ac_echo_test=`echo foo 1>&1`
+if test -z "$ac_echo_test" ; then
+     print_error "Your sh shell does not handle the output redirection"
+     print_error "1>&1 correctly.  Configure will work around this problem,"
+     print_error "but you should report the problem to your vendor."
+fi
+
+fi
+if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo $ac_n "checking whether aio routines can be used""... $ac_c"
+else
+echo $ac_n "checking whether aio routines can be used""... $ac_c" 1>&1
+fi
+    echo checking whether cross-compiling
+# If we cannot run a trivial program, we must be cross compiling.
+cat > conftest.c <<EOF
+#include "confdefs.h"
+main(){exit(0);}
+EOF
+eval $compile
+if test -s conftest && (./conftest; exit) 2>/dev/null; then
+  :
+else
+  cross_compiling=1
+fi
+rm -fr conftest*
+
+if test -n "$cross_compiling"
+then
+  aio_runs=unknown
+else
+cat > conftest.c <<EOF
+#include "confdefs.h"
+
+int main( int argc, char **argv )
+{
+    if (argc > 10) aio_write();
+    return 0;
+}
+
+EOF
+eval $compile
+if test -s conftest && (./conftest; exit) 2>/dev/null; then
+  aio_runs=yes
+
+else
+  aio_runs=no
+fi
+fi
+rm -fr conftest*;    
+    if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo "$ac_t""$aio_runs"
+else
+echo "$ac_t""$aio_runs" 1>&1
+fi						 
+    if test "$enable_aio" != "no" -a "$aio_runs" = "no" ; then
+        enable_aio=no
+    fi
+    if test "$enable_aio" = "no" ; then
+        
+{
+test -n "$verbose" && \
+echo "	defining NO_AIO"
+echo "#define" NO_AIO 1 >> confdefs.h
+DEFS="$DEFS -DNO_AIO=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}NO_AIO\${SEDdB}NO_AIO\${SEDdC}1\${SEDdD}
+\${SEDuA}NO_AIO\${SEDuB}NO_AIO\${SEDuC}1\${SEDuD}
+\${SEDeA}NO_AIO\${SEDeB}NO_AIO\${SEDeC}1\${SEDeD}
+"
+}
+
+    else
+        
+{
+test -n "$verbose" && \
+echo "	defining NO_FD_IN_AIOCB"
+echo "#define" NO_FD_IN_AIOCB 1 >> confdefs.h
+DEFS="$DEFS -DNO_FD_IN_AIOCB=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}NO_FD_IN_AIOCB\${SEDdB}NO_FD_IN_AIOCB\${SEDdC}1\${SEDdD}
+\${SEDuA}NO_FD_IN_AIOCB\${SEDuB}NO_FD_IN_AIOCB\${SEDuC}1\${SEDuD}
+\${SEDeA}NO_FD_IN_AIOCB\${SEDeB}NO_FD_IN_AIOCB\${SEDeC}1\${SEDeD}
+"
+}
+
+        
+{
+test -n "$verbose" && \
+echo "	defining AIO_HANDLE_IN_AIOCB"
+echo "#define" AIO_HANDLE_IN_AIOCB 1 >> confdefs.h
+DEFS="$DEFS -DAIO_HANDLE_IN_AIOCB=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}AIO_HANDLE_IN_AIOCB\${SEDdB}AIO_HANDLE_IN_AIOCB\${SEDdC}1\${SEDdD}
+\${SEDuA}AIO_HANDLE_IN_AIOCB\${SEDuB}AIO_HANDLE_IN_AIOCB\${SEDuC}1\${SEDuD}
+\${SEDeA}AIO_HANDLE_IN_AIOCB\${SEDeB}AIO_HANDLE_IN_AIOCB\${SEDeC}1\${SEDeD}
+"
+}
+
+    fi
+    if test -z "$MPI" ; then
+        MPI=mpich
+        mpi_mpich=1
+    fi
+    if test -z "$FILE_SYSTEM" ; then
+        if test "$CC" = "mpcc" || test "$CC" = "mpCC" ; then
+            file_system_piofs=1
+            FILE_SYSTEM="piofs"
+            echo "configuring for file systems piofs, ufs, and nfs"
+        else 
+            echo "configuring for file systems ufs and nfs"
+        fi
+        file_system_ufs=1
+        file_system_nfs=1
+        FILE_SYSTEM="$FILE_SYSTEM ufs nfs"
+    fi
+        
+{
+test -n "$verbose" && \
+echo "	defining AIX"
+echo "#define" AIX 1 >> confdefs.h
+DEFS="$DEFS -DAIX=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}AIX\${SEDdB}AIX\${SEDdC}1\${SEDdD}
+\${SEDuA}AIX\${SEDuB}AIX\${SEDuC}1\${SEDuD}
+\${SEDeA}AIX\${SEDeB}AIX\${SEDeC}1\${SEDeD}
+"
+}
+
+# assume long long exists.
+    longlongsize=${longlongsize:-8} 
+    MPI_OFFSET_KIND1="      INTEGER MPI_OFFSET_KIND"
+    MPI_OFFSET_KIND2="      PARAMETER (MPI_OFFSET_KIND=8)"
+fi    
+#
+if test -n "$arch_paragon"; then
+    CC=${CC:-icc}
+    F77=${FC:-if77}
+    if test $DEBUG = "yes"; then
+        CFLAGS="$CFLAGS -g"
+    else 
+	if test "$CC" = "icc"; then
+           CFLAGS="$CFLAGS -Knoieee -Mvect -O3"
+	else
+           CFLAGS="$CFLAGS -O"
+        fi
+    fi
+    AR="ar860 cr$AR_LOCAL"
+    MPI_LIB="$MPI_LIB -nx"
+    if test -z "$MPI" ; then
+        MPI=mpich
+        mpi_mpich=1
+    fi
+    if test -z "$FILE_SYSTEM" ; then
+        file_system_pfs=1
+        file_system_ufs=1
+        file_system_nfs=1
+        FILE_SYSTEM="pfs ufs nfs"
+        echo "configuring for file systems pfs, ufs, and nfs"
+    fi
+        
+{
+test -n "$verbose" && \
+echo "	defining PARAGON"
+echo "#define" PARAGON 1 >> confdefs.h
+DEFS="$DEFS -DPARAGON=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}PARAGON\${SEDdB}PARAGON\${SEDdC}1\${SEDdD}
+\${SEDuA}PARAGON\${SEDuB}PARAGON\${SEDuC}1\${SEDuD}
+\${SEDeA}PARAGON\${SEDeB}PARAGON\${SEDeC}1\${SEDeD}
+"
+}
+
+    
+{
+test -n "$verbose" && \
+echo "	defining NO_AIO"
+echo "#define" NO_AIO 1 >> confdefs.h
+DEFS="$DEFS -DNO_AIO=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}NO_AIO\${SEDdB}NO_AIO\${SEDdC}1\${SEDdD}
+\${SEDuA}NO_AIO\${SEDuB}NO_AIO\${SEDuC}1\${SEDuD}
+\${SEDeA}NO_AIO\${SEDeB}NO_AIO\${SEDeC}1\${SEDeD}
+"
+}
+
+# NO_AIO is if configuring for NFS/UFS. It doesn't affect PFS asynch. I/O.
+# long long does not exist
+    longlongsize=${longlongsize:-0} 
+fi    
+#
+if test -n "$arch_tflop" || test -n "$arch_tflops"; then
+    CC=${CC:-pgcc}
+    F77=${FC:-pgf77}
+        TFLOP_FLAGS="-cougar -D__PUMA"
+    
+{
+test -n "$verbose" && \
+echo "	defining NO_AIO"
+echo "#define" NO_AIO 1 >> confdefs.h
+DEFS="$DEFS -DNO_AIO=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}NO_AIO\${SEDdB}NO_AIO\${SEDdC}1\${SEDdD}
+\${SEDuA}NO_AIO\${SEDuB}NO_AIO\${SEDuC}1\${SEDuD}
+\${SEDeA}NO_AIO\${SEDeB}NO_AIO\${SEDeC}1\${SEDeD}
+"
+}
+
+    if test $DEBUG = "yes"; then
+        CFLAGS="$CFLAGS -g $TFLOP_FLAGS"
+    else
+       if test "$CC" = "pgcc"; then
+           CFLAGS="$CFLAGS -Knoieee -Mvect -O3 $TFLOP_FLAGS"
+       else
+           CFLAGS="$CFLAGS -O $TFLOP_FLAGS"
+       fi
+    fi
+    AR="xar cr$AR_LOCAL"
+        RANLIB="xranlib"
+    MPI_LIB="$MPI_LIB"
+    if test -z "$MPI" ; then
+        MPI=mpich
+        mpi_mpich=1
+    fi
+    if test -z "$FILE_SYSTEM" ; then
+        file_system_ufs=1
+        FILE_SYSTEM="ufs"
+        echo "configuring for file system ufs"
+    fi
+fi
+#
+if test -n "$arch_freebsd" || test -n "$arch_LINUX" || test -n "$arch_LINUX_ALPHA" || test -n "$arch_netbsd" || test -n "$arch_openbsd" ; then
+    CC=${CC:-gcc}
+    if test -n "$arch_freebsd" || test -n "$arch_netbsd" || test -n "$arch_openbsd"; then
+       F77=${FC:-f77}
+              
+{
+test -n "$verbose" && \
+echo "	defining FREEBSD"
+echo "#define" FREEBSD 1 >> confdefs.h
+DEFS="$DEFS -DFREEBSD=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}FREEBSD\${SEDdB}FREEBSD\${SEDdC}1\${SEDdD}
+\${SEDuA}FREEBSD\${SEDuB}FREEBSD\${SEDuC}1\${SEDuD}
+\${SEDeA}FREEBSD\${SEDeB}FREEBSD\${SEDeC}1\${SEDeD}
+"
+}
+
+       
+  if test -z "$ac_echo_n" ; then
+ac_echo_n=yes
+if (echo "testing\c"; echo 1,2,3) | grep c >/dev/null; then
+  if (echo -n testing; echo 1,2,3) | sed s/-n/xn/ | grep xn >/dev/null; then
+    ac_n= ac_c='
+' ac_t='	'
+  else
+    ac_n=-n ac_c= ac_t=
+  fi
+else
+  ac_n= ac_c='\c' ac_t=
+fi
+ac_echo_test=`echo foo 1>&1`
+if test -z "$ac_echo_test" ; then
+     print_error "Your sh shell does not handle the output redirection"
+     print_error "1>&1 correctly.  Configure will work around this problem,"
+     print_error "but you should report the problem to your vendor."
+fi
+
+fi
+if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo $ac_n "checking if MOUNT_NFS is defined in the include files""... $ac_c"
+else
+echo $ac_n "checking if MOUNT_NFS is defined in the include files""... $ac_c" 1>&1
+fi
+  rm -f conftest.c
+  cat > conftest.c <<EOF
+#include <sys/param.h>
+#include <sys/mount.h>
+     main()
+     {
+         int i=MOUNT_NFS;
+     }
+EOF
+  rm -f conftest
+  $CC $USER_CFLAGS -o conftest conftest.c > /dev/null 2>&1
+  if test -x conftest ; then
+     if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo "$ac_t""yes"
+else
+echo "$ac_t""yes" 1>&1
+fi
+     
+{
+test -n "$verbose" && \
+echo "	defining HAVE_MOUNT_NFS"
+echo "#define" HAVE_MOUNT_NFS 1 >> confdefs.h
+DEFS="$DEFS -DHAVE_MOUNT_NFS=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}HAVE_MOUNT_NFS\${SEDdB}HAVE_MOUNT_NFS\${SEDdC}1\${SEDdD}
+\${SEDuA}HAVE_MOUNT_NFS\${SEDuB}HAVE_MOUNT_NFS\${SEDuC}1\${SEDuD}
+\${SEDeA}HAVE_MOUNT_NFS\${SEDeB}HAVE_MOUNT_NFS\${SEDeC}1\${SEDeD}
+"
+}
+
+  else
+     if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo "$ac_t""no"
+else
+echo "$ac_t""no" 1>&1
+fi
+  fi
+  rm -f conftest conftest.c
+
+       longlongsize=${longlongsize:-0}
+# printf doesn't work properly and no integer*8 as far as I can tell
+    else 
+       F77=${FC:-g77}
+              
+{
+test -n "$verbose" && \
+echo "	defining LINUX"
+echo "#define" LINUX 1 >> confdefs.h
+DEFS="$DEFS -DLINUX=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}LINUX\${SEDdB}LINUX\${SEDdC}1\${SEDdD}
+\${SEDuA}LINUX\${SEDuB}LINUX\${SEDuC}1\${SEDuD}
+\${SEDeA}LINUX\${SEDeB}LINUX\${SEDeC}1\${SEDeD}
+"
+}
+
+    fi
+    if test $DEBUG = "yes" ; then
+	if test "$CC" = "gcc" ; then
+                        CFLAGS="$CFLAGS -g -O -Wall -Wstrict-prototypes -Wmissing-prototypes"
+        else
+	    	    CFLAGS="$CFLAGS -g"
+        fi
+    else 
+                CFLAGS="$CFLAGS -O"
+    fi
+    if test "$enable_aio" != "yes" ; then
+        
+{
+test -n "$verbose" && \
+echo "	defining NO_AIO"
+echo "#define" NO_AIO 1 >> confdefs.h
+DEFS="$DEFS -DNO_AIO=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}NO_AIO\${SEDdB}NO_AIO\${SEDdC}1\${SEDdD}
+\${SEDuA}NO_AIO\${SEDuB}NO_AIO\${SEDuC}1\${SEDuD}
+\${SEDeA}NO_AIO\${SEDeB}NO_AIO\${SEDeC}1\${SEDeD}
+"
+}
+
+    else
+        # Try to find the aio routines
+	use_aio=no
+        echo checking for aio.h
+echo checking how to run the C preprocessor
+if test -z "$CPP"; then
+  # This must be in double quotes, not single quotes, because CPP may get
+  # substituted into the Makefile and ``${CC-cc}'' will simply confuse
+  # make.  It must be expanded now.
+  CPP="${CC-cc} -E"
+  cat > conftest.c <<EOF
+#include "confdefs.h"
+#include <stdio.h>
+Syntax Error
+EOF
+err=`eval "($CPP conftest.c >/dev/null) 2>&1"`
+if test -z "$err"; then
+  :
+else
+  rm -rf conftest*
+  CPP=/lib/cpp
+fi
+rm -f conftest*
+fi
+test ".${verbose}" != "." && echo "	setting CPP to $CPP"
+
+cat > conftest.c <<EOF
+#include "confdefs.h"
+#include <aio.h>
+EOF
+err=`eval "($CPP conftest.c >/dev/null) 2>&1"`
+if test -z "$err"; then
+  rm -rf conftest*
+  has_aio_h=yes
+
+else
+  rm -rf conftest*
+  has_aio_h=no
+fi
+rm -f conftest*
+
+		add_lib=""
+	LIBS_save="${LIBS}"
+LIBS="${LIBS} -laio"
+have_lib=""
+echo checking for -laio
+cat > conftest.c <<EOF
+#include "confdefs.h"
+
+int main() { exit(0); }
+int t() { main(); }
+EOF
+if eval $compile; then
+  rm -rf conftest*
+  have_lib="1"
+
+fi
+rm -f conftest*
+LIBS="${LIBS_save}"
+if test -n "${have_lib}"; then
+   :; add_lib="-laio"
+else
+   :; 
+fi
+
+	LIBS_save="${LIBS}"
+LIBS="${LIBS} -lrt"
+have_lib=""
+echo checking for -lrt
+cat > conftest.c <<EOF
+#include "confdefs.h"
+
+int main() { exit(0); }
+int t() { main(); }
+EOF
+if eval $compile; then
+  rm -rf conftest*
+  have_lib="1"
+
+fi
+rm -f conftest*
+LIBS="${LIBS_save}"
+if test -n "${have_lib}"; then
+   :; add_lib="$add_lib -lrt"
+else
+   :; 
+fi
+
+	LIBS_save="${LIBS}"
+LIBS="${LIBS} -lpthread"
+have_lib=""
+echo checking for -lpthread
+cat > conftest.c <<EOF
+#include "confdefs.h"
+
+int main() { exit(0); }
+int t() { main(); }
+EOF
+if eval $compile; then
+  rm -rf conftest*
+  have_lib="1"
+
+fi
+rm -f conftest*
+LIBS="${LIBS_save}"
+if test -n "${have_lib}"; then
+   :; add_lib="$add_lib -lpthread"
+has_pthread=yes
+else
+   :; has_pthread=no
+fi
+
+        echo checking for aio_write
+cat > conftest.c <<EOF
+#include "confdefs.h"
+#include <ctype.h>
+int main() { exit(0); }
+int t() { 
+/* The GNU C library defines this for functions which it implements
+    to always fail with ENOSYS.  Some functions are actually named
+    something starting with __ and the normal name is an alias.  */
+#if defined (__stub_aio_write) || defined (__stub___aio_write)
+choke me
+#else
+/* Override any gcc2 internal prototype to avoid an error.  */
+extern char aio_write(); aio_write();
+#endif
+ }
+EOF
+if eval $compile; then
+  rm -rf conftest*
+  has_aio_write=yes
+
+else
+  rm -rf conftest*
+  has_aio_write=no
+fi
+rm -f conftest*
+
+	if test "$has_aio_h" = "yes" -a "$has_aio_write" = "yes" -a \
+	        "$has_pthread" = "yes" ; then
+	    use_aio=yes	
+	fi    
+	# Check for aiocb_t as a shorthand for struct aiocb
+	echo checking for for aiocb_t
+cat > conftest.c <<EOF
+#include "confdefs.h"
+#include <aio.h>
+int main() { exit(0); }
+int t() { aiocb_t a; }
+EOF
+if eval $compile; then
+  rm -rf conftest*
+  has_aiocb_t=yes
+
+else
+  rm -rf conftest*
+  has_aiocb_t=no
+fi
+rm -f conftest*
+
+	if test "$has_aiocb_t" = "no" ; then 
+	    
+{
+test -n "$verbose" && \
+echo "	defining NEEDS_AIOCB_T"
+echo "#define" NEEDS_AIOCB_T 1 >> confdefs.h
+DEFS="$DEFS -DNEEDS_AIOCB_T=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}NEEDS_AIOCB_T\${SEDdB}NEEDS_AIOCB_T\${SEDdC}1\${SEDdD}
+\${SEDuA}NEEDS_AIOCB_T\${SEDuB}NEEDS_AIOCB_T\${SEDuC}1\${SEDuD}
+\${SEDeA}NEEDS_AIOCB_T\${SEDeB}NEEDS_AIOCB_T\${SEDeC}1\${SEDeD}
+"
+}
+
+        fi
+	if test "$use_aio" = "yes" ; then
+	    MPI_LIB="$MPI_LIB $add_lib"
+	    ROMIO_LIBLIST="$ROMIO_LIBLIST $add_lib"
+	else
+	    
+{
+test -n "$verbose" && \
+echo "	defining NO_AIO"
+echo "#define" NO_AIO 1 >> confdefs.h
+DEFS="$DEFS -DNO_AIO=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}NO_AIO\${SEDdB}NO_AIO\${SEDdC}1\${SEDdD}
+\${SEDuA}NO_AIO\${SEDuB}NO_AIO\${SEDuC}1\${SEDuD}
+\${SEDeA}NO_AIO\${SEDeB}NO_AIO\${SEDeC}1\${SEDeD}
+"
+}
+
+	fi
+    fi
+    if test -z "$MPI" ; then
+        MPI=mpich
+        mpi_mpich=1
+    fi
+    if test -z "$FILE_SYSTEM" ; then
+        file_system_ufs=1
+        file_system_nfs=1
+        FILE_SYSTEM="ufs nfs"
+        echo "configuring for file systems ufs and nfs"
+    fi
+fi    
+#
+if test -n "$arch_SX4" ; then
+    CC=${CC:-mpicc}
+    F77=${FC:-mpif90}
+    if test $DEBUG = "yes" ; then
+                CFLAGS="$CFLAGS -g"
+        FFLAGS="$FFLAGS -g"
+    else
+        USER_FFLAGS="$FFLAGS -Chopt"
+                CFLAGS="$CFLAGS -O"
+        FFLAGS="$FFLAGS -Chopt"
+    fi
+    
+{
+test -n "$verbose" && \
+echo "	defining NO_AIO"
+echo "#define" NO_AIO 1 >> confdefs.h
+DEFS="$DEFS -DNO_AIO=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}NO_AIO\${SEDdB}NO_AIO\${SEDdC}1\${SEDdD}
+\${SEDuA}NO_AIO\${SEDuB}NO_AIO\${SEDuC}1\${SEDuD}
+\${SEDeA}NO_AIO\${SEDeB}NO_AIO\${SEDeC}1\${SEDeD}
+"
+}
+
+    
+{
+test -n "$verbose" && \
+echo "	defining SX4"
+echo "#define" SX4 1 >> confdefs.h
+DEFS="$DEFS -DSX4=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}SX4\${SEDdB}SX4\${SEDdC}1\${SEDdD}
+\${SEDuA}SX4\${SEDuB}SX4\${SEDuC}1\${SEDuD}
+\${SEDeA}SX4\${SEDeB}SX4\${SEDeC}1\${SEDeD}
+"
+}
+
+    if test -z "$MPI" ; then
+        MPI=mpich
+        mpi_mpich=1
+    fi
+    if test -z "$FILE_SYSTEM" ; then
+        file_system_sfs=1
+        file_system_nfs=1
+        FILE_SYSTEM="sfs nfs"
+        echo "configuring for file systems sfs and nfs"
+    fi
+    MPI_OFFSET_KIND1="      INTEGER MPI_OFFSET_KIND"
+    MPI_OFFSET_KIND2="      PARAMETER (MPI_OFFSET_KIND=8)"
+fi
+#
+if test -n "$arch_hpux" || test -n "$arch_sppux" ; then
+    if test $DEBUG = "yes"; then
+                CFLAGS="$CFLAGS -g +w1"
+    else 
+                CFLAGS="$CFLAGS -O"
+    fi
+    
+{
+test -n "$verbose" && \
+echo "	defining NO_AIO"
+echo "#define" NO_AIO 1 >> confdefs.h
+DEFS="$DEFS -DNO_AIO=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}NO_AIO\${SEDdB}NO_AIO\${SEDdC}1\${SEDdD}
+\${SEDuA}NO_AIO\${SEDuB}NO_AIO\${SEDuC}1\${SEDuD}
+\${SEDeA}NO_AIO\${SEDeB}NO_AIO\${SEDeC}1\${SEDeD}
+"
+}
+
+    RANLIB=":"
+    if test -z "$MPI"; then
+        if test -f "/opt/mpi/include/mpi.h" ; then
+            echo "assuming that you want to use ROMIO with HP MPI"
+            MPI=hp
+        else 
+            echo "assuming that you want to use ROMIO with MPICH"
+            MPI=mpich
+        fi            
+    fi
+    if test $MPI = "mpich" ; then
+        mpi_mpich=1
+        MPI_LIB="$MPI_LIB -lV3"
+        CC=${CC:-cc -Ae}
+        F77=${FC:-f77 +U77}
+    fi
+    if test $MPI = "hp" ; then
+        mpi_hp=1
+        CC=${CC:-mpicc -Ae}
+        F77=${FC:-mpif77 +U77}
+    fi
+    if test $MPI = "lam" && test "$FC" != ""; then
+        FC="$FC +U77"
+    fi
+    FTESTDEFINE="external iargc, getarg"
+    if test -n "$arch_hpux" ; then
+                CFLAGS="$CFLAGS -D_LARGEFILE64_SOURCE"
+        
+{
+test -n "$verbose" && \
+echo "	defining HPUX"
+echo "#define" HPUX 1 >> confdefs.h
+DEFS="$DEFS -DHPUX=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}HPUX\${SEDdB}HPUX\${SEDdC}1\${SEDdD}
+\${SEDuA}HPUX\${SEDuB}HPUX\${SEDuC}1\${SEDuD}
+\${SEDeA}HPUX\${SEDeB}HPUX\${SEDeC}1\${SEDeD}
+"
+}
+
+        if test $MPI = "hp" ; then
+           F77=${FC:-mpif90 +U77}
+        else
+           F77=${FC:-f90 +U77}
+        fi
+    else
+                
+{
+test -n "$verbose" && \
+echo "	defining SPPUX"
+echo "#define" SPPUX 1 >> confdefs.h
+DEFS="$DEFS -DSPPUX=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}SPPUX\${SEDdB}SPPUX\${SEDdC}1\${SEDdD}
+\${SEDuA}SPPUX\${SEDuB}SPPUX\${SEDuC}1\${SEDuD}
+\${SEDeA}SPPUX\${SEDeB}SPPUX\${SEDeC}1\${SEDeD}
+"
+}
+
+    fi
+    if test -z "$FILE_SYSTEM" ; then
+        if test -n "$arch_hpux" ; then
+           echo checking for struct flock64
+cat > conftest.c <<EOF
+#include "confdefs.h"
+#include <fcntl.h>
+int main() { exit(0); }
+int t() { 
+struct flock64 fl; int i=F_SETLKW64; }
+EOF
+if eval $compile; then
+  rm -rf conftest*
+  flock64_ok="yes"
+
+else
+  rm -rf conftest*
+  flock64_ok="no"
+fi
+rm -f conftest*
+
+        else
+            flock64_ok="yes"
+        fi
+        if test $flock64_ok = "yes" ; then
+            file_system_hfs=1
+            file_system_nfs=1
+            FILE_SYSTEM="hfs nfs"
+            echo "configuring for file systems hfs and nfs"
+        else
+            file_system_ufs=1
+            file_system_nfs=1
+            FILE_SYSTEM="ufs nfs"
+            echo "no flock64; configuring for file systems ufs and nfs"
+        fi
+    fi
+    MPI_OFFSET_KIND1="      INTEGER MPI_OFFSET_KIND"
+    MPI_OFFSET_KIND2="      PARAMETER (MPI_OFFSET_KIND=8)"
+    if test "$CC" != "gcc" ; then
+        ROMIO_TCFLAGS="-Ae"
+    fi
+    if test "$F77" != "g77" ; then
+        ROMIO_TFFLAGS="+U77"
+    fi
+fi
+#
+if test -n "$arch_alpha" || test -n "$arch_ALPHA" ; then
+    CC=${CC:-cc}
+    F77=${FC:-f77}
+    if test $DEBUG = "yes"; then
+                CFLAGS="$CFLAGS -g -std1 -warnprotos -verbose"
+    else 
+                CFLAGS="$CFLAGS -O"
+    fi
+    
+{
+test -n "$verbose" && \
+echo "	defining AIO_PRIORITY_DEFAULT"
+echo "#define" AIO_PRIORITY_DEFAULT 1 >> confdefs.h
+DEFS="$DEFS -DAIO_PRIORITY_DEFAULT=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}AIO_PRIORITY_DEFAULT\${SEDdB}AIO_PRIORITY_DEFAULT\${SEDdC}1\${SEDdD}
+\${SEDuA}AIO_PRIORITY_DEFAULT\${SEDuB}AIO_PRIORITY_DEFAULT\${SEDuC}1\${SEDuD}
+\${SEDeA}AIO_PRIORITY_DEFAULT\${SEDeB}AIO_PRIORITY_DEFAULT\${SEDeC}1\${SEDeD}
+"
+}
+
+    MPI_LIB="$MPI_LIB -laio"
+    if test -z "$MPI" ; then
+        MPI=mpich
+        mpi_mpich=1
+    fi
+    if test -z "$FILE_SYSTEM" ; then
+        file_system_ufs=1
+        file_system_nfs=1
+        FILE_SYSTEM="ufs nfs"
+        echo "configuring for file systems ufs and nfs"
+    fi
+        
+{
+test -n "$verbose" && \
+echo "	defining DEC"
+echo "#define" DEC 1 >> confdefs.h
+DEFS="$DEFS -DDEC=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}DEC\${SEDdB}DEC\${SEDdC}1\${SEDdD}
+\${SEDuA}DEC\${SEDuB}DEC\${SEDuC}1\${SEDuD}
+\${SEDeA}DEC\${SEDeB}DEC\${SEDeC}1\${SEDeD}
+"
+}
+
+    MPI_OFFSET_KIND1="      INTEGER MPI_OFFSET_KIND"
+    MPI_OFFSET_KIND2="      PARAMETER (MPI_OFFSET_KIND=8)"
+    ROMIO_LIBLIST="-laio"
+fi    
+#
+if test -n "$arch_CRAY" ; then
+    CC=${CC:-cc}
+    F77=${FC:-f90}
+    NOF77=1
+    FTESTDEFINE="integer ilen"
+    F77GETARG="call pxfgetarg(i, str, ilen, ierr)"
+    if test $DEBUG = "yes"; then
+                CFLAGS="$CFLAGS -g"
+    else 
+                CFLAGS="$CFLAGS -O"
+    fi
+    
+{
+test -n "$verbose" && \
+echo "	defining NO_AIO"
+echo "#define" NO_AIO 1 >> confdefs.h
+DEFS="$DEFS -DNO_AIO=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}NO_AIO\${SEDdB}NO_AIO\${SEDdC}1\${SEDdD}
+\${SEDuA}NO_AIO\${SEDuB}NO_AIO\${SEDuC}1\${SEDuD}
+\${SEDeA}NO_AIO\${SEDeB}NO_AIO\${SEDeC}1\${SEDeD}
+"
+}
+
+    RANLIB=":"
+        CFLAGS="$CFLAGS -D_UNICOS"
+    
+{
+test -n "$verbose" && \
+echo "	defining CRAY"
+echo "#define" CRAY 1 >> confdefs.h
+DEFS="$DEFS -DCRAY=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}CRAY\${SEDdB}CRAY\${SEDdC}1\${SEDdD}
+\${SEDuA}CRAY\${SEDuB}CRAY\${SEDuC}1\${SEDuD}
+\${SEDeA}CRAY\${SEDeB}CRAY\${SEDeC}1\${SEDeD}
+"
+}
+
+    if test -z "$MPI" || test -n "$mpi_sgi" ; then
+        MPI=cray
+        mpi_cray=1
+        mpi_sgi=""
+# above is to disable configure tests specific to SGI MPI
+                
+{
+test -n "$verbose" && \
+echo "	defining MPISGI"
+echo "#define" MPISGI 1 >> confdefs.h
+DEFS="$DEFS -DMPISGI=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}MPISGI\${SEDdB}MPISGI\${SEDdC}1\${SEDdD}
+\${SEDuA}MPISGI\${SEDuB}MPISGI\${SEDuC}1\${SEDuD}
+\${SEDeA}MPISGI\${SEDeB}MPISGI\${SEDeC}1\${SEDeD}
+"
+}
+
+        
+{
+test -n "$verbose" && \
+echo "	defining HAVE_MPI_COMBINERS"
+echo "#define" HAVE_MPI_COMBINERS 1 >> confdefs.h
+DEFS="$DEFS -DHAVE_MPI_COMBINERS=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}HAVE_MPI_COMBINERS\${SEDdB}HAVE_MPI_COMBINERS\${SEDdC}1\${SEDdD}
+\${SEDuA}HAVE_MPI_COMBINERS\${SEDuB}HAVE_MPI_COMBINERS\${SEDuC}1\${SEDuD}
+\${SEDeA}HAVE_MPI_COMBINERS\${SEDeB}HAVE_MPI_COMBINERS\${SEDeC}1\${SEDeD}
+"
+}
+
+        
+{
+test -n "$verbose" && \
+echo "	defining NO_MPI_SGI_type_is_contig"
+echo "#define" NO_MPI_SGI_type_is_contig 1 >> confdefs.h
+DEFS="$DEFS -DNO_MPI_SGI_type_is_contig=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}NO_MPI_SGI_type_is_contig\${SEDdB}NO_MPI_SGI_type_is_contig\${SEDdC}1\${SEDdD}
+\${SEDuA}NO_MPI_SGI_type_is_contig\${SEDuB}NO_MPI_SGI_type_is_contig\${SEDuC}1\${SEDuD}
+\${SEDeA}NO_MPI_SGI_type_is_contig\${SEDeB}NO_MPI_SGI_type_is_contig\${SEDeC}1\${SEDeD}
+"
+}
+
+    fi
+#       MPISGI needed because of error in Cray's and SGI's 
+#       MPI_Type_get_contents (does not increment reference count).
+#       Others needed because MPISGI needed.
+    if test -z "$FILE_SYSTEM" ; then
+        file_system_ufs=1
+        file_system_nfs=1
+        FILE_SYSTEM="ufs nfs"
+        echo "configuring for file systems ufs and nfs"
+    fi
+    MPI_OFFSET_KIND1="      INTEGER MPI_OFFSET_KIND"
+    MPI_OFFSET_KIND2="      PARAMETER (MPI_OFFSET_KIND=8)"
+fi
+#
+if test -n "$arch_sgi" ; then
+    arch_IRIX=1
+    ARCH=IRIX
+fi
+if test -n "$arch_IRIX64" ; then
+    arch_IRIX=1
+fi
+if test -n "$arch_IRIX32" ; then
+    arch_IRIX=1
+fi
+if test -n "$arch_IRIXN32" ; then
+    arch_IRIX=1
+fi
+if test -n "$arch_sgi5" ; then
+    arch_IRIX5=1
+    ARCH=IRIX
+fi
+#
+
+#
+if test -n "$arch_IRIX"; then
+   if test -z "$ac_echo_n" ; then
+ac_echo_n=yes
+if (echo "testing\c"; echo 1,2,3) | grep c >/dev/null; then
+  if (echo -n testing; echo 1,2,3) | sed s/-n/xn/ | grep xn >/dev/null; then
+    ac_n= ac_c='
+' ac_t='	'
+  else
+    ac_n=-n ac_c= ac_t=
+  fi
+else
+  ac_n= ac_c='\c' ac_t=
+fi
+ac_echo_test=`echo foo 1>&1`
+if test -z "$ac_echo_test" ; then
+     print_error "Your sh shell does not handle the output redirection"
+     print_error "1>&1 correctly.  Configure will work around this problem,"
+     print_error "but you should report the problem to your vendor."
+fi
+
+fi
+if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo $ac_n "checking for IRIX OS version""... $ac_c"
+else
+echo $ac_n "checking for IRIX OS version""... $ac_c" 1>&1
+fi
+               osversion=`uname -r | sed 's/\..*//'`
+               osvminor=`uname -r | sed 's/[0-9]\.\([0-9]*\)\..*/\1/'`
+   if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo "$ac_t""$osversion"
+else
+echo "$ac_t""$osversion" 1>&1
+fi
+      if test -z "$ac_echo_n" ; then
+ac_echo_n=yes
+if (echo "testing\c"; echo 1,2,3) | grep c >/dev/null; then
+  if (echo -n testing; echo 1,2,3) | sed s/-n/xn/ | grep xn >/dev/null; then
+    ac_n= ac_c='
+' ac_t='	'
+  else
+    ac_n=-n ac_c= ac_t=
+  fi
+else
+  ac_n= ac_c='\c' ac_t=
+fi
+ac_echo_test=`echo foo 1>&1`
+if test -z "$ac_echo_test" ; then
+     print_error "Your sh shell does not handle the output redirection"
+     print_error "1>&1 correctly.  Configure will work around this problem,"
+     print_error "but you should report the problem to your vendor."
+fi
+
+fi
+if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo $ac_n "checking for IRIX cpucount""... $ac_c"
+else
+echo $ac_n "checking for IRIX cpucount""... $ac_c" 1>&1
+fi
+   cpucount=`hinv | grep '[0-9]* [0-9]* MHZ IP[0-9]* Proc' | cut -f 1 -d' '`
+   if test "$cpucount" = "" ; then
+     cpucount=`hinv | grep 'Processor [0-9]*:' | wc -l | sed -e 's/ //g'`
+   fi
+      if test "$cpucount" = "" ; then
+     print_error "Could not determine cpucount."
+     print_error "Please send "
+     hinv
+     print_error "to romio-maint@mcs.anl.gov"
+     exit 1
+   fi
+   if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo "$ac_t""$cpucount"
+else
+echo "$ac_t""$cpucount" 1>&1
+fi
+      if test -z "$ac_echo_n" ; then
+ac_echo_n=yes
+if (echo "testing\c"; echo 1,2,3) | grep c >/dev/null; then
+  if (echo -n testing; echo 1,2,3) | sed s/-n/xn/ | grep xn >/dev/null; then
+    ac_n= ac_c='
+' ac_t='	'
+  else
+    ac_n=-n ac_c= ac_t=
+  fi
+else
+  ac_n= ac_c='\c' ac_t=
+fi
+ac_echo_test=`echo foo 1>&1`
+if test -z "$ac_echo_test" ; then
+     print_error "Your sh shell does not handle the output redirection"
+     print_error "1>&1 correctly.  Configure will work around this problem,"
+     print_error "but you should report the problem to your vendor."
+fi
+
+fi
+if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo $ac_n "checking for IRIX cpumodel""... $ac_c"
+else
+echo $ac_n "checking for IRIX cpumodel""... $ac_c" 1>&1
+fi
+            cputype=`hinv -t cpu | tail -1 | cut -f 3 -d' '`
+   if test -z "$cputype" ; then
+        print_error "Could not get cputype from hinv -t cpu command."
+        print_error "Please send "
+        hinv -t cpu 2>&1
+        hinv -t cpu | cut -f 3 -d' ' 2>&1
+        print_error "to romio-maint@mcs.anl.gov" 
+        exit 1
+   fi
+   if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo "$ac_t""$cputype"
+else
+echo "$ac_t""$cputype" 1>&1
+fi
+            if test -z "$osversion" ; then
+        print_error "Could not determine OS version.  Please send" 
+        print_error " " 
+        uname -a
+        print_error "to romio-maint@mcs.anl.gov" 
+        exit 1
+   elif test $osversion = 4 ; then
+        true
+   elif test $osversion = 5 ; then
+        true
+   elif test $osversion = 6 ; then
+        true
+   else 
+       print_error "Could not recognize the version of IRIX (got $osversion)"
+       print_error "ROMIO knows about versions 4, 5 and 6; the version being"
+       print_error "returned from uname -r is $osversion."
+       print_error "Please send"
+       uname -a 2>&1
+       hinv 2>&1
+       print_error "to romio-maint@mcs.anl.gov"
+       exit 1
+   fi
+   if test -z "$ac_echo_n" ; then
+ac_echo_n=yes
+if (echo "testing\c"; echo 1,2,3) | grep c >/dev/null; then
+  if (echo -n testing; echo 1,2,3) | sed s/-n/xn/ | grep xn >/dev/null; then
+    ac_n= ac_c='
+' ac_t='	'
+  else
+    ac_n=-n ac_c= ac_t=
+  fi
+else
+  ac_n= ac_c='\c' ac_t=
+fi
+ac_echo_test=`echo foo 1>&1`
+if test -z "$ac_echo_test" ; then
+     print_error "Your sh shell does not handle the output redirection"
+     print_error "1>&1 correctly.  Configure will work around this problem,"
+     print_error "but you should report the problem to your vendor."
+fi
+
+fi
+if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo $ac_n "checking for cputype""... $ac_c"
+else
+echo $ac_n "checking for cputype""... $ac_c" 1>&1
+fi
+   OLD_ARCH=IRIX
+   IRIXARCH="$ARCH_$osversion"
+         cputype=`echo $cputype | sed -e 's%.*/%%' -e 's/R//' | tr -d "[A-Z]"`
+      case $cputype in 
+        3000) ;;
+        4000) ;;
+        4400) ;;
+        4600) ;;
+        5000) ;;
+        8000) ;;
+        10000);;
+	12000);;
+        *)
+        print_error "Unexpected IRIX/MIPS chipset $cputype.  Please send the output"
+        print_error " "
+        uname -a 2>&1
+        hinv 2>&1 
+        print_error " " 
+        print_error "to romio-maint@mcs.anl.gov" 
+        print_error "ROMIO will continue and assume that the cputype is"
+        print_error "compatible with a MIPS 4400 processor."
+        print_error " " 
+        cputype=4400
+        ;;
+   esac
+   if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo "$ac_t""$cputype"
+else
+echo "$ac_t""$cputype" 1>&1
+fi
+   IRIXARCH="$IRIXARCH_$cputype"
+   echo "IRIX-specific architecture is $IRIXARCH"
+fi
+
+#
+# special case 'sgi5' for use on MESHINE which is much like an SGI running
+# irix 5 with r4400 chips, but does not have 'hinv', so above code doesn't
+# work
+if test -n "$arch_sgi5"; then
+   osversion=5
+   cputype=4400
+   IRIXARCH="$ARCH_$osversion"
+   IRIXARCH="$IRIXARCH_$cputype"
+# now set arch_IRIX to 1
+   arch_IRIX=1
+   echo "IRIX-specific architecture is $IRIXARCH"
+      
+{
+test -n "$verbose" && \
+echo "	defining IRIX"
+echo "#define" IRIX 1 >> confdefs.h
+DEFS="$DEFS -DIRIX=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}IRIX\${SEDdB}IRIX\${SEDdC}1\${SEDdD}
+\${SEDuA}IRIX\${SEDuB}IRIX\${SEDuC}1\${SEDuD}
+\${SEDeA}IRIX\${SEDeB}IRIX\${SEDeC}1\${SEDeD}
+"
+}
+
+fi
+#
+if test -n "$arch_IRIX"; then
+    CC=${CC:-cc}
+    F77=${FC:-f77}
+    if test $DEBUG = "yes"; then
+        CFLAGS="$CFLAGS -g -fullwarn"
+    else 
+        CFLAGS="$CFLAGS -O"
+    fi
+   if test $osversion = 4 ; then
+	RANLIB="ar ts"
+        if test -n "$mpi_sgi"; then
+            echo "Error: SGI's MPI doesn't work with IRIX 4.x"
+            exit 1
+        fi
+   elif test $osversion = 5 ; then
+        if test -n "$mpi_sgi"; then
+            echo "Error: SGI's MPI doesn't work with IRIX 5.x"
+            exit 1
+        fi
+   elif test $osversion = 6 ; then
+	if test -z "$MPI"; then
+            if test -f "/usr/include/mpi.h" ; then
+                echo "assuming that you want to use ROMIO with SGI's MPI"
+                MPI=sgi
+                mpi_sgi=1
+            else 
+                echo "assuming that you want to use ROMIO with MPICH"
+                MPI=mpich
+                mpi_mpich=1
+            fi            
+	fi
+        RANLIB=":"
+                
+{
+test -n "$verbose" && \
+echo "	defining AIO_SIGNOTIFY_NONE"
+echo "#define" AIO_SIGNOTIFY_NONE 1 >> confdefs.h
+DEFS="$DEFS -DAIO_SIGNOTIFY_NONE=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}AIO_SIGNOTIFY_NONE\${SEDdB}AIO_SIGNOTIFY_NONE\${SEDdC}1\${SEDdD}
+\${SEDuA}AIO_SIGNOTIFY_NONE\${SEDuB}AIO_SIGNOTIFY_NONE\${SEDuC}1\${SEDuD}
+\${SEDeA}AIO_SIGNOTIFY_NONE\${SEDeB}AIO_SIGNOTIFY_NONE\${SEDeC}1\${SEDeD}
+"
+}
+
+	if test $cputype -ge 5000 ; then
+            MIPS=4
+        else 
+            MIPS=3
+        fi
+   fi
+   if test -n "$mpi_sgi" && test -z "$MPI_LIB" ; then
+       MPI_LIB="-lmpi"
+   fi
+#  check if pread64 is defined
+   
+  if test -z "$ac_echo_n" ; then
+ac_echo_n=yes
+if (echo "testing\c"; echo 1,2,3) | grep c >/dev/null; then
+  if (echo -n testing; echo 1,2,3) | sed s/-n/xn/ | grep xn >/dev/null; then
+    ac_n= ac_c='
+' ac_t='	'
+  else
+    ac_n=-n ac_c= ac_t=
+  fi
+else
+  ac_n= ac_c='\c' ac_t=
+fi
+ac_echo_test=`echo foo 1>&1`
+if test -z "$ac_echo_test" ; then
+     print_error "Your sh shell does not handle the output redirection"
+     print_error "1>&1 correctly.  Configure will work around this problem,"
+     print_error "but you should report the problem to your vendor."
+fi
+
+fi
+if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo $ac_n "checking if pread64 is defined""... $ac_c"
+else
+echo $ac_n "checking if pread64 is defined""... $ac_c" 1>&1
+fi
+  rm -f conftest.c
+  cat > conftest.c <<EOF
+#include <unistd.h>
+     main()
+     {
+         int fd=0, buf=0, i=0;
+         off64_t off=0;
+         pread64(fd, &buf, i, off);
+     }
+EOF
+  rm -f conftest
+  $CC $USER_CFLAGS -o conftest conftest.c > /dev/null 2>&1
+  if test -x conftest ; then
+      if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo "$ac_t""yes"
+else
+echo "$ac_t""yes" 1>&1
+fi
+      
+{
+test -n "$verbose" && \
+echo "	defining HAVE_PREAD64"
+echo "#define" HAVE_PREAD64 1 >> confdefs.h
+DEFS="$DEFS -DHAVE_PREAD64=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}HAVE_PREAD64\${SEDdB}HAVE_PREAD64\${SEDdC}1\${SEDdD}
+\${SEDuA}HAVE_PREAD64\${SEDuB}HAVE_PREAD64\${SEDuC}1\${SEDuD}
+\${SEDeA}HAVE_PREAD64\${SEDeB}HAVE_PREAD64\${SEDeC}1\${SEDeD}
+"
+}
+
+  else
+      if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo "$ac_t""no"
+else
+echo "$ac_t""no" 1>&1
+fi
+  fi
+rm -f conftest conftest.c
+
+#
+   if test -z "$FILE_SYSTEM" ; then
+       file_system_nfs=1
+       FILE_SYSTEM="nfs"
+       if test -z "$ac_echo_n" ; then
+ac_echo_n=yes
+if (echo "testing\c"; echo 1,2,3) | grep c >/dev/null; then
+  if (echo -n testing; echo 1,2,3) | sed s/-n/xn/ | grep xn >/dev/null; then
+    ac_n= ac_c='
+' ac_t='	'
+  else
+    ac_n=-n ac_c= ac_t=
+  fi
+else
+  ac_n= ac_c='\c' ac_t=
+fi
+ac_echo_test=`echo foo 1>&1`
+if test -z "$ac_echo_test" ; then
+     print_error "Your sh shell does not handle the output redirection"
+     print_error "1>&1 correctly.  Configure will work around this problem,"
+     print_error "but you should report the problem to your vendor."
+fi
+
+fi
+if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo $ac_n "checking for xfs""... $ac_c"
+else
+echo $ac_n "checking for xfs""... $ac_c" 1>&1
+fi
+       cat > conftest.c <<EOF
+#include "confdefs.h"
+
+#include <aio.h>
+int main() { exit(0); }
+int t() { aiocb64_t *t1; }
+EOF
+if eval $compile; then
+  rm -rf conftest*
+  file_system_xfs=1;FILE_SYSTEM="xfs $FILE_SYSTEM";
+
+fi
+rm -f conftest*
+
+       if test "$file_system_xfs" = 1 ; then 
+          if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo "$ac_t""yes"
+else
+echo "$ac_t""yes" 1>&1
+fi
+       else
+          if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo "$ac_t""no"
+else
+echo "$ac_t""no" 1>&1
+fi
+          file_system_ufs=1
+          FILE_SYSTEM="ufs $FILE_SYSTEM"
+       fi
+       echo "configuring for file systems $FILE_SYSTEM"
+   fi
+      
+{
+test -n "$verbose" && \
+echo "	defining IRIX"
+echo "#define" IRIX 1 >> confdefs.h
+DEFS="$DEFS -DIRIX=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}IRIX\${SEDdB}IRIX\${SEDdC}1\${SEDdD}
+\${SEDuA}IRIX\${SEDuB}IRIX\${SEDuC}1\${SEDuD}
+\${SEDeA}IRIX\${SEDeB}IRIX\${SEDeC}1\${SEDeD}
+"
+}
+
+   MPI_OFFSET_KIND1="      INTEGER MPI_OFFSET_KIND"
+   MPI_OFFSET_KIND2="      PARAMETER (MPI_OFFSET_KIND=8)"
+fi
+
+for func in memalign
+do
+trfunc=HAVE_`echo $func | tr '[a-z]' '[A-Z]'`
+echo checking for ${func}
+cat > conftest.c <<EOF
+#include "confdefs.h"
+#include <ctype.h>
+int main() { exit(0); }
+int t() { 
+/* The GNU C library defines this for functions which it implements
+    to always fail with ENOSYS.  Some functions are actually named
+    something starting with __ and the normal name is an alias.  */
+#if defined (__stub_${func}) || defined (__stub___${func})
+choke me
+#else
+/* Override any gcc2 internal prototype to avoid an error.  */
+extern char ${func}(); ${func}();
+#endif
+ }
+EOF
+if eval $compile; then
+  rm -rf conftest*
+  {
+test -n "$verbose" && \
+echo "	defining ${trfunc}"
+echo "#define" ${trfunc} 1 >> confdefs.h
+DEFS="$DEFS -D${trfunc}=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}${trfunc}\${SEDdB}${trfunc}\${SEDdC}1\${SEDdD}
+\${SEDuA}${trfunc}\${SEDuB}${trfunc}\${SEDuC}1\${SEDuD}
+\${SEDeA}${trfunc}\${SEDeB}${trfunc}\${SEDeC}1\${SEDeD}
+"
+}
+
+
+fi
+rm -f conftest*
+done
+
+
+  if test -z "$ac_echo_n" ; then
+ac_echo_n=yes
+if (echo "testing\c"; echo 1,2,3) | grep c >/dev/null; then
+  if (echo -n testing; echo 1,2,3) | sed s/-n/xn/ | grep xn >/dev/null; then
+    ac_n= ac_c='
+' ac_t='	'
+  else
+    ac_n=-n ac_c= ac_t=
+  fi
+else
+  ac_n= ac_c='\c' ac_t=
+fi
+ac_echo_test=`echo foo 1>&1`
+if test -z "$ac_echo_test" ; then
+     print_error "Your sh shell does not handle the output redirection"
+     print_error "1>&1 correctly.  Configure will work around this problem,"
+     print_error "but you should report the problem to your vendor."
+fi
+
+fi
+if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo $ac_n "checking if MPIR_Status_set_bytes is defined""... $ac_c"
+else
+echo $ac_n "checking if MPIR_Status_set_bytes is defined""... $ac_c" 1>&1
+fi
+  rm -f mpitest.c
+  cat > mpitest.c <<EOF
+#include "mpi.h"
+     main(int argc, char **argv)
+     {
+     	 MPI_Status status;
+         MPI_Datatype type;
+	 int err;
+
+         MPI_Init(&argc,&argv);
+         MPIR_Status_set_bytes(status,type,err);
+         MPI_Finalize(); 
+     }
+EOF
+  rm -f conftest
+  $CC $USER_CFLAGS -I$MPI_INCLUDE_DIR -o conftest mpitest.c $MPI_LIB > /dev/null 2>&1
+  if test -x conftest ; then
+     if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo "$ac_t""yes"
+else
+echo "$ac_t""yes" 1>&1
+fi
+     
+{
+test -n "$verbose" && \
+echo "	defining HAVE_STATUS_SET_BYTES"
+echo "#define" HAVE_STATUS_SET_BYTES 1 >> confdefs.h
+DEFS="$DEFS -DHAVE_STATUS_SET_BYTES=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}HAVE_STATUS_SET_BYTES\${SEDdB}HAVE_STATUS_SET_BYTES\${SEDdC}1\${SEDdD}
+\${SEDuA}HAVE_STATUS_SET_BYTES\${SEDuB}HAVE_STATUS_SET_BYTES\${SEDuC}1\${SEDuD}
+\${SEDeA}HAVE_STATUS_SET_BYTES\${SEDeB}HAVE_STATUS_SET_BYTES\${SEDeC}1\${SEDeD}
+"
+}
+
+  else
+     if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo "$ac_t""no"
+else
+echo "$ac_t""no" 1>&1
+fi
+  fi
+  rm -f conftest mpitest.c
+
+
+if test $NOF77 = 0 ; then
+    echo "checking Fortran external names"
+    
+   rm -f confftest.f confftest.o
+   cat > confftest.f <<EOF
+       subroutine mpir_init_fop( a )
+       integer a
+       a = 1
+       return
+       end
+EOF
+   $F77 $FFLAGS -c confftest.f > /dev/null 2>&1
+   if test ! -s confftest.o ; then
+        print_error "Unable to test Fortran compiler"
+        print_error "(compiling a test program failed to produce an "
+        print_error "object file)."
+	NOF77=1
+   elif test -z "$FORTRANNAMES" ; then
+    if test $arch_CRAY ; then
+     # Cray doesn't accept -a ...
+     nameform1=`strings confftest.o | grep mpir_init_fop_  | head -1`
+     nameform2=`strings confftest.o | grep MPIR_INIT_FOP   | head -1`
+     nameform3=`strings confftest.o | grep mpir_init_fop   | head -1`
+     nameform4=`strings confftest.o | grep mpir_init_fop__ | head -1`
+    else
+     nameform1=`strings -a confftest.o | grep mpir_init_fop_  | head -1`
+     nameform2=`strings -a confftest.o | grep MPIR_INIT_FOP   | head -1`
+     nameform3=`strings -a confftest.o | grep mpir_init_fop   | head -1`
+     nameform4=`strings -a confftest.o | grep mpir_init_fop__ | head -1`
+    fi
+    rm -f confftest.f confftest.o
+    if test -n "$nameform4" ; then
+	echo "Fortran externals are lower case and have two trailing underscores"
+	FORTRANNAMES="FORTRANDOUBLEUNDERSCORE"
+    elif test -n "$nameform1" ; then
+        # We don't set this in CFLAGS; it is a default case
+        echo "Fortran externals have a trailing underscore and are lowercase"
+	FORTRANNAMES="FORTRANUNDERSCORE"
+    elif test -n "$nameform2" ; then
+	echo "Fortran externals are uppercase"     
+	FORTRANNAMES="FORTRANCAPS" 
+    elif test -n "$nameform3" ; then
+	echo "Fortran externals are lower case"
+	FORTRANNAMES="FORTRANNOUNDERSCORE"
+    else
+	print_error "Unable to determine the form of Fortran external names"
+	print_error "Make sure that the compiler $F77 can be run on this system"
+	print_error "Turning off Fortran (-nof77 being assumed)."
+	NOF77=1
+    fi
+    fi
+    if test -n "$FORTRANNAMES" ; then
+        WDEF="-D$FORTRANNAMES"
+    fi
+    
+    if test -n "$WDEF" ; then
+        CFLAGS="$CFLAGS $WDEF"
+    fi
+    rm -f test/mpif.h
+    if test "$MPI_INCLUDE_DIR" != "." && test $FROM_MPICH = 0 ; then
+        if test ! -d test ; then mkdir test ; fi
+        ln -s $MPI_INCLUDE_DIR/mpif.h test
+    fi
+else 
+    F77=":"
+fi
+#
+
+if test -z "$ac_echo_n" ; then
+ac_echo_n=yes
+if (echo "testing\c"; echo 1,2,3) | grep c >/dev/null; then
+  if (echo -n testing; echo 1,2,3) | sed s/-n/xn/ | grep xn >/dev/null; then
+    ac_n= ac_c='
+' ac_t='	'
+  else
+    ac_n=-n ac_c= ac_t=
+  fi
+else
+  ac_n= ac_c='\c' ac_t=
+fi
+ac_echo_test=`echo foo 1>&1`
+if test -z "$ac_echo_test" ; then
+     print_error "Your sh shell does not handle the output redirection"
+     print_error "1>&1 correctly.  Configure will work around this problem,"
+     print_error "but you should report the problem to your vendor."
+fi
+
+fi
+if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo $ac_n "checking for inline""... $ac_c"
+else
+echo $ac_n "checking for inline""... $ac_c" 1>&1
+fi
+if eval "test \"`echo '$''{'pac_cv_c_inline'+set}'`\" = set"; then
+   if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo "$ac_t""(cached)"
+else
+echo "$ac_t""(cached)" 1>&1
+fi
+else
+  cat > conftest.c <<EOF
+#include "confdefs.h"
+inline int a( int b ){return b+1;}
+int main() { exit(0); }
+int t() { int a; }
+EOF
+if eval $compile; then
+  rm -rf conftest*
+  pac_cv_c_inline="yes"
+
+else
+  rm -rf conftest*
+  pac_cv_c_inline="no"
+fi
+rm -f conftest*
+
+fi
+if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo "$ac_t""$pac_cv_c_inline"
+else
+echo "$ac_t""$pac_cv_c_inline" 1>&1
+fi
+if test "$pac_cv_c_inline" = "no" ; then
+    
+{
+test -n "$verbose" && \
+echo "	defining inline"
+echo "#define" inline 1 >> confdefs.h
+DEFS="$DEFS -Dinline=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}inline\${SEDdB}inline\${SEDdC}1\${SEDdD}
+\${SEDuA}inline\${SEDuB}inline\${SEDuC}1\${SEDuD}
+\${SEDeA}inline\${SEDeB}inline\${SEDeC}1\${SEDeD}
+"
+}
+
+fi
+
+
+# Header files
+for ac_hdr in unistd.h
+do
+ac_safe=`echo "$ac_hdr" | tr '[a-z]./' '[A-Z]__'`
+if test -z "$ac_echo_n" ; then
+ac_echo_n=yes
+if (echo "testing\c"; echo 1,2,3) | grep c >/dev/null; then
+  if (echo -n testing; echo 1,2,3) | sed s/-n/xn/ | grep xn >/dev/null; then
+    ac_n= ac_c='
+' ac_t='	'
+  else
+    ac_n=-n ac_c= ac_t=
+  fi
+else
+  ac_n= ac_c='\c' ac_t=
+fi
+ac_echo_test=`echo foo 1>&1`
+if test -z "$ac_echo_test" ; then
+     print_error "Your sh shell does not handle the output redirection"
+     print_error "1>&1 correctly.  Configure will work around this problem,"
+     print_error "but you should report the problem to your vendor."
+fi
+
+fi
+if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo $ac_n "checking for $ac_hdr""... $ac_c"
+else
+echo $ac_n "checking for $ac_hdr""... $ac_c" 1>&1
+fi
+cat > conftest.c <<EOF
+#include "confdefs.h"
+
+#include <$ac_hdr>
+int main() { exit(0); }
+int t() { main(); }
+EOF
+if eval $compile; then
+  rm -rf conftest*
+  eval "ac_cv_header_$ac_safe=yes"
+
+else
+  rm -rf conftest*
+  eval "ac_cv_header_$ac_safe=no"
+fi
+rm -f conftest*
+if eval "test \"`echo '$ac_cv_header_'$ac_safe`\" = yes"; then
+  if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo "$ac_t""yes"
+else
+echo "$ac_t""yes" 1>&1
+fi
+    ac_tr_hdr=HAVE_`echo $ac_hdr | tr '[a-z]./' '[A-Z]__'`
+  
+{
+test -n "$verbose" && \
+echo "	defining $ac_tr_hdr"
+echo "#define" $ac_tr_hdr 1 >> confdefs.h
+DEFS="$DEFS -D$ac_tr_hdr=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}$ac_tr_hdr\${SEDdB}$ac_tr_hdr\${SEDdC}1\${SEDdD}
+\${SEDuA}$ac_tr_hdr\${SEDuB}$ac_tr_hdr\${SEDuC}1\${SEDuD}
+\${SEDeA}$ac_tr_hdr\${SEDeB}$ac_tr_hdr\${SEDeC}1\${SEDeD}
+"
+}
+ 
+else
+  if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo "$ac_t""no"
+else
+echo "$ac_t""no" 1>&1
+fi
+fi
+done
+
+#
+
+if test -z "$intsize" ; then
+    Pac_name="int"
+ Pac_varname=`echo "$Pac_name" | sed -e 's/ /_/g' -e 's/\*/star/g'`
+eval Pac_testval=\$"${Pac_varname}_len"
+if test -z "$Pac_testval" ; then
+   
+      
+   eval Pac_testval=\$"CROSS_SIZEOF_INT"
+fi
+if test -n "$Pac_testval" ; then
+    Pac_CV_NAME=$Pac_testval
+else
+if test -z "$ac_echo_n" ; then
+ac_echo_n=yes
+if (echo "testing\c"; echo 1,2,3) | grep c >/dev/null; then
+  if (echo -n testing; echo 1,2,3) | sed s/-n/xn/ | grep xn >/dev/null; then
+    ac_n= ac_c='
+' ac_t='	'
+  else
+    ac_n=-n ac_c= ac_t=
+  fi
+else
+  ac_n= ac_c='\c' ac_t=
+fi
+ac_echo_test=`echo foo 1>&1`
+if test -z "$ac_echo_test" ; then
+     print_error "Your sh shell does not handle the output redirection"
+     print_error "1>&1 correctly.  Configure will work around this problem,"
+     print_error "but you should report the problem to your vendor."
+fi
+
+fi
+if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo $ac_n "checking for size of int""... $ac_c"
+else
+echo $ac_n "checking for size of int""... $ac_c" 1>&1
+fi
+/bin/rm -f conftestval
+cat > conftest.c <<EOF
+#include "confdefs.h"
+#include <stdio.h>
+main() { 
+  FILE *f=fopen("conftestval","w");
+  if (!f) exit(1);
+  fprintf( f, "%d\n", sizeof(int));
+  exit(0);
+}
+EOF
+eval $compile
+if test -s conftest && (./conftest; exit) 2>/dev/null; then
+  Pac_CV_NAME=`cat conftestval`
+
+else
+  Pac_CV_NAME=""
+fi
+rm -fr conftest*
+/bin/rm -f conftestval
+if test -n "$Pac_CV_NAME" -a "$Pac_CV_NAME" != 0 ; then
+    if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo "$ac_t""$Pac_CV_NAME"
+else
+echo "$ac_t""$Pac_CV_NAME" 1>&1
+fi
+    eval ${Pac_varname}_len=$Pac_CV_NAME
+else
+    if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo "$ac_t""unavailable"
+else
+echo "$ac_t""unavailable" 1>&1
+fi
+fi
+fi
+intsize=$Pac_CV_NAME
+
+fi
+if test -z "$pointersize" ; then
+    Pac_name="void *"
+ Pac_varname=`echo "$Pac_name" | sed -e 's/ /_/g' -e 's/\*/star/g'`
+eval Pac_testval=\$"${Pac_varname}_len"
+if test -z "$Pac_testval" ; then
+   
+      
+   eval Pac_testval=\$"CROSS_SIZEOF_VOID_P"
+fi
+if test -n "$Pac_testval" ; then
+    Pac_CV_NAME=$Pac_testval
+else
+if test -z "$ac_echo_n" ; then
+ac_echo_n=yes
+if (echo "testing\c"; echo 1,2,3) | grep c >/dev/null; then
+  if (echo -n testing; echo 1,2,3) | sed s/-n/xn/ | grep xn >/dev/null; then
+    ac_n= ac_c='
+' ac_t='	'
+  else
+    ac_n=-n ac_c= ac_t=
+  fi
+else
+  ac_n= ac_c='\c' ac_t=
+fi
+ac_echo_test=`echo foo 1>&1`
+if test -z "$ac_echo_test" ; then
+     print_error "Your sh shell does not handle the output redirection"
+     print_error "1>&1 correctly.  Configure will work around this problem,"
+     print_error "but you should report the problem to your vendor."
+fi
+
+fi
+if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo $ac_n "checking for size of void *""... $ac_c"
+else
+echo $ac_n "checking for size of void *""... $ac_c" 1>&1
+fi
+/bin/rm -f conftestval
+cat > conftest.c <<EOF
+#include "confdefs.h"
+#include <stdio.h>
+main() { 
+  FILE *f=fopen("conftestval","w");
+  if (!f) exit(1);
+  fprintf( f, "%d\n", sizeof(void *));
+  exit(0);
+}
+EOF
+eval $compile
+if test -s conftest && (./conftest; exit) 2>/dev/null; then
+  Pac_CV_NAME=`cat conftestval`
+
+else
+  Pac_CV_NAME=""
+fi
+rm -fr conftest*
+/bin/rm -f conftestval
+if test -n "$Pac_CV_NAME" -a "$Pac_CV_NAME" != 0 ; then
+    if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo "$ac_t""$Pac_CV_NAME"
+else
+echo "$ac_t""$Pac_CV_NAME" 1>&1
+fi
+    eval ${Pac_varname}_len=$Pac_CV_NAME
+else
+    if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo "$ac_t""unavailable"
+else
+echo "$ac_t""unavailable" 1>&1
+fi
+fi
+fi
+pointersize=$Pac_CV_NAME
+
+fi
+if test -z "$ac_echo_n" ; then
+ac_echo_n=yes
+if (echo "testing\c"; echo 1,2,3) | grep c >/dev/null; then
+  if (echo -n testing; echo 1,2,3) | sed s/-n/xn/ | grep xn >/dev/null; then
+    ac_n= ac_c='
+' ac_t='	'
+  else
+    ac_n=-n ac_c= ac_t=
+  fi
+else
+  ac_n= ac_c='\c' ac_t=
+fi
+ac_echo_test=`echo foo 1>&1`
+if test -z "$ac_echo_test" ; then
+     print_error "Your sh shell does not handle the output redirection"
+     print_error "1>&1 correctly.  Configure will work around this problem,"
+     print_error "but you should report the problem to your vendor."
+fi
+
+fi
+if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo $ac_n "checking for int large enough for pointers""... $ac_c"
+else
+echo $ac_n "checking for int large enough for pointers""... $ac_c" 1>&1
+fi
+if test -n "$pointersize" -a -n "$intsize" ; then
+    if test $pointersize -le $intsize ; then
+       if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo "$ac_t""yes"
+else
+echo "$ac_t""yes" 1>&1
+fi
+    else
+       
+{
+test -n "$verbose" && \
+echo "	defining INT_LT_POINTER"
+echo "#define" INT_LT_POINTER 1 >> confdefs.h
+DEFS="$DEFS -DINT_LT_POINTER=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}INT_LT_POINTER\${SEDdB}INT_LT_POINTER\${SEDdC}1\${SEDdD}
+\${SEDuA}INT_LT_POINTER\${SEDuB}INT_LT_POINTER\${SEDuC}1\${SEDuD}
+\${SEDeA}INT_LT_POINTER\${SEDeB}INT_LT_POINTER\${SEDeC}1\${SEDeD}
+"
+}
+
+       if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo "$ac_t""no"
+else
+echo "$ac_t""no" 1>&1
+fi
+    fi
+else
+    if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo "$ac_t""cannot determine; assuming it is;"
+else
+echo "$ac_t""cannot determine; assuming it is;" 1>&1
+fi
+    echo "use '-intsize' and '-ptrsize' to indicate otherwise"
+fi
+
+#
+
+if test -n "$longlongsize" ; then
+    if test "$longlongsize" = 8 ; then
+       echo "defining MPI_Offset as long long in C and integer*8 in Fortran" 
+       
+{
+test -n "$verbose" && \
+echo "	defining HAVE_LONG_LONG_64"
+echo "#define" HAVE_LONG_LONG_64 1 >> confdefs.h
+DEFS="$DEFS -DHAVE_LONG_LONG_64=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}HAVE_LONG_LONG_64\${SEDdB}HAVE_LONG_LONG_64\${SEDdC}1\${SEDdD}
+\${SEDuA}HAVE_LONG_LONG_64\${SEDuB}HAVE_LONG_LONG_64\${SEDuC}1\${SEDuD}
+\${SEDeA}HAVE_LONG_LONG_64\${SEDeB}HAVE_LONG_LONG_64\${SEDeC}1\${SEDeD}
+"
+}
+
+       DEFINE_MPI_OFFSET="typedef long long MPI_Offset;"
+       FORTRAN_MPI_OFFSET="integer*8"
+       LL="\%lld"
+    elif test "$longlongsize" = "int" ; then  # a hack to set MPI_Offset as int
+       echo "defining MPI_Offset as int in C and integer in Fortran"
+       DEFINE_MPI_OFFSET="typedef int MPI_Offset;"
+       FORTRAN_MPI_OFFSET="integer"
+       
+{
+test -n "$verbose" && \
+echo "	defining MPI_OFFSET_IS_INT"
+echo "#define" MPI_OFFSET_IS_INT 1 >> confdefs.h
+DEFS="$DEFS -DMPI_OFFSET_IS_INT=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}MPI_OFFSET_IS_INT\${SEDdB}MPI_OFFSET_IS_INT\${SEDdC}1\${SEDdD}
+\${SEDuA}MPI_OFFSET_IS_INT\${SEDuB}MPI_OFFSET_IS_INT\${SEDuC}1\${SEDuD}
+\${SEDeA}MPI_OFFSET_IS_INT\${SEDeB}MPI_OFFSET_IS_INT\${SEDeC}1\${SEDeD}
+"
+}
+
+       LL="\%d"
+       MPI_OFFSET_KIND1="!"
+       MPI_OFFSET_KIND2="!"
+    else 
+       echo "defining MPI_Offset as long in C and integer in Fortran" 
+       DEFINE_MPI_OFFSET="typedef long MPI_Offset;"
+       FORTRAN_MPI_OFFSET="integer"
+       LL="\%ld"
+       MPI_OFFSET_KIND1="!"
+       MPI_OFFSET_KIND2="!"
+    fi
+else
+   Pac_name="long long"
+ Pac_varname=`echo "$Pac_name" | sed -e 's/ /_/g' -e 's/\*/star/g'`
+eval Pac_testval=\$"${Pac_varname}_len"
+if test -z "$Pac_testval" ; then
+   
+      
+   eval Pac_testval=\$"CROSS_SIZEOF_LONG_LONG"
+fi
+if test -n "$Pac_testval" ; then
+    Pac_CV_NAME=$Pac_testval
+else
+if test -z "$ac_echo_n" ; then
+ac_echo_n=yes
+if (echo "testing\c"; echo 1,2,3) | grep c >/dev/null; then
+  if (echo -n testing; echo 1,2,3) | sed s/-n/xn/ | grep xn >/dev/null; then
+    ac_n= ac_c='
+' ac_t='	'
+  else
+    ac_n=-n ac_c= ac_t=
+  fi
+else
+  ac_n= ac_c='\c' ac_t=
+fi
+ac_echo_test=`echo foo 1>&1`
+if test -z "$ac_echo_test" ; then
+     print_error "Your sh shell does not handle the output redirection"
+     print_error "1>&1 correctly.  Configure will work around this problem,"
+     print_error "but you should report the problem to your vendor."
+fi
+
+fi
+if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo $ac_n "checking for size of long long""... $ac_c"
+else
+echo $ac_n "checking for size of long long""... $ac_c" 1>&1
+fi
+/bin/rm -f conftestval
+cat > conftest.c <<EOF
+#include "confdefs.h"
+#include <stdio.h>
+main() { 
+  FILE *f=fopen("conftestval","w");
+  if (!f) exit(1);
+  fprintf( f, "%d\n", sizeof(long long));
+  exit(0);
+}
+EOF
+eval $compile
+if test -s conftest && (./conftest; exit) 2>/dev/null; then
+  Pac_CV_NAME=`cat conftestval`
+
+else
+  Pac_CV_NAME=""
+fi
+rm -fr conftest*
+/bin/rm -f conftestval
+if test -n "$Pac_CV_NAME" -a "$Pac_CV_NAME" != 0 ; then
+    if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo "$ac_t""$Pac_CV_NAME"
+else
+echo "$ac_t""$Pac_CV_NAME" 1>&1
+fi
+    eval ${Pac_varname}_len=$Pac_CV_NAME
+else
+    if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo "$ac_t""unavailable"
+else
+echo "$ac_t""unavailable" 1>&1
+fi
+fi
+fi
+longlongsize=$Pac_CV_NAME
+
+   if test -n "$longlongsize" ; then
+      if test "$longlongsize" = 8 ; then
+         if test -z "$ac_echo_n" ; then
+ac_echo_n=yes
+if (echo "testing\c"; echo 1,2,3) | grep c >/dev/null; then
+  if (echo -n testing; echo 1,2,3) | sed s/-n/xn/ | grep xn >/dev/null; then
+    ac_n= ac_c='
+' ac_t='	'
+  else
+    ac_n=-n ac_c= ac_t=
+  fi
+else
+  ac_n= ac_c='\c' ac_t=
+fi
+ac_echo_test=`echo foo 1>&1`
+if test -z "$ac_echo_test" ; then
+     print_error "Your sh shell does not handle the output redirection"
+     print_error "1>&1 correctly.  Configure will work around this problem,"
+     print_error "but you should report the problem to your vendor."
+fi
+
+fi
+if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo $ac_n "checking if the compiler prints long longs correctly with %lld""... $ac_c"
+else
+echo $ac_n "checking if the compiler prints long longs correctly with %lld""... $ac_c" 1>&1
+fi
+rm -f conftestll
+cat > conftest.c <<EOF
+#include "confdefs.h"
+#include <stdio.h>
+main() {
+  long long i=8; 
+  FILE *f=fopen("conftestll","w");
+  if (!f) exit(1);
+  fprintf( f, "%lld\n", i);
+  exit(0);
+}
+EOF
+eval $compile
+if test -s conftest && (./conftest; exit) 2>/dev/null; then
+  Pac_CV_NAME=`cat conftestll`
+
+else
+  Pac_CV_NAME=""
+fi
+rm -fr conftest*
+rm -f conftestll
+if test "$Pac_CV_NAME" = 8 ; then
+    if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo "$ac_t""yes"
+else
+echo "$ac_t""yes" 1>&1
+fi
+    
+{
+test -n "$verbose" && \
+echo "	defining HAVE_LONG_LONG_64"
+echo "#define" HAVE_LONG_LONG_64 1 >> confdefs.h
+DEFS="$DEFS -DHAVE_LONG_LONG_64=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}HAVE_LONG_LONG_64\${SEDdB}HAVE_LONG_LONG_64\${SEDdC}1\${SEDdD}
+\${SEDuA}HAVE_LONG_LONG_64\${SEDuB}HAVE_LONG_LONG_64\${SEDuC}1\${SEDuD}
+\${SEDeA}HAVE_LONG_LONG_64\${SEDeB}HAVE_LONG_LONG_64\${SEDeC}1\${SEDeD}
+"
+}
+
+    DEFINE_MPI_OFFSET="typedef long long MPI_Offset;"
+    FORTRAN_MPI_OFFSET="integer*8"
+    echo "defining MPI_Offset as long long in C and integer*8 in Fortran"
+    LL="\%lld"
+else
+    if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo "$ac_t""no"
+else
+echo "$ac_t""no" 1>&1
+fi
+    if test -z "$ac_echo_n" ; then
+ac_echo_n=yes
+if (echo "testing\c"; echo 1,2,3) | grep c >/dev/null; then
+  if (echo -n testing; echo 1,2,3) | sed s/-n/xn/ | grep xn >/dev/null; then
+    ac_n= ac_c='
+' ac_t='	'
+  else
+    ac_n=-n ac_c= ac_t=
+  fi
+else
+  ac_n= ac_c='\c' ac_t=
+fi
+ac_echo_test=`echo foo 1>&1`
+if test -z "$ac_echo_test" ; then
+     print_error "Your sh shell does not handle the output redirection"
+     print_error "1>&1 correctly.  Configure will work around this problem,"
+     print_error "but you should report the problem to your vendor."
+fi
+
+fi
+if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo $ac_n "checking if the compiler prints long longs correctly with %ld""... $ac_c"
+else
+echo $ac_n "checking if the compiler prints long longs correctly with %ld""... $ac_c" 1>&1
+fi
+    cat > conftest.c <<EOF
+#include "confdefs.h"
+#include <stdio.h>
+    main() {
+      long long i=8; 
+      FILE *f=fopen("conftestll","w");
+      if (!f) exit(1);
+      fprintf( f, "%ld\n", i);
+      exit(0);
+    }
+EOF
+eval $compile
+if test -s conftest && (./conftest; exit) 2>/dev/null; then
+  Pac_CV_NAME=`cat conftestll`
+
+else
+  Pac_CV_NAME=""
+fi
+rm -fr conftest*
+    rm -f conftestll
+    if test "$Pac_CV_NAME" = 8 ; then
+       if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo "$ac_t""yes"
+else
+echo "$ac_t""yes" 1>&1
+fi
+       
+{
+test -n "$verbose" && \
+echo "	defining HAVE_LONG_LONG_64"
+echo "#define" HAVE_LONG_LONG_64 1 >> confdefs.h
+DEFS="$DEFS -DHAVE_LONG_LONG_64=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}HAVE_LONG_LONG_64\${SEDdB}HAVE_LONG_LONG_64\${SEDdC}1\${SEDdD}
+\${SEDuA}HAVE_LONG_LONG_64\${SEDuB}HAVE_LONG_LONG_64\${SEDuC}1\${SEDuD}
+\${SEDeA}HAVE_LONG_LONG_64\${SEDeB}HAVE_LONG_LONG_64\${SEDeC}1\${SEDeD}
+"
+}
+
+       DEFINE_MPI_OFFSET="typedef long long MPI_Offset;"
+       FORTRAN_MPI_OFFSET="integer*8"
+       echo "defining MPI_Offset as long long in C and integer*8 in Fortran"
+       LL="\%ld"
+    else
+       if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo "$ac_t""no!!"
+else
+echo "$ac_t""no!!" 1>&1
+fi
+       echo "the compiler doesn't print long longs correctly!"
+       echo "defining MPI_Offset as long in C and integer in Fortran" 
+       DEFINE_MPI_OFFSET="typedef long MPI_Offset;"
+       FORTRAN_MPI_OFFSET="integer"
+       LL="\%ld"
+       MPI_OFFSET_KIND1="!"
+       MPI_OFFSET_KIND2="!"
+    fi
+fi
+
+      else
+         echo "defining MPI_Offset as long in C and integer in Fortran" 
+         DEFINE_MPI_OFFSET="typedef long MPI_Offset;"
+         FORTRAN_MPI_OFFSET="integer"
+         LL="\%ld"
+         MPI_OFFSET_KIND1="!"
+         MPI_OFFSET_KIND2="!"
+      fi
+   else 
+      rm -f ltest.c
+      cat > ltest.c <<EOF
+        main()
+        {
+           long long i=8;
+           return 0;
+        }
+EOF
+      rm -f conftest
+      $CC $USER_CFLAGS -o conftest ltest.c > /dev/null 2>&1
+      if test -x conftest ; then
+         echo "assuming size of long long is 8bytes; use '-longlongsize' to indicate otherwise"
+         rm -f conftest ltest.c
+         echo "defining MPI_Offset as long long in C and integer*8 in Fortran" 
+         
+{
+test -n "$verbose" && \
+echo "	defining HAVE_LONG_LONG_64"
+echo "#define" HAVE_LONG_LONG_64 1 >> confdefs.h
+DEFS="$DEFS -DHAVE_LONG_LONG_64=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}HAVE_LONG_LONG_64\${SEDdB}HAVE_LONG_LONG_64\${SEDdC}1\${SEDdD}
+\${SEDuA}HAVE_LONG_LONG_64\${SEDuB}HAVE_LONG_LONG_64\${SEDuC}1\${SEDuD}
+\${SEDeA}HAVE_LONG_LONG_64\${SEDeB}HAVE_LONG_LONG_64\${SEDeC}1\${SEDeD}
+"
+}
+
+         DEFINE_MPI_OFFSET="typedef long long MPI_Offset;"
+         FORTRAN_MPI_OFFSET="integer*8"
+         LL="\%lld"
+      else 
+         echo "assuming long long is not available; use '-longlongsize' to indicate otherwise"
+         echo "defining MPI_Offset as long in C and integer in Fortran" 
+         DEFINE_MPI_OFFSET="typedef long MPI_Offset;"
+         FORTRAN_MPI_OFFSET="integer"
+         LL="\%ld"
+         MPI_OFFSET_KIND1="!"
+         MPI_OFFSET_KIND2="!"
+      fi
+   fi
+fi
+
+#
+#
+if test -n "$longlongsize"; then
+   if test $FROM_MPICH = 0 ; then
+       
+  if test -z "$ac_echo_n" ; then
+ac_echo_n=yes
+if (echo "testing\c"; echo 1,2,3) | grep c >/dev/null; then
+  if (echo -n testing; echo 1,2,3) | sed s/-n/xn/ | grep xn >/dev/null; then
+    ac_n= ac_c='
+' ac_t='	'
+  else
+    ac_n=-n ac_c= ac_t=
+  fi
+else
+  ac_n= ac_c='\c' ac_t=
+fi
+ac_echo_test=`echo foo 1>&1`
+if test -z "$ac_echo_test" ; then
+     print_error "Your sh shell does not handle the output redirection"
+     print_error "1>&1 correctly.  Configure will work around this problem,"
+     print_error "but you should report the problem to your vendor."
+fi
+
+fi
+if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo $ac_n "checking if MPI_LONG_LONG_INT is defined in mpi.h""... $ac_c"
+else
+echo $ac_n "checking if MPI_LONG_LONG_INT is defined in mpi.h""... $ac_c" 1>&1
+fi
+  rm -f mpitest.c
+  cat > mpitest.c <<EOF
+#include "mpi.h"
+     main(int argc, char **argv)
+     {
+         long long i;   
+         MPI_Init(&argc,&argv);
+         MPI_Send(&i, 1, MPI_LONG_LONG_INT, 0, 0, MPI_COMM_WORLD);
+         MPI_Finalize(); 
+     }
+EOF
+  rm -f conftest
+  $CC $USER_CFLAGS -I$MPI_INCLUDE_DIR -o conftest mpitest.c $MPI_LIB > /dev/null 2>&1
+  if test -x conftest ; then
+      if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo "$ac_t""yes"
+else
+echo "$ac_t""yes" 1>&1
+fi
+      
+{
+test -n "$verbose" && \
+echo "	defining HAVE_MPI_LONG_LONG_INT"
+echo "#define" HAVE_MPI_LONG_LONG_INT 1 >> confdefs.h
+DEFS="$DEFS -DHAVE_MPI_LONG_LONG_INT=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}HAVE_MPI_LONG_LONG_INT\${SEDdB}HAVE_MPI_LONG_LONG_INT\${SEDdC}1\${SEDdD}
+\${SEDuA}HAVE_MPI_LONG_LONG_INT\${SEDuB}HAVE_MPI_LONG_LONG_INT\${SEDuC}1\${SEDuD}
+\${SEDeA}HAVE_MPI_LONG_LONG_INT\${SEDeB}HAVE_MPI_LONG_LONG_INT\${SEDeC}1\${SEDeD}
+"
+}
+
+  else
+      if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo "$ac_t""no"
+else
+echo "$ac_t""no" 1>&1
+fi
+  fi
+  rm -f conftest mpitest.c
+
+   else
+       
+{
+test -n "$verbose" && \
+echo "	defining HAVE_MPI_LONG_LONG_INT"
+echo "#define" HAVE_MPI_LONG_LONG_INT 1 >> confdefs.h
+DEFS="$DEFS -DHAVE_MPI_LONG_LONG_INT=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}HAVE_MPI_LONG_LONG_INT\${SEDdB}HAVE_MPI_LONG_LONG_INT\${SEDdC}1\${SEDdD}
+\${SEDuA}HAVE_MPI_LONG_LONG_INT\${SEDuB}HAVE_MPI_LONG_LONG_INT\${SEDuC}1\${SEDuD}
+\${SEDeA}HAVE_MPI_LONG_LONG_INT\${SEDeB}HAVE_MPI_LONG_LONG_INT\${SEDeC}1\${SEDeD}
+"
+}
+
+   fi
+fi
+#
+if test -n "$OFFSET_KIND" -a "A$MPI_OFFSET_KIND1" = "A!" ; then 
+  MPI_OFFSET_KIND1="        INTEGER MPI_OFFSET_KIND"
+  MPI_OFFSET_KIND2="        PARAMETER (MPI_OFFSET_KIND=$OFFSET_KIND)"
+else
+ if test "$FORTRAN_MPI_OFFSET" = "integer*8" && test "A$MPI_OFFSET_KIND2" = "A!" && test $NOF77 = 0 ; then
+   if test -z "$ac_echo_n" ; then
+ac_echo_n=yes
+if (echo "testing\c"; echo 1,2,3) | grep c >/dev/null; then
+  if (echo -n testing; echo 1,2,3) | sed s/-n/xn/ | grep xn >/dev/null; then
+    ac_n= ac_c='
+' ac_t='	'
+  else
+    ac_n=-n ac_c= ac_t=
+  fi
+else
+  ac_n= ac_c='\c' ac_t=
+fi
+ac_echo_test=`echo foo 1>&1`
+if test -z "$ac_echo_test" ; then
+     print_error "Your sh shell does not handle the output redirection"
+     print_error "1>&1 correctly.  Configure will work around this problem,"
+     print_error "but you should report the problem to your vendor."
+fi
+
+fi
+if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo $ac_n "checking for Fortran 90 KIND parameter for 8-byte integers""... $ac_c"
+else
+echo $ac_n "checking for Fortran 90 KIND parameter for 8-byte integers""... $ac_c" 1>&1
+fi
+rm -f kind.f kind.o kind
+cat <<EOF > kind.f
+      program main
+      integer i
+      i = selected_int_kind(16)
+      open(8, file="k.out", form="formatted")
+      write (8,*) i
+      close(8)
+      stop
+      end
+EOF
+if test -z "$F90" ; then
+   F90=f90
+fi
+KINDVAL=""
+if $F90 -o kind kind.f >/dev/null 2>&1 ; then
+    ./kind >/dev/null 2>&1
+    if test -s k.out ; then 
+        KINDVAL=`cat k.out`
+    fi
+fi
+rm -f kind k.out kind.f kind.o k.out
+if test -n "$KINDVAL" -a "$KINDVAL" != "-1" ; then
+   if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo "$ac_t""$KINDVAL"
+else
+echo "$ac_t""$KINDVAL" 1>&1
+fi
+   MPI_OFFSET_KIND1="      INTEGER MPI_OFFSET_KIND"
+   MPI_OFFSET_KIND2="      PARAMETER (MPI_OFFSET_KIND=$KINDVAL)"
+else
+    if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo "$ac_t""unavailable"
+else
+echo "$ac_t""unavailable" 1>&1
+fi
+fi
+
+ fi
+ #
+  if test "$FORTRAN_MPI_OFFSET" = "integer" && test "A$MPI_OFFSET_KIND2" = "A!" && test $NOF77 = 0 ; then
+   if test -z "$ac_echo_n" ; then
+ac_echo_n=yes
+if (echo "testing\c"; echo 1,2,3) | grep c >/dev/null; then
+  if (echo -n testing; echo 1,2,3) | sed s/-n/xn/ | grep xn >/dev/null; then
+    ac_n= ac_c='
+' ac_t='	'
+  else
+    ac_n=-n ac_c= ac_t=
+  fi
+else
+  ac_n= ac_c='\c' ac_t=
+fi
+ac_echo_test=`echo foo 1>&1`
+if test -z "$ac_echo_test" ; then
+     print_error "Your sh shell does not handle the output redirection"
+     print_error "1>&1 correctly.  Configure will work around this problem,"
+     print_error "but you should report the problem to your vendor."
+fi
+
+fi
+if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo $ac_n "checking for Fortran 90 KIND parameter for 4-byte integers""... $ac_c"
+else
+echo $ac_n "checking for Fortran 90 KIND parameter for 4-byte integers""... $ac_c" 1>&1
+fi
+rm -f kind.f kind.o kind
+cat <<EOF > kind.f
+      program main
+      integer i
+      i = selected_int_kind(8)
+      open(8, file="k.out", form="formatted")
+      write (8,*) i
+      close(8)
+      stop
+      end
+EOF
+if test -z "$F90" ; then
+   F90=f90
+fi
+KINDVAL=""
+if $F90 -o kind kind.f >/dev/null 2>&1 ; then
+    ./kind >/dev/null 2>&1
+    if test -s k.out ; then 
+        KINDVAL=`cat k.out`
+    fi
+fi
+rm -f kind k.out kind.f kind.o
+if test -n "$KINDVAL" -a "$KINDVAL" != "-1" ; then
+   if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo "$ac_t""$KINDVAL"
+else
+echo "$ac_t""$KINDVAL" 1>&1
+fi
+   MPI_OFFSET_KIND1="      INTEGER MPI_OFFSET_KIND"
+   MPI_OFFSET_KIND2="      PARAMETER (MPI_OFFSET_KIND=$KINDVAL)"
+else
+    if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo "$ac_t""unavailable"
+else
+echo "$ac_t""unavailable" 1>&1
+fi
+fi
+
+  fi
+fi
+#
+# check if MPI_Info functions are defined in the MPI implementation
+if test $FROM_MPICH = 0 ; then
+   
+  if test -z "$ac_echo_n" ; then
+ac_echo_n=yes
+if (echo "testing\c"; echo 1,2,3) | grep c >/dev/null; then
+  if (echo -n testing; echo 1,2,3) | sed s/-n/xn/ | grep xn >/dev/null; then
+    ac_n= ac_c='
+' ac_t='	'
+  else
+    ac_n=-n ac_c= ac_t=
+  fi
+else
+  ac_n= ac_c='\c' ac_t=
+fi
+ac_echo_test=`echo foo 1>&1`
+if test -z "$ac_echo_test" ; then
+     print_error "Your sh shell does not handle the output redirection"
+     print_error "1>&1 correctly.  Configure will work around this problem,"
+     print_error "but you should report the problem to your vendor."
+fi
+
+fi
+if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo $ac_n "checking if MPI_Info functions are defined in the MPI implementation""... $ac_c"
+else
+echo $ac_n "checking if MPI_Info functions are defined in the MPI implementation""... $ac_c" 1>&1
+fi
+  rm -f mpitest.c
+  cat > mpitest.c <<EOF
+#include "mpi.h"
+     main(int argc, char **argv)
+     {
+         MPI_Info info;
+         MPI_Init(&argc,&argv);
+         MPI_Info_create(&info);
+         MPI_Finalize(); 
+     }
+EOF
+  rm -f conftest
+  $CC $USER_CFLAGS -I$MPI_INCLUDE_DIR -o conftest mpitest.c $MPI_LIB > /dev/null 2>&1
+  if test -x conftest ; then
+      if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo "$ac_t""yes"
+else
+echo "$ac_t""yes" 1>&1
+fi
+      
+{
+test -n "$verbose" && \
+echo "	defining HAVE_MPI_INFO"
+echo "#define" HAVE_MPI_INFO 1 >> confdefs.h
+DEFS="$DEFS -DHAVE_MPI_INFO=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}HAVE_MPI_INFO\${SEDdB}HAVE_MPI_INFO\${SEDdC}1\${SEDdD}
+\${SEDuA}HAVE_MPI_INFO\${SEDuB}HAVE_MPI_INFO\${SEDuC}1\${SEDuD}
+\${SEDeA}HAVE_MPI_INFO\${SEDeB}HAVE_MPI_INFO\${SEDeC}1\${SEDeD}
+"
+}
+
+      HAVE_MPI_INFO="#define HAVE_MPI_INFO"
+      MPI_FINFO1="!"
+      MPI_FINFO2="!"
+      MPI_FINFO3="!"
+      MPI_FINFO4="!"
+  else
+      if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo "$ac_t""no"
+else
+echo "$ac_t""no" 1>&1
+fi
+      BUILD_MPI_INFO=1
+      MPI_FINFO1="      INTEGER MPI_MAX_INFO_KEY, MPI_MAX_INFO_VAL"
+      MPI_FINFO2="      PARAMETER (MPI_MAX_INFO_KEY=255, MPI_MAX_INFO_VAL=1024)"
+      MPI_FINFO3="      INTEGER MPI_INFO_NULL"
+      MPI_FINFO4="      PARAMETER (MPI_INFO_NULL=0)"
+  fi
+  rm -f conftest mpitest.c
+
+else
+   
+{
+test -n "$verbose" && \
+echo "	defining HAVE_MPI_INFO"
+echo "#define" HAVE_MPI_INFO 1 >> confdefs.h
+DEFS="$DEFS -DHAVE_MPI_INFO=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}HAVE_MPI_INFO\${SEDdB}HAVE_MPI_INFO\${SEDdC}1\${SEDdD}
+\${SEDuA}HAVE_MPI_INFO\${SEDuB}HAVE_MPI_INFO\${SEDuC}1\${SEDuD}
+\${SEDeA}HAVE_MPI_INFO\${SEDeB}HAVE_MPI_INFO\${SEDeC}1\${SEDeD}
+"
+}
+
+   HAVE_MPI_INFO="#define HAVE_MPI_INFO"
+   MPI_FINFO1="!"
+   MPI_FINFO2="!"
+   MPI_FINFO3="!"
+   MPI_FINFO4="!"
+fi   
+#
+if test -n "$mpi_sgi"; then
+   if test -z "$HAVE_MPI_INFO" ; then
+      
+  if test -z "$ac_echo_n" ; then
+ac_echo_n=yes
+if (echo "testing\c"; echo 1,2,3) | grep c >/dev/null; then
+  if (echo -n testing; echo 1,2,3) | sed s/-n/xn/ | grep xn >/dev/null; then
+    ac_n= ac_c='
+' ac_t='	'
+  else
+    ac_n=-n ac_c= ac_t=
+  fi
+else
+  ac_n= ac_c='\c' ac_t=
+fi
+ac_echo_test=`echo foo 1>&1`
+if test -z "$ac_echo_test" ; then
+     print_error "Your sh shell does not handle the output redirection"
+     print_error "1>&1 correctly.  Configure will work around this problem,"
+     print_error "but you should report the problem to your vendor."
+fi
+
+fi
+if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo $ac_n "checking if MPI_INFO_NULL is defined in mpi.h""... $ac_c"
+else
+echo $ac_n "checking if MPI_INFO_NULL is defined in mpi.h""... $ac_c" 1>&1
+fi
+  rm -f mpitest.c
+  cat > mpitest.c <<EOF
+#include "mpi.h"
+     main(int argc, char **argv)
+     {
+	int i;
+	i = MPI_INFO_NULL;
+     }
+EOF
+  rm -f conftest
+  $CC $USER_CFLAGS -I$MPI_INCLUDE_DIR -o conftest mpitest.c $MPI_LIB > /dev/null 2>&1
+  if test -x conftest ; then
+      if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo "$ac_t""yes"
+else
+echo "$ac_t""yes" 1>&1
+fi
+      cp adio/sgi/mpi3.1/*.h include
+  else
+      if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo "$ac_t""no"
+else
+echo "$ac_t""no" 1>&1
+fi
+  fi
+  rm -f conftest mpitest.c
+  # is MPI_INFO_NULL defined in mpi.h?
+   fi
+   
+  if test -z "$ac_echo_n" ; then
+ac_echo_n=yes
+if (echo "testing\c"; echo 1,2,3) | grep c >/dev/null; then
+  if (echo -n testing; echo 1,2,3) | sed s/-n/xn/ | grep xn >/dev/null; then
+    ac_n= ac_c='
+' ac_t='	'
+  else
+    ac_n=-n ac_c= ac_t=
+  fi
+else
+  ac_n= ac_c='\c' ac_t=
+fi
+ac_echo_test=`echo foo 1>&1`
+if test -z "$ac_echo_test" ; then
+     print_error "Your sh shell does not handle the output redirection"
+     print_error "1>&1 correctly.  Configure will work around this problem,"
+     print_error "but you should report the problem to your vendor."
+fi
+
+fi
+if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo $ac_n "checking if MPI_SGI_type_is_contig is defined""... $ac_c"
+else
+echo $ac_n "checking if MPI_SGI_type_is_contig is defined""... $ac_c" 1>&1
+fi
+  rm -f mpitest.c
+  cat > mpitest.c <<EOF
+#include "mpi.h"
+     main(int argc, char **argv)
+     {
+         MPI_Datatype type;
+         int i;
+
+         MPI_Init(&argc,&argv);
+         i = MPI_SGI_type_is_contig(type);
+         MPI_Finalize(); 
+     }
+EOF
+  rm -f conftest
+  $CC $USER_CFLAGS -I$MPI_INCLUDE_DIR -o conftest mpitest.c $MPI_LIB > /dev/null 2>&1
+  if test -x conftest ; then
+     if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo "$ac_t""yes"
+else
+echo "$ac_t""yes" 1>&1
+fi
+  else
+     if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo "$ac_t""no"
+else
+echo "$ac_t""no" 1>&1
+fi
+     
+{
+test -n "$verbose" && \
+echo "	defining NO_MPI_SGI_type_is_contig"
+echo "#define" NO_MPI_SGI_type_is_contig 1 >> confdefs.h
+DEFS="$DEFS -DNO_MPI_SGI_type_is_contig=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}NO_MPI_SGI_type_is_contig\${SEDdB}NO_MPI_SGI_type_is_contig\${SEDdC}1\${SEDdD}
+\${SEDuA}NO_MPI_SGI_type_is_contig\${SEDuB}NO_MPI_SGI_type_is_contig\${SEDuC}1\${SEDuD}
+\${SEDeA}NO_MPI_SGI_type_is_contig\${SEDeB}NO_MPI_SGI_type_is_contig\${SEDeC}1\${SEDeD}
+"
+}
+
+  fi
+  rm -f conftest mpitest.c
+
+   
+  if test -z "$ac_echo_n" ; then
+ac_echo_n=yes
+if (echo "testing\c"; echo 1,2,3) | grep c >/dev/null; then
+  if (echo -n testing; echo 1,2,3) | sed s/-n/xn/ | grep xn >/dev/null; then
+    ac_n= ac_c='
+' ac_t='	'
+  else
+    ac_n=-n ac_c= ac_t=
+  fi
+else
+  ac_n= ac_c='\c' ac_t=
+fi
+ac_echo_test=`echo foo 1>&1`
+if test -z "$ac_echo_test" ; then
+     print_error "Your sh shell does not handle the output redirection"
+     print_error "1>&1 correctly.  Configure will work around this problem,"
+     print_error "but you should report the problem to your vendor."
+fi
+
+fi
+if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo $ac_n "checking if MPI-2 combiners are defined in mpi.h""... $ac_c"
+else
+echo $ac_n "checking if MPI-2 combiners are defined in mpi.h""... $ac_c" 1>&1
+fi
+  rm -f mpitest.c
+  cat > mpitest.c <<EOF
+#include "mpi.h"
+     main(int argc, char **argv)
+     {
+         int i;
+
+         MPI_Init(&argc,&argv);
+         i = MPI_COMBINER_STRUCT;
+         MPI_Finalize(); 
+     }
+EOF
+  rm -f conftest
+  $CC $USER_CFLAGS -I$MPI_INCLUDE_DIR -o conftest mpitest.c $MPI_LIB > /dev/null 2>&1
+  if test -x conftest ; then
+     if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo "$ac_t""yes"
+else
+echo "$ac_t""yes" 1>&1
+fi
+     
+{
+test -n "$verbose" && \
+echo "	defining HAVE_MPI_COMBINERS"
+echo "#define" HAVE_MPI_COMBINERS 1 >> confdefs.h
+DEFS="$DEFS -DHAVE_MPI_COMBINERS=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}HAVE_MPI_COMBINERS\${SEDdB}HAVE_MPI_COMBINERS\${SEDdC}1\${SEDdD}
+\${SEDuA}HAVE_MPI_COMBINERS\${SEDuB}HAVE_MPI_COMBINERS\${SEDuC}1\${SEDuD}
+\${SEDeA}HAVE_MPI_COMBINERS\${SEDeB}HAVE_MPI_COMBINERS\${SEDeC}1\${SEDeD}
+"
+}
+
+  else
+     if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo "$ac_t""no"
+else
+echo "$ac_t""no" 1>&1
+fi
+  fi
+  rm -f conftest mpitest.c
+
+   
+  if test -z "$ac_echo_n" ; then
+ac_echo_n=yes
+if (echo "testing\c"; echo 1,2,3) | grep c >/dev/null; then
+  if (echo -n testing; echo 1,2,3) | sed s/-n/xn/ | grep xn >/dev/null; then
+    ac_n= ac_c='
+' ac_t='	'
+  else
+    ac_n=-n ac_c= ac_t=
+  fi
+else
+  ac_n= ac_c='\c' ac_t=
+fi
+ac_echo_test=`echo foo 1>&1`
+if test -z "$ac_echo_test" ; then
+     print_error "Your sh shell does not handle the output redirection"
+     print_error "1>&1 correctly.  Configure will work around this problem,"
+     print_error "but you should report the problem to your vendor."
+fi
+
+fi
+if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo $ac_n "checking if MPI_OFFSET_KIND is defined in mpif.h""... $ac_c"
+else
+echo $ac_n "checking if MPI_OFFSET_KIND is defined in mpif.h""... $ac_c" 1>&1
+fi
+  rm -f mpitest.f
+  cat > mpitest.f <<EOF
+      program main
+      implicit none
+      include 'mpif.h'
+      integer i
+      i = MPI_OFFSET_KIND
+      stop
+      end
+EOF
+  rm -f conftest
+  $F77 $FFLAGS -I$MPI_INCLUDE_DIR -o conftest mpitest.f $MPI_LIB > /dev/null 2>&1
+  if test -x conftest ; then
+     if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo "$ac_t""yes"
+else
+echo "$ac_t""yes" 1>&1
+fi
+     MPI_OFFSET_KIND1="!"
+     MPI_OFFSET_KIND2="!"
+  else
+     if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo "$ac_t""no"
+else
+echo "$ac_t""no" 1>&1
+fi
+  fi
+  rm -f conftest mpitest.f
+
+fi
+#
+# check if darray and subarray constructors are defined in the MPI implementation
+if test $FROM_MPICH = 0 ; then
+   
+  if test -z "$ac_echo_n" ; then
+ac_echo_n=yes
+if (echo "testing\c"; echo 1,2,3) | grep c >/dev/null; then
+  if (echo -n testing; echo 1,2,3) | sed s/-n/xn/ | grep xn >/dev/null; then
+    ac_n= ac_c='
+' ac_t='	'
+  else
+    ac_n=-n ac_c= ac_t=
+  fi
+else
+  ac_n= ac_c='\c' ac_t=
+fi
+ac_echo_test=`echo foo 1>&1`
+if test -z "$ac_echo_test" ; then
+     print_error "Your sh shell does not handle the output redirection"
+     print_error "1>&1 correctly.  Configure will work around this problem,"
+     print_error "but you should report the problem to your vendor."
+fi
+
+fi
+if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo $ac_n "checking if darray and subarray constructors are defined in the MPI implementation""... $ac_c"
+else
+echo $ac_n "checking if darray and subarray constructors are defined in the MPI implementation""... $ac_c" 1>&1
+fi
+  rm -f mpitest.c
+  cat > mpitest.c <<EOF
+#include "mpi.h"
+     main(int argc, char **argv)
+     {
+         int i=MPI_DISTRIBUTE_CYCLIC;
+         MPI_Datatype t;
+         MPI_Init(&argc,&argv);
+         MPI_Type_create_darray(i, i, i, &i, &i, &i, &i, i, MPI_INT, &t);
+         MPI_Type_create_subarray(i, &i, &i, &i, i, MPI_INT, &t);
+         MPI_Finalize(); 
+     }
+EOF
+  rm -f conftest
+  $CC $USER_CFLAGS -I$MPI_INCLUDE_DIR -o conftest mpitest.c $MPI_LIB > /dev/null 2>&1
+  if test -x conftest ; then
+      if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo "$ac_t""yes"
+else
+echo "$ac_t""yes" 1>&1
+fi
+      
+{
+test -n "$verbose" && \
+echo "	defining HAVE_MPI_DARRAY_SUBARRAY"
+echo "#define" HAVE_MPI_DARRAY_SUBARRAY 1 >> confdefs.h
+DEFS="$DEFS -DHAVE_MPI_DARRAY_SUBARRAY=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}HAVE_MPI_DARRAY_SUBARRAY\${SEDdB}HAVE_MPI_DARRAY_SUBARRAY\${SEDdC}1\${SEDdD}
+\${SEDuA}HAVE_MPI_DARRAY_SUBARRAY\${SEDuB}HAVE_MPI_DARRAY_SUBARRAY\${SEDuC}1\${SEDuD}
+\${SEDeA}HAVE_MPI_DARRAY_SUBARRAY\${SEDeB}HAVE_MPI_DARRAY_SUBARRAY\${SEDeC}1\${SEDeD}
+"
+}
+
+      HAVE_MPI_DARRAY_SUBARRAY="#define HAVE_MPI_DARRAY_SUBARRAY"
+      MPI_FARRAY1="!"
+      MPI_FARRAY2="!"
+      MPI_FARRAY3="!"
+      MPI_FARRAY4="!"
+      MPI_FARRAY5="!"
+      MPI_FARRAY6="!"
+      MPI_FARRAY7="!"
+  else
+      if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo "$ac_t""no"
+else
+echo "$ac_t""no" 1>&1
+fi
+      BUILD_MPI_ARRAY=1
+      MPI_FARRAY1="      INTEGER MPI_ORDER_C, MPI_ORDER_FORTRAN"
+      MPI_FARRAY2="      PARAMETER (MPI_ORDER_C=56, MPI_ORDER_FORTRAN=57)"
+      MPI_FARRAY3="      INTEGER MPI_DISTRIBUTE_BLOCK, MPI_DISTRIBUTE_CYCLIC"
+      MPI_FARRAY4="      INTEGER MPI_DISTRIBUTE_NONE, MPI_DISTRIBUTE_DFLT_DARG"
+      MPI_FARRAY5="      PARAMETER (MPI_DISTRIBUTE_BLOCK=121, MPI_DISTRIBUTE_CYCLIC=122)"
+      MPI_FARRAY6="      PARAMETER (MPI_DISTRIBUTE_NONE=123)"
+      MPI_FARRAY7="      PARAMETER (MPI_DISTRIBUTE_DFLT_DARG=-49767)"
+  fi
+  rm -f conftest mpitest.c
+
+else
+   
+{
+test -n "$verbose" && \
+echo "	defining HAVE_MPI_DARRAY_SUBARRAY"
+echo "#define" HAVE_MPI_DARRAY_SUBARRAY 1 >> confdefs.h
+DEFS="$DEFS -DHAVE_MPI_DARRAY_SUBARRAY=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}HAVE_MPI_DARRAY_SUBARRAY\${SEDdB}HAVE_MPI_DARRAY_SUBARRAY\${SEDdC}1\${SEDdD}
+\${SEDuA}HAVE_MPI_DARRAY_SUBARRAY\${SEDuB}HAVE_MPI_DARRAY_SUBARRAY\${SEDuC}1\${SEDuD}
+\${SEDeA}HAVE_MPI_DARRAY_SUBARRAY\${SEDeB}HAVE_MPI_DARRAY_SUBARRAY\${SEDeC}1\${SEDeD}
+"
+}
+
+   HAVE_MPI_DARRAY_SUBARRAY="#define HAVE_MPI_DARRAY_SUBARRAY"
+   MPI_FARRAY1="!"
+   MPI_FARRAY2="!"
+   MPI_FARRAY3="!"
+   MPI_FARRAY4="!"
+   MPI_FARRAY5="!"
+   MPI_FARRAY6="!"
+   MPI_FARRAY7="!"
+fi   
+#
+# Check to see if the compiler accepts prototypes
+#
+#
+# Test for weak symbol support...
+# We can't put # in the message because it causes autoconf to generate
+# incorrect code
+HAVE_WEAK_SYMBOLS=0
+if test -n "$arch_hpux" || test -n "$arch_sppux" ; then
+# multiple secondary definitions not allowed by HP compilers
+# Fortran interface for HP already uses one secondary defn. 
+# therefore, do not use this method for profiling interface.
+# build profiling interface explicitly.
+   TRY_WEAK_SYMBOLS=0
+fi
+if test $TRY_WEAK_SYMBOLS = 1 ; then
+  if test -z "$ac_echo_n" ; then
+ac_echo_n=yes
+if (echo "testing\c"; echo 1,2,3) | grep c >/dev/null; then
+  if (echo -n testing; echo 1,2,3) | sed s/-n/xn/ | grep xn >/dev/null; then
+    ac_n= ac_c='
+' ac_t='	'
+  else
+    ac_n=-n ac_c= ac_t=
+  fi
+else
+  ac_n= ac_c='\c' ac_t=
+fi
+ac_echo_test=`echo foo 1>&1`
+if test -z "$ac_echo_test" ; then
+     print_error "Your sh shell does not handle the output redirection"
+     print_error "1>&1 correctly.  Configure will work around this problem,"
+     print_error "but you should report the problem to your vendor."
+fi
+
+fi
+if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo $ac_n "checking for weak symbol support""... $ac_c"
+else
+echo $ac_n "checking for weak symbol support""... $ac_c" 1>&1
+fi
+  if test -z "$ac_ext" ; then 
+    ac_ext=c
+fi
+cat > conftest.$ac_ext <<EOF
+#include "confdefs.h"
+
+#pragma weak PFoo = Foo
+extern int PFoo(int);
+int Foo(a) { return a; }
+
+int main() { return 0; }
+int t() {
+return PFoo(1);
+; return 0; }
+EOF
+rm -f conftest.out
+if test -z "$ac_link" ; then
+ac_link='${CC-cc} -o conftest $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >conftest.out 2>&1'
+fi
+if eval $ac_link; then
+  rm -rf conftest*
+  has_pragma_weak=1
+else
+  if test -s conftest.out ; then cat conftest.out >> config.log ; fi
+fi
+rm -f conftest*
+
+  #
+  # Some systems (Linux ia64 and ecc, for example), support weak symbols
+  # only within a single object file!  This tests that case.
+  if test "$has_pragma_weak" = 1 ; then
+    if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo "$ac_t""pragma weak"
+else
+echo "$ac_t""pragma weak" 1>&1
+fi
+    if test -z "$ac_echo_n" ; then
+ac_echo_n=yes
+if (echo "testing\c"; echo 1,2,3) | grep c >/dev/null; then
+  if (echo -n testing; echo 1,2,3) | sed s/-n/xn/ | grep xn >/dev/null; then
+    ac_n= ac_c='
+' ac_t='	'
+  else
+    ac_n=-n ac_c= ac_t=
+  fi
+else
+  ac_n= ac_c='\c' ac_t=
+fi
+ac_echo_test=`echo foo 1>&1`
+if test -z "$ac_echo_test" ; then
+     print_error "Your sh shell does not handle the output redirection"
+     print_error "1>&1 correctly.  Configure will work around this problem,"
+     print_error "but you should report the problem to your vendor."
+fi
+
+fi
+if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo $ac_n "checking that weak symbols are visible to other files""... $ac_c"
+else
+echo $ac_n "checking that weak symbols are visible to other files""... $ac_c" 1>&1
+fi
+    rm -f conftest*
+    cat >>conftest1.c <<EOF
+extern int PFoo(int);
+#pragma weak PFoo = Foo
+int Foo(int);
+int Foo(a) { return a; }
+EOF
+    cat >>conftest2.c <<EOF
+extern int PFoo(int);
+int main() {
+return PFoo(0);}
+EOF
+    ac_link2='${CC-cc} -o conftest $CFLAGS $CPPFLAGS $LDFLAGS conftest1.c conftest2.c $LIBS >conftest.out 2>&1'
+    if eval $ac_link2 ; then
+        if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo "$ac_t""yes"
+else
+echo "$ac_t""yes" 1>&1
+fi
+    else
+      echo "$ac_link2" >>config.log
+      echo "Failed program was" >>config.log
+      cat conftest1.c >>config.log
+      cat conftest2.c >>config.log
+      if test -s conftest.out ; then cat conftest.out >> config.log ; fi
+      if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo "$ac_t""no"
+else
+echo "$ac_t""no" 1>&1
+fi
+      has_pragma_weak=0
+    fi
+    rm -f conftest*
+  fi
+  if test "$has_pragma_weak" = 1 ; then
+    HAVE_WEAK_SYMBOLS=1
+    
+{
+test -n "$verbose" && \
+echo "	defining HAVE_WEAK_SYMBOLS"
+echo "#define" HAVE_WEAK_SYMBOLS 1 >> confdefs.h
+DEFS="$DEFS -DHAVE_WEAK_SYMBOLS=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}HAVE_WEAK_SYMBOLS\${SEDdB}HAVE_WEAK_SYMBOLS\${SEDdC}1\${SEDdD}
+\${SEDuA}HAVE_WEAK_SYMBOLS\${SEDuB}HAVE_WEAK_SYMBOLS\${SEDuC}1\${SEDuD}
+\${SEDeA}HAVE_WEAK_SYMBOLS\${SEDeB}HAVE_WEAK_SYMBOLS\${SEDeC}1\${SEDeD}
+"
+}
+
+    
+{
+test -n "$verbose" && \
+echo "	defining HAVE_PRAGMA_WEAK"
+echo "#define" HAVE_PRAGMA_WEAK 1 >> confdefs.h
+DEFS="$DEFS -DHAVE_PRAGMA_WEAK=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}HAVE_PRAGMA_WEAK\${SEDdB}HAVE_PRAGMA_WEAK\${SEDdC}1\${SEDdD}
+\${SEDuA}HAVE_PRAGMA_WEAK\${SEDuB}HAVE_PRAGMA_WEAK\${SEDuC}1\${SEDuD}
+\${SEDeA}HAVE_PRAGMA_WEAK\${SEDeB}HAVE_PRAGMA_WEAK\${SEDeC}1\${SEDeD}
+"
+}
+
+  else
+    if test -z "$ac_ext" ; then 
+    ac_ext=c
+fi
+cat > conftest.$ac_ext <<EOF
+#include "confdefs.h"
+
+#pragma _HP_SECONDARY_DEF Foo PFoo
+int Foo(a) { return a; }
+
+int main() { return 0; }
+int t() {
+return PFoo(1);
+; return 0; }
+EOF
+rm -f conftest.out
+if test -z "$ac_link" ; then
+ac_link='${CC-cc} -o conftest $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >conftest.out 2>&1'
+fi
+if eval $ac_link; then
+  rm -rf conftest*
+  has_pragma_hp_secondary=1
+else
+  if test -s conftest.out ; then cat conftest.out >> config.log ; fi
+fi
+rm -f conftest*
+
+    if test "$has_pragma_hp_secondary" = 1 ; then 
+        if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo "$ac_t""pragma _HP_SECONDARY_DEF"
+else
+echo "$ac_t""pragma _HP_SECONDARY_DEF" 1>&1
+fi
+        HAVE_WEAK_SYMBOLS=1
+        
+{
+test -n "$verbose" && \
+echo "	defining HAVE_WEAK_SYMBOLS"
+echo "#define" HAVE_WEAK_SYMBOLS 1 >> confdefs.h
+DEFS="$DEFS -DHAVE_WEAK_SYMBOLS=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}HAVE_WEAK_SYMBOLS\${SEDdB}HAVE_WEAK_SYMBOLS\${SEDdC}1\${SEDdD}
+\${SEDuA}HAVE_WEAK_SYMBOLS\${SEDuB}HAVE_WEAK_SYMBOLS\${SEDuC}1\${SEDuD}
+\${SEDeA}HAVE_WEAK_SYMBOLS\${SEDeB}HAVE_WEAK_SYMBOLS\${SEDeC}1\${SEDeD}
+"
+}
+
+        
+{
+test -n "$verbose" && \
+echo "	defining HAVE_PRAGMA_HP_SEC_DEF"
+echo "#define" HAVE_PRAGMA_HP_SEC_DEF 1 >> confdefs.h
+DEFS="$DEFS -DHAVE_PRAGMA_HP_SEC_DEF=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}HAVE_PRAGMA_HP_SEC_DEF\${SEDdB}HAVE_PRAGMA_HP_SEC_DEF\${SEDdC}1\${SEDdD}
+\${SEDuA}HAVE_PRAGMA_HP_SEC_DEF\${SEDuB}HAVE_PRAGMA_HP_SEC_DEF\${SEDuC}1\${SEDuD}
+\${SEDeA}HAVE_PRAGMA_HP_SEC_DEF\${SEDeB}HAVE_PRAGMA_HP_SEC_DEF\${SEDeC}1\${SEDeD}
+"
+}
+
+    else
+        if test -z "$ac_ext" ; then 
+    ac_ext=c
+fi
+cat > conftest.$ac_ext <<EOF
+#include "confdefs.h"
+
+#pragma _CRI duplicate PFoo as Foo
+int Foo(a) { return a; }
+
+int main() { return 0; }
+int t() {
+return PFoo(1);
+; return 0; }
+EOF
+rm -f conftest.out
+if test -z "$ac_link" ; then
+ac_link='${CC-cc} -o conftest $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >conftest.out 2>&1'
+fi
+if eval $ac_link; then
+  rm -rf conftest*
+  has_pragma_cri_duplicate=1
+else
+  if test -s conftest.out ; then cat conftest.out >> config.log ; fi
+fi
+rm -f conftest*
+
+        if test "$has_pragma_cri_duplicate" = 1 ; then
+	    if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo "$ac_t""pragma _CRI duplicate x as y"
+else
+echo "$ac_t""pragma _CRI duplicate x as y" 1>&1
+fi
+	    HAVE_WEAK_SYMBOLS=1
+	    
+{
+test -n "$verbose" && \
+echo "	defining HAVE_WEAK_SYMBOLS"
+echo "#define" HAVE_WEAK_SYMBOLS 1 >> confdefs.h
+DEFS="$DEFS -DHAVE_WEAK_SYMBOLS=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}HAVE_WEAK_SYMBOLS\${SEDdB}HAVE_WEAK_SYMBOLS\${SEDdC}1\${SEDdD}
+\${SEDuA}HAVE_WEAK_SYMBOLS\${SEDuB}HAVE_WEAK_SYMBOLS\${SEDuC}1\${SEDuD}
+\${SEDeA}HAVE_WEAK_SYMBOLS\${SEDeB}HAVE_WEAK_SYMBOLS\${SEDeC}1\${SEDeD}
+"
+}
+
+	    
+{
+test -n "$verbose" && \
+echo "	defining HAVE_PRAGMA_CRI_DUP"
+echo "#define" HAVE_PRAGMA_CRI_DUP 1 >> confdefs.h
+DEFS="$DEFS -DHAVE_PRAGMA_CRI_DUP=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}HAVE_PRAGMA_CRI_DUP\${SEDdB}HAVE_PRAGMA_CRI_DUP\${SEDdC}1\${SEDdD}
+\${SEDuA}HAVE_PRAGMA_CRI_DUP\${SEDuB}HAVE_PRAGMA_CRI_DUP\${SEDuC}1\${SEDuD}
+\${SEDeA}HAVE_PRAGMA_CRI_DUP\${SEDeB}HAVE_PRAGMA_CRI_DUP\${SEDeC}1\${SEDeD}
+"
+}
+
+        else    
+            if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo "$ac_t""no"
+else
+echo "$ac_t""no" 1>&1
+fi
+        fi
+    fi
+  fi
+fi
+
+#
+# if FILE_SYSTEM is not set above, use ufs and nfs as default
+#
+if test -z "$FILE_SYSTEM" ; then
+    file_system_ufs=1
+    file_system_nfs=1
+    FILE_SYSTEM="ufs nfs"
+    echo "configuring for file systems ufs and nfs"
+fi
+#
+if test -n "$file_system_nfs" ; then
+   # Check for problems with locks
+   if test -z "$ac_echo_n" ; then
+ac_echo_n=yes
+if (echo "testing\c"; echo 1,2,3) | grep c >/dev/null; then
+  if (echo -n testing; echo 1,2,3) | sed s/-n/xn/ | grep xn >/dev/null; then
+    ac_n= ac_c='
+' ac_t='	'
+  else
+    ac_n=-n ac_c= ac_t=
+  fi
+else
+  ac_n= ac_c='\c' ac_t=
+fi
+ac_echo_test=`echo foo 1>&1`
+if test -z "$ac_echo_test" ; then
+     print_error "Your sh shell does not handle the output redirection"
+     print_error "1>&1 correctly.  Configure will work around this problem,"
+     print_error "but you should report the problem to your vendor."
+fi
+
+fi
+if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo $ac_n "checking whether file locks work with NFS""... $ac_c"
+else
+echo $ac_n "checking whether file locks work with NFS""... $ac_c" 1>&1
+fi
+   cat > conftest.c <<EOF
+#include "confdefs.h"
+
+#include <fcntl.h>
+#include <errno.h>
+#include <unistd.h>
+
+int main()
+{
+    struct flock lock;
+    int fd, err;
+
+    lock.l_type = F_WRLCK;
+    lock.l_start = 0;
+    lock.l_whence = SEEK_SET;
+    lock.l_len = 100;
+
+    fd = open("conftest.dat", O_RDWR | O_CREAT, 0644);
+
+    err = fcntl(fd, F_SETLKW, &lock);
+
+   /* printf("err = %d, errno = %d\n", err, errno); */
+    close(fd);
+    return err;
+}
+EOF
+eval $compile
+if test -s conftest && (./conftest; exit) 2>/dev/null; then
+  nfs_locks_work=yes
+
+else
+  nfs_locks_work=no
+fi
+rm -fr conftest*
+    if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo "$ac_t""$nfs_locks_work"
+else
+echo "$ac_t""$nfs_locks_work" 1>&1
+fi
+    if test "$nfs_locks_work" != "yes" ; then
+        if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo "$ac_t""Warning: File locks do not work with NFS.  See the Installation and
+users manual for instructions on fixing this"
+else
+echo "$ac_t""Warning: File locks do not work with NFS.  See the Installation and
+users manual for instructions on fixing this" 1>&1
+fi
+    fi
+fi
+if test -n "$file_system_nfs"; then
+        
+{
+test -n "$verbose" && \
+echo "	defining NFS"
+echo "#define" NFS 1 >> confdefs.h
+DEFS="$DEFS -DNFS=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}NFS\${SEDdB}NFS\${SEDdC}1\${SEDdD}
+\${SEDuA}NFS\${SEDuB}NFS\${SEDuC}1\${SEDuD}
+\${SEDeA}NFS\${SEDeB}NFS\${SEDeC}1\${SEDeD}
+"
+}
+
+fi
+if test -n "$file_system_ufs"; then
+        
+{
+test -n "$verbose" && \
+echo "	defining UFS"
+echo "#define" UFS 1 >> confdefs.h
+DEFS="$DEFS -DUFS=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}UFS\${SEDdB}UFS\${SEDdC}1\${SEDdD}
+\${SEDuA}UFS\${SEDuB}UFS\${SEDuC}1\${SEDuD}
+\${SEDeA}UFS\${SEDeB}UFS\${SEDeC}1\${SEDeD}
+"
+}
+
+fi
+if test -n "$file_system_hfs"; then
+        
+{
+test -n "$verbose" && \
+echo "	defining HFS"
+echo "#define" HFS 1 >> confdefs.h
+DEFS="$DEFS -DHFS=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}HFS\${SEDdB}HFS\${SEDdC}1\${SEDdD}
+\${SEDuA}HFS\${SEDuB}HFS\${SEDuC}1\${SEDuD}
+\${SEDeA}HFS\${SEDeB}HFS\${SEDeC}1\${SEDeD}
+"
+}
+
+fi
+if test -n "$file_system_sfs"; then
+        
+{
+test -n "$verbose" && \
+echo "	defining SFS"
+echo "#define" SFS 1 >> confdefs.h
+DEFS="$DEFS -DSFS=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}SFS\${SEDdB}SFS\${SEDdC}1\${SEDdD}
+\${SEDuA}SFS\${SEDuB}SFS\${SEDuC}1\${SEDuD}
+\${SEDeA}SFS\${SEDeB}SFS\${SEDeC}1\${SEDeD}
+"
+}
+
+fi
+if test -n "$file_system_xfs"; then
+        
+{
+test -n "$verbose" && \
+echo "	defining XFS"
+echo "#define" XFS 1 >> confdefs.h
+DEFS="$DEFS -DXFS=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}XFS\${SEDdB}XFS\${SEDdC}1\${SEDdD}
+\${SEDuA}XFS\${SEDuB}XFS\${SEDuC}1\${SEDuD}
+\${SEDeA}XFS\${SEDeB}XFS\${SEDeC}1\${SEDeD}
+"
+}
+
+    if test -z "$ac_echo_n" ; then
+ac_echo_n=yes
+if (echo "testing\c"; echo 1,2,3) | grep c >/dev/null; then
+  if (echo -n testing; echo 1,2,3) | sed s/-n/xn/ | grep xn >/dev/null; then
+    ac_n= ac_c='
+' ac_t='	'
+  else
+    ac_n=-n ac_c= ac_t=
+  fi
+else
+  ac_n= ac_c='\c' ac_t=
+fi
+ac_echo_test=`echo foo 1>&1`
+if test -z "$ac_echo_test" ; then
+     print_error "Your sh shell does not handle the output redirection"
+     print_error "1>&1 correctly.  Configure will work around this problem,"
+     print_error "but you should report the problem to your vendor."
+fi
+
+fi
+if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo $ac_n "checking for memory alignment needed for direct I/O""... $ac_c"
+else
+echo $ac_n "checking for memory alignment needed for direct I/O""... $ac_c" 1>&1
+fi
+/bin/rm -f memalignval
+/bin/rm -f /tmp/romio_tmp.bin
+cat > conftest.c <<EOF
+#include "confdefs.h"
+#include <stdio.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <stdio.h>
+main() { 
+  struct dioattr st;
+  int fd = open("/tmp/romio_tmp.bin", O_RDWR | O_CREAT, 0644);
+  FILE *f=fopen("memalignval","w");
+  if (fd == -1) exit(1);
+  if (!f) exit(1);
+  fcntl(fd, F_DIOINFO, &st);
+  fprintf( f, "%u\n", st.d_mem);
+  exit(0);
+}
+EOF
+eval $compile
+if test -s conftest && (./conftest; exit) 2>/dev/null; then
+  Pac_CV_NAME=`cat memalignval`
+
+else
+  Pac_CV_NAME=""
+fi
+rm -fr conftest*
+/bin/rm -f memalignval
+/bin/rm -f /tmp/romio_tmp.bin
+if test -n "$Pac_CV_NAME" -a "$Pac_CV_NAME" != 0 ; then
+    if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo "$ac_t""$Pac_CV_NAME"
+else
+echo "$ac_t""$Pac_CV_NAME" 1>&1
+fi
+    CFLAGS="$CFLAGS -DXFS_MEMALIGN=$Pac_CV_NAME"
+else
+    if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo "$ac_t""unavailable"
+else
+echo "$ac_t""unavailable" 1>&1
+fi
+    CFLAGS="$CFLAGS -DXFS_MEMALIGN=128"
+fi
+
+fi
+if test -n "$file_system_pvfs"; then
+   # Use ROMIO_PVFS instead of PVFS because FREEBSD defines PVFS.
+        
+{
+test -n "$verbose" && \
+echo "	defining ROMIO_PVFS"
+echo "#define" ROMIO_PVFS 1 >> confdefs.h
+DEFS="$DEFS -DROMIO_PVFS=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}ROMIO_PVFS\${SEDdB}ROMIO_PVFS\${SEDdC}1\${SEDdD}
+\${SEDuA}ROMIO_PVFS\${SEDuB}ROMIO_PVFS\${SEDuC}1\${SEDuD}
+\${SEDeA}ROMIO_PVFS\${SEDeB}ROMIO_PVFS\${SEDeC}1\${SEDeD}
+"
+}
+
+fi
+if test -n "$file_system_pfs"; then
+        
+{
+test -n "$verbose" && \
+echo "	defining PFS"
+echo "#define" PFS 1 >> confdefs.h
+DEFS="$DEFS -DPFS=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}PFS\${SEDdB}PFS\${SEDdC}1\${SEDdD}
+\${SEDuA}PFS\${SEDuB}PFS\${SEDuC}1\${SEDuD}
+\${SEDeA}PFS\${SEDeB}PFS\${SEDeC}1\${SEDeD}
+"
+}
+
+fi
+if test -n "$file_system_testfs"; then
+        
+{
+test -n "$verbose" && \
+echo "	defining ROMIO_TESTFS"
+echo "#define" ROMIO_TESTFS 1 >> confdefs.h
+DEFS="$DEFS -DROMIO_TESTFS=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}ROMIO_TESTFS\${SEDdB}ROMIO_TESTFS\${SEDdC}1\${SEDdD}
+\${SEDuA}ROMIO_TESTFS\${SEDuB}ROMIO_TESTFS\${SEDuC}1\${SEDuD}
+\${SEDeA}ROMIO_TESTFS\${SEDeB}ROMIO_TESTFS\${SEDeC}1\${SEDeD}
+"
+}
+
+fi
+if test -n "$file_system_piofs"; then
+        
+{
+test -n "$verbose" && \
+echo "	defining PIOFS"
+echo "#define" PIOFS 1 >> confdefs.h
+DEFS="$DEFS -DPIOFS=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}PIOFS\${SEDdB}PIOFS\${SEDdC}1\${SEDdD}
+\${SEDuA}PIOFS\${SEDuB}PIOFS\${SEDuC}1\${SEDuD}
+\${SEDeA}PIOFS\${SEDeB}PIOFS\${SEDeC}1\${SEDeD}
+"
+}
+
+    USER_CFLAGS="$USER_CFLAGS -bI:/usr/include/piofs/piofs.exp"
+    ROMIO_LFLAGS="$USER_FFLAGS -bI:/usr/include/piofs/piofs.exp"
+    USER_FFLAGS="$USER_FFLAGS -bI:/usr/include/piofs/piofs.exp"
+fi
+if test -n "$mpi_mpich"; then
+      
+{
+test -n "$verbose" && \
+echo "	defining NEEDS_MPI_TEST"
+echo "#define" NEEDS_MPI_TEST 1 >> confdefs.h
+DEFS="$DEFS -DNEEDS_MPI_TEST=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}NEEDS_MPI_TEST\${SEDdB}NEEDS_MPI_TEST\${SEDdC}1\${SEDdD}
+\${SEDuA}NEEDS_MPI_TEST\${SEDuB}NEEDS_MPI_TEST\${SEDuC}1\${SEDuD}
+\${SEDeA}NEEDS_MPI_TEST\${SEDeB}NEEDS_MPI_TEST\${SEDeC}1\${SEDeD}
+"
+}
+
+   
+{
+test -n "$verbose" && \
+echo "	defining MPICH"
+echo "#define" MPICH 1 >> confdefs.h
+DEFS="$DEFS -DMPICH=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}MPICH\${SEDdB}MPICH\${SEDdC}1\${SEDdD}
+\${SEDuA}MPICH\${SEDuB}MPICH\${SEDuC}1\${SEDuD}
+\${SEDeA}MPICH\${SEDeB}MPICH\${SEDeC}1\${SEDeD}
+"
+}
+
+   if test -z "$arch_SX4" ; then
+      MPIOF_H_INCLUDED=1
+   fi
+fi
+if test -n "$mpi_sgi"; then
+      
+{
+test -n "$verbose" && \
+echo "	defining MPISGI"
+echo "#define" MPISGI 1 >> confdefs.h
+DEFS="$DEFS -DMPISGI=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}MPISGI\${SEDdB}MPISGI\${SEDdC}1\${SEDdD}
+\${SEDuA}MPISGI\${SEDuB}MPISGI\${SEDuC}1\${SEDuD}
+\${SEDeA}MPISGI\${SEDeB}MPISGI\${SEDeC}1\${SEDeD}
+"
+}
+
+fi
+if test -n "$mpi_lam"; then
+      
+{
+test -n "$verbose" && \
+echo "	defining MPILAM"
+echo "#define" MPILAM 1 >> confdefs.h
+DEFS="$DEFS -DMPILAM=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}MPILAM\${SEDdB}MPILAM\${SEDdC}1\${SEDdD}
+\${SEDuA}MPILAM\${SEDuB}MPILAM\${SEDuC}1\${SEDuD}
+\${SEDeA}MPILAM\${SEDeB}MPILAM\${SEDeC}1\${SEDeD}
+"
+}
+
+fi
+if test -n "$mpi_hp"; then
+      
+{
+test -n "$verbose" && \
+echo "	defining MPIHP"
+echo "#define" MPIHP 1 >> confdefs.h
+DEFS="$DEFS -DMPIHP=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}MPIHP\${SEDdB}MPIHP\${SEDdC}1\${SEDdD}
+\${SEDuA}MPIHP\${SEDuB}MPIHP\${SEDuC}1\${SEDuD}
+\${SEDeA}MPIHP\${SEDeB}MPIHP\${SEDeC}1\${SEDeD}
+"
+}
+
+   if test "$NOF77" = 0; then
+      
+  if test -z "$ac_echo_n" ; then
+ac_echo_n=yes
+if (echo "testing\c"; echo 1,2,3) | grep c >/dev/null; then
+  if (echo -n testing; echo 1,2,3) | sed s/-n/xn/ | grep xn >/dev/null; then
+    ac_n= ac_c='
+' ac_t='	'
+  else
+    ac_n=-n ac_c= ac_t=
+  fi
+else
+  ac_n= ac_c='\c' ac_t=
+fi
+ac_echo_test=`echo foo 1>&1`
+if test -z "$ac_echo_test" ; then
+     print_error "Your sh shell does not handle the output redirection"
+     print_error "1>&1 correctly.  Configure will work around this problem,"
+     print_error "but you should report the problem to your vendor."
+fi
+
+fi
+if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo $ac_n "checking if mpiof.h is included in mpif.h""... $ac_c"
+else
+echo $ac_n "checking if mpiof.h is included in mpif.h""... $ac_c" 1>&1
+fi
+  rm -f mpitest.f
+  cat > mpitest.f <<EOF
+      program main
+      implicit none
+      include 'mpif.h'
+      integer i
+      i = MPI_MODE_RDWR
+      stop
+      end
+EOF
+  rm -f conftest
+  $F77 $FFLAGS -I$MPI_INCLUDE_DIR -o conftest mpitest.f $MPI_LIB > /dev/null 2>&1
+  if test -x conftest ; then
+      if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo "$ac_t""yes"
+else
+echo "$ac_t""yes" 1>&1
+fi
+      MPIOF_H_INCLUDED=1
+  else
+      if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo "$ac_t""no"
+else
+echo "$ac_t""no" 1>&1
+fi
+  fi
+  rm -f conftest mpitest.f
+
+   fi
+fi
+#
+
+  if test -z "$ac_echo_n" ; then
+ac_echo_n=yes
+if (echo "testing\c"; echo 1,2,3) | grep c >/dev/null; then
+  if (echo -n testing; echo 1,2,3) | sed s/-n/xn/ | grep xn >/dev/null; then
+    ac_n= ac_c='
+' ac_t='	'
+  else
+    ac_n=-n ac_c= ac_t=
+  fi
+else
+  ac_n= ac_c='\c' ac_t=
+fi
+ac_echo_test=`echo foo 1>&1`
+if test -z "$ac_echo_test" ; then
+     print_error "Your sh shell does not handle the output redirection"
+     print_error "1>&1 correctly.  Configure will work around this problem,"
+     print_error "but you should report the problem to your vendor."
+fi
+
+fi
+if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo $ac_n "checking for strerror()""... $ac_c"
+else
+echo $ac_n "checking for strerror()""... $ac_c" 1>&1
+fi
+  rm -f conftest.c
+  cat > conftest.c <<EOF
+#include <string.h>
+     main()
+     {
+        char *s = strerror(5);
+     }
+EOF
+  rm -f conftest
+  $CC $USER_CFLAGS -o conftest conftest.c >> config.log 2>&1
+  if test -x conftest ; then
+     if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo "$ac_t""yes"
+else
+echo "$ac_t""yes" 1>&1
+fi
+     
+{
+test -n "$verbose" && \
+echo "	defining HAVE_STRERROR"
+echo "#define" HAVE_STRERROR 1 >> confdefs.h
+DEFS="$DEFS -DHAVE_STRERROR=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}HAVE_STRERROR\${SEDdB}HAVE_STRERROR\${SEDdC}1\${SEDdD}
+\${SEDuA}HAVE_STRERROR\${SEDuB}HAVE_STRERROR\${SEDuC}1\${SEDuD}
+\${SEDeA}HAVE_STRERROR\${SEDeB}HAVE_STRERROR\${SEDeC}1\${SEDeD}
+"
+}
+
+  else
+     if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo "$ac_t""no"
+else
+echo "$ac_t""no" 1>&1
+fi
+     if test -z "$ac_echo_n" ; then
+ac_echo_n=yes
+if (echo "testing\c"; echo 1,2,3) | grep c >/dev/null; then
+  if (echo -n testing; echo 1,2,3) | sed s/-n/xn/ | grep xn >/dev/null; then
+    ac_n= ac_c='
+' ac_t='	'
+  else
+    ac_n=-n ac_c= ac_t=
+  fi
+else
+  ac_n= ac_c='\c' ac_t=
+fi
+ac_echo_test=`echo foo 1>&1`
+if test -z "$ac_echo_test" ; then
+     print_error "Your sh shell does not handle the output redirection"
+     print_error "1>&1 correctly.  Configure will work around this problem,"
+     print_error "but you should report the problem to your vendor."
+fi
+
+fi
+if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo $ac_n "checking for sys_errlist""... $ac_c"
+else
+echo $ac_n "checking for sys_errlist""... $ac_c" 1>&1
+fi
+     rm -f conftest.c
+
+     cat > conftest.c <<EOF
+#include <stdio.h>
+        main()
+        {
+           extern char *sys_errlist[];
+	   printf("%s\n", sys_errlist[34]);
+        }
+EOF
+
+     rm -f conftest
+     $CC $USER_CFLAGS -o conftest conftest.c > config.log 2>&1
+     if test -x conftest ; then
+        if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo "$ac_t""yes"
+else
+echo "$ac_t""yes" 1>&1
+fi
+        
+{
+test -n "$verbose" && \
+echo "	defining HAVE_SYSERRLIST"
+echo "#define" HAVE_SYSERRLIST 1 >> confdefs.h
+DEFS="$DEFS -DHAVE_SYSERRLIST=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}HAVE_SYSERRLIST\${SEDdB}HAVE_SYSERRLIST\${SEDdC}1\${SEDdD}
+\${SEDuA}HAVE_SYSERRLIST\${SEDuB}HAVE_SYSERRLIST\${SEDuC}1\${SEDuD}
+\${SEDeA}HAVE_SYSERRLIST\${SEDeB}HAVE_SYSERRLIST\${SEDeC}1\${SEDeD}
+"
+}
+
+     else
+        if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo "$ac_t""no"
+else
+echo "$ac_t""no" 1>&1
+fi
+     fi
+  fi
+  rm -f conftest conftest.c
+
+if test -z "$srcdir" -o "$srcdir" = "." ; then srcdir="$ROMIO_HOME" ; fi
+
+if test -z "$LIBNAME"; then
+LIBNAME="$ROMIO_HOME/lib/$ARCH/libmpio.a"
+fi
+#
+if test ! -d $ROMIO_HOME/lib ; then 
+   mkdir $ROMIO_HOME/lib
+fi
+if test ! -d $ROMIO_HOME/lib/$ARCH ; then 
+   mkdir $ROMIO_HOME/lib/$ARCH
+fi
+#
+if test $NOF77 = 1 ; then
+   F77=":"
+else
+   FORTRAN_TEST="fperf fcoll_test fmisc pfcoll_test" 
+fi
+#
+if test $FROM_MPICH = 0 ; then
+   
+  if test -z "$ac_echo_n" ; then
+ac_echo_n=yes
+if (echo "testing\c"; echo 1,2,3) | grep c >/dev/null; then
+  if (echo -n testing; echo 1,2,3) | sed s/-n/xn/ | grep xn >/dev/null; then
+    ac_n= ac_c='
+' ac_t='	'
+  else
+    ac_n=-n ac_c= ac_t=
+  fi
+else
+  ac_n= ac_c='\c' ac_t=
+fi
+ac_echo_test=`echo foo 1>&1`
+if test -z "$ac_echo_test" ; then
+     print_error "Your sh shell does not handle the output redirection"
+     print_error "1>&1 correctly.  Configure will work around this problem,"
+     print_error "but you should report the problem to your vendor."
+fi
+
+fi
+if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo $ac_n "checking if a simple MPI program compiles and links""... $ac_c"
+else
+echo $ac_n "checking if a simple MPI program compiles and links""... $ac_c" 1>&1
+fi
+  rm -f mpitest.c
+  cat > mpitest.c <<EOF
+#include "mpi.h"
+     main(int argc, char **argv)
+     {
+         MPI_Init(&argc,&argv);
+         MPI_Finalize(); 
+     }
+EOF
+  rm -f conftest
+  $CC $USER_CFLAGS -I$MPI_INCLUDE_DIR -o conftest mpitest.c $MPI_LIB > /dev/null 2>&1
+  if test ! -x conftest ; then
+      echo " "
+      print_error "Unable to compile a simple MPI program"
+      print_error "Use the -mpi, -mpiincdir, and -mpilib options to configure to specify the"
+      print_error "MPI implementation, the include path for mpi.h, and the MPI library to link"
+      rm -f conftest mpitest.c
+      exit 1
+  else
+      rm -f conftest mpitest.c
+  fi
+if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo "$ac_t""yes"
+else
+echo "$ac_t""yes" 1>&1
+fi
+
+   
+  if test -z "$ac_echo_n" ; then
+ac_echo_n=yes
+if (echo "testing\c"; echo 1,2,3) | grep c >/dev/null; then
+  if (echo -n testing; echo 1,2,3) | sed s/-n/xn/ | grep xn >/dev/null; then
+    ac_n= ac_c='
+' ac_t='	'
+  else
+    ac_n=-n ac_c= ac_t=
+  fi
+else
+  ac_n= ac_c='\c' ac_t=
+fi
+ac_echo_test=`echo foo 1>&1`
+if test -z "$ac_echo_test" ; then
+     print_error "Your sh shell does not handle the output redirection"
+     print_error "1>&1 correctly.  Configure will work around this problem,"
+     print_error "but you should report the problem to your vendor."
+fi
+
+fi
+if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo $ac_n "checking if MPI_Fint is defined in the MPI implementation""... $ac_c"
+else
+echo $ac_n "checking if MPI_Fint is defined in the MPI implementation""... $ac_c" 1>&1
+fi
+  cat > mpitest1.c <<EOF
+#include "mpi.h"
+     main()
+     {
+         MPI_Fint i;
+         i = 0;
+     }
+EOF
+  rm -f mpitest1.o
+  $CC $USER_CFLAGS -I$MPI_INCLUDE_DIR -c mpitest1.c > /dev/null 2>&1
+  if test ! -s mpitest1.o ; then
+      NEEDS_MPI_FINT="#define NEEDS_MPI_FINT"
+      CFLAGS="$CFLAGS -DNEEDS_MPI_FINT"
+      if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo "$ac_t""no"
+else
+echo "$ac_t""no" 1>&1
+fi
+      rm -f mpitest1.o mpitest1.c
+  else
+      NEEDS_MPI_FINT=""
+      if test -z "$ac_echo_test" -a 1 = 1 ; then
+echo "$ac_t""yes"
+else
+echo "$ac_t""yes" 1>&1
+fi
+      rm -f mpitest1.o mpitest1.c
+  fi
+
+else
+   NEEDS_MPI_FINT=""
+fi
+#
+if test "$MPI_INCLUDE_DIR" = "." ; then
+   ROMIO_INCLUDE="-I../include"
+else 
+   ROMIO_INCLUDE="-I../include -I$MPI_INCLUDE_DIR"
+fi
+#
+TEST_LIBNAME=$LIBNAME
+MPIRUN=mpirun
+#
+# if MPICH, use mpicc in test programs
+#
+if test $FROM_MPICH = 1 ; then
+   MPICH_HOME=`dirname $ROMIO_HOME`
+   if test -z "$MPI_BIN_DIR" ; then MPI_BIN_DIR=$MPICH_HOME/bin ; fi
+   TEST_CC=$MPI_BIN_DIR/mpicc
+   MPI_LIB=""
+   ROMIO_INCLUDE=""
+   USER_CFLAGS=""
+   USER_FFLAGS=""
+   TEST_LIBNAME=""
+   MPIRUN=$MPI_BIN_DIR/mpirun
+   if test -n "$arch_SX4" || test -n "$arch_hpux" ; then
+      TEST_F77=$MPI_BIN_DIR/mpif90
+   else
+      TEST_F77=$MPI_BIN_DIR/mpif77
+   fi
+   CC=$MPI_BIN_DIR/mpicc
+      
+{
+test -n "$verbose" && \
+echo "	defining HAVE_STATUS_SET_BYTES"
+echo "#define" HAVE_STATUS_SET_BYTES 1 >> confdefs.h
+DEFS="$DEFS -DHAVE_STATUS_SET_BYTES=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}HAVE_STATUS_SET_BYTES\${SEDdB}HAVE_STATUS_SET_BYTES\${SEDdC}1\${SEDdD}
+\${SEDuA}HAVE_STATUS_SET_BYTES\${SEDuB}HAVE_STATUS_SET_BYTES\${SEDuC}1\${SEDuD}
+\${SEDeA}HAVE_STATUS_SET_BYTES\${SEDeB}HAVE_STATUS_SET_BYTES\${SEDeC}1\${SEDeD}
+"
+}
+
+fi
+#
+if test $MPI != "mpich" ; then
+      
+{
+test -n "$verbose" && \
+echo "	defining PRINT_ERR_MSG"
+echo "#define" PRINT_ERR_MSG 1 >> confdefs.h
+DEFS="$DEFS -DPRINT_ERR_MSG=1"
+SEDDEFS="${SEDDEFS}\${SEDdA}PRINT_ERR_MSG\${SEDdB}PRINT_ERR_MSG\${SEDdC}1\${SEDdD}
+\${SEDuA}PRINT_ERR_MSG\${SEDuB}PRINT_ERR_MSG\${SEDuC}1\${SEDuD}
+\${SEDeA}PRINT_ERR_MSG\${SEDeB}PRINT_ERR_MSG\${SEDeC}1\${SEDeD}
+"
+}
+
+fi
+#
+if test -z "$TEST_CC" ; then
+   TEST_CC="$CC"
+fi
+if test -z "$TEST_F77" ; then
+   TEST_F77="$F77"
+fi
+#
+CFLAGS="$CFLAGS -DHAVE_ROMIOCONF_H"
+#
+echo "setting CC to $CC"
+echo "setting F77 to $F77"
+echo "setting TEST_CC to $TEST_CC"
+echo "setting TEST_F77 to $TEST_F77"
+echo "setting CFLAGS to $CFLAGS"
+echo "setting USER_CFLAGS to $USER_CFLAGS"
+echo "setting USER_FFLAGS to $USER_FFLAGS"
+#
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+if test ! -d adio ; then mkdir adio ; fi
+if test ! -d adio/include ; then mkdir adio/include ; fi
+if test ! -d mpi2-other ; then mkdir mpi2-other ; fi
+# 
+# Make sure we remove any configuration file incase there is out-of-date data.
+# We remove the version in include in case this is a vpath build
+rm -f adio/include/romioconf.h ${top_srcdir}/adio/include/romioconf.h 
+#
+# Create makefiles for all of the adio devices.  Only the ones that 
+# are active will be called by the top level ROMIO make
+# Set default prefixes.
+if test -n "$prefix"; then
+  test -z "$exec_prefix" && exec_prefix='${prefix}'
+  prsub="s%^prefix\\([ 	]*\\)=\\([ 	]*\\).*$%prefix\\1=\\2$prefix%"
+fi
+if test -n "$exec_prefix"; then
+  prsub="$prsub
+s%^exec_prefix\\([ 	]*\\)=\\([ 	]*\\).*$%exec_prefix\\1=\\2$exec_prefix%"
+fi
+# Quote sed substitution magic chars in DEFS.
+cat >conftest.def <<EOF
+$DEFS
+EOF
+escape_ampersand_and_backslash='s%[&\\]%\\&%g'
+DEFS=`sed "$escape_ampersand_and_backslash" <conftest.def`
+rm -f conftest.def
+# Substitute for predefined variables.
+
+trap 'rm -f config.status; exit 1' 1 3 15
+echo creating config.status
+rm -f config.status
+cat > config.status <<EOF
+#!/bin/sh
+# Generated automatically by configure.
+# Run this file to recreate the current configuration.
+# This directory was configured as follows,
+# on host `(hostname || uname -n) 2>/dev/null | sed 1q`:
+#
+# $0 $configure_args
+
+for arg
+do
+  case "\$arg" in
+    -recheck | --recheck | --rechec | --reche | --rech | --rec | --re | --r)
+    echo running \${CONFIG_SHELL-/bin/sh} $0 $configure_args
+    exec \${CONFIG_SHELL-/bin/sh} $0 $configure_args ;;
+    *) echo "Usage: config.status --recheck" 2>&1; exit 1 ;;
+  esac
+done
+
+trap 'rm -fr Makefile mpi-io/Makefile mpi2-other/info/Makefile \
+		   mpi2-other/array/Makefile adio/common/Makefile \
+		   test/Makefile test/misc.c test/large_file.c \
+		   test/runtests util/romioinstall include/mpio.h \
+		   include/mpiof.h \
+		   adio/ad_nfs/Makefile adio/ad_ufs/Makefile \
+		   adio/ad_xfs/Makefile adio/ad_hfs/Makefile \
+		   adio/ad_sfs/Makefile adio/ad_pfs/Makefile \
+		   adio/ad_testfs/Makefile adio/ad_pvfs/Makefile \
+		   adio/ad_piofs/Makefile  adio/include/romioconf.h conftest*; exit 1' 1 3 15
+VPATH='$VPATH'
+prefix='$prefix'
+exec_prefix='$exec_prefix'
+includedir='$includedir'
+bindir='$bindir'
+sbindir='$sbindir'
+libdir='$libdir'
+mandir='$mandir'
+docdir='$docdir'
+htmldir='$htmldir'
+RANLIB='$RANLIB'
+CC='$CC'
+F77='$F77'
+CPP='$CPP'
+HAVE_WEAK_SYMBOLS='$HAVE_WEAK_SYMBOLS'
+srcdir='$srcdir'
+ARCH='$ARCH'
+FILE_SYSTEM='$FILE_SYSTEM'
+CFLAGS='$CFLAGS'
+USER_CFLAGS='$USER_CFLAGS'
+USER_FFLAGS='$USER_FFLAGS'
+MIPS='$MIPS'
+BITS='$BITS'
+MPI='$MPI'
+AR='$AR'
+MPI_INCLUDE_DIR='$MPI_INCLUDE_DIR'
+MPI_LIB='$MPI_LIB'
+NOF77='$NOF77'
+NOPROFILE='$NOPROFILE'
+MAKE='$MAKE'
+PREFIX='$PREFIX'
+arch_IRIX='$arch_IRIX'
+ROMIO_HOME='$ROMIO_HOME'
+LIBNAME='$LIBNAME'
+TEST_LIBNAME='$TEST_LIBNAME'
+LL='$LL'
+F77GETARG='$F77GETARG'
+F77IARGC='$F77IARGC'
+FTESTDEFINE='$FTESTDEFINE'
+FORTRAN_MPI_OFFSET='$FORTRAN_MPI_OFFSET'
+FROM_MPICH='$FROM_MPICH'
+NEEDS_MPI_FINT='$NEEDS_MPI_FINT'
+HAVE_MPI_INFO='$HAVE_MPI_INFO'
+BUILD_MPI_INFO='$BUILD_MPI_INFO'
+HAVE_MPI_DARRAY_SUBARRAY='$HAVE_MPI_DARRAY_SUBARRAY'
+BUILD_MPI_ARRAY='$BUILD_MPI_ARRAY'
+DEFINE_MPI_OFFSET='$DEFINE_MPI_OFFSET'
+MPI_FINFO1='$MPI_FINFO1'
+MPI_FINFO2='$MPI_FINFO2'
+MPI_FINFO3='$MPI_FINFO3'
+MPI_FINFO4='$MPI_FINFO4'
+MPI_FARRAY1='$MPI_FARRAY1'
+MPI_FARRAY2='$MPI_FARRAY2'
+MPI_FARRAY3='$MPI_FARRAY3'
+MPI_FARRAY4='$MPI_FARRAY4'
+MPI_FARRAY5='$MPI_FARRAY5'
+MPI_FARRAY6='$MPI_FARRAY6'
+MPI_FARRAY7='$MPI_FARRAY7'
+MPI_OFFSET_KIND1='$MPI_OFFSET_KIND1'
+MPI_OFFSET_KIND2='$MPI_OFFSET_KIND2'
+TEST_CC='$TEST_CC'
+TEST_F77='$TEST_F77'
+ROMIO_INCLUDE='$ROMIO_INCLUDE'
+ROMIO_LFLAGS='$ROMIO_LFLAGS'
+ROMIO_LIBLIST='$ROMIO_LIBLIST'
+ROMIO_TCFLAGS='$ROMIO_TCFLAGS'
+ROMIO_TCPPFLAGS='$ROMIO_TCPPFLAGS'
+ROMIO_TFFLAGS='$ROMIO_TFFLAGS'
+MPIRUN='$MPIRUN'
+FORTRAN_TEST='$FORTRAN_TEST'
+LIBS='$LIBS'
+prefix='$prefix'
+exec_prefix='$exec_prefix'
+prsub='$prsub'
+extrasub='$extrasub'
+EOF
+cat >> config.status <<\EOF
+
+top_srcdir=$srcdir
+
+CONFIG_FILES=${CONFIG_FILES-"Makefile mpi-io/Makefile mpi2-other/info/Makefile \
+		   mpi2-other/array/Makefile adio/common/Makefile \
+		   test/Makefile test/misc.c test/large_file.c \
+		   test/runtests util/romioinstall include/mpio.h \
+		   include/mpiof.h \
+		   adio/ad_nfs/Makefile adio/ad_ufs/Makefile \
+		   adio/ad_xfs/Makefile adio/ad_hfs/Makefile \
+		   adio/ad_sfs/Makefile adio/ad_pfs/Makefile \
+		   adio/ad_testfs/Makefile adio/ad_pvfs/Makefile \
+		   adio/ad_piofs/Makefile "}
+for file in .. ${CONFIG_FILES}; do if test "x$file" != x..; then
+  srcdir=$top_srcdir
+  # Remove last slash and all that follows it.  Not all systems have dirname.
+  dir=`echo $file|sed 's%/[^/][^/]*$%%'`
+  if test "$dir" != "$file"; then
+    test "$top_srcdir" != . && srcdir=$top_srcdir/$dir
+    test ! -d $dir && mkdir $dir
+  fi
+  echo creating $file
+  rm -f $file
+  echo "# Generated automatically from `echo $file|sed 's|.*/||'`.in by configure." > $file
+cat $top_srcdir/${file}.in | sed -e "
+$prsub
+$extrasub
+s%@VPATH@%$VPATH%g
+s%@prefix@%$prefix%g
+s%@exec_prefix@%$exec_prefix%g
+s%@includedir@%$includedir%g
+s%@bindir@%$bindir%g
+s%@sbindir@%$sbindir%g
+s%@libdir@%$libdir%g
+s%@mandir@%$mandir%g
+s%@docdir@%$docdir%g
+s%@htmldir@%$htmldir%g
+s%@RANLIB@%$RANLIB%g
+s%@CC@%$CC%g
+s%@F77@%$F77%g
+s%@CPP@%$CPP%g
+s%@HAVE_WEAK_SYMBOLS@%$HAVE_WEAK_SYMBOLS%g
+s%@srcdir@%$srcdir%g
+s%@ARCH@%$ARCH%g
+s%@FILE_SYSTEM@%$FILE_SYSTEM%g
+s%@CFLAGS@%$CFLAGS%g
+s%@USER_CFLAGS@%$USER_CFLAGS%g
+s%@USER_FFLAGS@%$USER_FFLAGS%g
+s%@MIPS@%$MIPS%g
+s%@BITS@%$BITS%g
+s%@MPI@%$MPI%g
+s%@AR@%$AR%g
+s%@MPI_INCLUDE_DIR@%$MPI_INCLUDE_DIR%g
+s%@MPI_LIB@%$MPI_LIB%g
+s%@NOF77@%$NOF77%g
+s%@NOPROFILE@%$NOPROFILE%g
+s%@MAKE@%$MAKE%g
+s%@PREFIX@%$PREFIX%g
+s%@arch_IRIX@%$arch_IRIX%g
+s%@ROMIO_HOME@%$ROMIO_HOME%g
+s%@LIBNAME@%$LIBNAME%g
+s%@TEST_LIBNAME@%$TEST_LIBNAME%g
+s%@LL@%$LL%g
+s%@F77GETARG@%$F77GETARG%g
+s%@F77IARGC@%$F77IARGC%g
+s%@FTESTDEFINE@%$FTESTDEFINE%g
+s%@FORTRAN_MPI_OFFSET@%$FORTRAN_MPI_OFFSET%g" | sed -e "
+s%@FROM_MPICH@%$FROM_MPICH%g
+s%@NEEDS_MPI_FINT@%$NEEDS_MPI_FINT%g
+s%@HAVE_MPI_INFO@%$HAVE_MPI_INFO%g
+s%@BUILD_MPI_INFO@%$BUILD_MPI_INFO%g
+s%@HAVE_MPI_DARRAY_SUBARRAY@%$HAVE_MPI_DARRAY_SUBARRAY%g
+s%@BUILD_MPI_ARRAY@%$BUILD_MPI_ARRAY%g
+s%@DEFINE_MPI_OFFSET@%$DEFINE_MPI_OFFSET%g
+s%@MPI_FINFO1@%$MPI_FINFO1%g
+s%@MPI_FINFO2@%$MPI_FINFO2%g
+s%@MPI_FINFO3@%$MPI_FINFO3%g
+s%@MPI_FINFO4@%$MPI_FINFO4%g
+s%@MPI_FARRAY1@%$MPI_FARRAY1%g
+s%@MPI_FARRAY2@%$MPI_FARRAY2%g
+s%@MPI_FARRAY3@%$MPI_FARRAY3%g
+s%@MPI_FARRAY4@%$MPI_FARRAY4%g
+s%@MPI_FARRAY5@%$MPI_FARRAY5%g
+s%@MPI_FARRAY6@%$MPI_FARRAY6%g
+s%@MPI_FARRAY7@%$MPI_FARRAY7%g
+s%@MPI_OFFSET_KIND1@%$MPI_OFFSET_KIND1%g
+s%@MPI_OFFSET_KIND2@%$MPI_OFFSET_KIND2%g
+s%@TEST_CC@%$TEST_CC%g
+s%@TEST_F77@%$TEST_F77%g
+s%@ROMIO_INCLUDE@%$ROMIO_INCLUDE%g
+s%@ROMIO_LFLAGS@%$ROMIO_LFLAGS%g
+s%@ROMIO_LIBLIST@%$ROMIO_LIBLIST%g
+s%@ROMIO_TCFLAGS@%$ROMIO_TCFLAGS%g
+s%@ROMIO_TCPPFLAGS@%$ROMIO_TCPPFLAGS%g
+s%@ROMIO_TFFLAGS@%$ROMIO_TFFLAGS%g
+s%@MPIRUN@%$MPIRUN%g
+s%@FORTRAN_TEST@%$FORTRAN_TEST%g
+s%@LIBS@%$LIBS%g
+s%@DEFS@%-DHAVE_CONFIG_H%" >> $file
+fi; done
+
+CONFIG_HEADERS=${CONFIG_HEADERS-"adio/include/romioconf.h"}
+for file in .. ${CONFIG_HEADERS}; do if test "x$file" != x..; then
+echo creating $file
+
+# These sed commands are put into SEDDEFS when defining a macro.
+# They are broken into pieces to make the sed script easier to manage.
+# They are passed to sed as "A NAME B NAME C VALUE D", where NAME
+# is the cpp macro being defined and VALUE is the value it is being given.
+# Each defining turns into a single global substitution command.
+#
+# SEDd sets the value in "#define NAME VALUE" lines.
+SEDdA='s@^\([ 	]*\)#\([ 	]*define[ 	][ 	]*\)'
+SEDdB='\([ 	][ 	]*\)[^ 	]*@\1#\2'
+SEDdC='\3'
+SEDdD='@g'
+# SEDu turns "#undef NAME" with trailing blanks into "#define NAME VALUE".
+SEDuA='s@^\([ 	]*\)#\([ 	]*\)undef\([ 	][ 	]*\)'
+SEDuB='\([ 	]\)@\1#\2define\3'
+SEDuC=' '
+SEDuD='\4@g'
+# SEDe turns "#undef NAME" without trailing blanks into "#define NAME VALUE".
+SEDeA='s@^\([ 	]*\)#\([ 	]*\)undef\([ 	][ 	]*\)'
+SEDeB='$@\1#\2define\3'
+SEDeC=' '
+SEDeD='@g'
+rm -f conftest.sed
+EOF
+# Turn off quoting long enough to insert the sed commands.
+rm -f conftest.sh
+cat > conftest.sh <<EOF
+$SEDDEFS
+EOF
+
+# Break up $SEDDEFS (now in conftest.sh) because some shells have a limit
+# on the size of here documents.
+
+# Maximum number of lines to put in a single here document.
+maxshlines=9
+
+while :
+do
+  # wc gives bogus results for an empty file on some systems.
+  lines=`grep -c . conftest.sh`
+  if test -z "$lines" || test "$lines" -eq 0; then break; fi
+  rm -f conftest.s1 conftest.s2
+  sed ${maxshlines}q conftest.sh > conftest.s1 # Like head -20.
+  sed 1,${maxshlines}d conftest.sh > conftest.s2 # Like tail +21.
+  # Write a limited-size here document to append to conftest.sed.
+  echo 'cat >> conftest.sed <<CONFEOF' >> config.status
+  cat conftest.s1 >> config.status
+  echo 'CONFEOF' >> config.status
+  rm -f conftest.s1 conftest.sh
+  mv conftest.s2 conftest.sh
+done
+rm -f conftest.sh
+
+# Now back to your regularly scheduled config.status.
+cat >> config.status <<\EOF
+# This sed command replaces #undef's with comments.  This is necessary, for
+# example, in the case of _POSIX_SOURCE, which is predefined and required
+# on some systems where configure will not decide to define it in
+# adio/include/romioconf.h.
+cat >> conftest.sed <<\CONFEOF
+s,^[ 	]*#[ 	]*undef[ 	][ 	]*[a-zA-Z_][a-zA-Z_0-9]*,/* & */,
+CONFEOF
+rm -f conftest.h
+# Break up the sed commands because old seds have small limits.
+maxsedlines=20
+cp $top_srcdir/$file.in conftest.h1
+while :
+do
+  lines=`grep -c . conftest.sed`
+  if test -z "$lines" || test "$lines" -eq 0; then break; fi
+  rm -f conftest.s1 conftest.s2 conftest.h2
+  sed ${maxsedlines}q conftest.sed > conftest.s1 # Like head -20.
+  sed 1,${maxsedlines}d conftest.sed > conftest.s2 # Like tail +21.
+  sed -f conftest.s1 < conftest.h1 > conftest.h2
+  rm -f conftest.s1 conftest.h1 conftest.sed
+  mv conftest.h2 conftest.h1
+  mv conftest.s2 conftest.sed
+done
+rm -f conftest.sed conftest.h
+echo "/* $file.  Generated automatically by configure.  */" > conftest.h
+cat conftest.h1 >> conftest.h
+rm -f conftest.h1
+if cmp -s $file conftest.h 2>/dev/null; then
+  # The file exists and we would not be changing it.
+  echo "$file is unchanged"
+  rm -f conftest.h
+else
+  rm -f $file
+  mv conftest.h $file
+fi
+fi; done
+
+
+
+exit 0
+EOF
+chmod +x config.status
+${CONFIG_SHELL-/bin/sh} ./config.status
+
+if test "$NOF77" = 0; then
+    CONFIG_FILES="$CONFIG_FILES mpi-io/fortran/Makefile mpi2-other/info/fortran/Makefile mpi2-other/array/fortran/Makefile test/fmisc.f test/fcoll_test.f test/pfcoll_test.f test/fperf.f"
+fi
+export CONFIG_FILES
+./config.status
+CONFIG_FILES=""
+# delete the first line created by configure in some files
+sed 1d util/romioinstall > util/tmp
+mv util/tmp util/romioinstall
+chmod 755 util/romioinstall
+if test "$NOF77" = 0; then
+   sed 1d test/fcoll_test.f > test/tmp
+   mv test/tmp test/fcoll_test.f
+   if test "$MPIOF_H_INCLUDED" = 1; then
+      sed 5d test/fcoll_test.f > test/tmp
+      mv test/tmp test/fcoll_test.f
+   fi
+   sed 1d test/pfcoll_test.f > test/tmp
+   mv test/tmp test/pfcoll_test.f
+   if test "$MPIOF_H_INCLUDED" = 1; then
+      sed 5d test/pfcoll_test.f > test/tmp
+      mv test/tmp test/pfcoll_test.f
+   fi
+   sed 1d test/fperf.f > test/tmp
+   mv test/tmp test/fperf.f
+   if test "$MPIOF_H_INCLUDED" = 1; then
+      sed 5d test/fperf.f > test/tmp
+      mv test/tmp test/fperf.f
+   fi
+   sed 1d test/fmisc.f > test/tmp
+   mv test/tmp test/fmisc.f
+   if test "$MPIOF_H_INCLUDED" = 1; then
+      sed 5d test/fmisc.f > test/tmp
+      mv test/tmp test/fmisc.f
+   fi
+fi
+sed 1d test/misc.c > test/tmp
+mv test/tmp test/misc.c
+sed 1d test/large_file.c > test/tmp
+mv test/tmp test/large_file.c
+sed 1d include/mpio.h > include/tmp
+mv include/tmp include/mpio.h
+sed 1d include/mpiof.h > include/tmp
+mv include/tmp include/mpiof.h
+sed 1d test/runtests > test/tmp
+mv test/tmp test/runtests
+#
+chmod 755 test/runtests
+#
+rm -f *.o
+if test "$ROMIO_NO_BANNER" != "yes" -a "$FROM_MPICH" = 0 ; then
+print_error " "
+print_error Please register your copy of ROMIO with us by sending email
+print_error to majordomo@mcs.anl.gov with the message
+print_error subscribe romio-users
+print_error This will enable us to notify you of new releases of ROMIO
+print_error as well as bug fixes.
+print_error " "
+fi
+if test $FROM_MPICH = 0 ; then
+   print_error Configure done. Now type make
+   print_error " "
+fi
+exit 0
