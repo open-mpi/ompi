@@ -85,25 +85,9 @@ static inline int ompi_atomic_cmpset_64(volatile int64_t *addr,
     * Compare EDX:EAX with m64. If equal, set ZF and load ECX:EBX into
     * m64. Else, clear ZF and load m64 into EDX:EAX.
     */
-   lwords_t *pnew = (lwords_t*)&newval;
-
-#if 1
-   int64_t prev;
-
-   __asm__ __volatile__(
-                        "push %%ebx           \n\t"
-                        "movl %3, %%ebx       \n\t"
-                        SMPLOCK "cmpxchg8b %4 \n\t"
-                        "pop %%ebx            \n\t"
-                        : "=A" (prev)
-                        : "0" (oldval), "c" ((unsigned long)pnew->lo),
-                          "r" ((unsigned long)pnew->hi), "m" (addr)
-                        : "cc", "memory");
-   return (prev == oldval);
-#else
-   unsigned char realized;
-
    lwords_t *pold = (lwords_t*)&oldval;
+   lwords_t *pnew = (lwords_t*)&newval;
+   unsigned char realized;
 
    __asm__ __volatile(
                       "push %%ebx            \n\t"
@@ -112,11 +96,10 @@ static inline int ompi_atomic_cmpset_64(volatile int64_t *addr,
                       "sete      %0          \n\t"
                       "pop %%ebx             \n\t"
                       : "=qm" (realized)
-                      : "m"(*((volatile long*)addr)), "a"(pold->hi), "d"(pold->lo),
-                        "r"(pnew->hi), "c"(pnew->lo)
+                      : "m"(*((volatile long*)addr)), "a"(pold->lo), "d"(pold->hi),
+                        "r"(pnew->lo), "c"(pnew->hi)
                       : "cc", "memory" );
    return realized;
-#endif
 }
 
 #define ompi_atomic_cmpset_acq_64 ompi_atomic_cmpset_64
