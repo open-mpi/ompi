@@ -20,7 +20,7 @@ MPI_Accumulate
 MPI_Add_error_class
 MPI_Add_error_code
 MPI_Add_error_string
-MPI_Address
+MPI_Address                     DONE
 MPI_Allgather                   DONE
 MPI_Allgatherv                  Jeff
 MPI_Alloc_mem
@@ -318,5 +318,5 @@ MPI_Win_start
 MPI_Win_test
 MPI_Win_unlock
 MPI_Win_wait
-MPI_Wtick
+MPI_Wtick                       DONE [sort of]
 MPI_Wtime
