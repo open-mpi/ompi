@@ -269,14 +269,6 @@ int main(int argc, char *argv[])
 	return ret;
     }
  
-    /*
-     *  Register my process info with my replica.
-     */
-    if (OMPI_SUCCESS != (ret = ompi_rte_register())) {
-	fprintf(stderr, "ompi_rte_init: failed in ompi_rte_register()\n");
-	return ret;
-    }
-
 
     exit_cmd = false;
     while (!exit_cmd) {
