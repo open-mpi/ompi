@@ -82,7 +82,7 @@ ompi_list_t mca_gpr_replica_free_notify_id_tags;
 static void mca_gpr_replica_keytable_construct(mca_gpr_replica_keytable_t* keytable)
 {
     keytable->token = NULL;
-    keytable->key = 0;
+    keytable->key = MCA_GPR_REPLICA_KEY_MAX;
 }
 
 /* destructor - used to free any resources held by instance */
@@ -104,7 +104,7 @@ OBJ_CLASS_INSTANCE(
 /* constructor - used to initialize state of keylist instance */
 static void mca_gpr_replica_keylist_construct(mca_gpr_replica_keylist_t* keylist)
 {
-    keylist->key = 0;
+    keylist->key = MCA_GPR_REPLICA_KEY_MAX;
 }
 
 /* destructor - used to free any resources held by instance */
@@ -123,10 +123,10 @@ OBJ_CLASS_INSTANCE(
 /* constructor - used to initialize state of subscriber list instance */
 static void mca_gpr_replica_subscriber_list_construct(mca_gpr_replica_subscriber_list_t* subscriber)
 {
-    subscriber->addr_mode = 0;
-    subscriber->action = 0;
+    subscriber->addr_mode = OMPI_REGISTRY_NONE;
+    subscriber->action = OMPI_REGISTRY_NOTIFY_NONE;
     subscriber->keys = NULL;
-    subscriber->id_tag = 0;
+    subscriber->id_tag = MCA_GPR_NOTIFY_ID_MAX;
 }
 
 /* destructor - used to free any resources held by instance */
@@ -153,7 +153,7 @@ static void mca_gpr_replica_synchro_list_construct(mca_gpr_replica_synchro_list_
     synchro->keys = NULL;
     synchro->trigger = 0;
     synchro->count = 0;
-    synchro->id_tag = 0;
+    synchro->id_tag = MCA_GPR_NOTIFY_ID_MAX;
 }
 
 /* destructor - used to free any resources held by instance */
@@ -198,6 +198,7 @@ OBJ_CLASS_INSTANCE(
 /* constructor - used to initialize state of registry core instance */
 static void mca_gpr_replica_core_construct(mca_gpr_replica_core_t* reg)
 {
+    reg->num_keys = 0;
     reg->keys = NULL;
     reg->object_size = 0;
     reg->object = NULL;
@@ -210,16 +211,24 @@ static void mca_gpr_replica_core_construct(mca_gpr_replica_core_t* reg)
 /* destructor - used to free any resources held by instance */
 static void mca_gpr_replica_core_destructor(mca_gpr_replica_core_t* reg)
 {
+    mca_gpr_replica_list_t *ptr;
+
     if (NULL != reg->keys) {
 	free(reg->keys);
     }
+
     if (NULL != reg->object) {
 	free(reg->object);
     }
+
+    while (NULL != (ptr = (mca_gpr_replica_list_t*)ompi_list_remove_first(&reg->replicas))) {
+	OBJ_RELEASE(ptr);
+    }
+    OBJ_DESTRUCT(&reg->replicas);
+
     if (NULL != reg->write_invalidate.valid_replica) {
 	free(reg->write_invalidate.valid_replica);
     }
-    OBJ_DESTRUCT(&reg->replicas);
 }
 
 /* define instance of ompi_class_t */
@@ -246,10 +255,35 @@ static void mca_gpr_replica_segment_construct(mca_gpr_replica_segment_t* seg)
 /* destructor - used to free any resources held by instance */
 static void mca_gpr_replica_segment_destructor(mca_gpr_replica_segment_t* seg)
 {
+    mca_gpr_replica_core_t *reg;
+    mca_gpr_replica_subscriber_list_t *sub;
+    mca_gpr_replica_synchro_list_t *syn;
+    mca_gpr_replica_keytable_t *kt;
+    mca_gpr_replica_keylist_t *kl;
+
+    while (NULL != (reg = (mca_gpr_replica_core_t*)ompi_list_remove_first(&seg->registry_entries))) {
+	OBJ_RELEASE(reg);
+    }
     OBJ_DESTRUCT(&seg->registry_entries);
+
+    while (NULL != (sub = (mca_gpr_replica_subscriber_list_t*)ompi_list_remove_first(&seg->subscriber))) {
+	OBJ_RELEASE(sub);
+    }
     OBJ_DESTRUCT(&seg->subscriber);
+
+    while (NULL != (syn = (mca_gpr_replica_synchro_list_t*)ompi_list_remove_first(&seg->synchros))) {
+	OBJ_RELEASE(syn);
+    }
     OBJ_DESTRUCT(&seg->synchros);
+
+    while (NULL != (kt = (mca_gpr_replica_keytable_t*)ompi_list_remove_first(&seg->keytable))) {
+	OBJ_RELEASE(kt);
+    }
     OBJ_DESTRUCT(&seg->keytable);
+
+    while (NULL != (kl = (mca_gpr_replica_keylist_t*)ompi_list_remove_first(&seg->freekeys))) {
+	OBJ_RELEASE(kl);
+    }
     OBJ_DESTRUCT(&seg->freekeys);
 }
 
@@ -341,11 +375,41 @@ mca_gpr_base_module_t *mca_gpr_replica_init(bool *allow_multi_user_threads, bool
  */
 int mca_gpr_replica_finalize(void)
 {
+    mca_gpr_replica_segment_t *seg;
+    mca_gpr_replica_keytable_t *kt;
+    mca_gpr_replica_keylist_t *kl;
+    mca_gpr_notify_request_tracker_t *tk;
+    mca_gpr_idtag_list_t *id;
+
     /* free all storage, but only if this component was initialized */
 
     if (initialized) {
-	OBJ_DESTRUCT(&mca_gpr_replica_head);
+
+	while (NULL != (seg = (mca_gpr_replica_segment_t*)ompi_list_remove_first(&mca_gpr_replica_head.registry))) {
+	    OBJ_RELEASE(seg);
+	}
+	OBJ_DESTRUCT(&mca_gpr_replica_head.registry);
+
+	while (NULL != (kt = (mca_gpr_replica_keytable_t*)ompi_list_remove_first(&mca_gpr_replica_head.segment_dict))) {
+	    OBJ_RELEASE(kt);
+	}
+	OBJ_DESTRUCT(&mca_gpr_replica_head.segment_dict);
+
+	while (NULL != (kl = (mca_gpr_replica_keylist_t*)ompi_list_remove_first(&mca_gpr_replica_head.freekeys))) {
+	    OBJ_RELEASE(kl);
+	}
+	OBJ_DESTRUCT(&mca_gpr_replica_head.freekeys);
+
+
+	while (NULL != (tk = (mca_gpr_notify_request_tracker_t*)ompi_list_remove_first(&mca_gpr_replica_notify_request_tracker))) {
+	    OBJ_RELEASE(tk);
+	}
 	OBJ_DESTRUCT(&mca_gpr_replica_notify_request_tracker);
+
+
+	while (NULL != (id = (mca_gpr_idtag_list_t*)ompi_list_remove_first(&mca_gpr_replica_free_notify_id_tags))) {
+	    OBJ_RELEASE(id);
+	}
 	OBJ_DESTRUCT(&mca_gpr_replica_free_notify_id_tags);
 	initialized = false;
     }
