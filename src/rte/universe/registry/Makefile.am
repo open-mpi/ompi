@@ -19,26 +19,20 @@ AM_CPPFLAGS = \
 libs = $(top_builddir)/src/libmpi.la
 
 bin_PROGRAMS = \
-        openmpi
+        registry
 
-openmpi_SOURCES = \
-        openmpi.h \
-        ompi_init.h \
-        os_session_dir.c \
-        ompi_init.c \
-        openmpi.c 
+registry_SOURCES = \
+        registry.h \
+        registry.c
 
-openmpi_LDADD = \
+registry_LDADD = \
         $(libs) \
         $(LIBMPI_EXTRA_LIBS) \
-        $(LIBLAM_EXTRA_LIBS) \
-        $(top_builddir)/src/util/os_path.lo \
-        $(top_builddir)/src/util/os_create_dirpath.lo \
-        $(top_builddir)/src/util/sys_info.lo
+        $(LIBLAM_EXTRA_LIBS)
 
-openmpi_DFLAGS = $(LIBMPI_EXTRA_LDFLAGS) $(LIBLAM_EXTRA_LDFLAGS)
-openmpi_DEPENDENCIES = $(libs) \
-                       $(openmpi_LDADD)
+registry__DFLAGS = $(LIBMPI_EXTRA_LDFLAGS) $(LIBLAM_EXTRA_LDFLAGS)
+registry_DEPENDENCIES = $(libs) \
+                       $(registry_LDADD)
 
 clean-local:
 	test -z "$(LAM_CXX_TEMPLATE_REPOSITORY)" || $(RM) -rf $(LAM_CXX_TEMPLATE_REPOSITORY)
