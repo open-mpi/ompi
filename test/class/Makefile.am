@@ -23,21 +23,17 @@ ompi_bitmap_LDADD = \
         $(top_builddir)/src/util/malloc.lo \
         $(top_builddir)/src/util/output.lo \
         $(top_builddir)/src/threads/mutex.lo \
-        $(top_builddir)/src/threads/mutex_pthread.lo \
-        $(top_builddir)/src/threads/mutex_spinlock.lo \
         $(top_builddir)/test/support/libsupport.la
 ompi_bitmap_DEPENDENCIES = $(ompi_bitmap_LDADD)
 
 ompi_circular_buffer_fifo_SOURCES = ompi_circular_buffer_fifo.c 
 ompi_circular_buffer_fifo_LDADD = \
-        $(top_builddir)/src/threads/mutex_spinlock.lo \
         $(top_builddir)/test/support/libsupport.la \
         $(top_builddir)/src/util/libutil.la
 ompi_circular_buffer_fifo_DEPENDENCIES = $(ompi_circular_buffer_fifo_LDADD)
 
 ompi_fifo_SOURCES = ompi_fifo.c 
 ompi_fifo_LDADD = \
-        $(top_builddir)/src/threads/mutex_spinlock.lo \
         $(top_builddir)/test/support/libsupport.la \
         $(top_builddir)/src/util/libutil.la
 ompi_fifo_DEPENDENCIES = $(ompi_fifo_LDADD)
@@ -49,8 +45,6 @@ ompi_list_LDADD = \
         $(top_builddir)/src/util/malloc.lo \
         $(top_builddir)/src/util/output.lo \
         $(top_builddir)/src/threads/mutex.lo \
-        $(top_builddir)/src/threads/mutex_pthread.lo \
-        $(top_builddir)/src/threads/mutex_spinlock.lo \
         $(top_builddir)/test/support/libsupport.la
 ompi_list_DEPENDENCIES = $(ompi_list_LDADD)
 
@@ -62,8 +56,6 @@ ompi_hash_table_LDADD = \
         $(top_builddir)/src/util/malloc.lo \
         $(top_builddir)/src/util/output.lo \
         $(top_builddir)/src/threads/mutex.lo \
-        $(top_builddir)/src/threads/mutex_pthread.lo \
-        $(top_builddir)/src/threads/mutex_spinlock.lo \
         $(top_builddir)/src/util/libutil.la \
         $(top_builddir)/test/support/libsupport.la
 
@@ -74,8 +66,6 @@ ompi_pointer_array_LDADD = \
         $(top_builddir)/src/util/malloc.lo \
         $(top_builddir)/src/util/output.lo \
         $(top_builddir)/src/threads/mutex.lo \
-        $(top_builddir)/src/threads/mutex_pthread.lo \
-        $(top_builddir)/src/threads/mutex_spinlock.lo \
         $(top_builddir)/src/util/libutil.la \
         $(top_builddir)/test/support/libsupport.la
 ompi_pointer_array_DEPENDENCIES = $(ompi_pointer_array_LDADD)
@@ -87,8 +77,6 @@ ompi_value_array_LDADD = \
         $(top_builddir)/src/util/malloc.lo \
         $(top_builddir)/src/util/output.lo \
         $(top_builddir)/src/threads/mutex.lo \
-        $(top_builddir)/src/threads/mutex_pthread.lo \
-        $(top_builddir)/src/threads/mutex_spinlock.lo \
         $(top_builddir)/src/util/libutil.la \
         $(top_builddir)/test/support/libsupport.la
 ompi_value_array_DEPENDENCIES = $(ompi_value_array_LDADD)
@@ -101,8 +89,6 @@ ompi_rb_tree_LDADD = \
 	$(top_builddir)/src/class/ompi_object.lo \
 	$(top_builddir)/src/class/ompi_list.lo \
         $(top_builddir)/src/threads/mutex.lo \
-        $(top_builddir)/src/threads/mutex_pthread.lo \
-        $(top_builddir)/src/threads/mutex_spinlock.lo \
         $(top_builddir)/src/util/output.lo \
         $(top_builddir)/src/util/malloc.lo 
 ompi_rb_tree_DEPENDENCIES = $(ompi_rb_tree_LDADD)
