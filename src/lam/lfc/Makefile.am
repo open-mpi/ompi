@@ -11,13 +11,14 @@ noinst_LTLIBRARIES = liblfc.la
 
 headers = \
 	hash_table.h \
-    lam_pointer_array.h \
+	lam_pointer_array.h \
 	list.h \
 	object.h \
 	varray.h 
 
 liblfc_la_SOURCES = \
 	$(headers) \
+	array.c \
 	hash_table.c \
 	lam_pointer_array.c \
 	lam_value_array.c \
