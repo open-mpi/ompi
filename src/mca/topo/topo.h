@@ -62,8 +62,8 @@
  * **************** component struct *******************************
  */ 
 typedef int (*mca_topo_base_component_init_query_1_0_0_fn_t)
-  (bool *allow_multi_user_threads,
-   bool *have_hidden_threads);
+  (bool enable_progress_threads,
+   bool enable_mpi_threads);
 
 typedef struct mca_topo_base_module_1_0_0_t*
   (*mca_topo_base_component_comm_query_1_0_0_fn_t) (int *priority);

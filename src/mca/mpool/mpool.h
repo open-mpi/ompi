@@ -28,7 +28,7 @@ struct mca_mpool_t;
  * component initialize
  */
 typedef struct mca_mpool_base_module_t* (*mca_mpool_base_component_init_fn_t)
-  (bool *allow_multi_user_threads);
+  (bool enable_progress_threads, bool enable_mpi_threads);
 
 /**
   * if appropriate - returns base address of memory pool

@@ -40,28 +40,23 @@ typedef struct opened_component_t {
  * will have all of its function pointers saved and returned to the
  * caller.
  */
-int mca_pml_base_select(mca_pml_base_module_t *selected,
-                        bool *allow_multi_user_threads,
-                        bool *have_hidden_threads)
+int mca_pml_base_select(bool enable_progress_threads,
+                        bool enable_mpi_threads)
 {
-  int priority=0, best_priority=0;
-  bool user_threads=false, hidden_threads=false;
-  bool best_user_threads=false, best_hidden_threads=false;
-  ompi_list_item_t *item=NULL;
-  mca_base_component_list_item_t *cli=NULL;
-  mca_pml_base_component_t *component=NULL, *best_component=NULL;
-  mca_pml_base_module_t *modules=NULL;
+  int priority = 0, best_priority = 0;
+  ompi_list_item_t *item = NULL;
+  mca_base_component_list_item_t *cli = NULL;
+  mca_pml_base_component_t *component = NULL, *best_component = NULL;
+  mca_pml_base_module_t *module = NULL;
   ompi_list_t opened;
-  opened_component_t *om=NULL;  
+  opened_component_t *om = NULL;
 
   /* Traverse the list of available components; call their init
      functions. */
 
   best_priority = -1;
   best_component = NULL;
-  modules = NULL;
-  best_user_threads = user_threads = true;
-  best_hidden_threads = hidden_threads = false;
+  module = NULL;
   OBJ_CONSTRUCT(&opened, ompi_list_t);
   for (item = ompi_list_get_first(&mca_pml_base_components_available);
        ompi_list_get_end(&mca_pml_base_components_available) != item;
@@ -77,9 +72,9 @@ int mca_pml_base_select(mca_pml_base_module_t *selected,
       ompi_output_verbose(10, mca_pml_base_output,
                          "select: no init function; ignoring component");
     } else {
-      modules = component->pmlm_init(&priority, &user_threads,
-                                  &hidden_threads);
-      if (NULL == modules) {
+      module = component->pmlm_init(&priority, enable_progress_threads,
+                                     enable_mpi_threads);
+      if (NULL == module) {
         ompi_output_verbose(10, mca_pml_base_output,
                            "select: init returned failure");
       } else {
@@ -87,8 +82,6 @@ int mca_pml_base_select(mca_pml_base_module_t *selected,
                            "select: init returned priority %d", priority);
         if (priority > best_priority) {
           best_priority = priority;
-          best_user_threads = user_threads;
-          best_hidden_threads = hidden_threads;
           best_component = component;
         }
 
@@ -139,16 +132,14 @@ int mca_pml_base_select(mca_pml_base_module_t *selected,
      available list all unselected components.  The available list will
      contain only the selected component. */
 
-  mca_base_components_close(mca_pml_base_output, &mca_pml_base_components_available, 
-                         (mca_base_component_t *) best_component);
+  mca_base_components_close(mca_pml_base_output, 
+                            &mca_pml_base_components_available, 
+                            (mca_base_component_t *) best_component);
 
   /* Save the winner */
 
   mca_pml_base_selected_component = *best_component;
-  mca_pml = *modules;
-  *selected = *modules;
-  *allow_multi_user_threads &= best_user_threads;
-  *have_hidden_threads |= best_hidden_threads;
+  mca_pml = *module;
   ompi_output_verbose(10, mca_pml_base_output, 
                      "select: component %s selected",
                      component->pmlm_version.mca_component_name);

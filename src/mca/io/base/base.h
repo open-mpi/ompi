@@ -85,8 +85,8 @@ extern "C" {
      * functions -- it is not considered a public interface member --
      * and is only mentioned here for completeness.
      */
-    OMPI_DECLSPEC int mca_io_base_find_available(bool *allow_multi_user_threads, 
-                                                 bool *have_hidden_threads);
+    OMPI_DECLSPEC int mca_io_base_find_available(bool enable_progress_threads,
+                                                 bool enable_mpi_threads);
     
     /**
      * Select an available component for a new file handle.

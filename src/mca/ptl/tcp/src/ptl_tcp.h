@@ -98,8 +98,8 @@ extern int mca_ptl_tcp_component_close(void);
  */
 extern mca_ptl_base_module_t** mca_ptl_tcp_component_init(
     int *num_ptls, 
-    bool *allow_multi_user_threads,
-    bool *have_hidden_threads
+    bool enable_progress_threads,
+    bool enable_mpi_threads
 );
 
 /**

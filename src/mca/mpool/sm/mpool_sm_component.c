@@ -28,7 +28,8 @@
  * Local functions
  */
 static int mca_mpool_sm_open(void);
-static mca_mpool_base_module_t* mca_mpool_sm_init(bool *allow_multi_user_threads);
+static mca_mpool_base_module_t* mca_mpool_sm_init(bool enable_progress_threads,
+                                                  bool enable_mpi_threads);
 
 
 mca_mpool_sm_component_t mca_mpool_sm_component = {
@@ -97,7 +98,8 @@ static int mca_mpool_sm_open(void)
 
 
 static mca_mpool_base_module_t* 
-mca_mpool_sm_init(bool *allow_multi_user_threads)
+mca_mpool_sm_init(bool enable_progress_threads,
+                  bool enable_mpi_threads)
 {
     char *file_name;
     size_t len;
@@ -144,16 +146,13 @@ mca_mpool_sm_init(bool *allow_multi_user_threads)
 
 
     /* setup allocator */
-    mca_mpool_sm_component.sm_allocator = allocator_component->allocator_init(
-        allow_multi_user_threads,
-        mca_common_sm_mmap_alloc,
-        NULL
-        );
+    mca_mpool_sm_component.sm_allocator = 
+        allocator_component->allocator_init(enable_mpi_threads,
+                                            mca_common_sm_mmap_alloc, NULL);
     if(NULL == mca_mpool_sm_component.sm_allocator) {
         ompi_output(0, "mca_mpool_sm_init: unable to initialize allocator");
         return NULL;
     }
 
-    *allow_multi_user_threads = true;
     return &mca_mpool_sm_module;
 }

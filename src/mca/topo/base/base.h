@@ -39,8 +39,8 @@ OMPI_DECLSPEC    int mca_topo_base_comm_select(struct ompi_communicator_t *comm,
 
 OMPI_DECLSPEC    int mca_topo_base_comm_unselect(struct ompi_communicator_t *comm);
     
-OMPI_DECLSPEC    int mca_topo_base_find_available (bool *allow_multi_user_threads,
-                                      bool *have_hidden_threads);
+OMPI_DECLSPEC    int mca_topo_base_find_available (bool enable_progress_threads,
+                                                   bool enable_mpi_threads);
 
 
 OMPI_DECLSPEC    int mca_topo_base_init_comm (struct ompi_communicator_t *comm);

@@ -92,13 +92,10 @@ static const mca_coll_base_module_1_0_0_t inter = {
  * Initial query function that is invoked during MPI_INIT, allowing
  * this module to indicate what level of thread support it provides.
  */
-int mca_coll_demo_init_query(bool *allow_demo_user_threads,
-                             bool *have_hidden_user_threads)
+int mca_coll_demo_init_query(bool enable_progress_threads,
+                             bool enable_mpi_threads)
 {
-    *allow_demo_user_threads = true;
-    *have_hidden_user_threads = false;
-
-    /* All done */
+    /* Nothing to do */
   
     return OMPI_SUCCESS;
 }

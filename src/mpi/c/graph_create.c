@@ -75,13 +75,12 @@ int MPI_Graph_create(MPI_Comm old_comm, int nnodes, int *index,
      */
     if (!(mca_topo_base_components_opened_valid ||
           mca_topo_base_components_available_valid)) {
-        bool user_threads = true;
-        bool hidden_threads = true;
         if (OMPI_SUCCESS != (err = mca_topo_base_open())) {
             return OMPI_ERRHANDLER_INVOKE(old_comm, err, FUNC_NAME);
         }
-        if (OMPI_SUCCESS != (err = mca_topo_base_find_available (&user_threads,
-                                                                 &hidden_threads))) {
+        if (OMPI_SUCCESS != 
+            (err = mca_topo_base_find_available(OMPI_ENABLE_PROGRESS_THREADS,
+                                                OMPI_ENABLE_MPI_THREADS))) {
             return OMPI_ERRHANDLER_INVOKE(old_comm, err, FUNC_NAME);
         }
     }

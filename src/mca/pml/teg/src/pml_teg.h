@@ -80,8 +80,8 @@ extern int mca_pml_teg_component_close(void);
 
 extern mca_pml_base_module_t* mca_pml_teg_component_init(
     int *priority, 
-    bool *allow_multi_user_threads,
-    bool *have_hidden_threads
+    bool enable_progress_threads,
+    bool enable_mpi_threads
 );
 
 extern int mca_pml_teg_component_fini(void);

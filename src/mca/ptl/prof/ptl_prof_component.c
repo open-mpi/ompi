@@ -41,7 +41,7 @@ static int mca_ptl_prof_component_open_fn( void );
 static int mca_ptl_prof_component_close_fn( void );
 static struct mca_ptl_base_module_t** ptl_prof_component_init_fn(
        int *num_ptls,
-       bool *allow_multi_user_threads, bool *have_hidden_threads );
+       bool enable_progress_threads, bool enable_mpi_threads);
 static int ptl_prof_component_control_fn( int param, void* value, size_t size );
 
 mca_ptl_prof_module_1_0_0_t mca_ptl_prof_component = {
@@ -94,14 +94,12 @@ static int ptl_prof_component_control_fn( int param, void* value, size_t size )
 extern mca_ptl_prof_t mca_ptl_prof;
 static struct mca_ptl_base_module_t** ptl_prof_component_init_fn(
        int *num_ptls,
-       bool *allow_multi_user_threads,
-       bool *have_hidden_threads )
+       bool enable_progress_threads,
+       bool enable_mpi_threads)
 {
     mca_ptl_prof_t** ptl_array;
 
     *num_ptls = 1;
-    *allow_multi_user_threads = true;
-    *have_hidden_threads = false;
     ptl_array = (mca_ptl_prof_t**)malloc( (*num_ptls) * sizeof(mca_ptl_prof_t*) );
     ptl_array[0] = &mca_ptl_prof;
     mca_ptl_prof.super.ptl_component = (mca_ptl_base_component_t*)&mca_ptl_prof_component;

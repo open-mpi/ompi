@@ -167,13 +167,11 @@ int mca_ptl_mx_component_close(void)
  */
 mca_ptl_base_module_t** mca_ptl_mx_component_init(
     int *num_ptls, 
-    bool *allow_multi_user_threads,
-    bool *have_hidden_threads)
+    bool enable_progress_threads,
+    bool enable_mpi_threads)
 {
     mca_ptl_base_module_t** ptls;
     *num_ptls = 0;
-    *allow_multi_user_threads = true;
-    *have_hidden_threads = false; /* MX driver/callbacks are multi-threaded */
 
     ompi_free_list_init(&mca_ptl_mx_component.mx_send_frags, 
         sizeof(mca_ptl_mx_send_frag_t),

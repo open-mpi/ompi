@@ -57,15 +57,15 @@ extern "C" {
      * coll module functions
      */
 
-    int mca_coll_sm_init_query(bool *allow_multi_user_threads,
-			       bool *have_hidden_threads);
+    int mca_coll_sm_init_query(bool enable_progress_threads,
+                               bool enable_mpi_threads);
 
     const struct mca_coll_base_module_1_0_0_t *
     mca_coll_sm_comm_query(struct ompi_communicator_t *comm, int *priority,
-                           mca_coll_base_module_comm_t **data);
+                           struct mca_coll_base_comm_t **data);
 
     int mca_coll_sm_comm_unquery(struct ompi_communicator_t *comm,
-                                 mca_coll_base_module_comm_t *data);
+                                 struct mca_coll_base_comm_t *data);
 
     const struct mca_coll_base_module_1_0_0_t *
     mca_coll_sm_module_init(struct ompi_communicator_t *comm);

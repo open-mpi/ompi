@@ -91,11 +91,12 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 	    goto error;
     }
 
-    /* if we are not the seed nor a singleton, AND we have not set the
-     * orte_debug flag, then 
-     * start recording the compound command that starts us up.
-     * if we are the seed or a singleton, then don't do this - the registry is
-     * local, so we'll just drive it directly */
+    /* If we are not the seed nor a singleton, AND we have not set the
+       orte_debug flag, then start recording the compound command that
+       starts us up.  if we are the seed or a singleton, then don't do
+       this - the registry is local, so we'll just drive it
+       directly */
+
     if (orte_process_info.seed ||
         NULL == orte_process_info.ns_replica ||
         orte_debug_flag) {
@@ -110,11 +111,13 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     }
 
     /* Now do the things that hit the registry */
+
     if (ORTE_SUCCESS != (ret = orte_init_stage2())) {
         ORTE_ERROR_LOG(ret);
         error = "ompi_mpi_init: orte_init_stage2 failed";
         goto error;
     }
+
     /* Once we've joined the RTE, see if any MCA parameters were
        passed to the MPI level */
 
@@ -130,13 +133,14 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     }
 #endif
 
-    /* initialize ompi procs */
+    /* Initialize OMPI procs */
+
     if (OMPI_SUCCESS != (ret = ompi_proc_init())) {
         error = "mca_proc_init() failed";
         goto error;
     }
 
-    /* Open up MPI-related MCA modules. */
+    /* Open up MPI-related MCA components */
 
     if (OMPI_SUCCESS != (ret = mca_allocator_base_open())) {
         error = "mca_allocator_base_open() failed";
@@ -158,24 +162,54 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         error = "mca_coll_base_open() failed";
         goto error;
     }
-    /* The io framework is initialized lazily, at the first use of any
-       MPI_File_* function, so it is not included here. */
 
-    /* initialize module exchange */
+    /* In order to reduce the common case for MPI apps (where they
+       don't use MPI-2 IO or MPI-1 topology functions), the io and
+       topo frameworks are initialized lazily, at the first use of
+       relevant functions (e.g., MPI_FILE_*, MPI_CART_*, MPI_GRAPH_*),
+       so they are not opened here. */
+
+    /* Initialize module exchange */
+
     if (OMPI_SUCCESS != (ret = mca_base_modex_init())) {
         error = "mca_base_modex_init() failed";
         goto error;
     }
 
-    /* Select which pml, ptl, and coll modules to use, and determine the
-       final thread level */
+    /* Select which MPI components to use */
 
     if (OMPI_SUCCESS != 
-	(ret = mca_base_init_select_components(requested, provided))) {
-        error = "mca_base_init_select_components() failed";
+        (ret = mca_mpool_base_init(OMPI_ENABLE_PROGRESS_THREADS,
+                                   OMPI_ENABLE_MPI_THREADS))) {
+        error = "mca_mpool_base_init() failed";
         goto error;
     }
 
+    if (OMPI_SUCCESS != 
+        (ret = mca_pml_base_select(OMPI_ENABLE_PROGRESS_THREADS,
+                                   OMPI_ENABLE_MPI_THREADS))) {
+        error = "mca_pml_base_select() failed";
+        goto error;
+    }
+
+    if (OMPI_SUCCESS != 
+        (ret = mca_ptl_base_select(OMPI_ENABLE_PROGRESS_THREADS,
+                                   OMPI_ENABLE_MPI_THREADS))) {
+        error = "mca_ptl_base_select() failed";
+        goto error;
+    }
+
+    if (OMPI_SUCCESS != 
+        (ret = mca_coll_base_find_available(OMPI_ENABLE_PROGRESS_THREADS,
+                                            OMPI_ENABLE_MPI_THREADS))) {
+        error = "mca_coll_base_find_available() failed";
+        goto error;
+    }
+
+    /* io and topo components are not selected here -- see comment
+       above about the io and topo frameworks being loaded lazily */
+
+    /* Initialize each MPI handle subsystem */
     /* initialize requests */
     if (OMPI_SUCCESS != (ret = ompi_request_init())) {
         error = "ompi_request_init() failed";
@@ -253,9 +287,8 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         goto error;
     }
 
-    /*
-     *  Let system know we are at STG1 Barrier
-     */
+    /* Let system know we are at STG1 Barrier */
+
     if (ORTE_SUCCESS != (ret = orte_soh.set_proc_soh(orte_process_info.my_name,
                                 ORTE_PROC_STATE_AT_STG1, 0))) {
         ORTE_ERROR_LOG(ret);
@@ -263,8 +296,8 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         goto error;
     }
 
-    /* if the compound command is operative, execute it 
-    */
+    /* if the compound command is operative, execute it */
+
     if (compound_cmd) {
         if (OMPI_SUCCESS != (ret = orte_gpr.exec_compound_cmd())) {
             ORTE_ERROR_LOG(ret);
@@ -273,8 +306,9 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         }
     }
 
+    /* First barrier -- wait for message from RMGR_PROC_STAGE_GATE_MGR
+       to arrive */
 
-    /* FIRST BARRIER - WAIT FOR MSG FROM RMGR_PROC_STAGE_GATE_MGR TO ARRIVE */
     if (ORTE_SUCCESS != (ret = orte_rml.xcast(NULL, NULL, 0, NULL, NULL))) {
         ORTE_ERROR_LOG(ret);
 	    error = "ompi_mpi_init: failed to see all procs register\n";
@@ -306,17 +340,32 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         goto error;
     }
 
-    /* save the resulting thread levels */
+    /* Figure out the final MPI thread levels.  If we were not
+       compiled for support for MPI threads, then don't allow
+       MPI_THREAD_MULTIPLE. */
 
     ompi_mpi_thread_requested = requested;
-    ompi_mpi_thread_provided = *provided;
+    if (OMPI_HAVE_THREAD_SUPPORT == 1) {
+        ompi_mpi_thread_provided = *provided = MPI_THREAD_SINGLE;
+        ompi_mpi_main_thread = NULL;
+    } else if (OMPI_ENABLE_MPI_THREADS == 1) {
+        ompi_mpi_thread_provided = *provided = requested;
+        ompi_mpi_main_thread = ompi_thread_get_self();
+    } else {
+        if (MPI_THREAD_MULTIPLE == requested) {
+            ompi_mpi_thread_provided = *provided = MPI_THREAD_SERIALIZED;
+        } else {
+            ompi_mpi_thread_provided = *provided = requested;
+        }
+        ompi_mpi_main_thread = ompi_thread_get_self();
+    }
+
     ompi_mpi_thread_multiple = (ompi_mpi_thread_provided == 
                                 MPI_THREAD_MULTIPLE);
-#if OMPI_ENABLE_MPI_THREADS
-    ompi_mpi_main_thread = ompi_thread_get_self();
-#else
-    ompi_mpi_main_thread = NULL;
-#endif    
+    if (OMPI_ENABLE_PROGRESS_THREADS == 1 ||
+        OMPI_ENABLE_MPI_THREADS == 1) {
+        ompi_set_using_threads(true);
+    }
 
     /* Init coll for the comms */
 
@@ -342,9 +391,8 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     }
 #endif
 
-    /*
-     *  Let system know we are at STG2 Barrier
-     */
+    /* Let system know we are at STG2 Barrier */
+
     if (ORTE_SUCCESS != (ret = orte_soh.set_proc_soh(orte_process_info.my_name,
                                 ORTE_PROC_STATE_AT_STG2, 0))) {
         ORTE_ERROR_LOG(ret);
@@ -357,7 +405,9 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     ompi_progress_events(OMPI_EVLOOP_NONBLOCK);
 #endif
 
-    /* SECOND BARRIER - WAIT FOR MSG FROM RMGR_PROC_STAGE_GATE_MGR TO ARRIVE */
+    /* Second barrier -- wait for message from
+       RMGR_PROC_STAGE_GATE_MGR to arrive */
+
     if (ORTE_SUCCESS != (ret = orte_rml.xcast(NULL, NULL, 0, NULL, NULL))) {
         ORTE_ERROR_LOG(ret);
         error = "ompi_mpi_init: failed to see all procs register\n";
@@ -366,8 +416,8 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 
     /* new very last step: check whether we have been spawned or not.
        We introduce that at the very end, since we need collectives,
-       datatypes, ptls etc. up and running here....
-    */
+       datatypes, ptls etc. up and running here.... */
+
     if (OMPI_SUCCESS != (ret = ompi_comm_dyn_init())) {
         error = "ompi_comm_dyn_init() failed";
         goto error;
@@ -381,7 +431,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         return ret;
     }
 
-    /* All done */
+    /* All done.  Wasn't that simple? */
 
     ompi_mpi_initialized = true;
 

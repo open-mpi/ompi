@@ -74,16 +74,16 @@ int mca_allocator_basic_component_close(void)
   */
 
 mca_allocator_base_module_t* mca_allocator_basic_component_init(
-    bool *allow_multi_user_threads,
+    bool enable_mpi_threads,
     mca_allocator_base_component_segment_alloc_fn_t segment_alloc,
     mca_allocator_base_component_segment_free_fn_t segment_free)
 {
     mca_allocator_basic_module_t *module = (mca_allocator_basic_module_t *)
                                             malloc(sizeof(mca_allocator_basic_module_t));
-    if(module == NULL)
+    if (NULL == module) {
         return NULL;
+    }
 
-    *allow_multi_user_threads &= true;
     module->super.alc_alloc = mca_allocator_basic_alloc;
     module->super.alc_realloc = mca_allocator_basic_realloc;
     module->super.alc_free = mca_allocator_basic_free;

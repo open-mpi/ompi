@@ -29,8 +29,8 @@
  */
 static int open_component(void);
 static int close_component(void);
-static int init_query(bool *enable_multi_user_threads,
-                      bool *have_hidden_threads);
+static int init_query(bool enable_progress_threads,
+                      bool enable_mpi_threads);
 static const struct mca_io_base_module_1_0_0_t *
   file_query(struct ompi_file_t *file, 
              struct mca_io_base_file_t **private_data,
@@ -147,19 +147,13 @@ static int close_component(void)
 }
 
 
-static int init_query(bool *allow_multi_user_threads,
-                      bool *have_hidden_threads)
+static int init_query(bool enable_progress_threads,
+                      bool enable_mpi_threads)
 {
-    /* Note that we say "true" for multi user threads here because we
+    /* Note that it's ok if mpi_enable_threads==true here because we
        self-enforce only allowing one user thread into ROMIO at a time
        -- this fact will be clearly documented for users (ROMIO itself
        is not thread safe). */
-
-    *allow_multi_user_threads = true;
-    *have_hidden_threads = ompi_using_threads();
-
-    /* Don't launch a progress thread here -- we'll launch one the
-       first time a ROMIO module is initialized */
 
     return OMPI_SUCCESS;
 }

@@ -99,8 +99,9 @@ typedef void* (*mca_allocator_base_component_segment_free_fn_t)(void* segment);
 /**
   * The function used to initialize the component. 
   */
-typedef struct mca_allocator_base_module_t* (*mca_allocator_base_component_init_fn_t)(
-    bool *allow_multi_user_threads,
+typedef struct mca_allocator_base_module_t* 
+    (*mca_allocator_base_component_init_fn_t)(
+    bool enable_mpi_threads,
     mca_allocator_base_component_segment_alloc_fn_t segment_alloc,
     mca_allocator_base_component_segment_free_fn_t segment_free
 );

@@ -65,21 +65,12 @@ int MPI_File_open(MPI_Comm comm, char *filename, int amode,
 
     if (!(mca_io_base_components_opened_valid ||
           mca_io_base_components_available_valid)) {
-        bool user_threads = true;
-        bool hidden_threads = true;
         if (OMPI_SUCCESS != (rc = mca_io_base_open())) {
             return OMPI_ERRHANDLER_INVOKE(MPI_FILE_NULL, rc, FUNC_NAME);
         }
-        /* JMS Need to do something here with user_threads and
-           hidden_threads -- technically this is no longer a query,
-           it's a mandate.  The query part is left over from when this
-           function was invoked during MPI_INIT.  Since we've now
-           long-since decided the user threads and hidden threads
-           stuff (i.e., during MPI_INIT), we can't change them now.
-           This is not hugely important now, since ROMIO is the only
-           io component that we have, but it should be fixed. */
-        if (OMPI_SUCCESS != (rc = mca_io_base_find_available(&user_threads, 
-                                                             &hidden_threads))) {
+        if (OMPI_SUCCESS != 
+            (rc = mca_io_base_find_available(OMPI_ENABLE_PROGRESS_THREADS,
+                                             OMPI_ENABLE_MPI_THREADS))) {
             return OMPI_ERRHANDLER_INVOKE(MPI_FILE_NULL, rc, FUNC_NAME);
         }
     }
