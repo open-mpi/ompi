@@ -38,9 +38,6 @@ typedef enum { false, true } bool;
  */
 #define OMPI_HAVE_THREADS (OMPI_HAVE_SOLARIS_THREADS || OMPI_HAVE_POSIX_THREADS)
 
-/* parameter indicating if to check MPI arguments */
-extern bool ompi_mpi_param_check;
-
 /*
  * Do we have <stdint.h>?
  */
