@@ -32,17 +32,11 @@
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
-#ifdef HAVE_SYS_QUEUE_H
-#include <sys/queue.h>
-#endif
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-#ifdef HAVE_ERR_H
-#include <err.h>
-#endif
 
 #ifdef USE_LOG
 #include "log.h"
@@ -51,9 +45,9 @@
 #define log_error(x)	perror(x)
 #endif
 
-#include "event/event.h"
 #include "event/compat/sys/queue.h"
 #include "event/compat/err.h"
+#include "event/event.h"
 
 extern struct ompi_event_list ompi_timequeue;
 extern struct ompi_event_list ompi_eventqueue;
