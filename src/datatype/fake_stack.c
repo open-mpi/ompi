@@ -82,10 +82,6 @@ int ompi_convertor_create_stack_with_pos_general( ompi_convertor_t* pConvertor,
     pStack->count    = pConvertor->count;
     pStack->index    = -1;
     if( pConvertor->flags & CONVERTOR_HOMOGENEOUS ) {
-        if( pData->opt_desc.desc != NULL ) {
-            pElems = pData->opt_desc.desc;
-            pStack->end_loop = pData->opt_desc.used;
-        }
 
         loop_length = GET_FIRST_NON_LOOP( pElems );
         pStack->disp = pElems[loop_length].disp;

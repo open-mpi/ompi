@@ -208,20 +208,19 @@ typedef struct __dt_stack {
 
 struct ompi_convertor_t {
     ompi_object_t           super;              /**< basic superclass */
-    dt_desc_t*              pDesc;              /**< the datatype description associated with the convertor */
     uint32_t                remoteArch;         /**< the remote architecture */
-    uint32_t                converted;          /**< the number of already converted elements */
-    uint32_t                bConverted;         /**< the size of already converted elements in bytes */
     uint32_t                flags;              /**< the properties of this convertor */
+    dt_desc_t*              pDesc;              /**< the datatype description associated with the convertor */
     uint32_t                count;              /**< the total number of full datatype elements */
-    dt_stack_t*             pStack;             /**< the local stack for the actual conversion */
-    uint32_t                stack_pos;          /**< the actual position on the stack */
-    uint32_t                stack_size;         /**< size of the allocated stack */
     char*                   pBaseBuf;           /**< initial buffer as supplied by the user */
-    uint32_t                available_space;    /**< total available space */
+    dt_stack_t*             pStack;             /**< the local stack for the actual conversion */
+    uint32_t                stack_size;         /**< size of the allocated stack */
     convertor_advance_fct_t fAdvance;           /**< pointer to the pack/unpack functions */
     memalloc_fct_t          memAlloc_fn;        /**< pointer to the memory allocation function */
     conversion_fct_t*       pFunctions;         /**< the convertor functions pointer */
+    /* All others fields get modified for every call to pack/unpack functions */
+    uint32_t                stack_pos;          /**< the actual position on the stack */
+    uint32_t                bConverted;         /**< the size of already converted elements in bytes */
     dt_stack_t              static_stack[DT_STATIC_STACK_SIZE];  /**< local stack to be used for contiguous data */
 };
 OBJ_CLASS_DECLARATION( ompi_convertor_t );
@@ -309,7 +308,6 @@ static inline int ompi_convertor_copy( const ompi_convertor_t* pSrcConv, ompi_co
     pDestConv->pStack          = pDestConv->static_stack;
     pDestConv->stack_size      = DT_STATIC_STACK_SIZE;
     pDestConv->stack_pos       = 0;
-    pDestConv->available_space = 0;
     pDestConv->pFunctions      = pSrcConv->pFunctions;
 
    return OMPI_SUCCESS;

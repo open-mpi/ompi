@@ -127,7 +127,6 @@ int ompi_convertor_pack_general( ompi_convertor_t* pConvertor,
                         printf( "pack there is still room in the input buffer %d bytes\n", iCount );
                     goto complete_loop;
                 }
-                pConvertor->converted += rc;  /* number of elementd converted so far */
                 pos_desc++;  /* advance to the next data */
                 count_desc = pElem[pos_desc].count;
                 disp_desc = pElem[pos_desc].disp;
