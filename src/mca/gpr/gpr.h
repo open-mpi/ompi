@@ -131,7 +131,7 @@ struct mca_gpr_base_module_1_0_0_t {
     mca_gpr_base_module_delete_segment_fn_t delete_segment;
     mca_gpr_base_module_subscribe_fn_t subscribe;
     mca_gpr_base_module_unsubscribe_fn_t unsubscribe;
-    mca_gpr_base_module_delete_fn_t delete_fn;
+    mca_gpr_base_module_delete_fn_t delete_object;
 };
 typedef struct mca_gpr_base_module_1_0_0_t mca_gpr_base_module_1_0_0_t;
 typedef mca_gpr_base_module_1_0_0_t mca_gpr_base_module_t;

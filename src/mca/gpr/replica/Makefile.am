@@ -9,6 +9,7 @@ include $(top_ompi_srcdir)/config/Makefile.options
 sources = \
         gpr_replica_component.c \
         gpr_replica.h \
+        gpr_replica.c \
         gpr_replica_internals.c \
         gpr_replica_internals.h
 

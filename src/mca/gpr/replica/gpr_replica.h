@@ -17,6 +17,7 @@
  * typedefs needed in replica component
  */
 typedef uint32_t mca_gpr_replica_key_t;
+#define MCA_GPR_REPLICA_KEY_MAX UINT32_MAX
 
 struct mca_gpr_registry_t {
     ompi_list_t registry;
@@ -172,8 +173,8 @@ int gpr_replica_delete_segment(char *segment);
 int gpr_replica_put(ompi_registry_mode_t mode, char *segment,
 		    char **tokens, ompi_registry_object_t *object,
 		    ompi_registry_object_size_t size);
-int gpr_replica_delete(ompi_registry_mode_t mode,
-		       char *segment, char **tokens);
+int gpr_replica_delete_object(ompi_registry_mode_t mode,
+			      char *segment, char **tokens);
 ompi_registry_index_t* gpr_replica_index(char *segment);
 int gpr_replica_subscribe(ompi_process_name_t *caller, ompi_registry_mode_t mode,
 			  ompi_registry_notify_action_t action,

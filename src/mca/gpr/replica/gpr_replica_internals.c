@@ -108,9 +108,9 @@ mca_gpr_replica_key_t gpr_replica_get_key(char *segment, char *token)
 	if (NULL != ptr_key) {
 	    return(ptr_key->key);
 	}
-	return(0); /* couldn't find dictionary entry */
+	return MCA_GPR_REPLICA_KEY_MAX; /* couldn't find dictionary entry */
     }
-    return(0); /* couldn't find segment */
+    return MCA_GPR_REPLICA_KEY_MAX; /* couldn't find segment */
 }
 
 
@@ -121,7 +121,7 @@ mca_gpr_replica_key_t gpr_replica_define_key(char *segment, char *token)
 
     /* protect against errors */
     if (NULL == segment) {
-	return(0);
+	return MCA_GPR_REPLICA_KEY_MAX;
     }
 
     /* if token is NULL, then this is defining a segment name. Check dictionary to ensure uniqueness */
@@ -130,7 +130,7 @@ mca_gpr_replica_key_t gpr_replica_define_key(char *segment, char *token)
 	     ptr_seg != (mca_gpr_keytable_t*)ompi_list_get_end(&mca_gpr_replica_head.segment_dict);
 	     ptr_seg = (mca_gpr_keytable_t*)ompi_list_get_next(ptr_seg)) {
 	    if (0 == strcmp(segment, ptr_seg->token)) {
-		return(0);
+		return MCA_GPR_REPLICA_KEY_MAX;
 	    }
 	}
 
@@ -138,8 +138,12 @@ mca_gpr_replica_key_t gpr_replica_define_key(char *segment, char *token)
 	new = OBJ_NEW(mca_gpr_keytable_t);
 	new->token = strdup(segment);
 	if (0 == ompi_list_get_size(&mca_gpr_replica_head.freekeys)) { /* no keys waiting for reuse */
+	    if (MCA_GPR_REPLICA_KEY_MAX-2 > mca_gpr_replica_head.lastkey) {  /* have a key left */
 	    mca_gpr_replica_head.lastkey++;
 	    new->key = mca_gpr_replica_head.lastkey;
+	    } else {  /* out of keys */
+		return MCA_GPR_REPLICA_KEY_MAX;
+	    }
 	} else {
 	    ptr_key = (mca_gpr_keytable_t*)ompi_list_remove_first(&mca_gpr_replica_head.freekeys);
 	    new->key = ptr_key->key;
@@ -157,7 +161,7 @@ mca_gpr_replica_key_t gpr_replica_define_key(char *segment, char *token)
 	     ptr_key != (mca_gpr_keytable_t*)ompi_list_get_end(&seg->keytable);
 	     ptr_key = (mca_gpr_keytable_t*)ompi_list_get_next(ptr_key)) {
 	    if (0 == strcmp(token, ptr_key->token)) {
-		return(0); /* already taken, report error */
+		return MCA_GPR_REPLICA_KEY_MAX; /* already taken, report error */
 	    }
 	}
 	/* okay, token is unique - create dictionary entry */
@@ -174,7 +178,7 @@ mca_gpr_replica_key_t gpr_replica_define_key(char *segment, char *token)
 	return(new->key);
     }
     /* couldn't find segment */
-    return(0);
+    return MCA_GPR_REPLICA_KEY_MAX;
 }
 
 int gpr_replica_delete_key(char *segment, char *token)
@@ -194,27 +198,21 @@ int gpr_replica_delete_key(char *segment, char *token)
 
 	/* if specified token is NULL, then this is deleting a segment name.*/
 	if (NULL == token) {
-	    /* empty the segment's registry */
-	    while (0 < ompi_list_get_size(&seg->registry_entries)) {
-		ompi_list_remove_last(&seg->registry_entries);
+	    if (OMPI_SUCCESS != gpr_replica_empty_segment(seg)) { /* couldn't empty segment */
+		return OMPI_ERROR;
 	    }
-	    /* empty the segment's dictionary */
-	    while (0 < ompi_list_get_size(&seg->keytable)) {
-		ompi_list_remove_last(&seg->keytable);
+	    /* now remove the dictionary entry from the global registry dictionary*/
+	    ptr_seg = gpr_replica_find_dict_entry(segment, NULL);
+	    if (NULL == ptr_seg) { /* failed to find dictionary entry */
+		return OMPI_ERROR;
 	    }
-	    /* empty the list of free keys */
-	    while (0 < ompi_list_get_size(&seg->freekeys)) {
-		ompi_list_remove_last(&seg->freekeys);
-	    }
-	    /* now remove segment from global registry */
-	    ompi_list_remove_item(&mca_gpr_replica_head.registry, &seg->item);
 	    /* add key to global registry's freekey list */
 	    new = OBJ_NEW(mca_gpr_keytable_t);
 	    new->token = NULL;
 	    new->key = ptr_seg->key;
 	    ompi_list_append(&mca_gpr_replica_head.freekeys, &new->item);
-	    /* NEED TO RE-FIND PTR_SEG */
-	    /* now remove the dictionary entry from the global registry dictionary*/
+
+	    /* remove the dictionary entry */
 	    ompi_list_remove_item(&mca_gpr_replica_head.segment_dict, &ptr_seg->item);
 	    return(OMPI_SUCCESS);
 
@@ -260,4 +258,26 @@ int gpr_replica_delete_key(char *segment, char *token)
 	}
     }
     return(OMPI_ERROR); /* if we get here, then we couldn't find segment */
+}
+
+int gpr_replica_empty_segment(mca_gpr_registry_segment_t *seg)
+{
+
+    /* empty the segment's registry */
+    while (0 < ompi_list_get_size(&seg->registry_entries)) {
+	ompi_list_remove_last(&seg->registry_entries);
+    }
+
+    /* empty the segment's dictionary */
+    while (0 < ompi_list_get_size(&seg->keytable)) {
+	ompi_list_remove_last(&seg->keytable);
+    }
+    /* empty the list of free keys */
+    while (0 < ompi_list_get_size(&seg->freekeys)) {
+	ompi_list_remove_last(&seg->freekeys);
+    }
+    /* now remove segment from global registry */
+    ompi_list_remove_item(&mca_gpr_replica_head.registry, &seg->item);
+
+    return OMPI_SUCCESS;
 }
