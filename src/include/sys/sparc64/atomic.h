@@ -16,7 +16,7 @@
 #define OMPI_SYS_ARCH_ATOMIC_H 1
 
 /*
- * On sparc64, use casa and casxa (compare and swap) instructions.
+ * On sparc v9, use casa and casxa (compare and swap) instructions.
  */
 
 #define ASI_P "0x80"
@@ -30,7 +30,7 @@
 
 /**********************************************************************
  *
- * Define constants for UltraSparc 64
+ * Define constants for Sparc v9 (Ultra Sparc)
  *
  *********************************************************************/
 #define OMPI_HAVE_ATOMIC_MEM_BARRIER 1
@@ -114,6 +114,8 @@ static inline int ompi_atomic_cmpset_rel_32( volatile int32_t *addr,
 }
 
 
+#if OMPI_ASSEMBLY_ARCH == OMPI_SPARCV9_64
+
 static inline int ompi_atomic_cmpset_64( volatile int64_t *addr,
                                          int64_t oldval, int64_t newval)
 {
@@ -132,6 +134,35 @@ static inline int ompi_atomic_cmpset_64( volatile int64_t *addr,
    return (ret == oldval);
 }
 
+#else /* OMPI_ASSEMBLY_ARCH == OMPI_SPARCV9_64 */
+
+static inline int ompi_atomic_cmpset_64( volatile int64_t *addr,
+                                         int64_t oldval, int64_t newval)
+{
+    /* casa [reg(rs1)] %asi, reg(rs2), reg(rd)
+     *
+     * if (*(reg(rs1)) == reg(rs1) )
+     *    swap reg(rd), *(reg(rs1))
+     * else
+     *    reg(rd) = *(reg(rs1))
+     *
+     */
+    long long ret = newval;
+
+    __asm__ __volatile(
+                       "ldx %0, %%g1               \n\t" /* g1 = ret */
+                       "ldx %2, %%g2               \n\t" /* g2 = oldval */
+                       "casxa [%1] " ASI_P ", %%g2, %%g1 \n\t"
+                       "stx %%g1, %0               \n"
+                       : "=m"(ret)
+                       : "r"(addr), "m"(oldval)
+                       : "%g1", "%g2"
+                       );
+
+   return (ret == oldval);
+}
+
+#endif /* OMPI_ASSEMBLY_ARCH == OMPI_SPARCV9_64 */
 
 static inline int ompi_atomic_cmpset_acq_64( volatile int64_t *addr,
                                              int64_t oldval, int64_t newval)
