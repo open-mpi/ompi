@@ -23,7 +23,7 @@
  * Local variables
  */
 static mca_coll_1_0_0_t null_actions = {
-
+  NULL, NULL,  /* init and finalize */
   /* Checkpoint / restart */
 
   NULL, NULL, NULL, NULL,
