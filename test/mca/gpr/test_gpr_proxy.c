@@ -94,7 +94,7 @@ int main(int argc, char **argv)
     }
 
     /* initialize the rte - including ns and oob */
-    if(OMPI_SUCCESS == ompi_rte_init(&multi, &hidden)) {
+    if(OMPI_SUCCESS == ompi_rte_init(NULL, &multi, &hidden)) {
 	    fprintf(test_out, "NS opened\n");
 	    fprintf(test_out, "NS started\n");
     } else {

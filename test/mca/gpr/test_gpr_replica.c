@@ -18,6 +18,7 @@
 #include "include/constants.h"
 #include "util/sys_info.h"
 #include "util/proc_info.h"
+#include "runtime/runtime.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
 #include "mca/gpr/base/base.h"
@@ -29,8 +30,13 @@ static FILE *test_out=NULL;
 
 static char *cmd_str="diff ./test_gpr_replica_out ./test_gpr_replica_out_std";
 
+static void test_cbfunc(ompi_registry_notify_message_t *notify_msg, void *user_tag);
+
+
 int main(int argc, char **argv)
 {
+    bool multi_thread = false;
+    bool hidden_thread = false;
     ompi_list_t *test_list, *internal_tests;
     ompi_registry_index_value_t *ptr;
     ompi_registry_internal_test_results_t *ptri;
@@ -56,6 +62,8 @@ test_out = stderr;
       exit(1);
     } 
 
+    ompi_init(argc, argv);
+
     ompi_process_info.seed = true;
 
     /* startup the MCA */
@@ -66,28 +74,13 @@ test_out = stderr;
 	exit (1);
     }
 
-    fprintf(test_out, "\n\ngpr opening\n");
-    /* open the GPR */
-    if (OMPI_SUCCESS == mca_gpr_base_open()) {
-	fprintf(test_out, "GPR opened\n");
-	test_success();
-    } else {
-	fprintf(test_out, "GPR could not open\n");
-        test_failure("test_gpr_replica mca_gpr_base_open failed");
-        test_finalize();
+    fprintf(test_out, "\n\nstarting rte\n");
+    if (OMPI_SUCCESS != ompi_rte_init(NULL, &multi_thread, &hidden_thread)) {
+        /* JMS show_help */
+        printf("show_help: test_gpr_replica failed in ompi_rte_init\n");
+	test_failure("test_gpr_replica: couldn't start rte");
+	test_finalize();
 	exit(1);
-    }
-
-    fprintf(test_out, "\n\ngpr select\n");
-    /* startup the GPR replica */
-    if (OMPI_SUCCESS != mca_gpr_base_select(&multi, &hidden)) {
-	fprintf(test_out, "GPR replica could not start\n");
-	test_failure("test_gpr_replica mca_gpr_base_select failed");
-        test_finalize();
-	exit(1);
-    } else {
-	fprintf(test_out, "GPR replica started\n");
-	test_success();
     }
 
     fprintf(test_out, "\n\ntesting internals\n");
@@ -169,6 +162,8 @@ test_out = stderr;
 	exit(1);
     }
 
+    ompi_registry.dump(0);
+
     fprintf(test_out, "\n\ntesting overwrite function\n");
     /* test the put overwrite function */
     success = true;
@@ -205,6 +200,53 @@ test_out = stderr;
 	exit(1);
     }
 
+    ompi_registry.dump(0);
+
+    fprintf(test_out, "\n\ntesting register function\n");
+    /* test register */
+    success = true;
+    if (OMPI_SUCCESS != ompi_registry.rte_register()) {
+	fprintf(test_out, "register failed\n");
+	success = false;
+    } else {
+	fprintf(test_out, "register succeeded\n");
+	ompi_registry.dump(0);
+    }
+
+    fprintf(test_out, "\n\ntesting subscription and synchro functions\n");
+    /* test subscribe and synchro functions */
+    success = true;
+    if (OMPI_SUCCESS != ompi_registry.subscribe(OMPI_REGISTRY_AND,
+						OMPI_REGISTRY_NOTIFY_MODIFICATION,
+						name, name2, test_cbfunc, NULL)) {
+	fprintf(test_out, "subscribe to %s with key %s failed\n", name, *name2);
+	success = false;
+    } else {
+	fprintf(test_out, "subscribe to %s with key %s succeeded\n", name, *name2);
+	if (OMPI_SUCCESS != ompi_registry.synchro(OMPI_REGISTRY_SYNCHRO_MODE_LEVEL,
+						 OMPI_REGISTRY_AND,
+						 name, name2, 10,
+						 test_cbfunc, NULL)) {
+	    fprintf(test_out, "synchro to %s with key %s failed\n", name, *name2);
+	    success = false;
+	} else {
+	    fprintf(test_out, "synchro to %s with key %s succeeded\n", name, *name2);
+	    ompi_registry.dump(0);
+	}
+    }
+
+    fprintf(test_out, "\n\ntesting unregister function\n");
+    /* test unregister */
+    success = true;
+    if (OMPI_SUCCESS != ompi_registry.rte_unregister(OMPI_REGISTRY_UNREGISTER_NORMAL, ompi_process_info.name)) {
+	fprintf(test_out, "unregister of self failed\n");
+	success = false;
+    } else {
+	fprintf(test_out, "unregister of self succeeded\n");
+	ompi_registry.dump(0);
+    }
+
+    fprintf(test_out, "\n\ntesting get function\n");
     /* test the get function */
     success = true;
     for (i=0; i<5 && success; i++) {
@@ -237,6 +279,7 @@ test_out = stderr;
 	exit(1);
     }
 
+    fprintf(test_out, "\n\ntesting delete object function\n");
     /* test the delete object function */
     success = true;
     for (i=0; i<5 && success; i+=2) {
@@ -262,6 +305,9 @@ test_out = stderr;
 	exit(1);
     }
 
+    ompi_registry.dump(0);
+
+    fprintf(test_out, "\n\ntesting index function\n");
     /* check index */
     for (i=0; i<5 && success; i++) {
 	sprintf(name, "test-def-seg%d", i);
@@ -296,4 +342,10 @@ test_out = stderr;
     test_finalize();
 
     return(0);
+}
+
+
+static void test_cbfunc(ompi_registry_notify_message_t *notify_msg, void *user_tag)
+{
+    return;
 }
