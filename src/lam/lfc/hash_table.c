@@ -200,7 +200,7 @@ static inline int lam_fh_set_value_ptrkey(lam_fast_hash_t *htbl, void *val,
                                           void *key, uint32_t keysize)
 {
     int         err;
-    uint32_t        hval, i, bucket_idx;
+    uint32_t        hval, bucket_idx;
     lam_fhnode_t    *buckets;
     
     /* ASSERT: table size is power of 2 and table
@@ -235,7 +235,7 @@ static inline int lam_fh_set_value_nkey(lam_fast_hash_t *htbl, void *val,
                                           void *key, uint32_t keysize)
 {
     int         err;
-    uint32_t        hval, i, bucket_idx;
+    uint32_t        hval, bucket_idx;
     lam_fhnode_t    *buckets;
     
     /* ASSERT: table size is power of 2 and table
