@@ -19,6 +19,7 @@
 #include "include/constants.h"
 #include "util/output.h"
 #include "mca/oob/base/base.h"
+#include "mca/iof/base/base.h"
 #include "mca/iof/base/iof_base_endpoint.h"
 #include "iof_svc.h"
 #include "iof_svc_publish.h"
@@ -31,7 +32,8 @@ mca_iof_base_module_t mca_iof_svc_module = {
     mca_iof_svc_push,
     mca_iof_svc_pull,
     mca_iof_svc_subscribe,
-    mca_iof_svc_unsubscribe
+    mca_iof_svc_unsubscribe,
+    mca_iof_base_flush
 };
 
 

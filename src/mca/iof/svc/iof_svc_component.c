@@ -108,6 +108,7 @@ static int mca_iof_svc_close(void)
     }
     OMPI_THREAD_UNLOCK(&mca_iof_svc_component.svc_lock);
     mca_oob_recv_cancel(MCA_OOB_NAME_ANY, MCA_OOB_TAG_IOF_SVC);
+    return OMPI_SUCCESS;
 }
 
 
