@@ -39,11 +39,11 @@ struct ompi_cb_fifo_ctl_t {
     ompi_lock_t lock;
 
     /* current queue index */
-    volatile unsigned int fifo_index;
+    volatile int fifo_index;
 
     /* number of entries that have been used, but not invalidated.  used
      * for lazy resource reclamation */
-    volatile unsigned int num_to_clear;
+    volatile int num_to_clear;
 
 };
 typedef struct ompi_cb_fifo_ctl_t ompi_cb_fifo_ctl_t;
