@@ -24,6 +24,7 @@ libmca_base_la_SOURCES = \
         mca_base_module_compare.c \
         mca_base_module_exchange.c \
         mca_base_module_find.c \
+	mca_base_init_select_modules.c \
         mca_base_module_registry.c \
         mca_base_modules_open.c \
         mca_base_modules_close.c \
