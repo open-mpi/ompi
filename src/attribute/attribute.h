@@ -134,7 +134,7 @@ int ompi_attr_init(void);
  * Destroy the main attribute hash that stores the key and meta data
  */
 
-void ompi_attr_destroy(void);
+int ompi_attr_finalize(void);
 
 
 /**

@@ -9,12 +9,16 @@
 #include "mpi.h"
 #include "group/group.h"
 #include "errhandler/errhandler.h"
+#include "errhandler/errcode.h"
+#include "errhandler/errclass.h"
+#include "errhandler/errcode-internal.h"
 #include "communicator/communicator.h"
 #include "datatype/datatype.h"
 #include "op/op.h"
 #include "file/file.h"
 #include "info/info.h"
 #include "runtime/runtime.h"
+#include "util/common_cmd_line.h"
 
 #include "mca/base/base.h"
 #include "mca/ptl/ptl.h"
@@ -54,8 +58,28 @@ int ompi_mpi_finalize(void)
 
   /* Free secondary resources */
 
+  /* free attr resources */
+  if (OMPI_SUCCESS != (ret = ompi_attr_finalize())) {
+      return ret;
+  }
+
   /* free group resources */
   if (OMPI_SUCCESS != (ret = ompi_group_finalize())) {
+      return ret;
+  }
+
+  /* free internal error resources */
+  if (OMPI_SUCCESS != (ret = ompi_errcode_intern_finalize())) {
+      return ret;
+  }
+     
+  /* free error class resources */
+  if (OMPI_SUCCESS != (ret = ompi_errclass_finalize())) {
+      return ret;
+  }
+
+  /* free error code resources */
+  if (OMPI_SUCCESS != (ret = ompi_mpi_errcode_finalize())) {
       return ret;
   }
 
@@ -110,6 +134,16 @@ int ompi_mpi_finalize(void)
   /* Close down the MCA */
 
   if (OMPI_SUCCESS != (ret = mca_base_close())) {
+    return ret;
+  }
+
+  /* Leave OMPI land */
+
+  if (OMPI_SUCCESS != (ret = ompi_finalize())) {
+    return ret;
+  }
+      
+  if (OMPI_SUCCESS != (ret = ompi_common_cmd_line_finalize())) {
     return ret;
   }
 

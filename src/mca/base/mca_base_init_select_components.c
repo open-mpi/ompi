@@ -47,6 +47,8 @@ int mca_base_init_select_components(int requested,
   /* JMS: At some point, we'll need to feed it the thread level to
      ensure to pick one high enough (e.g., if we need CR) */
 
+  user_threads = true;
+  hidden_threads = false;
   if (OMPI_SUCCESS != mca_pml_base_select(&mca_pml, 
                                          &user_threads, &hidden_threads)) {
     return OMPI_ERROR;

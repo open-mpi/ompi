@@ -85,6 +85,8 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     }
 
     /* Join the run-time environment */
+    allow_multi_user_threads = true;
+    have_hidden_threads = false;
     if (OMPI_SUCCESS != (ret = ompi_rte_init(&allow_multi_user_threads,
                                              &have_hidden_threads))) {
         /* JMS show_help */
@@ -287,7 +289,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     }
 
     /* Wait for everyone to initialize */
-    /* Change the Barrier call to the backend call */
 
     if (MPI_SUCCESS != (ret = 
                         MPI_COMM_WORLD->c_coll.coll_barrier(MPI_COMM_WORLD))) {
