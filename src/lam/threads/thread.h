@@ -1,4 +1,6 @@
 /*
+ * $HEADER$
+ *
  * Copyright 2002-2003. The Regents of the University of California. This material
  * was produced under U.S. Government contract W-7405-ENG-36 for Los Alamos
  * National Laboratory, which is operated by the University of California for
@@ -28,10 +30,10 @@
  */
 /*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
                                                                                                      
-#ifndef THREAD_H
-#define THREAD_H
+#ifndef LAM_THREAD_H
+#define LAM_THREAD_H
 
-#include "lam/base/object.h"
+#include "lam/lfc/object.h"
 
 typedef struct lam_thread
 {
@@ -43,6 +45,4 @@ typedef struct lam_thread
 void lam_thr_init(lam_thread_t *a_thread);
 lam_thread_t *lam_thr_create(lam_object_t *arg);
 
-#endif  
-
-
+#endif /* LAM_THREAD_H */
