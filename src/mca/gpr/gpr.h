@@ -13,24 +13,80 @@
 #ifndef MCA_GPR_H_
 #define MCA_GPR_H_
 
-#include "ompi_config.h"
+/*
+ * includes
+ */
 
+#include <sys/types.h>
+#include <stdint.h>
+#include <limits.h>
+
+#include "ompi_config.h"
 #include "include/types.h"
+#include "include/constants.h"
+#include "class/ompi_list.h"
+
 #include "mca/mca.h"
+#include "mca/ns/base/base.h"
 #include "mca/gpr/base/base.h"
+
+/** Define the notification actions for the subscription system
+ */
+/** Notifies subscriber when object is modified */
+#define OMPI_REGISTRY_NOTIFY_MODIFICATION     0x0001
+/** Notifies subscriber when another subscriber is added */
+#define OMPI_REGISTRY_NOTIFY_ADD_SUBSCRIBER   0x0002
+/** Notifies subscriber when object is removed from registry */
+#define OMPI_REGISTRY_NOTIFY_DELETE           0x0004
+/** Notifies subscriber upon any action - effectively an OR of all other flags */
+#define OMPI_REGISTRY_NOTIFY_ALL              0xffff
+
+
+/** Define the mode bit-masks for registry operations.
+ */
+/** Overwrite permission */
+#define OMPI_REGISTRY_OVERWRITE       0x0001
+/** AND tokens together for search results */
+#define OMPI_REGISTRY_AND             0x0002
+/** OR tokens for search results */
+#define OMPI_REGISTRY_OR              0x0004
+/** XAND - all tokens required, nothing else allowed - must be exact match */
+#define OMPI_REGISTRY_XAND            0x0008
+/** XOR - any one of the tokens required, nothing else allowed */
+#define OMPI_REGISTRY_XOR             0x0010
+
+/*
+ * typedefs
+ */
+
+typedef uint16_t ompi_registry_action_t;
+typedef uint16_t ompi_registry_mode_t;
+
 
 /*
  * Global constants / types
  */
+typedef mca_oob_base_msgbuf_t ompi_registry_buf_t;
+typedef mca_oob_msgbuf_data_t ompi_registry_bufdata_t;
+typedef ompi_registry_buf_t ompi_registry_object_t;
 
 /*
  * Component functions
  */
 
 /*
+ * utility functions that may be provided, or use defaults
+ */
+typedef int (*mca_gpr_base_send_fn_t)(ompi_process_name_t *target,
+				       ompi_registry_buf_t *buf);
+typedef ompi_registry_buf_t (*mca_gpr_base_recv_fn_t)(void);
+
+
+/*
  * public functions that MUST be provided
  */
 typedef int (*mca_gpr_base_definesegment_fn_t)(char *segment);
+typedef int (*mca_gpr_base_deletesegment_fn_t)(char *segment);
 typedef int (*mca_gpr_base_put_fn_t)(ompi_registry_mode_t mode, char *segment,
 				     char **tokens, ompi_registry_object_t *object,
 				     int size);
@@ -46,9 +102,16 @@ typedef int (*mca_gpr_base_unsubscribe_fn_t)(ompi_registry_mode_t mode,
 					     char *segment, char **tokens);
 
 /*
- * non-public functions that can be provided, or use defaults
+ * block functions that may be provided, or use defaults
  */
-
+typedef ompi_registry_buf_t (*mca_gpr_base_getbuf_fn_t)(size_t size);
+typedef int (*mca_gpr_base_packbuf_fn_t)(ompi_registry_buf_t *buf, void *ptr,
+					 size_t num_items, ompi_registry_bufdata_t datatype);
+typedef int (*mca_gpr_base_packstring_fn_t)(ompi_registry_buf_t *buf, char *string);
+typedef int (*mca_gpr_base_unpackstring_fn_t)(ompi_registry_buf_t *buf, char *string, size_t maxlen);
+typedef int (*mca_gpr_base_unpackbuf_fn_t)(ompi_registry_buf_t *buf, void *ptr, size_t num_items,
+					   ompi_registry_bufdata_t datatype);
+typedef int (*mca_gpr_base_sendbuf_fn_t)(ompi_process_name_t *target, ompi_registry_buf_t *buf, bool freebuf);
 
 
 /*
@@ -64,16 +127,24 @@ struct mca_gpr_base_module_1_0_0_t {
 typedef struct mca_gpr_base_module_1_0_0_t mca_gpr_base_module_1_0_0_t;
 
 struct mca_gpr_1_0_0_t {
-    /* non-public utility functions */
-    mca_gpr_base_send_fn_t gpr_send;
-    mca_gpr_base_recv_fn_t gpr_recv;
-    /* public functions */
-    mca_gpr_base_get_fn_t gpr_get;
-    mca_gpr_base_put_fn_t gpr_put;
-    mca_gpr_base_definesegment_fn_t gpr_definesegment;
-    mca_gpr_base_subscribe_fn_t gpr_subscribe;
-    mca_gpr_base_unsubscribe_fn_t gpr_unsubscribe;
-    mca_gpr_base_delete_fn_t gpr_delete;
+    /* non-public utility functions - must be provided */
+    mca_gpr_base_send_fn_t send;
+    mca_gpr_base_recv_fn_t recv;
+    /* public functions - must be provided */
+    mca_gpr_base_get_fn_t get;
+    mca_gpr_base_put_fn_t put;
+    mca_gpr_base_definesegment_fn_t definesegment;
+    mca_gpr_base_deletesegment_fn_t deletesegment;
+    mca_gpr_base_subscribe_fn_t subscribe;
+    mca_gpr_base_unsubscribe_fn_t unsubscribe;
+    mca_gpr_base_delete_fn_t delete;
+    /* block functions - may be provided */
+    mca_gpr_base_getbuf_fn_t getbuf;
+    mca_gpr_base_packbuf_fn_t packbuf;
+    mca_gpr_base_packstring_fn_t pack_string;
+    mca_gpr_base_unpackstring_fn_t unpack_string;
+    mca_gpr_base_unpackbuf_fn_t unpack_buf;
+    mca_gpr_base_sendbuf_fn_t sendbuf;
 };
 typedef struct mca_gpr_1_0_0_t mca_gpr_1_0_0_t;
 
