@@ -180,6 +180,7 @@ lam_errhandler_t *lam_errhandler_create(lam_errhandler_type_t object_type,
          type when we *use* it). */
 
       new_errhandler->eh_mpi_object_type = object_type;
+      new_errhandler->eh_is_intrinsic = false;
       new_errhandler->eh_fortran_function = false;
       new_errhandler->eh_func.fort_fn = func;
     }
