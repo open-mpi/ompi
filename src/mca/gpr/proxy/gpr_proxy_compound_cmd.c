@@ -43,6 +43,7 @@ int mca_gpr_proxy_begin_compound_cmd(void)
         ompi_buffer_size(mca_gpr_proxy_compound_cmd, &size);
         if (0 < size) {
 	    ompi_buffer_free(mca_gpr_proxy_compound_cmd);
+	    mca_gpr_proxy_compound_cmd = NULL;
         }
     }
 
@@ -64,6 +65,7 @@ int mca_gpr_proxy_stop_compound_cmd(void)
 	ompi_buffer_size(mca_gpr_proxy_compound_cmd, &size);
 	if (0 < size) {
 	    ompi_buffer_free(mca_gpr_proxy_compound_cmd);
+	    mca_gpr_proxy_compound_cmd = NULL;
 	}
     }
 
@@ -120,6 +122,7 @@ ompi_list_t* mca_gpr_proxy_exec_compound_cmd(bool return_requested)
 	ompi_buffer_size(mca_gpr_proxy_compound_cmd, &size);
 	if (0 < size) {
 	    ompi_buffer_free(mca_gpr_proxy_compound_cmd);
+	    mca_gpr_proxy_compound_cmd = NULL;
 	}
     }
 

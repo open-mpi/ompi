@@ -69,6 +69,9 @@ void mca_gpr_replica_delete_segment_nl(mca_gpr_replica_segment_t *seg)
 
     /* remove segment name from global registry dictionary */
     mca_gpr_replica_delete_key(seg, NULL);
+    
+    /* release the segment pointer */
+    OBJ_RELEASE(seg);
 
     return;
 }
