@@ -216,15 +216,19 @@ int mca_ptl_mx_send(
     /* first fragment - need to try and match at the receiver */
     if(offset == 0) {
         hdr->hdr_common.hdr_flags = flags;
-        hdr->hdr_match.hdr_src = (uint16_t)sendreq->req_base.req_comm->c_my_rank;
-        hdr->hdr_match.hdr_dst = (uint16_t)sendreq->req_base.req_peer;
+        hdr->hdr_match.hdr_src = sendreq->req_base.req_comm->c_my_rank;
+        hdr->hdr_match.hdr_dst = sendreq->req_base.req_peer;
         hdr->hdr_match.hdr_tag = sendreq->req_base.req_tag;
         hdr->hdr_match.hdr_msg_length = sendreq->req_bytes_packed;
         hdr->hdr_match.hdr_msg_seq = sendreq->req_base.req_sequence;
 
         /* for the first 32K - send header for matching + data */
         segments = sendfrag->frag_segments;
-        sendfrag->frag_segment_count = 2;
+        if(sendfrag->frag_send.frag_base.frag_size > 0) {
+            sendfrag->frag_segment_count = 2;
+        } else {
+            sendfrag->frag_segment_count = 1;
+        }
 
         /* if an acknoweldgment is not required - can get by with a shorter header */
         if((flags & MCA_PTL_FLAGS_ACK) == 0) {
@@ -500,7 +504,7 @@ void mca_ptl_mx_matched(
             request->req_base.req_addr,     /* users buffer */
             0,                              /* offset in bytes into packed buffer */
             NULL );                         /* not allocating memory */
-        ompi_convertor_get_packed_size(convertor, &request->req_bytes_packed);
+        /*ompi_convertor_get_packed_size(convertor, &request->req_bytes_packed); */
 
         iov.iov_base = mx_frag->frag_data;
         iov.iov_len = mx_frag->frag_size;

@@ -95,7 +95,7 @@ do {                                                                            
                 case MCA_PTL_HDR_TYPE_RNDV:                                         \
                 {                                                                   \
                     recvfrag->frag_size = hdr->hdr_rndv.hdr_frag_length;            \
-                    MCA_PTL_MX_RECV_FRAG_MATCH(recvfrag,hdr);                       \
+                    MCA_PTL_MX_RECV_FRAG_RNDV(recvfrag,hdr);                        \
                     MCA_PTL_MX_POST(ptl, MCA_PTL_HDR_TYPE_RNDV,                     \
                         sizeof(mca_ptl_base_rendezvous_header_t));                  \
                     break;                                                          \

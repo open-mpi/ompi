@@ -79,6 +79,7 @@ OBJ_CLASS_DECLARATION(mca_ptl_mx_send_frag_t);
     (ack)->frag_send.frag_base.frag_owner = ptl; \
     (ack)->frag_send.frag_base.frag_addr = NULL; \
     (ack)->frag_send.frag_base.frag_size = 0; \
+    (ack)->frag_segments[0].segment_length = sizeof(mca_ptl_base_ack_header_t); \
     (ack)->frag_segment_count = 1; \
     (ack)->frag_free = 0; \
 }
