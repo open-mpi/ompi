@@ -20,7 +20,6 @@ EXTRA_DIST = VERSION
 
 sources = \
         coll_basic.h \
-        coll_basic.c \
         coll_basic_allgather.c \
         coll_basic_allgatherv.c \
         coll_basic_allreduce.c \
@@ -32,6 +31,7 @@ sources = \
         coll_basic_component.c \
         coll_basic_gather.c \
         coll_basic_gatherv.c \
+        coll_basic_module.c \
         coll_basic_reduce.c \
         coll_basic_reduce_scatter.c \
         coll_basic_scan.c \
