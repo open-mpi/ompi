@@ -40,14 +40,19 @@ static int ptl_prof_component_control_fn( int param, void* value, size_t size )
  * function associated with this PTL.
  */
 extern mca_ptl_prof_t mca_ptl_prof;
-static struct mca_ptl_t** ptl_prof_component_init_fn( int *num_ptls,
-                                                      bool *allow_multi_user_threads,
-                                                      bool *have_hidden_threads )
+static struct mca_ptl_base_module_t** ptl_prof_component_init_fn(
+       int *num_ptls,
+       bool *allow_multi_user_threads,
+       bool *have_hidden_threads )
 {
+    struct mca_ptl_base_module_t** ptl_array;
+
     *num_ptls = 1;
     *allow_multi_user_threads = true;
     *have_hidden_threads = false;
-    return (struct mca_ptl_t**)&mca_ptl_prof;
+    ptl_array = (struct mca_ptl_base_module_t**)malloc( (*num_ptls) * sizeof(struct mca_ptl_base_module_t*) );
+    ptl_array[0] = (struct mca_ptl_base_module_t*)&mca_ptl_prof;
+    return ptl_array;
 }
 
 static int mca_ptl_prof_component_open_fn( void )
