@@ -4,9 +4,6 @@
 //
 
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
 // return  codes
 OMPI_DECLSPEC extern const int SUCCESS;
 OMPI_DECLSPEC extern const int ERR_BUFFER;
@@ -209,8 +206,3 @@ OMPI_DECLSPEC extern const Group  GROUP_EMPTY;
 // topologies
 OMPI_DECLSPEC extern const int GRAPH;
 OMPI_DECLSPEC extern const int CART;
-
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
-
