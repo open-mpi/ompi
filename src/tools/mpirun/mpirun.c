@@ -23,6 +23,7 @@
 #include <sys/param.h>
 #endif
 #include <errno.h>
+#include <signal.h>
 
 #include "include/constants.h"
 
