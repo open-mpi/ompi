@@ -83,7 +83,7 @@ AH_TOP([/* -*- c -*-
 #define LAM_CONFIG_H
 ])
 AH_BOTTOM([
-#include <lam_config.h>
+#include <lam_config_bottom.h>
 #endif /* LAM_CONFIG_H */
 ])
 
