@@ -37,9 +37,12 @@ int mca_mpool_base_close(void)
 
     /* Blatently ignore the return code (what would we do to recover,
        anyway?  This component is going away, so errors don't matter
-       anymore) */
+       anymore).  Note that it's legal for the module to have NULL for
+       the finalize function. */
 
-    sm->mpool_module->mpool_finalize(sm->mpool_module);
+    if (NULL != sm->mpool_module->mpool_finalize) {
+        sm->mpool_module->mpool_finalize(sm->mpool_module);
+    }
     OBJ_RELEASE(sm);
   }
 

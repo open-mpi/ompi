@@ -23,7 +23,7 @@
 #include "mca/mpool/base/base.h"
 
 
-mca_mpool_base_component_t* mca_mpool_component_lookup(const char* name)
+mca_mpool_base_component_t* mca_mpool_base_component_lookup(const char* name)
 {
     /* Traverse the list of available modules; call their init functions. */
     ompi_list_item_t* item;
@@ -42,7 +42,7 @@ mca_mpool_base_component_t* mca_mpool_component_lookup(const char* name)
 }
 
 
-mca_mpool_base_module_t* mca_mpool_module_lookup(const char* name)
+mca_mpool_base_module_t* mca_mpool_base_module_lookup(const char* name)
 {
     /* Finalize all the mpool modules and free their list items */
     ompi_list_item_t *item;

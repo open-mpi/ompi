@@ -46,6 +46,7 @@
 #include "mca/oob/base/base.h"
 #include "mca/ns/base/base.h"
 #include "mca/gpr/base/base.h"
+#include "mca/mpool/base/base.h"
 
 
 int ompi_mpi_finalize(void)
@@ -197,6 +198,9 @@ int ompi_mpi_finalize(void)
 	return ret;
     }
     if (OMPI_SUCCESS != (ret = mca_coll_base_close())) {
+	return ret;
+    }
+    if (OMPI_SUCCESS != (ret = mca_mpool_base_close())) {
 	return ret;
     }
 
