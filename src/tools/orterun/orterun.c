@@ -46,6 +46,7 @@
 #include "mca/ns/ns.h"
 #include "mca/gpr/gpr.h"
 #include "mca/rmgr/rmgr.h"
+#include "mca/errmgr/errmgr.h"
 
 #include "runtime/runtime.h"
 #include "runtime/orte_wait.h"
@@ -249,6 +250,89 @@ int main(int argc, char *argv[], char* env[])
     return rc;
 }
 
+/*
+ * On abnormal termination - dump the 
+ * exit status of the aborted procs.
+ */
+
+static void dump_aborted_procs(orte_jobid_t jobid)
+{
+    char *segment;
+    orte_gpr_value_t** values = NULL;
+    int i, k, num_values = 0;
+    int rc;
+    char *keys[] = {
+        ORTE_PROC_NAME_KEY,
+        ORTE_PROC_PID_KEY,
+        ORTE_PROC_RANK_KEY,
+        ORTE_PROC_EXIT_CODE_KEY,
+        ORTE_NODE_NAME_KEY,
+        NULL
+    };
+
+    /* query the job segment on the registry */
+    if(ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&segment, jobid))) {
+        ORTE_ERROR_LOG(rc);
+        return;
+    }
+
+    rc = orte_gpr.get(
+        ORTE_GPR_KEYS_AND|ORTE_GPR_TOKENS_OR,
+        segment,
+        NULL,
+        keys,
+        &num_values,
+        &values
+        );
+    if(rc != ORTE_SUCCESS) {
+        ORTE_ERROR_LOG(rc);
+        free(segment);
+        return;
+    }
+
+    for(i=0; i<num_values; i++) {
+        orte_gpr_value_t* value = values[i];
+        orte_process_name_t name;
+        uint32_t pid = 0;
+        uint32_t rank = 0;
+        int32_t exit_code = 0;
+        char* node_name = NULL;
+
+        for(k=0; k < value->cnt; k++) {
+            orte_gpr_keyval_t* keyval = value->keyvals[k];
+            if(strcmp(keyval->key, ORTE_PROC_NAME_KEY) == 0) {
+                name = keyval->value.proc;
+                continue;
+            }
+            if(strcmp(keyval->key, ORTE_PROC_PID_KEY) == 0) {
+                pid = keyval->value.ui32;
+                continue;
+            }
+            if(strcmp(keyval->key, ORTE_PROC_RANK_KEY) == 0) {
+                rank = keyval->value.ui32;
+                continue;
+            }
+            if(strcmp(keyval->key, ORTE_PROC_EXIT_CODE_KEY) == 0) {
+                exit_code = keyval->value.i32;
+                continue;
+            }
+            if(strcmp(keyval->key, ORTE_NODE_NAME_KEY) == 0) {
+                node_name = keyval->value.strptr;
+                continue;
+            }
+        }
+ 
+        if(WIFSIGNALED(exit_code)) { 
+            fprintf(stderr, "[%d,%d,%d] process rank %d pid %d on node \"%s\" exited on signal %d\n",
+                 ORTE_NAME_ARGS(&name),rank,pid,node_name,WTERMSIG(exit_code));
+        }
+        OBJ_RELEASE(value);
+    }
+    if(NULL != values) {
+        free(values);
+    }
+}
+
 
 /*
  * signal main thread when application completes
@@ -258,14 +342,21 @@ static void job_state_callback(orte_jobid_t jobid, orte_proc_state_t state)
 {
     OMPI_THREAD_LOCK(&orterun_globals.lock);
     switch(state) {
-        case ORTE_PROC_STATE_TERMINATED:
         case ORTE_PROC_STATE_ABORTED:
+            dump_aborted_procs(jobid);
+            /* fall through */
+        case ORTE_PROC_STATE_TERMINATED:
             orterun_globals.exit = true;
             ompi_condition_signal(&orterun_globals.cond);
             break;
     }
     OMPI_THREAD_UNLOCK(&orterun_globals.lock);
 }
+
+/*
+ * Fail-safe in the event the job hangs and doesn't  
+ * cleanup correctly.
+ */
 
 static void exit_callback(int fd, short event, void *arg)
 {
@@ -274,6 +365,11 @@ static void exit_callback(int fd, short event, void *arg)
 }
 
 
+/*
+ * Attempt to terminate the job and wait for callback indicating
+ * the job has been aborted. 
+ */
+
 static void signal_callback(int fd, short flags, void *arg)
 {
     int ret;
@@ -281,9 +377,7 @@ static void signal_callback(int fd, short flags, void *arg)
     ompi_event_t* event;
 
     static int signalled = 0;
-    printf("in orterun signal_callback\n");
     if (0 != signalled++) {
-        printf("exiting gratuitious callback\n");
          return;
     }
 
