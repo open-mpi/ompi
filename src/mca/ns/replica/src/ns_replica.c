@@ -22,7 +22,7 @@
  * functions
  */
 
-mca_ns_base_cellid_t ns_replica_create_cellid(void)
+mca_ns_base_cellid_t mca_ns_replica_create_cellid(void)
 {
     OMPI_THREAD_LOCK(&mca_ns_replica_mutex);
 
@@ -36,7 +36,7 @@ mca_ns_base_cellid_t ns_replica_create_cellid(void)
     }
 }
 
-mca_ns_base_jobid_t ns_replica_create_jobid(void)
+mca_ns_base_jobid_t mca_ns_replica_create_jobid(void)
 {
     mca_ns_replica_name_tracker_t *new_nt;
 
@@ -57,7 +57,7 @@ mca_ns_base_jobid_t ns_replica_create_jobid(void)
 }
 
 
-mca_ns_base_vpid_t ns_replica_reserve_range(mca_ns_base_jobid_t job, mca_ns_base_vpid_t range)
+mca_ns_base_vpid_t mca_ns_replica_reserve_range(mca_ns_base_jobid_t job, mca_ns_base_vpid_t range)
 {
     mca_ns_replica_name_tracker_t *ptr;
     mca_ns_base_vpid_t start;
@@ -81,14 +81,4 @@ mca_ns_base_vpid_t ns_replica_reserve_range(mca_ns_base_jobid_t job, mca_ns_base
     }
     OMPI_THREAD_UNLOCK(&mca_ns_replica_mutex);
     return MCA_NS_BASE_VPID_MAX;
-}
-
-
-int ns_replica_free_name(ompi_process_name_t* name)
-{
-    if (NULL != name) {
-	free(name);
-    }
-
-    return OMPI_SUCCESS;
 }
