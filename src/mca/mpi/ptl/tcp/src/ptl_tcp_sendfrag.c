@@ -11,7 +11,7 @@
 #include "ptl_tcp_sendfrag.h"
 
 
-lam_class_info_t  mca_ptl_peer_cls = {
+lam_class_info_t  mca_ptl_tcp_send_frag_cls = {
     "mca_ptl_tcp_send_frag_t",
     &mca_ptl_base_send_frag_cls,
     (class_init_t)mca_ptl_tcp_send_frag_init,

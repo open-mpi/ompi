@@ -49,7 +49,7 @@ void mca_ptl_tcp_proc_init(mca_ptl_tcp_proc_t* proc)
 void mca_ptl_tcp_proc_destroy(mca_ptl_tcp_proc_t* proc)
 {
     /* remove from list of all proc instances */
-    lam_list_remove(&mca_ptl_tcp_procs, &proc->super);
+    lam_list_remove_item(&mca_ptl_tcp_procs, &proc->super);
 
     /* release resources */
     if(NULL != proc->proc_peers) 
@@ -115,8 +115,10 @@ mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_create(lam_proc_t* lam_proc)
         OBJ_RELEASE(ptl_proc);
         return NULL;
     }
+#if TIM_HASNT_IMPLEMENTED_THIS_YET
     if(lam_proc == lam_proc_local())
         mca_ptl_tcp_proc = ptl_proc;
+#endif
     return ptl_proc;
 }
 
