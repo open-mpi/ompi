@@ -9,6 +9,7 @@
 #include "mpi.h"
 #include "mpi/communicator/communicator.h"
 #include "mca/mpi/coll/coll.h"
+#include "mca/mpi/coll/base/coll_tags.h"
 #include "coll_basic.h"
 
 
@@ -23,6 +24,9 @@ int mca_coll_basic_allreduce(void *sbuf, void *rbuf, int count,
                              MPI_Datatype dtype, MPI_Op op,
                              MPI_Comm comm)
 {
+#if 1
+  return LAM_ERR_NOT_IMPLEMENTED;
+#else
   int err;
 
   /* Reduce to 0 and broadcast. */
@@ -33,4 +37,5 @@ int mca_coll_basic_allreduce(void *sbuf, void *rbuf, int count,
     return err;
 
   return comm->c_coll.coll_bcast_intra(rbuf, count, dtype, 0, comm);
+#endif
 }

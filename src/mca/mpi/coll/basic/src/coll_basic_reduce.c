@@ -10,6 +10,7 @@
 #include "lam/constants.h"
 #include "mpi.h"
 #include "mca/mpi/coll/coll.h"
+#include "mca/mpi/coll/base/coll_tags.h"
 #include "coll_basic.h"
 
 
@@ -24,6 +25,9 @@ int mca_coll_basic_reduce_lin(void *sbuf, void *rbuf, int count,
                               MPI_Datatype dtype, MPI_Op op,
                               int root, MPI_Comm comm)
 {
+#if 1
+  return LAM_ERR_NOT_IMPLEMENTED;
+#else
   int i;
   int size;
   int rank;
@@ -119,6 +123,7 @@ int mca_coll_basic_reduce_lin(void *sbuf, void *rbuf, int count,
   /* All done */
 
   return (MPI_SUCCESS);
+#endif
 }
 
 
@@ -133,6 +138,9 @@ int mca_coll_basic_reduce_log(void *sbuf, void *rbuf, int count,
                               MPI_Datatype dtype, MPI_Op op,
                               int root, MPI_Comm comm)
 {
+#if 1
+  return LAM_ERR_NOT_IMPLEMENTED;
+#else
   int i;
   int size;
   int rank;
@@ -293,4 +301,5 @@ int mca_coll_basic_reduce_log(void *sbuf, void *rbuf, int count,
   /* All done */
 
   return err;
+#endif
 }

@@ -9,6 +9,7 @@
 #include "mpi.h"
 #include "mpi/communicator/communicator.h"
 #include "mca/mpi/coll/coll.h"
+#include "mca/mpi/coll/base/coll_tags.h"
 #include "coll_basic.h"
 
 
@@ -25,6 +26,9 @@ int mca_coll_basic_allgatherv(void *sbuf, int scount,
                               MPI_Datatype rdtype, 
                               MPI_Comm comm)
 {
+#if 1
+  return LAM_ERR_NOT_IMPLEMENTED;
+#else
   int i, size;
   int err;
 
@@ -39,4 +43,5 @@ int mca_coll_basic_allgatherv(void *sbuf, int scount,
   }
 
   return MPI_SUCCESS;
+#endif
 }
