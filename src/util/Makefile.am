@@ -12,6 +12,7 @@ noinst_LTLIBRARIES = libutil.la
 headers = \
     argv.h \
     cmd_line.h \
+    common_cmd_line.h \
     few.h \
     hibit.h \
     if.h \
@@ -27,6 +28,7 @@ libutil_la_SOURCES = \
     $(headers) \
     argv.c \
     cmd_line.c \
+    common_cmd_line.c \
     few.c \
     if.c \
     malloc.c \
