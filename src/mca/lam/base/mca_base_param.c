@@ -43,7 +43,6 @@ static int param_register(const char *type_name, const char *module_name,
                           mca_base_param_type_t type,
                           mca_base_param_storage_t *default_value);
 static bool param_lookup(int index, mca_base_param_storage_t *storage);
-static int param_compare(const void *a, const void *b);
 static void param_free(mca_base_param_t *p);
 
 
@@ -397,7 +396,7 @@ static int param_register(const char *type_name, const char *module_name,
 
   array = (mca_base_param_t**) lam_arr_get_c_array(&mca_base_params, &len);
   for (i = 0; i < len; ++i) {
-    if (0 == param_compare(&param, array[i])) {
+    if (0 == strcmp(param->mbp_full_name, array[i]->mbp_full_name)) {
 
       /* Copy in the new default value to the old entry */
 
@@ -493,15 +492,6 @@ static bool param_lookup(int index, mca_base_param_storage_t *storage)
   /* All done */
 
   return true;
-}
-
-
-static int param_compare(const void *a, const void *b)
-{
-  const mca_base_param_t *aa = (const mca_base_param_t*) a;
-  const mca_base_param_t *bb = (const mca_base_param_t*) b;
-
-  return strcmp(aa->mbp_full_name, bb->mbp_full_name);
 }
 
 
