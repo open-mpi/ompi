@@ -26,7 +26,7 @@ extern "C" {
 #endif
 
 
-#define OMPI_NAME_COMPONENTS(n)  (n).cellid,(n).jobid,(n).vpid
+#define OMPI_NAME_ARGS(n)  (n).cellid,(n).jobid,(n).vpid
 
 
 /*

@@ -228,8 +228,8 @@ static int mca_oob_tcp_peer_start_connect(mca_oob_tcp_peer_t* peer)
         struct timeval tv = { 1,0 };
         ompi_output(0, 
             "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_peer_start_connect: socket() failed with errno=%d\n",
-            OMPI_NAME_COMPONENTS(mca_oob_name_self),
-            OMPI_NAME_COMPONENTS(peer->peer_name),
+            OMPI_NAME_ARGS(mca_oob_name_self),
+            OMPI_NAME_ARGS(peer->peer_name),
             errno);
         mca_oob_tcp_peer_close(peer);
         ompi_evtimer_add(&peer->peer_timer_event, &tv);
@@ -242,31 +242,31 @@ static int mca_oob_tcp_peer_start_connect(mca_oob_tcp_peer_t* peer)
     /* setup the socket as non-blocking */
     if((flags = fcntl(peer->peer_sd, F_GETFL, 0)) < 0) {
         ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_peer_connect: fcntl(F_GETFL) failed with errno=%d\n", 
-            OMPI_NAME_COMPONENTS(mca_oob_name_self),
-            OMPI_NAME_COMPONENTS(peer->peer_name),
+            OMPI_NAME_ARGS(mca_oob_name_self),
+            OMPI_NAME_ARGS(peer->peer_name),
             errno);
     } else {
        flags |= O_NONBLOCK;
         if(fcntl(peer->peer_sd, F_SETFL, flags) < 0)
             ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_peer_connect: fcntl(F_SETFL) failed with errno=%d\n", 
-                OMPI_NAME_COMPONENTS(mca_oob_name_self),
-                OMPI_NAME_COMPONENTS(peer->peer_name),
+                OMPI_NAME_ARGS(mca_oob_name_self),
+                OMPI_NAME_ARGS(peer->peer_name),
                 errno);
     }
 
     /* pick an address in round-robin fashion from the list exported by the peer */
     if((rc = mca_oob_tcp_addr_get_next(peer->peer_addr, &inaddr)) != OMPI_SUCCESS) {
         ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_peer_start_connect: mca_oob_tcp_addr_get_next failed with error=%d",
-            OMPI_NAME_COMPONENTS(mca_oob_name_self),
-            OMPI_NAME_COMPONENTS(peer->peer_name),
+            OMPI_NAME_ARGS(mca_oob_name_self),
+            OMPI_NAME_ARGS(peer->peer_name),
             rc);
         return rc;
     }
 
     if(mca_oob_tcp_component.tcp_debug > 2) {
         ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_peer_start_connect: connecting to: %s:%d\n",
-            OMPI_NAME_COMPONENTS(mca_oob_name_self),
-            OMPI_NAME_COMPONENTS(peer->peer_name),
+            OMPI_NAME_ARGS(mca_oob_name_self),
+            OMPI_NAME_ARGS(peer->peer_name),
             inet_ntoa(inaddr.sin_addr),
             ntohs(inaddr.sin_port));
     }
@@ -279,8 +279,8 @@ static int mca_oob_tcp_peer_start_connect(mca_oob_tcp_peer_t* peer)
             return OMPI_SUCCESS;
         }
         ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_peer_start_connect: connect failed with errno=%d",
-            OMPI_NAME_COMPONENTS(mca_oob_name_self),
-            OMPI_NAME_COMPONENTS(peer->peer_name),
+            OMPI_NAME_ARGS(mca_oob_name_self),
+            OMPI_NAME_ARGS(peer->peer_name),
             errno);
         mca_oob_tcp_peer_close(peer);
         return OMPI_ERR_UNREACH;
@@ -294,8 +294,8 @@ static int mca_oob_tcp_peer_start_connect(mca_oob_tcp_peer_t* peer)
         ompi_output(0, 
             "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_peer_start_connect: "
             "mca_oob_tcp_peer_send_connect_ack failed with errno=%d",
-            OMPI_NAME_COMPONENTS(mca_oob_name_self),
-            OMPI_NAME_COMPONENTS(peer->peer_name),
+            OMPI_NAME_ARGS(mca_oob_name_self),
+            OMPI_NAME_ARGS(peer->peer_name),
             rc);
         mca_oob_tcp_peer_close(peer);
     }
@@ -319,8 +319,8 @@ static void mca_oob_tcp_peer_complete_connect(mca_oob_tcp_peer_t* peer)
     /* check connect completion status */
     if(getsockopt(peer->peer_sd, SOL_SOCKET, SO_ERROR, &so_error, &so_length) < 0) {
         ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_peer_complete_connect: getsockopt() failed with errno=%d\n", 
-            OMPI_NAME_COMPONENTS(mca_oob_name_self),
-            OMPI_NAME_COMPONENTS(peer->peer_name),
+            OMPI_NAME_ARGS(mca_oob_name_self),
+            OMPI_NAME_ARGS(peer->peer_name),
             errno);
         mca_oob_tcp_peer_close(peer);
         return;
@@ -332,8 +332,8 @@ static void mca_oob_tcp_peer_complete_connect(mca_oob_tcp_peer_t* peer)
         struct timeval tv = { 1,0 };
         ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_peer_complete_connect: "
             "connection refused - retrying\n", 
-            OMPI_NAME_COMPONENTS(mca_oob_name_self),
-            OMPI_NAME_COMPONENTS(peer->peer_name));
+            OMPI_NAME_ARGS(mca_oob_name_self),
+            OMPI_NAME_ARGS(peer->peer_name));
         mca_oob_tcp_peer_close(peer);
         if(peer->peer_retries > mca_oob_tcp_component.tcp_peer_retries) {
            return;
@@ -342,8 +342,8 @@ static void mca_oob_tcp_peer_complete_connect(mca_oob_tcp_peer_t* peer)
         return;
     } else if(so_error != 0) {
         ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_peer_complete_connect: connect() failed with errno=%d\n", 
-            OMPI_NAME_COMPONENTS(mca_oob_name_self),
-            OMPI_NAME_COMPONENTS(peer->peer_name),
+            OMPI_NAME_ARGS(mca_oob_name_self),
+            OMPI_NAME_ARGS(peer->peer_name),
             so_error);
         mca_oob_tcp_peer_close(peer);
         return;
@@ -354,8 +354,8 @@ static void mca_oob_tcp_peer_complete_connect(mca_oob_tcp_peer_t* peer)
         ompi_event_add(&peer->peer_recv_event, 0);
     } else {
         ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_peer_complete_connect: unable to send connect ack.",
-            OMPI_NAME_COMPONENTS(mca_oob_name_self),
-            OMPI_NAME_COMPONENTS(peer->peer_name));
+            OMPI_NAME_ARGS(mca_oob_name_self),
+            OMPI_NAME_ARGS(peer->peer_name));
         mca_oob_tcp_peer_close(peer);
     }
 }
@@ -386,8 +386,8 @@ void mca_oob_tcp_peer_close(mca_oob_tcp_peer_t* peer)
 {
     if(mca_oob_tcp_component.tcp_debug > 1) {
         ompi_output(0, "[%d,%d,%d] closing peer [%d,%d,%d] sd %d state %d\n",
-            OMPI_NAME_COMPONENTS(mca_oob_name_self),
-            OMPI_NAME_COMPONENTS(peer->peer_name),
+            OMPI_NAME_ARGS(mca_oob_name_self),
+            OMPI_NAME_ARGS(peer->peer_name),
             peer->peer_sd,
             peer->peer_state);
     }
@@ -453,9 +453,9 @@ static int mca_oob_tcp_peer_recv_connect_ack(mca_oob_tcp_peer_t* peer)
     if(memcmp(&peer->peer_name, &guid[0], sizeof(ompi_process_name_t)) != 0) {
         ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_peer_connect: "
             "received unexpected process identifier [%d,%d,%d]\n",
-            OMPI_NAME_COMPONENTS(mca_oob_name_self),
-            OMPI_NAME_COMPONENTS(peer->peer_name),
-            OMPI_NAME_COMPONENTS(guid[0]));
+            OMPI_NAME_ARGS(mca_oob_name_self),
+            OMPI_NAME_ARGS(peer->peer_name),
+            OMPI_NAME_ARGS(guid[0]));
         mca_oob_tcp_peer_close(peer);
         return OMPI_ERR_UNREACH;
     }
@@ -489,8 +489,8 @@ static int mca_oob_tcp_peer_recv_blocking(mca_oob_tcp_peer_t* peer, void* data, 
             if(mca_oob_tcp_component.tcp_debug > 3) {
                 ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_peer_recv_blocking: "
                     "peer closed connection: peer state %d",
-                    OMPI_NAME_COMPONENTS(mca_oob_name_self),
-                    OMPI_NAME_COMPONENTS(peer->peer_name),
+                    OMPI_NAME_ARGS(mca_oob_name_self),
+                    OMPI_NAME_ARGS(peer->peer_name),
                     peer->peer_state);
             }
             mca_oob_tcp_peer_close(peer);
@@ -501,8 +501,8 @@ static int mca_oob_tcp_peer_recv_blocking(mca_oob_tcp_peer_t* peer, void* data, 
         if(retval < 0) {
             if(errno != EINTR && errno != EAGAIN && errno != EWOULDBLOCK) {
                 ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_peer_recv_blocking: recv() failed with errno=%d\n",
-                    OMPI_NAME_COMPONENTS(mca_oob_name_self),
-                    OMPI_NAME_COMPONENTS(peer->peer_name),
+                    OMPI_NAME_ARGS(mca_oob_name_self),
+                    OMPI_NAME_ARGS(peer->peer_name),
                     errno);
                 mca_oob_tcp_peer_close(peer);
                 return -1;
@@ -527,8 +527,8 @@ static int mca_oob_tcp_peer_send_blocking(mca_oob_tcp_peer_t* peer, void* data, 
         if(retval < 0) {
             if(errno != EINTR && errno != EAGAIN && errno != EWOULDBLOCK) {
                 ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_peer_send_blocking: send() failed with errno=%d\n",
-                    OMPI_NAME_COMPONENTS(mca_oob_name_self),
-                    OMPI_NAME_COMPONENTS(peer->peer_name),
+                    OMPI_NAME_ARGS(mca_oob_name_self),
+                    OMPI_NAME_ARGS(peer->peer_name),
                     errno);
                 mca_oob_tcp_peer_close(peer);
                 return -1;
@@ -592,8 +592,8 @@ static void mca_oob_tcp_peer_recv_handler(int sd, short flags, void* user)
                 MCA_OOB_TCP_MSG_ALLOC(msg, rc);
                 if(NULL == msg) {
                     ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_peer_recv_handler: unable to allocate recv message\n",
-                        OMPI_NAME_COMPONENTS(mca_oob_name_self),
-                        OMPI_NAME_COMPONENTS(peer->peer_name));
+                        OMPI_NAME_ARGS(mca_oob_name_self),
+                        OMPI_NAME_ARGS(peer->peer_name));
                     return;
                 }
                 msg->msg_type = MCA_OOB_TCP_UNEXPECTED;
@@ -670,8 +670,8 @@ static void mca_oob_tcp_peer_send_handler(int sd, short flags, void* user)
         }
     default:
         ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_peer_send_handler: invalid connection state (%d)",
-            OMPI_NAME_COMPONENTS(mca_oob_name_self),
-            OMPI_NAME_COMPONENTS(peer->peer_name),
+            OMPI_NAME_ARGS(mca_oob_name_self),
+            OMPI_NAME_ARGS(peer->peer_name),
             peer->peer_state);
         ompi_event_del(&peer->peer_send_event);
         break;
@@ -728,8 +728,8 @@ static void mca_oob_tcp_peer_dump(mca_oob_tcp_peer_t* peer, const char* msg)
 #endif
                                                                                                             
     sprintf(buff, "[%d,%d,%d]-[%d,%d,%d] %s: %s - %s nodelay %d sndbuf %d rcvbuf %d flags %08x\n",
-        OMPI_NAME_COMPONENTS(mca_oob_name_self),
-        OMPI_NAME_COMPONENTS(peer->peer_name),
+        OMPI_NAME_ARGS(mca_oob_name_self),
+        OMPI_NAME_ARGS(peer->peer_name),
         msg, src, dst, nodelay, sndbuf, rcvbuf, flags);
     ompi_output(0, buff);
 }
