@@ -28,6 +28,7 @@
 #include "datatype/datatype.h"
 #include "class/ompi_object.h"
 #include "class/ompi_pointer_array.h"
+#include "mpi/f77/fint_2_int.h"
 
 
 /**
@@ -151,7 +152,8 @@ typedef void (ompi_op_c_handler_fn_t)(void *, void *, int *, MPI_Datatype *);
 /**
  * Typedef for fortran op functions.
  */
-typedef void (ompi_op_fortran_handler_fn_t)(void *, void *, int *, MPI_Fint *);
+typedef void (ompi_op_fortran_handler_fn_t)(void *, void *, 
+                                            MPI_Fint *, MPI_Fint *);
 
 
 /*
@@ -420,21 +422,21 @@ static inline bool ompi_op_is_commute(ompi_op_t *op)
  * the target buffer).
  *
  * This function figures out which reduction operation function to
- * invoke and wehther to invoke it with C- or Fortran-style invocation
+ * invoke and whether to invoke it with C- or Fortran-style invocation
  * methods.  If the op is intrinsic and has the operation defined for
- * dtype, the appropriate bacl-end function will be invoked.
+ * dtype, the appropriate back-end function will be invoked.
  * Otherwise, the op is assumed to be a user op and the first function
  * pointer in the op array will be used.
  *
  * NOTE: This function assumes that a correct combination will be
  * given to it; it makes no provision for errors (in the name of
  * optimization).  If you give it an intrinsic op with a datatype that
- * is note defined to have that operation, it is likely to seg fault.
+ * is not defined to have that operation, it is likely to seg fault.
  */
 static inline void ompi_op_reduce(ompi_op_t *op, void *source, void *target,
                                   int count, ompi_datatype_t *dtype)
 {
-  MPI_Fint fint = (MPI_Fint) dtype->d_f_to_c_index;
+  MPI_Fint f_dtype, f_count;
 
   /*
    * Call the reduction function.  Two dimensions: a) if both the op
@@ -445,15 +447,18 @@ static inline void ompi_op_reduce(ompi_op_t *op, void *source, void *target,
    * NOTE: We assume here that we will get a valid result back from
    * the ompi_op_ddt_map[] (and not -1) -- if we do, then the
    * parameter check in the top-level MPI function should have caught
-   * it.  If we get -1 because the top-level parameter check is off,
-   * then it's an erroneous program and it's the user's fault.  :-)
+   * it.  If we get -1 because the top-level parameter check is turned
+   * off, then it's an erroneous program and it's the user's fault.
+   * :-)
    */
 
   if (0 != (op->o_flags & OMPI_OP_FLAGS_INTRINSIC) &&
       dtype->id < DT_MAX_PREDEFINED) {
     if (0 != (op->o_flags & OMPI_OP_FLAGS_FORTRAN_FUNC)) {
+      f_dtype = OMPI_INT_2_FINT(dtype->d_f_to_c_index);
+      f_count = OMPI_INT_2_FINT(count);
       op->o_func[ompi_op_ddt_map[dtype->id]].fort_fn(source, target,
-                                                     &count, &fint);
+                                                     &f_count, &f_dtype);
     } else {
       op->o_func[ompi_op_ddt_map[dtype->id]].c_fn(source, target, &count,
                                                   &dtype);
@@ -463,7 +468,9 @@ static inline void ompi_op_reduce(ompi_op_t *op, void *source, void *target,
   /* User-defined function */
 
   else if (0 != (op->o_flags & OMPI_OP_FLAGS_FORTRAN_FUNC)) {
-    op->o_func[0].fort_fn(source, target, &count, &fint);
+    f_dtype = OMPI_INT_2_FINT(dtype->d_f_to_c_index);
+    f_count = OMPI_INT_2_FINT(count);
+    op->o_func[0].fort_fn(source, target, &f_count, &f_dtype);
   } else {
     op->o_func[0].c_fn(source, target, &count, &dtype);
   }
