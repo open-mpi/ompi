@@ -123,18 +123,7 @@ typedef struct {
  */
 
 #if !defined(HAVE_VASPRINTF) || !defined(HAVE_VSNPRINTF)
-#if __STDC__
 #include <stdarg.h>
-#else
-#ifdef __cplusplus
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-#endif /* __STDC__ */
-#endif
-
-#if !defined(HAVE_SNPRINTF) || !defined(HAVE_VSNPRINTF)
 #include <stdlib.h>
 #endif
 

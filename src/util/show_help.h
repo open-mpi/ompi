@@ -76,15 +76,7 @@
 
 #include "ompi_config.h"
 
-#if __STDC__
 #include <stdarg.h>
-#else
-#ifdef __cplusplus
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-#endif /* __STDC__ */
 
 
 #ifdef __cplusplus
