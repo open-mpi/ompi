@@ -53,20 +53,6 @@ extern ompi_process_name_t mca_oob_name_self;
  * OOB API 
  */
 
-#if 0 /* not used anymore */
-/**
- * Supported datatypes for conversion operations.
- */
-typedef enum {
-    MCA_OOB_BASE_BYTE, /**< a byte of data */
-    MCA_OOB_BASE_INT16, /**< a 16 bit integer */
-    MCA_OOB_BASE_INT32, /**< a 32 bit integer */
-    MCA_OOB_BASE_STRING, /**< a NULL terminated string */
-    MCA_OOB_BASE_PACKED /**< already packed data. */
-} mca_oob_base_type_t;
-
-#endif
-
 /**
 *   General flags for send/recv
 * 
@@ -220,7 +206,7 @@ typedef void (*mca_oob_callback_fn_t)(
     ompi_process_name_t* peer, 
     struct iovec* msg, 
     int count,
-    int* tag,
+    int tag,
     void* cbdata);
 
 /**
@@ -238,8 +224,8 @@ typedef void (*mca_oob_callback_fn_t)(
 typedef void (*mca_oob_callback_packed_fn_t)(
     int status,
     ompi_process_name_t* peer, 
-    ompi_buffer_t* buffer,
-    int* tag,
+    ompi_buffer_t buffer,
+    int tag,
     void* cbdata);
 
 /**
@@ -270,6 +256,31 @@ int mca_oob_send_nb(
     void* cbdata);
 
 /**
+*  Non-blocking version of mca_oob_send_packed().
+*
+*  @param peer (IN)    Opaque name of peer process.
+*  @param buffer (IN)  Opaque buffer handle.
+*  @param tag (IN)     User defined tag for matching send/recv.
+*  @param flags (IN)   Currently unused.
+*  @param cbfunc (IN)  Callback function on send completion.
+*  @param cbdata (IN)  User data that is passed to callback function.
+*  @return             OMPI error code (<0) on error number of bytes actually sent.
+*
+*  The user supplied callback function is called when the send completes. Note that
+*  the callback may occur before the call to mca_oob_send returns to the caller, 
+*  if the send completes during the call.
+*
+*/
+
+int mca_oob_send_packed_nb(
+    ompi_process_name_t* peer, 
+    ompi_buffer_t buffer,
+    int tag,
+    int flags, 
+    mca_oob_callback_packed_fn_t cbfunc,
+    void* cbdata);
+
+/**
 * Non-blocking version of mca_oob_recv().
 *
 * @param peer (IN)    Opaque name of peer process or MCA_OOB_NAME_ANY for wildcard receive.
@@ -289,44 +300,33 @@ int mca_oob_recv_nb(
     ompi_process_name_t* peer, 
     struct iovec* msg,  
     int count, 
-    int* tag,
+    int tag,
     int flags, 
     mca_oob_callback_fn_t cbfunc,
     void* cbdata);
 
-#if 0 /* not used any more */
-/*
- * functions for pack and unpack routines
- */
 /**
- * This function packs the passed data according to the type enum.
- *
- * @param dest the destination for the packed data
- * @param src the source of the data
- * @param n the number of elements in the src
- * @param type the type of data 
- *
- * @retval OMPI_SUCCESS
- * @retval OMPI_ERROR
- */
+* Non-blocking version of mca_oob_recv_packed().
+*
+* @param peer (IN)    Opaque name of peer process or MCA_OOB_NAME_ANY for wildcard receive.
+* @param buffer (IN)  Array of iovecs describing user buffers and lengths.
+* @param count (IN)   Number of elements in iovec array.
+* @param tag (IN)     User defined tag for matching send/recv.
+* @param flags (IN)   May be MCA_OOB_PEEK to return up to size bytes of msg w/out removing it from the queue,
+* @param cbfunc (IN)  Callback function on recv completion.
+* @param cbdata (IN)  User data that is passed to callback function.
+* @return             OMPI error code (<0) on error or number of bytes actually received.
+*
+* The user supplied callback function is called asynchronously when a message is received 
+* that matches the call parameters.
+*/
 
-int mca_oob_base_pack(void * dest, void * src, size_t n, mca_oob_base_type_t type);
-
-/**
- * This function unpacks the passed data according to the type enum.
- *
- * @param dest the destination for the unpacked data
- * @param src the source of the packed data
- * @param n the number of elements in the src
- * @param type the type of the data to unpack
- * 
- * @retval OMPI_SUCCESS
- * @retval OMPI_ERROR
- */
-
-int mca_oob_base_unpack(void * dest, void * src, size_t n, mca_oob_base_type_t type);
-#endif 
-
+int mca_oob_recv_packed_nb(
+    ompi_process_name_t* peer, 
+    int tag,
+    int flags, 
+    mca_oob_callback_packed_fn_t cbfunc,
+    void* cbdata);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

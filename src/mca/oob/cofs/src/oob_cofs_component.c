@@ -105,11 +105,7 @@ mca_oob_t* mca_oob_cofs_init(bool *allow_multi_user_threads, bool *have_hidden_t
   free(tmp);
 
   mca_oob_cofs_serial = 0;
-#if 0
-  return NULL;
-#else
   return &mca_oob_cofs;
-#endif
 }
 
 

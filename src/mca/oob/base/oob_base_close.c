@@ -33,7 +33,12 @@ int mca_oob_base_close(void)
   OBJ_DESTRUCT(&mca_oob_base_modules);
   OBJ_DESTRUCT(&mca_oob_base_components);
 
-  /* All done */
+  if( NULL != mca_oob_base_include )
+    free(mca_oob_base_include);
+  if( NULL != mca_oob_base_exclude )
+    free(mca_oob_base_exclude);
 
+  /* All done */
   return OMPI_SUCCESS;
 }
+

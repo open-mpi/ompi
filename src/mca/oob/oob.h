@@ -231,6 +231,8 @@ extern "C" {
  * Global struct holding the selected module's function pointers
  */
 extern int mca_oob_base_output;
+extern char* mca_oob_base_include;
+extern char* mca_oob_base_exclude;
 extern ompi_list_t mca_oob_base_components;
 extern ompi_list_t mca_oob_base_modules;
 
