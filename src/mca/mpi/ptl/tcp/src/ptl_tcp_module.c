@@ -10,8 +10,8 @@
 #include "lam/mem/malloc.h"
 #include "mca/mpi/pml/pml.h"
 #include "mca/mpi/ptl/ptl.h"
-#include "mca/lam/base/mca_lam_param.h"
-#include "mca/lam/base/module_exchange.h"
+#include "mca/lam/base/mca_base_param.h"
+#include "mca/lam/base/mca_base_module_exchange.h"
 #include "ptl_tcp.h"
 
 mca_ptl_tcp_module_1_0_0_t mca_ptl_tcp_module = {
