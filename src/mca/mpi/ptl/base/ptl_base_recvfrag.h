@@ -11,7 +11,7 @@
 #include "mca/mpi/ptl/base/ptl_base_recvreq.h"
 #include "mca/mpi/ptl/base/ptl_base_match.h"
 
-extern lam_class_info_t mca_ptl_base_recv_frag_cls;
+extern lam_class_info_t mca_ptl_base_recv_frag_t_class_info;
 
 
 struct mca_ptl_base_recv_frag_t {

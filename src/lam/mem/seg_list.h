@@ -22,10 +22,10 @@ struct lam_seg_list_t
 };
 typedef struct lam_seg_list_t lam_seg_list_t;
 
-extern lam_class_info_t     lam_seg_list_cls;
+extern lam_class_info_t     lam_seg_list_t_class_info;
 
-void lam_sgl_init(lam_seg_list_t *slist);
-void lam_sgl_destroy(lam_seg_list_t *slist);
+void lam_sgl_construct(lam_seg_list_t *slist);
+void lam_sgl_destruct(lam_seg_list_t *slist);
 void lam_sgl_append_elt_chunk(
     lam_seg_list_t *slist, 
     void *chunk, 

@@ -42,7 +42,7 @@ int MPI_Info_create(MPI_Info *info) {
      * allocates the space for MPI_Info, but also calls all the
      * relevant init functions.
      */
-    (*info) = OBJ_CREATE(lam_info_t, &lam_info_cls);
+    (*info) = OBJ_NEW(lam_info_t);
     
     if (NULL == (*info)) {
         printf ("Malloc failed. Ran out of resources\n");

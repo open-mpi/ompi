@@ -8,18 +8,21 @@
 
 #define CHANNEL_CLS(chnl)       ((lam_ctchannel_class_t *)(OBJECT(chnl)->obj_class))
 
-lam_ctchannel_class_t   lam_ctchannel_cls = {
-{"lam_ct_channel_t", &lam_object_cls,
-    (class_init_t)lam_cth_init,
-    (class_destroy_t)lam_obj_destroy},
+lam_ctchannel_class_t   lam_ct_channel_t_class_info = {
+    {
+        "lam_ct_channel_t",
+        CLASS_INFO(lam_object_t),
+        (lam_construct_t)lam_cth_construct,
+        (lam_destruct_t)lam_object_destruct
+    },
     NULL, NULL, NULL, NULL,
     NULL, NULL
 };
 
 
-void lam_cth_init(lam_ctchannel_t *channel)
+void lam_cth_construct(lam_ctchannel_t *channel)
 {
-    SUPER_INIT(channel, lam_ctchannel_cls.cls_parent);
+    OBJ_CONSTRUCT_SUPER(channel, lam_object_t);
     channel->cth_status = CT_CHNL_CLOSED;
     channel->cth_id = 0;
     channel->cth_timeout_secs = 0;
@@ -88,10 +91,13 @@ uint32_t lam_cth_send_packed_msg(lam_ctchannel_t *channel, const uint8_t *packed
  */
 
 
-lam_ctchannel_class_t   lam_tcp_channel_cls = {
-    {"lam_tcp_chnl_t", &lam_ctchannel_cls,
-        (class_init_t)lam_tcpch_init,
-        (class_destroy_t)lam_tcpch_destroy},
+lam_ctchannel_class_t   lam_tcp_chnl_t_class_info = {
+    {
+        "lam_tcp_chnl_t",
+        CLASS_INFO(lam_ctchannel_t),
+        (lam_construct_t) lam_tcpch_construct,
+        (lam_destruct_t) lam_tcpch_destruct
+    },
     lam_tcpch_send,
     lam_tcpch_recv,
     lam_tcpch_get_msg,
@@ -100,17 +106,17 @@ lam_ctchannel_class_t   lam_tcp_channel_cls = {
     lam_tcpch_send_packed_msg
 };
 
-void lam_tcpch_init(lam_tcp_chnl_t *channel)
+void lam_tcpch_construct(lam_tcp_chnl_t *channel)
 {
-    SUPER_INIT(channel, lam_tcp_channel_cls.cls_parent);
+    OBJ_CONSTRUCT_SUPER(channel, lam_object_t);
     channel->tcp_sockfd = 0;
     memset(&(channel->tcp_addr), 0, sizeof(channel->tcp_addr));
     channel->tcp_blocking = 0;
 }
 
-void lam_tcpch_destroy(lam_tcp_chnl_t *channel)
+void lam_tcpch_destruct(lam_tcp_chnl_t *channel)
 {
-    SUPER_DESTROY(channel, lam_tcp_channel_cls.cls_parent);
+    OBJ_DESTRUCT_SUPER(channel, lam_ct_channel_t);
 }
 
 

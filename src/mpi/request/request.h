@@ -9,7 +9,7 @@
 #include "lam/lfc/list.h"
 
 
-extern lam_class_info_t lam_request_cls;
+extern lam_class_info_t lam_request_t_class_info;
 
 typedef enum {
     LAM_REQUEST_PML,
@@ -24,8 +24,8 @@ struct lam_request_t {
 };
 typedef struct lam_request_t lam_request_t;
 
-void lam_request_init(lam_request_t*);
-void lam_request_destroy(lam_request_t*);
+void lam_request_construct(lam_request_t*);
+void lam_request_destruct(lam_request_t*);
 
 #endif
 

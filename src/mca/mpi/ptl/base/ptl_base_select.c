@@ -76,7 +76,7 @@ int mca_ptl_base_select(bool *allow_multi_user_threads,
           if (NULL == sm) {
             return LAM_ERR_OUT_OF_RESOURCE;
           }
-          lam_list_item_init((lam_list_item_t *) sm);
+          lam_list_item_construct((lam_list_item_t *) sm);
           sm->pbsm_module = module;
           sm->pbsm_actions = actions[i];
           lam_list_append(&mca_ptl_base_modules_initialized,

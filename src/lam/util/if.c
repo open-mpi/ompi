@@ -66,15 +66,15 @@ static int lam_ifinit(void)
         close(sd);
         return LAM_ERROR;
     }
-    STATIC_INIT(lam_if_list, &lam_list_cls);
+    OBJ_CONSTRUCT(&lam_if_list, lam_list_t);
 
     for(ptr = buff; ptr < buff + ifconf.ifc_len; ) {
         struct ifreq* ifr = (struct ifreq*)ptr;
         lam_if_t intf;
         lam_if_t *intf_ptr;
-        lam_list_item_init(&intf.if_item);
+        lam_list_item_construct(&intf.if_item);
 
-        STATIC_INIT(intf, &lam_list_item_cls);
+        OBJ_CONSTRUCT(&intf, lam_list_item_t);
 
 #if defined(__APPLE__)
         ptr += (sizeof(ifr->ifr_name) + 

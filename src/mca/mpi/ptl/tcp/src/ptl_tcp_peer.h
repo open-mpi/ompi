@@ -26,7 +26,7 @@ typedef enum {
 } mca_ptl_tcp_state_t;
     
 
-extern lam_class_info_t mca_ptl_tcp_peer_cls;
+extern lam_class_info_t mca_ptl_tcp_peer_t_class_info;
 
 /**
  *  An abstraction that represents a connection to a peer process.

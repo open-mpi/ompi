@@ -14,7 +14,7 @@
 #include "ptl_tcp.h"
 #include "ptl_tcp_peer.h"
 
-extern lam_class_info_t mca_ptl_tcp_proc_cls;
+extern lam_class_info_t mca_ptl_tcp_proc_t_class_info;
 
 
 /**

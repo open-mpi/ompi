@@ -111,7 +111,7 @@ void test_dynamic()
 {
     lam_fast_hash_t     *table;
     
-    table = OBJ_CREATE(lam_fast_hash_t, &lam_fast_hash_cls);
+    table = OBJ_NEW(lam_fast_hash_t);
     if ( NULL == table )
     {
         printf("Error: Unable to create hash table.\n");
@@ -128,12 +128,12 @@ void test_static()
 {
     lam_fast_hash_t     table;
     
-    STATIC_INIT(table, &lam_fast_hash_cls);
+    OBJ_CONSTRUCT(&table, lam_fast_hash_t);
 
     printf("Testing with statically created table...\n");
     test_htable(&table);
 
-    STATIC_DESTROY(table);
+    OBJ_DESTRUCT(&table);
 }
 
 

@@ -97,7 +97,7 @@ int MPI_Info_set(MPI_Info info, char *key, char *value) {
         free(old_info->ie_value);
         old_info->ie_value = new_value;
     } else {
-        new_info = OBJ_CREATE(lam_info_entry_t, &lam_info_entry_cls);
+        new_info = OBJ_NEW(lam_info_entry_t);
         if (NULL == new_info) {
             printf ("Unable to malloc memory for new (key, value) pair\n");
             return MPI_ERR_SYSRESOURCE;

@@ -58,7 +58,7 @@ static void release_registry_item(registry_item_t *ri);
 /*
  * Initialize the registry
  */
-int mca_base_module_registry_init(void)
+int mca_base_module_registry_construct(void)
 {
   /* Setup internal structures */
 
@@ -69,7 +69,7 @@ int mca_base_module_registry_init(void)
     if (lt_dlinit() != 0)
       return LAM_ERR_OUT_OF_RESOURCE;
 
-    lam_list_init(&registry);
+    lam_list_construct(&registry);
     initialized = true;
   }
 
@@ -96,12 +96,12 @@ int mca_base_module_registry_retain(char *type, lt_dlhandle module_handle,
 
   /* Initialize the registry item */
 
-  lam_list_item_init((lam_list_item_t *) ri);
+  lam_list_item_construct((lam_list_item_t *) ri);
   strcpy(ri->ri_type, type);
   ri->ri_dlhandle = module_handle;
   ri->ri_module_struct = module_struct;
   ri->ri_refcount = 1;
-  lam_list_init(&ri->ri_dependencies);
+  lam_list_construct(&ri->ri_dependencies);
 
   /* Append the new item to the registry */
 
@@ -234,7 +234,7 @@ static int link_items(registry_item_t *src, registry_item_t *depend)
 
   /* Initialize the new dependency item */
 
-  lam_list_item_init((lam_list_item_t *) di);
+  lam_list_item_construct((lam_list_item_t *) di);
   di->di_registry_entry = depend;
 
   /* Add it to the dependency list on the source registry entry */
@@ -283,7 +283,7 @@ static void release_registry_item(registry_item_t *ri)
        pointer is no longer valid because it has [potentially] been
        unloaded from memory.  So don't try to use it.  :-) */
 
-    lam_list_destroy(&di->di_registry_entry->ri_dependencies);
+    lam_list_destruct(&di->di_registry_entry->ri_dependencies);
     lam_list_remove_item(&registry, (lam_list_item_t *) ri);
     free(ri);
   }

@@ -15,7 +15,7 @@
  *
  */
 
-extern lam_class_info_t    lam_array_cls;
+extern lam_class_info_t    lam_array_t_class_info;
 
 
 /*
@@ -39,13 +39,13 @@ typedef struct lam_array_t lam_array_t;
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
-  void lam_arr_init(lam_array_t *arr);
-  void lam_arr_destroy(lam_array_t *arr);
+  void lam_arr_construct(lam_array_t *arr);
+  void lam_arr_destruct(lam_array_t *arr);
 
   /* initializes array with fixed length.
-   * lam_arr_init() must have been called first.
+   * lam_arr_construct() must have been called first.
    */
-  bool lam_arr_init_with(lam_array_t *arr, size_t length);
+  bool lam_arr_construct_with(lam_array_t *arr, size_t length);
   
   bool lam_arr_append_item(lam_array_t *arr, lam_object_t *item);
   

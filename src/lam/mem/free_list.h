@@ -11,7 +11,7 @@
 #include "lam/mem/seg_list.h"
 #include "lam/mem/mem_pool.h"
 
-extern lam_class_info_t lam_free_list_cls;
+extern lam_class_info_t lam_free_list_t_class_info;
 
 
 struct lam_free_list_t
@@ -28,12 +28,12 @@ struct lam_free_list_t
 typedef struct lam_free_list_t lam_free_list_t;
 
 
-void lam_free_list_init(lam_free_list_t *flist);
-void lam_free_list_destroy(lam_free_list_t *flist);
+void lam_free_list_construct(lam_free_list_t *flist);
+void lam_free_list_destruct(lam_free_list_t *flist);
 int  lam_free_list_grow(lam_free_list_t* flist, size_t num_elements);
 
 
-int lam_free_list_init_with(
+int lam_free_list_construct_with(
     lam_free_list_t *flist, 
     size_t element_size,
     lam_class_info_t* element_class,

@@ -31,9 +31,9 @@ typedef struct lam_allocator
     void            (*alc_free_fn)(struct lam_allocator *, void *);
 } lam_allocator_t;
 
-extern lam_class_info_t      allocator_cls;
+extern lam_class_info_t lam_allocator_t_class_info;
 
-void lam_allocator_init(lam_allocator_t *allocator);
+void lam_allocator_construct(lam_allocator_t *allocator);
 
 void *lam_alg_get_chunk(size_t chunk_size, int is_shared,
                            int mem_protect);

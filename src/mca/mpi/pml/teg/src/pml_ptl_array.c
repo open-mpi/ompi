@@ -6,17 +6,17 @@
 #include "pml_ptl_array.h"
 
 
-lam_class_info_t mca_pml_teg_array_cls = {
+lam_class_info_t mca_pml_teg_array_t_class_info = {
     "mca_ptl_array_t",
-    &lam_object_cls,
-    (class_init_t) mca_ptl_array_init,
-    (class_destroy_t) mca_ptl_array_destroy
+    CLASS_INFO(lam_object_t),
+    (lam_construct_t) mca_ptl_array_construct,
+    (lam_destruct_t) mca_ptl_array_destruct
 };
                                                                                                                              
 
-void mca_ptl_array_init(mca_ptl_array_t* array)
+void mca_ptl_array_construct(mca_ptl_array_t* array)
 {
-    SUPER_INIT(array, &lam_object_cls);
+    OBJ_CONSTRUCT_SUPER(array, lam_object_t);
     array->ptl_procs = 0;
     array->ptl_size = 0;
     array->ptl_index = 0;
@@ -24,11 +24,11 @@ void mca_ptl_array_init(mca_ptl_array_t* array)
 }
 
 
-void mca_ptl_array_destroy(mca_ptl_array_t* array)
+void mca_ptl_array_destruct(mca_ptl_array_t* array)
 {
-    if (array->ptl_procs != 0)
+    if(array->ptl_procs != 0)
         free(array->ptl_procs);
-    SUPER_DESTROY(array, &lam_object_cls);
+    OBJ_DESTRUCT_SUPER(array, lam_object_t);
 }
 
 

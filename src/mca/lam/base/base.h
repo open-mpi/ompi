@@ -78,7 +78,7 @@ extern "C" {
 
   /* mca_base_module_register.c */
 
-  int mca_base_module_registry_init(void);
+  int mca_base_module_registry_construct(void);
   int mca_base_module_registry_retain(char *type, lt_dlhandle module_handle, 
                                       const mca_base_module_t *module_struct);
   int mca_base_module_registry_link(const char *src_type, 

@@ -75,7 +75,7 @@ static inline lam_proc_t* lam_comm_lookup_peer(lam_communicator_t* comm, size_t 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
-  int lam_comm_init(lam_communicator_t *comm);
+  int lam_comm_construct(lam_communicator_t *comm);
   int lam_comm_link_function(void);
 #if defined(c_plusplus) || defined(__cplusplus)
 }

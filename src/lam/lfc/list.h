@@ -15,8 +15,8 @@
  *
  */
 
-extern lam_class_info_t   lam_list_item_cls;
-extern lam_class_info_t   lam_list_cls;
+extern lam_class_info_t   lam_list_item_t_class_info;
+extern lam_class_info_t   lam_list_t_class_info;
 typedef int               lam_list_type_t;
 
 
@@ -37,8 +37,8 @@ typedef struct lam_list_item
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
-  void lam_list_item_init(lam_list_item_t *item);
-  void lam_list_item_destroy(lam_list_item_t *item);
+  void lam_list_item_construct(lam_list_item_t *item);
+  void lam_list_item_destruct(lam_list_item_t *item);
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
@@ -68,8 +68,8 @@ typedef struct lam_list
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
-  void lam_list_init(lam_list_t *list);
-  void lam_list_destroy(lam_list_t *list);
+  void lam_list_construct(lam_list_t *list);
+  void lam_list_destruct(lam_list_t *list);
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

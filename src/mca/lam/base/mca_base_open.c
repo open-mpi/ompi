@@ -64,7 +64,7 @@ int mca_base_open(void)
 
   /* Open up the module registry */
 
-  return mca_base_module_registry_init();
+  return mca_base_module_registry_construct();
 }
 
 

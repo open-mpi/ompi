@@ -115,7 +115,7 @@ bool lam_output_init(void)
 
   /* Initialize the mutex that protects the output */
 
-  lam_mutex_init(&mutex);
+  lam_mutex_construct(&mutex);
   initialized = true;
 
   /* Open the default verbose stream */

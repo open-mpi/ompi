@@ -259,7 +259,7 @@ int mca_base_param_finalize(void)
     for (i = 0; i < size; ++i)
       param_free(array[i]);
 
-    lam_arr_destroy(&mca_base_params);
+    lam_arr_destruct(&mca_base_params);
     initialized = false;
   }
 
@@ -281,7 +281,7 @@ param_register(const char *type_name, const char *module_name, const char *param
   /* Initialize the array if it has never been initialized */
 
   if (!initialized) {
-    lam_arr_init(&mca_base_params);
+    lam_arr_construct(&mca_base_params);
     initialized = true;
   }
 

@@ -98,7 +98,7 @@ typedef struct lam_ctchannel_class
 } lam_ctchannel_class_t;
 
 
-extern lam_ctchannel_class_t    lam_ctchannel_cls;
+extern lam_ctchannel_class_t    lam_ct_channel_t_class_info;
 
 typedef struct lam_ctchannel
 {
@@ -109,7 +109,7 @@ typedef struct lam_ctchannel
 } lam_ctchannel_t;
 
 
-void lam_cth_init(lam_ctchannel_t *channel);
+void lam_cth_construct(lam_ctchannel_t *channel);
 
 /*
  *
@@ -189,10 +189,10 @@ typedef struct lam_tcp_channel
     int                 tcp_blocking;
 } lam_tcp_chnl_t;
 
-extern lam_ctchannel_class_t   lam_tcp_channel_cls;
+extern lam_ctchannel_class_t   lam_tcp_chnl_t_class_info;
 
-void lam_tcpch_init(lam_tcp_chnl_t *channel);
-void lam_tcpch_destroy(lam_tcp_chnl_t *channel);
+void lam_tcpch_construct(lam_tcp_chnl_t *channel);
+void lam_tcpch_destruct(lam_tcp_chnl_t *channel);
 
 
 uint32_t lam_tcpch_send(lam_tcp_chnl_t *channel, const uint8_t *data, 

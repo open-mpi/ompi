@@ -14,7 +14,7 @@
 
 
 static void mca_ptl_tcp_peer_init(mca_ptl_base_peer_t* ptl_peer);
-static void mca_ptl_tcp_peer_destroy(mca_ptl_base_peer_t* ptl_peer);
+static void mca_ptl_tcp_peer_destruct(mca_ptl_base_peer_t* ptl_peer);
 static int  mca_ptl_tcp_peer_start_connect(mca_ptl_base_peer_t*);
 static void mca_ptl_tcp_peer_close_i(mca_ptl_base_peer_t*);
 static void mca_ptl_tcp_peer_connected(mca_ptl_base_peer_t*);
@@ -23,11 +23,11 @@ static void mca_ptl_tcp_peer_send_handler(mca_ptl_base_peer_t*, int sd);
 static void mca_ptl_tcp_peer_except_handler(mca_ptl_base_peer_t*, int sd);
 
 
-lam_class_info_t  mca_ptl_tcp_peer_cls = {
+lam_class_info_t  mca_ptl_tcp_peer_t_class_info = {
     "mca_tcp_ptl_peer_t", 
-    &lam_list_cls,
-    (class_init_t)mca_ptl_tcp_peer_init, 
-    (class_destroy_t)mca_ptl_tcp_peer_destroy
+    CLASS_INFO(lam_list_t),
+    (lam_construct_t)mca_ptl_tcp_peer_construct, 
+    (lam_destruct_t)mca_ptl_tcp_peer_destruct
 };
 
 
@@ -42,9 +42,9 @@ static lam_reactor_listener_t mca_ptl_tcp_peer_listener = {
  * Initialize state of the peer instance.
  */
 
-void mca_ptl_tcp_peer_init(mca_ptl_base_peer_t* ptl_peer)
+void mca_ptl_tcp_peer_construct(mca_ptl_base_peer_t* ptl_peer)
 {
-    SUPER_INIT(ptl_peer, &lam_list_cls);
+    OBJ_CONSTRUCT_SUPER(ptl_peer, lam_list_t);
     ptl_peer->peer_ptl = 0;
     ptl_peer->peer_proc = 0;
     ptl_peer->peer_addr = 0;
@@ -53,8 +53,8 @@ void mca_ptl_tcp_peer_init(mca_ptl_base_peer_t* ptl_peer)
     ptl_peer->peer_recv_frag = 0;
     ptl_peer->peer_state = MCA_PTL_TCP_CLOSED;
     ptl_peer->peer_retries = 0;
-    STATIC_INIT(ptl_peer->peer_frags, &lam_list_cls);
-    lam_mutex_init(&ptl_peer->peer_lock);
+    OBJ_CONSTRUCT(&ptl_peer->peer_frags, lam_list_t);
+    lam_mutex_construct(&ptl_peer->peer_lock);
 }
 
 
@@ -62,11 +62,11 @@ void mca_ptl_tcp_peer_init(mca_ptl_base_peer_t* ptl_peer)
  * Cleanup any resources held by the peer.
  */
 
-void mca_ptl_tcp_peer_destroy(mca_ptl_base_peer_t* ptl_peer)
+void mca_ptl_tcp_peer_destruct(mca_ptl_base_peer_t* ptl_peer)
 {
     mca_ptl_tcp_proc_remove(ptl_peer->peer_proc, ptl_peer);
     mca_ptl_tcp_peer_close_i(ptl_peer);
-    SUPER_DESTROY(ptl_peer, &lam_list_cls);
+    OBJ_DESTRUCT_SUPER(ptl_peer, lam_list_t);
 }
 
 

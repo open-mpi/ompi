@@ -47,7 +47,7 @@ int mca_pml_base_select(mca_pml_t *selected, bool *allow_multi_user_threads,
 
   best_priority = -1;
   best_module = NULL;
-  lam_list_init(&opened);
+  lam_list_construct(&opened);
   for (item = lam_list_get_first(&mca_pml_base_modules_available);
        lam_list_get_end(&mca_pml_base_modules_available) != item;
        item = lam_list_get_next(item)) {
@@ -81,7 +81,7 @@ int mca_pml_base_select(mca_pml_t *selected, bool *allow_multi_user_threads,
         if (NULL == om) {
           return LAM_ERR_OUT_OF_RESOURCE;
         }
-        lam_list_item_init((lam_list_item_t *) om);
+        lam_list_item_construct((lam_list_item_t *) om);
         om->om_module = module;
         lam_list_append(&opened, (lam_list_item_t*) om);
       }

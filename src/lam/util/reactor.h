@@ -15,7 +15,7 @@ extern const int LAM_REACTOR_NOTIFY_RECV;
 extern const int LAM_REACTOR_NOTIFY_SEND;
 extern const int LAM_REACTOR_NOTIFY_EXCEPT;
 
-extern lam_class_info_t lam_reactor_cls;
+extern lam_class_info_t lam_reactor_descriptor_t_class_info;
 
 
 /*
@@ -52,8 +52,8 @@ struct lam_reactor_descriptor_t {
 typedef struct lam_reactor_descriptor_t lam_reactor_descriptor_t;
 
 
-void lam_reactor_descriptor_init(lam_reactor_descriptor_t*);
-void lam_reactor_descriptor_destroy(lam_reactor_descriptor_t*);
+void lam_reactor_descriptor_construct(lam_reactor_descriptor_t*);
+void lam_reactor_descriptor_destruct(lam_reactor_descriptor_t*);
 
 
 struct lam_reactor_t {
@@ -73,8 +73,8 @@ struct lam_reactor_t {
 typedef struct lam_reactor_t lam_reactor_t;
 
  
-void lam_reactor_init(lam_reactor_t*);
-void lam_reactor_destroy(lam_reactor_t*);
+void lam_reactor_construct(lam_reactor_t*);
+void lam_reactor_destruct(lam_reactor_t*);
 
 int  lam_reactor_insert(lam_reactor_t*, int sd, lam_reactor_listener_t*, void* user, int flags);
 int  lam_reactor_remove(lam_reactor_t*, int sd, int flags);

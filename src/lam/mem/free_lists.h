@@ -49,13 +49,13 @@ struct lam_free_lists_t
 typedef struct lam_free_lists_t lam_free_lists_t;
 
 
-extern lam_class_info_t lam_free_lists_cls;
+extern lam_class_info_t lam_free_lists_t_class_info;
 
-void lam_free_lists_init(lam_free_lists_t *flist);
-void lam_free_lists_destroy(lam_free_lists_t *flist);
+void lam_free_lists_construct(lam_free_lists_t *flist);
+void lam_free_lists_destruct(lam_free_lists_t *flist);
 
-/* lam_frl_init must have been called prior to calling this function */
-int lam_free_lists_init_with(lam_free_lists_t *flist, 
+/* lam_frl_construct must have been called prior to calling this function */
+int lam_free_lists_construct_with(lam_free_lists_t *flist, 
                   int nlists,
                   int pages_per_list,
                   size_t chunk_size, 
