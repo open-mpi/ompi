@@ -6834,7 +6834,7 @@
 
       <!-- ARGUMENT : inbuf -->
       <arg name="inbuf" intent="in">
-        <type kind="ptr">
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -6856,7 +6856,7 @@
 
       <!-- ARGUMENT : outbuf -->
       <arg name="outbuf" intent="out">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
