@@ -39,6 +39,7 @@
 
 #include "util/sys_info.h"
 #include "util/proc_info.h"
+#include "util/output.h"
 #include "util/os_path.h"
 #include "util/os_create_dirpath.h"
 #include "util/session_dir.h"
@@ -241,29 +242,14 @@ ompi_clean_dir(char *pathname)
 		if ((0 != strcmp(ep->d_name, ".")) &&
 		    (0 != strcmp(ep->d_name, "..")) &&
 		    (DT_DIR != ep->d_type)) {
-		    filenm = ompi_os_path(true, pathname, ep->d_name, NULL);
-		    if (!unlink(filenm)) {
-			if (ENOENT == errno) { /* file doesn't exist - race condition */
-			    /* ignore this */
-			} else if (EBUSY == errno) {  /* someone using it */
-			    /* left in for diag purposes - should print something */
-			    /* otherwise, normally just report error */
-			} else {  /* no idea what to do - punt */
-			    return OMPI_ERROR;
-			}
-		    }
+		    filenm = ompi_os_path(false, pathname, ep->d_name, NULL);
+		    unlink(filenm);
 		}
 	    }
-	    if (!rmdir(pathname)) { /* error */
-		if (EEXIST == errno || ENOTEMPTY == errno) { /* not empty */
-		} else if (ENOENT == errno || EBUSY == errno) {  /* doesn't exist or busy - race condition */
-		    /* put in diagnostic message for now */
-		} else {  /* no idea */
-		}
-	    }
-	    return OMPI_SUCCESS;
+	    closedir(dp);
 	}
-	return OMPI_ERROR;
+	rmdir(pathname);
+	return OMPI_SUCCESS;
     }
     return OMPI_ERROR;
 }

@@ -14,6 +14,7 @@
 #include "include/constants.h"
 #include "util/sys_info.h"
 #include "util/os_path.h"
+#include "util/os_create_dirpath.h"
 #include "util/session_dir.h"
 #include "util/proc_info.h"
 #include "support.h"
@@ -264,6 +265,8 @@ static bool test6(void)
 
 static bool test7(void)
 {
+    char *filenm;
+    FILE *fp;
 
     /* create test proc session directory tree */
     if (OMPI_ERROR == ompi_session_dir(true, NULL, ompi_system_info.user, "localhost", NULL, "test-universe", "test-job", "test-proc")) {
@@ -274,6 +277,23 @@ static bool test7(void)
 	    ompi_process_info.proc_session_dir,
 	    ompi_process_info.job_session_dir,
 	    ompi_process_info.universe_session_dir);
+
+    /* create some files */
+
+    filenm = ompi_os_path(false, ompi_process_info.proc_session_dir, "dum1", NULL);
+    fp = fopen(filenm, "w");
+    fprintf(fp, "ss");
+    fclose(fp);
+
+    filenm = ompi_os_path(false, ompi_process_info.job_session_dir, "dum2", NULL);
+    fp = fopen(filenm, "w");
+    fprintf(fp, "ss");
+    fclose(fp);
+
+    filenm = ompi_os_path(false, ompi_process_info.universe_session_dir, "dum3", NULL);
+    fp = fopen(filenm, "w");
+    fprintf(fp, "ss");
+    fclose(fp);
 
     if (OMPI_ERROR == ompi_session_dir_finalize()) {
 	return(false);
