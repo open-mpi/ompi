@@ -1,7 +1,9 @@
 .deps
 .libs
-libcofs.la
 Makefile
 Makefile.in
-oob_cofs.lo
-oob_cofs_module.lo
+*.lo
+libmca_oob_cofs.la
+oob_cofs_config.h
+oob_cofs_config.h.in
+stamp-h1

@@ -42,53 +42,64 @@
  */
 
   /* "Special" tags */
-#define MCA_OOB_ANY_TAG  -1
+#define MCA_OOB_ANY_TAG      -1
 #define MCA_OOB_REGISTRY_TAG -2
 
   /* "Special" vpids */
-#define MCA_OOB_MPIRUN  -1
+#define MCA_OOB_MPIRUN       -1
 
-typedef void (*mca_oob_recv_cb_t)(lam_job_handle_t job_handle, int tag, 
-                                  int vpid, void* data, size_t data_len, int status);
+typedef void (*mca_oob_base_recv_cb_t)(lam_job_handle_t job_handle, int tag, 
+                                       int vpid, void* data, size_t data_len, int status);
 
 
 /*
  * Functions every module instance will have to provide
  */
-typedef int (*mca_oob_query_fn_t)(int *priority);
-typedef struct mca_oob_1_0_0* (*mca_oob_init_fn_t)(void);
-typedef int (*mca_oob_send_fn_t)(lam_job_handle_t job_handle, int vpid, int tag, 
-                                 void* data, size_t data_len);
-typedef int (*mca_oob_recv_fn_t)(lam_job_handle_t job_handle, int* tag, int* vpid, 
-                                 void** data, size_t* data_len);
-typedef int (*mca_oob_recv_nb_fn_t)(lam_job_handle_t job_handle, int* tag, int* vpid, 
-                                    void** data, size_t* data_len);
-typedef int (*mca_oob_recv_cb_fn_t)(lam_job_handle_t job_handle, int tag, 
-                                    mca_oob_recv_cb_t callback);
-typedef int (*mca_oob_finalize_fn_t)(void);
+typedef int (*mca_oob_base_query_fn_t)(int *priority);
+typedef struct mca_oob_1_0_0_t* (*mca_oob_base_init_fn_t)(void);
+typedef int (*mca_oob_base_send_fn_t)(lam_job_handle_t job_handle, int vpid, int tag, 
+                                      void* data, size_t data_len);
+typedef int (*mca_oob_base_recv_fn_t)(lam_job_handle_t job_handle, int* tag, int* vpid, 
+                                      void** data, size_t* data_len);
+typedef int (*mca_oob_base_recv_nb_fn_t)(lam_job_handle_t job_handle, int* tag, int* vpid, 
+                                         void** data, size_t* data_len);
+typedef int (*mca_oob_base_recv_cb_fn_t)(lam_job_handle_t job_handle, int tag, 
+                                         mca_oob_base_recv_cb_t callback);
+typedef int (*mca_oob_base_finalize_fn_t)(void);
 
 
 /*
  * Ver 1.0.0
  */
-struct mca_oob_module_1_0_0_t {
-  mca_module_1_0_0_t super;
+struct mca_oob_base_module_1_0_0_t {
+  mca_base_module_t oobm_version;
+  mca_base_module_data_1_0_0_t oobm_data;
 
-  mca_oob_query_fn_t oobm_query;
-  mca_oob_init_fn_t oobm_init;
-  mca_oob_finalize_fn_t oob_finalize;
+  mca_oob_base_query_fn_t oobm_query;
+  mca_oob_base_init_fn_t oobm_init;
+  mca_oob_base_finalize_fn_t oob_finalize;
 };
-typedef struct mca_oob_module_1_0_0_t mca_oob_module_1_0_0_t;
+typedef struct mca_oob_base_module_1_0_0_t mca_oob_base_module_1_0_0_t;
 
 struct mca_oob_1_0_0_t {
-  mca_oob_send_fn_t oob_send;
-  mca_oob_recv_fn_t oob_recv;
-  mca_oob_recv_nb_fn_t oob_recv_nb;
-  mca_oob_recv_cb_fn_t oob_recv_cb;
+  mca_oob_base_send_fn_t oob_send;
+  mca_oob_base_recv_fn_t oob_recv;
+  mca_oob_base_recv_nb_fn_t oob_recv_nb;
+  mca_oob_base_recv_cb_fn_t oob_recv_cb;
 };
 typedef struct mca_oob_1_0_0_t mca_oob_1_0_0_t;
 
-typedef mca_oob_module_1_0_0_t mca_oob_module_t;
+/*
+ * Macro for use in modules that are of type coll v1.0.0
+ */
+#define MCA_OOB_BASE_VERSION_1_0_0 \
+  /* oob v1.0 is chained to MCA v1.0 */ \
+  MCA_BASE_VERSION_1_0_0, \
+  /* oob v1.0 */ \
+  "oob", 1, 0, 0
+
+
+typedef mca_oob_base_module_1_0_0_t mca_oob_base_module_t;
 typedef mca_oob_1_0_0_t mca_oob_t;
 
 
