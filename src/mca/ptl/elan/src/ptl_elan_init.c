@@ -355,7 +355,9 @@ mca_ptl_elan_state_init (mca_ptl_elan_component_t * emp)
                      "Elan version is not compatible with %s \n",
                      ELAN_VERSION);
         return OMPI_ERROR;
-    }
+    } 
+#else
+    ompi_output (0, "Elan version is %s \n", ELAN_VERSION);
 #endif
 
     /* Allocate elan capability from the heap */

@@ -6,6 +6,9 @@
 #include "test_util.h"
 
 #define MYBUFSIZE (4*1024*1024)
+#define CHECK 1
+#define PONG 0
+
 char        s_buf[MYBUFSIZE];
 char        r_buf[MYBUFSIZE];
 int         skip = 0;
@@ -15,7 +18,7 @@ main (int argc, char *argv[])
 {
     char hostname[32];
 
-    int         myid, numprocs, i;
+    int         myid, numprocs, i, j;
     double      startwtime = 0.0, endwtime;
     int         namelen;
     int         size;
@@ -45,7 +48,7 @@ main (int argc, char *argv[])
 
     /* touch the data */
     for (i = 0; i < size; i++) {
-        s_buf[i] = 'a' + i;
+        s_buf[i] = 'A';
     }
 
     gethostname(hostname, 32);
@@ -59,12 +62,25 @@ main (int argc, char *argv[])
 	    gettimeofday (&t_start, 0);
 	if (myid == 0) {
             MPI_Send (s_buf, size, MPI_CHAR, 1, i, MPI_COMM_WORLD);
-            /*MPI_Recv (r_buf, size, MPI_CHAR, 1, i, MPI_COMM_WORLD,
-	     * &stat);*/
+	    if (PONG)
+            MPI_Recv (r_buf, size, MPI_CHAR, 1, i, MPI_COMM_WORLD, &stat);
 	} else {
             MPI_Recv (r_buf, size, MPI_CHAR, 0, i, MPI_COMM_WORLD, &stat);
-            /*MPI_Send (s_buf, size, MPI_CHAR, 0, i, MPI_COMM_WORLD);*/
+	    if (PONG)
+            MPI_Send (s_buf, size, MPI_CHAR, 0, i, MPI_COMM_WORLD);
         }
+
+	if (CHECK && myid != 0) {
+	    for (j=0; j < size; j ++) {
+		if (r_buf[j] != 'A') {
+		    fprintf(stderr, "[%s:%s] error from byte %d \n",
+			    hostname, __FUNCTION__, j);
+		    break;
+		} else {
+		    r_buf[j] = '0';
+		}
+	    } 
+	}
     }
     gettimeofday (&t_end, 0);
 

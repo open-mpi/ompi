@@ -259,7 +259,7 @@ mca_ptl_elan_init_qdma_desc (struct mca_ptl_elan_send_frag_t *frag,
      *     Later will use the inline header to report the progress */
     frag->frag_base.frag_header = *hdr; 
 
-#if OMPI_PTL_ELAN_COMP_QUEUE || 1
+#if OMPI_PTL_ELAN_COMP_QUEUE
     /* XXX: Chain a QDMA to each queue and 
      * Have all the srcEvent fired to the Queue */
 
@@ -409,7 +409,7 @@ mca_ptl_elan_init_putget_desc (struct mca_ptl_elan_send_frag_t *frag,
     desc->chain_dma.dma_dstEvent = elan4_main2elan (ctx, 
 	    (void *) ptl->queue->input);
 
-#if OMPI_PTL_ELAN_COMP_QUEUE || 1
+#if OMPI_PTL_ELAN_COMP_QUEUE
     /* XXX: Chain a QDMA to each queue and 
      * Have all the srcEvent fired to the Queue */
 
@@ -543,7 +543,7 @@ mca_ptl_elan_init_get_desc (mca_ptl_elan_module_t *ptl,
     desc->chain_dma.dma_dstEvent = elan4_main2elan (ctx, 
 	    (void *) ptl->queue->input);
 
-#if OMPI_PTL_ELAN_COMP_QUEUE || 1
+#if OMPI_PTL_ELAN_COMP_QUEUE
     /* XXX: Chain a QDMA to each queue and 
      * Have all the srcEvent fired to the Queue */
     desc->comp_dma.dma_cookie   = elan4_local_cookie(ptl->queue->tx_cpool,

@@ -317,7 +317,7 @@ ompi_init_elan_qdma (mca_ptl_elan_component_t * emp,
 
     START_FUNC(PTL_ELAN_DEBUG_INIT);
 
-#if OMPI_PTL_ELAN_COMP_QUEUE || 1
+#if OMPI_PTL_ELAN_COMP_QUEUE
     /* Create a complete queue here, later use the queue above directly */
     /* Init the Transmit Queue structure */
     for (i = 0; i < num_rails; i++) {
