@@ -71,15 +71,15 @@ static void ompi_list_construct(ompi_list_t *list)
  */
 static void ompi_list_destruct(ompi_list_t *list)
 {
-    ompi_list_item_t *item;
+/*     ompi_list_item_t *item; */
 
-    if (NULL != list) {
-	while (NULL != (item = ompi_list_remove_first(list))) {
-	    OBJ_RELEASE(item);
-	}
+/*     if (NULL != list) { */
+/* 	while (NULL != (item = ompi_list_remove_first(list))) { */
+/* 	    OBJ_RELEASE(item); */
+/* 	} */
 
 	ompi_list_construct(list);
-    }
+/*     } */
 }
 
 
