@@ -152,3 +152,21 @@ lam_proc_t** lam_proc_self(size_t* size)
     return procs;
 }
 
+lam_proc_t * lam_proc_find ( lam_job_handle_t jobid, uint32_t vpid )
+{
+    lam_proc_t *proc;
+
+    /* return the proc-struct which matches this jobid+process id */
+    THREAD_LOCK(&lam_proc_lock);
+    for(proc =  (lam_proc_t*)lam_list_get_first(&lam_proc_list); 
+        proc != (lam_proc_t*)lam_list_get_end(&lam_proc_list);
+        proc =  (lam_proc_t*)lam_list_get_next(proc)) {
+        if( (strcmp(proc->proc_job,jobid) == 0) &&
+            (proc->proc_vpid == vpid ) )
+            { 
+                break;
+            }
+    }
+    THREAD_UNLOCK(&lam_proc_lock);
+    return proc;
+}
