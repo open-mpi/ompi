@@ -57,7 +57,7 @@ do {                                                                            
                 }                                                                   \
                 case MCA_PTL_HDR_TYPE_FRAG:                                         \
                 {                                                                   \
-                    MCA_PTL_MX_RECV_FRAG_FRAG(recvfrag,hdr);                        \
+                    MCA_PTL_MX_RECV_FRAG_FRAG(recvfrag);                            \
                     break;                                                          \
                 }                                                                   \
                 case MCA_PTL_HDR_TYPE_ACK:                                          \

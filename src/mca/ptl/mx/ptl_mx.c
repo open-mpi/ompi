@@ -137,7 +137,6 @@ int mca_ptl_mx_send(
 {
     mca_ptl_mx_module_t* mx_ptl = (mca_ptl_mx_module_t*)ptl;
     mca_ptl_mx_send_frag_t* sendfrag;
-    mca_ptl_base_header_t* hdr;
     mx_return_t mx_return;
     int rc;
 
@@ -150,23 +149,6 @@ int mca_ptl_mx_send(
             return rc;
     }
 
-    /* setup message header */
-    hdr = &sendfrag->frag_send.frag_base.frag_header;
-    hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_MATCH;
-    hdr->hdr_common.hdr_flags = flags;
-    hdr->hdr_common.hdr_size = sizeof(mca_ptl_base_match_header_t);
-    hdr->hdr_frag.hdr_frag_offset = offset;
-    hdr->hdr_frag.hdr_frag_seq = 0;
-    hdr->hdr_frag.hdr_src_ptr.lval = 0; /* for VALGRIND/PURIFY - REPLACE WITH MACRO */
-    hdr->hdr_frag.hdr_src_ptr.pval = sendfrag;
-    hdr->hdr_frag.hdr_dst_ptr.lval = 0;
-    hdr->hdr_match.hdr_contextid = sendreq->req_base.req_comm->c_contextid;
-    hdr->hdr_match.hdr_src = sendreq->req_base.req_comm->c_my_rank;
-    hdr->hdr_match.hdr_dst = sendreq->req_base.req_peer;
-    hdr->hdr_match.hdr_tag = sendreq->req_base.req_tag;
-    hdr->hdr_match.hdr_msg_length = sendreq->req_bytes_packed;
-    hdr->hdr_match.hdr_msg_seq = sendreq->req_base.req_sequence;
- 
     /* initialize convertor */
     sendfrag->frag_progress = 0;
     sendfrag->frag_free = 0;
@@ -208,19 +190,12 @@ int mca_ptl_mx_send(
         sendfrag->frag_free <<= 1;
         sendfrag->frag_segments[1].segment_ptr = iov.iov_base;
         sendfrag->frag_segments[1].segment_length = iov.iov_len;
-        sendfrag->frag_segment_count = 2;
+        sendfrag->frag_segment_count = 1;
         sendfrag->frag_send.frag_base.frag_addr = iov.iov_base;
     } else {
         sendfrag->frag_send.frag_base.frag_addr = NULL;
         sendfrag->frag_send.frag_base.frag_size = 0;
-        sendfrag->frag_segment_count = 1;
-    }
-    hdr->hdr_frag.hdr_frag_length = size;
-
-    /* convert header to network byte order if required */
-    if(ptl_peer->peer_byte_swap) {
-        hdr->hdr_common.hdr_flags |= MCA_PTL_FLAGS_NBO;
-        MCA_PTL_BASE_MATCH_HDR_HTON(hdr->hdr_match);
+        sendfrag->frag_segment_count = 0;
     }
 
     /* fragment state */
@@ -237,7 +212,7 @@ int mca_ptl_mx_send(
     /* start the fragment */
     mx_return = mx_isend(
         mx_ptl->mx_endpoint,
-        sendfrag->frag_segments,
+        sendfrag->frag_segments+1,  /* no header - data only */
         sendfrag->frag_segment_count,
         ptl_peer->peer_addr,
         0,
