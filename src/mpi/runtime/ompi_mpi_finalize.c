@@ -184,8 +184,14 @@ int ompi_mpi_finalize(void)
 
     /* Close down MCA modules */
 
-    if (OMPI_SUCCESS != (ret = mca_io_base_close())) {
-	return ret;
+    /* io is opened lazily, so it's only necessary to close it if it
+       was actually opened */
+
+    if (mca_io_base_components_opened_valid ||
+        mca_io_base_components_available_valid) {
+        if (OMPI_SUCCESS != (ret = mca_io_base_close())) {
+            return ret;
+        }
     }
     if (OMPI_SUCCESS != (ret = mca_topo_base_close())) {
 	return ret;
