@@ -14,6 +14,10 @@ EXTRA_DIST = \
         f77_find_ext_symbol_convention.m4 \
         f77_get_alignment.m4 \
         f77_get_sizeof.m4 \
+        mca_acinclude.m4 \
+        mca_configure.ac \
+        mca_make_configure.pl \
+        mca_no_configure_components.m4 \
         ompi_case_sensitive_fs_setup.m4 \
         ompi_check_optflags.m4 \
         ompi_check_pthread_pids.m4 \
@@ -30,5 +34,4 @@ EXTRA_DIST = \
         ompi_setup_cc.m4 \
         ompi_setup_cxx.m4 \
         ompi_setup_f77.m4 \
-        ompi_setup_f90.m4 \
-        mca_no_configure_components.m4
+        ompi_setup_f90.m4
