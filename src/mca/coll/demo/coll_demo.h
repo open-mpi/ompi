@@ -202,24 +202,6 @@ extern int mca_coll_demo_verbose;
 
 
 
-/* Utility functions */
-
-static inline void mca_coll_demo_free_reqs(ompi_request_t **reqs, int count)
-{
-  int i;
-  for (i = 0; i < count; ++i)
-    mca_pml.pml_free(&reqs[i]);
-}
-
-
-/*
- * Data structure for hanging data off the communicator 
- */
-struct mca_coll_base_comm_t {
-  ompi_request_t **mccb_reqs;
-  int mccb_num_reqs;
-};
-
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
