@@ -451,7 +451,7 @@ ompi_dir_empty(char *pathname)
                     DeleteFile(file_name);
 
             }
-            if (!FindNextFile(search_path, &file_data)) {
+            if (0 == FindNextFile(file, &file_data)) {
                     empty = true;
             }
         } while(!empty);
@@ -502,7 +502,7 @@ static bool ompi_is_empty(char *pathname)
             return false;
         }
 
-        while (0 != FindNextFile(search_path, &file_data)) {
+        while (0 != FindNextFile(file, &file_data)) {
             if (0 != strcmp(file_data.cFileName, ".") || 0 != strcmp(file_data.cFileName, "..")) {
                 FindClose(&file_data);
                 return false;

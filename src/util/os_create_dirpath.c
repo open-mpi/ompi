@@ -22,7 +22,9 @@ int ompi_os_create_dirpath(const char *path, const mode_t mode)
 {
     char *pth, *bottom_up, *tmp;
     struct stat buf;
-
+#ifdef WIN32
+	int count = 0;
+#endif
     if (NULL == path) { /* protect ourselves from errors */
 	return(OMPI_ERROR);
     }
@@ -66,10 +68,19 @@ int ompi_os_create_dirpath(const char *path, const mode_t mode)
 	strcpy(pth, dirname(tmp)); /* "pop" the directory tree */
 	free(tmp);
     }
+#ifdef WIN32
+	if (bottom_up[strlen(bottom_up)-1] == '\\') {
+		bottom_up[strlen(bottom_up)-1] = '\0';
+	}
+#endif
 
     /* okay, ready to build from the top down */
     while (strlen(bottom_up) > 1) {
-	strcat(pth, ompi_system_info.path_sep);
+#ifdef WIN32
+	if(0 != count) {
+		strcat(pth, ompi_system_info.path_sep);
+	}
+#endif
 	strcat(pth, basename(bottom_up));
 	/* try to make the next layer - return error if can't & directory doesn't exist */
 	/* if directory already exists, then that means somebody beat us to it - not an error */
@@ -81,6 +92,9 @@ int ompi_os_create_dirpath(const char *path, const mode_t mode)
 	tmp = strdup(bottom_up);
 	strcpy(bottom_up, dirname(tmp)); /* "pop" the directory tree */
 	free(tmp);
+#ifdef WIN32
+	count++;
+#endif
    }
 
     free(pth);
