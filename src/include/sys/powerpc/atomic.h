@@ -134,7 +134,7 @@ static inline int ompi_atomic_add_32(volatile int32_t* v, int i)
                     "stwcx. r4, 0, %0\n\t"              \
                     "bne cr0, top1"
                     :
-                    : "r" (ptr)
+                    : "r" (v)
                     : "r4");
    return *v;
 }
@@ -147,7 +147,7 @@ static inline int ompi_atomic_sub_32(volatile int32_t* v, int i)
                     "stwcx. r4, 0, %0\n\t" \
                     "bne cr0, top2"
                     :
-                    : "r" (ptr)
+                    : "r" (v)
                     : "r4");
    return *v;
 }
