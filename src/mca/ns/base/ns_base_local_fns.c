@@ -11,6 +11,9 @@
 #include <string.h>
 #include <stddef.h>
 #include <stdlib.h>
+#if HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif
 
 #include "include/constants.h"
 #include "util/output.h"
