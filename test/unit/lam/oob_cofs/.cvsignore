@@ -4,3 +4,4 @@ Makefile
 .libs
 .gdb_history
 oob_cofs_test
+pcm_cofs_test
