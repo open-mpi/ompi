@@ -208,8 +208,6 @@ int mca_ptl_mx_send(
             &(sendfrag->frag_free))) < 0) {
             return OMPI_ERROR;
         }
-        /* adjust the freeAfter as the position zero is reserved for the header */
-        sendfrag->frag_free <<= 1;
         sendfrag->frag_segments[1].segment_ptr = iov.iov_base;
         sendfrag->frag_segments[1].segment_length = iov.iov_len;
         sendfrag->frag_segment_count = 2;
@@ -293,6 +291,7 @@ int mca_ptl_mx_send_continue(
         return rc;
     }
     sendfrag->frag_free = 0;
+    sendfrag->frag_send.frag_base.frag_header.hdr_frag.hdr_frag_offset = offset;
 
     /* initialize convertor */
     convertor = &sendfrag->frag_send.frag_base.frag_convertor;
@@ -323,8 +322,6 @@ int mca_ptl_mx_send_continue(
         return OMPI_ERROR;
     }
 
-    /* adjust the freeAfter as the position zero is reserved for the header */
-    sendfrag->frag_free <<= 1;
     sendfrag->frag_segments[1].segment_ptr = iov.iov_base;
     sendfrag->frag_segments[1].segment_length = iov.iov_len;
     sendfrag->frag_segment_count = 1;
@@ -343,7 +340,7 @@ int mca_ptl_mx_send_continue(
     mca_pml_base_send_request_offset(sendreq, size);
 
     /* start the fragment */
-    match.sval.uval = (uint32_t)sendreq;
+    match.sval.uval = sendreq->req_peer_match.ival;
     match.sval.lval = offset;
     mx_return = mx_isend(
         mx_ptl->mx_endpoint,
@@ -415,7 +412,7 @@ void mca_ptl_mx_matched(
                 ack->frag_segments,
                 ack->frag_segment_count,
                 ack->frag_send.frag_base.frag_peer->peer_addr,
-                1,
+                0,
                 ack,
                 &ack->frag_request);
             if(mx_return != MX_SUCCESS) {

@@ -163,6 +163,7 @@ static void mca_ptl_mx_match(void* context, uint64_t match_value, int size)
         frag->frag_recv.frag_base.frag_size = frag->frag_size;
         frag->frag_recv.frag_base.frag_addr = frag->frag_data;
         frag->frag_recv.frag_is_buffered = true;
+        frag->frag_recv.frag_request = NULL;
         frag->frag_segment_count = 2;
         segments = frag->frag_segments;
 
@@ -179,6 +180,7 @@ static void mca_ptl_mx_match(void* context, uint64_t match_value, int size)
         frag->frag_recv.frag_base.frag_size = size;
         frag->frag_recv.frag_base.frag_header.hdr_common.hdr_type =
             MCA_PTL_HDR_TYPE_FRAG;
+        frag->frag_recv.frag_request = request;
 
         /* initialize convertor */
         ompi_convertor_copy(proc->proc_convertor, convertor);
