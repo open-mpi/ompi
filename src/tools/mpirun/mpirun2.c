@@ -11,6 +11,7 @@
 
 #include "include/constants.h"
 
+#include "event/event.h"
 #include "util/proc_info.h"
 #include "util/argv.h"
 #include "util/cmd_line.h"
@@ -219,14 +220,6 @@ main(int argc, char *argv[])
 	exit(-1);
     }
 
-    /*
-     *  Register my process info with my replica.
-     */
-/*     if (OMPI_SUCCESS != (ret = ompi_rte_register())) { */
-/* 	ompi_output(0, "ompi_rte_init: failed in ompi_rte_register()\n"); */
-/* 	return ret; */
-/*     } */
- 
     /* finalize the rte startup */
     if (OMPI_SUCCESS != (ret = ompi_rte_init_finalstage(&multi_thread,
 							&hidden_thread))) {
@@ -337,6 +330,7 @@ main(int argc, char *argv[])
     unlink(filenm);
 
     /* finalize the system */
+    ompi_event_fini();
     ompi_rte_finalize();
     mca_base_close();
     ompi_finalize();
