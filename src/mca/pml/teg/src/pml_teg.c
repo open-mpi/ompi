@@ -191,7 +191,7 @@ int mca_pml_teg_add_procs(ompi_proc_t** procs, size_t nprocs)
     }
     
     /* attempt to add all procs to each ptl */
-    ptl_peers = (mca_ptl_base_peer_t **)malloc(nprocs * sizeof(struct mca_ptl_base_peer_t*));
+    ptl_peers = (struct mca_ptl_base_peer_t **)malloc(nprocs * sizeof(struct mca_ptl_base_peer_t*));
     for(p_index = 0; p_index < mca_pml_teg.teg_num_ptl_modules; p_index++) {
         mca_ptl_base_module_t* ptl = mca_pml_teg.teg_ptl_modules[p_index];
 
