@@ -18,9 +18,11 @@
 # this to the svn repository
 #
 
+topdir := $(shell cygpath -m $(CURDIR))/../..
 gen_base = ${topdir}/src/win32/generated_include
 copy_base = ${topdir}/src/mca/
-install_dir = ${prefix}
+prefix = ${topdir}/Debug
+installdir = ${prefix}
 
 # list of components to build with the c compiler
 C_SUBDIRS = \
@@ -44,31 +46,58 @@ CPP_SUBDIRS = \
         gpr/replica/
 
 #list of components that are not working as yet
-CPP_EXCLUDE = \
-        ptl/tcp/src \
-        pcm/wmi
+CPP_EXCLUDE = pcm/wmi
 
 CC = cl
 
 INCL = \
         /I"${topdir}/src/win32/generated_include" \
-        /I"${topdir}/src/win32/" \
+        /I"${topdir}/src/win32" \
+        /I"${topdir}/include" \
         /I"${topdir}/src" \
-        /I"${topdir}/include"
+        /I"${topdir}/src/event/compat/" \
+        /I"${topdir}/src/event" \
+        /I"${topdir}/src/event/WIN32-Code/" 
 
 CFLAGS = \
         /DWIN32 \
-        /DOMPI_SYSCONFDIR="\"${install-dir}/share\"" \
+        /DOMPI_BUILDING=0 \
+        /DHAVE_CONFIG_H \
+        /DOMPI_SYSCONFDIR="\"${installdir}/share\"" \
+        /D_WINDLL \
+        /EHsc \
+        /MLd \
+        /W0 \
+        /Wp64 \
+        /ZI \
+        /Zi \
+        /TC \
+        /D_MBCS \
+        /Gm \
+        /Od \
+        /LDd \
         /nologo \
-        /c 
+        /c
 
 CPPFLAGS = \
         /DWIN32 \
-        /DOMPI_SYSCONFDIR="\"${install-dir}/share\"" \
-        /c \
         /TP \
+        /DOMPI_BUILDING=0 \
+        /DHAVE_CONFIG_H \
+        /DOMPI_SYSCONFDIR="\"${installdir}/share\"" \
+        /D_WINDLL \
+        /EHsc \
+        /MLd \
+        /W0 \
+        /Wp64 \
+        /ZI \
+        /Zi \
+        /D_MBCS \
+        /Gm \
+        /Od \
+        /LDd \
         /nologo \
-        /EHsc
+        /c
 
 # link with ompi.lib to resolve external symbols
 OMPILIB = \

@@ -14,8 +14,8 @@
  */
 
 #include "ompi_config.h"
-#include "datatype.h"
-#include "datatype_internal.h"
+#include "datatype/datatype.h"
+#include "datatype/datatype_internal.h"
 
 /* When we add a datatype we should update it's definition depending on
  * the initial displacement for the whole data, so the displacement of

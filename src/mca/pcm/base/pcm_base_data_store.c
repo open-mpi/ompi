@@ -21,7 +21,7 @@
 #include <stdlib.h>
 #include <errno.h>
 
-#include "base_data_store.h"
+#include "mca/pcm/base/base_data_store.h"
 
 #include "mca/ns/ns.h"
 #include "mca/ns/base/base.h"

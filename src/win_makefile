@@ -18,8 +18,9 @@
 # this to the svn repository
 #
 
-topdir = `echo $(CURDIR) | sed 's/^\//C:\/cygwin\//g' | sed 's/\/src//g'`
-install-dir = ${prefix}
+topdir := $(shell cygpath -m $(CURDIR))/..
+prefix = ${topdir}/src/Debug
+installdir = ${prefix}
 pkgdatadir = ${prefix}/share
 sysconfdir = ${prefix}/etc
 pkglibdir = ${prefix}/lib
@@ -49,6 +50,7 @@ C_SUBDIRS =  \
         mca/coll/base \
         mca/gpr/base \
         mca/io/base \
+        mca/iof/base \
         mca/llm/base \
         mca/mpool/base \
         mca/ns/base \
@@ -62,54 +64,31 @@ C_SUBDIRS =  \
         mca/topo/base \
         win32/generated_source \
         win \
-        win32 \
-        mca/allocator/bucket \
-        mca/coll/basic \
-        mca/llm/hostfile/src \
-        mca/ns/proxy/src \
-        mca/gpr/proxy/ \
-        mca/pcmclient/env \
-        mca/pcmclient/seed \
-        mca/pcmclient/singleton \
-        mca/topo/unity/src \
-        mca/ptl/tcp/src \
-        mca/oob/tcp/ \
-        mca/pml/teg/src \
-        mca/ns/replica/src \
-        mca/gpr/replica/
+        win32 
 
-EXTRA_DIRS = \
-
-
-STATIC_LIBS = \
-        allocator \
-        coll\
-        llm\
-        ns\
-        gpr \
-        pcmclient\
-        topo\
-        ptl\
-        oob\
-        pml\
-        ns\
-        gpr
+EXTRA_DIRS = 
 
 #
 # A small function to extract the list of all files in these directories
 #
-FILES = $(foreach dir, ${C_SUBDIRS}, $(wildcard ${dir}/*.[ch]))
+SOURCE_FILES = $(foreach dir, ${C_SUBDIRS}, $(wildcard ${dir}/*.[c]))
+OBJECT_FILES = $(SOURCE_FILES:.c=.obj)
+DEBUG = Debug
+LINKED_SOURCE = $(foreach dir, ${DEBUG}, $(wildcard ${dir}/*.[c]))
+LINKED_OBJS = $(LINKED_SOURCE:.c=.obj)
 
+.SUFFIXES: .c .obj
 CC = cl
+CXX = $(CC)
 
 INCL = \
-        /I"${topdir}/src/event/WIN32-Code/" \
-        /I"${topdir}/src/event/compat/" \
-        /I"${topdir}/src/win32/generated_include/libltdl" \
         /I"${topdir}/src/win32/generated_include" \
-        /I"${topdir}/src/win32/" \
+        /I"${topdir}/src/win32" \
+        /I"${topdir}/include" \
         /I"${topdir}/src" \
-        /I"${topdir}/include"
+        /I"${topdir}/src/event/compat/" \
+        /I"${topdir}/src/event" \
+        /I"${topdir}/src/event/WIN32-Code/" 
 
 CFLAGS = \
         /DWIN32 \
@@ -134,6 +113,23 @@ CFLAGS = \
         /nologo \
         /c
 
+STATIC_LIBS = \
+        allocator \
+        coll\
+        llm\
+        ns\
+        gpr \
+        pcmclient\
+        topo\
+        ptl\
+        oob\
+        pml\
+        ns\
+        gpr \
+        iof
+
+CXXFLAGS = $(CFLAGS) $(INCL)
+
 LINK = link
 
 LINKFLAGS = \
@@ -157,7 +153,10 @@ ADDLIBS = \
         odbc32.lib \
         odbccp32.lib 
 
-all: clibs libmpi
+.c.obj:
+	$(CXX) $(CXXFLAGS) $*.c
+
+all: libmpi
 
 prebuild:
 	@echo "Creating mca_base_parse_paramfile_lex.c"
@@ -169,33 +168,35 @@ prebuild:
 	@echo "Creating show_help_lex.c"
 	@/usr/bin/flex -t -Pompi_show_help_yy "${topdir}/src/util/show_help_lex.l" \
                 > "${topdir}/src/util/show_help_lex.c" 2>/dev/null
-	@echo -n "Copying static-components.h to the right directories ......"
 	@for dirs in ${STATIC_LIBS}; do \
         (dir="mca/$${dirs}/base"; comp_name="$${dirs}_static-components.h"; cp "${topdir}/src/win32/generated_include/$${comp_name}" "$${dir}/static-components.h";); \
      done
+	@for dirs in ${C_SUBDIRS}; do \
+	    (echo "Entering $${dirs}"; cd $$dirs; if test -f .compile_files; then (more .compile_files| xargs -i'{}' ln '{}' ${topdir}/src/Debug/'{}'); else (ls *.c 2>/dev/null | xargs -i'{}' ln '{}' ${topdir}/src/Debug/'{}'); fi); \
+	done
 	@echo "done"
 
 
-clibs: prebuild ${FILES}
-	@for dirs in ${C_SUBDIRS}; do \
-	    (echo "Entering $${dirs}"; cd $$dirs; if test -f .compile_files; then (more .compile_files| xargs -i'{}' ${CC} ${CFLAGS} ${INCL} '{}'); else (ls *.c 2>/dev/null | xargs -i'{}' ${CC} ${CFLAGS} ${INCL} '{}'); fi); \
-	done
-
-libmpi:
-	${LINK} ${LINKFLAGS} ${ADDLIBS} Debug/*.obj
+libmpi: $(LINKED_OBJS)
+	${LINK} ${LINKFLAGS} ${ADDLIBS} $(LINKED_OBJS)
 
 install:
 	@echo -n "Installing libmpi and include file ................"
-	@install -c ${topdir}/src/libmpi.lib ${install-dir}/lib/libmpi.lib
-	@install -c ${topdir}/src/libmpi.exp ${install-dir}/lib/libmpi.exp
-	@install -c ${topdir}/src/libmpi.dll ${install-dir}/lib/libmpi.dll
-	@install -c ${topdir}/include/ompi_config_bottom.h \
-                                    ${install-dir}/include/ompi_config_bottom.h 
-	@install -c ${topdir}/src/win32/generated_include/ompi_config.h \
-                                    ${install-dir}/include/ompi_config.h 
-	@install -c ${topdir}/include/mpi.h ${install-dir}/include/mpi.h
-	@install -c ${topdir}/include/ompi_stdint.h ${install-dir}/include/ompi_stdint.h
-	@install -c ${topdir}/src/win32/win_compat.h ${install-dir}/include/win32/win_compat.h
+	@install -d ${topdir}/src ${installdir}/lib
+	@install -p ${topdir}/src/libmpi.lib ${installdir}/lib/libmpi.lib
+	@install -p ${topdir}/src/libmpi.exp ${installdir}/lib/libmpi.exp
+	@install -p ${topdir}/src/libmpi.dll ${installdir}/lib/libmpi.dll
+	@install -p ${topdir}/src/vc70.idb ${installdir}/lib/vc70.idb
+	@install -p ${topdir}/src/vc70.pdb ${installdir}/lib/vc70.pdb
+	@install -d ${topdir}/include ${installdir}/include/
+	@install -p ${topdir}/include/ompi_config_bottom.h \
+                                  ${installdir}/include/ompi_config_bottom.h 
+	@install -p ${topdir}/src/win32/generated_include/ompi_config.h \
+                                  ${installdir}/include/ompi_config.h 
+	@install -p ${topdir}/include/mpi.h ${installdir}/include/mpi.h
+	@install -p ${topdir}/include/ompi_stdint.h ${installdir}/include/ompi_stdint.h
+	@install -d ${topdir}/src/win32 ${installdir}/include/win32
+	@install -p ${topdir}/src/win32/win_compat.h ${installdir}/include/win32/win_compat.h
 	@echo "done"
 
 .PHONY: clean
@@ -207,3 +208,4 @@ clean:
 	@for dirs in ${C_PPSUBDIRS}; do \
 	    (echo "Entering $$dirs"; cd $$dirs; rm -rf *.lib *.obj *.exp;); \
 	done
+	@echo "Entering ${topdir}/src/Debug ... "; cd ${topdir}/src/Debug; rm -rf *.lib *.obj *.exp *.c;

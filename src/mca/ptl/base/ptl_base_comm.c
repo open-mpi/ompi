@@ -14,7 +14,7 @@
 
 #include "ompi_config.h"
 #include <string.h>
-#include "ptl_base_comm.h"
+#include "mca/ptl/base/ptl_base_comm.h"
 
 static void mca_pml_ptl_comm_construct(mca_pml_ptl_comm_t* comm);
 static void mca_pml_ptl_comm_destruct(mca_pml_ptl_comm_t* comm);

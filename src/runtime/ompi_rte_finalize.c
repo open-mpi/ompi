@@ -48,7 +48,10 @@ int ompi_rte_finalize(void)
 #endif
   ompi_rte_internal_fini_spawn();
 
+#ifndef WIN32
+  /* We need to add a NULL component for iof. Until then, this will have to do */
   mca_iof_base_close();
+#endif
   mca_pcm_base_close();
   mca_llm_base_close();
   mca_pcmclient_base_close();
