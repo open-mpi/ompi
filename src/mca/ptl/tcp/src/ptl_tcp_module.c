@@ -164,8 +164,10 @@ int mca_ptl_tcp_module_close(void)
             mca_ptl_tcp_module.tcp_recv_frags.super.ompi_list_length);
     }
 
-    free(mca_ptl_tcp_module.tcp_if_include);
-    free(mca_ptl_tcp_module.tcp_if_exclude);
+    if(NULL != mca_ptl_tcp_module.tcp_if_include)
+        free(mca_ptl_tcp_module.tcp_if_include);
+    if(NULL != mca_ptl_tcp_module.tcp_if_exclude)
+       free(mca_ptl_tcp_module.tcp_if_exclude);
     if (NULL != mca_ptl_tcp_module.tcp_ptls)
         free(mca_ptl_tcp_module.tcp_ptls);
  
