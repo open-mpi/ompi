@@ -324,7 +324,7 @@ ompi_op_t ompi_mpi_op_maxloc = {
       LOGICAL_NULL,
       COMPLEX_NULL,
       BYTE_NULL,
-      TWOLOC_NULL }
+      TWOLOC(maxloc) }
 };
 
 
@@ -342,7 +342,7 @@ ompi_op_t ompi_mpi_op_minloc = {
       LOGICAL(replace),
       COMPLEX(replace),
       BYTE(replace),
-      TWOLOC_NULL }
+      TWOLOC(minloc) }
 };
 
 /*
