@@ -151,14 +151,20 @@ int ompi_session_dir(bool create, char *prefix, char *user, char *hostid, char *
 
  COMPLETE:
     if (proc) {
-	ompi_process_info.proc_session_dir = strdup(fulldirpath);
+	if (create) {
+            ompi_process_info.proc_session_dir = strdup(fulldirpath);
+        }
 	fulldirpath = dirname(fulldirpath);
     }
     if (job) {
-	ompi_process_info.job_session_dir = strdup(fulldirpath);
+        if (create) {
+            ompi_process_info.job_session_dir = strdup(fulldirpath);
+        }
 	fulldirpath = dirname(fulldirpath);
     }
-    ompi_process_info.universe_session_dir = strdup(fulldirpath);
+    if (create) {
+        ompi_process_info.universe_session_dir = strdup(fulldirpath);
+    }
 
  CLEANUP:
     if (tmp) {
