@@ -216,6 +216,7 @@ int mca_ptl_mx_send(
     /* first fragment - need to try and match at the receiver */
     if(offset == 0) {
         hdr->hdr_common.hdr_flags = flags;
+        hdr->hdr_match.hdr_contextid = sendreq->req_base.req_comm->c_contextid;
         hdr->hdr_match.hdr_src = sendreq->req_base.req_comm->c_my_rank;
         hdr->hdr_match.hdr_dst = sendreq->req_base.req_peer;
         hdr->hdr_match.hdr_tag = sendreq->req_base.req_tag;
