@@ -26,7 +26,7 @@ int mca_pcm_cofs_finalize(void);
  * "Action" functions
  */
 int mca_pcm_cofs_query_get_nodes(lam_pcm_node_t **nodes, size_t *nodes_len, 
-                                            int available_procs);
+                                            int *available_procs);
 
 lam_job_handle_t mca_pcm_cofs_handle_new(lam_job_handle_t parent);
 lam_job_handle_t mca_pcm_cofs_handle_get(void);
@@ -55,3 +55,4 @@ int mca_pcm_cofs_proc_get_parent(void);
 
 extern char mca_pcm_cofs_comm_loc[LAM_PATH_MAX]; /* location for file drop-off */
 extern int mca_pcm_cofs_my_vpid;
+extern char *mca_pcm_cofs_my_handle;
