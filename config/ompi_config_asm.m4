@@ -290,20 +290,30 @@ AC_DEFUN([OMPI_CHECK_ASM_TYPE],[
     AC_MSG_CHECKING([prefix for function in .type])
     ompi_cv_asm_type=""
 
-    for type  in @ \# % ; do
-        asm_result=0
-        echo "configure: trying $type" >& AC_FD_CC
-        OMPI_TRY_ASSEMBLE([     .type mysym, ${type}function],
-            [# ok, we succeeded at assembling.  see if there was
-             # a warning in the output.
-             if test "`cat conftest.out`" = "" ; then
-                ompi_cv_asm_type="${type}"
-                asm_result=1
-             fi])
-        if test "$asm_result" = "1" ; then
-            break
-        fi
-    done
+    case "${host}" in
+    *-sun-solaris*)
+        # GCC on solaris seems to accept just about anything, not
+        # that what it defines actually works...  So just hardwire
+        # to the right answer
+        ompi_cv_asm_type="#"
+    ;;
+    *)
+        for type  in @ \# % ; do
+            asm_result=0
+            echo "configure: trying $type" >& AC_FD_CC
+            OMPI_TRY_ASSEMBLE([     .type mysym, ${type}function],
+                [# ok, we succeeded at assembling.  see if there was
+                 # a warning in the output.
+                 if test "`cat conftest.out`" = "" ; then
+                    ompi_cv_asm_type="${type}"
+                    asm_result=1
+                 fi])
+            if test "$asm_result" = "1" ; then
+                break
+            fi
+        done
+    ;;
+    esac
     rm -f conftest.out
 
     AC_MSG_RESULT([$ompi_cv_asm_type])
@@ -618,7 +628,7 @@ case "${host}" in
             ompi_cv_asm_arch="POWERPC32"
 
             # Note that on some platforms (Apple G5), even if we are
-            # compiling in 32 bit more (and therefore should assume
+            # compiling in 32 bit mode (and therefore should assume
             # sizeof(long) == 4), we can use the 64 bit test and set
             # operations.
             OMPI_CHECK_POWERPC_64BIT(OMPI_ASM_SUPPORT_64BIT=1)
@@ -633,14 +643,15 @@ case "${host}" in
 
     sparc-*)
         if test "$ac_cv_sizeof_long" = "4" ; then
+            OMPI_ASM_SUPPORT_64BIT=0
             ompi_cv_asm_arch="SPARC32"
         elif test "$ac_cv_sizeof_long" = "8" ; then
+            OMPI_ASM_SUPPORT_64BIT=1
             ompi_cv_asm_arch="SPARC64"
         else
           AC_MSG_ERROR([Could not determine Sparc word size: $ac_cv_sizeof_long])
         fi
-        OMPI_ASM_SUPPORT_64BIT=1
-        OMPI_GCC_INLINE_ASSIGN='"mov 0,%0" : : "=&r"(ret)'
+        OMPI_GCC_INLINE_ASSIGN='"mov 0,%0" : "=&r"(ret)'
     ;;
 
     *)
@@ -716,12 +727,13 @@ dnl do all the evil mojo to provide a working assembly file
 dnl
 dnl #################################################################
 AC_DEFUN([OMPI_ASM_FIND_FILE], [
+    AC_REQUIRE([AC_PROG_FGREP])
     AC_CHECK_PROG([PERL], [perl], [perl])
 
     # see if we have a pre-built one already
     AC_MSG_CHECKING([for pre-built assembly file])
     ompi_cv_asm_file=""
-    if grep "$ompi_cv_asm_arch" "${top_ompi_srcdir}/src/asm/asm-data.txt" | grep -F "$ompi_cv_asm_format" >conftest.out 2>&1 ; then
+    if grep "$ompi_cv_asm_arch" "${top_ompi_srcdir}/src/asm/asm-data.txt" | $FGREP "$ompi_cv_asm_format" >conftest.out 2>&1 ; then
         ompi_cv_asm_file="`cut -f3 conftest.out`"
         if test ! "$ompi_cv_asm_file" = "" ; then
             ompi_cv_asm_file="atomic-${ompi_cv_asm_file}.s"

@@ -27,6 +27,9 @@ int32_t new32;
 int
 main(int argc, char *argv[])
 {
+#if ! OMPI_HAVE_ATOMIC_CMPSET_32
+    return 77;
+#else
 
     vol32 = 42, old32 = 42, new32 = 50;
     assert(ompi_atomic_cmpset_32(&vol32, old32, new32) == 1);
@@ -53,4 +56,5 @@ main(int argc, char *argv[])
     assert(vol32 == 42);
 
     return 0;
+#endif
 }

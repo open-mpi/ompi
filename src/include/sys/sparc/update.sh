@@ -26,7 +26,8 @@ cat > $CFILE<<EOF
 #define inline
 #define OMPI_GCC_INLINE_ASSEMBLY 1
 #define OMPI_WANT_SMP_LOCKS 1
+#define OMPI_GENERATE_ASM_FILE
 #include "atomic.h"
 EOF
 
-gcc -I. -S $CFILE -o atomic.s
+gcc -O1 -I. -S $CFILE -o atomic.s

@@ -22,13 +22,23 @@
 #define MB()
 #endif
 
+#ifdef OMPI_GENERATE_ASM_FILE
+struct ompi_lock_t {
+    union {
+        volatile int lock;         /**< The lock address (an integer) */
+        volatile unsigned char sparc_lock; /**< The lock address on sparc */
+        char padding[sizeof(int)]; /**< Array for optional padding */
+    } u;
+};
+typedef struct ompi_lock_t ompi_lock_t;
+#endif
 
 /**********************************************************************
  *
  * Define constants for UltraSparc 64
  *
  *********************************************************************/
-#define OMPI_HAVE_MEM_BARRIER 1
+#define OMPI_HAVE_ATOMIC_MEM_BARRIER 1
 
 #define OMPI_HAVE_ATOMIC_CMPSET_32 0
 #define OMPI_HAVE_ATOMIC_CMPSET_64 0
@@ -79,7 +89,7 @@ static inline void ompi_atomic_wmb(void)
 
 static inline void ompi_atomic_init(ompi_lock_t* lock, int value)
 {
-    lock->sparc_lock = (unsigned char) value;
+    lock->u.sparc_lock = (unsigned char) value;
 }
 
 
@@ -94,7 +104,7 @@ static inline int ompi_atomic_trylock(ompi_lock_t *lock)
     __asm__ __volatile__ ("\t"
                           "ldstub [%1], %0"
                           : "=r"(result)
-                          : "r"(&(lock->sparc_lock))
+                          : "r"(&(lock->u.sparc_lock))
                           : "memory");
     return (result == 0);
 }
@@ -107,10 +117,10 @@ static inline void ompi_atomic_lock(ompi_lock_t *lock)
                           "retry:               \n\t"
                           "ldstub [%0], %%l0    \n\t"
                           "tst    %%l0          \n\t"
-                          "bw     out           \n\t"
+                          "be     out           \n\t"
                           "nop                  \n"
                           "loop:                \n\t"
-                          "ldb    [%0], %%l0    \n\t"
+                          "ldub   [%0], %%l0    \n\t"
                           "tst    %%l0          \n\t"
                           "bne    loop          \n\t"
                           "nop                  \n\t"
@@ -118,7 +128,7 @@ static inline void ompi_atomic_lock(ompi_lock_t *lock)
                           "out:                 \n\t"
                           "nop"
                           :
-                          : "r"(&(lock->sparc_lock))
+                          : "r"(&(lock->u.sparc_lock))
                           : "%l0", "memory");
 }
 
@@ -130,7 +140,7 @@ static inline void ompi_atomic_unlock(ompi_lock_t *lock)
                           "stbar             \n\t"
                           "stb %%g0, [%0]    \n\t"
                           :
-                          : "r"(&(lock->sparc_lock))
+                          : "r"(&(lock->u.sparc_lock))
                           : "memory");
 }
 

@@ -62,6 +62,28 @@
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
+/**********************************************************************
+ *
+ * Data structures for atomic ops
+ *
+ *********************************************************************/
+/**
+ * Volatile lock object (with optional padding).
+ *
+ * \note The internals of the lock are included here, but should be
+ * considered private.  The implementation currently in use may choose
+ * to use an int or unsigned char as the lock value - the user is not
+ * informed either way.
+ */
+struct ompi_lock_t {
+    union {
+        volatile int lock;         /**< The lock address (an integer) */
+        volatile unsigned char sparc_lock; /**< The lock address on sparc */
+        char padding[sizeof(int)]; /**< Array for optional padding */
+    } u;
+};
+typedef struct ompi_lock_t ompi_lock_t;
+
 
 /**********************************************************************
  *
@@ -161,22 +183,6 @@ void ompi_atomic_wmb(void);
  * Atomic spinlocks - always inlined, if have atomic cmpset
  *
  *********************************************************************/
-/**
- * Volatile lock object (with optional padding).
- *
- * \note The internals of the lock are included here, but should be
- * considered private.  The implementation currently in use may choose
- * to use an int or unsigned char as the lock value - the user is not
- * informed either way.
- */
-struct ompi_lock_t {
-    union {
-        volatile int lock;         /**< The lock address (an integer) */
-        volatile unsigned char sparc_lock; /**< The lock address on sparc */
-        char padding[sizeof(int)]; /**< Array for optional padding */
-    } u;
-};
-typedef struct ompi_lock_t ompi_lock_t;
 
 #if !defined(OMPI_HAVE_ATOMIC_SPINLOCKS) && !defined(DOXYGEN)
 /* 0 is more like "pending" - we'll fix up at the end after all

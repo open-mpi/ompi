@@ -33,6 +33,8 @@ struct start_info {
     ompi_lock_t *lock;
 };
 
+
+#if OMPI_HAVE_POSIX_THREADS
 static void* atomic_spinlock_start(void* arg)
 {
     struct start_info *data = (struct start_info*) arg;
@@ -40,6 +42,7 @@ static void* atomic_spinlock_start(void* arg)
     return (void*) (unsigned long) atomic_spinlock_test(data->lock, data->count,
                                         data->tid);
 }
+#endif
 
 
 int
