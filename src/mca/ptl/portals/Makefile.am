@@ -28,7 +28,13 @@ component_noinst = libmca_ptl_portals.la
 component_install =
 endif
 
-portals_SOURCES =
+portals_SOURCES = \
+	ptl_portals.h \
+	ptl_portals_nal.h \
+	ptl_portals_component.c \
+	ptl_portals_nal.c \
+	ptl_portals_stubs.c
+
 
 mcacomponentdir = $(libdir)/openmpi
 mcacomponent_LTLIBRARIES = $(component_install)
