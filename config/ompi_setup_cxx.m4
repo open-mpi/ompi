@@ -28,7 +28,6 @@ fi
 OMPI_CXXFLAGS_BEFORE_PICKY="$CXXFLAGS"
 if test "$GCC" = "yes" -a "$WANT_PICKY_COMPILER" = 1; then
     add="-g -Wall -Wundef -Wno-long-long"
-    add="$add -Wmissing-prototypes -Wstrict-prototypes"
 
     # see if -Wno-long-double works...
     AC_LANG_PUSH(C++)
