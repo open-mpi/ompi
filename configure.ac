@@ -309,12 +309,12 @@ AC_CONFIG_FILES([
     src/lam/util/Makefile
 
     src/mpi/Makefile
-    src/mpi/communicator/Makefile
-    src/mpi/datatype/Makefile
-    src/mpi/p2p/Makefile
-    src/mpi/p2p/base/Makefile
-    src/mpi/p2p/interface/Makefile
-    src/mpi/p2p/matching/Makefile
+    src/mpi/c/Makefile
+    src/mpi/c/profile/Makefile
+    src/mpi/cxx/Makefile
+    src/mpi/f77/Makefile
+    src/mpi/f77/profile/Makefile
+    src/mpi/f90/Makefile
 
     src/tools/Makefile
     src/tools/wrappers/Makefile
