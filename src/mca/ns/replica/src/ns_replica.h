@@ -63,13 +63,6 @@ mca_ns_base_cellid_t ns_replica_create_cellid(void);
  */
 mca_ns_base_jobid_t ns_replica_create_jobid(void);
 
-/*
- * Implementation of create_process_name()
- */
-ompi_process_name_t* ns_replica_create_process_name(
-			    mca_ns_base_cellid_t cell,
-			    mca_ns_base_jobid_t job,
-			    mca_ns_base_vpid_t vpid);
 
 /*
  * Implementation of reserve_range()
@@ -83,40 +76,6 @@ mca_ns_base_vpid_t ns_replica_reserve_range(
  */
 int ns_replica_free_name(ompi_process_name_t* name);
 
-/*
- * Implementation of get_proc_name_string()
- */
-char* ns_replica_get_proc_name_string(const ompi_process_name_t* name);
-
-/*
- * Implementation of get_vpid_string()
- */
-char* ns_replica_get_vpid_string(const ompi_process_name_t* name);
-
-/*
- * Implementation of get_jobid_string()
- */
-char* ns_replica_get_jobid_string(const ompi_process_name_t* name);
-
-/*
- * Implementation of get_cellid_string()
- */
-char* ns_replica_get_cellid_string(const ompi_process_name_t* name);
-
-/*
- * Implementation of get_vpid()
- */
-mca_ns_base_vpid_t ns_replica_get_vpid(const ompi_process_name_t* name);
-
-/*
- * Implementation of get_jobid()
- */
-mca_ns_base_jobid_t ns_replica_get_jobid(const ompi_process_name_t* name);
-
-/*
- * Implementation of get_cellid()
- */
-mca_ns_base_cellid_t ns_replica_get_cellid(const ompi_process_name_t* name);
 
 /*
  * Implementation of compare()
