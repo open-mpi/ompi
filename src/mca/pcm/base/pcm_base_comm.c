@@ -4,6 +4,8 @@
 
 #include "ompi_config.h"
 
+#include <string.h>
+
 #include "class/ompi_list.h"
 #include "mca/pcm/base/base.h"
 
