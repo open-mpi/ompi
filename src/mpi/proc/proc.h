@@ -13,10 +13,11 @@ extern lam_class_t lam_proc_t_class;
 
 
 struct lam_proc_t {
-    lam_list_item_t        super;       /* allow proc to be placed on a list */
-    lam_job_handle_t       proc_job;    /* identifies a unique job */
-    uint32_t               proc_vpid;   /* process identifier w/in the job */
-    struct mca_pml_proc_t* proc_pml;    /* PML specific proc data */
+    lam_list_item_t           super;       /* allow proc to be placed on a list */
+    lam_job_handle_t          proc_job;    /* identifies a unique job */
+    uint32_t                  proc_vpid;   /* process identifier w/in the job */
+    struct mca_pml_proc_t*    proc_pml;    /* PML specific proc data */
+    struct mca_base_modex_t*  proc_modex;  /* MCA module exchange data */
 
   /* JMS: need to have the following information:
 
