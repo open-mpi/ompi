@@ -99,19 +99,22 @@ do {                                                                            
             switch(hdr->hdr_common.hdr_type) {                                      \
                 case MCA_PTL_HDR_TYPE_MATCH:                                        \
                 {                                                                   \
-                    if(hdr->hdr_common.hdr_flags & MCA_PTL_FLAGS_NBO) {             \
-                        MCA_PTL_BASE_MATCH_HDR_NTOH(hdr->hdr_match);                \
-                    }                                                               \
-                    ptl->super.ptl_match(&ptl->super, &recvfrag->frag_recv,         \
-                        &hdr->hdr_match);                                           \
+                    MCA_PTL_MX_RECV_FRAG_MATCH(recvfrag,hdr);                       \
+                    MCA_PTL_MX_POST(ptl, rc);                                       \
                     break;                                                          \
                 }                                                                   \
                 case MCA_PTL_HDR_TYPE_FRAG:                                         \
+                {                                                                   \
+                    MCA_PTL_MX_RECV_FRAG_FRAG(recvfrag,hdr);                        \
                     break;                                                          \
+                }                                                                   \
                 case MCA_PTL_HDR_TYPE_ACK:                                          \
+                {                                                                   \
+                    MCA_PTL_MX_RECV_FRAG_ACK(recvfrag,hdr);                         \
+                    MCA_PTL_MX_POST(ptl, rc);                                       \
                     break;                                                          \
+                }                                                                   \
             }                                                                       \
-            MCA_PTL_MX_POST(ptl, rc);                                               \
             break;                                                                  \
         }                                                                           \
         default:                                                                    \

@@ -36,5 +36,42 @@ OBJ_CLASS_DECLARATION(mca_ptl_mx_recv_frag_t);
 #define MCA_PTL_MX_RECV_FRAG_RETURN(recvfrag) \
     OMPI_FREE_LIST_RETURN(&mca_ptl_mx_component.mx_recv_frags, (ompi_list_item_t*)recvfrag);
     
+
+/**
+ *  Callback on receipt of a match fragment.
+ */
+
+#define MCA_PTL_MX_RECV_FRAG_MATCH(recvfrag, hdr)                  \
+do {                                                               \
+    if(hdr->hdr_common.hdr_flags & MCA_PTL_FLAGS_NBO) {            \
+         MCA_PTL_BASE_MATCH_HDR_NTOH(hdr->hdr_match);              \
+    }                                                              \
+    ptl->super.ptl_match(&ptl->super, &recvfrag->frag_recv,        \
+        &hdr->hdr_match);                                          \
+} while(0)
+
+/**
+ *
+ */
+
+static inline void MCA_PTL_MX_RECV_FRAG_FRAG(
+    mca_ptl_mx_recv_frag_t* recvfrag,
+    mca_ptl_base_header_t* hdr)
+{
+    /* copy into user space */
+    if(recvfrag->frag_recv.frag_is_buffered) {
+
+
+    } 
+}
+
+
+static inline void MCA_PTL_MX_RECV_FRAG_ACK(
+    mca_ptl_mx_recv_frag_t* recvfrag,
+    mca_ptl_base_header_t* hdr)
+{
+}
+
+
 #endif
 
