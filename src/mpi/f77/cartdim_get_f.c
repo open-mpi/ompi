@@ -48,5 +48,5 @@ OMPI_GENERATE_F77_BINDINGS (MPI_CARTDIM_GET,
 
 void mpi_cartdim_get_f(MPI_Fint *comm, MPI_Fint *ndims, MPI_Fint *ierr)
 {
-
+  /* This function not yet implemented */
 }

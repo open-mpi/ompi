@@ -56,7 +56,7 @@ void mpi_irecv_f(char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *sourc
 
     *ierr = MPI_Irecv(buf, *count, c_type, *source, *tag, c_comm, &c_req);
 
-    if (*ierr == MPI_SUCCESS) {
+    if (MPI_SUCCESS == *ierr) {
         *request = MPI_Request_c2f(c_req);
     }
 }

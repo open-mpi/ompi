@@ -48,5 +48,5 @@ OMPI_GENERATE_F77_BINDINGS (MPI_ATTR_GET,
 
 void mpi_attr_get_f(MPI_Fint *comm, MPI_Fint *keyval, char *attribute_val, MPI_Fint *flag, MPI_Fint *ierr)
 {
-
+  /* This function not yet implemented */
 }

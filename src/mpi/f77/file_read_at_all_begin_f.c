@@ -48,5 +48,5 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_READ_AT_ALL_BEGIN,
 
 void mpi_file_read_at_all_begin_f(MPI_Fint *fh, MPI_Fint *offset, char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *ierr)
 {
-
+  /* This function not yet implemented */
 }

@@ -48,5 +48,5 @@ OMPI_GENERATE_F77_BINDINGS (MPI_INFO_CREATE,
 
 void mpi_info_create_f(MPI_Fint *info, MPI_Fint *ierr)
 {
-
+  /* This function not yet implemented */
 }

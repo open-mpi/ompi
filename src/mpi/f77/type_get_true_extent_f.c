@@ -54,7 +54,7 @@ void mpi_type_get_true_extent_f(MPI_Fint *datatype, MPI_Fint *true_lb, MPI_Fint 
 
     *ierr = MPI_Type_get_true_extent(c_type, &c_true_lb, &c_true_extent);
 
-    if (*ierr == MPI_SUCCESS){
+    if (MPI_SUCCESS == *ierr) {
       *true_lb = (MPI_Fint) c_true_lb;
       *true_extent = (MPI_Fint) c_true_extent;
     }

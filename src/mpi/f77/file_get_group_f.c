@@ -48,5 +48,5 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_GET_GROUP,
 
 void mpi_file_get_group_f(MPI_Fint *fh, MPI_Fint *group, MPI_Fint *ierr)
 {
-
+  /* This function not yet implemented */
 }

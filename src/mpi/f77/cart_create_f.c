@@ -48,5 +48,5 @@ OMPI_GENERATE_F77_BINDINGS (MPI_CART_CREATE,
 
 void mpi_cart_create_f(MPI_Fint *old_comm, MPI_Fint *ndims, MPI_Fint *dims, MPI_Fint *periods, MPI_Fint *reorder, MPI_Fint *comm_cart, MPI_Fint *ierr)
 {
-
+  /* This function not yet implemented */
 }

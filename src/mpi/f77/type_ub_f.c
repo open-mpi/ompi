@@ -53,6 +53,7 @@ void mpi_type_ub_f(MPI_Fint *mtype, MPI_Fint *ub, MPI_Fint *ierr)
 
     *ierr = MPI_Type_ub(c_mtype, &c_ub);
 
-    if (*ierr == MPI_SUCCESS)
+    if (MPI_SUCCESS == *ierr) {
       *ub = (MPI_Fint)c_ub;
+    }
 }

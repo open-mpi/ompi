@@ -52,7 +52,7 @@ void mpi_type_commit_f(MPI_Fint *type, MPI_Fint *ierr)
 
     *ierr = MPI_Type_commit(&c_type); 
 
-    if (*ierr == MPI_SUCCESS)
+    if (MPI_SUCCESS == *ierr) {
       *type = MPI_Type_c2f(c_type);
-
+    }
 }

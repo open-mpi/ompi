@@ -52,7 +52,7 @@ void mpi_type_set_attr_f(MPI_Fint *type, MPI_Fint *type_keyval, char *attr_val, 
 
     *ierr = MPI_Type_set_attr( c_type, *type_keyval, attr_val );
 
-    if (*ierr == MPI_SUCCESS)
+    if (MPI_SUCCESS == *ierr) {
         *type = MPI_Type_c2f( c_type );
-
+    }
 }

@@ -56,9 +56,7 @@ void mpi_bsend_init_f(char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *
 
     *ierr = MPI_Bsend_init(buf, *count, c_type, *dest, *tag, c_comm, &c_req);
 
-    if (*ierr == MPI_SUCCESS) {
+    if (MPI_SUCCESS == *ierr) {
         *request = MPI_Request_c2f(c_req);
     }
-
-
 }

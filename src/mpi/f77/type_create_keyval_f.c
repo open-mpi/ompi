@@ -71,7 +71,7 @@ void mpi_type_create_keyval_f(MPI_Fint *type_copy_attr_fn, MPI_Fint *type_delete
     ret = ompi_attr_create_keyval(TYPE_ATTR, copy_fn, del_fn,
                                   type_keyval, extra_state, OMPI_KEYVAL_F77);
 
-    if (ret != OMPI_SUCCESS) {
+    if (MPI_SUCCESS != ret) {
         *ierr = OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER,
                                        FUNC_NAME);
     } else {

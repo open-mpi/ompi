@@ -53,7 +53,7 @@ void mpi_get_elements_f(MPI_Fint *status, MPI_Fint *datatype, MPI_Fint *count, M
 
     *ierr = MPI_Status_f2c(status, &c_status);
 
-    if (*ierr == MPI_SUCCESS)
+    if (MPI_SUCCESS == *ierr) {
       *ierr = MPI_Get_elements(&c_status, c_type, count);
-
+    }
 }

@@ -48,5 +48,5 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_SET_SIZE,
 
 void mpi_file_set_size_f(MPI_Fint *fh, MPI_Fint *size, MPI_Fint *ierr)
 {
-
+  /* This function not yet implemented */
 }

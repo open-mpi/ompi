@@ -9,6 +9,8 @@
 
 #include "mpi.h"
 #include "mpi/f77/bindings.h"
+#include "errhandler/errhandler.h"
+#include "communicator/communicator.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_TESTSOME = mpi_testsome_f
@@ -47,24 +49,22 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TESTSOME,
 #include "mpi/f77/profile/defines.h"
 #endif
 
+static const char FUNC_NAME[] = "MPI_TESTSOME";
+
+
 void mpi_testsome_f(MPI_Fint *incount, MPI_Fint *array_of_requests, MPI_Fint *outcount, MPI_Fint *array_of_indices, MPI_Fint *array_of_statuses, MPI_Fint *ierr)
 {
     MPI_Request *c_req;
     MPI_Status *c_status;
     int i;
 
-    c_req = malloc(*incount * sizeof(MPI_Request));
-    if (c_req == NULL) {
-        *ierr = MPI_ERR_INTERN;
+    c_req = malloc(*incount * (sizeof(MPI_Request) + sizeof(MPI_Status)));
+    if (NULL == c_req) {
+        *ierr = OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_NO_MEM,
+                                       FUNC_NAME);
         return;
     }
-
-    c_status = malloc(*incount * sizeof(MPI_Status));
-    if (c_status == NULL){
-        *ierr = MPI_ERR_INTERN;
-        free(c_req);
-        return;
-    }
+    c_status = (MPI_Status*) c_req + *incount;
 
     for (i = 0; i < *incount; i++) {
         c_req[i] = MPI_Request_f2c(array_of_requests[i]);
@@ -73,8 +73,8 @@ void mpi_testsome_f(MPI_Fint *incount, MPI_Fint *array_of_requests, MPI_Fint *ou
     *ierr = MPI_Testsome(*incount, c_req, outcount, array_of_indices, 
                          c_status);
 
-    if (*ierr == MPI_SUCCESS) {
-        if (*outcount != MPI_UNDEFINED) {
+    if (MPI_SUCCESS == *ierr) {
+        if (MPI_UNDEFINED != *outcount) {
             for (i = 0; i < *outcount; i++) {
                 array_of_indices[i] += 1;
             }
@@ -85,6 +85,4 @@ void mpi_testsome_f(MPI_Fint *incount, MPI_Fint *array_of_requests, MPI_Fint *ou
     }
 
     free(c_req);
-    free(c_status);
-
 }

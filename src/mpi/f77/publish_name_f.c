@@ -48,5 +48,5 @@ OMPI_GENERATE_F77_BINDINGS (MPI_PUBLISH_NAME,
 
 void mpi_publish_name_f(char *service_name, MPI_Fint *info, char *port_name, MPI_Fint *ierr)
 {
-
+  /* This function not yet implemented */
 }

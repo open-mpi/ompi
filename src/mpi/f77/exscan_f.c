@@ -48,5 +48,5 @@ OMPI_GENERATE_F77_BINDINGS (MPI_EXSCAN,
 
 void mpi_exscan_f(char *sendbuf, char *recvbuf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *op, MPI_Fint *comm, MPI_Fint *ierr)
 {
-
+  /* This function not yet implemented */
 }

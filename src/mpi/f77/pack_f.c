@@ -48,5 +48,5 @@ OMPI_GENERATE_F77_BINDINGS (MPI_PACK,
 
 void mpi_pack_f(char *inbuf, MPI_Fint *incount, MPI_Fint *datatype, char *outbuf, MPI_Fint *outsize, MPI_Fint *position, MPI_Fint *comm, MPI_Fint *ierr)
 {
-
+  /* This function not yet implemented */
 }

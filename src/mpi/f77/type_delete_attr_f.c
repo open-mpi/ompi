@@ -52,8 +52,7 @@ void mpi_type_delete_attr_f(MPI_Fint *type, MPI_Fint *type_keyval, MPI_Fint *ier
 
     *ierr = MPI_Type_delete_attr( c_type, *type_keyval ); 
 
-    if (*ierr == MPI_SUCCESS)
+    if (MPI_SUCCESS == *ierr) {
       *type = MPI_Type_c2f( c_type );
+    }
 }
-
-

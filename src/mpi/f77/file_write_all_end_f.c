@@ -48,5 +48,5 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_WRITE_ALL_END,
 
 void mpi_file_write_all_end_f(MPI_Fint *fh, char *buf, MPI_Fint *status, MPI_Fint *ierr)
 {
-
+  /* This function not yet implemented */
 }

@@ -48,5 +48,5 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_SET_ATOMICITY,
 
 void mpi_file_set_atomicity_f(MPI_Fint *fh, MPI_Fint *flag, MPI_Fint *ierr)
 {
-
+  /* This function not yet implemented */
 }

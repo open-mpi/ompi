@@ -48,5 +48,5 @@ OMPI_GENERATE_F77_BINDINGS (MPI_ALLGATHERV,
 
 void mpi_allgatherv_f(char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcounts, MPI_Fint *displs, MPI_Fint *recvtype, MPI_Fint *comm, MPI_Fint *ierr)
 {
-
+  /* This function not yet implemented */
 }

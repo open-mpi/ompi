@@ -48,5 +48,5 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_SYNC,
 
 void mpi_file_sync_f(MPI_Fint *fh, MPI_Fint *ierr)
 {
-
+  /* This function not yet implemented */
 }

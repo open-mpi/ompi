@@ -48,5 +48,5 @@ OMPI_GENERATE_F77_BINDINGS (MPI_ADD_ERROR_STRING,
 
 void mpi_add_error_string_f(MPI_Fint *errorcode, char *string, MPI_Fint *ierr)
 {
-
+  /* This function not yet implemented */
 }

@@ -48,13 +48,13 @@ OMPI_GENERATE_F77_BINDINGS (MPI_STATUS_SET_CANCELLED,
 
 void mpi_status_set_cancelled_f(MPI_Fint *status, MPI_Fint *flag, MPI_Fint *ierr)
 {
-
     MPI_Status c_status;
 
     MPI_Status_f2c( status, &c_status );
 
     *ierr = MPI_Status_set_cancelled(&c_status, *flag);
 
-    if (*ierr == MPI_SUCCESS)
+    if (MPI_SUCCESS == *ierr) {
         MPI_Status_c2f(&c_status, status);
+    }
 }

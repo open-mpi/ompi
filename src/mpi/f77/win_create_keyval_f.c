@@ -70,7 +70,7 @@ void mpi_win_create_keyval_f(MPI_Fint *win_copy_attr_fn, MPI_Fint *win_delete_at
     ret = ompi_attr_create_keyval(WIN_ATTR, copy_fn, del_fn,
                                  win_keyval, extra_state, OMPI_KEYVAL_F77);
 
-    if (ret != OMPI_SUCCESS) {
+    if (MPI_SUCCESS != ret) {
         OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER, FUNC_NAME);
     } else {
         *ierr = MPI_SUCCESS;

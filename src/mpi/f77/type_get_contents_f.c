@@ -9,6 +9,8 @@
 
 #include "mpi.h"
 #include "mpi/f77/bindings.h"
+#include "errhandler/errhandler.h"
+#include "communicator/communicator.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_TYPE_GET_CONTENTS = mpi_type_get_contents_f
@@ -47,9 +49,11 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_GET_CONTENTS,
 #include "mpi/f77/profile/defines.h"
 #endif
 
+static const char FUNC_NAME[] = "MPI_TYPE_GET_CONTENTS";
+
+
 void mpi_type_get_contents_f(MPI_Fint *mtype, MPI_Fint *max_integers, MPI_Fint *max_addresses, MPI_Fint *max_datatypes, MPI_Fint *array_of_integers, MPI_Fint *array_of_addresses, MPI_Fint *array_of_datatypes, MPI_Fint *ierr)
 {
-    
     MPI_Aint *c_address_array = NULL;
     MPI_Datatype *c_datatype_array = NULL;
     MPI_Datatype c_mtype = MPI_Type_f2c(*mtype);
@@ -57,20 +61,22 @@ void mpi_type_get_contents_f(MPI_Fint *mtype, MPI_Fint *max_integers, MPI_Fint *
 
     if (*max_datatypes) {
         c_datatype_array = malloc(*max_datatypes * sizeof(MPI_Datatype));
-        if (c_datatype_array == (MPI_Datatype*) NULL) {
-            *ierr = MPI_ERR_INTERN;
+        if (NULL == c_datatype_array) {
+            *ierr = OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_NO_MEM,
+                                           FUNC_NAME);
             return;
         }
     }
 
     if (*max_addresses) {
         c_address_array = malloc(*max_addresses * sizeof(MPI_Aint));
-        if (c_address_array == (MPI_Aint *) NULL) {
-            /*  prevent memory leaks */
-            if (c_datatype_array != (MPI_Datatype*) NULL)
+        if (NULL == c_address_array) {
+            if (NULL != c_datatype_array) {
               free(c_datatype_array);
+            }
 
-            *ierr = MPI_ERR_INTERN;
+            *ierr = OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_NO_MEM,
+                                           FUNC_NAME);
             return;
         }
     }
@@ -79,7 +85,7 @@ void mpi_type_get_contents_f(MPI_Fint *mtype, MPI_Fint *max_integers, MPI_Fint *
                                   *max_datatypes, array_of_integers, 
                                   c_address_array, c_datatype_array);
 
-    if (*ierr == MPI_SUCCESS) {
+    if (MPI_SUCCESS == *ierr) {
         for (i = 0; i < *max_addresses; i++) {
             array_of_addresses[i] = (MPI_Fint)c_address_array[i];
         }

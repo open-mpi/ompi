@@ -48,5 +48,5 @@ OMPI_GENERATE_F77_BINDINGS (MPI_ATTR_PUT,
 
 void mpi_attr_put_f(MPI_Fint *comm, MPI_Fint *keyval, char *attribute_val, MPI_Fint *ierr)
 {
-
+  /* This function not yet implemented */
 }

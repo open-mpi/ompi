@@ -53,13 +53,14 @@ void mpi_start_f(MPI_Fint *request, MPI_Fint *ierr)
 
     *ierr = MPI_Start(&c_req);
 
-    if (*ierr == MPI_SUCCESS) {
+    if (MPI_SUCCESS == *ierr) {
         /* For a persistent request, the underlying request descriptor could
            change (i.e. the old descriptor has not completed and cannot be 
            reused).
            So commit new descriptor.
         */
-        if ( tmp_req != c_req )
+        if ( tmp_req != c_req ) {
             *request = MPI_Request_c2f(c_req);
+        }
     }
 }

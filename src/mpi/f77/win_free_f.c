@@ -48,5 +48,5 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WIN_FREE,
 
 void mpi_win_free_f(MPI_Fint *win, MPI_Fint *ierr)
 {
-
+  /* This function not yet implemented */
 }

@@ -48,5 +48,5 @@ OMPI_GENERATE_F77_BINDINGS (MPI_ERRHANDLER_FREE,
 
 void mpi_errhandler_free_f(MPI_Fint *errhandler, MPI_Fint *ierr)
 {
-
+  /* This function not yet implemented */
 }
