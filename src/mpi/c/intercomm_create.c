@@ -117,6 +117,16 @@ int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
         goto err_exit;
     }
 
+    if ( MPI_PARAM_CHECK ) {
+	rc = ompi_comm_overlapping_groups(local_comm->c_local_group->grp_proc_count,
+					  local_comm->c_local_group->grp_proc_pointers,
+					  rsize,
+					  rprocs);
+	if ( OMPI_SUCCESS != rc ) {
+	    goto err_exit;
+	}
+    }
+
     newcomp = ompi_comm_allocate ( local_comm->c_local_group->grp_proc_count, rsize);
     if ( NULL == newcomp ) {
         rc = MPI_ERR_INTERN;

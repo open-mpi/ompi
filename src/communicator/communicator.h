@@ -339,6 +339,15 @@ struct ompi_communicator_t {
                                        int tag,
                                        int rsize);
 
+
+    /**
+     * This routine verifies, whether local_group and remote group are overlapping
+     * in intercomm_create
+     */
+    int ompi_comm_overlapping_groups (int size, ompi_proc_t **lprocs,
+				      int rsize, ompi_proc_t ** rprocs);
+
+
     /**
      * This is a routine determining whether the local or the
      * remote group will be first in the new intra-comm.
