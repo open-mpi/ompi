@@ -10,12 +10,12 @@ noinst_LTLIBRARIES = libmca_mpi_pml_base.la
 
 headers = \
         base.h \
-	fragment.h \
-	header.h \
-	recvfrag.h \
-	request.h \
-	sendfrag.h \
-	sendreq.h 
+	pml_base_fragment.h \
+	pml_base_header.h \
+	pml_base_recvfrag.h \
+	pml_base_request.h \
+	pml_base_sendfrag.h \
+	pml_base_sendreq.h 
 
 libmca_mpi_pml_base_la_SOURCES = \
         $(headers) \
