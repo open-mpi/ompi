@@ -47,7 +47,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_CREATE_KEYVAL,
                            mpi_type_create_keyval_,
                            mpi_type_create_keyval__,
                            mpi_type_create_keyval_f,
-                           (MPI_F_copy_function* type_copy_attr_fn, MPI_F_delete_function* type_delete_attr_fn, MPI_Fint *type_keyval, char *extra_state, MPI_Fint *ierr),
+                           (MPI_F_copy_function* type_copy_attr_fn, MPI_F_delete_function* type_delete_attr_fn, MPI_Fint *type_keyval, MPI_Fint *extra_state, MPI_Fint *ierr),
                            (type_copy_attr_fn, type_delete_attr_fn, type_keyval, extra_state, ierr) )
 #endif
 
@@ -58,7 +58,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_CREATE_KEYVAL,
 
 static char FUNC_NAME[] = "MPI_Type_create_keyval_f";
 
-void mpi_type_create_keyval_f(MPI_F_copy_function* type_copy_attr_fn, MPI_F_delete_function* type_delete_attr_fn, MPI_Fint *type_keyval, char *extra_state, MPI_Fint *ierr)
+void mpi_type_create_keyval_f(MPI_F_copy_function* type_copy_attr_fn, MPI_F_delete_function* type_delete_attr_fn, MPI_Fint *type_keyval, MPI_Fint *extra_state, MPI_Fint *ierr)
 {
     int ret, c_err;
     ompi_attribute_fn_ptr_union_t copy_fn;
