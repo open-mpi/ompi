@@ -9,7 +9,6 @@
 #endif
 #include <stdlib.h>
 
-/*   printf( "save in %s:%d at %p DT_BYTE disp %ld count %d\n", __FILE__, __LINE__, (PELEM), (DISP), (COUNT) ); \ */
 #define SAVE_DESC( PELEM, DISP, COUNT ) \
 do { \
   (PELEM)->flags  = DT_FLAG_BASIC | DT_FLAG_DATA; \
@@ -21,8 +20,6 @@ do { \
   nbElems++; \
 } while(0)
 
-/*   printf( "save in %s:%d type %d flags %x count %d disp %ld extent %d\n", \ */
-/*           __FILE__, __LINE__, (TYPE), (FLAGS), (COUNT), (DISP), (EXTENT) ); \ */
 #define SAVE_ELEM( PELEM, TYPE, FLAGS, COUNT, DISP, EXTENT ) \
 do { \
   (PELEM)->flags  = (FLAGS); \
@@ -63,9 +60,8 @@ int ompi_ddt_optimize_short( dt_desc_t* pData, int count,
    pStack->end_loop = pData->desc.used;
    pStack->disp = 0;
    pos_desc  = 0;
+   totalDisp = 0;
    
-   /* JMS: removed next_loop here */
-   totalDisp = pStack->disp;
    while( stack_pos >= 0 ) {
       if( pData->desc.desc[pos_desc].type == DT_END_LOOP ) { /* end of the current loop */
          dt_elem_desc_t* pStartLoop;
@@ -81,13 +77,11 @@ int ompi_ddt_optimize_short( dt_desc_t* pData, int count,
                     pData->desc.desc[pos_desc].extent );
          stack_pos--;
          pStack--;
-         /* JMS: made this into a block and added the totalDisp= line */
          if( stack_pos >= 0 ) {
              pStartLoop->disp = (pElemDesc - 1)->count;
-             totalDisp = pStack->disp;
+             totalDisp = pStack->disp;  /* update the displacement position */
          }
          pos_desc++;
-         totalDisp = pStack->disp;  /* update the displacement position */
          continue;
       }
       if( pData->desc.desc[pos_desc].type == DT_LOOP ) {
