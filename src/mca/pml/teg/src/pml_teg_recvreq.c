@@ -39,7 +39,7 @@ static void mca_pml_teg_recv_request_destruct(mca_pml_base_recv_request_t* reque
 
 OBJ_CLASS_INSTANCE(
     mca_pml_teg_recv_request_t,
-    mca_pml_base_request_t,
+    mca_pml_base_recv_request_t,
     mca_pml_teg_recv_request_construct,
     mca_pml_teg_recv_request_destruct);
                                                                                                                                                      
