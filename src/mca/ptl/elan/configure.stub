@@ -8,93 +8,39 @@
 # configure script.
 #
 AC_DEFUN([MCA_CONFIGURE_STUB],[
-    AC_CHECK_LIB([rmscall], [rms_getcap],
-	[ompi_elan_have_librmscall=yes], [])
 
-    AC_CHECK_LIB([elan], [elan_init],
-	[ompi_elan_have_libelan=yes], [])
+    # Look for a bunch of libraries; abort if we don't have them
 
-    AC_CHECK_LIB([elan4], [elan4_init],
-	[ompi_elan_have_libelan4=yes], [])
+    PTL_ELAN_LIBS=
+    pairs="rmscall:rms_getcap elan:elan_init elan4:elan4_init elan3:elan3_create elanctrl:elanctrl_open"
+    for pair in $pairs; do
+        lib="`echo $pair | cut -d: -f1`"
+        func="`echo $pair | cut -d: -f2`"
 
-    echo "Found librmscall ... ${ompi_elan_have_librmscall:-no}"
-    echo "Found libelan ... ${ompi_elan_have_libelan:-no}"
-    echo "Found libelan4 ... ${ompi_elan_have_libelan4:-no}"
+        AC_CHECK_LIB([$lib], [$func], [happy=yes], [happy=])
+        if test -z "$happy"; then
+            AC_MSG_WARN([*** Cannot find lib$lib])
+            AC_MSG_ERROR([Cannot continue])
+        fi
+        PTL_ELAN_LIBS="$PTL_ELAN_LIBS -l$lib"
+    done
 
-    if test "$ompi_elan_have_librmscall" = "yes" \
-	-a "$ompi_elan_have_libelan" = "yes" \
-	-a "$ompi_elan_have_libelan4" = "yes"; then
-	PTL_ELAN_LIBS="-lrmscall -lelan -lelan4"
-	ompi_elan_have_elanlibs=yes
-    else
-	AC_MSG_NOTICE([Cannot support elan4 without librmscall, 
-	    libelan and libelan4])
-    fi
+    # Some versions of AC seem to automatically append LIBS with the
+    # result of a successful AC_CHECK_LIB.  So ensure to override this
+    # here.
 
-    AC_CHECK_LIB([elan3], [elan3_create],  
-	[ompi_elan_have_libelan3=yes], 
-	[ompi_elan_nolibelan3=1])
+    LIBS="$PTL_ELAN_LIBS"
 
-    AC_CHECK_LIB([elanctrl], [elanctrl_open], 
-	[ompi_elan_have_libelanctrl=yes], 
-	[ompi_elan_nolibelanctrl=1])
-
-    if test "$ompi_elan_have_libelan3" = "yes"; then
-	PTL_ELAN_LIBS="$PTL_ELAN_LIBS -lelan3"
-	test "$ompi_elan_have_elanlibs" = "yes" && ompi_enable_elan="yes"
-    elif test "$ompi_elan_have_libelanctrl" = "yes"; then
-	PTL_ELAN_LIBS="$PTL_ELAN_LIBS -lelanctrl"
-	test "$ompi_elan_have_elanlibs" = "yes" && ompi_enable_elan="yes"
-    else
-	AC_MSG_NOTICE([ 
-		Cannot support elan4 without libelan3 or libelanctrl!])
-    fi 
+    # Need the elan qs2netlib source as well
 
     AC_ARG_WITH(ptl_elan_qsnet2libsrc, 
 	    AC_HELP_STRING([--with-ptl-elan-qsnet2libsrc],
 		[provide the path to qsnet2lib source]))
-    echo "path to qsnet2lib source,  ${with_ptl_elan_qsnet2libsrc:-no}"
-
-    if test "${with_ptl_elan_qsnet2libsrc+set}" = set \
-	-a "$ompi_enable_elan" = yes; then
-	withval="$with_ptl_elan_qsnet2libsrc"
-	PTL_ELAN_QSNET2LIBSRC=$with_ptl_elan_qsnet2libsrc
-	PTL_ELAN_CPPFLAGS="-I${with_ptl_elan_qsnet2libsrc}/include -I${with_ptl_elan_qsnet2libsrc}/elan4lib/include -I${with_ptl_elan_qsnet2libsrc}/elan4lib/elan4 -I${with_ptl_elan_qsnet2libsrc}/elan4lib/common"
-       	PTL_ELAN_LDFLAGS=" "
+    dir="$with_ptl_elan_qsnet2libsrc"
+    if test -z "$dir"; then
+        AC_MSG_WARN([*** Need path to qsnet2 library source; please use --with-ptl-elan-qs2netlibsrc=/path/to/qsnet2/source])
+        AC_MSG_ERROR([Cannot continue])
     else
-	PTL_ELAN_QSNET2LIBSRC=" "
-	PTL_ELAN_CPPFLAGS=" "
-	PTL_ELAN_LDFLAGS=" "
-	echo "Cannot support elan4 without a path to qsnet2lib source " \
-	    "and librmscall+libelan+libelan4"
-        exit 0
+	CPPFLAGS="-I${dir}/include -I${dir}/elan4lib/include -I${dir}/elan4lib/elan4 -I${dir}/elan4lib/common"
     fi
-
-    CPPFLAGS="$CPPFLAGS ${PTL_ELAN_CPPFLAGS}"
-    LDFLAGS="$LDFLAGS ${PTL_ELAN_LDFLAGS}"
-    LIBS="$LIBS $PTL_ELAN_LIBS"
-
-    AC_SUBST(PTL_ELAN_QSNET2LIBSRC)
-    AC_SUBST(PTL_ELAN_LIBS)
-])dnl
-
-#
-# Since MCA_CONFIGURE_STUB is not invoked when we are configured with
-# --enable dist, we provide this alternate macro is that invoked
-# instead.  Not all modules will need this -- probably only modules
-# thaty use AM_CONDITIONALS will require doing anything here.  If you
-# don't need it, you can remove this whole AC_DEFUN.
-#
-AC_DEFUN([MCA_CONFIGURE_DIST_STUB],[
-#
-# elan ptl configure-dist.stub
-#
-
-# ...probably only need this if have AM_CONDITIONALs in the
-# MCA_CONFIGURE_STUB.
-echo "Hello from elan configure.stub:MCA-CONFIGURE-DIST-STUB!"
-
-#
-# done with elan ptl configure-dist.stub
-#
 ])dnl
