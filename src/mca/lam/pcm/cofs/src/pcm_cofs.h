@@ -17,8 +17,7 @@ int mca_pcm_cofs_close(void);
 /*
  * Startup / Shutdown
  */
-int mca_pcm_cofs_query(int *priority);
-struct mca_pcm_1_0_0_t* mca_pcm_cofs_init(void);
+struct mca_pcm_1_0_0_t* mca_pcm_cofs_init(int *priority);
 int mca_pcm_cofs_finalize(void);
 
 
