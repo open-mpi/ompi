@@ -32,17 +32,17 @@ static void ompi_mutex_destruct(ompi_mutex_t *m)
 static void ompi_mutex_construct(ompi_mutex_t *m)
 {
 #if OMPI_HAVE_POSIX_THREADS
-    pthread_mutex_init(&m->m_lock.thread, 0);
+    pthread_mutex_init(&m->m_lock_pthread, 0);
 #endif
 #if OMPI_SYS_ARCH_ATOMIC_H
-    ompi_atomic_unlock(&m->m_lock.atomic);
+    ompi_atomic_unlock(&m->m_lock_atomic);
 #endif
 }
 
 static void ompi_mutex_destruct(ompi_mutex_t *m)
 {
 #if OMPI_HAVE_POSIX_THREADS
-    pthread_mutex_destroy(&m->m_lock);
+    pthread_mutex_destroy(&m->m_lock_pthread);
 #endif
 }
 
