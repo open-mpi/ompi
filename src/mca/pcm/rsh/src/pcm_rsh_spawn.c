@@ -389,6 +389,7 @@ internal_spawn_proc(int jobid, ompi_rte_node_schedule_t *sched,
 
  proc_cleanup:
 
+#if 0
    /* TSW - this needs to be fixed - however, ssh is not existing - and for
     * now this at least gives us stdout/stderr.
    */
@@ -414,6 +415,7 @@ internal_spawn_proc(int jobid, ompi_rte_node_schedule_t *sched,
 
     ret = OMPI_ERROR;
   }
+#endif
 
  cleanup:
     /* free up everything we used on the way */
