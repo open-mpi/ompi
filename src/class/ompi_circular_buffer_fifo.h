@@ -288,7 +288,7 @@ static inline int ompi_cb_fifo_get_slot(ompi_cb_fifo_t *fifo) {
 
     index = fifo->head->fifo_index;
     /* try and reserve slot */
-    if (fifo->queue[index] == OMPI_CB_FREE) {
+    if ( OMPI_CB_FREE == fifo->queue[index] ) {
         fifo->queue[index] = OMPI_CB_RESERVED;
         return_value = index;
         (fifo->head->fifo_index)++;
@@ -333,6 +333,10 @@ static inline void *ompi_cb_fifo_read_from_tail(ompi_cb_fifo_t *fifo,
     read_from_tail = (void *)fifo->queue[index];
     fifo->tail->num_to_clear++;
 
+    /* increment counter for later lazy free */
+    (fifo->tail->fifo_index)++;
+    (fifo->tail->fifo_index) &= fifo->mask;
+
     /* check to see if time to do a lazy free of queue slots */
     if ( (fifo->tail->num_to_clear == fifo->lazy_free_frequency) ||
             flush_entries_read ) {
@@ -352,10 +356,6 @@ static inline void *ompi_cb_fifo_read_from_tail(ompi_cb_fifo_t *fifo,
             *queue_empty=true;
         }
     }
-    
-    /* increment counter for later lazy free */
-    (fifo->tail->fifo_index)++;
-    (fifo->tail->fifo_index) &= fifo->mask;
 
     /* return */
     return read_from_tail;
