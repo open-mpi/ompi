@@ -9,10 +9,12 @@
 #   include<time.h>
 #endif
 
+#define EPOCHFILETIME (116444736000000000LL)
+
 int gettimeofday(struct timeval *tv, struct timezone *tz) {
     
     FILETIME file_time;
-    ULARGE_INTEGER place_holder;
+    LARGE_INTEGER place_holder;
     __int64 time;
     
 
@@ -25,7 +27,8 @@ int gettimeofday(struct timeval *tv, struct timezone *tz) {
     place_holder.LowPart = file_time.dwLowDateTime;
     place_holder.HighPart = file_time.dwHighDateTime;
     time = place_holder.QuadPart;
-    
+    time -= EPOCHFILETIME;
+
     /* Now we can use arithmetic operations on time which is nothing but
        a 64 bit integer holding time in 100 nanosec intervals */
 

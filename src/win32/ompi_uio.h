@@ -5,15 +5,16 @@
 #ifndef OMPI_UIO_H
 #define OMPI_UIO_H
 
-#define RETRIES 2 /* ft-mpi defines it this way */
 #include "ompi_declspec.h"
+#include <winsock2.h>
+#include <ws2tcpip.h>
 
 /* define the iovec structure */
-struct iovec{
-      void * iov_base;
-      size_t iov_len;
+struct iovec {
+  WSABUF data;
 };
-
+#define iov_base data.buf
+#define iov_len data.len
 
 #if defined(c_plusplus) || defined (__cplusplus)
 extern "C" {
@@ -35,17 +36,6 @@ OMPI_DECLSPEC int writev (int fd, struct iovec *iov, int cnt);
    buffer.
  */
 OMPI_DECLSPEC int readv (int fd, struct iovec *iov, int cnt);
-
-/* static inlined helper functions to push the write through. 
-   This was almost completely lifted from ft-mpi code. please
-   check Harness/hcore/share/snipe_lite.c for more details. 
-   The only difference being that harness code was implemented 
-   for blocking operations only */
-
-OMPI_DECLSPEC int writeconn (int s,char * data,int len);
-
-OMPI_DECLSPEC int readconn (int s,char * data,int len);
-
    
 #if defined(c_plusplus) || defined (__cplusplus)
 }
