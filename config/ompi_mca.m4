@@ -43,7 +43,7 @@ unset msg
 # The list of MCA types (it's fixed)
 
 AC_MSG_CHECKING([for MCA types])
-found_types="allocator coll io mpool oob one pcm pml ptl registry topo"
+found_types="allocator coll common io gpr mpool oob one pcm pml ptl registry topo"
 AC_MSG_RESULT([$found_types])
 
 # Get the list of all the non-configure MCA modules that were found by
@@ -228,6 +228,13 @@ unset foo type m modules structs outfile outdir total_dir file \
 # substitue on a variable name that contains a variable (e.g.,
 # OMPI_MCA_$type_SUBDIRS).  So we have to do this manually.  :-(
 
+# Common types
+
+AC_SUBST(MCA_common_ALL_SUBDIRS)
+AC_SUBST(MCA_common_STATIC_SUBDIRS)
+AC_SUBST(MCA_common_DYNAMIC_SUBDIRS)
+AC_SUBST(MCA_common_STATIC_LTLIBS)
+
 # OMPI types
 
 AC_SUBST(MCA_oob_ALL_SUBDIRS)
@@ -239,6 +246,11 @@ AC_SUBST(MCA_pcm_ALL_SUBDIRS)
 AC_SUBST(MCA_pcm_STATIC_SUBDIRS)
 AC_SUBST(MCA_pcm_DYNAMIC_SUBDIRS)
 AC_SUBST(MCA_pcm_STATIC_LTLIBS)
+
+AC_SUBST(MCA_gpr_ALL_SUBDIRS)
+AC_SUBST(MCA_gpr_STATIC_SUBDIRS)
+AC_SUBST(MCA_gpr_DYNAMIC_SUBDIRS)
+AC_SUBST(MCA_gpr_STATIC_LTLIBS)
 
 AC_SUBST(MCA_registry_ALL_SUBDIRS)
 AC_SUBST(MCA_registry_STATIC_SUBDIRS)
