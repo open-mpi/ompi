@@ -16,6 +16,16 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
-int MPI_Address(void *location, MPI_Aint *address){
+static char FUNC_NAME[] = "MPI_Address";
+
+int MPI_Address(void *location, MPI_Aint *address)
+{
+    if( MPI_PARAM_CHECK ) {
+        if( OMPI_MPI_INVALID_STATE ) {
+            OMPI_ERRHANDLER_RETURN( MPI_ERR_INTERN, (ompi_communicator_t*)NULL,
+                                    MPI_ERR_INTERN, FUNC_NAME );
+        }
+    }
+    *address = (MPI_Aint)location;
 	return MPI_SUCCESS;
 }
