@@ -6,6 +6,7 @@
 #include "lam/mem/malloc.h"
 #include "mca/mpi/pml/pml.h"
 #include "mca/mpi/ptl/ptl.h"
+#include "mca/lam/base/mca_base_param.h"
 #include "mca/mpi/ptl/base/ptl_base_sendreq.h"
 #include "mca/mpi/ptl/base/ptl_base_recvreq.h"
 #include "pml_teg.h"
@@ -41,10 +42,28 @@ mca_pml_base_module_1_0_0_t mca_pml_teg_module = {
 
     mca_pml_teg_module_init  /* module init */
 };
-                                                                                                                            
+
+
+
+static inline int mca_pml_teg_param_register_int(
+    const char* param_name,
+    int default_value)
+{
+    int id = mca_base_param_register_int("pml","teg",param_name,NULL,default_value);
+    int param_value = default_value;
+    mca_base_param_lookup_int(id,&param_value);
+    return param_value;
+}
+                                                                                                                        
 
 int mca_pml_teg_module_open(void)
 {
+    mca_pml_teg.teg_free_list_num =
+        mca_pml_teg_param_register_int("free-list-num", 256);
+    mca_pml_teg.teg_free_list_max =
+        mca_pml_teg_param_register_int("free-list-max", -1);
+    mca_pml_teg.teg_free_list_inc =
+        mca_pml_teg_param_register_int("free-list-inc", 256);
     return LAM_SUCCESS;
 }
 
@@ -66,6 +85,16 @@ mca_pml_t* mca_pml_teg_module_init(int* priority, int* min_thread, int* max_thre
     mca_pml_teg.teg_ptls = 0;
     mca_pml_teg.teg_num_ptls = 0;
 
+    lam_free_list_init(&mca_pml_teg.teg_recv_requests);
+    lam_free_list_init_with(
+        &mca_pml_teg.teg_recv_requests,
+        sizeof(mca_ptl_base_recv_request_t),
+        &mca_ptl_base_recv_request_cls, 
+        mca_pml_teg.teg_free_list_num,
+        mca_pml_teg.teg_free_list_max,
+        mca_pml_teg.teg_free_list_inc,
+        NULL);
+        
     lam_list_init(&mca_pml_teg.teg_incomplete_sends);
     lam_mutex_init(&mca_pml_teg.teg_lock);
     return &mca_pml_teg.super;

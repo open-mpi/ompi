@@ -95,7 +95,12 @@ extern int mca_ptl_tcp_request_alloc(
     struct mca_ptl_t* ptl,
     struct mca_ptl_base_send_request_t**
 );
-                                                                                                 
+
+extern void mca_ptl_tcp_request_return(
+    struct mca_ptl_t* ptl,
+    struct mca_ptl_base_send_request_t*
+);
+
 extern int mca_ptl_tcp_send(
     struct mca_ptl_t* ptl,
     struct mca_ptl_peer_t* ptl_peer,

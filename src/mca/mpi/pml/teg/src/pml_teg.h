@@ -7,7 +7,7 @@
  * $HEADER$
  */
 
-#ifndef MCA_PML_TEG_H_
+#ifndef MCA_PML_TEG_H
 #define MCA_PML_TEG_H
 
 #include "lam/mem/free_list.h"
@@ -32,8 +32,13 @@ struct mca_pml_teg_t {
 
     lam_list_t  teg_incomplete_sends; 
     lam_mutex_t teg_lock;
+
+    int teg_free_list_num; /* initial size of free list */
+    int teg_free_list_max; /* maximum size of free list */
+    int teg_free_list_inc; /* number of elements to grow free list */
+    lam_free_list_t teg_recv_requests;
 };
-typedef struct mca_pml_teg_t mca_pml_teg_t;
+typedef struct mca_pml_teg_t mca_pml_teg_t; 
 
 extern mca_pml_teg_t mca_pml_teg;
 
@@ -42,7 +47,7 @@ extern mca_pml_teg_t mca_pml_teg;
  * PML module functions.
  */
 
-extern mca_pml_base_module_1_0_0_t mca_pml_teg_module_1_0_0_0;
+extern mca_pml_base_module_1_0_0_t mca_pml_teg_module;
 
 
 extern int mca_pml_teg_module_open(void);
@@ -134,18 +139,17 @@ extern int mca_pml_teg_progress(void);
 extern int mca_pml_teg_start(
     lam_request_t* request
 );
-                                                                                                                          
+
 extern int mca_pml_teg_test(
     lam_request_t** request,
     int count,
     int *completed
 );
-                                                                                                                          
+
 extern int mca_pml_teg_wait(
     lam_request_t* request,
     lam_status_public_t* status
 );
-                                                                                                                          
 
 #endif
 

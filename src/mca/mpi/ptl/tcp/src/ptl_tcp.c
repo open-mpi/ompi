@@ -27,7 +27,8 @@ mca_ptl_tcp_t mca_ptl_tcp = {
     mca_ptl_tcp_del_proc,
     mca_ptl_tcp_fini,
     mca_ptl_tcp_send,
-    mca_ptl_tcp_request_alloc
+    mca_ptl_tcp_request_alloc,
+    mca_ptl_tcp_request_return
     }
 };
 
@@ -106,5 +107,10 @@ int mca_ptl_tcp_request_alloc(struct mca_ptl_t* ptl, struct mca_ptl_base_send_re
     int rc;
     *request = (struct mca_ptl_base_send_request_t*)lam_free_list_get(&mca_ptl_tcp_module.tcp_send_requests, &rc);
     return rc;
+}
+
+void mca_ptl_tcp_request_return(struct mca_ptl_t* ptl, struct mca_ptl_base_send_request_t* request)
+{
+    lam_free_list_return(&mca_ptl_tcp_module.tcp_send_requests, (lam_list_item_t*)request);
 }
 

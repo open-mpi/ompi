@@ -18,8 +18,8 @@ int mca_pml_teg_isend_init(
     lam_communicator_t* comm,
     lam_request_t **request)
 {
-    mca_ptl_base_send_request_t* sendreq;
-    int rc = mca_pml_teg_send_request_alloc(comm,dst,&sendreq);
+    int rc;
+    mca_ptl_base_send_request_t* sendreq = mca_pml_teg_send_request_alloc(comm,dst,&rc);
     if(rc != LAM_SUCCESS)
         return rc;
  
@@ -50,8 +50,8 @@ int mca_pml_teg_isend(
     lam_communicator_t* comm,
     lam_request_t **request)
 {
-    mca_ptl_base_send_request_t* sendreq;
-    int rc = mca_pml_teg_send_request_alloc(comm,dst,&sendreq);
+    int rc;
+    mca_ptl_base_send_request_t* sendreq = mca_pml_teg_send_request_alloc(comm,dst,&rc);
     if(rc != LAM_SUCCESS)
         return rc;
 
