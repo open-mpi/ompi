@@ -227,6 +227,7 @@ static inline int32_t ompi_convertor_pack( ompi_convertor_t* pConv,
     if( pConv->bConverted == (pConv->pDesc->size * pConv->count) ) {
 	iov[0].iov_len = 0;
 	*out_size = 0;
+        *max_data = 0;
 	return 1;  /* nothing to do */
     }
     
@@ -238,8 +239,8 @@ static inline int32_t ompi_convertor_pack( ompi_convertor_t* pConv,
 }
 
 static inline int32_t ompi_convertor_unpack( ompi_convertor_t* pConv,
-                                         struct iovec* iov, uint32_t* out_size,
-                                         uint32_t* max_data, int32_t* freeAfter )
+                                             struct iovec* iov, uint32_t* out_size,
+                                             uint32_t* max_data, int32_t* freeAfter )
 {
     dt_desc_t *pData = pConv->pDesc;
     uint32_t length;
@@ -247,6 +248,7 @@ static inline int32_t ompi_convertor_unpack( ompi_convertor_t* pConv,
     /* protect against over unpacking data */
     if( pConv->bConverted == (pData->size * pConv->count) ) {
         iov[0].iov_len = 0;
+        out_size = 0;
         *max_data = 0;
         return 1;  /* nothing to do */
     }
@@ -269,9 +271,9 @@ static inline int32_t ompi_convertor_unpack( ompi_convertor_t* pConv,
 /* and finally the convertor functions */
 OMPI_DECLSPEC ompi_convertor_t* ompi_convertor_create( int32_t remote_arch, int32_t mode );
 OMPI_DECLSPEC int32_t ompi_convertor_init_for_send( ompi_convertor_t* pConv, uint32_t flags,
-                                                const dt_desc_t* pData, int32_t count,
-                                                const void* pUserBuf, int32_t local_starting_point,
-                                                memalloc_fct_t allocfn );
+                                                    const dt_desc_t* pData, int32_t count,
+                                                    const void* pUserBuf, int32_t local_starting_point,
+                                                    memalloc_fct_t allocfn );
 OMPI_DECLSPEC int32_t ompi_convertor_init_for_recv( ompi_convertor_t* pConv, uint32_t flags,
                                                     const dt_desc_t* pData, int32_t count,
                                                     const void* pUserBuf, int32_t remote_starting_point,
