@@ -53,7 +53,7 @@ static int param_register(const char *type_name, const char *component_name,
                           mca_base_param_storage_t *default_value,
                           mca_base_param_storage_t *file_value,
                           mca_base_param_storage_t *override_value);
-static bool param_lookup(int index, mca_base_param_storage_t *storage,
+static bool param_lookup(size_t index, mca_base_param_storage_t *storage,
                          ompi_hash_table_t *attrs);
 static bool lookup_keyvals(mca_base_param_t *param,
                            mca_base_param_storage_t *storage,
@@ -170,7 +170,7 @@ int mca_base_param_register_string(const char *type_name,
 /*
  * Associate a keyval with a parameter index
  */
-int mca_base_param_kv_associate(int index, int keyval)
+int mca_base_param_kv_associate(size_t index, int keyval)
 {
   size_t len;
   mca_base_param_t *array;
@@ -596,7 +596,7 @@ static int param_register(const char *type_name, const char *component_name,
 /*
  * Lookup a parameter in multiple places
  */
-static bool param_lookup(int index, mca_base_param_storage_t *storage,
+static bool param_lookup(size_t index, mca_base_param_storage_t *storage,
                          ompi_hash_table_t *attrs)
 {
     size_t size;

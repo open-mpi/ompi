@@ -23,7 +23,7 @@
 #define attr_datatype_f d_f_to_c_index
 #define attr_win_f w_f_to_c_index
 
-#define CREATE_KEY() ompi_bitmap_find_and_set_first_unset_bit(key_bitmap)
+#define CREATE_KEY(key) ompi_bitmap_find_and_set_first_unset_bit(key_bitmap, (key))
 
 #define FREE_KEY(key) ompi_bitmap_clear_bit(key_bitmap, (key))
 
@@ -192,8 +192,10 @@ ompi_attr_create_keyval(ompi_attribute_type_t type,
     /* Create a new unique key and fill the hash */
   
     OMPI_THREAD_LOCK(&alock);
-    *key = CREATE_KEY();
-    ret = ompi_hash_table_set_value_uint32(keyval_hash, *key, attr);
+    ret = CREATE_KEY(key);
+    if (OMPI_SUCCESS == ret) {
+        ret = ompi_hash_table_set_value_uint32(keyval_hash, *key, attr);
+    }
     OMPI_THREAD_UNLOCK(&alock);
     if (OMPI_SUCCESS != ret) {
 	return ret;

@@ -52,8 +52,7 @@ static inline int ompi_hibit(int value, int start)
  */
 static inline int ompi_cube_dim(int value) 
 {
-    int dim;
-    size_t size;
+    int dim, size;
 
     for (dim = 0, size = 1; size < value; ++dim, size <<= 1) {
         continue;

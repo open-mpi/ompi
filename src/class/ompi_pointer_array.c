@@ -66,7 +66,7 @@ void ompi_pointer_array_destruct(ompi_pointer_array_t *array){
 size_t ompi_pointer_array_add(ompi_pointer_array_t *table, void *ptr)
 {
     void **p;
-    int	i;
+    size_t i;
     size_t index;
 
     if (0) {

@@ -19,10 +19,10 @@ struct mca_mem_pool_t;
 struct ompi_free_list_t
 {
     ompi_list_t super;
-    int fl_max_to_alloc;
-    int fl_num_allocated;
-    int fl_num_per_alloc;
-    int fl_num_waiting;
+    size_t fl_max_to_alloc;
+    size_t fl_num_allocated;
+    size_t fl_num_per_alloc;
+    size_t fl_num_waiting;
     size_t fl_elem_size;
     ompi_class_t* fl_elem_class;
     mca_mpool_base_module_t* fl_mpool;

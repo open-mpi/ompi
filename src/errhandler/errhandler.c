@@ -166,15 +166,15 @@ ompi_errhandler_t *ompi_errhandler_create(ompi_errhandler_type_t object_type,
  */
 static void ompi_errhandler_construct(ompi_errhandler_t *new_errhandler)
 {
-  int ret_val;
+  size_t ret_val;
 
   /* assign entry in fortran <-> c translation array */
 
   ret_val = ompi_pointer_array_add(ompi_errhandler_f_to_c_table, 
-                                  new_errhandler);
+                                   new_errhandler);
   new_errhandler->eh_f_to_c_index = ret_val;
 
-  new_errhandler->eh_fortran_function = 0;
+  new_errhandler->eh_fortran_function = NULL;
 
   new_errhandler->eh_comm_fn      = NULL;
   new_errhandler->eh_win_fn       = NULL;
