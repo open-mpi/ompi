@@ -34,7 +34,7 @@
 
 int orte_gpr_replica_put(int cnt, orte_gpr_value_t **values)
 {
-    int rc, i, j;
+    int rc = ORTE_SUCCESS, i, j;
     int8_t action_taken;
     orte_gpr_value_t *val;
     orte_gpr_replica_segment_t *seg=NULL;

@@ -150,8 +150,7 @@ int orte_gpr_replica_check_subscriptions(orte_gpr_replica_segment_t *seg,
                                          orte_gpr_replica_action_t action_taken)
 {
     orte_gpr_replica_triggers_t **trig;
-    orte_gpr_replica_subscribed_data_t **sptr;
-    int i, j, n, rc;
+    int i, rc;
 
     trig = (orte_gpr_replica_triggers_t**)((orte_gpr_replica.triggers)->addr);
     for (i=0; i < (orte_gpr_replica.triggers)->size; i++) {

@@ -47,7 +47,7 @@ orte_gpr_proxy_subscribe(orte_gpr_notify_action_t action,
 {
     orte_buffer_t *cmd;
     orte_buffer_t *answer;
-    int rc, ret;
+    int rc = ORTE_SUCCESS, ret;
     orte_gpr_notify_id_t idtag, remote_idtag;
 
     *sub_number = ORTE_GPR_NOTIFY_ID_MAX;
