@@ -21,7 +21,7 @@
 
 void mca_pml_teg_send_request_schedule(mca_ptl_base_send_request_t* req)
 {
-    lam_proc_t *proc = lam_comm_lookup_peer(req->super.req_comm, req->super.req_peer);
+    lam_proc_t *proc = lam_comm_peer_lookup(req->super.req_comm, req->super.req_peer);
     mca_pml_proc_t* proc_pml = proc->proc_pml;
 
     /* allocate remaining bytes to PTLs */

@@ -10,6 +10,7 @@
 #include <arpa/inet.h>
 
 #include "lam/constants.h"
+#include "lam/event/event.h"
 #include "lam/util/if.h"
 #include "lam/util/argv.h"
 #include "lam/util/output.h"
@@ -306,10 +307,16 @@ mca_ptl_t** mca_ptl_tcp_module_init(int *num_ptls,
                                     bool *have_hidden_threads)
 {
     mca_ptl_t **ptls;
+    int rc;
+
     *num_ptls = 0;
     *allow_multi_user_threads = true;
     *have_hidden_threads = false;
 
+    if((rc = lam_event_init()) != LAM_SUCCESS) {
+        lam_output(0, "mca_ptl_tcp_module_init: unable to initialize event dispatch thread: %d\n", rc);
+        return NULL;
+    }
 
     /* initialize free lists */
     lam_free_list_init(&mca_ptl_tcp_module.tcp_send_requests, 

@@ -134,9 +134,9 @@ struct lam_eventop {
 #define LAM_EVLOOP_NONBLOCK	0x02
 
 
-void lam_event_init(void);
-int  lam_event_dispatch(void);
-int  lam_event_loop(int);
+int lam_event_init(void);
+int lam_event_dispatch(void);
+int lam_event_loop(int);
 
 #define lam_evtimer_add(ev, tv)		lam_event_add(ev, tv)
 #define lam_evtimer_set(ev, cb, arg)	lam_event_set(ev, -1, 0, cb, arg)

@@ -55,6 +55,13 @@ typedef struct lam_communicator_t lam_communicator_t;
 
 
 /**
+ * is this a valid communicator
+ */
+static inline int lam_comm_invalid(lam_communicator_t* comm)
+{
+    return false;
+}
+/**
  * rank w/in the communicator
  */
 static inline int lam_comm_rank(lam_communicator_t* comm)
@@ -79,7 +86,7 @@ static inline lam_communicator_t *lam_comm_lookup(uint32_t cid)
     return (lam_communicator_t*)lam_pointer_array_get_item(&lam_mpi_communicators, cid);
 }
 
-static inline lam_proc_t* lam_comm_lookup_peer(lam_communicator_t* comm, int peer_id)
+static inline lam_proc_t* lam_comm_peer_lookup(lam_communicator_t* comm, int peer_id)
 {
 #if LAM_ENABLE_DEBUG
     if(peer_id >= comm->c_remote_group->grp_proc_count) {
@@ -89,6 +96,15 @@ static inline lam_proc_t* lam_comm_lookup_peer(lam_communicator_t* comm, int pee
 #endif
     return comm->c_remote_group->grp_proc_pointers[peer_id];
 }
+
+static inline bool lam_comm_peer_invalid(lam_communicator_t* comm, int peer_id)
+{
+    if(peer_id < 0 || peer_id >= comm->c_remote_group->grp_proc_count) {
+        return true;
+    }
+    return false;
+}
+
 
 
 #if defined(c_plusplus) || defined(__cplusplus)

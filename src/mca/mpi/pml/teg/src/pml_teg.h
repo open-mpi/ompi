@@ -16,6 +16,7 @@
 #include "lam/util/cmd_line.h"
 #include "mpi/request/request.h"
 #include "mca/mpi/pml/pml.h"
+#include "mca/mpi/pml/base/pml_base_request.h"
 #include "mca/mpi/ptl/ptl.h"
 
 
@@ -34,7 +35,6 @@ struct mca_pml_teg_t {
 
     lam_list_t   teg_procs;
     lam_mutex_t  teg_lock;
-    lam_thread_t teg_thread;
 
     int teg_free_list_num;   /* initial size of free list */
     int teg_free_list_max;   /* maximum size of free list */
@@ -51,6 +51,9 @@ struct mca_pml_teg_t {
     lam_mutex_t teg_request_lock;
     lam_condition_t teg_request_cond;
     volatile int teg_request_waiting;
+
+    /* null request */
+    mca_pml_base_request_t teg_null;
 };
 typedef struct mca_pml_teg_t mca_pml_teg_t; 
 
@@ -180,8 +183,12 @@ extern int mca_pml_teg_test(
 );
 
 extern int mca_pml_teg_wait(
-    lam_request_t* request,
+    lam_request_t** request,
     lam_status_public_t* status
+);
+
+extern int mca_pml_teg_null(
+    lam_request_t** request
 );
 
 #endif

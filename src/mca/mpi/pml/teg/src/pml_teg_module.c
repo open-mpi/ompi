@@ -59,9 +59,17 @@ static inline int mca_pml_teg_param_register_int(
 
 int mca_pml_teg_module_open(void)
 {
+    mca_pml_base_request_t* teg_null = &mca_pml_teg.teg_null;
     OBJ_CONSTRUCT(&mca_pml_teg.teg_lock, lam_mutex_t);
     OBJ_CONSTRUCT(&mca_pml_teg.teg_recv_requests, lam_free_list_t);
     OBJ_CONSTRUCT(&mca_pml_teg.teg_procs, lam_list_t);
+
+    OBJ_CONSTRUCT(teg_null, mca_pml_base_request_t);
+    teg_null->req_type = MCA_PML_REQUEST_NULL;
+    teg_null->req_status.MPI_SOURCE = LAM_PROC_NULL;
+    teg_null->req_status.MPI_TAG = LAM_ANY_TAG;
+    teg_null->req_status.MPI_ERROR = LAM_SUCCESS;
+    teg_null->req_status._count = 0;
 
     mca_pml_teg.teg_free_list_num =
         mca_pml_teg_param_register_int("free_list_num", 256);
@@ -126,13 +134,6 @@ mca_pml_t* mca_pml_teg_module_init(int* priority,
     OBJ_CONSTRUCT(&mca_pml_teg.teg_request_lock, lam_mutex_t);
     OBJ_CONSTRUCT(&mca_pml_teg.teg_request_cond, lam_condition_t);
     mca_pml_teg.teg_request_waiting = 0;
-
-    /* event dispatch thread */
-    OBJ_CONSTRUCT(&mca_pml_teg.teg_thread, lam_thread_t);
-    mca_pml_teg.teg_thread.t_run = mca_pml_teg_thread;
-    if(lam_thread_start(&mca_pml_teg.teg_thread) != LAM_SUCCESS)
-        return NULL;
-
     return &mca_pml_teg.super;
 }
 

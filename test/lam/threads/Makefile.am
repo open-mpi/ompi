@@ -5,6 +5,7 @@
 
 include $(top_srcdir)/config/Makefile.options
 AM_CPPFLAGS = -I$(top_srcdir)/test/support -DLAM_ENABLE_DEBUG_OVERRIDE=1
+AM_LDFLAGS = -lpthread
 
 noinst_PROGRAMS = \
 	lam_thread \
@@ -20,8 +21,7 @@ lam_thread_LDADD = \
         $(top_builddir)/src/lam/threads/mutex_pthread.lo \
         $(top_builddir)/src/lam/threads/mutex_spinwait.lo \
         $(top_builddir)/src/lam/threads/mutex_spinlock.lo \
-        $(top_builddir)/test/support/libsupport.la \
-	-lpthread
+        $(top_builddir)/test/support/libsupport.la 
 lam_thread_DEPENDENCIES = $(lam_thread_LDADD)
 
 lam_condition_SOURCES = lam_condition.c
@@ -37,7 +37,6 @@ lam_condition_LDADD = \
         $(top_builddir)/src/lam/lfc/lam_object.lo \
         $(top_builddir)/src/lam/mem/malloc.lo \
         $(top_builddir)/src/lam/util/output.lo \
-        $(top_builddir)/test/support/libsupport.la \
-	-lpthread
+        $(top_builddir)/test/support/libsupport.la 
 lam_condition_DEPENDENCIES = $(lam_condition_LDADD)
 
