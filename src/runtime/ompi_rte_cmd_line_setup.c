@@ -58,10 +58,6 @@ void ompi_rte_cmd_line_setup(ompi_cmd_line_t *cmd_line)
 			   "Hostfile for this universe");
 
     ompi_cmd_line_make_opt3(cmd_line,  /* read in ompi_rte_parse_cmd_line */
-			    '\0', "initcontact", "initcontact", 1,
-			    "Initial oob contact info");
-
-    ompi_cmd_line_make_opt3(cmd_line,  /* read in ompi_rte_parse_cmd_line */
 			    '\0', "nsreplica", "nsreplica", 1,
 			    "OOB contact info for name server replica assigned to this process");
 

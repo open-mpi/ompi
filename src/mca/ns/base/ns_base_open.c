@@ -6,7 +6,10 @@
 
 #include "mca/mca.h"
 #include "mca/base/base.h"
+#include "mca/base/mca_base_param.h"
 #include "util/output.h"
+#include "util/proc_info.h"
+#include "mca/oob/base/base.h"
 #include "mca/ns/base/base.h"
 
 
@@ -38,6 +41,18 @@ mca_ns_base_component_t mca_ns_base_selected_component;
  */
 int mca_ns_base_open(void)
 {
+    int id;
+    char *replica;
+
+    /* check the environment for replica information */
+    id = mca_base_param_register_string("ns", "base", "replica", NULL, NULL);
+    mca_base_param_lookup_string(id, &replica);
+    if (NULL != replica) {
+	mca_oob_set_contact_info(replica);
+	ompi_process_info.ns_replica = ns_base_create_process_name(0,0,0);
+	mca_oob_parse_contact_info(replica, ompi_process_info.ns_replica, NULL);
+    }
+
 
   /* Open up all available components */
 

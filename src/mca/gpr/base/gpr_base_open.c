@@ -6,7 +6,10 @@
 
 #include "mca/mca.h"
 #include "mca/base/base.h"
+#include "mca/base/mca_base_param.h"
 #include "util/output.h"
+#include "util/proc_info.h"
+#include "mca/oob/base/base.h"
 #include "mca/gpr/base/base.h"
 
 
@@ -193,6 +196,18 @@ mca_gpr_base_component_t mca_gpr_base_selected_component;
  */
 int mca_gpr_base_open(void)
 {
+    int id;
+    char *replica;
+
+    /* check the environment for replica information */
+    id = mca_base_param_register_string("gpr", "base", "replica", NULL, NULL);
+    mca_base_param_lookup_string(id, &replica);
+    if (NULL != replica) {
+	mca_oob_set_contact_info(replica);
+	ompi_process_info.gpr_replica = ns_base_create_process_name(0,0,0);
+	mca_oob_parse_contact_info(replica, ompi_process_info.gpr_replica, NULL);
+    }
+
   /* Open up all available components */
 
   if (OMPI_SUCCESS != 

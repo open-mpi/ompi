@@ -1,4 +1,4 @@
-/* -*- C++ -*-
+/* -*- C -*-
  *
  * $HEADER$
  */
@@ -23,14 +23,6 @@
 extern char** environ;
 
 static long num_running_procs;
-
-static int
-mpirun_monitor(ompi_process_name_t *name, int newstate, int status)
-{
-    /* BWB - do state checks and the like... */
-    num_running_procs--;
-    return OMPI_SUCCESS;
-}
 
 
 int
@@ -145,13 +137,24 @@ main(int argc, char *argv[])
     ompi_cmd_line_get_tail(cmd_line, &(sched->argc), &(sched->argv));
     /* set initial contact info */
     my_contact_info = mca_oob_get_contact_info();
-    ompi_argv_append(&(sched->argc), &(sched->argv), "-initcontact");
-    ompi_argv_append(&(sched->argc), &(sched->argv), my_contact_info);
-    ompi_argv_append(&(sched->argc), &(sched->argv), "-nsreplica");
-    ompi_argv_append(&(sched->argc), &(sched->argv), my_contact_info);
-    ompi_argv_append(&(sched->argc), &(sched->argv), "-gprreplica");
-    ompi_argv_append(&(sched->argc), &(sched->argv), my_contact_info);
-    mca_pcm_base_build_base_env(environ, &(sched->env));
+    mca_pcm_base_build_base_env(environ, &(sched->envc), &(sched->env));
+    asprintf(&tmp, "OMPI_MCA_ns_base_replica=%s", my_contact_info);
+    ompi_argv_append(&(sched->envc), &(sched->env), tmp);
+    free(tmp);
+    asprintf(&tmp, "OMPI_MCA_gpr_base_replica=%s", my_contact_info);
+    ompi_argv_append(&(sched->envc), &(sched->env), tmp);
+    free(tmp);
+    if (NULL != ompi_universe_info.name) {
+	asprintf(&tmp, "OMPI_universe_name=%s", ompi_universe_info.name);
+	ompi_argv_append(&(sched->envc), &(sched->env), tmp);
+	free(tmp);
+    }
+    if (ompi_cmd_line_is_taken(cmd_line, "tmpdir")) {  /* user specified the tmp dir base */
+	asprintf(&tmp, "OMPI_tmpdir_base=%s", ompi_cmd_line_get_param(cmd_line, "tmpdir", 0, 0));
+	ompi_argv_append(&(sched->envc), &(sched->env), tmp);
+	free(tmp);
+    }
+
     getcwd(cwd, MAXPATHLEN);
     sched->cwd = strdup(cwd);
     sched->nodelist = nodelist;

@@ -22,9 +22,8 @@
 
 void ompi_rte_parse_cmd_line(ompi_cmd_line_t *cmd_line)
 {
-    char *universe, *initcontact, *nsreplica, *gprreplica, *tmp;
+    char *universe, *nsreplica, *gprreplica, *tmp;
 
-    ompi_output(0, "parsing command line");
 
     /* get universe name and store it, if user specified it */
     /* otherwise, stick with default name */
@@ -72,16 +71,6 @@ void ompi_rte_parse_cmd_line(ompi_cmd_line_t *cmd_line)
 	ompi_process_info.tmpdir_base = NULL;
     }
 
-    /* get initial contact info */
-    if (ompi_cmd_line_is_taken(cmd_line, "initcontact")) {
-	if (NULL == ompi_cmd_line_get_param(cmd_line, "initcontact", 0, 0)) {
-	    ompi_output(0, "error retrieving initial contact info - please report error to bugs@open-mpi.org");
-	    return;
-	}
-	initcontact = strdup(ompi_cmd_line_get_param(cmd_line, "initcontact", 0, 0));
-	mca_oob_set_contact_info(initcontact);
-    }
-
     /* see if name server replica provided */
     if (ompi_cmd_line_is_taken(cmd_line, "nsreplica")) {
 	if (NULL == ompi_cmd_line_get_param(cmd_line, "nsreplica", 0, 0)) {
@@ -89,9 +78,6 @@ void ompi_rte_parse_cmd_line(ompi_cmd_line_t *cmd_line)
 	    return;
 	}
 	nsreplica = strdup(ompi_cmd_line_get_param(cmd_line, "nsreplica", 0, 0));
-	if (0 != strcmp(nsreplica, initcontact)) {
-	    mca_oob_set_contact_info(nsreplica);
-	}
 	mca_oob_parse_contact_info(nsreplica, ompi_process_info.ns_replica, NULL);
     } else {
 	ompi_process_info.ns_replica = NULL;
@@ -104,8 +90,8 @@ void ompi_rte_parse_cmd_line(ompi_cmd_line_t *cmd_line)
 	    return;
 	}
 	gprreplica = strdup(ompi_cmd_line_get_param(cmd_line, "gprreplica", 0, 0));
-	if (0 != strcmp(nsreplica, gprreplica) &&
-	    0 != strcmp(initcontact, gprreplica)) { /* check to see if different */
+	if (NULL != nsreplica &&
+	    0 != strcmp(nsreplica, gprreplica)) { /* check to see if different */
 	    mca_oob_set_contact_info(gprreplica);
 	}
 	mca_oob_parse_contact_info(gprreplica, ompi_process_info.gpr_replica, NULL);
