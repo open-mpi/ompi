@@ -42,8 +42,8 @@ get_job_item(mca_ns_base_jobid_t jobid)
 {
     ompi_list_item_t *item;
 
-    for (item = ompi_list_get_first(&mca_pcm_rms_jobs) ;
-         item != ompi_list_get_end(&mca_pcm_rms_jobs) ;
+    for (item = ompi_list_get_first(&rms_jobs) ;
+         item != ompi_list_get_end(&rms_jobs) ;
          item = ompi_list_get_next(item) ) {
         mca_pcm_rms_job_item_t  *job_item = (mca_pcm_rms_job_item_t*) item;
         if (job_item->jobid == jobid) return job_item;
