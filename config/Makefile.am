@@ -26,6 +26,7 @@ EXTRA_DIST = \
         f77_get_alignment.m4 \
         f77_get_sizeof.m4 \
         f90_check_type.m4 \
+        f90_get_alignment.m4 \
         f90_get_sizeof.m4 \
         mca_acinclude.m4 \
         mca_configure.ac \
