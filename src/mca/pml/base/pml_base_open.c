@@ -30,7 +30,7 @@
 
 #include "mca/pml/base/static-components.h"
 
-static int mca_pml_base_progress(void) 
+int mca_pml_base_progress(void) 
 {
     return OMPI_SUCCESS;
 }

@@ -57,7 +57,7 @@ void ompi_progress(void)
         }
     }
 
-#if 0
+#if 1
     /* TSW - disable this until can validate that it doesn't impact SMP
      * performance
     */

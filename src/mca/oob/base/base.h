@@ -67,11 +67,12 @@ OMPI_DECLSPEC extern ompi_process_name_t mca_oob_name_self;
 #define MCA_OOB_TAG_RTE         4
 #define MCA_OOB_TAG_EXEC        5
 #define MCA_OOB_TAG_DAEMON      6
-#define MCA_OOB_TAG_STDIO       7
-#define MCA_OOB_TAG_SCHED       8
-#define MCA_OOB_TAG_PCM_KILL    9
+#define MCA_OOB_TAG_IOF_SVC     7
+#define MCA_OOB_TAG_IOF_CLT     8
+#define MCA_OOB_TAG_SCHED       9
 #define MCA_OOB_TAG_XCAST       10
-#define MCA_OOB_TAG_PCM_KILL_ACK 11
+#define MCA_OOB_TAG_PCM_KILL    11
+#define MCA_OOB_TAG_PCM_KILL_ACK 12
 #define MCA_OOB_TAG_USER        1000 /* user defined tags should be assigned above this level */
 
 /*

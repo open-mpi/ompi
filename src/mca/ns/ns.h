@@ -45,6 +45,7 @@
  * useful defines for bit-masks
  */
 
+#define OMPI_NS_CMP_NONE       0x00
 #define OMPI_NS_CMP_CELLID     0x01
 #define OMPI_NS_CMP_JOBID      0x02
 #define OMPI_NS_CMP_VPID       0x04

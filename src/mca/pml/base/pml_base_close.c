@@ -29,6 +29,7 @@ int mca_pml_base_close(void)
      anyway?  This module is going away, so errors don't matter
      anymore) */
 
+  mca_pml.pml_progress = mca_pml_base_progress;
   if (NULL != mca_pml_base_selected_component.pmlm_finalize) {
     mca_pml_base_selected_component.pmlm_finalize();
   }

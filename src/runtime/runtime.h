@@ -533,6 +533,11 @@ OMPI_DECLSPEC   int ompi_rte_job_shutdown(mca_ns_base_jobid_t jobid);
      */
 OMPI_DECLSPEC   int ompi_rte_init_cleanup(void);
 
+    /**
+     * Setup I/O forwarding.
+     */
+OMPI_DECLSPEC   int ompi_rte_init_io(void);
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
