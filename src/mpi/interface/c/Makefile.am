@@ -21,9 +21,7 @@ DIST_SUBDIRS = profile
 
 noinst_LTLIBRARIES = libmpi_c.la
 
-headers = \
-	bindings.h \
-	bindings_profiling.h
+headers = bindings.h
 
 libmpi_c_la_SOURCES = \
 	comm_get_name.c \
