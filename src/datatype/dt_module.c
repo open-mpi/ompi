@@ -131,9 +131,6 @@ ompi_pointer_array_t *ompi_datatype_f_to_c_table = NULL;
 
 int local_sizes[DT_MAX_PREDEFINED];
 
-/* VPS: fake convertor for time being / to provide pack/unpack functions */
-ompi_convertor_t* ompi_convertor;
-
 static ompi_convertor_t* pDumpConv = NULL;
 
 #define COPY_DATA_DESC( PDST, PSRC )                                    \
@@ -248,10 +245,6 @@ int ompi_ddt_init( void )
 
     for( i = 0; i < DT_MAX_PREDEFINED; i++ )
         local_sizes[i] = basicDatatypes[i].size;
-
-    /* VPS: Create a fake convertor. No error checking here now, since
-       this will be removed sometime */
-    ompi_convertor = ompi_convertor_create(0,0);
 
     /* Start to populate the f2c index translation table */
     ompi_pointer_array_add( ompi_datatype_f_to_c_table, NULL );  /* why not ? */
