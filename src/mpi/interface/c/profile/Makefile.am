@@ -218,6 +218,46 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         pkeyval_create.c \
         pkeyval_free.c \
         plookup_name.c \
+        pop_c2f.c \
+        pop_create.c \
+        pop_f2c.c \
+        pop_free.c \
+        popen_port.c \
+        ppack_external.c \
+        ppack_external_size.c \
+        ppack.c \
+        ppack_size.c \
+        ppcontrol.c \
+        pprobe.c \
+        ppublish_name.c \
+        pput.c \
+        pquery_thread.c \
+        precv_init.c \
+        precv.c \
+        preduce.c \
+        preduce_scatter.c \
+        pregister_datarep.c \
+        prequest_c2f.c \
+        prequest_f2c.c \
+        prequest_free.c \
+        prequest_get_status.c \
+        prsend_init.c \
+        prsend.c \
+        pscan.c \
+        pscatter.c \
+        pscatterv.c \
+        psend.c \
+        psend_init.c \
+        psendrecv.c \
+        psendrecv_replace.c \
+        pssend_init.c \
+        pssend.c \
+        pstart.c \
+        pstartall.c \
+        pstatus_c2f.c \
+        pstatus_f2c.c \
+        pstatus_set_cancelled.c \
+        pstatus_set_elements.c \
         ptestall.c \
         ptestany.c \
         ptest.c \

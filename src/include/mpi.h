@@ -678,50 +678,83 @@ extern "C" {
   int MPI_Keyval_free(int *keyval);
   int MPI_Lookup_name(char *service_name, MPI_Info info, char *port_name);
   MPI_Fint MPI_Op_c2f(MPI_Op op); 
-  int MPI_Op_create(MPI_User_function *, int, MPI_Op *);
-  int MPI_Open_port(MPI_Info, char *);
-  MPI_Op MPI_Op_f2c(MPI_Fint f_handle);
-  int MPI_Op_free(MPI_Op *);
-  int MPI_Pack(void *, int, MPI_Datatype, void *, int, int *, MPI_Comm);
-  int MPI_Pack_size(int, MPI_Datatype, MPI_Comm, int *);
-  int MPI_Pcontrol(int level, ...);
-  int MPI_Probe(int, int, MPI_Comm, MPI_Status *);
-  int MPI_Publish_name(char *, MPI_Info, char *);
-  int MPI_Put(void *, int, MPI_Datatype, int, MPI_Aint, int, 
-              MPI_Datatype, MPI_Win);
-  int MPI_Query_thread(int *);
-  int MPI_Recv(void *, int, MPI_Datatype, int, int, MPI_Comm, MPI_Status *);
-  int MPI_Recv_init(void *, int, MPI_Datatype, int, int, 
-                    MPI_Comm, MPI_Request *);
-  int MPI_Reduce(void *, void *, int, MPI_Datatype, MPI_Op, int, MPI_Comm);
-  int MPI_Reduce_scatter(void *, void *, int *, MPI_Datatype, 
-                         MPI_Op, MPI_Comm);
-  MPI_Fint MPI_Request_c2f(MPI_Request);
-  MPI_Request MPI_Request_f2c(MPI_Fint);
-  int MPI_Request_free(MPI_Request *);
-  int MPI_Rsend(void *, int, MPI_Datatype, int, int, MPI_Comm);
-  int MPI_Rsend_init(void *, int, MPI_Datatype, int, int, 
-                     MPI_Comm, MPI_Request *);
-  int MPI_Scan(void *, void *, int, MPI_Datatype, MPI_Op, MPI_Comm);
-  int MPI_Scatter(void *, int, MPI_Datatype, void *, int, 
-                  MPI_Datatype, int, MPI_Comm);
-  int MPI_Scatterv(void *, int *, int *, MPI_Datatype, 
-                   void *, int, MPI_Datatype, int, MPI_Comm);
-  int MPI_Send(void *, int, MPI_Datatype, int, int, MPI_Comm);
-  int MPI_Send_init(void *, int, MPI_Datatype, int, int, 
-                    MPI_Comm, MPI_Request *);
-  int MPI_Sendrecv(void *, int, MPI_Datatype, int, int, void *, 
-                   int, MPI_Datatype, int, int, MPI_Comm, 
-                   MPI_Status *);
-  int MPI_Sendrecv_replace(void *, int, MPI_Datatype, int, int, 
-                           int, int, MPI_Comm, MPI_Status *);
-  int MPI_Ssend(void *, int, MPI_Datatype, int, int, MPI_Comm);
-  int MPI_Ssend_init(void *, int, MPI_Datatype, int, int, 
-                     MPI_Comm, MPI_Request *);
-  int MPI_Startall(int, MPI_Request *);
-  int MPI_Start(MPI_Request *);
-  int MPI_Status_c2f(MPI_Status *, MPI_Fint *);
-  int MPI_Status_f2c(MPI_Fint *, MPI_Status *);
+  int MPI_Op_create(MPI_User_function *function, int commute, 
+                    MPI_Op *op);
+  int MPI_Open_port(MPI_Info info, char *port_name);
+  MPI_Op MPI_Op_f2c(MPI_Fint op);
+  int MPI_Op_free(MPI_Op *op);
+  int MPI_Pack_external(char *datarep, void *inbuf, int incount,
+                        MPI_Datatype datatype, void *outbuf,
+                        MPI_Aint outsize, MPI_Aint *position);
+  int MPI_Pack_external_size(char *datarep, int incount, 
+                             MPI_Datatype datatype, MPI_Aint *size);
+  int MPI_Pack(void *inbuf, int incount, MPI_Datatype datatype, 
+               void *outbuf, int outsize, int *position, MPI_Comm comm);
+  int MPI_Pack_size(int incount, MPI_Datatype datatype, MPI_Comm comm, 
+                    int *size);
+  int MPI_Pcontrol(const int level, ...);
+  int MPI_Probe(int source, int tag, MPI_Comm comm, MPI_Status *status);
+  int MPI_Publish_name(char *service_name, MPI_Info info, 
+                       char *port_name);
+  int MPI_Put(void *origin_addr, int origin_count, MPI_Datatype origin_datatype, 
+              int target_rank, MPI_Aint target_disp, int target_count, 
+              MPI_Datatype target_datatype, MPI_Win win);
+  int MPI_Query_thread(int *provided);
+  int MPI_Recv_init(void *buf, int count, MPI_Datatype datatype, int source,
+                    int tag, MPI_Comm comm, MPI_Request *request);
+  int MPI_Recv(void *buf, int count, MPI_Datatype datatype, int source, 
+               int tag, MPI_Comm comm, MPI_Status *status);
+  int MPI_Reduce(void *sendbuf, void *recvbuf, int count, 
+                 MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm);
+  int MPI_Reduce_scatter(void *sendbuf, void *recvbuf, int *recvcounts, 
+                         MPI_Datatype datatype, MPI_Op op, MPI_Comm comm);
+  int MPI_Register_datarep(char *datarep, 
+                       MPI_Datarep_conversion_function *read_conversion_fn,
+                       MPI_Datarep_conversion_function *write_conversion_fn,
+                       MPI_Datarep_extent_function *dtype_file_extent_fn,
+                       void *extra_state);
+  MPI_Fint MPI_Request_c2f(MPI_Request request);
+  MPI_Request MPI_Request_f2c(MPI_Fint request);
+  int MPI_Request_free(MPI_Request *request);
+  int MPI_Request_get_status(MPI_Request request, int *flag, 
+                             MPI_Status *status);
+  int MPI_Rsend(void *ibuf, int count, MPI_Datatype datatype, int dest, 
+                int tag, MPI_Comm comm);
+  int MPI_Rsend_init(void *buf, int count, MPI_Datatype datatype, 
+                     int dest, int tag, MPI_Comm comm, 
+                     MPI_Request *request);
+  int MPI_Scan(void *sendbuf, void *recvbuf, int count, 
+               MPI_Datatype datatype, MPI_Op op, MPI_Comm comm);
+  int MPI_Scatter(void *sendbuf, int sendcount, MPI_Datatype sendtype, 
+                  void *recvbuf, int recvcount, MPI_Datatype recvtype, 
+                  int root, MPI_Comm comm);
+  int MPI_Scatterv(void *sendbuf, int *sendcounts, int *displs, 
+                   MPI_Datatype sendtype, void *recvbuf, int recvcount, 
+                   MPI_Datatype recvtype, int root, MPI_Comm comm);
+  int MPI_Send_init(void *buf, int count, MPI_Datatype datatype, 
+                    int dest, int tag, MPI_Comm comm, 
+                    MPI_Request *request);
+  int MPI_Send(void *buf, int count, MPI_Datatype datatype, int dest, 
+               int tag, MPI_Comm comm);
+  int MPI_Sendrecv(void *sendbuf, int sendcount, MPI_Datatype sendtype, 
+                   int dest, int sendtag, void *recvbuf, int recvcount,
+                   MPI_Datatype recvtype, int source, int recvtag, 
+                   MPI_Comm comm,  MPI_Status *status);
+  int MPI_Sendrecv_replace(void * buf, int count, MPI_Datatype datatype, 
+                           int dest, int sendtag, int source, int recvtag,
+                           MPI_Comm comm, MPI_Status *status);
+  int MPI_Ssend_init(void *buf, int count, MPI_Datatype datatype, 
+                     int dest, int tag, MPI_Comm comm, 
+                     MPI_Request *request);
+  int MPI_Ssend(void *buf, int count, MPI_Datatype datatype, int dest, 
+                int tag, MPI_Comm comm);
+  int MPI_Start(MPI_Request *request);
+  int MPI_Startall(int count, MPI_Request *array_of_requests);
+  int MPI_Status_c2f(MPI_Status *c_status, MPI_Fint *f_status);
+  int MPI_Status_f2c(MPI_Fint *f_status, MPI_Status *c_status);
+  int MPI_Status_set_cancelled(MPI_Status *status, int flag);
+  int MPI_Status_set_elements(MPI_Status *status, MPI_Datatype *datatype,
+                              int count);
   int MPI_Testall(int count, MPI_Request array_of_requests[], int *flag, 
                   MPI_Status array_of_statuses[]);
   int MPI_Testany(int count, MPI_Request array_of_requests[], int *index, 
@@ -1153,50 +1186,83 @@ extern "C" {
   int PMPI_Keyval_free(int *keyval);
   int PMPI_Lookup_name(char *service_name, MPI_Info info, char *port_name);
   MPI_Fint PMPI_Op_c2f(MPI_Op op); 
-  int PMPI_Op_create(MPI_User_function *, int, MPI_Op *);
-  int PMPI_Open_port(MPI_Info, char *);
-  MPI_Op PMPI_Op_f2c(MPI_Fint f_handle);
-  int PMPI_Op_free(MPI_Op *);
-  int PMPI_Pack(void *, int, MPI_Datatype, void *, int, int *, MPI_Comm);
-  int PMPI_Pack_size(int, MPI_Datatype, MPI_Comm, int *);
-  int PMPI_Pcontrol(int level, ...);
-  int PMPI_Probe(int, int, MPI_Comm, MPI_Status *);
-  int PMPI_Publish_name(char *, MPI_Info, char *);
-  int PMPI_Put(void *, int, MPI_Datatype, int, MPI_Aint, int, 
-               MPI_Datatype, MPI_Win);
-  int PMPI_Query_thread(int *);
-  int PMPI_Recv(void *, int, MPI_Datatype, int, int, MPI_Comm, MPI_Status *);
-  int PMPI_Recv_init(void *, int, MPI_Datatype, int, int, 
-                     MPI_Comm, MPI_Request *);
-  int PMPI_Reduce(void *, void *, int, MPI_Datatype, MPI_Op, int, MPI_Comm);
-  int PMPI_Reduce_scatter(void *, void *, int *, MPI_Datatype, 
-                          MPI_Op, MPI_Comm);
-  MPI_Fint PMPI_Request_c2f(MPI_Request);
-  MPI_Request PMPI_Request_f2c(MPI_Fint);
-  int PMPI_Request_free(MPI_Request *);
-  int PMPI_Rsend(void *, int, MPI_Datatype, int, int, MPI_Comm);
-  int PMPI_Rsend_init(void *, int, MPI_Datatype, int, int, 
-                      MPI_Comm, MPI_Request *);
-  int PMPI_Scan(void *, void *, int, MPI_Datatype, MPI_Op, MPI_Comm);
-  int PMPI_Scatter(void *, int, MPI_Datatype, void *, int, 
-                   MPI_Datatype, int, MPI_Comm);
-  int PMPI_Scatterv(void *, int *, int *, MPI_Datatype, 
-                    void *, int, MPI_Datatype, int, MPI_Comm);
-  int PMPI_Send(void *, int, MPI_Datatype, int, int, MPI_Comm);
-  int PMPI_Send_init(void *, int, MPI_Datatype, int, int, 
-                     MPI_Comm, MPI_Request *);
-  int PMPI_Sendrecv(void *, int, MPI_Datatype, int, int, void *, 
-                    int, MPI_Datatype, int, int, MPI_Comm, 
-                    MPI_Status *);
-  int PMPI_Sendrecv_replace(void *, int, MPI_Datatype, int, int, 
-                            int, int, MPI_Comm, MPI_Status *);
-  int PMPI_Ssend(void *, int, MPI_Datatype, int, int, MPI_Comm);
-  int PMPI_Ssend_init(void *, int, MPI_Datatype, int, int, 
-                      MPI_Comm, MPI_Request *);
-  int PMPI_Startall(int, MPI_Request *);
-  int PMPI_Start(MPI_Request *);
-  int PMPI_Status_c2f(MPI_Status *, MPI_Fint *);
-  int PMPI_Status_f2c(MPI_Fint *, MPI_Status *);
+  int PMPI_Op_create(MPI_User_function *function, int commute, 
+                    MPI_Op *op);
+  int PMPI_Open_port(MPI_Info info, char *port_name);
+  MPI_Op PMPI_Op_f2c(MPI_Fint op);
+  int PMPI_Op_free(MPI_Op *op);
+  int PMPI_Pack_external(char *datarep, void *inbuf, int incount,
+                        MPI_Datatype datatype, void *outbuf,
+                        MPI_Aint outsize, MPI_Aint *position);
+  int PMPI_Pack_external_size(char *datarep, int incount, 
+                             MPI_Datatype datatype, MPI_Aint *size);
+  int PMPI_Pack(void *inbuf, int incount, MPI_Datatype datatype, 
+               void *outbuf, int outsize, int *position, MPI_Comm comm);
+  int PMPI_Pack_size(int incount, MPI_Datatype datatype, MPI_Comm comm, 
+                    int *size);
+  int PMPI_Pcontrol(const int level, ...);
+  int PMPI_Probe(int source, int tag, MPI_Comm comm, MPI_Status *status);
+  int PMPI_Publish_name(char *service_name, MPI_Info info, 
+                       char *port_name);
+  int PMPI_Put(void *origin_addr, int origin_count, MPI_Datatype origin_datatype, 
+              int target_rank, MPI_Aint target_disp, int target_count, 
+              MPI_Datatype target_datatype, MPI_Win win);
+  int PMPI_Query_thread(int *provided);
+  int PMPI_Recv_init(void *buf, int count, MPI_Datatype datatype, int source,
+                    int tag, MPI_Comm comm, MPI_Request *request);
+  int PMPI_Recv(void *buf, int count, MPI_Datatype datatype, int source, 
+               int tag, MPI_Comm comm, MPI_Status *status);
+  int PMPI_Reduce(void *sendbuf, void *recvbuf, int count, 
+                 MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm);
+  int PMPI_Reduce_scatter(void *sendbuf, void *recvbuf, int *recvcounts, 
+                         MPI_Datatype datatype, MPI_Op op, MPI_Comm comm);
+  int PMPI_Register_datarep(char *datarep, 
+                       MPI_Datarep_conversion_function *read_conversion_fn,
+                       MPI_Datarep_conversion_function *write_conversion_fn,
+                       MPI_Datarep_extent_function *dtype_file_extent_fn,
+                       void *extra_state);
+  MPI_Fint PMPI_Request_c2f(MPI_Request request);
+  MPI_Request PMPI_Request_f2c(MPI_Fint request);
+  int PMPI_Request_free(MPI_Request *request);
+  int PMPI_Request_get_status(MPI_Request request, int *flag, 
+                             MPI_Status *status);
+  int PMPI_Rsend(void *ibuf, int count, MPI_Datatype datatype, int dest, 
+                int tag, MPI_Comm comm);
+  int PMPI_Rsend_init(void *buf, int count, MPI_Datatype datatype, 
+                     int dest, int tag, MPI_Comm comm, 
+                     MPI_Request *request);
+  int PMPI_Scan(void *sendbuf, void *recvbuf, int count, 
+               MPI_Datatype datatype, MPI_Op op, MPI_Comm comm);
+  int PMPI_Scatter(void *sendbuf, int sendcount, MPI_Datatype sendtype, 
+                  void *recvbuf, int recvcount, MPI_Datatype recvtype, 
+                  int root, MPI_Comm comm);
+  int PMPI_Scatterv(void *sendbuf, int *sendcounts, int *displs, 
+                   MPI_Datatype sendtype, void *recvbuf, int recvcount, 
+                   MPI_Datatype recvtype, int root, MPI_Comm comm);
+  int PMPI_Send_init(void *buf, int count, MPI_Datatype datatype, 
+                    int dest, int tag, MPI_Comm comm, 
+                    MPI_Request *request);
+  int PMPI_Send(void *buf, int count, MPI_Datatype datatype, int dest, 
+               int tag, MPI_Comm comm);
+  int PMPI_Sendrecv(void *sendbuf, int sendcount, MPI_Datatype sendtype, 
+                   int dest, int sendtag, void *recvbuf, int recvcount,
+                   MPI_Datatype recvtype, int source, int recvtag, 
+                   MPI_Comm comm,  MPI_Status *status);
+  int PMPI_Sendrecv_replace(void * buf, int count, MPI_Datatype datatype, 
+                           int dest, int sendtag, int source, int recvtag,
+                           MPI_Comm comm, MPI_Status *status);
+  int PMPI_Ssend_init(void *buf, int count, MPI_Datatype datatype, 
+                     int dest, int tag, MPI_Comm comm, 
+                     MPI_Request *request);
+  int PMPI_Ssend(void *buf, int count, MPI_Datatype datatype, int dest, 
+                int tag, MPI_Comm comm);
+  int PMPI_Start(MPI_Request *request);
+  int PMPI_Startall(int count, MPI_Request *array_of_requests);
+  int PMPI_Status_c2f(MPI_Status *c_status, MPI_Fint *f_status);
+  int PMPI_Status_f2c(MPI_Fint *f_status, MPI_Status *c_status);
+  int PMPI_Status_set_cancelled(MPI_Status *status, int flag);
+  int PMPI_Status_set_elements(MPI_Status *status, MPI_Datatype *datatype,
+                              int count);
   int PMPI_Testall(int count, MPI_Request array_of_requests[], int *flag, 
                   MPI_Status array_of_statuses[]);
   int PMPI_Testany(int count, MPI_Request array_of_requests[], int *index, 

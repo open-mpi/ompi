@@ -245,6 +245,46 @@ libmpi_c_mpi_la_SOURCES = \
         keyval_create.c \
         keyval_free.c \
         lookup_name.c \
+        op_c2f.c \
+        op_create.c \
+        op_f2c.c \
+        op_free.c \
+        open_port.c \
+        pack_external.c \
+        pack_external_size.c \
+        pack.c \
+        pack_size.c \
+        pcontrol.c \
+        probe.c \
+        publish_name.c \
+        put.c \
+        query_thread.c \
+        recv_init.c \
+        recv.c \
+        reduce.c \
+        reduce_scatter.c \
+        register_datarep.c \
+        request_c2f.c \
+        request_f2c.c \
+        request_free.c \
+        request_get_status.c \
+        rsend_init.c \
+        rsend.c \
+        scan.c \
+        scatter.c \
+        scatterv.c \
+        send.c \
+        send_init.c \
+        sendrecv.c \
+        sendrecv_replace.c \
+        ssend_init.c \
+        ssend.c \
+        start.c \
+        startall.c \
+        status_c2f.c \
+        status_f2c.c \
+        status_set_cancelled.c \
+        status_set_elements.c \
         testall.c \
         testany.c \
         test.c \
