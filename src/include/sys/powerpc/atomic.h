@@ -57,7 +57,7 @@ static inline int ompi_atomic_cmpset_32( volatile int32_t *addr,
                          "   bne-    2f         \n\t"
                          "   stwcx.  %4, 0, %2  \n\t"
                          "   bne-    1b         \n\t"
-                         SYNC
+                         SMP_SYNC
                          "2:"
                          : "=&r" (ret), "=m" (*addr)
                          : "r" (addr), "r" (oldval), "r" (newval), "m" (*addr)
@@ -86,7 +86,7 @@ static inline int ompi_atomic_cmpset_rel_32( volatile int32_t *addr,
     return ompi_atomic_cmpset_32(addr, oldval, newval);
 }
 
-#if HOW_TO_DECIDE_IF_THE_ARCHI_SUPPORT_64_BITS_ATOMICS
+#if defined(HOW_TO_DECIDE_IF_THE_ARCHI_SUPPORT_64_BITS_ATOMICS)
 #define OMPI_ARCHITECTURE_DEFINE_ATOMIC_CMPSET_64
 static inline int ompi_atomic_cmpset_64( volatile int64_t *addr,
                                          int64_t oldval, int64_t newval)
@@ -135,11 +135,11 @@ static inline int ompi_atomic_add_32(volatile int32_t* v, int inc)
 
    __asm__ __volatile__(
                         "1:   lwarx %0,0,%3     # atomic_add\n\t"
-                        "     add   %0,%2,%0                \n\t"
+                        "     add  %0,%2,%0                \n\t"
                         "     stwcx.   %0,0,%3              \n\t"
                         "     bne-  1b                      \n\t"
                         : "=&r" (t), "=m" (*v)
-                        : "r" (inc), "r" (&v), "m" (*v)
+                        : "r" (inc), "r" (v), "m" (*v)
                         : "cc");
 
    return *v;
@@ -156,7 +156,7 @@ static inline int ompi_atomic_sub_32(volatile int32_t* v, int dec)
                         "     stwcx.   %0,0,%3              \n\t"
                         "     bne-  1b                      \n\t"
                         : "=&r" (t), "=m" (*v)
-                        : "r" (dec), "r" (&v), "m" (*v)
+                        : "r" (dec), "r" (v), "m" (*v)
                         : "cc");
 
    return *v;
