@@ -1655,7 +1655,9 @@ AC_CONFIG_FILES([
     test/mca/gpr/Makefile
     test/mca/ns/Makefile
     test/mca/oob/Makefile
+    test/mca/ras/Makefile
     test/mca/rds/Makefile
+    test/mca/rmaps/Makefile
     test/runtime/Makefile
     test/support/Makefile
     test/threads/Makefile

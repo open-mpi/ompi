@@ -52,7 +52,7 @@ int orte_gpr_replica_dump_all_fn(orte_buffer_t *buffer)
     char tmp_out[80], *tmp;
     int rc;
     
-    tmp = &tmp_out;
+    tmp = tmp_out;
     sprintf(tmp_out, "\n\n\nDUMP OF GENERAL PURPOSE REGISTRY");
     orte_gpr_replica_dump_load_string(buffer, &tmp);
     
@@ -222,7 +222,7 @@ int orte_gpr_replica_dump_triggers_fn(orte_buffer_t *buffer)
     char tmp_out[100], *tmp;
     int j, k;
     
-    tmp = &tmp_out;
+    tmp = tmp_out;
     sprintf(tmp_out, "\nDUMP OF GPR TRIGGERS\n");
     orte_gpr_replica_dump_load_string(buffer, &tmp);
 
@@ -456,7 +456,7 @@ void orte_gpr_replica_dump_itagval_value(orte_buffer_t *buffer,
 {
     char tmp[132], *tmp2;
     
-    tmp2 = &tmp;
+    tmp2 = tmp;
     switch(iptr->type) {
 
         case ORTE_BYTE:

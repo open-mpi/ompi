@@ -1,3 +1,4 @@
+# -*- makefile -*-
 #
 # Copyright (c) 2004-2005 The Trustees of Indiana University.
 #                         All rights reserved.
@@ -15,5 +16,16 @@
 #
 
 include $(top_srcdir)/config/Makefile.options
+AM_CPPFLAGS = -I$(top_srcdir)/test/support -DOMPI_ENABLE_DEBUG_OVERRIDE=1
 
-SUBDIRS		= gpr ns oob ras rds rmaps
+check_PROGRAMS = \
+	test_rmaps
+
+TESTS = \
+	$(check_PROGRAMS)
+
+test_rmaps_SOURCES = test_rmaps.c
+test_rmaps_LDADD = \
+        $(top_builddir)/test/support/libsupport.a \
+        $(top_builddir)/src/libmpi.la 
+test_rmaps_DEPENDENCIES = $(test_rmaps_LDADD)
