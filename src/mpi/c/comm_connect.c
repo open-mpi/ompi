@@ -24,7 +24,8 @@ int MPI_Comm_connect(char *port_name, MPI_Info info, int root,
     int rank, i, rc;
     int maxprocs;
     uint32_t *rprocs=NULL;
-    int mode;
+    uint32_t lleader=0; /* OOB contact information of our root */
+    uint32_t rleader=0; /* OOB contact information of other root */
     ompi_communicator_t *comp, *newcomp;
 
     comp = (ompi_communicator_t *) comm;
@@ -113,12 +114,12 @@ int MPI_Comm_connect(char *port_name, MPI_Info info, int root,
     }
 
     /* Determine context id. It is identical to f_2_c_handle */
-    rc = ompi_comm_nextcid ( newcomp,       /* new communicator */ 
-                             comp,          /* old comm */
-                             NULL,          /* bridge comm */
-                             MPI_UNDEFINED, /* local leader */
-                             MPI_UNDEFINED, /* remote_leader */
-                             mode );        /* mode */
+    rc = ompi_comm_nextcid ( newcomp,                  /* new comm */ 
+                             comp,                     /* old comm */
+                             NULL,                     /* bridge comm */
+                             &lleader,                /* local leader */
+                             &rleader,                 /* remote_leader */
+                             OMPI_COMM_CID_INTRA_OOB); /* mode */
     if ( OMPI_SUCCESS != rc ) {
         goto exit;
     }

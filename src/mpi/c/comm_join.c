@@ -19,8 +19,9 @@
 
 int MPI_Comm_join(int fd, MPI_Comm *intercomm) 
 {
-    uint32_t rproc;
-    int mode;
+    int rc;
+    ompi_proc_t rproc;
+    uint32_t lleader=0; /* OOB contact information of our root */
     ompi_communicator_t *comp, *newcomp;
 
     comp = (ompi_communicator_t *)MPI_COMM_SELF;
@@ -44,15 +45,23 @@ int MPI_Comm_join(int fd, MPI_Comm *intercomm)
                               comp->c_local_group->grp_proc_count,    /* local_size */
                               comp->c_local_group->grp_proc_pointers, /* local_procs*/
                               1,                                      /* remote_size */
-                              rproc,                                  /* remote_procs */
+                              &rproc,                                 /* remote_procs */
                               NULL,                                   /* attrs */
                               comp->error_handler,                    /* error handler */
                               NULL,                                   /* coll module */
                               NULL                                    /* topo module */
                               );
 
-    /* setup comm_cid: need a separate routine for that, 
-       since it is so trivial ? How about multi-threaded case ? */
+    /* setup comm_cid */
+    rc = ompi_comm_nextcid ( newcomp,                  /* new comm */ 
+                             comp,                     /* old comm */
+                             NULL,                     /* bridge comm */
+                             &lleader,                /* local leader */
+                             &rproc,                   /* remote_leader */
+                             OMPI_COMM_CID_INTRA_OOB); /* mode */
+    if ( OMPI_SUCCESS != rc ) {
+        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_SELF, rc, "MPI_Comm_join");
+    }
 
 
     /* PROBLEM: do we have to re-start some low level stuff
