@@ -2,7 +2,7 @@ Overview
 ========
 
 This file is here for those who are building/exploring OMPI/MPI in its
-source code form, most likely through a developer's tree (i.e., a CVS
+source code form, most likely through a developer's tree (i.e., a SVN
 checkout).
 
 
