@@ -88,6 +88,7 @@ extern const struct ompi_eventop ompi_win32ops;
 
 /* In order of preference */
 static const struct ompi_eventop *ompi_eventops[] = {
+#if 0
 #if HAVE_WORKING_KQUEUE
     &ompi_kqops,
 #endif
@@ -96,6 +97,7 @@ static const struct ompi_eventop *ompi_eventops[] = {
 #endif
 #if HAVE_RTSIG
     &ompi_rtsigops,
+#endif
 #endif
 #if HAVE_POLL
     &ompi_pollops,
