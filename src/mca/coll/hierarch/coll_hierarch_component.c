@@ -85,7 +85,7 @@ const mca_coll_base_component_1_0_0_t mca_coll_hierarch_component = {
 
   mca_coll_hierarch_init_query,
   mca_coll_hierarch_comm_query,
-  NULL
+  mca_coll_hierarch_comm_unquery
 };
 
 
