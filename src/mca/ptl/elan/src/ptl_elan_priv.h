@@ -62,7 +62,7 @@ struct mca_ptl_elan_state_t {
     int          elan_localid;   /**< # of local elan vpids */
     int          elan_numlocals;   /**< # of local elan vpids */
     int          elan_maxlocals;   /**< maximum # of local elan vpids */
-    int          elan_nrails;      /**< # of rails elan vpids */
+    int          elan_nrails;      /**< # of rails */
     int          elan_rmsid;       /**< rms resource id */
     int          intcookie;       
     long         elan_pagesize;
@@ -87,13 +87,7 @@ typedef struct mca_ptl_elan_state_t mca_ptl_elan_state_t;
 
 /* Initialization and finalization routines */
 int ompi_mca_ptl_elan_init( mca_ptl_elan_module_1_0_0_t * emp);
-int ompi_mca_ptl_elan_setup (mca_ptl_elan_state_t *ems);
-int ompi_mca_ptl_elan_fin (mca_ptl_elan_state_t *ems);
-
-/* Accessory functions to deallocate the memory */
-void elan_state_close(struct mca_ptl_elan_state_t *);
-void elan_ptls_close(struct mca_ptl_elan_t **, size_t elan_num_ptls);
-void elan_localproc_close(struct mca_ptl_elan_proc_t *); 
+int ompi_mca_ptl_elan_finalize (mca_ptl_elan_module_1_0_0_t * emp);
 
 /* communication prototypes */
 

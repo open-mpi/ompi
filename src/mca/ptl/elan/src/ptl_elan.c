@@ -20,6 +20,7 @@
 #include "ptl_elan_frag.h"
 
 
+/* XXX: There must be multiple PTL's. This could be the template */
 mca_ptl_elan_t  mca_ptl_elan = {
     {
         &mca_ptl_elan_module.super,
@@ -40,7 +41,7 @@ mca_ptl_elan_t  mca_ptl_elan = {
         mca_ptl_elan_matched,
         mca_ptl_elan_req_alloc,
         mca_ptl_elan_req_return
-	}
+    }
 };
 
 int mca_ptl_elan_add_proc (struct mca_ptl_t *ptl,
@@ -62,6 +63,21 @@ int mca_ptl_elan_del_proc (struct mca_ptl_t *ptl,
 
 int mca_ptl_elan_finalize (struct mca_ptl_t *ptl)
 {
+    int rail_index;
+    struct mca_ptl_elan_t * elan_ptl ;
+
+    elan_ptl = (struct mca_ptl_elan_t *) ptl;
+
+    /* XXX: Free all the lists, etc, hanged over PTL */
+
+    /* Free the PTL */
+    rail_index = elan_ptl->ptl_ni_local;
+    free(elan_ptl);
+
+    /* Record the missing of this entry */
+    mca_ptl_elan_module.elan_ptls[rail_index] = NULL;
+    mca_ptl_elan_module.elan_num_ptls -- ;
+
     return OMPI_SUCCESS;
 }
 
@@ -120,7 +136,6 @@ int mca_ptl_elan_get (struct mca_ptl_t* ptl,
 {
     return OMPI_SUCCESS;
 }
-
 
 /*
  *  A posted receive has been matched - if required send an

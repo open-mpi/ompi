@@ -54,7 +54,8 @@ mca_ptl_elan_module_1_0_0_t mca_ptl_elan_module = {
     }
 };
 
-/*static mca_ptl_elan_module_1_0_0_t *mp = &mca_ptl_elan_module;*/
+static mca_ptl_elan_module_1_0_0_t *elan_mp = &mca_ptl_elan_module;
+static int      mca_ptl_elan_module_initialized = 0;
 
 /**
  * utility routines for parameter registration
@@ -105,29 +106,31 @@ mca_ptl_elan_module_open (void)
         mca_ptl_elan_param_register_int ("max_frag_size", -1);
 
     /* register ELAN module parameters */
-    mca_ptl_elan_module.elan_free_list_num =
+    elan_mp->elan_free_list_num =
         mca_ptl_elan_param_register_int ("free_list_num", 64);
-    mca_ptl_elan_module.elan_free_list_max =
+    elan_mp->elan_free_list_max =
         mca_ptl_elan_param_register_int ("free_list_max", -1);
-    mca_ptl_elan_module.elan_free_list_inc =
+    elan_mp->elan_free_list_inc =
         mca_ptl_elan_param_register_int ("free_list_inc", 64);
 
     /* initialize state */
-    mca_ptl_elan_module.elan_ptls = NULL;
-    mca_ptl_elan_module.elan_num_ptls = 0;
-    mca_ptl_elan_module.elan_local = NULL; 
+    elan_mp->elan_ptls = NULL;
+    elan_mp->elan_num_ptls = 0;
+    elan_mp->elan_local = NULL; 
 
-    /* initialize objects */
-    OBJ_CONSTRUCT (&mca_ptl_elan_module.elan_reqs, ompi_list_t);
-    OBJ_CONSTRUCT (&mca_ptl_elan_module.elan_prog_events, ompi_list_t);
-    OBJ_CONSTRUCT (&mca_ptl_elan_module.elan_comp_events, ompi_list_t);
-    OBJ_CONSTRUCT (&mca_ptl_elan_module.elan_procs, ompi_list_t);
-    OBJ_CONSTRUCT (&mca_ptl_elan_module.elan_pending_acks, ompi_list_t);
+    /* initialize list */
+    OBJ_CONSTRUCT (&elan_mp->elan_reqs, ompi_list_t);
+    OBJ_CONSTRUCT (&elan_mp->elan_prog_events, ompi_list_t);
+    OBJ_CONSTRUCT (&elan_mp->elan_comp_events, ompi_list_t);
+    OBJ_CONSTRUCT (&elan_mp->elan_procs, ompi_list_t);
+    OBJ_CONSTRUCT (&elan_mp->elan_pending_acks, ompi_list_t);
 
-    OBJ_CONSTRUCT (&mca_ptl_elan_module.elan_events_free, ompi_free_list_t);
-    OBJ_CONSTRUCT (&mca_ptl_elan_module.elan_reqs, ompi_free_list_t);
+    /* initialize free list */
+    OBJ_CONSTRUCT (&elan_mp->elan_events_free, ompi_free_list_t);
+    OBJ_CONSTRUCT (&elan_mp->elan_reqs, ompi_free_list_t);
 
-    OBJ_CONSTRUCT (&mca_ptl_elan_module.elan_lock, ompi_mutex_t);
+    /* initialize other objects */
+    OBJ_CONSTRUCT (&elan_mp->elan_lock, ompi_mutex_t);
 
     return OMPI_SUCCESS;
 }
@@ -136,55 +139,54 @@ mca_ptl_elan_module_open (void)
 int
 mca_ptl_elan_module_close (void)
 {
-#ifdef CLEAN_ELAN_MEM
-    elan_state_close(mca_ptl_elan_module.elan_state);
-    elan_ptls_close(mca_ptl_elan_module.elan_ptls, 
-            mca_ptl_elan_module.elan_num_ptls);
-    elan_localproc_close(mca_ptl_elan_module.elan_local);
-#else
+    if (mca_ptl_elan_module_initialized) {
 
-    if (NULL != mca_ptl_elan_module.elan_ptls) {
-        int         i;
-        for (i = mca_ptl_elan_module.elan_num_ptls; i > 0; i--) {
-            free (mca_ptl_elan_module.elan_ptls[i - 1]);
-        }
-        free (mca_ptl_elan_module.elan_ptls);
-    }
+	/* cleanup the proc, ptl, and the module */
+	ompi_mca_ptl_elan_finalize (&mca_ptl_elan_module);
 
-    /* TODO: Make sure this is not just an alias pointer */
-    if ( mca_ptl_elan_module.elan_local) {
-        free(mca_ptl_elan_module.elan_local);
+	/* XXX: Make sure this is not just an alias pointer */
+	if (elan_mp->elan_local) {
+	    free (elan_mp->elan_local);
+	}
+
+	if (NULL != elan_mp->elan_ptls) {
+	    int         i;
+	    for (i = elan_mp->elan_num_ptls; i > 0; i--) {
+		free (elan_mp->elan_ptls[i - 1]);
+	    }
+	    free (elan_mp->elan_ptls);
+	}
     }
-#endif
 
     /* Check whether all the entries are return to the free list */
-    if (mca_ptl_elan_module.elan_reqs_free.fl_num_allocated !=
-        mca_ptl_elan_module.elan_reqs_free.super.ompi_list_length) {
+    if (elan_mp->elan_reqs_free.fl_num_allocated !=
+        elan_mp->elan_reqs_free.super.ompi_list_length) {
         ompi_output (0, "elan requests: %d allocated %d returned\n",
-                     mca_ptl_elan_module.elan_reqs_free.fl_num_allocated,
-                     mca_ptl_elan_module.elan_reqs_free.super.ompi_list_length);
+                     elan_mp->elan_reqs_free.fl_num_allocated,
+                     elan_mp->elan_reqs_free.super.ompi_list_length);
     }
 
-    if (mca_ptl_elan_module.elan_events_free.fl_num_allocated !=
-        mca_ptl_elan_module.elan_events_free.super.ompi_list_length) {
+    if (elan_mp->elan_events_free.fl_num_allocated !=
+        elan_mp->elan_events_free.super.ompi_list_length) {
         ompi_output (0, "elan events: %d allocated %d returned\n",
-                     mca_ptl_elan_module.elan_reqs_free.fl_num_allocated,
-                     mca_ptl_elan_module.elan_reqs_free.super.ompi_list_length);
+                     elan_mp->elan_reqs_free.fl_num_allocated,
+                     elan_mp->elan_reqs_free.super.ompi_list_length);
     }
 
 
     /* Free the empty list holders */
-    OBJ_DESTRUCT (&(mca_ptl_elan_module.elan_reqs));
-    OBJ_DESTRUCT (&(mca_ptl_elan_module.elan_prog_events));
-    OBJ_DESTRUCT (&(mca_ptl_elan_module.elan_comp_events));
-    OBJ_DESTRUCT (&(mca_ptl_elan_module.elan_procs));
-    OBJ_DESTRUCT (&(mca_ptl_elan_module.elan_pending_acks));
+    OBJ_DESTRUCT (&(elan_mp->elan_reqs));
+    OBJ_DESTRUCT (&(elan_mp->elan_prog_events));
+    OBJ_DESTRUCT (&(elan_mp->elan_comp_events));
+    OBJ_DESTRUCT (&(elan_mp->elan_procs));
+    OBJ_DESTRUCT (&(elan_mp->elan_pending_acks));
 
     /* Destruct the free lists */
-    OBJ_DESTRUCT (&(mca_ptl_elan_module.elan_events_free));
-    OBJ_DESTRUCT (&(mca_ptl_elan_module.elan_reqs_free));
+    OBJ_DESTRUCT (&(elan_mp->elan_events_free));
+    OBJ_DESTRUCT (&(elan_mp->elan_reqs_free));
 
-    OBJ_DESTRUCT (&mca_ptl_elan_module.elan_lock);
+    /* Destruct other structures */
+    OBJ_DESTRUCT (&elan_mp->elan_lock);
 
     return OMPI_SUCCESS;
 }
@@ -202,7 +204,7 @@ mca_ptl_elan_module_init (int *num_ptls,
 {
     mca_ptl_t **ptls;
     int         rc;
-
+ 
     *num_ptls = 0;
     *allow_multi_user_threads = true;
     *have_hidden_threads = OMPI_HAVE_THREADS;
@@ -215,39 +217,37 @@ mca_ptl_elan_module_init (int *num_ptls,
     /* duplicated actions are avoid with a static variable, 
      * inited in ompi_event_init() */
     if ((rc = ompi_event_init ()) != OMPI_SUCCESS) {
-        ompi_output (0, "mca_ptl_elan_module_init: "
-                     "unable to initialize event dispatch thread: %d\n",
-                     rc);
+	ompi_output(0, 
+		"[%s:%d] mca_ptl_elan_module_init: " 
+		"unable to initialize event dispatch thread: %d\n",
+	       	__FILE__, __LINE__, rc);
         return NULL;
     }
 
     /* initialize free lists */
-    ompi_free_list_init (&(mca_ptl_elan_module.elan_reqs_free),
+    ompi_free_list_init (&(elan_mp->elan_reqs_free),
                          sizeof (mca_ptl_elan_send_request_t),
                          OBJ_CLASS (mca_ptl_elan_send_request_t),
-                         mca_ptl_elan_module.elan_free_list_num,
-                         mca_ptl_elan_module.elan_free_list_max,
-                         mca_ptl_elan_module.elan_free_list_inc, NULL);
+                         elan_mp->elan_free_list_num,
+                         elan_mp->elan_free_list_max,
+                         elan_mp->elan_free_list_inc, NULL);
 
-    ompi_free_list_init (&mca_ptl_elan_module.elan_events_free,
+    ompi_free_list_init (&elan_mp->elan_events_free,
                          sizeof (mca_ptl_elan_send_frag_t),
                          OBJ_CLASS (mca_ptl_elan_send_frag_t),
-                         mca_ptl_elan_module.elan_free_list_num,
-                         mca_ptl_elan_module.elan_free_list_max,
-                         mca_ptl_elan_module.elan_free_list_inc, NULL);
+                         elan_mp->elan_free_list_num,
+                         elan_mp->elan_free_list_max,
+                         elan_mp->elan_free_list_inc, NULL);
 
     /* use default allocator */
 
     /* open basic elan device */
     if (OMPI_SUCCESS != ompi_mca_ptl_elan_init(&mca_ptl_elan_module)) {
+	ompi_output(0, 
+		"[%s:%d] error in initializing elan module state and PTL's.\n",
+		__FILE__, __LINE__);
         return NULL;
     }
-
-    /* setup communication infrastructure */
-    if (OMPI_SUCCESS != ompi_mca_ptl_elan_setup (&mca_ptl_elan_module)) {
-        return NULL;
-    }
-
     /* 
      * (mca_ptl_elan_module_exchange () != OMPI_SUCCESS)
      *
@@ -259,21 +259,24 @@ mca_ptl_elan_module_init (int *num_ptls,
      * over elan, there is no need for a oob_based exchange.
      */
 
-    ptls = (mca_ptl_t **) malloc (mca_ptl_elan_module.elan_num_ptls *
-                                       sizeof (mca_ptl_t *));
+    ptls = (mca_ptl_t **) malloc (elan_mp->elan_num_ptls *
+                                       sizeof (mca_ptl_elan_t *));
 
     if (NULL == ptls) {
+	ompi_output(0, 
+		"[%s:%d] error in malloc for elan PTL references\n",
+		__FILE__, __LINE__);
         return NULL;
     }
 
     /* FIXME: 
      * Why use memcopy to create two instances of the same 
      * structures, do they need to be defined them as constants,
-     * or coherency on two replicas will be a potential problem  */
-    memcpy (ptls, mca_ptl_elan_module.elan_ptls,
-            mca_ptl_elan_module.elan_num_ptls * sizeof (mca_ptl_elan_t *));
-
-    *num_ptls = mca_ptl_elan_module.elan_num_ptls;
+     * will coherency on two replicas be a potential problem? */
+    memcpy (ptls, elan_mp->elan_ptls,
+            elan_mp->elan_num_ptls * sizeof (mca_ptl_elan_t *));
+    *num_ptls = elan_mp->elan_num_ptls;
+    mca_ptl_elan_module_initialized = 1; 
 
     return ptls;
 }
@@ -290,9 +293,9 @@ mca_ptl_elan_module_control (int param,
     switch (param) {
     case MCA_PTL_ENABLE:
         if (*(int *) value) {
-            ompi_event_add (&mca_ptl_elan_module.elan_recv_event, 0);
+            ompi_event_add (&elan_mp->elan_recv_event, 0);
         } else {
-            ompi_event_del (&mca_ptl_elan_module.elan_recv_event);
+            ompi_event_del (&elan_mp->elan_recv_event);
         }
         break;
     default:
