@@ -134,7 +134,7 @@
 
     <xsl:for-each select="return[1]">
       <xsl:if test="@name = 'ierr'">
-       <xsl:text>echo "  integer, intent(out), optional :: ierr"</xsl:text>
+       <xsl:text>echo "  integer, intent(out) :: ierr"</xsl:text>
       </xsl:if>
     </xsl:for-each>
 
@@ -181,7 +181,7 @@ do
 
     <xsl:for-each select="return[1]">
       <xsl:if test="@name = 'ierr'">
-       <xsl:text>    echo "  integer, intent(out), optional :: ierr"</xsl:text>
+       <xsl:text>    echo "  integer, intent(out) :: ierr"</xsl:text>
       </xsl:if>
     </xsl:for-each>
 
