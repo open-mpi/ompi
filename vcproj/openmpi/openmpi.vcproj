@@ -2,7 +2,7 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="7.10"
-	Name="openmpi"
+	Name="hello"
 	ProjectGUID="{00041BD4-5225-4A91-9FD1-CF0F2B32AB4C}"
 	Keyword="Win32Proj">
 	<Platforms>
