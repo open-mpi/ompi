@@ -26,7 +26,7 @@
  *	gatherv_intra
  *
  *	Function:	- basic gatherv operation
- *	Accepts:	- same arguments as MPI_Bcast()
+ *	Accepts:	- same arguments as MPI_Gatherb()
  *	Returns:	- MPI_SUCCESS or error code
  */
 int mca_coll_basic_gatherv_intra(void *sbuf, int scount, 
@@ -80,8 +80,7 @@ int mca_coll_basic_gatherv_intra(void *sbuf, int scount,
 
     if (i == rank) {
       err = ompi_ddt_sndrcv(sbuf, scount, sdtype,
-                           ptmp, rcounts[i], rdtype, 
-                           MCA_COLL_BASE_TAG_GATHERV, comm);
+                            ptmp, rcounts[i], rdtype);
     } else {
       err = mca_pml.pml_recv(ptmp, rcounts[i], rdtype, i,
                              MCA_COLL_BASE_TAG_GATHERV, 
@@ -103,7 +102,7 @@ int mca_coll_basic_gatherv_intra(void *sbuf, int scount,
  *	gatherv_inter
  *
  *	Function:	- basic gatherv operation
- *	Accepts:	- same arguments as MPI_Bcast()
+ *	Accepts:	- same arguments as MPI_Gatherv()
  *	Returns:	- MPI_SUCCESS or error code
  */
 int mca_coll_basic_gatherv_inter(void *sbuf, int scount,

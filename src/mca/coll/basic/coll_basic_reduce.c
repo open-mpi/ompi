@@ -198,8 +198,7 @@ int mca_coll_basic_reduce_lin_intra(void *sbuf, void *rbuf, int count,
   /* Initialize the receive buffer. */
 
   if (rank == (size - 1)) {
-    err = ompi_ddt_sndrcv(sbuf, count, dtype, rbuf, count,
-                         dtype, MCA_COLL_BASE_TAG_REDUCE, comm);
+    err = ompi_ddt_sndrcv(sbuf, count, dtype, rbuf, count, dtype);
   } else {
     err = mca_pml.pml_recv(rbuf, count, dtype, size - 1,
                            MCA_COLL_BASE_TAG_REDUCE, comm, MPI_STATUS_IGNORE);
@@ -375,8 +374,7 @@ int mca_coll_basic_reduce_log_intra(void *sbuf, void *rbuf, int count,
                buffer into a temp buffer (pml_buffer) and then reduce
                what we just received against it. */
             if( !ompi_op_is_commute(op) ) {
-               ompi_ddt_sndrcv( sbuf, count, dtype, pml_buffer, count, dtype,
-                                MCA_COLL_BASE_TAG_REDUCE, comm);
+               ompi_ddt_sndrcv( sbuf, count, dtype, pml_buffer, count, dtype);
                ompi_op_reduce( op, rbuf, pml_buffer, count, dtype );
             } else {
                ompi_op_reduce(op, sbuf, pml_buffer, count, dtype);
@@ -394,8 +392,7 @@ int mca_coll_basic_reduce_log_intra(void *sbuf, void *rbuf, int count,
    err = MPI_SUCCESS;
    if (0 == vrank) {
       if (root == rank) {
-         ompi_ddt_sndrcv( snd_buffer, count, dtype,
-                          rbuf, count, dtype, MCA_COLL_BASE_TAG_REDUCE, comm);
+         ompi_ddt_sndrcv( snd_buffer, count, dtype, rbuf, count, dtype);
       } else {
          err = mca_pml.pml_send( snd_buffer, count,
                                  dtype, root, MCA_COLL_BASE_TAG_REDUCE,

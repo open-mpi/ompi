@@ -72,8 +72,7 @@ int mca_coll_basic_scatter_intra(void *sbuf, int scount,
     /* simple optimization */
 
     if (i == rank) {
-      err = ompi_ddt_sndrcv(ptmp, scount, sdtype, rbuf,
-                           rcount, rdtype, MCA_COLL_BASE_TAG_SCATTER, comm);
+      err = ompi_ddt_sndrcv(ptmp, scount, sdtype, rbuf, rcount, rdtype);
     } else {
       err = mca_pml.pml_send(ptmp, scount, sdtype, i, 
                              MCA_COLL_BASE_TAG_SCATTER, 

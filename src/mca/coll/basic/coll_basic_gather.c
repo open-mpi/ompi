@@ -69,8 +69,7 @@ int mca_coll_basic_gather_intra(void *sbuf, int scount,
 
 	if (i == rank) {
 	    err = ompi_ddt_sndrcv(sbuf, scount, sdtype, ptmp,
-				 rcount, rdtype, 
-				 MCA_COLL_BASE_TAG_GATHER, comm);
+                                  rcount, rdtype);
 	} else {
 	    err = mca_pml.pml_recv(ptmp, rcount, rdtype, i,
 				   MCA_COLL_BASE_TAG_GATHER, 

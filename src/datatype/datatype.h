@@ -316,7 +316,7 @@ OMPI_DECLSPEC int32_t ompi_ddt_set_args( dt_desc_t* pData,
                                          int32_t ca, long* a,
                                          int32_t cd, ompi_datatype_t** d,int32_t type);
 OMPI_DECLSPEC int32_t ompi_ddt_sndrcv( void *sbuf, int32_t scount, const ompi_datatype_t* sdtype, void *rbuf,
-                                       int32_t rcount, const ompi_datatype_t* rdtype, int32_t tag, MPI_Comm comm);
+                                       int32_t rcount, const ompi_datatype_t* rdtype);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
