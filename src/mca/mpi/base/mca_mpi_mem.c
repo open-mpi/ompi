@@ -10,7 +10,7 @@
 #include "lam/mem/malloc.h"
 #include "mpi.h"
 #include "mca/mca.h"
-#include "mca/mpi/mpi.h"
+#include "mca/mpi/base/base.h"
 
 
 int mca_mpi_alloc_mem(MPI_Aint size, MPI_Info info, void *baseptr)
