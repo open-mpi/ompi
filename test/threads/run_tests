@@ -1,0 +1,38 @@
+#! /bin/csh -f
+#  Name
+#  ====
+#  run script for thread tests
+
+# Arguements
+# ==========
+# 
+# test_list  =  no args runs all tests
+#              or
+#               condition runs ompi_condition tests
+#               thread runs ompi_thread tests
+
+# Usage
+#
+# =====
+# To invoke this script, enter either
+#     run_tests 
+# with no arguments to run all tests, or
+#     run_tests <test_name>
+
+umask 007
+
+if ("x$1" == "x") then
+  ./ompi_thread
+  ./ompi_condition
+else if ("$1" == "condition") then
+  ./ompi_condition
+else if ("$1" == "thread") then
+  ./ompi_thread
+else
+  echo "correct use: "
+  echo "    run    (to run all class tests)"
+  echo "or  run <atomic>"
+  exit -1
+endif
+
+
