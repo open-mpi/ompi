@@ -70,7 +70,7 @@ if test "$LAM_TOP_BUILDDIR" != "$LAM_TOP_SRCDIR"; then
     AC_MSG_NOTICE([Detected VPATH build])
 fi
 
-# Setup the top of the src/include/lam_config.h file
+# Setup the top of the include/lam_config.h file
 
 AH_TOP([/* -*- c -*-
  *
@@ -643,8 +643,8 @@ lam_show_subtitle "Wrapper compiler flags"
 # purely aesthetic.
 #
 
-CPPFLAGS='-I$(top_srcdir)/src -I$(top_srcdir)/src/include -I$(top_builddir)/src'" $CPPFLAGS"
-CXXCPPFLAGS='-I$(top_srcdir)/src  -I$(top_srcdir)/src/include -I$(top_builddir)/src'" $CXXCPPFLAGS"
+CPPFLAGS='-I$(top_srcdir)/src -I$(top_srcdir)/include -I$(top_builddir)/src'" $CPPFLAGS"
+CXXCPPFLAGS='-I$(top_srcdir)/src  -I$(top_srcdir)/include -I$(top_builddir)/src'" $CXXCPPFLAGS"
 
 #
 # Adding WRAPPER_* flags so that extra flags needed for wrappper compilers
@@ -715,11 +715,13 @@ AC_SUBST(FFLAGS)
 
 lam_show_subtitle "Final output" 
 
-AM_CONFIG_HEADER([src/include/lam_config.h])
+AM_CONFIG_HEADER([include/lam_config.h])
 AC_CONFIG_FILES([
     Makefile
 
     config/Makefile
+
+    include/Makefile
 
     src/Makefile
     src/include/Makefile

@@ -57,7 +57,7 @@
 #include "lam_config.h"
 
 #include "mca/mca.h"
-#include "types.h"
+#include "include/types.h"
 
 #include <sys/param.h>
 

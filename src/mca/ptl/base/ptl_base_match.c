@@ -8,7 +8,7 @@
 
 #include "lfc/lam_list.h"
 #include "threads/mutex.h"
-#include "constants.h"
+#include "include/constants.h"
 #include "communicator/communicator.h"
 #include "mca/pml/pml.h"
 #include "mca/ptl/ptl.h"

@@ -15,7 +15,7 @@
 #include <string.h>
 
 #include "lam_config.h"
-#include "types.h"
+#include "include/types.h"
 #include "lfc/lam_object.h"
 
 /* VPS: Just to compile right now, has to move later on */

@@ -10,7 +10,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "constants.h"
+#include "include/constants.h"
 #include "lfc/lam_value_array.h"
 #include "mca/mca.h"
 #include "mca/base/mca_base_param.h"

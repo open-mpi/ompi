@@ -335,7 +335,7 @@ EOF
     # We only need the libltdl stuff for the top-level
     # configure, not any of the MCA modules.
 
-    if test -f src/include/mpi.h; then
+    if test -f include/mpi.h; then
 	rm -rf libltdl src/libltdl src/ltdl.h
 	run_and_check $lam_libtoolize --automake --copy --ltdl
 	mv libltdl src
@@ -699,7 +699,7 @@ fi
 
 # figure out if we're at the top level of the LAM tree, a module's
 # top-level directory, or somewhere else.
-if test -f VERSION -a -f configure.ac -a -f src/include/mpi.h ; then
+if test -f VERSION -a -f configure.ac -a -f include/mpi.h ; then
     # Top level of LAM tree
     lamdir="`pwd`"
 elif test -f configure.in -o -f configure.ac -o -f configure.params ; then

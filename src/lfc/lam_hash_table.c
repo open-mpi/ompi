@@ -6,7 +6,7 @@
 #include <stdlib.h>
 
 #include "lam_config.h"
-#include "constants.h"
+#include "include/constants.h"
 #include "util/output.h"
 #include "lfc/lam_hash_table.h"
 

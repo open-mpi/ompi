@@ -10,7 +10,7 @@
 #include "mpi.h"
 #include "util/strncpy.h"
 #include "lfc/lam_list.h"
-#include "lam.h"
+#include "include/lam.h"
 
 
 /**

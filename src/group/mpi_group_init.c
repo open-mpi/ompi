@@ -3,7 +3,7 @@
  */
 
 #include "group/group.h"
-#include "constants.h"
+#include "include/constants.h"
 #include "mpi.h"
 
 /* define class information */

@@ -5,7 +5,7 @@
 #ifndef LAM_MEMORY_POOL_H
 #define LAM_MEMORY_POOL_H
 
-#include "types.h"
+#include "include/types.h"
 #include "lfc/lam_object.h"
 #include "mem/allocator.h"
 #include "threads/mutex.h"

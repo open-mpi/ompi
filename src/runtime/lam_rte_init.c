@@ -6,7 +6,7 @@
 
 #include "lam_config.h"
 
-#include "constants.h"
+#include "include/constants.h"
 #include "runtime/runtime.h"
 #include "util/output.h"
 #include "threads/mutex.h"
