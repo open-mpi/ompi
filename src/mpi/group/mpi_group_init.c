@@ -30,6 +30,7 @@ lam_group_t *group_allocate(int group_size)
 {
     /* local variables */
     lam_group_t *new_group;
+    int ret_val;
 
     /* create new group group element */
     new_group=OBJ_NEW(lam_group_t);
@@ -41,8 +42,13 @@ lam_group_t *group_allocate(int group_size)
             malloc(sizeof(lam_proc_t *)*group_size);
         if( new_group->grp_proc_pointers ) {
             /* grp_proc_pointers allocated */
+            new_group->grp_proc_count=group_size;
             /* assign entry in fortran <-> c translation array */
-            /*lam_pointer_array_add(,new_group); */
+            ret_val=lam_pointer_array_add(lam_group_f_to_c_table,new_group);
+            if( -1 == ret_val ){
+                free(new_group);
+                new_group=NULL;
+            }
         } else {
             /* grp_proc_pointers allocation failed */
             free(new_group);
