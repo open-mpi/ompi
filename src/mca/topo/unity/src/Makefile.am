@@ -11,7 +11,7 @@ headers = \
 noinst_LTLIBRARIES = libmca_topo_unity.la
 libmca_topo_unity_la_SOURCES = \
     $(headers) \
-    cart_map.c \
-    graph_map.c \
+    topo_unity_cart_map.c \
+    topo_unity_graph_map.c \
     topo_unity.c \
     topo_unity_component.c
