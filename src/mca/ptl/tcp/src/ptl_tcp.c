@@ -45,6 +45,13 @@ mca_ptl_tcp_module_t mca_ptl_tcp_module = {
     }
 };
 
+/*
+ * For each peer process:
+ * (1) Lookup/create a parallel structure that represents the TCP state of the peer process.
+ * (2) Use the mca_base_modex_recv function determine the endpoints exported by the peer.
+ * (3) Create a data structure to represent the state of the connection to the peer.
+ * (4) Select an address exported by the peer to use for this connection.
+ */
 
 int mca_ptl_tcp_add_procs(
     struct mca_ptl_base_module_t* ptl, 
@@ -68,7 +75,8 @@ int mca_ptl_tcp_add_procs(
         /* 
          * Check to make sure that the peer has at least as many interface addresses
          * exported as we are trying to use. If not, then don't bind this PTL instance
-         * to the proc.
+         * to the proc, as we have already associated a PTL instance w/ each of the
+         * endpoints published by the peer.
         */
         OMPI_THREAD_LOCK(&ptl_proc->proc_lock);
         if(ptl_proc->proc_addr_count == ptl_proc->proc_peer_count) {
@@ -100,7 +108,8 @@ int mca_ptl_tcp_add_procs(
 }
 
 /*
- *
+ * Cleanup the peer datastructure(s) - and remove the cooresponding 
+ * tcp process data structure(s).
  */
 
 int mca_ptl_tcp_del_procs(struct mca_ptl_base_module_t* ptl, size_t nprocs, struct ompi_proc_t **procs, struct mca_ptl_base_peer_t ** peers)
@@ -116,7 +125,7 @@ int mca_ptl_tcp_del_procs(struct mca_ptl_base_module_t* ptl, size_t nprocs, stru
 }
 
 /*
- *
+ * Cleanup all peer data structures associated w/ the ptl.
  */
 
 int mca_ptl_tcp_finalize(struct mca_ptl_base_module_t* ptl)
@@ -133,7 +142,8 @@ int mca_ptl_tcp_finalize(struct mca_ptl_base_module_t* ptl)
 }
 
 /*
- * 
+ * Initialize a request for use by the ptl. Use the extra memory allocated
+ * along w/ the ptl to cache the first fragment control information.
  */
 
 int mca_ptl_tcp_request_init(struct mca_ptl_base_module_t* ptl, struct mca_pml_base_send_request_t* request)
@@ -144,7 +154,7 @@ int mca_ptl_tcp_request_init(struct mca_ptl_base_module_t* ptl, struct mca_pml_b
 
 
 /*
- *
+ * Cleanup any resources cached along w/ the request.
  */
 
 void mca_ptl_tcp_request_fini(struct mca_ptl_base_module_t* ptl, struct mca_pml_base_send_request_t* request)
