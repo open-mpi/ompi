@@ -2,9 +2,8 @@
  * $HEADER$
  */
 
-#ifndef _LAM_POINTER_ARRAY
-#define _LAM_POINTER_ARRAY
-
+#ifndef LAM_POINTER_ARRAY_H
+#define LAM_POINTER_ARRAY_H
 
 #include "threads/mutex.h"
 #include "lfc/lam_object.h"
@@ -23,7 +22,7 @@ struct lam_pointer_array_t {
     lam_object_t super;
     /* synchronization object */
     lam_mutex_t lock;
-    /* inde_ of lowest free element */
+    /* index of lowest free element */
     size_t lowest_free;
     /* number of fee elements in the list */
     size_t number_free;
@@ -67,4 +66,19 @@ int lam_pointer_array_set_item(lam_pointer_array_t *array,
  */
 void *lam_pointer_array_get_item(lam_pointer_array_t *array, size_t index);
 
-#endif /* _LAM_POINTER_ARRAY*/
+/**
+ * Get the size of the pointer array
+ *
+ * @param array Pointer to array (IN)
+ *
+ * @returns size Size of the array
+ *
+ * Simple inline function to return the size of the array in order to
+ * hide the member field from external users.
+ */
+static inline size_t lam_pointer_array_get_size(lam_pointer_array_t *array)
+{
+  return array->size;
+}
+
+#endif /* LAM_POINTER_ARRAY_H */
