@@ -42,18 +42,19 @@ static void mca_ptl_tcp_send_frag_destruct(mca_ptl_tcp_send_frag_t* frag)
  *  data buffer, and the indicated size.
  */
 
-void mca_ptl_tcp_send_frag_reinit(
+void mca_ptl_tcp_send_frag_init(
     mca_ptl_tcp_send_frag_t* sendfrag,
     mca_ptl_base_peer_t* ptl_peer,
     mca_ptl_base_send_request_t* sendreq,
-    size_t size)
+    size_t size,
+    int flags)
 {
     /* message header */
     mca_ptl_base_header_t* hdr = &sendfrag->frag_header;
     if(sendreq->req_frags == 0) {
-        hdr->hdr_type = MCA_PTL_HDR_TYPE_MATCH;
-        hdr->hdr_flags = MCA_PTL_FLAGS_ACK_IMMEDIATE;
-        hdr->hdr_size = sizeof(mca_ptl_base_match_header_t);
+        hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_MATCH;
+        hdr->hdr_common.hdr_flags = flags;
+        hdr->hdr_common.hdr_size = sizeof(mca_ptl_base_match_header_t);
         hdr->hdr_frag.hdr_frag_offset = sendreq->req_offset;
         hdr->hdr_frag.hdr_frag_seq = 0;
         hdr->hdr_frag.hdr_src_ptr.pval = sendfrag;
@@ -65,9 +66,9 @@ void mca_ptl_tcp_send_frag_reinit(
         hdr->hdr_match.hdr_msg_length = sendreq->super.req_length;
         hdr->hdr_match.hdr_msg_seq = sendreq->req_msg_seq;
     } else {
-        hdr->hdr_type = MCA_PTL_HDR_TYPE_FRAG;
-        hdr->hdr_flags = 0;
-        hdr->hdr_size = sizeof(mca_ptl_base_frag_header_t);
+        hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_FRAG;
+        hdr->hdr_common.hdr_flags = flags;
+        hdr->hdr_common.hdr_size = sizeof(mca_ptl_base_frag_header_t);
         hdr->hdr_frag.hdr_frag_offset = sendreq->req_offset;
         hdr->hdr_frag.hdr_frag_seq = 0;
         hdr->hdr_frag.hdr_src_ptr.pval = sendfrag;
@@ -76,7 +77,7 @@ void mca_ptl_tcp_send_frag_reinit(
 
     /* update request */
     if(sendreq->req_offset + size > sendreq->super.req_length)
-        size = sendreq->super.req_length = sendreq->req_offset;
+        size = sendreq->super.req_length - sendreq->req_offset;
     hdr->hdr_frag.hdr_frag_length = size;
     sendreq->req_offset += size;
     sendreq->req_frags++;

@@ -35,7 +35,7 @@ struct mca_ptl_tcp_module_1_0_0_t {
     lam_free_list_t tcp_send_frags;
     lam_free_list_t tcp_recv_frags;
     lam_list_t tcp_procs;
-    lam_list_t tcp_acks;
+    lam_list_t tcp_pending_acks;
     struct mca_ptl_tcp_proc_t* tcp_local;
     lam_event_t tcp_send_event;
     lam_event_t tcp_recv_event;
@@ -43,6 +43,8 @@ struct mca_ptl_tcp_module_1_0_0_t {
 };
 typedef struct mca_ptl_tcp_module_1_0_0_t mca_ptl_tcp_module_1_0_0_t;
 typedef struct mca_ptl_tcp_module_1_0_0_t mca_ptl_tcp_module_t;
+struct mca_ptl_tcp_recv_frag_t;
+struct mca_ptl_tcp_send_frag_t;
 
 extern mca_ptl_tcp_module_1_0_0_t mca_ptl_tcp_module;
 
@@ -106,21 +108,28 @@ extern void mca_ptl_tcp_request_return(
     struct mca_ptl_base_send_request_t*
 );
 
-extern void mca_ptl_tcp_frag_return(
+extern void mca_ptl_tcp_recv_frag_return(
     struct mca_ptl_t* ptl,
-    struct mca_ptl_base_recv_frag_t*
+    struct mca_ptl_tcp_recv_frag_t*
+);
+
+extern void mca_ptl_tcp_send_frag_return(
+    struct mca_ptl_t* ptl,
+    struct mca_ptl_tcp_send_frag_t*
 );
 
 extern int mca_ptl_tcp_send(
     struct mca_ptl_t* ptl,
     struct mca_ptl_base_peer_t* ptl_peer,
     struct mca_ptl_base_send_request_t*,
-    size_t size
+    size_t size,
+    int flags
 );
                                                                                                  
 extern void mca_ptl_tcp_recv(
     struct mca_ptl_t* ptl,
-    struct mca_ptl_base_recv_frag_t* frag
+    struct mca_ptl_base_recv_frag_t* frag,
+    struct lam_status_public_t* status
 );
                                                                                                  
 

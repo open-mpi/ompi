@@ -15,18 +15,7 @@
  *  Schedule message delivery across potentially multiple PTLs. 
  *
  *  @param request (IN)    Request to schedule
- *  @param complete (OUT)  Completion status
  *  @return status         Error status
- *
- *  The scheduler uses two seperate PTL pools. One for the first fragment 
- *  (low latency) and a second for the remaining fragments (high bandwidth). 
- *  Note that the same PTL could exist in both pools. 
- *
- *  If the first fragment cannot be scheduled due to a resource constraint,
- *  the entire message is queued for later delivery by the progress engine. 
- *  Likewise, if the entire message cannot be fragmented, the message will 
- *  be queued and the remainder of the message scheduled/fragmented
- *  by the progress engine.
  *
  */
 
@@ -62,7 +51,7 @@ void mca_pml_teg_send_request_schedule(mca_ptl_base_send_request_t* req)
                 bytes_to_frag = bytes_remaining;
         }
 
-        int rc = ptl->ptl_send(ptl, ptl_proc->ptl_peer, req, bytes_to_frag); 
+        int rc = ptl->ptl_send(ptl, ptl_proc->ptl_peer, req, bytes_to_frag, 0);
         if(rc == LAM_SUCCESS)
             bytes_remaining = req->super.req_length - req->req_offset;
     }
@@ -96,7 +85,7 @@ void mca_pml_teg_send_request_progress(
     lam_mutex_unlock(&mca_pml_teg.teg_request_lock);
 
     /* if first fragment - schedule remaining fragments */
-    if(complete == false && req->req_frags == 1) {
+    if(false == complete && req->req_frags == 1) {
         mca_pml_teg_send_request_schedule(req);
     }
 }

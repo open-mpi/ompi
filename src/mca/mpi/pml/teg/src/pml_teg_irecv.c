@@ -21,7 +21,7 @@ int mca_pml_teg_irecv_init(
     if(NULL == recvreq)
         return rc;
     
-    mca_ptl_base_recv_request_reinit(
+    mca_ptl_base_recv_request_init(
         recvreq,
         addr,
         length,
@@ -54,7 +54,7 @@ int mca_pml_teg_irecv(
     if(NULL == recvreq)
         return rc;
 
-    mca_ptl_base_recv_request_reinit(
+    mca_ptl_base_recv_request_init(
         recvreq,
         addr,
         length,
@@ -92,7 +92,7 @@ int mca_pml_teg_recv(
     if(NULL == recvreq)
         return rc;
     
-    mca_ptl_base_recv_request_reinit(
+    mca_ptl_base_recv_request_init(
         recvreq,
         addr,
         length,

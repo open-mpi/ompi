@@ -27,8 +27,6 @@ struct mca_ptl_base_send_request_t {
     size_t req_bytes_sent;
     /* number of bytes that have been acked */
     size_t req_bytes_acked;
-    /* clear to send flag */
-    bool req_clear_to_send;
     /* type of send */
     mca_pml_base_send_mode_t req_send_mode;
     /* sequence number for MPI pt-2-pt ordering */
@@ -45,7 +43,14 @@ struct mca_ptl_base_send_request_t {
 typedef struct mca_ptl_base_send_request_t mca_ptl_base_send_request_t;
 
 
-static inline void mca_ptl_base_send_request_reinit(
+static inline bool mca_ptl_base_send_request_matched(
+    mca_ptl_base_send_request_t* request)
+{
+    return (NULL != request->req_peer_request.pval);
+}
+
+
+static inline void mca_ptl_base_send_request_init(
     mca_ptl_base_send_request_t *request, 
     void *addr, 
     size_t length, 
@@ -56,7 +61,6 @@ static inline void mca_ptl_base_send_request_reinit(
     mca_pml_base_send_mode_t sendmode,
     bool persistent) 
 { 
-    request->req_clear_to_send = false; 
     request->req_offset = 0; 
     request->req_frags = 0; 
     request->req_bytes_sent = 0; 

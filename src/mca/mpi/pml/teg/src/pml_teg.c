@@ -188,6 +188,8 @@ int mca_pml_teg_add_procs(lam_proc_t** procs, size_t nprocs)
             struct mca_ptl_t *ptl = ptl_proc->ptl;
             if(ptl->ptl_bandwidth)
                 ptl_proc->ptl_weight = total_bandwidth / ptl_proc->ptl->ptl_bandwidth;
+            else
+                ptl_proc->ptl_weight = 1.0 / n_size;
 
             /* check to see if this ptl is already in the array of ptls used for first
              * fragments - if not add it.

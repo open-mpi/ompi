@@ -36,7 +36,7 @@ mca_ptl_tcp_t mca_ptl_tcp = {
     mca_ptl_tcp_recv,
     mca_ptl_tcp_request_alloc,
     mca_ptl_tcp_request_return,
-    mca_ptl_tcp_frag_return
+    (mca_ptl_base_frag_return_fn_t)mca_ptl_tcp_recv_frag_return
     }
 };
 
@@ -128,9 +128,32 @@ void mca_ptl_tcp_request_return(struct mca_ptl_t* ptl, struct mca_ptl_base_send_
 }
 
 
-void mca_ptl_tcp_frag_return(struct mca_ptl_t* ptl, struct mca_ptl_base_recv_frag_t* frag)
+void mca_ptl_tcp_recv_frag_return(struct mca_ptl_t* ptl, struct mca_ptl_tcp_recv_frag_t* frag)
 {
+    if(frag->frag_buff != NULL && frag->frag_buff != frag->super.super.frag_addr)
+        free(frag->frag_buff);
     lam_free_list_return(&mca_ptl_tcp_module.tcp_recv_frags, (lam_list_item_t*)frag);
+}
+
+
+void mca_ptl_tcp_send_frag_return(struct mca_ptl_t* ptl, struct mca_ptl_tcp_send_frag_t* frag)
+{
+    if(lam_list_get_size(&mca_ptl_tcp_module.tcp_pending_acks)) {
+        THREAD_LOCK(&mca_ptl_tcp_module.tcp_lock);
+        mca_ptl_tcp_recv_frag_t* pending = (mca_ptl_tcp_recv_frag_t*)
+            lam_list_remove_first(&mca_ptl_tcp_module.tcp_pending_acks);
+        if(NULL == pending) {
+            THREAD_UNLOCK(&mca_ptl_tcp_module.tcp_lock);
+            lam_free_list_return(&mca_ptl_tcp_module.tcp_send_frags, (lam_list_item_t*)frag);
+            return;
+        }
+        mca_ptl_tcp_send_frag_init_ack(frag, ptl, pending->super.super.frag_peer, pending);
+        mca_ptl_tcp_peer_send(pending->super.super.frag_peer, frag);
+        THREAD_UNLOCK(&mca_ptl_tcp_module.tcp_lock);
+        mca_ptl_tcp_recv_frag_return(ptl, pending);
+    } else {
+        lam_free_list_return(&mca_ptl_tcp_module.tcp_send_frags, (lam_list_item_t*)frag);
+    }
 }
 
 
@@ -138,7 +161,8 @@ int mca_ptl_tcp_send(
     struct mca_ptl_t* ptl,
     struct mca_ptl_base_peer_t* ptl_peer,
     struct mca_ptl_base_send_request_t* sendreq,
-    size_t size)
+    size_t size,
+    int flags)
 {
     mca_ptl_tcp_send_frag_t* sendfrag;
     if (sendreq->req_frags == 0) {
@@ -146,34 +170,44 @@ int mca_ptl_tcp_send(
     } else {
         int rc;
         sendfrag = (mca_ptl_tcp_send_frag_t*)lam_free_list_get(&mca_ptl_tcp_module.tcp_send_frags, &rc);
-        if(sendfrag == 0)
+        if(NULL == sendfrag)
             return rc;
     }
-    mca_ptl_tcp_send_frag_reinit(sendfrag, ptl_peer, sendreq, size);
+    mca_ptl_tcp_send_frag_init(sendfrag, ptl_peer, sendreq, size, flags);
     return mca_ptl_tcp_peer_send(ptl_peer, sendfrag);
 }
 
 
 void mca_ptl_tcp_recv(
     mca_ptl_t* ptl,
-    mca_ptl_base_recv_frag_t* frag)
+    mca_ptl_base_recv_frag_t* frag,
+    lam_status_public_t* status)
 {
-    /* fill in match */
-    mca_pml_base_request_t* request = &frag->frag_request->super;
     mca_ptl_base_header_t* header = &frag->super.frag_header;
-    request->req_status.MPI_SOURCE = header->hdr_match.hdr_src;
-    request->req_status.MPI_TAG = header->hdr_match.hdr_tag;
-    request->req_status.MPI_ERROR = LAM_SUCCESS;
-    request->req_status.MPI_LENGTH = header->hdr_match.hdr_msg_length;
 
-    /* send cts ack back to peer */
-    if(request->req_status.MPI_LENGTH > frag->super.frag_size) {
-        if(mca_ptl_tcp_recv_frag_cts((mca_ptl_tcp_recv_frag_t*)frag) == false) {
-             lam_list_append(&mca_ptl_tcp_module.tcp_acks, (lam_list_item_t*)frag);
+    /* fill in match */
+    status->MPI_SOURCE = header->hdr_match.hdr_src;
+    status->MPI_TAG = header->hdr_match.hdr_tag;
+    status->MPI_ERROR = LAM_SUCCESS;
+    status->_count = header->hdr_match.hdr_msg_length;
+
+    /* send ack back to peer */
+    if(header->hdr_common.hdr_flags & MCA_PTL_FLAGS_ACK_MATCHED) {
+        int rc;
+        mca_ptl_tcp_send_frag_t* ack = mca_ptl_tcp_send_frag_alloc(&rc);
+        mca_ptl_tcp_recv_frag_t* recv_frag = (mca_ptl_tcp_recv_frag_t*)frag;
+        if(NULL == ack) {
+            THREAD_LOCK(&mca_ptl_tcp_module.tcp_lock);
+            recv_frag->frag_ack_pending = true;
+            lam_list_append(&mca_ptl_tcp_module.tcp_pending_acks, (lam_list_item_t*)frag);
+            THREAD_UNLOCK(&mca_ptl_tcp_module.tcp_lock);
+        } else {
+            mca_ptl_tcp_send_frag_init_ack(ack, ptl, recv_frag->super.super.frag_peer, recv_frag);
+            mca_ptl_tcp_peer_send(ack->super.super.frag_peer, ack);
         }
     }
 
     /* process fragment if complete */
-    mca_ptl_tcp_recv_frag_process((mca_ptl_tcp_recv_frag_t*)frag);
+    mca_ptl_tcp_recv_frag_progress((mca_ptl_tcp_recv_frag_t*)frag);
 }
 
