@@ -26,6 +26,7 @@
 #include "util/argv.h"
 #include "util/output.h"
 #include "util/sys_info.h"
+#include "util/proc_info.h"
 #include "mca/pml/pml.h"
 #include "mca/ptl/ptl.h"
 #include "mca/pml/base/pml_base_sendreq.h"
@@ -33,6 +34,7 @@
 #include "mca/base/mca_base_module_exchange.h"
 #include "mca/ptl/sm/src/ptl_sm.h"
 #include "mca/mpool/base/base.h"
+#include "mca/oob/base/base.h"
 #include "ptl_sm.h"
 #include "ptl_sm_sendreq.h"
 #include "ptl_sm_sendfrag.h"
@@ -46,7 +48,6 @@
  */
 
 static int mca_ptl_sm_component_exchange(void);
-
 
 /*
  * Shared Memory (SM) component instance. 
@@ -207,6 +208,16 @@ int mca_ptl_sm_component_close(void)
         unlink(mca_ptl_sm_component.mmap_file->map_path);
     }
 
+#if OMPI_HAVE_THREADS == 1
+    /* close/cleanup fifo create for event notification */
+    if(mca_ptl_sm_component.sm_fifo_fd >= 0) {
+        ompi_event_del(&mca_ptl_sm_component.sm_fifo_event);
+        close(mca_ptl_sm_component.sm_fifo_fd);
+        unlink(mca_ptl_sm_component.sm_fifo_path);
+    }
+#endif
+
+
 CLEANUP:
 
     /* return */
@@ -237,9 +248,34 @@ mca_ptl_base_module_t** mca_ptl_sm_component_init(
 
     /* publish shared memory parameters with the MCA framework */
     if(mca_ptl_sm_component_exchange() != OMPI_SUCCESS)
-        return 0;
+        return NULL;
 
-    /* allocate the Shared Memory PTL.  Only one is being allocated */
+#if OMPI_HAVE_THREADS == 1
+    /* create a named pipe to receive events  */
+    sprintf(mca_ptl_sm_component.sm_fifo_path, 
+        "%s/sm_fifo.%d", ompi_process_info.job_session_dir,
+         mca_oob_name_self.vpid);
+    if(mkfifo(mca_ptl_sm_component.sm_fifo_path, 0660) < 0) {
+        ompi_output(0, "mca_ptl_sm_component_init: mkfifo failed with errno=%d\n",errno);
+        return NULL;
+    }
+    mca_ptl_sm_component.sm_fifo_fd = open(mca_ptl_sm_component.sm_fifo_path, O_RDWR);
+    if(mca_ptl_sm_component.sm_fifo_fd < 0) {
+        ompi_output(0, "mca_ptl_sm_component_init: open(%s) failed with errno=%d\n",
+            mca_ptl_sm_component.sm_fifo_path, errno);
+        return NULL;
+    }
+
+    memset(&mca_ptl_sm_component.sm_fifo_event, 0, sizeof(ompi_event_t));
+    ompi_event_set(&mca_ptl_sm_component.sm_fifo_event,
+        mca_ptl_sm_component.sm_fifo_fd,
+        OMPI_EV_READ|OMPI_EV_PERSIST,
+        mca_ptl_sm_component_event_handler,
+        NULL);
+    ompi_event_add(&mca_ptl_sm_component.sm_fifo_event, NULL);
+#endif
+
+    /* allocate the Shared Memory PTL */
     *num_ptls = 2;
     ptls = malloc((*num_ptls)*sizeof(mca_ptl_base_module_t*));
     if(NULL == ptls)
@@ -294,6 +330,21 @@ int mca_ptl_sm_component_control(int param, void* value, size_t size)
 /*
  *  SM component progress.
  */
+
+#if OMPI_HAVE_THREADS == 1
+void mca_ptl_sm_component_event_handler(int sd, short flags, void* user)
+{
+    unsigned char cmd;
+    int rc;
+    mca_ptl_sm_component_progress(0);
+    if(read(sd, &cmd, sizeof(cmd)) != sizeof(cmd)) {
+        ompi_output(0, "mca_ptl_sm_component_event_handler: read failed, errno=%d\n", 
+            errno);
+        ompi_event_del(&mca_ptl_sm_component.sm_fifo_event);
+    }
+}
+#endif
+
 
 int mca_ptl_sm_component_progress(mca_ptl_tstamp_t tstamp)
 {
@@ -571,6 +622,7 @@ int mca_ptl_sm_component_progress(mca_ptl_tstamp_t tstamp)
                 ompi_list_prepend(&(mca_ptl_sm_component.sm_pending_ack),item);
                 break;
             }
+            MCA_PTL_SM_SIGNAL_PEER(mca_ptl_sm_component.sm_peers[header_ptr->queue_index]);
 
             /* get next fragment to ack */
             item = ompi_list_remove_first(&(mca_ptl_sm_component.sm_pending_ack));

@@ -23,12 +23,14 @@
 #include <netinet/in.h>
 #include "class/ompi_free_list.h"
 #include "class/ompi_bitmap.h"
+#include "class/ompi_fifo.h"
+#include "event/event.h"
 #include "mca/pml/pml.h"
 #include "mca/ptl/ptl.h"
 #include "mca/mpool/mpool.h"
 #include "mca/common/sm/common_sm_mmap.h"
-#include "class/ompi_fifo.h"
 #include "mca/ptl/sm/src/ptl_sm_peer.h"
+
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
@@ -118,6 +120,13 @@ struct mca_ptl_sm_component_t {
     ompi_mutex_t sm_pending_ack_lock;
     ompi_list_t sm_pending_ack; /**< list of fragmnent that need to be
                                    acked */
+
+    struct mca_ptl_base_peer_t **sm_peers;
+#if OMPI_HAVE_THREADS == 1
+    char sm_fifo_path[PATH_MAX];   /**< path to fifo used to signal this process */
+    int  sm_fifo_fd;               /**< file descriptor corresponding to opened fifo */
+    ompi_event_t sm_fifo_event;    /**< event for callbacks on fifo activity */
+#endif
 };
 typedef struct mca_ptl_sm_component_t mca_ptl_sm_component_t;
 extern mca_ptl_sm_component_t mca_ptl_sm_component;
@@ -407,6 +416,23 @@ extern int mca_ptl_sm_send_continue(
 typedef struct mca_ptl_sm_exchange{
     char host_name[MCA_PTL_SM_MAX_HOSTNAME_LEN];
 }mca_ptl_sm_exchange_t;
+
+#if OMPI_HAVE_THREADS == 1
+void mca_ptl_sm_component_event_handler(int sd, short flags, void* user);
+#endif
+                                                                                                              
+#if OMPI_HAVE_THREADS == 1 
+#define MCA_PTL_SM_SIGNAL_PEER(peer) \
+{ \
+    unsigned char cmd = 0; \
+    if(write(peer->fifo_fd, &cmd, sizeof(cmd)) != sizeof(cmd)) { \
+        ompi_output(0, "mca_ptl_sm_send: write fifo failed: errno=%d\n", errno); \
+    } \
+}
+#else
+#define MCA_PTL_SM_SIGNAL_PEER(peer)
+#endif
+
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

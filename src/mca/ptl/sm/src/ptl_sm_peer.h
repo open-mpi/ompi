@@ -17,6 +17,10 @@
 #ifndef MCA_PTL_SM_PEER_H
 #define MCA_PTL_SM_PEER_H
 
+#if OMPI_HAVE_THREADS == 1
+#include "event/event.h"
+#endif
+
 /**
  *  An abstraction that represents a connection to a peer process.
  *  An instance of mca_ptl_base_peer_t is associated w/ each process 
@@ -28,7 +32,9 @@ struct mca_ptl_base_peer_t {
                          *   SMP specfic data structures. */
     int peer_smp_rank;  /**< My peer's SMP process rank.  Used for accessing
                          *   SMP specfic data structures. */
-
+#if OMPI_HAVE_THREADS == 1
+    int fifo_fd;        /**< pipe/fifo used to signal peer that data is queued */
+#endif
 };
 
 #endif
