@@ -61,6 +61,7 @@ mca_ptl_elan_recv_frag_t *
 mca_ptl_elan_alloc_recv_desc(struct mca_pml_base_recv_request_t *req);
 
 /**
+ * FIXME: Change frag to be a struct 
  * ELAN send request derived type. The send request contains 
  * the base send request and a point to the elan fragment descriptor
  */

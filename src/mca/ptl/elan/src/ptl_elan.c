@@ -24,7 +24,7 @@
 mca_ptl_elan_module_t mca_ptl_elan_module = {
     {
         &mca_ptl_elan_component.super,
-	2,
+	1,
 	sizeof(mca_ptl_elan_send_frag_t),
         0,                         /* ptl_exclusivity */
         0,                         /* ptl_latency */
@@ -254,7 +254,8 @@ mca_ptl_elan_isend (struct mca_ptl_base_module_t *ptl,
 
     START_FUNC(PTL_ELAN_DEBUG_SEND);
 
-    if (offset == 0) { /* The first fragment uses a cached desc */
+    if (offset == 0 && sendreq->req_cached) { 
+	/* The first fragment uses a cached desc */
         desc = ((mca_ptl_elan_send_request_t*)sendreq)->req_frag;
     } else {
        	desc = mca_ptl_elan_alloc_desc(ptl, 
@@ -401,6 +402,7 @@ mca_ptl_elan_matched (mca_ptl_base_module_t * ptl,
 
     int     set = 0;
 
+    START_FUNC(PTL_ELAN_DEBUG_RECV);
     header  = &frag->frag_base.frag_header;
     request = frag->frag_request;
     recv_frag = (mca_ptl_elan_recv_frag_t * ) frag;
@@ -417,9 +419,6 @@ mca_ptl_elan_matched (mca_ptl_base_module_t * ptl,
 #endif
 	/* Get a frag desc and allocate a send desc */
 	desc = mca_ptl_elan_alloc_desc(ptl, NULL, desc_type);
-	LOG_PRINT(PTL_ELAN_DEBUG_GET, "Get desc %p type %d\n", 
-		    desc, desc->desc->desc_type);
-
 	if (NULL == desc) {
 	    ompi_output(0,
 		    "[%s:%d] Unable to allocate an elan send descriptors \n", 
@@ -479,4 +478,5 @@ mca_ptl_elan_matched (mca_ptl_base_module_t * ptl,
 	 * Then Done with this fragment, i.e., data */
 	mca_ptl_elan_recv_frag_done (header, frag, request);
     }
+    END_FUNC(PTL_ELAN_DEBUG_RECV);
 }
