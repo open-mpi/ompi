@@ -43,7 +43,7 @@ typedef struct lam_communicator_t lam_communicator_t;
 
 /* return pointer to communicator associated with context id cid,
  * No error checking is done*/
-static inline lam_communicator_t *get_comm_ptr(uint32_t cid) 
+static inline lam_communicator_t *lam_comm_lookup(uint32_t cid) 
 { 
     /* array of pointers to communicators, indexed by context ID */
     extern lam_communicator_t **lam_cummunicator_ptrs;
@@ -53,6 +53,15 @@ static inline lam_communicator_t *get_comm_ptr(uint32_t cid)
         return (lam_communicator_t *) NULL;
 #endif
     return lam_cummunicator_ptrs[cid]; 
+}
+
+static inline lam_proc_t* lam_comm_lookup_peer(lam_communicator_t* comm, int peer_id)
+{
+#ifdef LAM_ENABLE_DEBUG
+    if(peer_id >= comm->c_remote_group->g_proc_count)
+        return (lam_proc_t *) NULL;
+#endif
+    return comm->c_remote_group->g_procs[peer_id];
 }
 
 #endif /* LAM_COMMUNICATOR_H */
