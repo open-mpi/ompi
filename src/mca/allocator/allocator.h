@@ -13,17 +13,17 @@ struct mca_allocator_t;
 /**
   * allocate function typedef
   */
-typedef void* (*mca_allocator_alloc_fn_t)(size_t size, size_t align);
+typedef void* (*mca_allocator_alloc_fn_t)(struct mca_allocator_t*, size_t size, size_t align);
  
 /**
   * realloc function typedef
   */
-typedef void* (*mca_allocator_realloc_fn_t)(void*, size_t);
+typedef void* (*mca_allocator_realloc_fn_t)(struct mca_allocator_t*, void*, size_t);
 
 /**
   * free function typedef
   */
-typedef void(*mca_allocator_free_fn_t)(void *);
+typedef void(*mca_allocator_free_fn_t)(struct mca_allocator_t*, void *);
 
 
 typedef int (*mca_allocator_finalize_fn_t)(
@@ -33,7 +33,6 @@ typedef int (*mca_allocator_finalize_fn_t)(
 
 struct mca_allocator_t {
     mca_allocator_alloc_fn_t alc_alloc;
-    mca_allocator_alloc_align_fn_t alc_alloc_align;
     mca_allocator_realloc_fn_t alc_realloc;
     mca_allocator_free_fn_t alc_free;
     mca_allocator_finalize_fn_t alc_finalize;
