@@ -69,7 +69,10 @@ extern "C" {
     /*
      * Internal monitor functions
      */
-    void pcm_bproc_monitor_cb(pid_t pid, int status, void *data);
+    void mca_pcm_bproc_monitor_cb(pid_t pid, int status, void *data);
+    void mca_pcm_bproc_stdin_handler(int sd, short flags, void *user);
+    void mca_pcm_bproc_stdout_handler(int sd, short flags, void *user);
+    void mca_pcm_bproc_stderr_handler(int sd, short flags, void *user);
 
 
     struct mca_pcm_bproc_module_t {

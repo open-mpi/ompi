@@ -17,7 +17,10 @@
 #include "ompi_config.h"
 
 #include <errno.h>
+#include <sys/types.h>
+#include <fcntl.h>
 #include <sys/bproc.h>
+#include <sys/wait.h>
 
 #include "pcm_bproc.h"
 #include "mca/pcm/pcm.h"
@@ -27,12 +30,14 @@
 #include "mca/pcm/base/base_job_track.h"
 #include "mca/pcm/base/base_kill_track.h"
 #include "runtime/ompi_rte_wait.h"
+#include "mca/ns/ns.h"
+#include "mca/ns/base/base.h"
+#include "runtime/runtime.h"
 
 static int
 internal_spawn_procs(mca_pcm_bproc_module_t *me,
                      mca_ns_base_jobid_t jobid, 
                      mca_ns_base_vpid_t base_vpid,
-                     char *base_new_procname,
                      const char *cmd, char * const argv[],
                      char ***env, int *envc,
                      ompi_list_t *node_alloc,
@@ -61,6 +66,9 @@ mca_pcm_bproc_spawn_procs(struct mca_pcm_base_module_1_0_0_t* me_super,
     struct bproc_io_t *io = NULL;
     int iolen = 0;
     int offset = 0;
+    mca_ns_base_vpid_t base_vpid;
+    char *base_proc_name_string, *tmp;
+    ompi_process_name_t *base_proc_name;
 
     /* figure out how many procs we have been allocated */
     for (sched_item = ompi_list_get_first(schedlist) ;
@@ -80,6 +88,41 @@ mca_pcm_bproc_spawn_procs(struct mca_pcm_base_module_1_0_0_t* me_super,
         }
     }
 
+    base_vpid = ompi_name_server.reserve_range(jobid, num_procs);
+    base_proc_name = 
+        ompi_name_server.create_process_name(ompi_name_server.get_cellid(ompi_rte_get_self()),
+                                             jobid, base_vpid);
+    base_proc_name_string = ompi_name_server.get_proc_name_string(base_proc_name);
+    ompi_name_server.free_name(base_proc_name);
+
+
+    /* setup IO forwarding - kind of */
+    iolen = 3;
+    io = malloc(sizeof(struct bproc_io_t) * iolen);
+
+    io[0].fd = 0;
+    io[0].type = BPROC_IO_FILE;
+    io[0].flags = 0;
+    io[0].d.file.offset = 0;
+    strcpy(io[0].d.file.name, "/dev/null");
+    io[0].d.file.flags = O_RDONLY;
+
+    io[1].fd = 1;
+    io[1].type = BPROC_IO_FILE;
+    io[1].flags = 0;
+    io[1].d.file.offset = 0;
+    strcpy(io[1].d.file.name, "/tmp/stdout");
+    io[1].d.file.flags = O_WRONLY|O_CREAT|O_TRUNC;
+    io[1].d.file.mode=0666;
+
+    io[2].fd = 2;
+    io[2].type = BPROC_IO_FILE;
+    io[2].flags = 0;
+    io[2].d.file.offset = 0;
+    strcpy(io[2].d.file.name, "/tmp/stderr");
+    io[2].d.file.flags = O_WRONLY|O_CREAT|O_TRUNC;
+    io[2].d.file.mode=0666;
+
     /* Each sched_item is a different argv/envp/cwd/etc to set, which
        means it is the largest bproc_vexecmove() that can possibly be
        started */
@@ -88,16 +131,39 @@ mca_pcm_bproc_spawn_procs(struct mca_pcm_base_module_1_0_0_t* me_super,
          sched_item = ompi_list_get_next(sched_item)) {
         sched = (ompi_rte_node_schedule_t*) sched_item;
 
-        ret = internal_spawn_procs(me, jobid, 0, "foobar", 
+        /* BWB - this has to go ...  need to figure out env in bproc */
+        asprintf(&tmp, "LD_LIBRARY_PATH=%s", getenv("LD_LIBRARY_PATH"));
+        ompi_argv_append(&(sched->envc), &(sched->env), tmp);
+        free(tmp);
+        /* add the base process name & num procs */
+        asprintf(&tmp, "OMPI_MCA_pcmclient_bproc_base_name=%s", base_proc_name_string);
+        ompi_argv_append(&(sched->envc), &(sched->env), tmp);
+        free(tmp);
+        asprintf(&tmp, "OMPI_MCA_pcmclient_bproc_num_procs=%d", num_procs);
+        ompi_argv_append(&(sched->envc), &(sched->env), tmp);
+        free(tmp);
+        asprintf(&tmp, "BPROC_RANK=XXXXXXXX");
+        ompi_argv_append(&(sched->envc), &(sched->env), tmp);
+        free(tmp);
+
+        printf("pcm: bproc: spawning procs: %s %s\n", sched->argv[0], base_proc_name_string);
+        ret = internal_spawn_procs(me, jobid, base_vpid,
                                    sched->argv[0], sched->argv,
                                    &(sched->env), &(sched->envc),
                                    sched->nodelist, io, iolen, &offset);
+        /* remove the base process name */
+#if 0
+        ompi_argv_shrink(&(sched->envc), &(sched->env), sched->envc - 3, 3);
+#endif
+        printf("pcm: bproc: internal_spawn_procs returned %d\n", ret);
 
         if (ret != OMPI_SUCCESS) {
             mca_pcm_bproc_kill_job(me_super, jobid, 0);
             return ret;
         }
     }
+
+    free(base_proc_name_string);
 
     return OMPI_SUCCESS;
 }
@@ -136,6 +202,8 @@ internal_set_nodelist(ompi_list_t *host_list,
     *nodelist = realloc(*nodelist, (*nodelist_len + growlen) * sizeof(int));
     if (*nodelist == NULL) return -1;
 
+
+    /* BWB - need to extend this to do the proper name lookups */
     i = *nodelist_len;
     for (host_item = ompi_list_get_first(host_list) ;
          host_item != ompi_list_get_end(host_list) ;
@@ -144,6 +212,8 @@ internal_set_nodelist(ompi_list_t *host_list,
 
         for (j = 0 ; j < host->count ; ++j) {
             (*nodelist)[i] = atoi(host->hostname);
+            printf("pcm: bproc: %s has node number %d (%d) \n", 
+                   host->hostname, (*nodelist)[i], i);
             i++;
         }
     }
@@ -161,7 +231,6 @@ static int
 internal_spawn_procs(mca_pcm_bproc_module_t *me,
                      mca_ns_base_jobid_t jobid, 
                      mca_ns_base_vpid_t base_vpid,
-                     char *base_new_procname,
                      const char *cmd, char * const argv[],
                      char ***env, int *envc,
                      ompi_list_t *node_alloc,
@@ -175,6 +244,7 @@ internal_spawn_procs(mca_pcm_bproc_module_t *me,
     int *pids;
     int i, ret;
 
+    printf("pcm: bproc: converting hosts -> bproc ids\n");
     /* convert into bproc node list */
     for (node_item = ompi_list_get_first(node_alloc) ;
          node_item != ompi_list_get_end(node_alloc) ;
@@ -184,20 +254,34 @@ internal_spawn_procs(mca_pcm_bproc_module_t *me,
         ret = internal_set_nodelist(data->hostlist, &nodelist, &nodelist_len);
         if (ret != 0) {
             /* BWB - want an error message here? */
+            printf("pcm: bproc: failure to resolve node at %d\n", ret);
             return OMPI_ERROR;
         }
     }
 
+    printf("pcm: bproc: allocating space for returned pids (%d)\n", nodelist_len);
     /* allocate space for the returned pids */
     pids = (int*) malloc(nodelist_len * sizeof(int));
     if (NULL == pids) return OMPI_ERR_OUT_OF_RESOURCE;
-    
-    internal_bproc_vexecmove_io(nodelist_len, nodelist, pids,
-                                io, iolen, cmd, argv,
-                                env, envc, *offset);
+
+    printf("pcm: bproc: starting %d procs (%s) with offset %d\n", 
+           nodelist_len,cmd, *offset);
+    ret = internal_bproc_vexecmove_io(nodelist_len, nodelist, pids,
+                                      io, iolen, cmd, argv,
+                                      env, envc, *offset);
+    printf("pcm: bproc: vexecmove returned %d\n", ret);
 
     /* register the returned pids */
     for (i = 0 ; i < nodelist_len ; ++i) {
+        printf("pcm: bproc: registering proc %d, pid %d\n", i, pids[i]);
+
+        if (pids[i] < 0) {
+            printf("pcm: bproc: invalid pid\n");
+            mca_pcm_bproc_kill_job((mca_pcm_base_module_t*) me, jobid, 0);
+            errno = pids[i];
+            return OMPI_ERR_IN_ERRNO;
+        }
+
         ret = mca_pcm_base_job_list_add_job_info(me->jobs,
                                                  jobid,
                                                  pids[i],
@@ -208,7 +292,7 @@ internal_spawn_procs(mca_pcm_bproc_module_t *me,
             return ret;
         }
 
-        ret = ompi_rte_wait_cb(pids[i], pcm_bproc_monitor_cb, NULL);
+        ret = ompi_rte_wait_cb(pids[i], mca_pcm_bproc_monitor_cb, NULL);
         if (OMPI_SUCCESS != ret) {
             mca_pcm_bproc_kill_job((mca_pcm_base_module_t*) me, jobid, 0);
             return ret;
@@ -238,7 +322,6 @@ internal_bproc_vexecmove_io(int nnodes, int *nodes, int *pids,
     asprintf(&tmp, "OMPI_MCA_pcmclient_bproc_rank_offset=%d", offset);
     ompi_argv_append(envc, env, tmp);
     free(tmp);
-    printf("bproc_vexecmove_io called\n");
     ret = bproc_vexecmove_io(nnodes, nodes, pids, io, iolen,
                              cmd, argv, *env);
     loc = ompi_argv_count(*env);
