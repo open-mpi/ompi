@@ -140,7 +140,7 @@ ompi_attrkey_item_destruct(ompi_attrkey_item_t *item)
  */
 
 int 
-ompi_attr_init()
+ompi_attr_init(void)
 {
     attr_hash = OBJ_NEW(ompi_attrkey_t);
     if (NULL == attr_hash) {
@@ -163,11 +163,13 @@ ompi_attr_init()
  * This will destroy the list, mostly during MPI_Finalize()
  */
 
-void 
-ompi_attr_destroy()
+int
+ompi_attr_finalize(void)
 {
     OBJ_RELEASE(attr_hash);
     OBJ_RELEASE(key_bitmap);
+
+    return OMPI_SUCCESS;
 }
   
 
