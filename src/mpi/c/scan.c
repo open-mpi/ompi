@@ -56,6 +56,12 @@ int MPI_Scan(void *sendbuf, void *recvbuf, int count,
         OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
     }
 
+    /* If everyone supplied count == 0, we can just return */
+
+    if (0 == count) {
+        return MPI_SUCCESS;
+    }
+
     /* Call the coll component to actually perform the allgather */
 
     err = comm->c_coll.coll_scan(sendbuf, recvbuf, count,
