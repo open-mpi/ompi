@@ -266,12 +266,8 @@ static void ompi_comm_destruct(ompi_communicator_t* comm)
 
     mca_coll_base_comm_unselect(comm);
 
-    /* Release topology information */
-
-    mca_topo_base_comm_unselect(comm);
 
     /*  Check if the communicator is a topology */
-    
     if (OMPI_COMM_IS_CART(comm) || OMPI_COMM_IS_GRAPH(comm)) {
 
         /* check and free individual things */
@@ -301,14 +297,25 @@ static void ompi_comm_destruct(ompi_communicator_t* comm)
 
     }
 
-    if (NULL != comm->c_remote_group) {
-        OBJ_RELEASE ( comm->c_remote_group );
-    }
+    /* Release topology information */
+    mca_topo_base_comm_unselect(comm);
+
     if (NULL != comm->c_local_group) {
         OBJ_RELEASE ( comm->c_local_group );
+        comm->c_local_group = NULL;
+        if (OMPI_COMM_IS_INTRA(comm) ) {
+            comm->c_remote_group = NULL;
+        }
     }
+    
+    if (NULL != comm->c_remote_group) {
+        OBJ_RELEASE ( comm->c_remote_group );
+        comm->c_remote_group = NULL;
+    }
+    
     if (NULL != comm->error_handler) {
         OBJ_RELEASE ( comm->error_handler );
+        comm->error_handler = NULL;
     }
 
     /* reset the ompi_comm_f_to_c_table entry */
