@@ -28,7 +28,7 @@ libs = $(top_builddir)/src/libmpi.la
 bin_PROGRAMS = ompid
 ompid_SOURCES = \
         ompid.h \
-        ompid.cc 
+        ompid.c 
 
 ompid_LDADD = $(libs) $(LIBMPI_EXTRA_LIBS) $(LIBOMPI_EXTRA_LIBS)
 ompid_LDFLAGS = $(LIBMPI_EXTRA_LDFLAGS) $(LIBOMPI_EXTRA_LDFLAGS)
