@@ -17,6 +17,7 @@ headers = \
         base.h \
         mca_base_module_exchange.h \
         mca_base_param.h \
+        mca_base_param_internal.h \
         mca_base_msgbuf.h \
         mca_base_msgbuf_internal.h 
 

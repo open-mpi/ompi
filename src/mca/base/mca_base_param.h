@@ -19,6 +19,11 @@
  * -# Lookup a "normal" parameter value on a specific index, or
  * -# Lookup an attribute parameter on a specific index and
  *    communicator / datatype / window.
+ *
+ * Note that there is a second header file (mca_base_param_internal.h)
+ * that contains several internal type delcarations for the parameter
+ * system.  The internal file is only used within the parameter system
+ * itself; it should not be required by any other Open MPI entities.
  */
 
 #ifndef OMPI_MCA_BASE_PARAM_H
@@ -27,76 +32,6 @@
 #include "mpi.h"
 
 #include "class/ompi_hash_table.h"
-
-/**
- * \internal
- *
- * Types for MCA parameters.
- */
-typedef union {
-  int intval;
-  /**< Integer value */
-  char *stringval;
-  /**< String value */
-} mca_base_param_storage_t;
-
-/** \internal
- *
- * Special name used to indicate that this is an "info" value.
- */
-#define MCA_BASE_PARAM_INFO ((void*) -1)
-
-
-/**
- * \internal
- *
- * The following types are really in this public .h file so that
- * ompi_info can see them.  No one else should use them!
- */
-typedef enum {
-  MCA_BASE_PARAM_TYPE_INT,
-  /**< The parameter is of type integer. */
-  MCA_BASE_PARAM_TYPE_STRING,
-  /**< The parameter is of type string. */
-
-  MCA_BASE_PARAM_TYPE_MAX
-  /**< Maximum parameter type. */
-} mca_base_param_type_t;
-
-/**
- * \internal
- *
- * Entry for holding the information about an MCA parameter and its
- * default value.
- */
-struct mca_base_param_t {
-  mca_base_param_type_t mbp_type;
-  /**< Enum indicating the type of the parameter (integer or string) */
-  char *mbp_type_name;
-  /**< String of the type name, or NULL */
-  char *mbp_module_name;
-  /**< String of the component name */
-  char *mbp_param_name;
-  /**< String of the parameter name */
-  char *mbp_full_name;
-  /**< Full parameter name, in case it is not
-     <type>_<component>_<param> */
-
-  int mbp_keyval;
-  /**< Keyval value for MPI attribute parameters */
-  char *mbp_env_var_name;
-  /**< Environment variable name */
-
-  mca_base_param_storage_t mbp_default_value;
-  /**< Default value of the parameter */
-};
-/**
- * \internal
- *
- * Convenience typedef.
- */
-typedef struct mca_base_param_t mca_base_param_t;
-
 
 /*
  * Global functions for MCA
@@ -109,12 +44,11 @@ extern "C" {
    * Register an integer MCA parameter.
    *
    * @param type_name[in] The MCA type (string).
-   * @param module_name[in] The name of the module (string).
+   * @param component_name[in] The name of the component (string).
    * @param param_name[in] The name of the parameter being registered
    * (string).
-   * @param mca_param_name[in] If NULL, the user-visible name of the
-   * parameter is {type_name}_{module_name}_{param_name}.  If this
-   * parameter is non-NULL, it is used instead of the default name.
+   * @param mca_param_name[in] Optional parameter to override the
+   * user-visible name of this parameter (string).
    * @param default_value[in] The value that is used for this
    * parameter if the user does not supply one.
    *
@@ -123,13 +57,33 @@ extern "C" {
    * mca_base_param_lookup_int() to retrieve the value of the parameter.
    *
    * This function registers an integer MCA parameter and associates it
-   * with a specific module.
+   * with a specific component.
    *
-   * In most cases, mca_param_name should be NULL.  Only in rare cases
-   * is it necessary (or advisable) to override the default name.
+   * The default resulting MCA parameter name is
+   * {type_name}[_{component_name}][_{param_name}].
+   *
+   * {component_name} is only included if it is non-NULL.  All
+   * components an should include their name; component frameworks
+   * should pass "base".  It is only permissible for the MCA base
+   * itself to pass NULL for the component_name.
+   *
+   * Likewise, {param_name} is also only included if it is non-NULL.
+   * Components and frameworks can pass NULL for this parameter if
+   * they wish.
+   *
+   * In most cases, mca_param_name should be NULL, in which case the
+   * user-visible name of this parameter will be the default form (as
+   * described above).  Only in rare cases is it necessary (or
+   * advisable) to override the default name -- its use is strongly
+   * discouraged.
+   *
+   * It is permissable to register a (type_name, component_name,
+   * param_name) triple more than once; the same index value will be
+   * returned, but the default value will be changed to reflect the
+   * last registration.
    */
   int mca_base_param_register_int(const char *type_name, 
-                                  const char *module_name,
+                                  const char *component_name,
                                   const char *param_name, 
                                   const char *mca_param_name,
                                   int default_value);
@@ -138,12 +92,11 @@ extern "C" {
    * Register a string MCA parameter.
    *
    * @param type_name[in] The MCA type (string).
-   * @param module_name[in] The name of the module (string).
+   * @param component_name[in] The name of the component (string).
    * @param param_name[in] The name of the parameter being registered
    * (string).
-   * @param mca_param_name[in] If NULL, the user-visible name of the
-   * parameter is {type_name}_{module_name}_{param_name}.  If this
-   * parameter is non-NULL, it is used instead of the default name.
+   * @param mca_param_name[in] Optional parameter to override the
+   * user-visible name of this parameter (string).
    * @param default_value[in] The value that is used for this
    * parameter if the user does not supply one.
    *
@@ -152,14 +105,13 @@ extern "C" {
    * mca_base_param_lookup_string() to retrieve the value of the
    * parameter.
    *
-   * This function registers an string MCA parameter and associates it
-   * with a specific module.
-   *
-   * In most cases, mca_param_name should be NULL.  Only in rare cases
-   * is it necessary (or advisable) to override the default name.
+   * This function is identical to mca_base_param_register_int()
+   * except that you are registering a string parameter with an
+   * associated string default value (which is allowed to be NULL).
+   * See mca_base_param_register_int() for all other details.
    */
   int mca_base_param_register_string(const char *type_name, 
-                                     const char *module_name,
+                                     const char *component_name,
                                      const char *param_name, 
                                      const char *mca_param_name,
                                      const char *default_value);
@@ -275,7 +227,7 @@ extern "C" {
    * Find the index for an MCA parameter based on its names.
    *
    * @param type_name Name of the type containing the parameter.
-   * @param module_name Name of the module containing the parameter.
+   * @param component_name Name of the component containing the parameter.
    * @param param_name Name of the parameter.
    *
    * @retval OMPI_ERROR If the parameter was not found.
@@ -283,14 +235,14 @@ extern "C" {
    *
    * It is not always convenient to widely propagate a parameter's index
    * value, or it may be necessary to look up the parameter from a
-   * different module -- where it is not possible to have the return
+   * different component -- where it is not possible to have the return
    * value from mca_base_param_register_int() or
    * mca_base_param_register_string().  This function can be used to
    * look up the index of any registered parameter.  The returned index
    * can be used with mca_base_param_lookup_int() and
    * mca_base_param_lookup_string().
    */
-  int mca_base_param_find(const char *type, const char *module, 
+  int mca_base_param_find(const char *type, const char *component, 
                           const char *param);
 
   /**

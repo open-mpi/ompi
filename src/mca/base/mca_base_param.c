@@ -14,13 +14,14 @@
 #include "attribute/attribute.h"
 #include "mca/mca.h"
 #include "mca/base/mca_base_param.h"
+#include "mca/base/mca_base_param_internal.h"
 
 
 /*
  * Public variables
  *
  * This variable is public, but not advertised in mca_base_param.h.
- * It's only public so that ompi_info can see it.  The relevant module
+ * It's only public so that ompi_info can see it.  The relevant component
  * in ompi_info will provide an extern to see this variable.
  */
 ompi_value_array_t mca_base_params;
@@ -36,21 +37,29 @@ static bool initialized = false;
 /*
  * local functions
  */
-static int param_register(const char *type_name, const char *module_name, 
+static int param_register(const char *type_name, const char *component_name, 
                           const char *param_name,
                           const char *mca_param_name,
                           mca_base_param_type_t type,
                           mca_base_param_storage_t *default_value);
 static bool param_lookup(int index, mca_base_param_storage_t *storage,
                          ompi_hash_table_t *attrs);
-static void param_free(mca_base_param_t *p);
+static void param_constructor(mca_base_param_t *p);
+static void param_destructor(mca_base_param_t *p);
+
+
+/*
+ * Make the class instance for mca_base_param_t
+ */
+OBJ_CLASS_INSTANCE(mca_base_param_t, ompi_object_t, 
+                   param_constructor, param_destructor);
 
 
 /*
  * Register an integer MCA parameter 
  */
 int mca_base_param_register_int(const char *type_name, 
-                                const char *module_name,
+                                const char *component_name,
                                 const char *param_name, 
                                 const char *mca_param_name, 
                                 int default_value)
@@ -58,7 +67,7 @@ int mca_base_param_register_int(const char *type_name,
   mca_base_param_storage_t storage;
 
   storage.intval = default_value;
-  return param_register(type_name, module_name, param_name, mca_param_name,
+  return param_register(type_name, component_name, param_name, mca_param_name,
                         MCA_BASE_PARAM_TYPE_INT, &storage);
 }
 
@@ -67,7 +76,7 @@ int mca_base_param_register_int(const char *type_name,
  * Register a string MCA parameter.
  */
 int mca_base_param_register_string(const char *type_name, 
-                                   const char *module_name,
+                                   const char *component_name,
                                    const char *param_name, 
                                    const char *mca_param_name,
                                    const char *default_value)
@@ -78,7 +87,7 @@ int mca_base_param_register_string(const char *type_name,
   } else {
     storage.stringval = NULL;
   }
-  return param_register(type_name, module_name, param_name, mca_param_name,
+  return param_register(type_name, component_name, param_name, mca_param_name,
                         MCA_BASE_PARAM_TYPE_STRING, &storage);
 }
 
@@ -177,7 +186,7 @@ int mca_base_param_kv_lookup_string(int index, ompi_hash_table_t *attrs,
 /*
  * Find the index for an MCA parameter based on its names.
  */
-int mca_base_param_find(const char *type_name, const char *module_name, 
+int mca_base_param_find(const char *type_name, const char *component_name, 
                         const char *param_name) 
 {
   size_t i, size;
@@ -188,21 +197,23 @@ int mca_base_param_find(const char *type_name, const char *module_name,
   if (!initialized) {
     return OMPI_ERROR;
   }
-  if (NULL == type_name || NULL == param_name) {
+  if (NULL == type_name) {
     return OMPI_ERROR;
   }
 
   /* Loop through looking for a parameter of a given
-     type/module/param */
+     type/component/param */
 
   size = ompi_value_array_get_size(&mca_base_params);
   array = OMPI_VALUE_ARRAY_GET_BASE(&mca_base_params, mca_base_param_t);
   for (i = 0; i < size; ++i) {
     if (0 == strcmp(type_name, array[i].mbp_type_name) &&
-        ((NULL == module_name && NULL == array[i].mbp_module_name) ||
-         (NULL != module_name && NULL != array[i].mbp_module_name &&
-          0 == strcmp(module_name, array[i].mbp_module_name))) &&
-        0 == strcmp(param_name, array[i].mbp_param_name)) {
+        ((NULL == component_name && NULL == array[i].mbp_component_name) ||
+         (NULL != component_name && NULL != array[i].mbp_component_name &&
+          0 == strcmp(component_name, array[i].mbp_component_name))) &&
+        ((NULL == param_name && NULL == array[i].mbp_param_name) ||
+         (NULL != param_name && NULL != array[i].mbp_param_name &&
+          0 == strcmp(param_name, array[i].mbp_param_name)))) {
       return i;
     }
   }
@@ -222,9 +233,12 @@ int mca_base_param_finalize(void)
   mca_base_param_t *array;
 
   if (initialized) {
+
+    /* This is slow, but effective :-) */
+
     array = OMPI_VALUE_ARRAY_GET_BASE(&mca_base_params, mca_base_param_t);
     while (0 < ompi_value_array_get_size(&mca_base_params)) {
-      param_free(&array[0]);
+      OBJ_DESTRUCT(&array[0]);
       ompi_value_array_remove_item(&mca_base_params, 0);
     }
     OBJ_DESTRUCT(&mca_base_params);
@@ -237,11 +251,12 @@ int mca_base_param_finalize(void)
 
 /*************************************************************************/
 
-static int param_register(const char *type_name, const char *module_name, 
+static int param_register(const char *type_name, const char *component_name, 
                           const char *param_name, const char *mca_param_name,
                           mca_base_param_type_t type,
                           mca_base_param_storage_t *default_value)
 {
+  int ret;
   size_t i, len;
   mca_base_param_t param, *array;
 
@@ -253,31 +268,38 @@ static int param_register(const char *type_name, const char *module_name,
     initialized = true;
   }
 
+  /* Error check */
+
+  if (NULL == type_name) {
+    return OMPI_ERR_BAD_PARAM;
+  }
+
   /* Create a parameter entry.  If a keyval is to be used, it will be
      registered elsewhere.  We simply assign -1 here. */
 
+  OBJ_CONSTRUCT(&param, mca_base_param_t);
   param.mbp_type = type;
-  param.mbp_keyval = -1;
+  param.mbp_keyval = MPI_KEYVAL_INVALID;
 
   param.mbp_type_name = strdup(type_name);
   if (NULL == param.mbp_type_name) {
-    return OMPI_ERROR;
+    OBJ_DESTRUCT(&param);
+    return OMPI_ERR_OUT_OF_RESOURCE;
   }
-  if (NULL != module_name) {
-    param.mbp_module_name = strdup(module_name);
-    if (NULL == param.mbp_module_name) {
-      free(param.mbp_type_name);
-      return OMPI_ERROR;
+  if (NULL != component_name) {
+    param.mbp_component_name = strdup(component_name);
+    if (NULL == param.mbp_component_name) {
+      OBJ_DESTRUCT(&param);
+      return OMPI_ERR_OUT_OF_RESOURCE;
     }
   } else {
-    param.mbp_module_name = NULL;
+    param.mbp_param_name = NULL;
   }
-  if (param_name != NULL) {
+  if (NULL != param_name) {
     param.mbp_param_name = strdup(param_name);
     if (NULL == param.mbp_param_name) {
-      free(param.mbp_type_name);
-      free(param.mbp_module_name);
-      return OMPI_ERROR;
+      OBJ_DESTRUCT(&param);
+      return OMPI_ERR_OUT_OF_RESOURCE;
     }
   } else {
     param.mbp_param_name = NULL;
@@ -285,17 +307,20 @@ static int param_register(const char *type_name, const char *module_name,
 
   /* The full parameter name may have been specified by the caller.
      If it was, use that (only for backwards compatability).
-     Otherwise, derive it from the type, module, and parameter
+     Otherwise, derive it from the type, component, and parameter
      name. */
 
   param.mbp_env_var_name = NULL;
-  if (MCA_BASE_PARAM_INFO != mca_param_name && NULL != mca_param_name) {
+  if (NULL != mca_param_name) {
     param.mbp_full_name = strdup(mca_param_name);
+    if (NULL == param.mbp_full_name) {
+      OBJ_DESTRUCT(&param);
+      return OMPI_ERROR;
+    }
   } else {
     len = 16 + strlen(type_name);
-
-    if (NULL != module_name) {
-      len += strlen(module_name);
+    if (NULL != component_name) {
+      len += strlen(component_name);
     }
     if (NULL != param_name) {
       len += strlen(param_name);
@@ -303,22 +328,16 @@ static int param_register(const char *type_name, const char *module_name,
 
     param.mbp_full_name = malloc(len);
     if (NULL == param.mbp_full_name) {
-      if (NULL != param.mbp_type_name) {
-        free(param.mbp_type_name);
-      }
-      if (NULL != param.mbp_module_name) {
-        free(param.mbp_module_name);
-      }
-      if (NULL != param.mbp_param_name) {
-        free(param.mbp_param_name);
-      }
+      OBJ_DESTRUCT(&param);
       return OMPI_ERROR;
     }
-    strncpy(param.mbp_full_name, type_name, len);
 
-    if (NULL != module_name) {
+    /* Copy the name over in parts */
+
+    strncpy(param.mbp_full_name, type_name, len);
+    if (NULL != component_name) {
       strcat(param.mbp_full_name, "_");
-      strcat(param.mbp_full_name, module_name);
+      strcat(param.mbp_full_name, component_name);
     }
     if (NULL != param_name) {
       strcat(param.mbp_full_name, "_");
@@ -326,25 +345,19 @@ static int param_register(const char *type_name, const char *module_name,
     }
   }
 
-  /* If mca_param_name isn't MCA_BASE_PARAM_INFO, then it's a
-     lookup-able value.  So alloc the environment variable name as
-     well. */
+  /* Create the environment name */
 
-  if (MCA_BASE_PARAM_INFO != mca_param_name) {
-    len = strlen(param.mbp_full_name) + strlen(mca_prefix) + 16;
-    param.mbp_env_var_name = malloc(len);
-    if (NULL == param.mbp_env_var_name) {
-      free(param.mbp_full_name);
-      free(param.mbp_type_name);
-      free(param.mbp_module_name);
-      free(param.mbp_param_name);
-      return OMPI_ERROR;
-    }
-    snprintf(param.mbp_env_var_name, len, "%s%s", mca_prefix, 
-             param.mbp_full_name);
+  len = strlen(param.mbp_full_name) + strlen(mca_prefix) + 16;
+  param.mbp_env_var_name = malloc(len);
+  if (NULL == param.mbp_env_var_name) {
+    OBJ_DESTRUCT(&param);
+    return OMPI_ERROR;
   }
+  snprintf(param.mbp_env_var_name, len, "%s%s", mca_prefix, 
+           param.mbp_full_name);
 
-  /* Figure out the default value */
+  /* Figure out the default value; zero it out if a default is not
+     provided */
 
   if (NULL != default_value) {
     if (MCA_BASE_PARAM_TYPE_STRING == param.mbp_type &&
@@ -357,49 +370,59 @@ static int param_register(const char *type_name, const char *module_name,
     memset(&param.mbp_default_value, 0, sizeof(param.mbp_default_value));
   }
 
-  /* See if this entry is already in the Array */
+  /* See if this entry is already in the array */
 
   len = ompi_value_array_get_size(&mca_base_params);
   array = OMPI_VALUE_ARRAY_GET_BASE(&mca_base_params, mca_base_param_t);
   for (i = 0; i < len; ++i) {
     if (0 == strcmp(param.mbp_full_name, array[i].mbp_full_name)) {
 
-      /* Copy in the new default value to the old entry */
+      /* We found an entry with the same param name.  Free the old
+         value (if it was a string */
 
       if (MCA_BASE_PARAM_TYPE_STRING == array[i].mbp_type &&
           NULL != array[i].mbp_default_value.stringval) {
         free(array[i].mbp_default_value.stringval);
       }
-      if (MCA_BASE_PARAM_TYPE_STRING == param.mbp_type &&
-          NULL != param.mbp_default_value.stringval) {
-        array[i].mbp_default_value.stringval =
-          strdup(param.mbp_default_value.stringval);
+
+      /* Now put in the new value */
+
+      if (MCA_BASE_PARAM_TYPE_STRING == param.mbp_type) {
+        if (NULL != param.mbp_default_value.stringval) {
+          array[i].mbp_default_value.stringval =
+            strdup(param.mbp_default_value.stringval);
+        } else {
+          array[i].mbp_default_value.stringval = NULL;
+        }
+      } else {
+          array[i].mbp_default_value.intval =
+            param.mbp_default_value.intval;
       }
 
-      param_free(&param);
+      /* Just in case we changed type */
+
+      array[i].mbp_type = param.mbp_type;
+
+      /* Now delete the newly-created entry (since we just saved the
+         value in the old entry) */
+
+      OBJ_DESTRUCT(&param);
       return i;
     }
   }
 
   /* Add it to the array */
 
-  if (OMPI_SUCCESS != ompi_value_array_append_item(&mca_base_params, &param)) {
-    return OMPI_ERROR;
+  if (OMPI_SUCCESS != 
+      (ret = ompi_value_array_append_item(&mca_base_params, &param))) {
+    return ret;
   }
   return ompi_value_array_get_size(&mca_base_params) - 1;
 }
 
 
 /*
- * DO NOT MODIFY THIS FUNCTION WITHOUT ALSO MODIFYING mca_base_param.c!
- *
- * This function appears in libompi.  Because of unix linker semantics,
- * it's simply easier to essentially duplicate this function in libmpi
- * because in libmpi, we need to lookup on a keyval before looking in
- * the environment.  The logic is simpler if we just duplicate/alter
- * the code in mca_base_param.c rather than try to make this a) public,
- * and b) more general (to accomodate looking up keyvals while not
- * linking to MPI_Comm_get_attr() in libmpi).
+ * Lookup a parameter
  */
 static bool param_lookup(int index, mca_base_param_storage_t *storage,
                          ompi_hash_table_t *attrs)
@@ -439,13 +462,13 @@ static bool param_lookup(int index, mca_base_param_storage_t *storage,
                         &storage->stringval, &flag);
     if (OMPI_SUCCESS == err && 1 == flag) {
 
-      /* Because of alignment weirdness between (void*) and int, it's
-         simpler to just call ompi_attr_get with the right storage
-         vehicle vs. trying to cast (extra) to (storage) */
+      /* Because of alignment weirdness between (void*) and int, we
+         must grab the lower sizeof(int) bytes from the (char*) in
+         stringval, in case sizeof(int) != sizeof(char*). */
 
       if (MCA_BASE_PARAM_TYPE_INT == array[index].mbp_type) {
-        err = ompi_attr_get(attrs, array[index].mbp_keyval, 
-                            &storage->intval, &flag);
+        storage->intval = *((int *) (storage->stringval +
+                                     sizeof(void *) - sizeof(int)));
       }
 
       /* Nothing to do for string -- we already have the value loaded
@@ -494,13 +517,34 @@ static bool param_lookup(int index, mca_base_param_storage_t *storage,
 }
 
 
-static void param_free(mca_base_param_t *p)
+/*
+ * Create an empty param container
+ */
+static void param_constructor(mca_base_param_t *p)
+{
+  p->mbp_type = MCA_BASE_PARAM_TYPE_MAX;
+
+  p->mbp_type_name = NULL;
+  p->mbp_component_name = NULL;
+  p->mbp_param_name = NULL;
+  p->mbp_full_name = NULL;
+
+  p->mbp_keyval = -1;
+  p->mbp_env_var_name = NULL;
+  p->mbp_default_value.stringval = NULL;
+}
+
+
+/*
+ * Free all the contents of a param container
+ */
+static void param_destructor(mca_base_param_t *p)
 {
   if (NULL != p->mbp_type_name) {
     free(p->mbp_type_name);
   }
-  if (NULL != p->mbp_module_name) {
-    free(p->mbp_module_name);
+  if (NULL != p->mbp_component_name) {
+    free(p->mbp_component_name);
   }
   if (NULL != p->mbp_param_name) {
     free(p->mbp_param_name);
