@@ -31,7 +31,7 @@ MPI_Comm_set_name(MPI_Comm comm, char *name)
 
   /* Copy in the name */
   
-  lam_strncpy(comm->c_name, name, MPI_MAX_OBJECT_NAME);
+  strncpy(comm->c_name, name, MPI_MAX_OBJECT_NAME);
   comm->c_name[MPI_MAX_OBJECT_NAME - 1] = 0;
 
   /* -- Tracing information for new communicator name -- */

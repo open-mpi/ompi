@@ -155,7 +155,7 @@ lam_argv_split(const char *src_string, int delimiter)
       if (NULL == argtemp)
 	return NULL;
 
-      lam_strncpy(argtemp, src_string, arglen);
+      strncpy(argtemp, src_string, arglen);
       argtemp[arglen] = '\0';
 
       if (LAM_ERROR == lam_argv_add(&argc, &argv, argtemp)) {
@@ -169,7 +169,7 @@ lam_argv_split(const char *src_string, int delimiter)
     /* short argument, copy to buffer and add */
 
     else {
-      lam_strncpy(arg, src_string, arglen);
+      strncpy(arg, src_string, arglen);
       arg[arglen] = '\0';
 
       if (LAM_ERROR == lam_argv_add(&argc, &argv, arg))
