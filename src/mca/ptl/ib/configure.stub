@@ -1,0 +1,78 @@
+# -*- shell-script -*-
+#
+# $HEADER$
+#
+
+#
+# Main function.  This will be invoked in the middle of the templated
+# configure script.
+#
+AC_DEFUN([MCA_CONFIGURE_STUB],[
+
+    # Additional --with flags that can be specified
+
+    AC_ARG_WITH(ptl-ib, 
+        AC_HELP_STRING([--with-ptl-ib=DIR],
+                       [Specify the installation directory of IB]))
+    AC_ARG_WITH(ptl-ib-libdir,
+        AC_HELP_STRING([--with-ptl-ib-libdir=DIR],
+                       [directory where the IB library can be found, if it is not in \$IBDIR/lib or \$IBDIR/binary/lib]))
+
+    # Add to CPPFLAGS if necessary
+
+    EXTRA_CPPFLAGS=
+    if test -n "$with_ptl_ib"; then
+        if test -d "$with_ptl_ib/include"; then
+            EXTRA_CPPFLAGS="-I$with_ptl_ib/include"
+        else
+            AC_MSG_WARN([*** Warning: cannot find $with_ptl_ib/include])
+            AC_MSG_WARN([*** Will still try to configure ib ptl anyway...])
+        fi
+        if test -d "$with_ptl_ib/wrap"; then
+            EXTRA_CPPFLAGS="-I$with_ptl_ib/wrap $EXTRA_CPPFLAGS"
+        else
+            AC_MSG_WARN([*** Warning: cannot find $with_ptl_ib/wrap])
+            AC_MSG_WARN([*** Will still try to configure ib ptl anyway...])
+        fi
+    fi
+
+    # See if we can find vapi.h
+
+    CPPFLAGS="$CPPFLAGS $EXTRA_CPPFLAGS"
+    AC_CHECK_HEADERS(vapi.h,,
+        AC_MSG_ERROR([*** Cannot find working vapi.h]))
+
+    # Add to LDFLAGS if necessary
+
+    EXTRA_LDFLAGS=
+    if test -n "$with_ptl_ib_libdir"; then
+        if test -d "$with_ptl_ib_libdir/lib"; then
+            EXTRA_LDFLAGS="-L$with_ptl_ib_libdir/lib"
+        else
+            AC_MSG_WARN([*** Warning: cannot find $with_ptl_ib_libdir/lib])
+            AC_MSG_WARN([*** Will still try to configure ib ptl anyway...])
+        fi
+    elif test -n "$with_ptl_ib"; then
+        if test -d "$with_ptl_ib/lib"; then
+            EXTRA_LDFLAGS="-L$with_ptl_ib/lib"
+        else
+            AC_MSG_WARN([*** Warning: cannot find $with_ptl_ib/lib])
+            AC_MSG_WARN([*** Will still try to configure ib ptl anyway...])
+        fi
+    fi
+
+    # Try to find libvapi
+
+    LDFLAGS="$LDFLAGS $EXTRA_LDFLAGS"
+    AC_CHECK_LIB([vapi], [VAPI_open_hca], [],
+        AC_MSG_ERROR([*** Cannot find libvapi]), [-lmtl_common -lmpga])
+    LIBS="$LIBS -lmtl_common -lmpga"
+
+    #
+    # Save extra compiler/linker flags so that they can be added in
+    # the wrapper compilers, if necessary
+    #
+
+    WRAPPER_EXTRA_LDFLAGS="$EXTRA_LDFLAGS"
+    WRAPPER_EXTRA_LIBS="-lvapi -lmtl_common -lmpga"
+])dnl
