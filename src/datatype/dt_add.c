@@ -34,10 +34,10 @@
 int ompi_ddt_add( dt_desc_t* pdtBase, const dt_desc_t* pdtAdd, 
 		  unsigned int count, long disp, long extent )
 {
-    uint32_t newLength, place_needed = 0, i, old_true_ub;
+    uint32_t newLength, place_needed = 0, i;
     short localFlags = 0;  /* no specific options yet */
     dt_elem_desc_t *pLast, *pLoop = NULL;
-    long lb, ub;
+    long lb, ub, old_true_ub;
 
     /* the extent should be always be positive. So a negative
      * value here have a special meaning ie. default extent as
