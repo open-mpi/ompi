@@ -99,7 +99,7 @@ do {                                                           \
 #define  OMPI_PTL_ELAN_ALIGNUP(x,a)  (((unsigned int)(x) + ((a)-1)) & (-(a)))
 
 /* XXX: Potentially configurable parameters */
-#define  OMPI_PTL_ELAN_NUM_QDESCS    (4)
+#define  OMPI_PTL_ELAN_NUM_QDESCS    (16)
 #define  OMPI_PTL_ELAN_NUM_PUTGET    (8)
 #define  OMPI_PTL_ELAN_ZERO_FFRAG    (0)
 

@@ -78,16 +78,11 @@ ompi_mca_ptl_elan_setup (mca_ptl_elan_state_t * ems)
         return OMPI_ERROR;
     }
 
-    /* 
-     * XXX: Leave the following later after testing of QDMA is done
-     */
     if (OMPI_SUCCESS != ompi_init_elan_putget (emp, rail_count)) {
         return OMPI_ERROR;
     }
 
-    /* 
-     * XXX: initialize STAT (including SYNC) structures.
-     */
+    /* TODO: initialize STAT (including SYNC) structures. */
     if (OMPI_SUCCESS != ompi_init_elan_stat (emp, rail_count)) {
         return OMPI_ERROR;
     }
@@ -243,13 +238,17 @@ ompi_module_elan_close_ptls (mca_ptl_elan_component_t * emp,
     int i;
     struct mca_ptl_elan_module_t *ptl; 
 
-    /* FIXME: find the ones that are still there and free them */
     for (i = 0; i < num_rails; i ++ ) {
 	ptl = emp->modules[i];
 	if (NULL == ptl) continue;
+
+	/* TODO: Deconstruct the module: ptl->super; */
 	OBJ_DESTRUCT (&(ptl->recv_frags));
 	OBJ_DESTRUCT (&(ptl->send_frags));
 	OBJ_DESTRUCT (&(ptl->pending_acks));
+
+	/* TODO: Free send/recv/comp queues */
+	/*ptl->comp;  ptl->queue; ptl->putget;*/
     }
 }
 
@@ -257,7 +256,7 @@ static void
 ompi_module_elan_close_procs (mca_ptl_elan_component_t * emp,
                               int num_rails)
 {
-    /* FIXME: find the ones that are still there and free them */
+    /* FIXME: find left procs and free them */
 }
 
 static int

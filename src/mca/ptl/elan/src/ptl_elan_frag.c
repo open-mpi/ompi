@@ -86,8 +86,6 @@ ompi_class_t mca_ptl_elan_recv_frag_t_class = {
 
 extern mca_ptl_elan_state_t mca_ptl_elan_global_state;
 
-/* FIXME: Even though we have also get implemened here, temporarily 
- * mca_ptl_elan_send_frag_t is still used as the return type */
 mca_ptl_elan_send_frag_t *
 mca_ptl_elan_alloc_desc (struct mca_ptl_base_module_t *ptl_ptr,
        	struct mca_pml_base_request_t *req, int desc_type)
@@ -165,6 +163,7 @@ mca_ptl_elan_send_desc_done (
     ptl = ((ompi_ptl_elan_qdma_desc_t *)frag->desc)->ptl;
     header = &frag->frag_base.frag_header;
 
+#if OMPI_PTL_ELAN_ENABLE_GET
     if (frag->desc->desc_type == MCA_PTL_ELAN_DESC_GET) {
 	if(ompi_atomic_fetch_and_set_int (&frag->frag_progressed, 1) == 0) {
 	    ptl->super.ptl_recv_progress(ptl, 
@@ -180,6 +179,7 @@ mca_ptl_elan_send_desc_done (
 	END_FUNC(PTL_ELAN_DEBUG_SEND);
 	return;
     }
+#endif
 
     LOG_PRINT(PTL_ELAN_DEBUG_SEND, 
 	    "req %p done frag %p desc %p desc_type %d length %d\n", 
@@ -205,8 +205,7 @@ mca_ptl_elan_send_desc_done (
 		frag, frag->desc, frag->desc->desc_type);
 
 	/* Return a frag or if not cached, or it is a follow up */ 
-	if ( /*(header->hdr_frag.hdr_frag_offset != 0) || */
-		(frag->desc->desc_status != MCA_PTL_ELAN_DESC_CACHED)){
+	if ( (frag->desc->desc_status != MCA_PTL_ELAN_DESC_CACHED)){
 	    ompi_free_list_t  *flist;
 	    if (frag->desc->desc_type == MCA_PTL_ELAN_DESC_PUT) {
 		flist = &ptl->putget->put_desc_free;
@@ -226,9 +225,7 @@ mca_ptl_elan_send_desc_done (
      }
 #else
     else  {
-
-	/* XXX: need to discuss this with TSW.
-	 * There is a little confusion here. 
+	/* XXX: 
 	 * Why the release of this send fragment is dependent 
 	 * on the receiving of an acknowledgement 
 	 * There are two drawbacks,
@@ -256,7 +253,6 @@ mca_ptl_elan_send_desc_done (
 		    (ompi_list_item_t *) frag);
     } 
 #endif
-
     END_FUNC(PTL_ELAN_DEBUG_SEND);
 }
  
