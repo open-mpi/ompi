@@ -23,10 +23,16 @@
  * If it's not the case then they should be modified in the initialization
  * function.
  */
+#if OMPI_WANT_F77_BINDINGS
 #define INIT_BASIC_FORTRAN_TYPE( TYPE, NAME, SIZE, ALIGN ) \
     { BASEOBJ_DATA, SIZE, 0/*true_lb*/, SIZE/*true_ub*/, ALIGN, \
       0/*lb*/, SIZE/*ub*/, DT_FLAG_BASIC | DT_FLAG_DATA, DT_##NAME, 1,  \
       (((long long)1)<<(DT_##NAME)), EMPTY_DATA(NAME) }
+#else
+#define INIT_BASIC_FORTRAN_TYPE( TYPE, NAME, SIZE, ALIGN ) \
+    INIT_BASIC_TYPE( TYPE, NAME )
+#endif  /* OMPI_WANT_F77_BINDINGS */
+
 ompi_datatype_t basicDatatypes[DT_MAX_PREDEFINED] = {
     INIT_BASIC_TYPE( DT_LOOP, LOOP ),
     INIT_BASIC_TYPE( DT_END_LOOP, END_LOOP ),
