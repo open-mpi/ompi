@@ -133,7 +133,7 @@ typedef long long bool;
 /* It is safe to include util/malloc.h here because a) it will only
    happen when we are building OMPI and therefore have a full OMPI
    source tree [including headers] available, and b) we guaranteed to
-   *not* to include anything else via mem/malloc.h, so we won't
+   *not* to include anything else via util/malloc.h, so we won't
    have Cascading Includes Of Death. */
 #include "util/malloc.h"
 #if defined(malloc)
