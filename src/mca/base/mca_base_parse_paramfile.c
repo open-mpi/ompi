@@ -26,9 +26,12 @@
 #include "mca/base/mca_base_parse_paramfile_lex.h"
 
 
+static const char *filename;
+
+
 static int parse_line(void);
 static void save_value(char *name, char *value);
-static void parse_error(void);
+static void parse_error(int num);
 
 
 int mca_base_parse_paramfile(const char *paramfile)
@@ -42,7 +45,9 @@ int mca_base_parse_paramfile(const char *paramfile)
         return OMPI_ERR_NOT_FOUND;
     }
 
+    filename = paramfile;
     mca_base_parse_done = false;
+    mca_base_yynewlines = 1;
     mca_base_param_init_buffer(mca_base_yyin);
     while (!mca_base_parse_done) {
         val = mca_base_yylex();
@@ -62,7 +67,7 @@ int mca_base_parse_paramfile(const char *paramfile)
 
         default:
             /* anything else is an error */
-            parse_error();
+            parse_error(1);
             break;
         }
     }
@@ -85,7 +90,7 @@ static int parse_line(void)
 
     val = mca_base_yylex();
     if (mca_base_parse_done || MCA_BASE_PARSE_EQUAL != val) {
-        parse_error();
+        parse_error(2);
         free(name);
         return OMPI_ERROR;
     }
@@ -96,7 +101,13 @@ static int parse_line(void)
     if (MCA_BASE_PARSE_SINGLE_WORD == val ||
         MCA_BASE_PARSE_VALUE == val) {
         save_value(name, mca_base_yytext);
-        return OMPI_SUCCESS;
+
+        /* Now we need to see the newline */
+
+        val = mca_base_yylex();
+        if (MCA_BASE_PARSE_NEWLINE == val) {
+            return OMPI_SUCCESS;
+        }
     }
 
     /* Did we get an EOL or EOF? */
@@ -109,7 +120,7 @@ static int parse_line(void)
 
     /* Nope -- we got something unexpected.  Bonk! */
 
-    parse_error();
+    parse_error(3);
     free(name);
     return OMPI_ERROR;
 }
@@ -141,15 +152,19 @@ static void save_value(char *name, char *value)
     fv = OBJ_NEW(mca_base_param_file_value_t);
     if (NULL != fv) {
         fv->mbpfv_param = name;
-        fv->mbpfv_value = strdup(value);
+        if (NULL != value) {
+            fv->mbpfv_value = strdup(value);
+        } else {
+            fv->mbpfv_value = NULL;
+        }
         ompi_list_append(&mca_base_param_file_values, (ompi_list_item_t*) fv);
     }
 }
 
 
-static void parse_error(void)
+static void parse_error(int num)
 {
     /* JMS need better error/warning message here */
-    ompi_output(0, "paramfile: error reading file at line %d, %s\n",
-                mca_base_yynewlines, mca_base_yytext);
+    ompi_output(0, "paramfile: error %d reading file %s at line %d:\n  %s\n",
+                num, filename, mca_base_yynewlines, mca_base_yytext);
 }
