@@ -34,6 +34,10 @@ my $fail_subject = "=== BUILD FAILURE (\@version@) ===";
 # max number of snapshots to keep downloaded
 my $max_snapshots = 3;
 
+# max number of old build roots to maintain (note that build roots are
+# only left if a) you use --leave-install or b) a build fails)
+my $max_build_roots = 3;
+
 ############################################################################
 # Shouldn't need to change below this line
 ############################################################################
@@ -55,6 +59,9 @@ my $debug_arg;
 my $file_arg;
 my $leave_install_arg;
 my $help_arg;
+my $force_arg;
+
+my $last_test_version_name = "last_test_version.txt";
 
 #--------------------------------------------------------------------------
 
@@ -296,7 +303,7 @@ sub try_build {
         }
     }
     chdir("openmpi-$version");
-
+    
     # configure it
     my $config_command = "./configure";
     if ($vpath_mode) {
@@ -432,6 +439,7 @@ my $ok = Getopt::Long::GetOptions("url|u=s" => \$url_arg,
                                   "debug|d" => \$debug_arg,
                                   "leave-install|l" => \$leave_install_arg,
                                   "help|h" => \$help_arg,
+                                  "force" => \$force_arg,
                                   );
 
 if (!$ok || $help_arg) {
@@ -530,13 +538,30 @@ foreach my $dir (qw(downloads)) {
 # if we were given a URL base, get the latest snapshot version number
 if ($url_arg) {
     chdir("downloads");
-    unlink($latest_name);
+
+    my $old_version;
+    $old_version = `cat $last_test_version_name`
+        if (-f $latest_name);
+    chomp($old_version);
+
     do_command(1, "$download $url_arg/$latest_name");
     test_abort("Could not download latest snapshot number -- aborting")
         if (! -f $latest_name);
     $version = `cat $latest_name`;
     chomp($version);
     push(@email_output, "Snapshot: $version\n\n");
+
+    # If the version hasn't changed since the last time we tested,
+    # then don't bother testing again.
+
+    if ($version eq $old_version) {
+        if ($debug || $force_arg) {
+            print "Version available on web site is the same as the last version we tested\nOnly testing again because we're in --debug or --force mode\n"
+                if ($debug);
+        } else {
+            exit(0);
+        }
+    }
     
     # see if we need to download the tarball
     $tarball_name = "openmpi-$version.tar.gz";
@@ -664,16 +689,42 @@ if (! $config_arg || ! -f $config_arg) {
     close CONF;
 }
 
+# remove this root if we're not leaving the install root
+chdir($scratch_root_arg);
+system("rm -rf build-$version")
+    if (!$leave_install_arg);
+
+my $dir = "$scratch_root_arg";
+opendir(ROOT, $dir);
+my @roots = sort(grep { /^build.+[0-9]$/ && -d "$dir/$_" } readdir(ROOT));
+
+my $i = $#roots;
+my $j = 0;
+while ($i >= $max_build_roots) {
+    print "Removing directory $roots[$j]\n" if ($debug);
+    system("rm -rf $roots[$j]");
+    ++$j;
+    --$i;
+}
+
 # trim the downloads dir to $max_snapshots
 my $dir = "$scratch_root_arg/downloads";
 opendir(DOWNLOADS, $dir);
-my @tarballs = sort(grep { /^openmpi.+gz\$/ && -f "$dir/$_" } readdir(DOWNLOADS));
+my @tarballs = sort(grep { /^openmpi.+gz$/ && -f "$dir/$_" } readdir(DOWNLOADS));
 closedir(DOWNLOADS);
-my $i = $#tarballs;
-while ($i > $max_snapshots) {
-    unlink($tarballs[$i]);
-    ++$i;
+$i = $#tarballs;
+$j = 0;
+while ($i >= $max_snapshots) {
+    print "Unlinking $tarballs[$j]\n" if ($debug);
+    unlink("$dir/$tarballs[$j]");
+    ++$j;
+    --$i;
 }
+
+# save the version that we just tested
+open LAST, ">$scratch_root_arg/downloads/$last_test_version_name";
+print LAST "$version\n";
+close LAST;
 
 # send success mail
 my $email_subject;
