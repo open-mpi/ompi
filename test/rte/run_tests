@@ -1,0 +1,34 @@
+#! /bin/csh -f
+#  Name
+#  ====
+#  run script for rte tests
+
+# Arguements
+# ==========
+# 
+# test_list  =  no args runs all tests
+#              or
+#               session runs ompi_session tests
+
+# Usage
+#
+# =====
+# To invoke this script, enter either
+#     run_tests 
+# with no arguments to run all tests, or
+#     run_tests <test_name>
+
+umask 007
+
+if ("x$1" == "x") then
+  ./openmpi
+else if ("$1" == "session") then
+  ./openmpi
+else
+  echo "correct use: "
+  echo "    run_tests (to run all rte tests)"
+  echo "or  run_tests <session>"
+  exit -1
+endif
+
+
