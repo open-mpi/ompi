@@ -818,7 +818,7 @@ void mca_oob_tcp_peer_dequeue_msg(mca_oob_tcp_peer_t* peer, mca_oob_tcp_msg_t* m
 
     for( item =  ompi_list_get_first(&peer->peer_send_queue);
          item != ompi_list_get_end(&peer->peer_send_queue);
-         item != ompi_list_get_next(item)) {
+         item = ompi_list_get_next(item)) {
         if(item == (ompi_list_item_t*)msg) {
             ompi_list_remove_item(&peer->peer_send_queue, item);
             break;
