@@ -1,7 +1,7 @@
 /*
  * $HEADER$
  *
- * $Id: argv.c,v 1.1 2004/01/07 08:03:19 jsquyres Exp $
+ * $Id: argv.c,v 1.2 2004/01/07 08:22:37 brbarret Exp $
  */
 
 #include <stdlib.h>
@@ -228,8 +228,8 @@ lam_argv_join(char **argv, int delimiter)
   char **p;
   char *pp;
   char *str;
-  uint str_len = 0;
-  uint i;
+  size_t str_len = 0;
+  size_t i;
 
   /* Find the total string length in argv including delimiters.  The
      last delimiter is replaced by the NULL character. */
