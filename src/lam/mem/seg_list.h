@@ -9,7 +9,7 @@
 #include "lam/lfc/list.h"
 #include "lam/threads/mutex.h"
 
-typedef struct lam_seg_list
+struct lam_seg_list_t
 {
     lam_object_t    super;
     size_t          sgl_min_bytes_pushed;
@@ -19,9 +19,10 @@ typedef struct lam_seg_list
     int             sgl_consec_fail;
     lam_mutex_t     sgl_lock;
     lam_list_t      sgl_list;
-} lam_seg_list_t;
+};
+typedef struct lam_seg_list_t lam_seg_list_t;
 
-extern lam_class_info_t     seg_list_cls;
+extern lam_class_info_t     lam_seg_list_cls;
 
 void lam_sgl_init(lam_seg_list_t *slist);
 void lam_sgl_destroy(lam_seg_list_t *slist);
@@ -41,7 +42,7 @@ void lam_sgl_append_elt_chunk(
 #define lam_sgl_lock_list(slist)  lam_mtx_trylock(&slist->sgl_lock)
 #define lam_sgl_unlock_list(slist) lam_mtx_unlock(&slist->sgl_lock)
 
-static bool lam_sgl_is_locked(lam_seg_list_t *slist);
+static inline bool lam_sgl_is_locked(lam_seg_list_t *slist);
 static inline bool lam_sgl_is_locked(lam_seg_list_t *slist)
 {
     /* returns 1 if list is currently locked, otherwise 0. */
