@@ -10,15 +10,18 @@
 #include "lam/types.h"
 #include "lam/lfc/object.h"
 
-typedef struct lam_fhnode
+struct lam_fhnode_t
 {
     lam_ptr_t       fhn_key;
     void           *fhn_value;
-    char            fhn_is_taken;   /* 1->node is occupied, 0-> not occupied */
-} lam_fhnode_t;
+    bool            fhn_using_key_ptr;   /* true-> need to free key when removing item. */
+    bool            fhn_is_taken;       /* true->node is occupied, false-> not occupied */
+};
+
+typedef struct lam_fhnode_t lam_fhnode_t;
 
 /* Hash table that only allows integer or string keys. */
-typedef struct lam_fast_hash
+struct lam_fast_hash_t
 {
     lam_object_t        super;
     lam_fhnode_t      **fh_nodes;     /* each item is an array of ints */
@@ -26,7 +29,9 @@ typedef struct lam_fast_hash
     uint32_t           *fh_bucket_cnt;     /* size of each bucket array */
     uint32_t            fh_mask;        /* used to compute the hash value */
     uint32_t            fh_size;
-} lam_fast_hash_t;
+};
+
+typedef struct lam_fast_hash_t lam_fast_hash_t;
 
 extern lam_class_info_t lam_fast_hash_cls;
 
@@ -35,12 +40,17 @@ extern lam_class_info_t lam_fast_hash_cls;
  *      Fast hash table interface
  *
  */
-
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
+    
 void lam_fh_init(lam_fast_hash_t *htbl);
 void lam_fh_destroy(lam_fast_hash_t *htbl);
 
-/* initialize hash table with fixed size 2 ^ (power2_size) */
-int lam_fh_init_with(lam_fast_hash_t *htbl, uint32_t power2_size);
+/* resize hash table to size */
+int lam_fh_resize(lam_fast_hash_t *htbl, uint32_t size);
+
+void lam_fh_remove_all(lam_fast_hash_t *htbl);
 
 void *lam_fh_get_value_for_ikey(lam_fast_hash_t *htbl, uint32_t key);
 void  lam_fh_remove_value_for_ikey(lam_fast_hash_t *htbl, uint32_t key);
@@ -50,15 +60,12 @@ void *lam_fh_get_value_for_lkey(lam_fast_hash_t *htbl, uint64_t key);
 void  lam_fh_remove_value_for_lkey(lam_fast_hash_t *htbl, uint64_t key);
 int   lam_fh_set_value_for_lkey(lam_fast_hash_t *htbl, void *val, uint64_t key);
 
-#if 0
-/*
- * TSW - This is broken - implementation tried to copy length of string
- * into space allocated for a pointer
- */
 void *lam_fh_get_value_for_skey(lam_fast_hash_t *htbl, const char *key);
 void  lam_fh_remove_value_for_skey(lam_fast_hash_t *htbl, const char *key);
 int   lam_fh_set_value_for_skey(lam_fast_hash_t *htbl, void *val, const char *key);
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
 #endif
 
 
