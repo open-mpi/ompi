@@ -9,11 +9,13 @@ AM_CPPFLAGS		= -DLAM_PROFILING_DEFINES=1
 
 noinst_LTLIBRARIES	= libmpi_f77_profile.la
 
+noinst_HEADERS		= defines.h
+
 nodist_libmpi_f77_profile_la_SOURCES= \
 			pcomm_get_name_f.c \
 			pcomm_set_name_f.c \
-			pdatatype_get_name_f.c \
-			pdatatype_set_name_f.c
+			pinit_f.c \
+			pfinalize_f.c
 
 # Sym link in the sources from the real MPI directory
 

@@ -22,9 +22,10 @@ DIST_SUBDIRS		= profile
 noinst_LTLIBRARIES	= libmpi_c.la
 
 libmpi_c_la_SOURCES	= \
+			bindings.h \
+			bindings_profiling.h \
 			comm_get_name.c \
 			comm_set_name.c \
-			datatype_get_name.c \
-			datatype_set_name.c \
-			profiling.h
+			init.c \
+			finalize.c \
 libmpi_c_la_LIBADD	= $(profile_lib)
