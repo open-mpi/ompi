@@ -97,7 +97,7 @@ int mca_ptl_tcp_module_open(void)
     mca_ptl_tcp_module.tcp_num_ptls = 0;
 
     /* initialize objects */
-    lam_mutex_init(&mca_ptl_tcp_module.tcp_lock);
+    OBJ_CONSTRUCT(&mca_ptl_tcp_module.tcp_lock, lam_mutex_t);
     OBJ_CONSTRUCT(&mca_ptl_tcp_module.tcp_procs, lam_list_t);
     OBJ_CONSTRUCT(&mca_ptl_tcp_module.tcp_acks, lam_list_t);
     OBJ_CONSTRUCT(&mca_ptl_tcp_module.tcp_send_requests, lam_free_list_t);
@@ -139,7 +139,7 @@ int mca_ptl_tcp_module_close(void)
     OBJ_DESTRUCT(&mca_ptl_tcp_module.tcp_send_requests);
     OBJ_DESTRUCT(&mca_ptl_tcp_module.tcp_send_frags);
     OBJ_DESTRUCT(&mca_ptl_tcp_module.tcp_recv_frags);
-    lam_mutex_destroy(&mca_ptl_tcp_module.tcp_lock);
+    OBJ_DESTRUCT(&mca_ptl_tcp_module.tcp_lock);
     return LAM_SUCCESS;
 }
 
@@ -256,16 +256,15 @@ static int mca_ptl_tcp_module_create_listen(void)
 static int mca_ptl_tcp_module_exchange(void)
 {
      size_t i;
-     mca_ptl_tcp_addr_t *addrs = malloc
-         (mca_ptl_tcp_module.tcp_num_ptls * sizeof(mca_ptl_tcp_addr_t));
+     size_t size = mca_ptl_tcp_module.tcp_num_ptls * sizeof(mca_ptl_tcp_addr_t);
+     mca_ptl_tcp_addr_t *addrs = malloc(size);
      for(i=0; i<mca_ptl_tcp_module.tcp_num_ptls; i++) {
          mca_ptl_tcp_t* ptl = mca_ptl_tcp_module.tcp_ptls[i];
          addrs[i].addr_inet = ptl->ptl_ifaddr.sin_addr;
          addrs[i].addr_port = mca_ptl_tcp_module.tcp_listen;
          addrs[i].addr_inuse = 0;
      }
-     int rc =  mca_base_modex_send(&mca_ptl_tcp_module.super.ptlm_version,
-         addrs, sizeof(mca_ptl_tcp_t),mca_ptl_tcp_module.tcp_num_ptls);
+     int rc =  mca_base_modex_send(&mca_ptl_tcp_module.super.ptlm_version, addrs, size);
      free(addrs);
      return rc;
 }

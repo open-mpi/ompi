@@ -67,8 +67,10 @@ extern "C" {
 
   /* mca_base_module_compare.c */
 
-  int mca_base_module_compare(mca_base_module_priority_list_item_t *a,
+  int mca_base_module_compare_priority(mca_base_module_priority_list_item_t *a,
                               mca_base_module_priority_list_item_t *b);
+  int mca_base_module_compare(mca_base_module_t *a,
+                              mca_base_module_t *b);
 
   /* mca_base_module_find.c */
 

@@ -21,13 +21,12 @@ static void lam_hash_table_construct(lam_hash_table_t* ht);
 static void lam_hash_table_destruct(lam_hash_table_t* ht);
 
 
-lam_class_t lam_hash_table_t_class = {
-    "lam_hash_table_t", 
-    OBJ_CLASS(lam_object_t),
-    (lam_construct_t)lam_hash_table_construct,
-    (lam_destruct_t)lam_hash_table_destruct
-};
-
+OBJ_CLASS_INSTANCE(
+    lam_hash_table_t, 
+    lam_object_t,
+    lam_hash_table_construct,
+    lam_hash_table_destruct
+);
 
 
 static void lam_hash_table_construct(lam_hash_table_t* ht)
@@ -65,8 +64,10 @@ int lam_hash_table_init(lam_hash_table_t* ht, size_t table_size)
     ht->ht_table = realloc(ht->ht_table, power2 * sizeof(lam_list_t));
     if(NULL == ht->ht_table)
         return LAM_ERR_OUT_OF_RESOURCE;
-    for(i=ht->ht_table_size; i<power2; i++)
-        OBJ_CONSTRUCT(ht->ht_table+i, lam_list_t);
+    for(i=ht->ht_table_size; i<power2; i++) {
+        lam_list_t* list = ht->ht_table+i;
+        OBJ_CONSTRUCT(list, lam_list_t);
+    }
     ht->ht_table_size = power2;
     return LAM_SUCCESS;
 }

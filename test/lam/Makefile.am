@@ -5,4 +5,8 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-SUBDIRS		= lfc
+SUBDIRS	= \
+	lfc \
+	threads \
+	util
+

@@ -27,9 +27,9 @@ lam_class_t lam_pointer_array_t_class = {
 /**
  * lam_pointer_array constructor
  */
-void lam_pointer_array_construct(lam_pointer_array_t *array){
-
-    lam_mutex_init(&array->lock);
+void lam_pointer_array_construct(lam_pointer_array_t *array)
+{
+    OBJ_CONSTRUCT(&array->lock, lam_mutex_t);
     array->lowest_free = 0;
     array->number_free = 0;
     array->size = 0;
@@ -45,9 +45,7 @@ void lam_pointer_array_destruct(lam_pointer_array_t *array){
     if( NULL != array->addr)
         free(array->addr);
 
-    lam_mutex_destroy(&array->lock);
-
-    /* return */
+    OBJ_DESTRUCT(&array->lock);
     return;
 }
 

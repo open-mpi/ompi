@@ -1,0 +1,6 @@
+Makefile
+Makefile.in
+*.lo
+.deps
+.libs
+lam_argv

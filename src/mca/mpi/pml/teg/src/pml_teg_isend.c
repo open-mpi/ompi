@@ -73,3 +73,35 @@ int mca_pml_teg_isend(
     return LAM_SUCCESS;
 }
 
+
+int mca_pml_teg_send(
+    void *buf,
+    size_t size,
+    lam_datatype_t *datatype,
+    int dst,
+    int tag,
+    mca_pml_base_send_mode_t sendmode,
+    lam_communicator_t* comm)
+{
+    int rc;
+    mca_ptl_base_send_request_t* sendreq = mca_pml_teg_send_request_alloc(comm,dst,&rc);
+    if(rc != LAM_SUCCESS)
+        return rc;
+
+    mca_ptl_base_send_request_reinit(
+        sendreq,
+        buf,
+        size,
+        datatype,
+        dst,
+        tag,
+        comm,
+        sendmode,
+        false
+        );
+         
+    if((rc = mca_pml_teg_send_request_start(sendreq)) != LAM_SUCCESS)
+        return rc;
+    return mca_pml_teg_wait(&sendreq->super, NULL);
+}
+

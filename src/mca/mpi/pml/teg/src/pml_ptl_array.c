@@ -6,15 +6,7 @@
 #include "pml_ptl_array.h"
 
 
-lam_class_t mca_pml_teg_array_t_class = {
-    "mca_ptl_array_t",
-    OBJ_CLASS(lam_object_t),
-    (lam_construct_t) mca_ptl_array_construct,
-    (lam_destruct_t) mca_ptl_array_destruct
-};
-                                                                                                                             
-
-void mca_ptl_array_construct(mca_ptl_array_t* array)
+static void mca_ptl_array_construct(mca_ptl_array_t* array)
 {
     array->ptl_procs = 0;
     array->ptl_size = 0;
@@ -23,12 +15,18 @@ void mca_ptl_array_construct(mca_ptl_array_t* array)
 }
 
 
-void mca_ptl_array_destruct(mca_ptl_array_t* array)
+static void mca_ptl_array_destruct(mca_ptl_array_t* array)
 {
     if(array->ptl_procs != 0)
         free(array->ptl_procs);
 }
 
+OBJ_CLASS_INSTANCE(
+    mca_pml_teg_ptl_array_t,
+    lam_object_t,
+    mca_ptl_array_construct,
+    mca_ptl_array_destruct
+);
 
 int mca_ptl_array_reserve(mca_ptl_array_t* array, size_t size)
 {
@@ -36,16 +34,12 @@ int mca_ptl_array_reserve(mca_ptl_array_t* array, size_t size)
     if(array->ptl_reserve >= size)
         return LAM_SUCCESS;
     
-    procs = malloc(sizeof(mca_ptl_array_t)*size);
-    if(array == 0)
+    procs = realloc(array->ptl_procs, sizeof(mca_ptl_proc_t)*size);
+    if(NULL == procs)
         return LAM_ERR_OUT_OF_RESOURCE;
-    if(array->ptl_size) {
-         memcpy(procs, array->ptl_procs, array->ptl_size * sizeof(mca_ptl_proc_t));
-         free(array->ptl_procs);
-    }
     array->ptl_procs = procs;
     array->ptl_reserve = size;
-    memset(array->ptl_procs+(size-array->ptl_size), 0, (size-array->ptl_size)*sizeof(mca_ptl_proc_t));
+    memset(array->ptl_procs+array->ptl_size, 0, (size-array->ptl_size)*sizeof(mca_ptl_proc_t));
     return LAM_SUCCESS;
 }
 

@@ -57,18 +57,6 @@ extern "C" {
    * this buffer can therefore open a socket to the indicated IP
    * address and TCP port.
    *
-   * The total number of bytes sent is (size * count).  The count
-   * argument is currently superfulous, since corresponding modules,
-   * by definition, should be able to deduce how many instances of
-   * meta data are in the received buffer either by dividing the total
-   * bytes received by the size of the module's meta data struct, or
-   * by analyzing the content in the received buffer (if it is
-   * self-describing data).  It is included in the interface to
-   * provide flexability for modules that may require sending
-   * multiple, logically separate instances of meta data (e.g., a PTL
-   * module type that sends one meta data struct for each of the three
-   * TCP NICs on its node).
-   *
    * During the selection process, the MCA framework will effectively
    * perform an "allgather" operation of all modex buffers; every
    * buffer will be available to every peer process (see
@@ -84,7 +72,7 @@ extern "C" {
    * regardless of pointer sizes or endian bias.
    */
   int mca_base_modex_send(mca_base_module_t *source_module, 
-                          void *buffer, size_t size, size_t count); 
+                          const void *buffer, size_t size);
 
   /**
    * Receive a module-specific buffer from a corresponding MCA module
@@ -121,7 +109,12 @@ extern "C" {
    */
   int mca_base_modex_recv(mca_base_module_t *dest_module,
                           lam_proc_t *source_proc,
-                          void **buffer, size_t *size, size_t *count); 
+                          void **buffer, size_t *size);
+
+  /*
+   *
+   */
+  int mca_base_modex_exchange(void);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

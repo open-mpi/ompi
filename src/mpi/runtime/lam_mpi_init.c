@@ -41,6 +41,8 @@ int lam_mpi_init(int argc, char **argv, int requested, int *provided)
     int ret, param, value;
     bool allow_multi_user_threads;
     bool have_hidden_threads;
+    lam_proc_t** procs;
+    size_t nprocs;
 
     /* Become a LAM process */
 
@@ -58,8 +60,12 @@ int lam_mpi_init(int argc, char **argv, int requested, int *provided)
     }
 
     /* Join the run-time environment */
-
     if (LAM_SUCCESS != (ret = lam_rte_init(&allow_multi_user_threads, &have_hidden_threads))) {
+        return ret;
+    }
+
+    /* initialize lam procs */
+    if (LAM_SUCCESS != (ret = lam_proc_init())) {
         return ret;
     }
 
@@ -90,11 +96,6 @@ int lam_mpi_init(int argc, char **argv, int requested, int *provided)
         return ret;
     }
 
-     /* initialize lam procs */
-     if (LAM_SUCCESS != (ret = lam_proc_init())) {
-         return ret;
-     }
-
      /* initialize groups  */
      if (LAM_SUCCESS != (ret = lam_group_init())) {
          return ret;
@@ -113,8 +114,18 @@ int lam_mpi_init(int argc, char **argv, int requested, int *provided)
      lam_mpi_param_check = (bool) value;
 
      /* do module exchange */
+     if (LAM_SUCCESS != (ret = mca_base_modex_exchange())) {
+         return ret;
+     }
 
      /* add all lam_proc_t's to PML */
+     if (NULL == (procs = lam_proc_world(&nprocs)))
+         return LAM_ERROR;
+     if (LAM_SUCCESS != (ret = mca_pml.pml_add_procs(procs, nprocs))) {
+         free(procs);
+         return ret;
+     }
+     free(procs);
 
      /* save the resulting thread levels */
 

@@ -22,8 +22,9 @@
  * may help the gentle reader to consider this an inverse comparison.
  * :-)
  */
-int mca_base_module_compare(mca_base_module_priority_list_item_t *a,  
-                            mca_base_module_priority_list_item_t *b)
+int mca_base_module_compare_priority(
+  mca_base_module_priority_list_item_t *a,  
+  mca_base_module_priority_list_item_t *b)
 {
   int val;
 
@@ -33,13 +34,14 @@ int mca_base_module_compare(mca_base_module_priority_list_item_t *a,
     return -1;
   else if (a->mpli_priority < b->mpli_priority)
     return 1;
-  else {
-    mca_base_module_t *aa = a->mpli_module;
-    mca_base_module_t *bb = b->mpli_module;
+  else 
+    return mca_base_module_compare(a->mpli_module, b->mpli_module);
+}
 
+int mca_base_module_compare(mca_base_module_t* aa, mca_base_module_t* bb)
+{
     /* The priorities were equal, so compare the names */
-
-    val = strncmp(aa->mca_module_name, bb->mca_module_name,
+    int val = strncmp(aa->mca_module_name, bb->mca_module_name,
                   MCA_BASE_MAX_MODULE_NAME_LEN);
     if (val != 0)
       return -val;
@@ -60,9 +62,6 @@ int mca_base_module_compare(mca_base_module_priority_list_item_t *a,
       return -1;
     else if (aa->mca_module_release_version < bb->mca_module_release_version)
       return 1;
-  }
-
-  /* They're equal */
-
-  return 0;
+    return 0;
 }
+

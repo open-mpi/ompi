@@ -8,6 +8,7 @@
 #include "mpi.h"
 #include "mpi/communicator/communicator.h"
 #include "mpi/group/group.h"
+#include "mca/mpi/pml/pml.h"
 
 
 /*
@@ -65,14 +66,15 @@ int lam_comm_init(void)
     OBJ_CONSTRUCT(&lam_mpi_comm_world, lam_communicator_t);
     group = OBJ_NEW(lam_group_t);
     group->grp_proc_pointers = lam_proc_world(&size);
-    group->grp_my_rank = 0;
+    group->grp_my_rank = lam_proc_local()->proc_vpid ;
     group->grp_proc_count = size;
     OBJ_RETAIN(group); /* bump reference count for remote reference */
 
-    lam_mpi_comm_self.c_contextid = 0;
-    lam_mpi_comm_self.c_my_rank = group->grp_my_rank;
+    lam_mpi_comm_world.c_contextid = 0;
+    lam_mpi_comm_world.c_my_rank = group->grp_my_rank;
     lam_mpi_comm_world.c_local_group = group;
     lam_mpi_comm_world.c_remote_group = group;
+    mca_pml.pml_add_comm(&lam_mpi_comm_world);
 
     /* Setup MPI_COMM_SELF */
     OBJ_CONSTRUCT(&lam_mpi_comm_self, lam_communicator_t);
@@ -80,13 +82,13 @@ int lam_comm_init(void)
     group->grp_proc_pointers = lam_proc_self(&size);
     group->grp_my_rank = 0;
     group->grp_proc_count = size;
+    OBJ_RETAIN(group); /* bump reference count for remote reference */
 
-    OBJ_RETAIN(group);
     lam_mpi_comm_self.c_contextid = 1;
     lam_mpi_comm_self.c_my_rank = group->grp_my_rank;
     lam_mpi_comm_self.c_local_group = group;
     lam_mpi_comm_self.c_remote_group = group;
-
+    mca_pml.pml_add_comm(&lam_mpi_comm_self);
     return LAM_SUCCESS;
 }
 

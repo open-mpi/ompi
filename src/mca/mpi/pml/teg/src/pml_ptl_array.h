@@ -8,7 +8,7 @@
 #include "lam/util/output.h"
 #include "mca/mpi/ptl/ptl.h"
 
-extern lam_class_t mca_ptl_array_t_class;
+extern lam_class_t mca_pml_teg_ptl_array_t_class;
 
 struct mca_ptl_proc_t {
     double ptl_weight;               /* PTL weight for scheduling */
@@ -25,11 +25,10 @@ struct mca_ptl_array_t {
     size_t           ptl_index;   /* last used index*/
 };
 typedef struct mca_ptl_array_t mca_ptl_array_t;
+typedef struct mca_ptl_array_t mca_pml_teg_ptl_array_t;
 
 
-void mca_ptl_array_construct(mca_ptl_array_t*);
-void mca_ptl_array_destruct(mca_ptl_array_t*);
-int  mca_ptl_array_reserve(mca_ptl_array_t*, size_t);
+int mca_ptl_array_reserve(mca_ptl_array_t*, size_t);
 
 static inline size_t mca_ptl_array_get_size(mca_ptl_array_t* array)
 {

@@ -62,3 +62,35 @@ int mca_pml_teg_irecv(
     return LAM_SUCCESS;
 }
 
+
+int mca_pml_teg_recv(
+    void *addr,
+    size_t length,
+    struct lam_datatype_t *datatype,
+    int src,
+    int tag,
+    struct lam_communicator_t* comm,
+    lam_status_public_t* status)
+{
+    int rc;
+    mca_ptl_base_recv_request_t *recvreq = mca_pml_teg_recv_request_alloc(&rc);
+    if(NULL == recvreq)
+        return rc;
+    
+    mca_ptl_base_recv_request_reinit(
+        recvreq,
+        addr,
+        length,
+        datatype,
+        src,
+        tag,
+        comm,
+        false);
+
+    if((rc = mca_pml_teg_recv_request_start(recvreq)) != LAM_SUCCESS) {
+        mca_pml_teg_recv_request_return(recvreq);
+        return rc;
+    }
+    return mca_pml_teg_wait((lam_request_t*)recvreq, status);
+}
+

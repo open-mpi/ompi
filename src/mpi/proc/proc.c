@@ -25,7 +25,7 @@ void lam_proc_construct(lam_proc_t* proc)
     static int init = 0;
     if(fetchNset(&init,1) == 0) {
         OBJ_CONSTRUCT(&lam_proc_list, lam_list_t);
-        lam_mutex_init(&lam_proc_lock);
+        OBJ_CONSTRUCT(&lam_proc_lock, lam_mutex_t);
     }
 
     proc->proc_job = NULL;
@@ -68,7 +68,6 @@ int lam_proc_init(void)
         lam_output(0, "lam_proc_init: pcm_proc_get_peers failed with errno=%d", rc);
         return rc;
     }
-    lam_output(0, "lam_proc_init: pcm_proc_get_peers returned %d peers", nprocs);
 
     for(i=0; i<nprocs; i++) {
         lam_job_handle_t job = procs[i].job_handle;
@@ -76,8 +75,10 @@ int lam_proc_init(void)
         lam_proc_t *proc = OBJ_NEW(lam_proc_t);
         proc->proc_job = strdup(job);
         proc->proc_vpid = vpid;
-        if(proc->proc_vpid == vpid && strcmp(proc->proc_job, job) == 0)
+        if(proc->proc_vpid == local->vpid && strcmp(proc->proc_job, local->job_handle) == 0) {
             lam_proc_local_proc = proc;
+            lam_output(0, "myrank=%d\n", local->vpid);
+        }
     }
     free(procs);
     return LAM_SUCCESS;
