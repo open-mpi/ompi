@@ -86,7 +86,7 @@ int MPI_Comm_connect(char *port_name, MPI_Info info, int root,
      * structure. 
      */ 
     if ( rank == root ) { 
-	tmp_port = ompi_parse_port (port_name, &tag, NULL);
+	tmp_port = ompi_parse_port (port_name, &tag);
 	port_proc_name = ompi_name_server.convert_string_to_process_name(tmp_port);
 	if ( NULL == port_proc_name ) {
 	    *newcomm = MPI_COMM_NULL;
