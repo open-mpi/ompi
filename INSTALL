@@ -1,6 +1,6 @@
 Execute the following instructions to install the Open MPI system from within the directory at the top of the tree:
 
-./autogen.sh
+./autogen.sh (if this fails read the HACKING file)
 ./configure --prefix=/where/to/install
 make install
 
