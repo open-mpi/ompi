@@ -24,6 +24,7 @@
 
 #include "support.h"
 
+#include "runtime/runtime.h"
 #include "threads/thread.h"
 #include "util/proc_info.h"
 #include "util/sys_info.h"
@@ -44,6 +45,22 @@ static FILE *test_out=NULL;
 /* function for exercising the registry */
 void thread_fn(ompi_object_t *object);
 
+#if !OMPI_HAVE_THREAD_SUPPORT
+
+/* If we don't have thread support, there's no point in running this
+   test */
+
+int main(int argc, char *argv[])
+{
+    printf("OMPI was compiled without thread support -- skipping this test\n");
+    return 77;
+}
+
+#else
+
+/* Only have the body of this test if we have thread support */
+
+
 int main(int argc, char **argv)
 {
     int i, rc, num_threads;
@@ -52,7 +69,7 @@ int main(int argc, char **argv)
     /* protect against sizeof mismatches */
     if (sizeof(i) > sizeof (void*)) {
         fprintf(stderr, "cannot run this test on this machine\n");
-        exit 77;
+        exit(77);
     }
     
     test_init("test_gpr_threads");
@@ -100,7 +117,7 @@ int main(int argc, char **argv)
     for (i=0; i < num_threads; i++) {
         if (OMPI_SUCCESS != (rc = ompi_thread_start(threads[i]))) {
             ORTE_ERROR_LOG(rc);
-            exit rc;
+            exit(rc);
         }
     }
 
@@ -117,3 +134,5 @@ int main(int argc, char **argv)
 void thread_fn(ompi_object_t *obj)
 {
 }
+
+#endif /* OMPI_HAVE_THREAD_SUPPORT */
