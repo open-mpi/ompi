@@ -118,6 +118,12 @@ int MPI_Scatterv(void *sendbuf, int *sendcounts, int *displs,
         }
     }
 
+    /* If we have nothing to do, just return */
+
+    if (0 == recvcount && ompi_comm_rank(comm) != root) {
+        return MPI_SUCCESS;
+    }
+
     /* Invoke the coll component to perform the back-end operation */
 	
     err = comm->c_coll.coll_scatterv(sendbuf, sendcounts, displs, sendtype, 

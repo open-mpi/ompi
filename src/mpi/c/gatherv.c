@@ -114,6 +114,12 @@ int MPI_Gatherv(void *sendbuf, int sendcount, MPI_Datatype sendtype,
         }
     }
 
+    /* If we have nothing to do, just return */
+
+    if (0 == sendcount && ompi_comm_rank(comm) != root) {
+        return MPI_SUCCESS;
+    }
+
     /* Invoke the coll component to perform the back-end operation */
 	
     err = comm->c_coll.coll_gatherv(sendbuf, sendcount, sendtype, recvbuf,

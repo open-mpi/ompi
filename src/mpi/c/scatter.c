@@ -90,6 +90,13 @@ int MPI_Scatter(void *sendbuf, int sendcount, MPI_Datatype sendtype,
         }
     }
 
+    /* If we have nothing to receive, return success (everyone must
+       have given the same recvcount) */
+
+    if (0 == recvcount) {
+        return MPI_SUCCESS;
+    }
+
     /* Invoke the coll component to perform the back-end operation */
 	
     err = comm->c_coll.coll_scatter(sendbuf, sendcount, sendtype, recvbuf,
