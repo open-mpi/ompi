@@ -35,8 +35,7 @@ int ompi_mpi_register_params(void)
     /* Whether we want MPI API function parameter checking or not */
     
     param_check_param = 
-        mca_base_param_register_int("base", "mpi", "param_check", 
-                                    "mpi_param_check",
+        mca_base_param_register_int("mpi", NULL, "param_check", NULL,
                                     (int) ompi_mpi_param_check);
     mca_base_param_lookup_int(param_check_param, &value);
     ompi_mpi_param_check = (bool) value;
@@ -55,8 +54,7 @@ int ompi_mpi_register_params(void)
     /* Whether or not to show MPI handle leaks */
     
     show_leaks_param = 
-        mca_base_param_register_int("base", "mpi", "show_handle_leaks",
-                                    "mpi_show_handle_leaks",
+        mca_base_param_register_int("mpi", NULL, "show_handle_leaks", NULL,
                                     (int) ompi_debug_show_handle_leaks);
     mca_base_param_lookup_int(show_leaks_param, &value);
     ompi_debug_show_handle_leaks = (bool) value;
@@ -66,8 +64,7 @@ int ompi_mpi_register_params(void)
        to free the handles. */
     
     no_free_param =
-        mca_base_param_register_int("base", "mpi", "no_free_handles", 
-                                    "mpi_no_free_handles",
+        mca_base_param_register_int("mpi", NULL, "no_free_handles", NULL,
                                     (int) ompi_debug_no_free_handles);
     mca_base_param_lookup_int(no_free_param, &value);
     ompi_debug_no_free_handles = (bool) value;
