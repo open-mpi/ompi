@@ -24,10 +24,12 @@ int MPI_Group_translate_ranks(MPI_Group group1, int n_ranks, int *ranks1,
 
     /* check for errors */
     if( MPI_PARAM_CHECK ) {
+        if( (MPI_GROUP_NULL == group1) || (MPI_GROUP_NULL == group2 ) ) {
+            return MPI_ERR_GROUP;
+        }
         if( n_ranks > group1_pointer->grp_proc_count ){
             return MPI_ERR_GROUP;
         }
-    
     }
 
     /* loop over all ranks */

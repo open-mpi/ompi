@@ -13,6 +13,15 @@
 #endif
 
 int MPI_Group_rank(MPI_Group group, int *rank) {
+
+    /* error checking */
+    if( MPI_PARAM_CHECK ) {
+        if( MPI_GROUP_NULL == group ){
+            return MPI_ERR_GROUP;
+        }
+    }
+
     *rank=lam_group_rank((lam_group_t *)group);
+
     return MPI_SUCCESS;
 }

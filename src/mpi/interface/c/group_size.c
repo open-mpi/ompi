@@ -13,6 +13,14 @@
 #endif
 
 int MPI_Group_size(MPI_Group group, int *size) {
+
+    /* error checking */
+    if( MPI_PARAM_CHECK ) {
+        if( MPI_GROUP_NULL == group ) {
+            return MPI_ERR_GROUP;
+        }
+    }
+
     *size=lam_group_size((lam_group_t *)group);
     return MPI_SUCCESS;
 }
