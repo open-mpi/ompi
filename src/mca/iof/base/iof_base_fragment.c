@@ -26,6 +26,7 @@
 
 static void orte_iof_base_frag_construct(orte_iof_base_frag_t* frag)
 {
+    OMPI_DEBUG_ZERO(*frag);
     frag->frag_owner = NULL;
     frag->frag_len = 0;
     frag->frag_iov[0].iov_base = (void*)&frag->frag_hdr;

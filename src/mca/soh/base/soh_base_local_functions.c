@@ -41,6 +41,11 @@ int orte_soh_base_set_node_soh_not_available(orte_cellid_t cell,
     return ORTE_ERR_NOT_IMPLEMENTED;
 }
 
+int orte_soh_base_begin_monitoring_not_available(orte_jobid_t job)
+{
+    return ORTE_ERR_NOT_IMPLEMENTED;
+}
+
 int orte_soh_base_module_finalize_not_available (void)
 {
     return ORTE_ERR_NOT_IMPLEMENTED;

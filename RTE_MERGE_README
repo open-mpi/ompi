@@ -1,6 +1,71 @@
 This file contains information on merging the branches/tim tree into the
 trunk.
 
+UPDATE MERGE 6:
+
+  svn merge -r4943:4977 svn+ssh://svn.open-mpi.org/l/svn/ompi/branches/tim .
+
+A  test/mca/ns/ns_nds.c
+A  test/mca/gpr/gpr_overwrite.c
+A  test/mca/gpr/gpr_triggers.c
+A  test/mca/gpr/gpr_put_get.c
+A  test/mca/gpr/gpr_mem_leaks.c
+U  test/mca/gpr/Makefile.am
+A  test/mca/gpr/gpr_internal_fns.c
+D  test/mca/gpr/gpr_test_trigs.c
+D  test/mca/gpr/gpr_test.c
+D  test/mca/gpr/gpr_test_proxy.c
+D  test/mca/gpr/gpr_test_overwrite.c
+U  test/mca/Makefile.am
+A  test/runtime/ompi_session_dir.c
+A  test/runtime/sigchld.c
+U  test/Makefile.am
+U  test/support/support.c
+D  test/ns
+D  test/plsnds/plsnds_test.c
+D  test/plsnds/Makefile.am
+D  test/plsnds
+D  test/rte/ompi_session_dir.c
+D  test/rte/run_tests
+D  test/rte/Makefile.am
+D  test/rte/sigchld.c
+D  test/rte
+U  include/ompi_config_bottom.h
+U  src/event/signal.c
+U  src/runtime/orte_restart.c
+U  src/dps/dps_unpack.c
+U  src/tools/ompi_info/ompi_info.cc
+U  src/tools/orterun/orterun.c
+U  src/mca/oob/tcp/oob_tcp_msg.h
+U  src/mca/oob/tcp/oob_tcp_msg.c
+U  src/mca/oob/base/oob_base_send_nb.c
+U  src/mca/oob/base/oob_base_recv_nb.c
+U  src/mca/ns/base/ns_base_nds_env.c
+U  src/mca/gpr/replica/communications/gpr_replica_put_get_cm.c
+U  src/mca/gpr/replica/gpr_replica_component.c
+U  src/mca/gpr/replica/functional_layer/gpr_replica_messaging_fn.c
+U  src/mca/gpr/proxy/gpr_proxy_put_get.c
+U  src/mca/gpr/base/gpr_base_open.c
+U  src/mca/rds/hostfile/rds_hostfile.c
+U  src/mca/soh/base/base.h
+U  src/mca/soh/base/soh_base_open.c
+U  src/mca/soh/base/soh_base_local_functions.c
+U  src/mca/rml/oob/Makefile.am
+U  src/mca/rml/oob/rml_oob_component.c
+D  src/mca/rml/oob/rml_oob.c
+U  src/mca/rml/base/rml_base_open.c
+U  src/mca/pls/bproc_seed/pls_bproc_seed.c
+U  src/mca/pls/bproc_seed/pls_bproc_seed_component.c
+U  src/mca/rmgr/urm/rmgr_urm.c
+U  src/mca/rmgr/base/rmgr_base_context.c
+U  src/mca/rmgr/rmgr.h
+U  src/mca/iof/base/iof_base_fragment.c
+U  src/util/proc_info.c
+U  src/util/sys_info.c
+U  ISSUES
+
+
+
 UPDATE MERGE 5:
 
   svn merge -r4937:4943 svn+ssh://svn.open-mpi.org/l/svn/ompi/branches/tim .

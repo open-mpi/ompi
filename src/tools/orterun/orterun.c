@@ -411,6 +411,8 @@ static int parse_locals(int argc, char* argv[])
                 }
                 if (made_app) {
                     ompi_pointer_array_add(&apps_pa, app);
+                } else {
+                    OBJ_RELEASE(app);
                 }
             
                 /* Reset the temps */
@@ -434,6 +436,8 @@ static int parse_locals(int argc, char* argv[])
         }
         if (made_app) {
             ompi_pointer_array_add(&apps_pa, app);
+        } else {
+            OBJ_RELEASE(app);
         }
     }
     ompi_argv_free(temp_argv);

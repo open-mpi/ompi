@@ -284,6 +284,14 @@ int orte_gpr_replica_recv_get_cmd(orte_buffer_t *input_buffer,
         free(keytags);
     }
     
+    if (NULL != values) {
+        for (i=0; i < cnt; i++) {
+            if (NULL != values[i])
+                OBJ_RELEASE(values[i]);
+        }
+        free(values);
+    }
+ 
     /* pack response code */
     if (ORTE_SUCCESS != (rc = orte_dps.pack(output_buffer, &ret, 1, ORTE_INT))) {
         ORTE_ERROR_LOG(rc);

@@ -57,7 +57,7 @@ int orte_soh_base_set_node_soh_not_available(orte_cellid_t cell,
                                              char *nodename,
                                              orte_node_state_t state);
 
-int orte_soh_base_begin_monitoring(orte_jobid_t job);
+int orte_soh_base_begin_monitoring_not_available(orte_jobid_t job);
 
 
 int orte_soh_base_module_finalize_not_available (void);

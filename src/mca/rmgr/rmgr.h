@@ -168,7 +168,7 @@ typedef int (*orte_rmgr_base_module_proc_stage_gate_init_fn_t)(orte_jobid_t job)
  * usually, broadcasting a message to all processes in the job that allows them
  * to proceed.
  */
-typedef void (*orte_rmgr_base_module_proc_stage_gate_mgr_fn_t)(orte_gpr_notify_message_t *notify_msg, void *user_tag);
+typedef void (*orte_rmgr_base_module_proc_stage_gate_mgr_fn_t)(orte_gpr_notify_data_t *data, void *user_tag);
 
 /**
  * Cleanup resources held by rmgr.

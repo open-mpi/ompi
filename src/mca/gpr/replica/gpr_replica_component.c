@@ -146,6 +146,9 @@ static void orte_gpr_replica_segment_destructor(orte_gpr_replica_segment_t* seg)
         dptr = (orte_gpr_replica_dict_t**)((seg->dict)->addr);
         for (i=0; i < (seg->dict)->size; i++) {
             if (NULL != dptr[i]) {
+                if (NULL != dptr[i]->entry) {
+                    free(dptr[i]->entry);
+                }
                 free(dptr[i]);
             }
         }
@@ -234,6 +237,12 @@ static void orte_gpr_replica_itagval_destructor(orte_gpr_replica_itagval_t* ptr)
 {
     if (ORTE_BYTE_OBJECT == ptr->type) {
         free(((ptr->value).byteobject).bytes);
+    } else if (ORTE_STRING == ptr->type) {
+        if (NULL != ptr->value.strptr)
+            free(ptr->value.strptr);
+    } else if (ORTE_APP_CONTEXT == ptr->type) {
+        if (NULL != ptr->value.app_context)
+            OBJ_RELEASE(ptr->value.app_context);
     }
 }
 
@@ -372,6 +381,10 @@ static void orte_gpr_replica_callbacks_destructor(orte_gpr_replica_callbacks_t* 
     if (NULL != cb->requestor) {
         free(cb->requestor);
         cb->requestor = NULL;
+    }
+    
+    if (NULL != cb->message) {
+        OBJ_RELEASE(cb->message);
     }
 }
 

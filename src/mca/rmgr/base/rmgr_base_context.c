@@ -86,6 +86,7 @@ int orte_rmgr_base_put_app_context(
         (value->keyvals[i])->key = strdup(ORTE_JOB_APP_CONTEXT_KEY);
         (value->keyvals[i])->type = ORTE_APP_CONTEXT;
         (value->keyvals[i])->value.app_context = app;
+        OBJ_RETAIN(app);
         app->idx = i;
         job_slots += app->num_procs;
     }

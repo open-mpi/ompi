@@ -192,7 +192,7 @@ int orte_ns_nds_env_put(const orte_process_name_t* name,
     free(param);
     free(value);
 
-    asprintf(&value, "%d", num_procs);
+    asprintf(&value, "%ld", num_procs);
     if(NULL == (param = mca_base_param_environ_variable("ns","nds","num_procs"))) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;

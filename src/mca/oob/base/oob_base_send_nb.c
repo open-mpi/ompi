@@ -115,7 +115,7 @@ int mca_oob_send_packed_nb(
 
     /* queue up the request */
     rc = mca_oob.oob_send_nb(peer, &oob_cbdata->cbiov, 1, tag, flags, mca_oob_send_callback, oob_cbdata);
-    if(rc != OMPI_SUCCESS) {
+    if(rc < 0) {
         free(oob_cbdata);
     }
     return rc;

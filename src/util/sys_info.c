@@ -47,11 +47,10 @@ orte_sys_info_t orte_system_info = {
 int orte_sys_info(void)
 {
     struct utsname sys_info;
-    char *path_name;
 
 #ifndef WIN32
 	struct passwd *pwdent;
-	char sep[2];
+	char *sep = "/";
 #else
     #define INFO_BUF_SIZE 32768
     TCHAR info_buf[INFO_BUF_SIZE];
@@ -95,24 +94,7 @@ int orte_sys_info(void)
         orte_system_info.machine = strdup(sys_info.machine);
     }
 
-#ifndef WIN32
-    if (NULL != (path_name = getcwd(NULL, 0))) {
-        if (strlen(path_name) > 1) {
-            sep[0] = path_name[strlen(path_name)-strlen(basename(path_name))-1];
-        }
-        else {
-            sep[0] = path_name[0];
-        }
-        sep[1] = '\0';
-        orte_system_info.path_sep = strdup(sep);
-        free(path_name);
-    }
-#else
-    /* we can hardcode windows path seperator to be "\" */
     orte_system_info.path_sep = strdup(sep);
-#endif
-
-
 
 	/* get the name of the user */
 #ifndef WIN32
