@@ -67,11 +67,11 @@ static int ptl_exclusivity_compare(const void* arg1, const void* arg2)
     mca_ptl_t* ptl1 = *(struct mca_ptl_t**)arg1;
     mca_ptl_t* ptl2 = *(struct mca_ptl_t**)arg2;
     if( ptl1->ptl_exclusivity > ptl2->ptl_exclusivity )
-        return 1;
+        return -1;
     else if (ptl1->ptl_exclusivity == ptl2->ptl_exclusivity )
         return 0;
     else
-        return -1;
+        return 1;
 }
 
 
