@@ -10,7 +10,7 @@
 #include <stdio.h>
 
 /* Ensure to get the right <ltdl.h> */ 
-#include "mca/ltdl.h"
+#include "libltdl/ltdl.h"
 
 #include "constants.h"
 #include "lfc/lam_list.h"

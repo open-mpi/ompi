@@ -5,7 +5,7 @@
 #ifndef MCA_BASE_H
 #define MCA_BASE_H
 
-#include "mca/ltdl.h"
+#include "libltdl/ltdl.h"
 
 /*
  * These units are large enough to warrant their own .h files

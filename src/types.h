@@ -20,6 +20,7 @@
 #endif
 
 struct lam_fd_set_t {
+  int i;
     uint32_t fds_bits[LAM_FD_SETSIZE / NFDBITS];
 };
 typedef struct lam_fd_set_t lam_fd_set_t;
