@@ -250,7 +250,7 @@ MPI_Test                        Ginger
 MPI_Test_cancelled              Ginger
 MPI_Testsome                    Ginger
 MPI_Topo_test                   Anju
-MPI_Type_c2f                    Ginger
+MPI_Type_c2f                    DONE
 MPI_Type_commit			DONE
 MPI_Type_contiguous		Ginger
 MPI_Type_create_darray		Ginger
@@ -269,7 +269,7 @@ MPI_Type_dup			Ginger
 MPI_Type_extent			Ginger
 MPI_Type_free			Ginger
 MPI_Type_free_keyval            Vishal
-MPI_Type_f2c			Ginger
+MPI_Type_f2c			DONE
 MPI_Type_get_attr               Vishal
 MPI_Type_get_contents		Ginger
 MPI_Type_get_envelope		DONE
@@ -319,4 +319,4 @@ MPI_Win_test
 MPI_Win_unlock
 MPI_Win_wait
 MPI_Wtick                       DONE [sort of]
-MPI_Wtime	                George
+MPI_Wtime	                    DONE
