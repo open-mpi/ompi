@@ -36,7 +36,6 @@ mca_ptl_gm_module_t mca_ptl_gm_module = {
 	0, /* latency */
 	0, /* bandwidth */
 	MCA_PTL_PUT,  /* ptl flags */
-
 	/* collection of interfaces */
 	mca_ptl_gm_add_procs,
 	mca_ptl_gm_del_procs,
@@ -64,8 +63,7 @@ mca_ptl_gm_add_procs (struct mca_ptl_base_module_t *ptl,
                       struct mca_ptl_base_peer_t **peers,
                       ompi_bitmap_t * reachable)
 {
-    int         i,j;
-    int num_peer_ptls = 1;
+    uint32_t i, j, num_peer_ptls = 1;
     struct ompi_proc_t *ompi_proc;
     mca_ptl_gm_proc_t *ptl_proc;
     mca_ptl_gm_peer_t *ptl_peer;
@@ -102,7 +100,7 @@ mca_ptl_gm_add_procs (struct mca_ptl_base_module_t *ptl,
             ptl_peer->global_id = ptl_proc->proc_addrs->global_id;
             ptl_peer->port_number = ptl_proc->proc_addrs->port_id;
             if (GM_SUCCESS !=
-                gm_global_id_to_node_id (((mca_ptl_gm_module_t *) ptl)->my_port,
+                gm_global_id_to_node_id (((mca_ptl_gm_module_t *) ptl)->gm_port,
                                          ptl_proc->proc_addrs[j].global_id,
                                          &lid)) {
                 ompi_output (0,
@@ -147,9 +145,33 @@ mca_ptl_gm_del_procs (struct mca_ptl_base_module_t *ptl,
  *
  */
 int
-mca_ptl_gm_finalize (struct mca_ptl_base_module_t *ptl)
+mca_ptl_gm_finalize (struct mca_ptl_base_module_t *base_ptl)
 {
-    free (ptl);
+    void* thread_return;
+    uint32_t index;
+    mca_ptl_gm_module_t* ptl = (mca_ptl_gm_module_t*)base_ptl;
+
+    /* we should do the same things as in the init step in reverse order.
+     * First we shutdown all threads if there are any.
+     */
+    if( 0 != ptl->thread.t_handle ) {
+	pthread_cancel( ptl->thread.t_handle );
+	ompi_thread_join( &(ptl->thread), &thread_return );
+    }
+    for( index = 0; index < mca_ptl_gm_component.gm_num_ptl_modules; index++ ) {
+	if( mca_ptl_gm_component.gm_ptl_modules[index] == ptl ) {
+	    mca_ptl_gm_component.gm_ptl_modules[index] = NULL;
+	    OMPI_OUTPUT((0, "GM ptl %p succesfully finalized\n", (void*)ptl));
+	}
+    }
+
+    /* based on the fact that the port 0 is reserved, we can use ZERO
+     * to mark a port as unused.
+     */
+    if( 0 != ptl->gm_port ) gm_close( ptl->gm_port );
+    ptl->gm_port = 0;
+    free( ptl );
+
     return OMPI_SUCCESS;
 }
 
@@ -201,7 +223,6 @@ mca_ptl_gm_request_fini (struct mca_ptl_base_module_t *ptl,
     frag->status = 0;
 #endif
 
-    A_PRINT("entering request fini\n");
     OBJ_DESTRUCT(request+1);
 }
 
@@ -287,7 +308,7 @@ mca_ptl_gm_put (struct mca_ptl_base_module_t *ptl,
 
    /* register the user buffer */
    if (offset > 0) {
-       status = gm_register_memory(gm_ptl->my_port, buffer_ptr, bytes_reg);
+       status = gm_register_memory(gm_ptl->gm_port, buffer_ptr, bytes_reg);
        if(GM_SUCCESS != status) {
           ompi_output(0,"[%s:%d] Unable to register memory\n",__FILE__,__LINE__);
        } 
@@ -317,7 +338,6 @@ mca_ptl_gm_put (struct mca_ptl_base_module_t *ptl,
    rc = mca_ptl_gm_peer_send (putfrag->peer,putfrag,sendreq,
                                 offset,&size,flags);
    assert(rc == 0);
-   A_PRINT("after issuing the put completion(fin) for the request");
 #endif
 
    return OMPI_SUCCESS;
@@ -387,7 +407,7 @@ mca_ptl_gm_matched( mca_ptl_base_module_t * ptl,
              bytes_recv = frag->frag_base.frag_size; 
              bytes_reg = total_bytes - bytes_recv;
              buffer_ptr += bytes_recv;
-             status = gm_register_memory(gm_ptl->my_port, buffer_ptr, bytes_reg);
+             status = gm_register_memory(gm_ptl->gm_port, buffer_ptr, bytes_reg);
              recv_frag->registered_buf = buffer_ptr;
              A_PRINT("Receiver: register addr: %p, bytes: %d\n",buffer_ptr,bytes_reg);
 

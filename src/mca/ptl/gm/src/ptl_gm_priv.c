@@ -34,16 +34,15 @@ int mca_ptl_gm_peer_put(mca_ptl_gm_peer_t *ptl_peer,
                         void * target_buffer,
                         int bytes) 
 {
-
-   gm_put( ptl_peer->peer_ptl->my_port, fragment->registered_buf,
-	   (gm_remote_ptr_t)target_buffer, bytes, GM_LOW_PRIORITY,
-	   ptl_peer->local_id, ptl_peer->port_number, 
-	   put_callback, (void *)fragment );
+    gm_put( ptl_peer->peer_ptl->gm_port, fragment->registered_buf,
+	    (gm_remote_ptr_t)target_buffer, bytes, GM_LOW_PRIORITY,
+	    ptl_peer->local_id, ptl_peer->port_number, 
+	    put_callback, (void *)fragment );
 
 
     fragment->send_frag.frag_base.frag_owner = &ptl_peer->peer_ptl->super;
     fragment->send_frag.frag_base.frag_peer =
-                             (struct mca_ptl_base_peer_t*)ptl_peer;
+	(struct mca_ptl_base_peer_t*)ptl_peer;
     fragment->send_frag.frag_base.frag_addr =(void *)target_buffer;
     fragment->send_frag.frag_base.frag_size = bytes; 
     return OMPI_SUCCESS;
@@ -125,7 +124,7 @@ int mca_ptl_gm_peer_send(mca_ptl_gm_peer_t *ptl_peer,
 	     ((mca_ptl_base_header_t *)header)->hdr_ack.hdr_src_ptr);
  
     /* initiate the gm send */
-    gm_send_with_callback( ptl_peer->peer_ptl->my_port, fragment->send_buf, 
+    gm_send_with_callback( ptl_peer->peer_ptl->gm_port, fragment->send_buf, 
                            GM_SIZE, size_out, GM_LOW_PRIORITY, ptl_peer->local_id,
                            ptl_peer->port_number, send_callback, (void *)fragment );
 
@@ -181,7 +180,7 @@ void put_callback(struct gm_port *port,void * context, gm_status_t status)
 #endif
 
         /* deregister the user memory */
-       status = gm_deregister_memory(ptl->my_port, (char *)(putfrag->registered_buf), bytes2);
+       status = gm_deregister_memory(ptl->gm_port, (char *)(putfrag->registered_buf), bytes2);
 
        if(GM_SUCCESS != status) {
     	   ompi_output(0," unpinning memory failed\n");
@@ -446,7 +445,7 @@ void ptl_gm_ctrl_frag(struct mca_ptl_gm_module_t *ptl,
       /* deregister the memory */
       bytes = header->hdr_ack.hdr_dst_size;
       reg_buf =(char *) header->hdr_ack.hdr_dst_addr.pval; 
-      status = gm_deregister_memory(ptl->my_port, reg_buf, bytes);
+      status = gm_deregister_memory(ptl->gm_port, reg_buf, bytes);
 
       if(GM_SUCCESS != status) 
 	{
@@ -555,7 +554,6 @@ void mca_ptl_gm_outstanding_recv(mca_ptl_gm_module_t *ptl)
  
     size = ompi_list_get_size (&ptl->gm_recv_outstanding_queue);
 
-
     if (size > 0)
     {  
         frag = (mca_ptl_gm_recv_frag_t *)
@@ -581,55 +579,59 @@ void mca_ptl_gm_outstanding_recv(mca_ptl_gm_module_t *ptl)
 
 } 
 
+int mca_ptl_gm_analyze_recv_event(mca_ptl_gm_module_t* ptl, gm_recv_event_t* event )
+{
+    void * mesg;
+    mca_ptl_gm_recv_frag_t * frag;
+
+    switch (gm_ntohc(event->recv.type)) {
+    case GM_RECV_EVENT:
+    case GM_HIGH_RECV_EVENT:
+    case GM_PEER_RECV_EVENT:
+    case GM_HIGH_PEER_RECV_EVENT:
+	mesg = gm_ntohp(event->recv.buffer);
+	frag = ptl_gm_handle_recv( ptl, event );
+	GM_DBG(PTL_GM_DBG_COMM,"FINISHED HANDLING INCOMING EVENT\n");
+	
+	if( (frag != NULL) && !(frag->matched) ) {
+	    /* allocate temporary buffer: temporary until the fragment will be finally matched */
+	    char* buffer = malloc( GM_SEND_BUF_SIZE );
+	    if (NULL == buffer) {
+		ompi_output(0, "[%s:%d] error in allocating memory \n", __FILE__, __LINE__);
+	    }
+	    /* copy the data from the registered buffer to the newly allocated one */
+	    memcpy( buffer, mesg, gm_ntohl(event->recv.length) );
+	    /* associate the buffer with the unexpected fragment */
+	    frag->frag_recv.frag_base.frag_addr = (void *)buffer;
+	    /* mark the fragment as having pending buffers */
+	    frag->have_allocated_buffer = true;
+	    
+	}
+	gm_provide_receive_buffer( ptl->gm_port, gm_ntohp(event->recv.buffer),
+				   GM_SIZE, GM_LOW_PRIORITY );
+	break;
+    case GM_NO_RECV_EVENT:
+	break;
+	
+    default:
+	gm_unknown(ptl->gm_port, event);
+	
+    }
+
+    return 0;
+}
+
 int mca_ptl_gm_incoming_recv (mca_ptl_gm_component_t * gm_comp)
 {
-    int i;
+    uint32_t i;
     gm_recv_event_t *event;
-    void * mesg;
     mca_ptl_gm_module_t *ptl;
-    mca_ptl_gm_recv_frag_t * frag;
 
     for( i = 0; i< gm_comp->gm_num_ptl_modules; i++) {
         ptl = gm_comp->gm_ptl_modules[i];
-        event = gm_receive(ptl->my_port);
+        event = gm_receive(ptl->gm_port);
 
-        switch (gm_ntohc(event->recv.type)) {
-        case GM_RECV_EVENT:
-        case GM_HIGH_RECV_EVENT:
-        case GM_PEER_RECV_EVENT:
-        case GM_HIGH_PEER_RECV_EVENT:
-            mesg = gm_ntohp(event->recv.buffer);
-            frag = ptl_gm_handle_recv( ptl, event );
-            GM_DBG(PTL_GM_DBG_COMM,"FINISHED HANDLING INCOMING EVENT\n");
-
-            if( (frag != NULL) && !(frag->matched) ) {
-                /* allocate temporary buffer: temporary until the fragment will be finally matched */
-                char* buffer = malloc( GM_SEND_BUF_SIZE );
-                if (NULL == buffer)
-                {
-                  ompi_output(0, "[%s:%d] error in allocating memory \n",
-                                                        __FILE__, __LINE__);
-
-                }
-                /* copy the data from the registered buffer to the newly allocated one */
-                memcpy( buffer, mesg, gm_ntohl(event->recv.length) );
-                /* associate the buffer with the unexpected fragment */
-                frag->frag_recv.frag_base.frag_addr = (void *)buffer;
-                /* mark the fragment as having pending buffers */
-                frag->have_allocated_buffer = true;
-
-            }
-            gm_provide_receive_buffer( ptl->my_port, gm_ntohp(event->recv.buffer),
-                                       GM_SIZE, GM_LOW_PRIORITY );
-            break;
-        case GM_NO_RECV_EVENT:
-            break;
-
-        default:
-            gm_unknown(ptl->my_port, event);
-
-        }
-
+	mca_ptl_gm_analyze_recv_event( ptl, event );
     }  
     return 0;
 }
