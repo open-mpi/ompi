@@ -157,12 +157,14 @@ static int mca_ptl_tcp_module_create_instances(void)
     argv = include = lam_argv_split(mca_ptl_tcp_module.tcp_if_include,'\'');
     while(argv && *argv) {
         char* if_name = *argv;
+#if TIM_HASNT_IMPLEMENTED_THIS_YET
         int if_index = lam_ifnametoindex(if_name);
         if(if_index < 0) {
             lam_output(0,"mca_ptl_tcp_module_init: invalid interface \"%s\"", if_name);
         } else {
             mca_ptl_tcp_create(if_index);
         }
+#endif
         argv++;
     }
     lam_argv_free(include);
@@ -249,8 +251,12 @@ static int mca_ptl_tcp_module_exchange(void)
          addrs[i].addr_port = mca_ptl_tcp_module.tcp_listen;
          addrs[i].addr_inuse = 0;
      }
+#if TIM_HASNT_IMPLEMENTED_THIS_YET
      return mca_base_modex_send(&mca_ptl_tcp_module.super.ptlm_version,
          addrs, sizeof(mca_ptl_tcp_t),mca_ptl_tcp_module.tcp_num_ptls);
+#else
+     return LAM_ERROR;
+#endif
 }
 
 /*

@@ -13,8 +13,8 @@
 #include "ptl_tcp_proc.h"
 
 
-lam_class_info_t  mca_ptl_peer_cls = {
-    "mca_ptl_peer_t", 
+lam_class_info_t  mca_ptl_tcp_peer_cls = {
+    "mca_tcp_ptl_peer_t", 
     &lam_list_cls,
     (class_init_t)mca_ptl_tcp_peer_init, 
     (class_destroy_t)mca_ptl_tcp_peer_destroy
@@ -121,7 +121,11 @@ int mca_ptl_tcp_peer_send(mca_ptl_peer_t* ptl_peer, mca_ptl_tcp_send_frag_t* fra
 bool mca_ptl_tcp_peer_accept(mca_ptl_peer_t* ptl_peer, struct sockaddr_in* addr, int sd)
 {
     mca_ptl_tcp_addr_t* ptl_addr;
+#if TIM_HASNT_IMPLEMENTED_THIS_YET
     mca_ptl_tcp_proc_t* this_proc = mca_ptl_tcp_proc_local();
+#else
+    mca_ptl_tcp_proc_t* this_proc = NULL;
+#endif
     THREAD_LOCK(&ptl_peer->peer_lock);
     if((ptl_addr = ptl_peer->peer_addr) != NULL  &&
         ptl_addr->addr_inet.s_addr == addr->sin_addr.s_addr) {
@@ -299,7 +303,11 @@ static int mca_ptl_tcp_peer_recv_connect_ack(mca_ptl_peer_t* ptl_peer)
 static int mca_ptl_tcp_peer_send_connect_ack(mca_ptl_peer_t* ptl_peer)
 {
     /* send process identifier to remote peer */
+#if TIM_HASNT_IMPLEMENTED_THIS_YET
     mca_ptl_tcp_proc_t* ptl_proc = mca_ptl_tcp_proc_local();
+#else
+    mca_ptl_tcp_proc_t* ptl_proc = NULL;
+#endif
     uint32_t size_n = htonl(ptl_proc->proc_guid_size);
     if(mca_ptl_tcp_peer_send_blocking(ptl_peer, &size_n, sizeof(size_n)) != sizeof(size_n) ||
        mca_ptl_tcp_peer_send_blocking(ptl_peer, ptl_proc->proc_guid, ptl_proc->proc_guid_size) != 
