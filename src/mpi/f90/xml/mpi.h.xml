@@ -55,9 +55,9 @@
 
       <!-- ARGUMENT : origin_addr -->
       <arg name="origin_addr" intent="in">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
-            <type kind="void" >
+            <type kind="void">
             </type>
           </indirect>
         </type>
@@ -203,9 +203,9 @@
 
       <!-- ARGUMENT : location -->
       <arg name="location" intent="in">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
-            <type kind="void" >
+            <type kind="void">
             </type>
           </indirect>
         </type>
@@ -230,14 +230,15 @@
     
     <!-- 
       -  METHOD: int MPI_Allgather(void *, int, MPI_Datatype, void *, int, MPI_Datatype, MPI_Comm) C
+      -  WARNING, this method has two choice arguments.
       -->
-    <method name="MPI_Allgather" kind="final" template="yes">
+    <method name="MPI_Allgather" kind="No_F90" template="yes">
 
       <!-- ARGUMENT : sendbuf -->
       <arg name="sendbuf" intent="in">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
-            <type kind="void" >
+            <type kind="void">
             </type>
           </indirect>
         </type>
@@ -257,9 +258,9 @@
 
       <!-- ARGUMENT : recvbuf -->
       <arg name="recvbuf" intent="out">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
-            <type kind="void" >
+            <type kind="void">
             </type>
           </indirect>
         </type>
@@ -292,12 +293,13 @@
     
     <!-- 
       -  METHOD: int MPI_Allgatherv(void *, int, MPI_Datatype, void *, int *, int *, MPI_Datatype, MPI_Comm) C
+      -  WARNING, this method has two choice arguments.
       -->
-    <method name="MPI_Allgatherv" kind="final" template="yes">
+    <method name="MPI_Allgatherv" kind="No_F90" template="yes">
 
       <!-- ARGUMENT : sendbuf -->
       <arg name="sendbuf" intent="in">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -319,9 +321,9 @@
 
       <!-- ARGUMENT : recvbuf -->
       <arg name="recvbuf" intent="out">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
-            <type kind="void" >
+            <type kind="void">
             </type>
           </indirect>
         </type>
@@ -368,6 +370,9 @@
     
     <!-- 
       -  METHOD: int MPI_Alloc_mem(MPI_Aint, MPI_Info, void *) C
+      -  WARNING, can't see how this method can work with F90 type checking,
+      -     there is no way to alloc memory in C for Fortran arrays
+      -     see MPI_Free_mem
       -->
     <method name="MPI_Alloc_mem" kind="final">
 
@@ -385,7 +390,7 @@
 
       <!-- ARGUMENT : baseptr -->
       <arg name="baseptr" intent="out">
-        <type kind="ptr" >
+        <type kind="ptr" idl="MPI_Aint">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -407,9 +412,9 @@
 
       <!-- ARGUMENT : sendbuf -->
       <arg name="sendbuf" intent="in">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
-            <type kind="void" >
+            <type kind="void">
             </type>
           </indirect>
         </type>
@@ -417,7 +422,7 @@
 
       <!-- ARGUMENT : recvbuf -->
       <arg name="recvbuf" intent="out">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -458,14 +463,15 @@
     
     <!-- 
       -  METHOD: int MPI_Alltoall(void *, int, MPI_Datatype, void *, int, MPI_Datatype, MPI_Comm) C
+      -  WARNING, this method has two choice arguments.
       -->
     <method name="MPI_Alltoall" kind="final" template="yes">
 
       <!-- ARGUMENT : sendbuf -->
       <arg name="sendbuf" intent="in">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
-            <type kind="void" >
+            <type kind="void">
             </type>
           </indirect>
         </type>
@@ -485,9 +491,9 @@
 
       <!-- ARGUMENT : recvbuf -->
       <arg name="recvbuf" intent="out">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
-            <type kind="void" >
+            <type kind="void">
             </type>
           </indirect>
         </type>
@@ -520,14 +526,15 @@
     
     <!-- 
       -  METHOD: int MPI_Alltoallv(void *, int *, int *, MPI_Datatype, void *, int *, int *, MPI_Datatype, MPI_Comm) C
+      -  WARNING, this method has two choice arguments.
       -->
     <method name="MPI_Alltoallv" kind="final" template="yes">
 
       <!-- ARGUMENT : sendbuf -->
       <arg name="sendbuf" intent="in">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
-            <type kind="void" >
+            <type kind="void">
             </type>
           </indirect>
         </type>
@@ -561,9 +568,9 @@
 
       <!-- ARGUMENT : recvbuf -->
       <arg name="recvbuf" intent="out">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
-            <type kind="void" >
+            <type kind="void">
             </type>
           </indirect>
         </type>
@@ -610,14 +617,15 @@
     
     <!-- 
       -  METHOD: int MPI_Alltoallw(void *, int *, int *, MPI_Datatype *, void *, int *, int *, MPI_Datatype *, MPI_Comm) C
+      -  WARNING, this method has two choice arguments.
       -->
     <method name="MPI_Alltoallw" kind="final" template="yes">
 
       <!-- ARGUMENT : sendbuf -->
       <arg name="sendbuf" intent="in">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
-            <type kind="void" >
+            <type kind="void">
             </type>
           </indirect>
         </type>
@@ -655,9 +663,9 @@
 
       <!-- ARGUMENT : recvbuf -->
       <arg name="recvbuf" intent="out">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
-            <type kind="void" >
+            <type kind="void">
             </type>
           </indirect>
         </type>
@@ -749,7 +757,7 @@
 
       <!-- ARGUMENT : attribute_val -->
       <arg name="attribute_val" intent="out">
-        <type kind="ptr" >
+        <type kind="ptr" idl="MPI_Fint">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -792,7 +800,7 @@
 
       <!-- ARGUMENT : attribute_val -->
       <arg name="attribute_val" intent="in">
-        <type kind="ptr" >
+        <type kind="ptr" idl="MPI_Fint">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -832,7 +840,7 @@
 
       <!-- ARGUMENT : buffer -->
       <arg name="buffer" intent="in">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -878,7 +886,7 @@
 
       <!-- ARGUMENT : buf -->
       <arg name="buf" intent="in">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -930,7 +938,7 @@
 
       <!-- ARGUMENT : buf -->
       <arg name="buf" intent="in">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -992,7 +1000,7 @@
 
       <!-- ARGUMENT : buffer -->
       <arg name="buffer" intent="in">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -1020,9 +1028,9 @@
 
       <!-- ARGUMENT : buffer -->
       <arg name="buffer" intent="out">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
-            <type kind="void" >
+            <type kind="void">
             </type>
           </indirect>
         </type>
@@ -1732,7 +1740,7 @@
 
       <!-- ARGUMENT : attribute_val -->
       <arg name="attribute_val" intent="out">
-        <type kind="ptr" >
+        <type kind="ptr" idl="MPI_Aint">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -1954,7 +1962,7 @@
 
       <!-- ARGUMENT : attribute_val -->
       <arg name="attribute_val" intent="in">
-        <type kind="ptr" >
+        <type kind="ptr" idl="MPI_Aint">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -2871,7 +2879,7 @@
 
       <!-- ARGUMENT : buf -->
       <arg name="buf" intent="out">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -2927,7 +2935,7 @@
 
       <!-- ARGUMENT : buf -->
       <arg name="buf" intent="out">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -2977,7 +2985,7 @@
 
       <!-- ARGUMENT : buf -->
       <arg name="buf" intent="out">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -3027,7 +3035,7 @@
 
       <!-- ARGUMENT : buf -->
       <arg name="buf" intent="in">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -3083,7 +3091,7 @@
 
       <!-- ARGUMENT : buf -->
       <arg name="buf" intent="in">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -3133,7 +3141,7 @@
 
       <!-- ARGUMENT : buf -->
       <arg name="buf" intent="in">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -3257,7 +3265,7 @@
 
       <!-- ARGUMENT : buf -->
       <arg name="buf" intent="out">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -3307,7 +3315,7 @@
 
       <!-- ARGUMENT : buf -->
       <arg name="buf" intent="out">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -3357,7 +3365,7 @@
 
       <!-- ARGUMENT : buf -->
       <arg name="buf" intent="out">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -3397,7 +3405,7 @@
 
       <!-- ARGUMENT : buf -->
       <arg name="buf" intent="out">
-        <type kind="ptr" >
+        <type kind="ptr">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -3441,7 +3449,7 @@
 
       <!-- ARGUMENT : buf -->
       <arg name="buf" intent="out">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -3497,7 +3505,7 @@
 
       <!-- ARGUMENT : buf -->
       <arg name="buf" intent="out">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -3553,7 +3561,7 @@
 
       <!-- ARGUMENT : buf -->
       <arg name="buf" intent="out">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -3631,7 +3639,7 @@
 
       <!-- ARGUMENT : buf -->
       <arg name="buf" intent="out">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -3681,7 +3689,7 @@
 
       <!-- ARGUMENT : buf -->
       <arg name="buf" intent="out">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -3759,7 +3767,7 @@
 
       <!-- ARGUMENT : buf -->
       <arg name="buf" intent="out">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -4035,7 +4043,7 @@
 
       <!-- ARGUMENT : buf -->
       <arg name="buf" intent="in">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -4085,7 +4093,7 @@
 
       <!-- ARGUMENT : buf -->
       <arg name="buf" intent="in">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -4135,7 +4143,7 @@
 
       <!-- ARGUMENT : buf -->
       <arg name="buf" intent="in">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -4219,7 +4227,7 @@
 
       <!-- ARGUMENT : buf -->
       <arg name="buf" intent="in">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -4275,7 +4283,7 @@
 
       <!-- ARGUMENT : buf -->
       <arg name="buf" intent="in">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -4331,7 +4339,7 @@
 
       <!-- ARGUMENT : buf -->
       <arg name="buf" intent="in">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -4409,7 +4417,7 @@
 
       <!-- ARGUMENT : buf -->
       <arg name="buf" intent="in">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -4459,7 +4467,7 @@
 
       <!-- ARGUMENT : buf -->
       <arg name="buf" intent="in">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -4537,7 +4545,7 @@
 
       <!-- ARGUMENT : buf -->
       <arg name="buf" intent="in">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -4615,7 +4623,7 @@
 
       <!-- ARGUMENT : base -->
       <arg name="base" intent="in">
-        <type kind="ptr" >
+        <type kind="ptr">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -5831,7 +5839,7 @@
 
       <!-- ARGUMENT : buf -->
       <arg name="buf" intent="in">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -6405,7 +6413,7 @@
 
       <!-- ARGUMENT : buf -->
       <arg name="buf" intent="out">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -6467,7 +6475,7 @@
 
       <!-- ARGUMENT : buf -->
       <arg name="buf" intent="in">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -6551,7 +6559,7 @@
 
       <!-- ARGUMENT : buf -->
       <arg name="buf" intent="in">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -6613,7 +6621,7 @@
 
       <!-- ARGUMENT : buf -->
       <arg name="buf" intent="in">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -6821,7 +6829,7 @@
 
       <!-- ARGUMENT : inbuf -->
       <arg name="inbuf" intent="in">
-        <type kind="ptr" >
+        <type kind="ptr">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -7186,7 +7194,7 @@
 
       <!-- ARGUMENT : buf -->
       <arg name="buf" intent="out">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -7248,7 +7256,7 @@
 
       <!-- ARGUMENT : buf -->
       <arg name="buf" intent="out">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -7565,7 +7573,7 @@
 
       <!-- ARGUMENT : ibuf -->
       <arg name="ibuf" intent="in">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -7617,7 +7625,7 @@
 
       <!-- ARGUMENT : buf -->
       <arg name="buf" intent="in">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -7885,7 +7893,7 @@
 
       <!-- ARGUMENT : buf -->
       <arg name="buf" intent="in">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -7937,7 +7945,7 @@
 
       <!-- ARGUMENT : buf -->
       <arg name="buf" intent="in">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -8097,7 +8105,7 @@
 
       <!-- ARGUMENT : buf -->
       <arg name="buf" intent="inout">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -8201,7 +8209,7 @@
 
       <!-- ARGUMENT : buf -->
       <arg name="buf" intent="in">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -8253,7 +8261,7 @@
 
       <!-- ARGUMENT : buf -->
       <arg name="buf" intent="in">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -9430,7 +9438,7 @@
 
       <!-- ARGUMENT : type_keyval -->
       <arg name="type_keyval" intent="inout">
-        <type kind="ptr" >
+        <type kind="ptr" idl="MPI_Fint">
           <indirect depth="1" kind="pointer">
             <type kind="int" ikind="int" >
             </type>
@@ -9464,7 +9472,7 @@
 
       <!-- ARGUMENT : attribute_val -->
       <arg name="attribute_val" intent="out">
-        <type kind="ptr" >
+        <type kind="ptr" idl="MPI_Aint">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -9964,7 +9972,7 @@
       <arg name="attr_val" intent="in">
         <type kind="ptr" >
           <indirect depth="1" kind="pointer">
-            <type kind="void" >
+            <type kind="void" idl="MPI_Aint">
             </type>
           </indirect>
         </type>
@@ -10234,7 +10242,7 @@
     <!-- 
       -  METHOD: int MPI_Unpack_external(char *, void *, MPI_Aint, MPI_Aint *, void *, int, MPI_Datatype) C
       -->
-    <method name="MPI_Unpack_external" kind="final">
+    <method name="MPI_Unpack_external" kind="final" template="yes">
 
       <!-- ARGUMENT : datarep -->
       <arg name="datarep" intent="in">
@@ -10782,7 +10790,7 @@
 
       <!-- ARGUMENT : attribute_val -->
       <arg name="attribute_val" intent="out">
-        <type kind="ptr" >
+        <type kind="ptr" idl="MPI_Aint">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -10986,7 +10994,7 @@
 
       <!-- ARGUMENT : attribute_val -->
       <arg name="attribute_val" intent="in">
-        <type kind="ptr" >
+        <type kind="ptr" idl="MPI_Aint">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -11523,7 +11531,7 @@
 
       <!-- ARGUMENT : argv -->
       <arg name="argv" intent="in">
-        <type kind="ptr" >
+        <type kind="ptr" idl="MPI_ARGV">
           <indirect depth="2" kind="pointer">
             <type kind="int" ikind="char" >
             </type>
@@ -11595,31 +11603,34 @@
 
       <!-- ARGUMENT : array_of_commands -->
       <arg name="array_of_commands" intent="in">
-        <type kind="ptr" >
-          <indirect depth="2" kind="pointer">
-            <type kind="int" ikind="char" >
-            </type>
-          </indirect>
+        <type kind="array" idl="MPI_ARGV">
+          <array lang="c" rank="2">
+            <type kind="int" ikind="char"/>
+            <dimension extent="*"/>
+            <dimension extent="*"/>
+          </array>
         </type>
       </arg>
 
       <!-- ARGUMENT : array_of_argv -->
       <arg name="array_of_argv" intent="in">
-        <type kind="ptr" >
-          <indirect depth="3" kind="pointer">
-            <type kind="int" ikind="char" >
-            </type>
-          </indirect>
+        <type kind="array" idl="MPI_A_ARGV">
+          <array lang="c" rank="3">
+            <type kind="int" ikind="char"/>
+            <dimension extent="*"/>
+            <dimension extent="count"/>
+            <dimension extent="*"/>
+          </array>
         </type>
       </arg>
 
       <!-- ARGUMENT : array_of_maxprocs -->
       <arg name="array_of_maxprocs" intent="in">
-        <type kind="ptr" >
-          <indirect depth="1" kind="pointer">
-            <type kind="int" ikind="int" >
-            </type>
-          </indirect>
+        <type kind="array">
+          <array lang="c" rank="1">
+            <type kind="int" ikind="int"/>
+            <dimension extent="*"/>
+          </array>
         </type>
       </arg>
 
