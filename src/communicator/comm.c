@@ -851,6 +851,31 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
 /**********************************************************************/
 /**********************************************************************/
 /**********************************************************************/
+    /**
+     * This routine verifies, whether local_group and remote group are overlapping
+     * in intercomm_create
+     */
+    int ompi_comm_overlapping_groups (int size, ompi_proc_t **lprocs,
+				      int rsize, ompi_proc_t ** rprocs)
+
+{
+    int rc=OMPI_SUCCESS;
+    int i,j;
+
+    for (i=0; i<size; i++) {
+	for ( j=0; j<rsize; j++) {
+	    if ( lprocs[i] == rprocs[j] ) {
+		rc = MPI_ERR_COMM;
+		return rc;
+	    }
+	}
+    }
+
+    return rc;
+}
+/**********************************************************************/
+/**********************************************************************/
+/**********************************************************************/
 int ompi_comm_determine_first ( ompi_communicator_t *intercomm, int high )
 {
     int flag, rhigh;
