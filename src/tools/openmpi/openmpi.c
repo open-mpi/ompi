@@ -26,7 +26,6 @@
 #include "util/pack.h"
 #include "util/sys_info.h"
 #include "util/cmd_line.h"
-#include "util/common_cmd_line.h"
 #include "util/proc_info.h"
 #include "util/session_dir.h"
 #include "util/universe_setup_file_io.h"
@@ -81,24 +80,16 @@ int main(int argc, char **argv)
 							 MCA_NS_BASE_VPID_MAX);
 
     /* setup to read common command line options that span all Open MPI programs */
-    if (OMPI_SUCCESS != (ret = ompi_common_cmd_line_init(argc, argv))) {
-	exit(ret);
-    }
+    cmd_line = OBJ_NEW(ompi_cmd_line_t);
 
-    if (ompi_cmd_line_is_taken(ompi_common_cmd_line, "help") || 
-        ompi_cmd_line_is_taken(ompi_common_cmd_line, "h")) {
-        printf("...showing ompi_info help message...\n");
-        exit(1);
-    }
+    ompi_cmd_line_make_opt(cmd_line, 'v', "version", 0,
+			   "Show version of Open MPI and this program");
 
-    if (ompi_cmd_line_is_taken(ompi_common_cmd_line, "version") ||
-	ompi_cmd_line_is_taken(ompi_common_cmd_line, "v")) {
-	printf("...showing off my version!\n");
-	exit(1);
-    }
+    ompi_cmd_line_make_opt(cmd_line, 'h', "help", 0,
+			   "Show help for this function");
+
 
     /* setup rte command line arguments */
-    cmd_line = OBJ_NEW(ompi_cmd_line_t);
     ompi_rte_cmd_line_setup(cmd_line);
 
     /*
@@ -121,6 +112,17 @@ int main(int argc, char **argv)
 	exit(ret);
     }
 
+    if (ompi_cmd_line_is_taken(cmd_line, "help") || 
+        ompi_cmd_line_is_taken(cmd_line, "h")) {
+        printf("...showing ompi_info help message...\n");
+        exit(1);
+    }
+
+    if (ompi_cmd_line_is_taken(cmd_line, "version") ||
+	ompi_cmd_line_is_taken(cmd_line, "v")) {
+	printf("...showing off my version!\n");
+	exit(1);
+    }
 
     /* parse the cmd_line for rte options */
     ompi_rte_parse_cmd_line(cmd_line);
@@ -209,11 +211,11 @@ int main(int argc, char **argv)
 	    /*
 	     * spawn the local seed
 	     */
-	    	if (0 > execvp("ompid", seed_argv)) {
-	    	    fprintf(stderr, "unable to exec daemon - please report error to bugs@open-mpi.org\n");
-		    fprintf(stderr, "errno: %s\n", strerror(errno));
-	    	    exit(1);
-	    	}
+	    if (0 > execvp("ompid", seed_argv)) {
+		fprintf(stderr, "unable to exec daemon - please report error to bugs@open-mpi.org\n");
+		fprintf(stderr, "errno: %s\n", strerror(errno));
+		exit(1);
+	    }
 	}
     } else {  /* check for remote universe existence */
 	/* future implementation: launch probe daemon, providing my contact info, probe
