@@ -191,8 +191,8 @@ static int ompi_socket_recv (int fd, char *buf, int len )
                 return ( OMPI_ERROR);
 	    }
 	}
-        num      -= (size_t) a;
-        c_ptr      += a;
+        num    -= a;
+        c_ptr  += a;
     }   while ( num > 0 );
     
 
