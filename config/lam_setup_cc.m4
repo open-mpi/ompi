@@ -57,6 +57,18 @@ if test "$GCC" = "yes" -a "$WANT_PICKY_COMPILER" = 1; then
     unset add
 fi
 
+# See if this version of gcc allows -finline-functions
+if test "$GCC" = "yes"; then
+    CFLAGS_orig="$CFLAGS"
+    CFLAGS="$CFLAGS -finline-functions"
+    add=
+    AC_TRY_COMPILE([], [], add=" -finline-functions")
+    CFLAGS="$CFLAGS_orig$add"
+    LAM_UNIQ(CFLAGS)
+    AC_MSG_WARN([$add has been added to CFLAGS])
+    unset add
+fi
+
 # Preload the optflags for the case where the user didn't specify any.
 # If we're using GNU compilers, use -O3 (since it GNU doesn't require
 # all compilation units to be compiled with the same level of
