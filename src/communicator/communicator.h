@@ -66,9 +66,12 @@ struct ompi_communicator_t {
 
     /* Hooks for topo module to hang things */
 
-    mca_topo_1_0_0_t c_topo; /**< structure of function pointers */
-    mca_topo_comm_t *c_topo_comm; /**<structure containing information
+    const mca_topo_1_0_0_t *c_topo; /**< structure of function pointers */
+
+    mca_topo_comm_t *c_topo_comm; /**<structure containing basic information
                                     *about the topology */
+
+    struct mca_topo_module_comm_t *c_topo_module; /**< component specific data */
 
     /* index in Fortran <-> C translation array */
 
@@ -192,6 +195,18 @@ extern "C" {
     int ompi_comm_create ( ompi_communicator_t* comm, ompi_group_t *group, 
                           ompi_communicator_t** newcomm );
 
+
+    /**
+     * create a cartesian communicator
+     */
+    int ompi_topo_create (ompi_communicator_t *old_comm, 
+                          int ndims_or_nnodes,
+                          int *dims_or_index,
+                          int *periods_or_edges,
+                          bool reorder,
+                          ompi_communicator_t **comm_cart,
+                          int cart_or_graph);
+    
     /**
      * split a communicator based on color and key. Parameters
      * are identical to the MPI-counterpart of the function.

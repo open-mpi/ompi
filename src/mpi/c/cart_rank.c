@@ -44,7 +44,7 @@ int MPI_Cart_rank(MPI_Comm comm, int *coords, int *rank) {
     }
 
     /* get the function pointer on this communicator */
-    func = comm->c_topo.topo_cart_rank;
+    func = comm->c_topo->topo_cart_rank;
     if (NULL == func) {
         return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER, 
                                      "MPI_Cart_rank");

@@ -27,6 +27,8 @@
 #include "mca/pml/base/base.h"
 #include "mca/coll/coll.h"
 #include "mca/coll/base/base.h"
+#include "mca/topo/topo.h"
+#include "mca/topo/base/base.h"
 
 
 /*
@@ -127,6 +129,10 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     if (OMPI_SUCCESS != (ret = mca_coll_base_open())) {
         /* JMS show_help */
         printf("show_help: ompi_mpi_init failed in mca_coll_base_init\n");
+        return ret;
+    }
+    if (OMPI_SUCCESS != (ret = mca_topo_base_open())) {
+        /* JMS show_help */
         return ret;
     }
 

@@ -44,7 +44,7 @@ int MPI_Cart_map(MPI_Comm comm, int ndims, int *dims,
     }
 
     /* get the function pointer on this communicator */
-    func = comm->c_topo.topo_cart_map;
+    func = comm->c_topo->topo_cart_map;
     if (NULL == func) {
         return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER, 
                                      "MPI_Cart_map");

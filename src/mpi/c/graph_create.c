@@ -18,19 +18,19 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
-int MPI_Graph_create(MPI_Comm comm_old, int nnodes, int *index,
+int MPI_Graph_create(MPI_Comm old_comm, int nnodes, int *index,
                      int *edges, int reorder, MPI_Comm *comm_graph) {
 
     int err;
-    mca_topo_base_graph_create_fn_t func;
+    bool re_order = false;
 
     /* check the arguments */
     if (MPI_PARAM_CHECK) {
-        if (MPI_COMM_NULL == comm_old) {
+        if (MPI_COMM_NULL == old_comm) {
             return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_COMM,
                                           "MPI_Graph_create");
         }
-        if (OMPI_COMM_IS_INTER(comm_old)) {
+        if (OMPI_COMM_IS_INTER(old_comm)) {
             return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_COMM,
                                           "MPI_Graph_create");
         }
@@ -38,17 +38,36 @@ int MPI_Graph_create(MPI_Comm comm_old, int nnodes, int *index,
             return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_ARG,
                                           "MPI_Graph_create");
         }
-    }
-    /* get the function pointer to do the right thing */
-    func = comm_old->c_topo.topo_graph_create;
-    if (NULL == func) {
-        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER, 
-                                     "MPI_Graph_create");
+
+        if (nnodes > ompi_comm_size(old_comm)) {
+            return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_ARG,
+                                          "MPI_Graph_create");
+        }
+
+        if (0 > reorder || 1 < reorder) {
+            return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_ARG,
+                                          "MPI_Graph_create: boo");
+        }
     }
 
-    /* call the function */
-    if ( MPI_SUCCESS != 
-            (err = func(comm_old, nnodes, index, edges, reorder, comm_graph))) {
+    /* 
+     * everything seems to be alright with the communicator, we can go 
+     * ahead and select a topology module for this purpose and create 
+     * the new graph communicator
+     */
+
+    re_order = (1 == reorder) ? true:false;
+
+    err = ompi_topo_create ((struct ompi_communicator_t *)old_comm,
+                            nnodes,
+                            index,
+                            edges,
+                            re_order,
+                            (struct ompi_communicator_t **)comm_graph,
+                            OMPI_COMM_GRAPH);
+
+    /* check the error status */
+    if (MPI_SUCCESS != err) {
         return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, err, "MPI_Graph_create");
     }
     

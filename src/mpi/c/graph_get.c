@@ -43,7 +43,7 @@ int MPI_Graph_get(MPI_Comm comm, int maxindex, int maxedges,
         }
     }
     /* get the function pointer to do the right thing */
-    func = comm->c_topo.topo_graph_get;
+    func = comm->c_topo->topo_graph_get;
     if (NULL == func) {
         return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER, 
                                      "MPI_Graph_get");
