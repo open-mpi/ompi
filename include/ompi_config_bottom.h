@@ -129,22 +129,18 @@ extern "C" {
 #endif
 
 #ifndef HAVE_ASPRINTF
-int ompi_asprintf(char **, const char *, ...);
 # define asprintf ompi_asprintf
 #endif
 
 #ifndef HAVE_SNPRINTF
-int ompi_snprintf(char *, size_t, const char *, ...);
 # define snprintf ompi_snprintf
 #endif
 
 #ifndef HAVE_VASPRINTF
-int ompi_vasprintf(char **, const char *, va_list);
 # define vasprintf ompi_vasprintf
 #endif
 
 #ifndef HAVE_VSNPRINTF
-int ompi_vsnprintf(char *, size_t, const char *, va_list);
 # define vsnprintf ompi_vsnprintf
 #endif
 
