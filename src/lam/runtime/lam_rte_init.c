@@ -10,6 +10,10 @@
 #include "lam/runtime/runtime.h"
 #include "lam/util/output.h"
 #include "lam/threads/mutex.h"
+#include "mca/lam/pcm/base/base.h"
+#include "mca/lam/oob/base/base.h"
+#include "mca/lam/registry/base/base.h"
+
 
 /**
  * Initialze and setup a process in the LAM RTE.
@@ -19,8 +23,52 @@
  *
  * This function performs 
  */
-int lam_rte_init(void)
+int lam_rte_init(bool *allow_multi_user_threads, bool *have_hidden_threads)
 {
+  int ret;
+  bool user_threads, hidden_threads;
+
+  *allow_multi_user_threads = false;
+  *have_hidden_threads = false;
+
+  /* Added by JMS -- feel free to move around */
+
+  if (LAM_SUCCESS != (ret = mca_pcm_base_open())) {
+    /* JMS show_help */
+    return ret;
+  }
+  if (LAM_SUCCESS != (ret = mca_pcm_base_select(&user_threads, 
+                                                &hidden_threads))) {
+    /* JMS show_help */
+    return ret;
+  }
+  *allow_multi_user_threads |= user_threads;
+  *have_hidden_threads |= hidden_threads;
+
+  if (LAM_SUCCESS != (ret = mca_oob_base_open())) {
+    /* JMS show_help */
+    return ret;
+  }
+  if (LAM_SUCCESS != (ret = mca_oob_base_select(&user_threads, 
+                                                &hidden_threads))) {
+    /* JMS show_help */
+    return ret;
+  }
+  *allow_multi_user_threads |= user_threads;
+  *have_hidden_threads |= hidden_threads;
+
+  if (LAM_SUCCESS != (ret = mca_registry_base_open())) {
+    /* JMS show_help */
+    return ret;
+  }
+  if (LAM_SUCCESS != (ret = mca_registry_base_select(&user_threads, 
+                                                     &hidden_threads))) {
+    /* JMS show_help */
+    return ret;
+  }
+  *allow_multi_user_threads |= user_threads;
+  *have_hidden_threads |= hidden_threads;
+
 #if 0
   /*
    * BWB - this comment should be removed at some point in the very
