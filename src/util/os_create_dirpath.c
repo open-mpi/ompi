@@ -10,8 +10,7 @@
 #include <unistd.h>
 #include <libgen.h>
 
-#include "constants.h"
-
+#include "include/constants.h"
 #include "util/os_create_dirpath.h"
 #include "util/sys_info.h"
 
