@@ -14,6 +14,10 @@
 #include "op/op.h"
 #include "mca/base/base.h"
 #include "mca/base/base.h"
+#include "mca/allocator/base/base.h"
+#include "mca/allocator/allocator.h"
+#include "mca/mpool/base/base.h"
+#include "mca/mpool/mpool.h"
 #include "mca/ptl/ptl.h"
 #include "mca/ptl/base/base.h"
 #include "mca/pml/pml.h"
@@ -71,7 +75,14 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     /* Open up relevant MCA modules.    Do not open io, topo, or one
          module types here -- they are loaded upon demand (i.e., upon
          relevant constructors). */
-
+    if (OMPI_SUCCESS != (ret = mca_allocator_base_open())) {
+        /* JMS show_help */
+        return ret;
+    }
+    if (OMPI_SUCCESS != (ret = mca_mpool_base_open())) {
+        /* JMS show_help */
+        return ret;
+    }
     if (OMPI_SUCCESS != (ret = mca_pml_base_open())) {
         /* JMS show_help */
         return ret;

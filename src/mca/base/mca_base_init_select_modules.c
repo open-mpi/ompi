@@ -15,6 +15,7 @@
 #include "mca/ptl/base/base.h"
 #include "mca/pml/pml.h"
 #include "mca/pml/base/base.h"
+#include "mca/mpool/base/base.h"
 
 
 /*
@@ -32,10 +33,17 @@ int mca_base_init_select_modules(int requested,
   ompi_list_t colls;
   bool user_threads, hidden_threads;
 
+
   /* Make final lists of available modules (i.e., call the query/init
      functions and see if they return happiness).  For pml, there will
      only be one (because there's only one for the whole process), but
      for ptl and coll, we'll get lists back. */
+
+  if (OMPI_SUCCESS != mca_mpool_base_init(&user_threads)) {
+    return OMPI_ERROR;
+  }
+  allow_multi_user_threads |= user_threads;
+
   /* JMS: At some point, we'll need to feed it the thread level to
      ensure to pick one high enough (e.g., if we need CR) */
 
