@@ -219,7 +219,29 @@ libmpi_c_mpi_la_SOURCES = \
 		group_size.c \
 		group_translate_ranks.c \
 		group_union.c \
+		ibsend.c \
+		info_c2f.c \
+		info_create.c \
+		info_delete.c \
+		info_dup.c \
+		info_f2c.c \
+		info_free.c \
+		info_get.c \
+		info_get_nkeys.c \
+		info_get_nthkey.c \
+		info_get_valuelen.c \
+		info_set.c \
         init.c \
+		init_thread.c \
+		initialized.c \
+		intercomm_create.c \
+		intercomm_merge.c \
+		iprobe.c \
+		irecv.c \
+		irsend.c \
+		is_thread_main.c \
+		isend.c \
+		issend.c \
         testall.c \
         testany.c \
         test.c \

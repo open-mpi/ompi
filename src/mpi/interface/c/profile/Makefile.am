@@ -192,7 +192,29 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
 		pgroup_size.c \
 		pgroup_translate_ranks.c \
 		pgroup_union.c \
-        pinit.c \
+        pibsend.c \
+		pinfo_c2f.c \
+		pinfo_create.c \
+		pinfo_delete.c \
+		pinfo_dup.c \
+		pinfo_f2c.c \
+		pinfo_free.c \
+		pinfo_get.c \
+		pinfo_get_nkeys.c \
+		pinfo_get_nthkey.c \
+		pinfo_get_valuelen.c \
+		pinfo_set.c \
+		pinit.c \
+		pinit_thread.c \
+		pinitialized.c \
+		pintercomm_create.c \
+		pintercomm_merge.c \
+		piprobe.c \
+		pirecv.c \
+		pirsend.c \
+		pis_thread_main.c \
+		pisend.c \
+		pissend.c \
         ptestall.c \
         ptestany.c \
         ptest.c \
