@@ -147,6 +147,7 @@ lam_cmd_line_t *lam_cmd_line_create(void)
 void lam_cmd_line_free(lam_cmd_line_t *cmd)
 {
   lam_list_item_t *item;
+  cmd_line_option_t *option;
 
 #if 0
   /* JMS This function doesn't seem to exist...? */
@@ -161,6 +162,11 @@ void lam_cmd_line_free(lam_cmd_line_t *cmd)
   for (item = lam_list_remove_first(&cmd->lcl_options);
        NULL != item;
        item = lam_list_remove_first(&cmd->lcl_options)) {
+    option = (cmd_line_option_t *) item;
+    if (NULL != option->clo_long_name)
+      LAM_FREE(option->clo_long_name);
+    if (NULL != option->clo_description)
+      LAM_FREE(option->clo_description);
     LAM_FREE(item);
   }
 
