@@ -416,7 +416,8 @@ void mca_ptl_ib_matched(mca_ptl_base_module_t* module,
      * We then need to copy from
      * unex_buffer to application buffer */
 
-    if (header->hdr_frag.hdr_frag_length > 0) {
+    if ((header->hdr_common.hdr_type & MCA_PTL_HDR_TYPE_MATCH) &&
+        (header->hdr_rndv.hdr_frag_length > 0)) {
         struct iovec iov;
         ompi_proc_t *proc;
 	unsigned int iov_count, max_data;
@@ -435,7 +436,7 @@ void mca_ptl_ib_matched(mca_ptl_base_module_t* module,
 				      request->req_base.req_datatype,
 				      request->req_base.req_count,
 				      request->req_base.req_addr,
-				      header->hdr_frag.hdr_frag_offset,
+                      0, /* fragment offset */
 				      NULL );
         ompi_convertor_unpack(&frag->frag_base.frag_convertor, &iov, &iov_count, &max_data, &freeAfter);
     }
