@@ -21,7 +21,8 @@
 #include "mca/base/mca_base_param.h"
 #include "mca/iof/iof.h"
 #include "mca/iof/base/base.h"
-
+#include "mca/iof/base/iof_base_header.h"
+#include "mca/iof/base/iof_base_fragment.h"
 
 /*
  * The following file was created by configure.  It contains extern
@@ -35,8 +36,8 @@
 /*
  * Global variables
  */
-int mca_iof_base_output = -1;
-ompi_list_t mca_iof_base_components_opened;
+
+mca_iof_base_t mca_iof_base;
 
 
 /**
@@ -45,15 +46,45 @@ ompi_list_t mca_iof_base_components_opened;
  */
 int mca_iof_base_open(void)
 {
-  /* Open up all available components */
+    int id;
+    int int_value;
+    char* str_value;
 
-  if (OMPI_SUCCESS != 
-      mca_base_components_open("iof", 0, mca_iof_base_static_components, 
-                               &mca_iof_base_components_opened)) {
-    return OMPI_ERROR;
-  }
+    /* Initialize globals */
+    OBJ_CONSTRUCT(&mca_iof_base.iof_components_opened, ompi_list_t);
+    OBJ_CONSTRUCT(&mca_iof_base.iof_endpoints, ompi_list_t);
+    OBJ_CONSTRUCT(&mca_iof_base.iof_lock, ompi_mutex_t);
+    OBJ_CONSTRUCT(&mca_iof_base.iof_condition, ompi_condition_t);
+    OBJ_CONSTRUCT(&mca_iof_base.iof_fragments, ompi_free_list_t);
 
-  /* All done */
-  return OMPI_SUCCESS;
+    /* lookup common parameters */
+    id = mca_base_param_register_int("iof","base","window_size",NULL,MCA_IOF_BASE_MSG_MAX << 1);
+    mca_base_param_lookup_int(id,&int_value);
+    mca_iof_base.iof_window_size = int_value;
+
+    id = mca_base_param_register_string("iof","base","service",NULL,"0.0.0");
+    mca_base_param_lookup_int(id,&str_value);
+    mca_iof_base.iof_service = ompi_name_server.convert_string_to_process_name(str_value);
+ 
+    /* initialize free list */
+    ompi_free_list_init(
+        &mca_iof_base.iof_fragments,
+        sizeof(mca_iof_base_frag_t),
+        OBJ_CLASS(mca_iof_base_frag_t),
+        0,   /* number to initially allocate */
+        -1,  /* maximum elements to allocate */
+        32,  /* number per allocation */
+        NULL); /* optional memory pool */
+
+
+    /* Open up all available components */
+    if (OMPI_SUCCESS != 
+        mca_base_components_open("iof", 0, mca_iof_base_static_components, 
+                                 &mca_iof_base.iof_components_opened)) {
+      return OMPI_ERROR;
+    }
+  
+    /* All done */
+    return OMPI_SUCCESS;
 }
 

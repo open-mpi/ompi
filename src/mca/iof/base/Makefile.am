@@ -23,13 +23,17 @@ AM_CPPFLAGS = -I$(top_builddir)/src
 # Source code files
 
 headers = \
-        base.h
+        base.h \
+        iof_base_endpoint.h \  
+        iof_base_fragment.h
 
 libmca_iof_base_la_SOURCES = \
         $(headers) \
         iof_base_close.c \
         iof_base_open.c \
- 	iof_base_select.c
+        iof_base_endpoint.c \
+        iof_base_fragment.c \
+ 	    iof_base_select.c
 
 # Conditionally install the header files
 

@@ -20,28 +20,32 @@ include $(top_ompi_srcdir)/config/Makefile.options
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
 # (for static builds).
 
-if OMPI_BUILD_iof_proxy_DSO
+if OMPI_BUILD_iof_svc_DSO
 component_noinst =
-component_install = mca_iof_proxy.la
+component_install = mca_iof_svc.la
 else
-component_noinst = libmca_iof_proxy.la
+component_noinst = libmca_iof_svc.la
 component_install =
 endif
 
-proxy_SOURCES = \
-    iof_proxy.c \
-    iof_proxy.h \
-    iof_proxy_component.c \
-    iof_proxy_svc.c \
-    iof_proxy_svc.h
+svc_SOURCES = \
+    iof_svc.c \
+    iof_svc.h \
+    iof_svc_component.c \
+    iof_svc_proxy.h \
+    iof_svc_proxy.c \
+    iof_svc_publish.h \
+    iof_svc_publish.c \
+    iof_svc_subscript.h \
+    iof_svc_subscript.c
 
 mcacomponentdir = $(libdir)/openmpi
 mcacomponent_LTLIBRARIES = $(component_install)
-mca_iof_proxy_la_SOURCES = $(proxy_SOURCES)
-mca_iof_proxy_la_LIBADD = 
-mca_iof_proxy_la_LDFLAGS = -module -avoid-version
+mca_iof_svc_la_SOURCES = $(svc_SOURCES)
+mca_iof_svc_la_LIBADD = 
+mca_iof_svc_la_LDFLAGS = -module -avoid-version
 
 noinst_LTLIBRARIES = $(component_noinst)
-libmca_iof_proxy_la_SOURCES = $(proxy_SOURCES)
-libmca_iof_proxy_la_LIBADD =
-libmca_iof_proxy_la_LDFLAGS = -module -avoid-version
+libmca_iof_svc_la_SOURCES = $(svc_SOURCES)
+libmca_iof_svc_la_LIBADD =
+libmca_iof_svc_la_LDFLAGS = -module -avoid-version

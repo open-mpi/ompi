@@ -178,7 +178,8 @@ OMPI_DECLSPEC extern mca_iof_base_module_t mca_iof;
                                                                                                                  
 typedef mca_iof_base_module_t* (*mca_iof_base_component_init_fn_t)(
     int *priority,
-    bool *thread_support
+    bool *allow_user_threads,
+    bool *have_hidden_threads
 );
 
 struct mca_iof_base_component_1_0_0_t {

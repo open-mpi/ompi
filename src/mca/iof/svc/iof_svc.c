@@ -18,21 +18,20 @@
 
 #include "include/constants.h"
 #include "util/output.h"
-#include "mca/iof/iof.h"
-#include "mca/oob/oob.h"
-#include "mca/iof/iof.h"
+#include "mca/oob/base/base.h"
 #include "mca/iof/base/iof_base_endpoint.h"
-#include "iof_proxy.h"
-#include "iof_proxy_svc.h"
+#include "iof_svc.h"
+#include "iof_svc_publish.h"
+#include "iof_svc_subscript.h"
 
 
-mca_iof_base_module_t mca_iof_proxy_module = {
-    mca_iof_proxy_publish,
-    mca_iof_proxy_unpublish,
-    mca_iof_proxy_push,
-    mca_iof_proxy_pull,
-    mca_iof_proxy_subscribe,
-    mca_iof_proxy_unsubscribe
+mca_iof_base_module_t mca_iof_svc_module = {
+    mca_iof_svc_publish,
+    mca_iof_svc_unpublish,
+    mca_iof_svc_push,
+    mca_iof_svc_pull,
+    mca_iof_svc_subscribe,
+    mca_iof_svc_unsubscribe
 };
 
 
@@ -48,7 +47,7 @@ mca_iof_base_module_t mca_iof_proxy_module = {
  *
  */
 
-int mca_iof_proxy_publish(
+int mca_iof_svc_publish(
     const ompi_process_name_t* name,
     mca_iof_base_mode_t mode,
     mca_iof_base_tag_t tag,
@@ -56,19 +55,24 @@ int mca_iof_proxy_publish(
 {
     int rc;
 
-    /* publish to server */
-    if(mode == MCA_IOF_SINK) {
-        rc = mca_iof_proxy_svc_publish(name,tag);
-        if(rc != OMPI_SUCCESS)
-            return rc;
-    }
-
     /* setup a local endpoint to reflect registration */
     rc = mca_iof_base_endpoint_create(
         name,
         mode,
         tag,
         fd);
+    if(rc != OMPI_SUCCESS) {
+        return rc;
+    }
+
+    /* publish endpoint */
+    if(mode == MCA_IOF_SINK) {
+        rc = mca_iof_svc_publish_create(
+            name,
+            &mca_oob_name_self,
+            OMPI_NS_CMP_ALL,
+            tag);
+    }
     return rc;
 }
 
@@ -83,24 +87,26 @@ int mca_iof_proxy_publish(
  *
  */
 
-int mca_iof_proxy_unpublish(
+int mca_iof_svc_unpublish(
     const ompi_process_name_t* name,
     ompi_ns_cmp_bitmask_t mask,
     mca_iof_base_tag_t tag)
 {
     int rc;
-
-    /* cleanup server */
-    mca_iof_proxy_svc_unpublish(
+    rc = mca_iof_svc_publish_delete(
         name,
+        MCA_OOB_NAME_SELF,
         mask,
         tag);
+    if(rc != OMPI_SUCCESS)
+        return rc;
 
     /* setup a local endpoint to reflect registration */
     rc = mca_iof_base_endpoint_delete(
         name,
         mask,
         tag);
+                                                                                                             
     return rc;
 }
 
@@ -115,7 +121,7 @@ int mca_iof_proxy_unpublish(
  * @param fd        Local file descriptor.
  */
 
-int mca_iof_proxy_push(
+int mca_iof_svc_push(
     const ompi_process_name_t* dst_name,
     ompi_ns_cmp_bitmask_t dst_mask,
     mca_iof_base_tag_t dst_tag,
@@ -123,25 +129,23 @@ int mca_iof_proxy_push(
 {
     int rc;
 
-    /* send a subscription to server on behalf of the destination */
-    rc = mca_iof_proxy_svc_subscribe(
+    /* setup a subscription */
+    rc = mca_iof_svc_subscript_create(
         MCA_OOB_NAME_SELF,
         OMPI_NS_CMP_ALL,
         dst_tag,
         dst_name,
         dst_mask,
-        dst_tag
-        );
+        dst_tag);
     if(rc != OMPI_SUCCESS)
         return rc;
-                                                                                                             
+
     /* setup a local endpoint to reflect registration */
     rc = mca_iof_base_endpoint_create(
-        MCA_OOB_NAME_SELF,
-        MCA_IOF_SOURCE,
+        MCA_OOB_NAME_SELF, 
+        MCA_IOF_SOURCE, 
         dst_tag,
         fd);
- 
     return rc;
 }
 
@@ -156,24 +160,25 @@ int mca_iof_proxy_push(
  * @param fd        Local file descriptor.
  */
 
-int mca_iof_proxy_pull(
+int mca_iof_svc_pull(
     const ompi_process_name_t* src_name,
     ompi_ns_cmp_bitmask_t src_mask,
     mca_iof_base_tag_t src_tag,
     int fd)
 {
-    /* setup a local endpoint */
     int rc;
+
+    /* setup a local endpoint */
     rc = mca_iof_base_endpoint_create(
-        MCA_OOB_NAME_SELF,
-        MCA_IOF_SOURCE,
+        MCA_OOB_NAME_SELF, 
+        MCA_IOF_SINK, 
         src_tag,
         fd);
     if(rc != OMPI_SUCCESS)
         return rc;
 
-    /* send a subscription message to the server */
-    rc = mca_iof_proxy_svc_subscribe(
+    /* create a subscription */
+    rc = mca_iof_svc_subscript_create(
         src_name,
         src_mask,
         src_tag,
@@ -183,16 +188,18 @@ int mca_iof_proxy_pull(
     return rc;
 }
 
+
 /**
  * Setup buffering for a specified set of endpoints.
  */
 
-int mca_iof_proxy_buffer(
+int mca_iof_svc_buffer(
     const ompi_process_name_t* src_name,
     ompi_ns_cmp_bitmask_t src_mask,
     mca_iof_base_tag_t src_tag,
     size_t buffer_size)
 {
+    /* send a message to the server indicating this set of connections should be buffered */
     return OMPI_ERROR;
 }
 
@@ -202,45 +209,24 @@ int mca_iof_proxy_buffer(
  * from a specified set of peers.
  */
 
-int mca_iof_proxy_subscribe(
+int mca_iof_svc_subscribe(
     const ompi_process_name_t* src_name,  
     ompi_ns_cmp_bitmask_t src_mask,
     mca_iof_base_tag_t src_tag,
     mca_iof_base_callback_fn_t cb,
     void* cbdata)
 {
-    int rc;
-
-    /* create a local registration to reflect the callback */
-
-    /* send a subscription message to the service */
-    rc = mca_iof_proxy_svc_subscribe(
-        src_name,
-        src_mask,
-        src_tag,
-        MCA_OOB_NAME_SELF,
-        OMPI_NS_CMP_ALL,
-        src_tag);
-    return rc;
+    /* setup local callback on receipt of data */
+    /* setup local subscription */
+    return OMPI_ERROR;
 }
 
-int mca_iof_proxy_unsubscribe(
+int mca_iof_svc_unsubscribe(
     const ompi_process_name_t* src_name,
     ompi_ns_cmp_bitmask_t src_mask,
     mca_iof_base_tag_t src_tag)
 {
-    int rc;
-
-    /* send an unsubscribe message to the service */
-    rc = mca_iof_proxy_svc_unsubscribe(
-        src_name,
-        src_mask,
-        src_tag,
-        MCA_OOB_NAME_SELF,
-        OMPI_NS_CMP_ALL,
-        src_tag);
-
-    /* remove local callback */
+    /* cleanup any local resouces associated with this subscription */
     return OMPI_ERROR;
 }
 
