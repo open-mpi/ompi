@@ -147,8 +147,6 @@ mca_ptl_elan_finalize (struct mca_ptl_base_module_t *ptl)
     int         rail_index;
     struct mca_ptl_elan_module_t *elan_ptl;
 
-    START_FUNC(PTL_ELAN_DEBUG_FIN);
-
     /* TODO: move from mca_ptl_elan_component_close()
        all the ptl_elan_finalize related code here */
 #if 0  
@@ -164,7 +162,6 @@ mca_ptl_elan_finalize (struct mca_ptl_base_module_t *ptl)
     mca_ptl_elan_component.num_modules--;
 #endif
 
-    END_FUNC(PTL_ELAN_DEBUG_FIN);
     return OMPI_SUCCESS;
 }
 
@@ -173,8 +170,6 @@ mca_ptl_elan_req_init (struct mca_ptl_base_module_t *ptl,
                        struct mca_pml_base_send_request_t *request)
 {
     mca_ptl_elan_send_frag_t *desc;
-
-    START_FUNC(PTL_ELAN_DEBUG_SEND);
 
     desc = mca_ptl_elan_alloc_desc(ptl, 
 	    (struct mca_pml_base_request_t *) request, 
@@ -190,7 +185,6 @@ mca_ptl_elan_req_init (struct mca_ptl_base_module_t *ptl,
     }
     desc->desc->desc_status = MCA_PTL_ELAN_DESC_CACHED;
 
-    END_FUNC(PTL_ELAN_DEBUG_SEND);
     return OMPI_SUCCESS;
 }
 
@@ -201,14 +195,12 @@ mca_ptl_elan_req_fini (struct mca_ptl_base_module_t *ptl,
     /* XXX: Lock to be added */
     ompi_ptl_elan_queue_ctrl_t *queue;
     mca_ptl_elan_send_frag_t    *desc;
-    START_FUNC(PTL_ELAN_DEBUG_SEND);
 
     /* return the fragment and update the status */
     queue = ((struct mca_ptl_elan_module_t * )ptl)->queue;
     desc = ((mca_ptl_elan_send_request_t *) request)->req_frag;
     OMPI_FREE_LIST_RETURN (&queue->tx_desc_free, (ompi_list_item_t *) desc);
     desc->desc->desc_status = MCA_PTL_ELAN_DESC_LOCAL;
-    END_FUNC(PTL_ELAN_DEBUG_SEND);
     return;
 }
 
@@ -252,8 +244,6 @@ mca_ptl_elan_isend (struct mca_ptl_base_module_t *ptl,
      *   correspondingly multiple LOCKS to go through
      */
 
-    START_FUNC(PTL_ELAN_DEBUG_SEND);
-
     if (offset == 0 && sendreq->req_cached) { 
 	/* The first fragment uses a cached desc */
         desc = ((mca_ptl_elan_send_request_t*)sendreq)->req_frag;
@@ -280,7 +270,6 @@ mca_ptl_elan_isend (struct mca_ptl_base_module_t *ptl,
 
     /* Update offset */
     sendreq->req_offset += size;
-    END_FUNC(PTL_ELAN_DEBUG_SEND);
     return rc;
 }
 
@@ -308,8 +297,6 @@ mca_ptl_elan_put (struct mca_ptl_base_module_t *ptl,
      *    elan information, so there needs to be a change 
      */
 
-    START_FUNC(PTL_ELAN_DEBUG_PUT);
-
     desc = mca_ptl_elan_alloc_desc(ptl, 
 	    (struct mca_pml_base_request_t *) sendreq, 
 	    MCA_PTL_ELAN_DESC_PUT);
@@ -328,7 +315,6 @@ mca_ptl_elan_put (struct mca_ptl_base_module_t *ptl,
     sendreq->req_offset += size;
 
     /* Update all the sends until the put is done */
-    END_FUNC(PTL_ELAN_DEBUG_PUT);
     return rc;
 }
 
@@ -364,7 +350,6 @@ mca_ptl_elan_get (struct mca_ptl_base_module_t *ptl,
      *    elan information, so there needs to be a change 
      */
 
-    START_FUNC(PTL_ELAN_DEBUG_GET);
     desc = mca_ptl_elan_alloc_desc(ptl, 
 	    (struct mca_pml_base_request_t *) req, 
 	    MCA_PTL_ELAN_DESC_GET);
@@ -382,7 +367,6 @@ mca_ptl_elan_get (struct mca_ptl_base_module_t *ptl,
     /*req->req_offset += size;*/
 
     /* Update all the sends until the put is done */
-    END_FUNC(PTL_ELAN_DEBUG_GET);
 #endif
     return rc;
 }
@@ -402,7 +386,6 @@ mca_ptl_elan_matched (mca_ptl_base_module_t * ptl,
 
     int     set = 0;
 
-    START_FUNC(PTL_ELAN_DEBUG_RECV);
     header  = &frag->frag_base.frag_header;
     request = frag->frag_request;
     recv_frag = (mca_ptl_elan_recv_frag_t * ) frag;
@@ -478,5 +461,4 @@ mca_ptl_elan_matched (mca_ptl_base_module_t * ptl,
 	 * Then Done with this fragment, i.e., data */
 	mca_ptl_elan_recv_frag_done (header, frag, request);
     }
-    END_FUNC(PTL_ELAN_DEBUG_RECV);
 }

@@ -19,8 +19,6 @@ ompi_mca_ptl_elan_setup (mca_ptl_elan_state_t * ems)
     mca_ptl_elan_component_t *emp;
     int         rail_count;
 
-    START_FUNC(PTL_ELAN_DEBUG_INIT);
-
     rail_count = ems->elan_nrails;
     emp = ems->elan_component;
     emp->num_modules = 0;
@@ -87,7 +85,6 @@ ompi_mca_ptl_elan_setup (mca_ptl_elan_state_t * ems)
         return OMPI_ERROR;
     }
 
-    END_FUNC(PTL_ELAN_DEBUG_INIT);
     return (OMPI_SUCCESS);
 }
 
@@ -274,7 +271,6 @@ ompi_elan_device_init (mca_ptl_elan_component_t * emp,
 
     mca_ptl_elan_state_t *ems;
 
-    START_FUNC(PTL_ELAN_DEBUG_INIT);
 
     ems = &mca_ptl_elan_global_state;
 
@@ -471,7 +467,6 @@ ompi_elan_device_init (mca_ptl_elan_component_t * emp,
     /* Free the local variable */
     free (rails);
 
-    END_FUNC(PTL_ELAN_DEBUG_INIT);
     return OMPI_SUCCESS;
 }
 
@@ -541,8 +536,6 @@ mca_ptl_elan_state_init (mca_ptl_elan_component_t * emp)
     elan_state = elan_init(0);
 #endif
 
-    START_FUNC (PTL_ELAN_DEBUG_INIT);
-
     ems->elan_ctx = ems->elan_rail[0]->rail_ctx;
     ems->elan_estate = (void *) ems->all_estates[0];
 
@@ -569,7 +562,6 @@ mca_ptl_elan_state_init (mca_ptl_elan_component_t * emp)
         return OMPI_ERROR;
     }
 
-    END_FUNC(PTL_ELAN_DEBUG_INIT);
     return (OMPI_SUCCESS);
 }
 
@@ -580,7 +572,6 @@ mca_ptl_elan_state_finalize (mca_ptl_elan_component_t * emp)
     int     num_rails;
     mca_ptl_elan_state_t *ems;
 
-    START_FUNC(PTL_ELAN_DEBUG_FIN);
 
     ems = &mca_ptl_elan_global_state;
     num_rails = ems->elan_nrails;
@@ -624,7 +615,6 @@ mca_ptl_elan_state_finalize (mca_ptl_elan_component_t * emp)
     free (ems->all_rails);
     free (ems->elan_cap);
 
-    END_FUNC(PTL_ELAN_DEBUG_FIN);
     return (OMPI_SUCCESS);
 }
 
@@ -638,7 +628,6 @@ mca_ptl_elan_thread_init (mca_ptl_elan_component_t * emp)
 {
     int     i, num_rails;
 
-    START_FUNC(PTL_ELAN_DEBUG_INIT);
     num_rails = emp->num_modules;
 
     /*struct ompi_ptl_elan_thread_t **threads; */
@@ -672,7 +661,6 @@ mca_ptl_elan_thread_init (mca_ptl_elan_component_t * emp)
 	emp->recv_threads[i] = t;
     }
 
-    END_FUNC(PTL_ELAN_DEBUG_INIT);
     return (OMPI_SUCCESS);
 }
 
@@ -683,7 +671,6 @@ mca_ptl_elan_thread_close (mca_ptl_elan_component_t * emp)
 {
     int     i, num_rails;
 
-    START_FUNC(PTL_ELAN_DEBUG_FIN);
     num_rails = emp->num_modules;
 
     for (i = 0; i < num_rails; i ++) {
@@ -748,7 +735,6 @@ mca_ptl_elan_thread_close (mca_ptl_elan_component_t * emp)
         ompi_thread_join(&trecv->thread, &ptr);
     }
 
-    END_FUNC(PTL_ELAN_DEBUG_FIN);
     return (OMPI_SUCCESS);
 }
 #endif /* End of OMPI_PTL_ELAN_THREADING */

@@ -39,8 +39,6 @@ ompi_init_elan_queue_events (mca_ptl_elan_module_t * ptl,
     ompi_ptl_elan_qdma_desc_t *desc;
     E4_Event32 *elan_ptr;
 
-    START_FUNC(PTL_ELAN_DEBUG_INIT);
-
     rail = (RAIL *) ptl->ptl_elan_rail;
     ctx = (ELAN4_CTX *) ptl->ptl_elan_ctx;
 
@@ -156,7 +154,6 @@ ompi_init_elan_queue_events (mca_ptl_elan_module_t * ptl,
 
     flist->fl_num_allocated += flist->fl_num_per_alloc;
 
-    END_FUNC(PTL_ELAN_DEBUG_INIT);
     return OMPI_SUCCESS;
 }
 
@@ -170,8 +167,6 @@ mca_ptl_elan_putget_desc_construct (
 	int local /* dma_src is local */ )
 {
     ELAN4_CTX *ctx;
-
-    START_FUNC(PTL_ELAN_DEBUG_DESC);
 
     ctx = (ELAN4_CTX *)ptl->ptl_elan_ctx;
     memset(desc, 0, sizeof(desc));
@@ -242,7 +237,6 @@ mca_ptl_elan_putget_desc_construct (
 
     /* Make PCI write visable */
     mb();
-    END_FUNC(PTL_ELAN_DEBUG_DESC);
 }
 
 #define OMPI_ELAN_PUTGET_GROW(ptl, flist, frag, dp, eptr, msize, esize, local)\
@@ -285,8 +279,6 @@ ompi_ptl_elan_init_putget_ctrl (mca_ptl_elan_module_t * ptl,
     mca_ptl_elan_send_frag_t *frag;
     ompi_free_list_t *put_list, *get_list;
     ompi_ptl_elan_putget_desc_t *put_desc, *get_desc;
-
-    START_FUNC(PTL_ELAN_DEBUG_INIT);
 
     main_align = OMPI_PTL_ELAN_GET_MAX (sizeof (void *), ELAN_ALIGN);
     elan_align = OMPI_PTL_ELAN_GET_MAX (sizeof (int *), ELAN_BLOCK_ALIGN);
@@ -344,7 +336,6 @@ ompi_ptl_elan_init_putget_ctrl (mca_ptl_elan_module_t * ptl,
     OMPI_PTL_ELAN_CHECK_UNEX (get_desc, NULL, OMPI_ERROR, 0);
     OMPI_ELAN_PUTGET_GROW(ptl, get_list, frag, get_desc, elan_ptr, 
 	    main_size, elan_size, 0);
-    END_FUNC (PTL_ELAN_DEBUG_INIT);
     return OMPI_SUCCESS;
 }
 
@@ -368,7 +359,6 @@ ompi_init_elan_qdma (mca_ptl_elan_component_t * emp,
     ELAN4_CTX  *ctx;
     struct mca_ptl_elan_module_t *ptl;
 
-    START_FUNC(PTL_ELAN_DEBUG_INIT);
     nslots = OMPI_PTL_ELAN_MAX_QSLOTS;
 
 #if OMPI_PTL_ELAN_COMP_QUEUE
@@ -553,7 +543,6 @@ ompi_init_elan_qdma (mca_ptl_elan_component_t * emp,
         OBJ_CONSTRUCT (&queue->rx_lock, ompi_mutex_t);
     }
 
-    END_FUNC(PTL_ELAN_DEBUG_INIT);
     return (OMPI_SUCCESS);
 }
 
@@ -566,8 +555,6 @@ ompi_init_elan_putget (mca_ptl_elan_component_t * emp,
     RAIL       *rail;
     ELAN4_CTX  *ctx;
     struct mca_ptl_elan_module_t *ptl;
-
-    START_FUNC(PTL_ELAN_DEBUG_INIT);
 
     /* Init the Transmit Queue structure */
     for (i = 0; i < num_rails; i++) {
@@ -626,7 +613,6 @@ ompi_init_elan_putget (mca_ptl_elan_component_t * emp,
 		0, OMPI_PTL_ELAN_NUM_PUTGET, OMPI_PTL_ELAN_MAX_PUTGET);
     }
 
-    END_FUNC(PTL_ELAN_DEBUG_INIT);
     return (OMPI_SUCCESS);
 }
 

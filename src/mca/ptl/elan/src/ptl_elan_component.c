@@ -134,8 +134,6 @@ mca_ptl_elan_component_open (void)
 int
 mca_ptl_elan_component_close (void)
 {
-    START_FUNC (PTL_ELAN_DEBUG_FIN);
-
     if (mca_ptl_elan_component_initialized) {
 
 #if OMPI_PTL_ELAN_THREADING
@@ -176,8 +174,6 @@ mca_ptl_elan_component_close (void)
 
     /* Destruct other structures */
     OBJ_DESTRUCT (&elan_mp->elan_lock);
-    END_FUNC (PTL_ELAN_DEBUG_FIN);
-
     return OMPI_SUCCESS;
 }
 
@@ -194,8 +190,6 @@ mca_ptl_elan_component_init (int *num_ptls,
 {
     mca_ptl_base_module_t **ptls;
  
-    START_FUNC(PTL_ELAN_DEBUG_INIT);
-
     *num_ptls = 0;
     *allow_multi_user_threads = true;
     *have_hidden_threads = OMPI_HAVE_THREADS;
@@ -263,7 +257,6 @@ mca_ptl_elan_component_init (int *num_ptls,
 #endif
 
     mca_ptl_elan_component_initialized = true;
-    END_FUNC(PTL_ELAN_DEBUG_INIT);
     return ptls;
 }
 
@@ -287,8 +280,6 @@ mca_ptl_elan_component_progress (mca_ptl_tstamp_t tstamp)
 {
     int         i, no_ptls;
 
-    START_FUNC (PTL_ELAN_DEBUG_NONE);
-
     no_ptls = elan_mp->num_modules;
 
     /* Iterate over all the PTL input Queues */
@@ -297,7 +288,6 @@ mca_ptl_elan_component_progress (mca_ptl_tstamp_t tstamp)
 	mca_ptl_elan_drain_recv(elan_mp->modules[i]);
     }
 
-    END_FUNC (PTL_ELAN_DEBUG_NONE);
     return OMPI_SUCCESS;
 }
 
