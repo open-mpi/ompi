@@ -262,12 +262,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         goto error;
     }
 
-    /* initialize attribute meta-data structure for comm/win/dtype */
-    if (OMPI_SUCCESS != (ret = ompi_attr_init())) {
-        error = "ompi_attr_init() failed";
-        goto error;
-    }
-
     /* initialize communicators */
     if (OMPI_SUCCESS != (ret = ompi_comm_init())) {
         error = "ompi_comm_init() failed";
@@ -289,6 +283,12 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     /* initialize file handles */
     if (OMPI_SUCCESS != (ret = ompi_file_init())) {
         error = "ompi_file_init() failed";
+        goto error;
+    }
+
+    /* initialize attribute meta-data structure for comm/win/dtype */
+    if (OMPI_SUCCESS != (ret = ompi_attr_init())) {
+        error = "ompi_attr_init() failed";
         goto error;
     }
 

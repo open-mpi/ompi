@@ -157,42 +157,31 @@ extern "C" {
 
 /*
  * Predefined attribute keyvals
+ *
+ * DO NOT CHANGE THE ORDER WITHOUT ALSO CHANGING THE ORDER IN
+ * src/attribute/attribute_predefined.c.
  */
 enum {
-  MPI_TAG_UB,
-  MPI_HOST,
-  MPI_IO,
+    /* MPI-1 */
+    MPI_TAG_UB,
+    MPI_HOST,
+    MPI_IO,
+    MPI_WTIME_IS_GLOBAL,
 
-  MPI_WTIME_IS_GLOBAL,
-  MPI_UNIVERSE_SIZE,
-  MPI_APPNUM,
+    /* MPI-2 */
+    MPI_APPNUM,
+    MPI_LASTUSEDCODE,
+    MPI_UNIVERSE_SIZE,
+    MPI_WIN_BASE,
+    MPI_WIN_SIZE,
+    MPI_WIN_DISP_UNIT,
 
-  MPI_WIN_BASE,
-  MPI_WIN_SIZE,
-  MPI_WIN_DISP_UNIT,
-
-  /* 
-   * Even though these four are IMPI attributes, they need to be there
-   * for all MPI jobs
-   */
-  IMPI_CLIENT_SIZE,
-  IMPI_CLIENT_COLOR,
-  IMPI_HOST_SIZE,
-  IMPI_HOST_COLOR,
-
-  /*
-   * Predefined attribute keyvals, but Open MPI-specific
-   */
-  OMPI_UNIVERSE_NCPUS,
-  OMPI_UNIVERSE_NNODES,
-
-  /*
-   * Predefined attribute keyvals, but Open MPI-specific
-   */
-  OMPI_MPI_SSI_COLL,
-  OMPI_MPI_SSI_COLL_CROSSOVER,
-  OMPI_MPI_SSI_COLL_ASSOCIATIVE,
-  OMPI_MPI_SSI_COLL_REDUCE_CROSSOVER
+    /* Even though these four are IMPI attributes, they need to be there
+       for all MPI jobs */
+    IMPI_CLIENT_SIZE,
+    IMPI_CLIENT_COLOR,
+    IMPI_HOST_SIZE,
+    IMPI_HOST_COLOR
 };
 
 /*

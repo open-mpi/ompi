@@ -69,14 +69,6 @@ union ompi_attribute_fn_ptr_union_t {
 typedef union ompi_attribute_fn_ptr_union_t ompi_attribute_fn_ptr_union_t;
 
 
-struct ompi_attrkey_t {
-    ompi_hash_table_t super; /**< hash table pointer which will contain
-			       <key,attr_meta_data> pair */
-};
-
-typedef struct ompi_attrkey_t ompi_attrkey_t;
-
-
 struct ompi_attrkey_item_t {
     ompi_object_t super;
     ompi_attribute_type_t attr_type; /**< One of COMM/WIN/DTYPE. This
@@ -258,6 +250,16 @@ int ompi_attr_copy_all(ompi_attribute_type_t type, void *old_object,
 
 int ompi_attr_delete_all(ompi_attribute_type_t type, void *object, 
 			ompi_hash_table_t *keyhash);
+
+
+/**
+ * \internal
+ *
+ * Create all the predefined attributes
+ *
+ * @returns OMPI_SUCCESS
+ */
+int ompi_attr_create_predefined(void);
 
 
 #if defined(c_plusplus) || defined(__cplusplus)
