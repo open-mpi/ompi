@@ -440,23 +440,27 @@ static int orte_pls_bproc_launch_app(
         orte_process_name_t* daemon_name;
         int fd;
         int rank = rc;
-        
+
         /* connect stdin to /dev/null */
-        fd = open("/dev/null", O_RDWR);
+        fd = open("/dev/null", O_RDONLY);
         if(fd >= 0) {
             if(fd != 0) {
                 dup2(fd, 0);
+                close(fd);
             }
         }
 
         /* connect stdout/stderr to a file */
-        fd = open("/tmp/orte.log", O_CREAT|O_RDWR|O_TRUNC, 0666);
+        fd = open("/tmp/orte.log", O_CREAT|O_WRONLY|O_TRUNC, 0666);
         if(fd >= 0) {
             if(fd != 1) {
                 dup2(fd,1);
             }
             if(fd != 2) {
                 dup2(fd,2);
+            }
+            if(fd > 2) {
+                close(fd);
             }
         } else {
             _exit(-1); 

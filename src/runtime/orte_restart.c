@@ -101,6 +101,27 @@ int orte_restart(orte_process_name_t *name, const char* uri)
     /*
      * setup new global state
      */
+    orte_process_info.seed = false;
+
+    /* if NULL, set ns_replica to old_name and set the corresponding uri parameter */
+    if (NULL == orte_process_info.ns_replica) {
+        orte_process_info.ns_replica = old_name;
+        orte_process_info.ns_replica_uri = strdup(uri);
+    }
+    
+    /* if NULL, set gpr_replica to old_name and set the corresponding uri parameter */
+    if (NULL == orte_process_info.gpr_replica) {
+        orte_process_info.gpr_replica = old_name;
+        orte_process_info.gpr_replica_uri = strdup(uri);
+    }
+
+    /* ensure my_name is set to the new_name */
+    if (NULL != orte_process_info.my_name) {
+        free(orte_process_info.my_name);
+    }
+    orte_process_info.my_name = new_name;
+
+#if 0
     /* close the proc_info structure so it can be reinitialized */
     if (ORTE_SUCCESS != (rc = orte_proc_info_finalize())) {
         ORTE_ERROR_LOG(rc);
@@ -113,33 +134,6 @@ int orte_restart(orte_process_name_t *name, const char* uri)
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    /* if NULL, set ns_replica to old_name and set the corresponding uri parameter */
-    if (NULL == orte_process_info.ns_replica) {
-        orte_process_info.ns_replica = old_name;
-        if (NULL != orte_process_info.ns_replica_uri) {
-            free(orte_process_info.ns_replica_uri);
-            orte_process_info.ns_replica_uri = NULL;
-        }
-        id = mca_base_param_register_string("ns", "replica", "uri", NULL, NULL);
-        if (ORTE_SUCCESS != (rc = mca_base_param_set_string(id, (char*)uri))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-    }
-    
-    /* if NULL, set gpr_replica to old_name and set the corresponding uri parameter */
-    if (NULL == orte_process_info.gpr_replica) {
-        orte_process_info.gpr_replica = old_name;
-        if (NULL != orte_process_info.gpr_replica_uri) {
-            free(orte_process_info.gpr_replica_uri);
-            orte_process_info.gpr_replica_uri = NULL;
-        }
-        id = mca_base_param_register_string("gpr", "replica", "uri", NULL, NULL);
-        if (ORTE_SUCCESS != (rc = mca_base_param_set_string(id, (char*)uri))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-    }
 
     /* call proc_info to reset the structure */
     if (ORTE_SUCCESS != (rc = orte_proc_info())) {
@@ -147,12 +141,6 @@ int orte_restart(orte_process_name_t *name, const char* uri)
         return rc;
     }
     
-    /* ensure my_name is set to the new_name */
-    if (NULL != orte_process_info.my_name) {
-        free(orte_process_info.my_name);
-    }
-    orte_process_info.my_name = new_name;
-
     /* finalize the sys_info structure so it can be reinitialized */
     if (ORTE_SUCCESS != (rc = orte_sys_info_finalize())) {
         ORTE_ERROR_LOG(rc);
@@ -205,6 +193,7 @@ int orte_restart(orte_process_name_t *name, const char* uri)
     if (NULL != procid_str) {
         free(procid_str);
     }
+#endif
 
     /*
      * Re-open components.
@@ -245,10 +234,14 @@ int orte_restart(orte_process_name_t *name, const char* uri)
     }
 
     /*
-     * Set contact info for our parent
+     * Set contact info for the replicas
      */
 
-    if (ORTE_SUCCESS != (rc = orte_rml.set_uri(uri))) {
+    if (ORTE_SUCCESS != (rc = orte_rml.set_uri(orte_process_info.ns_replica_uri))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    if (ORTE_SUCCESS != (rc = orte_rml.set_uri(orte_process_info.gpr_replica_uri))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
