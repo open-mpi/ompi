@@ -268,13 +268,6 @@ void laminfo::do_config(bool want_all)
   const string pthreads(LAM_HAVE_POSIX_THREADS ? "yes" : "no");
   const string memprofile(LAM_ENABLE_MEM_PROFILE ? "yes" : "no");
   const string memdebug(LAM_ENABLE_MEM_DEBUG ? "yes" : "no");
-#if 0
-  // Anju: 
-  // These are the options that will definately be added along the
-  // line. So, I am compiling them out instead of deleting them
-  const string romio(LAM_WANT_ROMIO ? "yes" : "no");
-  const string impi(LAM_WANT_IMPI ? "yes" : "no");
-#endif
   const string debug(LAM_ENABLE_DEBUG ? "yes" : "no");
   const string cprofiling(LAM_ENABLE_MPI_PROFILING ? "yes" : "no");
   const string cxxprofiling(LAM_ENABLE_MPI_PROFILING ? "yes" : "no");
@@ -283,6 +276,9 @@ void laminfo::do_config(bool want_all)
   const string f90profiling((LAM_ENABLE_MPI_PROFILING && LAM_ENABLE_MPI_F90) ?
                           "yes" : "no");
   const string cxxexceptions(LAM_HAVE_CXX_EXCEPTION_SUPPORT ? "yes" : "no");
+  int lam_mpi_param_check = 3;
+  const string paramcheck(0 == MPI_PARAM_CHECK ? "never" :
+                          1 == MPI_PARAM_CHECK ? "always" : "runtime");
 
   out("Configured by", "config:user", LAM_CONFIGURE_USER);
   out("Configured on", "config:timestamp", LAM_CONFIGURE_DATE);
@@ -304,17 +300,11 @@ void laminfo::do_config(bool want_all)
     out("C float size", "compiler:c:sizeof:float", sizeof(float));
     out("C double size", "compiler:c:sizeof:double", sizeof(double));
     out("C pointer size", "compiler:c:sizeof:pointer", sizeof(void *));
-#if 0
-    // Anju:
-    // Not yet gotten to this part in LAM-10.
-    //
     out("C char align", "compiler:c:align:char", LAM_ALIGNMENT_CHAR);
     out("C bool align", "compiler:c:align:bool", LAM_ALIGNMENT_CXX_BOOL);
     out("C int align", "compiler:c:align:int", LAM_ALIGNMENT_INT);
     out("C float align", "compiler:c:align:float", LAM_ALIGNMENT_FLOAT);
-    out("C double align", "compiler:c:align:double", 
-        LAM_ALIGNMENT_DOUBLE);
-#endif
+    out("C double align", "compiler:c:align:double", LAM_ALIGNMENT_DOUBLE);
   }
 
   out("C++ compiler", "compiler:cxx:command", LAM_CXX);
@@ -322,10 +312,6 @@ void laminfo::do_config(bool want_all)
   out("Fortran77 compiler", "compiler:f77:command", LAM_F77);
   out("Fortran90 compiler", "compiler:f90:command", LAM_F90);
   if (want_all) {
-#if 0
-    // Anju:
-    // Not yet gotten to this part in LAM-10.
-    //
     out("Fort integer size", "compiler:fortran:sizeof:integer", 
         LAM_SIZEOF_FORTRAN_INT);
     out("Fort real size", "compiler:fortran:sizeof:real", 
@@ -349,7 +335,6 @@ void laminfo::do_config(bool want_all)
     out("Fort dbl cplx align",
         "compiler:fortran:align:double_complex", 
         LAM_ALIGNMENT_FORTRAN_REAL);
-#endif
   }
 
   out("C profiling", "option:profiling:c", cprofiling);
@@ -362,6 +347,7 @@ void laminfo::do_config(bool want_all)
   out("Solaris thread support", "option:threads", sthreads);
 
   out("Debug support", "option:debug", debug);
+  out("MPI parameter check", "option:mpi-param-check", paramcheck);
   out("Memory profiling support", "option:mem-profile", memprofile);
   out("Memory debugging support", "option:mem-debug", memdebug);
 }

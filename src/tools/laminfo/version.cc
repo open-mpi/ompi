@@ -150,13 +150,15 @@ void laminfo::show_module_version(const string& type_name,
   // Now that we have a valid type, find the right module list
 
   modules = module_map[type_name];
-  for (item = lam_list_get_first(modules);
-       lam_list_get_end(modules) != item;
-       item = lam_list_get_next(item)) {
-    mli = (mca_base_module_list_item_t *) item;
-    module = mli->mli_module;
-    if (want_all_modules || module->mca_module_name == module_name) {
-      show_mca_version(module, scope, ver_type);
+  if (NULL != modules) {
+    for (item = lam_list_get_first(modules);
+         lam_list_get_end(modules) != item;
+         item = lam_list_get_next(item)) {
+      mli = (mca_base_module_list_item_t *) item;
+      module = mli->mli_module;
+      if (want_all_modules || module->mca_module_name == module_name) {
+        show_mca_version(module, scope, ver_type);
+      }
     }
   }
 }
