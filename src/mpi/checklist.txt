@@ -15,6 +15,19 @@ MPI_COMM_DUP_FN
 MPI_TYPE_DUP_FN
 MPI_WIN_DUP_FN
 
+MPI_TYPE_NULL_DELETE_FN         DONE
+MPI_TYPE_NULL_COPY_FN           DONE
+MPI_TYPE_DUP_FN                 DONE
+MPI_COMM_NULL_DELETE_FN         DONE
+MPI_COMM_NULL_COPY_FN           DONE
+MPI_COMM_DUP_FN                 DONE
+MPI_NULL_DELETE_FN              DONE
+MPI_NULL_COPY_FN                DONE
+MPI_DUP_FN                      DONE
+MPI_WIN_NULL_DELETE_FN          DONE
+MPI_WIN_NULL_COPY_FN            DONE
+MPI_WIN_DUP_FN                  DONE
+
 MPI_Abort
 MPI_Accumulate 
 MPI_Add_error_class             n.n
