@@ -65,14 +65,14 @@ ompi_registry_index_t* gpr_proxy_index(char *segment);
 /*
  * Implementation of subscribe()
  */
-int gpr_proxy_subscribe(ompi_registry_mode_t mode,
+int gpr_proxy_subscribe(ompi_process_name_t *caller, ompi_registry_mode_t mode,
 			ompi_registry_notify_action_t action,
 			char *segment, char **tokens);
 
 /*
  * Implementation of unsubscribe()
  */
-int gpr_proxy_unsubscribe(ompi_registry_mode_t mode,
+int gpr_proxy_unsubscribe(ompi_process_name_t *caller, ompi_registry_mode_t mode,
 			  char *segment, char **tokens);
 
 /*
