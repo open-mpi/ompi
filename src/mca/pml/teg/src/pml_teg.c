@@ -114,8 +114,14 @@ int mca_pml_teg_add_ptls(ompi_list_t *ptls)
             mca_pml_teg.teg_ptl_components[mca_pml_teg.teg_num_ptl_components++] = ptl->ptl_component;
         }
 
-         /* setup ptl */
-         ptl->ptl_match = mca_pml_teg_recv_frag_match;
+        /* 
+         *setup ptl 
+         */
+
+        /* set pointer to fragment matching logic routine, if this
+         *   not already set by the ptl */
+       if( NULL == ptl->ptl_match)
+           ptl->ptl_match = mca_pml_teg_recv_frag_match;
          ptl->ptl_send_progress = mca_pml_teg_send_request_progress;
          ptl->ptl_recv_progress = mca_pml_teg_recv_request_progress;
          ptl->ptl_stack = ptl;
