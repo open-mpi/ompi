@@ -40,10 +40,11 @@ POST_UNINSTALL = :
 host_triplet = @host@
 DIST_COMMON = $(am__configure_deps) $(include_HEADERS) \
 	$(srcdir)/Makefile.am $(srcdir)/Makefile.in \
-	$(srcdir)/config.h.in $(top_srcdir)/configure acconfig.h \
-	config.guess config.sub configure configure.in epoll.c \
-	epoll_sub.c err.c install-sh kqueue.c ltmain.sh missing poll.c \
-	rtsig.c select.c signal.c
+	$(srcdir)/config.h.in $(top_srcdir)/configure \
+	./config/config.guess ./config/config.sub ./config/install-sh \
+	./config/ltmain.sh ./config/missing acconfig.h configure \
+	configure.in epoll.c epoll_sub.c err.c kqueue.c poll.c rtsig.c \
+	select.c signal.c
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.in
@@ -130,9 +131,6 @@ LIBS = @LIBS@
 LIBTOOL = @LIBTOOL@
 LN_S = @LN_S@
 LTLIBOBJS = @LTLIBOBJS@
-MAINT = @MAINT@
-MAINTAINER_MODE_FALSE = @MAINTAINER_MODE_FALSE@
-MAINTAINER_MODE_TRUE = @MAINTAINER_MODE_TRUE@
 MAKEINFO = @MAKEINFO@
 OBJEXT = @OBJEXT@
 PACKAGE = @PACKAGE@
@@ -227,7 +225,7 @@ all: config.h
 .SUFFIXES: .c .lo .o .obj
 am--refresh:
 	@:
-$(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__configure_deps)
+$(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
 	    *$$dep*) \
@@ -254,9 +252,9 @@ Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 $(top_builddir)/config.status: $(top_srcdir)/configure $(CONFIG_STATUS_DEPENDENCIES)
 	$(SHELL) ./config.status --recheck
 
-$(top_srcdir)/configure: @MAINTAINER_MODE_TRUE@ $(am__configure_deps)
+$(top_srcdir)/configure:  $(am__configure_deps)
 	cd $(srcdir) && $(AUTOCONF)
-$(ACLOCAL_M4): @MAINTAINER_MODE_TRUE@ $(am__aclocal_m4_deps)
+$(ACLOCAL_M4):  $(am__aclocal_m4_deps)
 	cd $(srcdir) && $(ACLOCAL) $(ACLOCAL_AMFLAGS)
 
 config.h: stamp-h1
@@ -268,7 +266,7 @@ config.h: stamp-h1
 stamp-h1: $(srcdir)/config.h.in $(top_builddir)/config.status
 	@rm -f stamp-h1
 	cd $(top_builddir) && $(SHELL) ./config.status config.h
-$(srcdir)/config.h.in: @MAINTAINER_MODE_TRUE@ $(am__configure_deps) $(top_srcdir)/acconfig.h
+$(srcdir)/config.h.in:  $(am__configure_deps) $(top_srcdir)/acconfig.h
 	cd $(top_srcdir) && $(AUTOHEADER)
 	rm -f stamp-h1
 	touch $@
@@ -441,7 +439,7 @@ distclean-tags:
 distdir: $(DISTFILES)
 	$(am__remove_distdir)
 	mkdir $(distdir)
-	$(mkdir_p) $(distdir)/WIN32-Code $(distdir)/WIN32-Prj $(distdir)/WIN32-Prj/event_test $(distdir)/WIN32-Prj/signal_test $(distdir)/WIN32-Prj/time_test $(distdir)/compat $(distdir)/compat/sys $(distdir)/sample $(distdir)/test
+	$(mkdir_p) $(distdir)/WIN32-Code $(distdir)/WIN32-Prj $(distdir)/WIN32-Prj/event_test $(distdir)/WIN32-Prj/signal_test $(distdir)/WIN32-Prj/time_test $(distdir)/compat $(distdir)/compat/sys $(distdir)/config $(distdir)/sample $(distdir)/test
 	@srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`; \
 	topsrcdirstrip=`echo "$(top_srcdir)" | sed 's|.|.|g'`; \
 	list='$(DISTFILES)'; for file in $$list; do \
