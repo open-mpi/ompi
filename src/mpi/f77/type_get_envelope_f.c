@@ -48,5 +48,8 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_GET_ENVELOPE,
 
 void mpi_type_get_envelope_f(MPI_Fint *type, MPI_Fint *num_integers, MPI_Fint *num_addresses, MPI_Fint *num_datatypes, MPI_Fint *combiner, MPI_Fint *ierr)
 {
+    MPI_Datatype c_type = MPI_Type_f2c(*type);
 
+    *ierr = MPI_Type_get_envelope(c_type, num_integers, num_addresses, 
+                                  num_datatypes, combiner);
 }

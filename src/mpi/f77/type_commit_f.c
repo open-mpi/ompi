@@ -48,5 +48,11 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_COMMIT,
 
 void mpi_type_commit_f(MPI_Fint *type, MPI_Fint *ierr)
 {
+    MPI_Datatype c_type = MPI_Type_f2c(*type);
+
+    *ierr = MPI_Type_commit(&c_type); 
+
+    if (*ierr == MPI_SUCCESS)
+      *type = MPI_Type_c2f(c_type);
 
 }
