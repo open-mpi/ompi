@@ -15,13 +15,13 @@
 
 int mca_coll_base_close(void)
 {
-  extern lam_list_t mca_coll_base_modules_available;
+  extern lam_list_t mca_coll_base_modules_opened;
 
   /* Close all remaining available modules (may be one if this is a
      LAM RTE program, or [possibly] multiple if this is laminfo) */
 
   mca_base_modules_close(mca_coll_base_output, 
-                         &mca_coll_base_modules_available, NULL);
+                         &mca_coll_base_modules_opened, NULL);
 
   /* All done */
 
