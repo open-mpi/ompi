@@ -378,6 +378,7 @@ ompi_attr_get(ompi_hash_table_t *keyhash, int key, void *attribute,
        with the key, then the call is valid and returns FALSE in the
        flag argument */
 
+    *flag = 0;
     key_item = (ompi_attrkey_item_t *) 
 	ompi_hash_table_get_value_uint32(keyval_hash, key);
 
@@ -387,12 +388,7 @@ ompi_attr_get(ompi_hash_table_t *keyhash, int key, void *attribute,
 
     attr = ompi_hash_table_get_value_uint32(keyhash, key);
 
-    if (NULL == attr) {
-	*flag = 0;
-    } else {
-
-	/* VPS: Put Fortran stuff here too */
-	
+    if (NULL != attr) {
 	*((void **) attribute) = attr;
 	*flag = 1;
     }
