@@ -149,19 +149,23 @@ typedef struct mca_ptl_ib_peer_conn_t mca_ptl_ib_peer_conn_t;
         (MT_virt_addr_t) ib_buf_ptr->buf;                           \
 }
 
-#define IB_PREPARE_SEND_DESC(ib_buf_ptr, qp) {                      \
+#define IB_PREPARE_SEND_DESC(ib_buf_ptr, qp, msg_len) {             \
     ib_buf_ptr->desc.sr.comp_type = VAPI_SIGNALED;                  \
     ib_buf_ptr->desc.sr.opcode = VAPI_SEND;                         \
     ib_buf_ptr->desc.sr.remote_qkey = 0;                            \
     ib_buf_ptr->desc.sr.remote_qp = qp;                             \
     ib_buf_ptr->desc.sr.id = (VAPI_virt_addr_t)                     \
         (MT_virt_addr_t) ib_buf_ptr;                                \
-    ib_buf_ptr->desc.rr.sg_lst_len = 1;                             \
-    ib_buf_ptr->desc.rr.sg_lst_p = &ib_buf_ptr->desc.sg_entry;      \
-    ib_buf_ptr->desc.sg_entry.len = 4096;                           \
+    ib_buf_ptr->desc.sr.sg_lst_len = 1;                             \
+    ib_buf_ptr->desc.sr.sg_lst_p = &ib_buf_ptr->desc.sg_entry;      \
+    ib_buf_ptr->desc.sg_entry.len = msg_len;                        \
     ib_buf_ptr->desc.sg_entry.lkey = ib_buf_ptr->hndl.lkey;         \
     ib_buf_ptr->desc.sg_entry.addr = (VAPI_virt_addr_t)             \
         (MT_virt_addr_t) ib_buf_ptr->buf;                           \
+}
+
+#define IB_SET_REMOTE_QP_NUM(ib_buf_ptr, qp) {                      \
+    ib_buf_ptr->desc.sr.remote_qp = qp;                             \
 }
 
 int mca_ptl_ib_init_module(mca_ptl_ib_state_t*, int);

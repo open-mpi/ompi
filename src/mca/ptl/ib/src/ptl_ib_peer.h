@@ -87,7 +87,7 @@ void mca_ptl_ib_post_oob_recv_nb(void);
             peer_ptr->peer_conn->lres->qp_prop.qp_num);             \
     ompi_output(0, "Remote QP num : %d",                            \
             peer_ptr->peer_conn->rres->qp_num);                     \
-    ompi_output(0, "Remte LID : %d",                                \
+    ompi_output(0, "Remote LID : %d",                               \
             peer_ptr->peer_conn->rres->lid);                        \
 }
 

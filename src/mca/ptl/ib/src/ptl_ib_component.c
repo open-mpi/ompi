@@ -95,10 +95,10 @@ int mca_ptl_ib_component_open(void)
         mca_ptl_ib_param_register_int ("exclusivity", 0);
     mca_ptl_ib_module.super.ptl_first_frag_size =
         mca_ptl_ib_param_register_int ("first_frag_size",
-                (2048 - sizeof(mca_ptl_base_header_t))/*magic*/);
+                (16384 - sizeof(mca_ptl_base_header_t))/*magic*/);
     mca_ptl_ib_module.super.ptl_min_frag_size =
         mca_ptl_ib_param_register_int ("min_frag_size",
-                (2048 - sizeof(mca_ptl_base_header_t))/*magic*/);
+                (4096 - sizeof(mca_ptl_base_header_t))/*magic*/);
     mca_ptl_ib_module.super.ptl_max_frag_size =
         mca_ptl_ib_param_register_int ("max_frag_size", 2<<30);
 

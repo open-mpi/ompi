@@ -5,6 +5,7 @@
 #include "ptl_ib_peer.h"
 #include "ptl_ib_proc.h"
 #include "ptl_ib_sendfrag.h"
+#include "ptl_ib_priv.h"
 
 static void mca_ptl_ib_send_frag_construct(mca_ptl_ib_send_frag_t* frag);
 static void mca_ptl_ib_send_frag_destruct(mca_ptl_ib_send_frag_t* frag);
@@ -104,7 +105,7 @@ int mca_ptl_ib_send_frag_init(mca_ptl_ib_send_frag_t* sendfrag,
         }
 
 
-        /* if data is contigous convertor will return an offset
+        /* if data is contigous, convertor will return an offset
          * into users buffer - otherwise will return an allocated buffer 
          * that holds the packed data
          */
@@ -123,8 +124,12 @@ int mca_ptl_ib_send_frag_init(mca_ptl_ib_send_frag_t* sendfrag,
         /* adjust size and request offset to reflect actual 
          * number of bytes packed by convertor */
         size_out = iov.iov_len;
+        IB_PREPARE_SEND_DESC((&sendfrag->ib_buf), 0, 
+                (header_length + iov.iov_len));
     } else {
         size_out = size_in;
+        IB_PREPARE_SEND_DESC((&sendfrag->ib_buf), 0, 
+                (header_length + size_in));
     }
 
     hdr->hdr_frag.hdr_frag_length = size_out;
@@ -185,8 +190,6 @@ int mca_ptl_ib_register_send_frags(mca_ptl_base_module_t *ptl)
     mca_ptl_ib_send_frag_t *ib_send_frag;
     mca_ptl_ib_state_t *ib_state;
 
-    D_PRINT("");
-
     flist = &((mca_ptl_ib_module_t *)ptl)->send_free;
 
     ib_state = ((mca_ptl_ib_module_t *)ptl)->ib_state;
@@ -212,11 +215,7 @@ int mca_ptl_ib_register_send_frags(mca_ptl_base_module_t *ptl)
             return OMPI_ERROR;
         }
 
-        if(i == 0) {
-            D_PRINT("lkey = %d", ib_buf_ptr->hndl.lkey);
-        }
-
-        IB_PREPARE_SEND_DESC(ib_buf_ptr, 0);
+        IB_PREPARE_SEND_DESC(ib_buf_ptr, 0, 4096);
     }
 
     return OMPI_SUCCESS;

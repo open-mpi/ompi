@@ -511,9 +511,9 @@ int mca_ptl_ib_post_send(mca_ptl_ib_state_t *ib_state,
 {
     VAPI_ret_t ret;
 
-    IB_PREPARE_SEND_DESC(ib_buf, (peer_conn->rres->qp_num));
+    IB_SET_REMOTE_QP_NUM(ib_buf, (peer_conn->rres->qp_num));
 
-    D_PRINT("lkey = %d", ib_buf->hndl.lkey);
+    D_PRINT("length : %d", ib_buf->desc.sg_entry.len);
 
     ret = VAPI_post_sr(ib_state->nic,
             peer_conn->lres->qp_hndl,
