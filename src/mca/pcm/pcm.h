@@ -274,7 +274,7 @@ typedef bool
  * @warning Parameter list will probably change in the near future.
  */
 typedef int
-(*mca_pcm_base_spwan_procs_fn_t)(int jobid, 
+(*mca_pcm_base_spawn_procs_fn_t)(int jobid, 
                                  ompi_list_t schedule_list,
                                  ompi_vpid_t start_vpid);
 
@@ -354,7 +354,7 @@ struct mca_pcm_base_module_1_0_0_t {
     mca_pcm_base_allocate_resources_fn_t pcm_allocate_resources;
     mca_pcm_base_register_monitor_fn_t pcm_register_monitor;
     mca_pcm_base_can_spawn_fn_t pcm_can_spawn;
-    mca_pcm_base_spwan_procs_fn_t pcm_spawn_procs;
+    mca_pcm_base_spawn_procs_fn_t pcm_spawn_procs;
     mca_pcm_base_module_get_peers_fn_t pcm_peers;
     mca_pcm_base_module_get_self_fn_t pcm_self;
     mca_pcm_base_kill_proc_fn_t pcm_kill_proc;
