@@ -30,6 +30,7 @@ static bool test4(void);        /* verify pack a packed buffer */
 static bool test5(void);        /* verify unpack */
 static bool test6(void);        /* verify free */
 static bool test7(void);        /* verify preallocated buffer init, pack and unpack */
+static bool test8(void);        /* verify string pack and unpack */
 
 int main (int argc, char* argv[])
 {
@@ -83,6 +84,13 @@ int main (int argc, char* argv[])
     }
     else {
       test_failure("ompi_pack test7 failed");
+    }
+
+    if (test8()) {
+        test_success();
+    }
+    else {
+      test_failure("ompi_pack test8 failed");
     }
 
 
@@ -260,6 +268,63 @@ static bool test7(void)        /* verify preallocated buffer init, pack and unpa
 
     rc = ompi_buffer_free (bufA);
     if (OMPI_ERROR==rc) { test_comment ("ompi_buffer_free failed"); return(false);}
+
+    return (true);
+}
+
+
+static bool test8(void)        /* verify string pack and unpack */
+{
+
+    int rc;
+	char *str1;
+	char *str2;
+
+    rc = ompi_buffer_init (&bufA, 0);
+    if (OMPI_ERROR==rc) { test_comment ("ompi_buffer_init failed"); return(false);}
+
+    rc = ompi_buffer_init (&bufB, 10);
+    if (OMPI_ERROR==rc) { test_comment ("ompi_buffer_init failed"); return(false);}
+
+    rc = ompi_buffer_init (&bufC, 16);
+    if (OMPI_ERROR==rc) { test_comment ("ompi_buffer_init failed"); return(false);}
+
+    rc = ompi_pack_string (bufA, "HELLO ");
+    if (OMPI_ERROR==rc) { test_comment ("ompi_pack_string failed"); return(false);}
+
+    rc = ompi_pack_string (bufB, "WORLD!");
+    if (OMPI_ERROR==rc) { test_comment ("ompi_pack_string failed"); return(false);}
+
+    rc = ompi_pack (bufC, bufA, 1, OMPI_PACKED);
+    if (OMPI_ERROR==rc) { test_comment ("ompi_pack failed"); return(false);}
+    rc = ompi_pack (bufC, bufB, 1, OMPI_PACKED);
+    if (OMPI_ERROR==rc) { test_comment ("ompi_pack failed"); return(false);}
+
+	/* we now have a buffer with two strings in it */
+    rc = ompi_unpack_string (bufC, &str1);
+    if (OMPI_ERROR==rc) { test_comment ("ompi_pack_string failed"); return(false);}
+
+	rc = strcmp ("HELLO ", str1);
+	if (rc) { test_comment ("strcmp returns no zero value."); return (false); }
+
+    rc = ompi_unpack_string (bufC, &str2);
+    if (OMPI_ERROR==rc) { test_comment ("ompi_pack_string failed"); return(false);}
+
+	rc = strcmp ("WORLD!", str2);
+	if (rc) { test_comment ("strcmp returns no zero value."); return (false); }
+
+
+    rc = ompi_buffer_free (bufA);
+    if (OMPI_ERROR==rc) { test_comment ("ompi_buffer_free failed"); return(false);}
+
+    rc = ompi_buffer_free (bufB);
+    if (OMPI_ERROR==rc) { test_comment ("ompi_buffer_free failed"); return(false);}
+
+    rc = ompi_buffer_free (bufC);
+    if (OMPI_ERROR==rc) { test_comment ("ompi_buffer_free failed"); return(false);}
+
+	if (str1) { free (str1); }
+	if (str2) { free (str2); }
 
     return (true);
 }
