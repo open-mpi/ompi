@@ -67,55 +67,68 @@ END_FUNC(ompi_atomic_cmpset_rel_32)
 
 #START_64BIT
 START_FUNC(ompi_atomic_cmpset_64)
+	stw r4,-32(r1)
+	stw r5,-28(r1)
+	stw r6,-24(r1)
+	stw r7,-20(r1)
+	ld r5,-32(r1)
+	ld r7,-24(r1)
 	1: ldarx   r9, 0, r3  
-	   cmpd    0, r9, r4  
+	   cmpd    0, r9, r5  
 	   bne-    2f         
-	   stdcx.  r6, 0, r3  
-	   bne-    1b         
+	   stdcx.  r7, 0, r3
+	   bne-    1b
 	2:
-	li r3,0
-	cmpw cr7,r9,r4
-	bnelr+ cr7
-	cmpw cr7,r10,r5
-	bnelr+ cr7
-	li r3,1
+	xor r3,r5,r9
+	subfic r2,r3,0
+	adde r3,r2,r3
 	blr
 END_FUNC(ompi_atomic_cmpset_64)
 
 
 START_FUNC(ompi_atomic_cmpset_acq_64)
+        stw r4,-32(r1)
+        stw r5,-28(r1)
+        stw r6,-24(r1)
+        stw r7,-20(r1)
+        ld r5,-32(r1)
+        ld r7,-24(r1)
+
         1: ldarx   r9, 0, r3  
-           cmpd    0, r9, r4  
+           cmpd    0, r9, r5
            bne-    2f         
-           stdcx.  r6, 0, r3  
+           stdcx.  r7, 0, r3  
            bne-    1b         
         2:
-        cmpw cr0,r9,r4
-        li r3,0
-        bne+ cr0,L15
-        cmpw cr0,r10,r5
-        bne+ cr0,L15
-        li r3,1
-L15:
+        xor r3,r5,r9
+        subfic r2,r3,0
+        adde r3,r2,r3
+        blr
         lwsync
         blr
 END_FUNC(ompi_atomic_cmpset_acq_64)
 
 
 START_FUNC(ompi_atomic_cmpset_rel_64)
+        stw r4,-32(r1)
+        stw r5,-28(r1)
+        stw r6,-24(r1)
+        stw r7,-20(r1)
+        ld r5,-32(r1)
+        ld r7,-24(r1)
+
         eieio
         1: ldarx   r9, 0, r3  
-           cmpd    0, r9, r4  
+           cmpd    0, r9, r5  
            bne-    2f         
-           stdcx.  r6, 0, r3  
+           stdcx.  r7, 0, r3  
            bne-    1b         
         2:
-        cmpw cr0,r9,r4
-        li r3,0
-        bnelr+ cr0
-        cmpw cr0,r10,r5
-        bnelr+ cr0
-        li r3,1
+        xor r3,r5,r9
+        subfic r2,r3,0
+        adde r3,r2,r3
+        blr
+        lwsync
         blr
 END_FUNC(ompi_atomic_cmpset_rel_64)
 #END_64BIT
