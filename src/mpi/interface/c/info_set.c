@@ -37,12 +37,9 @@
  *   and MPI_ERR_INFO_VALUE are raised
  */
 int MPI_Info_set(MPI_Info info, char *key, char *value) {
-
-    lam_info_entry_t *new_info;
-    lam_info_entry_t *old_info; 
+    int err;
     int key_length;
     int value_length;
-    char *new_value; 
 
     /*
      * Error conditions are
@@ -74,38 +71,16 @@ int MPI_Info_set(MPI_Info info, char *key, char *value) {
     }
 
     /*
-     * If all is right with the arguments, then:
-     * 1. Allocate space for value 
-     * 2. Check if the key was associated with a previous value
-     *      - If so delete that value and store the new value
-     * 3. Store the (key, value) pair
+     * If all is right with the arguments, then call the back-end
+     * allocator.
      */
+    
+    err = lam_info_set (info, key, value);
 
-    new_value = malloc(value_length * sizeof(char));
-    if (NULL == new_value) {
+    if (MPI_ERR_SYSRESOURCE == err) {
         printf ("Unable to malloc memory for new (key, value) pair\n");
-        return MPI_ERR_SYSRESOURCE;
-    }
-
-    strcpy (new_value, value);
-    old_info = lam_info_find_key (info, key);
-
-    if (NULL != old_info) {
-        /*
-         * key already exists. remove the value associated with it
-         */
-        free(old_info->ie_value);
-        old_info->ie_value = new_value;
-    } else {
-        new_info = OBJ_NEW(lam_info_entry_t);
-        if (NULL == new_info) {
-            printf ("Unable to malloc memory for new (key, value) pair\n");
-            return MPI_ERR_SYSRESOURCE;
-        }
-        strcpy (new_info->ie_key, key);
-        new_info->ie_value = new_value;
-        lam_list_append (&(info->super), (lam_list_item_t *) new_info);
+        return err;
     }
     
-    return MPI_SUCCESS;
+    return err;
 }

@@ -35,8 +35,8 @@
 int MPI_Info_get_valuelen(MPI_Info info, char *key, int *valuelen,
                           int *flag) {
 
-    lam_info_entry_t *search;
     int key_length;
+    int err;
 
     /*
      * Simple function. All we need to do is search for the value
@@ -53,17 +53,11 @@ int MPI_Info_get_valuelen(MPI_Info info, char *key, int *valuelen,
         return MPI_ERR_INFO_KEY;
     }
 
-    search = lam_info_find_key (info, key);
+    err = lam_info_get_valuelen (info, key, valuelen, flag);
 
-    if (NULL == search){
-        *flag = 0;
-    } else {
-        /*
-         * We have found the element, so we can return the value
-         * Set the flag, value_length and value
-         */
-        *flag = 1;
-        *valuelen = strlen(search->ie_value);
-    }
-    return MPI_SUCCESS;
+    /*
+     * Once again, the error problem. lam_info_get_valuelen
+     * does not have an obvious error return.
+     */
+    return err;
 }

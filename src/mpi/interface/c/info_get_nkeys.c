@@ -27,12 +27,18 @@
  * containing the key-value pairs
  */
 int MPI_Info_get_nkeys(MPI_Info info, int *nkeys) {
+    int err;
 
     if (NULL == info){
         printf ("Invalid MPI_Info handle passed\n");
         return MPI_ERR_ARG;
     }
-    *nkeys = (int) lam_list_get_size(&(info->super));
+    err = lam_info_get_nkeys(info, nkeys);
+
+    /*
+     * check if there are any errors. There does not seem to be any 
+     * error possible in this. But have to look at it again
+     */
 
     return MPI_SUCCESS;
 }

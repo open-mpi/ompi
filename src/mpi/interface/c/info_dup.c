@@ -21,6 +21,7 @@
  *
  *   @retval MPI_SUCCESS
  *   @retval MPI_ERR_ARG
+ *   @retval MPI_ERR_SYSRESOURCE
  *
  *   Not only will the (key, value) pairs be duplicated, the order of keys
  *   will be the same in 'newinfo' as it is in 'info'.
@@ -28,9 +29,7 @@
  *   'MPI_Info_free'.
  */
 int MPI_Info_dup(MPI_Info info, MPI_Info *newinfo) {
-    lam_info_entry_t *iterator;
     int err;
-    int nkeys;
     /**
      * Here we need to do 2 things
      * 1. Create a newinfo object using MPI_Info_create
@@ -54,18 +53,12 @@ int MPI_Info_dup(MPI_Info info, MPI_Info *newinfo) {
     /*
      * Now to actually duplicate all the values
      */
-    err = MPI_Info_get_nkeys (info, &nkeys);
+    err = lam_info_dup (info, newinfo);
 
-    for (iterator = (lam_info_entry_t *)lam_list_get_first(&(info->super));
-         nkeys > 0;
-         nkeys--) {
-        err = MPI_Info_set (*newinfo, iterator->ie_key, iterator->ie_value);
-        if (MPI_SUCCESS != err) {
-            printf ("Failed to set a key in newinfo\n");
-            return err;
-        }
-        iterator = (lam_info_entry_t *)iterator->super.lam_list_next;
-    }
-
+    if (err == MPI_ERR_SYSRESOURCE) {
+        printf ("Resources are not sufficient to finish dup'ing\n");
+        return err;
+    }  
+        
     return MPI_SUCCESS;
 }

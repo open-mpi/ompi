@@ -36,9 +36,8 @@
 int MPI_Info_get(MPI_Info info, char *key, int valuelen,
                  char *value, int *flag) {
 
-    lam_info_entry_t *search;
+    int err;
     int key_length;
-    int value_length;
 
     /*
      * Simple function. All we need to do is search for the value
@@ -56,29 +55,12 @@ int MPI_Info_get(MPI_Info info, char *key, int valuelen,
         return MPI_ERR_INFO_KEY;
     }
 
-    search = lam_info_find_key (info, key);
-
-    if (NULL == search){
-        *flag = 0;
-    } else {
-        /*
-         * We have found the element, so we can return the value
-         * Set the flag, value_length and value
-         */
-        *flag = 1;
-        value_length = strlen(search->ie_value);
-        /*
-         * If the stored value is shorter than valuelen, then
-         * we can copy the entire value out. Else, we have to 
-         * copy ONLY valuelen bytes out
-         */
-        if (value_length < valuelen ) {
-               strcpy(value, search->ie_value);
-        } else {
-            lam_strncpy(value, search->ie_value, valuelen);
-            value[valuelen] = 0;
-        }
-    }
-
+    err = lam_info_get (info, key, valuelen, value, flag);
+    
+    /*
+     * Once again, lam_info_get does not return any error. So, as of
+     * now there is no error condition to check for. But maybe this 
+     * needs to be re-evaluated and then something can be done 
+     */
     return MPI_SUCCESS;
 }
