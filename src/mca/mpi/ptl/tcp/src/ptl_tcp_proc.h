@@ -40,7 +40,14 @@ void mca_ptl_tcp_proc_destroy(mca_ptl_tcp_proc_t*);
 
 mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_create(lam_proc_t* lam_proc);
 mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_lookup(void *guid, size_t size);
-mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_local(void);
+
+static inline mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_local(void) 
+{
+    extern mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_self;
+    if(NULL == mca_ptl_tcp_proc_self)
+        mca_ptl_tcp_proc_self = mca_ptl_tcp_proc_create(lam_proc_local());
+    return mca_ptl_tcp_proc_self;
+}
 
 int  mca_ptl_tcp_proc_insert(mca_ptl_tcp_proc_t*, mca_ptl_peer_t*);
 int  mca_ptl_tcp_proc_remove(mca_ptl_tcp_proc_t*, mca_ptl_peer_t*);

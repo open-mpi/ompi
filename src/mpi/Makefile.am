@@ -12,6 +12,7 @@ noinst_LTLIBRARIES = libmpi_convenience.la
 sources = \
         datatype/libmpi_datatype.la \
         interface/libmpi_interface.la \
+        proc/libmpi_proc.la \
         request/libmpi_request.la \
         runtime/libmpi_runtime.la
 
