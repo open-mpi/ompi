@@ -150,7 +150,7 @@ void ompi_info::open_components()
   component_map["pml"] = &mca_pml_base_components_available;
 
   mca_ptl_base_open();
-  component_map["ptl"] = &mca_ptl_base_components_available;
+  component_map["ptl"] = &mca_ptl_base_components_opened;
 
   mca_topo_base_open();
   component_map["topo"] = &mca_topo_base_components_opened;

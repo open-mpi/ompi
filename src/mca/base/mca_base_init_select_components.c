@@ -88,7 +88,7 @@ int mca_base_init_select_components(int requested,
   /* Tell the selected pml module about all the selected ptl
      modules */
 
-  mca_pml.pml_add_ptls(&mca_ptl_base_components_initialized);
+  mca_pml.pml_add_ptls(&mca_ptl_base_modules_initialized);
 
   /* All done */
 

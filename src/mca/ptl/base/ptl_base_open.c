@@ -25,8 +25,8 @@
  * Global variables
  */
 int mca_ptl_base_output = -1;
-ompi_list_t mca_ptl_base_components_available;
-ompi_list_t mca_ptl_base_components_initialized;
+ompi_list_t mca_ptl_base_components_opened;
+ompi_list_t mca_ptl_base_modules_initialized;
 
 
 /**
@@ -39,7 +39,7 @@ int mca_ptl_base_open(void)
 
   if (OMPI_SUCCESS != 
       mca_base_components_open("ptl", 0, mca_ptl_base_static_components, 
-                               &mca_ptl_base_components_available)) {
+                               &mca_ptl_base_components_opened)) {
     return OMPI_ERROR;
   }
 
@@ -47,7 +47,7 @@ int mca_ptl_base_open(void)
      iterate over it (even if it's empty, as in the case of
      ompi_info) */
 
-  OBJ_CONSTRUCT(&mca_ptl_base_components_initialized, ompi_list_t);
+  OBJ_CONSTRUCT(&mca_ptl_base_modules_initialized, ompi_list_t);
 
   /* All done */
 
