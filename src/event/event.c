@@ -37,6 +37,9 @@
 #else 
 #include <sys/_time.h>
 #endif
+#ifndef HAVE_TIMERADD
+#include <sys/_timeradd.h>
+#endif
 #include <sys/queue.h>
 #include <stdio.h>
 #include <stdlib.h>

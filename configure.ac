@@ -937,7 +937,7 @@ AC_DEFINE_UNQUOTED(OMPI_RANGE_F90_COMPLEX32, $OMPI_RANGE_F90_COMPLEX32,
 ompi_show_title "Header file tests"
 
 AC_CHECK_HEADERS([alloca.h aio.h arpa/inet.h dirent.h dlfcn.h execinfo.h \
-    sys/fcntl.h inttypes.h libgen.h net/if.h netdb.h netinet/in.h netinet/tcp.h \
+    fcntl.h inttypes.h libgen.h net/if.h netdb.h netinet/in.h netinet/tcp.h \
     sys/stat.h poll.h pthread.h pwd.h sched.h stdint.h string.h strings.h stropts.h \
     sys/types.h sys/ipc.h sys/mman.h sys/resource.h sys/select.h sys/socket.h \
     sys/ioctl.h err.h sys/statvfs.h sys/time.h sys/uio.h sys/utsname.h sys/wait.h \
