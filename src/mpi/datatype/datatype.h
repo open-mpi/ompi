@@ -16,6 +16,7 @@
 
 #include <sys/types.h>
 #include <sys/uio.h>
+#include <string.h>
 
 #include "lam/lfc/object.h"
 #include "lam/types.h"
@@ -391,7 +392,7 @@ int lam_datatype_scatter_iovec(lam_pack_state_t *state,
  * @param csum32   pointer to a 32-bit unsigned integer to hold the checksum
  * @return         the original value of dst
  */
-static inline lam_memcpy(void *dst, const void *src, size_t size, void *dummy)
+static inline void *lam_memcpy(void *dst, const void *src, size_t size, void *dummy)
 {
     return memcpy(dst, src, size);
 }
@@ -442,10 +443,10 @@ void *lam_memcpy_crc32(void *dst, const void *src, size_t size, void *crc32);
 void *lam_memcpy_crc64(void *dst, const void *src, size_t size, void *crc64);
 
 
-
-typedef  (ulm_scatterv_t) (void *, int *, int *, ULMType_t *, void *,
+#if 0
+typedef  void (ulm_scatterv_t) (void *, int *, int *, ULMType_t *, void *,
 			      int, ULMType_t *, int, int);
-
+#endif
 
 
 #endif                          /* LAM_DATATYPE_H_INCLUDED */
