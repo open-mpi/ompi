@@ -217,6 +217,8 @@ static int mca_ptl_tcp_module_create_instances(void)
 static int mca_ptl_tcp_module_create_listen(void)
 {
     int flags;
+    struct sockaddr_in inaddr;
+    lam_socklen_t addrlen = sizeof(struct sockaddr_in);
 
     /* create a listen socket for incoming connections */
     mca_ptl_tcp_module.tcp_listen_sd = socket(AF_INET, SOCK_STREAM, 0);
@@ -226,7 +228,6 @@ static int mca_ptl_tcp_module_create_listen(void)
     }
                                                                                                       
     /* bind to all addresses and dynamically assigned port */
-    struct sockaddr_in inaddr;
     memset(&inaddr, 0, sizeof(inaddr));
     inaddr.sin_family = AF_INET;
     inaddr.sin_addr.s_addr = INADDR_ANY;
@@ -238,7 +239,6 @@ static int mca_ptl_tcp_module_create_listen(void)
     }
                                                                                                       
     /* resolve system assignend port */
-    lam_socklen_t addrlen = sizeof(struct sockaddr_in);
     if(getsockname(mca_ptl_tcp_module.tcp_listen_sd, (struct sockaddr*)&inaddr, &addrlen) < 0) {
         lam_output(0, "mca_ptl_tcp_module_init: getsockname() failed with errno=%d", errno);
         return LAM_ERROR;
@@ -281,7 +281,7 @@ static int mca_ptl_tcp_module_create_listen(void)
 
 static int mca_ptl_tcp_module_exchange(void)
 {
-     size_t i;
+     size_t i, rc;
      size_t size = mca_ptl_tcp_module.tcp_num_ptls * sizeof(mca_ptl_tcp_addr_t);
      mca_ptl_tcp_addr_t *addrs = malloc(size);
      for(i=0; i<mca_ptl_tcp_module.tcp_num_ptls; i++) {
@@ -290,7 +290,7 @@ static int mca_ptl_tcp_module_exchange(void)
          addrs[i].addr_port = mca_ptl_tcp_module.tcp_listen_port;
          addrs[i].addr_inuse = 0;
      }
-     int rc =  mca_base_modex_send(&mca_ptl_tcp_module.super.ptlm_version, addrs, size);
+     rc =  mca_base_modex_send(&mca_ptl_tcp_module.super.ptlm_version, addrs, size);
      free(addrs);
      return rc;
 }
@@ -389,6 +389,7 @@ static void mca_ptl_tcp_module_accept(void)
         lam_socklen_t addrlen = sizeof(struct sockaddr_in);
         struct sockaddr_in addr;
         int sd = accept(mca_ptl_tcp_module.tcp_listen_sd, (struct sockaddr*)&addr, &addrlen);
+        lam_event_t* event;
         if(sd < 0) {
             if(errno == EINTR)
                 continue;
@@ -398,7 +399,7 @@ static void mca_ptl_tcp_module_accept(void)
         }
 
         /* wait for receipt of peers process identifier to complete this connection */
-        lam_event_t* event = malloc(sizeof(lam_event_t));
+        event = malloc(sizeof(lam_event_t));
         lam_event_set(event, sd, LAM_EV_READ|LAM_EV_PERSIST, mca_ptl_tcp_module_recv_handler, event);
         lam_event_add(event, 0);
     }
@@ -415,6 +416,8 @@ static void mca_ptl_tcp_module_recv_handler(int sd, short flags, void* user)
     uint32_t size;
     struct sockaddr_in addr;
     lam_socklen_t addr_len = sizeof(addr);
+    int retval;
+    mca_ptl_tcp_proc_t* ptl_proc;
 
     /* accept new connections on the listen socket */
     if(mca_ptl_tcp_module.tcp_listen_sd == sd) {
@@ -425,7 +428,7 @@ static void mca_ptl_tcp_module_recv_handler(int sd, short flags, void* user)
     free(user);
 
     /* recv the size of the process identifier */
-    int retval = recv(sd, &size, sizeof(size), 0);
+    retval = recv(sd, &size, sizeof(size), 0);
     if(retval == 0) {
         close(sd);
         return;
@@ -453,7 +456,7 @@ static void mca_ptl_tcp_module_recv_handler(int sd, short flags, void* user)
     }
 
     /* lookup the corresponding process */
-    mca_ptl_tcp_proc_t* ptl_proc = mca_ptl_tcp_proc_lookup(guid, size);
+    ptl_proc = mca_ptl_tcp_proc_lookup(guid, size);
     if(NULL == ptl_proc) {
         lam_output(0, "mca_ptl_tcp_module_recv_handler: unable to locate process");
         close(sd);

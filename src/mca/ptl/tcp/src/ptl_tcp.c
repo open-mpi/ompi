@@ -139,9 +139,9 @@ void mca_ptl_tcp_recv_frag_return(struct mca_ptl_t* ptl, struct mca_ptl_tcp_recv
 void mca_ptl_tcp_send_frag_return(struct mca_ptl_t* ptl, struct mca_ptl_tcp_send_frag_t* frag)
 {
     if(lam_list_get_size(&mca_ptl_tcp_module.tcp_pending_acks)) {
-        THREAD_LOCK(&mca_ptl_tcp_module.tcp_lock);
         mca_ptl_tcp_recv_frag_t* pending = (mca_ptl_tcp_recv_frag_t*)
             lam_list_remove_first(&mca_ptl_tcp_module.tcp_pending_acks);
+        THREAD_LOCK(&mca_ptl_tcp_module.tcp_lock);
         if(NULL == pending) {
             THREAD_UNLOCK(&mca_ptl_tcp_module.tcp_lock);
             lam_free_list_return(&mca_ptl_tcp_module.tcp_send_frags, (lam_list_item_t*)frag);

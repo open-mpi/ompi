@@ -109,7 +109,7 @@ void mca_ptl_tcp_send_frag_init(
 bool mca_ptl_tcp_send_frag_handler(mca_ptl_tcp_send_frag_t* frag, int sd)
 {
     int cnt=-1;
-    size_t i;
+    size_t i, num_vecs;
 
     /* non-blocking write, but continue if interrupted */
     while(cnt < 0) {
@@ -131,7 +131,7 @@ bool mca_ptl_tcp_send_frag_handler(mca_ptl_tcp_send_frag_t* frag, int sd)
     }
                                                                                                      
     /* if the write didn't complete - update the iovec state */
-    size_t num_vecs = frag->frag_vec_cnt;
+    num_vecs = frag->frag_vec_cnt;
     for(i=0; i<num_vecs; i++) {
         if(cnt >= (int)frag->frag_vec_ptr->iov_len) {
             cnt -= frag->frag_vec_ptr->iov_len;

@@ -389,6 +389,7 @@ void *lam_fmp_get_mem_segment(lam_fixed_mpool_t *pool,
     ssize_t len_to_alloc;
     char    *ptr;
     lam_memseg_t *tmp_seg;
+    void *tmp_ptr;
     
     /* return if pool can't be used */
     if ( !pool->fmp_pool_ok_to_use )
@@ -481,7 +482,7 @@ void *lam_fmp_get_mem_segment(lam_fixed_mpool_t *pool,
         len_to_alloc = 4 * (length + alignment);
         if (len_to_alloc < pool->fmp_min_alloc_size)
             len_to_alloc = 2 * pool->fmp_min_alloc_size;
-        void *tmp_ptr =
+        tmp_ptr =
             lam_zero_alloc(len_to_alloc, MMAP_SHARED_PROT, MMAP_SHARED_FLAGS);
         if ( !tmp_ptr )
         {
