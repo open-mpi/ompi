@@ -119,8 +119,10 @@ int mca_ptl_self_module_close(void)
     /* JMS debug */
     if (NULL != mca_ptl_self_module.self_ptls) {
         free(mca_ptl_self_module.self_ptls);
+        mca_ptl_self_module.self_ptls = NULL;
         OBJ_DESTRUCT( &(mca_ptl_self_module.self_send_requests) );
     }
+    mca_ptl_self_module.self_num_ptls = 0;
 #endif
     return OMPI_SUCCESS;
 }
