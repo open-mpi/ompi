@@ -54,7 +54,7 @@ int MPI_Pack(void *inbuf, int incount, MPI_Datatype datatype,
   /* Check for truncation */
 
   ompi_convertor_get_packed_size(local_convertor, &size);
-  if (*position + size > outsize) {
+  if( (*position + size) > (unsigned int)outsize ) {  /* we can cast as we already checked for < 0 */
     OBJ_RELEASE(local_convertor);
     return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TRUNCATE, FUNC_NAME);
   }
