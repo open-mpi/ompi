@@ -47,10 +47,10 @@ int mca_ptl_gm_peer_send( mca_ptl_gm_peer_t *ptl_peer,
     struct iovec outvec;
     size_t size_in,size_out;
     int header_length;
-    mca_ptl_base_frag_header_t* header;
+    mca_ptl_base_header_t* header;
 
-    header = (mca_ptl_base_frag_header_t*)fragment->send_buf;
-    header_length = header->hdr_common.hdr_size;
+    header = (mca_ptl_base_header_t*)fragment->send_buf;
+    header_length = sizeof(mca_ptl_base_match_header_t);
     A_PRINT("peer send (could be ack) : headerlen is %d \n", header_length);
     size_in = *size;
   
@@ -96,7 +96,7 @@ int mca_ptl_gm_peer_send( mca_ptl_gm_peer_t *ptl_peer,
 
     if( (header->hdr_common.hdr_type == MCA_PTL_HDR_TYPE_FRAG) ||
 	(header->hdr_common.hdr_type == MCA_PTL_HDR_TYPE_MATCH) )
-	header->hdr_frag_length = outvec.iov_len;
+	header->hdr_match.hdr_msg_length = outvec.iov_len;
 
     /* adjust size and request offset to reflect actual number of bytes
      * packed by convertor
@@ -107,18 +107,19 @@ int mca_ptl_gm_peer_send( mca_ptl_gm_peer_t *ptl_peer,
 	     sendreq, fragment->req, fragment, size_out,
 	     ((mca_ptl_base_header_t *)header)->hdr_ack.hdr_src_ptr);
  
-    printf( "send pointer %p SIZE %d length %d \n", (void*)fragment->send_buf, GM_BUF_SIZE, size_out );
-
-    /* initiate the gm send */
-    gm_send_with_callback( ptl_peer->peer_ptl->gm_port, fragment->send_buf, 
-                           GM_SIZE, size_out, GM_LOW_PRIORITY, ptl_peer->local_id,
-                           ptl_peer->port_number, send_callback, (void *)fragment );
+    DO_DEBUG( printf( "send pointer %p SIZE %d length %lu\n",
+                      (void*)fragment->send_buf, GM_BUF_SIZE, size_out ) );
 
     fragment->send_frag.frag_base.frag_owner = &ptl_peer->peer_ptl->super;
     fragment->send_frag.frag_base.frag_peer = (struct mca_ptl_base_peer_t*)ptl_peer;
     fragment->send_frag.frag_base.frag_addr = ((char*)fragment->send_buf) + header_length; 
     fragment->send_frag.frag_base.frag_size = size_out - header_length;
     fragment->send_frag.frag_request = sendreq;
+
+    /* initiate the gm send */
+    gm_send_with_callback( ptl_peer->peer_ptl->gm_port, fragment->send_buf, 
+                           GM_SIZE, size_out, GM_LOW_PRIORITY, ptl_peer->local_id,
+                           ptl_peer->port_number, send_callback, (void *)fragment );
 
     *size = (size_out - header_length);
     A_PRINT("inside peer send : bytes sent is %d\n",*size);
@@ -187,7 +188,6 @@ void send_callback(struct gm_port *port,void * context, gm_status_t status)
 {
     mca_ptl_gm_module_t *ptl;
     mca_ptl_gm_send_frag_t *frag;
-    int header_length;
     mca_pml_base_send_request_t *gm_send_req;
     mca_ptl_base_header_t* header;
 
@@ -197,18 +197,18 @@ void send_callback(struct gm_port *port,void * context, gm_status_t status)
     gm_send_req = frag->send_frag.frag_request;   
  
     header = (mca_ptl_base_header_t*)frag->send_buf;
-    header_length = ((mca_ptl_base_header_t*)header)->hdr_common.hdr_size;
 
     switch  (status) {
     case GM_SUCCESS:
+        DO_DEBUG( printf( "send_callback for data ptr %p\n", (void*)frag->send_buf ) );
 	ompi_atomic_add( &(ptl->num_send_tokens), 1 );
     
 	if(header->hdr_common.hdr_type == MCA_PTL_HDR_TYPE_ACK) {
 	    A_PRINT("send callback: Completion of send_ack, sent frag is %p\n", frag);
 	    OMPI_FREE_LIST_RETURN(&(ptl->gm_send_frags), ((ompi_list_item_t *) frag));
 	} else if(header->hdr_common.hdr_type == MCA_PTL_HDR_TYPE_FIN) {
-	    A_PRINT("send callback : Completion of fin, bytes complete =\
-                                %d\n",header->hdr_ack.hdr_dst_size);
+	    A_PRINT("send callback : Completion of fin, bytes complete = %d\n",
+                    header->hdr_ack.hdr_dst_size);
 	    ptl->super.ptl_send_progress( (mca_ptl_base_module_t*)ptl, frag->send_frag.frag_request, 
 					  header->hdr_ack.hdr_dst_size);
 	    
@@ -251,7 +251,7 @@ static void ptl_gm_ctrl_frag(struct mca_ptl_gm_module_t *ptl, mca_ptl_base_heade
     mca_ptl_gm_send_frag_t * frag;
     mca_pml_base_send_request_t *req;
     mca_pml_base_recv_request_t *request;
-    int header_length, bytes;
+    int bytes;
     char * reg_buf; 
     int status;
   
@@ -267,7 +267,6 @@ static void ptl_gm_ctrl_frag(struct mca_ptl_gm_module_t *ptl, mca_ptl_base_heade
 	req->req_peer_size = header->hdr_ack.hdr_dst_size;
 	frag->wait_for_ack = 0;
 	
-	header_length = frag->send_frag.frag_base.frag_header.hdr_frag.hdr_common.hdr_size;
 	bytes = frag->send_frag.frag_base.frag_size; 
 	
 	if(frag->send_complete == 1) {
@@ -284,7 +283,8 @@ static void ptl_gm_ctrl_frag(struct mca_ptl_gm_module_t *ptl, mca_ptl_base_heade
 	    header->hdr_ack.hdr_dst_match.pval;
 	/* call receive progress and indicate the recv has been completed  */
 	
-	GM_DBG(PTL_GM_DBG_COMM,"Calling recv_progress with bytes = %d\n",header->hdr_ack.hdr_dst_size);
+	GM_DBG( PTL_GM_DBG_COMM,"Calling recv_progress with bytes = %ld\n",
+                (long)header->hdr_ack.hdr_dst_size );
 	ptl->super.ptl_recv_progress (
 				      (mca_ptl_base_module_t *) ptl,
 				      request , 
@@ -329,16 +329,10 @@ mca_ptl_gm_recv_frag_match( struct mca_ptl_gm_module_t *ptl,
     recv_frag->frag_progressed = 0;
     
     recv_frag->frag_recv.frag_base.frag_header = *header;
-#if 0
-    recv_frag->frag_recv.frag_base.frag_addr = header;
-    /* + sizeof(mca_ptl_base_header_t);*/ /* XXX: bug */
-    recv_frag->frag_recv.frag_base.frag_size = gm_ntohl(event->recv.length);
-#endif
-#if 1
+
     recv_frag->frag_recv.frag_base.frag_addr =
-	(char *) header + sizeof (mca_ptl_base_header_t);
+	(char *) header + sizeof(mca_ptl_base_match_header_t);
     recv_frag->frag_recv.frag_base.frag_size = header->hdr_frag.hdr_frag_length;
-#endif
     
     recv_frag->matched = false;
     recv_frag->have_allocated_buffer = false;
@@ -381,16 +375,9 @@ mca_ptl_gm_recv_frag_frag( struct mca_ptl_gm_module_t *ptl,
     recv_frag->frag_progressed = 0;
 
     recv_frag->frag_recv.frag_base.frag_header = *header;
-#if 0
-    recv_frag->frag_recv.frag_base.frag_addr = header;
-    /* + sizeof(mca_ptl_base_header_t);*/ /* XXX: bug */
-    recv_frag->frag_recv.frag_base.frag_size = gm_ntohl(event->recv.length);
-#endif
-#if 1
     recv_frag->frag_recv.frag_base.frag_addr =
-        (char *) header + sizeof (mca_ptl_base_header_t);
+        (char *) header + sizeof(mca_ptl_base_frag_header_t);
     recv_frag->frag_recv.frag_base.frag_size = header->hdr_frag.hdr_frag_length;
-#endif
 
     recv_frag->matched = false;
     recv_frag->have_allocated_buffer = false;
@@ -409,6 +396,38 @@ mca_ptl_gm_recv_frag_frag( struct mca_ptl_gm_module_t *ptl,
     return recv_frag;
 }
 
+void mca_ptl_gm_outstanding_recv( struct mca_ptl_gm_module_t *ptl )
+{
+    mca_ptl_gm_recv_frag_t * frag = NULL;
+    int  size;
+    bool matched; 
+    
+    size = ompi_list_get_size (&ptl->gm_recv_outstanding_queue);
+    
+    if (size > 0) {
+        frag = (mca_ptl_gm_recv_frag_t *)
+	    ompi_list_remove_first( (ompi_list_t *)&(ptl->gm_recv_outstanding_queue) );
+	
+	
+        GM_DBG(PTL_GM_DBG_COMM," the frag size to be matched is %ld\n",frag->frag_recv.frag_base.frag_size);
+        matched = ptl->super.ptl_match( &(ptl->super),
+					&(frag->frag_recv),
+					&(frag->frag_recv.frag_base.frag_header.hdr_match) );
+	
+        GM_DBG(PTL_GM_DBG_COMM,"the value of matched is %d\n", matched);
+	
+        if(!matched) {
+	    ompi_list_append((ompi_list_t *)&(ptl->gm_recv_outstanding_queue),
+			     (ompi_list_item_t *) frag);
+        } else {
+	    /* if allocated buffer, free the buffer */
+	    /* return the recv descriptor to the free list */
+	    OMPI_FREE_LIST_RETURN(&(ptl->gm_recv_frags_free), (ompi_list_item_t *)frag);   
+        }  
+    }
+} 
+
+static inline
 mca_ptl_gm_recv_frag_t* ptl_gm_handle_recv( struct mca_ptl_gm_module_t *ptl, gm_recv_event_t* event )
 {
     mca_ptl_gm_recv_frag_t* frag = NULL;
@@ -436,37 +455,6 @@ mca_ptl_gm_recv_frag_t* ptl_gm_handle_recv( struct mca_ptl_gm_module_t *ptl, gm_
     }
     return frag;
 }
-
-void mca_ptl_gm_outstanding_recv( struct mca_ptl_gm_module_t *ptl )
-{
-    mca_ptl_gm_recv_frag_t * frag = NULL;
-    int  size;
-    bool matched; 
-    
-    size = ompi_list_get_size (&ptl->gm_recv_outstanding_queue);
-    
-    if (size > 0) {
-        frag = (mca_ptl_gm_recv_frag_t *)
-	    ompi_list_remove_first( (ompi_list_t *)&(ptl->gm_recv_outstanding_queue) );
-	
-	
-        GM_DBG(PTL_GM_DBG_COMM," the frag size to be matched is %d\n",frag->frag_recv.frag_base.frag_size);
-        matched = ptl->super.ptl_match( &(ptl->super),
-					&(frag->frag_recv),
-					&(frag->frag_recv.frag_base.frag_header.hdr_match) );
-	
-        GM_DBG(PTL_GM_DBG_COMM,"the value of matched is %d\n", matched);
-	
-        if(!matched) {
-	    ompi_list_append((ompi_list_t *)&(ptl->gm_recv_outstanding_queue),
-			     (ompi_list_item_t *) frag);
-        } else {
-	    /* if allocated buffer, free the buffer */
-	    /* return the recv descriptor to the free list */
-	    OMPI_FREE_LIST_RETURN(&(ptl->gm_recv_frags_free), (ompi_list_item_t *)frag);   
-        }  
-    }
-} 
 
 int mca_ptl_gm_analyze_recv_event( struct mca_ptl_gm_module_t* ptl, gm_recv_event_t* event )
 {
@@ -505,27 +493,5 @@ int mca_ptl_gm_analyze_recv_event( struct mca_ptl_gm_module_t* ptl, gm_recv_even
 	
     }
     
-    return 0;
-}
-
-/* Parse all the interfaces and check for a message. This function is used in the case
- * where OpenMPI does not use a thread for each PTL. The real analisys of the message
- * is done in a common place for all possibilities (threaded or not) in the function
- * mca_ptl_gm_analyze_recv_event.
- */
-int mca_ptl_gm_incoming_recv( struct mca_ptl_gm_component_t * gm_comp )
-{
-    uint32_t i;
-    gm_recv_event_t *event;
-    mca_ptl_gm_module_t *ptl;
-    
-    for( i = 0; i< gm_comp->gm_num_ptl_modules; i++) {
-        ptl = gm_comp->gm_ptl_modules[i];
-        event = gm_receive(ptl->gm_port);
-	/* If there are no receive events just skip the function call */
-	if( GM_NO_RECV_EVENT != gm_ntohc(event->recv.type) ) {
-	    mca_ptl_gm_analyze_recv_event( ptl, event );
-	}
-    }  
     return 0;
 }

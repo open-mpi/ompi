@@ -81,10 +81,10 @@ int mca_ptl_gm_send_ack_init( struct mca_ptl_gm_send_frag_t* ack,
 			      char * buffer,
 			      int size )
 {
-    mca_ptl_base_header_t * hdr;
+    mca_ptl_base_ack_header_t * hdr;
     mca_pml_base_recv_request_t *request;
 
-    hdr = (mca_ptl_base_header_t *)ack->send_buf;
+    hdr = (mca_ptl_base_ack_header_t*)ack->send_buf;
 
     ack->status = -1;
     ack->type = -1;
@@ -96,19 +96,18 @@ int mca_ptl_gm_send_ack_init( struct mca_ptl_gm_send_frag_t* ack,
 
     hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_ACK;
     hdr->hdr_common.hdr_flags = 0;
-    hdr->hdr_common.hdr_size = sizeof(mca_ptl_base_ack_header_t);
 
-    hdr->hdr_ack.hdr_src_ptr.pval =
+    hdr->hdr_src_ptr.pval =
 	frag->frag_recv.frag_base.frag_header.hdr_frag.hdr_src_ptr.pval;
 
-    A_PRINT("inside ack init: the src frag ptr is %p,hdr_len is %u\n",
-	    hdr->hdr_ack.hdr_src_ptr,hdr->hdr_common.hdr_size);
+    A_PRINT( "inside ack init: the src frag ptr is %p,hdr_len is %u\n",
+             hdr->hdr_src_ptr, hdr->hdr_common.hdr_size );
 
-    hdr->hdr_ack.hdr_dst_match.lval = 0;
-    hdr->hdr_ack.hdr_dst_match.pval = request; /*should this be dst_match */
-    hdr->hdr_ack.hdr_dst_addr.lval = 0; /*we are filling both p and val of dest address */
-    hdr->hdr_ack.hdr_dst_addr.pval = (void *)buffer;
-    hdr->hdr_ack.hdr_dst_size = size;
+    hdr->hdr_dst_match.lval = 0;
+    hdr->hdr_dst_match.pval = request; /*should this be dst_match */
+    hdr->hdr_dst_addr.lval = 0; /*we are filling both p and val of dest address */
+    hdr->hdr_dst_addr.pval = (void *)buffer;
+    hdr->hdr_dst_size = size;
 
     ack->send_frag.frag_request = 0;
     ack->send_frag.frag_base.frag_peer = (struct mca_ptl_base_peer_t *)ptl_peer;
@@ -117,7 +116,7 @@ int mca_ptl_gm_send_ack_init( struct mca_ptl_gm_send_frag_t* ack,
     ack->send_frag.frag_base.frag_size = 0;
     ack->status = 1; /* was able to register memory */
     ack->ptl = ptl;
-    ack->send_frag.frag_base.frag_header = *hdr;
+    ack->send_frag.frag_base.frag_header.hdr_ack = *hdr;
     ack->wait_for_ack = 0;
     ack->type = ACK;
 
@@ -145,7 +144,6 @@ int mca_ptl_gm_put_frag_init( struct mca_ptl_gm_send_frag_t* putfrag,
 
     hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_FIN;
     hdr->hdr_common.hdr_flags = 0;
-    hdr->hdr_common.hdr_size = sizeof(mca_ptl_base_ack_header_t);
   
     hdr->hdr_ack.hdr_dst_match.lval = 0;
     hdr->hdr_ack.hdr_dst_match.pval = request->req_peer_match.pval;
