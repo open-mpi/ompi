@@ -6,21 +6,18 @@
  * information, see the LICENSE file in the top level directory of the
  * CMPI source distribution.
  * 
- * $Id: mpi.h,v 1.2 2003/11/22 16:57:54 jsquyres Exp $
+ * $Id: mpi.h,v 1.3 2003/12/22 16:29:12 twoodall Exp $
  */
 
 #ifndef CMPI_H
 #define CMPI_H
 
-#include <cmpi_config.h>
-
 #define MPI_SUCCESS 0
-
 #define MPI_MAX_OBJECT_NAME 64
 
-typedef struct cmpi_communicator *MPI_Comm;
-typedef struct cmpi_group *MPI_Group;
-typedef struct cmpi_datatype *MPI_Datatype;
+typedef struct _lam_communicator *MPI_Comm;
+typedef struct _lam_group *MPI_Group;
+typedef struct _lam_datatype *MPI_Datatype;
 
 extern MPI_Comm MPI_COMM_NULL;
 extern MPI_Comm MPI_COMM_WORLD;
