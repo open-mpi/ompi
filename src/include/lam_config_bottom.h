@@ -38,6 +38,9 @@ typedef enum { false, true } bool;
  */
 #define LAM_HAVE_THREADS (LAM_HAVE_SOLARIS_THREADS || LAM_HAVE_POSIX_THREADS)
 
+/* parameter indicating if to check MPI arguments */
+extern bool lam_mpi_param_check;
+
 /*
  * Do we have <stdint.h>?
  */
