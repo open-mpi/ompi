@@ -31,11 +31,10 @@ int ompi_convertor_pack_general( ompi_convertor_t* pConvertor,
     int iCount, rc;
     unsigned int iov_count, total_bytes_converted = 0;
 
-    DUMP( "convertor_decode( %p, {%p, %d}, %d )\n", pConvertor,
+    DUMP( "convertor_decode( %p, {%p, %d}, %d )\n", (void*)pConvertor,
           iov[0].iov_base, iov[0].iov_len, *out_size );
 
-    if( pData->opt_desc.desc != NULL )    pElem = pData->opt_desc.desc;
-    else                                  pElem = pData->desc.desc;
+    pElem = pData->desc.desc;
 
     pStack = pConvertor->pStack + pConvertor->stack_pos;
     pos_desc   = pStack->index;
@@ -74,12 +73,11 @@ int ompi_convertor_pack_general( ompi_convertor_t* pConvertor,
                 if( pStack->index == -1 ) {
                     pStack->disp += (pData->ub - pData->lb);
                 } else {
-                    pStack->disp += pElem[pos_desc].extent;
+                    pStack->disp += pElem[pStack->index].extent;
                 }
                 pos_desc = pStack->index + 1;
                 count_desc = pElem[pos_desc].count;
                 disp_desc = pElem[pos_desc].disp;
-                continue;
             }
             if( pElem[pos_desc].type == DT_LOOP ) {
                 do {
@@ -99,8 +97,8 @@ int ompi_convertor_pack_general( ompi_convertor_t* pConvertor,
                 type = pElem[pos_desc].type;
                 rc = pConvertor->pFunctions[type]( count_desc,
                                                    pOutput + pStack->disp + disp_desc, oCount, pElem[pos_desc].extent,
-                                                   pInput, iCount, pElem[pos_desc].extent,
-                                                   &advance );
+                                                   pInput, iCount, ompi_ddt_basicDatatypes[type]->size );
+                advance = rc * ompi_ddt_basicDatatypes[type]->size;
                 iCount -= advance;      /* decrease the available space in the buffer */
                 pInput += advance;      /* increase the pointer to the buffer */
                 bConverted += advance;
@@ -109,7 +107,7 @@ int ompi_convertor_pack_general( ompi_convertor_t* pConvertor,
                     count_desc -= rc;
                     disp_desc += rc * pElem[pos_desc].extent;
                     if( iCount != 0 )
-                        printf( "there is still room in the input buffer %d bytes\n", iCount );
+                        printf( "pack there is still room in the input buffer %d bytes\n", iCount );
                     goto complete_loop;
                 }
                 pConvertor->converted += rc;  /* number of elementd converted so far */
@@ -793,7 +791,7 @@ int ompi_convertor_init_for_send( ompi_convertor_t* pConv,
     pConv->bConverted = 0;
     pConv->memAlloc_fn = allocfn;
     if( dt->flags & DT_FLAG_CONTIGUOUS ) {
-	pConv->flags |= DT_FLAG_CONTIGUOUS;
+	pConv->flags |= DT_FLAG_CONTIGUOUS | CONVERTOR_HOMOGENEOUS;
 	pConv->fAdvance = ompi_convertor_pack_homogeneous_contig;
     } else {
 	/* TODO handle the sender convert case */

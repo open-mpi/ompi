@@ -3,15 +3,27 @@
 #ifndef DATATYPE_INTERNAL_H_HAS_BEEN_INCLUDED
 #define DATATYPE_INTERNAL_H_HAS_BEEN_INCLUDED
 
+#include "util/output.h"
+
+extern int ompi_ddt_dfd;
+
 #if defined(VERBOSE)
 #  define DUMP_STACK( PSTACK, STACK_POS, PDESC, NAME ) \
      ompi_ddt_dump_stack( (PSTACK), (STACK_POS), (PDESC), (NAME) )
 #  if defined(ACCEPT_C99)
-#    define DUMP( ARGS... )          printf(__VA_ARGS__)
+#    define DUMP( ARGS... )          ompi_output(ompi_ddt_dfd, __VA_ARGS__)
 #  else
 #    if defined(__GNUC__) && !defined(__STDC__)
-#      define DUMP(ARGS...)          printf(ARGS)
+#      define DUMP(ARGS...)          ompi_output( ompi_ddt_dfd, ARGS)
 #  else
+static inline void DUMP( char* fmt, ... )
+{
+   va_list list;
+
+   va_start( list, fmt );
+   ompi_output( ompi_ddt_dfd, fmt, list );
+   va_end( list );
+}
 #      define DUMP                   printf
 #    endif  /* __GNUC__ && !__STDC__ */
 #  endif  /* ACCEPT_C99 */
@@ -112,7 +124,7 @@ typedef struct __dt_endloop_desc {
 #define CONVERTOR_USELESS          0x00010000
 #define CONVERTOR_RECV             0x00020000
 #define CONVERTOR_SEND             0x00040000
-
+#define CONVERTOR_HOMOGENEOUS      0x00080000
 #define CONVERTOR_STATE_MASK       0xFF000000
 #define CONVERTOR_STATE_START      0x01000000
 #define CONVEROTR_STATE_COMPLETE   0x02000000
@@ -263,12 +275,13 @@ int ompi_convertor_create_stack_at_begining( ompi_convertor_t* pConvertor, int* 
     pConvertor->pStack[0].count = pConvertor->count;
     /* first here we should select which data representation will be used for
      * this operation: normal one or the optimized version ? */
-    if( pData->opt_desc.used > 0 ) {
-        pElems = pData->opt_desc.desc;
-        pConvertor->pStack[0].end_loop = pData->opt_desc.used;
-    } else {
-        pElems = pData->desc.desc;
-        pConvertor->pStack[0].end_loop = pData->desc.used;
+    pElems = pData->desc.desc;
+    pConvertor->pStack[0].end_loop = pData->desc.used;
+    if( pConvertor->flags & CONVERTOR_HOMOGENEOUS ) {
+        if( pData->opt_desc.used > 0 ) {
+            pElems = pData->opt_desc.desc;
+            pConvertor->pStack[0].end_loop = pData->opt_desc.used;
+        }
     }
     index = GET_FIRST_NON_LOOP(pData->desc.desc);
     pConvertor->pStack[0].disp     = pElems[index].disp;
