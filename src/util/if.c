@@ -45,16 +45,16 @@ static lam_list_t lam_if_list;
 
 static int lam_ifinit(void) 
 {
-    if (lam_list_get_size(&lam_if_list) > 0)
-        return LAM_SUCCESS;
-
     char buff[1024];
     char *ptr;
     struct ifconf ifconf;
+    int sd;
     ifconf.ifc_len = sizeof(buff);
     ifconf.ifc_buf = buff;
                                                                                 
-    int sd;
+    if (lam_list_get_size(&lam_if_list) > 0)
+        return LAM_SUCCESS;
+
     if((sd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
         lam_output(0, "lam_ifinit: socket() failed with errno=%d\n", errno);
         return LAM_ERROR;
@@ -201,11 +201,11 @@ int lam_ifnametoindex(const char* if_name)
 int lam_ifaddrtoname(const char* if_addr, char* if_name, int length)
 {
     lam_if_t* intf;
+    in_addr_t inaddr = inet_addr(if_addr);
     int rc = lam_ifinit();
     if(rc != LAM_SUCCESS)
         return rc;
 
-    in_addr_t inaddr = inet_addr(if_addr);
     if(inaddr == INADDR_ANY) {
         struct hostent *h = gethostbyname(if_addr);
         if(h == 0) {
@@ -245,9 +245,10 @@ int lam_ifcount()
 
 int lam_ifbegin()
 {
+    lam_if_t *intf;
     if(lam_ifinit() != LAM_SUCCESS)
         return (-1);
-    lam_if_t *intf = (lam_if_t*)lam_list_get_first(&lam_if_list);
+    intf = (lam_if_t*)lam_list_get_first(&lam_if_list);
     if(intf != 0)
         return intf->if_index;
     return (-1);

@@ -37,6 +37,7 @@ void mca_pml_teg_send_request_schedule(mca_ptl_base_send_request_t* req)
          * size, then go ahead and give the rest of the message to this PTL.
          */
         size_t bytes_to_frag;
+		int rc;
         if(num_ptl == num_ptl_avail || bytes_remaining < ptl->ptl_min_frag_size)
             bytes_to_frag = bytes_remaining;
 
@@ -51,7 +52,7 @@ void mca_pml_teg_send_request_schedule(mca_ptl_base_send_request_t* req)
                 bytes_to_frag = bytes_remaining;
         }
 
-        int rc = ptl->ptl_send(ptl, ptl_proc->ptl_peer, req, bytes_to_frag, 0);
+        rc = ptl->ptl_send(ptl, ptl_proc->ptl_peer, req, bytes_to_frag, 0);
         if(rc == LAM_SUCCESS)
             bytes_remaining = req->super.req_length - req->req_offset;
     }

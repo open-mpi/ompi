@@ -332,6 +332,8 @@ static int mca_ptl_tcp_peer_recv_connect_ack(mca_ptl_base_peer_t* ptl_peer)
 static int mca_ptl_tcp_peer_start_connect(mca_ptl_base_peer_t* ptl_peer)
 {
     int rc;
+    int flags;
+    struct sockaddr_in peer_addr;
     ptl_peer->peer_sd = socket(AF_INET, SOCK_STREAM, 0);
     if (ptl_peer->peer_sd < 0) {
         ptl_peer->peer_retries++;
@@ -342,7 +344,6 @@ static int mca_ptl_tcp_peer_start_connect(mca_ptl_base_peer_t* ptl_peer)
     mca_ptl_tcp_peer_event_init(ptl_peer, ptl_peer->peer_sd);
 
     /* setup the socket as non-blocking */
-    int flags;
     if((flags = fcntl(ptl_peer->peer_sd, F_GETFL, 0)) < 0) {
         lam_output(0, "mca_ptl_tcp_peer_connect: fcntl(F_GETFL) failed with errno=%d\n", errno);
     } else {
@@ -352,7 +353,6 @@ static int mca_ptl_tcp_peer_start_connect(mca_ptl_base_peer_t* ptl_peer)
     }
                                                                                                               
     /* start the connect - will likely fail with EINPROGRESS */
-    struct sockaddr_in peer_addr;
     peer_addr.sin_family = AF_INET;
     peer_addr.sin_addr = ptl_peer->peer_addr->addr_inet;
     peer_addr.sin_port = ptl_peer->peer_addr->addr_port;
