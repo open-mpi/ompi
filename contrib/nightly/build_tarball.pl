@@ -83,7 +83,6 @@ sub test_abort {
 sub do_command {
     my ($merge_output, $cmd) = @_;
 
-    print "*** Running command: $cmd\n" if ($debug);
     pipe OUTread, OUTwrite;
     pipe ERRread, ERRwrite
         if (!$merge_output);
@@ -226,6 +225,7 @@ sub find_program {
         if ($status == 0) {
             return $names[$i];
         }
+        ++$i;
     }
     return undef;
 }
@@ -537,6 +537,7 @@ if ($url_arg) {
         if (! -f $latest_name);
     $version = `cat $latest_name`;
     chomp($version);
+    push(@email_output, "Snapshot: $version\n\n");
     
     # see if we need to download the tarball
     $tarball_name = "openmpi-$version.tar.gz";
@@ -604,8 +605,8 @@ WARNING: checksums.  Proceeding anyway...\n\n");
         if (! -r $tarball_name);
     $version = $tarball_name;
     $version =~ s/.*openmpi-(.+).tar.gz/$1/;
+    push(@email_output, "Snapshot: $version\n\n");
 } 
-push(@email_output, "Snapshot: $version\n\n");
 
 # Make a root for this build to play in (scratch_root_arg is absolute, so
 # root will be absolute)
