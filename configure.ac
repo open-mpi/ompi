@@ -414,6 +414,7 @@ AC_CONFIG_FILES([
     src/mca/mpi/one/base/Makefile
     src/mca/mpi/pml/Makefile
     src/mca/mpi/pml/base/Makefile
+    src/mca/mpi/pml/teg/Makefile
     src/mca/mpi/ptl/Makefile
     src/mca/mpi/ptl/base/Makefile
     src/mca/mpi/topo/Makefile
