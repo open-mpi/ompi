@@ -277,6 +277,7 @@ int ompi_convertor_pack_homogeneous_with_memcpy( ompi_convertor_t* pConv,
 
     pConv->bConverted += bConverted;  /* update the byte converted field in the convertor */
     iov[0].iov_len = bConverted;      /* update the length in the iovec */
+    *max_data = bConverted;
     return (pConv->bConverted == (pData->size * pConv->count));
 }
 
@@ -443,8 +444,8 @@ int ompi_convertor_pack_no_conversion( ompi_convertor_t* pConv,
              * we still have enough room in the buffer...
              */
             if( ((savePos + saveLength) == (pConv->pBaseBuf + lastDisp))
-                && ((saveLength + last_blength) < space_on_iovec) ) {
-                /* ok still contiguous */
+                && ((saveLength + last_blength) <= space_on_iovec) ) {
+                /* ok still contiguous and we still have some space on the buffer */
                 saveLength += last_blength;
                 /* nothing else to do, we act the next time */
             } else {
