@@ -161,6 +161,14 @@ int mca_coll_basic_reduce_log(void *sbuf, void *rbuf, int count,
 
 #if 0
     /* JMS Needs to be replaced with lam_datatype_*() functions */
+  /* JMS: result of Feb meeting:
+
+     if (dtype != MPI_IN_PLACE) {
+       MPI_Type_get_true_extent(dtype, &true_lb, &true_extent);
+       buffer_to_free = malloc(true_extent);
+       buffer_for_mpi = buffer_to_free - true_lb;
+     }
+  */
   err = lam_dtbuffer(dtype, count, &buf1, &origin1);
   if (MPI_SUCCESS != err)
     return err;
