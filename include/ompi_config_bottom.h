@@ -151,4 +151,22 @@ int ompi_vsnprintf(char *, size_t, const char *, va_list);
 
 #ifdef __cplusplus
 }
+
+/* For windoze weirdness. A function/object is not considered paprt of DLL interface unless
+   it is exported. Hence this macro. It needs to b prepended to the declaration of the 
+   function/object which needs to be exported from a DLL. For us, this would be all MPI_ functions
+   and also all function from within ompi implementation which are used by other execuatables 
+   such as ompi_info, mpicc, etc. Visual studio defines WIN32 and is the standard way of knowing
+   whether we are compiling using CL.EXE. Note that the compiler itself does not define this macro.
+   Also, they simply define the macro as opposed to defining it to something. I guess they 
+   dont program defensively :-) */
+
+#if defined (WIN32) 
+    #define OMPI_EXPORT __declspec(dllexport)
+    #define OMPI_IMPORT __declspec(dllimport)
+#else
+    #define OMPI_EXPORT 
+    #define OMPI_IMPORT 
+#endif /* windoze weirdness */
+        
 #endif
