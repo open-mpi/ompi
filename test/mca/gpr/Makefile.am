@@ -40,7 +40,6 @@ endif
 gpr_internal_fns_SOURCES = gpr_internal_fns.c
 gpr_internal_fns_LDADD = \
         $(top_builddir)/src/libmpi.la \
-        $(replica) \
         $(top_builddir)/test/support/libsupport.a 
 gpr_internal_fns_DEPENDENCIES = $(gpr_internal_fns_LDADD)
 
