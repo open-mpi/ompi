@@ -543,7 +543,9 @@ conversion_fct_t ompi_ddt_copy_functions[DT_MAX_PREDEFINED] = {
 #else
 #error Complete me please
 #endif
-#if (SIZEOF_LONG_DOUBLE + SIZEOF_INT) == 16
+#if (SIZEOF_LONG_DOUBLE + SIZEOF_INT) == 12
+   (conversion_fct_t)copy_bytes_12,             /* DT_LONG_DOUBLE_INT     */ 
+#elif (SIZEOF_LONG_DOUBLE + SIZEOF_INT) == 16
    (conversion_fct_t)copy_bytes_16,             /* DT_LONG_DOUBLE_INT     */ 
 #else
 #error Complete me please
