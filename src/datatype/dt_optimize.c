@@ -40,124 +40,121 @@ static inline long GET_LOOP_DISP( dt_elem_desc_t* _pElem )
 int ompi_ddt_optimize_short( dt_desc_t* pData, int count, 
 			     dt_type_desc_t* pTypeDesc )
 {
-   dt_elem_desc_t* pElemDesc;
-   long lastDisp = 0;
-   dt_stack_t* pStack;   /* pointer to the position on the stack */
-   int pos_desc;         /* actual position in the description of the derived datatype */
-   int stack_pos = 0;
-   int type, lastLength = 0, nbElems = 0, changes = 0;
-   long totalDisp;
+    dt_elem_desc_t* pElemDesc;
+    long lastDisp = 0;
+    dt_stack_t* pStack;   /* pointer to the position on the stack */
+    int pos_desc;         /* actual position in the description of the derived datatype */
+    int stack_pos = 0;
+    int type, lastLength = 0, nbElems = 0, changes = 0;
+    long totalDisp;
 
-   pTypeDesc->length = 2 * pData->desc.used + 1 /* for the fake DT_END_LOOP at the end */;
-   pTypeDesc->desc = pElemDesc = (dt_elem_desc_t*)malloc( sizeof(dt_elem_desc_t) * pTypeDesc->length );
-   pTypeDesc->used = 0;
+    pTypeDesc->length = 2 * pData->desc.used + 1 /* for the fake DT_END_LOOP at the end */;
+    pTypeDesc->desc = pElemDesc = (dt_elem_desc_t*)malloc( sizeof(dt_elem_desc_t) * pTypeDesc->length );
+    pTypeDesc->used = 0;
 
-   if( (count == 0) || (pData->desc.used == 0) ) return 1;
+    if( (count == 0) || (pData->desc.used == 0) ) return 1;
 
-   pStack = alloca( sizeof(dt_stack_t) * (pData->btypes[DT_LOOP]+2) );
-   pStack->count = count;
-   pStack->index = -1;
-   pStack->end_loop = pData->desc.used;
-   pStack->disp = 0;
-   pos_desc  = 0;
-   totalDisp = 0;
+    pStack = alloca( sizeof(dt_stack_t) * (pData->btypes[DT_LOOP]+2) );
+    pStack->count = count;
+    pStack->index = -1;
+    pStack->end_loop = pData->desc.used;
+    pStack->disp = 0;
+    pos_desc  = 0;
+    totalDisp = 0;
    
-   while( stack_pos >= 0 ) {
-      if( pData->desc.desc[pos_desc].type == DT_END_LOOP ) { /* end of the current loop */
-         dt_elem_desc_t* pStartLoop;
-         if( lastLength != 0 ) {
-            SAVE_DESC( pElemDesc, lastDisp, lastLength );
-            lastDisp += lastLength;
-            lastLength = 0;
-         }
-         pStartLoop = &(pTypeDesc->desc[pStack->index - 1]);
-         SAVE_ELEM( pElemDesc, DT_END_LOOP, pData->desc.desc[pos_desc].flags,
-                    nbElems - pStack->index + 1,  /* # of elems in this loop */
-                    pData->desc.desc[pos_desc].disp,
-                    pData->desc.desc[pos_desc].extent );
-         stack_pos--;
-         pStack--;
-         if( stack_pos >= 0 ) {
-             pStartLoop->disp = (pElemDesc - 1)->count;
-             totalDisp = pStack->disp;  /* update the displacement position */
-         }
-         pos_desc++;
-         continue;
-      }
-      if( pData->desc.desc[pos_desc].type == DT_LOOP ) {
-         dt_elem_desc_t* pEndLoop = &(pData->desc.desc[pos_desc + pData->desc.desc[pos_desc].disp]);
-         long loop_disp = GET_LOOP_DISP( &(pData->desc.desc[pos_desc]) );
-         if( pData->desc.desc[pos_desc].flags & DT_FLAG_CONTIGUOUS ) {
-            /* the loop is contiguous or composed by contiguous elements with a gap */
-            if( pData->desc.desc[pos_desc].extent == pEndLoop->extent ) {
-               /* the whole loop is contiguous */
-               if( (lastDisp + lastLength) != (totalDisp + loop_disp) ) {
-                  SAVE_DESC( pElemDesc, lastDisp, lastLength );
-                  lastLength = 0;
-                  lastDisp = totalDisp + loop_disp;
-               }
-               lastLength += pData->desc.desc[pos_desc].count * pEndLoop->extent;
-            } else {
-               int counter = pData->desc.desc[pos_desc].count;
-               if( (lastDisp + lastLength) == (totalDisp + loop_disp) ) {
-                  lastLength += pEndLoop->extent;
-                  counter--;
-               }
-               if( lastLength != 0 ) {
-                  SAVE_DESC( pElemDesc, lastDisp, lastLength );
-                  lastDisp += lastLength;
-                  lastLength = 0;
-               }                  
-               /* we have a gap in the begining or the end of the loop but the whole
-                * loop can be merged in just one memcpy.
-                */
-               SAVE_ELEM( pElemDesc, DT_LOOP, pData->desc.desc[pos_desc].flags,
-                          counter, (long)2, pData->desc.desc[pos_desc].extent );
-               SAVE_DESC( pElemDesc, loop_disp, pEndLoop->extent );
-               SAVE_ELEM( pElemDesc, DT_END_LOOP, pEndLoop->flags,
-                          2, pEndLoop->disp, pEndLoop->extent );
-            }
-            pos_desc += pData->desc.desc[pos_desc].disp + 1;
-            changes++;
-         } else {
+    while( stack_pos >= 0 ) {
+        if( pData->desc.desc[pos_desc].type == DT_END_LOOP ) { /* end of the current loop */
+            dt_elem_desc_t* pStartLoop;
             if( lastLength != 0 ) {
-               SAVE_DESC( pElemDesc, lastDisp, lastLength );
-               lastDisp += lastLength;
-               lastLength = 0;
-            }                  
-            SAVE_ELEM( pElemDesc, DT_LOOP, pData->desc.desc[pos_desc].flags,
-                       pData->desc.desc[pos_desc].count, (long)nbElems,
+                SAVE_DESC( pElemDesc, lastDisp, lastLength );
+                lastDisp += lastLength;
+                lastLength = 0;
+            }
+            pStartLoop = &(pTypeDesc->desc[pStack->index - 1]);
+            SAVE_ELEM( pElemDesc, DT_END_LOOP, pData->desc.desc[pos_desc].flags,
+                       nbElems - pStack->index + 1,  /* # of elems in this loop */
+                       pData->desc.desc[pos_desc].disp,
                        pData->desc.desc[pos_desc].extent );
-            PUSH_STACK( pStack, stack_pos, nbElems, pData->desc.desc[pos_desc].count,
-                        totalDisp, pos_desc + pData->desc.desc[pos_desc].disp );
+            pStack--;  /* go down one position on the stack */
+            if( --stack_pos >= 0 ) {  /* still something to do ? */
+                pStartLoop->disp = (pElemDesc - 1)->count;
+                totalDisp = pStack->disp;  /* update the displacement position */
+            }
             pos_desc++;
-            DUMP_STACK( pStack, stack_pos, pData->desc, "advance loops" );
-         }
-         /* JMS: added block */
-         if( stack_pos >= 0 ) {
-             totalDisp = pStack->disp;
-         }
-         /* JMS: changed "goto next_loop" to "continue" */
-         continue;
-      }
-      /* now here we have a basic datatype */
-      type = pData->desc.desc[pos_desc].type;
-      if( (lastDisp + lastLength) == (totalDisp + pData->desc.desc[pos_desc].disp) ) {
-         lastLength += pData->desc.desc[pos_desc].count * ompi_ddt_basicDatatypes[type]->size;
-      } else {
-         if( lastLength != 0 )
-            SAVE_DESC( pElemDesc, lastDisp, lastLength );
-         lastDisp = totalDisp + pData->desc.desc[pos_desc].disp;
-         lastLength = pData->desc.desc[pos_desc].count * ompi_ddt_basicDatatypes[type]->size;
-      }
-      pos_desc++;  /* advance to the next data */
-   }
-
-   if( lastLength != 0 )
-      SAVE_DESC( pElemDesc, lastDisp, lastLength );
-   /* cleanup the stack */
-   pTypeDesc->used = nbElems - 1;  /* except the last fake END_LOOP */
-   return OMPI_SUCCESS;
+            continue;
+        }
+        if( pData->desc.desc[pos_desc].type == DT_LOOP ) {
+            dt_elem_desc_t* pEndLoop = &(pData->desc.desc[pos_desc + pData->desc.desc[pos_desc].disp]);
+            long loop_disp = GET_LOOP_DISP( &(pData->desc.desc[pos_desc]) );
+            if( pData->desc.desc[pos_desc].flags & DT_FLAG_CONTIGUOUS ) {
+                /* the loop is contiguous or composed by contiguous elements with a gap */
+                if( pData->desc.desc[pos_desc].extent == pEndLoop->extent ) {
+                    /* the whole loop is contiguous */
+                    if( (lastDisp + lastLength) != (totalDisp + loop_disp) ) {
+                        SAVE_DESC( pElemDesc, lastDisp, lastLength );
+                        lastLength = 0;
+                        lastDisp = totalDisp + loop_disp;
+                    }
+                    lastLength += pData->desc.desc[pos_desc].count * pEndLoop->extent;
+                } else {
+                    int counter = pData->desc.desc[pos_desc].count;
+                    if( (lastDisp + lastLength) == (totalDisp + loop_disp) ) {
+                        lastLength += pEndLoop->extent;
+                        counter--;
+                    }
+                    if( lastLength != 0 ) {
+                        SAVE_DESC( pElemDesc, lastDisp, lastLength );
+                        lastDisp += lastLength;
+                        lastLength = 0;
+                    }                  
+                    /* we have a gap in the begining or the end of the loop but the whole
+                     * loop can be merged in just one memcpy.
+                     */
+                    SAVE_ELEM( pElemDesc, DT_LOOP, pData->desc.desc[pos_desc].flags,
+                               counter, (long)2, pData->desc.desc[pos_desc].extent );
+                    SAVE_DESC( pElemDesc, loop_disp, pEndLoop->extent );
+                    SAVE_ELEM( pElemDesc, DT_END_LOOP, pEndLoop->flags,
+                               2, pEndLoop->disp, pEndLoop->extent );
+                }
+                pos_desc += pData->desc.desc[pos_desc].disp + 1;
+                changes++;
+            } else {
+                if( lastLength != 0 ) {
+                    SAVE_DESC( pElemDesc, lastDisp, lastLength );
+                    lastDisp += lastLength;
+                    lastLength = 0;
+                }                  
+                SAVE_ELEM( pElemDesc, DT_LOOP, pData->desc.desc[pos_desc].flags,
+                           pData->desc.desc[pos_desc].count, (long)nbElems,
+                           pData->desc.desc[pos_desc].extent );
+                PUSH_STACK( pStack, stack_pos, nbElems, pData->desc.desc[pos_desc].count,
+                            totalDisp, pos_desc + pData->desc.desc[pos_desc].disp );
+                pos_desc++;
+                DUMP_STACK( pStack, stack_pos, pData->desc, "advance loops" );
+            }
+            totalDisp = pStack->disp;  /* update the displacement */
+            continue;
+        }
+        while( pData->desc.desc[pos_desc].flags & DT_FLAG_DATA ) {  /* keep doing it until we reach a non datatype element */
+            /* now here we have a basic datatype */
+            type = pData->desc.desc[pos_desc].type;
+            if( (lastDisp + lastLength) == (totalDisp + pData->desc.desc[pos_desc].disp) ) {
+                lastLength += pData->desc.desc[pos_desc].count * ompi_ddt_basicDatatypes[type]->size;
+            } else {
+                if( lastLength != 0 )
+                    SAVE_DESC( pElemDesc, lastDisp, lastLength );
+                lastDisp = totalDisp + pData->desc.desc[pos_desc].disp;
+                lastLength = pData->desc.desc[pos_desc].count * ompi_ddt_basicDatatypes[type]->size;
+            }
+            pos_desc++;  /* advance to the next data */
+        }
+    }
+    
+    if( lastLength != 0 )
+        SAVE_DESC( pElemDesc, lastDisp, lastLength );
+    /* cleanup the stack */
+    pTypeDesc->used = nbElems - 1;  /* except the last fake END_LOOP */
+    return OMPI_SUCCESS;
 }
 
 #define PRINT_MEMCPY( DST, SRC, LENGTH ) \
