@@ -176,6 +176,19 @@ int mca_pml_teg_add_procs(ompi_proc_t** procs, size_t nprocs)
     if(OMPI_SUCCESS != rc)
         return rc;
 
+    /* iterate through each of the procs and set the peers architecture */
+    for(p=0; p<nprocs; p++) {
+        uint32_t proc_arch;
+        size_t size = sizeof(proc_arch);
+        rc = mca_base_modex_recv(&mca_pml_teg_component.pmlm_version, procs[p], 
+            (void**)&proc_arch, &size);
+        if(rc != OMPI_SUCCESS) 
+            return rc;
+        if(size != sizeof(proc_arch))
+            return OMPI_ERROR;
+        procs[p]->proc_arch = ntohl(proc_arch);
+    }
+    
     /* attempt to add all procs to each ptl */
     ptl_peers = malloc(nprocs * sizeof(struct mca_ptl_base_peer_t*));
     for(p_index = 0; p_index < mca_pml_teg.teg_num_ptl_modules; p_index++) {

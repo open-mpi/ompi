@@ -54,6 +54,7 @@ static void mca_ptl_tcp_peer_construct(mca_ptl_base_peer_t* ptl_peer)
     ptl_peer->peer_recv_event.ev_flags = 0;
     ptl_peer->peer_state = MCA_PTL_TCP_CLOSED;
     ptl_peer->peer_retries = 0;
+    ptl_peer->peer_byte_swap = false;
     OBJ_CONSTRUCT(&ptl_peer->peer_frags, ompi_list_t);
     OBJ_CONSTRUCT(&ptl_peer->peer_send_lock, ompi_mutex_t);
     OBJ_CONSTRUCT(&ptl_peer->peer_recv_lock, ompi_mutex_t);

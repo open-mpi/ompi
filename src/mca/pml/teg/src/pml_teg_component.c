@@ -67,7 +67,6 @@ int mca_pml_teg_component_open(void)
     OBJ_CONSTRUCT(&mca_pml_teg.teg_procs, ompi_list_t);
 
 #if MCA_PML_TEG_STATISTICS
-    mca_pml_teg.teg_waits = 0;
     mca_pml_teg.teg_sends = 0;
     mca_pml_teg.teg_recvs = 0;
     mca_pml_teg.teg_isends = 0;
@@ -89,8 +88,6 @@ int mca_pml_teg_component_open(void)
 int mca_pml_teg_component_close(void)
 {
 #if MCA_PML_TEG_STATISTICS && OMPI_ENABLE_DEBUG
-    ompi_output(0, "mca_pml_teg.teg_waits = %d\n", 
-        mca_pml_teg.teg_waits);
     ompi_output(0, "mca_pml_teg.teg_sends = %d\n", 
         mca_pml_teg.teg_sends);
     ompi_output(0, "mca_pml_teg.teg_recvs = %d\n", 
@@ -123,6 +120,8 @@ mca_pml_base_module_t* mca_pml_teg_component_init(int* priority,
                                                   bool *allow_multi_user_threads,
                                                   bool *have_hidden_threads)
 {
+    uint32_t proc_arch;
+    int rc;
     *priority = 0;
     *have_hidden_threads = false;
 
@@ -146,6 +145,14 @@ mca_pml_base_module_t* mca_pml_teg_component_init(int* priority,
         ompi_output(0, "mca_pml_teg_component_init: mca_pml_bsend_init failed\n");
         return NULL;
     }
+
+    /* post this processes datatype */
+    proc_arch = ompi_proc_local()->proc_arch;
+    proc_arch = htonl(proc_arch);
+    rc = mca_base_modex_send(&mca_pml_teg_component.pmlm_version, &proc_arch, sizeof(proc_arch));
+    if(rc != OMPI_SUCCESS)
+        return NULL;
+    
     *allow_multi_user_threads &= true;
     return &mca_pml_teg.super;
 }

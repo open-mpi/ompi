@@ -20,7 +20,7 @@ struct ompi_proc_t {
     ompi_process_name_t       proc_name;
     struct mca_pml_proc_t*    proc_pml;    /* PML specific proc data */
     struct mca_base_modex_t*  proc_modex;  /* MCA module exchange data */
-    int                       proc_arch;
+    uint32_t                  proc_arch;
     ompi_convertor_t*         proc_convertor;
     ompi_mutex_t              proc_lock;
 
