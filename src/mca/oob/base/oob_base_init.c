@@ -47,7 +47,7 @@ static int mca_oob_base_parse_contact_info(
     char*** uri)
 {
     /* parse the process name */
-    char* ptr = strchr(contact_info, '=');
+    char* ptr = strchr(contact_info, ';');
     if(NULL == ptr)
         return OMPI_ERR_BAD_PARAM;
     *ptr = '\0';
@@ -209,12 +209,36 @@ char* mca_oob_get_contact_info()
     char *proc_addr = mca_oob.oob_get_addr();
     size_t size = strlen(proc_name) + 1 + strlen(proc_addr) + 1;
     char *contact_info = malloc(size);
-    sprintf(contact_info, "%s=%s", proc_name, proc_addr);
+    sprintf(contact_info, "%s;%s", proc_name, proc_addr);
     free(proc_name);
     free(proc_addr);
     return contact_info;
 }
 
+
+/**
+*  Setup the contact information for the seed daemon - which
+*  is passed as an MCA parameter. 
+*
+*  @param  seed  
+*/
+                                                                                                             
+int mca_oob_set_contact_info(const char* seed)
+{
+    /* TSW - fix this - currently just stuff the parameter in the environment */
+    setenv("OMPI_MCA_oob_base_seed", seed, 1);
+    return OMPI_SUCCESS;
+}
+                                                                                  
+/**
+*  Obtains the contact info (oob implementation specific) URI strings through
+*  which this process can be contacted on an OOB channel.
+*
+*  @return  A null terminated string.
+*
+*  The caller is responsible for freeing the returned string.
+*/
+                                                                                                             
 /**
 * Called to request the selected oob components to
 * register their address with the seed deamon.
