@@ -122,8 +122,8 @@ extern "C" {
      * @param have_hidden_threads (OUT)       Flag indicating wether PTL uses threads (TRUE)
      */
     extern mca_ptl_base_module_t **mca_ptl_gm_component_init (int *num_ptl_modules,
-                                                              bool * allow_multi_user_threads,
-                                                              bool * have_hidden_threads);
+                                                              bool enable_progress_threads,
+                                                              bool enable_mpi_threads);
 
     /**
      * GM module control.
