@@ -7,6 +7,8 @@
 
 #include "mpi.h"
 #include "mpi/proc/proc.h"
+#include "lam/lfc/lam_pointer_array.h"
+extern lam_class_t lam_group_t_class;
 
 struct lam_group_t {
     /* base class */
@@ -22,5 +24,30 @@ struct lam_group_t {
     lam_proc_t **grp_proc_pointers;
 };
 typedef struct lam_group_t lam_group_t;
+
+/*
+ * Table for Fortran <-> C group handle conversion
+ */
+extern lam_pointer_array_t *lam_group_f_to_c_table;
+
+/* 
+ * function prototypes 
+ */
+
+/**
+ * This routine is used to allocate a new group structure
+ *
+ * @param group_size Number of MPI processes in the group
+ *
+ * @return Pointer to new group structure
+ */
+lam_group_t *group_allocate(int group_size);
+
+/**
+ * Initialize LAM group infrastructure
+ *
+ * @return Error code
+ */
+int lam_group_init(void);
 
 #endif /* LAM_GROUP_H */
