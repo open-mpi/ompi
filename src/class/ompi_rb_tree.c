@@ -507,7 +507,7 @@ void right_rotate(ompi_rb_tree_t *tree, ompi_rb_tree_node_t * x)
     y = x->left;
 
     if(y->right != tree->nill) {
-        y->right->parent = y;
+        y->right->parent = x;
     }
 
     if (x == x->parent->left) {
