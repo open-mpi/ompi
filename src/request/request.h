@@ -178,6 +178,45 @@ static inline int ompi_request_free(ompi_request_t** request)
 /**
  * Non-blocking test for request completion.
  *
+ * @param request (IN)   Array of requests
+ * @param complete (OUT) Flag indicating if index is valid (a request completed).
+ * @param status (OUT)   Status of completed request.
+ * @return               OMPI_SUCCESS or failure status.
+ *
+ * Note that upon completion, the request is freed, and the
+ * request handle at index set to NULL.
+ */
+
+
+static inline int ompi_request_test(
+    ompi_request_t ** rptr,
+    int *completed,
+    ompi_status_public_t * status)
+{
+    ompi_request_t *request = *rptr;
+    ompi_atomic_mb();
+    if (request == MPI_REQUEST_NULL) {
+        *completed = true;
+        if (MPI_STATUS_IGNORE != status) {
+            *status = ompi_request_null.req_status;
+        }
+        return OMPI_SUCCESS;
+    }
+    else if (request->req_complete) {
+        *completed = true;
+        if (MPI_STATUS_IGNORE != status) {
+            *status = request->req_status;
+        }
+        return request->req_fini(rptr);
+    } else {
+        *completed = false;
+        return OMPI_SUCCESS;
+    }
+}
+
+/**
+ * Non-blocking test for request completion.
+ *
  * @param count (IN)     Number of requests
  * @param request (IN)   Array of requests
  * @param index (OUT)    Index of first completed request.
@@ -189,14 +228,13 @@ static inline int ompi_request_free(ompi_request_t** request)
  * request handle at index set to NULL.
  */
 
-OMPI_DECLSPEC int ompi_request_test(
+int ompi_request_test_any(
     size_t count,
     ompi_request_t ** requests,
     int *index,
     int *completed,
     ompi_status_public_t * status);
-
-                                                                                                            
+ 
 /**
  * Non-blocking test for request completion.
  *
