@@ -72,7 +72,7 @@ int MPI_Group_excl(MPI_Group group, int n, int *ranks,
     cnt=0;
     for (proc = 0; proc < n; proc++) {
         found=0;
-        for( i_excl=0 ; i_excl < n ; i_excl ) {
+        for( i_excl=0 ; i_excl < n ; ++i_excl ) {
             excl_proc=ranks[i_excl];
             /* check to see if this proc is within range */
             if( ( 0 > excl_proc ) ||
