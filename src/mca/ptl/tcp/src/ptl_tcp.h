@@ -23,23 +23,22 @@
 struct mca_ptl_tcp_component_t {
     mca_ptl_base_component_1_0_0_t super;  /**< base PTL component */
     struct mca_ptl_tcp_module_t** tcp_ptl_modules; /**< array of available PTL moduless */
-    size_t tcp_num_ptl_modules;           /**< number of ptls actually used */
-    size_t tcp_max_ptl_modules;           /**< maximum number of ptls - available kernel ifs */
-    int tcp_listen_sd;                    /**< listen socket for incoming connection requests */
-    unsigned short tcp_listen_port;       /**< listen port */
-    char* tcp_if_include;                 /**< comma seperated list of interface to include */
-    char* tcp_if_exclude;                 /**< comma seperated list of interface to exclude */
-    int   tcp_free_list_num;              /**< initial size of free lists */
-    int   tcp_free_list_max;              /**< maximum size of free lists */
-    int   tcp_free_list_inc;              /**< number of elements to alloc when growing free lists */
-    int   tcp_sndbuf;                     /**< socket sndbuf size */
-    int   tcp_rcvbuf;                     /**< socket rcvbuf size */
-    ompi_free_list_t tcp_send_requests;    /**< free list of tcp send requests -- sendreq + sendfrag */
+    size_t tcp_num_ptl_modules;            /**< number of ptls actually used */
+    size_t tcp_max_ptl_modules;            /**< maximum number of ptls - available kernel ifs */
+    int tcp_listen_sd;                     /**< listen socket for incoming connection requests */
+    unsigned short tcp_listen_port;        /**< listen port */
+    char* tcp_if_include;                  /**< comma seperated list of interface to include */
+    char* tcp_if_exclude;                  /**< comma seperated list of interface to exclude */
+    int   tcp_free_list_num;               /**< initial size of free lists */
+    int   tcp_free_list_max;               /**< maximum size of free lists */
+    int   tcp_free_list_inc;               /**< number of elements to alloc when growing free lists */
+    int   tcp_sndbuf;                      /**< socket sndbuf size */
+    int   tcp_rcvbuf;                      /**< socket rcvbuf size */
     ompi_free_list_t tcp_send_frags;       /**< free list of tcp send fragments */
     ompi_free_list_t tcp_recv_frags;       /**< free list of tcp recv fragments */
     ompi_list_t tcp_procs;                 /**< list of tcp proc structures */
     ompi_list_t tcp_pending_acks;          /**< list of pending acks - retry as sends complete */
-    struct mca_ptl_tcp_proc_t* tcp_local; /**< the tcp proc instance corresponding to the local process */
+    struct mca_ptl_tcp_proc_t* tcp_local;  /**< the tcp proc instance corresponding to the local process */
     ompi_event_t tcp_send_event;           /**< event structure for sends */
     ompi_event_t tcp_recv_event;           /**< event structure for recvs */
     ompi_mutex_t tcp_lock;                 /**< lock for accessing module state */
@@ -99,10 +98,11 @@ extern int mca_ptl_tcp_component_progress(
  * TCP PTL Interface
  */
 struct mca_ptl_tcp_module_t {
-    mca_ptl_base_module_t super;       /**< base PTL module interface */
+    mca_ptl_base_module_t super;    /**< base PTL module interface */
     int                ptl_ifindex; /**< PTL interface index */
     struct sockaddr_in ptl_ifaddr;  /**< PTL interface address */
     struct sockaddr_in ptl_ifmask;  /**< PTL interface netmask */
+    ompi_list_t        ptl_peers;   /**< List of all peers for this PTL */
 #if MCA_PTL_TCP_STATISTICS
     size_t ptl_bytes_sent;
     size_t ptl_bytes_recv;

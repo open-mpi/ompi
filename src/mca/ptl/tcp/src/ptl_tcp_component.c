@@ -108,7 +108,6 @@ int mca_ptl_tcp_component_open(void)
     OBJ_CONSTRUCT(&mca_ptl_tcp_component.tcp_lock, ompi_mutex_t);
     OBJ_CONSTRUCT(&mca_ptl_tcp_component.tcp_procs, ompi_list_t);
     OBJ_CONSTRUCT(&mca_ptl_tcp_component.tcp_pending_acks, ompi_list_t);
-    OBJ_CONSTRUCT(&mca_ptl_tcp_component.tcp_send_requests, ompi_free_list_t);
     OBJ_CONSTRUCT(&mca_ptl_tcp_component.tcp_send_frags, ompi_free_list_t);
     OBJ_CONSTRUCT(&mca_ptl_tcp_component.tcp_recv_frags, ompi_free_list_t);
 
@@ -145,12 +144,6 @@ int mca_ptl_tcp_component_open(void)
 
 int mca_ptl_tcp_component_close(void)
 {
-    if (mca_ptl_tcp_component.tcp_send_requests.fl_num_allocated != 
-        mca_ptl_tcp_component.tcp_send_requests.super.ompi_list_length) {
-        ompi_output(0, "tcp send requests: %d allocated %d returned\n",
-            mca_ptl_tcp_component.tcp_send_requests.fl_num_allocated, 
-            mca_ptl_tcp_component.tcp_send_requests.super.ompi_list_length);
-    }
     if (mca_ptl_tcp_component.tcp_send_frags.fl_num_allocated != 
         mca_ptl_tcp_component.tcp_send_frags.super.ompi_list_length) {
         ompi_output(0, "tcp send frags: %d allocated %d returned\n",
@@ -172,13 +165,14 @@ int mca_ptl_tcp_component_close(void)
         free(mca_ptl_tcp_component.tcp_ptl_modules);
  
     OBJ_DESTRUCT(&mca_ptl_tcp_component.tcp_procs);
-    OBJ_DESTRUCT(&mca_ptl_tcp_component.tcp_send_requests);
     OBJ_DESTRUCT(&mca_ptl_tcp_component.tcp_send_frags);
     OBJ_DESTRUCT(&mca_ptl_tcp_component.tcp_recv_frags);
     OBJ_DESTRUCT(&mca_ptl_tcp_component.tcp_lock);
 
-    if (mca_ptl_tcp_component.tcp_listen_sd >= 0) 
+    if (mca_ptl_tcp_component.tcp_listen_sd >= 0) {
+        ompi_event_del(&mca_ptl_tcp_component.tcp_recv_event);
         close(mca_ptl_tcp_component.tcp_listen_sd);
+    }
     return ompi_event_fini();
 }
 
@@ -194,6 +188,7 @@ static int mca_ptl_tcp_create(int if_index, const char* if_name)
     if(NULL == ptl)
         return OMPI_ERR_OUT_OF_RESOURCE;
     memcpy(ptl, &mca_ptl_tcp_module, sizeof(mca_ptl_tcp_module));
+    OBJ_CONSTRUCT(&ptl->ptl_peers, ompi_list_t);
     mca_ptl_tcp_component.tcp_ptl_modules[mca_ptl_tcp_component.tcp_num_ptl_modules++] = ptl;
 
     /* initialize the ptl */
@@ -398,15 +393,6 @@ mca_ptl_base_module_t** mca_ptl_tcp_component_init(int *num_ptl_modules,
         ompi_output(0, "mca_ptl_tcp_component_init: unable to initialize event dispatch thread: %d\n", rc);
         return NULL;
     }
-
-    /* initialize free lists */
-    ompi_free_list_init(&mca_ptl_tcp_component.tcp_send_requests, 
-        sizeof(mca_ptl_tcp_send_request_t),
-        OBJ_CLASS(mca_ptl_tcp_send_request_t),
-        mca_ptl_tcp_component.tcp_free_list_num,
-        mca_ptl_tcp_component.tcp_free_list_max,
-        mca_ptl_tcp_component.tcp_free_list_inc,
-        NULL); /* use default allocator */
 
     ompi_free_list_init(&mca_ptl_tcp_component.tcp_send_frags, 
         sizeof(mca_ptl_tcp_send_frag_t),

@@ -54,6 +54,8 @@ int mca_ptl_tcp_add_procs(
     ompi_bitmap_t* reachable)
 {
     size_t i;
+    mca_ptl_tcp_module_t *ptl_tcp = (mca_ptl_tcp_module_t*)ptl;
+
     for(i=0; i<nprocs; i++) {
         struct ompi_proc_t *ompi_proc = ompi_procs[i];
         mca_ptl_tcp_proc_t* ptl_proc = mca_ptl_tcp_proc_create(ompi_proc);
@@ -92,24 +94,47 @@ int mca_ptl_tcp_add_procs(
         ompi_bitmap_set_bit(reachable, i);
         OMPI_THREAD_UNLOCK(&ptl_proc->proc_lock);
         peers[i] = ptl_peer;
+        ompi_list_append(&ptl_tcp->ptl_peers, (ompi_list_item_t*)ptl_peer);
     }
     return OMPI_SUCCESS;
 }
 
+/*
+ *
+ */
+
 int mca_ptl_tcp_del_procs(struct mca_ptl_base_module_t* ptl, size_t nprocs, struct ompi_proc_t **procs, struct mca_ptl_base_peer_t ** peers)
 {
     size_t i;
+    mca_ptl_tcp_module_t *ptl_tcp = (mca_ptl_tcp_module_t*)ptl;
+
     for(i=0; i<nprocs; i++) {
+        ompi_list_remove_item(&ptl_tcp->ptl_peers, (ompi_list_item_t*)peers[i]);
         OBJ_RELEASE(peers[i]);
     }
     return OMPI_SUCCESS;
 }
 
+/*
+ *
+ */
+
 int mca_ptl_tcp_finalize(struct mca_ptl_base_module_t* ptl)
 {
-    free(ptl);
+    ompi_list_item_t* item;
+    mca_ptl_tcp_module_t *ptl_tcp = (mca_ptl_tcp_module_t*)ptl;
+
+    for( item = ompi_list_remove_first(&ptl_tcp->ptl_peers);
+         item != NULL;
+         item = ompi_list_remove_first(&ptl_tcp->ptl_peers)) {
+        OBJ_RELEASE(item);
+    }
     return OMPI_SUCCESS;
 }
+
+/*
+ * 
+ */
 
 int mca_ptl_tcp_request_init(struct mca_ptl_base_module_t* ptl, struct mca_pml_base_send_request_t* request)
 {
@@ -117,6 +142,10 @@ int mca_ptl_tcp_request_init(struct mca_ptl_base_module_t* ptl, struct mca_pml_b
     return OMPI_SUCCESS;
 }
 
+
+/*
+ *
+ */
 
 void mca_ptl_tcp_request_fini(struct mca_ptl_base_module_t* ptl, struct mca_pml_base_send_request_t* request)
 {
