@@ -31,15 +31,16 @@
 #include "include/constants.h"
 
 #include "util/sys_info.h"
+#include "util/proc_info.h"
 #include "util/os_path.h"
 #include "util/os_create_dirpath.h"
-#include "util/os_session_dir.h"
+#include "util/session_dir.h"
 
-static int ompi_check_dir(bool create, char *directory);
+int ompi_check_dir(bool create, char *directory);
 
 #define OMPI_DEFAULT_TMPDIR "tmp"
 
-static int ompi_check_dir(bool create, char *directory)
+int ompi_check_dir(bool create, char *directory)
 {
     struct stat buf;
     mode_t my_mode = S_IRWXU;  /* at the least, I need to be able to do anything */
@@ -55,12 +56,36 @@ static int ompi_check_dir(bool create, char *directory)
     return(OMPI_ERROR);  /* couldn't find it, or don't have access rights, and not asked to create it */
 }
 
-char *ompi_find_session_dir(bool create, char *prefix)
+char *ompi_session_dir(bool create, char *prefix, char *user, char *universe, char *job, char *proc)
 {
     char *tmpprefix=NULL, *tmp=NULL;
-    char sessions[PATH_MAX];
+    char *sessions;
+    int length=0;
 
-    sprintf(sessions, "openmpi-sessions-%s", ompi_system_info.user);
+    if (NULL == user || NULL == universe) { /* error conditions - have to provide at least that much */
+	return(NULL);
+    }
+
+    length = strlen("openmpi-sessions-") + strlen(user) + strlen(universe) + 2;
+
+    if (NULL == job && NULL != proc) { /* can't give a proc without a job */
+	return(NULL);
+    }
+
+    if (NULL != proc) {
+	length = length + strlen(job) + strlen(proc) + 2;
+	sessions = (char *)malloc(length*sizeof(char));
+	sprintf(sessions, "openmpi-sessions-%s%s%s%s%s%s%s", user, ompi_system_info.path_sep, universe,
+		ompi_system_info.path_sep, job, ompi_system_info.path_sep, proc);
+    } else if (NULL != job) {
+	length = length + strlen(job) + 1;
+	sessions = (char *)malloc(length*sizeof(char));
+	sprintf(sessions, "openmpi-sessions-%s%s%s%s%s", user, ompi_system_info.path_sep, universe,
+		ompi_system_info.path_sep, job);
+    } else {
+	sessions = (char *)malloc(length*sizeof(char));
+	sprintf(sessions, "openmpi-sessions-%s%s%s", user, ompi_system_info.path_sep, universe);
+    }
 
     if (NULL != prefix) {
 	tmpprefix = strdup(ompi_os_path(false, prefix, sessions, NULL)); /* make sure it's an absolute pathname */
@@ -135,67 +160,3 @@ char *ompi_find_session_dir(bool create, char *prefix)
 }
 
 
-/*
- *  ompi_session_dir_init
-*/
-
-int ompi_session_dir_init(char *prefix, char *universe)
-{
-
-    char *tmpsuffix = NULL;
-    char *tmpprefix = NULL;
-    char *name;
-
-    /* check if universe is specified - if not, use "default-universe" */
-    if (NULL == universe) {
-	universe = strdup("default-universe");
-    }
-
-    /* check to see if ompi_system_info populated - otherwise, error out */
-    if (!ompi_system_info.init) {
-	return(OMPI_ERROR);
-    }
-
-    /* locate the ompi-sessions directory - create it if it doesn't exist */
-    if (NULL == (tmpprefix = ompi_find_session_dir(true, prefix))) { /* couldn't find nor create the sessions directory */
-	return (OMPI_ERROR);
-    }
-
-    /* set up the name of the universe session directory, which is prefix/universe, and try to create it */
-    name = ompi_os_path(false, tmpprefix, universe, NULL);
-    if (OMPI_ERROR == ompi_os_create_dirpath(name, S_IRWXU)) { /* couldn't create the user directory */
-	free(tmpprefix);
-	free(name);
-	return(OMPI_ERROR);
-    }
-
-    /* store the sessions directory information */
-    ompi_system_info.session_dir = strdup(name);
-
-    /* set up the prefix environment */
-    /* after careful consideration, it was decided not to put this
-     * back in the environment.  Processes that inherit from this
-     * process will have the right things to get the same answer.  But
-     * this became a major issue all around, because the session
-     * prefix is not always the same across nodes and setting the env
-     * caused MPIRUN to push the env variable out, which was just
-     * causing major badness. 
-     */
-
-    /* may need to include the ability to detect if the system is automatically putting a suffix
-     * on our files. Not sure what this means yet, so nothing is implemented at this time.
-     */
-
-    /* clean up */
-    if (tmpprefix != NULL) {
-	free(tmpprefix);
-    }
-    if (tmpsuffix != NULL) {
-	free(tmpsuffix);
-    }
-    if (name != NULL) {
-	free(name);
-    }
-
-    return(OMPI_SUCCESS);
-}

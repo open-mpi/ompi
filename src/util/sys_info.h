@@ -29,7 +29,6 @@ struct ompi_sys_info_t {
 			    * Certifies that the ompi_sys_info() function has been
 			    * called at least once so fields have valid values
 			    */
-    pid_t pid;             /* Process ID for this process */
     char *sysname;         /**< Name of OS in use on this node. */
     char *nodename;        /**< Fully qualified host name on the network. */
     char *release;	   /**< Release level of the operating system. */
@@ -41,16 +40,6 @@ struct ompi_sys_info_t {
 			    * upon the operating system
 			    */
     char *user;            /**< User id on this system. */
-    char *session_dir;     /**< Location of user writable temp dir.
-			    * The session directory has the form
-			    * <prefix><openmpi-sessions>, where the prefix
-			    * can either be provided by the user via the
-			    * --tmpdir command-line flag, the use of one of several
-			    * environmental variables, or else a default location. The
-			    * function ompi_session_dir_init() develops
-			    * the name of this directory, creates it, and stores the name
-			    * in this location.
-			    */
     char *enviro;          /**< Computing environment employed on this system.
 			    * Indicates the local computing environment for managing
 			    * and scheduling resources - e.g., SLURM, PBS, LSF, or BProc
@@ -61,9 +50,6 @@ struct ompi_sys_info_t {
 			    * to ensure uniqueness of the file name. This field records
 			    * that value for future use.
 			    */
-    char *sock_stdin;      /**< Path name to temp file for stdin. */
-    char *sock_stdout;     /**< Path name to temp file for stdout. */
-    char *sock_stderr;     /**< Path name to temp file for stderr. */
 };
 typedef struct ompi_sys_info_t ompi_sys_info_t;
 
@@ -72,8 +58,7 @@ extern ompi_sys_info_t ompi_system_info;
 /**
  * Discover and record a wide range of information about the system upon which
  * this code is executing. ompi_sys_info populates a global variable with information about the system
- * upon which the process is executing. This function can be executed multiple times - the universe
- * process through ompi_init(), and each application process via mpi_init().
+ * upon which the process is executing.
  *
  * @retval None
  */

@@ -2,14 +2,16 @@
  * $HEADER$
  */
 /** @file:
+ * @page os_session_dir
  *
  * Find and/or create Open MPI session directory.
  *
- * The ompi_session_dir_init() function creates a temporary directory that is
+ * The ompi_session_dir() function searches for a temporary directory that is
  * used by the Open MPI system for storing system-critical information. For a given
- * system and user, the function attempts to create a directory that will be used
+ * system and user, the function attempts to find (or create, if not found and create is
+ * requested) a directory that will be used
  * to independently house information for multiple universes, as the user creates
- * them. Thus, the function creates a directory tree of the form:
+ * them. Thus, the function pursues a directory tree of the form:
  *
  * \par \em <prefix-dir>
  * An absolute path that identifies a temporary directory that is
@@ -30,77 +32,73 @@
  * local system. If none of these options are successful, the function returns an
  * error code.
  *
- * \par \em <openmpi-sessions>
- * This is a fixed name that serves as a concentrator for all Open MPI session
- * directories on the local system. If it doesn't already exist, this directory is
- * created with read-write-execute permissions for all. If it does exist, the access
- * permissions are checked to ensure they remain read-write-execute for all - if not,
+ * \par \em <openmpi-sessions>-<user-id>
+ * This serves as a concentrator for all Open MPI session
+ * directories for this user on the local system. If it doesn't already exist, this directory is
+ * created with read-write-execute permissions exclusively restricted to the user. If it does exist, the access
+ * permissions are checked to ensure they are correct - if not, the program attempts to correct
+ * them. If they can't' be changed to the correct values,
  * an error condition is returned.
  *
- * \par \em <user-id>
- * The user's id on the local system. For security purposes, this directory is created
- * with read-write-execute permissions exclusively restricted to the user. This also
- * allows multiple users to specify identical universe names without conflict.
- *
  * \par
- * Note: The <prefix>/openmpi-sessions/<user-id> directory is left on the system
+ * Note: The <prefix>/openmpi-sessions-<user-id> directory is left on the system
  * upon termination of an application and/or an Open MPI universe for future use
  * by the user. Thus, when checking a potential location for the directory, the
- * ompi_session_dir_init() function first checks to see if an appropriate directory
+ * ompi_session_tree_init() function first checks to see if an appropriate directory
  * already exists, and uses it if it does.
  *
  * \par \em <universe-name>
- * Finally, a directory is created for the specified universe name. This is the directory
+ * A directory is created for the specified universe name. This is the directory
  * that will be used to house all information relating to the specific universe. If the
  * directory already exists (indicating that the user is joining an existing universe),
  * then the function ensures that the user has exclusive read-write-execute permissions
  * on the directory.
- */
-
-/** 
- * @param prefix A pointer to a string identifying the root to be used for the session directory.
- * This value is provided by the user via the --tmpdir command-line option. If no value
- * is provided, prefix is passed by the calling program as a NULL value, and the
- * ompi_session_dir_init() function will attempt to find an appropriate root.
  *
- * @param universe A pointer to a string that specifies the name of the universe to be
- * established. This name is used to create the universe-specific sessions directory in
- * the user's openmpi-sessions directory. The universe-specific directory will be used
- * to store information required for universe operations. A NULL value will result in an
- * error condition being returned.
+ * \par \em <job>
+ * A directory is created for the specified job name. This will house all information relating
+ * to that specific job, including directories for each process within that job on this host.
  *
- * @retval OMPI_ERROR If the directory could not be created, or if an existing directory
- * of the correct name is found, but cannot be set to the required access permissions.
+ * \par \em <process>
+ * A directory for the specific process, will house all information for that process.
  *
- * @retval OMPI_SUCCESS If the directory was successfully created with the required access
- * permissions
- *
- * In addition to the return values, the ompi_session_dir_init() function stores the
- * absolute path name of the session directory in the ompi_system_info.session_dir field
- * (see the ompi_sys_info() function for details on this structure).
- *
- */
-
-int ompi_session_dir_init(char *prefix, char *universe);
-
-/** The ompi_find_session_dir() function searches either a user-specified location, or a
- * set of standard locations that might contain the "openmpi-sessions" directory. Once
+ * The ompi_session_dir() function searches either a user-specified location, or a
+ * set of standard locations that might contain the specified directory. Once
  * found, the function returns the pathname of that directory. The function calls the
  * ompi_check_dir() function.
  */
 
-/** @param create A boolean variable that indicates whether or not to create the "openmpi-sessions"
+/** @param create A boolean variable that indicates whether or not to create the specified
  * directory. If set to "false", the function only checks to see if an existing directory
  * can be found. This is typically used to locate an already existing universe for reconnection
- * purposes. If set to "true", then the function creates the "openmpi-sessions" directory, if possible.
- * @param prefix A string variable indicating where the user stipulated the "openmpi-sessions" directory
- * should be placed. A value of "NULL" indicates that the user specified no location - hence, the
+ * purposes. If set to "true", then the function creates the directory, if possible.
+ * @param prefix A string variable indicating where the user stipulated the directory
+ * should be found or placed. A value of "NULL" indicates that the user specified no location - hence, the
  * function explores a range of "standard" locations.
+ * @param user Name of the user to whom the universe belongs. This will be used to build the name of the
+ * "openmpi-sessions-<user>" branch of the directory tree.
+ * @param universe name of the universe being setup.
+ * @param job Name of the job for which a session directory is to be created/found. NULL indicates
+ * that only the universe directory is to be created/found.
+ * @param proc Name of the process for which a session directory is to be created/found. NULL indicates
+ * that only the job directory is to be created/found.
  *
- * @retval *path A pointer to a string containing the pathname of the "openmpi-sessions" directory.
+ * @retval *path A pointer to a string containing the pathname of the directory.
  * A "NULL" value is returned if the directory cannot be found (if create is "false") or created (if
  * create is "true").
  */
 
-char *ompi_find_session_dir(bool create, char *prefix);
+char *ompi_session_dir(bool create, char *prefix, char *user, char *universe, char *job, char *proc);
 
+/** The ompi_session_dir_finalize() function performs a cleanup of the session directory tree. It first
+ * removes the session directory for the calling process. It then checks to see if the job-level session
+ * directory is now empty - if so, it removes that level as well. Finally, it checks to see if the universe-level
+ * session directory is now empty - if so, it also removes that level. This three-part "last-one-out"
+ * procedure ensures that the directory tree is properly removed if all processes and applications
+ * within a universe have completed.
+ *
+ * @param None
+ * @retval OMPI_SUCCESS If the directory tree is properly cleaned up.
+ * @retval OMPI_ERROR If something prevents the tree from being properly cleaned up.
+ */
+
+int ompi_session_dir_finalize(void);
