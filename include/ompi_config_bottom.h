@@ -234,17 +234,21 @@ extern "C" {
 # define vsnprintf ompi_vsnprintf
 #endif
 
+/*
+ * Define IFADDR_NONE if we don't have it.  Solaris is the only system
+ * where I have found that it does not exist, and the man page for
+ * inet_addr() says that it returns -1 upon failure.  On Linux and
+ * other systems with IFADDR_NONE, it's just a #define to -1 anyway.
+ * So just #define it to -1 here if it doesn't already exist.
+ */
+
+#ifndef IFADDR_NONE
+#define IFADDR_NONE -1
+#endif
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
-
-/*
- * Define __func__-preprocessor directive if the compiler does not
- * already define it.  Define it to __FILE__ so that we at least have
- * a clue where the developer is trying to indicate where the error is
- * coming from (assuming that __func__ is typically used for
- * printf-style debugging).
- */
 
 #if !HAVE_DECL___FUNC__
 #define __func__ __FILE__

@@ -975,15 +975,6 @@ AC_DEFINE_UNQUOTED(OMPI_HAVE_SA_LEN, $VALUE,
     [Whether we have the sa_len struct in <sys/socket.h> or not])
 AC_MSG_RESULT([$MSG])
 
-# IFADDR_NONE
-AC_MSG_CHECKING([for INADDR_NONE])
-AC_COMPILE_IFELSE(AC_LANG_PROGRAM([[AC_INCLUDES_DEFAULT]],
-[[unsigned long inaddr = INADDR_NONE;]]),
-[MSG=yes VALUE=1], [MSG=no VALUE=0])
-AC_DEFINE_UNQUOTED(OMPI_HAVE_INADDR_NONE, $VALUE,
-    [Whether we have INADDR_NONE constant or not])
-AC_MSG_RESULT([$MSG])
-
 # union semun in sys/sem.h
 
 # Note that sometimes we have <stdbool.h>, but it doesn't work (e.g.,

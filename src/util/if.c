@@ -431,13 +431,7 @@ int ompi_ifaddrtoname(const char* if_addr, char* if_name, int length)
         return rc;
     }
 
-    if(
-#if OMPI_HAVE_INADDR_NONE
-       INADDR_NONE == inaddr
-#else
-       -1 == inaddr
-#endif
-       ) {
+    if(INADDR_NONE == inaddr) {
         h = gethostbyname(if_addr);
         if(0 == h) {
             ompi_output(0,"ompi_ifaddrtoname: unable to resolve %s\n", if_addr);
