@@ -396,9 +396,6 @@ int mca_ptl_ib_peer_send(mca_ptl_base_peer_t* peer,
     switch(peer->peer_state) {
         case MCA_PTL_IB_CONNECTING:
 
-            /* Well, connecting means that I've already sent my UD
-             * QP across, but I haven't got any reply, so, I have
-             * to check for timeout */
             ompi_list_append(&peer->peer_frags, (ompi_list_item_t*)frag);
 
             break;
@@ -419,21 +416,6 @@ int mca_ptl_ib_peer_send(mca_ptl_base_peer_t* peer,
             break;
 
         case MCA_PTL_IB_CONNECTED:
-            /* Fill in this later for the send to work
-             *
-            if (NULL != ptl_peer->peer_send_frag) {
-                ompi_list_append(&ptl_peer->peer_frags, (ompi_list_item_t*)frag);
-            } else {
-                if(mca_ptl_ib_send_frag_handler(frag, ptl_peer->peer_sd)) {
-                    OMPI_THREAD_UNLOCK(&ptl_peer->peer_send_lock);
-                    mca_ptl_ib_send_frag_progress(frag);
-                    return rc;
-                } else {
-                    ptl_peer->peer_send_frag = frag;
-                    ompi_event_add(&ptl_peer->peer_send_event, 0);
-                }
-            }
-            */
             break;
         default:
             rc = OMPI_ERR_UNREACH;

@@ -24,7 +24,6 @@
 #include "ptl_ib_proc.h"
 #include "ptl_ib_peer.h"
 #include "ptl_ib_priv.h"
-#include "ptl_ib_ud.h"
 
 /* Other IB ptl includes */
 #include "ptl_ib_sendreq.h"
