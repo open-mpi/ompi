@@ -827,5 +827,7 @@ AC_CONFIG_FILES([
     src/tools/laminfo/Makefile
     src/tools/mpirun/Makefile
     src/tools/wrappers/Makefile
+
+    src/RTE/universe/Makefile
 ])
 AC_OUTPUT
