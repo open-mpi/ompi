@@ -399,7 +399,7 @@ void ompi_info::do_config(bool want_all)
         WRAPPER_EXTRA_LIBS);
   }
 
-  out("Intenral debug support", "option:debug", debug);
+  out("Internal debug support", "option:debug", debug);
   out("MPI parameter check", "option:mpi-param-check", paramcheck);
   out("Memory profiling support", "option:mem-profile", memprofile);
   out("Memory debugging support", "option:mem-debug", memdebug);
