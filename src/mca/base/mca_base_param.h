@@ -324,6 +324,9 @@ extern "C" {
      * lieu of any other value from any other MCA source (environment
      * variable, file, etc.) until the value is unset with
      * mca_base_param_unset().
+     *
+     * This function may be invoked multiple times; each time, the
+     * last "set" value is replaced with the newest value.
      */
     OMPI_DECLSPEC int mca_base_param_set_int(int index, int value);
 
@@ -342,8 +345,12 @@ extern "C" {
      * variable, file, etc.) until the value is unset with
      * mca_base_param_unset().  
      *
-     * The string is copied by value; the string buffer does not
-     * become "owned" by the parameter subsystem.
+     * The string is copied by value; the string "value" parameter
+     * does not become "owned" by the parameter subsystem.
+     *
+     * This function may be invoked multiple times; each time, the
+     * last "set" value is replaced with the newest value (the old
+     * value is discarded).
      */
     OMPI_DECLSPEC int mca_base_param_set_string(int index, char *value);
 
