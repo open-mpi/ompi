@@ -1613,16 +1613,5 @@ AC_CONFIG_FILES([
     src/tools/wrappers/Makefile
 
     src/asm/test/Makefile
-    
-    test/support/Makefile
-    test/util/Makefile
-    test/class/Makefile
-    test/include/Makefile
-    test/rte/Makefile
-    test/dps/Makefile
-    test/mca/gpr/Makefile
-    test/mca/ns/Makefile
-    test/mca/rds/Makefile
-    test/runtime/Makefile
 ])
 AC_OUTPUT

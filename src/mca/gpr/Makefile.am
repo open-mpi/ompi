@@ -19,7 +19,8 @@ DIST_SUBDIRS = base $(MCA_gpr_ALL_SUBDIRS)
 
 # Source code files
 
-headers = gpr.h
+headers = gpr.h \
+	gpr_types.h
 
 # Conditionally install the header files
 

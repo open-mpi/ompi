@@ -30,6 +30,7 @@ headers = \
 libmca_rmaps_base_la_SOURCES = \
         $(headers) \
         rmaps_base_close.c \
+	rmaps_base_map.h \
         rmaps_base_map.c \
         rmaps_base_open.c \
         rmaps_base_select.c

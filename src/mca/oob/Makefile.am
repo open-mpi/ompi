@@ -20,7 +20,8 @@ DIST_SUBDIRS = base $(MCA_oob_ALL_SUBDIRS)
 
 # Source code files
 
-headers = oob.h
+headers = oob.h \
+	oob_types.h
 
 # Conditionally install the header files
 

@@ -19,7 +19,8 @@ DIST_SUBDIRS = base $(MCA_soh_ALL_SUBDIRS)
 
 # Source code files
 
-headers = soh.h
+headers = soh.h \
+	soh_types.h
 
 # Conditionally install the header files
 
