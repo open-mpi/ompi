@@ -21,6 +21,7 @@
 #include "runtime/runtime.h"
 #include "util/proc_info.h"
 #include "util/sys_info.h"
+#include "util/environ.h"
 
 #include "mca/gpr/base/base.h"
 #include "mca/rds/base/base.h"
@@ -50,7 +51,7 @@ main(int argc, char **argv)
     } 
 
     /* ENSURE THE GPR REPLICA IS ISOLATED */
-    setenv("OMPI_MCA_gpr_replica_isolate", "1", 1);
+    ompi_setenv("OMPI_MCA_gpr_replica_isolate", "1", true, &environ);
     
     /* Open up the output streams */
     if (!ompi_output_init()) {

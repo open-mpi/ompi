@@ -151,18 +151,18 @@ static bool test2(void)
 
     /* use the OMPI_PREFIX_ENV variable */
 
-    setenv("OMPI_PREFIX_ENV", "/tmp/trythis", 1);
+    ompi_setenv("OMPI_PREFIX_ENV", "/tmp/trythis", true, &environ);
 
     if (OMPI_ERROR == ompi_session_dir(true, NULL, "test-universe", 
 				       ompi_system_info.user, NULL, NULL, NULL, NULL)) {
-	unsetenv("OMPI_PREFIX_ENV");
+	ompi_unsetenv("OMPI_PREFIX_ENV", &environ);
         return(false);
     }
 
     ompi_session_dir_finalize ();
     free(tmp);
 
-    unsetenv("OMPI_PREFIX_ENV");
+    ompi_unsetenv("OMPI_PREFIX_ENV", &environ);
 
     return(true);
 
@@ -174,18 +174,18 @@ static bool test3(void)
     /* use the TMPDIR enviro variable */
     char *tmp;
 
-    setenv("TMPDIR", "/tmp/trythis", 1);
+    ompi_setenv("TMPDIR", "/tmp/trythis", true, &environ);
 
     if (OMPI_ERROR == ompi_session_dir(true, NULL, "test-universe", 
 				       ompi_system_info.user, NULL, NULL, NULL, NULL)) {
-	unsetenv("TMPDIR");
+	ompi_unsetenv("TMPDIR", &environ);
         return(false);
     }
 
     ompi_session_dir_finalize ();
     free(tmp);
 
-    unsetenv("TMPDIR");
+    ompi_unsetenv("TMPDIR", &environ);
 
     return(true);
 }
@@ -196,18 +196,18 @@ static bool test4(void)
     /* use the TMP enviro variable */
     char *tmp;
 
-    setenv("TMP", "/tmp/trythis", 1);
+    ompi_setenv("TMP", "/tmp/trythis", true, &environ);
 
     if (OMPI_ERROR == ompi_session_dir(true, NULL, "test-universe", 
 				       ompi_system_info.user, NULL, NULL, NULL, NULL)) {
-	unsetenv("TMP");
+	ompi_unsetenv("TMP", &environ);
         return(false);
     }
 
     ompi_session_dir_finalize ();
     free(tmp);
 
-    unsetenv("TMP");
+    ompi_unsetenv("TMP", &environ);
 
     return(true);
 }
@@ -218,17 +218,17 @@ static bool test5(void)
     /* use the HOME enviro variable */
     char *tmp;
 
-    setenv("HOME", "/tmp/trythis", 1);
+    ompi_setenv("HOME", "/tmp/trythis", true, &environ);
 
     if (OMPI_ERROR == ompi_session_dir(true, NULL, "test-universe", ompi_system_info.user, NULL, NULL, NULL, NULL)) {
-	unsetenv("HOME");
+	ompi_unsetenv("HOME", &environ);
         return(false);
     }
 
     ompi_session_dir_finalize ();
     free(tmp);
 
-    unsetenv("HOME");
+    ompi_unsetenv("HOME", &environ);
 
     return(true);
 }

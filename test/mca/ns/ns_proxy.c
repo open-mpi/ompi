@@ -57,19 +57,19 @@ int main(int argc, char **argv)
 
     /* setup environment for rte */
     seed = getenv("OMPI_DAEMON_SEED");
-    setenv("OMPI_MCA_pcmclient_env_num_procs", "2", 1);
-    setenv("OMPI_MCA_pcmclient_env_vpid_start", "0", 1);
-    setenv("OMPI_MCA_pcmclient_env_cellid", "0", 1);
-    setenv("OMPI_MCA_pcmclient_env_jobid", "0", 1);
+    ompi_setenv("OMPI_MCA_pcmclient_env_num_procs", "2", true, &environ);
+    ompi_setenv("OMPI_MCA_pcmclient_env_vpid_start", "0", true, &environ);
+    ompi_setenv("OMPI_MCA_pcmclient_env_cellid", "0", true, &environ);
+    ompi_setenv("OMPI_MCA_pcmclient_env_jobid", "0", true, &environ);
     if(seed == NULL || atoi(seed) != 0) {
         ompi_process_info.seed = true;
-        setenv("OMPI_MCA_pcmclient_env_procid", "0", 1);
+        ompi_setenv("OMPI_MCA_pcmclient_env_procid", "0", true, &environ);
     } else {
         ompi_process_info.seed = false;
-        setenv("OMPI_MCA_pcmclient_env_procid", "1", 1);
+        ompi_setenv("OMPI_MCA_pcmclient_env_procid", "1", true, &environ);
     }
     /* require tcp oob */
-    setenv("OMPI_MCA_oob_base_include", "tcp", 1);
+    ompi_setenv("OMPI_MCA_oob_base_include", "tcp", true, &environ);
 
     /* basic ompi init */
     if (OMPI_SUCCESS != ompi_init(argc, argv)) {
