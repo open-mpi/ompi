@@ -134,7 +134,8 @@ struct ompi_event_list ompi_signalqueue;
 struct ompi_event_list ompi_eventqueue;
 static struct timeval ompi_event_tv;
 ompi_mutex_t ompi_event_lock;
-static int ompi_event_inited;
+static int  ompi_event_inited = 0;
+static bool ompi_event_enabled = false;
 #if OMPI_HAVE_THREADS
 static ompi_thread_t ompi_event_thread;
 static ompi_event_t ompi_event_pipe_event;
@@ -213,10 +214,6 @@ int
 ompi_event_init(void)
 {
     int i;
-#if OMPI_HAVE_THREADS
-    int rc;
-#endif
-
     if(ompi_event_inited++ != 0)
         return OMPI_SUCCESS;
 
@@ -254,12 +251,7 @@ ompi_event_init(void)
          0);
     ompi_event_add_i(&ompi_event_pipe_event, 0);
     ompi_event_pipe_signalled = 0;
-
-    /* spin up a thread to dispatch events */
-    OBJ_CONSTRUCT(&ompi_event_thread, ompi_thread_t);
-    ompi_event_thread.t_run = ompi_event_run;
-    if((rc = ompi_thread_start(&ompi_event_thread)) != OMPI_SUCCESS)
-        return rc;
+    ompi_event_enable();
 #endif
 
 #if defined(USE_LOG) && defined(USE_DEBUG)
@@ -272,22 +264,56 @@ ompi_event_init(void)
 int ompi_event_fini(void)
 {
 #if OMPI_HAVE_THREADS
-    if(ompi_event_inited && --ompi_event_inited == 0) {
+    if(--ompi_event_inited == 0)
+        ompi_event_disable();
+#endif
+    return OMPI_SUCCESS;
+}
+
+int ompi_event_disable(void)
+{
+#if OMPI_HAVE_THREADS
+    OMPI_THREAD_LOCK(&ompi_event_lock);
+    if(ompi_event_inited > 0 && ompi_event_enabled) {
+        ompi_event_enabled = false;
         if(ompi_event_pipe_signalled == 0) {
             unsigned char byte = 0;
             if(write(ompi_event_pipe[1], &byte, 1) != 1)
                 ompi_output(0, "ompi_event_add: write() to ompi_event_pipe[1] failed with errno=%d\n", errno);
             ompi_event_pipe_signalled++;
         }
+        OMPI_THREAD_UNLOCK(&ompi_event_lock);
         ompi_thread_join(&ompi_event_thread, NULL);
+    } else {
+        OMPI_THREAD_UNLOCK(&ompi_event_lock);
     }
+#else
+    ompi_event_enabled = false;
 #endif
     return OMPI_SUCCESS;
 }
 
+int ompi_event_enable(void)
+{
+#if OMPI_HAVE_THREADS
+    int rc;
+    /* spin up a thread to dispatch events */
+    OMPI_THREAD_LOCK(&ompi_event_lock);
+    if(ompi_event_inited > 0 && ompi_event_enabled == false) {
+        OBJ_CONSTRUCT(&ompi_event_thread, ompi_thread_t);
+        ompi_event_enabled = true;
+        ompi_event_thread.t_run = ompi_event_run;
+        if((rc = ompi_thread_start(&ompi_event_thread)) != OMPI_SUCCESS)
+            return rc;
+    }
+    OMPI_THREAD_UNLOCK(&ompi_event_lock);
+#else
+    ompi_event_enabled = true;
+#endif
+    return OMPI_SUCCESS;
+}
 
-int
-ompi_event_haveevents(void)
+int ompi_event_haveevents(void)
 {
     return (RB_ROOT(&ompi_timetree) || TAILQ_FIRST(&ompi_eventqueue) ||
         TAILQ_FIRST(&ompi_signalqueue) || TAILQ_FIRST(&ompi_activequeue));
@@ -347,7 +373,7 @@ ompi_event_loop(int flags)
     }
 
     done = 0;
-    while (!done && ompi_event_inited) {
+    while (!done && ompi_event_enabled) {
         while (ompi_event_gotsig) {
             ompi_event_gotsig = 0;
             if (ompi_event_sigcb) {
