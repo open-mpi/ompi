@@ -52,7 +52,7 @@
 #define  PTL_ELAN_DEBUG_GET     (0x400)
 #define  PTL_ELAN_DEBUG_CHAIN   (0x800)
 
-#define  PTL_ELAN_DEBUG_FLAG (PTL_ELAN_DEBUG_GET|PTL_ELAN_DEBUG_ACK|PTL_ELAN_DEBUG_SEND)
+#define  PTL_ELAN_DEBUG_FLAG    (PTL_ELAN_DEBUG_MAC|PTL_ELAN_DEBUG_SEND)
 
 #define START_FUNC(flag)                                       \
 do {                                                           \
@@ -83,8 +83,8 @@ do {                                                           \
 } while (0)
 
 /* PTL_ELAN related MACROS, expose some as configurable options if needed */
-#define  OMPI_PTL_ELAN_ENABLE_GET    (1)
-#define  OMPI_PTL_ELAN_COMP_QUEUE    (0) 
+#define  OMPI_PTL_ELAN_ENABLE_GET    (0)
+#define  OMPI_PTL_ELAN_COMP_QUEUE    (1) 
 #define  OMPI_PTL_ELAN_THREADING     (OMPI_HAVE_POSIX_THREADS)
 
 #define  OMPI_PTL_ELAN_MAX_QSIZE     (2048)

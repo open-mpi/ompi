@@ -37,7 +37,7 @@ ompi_init_elan_queue_events (mca_ptl_elan_module_t * ptl,
 
     ompi_free_list_t *flist;
     ompi_ptl_elan_qdma_desc_t *desc;
-    E4_Event *elan_ptr;
+    E4_Event32 *elan_ptr;
 
     START_FUNC(PTL_ELAN_DEBUG_INIT);
 
@@ -52,7 +52,13 @@ ompi_init_elan_queue_events (mca_ptl_elan_module_t * ptl,
     elan_align = OMPI_PTL_ELAN_GET_MAX (sizeof (int *), ELAN_BLOCK_ALIGN);
     main_size  = OMPI_PTL_ELAN_ALIGNUP (sizeof (ompi_ptl_elan_qdma_desc_t), 
 	    main_align);
-    elan_size  = OMPI_PTL_ELAN_ALIGNUP (sizeof (E4_Event), elan_align);
+#if OMPI_PTL_ELAN_COMP_QUEUE
+    elan_size  = OMPI_PTL_ELAN_ALIGNUP ( 
+	    (2*sizeof (E4_Event32) + ELAN_BLOCK_SIZE), elan_align);
+#else
+    elan_size  = OMPI_PTL_ELAN_ALIGNUP (sizeof (E4_Event32), elan_align);
+
+#endif
 
     OBJ_CONSTRUCT(&flist->fl_lock, ompi_mutex_t);
     flist->fl_elem_size = flist->fl_max_to_alloc = OMPI_PTL_ELAN_MAX_QDESCS;
@@ -72,7 +78,7 @@ ompi_init_elan_queue_events (mca_ptl_elan_module_t * ptl,
     OMPI_PTL_ELAN_CHECK_UNEX (desc, NULL, OMPI_ERROR, 0);
 
     /* Allocating elan related structures */
-    elan_ptr = (E4_Event *) elan4_allocElan (rail->r_alloc,
+    elan_ptr = (E4_Event32 *) elan4_allocElan (rail->r_alloc,
 	    elan_align, elan_size * count);
     OMPI_PTL_ELAN_CHECK_UNEX (elan_ptr, NULL, OMPI_ERROR, 0);
 
@@ -80,25 +86,19 @@ ompi_init_elan_queue_events (mca_ptl_elan_module_t * ptl,
         ompi_list_item_t *item;
 
         desc->ptl   = ptl;
-        desc->elan_event = elan_ptr;
+        desc->elan_event = (E4_Event *) elan_ptr;
         frag->desc = (ompi_ptl_elan_base_desc_t *)desc;
 
-        /* Initialize some of the dma structures */
-	desc->main_dma.dma_dstAddr = 0;
-
 #if OMPI_PTL_ELAN_COMP_QUEUE
-	/* XXX: Chain a QDMA to each queue and 
-	 * Have all the srcEvent fired to the Queue */
-
-	/* Setup the chain dma */
+	/* XXX: provide a DMA structure for each chained event */
 	desc->comp_dma.dma_typeSize = E4_DMA_TYPE_SIZE (
 		sizeof(mca_ptl_base_frag_header_t), 
 		DMA_DataTypeByte, DMA_QueueWrite, 8);
-	desc->comp_dma.dma_cookie   = elan4_local_cookie(ptl->queue->tx_cpoll,
+	desc->comp_dma.dma_cookie   = elan4_local_cookie(ptl->queue->tx_cpool,
 		E4_COOKIE_TYPE_LOCAL_DMA, ptl->elan_vp);
 	desc->comp_dma.dma_vproc    = ptl->elan_vp;
-	desc->comp_dma.dma_srcAddr  = elan4_main2elan (ctx, (void *) hdr);
-	desc->comp_dma.dma_dstAddr  = 0x0ULL;
+	desc->comp_dma.dma_srcAddr  = 0x0ULL; /* To be filled in */
+	desc->comp_dma.dma_dstAddr  = 0x0ULL; /* To be filled in */
 
 	/* XXX: If completion is to be detected from the Queue
 	 *      there is no need to trigger a local event */
@@ -106,26 +106,24 @@ ompi_init_elan_queue_events (mca_ptl_elan_module_t * ptl,
 		(void *) ptl->comp->input);
 	/*desc->main_dma.dma_srcEvent = SDRAM2ELAN (ctx, desc->elan_event);*/
 	desc->comp_dma.dma_srcEvent = 0x0ULL;
-
 	desc->comp_dma.dma_typeSize |= RUN_DMA_CMD;
 	desc->comp_dma.dma_pad       = NOP_CMD;
-	memcpy ((void *)desc->comp_buff, (void *)&desc->comp_dma, 
-		sizeof (E4_DMA64));
-
+	desc->comp_event = (E4_Event *) (elan_ptr + 1);
+	desc->comp_buff  = (E4_Addr *) (elan_ptr + 2);
 	desc->comp_event->ev_CountAndType = E4_EVENT_INIT_VALUE(-32,
 		E4_EVENT_COPY, E4_EVENT_DTYPE_LONG, 8);
 	desc->comp_event->ev_Params[0]    = elan4_main2elan (ctx, 
 		(void *)desc->comp_buff);
+	desc->comp_event->ev_Params[1] = 0x0ULL; 
 
-	/* XXX: The chain dma will go directly into a command stream
-	 * so we need addend the command queue control bits.
-	 * Allocate space from command queues hanged off the CTX.
-	 */
-	desc->comp_event->ev_Params[1] = elan4_alloccq_space (ctx, 8, CQ_Size8K);
+        /* Initialize some of the dma structures */
+	desc->main_dma.dma_dstAddr = 0;
 	desc->main_dma.dma_srcEvent= elan4_main2elan(ctx, 
 		(E4_Event *)desc->comp_event);
 	desc->main_dma.dma_dstEvent= SDRAM2ELAN (ctx, queue->input);
 #else
+        /* Initialize some of the dma structures */
+	desc->main_dma.dma_dstAddr = 0;
 	desc->main_dma.dma_srcEvent = SDRAM2ELAN (ctx, desc->elan_event);
 	desc->main_dma.dma_dstEvent = SDRAM2ELAN (ctx, queue->input);
 	INITEVENT_WORD (ctx, desc->elan_event, &desc->main_doneWord);
@@ -138,7 +136,7 @@ ompi_init_elan_queue_events (mca_ptl_elan_module_t * ptl,
 
         /* Progress to the next element */
         desc = (ompi_ptl_elan_qdma_desc_t *) ((char *) desc + main_size);
-        elan_ptr = (E4_Event *) ((char *) elan_ptr + elan_size);
+        elan_ptr = (E4_Event32 *) ((char *) elan_ptr + elan_size);
         frag ++;
     }
     flist->fl_num_allocated += flist->fl_num_per_alloc;
@@ -162,23 +160,35 @@ mca_ptl_elan_putget_desc_contruct (
     memset(desc, 0, sizeof(desc));
     desc->ptl = ptl;
     desc->req = NULL;
-    desc->main_dma.dma_typeSize = 0;
-    desc->main_dma.dma_cookie   = 0;
-    desc->main_dma.dma_vproc    = 0;
+
+#if OMPI_PTL_ELAN_COMP_QUEUE
+
+    /* Allocate elan memory for chained event and buff */
+    desc->chain_buff = (E4_Addr *) ((char *)elan_event);
+    desc->comp_buff  = (E4_Addr *) ((char *)elan_event + ELAN_BLOCK_SIZE );
+    desc->elan_event = (E4_Event *) ((char *)elan_event + 2*ELAN_BLOCK_SIZE ); 
+    desc->chain_event= (E4_Event *) ((char *)elan_event 
+	    + 2 * ELAN_BLOCK_SIZE + sizeof (E4_Event32));
+    desc->comp_event= (E4_Event *) ((char *)elan_event 
+	    + 2 * ELAN_BLOCK_SIZE + 2 * sizeof (E4_Event32));
+#else
     desc->elan_event = elan_event; 
     desc->chain_event= (E4_Event32 *) 
 	((char *)elan_event + sizeof (E4_Event32));
     desc->chain_buff = (E4_Addr *) 
 	((char *)elan_event + 2*sizeof (E4_Event32));
 
-    /* XXX: Remember all the address needs to be converted 
+#if 0
+    desc->main_dma.dma_typeSize = 0;
+    desc->main_dma.dma_cookie   = 0;
+    desc->main_dma.dma_vproc    = 0;
+    /* XXX + TODO: To remove this block after verification
+     * Remember all the address needs to be converted 
      * before assigning to DMA descritpor */
     desc->main_dma.dma_srcAddr = src_elan4_addr;
     desc->main_dma.dma_dstAddr = dst_elan4_addr;
+#endif
 
-#if OMPI_PTL_ELAN_COMP_QUEUE
-    /* Have all the source event fired to the Queue */
-#else
     if (local) {
 	desc->main_dma.dma_srcEvent = elan4_main2elan(ctx, elan_event);
     } else {
@@ -243,10 +253,13 @@ ompi_ptl_elan_init_putget_ctrl (mca_ptl_elan_module_t * ptl,
     main_size  = OMPI_PTL_ELAN_ALIGNUP(sizeof(ompi_ptl_elan_putget_desc_t), 
 	    main_align);
 
-    /* FIXME: Get the correct number of elan_size,
-     * Contain elan_event, chain_event and a chain_buff */
+#if OMPI_PTL_ELAN_COMP_QUEUE
+    elan_size  = OMPI_PTL_ELAN_ALIGNUP( 
+	    (ELAN_BLOCK_SIZE + sizeof(E4_Event32)*2 ), elan_align);
+#else
     elan_size  = OMPI_PTL_ELAN_ALIGNUP(
 	    (ELAN_BLOCK_SIZE * 2 + sizeof(E4_Event32)*3 ), elan_align);
+#endif
 
     rail = (RAIL *) ptl->ptl_elan_rail;
     ctx  = (ELAN4_CTX *) ptl->ptl_elan_ctx;
@@ -309,13 +322,14 @@ ompi_init_elan_qdma (mca_ptl_elan_component_t * emp,
                      int num_rails)
 {
     int         i;
-    int         nslots   = OMPI_PTL_ELAN_MAX_QSLOTS;
-    int         slotsize = OMPI_PTL_ELAN_MAX_QSIZE;
+    int         nslots;
+    int         slotsize;
     RAIL       *rail;
     ELAN4_CTX  *ctx;
     struct mca_ptl_elan_module_t *ptl;
 
     START_FUNC(PTL_ELAN_DEBUG_INIT);
+    nslots = OMPI_PTL_ELAN_MAX_QSLOTS;
 
 #if OMPI_PTL_ELAN_COMP_QUEUE
     /* Create a complete queue here, later use the queue above directly */
@@ -343,9 +357,10 @@ ompi_init_elan_qdma (mca_ptl_elan_component_t * emp,
         /* Init the Receive Queue structure */
         comp->rx_nslots = nslots;
         nslots += OMPI_PTL_ELAN_LOST_QSLOTS;
+	slotsize = sizeof(mca_ptl_base_header_t);
+        comp->rx_slotsize = ELAN_ALIGNUP (slotsize, OMPI_PTL_ELAN_SLOT_ALIGN);
         comp->rx_buffsize = (slotsize > INPUT_QUEUE_MAX) ?
             INPUT_QUEUE_MAX : slotsize;
-        comp->rx_slotsize = ELAN_ALIGNUP (slotsize, OMPI_PTL_ELAN_SLOT_ALIGN);
         rxq = comp->rxq = (ompi_ptl_elan_recv_queue_t *)
             elan4_allocMain (rail->r_alloc, 64,
                              sizeof (ompi_ptl_elan_recv_queue_t));
@@ -374,7 +389,6 @@ ompi_init_elan_qdma (mca_ptl_elan_component_t * emp,
 
         /* Event to wait/block on, Bug here for the event */
         rxq->qr_qEvent = rxq->qr_elanDone;
-
         comp->input->q_event= SDRAM2ELAN (ctx, (void *) rxq->qr_elanDone);
         comp->input->q_fptr = rxq->qr_efitem;
         comp->input->q_bptr = rxq->qr_efitem;
@@ -430,29 +444,19 @@ ompi_init_elan_qdma (mca_ptl_elan_component_t * emp,
                                            CQ_WriteEnableBit |
                                            CQ_DmaStartEnableBit |
                                            CQ_STENEnableBit, NULL);
-
         OMPI_PTL_ELAN_CHECK_UNEX (queue->tx_cmdq, NULL, OMPI_ERROR, 0);
-
-        /* 
-         * Elan4 has a hierarchical event mechanism.
-         * It is easy to use but nontrivial to manipulate
-         * We implement a simpler event control mechanism, which
-         * should also provide us the capability to chain event,
-         * dma and IRQ etc but more open to update.
-         *
-         * Initialize a new event list managing this queue */
-        ompi_init_elan_queue_events (ptl, queue);
 
         /* Allocate a cookie pool */
         queue->tx_cpool = elan4_allocCookiePool (ctx, ptl->elan_vp);
+        ompi_init_elan_queue_events (ptl, queue);
 
         /* Init the Receive Queue structure */
         queue->rx_nslots = nslots;
         nslots += OMPI_PTL_ELAN_LOST_QSLOTS;
-
+	slotsize = OMPI_PTL_ELAN_MAX_QSIZE;
+        queue->rx_slotsize = ELAN_ALIGNUP (slotsize, OMPI_PTL_ELAN_SLOT_ALIGN);
         queue->rx_buffsize = (slotsize > INPUT_QUEUE_MAX) ?
             INPUT_QUEUE_MAX : slotsize;
-        queue->rx_slotsize = ELAN_ALIGNUP (slotsize, OMPI_PTL_ELAN_SLOT_ALIGN);
 
         rxq = queue->rxq = (ompi_ptl_elan_recv_queue_t *)
             elan4_allocMain (rail->r_alloc, 64,
@@ -470,7 +474,7 @@ ompi_init_elan_qdma (mca_ptl_elan_component_t * emp,
 		OMPI_PTL_ELAN_SLOT_ALIGN, sizeof (EVENT32));
         OMPI_PTL_ELAN_CHECK_UNEX (rxq->qr_elanDone, NULL, OMPI_ERROR, 0);
 
-        /* Set the top et al */
+        /* Set the top etc */
         rxq->qr_efitem = (E4_uint64) elan4_main2elan (ctx, rxq->qr_fptr);
 	assert(rxq->qr_efitem != ELAN_BAD_ADDR); 
         rxq->qr_base = rxq->qr_fptr;
@@ -480,9 +484,8 @@ ompi_init_elan_qdma (mca_ptl_elan_component_t * emp,
         rxq->qr_elitem = rxq->qr_efitem + 
 	    (queue->rx_slotsize * (nslots - OMPI_PTL_ELAN_LOST_QSLOTS));
 
-        /* Event to wait/block on, Bug here for the event */
+        /* XXX: Event to wait/block on, was buggy here for the event */
         rxq->qr_qEvent = rxq->qr_elanDone;
-
         queue->input->q_event= SDRAM2ELAN (ctx, (void *) rxq->qr_elanDone);
         queue->input->q_fptr = rxq->qr_efitem;
         queue->input->q_bptr = rxq->qr_efitem;
@@ -509,7 +512,6 @@ ompi_init_elan_qdma (mca_ptl_elan_component_t * emp,
         OMPI_PTL_ELAN_CHECK_UNEX (rxq->qr_es, NULL, OMPI_ERROR, 0);
         OBJ_CONSTRUCT (&queue->rx_lock, ompi_mutex_t);
     }
-
 
     END_FUNC(PTL_ELAN_DEBUG_INIT);
     return (OMPI_SUCCESS);
