@@ -7,7 +7,6 @@
 
 #include "mpi.h"
 #include "lam/lfc/array.h"
-#include "lam/lfc/object.h"
 #include "lam/util/cmd_line.h"
 
 /*
@@ -34,8 +33,6 @@ typedef enum {
 } mca_base_param_type_t;
 
 struct mca_base_param_t {
-  lam_object_t super;
-
   mca_base_param_type_t mbp_type;
   char *mbp_type_name;
   char *mbp_module_name;

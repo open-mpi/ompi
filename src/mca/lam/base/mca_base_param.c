@@ -11,7 +11,7 @@
 #include <stdlib.h>
 
 #include "lam/constants.h"
-#include "lam/lfc/array.h"
+#include "lam/lfc/lam_value_array.h"
 #include "lam/mem/malloc.h"
 #include "mca/mca.h"
 #include "mca/lam/base/mca_base_param.h"
@@ -24,7 +24,7 @@
  * It's only public so that laminfo can see it.  The relevant module
  * in laminfo will provide an extern to see this variable.
  */
-lam_array_t mca_base_params;
+lam_value_array_t mca_base_params;
 
 
 /*
@@ -199,7 +199,7 @@ int mca_base_param_find(const char *type_name, const char *module_name,
                         const char *param_name) 
 {
   size_t i, size;
-  mca_base_param_t **array;
+  mca_base_param_t *array;
 
   /* Check for bozo cases */
 
@@ -211,13 +211,14 @@ int mca_base_param_find(const char *type_name, const char *module_name,
   /* Loop through looking for a parameter of a given
      type/module/param */
 
-  array = (mca_base_param_t**) lam_arr_get_c_array(&mca_base_params, &size);
+  size = lam_value_array_get_size(&mca_base_params);
+  array = LAM_VALUE_ARRAY_GET_BASE(&mca_base_params, mca_base_param_t);
   for (i = 0; i < size; ++i) {
-    if (0 == strcmp(type_name, array[i]->mbp_type_name) &&
-        ((NULL == module_name && NULL == array[i]->mbp_module_name) ||
-         (NULL != module_name && NULL != array[i]->mbp_module_name &&
-          0 == strcmp(module_name, array[i]->mbp_module_name))) &&
-        0 == strcmp(param_name, array[i]->mbp_param_name))
+    if (0 == strcmp(type_name, array[i].mbp_type_name) &&
+        ((NULL == module_name && NULL == array[i].mbp_module_name) ||
+         (NULL != module_name && NULL != array[i].mbp_module_name &&
+          0 == strcmp(module_name, array[i].mbp_module_name))) &&
+        0 == strcmp(param_name, array[i].mbp_param_name))
       return i;
   }
 
@@ -243,22 +244,15 @@ int mca_base_param_find(const char *type_name, const char *module_name,
  */
 int mca_base_param_finalize(void)
 {
-  size_t i, size;
-  mca_base_param_t **array;
+  mca_base_param_t *array;
 
-  lam_malloc_debug(2);
   if (initialized) {
-    array = (mca_base_param_t**) lam_arr_get_c_array(&mca_base_params, &size);
-    for (i = 0; i < size; ++i) {
-      param_free(array[i]);
-      /* JMS Memory management of the array may change when array.[ch]
-         changes */
-      free(array[i]);
-      lam_arr_remove_item(&mca_base_params, i);
+    array = LAM_VALUE_ARRAY_GET_BASE(&mca_base_params, mca_base_param_t);
+    while (0 < lam_value_array_get_size(&mca_base_params)) {
+      param_free(&array[0]);
+      lam_value_array_remove_item(&mca_base_params, 0);
     }
-    /* JMS Memory management of the array may change when array.[ch]
-       changes */
-    free(array);
+    OBJ_DESTRUCT(&mca_base_params);
     initialized = false;
   }
 
@@ -274,48 +268,44 @@ static int param_register(const char *type_name, const char *module_name,
                           mca_base_param_storage_t *default_value)
 {
   size_t i, len;
-  mca_base_param_t *param, **array;
+  mca_base_param_t param, *array;
 
   /* Initialize the array if it has never been initialized */
 
   if (!initialized) {
-    lam_arr_construct(&mca_base_params);
+    OBJ_CONSTRUCT(&mca_base_params, lam_value_array_t);
+    lam_value_array_init(&mca_base_params, sizeof(mca_base_param_t));
     initialized = true;
   }
 
   /* Create a parameter entry.  If a keyval is to be used, it will be
      registered elsewhere.  We simply assign -1 here. */
 
-  param = malloc(sizeof(mca_base_param_t));
-  if (NULL == param) {
-    return LAM_ERR_OUT_OF_RESOURCE;
-  }
-  OBJ_CONSTRUCT_SUPER(&(param->super), lam_object_t);
-  param->mbp_type = type;
-  param->mbp_keyval = -1;
+  param.mbp_type = type;
+  param.mbp_keyval = -1;
 
-  param->mbp_type_name = strdup(type_name);
-  if (NULL == param->mbp_type_name) {
+  param.mbp_type_name = strdup(type_name);
+  if (NULL == param.mbp_type_name) {
     return LAM_ERROR;
   }
   if (NULL != module_name) {
-    param->mbp_module_name = strdup(module_name);
-    if (NULL == param->mbp_module_name) {
-      free(param->mbp_type_name);
+    param.mbp_module_name = strdup(module_name);
+    if (NULL == param.mbp_module_name) {
+      free(param.mbp_type_name);
       return LAM_ERROR;
     }
   } else {
-    param->mbp_module_name = NULL;
+    param.mbp_module_name = NULL;
   }
   if (param_name != NULL) {
-    param->mbp_param_name = strdup(param_name);
-    if (NULL == param->mbp_param_name) {
-      free(param->mbp_type_name);
-      free(param->mbp_module_name);
+    param.mbp_param_name = strdup(param_name);
+    if (NULL == param.mbp_param_name) {
+      free(param.mbp_type_name);
+      free(param.mbp_module_name);
       return LAM_ERROR;
     }
   } else {
-    param->mbp_param_name = NULL;
+    param.mbp_param_name = NULL;
   }
 
   /* The full parameter name may have been specified by the caller.
@@ -323,9 +313,9 @@ static int param_register(const char *type_name, const char *module_name,
      Otherwise, derive it from the type, module, and parameter
      name. */
 
-  param->mbp_env_var_name = NULL;
+  param.mbp_env_var_name = NULL;
   if (MCA_BASE_PARAM_INFO != mca_param_name && NULL != mca_param_name) {
-    param->mbp_full_name = strdup(mca_param_name);
+    param.mbp_full_name = strdup(mca_param_name);
   } else {
     len = 16 + strlen(type_name);
 
@@ -336,28 +326,28 @@ static int param_register(const char *type_name, const char *module_name,
       len += strlen(param_name);
     }
 
-    param->mbp_full_name = malloc(len);
-    if (NULL == param->mbp_full_name) {
-      if (NULL != param->mbp_type_name) {
-        free(param->mbp_type_name);
+    param.mbp_full_name = malloc(len);
+    if (NULL == param.mbp_full_name) {
+      if (NULL != param.mbp_type_name) {
+        free(param.mbp_type_name);
       }
-      if (NULL != param->mbp_module_name) {
-        free(param->mbp_module_name);
+      if (NULL != param.mbp_module_name) {
+        free(param.mbp_module_name);
       }
-      if (NULL != param->mbp_param_name) {
-        free(param->mbp_param_name);
+      if (NULL != param.mbp_param_name) {
+        free(param.mbp_param_name);
       }
       return LAM_ERROR;
     }
-    strncpy(param->mbp_full_name, type_name, len);
+    strncpy(param.mbp_full_name, type_name, len);
 
     if (NULL != module_name) {
-      strcat(param->mbp_full_name, "_");
-      strcat(param->mbp_full_name, module_name);
+      strcat(param.mbp_full_name, "_");
+      strcat(param.mbp_full_name, module_name);
     }
     if (NULL != param_name) {
-      strcat(param->mbp_full_name, "_");
-      strcat(param->mbp_full_name, param_name);
+      strcat(param.mbp_full_name, "_");
+      strcat(param.mbp_full_name, param_name);
     }
   }
 
@@ -366,62 +356,62 @@ static int param_register(const char *type_name, const char *module_name,
      well. */
 
   if (MCA_BASE_PARAM_INFO != mca_param_name) {
-    len = strlen(param->mbp_full_name) + strlen(mca_prefix) + 16;
-    param->mbp_env_var_name = malloc(len);
-    if (NULL == param->mbp_env_var_name) {
-      free(param->mbp_full_name);
-      free(param->mbp_type_name);
-      free(param->mbp_module_name);
-      free(param->mbp_param_name);
+    len = strlen(param.mbp_full_name) + strlen(mca_prefix) + 16;
+    param.mbp_env_var_name = malloc(len);
+    if (NULL == param.mbp_env_var_name) {
+      free(param.mbp_full_name);
+      free(param.mbp_type_name);
+      free(param.mbp_module_name);
+      free(param.mbp_param_name);
       return LAM_ERROR;
     }
-    snprintf(param->mbp_env_var_name, len, "%s%s", mca_prefix, 
-             param->mbp_full_name);
+    snprintf(param.mbp_env_var_name, len, "%s%s", mca_prefix, 
+             param.mbp_full_name);
   }
 
   /* Figure out the default value */
 
   if (NULL != default_value) {
-    if (MCA_BASE_PARAM_TYPE_STRING == param->mbp_type &&
+    if (MCA_BASE_PARAM_TYPE_STRING == param.mbp_type &&
         NULL != default_value->stringval) {
-      param->mbp_default_value.stringval = strdup(default_value->stringval);
+      param.mbp_default_value.stringval = strdup(default_value->stringval);
     } else {
-      param->mbp_default_value = *default_value;
+      param.mbp_default_value = *default_value;
     }
   } else {
-    memset(&param->mbp_default_value, 0, sizeof(param->mbp_default_value));
+    memset(&param.mbp_default_value, 0, sizeof(param.mbp_default_value));
   }
 
   /* See if this entry is already in the Array */
 
-  array = (mca_base_param_t**) lam_arr_get_c_array(&mca_base_params, &len);
+  len = lam_value_array_get_size(&mca_base_params);
+  array = LAM_VALUE_ARRAY_GET_BASE(&mca_base_params, mca_base_param_t);
   for (i = 0; i < len; ++i) {
-    if (0 == strcmp(param->mbp_full_name, array[i]->mbp_full_name)) {
+    if (0 == strcmp(param.mbp_full_name, array[i].mbp_full_name)) {
 
       /* Copy in the new default value to the old entry */
 
-      if (MCA_BASE_PARAM_TYPE_STRING == array[i]->mbp_type &&
-          NULL != array[i]->mbp_default_value.stringval) {
-        free(array[i]->mbp_default_value.stringval);
+      if (MCA_BASE_PARAM_TYPE_STRING == array[i].mbp_type &&
+          NULL != array[i].mbp_default_value.stringval) {
+        free(array[i].mbp_default_value.stringval);
       }
-      if (MCA_BASE_PARAM_TYPE_STRING == param->mbp_type &&
-          NULL != param->mbp_default_value.stringval) {
-        array[i]->mbp_default_value.stringval =
-          strdup(param->mbp_default_value.stringval);
+      if (MCA_BASE_PARAM_TYPE_STRING == param.mbp_type &&
+          NULL != param.mbp_default_value.stringval) {
+        array[i].mbp_default_value.stringval =
+          strdup(param.mbp_default_value.stringval);
       }
 
-      param_free(param);
-      free(param);
+      param_free(&param);
       return i;
     }
   }
 
   /* Add it to the array */
 
-  if (!lam_arr_append_item(&mca_base_params, (lam_object_t*) param)) {
+  if (LAM_SUCCESS != lam_value_array_append_item(&mca_base_params, &param)) {
     return LAM_ERROR;
   }
-  return lam_arr_get_size(&mca_base_params) - 1;
+  return lam_value_array_get_size(&mca_base_params) - 1;
 }
 
 
@@ -440,28 +430,27 @@ static bool param_lookup(int index, mca_base_param_storage_t *storage)
 {
   size_t size;
   char *env;
-  mca_base_param_t **array, *p;
+  mca_base_param_t *array;
 
   /* Lookup the index and see if it's valid */
 
   if (!initialized) {
     return false;
   }
-  if (lam_arr_get_size(&mca_base_params) < index) {
+  if (lam_value_array_get_size(&mca_base_params) < index) {
     return false;
   }
-  array = (mca_base_param_t **) lam_arr_get_c_array(&mca_base_params, 
-                                                    &size);
-  p = array[index];
+  size = lam_value_array_get_size(&mca_base_params);
+  array = LAM_VALUE_ARRAY_GET_BASE(&mca_base_params, mca_base_param_t);
 
   /* We either don't have a keyval or didn't find it.  So look in the
      environment. */
 
-  if (NULL != p->mbp_env_var_name &&
-      NULL != (env = getenv(p->mbp_env_var_name))) {
-    if (MCA_BASE_PARAM_TYPE_INT == p->mbp_type) {
+  if (NULL != array[index].mbp_env_var_name &&
+      NULL != (env = getenv(array[index].mbp_env_var_name))) {
+    if (MCA_BASE_PARAM_TYPE_INT == array[index].mbp_type) {
       storage->intval = atoi(env);
-    } else if (MCA_BASE_PARAM_TYPE_STRING == p->mbp_type) {
+    } else if (MCA_BASE_PARAM_TYPE_STRING == array[index].mbp_type) {
       storage->stringval = strdup(env);
     } else {
       return false;
@@ -472,14 +461,14 @@ static bool param_lookup(int index, mca_base_param_storage_t *storage)
 
   /* Didn't find it; use the default value. */
 
-  switch (p->mbp_type) {
+  switch (array[index].mbp_type) {
   case MCA_BASE_PARAM_TYPE_INT:
-    storage->intval = p->mbp_default_value.intval;
+    storage->intval = array[index].mbp_default_value.intval;
     break;
 
   case MCA_BASE_PARAM_TYPE_STRING:
-    if (NULL != p->mbp_default_value.stringval) {
-      storage->stringval = strdup(p->mbp_default_value.stringval);
+    if (NULL != array[index].mbp_default_value.stringval) {
+      storage->stringval = strdup(array[index].mbp_default_value.stringval);
     } else {
       storage->stringval = NULL;
     }
