@@ -343,8 +343,8 @@ void laminfo::do_config(bool want_all)
   out("Fortran90 profiling", "option:profiling:f90", f90profiling);
 
   out("C++ exceptions", "option:cxx_exceptions", cxxexceptions);
-  out("POSIX thread support", "option:threads", pthreads);
-  out("Solaris thread support", "option:threads", sthreads);
+  out("POSIX thread support", "option:pthreads", pthreads);
+  out("Solaris thread support", "option:solaris_threads", sthreads);
 
   out("Debug support", "option:debug", debug);
   out("MPI parameter check", "option:mpi-param-check", paramcheck);
