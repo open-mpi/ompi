@@ -10,6 +10,7 @@ sources = \
     oob_tcp.c \
     oob_tcp.h \
     oob_tcp_hdr.h \
+    oob_tcp_addr.h \
     oob_tcp_addr.c \
     oob_tcp_msg.c \
     oob_tcp_msg.h \
