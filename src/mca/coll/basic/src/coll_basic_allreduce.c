@@ -140,7 +140,7 @@ int mca_coll_basic_allreduce_inter(void *sbuf, void *rbuf, int count,
         /* sendrecv between the two roots */
         err = mca_pml.pml_irecv (tmpbuf, count, dtype, 0, 
                                  MCA_COLL_BASE_TAG_ALLREDUCE,
-                                 comm, &(req[0]));
+                                 comm, &(reqs[rsize]));
         if ( OMPI_SUCCESS != err ) {
             goto exit;
         }
@@ -148,12 +148,7 @@ int mca_coll_basic_allreduce_inter(void *sbuf, void *rbuf, int count,
         err = mca_pml.pml_isend (rbuf, count, dtype, 0, 
                                 MCA_COLL_BASE_TAG_ALLREDUCE,
                                 MCA_PML_BASE_SEND_STANDARD, comm,
-                                 &(req[1]));
-        if ( OMPI_SUCCESS != err ) {
-            goto exit;
-        }
-        
-        err = mca_pml.pml_wait_all (2, req, MPI_STATUSES_IGNORE);
+                                 &(reqs[0]));
         if ( OMPI_SUCCESS != err ) {
             goto exit;
         }
@@ -167,13 +162,13 @@ int mca_coll_basic_allreduce_inter(void *sbuf, void *rbuf, int count,
             err = mca_pml.pml_isend (tmpbuf, count, dtype,i,
                                      MCA_COLL_BASE_TAG_ALLREDUCE,
                                      MCA_PML_BASE_SEND_STANDARD, comm,
-                                     reqs++);
+                                     &reqs[i]);
             if ( OMPI_SUCCESS != err ) {
                 goto exit;
             }
         }
 
-        err = mca_pml.pml_wait_all (rsize, reqs, MPI_STATUSES_IGNORE);
+        err = mca_pml.pml_wait_all (rsize+1, reqs, MPI_STATUSES_IGNORE);
         if ( OMPI_SUCCESS != err ) {
             goto exit;
         }
