@@ -87,6 +87,36 @@ if test "$GCC" = "yes"; then
     unset add
 fi
 
+# Try to enable restrict keyword
+RESTRICT_CFLAGS=
+case "${host}" in
+    ia64-unknown-linux*)
+        if test "$CC" = "ecc" ; then
+            RESTRICT_CFLAGS="-restrict"
+        fi
+    ;;
+    mips-sgi-irix*)
+        if test "$CC" = "cc" ; then
+            RESTRICT_CFLAGS="-LANG:restrict=ON"
+        fi
+    ;;
+    i?86-pc-linux*)
+        if test "$CC" = "icc" ; then
+            RESTRICT_CFLAGS="-restrict"
+        fi
+    ;;
+esac
+if test ! -z "$RESTRICT_CFLAGS" ; then
+    CFLAGS_orig="$CFLAGS"
+    CFLAGS="$CFLAGS_orig $RESTRICT_CFLAGS"
+    add=
+    AC_TRY_COMPILE([], [], add=" $RESTRICT_CFLAGS")
+    CFLAGS="${CFLAGS_orig}${add}"
+    OMPI_UNIQ(CFLAGS)
+    AC_MSG_WARN([$add has been added to CFLAGS])
+    unset add
+fi
+
 # Preload the optflags for the case where the user didn't specify any.
 # If we're using GNU compilers, use -O3 (since it GNU doesn't require
 # all compilation units to be compiled with the same level of
