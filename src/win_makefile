@@ -1,0 +1,116 @@
+#!/bin/sh
+#
+# This is a simple makefile for windows which makes all the components which are 
+# required for super computing. Too lazy to open up visual studio each and every
+# time to compile a component, so just adding this to the svn repository 
+#
+
+# this is hardcoded for now. but will change shortly
+topdir = C:\cygwin\home\pkambadu\ompi
+
+# list of components to build with the c compiler
+C_SUBDIRS =  \
+        attribute \
+        class \
+        communicator \
+        datatype \
+        errhandler \
+        event \
+        event/WIN32-Code \
+        file \
+        group \
+        info \
+        mpi/c \
+        op \
+        proc \
+        request \
+        runtime \
+        mca/base \
+        mca/allocator/base \
+        mca/coll/base \
+        mca/gpr/base \
+        mca/io/base \
+        mca/llm/base \
+        mca/mpool/base \
+        mca/ns/base \
+        mca/one/base \
+        mca/oob/base \
+        mca/op/ \
+        mca/pcm/base \
+        mca/pcmclient/base \
+        mca/pml/base \
+        mca/ptl/base \
+        mca/topo/base \
+        win32/generated_source \
+        win \
+        win32
+
+#
+# A small function to extract the list of all files in these directories
+#
+FILES = $(foreach dir, ${C_SUBDIRS}, $(wildcard ${dir}/*.[ch]))
+
+CC = cl
+
+INCL = \
+        /I"${topdir}/src/event/WIN32-Code/" \
+        /I"${topdir}/src/event/compat/" \
+        /I"${topdir}/src/win32/generated_include/libltdl" \
+        /I"${topdir}/src/win32/generated_include" \
+        /I"${topdir}/src/win32/" \
+        /I"${topdir}/src" \
+        /I"${topdir}/include"
+
+CFLAGS = \
+        /DWIN32 \
+        /DOMPI_SYSCONFDIR \
+        /DHAVE_CONFIG_H \
+        /DOMPI_PKGDATA_DIR \
+        /DOMPI_PKGLIBDIR \
+        /DOMPI_SYSCONFDIR \
+        /DOMPI_BUILDING_LIBRARY \
+        /D_WINDLL \
+        /EHsc \
+        /MLd \
+        /W0 \
+        /Wp64 \
+        /ZI \
+        /TC \
+        /D_MBCS \
+        /Gm \
+        /Od \
+        /LD \
+        /Fo"${topdir}/src/Debug/" \
+        /nologo \
+        /c
+
+all: clibs
+
+temp:
+	@echo ${FILES}
+
+prebuild:
+	@echo "Creating mca_base_parse_paramfile_lex.c"
+	@/usr/bin/flex -t -Pmca_base_yy "${topdir}/src/mca/base/mca_base_parse_paramfile_lex.l" \
+                >"${topdir}/src/mca/base/mca_base_parse_paramfile_lex.c" 2>/dev/null
+	@echo "Creating mca_llm_base_parse_hostfile_lex.c"
+	@/usr/bin/flex -t -Pmca_llm_base_yy "${topdir}/src/mca/llm/base/llm_base_parse_hostfile_lex.l" \
+                > "${topdir}/src/mca/llm/base/mca_llm_base_parse_hostfile_lex.c" 2>/dev/null
+	@echo "Creating show_help_lex.c"
+	@/usr/bin/flex -t -Pompi_show_help_yy "${topdir}/src/util/show_help_lex.l" \
+                > "${topdir}/src/util/show_help_lex.c" 2>/dev/null
+
+clibs: prebuild ${FILES}
+	@for dirs in ${C_SUBDIRS}; do \
+	    (echo "Entering $${dirs}"; cd $$dirs; if test -f .compile_files; then (more .compile_files| xargs -i'{}' ${CC} ${CFLAGS} ${INCL} '{}'); else (ls *.c 2>/dev/null | xargs -i'{}' ${CC} ${CFLAGS} ${INCL} '{}'); fi); \
+	done
+
+.PHONY: clean
+
+clean:
+	@for dirs in ${C_SUBDIRS}; do \
+	    (echo "Entering $$dirs"; cd $$dirs; rm -rf *.lib *.obj *.exp;); \
+	done
+	@for dirs in ${C_PPSUBDIRS}; do \
+	    (echo "Entering $$dirs"; cd $$dirs; rm -rf *.lib *.obj *.exp;); \
+	done
