@@ -14,8 +14,9 @@
 
 #include "ompi_config.h"
 #include "mpi.h"
-#include "runtime/ompi_rte_wait.h"
+#include "runtime/orte_wait.h"
 #include "runtime/ompi_progress.h"
+#include "runtime/runtime.h"
 
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
@@ -42,13 +43,12 @@ main(int argc, char *argv[])
     pid_t pid, ret;
     int status = -1;
 
-    MPI_Init(&argc, &argv);
-    ompi_rte_wait_init();
+    orte_init();
 
     pid = fork();
     if (pid > 0) {
         count++;
-        ompi_rte_wait_cb(pid, callback, NULL);
+        orte_wait_cb(pid, callback, NULL);
     } else {
         sleep(10);
         printf("pid %d exiting\n", getpid());
@@ -57,7 +57,7 @@ main(int argc, char *argv[])
 
     pid = fork();
     if (pid > 0) {
-        ret = ompi_rte_waitpid(pid, &status, 0);
+        ret = orte_waitpid(pid, &status, 0);
         printf("pid %d waitpid, status %d\n", ret, status);
     } else {
         sleep(5);
@@ -68,7 +68,7 @@ main(int argc, char *argv[])
     pid = fork();
     if (pid > 0) {
         count++;
-        ompi_rte_wait_cb(pid, callback, NULL);
+        orte_wait_cb(pid, callback, NULL);
     } else {
         printf("pid %d exiting\n", getpid());
         exit(0);
@@ -76,9 +76,7 @@ main(int argc, char *argv[])
     
     while (count > 0) { ompi_progress(); }
 
-    ompi_rte_wait_finalize();
-    MPI_Finalize();
-
+    orte_finalize();
 
     return 0;
 }

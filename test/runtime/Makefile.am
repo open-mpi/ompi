@@ -18,6 +18,7 @@ AM_CPPFLAGS = \
             -I$(top_srcdir)/test/support
 
 check_PROGRAMS = \
+	sigchld \
 	parse_context
 
 TESTS = \
@@ -31,3 +32,11 @@ parse_context_LDADD = \
 
 parse_context_LDFLAGS = $(LIBMPI_EXTRA_LDFLAGS)
 parse_context_DEPENDENCIES = $(parse_context_LDADD)
+
+
+sigchld_SOURCES = \
+	sigchld.c
+sigchld_LDADD = \
+	$(top_builddir)/src/libmpi.la \
+	$(top_builddir)/test/support/libsupport.a
+sigchld_DEPENDENCIES = $(sigchld_LDADD)
