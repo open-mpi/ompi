@@ -111,7 +111,7 @@ void mca_pml_teg_send_request_progress(
     } 
     OMPI_THREAD_UNLOCK(&mca_pml_teg.teg_request_lock);
 
-    /* if first fragment - shedule remaining fragments */
+    /* if first fragment - schedule remaining fragments */
     if(first_frag == true) {
         mca_pml_teg_send_request_schedule(req);
     }
