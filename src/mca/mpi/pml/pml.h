@@ -40,10 +40,13 @@ typedef enum {
  * @param thread_max (OUT) Maximum thread level supported by the module.
  */
 
-typedef struct mca_pml_t * (*mca_pml_base_module_init_fn_t)(
+typedef struct mca_pml_1_0_0_t * (*mca_pml_base_module_init_fn_t)(
     int* priority, 
     int* min_thread, 
     int* max_thread);
+
+typedef int (*mca_pml_base_module_finalize_fn_t)(void);
+
 
 /**
  * PML module version and interface functions.
@@ -53,8 +56,10 @@ struct mca_pml_base_module_1_0_0_t {
    mca_base_module_t pmlm_version;
    mca_base_module_data_1_0_0_t pmlm_data;
    mca_pml_base_module_init_fn_t pmlm_init;
+   mca_pml_base_module_finalize_fn_t pmlm_finalize;
 };
 typedef struct mca_pml_base_module_1_0_0_t mca_pml_base_module_1_0_0_t;
+typedef mca_pml_base_module_1_0_0_t mca_pml_base_module_t;
 
 
 /*
@@ -132,7 +137,7 @@ typedef int (*mca_pml_base_wait_fn_t)(
  *  PML instance interface functions.
  */
 
-struct mca_pml_t {
+struct mca_pml_1_0_0_t {
 
     /* downcalls from MCA to PML */
     mca_pml_base_add_comm_fn_t     pml_add_comm;
@@ -151,7 +156,8 @@ struct mca_pml_t {
     mca_pml_base_test_fn_t         pml_test;
     mca_pml_base_wait_fn_t         pml_wait;
 };
-typedef struct mca_pml_t mca_pml_t;
+typedef struct mca_pml_1_0_0_t mca_pml_1_0_0_t;
+typedef mca_pml_1_0_0_t mca_pml_t;
 
 /*
  * Macro for use in modules that are of type pml v1.0.0
@@ -170,25 +176,19 @@ typedef struct mca_pml_t mca_pml_t;
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
+  int mca_pml_base_open(void);
+  int mca_pml_base_select(void);
   int mca_pml_base_close(void);
-  int mca_pml_base_open(lam_cmd_line_t *cmd);
-  int mca_pml_base_init(void);
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
 
 /*
- * Public variables
+ * Globals
  */
-
-extern lam_list_t *mca_pml_base_opened;
-extern lam_list_t *mca_pml_base_available;
-
-/*
- * Global instance of array of pointers to mca_base_module_t.  Will
- * effectively be filled in by configure.
- */
-
-extern const mca_base_module_t **mca_pml_base_modules;
+extern int mca_pml_base_output;
+extern lam_list_t mca_pml_base_modules_available;
+extern mca_pml_base_module_t mca_pml_base_selected_module;
+extern mca_pml_t mca_pml;
 
 #endif /* MCA_PML_H */
