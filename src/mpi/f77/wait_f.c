@@ -8,6 +8,7 @@
 
 #include "mpi.h"
 #include "mpi/f77/bindings.h"
+#include "mpi/f77/constants.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_WAIT = mpi_wait_f
@@ -54,8 +55,9 @@ void mpi_wait_f(MPI_Fint *request, MPI_Fint *status, MPI_Fint *ierr)
     *ierr = OMPI_INT_2_FINT(MPI_Wait(&c_req, &c_status));
 
     if (MPI_SUCCESS == *ierr) {
-        /* reset request handle to MPI_REQUEST_NULL */
-        *request = -1;
-        MPI_Status_c2f(&c_status, status);
+        *request = 0;
+        if (!OMPI_IS_FORTRAN_STATUS_IGNORE(status)) {
+            MPI_Status_c2f(&c_status, status);
+        }
     }
 }

@@ -20,6 +20,7 @@
 #include "errhandler/errcode.h"
 #include "errhandler/errclass.h"
 #include "errhandler/errcode-internal.h"
+#include "request/request.h"
 #include "op/op.h"
 #include "file/file.h"
 
@@ -166,11 +167,18 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         goto error;
     }
 
+    /* initialize requests */
+    if (OMPI_SUCCESS != (ret = ompi_request_init())) {
+        error = "ompi_request_init() failed";
+        goto error;
+    }
+
     /* initialize info */
     if (OMPI_SUCCESS != (ret = ompi_info_init())) {
         error = "ompi_info_init() failed";
         goto error;
     }
+
     /* initialize error handlers */
     if (OMPI_SUCCESS != (ret = ompi_errhandler_init())) {
         error = "ompi_errhandler_init() failed";
