@@ -10,7 +10,6 @@ SUBDIRS = \
         $(LIBLTDL_SUBDIR) \
         attribute \
         communicator \
-        ctnetwork \
         datatype \
         errhandler \
         event \
