@@ -1,4 +1,6 @@
 /*
+ * $HEADER$
+ *
  * Copyright 2002-2003. The Regents of the University of
  * California. This material was produced under U.S. Government
  * contract W-7405-ENG-36 for Los Alamos National Laboratory, which is
@@ -31,12 +33,12 @@
  */
 /*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
 
-#ifndef _LAM_REACTOR_
-#define _LAM_REACTOR_
+#ifndef LAM_REACTOR
+#define LAM_REACTOR
 
-#include "lam_types.h"
-#include "lam/base/list.h"
-#include "lam/base/hash_table.h"
+#include "include/lam_types.h"
+#include "lam/lfc/list.h"
+#include "lam/lfc/hash_table.h"
 #include "lam/threads/mutex.h"
 
 extern const int LAM_NOTIFY_ALL;
@@ -83,7 +85,7 @@ typedef struct _lam_reactor {
     lam_dbl_list_t     r_pending;
     lam_fast_hash_t    r_hash;
     int                r_max;
-    bool_t             r_run;
+    lam_bool_t         r_run;
     int                r_changes;
     lam_fd_set_t       r_send_set;
     lam_fd_set_t       r_recv_set;
@@ -94,10 +96,10 @@ typedef struct _lam_reactor {
 void lam_reactor_init(lam_reactor_t*);
 void lam_reactor_destroy(lam_reactor_t*);
 
-bool_t lam_reactor_insert(lam_reactor_t*, int sd, lam_reactor_listener_t*, int flags);
-bool_t lam_reactor_remove(lam_reactor_t*, int sd, lam_reactor_listener_t*, int flags);
+lam_bool_t lam_reactor_insert(lam_reactor_t*, int sd, lam_reactor_listener_t*, int flags);
+lam_bool_t lam_reactor_remove(lam_reactor_t*, int sd, lam_reactor_listener_t*, int flags);
 void   lam_reactor_poll(lam_reactor_t*);
 void   lam_reactor_run(lam_reactor_t*);
 
-#endif
+#endif /* LAM_REACTOR */
 
