@@ -152,6 +152,7 @@ static inline lam_list_item_t *lam_list_remove_item
     /* reset previous pointer of next element */
     item->lam_list_next->lam_list_prev=item->lam_list_prev;
 
+    list->lam_list_length--;
     return (lam_list_item_t *)item->lam_list_prev;
 }
 
