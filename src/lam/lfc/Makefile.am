@@ -1,4 +1,6 @@
 #
+# $HEADER$
+#
 # Copyright 2002-2003. The Regents of the University of California. This material
 # was produced under U.S. Government contract W-7405-ENG-36 for Los Alamos
 # National Laboratory, which is operated by the University of California for
@@ -26,12 +28,15 @@
 # warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU Lesser General Public License for more details.
 #
+# $Id: Makefile.am,v 1.2 2004/01/07 07:54:53 jsquyres Exp $
+#
 
 include $(top_srcdir)/config/Makefile.options
 
-lib_LTLIBRARIES	= libbase.la
+AM_CPPFLAGS	= -I$(top_srcdir)/src
+lib_LTLIBRARIES	= liblfc.la
 
-libbase_la_SOURCES = \
+liblfc_la_SOURCES = \
 	array.c \
 	hash_table.c \
 	list.c \
