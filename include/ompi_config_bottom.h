@@ -135,23 +135,31 @@ typedef long long bool;
    source tree [including headers] available, and b) we guaranteed to
    *not* to include anything else via util/malloc.h, so we won't
    have Cascading Includes Of Death. */
-#include "util/malloc.h"
-#if defined(malloc)
-#undef malloc
-#endif
-#define malloc(size) ompi_malloc((size), __FILE__, __LINE__)
-#if defined(calloc)
-#undef calloc
-#endif
-#define calloc(nmembers, size) ompi_calloc((nmembers), (size), __FILE__, __LINE__)
-#if defined(realloc)
-#undef realloc
-#endif
-#define realloc(ptr, size) ompi_realloc((ptr), (size), __FILE__, __LINE__)
-#if defined(free)
-#undef free
-#endif
-#define free(ptr) ompi_free((ptr), __FILE__, __LINE__)
+#    include "util/malloc.h"
+#    if defined(malloc)
+#        undef malloc
+#    endif
+#    define malloc(size) ompi_malloc((size), __FILE__, __LINE__)
+#    if defined(calloc)
+#        undef calloc
+#    endif
+#    define calloc(nmembers, size) ompi_calloc((nmembers), (size), __FILE__, __LINE__)
+#    if defined(realloc)
+#        undef realloc
+#    endif
+#    define realloc(ptr, size) ompi_realloc((ptr), (size), __FILE__, __LINE__)
+#    if defined(free)
+#        undef free
+#    endif
+#    define free(ptr) ompi_free((ptr), __FILE__, __LINE__)
+
+/*
+ * If we're mem debugging, make the OMPI_DEBUG_ZERO resolve to memset
+ */
+#    include <string.h>
+#    define OMPI_DEBUG_ZERO(obj) memset(&obj, 0, sizeof(obj))
+#else
+#    define OMPI_DEBUG_ZERO(obj)
 #endif
 
 
