@@ -33,6 +33,7 @@ sinclude(config/f77_get_fortran_handle_max.m4)
 sinclude(config/f77_get_sizeof.m4)
 
 sinclude(config/f90_check_type.m4)
+sinclude(config/f90_get_alignment.m4)
 sinclude(config/f90_get_sizeof.m4)
 
 sinclude(config/ompi_case_sensitive_fs_setup.m4)
