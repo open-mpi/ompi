@@ -1,4 +1,6 @@
 /*
+ * $HEADER$
+ *
  * Copyright 2002-2003. The Regents of the University of California. This material
  * was produced under U.S. Government contract W-7405-ENG-36 for Los Alamos
  * National Laboratory, which is operated by the University of California for
@@ -36,23 +38,23 @@
 
 #if defined (__mips)
 
-#include "lam/os/IRIX/ulm_os.h"
+#include "lam/os/irix/ulm_os.h"
 
 #elif defined (__linux__)
 
-#include "lam/os/LINUX/ulm_os.h"
+#include "lam/os/linux/ulm_os.h"
 
 #elif defined (__osf__)
 
-#include "lam/os/TRU64/ulm_os.h"
+#include "lam/os/tru64/ulm_os.h"
 
 #elif defined (__APPLE__)
 
-#include "lam/os/DARWIN/ulm_os.h"
+#include "lam/os/darwin/ulm_os.h"
 
 #elif defined (__CYGWIN__)
 
-#include "lam/os/CYGWIN/ulm_os.h"
+#include "lam/os/cygwin/ulm_os.h"
 
 #else
 # error
