@@ -10,6 +10,7 @@
 #include "lam_config.h"
 #include "lam/stdint.h"
 
+#include "datatype.h"
 
 #define ALIGNED32(X) (((uint32_t)(X) & (uint32_t) 3) == (uint32_t) 0 ? 1 : 0)
 
