@@ -24,9 +24,11 @@ struct lam_win_t {
 
   int w_f_to_c_index;
 
-  /* Error handling */
+  /* Error handling.  This field does not have the "w_" prefix so that
+     the LAM_ERRHDL_* macros can find it, regardless of whether it's a
+     comm, window, or file. */
 
-  lam_errhandler_t *w_errhandler;
+  lam_errhandler_t *error_handler;
 };
 
 typedef struct lam_win_t lam_win_t;

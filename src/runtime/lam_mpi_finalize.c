@@ -8,6 +8,7 @@
 #include "runtime/runtime.h"
 #include "mpi.h"
 #include "group/group.h"
+#include "errhandler/errhandler.h"
 #include "runtime/runtime.h"
 #include "mca/base/base.h"
 #include "mca/ptl/ptl.h"
@@ -52,6 +53,11 @@ int lam_mpi_finalize(void)
 
   /* free group resources */
   if (LAM_SUCCESS != (ret = lam_group_finalize())) {
+      return ret;
+  }
+
+  /* free errhandler resources */
+  if (LAM_SUCCESS != (ret = lam_errhandler_finalize())) {
       return ret;
   }
 

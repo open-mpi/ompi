@@ -27,7 +27,7 @@ static void lam_comm_construct(lam_communicator_t* comm)
     comm->c_my_rank = 0;
     comm->c_local_group = NULL;
     comm->c_remote_group = NULL;
-    comm->c_error_handler = NULL;
+    comm->error_handler = NULL;
     comm->c_pml_comm = NULL;
     comm->c_coll_comm = NULL;
 }

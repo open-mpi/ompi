@@ -10,11 +10,14 @@ noinst_LTLIBRARIES = liberrhandler.la
 # Source code files
 
 headers = \
-        errhandler.h
+        errhandler.h \
+        errhandler_predefined.h
 
 liberrhandler_la_SOURCES = \
 	$(headers) \
-        errhandler_invoke.c
+        errhandler.c \
+        errhandler_invoke.c \
+        errhandler_predefined.c
 
 # Conditionally install the header files
 
