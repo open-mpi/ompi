@@ -2,9 +2,9 @@
  * $HEADER
  *
  * The actual ROMIO routines.
- * all of these routines have been renamed: prefix with mca_io_romio
+ * all of these routines have been renamed: prefix with "mca_io_romio"
  *
- * ROMIO specific types have also been renamed:  (cant do this with #define
+ * Two ROMIO specific types have also been renamed:  (cant do this with #define
  * since this file is included by LAM's I/O module)
  * all ROMIO references to:
  *    MPIO_Request changed to:  mca_io_romio_MPIO_Request
