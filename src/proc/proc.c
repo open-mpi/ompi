@@ -175,7 +175,6 @@ ompi_proc_t * ompi_proc_find_and_add ( const ompi_process_name_t * name, bool* i
     ompi_proc_t *proc, *rproc=NULL;
     ompi_ns_cmp_bitmask_t mask;
 
-    fprintf(stderr, "ompi_proc_find_and_add\n");
     /* return the proc-struct which matches this jobid+process id */
     mask = OMPI_NS_CMP_CELLID | OMPI_NS_CMP_JOBID | OMPI_NS_CMP_VPID;
     OMPI_THREAD_LOCK(&ompi_proc_lock);
