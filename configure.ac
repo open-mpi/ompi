@@ -906,6 +906,8 @@ AC_CONFIG_FILES([
     test/include/Makefile
     test/support/Makefile
     test/class/Makefile
+    test/mca/Makefile
+    test/mca/oob/Makefile
     test/threads/Makefile
     test/util/Makefile
     test/rte/Makefile
