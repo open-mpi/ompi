@@ -48,9 +48,7 @@ int orte_dps_unpack(orte_buffer_t *buffer, void *dst,
     size_t mem_left;
     size_t num_bytes, hdr_bytes;
     void *src;
-    char *srcptr;
     orte_data_type_t stored_type;
-    uint32_t tmp_32;
 
     /* check for errors */
     if (buffer == NULL || dst == NULL || max_num_vals == NULL) { 
