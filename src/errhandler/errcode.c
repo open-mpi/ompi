@@ -94,7 +94,7 @@ int ompi_mpi_errcode_init (void)
     OBJ_CONSTRUCT(&ompi_err_buffer, ompi_mpi_errcode_t);
     ompi_err_buffer.code = MPI_ERR_BUFFER;
     ompi_err_buffer.class = MPI_ERR_BUFFER;
-    strcpy(ompi_err_buffer.errstring, "MPI_ERR_BUFFER: Invalid buffer pointer");
+    strcpy(ompi_err_buffer.errstring, "MPI_ERR_BUFFER: invalid buffer pointer");
     ompi_pointer_array_set_item(&ompi_mpi_errcodes, MPI_ERR_BUFFER, &ompi_err_buffer);
 
     OBJ_CONSTRUCT(&ompi_err_count, ompi_mpi_errcode_t);
@@ -184,7 +184,7 @@ int ompi_mpi_errcode_init (void)
     OBJ_CONSTRUCT(&ompi_err_other, ompi_mpi_errcode_t);
     ompi_err_other.code = MPI_ERR_OTHER;
     ompi_err_other.class = MPI_ERR_OTHER;
-    strcpy(ompi_err_other.errstring, "MPI_ERR_OTHER: Known error not in list");
+    strcpy(ompi_err_other.errstring, "MPI_ERR_OTHER: known error not in list");
     ompi_pointer_array_set_item(&ompi_mpi_errcodes, MPI_ERR_OTHER, &ompi_err_other);
 
     OBJ_CONSTRUCT(&ompi_err_intern, ompi_mpi_errcode_t);
