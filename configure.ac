@@ -138,6 +138,7 @@ LAM_SETUP_CC
 #
 
 AC_CHECK_TYPES(long long)
+AC_CHECK_TYPES(long double)
 AC_CHECK_TYPES(int8_t)
 AC_CHECK_TYPES(uint8_t)
 AC_CHECK_TYPES(int16_t)
@@ -157,7 +158,12 @@ AC_CHECK_SIZEOF(char)
 AC_CHECK_SIZEOF(short)
 AC_CHECK_SIZEOF(int)
 AC_CHECK_SIZEOF(long)
-AC_CHECK_SIZEOF(long long)
+if test $ac_cv_type_long_long = yes; then
+    AC_CHECK_SIZEOF(long long)
+fi
+if test $ac_cv_type_long_double = yes; then
+    AC_CHECK_SIZEOF(long double)
+fi
 AC_CHECK_SIZEOF(void *)
 
 #
@@ -169,10 +175,14 @@ LAM_C_GET_ALIGNMENT(short, LAM_ALIGNMENT_SHORT)
 LAM_C_GET_ALIGNMENT(wchar_t, LAM_ALIGNMENT_WCHAR)
 LAM_C_GET_ALIGNMENT(int, LAM_ALIGNMENT_INT)
 LAM_C_GET_ALIGNMENT(long, LAM_ALIGNMENT_LONG)
-LAM_C_GET_ALIGNMENT(long long, LAM_ALIGNMENT_LONG_LONG)
+if test $ac_cv_type_long_long = yes; then
+    LAM_C_GET_ALIGNMENT(long long, LAM_ALIGNMENT_LONG_LONG)
+fi
 LAM_C_GET_ALIGNMENT(float, LAM_ALIGNMENT_FLOAT)
 LAM_C_GET_ALIGNMENT(double, LAM_ALIGNMENT_DOUBLE)
-LAM_C_GET_ALIGNMENT(long double, LAM_ALIGNMENT_LONG_DOUBLE)
+if test $ac_cv_type_long_double = yes; then
+    LAM_C_GET_ALIGNMENT(long double, LAM_ALIGNMENT_LONG_DOUBLE)
+fi
 LAM_C_GET_ALIGNMENT(void *, LAM_ALIGNMENT_VOID_P)
 
 #
