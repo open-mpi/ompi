@@ -170,4 +170,23 @@ fi
 # --with-lam=maintainer_options
 # --with-mca-*
 # ...?
+
+#
+# Do we want deprecated executable names ?
+# 
+WANT_DEN=yes
+AC_MSG_CHECKING(if want deprecated executable names)
+AC_ARG_ENABLE(deprecated-executable-names,
+    AC_HELP_STRING([--disable-deprecated-executable-names],
+        [do not make sym links to deprecated LAM executables
+         (e.g., hcc, hcp, hf77, hf90, wipe)]),
+    [if test "$enableval" = "yes"; then
+    WANT_DEN=yes
+    else
+    WANT_DEN=no
+    fi])
+AM_CONDITIONAL(WANT_DEPRECATED_EXECUTABLE_NAMES, test "$WANT_DEN" = "yes")
+AC_MSG_RESULT([$WANT_DEN])
+
+#
 ])
