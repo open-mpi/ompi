@@ -126,7 +126,7 @@ int lam_mpi_init(int argc, char **argv, int requested, int *provided)
      /* If we have run-time MPI parameter checking possible, register
         an MCA paramter to find out if the user wants it on or off by
         default */
-
+     param = mca_base_param_register_int("mpi", NULL, "error_check", NULL, 1);
      mca_base_param_lookup_int(param, &value);
      lam_mpi_param_check = (bool) value; 
 
