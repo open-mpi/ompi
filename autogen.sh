@@ -467,12 +467,6 @@ EOF
                 pd_component_name="`basename $pd_dir`"
                 pd_component_type="`dirname $pd_dir`"
                 pd_component_type="`basename $pd_component_type`"
-                pd_ver_file="`grep PARAM_VERSION_FILE configure.params`"
-                if test -z "$pd_ver_file"; then
-                    pd_ver_file="VERSION"
-                else
-                    pd_ver_file="`echo $pd_ver_file | cut -d= -f1`"
-                fi
 
                 # Write out to two files (they're merged at the end)
 
@@ -493,55 +487,154 @@ dnl No-configure component:
 dnl    $pd_dir
 
 EOF
+                # Tell configure to add all the PARAM_CONFIG_FILES to
+                # the AC_CONFIG_FILES list.
+
                 for file in $PARAM_CONFIG_FILES; do
                     echo "AC_CONFIG_FILES([$pd_dir/$file])" >> $pd_list_file
                 done
 
-                # Get all the version numbers
+                # Add this component directory to the list of
+                # subdirectories to traverse when building.
 
-                pd_get_ver="../../../../config/ompi_get_version.sh"
-                pd_ver="`sh $pd_get_ver $pd_ver_file --all`"
-                pd_ver_full="`echo $pd_ver | awk '{ print $1 }'`"
-                pd_ver_major="`echo $pd_ver | awk '{ print $2 }'`"
-                pd_ver_minor="`echo $pd_ver | awk '{ print $3 }'`"
-                pd_ver_release="`echo $pd_ver | awk '{ print $4 }'`"
-                pd_ver_alpha="`echo $pd_ver | awk '{ print $5 }'`"
-                pd_ver_beta="`echo $pd_ver | awk '{ print $6 }'`"
-                pd_ver_svn="`echo $pd_ver | awk '{ print $7 }'`"
                 cat >> $pd_list_file <<EOF
+
+dnl Add this component directory to the list of directories to
+dnl traverse for this component framework
 
 MCA_${pd_component_type}_NO_CONFIGURE_SUBDIRS="$pd_dir \$MCA_${pd_component_type}_NO_CONFIGURE_SUBDIRS"
 
-dnl Since AM_CONDITIONAL does not accept a variable name as its first
-dnl argument, we generate it here, and the variable used in the test
-dnl will be filled in later.
+EOF
 
-dnl Similarly, AC_DEFINE_UNQUOTED doesn't take a variable first
-dnl argument.  So we have to figure it out here.
+                # See if we have a VERSION file
 
-AC_DEFINE_UNQUOTED(MCA_${pd_component_type}_${pd_component_name}_MAJOR_VERSION, 
-    $pd_ver_major,
-    [Major OMPI MCA $pd_component_type $pd_component_name version])
-AC_DEFINE_UNQUOTED(MCA_${pd_component_type}_${pd_component_name}_MINOR_VERSION, 
-    $pd_ver_minor,
-    [Minor OMPI MCA $pd_component_type $pd_component_name version])
-AC_DEFINE_UNQUOTED(MCA_${pd_component_type}_${pd_component_name}_RELEASE_VERSION, 
-    $pd_ver_release,
-    [Release OMPI MCA $pd_component_type $pd_component_name version])
-AC_DEFINE_UNQUOTED(MCA_${pd_component_type}_${pd_component_name}_ALPHA_VERSION, 
-    $pd_ver_alpha,
-    [Alpha OMPI MCA $pd_component_type $pd_component_name version])
-AC_DEFINE_UNQUOTED(MCA_${pd_component_type}_${pd_component_name}_BETA_VERSION, 
-    $pd_ver_beta,
-    [Beta OMPI MCA $pd_component_type $pd_component_name version])
-AC_DEFINE_UNQUOTED(MCA_${pd_component_type}_${pd_component_name}_SVN_VERSION, 
-    "$pd_ver_svn",
-    [SVN OMPI MCA $pd_component_type $pd_component_name version])
-AC_DEFINE_UNQUOTED(MCA_${pd_component_type}_${pd_component_name}_FULL_VERSION, 
-    "$pd_ver_full",
-    [Full OMPI MCA $pd_component_type $pd_component_name version])
+                if test -z "$PARAM_VERSION_FILE"; then
+                    if test -f "VERSION"; then
+                        PARAM_VERSION_FILE="VERSION"
+                    fi
+                else
+                    if test ! -f "$PARAM_VERSION_FILE"; then
+                        PARAM_VERSION_FILE=
+                    fi
+                fi
+
+                # If we have the VERSION file, save the version
+                # numbers in a .h file.  Ignore this for the
+                # mca/common tree -- they're not components, so they
+                # don't have version numbers.
+
+                if test -n "$PARAM_VERSION_FILE" -a \
+                    "$pd_component_type" != "common"; then
+                    pd_ver_header="$pd_dir/$pd_component_type-$pd_component_name-version.h"
+                    pd_ver_header_base="`basename $pd_ver_header`"
+
+                    # Get all the version numbers
+
+                    pd_get_ver="../../../../config/ompi_get_version.sh"
+                    pd_ver="`sh $pd_get_ver $PARAM_VERSION_FILE --all`"
+                    pd_ver_full="`echo $pd_ver | awk '{ print $1 }'`"
+                    pd_ver_major="`echo $pd_ver | awk '{ print $2 }'`"
+                    pd_ver_minor="`echo $pd_ver | awk '{ print $3 }'`"
+                    pd_ver_release="`echo $pd_ver | awk '{ print $4 }'`"
+                    pd_ver_alpha="`echo $pd_ver | awk '{ print $5 }'`"
+                    pd_ver_beta="`echo $pd_ver | awk '{ print $6 }'`"
+                    pd_ver_svn="`echo $pd_ver | awk '{ print $7 }'`"
+
+                    # Because autoconf does not handle selectively
+                    # sending some AC_DEFINE's to one file and not to
+                    # all others, we have to do a bizarre multi-step
+                    # thing to make this work.  :-(
+
+                    # 1. make a template header file
+                    # <type>-<name>-version.h.template.in.  In there,
+                    # have #define's with values that are @foo@ (i.e.,
+                    # the result of AC_SUBST)
+
+                    # 2. Add the template header file to the list of
+                    # AC_CONFIG_FILES so that AC_SUBST'ed things will
+                    # be substituted in.
+
+                    # 3. Setup commands to run after config.status has
+                    # run.  Compare the resulting template header
+                    # version file with the existing version header
+                    # file.  If they're different (or if the version
+                    # header file does not yet exist), replace it with
+                    # the template version header file.  Otherwise,
+                    # leave it alone.  This leaves the
+                    # <type>-<name>-version.h file unchanged (and
+                    # therefore its timestamp unaltered) if nothing
+                    # changed.
+
+                    rm -f "$pd_ver_header_base.template.in"
+                    cat > "$pd_ver_header_base.template.in" <<EOF
+/*
+ * This file is automatically created by autogen.sh; it should not
+ * be edited by hand!!
+ *
+ * List of version number for this component
+ */
+
+#ifndef MCA_${pd_component_type}_${pd_component_name}_VERSION_H
+#define MCA_${pd_component_type}_${pd_component_name}_VERSION_H
+
+#define MCA_${pd_component_type}_${pd_component_name}_MAJOR_VERSION @MCA_${pd_component_type}_${pd_component_name}_MAJOR_VERSION@
+#define MCA_${pd_component_type}_${pd_component_name}_MINOR_VERSION @MCA_${pd_component_type}_${pd_component_name}_MINOR_VERSION@
+#define MCA_${pd_component_type}_${pd_component_name}_RELEASE_VERSION @MCA_${pd_component_type}_${pd_component_name}_RELEASE_VERSION@
+#define MCA_${pd_component_type}_${pd_component_name}_ALPHA_VERSION @MCA_${pd_component_type}_${pd_component_name}_ALPHA_VERSION@
+#define MCA_${pd_component_type}_${pd_component_name}_BETA_VERSION @MCA_${pd_component_type}_${pd_component_name}_BETA_VERSION@
+#define MCA_${pd_component_type}_${pd_component_name}_SVN_VERSION "@MCA_${pd_component_type}_${pd_component_name}_SVN_VERSION@"
+#define MCA_${pd_component_type}_${pd_component_name}_FULL_VERSION "@MCA_${pd_component_type}_${pd_component_name}_FULL_VERSION@"
+
+#endif /* MCA_${pd_component_type}_${pd_component_name}_VERSION_H */
+EOF
+                    cat >> $pd_list_file <<EOF
+dnl Generate the version header template
+
+AC_CONFIG_FILES([$pd_ver_header.template])
+
+dnl Assign and AC_SUBST all the version number components
+
+MCA_${pd_component_type}_${pd_component_name}_MAJOR_VERSION=$pd_ver_major
+AC_SUBST(MCA_${pd_component_type}_${pd_component_name}_MAJOR_VERSION)
+MCA_${pd_component_type}_${pd_component_name}_MINOR_VERSION=$pd_ver_minor
+AC_SUBST(MCA_${pd_component_type}_${pd_component_name}_MINOR_VERSION)
+MCA_${pd_component_type}_${pd_component_name}_RELEASE_VERSION=$pd_ver_release
+AC_SUBST(MCA_${pd_component_type}_${pd_component_name}_RELEASE_VERSION)
+MCA_${pd_component_type}_${pd_component_name}_ALPHA_VERSION=$pd_ver_alpha
+AC_SUBST(MCA_${pd_component_type}_${pd_component_name}_ALPHA_VERSION)
+MCA_${pd_component_type}_${pd_component_name}_BETA_VERSION=$pd_ver_beta
+AC_SUBST(MCA_${pd_component_type}_${pd_component_name}_BETA_VERSION)
+MCA_${pd_component_type}_${pd_component_name}_SVN_VERSION="$pd_ver_svn"
+AC_SUBST(MCA_${pd_component_type}_${pd_component_name}_SVN_VERSION)
+MCA_${pd_component_type}_${pd_component_name}_FULL_VERSION="$pd_ver_full"
+AC_SUBST(MCA_${pd_component_type}_${pd_component_name}_FULL_VERSION)
+
+dnl After config.status has run, compare the version header template to
+dnl the version header.  If the version header does not exist, create it
+dnl from the template.  If it does already exist, diff it and see if
+dnl they're different.  If they're different, copy the template over the
+dnl old version.  If they're the same, leave the original alone so that
+dnl we don't distrub any dependencies.
+
+AC_CONFIG_COMMANDS([${pd_component_type}-${pd_component_name}],
+[if test -f "$pd_ver_header"; then
+  diff "$pd_ver_header" "$pd_ver_header.template" > /dev/null 2>&1
+  if test "$?" != 0; then
+    cp "$pd_ver_header.template" "$pd_ver_header"
+    echo "config.status: regenerating $pd_ver_header"
+  else
+    echo "config.state: $pd_ver_header unchanged"
+  fi
+else
+  cp "$pd_ver_header.template" "$pd_ver_header"
+  echo "config.status: creating $pd_ver_header"
+fi])
 
 EOF
+                fi
+
+                # Setup the AM_CONDITIONAL to build this component
+
                 cat >> $pd_amc_file <<EOF
 AM_CONDITIONAL(OMPI_BUILD_${pd_component_type}_${pd_component_name}_DSO,
     test "\$BUILD_${pd_component_type}_${pd_component_name}_DSO" = "1")
@@ -568,6 +661,7 @@ EOF
 
         cd "$pd_cur_dir"
     fi
+    unset PARAM_CONFIG_FILES PARAM_VERSION_FILE
     unset pd_dir pd_ompi_topdir pd_cur_dir pd_component_type
 }
 
