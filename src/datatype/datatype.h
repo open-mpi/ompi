@@ -12,7 +12,9 @@
 #define DATATYPE_H_HAS_BEEN_INCLUDED
 
 #include "lam_config.h"
+#include <sys/types.h>
 #include <sys/uio.h>
+#include <unistd.h>
 #include <string.h>
 #include "include/constants.h"
 #include "lfc/lam_object.h"
@@ -172,20 +174,20 @@ int lam_ddt_create_darray( int size, int rank, int ndims, int* pGSizes, int *pDi
 int lam_ddt_add( dt_desc_t* pdtBase, dt_desc_t* pdtNew, unsigned int count, long disp, long extent );
 
 static inline int lam_ddt_type_lb( dt_desc_t* pData, long* disp )
-{ *disp = pData->lb; return 0; };
+{ *disp = pData->lb; return 0; }
 static inline int lam_ddt_type_ub( dt_desc_t* pData, long* disp )
-{ *disp = pData->ub; return 0; };
+{ *disp = pData->ub; return 0; }
 static inline int lam_ddt_type_size ( dt_desc_t* pData, int *size )
-{ *size = pData->size; return 0; };
+{ *size = pData->size; return 0; }
 static inline int lam_ddt_type_extent( dt_desc_t* pData, long* extent )
-{ *extent = (pData->ub - pData->lb); return 0; };
+{ *extent = (pData->ub - pData->lb); return 0; }
 
 static inline int lam_ddt_type_resize( dt_desc_t* pOld, long lb, long extent, dt_desc_t** pNew )
-{ /* empty function */ return -1; };
+{ /* empty function */ return -1; }
 static inline int lam_ddt_get_extent( dt_desc_t* pData, long* lb, long* extent)
-{ *lb = pData->lb; *extent = pData->ub - pData->lb; return 0; };
+{ *lb = pData->lb; *extent = pData->ub - pData->lb; return 0; }
 static inline int lam_ddt_get_true_extent( dt_desc_t* pData, long* true_lb, long* true_extent)
-{ *true_lb = pData->true_lb; *true_extent = (pData->true_ub - pData->true_lb); return 0; };
+{ *true_lb = pData->true_lb; *true_extent = (pData->true_ub - pData->true_lb); return 0; }
 
 int lam_ddt_get_element_count( dt_desc_t* pData, int iSize );
 int lam_ddt_copy_content_same_ddt( dt_desc_t* pData, int count, char* pDestBuf, char* pSrcBuf );
