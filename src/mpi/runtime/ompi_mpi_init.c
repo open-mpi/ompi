@@ -75,9 +75,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         goto error;
     }
 
-    /* parse environmental variables and fill corresponding info structures */
-    ompi_rte_parse_environ();
-
     /* Open up the MCA */
 
     if (OMPI_SUCCESS != (ret = mca_base_open())) {
@@ -92,6 +89,9 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 						    &have_hidden_threads))) {
 	goto error;
     }
+
+    /* parse environmental variables and fill corresponding info structures */
+    ompi_rte_parse_environ();
 
     /* check for existing universe to join */
     if (OMPI_SUCCESS != (ret = ompi_rte_universe_exists())) {
