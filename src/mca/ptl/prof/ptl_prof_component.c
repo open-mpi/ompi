@@ -30,7 +30,7 @@
  * with the pointer to a ptl automatically generate, which will contain
  * the correct pointers.
  */
-static int ptl_prof_module_control_fn( int param, void* value, size_t size )
+static int ptl_prof_component_control_fn( int param, void* value, size_t size )
 {
     /* check in mca_ptl_base_modules_initialized */
     return 0;
@@ -40,9 +40,9 @@ static int ptl_prof_module_control_fn( int param, void* value, size_t size )
  * function associated with this PTL.
  */
 extern mca_ptl_prof_t mca_ptl_prof;
-static struct mca_ptl_t** ptl_prof_module_init_fn( int *num_ptls,
-                                                   bool *allow_multi_user_threads,
-                                                   bool *have_hidden_threads )
+static struct mca_ptl_t** ptl_prof_component_init_fn( int *num_ptls,
+                                                      bool *allow_multi_user_threads,
+                                                      bool *have_hidden_threads )
 {
     *num_ptls = 1;
     *allow_multi_user_threads = true;
@@ -50,17 +50,17 @@ static struct mca_ptl_t** ptl_prof_module_init_fn( int *num_ptls,
     return (struct mca_ptl_t**)&mca_ptl_prof;
 }
 
-static int mca_ptl_prof_module_open_fn( void )
+static int mca_ptl_prof_component_open_fn( void )
 {
     return OMPI_SUCCESS;
 }
 
-static int mca_ptl_prof_module_close_fn( void )
+static int mca_ptl_prof_component_close_fn( void )
 {
     return OMPI_SUCCESS;
 }
 
-mca_ptl_prof_module_1_0_0_t mca_ptl_prof_module = {
+mca_ptl_prof_module_1_0_0_t mca_ptl_prof_component = {
     {
         /* First, the mca_base_module_t struct containing meta information
            about the module itself */
@@ -75,8 +75,8 @@ mca_ptl_prof_module_1_0_0_t mca_ptl_prof_module = {
             1,  /* MCA module major version */
             0,  /* MCA module minor version */
             0,  /* MCA module release version */
-            mca_ptl_prof_module_open_fn,  /* module open */
-            mca_ptl_prof_module_close_fn  /* module close */
+            mca_ptl_prof_component_open_fn,  /* module open */
+            mca_ptl_prof_component_close_fn  /* module close */
         },
 
         /* Next the MCA v1.0.0 module meta data */
@@ -86,8 +86,8 @@ mca_ptl_prof_module_1_0_0_t mca_ptl_prof_module = {
             true
         },
 
-        ptl_prof_module_init_fn,
-        ptl_prof_module_control_fn,
+        ptl_prof_component_init_fn,
+        ptl_prof_component_control_fn,
         NULL,
     }
 };
