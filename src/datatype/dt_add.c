@@ -34,7 +34,7 @@
 int ompi_ddt_add( dt_desc_t* pdtBase, const dt_desc_t* pdtAdd, 
 		  unsigned int count, long disp, long extent )
 {
-    uint32_t newLength, place_needed = 0, i;
+    uint32_t newLength, place_needed = 0, i, old_true_ub;
     short localFlags = 0;  /* no specific options yet */
     dt_elem_desc_t *pLast, *pLoop = NULL;
     long lb, ub;
@@ -165,6 +165,7 @@ int ompi_ddt_add( dt_desc_t* pdtBase, const dt_desc_t* pdtAdd,
         /* should I add some space until the extent of this datatype ? */
     }
 
+    old_true_ub      = pdtBase->true_ub;
     pdtBase->size += count * pdtAdd->size;
     pdtBase->true_lb = LMIN( pdtBase->true_lb, pdtAdd->true_lb + disp );
     pdtBase->true_ub = LMAX( pdtBase->true_ub,
@@ -177,7 +178,7 @@ int ompi_ddt_add( dt_desc_t* pdtBase, const dt_desc_t* pdtAdd,
      * should ALWAYS follow each other.
      */
     if( disp != pdtBase->true_ub ) { /* add the initial gap */
-        if( disp < pdtBase->true_ub ) pdtBase->flags |= DT_FLAG_OVERLAP;
+        if( disp < old_true_ub ) pdtBase->flags |= DT_FLAG_OVERLAP;
         UNSET_CONTIGUOUS_FLAG(pdtBase->flags);
     } else {
         if( (pdtBase->flags & DT_FLAG_CONTIGUOUS) && (pdtAdd->flags & DT_FLAG_CONTIGUOUS)
