@@ -23,6 +23,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "mpipr.h"
+/* Open MPI: This seemes to have been missing */
+#include "adio.h"
 
 #define FPRINTF fprintf
 void *ADIOI_Malloc_fn(size_t size, int lineno, char *fname);
