@@ -4,16 +4,19 @@
 
 /** @file
  *
- *  Define the cache caracteristics of the platform
+ *  Define the cache characteristics of the platform
  *  
  */
 
-#ifndef CACHE
-#define CACHE 1
+#ifndef OMPI_SYS_CACHE_H
+#define OMPI_SYS_CACHE_H 1
 
-/* size of cache line  - for now hardwire this to a reasonable
- * value, and automate later - RLG */
+/**
+ * Size of cache line.
+ *
+ * For now hardwire this to a reasonable value, and automate later - RLG
+ */
 #define CACHE_LINE_SIZE 128
 
 
-#endif /* CACHE */
+#endif /* OMPI_SYS_CACHE_H */

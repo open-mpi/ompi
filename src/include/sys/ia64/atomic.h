@@ -2,8 +2,8 @@
  * $HEADER$
  */
 
-#ifndef OMPI_SYS_ATOMIC_H_INCLUDED
-#define OMPI_SYS_ATOMIC_H_INCLUDED
+#ifndef OMPI_SYS_ARCH_ATOMIC_H
+#define OMPI_SYS_ARCH_ATOMIC_H 1
 
 /*
  * On ia64, we use cmpxchg, which supports acquire/release semantics natively.
@@ -118,4 +118,4 @@ static inline int ompi_atomic_cmpset_64(volatile uint64_t *addr,
 }
 
 
-#endif /* ! OMPI_SYS_ATOMIC_H_INCLUDED */
+#endif /* ! OMPI_SYS_ARCH_ATOMIC_H */

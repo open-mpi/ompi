@@ -15,8 +15,8 @@
  * Only the necessary subset of functions are implemented here.
  */
 
-#ifndef OMPI_ATOMIC_H
-#define OMPI_ATOMIC_H 1
+#ifndef OMPI_SYS_ATOMIC_H
+#define OMPI_SYS_ATOMIC_H 1
 
 #include "ompi_config.h"
 
@@ -251,17 +251,17 @@ STATIC_INLINE int ompi_atomic_add_int(int *addr, int delta);
  */
 
 #if   defined(__alpha__)
-# include "sys/alpha/atomic.h"
+# include "alpha/atomic.h"
 #elif defined(__amd64__)
-# include "sys/amd64/atomic.h"
+# include "amd64/atomic.h"
 #elif defined(__i386__)
-# include "sys/ia32/atomic.h"
+# include "ia32/atomic.h"
 #elif defined(__ia64__)
-# include "sys/ia64/atomic.h"
+# include "ia64/atomic.h"
 #elif defined(__POWERPC__)
-# include "sys/powerpc/atomic.h"
+# include "powerpc/atomic.h"
 #elif defined(__sparc__) || defined(__sparc)
-# include "sys/sparc64/atomic.h"
+# include "sparc64/atomic.h"
 #endif
 
 #endif
@@ -430,4 +430,4 @@ static inline int ompi_atomic_add_int(int *addr, int delta)
     return (oldval + delta);
 }
 
-#endif /* OMPI_ATOMIC_H */
+#endif /* OMPI_SYS_ATOMIC_H */

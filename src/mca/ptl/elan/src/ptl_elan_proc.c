@@ -1,8 +1,12 @@
 /*
  * $HEADER$
  */
+
+#include "ompi_config.h"
+
 #include <string.h>
-#include "atomic.h"
+
+#include "sys/atomic.h"
 #include "class/ompi_hash_table.h"
 #include "mca/base/mca_base_module_exchange.h"
 #include "ptl_elan.h"

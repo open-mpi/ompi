@@ -2,8 +2,8 @@
  * $HEADER$
  */
 
-#ifndef OMPI_SYS_ATOMIC_H_INCLUDED
-#define OMPI_SYS_ATOMIC_H_INCLUDED
+#ifndef OMPI_SYS_ARCH_ATOMIC_H
+#define OMPI_SYS_ARCH_ATOMIC_H 1
 
 /*
  * On ia32, we use cmpxchg.
@@ -109,4 +109,4 @@ static inline int ompi_atomic_cmpset_rel_64(volatile uint64_t *addr,
     return ompi_atomic_cmpset_64(addr, oldval, newval);
 }
 
-#endif /* ! OMPI_SYS_ATOMIC_H_INCLUDED */
+#endif /* ! OMPI_SYS_ARCH_ATOMIC_H */

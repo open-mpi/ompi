@@ -31,6 +31,7 @@ headers = \
 
 libutil_la_SOURCES = \
     $(headers) \
+    asm.S \
     argv.c \
     cmd_line.c \
     common_cmd_line.c \

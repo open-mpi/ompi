@@ -7,7 +7,6 @@ include $(top_srcdir)/config/Makefile.options
 SUBDIRS = sys
 
 noinst_HEADERS = \
-        atomic.h \
         constants.h \
         ompi.h \
         totalview.h \

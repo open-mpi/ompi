@@ -7,7 +7,7 @@
 
 #include "support.h"
 
-#include "include/atomic.h"
+#include "include/sys/atomic.h"
 
 /* default options */
 

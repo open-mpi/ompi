@@ -107,7 +107,7 @@
 #include "ompi_config.h"
 #endif
 
-#include "include/atomic.h"
+#include "include/sys/atomic.h"
 
 /*
  * BEGIN_C_DECLS should be used at the beginning of your declarations,
