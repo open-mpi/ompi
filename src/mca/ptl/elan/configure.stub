@@ -56,6 +56,8 @@ AC_DEFUN([MCA_CONFIGURE_STUB],[
 	CPPFLAGS="-I${QSNET2SRC}/include -I${QSNET2SRC}/elan4lib/include -I${QSNET2SRC}/elan4lib/elan4 -I${QSNET2SRC}/elan4lib/common"
     fi
 
+    AC_SUBST(LIBS)
+    AC_SUBST(CPPFLAGS)
     AC_SUBST(QSNET2SRC)
 
 ])dnl

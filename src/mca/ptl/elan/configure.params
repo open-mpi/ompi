@@ -7,5 +7,5 @@
 
 PARAM_INIT_FILE=src/ptl_elan.c
 PARAM_CONFIG_HEADER_FILE="src/elan_config.h"
-PARAM_CONFIG_FILES="Makefile src/Makefile"
+PARAM_CONFIG_FILES="Makefile src/Makefile tests/Makefile"
 PARAM_WANT_CXX=no

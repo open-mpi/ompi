@@ -4,19 +4,20 @@
 
 extern mca_ptl_elan_module_1_0_0_t mca_ptl_elan_module;
 
-int test_rdma(mca_ptl_elan_module_1_0_0_t *emp);
+int test_rdma(mca_ptl_elan_module_1_0_0_t *emp, int reps);
 
 int main (int argc, char ** argv)
 {
     /* Initialization test */
     ompi_mca_ptl_elan_init (&mca_ptl_elan_module);
 
-    /* Please add a barrier at the beginning */
-#if 0
-    test_rdma(&mca_ptl_elan_module);
-#endif
+    /* Please replace with a barrier at the beginning */
+    sleep(5); /* Sleep 5 seconds for others to catch up */
 
-    /* Please add a barrier at the end */
+    test_rdma(&mca_ptl_elan_module, 1);
+
+    /* Please replace with a barrier at the end */
+    sleep(5); /* Sleep 5 seconds for others to catch up */
 
     /* Finalize the device */
     ompi_mca_ptl_elan_finalize (&mca_ptl_elan_module);
@@ -29,6 +30,6 @@ int main (int argc, char ** argv)
 
 int test_rdma(mca_ptl_elan_module_1_0_0_t *emp, int reps)
 {
-    /* To test rdma (put/get) function */
+    /* TODO: To test rdma (put/get) function */
     return 0;
 }
