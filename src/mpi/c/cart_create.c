@@ -35,7 +35,7 @@ int MPI_Cart_create(MPI_Comm old_comm, int ndims, int *dims,
                                           "MPI_Cart_create");
         }
         if (1 > ndims) {
-            return LAM_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_COMM,
+            return LAM_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_ARG,
                                           "MPI_Cart_create");
         }
         if (NULL == dims || NULL == periods || NULL == comm_cart) {
