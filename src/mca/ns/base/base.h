@@ -114,6 +114,13 @@ OMPI_DECLSPEC    mca_ns_base_vpid_t mca_ns_base_reserve_range(mca_ns_base_jobid_
 
 OMPI_DECLSPEC    int mca_ns_base_free_name(ompi_process_name_t* name);
 
+OMPI_DECLSPEC    mca_ns_base_cellid_t mca_ns_base_create_cellid_not_available(void);
+
+OMPI_DECLSPEC    mca_ns_base_jobid_t mca_ns_base_create_jobid_not_available(void);
+
+OMPI_DECLSPEC    mca_ns_base_vpid_t mca_ns_base_get_vpid_range_not_available(mca_ns_base_jobid_t job,
+                                                                             mca_ns_base_vpid_t range);
+
 
 
 /*

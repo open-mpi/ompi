@@ -490,9 +490,9 @@ OMPI_DECLSPEC    void ompi_rte_parse_environ(void);
 
 
     /**
-     * Register a daemon on the virtual machine segment.
+     * Register on the virtual machine segment.
      */
-OMPI_DECLSPEC    int ompi_vm_register(void);
+OMPI_DECLSPEC    int ompi_rte_vm_register(void);
 
     /**
      * Startup a job - notify processes that all ready to begin

@@ -236,7 +236,7 @@ int main(int argc, char *argv[])
 
 
     /* register this node on the virtual machine */
-    ompi_vm_register();
+    ompi_rte_vm_register();
 
     if (ompi_daemon_debug) {
 	ompi_output(0, "[%d,%d,%d] ompid: issuing callback", ompi_rte_get_self()->cellid,

@@ -281,6 +281,11 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         goto error;
     } 
 
+    /*
+     * Set the virtual machine status for this node
+     */
+    ompi_rte_vm_register();
+    
     /* execute the compound command - no return data requested
     *  we'll get it all from the startup message
     */

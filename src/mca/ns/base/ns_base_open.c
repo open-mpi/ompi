@@ -40,7 +40,36 @@
  * Global variables
  */
 int mca_ns_base_output = -1;
-mca_ns_base_module_t ompi_name_server;
+mca_ns_base_module_t ompi_name_server = {
+    mca_ns_base_create_cellid_not_available,
+    mca_ns_base_assign_cellid_to_process,
+    mca_ns_base_create_jobid_not_available,
+    mca_ns_base_create_process_name,
+    mca_ns_base_copy_process_name,
+    mca_ns_base_convert_string_to_process_name,
+    mca_ns_base_get_vpid_range_not_available,
+    mca_ns_base_free_name,
+    mca_ns_base_get_proc_name_string,
+    mca_ns_base_get_vpid_string,
+    mca_ns_base_convert_vpid_to_string,
+    mca_ns_base_convert_string_to_vpid,
+    mca_ns_base_get_jobid_string,
+    mca_ns_base_convert_jobid_to_string,
+    mca_ns_base_convert_string_to_jobid,
+    mca_ns_base_get_cellid_string,
+    mca_ns_base_convert_cellid_to_string,
+    mca_ns_base_convert_string_to_cellid,
+    mca_ns_base_get_vpid,
+    mca_ns_base_get_jobid,
+    mca_ns_base_get_cellid,
+    mca_ns_base_compare,
+    mca_ns_base_pack_name,
+    mca_ns_base_unpack_name,
+    mca_ns_base_pack_cellid,
+    mca_ns_base_unpack_cellid,
+    mca_ns_base_pack_jobid,
+    mca_ns_base_unpack_jobid
+};
 bool mca_ns_base_selected = false;
 ompi_list_t mca_ns_base_components_available;
 mca_ns_base_component_t mca_ns_base_selected_component;

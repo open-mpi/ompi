@@ -67,7 +67,7 @@ int ompi_attr_create_predefined(void)
 
      rc = ompi_registry.subscribe(
          OMPI_REGISTRY_OR,
-	 OMPI_REGISTRY_NOTIFY_ON_STARTUP|OMPI_REGISTRY_NOTIFY_INCLUDE_STARTUP_DATA,
+	     OMPI_REGISTRY_NOTIFY_ON_STARTUP|OMPI_REGISTRY_NOTIFY_INCLUDE_STARTUP_DATA,
          OMPI_RTE_VM_STATUS_SEGMENT,
          NULL,
          ompi_attr_create_predefined_callback,
@@ -84,12 +84,10 @@ void ompi_attr_create_predefined_callback(
 	ompi_registry_notify_message_t *msg,
 	void *cbdata)
 {
-    int num, err;
+    int err;
     ompi_list_item_t *item;
     ompi_registry_value_t *reg_value;
-    ompi_buffer_t buffer;
-    char *bogus;
-    ompi_process_name_t name;
+    ompi_rte_vm_status_t *vm_stat;
 
     /* Set some default values */
 
@@ -124,26 +122,13 @@ void ompi_attr_create_predefined_callback(
              NULL != item;
              item = ompi_list_remove_first(&msg->data)) {
             reg_value = (ompi_registry_value_t *) item;
-            buffer = (ompi_buffer_t) reg_value->object;
-            
-            /* Node name */
-            ompi_unpack_string(buffer, &bogus);
-            free(bogus);
-            
-            /* Process name */
-            ompi_unpack(buffer, &name, 1, OMPI_NAME);
-            free(&name);
-            
-            /* OOB contact info */
-            ompi_unpack_string(buffer, &bogus);
-            free(bogus);
+            vm_stat = ompi_rte_unpack_vm_status(reg_value); 
             
             /* Process slot count */
-            ompi_unpack(buffer, &num, 1, OMPI_INT32);
-            attr_universe_size += num;
+            attr_universe_size += vm_stat->num_cpus;
             
             /* Discard the rest */
-            ompi_buffer_free(buffer);
+            free(vm_stat);
             OBJ_RELEASE(item);
         }
     }
