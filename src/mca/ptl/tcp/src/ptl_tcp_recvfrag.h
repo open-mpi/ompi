@@ -79,7 +79,7 @@ static inline void mca_ptl_tcp_recv_frag_matched(mca_ptl_tcp_recv_frag_t* frag)
                                                                                                                            
         /* non-contiguous - allocate buffer for receive */
         if(NULL == iov.iov_base) {
-                frag->super.super.frag_addr = malloc(iov.iov_len);
+                frag->super.super.frag_addr = malloc(header->hdr_frag_length);
                 frag->super.super.frag_size = header->hdr_frag_length;
                 frag->super.frag_is_buffered = true;
         /* we now have correct offset into users buffer */
