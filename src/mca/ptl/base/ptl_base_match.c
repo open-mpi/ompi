@@ -103,7 +103,7 @@ bool mca_ptl_base_match(
      * end points) from being processed, and potentially "loosing"
      * the fragment.
      */
-    OMPI_THREAD_LOCK(&pml_comm->c_matching_lock);
+    THREAD_LOCK(&pml_comm->c_matching_lock);
 
     /* get sequence number of next message that can be processed */
     next_msg_seq_expected = *((pml_comm->c_next_msg_seq)+frag_src);
@@ -164,7 +164,7 @@ bool mca_ptl_base_match(
                     (ompi_list_item_t *)frag_desc);
     }
 
-    OMPI_THREAD_UNLOCK(&pml_comm->c_matching_lock);
+    THREAD_UNLOCK(&pml_comm->c_matching_lock);
     return match_made;
 }
 

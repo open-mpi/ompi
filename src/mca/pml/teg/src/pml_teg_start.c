@@ -26,16 +26,16 @@ int mca_pml_teg_start(size_t count, ompi_request_t** requests)
             case OMPI_REQUEST_ACTIVE: {
             
                 ompi_request_t *request;
-                OMPI_THREAD_LOCK(&mca_pml_teg.teg_request_lock);
+                THREAD_LOCK(&mca_pml_teg.teg_request_lock);
                 if (pml_request->req_pml_done == false) {
                     /* free request after it completes */
                     pml_request->req_free_called = true;
                 } else {
                     /* can reuse the existing request */
-                    OMPI_THREAD_UNLOCK(&mca_pml_teg.teg_request_lock);
+                    THREAD_UNLOCK(&mca_pml_teg.teg_request_lock);
                     break;
                 }
-                OMPI_THREAD_UNLOCK(&mca_pml_teg.teg_request_lock);
+                THREAD_UNLOCK(&mca_pml_teg.teg_request_lock);
 
                 /* allocate a new request */
                 switch(pml_request->req_type) {

@@ -40,7 +40,7 @@ int mca_pml_teg_wait(
 
     if(completed < 0) {
         /* give up and sleep until completion */
-        OMPI_THREAD_LOCK(&mca_pml_teg.teg_request_lock);
+        THREAD_LOCK(&mca_pml_teg.teg_request_lock);
         mca_pml_teg.teg_request_waiting++;
         do {
             for(i=0; i<count; i++) {
@@ -58,7 +58,7 @@ int mca_pml_teg_wait(
             }
         } while(completed < 0);
         mca_pml_teg.teg_request_waiting--;
-        OMPI_THREAD_UNLOCK(&mca_pml_teg.teg_request_lock);
+        THREAD_UNLOCK(&mca_pml_teg.teg_request_lock);
     }
 
     /* return status */
@@ -92,7 +92,7 @@ int mca_pml_teg_wait_all(
          * acquire lock and test for completion - if all requests are not completed
          * pend on condition variable until a request completes 
          */
-        OMPI_THREAD_LOCK(&mca_pml_teg.teg_request_lock);
+        THREAD_LOCK(&mca_pml_teg.teg_request_lock);
         mca_pml_teg.teg_request_waiting++;
         do {
             completed = 0;
@@ -107,7 +107,7 @@ int mca_pml_teg_wait_all(
                 ompi_condition_wait(&mca_pml_teg.teg_request_cond, &mca_pml_teg.teg_request_lock);
         } while (completed != count);
         mca_pml_teg.teg_request_waiting--;
-        OMPI_THREAD_UNLOCK(&mca_pml_teg.teg_request_lock);
+        THREAD_UNLOCK(&mca_pml_teg.teg_request_lock);
     }
 
     if(NULL != statuses) {

@@ -17,7 +17,7 @@
 /*
  * Lock structure
  */
-enum { OMPI_LOCK_OMPI_UNLOCKED = 0 };
+enum { LOCK_UNLOCKED = 0 };
 
 typedef struct {
     union {
@@ -88,7 +88,7 @@ static inline int spintrylock(ompi_lock_data_t *lock)
 static inline void spinunlock(ompi_lock_data_t *lock)
 {
     asm("mb");
-    lock->data.lockData_m = OMPI_LOCK_OMPI_UNLOCKED;
+    lock->data.lockData_m = LOCK_UNLOCKED;
 }
 
 static inline int fetchNadd(volatile int *addr, int inc)

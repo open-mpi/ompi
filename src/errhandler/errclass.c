@@ -237,8 +237,8 @@ int ompi_errclass_init (void)
     ompi_pointer_array_set_item(&ompi_errclasses, MPI_ERR_KEYVAL, &ompi_errclass_keyval);
 
     OBJ_CONSTRUCT(&ompi_errclass_locktype, ompi_errclass_t);
-    ompi_errclass_locktype.class = MPI_ERR_OMPI_LOCKTYPE;
-    ompi_pointer_array_set_item(&ompi_errclasses, MPI_ERR_OMPI_LOCKTYPE, &ompi_errclass_locktype);
+    ompi_errclass_locktype.class = MPI_ERR_LOCKTYPE;
+    ompi_pointer_array_set_item(&ompi_errclasses, MPI_ERR_LOCKTYPE, &ompi_errclass_locktype);
 
     OBJ_CONSTRUCT(&ompi_errclass_name, ompi_errclass_t);
     ompi_errclass_name.class = MPI_ERR_NAME;

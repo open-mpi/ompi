@@ -40,7 +40,7 @@ static void* mca_pml_bsend_alloc_segment(size_t* size_inout)
         if( mca_pml_bsend_addr + *size_inout <= mca_pml_bsend_base + mca_pml_bsend_size )  {
             size = *size_inout;
         } else {
-            OMPI_THREAD_UNLOCK(&mca_pml_bsend_mutex);
+            THREAD_UNLOCK(&mca_pml_bsend_mutex);
             return NULL;
         }
     }
@@ -117,16 +117,16 @@ int mca_pml_base_bsend_attach(void* addr, int size)
     }
 
     /* check for buffer already attached */
-    OMPI_THREAD_LOCK(&mca_pml_bsend_mutex);
+    THREAD_LOCK(&mca_pml_bsend_mutex);
     if(NULL != mca_pml_bsend_allocator) {
-        OMPI_THREAD_UNLOCK(&mca_pml_bsend_mutex);
+        THREAD_UNLOCK(&mca_pml_bsend_mutex);
         return OMPI_ERR_BUFFER;
     }
 
     /* try to create an instance of the allocator - to determine thread safety level */
     mca_pml_bsend_allocator = mca_pml_bsend_allocator_component->allocator_init(&thread_safe, mca_pml_bsend_alloc_segment, NULL);
     if(NULL == mca_pml_bsend_allocator) {
-        OMPI_THREAD_UNLOCK(&mca_pml_bsend_mutex);
+        THREAD_UNLOCK(&mca_pml_bsend_mutex);
         return OMPI_ERR_BUFFER;
     }
 
@@ -135,7 +135,7 @@ int mca_pml_base_bsend_attach(void* addr, int size)
     mca_pml_bsend_addr = addr;
     mca_pml_bsend_size = size;
     mca_pml_bsend_count = 0;
-    OMPI_THREAD_UNLOCK(&mca_pml_bsend_mutex);
+    THREAD_UNLOCK(&mca_pml_bsend_mutex);
     return OMPI_SUCCESS;
 }
 
@@ -144,11 +144,11 @@ int mca_pml_base_bsend_attach(void* addr, int size)
  */
 int mca_pml_base_bsend_detach(void* addr, int* size)
 {
-    OMPI_THREAD_LOCK(&mca_pml_bsend_mutex);
+    THREAD_LOCK(&mca_pml_bsend_mutex);
 
     /* is buffer attached */
     if(NULL == mca_pml_bsend_allocator) {
-        OMPI_THREAD_UNLOCK(&mca_pml_bsend_mutex);
+        THREAD_UNLOCK(&mca_pml_bsend_mutex);
         return OMPI_ERR_BUFFER;
     }
 
@@ -171,7 +171,7 @@ int mca_pml_base_bsend_detach(void* addr, int* size)
     mca_pml_bsend_addr = NULL;
     mca_pml_bsend_size = 0;
     mca_pml_bsend_count = 0;
-    OMPI_THREAD_UNLOCK(&mca_pml_bsend_mutex);
+    THREAD_UNLOCK(&mca_pml_bsend_mutex);
     return OMPI_SUCCESS;
 } 
 
@@ -186,16 +186,16 @@ int mca_pml_base_bsend_request_init(ompi_request_t* request, bool persistent)
     void* buf;
     int rc;
  
-    OMPI_THREAD_LOCK(&mca_pml_bsend_mutex);
+    THREAD_LOCK(&mca_pml_bsend_mutex);
     if(NULL == mca_pml_bsend_addr) {
-        OMPI_THREAD_UNLOCK(&mca_pml_bsend_mutex);
+        THREAD_UNLOCK(&mca_pml_bsend_mutex);
         return OMPI_ERR_BUFFER;
     }
 
     /* allocate a buffer to hold packed message */
     buf = mca_pml_bsend_allocator->alc_alloc(mca_pml_bsend_allocator, sendreq->req_bytes_packed, 0);
     if(NULL == buf) {
-        OMPI_THREAD_UNLOCK(&mca_pml_bsend_mutex);
+        THREAD_UNLOCK(&mca_pml_bsend_mutex);
         return OMPI_ERR_BUFFER;
     }
     
@@ -204,14 +204,14 @@ int mca_pml_base_bsend_request_init(ompi_request_t* request, bool persistent)
     iov.iov_len = sendreq->req_bytes_packed;
     if((rc = ompi_convertor_pack(&sendreq->req_convertor, &iov, 1)) < 0) {
         mca_pml_bsend_allocator->alc_free(mca_pml_bsend_allocator, buf);
-        OMPI_THREAD_UNLOCK(&mca_pml_bsend_mutex);
+        THREAD_UNLOCK(&mca_pml_bsend_mutex);
         return OMPI_ERROR;
     }
 
     /* setup convertor to reflect contiguous buffer */
     if((rc = ompi_convertor_init_for_send(&sendreq->req_convertor, 0, MPI_BYTE, iov.iov_len, iov.iov_base, 0)) != OMPI_SUCCESS) {
         mca_pml_bsend_allocator->alc_free(mca_pml_bsend_allocator, buf);
-        OMPI_THREAD_UNLOCK(&mca_pml_bsend_mutex);
+        THREAD_UNLOCK(&mca_pml_bsend_mutex);
         return rc;
     }
 
@@ -221,7 +221,7 @@ int mca_pml_base_bsend_request_init(ompi_request_t* request, bool persistent)
     /* set flag indicating mpi layer is done */
     sendreq->super.req_persistent = persistent;
     sendreq->super.req_mpi_done = true;
-    OMPI_THREAD_UNLOCK(&mca_pml_bsend_mutex);
+    THREAD_UNLOCK(&mca_pml_bsend_mutex);
     return OMPI_SUCCESS;
 }
                                                                                                              
@@ -234,7 +234,7 @@ int mca_pml_base_bsend_request_fini(ompi_request_t* request)
     mca_pml_base_send_request_t* sendreq = (mca_pml_base_send_request_t*)request;
 
     /* remove from list of pending requests */
-    OMPI_THREAD_LOCK(&mca_pml_bsend_mutex);
+    THREAD_LOCK(&mca_pml_bsend_mutex);
 
     /* free buffer */
     mca_pml_bsend_allocator->alc_free(mca_pml_bsend_allocator, sendreq->req_convertor.pBaseBuf);
@@ -243,7 +243,7 @@ int mca_pml_base_bsend_request_fini(ompi_request_t* request)
     if(--mca_pml_bsend_count == 0)
         ompi_condition_signal(&mca_pml_bsend_condition);
 
-    OMPI_THREAD_UNLOCK(&mca_pml_bsend_mutex);
+    THREAD_UNLOCK(&mca_pml_bsend_mutex);
     return OMPI_SUCCESS;
 }
                                                                                                              

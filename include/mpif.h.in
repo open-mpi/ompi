@@ -71,7 +71,7 @@
        integer MPI_MAX_INFO_KEY, MPI_MAX_INFO_VAL
        integer MPI_MAX_PORT_NAME, MPI_MAX_OBJECT_NAME
        integer MPI_ORDER_C, MPI_ORDER_FORTRAN
-       integer MPI_DISTRIBUTE_BOMPI_LOCK, MPI_DISTRIBUTE_CYCLIC
+       integer MPI_DISTRIBUTE_BLOCK, MPI_DISTRIBUTE_CYCLIC
        integer MPI_DISTRIBUTE_NONE, MPI_DISTRIBUTE_DFLT_DARG
 
        parameter (MPI_ANY_SOURCE=-1)
@@ -103,7 +103,7 @@
        parameter (MPI_MAX_OBJECT_NAME=63)
        parameter (MPI_ORDER_C=0)
        parameter (MPI_ORDER_FORTRAN=1)
-       parameter (MPI_DISTRIBUTE_BOMPI_LOCK=0)
+       parameter (MPI_DISTRIBUTE_BLOCK=0)
        parameter (MPI_DISTRIBUTE_CYCLIC=1)
        parameter (MPI_DISTRIBUTE_NONE=2)
        parameter (MPI_DISTRIBUTE_DFLT_DARG=-1)
@@ -183,7 +183,7 @@
        integer MPI_ERR_INFO                  
        integer MPI_ERR_IO                    
        integer MPI_ERR_KEYVAL                
-       integer MPI_ERR_OMPI_LOCKTYPE              
+       integer MPI_ERR_LOCKTYPE              
        integer MPI_ERR_NAME                  
        integer MPI_ERR_NO_MEM                
        integer MPI_ERR_NOT_SAME              
@@ -241,7 +241,7 @@
        parameter( MPI_ERR_INFO                 = 34)
        parameter( MPI_ERR_IO                   = 35)
        parameter( MPI_ERR_KEYVAL               = 36)
-       parameter( MPI_ERR_OMPI_LOCKTYPE             = 37)
+       parameter( MPI_ERR_LOCKTYPE             = 37)
        parameter( MPI_ERR_NAME                 = 38)
        parameter( MPI_ERR_NO_MEM               = 39)
        parameter( MPI_ERR_NOT_SAME             = 40)

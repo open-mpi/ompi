@@ -24,7 +24,7 @@
     mca_ptl_proc_t* ptl_proc; \
     mca_ptl_t* ptl; \
 \
-    OMPI_THREAD_SCOPED_LOCK(&proc->proc_lock, \
+    THREAD_SCOPED_LOCK(&proc->proc_lock, \
         (ptl_proc = mca_ptl_array_get_next(&proc->proc_ptl_first))); \
     ptl = ptl_proc->ptl; \
     rc = ptl->ptl_request_alloc(ptl,&sendreq); \

@@ -215,7 +215,7 @@ void ompi_output_close(int output_id)
 
   /* If no one has the syslog open, we should close it */
 
-  OMPI_THREAD_LOCK(&mutex);
+  THREAD_LOCK(&mutex);
   for (i = 0; i < OMPI_OUTPUT_MAX_STREAMS; ++i)
     if (info[i].ldi_used && info[i].ldi_syslog)
       break;
@@ -229,7 +229,7 @@ void ompi_output_close(int output_id)
     temp_str = NULL;
     temp_str_len = 0;
   }
-  OMPI_THREAD_UNLOCK(&mutex);
+  THREAD_UNLOCK(&mutex);
 }
 
 
@@ -310,12 +310,12 @@ static int do_open(int output_id, ompi_output_stream_t *lds)
      OMPI_ERROR */
 
   if (-1 == output_id) {
-    OMPI_THREAD_LOCK(&mutex);
+    THREAD_LOCK(&mutex);
     for (i = 0; i < OMPI_OUTPUT_MAX_STREAMS; ++i)
       if (!info[i].ldi_used)
         break;
     if (i >= OMPI_OUTPUT_MAX_STREAMS) {
-      OMPI_THREAD_UNLOCK(&mutex);
+      THREAD_UNLOCK(&mutex);
       return OMPI_ERR_OUT_OF_RESOURCE;
     }
   } 
@@ -338,7 +338,7 @@ static int do_open(int output_id, ompi_output_stream_t *lds)
   /* Got a stream -- now initialize it and open relevant outputs */
 
   info[i].ldi_used = true;
-  OMPI_THREAD_UNLOCK(&mutex);
+  THREAD_UNLOCK(&mutex);
   info[i].ldi_enabled = lds->lds_is_debugging ? (bool) OMPI_ENABLE_DEBUG : true;
   info[i].ldi_verbose_level = 0;
 
@@ -469,7 +469,7 @@ static void output(int output_id, char *format, va_list arglist)
     
     /* Make the formatted string */
 
-    OMPI_THREAD_LOCK(&mutex);
+    THREAD_LOCK(&mutex);
     str = ompi_vsnprintf(format, arglist);
     total_len = len = strlen(str);
     if ('\n' != str[len - 1]) {
@@ -519,7 +519,7 @@ static void output(int output_id, char *format, va_list arglist)
 
     if (ldi->ldi_fd != -1)
       write(ldi->ldi_fd, temp_str, total_len);
-    OMPI_THREAD_UNLOCK(&mutex);
+    THREAD_UNLOCK(&mutex);
 
     free(str);
   }  

@@ -65,9 +65,9 @@ int mca_ptl_tcp_add_procs(
          * exported as we are trying to use. If not, then don't bind this PTL instance
          * to the proc.
         */
-        OMPI_THREAD_LOCK(&ptl_proc->proc_lock);
+        THREAD_LOCK(&ptl_proc->proc_lock);
         if(ptl_proc->proc_addr_count == ptl_proc->proc_peer_count) {
-            OMPI_THREAD_UNLOCK(&ptl_proc->proc_lock);
+            THREAD_UNLOCK(&ptl_proc->proc_lock);
             return OMPI_ERR_UNREACH;
         }
 
@@ -76,18 +76,18 @@ int mca_ptl_tcp_add_procs(
          */
         ptl_peer = OBJ_NEW(mca_ptl_tcp_peer_t);
         if(NULL == ptl_peer) {
-            OMPI_THREAD_UNLOCK(&ptl_proc->proc_lock);
+            THREAD_UNLOCK(&ptl_proc->proc_lock);
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
         ptl_peer->peer_ptl = (mca_ptl_tcp_t*)ptl;
         rc = mca_ptl_tcp_proc_insert(ptl_proc, ptl_peer);
         if(rc != OMPI_SUCCESS) {
             OBJ_RELEASE(ptl_peer);
-            OMPI_THREAD_UNLOCK(&ptl_proc->proc_lock);
+            THREAD_UNLOCK(&ptl_proc->proc_lock);
             return rc;
         }
         ompi_bitmap_set_bit(reachable, i);
-        OMPI_THREAD_UNLOCK(&ptl_proc->proc_lock);
+        THREAD_UNLOCK(&ptl_proc->proc_lock);
         peers[i] = ptl_peer;
     }
     return OMPI_SUCCESS;
@@ -141,14 +141,14 @@ void mca_ptl_tcp_send_frag_return(struct mca_ptl_t* ptl, struct mca_ptl_tcp_send
 {
     if(ompi_list_get_size(&mca_ptl_tcp_module.tcp_pending_acks)) {
         mca_ptl_tcp_recv_frag_t* pending;
-        OMPI_THREAD_LOCK(&mca_ptl_tcp_module.tcp_lock);
+        THREAD_LOCK(&mca_ptl_tcp_module.tcp_lock);
         pending = (mca_ptl_tcp_recv_frag_t*)ompi_list_remove_first(&mca_ptl_tcp_module.tcp_pending_acks);
         if(NULL == pending) {
-            OMPI_THREAD_UNLOCK(&mca_ptl_tcp_module.tcp_lock);
+            THREAD_UNLOCK(&mca_ptl_tcp_module.tcp_lock);
             OMPI_FREE_LIST_RETURN(&mca_ptl_tcp_module.tcp_send_frags, (ompi_list_item_t*)frag);
             return;
         }
-        OMPI_THREAD_UNLOCK(&mca_ptl_tcp_module.tcp_lock);
+        THREAD_UNLOCK(&mca_ptl_tcp_module.tcp_lock);
         mca_ptl_tcp_send_frag_init_ack(frag, ptl, pending->super.super.frag_peer, pending);
         mca_ptl_tcp_peer_send(pending->super.super.frag_peer, frag);
         mca_ptl_tcp_recv_frag_return(ptl, pending);
@@ -213,10 +213,10 @@ void mca_ptl_tcp_matched(
         ack = (mca_ptl_tcp_send_frag_t*)item;
 
         if(NULL == ack) {
-            OMPI_THREAD_LOCK(&mca_ptl_tcp_module.tcp_lock);
+            THREAD_LOCK(&mca_ptl_tcp_module.tcp_lock);
             recv_frag->frag_ack_pending = true;
             ompi_list_append(&mca_ptl_tcp_module.tcp_pending_acks, (ompi_list_item_t*)frag);
-            OMPI_THREAD_UNLOCK(&mca_ptl_tcp_module.tcp_lock);
+            THREAD_UNLOCK(&mca_ptl_tcp_module.tcp_lock);
         } else {
             mca_ptl_tcp_send_frag_init_ack(ack, ptl, recv_frag->super.super.frag_peer, recv_frag);
             mca_ptl_tcp_peer_send(ack->super.super.frag_peer, ack);

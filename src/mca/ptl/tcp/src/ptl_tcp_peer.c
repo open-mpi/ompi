@@ -149,7 +149,7 @@ static void mca_ptl_tcp_peer_destruct(mca_ptl_base_peer_t* ptl_peer)
 int mca_ptl_tcp_peer_send(mca_ptl_base_peer_t* ptl_peer, mca_ptl_tcp_send_frag_t* frag)
 {
     int rc = OMPI_SUCCESS;
-    OMPI_THREAD_LOCK(&ptl_peer->peer_send_lock);
+    THREAD_LOCK(&ptl_peer->peer_send_lock);
     switch(ptl_peer->peer_state) {
     case MCA_PTL_TCP_CONNECTING:
     case MCA_PTL_TCP_CONNECT_ACK:
@@ -167,7 +167,7 @@ int mca_ptl_tcp_peer_send(mca_ptl_base_peer_t* ptl_peer, mca_ptl_tcp_send_frag_t
         } else {
 #if 0
             if(mca_ptl_tcp_send_frag_handler(frag, ptl_peer->peer_sd)) {
-                OMPI_THREAD_UNLOCK(&ptl_peer->peer_send_lock);
+                THREAD_UNLOCK(&ptl_peer->peer_send_lock);
                 mca_ptl_tcp_send_frag_progress(frag);
                 return rc;
             } else 
@@ -179,7 +179,7 @@ int mca_ptl_tcp_peer_send(mca_ptl_base_peer_t* ptl_peer, mca_ptl_tcp_send_frag_t
         }
         break;
     }
-    OMPI_THREAD_UNLOCK(&ptl_peer->peer_send_lock);
+    THREAD_UNLOCK(&ptl_peer->peer_send_lock);
     return rc;
 }
 
@@ -239,8 +239,8 @@ bool mca_ptl_tcp_peer_accept(mca_ptl_base_peer_t* ptl_peer, struct sockaddr_in* 
 {
     mca_ptl_tcp_addr_t* ptl_addr;
     mca_ptl_tcp_proc_t* this_proc = mca_ptl_tcp_proc_local();
-    OMPI_THREAD_LOCK(&ptl_peer->peer_recv_lock);
-    OMPI_THREAD_LOCK(&ptl_peer->peer_send_lock);
+    THREAD_LOCK(&ptl_peer->peer_recv_lock);
+    THREAD_LOCK(&ptl_peer->peer_send_lock);
     if((ptl_addr = ptl_peer->peer_addr) != NULL  &&
         ptl_addr->addr_inet.s_addr == addr->sin_addr.s_addr) {
         mca_ptl_tcp_proc_t *peer_proc = ptl_peer->peer_proc;
@@ -251,8 +251,8 @@ bool mca_ptl_tcp_peer_accept(mca_ptl_base_peer_t* ptl_peer, struct sockaddr_in* 
             ptl_peer->peer_sd = sd;
             if(mca_ptl_tcp_peer_send_connect_ack(ptl_peer) != OMPI_SUCCESS) {
                  mca_ptl_tcp_peer_close(ptl_peer);
-                 OMPI_THREAD_UNLOCK(&ptl_peer->peer_send_lock);
-                 OMPI_THREAD_UNLOCK(&ptl_peer->peer_recv_lock);
+                 THREAD_UNLOCK(&ptl_peer->peer_send_lock);
+                 THREAD_UNLOCK(&ptl_peer->peer_recv_lock);
                  return false;
             }
             mca_ptl_tcp_peer_event_init(ptl_peer, sd);
@@ -261,13 +261,13 @@ bool mca_ptl_tcp_peer_accept(mca_ptl_base_peer_t* ptl_peer, struct sockaddr_in* 
 #if OMPI_ENABLE_DEBUG
             mca_ptl_tcp_peer_dump(ptl_peer, "accepted");
 #endif
-            OMPI_THREAD_UNLOCK(&ptl_peer->peer_send_lock);
-            OMPI_THREAD_UNLOCK(&ptl_peer->peer_recv_lock);
+            THREAD_UNLOCK(&ptl_peer->peer_send_lock);
+            THREAD_UNLOCK(&ptl_peer->peer_recv_lock);
             return true;
         }
     }
-    OMPI_THREAD_UNLOCK(&ptl_peer->peer_send_lock);
-    OMPI_THREAD_UNLOCK(&ptl_peer->peer_recv_lock);
+    THREAD_UNLOCK(&ptl_peer->peer_send_lock);
+    THREAD_UNLOCK(&ptl_peer->peer_recv_lock);
     return false;
 }
 
@@ -526,7 +526,7 @@ static void mca_ptl_tcp_peer_complete_connect(mca_ptl_base_peer_t* ptl_peer)
 static void mca_ptl_tcp_peer_recv_handler(int sd, short flags, void* user)
 {
     mca_ptl_base_peer_t* ptl_peer = user;
-    OMPI_THREAD_LOCK(&ptl_peer->peer_recv_lock);
+    THREAD_LOCK(&ptl_peer->peer_recv_lock);
     switch(ptl_peer->peer_state) {
     case MCA_PTL_TCP_CONNECT_ACK:
         {
@@ -540,7 +540,7 @@ static void mca_ptl_tcp_peer_recv_handler(int sd, short flags, void* user)
             int rc;
             MCA_PTL_TCP_RECV_FRAG_ALLOC(recv_frag, rc);
             if(NULL == recv_frag) {
-                OMPI_THREAD_UNLOCK(&ptl_peer->peer_recv_lock);
+                THREAD_UNLOCK(&ptl_peer->peer_recv_lock);
                 return;
             }
             mca_ptl_tcp_recv_frag_init(recv_frag, ptl_peer);
@@ -560,7 +560,7 @@ static void mca_ptl_tcp_peer_recv_handler(int sd, short flags, void* user)
         break;
         }
     }
-    OMPI_THREAD_UNLOCK(&ptl_peer->peer_recv_lock);
+    THREAD_UNLOCK(&ptl_peer->peer_recv_lock);
 }
 
 
@@ -572,7 +572,7 @@ static void mca_ptl_tcp_peer_recv_handler(int sd, short flags, void* user)
 static void mca_ptl_tcp_peer_send_handler(int sd, short flags, void* user)
 {
     mca_ptl_tcp_peer_t* ptl_peer = user;
-    OMPI_THREAD_LOCK(&ptl_peer->peer_send_lock);
+    THREAD_LOCK(&ptl_peer->peer_send_lock);
     switch(ptl_peer->peer_state) {
     case MCA_PTL_TCP_CONNECTING:
         mca_ptl_tcp_peer_complete_connect(ptl_peer);
@@ -587,9 +587,9 @@ static void mca_ptl_tcp_peer_send_handler(int sd, short flags, void* user)
             }
 
             /* if required - update request status and release fragment */
-            OMPI_THREAD_UNLOCK(&ptl_peer->peer_send_lock);
+            THREAD_UNLOCK(&ptl_peer->peer_send_lock);
             mca_ptl_tcp_send_frag_progress(frag);
-            OMPI_THREAD_LOCK(&ptl_peer->peer_send_lock);
+            THREAD_LOCK(&ptl_peer->peer_send_lock);
 
             /* progress any pending sends */
             ptl_peer->peer_send_frag = (mca_ptl_tcp_send_frag_t*)
@@ -608,7 +608,7 @@ static void mca_ptl_tcp_peer_send_handler(int sd, short flags, void* user)
         ompi_event_del(&ptl_peer->peer_send_event);
         break;
     }
-    OMPI_THREAD_UNLOCK(&ptl_peer->peer_send_lock);
+    THREAD_UNLOCK(&ptl_peer->peer_send_lock);
 }
 
 
