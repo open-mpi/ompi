@@ -78,6 +78,13 @@ SUBDIRS = \
         dynamic-mca \
         tools
 
+# The "os" subdir only has header files, and nothing is generated.  So
+# it's safe to just include it in DIST_SUBDIRS.
+
+DIST_SUBDIRS = $(SUBDIRS) os
+
+# Build the main MPI library
+
 lib_LTLIBRARIES = libmpi.la
 libmpi_la_SOURCES =
 libmpi_la_LIBADD = \
