@@ -54,7 +54,7 @@ typedef struct _lam_reactor {
     lam_dbl_list_t     r_pending;
     lam_fast_hash_t    r_hash;
     int                r_max;
-    lam_bool_t         r_run;
+    bool               r_run;
     int                r_changes;
     lam_fd_set_t       r_send_set;
     lam_fd_set_t       r_recv_set;
@@ -65,10 +65,10 @@ typedef struct _lam_reactor {
 void lam_reactor_init(lam_reactor_t*);
 void lam_reactor_destroy(lam_reactor_t*);
 
-lam_bool_t lam_reactor_insert(lam_reactor_t*, int sd, lam_reactor_listener_t*, int flags);
-lam_bool_t lam_reactor_remove(lam_reactor_t*, int sd, lam_reactor_listener_t*, int flags);
-void   lam_reactor_poll(lam_reactor_t*);
-void   lam_reactor_run(lam_reactor_t*);
+bool lam_reactor_insert(lam_reactor_t*, int sd, lam_reactor_listener_t*, int flags);
+bool lam_reactor_remove(lam_reactor_t*, int sd, lam_reactor_listener_t*, int flags);
+void lam_reactor_poll(lam_reactor_t*);
+void lam_reactor_run(lam_reactor_t*);
 
 #endif /* LAM_REACTOR_H */
 

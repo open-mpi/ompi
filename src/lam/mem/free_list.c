@@ -10,23 +10,17 @@
 #include "lam/mem/mem_globals.h"
 
 /* private list functions */
-inline lam_flist_elt_t *lam_flr_request_elt(lam_free_list_t *flist, int pool_idx)
-{
-    lam_dbl_list_t      *seg_list = &(flist->fl_free_lists[pool_idx]->sgl_list);
-    volatile lam_flist_elt_t *elt = lam_dbl_get_last(seg_list);
-    
-    if ( elt )
-        lam_sgl_set_consec_fail(seg_list, 0);
-    return elt;
-}
 
-void lam_frl_append(lam_free_list_t *flist, void *chunk, int pool_idx);
+static lam_flist_elt_t *lam_flr_request_elt(lam_free_list_t *flist, 
+                                            int pool_idx);
 
-int lam_frl_create_more_elts(lam_free_list_t *flist, int pool_idx);
+static void lam_frl_append(lam_free_list_t *flist, void *chunk, int pool_idx);
 
-void *lam_frl_get_mem_chunk(lam_free_list_t *flist, int index, size_t *len, int *err);
+static int lam_frl_create_more_elts(lam_free_list_t *flist, int pool_idx);
 
-int lam_frl_mem_pool_init(lam_free_list_t *flist, int nlists, long pages_per_list, ssize_t chunk_size,
+static void *lam_frl_get_mem_chunk(lam_free_list_t *flist, int index, size_t *len, int *err);
+
+static int lam_frl_mem_pool_init(lam_free_list_t *flist, int nlists, long pages_per_list, ssize_t chunk_size,
                       size_t page_size, long min_pages_per_list,
                       long default_min_pages_per_list, long default_pages_per_list,
                       long max_pages_per_list, ssize_t max_mem_in_pool);
@@ -104,9 +98,9 @@ int lam_frl_init_with(
         int max_pages_per_list,
         int max_consec_req_fail,
         const char *description,
-        bool_t retry_for_more_resources,
+        bool retry_for_more_resources,
         lam_affinity_t *affinity,
-        bool_t enforce_affinity,
+        bool enforce_affinity,
         lam_mem_pool_t *mem_pool)
 {
     /* lam_frl_init must have been called prior to calling this function */
@@ -258,7 +252,7 @@ int lam_frl_init_with(
 }
 
 
-int lam_frl_mem_pool_init(lam_free_list_t *flist,
+static int lam_frl_mem_pool_init(lam_free_list_t *flist,
                       int nlists, long pages_per_list, ssize_t chunk_size,
                       size_t page_size, long min_pages_per_list,
                       long default_min_pages_per_list, long default_pages_per_list,
@@ -308,7 +302,7 @@ int lam_frl_mem_pool_init(lam_free_list_t *flist,
 }
 
 
-void *lam_frl_get_mem_chunk(lam_free_list_t *flist, int index, size_t *len, int *err)
+static void *lam_frl_get_mem_chunk(lam_free_list_t *flist, int index, size_t *len, int *err)
 {
     void        *chunk = 0;
     uint64_t    sz_to_add;
@@ -386,7 +380,18 @@ void *lam_frl_get_mem_chunk(lam_free_list_t *flist, int index, size_t *len, int 
 
 
 
-void lam_frl_append(lam_free_list_t *flist, void *chunk, int pool_idx)
+static lam_flist_elt_t *lam_flr_request_elt(lam_free_list_t *flist, int pool_idx)
+{
+    lam_dbl_list_t      *seg_list = &(flist->fl_free_lists[pool_idx]->sgl_list);
+    volatile lam_flist_elt_t *elt = lam_dbl_get_last(seg_list);
+    
+    if ( elt )
+        lam_sgl_set_consec_fail(seg_list, 0);
+    return elt;
+}
+
+
+static void lam_frl_append(lam_free_list_t *flist, void *chunk, int pool_idx)
 {
     /* ASSERT: mp_chunk_sz >= fl_elt_per_chunk * fl_elt_size */
     // push items onto list 
@@ -398,7 +403,7 @@ void lam_frl_append(lam_free_list_t *flist, void *chunk, int pool_idx)
 
 
 
-int lam_frl_create_more_elts(lam_free_list_t *flist, int pool_idx)
+static int lam_frl_create_more_elts(lam_free_list_t *flist, int pool_idx)
 {
     int         err = LAM_SUCCESS, desc;
     size_t      len_added;
