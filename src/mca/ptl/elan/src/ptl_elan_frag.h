@@ -72,7 +72,7 @@ typedef struct mca_ptl_elan_send_request_t mca_ptl_elan_send_request_t;
 void 
 mca_ptl_elan_send_desc_done (
        	mca_ptl_elan_send_frag_t *desc,
-       	mca_ptl_elan_send_request_t *req);
+       	mca_pml_base_send_request_t *req);
  
 void 
 mca_ptl_elan_recv_frag_done (

@@ -22,8 +22,8 @@
 struct mca_ptl_elan_peer_t {
     ompi_list_item_t            super;
 
-    struct mca_ptl_elan_module_t* peer_ptl;    
-    struct mca_ptl_elan_proc_t* peer_proc; 
+    struct mca_ptl_elan_module_t *peer_ptl;    
+    struct mca_ptl_elan_proc_t *peer_proc; 
 
     int     peer_vp;
     int     peer_rails;

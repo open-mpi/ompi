@@ -121,7 +121,7 @@ typedef struct ompi_ptl_elan_recv_queue_t ompi_ptl_elan_recv_queue_t;
     /* 8 byte aligned */                                  \
     volatile E4_uint64 main_doneWord;                     \
     /* 8 byte aligned */                                  \
-    E4_Event32        *elan_event;                        \
+    E4_Event          *elan_event;                        \
     uint8_t           *desc_buff;                         \
     /* 8 byte aligned */                                  \
     mca_pml_base_send_request_t *req;                     \
@@ -196,6 +196,7 @@ struct ompi_ptl_elan_putget_ctrl_t {
     int               pg_evictCache;
     int32_t           pg_waitType;
     ELAN_FLAGS        pg_flags;
+    ompi_mutex_t      pg_lock;
 
     E4_CmdQ          *put_cmdq;
     E4_CmdQ          *get_cmdq;
@@ -284,6 +285,10 @@ int         mca_ptl_elan_start_desc(mca_ptl_elan_send_frag_t *desc,
                   size_t offset,
                   size_t *size,
                   int flags);
+
+int         mca_ptl_elan_start_ack ( mca_ptl_base_module_t * ptl, 
+			 mca_ptl_elan_send_frag_t * desc,
+			 mca_ptl_elan_recv_frag_t * recv_frag);
 
 int         mca_ptl_elan_poll_desc(mca_ptl_elan_send_frag_t *desc);
 int         mca_ptl_elan_wait_desc(mca_ptl_elan_send_frag_t *desc);
