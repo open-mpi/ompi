@@ -224,6 +224,8 @@ lam_event_loop(int flags)
     struct timeval tv;
     int res, done;
 
+    lam_mutex_lock(&lam_event_lock);
+
     /* Calculate the initial events that we are waiting for */
     if (lam_evsel->recalc(lam_evbase, 0) == -1) {
         lam_output(0, "lam_event_loop: lam_evsel->recalc() failed.");
@@ -282,6 +284,7 @@ lam_event_loop(int flags)
             return (-1);
         }
     }
+    lam_mutex_unlock(&lam_event_lock);
     lam_output(0, "lam_event_loop: done");
     return (0);
 }
