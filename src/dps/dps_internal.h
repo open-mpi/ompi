@@ -34,6 +34,40 @@ extern "C" {
 #define ORTE_DPS_DEFAULT_PAGE_SIZE  1
 
 /*
+ * ORTE type corresponding to size_t
+ */
+#if SIZEOF_SIZE_T == 1
+#define DPS_TYPE_SIZE_T ORTE_UINT8
+#elif SIZEOF_SIZE_T == 2
+#define DPS_TYPE_SIZE_T ORTE_UINT16
+#elif SIZEOF_SIZE_T == 4
+#define DPS_TYPE_SIZE_T ORTE_UINT32
+#elif SIZEOF_SIZE_T == 8
+#define DPS_TYPE_SIZE_T ORTE_UINT64
+#else
+#error Unsupported size_t size!
+#endif
+
+/*
+ * ORTE type corresponding to int and unsigned int
+ */
+#if SIZEOF_INT == 1
+#define DPS_TYPE_INT ORTE_INT8
+#define DPS_TYPE_UINT ORTE_UINT8
+#elif SIZEOF_INT == 2
+#define DPS_TYPE_INT ORTE_INT16
+#define DPS_TYPE_UINT ORTE_UINT16
+#elif SIZEOF_INT == 4
+#define DPS_TYPE_INT ORTE_INT32
+#define DPS_TYPE_UINT ORTE_UINT32
+#elif SIZEOF_INT == 8
+#define DPS_TYPE_INT ORTE_INT64
+#define DPS_TYPE_UINT ORTE_UINT64
+#else
+#error Unsupported int size!
+#endif
+
+/*
  * globals needed within dps
  */
 extern bool orte_dps_debug;

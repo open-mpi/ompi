@@ -49,37 +49,31 @@ int orte_dps_pack(orte_buffer_t *buffer, void *src,
     int32_t op_size=0;
     size_t num_bytes, hdr_bytes;
 
-	/* hdr_bytes = header for each packed type. */ 
-	/* num_bytes = packed size of data type. */
-	/* op_size = total size = (num_bytes+hdr_bytes) */
+    /* hdr_bytes = header for each packed type. */ 
+    /* num_bytes = packed size of data type. */
+    /* op_size = total size = (num_bytes+hdr_bytes) */
     
     /* check for error */
-    if (!buffer || !src || 0 >= num_vals) { return (ORTE_ERROR); }
+    if (!buffer || !src || 0 >= num_vals) { 
+        return (ORTE_ERROR); 
+    }
     
     dst = buffer->data_ptr;    /* get location in buffer */
 
-    /* change into to fixed size type for local size */
-    if (ORTE_INT == type || ORTE_UINT == type) {
-        switch(sizeof(int)) {
-            case 1:
-                type = (type == ORTE_INT) ? ORTE_INT8 : ORTE_UINT8;
-                break;
-            case 2:
-                type = (type == ORTE_INT) ? ORTE_INT16 : ORTE_UINT16;
-                break;
-            case 4:
-                type = (type == ORTE_INT) ? ORTE_INT32 : ORTE_UINT32;
-                break;
-            case 8:
-                type = (type == ORTE_INT) ? ORTE_INT64 : ORTE_UINT64;
-                break;
-            default:
-                return ORTE_ERR_NOT_IMPLEMENTED;
-        }
+    /* check for size of generic data types so they can be properly
+       packed NOTE we convert the generic data type flag to a hard
+       type for storage to handle heterogeneity */
+    if (ORTE_INT == type) {
+        type = DPS_TYPE_INT;
+    } else if (ORTE_UINT == type) {
+        type = DPS_TYPE_UINT;
+    } else if (ORTE_SIZE == type) {
+        type = DPS_TYPE_SIZE_T;
     }
 
     /* calculate the required memory size for this operation */
-    if (0 == (op_size = orte_dps_memory_required(src, num_vals, type))) {  /* got error */
+    if (0 == (op_size = orte_dps_memory_required(src, num_vals, type))) {
+        /* got error */
         return ORTE_ERROR;
     }
    
@@ -87,42 +81,19 @@ int orte_dps_pack(orte_buffer_t *buffer, void *src,
     hdr_bytes = orte_dps_memory_required(NULL, 1, ORTE_DATA_TYPE);
     
     /* add in the space to store the number of values */
-    hdr_bytes += sizeof(uint32_t);
+    hdr_bytes += sizeof(size_t);
 
-	/* total space needed */
-	op_size += hdr_bytes;
+    /* total space needed */
+    op_size += hdr_bytes;
 
     /* check to see if current buffer has enough room */
     if (op_size > buffer->space) {  /* need to extend the buffer */
-        if (ORTE_SUCCESS != (rc = orte_dps_buffer_extend(buffer, op_size))) { /* got an error */
+        if (ORTE_SUCCESS != (rc = orte_dps_buffer_extend(buffer, op_size))) {
+            /* got an error */
             return rc;
         }
-        dst = buffer->data_ptr;  /* need to reset the dst since it could have moved */
-    }
-    
-    /* check for size of generic data types so they can be properly packed
-     * NOTE we convert the generic data type flag to a hard type for storage
-     * to handle heterogeneity
-     */
-
-    
-    if (ORTE_SIZE == type) {
-        switch(sizeof(size_t)) {
-            case 1:
-                type = (type == ORTE_SIZE) ? ORTE_INT8 : ORTE_UINT8;
-                break;
-            case 2:
-                type = (type == ORTE_SIZE) ? ORTE_INT16 : ORTE_UINT16;
-                break;
-            case 4:
-                type = (type == ORTE_SIZE) ? ORTE_INT32 : ORTE_UINT32;
-                break;
-            case 8:
-                type = (type == ORTE_SIZE) ? ORTE_INT64 : ORTE_UINT64;
-                break;
-            default:
-                return ORTE_ERR_NOT_IMPLEMENTED;
-        }
+        /* need to reset the dst since it could have moved */
+        dst = buffer->data_ptr;
     }
     
     /* store the data type */
@@ -135,7 +106,7 @@ int orte_dps_pack(orte_buffer_t *buffer, void *src,
     
     /* store the number of values as uint32_t */
     if (ORTE_SUCCESS != (rc = orte_dps_pack_nobuffer(dst, &num_vals, 1,
-                                        ORTE_UINT32, &num_bytes))) {
+                                        DPS_TYPE_SIZE_T, &num_bytes))) {
         return rc;
     }
     dst = (void *)((char*)dst + num_bytes);
@@ -146,15 +117,16 @@ int orte_dps_pack(orte_buffer_t *buffer, void *src,
         return rc;
     }
 
-	/* debugging */
-	if (num_bytes+sizeof(uint32_t)+orte_dps_memory_required(NULL, 1, ORTE_DATA_TYPE) != (size_t)op_size) {
-		fprintf(stderr,"orte_dps_pack: Ops, num_bytes %d + headers %d = %d, but op_size was %d?!\n", 
-				(int)num_bytes, (int)hdr_bytes,  (int)(num_bytes+hdr_bytes), (int)op_size);
-	}
-/* 	fflush(stdout); fflush(stderr); */
-/* 	fprintf(stderr,"packed total of %d bytes. Hdr %d datatype %d\n", op_size, hdr_bytes, num_bytes); */
-/* 	fflush(stdout); fflush(stderr); */
-
+#if OMPI_ENABLE_DEBUG
+    /* debugging */
+    if (num_bytes+sizeof(size_t)+orte_dps_memory_required(NULL, 1, ORTE_DATA_TYPE) != (size_t)op_size) {
+        fprintf(stderr,"orte_dps_pack: Ops, num_bytes %d + headers %d = %d, but op_size was %d?!\n", 
+                (int)num_bytes, (int)hdr_bytes,  (int)(num_bytes+hdr_bytes), (int)op_size);
+    }
+    /* 	fflush(stdout); fflush(stderr); */
+    /* 	fprintf(stderr,"packed total of %d bytes. Hdr %d datatype %d\n", op_size, hdr_bytes, num_bytes); */
+    /* 	fflush(stdout); fflush(stderr); */
+#endif
     
     /* ok, we managed to pack some more stuff, so update all ptrs/cnts */
     buffer->data_ptr = (void*)((char*)dst + num_bytes);
@@ -170,10 +142,10 @@ int orte_dps_pack_nobuffer(void *dst, void *src, size_t num_vals,
                     orte_data_type_t type, size_t *num_bytes)
 {
     size_t i, len, n, elementsize;
-	char *dptr;	/* my moving destination pointer */
-	uint16_t   tmp_16; /* temp location of converted data */
-	uint32_t   tmp_32; /* temp location of converted data */
-	orte_process_name_t   tmp_procname; /* temp location of converted data */
+    char *dptr;	/* my moving destination pointer */
+    uint16_t   tmp_16; /* temp location of converted data */
+    uint32_t   tmp_32; /* temp location of converted data */
+    orte_process_name_t   tmp_procname; /* temp location of converted data */
 
     uint16_t * s16;
     uint32_t * s32;
@@ -185,17 +157,14 @@ int orte_dps_pack_nobuffer(void *dst, void *src, size_t num_vals,
     orte_byte_object_t *sbyteptr;
     orte_gpr_keyval_t **keyval;
     orte_gpr_value_t **values;
-	orte_app_context_t **app_context;
-	orte_app_context_map_t **app_context_map;
+    orte_app_context_t **app_context;
+    orte_app_context_map_t **app_context_map;
     orte_gpr_subscription_t **subs;
     orte_gpr_notify_data_t **data;
 
     /* initialize the number of bytes */
     *num_bytes = 0;
 
-	elementsize = 1024*1024*1024; /* instant memory fault on error */
-
-    
     /* pack the data */
     switch(type) {
 
@@ -216,14 +185,15 @@ int orte_dps_pack_nobuffer(void *dst, void *src, size_t num_vals,
         case ORTE_GPR_CMD:
         case ORTE_INT16:
         case ORTE_UINT16:
-			dptr = (char *) dst;
-			s16 = (uint16_t *) src;
-			elementsize = sizeof (uint16_t);
+            dptr = (char *) dst;
+            s16 = (uint16_t *) src;
+            elementsize = sizeof (uint16_t);
             for (i=0; i<num_vals; i++) {
                 /* convert the host order to network order */
                 tmp_16 = htons(*s16);
-				memcpy (dptr, (char*) &tmp_16, elementsize);
-                dptr+=elementsize; s16++;
+                memcpy (dptr, (char*) &tmp_16, elementsize);
+                dptr+=elementsize; 
+                s16++;
             }
             *num_bytes = num_vals * elementsize;
             break;
@@ -234,21 +204,37 @@ int orte_dps_pack_nobuffer(void *dst, void *src, size_t num_vals,
         case ORTE_GPR_NOTIFY_ID:
         case ORTE_INT32:
         case ORTE_UINT32:
-			dptr = (char *) dst;
-			s32 = (uint32_t *) src;
-			elementsize = sizeof (uint32_t);
+            dptr = (char *) dst;
+            s32 = (uint32_t *) src;
+            elementsize = sizeof (uint32_t);
             for (i=0; i<num_vals; i++) {
                 /* convert the host order to network order */
                 tmp_32 = htonl(*s32);
-				memcpy (dptr, (char*) &tmp_32, elementsize);
-                dptr+=elementsize; s32++;
+                memcpy (dptr, (char*) &tmp_32, elementsize);
+                dptr+=elementsize; 
+                s32++;
             }
             *num_bytes = num_vals * elementsize;
             break;
         
         case ORTE_INT64:
         case ORTE_UINT64:
-            return ORTE_ERR_NOT_IMPLEMENTED;
+            dptr = (char *) dst;
+            s32 = (uint32_t *) src;
+            for (i=0; i<num_vals; i++) {
+                /* convert the host order to network order */
+                tmp_32 = htonl(*s32);
+                memcpy (dptr, (char*) &tmp_32, sizeof(uint32_t));
+                dptr += sizeof(uint32_t);
+                s32++;
+
+                /* do it twice to get 64 bits */
+                tmp_32 = htonl(*s32);
+                memcpy (dptr, (char*) &tmp_32, sizeof(uint32_t));
+                dptr += sizeof(uint32_t);
+                s32++;
+            }
+            *num_bytes = num_vals * sizeof(uint64_t);;
             break;
                         
         case ORTE_FLOAT:
@@ -267,24 +253,23 @@ int orte_dps_pack_nobuffer(void *dst, void *src, size_t num_vals,
             for (i=0; i<num_vals; i++) {
                 /* pack native bool as uint8_t */
                 *bool_dst = *bool_src ? (uint8_t)true : (uint8_t)false;
-                bool_dst++; bool_src++;
+                bool_dst++; 
+                bool_src++;
             }
             *num_bytes = num_vals * sizeof(uint8_t);
             break;
 
         case ORTE_STRING:
             str = (char **) src;
-			dptr = (char *) dst;
-			elementsize = sizeof (uint32_t);
+            dptr = (char *) dst;
+            elementsize = sizeof (uint32_t);
             for (i=0; i<num_vals; i++) {
                 len = strlen(str[i]);  /* exclude the null terminator */
                 tmp_32 = htonl(len);
-				memcpy (dptr, (char*) &tmp_32, elementsize); /* copy str len to buffer */
-
+                memcpy (dptr, (char*) &tmp_32, elementsize); /* copy str len to buffer */
                 dptr+=elementsize;
                 memcpy(dptr, str[i], len); /* copy str to buffer */
                 dptr+=len;
-
                 *num_bytes += len + elementsize;
             }
             break;
@@ -292,13 +277,14 @@ int orte_dps_pack_nobuffer(void *dst, void *src, size_t num_vals,
         case ORTE_NAME:
             sn = (orte_process_name_t*) src;
             dptr = (char *) dst;
-			elementsize = sizeof (orte_process_name_t);
+            elementsize = sizeof (orte_process_name_t);
             for (i=0; i<num_vals; i++) {
                 tmp_procname.cellid = htonl(sn->cellid);
                 tmp_procname.jobid = htonl(sn->jobid);
                 tmp_procname.vpid = htonl(sn->vpid);
-				memcpy (dptr, (char*) &tmp_procname, elementsize); /* copy converted proc name to buffer */
-                dptr+=elementsize; sn++;
+                memcpy (dptr, (char*) &tmp_procname, elementsize); /* copy converted proc name to buffer */
+                dptr+=elementsize; 
+                sn++;
             }
             *num_bytes = num_vals * sizeof(orte_process_name_t);
             break;
@@ -306,12 +292,12 @@ int orte_dps_pack_nobuffer(void *dst, void *src, size_t num_vals,
         case ORTE_BYTE_OBJECT:
             sbyteptr = (orte_byte_object_t *) src;
             dbyte = (uint8_t *) dst;
-			elementsize = sizeof (uint32_t);
+            elementsize = sizeof (uint32_t);
             for (i=0; i<num_vals; i++) {
                 /* pack number of bytes */
                 tmp_32 = htonl(sbyteptr->size);
-				memcpy (dbyte, (char*) &tmp_32, elementsize); /* copy byte count to buffer */
-				dbyte += elementsize;
+                memcpy (dbyte, (char*) &tmp_32, elementsize); /* copy byte count to buffer */
+                dbyte += elementsize;
                 *num_bytes += elementsize;
 
                 /* pack actual bytes */
@@ -323,36 +309,38 @@ int orte_dps_pack_nobuffer(void *dst, void *src, size_t num_vals,
             break;
 
         case ORTE_KEYVAL:
-            /* array of pointers to keyval objects - need to pack the objects */
+            /* array of pointers to keyval objects - need to pack the
+               objects */
             keyval = (orte_gpr_keyval_t**) src;
-			/* use temp count of bytes packed 'n'. Must add these to num_bytes at each stage */
+            /* use temp count of bytes packed 'n'. Must add these to
+               num_bytes at each stage */
             for (i=0; i < num_vals; i++) {
                 /* pack the key */
-				n = 0;
+                n = 0;
                 if (ORTE_SUCCESS != orte_dps_pack_nobuffer(dst,
                                 (void*)(&(keyval[i]->key)), 1, ORTE_STRING, &n)) {
                     return ORTE_ERROR;
                 }
                 dst = (void*)((char*)dst + n);
-				*num_bytes+=n;
+                *num_bytes+=n;
 
                 /* pack the data type so we can read it for unpacking */
-				n = 0;
+                n = 0;
                 if (ORTE_SUCCESS != orte_dps_pack_nobuffer(dst, &(keyval[i]->type), 1,
                                  ORTE_DATA_TYPE, &n)) {
                     return ORTE_ERROR;
                 }
                 dst = (void*)((char*)dst + n);
-				*num_bytes+=n;
+                *num_bytes+=n;
 
                 /* pack the value */
-				n = 0;
+                n = 0;
                 if (ORTE_SUCCESS != orte_dps_pack_nobuffer(dst, &(keyval[i]->value), 1,
                                  keyval[i]->type, &n)) {
                     return ORTE_ERROR;
                 }
                 dst = (void*)((char*)dst + n);
-				*num_bytes+=n;
+                *num_bytes+=n;
             }
             break;
         
@@ -370,51 +358,51 @@ int orte_dps_pack_nobuffer(void *dst, void *src, size_t num_vals,
                 *num_bytes+=n;
                 
                 /* pack the segment name */
-				n = 0;
+                n = 0;
                 if (ORTE_SUCCESS != orte_dps_pack_nobuffer(dst,
                                 (void*)(&(values[i]->segment)), 1, ORTE_STRING, &n)) {
                     return ORTE_ERROR;
                 }
                 dst = (void*)((char*)dst + n);
-				*num_bytes+=n;
+                *num_bytes+=n;
 
                 /* pack the number of tokens so we can read it for unpacking */
-				n = 0;
+                n = 0;
                 if (ORTE_SUCCESS != orte_dps_pack_nobuffer(dst,
                                 (void*)(&(values[i]->num_tokens)), 1, ORTE_INT32, &n)) {
                     return ORTE_ERROR;
                 }
                 dst = (void*)((char*)dst + n);
-				*num_bytes+=n;
+                *num_bytes+=n;
 
                 /* if there are tokens, pack them */
                 if (0 < values[i]->num_tokens) {
-    				   n = 0;
+                    n = 0;
                     if (ORTE_SUCCESS != orte_dps_pack_nobuffer(dst,
                                     (void*)((values[i]->tokens)), values[i]->num_tokens, ORTE_STRING, &n)) {
                         return ORTE_ERROR;
                     }
                     dst = (void*)((char*)dst + n);
-    				   *num_bytes+=n;
+                    *num_bytes+=n;
                 }
                 
                 /* pack the number of keyval pairs so we can read it for unpacking */
-				n = 0;
+                n = 0;
                 if (ORTE_SUCCESS != orte_dps_pack_nobuffer(dst,
                                 (void*)(&(values[i]->cnt)), 1, ORTE_INT32, &n)) {
                     return ORTE_ERROR;
                 }
                 dst = (void*)((char*)dst + n);
-				*num_bytes+=n;
+                *num_bytes+=n;
 
                 /* pack the keyval pairs */
-				n = 0;
+                n = 0;
                 if (ORTE_SUCCESS != orte_dps_pack_nobuffer(dst,
                                 (void*)((values[i]->keyvals)), values[i]->cnt, ORTE_KEYVAL, &n)) {
                     return ORTE_ERROR;
                 }
                 dst = (void*)((char*)dst + n);
-				*num_bytes+=n;
+                *num_bytes+=n;
             }
             break;
             
@@ -422,8 +410,7 @@ int orte_dps_pack_nobuffer(void *dst, void *src, size_t num_vals,
             /* array of pointers to orte_app_context objects - need to pack the objects a set of fields at a time */
             app_context = (orte_app_context_t**) src;
             for (i=0; i < num_vals; i++) {
-
-				n = 0; /* must always start count at zero! */
+                n = 0; /* must always start count at zero! */
 
                 /* pack the application index (for multiapp jobs) */
                 if (ORTE_SUCCESS != orte_dps_pack_nobuffer(dst,
@@ -431,68 +418,68 @@ int orte_dps_pack_nobuffer(void *dst, void *src, size_t num_vals,
                     return ORTE_ERROR;
                 }
                 dst = (void*)((char*)dst + n);
-				*num_bytes+=n;
+                *num_bytes+=n;
 
                 /* pack the application name */
-				n = 0;
+                n = 0;
                 if (ORTE_SUCCESS != orte_dps_pack_nobuffer(dst,
                                 (void*)(&(app_context[i]->app)), 1, ORTE_STRING, &n)) {
                     return ORTE_ERROR;
                 }
                 dst = (void*)((char*)dst + n);
-				*num_bytes+=n;
+                *num_bytes+=n;
 
                 /* pack the number of processes */
-				n = 0;
+                n = 0;
                 if (ORTE_SUCCESS != orte_dps_pack_nobuffer(dst,
                                 (void*)(&(app_context[i]->num_procs)), 1, ORTE_INT32, &n)) {
                     return ORTE_ERROR;
                 }
                 dst = (void*)((char*)dst + n);
-				*num_bytes+=n;
+                *num_bytes+=n;
 
                 /* pack the number of entries in the argv array */
-				n = 0;
+                n = 0;
                 if (ORTE_SUCCESS != orte_dps_pack_nobuffer(dst,
                                 (void*)(&(app_context[i]->argc)), 1, ORTE_INT32, &n)) {
                     return ORTE_ERROR;
                 }
                 dst = (void*)((char*)dst + n);
-				*num_bytes+=n;
+                *num_bytes+=n;
 
                 /* if there are entries, pack the argv entries */
                 if (0 < app_context[i]->argc) {
-					n = 0;
+                    n = 0;
                     if (ORTE_SUCCESS != orte_dps_pack_nobuffer(dst,
                                     (void*)(app_context[i]->argv), app_context[i]->argc, ORTE_STRING, &n)) {
                         return ORTE_ERROR;
                     }
                     dst = (void*)((char*)dst + n);
-    				   *num_bytes+=n;
+                    *num_bytes+=n;
                 }
                 
                 /* pack the number of entries in the enviro array */
-				n = 0;
+                n = 0;
                 if (ORTE_SUCCESS != orte_dps_pack_nobuffer(dst,
                                 (void*)(&(app_context[i]->num_env)), 1, ORTE_INT32, &n)) {
                     return ORTE_ERROR;
                 }
                 dst = (void*)((char*)dst + n);
-			    *num_bytes+=n;
+                *num_bytes+=n;
 
                 /* if there are entries, pack the enviro entries */
                 if (0 < app_context[i]->num_env) {
-				    n = 0;
+                    n = 0;
                     if (ORTE_SUCCESS != orte_dps_pack_nobuffer(dst,
                                     (void*)(app_context[i]->env), app_context[i]->num_env, ORTE_STRING, &n)) {
                         return ORTE_ERROR;
                     }
                     dst = (void*)((char*)dst + n);
-    				*num_bytes+=n;
+                    *num_bytes+=n;
                 }
                 
                 /* pack the cwd */
-				n = 0;
+                n = 0;
                 if (ORTE_SUCCESS != orte_dps_pack_nobuffer(dst,
                                 (void*)(&(app_context[i]->cwd)), 1, ORTE_STRING, &n)) {
                     return ORTE_ERROR;
@@ -502,7 +489,7 @@ int orte_dps_pack_nobuffer(void *dst, void *src, size_t num_vals,
                                 
                 /* Pack the map data */
 
-				n = 0;
+                n = 0;
                 if (ORTE_SUCCESS != orte_dps_pack_nobuffer(dst,
                         (void*)(&(app_context[i]->num_map)), 1, ORTE_INT32, &n)) {
                     return ORTE_ERROR;
@@ -511,37 +498,37 @@ int orte_dps_pack_nobuffer(void *dst, void *src, size_t num_vals,
                 *num_bytes += n;
 
                 if (app_context[i]->num_map > 0) {
-						n = 0;
-                        if (ORTE_SUCCESS != orte_dps_pack_nobuffer(dst,
+                    n = 0;
+                    if (ORTE_SUCCESS != orte_dps_pack_nobuffer(dst,
                              (void*)(app_context[i]->map_data), app_context[i]->num_map, ORTE_APP_CONTEXT_MAP, &n)) {
-                            return ORTE_ERROR;
-                        }
-                        dst = (void*)((char*)dst + n);
-                        *num_bytes += n;
+                        return ORTE_ERROR;
+                    }
+                    dst = (void*)((char*)dst + n);
+                    *num_bytes += n;
                }
             }
             break;
 
-		case ORTE_APP_CONTEXT_MAP:
+        case ORTE_APP_CONTEXT_MAP:
             app_context_map = (orte_app_context_map_t**) src;
             for (i=0; i < num_vals; i++) {
                 n = 0;
                 if (ORTE_SUCCESS != orte_dps_pack_nobuffer(dst,
-                        (void*)(&(app_context_map[i]->map_type)), 1, ORTE_UINT8, &n)) {
+                                                           (void*)(&(app_context_map[i]->map_type)), 1, ORTE_UINT8, &n)) {
                     return ORTE_ERROR;
                 }
                 dst = (void*)((char*)dst + n);
                 *num_bytes += n;
-
+                
                 n = 0;
                 if (ORTE_SUCCESS != orte_dps_pack_nobuffer(dst,
-                        (void*)(&(app_context_map[i]->map_data)), 1, ORTE_STRING, &n)) {
-                   return ORTE_ERROR;
+                                                           (void*)(&(app_context_map[i]->map_data)), 1, ORTE_STRING, &n)) {
+                    return ORTE_ERROR;
                 }
                 dst = (void*)((char*)dst + n);
                 *num_bytes += n;
             }
-			break;
+            break;
 
         case ORTE_GPR_SUBSCRIPTION:
             /* array of pointers to subscription objects - need to pack the objects */
