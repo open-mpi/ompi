@@ -37,3 +37,10 @@ typedef enum { false, true } bool;
  * Do we have thread support?
  */
 #define LAM_HAVE_THREADS (LAM_HAVE_SOLARIS_THREADS || LAM_HAVE_POSIX_THREADS)
+
+/*
+ * Do we have <stdint.h>?
+ */
+#if HAVE_STDINT_H
+#include <stdint.h>
+#endif
