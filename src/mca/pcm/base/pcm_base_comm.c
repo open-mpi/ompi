@@ -19,7 +19,7 @@
 
 int
 mca_pcm_base_send_schedule(FILE *fp, 
-                           int jobid,
+                           mca_ns_base_jobid_t jobid,
                            ompi_rte_node_schedule_t *sched,
                            int num_procs)
 {
@@ -128,6 +128,18 @@ get_int(FILE *fp, int *num)
 
 
 static int
+get_uint(FILE *fp, unsigned int *num)
+{
+    int ret;
+
+    ret = fscanf(fp, "%u\n", num);
+    if (ret != 1) return OMPI_ERROR;
+
+    return OMPI_SUCCESS;
+}
+
+
+static int
 get_check_version(FILE *fp)
 {
     int ret;
@@ -214,8 +226,8 @@ get_argv_array(FILE *fp, int *argcp, char ***argvp)
 
 int 
 mca_pcm_base_recv_schedule(FILE *fp, 
-                           int *jobid,
-                          ompi_rte_node_schedule_t *sched,
+                           mca_ns_base_jobid_t *jobid,
+                           ompi_rte_node_schedule_t *sched,
                            int *num_procs)
 {
     int ret, val;
@@ -229,7 +241,7 @@ mca_pcm_base_recv_schedule(FILE *fp,
     if (OMPI_SUCCESS != ret) return ret;
 
     /* get our jobid */
-    ret = get_int(fp, jobid);
+    ret = get_uint(fp, jobid);
     if (OMPI_SUCCESS != ret) return ret;
 
     /* get argc */

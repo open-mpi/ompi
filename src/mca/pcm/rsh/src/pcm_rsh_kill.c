@@ -19,7 +19,7 @@ mca_pcm_rsh_kill_proc(ompi_process_name_t *name, int flags)
 
 
 int
-mca_pcm_rsh_kill_job(int jobid, int flags)
+mca_pcm_rsh_kill_job(mca_ns_base_jobid_t jobid, int flags)
 {
     return OMPI_ERROR;
 }

@@ -164,11 +164,9 @@ typedef char *
  *                   for <code>nodes</code> for usage.
  * @param nodelist (OUT) List of <code>mca_pcm_node_t</code>s describing
  *                   the allocated resources.
- *
- * @warning The type for jobid will change in the near future
  */
 typedef ompi_list_t*
-(*mca_pcm_base_allocate_resources_fn_t)(int jobid,
+(*mca_pcm_base_allocate_resources_fn_t)(mca_ns_base_jobid_t jobid,
                                         int nodes,
                                         int procs);
 
@@ -191,11 +189,9 @@ typedef bool
  * 0 for the forseeable future).  The job is specified using an array
  * of \c mca_pcm_base_schedule_t structures, which give both process
  * and location information.
- *
- * @warning Parameter list will probably change in the near future.
  */
 typedef int
-(*mca_pcm_base_spawn_procs_fn_t)(int jobid, 
+(*mca_pcm_base_spawn_procs_fn_t)(mca_ns_base_jobid_t jobid, 
                                  ompi_list_t *schedule_list);
 
 
@@ -226,7 +222,7 @@ typedef int
  * processes (0 will be same as a "kill <pid>"
  */
 typedef int
-(*mca_pcm_base_kill_job_fn_t)(int jobid, int flags);
+(*mca_pcm_base_kill_job_fn_t)(mca_ns_base_jobid_t jobid, int flags);
 
 
 /**
@@ -237,11 +233,9 @@ typedef int
  * @param jobid (IN) Jobid associated with the resources to be freed.
  * @param nodes (IN) Nodelist from associated allocate_resource call.
  *                   All associated memory will be freed as appropriate.
- *
- * @warning The type for jobid will change in the near future.
  */
 typedef int
-(*mca_pcm_base_deallocate_resources_fn_t)(int jobid,
+(*mca_pcm_base_deallocate_resources_fn_t)(mca_ns_base_jobid_t jobid,
                                           ompi_list_t *nodelist);
 
 
