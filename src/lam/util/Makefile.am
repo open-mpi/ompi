@@ -1,4 +1,6 @@
 #
+# $HEADER$
+#
 # Copyright 2002-2003. The Regents of the University of California. This material
 # was produced under U.S. Government contract W-7405-ENG-36 for Los Alamos
 # National Laboratory, which is operated by the University of California for
@@ -26,11 +28,12 @@
 # warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU Lesser General Public License for more details.
 #
-                                                                                                     
+
 include $(top_srcdir)/config/Makefile.options
 
 lib_LTLIBRARIES	= libutil.la
 
 libutil_la_SOURCES = \
+	argv.c \
 	lam_log.c \
 	reactor.c 
