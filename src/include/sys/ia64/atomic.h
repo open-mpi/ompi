@@ -32,10 +32,10 @@
  * Define constants for IA64
  *
  *********************************************************************/
-#define OMPI_HAVE_MEM_BARRIER 1
+#define OMPI_HAVE_ATOMIC_MEM_BARRIER 1
 
-#define OMPI_HAVE_ATOMIC_CMPSET_32
-#define OMPI_HAVE_ATOMIC_CMPSET_64
+#define OMPI_HAVE_ATOMIC_CMPSET_32 1
+#define OMPI_HAVE_ATOMIC_CMPSET_64 1
 
 /**********************************************************************
  *
