@@ -136,6 +136,33 @@ mca_gpr_replica_key_t gpr_replica_get_key(char *segment, char *token)
 }
 
 
+char *gpr_replica_get_token(char *segment, mca_gpr_replica_key_t key)
+{
+    mca_gpr_replica_segment_t *seg;
+    mca_gpr_replica_keytable_t *ptr_key;
+    char *answer;
+
+    if (NULL == segment) {
+	return NULL;
+    }
+
+    seg = gpr_replica_find_seg(false, segment);
+    if (NULL == seg) {
+	return NULL;
+    }
+
+    /* find the matching key */
+    for (ptr_key = (mca_gpr_replica_keytable_t*)ompi_list_get_first(&seg->keytable);
+	 ptr_key != (mca_gpr_replica_keytable_t*)ompi_list_get_end(&seg->keytable);
+	 ptr_key = (mca_gpr_replica_keytable_t*)ompi_list_get_next(ptr_key)) {
+	if (key == ptr_key->key) {
+	    answer = strdup(ptr_key->token);
+	    return answer;
+	}
+    }
+    return(NULL); /* couldn't find the specified entry */
+}
+
 ompi_list_t *gpr_replica_get_key_list(char *segment, char **tokens)
 {
     ompi_list_t *keys;
@@ -418,7 +445,7 @@ mca_gpr_replica_trigger_list_t *gpr_replica_construct_trigger(ompi_registry_sync
     mca_gpr_replica_segment_t *seg;
     mca_gpr_replica_core_t *reg;
     mca_gpr_replica_trigger_list_t *trig;
-    char **tokptr;
+    char **tokptr, **tok2;
     mca_gpr_replica_key_t *keyptr;
     int i, num_tokens;
 
@@ -448,18 +475,24 @@ mca_gpr_replica_trigger_list_t *gpr_replica_construct_trigger(ompi_registry_sync
 	    num_tokens++;
 	    tokptr++;
 	}
+	/* get memory for the keys and the tokens */
 	trig->keys = (mca_gpr_replica_key_t*)malloc(num_tokens*sizeof(mca_gpr_replica_key_t));
 	keyptr = trig->keys;
-	/* store key values of tokens, defining them if needed */
+	trig->tokens = (char**)malloc((num_tokens+1)*(sizeof(char*)));
+	tok2 = trig->tokens;
+	/* store tokens and key values of tokens, defining them if needed */
 	for (i=0, tokptr=tokens; NULL != tokptr && NULL != *tokptr; i++, tokptr++) {
 	    *keyptr = gpr_replica_get_key(segment, *tokptr);
 	    if (MCA_GPR_REPLICA_KEY_MAX == *keyptr) {
 		*keyptr = gpr_replica_define_key(segment, *tokptr);
 	    }
 	    keyptr++;
+	    *tok2 = strdup(*tokptr);
+	    tok2++;
 	}
 	trig->num_keys = num_tokens;
     }
+    *tok2 = NULL;
 
     /* traverse segment entries and initialize trigger count */
     for (reg = (mca_gpr_replica_core_t*)ompi_list_get_first(&seg->registry_entries);
@@ -568,7 +601,8 @@ mca_gpr_notify_id_t gpr_replica_remove_trigger(ompi_registry_synchro_mode_t sync
 }
 
 
-ompi_registry_notify_message_t *gpr_replica_construct_notify_message(ompi_registry_mode_t addr_mode, char *segment, char **tokens)
+ompi_registry_notify_message_t *gpr_replica_construct_notify_message(ompi_registry_mode_t addr_mode,
+								     char *segment, char **tokens)
 {
     ompi_list_t *reg_entries;
     ompi_registry_value_t *reg, *obj;

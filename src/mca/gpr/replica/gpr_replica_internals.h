@@ -93,3 +93,5 @@ mca_gpr_notify_id_t gpr_replica_remove_trigger(ompi_registry_synchro_mode_t sync
 					       ompi_registry_notify_action_t action,
 					       ompi_registry_mode_t addr_mode,
 					       char *segment, char **tokens, int trigger);
+
+char *gpr_replica_get_token(char *segment, mca_gpr_replica_key_t key);

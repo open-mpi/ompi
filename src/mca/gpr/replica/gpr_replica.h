@@ -81,6 +81,7 @@ struct mca_gpr_replica_trigger_list_t {
     ompi_registry_mode_t addr_mode;            /**< Addressing mode */
     mca_gpr_replica_key_t num_keys;            /**< Number of keys in array */
     mca_gpr_replica_key_t *keys;               /**< Array of keys describing objects to be counted */
+    char **tokens;                             /**< Array of tokens - null terminated for use in other functions */
     uint32_t trigger;                          /**< Number of objects that trigger notification */
     uint32_t count;                            /**< Number of qualifying objects currently in segment */
     int8_t above_below;                        /**< Tracks transitions across level */
