@@ -86,8 +86,7 @@ int main(int argc, char *argv[])
   // Do the parsing
 
   if (OMPI_SUCCESS != ompi_cmd_line_parse(cmd_line, false, argc, argv) ||
-      ompi_cmd_line_is_taken(cmd_line, "help") || 
-      ompi_cmd_line_is_taken(cmd_line, "h")) {
+      ompi_cmd_line_is_taken(cmd_line, "help") ){
 #if 1
     printf("...showing ompid help message...\n");
 #else
