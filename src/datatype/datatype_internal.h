@@ -258,17 +258,17 @@ int ompi_convertor_create_stack_at_begining( ompi_convertor_t* pConvertor, int* 
      */
     pConvertor->pStack[0].index = -1;
     pConvertor->pStack[0].count = pConvertor->count;
-    index = GET_FIRST_NON_LOOP(pData->desc.desc);
-    pConvertor->pStack[0].disp  = pElems[index].disp;
     /* first here we should select which data representation will be used for
      * this operation: normal one or the optimized version ? */
     if( pData->opt_desc.used > 0 ) {
-	pElems = pData->opt_desc.desc;
-	pConvertor->pStack[0].end_loop = pData->opt_desc.used;
+        pElems = pData->opt_desc.desc;
+        pConvertor->pStack[0].end_loop = pData->opt_desc.used;
     } else {
-	pElems = pData->desc.desc;
-	pConvertor->pStack[0].end_loop = pData->desc.used;
+        pElems = pData->desc.desc;
+        pConvertor->pStack[0].end_loop = pData->desc.used;
     }
+    index = GET_FIRST_NON_LOOP(pData->desc.desc);
+    pConvertor->pStack[0].disp     = pElems[index].disp;
     pConvertor->pStack[1].index    = 0;
     pConvertor->pStack[1].count    = pElems->count;
     pConvertor->pStack[1].disp     = pConvertor->pStack[0].disp;
