@@ -65,7 +65,7 @@ static int mca_common_sm_mmap_open(char* path)
  *
  *  @param size_ctl_structure  size of the control structure at
  *                             the head of the file. The control structure 
- *                             is assumed to have mca_common_sm_segment_t
+ *                             is assumed to have mca_common_sm_file_header_t
  *                             as its first segment (IN)
  *
  *  @param data_set_alignment  alignment of the data segment.  this
@@ -77,16 +77,17 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
 {
     int fd,return_code=OMPI_SUCCESS;
     bool file_previously_opened;
-    mca_common_sm_segment_t* seg;
+    mca_common_sm_file_header_t* seg;
     mca_common_sm_mmap_t* map;
     struct stat s_stat;
     unsigned char *addr;
     size_t tmp,mem_offset;
 
     /* input parameter error checks */
-    if( (size < sizeof(mca_common_sm_segment_t) ) ||
+    if( (size < sizeof(mca_common_sm_file_header_t) ) ||
                 ( file_name == NULL ) || 
-                ( size_ctl_structure < sizeof(mca_common_sm_segment_t ) ) ||
+                ( size_ctl_structure <
+                  sizeof(mca_common_sm_file_header_t ) ) ||
                 ( data_seg_alignment == 0 ) ) {
         return NULL;
     }
@@ -142,7 +143,7 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
     map = OBJ_NEW(mca_common_sm_mmap_t);
     strncpy(map->map_path, file_name, PATH_MAX);
     /* the first entry in the file is the control strcuture.  the first
-       entry in the control structure is an mca_common_sm_segment_t
+       entry in the control structure is an mca_common_sm_file_header_t
        element */
     map->map_seg = seg;
 
@@ -197,7 +198,7 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
 void* mca_common_sm_mmap_alloc(size_t* size)
 {
     mca_common_sm_mmap_t* map = mca_common_sm_mmap;
-    mca_common_sm_segment_t* seg = map->map_seg;
+    mca_common_sm_file_header_t* seg = map->map_seg;
     void* addr;
 
     spinlock(&seg->seg_lock);

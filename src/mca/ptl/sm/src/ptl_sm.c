@@ -3,6 +3,8 @@
  */
 
 #include <string.h>
+#include <stdlib.h>
+
 #include "util/output.h"
 #include "util/if.h"
 #include "mca/pml/pml.h"
@@ -156,31 +158,16 @@ int mca_ptl_sm_add_procs(
      * data structure.  This will reside in shared memory */
 
     /* Create backing file */
-    len=strlen(ompi_process_info.job_session_dir) +
-            strlen(ompi_system_info.nodename)+
-            /* length of fixed-string name part */
-            23;
-    memset(&(file_name[0]),0,PATH_MAX);
-    if( PATH_MAX <= len ) {
-            ompi_output(0, "mca_ptl_sm_add_procs: name of backing file too long %ld \n",
-                    len);
-            return_code=OMPI_ERROR;
-            goto CLEANUP;
-    }
-    mca_ptl_sm_component.sm_resouce_ctl_file= (char *)
-        malloc(len+1);
-    if( NULL == mca_ptl_sm_component.sm_resouce_ctl_file ){
-        return_code=OMPI_ERR_OUT_OF_RESOURCE;
+    /* set file name */
+    len=asprintf(&(mca_ptl_sm_component.sm_resouce_ctl_file),
+            "%s/shared_mem_ptl_module.%s",ompi_process_info.job_session_dir,
+            ompi_system_info.nodename);
+    if( 0 > len ) {
         goto CLEANUP;
     }
-    memset(mca_ptl_sm_component.sm_resouce_ctl_file,0,len+1);
-    sprintf(mca_ptl_sm_component.sm_resouce_ctl_file,
-            "%s/shared_mem_ptl_module.%s",
-            ompi_process_info.job_session_dir,
-            ompi_system_info.nodename);
     size=sizeof(mca_ptl_sm_module_resource_t);
     if(NULL == 
-            (mca_ptl_sm_component.resource_ctl = 
+            (mca_ptl_sm_component.mmap_file = 
              mca_common_sm_mmap_init(size,
                  mca_ptl_sm_component.sm_resouce_ctl_file,
                  sizeof(mca_ptl_sm_module_resource_t), 8 ))) 
@@ -196,9 +183,14 @@ int mca_ptl_sm_add_procs(
      * make this array growable, but then one would need to uses mutexes
      * for any access to these queues to ensure data consistancy when
      * the array is grown */
+    if(0 == ptl_sm->my_smp_rank ) {
+        mca_ptl_sm_component.mmap_file->map_seg->seg_inited=true;
+    }
 
     /* Note:  Need to make sure that proc 0 initializes control
      * structures before any of the other procs can progress */
+    if( 0 != ptl_sm->my_smp_rank ) {
+    }
 
     /* Initizlize queue data structures 
      *   - proc with lowest local rank does this

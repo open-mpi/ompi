@@ -21,7 +21,7 @@
  * Shared Memory resource managment
  */
 struct mca_ptl_sm_module_resource_t {
-    mca_common_sm_segment_t segment_header;
+    mca_common_sm_file_header_t segment_header;
 };
 typedef struct mca_ptl_sm_module_resource_t mca_ptl_sm_module_resource_t;
 extern mca_ptl_sm_module_resource_t mca_ptl_sm_module_resource;
@@ -44,9 +44,8 @@ struct mca_ptl_sm_component_t {
     ompi_mutex_t sm_lock;
     char* sm_resouce_ctl_file;     /**< name of shared memory file used 
                                             to coordinate resource usage */
-    mca_ptl_sm_module_resource_t *resource_ctl;
-                                          /**< shared memory coordination data.
-                                            Resides in shared memory */
+    mca_common_sm_mmap_t *mmap_file;     /**< description of mmap'ed
+                                           file */
 };
 typedef struct mca_ptl_sm_component_t mca_ptl_sm_component_t;
 extern mca_ptl_sm_component_t mca_ptl_sm_component;
