@@ -45,8 +45,8 @@ bool lam_arr_init_with(lam_array_t *arr, size_t length);
 
 bool lam_arr_append_item(lam_array_t *arr, lam_object_t *item);
 
-lam_object_t *lam_arr_get_item(lam_array_t *arr, int index);
-inline lam_object_t *lam_arr_get_item(lam_array_t *arr, int index)
+static inline lam_object_t *lam_arr_get_item(lam_array_t *arr, int index);
+static inline lam_object_t *lam_arr_get_item(lam_array_t *arr, int index)
 {
     if ( (index >=0) && (index < arr->arr_length) )
     {
@@ -55,8 +55,8 @@ inline lam_object_t *lam_arr_get_item(lam_array_t *arr, int index)
     return NULL;
 }
 
-size_t lam_arr_get_size(lam_array_t *arr);
-inline size_t lam_arr_get_size(lam_array_t *arr)
+static inline size_t lam_arr_get_size(lam_array_t *arr);
+static inline size_t lam_arr_get_size(lam_array_t *arr)
 {
     return arr->arr_size;
 }
@@ -73,8 +73,10 @@ void lam_arr_remove_item_matching(lam_array_t *arr, lam_object_t *item,
 
 void lam_arr_set_item(lam_array_t *arr, lam_object_t *item, int index);
 
-lam_object_t **lam_arr_get_c_array(lam_array_t *arr, size_t *size);
-inline lam_object_t **lam_arr_get_c_array(lam_array_t *arr, size_t *size)
+static inline lam_object_t **lam_arr_get_c_array(lam_array_t *arr, 
+                                                size_t *size);
+static inline lam_object_t **lam_arr_get_c_array(lam_array_t *arr, 
+                                                 size_t *size)
 {
     *size = arr->arr_size;
     return arr->arr_items;
