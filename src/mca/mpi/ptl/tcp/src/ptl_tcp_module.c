@@ -116,7 +116,7 @@ int mca_ptl_tcp_module_close(void)
  * (3) all available interfaces except for those excluded by the user
  */
 
-static int mca_ptl_tcp_module_create_instances()
+static int mca_ptl_tcp_module_create_instances(void)
 {
     int if_count = lam_ifcount();
     int if_index;
@@ -177,7 +177,7 @@ static int mca_ptl_tcp_module_create_instances()
  * Create a listen socket and bind to all interfaces
  */
 
-static int mca_ptl_tcp_module_create_listen()
+static int mca_ptl_tcp_module_create_listen(void)
 {
     /* create a listen socket for incoming connections */
     mca_ptl_tcp_module.tcp_listen = socket(AF_INET, SOCK_STREAM, 0);
@@ -228,7 +228,7 @@ static int mca_ptl_tcp_module_create_listen()
  *  FIX: just pass around sockaddr_in for now
  */
 
-static int mca_ptl_tcp_module_exchange()
+static int mca_ptl_tcp_module_exchange(void)
 {
      size_t i;
      struct sockaddr_in* addrs = (struct sockaddr_in*)LAM_MALLOC
