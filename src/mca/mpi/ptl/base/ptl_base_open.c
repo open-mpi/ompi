@@ -26,6 +26,7 @@
  */
 int mca_ptl_base_output = -1;
 lam_list_t mca_ptl_base_modules_available;
+lam_list_t mca_ptl_base_modules_initialized;
 
 
 /**
@@ -41,6 +42,12 @@ int mca_ptl_base_open(void)
                             &mca_ptl_base_modules_available)) {
     return LAM_ERROR;
   }
+
+  /* Initialize the list so that in mca_ptl_base_close(), we can
+     iterate over it (even if it's empty, as in the case of
+     laminfo) */
+
+  lam_list_init(&mca_ptl_base_modules_initialized);
 
   /* All done */
 

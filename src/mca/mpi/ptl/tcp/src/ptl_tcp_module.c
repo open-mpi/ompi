@@ -262,11 +262,13 @@ static int mca_ptl_tcp_module_exchange(void)
  *  (2) setup TCP listen socket for incoming connection attempts
  *  (3) register PTL parameters with the MCA
  */
-mca_ptl_t** mca_ptl_tcp_module_init(int* num_ptls, int* thread_min, int* thread_max)
+mca_ptl_t** mca_ptl_tcp_module_init(int *num_ptls, 
+                                    bool *allow_multi_user_threads,
+                                    bool *have_hidden_threads)
 {
     *num_ptls = 0;
-    *thread_min = MPI_THREAD_MULTIPLE;
-    *thread_max = MPI_THREAD_MULTIPLE;
+    *allow_multi_user_threads = true;
+    *have_hidden_threads = false;
 
     /* initialize containers */
     lam_reactor_init(&mca_ptl_tcp_module.tcp_reactor);

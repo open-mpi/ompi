@@ -35,15 +35,20 @@ typedef lam_list_t mca_ptl_base_queue_t;
 /**
  *  MCA->PTL Intializes the PTL module and creates specific PTL instance(s).
  *
- *  @param num_ptls (OUT)    Returns the number of ptl instances created.
- *  @param thread_min (OUT)  Minimum thread level supported by the PTL.
- *  @param thread_max (OUT)  Maximum thread level supported by the PTL.
- *  @return                  Array of pointers to PTL instances.
+ *  @param num_ptls (OUT) Returns the number of ptl instances created.
+ *
+ * @param allow_multi_user_threads (OUT) Whether this module can run
+ * at MPI_THREAD_MULTIPLE or not.
+ *
+ * @param have_hidden_threads (OUT) Whether this module may use
+ * hidden threads (e.g., progress threads) or not.
+ *
+ *  @return Array of pointers to PTL instances.
  */
 typedef struct mca_ptl_t** (*mca_ptl_base_module_init_fn_t)(
-    int* num_ptls, 
-    int *thread_min, 
-    int *thread_max
+    int *num_ptls, 
+    bool *allow_multi_user_threads,
+    bool *have_hidden_threads
 );
 
                                                                                                             
@@ -107,7 +112,7 @@ typedef int (*mca_ptl_base_del_proc_fn_t)(
  *  
  *  @param ptl (IN)   The PTL module instance that is being unloaded.
  */
-typedef int (*mca_ptl_base_fini_fn_t)(
+typedef int (*mca_ptl_base_finalize_fn_t)(
     struct mca_ptl_t* ptl
 );
                                                                                                          
@@ -147,7 +152,7 @@ struct mca_ptl_t {
     /* PTL function table */
     mca_ptl_base_add_proc_fn_t         ptl_add_proc;
     mca_ptl_base_del_proc_fn_t         ptl_del_proc;
-    mca_ptl_base_fini_fn_t             ptl_fini;
+    mca_ptl_base_finalize_fn_t         ptl_finalize;
     mca_ptl_base_send_fn_t             ptl_send;
     mca_ptl_base_request_alloc_fn_t    ptl_request_alloc;
     mca_ptl_base_request_return_fn_t   ptl_request_return;
