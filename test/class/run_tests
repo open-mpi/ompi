@@ -1,0 +1,53 @@
+#! /bin/csh -f
+#  Name
+#  ====
+#  run for class tests
+
+# Arguements
+# ==========
+# 
+# test_list  =  no args runs all tests
+#              or
+#               bitmap runs ompi_bitmap tests
+#               hash_list runs ompi_hash_list tests
+#               pointer_array runs ompi_pointer_array tests, 
+#               rb_tree runs ompi_rb_tree tests
+#               value_array runs ompi_value_array tests
+
+# Usage
+#
+# =====
+# To invoke this script, enter either
+#     run 
+# with no arguments to run all tests, or
+#     run <test_name>
+
+umask 007
+
+if ("x$1" == "x") then
+  ./ompi_bitmap
+  ./ompi_hash_table
+  ./ompi_list
+  ./ompi_pointer_array
+  ./ompi_rb_tree
+  ./ompi_value_array
+else if ("$1" == "bitmap") then
+  ./ompi_bitmap
+else if ("$1" == "hash_table") then
+  ./ompi_hash_table
+else if ("$1" == "list") then
+  ./ompi_list
+else if ("$1" == "pointer_array") then
+  ./ompi_pointer_array
+else if ("$1" == "rb_tree") then
+  ./ompi_rb_tree
+else if ("$1" == "value_array") then
+  ./ompi_value_array
+else
+  echo "correct use: "
+  echo "    run    (to run all class tests)"
+  echo "or  run <bimmap | hash_table | list | pointer_array | rb_tree | value_array"
+  exit -1
+endif
+
+
