@@ -168,5 +168,65 @@ configure with the '--without-threads' option.
 EOF
     AC_MSG_ERROR(["*** Can not continue."])
 fi
-])
+
+#
+# Now configure the whole MPI and progress thread gorp
+#
+AC_MSG_CHECKING([if want MPI thread support])
+AC_ARG_ENABLE([mpi-threads],
+    AC_HELP_STRING([--enable-mpi-threads],
+        [Enable threads for MPI applications (default: enabled)]),
+    [enable_mpi_threads="$enableval"])
+
+if test "$enable_mpi_threads" = "" ; then 
+    # no argument given either way.  Default to whether we have threads or not
+    if test "$THREAD_TYPE" != "none" ; then
+        OMPI_ENABLE_MPI_THREADS=1
+        enable_mpi_threads="yes"
+    else
+        OMPI_ENABLE_MPI_THREADS=0
+        enable_mpi_threads="no"
+    fi
+elif test "$enable_mpi_threads" = "no" ; then
+    OMPI_ENABLE_MPI_THREADS=0
+else
+    # they want MPI threads.  Make sure we have threads
+    if "$THREAD_TYPE" != "none" ; then
+        OMPI_ENABLE_MPI_THREADS=1
+        enable_mpi_threads="yes"
+    else
+        AC_MSG_ERROR([User requested MPI threads, but no threading model supported])
+    fi
+fi
+AC_DEFINE_UNQUOTED([OMPI_ENABLE_MPI_THREADS], [$OMPI_ENABLE_MPI_THREADS],
+                   [Whether we should enable support for multiple user threads])
+AC_MSG_RESULT([$enable_mpi_threads])
+
+
+AC_MSG_CHECKING([if want asynchronous progress thread support])
+AC_ARG_ENABLE([progress-threads],
+    AC_HELP_STRING([--enable-progress-threads],
+        [Enable threads asynchronous communication progress (default: disabled)]),
+    [enable_progress_threads="$enableval"])
+
+if test "$enable_progress_threads" = "" ; then
+    # no argument given either way.  Default to no.
+    OMPI_ENABLE_PROGRESS_THREADS=0
+    enable_progress_threads="no"
+elif test "$enable_progress_threads" = "no" ; then
+    OMPI_ENABLE_PROGRESS_THREADS=0
+    enable_progress_threads="no"
+else
+    # they want threaded progress
+    if "$THREAD_TYPE" != "none" ; then
+        OMPI_ENABLE_PROGRESS_THREADS=1
+        enable_progress_threads="yes"
+    else
+        AC_MSG_ERROR([User requested progress threads, but no threading model supported])
+    fi
+fi
+AC_DEFINE_UNQUOTED([OMPI_ENABLE_PROGRESS_THREADS], [$OMPI_ENABLE_PROGRESS_THREADS],
+                   [Whether we should use progress threads rather than polling])
+AC_MSG_RESULT([$enable_progress_threads])
+])dnl
 

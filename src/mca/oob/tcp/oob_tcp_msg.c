@@ -55,7 +55,7 @@ static void mca_oob_tcp_msg_destruct(mca_oob_tcp_msg_t* msg)
 
 int mca_oob_tcp_msg_wait(mca_oob_tcp_msg_t* msg, int* rc)
 {
-#if OMPI_HAVE_THREADS
+#if OMPI_ENABLE_PROGRESS_THREADS
     OMPI_THREAD_LOCK(&msg->msg_lock);
     while(msg->msg_complete == false) {
         if(ompi_event_progress_thread()) {
@@ -97,7 +97,7 @@ int mca_oob_tcp_msg_timedwait(mca_oob_tcp_msg_t* msg, int* rc, struct timespec* 
     uint32_t usecs = abstime->tv_nsec * 1000;
     gettimeofday(&tv,NULL);
 
-#if OMPI_HAVE_THREADS
+#if OMPI_ENABLE_PROGRESS_THREADS
     OMPI_THREAD_LOCK(&msg->msg_lock);
     while(msg->msg_complete == false && 
           ((uint32_t)tv.tv_sec <= secs ||

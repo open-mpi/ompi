@@ -19,7 +19,7 @@
 /*
  * Default to a safe value
  */
-bool ompi_uses_threads = (bool) OMPI_HAVE_THREADS;
+bool ompi_uses_threads = (bool) OMPI_HAVE_THREAD_SUPPORT;
 
 
 #ifdef WIN32

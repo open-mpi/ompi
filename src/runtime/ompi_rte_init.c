@@ -158,6 +158,13 @@ int ompi_rte_init(ompi_cmd_line_t *cmd_line, bool *allow_multi_user_threads, boo
     }
 
     /*
+     * And the progress code
+     */
+    if (OMPI_SUCCESS != (ret = ompi_progress_init())) {
+        return ret;
+    }
+
+    /*
      * Internal startup
      */
     if (OMPI_SUCCESS != (ret = ompi_rte_internal_init_spawn())) {

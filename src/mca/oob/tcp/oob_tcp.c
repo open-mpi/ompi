@@ -424,7 +424,7 @@ mca_oob_t* mca_oob_tcp_component_init(int* priority, bool *allow_multi_user_thre
 {
     *priority = 1;
     *allow_multi_user_threads = true;
-    *have_hidden_threads = OMPI_HAVE_THREADS;
+    *have_hidden_threads = OMPI_ENABLE_PROGRESS_THREADS;
 
 
     /* are there any interfaces? */

@@ -18,6 +18,8 @@
 extern "C" {
 #endif
 
+OMPI_DECLSPEC extern int ompi_progress_init(void);
+
 OMPI_DECLSPEC extern void ompi_progress_events(int);
 
 OMPI_DECLSPEC extern void ompi_progress(void);

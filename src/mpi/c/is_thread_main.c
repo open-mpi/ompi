@@ -43,7 +43,7 @@ int MPI_Is_thread_main(int *flag)
 
     /* Compare this thread ID to the main thread ID */
 
-#if OMPI_HAVE_THREADS
+#if OMPI_ENABLE_MPI_THREADS
     *flag = (int) ompi_thread_self_compare(ompi_mpi_main_thread);
 #else
     *flag = 1;

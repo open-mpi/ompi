@@ -223,7 +223,7 @@ static inline int ompi_request_test(
         return request->req_fini(rptr);
     } else {
         *completed = false;
-#if OMPI_HAVE_THREADS == 0
+#if OMPI_ENABLE_PROGRESS_THREADS == 0
         ompi_progress();
 #endif
         return OMPI_SUCCESS;

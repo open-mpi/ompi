@@ -148,7 +148,7 @@ static inline bool ompi_using_threads(void)
  */
 static inline bool ompi_set_using_threads(bool have)
 {
-#if OMPI_HAVE_THREADS
+#if OMPI_HAVE_THREAD_SUPPORT
     ompi_uses_threads = have;
 #else
     ompi_uses_threads = false;

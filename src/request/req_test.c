@@ -52,7 +52,7 @@ int ompi_request_test_any(
     /* Only fall through here if we found nothing */
     if(num_requests_null_inactive != count) {
         *completed = false;
-#if OMPI_HAVE_THREADS == 0
+#if OMPI_ENABLE_PROGRESS_THREADS == 0
         ompi_progress();
 #endif
     } else {
@@ -90,7 +90,7 @@ int ompi_request_test_all(
 
     if (num_completed != count) {
         *completed = false;
-#if OMPI_HAVE_THREADS == 0
+#if OMPI_ENABLE_PROGRESS_THREADS == 0
         ompi_progress();
 #endif
         return OMPI_SUCCESS;

@@ -228,7 +228,7 @@ void mca_io_base_request_return(ompi_file_t *file)
     OMPI_THREAD_UNLOCK(&file->f_io_requests_lock);
 }
 
-#if OMPI_HAVE_THREADS
+#if OMPI_ENABLE_PROGRESS_THREADS
 static volatile bool thread_running = false;
 static volatile bool thread_done = false;
 static ompi_thread_t progress_thread;
@@ -255,14 +255,14 @@ request_progress_thread(ompi_object_t *arg)
 
     return NULL;
 }
-#endif /* OMPI_HAVE_THREADS */
+#endif /* OMPI_ENABLE_PROGRESS_THREADS */
 
 void
 mca_io_base_request_progress_init()
 {
     mca_io_base_request_num_pending = 0;
 
-#if OMPI_HAVE_THREADS
+#if OMPI_ENABLE_PROGRESS_THREADS
     thread_running = false;
     thread_done = false;
 
@@ -272,14 +272,14 @@ mca_io_base_request_progress_init()
 
     progress_thread.t_run = request_progress_thread;
     progress_thread.t_arg = NULL;
-#endif /* OMPI_HAVE_THREADS */
+#endif /* OMPI_ENABLE_PROGRESS_THREADS */
 }
 
 
 void
 mca_io_base_request_progress_add()
 {
-#if OMPI_HAVE_THREADS
+#if OMPI_ENABLE_PROGRESS_THREADS
     /* if we don't have a progress thread, make us have a progress
        thread */
     if (! thread_running) {
@@ -290,13 +290,13 @@ mca_io_base_request_progress_add()
         }
         OMPI_THREAD_UNLOCK(&progress_mutex);
     }
-#endif /* OMPI_HAVE_THREADS */
+#endif /* OMPI_ENABLE_PROGRESS_THREADS */
 
     OMPI_THREAD_ADD32(&mca_io_base_request_num_pending, 1);
 
-#if OMPI_HAVE_THREADS
+#if OMPI_ENABLE_PROGRESS_THREADS
     ompi_condition_signal(&progress_cond);
-#endif /* OMPI_HAVE_THREADS */
+#endif /* OMPI_ENABLE_PROGRESS_THREADS */
 }
 
 
@@ -310,7 +310,7 @@ mca_io_base_request_progress_del()
 void
 mca_io_base_request_progress_fini()
 {
-#if OMPI_HAVE_THREADS
+#if OMPI_ENABLE_PROGRESS_THREADS
     void *ret;
 
     /* make the helper thread die */
@@ -324,5 +324,5 @@ mca_io_base_request_progress_fini()
     OBJ_DESTRUCT(&progress_thread);
     OBJ_DESTRUCT(&progress_cond);
     OBJ_DESTRUCT(&progress_mutex);
-#endif /* OMPI_HAVE_THREADS */
+#endif /* OMPI_ENABLE_PROGRESS_THREADS */
 }
