@@ -24,7 +24,7 @@
 /*
  * Struct of function pointers and all that to let us be initialized
  */
-mca_pcmclient_base_component_1_0_0_t mca_pcmclient_seed_component = {
+OMPI_COMP_EXPORT mca_pcmclient_base_component_1_0_0_t mca_pcmclient_seed_component = {
   {
     MCA_PCMCLIENT_BASE_VERSION_1_0_0,
 
