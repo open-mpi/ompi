@@ -1,67 +1,181 @@
 #! /bin/bash 
 #
-# Copyright (c) 2003 The Trustees of Indiana University.  
-#                    All rights reserved.
+# @COPYRIGHT@
 #
 # This file is part of the LAM/MPI software package.  For license
 # information, see the LICENSE file in the top level directory of the
 # LAM/MPI source distribution.
 #
-# $Id: autogen.sh,v 1.4 2003/12/28 15:11:48 jsquyres Exp $
+# $Id: autogen.sh,v 1.5 2004/01/04 00:14:51 brbarret Exp $
 #
 # This script is run on developer copies of LAM/MPI -- *not*
 # distribution tarballs.
+
+
+################################################################################
 #
-# Some helper functions
+# User-definable parameters (search path and minimum supported versions)
 #
+################################################################################
 
+lam_aclocal_search="aclocal"
+lam_autoheader_search="autoheader"
+lam_autoconf_search="autoconf"
+lam_libtoolize_search="libtoolize glibtoolize"
+lam_automake_search="automake"
+
+lam_automake_version="1.6"
+lam_autoconf_version="2.57"
+lam_libtool_version="1.5"
+
+
+################################################################################
 #
-# Subroutine to check for the existence of various standard GNU tools
+# Global variables - should not need to modify defaults
 #
-# First argument: variable name to set
-# Other arguments: list of programs to look for
+################################################################################
+
+lam_aclocal_version="$lam_automake_version"
+lam_autoheader_version="$lam_autoconf_version"
+lam_libtoolize_version="$lam_libtool_version"
+
+# program names to execute
+lam_aclocal=""
+lam_autoheader=""
+lam_autoconf=""
+lam_libtoolize=""
+lam_automake=""
+
+
+################################################################################
 #
-test_for_existence() {
-    local tfe_foo_set=0
-    local tfe_found=0
-    local tfe_output=0
-    tfe_name="$1"
+# Version check - does major,minor,release check (hopefully ignoring beta et al)
+#
+# INPUT:
+#    - minimum version allowable
+#    - version we found
+#
+# OUTPUT:
+#    - 0 version is ok
+#    - 1 version is not ok
+#
+# SIDE EFFECTS:
+#    none
+#
+################################################################################
+check_version() {
+    local min_version="$1"
+    local version="$2"
 
-    for i in $* ; do
-        if [ $tfe_foo_set = 0 ]; then
-            tfe_foo_set=1
-            continue
-        fi
-
-        tfe_output="`$i --version 2>&1`"
-        if [ $? == 0 ]; then
-            tfe_found=1
-            eval "$tfe_name=$i"
-            break
-        fi
-    done
-
-    if test $tfe_found = 0; then
-	cat <<EOF
-
-You must have GNU autoconf, automake, and libtool installed to build
-the developer's version of LAM/MPI.  You can obtain these packages
-from ftp://ftp.gnu.org/gnu/.
-
-EOF
-	# Stupid emacs: '
-	exit 1
+    local min_major_version="`echo $min_version | cut -f1 -d.`"
+    local min_minor_version="`echo $min_version | cut -f2 -d.`"
+    local min_release_version="`echo $min_version | cut -f3 -d.`"
+    if test "$min_release_version" = "" ; then
+        min_release_version=0
     fi
-    unset tfe_name
+
+    local major_version="`echo $version | cut -f1 -d.`"
+    local minor_version="`echo $version | cut -f2 -d.`"
+    local release_version="`echo $version | cut -f3 -d.`"
+    if test "$release_version" = "" ; then
+        release_version=0
+    fi
+
+    if test $min_major_version -lt $major_version ; then
+        return 0
+    elif test $min_major_version -gt $major_version ; then
+        return 1
+    fi
+
+    if test $min_minor_version -lt $minor_version ; then
+        return 0
+    elif test $min_minor_version -gt $minor_version ; then
+        return 1
+    fi
+
+    if test $min_release_version -gt $release_version ; then
+        return 1
+    fi
+
+    return 0
 }
 
 
+################################################################################
 #
-# Subroutine to execite the standard GNU tools, and if they fail,
-# print out a warning.
+# find app - find a version of the given application that is new enough for use
 #
+# INPUT:
+#    - name of application (eg aclocal)
+#
+# OUTPUT:
+#    none
+#
+# SIDE EFFECTS:
+#    - sets application_name variable to working executable name
+#    - aborts on error finding application
+#
+################################################################################
+find_app() {
+    local app_name="$1"
+
+    local version="0.0.0"
+    local min_version="99.99.99"
+    local found=0
+
+    eval "min_version=\"\$lam_${app_name}_version\""
+
+    eval "search_path=\"\$lam_${app_name}_search\""
+    for i in $search_path ; do
+        version="`${i} --version 2>&1`"
+        if test "$?" != 0 ; then
+            continue
+        fi
+
+        version="`echo $version | cut -f2 -d')'`"
+        version="`echo $version | cut -f1 -d' '`"
+
+        if check_version $min_version $version ; then
+            eval "lam_${app_name}=\"${i}\""
+            found=1
+        fi
+    done
+
+    if test "$found" = "0" ; then
+	cat <<EOF
+I could not find a recent enough copy of ${app_name}.
+I am gonna abort.  :-(
+
+Please make sure you are using at least the following versions of the
+GNU tools:
+
+GNU Autoconf $lam_autoconf_version
+GNU Automake $lam_automake_version
+GNU Libtool  $lam_libtool_version
+
+EOF
+        exit 1
+    fi
+}
+
+
+################################################################################
+#
+# run_and_check - run the right GNU tool, printing warning on failure
+#
+# INPUT:
+#    - name of application (eg aclocal)
+#    - program arguments
+#
+# OUTPUT:
+#    none
+#
+# SIDE EFFECTS:
+#    - aborts on error running application
+#
+################################################################################
 run_and_check() {
-    rac_progs="$*"
+    local rac_progs="$*"
     echo "$rac_progs"
     eval $rac_progs
     if test "$?" != 0; then
@@ -81,17 +195,32 @@ GNU Libtool  1.5
 EOF
 	exit 1
     fi
-    unset rac_progs
 }
 
+
+
+################################################################################
 #
-# Subroutine to look for standard files in a number of common places
-# (e.g., ./config.guess, config/config.guess, dist/config.guess), and
-# delete it.  If it's not found there, look for AC_CONFIG_AUX_DIR in
-# the configure.in script and try there.  If it's not there, oh well.
+# find_and_delete -  look for standard files in a number of common places
+#     (e.g., ./config.guess, config/config.guess, dist/config.guess), and
+#     delete it.  If it's not found there, look for AC_CONFIG_AUX_DIR in
+#     the configure.in script and try there.  If it's not there, oh well.
 #
+# INPUT:
+#    - file to delete
+#
+# OUTPUT:
+#    none
+#
+# SIDE EFFECTS:
+#    - files may disappear
+#
+################################################################################
 find_and_delete() {
-    fad_file="$1"
+    local fad_file="$1"
+
+    local fad_cfile
+    local auxdir
 
     # Look for the file in "standard" places
 
@@ -119,16 +248,30 @@ find_and_delete() {
 	if test -f "$auxdir/$fad_file"; then
 	    rm -f "$auxdir/$fad_file"
 	fi
-	unset fad_cfile
     fi
-    unset fad_file
 }
 
 
-##########################################################################
-# Main
-##########################################################################
+################################################################################
+#
+# main - do the real work...
+#
+################################################################################
 
+# sanity check to make sure user isn't being stupid
+if test ! -d CVS ; then
+    cat <<EOF
+
+This doesn't look like a developer copy of LAM/MPI.  You probably do not
+want to run autogen.sh - it is normally not needed for a release source
+tree.  Giving you 2 seconds to reconsider and kill me.
+
+EOF
+    sleep 2
+fi
+
+
+# make sure we are at the top of the tree
 if test -f VERSION -a -f configure.ac -a -f src/mpi/datatype/d_get_name.c ; then
     bad=0
 else
@@ -140,21 +283,15 @@ EOF
     exit 1
 fi
 
-test_for_existence autoconf autoconf autoconf-2.57
-test_for_existence automake automake automake-1.5
-test_for_existence libtoolize libtoolize glibtoolize
 
-# See if the package doesn't want us to set it up
-
-cat <<EOF
-
-*** Running GNU tools in directory: 
-***   `pwd`
-
-EOF
+# find all the apps we are going to run
+find_app "aclocal"
+find_app "autoheader"
+find_app "autoconf"
+find_app "libtoolize"
+find_app "automake"
 
 # Find and delete the GNU helper script files
-
 find_and_delete config.guess
 find_and_delete config.sub
 find_and_delete depcomp
@@ -166,22 +303,20 @@ find_and_delete mkinstalldirs
 find_and_delete libtool
 
 # Run the GNU tools
-
-run_and_check aclocal
+run_and_check $lam_aclocal
 if test "`grep AC_CONFIG_HEADER configure.ac`" != "" -o \
     "`grep AM_CONFIG_HEADER configure.ac`" != ""; then
-    run_and_check autoheader
+    run_and_check $lam_autoheader
 fi
-run_and_check autoconf
+run_and_check $lam_autoconf
 echo "  -- patching configure for broken -c/-o compiler test"
 sed -e 's/chmod -w \./#LAM\/MPI FIX: chmod -w ./' \
     configure > configure.new
 mv configure.new configure
 chmod a+x configure
 
-run_and_check $libtoolize --automake --copy
-run_and_check automake --foreign -a --copy --include-deps
+run_and_check $lam_libtoolize --automake --copy
+run_and_check $lam_automake --foreign -a --copy --include-deps
 	
 # All done
-
 exit 0
