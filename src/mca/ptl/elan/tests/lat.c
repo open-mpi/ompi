@@ -6,7 +6,7 @@
 #include "test_util.h"
 
 #define MYBUFSIZE (4*1024*1024)
-#define CHECK 1
+#define CHECK 0
 #define PONG 0
 
 char        s_buf[MYBUFSIZE];
@@ -16,8 +16,6 @@ int         skip = 0;
 int
 main (int argc, char *argv[])
 {
-    char hostname[32];
-
     int         myid, numprocs, i, j;
     double      startwtime = 0.0, endwtime;
     int         namelen;
@@ -25,6 +23,8 @@ main (int argc, char *argv[])
     int         loop;
     MPI_Status  stat;
     int         sleep = 1;
+
+    /*while (sleep > 0);*/
 
     struct timeval t_start, t_end;
 
@@ -51,11 +51,9 @@ main (int argc, char *argv[])
         s_buf[i] = 'A';
     }
 
-    gethostname(hostname, 32);
-
-    fprintf(stdout, "[%s:%s:%d] done with init and barrier\n",
-	    hostname, __FUNCTION__, __LINE__);
-    fflush(stdout);
+    fprintf(stderr, "[proc%d:%s:%d] done with init, to loop %d \n",
+	    myid, __FUNCTION__, __LINE__, loop);
+    fflush(stderr);
 
     for (i = 0; i < loop + skip; i++) {
 	if (i == skip)
@@ -73,8 +71,8 @@ main (int argc, char *argv[])
 	if (CHECK && myid != 0) {
 	    for (j=0; j < size; j ++) {
 		if (r_buf[j] != 'A') {
-		    fprintf(stderr, "[%s:%s] error from byte %d \n",
-			    hostname, __FUNCTION__, j);
+		    fprintf(stderr, "[proc%d:%s] error from byte %d \n",
+			    myid, __FUNCTION__, j);
 		    break;
 		} else {
 		    r_buf[j] = '0';
@@ -84,9 +82,9 @@ main (int argc, char *argv[])
     }
     gettimeofday (&t_end, 0);
 
-    fprintf(stdout, "[%s:%s:%d] done with pingpong\n",
-	    hostname, __FUNCTION__, __LINE__);
-    fflush(stdout);
+    fprintf(stderr, "[proc%d:%s:%d] done with pingpong\n",
+	    myid, __FUNCTION__, __LINE__);
+    fflush(stderr);
  
     if (myid == 0) {
         double      latency;

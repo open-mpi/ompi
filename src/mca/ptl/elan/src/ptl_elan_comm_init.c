@@ -104,7 +104,6 @@ ompi_init_elan_queue_events (mca_ptl_elan_module_t * ptl,
 	 *      there is no need to trigger a local event */
 	desc->comp_dma.dma_dstEvent = elan4_main2elan (ctx, 
 		(void *) ptl->comp->input);
-	/*desc->main_dma.dma_srcEvent = SDRAM2ELAN (ctx, desc->elan_event);*/
 	desc->comp_dma.dma_srcEvent = 0x0ULL;
 	desc->comp_dma.dma_typeSize |= RUN_DMA_CMD;
 	desc->comp_dma.dma_pad       = NOP_CMD;
