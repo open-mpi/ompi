@@ -51,7 +51,7 @@ struct mca_pml_base_request_t {
     int32_t req_tag;                      /**< user defined tag */
     ompi_communicator_t *req_comm;        /**< communicator pointer */
     ompi_proc_t* req_proc;                /**< peer process */
-    uint64_t req_sequence;                /**< sequence number for MPI pt-2-pt ordering */
+    mca_ptl_sequence_t req_sequence;      /**< sequence number for MPI pt-2-pt ordering */
     ompi_datatype_t *req_datatype;        /**< pointer to data type */
     mca_pml_base_request_type_t req_type; /**< MPI request type - used for test */
     bool req_persistent;                  /**< flag indicating if the this is a persistent request */
