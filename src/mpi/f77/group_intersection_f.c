@@ -55,7 +55,8 @@ void mpi_group_intersection_f(MPI_Fint *group1, MPI_Fint *group2, MPI_Fint *newg
   c_group1 = MPI_Group_f2c(*group1);
   c_group2 = MPI_Group_f2c(*group2);
   
-  *ierr = MPI_Group_intersection(c_group1, c_group2, &c_newgroup);
+  *ierr = OMPI_INT_2_FINT(MPI_Group_intersection(c_group1, c_group2, 
+						 &c_newgroup));
 
   /* translate the results from c to fortran */
   *newgroup = c_newgroup->grp_f_to_c_index;

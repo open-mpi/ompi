@@ -48,7 +48,10 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_TEST_INTER,
 
 void mpi_comm_test_inter_f(MPI_Fint *comm, MPI_Fint *flag, MPI_Fint *ierr)
 {
-    MPI_Comm c_comm = MPI_Comm_f2c ( *comm );
+    MPI_Comm c_comm = MPI_Comm_f2c (*comm);
+    OMPI_SINGLE_NAME_DECL(flag);
 
-    *ierr = MPI_Comm_test_inter ( c_comm, flag );
+    *ierr = OMPI_INT_2_FINT(MPI_Comm_test_inter(c_comm, 
+					OMPI_SINGLE_NAME_CONVERT(flag)));
+    OMPI_SINGLE_INT_2_FINT(flag);
 }

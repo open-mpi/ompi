@@ -42,6 +42,7 @@
 
 #if OMPI_SIZEOF_FORTRAN_INT == SIZEOF_INT
   #define OMPI_ARRAY_NAME_DECL(a)
+  #define OMPI_2_DIM_ARRAY_NAME_DECL(a, dim2)
   #define OMPI_SINGLE_NAME_DECL(a)
   #define OMPI_ARRAY_NAME_CONVERT(a) a
   #define OMPI_SINGLE_NAME_CONVERT(a) a
@@ -49,6 +50,7 @@
   #define OMPI_FINT_2_INT(a) a
   #define OMPI_ARRAY_FINT_2_INT_ALLOC(in, n) 
   #define OMPI_ARRAY_FINT_2_INT(in, n)
+  #define OMPI_2_DIM_ARRAY_FINT_2_INT(in, n, dim2) 
   #define OMPI_ARRAY_FINT_2_INT_CLEANUP(in)
   #define OMPI_SINGLE_FINT_2_INT(in)
   #define OMPI_SINGLE_INT_2_FINT(in)
@@ -56,6 +58,7 @@
 
 #elif OMPI_SIZEOF_FORTRAN_INT > SIZEOF_INT
   #define OMPI_ARRAY_NAME_DECL(a) int *c_##a
+  #define OMPI_2_DIM_ARRAY_NAME_DECL(a, dim2) int (*c_##a)[dim2], dim2_index
   #define OMPI_SINGLE_NAME_DECL(a) int c_##a
   #define OMPI_ARRAY_NAME_CONVERT(a) c_##a
   #define OMPI_SINGLE_NAME_CONVERT(a) &c_##a
@@ -71,6 +74,16 @@
     OMPI_ARRAY_NAME_CONVERT(in) = malloc(n * sizeof(int)); \
     while(n > 0) { \
       OMPI_ARRAY_NAME_CONVERT(in)[n - 1] = (int) in[n - 1]; \
+      --n; \
+    }
+
+  /* This is for 2-dim arrays */
+  #define OMPI_2_DIM_ARRAY_FINT_2_INT(in, n, dim2) \
+    OMPI_ARRAY_NAME_CONVERT(in) = (int (*)[dim2]) malloc(n * sizeof(*OMPI_ARRAY_NAME_CONVERT(in))); \
+    while(n > 0) { \
+      for(dim2_index = 0; dim2_index < dim2; ++dim2_index) { \
+        OMPI_ARRAY_NAME_CONVERT(in)[n - 1][dim2_index] = (int)in[n - 1][dim2_index]; \
+      } \
       --n; \
     }
 
@@ -96,6 +109,7 @@
 
 #else /* int > MPI_Fint  */
   #define OMPI_ARRAY_NAME_DECL(a) int *c_##a
+  #define OMPI_2_DIM_ARRAY_NAME_DECL(a, dim2) int (*c_##a)[dim2], dim2_index
   #define OMPI_SINGLE_NAME_DECL(a) int c_##a
   #define OMPI_ARRAY_NAME_CONVERT(a) c_##a
   #define OMPI_SINGLE_NAME_CONVERT(a) &c_##a
@@ -113,13 +127,22 @@
       --n; \
     }
 
+  #define OMPI_2_DIM_ARRAY_FINT_2_INT(in, n, dim2) \
+    OMPI_ARRAY_NAME_CONVERT(in) = (int (*)[dim2]) malloc(n * sizeof(*OMPI_ARRAY_NAME_CONVERT(in))); \
+    while(n > 0) { \
+      for(dim2_index = 0; dim2_index < dims2; ++i) { \
+        OMPI_ARRAY_NAME_CONVERT(in)[n - 1][dim2_index] = in[n - 1][dim2_index]; \
+      } \
+      --n; \
+    }
+
   #define OMPI_ARRAY_FINT_2_INT_CLEANUP(in) \
     free(OMPI_ARRAY_NAME_CONVERT(in))
 
-  #define OMPI_SINGLE_FINT_2_INT(in)
-    OMPI_ARRAY_NAME_CONVERT(in) = *(in)
+  #define OMPI_SINGLE_FINT_2_INT(in) \
+     OMPI_ARRAY_NAME_CONVERT(in) = *(in)
 
-  #define OMPI_SINGLE_INT_2_FINT(n) \
+  #define OMPI_SINGLE_INT_2_FINT(in) \
     in = (MPI_Fint) OMPI_ARRAY_NAME_CONVERT(in)
 
   #define OMPI_ARRAY_INT_2_FINT(in, n) \

@@ -50,19 +50,17 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GROUP_COMPARE,
 #endif
 
 void mpi_group_compare_f(MPI_Fint *group1, MPI_Fint *group2,
-                         MPI_Fint *result, MPI_Fint *ierror)
+                         MPI_Fint *result, MPI_Fint *ierr)
 {
-    /* local variables */
-    int c_result, c_error;
     ompi_group_t *c_group1, *c_group2;
+    OMPI_SINGLE_NAME_DECL(result);
 
     /* make the fortran to c representation conversion */
     c_group1 = MPI_Group_f2c(*group1);
     c_group2 = MPI_Group_f2c(*group2);
 
-    c_error = MPI_Group_compare(c_group1, c_group2, &c_result);
-
-    /* translate the results from c to fortran */
-    *ierror = (MPI_Fint) c_error;
-    *result = (MPI_Fint) c_result;
+    *ierr = OMPI_INT_2_FINT(MPI_Group_compare(c_group1, c_group2, 
+					      OMPI_SINGLE_NAME_CONVERT(result)
+					      ));
+    OMPI_SINGLE_INT_2_FINT(result);
 }

@@ -48,5 +48,11 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GET_VERSION,
 
 void mpi_get_version_f(MPI_Fint *version, MPI_Fint *subversion, MPI_Fint *ierr)
 {
-  *ierr = MPI_Get_version(version, subversion);
+    OMPI_SINGLE_NAME_DECL(version);
+    OMPI_SINGLE_NAME_DECL(subversion);
+
+    *ierr = OMPI_INT_2_FINT(MPI_Get_version(OMPI_SINGLE_NAME_CONVERT(version),
+				    OMPI_SINGLE_NAME_CONVERT(subversion)));
+    OMPI_SINGLE_INT_2_FINT(version);
+    OMPI_SINGLE_INT_2_FINT(subversion);
 }

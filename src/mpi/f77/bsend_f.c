@@ -53,5 +53,7 @@ void mpi_bsend_f(char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *dest,
 
     c_comm = MPI_Comm_f2c (*comm);
   
-    *ierr = MPI_Bsend(buf, *count, c_type, *dest, *tag, c_comm);
+    *ierr = OMPI_INT_2_FINT(MPI_Bsend(buf, OMPI_FINT_2_INT(*count),
+				      c_type, OMPI_FINT_2_INT(*dest),
+				      OMPI_FINT_2_INT(*tag), c_comm));
 }

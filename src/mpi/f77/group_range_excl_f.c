@@ -50,12 +50,19 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GROUP_RANGE_EXCL,
 void mpi_group_range_excl_f(MPI_Fint *group, MPI_Fint *n, MPI_Fint ranges[][3], MPI_Fint *newgroup, MPI_Fint *ierr)
 {
   ompi_group_t *c_group, *c_newgroup;
+  OMPI_2_DIM_ARRAY_NAME_DECL(ranges, 3);
 
   /* Make the fortran to c representation conversion */
   c_group = MPI_Group_f2c(*group);
-  
-  *ierr = MPI_Group_range_excl(c_group, *n, ranges, &c_newgroup);
+
+  OMPI_2_DIM_ARRAY_FINT_2_INT(ranges, *n, 3);
+  *ierr = OMPI_INT_2_FINT(MPI_Group_range_excl(c_group, 
+					       OMPI_FINT_2_INT(*n), 
+					       OMPI_ARRAY_NAME_CONVERT(ranges),
+					       &c_newgroup));
 
   /* translate the results from c to fortran */
   *newgroup = c_newgroup->grp_f_to_c_index;
+
+  OMPI_ARRAY_FINT_2_INT_CLEANUP(ranges);
 }

@@ -50,9 +50,12 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GROUP_SIZE,
 void mpi_group_size_f(MPI_Fint *group, MPI_Fint *size, MPI_Fint *ierr)
 {
   ompi_group_t *c_group;
+  OMPI_SINGLE_NAME_DECL(size);
 
   /* Make the fortran to c representation conversion */
   c_group = MPI_Group_f2c(*group);
   
-  *ierr = MPI_Group_size(c_group, size); 
+  *ierr = OMPI_INT_2_FINT(MPI_Group_size(c_group, 
+					 OMPI_SINGLE_NAME_CONVERT(size))); 
+  OMPI_SINGLE_INT_2_FINT(size);
 }

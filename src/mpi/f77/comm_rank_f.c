@@ -49,6 +49,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_RANK,
 void mpi_comm_rank_f(MPI_Fint *comm, MPI_Fint *rank, MPI_Fint *ierr)
 {
     MPI_Comm c_comm = MPI_Comm_f2c( *comm );
+    OMPI_SINGLE_NAME_DECL(rank);
 
-    *ierr = MPI_Comm_rank( c_comm, rank );
+    *ierr = OMPI_INT_2_FINT(MPI_Comm_rank( c_comm,
+					   OMPI_SINGLE_NAME_CONVERT(rank)));
+    OMPI_SINGLE_INT_2_FINT(rank);
 }
