@@ -100,7 +100,7 @@ int mca_oob_tcp_recv_nb(ompi_process_name_t* peer, const struct iovec* msg, int 
  *  OOB TCP Component
 */
 struct mca_oob_tcp_component_t {
-    mca_oob_base_component_1_0_0_t super;  /**< base PTL component */
+    mca_oob_base_component_1_0_0_t super;  /**< base OOB component */
     int tcp_listen_sd;                     /**< listen socket for incoming connection requests */
     unsigned short   tcp_listen_port;      /**< listen port */
     ompi_list_t      tcp_peer_list;        /**< list of peers sorted in mru order */
@@ -112,6 +112,8 @@ struct mca_oob_tcp_component_t {
     ompi_mutex_t     tcp_lock;             /**< lock for accessing module state */
     ompi_condition_t tcp_condition;        /**< condition variable for blocking sends */
     size_t           tcp_cache_size;       /**< max size of tcp peer cache */
+    ompi_list_t      tcp_post_recv;        /**< list of the recvs the user has posted */
+    ompi_list_t      tcp_msg_recv;         /**< list of recieved messages */
 };
 typedef struct mca_oob_tcp_component_t mca_oob_tcp_component_t;
 

@@ -44,7 +44,6 @@ struct mca_oob_tcp_peer_t {
     ompi_event_t peer_recv_event;     /**< registration with event thread for recv events */
     ompi_mutex_t peer_lock;           /**< make sure only one thread accesses critical data structures */
     ompi_list_t peer_send_queue;      /**< list of messages to send */
-    ompi_list_t peer_recv_queue;      /**< list of pending receives */
     mca_oob_tcp_msg_t *peer_send_msg; /**< current send in progress */
     mca_oob_tcp_msg_t *peer_recv_msg; /**< current recv in progress */
 };
@@ -52,7 +51,7 @@ typedef struct mca_oob_tcp_peer_t mca_oob_tcp_peer_t;
 
 /**
  * Get a new peer data structure
- */                                                                                                                 
+ */ 
 #define MCA_OOB_TCP_PEER_ALLOC(peer, rc) \
     { \
     ompi_list_item_t* item; \
@@ -67,7 +66,6 @@ typedef struct mca_oob_tcp_peer_t mca_oob_tcp_peer_t;
     { \
     OMPI_FREE_LIST_RETURN(&mca_oob_tcp_module.tcp_peer_free, (ompi_list_item_t*)peer); \
     }
-                                                                                                                 
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -92,9 +90,7 @@ mca_oob_tcp_peer_t *mca_oob_tcp_peer_lookup(const ompi_process_name_t* peer_name
  * @param msg   The message to send.
  * @retval      OMPI_SUCCESS or error code on failure.
  */
-
 int mca_oob_tcp_peer_send(mca_oob_tcp_peer_t* peer, mca_oob_tcp_msg_t* msg);
-
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

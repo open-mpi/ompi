@@ -1,5 +1,6 @@
 #include <unistd.h>
 #include <fcntl.h>
+#include <sys/uio.h>
 #include <sys/types.h>
 #include <sys/errno.h>
 #include <netinet/tcp.h>
@@ -10,7 +11,7 @@
 
 
 static int  mca_oob_tcp_peer_start_connect(mca_oob_tcp_peer_t* peer);
-static int  mca_oob_tcp_peer_event_init(mca_oob_tcp_peer_t* peer, int sd);
+static int  mca_oob_tcp_peer_event_init(mca_oob_tcp_peer_t* peer);
 static void mca_oob_tcp_peer_close(mca_oob_tcp_peer_t* peer);
 static void mca_oob_tcp_peer_connected(mca_oob_tcp_peer_t* peer);
 static void mca_oob_tcp_peer_construct(mca_oob_tcp_peer_t* peer);
@@ -42,7 +43,6 @@ OBJ_CLASS_INSTANCE(
 static void mca_oob_tcp_peer_construct(mca_oob_tcp_peer_t* peer) 
 { 
     OBJ_CONSTRUCT(&(peer->peer_send_queue), ompi_list_t);
-    OBJ_CONSTRUCT(&(peer->peer_recv_queue), ompi_list_t);
     OBJ_CONSTRUCT(&(peer->peer_lock), ompi_mutex_t);
 }
 
@@ -56,16 +56,15 @@ static void mca_oob_tcp_peer_construct(mca_oob_tcp_peer_t* peer)
  */
 static void mca_oob_tcp_peer_destruct(mca_oob_tcp_peer_t * peer)
 {
+    mca_oob_tcp_peer_close(peer);
     OBJ_DESTRUCT(&(peer->peer_send_queue));
-    OBJ_DESTRUCT(&(peer->peer_recv_queue));
     OBJ_DESTRUCT(&(peer->peer_lock));
 }
 
 /*
  * Initialize events to be used by the peer instance for TCP select/poll callbacks.
  */
-
-static int mca_oob_tcp_peer_event_init(mca_oob_tcp_peer_t* peer, int sd)
+static int mca_oob_tcp_peer_event_init(mca_oob_tcp_peer_t* peer)
 {
     ompi_event_set(
         &peer->peer_recv_event,
@@ -86,7 +85,6 @@ static int mca_oob_tcp_peer_event_init(mca_oob_tcp_peer_t* peer, int sd)
  *  
  *
  */
-
 int mca_oob_tcp_peer_send(mca_oob_tcp_peer_t* peer, mca_oob_tcp_msg_t* msg)
 {
     int rc = OMPI_SUCCESS;
@@ -112,11 +110,8 @@ int mca_oob_tcp_peer_send(mca_oob_tcp_peer_t* peer, mca_oob_tcp_msg_t* msg)
         if (NULL != peer->peer_send_msg) {
             ompi_list_append(&peer->peer_send_queue, (ompi_list_item_t*)msg);
         } else {
-            if(mca_oob_tcp_msg_send_handler(msg, peer->peer_sd)) {
-                OMPI_THREAD_UNLOCK(&peer->peer_lock);
-                mca_oob_tcp_msg_complete(msg);
-                return rc;
-            } else {
+            /*if the send does not complete */
+            if(!mca_oob_tcp_msg_send_handler(msg, peer)) {
                 peer->peer_send_msg = msg;
                 ompi_event_add(&peer->peer_send_event, 0);
             }
@@ -126,7 +121,6 @@ int mca_oob_tcp_peer_send(mca_oob_tcp_peer_t* peer, mca_oob_tcp_msg_t* msg)
     OMPI_THREAD_UNLOCK(&peer->peer_lock);
     return rc;
 }
-
 
 /*
  * Lookup a peer by name, create one if it doesn't exist.
@@ -153,6 +147,11 @@ mca_oob_tcp_peer_t * mca_oob_tcp_peer_lookup(const ompi_process_name_t* name)
     }
 
     peer->peer_name = *name;
+    /******
+     * need to add the peer's address to the structure
+     ******/
+
+
     if(OMPI_SUCCESS != ompi_rb_tree_insert(&mca_oob_tcp_module.tcp_peer_tree, 
                        (ompi_process_name_t *) name, peer)) {
         MCA_OOB_TCP_PEER_RETURN(peer);
@@ -162,23 +161,25 @@ mca_oob_tcp_peer_t * mca_oob_tcp_peer_lookup(const ompi_process_name_t* name)
     ompi_list_prepend(&mca_oob_tcp_module.tcp_peer_list, (ompi_list_item_t *) peer);
     /* if the peer list is over the maximum size, remove one unsed peer */
     if(ompi_list_get_size(&mca_oob_tcp_module.tcp_peer_list) > 
-       mca_oob_tcp_module.tcp_cache_size) {
-       old = (mca_oob_tcp_peer_t *) 
+        mca_oob_tcp_module.tcp_cache_size) {
+        old = (mca_oob_tcp_peer_t *) 
               ompi_list_get_last(&mca_oob_tcp_module.tcp_peer_list);
-       while(1) {
-           if(0 == ompi_list_get_size(&(old->peer_send_queue)) &&
-              0 == ompi_list_get_size(&(old->peer_recv_queue))) {
-               ompi_list_remove_item(&mca_oob_tcp_module.tcp_peer_list, 
-                                     (ompi_list_item_t *) old);
-               MCA_OOB_TCP_PEER_RETURN(old);
-               break;
-           } else {
-               old = (mca_oob_tcp_peer_t *) ompi_list_get_prev(old);
-               if(NULL == old) {
-                   break;
-               }
-           }
-       }
+        while(1) {
+            if(0 == ompi_list_get_size(&(old->peer_send_queue)) &&
+               NULL == peer->peer_recv_msg) { 
+                ompi_list_remove_item(&mca_oob_tcp_module.tcp_peer_list, 
+                                      (ompi_list_item_t *) old);
+                MCA_OOB_TCP_PEER_RETURN(old);
+                break;
+            } else {
+                old = (mca_oob_tcp_peer_t *) ompi_list_get_prev(old);
+                if(NULL == old) {
+                    /* we tried, but we couldn't find one that was valid to get rid
+                     * of. Oh well. */
+                    break;
+                }
+            }
+        }
     }
     OMPI_THREAD_UNLOCK(&mca_oob_tcp_module.tcp_lock);
     return peer;
@@ -195,8 +196,7 @@ mca_oob_tcp_peer_t * mca_oob_tcp_peer_lookup(const ompi_process_name_t* name)
 static int mca_oob_tcp_peer_start_connect(mca_oob_tcp_peer_t* peer)
 {
     int rc,flags;
-    struct sockaddr_in peer_addr;
-                                                                                                                                 
+
     peer->peer_sd = socket(AF_INET, SOCK_STREAM, 0);
     if (peer->peer_sd < 0) {
         peer->peer_retries++;
@@ -204,7 +204,7 @@ static int mca_oob_tcp_peer_start_connect(mca_oob_tcp_peer_t* peer)
     }
 
     /* setup event callbacks */
-    mca_oob_tcp_peer_event_init(peer, peer->peer_sd);
+    mca_oob_tcp_peer_event_init(peer);
 
     /* setup the socket as non-blocking */
     if((flags = fcntl(peer->peer_sd, F_GETFL, 0)) < 0) {
@@ -216,8 +216,7 @@ static int mca_oob_tcp_peer_start_connect(mca_oob_tcp_peer_t* peer)
     }
 
     /* start the connect - will likely fail with EINPROGRESS */
-    peer_addr = peer->peer_addr;
-    if(connect(peer->peer_sd, (struct sockaddr*)&peer_addr, sizeof(peer_addr)) < 0) {
+    if(connect(peer->peer_sd, (struct sockaddr*)&(peer->peer_addr), sizeof(peer->peer_addr)) < 0) {
         /* non-blocking so wait for completion */
         if(errno == EINPROGRESS) {
             peer->peer_state = MCA_OOB_TCP_CONNECTING;
@@ -244,7 +243,6 @@ static int mca_oob_tcp_peer_start_connect(mca_oob_tcp_peer_t* peer)
  * later. Otherwise, send this processes identifier to the peer on the
  * newly connected socket.
  */
-                                                                                                                       
 static void mca_oob_tcp_peer_complete_connect(mca_oob_tcp_peer_t* peer)
 {
     int so_error = 0;
@@ -276,13 +274,11 @@ static void mca_oob_tcp_peer_complete_connect(mca_oob_tcp_peer_t* peer)
         mca_oob_tcp_peer_close(peer);
     }
 }
-                                                                                                                       
 
 /*
  *  Setup peer state to reflect that connection has been established,
  *  and start any pending sends.
  */
-                                                                                                                                 
 static void mca_oob_tcp_peer_connected(mca_oob_tcp_peer_t* peer)
 {
     peer->peer_state = MCA_OOB_TCP_CONNECTED;
@@ -294,13 +290,12 @@ static void mca_oob_tcp_peer_connected(mca_oob_tcp_peer_t* peer)
         ompi_event_add(&peer->peer_send_event, 0);
     }
 }
-                                                                                                   
+
 /*
  * Remove any event registrations associated with the socket
  * and update the peer state to reflect the connection has
  * been closed.
  */
-
 static void mca_oob_tcp_peer_close(mca_oob_tcp_peer_t* peer)
 {
     if(peer->peer_sd >= 0) {
@@ -353,7 +348,7 @@ static int mca_oob_tcp_peer_recv_connect_ack(mca_oob_tcp_peer_t* peer)
 #endif
     return OMPI_SUCCESS;
 }
-                                                                                                            
+
 /*
  * A blocking recv on a non-blocking socket. Used to receive the small amount of connection
  * information that identifies the peers endpoint.
@@ -431,11 +426,10 @@ static void mca_oob_tcp_peer_recv_handler(int sd, short flags, void* user)
                 OMPI_THREAD_UNLOCK(&peer->peer_lock);
                 return;
             }
-            mca_oob_tcp_msg_init(msg, peer);
         }
 
         /* check for completion of non-blocking recv on the current fragment */
-        if(mca_oob_tcp_msg_recv_handler(msg, sd) == false)
+        if(mca_oob_tcp_msg_recv_handler(msg, peer) == false)
             peer->peer_recv_msg = msg;
         else
             peer->peer_recv_msg = 0;
@@ -455,7 +449,6 @@ static void mca_oob_tcp_peer_recv_handler(int sd, short flags, void* user)
  * A file descriptor is available/ready for send. Check the state
  * of the socket and take the appropriate action.
  */
-                                                                                                                       
 static void mca_oob_tcp_peer_send_handler(int sd, short flags, void* user)
 {
     mca_oob_tcp_peer_t* peer = user;
@@ -469,20 +462,15 @@ static void mca_oob_tcp_peer_send_handler(int sd, short flags, void* user)
         /* complete the current send */
         do {
             mca_oob_tcp_msg_t* msg = peer->peer_send_msg;
-            if(mca_oob_tcp_msg_send_handler(msg, sd) == false) {
+            if(mca_oob_tcp_msg_send_handler(msg, peer) == false) {
                 break;
             }
-                                                                                                                       
             /* if required - update request status and release fragment */
-            OMPI_THREAD_UNLOCK(&peer->peer_lock);
-            mca_oob_tcp_msg_complete(msg);
-            OMPI_THREAD_LOCK(&peer->peer_lock);
-                                                                                                                       
             /* progress any pending sends */
             peer->peer_send_msg = (mca_oob_tcp_msg_t*)
                 ompi_list_remove_first(&peer->peer_send_queue);
         } while (NULL != peer->peer_send_msg);
-                                                                                                                       
+        
         /* if nothing else to do unregister for send event notifications */
         if(NULL == peer->peer_send_msg) {
             ompi_event_del(&peer->peer_send_event);
@@ -502,7 +490,6 @@ static void mca_oob_tcp_peer_send_handler(int sd, short flags, void* user)
 /*
  * Routine for debugging to print the connection state and socket options
  */
-
 static void mca_oob_tcp_peer_dump(mca_oob_tcp_peer_t* peer, const char* msg)
 {
     char src[64];
@@ -551,13 +538,4 @@ static void mca_oob_tcp_peer_dump(mca_oob_tcp_peer_t* peer, const char* msg)
         msg, src, dst, nodelay, sndbuf, rcvbuf, flags);
     ompi_output(0, buff);
 }
-
-/* JMS Added these so that we can link successfully */
-bool mca_oob_tcp_msg_send_handler(mca_oob_tcp_msg_t* msg, int sd) 
-{ return true; }
-bool mca_oob_tcp_msg_recv_handler(mca_oob_tcp_msg_t* msg, int sd)
-{ return true; }
-void mca_oob_tcp_msg_init(mca_oob_tcp_msg_t* msg, struct mca_oob_tcp_peer_t*b)
-{ }
-
 

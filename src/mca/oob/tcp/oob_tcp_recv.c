@@ -11,7 +11,6 @@
  *                     iovec array without removing the message from the queue.
  * @return             OMPI error code (<0) on error or number of bytes actually received.
  */
-
 int mca_oob_tcp_recv(ompi_process_name_t* peer, const struct iovec *msg, int count, int flags)
 {
     return OMPI_ERR_NOT_IMPLEMENTED;
@@ -28,12 +27,9 @@ int mca_oob_tcp_recv(ompi_process_name_t* peer, const struct iovec *msg, int cou
  * @param cbdata (IN)  User data that is passed to callback function.
  * @return             OMPI error code (<0) on error or number of bytes actually received.
  */
-
 int mca_oob_tcp_recv_nb(ompi_process_name_t* peer, const struct iovec* msg, int count, int flags,
                                      mca_oob_callback_fn_t cbfunc, void* cbdata)
 {
     return OMPI_ERR_NOT_IMPLEMENTED;
 }
-
-
 
