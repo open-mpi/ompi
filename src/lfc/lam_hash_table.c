@@ -125,7 +125,8 @@ void* lam_hash_table_get_value_uint32(lam_hash_table_t* ht, uint32_t key)
 
 #if LAM_ENABLE_DEBUG
     if(ht->ht_table_size == 0) {
-        lam_output(0, "lam_hash_table_get_value_uint32: lam_hash_table_init() has not been called");
+        lam_output(0, "lam_hash_table_get_value_uint32:"
+		   "lam_hash_table_init() has not been called");
         return NULL;
     }
 #endif
@@ -140,14 +141,16 @@ void* lam_hash_table_get_value_uint32(lam_hash_table_t* ht, uint32_t key)
 }
 
 
-int lam_hash_table_set_value_uint32(lam_hash_table_t* ht, uint32_t key, void* value)
+int lam_hash_table_set_value_uint32(lam_hash_table_t* ht,
+				    uint32_t key, void* value)
 {
     lam_list_t* list = ht->ht_table + (key & ht->ht_mask);
     lam_uint32_hash_node_t *node;
 
 #if LAM_ENABLE_DEBUG
     if(ht->ht_table_size == 0) {
-        lam_output(0, "lam_hash_table_set_value_uint32: lam_hash_table_init() has not been called");
+        lam_output(0, "lam_hash_table_set_value_uint32:"
+		   "lam_hash_table_init() has not been called");
         return LAM_ERR_BAD_PARAM;
     }
 #endif
@@ -181,7 +184,8 @@ int lam_hash_table_remove_value_uint32(lam_hash_table_t* ht, uint32_t key)
 
 #if LAM_ENABLE_DEBUG
     if(ht->ht_table_size == 0) {
-        lam_output(0, "lam_hash_table_remove_value_uint32: lam_hash_table_init() has not been called");
+        lam_output(0, "lam_hash_table_remove_value_uint32:"
+		   "lam_hash_table_init() has not been called");
         return LAM_ERR_BAD_PARAM;
     }
 #endif
@@ -234,7 +238,8 @@ void* lam_hash_table_get_value_uint64(lam_hash_table_t* ht, uint64_t key)
 
 #if LAM_ENABLE_DEBUG
     if(ht->ht_table_size == 0) {
-        lam_output(0, "lam_hash_table_get_value_uint64: lam_hash_table_init() has not been called");
+        lam_output(0, "lam_hash_table_get_value_uint64:"
+		   "lam_hash_table_init() has not been called");
         return NULL;
     }
 #endif
@@ -249,14 +254,16 @@ void* lam_hash_table_get_value_uint64(lam_hash_table_t* ht, uint64_t key)
 }
 
 
-int lam_hash_table_set_value_uint64(lam_hash_table_t* ht, uint64_t key, void* value)
+int lam_hash_table_set_value_uint64(lam_hash_table_t* ht,
+				    uint64_t key, void* value)
 {
     lam_list_t* list = ht->ht_table + (key & ht->ht_mask);
     lam_uint64_hash_node_t *node;
 
 #if LAM_ENABLE_DEBUG
     if(ht->ht_table_size == 0) {
-        lam_output(0, "lam_hash_table_set_value_uint64: lam_hash_table_init() has not been called");
+        lam_output(0, "lam_hash_table_set_value_uint64:"
+		   "lam_hash_table_init() has not been called");
         return LAM_ERR_BAD_PARAM;
     }
 #endif
@@ -290,7 +297,8 @@ int lam_hash_table_remove_value_uint64(lam_hash_table_t* ht, uint64_t key)
 
 #if LAM_ENABLE_DEBUG
     if(ht->ht_table_size == 0) {
-        lam_output(0, "lam_hash_table_remove_value_uint64: lam_hash_table_init() has not been called");
+        lam_output(0, "lam_hash_table_remove_value_uint64:"
+		   "lam_hash_table_init() has not been called");
         return LAM_ERR_BAD_PARAM;
     }
 #endif
@@ -343,7 +351,8 @@ static lam_class_t lam_ptr_hash_node_t_class = {
 };
 
 
-static inline uint32_t lam_hash_value(size_t mask, const void *key, uint32_t keysize)
+static inline uint32_t lam_hash_value(size_t mask, const void *key,
+				      uint32_t keysize)
 {
     uint32_t h, i;
     const unsigned char *p;
@@ -355,14 +364,17 @@ static inline uint32_t lam_hash_value(size_t mask, const void *key, uint32_t key
     return (h & mask);
 }
 
-void* lam_hash_table_get_value_ptr(lam_hash_table_t* ht, const void* key, size_t key_size)
+void* lam_hash_table_get_value_ptr(lam_hash_table_t* ht, const void* key,
+				   size_t key_size)
 {
-    lam_list_t* list = ht->ht_table + lam_hash_value(ht->ht_mask, key, key_size);
+    lam_list_t* list = ht->ht_table + lam_hash_value(ht->ht_mask, key, 
+						     key_size);
     lam_ptr_hash_node_t *node;
 
 #if LAM_ENABLE_DEBUG
     if(ht->ht_table_size == 0) {
-        lam_output(0, "lam_hash_table_get_value_ptr: lam_hash_table_init() has not been called");
+        lam_output(0, "lam_hash_table_get_value_ptr:"
+		   "lam_hash_table_init() has not been called");
         return NULL;
     }
 #endif
@@ -378,14 +390,17 @@ void* lam_hash_table_get_value_ptr(lam_hash_table_t* ht, const void* key, size_t
 }
 
 
-int lam_hash_table_set_value_ptr(lam_hash_table_t* ht, const void* key, size_t key_size, void* value)
+int lam_hash_table_set_value_ptr(lam_hash_table_t* ht, const void* key,
+				 size_t key_size, void* value)
 {
-    lam_list_t* list = ht->ht_table + lam_hash_value(ht->ht_mask, key, key_size);
+    lam_list_t* list = ht->ht_table + lam_hash_value(ht->ht_mask, key,
+						     key_size);
     lam_ptr_hash_node_t *node;
 
 #if LAM_ENABLE_DEBUG
     if(ht->ht_table_size == 0) {
-        lam_output(0, "lam_hash_table_set_value_ptr: lam_hash_table_init() has not been called");
+        lam_output(0, "lam_hash_table_set_value_ptr:"
+		   "lam_hash_table_init() has not been called");
         return LAM_ERR_BAD_PARAM;
     }
 #endif
@@ -415,14 +430,17 @@ int lam_hash_table_set_value_ptr(lam_hash_table_t* ht, const void* key, size_t k
 }
 
 
-int lam_hash_table_remove_value_ptr(lam_hash_table_t* ht, const void* key, size_t key_size)
+int lam_hash_table_remove_value_ptr(lam_hash_table_t* ht,
+				    const void* key, size_t key_size)
 {
-    lam_list_t* list = ht->ht_table + lam_hash_value(ht->ht_mask, key, key_size);
+    lam_list_t* list = ht->ht_table + lam_hash_value(ht->ht_mask,
+						     key, key_size);
     lam_ptr_hash_node_t *node;
 
 #if LAM_ENABLE_DEBUG
     if(ht->ht_table_size == 0) {
-        lam_output(0, "lam_hash_table_remove_value_ptr: lam_hash_table_init() has not been called");
+        lam_output(0, "lam_hash_table_remove_value_ptr: "
+		   "lam_hash_table_init() has not been called");
         return LAM_ERR_BAD_PARAM;
     }
 #endif
@@ -440,7 +458,72 @@ int lam_hash_table_remove_value_ptr(lam_hash_table_t* ht, const void* key, size_
             return LAM_SUCCESS;
         }
     } 
-    return LAM_ERR_NOT_FOUND;
+ return LAM_ERR_NOT_FOUND;
 }
 
 
+int 
+lam_hash_table_get_first_key_uint32(lam_hash_table_t *ht, uint32_t *key, 
+				    void *value, void **node)
+{
+    *node = (void *)(lam_uint32_hash_node_t*) lam_list_get_first(ht->ht_table);
+    if (NULL == *node)
+	return LAM_ERROR;
+    *key = ((lam_uint32_hash_node_t*)(*node))->hn_key;
+    return LAM_SUCCESS;
+}
+
+
+int 
+lam_hash_table_get_next_key_uint32(lam_hash_table_t *ht, uint32_t *key,
+				   void *value, void *in_node, void **out_node)
+{
+    lam_list_t* list = ht->ht_table + (((lam_uint32_hash_node_t*)
+				       in_node)->hn_key & ht->ht_mask);
+    if (in_node == lam_list_get_end(list)) {
+	++list;
+	*out_node = (void *) lam_list_get_first(list);
+
+	if (NULL == *out_node)
+	    return LAM_ERROR;
+
+    } else {
+	*out_node = (void *) lam_list_get_next(in_node);
+    }
+    *key = ((lam_uint32_hash_node_t*)(*out_node))->hn_key;
+    return LAM_SUCCESS;
+}
+
+
+int 
+lam_hash_table_get_first_key_uint64(lam_hash_table_t *ht, uint64_t *key,
+				    void *value, void **node)
+{
+    *node = (lam_uint64_hash_node_t*) lam_list_get_first(ht->ht_table);
+    if (NULL == *node)
+	return LAM_ERROR;
+    *key = ((lam_uint64_hash_node_t*)(*node))->hn_key;
+    return LAM_SUCCESS;
+}
+
+
+int 
+lam_hash_table_get_next_key_uint64(lam_hash_table_t *ht, uint64_t *key,
+				   void *value, void *in_node, void **out_node)
+{
+    lam_list_t* list = ht->ht_table + (((lam_uint64_hash_node_t*)
+					in_node)->hn_key & ht->ht_mask);
+    if (in_node == lam_list_get_end(list)) {
+	++list;
+	*out_node = (void *) lam_list_get_first(list);
+
+	if (NULL == *out_node)
+	    return LAM_ERROR;
+
+    } else {
+	*out_node = (void *) lam_list_get_next(in_node);
+    }
+    *key = ((lam_uint64_hash_node_t*)(*out_node))->hn_key;
+    return LAM_SUCCESS;
+
+}
