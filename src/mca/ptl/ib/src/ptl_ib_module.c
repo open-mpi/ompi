@@ -1,0 +1,375 @@
+/*
+ * $HEADER$
+ */
+
+/* Open MPI includes */
+#include "include/constants.h"
+#include "event/event.h"
+#include "util/if.h"
+#include "util/argv.h"
+#include "util/output.h"
+#include "mca/pml/pml.h"
+#include "mca/ptl/ptl.h"
+#include "mca/pml/base/pml_base_sendreq.h"
+#include "mca/base/mca_base_param.h"
+#include "mca/base/mca_base_module_exchange.h"
+
+/* IB ptl includes */
+#include "ptl_ib.h"
+#include "ptl_ib_priv.h"
+
+
+mca_ptl_ib_module_1_0_0_t mca_ptl_ib_module = {
+    {
+        /* First, the mca_base_module_t struct containing meta information
+           about the module itself */
+
+        {
+            /* Indicate that we are a pml v1.0.0 module (which also implies a
+               specific MCA version) */
+
+            MCA_PTL_BASE_VERSION_1_0_0,
+
+            "ib", /* MCA module name */
+            1,  /* MCA module major version */
+            0,  /* MCA module minor version */
+            0,  /* MCA module release version */
+            mca_ptl_ib_module_open,  /* module open */
+            mca_ptl_ib_module_close  /* module close */
+        },
+
+        /* Next the MCA v1.0.0 module meta data */
+
+        {
+            /* Whether the module is checkpointable or not */
+
+            false
+        },
+
+        mca_ptl_ib_module_init,  
+        mca_ptl_ib_module_control,
+        mca_ptl_ib_module_progress,
+    }
+};
+
+
+/*
+ * functions for receiving event callbacks
+ */
+
+static void mca_ptl_ib_module_recv_handler(int, short, void*);
+
+
+/*
+ * utility routines for parameter registration
+ */
+
+static inline char* mca_ptl_ib_param_register_string(
+        const char* param_name, 
+        const char* default_value)
+{
+    char *param_value;
+    int id = mca_base_param_register_string("ptl","ib",param_name,NULL,default_value);
+    mca_base_param_lookup_string(id, &param_value);
+    return param_value;
+}
+
+static inline int mca_ptl_ib_param_register_int(
+        const char* param_name, 
+        int default_value)
+{
+    int id = mca_base_param_register_int("ptl","ib",param_name,NULL,default_value);
+    int param_value = default_value;
+    mca_base_param_lookup_int(id,&param_value);
+    return param_value;
+}
+
+/*
+ *  Called by MCA framework to open the module, registers
+ *  module parameters.
+ */
+
+int mca_ptl_ib_module_open(void)
+{
+    fprintf(stderr,"[%s:%d] %s\n",
+            __FILE__, __LINE__, __func__);
+    fflush(stderr);
+    /* register super module parameters */
+    mca_ptl_ib.super.ptl_exclusivity =
+        mca_ptl_ib_param_register_int ("exclusivity", 0);
+    mca_ptl_ib.super.ptl_first_frag_size =
+        mca_ptl_ib_param_register_int ("first_frag_size",
+                (2048 - sizeof(mca_ptl_base_header_t))/*magic*/);
+    mca_ptl_ib.super.ptl_min_frag_size =
+        mca_ptl_ib_param_register_int ("min_frag_size",
+                (2048 - sizeof(mca_ptl_base_header_t))/*magic*/);
+    mca_ptl_ib.super.ptl_max_frag_size =
+        mca_ptl_ib_param_register_int ("max_frag_size", 2<<30);
+
+    /* register IB module parameters */
+    mca_ptl_ib_module.ib_free_list_num =
+        mca_ptl_ib_param_register_int ("free_list_num", 32);
+    mca_ptl_ib_module.ib_free_list_max =
+        mca_ptl_ib_param_register_int ("free_list_max", 1024);
+    mca_ptl_ib_module.ib_free_list_inc =
+        mca_ptl_ib_param_register_int ("free_list_inc", 32);
+
+    return OMPI_SUCCESS;
+}
+
+/*
+ * module cleanup - sanity checking of queue lengths
+ */
+
+int mca_ptl_ib_module_close(void)
+{
+    fprintf(stderr,"[%s][%d]\n", __FILE__, __LINE__);
+    /* Stub */
+    return OMPI_SUCCESS;
+}
+
+/*
+ *  Register IB module addressing information. The MCA framework
+ *  will make this available to all peers. 
+ */
+
+static int mca_ptl_ib_module_send(void)
+{
+    int i, rc, size;
+    mca_ptl_ib_ud_addr_t* ud_qp_addr = NULL;
+
+    size = sizeof(mca_ptl_ib_ud_addr_t) * mca_ptl_ib_module.ib_num_ptls;
+
+    ud_qp_addr = (mca_ptl_ib_ud_addr_t*) malloc(size);
+
+    if(NULL == ud_qp_addr) {
+        return OMPI_ERROR;
+    }
+
+    for(i = 0; i < mca_ptl_ib_module.ib_num_ptls; i++) {
+        mca_ptl_ib_t* ptl = mca_ptl_ib_module.ib_ptls[i];
+        ud_qp_addr[i].ud_qp = ptl->ud_qp_hndl;
+        ud_qp_addr[i].lid = ptl->port.lid;
+    }
+
+    rc =  mca_base_modex_send(&mca_ptl_ib_module.super.ptlm_version, 
+            ud_qp_addr, size);
+
+    free(ud_qp_addr);
+
+    return rc;
+}
+
+/*
+ *  IB module initialization:
+ *  (1) read interface list from kernel and compare against module parameters
+ *      then create a PTL instance for selected interfaces
+ *  (2) setup IB listen socket for incoming connection attempts
+ *  (3) register PTL parameters with the MCA
+ */
+mca_ptl_t** mca_ptl_ib_module_init(int *num_ptls, 
+        bool *allow_multi_user_threads,
+        bool *have_hidden_threads)
+{
+    mca_ptl_t **ptls;
+    int i, rc;
+
+    uint32_t  num_hcas;
+    VAPI_ret_t ret;
+    VAPI_hca_id_t* hca_id = NULL;
+    mca_ptl_ib_t* ptl_ib = NULL;
+    *num_ptls = 0;
+    VAPI_cqe_num_t act_num_cqe;
+
+    act_num_cqe = 0;
+
+    *allow_multi_user_threads = true;
+    *have_hidden_threads = OMPI_HAVE_THREADS;
+
+    fprintf(stderr,"[%s:%d] %s\n", 
+            __FILE__, __LINE__, __func__);
+
+    /* need to set ompi_using_threads() as ompi_event_init() 
+     * will spawn a thread if supported */
+    if(OMPI_HAVE_THREADS) {
+        ompi_set_using_threads(true);
+    }
+
+    if((rc = ompi_event_init()) != OMPI_SUCCESS) {
+        ompi_output(0, "mca_ptl_ib_module_init: "
+                "unable to initialize event dispatch thread: %d\n", rc);
+        return NULL;
+    }
+
+#if 0
+    /* initialize free lists */
+    ompi_free_list_init(&mca_ptl_ib_module.ib_send_requests, 
+            sizeof(mca_ptl_ib_send_request_t),
+            OBJ_CLASS(mca_ptl_ib_send_request_t),
+            mca_ptl_ib_module.ib_free_list_num,
+            mca_ptl_ib_module.ib_free_list_max,
+            mca_ptl_ib_module.ib_free_list_inc,
+            NULL); /* use default allocator */
+
+    ompi_free_list_init(&mca_ptl_ib_module.ib_recv_frags, 
+            sizeof(mca_ptl_ib_recv_frag_t),
+            OBJ_CLASS(mca_ptl_ib_recv_frag_t),
+            mca_ptl_ib_module.ib_free_list_num,
+            mca_ptl_ib_module.ib_free_list_max,
+            mca_ptl_ib_module.ib_free_list_inc,
+            NULL); /* use default allocator */
+#endif
+
+
+    /* List all HCAs */
+    ret = EVAPI_list_hcas(0, &num_hcas, NULL);
+
+    /* Don't check for return status, it will be
+     * VAPI_EAGAIN, we are just trying to get the
+     * number of HCAs */
+    if (0 == num_hcas) {
+        return NULL;
+    }
+
+    hca_id = (VAPI_hca_id_t*) malloc(sizeof(VAPI_hca_id_t) * num_hcas);
+    if(NULL == hca_id) {
+        return NULL;
+    }
+
+    /* HACK: To avoid confusion, right now open only 
+     * one IB PTL */
+
+    /*mca_ptl_ib_module.ib_num_hcas = num_hcas;*/
+    mca_ptl_ib_module.ib_num_hcas = 1;
+    mca_ptl_ib_module.ib_num_ptls = 1;
+    mca_ptl_ib_module.ib_max_ptls = 1;
+
+    /* Now get the hca_id from underlying VAPI layer */
+    ret = EVAPI_list_hcas(mca_ptl_ib_module.ib_num_hcas, 
+            &num_hcas, hca_id);
+
+    /* HACK : Don't check return status now,
+     * just opening one ptl ... */
+    /*MCA_PTL_IB_VAPI_RET(NULL, ret, "EVAPI_list_hcas"); */
+
+    /* Number of PTLs are equal to number of HCAs */
+    ptl_ib = (mca_ptl_ib_t*) malloc(sizeof(mca_ptl_ib_t) * 
+            mca_ptl_ib_module.ib_num_ptls);
+    if(NULL == ptl_ib) {
+        return NULL;
+    }
+
+    /* Copy the function pointers to the IB ptls */
+    for(i = 0; i< mca_ptl_ib_module.ib_num_ptls; i++) {
+        memcpy((void*)&ptl_ib[i], 
+                &mca_ptl_ib, 
+                sizeof(mca_ptl_ib));
+    }
+
+    /* Allocate list of IB ptl pointers */
+    mca_ptl_ib_module.ib_ptls = (struct mca_ptl_ib_t**) 
+        malloc(mca_ptl_ib_module.ib_num_ptls * 
+                sizeof(struct mca_ptl_ib_t*));
+    if(NULL == mca_ptl_ib_module.ib_ptls) {
+        return NULL;
+    }
+
+    /* Set the pointers for all IB ptls */
+    for(i = 0; i < mca_ptl_ib_module.ib_num_ptls; i++) {
+        mca_ptl_ib_module.ib_ptls[i] = &ptl_ib[i];
+    }
+
+    /* Open the HCAs asscociated with ptls */
+    for(i = 0; i < mca_ptl_ib_module.ib_num_ptls; i++) {
+
+        strncpy(ptl_ib[i].hca_id, hca_id[i],
+                sizeof(VAPI_hca_id_t));
+        /* Open the HCA */
+        ret = EVAPI_get_hca_hndl(ptl_ib[i].hca_id, 
+                &ptl_ib[i].nic);
+
+        MCA_PTL_IB_VAPI_RET(NULL, ret, "EVAPI_get_hca_hndl");
+
+        /* Querying for port properties */
+        ret = VAPI_query_hca_port_prop(ptl_ib[i].nic,
+                (IB_port_t)DEFAULT_PORT, 
+                (VAPI_hca_port_t *)&(ptl_ib[i].port));
+        MCA_PTL_IB_VAPI_RET(NULL, ret, "VAPI_query_hca_port_prop");
+    }
+
+    /* Create the Completion Queue & Protection handles
+     * before creating the UD Queue Pair */
+    for(i = 0; i < mca_ptl_ib_module.ib_num_ptls; i++) {
+
+        ret = VAPI_alloc_pd(ptl_ib[i].nic, &ptl_ib[i].ptag);
+        MCA_PTL_IB_VAPI_RET(NULL, ret, "VAPI_alloc_pd");
+
+        ret = VAPI_create_cq(ptl_ib[i].nic, DEFAULT_CQ_SIZE,
+                &ptl_ib[i].cq_hndl, &act_num_cqe);
+        MCA_PTL_IB_VAPI_RET(NULL, ret, "VAPI_create_cq");
+
+        /* If we didn't get any CQ entries, then return
+         * failure */
+        if(act_num_cqe == 0) {
+            return NULL;
+        }
+
+        ret = mca_ptl_ib_ud_cq_init(&ptl_ib[i]);
+
+        if(ret != VAPI_OK) {
+            return NULL;
+        }
+
+        ret = mca_ptl_ib_ud_qp_init(&ptl_ib[i]);
+
+        if(ret != VAPI_OK) {
+            return NULL;
+        }
+    }
+
+    if(mca_ptl_ib_module_send() != OMPI_SUCCESS) {
+        return NULL;
+    }
+
+    /* Allocate list of MCA ptl pointers */
+    ptls = (mca_ptl_t**) malloc(mca_ptl_ib_module.ib_num_ptls * 
+            sizeof(mca_ptl_t*));
+    if(NULL == ptls) {
+        return NULL;
+    }
+
+    memcpy(ptls, mca_ptl_ib_module.ib_ptls, 
+            mca_ptl_ib_module.ib_num_ptls * 
+            sizeof(mca_ptl_ib_t*));
+
+    *num_ptls = mca_ptl_ib_module.ib_num_ptls;
+
+    fprintf(stderr,"ptls = %p, num_ptls = %d\n",
+            ptls, *num_ptls);
+
+    free(hca_id);
+    return ptls;
+}
+
+/*
+ *  IB module control
+ */
+
+int mca_ptl_ib_module_control(int param, void* value, size_t size)
+{
+    /* Stub */
+    fprintf(stderr,"[%s][%d]\n", __FILE__, __LINE__);
+    return OMPI_SUCCESS;
+}
+
+
+/*
+ *  IB module progress.
+ */
+
+int mca_ptl_ib_module_progress(mca_ptl_tstamp_t tstamp)
+{
+    /* Stub */
+    fprintf(stderr,"[%s][%d]\n", __FILE__, __LINE__);
+    return OMPI_SUCCESS;
+}

@@ -1,0 +1,10 @@
+# -*- shell-script -*-
+#
+# $HEADER$
+#
+
+# Specific to this module
+
+PARAM_INIT_FILE=src/ptl_ib.c
+PARAM_CONFIG_HEADER_FILE="ptl_ib_config.h"
+PARAM_CONFIG_FILES="Makefile src/Makefile"
