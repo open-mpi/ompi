@@ -45,9 +45,9 @@ int mca_oob_cofs_send(
 
   /* create the file and open it... */
   snprintf(msg_file, OMPI_PATH_MAX, "%s/%d_%d_%d_%ld.msg", mca_oob_cofs_comm_loc,
-           mca_oob_base_self.jobid, mca_oob_base_self.procid, peer->procid, mca_oob_cofs_serial);
+           mca_oob_base_self.jobid, mca_oob_base_self.procid, peer->procid, (long)mca_oob_cofs_serial);
   snprintf(msg_file_tmp, OMPI_PATH_MAX, "%s/.%d_%d_%d_%ld.msg", mca_oob_cofs_comm_loc,
-           mca_oob_base_self.jobid, mca_oob_base_self.procid, peer->procid, mca_oob_cofs_serial);
+           mca_oob_base_self.jobid, mca_oob_base_self.procid, peer->procid, (long)mca_oob_cofs_serial);
 
   fp = fopen(msg_file_tmp, "w");
   if (fp == NULL) {
@@ -129,7 +129,7 @@ find_match(ompi_process_id_t jobid, ompi_process_id_t procid)
 {
   DIR* dir;
   struct dirent *ent;
-  uint64_t tmp_serial;
+  unsigned long tmp_serial;
   int tmp_jobid, tmp_procid, tmp_myprocid;
   int ret;
   bool found = false;
