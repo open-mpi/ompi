@@ -74,7 +74,7 @@ static void mca_ptl_base_check_cantmatch_for_match(
  *   - this routine may be called simoultaneously by more than one thread
  */
 int mca_ptl_base_match(mca_ptl_base_header_t *frag_header,
-        mca_ptl_base_recv_frag_t *frag_desc, int *match_made, 
+        mca_ptl_base_recv_frag_t *frag_desc, bool* match_made, 
         lam_list_t *additional_matches)
 {
     /* local variables */
@@ -85,7 +85,7 @@ int mca_ptl_base_match(mca_ptl_base_header_t *frag_header,
     int frag_src;
 
     /* initialization */
-    *match_made=0;
+    *match_made=false;
 
     /* communicator pointer */
     comm_ptr=lam_comm_lookup(frag_header->hdr_contextid);
@@ -128,7 +128,7 @@ int mca_ptl_base_match(mca_ptl_base_header_t *frag_header,
         if (matched_receive) {
 
             /* set flag indicating the input fragment was matched */
-            *match_made=1;
+            *match_made=true;
             /* associate the receive descriptor with the fragment
              * descriptor */
             frag_desc->frag_match=matched_receive;

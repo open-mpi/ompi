@@ -98,7 +98,8 @@ mca_pml_t* mca_pml_teg_module_init(int* priority,
         mca_pml_teg.teg_free_list_inc,
         NULL);
         
-    lam_list_init(&mca_pml_teg.teg_incomplete_sends);
+    STATIC_INIT(mca_pml_teg.teg_incomplete_sends, &lam_list_cls);
+    STATIC_INIT(mca_pml_teg.teg_procs, &lam_list_cls);
     lam_mutex_init(&mca_pml_teg.teg_lock);
     mca_pml_teg.teg_recv_sequence = 0;
     return &mca_pml_teg.super;

@@ -94,7 +94,7 @@ static bool mca_ptl_tcp_recv_frag_header(mca_ptl_tcp_recv_frag_t* frag, int sd)
         return false;
 
     /* attempt to match a posted recv */
-    /* ????? */
+    /* FIX */
 
     /* match was not made - so allocate buffer for eager send */
     if(NULL == frag->frag_match) {
