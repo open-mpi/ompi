@@ -201,6 +201,7 @@ mca_coll_hierarch_module_init(struct ompi_communicator_t *comm)
     if ( NULL == data->hier_reqs ) {
 	goto exit;
     }
+    data->hier_am_lleader=0; /* false */
 
     /* determine how many local leader there are and who they are */
     colorarr = (int *) comm->c_coll_selected_data;
@@ -228,8 +229,10 @@ mca_coll_hierarch_module_init(struct ompi_communicator_t *comm)
 		data->hier_my_lleader = c;
 	    }
 	    c++;
+	    if ( llr[c] == rank ) {
+		data->hier_am_lleader = 1; 
+	    }
 	}
-
     }
     
     data->hier_num_lleaders = c-1;
@@ -365,9 +368,6 @@ mca_coll_hierarch_checkfor_component ( struct ompi_communicator_t *comm,
 	}
     }
     
-    /* Here we might introduce later on an allreduce step to determine,
-       whether we agree on the result or not  */
-
     *ncount = counter; /* true */
     /* Print the final result */
     if ( counter == 1 ) {

@@ -44,6 +44,7 @@ extern int mca_coll_hierarch_verbose;
 	int                   hier_num_lleaders; /* number of local leaders */
 	int                      *hier_lleaders; /* list of local leaders */
 	int                     hier_my_lleader; /* pos. of my lleader in hier_lleaders */
+	int                     hier_am_lleader; /* am I an lleader? */
 	int                       hier_num_reqs; /* num. of requests */
 	ompi_request_t              **hier_reqs; /* list of requests */
     };
