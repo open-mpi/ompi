@@ -33,6 +33,7 @@
 #include "util/sys_info.h"
 #include "util/os_path.h"
 #include "util/os_create_dirpath.h"
+#include "util/os_session_dir.h"
 
 static int ompi_check_dir(bool create, char *directory);
 
