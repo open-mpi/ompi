@@ -33,6 +33,7 @@ sinclude(config/lam_setup_cc.m4)
 sinclude(config/lam_setup_cxx.m4)
 sinclude(config/lam_setup_f77.m4)
 sinclude(config/lam_setup_f90.m4)
+sinclude(config/lam_setup_libevent.m4)
 
 sinclude(config/lam_check_pthread_pids.m4)
 sinclude(config/lam_config_pthreads.m4)

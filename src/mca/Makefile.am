@@ -25,18 +25,20 @@ headers = mca.h
 noinst_LTLIBRARIES = libmca.la
 
 libmca_la_SOURCES =
-libmca_la_LIBADD = $(LIBLTDL_LTLIB) \
+libmca_la_LIBADD = \
         base/libmca_base.la \
-        common/libmca_common.la \
         coll/libmca_coll.la \
-        io/libmca_io.la \
-        one/libmca_one.la \
         oob/libmca_oob.la \
         pcm/libmca_pcm.la \
         pml/libmca_pml.la \
         ptl/libmca_ptl.la \
         registry/libmca_registry.la
 libmca_la_DEPENDENCIES = $(libmca_la_LIBADD)
+
+not_implemented_yet = \
+        one/libmca_one.la \
+        io/libmca_io.la \
+        common/libmca_common.la
 
 # Conditionally install the header files
 
