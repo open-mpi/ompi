@@ -116,7 +116,7 @@ start_proc() {
     local argv="$*"
     local rmt_boot="${lam_mydir}/mpiboot"
 
-    local cmd="ssh ${rmt_hostname} ${rmt_boot} -myvpid ${rmt_vpid}"
+    local cmd="ssh ${rmt_hostname} -f -n ${rmt_boot} -myvpid ${rmt_vpid}"
     cmd="${cmd} -numprocs ${lam_numprocs} -jobhandle ${lam_jobhandle}"
     cmd="${cmd} -pwd ${lam_cwd}"
     if test ! -z "${MCA_common_lam_cofs_comm_dir}" ; then
@@ -193,7 +193,7 @@ launch_procs() {
 # Do the prep work
 #
 ######################################################################
-lam_jobhandle="pcm_cofs_job_handle_${$}_0"
+lam_jobhandle="pcm-cofs-job-handle-${$}-0"
 
 
 ######################################################################

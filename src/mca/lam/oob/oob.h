@@ -101,5 +101,7 @@ typedef mca_oob_1_0_0_t mca_oob_t;
   /* oob v1.0 */ \
   "oob", 1, 0, 0
 
+extern mca_oob_t mca_oob;
+
 
 #endif
