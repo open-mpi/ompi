@@ -91,7 +91,7 @@ int MPI_Comm_spawn(char *command, char **argv, int maxprocs, MPI_Info info,
        ompi_open_port (port_name);
        ompi_comm_start_processes (1, &command, &argv, &maxprocs, 
                                   &info, port_name);
-       tmp_port = ompi_parse_port (port_name, &tag);
+       tmp_port = ompi_parse_port (port_name, &tag, NULL);
        free(tmp_port);
    }
    

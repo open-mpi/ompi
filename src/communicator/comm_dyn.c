@@ -380,14 +380,20 @@ ompi_comm_start_processes(int count, char **array_of_commands,
         }
 
         /* Add environment variable with the contact information for the 
-           child processes */
+           child processes. 
+	   12.23.2004 EG: the content of the environment variable
+	   does know hold additionally to the oob contact information
+	   also the information, which application in spawn/spawn_multiple
+	   it has been. This information is needed to construct the 
+	   attribute MPI_APPNUM on the children side (an optional 
+	   MPI-2 attribute. */
         asprintf(&envvarname, "OMPI_PARENT_PORT_%u", new_jobid);
-        asprintf(&tmp, "%s=%s", envvarname, port_name);
+        asprintf(&tmp, "%s=%s:%d", envvarname, port_name, i);
         ompi_argv_append(&(sched->envc), &(sched->env), tmp);
         free(tmp);
         free(envvarname);
 
-	/* Verify for the 'wdir' and later potentially for the
+	/* Check for the 'wdir' and later potentially for the
 	   'path' Info object */
 	have_wdir = 0; 
 	if ( array_of_info != NULL && array_of_info[i] != MPI_INFO_NULL ) {
@@ -482,6 +488,8 @@ int ompi_comm_dyn_init (void)
     ompi_process_name_t *port_proc_name=NULL;
     ompi_group_t *group = NULL;
     ompi_errhandler_t *errhandler = NULL;
+    char remainder[128];
+    int appnum=0;
 
     /* get jobid */
     /* JMS: Previous was using ompi_proc_self() here, which
@@ -501,8 +509,11 @@ int ompi_comm_dyn_init (void)
     if (NULL != port_name ) {
 	ompi_communicator_t *oldcomm;
 
-	/* we have been spawned */
-	oob_port = ompi_parse_port (port_name, &tag);
+	/* split the content of the environment variable into 
+	   its pieces, which are : port_name, tag, and mpi_appnum. */
+	oob_port = ompi_parse_port (port_name, &tag, &(remainder[0]));
+	sscanf (remainder, "%d", &appnum);
+	
 	port_proc_name = ompi_name_server.convert_string_to_process_name(oob_port);
 	ompi_comm_connect_accept (MPI_COMM_WORLD, root, port_proc_name,  
 				  send_first, &newcomm, tag );
