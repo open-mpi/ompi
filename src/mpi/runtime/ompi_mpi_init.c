@@ -27,6 +27,7 @@
 #include "group/group.h"
 #include "info/info.h"
 #include "util/show_help.h"
+#include "util/stacktrace.h"
 #include "errhandler/errcode.h"
 #include "errhandler/errclass.h"
 #include "request/request.h"
@@ -123,6 +124,11 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     if (OMPI_SUCCESS != (ret = ompi_mpi_register_params())) {
         error = "mca_mpi_register_params() failed";
         goto error;
+    }
+
+    if (OMPI_SUCCESS != (ret = ompi_util_register_stackhandlers ())) {
+	error = "util_register_stackhandlers() failed";
+	goto error;
     }
 
     /* initialize ompi procs */
