@@ -5,6 +5,8 @@
 
 include $(top_lam_srcdir)/config/Makefile.options
 
+SUBDIRS = romio-1.2.5.1
+
 AM_CPPFLAGS = \
         -I$(top_lam_builddir)/src/include \
         -I$(top_lam_srcdir)/src \

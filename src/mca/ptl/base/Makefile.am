@@ -19,6 +19,7 @@ headers = \
 	ptl_base_header.h \
 	ptl_base_match.h \
 	ptl_base_recvfrag.h \
+	ptl_base_recvreq.h \
 	ptl_base_sendfrag.h \
 	ptl_base_sendreq.h 
 

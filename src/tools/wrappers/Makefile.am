@@ -29,22 +29,22 @@ bin_PROGRAMS    = mpicc mpic++ mpif77 mpif90
 
 EXTRA_DIST    = wrap.cc wrap_engine.cc
 
-mpicc_SOURCES       = mpicc.cc wrap_cc.cc wrap_engine_cc.cc
+mpicc_SOURCES       = mpicc.cc wrap_cc.cc wrap_engine_cc.cc lamwrap.h
 mpicc_LDADD         = $(libs) $(LIBLAM_EXTRA_LIBS)
 mpicc_LDFLAGS       = $(LIBLAM_EXTRA_LDFLAGS)
 mpicc_DEPENDENCIES  = $(libs)
 
-mpic___SOURCES      = mpicxx.cc wrap_cxx.cc wrap_engine_cxx.cc
+mpic___SOURCES      = mpicxx.cc wrap_cxx.cc wrap_engine_cxx.cc lamwrap.h
 mpic___LDADD        = $(libs) $(LIBLAM_EXTRA_LIBS)
 mpic___LDFLAGS      = $(LIBLAM_EXTRA_LDFLAGS)
 mpic___DEPENDENCIES = $(libs)
 
-mpif77_SOURCES      = mpif77.cc wrap_f77.cc wrap_engine_f77.cc
+mpif77_SOURCES      = mpif77.cc wrap_f77.cc wrap_engine_f77.cc lamwrap.h
 mpif77_LDADD        = $(libs) $(LIBLAM_EXTRA_LIBS)
 mpif77_LDFLAGS      = $(LIBLAM_EXTRA_LDFLAGS)
 mpif77_DEPENDENCIES = $(libs)
 
-mpif90_SOURCES      = mpif90.cc wrap_f90.cc wrap_engine_f90.cc
+mpif90_SOURCES      = mpif90.cc wrap_f90.cc wrap_engine_f90.cc lamwrap.h
 mpif90_LDADD        = $(libs) $(LIBLAM_EXTRA_LIBS)
 mpif90_LDFLAGS      = $(LIBLAM_EXTRA_LDFLAGS)
 mpif90_DEPENDENCIES = $(libs)

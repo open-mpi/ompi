@@ -755,6 +755,7 @@ AC_CONFIG_FILES([
     src/communicator/Makefile
     src/datatype/Makefile
     src/errhandler/Makefile
+    src/file/Makefile
     src/group/Makefile
     src/info/Makefile
     src/op/Makefile
@@ -784,8 +785,6 @@ AC_CONFIG_FILES([
     src/mca/pml/base/Makefile
     src/mca/ptl/Makefile
     src/mca/ptl/base/Makefile
-    src/mca/topo/Makefile
-    src/mca/topo/base/Makefile
 
     src/mpi/Makefile
     src/mpi/c/Makefile
@@ -799,21 +798,5 @@ AC_CONFIG_FILES([
     src/tools/laminfo/Makefile
     src/tools/mpirun/Makefile
     src/tools/wrappers/Makefile
-
-    test/Makefile
-    test/support/Makefile
-    test/lam/Makefile
-    test/lam/lfc/Makefile
-    test/lam/threads/Makefile
-    test/lam/util/Makefile
-    test/mpi/Makefile
-    test/mpi/environment/Makefile
-    test/unit/Makefile
-    test/unit/lam/Makefile
-    test/unit/lam/oob_cofs/Makefile
-    test/unit/lam/util/Makefile
-    test/unit/mpi/Makefile
-    test/unit/mpi/communicator/Makefile
-    test/unit/mpi/datatype/Makefile
 ])
 AC_OUTPUT
