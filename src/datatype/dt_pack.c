@@ -69,13 +69,15 @@ int ompi_convertor_pack_general( ompi_convertor_t* pConvertor,
                         goto complete_loop;  /* completed */
                     pConvertor->stack_pos--;
                     pStack--;
-                }
-                if( pStack->index == -1 ) {
-                    pStack->disp += (pData->ub - pData->lb);
+                    pos_desc++;
                 } else {
-                    pStack->disp += pElem[pStack->index].extent;
+                    pos_desc = pStack->index + 1;
+                    if( pStack->index == -1 ) {
+                        pStack->disp += (pData->ub - pData->lb);
+                    } else {
+                        pStack->disp += pElem[pStack->index].extent;
+                    }
                 }
-                pos_desc = pStack->index + 1;
                 count_desc = pElem[pos_desc].count;
                 disp_desc = pElem[pos_desc].disp;
             }
@@ -96,7 +98,8 @@ int ompi_convertor_pack_general( ompi_convertor_t* pConvertor,
                 /* now here we have a basic datatype */
                 type = pElem[pos_desc].type;
                 rc = pConvertor->pFunctions[type]( count_desc,
-                                                   pOutput + pStack->disp + disp_desc, oCount, pElem[pos_desc].extent,
+                                                   pOutput + pStack->disp + disp_desc,
+                                                   iCount, pElem[pos_desc].extent,
                                                    pInput, iCount, ompi_ddt_basicDatatypes[type]->size );
                 advance = rc * ompi_ddt_basicDatatypes[type]->size;
                 iCount -= advance;      /* decrease the available space in the buffer */
@@ -582,9 +585,8 @@ int ompi_convertor_pack_no_conversion_contig( ompi_convertor_t* pConv,
                                               int* freeAfter )
 {
     dt_desc_t* pData = pConv->pDesc;
-    char* pSrc = pConv->pBaseBuf + pData->true_lb;
     dt_stack_t* pStack = &(pConv->pStack[pConv->stack_pos]);
-    char* pDest;
+    char *pSrc, *pDest;
     size_t length = pData->size * pConv->count;
     long extent;
     uint32_t max_allowed = *max_data;
@@ -635,6 +637,7 @@ int ompi_convertor_pack_no_conversion_contig( ompi_convertor_t* pConv,
                         pSrc += extent;
                     }
                     max_allowed -= iov[index].iov_len;
+                    total_bytes_converted += iov[index].iov_len;
                 }
                 *out_size = index;
                 *max_data = total_bytes_converted + - max_allowed;
@@ -656,6 +659,7 @@ int ompi_convertor_pack_no_conversion_contig( ompi_convertor_t* pConv,
                 MEMCPY( iov[iov_count].iov_base, pSrc, iov[iov_count].iov_len);
             }
             *max_data = iov[iov_count].iov_len;
+            total_bytes_converted += iov[iov_count].iov_len;
         } else {
             uint32_t done, counter;
             
@@ -677,6 +681,7 @@ int ompi_convertor_pack_no_conversion_contig( ompi_convertor_t* pConv,
                 pDest += done;
                 max_allowed -= done;
                 i++;  /* just to compute the correct source pointer */
+                total_bytes_converted += done;
             }
             pSrc = pConv->pBaseBuf + pData->true_lb + i * extent;
             counter = max_allowed / pData->size;
@@ -688,12 +693,12 @@ int ompi_convertor_pack_no_conversion_contig( ompi_convertor_t* pConv,
                 pSrc += extent;
             }
             max_allowed -= (counter * pData->size);
-            total_bytes_converted += iov[iov_count].iov_len - max_allowed;
-            iov[iov_count].iov_len = *max_data;
+            iov[iov_count].iov_len -= max_allowed;
+            total_bytes_converted += iov[iov_count].iov_len;
         }
     }
     *max_data = total_bytes_converted;
-    pConv->bConverted += iov[iov_count].iov_len;
+    pConv->bConverted += total_bytes_converted;
     *out_size = iov_count;
     return (pConv->bConverted == length);
 }
@@ -800,14 +805,12 @@ int ompi_convertor_init_for_send( ompi_convertor_t* pConv,
     if( dt->flags & DT_FLAG_CONTIGUOUS ) {
 	pConv->flags |= DT_FLAG_CONTIGUOUS | CONVERTOR_HOMOGENEOUS;
 	pConv->fAdvance = ompi_convertor_pack_no_conversion_contig;
-    } else {
-	/* TODO handle the sender convert case */
-	pConv->fAdvance = ompi_convertor_pack_no_conversion_contig;
-	pConv->fAdvance = ompi_convertor_pack_no_conversion;
+	return ompi_convertor_create_stack_with_pos_contig( pConv, starting_pos, ompi_ddt_local_sizes );
     }
     pConv->fAdvance = ompi_convertor_pack_general;
+    pConv->fAdvance = ompi_convertor_pack_no_conversion;
     if( starting_pos != 0 ) {
-	return ompi_convertor_create_stack_with_pos( pConv, starting_pos, ompi_ddt_local_sizes );
+	return ompi_convertor_create_stack_with_pos_general( pConv, starting_pos, ompi_ddt_local_sizes );
     }
     return ompi_convertor_create_stack_at_begining( pConv, ompi_ddt_local_sizes );
 }
