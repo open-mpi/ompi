@@ -5,6 +5,22 @@
 procedure='MPI_Sizeof'
 
 rank=0
+for kind in $lkinds
+do
+    proc="${procedure}${rank}DL${kind}"
+    echo "subroutine ${proc}(x, size, ierr)"
+    echo "  use mpi_kinds"
+    echo "  implicit none"
+    echo "  include 'fortran_sizes.h'"
+    echo "  logical(kind=MPI_INTEGER${kind}_KIND), intent(in) :: x"
+    echo "  integer, intent(out) :: size"
+    echo "  integer, intent(out) :: ierr"
+    echo "  size = OMPI_SIZEOF_F90_LOGICAL${kind}"
+    echo "  ierr = 0"
+    echo "end subroutine ${proc}"
+    echo
+done
+
 for kind in $ikinds
 do
     proc="${procedure}${rank}DI${kind}"
@@ -67,6 +83,22 @@ do
   case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
   case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
 
+  for kind in $lkinds
+  do
+    proc="${procedure}${rank}DL${kind}"
+    echo "subroutine ${proc}(x, size, ierr)"
+    echo "  use mpi_kinds"
+    echo "  implicit none"
+    echo "  include 'fortran_sizes.h'"
+    echo "  logical(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(in) :: x"
+    echo "  integer, intent(out) :: size"
+    echo "  integer, intent(out) :: ierr"
+    echo "  size = OMPI_SIZEOF_F90_LOGICAL${kind}"
+    echo "  ierr = 0"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
   for kind in $ikinds
   do
     proc="${procedure}${rank}DI${kind}"
@@ -77,7 +109,6 @@ do
     echo "  integer(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(in) :: x"
     echo "  integer, intent(out) :: size"
     echo "  integer, intent(out) :: ierr"
-    echo "  integer(kind=MPI_INTEGER${kind}_KIND) :: type"
     echo "  size = OMPI_SIZEOF_F90_INT${kind}"
     echo "  ierr = 0"
     echo "end subroutine ${proc}"
@@ -94,7 +125,6 @@ do
     echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: x"
     echo "  integer, intent(out) :: size"
     echo "  integer, intent(out) :: ierr"
-    echo "  real(kind=MPI_REAL${kind}_KIND) :: type"
     echo "  size = OMPI_SIZEOF_F90_REAL${kind}"
     echo "  ierr = 0"
     echo "end subroutine ${proc}"
@@ -114,7 +144,6 @@ do
     echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: x"
     echo "  integer, intent(out) :: size"
     echo "  integer, intent(out) :: ierr"
-    echo "  complex(kind=MPI_REAL${kind}_KIND) :: type"
     echo "  size = OMPI_SIZEOF_F90_COMPLEX${size_kind}"
     echo "  ierr = 0"
     echo "end subroutine ${proc}"
