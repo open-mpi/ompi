@@ -22,6 +22,7 @@
 #include "datatype/datatype.h"
 #include "communicator/communicator.h"
 #include "win/win.h"
+#include "mpi/f77/fint_2_int.h"
 
 /*
  * Macros
@@ -48,10 +49,18 @@
 
 #define DELETE_ATTR_OBJECT(type, attribute) \
     if((key_item->attr_flag & OMPI_KEYVAL_F77)) { \
+        MPI_Fint f_key = OMPI_INT_2_FINT(key); \
+        MPI_Fint f_err; \
         (*((key_item->delete_attr_fn).attr_F_delete_fn)) \
                             (&(((ompi_##type##_t *)object)->attr_##type##_f), \
-			    &key, (int *) &attribute, \
-			    (int *) &key_item->extra_state, &err); \
+			    &f_key, (MPI_Fint *) &attribute, \
+			    (MPI_Fint *) key_item->extra_state, &f_err); \
+        if (MPI_SUCCESS != OMPI_FINT_2_INT(f_err)) { \
+            if (need_lock) { \
+                OMPI_THREAD_UNLOCK(&alock); \
+            } \
+            return OMPI_FINT_2_INT(f_err); \
+        } \
     } else { \
         if ((err = (*((key_item->delete_attr_fn).attr_##type##_delete_fn)) \
                             ((ompi_##type##_t *)object, \
@@ -66,17 +75,25 @@
 
 #define COPY_ATTR_OBJECT(type, old_object, hash_value) \
     if((hash_value->attr_flag & OMPI_KEYVAL_F77)) { \
+        MPI_Fint f_key = OMPI_INT_2_FINT(key); \
+        MPI_Fint f_err; \
+        ompi_fortran_logical_t f_flag; \
         (*((hash_value->copy_attr_fn).attr_F_copy_fn)) \
                    (&(((ompi_##type##_t *)old_object)->attr_##type##_f),\
-		    (int *) &key, (int *) &hash_value->extra_state, \
-		    (int *) &old_attr, \
-		    (int *) &new_attr, &flag, &err); \
+		    &f_key, (MPI_Fint *) hash_value->extra_state, \
+		    (MPI_Fint *) &old_attr, \
+		    (MPI_Fint *) &new_attr, &f_flag, &f_err); \
+        if (MPI_SUCCESS != OMPI_FINT_2_INT(f_err)) { \
+            OMPI_THREAD_UNLOCK(&alock); \
+            return OMPI_FINT_2_INT(f_err); \
+        } \
+        flag = OMPI_FINT_2_INT(f_flag); \
     } else { \
         if ((err = (*((hash_value->copy_attr_fn).attr_##type##_copy_fn)) \
               ((ompi_##type##_t *)old_object, key, hash_value->extra_state, \
                old_attr, &new_attr, &flag)) != MPI_SUCCESS) { \
             OMPI_THREAD_UNLOCK(&alock); \
-           return err; \
+            return err; \
         }\
     }
 
@@ -229,12 +246,6 @@ ompi_attr_create_keyval(ompi_attribute_type_t type,
     attr->key = *key;
     attr->attr_flag = flags;
 
-    /* Bump up the reference count, since we want the object to be
-       destroyed only when free_keyval is called and not when all
-       attributes associated with it have been deleted */
-
-    OBJ_RETAIN(attr);
-
     /* Other fields will be filled in by the create_attr function */
   
     return MPI_SUCCESS;
@@ -378,7 +389,7 @@ ompi_attr_set(ompi_attribute_type_t type, void *object,
     ompi_attrkey_item_t *key_item;
     int ret, err;
     void *oldattr;
-    int had_old = 0;
+    bool had_old = false;
 
     /* Protect against the user calling ompi_attr_destroy and then
        calling any of the functions which use it  */
@@ -441,7 +452,7 @@ ompi_attr_set(ompi_attribute_type_t type, void *object,
             /* show_help */
             return MPI_ERR_INTERN;
 	}
-	had_old = 1;
+	had_old = true;
     }
 
     ret = ompi_hash_table_set_value_uint32(*keyhash, key, attribute); 
