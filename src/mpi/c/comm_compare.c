@@ -35,8 +35,7 @@ int MPI_Comm_compare(MPI_Comm comm1, MPI_Comm comm2, int *result) {
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
-        if ( MPI_COMM_NULL == comm1 || MPI_COMM_NULL == comm2 || 
-             ompi_comm_invalid ( comm1 ) || ompi_comm_invalid (comm2) )
+        if ( NULL == comm1 || NULL == comm2 )
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
                                           FUNC_NAME);
 
@@ -53,11 +52,16 @@ int MPI_Comm_compare(MPI_Comm comm1, MPI_Comm comm2, int *result) {
         return MPI_SUCCESS;
     }
 
+    if ( MPI_COMM_NULL == comm1 || MPI_COMM_NULL == comm2 ) {
+	*result = MPI_UNEQUAL;
+	return MPI_SUCCESS;
+    }
+
     /* compare sizes of local and remote groups */
     size1 = ompi_comm_size (comp1);
-    size2 = ompi_comm_size (comp1);
+    size2 = ompi_comm_size (comp2);
     rsize1 = ompi_comm_remote_size (comp1);
-    rsize2 = ompi_comm_remote_size (comp1);
+    rsize2 = ompi_comm_remote_size (comp2);
 
     if ( size1 != size2 || rsize1 != rsize2 ) {
         *result = MPI_UNEQUAL;
