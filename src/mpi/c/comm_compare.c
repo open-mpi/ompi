@@ -25,7 +25,7 @@ int MPI_Comm_compare(MPI_Comm comm1, MPI_Comm comm2, int *result) {
     ompi_communicator_t *comp1, *comp2;
     ompi_group_t *grp1, *grp2;
     int size1, size2, rsize1, rsize2;
-    int lresult, rresult=MPI_SIMILAR;
+    int lresult, rresult=MPI_CONGRUENT;
     int sameranks = 1;
     int sameorder = 1;
     int i, j;
