@@ -103,10 +103,15 @@ static int mca_ptl_prof_component_open_fn( void )
 
 static int mca_ptl_prof_component_close_fn( void )
 {
+#if 0
+    /* JMS This should only occur if this component was selected -- if
+       it wasn't selected, it appears that the PTL base takes care of
+       freeing this (ptl_base_select.c line 124) */
     if( NULL != mca_ptl_prof_component.prof_ptls ) {
         free( mca_ptl_prof_component.prof_ptls );
         mca_ptl_prof_component.prof_ptls = NULL;
     }
+#endif
     return OMPI_SUCCESS;
 }
 
