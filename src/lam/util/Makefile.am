@@ -13,8 +13,8 @@ headers = \
     argv.h \
     cmd_line.h \
     few.h \
-    lam_log.h \
     malloc.h \
+    output.h \
     path.h \
     reactor.h \
     strncpy.h
@@ -24,7 +24,7 @@ libutil_la_SOURCES = \
     argv.c \
     cmd_line.c \
     few.c \
-    lam_log.c \
+    output.c \
     path.c \
     reactor.c \
     strncpy.c
