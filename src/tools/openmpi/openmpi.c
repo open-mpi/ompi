@@ -193,7 +193,7 @@ int main(int argc, char **argv)
     /* does universe already exist on specified host? Check session directory to see */
     /* don't know how to handle remote host yet - only cover localhost */
 
-    if (NULL == ompi_universe.host) { /* localhost specified or defaulted */
+    if (0 == strncmp(ompi_universe.host, ompi_system_info.nodename, strlen(ompi_system_info.nodename))) { /* localhost specified or defaulted */
 	if (OMPI_SUCCESS == ompi_session_dir(false, tmpdir, ompi_system_info.user, ompi_system_info.nodename, NULL,
 					     ompi_universe.name, NULL, NULL)) { /* found */
 	    fprintf(stderr, "think i found something\n");
