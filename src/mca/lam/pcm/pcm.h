@@ -79,8 +79,8 @@ typedef struct lam_pcm_control_args {
  * functions every module must provide
  */
 
-typedef int (*mca_pcm_query_fn_t)(int *priority);
-typedef struct mca_pcm_1_0_0* (*mca_pcm_init_fn_t)(void);
+typedef int (*mca_pcm_base_query_fn_t)(int *priority);
+typedef struct mca_pcm_1_0_0_t* (*mca_pcm_base_init_fn_t)(void);
 
   /**
    * \func lam_pcm_query_get_nodes
@@ -104,8 +104,9 @@ typedef struct mca_pcm_1_0_0* (*mca_pcm_init_fn_t)(void);
    * In the case where both are available, available_procs will be
    * equal to the sum of nodes[0...n].num_procs.
    */
-typedef int (*mca_pcm_query_get_nodes)(lam_pcm_node_t **nodes, size_t *nodes_len, 
-                                       int available_procs);
+typedef int (*mca_pcm_base_query_get_nodes_fn_t)(lam_pcm_node_t **nodes, 
+                                                 size_t *nodes_len, 
+                                                 int available_procs);
 
 
   /**
@@ -127,7 +128,7 @@ typedef int (*mca_pcm_query_get_nodes)(lam_pcm_node_t **nodes, size_t *nodes_len
    *
    * \warning The handle must be released using lam_pcm_handle_free
    */
-typedef lam_job_handle_t (*mca_pcm_handle_new_fn_t)(lam_job_handle_t parent);
+typedef lam_job_handle_t (*mca_pcm_base_handle_new_fn_t)(lam_job_handle_t parent);
 
 
   /**
@@ -140,7 +141,7 @@ typedef lam_job_handle_t (*mca_pcm_handle_new_fn_t)(lam_job_handle_t parent);
    *
    * \warning The handle must be released using lam_pcm_handle_free
    */
-typedef lam_job_handle_t (*mca_pcm_handle_get_fn_t)(void);
+typedef lam_job_handle_t (*mca_pcm_base_handle_get_fn_t)(void);
 
 
   /**
@@ -151,7 +152,7 @@ typedef lam_job_handle_t (*mca_pcm_handle_get_fn_t)(void);
    * Free a job handle returned by lam_pcm_handle_new or
    * lam_pcm_handle_get.
    */
-typedef void (*mca_pcm_handle_free_fn_t)(lam_job_handle_t *job_handle);
+typedef void (*mca_pcm_base_handle_free_fn_t)(lam_job_handle_t *job_handle);
 
 
   /**
@@ -167,7 +168,7 @@ typedef void (*mca_pcm_handle_free_fn_t)(lam_job_handle_t *job_handle);
    * always return LAM_SUCCESS (yes) if called from mpirun.  Useful
    * for asking if MPI_SPAWN and friends can run.
    */
-typedef int (*mca_pcm_job_can_sapwn_fn_t)(lam_job_handle_t job_handle);
+typedef int (*mca_pcm_base_job_can_spawn_fn_t)(lam_job_handle_t job_handle);
 
 
   /**
@@ -190,7 +191,7 @@ typedef int (*mca_pcm_job_can_sapwn_fn_t)(lam_job_handle_t job_handle);
    * \Warning It is an error to call this function more than once on a single
    * job handle.
    */
-typedef int (*mca_pcm_job_set_arguments_fn_t)(lam_job_handle_t job_handle, 
+typedef int (*mca_pcm_base_job_set_arguments_fn_t)(lam_job_handle_t job_handle, 
                                               lam_pcm_control_args_t* opts, 
                                               size_t opts_len);
 
@@ -220,7 +221,7 @@ typedef int (*mca_pcm_job_set_arguments_fn_t)(lam_job_handle_t job_handle,
    * LAM_ERR_NOT_SUPPORTED will be returned if the mca module does not
    * support spawning of new applications from
    */
-typedef int (*mca_pcm_job_launch_procs_fn_t)(lam_job_handle_t job_handle, 
+typedef int (*mca_pcm_base_job_launch_procs_fn_t)(lam_job_handle_t job_handle, 
                                              lam_pcm_node_t *nodes, 
                                              size_t nodes_len, const char* file, 
                                              int argc, const char* argv[], 
@@ -243,7 +244,7 @@ typedef int (*mca_pcm_job_launch_procs_fn_t)(lam_job_handle_t job_handle,
    * returns, it is safe to assume that all rendezvous is complete
    * (ie, you can exit and not mess anything up
    */
-typedef int (*mca_pcm_job_rendezvous_fn_t)(lam_job_handle_t job_handle);
+typedef int (*mca_pcm_base_job_rendezvous_fn_t)(lam_job_handle_t job_handle);
 
 
   /**
@@ -258,7 +259,7 @@ typedef int (*mca_pcm_job_rendezvous_fn_t)(lam_job_handle_t job_handle);
    * on a job at termination, as job results will be expunged over
    * time as resource limits dictate.
    */
-typedef int (*mca_pcm_job_wait_fn_t)(lam_job_handle_t job_handle);
+typedef int (*mca_pcm_base_job_wait_fn_t)(lam_job_handle_t job_handle);
 
 
   /**
@@ -273,7 +274,7 @@ typedef int (*mca_pcm_job_wait_fn_t)(lam_job_handle_t job_handle);
    * Ask if job is running.  If job has recently finished, this does
    * not imply wait the pcm interface will call wait for you.
    */
-typedef int (*mca_pcm_job_running_fn_t)(lam_job_handle_t job_handle, 
+typedef int (*mca_pcm_base_job_running_fn_t)(lam_job_handle_t job_handle, 
                                         int* running);
 
 
@@ -291,7 +292,7 @@ typedef int (*mca_pcm_job_running_fn_t)(lam_job_handle_t job_handle,
    *
    * \warning This function is not yet implemented.
    */
-typedef int (*mca_pcm_job_list_running_fn_t)(lam_job_handle_t **handles, 
+typedef int (*mca_pcm_base_job_list_running_fn_t)(lam_job_handle_t **handles, 
                                              size_t handles_len);
 
 
@@ -313,7 +314,7 @@ typedef int (*mca_pcm_job_list_running_fn_t)(lam_job_handle_t **handles,
    * integration with the oob mca module is probably required to meet
    * this constraint).
    */
-typedef int (*mca_pcm_proc_startup_fn_t)(void);
+typedef int (*mca_pcm_base_proc_startup_fn_t)(void);
 
 
   /**
@@ -328,7 +329,7 @@ typedef int (*mca_pcm_proc_startup_fn_t)(void);
    * \warning This function is not implemented and its argument list
    * will obviously change in the very near future.
    */
-typedef int (*mca_pcm_proc_get_peers_fn_t)(void);
+typedef int (*mca_pcm_base_proc_get_peers_fn_t)(void);
 
 
   /**
@@ -341,7 +342,7 @@ typedef int (*mca_pcm_proc_get_peers_fn_t)(void);
    * \warning This function is not implemented and its argument list
    * will obviously change in the very near future.
    */
-typedef  int (*mca_pcm_proc_get_me_fn_t)(void);
+typedef  int (*mca_pcm_base_proc_get_me_fn_t)(void);
 
   /**
    * Get my entry in the peers list
@@ -353,46 +354,56 @@ typedef  int (*mca_pcm_proc_get_me_fn_t)(void);
    * \warning This function is not implemented and its argument list
    * will obviously change in the very near future.
    */
-typedef int (*mca_pcm_proc_get_parent_fn_t)(void);
+typedef int (*mca_pcm_base_proc_get_parent_fn_t)(void);
 
-typedef int (*mca_pcm_finalize_fn_t)(void);
+typedef int (*mca_pcm_base_finalize_fn_t)(void);
 
 
 /*
  * Ver 1.0.0
  */
-typedef struct mca_pcm_module_1_0_0 {
-  mca_module_1_0_0_t super;
+struct mca_pcm_base_module_1_0_0_t {
+  mca_base_module_t pcmm_version;
+  mca_base_module_data_1_0_0_t pcmm_data;
 
-  mca_pcm_query_fn_t pcmm_query;
-  mca_pcm_init_fn_t pcmm_init;
-  mca_pcm_finalize_fn_t pcmm_finalize;
-} mca_pcm_module_1_0_0_t;
+  mca_pcm_base_query_fn_t pcmm_query;
+  mca_pcm_base_init_fn_t pcmm_init;
+  mca_pcm_base_finalize_fn_t pcmm_finalize;
+};
+typedef struct mca_pcm_base_module_1_0_0_t mca_pcm_base_module_1_0_0_t;
 
-typedef struct mca_pcm_1_0_0 {
-  mca_1_0_0_t super;
+struct mca_pcm_1_0_0_t {
+  mca_pcm_base_query_get_nodes_fn_t pcm_query_get_nodes;
 
-  mca_pcm_query_get_nodes_fn_t pcm_query_get_nodes;
+  mca_pcm_base_handle_new_fn_t pcm_handle_new;
+  mca_pcm_base_handle_get_fn_t pcm_handle_get;
+  mca_pcm_base_handle_free_fn_t pcm_handle_free;
 
-  mca_pcm_handle_new_fn_t pcm_handle_new;
-  mca_pcm_handle_get_fn_t pcm_handle_get;
-  mca_pcm_handle_free_fn_t pcm_handle_free;
+  mca_pcm_base_job_can_spawn_fn_t pcm_job_can_spawn;
+  mca_pcm_base_job_set_arguments_fn_t pcm_job_set_arguments;
+  mca_pcm_base_job_launch_procs_fn_t pcm_job_launch_procs;
+  mca_pcm_base_job_rendezvous_fn_t pcm_job_rendezvous;
+  mca_pcm_base_job_wait_fn_t pcm_job_wait;
+  mca_pcm_base_job_running_fn_t pcm_job_running;
+  mca_pcm_base_job_list_running_fn_t pcm_job_list_running;
 
-  mca_pcm_job_can_spwan_fn_t pcm_job_can_spawn;
-  mca_pcm_job_set_arguments_fn_t pcm_job_set_arguments;
-  mca_pcm_job_launch_procs_fn_t pcm_job_launch_procs;
-  mca_pcm_job_rendezvous_fn_t pcm_job_rendezvous;
-  mca_pcm_job_wait_fn_t pcm_job_wait;
-  mca_pcm_job_running_fn_t pcm_job_running;
-  mca_pcm_job_list_running_fn_t pcm_job_list_running;
+  mca_pcm_base_proc_startup_fn_t pcm_proc_startup;
+  mca_pcm_base_proc_get_peers_fn_t pcm_proc_get_peers;
+  mca_pcm_base_proc_get_me_fn_t pcm_proc_get_me;
+  mca_pcm_base_proc_get_parent_fn_t pcm_proc_get_parent;
+};
+typedef struct mca_pcm_1_0_0_t mca_pcm_1_0_0_t;
 
-  mca_pcm_proc_startup_fn_t pcm_proc_startup;
-  mca_pcm_proc_get_peers_fn_t pcm_proc_get_peers;
-  mca_pcm_proc_get_me_fn_t pcm_proc_get_me;
-  mca_pcm_proc_get_parent_fn_t pcm_proc_get_parent;
-} mca_pcm_module_1_0_0_t;
+/*
+ * Macro for use in modules that are of type pcm v1.0.0
+ */
+#define MCA_PCM_BASE_VERSION_1_0_0 \
+  /* pcm v1.0 is chained to MCA v1.0 */ \
+  MCA_BASE_VERSION_1_0_0, \
+  /* pcm v1.0 */ \
+  "pcm", 1, 0, 0
 
-typedef mca_pcm_module_1_0_0_t mca_pcm_module_t;
+typedef mca_pcm_base_module_1_0_0_t mca_pcm_base_module_t;
 typedef mca_pcm_1_0_0_t mca_pcm_t;
 
 /*
@@ -404,7 +415,7 @@ extern "C" {
   int mca_pcm_base_open(lam_cmd_line_t *cmd);
   int mca_pcm_base_close(void);
 
-  bool mca_pcm_base_is_checkpointable(void)
+  bool mca_pcm_base_is_checkpointable(void);
 
   int mca_pcm_base_checkpoint(void);
   int mca_pcm_base_continue(void);
