@@ -43,18 +43,23 @@ sources = \
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
 # (for static builds).
 
-if OMPI_BUILD_coll_sm_DSO
 component_noinst =
-component_install = mca_coll_sm.la
-else
-component_noinst = libmca_coll_sm.la
 component_install =
+if OMPI_BUILD_coll_sm_DSO
+component_install += mca_coll_sm.la
+else
+component_noinst += libmca_coll_sm.la
 endif
+
+# See src/mca/ptl/sm/Makefile.am for an explanation of
+# libmca_common_sm.la.
 
 mcacomponentdir = $(libdir)/openmpi
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_coll_sm_la_SOURCES = $(sources)
 mca_coll_sm_la_LDFLAGS = -module -avoid-version
+mca_coll_sm_la_LIBADD = \
+        $(top_ompi_builddir)/src/mca/common/sm/libmca_common_sm.la
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_coll_sm_la_SOURCES =$(sources)
