@@ -1,7 +1,8 @@
 AUTOMAKE_OPTIONS = foreign no-dependencies
 
 CFLAGS = -Wall @CFLAGS@
-SUBDIRS = . sample test
+# LAM: No need to build the sample or test
+#SUBDIRS = . sample test
 
 EXTRA_DIST = acconfig.h err.c event.h evsignal.h event.3 kqueue.c \
 	epoll_sub.c epoll.c select.c rtsig.c poll.c signal.c \
@@ -19,14 +20,17 @@ EXTRA_DIST = acconfig.h err.c event.h evsignal.h event.3 kqueue.c \
 	WIN32-Prj/signal_test/signal_test.dsp WIN32-Prj/time_test \
 	WIN32-Prj/time_test/time_test.dsp
 
-lib_LIBRARIES = libevent.a
+# LAM: Changed to libevent.la
+lib_LTLIBRARIES = libevent.la
 
-libevent_a_SOURCES = event.c
-libevent_a_LIBADD = @LIBOBJS@
+# LAM: Changed to libevent_la_*
+libevent_la_SOURCES = event.c
+libevent_la_LIBADD = @LIBOBJS@
 
 include_HEADERS = event.h
 
-INCLUDES = -Icompat
+# LAM: Make it work in a VPATH environment
+INCLUDES = -I$(top_srcdir)/compat
 
 man_MANS = event.3
 

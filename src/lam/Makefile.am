@@ -5,7 +5,7 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-SUBDIRS	= ctnetwork lfc mem os runtime threads util
+SUBDIRS	= ctnetwork event lfc mem os runtime threads util
 
 noinst_LTLIBRARIES = liblam_convenience.la
 
@@ -21,6 +21,7 @@ headers = \
 
 sources = \
         ctnetwork/libctnetwork.la \
+        event/libevent.la \
         lfc/liblfc.la \
         mem/libmem.la \
         runtime/libruntime.la \
