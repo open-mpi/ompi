@@ -53,8 +53,6 @@ static void mca_ptl_sm_first_frag_construct(mca_ptl_sm_frag_t* frag)
     /* align */
     ptr=ptr-(((size_t)ptr)%(mca_ptl_sm_component.fragment_alignment));
     frag->buff=ptr;
-    frag->buff_offset_from_segment_base=RELATIVE_ADDRESS(
-            ptr,mca_ptl_sm_component.sm_mpool_base);
 }
 
 
@@ -89,8 +87,6 @@ static void mca_ptl_sm_second_frag_construct(mca_ptl_sm_frag_t* frag)
     /* align */
     ptr=ptr-(((size_t)ptr)%(mca_ptl_sm_component.fragment_alignment));
     frag->buff=ptr;
-    frag->buff_offset_from_segment_base=RELATIVE_ADDRESS(
-            ptr,mca_ptl_sm_component.sm_mpool_base);
 }
 
 

@@ -36,9 +36,6 @@ struct mca_ptl_sm_frag_t {
                             acking */
     struct mca_ptl_base_module_t* send_ptl;   /**< PTL that is selected for first fragment */
     void *buff;           /**< pointer to buffer */
-    void *buff_offset_from_segment_base;   /**< pointer to buffer,
-                                             relative to base of the
-                                             shared memory segment */
 };
 typedef struct mca_ptl_sm_frag_t mca_ptl_sm_frag_t;
 

@@ -132,7 +132,7 @@ int mca_ptl_sm_component_open(void)
     mca_ptl_sm_component.size_of_cb_queue =
         mca_ptl_sm_param_register_int("size_of_cb_queue", 128);
     mca_ptl_sm_component.cb_lazy_free_freq =
-        mca_ptl_sm_param_register_int("cb_lazy_free_freq", 128);
+        mca_ptl_sm_param_register_int("cb_lazy_free_freq", 120);
     /* make sure that queue size and lazy free frequency are consistent -
      * want to make sure that slots are freed at a rate they can be
      * reused, w/o allocating extra new circular buffer fifo arrays */
@@ -153,14 +153,11 @@ int mca_ptl_sm_component_open(void)
 
     /* initialize objects */
     OBJ_CONSTRUCT(&mca_ptl_sm_component.sm_lock, ompi_mutex_t);
-    OBJ_CONSTRUCT(&mca_ptl_sm.sm_send_requests, ompi_free_list_t);
-    OBJ_CONSTRUCT(&mca_ptl_sm.sm_first_frags, ompi_free_list_t);
-    OBJ_CONSTRUCT(&mca_ptl_sm.sm_second_frags, ompi_free_list_t);
-    OBJ_CONSTRUCT(&mca_ptl_sm.sm_pending_ack_lock, ompi_mutex_t);
-    OBJ_CONSTRUCT(&mca_ptl_sm.sm_pending_ack, ompi_list_t);
-/* debug */
-system("echo I am on host `hostname`");
-/* end debug */
+    OBJ_CONSTRUCT(&mca_ptl_sm_component.sm_send_requests, ompi_free_list_t);
+    OBJ_CONSTRUCT(&mca_ptl_sm_component.sm_first_frags, ompi_free_list_t);
+    OBJ_CONSTRUCT(&mca_ptl_sm_component.sm_second_frags, ompi_free_list_t);
+    OBJ_CONSTRUCT(&mca_ptl_sm_component.sm_pending_ack_lock, ompi_mutex_t);
+    OBJ_CONSTRUCT(&mca_ptl_sm_component.sm_pending_ack, ompi_list_t);
 
     return OMPI_SUCCESS;
 }
@@ -173,11 +170,11 @@ system("echo I am on host `hostname`");
 int mca_ptl_sm_component_close(void)
 {
     OBJ_DESTRUCT(&mca_ptl_sm_component.sm_lock);
-    OBJ_DESTRUCT(&mca_ptl_sm.sm_send_requests);
-    OBJ_DESTRUCT(&mca_ptl_sm.sm_first_frags);
-    OBJ_DESTRUCT(&mca_ptl_sm.sm_second_frags);
-    OBJ_DESTRUCT(&mca_ptl_sm.sm_pending_ack_lock);
-    OBJ_DESTRUCT(&mca_ptl_sm.sm_pending_ack);
+    OBJ_DESTRUCT(&mca_ptl_sm_component.sm_send_requests);
+    OBJ_DESTRUCT(&mca_ptl_sm_component.sm_first_frags);
+    OBJ_DESTRUCT(&mca_ptl_sm_component.sm_second_frags);
+    OBJ_DESTRUCT(&mca_ptl_sm_component.sm_pending_ack_lock);
+    OBJ_DESTRUCT(&mca_ptl_sm_component.sm_pending_ack);
     return OMPI_SUCCESS;
 }
 
@@ -191,6 +188,7 @@ mca_ptl_base_module_t** mca_ptl_sm_component_init(
     bool *have_hidden_threads)
 {
     mca_ptl_base_module_t **ptls = NULL;
+    int i;
 
     *num_ptls = 0;
     *allow_multi_user_threads = true;
@@ -207,26 +205,28 @@ mca_ptl_base_module_t** mca_ptl_sm_component_init(
         return 0;
 
     /* allocate the Shared Memory PTL.  Only one is being allocated */
-    ptls = malloc(sizeof(mca_ptl_base_module_t*));
+    *num_ptls = 2;
+    ptls = malloc((*num_ptls)*sizeof(mca_ptl_base_module_t*));
     if(NULL == ptls)
         return NULL;
 
-    /* only one copy of this ptl is created */
-    *ptls = &mca_ptl_sm.super;
-    *num_ptls = 1;
+    /* get pointer to the ptls */
+    ptls[0] = (mca_ptl_base_module_t *)(&(mca_ptl_sm[0]));
+    ptls[1] = (mca_ptl_base_module_t *)(&(mca_ptl_sm[1]));
 
     /* set scheduling parameters */
-    mca_ptl_sm.super.ptl_cache_size=mca_ptl_sm_component.sm_first_frag_free_list_max;
-    mca_ptl_sm.super.ptl_cache_bytes=sizeof(mca_ptl_sm_send_request_t) -
+    for( i=0 ; i < 2 ; i++ ) {
+        mca_ptl_sm[i].super.ptl_cache_size=mca_ptl_sm_component.sm_first_frag_free_list_max;
+        mca_ptl_sm[i].super.ptl_cache_bytes=sizeof(mca_ptl_sm_send_request_t) -
                 sizeof(mca_pml_base_send_request_t);
-    mca_ptl_sm.super.ptl_first_frag_size=mca_ptl_sm_component.first_fragment_size;
-
-    mca_ptl_sm.super.ptl_min_frag_size=mca_ptl_sm_component.max_fragment_size;
-    mca_ptl_sm.super.ptl_max_frag_size=mca_ptl_sm_component.max_fragment_size;
-    mca_ptl_sm.super.ptl_exclusivity=100;  /* always use this ptl */
-    mca_ptl_sm.super.ptl_latency=100;      /* lowest latency */
-    mca_ptl_sm.super.ptl_bandwidth=900; /* not really used now since
+        mca_ptl_sm[i].super.ptl_first_frag_size=mca_ptl_sm_component.first_fragment_size;
+        mca_ptl_sm[i].super.ptl_min_frag_size=mca_ptl_sm_component.max_fragment_size;
+        mca_ptl_sm[i].super.ptl_max_frag_size=mca_ptl_sm_component.max_fragment_size;
+        mca_ptl_sm[i].super.ptl_exclusivity=100;  /* always use this ptl */
+        mca_ptl_sm[i].super.ptl_latency=100;      /* lowest latency */
+        mca_ptl_sm[i].super.ptl_bandwidth=900; /* not really used now since
                                      exclusivity is set to 100 */
+    }
 
     /* initialize some PTL data */
     /* start with no SM procs */
@@ -234,7 +234,8 @@ mca_ptl_base_module_t** mca_ptl_sm_component_init(
     mca_ptl_sm_component.my_smp_rank=-1;
 
     /* set flag indicating ptl not inited */
-    mca_ptl_sm.ptl_inited=false;
+    mca_ptl_sm[0].ptl_inited=false;
+    mca_ptl_sm[1].ptl_inited=false;
 
     return ptls;
 }
@@ -262,15 +263,14 @@ int mca_ptl_sm_component_control(int param, void* value, size_t size)
 int mca_ptl_sm_component_progress(mca_ptl_tstamp_t tstamp)
 {
     /* local variables */
-    int my_local_smp_rank, return_status;
+    int my_local_smp_rank, proc, return_status;
     unsigned int peer_local_smp_rank ;
     mca_ptl_sm_frag_t *header_ptr;
-    ompi_fifo_t *send_fifo;
+    volatile ompi_fifo_t *send_fifo;
     bool frag_matched;
     mca_ptl_base_match_header_t *matching_header;
     mca_pml_base_send_request_t *base_send_req;
     ompi_list_item_t *item;
-    char *sm_frag_desc_rel_to_base;
 
     my_local_smp_rank=mca_ptl_sm_component.my_smp_rank;
 
@@ -282,16 +282,124 @@ int mca_ptl_sm_component_progress(mca_ptl_tstamp_t tstamp)
 
     /* poll each fifo */
 
-    /* loop over fifo's */
-    for( peer_local_smp_rank=0 ; 
-            peer_local_smp_rank < mca_ptl_sm_component.num_smp_procs
-            ; peer_local_smp_rank++ ) 
+    /* loop over fifo's - procs with same base shared memory 
+     * virtual address as this process */
+    for( proc=0 ; proc < mca_ptl_sm_component.num_smp_procs_same_base_addr
+            ; proc++ ) 
     {
+        peer_local_smp_rank=
+            mca_ptl_sm_component.list_smp_procs_same_base_addr[proc];
 
-        /* we don't use the shared memory ptl to send to ourselves */
-        if( peer_local_smp_rank == my_local_smp_rank ) {
+        send_fifo=&(mca_ptl_sm_component.fifo
+                [peer_local_smp_rank][my_local_smp_rank]);
+
+        /* debug 
+        fprintf(stderr," progress peer %d me %d \n",
+                peer_local_smp_rank,my_local_smp_rank);
+        fflush(stderr);
+         end debug */
+        /* if fifo is not yet setup - continue - not data has been sent*/
+        if(OMPI_CB_FREE == send_fifo->tail){
             continue;
         }
+
+        /* aquire thread lock */
+        if( ompi_using_threads() ) {
+            ompi_atomic_lock(&(send_fifo->tail_lock));
+        }
+
+        /* get pointer - pass in offset to change queue pointer
+         * addressing from that of the sender */
+        header_ptr=(mca_ptl_sm_frag_t *)
+            ompi_fifo_read_from_tail_same_base_addr( send_fifo);
+        if( OMPI_CB_FREE == header_ptr ) {
+            /* release thread lock */
+            if( ompi_using_threads() ) {
+                ompi_atomic_unlock(&(send_fifo->tail_lock));
+            }
+            continue;
+        }
+
+        /* release thread lock */
+        if( ompi_using_threads() ) {
+            ompi_atomic_unlock(&(send_fifo->tail_lock));
+        }
+
+        /* figure out what type of message this is */
+        switch
+            (header_ptr->super.frag_base.frag_header.hdr_common.hdr_type)
+            {
+        
+                case MCA_PTL_HDR_TYPE_MATCH:
+                    /* set the owning ptl */
+                    header_ptr->super.frag_base.frag_owner=
+                        (mca_ptl_base_module_t *) (&mca_ptl_sm);
+                    /* attempt match */
+                    matching_header= &(header_ptr->super.frag_base.
+                            frag_header.hdr_match);
+                    frag_matched=mca_ptl_base_match_in_order_network_delivery(
+                            matching_header,
+                            (mca_ptl_base_recv_frag_t *)header_ptr);
+                    if( frag_matched ) {
+                        /* deliver data, and ack */
+                        mca_ptl_sm_matched_same_base_addr(
+                                (mca_ptl_base_module_t *)&mca_ptl_sm,
+                                (mca_ptl_base_recv_frag_t *)header_ptr);
+                                    
+                    }
+                    break;
+
+                case MCA_PTL_HDR_TYPE_FRAG:
+                    /* set the owning ptl */
+                    header_ptr->super.frag_base.frag_owner=
+                        (mca_ptl_base_module_t *) (&mca_ptl_sm);
+                    /* second and beyond fragment - just need to deliver
+                     * the data, and ack */
+                    mca_ptl_sm_matched_same_base_addr(
+                            (mca_ptl_base_module_t *)&mca_ptl_sm,
+                            (mca_ptl_base_recv_frag_t *)header_ptr);
+                    break;
+
+                case MCA_PTL_HDR_TYPE_ACK:
+                    /* ack */
+                    /* update the send statistics */
+                    /* NOTE !!! : need to change the update stats,
+                     *   so that MPI_Wait/Test on the send can complete
+                     *   as soon as the data is copied intially into
+                     *   the shared memory buffers */
+                    base_send_req=header_ptr->super.frag_base.frag_header.
+                        hdr_frag.hdr_src_ptr.pval;
+
+                    header_ptr->send_ptl->ptl_send_progress(
+                                (mca_ptl_base_module_t *)&mca_ptl_sm,
+                                base_send_req,
+                                header_ptr->super.frag_base.frag_size);
+
+                    /* if this is not the first fragment, recycle
+                     * resources.  The first fragment is handled by
+                     * the PML */
+                    if( 0 < header_ptr->super.frag_base.frag_header.
+                            hdr_frag.hdr_frag_offset ) {
+                        OMPI_FREE_LIST_RETURN(&mca_ptl_sm_component.sm_second_frags,
+                                (ompi_list_item_t *)header_ptr);
+                    } 
+                    break;
+
+                default:
+                    fprintf(stderr," Warnning: mca_ptl_sm_component_progress - unrecognized fragment type \n");
+                    fflush(stderr);
+
+            }
+
+    }  /* end peer_local_smp_rank loop */
+
+    /* loop over fifo's - procs with different base shared memory 
+     * virtual address as this process */
+    for( proc=0 ; proc < mca_ptl_sm_component.num_smp_procs_different_base_addr
+            ; proc++ ) 
+    {
+        peer_local_smp_rank=
+            mca_ptl_sm_component.list_smp_procs_different_base_addr[proc];
 
         send_fifo=&(mca_ptl_sm_component.fifo
                 [peer_local_smp_rank][my_local_smp_rank]);
@@ -306,9 +414,10 @@ int mca_ptl_sm_component_progress(mca_ptl_tstamp_t tstamp)
             ompi_atomic_lock(&(send_fifo->tail_lock));
         }
 
-        /* get pointer */
+        /* get pointer - pass in offset to change queue pointer
+         * addressing from that of the sender */
         header_ptr=(mca_ptl_sm_frag_t *)ompi_fifo_read_from_tail( send_fifo,
-                mca_ptl_sm_component.sm_offset);
+                mca_ptl_sm_component.sm_offset[peer_local_smp_rank]);
         if( OMPI_CB_FREE == header_ptr ) {
             /* release thread lock */
             if( ompi_using_threads() ) {
@@ -325,7 +434,7 @@ int mca_ptl_sm_component_progress(mca_ptl_tstamp_t tstamp)
         /* change the address from address relative to the shared
          * memory address, to a true virtual address */
         header_ptr = (mca_ptl_sm_frag_t *)( (char *)header_ptr+
-                mca_ptl_sm_component.sm_offset);
+                mca_ptl_sm_component.sm_offset[peer_local_smp_rank]);
 
 
         /* figure out what type of message this is */
@@ -381,36 +490,34 @@ int mca_ptl_sm_component_progress(mca_ptl_tstamp_t tstamp)
                      * the PML */
                     if( 0 < header_ptr->super.frag_base.frag_header.
                             hdr_frag.hdr_frag_offset ) {
-                        OMPI_FREE_LIST_RETURN(&mca_ptl_sm.sm_second_frags,
+                        OMPI_FREE_LIST_RETURN(&mca_ptl_sm_component.sm_second_frags,
                                 (ompi_list_item_t *)header_ptr);
                     } 
                     break;
 
                 default:
+                    fprintf(stderr," Warnning: mca_ptl_sm_component_progress - unrecognized fragment type \n");
+                    fflush(stderr);
 
             }
 
     }  /* end peer_local_smp_rank loop */
 
-    /* progress acks */
-    if( !ompi_list_is_empty(&(mca_ptl_sm.sm_pending_ack)) ) {
 
-        OMPI_THREAD_LOCK(&(mca_ptl_sm.sm_pending_ack_lock));
+    /* progress acks */
+    if( !ompi_list_is_empty(&(mca_ptl_sm_component.sm_pending_ack)) ) {
+
+        OMPI_THREAD_LOCK(&(mca_ptl_sm_component.sm_pending_ack_lock));
 
         /* remove ack from list - need to remove from list before
          *   sending the ack, so that when the ack is recieved,
          *   manipulated, and put on a new list, it is not also
          *   on a different list */
-        item = ompi_list_remove_first(&(mca_ptl_sm.sm_pending_ack));
-        while ( item != ompi_list_get_end(&(mca_ptl_sm.sm_pending_ack)) ) {
+        item = ompi_list_remove_first(&(mca_ptl_sm_component.sm_pending_ack));
+        while ( item != ompi_list_get_end(&(mca_ptl_sm_component.sm_pending_ack)) ) {
 
             /* get fragment pointer */
             header_ptr = (mca_ptl_sm_frag_t *)item;
-
-            /* change address to address relative to the shared memory
-             *   segment base */
-            sm_frag_desc_rel_to_base= (char *) ( (char *)header_ptr -
-                    mca_ptl_sm_component.sm_offset );
 
             /* try and send an ack - no need to check and see if a send
              * queue has been allocated, since entries are put here only
@@ -418,24 +525,22 @@ int mca_ptl_sm_component_progress(mca_ptl_tstamp_t tstamp)
 
             /* fragment already marked as an ack */
 
-            return_status=ompi_fifo_write_to_head( sm_frag_desc_rel_to_base,
-                    send_fifo,
-                    mca_ptl_sm_component.sm_mpool,
-                    mca_ptl_sm_component.sm_offset);
+            return_status=ompi_fifo_write_to_head_same_base_addr(header_ptr,
+                    send_fifo, mca_ptl_sm_component.sm_mpool);
 
             /* if ack failed, break */
             if( 0 > return_status ) {
                 /* put the descriptor back on the list */
-                ompi_list_prepend(&(mca_ptl_sm.sm_pending_ack),item);
+                ompi_list_prepend(&(mca_ptl_sm_component.sm_pending_ack),item);
                 break;
             }
 
             /* get next fragment to ack */
-            item = ompi_list_remove_first(&(mca_ptl_sm.sm_pending_ack));
+            item = ompi_list_remove_first(&(mca_ptl_sm_component.sm_pending_ack));
 
         }
 
-        OMPI_THREAD_UNLOCK(&(mca_ptl_sm.sm_pending_ack_lock));
+        OMPI_THREAD_UNLOCK(&(mca_ptl_sm_component.sm_pending_ack_lock));
     }
 
     return OMPI_SUCCESS;
