@@ -31,6 +31,7 @@ headers = \
     pow2.h \
     session_dir.h \
     daemon_init.h \
+    universe_setup_file_io.h \
     strncpy.h
 
 libutil_la_SOURCES = \
@@ -54,6 +55,7 @@ libutil_la_SOURCES = \
     pow2.c \
     session_dir.c \
     daemon_init.c \
+    universe_setup_file_io.c \
     strncpy.c
 
 # Conditionally install the header files

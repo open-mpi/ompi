@@ -15,6 +15,8 @@ struct ompi_universe_t {
     bool silent_mode;
     bool script_mode;
     bool web_server;
+    char *socket_contact_info;
+    char *oob_contact_info;
     bool console_connected;
 };
 typedef struct ompi_universe_t ompi_universe_t;
