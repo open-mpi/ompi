@@ -35,7 +35,7 @@ static inline mca_ptl_base_send_request_t* mca_pml_teg_send_request_alloc(
     return sendreq;
 }
 
-static inline void mca_ptl_base_send_request_return(
+static inline void mca_pml_teg_send_request_return(
     mca_ptl_base_send_request_t* request)
 {
     request->req_owner->ptl_request_return(request->req_owner, request);
