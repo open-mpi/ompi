@@ -324,9 +324,6 @@ int mca_ptl_sm_component_progress(mca_ptl_tstamp_t tstamp)
         header_ptr = (mca_ptl_sm_frag_t *)( (char *)header_ptr+
                 mca_ptl_sm_component.sm_offset);
 
-        /* set the owning ptl */
-        header_ptr->super.frag_base.frag_owner=(mca_ptl_base_module_t *)
-            (&mca_ptl_sm);
 
         /* figure out what type of message this is */
         switch
@@ -334,6 +331,9 @@ int mca_ptl_sm_component_progress(mca_ptl_tstamp_t tstamp)
             {
         
                 case MCA_PTL_HDR_TYPE_MATCH:
+                    /* set the owning ptl */
+                    header_ptr->super.frag_base.frag_owner=
+                        (mca_ptl_base_module_t *) (&mca_ptl_sm);
                     /* attempt match */
                     matching_header= &(header_ptr->super.frag_base.
                             frag_header.hdr_match);
@@ -349,6 +349,9 @@ int mca_ptl_sm_component_progress(mca_ptl_tstamp_t tstamp)
                     break;
 
                 case MCA_PTL_HDR_TYPE_FRAG:
+                    /* set the owning ptl */
+                    header_ptr->super.frag_base.frag_owner=
+                        (mca_ptl_base_module_t *) (&mca_ptl_sm);
                     /* second and beyond fragment - just need to deliver
                      * the data, and ack */
                     mca_ptl_sm_matched((mca_ptl_base_module_t *)&mca_ptl_sm,
@@ -364,8 +367,9 @@ int mca_ptl_sm_component_progress(mca_ptl_tstamp_t tstamp)
                      *   the shared memory buffers */
                     base_send_req=header_ptr->super.frag_base.frag_header.
                         hdr_frag.hdr_src_ptr.pval;
-                    ((mca_ptl_base_recv_frag_t *)header_ptr)->
-                        frag_base.frag_owner->ptl_send_progress(
+                    header_ptr->send_ptl->ptl_send_progress(
+                    /*((mca_ptl_base_recv_frag_t *)header_ptr)->
+                        frag_base.frag_owner->ptl_send_progress(*/
                                 (mca_ptl_base_module_t *)&mca_ptl_sm,
                                 base_send_req,
                                 header_ptr->super.frag_base.frag_size);
