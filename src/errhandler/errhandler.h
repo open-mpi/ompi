@@ -115,7 +115,6 @@ extern lam_pointer_array_t *lam_errhandler_f_to_c_table;
  * Conditionally invoke an MPI error handler.
  *
  * @param rc The return code to check
- * @param errhandler The MPI_Errhandler to invoke
  * @param mpi_object The MPI object to invoke the errhandler on (a
  *    comm, win, or win)
  * @param err_code The error code
@@ -137,7 +136,6 @@ extern lam_pointer_array_t *lam_errhandler_f_to_c_table;
  * return MPI_SUCCESS.
  *
  * @param rc The return code to check
- * @param errhandler The MPI_Errhandler to invoke
  * @param mpi_object The MPI object to invoke the errhandler on (a
  *    comm, win, or win)
  * @param err_code The error code
