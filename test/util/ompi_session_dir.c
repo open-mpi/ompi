@@ -15,28 +15,9 @@
 #include "util/sys_info.h"
 #include "util/os_path.h"
 #include "util/session_dir.h"
+#include "util/proc_info.h"
 #include "support.h"
 
-struct ompi_proc_info_t {
-    bool init;             /**< Certifies that values have been filled.
-			    * Certifies that the ompi_sys_info() function has been
-			    * called at least once so fields have valid values
-			    */
-    char *universe_session_dir;  /**< Location of universe  temp dir.
-			    * The session directory has the form
-			    * <prefix><openmpi-sessions-user><universe>, where the prefix
-			    * can either be provided by the user via the
-			    * --tmpdir command-line flag, the use of one of several
-			    * environmental variables, or else a default location.
-			    */
-
-    char *job_session_dir;  /**< Session directory for job */
-
-    char *proc_session_dir;    /**< Session directory for the process */
-};
-typedef struct ompi_proc_info_t ompi_proc_info_t;
-
-ompi_proc_info_t ompi_process_info;
 
 static bool test1(void);   /* given prefix, both one that works and one that fails */
 static bool test2(void);   /* no prefix given, OMPI_PREFIX_ENV set, one good and one bad */
@@ -44,15 +25,24 @@ static bool test3(void);   /* no prefix given, TMPDIR set, one good and one bad 
 static bool test4(void);   /* no prefix given, TMP set, one good and one bad */
 static bool test5(void);   /* no prefix given, HOME set, one good and one bad */
 static bool test6(void);   /* no prefix given, nothing set, one good and one bad */
+static bool test7(void);   /* remove session directory tree */
 
+static FILE *test_out=NULL;
 
 int main(int argc, char* argv[])
 {
     ompi_sys_info(); /* initialize system */
 
     test_init("ompi_session_dir_t");
- 
+     test_out = fopen( "test_session_dir_out", "w+" );
+    if( test_out == NULL ) {
+      test_failure("test_session_dir couldn't open test file failed");
+      test_finalize();
+      exit(1);
+    } 
 
+
+    fprintf(test_out, "running test1\n");
     if (test1()) {
         test_success();
     }
@@ -60,6 +50,7 @@ int main(int argc, char* argv[])
       test_failure("ompi_session_dir_t test1 failed");
     }
 
+    fprintf(test_out, "running test2\n");
     if (test2()) {
         test_success();
     }
@@ -67,6 +58,7 @@ int main(int argc, char* argv[])
       test_failure("ompi_session_dir_t test2 failed");
     }
 
+    fprintf(test_out, "running test3\n");
     if (test3()) {
         test_success();
     }
@@ -74,6 +66,7 @@ int main(int argc, char* argv[])
       test_failure("ompi_session_dir_t test3 failed");
     }
 
+    fprintf(test_out, "running test4\n");
     if (test4()) {
         test_success();
     }
@@ -81,6 +74,7 @@ int main(int argc, char* argv[])
       test_failure("ompi_session_dir_t test4 failed");
     }
 
+    fprintf(test_out, "running test5\n");
     if (test5()) {
         test_success();
     }
@@ -88,6 +82,7 @@ int main(int argc, char* argv[])
       test_failure("ompi_session_dir_t test5 failed");
     }
 
+    fprintf(test_out, "running test6\n");
     if (test6()) {
         test_success();
     }
@@ -95,6 +90,15 @@ int main(int argc, char* argv[])
       test_failure("ompi_session_dir_t test6 failed");
     }
 
+    fprintf(test_out, "running test7\n");
+    if (test7()) {
+        test_success();
+    }
+    else {
+      test_failure("ompi_session_dir_t test6 failed");
+    }
+
+    fclose(test_out);
     test_finalize();
     return 0;
 }
@@ -256,4 +260,24 @@ static bool test6(void)
     rmdir(tmp);
 
     return(true);
+}
+
+static bool test7(void)
+{
+
+    /* create test proc session directory tree */
+    if (OMPI_ERROR == ompi_session_dir(true, NULL, ompi_system_info.user, "localhost", NULL, "test-universe", "test-job", "test-proc")) {
+	return(false);
+    }
+
+    fprintf(test_out, "removing directories: %s\n\t%s\n\t%s\n",
+	    ompi_process_info.proc_session_dir,
+	    ompi_process_info.job_session_dir,
+	    ompi_process_info.universe_session_dir);
+
+    if (OMPI_ERROR == ompi_session_dir_finalize()) {
+	return(false);
+    }
+
+    return true;
 }
