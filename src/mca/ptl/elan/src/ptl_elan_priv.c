@@ -1191,7 +1191,6 @@ ptl_elan_send_comp:
 	    return OMPI_SUCCESS;
 	}
 #endif
-	/* FIXME: Support Completion Queue with Get */
 	if (header->hdr_common.hdr_type == MCA_PTL_HDR_TYPE_ACK 
 		|| header->hdr_common.hdr_type == MCA_PTL_HDR_TYPE_FIN_ACK) {
 	    frag = ((mca_ptl_elan_ack_header_t*)header)->frag;
@@ -1200,6 +1199,8 @@ ptl_elan_send_comp:
 		header->hdr_frag.hdr_src_ptr.pval; 
 	}
 	basic = (ompi_ptl_elan_base_desc_t*)frag->desc;
+
+	LOG_PRINT(PTL_ELAN_DEBUG_SEND, "frag %p desc %p \n", frag, basic);
 
 	/* XXX: please reset additional chained event for put/get desc */
 	mca_ptl_elan_send_desc_done (frag, 
@@ -1256,6 +1257,8 @@ ptl_elan_send_comp:
 	    frag = (mca_ptl_elan_send_frag_t *)
 		ompi_list_remove_first (&ptl->send_frags);
 	    basic = (ompi_ptl_elan_base_desc_t*)frag->desc;
+
+	    LOG_PRINT(PTL_ELAN_DEBUG_SEND, "frag %p desc %p \n", frag, basic);
 
 	    mca_ptl_elan_send_desc_done (frag, 
 		    (mca_pml_base_send_request_t *) basic->req);

@@ -113,6 +113,8 @@ mca_ptl_elan_alloc_desc (struct mca_ptl_base_module_t *ptl_ptr,
 	return NULL;
     }
 
+    LOG_PRINT(PTL_ELAN_DEBUG_SEND, "flist %p length %d type %d\n", 
+	    flist, flist->super.ompi_list_length, desc_type);
     if (ompi_using_threads ()) {
 	ompi_mutex_lock(&flist->fl_lock);
 	item = ompi_list_remove_first (&((flist)->super));
@@ -137,6 +139,8 @@ mca_ptl_elan_alloc_desc (struct mca_ptl_base_module_t *ptl_ptr,
     desc = (mca_ptl_elan_send_frag_t *) item; 
     desc->desc->req = req;
     desc->desc->desc_type = desc_type;
+    LOG_PRINT(PTL_ELAN_DEBUG_SEND, "Got frag %p desc %d type %d\n", 
+	    desc, desc->desc, desc_type);
     END_FUNC(PTL_ELAN_DEBUG_SEND);
     return desc;
 }
@@ -178,8 +182,8 @@ mca_ptl_elan_send_desc_done (
     }
 
     LOG_PRINT(PTL_ELAN_DEBUG_SEND, 
-	    "req %p done frag %p desc_status %d desc_type %d length %d\n", 
-	    req, frag, frag->desc->desc_status, 
+	    "req %p done frag %p desc %p desc_type %d length %d\n", 
+	    req, frag, frag->desc, 
 	    frag->desc->desc_type,
 	    header->hdr_frag.hdr_frag_length);
 
@@ -196,6 +200,9 @@ mca_ptl_elan_send_desc_done (
 	    ptl->super.ptl_send_progress(ptl, req, 
 		    header->hdr_frag.hdr_frag_length);
 	}
+
+	LOG_PRINT(PTL_ELAN_DEBUG_SEND, "return frag %p desc %p type %d\n", 
+		frag, frag->desc, frag->desc->desc_type);
 
 	/* Return a frag or if not cached, or it is a follow up */ 
 	if ( /*(header->hdr_frag.hdr_frag_offset != 0) || */
