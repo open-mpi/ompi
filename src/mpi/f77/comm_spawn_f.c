@@ -19,12 +19,12 @@
 #pragma weak pmpi_comm_spawn__ = mpi_comm_spawn_f
 #elif OMPI_PROFILE_LAYER
 OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_SPAWN,
-                           pmpi_comm_spawn,
-                           pmpi_comm_spawn_,
-                           pmpi_comm_spawn__,
-                           pmpi_comm_spawn_f,
-                           (char *command, char *argv, MPI_Fint *maxprocs, MPI_Fint *info, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *intercomm, MPI_Fint *array_of_errcodes, MPI_Fint *ierr),
-                           (command, argv, maxprocs, info, root, comm, intercomm, array_of_errcodes, ierr) )
+                            pmpi_comm_spawn,
+                            pmpi_comm_spawn_,
+                            pmpi_comm_spawn__,
+                            pmpi_comm_spawn_f,
+                            (char *command, char *argv, MPI_Fint *maxprocs, MPI_Fint *info, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *intercomm, MPI_Fint *array_of_errcodes, MPI_Fint *ierr, int cmd_len, int argv_len),
+                            (command, argv, maxprocs, info, root, comm, intercomm, array_of_errcodes, ierr, cmd_len, argv_len) )
 #endif
 
 #if OMPI_HAVE_WEAK_SYMBOLS
@@ -36,12 +36,12 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_SPAWN,
 
 #if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
 OMPI_GENERATE_F77_BINDINGS (MPI_COMM_SPAWN,
-                           mpi_comm_spawn,
-                           mpi_comm_spawn_,
-                           mpi_comm_spawn__,
-                           mpi_comm_spawn_f,
-                           (char *command, char *argv, MPI_Fint *maxprocs, MPI_Fint *info, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *intercomm, MPI_Fint *array_of_errcodes, MPI_Fint *ierr),
-                           (command, argv, maxprocs, info, root, comm, intercomm, array_of_errcodes, ierr) )
+                            mpi_comm_spawn,
+                            mpi_comm_spawn_,
+                            mpi_comm_spawn__,
+                            mpi_comm_spawn_f,
+                            (char *command, char *argv, MPI_Fint *maxprocs, MPI_Fint *info, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *intercomm, MPI_Fint *array_of_errcodes, MPI_Fint *ierr, int cmd_len, int argv_len),
+                            (command, argv, maxprocs, info, root, comm, intercomm, array_of_errcodes, ierr, cmd_len, argv_len) )
 #endif
 
 
