@@ -31,14 +31,14 @@
 #include "ptl_ib_recvfrag.h"
 
 /**
- * IB PTL module.
+ * IB PTL component.
  */
 
-struct mca_ptl_ib_module_1_0_0_t {
-    mca_ptl_base_module_1_0_0_t super;    /**< base PTL module */
-    struct mca_ptl_ib_t** ib_ptls;      /**< array of available PTLs */
-    uint32_t ib_num_ptls;                  /**< number of ptls actually used */
-    uint32_t ib_max_ptls;                  /**< maximum number of ptls */
+struct mca_ptl_ib_component_t {
+    mca_ptl_base_component_1_0_0_t super; /**< base PTL component */
+    struct mca_ptl_ib_module_t** ib_ptl_modules; /**< array of available PTLs */
+    uint32_t ib_num_ptl_modules;        /**< number of ptl modules actually used */
+    uint32_t ib_max_ptl_modules;         /**< maximum number of ptls */
     int   ib_free_list_num;              /**< initial size of free lists */
     int   ib_free_list_max;              /**< maximum size of free lists */
     int   ib_free_list_inc;              /**< number of elements to alloc when growing free lists */
@@ -47,19 +47,18 @@ struct mca_ptl_ib_module_1_0_0_t {
     ompi_event_t ib_send_event;           /**< event structure for sends */
     ompi_event_t ib_recv_event;           /**< event structure for recvs */
     ompi_mutex_t ib_lock;                 /**< lock for accessing module state */
-    uint32_t ib_num_hcas;                   /* number of hcas available to the IB module */
+    uint32_t ib_num_hcas;                   /* number of hcas available to the IB component */
 };
-typedef struct mca_ptl_ib_module_1_0_0_t mca_ptl_ib_module_1_0_0_t;
-typedef struct mca_ptl_ib_module_1_0_0_t mca_ptl_ib_module_t;
+typedef struct mca_ptl_ib_component_t mca_ptl_ib_component_t;
 struct mca_ptl_ib_recv_frag_t;
 
-extern mca_ptl_ib_module_1_0_0_t mca_ptl_ib_module;
+extern mca_ptl_ib_component_t mca_ptl_ib_component;
 
 /**
  * IB PTL Interface
  */
-struct mca_ptl_ib_t {
-    mca_ptl_t                       super;      /**< base PTL interface */
+struct mca_ptl_ib_module_t {
+    mca_ptl_base_module_t           super;      /**< base PTL interface */
     VAPI_hca_id_t                   hca_id;     /* ID of HCA this PTL is tied to */
     VAPI_hca_port_t                 port;       /* InfiniBand port of this PTL */
     VAPI_hca_hndl_t                 nic;        /* NIC handle */  
@@ -83,52 +82,52 @@ struct mca_ptl_ib_t {
     EVAPI_compl_handler_hndl_t      ud_comp_ev_hndl; /* UD completion handler handle */
 };
 
-typedef struct mca_ptl_ib_t mca_ptl_ib_t;
+typedef struct mca_ptl_ib_module_t mca_ptl_ib_module_t;
 
-extern mca_ptl_ib_t mca_ptl_ib;
+extern mca_ptl_ib_module_t mca_ptl_ib_module;
 
 /**
- * Register IB module parameters with the MCA framework
+ * Register IB component parameters with the MCA framework
  */
-extern int mca_ptl_ib_module_open(void);
+extern int mca_ptl_ib_component_open(void);
 
 /**
  * Any final cleanup before being unloaded.
  */
-extern int mca_ptl_ib_module_close(void);
+extern int mca_ptl_ib_component_close(void);
 
 /**
- * IB module initialization.
+ * IB component initialization.
  * 
- * @param num_ptls (OUT)                  Number of PTLs returned in PTL array.
+ * @param num_ptl_modules (OUT)                  Number of PTLs returned in PTL array.
  * @param allow_multi_user_threads (OUT)  Flag indicating wether PTL supports user threads (TRUE)
  * @param have_hidden_threads (OUT)       Flag indicating wether PTL uses threads (TRUE)
  *
- *  (1) read interface list from kernel and compare against module parameters
+ *  (1) read interface list from kernel and compare against component parameters
  *      then create a PTL instance for selected interfaces
  *  (2) setup IB listen socket for incoming connection attempts
  *  (3) publish PTL addressing info 
  *
  */
-extern mca_ptl_t** mca_ptl_ib_module_init(
-    int *num_ptls, 
+extern mca_ptl_base_module_t** mca_ptl_ib_component_init(
+    int *num_ptl_modules, 
     bool *allow_multi_user_threads,
     bool *have_hidden_threads
 );
 
 /**
- * IB module control.
+ * IB component control.
  */
-extern int mca_ptl_ib_module_control(
+extern int mca_ptl_ib_component_control(
     int param,
     void* value,
     size_t size
 );
 
 /**
- * IB module progress.
+ * IB component progress.
  */
-extern int mca_ptl_ib_module_progress(
+extern int mca_ptl_ib_component_progress(
    mca_ptl_tstamp_t tstamp
 );
 
@@ -142,7 +141,7 @@ extern int mca_ptl_ib_module_progress(
  */
 
 extern int mca_ptl_ib_finalize(
-    struct mca_ptl_t* ptl
+    struct mca_ptl_base_module_t* ptl
 );
 
 
@@ -159,7 +158,7 @@ extern int mca_ptl_ib_finalize(
  */
 
 extern int mca_ptl_ib_add_procs(
-    struct mca_ptl_t* ptl,
+    struct mca_ptl_base_module_t* ptl,
     size_t nprocs,
     struct ompi_proc_t **procs,
     struct mca_ptl_base_peer_t** peers,
@@ -177,7 +176,7 @@ extern int mca_ptl_ib_add_procs(
  *
  */
 extern int mca_ptl_ib_del_procs(
-    struct mca_ptl_t* ptl,
+    struct mca_ptl_base_module_t* ptl,
     size_t nprocs,
     struct ompi_proc_t **procs,
     struct mca_ptl_base_peer_t** peers
@@ -192,7 +191,7 @@ extern int mca_ptl_ib_del_procs(
  *
  */
 extern int mca_ptl_ib_request_alloc(
-    struct mca_ptl_t* ptl,
+    struct mca_ptl_base_module_t* ptl,
     struct mca_pml_base_send_request_t**
 );
 
@@ -204,7 +203,7 @@ extern int mca_ptl_ib_request_alloc(
  *
  */
 extern void mca_ptl_ib_request_return(
-    struct mca_ptl_t* ptl,
+    struct mca_ptl_base_module_t* ptl,
     struct mca_pml_base_send_request_t*
 );
 
@@ -216,10 +215,10 @@ extern void mca_ptl_ib_request_return(
  *
  */
 extern void mca_ptl_ib_matched(
-    struct mca_ptl_t* ptl,
+    struct mca_ptl_base_module_t* ptl,
     struct mca_ptl_base_recv_frag_t* frag
 );
-                                                                                                 
+
 /**
  * PML->PTL Initiate a send of the specified size.
  *
@@ -231,7 +230,7 @@ extern void mca_ptl_ib_matched(
  * @param request (OUT)          OMPI_SUCCESS if the PTL was able to queue one or more fragments
  */
 extern int mca_ptl_ib_send(
-    struct mca_ptl_t* ptl,
+    struct mca_ptl_base_module_t* ptl,
     struct mca_ptl_base_peer_t* ptl_peer,
     struct mca_pml_base_send_request_t*,
     size_t offset,
@@ -247,7 +246,7 @@ extern int mca_ptl_ib_send(
  *
  */
 extern void mca_ptl_ib_recv_frag_return(
-    struct mca_ptl_t* ptl,
+    struct mca_ptl_base_module_t* ptl,
     struct mca_ptl_ib_recv_frag_t* frag
 );
 
@@ -260,7 +259,7 @@ extern void mca_ptl_ib_recv_frag_return(
  *
  */
 extern void mca_ptl_ib_send_frag_return(
-    struct mca_ptl_t* ptl,
+    struct mca_ptl_base_module_t* ptl,
     struct mca_ptl_ib_send_frag_t*
 );
 

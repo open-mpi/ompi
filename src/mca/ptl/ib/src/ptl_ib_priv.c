@@ -222,11 +222,11 @@ int mca_ptl_ib_get_hca_id(int num, VAPI_hca_id_t* hca_id)
     VAPI_ret_t ret;
     VAPI_hca_id_t* hca_ids = NULL;
 
-    hca_ids = (VAPI_hca_id_t*) malloc(mca_ptl_ib_module.ib_num_hcas *
+    hca_ids = (VAPI_hca_id_t*) malloc(mca_ptl_ib_component.ib_num_hcas *
             sizeof(VAPI_hca_id_t));
 
     /* Now get the hca_id from underlying VAPI layer */
-    ret = EVAPI_list_hcas(mca_ptl_ib_module.ib_num_hcas, 
+    ret = EVAPI_list_hcas(mca_ptl_ib_component.ib_num_hcas, 
             &num_hcas, hca_ids);
 
     /* HACK: right now, I have put VAPI_EAGAIN as

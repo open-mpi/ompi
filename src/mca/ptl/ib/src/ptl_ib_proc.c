@@ -70,7 +70,7 @@ mca_ptl_ib_proc_t* mca_ptl_ib_proc_create(ompi_proc_t* ompi_proc)
     /* lookup ib parameters exported by
      * this proc */
     rc = mca_base_modex_recv(
-            &mca_ptl_ib_module.super.ptlm_version,
+            &mca_ptl_ib_component.super.ptlm_version,
             ompi_proc,
             (void**)&ptl_proc->proc_addrs,
             &size);
@@ -115,7 +115,7 @@ int mca_ptl_ib_proc_insert(mca_ptl_ib_proc_t* ptl_proc,
         mca_ptl_base_peer_t* ptl_peer)
 {
     int i;
-    struct mca_ptl_ib_t *ptl_ib = ptl_peer->peer_ptl;
+    struct mca_ptl_ib_module_t *ptl_ib = ptl_peer->peer_ptl;
 
     /* insert into peer array */
     ptl_peer->peer_proc = ptl_proc;

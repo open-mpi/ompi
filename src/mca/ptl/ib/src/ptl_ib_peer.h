@@ -29,7 +29,7 @@ typedef enum {
 
 struct mca_ptl_base_peer_t {
     ompi_list_item_t          super;
-    struct mca_ptl_ib_t*      peer_ptl;         /**< PTL instance that created this connection */
+    struct mca_ptl_ib_module_t* peer_ptl;       /**< PTL instance that created this connection */
     struct mca_ptl_ib_proc_t* peer_proc;        /**< proc structure corresponding to peer */
     struct mca_ptl_ib_addr_t* peer_addr;        /**< address of peer */
     int                       peer_sd;          /**< socket connection to peer */

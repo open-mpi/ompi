@@ -19,36 +19,36 @@
 #include "ptl_ib_priv.h"
 
 
-mca_ptl_ib_module_1_0_0_t mca_ptl_ib_module = {
+mca_ptl_ib_component_t mca_ptl_ib_component = {
     {
-        /* First, the mca_base_module_t struct containing meta information
-           about the module itself */
+        /* First, the mca_base_component_t struct containing meta information
+           about the component itself */
 
         {
-            /* Indicate that we are a pml v1.0.0 module (which also implies a
+            /* Indicate that we are a pml v1.0.0 component (which also implies a
                specific MCA version) */
 
             MCA_PTL_BASE_VERSION_1_0_0,
 
-            "ib", /* MCA module name */
-            1,  /* MCA module major version */
-            0,  /* MCA module minor version */
-            0,  /* MCA module release version */
-            mca_ptl_ib_module_open,  /* module open */
-            mca_ptl_ib_module_close  /* module close */
+            "ib", /* MCA component name */
+            1,  /* MCA component major version */
+            0,  /* MCA component minor version */
+            0,  /* MCA component release version */
+            mca_ptl_ib_component_open,  /* component open */
+            mca_ptl_ib_component_close  /* component close */
         },
 
-        /* Next the MCA v1.0.0 module meta data */
+        /* Next the MCA v1.0.0 component meta data */
 
         {
-            /* Whether the module is checkpointable or not */
+            /* Whether the component is checkpointable or not */
 
             false
         },
 
-        mca_ptl_ib_module_init,  
-        mca_ptl_ib_module_control,
-        mca_ptl_ib_module_progress,
+        mca_ptl_ib_component_init,  
+        mca_ptl_ib_component_control,
+        mca_ptl_ib_component_progress,
     }
 };
 
@@ -56,7 +56,7 @@ mca_ptl_ib_module_1_0_0_t mca_ptl_ib_module = {
  * functions for receiving event callbacks
  */
 
-static void mca_ptl_ib_module_recv_handler(int, short, void*);
+static void mca_ptl_ib_component_recv_handler(int, short, void*);
 
 
 /*
@@ -84,41 +84,41 @@ static inline int mca_ptl_ib_param_register_int(
 }
 
 /*
- *  Called by MCA framework to open the module, registers
- *  module parameters.
+ *  Called by MCA framework to open the component, registers
+ *  component parameters.
  */
 
-int mca_ptl_ib_module_open(void)
+int mca_ptl_ib_component_open(void)
 {
-    D_PRINT("Opening InfiniBand module ...\n");
-    /* register super module parameters */
-    mca_ptl_ib.super.ptl_exclusivity =
+    D_PRINT("Opening InfiniBand component ...\n");
+    /* register super component parameters */
+    mca_ptl_ib_module.super.ptl_exclusivity =
         mca_ptl_ib_param_register_int ("exclusivity", 0);
-    mca_ptl_ib.super.ptl_first_frag_size =
+    mca_ptl_ib_module.super.ptl_first_frag_size =
         mca_ptl_ib_param_register_int ("first_frag_size",
                 (2048 - sizeof(mca_ptl_base_header_t))/*magic*/);
-    mca_ptl_ib.super.ptl_min_frag_size =
+    mca_ptl_ib_module.super.ptl_min_frag_size =
         mca_ptl_ib_param_register_int ("min_frag_size",
                 (2048 - sizeof(mca_ptl_base_header_t))/*magic*/);
-    mca_ptl_ib.super.ptl_max_frag_size =
+    mca_ptl_ib_module.super.ptl_max_frag_size =
         mca_ptl_ib_param_register_int ("max_frag_size", 2<<30);
 
-    /* register IB module parameters */
-    mca_ptl_ib_module.ib_free_list_num =
+    /* register IB component parameters */
+    mca_ptl_ib_component.ib_free_list_num =
         mca_ptl_ib_param_register_int ("free_list_num", 32);
-    mca_ptl_ib_module.ib_free_list_max =
+    mca_ptl_ib_component.ib_free_list_max =
         mca_ptl_ib_param_register_int ("free_list_max", 1024);
-    mca_ptl_ib_module.ib_free_list_inc =
+    mca_ptl_ib_component.ib_free_list_inc =
         mca_ptl_ib_param_register_int ("free_list_inc", 32);
 
     return OMPI_SUCCESS;
 }
 
 /*
- * module cleanup - sanity checking of queue lengths
+ * component cleanup - sanity checking of queue lengths
  */
 
-int mca_ptl_ib_module_close(void)
+int mca_ptl_ib_component_close(void)
 {
     fprintf(stderr,"[%s][%d]\n", __FILE__, __LINE__);
     /* Stub */
@@ -126,16 +126,16 @@ int mca_ptl_ib_module_close(void)
 }
 
 /*
- *  Register IB module addressing information. The MCA framework
+ *  Register IB component addressing information. The MCA framework
  *  will make this available to all peers. 
  */
 
-static int mca_ptl_ib_module_send(void)
+static int mca_ptl_ib_component_send(void)
 {
     int i, rc, size;
     mca_ptl_ib_ud_addr_t* ud_qp_addr = NULL;
 
-    size = sizeof(mca_ptl_ib_ud_addr_t) * mca_ptl_ib_module.ib_num_ptls;
+    size = sizeof(mca_ptl_ib_ud_addr_t) * mca_ptl_ib_component.ib_num_ptl_modules;
 
     ud_qp_addr = (mca_ptl_ib_ud_addr_t*) malloc(size);
 
@@ -143,8 +143,8 @@ static int mca_ptl_ib_module_send(void)
         return OMPI_ERROR;
     }
 
-    for(i = 0; i < mca_ptl_ib_module.ib_num_ptls; i++) {
-        mca_ptl_ib_t* ptl = mca_ptl_ib_module.ib_ptls[i];
+    for(i = 0; i < mca_ptl_ib_component.ib_num_ptl_modules; i++) {
+        mca_ptl_ib_module_t* ptl = mca_ptl_ib_component.ib_ptl_modules[i];
         ud_qp_addr[i].ud_qp = ptl->ud_qp_hndl;
         ud_qp_addr[i].lid = ptl->port.lid;
     }
@@ -152,7 +152,7 @@ static int mca_ptl_ib_module_send(void)
     D_PRINT("ud_qp_addr[0].ud_qp = %d\n",(int)ud_qp_addr[0].ud_qp);
     D_PRINT("ud_qp_addr[0].lid = %d\n", (int)ud_qp_addr[0].lid);
 
-    rc =  mca_base_modex_send(&mca_ptl_ib_module.super.ptlm_version, 
+    rc =  mca_base_modex_send(&mca_ptl_ib_component.super.ptlm_version, 
             ud_qp_addr, size);
 
     free(ud_qp_addr);
@@ -161,27 +161,27 @@ static int mca_ptl_ib_module_send(void)
 }
 
 /*
- *  IB module initialization:
- *  (1) read interface list from kernel and compare against module parameters
+ *  IB component initialization:
+ *  (1) read interface list from kernel and compare against component parameters
  *      then create a PTL instance for selected interfaces
  *  (2) setup IB listen socket for incoming connection attempts
  *  (3) register PTL parameters with the MCA
  */
-mca_ptl_t** mca_ptl_ib_module_init(int *num_ptls, 
+mca_ptl_base_module_t** mca_ptl_ib_component_init(int *num_ptl_modules, 
         bool *allow_multi_user_threads,
         bool *have_hidden_threads)
 {
-    mca_ptl_t **ptls;
+    mca_ptl_base_module_t **ptls;
     int i, ret;
 
     uint32_t  num_hcas;
-    mca_ptl_ib_t* ptl_ib = NULL;
-    *num_ptls = 0;
+    mca_ptl_ib_module_t* ptl_ib = NULL;
+    *num_ptl_modules = 0;
 
     *allow_multi_user_threads = true;
     *have_hidden_threads = OMPI_HAVE_THREADS;
 
-    D_PRINT("IB Module Init\n");
+    D_PRINT("IB Component Init\n");
 
     /* need to set ompi_using_threads() as ompi_event_init() 
      * will spawn a thread if supported */
@@ -190,7 +190,7 @@ mca_ptl_t** mca_ptl_ib_module_init(int *num_ptls,
     }
 
     if((ret = ompi_event_init()) != OMPI_SUCCESS) {
-        ompi_output(0, "mca_ptl_ib_module_init: "
+        ompi_output(0, "mca_ptl_ib_component_init: "
                 "unable to initialize event dispatch thread: %d\n", ret);
         return NULL;
     }
@@ -206,46 +206,46 @@ mca_ptl_t** mca_ptl_ib_module_init(int *num_ptls,
     /* HACK: To avoid confusion, right now open only 
      * one IB PTL */
 
-    /*mca_ptl_ib_module.ib_num_hcas = num_hcas;*/
-    mca_ptl_ib_module.ib_num_hcas = 1;
+    /*mca_ptl_ib_component.ib_num_hcas = num_hcas;*/
+    mca_ptl_ib_component.ib_num_hcas = 1;
 
     /* Number of InfiniBand PTLs is equal to
      * number of physical HCAs. Is this always the
      * case, or under some conditions, there can be
      * multiple PTLs for one HCA? */
-    mca_ptl_ib_module.ib_num_ptls = 
-        mca_ptl_ib_module.ib_num_hcas;
+    mca_ptl_ib_component.ib_num_ptl_modules = 
+        mca_ptl_ib_component.ib_num_hcas;
 
-    /* Not sure what max_ptls does */
-    mca_ptl_ib_module.ib_max_ptls = 
-        mca_ptl_ib_module.ib_num_hcas;
+    /* Not sure what max_ptl_modules does */
+    mca_ptl_ib_component.ib_max_ptl_modules = 
+        mca_ptl_ib_component.ib_num_hcas;
 
-    D_PRINT("num_hcas: %d, num_ptls: %d, max_ptls: %d\n",
-           mca_ptl_ib_module.ib_num_hcas,
-          mca_ptl_ib_module.ib_num_ptls,
-         mca_ptl_ib_module.ib_max_ptls); 
+    D_PRINT("num_hcas: %d, num_ptl_modules: %d, max_ptl_modules: %d\n",
+           mca_ptl_ib_component.ib_num_hcas,
+          mca_ptl_ib_component.ib_num_ptl_modules,
+         mca_ptl_ib_component.ib_max_ptl_modules); 
 
-    ptl_ib = (mca_ptl_ib_t*) malloc(sizeof(mca_ptl_ib_t) * 
-            mca_ptl_ib_module.ib_num_ptls);
+    ptl_ib = (mca_ptl_ib_module_t*) malloc(sizeof(mca_ptl_ib_module_t) * 
+            mca_ptl_ib_component.ib_num_ptl_modules);
     if(NULL == ptl_ib) {
         return NULL;
     }
 
     /* Zero out the PTL struct memory region */
-    memset((void*)ptl_ib, 0, sizeof(mca_ptl_ib_t) *
-            mca_ptl_ib_module.ib_num_ptls);
+    memset((void*)ptl_ib, 0, sizeof(mca_ptl_ib_module_t) *
+            mca_ptl_ib_component.ib_num_ptl_modules);
 
     /* Copy the function pointers to the IB ptls */
-    for(i = 0; i< mca_ptl_ib_module.ib_num_ptls; i++) {
+    for(i = 0; i< mca_ptl_ib_component.ib_num_ptl_modules; i++) {
         memcpy((void*)&ptl_ib[i], 
-                &mca_ptl_ib, 
-                sizeof(mca_ptl_ib));
+                &mca_ptl_ib_module, 
+                sizeof(mca_ptl_ib_module));
     }
 
     D_PRINT("About to initialize IB ptls ...\n");
 
     /* For each ptl, do this */
-    for(i = 0; i < mca_ptl_ib_module.ib_num_ptls; i++) {
+    for(i = 0; i < mca_ptl_ib_component.ib_num_ptl_modules; i++) {
 
         if(mca_ptl_ib_get_hca_id(i, &ptl_ib[i].hca_id) 
                 != OMPI_SUCCESS) {
@@ -345,43 +345,43 @@ mca_ptl_t** mca_ptl_ib_module_init(int *num_ptls,
     }
 
     /* Allocate list of IB ptl pointers */
-    mca_ptl_ib_module.ib_ptls = (struct mca_ptl_ib_t**) 
-        malloc(mca_ptl_ib_module.ib_num_ptls * 
-                sizeof(struct mca_ptl_ib_t*));
-    if(NULL == mca_ptl_ib_module.ib_ptls) {
+    mca_ptl_ib_component.ib_ptl_modules = (struct mca_ptl_ib_module_t**) 
+        malloc(mca_ptl_ib_component.ib_num_ptl_modules * 
+                sizeof(struct mca_ptl_ib_module_t*));
+    if(NULL == mca_ptl_ib_component.ib_ptl_modules) {
         return NULL;
     }
 
     /* Set the pointers for all IB ptls */
-    for(i = 0; i < mca_ptl_ib_module.ib_num_ptls; i++) {
-        mca_ptl_ib_module.ib_ptls[i] = &ptl_ib[i];
+    for(i = 0; i < mca_ptl_ib_component.ib_num_ptl_modules; i++) {
+        mca_ptl_ib_component.ib_ptl_modules[i] = &ptl_ib[i];
     }
 
-    if(mca_ptl_ib_module_send() != OMPI_SUCCESS) {
+    if(mca_ptl_ib_component_send() != OMPI_SUCCESS) {
         return NULL;
     }
 
     /* Allocate list of MCA ptl pointers */
-    ptls = (mca_ptl_t**) malloc(mca_ptl_ib_module.ib_num_ptls * 
-            sizeof(mca_ptl_t*));
+    ptls = (mca_ptl_base_module_t**) malloc(mca_ptl_ib_component.ib_num_ptl_modules * 
+            sizeof(mca_ptl_base_module_t*));
     if(NULL == ptls) {
         return NULL;
     }
 
-    memcpy(ptls, mca_ptl_ib_module.ib_ptls, 
-            mca_ptl_ib_module.ib_num_ptls * 
-            sizeof(mca_ptl_ib_t*));
+    memcpy(ptls, mca_ptl_ib_component.ib_ptl_modules, 
+            mca_ptl_ib_component.ib_num_ptl_modules * 
+            sizeof(mca_ptl_ib_module_t*));
 
-    *num_ptls = mca_ptl_ib_module.ib_num_ptls;
+    *num_ptl_modules = mca_ptl_ib_component.ib_num_ptl_modules;
 
     return ptls;
 }
 
 /*
- *  IB module control
+ *  IB component control
  */
 
-int mca_ptl_ib_module_control(int param, void* value, size_t size)
+int mca_ptl_ib_component_control(int param, void* value, size_t size)
 {
     /* Stub */
     fprintf(stderr,"[%s][%d]\n", __FILE__, __LINE__);
@@ -390,10 +390,10 @@ int mca_ptl_ib_module_control(int param, void* value, size_t size)
 
 
 /*
- *  IB module progress.
+ *  IB component progress.
  */
 
-int mca_ptl_ib_module_progress(mca_ptl_tstamp_t tstamp)
+int mca_ptl_ib_component_progress(mca_ptl_tstamp_t tstamp)
 {
     /* Stub */
     fprintf(stderr,"[%s][%d]\n", __FILE__, __LINE__);
