@@ -162,7 +162,7 @@ int ompi_ddt_set_args( ompi_datatype_t* pData,
    return MPI_SUCCESS;
 }
 
-int ompi_ddt_get_args( ompi_datatype_t* pData, int which,
+int ompi_ddt_get_args( const ompi_datatype_t* pData, int which,
                       int * ci, int * i,
                       int * ca, MPI_Aint * a,
                       int * cd, MPI_Datatype * d, int * type)

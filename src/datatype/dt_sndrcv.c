@@ -25,85 +25,86 @@
  *			- communicator
  *	Returns:	- MPI_SUCCESS or error code
  */
-int ompi_ddt_sndrcv(void *sbuf, int scount, MPI_Datatype sdtype, void *rbuf,
-                    int rcount, MPI_Datatype rdtype, int tag, MPI_Comm comm)
+int ompi_ddt_sndrcv( void *sbuf, int scount, const ompi_datatype_t* sdtype, void *rbuf,
+                     int rcount, const ompi_datatype_t* rdtype, int tag, MPI_Comm comm )
 {
-    int err;
-    unsigned int size;
-    int rank;
-    int position = 0;
-    ompi_convertor_t *local_convertor;
-    ompi_request_t *req;
+   int err;
+   ompi_convertor_t *send_convertor, *recv_convertor;
+   struct iovec iov;
+   int length, completed;
+   uint32_t max_data, iov_count;
+   int32_t freeAfter;
 
-    /* If same datatypes used, just copy. */
+   /* First check if we really have something to do */
+   if( 0 == (rcount * scount) ) {
+      if( (0 == rcount) && (0 != scount) )
+         return MPI_ERR_TRUNCATE;
+      return MPI_SUCCESS;
+   }
+   
+   /* If same datatypes used, just copy. */
+   if (sdtype == rdtype) {
+      max_data = ( scount < rcount ? scount : rcount );
+      ompi_ddt_copy_content_same_ddt(rdtype, max_data, (char*)rbuf, (char*)sbuf);
+      if( scount > rcount )
+         return MPI_ERR_TRUNCATE;
+      return MPI_SUCCESS;
+   }
 
-    if (sdtype == rdtype) {
-	if (scount <= rcount) {
-	    ompi_ddt_copy_content_same_ddt(rdtype, scount, (char *) rbuf,
-					  (char *) sbuf);
-	    err = MPI_SUCCESS;
-	} else {
-            err = MPI_ERR_TRUNCATE;
-        }
-    }
+   /* If receive packed. */
 
-    /* If receive packed. */
+   else if (rdtype == MPI_PACKED) {
+      send_convertor = OBJ_NEW(ompi_convertor_t);
+      ompi_convertor_init_for_send( send_convertor, 0, sdtype, scount, sbuf, 0, NULL );
 
-    else if (rdtype == MPI_PACKED) {
-        local_convertor = OBJ_NEW(ompi_convertor_t);
-        ompi_convertor_init_for_send( local_convertor, 0, sdtype,
-				      scount, NULL, 0, NULL );
-        err = ompi_convertor_get_packed_size(local_convertor, &size);
-        OBJ_RELEASE(local_convertor);
-        if( OMPI_SUCCESS != err ) {
-            return err;
-        }
+      iov_count = 1;
+      iov.iov_len = rcount;
+      iov.iov_base = rbuf;
+      max_data = ( iov.iov_len > (scount * sdtype->size) ? (scount * sdtype->size) : iov.iov_len );
 
-	if( (int)size <= rcount ) {
-	    err = MPI_Pack(sbuf, scount, sdtype,
-                           rbuf, rcount, &position, MPI_COMM_WORLD);
-	} else {
-            err = MPI_ERR_TRUNCATE;
-        }
-    }
+      err = ompi_convertor_pack( send_convertor, &iov, &iov_count, &max_data, &freeAfter );
+      if( max_data < (uint32_t)rcount )
+         err = MPI_ERR_TRUNCATE;
+      OBJ_RELEASE( send_convertor );
+   }
 
-    /* If send packed. */
+   /* If send packed. */
 
-    else if (sdtype == MPI_PACKED) {
-        local_convertor = OBJ_NEW(ompi_convertor_t);
-        ompi_convertor_init_for_send(local_convertor, 0, rdtype,
-                                     rcount, NULL, 0, NULL );
-        err = ompi_convertor_get_packed_size(local_convertor, &size);
-        OBJ_RELEASE(local_convertor);
-        if( OMPI_SUCCESS != err ) {
-            return err;
-        }
+   else if (sdtype == MPI_PACKED) {
+      recv_convertor = OBJ_NEW(ompi_convertor_t);
+      ompi_convertor_init_for_recv( recv_convertor, 0, rdtype, rcount, rbuf, 0, NULL );
 
-	if( scount <= (int)size ) {
-	    err = MPI_Unpack(sbuf, scount, &position,
-                             rbuf, rcount, rdtype, 
-                             MPI_COMM_WORLD);
-	} else {
-            err = MPI_ERR_TRUNCATE;
-        }
-    }
+      iov_count = 1;
+      iov.iov_len = scount;
+      iov.iov_base = sbuf;
+      max_data = ( iov.iov_len < (rcount * rdtype->size) ? iov.iov_len : (rcount * rdtype->size) );
 
-    /* Let the PML handle it (i.e., do a normal send/recv) */
+      err = ompi_convertor_unpack( recv_convertor, &iov, &iov_count, &max_data, &freeAfter );
+      if( scount > (int32_t)(rcount * rdtype->size) )
+         err = MPI_ERR_TRUNCATE;
+      OBJ_RELEASE( recv_convertor );
+   }
 
-    else {
-        rank = ompi_comm_rank(comm);
-        err = mca_pml.pml_irecv(rbuf, rcount, rdtype, rank, tag, comm, &req);
-        if (MPI_SUCCESS != err) {
-            return err;
-        }
-        err = mca_pml.pml_send(sbuf, scount, sdtype, rank, tag,
-                               MCA_PML_BASE_SEND_STANDARD, comm);
-        if (MPI_SUCCESS != err) {
-            return err;
-        }
-        err = ompi_request_wait(&req, MPI_STATUS_IGNORE);
-    }
+   iov.iov_len = length = 64 * 1024;
+   iov.iov_base = (void*)malloc( length * sizeof(char) );
 
-    return err;
+   send_convertor = OBJ_NEW(ompi_convertor_t);
+   recv_convertor = OBJ_NEW(ompi_convertor_t);
+   ompi_convertor_init_for_send( send_convertor, 0, sdtype, scount, sbuf, 0, NULL );
+   ompi_convertor_init_for_recv( recv_convertor, 0, rdtype, rcount, rbuf, 0, NULL );
+
+   completed = 0;
+   while( !completed ) {
+      iov.iov_len = length;
+      iov_count = 1;
+      max_data = length;
+      completed |= ompi_convertor_pack( send_convertor, &iov, &iov_count, &max_data, &freeAfter );
+      completed |= ompi_convertor_unpack( recv_convertor, &iov, &iov_count, &max_data, &freeAfter );
+   }
+   free( iov.iov_base );
+   OBJ_RELEASE( send_convertor );
+   OBJ_RELEASE( recv_convertor );
+
+   return ( (scount * sdtype->size) <= (rcount * rdtype->size) ? MPI_SUCCESS : MPI_ERR_TRUNCATE );
 }
 

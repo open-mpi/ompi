@@ -18,7 +18,7 @@
  * be sure that the pdtBase datatype is correctly initialized with all fields
  * set to ZERO if it's a empty datatype.
  */
-int ompi_ddt_add( dt_desc_t* pdtBase, dt_desc_t* pdtAdd, 
+int ompi_ddt_add( dt_desc_t* pdtBase, const dt_desc_t* pdtAdd, 
 		  unsigned int count, long disp, long extent )
 {
     uint32_t newLength, place_needed = 0, i;
@@ -72,8 +72,6 @@ int ompi_ddt_add( dt_desc_t* pdtBase, dt_desc_t* pdtAdd,
         return 0;
     }
 
-    OBJ_RETAIN( pdtAdd );
-      
     /* compute the new memory alignement */
     pdtBase->align = IMAX( pdtBase->align, pdtAdd->align );
 
@@ -100,6 +98,14 @@ int ompi_ddt_add( dt_desc_t* pdtBase, dt_desc_t* pdtAdd,
         if( extent == (int)pdtAdd->size )
             pLast->flags |= DT_FLAG_CONTIGUOUS;
     } else {
+        /* We handle a user defined datatype. We should make sure that the user will not have the
+         * oportunity to destroy it before all datatypes derived are destroyed. As we keep pointers
+         * to every datatype (for MPI_Type_get_content and MPI_Type_get_envelope) we have to make
+         * sure that those datatype will be available if the user ask for them. However, there
+         * is no easy way to free them in this case ...
+         */
+        OBJ_RETAIN( pdtAdd );
+      
         /* now we add a complex datatype */
         if( disp != pdtBase->true_ub ) { /* add the initial gap */
             if( disp < pdtBase->true_ub ) pdtBase->flags |= DT_FLAG_OVERLAP;
@@ -200,8 +206,6 @@ int ompi_ddt_add( dt_desc_t* pdtBase, dt_desc_t* pdtAdd,
     if( ((int)pdtBase->size != (pdtBase->true_ub - pdtBase->true_lb)) ||
         !(pdtBase->flags & DT_FLAG_CONTIGUOUS) || !(pdtAdd->flags & DT_FLAG_CONTIGUOUS) )
         UNSET_CONTIGUOUS_FLAG(pdtBase->flags);
-
-    OBJ_RELEASE( pdtAdd );
 
     return OMPI_SUCCESS;
 }

@@ -145,7 +145,7 @@ typedef struct {
     long double i;
 } ompi_complex_long_double_t;
 
-extern ompi_datatype_t* ompi_ddt_basicDatatypes[];
+extern const ompi_datatype_t* ompi_ddt_basicDatatypes[];
 
 /* macros to play with the flags */
 #define SWAP( INT_VALUE, FLAG )  (INT_VALUE) = (INT_VALUE) ^ (FLAG)
@@ -169,7 +169,8 @@ static inline int  IMIN( int a, int b ) { return ( a < b ? a : b ); }
 
 extern conversion_fct_t ompi_ddt_copy_functions[DT_MAX_PREDEFINED];
 
-extern void ompi_ddt_dump_stack( dt_stack_t* pStack, int stack_pos, dt_elem_desc_t* pDesc, char* name );
+extern void ompi_ddt_dump_stack( const dt_stack_t* pStack, int stack_pos,
+                                 const dt_elem_desc_t* pDesc, const char* name );
 #define SAVE_STACK( PSTACK, INDEX, COUNT, DISP, END_LOOP) \
 do { \
    (PSTACK)->index    = (INDEX); \
@@ -197,9 +198,9 @@ do { \
 #define OMPI_DDT_SAFEGUARD_POINTER( ACTPTR, LENGTH, INITPTR, PDATA, COUNT )
 #endif  /* OMPI_ENABLE_DEBUG */
 
-static inline void ompi_ddt_safeguard_pointer( void* actual_ptr, int length,
-                                               void* initial_ptr,
-                                               ompi_datatype_t* pData,
+static inline void ompi_ddt_safeguard_pointer( const void* actual_ptr, int length,
+                                               const void* initial_ptr,
+                                               const ompi_datatype_t* pData,
                                                int count )
 {
     char* lower_bound = (char*)initial_ptr;
@@ -249,7 +250,7 @@ do { \
 } while(0)
 #endif  /* USELESS */
 
-static inline int GET_FIRST_NON_LOOP( dt_elem_desc_t* _pElem )
+static inline int GET_FIRST_NON_LOOP( const dt_elem_desc_t* _pElem )
 {
     int index = 0;
 
@@ -263,10 +264,10 @@ static inline int GET_FIRST_NON_LOOP( dt_elem_desc_t* _pElem )
 }
 
 int ompi_convertor_create_stack_with_pos_general( ompi_convertor_t* pConvertor,
-                                                  int starting_point, int* sizes );
+                                                  int starting_point, const int* sizes );
 static inline
 int ompi_convertor_create_stack_with_pos_contig( ompi_convertor_t* pConvertor,
-                                                 int starting_point, int* sizes )
+                                                 int starting_point, const int* sizes )
 {
     dt_stack_t* pStack;   /* pointer to the position on the stack */
     ompi_datatype_t* pData = pConvertor->pDesc;
@@ -313,7 +314,7 @@ int ompi_convertor_create_stack_with_pos_contig( ompi_convertor_t* pConvertor,
 }
 
 static inline
-int ompi_convertor_create_stack_at_begining( ompi_convertor_t* pConvertor, int* sizes )
+int ompi_convertor_create_stack_at_begining( ompi_convertor_t* pConvertor, const int* sizes )
 {
     ompi_datatype_t* pData = pConvertor->pDesc;
     dt_stack_t* pStack;

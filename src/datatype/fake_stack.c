@@ -11,10 +11,10 @@
 #include <stdlib.h>
 
 int ompi_convertor_create_stack_with_pos( ompi_convertor_t* pConvertor,
-                                          int starting_point, int* sizes );
+                                          int starting_point, const int* sizes );
 
 static inline size_t 
-ompi_convertor_compute_remote_size( ompi_datatype_t* pData, int* sizes )
+ompi_convertor_compute_remote_size( const ompi_datatype_t* pData, const int* sizes )
 {
     uint32_t i;
     size_t length = 0;
@@ -26,7 +26,7 @@ ompi_convertor_compute_remote_size( ompi_datatype_t* pData, int* sizes )
 }
 
 int ompi_convertor_create_stack_with_pos_general( ompi_convertor_t* pConvertor,
-                                                  int starting_point, int* sizes )
+                                                  int starting_point, const int* sizes )
 {
     dt_stack_t* pStack;   /* pointer to the position on the stack */
     int pos_desc;         /* actual position in the description of the derived datatype */

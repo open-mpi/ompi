@@ -10,7 +10,7 @@
  */
 
 int ompi_ddt_create_vector( int count, int bLength, long stride,
-                            dt_desc_t* oldType, dt_desc_t** newType )
+                            const dt_desc_t* oldType, dt_desc_t** newType )
 {
     long extent = oldType->ub - oldType->lb;
     dt_desc_t *pTempData, *pData;
@@ -22,12 +22,12 @@ int ompi_ddt_create_vector( int count, int bLength, long stride,
     } else {
         if( 1 == bLength ) {
             pData = pTempData;
-            pTempData = oldType;
+            ompi_ddt_add( pData, oldType, count, 0, extent * stride );
         } else {
             ompi_ddt_add( pTempData, oldType, bLength, 0, extent );
             pData = ompi_ddt_create( oldType->desc.used + 2 + 2 );
+            ompi_ddt_add( pData, pTempData, count, 0, extent * stride );
         }
-        ompi_ddt_add( pData, pTempData, count, 0, extent * stride );
         if( 1 != bLength )
             OBJ_RELEASE( pTempData );
         /* correct the ub to remove the last stride */
@@ -38,7 +38,7 @@ int ompi_ddt_create_vector( int count, int bLength, long stride,
 }
 
 int ompi_ddt_create_hvector( int count, int bLength, long stride,
-                             dt_desc_t* oldType, dt_desc_t** newType )
+                             const dt_desc_t* oldType, dt_desc_t** newType )
 {
     long extent = oldType->ub - oldType->lb;
     dt_desc_t *pTempData, *pData;
@@ -50,12 +50,12 @@ int ompi_ddt_create_hvector( int count, int bLength, long stride,
     } else {
         if( 1 == bLength ) {
             pData = pTempData;
-            pTempData = oldType;
+            ompi_ddt_add( pData, oldType, count, 0, stride );
         } else {
             ompi_ddt_add( pTempData, oldType, bLength, 0, extent );
             pData = ompi_ddt_create( oldType->desc.used + 2 + 2 );
+            ompi_ddt_add( pData, pTempData, count, 0, stride );
         }
-        ompi_ddt_add( pData, pTempData, count, 0, stride );
         if( 1 != bLength )
             OBJ_RELEASE( pTempData );
         /* correct the ub to remove the last stride */
