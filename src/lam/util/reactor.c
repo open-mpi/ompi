@@ -40,6 +40,7 @@
 #include <errno.h>
 
 #include "lam/util/reactor.h"
+#include "lam/util/malloc.h"
 
 
 const int LAM_NOTIFY_RECV = 1;
@@ -263,7 +264,7 @@ void lam_reactor_dispatch(lam_reactor_t* r, int cnt, lam_fd_set_t* rset, lam_fd_
                 lam_dbl_append(&r->r_free, &descriptor->rd_base);
             } else {
                 lam_reactor_descriptor_destroy(descriptor);
-                lam_free(descriptor);
+                LAM_FREE(descriptor);
             }
         } else {
             lam_dbl_append(&r->r_active, &descriptor->rd_base);
