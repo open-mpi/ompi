@@ -40,12 +40,14 @@ static struct mca_oob_1_0_0_t mca_oob_tcp = {
  */
 int mca_oob_tcp_open(void)
 {
+#if 0
     mca_oob_tcp_module.tcp_listen_port = 1;
     OBJ_CONSTRUCT(&mca_oob_tcp_module.tcp_peer_list, ompi_list_t);
     OBJ_CONSTRUCT(&mca_oob_tcp_module.tcp_peer_tree, ompi_rb_tree_t);
     OBJ_CONSTRUCT(&mca_oob_tcp_module.tcp_peer_free, ompi_free_list_t);
     OBJ_CONSTRUCT(&mca_oob_tcp_module.tcp_lock,      ompi_mutex_t);
     OBJ_CONSTRUCT(&mca_oob_tcp_module.tcp_condition, ompi_condition_t);
+#endif
     return OMPI_SUCCESS;
 }
 
@@ -56,11 +58,13 @@ int mca_oob_tcp_open(void)
 
 int mca_oob_tcp_close(void)
 {
+#if 0
     OBJ_DESTRUCT(&mca_oob_tcp_module.tcp_peer_list);
     OBJ_DESTRUCT(&mca_oob_tcp_module.tcp_peer_tree);
     OBJ_DESTRUCT(&mca_oob_tcp_module.tcp_peer_free);
     OBJ_DESTRUCT(&mca_oob_tcp_module.tcp_condition);
     OBJ_DESTRUCT(&mca_oob_tcp_module.tcp_lock);
+#endif
     return OMPI_SUCCESS;
 }
 
