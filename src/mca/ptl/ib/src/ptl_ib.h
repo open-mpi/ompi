@@ -9,7 +9,6 @@
 
 /* Standard system includes */
 #include <sys/types.h>
-#include <stdint.h>
 #include <string.h>
 
 /* Open MPI includes */

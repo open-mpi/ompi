@@ -15,6 +15,7 @@
 #include "mca/ns/ns.h"
 
 #include <sys/param.h>
+#include <netdb.h>
 
 
 /**
