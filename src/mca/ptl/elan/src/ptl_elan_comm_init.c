@@ -626,10 +626,10 @@ ompi_init_elan_putget (mca_ptl_elan_component_t * emp,
         OMPI_PTL_ELAN_CHECK_UNEX (putget->pg_cmdStream, NULL, OMPI_ERROR, 0);
 
 	/* Allocate a per vp counter to throttle outstanding get DMAs */
-	putget->pg_pendingGetCount = malloc(sizeof(u_int)*ptl->elan_nvp);
+	putget->pg_pendingGetCount = malloc(sizeof(uint32_t)*ptl->elan_nvp);
         OMPI_PTL_ELAN_CHECK_UNEX (putget->pg_pendingGetCount, 
 		NULL, OMPI_ERROR, 0);
-	memset(putget->pg_pendingGetCount, 0, sizeof(u_int)*ptl->elan_nvp);
+	memset(putget->pg_pendingGetCount, 0, sizeof(uint32_t)*ptl->elan_nvp);
 	putget->pg_cpool = elan4_allocCookiePool(ctx, ptl->elan_vp);
        	ompi_ptl_elan_init_putget_ctrl (ptl, rail, putget, 
 		0, OMPI_PTL_ELAN_NUM_PUTGET, OMPI_PTL_ELAN_MAX_PUTGET);
