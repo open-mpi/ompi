@@ -310,8 +310,6 @@ int ompi_cmd_line_parse(ompi_cmd_line_t *cmd, bool ignore_unknown,
                                     "enough parameters (%d)",
                                     cmd->lcl_argv[orig],
                                     option->clo_num_params);
-                        if (NULL != param->clp_argv)
-                            ompi_argv_free(param->clp_argv);
                         OBJ_RELEASE(param);
                         i = cmd->lcl_argc;
                         break;
