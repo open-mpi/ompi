@@ -1,7 +1,7 @@
 #! /bin/csh -f
 #  Name
 #  ====
-#  run for mca ns tests
+#  run script for mca ns tests
 
 # Arguements
 # ==========
@@ -14,9 +14,9 @@
 #
 # =====
 # To invoke this script, enter either
-#     run 
+#     run_tests 
 # with no arguments to run all tests, or
-#     run <test_name>
+#     run_tests <test_name>
 
 umask 007
 
@@ -26,8 +26,8 @@ else if ("$1" == "replica") then
   ./test_ns_replica;
 else
   echo "correct use: "
-  echo "    run    (to run all class tests)"
-  echo "or  run < replica >"
+  echo "    run_tests    (to run all mca ns tests)"
+  echo "or  run_tests < replica >"
   exit -1
 endif
 
