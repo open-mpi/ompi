@@ -47,9 +47,6 @@ int main(int argc, char **argv)
 
     tmp = universe_name = remote_host = remote_uid = NULL;
 
-    /* get info on type of system we are on */
-    ompi_sys_info();
-
     /* setup to read common command line options that span all Open MPI programs */
     ompi_common_cmd_line_init(argc, argv);
 

@@ -53,13 +53,18 @@ typedef struct ompi_sys_info_t ompi_sys_info_t;
 
 extern ompi_sys_info_t ompi_system_info;
 
+
 /**
- * Discover and record a wide range of information about the system upon which
- * this code is executing. ompi_sys_info populates a global variable with information about the system
- * upon which the process is executing.
+ * \internal
+ *
+ * Discover and record a wide range of information about the system
+ * upon which this code is executing. ompi_sys_info populates a global
+ * variable with information about the system upon which the process
+ * is executing.
+ *
+ * Called from \c ompi_init.
  *
  * @retval OMPI_SUCCESS If values are successfully determined.
  * @retval OMPI_ERROR If the system does not provide the requested information.
  */
-
 int ompi_sys_info(void);
