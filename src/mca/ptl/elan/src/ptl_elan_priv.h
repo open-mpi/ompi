@@ -52,7 +52,7 @@
 #define  PTL_ELAN_DEBUG_GET     (0x400)
 #define  PTL_ELAN_DEBUG_CHAIN   (0x800)
 
-#define  PTL_ELAN_DEBUG_FLAG   (PTL_ELAN_DEBUG_NONE)
+#define  PTL_ELAN_DEBUG_FLAG    (PTL_ELAN_DEBUG_NONE)
 
 #define  LOG_PRINT(flag, args...)                              \
 do {                                                           \
@@ -63,6 +63,8 @@ do {                                                           \
 	fprintf(stderr, args);                                 \
     }                                                          \
 } while (0)
+
+#define  OMPI_PTL_ELAN_CMQ_REUSE     (1)
 
 #define  OMPI_PTL_ELAN_MAX_QSIZE     (2048)
 #define  OMPI_PTL_ELAN_MAX_QSLOTS    (128)
@@ -81,11 +83,14 @@ do {                                                           \
 
 /* XXX: Potentially configurable parameters */
 #define  OMPI_PTL_ELAN_NUM_QDESCS    (16)
-#define  OMPI_PTL_ELAN_NUM_PUTGET    (8)
-#define  OMPI_PTL_ELAN_ZERO_FFRAG    (0)
+#define  OMPI_PTL_ELAN_NUM_PUTGET    (16)
+#define  OMPI_PTL_ELAN_ZERO_FFRAG    (1)
 
+#define  OMPI_PTL_ELAN_USE_DTP       (0)
 #define  OMPI_PTL_ELAN_ENABLE_GET    (0)
-#define  OMPI_PTL_ELAN_COMP_QUEUE    (0) 
+#define  OMPI_PTL_ELAN_COMP_QUEUE    (1)
+#define  OMPI_PTL_ELAN_ONE_QUEUE     (OMPI_PTL_ELAN_COMP_QUEUE && 1)
+
 #define  OMPI_PTL_ELAN_THREADING      \
     (OMPI_PTL_ELAN_COMP_QUEUE && OMPI_HAVE_POSIX_THREADS)
 
@@ -109,12 +114,43 @@ do {                                                           \
     }                                                          \
 } while (0)
 
+
+#if OMPI_PTL_ELAN_CMQ_REUSE
+#define PTL_ELAN4_GET_QBUFF(dspace, ctx, bsize, csize)      \
+do {                                                        \
+    if (ptl_elan_cmdq_space.free == 0) {                    \
+	ompi_output(0,                                      \
+		"[%s:%d] error acquiring cmdq space \n",    \
+		__FILE__, __LINE__);                        \
+    } else {                                                \
+	ptl_elan_cmdq_space.free --;                        \
+	dspace = ptl_elan_cmdq_space.space;                 \
+    }                                                       \
+} while (0)
+
+#define PTL_ELAN4_FREE_QBUFF(ctx, buff, bsize) \
+do {                                                             \
+    if (ptl_elan_cmdq_space.free >= ptl_elan_cmdq_space.total || \
+      ptl_elan_cmdq_space.space != buff ) {                      \
+	ompi_output(0,                                      \
+		"[%s:%d] error releasing cmdq space \n",    \
+		__FILE__, __LINE__);                        \
+    } else {                                                \
+	ptl_elan_cmdq_space.free ++;                        \
+    }                                                       \
+} while (0)
+#else
+#define PTL_ELAN4_GET_QBUFF(dspace, ctx, bsize, csize)      \
+    dspace = elan4_alloccq_space(ctx, bsize, csize);
+#define PTL_ELAN4_FREE_QBUFF elan4_freecq_space
+#endif
+
 enum {
     /* the first four bits for type */
     MCA_PTL_ELAN_DESC_NULL   = 0x00,
     MCA_PTL_ELAN_DESC_QDMA   = 0x01,
-    MCA_PTL_ELAN_DESC_PUT    = 0x02,
-    MCA_PTL_ELAN_DESC_GET    = 0x04,
+    MCA_PTL_ELAN_DESC_PUT    = 0x02, /* QDMA + PUT */
+    MCA_PTL_ELAN_DESC_GET    = 0x04, /* QDMA + GET */
     /* next first four bits for status */
     MCA_PTL_ELAN_DESC_LOCAL  = 0x10,
     MCA_PTL_ELAN_DESC_CACHED = 0x20
@@ -124,6 +160,14 @@ enum {
 enum {
     MCA_PTL_HDR_TYPE_STOP    = 0xFF /* Only a character */
 };
+
+/* To set up a component-wise list of free cmdq space */
+struct ompi_ptl_elan_cmdq_space_t {
+    int    total; 
+    int    free;
+    E4_Addr space;
+};
+typedef struct ompi_ptl_elan_cmdq_space_t ompi_ptl_elan_cmdq_space_t;
 
 struct ompi_ptl_elan_thread_t
 {
@@ -266,6 +310,7 @@ struct ompi_ptl_elan_putget_desc_t {
     E4_Addr            src_elan_addr;
     E4_Addr            dst_elan_addr;
     /* 8 byte aligned */
+    uint8_t            buff[sizeof(mca_ptl_base_header_t)];
 };
 typedef struct ompi_ptl_elan_putget_desc_t ompi_ptl_elan_putget_desc_t;
 
@@ -384,6 +429,7 @@ int         mca_ptl_elan_wait_queue(mca_ptl_elan_module_t * ptl,
 /* control, synchronization and state prototypes */
 int         mca_ptl_elan_drain_recv(mca_ptl_elan_module_t  * ptl);
 int         mca_ptl_elan_update_desc(mca_ptl_elan_module_t * ptl); 
+int         mca_ptl_elan_lookup(mca_ptl_elan_module_t * ptl); 
 
 int
 mca_ptl_elan_start_get (mca_ptl_elan_send_frag_t * frag,

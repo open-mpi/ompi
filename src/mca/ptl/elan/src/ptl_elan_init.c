@@ -12,6 +12,7 @@
 #define _ELAN4
 
 mca_ptl_elan_state_t mca_ptl_elan_global_state;
+struct ompi_ptl_elan_cmdq_space_t ptl_elan_cmdq_space;
 
 static int
 ompi_mca_ptl_elan_setup (mca_ptl_elan_state_t * ems)
@@ -630,6 +631,22 @@ mca_ptl_elan_thread_init (mca_ptl_elan_component_t * emp)
 
     num_rails = emp->num_modules;
 
+#if OMPI_PTL_ELAN_ONE_QUEUE
+    emp->recv_threads = (struct ompi_ptl_elan_thread_t **)
+	malloc (num_rails * sizeof(struct ompi_ptl_elan_thread_t*));
+
+    for (i = 0; i < num_rails; i ++) {
+	ompi_ptl_elan_thread_t * t;
+	t = (struct ompi_ptl_elan_thread_t *)
+	    malloc (sizeof(struct ompi_ptl_elan_thread_t));
+	OBJ_CONSTRUCT(&t->thread, ompi_thread_t);
+	t->thread.t_run = (ompi_thread_fn_t) mca_ptl_elan_lookup;
+	t->ptl = emp->modules[i];
+	pthread_create(&t->thread.t_handle, NULL, 
+			(void *)t->thread.t_run, (void*)t->ptl);
+	emp->recv_threads[i] = t;
+    }
+#else
     /*struct ompi_ptl_elan_thread_t **threads; */
     emp->send_threads = (struct ompi_ptl_elan_thread_t **)
 	malloc (num_rails * sizeof(struct ompi_ptl_elan_thread_t*));
@@ -660,6 +677,7 @@ mca_ptl_elan_thread_init (mca_ptl_elan_component_t * emp)
 			(void *)t->thread.t_run, (void*)t->ptl);
 	emp->recv_threads[i] = t;
     }
+#endif
 
     return (OMPI_SUCCESS);
 }
@@ -715,12 +733,14 @@ mca_ptl_elan_thread_close (mca_ptl_elan_component_t * emp)
         elan4_run_dma_cmd (ptl->queue->tx_cmdq, (DMA *) & desc->main_dma);
 	elan4_flush_cmdq_reorder (ptl->queue->tx_cmdq);
 
+#if !OMPI_PTL_ELAN_ONE_QUEUE
 	/* finish the send thread */
 	desc->main_dma.dma_dstEvent = SDRAM2ELAN (ctx, ptl->comp->input);
 	MEMBAR_VISIBLE ();
         elan4_run_dma_cmd (ptl->queue->tx_cmdq, (DMA *) & desc->main_dma);
 	elan4_flush_cmdq_reorder (ptl->queue->tx_cmdq);
 	MEMBAR_VISIBLE ();
+#endif
     }
 
     /* Join all threads */
@@ -728,10 +748,11 @@ mca_ptl_elan_thread_close (mca_ptl_elan_component_t * emp)
 	ompi_ptl_elan_thread_t * tsend, *trecv;
 	int *ptr = (int *)malloc(sizeof(int));
 
-	tsend = emp->send_threads[i];
 	trecv = emp->recv_threads[i];
-
+#if !OMPI_PTL_ELAN_ONE_QUEUE
+	tsend = emp->send_threads[i];
         ompi_thread_join(&tsend->thread, &ptr);
+#endif
         ompi_thread_join(&trecv->thread, &ptr);
     }
 

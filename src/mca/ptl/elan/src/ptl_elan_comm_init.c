@@ -42,6 +42,17 @@ ompi_init_elan_queue_events (mca_ptl_elan_module_t * ptl,
     rail = (RAIL *) ptl->ptl_elan_rail;
     ctx = (ELAN4_CTX *) ptl->ptl_elan_ctx;
 
+#if OMPI_PTL_ELAN_CMQ_REUSE
+
+#define OMPI_PTL_ELAN_CMQ_ENTRIES 1024
+    {
+	ptl_elan_cmdq_space.total = OMPI_PTL_ELAN_CMQ_ENTRIES;
+	ptl_elan_cmdq_space.free  = OMPI_PTL_ELAN_CMQ_ENTRIES;
+	ptl_elan_cmdq_space.space = elan4_alloccq_space(ctx, 
+		8*OMPI_PTL_ELAN_CMQ_ENTRIES, CQ_Size8K);
+    }
+#endif
+
     /* initialize list */
     OBJ_CONSTRUCT (&queue->tx_desc_free, ompi_free_list_t);
     flist = &queue->tx_desc_free;
@@ -99,8 +110,13 @@ ompi_init_elan_queue_events (mca_ptl_elan_module_t * ptl,
 
 	/* XXX: If completion is to be detected from the Queue
 	 *      there is no need to trigger a local event */
+#if OMPI_PTL_ELAN_ONE_QUEUE
+	desc->comp_dma.dma_dstEvent = elan4_main2elan (ctx, 
+		(void *) ptl->queue->input);
+#else
 	desc->comp_dma.dma_dstEvent = elan4_main2elan (ctx, 
 		(void *) ptl->comp->input);
+#endif
 	desc->comp_dma.dma_srcEvent = 0x0ULL;
 	desc->comp_dma.dma_typeSize |= RUN_DMA_CMD;
 	desc->comp_dma.dma_pad       = NOP_CMD;
@@ -199,8 +215,13 @@ mca_ptl_elan_putget_desc_construct (
 
     /* XXX: If completion is to be detected from the Queue
      *      there is no need to trigger a local event */
+#if OMPI_PTL_ELAN_ONE_QUEUE
+    desc->comp_dma.dma_dstEvent = elan4_main2elan (ctx, 
+	    (void *) ptl->queue->input);
+#else
     desc->comp_dma.dma_dstEvent = elan4_main2elan (ctx, 
 	    (void *) ptl->comp->input);
+#endif
     desc->comp_dma.dma_srcEvent = 0x0ULL;
     desc->comp_dma.dma_typeSize |= RUN_DMA_CMD;
     desc->comp_dma.dma_pad       = NOP_CMD;

@@ -284,8 +284,12 @@ mca_ptl_elan_component_progress (mca_ptl_tstamp_t tstamp)
 
     /* Iterate over all the PTL input Queues */
     for (i = 0; i < no_ptls; i++) {
+#if OMPI_PTL_ELAN_ONE_QUEUE
+	mca_ptl_elan_lookup(elan_mp->modules[i]);
+#else
 	mca_ptl_elan_update_desc(elan_mp->modules[i]);
 	mca_ptl_elan_drain_recv(elan_mp->modules[i]);
+#endif
     }
 
     return OMPI_SUCCESS;

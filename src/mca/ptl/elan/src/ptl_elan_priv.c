@@ -267,6 +267,11 @@ mca_ptl_elan_init_qdma_desc (struct mca_ptl_elan_send_frag_t *frag,
 
     /* initialize convertor */
     if(size_in > 0) {
+#if !OMPI_PTL_ELAN_USE_DTP
+	memcpy(&desc->buff[header_length], 
+		pml_req->req_base.req_addr, size_in);
+	size_out = size_in;
+#else
 	struct iovec iov;
         ompi_convertor_t *convertor;
 
@@ -296,6 +301,7 @@ mca_ptl_elan_init_qdma_desc (struct mca_ptl_elan_send_frag_t *frag,
             return;
 	}
         size_out = iov.iov_len;
+#endif
     } else {
 	size_out = size_in;
     }
@@ -317,11 +323,16 @@ mca_ptl_elan_init_qdma_desc (struct mca_ptl_elan_send_frag_t *frag,
      * so we need addend the command queue control bits.
      * Allocate space from command queues hanged off the CTX.
      */
-    desc->comp_event->ev_Params[1] = elan4_alloccq_space (ctx, 8, CQ_Size8K);
+    PTL_ELAN4_GET_QBUFF (desc->comp_event->ev_Params[1], ctx, 8, CQ_Size8K);
     desc->comp_event->ev_CountAndType = E4_EVENT_INIT_VALUE(-32,
 	    E4_EVENT_COPY, E4_EVENT_DTYPE_LONG, 8);
     desc->comp_dma.dma_cookie   = elan4_local_cookie(ptl->queue->tx_cpool,
 	    E4_COOKIE_TYPE_LOCAL_DMA, ptl->elan_vp);
+
+#if OMPI_PTL_ELAN_ONE_QUEUE
+    frag->frag_base.frag_header.hdr_common.hdr_type += 8;
+#endif
+
     desc->comp_dma.dma_srcAddr  = elan4_main2elan (ctx, 
 	    (void *) &frag->frag_base.frag_header);
     memcpy ((void *)desc->comp_buff, (void *)&desc->comp_dma, 
@@ -484,14 +495,21 @@ mca_ptl_elan_init_put_desc (struct mca_ptl_elan_send_frag_t *frag,
      */
     desc->comp_event->ev_Params[0]    = elan4_main2elan (ctx, 
 	    (void *)desc->comp_buff);
-    desc->comp_event->ev_Params[1] = elan4_alloccq_space (ctx, 8, CQ_Size8K);
+    PTL_ELAN4_GET_QBUFF (desc->comp_event->ev_Params[1], ctx, 8, CQ_Size8K);
     desc->comp_event->ev_CountAndType = E4_EVENT_INIT_VALUE(-32,
 	    E4_EVENT_COPY, E4_EVENT_DTYPE_LONG, 8);
 
     desc->comp_dma.dma_cookie   = elan4_local_cookie(ptl->queue->tx_cpool,
 	    E4_COOKIE_TYPE_LOCAL_DMA, ptl->elan_vp);
+
+#if OMPI_PTL_ELAN_ONE_QUEUE
+    *((mca_ptl_base_header_t *) desc->buff) = *hdr;
+    ((mca_ptl_base_header_t *) desc->buff)->hdr_common.hdr_type += 8; 
+    desc->comp_dma.dma_srcAddr  = elan4_main2elan (ctx, (void *)desc->buff);
+#else
     desc->comp_dma.dma_srcAddr  = elan4_main2elan (ctx, 
 	    (void *) &frag->frag_base.frag_header);
+#endif
     memcpy ((void *)desc->comp_buff, (void *)&desc->comp_dma, 
 	    sizeof (E4_DMA64));
 
@@ -519,13 +537,14 @@ mca_ptl_elan_init_put_desc (struct mca_ptl_elan_send_frag_t *frag,
     /* XXX: The chain dma will go directly into a command stream
      * so we need addend the command queue control bits.
      * Allocate space from command queues hanged off the CTX. */
-    desc->chain_event->ev_Params[1] = elan4_alloccq_space (ctx, 8, CQ_Size8K);
-    desc->main_dma.dma_srcAddr = desc->src_elan_addr;
-    desc->main_dma.dma_dstAddr = desc->dst_elan_addr;
-    desc->main_dma.dma_dstEvent= 0x0ULL; /*disable remote event */
+    PTL_ELAN4_GET_QBUFF (desc->chain_event->ev_Params[1], ctx, 8, CQ_Size8K);
 
     /* Chain an event */
     desc->main_dma.dma_srcEvent= elan4_main2elan(ctx, desc->chain_event);
+
+    desc->main_dma.dma_srcAddr = desc->src_elan_addr;
+    desc->main_dma.dma_dstAddr = desc->dst_elan_addr;
+    desc->main_dma.dma_dstEvent= 0x0ULL; /*disable remote event */
 
     flags = 0;
     desc->main_dma.dma_typeSize = E4_DMA_TYPE_SIZE (size_out, 
@@ -613,13 +632,20 @@ mca_ptl_elan_init_get_desc (mca_ptl_elan_module_t *ptl,
      */
     frag->frag_base.frag_header = *hdr; 
     ((mca_ptl_elan_ack_header_t *) &frag->frag_base.frag_header)->frag = frag; 
-    desc->comp_event->ev_Params[1] = elan4_alloccq_space (ctx, 8, CQ_Size8K);
+    PTL_ELAN4_GET_QBUFF (desc->comp_event->ev_Params[1], ctx, 8, CQ_Size8K);
     desc->comp_event->ev_CountAndType = E4_EVENT_INIT_VALUE(-32,
 	    E4_EVENT_COPY, E4_EVENT_DTYPE_LONG, 8);
     desc->comp_dma.dma_cookie   = elan4_local_cookie(ptl->queue->tx_cpool,
 	    E4_COOKIE_TYPE_LOCAL_DMA, ptl->elan_vp);
+
+#if OMPI_PTL_ELAN_ONE_QUEUE
+    *((mca_ptl_base_header_t *) desc->buff) = *hdr;
+    ((mca_ptl_base_header_t *) desc->buff)->hdr_common.hdr_type += 8; 
+    desc->comp_dma.dma_srcAddr  = elan4_main2elan (ctx, (void *)desc->buff);
+#else
     desc->comp_dma.dma_srcAddr  = elan4_main2elan (ctx, 
 	    (void *) &frag->frag_base.frag_header);
+#endif
     memcpy ((void *)desc->comp_buff, (void *)&desc->comp_dma, 
 	    sizeof (E4_DMA64));
 
@@ -653,14 +679,15 @@ mca_ptl_elan_init_get_desc (mca_ptl_elan_module_t *ptl,
     /* XXX: The chain dma will go directly into a command stream
      * so we need addend the command queue control bits.
      * Allocate space from command queues hanged off the CTX.  */
-    desc->chain_event->ev_Params[1] = elan4_alloccq_space (ctx, 8, CQ_Size8K);
+    PTL_ELAN4_GET_QBUFF (desc->chain_event->ev_Params[1], ctx, 8, CQ_Size8K);
+
+    /* Chain an event */
+    desc->main_dma.dma_dstEvent= elan4_main2elan(ctx, 
+	    (E4_Event *)desc->chain_event);
 
     desc->main_dma.dma_srcAddr = desc->src_elan_addr;
     desc->main_dma.dma_dstAddr = desc->dst_elan_addr;
     desc->main_dma.dma_srcEvent= 0x0ULL; /*disable remote event */
-    /* Chain an event */
-    desc->main_dma.dma_dstEvent= elan4_main2elan(ctx, 
-	    (E4_Event *)desc->chain_event);
 
     flags = 0;
     desc->main_dma.dma_typeSize = E4_DMA_TYPE_SIZE (size_out, 
@@ -956,14 +983,21 @@ mca_ptl_elan_start_ack ( mca_ptl_base_module_t * ptl,
 
     /* XXX: Need to have a way to differentiate different frag */
     ((mca_ptl_elan_ack_header_t *) hdr)->frag = desc; 
-    qdma->comp_event->ev_Params[1] = elan4_alloccq_space (ctx, 8, CQ_Size8K);
+    PTL_ELAN4_GET_QBUFF (qdma->comp_event->ev_Params[1], ctx, 8, CQ_Size8K);
     qdma->comp_event->ev_CountAndType = E4_EVENT_INIT_VALUE(-32,
 	    E4_EVENT_COPY, E4_EVENT_DTYPE_LONG, 8);
     qdma->comp_dma.dma_cookie   = elan4_local_cookie(
 	    elan_ptl->queue->tx_cpool,
 	    E4_COOKIE_TYPE_LOCAL_DMA, 
 	    elan_ptl->elan_vp);
+
+#if OMPI_PTL_ELAN_ONE_QUEUE
+    *((mca_ptl_base_header_t *) qdma->buff) = *hdr;
+    ((mca_ptl_base_header_t *) qdma->buff)->hdr_common.hdr_type += 8; 
+    qdma->comp_dma.dma_srcAddr  = elan4_main2elan (ctx, (void *)qdma->buff);
+#else
     qdma->comp_dma.dma_srcAddr  = elan4_main2elan (ctx, (void *) hdr);
+#endif
     memcpy ((void *)qdma->comp_buff, (void *)&qdma->comp_dma, 
 	    sizeof (E4_DMA64));
 
@@ -1154,7 +1188,7 @@ ptl_elan_send_comp:
 		(mca_pml_base_send_request_t *) basic->req);
 
 #if OMPI_PTL_ELAN_COMP_QUEUE
-	elan4_freecq_space (ctx, frag->desc->comp_event->ev_Params[1], 8);
+	PTL_ELAN4_FREE_QBUFF (ctx, frag->desc->comp_event->ev_Params[1], 8);
 #endif
 
 	/* Work out the new front pointer */
@@ -1218,6 +1252,132 @@ ptl_elan_send_comp:
 	}
     } /* end of the while loop */
 #endif 
+
+    return OMPI_SUCCESS;
+}
+
+int
+mca_ptl_elan_lookup(struct mca_ptl_elan_module_t *ptl)
+{
+    struct ompi_ptl_elan_queue_ctrl_t *queue;
+    ompi_ptl_elan_recv_queue_t *rxq;
+    ELAN_CTX   *ctx;
+    int         rc;
+
+    queue = ptl->queue;
+    rxq   = queue->rxq;
+    ctx   = ptl->ptl_elan_ctx;
+
+ptl_elan_recv_comp:
+    OMPI_LOCK (&queue->rx_lock);
+#if OMPI_PTL_ELAN_THREADING
+    rc = mca_ptl_elan_wait_queue(ptl, rxq, 1);
+#else
+    rc = (*(int *) (&rxq->qr_doneWord));
+#endif
+    if (rc) {
+	mca_ptl_base_header_t *header;
+
+	header = (mca_ptl_base_header_t *) rxq->qr_fptr;
+
+    if (header->hdr_common.hdr_type >= 8) {
+	mca_ptl_elan_send_frag_t *frag;
+	ompi_ptl_elan_base_desc_t *basic;
+
+	header->hdr_common.hdr_type = header->hdr_common.hdr_type - 8;
+
+#if OMPI_PTL_ELAN_THREADING
+	if (header->hdr_common.hdr_type == MCA_PTL_HDR_TYPE_STOP) {
+	    /* XXX: release the lock and quit the thread */
+	    OMPI_UNLOCK (&queue->rx_lock);
+	    return OMPI_SUCCESS;
+	}
+#endif
+	if (header->hdr_common.hdr_type == MCA_PTL_HDR_TYPE_ACK 
+		|| header->hdr_common.hdr_type == MCA_PTL_HDR_TYPE_FIN_ACK) {
+	    frag = ((mca_ptl_elan_ack_header_t*)header)->frag;
+	} else {
+	    frag = (mca_ptl_elan_send_frag_t *)
+		header->hdr_frag.hdr_src_ptr.pval; 
+	}
+	basic = (ompi_ptl_elan_base_desc_t*)frag->desc;
+
+	LOG_PRINT(PTL_ELAN_DEBUG_SEND, "frag %p desc %p \n", frag, basic);
+
+	/* XXX: please reset additional chained event for put/get desc */
+	mca_ptl_elan_send_desc_done (frag, 
+		(mca_pml_base_send_request_t *) basic->req);
+
+#if OMPI_PTL_ELAN_COMP_QUEUE
+	PTL_ELAN4_FREE_QBUFF (ctx, frag->desc->comp_event->ev_Params[1], 8);
+#endif
+
+    } else {
+
+#if OMPI_PTL_ELAN_THREADING
+	if (header->hdr_common.hdr_type == MCA_PTL_HDR_TYPE_STOP) {
+	    /* XXX: release the lock and quit the thread */
+	    OMPI_UNLOCK (&queue->rx_lock);
+	    return OMPI_SUCCESS;
+	} 
+#endif
+
+	switch (header->hdr_common.hdr_type) {
+	case MCA_PTL_HDR_TYPE_MATCH:
+	case MCA_PTL_HDR_TYPE_FRAG:
+	    /* a data fragment */
+	    mca_ptl_elan_data_frag (ptl, header);
+	    break;
+	case MCA_PTL_HDR_TYPE_ACK:
+	case MCA_PTL_HDR_TYPE_NACK:
+	    mca_ptl_elan_ctrl_frag (ptl, header);
+	    break;
+	case MCA_PTL_HDR_TYPE_FIN:
+	    mca_ptl_elan_last_frag (ptl, header);
+	    break;
+	case MCA_PTL_HDR_TYPE_FIN_ACK:
+	    mca_ptl_elan_last_frag_ack (ptl, header);
+	    break;
+	default:
+	    fprintf(stderr, "[%s:%d] unknow fragment type %d\n",
+		    __FILE__, __LINE__,
+		    header->hdr_common.hdr_type);
+	    fflush(stderr);
+	    break;
+	}
+    }
+
+	/* Work out the new front pointer */
+	if (rxq->qr_fptr == rxq->qr_top) {
+	    rxq->qr_fptr = rxq->qr_base;
+	    rxq->qr_efptr = rxq->qr_efitem;
+	} else {
+	    rxq->qr_fptr = (void *) ((uintptr_t) rxq->qr_fptr
+				     + queue->rx_slotsize);
+	    rxq->qr_efptr += queue->rx_slotsize;
+	}
+
+	/* PCI Write, Reset the event 
+	 * Order RESETEVENT wrt to wait_event_cmd */
+	queue->input->q_fptr = rxq->qr_efptr;
+	RESETEVENT_WORD (&rxq->qr_doneWord);
+	MEMBAR_STORESTORE ();
+
+	/* Re-prime queue event by issuing a waitevent(1) on it */
+	elan4_wait_event_cmd (rxq->qr_cmdq,
+		/* Is qr_elanDone really a main memory address? */
+		MAIN2ELAN (ctx, rxq->qr_elanDone),
+		E4_EVENT_INIT_VALUE (-32, E4_EVENT_WRITE,
+		    E4_EVENT_DTYPE_LONG, 0), 
+		MAIN2ELAN (ctx, (void *) &rxq->qr_doneWord),
+		0xfeedfacedeadbeef);
+	elan4_flush_cmdq_reorder (rxq->qr_cmdq);
+    }
+    OMPI_UNLOCK (&queue->rx_lock);
+
+#if OMPI_PTL_ELAN_THREADING
+    goto ptl_elan_recv_comp;
+#endif
 
     return OMPI_SUCCESS;
 }
