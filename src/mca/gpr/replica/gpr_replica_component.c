@@ -361,7 +361,7 @@ void mca_gpr_replica_recv(int status, ompi_process_name_t* sender,
 	    goto RETURN_ERROR;
 	}
 
-	tokens = (char**)malloc(num_tokens*sizeof(char*));
+	tokens = (char**)malloc((num_tokens+1)*sizeof(char*));
 
 	tokptr = tokens;
 	for (i=0; i<num_tokens; i++) {
@@ -370,6 +370,7 @@ void mca_gpr_replica_recv(int status, ompi_process_name_t* sender,
 	    }
 	    tokptr++;
 	}
+    *tokptr = NULL;
 
 	if (OMPI_SUCCESS != ompi_unpack(buffer, &object_size, 1, MCA_GPR_OOB_PACK_OBJECT_SIZE)) {
 	    goto RETURN_ERROR;
