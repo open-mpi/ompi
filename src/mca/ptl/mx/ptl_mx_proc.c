@@ -140,12 +140,11 @@ mca_ptl_mx_proc_t* mca_ptl_mx_proc_lookup(const ompi_process_name_t *name)
  */
 int mca_ptl_mx_proc_insert(mca_ptl_mx_proc_t* ptl_proc, mca_ptl_base_peer_t* ptl_peer)
 {
-    /* insert into peer array */ 
-    mx_endpoint_addr_t addr;
     uint64_t mx_nic_addr;
     uint32_t mx_endpoint_id;
     uint32_t mx_filter;
                                                                                                   
+    /* insert into peer array */ 
     ptl_peer->peer_proc = ptl_proc;
     ptl_peer->peer_addr = ptl_proc->proc_addrs[ptl_proc->proc_peer_count];
     ptl_proc->proc_peers[ptl_proc->proc_peer_count] = ptl_peer;

@@ -141,7 +141,7 @@ int mca_ptl_mx_send(
     mx_return_t mx_return;
     int rc;
 
-    if (offset == 0 && sendreq->req_cached) {
+    if (sendreq->req_cached) {
         sendfrag = (mca_ptl_mx_send_frag_t*)(sendreq+1);
     } else {
         ompi_list_item_t* item;
@@ -168,6 +168,7 @@ int mca_ptl_mx_send(
     hdr->hdr_match.hdr_msg_seq = sendreq->req_base.req_sequence;
  
     /* initialize convertor */
+    sendfrag->frag_progress = 0;
     sendfrag->frag_free = 0;
     if(size > 0) {
        ompi_convertor_t *convertor;
@@ -276,6 +277,7 @@ int mca_ptl_mx_send_continue(
     mca_ptl_mx_send_frag_t* sendfrag;
     mca_ptl_base_header_t* hdr;
     mx_return_t mx_return;
+    uint64_t match_value;
     int rc;
 
     /* allocate fragment */
@@ -296,6 +298,7 @@ int mca_ptl_mx_send_continue(
     hdr->hdr_frag.hdr_dst_ptr = sendreq->req_peer_match;
  
     /* initialize convertor */
+    sendfrag->frag_progress = 0;
     sendfrag->frag_free = 0;
     if(size > 0) {
        ompi_convertor_t *convertor;
@@ -362,12 +365,13 @@ int mca_ptl_mx_send_continue(
     sendreq->req_offset += size;
 
     /* start the fragment */
+    match_value = ((uint64_t)sendreq << 32) | (uint64_t)offset;
     mx_return = mx_isend(
         mx_ptl->mx_endpoint,
         sendfrag->frag_segments,
         sendfrag->frag_segment_count,
         sendfrag->frag_send.frag_base.frag_peer->peer_addr,
-        1,
+        match_value,
         sendfrag,
         &sendfrag->frag_request);
     if(mx_return != MX_SUCCESS) {

@@ -91,7 +91,7 @@ int mca_ptl_mx_component_open(void)
 
     /* register MX module parameters */
     mca_ptl_mx_component.mx_filter =
-        (uint32_t)mca_ptl_mx_param_register_int("filter", 0x12345);
+        (uint32_t)mca_ptl_mx_param_register_int("filter", 0xdeadbeef);
     mca_ptl_mx_component.mx_prepost =
         mca_ptl_mx_param_register_int("prepost", 1);
     mca_ptl_mx_component.mx_debug =

@@ -24,8 +24,12 @@ struct mca_ptl_mx_send_frag_t {
    mx_request_t frag_request;
    mx_segment_t frag_segments[2];
    size_t frag_segment_count;
+   uint32_t frag_progress;
 };
 typedef struct mca_ptl_mx_send_frag_t mca_ptl_mx_send_frag_t;
+
+OBJ_CLASS_DECLARATION(mca_ptl_mx_send_frag_t);
+
 
 #define MCA_PTL_MX_SEND_FRAG_ALLOC(sendfrag, rc)  \
     { \
@@ -48,17 +52,14 @@ typedef struct mca_ptl_mx_send_frag_t mca_ptl_mx_send_frag_t;
     OMPI_FREE_LIST_RETURN(&mca_ptl_mx_component.mx_send_frags, (ompi_list_item_t*)sendfrag); \
     }
 
-OBJ_CLASS_DECLARATION(mca_ptl_mx_send_frag_t);
-
-
 #define MCA_PTL_MX_SEND_FRAG_INIT_ACK(ack,ptl,frag) \
 { \
     mca_ptl_base_header_t* hdr = &(ack)->frag_send.frag_base.frag_header; \
-    mca_pml_base_recv_request_t* request = frag->frag_recv.frag_request; \
+    mca_pml_base_recv_request_t* request = (frag)->frag_recv.frag_request; \
     hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_ACK; \
     hdr->hdr_common.hdr_flags = 0; \
     hdr->hdr_common.hdr_size = sizeof(mca_ptl_base_ack_header_t); \
-    hdr->hdr_ack.hdr_src_ptr = frag->frag_recv.frag_base.frag_header.hdr_frag.hdr_src_ptr; \
+    hdr->hdr_ack.hdr_src_ptr = (frag)->frag_recv.frag_base.frag_header.hdr_frag.hdr_src_ptr; \
     hdr->hdr_ack.hdr_dst_match.lval = 0; /* for VALGRIND/PURIFY - REPLACE WITH MACRO */ \
     hdr->hdr_ack.hdr_dst_match.pval = request; \
     hdr->hdr_ack.hdr_dst_addr.lval = 0; /* for VALGRIND/PURIFY - REPLACE WITH MACRO */ \
@@ -73,6 +74,45 @@ OBJ_CLASS_DECLARATION(mca_ptl_mx_send_frag_t);
     (ack)->frag_free = 0; \
 }
                                                                                                                   
+
+static inline void MCA_PTL_MX_SEND_FRAG_PROGRESS(mca_ptl_mx_send_frag_t* frag)
+{
+   mca_pml_base_send_request_t* request = frag->frag_send.frag_request;
+   bool frag_ack;
+   uint32_t frag_progress;
+
+    /* if this is an ack - simply return to pool */
+    if(request == NULL) {
+        MCA_PTL_MX_SEND_FRAG_RETURN(frag);
+        return;
+    }
+                                                                                                          
+    /* Done when:
+     * (1) send completes and ack is received
+     * (2) send completes and ack is not required
+     */
+    frag_ack = (frag->frag_send.frag_base.frag_header.
+        hdr_common.hdr_flags & MCA_PTL_FLAGS_ACK) ? true : false;
+    frag_progress = ompi_atomic_add_32(&frag->frag_progress, 1); 
+
+    if((frag_ack == true && frag_progress == 2) ||  
+       (frag_ack == false && frag_progress == 1)) {
+                                                                                                          
+        /* update request status */
+        frag->frag_send.frag_base.frag_owner->ptl_send_progress(
+            frag->frag_send.frag_base.frag_owner,
+            request,
+            frag->frag_send.frag_base.frag_size);
+                                                                                                          
+        /* return any fragment that didnt come from the cache */
+        if (request->req_cached == false || 
+            frag->frag_send.frag_base.frag_header.hdr_frag.hdr_frag_offset != 0) {
+            MCA_PTL_MX_SEND_FRAG_RETURN(frag);
+        }
+    }
+}
+
+
 
 #endif
 
