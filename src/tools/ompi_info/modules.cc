@@ -27,6 +27,8 @@
 #include "mca/coll/base/base.h"
 #include "mca/ns/ns.h"
 #include "mca/ns/base/base.h"
+#include "mca/topo/topo.h"
+#include "mca/topo/base/base.h"
 #include "tools/ompi_info/ompi_info.h"
 
 using namespace std;
@@ -145,13 +147,8 @@ void ompi_info::open_components()
   mca_ptl_base_open();
   component_map["ptl"] = &mca_ptl_base_modules_available;
 
-#if 0
-  // topo component opening not implemented yet
   mca_topo_base_open();
-  component_map["topo"] = &mca_topo_base_components_available;
-#else
-  component_map["topo"] = NULL;
-#endif
+  component_map["topo"] = &mca_topo_base_modules_opened;
 
   // All done
 
