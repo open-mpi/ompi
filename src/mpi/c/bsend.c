@@ -23,7 +23,7 @@ static const char FUNC_NAME[] = "MPI_Bsend";
 
 int MPI_Bsend(void *buf, int count, MPI_Datatype type, int dest, int tag, MPI_Comm comm) 
 {
-    int rc, index;
+    int rc;
     ompi_request_t* request;
 
     if (dest == MPI_PROC_NULL) {
@@ -59,7 +59,7 @@ int MPI_Bsend(void *buf, int count, MPI_Datatype type, int dest, int tag, MPI_Co
     if(OMPI_SUCCESS != rc)
         goto error_return;
 
-    rc = ompi_request_wait(1, &request, &index, NULL);
+    rc = ompi_request_wait(&request, MPI_STATUS_IGNORE);
     if(OMPI_SUCCESS != rc) {
         ompi_request_free(&request);
         return rc;

@@ -32,7 +32,6 @@ int mca_coll_basic_exscan_intra(void *sbuf, void *rbuf, int count,
   int size;
   int rank;
   int err;
-  int index;
   long true_lb, true_extent, lb, extent;
   char *free_buffer = NULL;
   char *reduce_buffer = NULL;
@@ -101,7 +100,7 @@ int mca_coll_basic_exscan_intra(void *sbuf, void *rbuf, int count,
     /* Finally, wait for the receive to complete (so that we can do
        the reduction).  */
 
-    err = ompi_request_wait(1, &req, &index, MPI_STATUS_IGNORE);
+    err = ompi_request_wait(&req, MPI_STATUS_IGNORE);
     if (MPI_SUCCESS != err) {
       goto error;
     }
@@ -114,7 +113,7 @@ int mca_coll_basic_exscan_intra(void *sbuf, void *rbuf, int count,
     /* If we're not commutative, we have to wait for the receive to
        complete and then copy it into the reduce buffer */
 
-    err = ompi_request_wait(1, &req, &index,  MPI_STATUS_IGNORE);
+    err = ompi_request_wait(&req, MPI_STATUS_IGNORE);
     if (MPI_SUCCESS != err) {
       goto error;
     }
@@ -143,7 +142,7 @@ error:
   free(free_buffer);
   if (MPI_REQUEST_NULL != req) {
     ompi_request_cancel(req);
-    ompi_request_wait(1, &req, &index, MPI_STATUS_IGNORE);
+    ompi_request_wait(&req, MPI_STATUS_IGNORE);
   }
 
   /* All done */
