@@ -30,7 +30,7 @@ int mca_pml_teg_wait(
     /* return request to pool */
     if(pml_request->req_persistent == false) {
         if(pml_request->req_pml_done == true)
-            mca_pml_teg_request_return(pml_request);
+            mca_pml_teg_free(request);
         *request = NULL;
     }
 
