@@ -14,13 +14,6 @@ LEX_OUTPUT_ROOT = lex.mca_llm_base_yy
 
 # Source code files
 
-noinst_PROGRAMS = \
-	hostparse
-hostparse_SOURCES = \
-	hostparse.c
-hostparse_LDADD = \
-	libmca_llm_base.la
-
 headers = \
 	base.h \
 	base_internal.h \
