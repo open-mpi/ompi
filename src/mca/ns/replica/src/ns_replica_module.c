@@ -21,6 +21,7 @@
 #include "util/proc_info.h"
 #include "util/output.h"
 #include "mca/mca.h"
+#include "mca/oob/base/base.h"
 #include "mca/ns/base/base.h"
 #include "ns_replica.h"
 
@@ -165,4 +166,29 @@ int mca_ns_replica_finalize(void)
   /* All done */
 
   return OMPI_SUCCESS;
+}
+
+mca_oob_callback_fn_t mca_ns_replica_recv(int status, const ompi_process_name_t *sender,
+					  const struct iovec *msg, size_t count,
+					  void *cbdata)
+{
+    ompi_ns_msg_buffer_t *cmd, answer;
+    ompi_process_id_t tmp1;
+    struct iovec reply;
+    int i;
+
+    for (i=0; i<count; i++) {  /* loop through all included commands */
+	cmd = (ompi_ns_msg_buffer_t*)msg->iov_base;
+	if (OMPI_NS_CREATE_CELLID == cmd->command) { /* got create_cellid command */
+	    tmp1 = ompi_name_server.create_cellid();
+	    answer.command = cmd->command;
+	    answer.buflen = sizeof(tmp1);
+	    answer.buf = (uint8_t*)&tmp1;
+
+	    reply.iov_base = (char*)&answer;
+	    reply.iov_len = sizeof(answer);
+	    mca_oob_send(sender, &reply, 1, 0);
+	}
+    }
+    return OMPI_SUCCESS;
 }

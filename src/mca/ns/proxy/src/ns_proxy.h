@@ -27,6 +27,13 @@ mca_ns_t* mca_ns_proxy_init(bool *allow_multi_user_threads, bool *have_hidden_th
 int mca_ns_proxy_finalize(void);
 
 /*
+ * globals used within proxy component
+ */
+
+extern ompi_process_name_t mca_ns_my_replica;
+
+
+/*
  * Implementation of create_cellid().
  */
 ompi_process_id_t ns_proxy_create_cellid(void);
