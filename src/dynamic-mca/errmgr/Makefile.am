@@ -14,37 +14,11 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-SUBDIRS = \
-	allocator \
-        base \
-        coll \
-        common \
-	errmgr \
-        gpr \
-        io \
-        iof \
-	llm \
-        mpool \
-        ns \
-        one \
-        oob \
-        pcm \
-	pcmclient \
-        pml \
-        ptl \
-        soh \
-        svc \
-        topo
+SUBDIRS			= $(MCA_errmgr_DSO_SUBDIRS)
+DISTCLEANFILES		= $(SUBDIRS)
 
-# Source code files
+# Every directory under here is a sym link to something in the main
+# src/mca tree.  Hence, we don't want to distribute anything under
+# here.
 
-headers = mca.h
-
-# Conditionally install the header files
-
-if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/mca
-ompi_HEADERS = $(headers)
-else
-ompidir = $(includedir)
-endif
+DIST_SUBDIRS		=
