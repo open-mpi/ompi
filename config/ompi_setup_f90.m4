@@ -63,13 +63,6 @@ else
         OMPI_WANT_F90_BINDINGS=0
         OMPI_F90="none"
         BASEF90="none"
-    elif test "$FC" = "$F77"; then
-        AC_MSG_WARN([*** Found same compiler for Fortran 77 and 90/95.])
-        AC_MSG_WARN([*** Assuming no Fortran 90/95 compiler; disabling])
-        AC_MSG_WARN([*** Fortran 90/95 MPI bindings.])
-        OMPI_WANT_F90_BINDINGS=0
-        OMPI_F90="none"
-        BASEF90="none"
     else
         OMPI_F90="$FC"
         BASEF90="`basename $FC`"
