@@ -17,7 +17,7 @@
 #include "include/sys/atomic.h"
 #include "include/sys/architecture.h"
 
-#if OMPI_ASSEMBLY_ARCH == OMPI_SPARC32
+#if OMPI_ASSEMBLY_ARCH == OMPI_SPARC
 
 #if OMPI_WANT_SMP_LOCKS
 
