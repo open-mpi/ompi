@@ -26,7 +26,7 @@
 
 struct ompi_mutex_t {
     ompi_object_t super;
-#if defined(OMPI_HAVE_POSIX_THREADS)
+#if OMPI_HAVE_POSIX_THREADS
     pthread_mutex_t m_lock_pthread;
 #endif
     ompi_lock_t m_lock_atomic;
