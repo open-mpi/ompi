@@ -8,6 +8,7 @@
 #include "class/ompi_pointer_array.h"
 #include "runtime/runtime.h"
 #include "runtime/runtime_types.h"
+#include "runtime/runtime_internal.h"
 #include "mca/pcm/pcm.h"
 #include "mca/pcm/base/base.h"
 #include "mca/pcmclient/pcmclient.h"
