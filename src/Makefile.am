@@ -20,6 +20,7 @@ endif
 # See if we have f77 MPI bindings
 
 if OMPI_WANT_F77_BINDINGS
+f77_base_lib = mpi/f77/libmpi_f77.la
 if WANT_MPI_F77_BINDINGS_LAYER
 f77_mpi_lib = mpi/f77/libmpi_f77_mpi.la
 else
@@ -101,7 +102,8 @@ libmpi_la_LIBADD = \
         mca/pml/base/libmca_pml_base.la $(MCA_pml_STATIC_LTLIBS) \
         mca/ptl/base/libmca_ptl_base.la $(MCA_ptl_STATIC_LTLIBS) \
         mca/topo/base/libmca_topo_base.la $(MCA_topo_STATIC_LTLIBS) \
-        $(c_mpi_lib) $(c_pmpi_lib) $(f77_mpi_lib) $(f77_pmpi_lib) \
+        mpi/c/libmpi_c.la $(c_mpi_lib) $(c_pmpi_lib) \
+        mpi/f77/libmpi_f77.la $(f77_mpi_lib) $(f77_pmpi_lib) \
         $(f90_lib) $(cxx_lib) \
 	mpi/runtime/libmpiruntime.la \
         op/libop.la \
