@@ -36,7 +36,7 @@ struct mca_ptl_base_send_request_t {
     /* queue of fragments that are waiting to be acknowledged */
     mca_ptl_base_queue_t req_unacked_frags;
     /* PTL that allocated this descriptor */
-    struct mca_ptl_t* req_owner;
+    struct mca_ptl_proc_t* req_owner;
 };
 typedef struct mca_ptl_base_send_request_t mca_ptl_base_send_request_t;
 

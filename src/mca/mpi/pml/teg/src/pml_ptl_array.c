@@ -15,39 +15,40 @@ lam_class_info_t mca_pml_teg_proc_cls = {
 };
                                                                                                                              
 
-void mca_ptl_array_init(mca_ptl_array_t* ptl_array)
+void mca_ptl_array_init(mca_ptl_array_t* array)
 {
-    SUPER_INIT(ptl_array, &lam_object_cls);
-    ptl_array->ptl_array = 0;
-    ptl_array->ptl_size = 0;
-    ptl_array->ptl_index = 0;
-    ptl_array->ptl_reserve = 0;
+    SUPER_INIT(array, &lam_object_cls);
+    array->ptl_procs = 0;
+    array->ptl_size = 0;
+    array->ptl_index = 0;
+    array->ptl_reserve = 0;
 }
 
 
-void mca_ptl_array_destroy(mca_ptl_array_t* ptl_array)
+void mca_ptl_array_destroy(mca_ptl_array_t* array)
 {
-    if(ptl_array->ptl_array != 0)
-        LAM_FREE(ptl_array->ptl_array);
-    SUPER_DESTROY(ptl_array, &lam_object_cls);
+    if(array->ptl_procs != 0)
+        LAM_FREE(array->ptl_procs);
+    SUPER_DESTROY(array, &lam_object_cls);
 }
 
 
-int mca_ptl_array_reserve(mca_ptl_array_t* ptl_array, size_t size)
+int mca_ptl_array_reserve(mca_ptl_array_t* array, size_t size)
 {
-    mca_ptl_info_t *array;
-    if(ptl_array->ptl_reserve >= size)
+    mca_ptl_proc_t *procs;
+    if(array->ptl_reserve >= size)
         return LAM_SUCCESS;
     
-    array = (mca_ptl_info_t*)LAM_MALLOC(sizeof(mca_ptl_array_t)*size);
+    procs = (mca_ptl_proc_t*)LAM_MALLOC(sizeof(mca_ptl_array_t)*size);
     if(array == 0)
         return LAM_ERR_OUT_OF_RESOURCE;
-    if(ptl_array->ptl_size) {
-         memcpy(ptl_array->ptl_array, array, ptl_array->ptl_size * sizeof(mca_ptl_info_t));
-         LAM_FREE(ptl_array->ptl_array);
+    if(array->ptl_size) {
+         memcpy(procs, array->ptl_procs, array->ptl_size * sizeof(mca_ptl_proc_t));
+         LAM_FREE(array->ptl_procs);
     }
-    memset(ptl_array->ptl_array+(size-ptl_array->ptl_size), 0, (size-ptl_array->ptl_size)*sizeof(mca_ptl_info_t));
-    ptl_array->ptl_reserve = size;
+    array->ptl_procs = procs;
+    array->ptl_reserve = size;
+    memset(array->ptl_procs+(size-array->ptl_size), 0, (size-array->ptl_size)*sizeof(mca_ptl_proc_t));
     return LAM_SUCCESS;
 }
 

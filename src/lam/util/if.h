@@ -6,6 +6,9 @@
 #ifndef _LAM_IF_UTIL_
 #define _LAM_IF_UTIL_
 
+#include <sys/types.h>
+#include <sys/socket.h>
+
 /**
  *  Lookup an interface by name and return its primary address.
  *  

@@ -4,6 +4,7 @@
 
 #include "lam/mem/malloc.h"
 #include "lam/util/output.h"
+#include "lam/util/if.h"
 #include "mca/mpi/pml/pml.h"
 #include "mca/mpi/ptl/ptl.h"
 #include "ptl_tcp.h"
@@ -18,7 +19,7 @@ mca_ptl_tcp_t mca_ptl_tcp = {
     0, /* ptl_frag_max_size */
     0, /* ptl_latency */
     0, /* ptl_andwidth */
-    mca_ptl_tcp_add_procs,
+    mca_ptl_tcp_add_proc,
     mca_ptl_tcp_fini,
     mca_ptl_tcp_send,
     mca_ptl_tcp_request_alloc
@@ -38,8 +39,13 @@ int mca_ptl_tcp_create(int if_index)
 
     /* initialize the ptl */
     ptl->tcp_ifindex = if_index;
-    lam_ifindextoaddr(if_index, &ptl->tcp_addr, sizeof(ptl->tcp_addr));
+    lam_ifindextoaddr(if_index, (struct sockaddr*)&ptl->tcp_addr, sizeof(ptl->tcp_addr));
+    return LAM_SUCCESS;
+}
 
+
+int mca_ptl_tcp_add_proc(struct mca_ptl_t* ptl, struct lam_proc_t *procs, struct mca_ptl_addr_t** ptl_addr)
+{
     return LAM_SUCCESS;
 }
 

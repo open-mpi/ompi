@@ -21,6 +21,7 @@
  */
 
 struct mca_ptl_t;
+struct mca_ptl_addr_t;
 struct mca_ptl_base_fragment_t;
 struct mca_ptl_base_send_request_t;
 
@@ -82,10 +83,10 @@ typedef struct mca_ptl_base_module_1_0_0_t mca_ptl_base_module_t;
  *  @param nprocs (IN)  
  *  @return            
  */
-typedef int (*mca_ptl_base_add_procs_fn_t)(
+typedef int (*mca_ptl_base_add_proc_fn_t)(
     struct mca_ptl_t* ptl, 
-    struct lam_proc_t** procs, 
-    size_t nprocs
+    struct lam_proc_t* proc, 
+    struct mca_ptl_addr_t**
 );
 
 /**
@@ -112,6 +113,7 @@ typedef int (*mca_ptl_base_request_alloc_fn_t)(
 
 typedef int (*mca_ptl_base_send_fn_t)(
     struct mca_ptl_t* ptl, 
+    struct mca_ptl_addr_t* ptl_addr, 
     struct mca_ptl_base_send_request_t* send_request,
     size_t size,
     bool* complete
@@ -125,7 +127,7 @@ struct mca_ptl_t {
 
     /* PTL common attributes */
     mca_ptl_base_module_t* ptl_module;
-    bool        ptl_exclusive;         /**< indicates this PTL should be used exclusively */
+    int         ptl_exclusive;         /**< indicates this PTL should be used exclusively */
     size_t      ptl_first_frag_size;   /**< maximum size of first fragment */
     size_t      ptl_min_frag_size;     /**< threshold below which the PTL will not fragment */
     size_t      ptl_max_frag_size;     /**< maximum fragment size supported by the PTL */
@@ -133,7 +135,7 @@ struct mca_ptl_t {
     uint64_t    ptl_bandwidth;         /**< bandwidth (bytes/sec) supported by each endpoint */
 
     /* PTL function table */
-    mca_ptl_base_add_procs_fn_t      ptl_add_procs;
+    mca_ptl_base_add_proc_fn_t       ptl_add_proc;
     mca_ptl_base_fini_fn_t           ptl_fini;
     mca_ptl_base_send_fn_t           ptl_send;
     mca_ptl_base_request_alloc_fn_t  ptl_request_alloc;
