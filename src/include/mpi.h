@@ -414,55 +414,66 @@ extern "C" {
                      int dest, int tag, MPI_Comm comm, MPI_Request *request); 
   int MPI_Buffer_attach(void *buffer, int size);
   int MPI_Buffer_detach(void *buffer, int *size);
+  int MPI_Cancel(MPI_Request *request);
+  int MPI_Cart_coords(MPI_Comm comm, int rank, int maxdims, int *coords);
+  int MPI_Cart_create(MPI_Comm old_comm, int ndims, int *dims, 
+                      int *periods, int redorder, MPI_Comm *comm_cart);
+  int MPI_Cart_get(MPI_Comm comm, int maxdims, int *dims, 
+                   int *periods, int *coords);
+  int MPI_Cart_map(MPI_Comm comm, int ndims, int *dims, 
+                   int *periods, int *newrank);
+  int MPI_Cart_rank(MPI_Comm comm, int *coords, int *rank);
+  int MPI_Cart_shift(MPI_Comm comm, int direction, int disp, 
+                     int *rank_source, int *rank_dest);
+  int MPI_Cart_sub(MPI_Comm comm, int *remain_dims, MPI_Comm *new_comm);
+  int MPI_Cartdim_get(MPI_Comm comm, int *ndims);
+  int MPI_Close_port(char *port_name);
+  int MPI_Comm_accept(char *port_name, MPI_Info info, int root, 
+                      MPI_Comm comm, MPI_Comm *newcomm);
+  MPI_Fint MPI_Comm_c2f(MPI_Comm comm);
+  int MPI_Comm_call_error_handler(MPI_Comm comm, int errorcode);
+  int MPI_Comm_compare(MPI_Comm comm1, MPI_Comm comm2, int *result);
+  int MPI_Comm_connect(char *port_name, MPI_Info info, int root, 
+                       MPI_Comm comm, MPI_Comm *newcomm);
+  int MPI_Comm_create_errhandler(MPI_Comm_errhandler_fn *function, 
+                                 MPI_Errhandler *errhandler);
+  int MPI_Comm_create_keyval(MPI_Comm_copy_attr_function *comm_copy_attr_fn, 
+                             MPI_Comm_delete_attr_function *comm_delete_attr_fn, 
+                             int *comm_keyval, void *extra_state);
+  int MPI_Comm_create(MPI_Comm comm, MPI_Group group, MPI_Comm *newcomm);
+  int MPI_Comm_delete_attr(MPI_Comm comm, int comm_keyval);
+  int MPI_Comm_disconnect(MPI_Comm *comm);
+  int MPI_Comm_dup(MPI_Comm comm, MPI_Comm *newcomm);
+  MPI_Comm MPI_Comm_f2c(MPI_Fint comm);
+  int MPI_Comm_free_keyval(int *comm_keyval);
+  int MPI_Comm_free(MPI_Comm *comm);
+  int MPI_Comm_get_attr(MPI_Comm comm, int comm_keyval, 
+                        void *attribute_val, int *flag);
+  int MPI_Comm_get_errhandler(MPI_Comm comm, MPI_Errhandler *erhandler);
+  int MPI_Comm_get_name(MPI_Comm comm, char *comm_name, int *resultlen);
+  int MPI_Comm_get_parent(MPI_Comm *parent);
+  int MPI_Comm_group(MPI_Comm comm, MPI_Group *group);
+  int MPI_Comm_join(int fd, MPI_Comm *intercomm);
+  int MPI_Comm_rank(MPI_Comm comm, int *rank);
+  int MPI_Comm_remote_group(MPI_Comm comm, MPI_Group *group);
+  int MPI_Comm_remote_size(MPI_Comm comm, int *size);
+  int MPI_Comm_set_attr(MPI_Comm comm, int comm_keyval, void *attribute_val);
+  int MPI_Comm_set_errhandler(MPI_Comm comm, MPI_Errhandler errhandler);
+  int MPI_Comm_set_name(MPI_Comm comm, char *comm_name);
+  int MPI_Comm_size(MPI_Comm comm, int *size);
+  int MPI_Comm_spawn(char *command, char **argv, int maxprocs, MPI_Info info, 
+                     int root, MPI_Comm comm, MPI_Comm *intercomm, 
+                     int *array_of_errcodes);
+  int MPI_Comm_spawn_multiple(int count, char **array_of_commands, char ***array_of_argv, 
+                              int *array_of_maxprocs, MPI_Info *array_of_info, 
+                              int root, MPI_Comm comm, MPI_Comm *intercomm, 
+                              int *array_of_errcodes);
+  int MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm);
+  int MPI_Comm_test_inter(MPI_Comm comm, int *flag);
   /* 
-   * Anju: Shell functions done till here 
+   * Anju:
+   * Here ends the alphabet C
    */
-  int MPI_Cancel(MPI_Request *);
-  int MPI_Cart_coords(MPI_Comm, int, int, int *);
-  int MPI_Cart_create(MPI_Comm, int, int *, int *, int, MPI_Comm *);
-  int MPI_Cartdim_get(MPI_Comm, int *);
-  int MPI_Cart_get(MPI_Comm, int, int *, int *, int *);
-  int MPI_Cart_map(MPI_Comm, int, int *, int *, int *);
-  int MPI_Cart_rank(MPI_Comm, int *, int *);
-  int MPI_Cart_shift(MPI_Comm, int, int, int *, int *);
-  int MPI_Cart_sub(MPI_Comm, int *, MPI_Comm *);
-  int MPI_Close_port(char *);
-  MPI_Fint MPI_Comm_c2f(MPI_Comm);
-  int MPI_Comm_accept(char *, MPI_Info, int, MPI_Comm, MPI_Comm *);
-  int MPI_Comm_compare(MPI_Comm, MPI_Comm, int *);
-  int MPI_Comm_connect(char *, MPI_Info, int, MPI_Comm, MPI_Comm *);
-  int MPI_Comm_create(MPI_Comm, MPI_Group, MPI_Comm *);
-  int MPI_Comm_create_errhandler(MPI_Comm_errhandler_fn *, 
-                                 MPI_Errhandler *);
-  int MPI_Comm_create_keyval(MPI_Comm_copy_attr_function *, 
-                             MPI_Comm_delete_attr_function *, 
-                             int *, void *);
-  int MPI_Comm_delete_attr(MPI_Comm, int);
-  int MPI_Comm_disconnect(MPI_Comm *);
-  int MPI_Comm_dup(MPI_Comm, MPI_Comm *);
-  MPI_Comm MPI_Comm_f2c(MPI_Fint);
-  int MPI_Comm_free(MPI_Comm *);
-  int MPI_Comm_free_keyval(int *);
-  int MPI_Comm_get_attr(MPI_Comm, int, void *, int *);
-  int MPI_Comm_get_errhandler(MPI_Comm, MPI_Errhandler *);
-  int MPI_Comm_get_name(MPI_Comm, char *, int *);
-  int MPI_Comm_get_parent(MPI_Comm *);
-  int MPI_Comm_group(MPI_Comm, MPI_Group *);
-  int MPI_Comm_join(int, MPI_Comm *);
-  int MPI_Comm_rank(MPI_Comm, int *);
-  int MPI_Comm_remote_group(MPI_Comm, MPI_Group *);
-  int MPI_Comm_remote_size(MPI_Comm, int *);
-  int MPI_Comm_set_attr(MPI_Comm, int, void *);
-  int MPI_Comm_set_errhandler(MPI_Comm, MPI_Errhandler);
-  int MPI_Comm_set_name(MPI_Comm, char *);
-  int MPI_Comm_size(MPI_Comm, int *);
-  int MPI_Comm_spawn(char *, char **, int, MPI_Info, int, 
-                     MPI_Comm, MPI_Comm *, int *);
-  int MPI_Comm_spawn_multiple(int, char **, char ***, int *, 
-                              MPI_Info *, int, MPI_Comm, 
-                              MPI_Comm *, int *);
-  int MPI_Comm_split(MPI_Comm, int, int, MPI_Comm *);
-  int MPI_Comm_test_inter(MPI_Comm, int *);
   int MPI_Dims_create(int, int, int *);
   MPI_Fint MPI_Errhandler_c2f(MPI_Errhandler err);
   int MPI_Errhandler_create(MPI_Handler_function *, MPI_Errhandler *);
@@ -670,80 +681,104 @@ extern "C" {
   /*
    * Profiling MPI API
    */
-  int PMPI_Abort(MPI_Comm, int);
-  int PMPI_Accumulate(void *, int, MPI_Datatype, int, MPI_Aint, 
-                      int, MPI_Datatype, MPI_Op, MPI_Win);
-  int PMPI_Address(void *, MPI_Aint *);
-  int PMPI_Allgather(void *, int, MPI_Datatype, void *, int, 
-                     MPI_Datatype, MPI_Comm);
-  int PMPI_Allgatherv(void *, int, MPI_Datatype, void *, int *, 
-                      int *, MPI_Datatype, MPI_Comm);
+  int PMPI_Abort(MPI_Comm comm, int errorcode);
+  int PMPI_Accumulate(void *origin_addr, int origin_count, MPI_Datatype origin_datatype,
+                   int target_rank, MPI_Aint target_disp, int target_count,
+                   MPI_Datatype target_datatype, MPI_Op op, MPI_Win win); 
+  int PMPI_Add_error_class(int *errorclass);
+  int PMPI_Add_error_code(int errorclass, int *errorcode);
+  int PMPI_Add_error_string(int errorcode, char *string);
+  int PMPI_Address(void *location, MPI_Aint *address);
+  int PMPI_Allgather(void *sendbuf, int sendcount, MPI_Datatype sendtype, 
+                    void *recvbuf, int recvcount, 
+                    MPI_Datatype recvtype, MPI_Comm comm);
+  int PMPI_Allgatherv(void *sendbuf, int sendcount, MPI_Datatype sendtype, 
+                     void *recvbuf, int *recvcounts, 
+                     int *displs, MPI_Datatype recvtype, MPI_Comm comm);
   int PMPI_Alloc_mem(MPI_Aint size, MPI_Info info, 
-                     void *baseptr);
-  int PMPI_Allreduce(void *, void *, int, MPI_Datatype, 
-                     MPI_Op, MPI_Comm);
-  int PMPI_Alltoall(void *, int, MPI_Datatype, void *, int, 
-                    MPI_Datatype, MPI_Comm);
-  int PMPI_Alltoallv(void *, int *, int *, MPI_Datatype, void *, 
-                     int *, int *, MPI_Datatype, MPI_Comm);
-  int PMPI_Alltoallw(void *, int *, int *, MPI_Datatype *, void *,
-                     int *, int *, MPI_Datatype *, MPI_Comm);
-  int PMPI_Attr_delete(MPI_Comm, int);
-  int PMPI_Attr_get(MPI_Comm, int, void *, int *);
-  int PMPI_Attr_put(MPI_Comm, int, void *);
-  int PMPI_Barrier(MPI_Comm);
-  int PMPI_Bcast(void *, int, MPI_Datatype, int, MPI_Comm);
-  int PMPI_Bsend(void *, int, MPI_Datatype, int, int, MPI_Comm);
-  int PMPI_Bsend_init(void *, int, MPI_Datatype, int, int, 
-                      MPI_Comm, MPI_Request *);
-  int PMPI_Buffer_attach(void *, int);
-  int PMPI_Buffer_detach(void *, int *);
-  int PMPI_Cancel(MPI_Request *);
-  int PMPI_Cart_coords(MPI_Comm, int, int, int *);
-  int PMPI_Cart_create(MPI_Comm, int, int *, int *, int, MPI_Comm *);
-  int PMPI_Cartdim_get(MPI_Comm, int *);
-  int PMPI_Cart_get(MPI_Comm, int, int *, int *, int *);
-  int PMPI_Cart_map(MPI_Comm, int, int *, int *, int *);
-  int PMPI_Cart_rank(MPI_Comm, int *, int *);
-  int PMPI_Cart_shift(MPI_Comm, int, int, int *, int *);
-  int PMPI_Cart_sub(MPI_Comm, int *, MPI_Comm *);
-  int PMPI_Close_port(char *);
-  MPI_Fint PMPI_Comm_c2f(MPI_Comm);
-  int PMPI_Comm_accept(char *, MPI_Info, int, MPI_Comm, MPI_Comm *);
-  int PMPI_Comm_compare(MPI_Comm, MPI_Comm, int *);
-  int PMPI_Comm_connect(char *, MPI_Info, int, MPI_Comm, MPI_Comm *);
-  int PMPI_Comm_create(MPI_Comm, MPI_Group, MPI_Comm *);
-  int PMPI_Comm_create_errhandler(MPI_Comm_errhandler_fn *, 
-                                  MPI_Errhandler *);
-  int PMPI_Comm_create_keyval(MPI_Comm_copy_attr_function *, 
-                              MPI_Comm_delete_attr_function *, 
-                              int *, void *);
-  int PMPI_Comm_delete_attr(MPI_Comm, int);
-  int PMPI_Comm_disconnect(MPI_Comm *);
-  int PMPI_Comm_dup(MPI_Comm, MPI_Comm *);
-  MPI_Comm PMPI_Comm_f2c(MPI_Fint);
-  int PMPI_Comm_free(MPI_Comm *);
-  int PMPI_Comm_free_keyval(int *);
-  int PMPI_Comm_get_attr(MPI_Comm, int, void *, int *);
-  int PMPI_Comm_get_errhandler(MPI_Comm, MPI_Errhandler *);
-  int PMPI_Comm_get_name(MPI_Comm, char *, int *);
-  int PMPI_Comm_get_parent(MPI_Comm *);
-  int PMPI_Comm_group(MPI_Comm, MPI_Group *);
-  int PMPI_Comm_join(int, MPI_Comm *);
-  int PMPI_Comm_rank(MPI_Comm, int *);
-  int PMPI_Comm_remote_group(MPI_Comm, MPI_Group *);
-  int PMPI_Comm_remote_size(MPI_Comm, int *);
-  int PMPI_Comm_set_attr(MPI_Comm, int, void *);
-  int PMPI_Comm_set_errhandler(MPI_Comm, MPI_Errhandler);
-  int PMPI_Comm_set_name(MPI_Comm, char *);
-  int PMPI_Comm_size(MPI_Comm, int *);
-  int PMPI_Comm_spawn(char *, char **, int, MPI_Info, int, 
-                      MPI_Comm, MPI_Comm *, int *);
-  int PMPI_Comm_spawn_multiple(int, char **, char ***, int *, 
-                               MPI_Info *, int, MPI_Comm, 
-                               MPI_Comm *, int *);
-  int PMPI_Comm_split(MPI_Comm, int, int, MPI_Comm *);
-  int PMPI_Comm_test_inter(MPI_Comm, int *);
+                    void *baseptr);
+  int PMPI_Allreduce(void *sendbuf, void *recvbuf, int count, 
+                    MPI_Datatype datatype, MPI_Op op, MPI_Comm comm); 
+  int PMPI_Alltoall(void *sendbuf, int sendcount, MPI_Datatype sendtype, 
+                   void *recvbuf, int recvcount, 
+                   MPI_Datatype recvtype, MPI_Comm comm);
+  int PMPI_Alltoallv(void *sendbuf, int *sendcounts, int *sdispls, 
+                    MPI_Datatype sendtype, void *recvbuf, int *recvcounts,
+                    int *rdispls, MPI_Datatype recvtype, MPI_Comm comm);
+  int PMPI_Alltoallw(void *sendbuf, int *sendcounts, int *sdispls, MPI_Datatype *sendtypes, 
+                    void *recvbuf, int *recvcounts, int *rdispls, MPI_Datatype *recvtypes,
+                    MPI_Comm comm);
+  int PMPI_Attr_delete(MPI_Comm comm, int keyval);
+  int PMPI_Attr_get(MPI_Comm comm, int keyval, void *attribute_val, int *flag);
+  int PMPI_Attr_put(MPI_Comm comm, int keyval, void *attribute_val);
+  int PMPI_Barrier(MPI_Comm comm);
+  int PMPI_Bcast(void *buffer, int count, MPI_Datatype datatype, 
+                int root, MPI_Comm comm);
+  int PMPI_Bsend(void *buf, int count, MPI_Datatype datatype, 
+                int dest, int tag, MPI_Comm comm);
+  int PMPI_Bsend_init(void *buf, int count, MPI_Datatype datatype, 
+                     int dest, int tag, MPI_Comm comm, MPI_Request *request); 
+  int PMPI_Buffer_attach(void *buffer, int size);
+  int PMPI_Buffer_detach(void *buffer, int *size);
+  int PMPI_Cancel(MPI_Request *request);
+  int PMPI_Cart_coords(MPI_Comm comm, int rank, int maxdims, int *coords);
+  int PMPI_Cart_create(MPI_Comm old_comm, int ndims, int *dims, 
+                      int *periods, int redorder, MPI_Comm *comm_cart);
+  int PMPI_Cart_get(MPI_Comm comm, int maxdims, int *dims, 
+                   int *periods, int *coords);
+  int PMPI_Cart_map(MPI_Comm comm, int ndims, int *dims, 
+                   int *periods, int *newrank);
+  int PMPI_Cart_rank(MPI_Comm comm, int *coords, int *rank);
+  int PMPI_Cart_shift(MPI_Comm comm, int direction, int disp, 
+                     int *rank_source, int *rank_dest);
+  int PMPI_Cart_sub(MPI_Comm comm, int *remain_dims, MPI_Comm *new_comm);
+  int PMPI_Cartdim_get(MPI_Comm comm, int *ndims);
+  int PMPI_Close_port(char *port_name);
+  int PMPI_Comm_accept(char *port_name, MPI_Info info, int root, 
+                      MPI_Comm comm, MPI_Comm *newcomm);
+  MPI_Fint PMPI_Comm_c2f(MPI_Comm comm);
+  int PMPI_Comm_call_error_handler(MPI_Comm comm, int errorcode);
+  int PMPI_Comm_compare(MPI_Comm comm1, MPI_Comm comm2, int *result);
+  int PMPI_Comm_connect(char *port_name, MPI_Info info, int root, 
+                       MPI_Comm comm, MPI_Comm *newcomm);
+  int PMPI_Comm_create_errhandler(MPI_Comm_errhandler_fn *function, 
+                                 MPI_Errhandler *errhandler);
+  int PMPI_Comm_create_keyval(MPI_Comm_copy_attr_function *comm_copy_attr_fn, 
+                             MPI_Comm_delete_attr_function *comm_delete_attr_fn, 
+                             int *comm_keyval, void *extra_state);
+  int PMPI_Comm_create(MPI_Comm comm, MPI_Group group, MPI_Comm *newcomm);
+  int PMPI_Comm_delete_attr(MPI_Comm comm, int comm_keyval);
+  int PMPI_Comm_disconnect(MPI_Comm *comm);
+  int PMPI_Comm_dup(MPI_Comm comm, MPI_Comm *newcomm);
+  MPI_Comm PMPI_Comm_f2c(MPI_Fint comm);
+  int PMPI_Comm_free_keyval(int *comm_keyval);
+  int PMPI_Comm_free(MPI_Comm *comm);
+  int PMPI_Comm_get_attr(MPI_Comm comm, int comm_keyval, 
+                        void *attribute_val, int *flag);
+  int PMPI_Comm_get_errhandler(MPI_Comm comm, MPI_Errhandler *erhandler);
+  int PMPI_Comm_get_name(MPI_Comm comm, char *comm_name, int *resultlen);
+  int PMPI_Comm_get_parent(MPI_Comm *parent);
+  int PMPI_Comm_group(MPI_Comm comm, MPI_Group *group);
+  int PMPI_Comm_join(int fd, MPI_Comm *intercomm);
+  int PMPI_Comm_rank(MPI_Comm comm, int *rank);
+  int PMPI_Comm_remote_group(MPI_Comm comm, MPI_Group *group);
+  int PMPI_Comm_remote_size(MPI_Comm comm, int *size);
+  int PMPI_Comm_set_attr(MPI_Comm comm, int comm_keyval, void *attribute_val);
+  int PMPI_Comm_set_errhandler(MPI_Comm comm, MPI_Errhandler errhandler);
+  int PMPI_Comm_set_name(MPI_Comm comm, char *comm_name);
+  int PMPI_Comm_size(MPI_Comm comm, int *size);
+  int PMPI_Comm_spawn(char *command, char **argv, int maxprocs, MPI_Info info, 
+                     int root, MPI_Comm comm, MPI_Comm *intercomm, 
+                     int *array_of_errcodes);
+  int PMPI_Comm_spawn_multiple(int count, char **array_of_commands, char ***array_of_argv, 
+                              int *array_of_maxprocs, MPI_Info *array_of_info, 
+                              int root, MPI_Comm comm, MPI_Comm *intercomm, 
+                              int *array_of_errcodes);
+  int PMPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm);
+  int PMPI_Comm_test_inter(MPI_Comm comm, int *flag);
+  /*
+   * Here ends Aplphabet C
+   */
   int PMPI_Dims_create(int, int, int *);
   MPI_Fint PMPI_Errhandler_c2f(MPI_Errhandler err);
   int PMPI_Errhandler_create(MPI_Handler_function *, MPI_Errhandler *);

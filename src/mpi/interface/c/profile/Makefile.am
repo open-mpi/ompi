@@ -51,8 +51,47 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
 				pbsend.c \
 				pbuffer_attach.c \
 				pbuffer_detach.c \
-                pcomm_get_name.c \
-                pcomm_set_name.c \
+				pcancel.c \
+				pcart_coords.c \
+				pcart_create.c \
+				pcart_get.c \
+				pcart_map.c \
+				pcart_rank.c \
+				pcart_shift.c \
+				pcart_sub.c \
+				pcartdim_get.c \
+				pclose_port.c \
+				pcomm_accept.c \
+				pcomm_c2f.c \
+				pcomm_call_errhandler.c \
+				pcomm_compare.c \
+				pcomm_connect.c \
+				pcomm_create_errhandler.c \
+				pcomm_create_keyval.c \
+				pcomm_create.c \
+				pcomm_delete_attr.c \
+				pcomm_disconnect.c \
+				pcomm_dup.c \
+				pcomm_f2c.c \
+				pcomm_free_keyval.c \
+				pcomm_free.c \
+				pcomm_get_attr.c \
+				pcomm_get_errhandler.c \
+				pcomm_get_name.c \
+				pcomm_get_parent.c \
+				pcomm_group.c \
+				pcomm_join.c \
+				pcomm_rank.c \
+				pcomm_remote_group.c \
+				pcomm_remote_size.c \
+				pcomm_set_attribute.c \
+				pcomm_set_errhandler.c \
+				pcomm_set_name.c \
+				pcomm_size.c \
+				pcomm_spawn.c \
+				pcomm_spawn_multiple.c \
+				pcomm_split.c \
+				pcomm_test_inter.c \
                 pfinalize.c \
                 pfree_mem.c \
                 pinit.c

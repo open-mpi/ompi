@@ -78,8 +78,47 @@ libmpi_c_mpi_la_SOURCES = \
 				bsend.c \
 				buffer_attach.c \
 				buffer_detach.c \
-                comm_get_name.c \
-                comm_set_name.c \
+				cancel.c \
+				cart_coords.c \
+				cart_create.c \
+				cart_get.c \
+				cart_map.c \
+				cart_rank.c \
+				cart_shift.c \
+				cart_sub.c \
+				cartdim_get.c \
+				close_port.c \
+				comm_accept.c \
+				comm_c2f.c \
+				comm_call_errhandler.c \
+				comm_compare.c \
+				comm_connect.c \
+				comm_create_errhandler.c \
+				comm_create_keyval.c \
+				comm_create.c \
+				comm_delete_attr.c \
+				comm_disconnect.c \
+				comm_dup.c \
+				comm_f2c.c \
+				comm_free_keyval.c \
+				comm_free.c \
+				comm_get_attr.c \
+				comm_get_errhandler.c \
+				comm_get_name.c \
+				comm_get_parent.c \
+				comm_group.c \
+				comm_join.c \
+				comm_rank.c \
+				comm_remote_group.c \
+				comm_remote_size.c \
+				comm_set_attribute.c \
+				comm_set_errhandler.c \
+				comm_set_name.c \
+				comm_size.c \
+				comm_spawn.c \
+				comm_spawn_multiple.c \
+				comm_split.c \
+				comm_test_inter.c \
                 finalize.c \
                 free_mem.c \
                 init.c
