@@ -171,7 +171,11 @@ int mca_topo_base_select (mca_topo_t *selected,
                  * function pointers. This is yet to be done 
                  */ 
                 if (NULL != om->om_actions->init) { 
+                    /*
+                     * commenting this out for now since I m
+                     * not sure of the calling conventions
                     (void)om->om_actions->init();
+                    */
                 }
                 mca_topo_base_selected_module = *best_module;
                 mca_topo = *(om->om_actions);

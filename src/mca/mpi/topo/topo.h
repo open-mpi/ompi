@@ -51,8 +51,8 @@
  */ 
 typedef const struct mca_topo_1_0_0_t * 
   (*mca_topo_base_comm_query_1_0_0_fn_t)(int *priority,
-                                    bool *allow_multi_user_threads,
-                                    bool *have_hidden_threads);
+                                         bool *allow_multi_user_threads,
+                                         bool *have_hidden_threads);
 
 typedef int (*mca_topo_base_comm_finalize_1_0_0_fn_t) (void);
 /*
@@ -83,7 +83,9 @@ typedef mca_topo_base_module_1_0_0_t mca_topo_base_module_t;
  * ***********************************************************************
  */
 
-typedef int (*mca_topo_base_init_1_0_0_fn_t)(void);
+typedef int (*mca_topo_base_init_1_0_0_fn_t)
+                    (lam_commmunicator_t *comm,
+                     mca_topo_1_0_0_t **new_topo);
 
 typedef int (*mca_topo_base_cart_coords_fn_t) 
                     (lam_communicator_t* comm, 

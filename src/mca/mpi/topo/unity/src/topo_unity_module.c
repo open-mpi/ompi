@@ -21,34 +21,95 @@ const char *mca_topo_unity_module_version_string =
     "LAM/MPI unity topology MCA module version" MCA_TOPO_UNITY_VERSION;
 
 /*
- * Instntiate the public struct with all of our public information
- * and pointers to our public functions in it
+ * *******************************************************************
+ * ****** this is the structure that defines the module **************
+ * *******************************************************************
+ * this structure contains the module version information along with
+ * some meta data and function pointers which allow a module to 
+ * interact with the MCA framework. module open() and close() are 
+ * called during MPI_INIT and MPI_FINALIZE respectively and query()
+ * and finalize() are called during creation/destruction of a comm
+ * *******************************************************************
+ */
+const mca_topo_base_module_1_0_0_t mca_topo_unity_module = {
+    {
+        MCA_TOPO_UNITY_VERSION_1_0_0, /* version number */
+        "unity",                      /* module name */
+        MCA_TOPO_UNITY_MAJOR_VERSION, /* major version */
+        MCA_TOPO_UNITY_MINOR_VERSION, /* minor version */
+        MCA_TOPO_UNITY_RELEASE_VERSION, /* release version */
+        mca_topo_unity_module_open,   /* fp to open the module */
+        mca_topo_unity_module_close   /* fp to close the module */
+    },
+    {
+      false /* whether checkpoint/restart is enabled */
+    },
+    mca_topo_unity_comm_query,      /* get priority and actions */
+    mca_topo_unity_comm_finalize    /* undo actions of query */
+};
+/*
+ * *******************************************************************
+ * ******************** structure definition ends ********************
+ * *******************************************************************
+ */ 
+
+/*
+ * *******************************************************************
+ * ************************ actions structure ************************
+ * *******************************************************************
+ */
+static const mca_topo_t unity {
+    mca_topo_unity_init, /* initalise after being selected */
+    NULL, /* topo_cart_coords */
+    NULL, /* topo_cart_create */
+    NULL, /* topo_cart_get */
+    NULL, /* topo_cartdim_get */
+    mca_topo_unity_cart_map,
+    NULL, /* topo_cart_rank */
+    NULL, /* topo_cart_shift */
+    NULL, /* topo_cart_sub */
+    NULL, /* topo_graph_create */
+    NULL, /* topo_graph_get */
+    mca_topo_unity_graph_map,
+    NULL, /* topo_graph_neighbors */
+    NULL, /* topo_graph_neighbors_count */
+};
+/*
+ * *******************************************************************
+ * ************************* structure ends **************************
+ * *******************************************************************
  */
 
-const mca_topo_base_module_1_0_0_t mca_topo_unity_module = {
+int mca_topo_unity_module_open (void) {
     /*
-     * First, the mca_modult_t struct containing meta information
-     * about the module itself
+     * As of now do nothing
      */
-    {
-        /*
-         * Indicate that we are a topo v1.0.0 module (which also 
-         * implies a specific MCA version)
-         */
-        MCA_TOPO_UNITY_VERSION_1_0_0,
-        /*
-         * MOdule name and version
-         */
-        "unity",
-        MCA_TOPO_UNITY_MAJOR_VERSION,
-        MCA_TOPO_UNITY_MINOR_VERSION,
-        MCA_TOPO_UNITY_RELEASE_VERSION,
-        /*
-         * Module open and cose functions
-         */
-        NULL,
-        NULL
-    },
+    return LAM_SUCCESS;
+} 
+    
+int mca_topo_unity_module_close (void) {
     /*
-     * Next the MCA 
+     * As of now do nothing
+     */
+    return LAM_SUCCESS;
+}
 
+mca_topo_t* mca_topo_unity_module_query(int* priority,
+                                        bool *allow_multi_user_threads,
+                                        bool *have_hidden_threads)
+{
+        *priority = 0;
+        *allow_multi_user_threads = true;
+        *have_hidden_threads = false;
+        /*
+         * return the structure of function pointers
+         */ 
+        return &unity;
+}      
+
+int mca_topo_unity_module_finalize (void) {
+    /*
+     * do nothing as of now
+     */
+     return LAM_SUCCESS;
+} 
