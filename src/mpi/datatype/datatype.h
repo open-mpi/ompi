@@ -22,7 +22,7 @@
 #include "lam_config.h"
 #include "lam/constants.h"
 #include "lam/stdint.h"
-#include "lam/lfc/object.h"
+#include "lam/lfc/lam_object.h"
 #include "lam/types.h"
 
 #include "mpi.h"

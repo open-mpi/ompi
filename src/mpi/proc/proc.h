@@ -6,7 +6,7 @@
 #define LAM_PROC
 
 #include "lam/types.h"
-#include "lam/lfc/list.h"
+#include "lam/lfc/lam_list.h"
 
 
 extern lam_class_info_t lam_proc_t_class_info;

@@ -6,7 +6,7 @@
 #define LAM_FREE_LISTS_H
 
 #include "lam_config.h"
-#include "lam/lfc/list.h"
+#include "lam/lfc/lam_list.h"
 #include "lam/threads/mutex.h"
 #include "lam/mem/seg_list.h"
 #include "lam/mem/mem_pool.h"

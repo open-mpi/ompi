@@ -6,7 +6,7 @@
 #define LAM_REQUEST_H
 
 #include "mpi.h"
-#include "lam/lfc/list.h"
+#include "lam/lfc/lam_list.h"
 
 
 extern lam_class_info_t lam_request_t_class_info;

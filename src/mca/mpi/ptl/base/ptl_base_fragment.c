@@ -3,7 +3,7 @@
  */
 /*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
 
-#include "lam/lfc/list.h"
+#include "lam/lfc/lam_list.h"
 #include "mca/mpi/ptl/base/ptl_base_fragment.h"
 
 static void mca_ptl_base_frag_construct(mca_ptl_base_frag_t* frag);

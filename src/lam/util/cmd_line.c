@@ -9,8 +9,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "lam/lfc/object.h"
-#include "lam/lfc/list.h"
+#include "lam/lfc/lam_object.h"
+#include "lam/lfc/lam_list.h"
 #include "lam/mem/malloc.h"
 #include "lam/threads/mutex.h"
 #include "lam/util/argv.h"
@@ -106,7 +106,7 @@ lam_cmd_line_t *lam_cmd_line_create(void)
      only thread that has this instance), there's no need to lock it
      right now. */
 
-  lam_mutex_construct(&cmd->lcl_mutex);
+  lam_mutex_init(&cmd->lcl_mutex);
 
   /* Initialize the lists */
 

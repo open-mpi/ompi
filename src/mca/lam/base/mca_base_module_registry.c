@@ -13,7 +13,7 @@
 #include "mca/ltdl.h"
 
 #include "lam/constants.h"
-#include "lam/lfc/list.h"
+#include "lam/lfc/lam_list.h"
 #include "mca/mca.h"
 #include "mca/lam/base/base.h"
 

@@ -6,7 +6,7 @@
  * @file Implementation of lam_object_t, the base lam foundation class
  */
 
-#include "lam/lfc/object.h"
+#include "lam/lfc/lam_object.h"
 
 void lam_object_construct(lam_object_t * obj)
 {

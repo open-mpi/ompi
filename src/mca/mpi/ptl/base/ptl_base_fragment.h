@@ -6,7 +6,7 @@
 #ifndef MCA_PML_BASE_FRAGMENT_H
 #define MCA_PML_BASE_FRAGMENT_H
 
-#include "lam/lfc/list.h"
+#include "lam/lfc/lam_list.h"
 #include "mca/mpi/ptl/ptl.h"
 #include "mca/mpi/ptl/base/ptl_base_header.h"
 

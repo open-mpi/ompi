@@ -6,7 +6,7 @@
 #define SEG_LIST_H
 
 #include "lam_config.h"
-#include "lam/lfc/list.h"
+#include "lam/lfc/lam_list.h"
 #include "lam/threads/mutex.h"
 
 struct lam_seg_list_t

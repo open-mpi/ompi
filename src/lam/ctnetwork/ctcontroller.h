@@ -5,7 +5,7 @@
 #ifndef LAM_CT_CONTROLLER_H
 #define LAM_CT_CONTROLLER_H
 
-#include "lam/lfc/object.h"
+#include "lam/lfc/lam_object.h"
 #include "lam/ctnetwork/ctnode.h"
 
 typedef void    (*lam_ctmsg_recvd_fn)(struct lam_ctcontroller *,

@@ -15,12 +15,12 @@ lam_class_info_t mca_pml_base_request_t_class_info = {
 void mca_pml_base_request_construct(mca_pml_base_request_t* req)
 {
     OBJ_CONSTRUCT_SUPER(req, lam_request_t);
-    lam_mutex_construct(&req->req_lock);
+    lam_mutex_init(&req->req_lock);
 }
 
 void mca_pml_base_request_destruct(mca_pml_base_request_t* req)
 {
-    lam_mutex_destruct(&req->req_lock);
+    lam_mutex_destroy(&req->req_lock);
     OBJ_DESTRUCT_SUPER(req, lam_request_t);
 }
 

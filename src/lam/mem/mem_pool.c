@@ -36,7 +36,7 @@ void lam_mp_construct(lam_mem_pool_t *pool)
     OBJ_CONSTRUCT_SUPER(pool, lam_object_t);
     
     pool->mp_private_alloc = OBJ_NEW(lam_allocator_t);
-    lam_mutex_construct(&(pool->mp_lock));
+    lam_mutex_init(&(pool->mp_lock));
     pool->mp_dev_alloc = NULL;
 }
 
@@ -45,7 +45,7 @@ void lam_mp_shared_construct(lam_mem_pool_t *pool)
     OBJ_CONSTRUCT_SUPER(pool, lam_object_t);
     
     pool->mp_private_alloc = OBJ_NEW(lam_allocator_t);
-    lam_mutex_construct(&(pool->mp_lock));
+    lam_mutex_init(&(pool->mp_lock));
     lam_allocator_set_is_shared(pool->mp_private_alloc, 1);
     lam_allocator_set_mem_prot(pool->mp_private_alloc, MMAP_SHARED_PROT);
     pool->mp_dev_alloc = NULL;    

@@ -19,7 +19,7 @@ void lam_proc_construct(lam_proc_t* proc)
     static int init = 0;
     if(fetchNset(&init,1) == 0) {
         OBJ_CONSTRUCT(&lam_proc_list, lam_list_t);
-        lam_mutex_construct(&lam_proc_lock);
+        lam_mutex_init(&lam_proc_lock);
     }
 
     OBJ_CONSTRUCT_SUPER(proc, lam_list_t);

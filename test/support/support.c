@@ -55,14 +55,15 @@ void test_failure(char *a){
     fflush(stderr);
 }
 
-int test_verify(char *expected_result, char *test_result){
+int test_verify(const char *expected_result, const char *test_result){
+
     /* local variables */
     size_t len_expect,len_result;
     int return_value;
 
     return_value = 1;
-    len_expect = strlen(expected_result);
-    len_result = strlen(test_result);
+    len_expect = expected_result ? strlen(expected_result) : 0;
+    len_result = test_result ? strlen(test_result) : 0;
 
     if( (!(len_expect == len_result)) ||
             ( 0 != strcmp(expected_result,test_result)) ) {

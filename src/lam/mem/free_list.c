@@ -5,25 +5,29 @@
 #include "lam/mem/free_list.h"
 
 
+static void lam_free_list_construct(lam_free_list_t* fl);
+static void lam_free_list_destruct(lam_free_list_t* fl);
+
+
 lam_class_info_t lam_free_list_t_class_info = {
     "lam_free_list_t", 
     CLASS_INFO(lam_list_t),
     (lam_construct_t)lam_free_list_construct, 
     (lam_destruct_t)lam_free_list_destruct
 };
-                                                                                                                             
 
-void lam_free_list_construct(lam_free_list_t* fl)
+
+static void lam_free_list_construct(lam_free_list_t* fl)
 {
     OBJ_CONSTRUCT_SUPER(fl, lam_list_t);
 }
 
-void lam_free_list_destruct(lam_free_list_t* fl)
+static void lam_free_list_destruct(lam_free_list_t* fl)
 {
     OBJ_DESTRUCT_SUPER(fl, lam_object_t);
 }
 
-int lam_free_list_construct_with(
+int lam_free_list_init(
     lam_free_list_t *flist,
     size_t elem_size,
     lam_class_info_t* elem_class,

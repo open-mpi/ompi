@@ -22,7 +22,7 @@ struct lam_mutex_t {
 struct lam_mutex_t lam_mutex_t;
 
 
-static inline void lam_mutex_construct(lam_mutex_t* m) 
+static inline void lam_mutex_init(lam_mutex_t* m) 
 {
     m->mutex_spinlock = 0;
     m->mutex_waiting = 0;
@@ -30,7 +30,7 @@ static inline void lam_mutex_construct(lam_mutex_t* m)
     pthread_cond_init(&m->mutex_cond, 0);
 }
 
-static inline void lam_mutex_destruct(lam_mutex_t* m)
+static inline void lam_mutex_destroy(lam_mutex_t* m)
 {
 
 }

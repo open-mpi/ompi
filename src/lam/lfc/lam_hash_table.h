@@ -64,6 +64,16 @@ static inline size_t lam_hash_table_get_size(lam_hash_table_t *ht)
 }
 
 /**
+ *  Remove all elements from the table.
+ *
+ *  @param   table   The input hash table (IN).
+ *  @return  LAM return code.
+ *
+ */
+
+int lam_hash_table_remove_all(lam_hash_table_t *ht);
+
+/**
  *  Retrieve value via uint32_t key.
  *
  *  @param   table   The input hash table (IN).
@@ -140,7 +150,7 @@ int lam_hash_table_remove_value_uint64(lam_hash_table_t *table, uint64_t key);
  *
  */
 
-void *lam_hash_table_get_value_ptr(lam_hash_table_t *table, void* key, size_t keylen);
+void *lam_hash_table_get_value_ptr(lam_hash_table_t *table, const void* key, size_t keylen);
 
 /**
  *  Set value based on arbitrary length binary key.
@@ -152,7 +162,7 @@ void *lam_hash_table_get_value_ptr(lam_hash_table_t *table, void* key, size_t ke
  *
  */
 
-int lam_hash_table_set_value_ptr(lam_hash_table_t *table, void* key, size_t keylen, void* value);
+int lam_hash_table_set_value_ptr(lam_hash_table_t *table, const void* key, size_t keylen, void* value);
 
 /**
  *  Remove value based on arbitrary length binary key.
@@ -163,7 +173,7 @@ int lam_hash_table_set_value_ptr(lam_hash_table_t *table, void* key, size_t keyl
  *
  */
 
-int lam_hash_table_remove_value_ptr(lam_hash_table_t *table, void* key, size_t keylen);
+int lam_hash_table_remove_value_ptr(lam_hash_table_t *table, const void* key, size_t keylen);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

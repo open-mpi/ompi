@@ -3,9 +3,7 @@
  */
 
 /**
- * @file
- *
- * Simple C-language object-oriented system.
+ * @file:
  *
  * Simple C-language object-oriented system with single inheritance
  * and ownership-based memory management using a retain/release model.
@@ -14,7 +12,7 @@
  * descriptor.  The first element of the struct must be the parent
  * class's struct.  The class descriptor must be given a well-known
  * name based upon the class struct name: If the struct is sally_t,
- * the class info descriptor should be sally_t_class_info.
+ * the class info descriptor should be xxx_t_class_info.
  *
  * (a) To define a class
  *
@@ -22,7 +20,6 @@
  * should always be the parent class, and be called "super",
  * for example
  * 
- * @code
  *   typedef struct sally_t sally_t;
  *   struct sally_t
  *   {
@@ -32,7 +29,6 @@
  *   };
  *
  *   extern lam_class_info_t sally_t_class_info;
- * @endcode
  *
  * All classes must have a parent.
  * 
@@ -40,14 +36,12 @@
  * for this class, and should be the name of the class with
  * "_class_info" appended:
  *
- * @code
  *   lam_class_info_t sally_t_class_info = {
  *     "sally_t",
  *     CLASS_INFO(parent_t),  // pointer to parent_t_class_info
  *     sally_construct,
  *     sally_destruct
  *   };
- * @endcode
  *
  * This variable should be publically advertised using the "extern"
  * statement in the interface file as shown above.
@@ -59,16 +53,12 @@
  * The first thing sally_construct should do is run its parent's
  * constructor using the OBJ_CONSTRUCT_SUPER macro:
  *
- * @code
  *   OBJ_CONSTRUCT_SUPER(obj, type_of_parent);
- * @endcode
  *
  * Similarly, the las thing sally_destruct should do is run its
  * parents' destructor.
  *
- * @code
  *   OBJ_DESTRUCT_SUPER(obj, type_of_parent);
- * @endcode
  *
  * Other class methods may be added to the struct.
  *
@@ -76,9 +66,7 @@
  *
  * To create a instance of a class (an object) use OBJ_NEW:
  *
- * @code
  *   sally_t *sally = OBJ_NEW(sally_t);
- * @endcode
  *
  * which allocates memory of sizeof(sally_t) and runs the class's
  * "init" method.
@@ -86,11 +74,9 @@
  * Use OBJ_RETAIN, OBJ_RELEASE to do reference-count-based
  * memory management:
  *
- * @code
  *   OBJ_RETAIN(sally);
  *   OBJ_RELEASE(sally);
  *   OBJ_RELEASE(sally);
- * @endcode
  *
  * When the reference count reaches zero, the class's "fini" method
  * is run and the memory is freed.
@@ -104,19 +90,15 @@
  * necessary to initialize the memory, which is done using
  * OBJ_CONSTRUCT:
  *
- * @code
  *   sally_t sally;
  *
  *   OBJ_CONSTRUCT(&sally, sally_t);
- * @endcode
  *
  * The retain/release model is not necessary here, but before the
  * object goes out of scope, OBJ_DESTRUCT should be run to release
  * initialized resources:
  *
- * @code
  *   OBJ_DESTRUCT(&sally);
- * @endcode
  */
 
 #ifndef LAM_OBJECT_H
@@ -129,7 +111,7 @@
 #include "lam/mem/malloc.h"
 
 /*
- * typedefs
+ * Class definition
  */
 
 typedef struct lam_object_t lam_object_t;
@@ -137,17 +119,11 @@ typedef struct lam_class_info_t lam_class_info_t;
 typedef void (*lam_construct_t) (lam_object_t *);
 typedef void (*lam_destruct_t) (lam_object_t *);
 
-
-/**
- * Class descriptor.  This structure should be instantiated once for
- * each class, and provides both the inheritance mechanism, and the
- * "vtable" for the class.
- */
 struct lam_class_info_t {
-    const char *cls_name;	   /**< symbolic name of class */
-    lam_class_info_t *cls_parent;  /**< pointer to parent class descriptor */
-    lam_construct_t cls_construct; /**< class constructor */
-    lam_destruct_t cls_destruct;   /**< class destructor */
+    const char *cls_name;
+    lam_class_info_t *cls_parent;
+    lam_construct_t cls_construct;
+    lam_destruct_t cls_destruct;
 };
 
 extern lam_class_info_t lam_object_t_class_info;

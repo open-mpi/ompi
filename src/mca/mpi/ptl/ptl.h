@@ -9,7 +9,7 @@
 
 #include "mca/mca.h"
 #include "lam/lam.h"
-#include "lam/lfc/list.h"
+#include "lam/lfc/lam_list.h"
 #include "mpi/proc/proc.h"
 #include "mca/mpi/pml/pml.h"
 

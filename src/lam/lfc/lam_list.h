@@ -6,8 +6,7 @@
 #define LAM_LIST_H
 
 #include <stdio.h>
-
-#include "lam/lfc/object.h"
+#include "lam/lfc/lam_object.h"
 
 /*
  *

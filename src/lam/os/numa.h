@@ -3,7 +3,7 @@
  */
 
 #include "lam/constants.h"
-#include "lam/lfc/object.h"
+#include "lam/lfc/lam_object.h"
 
 typedef int     affinity_t;
 

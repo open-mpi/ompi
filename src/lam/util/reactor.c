@@ -74,7 +74,7 @@ void lam_reactor_construct(lam_reactor_t* r)
 { 
     OBJ_CONSTRUCT_SUPER(r, lam_object_t);
 
-    lam_mutex_construct(&r->r_mutex);
+    lam_mutex_init(&r->r_mutex);
     OBJ_CONSTRUCT(&r->r_active, lam_list_t);
     OBJ_CONSTRUCT(&r->r_free, lam_list_t);
     OBJ_CONSTRUCT(&r->r_pending, lam_list_t);

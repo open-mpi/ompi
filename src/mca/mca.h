@@ -6,7 +6,7 @@
 #define LAM_MCA_H
 
 #include "mpi.h"
-#include "lam/lfc/list.h"
+#include "lam/lfc/lam_list.h"
 #include "lam/util/cmd_line.h"
 
 /*

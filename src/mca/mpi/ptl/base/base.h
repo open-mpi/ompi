@@ -7,7 +7,7 @@
 
 #include "lam_config.h"
 
-#include "lam/lfc/list.h"
+#include "lam/lfc/lam_list.h"
 #include "mca/mca.h"
 #include "mca/mpi/ptl/ptl.h"
 

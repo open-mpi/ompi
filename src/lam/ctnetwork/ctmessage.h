@@ -5,7 +5,7 @@
 #ifndef LAM_CT_MESSAGE_H
 #define LAM_CT_MESSAGE_H
 
-#include "lam/lfc/object.h"
+#include "lam/lfc/lam_object.h"
 
 
 /*

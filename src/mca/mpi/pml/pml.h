@@ -7,7 +7,7 @@
 
 #include "lam_config.h"
 #include "lam/lam.h"
-#include "lam/lfc/list.h"
+#include "lam/lfc/lam_list.h"
 #include "mpi/communicator/communicator.h"
 #include "mpi/datatype/datatype.h"
 #include "mpi/request/request.h"

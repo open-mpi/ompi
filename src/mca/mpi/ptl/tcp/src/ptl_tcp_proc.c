@@ -30,7 +30,7 @@ void mca_ptl_tcp_proc_construct(mca_ptl_tcp_proc_t* proc)
     proc->proc_addr_count = 0;
     proc->proc_peers = 0;
     proc->proc_peer_count = 0;
-    lam_mutex_construct(&proc->proc_lock);
+    lam_mutex_init(&proc->proc_lock);
 
     /* add to list of all proc instance */
     THREAD_LOCK(&mca_ptl_tcp_module.tcp_lock);

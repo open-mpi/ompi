@@ -5,7 +5,7 @@
 #ifndef LAM_THREAD_H
 #define LAM_THREAD_H
 
-#include "lam/lfc/object.h"
+#include "lam/lfc/lam_object.h"
 
 typedef struct lam_thread
 {

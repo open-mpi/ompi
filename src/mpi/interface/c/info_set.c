@@ -6,7 +6,7 @@
 
 #include "mpi.h"
 #include "mpi/interface/c/bindings.h"
-#include "lam/lfc/list.h"
+#include "lam/lfc/lam_list.h"
 #include "mpi/info/info.h"
 #include <stdlib.h>
 #include <string.h>

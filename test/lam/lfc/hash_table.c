@@ -3,9 +3,10 @@
  */
 
 #include <stdint.h>
+#include <string.h>
 #include "support.h"
-#include "lam/lfc/object.h"
-#include "lam/lfc/hash_table.h"
+#include "lam/lfc/lam_object.h"
+#include "lam/lfc/lam_hash_table.h"
 
 char *num_keys[] = {
     "1234", "1234",
@@ -39,8 +40,7 @@ char *perm_keys[] = {
     NULL
 };
 
-void validate_table(lam_fast_hash_t *table, char *keys[],
-                    int is_numeric_keys)
+static void validate_table(lam_hash_table_t *table, char *keys[], int is_numeric_keys)
 {
     int         j;
     const char  *val;
@@ -48,87 +48,81 @@ void validate_table(lam_fast_hash_t *table, char *keys[],
     for ( j = 0; keys[j]; j += 2)
     {
         if ( 1 == is_numeric_keys )
-            val = lam_fh_get_value_for_ikey(table, atoi(keys[j]));
+            val = lam_hash_table_get_value_uint32(table, atoi(keys[j]));
         else
-            val = lam_fh_get_value_for_skey(table, keys[j]);
-        
+            val = lam_hash_table_get_value_ptr(table, keys[j], strlen(keys[j]));
         test_verify(keys[j+1], val);
     }
-    test_verify_int(j/2, lam_fh_count(table));
+    test_verify_int(j/2, lam_hash_table_get_size(table));
 }
 
-void test_htable(lam_fast_hash_t *table)
+static void test_htable(lam_hash_table_t *table)
 {
-    char        *skey1 = "foo", *skey2 = "2";
-    int         ikey1 = 2, j;
-    
+    int j;
     printf("\nTesting integer keys...\n");
     for ( j = 0; num_keys[j]; j += 2)
     {
-        lam_fh_set_value_for_ikey(table, num_keys[j+1], 
-                                  atoi(num_keys[j]));
-        
+        lam_hash_table_set_value_uint32(table, atoi(num_keys[j]), num_keys[j+1]);
     }
     validate_table(table, num_keys, 1);
     
     /* remove all values for next test */
-    lam_fh_remove_all(table);
-    test_verify_int(0, lam_fh_count(table));
+    lam_hash_table_remove_all(table);
+    test_verify_int(0, lam_hash_table_get_size(table));
     
     printf("\nTesting string keys...\n");
     for ( j = 0; str_keys[j]; j += 2)
     {
-        lam_fh_set_value_for_skey(table, str_keys[j+1], 
-                                  str_keys[j]);
-        
+        lam_hash_table_set_value_ptr(table, str_keys[j], strlen(str_keys[j]), str_keys[j+1]);
     }
     validate_table(table, str_keys, 0);
     
     /* remove all values for next test */
-    lam_fh_remove_all(table);
-    test_verify_int(0, lam_fh_count(table));
-    
+    lam_hash_table_remove_all(table);
+    test_verify_int(0, lam_hash_table_get_size(table));
     
     printf("\nTesting collision resolution...\n");
     /* All of the string keys in keys array should
         have the same hash value. */
     for ( j = 0; perm_keys[j]; j += 2)
     {
-        lam_fh_set_value_for_skey(table, perm_keys[j+1], perm_keys[j]);
+        lam_hash_table_set_value_ptr(table, perm_keys[j], strlen(perm_keys[j]), perm_keys[j+1]);
     }
 
     validate_table(table, perm_keys, 0);
     
     /* remove all values for next test */
-    lam_fh_remove_all(table);
-    test_verify_int(0, lam_fh_count(table));
+    lam_hash_table_remove_all(table);
+    test_verify_int(0, lam_hash_table_get_size(table));
     
     printf("\n\n");
 }
 
 
-void test_dynamic()
+static void test_dynamic(void)
 {
-    lam_fast_hash_t     *table;
+    lam_hash_table_t     *table;
     
-    table = OBJ_NEW(lam_fast_hash_t);
+    table = OBJ_NEW(lam_hash_table_t);
     if ( NULL == table )
     {
         printf("Error: Unable to create hash table.\n");
         exit(-1);
     }
     printf("Testing with dynamically created table...\n");
+    lam_hash_table_init(table, 4);
     test_htable(table);
     
     OBJ_RELEASE(table);
 }
 
 
-void test_static()
+static void test_static(void)
 {
-    lam_fast_hash_t     table;
+    lam_hash_table_t     table;
     
-    OBJ_CONSTRUCT(&table, lam_fast_hash_t);
+    OBJ_CONSTRUCT(&table, lam_hash_table_t);
+    lam_hash_table_init(&table, 128);
 
     printf("Testing with statically created table...\n");
     test_htable(&table);
