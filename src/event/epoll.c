@@ -58,6 +58,7 @@
 extern struct lam_event_list lam_eventqueue;
 extern volatile sig_atomic_t lam_evsignal_caught;
 extern lam_mutex_t lam_event_mutex;
+extern lam_mutex_t lam_event_lock;
 
 /* due to limitations in the epoll interface, we need to keep track of
  * all file descriptors outself.
@@ -208,27 +209,27 @@ epoll_dispatch(void *arg, struct timeval *tv)
 
 		if (what & EPOLLIN) {
 			evread = evep->evread;
-			which |= EV_READ;
+			which |= LAM_EV_READ;
 		}
 
 		if (what & EPOLLOUT) {
 			evwrite = evep->evwrite;
-			which |= EV_WRITE;
+			which |= LAM_EV_WRITE;
 		}
 
 		if (!which)
 			continue;
 
-		if (evread != NULL && !(evread->ev_events & EV_PERSIST))
+		if (evread != NULL && !(evread->ev_events & LAM_EV_PERSIST))
 			lam_event_del(evread);
 		if (evwrite != NULL && evwrite != evread &&
-		    !(evwrite->ev_events & EV_PERSIST))
+		    !(evwrite->ev_events & LAM_EV_PERSIST))
 			lam_event_del(evwrite);
 
 		if (evread != NULL)
-			lam_event_active(evread, EV_READ, 1);
+			lam_event_active(evread, LAM_EV_READ, 1);
 		if (evwrite != NULL)
-			lam_event_active(evwrite, EV_WRITE, 1);
+			lam_event_active(evwrite, LAM_EV_WRITE, 1);
 	}
 
 	return (0);
@@ -243,7 +244,7 @@ epoll_add(void *arg, struct lam_event *ev)
 	struct evepoll *evep;
 	int fd, op, events;
 
-	if (ev->ev_events & EV_SIGNAL)
+	if (ev->ev_events & LAM_EV_SIGNAL)
 		return (lam_evsignal_add(&epollop->evsigmask, ev));
 
 	fd = ev->ev_fd;
@@ -264,9 +265,9 @@ epoll_add(void *arg, struct lam_event *ev)
 		op = EPOLL_CTL_MOD;
 	}
 
-	if (ev->ev_events & EV_READ)
+	if (ev->ev_events & LAM_EV_READ)
 		events |= EPOLLIN;
-	if (ev->ev_events & EV_WRITE)
+	if (ev->ev_events & LAM_EV_WRITE)
 		events |= EPOLLOUT;
 
 	epev.data.ptr = evep;
@@ -275,9 +276,9 @@ epoll_add(void *arg, struct lam_event *ev)
 			return (-1);
 
 	/* Update events responsible */
-	if (ev->ev_events & EV_READ)
+	if (ev->ev_events & LAM_EV_READ)
 		evep->evread = ev;
-	if (ev->ev_events & EV_WRITE)
+	if (ev->ev_events & LAM_EV_WRITE)
 		evep->evwrite = ev;
 
 	return (0);
@@ -292,7 +293,7 @@ epoll_del(void *arg, struct lam_event *ev)
 	int fd, events, op;
 	int needwritedelete = 1, needreaddelete = 1;
 
-	if (ev->ev_events & EV_SIGNAL)
+	if (ev->ev_events & LAM_EV_SIGNAL)
 		return (lam_evsignal_del(&epollop->evsigmask, ev));
 
 	fd = ev->ev_fd;
@@ -303,9 +304,9 @@ epoll_del(void *arg, struct lam_event *ev)
 	op = EPOLL_CTL_DEL;
 	events = 0;
 
-	if (ev->ev_events & EV_READ)
+	if (ev->ev_events & LAM_EV_READ)
 		events |= EPOLLIN;
-	if (ev->ev_events & EV_WRITE)
+	if (ev->ev_events & LAM_EV_WRITE)
 		events |= EPOLLOUT;
 
 	if ((events & (EPOLLIN|EPOLLOUT)) != (EPOLLIN|EPOLLOUT)) {
