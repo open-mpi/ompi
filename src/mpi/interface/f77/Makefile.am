@@ -5,21 +5,31 @@
 
 include $(top_srcdir)/config/Makefile.options
 
+# We must traverse into this directory to install the proper header
+# files.  So only build the f77 bindings if we want to build them, and
+# only expect to find the f77 profiling library if we're building the
+# f77 bindings *and* we're compiling profiling separately.
+
 # If the user selected --disable-profiling, then we don't traverse
 # into the profile directory.
 
+if BUILD_MPI_F77
+f77_lib = libmpi_f77.la
+
 if COMPILE_PROFILING_SEPARATELY
-profile_dir = profile
 profile_lib = profile/libmpi_f77_profile.la
 else
-profile_dir =
 profile_lib =
 endif
 
-SUBDIRS = $(profile_dir)
-DIST_SUBDIRS = profile
+else
+f77_lib =
+profile_lib =
+endif
 
-noinst_LTLIBRARIES = libmpi_f77.la
+SUBDIRS = profile
+
+noinst_LTLIBRARIES = $(f77_lib)
 
 headers = \
 	bindings.h \

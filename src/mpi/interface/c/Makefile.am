@@ -5,19 +5,17 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-# If the user selected --disable-profiling, then we don't traverse
-# into the profile directory.
+# We must traverse into the profile directory to install the proper
+# header files.  So only only expect to find the C profiling library
+# if we're compiling profiling separately.
 
 if COMPILE_PROFILING_SEPARATELY
-profile_dir = profile
 profile_lib = profile/libmpi_c_profile.la
 else
-profile_dir =
 profile_lib =
 endif
 
-SUBDIRS = $(profile_dir)
-DIST_SUBDIRS = profile
+SUBDIRS = profile
 
 noinst_LTLIBRARIES = libmpi_c.la
 

@@ -7,9 +7,24 @@ include $(top_srcdir)/config/Makefile.options
 
 AM_CPPFLAGS = -DLAM_PROFILING_DEFINES=1
 
-noinst_LTLIBRARIES = libmpi_f77_profile.la
+# We must traverse into this directory to install the proper header
+# files.  So only build the f77 profiling bindings only if we're
+# building the f77 bindings *and* we're compiling profiling
+# separately.
 
-noinst_HEADERS = defines.h
+if BUILD_MPI_F77
+if COMPILE_PROFILING_SEPARATELY
+f77_lib = libmpi_f77_profile.la
+else
+f77_lib =
+endif
+else
+f77_lib =
+endif
+
+noinst_LTLIBRARIES = $(f77_lib)
+
+headers = defines.h
 
 nodist_libmpi_f77_profile_la_SOURCES = \
 	pcomm_get_name_f.c \

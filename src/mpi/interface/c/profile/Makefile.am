@@ -7,7 +7,17 @@ include $(top_srcdir)/config/Makefile.options
 
 AM_CPPFLAGS = -DLAM_PROFILING_DEFINES=1
 
-noinst_LTLIBRARIES = libmpi_c_profile.la
+# We must traverse into the profile directory to install the proper
+# header files.  So only only expect to find the C profiling library
+# if we're compiling profiling separately.
+
+if COMPILE_PROFILING_SEPARATELY
+lib = libmpi_c_profile.la
+else
+lib =
+endif
+
+noinst_LTLIBRARIES = $(lib)
 
 headers = defines.h
 
