@@ -1,3 +1,4 @@
+# -*- shell-script -*-
 #
 # Copyright (c) 2004-2005 The Trustees of Indiana University.
 #                         All rights reserved.
@@ -12,24 +13,8 @@
 # $HEADER$
 #
 
-include $(top_srcdir)/config/Makefile.options
+# Specific to this module
 
-SUBDIRS = \
-	allocator \
-        coll \
-        common \
-        gpr \
-        io \
-        iof \
-        mpool \
-	llm \
-        ns \
-        one \
-        oob \
-        pcm \
-	pcmclient \
-        pml \
-        ptl \
-        soh \
-        svc \
-        topo
+PARAM_INIT_FILE=iof_proxy.c
+PARAM_CONFIG_HEADER_FILE="iof_config.h"
+PARAM_CONFIG_FILES="Makefile"

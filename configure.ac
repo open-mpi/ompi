@@ -1122,6 +1122,8 @@ AC_CONFIG_FILES([
     src/mca/gpr/base/Makefile
     src/mca/io/Makefile
     src/mca/io/base/Makefile
+    src/mca/iof/Makefile
+    src/mca/iof/base/Makefile
     src/mca/mpool/Makefile
     src/mca/mpool/base/Makefile
     src/mca/one/Makefile
@@ -1149,6 +1151,7 @@ AC_CONFIG_FILES([
     src/dynamic-mca/coll/Makefile
     src/dynamic-mca/gpr/Makefile
     src/dynamic-mca/io/Makefile
+    src/dynamic-mca/iof/Makefile
     src/dynamic-mca/mpool/Makefile
     src/dynamic-mca/one/Makefile
     src/dynamic-mca/ns/Makefile
