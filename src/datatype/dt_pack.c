@@ -814,18 +814,13 @@ OBJ_CLASS_INSTANCE(ompi_convertor_t, ompi_object_t, ompi_convertor_construct, om
 
 inline int ompi_convertor_copy( const ompi_convertor_t* pSrcConv, ompi_convertor_t* pDestConv )
 {
-   pDestConv->remoteArch = pSrcConv->remoteArch;
-   pDestConv->flags = pSrcConv->flags;
-   pDestConv->pFunctions = pSrcConv->pFunctions;
+   pDestConv->pDesc           = NULL;
+   pDestConv->remoteArch      = pSrcConv->remoteArch;
+   pDestConv->pStack          = NULL;
+   pDestConv->stack_pos       = 0;
+   pDestConv->available_space = 0;
+   pDestConv->pFunctions      = pSrcConv->pFunctions;
 
-   pDestConv->pStack      = NULL;
-   pDestConv->stack_pos   = 0;
-   pDestConv->pDesc       = NULL;
-   pDestConv->count       = 0;
-   pDestConv->converted   = 0;
-   pDestConv->bConverted  = 0;
-   pDestConv->fAdvance    = NULL;
-   pDestConv->memAlloc_fn = NULL;
    return OMPI_SUCCESS;
 }
 
