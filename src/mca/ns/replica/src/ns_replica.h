@@ -51,9 +51,7 @@ int mca_ns_replica_finalize(void);
  * oob interface
  */
 
-void mca_ns_replica_recv(int status, ompi_process_name_t* sender,
-			 ompi_buffer_t* buffer, int* tag,
-			 void* cbdata);
+void mca_ns_replica_recv(int status, ompi_process_name_t* sender, ompi_buffer_t buffer, int tag, void* cbdata);
 
 /*
  * Implementation of create_cellid().
