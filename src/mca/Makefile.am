@@ -24,7 +24,6 @@ SUBDIRS = \
 	coll \
 	common \
 	errmgr \
-	gpr \
 	io \
 	iof \
 	gpr \
