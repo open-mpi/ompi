@@ -63,7 +63,7 @@ namespace ompi_info {
   extern std::string path_pkglibdir;
   extern std::string path_sysconfdir;
 
-  void do_params();
+  void do_params(bool want_all);
   void show_mca_params(const std::string& type, const std::string& component, 
                        const std::string& param);
 

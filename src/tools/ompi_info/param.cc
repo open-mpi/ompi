@@ -44,11 +44,11 @@ string ompi_info::path_sysconfdir = "sysconfdir";
 extern ompi_value_array_t mca_base_params;
 
 
-void ompi_info::do_params()
+void ompi_info::do_params(bool want_all)
 {
   unsigned int count;
   string type, component;
-  bool found, want_all;
+  bool found;
   ompi_info::type_vector_t::size_type i;
 
   ompi_info::open_components();
@@ -56,7 +56,6 @@ void ompi_info::do_params()
   // See if the special param "all" was givin to --param; that
   // superceeds any individual type
 
-  want_all = false;
   count = ompi_cmd_line_get_ninsts(cmd_line, "param");
   for (i = 0; i < count; ++i) {
     type = ompi_cmd_line_get_param(cmd_line, "param", i, 0);
@@ -400,7 +399,7 @@ void ompi_info::do_config(bool want_all)
         WRAPPER_EXTRA_LIBS);
   }
 
-  out("Debug support", "option:debug", debug);
+  out("Intenral debug support", "option:debug", debug);
   out("MPI parameter check", "option:mpi-param-check", paramcheck);
   out("Memory profiling support", "option:mem-profile", memprofile);
   out("Memory debugging support", "option:mem-debug", memdebug);
