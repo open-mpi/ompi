@@ -19,6 +19,10 @@ AM_CPPFLAGS = -I$(top_ompi_builddir)/src/include \
 
 noinst_LTLIBRARIES = libmca_pcm_bproc.la
 libmca_pcm_bproc_la_SOURCES = \
-	pcm_bproc.c \
 	pcm_bproc.h \
-	pcm_bproc_component.c
+	pcm_bproc_component.c \
+	pcm_bproc_allocate.c \
+	pcm_bproc_spawn.c \
+	pcm_bproc_monitor.c \
+	pcm_bproc_control.c
+

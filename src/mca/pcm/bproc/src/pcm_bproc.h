@@ -65,6 +65,12 @@ extern "C" {
                                            mca_ns_base_jobid_t jobid,
                                            ompi_list_t *nodelist);
 
+    /*
+     * Internal monitor functions
+     */
+    void pcm_bproc_monitor_cb(pid_t pid, int status, void *data);
+
+
     struct mca_pcm_bproc_module_t {
         mca_pcm_base_module_t super;
 
