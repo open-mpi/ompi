@@ -29,10 +29,16 @@ int mca_pml_teg_iprobe(int src,
     recvreq.req_base.req_type = MCA_PML_REQUEST_IPROBE;
     MCA_PML_BASE_RECV_REQUEST_INIT(&recvreq, NULL, 0, &ompi_mpi_char, src, tag, comm, true);
 
+    *matched = 0;
     if ((rc = mca_pml_teg_recv_request_start(&recvreq)) == OMPI_SUCCESS) {
-        if ((*matched = recvreq.req_base.req_ompi.req_complete) == true
-            && (NULL != status)) {
-            *status = recvreq.req_base.req_ompi.req_status;
+        if( recvreq.req_base.req_ompi.req_complete == true ) {
+            if( NULL != status ) {
+                *status = recvreq.req_base.req_ompi.req_status;
+            }
+            *matched = 1;
+        } else {
+            /* we are supposed to progress ... */
+            ompi_progress();
         }
     }
     MCA_PML_BASE_RECV_REQUEST_RETURN( &recvreq );
