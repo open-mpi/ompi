@@ -190,6 +190,7 @@ MCA_CONFIGURE_DIST_STUB";
         $config_values{CONFIGURE_DIST_STUB_MACRO} = "true";
     }
 } else {
+    $config_values{CONFIGURE_STUB_SINCLUDE} = "";
     $config_values{CONFIGURE_STUB_MACRO} = "true";
     $config_values{CONFIGURE_DIST_STUB_MACRO} = "true";
 }
