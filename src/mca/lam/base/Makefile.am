@@ -9,11 +9,9 @@ noinst_LTLIBRARIES = libmca_lam_base.la
 # Source code files
 
 headers = \
-        mca_base_close.h \
-        mca_base_module_compare.h \
-        mca_base_open.h \
-        mca_base_param.h \
-        mca_base_module_exchange.h
+	base.h \
+        mca_base_module_exchange.h \
+        mca_base_param.h
 
 # Library
 
