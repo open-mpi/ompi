@@ -12,6 +12,7 @@
 
 
 extern lam_class_info_t mca_ptl_base_send_request_t_class_info;
+struct mca_ptl_base_send_frag_t;
 
 
 struct mca_ptl_base_send_request_t {
@@ -45,6 +46,12 @@ struct mca_ptl_base_send_request_t {
     lam_ptr_t req_peer_request;
 };
 typedef struct mca_ptl_base_send_request_t mca_ptl_base_send_request_t;
+
+
+void mca_ptl_base_send_request_progress(
+    mca_ptl_base_send_request_t* request, 
+    struct mca_ptl_base_send_frag_t* frag
+);
 
 
 static inline void mca_ptl_base_send_request_reinit(

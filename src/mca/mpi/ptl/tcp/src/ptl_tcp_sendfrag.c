@@ -11,6 +11,10 @@
 #include "ptl_tcp_sendfrag.h"
 
 
+static void mca_ptl_tcp_send_frag_construct(mca_ptl_tcp_send_frag_t* frag);
+static void mca_ptl_tcp_send_frag_destruct(mca_ptl_tcp_send_frag_t* frag);
+
+
 lam_class_info_t  mca_ptl_tcp_send_frag_t_class_info = {
     "mca_ptl_tcp_send_frag_t",
     CLASS_INFO(mca_ptl_base_send_frag_t),
@@ -19,16 +23,17 @@ lam_class_info_t  mca_ptl_tcp_send_frag_t_class_info = {
 };
                                                                                                            
 
-void mca_ptl_tcp_send_frag_construct(mca_ptl_tcp_send_frag_t* frag)
+static void mca_ptl_tcp_send_frag_construct(mca_ptl_tcp_send_frag_t* frag)
 {
     OBJ_CONSTRUCT_SUPER(frag, mca_ptl_base_send_frag_t);
 }
 
 
-void mca_ptl_tcp_send_frag_destruct(mca_ptl_tcp_send_frag_t* frag)
+static void mca_ptl_tcp_send_frag_destruct(mca_ptl_tcp_send_frag_t* frag)
 {
     OBJ_DESTRUCT_SUPER(frag, mca_ptl_base_send_frag_t);
 }
+
 
 /*
  *  Initialize the fragment based on the current offset into the users
@@ -114,7 +119,7 @@ bool mca_ptl_tcp_send_frag_handler(mca_ptl_tcp_send_frag_t* frag, int sd)
                 return false;
             default:
                 {
-                lam_output(0, "mca_ptl_tcp_send_frag_handler: writev failedd with errno=%d", errno);
+                lam_output(0, "mca_ptl_tcp_send_frag_handler: writev failed with errno=%d", errno);
                 mca_ptl_tcp_peer_close(frag->frag_peer);
                 return false;
                 }
@@ -136,6 +141,8 @@ bool mca_ptl_tcp_send_frag_handler(mca_ptl_tcp_send_frag_t* frag, int sd)
             break;
         }
     }
+
+    /* done with this frag? */
     return (frag->frag_vec_cnt == 0);
 }
 

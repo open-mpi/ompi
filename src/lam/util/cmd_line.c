@@ -110,8 +110,8 @@ lam_cmd_line_t *lam_cmd_line_create(void)
 
   /* Initialize the lists */
 
-  lam_list_construct(&cmd->lcl_options);
-  lam_list_construct(&cmd->lcl_params);
+  OBJ_CONSTRUCT(&cmd->lcl_options, lam_list_t);
+  OBJ_CONSTRUCT(&cmd->lcl_params, lam_list_t);
 
   /* Initialize the argc/argv pairs */
 
@@ -225,7 +225,7 @@ int lam_cmd_line_make_opt(lam_cmd_line_t *cmd, char short_name,
   option = malloc(sizeof(cmd_line_option_t));
   if (NULL == option)
     return LAM_ERR_OUT_OF_RESOURCE;
-  lam_list_item_construct((lam_list_item_t *) option);
+  OBJ_CONSTRUCT((lam_list_item_t *) option, lam_list_item_t);
 
   option->clo_short_name = short_name;
   if (NULL != long_name) {
@@ -393,7 +393,7 @@ int lam_cmd_line_parse(lam_cmd_line_t *cmd, bool ignore_unknown,
           return LAM_ERR_OUT_OF_RESOURCE;
         }
         item = (lam_list_item_t *) param;
-        lam_list_item_construct(item);
+        OBJ_CONSTRUCT(item, lam_list_item_t);
         param->clp_arg = cmd->lcl_argv[i];
         param->clp_option = option;
         param->clp_argc = 0;

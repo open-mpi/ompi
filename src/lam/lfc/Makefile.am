@@ -10,19 +10,19 @@ noinst_LTLIBRARIES = liblfc.la
 # Source code files
 
 headers = \
-	array.h \
 	hash_table.h \
     lam_pointer_array.h \
 	list.h \
-	object.h
+	object.h \
+	varray.h 
 
 liblfc_la_SOURCES = \
 	$(headers) \
-	array.c \
 	hash_table.c \
-    lam_pointer_array.c \
+	lam_pointer_array.c \
+	lam_value_array.c \
 	list.c \
-	object.c
+	object.c 
 
 # Conditionally install the header files
 

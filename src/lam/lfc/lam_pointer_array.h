@@ -11,12 +11,12 @@
 /*
  * typedefs
  */
-typedef struct lam_pointer_array lam_pointer_array_t;
+typedef struct lam_pointer_array_t lam_pointer_array_t;
 
 /*
  * dynamic pointer array
  */
-struct lam_pointer_array {
+struct lam_pointer_array_t {
     /* synchronization object */
     lam_mutex_t lock;
     /* index of lowest free element */

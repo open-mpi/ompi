@@ -36,6 +36,7 @@ struct mca_ptl_tcp_module_1_0_0_t {
     lam_free_list_t tcp_send_frags;
     lam_free_list_t tcp_recv_frags;
     lam_list_t tcp_procs;
+    lam_list_t tcp_acks;
     struct mca_ptl_tcp_proc_t* tcp_local;
     lam_mutex_t tcp_lock;
 };
@@ -116,7 +117,7 @@ extern int mca_ptl_tcp_send(
     size_t size
 );
                                                                                                  
-extern int mca_ptl_tcp_recv(
+extern void mca_ptl_tcp_recv(
     struct mca_ptl_t* ptl,
     struct mca_ptl_base_recv_frag_t* frag
 );

@@ -17,8 +17,8 @@ lam_class_info_t lam_proc_t_class_info = {
 void lam_proc_construct(lam_proc_t* proc)
 {
     static int init = 0;
-    if(init++ == 0) {
-        lam_list_construct(&lam_proc_list);
+    if(fetchNset(&init,1) == 0) {
+        OBJ_CONSTRUCT(&lam_proc_list, lam_list_t);
         lam_mutex_construct(&lam_proc_lock);
     }
 

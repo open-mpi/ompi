@@ -58,8 +58,10 @@ static inline int mca_pml_teg_param_register_int(
 
 int mca_pml_teg_module_open(void)
 {
+    lam_mutex_construct(&mca_pml_teg.teg_lock);
     OBJ_CONSTRUCT(&mca_pml_teg.teg_recv_requests, lam_free_list_t);
     OBJ_CONSTRUCT(&mca_pml_teg.teg_procs, lam_list_t);
+
     mca_pml_teg.teg_free_list_num =
         mca_pml_teg_param_register_int("free_list_num", 256);
     mca_pml_teg.teg_free_list_max =
@@ -78,6 +80,7 @@ int mca_pml_teg_module_close(void)
         free(mca_pml_teg.teg_ptls);
     OBJ_DESTRUCT(&mca_pml_teg.teg_recv_requests);
     OBJ_DESTRUCT(&mca_pml_teg.teg_procs);
+    lam_mutex_destruct(&mca_pml_teg.teg_lock);
     return LAM_SUCCESS;
 }
 
