@@ -272,6 +272,12 @@ lam_show_title "System-specific tests"
 # all: type of recvfrom optlen
 
 #
+# Check out what thread support we have
+#
+
+LAM_CONFIG_THREADS
+
+#
 # File system case sensitivity
 #
 

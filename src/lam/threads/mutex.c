@@ -2,7 +2,12 @@
  * $HEADER$
  */
 
+#include "lam_config.h"
+
 #include "lam/threads/mutex.h"
 
-bool lam_uses_threads;
+/*
+ * Default to a safe value
+ */
+bool lam_uses_threads = (bool) LAM_HAVE_THREADS;
 
