@@ -13,3 +13,4 @@ libevent.la
 libtool
 stamp-h
 stamp-h1
+config.h
