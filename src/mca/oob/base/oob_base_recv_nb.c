@@ -37,7 +37,7 @@ static void mca_oob_base_recv_cb(int status, const ompi_process_name_t* peer,
             /* unpack the data */
             mca_oob_base_unpack(user_iovec[i].iov_base, msg[i].iov_base, num, MCA_OOB_BASE_INT32);
             /* free the old buffer */
-            free(user_iovec[i].iov_base);
+            free(msg[i].iov_base);
         }
     }
     /* free the iovecs we allocated */

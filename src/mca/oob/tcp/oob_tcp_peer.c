@@ -114,6 +114,8 @@ int mca_oob_tcp_peer_send(mca_oob_tcp_peer_t* peer, mca_oob_tcp_msg_t* msg)
             if(!mca_oob_tcp_msg_send_handler(msg, peer)) {
                 peer->peer_send_msg = msg;
                 ompi_event_add(&peer->peer_send_event, 0);
+            } else {
+                mca_oob_tcp_msg_complete(msg, &peer->peer_name);
             }
         }
         break;
