@@ -78,7 +78,7 @@ int main(int argc, char *argv[])
     }
 
     /* daemonize myself */
-/*     ompi_daemon_init(NULL); */
+    ompi_daemon_init(NULL);
 
     /* setup the thread lock and condition variable */
     OBJ_CONSTRUCT(&ompi_daemon_mutex, ompi_mutex_t);
@@ -297,7 +297,13 @@ int main(int argc, char *argv[])
     ompi_rte_finalize();
     mca_base_close();
     ompi_finalize();
-    return 0;
+
+    if (ompi_daemon_debug) {
+	ompi_output(0, "[%d,%d,%d] ompid: done - exiting", ompi_process_info.name->cellid,
+		    ompi_process_info.name->jobid, ompi_process_info.name->vpid);
+    }
+
+    exit(0);
 }
 
 static void ompi_daemon_recv(int status, ompi_process_name_t* sender,

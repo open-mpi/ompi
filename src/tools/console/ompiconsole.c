@@ -170,6 +170,7 @@ int main(int argc, char *argv[])
 	return ret;
     }
 
+    fprintf (stderr, "issuing exit cmd\n");
     ompi_buffer_init(&cmd, 0);
     command = OMPI_DAEMON_EXIT_CMD;
     recv_tag = MCA_OOB_TAG_DAEMON;
