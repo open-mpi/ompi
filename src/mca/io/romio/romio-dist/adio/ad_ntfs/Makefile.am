@@ -57,5 +57,6 @@ dir=$(top_srcdir)/adio/ad_ntfs
 $(libadio_ntfs_la_SOURCES):
 	if test ! -r $@ ; then \
 		pname=`echo $@ | cut -b '19-'` ; \
+		rm -f $@; \
 		ln -s $(dir)/$$pname $@ ; \
 	fi
