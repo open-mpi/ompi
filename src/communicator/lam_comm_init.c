@@ -145,7 +145,7 @@ lam_communicator_t *lam_comm_allocate ( int local_size, int remote_size )
 ** the function has to be thread safe and work for 
 ** any combinationf of inter- and intra-communicators.
 */
-int lam_comm_nextcid ( MPI_Comm comm, int mode )
+int lam_comm_nextcid ( lam_communicator_t* comm, int mode )
 {
     static int nextcid=0;
     return nextcid++;
@@ -154,37 +154,36 @@ int lam_comm_nextcid ( MPI_Comm comm, int mode )
 /*
 ** COunterpart to MPI_Comm_group. To be used within LAM functions.
 */
-int lam_comm_group ( MPI_Comm comm, MPI_Group *group )
+int lam_comm_group ( lam_communicator_t* comm, lam_group_t **group )
 {
      /* local variable */
     lam_group_t *group_p;
-    lam_communicator_t *comm_p;
-
-    comm_p = (lam_communicator_t *)comm;
 
    /* get new group struct */
-    group_p=lam_group_allocate(comm_p->c_local_group->grp_proc_count);
+    group_p=lam_group_allocate(comm->c_local_group->grp_proc_count);
     if( NULL == group_p ) {
         return MPI_ERR_GROUP;
     }
 
     /* set elements of the struct */
-    group_p->grp_my_rank = comm_p->c_local_group->grp_my_rank;
-    memcpy ( group_p->grp_proc_pointers, comm_p->c_local_group->grp_proc_pointers,
+    group_p->grp_my_rank = comm->c_local_group->grp_my_rank;
+    memcpy ( group_p->grp_proc_pointers, 
+             comm->c_local_group->grp_proc_pointers,
              group_p->grp_proc_count * sizeof ( lam_proc_t *));
 
     /* increment proc reference counters */
     lam_group_increment_proc_count(group_p);
 
     /* set the user handle */
-    *group = ( MPI_Group) group_p;
+    *group = group_p;
     return MPI_SUCCESS;
 }
 
 /*
 ** Counterpart to MPI_Comm_split. To be used within LAM (e.g. MPI_Cart_sub).
 */
-int lam_comm_split ( MPI_Comm comm, int color, int key, MPI_Comm *newcomm )
+int lam_comm_split ( lam_communicator_t* comm, int color, int key, 
+                     lam_communicator_t **newcomm )
 {
     lam_group_t *new_group;
     int myinfo[2];
@@ -268,7 +267,7 @@ int lam_comm_split ( MPI_Comm comm, int color, int key, MPI_Comm *newcomm )
         my_gpointer=comm->c_local_group->grp_proc_pointers[my_grank];
         lam_set_group_rank(new_group, my_gpointer);
 
-        rc = lam_comm_create ( comm, (MPI_Group) new_group, newcomm );
+        rc = lam_comm_create ( comm, new_group, newcomm );
 
         /* Free now the results-array*/
         free ( results );
@@ -286,7 +285,8 @@ int lam_comm_split ( MPI_Comm comm, int color, int key, MPI_Comm *newcomm )
 /*
 ** Counterpart to MPI_Comm_create. To be used within LAM.
 */
-int lam_comm_create ( MPI_Comm comm, MPI_Group group, MPI_Comm *newcomm )
+int lam_comm_create ( lam_communicator_t *comm, lam_group_t *group, 
+                      lam_communicator_t **newcomm )
 {
     lam_communicator_t *newcomp;
     
@@ -314,20 +314,21 @@ int lam_comm_create ( MPI_Comm comm, MPI_Group group, MPI_Comm *newcomm )
     newcomp->error_handler = comm->error_handler;
     OBJ_RETAIN ( newcomp->error_handler );
 
-    *newcomm = (MPI_Comm ) newcomp;
+    *newcomm =  newcomp;
     return MPI_SUCCESS;
 }
 
 /*
 ** Counterpart to MPI_Comm_free. To be used within LAM.
 */
-int lam_comm_free ( MPI_Comm *comm )
+int lam_comm_free ( lam_communicator_t **comm )
 {
     int proc;
     lam_group_t *grp;
     lam_communicator_t *comp;
 
-    comp = (lam_communicator_t *) comm;
+    comp = (lam_communicator_t *)*comm;
+
     /* Release local group */
     grp = comp->c_local_group;
     for ( proc = 0; proc <grp->grp_proc_count; proc++ )
