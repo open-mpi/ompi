@@ -63,6 +63,7 @@ mca_iof_proxy_component_t mca_iof_proxy_component = {
     }
 };
 
+#if 0
 static char* mca_iof_proxy_param_register_string(
     const char* param_name,
     const char* default_value)
@@ -72,6 +73,7 @@ static char* mca_iof_proxy_param_register_string(
     mca_base_param_lookup_string(id, &param_value);
     return param_value;
 }
+#endif
 
 static  int mca_iof_proxy_param_register_int(
     const char* param_name,
