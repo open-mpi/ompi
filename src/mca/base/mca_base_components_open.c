@@ -101,9 +101,6 @@ int mca_base_components_open(const char *type_name, int output_id,
 static int parse_requested(int mca_param, char ***requested_component_names)
 {
   char *requested;
-  char *comma;
-  char *start;
-  int argc;
 
   *requested_component_names = NULL;
 
@@ -115,23 +112,7 @@ static int parse_requested(int mca_param, char ***requested_component_names)
   if (NULL == requested) {
     return OMPI_SUCCESS;
   }
-
-  /* Loop over all names (yes, this could be more clever, but it's
-     nice and obvious this way!) */
-
-  start = requested;
-  comma = strchr(start, ',');
-  while (NULL != comma) {
-    *comma = '\0';
-    ompi_argv_append(&argc, requested_component_names, start);
-
-    start = comma + 1;
-    comma = strchr(start, ',');
-  }
-
-  /* The last name */
-
-  ompi_argv_append(&argc, requested_component_names, start);
+  *requested_component_names = ompi_argv_split(requested, ',');
 
   /* All done */
 
