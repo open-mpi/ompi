@@ -107,6 +107,10 @@ int mca_ptl_tcp_add_procs(
             OMPI_THREAD_UNLOCK(&ptl_proc->proc_lock);
             return rc;
         }
+        /* do we need to convert to/from network byte order */
+        if(ompi_proc->proc_arch != proc_self->proc_arch)
+            ptl_peer->peer_byte_swap = true;
+
         ompi_bitmap_set_bit(reachable, i);
         OMPI_THREAD_UNLOCK(&ptl_proc->proc_lock);
         peers[i] = ptl_peer;
@@ -193,6 +197,9 @@ void mca_ptl_tcp_send_frag_return(struct mca_ptl_base_module_t* ptl, struct mca_
         }
         OMPI_THREAD_UNLOCK(&mca_ptl_tcp_component.tcp_lock);
         mca_ptl_tcp_send_frag_init_ack(frag, ptl, pending->frag_recv.frag_base.frag_peer, pending);
+        if(frag->frag_send.frag_base.frag_peer->peer_byte_swap) {
+            MCA_PTL_BASE_ACK_HDR_HTON(frag->frag_send.frag_base.frag_header.hdr_ack);
+        }
         mca_ptl_tcp_peer_send(pending->frag_recv.frag_base.frag_peer, frag, 0);
         mca_ptl_tcp_recv_frag_return(ptl, pending);
     } else {
@@ -262,6 +269,9 @@ void mca_ptl_tcp_matched(
             OMPI_THREAD_UNLOCK(&mca_ptl_tcp_component.tcp_lock);
         } else {
             mca_ptl_tcp_send_frag_init_ack(ack, ptl, recv_frag->frag_recv.frag_base.frag_peer, recv_frag);
+            if(ack->frag_send.frag_base.frag_peer->peer_byte_swap) {
+                MCA_PTL_BASE_ACK_HDR_HTON(ack->frag_send.frag_base.frag_header.hdr_ack);
+            }
             mca_ptl_tcp_peer_send(ack->frag_send.frag_base.frag_peer, ack, 0);
         }
     }

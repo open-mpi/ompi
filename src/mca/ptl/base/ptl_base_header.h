@@ -7,7 +7,10 @@
 #ifndef MCA_PTL_BASE_HEADER_H
 #define MCA_PTL_BASE_HEADER_H
 
+#include "ompi_config.h"
 #include "mca/ptl/ptl.h"
+#include <sys/types.h>
+#include <netinet/in.h>
 
 
 #define MCA_PTL_HDR_TYPE_MATCH  0
@@ -22,6 +25,46 @@
 #define MCA_PTL_FLAGS_ACK_AGGREGATE   2
 
 
+/*
+ * Convert a 64 bit value to network byte order.
+ */
+
+static inline uint64_t hton64(uint64_t val)
+{ 
+    union { uint64_t ll;                
+            uint32_t l[2]; 
+    } w, r;      
+
+    /* platform already in network byte order? */
+    if(htonl(1) == 1L)
+        return val;
+    w.ll = val;
+    r.l[0] = htonl(w.l[1]);
+    r.l[1] = htonl(w.l[0]);
+    return r.ll; 
+}
+
+
+/*
+ * Convert a 64 bit value from network to host byte order.
+ */
+
+static inline uint64_t ntoh64(uint64_t val)
+{ 
+    union { uint64_t ll;                
+            uint32_t l[2]; 
+    } w, r;      
+
+    /* platform already in network byte order? */
+    if(htonl(1) == 1L)
+        return val;
+    w.ll = val;
+    r.l[0] = ntohl(w.l[1]);
+    r.l[1] = ntohl(w.l[0]);
+    return r.ll; 
+}
+
+
 /**
  * Common header attributes - must be first element in each header type 
  */
@@ -31,6 +74,12 @@ struct mca_ptl_base_common_header_t {
     uint16_t hdr_size; /**< size of header - allow for variable length */
 };
 typedef struct mca_ptl_base_common_header_t mca_ptl_base_common_header_t;
+
+#define MCA_PTL_BASE_COMMON_HDR_NTOH(h) \
+   (h).hdr_size = ntohs((h).hdr_size)
+
+#define MCA_PTL_BASE_COMMON_HDR_HTON(h) \
+   (h).hdr_size = htons((h).hdr_size)
 
 
 /**
@@ -46,6 +95,17 @@ struct mca_ptl_base_frag_header_t {
 };
 typedef struct mca_ptl_base_frag_header_t mca_ptl_base_frag_header_t;
 
+#define MCA_PTL_BASE_FRAG_HDR_NTOH(h) \
+    MCA_PTL_BASE_COMMON_HDR_NTOH((h).hdr_common); \
+    (h).hdr_frag_length = ntohl((h).hdr_frag_length); \
+    (h).hdr_frag_offset = ntohl((h).hdr_frag_offset); \
+    (h).hdr_frag_seq = ntoh64((h).hdr_frag_seq)
+
+#define MCA_PTL_BASE_FRAG_HDR_HTON(h) \
+    MCA_PTL_BASE_COMMON_HDR_HTON((h).hdr_common); \
+    (h).hdr_frag_length = htonl((h).hdr_frag_length); \
+    (h).hdr_frag_offset = htonl((h).hdr_frag_offset); \
+    (h).hdr_frag_seq = hton64((h).hdr_frag_seq) 
 
 /**
  *  Header definition for the first fragment, contains the additional
@@ -62,6 +122,24 @@ struct mca_ptl_base_match_header_t {
 };
 typedef struct mca_ptl_base_match_header_t mca_ptl_base_match_header_t;
 
+#define MCA_PTL_BASE_MATCH_HDR_NTOH(h) \
+    MCA_PTL_BASE_FRAG_HDR_NTOH((h).hdr_frag); \
+    (h).hdr_contextid = ntohl((h).hdr_contextid); \
+    (h).hdr_src = ntohl((h).hdr_src); \
+    (h).hdr_dst = ntohl((h).hdr_dst); \
+    (h).hdr_tag = ntohl((h).hdr_tag); \
+    (h).hdr_msg_length = ntohl((h).hdr_msg_length); \
+    (h).hdr_msg_seq = ntoh64((h).hdr_msg_seq)
+
+#define MCA_PTL_BASE_MATCH_HDR_HTON(h) \
+    MCA_PTL_BASE_FRAG_HDR_HTON((h).hdr_frag); \
+    (h).hdr_contextid = htonl((h).hdr_contextid); \
+    (h).hdr_src = htonl((h).hdr_src); \
+    (h).hdr_dst = htonl((h).hdr_dst); \
+    (h).hdr_tag = htonl((h).hdr_tag); \
+    (h).hdr_msg_length = htonl((h).hdr_msg_length); \
+    (h).hdr_msg_seq = hton64((h).hdr_msg_seq)
+    
 
 /**
  *  Header used to acknowledgment outstanding fragment(s).
@@ -76,6 +154,13 @@ struct mca_ptl_base_ack_header_t {
 };
 typedef struct mca_ptl_base_ack_header_t mca_ptl_base_ack_header_t;
 
+#define MCA_PTL_BASE_ACK_HDR_NTOH(h) \
+    MCA_PTL_BASE_COMMON_HDR_NTOH(h.hdr_common); \
+    (h).hdr_dst_size = ntohl((h).hdr_dst_size)
+
+#define MCA_PTL_BASE_ACK_HDR_HTON(h) \
+    MCA_PTL_BASE_COMMON_HDR_HTON((h).hdr_common); \
+    (h).hdr_dst_size = htonl((h).hdr_dst_size)
 
 /**
  * Union of defined header types.

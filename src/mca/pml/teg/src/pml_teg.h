@@ -54,7 +54,6 @@ struct mca_pml_teg_t {
     long teg_irecvs;
     long teg_sends;
     long teg_recvs;
-    long teg_waits;
 #endif
 };
 typedef struct mca_pml_teg_t mca_pml_teg_t; 

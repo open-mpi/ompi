@@ -43,11 +43,11 @@ void ompi_proc_construct(ompi_proc_t* proc)
 
     proc->proc_pml = NULL;
     proc->proc_modex = NULL;
-    proc->proc_arch = 0;
     OBJ_CONSTRUCT(&proc->proc_lock, ompi_mutex_t);
 
     /* FIX - need to determine remote process architecture */
     proc->proc_convertor = ompi_convertor_create(0, 0);
+    proc->proc_arch = 0;
 
     OMPI_THREAD_LOCK(&ompi_proc_lock);
     ompi_list_append(&ompi_proc_list, (ompi_list_item_t*)proc);

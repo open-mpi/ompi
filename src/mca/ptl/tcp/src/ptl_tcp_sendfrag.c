@@ -128,6 +128,15 @@ int mca_ptl_tcp_send_frag_init(
     }
     hdr->hdr_frag.hdr_frag_length = size_out;
 
+    /* convert to network byte order if required */
+    if(ptl_peer->peer_byte_swap) {
+        if(offset == 0) {
+            MCA_PTL_BASE_MATCH_HDR_HTON(hdr->hdr_match);
+        } else {
+            MCA_PTL_BASE_FRAG_HDR_HTON(hdr->hdr_frag);
+        }
+    }
+
     /* fragment state */
     sendfrag->frag_owner = &ptl_peer->peer_ptl->super;
     sendfrag->frag_send.frag_request = sendreq;

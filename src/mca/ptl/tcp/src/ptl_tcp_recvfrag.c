@@ -74,9 +74,32 @@ void mca_ptl_tcp_recv_frag_init(mca_ptl_tcp_recv_frag_t* frag, mca_ptl_base_peer
 bool mca_ptl_tcp_recv_frag_handler(mca_ptl_tcp_recv_frag_t* frag, int sd)
 {
     /* read common header */
-    if(frag->frag_hdr_cnt < sizeof(mca_ptl_base_header_t))
+    if(frag->frag_hdr_cnt < sizeof(mca_ptl_base_header_t)) {
+        mca_ptl_tcp_peer_t* ptl_peer;
         if(mca_ptl_tcp_recv_frag_header(frag, sd, sizeof(mca_ptl_base_header_t)) == false)
             return false;
+
+        /* convert this to host byte order if required */
+        if(frag->frag_recv.frag_base.frag_peer->peer_byte_swap) {
+            /* note this field is only a byte - so doesn't matter what the byte ordering is */
+            switch(frag->frag_recv.frag_base.frag_header.hdr_common.hdr_type) {
+                case MCA_PTL_HDR_TYPE_MATCH:
+                    MCA_PTL_BASE_MATCH_HDR_NTOH(frag->frag_recv.frag_base.frag_header.hdr_match);
+                    break;
+                case MCA_PTL_HDR_TYPE_FRAG:
+                    MCA_PTL_BASE_FRAG_HDR_NTOH(frag->frag_recv.frag_base.frag_header.hdr_frag);
+                    break;
+                case MCA_PTL_HDR_TYPE_ACK: 
+                case MCA_PTL_HDR_TYPE_NACK:
+                    MCA_PTL_BASE_FRAG_HDR_NTOH(frag->frag_recv.frag_base.frag_header.hdr_frag);
+                    break;
+                default:
+                    ompi_output(0, "mca_ptl_tcp_recv_frag_handler: invalid message type: %08X", 
+                        *(unsigned long*)&frag->frag_recv.frag_base.frag_header);
+                    return true;
+            }
+        }
+    }
 
     switch(frag->frag_recv.frag_base.frag_header.hdr_common.hdr_type) {
     case MCA_PTL_HDR_TYPE_MATCH:
@@ -89,7 +112,7 @@ bool mca_ptl_tcp_recv_frag_handler(mca_ptl_tcp_recv_frag_t* frag, int sd)
     default:
         ompi_output(0, "mca_ptl_tcp_recv_frag_handler: invalid message type: %08X", 
             *(unsigned long*)&frag->frag_recv.frag_base.frag_header);
-         return false;
+         return true;
     }
 }
 
