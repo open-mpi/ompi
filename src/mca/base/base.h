@@ -90,7 +90,7 @@ extern "C" {
 
     /* mca_base_module_register.c */
 
-    int mca_base_module_repository_construct(void);
+    int mca_base_module_repository_initialize(void);
     int mca_base_module_repository_retain(char *type, 
                                           lt_dlhandle module_handle, 
                                           const mca_base_module_t *module_struct);

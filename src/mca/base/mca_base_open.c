@@ -63,7 +63,7 @@ int mca_base_open(void)
 
   /* Open up the module repository */
 
-  return mca_base_module_repository_construct();
+  return mca_base_module_repository_initialize();
 }
 
 
