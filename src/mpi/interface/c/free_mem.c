@@ -10,7 +10,7 @@
 #include "mpi/interface/c/bindings.h"
 
 #if LAM_WANT_MPI_PROFILING && LAM_HAVE_WEAK_SYMBOLS
-#pragma weak PMPI_Free_mem = MPI_Free_mem
+#pragma weak MPI_Free_mem = PMPI_Free_mem
 #endif
 
 
