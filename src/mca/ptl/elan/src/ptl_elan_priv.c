@@ -1062,6 +1062,7 @@ mca_ptl_elan_drain_recv (struct mca_ptl_elan_module_t *ptl)
     rxq   = queue->rxq;
     ctx   = ptl->ptl_elan_ctx;
 
+ptl_elan_recv_comp:
     OMPI_LOCK (&queue->rx_lock);
 #if OMPI_PTL_ELAN_THREADING
     rc = mca_ptl_elan_wait_queue(ptl, rxq, 1);
@@ -1073,6 +1074,13 @@ mca_ptl_elan_drain_recv (struct mca_ptl_elan_module_t *ptl)
 
 	header = (mca_ptl_base_header_t *) rxq->qr_fptr;
 
+#if OMPI_PTL_ELAN_THREADING
+	if (header->hdr_common.hdr_type == MCA_PTL_HDR_TYPE_STOP) {
+	    /* XXX: release the lock and quit the thread */
+	    OMPI_UNLOCK (&queue->rx_lock);
+	    return OMPI_SUCCESS;
+	} 
+#endif
 	switch (header->hdr_common.hdr_type) {
 	case MCA_PTL_HDR_TYPE_MATCH:
 	case MCA_PTL_HDR_TYPE_FRAG:
@@ -1125,6 +1133,10 @@ mca_ptl_elan_drain_recv (struct mca_ptl_elan_module_t *ptl)
     }
     OMPI_UNLOCK (&queue->rx_lock);
 
+#if OMPI_PTL_ELAN_THREADING
+    goto ptl_elan_recv_comp;
+#endif
+
     END_FUNC(PTL_ELAN_DEBUG_THREAD);
     return OMPI_SUCCESS;
 }
@@ -1144,6 +1156,7 @@ mca_ptl_elan_update_desc (struct mca_ptl_elan_module_t *ptl)
     comp = ptl->comp;
     ctx  = ptl->ptl_elan_ctx;
     rxq  = comp->rxq;
+ptl_elan_send_comp:
     OMPI_LOCK (&comp->rx_lock);
 #if OMPI_PTL_ELAN_THREADING
     /* XXX: block on the recv queue without holding a lock */
@@ -1166,8 +1179,13 @@ mca_ptl_elan_update_desc (struct mca_ptl_elan_module_t *ptl)
 		    header->hdr_common.hdr_flags,
 		    header->hdr_common.hdr_size);
 
-	/* FIXME: To handle other different types of headers
-	 * and use a simplied way checking completion */
+#if OMPI_PTL_ELAN_THREADING
+	if (header->hdr_common.hdr_type == MCA_PTL_HDR_TYPE_STOP) {
+	    /* XXX: release the lock and quit the thread */
+	    OMPI_UNLOCK (&comp->rx_lock);
+	    return OMPI_SUCCESS;
+	}
+#endif
 	if (header->hdr_common.hdr_type == MCA_PTL_HDR_TYPE_ACK) {
 	    frag = ((mca_ptl_elan_ack_header_t*)header)->frag;
 	} else {
@@ -1207,6 +1225,11 @@ mca_ptl_elan_update_desc (struct mca_ptl_elan_module_t *ptl)
 	elan4_flush_cmdq_reorder (rxq->qr_cmdq);
     }
     OMPI_UNLOCK (&comp->rx_lock);
+
+#if OMPI_PTL_ELAN_THREADING
+    goto ptl_elan_send_comp;
+#endif
+
 #else
     ctx  = ptl->ptl_elan_ctx;
     while (ompi_list_get_size (&ptl->send_frags) > 0) {

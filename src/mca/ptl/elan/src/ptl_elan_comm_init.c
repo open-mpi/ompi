@@ -142,6 +142,19 @@ ompi_init_elan_queue_events (mca_ptl_elan_module_t * ptl,
         elan_ptr = (E4_Event32 *) ((char *) elan_ptr + elan_size);
         frag ++;
     }
+
+#if OMPI_PTL_ELAN_THREADING
+    /* Allocating a DMA:event pair for threads notification */
+    queue->last = (ompi_ptl_elan_ctrl_desc_t *) elan4_allocMain (
+	    rail->r_alloc, main_align, sizeof(ompi_ptl_elan_ctrl_desc_t));
+    OMPI_PTL_ELAN_CHECK_UNEX (queue->last, NULL, OMPI_ERROR, 0);
+    queue->last->elan_event = (E4_Event *) elan4_allocElan (
+	    rail->r_alloc, elan_align, sizeof(E4_Event32)); 
+    OMPI_PTL_ELAN_CHECK_UNEX (queue->last->elan_event, NULL, OMPI_ERROR, 0);
+    queue->last->mesg = malloc(sizeof(mca_ptl_base_header_t));
+    OMPI_PTL_ELAN_CHECK_UNEX (queue->last->mesg, NULL, OMPI_ERROR, 0);
+#endif
+
     flist->fl_num_allocated += flist->fl_num_per_alloc;
 
     END_FUNC(PTL_ELAN_DEBUG_INIT);
