@@ -112,14 +112,16 @@ static void* mca_ptl_mx_thread(ompi_object_t *arg)
             &mx_result);
         if(mx_return == MX_TIMEOUT)
             continue;
-        if(mx_return != MX_SUCCESS) {
+        else if(ptl->mx_thread_run == false)
+            break;
+        else if(mx_return != MX_SUCCESS) {
             ompi_output(0, "mca_ptl_mx_thread: mx_probe() failed with status %d\n", 
                 mx_return);
             break;
         }
-
+        
         /* process the pending request */
-        mca_ptl_mx_progress(ptl, mx_request);
+        MCA_PTL_MX_PROGRESS(ptl, mx_request);
     }
     return NULL;
 }
@@ -146,7 +148,7 @@ static mca_ptl_mx_module_t* mca_ptl_mx_create(uint64_t addr)
     /* open local endpoint */
     status = mx_open_endpoint(
         addr,
-        MX_ANY_ENDPOINT,
+        1,
         mca_ptl_mx_component.mx_filter,
         NULL,
         0,
@@ -165,7 +167,7 @@ static mca_ptl_mx_module_t* mca_ptl_mx_create(uint64_t addr)
         mca_ptl_mx_finalize(&ptl->super);
         return NULL;
     }
-													    
+
     /* breakup the endpoint address */
     if((status = mx_decompose_endpoint_addr(
         ptl->mx_endpoint_addr,
@@ -177,9 +179,19 @@ static mca_ptl_mx_module_t* mca_ptl_mx_create(uint64_t addr)
         return NULL;
     }
 
+    if(mca_ptl_mx_component.mx_debug) {
+        ompi_output(0, "mca_ptl_mx_create: opened %08X:%08X:%08X:%08X\n", 
+            (uint32_t)(ptl->mx_nic_addr >> 32), 
+            (uint32_t)ptl->mx_nic_addr,
+            ptl->mx_endpoint_id,
+            ptl->mx_filter);
+    }
+
     /* pre-post receive buffers */
     for(i=0; i<mca_ptl_mx_component.mx_prepost; i++) {
-        if(mca_ptl_mx_post(ptl) != OMPI_SUCCESS) {
+        int rc;
+        MCA_PTL_MX_POST(ptl, rc);
+        if(rc != OMPI_SUCCESS) {
             mca_ptl_mx_finalize(&ptl->super);
             return NULL;
         }
@@ -208,10 +220,12 @@ static mca_ptl_mx_module_t* mca_ptl_mx_create(uint64_t addr)
 int mca_ptl_mx_finalize(struct mca_ptl_base_module_t* ptl)
 {
     mca_ptl_mx_module_t* ptl_mx = (mca_ptl_mx_module_t*)ptl;
+    mx_wakeup(ptl_mx->mx_endpoint);
 #if OMPI_HAVE_THREADS
     ptl_mx->mx_thread_run = false;
     ompi_thread_join(&ptl_mx->mx_thread, NULL);
 #endif
+    mx_close_endpoint(ptl_mx->mx_endpoint);
     free(ptl_mx);
     return OMPI_SUCCESS;
 }

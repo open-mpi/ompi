@@ -20,6 +20,7 @@
 #include "info/info.h"
 #include "util/proc_info.h"
 #include "runtime/runtime.h"
+#include "runtime/ompi_progress.h"
 #include "runtime/ompi_rte_wait.h"
 
 #include "mca/base/base.h"
@@ -43,6 +44,9 @@ int ompi_mpi_finalize(void)
   int ret;
 
   ompi_mpi_finalized = true;
+#if OMPI_HAVE_THREADS == 0
+  ompi_progress_events(OMPI_EVLOOP_ONCE);
+#endif
 
   /* unregister process */
   if (OMPI_SUCCESS != (ret = ompi_registry.rte_unregister(
