@@ -21,6 +21,8 @@ noinst_LTLIBRARIES = liblfc.la
 
 headers = \
 	ompi_bitmap.h \
+        ompi_circular_buffer_fifo.h \
+        ompi_fifo.h \
 	ompi_free_list.h \
 	ompi_hash_table.h \
 	ompi_list.h \
