@@ -44,10 +44,10 @@ rm -f conf_fs_test.$$ CONF_FS_TEST.$$
 #
 # Now see what the user wants to do...
 #
-AC_MSG_CHECKING([if configuring for case sensitive fs])
-AC_ARG_WITH(cs_fs, [  --with-cs-fs            Destination FS is case sensitive
-                          (specify --without-cs-fs if installing on HFS+
-                           on MacOS X)])
+AC_MSG_CHECKING([if configuring for case sensitive filesystem])
+AC_ARG_WITH(cs_fs, 
+            AC_HELP_STRING([--with-cs-fs],
+                           [Destination FS is case sensitive (default: set to value of the build FS's case sensitivity)]))
 
 if test "$with_cs_fs" = "yes"; then
     LAM_WANT_CS_FS=1
