@@ -37,8 +37,6 @@ OMPI_DECLSPEC extern ompi_pointer_array_t *ompi_datatype_f_to_c_table;
  */
 #define DT_MAX_PREDEFINED  0x2A
 
-#define DT_INCREASE_STACK  32
-
 /* flags for the datatypes. */
 #define DT_FLAG_DESTROYED  0x0001  /**< user destroyed but some other layers still have a reference */
 #define DT_FLAG_COMMITED   0x0002  /**< ready to be used for a send/recv operation */
