@@ -61,5 +61,10 @@ static inline lam_proc_t* lam_proc_local(void)
     return lam_proc_local_proc;
 }
 
+/**
+ * Returns the proc instance for a given vpid 
+*/
+lam_proc_t * lam_proc_find ( lam_job_handle_t jobid, uint32_t vpid );
+
 #endif /* LAM_PROC */
 
