@@ -51,14 +51,14 @@ int mca_oob_parse_contact_info(
 
     /* parse the process name */
     char* cinfo = strdup(contact_info);
-    char* ptr = strchr(contact_info, ';');
+    char* ptr = strchr(cinfo, ';');
     if(NULL == ptr) {
         free(cinfo);
         return OMPI_ERR_BAD_PARAM;
     }
     *ptr = '\0';
     ptr++;
-    proc_name = ns_base_convert_string_to_process_name(contact_info);
+    proc_name = ns_base_convert_string_to_process_name(cinfo);
     *name = *proc_name;
     free(proc_name);
 
