@@ -853,7 +853,7 @@ int mca_ptl_sm_send(
 
     /* if this is the entire message - signal request is complete */
     if(sendreq->req_bytes_packed == size) {
-        ompi_request_complete(sendreq);
+        ompi_request_complete( &(sendreq->req_base.req_ompi) );
     }
 
     /* return */
