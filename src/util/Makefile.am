@@ -40,7 +40,7 @@ headers = \
 
 libutil_la_SOURCES = \
     $(headers) \
-    asm.S \
+    assembly.s \
     argv.c \
     cmd_line.c \
     few.c \
