@@ -357,3 +357,5 @@ OP_FUNC(replace, long_double, long double, =)
 OP_FUNC(replace, fortran_complex, ompi_fortran_complex_t, =)
 /* Byte */
 OP_FUNC(replace, byte, char, =)
+/* Byte */
+OP_FUNC(replace, fortran_logical, ompi_fortran_logical_t, =)
