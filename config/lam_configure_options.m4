@@ -55,7 +55,7 @@ AC_DEFINE_UNQUOTED(LAM_ENABLE_MEM_PROFILE, $WANT_MEM_PROFILE,
     [Whether we want the memory profiling or not])
 
 #
-# Developer debugging
+# Developer picky compiler options
 #
 
 AC_MSG_CHECKING([if want developer-level compiler pickyness])
@@ -117,6 +117,24 @@ else
 fi
 AC_DEFINE_UNQUOTED(LAM_ENABLE_MPI_F77, $WANT_MPI_F77,
     [Whether we want the MPI f77 bindings or not])
+
+#
+# MPI profiling
+#
+
+AC_MSG_CHECKING([whether to enable PMPI])
+AC_ARG_ENABLE(mpi-profile, 
+    AC_HELP_STRING([--enable-mpi-profile],
+                   [enable MPI profiling (default: enabled)]))
+if test "$enable_mpi_profile" != "no"; then
+    AC_MSG_RESULT([yes])
+    WANT_MPI_PROFILE=1
+else
+    AC_MSG_RESULT([no])
+    WANT_MPI_PROFILE=0
+fi
+# Anju: continue here...
+
 
 #
 # Fortran 90
