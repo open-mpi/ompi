@@ -287,7 +287,7 @@ static int ompi_convertor_unpack_homogeneous_contig( ompi_convertor_t* pConv,
     char* pDstBuf = pConv->pBaseBuf;
     char* pSrcBuf = iov[0].iov_base;
     int bConverted = 0;
-    long jump, extent = pData->ub - pData->lb;
+    long extent = pData->ub - pData->lb;
     unsigned int length, remaining, i;
     dt_stack_t* stack = &(pConv->pStack[1]);
 
@@ -307,19 +307,30 @@ static int ompi_convertor_unpack_homogeneous_contig( ompi_convertor_t* pConv,
         } else {
             pDstBuf += stack->disp;
 
-            length = pConv->bConverted / pData->size;
-            length = pConv->bConverted - length * pData->size;
-            jump = extent - length;
+            length = pConv->bConverted / pData->size;  /* already done */
+            length = pConv->bConverted - length * pData->size;  /* still left on the last element */
             remaining = iov[0].iov_len;
 
-            for( i = 0; remaining < length; i++ ) {
+            /* complete the last copy */
+            if( length != 0 ) {
                 OMPI_DDT_SAFEGUARD_POINTER( pDstBuf, length, pConv->pBaseBuf, pData, pConv->count );
                 MEMCPY( pDstBuf, pSrcBuf, length );
                 pSrcBuf += length;
-                pDstBuf += jump;
+                pDstBuf += (extent - length);
                 remaining -= length;
-                length = pData->size;
-                jump = extent;
+            }
+            for( i = 0; pData->size <= remaining; i++ ) {
+                OMPI_DDT_SAFEGUARD_POINTER( pDstBuf, pData->size, pConv->pBaseBuf, pData, pConv->count );
+                MEMCPY( pDstBuf, pSrcBuf, pData->size );
+                pSrcBuf += pData->size;
+                pDstBuf += extent;
+                remaining -= pData->size;
+            }
+            /* copy the last bits */
+            if( remaining != 0 ) {
+                OMPI_DDT_SAFEGUARD_POINTER( pDstBuf, remaining, pConv->pBaseBuf, pData, pConv->count );
+                MEMCPY( pDstBuf, pSrcBuf, remaining );
+                pDstBuf += remaining;
             }
             bConverted += iov[0].iov_len;
             stack->disp = pDstBuf - pConv->pBaseBuf;  /* save the position */
