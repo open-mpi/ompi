@@ -96,6 +96,15 @@ mca_ptl_gm_component_open(void)
     OBJ_CONSTRUCT (&mca_ptl_gm_component.gm_send_req, ompi_list_t);
 
     /* register GM component parameters */
+    mca_ptl_gm_component.gm_port_name =
+        mca_ptl_gm_param_register_string( "port_name", "OMPI_GM" );
+    mca_ptl_gm_component.gm_max_port_number =
+        mca_ptl_gm_param_register_int ("max_ports_number", 16 );
+    mca_ptl_gm_component.gm_max_boards_number =
+        mca_ptl_gm_param_register_int ("max_boards_number", 4 );
+    mca_ptl_gm_component.gm_max_ptl_modules = 
+	mca_ptl_gm_param_register_int( "max_ptl_modules", 1 );
+
     mca_ptl_gm_component.gm_segment_size = 
         mca_ptl_gm_param_register_int( "segment_size", 16 * 1024 ); /* 16K by default */
     mca_ptl_gm_module.super.ptl_first_frag_size =
@@ -105,18 +114,10 @@ mca_ptl_gm_component_open(void)
     mca_ptl_gm_module.super.ptl_max_frag_size =
         mca_ptl_gm_param_register_int ("max_frag_size", 256 * 1024 * 1024);
     /* Parameters setting the message limits. */
-    mca_ptl_gm_component.gm_port_name =
-        mca_ptl_gm_param_register_string( "port_name", "OMPI_GM" );
-    mca_ptl_gm_component.gm_max_port_number =
-        mca_ptl_gm_param_register_int ("max_ports_number", 16 );
-    mca_ptl_gm_component.gm_max_boards_number =
-        mca_ptl_gm_param_register_int ("max_boards_number", 4 );
-    mca_ptl_gm_component.gm_max_rdma_frag_size =
-        mca_ptl_gm_param_register_int ("max_rdma_frag_size", 512 * 1024);
-    mca_ptl_gm_component.gm_max_eager_size = 
-        mca_ptl_gm_param_register_int( "max_eager_size", 64 * mca_ptl_gm_module.super.ptl_first_frag_size );
-    mca_ptl_gm_component.gm_max_ptl_modules = 
-	mca_ptl_gm_param_register_int( "max_ptl_modules", 1 );
+    mca_ptl_gm_component.gm_eager_limit = 
+        mca_ptl_gm_param_register_int( "eager_limit", 10 * mca_ptl_gm_component.gm_segment_size );
+    mca_ptl_gm_component.gm_rdma_frag_size =
+        mca_ptl_gm_param_register_int ("rdma_frag_size", 128 * 1024);
     
     mca_ptl_gm_component.gm_free_list_num =
         mca_ptl_gm_param_register_int ("free_list_num", 256);
@@ -379,7 +380,6 @@ mca_ptl_gm_init_sendrecv (mca_ptl_gm_module_t * ptl)
 
 	gm_provide_receive_buffer( ptl->gm_port, (char*)ptl->gm_recv_dma_memory + i * mca_ptl_gm_component.gm_segment_size,
 				   GM_SIZE, GM_LOW_PRIORITY );
-	DO_DEBUG(printf( "%3d : gm register GM receive buffer %p\n", i, (void*)ptl->gm_recv_dma_memory ) );
     }
 
     OBJ_CONSTRUCT( &(ptl->gm_pending_acks), ompi_list_t );

@@ -44,17 +44,16 @@ extern "C" {
         struct mca_ptl_gm_module_t **gm_ptl_modules; /**< array of available PTL modules */
         size_t      gm_num_ptl_modules;      /**< number of ptls actually used */
         size_t      gm_max_ptl_modules;      /**< maximum number of ptls - available */
+        uint32_t    gm_max_port_number;      /**< maximum number of ports by board */
+        uint32_t    gm_max_boards_number;    /**< maximum number of boards on the node */
         uint32_t    gm_free_list_num;        /**< initial size of free lists */
         uint32_t    gm_free_list_max;        /**< maximum size of free lists */
         uint32_t    gm_free_list_inc;        /**< number of elements to alloc when growing free lists */
-        uint32_t    gm_max_port_number;      /**< maximum number of ports by board */
-        uint32_t    gm_max_boards_number;    /**< maximum number of boards on the node */
-        uint32_t    gm_max_rdma_frag_size;   /**< maximum fragment size used to transfer data over RDMA */
-        uint32_t    gm_max_eager_size;       /**< number of bytes before the rendez-vous protocol. If the
-                                              **< size of the message is less than this number then GM 
-                                              **< use a eager protocol.
-                                              */
 	uint32_t    gm_segment_size;         /**< size of the allocated segment */
+        uint32_t    gm_eager_limit;          /**< number of bytes before the rendez-vous protocol. If the
+                                              **< size of the message is less than this number then GM 
+                                              **< use a eager protocol.  */
+        uint32_t    gm_rdma_frag_size;       /**< maximum fragment size used to transfer data over RDMA */
         char*       gm_port_name;            /**< the name used to get the port */
 
         struct mca_ptl_gm_proc_t* gm_local;
