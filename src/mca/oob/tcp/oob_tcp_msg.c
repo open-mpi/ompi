@@ -205,7 +205,7 @@ int mca_oob_tcp_msg_copy(mca_oob_tcp_msg_t* msg, struct iovec* iov, int count)
                 if(++src_cnt == count)
                     return rc;
                 src++;
-                src_ptr = src->iov_base;
+                src_ptr = (unsigned char*)src->iov_base;
                 src_len = src->iov_len;
             }
         }
