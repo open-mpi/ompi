@@ -1,3 +1,4 @@
+# -*- makefile -*-
 #
 # $HEADER$
 #
