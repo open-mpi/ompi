@@ -170,12 +170,10 @@ struct mca_coll_1_0_0_t {
   mca_coll_base_alltoallv_fn_t coll_alltoallv;
   mca_coll_base_alltoallw_fn_t coll_alltoallw;
   mca_coll_base_barrier_fn_t coll_barrier;
-  bool coll_bcast_optimization;
   mca_coll_base_bcast_fn_t coll_bcast;
   mca_coll_base_exscan_fn_t coll_exscan;
   mca_coll_base_gather_fn_t coll_gather;
   mca_coll_base_gatherv_fn_t coll_gatherv;
-  bool coll_reduce_optimization;
   mca_coll_base_reduce_fn_t coll_reduce;
   mca_coll_base_reduce_scatter_fn_t coll_reduce_scatter;
   mca_coll_base_scan_fn_t coll_scan;

@@ -28,6 +28,7 @@ int MPI_Gatherv(void *sendbuf, int sendcount, MPI_Datatype sendtype,
     int i, size, err;
     
     if (MPI_PARAM_CHECK) {
+        err = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (ompi_comm_invalid(comm)) {
 	    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
@@ -41,16 +42,11 @@ int MPI_Gatherv(void *sendbuf, int sendcount, MPI_Datatype sendtype,
           /* Errors for all ranks */
 
           if ((root >= ompi_comm_size(comm)) || (root < 0)) {
-            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ROOT, FUNC_NAME);
+            err = MPI_ERR_ROOT;
+          } else {
+            OMPI_CHECK_DATATYPE_FOR_SEND(err, sendtype, sendcount);
           }
-
-          if (sendcount < 0) {
-            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COUNT, FUNC_NAME);
-          }
-
-          if (sendtype == MPI_DATATYPE_NULL) {
-            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TYPE, FUNC_NAME); 
-          }
+          OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
 
           /* Errors for the root.  Some of these could have been
              combined into compound if statements above, but since
@@ -59,10 +55,6 @@ int MPI_Gatherv(void *sendbuf, int sendcount, MPI_Datatype sendtype,
              them out into individual tests. */
 
           if (ompi_comm_rank(comm) == root) {
-            if (recvtype == MPI_DATATYPE_NULL) {
-              return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TYPE, FUNC_NAME); 
-            }
-
             if (NULL == displs) {
                 return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
             }
@@ -75,6 +67,8 @@ int MPI_Gatherv(void *sendbuf, int sendcount, MPI_Datatype sendtype,
             for (i = 0; i < size; ++i) {
               if (recvcounts[i] < 0) {
                 return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COUNT, FUNC_NAME);
+              } else if (MPI_DATATYPE_NULL == recvtype) {
+                return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TYPE, FUNC_NAME);
               }
             }
           }
@@ -84,20 +78,15 @@ int MPI_Gatherv(void *sendbuf, int sendcount, MPI_Datatype sendtype,
 
         else {
           if (! ((root >= 0 && root < ompi_comm_remote_size(comm)) ||
-                 root == MPI_ROOT || root == MPI_PROC_NULL)) {
+                 MPI_ROOT == root || MPI_PROC_NULL == root)) {
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ROOT, FUNC_NAME);
           }
 
           /* Errors for the senders */
 
-          if (root != MPI_ROOT && root != MPI_PROC_NULL) {
-            if (sendcount < 0) {
-              return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COUNT, FUNC_NAME);
-            }
-
-            if (sendtype == MPI_DATATYPE_NULL) {
-              return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TYPE, FUNC_NAME); 
-            }
+          if (MPI_ROOT != root && MPI_PROC_NULL != root) {
+            OMPI_CHECK_DATATYPE_FOR_SEND(err, sendtype, sendcount);
+            OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
           }
 
           /* Errors for the root.  Ditto on the comment above -- these
@@ -117,6 +106,8 @@ int MPI_Gatherv(void *sendbuf, int sendcount, MPI_Datatype sendtype,
             for (i = 0; i < size; ++i) {
               if (recvcounts[i] < 0) {
                 return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COUNT, FUNC_NAME);
+              } else if (MPI_DATATYPE_NULL == recvtype) {
+                return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TYPE, FUNC_NAME); 
               }
             }
           }

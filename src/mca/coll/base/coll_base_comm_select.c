@@ -31,8 +31,8 @@ static mca_coll_1_0_0_t null_actions = {
   /* Collective function pointers */
 
   NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-  false, NULL, NULL, NULL, NULL,
-  false, NULL, NULL, NULL, NULL, NULL
+  NULL, NULL, NULL, NULL,
+  NULL, NULL, NULL, NULL, NULL
 };
 
 
@@ -74,7 +74,7 @@ static int module_init(const mca_coll_1_0_0_t *module,
                        ompi_communicator_t *comm);
 
 static int query_basic(ompi_communicator_t *comm);
-static void replace_null_with_basic(ompi_communicator_t *comm);
+static int replace_null_with_basic(ompi_communicator_t *comm);
 
 
 /*
@@ -295,11 +295,11 @@ static ompi_list_t *check_components(ompi_list_t *components,
 {
   int i, priority;
   const mca_base_module_t *component;
-  ompi_list_item_t *item, *next;
+  ompi_list_item_t *item, *next, *item2;
   const mca_coll_1_0_0_t *actions;
   bool want_to_check;
   ompi_list_t *selectable;
-  avail_coll_t *avail;
+  avail_coll_t *avail, *avail2;
 
   /* Make a list of the components that query successfully */
 
@@ -342,17 +342,32 @@ static ompi_list_t *check_components(ompi_list_t *components,
         avail = OBJ_NEW(avail_coll_t);
         avail->ac_priority = 0;
         avail->ac_component = (mca_coll_base_module_1_0_0_t *) component;
-        ompi_list_append(selectable, item);
-      } else {
-        ompi_list_remove_item(components, item);
+
+        /* Put this item on the list in priority order (highest
+           priority first).  Should it go first? */
+
+        item2 = ompi_list_get_first(selectable); 
+        avail2 = (avail_coll_t *) item2;
+        if (avail->ac_priority > avail2->ac_priority) {
+          ompi_list_prepend(selectable, item);
+        } else {
+          for (i = 1; item2 != ompi_list_get_end(selectable); 
+               item2 = ompi_list_get_next(selectable), ++i) {
+            avail2 = (avail_coll_t *) item2;
+            if (avail->ac_priority > avail2->ac_priority) {
+              ompi_list_insert(selectable, item, i);
+              break;
+            }
+          }
+
+          /* If we didn't find a place to put it in the list, then
+             append it (because it has the lowest priority found so
+             far) */
+          if (ompi_list_get_end(selectable) == item2) {
+            ompi_list_append(selectable, item);
+          }
+        }
       }
-    }
-
-    /* If we didn't want to check, then eliminate this entry from the
-       list */
-
-    else {
-      ompi_list_remove_item(components, item);
     }
   }
 
@@ -531,11 +546,15 @@ static int query_basic(ompi_communicator_t *comm)
 /* 
  * Replace the NULL pointers by corresponsing ompi_basic pointers 
  */
-static void replace_null_with_basic(ompi_communicator_t *comm)
+static int replace_null_with_basic(ompi_communicator_t *comm)
 {
+  int err;
+
 #define CHECK(name) \
   if (NULL == comm->c_coll.coll_##name) { \
-    query_basic(comm); \
+    if (OMPI_SUCCESS != (err = query_basic(comm))) { \
+      return err; \
+    } \
     comm->c_coll.coll_##name = comm->c_coll_basic_module->coll_##name; \
   }
 
@@ -555,4 +574,8 @@ static void replace_null_with_basic(ompi_communicator_t *comm)
   CHECK(scan); 
   CHECK(scatter); 
   CHECK(scatterv); 
+
+  /* Happiness; all done */
+
+  return OMPI_SUCCESS;
 }

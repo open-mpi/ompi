@@ -32,20 +32,19 @@ int MPI_Alltoall(void *sendbuf, int sendcount, MPI_Datatype sendtype,
       /* Unrooted operation -- same checks for all ranks on both
          intracommunicators and intercommunicators */
 
+      err = MPI_SUCCESS;
       OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
       if (ompi_comm_invalid(comm)) {
 	return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
                                      FUNC_NAME);
+      } else if (MPI_DATATYPE_NULL == recvtype) {
+        err = MPI_ERR_TYPE;
+      } else if (recvcount < 0) {
+        err = MPI_ERR_COUNT;
+      } else {
+        OMPI_CHECK_DATATYPE_FOR_SEND(err, sendtype, sendcount);
       }
-
-      if ((MPI_DATATYPE_NULL == sendtype) || 
-          (MPI_DATATYPE_NULL == recvtype)) {
-        return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TYPE, FUNC_NAME);
-      }
-    
-      if ((sendcount < 0) || (recvcount < 0)) {
-        return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COUNT, FUNC_NAME);
-      }
+      OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
     }
 
     /* Invoke the coll component to perform the back-end operation */

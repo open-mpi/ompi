@@ -28,6 +28,7 @@ int MPI_Scan(void *sendbuf, void *recvbuf, int count,
     int err;
 
     if (MPI_PARAM_CHECK) {
+        err = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (ompi_comm_invalid(comm)) {
 	    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
@@ -37,28 +38,22 @@ int MPI_Scan(void *sendbuf, void *recvbuf, int count,
         /* No intercommunicators allowed! (MPI does not define
            MPI_SCAN on intercommunicators) */
 
-        if (OMPI_COMM_IS_INTER(comm)) {
-	    return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COMM, FUNC_NAME);
+        else if (OMPI_COMM_IS_INTER(comm)) {
+          err = MPI_ERR_COMM;
         }
 
         /* Unrooted operation; checks for all ranks */
 	
-	if (MPI_DATATYPE_NULL == datatype) {
-	    return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TYPE, FUNC_NAME);
-	}
-	
-	if (MPI_OP_NULL == op) {
-	    return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_OP, FUNC_NAME);
-	}
-
-        if (ompi_op_is_intrinsic(op) && datatype->id < DT_MAX_PREDEFINED &&
-            -1 == ompi_op_ddt_map[datatype->id]) {
-          return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_OP, FUNC_NAME);
+	else if (MPI_OP_NULL == op) {
+          err = MPI_ERR_OP;
+	} else if (ompi_op_is_intrinsic(op) &&
+                   datatype->id < DT_MAX_PREDEFINED &&
+                   -1 == ompi_op_ddt_map[datatype->id]) {
+          err = MPI_ERR_OP;
+        } else {
+          OMPI_CHECK_DATATYPE_FOR_SEND(err, datatype, count);
         }
-
-	if (count < 0) {
-	    return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COUNT, FUNC_NAME);
-	}
+        OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
     }
 
     /* Call the coll component to actually perform the allgather */

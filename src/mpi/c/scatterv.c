@@ -28,6 +28,7 @@ int MPI_Scatterv(void *sendbuf, int *sendcounts, int *displs,
     int i, size, err;
     
     if (MPI_PARAM_CHECK) {
+        err = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (ompi_comm_invalid(comm)) {
 	    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
@@ -48,7 +49,7 @@ int MPI_Scatterv(void *sendbuf, int *sendcounts, int *displs,
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COUNT, FUNC_NAME);
           }
 
-          if (recvtype == MPI_DATATYPE_NULL) {
+          if (MPI_DATATYPE_NULL == recvtype) {
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TYPE, FUNC_NAME); 
           }
 
@@ -59,10 +60,6 @@ int MPI_Scatterv(void *sendbuf, int *sendcounts, int *displs,
              them out into individual tests. */
 
           if (ompi_comm_rank(comm) == root) {
-            if (sendtype == MPI_DATATYPE_NULL) {
-              return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TYPE, FUNC_NAME); 
-            }
-
             if (NULL == displs) {
                 return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
             }
@@ -73,9 +70,8 @@ int MPI_Scatterv(void *sendbuf, int *sendcounts, int *displs,
 
             size = ompi_comm_size(comm);
             for (i = 0; i < size; ++i) {
-              if (sendcounts[i] < 0) {
-                return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COUNT, FUNC_NAME);
-              }
+              OMPI_CHECK_DATATYPE_FOR_SEND(err, sendtype, sendcounts[i]);
+              OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
             }
           }
         }
@@ -84,18 +80,18 @@ int MPI_Scatterv(void *sendbuf, int *sendcounts, int *displs,
 
         else {
           if (! ((root >= 0 && root < ompi_comm_remote_size(comm)) ||
-                 root == MPI_ROOT || root == MPI_PROC_NULL)) {
+                 MPI_ROOT == root || MPI_PROC_NULL == root)) {
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ROOT, FUNC_NAME);
           }
 
           /* Errors for the receivers */
 
-          if (root != MPI_ROOT && root != MPI_PROC_NULL) {
+          if (MPI_ROOT != root && MPI_PROC_NULL != root) {
             if (recvcount < 0) {
               return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COUNT, FUNC_NAME);
             }
 
-            if (recvtype == MPI_DATATYPE_NULL) {
+            if (MPI_DATATYPE_NULL == recvtype) {
               return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TYPE, FUNC_NAME); 
             }
           }
@@ -115,9 +111,8 @@ int MPI_Scatterv(void *sendbuf, int *sendcounts, int *displs,
 
             size = ompi_comm_size(comm);
             for (i = 0; i < size; ++i) {
-              if (sendcounts[i] < 0) {
-                return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COUNT, FUNC_NAME);
-              }
+              OMPI_CHECK_DATATYPE_FOR_SEND(err, sendtype, sendcounts[i]);
+              OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
             }
           }
         }
