@@ -31,7 +31,8 @@ mca_ptl_sm_t mca_ptl_sm = {
     &mca_ptl_sm_component.super,
     5, /* number of elements in the send descriptor cache: RLG - this is
         garbage, need to fix. */
-    sizeof(mca_ptl_sm_send_request_t), /* size of shared memory send
+    sizeof(mca_ptl_sm_send_request_t) -
+        sizeof(mca_pml_base_send_request_t),  /* size of shared memory send
                                            descriptor */
     1, /* ptl_exclusivity */
     0, /* ptl_latency */

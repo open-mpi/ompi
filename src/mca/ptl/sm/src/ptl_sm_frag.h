@@ -18,9 +18,13 @@
 
 OBJ_CLASS_DECLARATION(mca_ptl_sm_frag_t);
 
+OBJ_CLASS_DECLARATION(mca_ptl_sm_second_frag_t);
+
 
 /**
- *  shared memory received fragment derived type.
+ *  shared memory received fragment derived type - because of
+ *  the way lists are initialized in Open MPI, this is good
+ *  only for the first fragment.
  */
 struct mca_ptl_sm_frag_t {
     mca_ptl_base_recv_frag_t super; /**< base receive fragment descriptor */
@@ -28,6 +32,13 @@ struct mca_ptl_sm_frag_t {
     void *buff;           /**< pointer to buffer */
 };
 typedef struct mca_ptl_sm_frag_t mca_ptl_sm_frag_t;
+
+/**
+ *  shared memory received fragment derived type - because of
+ *  the way lists are initialized in Open MPI, this is good
+ *  only for the second and beyond fragments.
+ */
+typedef struct mca_ptl_sm_frag_t mca_ptl_sm_second_frag_t;
 
 #endif
 
