@@ -14,7 +14,8 @@ extern lam_list_t lam_procs;
 
 struct lam_proc_t {
     lam_list_item_t        super;       /* allow proc to be placed on a list */
-    int                    proc_gid;    /* globally unique identifier? */
+    char*                  proc_jobid;  /* identifies a unique job */
+    int                    proc_vpid;   /* process identifier w/in the job */
     struct mca_pml_proc_t* proc_pml;    /* PML specific proc data */
 
   /* JMS: need to have the following information:
@@ -29,9 +30,8 @@ struct lam_proc_t {
 typedef struct lam_proc_t lam_proc_t;
 
 
-void lam_proc_init(lam_proc_t*);
-void lam_proc_destroy(lam_proc_t*);
-
+void  lam_proc_init(lam_proc_t*);
+void  lam_proc_destroy(lam_proc_t*);
 
 #endif /* LAM_PROC */
 
