@@ -2,8 +2,9 @@
 #
 # $HEADER$
 #
-
+                                                                                                            
 # Specific to this module
-
+                                                                                                            
 PARAM_INIT_FILE=oob_tcp.c
+PARAM_CONFIG_HEADER_FILE="oob_tcp_config.h"
 PARAM_CONFIG_FILES="Makefile"

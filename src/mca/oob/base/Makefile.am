@@ -20,12 +20,12 @@ headers = \
 libmca_oob_base_la_SOURCES = \
         $(headers) \
         oob_base_close.c \
-        oob_base_open.c \
         oob_base_init.c \
-        oob_base_send.c \
-	oob_base_send_nb.c \
+        oob_base_open.c \
         oob_base_recv.c \
-	oob_base_recv_nb.c \
+        oob_base_recv_nb.c \
+        oob_base_send.c \
+        oob_base_send_nb.c \
 	oob_base_pack.c
 
 # Conditionally install the header files
