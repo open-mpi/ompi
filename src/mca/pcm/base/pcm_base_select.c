@@ -121,8 +121,8 @@ int mca_pcm_base_select(bool *allow_multi_user_threads,
   *have_hidden_threads = best_hidden_threads;
   ompi_output_verbose(10, mca_pcm_base_output, 
                      "select: component %s initialized",
-                     component->pcm_version.mca_component_name);
-
+                      best_component->pcm_version.mca_component_name);
+  
   /* All done */
 
   return OMPI_SUCCESS;
