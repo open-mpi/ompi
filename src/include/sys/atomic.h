@@ -137,6 +137,7 @@ static inline void ompi_atomic_unlock(ompi_lock_t *lock);
 #else
 #error No atomic operations defined yet
 #endif
+#endif  /* ifdef WIN32*/
 
 #ifndef OMPI_HAVE_ATOMIC
 #define OMPI_HAVE_ATOMIC 0
@@ -161,7 +162,7 @@ static inline int32_t ompi_atomic_add_32(volatile int32_t *addr, int delta)
 
 #if !defined(OMPI_ARCHITECTURE_DEFINE_ATOMIC_SUB_32)
 static inline int32_t ompi_atomic_sub_32(volatile int32_t *addr, int delta)
-{
+
    int32_t oldval;
    
    do {
@@ -334,8 +335,6 @@ static inline void ompi_atomic_sub_xx( volatile void* addr, int32_t value, size_
  */
 #define ompi_atomic_sub( ADDR, VALUE )                                  \
    ompi_atomic_sub_xx( (volatile void*)(ADDR), (int32_t)(VALUE), sizeof(*(ADDR)) )
-
-#endif /* ifdef WIN32 */
 
 #if OMPI_HAVE_ATOMIC || OMPI_HAVE_ATOMIC_WIN32
 
