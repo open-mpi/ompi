@@ -50,10 +50,14 @@ void mpi_get_elements_f(MPI_Fint *status, MPI_Fint *datatype, MPI_Fint *count, M
 {
     MPI_Datatype c_type = MPI_Type_f2c(*datatype);
     MPI_Status   c_status;
+    OMPI_SINGLE_NAME_DECL(count);
 
     *ierr = MPI_Status_f2c(status, &c_status);
 
     if (MPI_SUCCESS == *ierr) {
-      *ierr = MPI_Get_elements(&c_status, c_type, count);
+      *ierr = OMPI_INT_2_FINT(MPI_Get_elements(&c_status, c_type, 
+					       OMPI_SINGLE_NAME_CONVERT(count)
+					       ));
+      OMPI_SINGLE_INT_2_FINT(count);
     }
 }

@@ -50,9 +50,12 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GROUP_RANK,
 void mpi_group_rank_f(MPI_Fint *group, MPI_Fint *rank, MPI_Fint *ierr)
 {
   ompi_group_t *c_group;
+  OMPI_SINGLE_NAME_DECL(rank);
 
   /* Make the fortran to c representation conversion */
   c_group = MPI_Group_f2c(*group);
   
-  *ierr = MPI_Group_rank(c_group, rank);
+  *ierr = OMPI_INT_2_FINT(MPI_Group_rank(c_group, 
+					 OMPI_SINGLE_NAME_CONVERT(rank)));
+  OMPI_SINGLE_INT_2_FINT(rank);
 }

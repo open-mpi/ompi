@@ -54,7 +54,7 @@ void mpi_group_free_f(MPI_Fint *group, MPI_Fint *ierr)
   /* Make the fortran to c representation conversion */
 
   c_group = MPI_Group_f2c(*group);
-  *ierr = MPI_Group_free( &c_group );
+  *ierr = OMPI_INT_2_FINT(MPI_Group_free( &c_group ));
 
   /* This value comes from the MPI_GROUP_NULL value in mpif.h.  Do not
      change without consulting mpif.h! */

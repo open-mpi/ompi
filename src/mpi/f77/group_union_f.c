@@ -55,7 +55,7 @@ void mpi_group_union_f(MPI_Fint *group1, MPI_Fint *group2, MPI_Fint *newgroup, M
   c_group1 = MPI_Group_f2c(*group1);
   c_group2 = MPI_Group_f2c(*group2);
   
-  *ierr = MPI_Group_union(c_group1, c_group2, &c_newgroup);
+  *ierr = OMPI_INT_2_FINT(MPI_Group_union(c_group1, c_group2, &c_newgroup));
 
   /* translate the results from c to fortran */
   *newgroup = c_newgroup->grp_f_to_c_index;

@@ -49,5 +49,5 @@ void mpi_cancel_f(MPI_Fint *request, MPI_Fint *ierr)
 {
     MPI_Request c_req = MPI_Request_f2c(*request);
 
-    *ierr = MPI_Cancel(&c_req);
+    *ierr = OMPI_INT_2_FINT(MPI_Cancel(&c_req));
 }
