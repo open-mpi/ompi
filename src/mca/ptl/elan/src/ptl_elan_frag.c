@@ -1,9 +1,15 @@
 /*
  * $HEADER$
  */
+
+#ifdef HAVE_CONFIG_H
+#include "ompi_config.h"
+#endif
+
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/errno.h>
+
 #include "types.h"
 #include "datatype/datatype.h"
 #include "mca/pml/base/pml_base_sendreq.h"
@@ -166,7 +172,7 @@ mca_ptl_elan_send_desc_done (
 		& MCA_PTL_FLAGS_ACK_MATCHED)
 	    || mca_pml_base_send_request_matched(req)) {
 
-	if(fetchNset (&desc->frag_progressed, 1) == 0) {
+	if(ompi_atomic_fetch_and_set_int (&desc->frag_progressed, 1) == 0) {
 	    ptl->super.ptl_send_progress(ptl, req, 
 		    header->hdr_frag.hdr_frag_length);
 	}
@@ -208,7 +214,7 @@ mca_ptl_elan_send_desc_done (
 	 *       the start of following fragments. As the logic is not there.
 	 */
 
-	if(fetchNset (&desc->frag_progressed, 1) == 0) {
+	if(ompi_atomic_fetch_and_set_int (&desc->frag_progressed, 1) == 0) {
 	    ptl->super.ptl_send_progress(ptl, req, 
 		    header->hdr_frag.hdr_frag_length);
 	}

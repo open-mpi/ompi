@@ -5,7 +5,7 @@
 #define OMPI_CONDITION_PTHREAD_H
 
 #include <pthread.h>
-#include "threads/mutex_pthread.h"
+#include "threads/mutex.h"
 
 
 struct ompi_condition_t {
@@ -19,12 +19,12 @@ OBJ_CLASS_DECLARATION(ompi_condition_t);
 
 static inline int ompi_condition_wait(ompi_condition_t* c, ompi_mutex_t* m)
 {
-    return pthread_cond_wait(&c->c_cond, &m->m_lock);
+    return pthread_cond_wait(&c->c_cond, &m->m_lock.thread);
 }
 
 static inline int ompi_condition_timedwait(ompi_condition_t* c, ompi_mutex_t* m, const struct timespec *abstime)
 {
-    return pthread_cond_timedwait(&c->c_cond, &m->m_lock, abstime);
+    return pthread_cond_timedwait(&c->c_cond, &m->m_lock.thread, abstime);
 }
 
 static inline int ompi_condition_signal(ompi_condition_t* c)

@@ -8,6 +8,10 @@
  * Implementation of ompi_object_t, the base ompi foundation class
  */
 
+#ifdef HAVE_CONFIG_H
+#include "ompi_config.h"
+#endif
+
 #include <stdio.h>
 
 #include "include/constants.h"

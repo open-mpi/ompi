@@ -1,3 +1,9 @@
+/*
+ * $HEADER$
+ */
+
+#include "ompi_config.h"
+
 #include "pml_teg.h"
 #include "pml_teg_sendreq.h"
 #include "mca/pml/base/pml_base_request.h"

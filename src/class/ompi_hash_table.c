@@ -2,10 +2,13 @@
  * $HEADER$
  */
 
+#ifdef HAVE_CONFIG_H
+#include "ompi_config.h"
+#endif
+
 #include <string.h>
 #include <stdlib.h>
 
-#include "ompi_config.h"
 #include "include/constants.h"
 #include "util/output.h"
 #include "class/ompi_hash_table.h"

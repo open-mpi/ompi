@@ -103,11 +103,11 @@
 #include <assert.h>
 #include <stdlib.h>
 
-#ifdef HAVE_CONFIG_H
-#include "ompi_config.h"
-#endif
-
+#ifdef __WINDOWS__
+#include <windows.h>
+#else
 #include "include/sys/atomic.h"
+#endif
 
 /*
  * BEGIN_C_DECLS should be used at the beginning of your declarations,
@@ -120,8 +120,8 @@
 # define BEGIN_C_DECLS extern "C" {
 # define END_C_DECLS }
 #else
-# define BEGIN_C_DECLS /* empty */
-# define END_C_DECLS /* empty */
+# define BEGIN_C_DECLS          /* empty */
+# define END_C_DECLS            /* empty */
 #endif
 
 
@@ -148,11 +148,11 @@
  * Put this in NAME.c
  */
 #define OBJ_CLASS_INSTANCE(NAME, PARENT, CONSTRUCTOR, DESTRUCTOR)       \
-    ompi_class_t NAME ## _class = {                                      \
+    ompi_class_t NAME ## _class = {                                     \
         # NAME,                                                         \
         OBJ_CLASS(PARENT),                                              \
-        (ompi_construct_t)CONSTRUCTOR,                                   \
-        (ompi_destruct_t)DESTRUCTOR,                                     \
+        (ompi_construct_t) CONSTRUCTOR,                                 \
+        (ompi_destruct_t) DESTRUCTOR,                                   \
         0, 0, NULL, NULL                                                \
     }
 
@@ -164,7 +164,7 @@
  *
  * Put this in NAME.h
  */
-#define OBJ_CLASS_DECLARATION(NAME) \
+#define OBJ_CLASS_DECLARATION(NAME)             \
     extern ompi_class_t NAME ## _class
 
 
@@ -175,7 +175,7 @@
  * @param type          Type (class) of the object
  * @return              Pointer to the object 
  */
-#define OBJ_NEW(type)                                   \
+#define OBJ_NEW(type)                                           \
     ((type *) ompi_obj_new(sizeof(type), OBJ_CLASS(type)))
 
 
@@ -187,11 +187,11 @@
 #define OBJ_RETAIN(object)                                              \
     do {                                                                \
         assert(NULL != object);                                         \
-        assert(NULL != ((ompi_object_t *) (object))->obj_class);         \
+        assert(NULL != ((ompi_object_t *) (object))->obj_class);        \
         if (object) {                                                   \
-            ompi_obj_update((ompi_object_t *) (object), 1);               \
+            ompi_obj_update((ompi_object_t *) (object), 1);             \
         }                                                               \
-        assert(((ompi_object_t *) (object))->obj_reference_count >= 0);  \
+        assert(((ompi_object_t *) (object))->obj_reference_count >= 0); \
     } while (0)
 
 
@@ -208,9 +208,9 @@
 #define OBJ_RELEASE(object)                                             \
     do {                                                                \
         assert(NULL != object);                                         \
-        assert(NULL != ((ompi_object_t *) (object))->obj_class);         \
-        if (0 == ompi_obj_update((ompi_object_t *) (object), -1)) {       \
-            ompi_obj_run_destructors((ompi_object_t *) (object));         \
+        assert(NULL != ((ompi_object_t *) (object))->obj_class);        \
+        if (0 == ompi_obj_update((ompi_object_t *) (object), -1)) {     \
+            ompi_obj_run_destructors((ompi_object_t *) (object));       \
             free(object);                                               \
             object = NULL;                                              \
         }                                                               \
@@ -224,18 +224,18 @@
  * @param type          The object type
  */
 
-#define OBJ_CONSTRUCT(object, type) \
+#define OBJ_CONSTRUCT(object, type)                     \
     OBJ_CONSTRUCT_INTERNAL(object, OBJ_CLASS(type))
 
 #define OBJ_CONSTRUCT_INTERNAL(object, type)                            \
     do {                                                                \
         if (0 == (type)->cls_initialized) {                             \
-            ompi_class_initialize((type));                               \
+            ompi_class_initialize((type));                              \
         }                                                               \
         if (object) {                                                   \
-            ((ompi_object_t *) (object))->obj_class = (type);            \
-            ((ompi_object_t *) (object))->obj_reference_count = 1;       \
-            ompi_obj_run_constructors((ompi_object_t *) (object));        \
+            ((ompi_object_t *) (object))->obj_class = (type);           \
+            ((ompi_object_t *) (object))->obj_reference_count = 1;      \
+            ompi_obj_run_constructors((ompi_object_t *) (object));      \
         }                                                               \
     } while (0)
 
@@ -245,11 +245,11 @@
  *
  * @param object        Pointer to the object
  */
-#define OBJ_DESTRUCT(object)                                    \
-    do {                                                        \
-        if (object) {                                           \
+#define OBJ_DESTRUCT(object)                                      \
+    do {                                                          \
+        if (object) {                                             \
             ompi_obj_run_destructors((ompi_object_t *) (object)); \
-        }                                                       \
+        }                                                         \
     } while (0)
 
 
@@ -289,8 +289,8 @@ struct ompi_class_t {
  * This is special and does not follow the pattern for other classes.
  */
 struct ompi_object_t {
-    ompi_class_t *obj_class;        /**< class descriptor */
-    volatile int obj_reference_count;       /**< reference count */
+    ompi_class_t *obj_class;            /**< class descriptor */
+    volatile int obj_reference_count;   /**< reference count */
 };
 
 OBJ_CLASS_DECLARATION(ompi_object_t);
@@ -299,7 +299,6 @@ OBJ_CLASS_DECLARATION(ompi_object_t);
 /* declarations *******************************************************/
 
 BEGIN_C_DECLS
-
 /**
  * Lazy initialization of class descriptor.
  *
@@ -311,7 +310,6 @@ BEGIN_C_DECLS
 void ompi_class_initialize(ompi_class_t *);
 
 END_C_DECLS
-
 /**
  * Run the hierarchy of class constructors for this object, in a
  * parent-first order.
@@ -324,7 +322,7 @@ END_C_DECLS
  * Hardwired for fairly shallow inheritance trees
  * @param size          Pointer to the object.
  */
-static inline void ompi_obj_run_constructors(ompi_object_t *object)
+static inline void ompi_obj_run_constructors(ompi_object_t * object)
 {
     ompi_class_t *cls;
     int i;
@@ -335,7 +333,7 @@ static inline void ompi_obj_run_constructors(ompi_object_t *object)
     cls = object->obj_class;
     for (i = cls->cls_depth - 1; i >= 0; i--) {
         if (cls->cls_construct_array[i]) {
-            (cls->cls_construct_array[i])(object);
+            (cls->cls_construct_array[i]) (object);
         }
     }
 }
@@ -349,7 +347,7 @@ static inline void ompi_obj_run_constructors(ompi_object_t *object)
  *
  * @param size          Pointer to the object.
  */
-static inline void ompi_obj_run_destructors(ompi_object_t *object)
+static inline void ompi_obj_run_destructors(ompi_object_t * object)
 {
     ompi_class_t *cls;
     int i;
@@ -360,7 +358,7 @@ static inline void ompi_obj_run_destructors(ompi_object_t *object)
     cls = object->obj_class;
     for (i = 0; i < cls->cls_depth; i++) {
         if (cls->cls_destruct_array[i]) {
-            (cls->cls_destruct_array[i])(object);
+            (cls->cls_destruct_array[i]) (object);
         }
     }
 }
@@ -376,7 +374,7 @@ static inline void ompi_obj_run_destructors(ompi_object_t *object)
  * @param cls           Pointer to the class descriptor of this object
  * @return              Pointer to the object 
  */
-static inline ompi_object_t *ompi_obj_new(size_t size, ompi_class_t *cls)
+static inline ompi_object_t *ompi_obj_new(size_t size, ompi_class_t * cls)
 {
     ompi_object_t *object;
 
@@ -387,7 +385,7 @@ static inline ompi_object_t *ompi_obj_new(size_t size, ompi_class_t *cls)
         ompi_class_initialize(cls);
     }
     if (NULL != object) {
-	object->obj_class = cls;
+        object->obj_class = cls;
         object->obj_reference_count = 1;
         ompi_obj_run_constructors(object);
     }
@@ -407,8 +405,17 @@ static inline ompi_object_t *ompi_obj_new(size_t size, ompi_class_t *cls)
  */
 static inline int ompi_obj_update(ompi_object_t *object, int inc)
 {
+#ifdef __WINDOWS__
+
     int newval;
-#if 0
+    LONG volatile *addr;
+
+    addr = (LONG volatile *) &(object->obj_reference_count);
+    newval = (int) InterlockedExchangeAdd(addr, (LONG) inc) + inc;
+
+#elif OMPI_SYS_ARCH_ATOMIC_H
+
+    int newval;
     int oldval;
     volatile int *addr;
 
@@ -416,14 +423,18 @@ static inline int ompi_obj_update(ompi_object_t *object, int inc)
     do {
         oldval = *addr;
         newval = oldval + inc;
-    } while (ompi_atomic_cmpset_int(addr,  oldval, newval) == 0);
+    } while (ompi_atomic_cmpset_int(addr, oldval, newval) == 0);
+
 #else
+
     object->obj_reference_count += inc;
     newval = object->obj_reference_count;
+
 #endif
+
     return newval;
 }
 
 /**********************************************************************/
 
-#endif				/* OMPI_OBJECT_H */
+#endif                          /* OMPI_OBJECT_H */

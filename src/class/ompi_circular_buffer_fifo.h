@@ -7,7 +7,7 @@
 
 #include "include/constants.h"
 #include "include/sys/cache.h"
-#include "os/atomic.h"
+#include "include/sys/atomic.h"
 #include "mca/mpool/mpool.h"
 #include "util/pow2.h"
 

@@ -12,7 +12,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include "os/atomic.h"
+#include "include/sys/atomic.h"
 #include "mca/ptl/ptl.h"
 #include "mca/ptl/base/ptl_base_recvfrag.h"
 #include "ptl_tcp.h"
@@ -95,7 +95,7 @@ static inline void mca_ptl_tcp_recv_frag_progress(mca_ptl_tcp_recv_frag_t* frag)
 { 
     if((frag)->frag_msg_cnt >= frag->frag_recv.frag_base.frag_header.hdr_frag.hdr_frag_length) { 
         /* make sure this only happens once for threaded case */ 
-        if(fetchNset(&frag->frag_progressed, 1) == 0) {
+        if(ompi_atomic_fetch_and_set_int(&frag->frag_progressed, 1) == 0) {
             mca_pml_base_recv_request_t* request = frag->frag_recv.frag_request; 
             if(frag->frag_recv.frag_is_buffered) { 
                 mca_ptl_base_match_header_t* header = &(frag)->frag_recv.frag_base.frag_header.hdr_match; 

@@ -2,12 +2,12 @@
 #define _COMMON_SM_MMAP_H_
 
 #include "class/ompi_object.h"
-#include "os/atomic.h"
 #include "class/ompi_list.h"
+#include "include/sys/atomic.h"
 
 struct mca_common_sm_file_header_t {
     /* lock to control atomic access */
-    ompi_lock_data_t seg_lock;
+    ompi_lock_t seg_lock;
     /* is the segment ready for use */
     volatile bool seg_inited;
     /* Offset to next available memory location available for allocation */

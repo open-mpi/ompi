@@ -4,7 +4,8 @@
 /** @file:
  *
  */
-#define _GNU_SOURCE
+/* #define _GNU_SOURCE */
+
 #include <stdio.h>
 #include <string.h>
 #include <stddef.h>

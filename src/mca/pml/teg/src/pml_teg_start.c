@@ -1,3 +1,9 @@
+/*
+ * $HEADER$
+ */
+
+#include "ompi_config.h"
+
 #include "pml_teg.h"
 #include "pml_teg_recvreq.h"
 #include "pml_teg_sendreq.h"
@@ -12,10 +18,11 @@ int mca_pml_teg_start(size_t count, ompi_request_t** requests)
         if(NULL == pml_request)
             continue;
 
-        /* If the persistent request is currently active - obtain the request lock
-         * and verify the status is incomplete. if the pml layer has not completed
-         * the request - mark the request as free called - so that it will be freed
-         * when the request completes - and create a new request.
+        /* If the persistent request is currently active - obtain the
+         * request lock and verify the status is incomplete. if the
+         * pml layer has not completed the request - mark the request
+         * as free called - so that it will be freed when the request
+         * completes - and create a new request.
          */
 
         switch(pml_request->req_ompi.req_state) {
