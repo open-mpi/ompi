@@ -105,19 +105,19 @@ struct __dt_stack {
  * for the name of the fields.
  */
 typedef struct __dt_loop_desc {
-    u_int16_t flags;  /**< flags for the record */
-    u_int16_t type;   /**< the basic data type id */
-    u_int32_t loops;  /**< number of times the loop have to be done */
-    long      items;  /**< number of items in the loop */
-    u_int32_t extent; /**< extent of the whole loop */
+    uint16_t flags;  /**< flags for the record */
+    uint16_t type;   /**< the basic data type id */
+    uint32_t loops;  /**< number of times the loop have to be done */
+    long     items;  /**< number of items in the loop */
+    uint32_t extent; /**< extent of the whole loop */
 } dt_loop_desc_t;
 
 typedef struct __dt_endloop_desc {
-    u_int16_t flags;        /**< flags for the record */
-    u_int16_t type;         /**< the basic data type id */
-    u_int32_t items;        /**< number of items in the loop */
-    long      total_extent; /**< total extent of the loop taking in account the repetitions */
-    u_int32_t size;         /**< real size of the data in the loop */
+    uint16_t flags;        /**< flags for the record */
+    uint16_t type;         /**< the basic data type id */
+    uint32_t items;        /**< number of items in the loop */
+    long     total_extent; /**< total extent of the loop taking in account the repetitions */
+    uint32_t size;         /**< real size of the data in the loop */
 } dt_endloop_desc_t;
 
 /* keep the last 16 bits free for data flags */

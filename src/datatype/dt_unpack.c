@@ -40,22 +40,22 @@ void ompi_ddt_dump_stack( dt_stack_t* pStack, int stack_pos, dt_elem_desc_t* pDe
  */
 static int ompi_convertor_unpack_general( ompi_convertor_t* pConvertor,
 					  struct iovec* iov,
-					  unsigned int* out_size,
-					  unsigned int* max_data,
-					  int* freeAfter )
+					  uint32_t* out_size,
+					  uint32_t* max_data,
+					  int32_t* freeAfter )
 {
     dt_stack_t* pStack;    /* pointer to the position on the stack */
-    unsigned int pos_desc; /* actual position in the description of the derived datatype */
+    uint32_t pos_desc;     /* actual position in the description of the derived datatype */
     int count_desc;        /* the number of items already done in the actual pos_desc */
     int type;              /* type at current position */
-    unsigned int advance;  /* number of bytes that we should advance the buffer */
+    uint32_t advance;      /* number of bytes that we should advance the buffer */
     long disp_desc = 0;    /* compute displacement for truncated data */
     int bConverted = 0;    /* number of bytes converted this time */
     dt_elem_desc_t* pElems;
     int oCount = (pConvertor->pDesc->ub - pConvertor->pDesc->lb) * pConvertor->count;
     char* pInput;
     int iCount, rc;
-    unsigned int iov_count, total_bytes_converted = 0;
+    uint32_t iov_count, total_bytes_converted = 0;
 
     /* For the general case always use the user data description */
     pElems = pConvertor->pDesc->desc.desc;
@@ -152,13 +152,13 @@ static int ompi_convertor_unpack_general( ompi_convertor_t* pConvertor,
 
 static int ompi_convertor_unpack_homogeneous( ompi_convertor_t* pConv,
 					      struct iovec* iov,
-					      unsigned int* out_size,
-					      unsigned int* max_data,
-					      int* freeAfter )
+					      uint32_t* out_size,
+					      uint32_t* max_data,
+					      int32_t* freeAfter )
 {
     dt_stack_t* pStack;    /* pointer to the position on the stack */
-    unsigned int pos_desc; /* actual position in the description of the derived datatype */
-    unsigned int i;        /* counter for basic datatype with extent */
+    uint32_t pos_desc;     /* actual position in the description of the derived datatype */
+    uint32_t i;            /* counter for basic datatype with extent */
     int bConverted = 0;    /* number of bytes converted this time */
     long lastDisp = 0;
     size_t space = iov[0].iov_len, last_count = 0, last_blength = 0;
@@ -266,7 +266,7 @@ static int ompi_convertor_unpack_homogeneous( ompi_convertor_t* pConv,
         bConverted += last_count;
         lastDisp += last_count;
     }
-    if( pos_desc < (unsigned int)pStack->end_loop ) {  /* cleanup the stack */
+    if( pos_desc < (uint32_t)pStack->end_loop ) {  /* cleanup the stack */
         PUSH_STACK( pStack, pConv->stack_pos, pos_desc, last_blength,
                     lastDisp, pos_desc );
     }
@@ -279,16 +279,16 @@ static int ompi_convertor_unpack_homogeneous( ompi_convertor_t* pConv,
 
 static int ompi_convertor_unpack_homogeneous_contig( ompi_convertor_t* pConv,
 						     struct iovec* iov,
-						     unsigned int* out_size,
-						     unsigned int* max_data,
-						     int* freeAfter )
+						     uint32_t* out_size,
+						     uint32_t* max_data,
+						     int32_t* freeAfter )
 {
     dt_desc_t *pData = pConv->pDesc;
     char* pDstBuf = pConv->pBaseBuf;
     char* pSrcBuf = iov[0].iov_base;
     int bConverted = 0;
     long extent = pData->ub - pData->lb;
-    unsigned int length, remaining, i;
+    uint32_t length, remaining, i;
     dt_stack_t* stack = &(pConv->pStack[1]);
 
     *out_size = 1;
@@ -344,12 +344,12 @@ static int ompi_convertor_unpack_homogeneous_contig( ompi_convertor_t* pConv,
 
 int ompi_convertor_unpack( ompi_convertor_t* pConvertor,
 			   struct iovec* iov,
-			   unsigned int* out_size,
-			   unsigned int* max_data,
-			   int* freeAfter )
+			   uint32_t* out_size,
+			   uint32_t* max_data,
+			   int32_t* freeAfter )
 {
    dt_desc_t *pData = pConvertor->pDesc;
-   unsigned int length;
+   uint32_t length;
 
    *freeAfter = 0;
    if( pConvertor->bConverted == (pData->size * pConvertor->count) ) {
@@ -383,13 +383,13 @@ int ompi_convertor_unpack( ompi_convertor_t* pConvertor,
  *                basic datatype.
  */
 #define COPY_TYPE( TYPENAME, TYPE, COUNT )                              \
-static int copy_##TYPENAME( unsigned int count,                         \
-                            char* from, unsigned int from_len, long from_extent, \
-                            char* to, unsigned int to_len, long to_extent ) \
+static int copy_##TYPENAME( uint32_t count,                             \
+                            char* from, uint32_t from_len, long from_extent, \
+                            char* to, uint32_t to_len, long to_extent ) \
 {                                                                       \
-    unsigned int i;                                                     \
-    unsigned int remote_TYPE_size = sizeof(TYPE) * (COUNT); /* TODO */  \
-    unsigned int local_TYPE_size = (COUNT) * sizeof(TYPE);              \
+    uint32_t i;                                                         \
+    uint32_t remote_TYPE_size = sizeof(TYPE) * (COUNT); /* TODO */      \
+    uint32_t local_TYPE_size = (COUNT) * sizeof(TYPE);                  \
                                                                         \
     if( (remote_TYPE_size * count) > from_len ) {                       \
         count = from_len / remote_TYPE_size;                            \
@@ -416,22 +416,22 @@ static int copy_##TYPENAME( unsigned int count,                         \
     return count;                                                       \
 }
 
-static int copy_bytes_1( unsigned int count, char* from, unsigned int from_len, long from_extent, char* to, unsigned int to_len, long to_extent );
-static int copy_bytes_2( unsigned int count, char* from, unsigned int from_len, long from_extent, char* to, unsigned int to_len, long to_extent );
-static int copy_bytes_4( unsigned int count, char* from, unsigned int from_len, long from_extent, char* to, unsigned int to_len, long to_extent );
-static int copy_bytes_8( unsigned int count, char* from, unsigned int from_len, long from_extent, char* to, unsigned int to_len, long to_extent );
-static int copy_bytes_12( unsigned int count, char* from, unsigned int from_len, long from_extent, char* to, unsigned int to_len, long to_extent );
-static int copy_bytes_16( unsigned int count, char* from, unsigned int from_len, long from_extent, char* to, unsigned int to_len, long to_extent );
-static int copy_bytes_20( unsigned int count, char* from, unsigned int from_len, long from_extent, char* to, unsigned int to_len, long to_extent );
+static int copy_bytes_1( uint32_t count, char* from, uint32_t from_len, long from_extent, char* to, uint32_t to_len, long to_extent );
+static int copy_bytes_2( uint32_t count, char* from, uint32_t from_len, long from_extent, char* to, uint32_t to_len, long to_extent );
+static int copy_bytes_4( uint32_t count, char* from, uint32_t from_len, long from_extent, char* to, uint32_t to_len, long to_extent );
+static int copy_bytes_8( uint32_t count, char* from, uint32_t from_len, long from_extent, char* to, uint32_t to_len, long to_extent );
+static int copy_bytes_12( uint32_t count, char* from, uint32_t from_len, long from_extent, char* to, uint32_t to_len, long to_extent );
+static int copy_bytes_16( uint32_t count, char* from, uint32_t from_len, long from_extent, char* to, uint32_t to_len, long to_extent );
+static int copy_bytes_20( uint32_t count, char* from, uint32_t from_len, long from_extent, char* to, uint32_t to_len, long to_extent );
 
 #define COPY_CONTIGUOUS_BYTES( TYPENAME, COUNT )                        \
-static int copy_##TYPENAME##_##COUNT( unsigned int count,               \
-                                      char* from, unsigned int from_len, long from_extent, \
-                                      char* to, unsigned int to_len, long to_extent) \
+static int copy_##TYPENAME##_##COUNT( uint32_t count,                   \
+                                      char* from, uint32_t from_len, long from_extent, \
+                                      char* to, uint32_t to_len, long to_extent) \
 {                                                                       \
-    unsigned int i;                                                     \
-    unsigned int remote_TYPE_size = (COUNT); /* TODO */                 \
-    unsigned int local_TYPE_size = (COUNT);                             \
+    uint32_t i;                                                         \
+    uint32_t remote_TYPE_size = (COUNT); /* TODO */                     \
+    uint32_t local_TYPE_size = (COUNT);                                 \
                                                                         \
     if( (remote_TYPE_size * count) > from_len ) {                       \
         count = from_len / remote_TYPE_size;                            \
@@ -601,7 +601,7 @@ int ompi_convertor_need_buffers( ompi_convertor_t* pConvertor )
 }
 
 extern int ompi_ddt_local_sizes[DT_MAX_PREDEFINED];
-int ompi_convertor_init_for_recv( ompi_convertor_t* pConv, unsigned int flags,
+int ompi_convertor_init_for_recv( ompi_convertor_t* pConv, uint32_t flags,
 				  dt_desc_t* pData, int count,
 				  void* pUserBuf, int starting_point,
 				  memalloc_fct_t allocfn )
