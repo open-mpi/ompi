@@ -3,7 +3,7 @@ dnl
 dnl $HEADER$
 dnl
 
-AC_DEFUN(LAM_CASE_SENSITIVE_FS_SETUP,[
+AC_DEFUN([LAM_CASE_SENSITIVE_FS_SETUP],[
 #
 # Arguments: none
 #
