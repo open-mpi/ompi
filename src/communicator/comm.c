@@ -112,7 +112,7 @@ ompi_communicator_t * ompi_comm_set ( ompi_communicator_t* oldcomm,
 
     /* Copy attributes and call according copy functions, 
        if required */
-    ompi_attr_hash_init(&newcomm->c_keyash);
+    ompi_attr_hash_init(&newcomm->c_keyhash);
     if ( attr != NULL ) {
         ompi_attr_copy_all (COMM_ATTR, oldcomm, newcomm, attr, newcomm->c_keyhash);
     }
@@ -614,11 +614,11 @@ int ompi_comm_free ( ompi_communicator_t **comm )
 {
 
     /* Release attributes */
-    ompi_attr_delete_all ( COMM_ATTR, comm, comm->c_keyhash );
-    OBJ_RELEASE(comm->c_keyhash);
+    ompi_attr_delete_all ( COMM_ATTR, comm, (*comm)->c_keyhash );
+    OBJ_RELEASE((*comm)->c_keyhash);
 
     /* Release the communicator */
-    OBJ_RELEASE ( comm );
+    OBJ_RELEASE ( *comm );
 
     *comm = MPI_COMM_NULL;
     return OMPI_SUCCESS;
