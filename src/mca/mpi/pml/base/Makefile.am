@@ -14,7 +14,9 @@ headers = \
 
 libmca_mpi_pml_base_la_SOURCES = \
         $(headers) \
-	pml_base_request.c
+	pml_base_close.c \
+	pml_base_request.c \
+	pml_base_open.c
 
 # Conditionally install the header files
 
