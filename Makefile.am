@@ -7,4 +7,7 @@ include $(top_srcdir)/config/Makefile.options
 
 SUBDIRS = config include src
 
-EXTRA_DIST = VERSION Doxyfile
+EXTRA_DIST = README INSTALL VERSION Doxyfile
+
+dist-hook:
+	csh config/distscript.csh
