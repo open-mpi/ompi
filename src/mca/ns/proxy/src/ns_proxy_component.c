@@ -53,6 +53,7 @@ static mca_ns_base_module_t mca_ns_proxy = {
     ns_base_create_cellid,
     ns_base_create_jobid,
     ns_base_create_process_name,
+    ns_base_convert_string_to_process_name,
     ns_base_reserve_range,
     ns_base_free_name,
     ns_base_get_proc_name_string,

@@ -71,11 +71,7 @@ int MPI_Comm_connect(char *port_name, MPI_Info info, int root,
      * translate the port_name string into the according process_name_t 
      * structure. This functionality is currently missing from ns.
      */ 
-#if 0
     port_proc_name = ompi_name_server.convert_string_to_process_name(port_name);
-#else
-    port_proc_name = NULL;
-#endif
     if ( NULL == port_proc_name ) {
         *newcomm = MPI_COMM_NULL;
         return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_PORT, FUNC_NAME);
