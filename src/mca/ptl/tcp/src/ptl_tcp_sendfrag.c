@@ -35,6 +35,7 @@ ompi_class_t  mca_ptl_tcp_send_frag_t_class = {
 
 static void mca_ptl_tcp_send_frag_construct(mca_ptl_tcp_send_frag_t* frag)
 {
+   frag->free_after = 0;
 }
 
 
@@ -64,7 +65,6 @@ int mca_ptl_tcp_send_frag_init(
     size_t size_in = *size;
     size_t size_out;
     unsigned int iov_count, max_data;
-    int freeAfter = 0;
 
     mca_ptl_base_header_t* hdr = &sendfrag->frag_header;
     if(offset == 0) {
@@ -93,6 +93,7 @@ int mca_ptl_tcp_send_frag_init(
         hdr->hdr_frag.hdr_dst_ptr = sendreq->req_peer_match;
     }
 
+    sendfrag->free_after = 0;
     /* initialize convertor */
     if(size_in > 0) {
        ompi_convertor_t *convertor;
@@ -117,9 +118,12 @@ int mca_ptl_tcp_send_frag_init(
         sendfrag->frag_vec[1].iov_len = size_in;
         iov_count = 1;
         max_data = size_in;
-        if((rc = ompi_convertor_pack(convertor, &sendfrag->frag_vec[1], 
-				     &iov_count, &max_data, &freeAfter)) < 0)
+        if((rc = ompi_convertor_pack( convertor, &sendfrag->frag_vec[1], 
+                                      &iov_count, &max_data, &(sendfrag->free_after) )) < 0) {
             return OMPI_ERROR;
+        }
+        /* adjust the freeAfter as the position zero is reserved for the header */
+        sendfrag->free_after <<= 1;
 
         /* adjust size and request offset to reflect actual number of bytes packed by convertor */
         size_out = sendfrag->frag_vec[1].iov_len;
@@ -142,7 +146,7 @@ int mca_ptl_tcp_send_frag_init(
     sendfrag->frag_send.frag_request = sendreq;
     sendfrag->frag_send.frag_base.frag_addr = sendfrag->frag_vec[1].iov_base;
     sendfrag->frag_send.frag_base.frag_size = size_out;
-
+    
     sendfrag->frag_peer = ptl_peer;
     sendfrag->frag_vec_ptr = sendfrag->frag_vec;
     sendfrag->frag_vec_cnt = (size_out == 0) ? 1 : 2;
@@ -198,8 +202,13 @@ bool mca_ptl_tcp_send_frag_handler(mca_ptl_tcp_send_frag_t* frag, int sd)
     for(i=0; i<num_vecs; i++) {
         if(cnt >= (int)frag->frag_vec_ptr->iov_len) {
             cnt -= frag->frag_vec_ptr->iov_len;
+            if( frag->free_after & 1 ) {
+               free( frag->frag_saved_vec.iov_base );
+            }
             frag->frag_vec_ptr++;
             frag->frag_vec_cnt--;
+            frag->frag_saved_vec = *frag->frag_vec_ptr;
+            frag->free_after >>= 1;
         } else {
             frag->frag_vec_ptr->iov_base = (ompi_iov_base_ptr_t)
                 (((unsigned char*)frag->frag_vec_ptr->iov_base) + cnt);
