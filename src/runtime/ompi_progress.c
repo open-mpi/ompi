@@ -35,7 +35,7 @@ void ompi_progress_events(int flag)
 void ompi_progress(void)
 {
     /* progress any outstanding communications */
-    int ret, events = 0;
+    int ret, temp, events = 0;
 #if OMPI_HAVE_THREADS == 0
     if (ompi_progress_event_flag != 0) {
         ret = ompi_event_loop(ompi_progress_event_flag);
@@ -52,11 +52,9 @@ void ompi_progress(void)
     /* Progress IO requests, if there are any */
 
     if (ompi_progress_pending_io_reqs > 0) {
-        ret = mca_io_base_progress();
-        if (ret > 0) {
-            events += ret;
-            ompi_progress_pending_io_reqs -= ret;
-        }
+        temp = ompi_progress_pending_io_reqs;
+        mca_io_base_progress(&ompi_progress_pending_io_reqs);
+        events += (temp - ompi_progress_pending_io_reqs);
     }
 
 #if 1

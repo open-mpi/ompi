@@ -157,9 +157,9 @@ int mca_io_base_component_del(mca_io_base_components_t *comp)
 }
 
 
-int mca_io_base_progress(void)
+int mca_io_base_progress(int *num_pending)
 {
-    int ret, count = 0;
+    int ret;
     ompi_list_item_t *item;
     component_item_t *citem;
 
@@ -173,25 +173,23 @@ int mca_io_base_progress(void)
          item = ompi_list_get_next(item)) {
         citem = (component_item_t *) item;
 
-        switch(citem->version) {
+        switch (citem->version) {
         case MCA_IO_BASE_V_1_0_0:
-            ret = citem->component.v1_0_0.io_progress();
+            ret = citem->component.v1_0_0.io_progress(num_pending);
+            if (OMPI_SUCCESS != ret) {
+                OMPI_THREAD_UNLOCK(&mutex);
+                return ret;
+            }
             break;
-        default:
-            ret = -1;
-            break;
-        }
 
-        if (ret > 0) {
-            count += ret;
-        } else {
-            return ret;
+        default:
+            break;
         }
     }
 
     OMPI_THREAD_UNLOCK(&mutex);
 
-    return count;
+    return OMPI_SUCCESS;
 }
 
 
