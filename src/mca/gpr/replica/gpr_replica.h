@@ -180,7 +180,7 @@ extern ompi_list_t mca_gpr_replica_notify_request_tracker;
 extern mca_gpr_notify_id_t mca_gpr_replica_last_notify_id_tag;
 extern ompi_list_t mca_gpr_replica_free_notify_id_tags;
 extern int mca_gpr_replica_debug;
-extern ompi_mutex_t mca_gpr_replica_mutex, mca_gpr_replica_internals_mutex;
+extern ompi_mutex_t mca_gpr_replica_mutex;
 
 /*
  * Module open / close
@@ -222,37 +222,36 @@ int gpr_replica_subscribe(ompi_registry_mode_t addr_mode,
 			  char *segment, char **tokens,
 			  ompi_registry_notify_cb_fn_t cb_func, void *user_tag);
 int gpr_replica_subscribe_nl(ompi_registry_mode_t addr_mode,
-			  ompi_registry_notify_action_t action,
-			  char *segment, char **tokens,
-			  ompi_registry_notify_cb_fn_t cb_func, void *user_tag);
+			     ompi_registry_notify_action_t action,
+			     char *segment, char **tokens, mca_gpr_notify_id_t idtag);
 
 int gpr_replica_unsubscribe(ompi_registry_mode_t addr_mode,
 			    ompi_registry_notify_action_t action,
 			    char *segment, char **tokens);
-int gpr_replica_unsubscribe_nl(ompi_registry_mode_t addr_mode,
-			    ompi_registry_notify_action_t action,
-			    char *segment, char **tokens);
+mca_gpr_notify_id_t gpr_replica_unsubscribe_nl(ompi_registry_mode_t addr_mode,
+					       ompi_registry_notify_action_t action,
+					       char *segment, char **tokens);
 
 int gpr_replica_synchro(ompi_registry_synchro_mode_t synchro_mode,
 			ompi_registry_mode_t addr_mode,
 			char *segment, char **tokens, int trigger,
 			ompi_registry_notify_cb_fn_t cb_func, void *user_tag);
 int gpr_replica_synchro_nl(ompi_registry_synchro_mode_t synchro_mode,
-			ompi_registry_mode_t addr_mode,
-			char *segment, char **tokens, int trigger,
-			ompi_registry_notify_cb_fn_t cb_func, void *user_tag);
+			   ompi_registry_mode_t addr_mode,
+			   char *segment, char **tokens, int trigger,
+			   mca_gpr_notify_id_t id_tag);
 
 int gpr_replica_cancel_synchro(ompi_registry_synchro_mode_t synchro_mode,
 			       ompi_registry_mode_t addr_mode,
 			       char *segment, char **tokens, int trigger);
-int gpr_replica_cancel_synchro_nl(ompi_registry_synchro_mode_t synchro_mode,
-			       ompi_registry_mode_t addr_mode,
-			       char *segment, char **tokens, int trigger);
+mca_gpr_notify_id_t gpr_replica_cancel_synchro_nl(ompi_registry_synchro_mode_t synchro_mode,
+						  ompi_registry_mode_t addr_mode,
+						  char *segment, char **tokens, int trigger);
 
 ompi_list_t* gpr_replica_get(ompi_registry_mode_t addr_mode,
 			     char *segment, char **tokens);
 ompi_list_t* gpr_replica_get_nl(ompi_registry_mode_t addr_mode,
-			     char *segment, char **tokens);
+				char *segment, char **tokens);
 
 ompi_list_t* gpr_replica_test_internals(int level);
 
@@ -263,4 +262,14 @@ void mca_gpr_replica_recv(int status, ompi_process_name_t* sender,
 void gpr_replica_remote_notify(ompi_process_name_t *recipient, int recipient_tag,
 			       ompi_registry_notify_message_t *message);
 
+int gpr_replica_rte_register(char *contact_info, size_t num_procs,
+			     ompi_registry_notify_cb_fn_t start_cb_func, void *start_user_tag,
+			     ompi_registry_notify_cb_fn_t end_cb_func, void *end_user_tag);
+
+int gpr_replica_rte_register_nl(char *contact_info, ompi_buffer_t buffer, size_t num_procs,
+				mca_gpr_notify_id_t start_tag, mca_gpr_notify_id_t end_tag);
+
+int gpr_replica_rte_unregister(char *proc_name_string);
+
+int gpr_replica_rte_unregister_nl(char *proc_name_string);
 #endif
