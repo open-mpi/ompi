@@ -69,7 +69,7 @@ struct ompi_errhandler_t {
     ompi_errhandler_fortran_handler_fn_t *eh_fort_fn;
 
     /* index in Fortran <-> C translation array */
-    int eh_f_to_c_index;
+    size_t eh_f_to_c_index;
 };
 typedef struct ompi_errhandler_t ompi_errhandler_t;
 

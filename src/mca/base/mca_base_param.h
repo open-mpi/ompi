@@ -165,7 +165,7 @@ extern "C" {
      * versions will cross reference and attempt to find parameter
      * values on attributes.
      */
-    int mca_base_param_kv_associate(int index, int keyval);
+    int mca_base_param_kv_associate(size_t index, int keyval);
 
     /**
      * Look up an integer MCA parameter.
