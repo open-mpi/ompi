@@ -13,124 +13,124 @@
 static int lam_convertor_pack_general( lam_convertor_t* pConvertor,
                                        struct iovec* out, unsigned int outCount )
 {
-   dt_stack_t* pStack;   /* pointer to the position on the stack */
-   int pos_desc;         /* actual position in the description of the derived datatype */
-   int count_desc;       /* the number of items already done in the actual pos_desc */
-   int end_loop;         /* last element in the actual loop */
-   int type;             /* type at current position */
-   unsigned int advance; /* number of bytes that we should advance the buffer */
-   int rc;
-   long disp_desc = 0;   /* compute displacement for truncated data */
-   long disp;            /* displacement at the beging of the last loop */
-   dt_desc_t *pData = pConvertor->pDesc;
-   dt_elem_desc_t* pElem;
-   char* pOutput = pConvertor->pBaseBuf;
-   int oCount = (pData->ub - pData->lb) * pConvertor->count;
-   char* pInput = out[0].iov_base;
-   int iCount = out[0].iov_len;
+    dt_stack_t* pStack;   /* pointer to the position on the stack */
+    int pos_desc;         /* actual position in the description of the derived datatype */
+    int count_desc;       /* the number of items already done in the actual pos_desc */
+    int type;             /* type at current position */
+    unsigned int advance; /* number of bytes that we should advance the buffer */
+    int rc;
+    long disp_desc = 0;   /* compute displacement for truncated data */
+    long disp;            /* displacement at the beging of the last loop */
+    dt_desc_t *pData = pConvertor->pDesc;
+    dt_elem_desc_t* pElem;
+    char* pOutput = pConvertor->pBaseBuf;
+    int oCount = (pData->ub - pData->lb) * pConvertor->count;
+    char* pInput = out[0].iov_base;
+    int iCount = out[0].iov_len;
 
-   DUMP( "convertor_decode( %p, {%p, %d}, %d )\n", pConvertor,
-         out[0].iov_base, out[0].iov_len, outCount );
-   pStack = pConvertor->pStack + pConvertor->stack_pos;
-   pos_desc  = pStack->index;
-   disp = 0;
+    DUMP( "convertor_decode( %p, {%p, %d}, %d )\n", pConvertor,
+          out[0].iov_base, out[0].iov_len, outCount );
+    pStack = pConvertor->pStack + pConvertor->stack_pos;
+    pos_desc  = pStack->index;
+    disp = 0;
 
-   if( pData->opt_desc.desc != NULL )    pElem = pData->opt_desc.desc;
-   else                                  pElem = pData->desc.desc;
+    if( pData->opt_desc.desc != NULL )    pElem = pData->opt_desc.desc;
+    else                                  pElem = pData->desc.desc;
 
-   if( pos_desc == -1 ) {
-      pos_desc = 0;
-      count_desc = pElem[0].count;
-      disp_desc = pElem[0].disp;
-   } else {
-      count_desc = pStack->count;
-      if( pElem[pos_desc].type != DT_LOOP ) {
-         pConvertor->stack_pos--;
-         pStack--;
-         disp = pStack->disp;
-         disp_desc = ( pElem[pos_desc].disp +
-                       (pElem[pos_desc].count - count_desc) * pElem[pos_desc].extent);
-      }
-   }
-   DUMP_STACK( pConvertor->pStack, pConvertor->stack_pos, pElem, "starting" );
-   DUMP( "remember position on stack %d last_elem at %d\n", pConvertor->stack_pos, pos_desc );
-   DUMP( "top stack info {index = %d, count = %d}\n", 
-         pStack->index, pStack->count );
-
-  next_loop:
-   end_loop = pStack->end_loop;
-   while( pConvertor->stack_pos >= 0 ) {
-      if( pos_desc == end_loop ) { /* end of the current loop */
-         while( --(pStack->count) == 0 ) { /* end of loop */
+    if( pos_desc == -1 ) {
+        pos_desc = 0;
+        count_desc = pElem[0].count;
+        disp_desc = pElem[0].disp;
+    } else {
+        count_desc = pStack->count;
+        if( pElem[pos_desc].type != DT_LOOP ) {
             pConvertor->stack_pos--;
             pStack--;
-            if( pConvertor->stack_pos == -1 )
-               return 1;  /* completed */
-         }
-         pos_desc = pStack->index;
-         if( pos_desc == -1 )
-            pStack->disp += (pData->ub - pData->lb);
-         else
-            pStack->disp += pElem[pos_desc].extent;
-         pos_desc++;
-         disp = pStack->disp;
-         count_desc = pElem[pos_desc].count;
-         disp_desc = pElem[pos_desc].disp;
-         goto next_loop;
-      }
-      if( pElem[pos_desc].type == DT_LOOP ) {
-         do {
-            PUSH_STACK( pStack, pConvertor->stack_pos,
-                        pos_desc, pElem[pos_desc].count,
-                        disp, pos_desc + pElem[pos_desc].disp + 1);
+            disp = pStack->disp;
+            disp_desc = ( pElem[pos_desc].disp +
+                          (pElem[pos_desc].count - count_desc) * pElem[pos_desc].extent);
+        }
+    }
+    DUMP_STACK( pConvertor->pStack, pConvertor->stack_pos, pElem, "starting" );
+    DUMP( "remember position on stack %d last_elem at %d\n", pConvertor->stack_pos, pos_desc );
+    DUMP( "top stack info {index = %d, count = %d}\n", 
+          pStack->index, pStack->count );
+
+  next_loop:
+    while( pos_desc < pStack->end_loop ) {
+        if( pElem[pos_desc].type == DT_END_LOOP ) { /* end of the current loop */
+            if( --(pStack->count) == 0 ) {
+                pConvertor->stack_pos--;
+                pStack--;
+                if( pConvertor->stack_pos == -1 )
+                    return 1;  /* completed */
+            }
+            pos_desc = pStack->index;
+            if( pos_desc == -1 )
+                pStack->disp += (pData->ub - pData->lb);
+            else
+                pStack->disp += pElem[pos_desc].extent;
             pos_desc++;
-         } while( pElem[pos_desc].type == DT_LOOP ); /* let's start another loop */
-         DUMP_STACK( pConvertor->pStack, pConvertor->stack_pos, pElem, "advance loops" );
-         /* update the current state */
-         count_desc = pElem[pos_desc].count;
-         disp_desc = pElem[pos_desc].disp;
-         goto next_loop;
-      }
-      /* now here we have a basic datatype */
-      type = pElem[pos_desc].type;
-      rc = pConvertor->pFunctions[type]( count_desc,
-                                         pOutput + disp + disp_desc, oCount, pElem[pos_desc].extent,
-                                         pInput, iCount, pElem[pos_desc].extent,
-                                         &advance );
-      if( rc <= 0 ) {
-         printf( "trash in the input buffer\n" );
-         return -1;
-      }
-      iCount -= advance;      /* decrease the available space in the buffer */
-      pInput += advance;      /* increase the pointer to the buffer */
-      pConvertor->bConverted += advance;
-      if( rc != count_desc ) {
-         /* not all data has been converted. Keep the state */
-         PUSH_STACK( pStack, pConvertor->stack_pos, pos_desc,
-                     count_desc - rc,
-                     disp + rc * pElem[pos_desc].extent,
-                     pos_desc );
-         if( iCount != 0 )
-            printf( "there is still room in the input buffer %d bytes\n", iCount );
-         return 0;
-      }
-      pConvertor->converted += rc;  /* number of elementd converted so far */
-      pos_desc++;  /* advance to the next data */
-      count_desc = pElem[pos_desc].count;
-      disp_desc = pElem[pos_desc].disp;
-      if( iCount == 0 ) break;  /* break if there is no more data in the buffer */
-   }
+            disp = pStack->disp;
+            count_desc = pElem[pos_desc].count;
+            disp_desc = pElem[pos_desc].disp;
+            goto next_loop;
+        }
+        if( pElem[pos_desc].type == DT_LOOP ) {
+            do {
+                PUSH_STACK( pStack, pConvertor->stack_pos,
+                            pos_desc, pElem[pos_desc].count,
+                            disp, pos_desc + pElem[pos_desc].disp + 1);
+                pos_desc++;
+            } while( pElem[pos_desc].type == DT_LOOP ); /* let's start another loop */
+            DUMP_STACK( pConvertor->pStack, pConvertor->stack_pos, pElem, "advance loops" );
+            /* update the current state */
+            count_desc = pElem[pos_desc].count;
+            disp_desc = pElem[pos_desc].disp;
+            goto next_loop;
+        }
+        while( pElem[pos_desc].flags & DT_FLAG_DATA ) {
+            /* now here we have a basic datatype */
+            type = pElem[pos_desc].type;
+            rc = pConvertor->pFunctions[type]( count_desc,
+                                               pOutput + disp + disp_desc, oCount, pElem[pos_desc].extent,
+                                               pInput, iCount, pElem[pos_desc].extent,
+                                               &advance );
+            if( rc <= 0 ) {
+                printf( "trash in the input buffer\n" );
+                return -1;
+            }
+            iCount -= advance;      /* decrease the available space in the buffer */
+            pInput += advance;      /* increase the pointer to the buffer */
+            pConvertor->bConverted += advance;
+            if( rc != count_desc ) {
+                /* not all data has been converted. Keep the state */
+                PUSH_STACK( pStack, pConvertor->stack_pos, pos_desc,
+                            count_desc - rc,
+                            disp + rc * pElem[pos_desc].extent,
+                            pos_desc );
+                if( iCount != 0 )
+                    printf( "there is still room in the input buffer %d bytes\n", iCount );
+                return 0;
+            }
+            pConvertor->converted += rc;  /* number of elementd converted so far */
+            pos_desc++;  /* advance to the next data */
+            count_desc = pElem[pos_desc].count;
+            disp_desc = pElem[pos_desc].disp;
+            if( iCount == 0 ) goto complete_loop;  /* break if there is no more data in the buffer */
+        }
+    }
+  complete_loop:
+    /* out of the loop: we have complete the data conversion or no more space
+     * in the buffer.
+     */
+    if( pConvertor->pStack[0].count < 0 ) return 1;  /* data succesfully converted */
 
-   /* out of the loop: we have complete the data conversion or no more space
-    * in the buffer.
-    */
-   if( pConvertor->pStack[0].count < 0 ) return 1;  /* data succesfully converted */
+    /* I complete an element, next step I should go to the next one */
+    PUSH_STACK( pStack, pConvertor->stack_pos, pos_desc, pElem[pos_desc].count,
+                disp, pos_desc );
 
-   /* I complete an element, next step I should go to the next one */
-   PUSH_STACK( pStack, pConvertor->stack_pos, pos_desc, pElem[pos_desc].count,
-               disp, pos_desc );
-
-   return 0;
+    return 0;
 }
 
 /* We suppose here that we work with an already optimized version of the data
@@ -149,7 +149,6 @@ static int lam_convertor_pack_homogeneous( lam_convertor_t* pConv,
     dt_elem_desc_t* pElems;
     int next_length;
     int init_bconvert = pConv->bConverted;
-    int end_desc;
 
     pDestBuf = iov[0].iov_base;
 
@@ -177,10 +176,8 @@ static int lam_convertor_pack_homogeneous( lam_convertor_t* pConv,
 
     if( pData->opt_desc.desc != NULL ) {
         pElems = pData->opt_desc.desc;
-        end_desc = pData->opt_desc.used;
     } else {
         pElems = pData->desc.desc;
-        end_desc = pData->desc.used;
     }
 
     pStack = pConv->pStack + pConv->stack_pos;
@@ -195,9 +192,9 @@ static int lam_convertor_pack_homogeneous( lam_convertor_t* pConv,
     DUMP( "remember position on stack %d last_elem at %d\n", pConv->stack_pos, pos_desc );
     DUMP( "top stack info {index = %d, count = %d}\n", 
           pStack->index, pStack->count );
-
-    while( pos_desc < end_desc ) {
-        while( pElems[pos_desc].type == DT_END_LOOP ) { /* end of the current loop */
+  next_loop:
+    while( pos_desc < pStack->end_loop ) {
+        if( pElems[pos_desc].type == DT_END_LOOP ) { /* end of the current loop */
             if( --(pStack->count) == 0 ) { /* end of loop */
                 pStack--;
                 if( --(pConv->stack_pos) == -1 ) break;
@@ -209,7 +206,8 @@ static int lam_convertor_pack_homogeneous( lam_convertor_t* pConv,
                     pStack->disp += pElems[pos_desc].extent;
             }
             pos_desc++;
-            last_count = pElems[pos_desc].count;
+            last_count = pElems[pos_desc].count * basicDatatypes[pElems[pos_desc].type].size;
+            goto next_loop;
         }
         while( pElems[pos_desc].type == DT_LOOP ) {
             int stop_in_loop = 0;
@@ -239,7 +237,7 @@ static int lam_convertor_pack_homogeneous( lam_convertor_t* pConv,
             PUSH_STACK( pStack, pConv->stack_pos, pos_desc, last_count,
                         pStack->disp, pos_desc + pElems[pos_desc].disp );
             pos_desc++;
-            last_count = pElems[pos_desc].count;
+            last_count = pElems[pos_desc].count * basicDatatypes[pElems[pos_desc].type].size;
         }
         /* now here we have a basic datatype */
         while( pElems[pos_desc].flags & DT_FLAG_DATA ) {
@@ -253,9 +251,9 @@ static int lam_convertor_pack_homogeneous( lam_convertor_t* pConv,
             pConv->bConverted += last_count;
             space -= last_count;
             pDestBuf += last_count;
-            lastDisp = pStack->disp + pElems[pos_desc].disp;
             pos_desc++;  /* advance to the next data */
-            last_count = pElems[pos_desc].count;
+            lastDisp = pStack->disp + pElems[pos_desc].disp;
+            last_count = pElems[pos_desc].count * basicDatatypes[pElems[pos_desc].type].size;
         }
     }
     last_count = 0;  /* complete the data */
@@ -314,6 +312,7 @@ int lam_convertor_pack( lam_convertor_t* pConv, struct iovec* out, unsigned int 
 {
     dt_desc_t* pData = pConv->pDesc;
 
+    /* TODO should use the remote size */
     if( pConv->bConverted == (pData->size * pConv->count) ) {  /* conversion completed or nothing to do */
         out[0].iov_len = 0;
         return 1;
@@ -371,9 +370,11 @@ lam_convertor_t* lam_convertor_create( int remote_arch, int mode )
 {
    lam_convertor_t* pConv = OBJ_NEW(lam_convertor_t);
 
-   pConv->pStack = NULL;
+   pConv->pDesc      = NULL;
+   pConv->pStack     = NULL;
    pConv->remoteArch = remote_arch;
-   pConv->fAdvance = NULL;
+   pConv->fAdvance   = NULL;
+   pConv->freebuf    = NULL;
    return pConv;
 }
 
