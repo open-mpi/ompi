@@ -267,7 +267,7 @@ static void mca_oob_tcp_recv_handler(int sd, short flags, void* user)
 mca_oob_t* mca_oob_tcp_init(bool *allow_multi_user_threads, bool *have_hidden_threads)
 {
     /* initialize data structures */
-    ompi_rb_tree_init(&mca_oob_tcp_component.tcp_peer_tree, (ompi_rb_tree_comp_fn_t)ompi_process_name_compare);
+    ompi_rb_tree_init(&mca_oob_tcp_component.tcp_peer_tree, (ompi_rb_tree_comp_fn_t)mca_oob_tcp_process_name_compare);
 
     ompi_free_list_init(&mca_oob_tcp_component.tcp_peer_free,
         sizeof(mca_oob_tcp_peer_t),
@@ -320,5 +320,35 @@ int mca_oob_tcp_finalize(void)
     }
     ompi_event_fini();
     return OMPI_SUCCESS;
+}
+
+/**
+* Compare two process names for equality.
+*
+* @param  n1  Process name 1.
+* @param  n2  Process name 2.
+* @return     (-1 for n1<n2 0 for equality, 1 for n1>n2)
+*
+* Note that the definition of < or > is somewhat arbitrary -
+* just needs to be consistently applied to maintain an ordering
+* when process names are used as indices.
+*/
+
+
+int mca_oob_tcp_process_name_compare(const ompi_process_name_t* n1, const ompi_process_name_t* n2)
+{
+   if(n1->cellid < n2->cellid)
+       return -1;
+   else if(n1->cellid > n2->cellid)
+       return 1;
+   else if(n1->jobid < n2->jobid)
+       return -1;
+   else if(n1->jobid > n2->jobid)
+       return 1;
+   else if(n1->vpid < n2->vpid)
+       return -1;
+   else if(n1->vpid > n2->vpid)
+       return 1;
+   return(0);
 }
 

@@ -67,23 +67,7 @@ int mca_oob_tcp_finalize(void);
 * just needs to be consistently applied to maintain an ordering
 * when process names are used as indices.
 */
-                                                                                                                      
-static int ompi_process_name_compare(const ompi_process_name_t* n1, const ompi_process_name_t* n2)
-{
-   if(n1->cellid < n2->cellid)
-       return -1;
-   else if(n1->cellid > n2->cellid)
-       return 1;
-   else if(n1->jobid < n2->jobid)
-       return -1;
-   else if(n1->jobid > n2->jobid)
-       return 1;
-   else if(n1->vpid < n2->vpid)
-       return -1;
-   else if(n1->vpid > n2->vpid)
-       return 1;
-   return(0);
-}
+int mca_oob_tcp_process_name_compare(const ompi_process_name_t* n1, const ompi_process_name_t* n2);
                                                                                                                       
 /**
  *  Similiar to unix writev(2).
