@@ -423,7 +423,8 @@ typedef mca_pcm_1_0_0_t mca_pcm_t;
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
-  int mca_pcm_base_open(lam_cmd_line_t *cmd);
+  int mca_pcm_base_open(void);
+  int mca_pcm_base_select(void);
   int mca_pcm_base_close(void);
 
   bool mca_pcm_base_is_checkpointable(void);
@@ -437,8 +438,15 @@ extern "C" {
 
 
 /*
- * Global struct holding the selected module's function pointers
+ * Macros
  */
+
+/*
+ * Globals
+ */
+extern int mca_pcm_base_output;
+extern lam_list_t mca_pcm_base_modules_available;
+extern mca_pcm_base_module_t mca_pcm_base_selected_module;
 extern mca_pcm_t mca_pcm;
 
 #endif
