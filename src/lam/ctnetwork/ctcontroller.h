@@ -28,57 +28,21 @@
  */
 /*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
 
-#ifndef CT_MESSAGE_H
-#define CT_MESSAGE_H
+#ifndef CT_CONTROLLER_H
+#define CT_CONTROLLER_H
 
 #include "lam/base/object.h"
+#include "runtime/ctnetwork/ctnode.h"
 
-
-/*
- *
- *      Available Classes
- *
- */
-
-extern lam_class_info_t     lam_ctmsg_cls;
-
-/*
- *
- *      CT Message interface
- *
- */
-
-/*
- * Message control info for routing msgs.
- */
-
-enum
-{
-    LAM_CT_BCAST = 1,
-    LAM_CT_ALLGATHER,
-    LAM_CT_SCATTER,
-    LAM_CT_PT2PT
-};
-
-typedef struct lam_ct_ctrl
-{
-    uint8_t         ctc_is_user_msg;    /* 1 -> msg is for user app. */
-    uint8_t         ctc_routing_type;   /* broadcast, scatter, pt2pt, etc. */
-    uint16_t        ctc_len;
-    uint8_t         *ctc_info;
-} lam_ct_ctrl_t;
-
-
-
-typedef struct lam_ctmsg
+typedef struct lam_ctcontroller
 {
     lam_object_t    super;
-    lam_ct_ctrl_t   ctm_ctrl;
-    uint32_t        ctm_len;
-    uint8_t         *ctm_data;
-    int             ctm_should_free;
-} lam_ctmsg_t;
+    lam_ctnode_t    ctl_node;
+} lam_ctctrl_t;
 
-#endif  /* CT_MESSAGE_H */
+void lam_ctl_init(lam_ctctrl_t *ctrl);
+void lam_ctl_destroy(lam_ctctrl_t *ctrl);
+
+#endif  /* CT_CONTROLLER_H */
 
 
