@@ -2,6 +2,8 @@
  * $HEADER$
  */
 
+#include "ompi_config.h"
+
 #include <string.h>
 #include <stdlib.h>
 
@@ -21,6 +23,7 @@
 #include "mca/ptl/sm/src/ptl_sm_peer.h"
 #include "mca/common/sm/common_sm_mmap.h"
 #include "util/proc_info.h"
+#include "util/printf.h"
 
 mca_ptl_sm_t mca_ptl_sm = {
     {
