@@ -5,17 +5,17 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-AM_CPPFLAGS		= -DLAM_PROFILING_DEFINES=1
+AM_CPPFLAGS = -DLAM_PROFILING_DEFINES=1
 
-noinst_LTLIBRARIES	= libmpi_f77_profile.la
+noinst_LTLIBRARIES = libmpi_f77_profile.la
 
-noinst_HEADERS		= defines.h
+noinst_HEADERS = defines.h
 
-nodist_libmpi_f77_profile_la_SOURCES= \
-			pcomm_get_name_f.c \
-			pcomm_set_name_f.c \
-			pinit_f.c \
-			pfinalize_f.c
+nodist_libmpi_f77_profile_la_SOURCES = \
+	pcomm_get_name_f.c \
+	pcomm_set_name_f.c \
+	pinit_f.c \
+	pfinalize_f.c
 
 # Sym link in the sources from the real MPI directory
 
@@ -24,6 +24,15 @@ $(nodist_libmpi_f77_profile_la_SOURCES):
 		pname=`echo $@ | cut -b '2-'` ; \
 		ln -s $(top_srcdir)/src/mpi/f77/$$pname $@ ; \
 	fi
+
+# Conditionally install the header files
+
+if WANT_INSTALL_HEADERS
+lamdir = $(includedir)/lam/mpi/f77/profile
+lam_HEADERS = $(headers)
+else
+lamdir = $(includedir)
+endif
 
 # These files were created by targets above
 
