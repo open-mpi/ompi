@@ -108,7 +108,6 @@ mca_ptl_elan_alloc_send_desc (struct mca_ptl_base_module_t *ptl_ptr,
     }
 
     if (ompi_using_threads ()) {
-
 	ompi_mutex_lock(&flist->fl_lock);
 	item = ompi_list_remove_first (&((flist)->super));
 
@@ -122,13 +121,27 @@ mca_ptl_elan_alloc_send_desc (struct mca_ptl_base_module_t *ptl_ptr,
 	}
 	ompi_mutex_unlock(&flist->fl_lock);
     } else {
+	if (MCA_PTL_ELAN_DESC_QDMA == desc_type )
+	    LOG_PRINT(PTL_ELAN_DEBUG_ACK, 
+		    "before list %p length %d item %p\n", 
+		    flist, flist->super.ompi_list_length,
+		    item);
+
 	item = ompi_list_remove_first (&((flist)->super));
+
+	if (MCA_PTL_ELAN_DESC_QDMA == desc_type )
+	    LOG_PRINT(PTL_ELAN_DEBUG_ACK, 
+		    "after list %p length %d item %p\n", 
+		    flist, flist->super.ompi_list_length,
+		    item);
 
 	/* Progress this PTL module to get back a descriptor,
 	 * Is it OK to progress with ptl->ptl_send_progress()? */
 	while (NULL == item) {
 	    mca_ptl_tstamp_t tstamp = 0;
 
+	    /*LOG_PRINT(PTL_ELAN_DEBUG_ACK, "Warning: no more
+	     * descriptors\n");*/
 	    /* XXX: 
 	     * Well, this still does not trigger the progress on 
 	     * PTL's from other modules.  Wait for PML to change.
@@ -160,25 +173,19 @@ mca_ptl_elan_send_desc_done (
        	mca_pml_base_send_request_t *req) 
 { 
     mca_ptl_elan_module_t *ptl;
-    ompi_ptl_elan_queue_ctrl_t *queue;
     mca_ptl_base_header_t *header;
  
+    START_FUNC(PTL_ELAN_DEBUG_SEND);
     ptl = ((ompi_ptl_elan_qdma_desc_t *)desc->desc)->ptl;
     header = &desc->frag_base.frag_header;
-    queue = ptl->queue;
 
-    if (PTL_ELAN_DEBUG_FLAG & PTL_ELAN_DEBUG_SEND) {
-	char hostname[32];
-	gethostname(hostname, 32);
-
-	fprintf(stderr, "req %p flag %d, length %d\n", 
-		req, 
-		header->hdr_common.hdr_flags,
-		header->hdr_frag.hdr_frag_length);
-    }
+    LOG_PRINT(PTL_ELAN_DEBUG_ACK,
+	"list %p length %d\n",
+	&ptl->queue->tx_desc_free,
+	ptl->queue->tx_desc_free.super.ompi_list_length);
 
     if(NULL == req) { /* An ack descriptor */
-	OMPI_FREE_LIST_RETURN (&queue->tx_desc_free,
+	OMPI_FREE_LIST_RETURN (&ptl->queue->tx_desc_free,
 		(ompi_list_item_t *) desc);
     } 
 #if 1   
@@ -186,16 +193,49 @@ mca_ptl_elan_send_desc_done (
 		& MCA_PTL_FLAGS_ACK_MATCHED)
 	    || mca_pml_base_send_request_matched(req)) {
 
+	LOG_PRINT(PTL_ELAN_DEBUG_ACK,
+		"returning req %p mpi_done %d pml_done %d \n", 
+		req, 
+		req->req_base.req_mpi_done,
+		req->req_base.req_pml_done);
+
+
 	if(fetchNset (&desc->frag_progressed, 1) == 0) {
 	    ptl->super.ptl_send_progress(ptl, req, 
 		    header->hdr_frag.hdr_frag_length);
 	}
 
+	LOG_PRINT(PTL_ELAN_DEBUG_ACK,
+		"returning req %p mpi_done %d pml_done %d \n", 
+		req, 
+		req->req_base.req_mpi_done,
+		req->req_base.req_pml_done);
+
 	/* Return a frag or if not cached, or it is a follow up */ 
-	if((header->hdr_frag.hdr_frag_offset != 0) || (desc->desc->desc_status 
-		    != MCA_PTL_ELAN_DESC_CACHED)) 
-	    OMPI_FREE_LIST_RETURN (&queue->tx_desc_free,
-		    (ompi_list_item_t *) desc);
+	if (
+		/*(header->hdr_frag.hdr_frag_offset != 0) || */
+		(desc->desc->desc_status != MCA_PTL_ELAN_DESC_CACHED)){
+	    if (desc->desc->desc_type == MCA_PTL_ELAN_DESC_PUT) {
+		OMPI_FREE_LIST_RETURN (&ptl->putget->put_desc_free,
+			(ompi_list_item_t *) desc);
+		LOG_PRINT(PTL_ELAN_DEBUG_ACK,
+		    "list %p length %d\n",
+		    &ptl->putget->put_desc_free,
+		    ptl->putget->put_desc_free.super.ompi_list_length);
+	    } else {
+		OMPI_FREE_LIST_RETURN (&ptl->queue->tx_desc_free,
+			(ompi_list_item_t *) desc);
+		LOG_PRINT(PTL_ELAN_DEBUG_ACK,
+		    "list %p length %d\n",
+		    &ptl->queue->tx_desc_free,
+		    ptl->queue->tx_desc_free.super.ompi_list_length);
+	    }
+	} else {
+	    LOG_PRINT(PTL_ELAN_DEBUG_ACK,
+		    "PML return frag to list %p, length %d\n", 
+		    &ptl->queue->tx_desc_free,
+		    ptl->queue->tx_desc_free.super.ompi_list_length);
+	}
      }
 #else
     else  {
@@ -228,6 +268,13 @@ mca_ptl_elan_send_desc_done (
 		    (ompi_list_item_t *) desc);
     } 
 #endif
+
+    LOG_PRINT(PTL_ELAN_DEBUG_ACK,
+	"list %p length %d\n",
+	&ptl->queue->tx_desc_free,
+	ptl->queue->tx_desc_free.super.ompi_list_length);
+
+    END_FUNC(PTL_ELAN_DEBUG_SEND);
 }
  
 void 

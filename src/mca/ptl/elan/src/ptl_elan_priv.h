@@ -47,28 +47,31 @@
 #define  PTL_ELAN_DEBUG_SEND  (0x010)
 #define  PTL_ELAN_DEBUG_RECV  (0x020)
 #define  PTL_ELAN_DEBUG_ACK   (0x040)
-#define  PTL_ELAN_DEBUG_PROG  (0x080)
+#define  PTL_ELAN_DEBUG_MAC   (0x080)
 
 #define  PTL_ELAN_DEBUG_QDMA  (0x100)
 #define  PTL_ELAN_DEBUG_PUT   (0x200)
 #define  PTL_ELAN_DEBUG_GET   (0x400)
 #define  PTL_ELAN_DEBUG_CHAIN (0x800)
 
+#define  OMPI_PTL_ELAN_MAX_QSLOTS  (128)
+#define  OMPI_PTL_ELAN_MAX_QDESCS  (128)
+#define  OMPI_PTL_ELAN_NUM_QDESCS  (4)
+
 /* For now only debug send's */
-#if 1
+#if 0
 #define  PTL_ELAN_DEBUG_FLAG  PTL_ELAN_DEBUG_NONE
 #else
-#define  PTL_ELAN_DEBUG_FLAG  (PTL_ELAN_DEBUG_ACK \
-    | PTL_ELAN_DEBUG_SEND | PTL_ELAN_DEBUG_PUT | PTL_ELAN_DEBUG_RECV)
+#define  PTL_ELAN_DEBUG_FLAG (PTL_ELAN_DEBUG_MAC|PTL_ELAN_DEBUG_ACK|PTL_ELAN_DEBUG_SEND|PTL_ELAN_DEBUG_PUT)
 #endif
 
 #define  LOG_PRINT(flag, args...)                              \
 do {                                                           \
     if (PTL_ELAN_DEBUG_FLAG & flag) {                          \
 	char hostname[32]; gethostname(hostname, 32);          \
-	fprintf(stderr, "[%s:%s:%d] ",                         \
+	fprintf(stdout, "[%s:%s:%d] ",                         \
 		hostname, __FUNCTION__, __LINE__);             \
-	fprintf(stderr, args);                                 \
+	fprintf(stdout, args);                                 \
     }                                                          \
 } while (0)
 
@@ -86,7 +89,7 @@ do {                                                           \
 do {                                                           \
     if (PTL_ELAN_DEBUG_FLAG & flag) {                          \
 	char hostname[32]; gethostname(hostname, 32);          \
-	fprintf(stderr, "[%s:%s:%d] Entering ...\n",           \
+	fprintf(stdout, "[%s:%s:%d] Entering ...\n",           \
 	    hostname, __FUNCTION__, __LINE__);                 \
     }                                                          \
 } while (0) 
@@ -95,7 +98,7 @@ do {                                                           \
 do {                                                           \
     if (PTL_ELAN_DEBUG_FLAG & flag) {                          \
 	char hostname[32]; gethostname(hostname, 32);          \
-	fprintf(stderr, "[%s:%s:%d] Completes ...\n",          \
+	fprintf(stdout, "[%s:%s:%d] Completes ...\n",          \
 	    hostname, __FUNCTION__, __LINE__);                 \
     }                                                          \
 } while (0)

@@ -141,27 +141,22 @@ mca_ptl_elan_ctrl_frag (struct mca_ptl_elan_module_t *ptl,
      START_FUNC(PTL_ELAN_DEBUG_ACK);
  
      desc = (mca_ptl_elan_send_frag_t*) header->hdr_ack.hdr_src_ptr.pval;
-     req = (mca_pml_base_send_request_t *) desc->desc->req;
+     req  = (mca_pml_base_send_request_t *) desc->desc->req;
 
      req->req_peer_match = header->hdr_ack.hdr_dst_match;
      req->req_peer_addr  = header->hdr_ack.hdr_dst_addr;
      req->req_peer_size  = header->hdr_ack.hdr_dst_size;
 
-    if (PTL_ELAN_DEBUG_FLAG & PTL_ELAN_DEBUG_ACK) {
-	char hostname[32];
-	gethostname(hostname, 32);
-	fprintf(stderr, "[%s][%s:%d] remote req %p addr %p, length %d\n", 
-		hostname, __FUNCTION__, __LINE__,
-		req->req_peer_match.pval, 
-		req->req_peer_addr.pval, 
-		req->req_peer_size);
-    }
+    LOG_PRINT(PTL_ELAN_DEBUG_ACK, "remote req %p addr %p, length %d\n", 
+	    req->req_peer_match.pval, 
+	    req->req_peer_addr.pval, 
+	    req->req_peer_size);
 
      /* FIXME: 
       * This sort of synchronized fragment release will lead
       * to race conditions, also see the note insize the follwoing routine */
      mca_ptl_elan_send_desc_done (desc, req); 
-     END_FUNC(PTL_ELAN_DEBUG_RECV);
+     END_FUNC(PTL_ELAN_DEBUG_ACK);
 }
 
 static void
@@ -182,7 +177,7 @@ mca_ptl_elan_init_qdma_desc (struct mca_ptl_elan_send_frag_t *frag,
     mca_ptl_base_header_t *hdr;
     struct ompi_ptl_elan_qdma_desc_t * desc;
    
-    START_FUNC(PTL_ELAN_DEBUG_NONE);
+    START_FUNC(PTL_ELAN_DEBUG_SEND);
 
     desc   = (ompi_ptl_elan_qdma_desc_t *)frag->desc;
     destvp = ptl_peer->peer_vp;
@@ -220,13 +215,9 @@ mca_ptl_elan_init_qdma_desc (struct mca_ptl_elan_send_frag_t *frag,
 	header_length = sizeof (mca_ptl_base_frag_header_t);
     }
 
-    if (PTL_ELAN_DEBUG_FLAG & PTL_ELAN_DEBUG_SEND) {                    
-	char hostname[32]; gethostname(hostname, 32);    
-	fprintf(stderr, "[%s:%s:%d] frag %p req %p \n",
-	    hostname, __FUNCTION__, __LINE__,
-	    hdr->hdr_frag.hdr_src_ptr.pval,
-	    hdr->hdr_frag.hdr_dst_ptr.pval);           
-    }                                                    
+    LOG_PRINT(PTL_ELAN_DEBUG_SEND, "frag %p req %p \n",
+	hdr->hdr_frag.hdr_src_ptr.pval,
+	hdr->hdr_frag.hdr_dst_ptr.pval);           
 
     /* initialize convertor */
     if(size_in > 0) {
@@ -279,12 +270,10 @@ mca_ptl_elan_init_qdma_desc (struct mca_ptl_elan_send_frag_t *frag,
                                                      size_out),
                                                     DMA_DataTypeByte,
                                                     DMA_QueueWrite, 16);
+    desc->main_dma.dma_cookie = elan4_local_cookie (ptl->queue->tx_cpool, 
+	    E4_COOKIE_TYPE_LOCAL_DMA, destvp);
 
-    desc->main_dma.dma_cookie =
-        elan4_local_cookie (ptl->queue->tx_cpool, 
-		E4_COOKIE_TYPE_LOCAL_DMA, destvp);
-
-    if (PTL_ELAN_DEBUG_FLAG & PTL_ELAN_DEBUG_SEND) {
+    if (PTL_ELAN_DEBUG_FLAG & PTL_ELAN_DEBUG_MAC) {
 	char hostname[32];
 
 	gethostname(hostname, 32);
@@ -298,7 +287,7 @@ mca_ptl_elan_init_qdma_desc (struct mca_ptl_elan_send_frag_t *frag,
 
     /* Make main memory coherent with IO domain (IA64) */
     MEMBAR_VISIBLE ();
-    END_FUNC(PTL_ELAN_DEBUG_NONE);
+    END_FUNC(PTL_ELAN_DEBUG_SEND);
 }
 
 static void
@@ -350,22 +339,17 @@ mca_ptl_elan_init_putget_desc (struct mca_ptl_elan_send_frag_t *frag,
     desc->dst_elan_addr = (E4_Addr)pml_req->req_peer_addr.lval;
     desc->desc_buff = hdr;
 
-    if (PTL_ELAN_DEBUG_FLAG & PTL_ELAN_DEBUG_PUT) {
-	char hostname[32];
-	gethostname(hostname, 32);
-	fprintf(stderr, "[%s][%s:%d] remote req %p addr %x, length %d\n", 
-		hostname, __FUNCTION__, __LINE__,
+    LOG_PRINT(PTL_ELAN_DEBUG_PUT, " remote req %p addr %x, length %d\n", 
 		pml_req->req_peer_match.pval, 
 		pml_req->req_peer_addr.lval, 
 		pml_req->req_peer_size);
-    }
 
-    /* initialize convertor */
+    /* FIXME: initialize convertor and get the fragment copied out */
     if(size_in > 0 && 0) {
 	struct iovec iov;
         ompi_convertor_t *convertor;
 
-        if( offset <= mca_ptl_elan_module.super.ptl_first_frag_size ) {
+        if( offset <= mca_ptl_elan_module.super.ptl_first_frag_size) {
             convertor = &pml_req->req_convertor;
         } else {
             convertor = &frag->frag_base.frag_convertor;
@@ -379,9 +363,11 @@ mca_ptl_elan_init_putget_desc (struct mca_ptl_elan_send_frag_t *frag,
                 offset);
         }
 
-	/* For now, eager sends are always packed into the descriptor
-         * TODO: Inline up to 256 bytes (including the header), then
-	 *       do a chained send for mesg < first_frag_size */
+	/* 
+         * TODO: 
+	 *   For now, eager sends are always packed into the descriptor
+	 *   Inline up to 256 bytes (including the header), then
+	 *   do a chained send for mesg < first_frag_size */
 
 	/*desc->src_elan_addr = elan4_main2elan(ctx, desc->desc_buff);*/
         iov.iov_base = desc->desc_buff;
@@ -401,13 +387,10 @@ mca_ptl_elan_init_putget_desc (struct mca_ptl_elan_send_frag_t *frag,
     *size = size_out;
     hdr->hdr_frag.hdr_frag_length = size_out;
 
-    /* XXX: no additional flags for the DMA, remote, shmem, qwrite, 
-     *      broadcast, etc */
     flags = 0;
 
-    /* 
-     * FIXME: 
-     *   Be sure to correctly setup a chained DMA.
+    /* FIXME: no additional flags for the DMA, remote, shmem, qwrite, 
+     *        broadcast, etc. Be sure to correctly setup a chained DMA.
      */
 
     /* Setup the chain dma */
@@ -458,14 +441,13 @@ mca_ptl_elan_init_putget_desc (struct mca_ptl_elan_send_frag_t *frag,
      * Allocate space from command queues hanged off the CTX.
      */
     desc->chain_event->ev_Params[1] = elan4_alloccq_space (ctx, 8, CQ_Size8K);
-
     desc->main_dma.dma_srcAddr = desc->src_elan_addr;
     desc->main_dma.dma_dstAddr = desc->dst_elan_addr;
+    desc->main_dma.dma_dstEvent= 0x0ULL; /*disable remote event */
 
     /* Chain an event */
     desc->main_dma.dma_srcEvent= elan4_main2elan(ctx, 
 	    (E4_Event *)desc->chain_event);
-    desc->main_dma.dma_dstEvent= 0x0ULL; /*disable remote event */
 
     /* XXX: Hardcoded DMA retry count */
     desc->main_dma.dma_typeSize = E4_DMA_TYPE_SIZE (size_out, 
@@ -478,7 +460,7 @@ mca_ptl_elan_init_putget_desc (struct mca_ptl_elan_send_frag_t *frag,
 	    destvp);
     desc->main_dma.dma_vproc = destvp;
 
-    if (PTL_ELAN_DEBUG_FLAG & PTL_ELAN_DEBUG_PUT) {
+    if (PTL_ELAN_DEBUG_FLAG & PTL_ELAN_DEBUG_MAC) {
 	char hostname[32];
 	gethostname(hostname, 32);
 	fprintf(stderr, "[%s send...] destvp %d type %d flag %d size %d\n",
@@ -489,7 +471,7 @@ mca_ptl_elan_init_putget_desc (struct mca_ptl_elan_send_frag_t *frag,
 
     /* Make main memory coherent with IO domain (IA64) */
     MEMBAR_VISIBLE ();
-    END_FUNC(PTL_ELAN_DEBUG_NONE);
+    END_FUNC(PTL_ELAN_DEBUG_SEND);
 }
 
 int
@@ -504,13 +486,12 @@ mca_ptl_elan_start_desc (mca_ptl_elan_send_frag_t * desc,
 
     ptl = ptl_peer->peer_ptl;
 
-    START_FUNC(PTL_ELAN_DEBUG_NONE);
+    START_FUNC(PTL_ELAN_DEBUG_SEND);
 
     if (desc->desc->desc_type == MCA_PTL_ELAN_DESC_QDMA) {
         struct ompi_ptl_elan_qdma_desc_t *qdma;
 
         qdma = (ompi_ptl_elan_qdma_desc_t *)desc->desc;
-	
         mca_ptl_elan_init_qdma_desc (desc, ptl, ptl_peer, sendreq, 
 		offset, size, flags);
         elan4_run_dma_cmd (ptl->queue->tx_cmdq, (DMA *) & qdma->main_dma);
@@ -529,9 +510,7 @@ mca_ptl_elan_start_desc (mca_ptl_elan_send_frag_t * desc,
 	/* For each put/get descriptor, a QDMA is chained off. */
         mca_ptl_elan_init_putget_desc (desc, ptl, ptl_peer, sendreq, 
 		offset, size, flags);
-
         elan4_run_dma_cmd (ptl->putget->put_cmdq, (E4_DMA *) &pdesc->main_dma);
-
 	/*ptl->queue->tx_cmdq->cmdq_flush */
 	elan4_flush_cmdq_reorder (ptl->putget->put_cmdq);
 
@@ -552,7 +531,7 @@ mca_ptl_elan_start_desc (mca_ptl_elan_send_frag_t * desc,
     desc->frag_progressed  = 0;
     desc->frag_ack_pending = 0; /* this is ack for internal elan */
 
-    END_FUNC(PTL_ELAN_DEBUG_NONE);
+    END_FUNC(PTL_ELAN_DEBUG_SEND);
     return OMPI_SUCCESS;
 }
 
@@ -577,9 +556,7 @@ mca_ptl_elan_start_ack ( mca_ptl_base_module_t * ptl,
     elan_ptl = (mca_ptl_elan_module_t *) ptl;
     desc->desc->desc_type = MCA_PTL_ELAN_DESC_QDMA; 
     qdma = (ompi_ptl_elan_qdma_desc_t *)desc->desc;
-
     hdr = (mca_ptl_base_header_t *) & qdma->buff[0];
-
     request = recv_frag->frag_recv.frag_request;
 
     hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_ACK;
@@ -608,12 +585,13 @@ mca_ptl_elan_start_ack ( mca_ptl_base_module_t * ptl,
 
     if (PTL_ELAN_DEBUG_FLAG & PTL_ELAN_DEBUG_ACK) {                    
 	char hostname[32]; gethostname(hostname, 32);    
-	fprintf(stderr, "[%s:%s:%d] remote frag %p local req %p buffer %p size %d \n",
-	    hostname, __FUNCTION__, __LINE__,
-	    hdr->hdr_ack.hdr_src_ptr.pval,
-	    hdr->hdr_ack.hdr_dst_match.pval,
-	    hdr->hdr_ack.hdr_dst_addr.pval,
-	    hdr->hdr_ack.hdr_dst_size);           
+	fprintf(stderr, 
+		"[%s:%s:%d] remote frag %p local req %p buffer %p size %d \n",
+	       	hostname, __FUNCTION__, __LINE__,
+	       	hdr->hdr_ack.hdr_src_ptr.pval,
+	       	hdr->hdr_ack.hdr_dst_match.pval,
+	       	hdr->hdr_ack.hdr_dst_addr.pval,
+	       	hdr->hdr_ack.hdr_dst_size);           
     }                                                    
 
     /* Filling up QDMA descriptor */
@@ -631,10 +609,7 @@ mca_ptl_elan_start_ack ( mca_ptl_base_module_t * ptl,
 
     /* Make main memory coherent with IO domain (IA64) */
     MEMBAR_VISIBLE ();
-
     elan4_run_dma_cmd (elan_ptl->queue->tx_cmdq, (DMA *) & qdma->main_dma);
-
-    /*ptl->queue->tx_cmdq->cmdq_flush */
     elan4_flush_cmdq_reorder (elan_ptl->queue->tx_cmdq);
 
     /* Insert desc into the list of outstanding DMA's */
@@ -665,7 +640,7 @@ mca_ptl_elan_drain_recv (mca_ptl_elan_component_t * emp)
     int         i;
     int         rc;
 
-    START_FUNC(PTL_ELAN_DEBUG_NONE);
+    START_FUNC(PTL_ELAN_DEBUG_RECV);
     num_ptl_modules = emp->elan_num_ptl_modules;
 
     /* Iterate over all the PTL input Queues */
@@ -675,22 +650,18 @@ mca_ptl_elan_drain_recv (mca_ptl_elan_component_t * emp)
         queue = emp->elan_ptl_modules[i]->queue;
         rxq = queue->rxq;
         ctx = ptl->ptl_elan_ctx;
-
         OMPI_LOCK (&queue->rx_lock);
-
 #if 1
         rc = (*(int *) (&rxq->qr_doneWord));
 #else
-        rc = elan4_pollevent_word (ctx, &rxq->qr_doneWord, 2000);
+        rc = elan4_pollevent_word (ctx, &rxq->qr_doneWord, 1);
 #endif
  
         if (rc) {
-
             mca_ptl_base_header_t *header;
 
             header = (mca_ptl_base_header_t *) rxq->qr_fptr;
-
-	    if (PTL_ELAN_DEBUG_FLAG & PTL_ELAN_DEBUG_RECV) {
+	    if (PTL_ELAN_DEBUG_FLAG & PTL_ELAN_DEBUG_MAC) {
 		char hostname[32];
 		gethostname(hostname, 32);
 
@@ -719,8 +690,8 @@ mca_ptl_elan_drain_recv (mca_ptl_elan_component_t * emp)
 		break;
             default:
                 fprintf(stdout, "[%s:%d] unknow fragment type %d\n",
-                             __FILE__, __LINE__,
-                             header->hdr_common.hdr_type);
+		       	__FILE__, __LINE__,
+		       	header->hdr_common.hdr_type);
 		fflush(stdout);
                 break;
             }
@@ -735,13 +706,10 @@ mca_ptl_elan_drain_recv (mca_ptl_elan_component_t * emp)
                 rxq->qr_efptr += queue->rx_slotsize;
             }
 
-            /* PCI Write */
+            /* PCI Write, Reset the event 
+	     * Order RESETEVENT wrt to wait_event_cmd */
             queue->input->q_fptr = rxq->qr_efptr;
-
-            /* Reset the event */
             RESETEVENT_WORD (&rxq->qr_doneWord);
-
-            /* Order RESETEVENT wrt to wait_event_cmd */
             MEMBAR_STORESTORE ();
 
             /* Re-prime queue event by issuing a waitevent(1) on it */
@@ -752,15 +720,12 @@ mca_ptl_elan_drain_recv (mca_ptl_elan_component_t * emp)
                         E4_EVENT_DTYPE_LONG, 0), 
                     MAIN2ELAN (ctx, (void *) &rxq->qr_doneWord),
                     0xfeedfacedeadbeef);
-
-            /*rxq->qr_cmdq->cmdq_flush */
 	    elan4_flush_cmdq_reorder (rxq->qr_cmdq);
-
         }
         OMPI_UNLOCK (&queue->rx_lock);
     }
 
-    END_FUNC(PTL_ELAN_DEBUG_NONE);
+    END_FUNC(PTL_ELAN_DEBUG_RECV);
     return OMPI_SUCCESS;
 }
 
@@ -775,8 +740,6 @@ mca_ptl_elan_update_desc (mca_ptl_elan_component_t * emp)
     int         num_ptl_modules;
     int         i;
     int         rc = 0;
-
-    START_FUNC(PTL_ELAN_DEBUG_NONE);
 
     num_ptl_modules = emp->elan_num_ptl_modules;
 
@@ -794,7 +757,7 @@ mca_ptl_elan_update_desc (mca_ptl_elan_component_t * emp)
             rc = * ((int *) (&desc->desc->main_doneWord));
 #else
             /* Poll the completion event for 1usec */
-            rc = elan4_pollevent_word(ctx, &desc->desc->main_doneWord, 2000);
+            rc = elan4_pollevent_word(ctx, &desc->desc->main_doneWord, 1);
 #endif
 	    if (rc) {
 		mca_ptl_base_header_t *header;
@@ -805,28 +768,20 @@ mca_ptl_elan_update_desc (mca_ptl_elan_component_t * emp)
                 desc = (mca_ptl_elan_send_frag_t *)
                     ompi_list_remove_first (&queue->tx_desc);
 		qdma = (ompi_ptl_elan_qdma_desc_t*)desc->desc;
-
                 req = (mca_ptl_elan_send_request_t *)qdma->req;
-		header = (mca_ptl_base_header_t *)&qdma->buff[0];
+		header = (mca_ptl_base_header_t *)&qdma->buff[0]; 
 
-		if (PTL_ELAN_DEBUG_FLAG & PTL_ELAN_DEBUG_SEND) {
-		    char hostname[32];
-		    gethostname(hostname, 32);
-
-		    fprintf(stderr, 
-			    "[%s comp sending...] type %d flag %d size %d\n",
-			    hostname,
-			    header->hdr_common.hdr_type,
-			    header->hdr_common.hdr_flags,
-			    header->hdr_common.hdr_size);
-		}
+		LOG_PRINT(PTL_ELAN_DEBUG_MAC,
+		       	"[comp send] type %d flag %d size %d\n",
+		       	header->hdr_common.hdr_type,
+		       	header->hdr_common.hdr_flags,
+		       	header->hdr_common.hdr_size);
  		mca_ptl_elan_send_desc_done (desc, req);
 
 		/* Remember to reset the events */
 		INITEVENT_WORD (ctx, qdma->elan_event, &qdma->main_doneWord);
 		RESETEVENT_WORD (&qdma->main_doneWord);
 		PRIMEEVENT_WORD (ctx, qdma->elan_event, 1);
-
  	    } else {
  		/* XXX: Stop at any incomplete send desc */
 		break;
@@ -837,7 +792,6 @@ mca_ptl_elan_update_desc (mca_ptl_elan_component_t * emp)
     /* Have the putget list checking to be in the same function */
     mca_ptl_elan_update_putget(emp);
 
-    END_FUNC(PTL_ELAN_DEBUG_NONE);
     return OMPI_SUCCESS;
 }
 
@@ -853,8 +807,6 @@ mca_ptl_elan_update_putget (mca_ptl_elan_component_t * emp)
     int         i;
     int         rc = 0;
 
-    START_FUNC(PTL_ELAN_DEBUG_NONE);
-
     num_ptl_modules = emp->elan_num_ptl_modules;
 
     /* Update the send request if any of send's is completed */
@@ -867,11 +819,11 @@ mca_ptl_elan_update_putget (mca_ptl_elan_component_t * emp)
 	while (ompi_list_get_size (&putget->put_desc) > 0) {
             desc = (mca_ptl_elan_send_frag_t *)
                 ompi_list_get_first (&putget->put_desc);
-#if 0
+#if 1
             rc = * ((int *) (&desc->desc->main_doneWord));
 #else
             /* Poll the completion event for 1usec */
-            rc = elan4_pollevent_word(ctx, &desc->desc->main_doneWord, 2000);
+            rc = elan4_pollevent_word(ctx, &desc->desc->main_doneWord, 1);
 #endif
 	    if (rc) {
 		mca_ptl_base_header_t *header;
@@ -883,27 +835,20 @@ mca_ptl_elan_update_putget (mca_ptl_elan_component_t * emp)
                 desc = (mca_ptl_elan_send_frag_t *)
                     ompi_list_remove_first (&putget->put_desc);
 		pdesc = (ompi_ptl_elan_putget_desc_t*)desc->desc;
+                req   = (mca_ptl_elan_send_request_t *)pdesc->req;
+		header= (mca_ptl_base_header_t *)pdesc->desc_buff;
 
-                req = (mca_ptl_elan_send_request_t *)pdesc->req;
-		header = (mca_ptl_base_header_t *)pdesc->desc_buff;
-
-		if (PTL_ELAN_DEBUG_FLAG & PTL_ELAN_DEBUG_PUT) {
-		    char hostname[32];
-		    gethostname(hostname, 32);
-
-		    fprintf(stderr, 
-			    "[%s comp sending...] type %d flag %d size %d\n",
-			    hostname,
-			    header->hdr_common.hdr_type,
-			    header->hdr_common.hdr_flags,
-			    header->hdr_common.hdr_size);
-		}
+		LOG_PRINT(PTL_ELAN_DEBUG_MAC,
+		       	"[comp put] type %d flag %d size %d\n",
+		       	header->hdr_common.hdr_type,
+		       	header->hdr_common.hdr_flags,
+		       	header->hdr_common.hdr_size);
 
  		/*mca_ptl_elan_send_desc_done (desc, req);*/
 		OMPI_FREE_LIST_RETURN (&putget->put_desc_free,
 			(ompi_list_item_t *) desc);
-		/* Remember to reset the events */
 
+		/* Remember to reset the events */
 		INITEVENT_WORD (ctx, pdesc->elan_event, &pdesc->main_doneWord);
 		RESETEVENT_WORD (&pdesc->main_doneWord);
 		PRIMEEVENT_WORD (ctx, pdesc->elan_event, 1);
@@ -911,7 +856,6 @@ mca_ptl_elan_update_putget (mca_ptl_elan_component_t * emp)
 	} /* end of the while loop */
     } /* end of the for loop */
 
-    END_FUNC(PTL_ELAN_DEBUG_NONE);
     return OMPI_SUCCESS;
 }
 
