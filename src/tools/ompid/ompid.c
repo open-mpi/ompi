@@ -87,20 +87,19 @@ int main(int argc, char *argv[])
     enviro_val = getenv("OMPI_daemon_debug");
     if (NULL != enviro_val) {  /* flag was set */
 		ompi_daemon_debug = true;
-		ompi_output(0, "ompid: entered daemon");
+		ompi_output(0, "ompid: entered debug mode");
 	} else {
 		ompi_daemon_debug = false;
     }
 
-    ompi_daemon_debug = true;  /**** DEBUGGING PURPOSES */
-
-    if (ompi_daemon_debug) {
-		ompi_output(0, "ompid: daemonizing");
-    }
-
     /* daemonize myself */
 #ifndef WIN32
-    ompi_daemon_init(NULL);
+    if (!ompi_daemon_debug) {
+        ompi_output(0, "ompid: daemonizing");
+        ompi_daemon_init(NULL);
+    } else {
+       ompi_output(0, "ompid: debug mode - not daemonizing");
+    }
 #endif
 
     /* setup the thread lock and condition variable */
@@ -205,6 +204,8 @@ int main(int argc, char *argv[])
     ompi_registry.assign_ownership(segment, ompi_name_server.get_jobid(ompi_rte_get_self()));
     free(segment);
 
+    my_status.rank = ompi_name_server.get_vpid(ompi_rte_get_self());
+    my_status.nodename = strdup(ompi_system_info.nodename);
     my_status.status_key = OMPI_PROC_STARTING;
     my_status.exit_code = 0;
     if (OMPI_SUCCESS != (ret = ompi_rte_set_process_status(&my_status, ompi_rte_get_self()))) {
