@@ -65,13 +65,18 @@ int mca_ptl_tcp_add_procs(
 {
     size_t i;
     mca_ptl_tcp_module_t *ptl_tcp = (mca_ptl_tcp_module_t*)ptl;
+    struct ompi_proc_t * proc_self = ompi_proc_local();
 
     for(i=0; i<nprocs; i++) {
         struct ompi_proc_t *ompi_proc = ompi_procs[i];
-        mca_ptl_tcp_proc_t* ptl_proc = mca_ptl_tcp_proc_create(ompi_proc);
+        mca_ptl_tcp_proc_t* ptl_proc;
         mca_ptl_base_peer_t* ptl_peer;
         int rc;
 
+        /* Dont let me register tcp for self */
+        if( proc_self == ompi_proc ) continue;
+
+        ptl_proc = mca_ptl_tcp_proc_create(ompi_proc);
         if(NULL == ptl_proc)
             return OMPI_ERR_OUT_OF_RESOURCE;
 
