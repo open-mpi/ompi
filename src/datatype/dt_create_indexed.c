@@ -55,7 +55,7 @@ int ompi_ddt_create_hindexed( int count, int* pBlockLength, long* pDisp,
     if( 1 >= count ) {
         pdt = ompi_ddt_create( oldType->desc.used + 2 );
         /* multiply by count to make it zero if count is zero */
-        ompi_ddt_add( pdt, oldType, dLength, count * disp, extent );
+        ompi_ddt_add( pdt, oldType, count * dLength, disp, extent );
     } else {
         for( i = 1; i < count; i++ ) {
             if( pBlockLength[i] == 0 ) continue;
