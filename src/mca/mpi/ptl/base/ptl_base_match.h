@@ -25,5 +25,8 @@ mca_ptl_base_recv_request_t *check_specific_and_wild_receives_for_match(
         mca_ptl_base_reliable_hdr_t *frag_header, 
         mca_pml_comm_t *ptl_comm);
 
+void lam_check_cantmatch_for_match(lam_list_t *additional_matches,
+                mca_pml_comm_t *pml_comm, int frag_src);
+
 #endif /* MCA_PTL_BASE_MATCH_H */
 

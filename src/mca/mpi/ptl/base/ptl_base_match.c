@@ -100,13 +100,6 @@ int mca_ptl_base_match(mca_ptl_base_reliable_hdr_t *frag_header,
 
 		/* if match found, process data */
 		if (matched_receive) {
-			/* 
-			 * if threaded, ok to release lock, since the posted
-			 * receive is not on any queue, so it won't be
-			 * matched again, and the fragment can be processed
-			 * w/o any conflict from other threads - locks will
-			 * be used where concurent access needs to be managed.
-			 */
 
             /* set flag indicating the input fragment was matched */
             *match_made=1;
@@ -128,9 +121,6 @@ int mca_ptl_base_match(mca_ptl_base_reliable_hdr_t *frag_header,
                     (lam_list_item_t *)frag_desc);
             THREAD_UNLOCK((pml_comm->unexpected_frags_lock)+frag_src);
 
-			/* now that the fragment is on the list, ok to
-			 * release match - other matches may be attempted */
-            THREAD_UNLOCK((pml_comm->c_matching_lock)+frag_src);
 		}
 
 		/* 
@@ -138,20 +128,22 @@ int mca_ptl_base_match(mca_ptl_base_reliable_hdr_t *frag_header,
 		 *   any fragments on the c_frags_cant_match list
 		 *   may now be used to form new matchs
 		 */
-		if (lam_list_get_size((pml_comm->frags_cant_match)+frag_src)) {
-            /* initialize list to empty */
-            lam_list_set_size(additional_matches,0);
-			/* need to handle this -- lam_check_cantmatch_for_match();
-             * */
+		if (0 < lam_list_get_size((pml_comm->frags_cant_match)+frag_src)) {
+
+            lam_check_cantmatch_for_match(additional_matches,pml_comm,frag_src);
+
 		}
 
-		/* 
-		 * mark message as done, if it has completed - need to mark
-		 *   it this late to avoid a race condition with another thread
-		 *   waiting to complete a recv, completing, and try to free the
-		 *   communicator before the current thread is done referencing
-		 *   this communicator - is this true ?
-		 */
+			
+        /* 
+         * if threaded, ok to release lock, since the posted
+         * receive is not on any queue, so it won't be
+         * matched again, and the fragment can be processed
+         * w/o any conflict from other threads - locks will
+         * be used where concurent access needs to be managed.
+         */
+        THREAD_UNLOCK((pml_comm->c_matching_lock)+frag_src);
+
     } else {
         /*
          * This message comes after the next expected, so it
@@ -490,3 +482,134 @@ mca_ptl_base_recv_request_t *check_specific_and_wild_receives_for_match(
         }
     }
 }
+
+#if (0)
+			/* need to handle this -- lam_check_cantmatch_for_match();
+             */
+/**
+ * Scan the list of frags that came in ahead of time to see if any
+ * can be processed at this time.  If they can, try and match the
+ * frags.
+ *
+ * @param additional_matches List to hold new matches with fragments
+ * from the frags_cant_match list. (IN/OUT)
+ *
+ * @param pml_comm Pointer to the communicator structure used for
+ * matching purposes. (IN)
+ *
+ * This routine assumes that the appropriate matching locks are
+ * set by the upper level routine.
+ */
+
+void lam_check_cantmatch_for_match(lam_list_t *additional_matches,
+        mca_pml_comm_t *pml_comm, int frag_src)
+{
+    /* local parameters */
+    int match_found;
+    mca_pml_base_sequence_t next_msg_seq_num_expected, frag_seq_number;
+    mca_pml_base_recv_frag_t *frag_desc;
+	mca_pml_base_recv_request_t *matched_receive;
+
+    /*
+     * Initialize list size - assume that most of the time this search
+     * will come up empty, so just initialize count - not pointers
+     */
+    lam_list_set_size(additional_matches,0);
+
+    /*
+     * Loop over all the out of sequence messages.  No ordering is assumed
+     * in the frags_cant_match list.
+     */
+
+    match_found = 1;
+    while ((0 < lam_list_get_size((pml_comm->frags_cant_match)+frag_src)) &&
+            match_found) {
+
+        /* initialize match flag for this search */
+        match_found = 0;
+
+        /* get sequence number of next message that can be processed */
+        next_msg_seq_num_expected = *((pml_comm->c_next_msg_seq_num)+frag_src);
+
+        /* search the list for a fragment from the send with sequence
+         * number next_msg_seq_num_expected
+         */
+        for(frag_desc = (mca_pml_base_recv_frag_t *) 
+            lam_list_get_first((pml_comm->frags_cant_match)+frag_src);
+            frag_desc != (mca_pml_base_recv_frag_t *)
+            lam_list_get_end((pml_comm->frags_cant_match)+frag_src);
+            frag_desc = (mca_pml_base_recv_frag_t *) 
+            ((lam_list_item_t *)frags_cant_match)->lam_list_next) 
+        {
+            /*
+             * If the message has the next expected seq from that proc...
+             */
+            frag_seq_number=frag_desc->super.frag_header.hdr_msg_seq_num;
+            if (frag_seq_number == next_msg_seq_num_expected) {
+
+                /* initialize list on first entry - assume that most
+                 * of the time nothing is found, so initially we just
+                 * set the count to zero, and don't initialize any
+                 * other parameters
+                 */
+                if(0 == lam_list_get_size(additional_matches))
+                {
+                        lam_list_init(additional_matches);
+                }
+
+                /* We're now expecting the next sequence number. */
+                (pml_comm->c_next_msg_seq_num[frag_src])++;
+
+                /* signal that match was made */
+                match_found = 1;
+
+                /*
+                 * remove frag_desc from list
+                 */
+                lam_list_remove_item((pml_comm->frags_cant_match)+frag_src,
+                        (lam_list_item_t *)frag_desc);
+
+                /*
+                 * check to see if this frag matches a posted message
+                 */
+                matched_receive = mca_ptl_base_check_recieves_for_match(
+                        frag_desc, pml_comm);
+
+                /* if match found, process data */
+                if (matched_receive) {
+
+                    /* associate the receive descriptor with the fragment
+                     * descriptor */
+                    frag_desc->matched_recv=matched_receive;
+
+                    /* add this fragment descriptor to the list of
+                     * descriptors to be processed later
+                     */
+                    lam_list_append(additional_matches,
+                            (lam_list_item_t *)frag_desc);
+
+                } else {
+	
+                    /* if no match found, place on unexpected queue - need to
+                     * lock to prevent probe from interfering with updating
+                     * the list */
+                    THREAD_LOCK((pml_comm->unexpected_frags_lock)+frag_src);
+                    lam_list_append( ((pml_comm->unexpected_frags)+frag_src),
+                            (lam_list_item_t *)frag_desc);
+                    THREAD_UNLOCK((pml_comm->unexpected_frags_lock)+frag_src);
+
+                }
+
+                /* frags_cant_match is not an ordered list, so exit loop
+                 * and re-start search for next sequence number */
+                break;
+
+            } /* end if (frag_seq_number == next_msg_seq_num_expected) */
+            
+        } /* end for (frag_desc) loop */
+        
+    } /* end while loop */
+
+    return;
+}
+#endif /* if (0) */
