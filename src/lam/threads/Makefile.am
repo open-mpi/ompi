@@ -31,7 +31,7 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-lib_LTLIBRARIES	= libthreads.la
+noinst_LTLIBRARIES = libthreads.la
 
 libthreads_la_SOURCES = \
 	mutex.h \

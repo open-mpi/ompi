@@ -31,7 +31,7 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-lib_LTLIBRARIES	= libutil.la
+noinst_LTLIBRARIES = libutil.la
 
 libutil_la_SOURCES = \
 	argv.c \
