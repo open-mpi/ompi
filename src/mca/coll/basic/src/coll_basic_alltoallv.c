@@ -44,6 +44,9 @@ mca_coll_basic_alltoallv_intra(void *sbuf, int *scounts, int *sdisps,
   size = ompi_comm_size(comm);
   rank = ompi_comm_rank(comm);
 
+  ompi_ddt_type_extent(sdtype, &sndextent);
+  ompi_ddt_type_extent(rdtype, &rcvextent);
+        
   /* simple optimization */
 
   psnd = ((char *) sbuf) + (sdisps[rank] * sndextent);
