@@ -22,7 +22,6 @@
 #include "class/ompi_list.h"
 #include "class/ompi_pointer_array.h"
 #include "threads/mutex.h"
-#include "include/ompi.h"
 
 
 /**

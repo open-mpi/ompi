@@ -13,6 +13,8 @@
  */
 
 #include "ompi_config.h"
+
+#include "include/constants.h"
 #include "util/proc_info.h"
 #include "util/output.h"
 #include "runtime/ompi_progress.h"

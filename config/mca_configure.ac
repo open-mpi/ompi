@@ -316,16 +316,16 @@ if test -z "$found_ompi_headers"; then
     if test -n "$with_openmpi"; then
         if test -d $with_opemnpi ; then
             if test -d "$with_openmpi/include/openmpi" -a \
-                -f "$with_openmpi/include/openmpi/include/ompi.h"; then
+                -f "$with_openmpi/include/openmpi/include/ompi_socket_errno.h"; then
                 INCFLAGS="-I$with_openmpi/include/openmpi -I$with_openmpi/include"
                 found_ompi_headers=1
                 AC_MSG_RESULT([$with_openmpi/include/openmpi])
             elif test -d "$with_openmpi/openmpi" -a \
-                -f "$with_openmpi/openmpi/include/ompi.h"; then
+                -f "$with_openmpi/openmpi/include/ompi_socket_errno.h"; then
                 INCFLAGS="-I$with_openmpi/openmpi I$with_openmpi/openmpi"
                 found_ompi_headers=1
                 AC_MSG_RESULT([$with_openmpi/openmpi])
-            elif test -f "$with_openmpi/include/ompi.h"; then
+            elif test -f "$with_openmpi/include/ompi_socket_errno.h"; then
                 INCFLAGS="-I$with_openmpi -I$with_openmpi/.."
                 found_ompi_headers=1
                 AC_MSG_RESULT([$with_openmpi])
@@ -348,7 +348,7 @@ if test -z "$found_ompi_headers"; then
     # preprocessor's default search path)
 
     if test -z "$found_ompi_headers"; then
-        AC_COMPILE_IFELSE(AC_LANG_PROGRAM([[#include "include/ompi.h"]], 
+        AC_COMPILE_IFELSE(AC_LANG_PROGRAM([[#include "include/ompi_socket_errno.h"]], 
                           [[]]), 
             [found_ompi_headers=1])
         if test -n "$found_ompi_headers"; then

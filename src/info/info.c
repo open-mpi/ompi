@@ -13,6 +13,8 @@
  */
 
 #include "ompi_config.h"
+
+#include "include/constants.h"
 #include "info/info.h"
 #include "mpi/runtime/params.h"
 #include "util/output.h"

@@ -21,7 +21,6 @@
 #define MCA_IOF_H
 
 #include "ompi_config.h"
-#include "include/ompi.h"
 #include "class/ompi_list.h"
 #include "mca/mca.h"
 #include "mca/ns/ns.h"
