@@ -391,6 +391,7 @@ int ompi_op_init(void)
   ompi_op_ddt_map[DT_SHORT] = OMPI_OP_TYPE_SHORT;
   ompi_op_ddt_map[DT_UNSIGNED_SHORT] = OMPI_OP_TYPE_UNSIGNED_SHORT;
   ompi_op_ddt_map[DT_INT] = OMPI_OP_TYPE_INT;
+  ompi_op_ddt_map[DT_UNSIGNED_INT] = OMPI_OP_TYPE_UNSIGNED;
   ompi_op_ddt_map[DT_LONG] = OMPI_OP_TYPE_LONG;
   ompi_op_ddt_map[DT_UNSIGNED_LONG] = OMPI_OP_TYPE_UNSIGNED_LONG;
   ompi_op_ddt_map[DT_FLOAT] = OMPI_OP_TYPE_FLOAT;

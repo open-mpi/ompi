@@ -304,7 +304,7 @@ LOC_STRUCT(float_int, float, int)
 LOC_STRUCT(double_int, double, int)
 LOC_STRUCT(long_int, long, int)
 LOC_STRUCT(2int, int, int)
-LOC_STRUCT(short_int, short, short)
+LOC_STRUCT(short_int, short, int)
 LOC_STRUCT(long_double_int, long double, int)
 
 /*************************************************************************
@@ -318,7 +318,26 @@ LOC_FUNC(maxloc, float_int, >)
 LOC_FUNC(maxloc, double_int, >)
 LOC_FUNC(maxloc, long_int, >)
 LOC_FUNC(maxloc, 2int, >)
+#if 0
+#define LOC_FUNC(name, type_name, op) \
 LOC_FUNC(maxloc, short_int, >)
+#else
+  void ompi_mpi_op_maxloc_short_int(void *in, void *out, int *count, 
+                                        MPI_Datatype *dtype)
+  { 
+    int i; 
+    ompi_op_predefined_short_int_t *a = (ompi_op_predefined_short_int_t*) in; 
+    ompi_op_predefined_short_int_t *b = (ompi_op_predefined_short_int_t*) out;
+    for (i = 0; i < *count; ++i, a++, b++ ) { 
+      if (a->v > b->v) { 
+        b->v = a->v; 
+        b->k = a->k;
+      } else if (a->v == b->v) { 
+        b->k = (b->k < a->k ? b->k : a->k); 
+      } 
+    } 
+  }
+#endif
 LOC_FUNC(maxloc, long_double_int, >)
 
 /*************************************************************************
