@@ -2,8 +2,8 @@
  * $HEADER$
  */
 
-#ifndef _MUTEX_SPINLOCK_
-#define _MUTEX_SPINLOCK_
+#ifndef LAM_MUTEX_SPINLOCK_
+#define LAM_MUTEX_SPINLOCK_
 
 #include "lam/os/atomic.h"
 typedef lam_lock_data_t lam_mutex_t;
@@ -14,4 +14,3 @@ typedef lam_lock_data_t lam_mutex_t;
 #define lam_mutex_unlock(m)  spinunlock(m)
 
 #endif
-
