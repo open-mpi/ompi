@@ -21,7 +21,7 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
-static char FUNC_NAME[] = "MPI_Comm_set_name";
+static const char FUNC_NAME[] = "MPI_Comm_set_name";
 
 
 int MPI_Comm_set_name(MPI_Comm comm, char *name) {
@@ -31,13 +31,15 @@ int MPI_Comm_set_name(MPI_Comm comm, char *name) {
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
-        if ( MPI_COMM_NULL == comm || ompi_comm_invalid ( comm ) )
+        if ( MPI_COMM_NULL == comm || ompi_comm_invalid ( comm ) ) {
             return OMPI_ERRHANDLER_INVOKE ( MPI_COMM_WORLD, MPI_ERR_COMM,
                                             FUNC_NAME);
+        }
 
-        if ( NULL == name )
+        if ( NULL == name ) {
             return OMPI_ERRHANDLER_INVOKE ( comm, MPI_ERR_ARG, 
                                             FUNC_NAME);
+        }
     }
 
     /* -- Thread safety entrance -- */

@@ -21,28 +21,35 @@
 
 static const char FUNC_NAME[] = "MPI_Type_create_struct";
 
-int
-MPI_Type_create_struct(int count,
-                       int array_of_blocklengths[],
-                       MPI_Aint array_of_displacements[],
-                       MPI_Datatype array_of_types[],
-                       MPI_Datatype *newtype)
+
+int MPI_Type_create_struct(int count,
+                           int array_of_blocklengths[],
+                           MPI_Aint array_of_displacements[],
+                           MPI_Datatype array_of_types[],
+                           MPI_Datatype *newtype)
 {
    int i, rc;
 
    if( MPI_PARAM_CHECK ) {
-      if( OMPI_MPI_INVALID_STATE ) {
-         OMPI_ERRHANDLER_RETURN( MPI_ERR_INTERN, MPI_COMM_WORLD,
-                                MPI_ERR_INTERN, FUNC_NAME );
-      }
+      OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
       if( count < 0 ) {
-         OMPI_ERRHANDLER_RETURN( MPI_ERR_COUNT, MPI_COMM_WORLD,
-                                MPI_ERR_COUNT, FUNC_NAME );
+        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COUNT,
+                                      FUNC_NAME);
+      } else if(NULL == array_of_blocklengths ||
+                NULL == array_of_displacements ||
+                NULL == array_of_types) {
+        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
+      } else if (NULL == newtype) {
+        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_TYPE, FUNC_NAME);
       }
       for ( i = 0; i < count; i++ ){
-         if(array_of_blocklengths[i] < 0) {
-            OMPI_ERRHANDLER_RETURN( MPI_ERR_ARG, MPI_COMM_WORLD,
-                                   MPI_ERR_ARG, FUNC_NAME );
+         if (NULL == array_of_types[i] ||
+             MPI_DATATYPE_NULL == array_of_types[i]) {
+           return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_TYPE,
+                                         FUNC_NAME);
+         } else if (array_of_blocklengths[i] < 0) {
+           return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
+                                         FUNC_NAME);
          }
       }
    }

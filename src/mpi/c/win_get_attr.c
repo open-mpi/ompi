@@ -18,11 +18,14 @@
 
 static const char FUNC_NAME[] = "MPI_Win_get_attr";
 
+
 int MPI_Win_get_attr(MPI_Win win, int win_keyval,
-                     void *attribute_val, int *flag) {
+                     void *attribute_val, int *flag) 
+{
     int ret;
 
     if (MPI_PARAM_CHECK) {
+       OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 	if ((NULL == attribute_val) || (NULL == flag)) {
 	    return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_ARG, 
 					 FUNC_NAME);
@@ -31,7 +34,5 @@ int MPI_Win_get_attr(MPI_Win win, int win_keyval,
     
     ret = ompi_attr_get(win->w_keyhash, win_keyval, 
 		       attribute_val, flag);
-
     OMPI_ERRHANDLER_RETURN(ret, win, MPI_ERR_OTHER, FUNC_NAME);  
-
 }

@@ -21,16 +21,18 @@
 
 static const char FUNC_NAME[] = "MPI_Type_dup";
 
-int
-MPI_Type_dup (MPI_Datatype type,
-              MPI_Datatype *newtype)
+
+int MPI_Type_dup (MPI_Datatype type,
+                  MPI_Datatype *newtype)
 {
    int rc;
 
    if( MPI_PARAM_CHECK ) {
-      if( OMPI_MPI_INVALID_STATE ) {
-         OMPI_ERRHANDLER_RETURN( MPI_ERR_INTERN, MPI_COMM_WORLD,
-                                MPI_ERR_INTERN, FUNC_NAME );
+      OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+      if (NULL == type || MPI_DATATYPE_NULL == type ||
+          NULL == newtype) {
+        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_TYPE,
+                                      FUNC_NAME );
       }
    }
 
@@ -42,6 +44,5 @@ MPI_Type_dup (MPI_Datatype type,
    }
 
    ompi_ddt_set_args( *newtype, 0, NULL, 0, NULL, 1, &type, MPI_COMBINER_DUP );
-
    return MPI_SUCCESS;
 }

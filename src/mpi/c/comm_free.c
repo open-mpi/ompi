@@ -17,7 +17,7 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
-static char FUNC_NAME[] = "MPI_Comm_free";
+static const char FUNC_NAME[] = "MPI_Comm_free";
 
 
 int MPI_Comm_free(MPI_Comm *comm) {

@@ -23,9 +23,12 @@ static const char FUNC_NAME[] = "MPI_Request_free";
 int MPI_Request_free(MPI_Request *request) 
 {
     int rc;
-    if( request == NULL ) {
+    if (MPI_PARAM_CHECK) {
+      OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+      if( request == NULL ) {
         rc = OMPI_ERR_BAD_PARAM;
         goto error_return;
+      }
     }
     if( *request == NULL ) {
         return MPI_SUCCESS;

@@ -18,12 +18,12 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
-static char FUNC_NAME[] = "MPI_Group_translate_ranks";
+static const char FUNC_NAME[] = "MPI_Group_translate_ranks";
 
 
 int MPI_Group_translate_ranks(MPI_Group group1, int n_ranks, int *ranks1,
-                              MPI_Group group2, int *ranks2) {
-
+                              MPI_Group group2, int *ranks2) 
+{
     int rank, proc, proc2;
     ompi_proc_t *proc1_pointer, *proc2_pointer;
     ompi_group_t *group1_pointer, *group2_pointer;

@@ -31,9 +31,10 @@ int MPI_Unpack(void *inbuf, int insize, int *position,
     struct iovec outvec;
 
     if (MPI_PARAM_CHECK) {
-      if (MPI_COMM_NULL == comm) {
+      OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+      if (ompi_comm_invalid(comm)) {
 	return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM,
-                                     "MPI_Unpack");
+                                      FUNC_NAME);
       }
       
       if ((NULL == inbuf) || (NULL == outbuf) || (NULL == position)) {

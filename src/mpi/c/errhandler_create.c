@@ -15,6 +15,9 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
+static const char FUNC_NAME[] = "MPI_Errhandler_create";
+
+
 int MPI_Errhandler_create(MPI_Handler_function *function,
                           MPI_Errhandler *errhandler)
 {

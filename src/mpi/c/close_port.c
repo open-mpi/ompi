@@ -17,7 +17,7 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
-static char FUNC_NAME[] = "MPI_Close_port";
+static const char FUNC_NAME[] = "MPI_Close_port";
 
 
 int MPI_Close_port(char *port_name) 
@@ -27,7 +27,7 @@ int MPI_Close_port(char *port_name)
 
         if ( NULL == port_name )
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, 
-                                          "MPI_Close_port");
+                                          FUNC_NAME);
     }
 
     /* As far as I can see at the moment, this is an empty function.
@@ -35,5 +35,7 @@ int MPI_Close_port(char *port_name)
        therefore we don't have to free an 'address'.
     */
 
-    return MPI_SUCCESS;
+    /* This function is not yet implemented */
+
+    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INTERN, FUNC_NAME);
 }

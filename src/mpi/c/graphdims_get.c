@@ -18,40 +18,45 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
-int MPI_Graphdims_get(MPI_Comm comm, int *nnodes, int *nedges) {
+static const char FUNC_NAME[] = "MPI_Graphdims_get";
+
+
+int MPI_Graphdims_get(MPI_Comm comm, int *nnodes, int *nedges) 
+{
     int err;
     mca_topo_base_graphdims_get_fn_t func;
 
     /* check the arguments */
     if (MPI_PARAM_CHECK) {
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (MPI_COMM_NULL == comm) {
             return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_COMM,
-                                          "MPI_Graphdims_get");
+                                           FUNC_NAME);
         }
         if (OMPI_COMM_IS_INTER(comm)) {
             return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_COMM,
-                                          "MPI_Graphdims_get");
+                                           FUNC_NAME);
         }
         if (!OMPI_COMM_IS_GRAPH(comm)) {
             return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_TOPOLOGY,
-                                          "MPI_Graphdims_get");
+                                           FUNC_NAME);
         }
         if (NULL == nnodes || NULL == nedges) {
             return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_ARG,
-                                          "MPI_Graphdims_get");
+                                           FUNC_NAME);
         }
     }
     /* get the function pointer to do the right thing */
     func = comm->c_topo->topo_graphdims_get;
     if (NULL == func) {
         return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER, 
-                                     "MPI_Graphdims_get");
+                                      FUNC_NAME);
     }
 
     /* call the function */
     if ( MPI_SUCCESS != 
             (err = func(comm, nnodes, nedges))) {
-        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, err, "MPI_Graphdims_get");
+        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, err, FUNC_NAME);
     }
     
     /* All done */

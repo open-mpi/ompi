@@ -18,7 +18,7 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
-static char FUNC_NAME[] = "MPI_Group_compare";
+static const char FUNC_NAME[] = "MPI_Group_compare";
 
 
 int MPI_Group_compare(MPI_Group group1, MPI_Group group2, int *result) {
@@ -27,7 +27,6 @@ int MPI_Group_compare(MPI_Group group1, MPI_Group group2, int *result) {
     int return_value, proc1, proc2, similar, identical, match ;
     ompi_group_t *group1_pointer, *group2_pointer;
     ompi_proc_t *proc1_pointer, *proc2_pointer;
-
 
     /* initialization */
     return_value=MPI_SUCCESS;

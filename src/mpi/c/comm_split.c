@@ -17,7 +17,7 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
-static char FUNC_NAME[] = "MPI_Comm_split";
+static const char FUNC_NAME[] = "MPI_Comm_split";
 
 
 int MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm) {
@@ -27,17 +27,20 @@ int MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm) {
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
-        if ( comm == MPI_COMM_NULL || ompi_comm_invalid ( comm ))
+        if ( comm == MPI_COMM_NULL || ompi_comm_invalid ( comm )) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
                                           FUNC_NAME);
+        }
 
-        if ( color < 0 &&  MPI_UNDEFINED != color ) 
+        if ( color < 0 &&  MPI_UNDEFINED != color ) {
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, 
                                           FUNC_NAME);
+        }
         
-        if ( NULL == newcomm )
+        if ( NULL == newcomm ) {
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, 
                                           FUNC_NAME);
+        }
     }
     
     rc = ompi_comm_split ( (ompi_communicator_t*)comm, color, key, 

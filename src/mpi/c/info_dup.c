@@ -19,6 +19,9 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
+static const char FUNC_NAME[] = "MPI_Info_dup";
+
+
 /**
  *   MPI_Info_dup - Duplicate an 'MPI_Info' object
  *
@@ -47,25 +50,22 @@ int MPI_Info_dup(MPI_Info info, MPI_Info *newinfo) {
      */
 
     if (MPI_PARAM_CHECK) {
-        if (NULL == info){
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
-                                         "MPI_Info_dup");
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+        if (NULL == info || MPI_INFO_NULL == info || NULL == newinfo) {
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INFO,
+                                          FUNC_NAME);
         }
     }
 
-    err = MPI_Info_create(newinfo);
-    if (MPI_SUCCESS != err) {
-        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, err,
-                                     "MPI_Info_dup");
+    *newinfo = OBJ_NEW(ompi_info_t);
+    if (NULL == *newinfo) {
+        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_NO_MEM,
+                                      FUNC_NAME);
     }
+
     /*
      * Now to actually duplicate all the values
      */
     err = ompi_info_dup (info, newinfo);
-    if (err == MPI_ERR_SYSRESOURCE) {
-        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, err,
-                                     "MPI_Info_dup");
-    }  
-        
-    return MPI_SUCCESS;
+    OMPI_ERRHANDLER_RETURN(err, MPI_COMM_WORLD, err, FUNC_NAME);
 }

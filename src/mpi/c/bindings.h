@@ -26,14 +26,14 @@ extern bool ompi_mpi_param_check;
  */
 #define OMPI_CHECK_DATATYPE_FOR_SEND( RC, DDT, COUNT ) \
 do { \
-   if( (DDT) == MPI_DATATYPE_NULL ) (RC) = MPI_ERR_TYPE; \
+   if( NULL == (DDT) || MPI_DATATYPE_NULL == (DDT) ) (RC) = MPI_ERR_TYPE; \
    else if( (COUNT) < 0 ) (RC) = MPI_ERR_COUNT; \
    else if( !ompi_ddt_is_committed((DDT)) ) (RC) = MPI_ERR_TYPE; \
 } while (0)
 
 #define OMPI_CHECK_DATATYPE_FOR_RECV( RC, DDT, COUNT ) \
 do { \
-   if( (DDT) == MPI_DATATYPE_NULL ) (RC) = MPI_ERR_TYPE; \
+   if( NULL == (DDT) || MPI_DATATYPE_NULL == (DDT) ) (RC) = MPI_ERR_TYPE; \
    else if( (COUNT) < 0 ) (RC) = MPI_ERR_COUNT; \
    else if( !ompi_ddt_is_committed((DDT)) ) (RC) = MPI_ERR_TYPE; \
    else if( ompi_ddt_is_overerlapped((DDT)) ) (RC) = MPI_ERR_TYPE; \
@@ -41,7 +41,7 @@ do { \
 
 #define OMPI_CHECK_DATATYPE_FOR_ONE_SIDED( RC, DDT, COUNT ) \
 do { \
-   if( (DDT) == MPI_DATATYPE_NULL ) (RC) = MPI_ERR_TYPE; \
+   if( NULL == (DDT) || MPI_DATATYPE_NULL == (DDT) ) (RC) = MPI_ERR_TYPE; \
    else if( (COUNT) < 0 ) (RC) = MPI_ERR_COUNT; \
    else if( !ompi_ddt_is_committed((DDT)) ) (RC) = MPI_ERR_TYPE; \
    else if( ompi_ddt_is_overerlapped((DDT)) ) (RC) = MPI_ERR_TYPE; \

@@ -21,7 +21,7 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
-static char FUNC_NAME[] = "MPI_Init";
+static const char FUNC_NAME[] = "MPI_Init";
 
 
 int MPI_Init(int *argc, char ***argv)
@@ -32,6 +32,16 @@ int MPI_Init(int *argc, char ***argv)
   int required = MPI_THREAD_SINGLE;
   MPI_Comm null = NULL;
 
+  /* Ensure that we were not already initialized or finalized */
+
+  if (ompi_mpi_finalized) {
+    /* JMS show_help */
+    return OMPI_ERRHANDLER_INVOKE(null, MPI_ERR_OTHER, FUNC_NAME);
+  } else if (ompi_mpi_initialized) {
+    /* JMS show_help */
+    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER, FUNC_NAME);
+  }
+
   /* check for environment overrides for required thread level.  If
      there is, check to see that it is a valid/supported thread level.
      If not, default to MPI_THREAD_SINGLE. */
@@ -40,7 +50,7 @@ int MPI_Init(int *argc, char ***argv)
     required = atoi(env);
     if (required < MPI_THREAD_SINGLE || required > MPI_THREAD_MULTIPLE) {
       /* JMS show_help */
-      OMPI_ERRHANDLER_INVOKE(null, err, FUNC_NAME);
+      return OMPI_ERRHANDLER_INVOKE(null, err, FUNC_NAME);
     }
   } 
 

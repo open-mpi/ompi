@@ -19,7 +19,7 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
-static char FUNC_NAME[] = "MPI_Add_error_code";
+static const char FUNC_NAME[] = "MPI_Add_error_code";
 
 
 int MPI_Add_error_string(int errorcode, char *string)

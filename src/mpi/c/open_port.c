@@ -18,7 +18,7 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
-static char FUNC_NAME[] = "MPI_Open_port";
+static const char FUNC_NAME[] = "MPI_Open_port";
 
 
 int MPI_Open_port(MPI_Info info, char *port_name) 
@@ -26,9 +26,10 @@ int MPI_Open_port(MPI_Info info, char *port_name)
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME); 
 
-        if ( NULL == port_name )
+        if ( NULL == port_name ) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, 
                                           FUNC_NAME);
+        }
     }
 
     if ( MPI_INFO_NULL != info ) {
@@ -50,5 +51,7 @@ int MPI_Open_port(MPI_Info info, char *port_name)
        memcpy ( port_name, oob-whatever-fcnt, strlen(oob-whatever-fctn));
     */
 
-    return MPI_SUCCESS;
+    /* This function is not yet implemented */
+
+    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER, FUNC_NAME);
 }

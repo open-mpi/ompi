@@ -19,6 +19,9 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
+static const char FUNC_NAME[] = "MPI_Info_get_nkeys";
+
+
 /**
  * MPI_Info_get_nkeys - Returns the number of keys defined on an
  * 'MPI_Info' object
@@ -32,21 +35,22 @@
  * This function returns the number of elements in the list 
  * containing the key-value pairs
  */
-int MPI_Info_get_nkeys(MPI_Info info, int *nkeys) {
+int MPI_Info_get_nkeys(MPI_Info info, int *nkeys) 
+{
     int err;
 
     if (MPI_PARAM_CHECK) {
-        if (NULL == info){
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+        if (NULL == info || MPI_INFO_NULL == info) {
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INFO,
+                                          FUNC_NAME);
+        }
+        if (NULL == nkeys) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
-                                         "MPI_Info_nkeys");
+                                          FUNC_NAME);
         }
     }
+
     err = ompi_info_get_nkeys(info, nkeys);
-
-    /*
-     * check if there are any errors. There does not seem to be any 
-     * error possible in this. But have to look at it again
-     */
-
-    return MPI_SUCCESS;
+    OMPI_ERRHANDLER_RETURN(err, MPI_COMM_WORLD, err, FUNC_NAME);
 }

@@ -19,7 +19,7 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
-static char FUNC_NAME[] = "MPI_Scan";
+static const char FUNC_NAME[] = "MPI_Scan";
 
 
 int MPI_Scan(void *sendbuf, void *recvbuf, int count,

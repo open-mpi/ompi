@@ -17,7 +17,7 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
-static char FUNC_NAME[] = "MPI_Comm_group";
+static const char FUNC_NAME[] = "MPI_Comm_group";
 
 
 int MPI_Comm_group(MPI_Comm comm, MPI_Group *group) {

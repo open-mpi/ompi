@@ -17,12 +17,15 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
+static const char FUNC_NAME[] = "MPI_Errhandler_c2f";
+
 
 MPI_Fint MPI_Errhandler_c2f(MPI_Errhandler errhandler)
 {
   /* Error checking */
 
   if (MPI_PARAM_CHECK) {
+    OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
     if (NULL == errhandler ||
         MPI_ERRHANDLER_NULL == errhandler ||
         OMPI_ERRHANDLER_TYPE_COMM != errhandler->eh_mpi_object_type) {

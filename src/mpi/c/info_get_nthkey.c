@@ -20,6 +20,9 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
+static const char FUNC_NAME[] = "MPI_Info_get_nthkey";
+
+
 /**
  *   MPI_Info_get_nthkey - Get a key indexed by integer from an 'MPI_Info' obje
  *
@@ -30,7 +33,8 @@
  *   @retval MPI_SUCCESS
  *   @retval MPI_ERR_ARG
  */
-int MPI_Info_get_nthkey(MPI_Info info, int n, char *key) {
+int MPI_Info_get_nthkey(MPI_Info info, int n, char *key) 
+{
     int nkeys;
     int err;
 
@@ -40,28 +44,30 @@ int MPI_Info_get_nthkey(MPI_Info info, int n, char *key) {
      * 3. If so, give the nth defined key
      */
     if (MPI_PARAM_CHECK) {
-        if (NULL == info || 0 > n){
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+        if (NULL == info || MPI_INFO_NULL == info) {
+            return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_INFO,
+                                           FUNC_NAME);
+        }
+        if (0 > n) {
             return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_ARG,
-                                          "MPI_Info_get_nthkey");
+                                           FUNC_NAME);
+        }
+        if (NULL == key) {
+            return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_INFO_KEY,
+                                           FUNC_NAME);
         }
     }
 
-    MPI_Info_get_nkeys(info, &nkeys);
-    
+    err = ompi_info_get_nkeys(info, &nkeys);
+    OMPI_ERRHANDLER_CHECK(err, MPI_COMM_WORLD, err, FUNC_NAME);
     if (nkeys < n) {
         return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_INFO_KEY,
-                                      "MPI_Info_get_nthkey");
-
-    } else {
-        /*
-         * Everything seems alright. Call the back end key copy
-         */
-        err = ompi_info_get_nthkey (info, n, key);
+                                       FUNC_NAME);
     }
+    
+    /* Everything seems alright. Call the back end key copy */
 
-    /*
-     * Have to check whether there are any error condditions. It appears
-     * that there are not too many error conditions from the look of it
-     */
-    return MPI_SUCCESS;
+    err = ompi_info_get_nthkey (info, n, key);
+    OMPI_ERRHANDLER_RETURN(err, MPI_COMM_WORLD, err, FUNC_NAME);
 }

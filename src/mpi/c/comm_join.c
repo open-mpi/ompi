@@ -17,7 +17,7 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
-static char FUNC_NAME[] = "MPI_Comm_join";
+static const char FUNC_NAME[] = "MPI_Comm_join";
 
 
 int MPI_Comm_join(int fd, MPI_Comm *intercomm) 
@@ -32,9 +32,10 @@ int MPI_Comm_join(int fd, MPI_Comm *intercomm)
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
-        if ( NULL == intercomm ) 
+        if ( NULL == intercomm ) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, 
                                           FUNC_NAME);
+        }
     }
     
     /* sendrecv OOB-name (port-name) through the socket connection.

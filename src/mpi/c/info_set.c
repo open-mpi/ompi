@@ -21,6 +21,9 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
+static const char FUNC_NAME[] = "MPI_Info_set";
+
+
 /**
  *   MPI_Info_set - Set a (key, value) pair in an 'MPI_Info' object
  *
@@ -42,39 +45,39 @@
  *   key or value is greater than the allowed maxima, MPI_ERR_INFO_KEY
  *   and MPI_ERR_INFO_VALUE are raised
  */
-int MPI_Info_set(MPI_Info info, char *key, char *value) {
+int MPI_Info_set(MPI_Info info, char *key, char *value) 
+{
     int err;
     int key_length;
     int value_length;
 
     /*
      * Error conditions are
-     * 1. MPI_ERR_ARG if
      *          - info is NULL
-     * 2. MPI_ERR_SYSRESOURCE
      *          - No storage space available for the new value
-     * 3. MPI_ERR_INFO_KEY
      *          - Key length exceeded MPI_MAX_KEY_VAL
-     * 3. MPI_ERR_INFO_VAL
      *          - value length exceeded MPI_MAX_KEY_VAL
      */
 
     if (MPI_PARAM_CHECK) {
-        if (NULL == info){
-            return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_ARG,
-                                          "MPI_Info_set");
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+        if (NULL == info || MPI_INFO_NULL == info) {
+            return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_INFO,
+                                           FUNC_NAME);
         }
 
         key_length = (key) ? strlen (key) : 0;
-        if ( (0 == key_length) || (MPI_MAX_INFO_KEY <= key_length)) {
+        if ((NULL == key) || (0 == key_length) ||
+            (MPI_MAX_INFO_KEY <= key_length)) {
             return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_INFO_KEY,
-                                          "MPI_Info_set");
+                                           FUNC_NAME);
         }
 
         value_length = (value) ? strlen (value) : 0;
-        if ( (0 == value_length) || (MPI_MAX_INFO_KEY <= value_length)) {
+        if ((NULL == value) || (0 == value_length) || 
+            (MPI_MAX_INFO_KEY <= value_length)) {
             return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_INFO_VALUE,
-                                          "MPI_Info_set");
+                                           FUNC_NAME);
         }
     }
 
@@ -84,11 +87,5 @@ int MPI_Info_set(MPI_Info info, char *key, char *value) {
      */
     
     err = ompi_info_set (info, key, value);
-
-    if (MPI_ERR_SYSRESOURCE == err) {
-        return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_SYSRESOURCE,
-                                      "MPI_Info_set");
-    }
-    
-    return err;
+    OMPI_ERRHANDLER_RETURN(err, MPI_COMM_WORLD, err, FUNC_NAME);
 }

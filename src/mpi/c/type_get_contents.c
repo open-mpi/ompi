@@ -21,21 +21,26 @@
 
 static const char FUNC_NAME[] = "MPI_Type_get_contents";
 
-int
-MPI_Type_get_contents(MPI_Datatype mtype,
-                      int max_integers,
-                      int max_addresses,
-                      int max_datatypes,
-                      int array_of_integers[],
-                      MPI_Aint array_of_addresses[],
-                      MPI_Datatype array_of_datatypes[])
+
+int MPI_Type_get_contents(MPI_Datatype mtype,
+                          int max_integers,
+                          int max_addresses,
+                          int max_datatypes,
+                          int array_of_integers[],
+                          MPI_Aint array_of_addresses[],
+                          MPI_Datatype array_of_datatypes[])
 {
    int rc;
 
    if( MPI_PARAM_CHECK ) {
-      if( OMPI_MPI_INVALID_STATE ) {
-         OMPI_ERRHANDLER_RETURN( MPI_ERR_INTERN, MPI_COMM_WORLD,
-                                MPI_ERR_INTERN, FUNC_NAME );
+      OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+      if (NULL == mtype || MPI_DATATYPE_NULL == mtype) {
+        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_TYPE,
+                                      FUNC_NAME );
+      } else if (NULL == array_of_integers || NULL == array_of_addresses ||
+                 NULL == array_of_datatypes) {
+        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
+                                      FUNC_NAME );
       }
    }
 
@@ -47,6 +52,9 @@ MPI_Type_get_contents(MPI_Datatype mtype,
                              MPI_ERR_INTERN, FUNC_NAME );
    }
 
-   /* TODO: we have to return a copy of the datatypes not the original datatypes */
-   return MPI_SUCCESS;
+   /* TODO: we have to return a copy of the datatypes not the original
+      datatypes */
+   /* This function is not yet implemented */
+
+   return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INTERN, FUNC_NAME);
 }

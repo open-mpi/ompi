@@ -18,20 +18,23 @@
 #endif
     
 
+static const char FUNC_NAME[] = "MPI_Comm_call_errhandler";
+
+
 int MPI_Comm_call_errhandler(MPI_Comm comm, int errorcode)
 {
   /* Error checking */
 
   if (MPI_PARAM_CHECK) {
-    if (NULL == comm ||
-        MPI_COMM_NULL == comm) {
-      return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
-                                   "MPI_Comm_call_errhandler");
+    OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+    if (ompi_comm_invalid(comm)) {
+      return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM,
+                                    FUNC_NAME);
     }
   }
 
   /* Invoke the errhandler */
 
-  return OMPI_ERRHANDLER_INVOKE(comm, errorcode,
-                               "MPI_Comm_call_errhandler");
+  return OMPI_ERRHANDLER_INVOKE(comm, errorcode, FUNC_NAME);
 }
+

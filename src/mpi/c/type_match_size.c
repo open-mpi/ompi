@@ -21,9 +21,14 @@
 
 static const char FUNC_NAME[] = "MPI_Type_match_size";
 
-int
-MPI_Type_match_size(int typeclass, int size, MPI_Datatype *type)
+
+int MPI_Type_match_size(int typeclass, int size, MPI_Datatype *type)
 {
-   /* TODO */
-   return MPI_SUCCESS;
+  if (MPI_PARAM_CHECK) {
+    OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+  }
+
+  /* This function is not yet implemented */
+
+  return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INTERN, FUNC_NAME);
 }

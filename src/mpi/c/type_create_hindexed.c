@@ -21,28 +21,33 @@
 
 static const char FUNC_NAME[] = "MPI_Type_create_hindexed";
 
-int
-MPI_Type_create_hindexed(int count,
-                         int array_of_blocklengths[],
-                         MPI_Aint array_of_displacements[],
-                         MPI_Datatype oldtype,
-                         MPI_Datatype *newtype)
+
+int MPI_Type_create_hindexed(int count,
+                             int array_of_blocklengths[],
+                             MPI_Aint array_of_displacements[],
+                             MPI_Datatype oldtype,
+                             MPI_Datatype *newtype)
 {
    int rc, i;
 
    if( MPI_PARAM_CHECK ) {
-      if( OMPI_MPI_INVALID_STATE ) {
-         OMPI_ERRHANDLER_RETURN( MPI_ERR_INTERN, MPI_COMM_WORLD,
-                                MPI_ERR_INTERN, FUNC_NAME );
-      }
+      OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
       if( count < 0 ) {
-         OMPI_ERRHANDLER_RETURN( MPI_ERR_COUNT, MPI_COMM_WORLD,
-                                MPI_ERR_COUNT, FUNC_NAME );
+        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COUNT, 
+                                      FUNC_NAME);
+      } else if (NULL == array_of_blocklengths ||
+                 NULL == array_of_displacements) {
+        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, 
+                                      FUNC_NAME);
+      } else if (MPI_DATATYPE_NULL == oldtype || NULL == oldtype ||
+                 NULL == newtype) {
+        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_TYPE,
+                                      FUNC_NAME);
       }
-      for( i = 0; i < count; i++ ) {
-         if(array_of_blocklengths[i] < 0) {
-            OMPI_ERRHANDLER_RETURN( MPI_ERR_ARG, MPI_COMM_WORLD,
-                                   MPI_ERR_ARG, FUNC_NAME );
+      for ( i = 0; i < count; i++ ) {
+         if (array_of_blocklengths[i] < 0) {
+           return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
+                                         FUNC_NAME );
          }
       }
    }

@@ -19,31 +19,35 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
+static const char FUNC_NAME[] = "MPI_Cart_coords";
+
+
 int MPI_Cart_coords(MPI_Comm comm, int rank, int maxdims, int *coords) {
     int err;
     mca_topo_base_cart_coords_fn_t func;
 
     /* check the arguments */
     if (MPI_PARAM_CHECK) {
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (MPI_COMM_NULL == comm) {
             return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_COMM,
-                                          "MPI_Cart_coords");
+                                          FUNC_NAME);
         }
         if (OMPI_COMM_IS_INTER(comm)) { 
             return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_COMM,
-                                          "MPI_Cart_coords");
+                                          FUNC_NAME);
         }
         if (!OMPI_COMM_IS_CART(comm)) {
             return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_TOPOLOGY,
-                                          "MPI_Cart_coords");
+                                          FUNC_NAME);
         }
         if ( (0 > maxdims) || ((0 < maxdims) && (NULL == coords))) {
             return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_ARG,
-                                          "MPI_Cart_coords");
+                                          FUNC_NAME);
         }
         if ((0 > rank) || (rank > ompi_group_size(comm->c_local_group))) {
             return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_RANK,
-                                          "MPI_Cart_coords");
+                                          FUNC_NAME);
         }
     }
 
@@ -51,12 +55,12 @@ int MPI_Cart_coords(MPI_Comm comm, int rank, int maxdims, int *coords) {
     func = comm->c_topo->topo_cart_coords;
     if (NULL == func) {
         return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER, 
-                                     "MPI_Cart_coords");
+                                     FUNC_NAME);
     }
     /* call the function */
     if ( MPI_SUCCESS != 
             (err = func(comm, rank, maxdims, coords))) {
-        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, err, "MPI_Cart_coords");
+        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, err, FUNC_NAME);
     }
 
     /* all done */

@@ -18,7 +18,7 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
-static char FUNC_NAME[] = "MPI_Group_difference";
+static const char FUNC_NAME[] = "MPI_Group_difference";
 
 
 int MPI_Group_difference(MPI_Group group1, MPI_Group group2,

@@ -18,7 +18,17 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
+static const char FUNC_NAME[] = "MPI_Buffer_detach";
+
+
 int MPI_Buffer_detach(void *buffer, int *size) 
 {
-    return mca_pml_base_bsend_detach(buffer, size);
+  if (MPI_PARAM_CHECK) {
+    OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+    if (NULL == buffer || NULL == size || *size < 0) {
+      return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
+    }
+  }
+
+  return mca_pml_base_bsend_detach(buffer, size);
 }

@@ -20,13 +20,20 @@
 
 static const char FUNC_NAME[] = "MPI_Type_size";
 
-int
-MPI_Type_size(MPI_Datatype type, int *size)
+
+int MPI_Type_size(MPI_Datatype type, int *size)
 {
-    if( type == MPI_DATATYPE_NULL ) {
-        OMPI_ERRHANDLER_RETURN( MPI_ERR_TYPE, MPI_COMM_WORLD,
-                               MPI_ERR_TYPE, FUNC_NAME );
-	}
-    *size = type->size;
-    return MPI_SUCCESS;
+  if (MPI_PARAM_CHECK) {
+    OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+    if (NULL == type || MPI_DATATYPE_NULL == type) {
+      return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_TYPE, FUNC_NAME);
+    } else if (NULL == size) {
+      return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
+    }
+  }
+
+  /* Simple */
+
+  *size = type->size;
+  return MPI_SUCCESS;
 }

@@ -6,6 +6,8 @@
 
 #include "mpi.h"
 #include "mpi/c/bindings.h"
+#include "communicator/communicator.h"
+#include "errhandler/errhandler.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_File_read_at_all = PMPI_File_read_at_all
@@ -15,8 +17,18 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
+static const char FUNC_NAME[] = "MPI_File_read_at_all";
+
+
 int MPI_File_read_at_all(MPI_File fh, MPI_Offset offset, void *buf,
-		                 int count, MPI_Datatype datatype, 
-						 MPI_Status *status) {
-    return MPI_SUCCESS;
+                         int count, MPI_Datatype datatype, 
+                         MPI_Status *status)
+{
+  if (MPI_PARAM_CHECK) {
+    OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+  }
+
+  /* This function is not yet implemented */
+
+  return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INTERN, FUNC_NAME);
 }

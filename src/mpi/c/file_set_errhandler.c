@@ -18,19 +18,23 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
-int MPI_File_set_errhandler( MPI_File file, MPI_Errhandler errhandler) {
+static const char FUNC_NAME[] = "MPI_File_set_errhandler";
+
+
+int MPI_File_set_errhandler( MPI_File file, MPI_Errhandler errhandler) 
+{
   /* Error checking */
 
   if (MPI_PARAM_CHECK) {
+    OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
     if (NULL == file || 
         MPI_FILE_NULL == file) {
-      return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
-                                   "MPI_File_set_errhandler");
+      return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_FILE,
+                                    FUNC_NAME);
     } else if (NULL == errhandler ||
                MPI_ERRHANDLER_NULL == errhandler ||
                OMPI_ERRHANDLER_TYPE_FILE != errhandler->eh_mpi_object_type) {
-      return OMPI_ERRHANDLER_INVOKE(file, MPI_ERR_ARG,
-                               "MPI_File_set_errhandler");
+      return OMPI_ERRHANDLER_INVOKE(file, MPI_ERR_ARG, FUNC_NAME);
     }
   }
 
@@ -44,5 +48,6 @@ int MPI_File_set_errhandler( MPI_File file, MPI_Errhandler errhandler) {
   OBJ_RETAIN(file->error_handler);
 
   /* All done */
+
   return MPI_SUCCESS;
 }

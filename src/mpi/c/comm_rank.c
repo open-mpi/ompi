@@ -17,7 +17,7 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
-static char FUNC_NAME[] = "MPI_Comm_rank";
+static const char FUNC_NAME[] = "MPI_Comm_rank";
 
 
 int MPI_Comm_rank(MPI_Comm comm, int *rank) 

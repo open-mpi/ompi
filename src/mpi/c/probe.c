@@ -17,6 +17,9 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
+static const char FUNC_NAME[] = "MPI_Probe";
+
+
 int MPI_Probe(int source, int tag, MPI_Comm comm, MPI_Status *status) 
 {
     int rc;
@@ -29,12 +32,11 @@ int MPI_Probe(int source, int tag, MPI_Comm comm, MPI_Status *status)
         }
         return MPI_SUCCESS;
     }
-                                                                                                                  
+
     if ( MPI_PARAM_CHECK ) {
         rc = MPI_SUCCESS;
-        if ( OMPI_MPI_INVALID_STATE ) {
-            rc = MPI_ERR_INTERN;
-        } else if (tag < 0 || tag > MPI_TAG_UB_VALUE) {
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+        if (tag < 0 || tag > MPI_TAG_UB_VALUE) {
             rc = MPI_ERR_TAG;
         } else if (ompi_comm_invalid(comm)) {
             rc = MPI_ERR_COMM;
@@ -43,8 +45,7 @@ int MPI_Probe(int source, int tag, MPI_Comm comm, MPI_Status *status)
         }
         OMPI_ERRHANDLER_CHECK(rc, comm, rc, "MPI_Probe");
     }
-                                                                                                                  
+
     rc = mca_pml.pml_probe(source, tag, comm, status);
     OMPI_ERRHANDLER_RETURN(rc, comm, rc, "MPI_Probe");
 }
-

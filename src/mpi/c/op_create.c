@@ -18,7 +18,7 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
-static char FUNC_NAME[] = "MPI_Op_create";
+static const char FUNC_NAME[] = "MPI_Op_create";
 
 
 int MPI_Op_create(MPI_User_function *function, int commute,
@@ -30,10 +30,10 @@ int MPI_Op_create(MPI_User_function *function, int commute,
 
   if (MPI_PARAM_CHECK) {
     OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-    if (NULL == function || 
-        NULL == op) {
-      return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
-                                    FUNC_NAME);
+    if (NULL == op) {
+      return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OP, FUNC_NAME);
+    } else if (NULL == function) {
+      return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
     }
   }
 
@@ -44,7 +44,5 @@ int MPI_Op_create(MPI_User_function *function, int commute,
   if (NULL == *op) {
     err = MPI_ERR_INTERN;
   }
-
-  OMPI_ERRHANDLER_RETURN(err, MPI_COMM_WORLD, MPI_ERR_INTERN,
-                         FUNC_NAME);
+  OMPI_ERRHANDLER_RETURN(err, MPI_COMM_WORLD, MPI_ERR_INTERN, FUNC_NAME);
 }

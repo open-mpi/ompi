@@ -19,7 +19,7 @@
 
 #define INTERCOMM_MERGE_TAG 1010
 
-static char FUNC_NAME[] = "MPI_Intercomm_merge";
+static const char FUNC_NAME[] = "MPI_Intercomm_merge";
 
 
 int MPI_Intercomm_merge(MPI_Comm intercomm, int high,

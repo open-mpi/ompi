@@ -21,6 +21,9 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
+static const char FUNC_NAME[] = "MPI_Info_delete";
+
+
 /**
  * Delete a (key,value) pair from "info"
  *
@@ -39,23 +42,20 @@ int MPI_Info_delete(MPI_Info info, char *key) {
      * This function merely deletes the (key,val) pair in info
      */
     if (MPI_PARAM_CHECK) {
-        if (NULL == info || NULL == key){
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
-                                         "MPI_Info_delete");
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+        if (NULL == info || MPI_INFO_NULL == info) {
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INFO,
+                                          FUNC_NAME);
+        }
+
+        key_length = (key) ? strlen (key) : 0;
+        if ((NULL == key) || (0 == key_length) ||
+            (MPI_MAX_INFO_KEY <= key_length)) {
+          return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INFO_KEY,
+                                        FUNC_NAME);
         }
     }
 
-    key_length = (key) ? strlen (key) : 0;
-    if ( (0 == key_length) || (MPI_MAX_INFO_KEY <= key_length)) {
-        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INFO_KEY,
-                                     "MPI_Info_delete");
-    }
-
     err = ompi_info_delete (info, key);
-
-    if (MPI_ERR_INFO_NOKEY == err) {
-        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INFO_NOKEY,
-                                     "MPI_Info_delete");
-    }
-    return err;
+    OMPI_ERRHANDLER_RETURN(err, MPI_COMM_WORLD, err, FUNC_NAME);
 }

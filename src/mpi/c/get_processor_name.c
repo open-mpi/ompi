@@ -10,6 +10,7 @@
 #include "mpi/c/bindings.h"
 #include "runtime/runtime.h"
 #include "communicator/communicator.h"
+#include "errhandler/errhandler.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Get_processor_name = PMPI_Get_processor_name
@@ -19,21 +20,24 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
+static const char FUNC_NAME[] = "MPI_Get_processor_name";
+
+
 int MPI_Get_processor_name(char *name, int *resultlen) 
 {
     char tmp[MPI_MAX_PROCESSOR_NAME];
     int len;
 
     if ( MPI_PARAM_CHECK) {
-        if ( ompi_mpi_finalized )
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INTERN, 
-                                          "MPI_Get_processor_name");
-        if ( NULL == name  )
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+        if ( NULL == name  ) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, 
-                                         "MPI_Get_processor_name");
-        if ( NULL == resultlen  )
+                                          FUNC_NAME);
+        }
+        if ( NULL == resultlen  ) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, 
-                                         "MPI_Get_processor_name");
+                                          FUNC_NAME);
+        }
     }
     
     /* A simple implementation of this function using gethostname*/
