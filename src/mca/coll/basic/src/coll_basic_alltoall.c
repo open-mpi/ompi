@@ -189,27 +189,22 @@ int mca_coll_basic_alltoall_inter(void *sbuf, int scount,
 
     /* Post all receives first */
     for (i = 0; i < size;  i++, ++rreq) {
-	err = mca_pml.pml_irecv_init(prcv + (i * rcvinc), rcount, rdtype, i,
+	err = mca_pml.pml_irecv(prcv + (i * rcvinc), rcount, rdtype, i,
 				     MCA_COLL_BASE_TAG_ALLTOALL, comm, rreq);
-	if (MPI_SUCCESS != err) {
-            mca_coll_basic_free_reqs(req, rreq - req);
+	if (OMPI_SUCCESS != err) {
             return err;
 	}
     }
 
     /* Now post all sends */
     for (i = 0; i < size; i++, ++sreq) {
-	err = mca_pml.pml_isend_init(psnd + (i * sndinc), scount, sdtype, i,
-                                     MCA_COLL_BASE_TAG_ALLTOALL, 
-                                     MCA_PML_BASE_SEND_STANDARD, comm, sreq);
-	if (MPI_SUCCESS != err) {
-            mca_coll_basic_free_reqs(req, sreq - req);
+	err = mca_pml.pml_isend(psnd + (i * sndinc), scount, sdtype, i,
+                                MCA_COLL_BASE_TAG_ALLTOALL, 
+                                MCA_PML_BASE_SEND_STANDARD, comm, sreq);
+	if (OMPI_SUCCESS != err) {
             return err;
 	}
     }
-
-    /* Start your engines.  This will never return an error. */
-    mca_pml.pml_start(nreqs, req);
 
     /* Wait for them all.  If there's an error, note that we don't
        care what the error was -- just that there *was* an error.  The
@@ -218,9 +213,6 @@ int mca_coll_basic_alltoall_inter(void *sbuf, int scount,
        So free them anyway -- even if there was an error, and return
        the error after we free everything. */
     err = mca_pml.pml_wait_all(nreqs, req, MPI_STATUSES_IGNORE);
-
-    /* Free the reqs */
-    mca_coll_basic_free_reqs(req, nreqs);
 
     /* All done */
     return err;

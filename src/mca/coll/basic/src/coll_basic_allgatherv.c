@@ -59,20 +59,22 @@ int mca_coll_basic_allgatherv_inter(void *sbuf, int scount,
                                     struct ompi_communicator_t *comm)
 {
     int size, rsize;
-    int err;
+    int err, i;
     int *scounts=NULL;
     int *sdisps=NULL;
     
     rsize = ompi_comm_remote_size (comm);
     size  = ompi_comm_size (comm);
 
-    scounts = (int *) calloc (rsize, sizeof(int) );
+    scounts = (int *) malloc (rsize * sizeof(int) );
     sdisps  = (int *) calloc (rsize, sizeof(int));
     if ( NULL == scounts || NULL == sdisps ) {
         return err;
     }
     
-    scounts[0] = scount;    
+    for ( i=0; i<rsize; i++) {
+        scounts[i] = scount;    
+    }
 
     err = comm->c_coll.coll_alltoallv (sbuf, scounts, sdisps, sdtype,
                                        rbuf, rcounts, disps, rdtype,
