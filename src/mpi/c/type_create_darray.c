@@ -16,6 +16,7 @@
 
 #include "mpi.h"
 #include "mpi/c/bindings.h"
+#include "datatype/datatype.h"
 #include "communicator/communicator.h"
 #include "errhandler/errhandler.h"
 
@@ -42,11 +43,57 @@ int MPI_Type_create_darray(int size,
                            MPI_Datatype *newtype)
 
 {
-  if (MPI_PARAM_CHECK) {
-    OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-  }
+    int32_t i;
 
-  /* This function is not yet implemented */
+    if (MPI_PARAM_CHECK) {
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+        if( (rank < 0) || (size < 0) || (rank >= size) ) {
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
+        } else if( ndims < 0 ) {
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COUNT, FUNC_NAME);
+        } else if( (NULL == gsize_array) || (NULL == distrib_array) || (NULL == darg_array) || (NULL == psize_array)) {
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
+        } else if (NULL == newtype) {
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_TYPE, FUNC_NAME);
+        } else if( !(DT_FLAG_DATA & oldtype ->flags) ) {
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_TYPE, FUNC_NAME);
+        } else if( (MPI_ORDER_C != order) && (MPI_ORDER_FORTRAN != order) ) {
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
+        }
+        for( i = 0; i < ndims; i++ ) {
+            if( (MPI_DISTRIBUTE_BLOCK != distrib_array[i]) && (MPI_DISTRIBUTE_CYCLIC != distrib_array[i]) &&
+                (MPI_DISTRIBUTE_NONE != distrib_array[i]) ) {
+                return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
+            } else if( (gsize_array[i] < 1) || (darg_array[i] < 0) || (psize_array[i] < 0) ) {
+                return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
+            } else if( (MPI_DISTRIBUTE_DFLT_DARG != darg_array[i]) && (MPI_DISTRIBUTE_BLOCK == distrib_array[i]) &&
+                       ((darg_array[i] * psize_array[i]) < gsize_array[i]) ) {
+                return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
+            }
+        }
+    }
+    if( ndims < 1 ) {
+        *newtype = &ompi_mpi_datatype_null;
+        return MPI_SUCCESS;
+    }
 
-  return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER, FUNC_NAME);
+    /* This function is not yet implemented */
+
+    {
+        int* a_i[8];
+
+        a_i[0] = &size;
+        a_i[1] = &rank;
+        a_i[2] = &ndims;
+        a_i[3] = gsize_array;
+        a_i[4] = distrib_array;
+        a_i[5] = darg_array;
+        a_i[6] = psize_array;
+        a_i[7] = &order;
+
+        ompi_ddt_set_args( *newtype, 4 * ndims + 4, a_i, 0, NULL, 1, &oldtype,
+                           MPI_COMBINER_DARRAY );
+    }
+
+    return MPI_SUCCESS;
 }

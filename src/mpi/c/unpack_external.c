@@ -12,7 +12,6 @@
  * $HEADER$
  */
 #include "ompi_config.h"
-#include <stdio.h>
 
 #include "mpi.h"
 #include "mpi/c/bindings.h"
