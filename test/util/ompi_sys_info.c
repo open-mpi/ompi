@@ -51,6 +51,7 @@ static bool test1(void)
         return(false);
 
     if (ompi_system_info.sysname == NULL ||
+        ompi_system_info.pid <= 0 ||
         ompi_system_info.nodename == NULL ||
         ompi_system_info.release == NULL ||
         ompi_system_info.version == NULL ||
