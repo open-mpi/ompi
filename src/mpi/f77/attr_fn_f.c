@@ -148,6 +148,29 @@ OMPI_GENERATE_F77_BINDINGS( MPI_WIN_DUP_FN,
                             (window, win_keyval, extra_state, attribute_val_in, attribute_val_out, flag, ierr) )
 #endif
 
+/*
+ * Note that in this file, we invoke OMPI_C_<function> rather than
+ * <function>, where <function> is MPI_DUP_FN (and all the rest).
+ * Specifically:
+ * 
+ *   MPI_NULL_DELETE_FN -> OMPI_C_MPI_NULL_DELETE_FN
+ *   MPI_NULL_COPY_FN -> OMPI_C_MPI_NULL_COPY_FN
+ *   MPI_DUP_FN -> OMPI_C_MPI_DUP_FN
+ *
+ *   MPI_TYPE_NULL_DELETE_FN -> OMPI_C_MPI_TYPE_NULL_DELETE_FN
+ *   MPI_TYPE_NULL_COPY_FN -> OMPI_C_MPI_TYPE_NULL_COPY_FN
+ *   MPI_TYPE_DUP_FN -> OMPI_C_MPI_TYPE_DUP_FN
+ *
+ *   MPI_COMM_NULL_DELETE_FN -> OMPI_C_MPI_COMM_NULL_DELETE_FN
+ *   MPI_COMM_NULL_COPY_FN -> OMPI_C_MPI_COMM_NULL_COPY_FN
+ *   MPI_COMM_DUP_FN -> OMPI_C_MPI_COMM_DUP_FN
+ *
+ *   MPI_WIN_NULL_DELETE_FN -> OMPI_C_MPI_WIN_NULL_DELETE_FN
+ *   MPI_WIN_NULL_COPY_FN -> OMPI_C_MPI_WIN_NULL_COPY_FN
+ *   MPI_WIN_DUP_FN -> OMPI_C_MPI_WIN_DUP_FN
+ *
+ * The reason why is discussed in a lengthy comment in mpi.h.
+ */
 void mpi_type_null_delete_fn_f( MPI_Fint* type, int* type_keyval,
                                 void* attribute_val_out, int* flag, int* ierr )
 {
