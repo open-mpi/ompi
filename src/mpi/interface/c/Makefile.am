@@ -5,10 +5,19 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-# JMS: Need more stuff here:
-# - Do we want a separate compile for profiling (affects SUBDIRS and LIBADD)
+# If the user selected --disable-profiling, then we don't traverse
+# into the profile directory.
 
-SUBDIRS			= profile
+if COMPILE_PROFILING_SEPARATELY
+profile_dir		= profile
+profile_lib		= profile/libmpi_c_profile.la
+else
+profile_dir		=
+profile_lib		=
+endif
+
+SUBDIRS			= $(profile_dir)
+DIST_SUBDIRS		= profile
 
 lib_LTLIBRARIES		= libmpi_c.la
 
@@ -16,5 +25,6 @@ libmpi_c_la_SOURCES	= \
 			comm_get_name.c \
 			comm_set_name.c \
 			datatype_get_name.c \
-			datatype_set_name.c
-libmpi_c_la_LIBADD	= profile/libmpi_c_profile.la
+			datatype_set_name.c \
+			profiling.h
+libmpi_c_la_LIBADD	= $(profile_lib)
