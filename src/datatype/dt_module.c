@@ -75,6 +75,7 @@ ompi_datatype_t basicDatatypes[DT_MAX_PREDEFINED] = {
     INIT_BASIC_TYPE( DT_WCHAR, WCHAR ),
     INIT_BASIC_TYPE( DT_2COMPLEX, 2COMPLEX ),
     INIT_BASIC_TYPE( DT_2DOUBLE_COMPLEX, 2DOUBLE_COMPLEX ),
+    INIT_BASIC_DATA( int, OMPI_ALIGNMENT_INT, CXX_BOOL ),
     INIT_BASIC_TYPE( DT_UNAVAILABLE, UNAVAILABLE )
 };
 
@@ -116,7 +117,7 @@ ompi_datatype_t* ompi_mpi_unsigned_long_long = basicDatatypes + DT_UNSIGNED_LONG
 ompi_datatype_t* ompi_mpi_cxx_cplex = basicDatatypes + DT_COMPLEX_FLOAT;
 ompi_datatype_t* ompi_mpi_cxx_dblcplex = basicDatatypes + DT_COMPLEX_DOUBLE;
 ompi_datatype_t* ompi_mpi_cxx_ldblcplex = basicDatatypes + DT_COMPLEX_LONG_DOUBLE;
-ompi_datatype_t* ompi_mpi_cxx_bool;
+ompi_datatype_t* ompi_mpi_cxx_bool = basicDatatypes + DT_CXX_BOOL;
 ompi_datatype_t* ompi_mpi_2cplex = basicDatatypes + DT_2COMPLEX;
 ompi_datatype_t* ompi_mpi_2dblcplex = basicDatatypes + DT_2DOUBLE_COMPLEX;
 
