@@ -153,7 +153,6 @@ mca_ptl_elan_alloc_send_desc (struct mca_ptl_base_module_t *ptl_ptr,
     }
     desc = (mca_ptl_elan_send_frag_t *) item; 
     desc->desc->req = sendreq;
-
     desc->desc->desc_type = desc_type;
 
     END_FUNC(PTL_ELAN_DEBUG_NONE);
@@ -176,13 +175,15 @@ mca_ptl_elan_send_desc_done (
     mca_ptl_base_header_t *header;
  
     START_FUNC(PTL_ELAN_DEBUG_SEND);
+
     ptl = ((ompi_ptl_elan_qdma_desc_t *)desc->desc)->ptl;
     header = &desc->frag_base.frag_header;
 
-    LOG_PRINT(PTL_ELAN_DEBUG_ACK,
-	"list %p length %d\n",
-	&ptl->queue->tx_desc_free,
-	ptl->queue->tx_desc_free.super.ompi_list_length);
+    LOG_PRINT(PTL_ELAN_DEBUG_MAC,
+	    "[comp send] type %d flag %d size %d\n",
+	    header->hdr_common.hdr_type,
+	    header->hdr_common.hdr_flags,
+	    header->hdr_common.hdr_size);
 
     if(NULL == req) { /* An ack descriptor */
 	OMPI_FREE_LIST_RETURN (&ptl->queue->tx_desc_free,
@@ -240,22 +241,23 @@ mca_ptl_elan_send_desc_done (
 #else
     else  {
 
-    /* XXX: need to discuss this with TSW.
-     * There is a little confusion here. 
-     * Why the release of this send fragment is dependent 
-     * on the receiving of an acknowledgement 
-     * There are two drawbacks,
-     * a) Send fragment is not immediately return the free pool
-     * b) Some list is needed to hold on this fragment and
-     *    later on find an time slot to process it.
-     * c) If ever local completion happens later then the receive
-     *    of the acknowledgement. The following will happen
-     *    1) The receiving of an acknoledgement can not immediatly
-     *    trigger the scheduling the followup fragment since it
-     *    is dependent on the send fragment to complete.
-     *    2) Later, the local send completeion cannot trigger 
-     *       the start of following fragments. As the logic is not there.
-     */
+	/* XXX: need to discuss this with TSW.
+	 * There is a little confusion here. 
+	 * Why the release of this send fragment is dependent 
+	 * on the receiving of an acknowledgement 
+	 * There are two drawbacks,
+	 * a) Send fragment is not immediately return the free pool
+	 * b) Some list is needed to hold on this fragment and
+	 *    later on find an time slot to process it.
+	 * c) If ever local completion happens later then the receive
+	 *    of the acknowledgement. The following will happen
+	 *    1) The receiving of an acknoledgement can not immediatly
+	 *    trigger the scheduling the followup fragment since it
+	 *    is dependent on the send fragment to complete.
+	 *    2) Later, the local send completeion cannot trigger 
+	 *       the start of following fragments. As the logic is not there.
+	 */
+
 	if(fetchNset (&desc->frag_progressed, 1) == 0) {
 	    ptl->super.ptl_send_progress(ptl, req, 
 		    header->hdr_frag.hdr_frag_length);

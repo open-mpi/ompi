@@ -23,9 +23,9 @@ ompi_mca_ptl_elan_setup (mca_ptl_elan_state_t * ems)
 
     rail_count = ems->elan_nrails;
     emp = ems->elan_component;
-    emp->elan_num_ptl_modules = 0;
-    emp->elan_ptl_modules = malloc (rail_count * sizeof (mca_ptl_elan_module_t *));
-    if (NULL == emp->elan_ptl_modules) {
+    emp->num_modules = 0;
+    emp->modules = malloc (rail_count * sizeof (mca_ptl_elan_module_t *));
+    if (NULL == emp->modules) {
         ompi_output (0,
                      "[%s:%d] error in malloc for ptl references \n",
                      __FILE__, __LINE__);
@@ -46,29 +46,30 @@ ompi_mca_ptl_elan_setup (mca_ptl_elan_state_t * ems)
         }
 
         memcpy (ptl, &mca_ptl_elan_module, sizeof (mca_ptl_elan_module));
-        emp->elan_ptl_modules[emp->elan_num_ptl_modules] = ptl;
+        emp->modules[emp->num_modules] = ptl;
 
         /* MCA related structures */
 
-        ptl->ptl_ni_local = emp->elan_num_ptl_modules;
+        ptl->ptl_ni_local = emp->num_modules;
         ptl->ptl_ni_total = rail_count;
 
         /* allow user to specify per rail bandwidth and latency */
-        sprintf (param, "bandwidth_elanrail%d", emp->elan_num_ptl_modules);
+        sprintf (param, "bandwidth_elanrail%d", emp->num_modules);
         ptl->super.ptl_bandwidth =
             mca_ptl_elan_param_register_int (param, 1000);
-        sprintf (param, "latency_elanrail%d", emp->elan_num_ptl_modules);
-
+        sprintf (param, "latency_elanrail%d", emp->num_modules);
         ptl->super.ptl_latency =
             mca_ptl_elan_param_register_int (param, 1);
 
         /* Setup elan related structures such as ctx, rail */
-        ptl->ptl_elan_rail = ems->elan_rail[emp->elan_num_ptl_modules];
-        ptl->ptl_elan_ctx  = ems->elan_rail[emp->elan_num_ptl_modules]->rail_ctx;
-        ptl->elan_vp = ems->elan_vp;
+        ptl->ptl_elan_rail = ems->elan_rail[emp->num_modules];
+        ptl->ptl_elan_ctx  = ems->elan_rail[emp->num_modules]->rail_ctx;
+        ptl->elan_vp  = ems->elan_vp;
         ptl->elan_nvp = ems->elan_nvp;
-        emp->elan_num_ptl_modules++;
-    } while (emp->elan_num_ptl_modules < rail_count);
+	OBJ_CONSTRUCT (&ptl->recv_frags, ompi_list_t);
+	OBJ_CONSTRUCT (&ptl->send_frags, ompi_list_t);
+        emp->num_modules++;
+    } while (emp->num_modules < rail_count);
 
     /* Allocating all the communication strcutures for PTL's, */
     if (OMPI_SUCCESS != ompi_init_elan_qdma (emp, rail_count)) {
@@ -238,7 +239,16 @@ static void
 ompi_module_elan_close_ptls (mca_ptl_elan_component_t * emp,
                              int num_rails)
 {
+    int i;
+    struct mca_ptl_elan_module_t *ptl; 
+
     /* FIXME: find the ones that are still there and free them */
+    for (i = 0; i < num_rails; i ++ ) {
+	ptl = emp->modules[i];
+	if (NULL == ptl) continue;
+	OBJ_DESTRUCT (&(ptl->recv_frags));
+	OBJ_DESTRUCT (&(ptl->send_frags));
+    }
 }
 
 static void
