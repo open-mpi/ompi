@@ -13,6 +13,8 @@ noinst_LTLIBRARIES = libruntime.la
 
 headers = \
 	runtime.h \
+        universe_connect.h \
+        universe_init.h \
 	ompi_progress.h
 
 libruntime_la_SOURCES = \
@@ -20,6 +22,8 @@ libruntime_la_SOURCES = \
         ompi_abort.c \
         ompi_finalize.c \
         ompi_init.c \
+        universe_connect.c \
+        universe_init.c \
         ompi_mpi_init.c \
         ompi_mpi_finalize.c \
 	ompi_progress.c \
