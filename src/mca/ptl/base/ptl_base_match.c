@@ -169,10 +169,10 @@ bool mca_ptl_base_match(
 }
 
 /**
- * Upper level routine for matching a recieved message header to posted
+ * Upper level routine for matching a received message header to posted
  * receives.
  *
- * @param frag_header Matching data from recived fragment (IN)
+ * @param frag_header Matching data from received fragment (IN)
  *
  * @param pml_comm Pointer to the communicator structure used for
  * matching purposes. (IN)
