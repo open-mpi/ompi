@@ -1,0 +1,118 @@
+Overview
+========
+
+This file is here for those who are building/exploring LAM/MPI in its
+source code form, most likely through a developer's tree (i.e., a CVS
+checkout).
+
+
+Use of GNU Autoconf, Automake, and Libtool
+==========================================
+
+If you are building LAM/MPI from a developer's tree, you must first
+use fairly recent versions of the GNU tools Autoconf, Automake, and
+Libtool.  As of this writing, you need at least Autoconf v2.58,
+Automake v1.6, and Libtool 1.5.  You can check what versions you have
+installed with the following:
+
+shell$ autoconf --version
+shell$ automake --version
+shell$ libtool --version
+
+If you need newer versions, you are *strongly* encouraged to heed the
+following advice:
+
+1. Unless your OS distribution has easy-to-use binary installations,
+   the sources can be can be downloaded from:
+
+        ftp://ftp.gnu.org/gnu/autoconf/
+        ftp://ftp.gnu.org/gnu/automake/
+        ftp://ftp.gnu.org/gnu/libtool/
+
+2. Build and install the tools in the following order:
+
+   2a. Autoconf
+   2b. Automake
+   2c. Libtool
+
+3. You MUST install all three tools into the same prefix directory.
+   These three tools are somewhat inter-related, and if they're going
+   to be used together, they MUST share a common installation prefix.
+
+   3a. It is *strongly* encouraged that you do not install your new
+       versions over the OS-installed versions.  This could cause
+       other things on your system to break.  Instead, install into
+       $HOME/local, or /usr/local, or wherever else you tend to
+       install "local" kinds of software.
+   3b. In doing so, be sure to prefix your $path with the directory
+       where they are installed.  For example, if you install into
+       $HOME/local, you may want to edit your shell startup file
+       (.bashrc, .cshrc, .tcshrc, etc.) to have something like:
+
+          # For bash/sh:
+          export PATH=$HOME/local/bin:$PATH
+          # For csh/tcsh:
+          set path = ($HOME/local/bin $path)
+
+   3c. Ensure to set your $path *BEFORE* you configure/build/install
+       the three packages.
+
+4. All three packages require two simple commands to build and
+   install (where PREFIX is the prefix discussed in 3, above).
+
+      shell$ cd autoconf-2.58
+      shell$ ./configure --prefix=PREFIX
+      shell$ make all install
+
+      --> if on csh or tcsh, run the "rehash" command
+
+      shell$ cd ../automake-1.6
+      shell$ ./configure --prefix=PREFIX
+      shell$ make all install
+
+      shell$ cd ../libtool-1.5
+      shell$ ./configure --prefix=PREFIX
+      shell$ make all install
+
+      --> if on csh or tcsh, run the "rehash" command
+
+   Autoconf and Automake build and install very quickly; Libtool will
+   take a minute or two.
+
+5. You can now run LAM's top-level "autogen.sh" script.  This script
+   will invoke the GNU Autoconf, Automake, and Libtool commands in the
+   proper order and setup to run LAM's top-level "configure" script.
+
+   Running autogen.sh typically takes several minutes.  It's not very
+   exciting to watch.  :-)
+
+   5a. You generally need to run autogen.sh whenever the file
+       "configure.ac" changes, or any files in the config/ directory
+       change (the config/ directory is where a lot of "include" files
+       for LAM's configure script live).
+
+   5b. You do *NOT* need to re-run autogen.sh if you modify a
+       Makefile.am.
+
+   5c. Note that "autogen.sh" automatically traverses the entire LAM
+       tree, running the GNU tools in all MCA modules.  This is not
+       always necessary.  As you become more familiar with the LAM
+       sources, you will come to understand the when you only need to
+       re-generate the top-level configure script, and when you need
+       to re-generate *all* configure scripts (it's complicated -- not
+       described here -- when in doubt, do them all).
+
+       If you only need to re-generate the top-level configure script,
+       you can run:
+
+          shell$ autogen.sh -l
+
+       (i.e., "local" mode) which will prevent autogen.sh from
+       traversing all the MCA modules.
+
+   5d. Similarly, if you only need to regenerate the configure script
+       in a since MCA module directory, cd into that module's
+       directory and run autogen.sh in there directly.
+
+          shell$ cd src/mca/mpi/pml/teg
+          shell$ ../../../../../autogen.sh
