@@ -39,5 +39,7 @@ libutil_la_SOURCES = \
 	lam_log.c \
 	lam_log.h \
 	malloc.h \
-	reactor.c 
-	reactor.h
+	reactor.c \
+	reactor.h \
+	strncpy.c \
+	strncpy.h
