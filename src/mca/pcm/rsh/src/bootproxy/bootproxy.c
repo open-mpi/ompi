@@ -7,7 +7,9 @@
 #include "util/cmd_line.h"
 #include "mca/base/base.h"
 #include "mca/pcm/rsh/src/pcm_rsh.h"
+#if 0
 #include "mca/pcm/base/pcm_base_pack_unpack.h"
+#endif
 
 /* Timeout for socket listens */
 
@@ -25,12 +27,12 @@ FILE *debug;
 
 
 /* Global static variables */
-
+#if 0
 static int *vpid_success;
 static int cmd_argc;
 static char **cmd_argv;
 static ompi_value_array_t *hostmap;
-
+#endif
 /**
  * Bootproxy is a relay proxy for rsh PCM purposes. It will start on
  * each remot e node where processes needs to be launched before any
@@ -47,6 +49,8 @@ static ompi_value_array_t *hostmap;
  */
 int main(int argc, char *argv[])
 {
+    return 0;
+#if 0
     int ret;
     int sockfd, peer_port;
     char *peer_address;
@@ -358,4 +362,5 @@ int main(int argc, char *argv[])
     fprintf(debug, "All done in bootproxy - over and out \n");
     fflush(debug);
     return 0;
+#endif
 } 
