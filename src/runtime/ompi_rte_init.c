@@ -320,10 +320,7 @@ int ompi_rte_init(ompi_cmd_line_t *cmd_line, bool *allow_multi_user_threads, boo
     }
 
     if (NULL != ompi_rte_get_self()) {  /* name set in environment - nonsingleton - record name */
-	ompi_output(0, "got name from environment");
 	ompi_process_info.name = ompi_rte_get_self();
-    } else {
-	ompi_output(0, "did NOT get name from environment");
     }
 
     /*****    SET MY NAME IF NOT ALREADY PROVIDED IN ENVIRONMENT   *****/
