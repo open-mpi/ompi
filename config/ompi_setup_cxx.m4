@@ -27,6 +27,32 @@ BASECXX="`basename $CXX`"
 CXXFLAGS="$ompi_cxxflags_save"
 AC_DEFINE_UNQUOTED(OMPI_CXX, "$CXX", [OMPI underlying C++ compiler])
 
+# Check for compilers that impersonate g++
+
+AC_MSG_CHECKING([for compilers that impersonate g++])
+msg=
+TRULY_GXX=$GXX
+if test "$GXX" = "yes"; then
+    AC_TRY_COMPILE([], [
+int i = 3;
+#if __INTEL_COMPILER
+#error Yes, I am lying about being g++.
+#endif
+], [], [msg=intel])
+
+    # If we made it through unscathed, then it really is g++   
+    if test -z "$msg"; then
+        TRULY_GXX=yes
+    else
+        TRULY_GXX=no
+    fi
+else
+    # We never thought that this was GXX to begin with
+    msg=not applicable
+    TRULY_GXX=no
+fi
+AC_MSG_RESULT([$msg])
+
 # Do we want debugging?
 
 if test "$WANT_DEBUG" = "1"; then
@@ -35,8 +61,11 @@ if test "$WANT_DEBUG" = "1"; then
     AC_MSG_WARN([-g has been added to CXXFLAGS (--enable-debug)])
 fi
 
+# These flags are generally g++-specific; even the g++-impersonating
+# compilers won't accept them.
+
 OMPI_CXXFLAGS_BEFORE_PICKY="$CXXFLAGS"
-if test "$GCC" = "yes" -a "$WANT_PICKY_COMPILER" = 1; then
+if test "$TRULY_GXX" = "yes" -a "$WANT_PICKY_COMPILER" = 1; then
     add="-g -Wall -Wundef -Wno-long-long"
 
     # see if -Wno-long-double works...
@@ -53,8 +82,9 @@ if test "$GCC" = "yes" -a "$WANT_PICKY_COMPILER" = 1; then
     unset add
 fi
 
-# See if this version of gcc allows -finline-functions
-if test "$GCC" = "yes"; then
+# See if this version of g++ allows -finline-functions
+
+if test "$GXX" = "yes"; then
     CXXFLAGS_orig="$CXXFLAGS"
     CXXFLAGS="$CXXFLAGS -finline-functions"
     add=
@@ -121,6 +151,9 @@ case "$host" in
 esac
 
 # Same rationale for g++ as with gcc in OMPI_SETUP_CC.
+
+# Note: gcc-imperonating compilers accept -O3, so there's no need for
+# $TRULY_GCC here.
 
 if test "$GXX" = yes; then
     OPTFLAGS="-O3"
