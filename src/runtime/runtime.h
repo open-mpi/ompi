@@ -12,8 +12,6 @@
  * Global variables and symbols for the MPI layer
  */
 
-#define OMPI_MPI_INVALID_STATE (!ompi_mpi_initialized || ompi_mpi_finalized)
-
 extern bool ompi_mpi_initialized;
 extern bool ompi_mpi_finalized;
 extern bool ompi_mpi_param_check;
