@@ -4,6 +4,7 @@
 
 #include "attribute/attribute.h"
 #include "communicator/communicator.h"
+#include "include/constants.h"
 
 /**
  * Macros - Lots of them!
@@ -137,7 +138,7 @@ lam_attr_init()
 			    ATTR_TABLE_SIZE) != LAM_SUCCESS)
 	return MPI_ERR_SYSRESOURCE;
   
-    return MPI_SUCCESS;
+    return LAM_SUCCESS;
 }
 
 
@@ -490,7 +491,6 @@ lam_attr_delete_all(lam_attribute_type_t type, void *object,
     int ret;
     uint32_t key, oldkey;
     void *node, *in_node, *old_attr;
-    lam_attrkey_item_t *hash_value;
 
     /* Protect against the user calling lam_attr_destroy and then
        calling any of the functions which use it  */
