@@ -36,7 +36,8 @@ int mca_coll_basic_gatherv_intra(void *sbuf, int scount,
   size = ompi_comm_size(comm);
   rank = ompi_comm_rank(comm);
 
-  /* Everyone but root sends data and returns. */
+  /* Everyone but root sends data and returns.  Note that we will only
+     get here if scount > 0 or rank == root. */
 
   if (rank != root) {
     err = mca_pml.pml_send(sbuf, scount, sdtype, root,
@@ -54,6 +55,9 @@ int mca_coll_basic_gatherv_intra(void *sbuf, int scount,
 
   for (i = 0; i < size; ++i) {
     ptmp = ((char *) rbuf) + (extent * disps[i]);
+    if (0 == rcounts[i]) {
+        continue;
+    }
 
     /* simple optimization */
 
@@ -103,6 +107,9 @@ int mca_coll_basic_gatherv_inter(void *sbuf, int scount,
   size = ompi_comm_remote_size(comm);
   rank = ompi_comm_rank(comm);
 
+  /* If not root, receive data.  Note that we will only get here if
+     scount > 0 or rank == root. */
+
   if ( MPI_PROC_NULL == root ) {
       /* do nothing */
       err = OMPI_SUCCESS;
@@ -121,6 +128,10 @@ int mca_coll_basic_gatherv_inter(void *sbuf, int scount,
       }
 
       for (i = 0; i < size; ++i) {
+          if (0 == rcounts[i]) {
+              continue;
+          }
+
           ptmp = ((char *) rbuf) + (extent * disps[i]);
           err = mca_pml.pml_irecv(ptmp, rcounts[i], rdtype, i,
                                   MCA_COLL_BASE_TAG_GATHERV, 

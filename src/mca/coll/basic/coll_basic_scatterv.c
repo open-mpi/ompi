@@ -39,7 +39,8 @@ int mca_coll_basic_scatterv_intra(void *sbuf, int *scounts,
   rank = ompi_comm_rank(comm);
   size = ompi_comm_size(comm);
 
-  /* If not root, receive data. */
+  /* If not root, receive data.  Note that we will only get here if
+     rcount > 0 or rank == root. */
 
   if (rank != root) {
     err = mca_pml.pml_recv(rbuf, rcount, rdtype,
@@ -56,6 +57,9 @@ int mca_coll_basic_scatterv_intra(void *sbuf, int *scounts,
   }
 
   for (i = 0; i < size; ++i) {
+    if (0 == scounts[i]) {
+      continue;
+    }
     ptmp = ((char *) sbuf) + (extent * disps[i]);
 
     /* simple optimization */
@@ -106,6 +110,9 @@ int mca_coll_basic_scatterv_inter(void *sbuf, int *scounts,
   rank = ompi_comm_rank(comm);
   size = ompi_comm_remote_size(comm);
 
+  /* If not root, receive data.  Note that we will only get here if
+     rcount > 0 or rank == root. */
+
   if ( MPI_PROC_NULL == root ) {
       /* do nothing */
       err = OMPI_SUCCESS;
@@ -124,6 +131,10 @@ int mca_coll_basic_scatterv_inter(void *sbuf, int *scounts,
       }
       
       for (i = 0; i < size; ++i) {
+          if (0 == scounts[i]) {
+              continue;
+          }
+
           ptmp = ((char *) sbuf) + (extent * disps[i]);
           err = mca_pml.pml_isend(ptmp, scounts[i], sdtype, i, 
                                   MCA_COLL_BASE_TAG_SCATTERV, 
