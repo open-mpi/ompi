@@ -7,6 +7,8 @@
 
 #include "libltdl/ltdl.h"
 
+#include "mpi.h"
+
 /*
  * These units are large enough to warrant their own .h files
  */
@@ -37,6 +39,13 @@ struct mca_base_module_priority_list_item_t {
 typedef struct mca_base_module_priority_list_item_t 
   mca_base_module_priority_list_item_t;
 
+
+/*
+ * Alloc and free mem functions
+ */
+typedef int (*mca_base_alloc_mem_fn_t)(MPI_Aint size, MPI_Info info, 
+                                       void **base);
+typedef int (*mca_base_free_mem_fn_t)(void *base);
 
 /*
  * Public variables
