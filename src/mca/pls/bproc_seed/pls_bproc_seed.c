@@ -453,7 +453,7 @@ static int orte_pls_bproc_launch_app(
         }
 
         /* connect stdout/stderr to a file */
-        fd = open("/tmp/orte.log", O_CREAT|O_WRONLY|O_TRUNC, 0666);
+        fd = open("/dev/null", O_CREAT|O_WRONLY|O_TRUNC, 0666);
         if(fd >= 0) {
             if(fd != 1) {
                 dup2(fd,1);
