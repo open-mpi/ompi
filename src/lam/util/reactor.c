@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <errno.h>
 
+#include "lam_config.h"
 #include "lam/util/reactor.h"
 #include "lam/util/malloc.h"
 
@@ -79,7 +80,7 @@ void lam_reactor_init(lam_reactor_t* r)
     lam_fh_init_with(&r->r_hash, 1024);
 
     r->r_max = -1;
-    r->r_run = LAM_TRUE;
+    r->r_run = true;
     r->r_changes = 0;
 
     LAM_FD_ZERO(&r->r_recv_set);
@@ -98,12 +99,12 @@ void lam_reactor_destroy(lam_reactor_t* r)
 }
 
 
-lam_bool_t lam_reactor_insert(lam_reactor_t* r, int sd, lam_reactor_listener_t* listener, int flags)
+bool lam_reactor_insert(lam_reactor_t* r, int sd, lam_reactor_listener_t* listener, int flags)
 {
 #ifndef NDEBUG
     if(sd < 0 || sd > LAM_FD_SETSIZE) {
         lam_err(("Reactor::insertListener(%d) invalid descriptor.\n", sd));
-        return LAM_FALSE;
+        return false;
     }
 #endif
 
@@ -113,7 +114,7 @@ lam_bool_t lam_reactor_insert(lam_reactor_t* r, int sd, lam_reactor_listener_t* 
         descriptor = lam_reactor_get_descriptor(r, sd);
         if(descriptor == 0) {
             lam_mtx_unlock(&r->r_mutex);
-            return LAM_FALSE;
+            return false;
         }
         lam_dbl_append(&r->r_pending, &descriptor->rd_base);
         lam_fh_set_value_for_ikey(&r->r_hash,descriptor,sd);
@@ -134,16 +135,16 @@ lam_bool_t lam_reactor_insert(lam_reactor_t* r, int sd, lam_reactor_listener_t* 
     }
     r->r_changes++;
     lam_mtx_unlock(&r->r_mutex);
-    return LAM_TRUE;
+    return true;
 }
 
 
-lam_bool_t lam_reactor_remove(lam_reactor_t* r, int sd, lam_reactor_listener_t* rl, int flags)
+bool lam_reactor_remove(lam_reactor_t* r, int sd, lam_reactor_listener_t* rl, int flags)
 {
 #ifndef NDEBUG
     if(sd < 0 || sd > LAM_FD_SETSIZE) {
         lam_err(("lam_reactor_remove(%d) invalid descriptor.\n", sd));
-        return LAM_FALSE;
+        return false;
     }
 #endif
 
@@ -152,7 +153,7 @@ lam_bool_t lam_reactor_remove(lam_reactor_t* r, int sd, lam_reactor_listener_t* 
     if(descriptor == 0) {
         lam_err(("lam_reactor_remove(%d): descriptor not registered.\n", sd));
         lam_mtx_unlock(&r->r_mutex);
-        return LAM_FALSE;
+        return false;
     }
     descriptor->rd_flags &= ~flags;
     if(flags & LAM_NOTIFY_RECV) {
@@ -169,7 +170,7 @@ lam_bool_t lam_reactor_remove(lam_reactor_t* r, int sd, lam_reactor_listener_t* 
     }
     r->r_changes++;
     lam_mtx_unlock(&r->r_mutex);
-    return LAM_TRUE;
+    return true;
 }
 
 
@@ -269,7 +270,7 @@ void lam_reactor_poll(lam_reactor_t* r)
 
 void lam_reactor_run(lam_reactor_t* r)
 {
-    while(r->r_run == LAM_TRUE) {
+    while(true == r->r_run) {
         lam_fd_set_t rset = r->r_recv_set;
         lam_fd_set_t sset = r->r_send_set;
         lam_fd_set_t eset = r->r_except_set;

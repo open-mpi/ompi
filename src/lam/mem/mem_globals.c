@@ -3,7 +3,8 @@
  */
 
 #include <unistd.h>
-#include "include/lam_constants.h"
+
+#include "lam_constants.h"
 #include "lam/lfc/object.h"
 #include "lam/mem/mem_globals.h"
 
