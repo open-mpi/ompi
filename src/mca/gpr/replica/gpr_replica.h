@@ -189,7 +189,7 @@ typedef struct {
     orte_gpr_replica_segment_t *seg;
     orte_gpr_replica_container_t *cptr;
     orte_gpr_replica_itagval_t *iptr;
-    int trigger_level;
+    orte_gpr_replica_itagval_t trigger_level;
 } orte_gpr_replica_counter_t;
 
 OBJ_CLASS_DECLARATION(orte_gpr_replica_counter_t);

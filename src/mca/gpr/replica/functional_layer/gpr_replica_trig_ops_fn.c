@@ -28,6 +28,7 @@
 #include "mca/errmgr/errmgr.h"
 #include "mca/ns/ns.h"
 #include "util/output.h"
+#include "mca/gpr/replica/api_layer/gpr_replica_api.h"
 #include "mca/gpr/replica/transition_layer/gpr_replica_tl.h"
 #include "gpr_replica_fn.h"
 
@@ -207,31 +208,37 @@ int orte_gpr_replica_check_trig(orte_gpr_replica_triggers_t *trig)
             }
             goto FIRED;
         }
-    }
-    return ORTE_SUCCESS;
-    
-    /* not comparing levels - check instead to see if counters are at a level */
-    cntr = (orte_gpr_replica_counter_t**)((trig->counters)->addr);
-    fire = true;
-    for (i=0; i < (trig->counters)->size && fire; i++) {
-        if (NULL != cntr[i]) {
-            if (ORTE_SUCCESS != (rc = orte_gpr_replica_get_value(&level, cntr[i]->iptr))) {
+        return ORTE_SUCCESS;\
+        
+    } else if (ORTE_GPR_TRIG_AT_LEVEL & trig->action) { /* see if counters are at a level */
+        cntr = (orte_gpr_replica_counter_t**)((trig->counters)->addr);
+        fire = true;
+        for (i=0; i < (trig->counters)->size && fire; i++) {
+            if (NULL != cntr[i]) {
+                if (ORTE_SUCCESS != (rc = orte_gpr_replica_get_value(&level, cntr[i]->iptr))) {
+                    ORTE_ERROR_LOG(rc);
+                    return rc;
+                }
+                if (ORTE_SUCCESS != (rc = orte_gpr_replica_get_value(&level2, &(cntr[i]->trigger_level)))) {
+                    ORTE_ERROR_LOG(rc);
+                    return rc;
+                }
+                if (level2 != level) {
+                    fire = false;
+                }
+            }
+        }
+        if (fire) { /* all counters at specified trigger level */
+            if (ORTE_SUCCESS != (rc = orte_gpr_replica_register_callback(trig))) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
-            if (cntr[i]->trigger_level != level) {
-                fire = false;
-            }
+            goto FIRED;
         }
+        return ORTE_SUCCESS;
     }
-    if (fire) { /* all counters at specified trigger level */
-        if (ORTE_SUCCESS != (rc = orte_gpr_replica_register_callback(trig))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        goto FIRED;
-    }
-    return ORTE_SUCCESS;
+   
+    return ORTE_SUCCESS;  /* neither cmp nor at level set */
 
 FIRED:
     /* if notify_at_start set, unset it to indicate that trigger fired */

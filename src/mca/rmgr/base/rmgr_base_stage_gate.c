@@ -26,6 +26,8 @@
 #include "include/orte_constants.h"
 #include "include/orte_types.h"
 
+#include "util/output.h"
+
 #include "dps/dps.h"
 #include "mca/gpr/gpr.h"
 #include "mca/errmgr/errmgr.h"
@@ -81,7 +83,7 @@ int orte_rmgr_base_proc_stage_gate_init(orte_jobid_t job)
         }
         value.keyvals[i]->key = strdup(keys[i]);
         value.keyvals[i]->type = ORTE_UINT32;
-        value.keyvals[i]->value.i32 = 0;
+        value.keyvals[i]->value.ui32 = 0;
     }
     values = &value;
     
@@ -275,6 +277,7 @@ int orte_rmgr_base_proc_stage_gate_init(orte_jobid_t job)
 
     OBJ_DESTRUCT(&sub);
     OBJ_DESTRUCT(&trig);
+    
     return ORTE_SUCCESS;
 }
 

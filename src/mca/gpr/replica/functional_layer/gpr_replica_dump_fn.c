@@ -278,6 +278,10 @@ static void orte_gpr_replica_dump_trigger(orte_buffer_t *buffer, int cnt,
 	    tmp_out = strdup("\t\tORTE_GPR_TRIG_ONE_SHOT");
         orte_gpr_replica_dump_load_string(buffer, &tmp_out);
 	}
+    if (ORTE_GPR_TRIG_AT_LEVEL & trig->action) {
+        tmp_out = strdup("\t\tORTE_GPR_TRIG_AT_LEVEL");
+        orte_gpr_replica_dump_load_string(buffer, &tmp_out);
+    }
     if (ORTE_GPR_TRIG_CMP_LEVELS & trig->action) {
         tmp_out = strdup("\t\tORTE_GPR_TRIG_CMP_LEVELS");
         orte_gpr_replica_dump_load_string(buffer, &tmp_out);
@@ -392,7 +396,11 @@ static void orte_gpr_replica_dump_trigger(orte_buffer_t *buffer, int cnt,
     }  /* for i */
     
     if (0 < trig->num_counters) {
-        asprintf(&tmp_out, "\tTrigger monitoring %d counters", trig->num_counters);
+        if (ORTE_GPR_TRIG_AT_LEVEL & trig->action) {
+            asprintf(&tmp_out, "\tTrigger monitoring %d counters for level", trig->num_counters);
+        } else {
+            asprintf(&tmp_out, "\tTrigger monitoring %d counters for compare", trig->num_counters);
+        }
         orte_gpr_replica_dump_load_string(buffer, &tmp_out);
         cntr = (orte_gpr_replica_counter_t**)((trig->counters)->addr);
         for (i=0; i < (trig->counters)->size; i++) {
@@ -400,8 +408,15 @@ static void orte_gpr_replica_dump_trigger(orte_buffer_t *buffer, int cnt,
                 ORTE_SUCCESS == orte_gpr_replica_dict_reverse_lookup(&token, cntr[i]->seg,
                     (cntr[i]->iptr)->itag)) {
                 asprintf(&tmp_out, "\t\tCounter: %d\tSegment: %s\tName: %s", i,
-                                        (cntr[i]->seg)->name, token);
+                                    (cntr[i]->seg)->name, token);
                 free(token);
+                orte_gpr_replica_dump_load_string(buffer, &tmp_out);
+                if (ORTE_GPR_TRIG_AT_LEVEL & trig->action) {
+                    asprintf(&tmp_out, "\t\tTrigger Level:");
+                    orte_gpr_replica_dump_load_string(buffer, &tmp_out);
+                    orte_gpr_replica_dump_itagval_value(buffer, &(cntr[i]->trigger_level));
+                }
+                asprintf(&tmp_out, "\t\tCurrent Value:");
                 orte_gpr_replica_dump_load_string(buffer, &tmp_out);
                 orte_gpr_replica_dump_itagval_value(buffer, cntr[i]->iptr);
             }
