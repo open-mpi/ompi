@@ -39,7 +39,8 @@ int ompi_rte_universe_exists()
     char *contact_file;
     int ret;
     ompi_process_name_t proc={0,0,0};
-    bool ns_found=false, gpr_found=false, ping_success=false;
+/*    bool ns_found=false, gpr_found=false; */
+    bool ping_success=false;
 
     /* if both ns_replica and gpr_replica were provided, check for contact with them */
     if (NULL != ompi_process_info.ns_replica && NULL != ompi_process_info.gpr_replica) {

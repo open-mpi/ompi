@@ -81,6 +81,18 @@ extern "C" {
 
 OMPI_DECLSPEC extern ompi_universe_t ompi_universe_info;
 
+    /* Define the startup/shutdown xcast message format for sending information
+     * from compound registry commands at the beginning and end of processes.
+     */
+
+    struct ompi_startup_shutdown_message_t {
+	ompi_list_item_t item;
+	ompi_registry_notify_message_t *msg;
+    };
+    typedef struct ompi_startup_shutdown_message_t ompi_startup_shutdown_message_t;
+
+    OBJ_CLASS_DECLARATION(ompi_startup_shutdown_message_t);
+
     /**
      * Initialize the Open MPI support code
      *
