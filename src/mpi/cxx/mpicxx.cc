@@ -125,10 +125,10 @@ const Datatype UNSIGNED_LONG_LONG(MPI_UNSIGNED_LONG_LONG);
 const Datatype LONG_LONG(MPI_LONG_LONG);
 
 // c++ types
-const Datatype BOOL(ompi_mpi_cxx_bool);
-const Datatype COMPLEX(ompi_mpi_cxx_cplex);
-const Datatype DOUBLE_COMPLEX(ompi_mpi_cxx_dblcplex);
-const Datatype LONG_DOUBLE_COMPLEX(ompi_mpi_cxx_ldblcplex);
+const Datatype BOOL(&ompi_mpi_cxx_bool);
+const Datatype COMPLEX(&ompi_mpi_cxx_cplex);
+const Datatype DOUBLE_COMPLEX(&ompi_mpi_cxx_dblcplex);
+const Datatype LONG_DOUBLE_COMPLEX(&ompi_mpi_cxx_ldblcplex);
 
 // datatype decoding constants
 const int COMBINER_NAMED = MPI_COMBINER_NAMED;
