@@ -38,8 +38,7 @@ static inline uint32_t lam_hash_value(const unsigned char * key, uint32_t keysiz
 }
 
 
-static inline void *lam_fh_get_value(lam_fast_hash_t *htbl, void *key, uint32_t keysize,
-                                     bool use_ptr)
+static inline void *lam_fh_get_value_nkey(lam_fast_hash_t *htbl, void *key, uint32_t keysize)
 {
     uint32_t        hval, i;
     lam_fhnode_t    *buckets;
@@ -50,32 +49,45 @@ static inline void *lam_fh_get_value(lam_fast_hash_t *htbl, void *key, uint32_t 
     hval = lam_hash_value((const char *)key, keysize) & htbl->fh_mask;
     buckets = htbl->fh_nodes[hval];
     if ( !buckets )
-        return 0;
+        return NULL;
     
-    if ( true == use_ptr )
+    for ( i = 0; i < htbl->fh_bucket_cnt[hval]; i++ )
     {
-        for ( i = 0; i < htbl->fh_bucket_cnt[hval]; i++ )
-        {
-            if ( (true == buckets[i].fhn_is_taken) &&
-                 (0 == memcmp(buckets[i].fhn_key.pval, key, keysize)) )
-                return buckets[i].fhn_value;
-        }        
-    }
-    else
-    {
-        for ( i = 0; i < htbl->fh_bucket_cnt[hval]; i++ )
-        {
-            if ( (true == buckets[i].fhn_is_taken) &&
-                 (0 == memcmp(&(buckets[i].fhn_key), key, keysize)) )
-                return buckets[i].fhn_value;
-        }        
-    }
-
-    return 0;
+        if ( (true == buckets[i].fhn_is_taken) &&
+             (0 == memcmp(&(buckets[i].fhn_key), key, keysize)) )
+            return buckets[i].fhn_value;
+    }        
+    
+    return NULL;
 }
 
 
-static inline void lam_fh_remove_value(lam_fast_hash_t *htbl, void *key, uint32_t keysize)
+static inline void *lam_fh_get_value_ptrkey(lam_fast_hash_t *htbl, void *key, uint32_t keysize)
+{
+    uint32_t        hval, i;
+    lam_fhnode_t    *buckets;
+    
+    /* ASSERT: table size is power of 2 and table
+        has been initialized using lam_fh_init_with().
+        */
+    hval = lam_hash_value((const char *)key, keysize) & htbl->fh_mask;
+    buckets = htbl->fh_nodes[hval];
+    if ( !buckets )
+        return NULL;
+    
+    for ( i = 0; i < htbl->fh_bucket_cnt[hval]; i++ )
+    {
+        if ( (true == buckets[i].fhn_is_taken)
+             && (buckets[i].fhn_ptr_key_size == keysize)
+             && (0 == memcmp(buckets[i].fhn_key.pval, key, keysize)) )
+            return buckets[i].fhn_value;
+    }        
+    
+    return NULL;
+}
+
+
+static inline void lam_fh_remove_value_nkey(lam_fast_hash_t *htbl, void *key, uint32_t keysize)
 {
     uint32_t        hval, i;
     lam_fhnode_t    *buckets;
@@ -91,22 +103,17 @@ static inline void lam_fh_remove_value(lam_fast_hash_t *htbl, void *key, uint32_
     for ( i = 0; i < htbl->fh_bucket_cnt[hval]; i++ )
     {
         if ( (true == buckets[i].fhn_is_taken) &&
-             (0 == memcmp(&(buckets[i].fhn_key), key, keysize)) )
+             (0 == memcmp(&(buckets[i].fhn_key), key, sizeof(lam_ptr_t))) )
         {
             buckets[i].fhn_is_taken = false;
             buckets[i].fhn_value = 0;
-            if ( buckets[i].fhn_using_key_ptr )
-            {
-                LAM_FREE(buckets[i].fhn_key.pval);
-            }
         }
     }
 }
 
-static inline int lam_fh_set_value(lam_fast_hash_t *htbl, void *val,
-                                     void *key, uint32_t keysize, bool should_alloc)
+static inline void lam_fh_remove_value_ptrkey(lam_fast_hash_t *htbl, void *key, uint32_t keysize)
 {
-    uint32_t        hval, i, bucket_idx;
+    uint32_t        hval, i;
     lam_fhnode_t    *buckets;
     
     /* ASSERT: table size is power of 2 and table
@@ -115,11 +122,38 @@ static inline int lam_fh_set_value(lam_fast_hash_t *htbl, void *val,
     hval = lam_hash_value((const char *)key, keysize) & htbl->fh_mask;
     buckets = htbl->fh_nodes[hval];
     if ( !buckets )
+        return ;
+    
+    for ( i = 0; i < htbl->fh_bucket_cnt[hval]; i++ )
+    {
+        if ( (true == buckets[i].fhn_is_taken)
+             && (buckets[i].fhn_ptr_key_size == keysize)
+             && (0 == memcmp(&(buckets[i].fhn_key), key, keysize)) )
+        {
+            buckets[i].fhn_is_taken = false;
+            buckets[i].fhn_value = 0;
+            LAM_FREE(buckets[i].fhn_key.pval);
+        }
+    }
+}
+
+
+static inline int lam_fh_find_empty_bucket(lam_fast_hash_t *htbl, uint32_t hval,
+                                           uint32_t *bucket_idx)
+{
+    uint32_t        i;
+    lam_fhnode_t    *buckets;
+    
+    /* ASSERT: table size is power of 2 and table
+        has been initialized using lam_fh_init_with().
+        */
+    buckets = htbl->fh_nodes[hval];
+    if ( !buckets )
     {
         /* create new array of buckets
         for collision */
         htbl->fh_nodes[hval] = (lam_fhnode_t *)LAM_MALLOC(sizeof(lam_fhnode_t)
-                                                      * BUCKET_ALLOC_SZ);
+                                                          * BUCKET_ALLOC_SZ);
         if ( !htbl->fh_nodes[hval] )
             return LAM_ERR_OUT_OF_RESOURCE;
         
@@ -136,7 +170,7 @@ static inline int lam_fh_set_value(lam_fast_hash_t *htbl, void *val,
         if ( false == buckets[i].fhn_is_taken )
         {
             /* found empty bucket */
-            bucket_idx = i;
+            *bucket_idx = i;
             break;
         }
     }
@@ -155,28 +189,71 @@ static inline int lam_fh_set_value(lam_fast_hash_t *htbl, void *val,
         buckets = htbl->fh_nodes[hval] + htbl->fh_bucket_cnt[hval];
         memset(buckets, 0,
                sizeof(lam_fhnode_t) * BUCKET_ALLOC_SZ);
-        bucket_idx = htbl->fh_bucket_cnt[hval];
+        *bucket_idx = htbl->fh_bucket_cnt[hval];
         htbl->fh_bucket_cnt[hval] += BUCKET_ALLOC_SZ;  /* keep track of array size. */
     }
     
+    return LAM_SUCCESS;
+}
+
+static inline int lam_fh_set_value_ptrkey(lam_fast_hash_t *htbl, void *val,
+                                          void *key, uint32_t keysize)
+{
+    int         err;
+    uint32_t        hval, i, bucket_idx;
+    lam_fhnode_t    *buckets;
+    
+    /* ASSERT: table size is power of 2 and table
+        has been initialized using lam_fh_init_with().
+        */
+    hval = lam_hash_value((const char *)key, keysize) & htbl->fh_mask;
+    err = lam_fh_find_empty_bucket(htbl, hval, &bucket_idx);
+    if ( LAM_SUCCESS != err )
+        return err;
+    
     /* ASSERT: we have an empty bucket */
     /* found empty bucket */
-    if ( should_alloc )
+    buckets = htbl->fh_nodes[hval];
+    buckets[bucket_idx].fhn_key.pval = LAM_MALLOC(keysize);
+    if ( NULL == buckets[bucket_idx].fhn_key.pval )
     {
-        buckets[bucket_idx].fhn_key.pval = LAM_MALLOC(keysize);
-        if ( NULL == buckets[bucket_idx].fhn_key.pval )
-        {
-            return LAM_ERR_OUT_OF_RESOURCE;
-        }
-        memcpy(buckets[bucket_idx].fhn_key.pval, key, keysize);
+        return LAM_ERR_OUT_OF_RESOURCE;
     }
-    else
-    {
-        memcpy(&(buckets[bucket_idx].fhn_key), key, keysize);
-    }
-    buckets[bucket_idx].fhn_using_key_ptr = should_alloc;
+    memcpy(buckets[bucket_idx].fhn_key.pval, key, keysize);
+    buckets[bucket_idx].fhn_using_key_ptr = true;
+    buckets[bucket_idx].fhn_value = val;
+    buckets[bucket_idx].fhn_ptr_key_size = keysize;
+    buckets[bucket_idx].fhn_is_taken = true;
+    
+    htbl->fh_count++;
+    
+    
+    return LAM_SUCCESS;
+}
+
+static inline int lam_fh_set_value_nkey(lam_fast_hash_t *htbl, void *val,
+                                          void *key, uint32_t keysize)
+{
+    int         err;
+    uint32_t        hval, i, bucket_idx;
+    lam_fhnode_t    *buckets;
+    
+    /* ASSERT: table size is power of 2 and table
+        has been initialized using lam_fh_init_with().
+        */
+    hval = lam_hash_value((const char *)key, keysize) & htbl->fh_mask;
+    err = lam_fh_find_empty_bucket(htbl, hval, &bucket_idx);
+    if ( LAM_SUCCESS != err )
+        return err;
+    
+    /* ASSERT: we have an empty bucket */
+    /* found empty bucket */
+    buckets = htbl->fh_nodes[hval];
+    memcpy(&(buckets[bucket_idx].fhn_key), key, keysize);
+    buckets[bucket_idx].fhn_using_key_ptr = false;
     buckets[bucket_idx].fhn_value = val;
     buckets[bucket_idx].fhn_is_taken = true;
+    /* We don't need to set the key_size field for numeric keys */
     
     htbl->fh_count++;
     
@@ -310,53 +387,53 @@ void lam_fh_remove_all(lam_fast_hash_t *htbl)
 
 void *lam_fh_get_value_for_ikey(lam_fast_hash_t *htbl, uint32_t key)
 {
-    return lam_fh_get_value(htbl, &key, sizeof(key), false);
+    return lam_fh_get_value_nkey(htbl, &key, sizeof(key));
 }
 
 
 
 void lam_fh_remove_value_for_ikey(lam_fast_hash_t *htbl, uint32_t key)
 {
-    lam_fh_remove_value(htbl, &key, sizeof(key));
+    lam_fh_remove_value_nkey(htbl, &key, sizeof(key));
 }
 
 
 int lam_fh_set_value_for_ikey(lam_fast_hash_t *htbl, void *val, uint32_t key)
 {
-    return lam_fh_set_value(htbl, val, &key, sizeof(key), false);
+    return lam_fh_set_value_nkey(htbl, val, &key, sizeof(key));
 }
 
 
 void *lam_fh_get_value_for_lkey(lam_fast_hash_t *htbl, uint64_t key)
 {
-    return lam_fh_get_value(htbl, &key, sizeof(key), false);
+    return lam_fh_get_value_nkey(htbl, &key, sizeof(key));
 }
 
 
 void lam_fh_remove_value_for_lkey(lam_fast_hash_t *htbl, uint64_t key)
 {
-    lam_fh_remove_value(htbl, &key, sizeof(key));
+    lam_fh_remove_value_nkey(htbl, &key, sizeof(key));
 }
 
 
 int lam_fh_set_value_for_lkey(lam_fast_hash_t *htbl, void *val, uint64_t key)
 {
-    return lam_fh_set_value(htbl, val, &key, sizeof(key), false);
+    return lam_fh_set_value_nkey(htbl, val, &key, sizeof(key));
 }
 
 
 void *lam_fh_get_value_for_skey(lam_fast_hash_t *htbl, const char *key)
 {
-    return lam_fh_get_value(htbl, (void *)key, strlen(key)+1, true);
+    return lam_fh_get_value_ptrkey(htbl, (void *)key, strlen(key)+1);
 }
 
 void lam_fh_remove_value_for_skey(lam_fast_hash_t *htbl, const char *key)
 {
-    lam_fh_remove_value(htbl, (void *)key, strlen(key)+1);
+    lam_fh_remove_value_ptrkey(htbl, (void *)key, strlen(key)+1);
 }
 
 int lam_fh_set_value_for_skey(lam_fast_hash_t *htbl, void *val, const char *key)
 {
-    return lam_fh_set_value(htbl, val, (void *)key, strlen(key)+1, true);
+    return lam_fh_set_value_ptrkey(htbl, val, (void *)key, strlen(key)+1);
 }
 
