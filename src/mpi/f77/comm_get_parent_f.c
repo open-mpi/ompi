@@ -48,5 +48,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_GET_PARENT,
 
 void mpi_comm_get_parent_f(MPI_Fint *parent, MPI_Fint *ierr)
 {
-  /* This function not yet implemented */
+    MPI_Comm c_parent;
+
+    *ierr = OMPI_INT_2_FINT(MPI_Comm_get_parent(&c_parent));
+
+    *parent = MPI_Comm_c2f(c_parent);
 }

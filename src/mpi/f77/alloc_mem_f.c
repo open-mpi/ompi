@@ -48,5 +48,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_ALLOC_MEM,
 
 void mpi_alloc_mem_f(MPI_Fint *size, MPI_Fint *info, char *baseptr, MPI_Fint *ierr)
 {
-  /* This function not yet implemented */
+    MPI_Info c_info = MPI_Info_f2c(*info);
+
+    *ierr = OMPI_INT_2_FINT(MPI_Alloc_mem((MPI_Aint) *size, c_info, baseptr));
 }

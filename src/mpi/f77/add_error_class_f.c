@@ -48,5 +48,10 @@ OMPI_GENERATE_F77_BINDINGS (MPI_ADD_ERROR_CLASS,
 
 void mpi_add_error_class_f(MPI_Fint *errorclass, MPI_Fint *ierr)
 {
-  /* This function not yet implemented */
+    OMPI_SINGLE_NAME_DECL(errorclass);
+
+    *ierr = OMPI_INT_2_FINT(MPI_Add_error_class(OMPI_SINGLE_NAME_CONVERT(errorclass)
+						));
+    
+    OMPI_SINGLE_INT_2_FINT(errorclass);
 }
