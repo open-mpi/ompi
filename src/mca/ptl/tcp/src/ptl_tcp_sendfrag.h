@@ -10,8 +10,8 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include "include/sys/atomic.h"
 #include "ompi_config.h"
+#include "include/sys/atomic.h"
 #include "mca/pml/base/pml_base_sendreq.h"
 #include "mca/ptl/base/ptl_base_sendfrag.h"
 #include "ptl_tcp.h"
@@ -26,9 +26,11 @@ struct mca_ptl_base_peer_t;
  */
 struct mca_ptl_tcp_send_frag_t {
    mca_ptl_base_send_frag_t frag_send;  /**< base send fragment descriptor */
+   int32_t free_after;                  /**< keep trace of which vectors we have to free */
    struct iovec *frag_vec_ptr;          /**< pointer into iovec array */
    size_t frag_vec_cnt;                 /**< number of iovec structs left to process */
    struct iovec frag_vec[2];            /**< array of iovecs for send */
+   struct iovec  frag_saved_vec;         /**< save the initial values from the current iovec */
    volatile int frag_progressed;        /**< for threaded case - has request status been updated */
 };
 typedef struct mca_ptl_tcp_send_frag_t mca_ptl_tcp_send_frag_t;
@@ -130,6 +132,7 @@ static inline void mca_ptl_tcp_send_frag_init_ack(
     ack->frag_vec[0].iov_base = (ompi_iov_base_ptr_t)hdr;
     ack->frag_vec[0].iov_len = sizeof(mca_ptl_base_header_t);
     ack->frag_vec_cnt = 1;
+    ack->free_after = 0;
 }
 
 
