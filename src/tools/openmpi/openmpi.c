@@ -54,7 +54,7 @@ int main(int argc, char **argv)
     pid_t pid;
     bool multi_thread = false;
     bool hidden_thread = false;
-    int ret;
+    int ret=0;
 
    /*
      * Intialize the Open MPI environment

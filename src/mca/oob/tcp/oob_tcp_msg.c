@@ -89,8 +89,8 @@ int mca_oob_tcp_msg_timedwait(mca_oob_tcp_msg_t* msg, int* rc, struct timespec* 
 #if OMPI_HAVE_THREADS
     OMPI_THREAD_LOCK(&msg->msg_lock);
     while(msg->msg_complete == false && 
-          (tv.tv_sec <= secs ||
-          (tv.tv_sec == secs && tv.tv_usec < usecs))) {
+          ((uint32_t)tv.tv_sec <= secs ||
+	   ((uint32_t)tv.tv_sec == secs && (uint32_t)tv.tv_usec < usecs))) {
         if(ompi_event_progress_thread()) {
             int rc;
             OMPI_THREAD_UNLOCK(&msg->msg_lock);

@@ -589,14 +589,14 @@ int mca_oob_tcp_peer_send_ident(mca_oob_tcp_peer_t* peer)
 }
 
 
-static void mca_oob_tcp_peer_recv_ident(mca_oob_tcp_peer_t* peer, mca_oob_tcp_hdr_t* hdr)
-{
-    OMPI_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
-    ompi_rb_tree_delete(&mca_oob_tcp_component.tcp_peer_tree, &peer->peer_name);
-    peer->peer_name = hdr->msg_src;
-    ompi_rb_tree_insert(&mca_oob_tcp_component.tcp_peer_tree, &peer->peer_name, peer);
-    OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
-}
+/* static void mca_oob_tcp_peer_recv_ident(mca_oob_tcp_peer_t* peer, mca_oob_tcp_hdr_t* hdr) */
+/* { */
+/*     OMPI_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock); */
+/*     ompi_rb_tree_delete(&mca_oob_tcp_component.tcp_peer_tree, &peer->peer_name); */
+/*     peer->peer_name = hdr->msg_src; */
+/*     ompi_rb_tree_insert(&mca_oob_tcp_component.tcp_peer_tree, &peer->peer_name, peer); */
+/*     OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock); */
+/* } */
 
 
 /*

@@ -26,7 +26,7 @@
 
 void ompi_rte_parse_cmd_line(ompi_cmd_line_t *cmd_line)
 {
-    char *universe, *nsreplica, *gprreplica, *tmp;
+    char *universe=NULL, *nsreplica=NULL, *gprreplica=NULL, *tmp=NULL;
 
 
     /* get universe name and store it, if user specified it */

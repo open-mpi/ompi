@@ -19,7 +19,6 @@
 int mca_gpr_base_unpack_synchro(ompi_buffer_t buffer, ompi_registry_notify_id_t *remote_idtag)
 {
     mca_gpr_cmd_flag_t command;
-    int32_t response;
 
     if ((OMPI_SUCCESS != ompi_unpack(buffer, &command, 1, MCA_GPR_OOB_PACK_CMD))
 	|| (MCA_GPR_SUBSCRIBE_CMD != command)) {
@@ -30,7 +29,7 @@ int mca_gpr_base_unpack_synchro(ompi_buffer_t buffer, ompi_registry_notify_id_t 
 	return OMPI_ERROR;
     }
 
-    return (int)response;
+    return OMPI_SUCCESS;
 }
 
 

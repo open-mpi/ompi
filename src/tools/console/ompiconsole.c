@@ -42,7 +42,7 @@ int main(int argc, char *argv[])
     char *hostname, *contact_info;
     ompi_process_name_t proc_name;
     int32_t proc_slots;
-    int ret;
+    int ret=0;
     ompi_cmd_line_t *cmd_line;
     bool allow_multi_user_threads   = false;
     bool have_hidden_threads  = false;
