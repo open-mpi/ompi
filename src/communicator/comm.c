@@ -8,6 +8,7 @@
 #include "mpi.h"
 
 #include "communicator/communicator.h"
+#include "datatype/datatype.h"
 #include "proc/proc.h"
 #include "util/bit_ops.h"
 #include "include/constants.h"
@@ -66,23 +67,20 @@ static int ompi_comm_allgather_emulate_intra (void* inbuf, int incount, MPI_Data
  * All other routines are just used to determine these elements.
  */   
 
-ompi_communicator_t * ompi_comm_set ( ompi_communicator_t* oldcomm,
-                                      int local_size, 
-                                      ompi_proc_t **local_procs,
-                                      int remote_size,
-                                      ompi_proc_t **remote_procs,
-                                      ompi_hash_table_t *attr,
-                                      ompi_errhandler_t *errh,
-                                      mca_base_component_t *collcomponent,
-                                      mca_base_component_t *topocomponent )
+int ompi_comm_set ( ompi_communicator_t *newcomm, 
+                    ompi_communicator_t* oldcomm,
+                    int local_size, 
+                    ompi_proc_t **local_procs,
+                    int remote_size,
+                    ompi_proc_t **remote_procs,
+                    ompi_hash_table_t *attr,
+                    ompi_errhandler_t *errh,
+                    mca_base_component_t *collcomponent,
+                    mca_base_component_t *topocomponent )
 {
-    ompi_communicator_t *newcomm;
     ompi_proc_t *my_gpointer;
     int my_grank;
 
-    /* Allocate comm structure */
-    newcomm = ompi_comm_allocate ( local_size, remote_size );
-    
     /* Set local_group information */
     memcpy ( newcomm->c_local_group->grp_proc_pointers, 
              local_procs, local_size * sizeof(ompi_proc_t *));
@@ -139,21 +137,17 @@ ompi_communicator_t * ompi_comm_set ( ompi_communicator_t* oldcomm,
 
     /* Initialize the PML stuff in the newcomm  */
     if ( OMPI_ERROR == mca_pml.pml_add_comm(newcomm) ) {
-        goto err_exit;
+        return OMPI_ERROR;
     }
 
     /* Initialize the coll components */
     /* Let the collectives components fight over who will do
        collective on this new comm.  */
     if (OMPI_ERROR == mca_coll_base_comm_select(newcomm, collcomponent)) {
-	goto err_exit;
+	return OMPI_ERROR;
     }
 
- err_exit:
-    /* Free whatever has been allocated, print an appropriate
-       error message and return a null pointer */
-
-    return ( newcomm );
+    return (OMPI_SUCCESS);
 }
 
 
@@ -241,21 +235,11 @@ int ompi_comm_create ( ompi_communicator_t *comm, ompi_group_t *group,
     else {
         rsize  = 0;
         rprocs = NULL;
-        mode = OMPI_COMM_CID_INTRA;
+        mode   = OMPI_COMM_CID_INTRA;
     }
 
-    newcomp = ompi_comm_set ( comm,                     /* old comm */
-                              group->grp_proc_count,    /* local_size */
-                              group->grp_proc_pointers, /* local_procs*/
-                              rsize,                    /* remote_size */
-                              rprocs,                   /* remote_procs */
-                              NULL,                     /* attrs */
-                              comm->error_handler,      /* error handler */
-                              NULL,                     /* coll component */
-                              NULL                      /* topo component */
-                              );
-
-    if ( MPI_COMM_NULL == newcomp ) {
+    newcomp = ompi_comm_allocate (group->grp_proc_count, rsize );
+    if ( NULL == newcomp ) {
         rc = MPI_ERR_INTERN;
         goto exit;
     }
@@ -270,6 +254,22 @@ int ompi_comm_create ( ompi_communicator_t *comm, ompi_group_t *group,
     if ( OMPI_SUCCESS != rc ) {
         goto exit;
     }
+
+    rc = ompi_comm_set ( newcomp,                  /* new comm */
+                         comm,                     /* old comm */
+                         group->grp_proc_count,    /* local_size */
+                         group->grp_proc_pointers, /* local_procs*/
+                         rsize,                    /* remote_size */
+                         rprocs,                   /* remote_procs */
+                         NULL,                     /* attrs */
+                         comm->error_handler,      /* error handler */
+                         NULL,                     /* coll component */
+                         NULL                      /* topo component */
+                         );
+    if ( OMPI_SUCCESS != rc ) {
+        goto exit;
+    }
+
 
     /* Check whether we are part of the new comm.
        If not, we have to free the structure again.
@@ -445,17 +445,8 @@ int ompi_comm_split ( ompi_communicator_t* comm, int color, int key,
     /* Step 3: set up the communicator                           */
     /* --------------------------------------------------------- */
     /* Create the communicator finally */
-    newcomp = ompi_comm_set ( comm,               /* old comm */
-                              my_size,            /* local_size */
-                              procs,              /* local_procs*/
-                              my_rsize,           /* remote_size */
-                              rprocs,             /* remote_procs */
-                              NULL,               /* attrs */
-                              comm->error_handler,/* error handler */
-                              NULL,               /* coll component */
-                              NULL                /* topo component */
-                              );
-    if ( MPI_COMM_NULL == newcomp ) {
+    newcomp = ompi_comm_allocate (my_size, my_rsize );
+    if ( NULL == newcomp ) {
         rc = MPI_ERR_INTERN;
         goto exit;
     }
@@ -470,6 +461,22 @@ int ompi_comm_split ( ompi_communicator_t* comm, int color, int key,
     if ( OMPI_SUCCESS != rc ) {
         goto exit;
     }
+
+    rc = ompi_comm_set ( newcomp,            /* new comm */
+                         comm,               /* old comm */
+                         my_size,            /* local_size */
+                         procs,              /* local_procs*/
+                         my_rsize,           /* remote_size */
+                         rprocs,             /* remote_procs */
+                         NULL,               /* attrs */
+                         comm->error_handler,/* error handler */
+                         NULL,               /* coll component */
+                         NULL                /* topo component */
+                         );
+    if ( OMPI_SUCCESS != rc  ) {
+        goto exit;
+    }
+
 
  exit:
     if ( NULL != results ) {
@@ -521,7 +528,6 @@ static int ompi_comm_allgather_emulate_intra( void *inbuf, int incount,
     int rank, rsize, i, rc;
     int *tmpbuf=NULL;
     MPI_Request *req=NULL, sendreq;
-    MPI_Status *stats=NULL, status;
 
     rsize = ompi_comm_remote_size(comm);
     rank  = ompi_comm_rank(comm);
@@ -530,8 +536,7 @@ static int ompi_comm_allgather_emulate_intra( void *inbuf, int incount,
     if ( 0 == rank ) {
         tmpbuf = (int *) malloc (rsize*outcount*sizeof(int));
         req = (MPI_Request *)malloc (rsize*outcount*sizeof(MPI_Request));
-        stats = (MPI_Status *)malloc (rsize*outcount*sizeof(MPI_Status));
-        if ( NULL == tmpbuf || NULL == req || NULL == stats) {
+        if ( NULL == tmpbuf || NULL == req ) {
             return (OMPI_ERR_OUT_OF_RESOURCE);
         }
 
@@ -550,13 +555,13 @@ static int ompi_comm_allgather_emulate_intra( void *inbuf, int incount,
     }
         
     if ( 0 == rank ) {
-        rc = mca_pml.pml_wait (rsize, req, NULL, stats);
+        rc = mca_pml.pml_wait_all (rsize, req, MPI_STATUSES_IGNORE);
         if ( OMPI_SUCCESS != rc ) {
             goto exit;       
         }
     }
 
-    rc = mca_pml.pml_wait (1, &sendreq, NULL, &status );
+    rc = mca_pml.pml_wait_all (1, &sendreq, MPI_STATUS_IGNORE);
     if ( OMPI_SUCCESS != rc ) {
         goto exit;       
     }
@@ -579,14 +584,11 @@ static int ompi_comm_allgather_emulate_intra( void *inbuf, int incount,
         }
     }
 
-    rc = mca_pml.pml_wait (1, &sendreq, NULL, &status );
+    rc = mca_pml.pml_wait_all (1, &sendreq, MPI_STATUS_IGNORE );
 
  exit:
     if ( NULL != req ) {
         free ( req );
-    }
-    if ( NULL != stats ) {
-        free ( stats );
     }
     if ( NULL != tmpbuf ) {
         free ( tmpbuf );
@@ -619,77 +621,137 @@ int ompi_comm_free ( ompi_communicator_t **comm )
 /**********************************************************************/
 /**********************************************************************/
 /**********************************************************************/
-ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm, 
-                                   ompi_communicator_t *bridge_comm, 
-                                   int local_leader,
-                                   int remote_leader,
-                                   int tag,
-                                   int rsize)
-{
-    ompi_proc_t **rprocs = NULL;
-#if 0 /* TSW - fix this */
-    int local_rank, local_size;
-    ompi_process_id_t jobid;
-    uint32_t *rvpids=NULL, *vpids=NULL;
-    int rc, i;
-    
-    local_rank = ompi_comm_rank ( local_comm );
+/* This routine will be very soon cleaned up. We agreed on the
+   required interface with Brian, Rich and Tim W., as soon
+   as the functions are implemented, this function
+   will be simplified significantly.
+*/
+#define PROC local_comm->c_local_group->grp_proc_pointers
 
-    vpids  = (uint32_t *) malloc ( local_size * sizeof(uint32_t));
-    rvpids = (uint32_t *) malloc ( rsize * sizeof(uint32_t));
-    rprocs = (ompi_proc_t **) malloc ( rsize * sizeof(ompi_proc_t *));
-    if ( NULL == vpids || NULL == rvpids || NULL == rprocs ) {
+ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm, 
+                                     ompi_communicator_t *bridge_comm, 
+                                     int local_leader,
+                                     int remote_leader,
+                                     int tag,
+                                     int rsize)
+{
+    int rc, i, count[2];
+    int local_rank, local_size;
+    ompi_proc_t **rprocs=NULL;
+    
+    typedef struct _tmp_pname {
+        uint32_t vpid;
+        uint32_t jobid;
+        uint32_t cellid;
+    } tmp_pname;
+    tmp_pname *lnames=NULL, *rnames=NULL;
+    ompi_process_name_t rprocname;
+
+    MPI_Datatype ntype=MPI_DATATYPE_NULL, btype, intype[2];
+    MPI_Aint extent, addr[2];
+
+    local_rank = ompi_comm_rank (local_comm);
+    local_size = ompi_comm_size (local_comm);
+
+    rnames = (tmp_pname *)    malloc(rsize * sizeof (tmp_pname));
+    rprocs = (ompi_proc_t **) malloc(rsize * sizeof(ompi_proc_t *));
+    if (NULL == rprocs || NULL == rnames) {
         rc = OMPI_ERR_OUT_OF_RESOURCE;
         goto err_exit;
     }
     
-    if ( local_rank == local_leader ) {
+    /* generate a derived datatype describing tmp_pname */
+    btype = MPI_UNSIGNED;
+    ompi_ddt_type_extent (btype,  &extent);
+    if ( extent != 4 ) {
+        btype = MPI_UNSIGNED_SHORT;
+        ompi_ddt_type_extent ( btype, &extent);
+        if ( 4 != extent ) {
+            btype = MPI_UNSIGNED_LONG;
+            ompi_ddt_type_extent ( btype, &extent);
+        }
+    }
+    
+    addr[0]   = 0;
+    addr[1]   = ( ((char *)&rnames[1]) - ((char *)&rnames[0]));
+    intype[0] = btype;
+    intype[1] = MPI_UB;
+    count[0]  = 3;
+    count[1]  = 1;
+    ompi_ddt_create_struct (2, count, addr, intype, &ntype );
+    ompi_ddt_commit (&ntype);
+
+    if (local_rank == local_leader) {
         MPI_Request req;
-        MPI_Status status;
-        /* generate vpid list */
+
+        lnames=(tmp_pname *) malloc (local_size*sizeof(tmp_pname));
+        if ( NULL == lnames ) {
+            rc = OMPI_ERR_OUT_OF_RESOURCE;
+            goto err_exit;
+        }
+
+        /* generate name list */
         for ( i = 0; i < local_size; i++ ){
-            vpids[i] = (uint32_t) local_comm->c_local_group->grp_proc_pointers[i]->proc_name;
+            lnames[i].vpid   = PROC[i]->proc_name.vpid;
+            lnames[i].jobid  = PROC[i]->proc_name.jobid;
+            lnames[i].cellid = PROC[i]->proc_name.cellid;
         }
         
-        
         /* local leader exchange group sizes and vpid lists */
-        rc = mca_pml.pml_irecv (rvpids, rsize, MPI_UNSIGNED, remote_leader, tag,
+        rc = mca_pml.pml_irecv (rnames, rsize, ntype, remote_leader, tag,
                                 bridge_comm, &req );
         if ( rc != MPI_SUCCESS ) {
             goto err_exit;
         }
-        rc = mca_pml.pml_send (vpids, local_size, MPI_UNSIGNED, remote_leader, tag, 
+        rc = mca_pml.pml_send (lnames, local_size, ntype, remote_leader, tag, 
                                MCA_PML_BASE_SEND_STANDARD, bridge_comm );
         if ( rc != MPI_SUCCESS ) {
             goto err_exit;
         }
-        rc = mca_pml.pml_wait ( 1, &req, NULL, &status);
+        rc = mca_pml.pml_wait_all ( 1, &req, MPI_STATUS_IGNORE );
         if ( rc != MPI_SUCCESS ) {
             goto err_exit;
         }
     }
 
-    rc = local_comm->c_coll.coll_bcast( rvpids, rsize, MPI_UNSIGNED, 
+    rc = local_comm->c_coll.coll_bcast( rnames, rsize, ntype, 
                                         local_leader, local_comm );
     if ( rc != MPI_SUCCESS ) {
         goto err_exit;
     }
     
     for ( i = 0; i < rsize; i++ ) {
-        rprocs[i] = ompi_proc_find ( job, rvpids[i] );
+        rprocname.vpid   = rnames[i].vpid;
+        rprocname.cellid = rnames[i].cellid;
+        rprocname.jobid  = rnames[i].jobid;
+        
+       /* ompi_proc_find should be used here, it 
+          seems however not to work at the moment.
+          Will have to be fixed later.
+       */
+        rprocs[i] = ompi_proc_find (&rprocname );
     }
 
  err_exit:
-    if ( NULL != vpids ) {
-        free ( vpids );
+    if ( NULL != lnames ) {
+        free ( lnames );
     }
-    if ( NULL != rvpids) {
-        free ( rvpids );
+    if ( NULL != rnames) {
+        free ( rnames );
     }
     /* rprocs has to be freed in the level above (i.e. intercomm_create ) */
-
-#endif
-return rprocs;
+    if ( ntype != MPI_DATATYPE_NULL ) {
+        ompi_ddt_destroy ( &ntype );
+    }
+    if ( OMPI_SUCCESS !=rc ) {
+        printf("%d: Error in ompi_get_rprocs\n", local_rank);
+        if ( NULL != rprocs ) {
+            free ( rprocs);
+            rprocs=NULL;
+        }
+    }
+        
+    return rprocs;
 }
 /**********************************************************************/
 /**********************************************************************/
@@ -697,57 +759,41 @@ return rprocs;
 int ompi_comm_determine_first ( ompi_communicator_t *intercomm, int high )
 {
     int flag, rhigh;
-    int local_rank, rc;
-    ompi_proc_t *lvpid, *rvpid;
-    ompi_ns_cmp_bitmask_t mask;
+    int rank, rsize;
+    int *rcounts;
+    MPI_Aint *rdisps;
+    int scount=0;
+    int *sbuf;
+    int rc;
 
-    lvpid = intercomm->c_local_group->grp_proc_pointers[0];
-    rvpid = intercomm->c_remote_group->grp_proc_pointers[0];
-    local_rank = ompi_comm_rank ( intercomm );
-
-    /*
-     * determine maximal high value over the intercomm
-     */
-    mask = OMPI_NS_CMP_CELLID | OMPI_NS_CMP_JOBID | OMPI_NS_CMP_VPID;
-    if ( ompi_name_server.compare(mask, &lvpid->proc_name,
-                                  &rvpid->proc_name) < 0 ) {
-        if ( 0 == local_rank  ) {
-            rc = intercomm->c_coll.coll_bcast(&high, 1, MPI_INT, MPI_ROOT,
-                                              intercomm );
-        }
-        else {
-            rc = intercomm->c_coll.coll_bcast(&high, 1, MPI_INT, MPI_PROC_NULL,
-                                              intercomm );
-        }
-        if ( rc != MPI_SUCCESS ) {
-            return rc;
-        }
-
-        rc = intercomm->c_coll.coll_bcast ( &rhigh, 1, MPI_INT, 0, intercomm );
-        if ( rc != MPI_SUCCESS ) {
-            return rc;
-        }
+    rank = ompi_comm_rank        (intercomm);
+    rsize= ompi_comm_remote_size (intercomm);
+    
+    rdisps  = (MPI_Aint *) calloc ( rsize, sizeof(MPI_Aint));
+    rcounts = (int *)      calloc ( rsize, sizeof(int));
+    if ( NULL == rdisps || NULL == rcounts ){
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
-    else {
-        rc = intercomm->c_coll.coll_bcast ( &rhigh, 1, MPI_INT, 0, intercomm );
-        if ( rc != MPI_SUCCESS ) {
-            return rc;
-        }
-
-        if ( 0 == local_rank  ) {
-            rc = intercomm->c_coll.coll_bcast ( &high, 1, MPI_INT, MPI_ROOT,
-                                                intercomm );
-        }
-        else { 
-            rc = intercomm->c_coll.coll_bcast(&high, 1, MPI_INT, MPI_PROC_NULL,
-                                              intercomm);
-        }
-        if ( rc != MPI_SUCCESS ) {
-            return rc;
-        }
-
+    
+    rcounts[0] = 1;
+    sbuf       = &high;
+    if ( 0 == rank ) {
+        scount = 1;
+    }
+    
+    rc = intercomm->c_coll.coll_allgatherv(sbuf, scount, MPI_INT,
+                                           &rhigh, rcounts, rdisps,
+                                           MPI_INT, intercomm);
+    if ( rc != OMPI_SUCCESS ) {
+        flag = -1;
     }
 
+    if ( NULL != rdisps ) {
+        free ( rdisps );
+    }
+    if ( NULL != rcounts ) {
+        free ( rcounts );
+    }
 
     /* This is the logic for determining who is first, who is second */
     if ( high && !rhigh ) {
@@ -756,8 +802,8 @@ int ompi_comm_determine_first ( ompi_communicator_t *intercomm, int high )
     else if ( !high && rhigh ) {
         flag = false;
     }
+#if 0 
     else {
-        
         if ( lvpid > rvpid ) {
             flag = true;
         }
@@ -765,6 +811,7 @@ int ompi_comm_determine_first ( ompi_communicator_t *intercomm, int high )
             flag = false;
         }
     }
+#endif
 
     return flag;
 }
