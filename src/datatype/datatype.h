@@ -17,6 +17,7 @@
 #include <unistd.h>
 #include <string.h>
 #include "include/constants.h"
+#include "errhandler/errhandler.h"
 #include "lfc/lam_object.h"
 #include "lfc/lam_hash_table.h"
 #include "mpi.h"
@@ -64,7 +65,7 @@ typedef struct lam_datatype_t {
    /* Attribute fields */
    lam_hash_table_t *d_keyhash;
    char name[MPI_MAX_OBJECT_NAME];
-
+    lam_errhandler_t *error_handler; /**< error handler */
    dt_type_desc_t desc;     /**< the data description */
    dt_type_desc_t opt_desc; /**< short description of the data used when conversion is useless
                              * or in the send case (without conversion) */
