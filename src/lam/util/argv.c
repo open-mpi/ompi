@@ -1,11 +1,13 @@
 /*
  * $HEADER$
  *
- * $Id: argv.c,v 1.2 2004/01/07 08:22:37 brbarret Exp $
+ * $Id: argv.c,v 1.3 2004/01/07 08:35:06 jsquyres Exp $
  */
 
 #include <stdlib.h>
 #include <string.h>
+
+#include "lam/util/argv.h"
 
 #define ARGSIZE		128
 
