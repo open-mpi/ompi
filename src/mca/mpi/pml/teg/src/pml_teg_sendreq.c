@@ -81,5 +81,14 @@ void mca_pml_teg_send_request_progress(
     mca_ptl_base_send_request_t* req,
     mca_ptl_base_send_frag_t* frag)
 {
+    lam_mutex_lock(&mca_pml_teg.teg_lock);
+    req->req_bytes_sent += frag->super.frag_size;
+    if (req->req_bytes_sent >= req->super.req_length) {
+        req->super.req_mpi_done = true;
+        if(mca_pml_teg.teg_req_waiting) {
+            lam_condition_broadcast(&mca_pml_teg.teg_condition);
+        }
+    }
+    lam_mutex_unlock(&mca_pml_teg.teg_lock);
 }
 

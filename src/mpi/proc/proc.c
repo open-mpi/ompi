@@ -77,7 +77,6 @@ int lam_proc_init(void)
         proc->proc_vpid = vpid;
         if(proc->proc_vpid == local->vpid && strcmp(proc->proc_job, local->job_handle) == 0) {
             lam_proc_local_proc = proc;
-            lam_output(0, "myrank=%d\n", local->vpid);
         }
     }
     free(procs);

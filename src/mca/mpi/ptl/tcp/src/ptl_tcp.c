@@ -6,14 +6,18 @@
 #include "lam/util/if.h"
 #include "mca/mpi/pml/pml.h"
 #include "mca/mpi/ptl/ptl.h"
+#include "mca/mpi/ptl/base/ptl_base_header.h"
 #include "mca/mpi/ptl/base/ptl_base_sendreq.h"
 #include "mca/mpi/ptl/base/ptl_base_sendfrag.h"
+#include "mca/mpi/ptl/base/ptl_base_recvreq.h"
+#include "mca/mpi/ptl/base/ptl_base_recvfrag.h"
 #include "mca/lam/base/mca_base_module_exchange.h"
 #include "ptl_tcp.h"
 #include "ptl_tcp_addr.h"
 #include "ptl_tcp_peer.h"
 #include "ptl_tcp_proc.h"
 #include "ptl_tcp_sendreq.h"
+#include "ptl_tcp_recvfrag.h"
 
 
 mca_ptl_tcp_t mca_ptl_tcp = {
@@ -151,11 +155,25 @@ int mca_ptl_tcp_send(
 
 
 void mca_ptl_tcp_recv(
-    struct mca_ptl_t* ptl,
-    struct mca_ptl_base_recv_frag_t* frag)
+    mca_ptl_t* ptl,
+    mca_ptl_base_recv_frag_t* frag)
 {
-    if(mca_ptl_tcp_recv_frag_cts((mca_ptl_tcp_recv_frag_t*)frag) == false) {
-        lam_list_append(&mca_ptl_tcp_module.tcp_acks, (lam_list_item_t*)frag);
+    /* fill in match */
+    mca_pml_base_request_t* request = &frag->frag_request->super;
+    mca_ptl_base_header_t* header = &frag->super.frag_header;
+    request->req_status.MPI_SOURCE = header->hdr_match.hdr_src;
+    request->req_status.MPI_TAG = header->hdr_match.hdr_tag;
+    request->req_status.MPI_ERROR = LAM_SUCCESS;
+    request->req_status.MPI_LENGTH = header->hdr_match.hdr_msg_length;
+
+    /* send cts ack back to peer */
+    if(request->req_status.MPI_LENGTH > frag->super.frag_size) {
+        if(mca_ptl_tcp_recv_frag_cts((mca_ptl_tcp_recv_frag_t*)frag) == false) {
+             lam_list_append(&mca_ptl_tcp_module.tcp_acks, (lam_list_item_t*)frag);
+        }
     }
+
+    /* process fragment if complete */
+    mca_ptl_tcp_recv_frag_process((mca_ptl_tcp_recv_frag_t*)frag);
 }
 

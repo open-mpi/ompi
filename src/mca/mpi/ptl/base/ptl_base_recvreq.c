@@ -11,7 +11,7 @@
 
 static void mca_ptl_base_recv_request_construct(mca_ptl_base_recv_request_t*);
 static void mca_ptl_base_recv_request_destruct(mca_ptl_base_recv_request_t*);
-static bool mca_ptl_base_recv_request_match_specific_proc(mca_ptl_base_recv_request_t*, int);
+static mca_ptl_base_recv_frag_t* mca_ptl_base_recv_request_match_specific_proc(mca_ptl_base_recv_request_t*, int);
 
 
 lam_class_t mca_ptl_base_recv_request_t_class = { 
@@ -39,21 +39,23 @@ static void mca_ptl_base_recv_request_destruct(mca_ptl_base_recv_request_t* requ
 
 void mca_ptl_base_recv_request_match_specific(mca_ptl_base_recv_request_t* request)
 {
-    lam_communicator_t *comm = request->super.req_communicator;
+    lam_communicator_t *comm = request->super.req_comm;
     mca_pml_comm_t* pml_comm = comm->c_pml_comm;
     int req_peer = request->super.req_peer;
-
+    mca_ptl_base_recv_frag_t* frag;
+   
     /* check for a specific match */
+    THREAD_LOCK(pml_comm->c_matching_lock+req_peer);
     if (lam_list_get_size(&pml_comm->c_unexpected_frags[req_peer]) > 0 &&
-        mca_ptl_base_recv_request_match_specific_proc(request, req_peer)) {
+        (frag = mca_ptl_base_recv_request_match_specific_proc(request, req_peer)) != NULL) {
+        THREAD_UNLOCK(pml_comm->c_matching_lock+req_peer);
+        mca_ptl_base_recv_frag_process(frag);
         return; /* match found */
     }
 
     /* We didn't find any matches.  Record this irecv so we can match 
      * it when the message comes in.
     */
-
-    THREAD_LOCK(pml_comm->c_matching_lock+req_peer);
     lam_list_append(pml_comm->c_specific_receives+req_peer, (lam_list_item_t*)request);
     THREAD_UNLOCK(pml_comm->c_matching_lock+req_peer);
 }
@@ -66,7 +68,7 @@ void mca_ptl_base_recv_request_match_specific(mca_ptl_base_recv_request_t* reque
 
 void mca_ptl_base_recv_request_match_wild(mca_ptl_base_recv_request_t* request)
 {
-    lam_communicator_t *comm = request->super.req_communicator;
+    lam_communicator_t *comm = request->super.req_comm;
     mca_pml_comm_t* pml_comm = comm->c_pml_comm;
     int proc_count = comm->c_remote_group->grp_proc_count;
     int proc;
@@ -78,15 +80,22 @@ void mca_ptl_base_recv_request_match_wild(mca_ptl_base_recv_request_t* request)
      * process.
     */
     for (proc = 0; proc < proc_count; proc++) {
-                                                                                                                  
+        mca_ptl_base_recv_frag_t* frag;
+
         /* continue if no frags to match */
-        if (lam_list_get_size(&pml_comm->c_unexpected_frags[proc]) == 0)
+        THREAD_LOCK(pml_comm->c_matching_lock+proc);
+        if (lam_list_get_size(&pml_comm->c_unexpected_frags[proc]) == 0) {
+            THREAD_UNLOCK(pml_comm->c_matching_lock+proc);
             continue;
+        }
 
         /* loop over messages from the current proc */
-        if (mca_ptl_base_recv_request_match_specific_proc(request, proc)) {
+        if ((frag = mca_ptl_base_recv_request_match_specific_proc(request, proc)) != NULL) {
+            THREAD_UNLOCK(pml_comm->c_matching_lock+proc);
+            mca_ptl_base_recv_frag_process(frag);
             return; /* match found */
         }
+        THREAD_UNLOCK(pml_comm->c_matching_lock+proc);
     } 
 
     /* We didn't find any matches.  Record this irecv so we can match to
@@ -104,41 +113,33 @@ void mca_ptl_base_recv_request_match_wild(mca_ptl_base_recv_request_t* request)
  *  it places the request in the appropriate matched receive list. 
 */
 
-static bool mca_ptl_base_recv_request_match_specific_proc(mca_ptl_base_recv_request_t* request, int proc)
+static mca_ptl_base_recv_frag_t* mca_ptl_base_recv_request_match_specific_proc(
+    mca_ptl_base_recv_request_t* request, int proc)
 {
-    mca_pml_comm_t *pml_comm = request->super.req_communicator->c_pml_comm;
+    mca_pml_comm_t *pml_comm = request->super.req_comm->c_pml_comm;
     lam_list_t* unexpected_frags = pml_comm->c_unexpected_frags+proc;
     mca_ptl_base_recv_frag_t* frag;
     int tag = request->super.req_tag;
 
-    /* lock for thread safety */
-    THREAD_LOCK(pml_comm->c_matching_lock+proc);
     for (frag =  (mca_ptl_base_recv_frag_t*)lam_list_get_first(unexpected_frags);
          frag != (mca_ptl_base_recv_frag_t*)lam_list_get_end(unexpected_frags);
          frag =  (mca_ptl_base_recv_frag_t*)lam_list_get_next(frag)) {
         mca_ptl_base_match_header_t* header = &frag->super.frag_header.hdr_match;
 
         /* check first frag - we assume that process matching has been done already */
-        if (((tag == LAM_ANY_TAG) || (tag == header->hdr_user_tag))) {
+        if (((tag == LAM_ANY_TAG) || (tag == header->hdr_tag))) {
 
-            if (tag == LAM_ANY_TAG && header->hdr_user_tag < 0) {
+            if (tag == LAM_ANY_TAG && header->hdr_tag < 0) {
                 continue;
             }
-
+            lam_list_remove_item(unexpected_frags, frag);
             request->req_sequence = header->hdr_msg_seq;
-            request->super.req_tag = tag = header->hdr_user_tag;
-            request->super.req_peer = header->hdr_src_rank;
+            request->super.req_tag = tag = header->hdr_tag;
+            request->super.req_peer = header->hdr_src;
             frag->frag_request = request;
-
-            /* notify ptl fragment has been matched - send cts to peer */
-            THREAD_UNLOCK(pml_comm->c_matching_lock+proc);
-
-            mca_ptl_base_recv_frag_process(frag);
-            return true;
+            return frag;
         } 
     }
-
-    THREAD_UNLOCK(pml_comm->c_matching_lock+proc);
-    return false;
+    return NULL;
 }
 

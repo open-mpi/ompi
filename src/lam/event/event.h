@@ -129,18 +129,14 @@ struct lam_eventop {
 	int (*dispatch)(void *, struct timeval *);
 };
 
-#define LAM_TIMEOUT_DEFAULT	{5, 0}
-
-void lam_event_init(void);
-int lam_event_dispatch(void);
-
+#define LAM_TIMEOUT_DEFAULT	{1, 0}
 #define LAM_EVLOOP_ONCE		0x01
 #define LAM_EVLOOP_NONBLOCK	0x02
 
+
+void lam_event_init(void);
+int  lam_event_dispatch(void);
 int  lam_event_loop(int);
-int  lam_timeout_next(struct timeval *);
-void lam_timeout_correct(struct timeval *);
-void lam_timeout_process(void);
 
 #define lam_evtimer_add(ev, tv)		lam_event_add(ev, tv)
 #define lam_evtimer_set(ev, cb, arg)	lam_event_set(ev, -1, 0, cb, arg)
@@ -164,14 +160,19 @@ void lam_timeout_process(void);
 void lam_event_set(struct lam_event *, int, short, void (*)(int, short, void *), void *);
 int  lam_event_add(struct lam_event *, struct timeval *);
 int  lam_event_del(struct lam_event *);
-void lam_event_active(struct lam_event *, int, short);
 int  lam_event_pending(struct lam_event *, short, struct timeval *);
+void lam_event_active(struct lam_event *, int, short);
 
 #ifdef WIN32
 #define lam_event_initialized(ev)	((ev)->ev_flags & LAM_EVLIST_INIT && (ev)->ev_fd != INVALID_HANDLE_VALUE)
 #else
 #define lam_event_initialized(ev)	((ev)->ev_flags & LAM_EVLIST_INIT)
 #endif
+
+/* for internal use only */
+int  lam_event_add_i(struct lam_event *, struct timeval *);
+int  lam_event_del_i(struct lam_event *);
+void lam_event_active_i(struct lam_event *, int, short);
 
 #ifdef __cplusplus
 }

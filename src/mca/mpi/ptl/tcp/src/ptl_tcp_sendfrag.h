@@ -21,9 +21,6 @@ struct mca_ptl_tcp_send_frag_t {
    struct iovec *frag_vec_ptr;
    size_t frag_vec_cnt;
    struct iovec frag_vec[2];
-#define frag_peer super.super.frag_peer
-#define frag_header super.super.frag_header
-#define frag_owner super.super.frag_owner
 };
 typedef struct mca_ptl_tcp_send_frag_t mca_ptl_tcp_send_frag_t;
 

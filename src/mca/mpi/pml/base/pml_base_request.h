@@ -13,16 +13,7 @@
 
 extern lam_class_t mca_pml_base_request_t_class;
 
-/* MPI request status */
-typedef enum {
-    MCA_PML_STATUS_INVALID = 1,
-    MCA_PML_STATUS_INITED = 2,
-    MCA_PML_STATUS_INCOMPLETE = 3,
-    MCA_PML_STATUS_COMPLETE = 4,
-    MCA_PML_STATUS_INACTIVE = 5
-} mca_pml_base_request_status_t;
-
-
+/* request type */
 typedef enum {
     MCA_PML_REQUEST_SEND,
     MCA_PML_REQUEST_RECV
@@ -30,7 +21,7 @@ typedef enum {
 
 
 /* MPI pml (point-to-point) request */
-typedef struct {
+struct mca_pml_base_request_t {
     /* base request */
     lam_request_t super;
     /* pointer to application buffer */
@@ -42,24 +33,21 @@ typedef struct {
     /* user defined tag */
     int32_t req_tag;
     /* communicator pointer */
-    lam_communicator_t *req_communicator;
+    lam_communicator_t *req_comm;
     /* pointer to data type */
     lam_datatype_t *req_datatype;
     /* MPI request type - used for test */
     mca_pml_base_request_type_t req_type;
-    /* MPI request status */
-    mca_pml_base_request_status_t req_status;
     /* completion status */
-    lam_status_public_t req_status_public;
+    lam_status_public_t req_status;
     /* flag indicating if the this is a persistent request */
     bool req_persistent;
     /* flag indicating if MPI is done with this request */
     bool req_mpi_done;
     /* flag indicating if the pt-2-pt layer is done with this request */
-    bool req_pml_layer_done;
-    /* lock to update request status */
-    lam_mutex_t req_lock;
-} mca_pml_base_request_t;
+    bool req_pml_done;
+};
+typedef struct mca_pml_base_request_t mca_pml_base_request_t;
 
 
 void mca_pml_base_request_construct(mca_pml_base_request_t*);

@@ -55,9 +55,12 @@
 
 #include "event.h"
 #include "evsignal.h"
+#include "lam/threads/mutex.h"
+
 
 extern struct lam_event_list lam_eventqueue;
 extern volatile sig_atomic_t lam_evsignal_caught;
+extern lam_mutex_t lam_event_lock;
 
 struct pollop {
 	int event_count;		/* Highest number alloc */
@@ -166,7 +169,9 @@ poll_dispatch(void *arg, struct timeval *tv)
 		return (-1);
 
 	sec = tv->tv_sec * 1000 + tv->tv_usec / 1000;
+        lam_mutex_unlock(&lam_event_lock);
 	res = poll(pop->event_set, nfds, sec);
+        lam_mutex_lock(&lam_event_lock);
 
 	if (lam_evsignal_recalc(&pop->evsigmask) == -1)
 		return (-1);
@@ -209,8 +214,8 @@ poll_dispatch(void *arg, struct timeval *tv)
 
 		if (res) {
 			if (!(ev->ev_events & LAM_EV_PERSIST))
-				lam_event_del(ev);
-			lam_event_active(ev, res, 1);
+				lam_event_del_i(ev);
+			lam_event_active_i(ev, res, 1);
 		}	
 	}
 

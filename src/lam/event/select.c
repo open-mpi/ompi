@@ -197,8 +197,8 @@ select_dispatch(void *arg, struct timeval *tv)
 
 		if (res) {
 			if (!(ev->ev_events & LAM_EV_PERSIST))
-				lam_event_del(ev);
-			lam_event_active(ev, res, 1);
+				lam_event_del_i(ev);
+			lam_event_active_i(ev, res, 1);
 		} else if (ev->ev_fd > maxfd)
 			maxfd = ev->ev_fd;
 	}

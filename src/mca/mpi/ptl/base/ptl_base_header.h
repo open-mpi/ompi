@@ -61,11 +61,11 @@ struct mca_ptl_base_match_header_t {
     /* communicator index */
     uint32_t hdr_contextid;
     /* source rank */
-    int32_t hdr_src_rank;
+    int32_t hdr_src;
     /* destination rank */
-    int32_t hdr_dst_rank;
+    int32_t hdr_dst;
     /* user tag */
-    int32_t hdr_user_tag;
+    int32_t hdr_tag;
     /* message length */
     uint32_t hdr_msg_length;
     /* message sequence number */

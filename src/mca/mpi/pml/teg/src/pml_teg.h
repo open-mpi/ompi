@@ -10,6 +10,7 @@
 #ifndef MCA_PML_TEG_H
 #define MCA_PML_TEG_H
 
+#include "lam/threads/thread.h"
 #include "lam/threads/condition.h"
 #include "lam/mem/free_list.h"
 #include "lam/util/cmd_line.h"
@@ -34,7 +35,8 @@ struct mca_pml_teg_t {
     lam_list_t  teg_procs;
     lam_mutex_t teg_lock;
     lam_condition_t teg_condition;
-    int teg_reqs_waiting;
+    int teg_req_waiting;
+    lam_thread_t teg_thread;
 
     int teg_free_list_num; /* initial size of free list */
     int teg_free_list_max; /* maximum size of free list */

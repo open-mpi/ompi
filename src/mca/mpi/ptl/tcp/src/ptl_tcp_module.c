@@ -3,6 +3,11 @@
  */
 #include <errno.h>
 #include <unistd.h>
+#include <fcntl.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 #include "lam/constants.h"
 #include "lam/util/if.h"
@@ -211,36 +216,57 @@ static int mca_ptl_tcp_module_create_instances(void)
 
 static int mca_ptl_tcp_module_create_listen(void)
 {
+    int flags;
+
     /* create a listen socket for incoming connections */
-    mca_ptl_tcp_module.tcp_listen = socket(AF_INET, SOCK_STREAM, 0);
-    if(mca_ptl_tcp_module.tcp_listen < 0) {
+    mca_ptl_tcp_module.tcp_listen_sd = socket(AF_INET, SOCK_STREAM, 0);
+    if(mca_ptl_tcp_module.tcp_listen_sd < 0) {
         lam_output(0,"mca_ptl_tcp_module_init: socket() failed with errno=%d", errno);
         return LAM_ERROR;
     }
                                                                                                       
     /* bind to all addresses and dynamically assigned port */
     struct sockaddr_in inaddr;
+    memset(&inaddr, 0, sizeof(inaddr));
     inaddr.sin_family = AF_INET;
     inaddr.sin_addr.s_addr = INADDR_ANY;
     inaddr.sin_port = 0;
                                                                                                       
-    if(bind(mca_ptl_tcp_module.tcp_listen, (struct sockaddr*)&inaddr, sizeof(inaddr)) < 0) {
+    if(bind(mca_ptl_tcp_module.tcp_listen_sd, (struct sockaddr*)&inaddr, sizeof(inaddr)) < 0) {
         lam_output(0,"mca_ptl_tcp_module_init: bind() failed with errno=%d", errno);
         return LAM_ERROR;
     }
                                                                                                       
     /* resolve system assignend port */
     lam_socklen_t addrlen = sizeof(struct sockaddr_in);
-    if(getsockname(mca_ptl_tcp_module.tcp_listen, (struct sockaddr*)&inaddr, &addrlen) < 0) {
+    if(getsockname(mca_ptl_tcp_module.tcp_listen_sd, (struct sockaddr*)&inaddr, &addrlen) < 0) {
         lam_output(0, "mca_ptl_tcp_module_init: getsockname() failed with errno=%d", errno);
         return LAM_ERROR;
     }
-    mca_ptl_tcp_module.tcp_port = inaddr.sin_port;
+    mca_ptl_tcp_module.tcp_listen_port = inaddr.sin_port;
 
+    /* setup listen backlog to maximum allowed by kernel */
+    if(listen(mca_ptl_tcp_module.tcp_listen_sd, SOMAXCONN) < 0) {
+        lam_output(0, "mca_ptl_tcp_module_init: listen() failed with errno=%d", errno);
+        return LAM_ERROR;
+    }
+                                                                                                                   
+    /* set socket up to be non-blocking, otherwise accept could block */
+    if((flags = fcntl(mca_ptl_tcp_module.tcp_listen_sd, F_GETFL, 0)) < 0) {
+        lam_output(0, "mca_ptl_tcp_module_init: fcntl(F_GETFL) failed with errno=%d", errno);
+        return LAM_ERROR;
+    } else {
+        flags |= O_NONBLOCK;
+        if(fcntl(mca_ptl_tcp_module.tcp_listen_sd, F_SETFL, flags) < 0) {
+            lam_output(0, "mca_ptl_tcp_module_init: fcntl(F_SETFL) failed with errno=%d", errno);
+            return LAM_ERROR;
+        }
+    }
+   
     /* register listen port */
     lam_event_set(
         &mca_ptl_tcp_module.tcp_recv_event,
-        mca_ptl_tcp_module.tcp_listen, 
+        mca_ptl_tcp_module.tcp_listen_sd, 
         LAM_EV_READ|LAM_EV_PERSIST, 
         mca_ptl_tcp_module_recv_handler, 
         0);
@@ -261,7 +287,7 @@ static int mca_ptl_tcp_module_exchange(void)
      for(i=0; i<mca_ptl_tcp_module.tcp_num_ptls; i++) {
          mca_ptl_tcp_t* ptl = mca_ptl_tcp_module.tcp_ptls[i];
          addrs[i].addr_inet = ptl->ptl_ifaddr.sin_addr;
-         addrs[i].addr_port = mca_ptl_tcp_module.tcp_listen;
+         addrs[i].addr_port = mca_ptl_tcp_module.tcp_listen_port;
          addrs[i].addr_inuse = 0;
      }
      int rc =  mca_base_modex_send(&mca_ptl_tcp_module.super.ptlm_version, addrs, size);
@@ -353,10 +379,10 @@ void mca_ptl_tcp_module_progress(mca_ptl_base_tstamp_t tstamp)
 
 static void mca_ptl_tcp_module_accept(void)
 {
-    lam_socklen_t addrlen = sizeof(struct sockaddr_in);
     while(true) {
+        lam_socklen_t addrlen = sizeof(struct sockaddr_in);
         struct sockaddr_in addr;
-        int sd = accept(mca_ptl_tcp_module.tcp_listen, (struct sockaddr*)&addr, &addrlen);
+        int sd = accept(mca_ptl_tcp_module.tcp_listen_sd, (struct sockaddr*)&addr, &addrlen);
         if(sd < 0) {
             if(errno == EINTR)
                 continue;
@@ -385,7 +411,7 @@ static void mca_ptl_tcp_module_recv_handler(int sd, short flags, void* user)
     lam_socklen_t addr_len = sizeof(addr);
 
     /* accept new connections on the listen socket */
-    if(mca_ptl_tcp_module.tcp_listen == sd) {
+    if(mca_ptl_tcp_module.tcp_listen_sd == sd) {
         mca_ptl_tcp_module_accept();
         return;
     }
