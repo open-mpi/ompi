@@ -22,10 +22,13 @@ static const char FUNC_NAME[] = "MPI_Get_count";
 
 int MPI_Get_count(MPI_Status *status, MPI_Datatype datatype, int *count) 
 {
-   int size;
+   int size, rc;
 
    if (MPI_PARAM_CHECK) {
       OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+      OMPI_CHECK_DATATYPE_FOR_RECV(rc, datatype, 1);
+
+      OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
    }
 
    if( ompi_ddt_type_size( datatype, &size ) == MPI_SUCCESS ) {
@@ -35,7 +38,7 @@ int MPI_Get_count(MPI_Status *status, MPI_Datatype datatype, int *count)
       }
       
       *count = status->_count / size;
-      if( (status->_count * size) == status->_count )
+      if( ((*count) * size) == status->_count )
          return MPI_SUCCESS;
       *count = MPI_UNDEFINED;
    }
