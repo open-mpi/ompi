@@ -8,6 +8,7 @@
 
 #include "mca/mca.h"
 #include "mca/base/base.h"
+#include "mca/base/mca_base_param.h"
 #include "mca/ptl/ptl.h"
 #include "mca/ptl/base/base.h"
 
@@ -25,6 +26,8 @@
  * Global variables
  */
 int mca_ptl_base_output = -1;
+char* mca_ptl_base_include = "";
+char* mca_ptl_base_exclude = "";
 ompi_list_t mca_ptl_base_components_opened;
 ompi_list_t mca_ptl_base_modules_initialized;
 
@@ -49,7 +52,12 @@ int mca_ptl_base_open(void)
 
   OBJ_CONSTRUCT(&mca_ptl_base_modules_initialized, ompi_list_t);
 
-  /* All done */
+  /* register parameters */
+  mca_base_param_lookup_string(
+      mca_base_param_register_string("ptl","base","include",NULL,NULL), &mca_ptl_base_include);
+  mca_base_param_lookup_string(
+      mca_base_param_register_string("ptl","base","exclude",NULL,NULL), &mca_ptl_base_exclude);
 
+  /* All done */
   return OMPI_SUCCESS;
 }
