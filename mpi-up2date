@@ -1,4 +1,0 @@
-svn up
-./autogen.sh
-./configure --prefix=/where/to/install
-make install
