@@ -4,4 +4,6 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-# Placeholder for things to come...
+EXTRA_DIST = $(sysconf_DATA)
+
+sysconf_DATA = openmpi-mca-params.conf

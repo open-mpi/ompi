@@ -181,16 +181,18 @@ static void find_dyn_components(const char *path, const char *type_name,
 
   OBJ_CONSTRUCT(&found_files, ompi_list_t);
   dir = path_to_use;
-  do {
-    end = strchr(dir, ':');
-    if (NULL != end) {
-      *end = '\0';
-    }
-    if (0 != lt_dlforeachfile(dir, save_filename, &params)) {
-      break;
-    }
-    dir = end + 1;
-  } while (NULL != end);
+  if (NULL != dir) {
+    do {
+      end = strchr(dir, ':');
+      if (NULL != end) {
+        *end = '\0';
+      }
+      if (0 != lt_dlforeachfile(dir, save_filename, &params)) {
+        break;
+      }
+      dir = end + 1;
+    } while (NULL != end);
+  }
 
   /* Iterate through all the filenames that we found.  Since one
      component may [try to] call another to be loaded, only try to load
@@ -221,8 +223,10 @@ static void find_dyn_components(const char *path, const char *type_name,
   if (NULL != param) {
     free(param);
   }
+  if (NULL != path_to_use) {
+    free(path_to_use);
+  }
   OBJ_DESTRUCT(&found_files);
-  free(path_to_use);
 }
 
 
