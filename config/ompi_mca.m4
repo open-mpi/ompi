@@ -55,7 +55,7 @@ fi
 # The list of MCA types (it's fixed)
 
 AC_MSG_CHECKING([for MCA types])
-found_types="common allocator coll gpr io llm mpool ns one oob op pcm pcmclient pml ptl topo"
+found_types="common allocator coll gpr io llm mpool ns one oob op pcm pcmclient pml ptl svc topo"
 AC_MSG_RESULT([$found_types])
 
 # Get the list of all the non-configure MCA components that were found by
@@ -324,6 +324,11 @@ AC_SUBST(MCA_ptl_ALL_SUBDIRS)
 AC_SUBST(MCA_ptl_STATIC_SUBDIRS)
 AC_SUBST(MCA_ptl_DSO_SUBDIRS)
 AC_SUBST(MCA_ptl_STATIC_LTLIBS)
+
+AC_SUBST(MCA_svc_ALL_SUBDIRS)
+AC_SUBST(MCA_svc_STATIC_SUBDIRS)
+AC_SUBST(MCA_svc_DSO_SUBDIRS)
+AC_SUBST(MCA_svc_STATIC_LTLIBS)
 
 AC_SUBST(MCA_topo_ALL_SUBDIRS)
 AC_SUBST(MCA_topo_STATIC_SUBDIRS)
