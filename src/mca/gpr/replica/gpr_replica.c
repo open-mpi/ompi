@@ -32,9 +32,17 @@
 
 int gpr_replica_delete_segment(char *segment)
 {
-    mca_gpr_replica_segment_t *seg;
-
+    int rc;
     OMPI_THREAD_LOCK(&mca_gpr_replica_mutex);
+    rc = gpr_replica_delete_segment_nl(segment);
+    OMPI_THREAD_UNLOCK(&mca_gpr_replica_mutex);
+    return rc;
+}
+
+
+int gpr_replica_delete_segment_nl(char *segment)
+{
+    mca_gpr_replica_segment_t *seg;
 
     if (mca_gpr_replica_debug) {
 	ompi_output(0, "[%d,%d,%d] gpr replica: delete_segment entered", ompi_process_info.name->cellid,
@@ -50,15 +58,23 @@ int gpr_replica_delete_segment(char *segment)
     OBJ_RELEASE(seg);
 
     if (OMPI_SUCCESS != gpr_replica_delete_key(segment, NULL)) { /* couldn't remove dictionary entry */
-	OMPI_THREAD_UNLOCK(&mca_gpr_replica_mutex);
 	return OMPI_ERROR;
     }
-
-    OMPI_THREAD_UNLOCK(&mca_gpr_replica_mutex);
     return OMPI_SUCCESS;
 }
 
 int gpr_replica_put(ompi_registry_mode_t addr_mode, char *segment,
+		    char **tokens, ompi_registry_object_t object,
+		    ompi_registry_object_size_t size)
+{
+    int rc;
+    OMPI_THREAD_LOCK(&mca_gpr_replica_mutex);
+    rc = gpr_replica_put_nl(addr_mode, segment, tokens, object, size);
+    OMPI_THREAD_UNLOCK(&mca_gpr_replica_mutex);
+    return rc;
+}
+
+int gpr_replica_put_nl(ompi_registry_mode_t addr_mode, char *segment,
 		    char **tokens, ompi_registry_object_t object,
 		    ompi_registry_object_size_t size)
 {
@@ -93,8 +109,6 @@ int gpr_replica_put(ompi_registry_mode_t addr_mode, char *segment,
      * only overwrite permission mode flag has any affect
      */
     put_mode = addr_mode & OMPI_REGISTRY_OVERWRITE;
-
-    OMPI_THREAD_LOCK(&mca_gpr_replica_mutex);
 
     /* find the segment */
     seg = gpr_replica_find_seg(true, segment);
@@ -198,12 +212,21 @@ int gpr_replica_put(ompi_registry_mode_t addr_mode, char *segment,
 		    ompi_process_info.name->jobid, ompi_process_info.name->vpid);
     }
 
-    OMPI_THREAD_UNLOCK(&mca_gpr_replica_mutex);
-
     return return_code;
 }
 
 int gpr_replica_delete_object(ompi_registry_mode_t addr_mode,
+			      char *segment, char **tokens)
+{
+    int rc;
+    OMPI_THREAD_LOCK(&mca_gpr_replica_mutex);
+    rc = gpr_replica_delete_object_nl(addr_mode, segment, tokens);
+    OMPI_THREAD_UNLOCK(&mca_gpr_replica_mutex);
+    return rc;
+}
+
+
+int gpr_replica_delete_object_nl(ompi_registry_mode_t addr_mode,
 			      char *segment, char **tokens)
 {
     mca_gpr_replica_core_t *reg, *prev;
@@ -229,12 +252,10 @@ int gpr_replica_delete_object(ompi_registry_mode_t addr_mode,
 	return OMPI_ERROR;
     }
 
-    OMPI_THREAD_LOCK(&mca_gpr_replica_mutex);
 
     /* find the specified segment */
     seg = gpr_replica_find_seg(false, segment);
     if (NULL == seg) {  /* segment not found */
-	OMPI_THREAD_UNLOCK(&mca_gpr_replica_mutex);
 	return OMPI_ERROR;
     }
 
@@ -316,12 +337,19 @@ int gpr_replica_delete_object(ompi_registry_mode_t addr_mode,
 	free(keys);
     }
 
-    OMPI_THREAD_UNLOCK(&mca_gpr_replica_mutex);
-
     return return_code;
 }
 
 ompi_list_t* gpr_replica_index(char *segment)
+{
+    ompi_list_t* list;
+	OMPI_THREAD_LOCK(&mca_gpr_replica_mutex);
+    list = gpr_replica_index_nl(segment);
+	OMPI_THREAD_UNLOCK(&mca_gpr_replica_mutex);
+    return list;
+}
+
+ompi_list_t* gpr_replica_index_nl(char *segment)
 {
     ompi_list_t *answer;
     mca_gpr_replica_keytable_t *ptr;
@@ -332,8 +360,6 @@ ompi_list_t* gpr_replica_index(char *segment)
 	ompi_output(0, "[%d,%d,%d] gpr replica: index entered segment: %s", ompi_process_info.name->cellid,
 		    ompi_process_info.name->jobid, ompi_process_info.name->vpid, segment);
     }
-
-    OMPI_THREAD_LOCK(&mca_gpr_replica_mutex);
 
     answer = OBJ_NEW(ompi_list_t);
 
@@ -349,7 +375,6 @@ ompi_list_t* gpr_replica_index(char *segment)
 	/* find the specified segment */
 	seg = gpr_replica_find_seg(false, segment);
 	if (NULL == seg) {  /* segment not found */
-	    OMPI_THREAD_UNLOCK(&mca_gpr_replica_mutex);
 	    return answer;
 	}
 	/* got segment - now index that dictionary */
@@ -362,12 +387,23 @@ ompi_list_t* gpr_replica_index(char *segment)
 	}
 
     }
-
-    OMPI_THREAD_UNLOCK(&mca_gpr_replica_mutex);
     return answer;
 }
 
 int gpr_replica_subscribe(ompi_registry_mode_t addr_mode,
+			  ompi_registry_notify_action_t action,
+			  char *segment, char **tokens,
+			  ompi_registry_notify_cb_fn_t cb_func, void *user_tag)
+{
+    int rc;
+    OMPI_THREAD_LOCK(&mca_gpr_replica_mutex);
+    rc = gpr_replica_subscribe_nl(addr_mode,action,segment,tokens,cb_func,user_tag);
+    OMPI_THREAD_UNLOCK(&mca_gpr_replica_mutex);
+    return rc;
+}
+
+
+int gpr_replica_subscribe_nl(ompi_registry_mode_t addr_mode,
 			  ompi_registry_notify_action_t action,
 			  char *segment, char **tokens,
 			  ompi_registry_notify_cb_fn_t cb_func, void *user_tag)
@@ -388,7 +424,6 @@ int gpr_replica_subscribe(ompi_registry_mode_t addr_mode,
 	return OMPI_ERROR;
     }
 
-    OMPI_THREAD_LOCK(&mca_gpr_replica_mutex);
 
     /* enter request on notify tracking system */
     trackptr = OBJ_NEW(mca_gpr_notify_request_tracker_t);
@@ -416,16 +451,27 @@ int gpr_replica_subscribe(ompi_registry_mode_t addr_mode,
 	    notify_msg->trig_synchro = OMPI_REGISTRY_SYNCHRO_MODE_NONE;
 	    gpr_replica_process_triggers(segment, trig, notify_msg);
 	}
-	OMPI_THREAD_UNLOCK(&mca_gpr_replica_mutex);
 	return OMPI_SUCCESS;
     } else {
 	OBJ_RELEASE(trackptr);
-	OMPI_THREAD_UNLOCK(&mca_gpr_replica_mutex);
 	return OMPI_ERROR;
     }
 }
 
+
 int gpr_replica_unsubscribe(ompi_registry_mode_t addr_mode,
+			    ompi_registry_notify_action_t action,
+			    char *segment, char **tokens)
+{
+    int rc;
+    OMPI_THREAD_LOCK(&mca_gpr_replica_mutex);
+    rc = gpr_replica_unsubscribe_nl(addr_mode,action,segment,tokens);
+    OMPI_THREAD_UNLOCK(&mca_gpr_replica_mutex);
+    return rc;
+}
+
+
+int gpr_replica_unsubscribe_nl(ompi_registry_mode_t addr_mode,
 			    ompi_registry_notify_action_t action,
 			    char *segment, char **tokens)
 {
@@ -443,12 +489,10 @@ int gpr_replica_unsubscribe(ompi_registry_mode_t addr_mode,
 	return OMPI_ERROR;
     }
 
-    OMPI_THREAD_LOCK(&mca_gpr_replica_mutex);
 
     /* find trigger on replica - return id_tag */
     if (MCA_GPR_NOTIFY_ID_MAX == (id_tag = gpr_replica_remove_trigger(OMPI_REGISTRY_SYNCHRO_MODE_NONE, action,
 								      addr_mode, segment, tokens, 0))) {
-	OMPI_THREAD_UNLOCK(&mca_gpr_replica_mutex);
 	return OMPI_ERROR;
     }
 
@@ -463,17 +507,26 @@ int gpr_replica_unsubscribe(ompi_registry_mode_t addr_mode,
 	ompi_list_remove_item(&mca_gpr_replica_notify_request_tracker, &trackptr->item);
 	OBJ_RELEASE(trackptr);
 
-	OMPI_THREAD_UNLOCK(&mca_gpr_replica_mutex);
 	return OMPI_SUCCESS;
     }
 
     /* if we get here, then couldn't find request */
-    OMPI_THREAD_UNLOCK(&mca_gpr_replica_mutex);
     return OMPI_ERROR;
 }
 
-
 int gpr_replica_synchro(ompi_registry_synchro_mode_t synchro_mode,
+			ompi_registry_mode_t addr_mode,
+			char *segment, char **tokens, int trigger,
+			ompi_registry_notify_cb_fn_t cb_func, void *user_tag)
+{
+    int rc;
+    OMPI_THREAD_LOCK(&mca_gpr_replica_mutex);
+    rc = gpr_replica_synchro_nl(synchro_mode,addr_mode,segment,tokens,trigger,cb_func,user_tag);
+    OMPI_THREAD_UNLOCK(&mca_gpr_replica_mutex);
+    return rc;
+}
+
+int gpr_replica_synchro_nl(ompi_registry_synchro_mode_t synchro_mode,
 			ompi_registry_mode_t addr_mode,
 			char *segment, char **tokens, int trigger,
 			ompi_registry_notify_cb_fn_t cb_func, void *user_tag)
@@ -494,7 +547,6 @@ int gpr_replica_synchro(ompi_registry_synchro_mode_t synchro_mode,
 	return OMPI_ERROR;
     }
 
-    OMPI_THREAD_LOCK(&mca_gpr_replica_mutex);
     /* enter request on notify tracking system */
     trackptr = OBJ_NEW(mca_gpr_notify_request_tracker_t);
     trackptr->requestor = NULL;
@@ -524,16 +576,25 @@ int gpr_replica_synchro(ompi_registry_synchro_mode_t synchro_mode,
 	    notify_msg->trig_synchro = trig->synch_mode;
 	    gpr_replica_process_triggers(segment, trig, notify_msg);
 	}
-	OMPI_THREAD_UNLOCK(&mca_gpr_replica_mutex);
 	return OMPI_SUCCESS;
     } else {
-	OMPI_THREAD_UNLOCK(&mca_gpr_replica_mutex);
 	OBJ_RELEASE(trackptr);
 	return OMPI_ERROR;
     }
 }
 
 int gpr_replica_cancel_synchro(ompi_registry_synchro_mode_t synchro_mode,
+			       ompi_registry_mode_t addr_mode,
+			       char *segment, char **tokens, int trigger)
+{
+    int rc;
+    OMPI_THREAD_LOCK(&mca_gpr_replica_mutex);
+    rc = gpr_replica_cancel_synchro_nl(synchro_mode,addr_mode,segment,tokens,trigger);
+    OMPI_THREAD_UNLOCK(&mca_gpr_replica_mutex);
+    return rc;
+}
+
+int gpr_replica_cancel_synchro_nl(ompi_registry_synchro_mode_t synchro_mode,
 			       ompi_registry_mode_t addr_mode,
 			       char *segment, char **tokens, int trigger)
 {
@@ -551,11 +612,9 @@ int gpr_replica_cancel_synchro(ompi_registry_synchro_mode_t synchro_mode,
 	return OMPI_ERROR;
     }
 
-    OMPI_THREAD_LOCK(&mca_gpr_replica_mutex);
     /* find trigger on replica - return id_tag */
     if (MCA_GPR_NOTIFY_ID_MAX == (id_tag = gpr_replica_remove_trigger(synchro_mode, OMPI_REGISTRY_NOTIFY_NONE,
 								      addr_mode, segment, tokens, trigger))) {
-	OMPI_THREAD_UNLOCK(&mca_gpr_replica_mutex);
 	return OMPI_ERROR;
     }
 
@@ -570,16 +629,24 @@ int gpr_replica_cancel_synchro(ompi_registry_synchro_mode_t synchro_mode,
 	ompi_list_remove_item(&mca_gpr_replica_notify_request_tracker, &trackptr->item);
 	OBJ_RELEASE(trackptr);
 
-	OMPI_THREAD_UNLOCK(&mca_gpr_replica_mutex);
 	return OMPI_SUCCESS;
     }
 
     /* if we get here, then couldn't find request */
-    OMPI_THREAD_UNLOCK(&mca_gpr_replica_mutex);
     return OMPI_ERROR;
 }
 
 ompi_list_t* gpr_replica_get(ompi_registry_mode_t addr_mode,
+			     char *segment, char **tokens)
+{
+    ompi_list_t* list;
+    OMPI_THREAD_LOCK(&mca_gpr_replica_mutex);
+    list = gpr_replica_get_nl(addr_mode, segment, tokens);
+	OMPI_THREAD_UNLOCK(&mca_gpr_replica_mutex);
+    return list;
+}
+
+ompi_list_t* gpr_replica_get_nl(ompi_registry_mode_t addr_mode,
 			     char *segment, char **tokens)
 {
     mca_gpr_replica_segment_t *seg=NULL;
@@ -603,11 +670,9 @@ ompi_list_t* gpr_replica_get(ompi_registry_mode_t addr_mode,
 	return answer;
     }
 
-    OMPI_THREAD_LOCK(&mca_gpr_replica_mutex);
     /* find the specified segment */
     seg = gpr_replica_find_seg(false, segment);
     if (NULL == seg) {  /* segment not found */
-	OMPI_THREAD_UNLOCK(&mca_gpr_replica_mutex);
 	return answer;
     }
     if (mca_gpr_replica_debug) {
@@ -623,7 +688,6 @@ ompi_list_t* gpr_replica_get(ompi_registry_mode_t addr_mode,
 	/* convert tokens to list of keys */
 	keylist = gpr_replica_get_key_list(segment, tokens);
 	if (0 == (num_tokens = ompi_list_get_size(keylist))) {
-	    OMPI_THREAD_UNLOCK(&mca_gpr_replica_mutex);
 	    return answer;
 	}
 
@@ -679,8 +743,6 @@ ompi_list_t* gpr_replica_get(ompi_registry_mode_t addr_mode,
 	ompi_output(0, "[%d,%d,%d] gpr replica-get: leaving", ompi_process_info.name->cellid,
 		    ompi_process_info.name->jobid, ompi_process_info.name->vpid);
     }
-
-    OMPI_THREAD_UNLOCK(&mca_gpr_replica_mutex);
     return answer;
 }
 
