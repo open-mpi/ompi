@@ -86,11 +86,11 @@ void mpi_type_struct_f(MPI_Fint *count, MPI_Fint *array_of_blocklengths,
 			    c_type_old_array, &c_new));
 
     OMPI_ARRAY_FINT_2_INT_CLEANUP(array_of_blocklengths);
-
-    if (MPI_SUCCESS == *ierr) {
-        *newtype = MPI_Type_c2f(c_new);
-    }
-
     free(c_type_old_array);
+
+    if (MPI_SUCCESS != *ierr) {
+       c_new = MPI_DATATYPE_NULL;
+    }
+    *newtype = MPI_Type_c2f(c_new);
 }
     

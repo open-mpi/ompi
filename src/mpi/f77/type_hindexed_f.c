@@ -78,10 +78,11 @@ void mpi_type_hindexed_f(MPI_Fint *count, MPI_Fint *array_of_blocklengths,
 			      OMPI_ARRAY_NAME_CONVERT(array_of_blocklengths), 
 			      c_disp_array, c_old, &c_new));
 
-    if (MPI_SUCCESS == *ierr) {
-      *newtype = MPI_Type_c2f(c_new);
-    }
-
     free(c_disp_array);
     OMPI_ARRAY_FINT_2_INT_CLEANUP(array_of_blocklengths);
+
+    if (MPI_SUCCESS != *ierr) {
+       c_new = MPI_DATATYPE_NULL;
+    }
+    *newtype = MPI_Type_c2f(c_new);
 }
