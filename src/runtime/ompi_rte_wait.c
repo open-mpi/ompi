@@ -145,7 +145,7 @@ static void register_sig_event(void);
 static int unregister_callback(pid_t pid);
 void ompi_rte_wait_signal_callback(int fd, short event, void *arg);
 static pid_t internal_waitpid(pid_t pid, int *status, int options);
-#if  OMPI_THREADS_HAVE_DIFFERENT_PIDS
+#if  OMPI_HAVE_THREADS && OMPI_THREADS_HAVE_DIFFERENT_PIDS
 static void internal_waitpid_callback(int fd, short event, void *arg);
 #endif
 
@@ -564,7 +564,7 @@ register_sig_event(void)
 static pid_t
 internal_waitpid(pid_t pid, int *status, int options)
 {
-#if  OMPI_THREADS_HAVE_DIFFERENT_PIDS
+#if  OMPI_HAVE_THREADS && OMPI_THREADS_HAVE_DIFFERENT_PIDS
     waitpid_callback_data_t data;
     struct timeval tv;
     struct ompi_event ev;
@@ -606,7 +606,7 @@ internal_waitpid(pid_t pid, int *status, int options)
 }
 
 
-#if  OMPI_THREADS_HAVE_DIFFERENT_PIDS
+#if  OMPI_HAVE_THREADS && OMPI_THREADS_HAVE_DIFFERENT_PIDS
 static void
 internal_waitpid_callback(int fd, short event, void *arg)
 {
