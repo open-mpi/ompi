@@ -23,9 +23,7 @@ int MPI_Add_error_class(int *errorclass)
     int class;
 
     if ( MPI_PARAM_CHECK ) {
-        if ( ompi_mpi_finalized )
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INTERN, 
-                                          "MPI_Add_error_class");
+        OMPI_ERR_INIT_FINALIZE;
     }
     
     class = ompi_errclass_add();

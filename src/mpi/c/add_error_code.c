@@ -24,9 +24,8 @@ int MPI_Add_error_code(int errorclass, int *errorcode)
     int code;
 
     if ( MPI_PARAM_CHECK ) {
-        if ( ompi_mpi_finalized) 
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INTERN,
-                                          "MPI_Add_error_code");
+        OMPI_ERR_INIT_FINALIZE;
+
         if ( ompi_errclass_is_invalid(errorclass) )
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
                                           "MPI_Add_error_code");

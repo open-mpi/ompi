@@ -24,9 +24,8 @@ int MPI_Add_error_string(int errorcode, char *string)
     int rc;
 
     if ( MPI_PARAM_CHECK ) {
-        if ( ompi_mpi_finalized) 
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INTERN,
-                                          "MPI_Add_error_string");
+        OMPI_ERR_INIT_FINALIZE;
+
         if ( ompi_mpi_errcode_is_invalid(errorcode) )
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
                                           "MPI_Add_error_string");

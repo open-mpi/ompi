@@ -22,9 +22,8 @@ int MPI_Error_class(int errorcode, int *errorclass)
 {
 
     if ( MPI_PARAM_CHECK ) {
-        if ( ompi_mpi_finalized )
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INTERN, 
-                                          "MPI_Error_class");
+        OMPI_ERR_INIT_FINALIZE;
+
         if ( ompi_mpi_errcode_is_invalid(errorcode))
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
                                           "MPI_Error_class");
