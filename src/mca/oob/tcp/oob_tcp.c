@@ -489,7 +489,7 @@ int mca_oob_tcp_resolve(mca_oob_tcp_peer_t* peer)
      mca_oob_tcp_addr_t* addr;
      mca_oob_tcp_subscription_t* subscription;
      ompi_list_item_t* item;
-     char segment[32];
+     char segment[32], *jobid;
      int rc;
   
      /* if the address is already cached - simply return it */
@@ -521,7 +521,8 @@ int mca_oob_tcp_resolve(mca_oob_tcp_peer_t* peer)
      OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
 
      /* subscribe */
-     sprintf(segment, "oob-tcp-%u", peer->peer_name.jobid);
+     jobid = ompi_name_server.get_jobid_string(&peer->peer_name);
+     sprintf(segment, "oob-tcp-%s", jobid);
      rc = ompi_registry.subscribe(
          OMPI_REGISTRY_OR,
          OMPI_REGISTRY_NOTIFY_ADD_ENTRY|OMPI_REGISTRY_NOTIFY_DELETE_ENTRY|
@@ -534,6 +535,7 @@ int mca_oob_tcp_resolve(mca_oob_tcp_peer_t* peer)
          ompi_output(0, "mca_oob_tcp_resolve: ompi_registry.subscribe failed with error status: %d\n", rc);
          return rc;
      }
+     free(jobid);
      return OMPI_SUCCESS;
 }
 
@@ -543,7 +545,7 @@ int mca_oob_tcp_resolve(mca_oob_tcp_peer_t* peer)
  */
 int mca_oob_tcp_init(void)
 {
-    char *keys[2];
+    char *keys[2], *jobid;
     void *addr;
     int32_t size;
     char segment[32];
@@ -573,7 +575,8 @@ int mca_oob_tcp_init(void)
         return rc;
     }
 
-    sprintf(segment, "oob-tcp-%u", mca_oob_name_self.jobid);
+    jobid = ompi_name_server.get_jobid_string(&mca_oob_name_self);
+    sprintf(segment, "oob-tcp-%s", jobid);
     if(mca_oob_tcp_component.tcp_debug > 1) {
         ompi_output(0, "[%d,%d,%d] mca_oob_tcp_init: calling ompi_registry.synchro(%s,%d)\n", 
             OMPI_NAME_ARGS(mca_oob_name_self),
@@ -621,6 +624,8 @@ int mca_oob_tcp_init(void)
             OMPI_NAME_ARGS(mca_oob_name_self), rc);
         return rc;
     }
+    free(jobid);
+    free(keys[0]);
     return OMPI_SUCCESS;
 }
 
