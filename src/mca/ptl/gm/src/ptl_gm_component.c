@@ -112,7 +112,7 @@ mca_ptl_gm_component_open(void)
     mca_ptl_gm_component.gm_max_rdma_frag_size =
         mca_ptl_gm_param_register_int ("max_rdma_frag_size", 512 * 1024);
     mca_ptl_gm_component.gm_max_eager_size = 
-        mca_ptl_gm_param_register_int( "max_eager_size", 16 * mca_ptl_gm_module.super.ptl_first_frag_size );
+        mca_ptl_gm_param_register_int( "max_eager_size", 64 * mca_ptl_gm_module.super.ptl_first_frag_size );
     mca_ptl_gm_component.gm_max_ptl_modules = 
 	mca_ptl_gm_param_register_int( "max_ptl_modules", 1 );
     

@@ -343,9 +343,9 @@ mca_ptl_gm_matched( mca_ptl_base_module_t * ptl,
     mca_ptl_gm_recv_frag_t *recv_frag;
     mca_ptl_gm_peer_t* peer;
 
+    gm_ptl = (mca_ptl_gm_module_t *)ptl;
     hdr = &frag->frag_base.frag_header;
     request = frag->frag_request;
-    gm_ptl = (mca_ptl_gm_module_t *)ptl;
     recv_frag = (mca_ptl_gm_recv_frag_t *)frag;
     peer = (mca_ptl_gm_peer_t*)recv_frag->frag_recv.frag_base.frag_peer;
 
@@ -385,7 +385,7 @@ mca_ptl_gm_matched( mca_ptl_base_module_t * ptl,
 	iov.iov_len = frag->frag_base.frag_size;
     
         ompi_convertor_copy( peer->peer_proc->proc_ompi->proc_convertor,
-                             &frag->frag_base.frag_convertor);
+                             &frag->frag_base.frag_convertor );
         ompi_convertor_init_for_recv( &frag->frag_base.frag_convertor, 0,
                                       request->req_base.req_datatype,
                                       request->req_base.req_count,
