@@ -2,7 +2,10 @@
  * $HEADER$
  */
 
-/** @file */
+ /** @file
+  *
+  * Data stuctures and functions related to LAM datatypes.
+  */
 
 /*
  * LAM internal data type representation
@@ -37,11 +40,12 @@ typedef struct lam_pack_state_t lam_pack_state_t;
  * Datatype state flags
  */
 enum lam_datatype_state_t {
-    LAM_DATATYPE_STATE_COMMITTED = 1 << 0,
-    LAM_DATATYPE_STATE_FORTRAN = 1 << 1,
-    LAM_DATATYPE_STATE_OPTIMIZED = 1 << 2,
-    LAM_DATATYPE_STATE_DONT_OPTIMIZE = 1 << 3,
-    LAM_DATATYPE_STATE_XDR = 1 << 4,
+    LAM_DATATYPE_STATE_COMMITTED      = 1 << 0,
+    LAM_DATATYPE_STATE_CONTIGUOUS     = 1 << 1,
+    LAM_DATATYPE_STATE_FORTRAN        = 1 << 2,
+    LAM_DATATYPE_STATE_OPTIMIZED      = 1 << 3,
+    LAM_DATATYPE_STATE_DONT_OPTIMIZE  = 1 << 4,
+    LAM_DATATYPE_STATE_XDR            = 1 << 5,
     /* etc. */
 };
 
@@ -104,36 +108,36 @@ struct lam_checksum_t {
  */
 struct lam_datatype_t {
 
-    lam_object_t super;         /**< object super class */
-    char name[MPI_MAX_OBJECT_NAME]; /**< object name */
-    int flags;                  /**< bit flags */
+    lam_object_t d_super;       /**< object super class */
+    char d_name[MPI_MAX_OBJECT_NAME]; /**< object name */
+    int d_flags;                  /**< bit flags */
 
     /* cached information */
 
-    ssize_t lower_bound;
-    size_t extent;
-    size_t packed_size;         /**< size in bytes, ignoring gaps */
-    int nbasic;                 /**< number of basic elements */
+    ssize_t d_lower_bound;
+    size_t d_extent;
+    size_t d_packed_size;       /**< size in bytes, ignoring gaps */
+    int d_nbasic;                /**< number of basic elements */
 
     /* optimized representation */
 
-    size_t datavec_size;        /**< size of optimized representation */
-    lam_datavec_t *datavec;     /**< optimized representation (may be null) */
+    size_t d_datavec_size;        /**< size of optimized representation */
+    lam_datavec_t *d_datavec;     /**< optimized representation (may be null) */
 
     /* XDR representation */
 
-    size_t dataxdr_size;        /**< size of XDR representation */
-    lam_dataxdr_t *dataxdr;     /**< XDR representation (may be null) */
+    size_t d_dataxdr_size;        /**< size of XDR representation */
+    lam_dataxdr_t *d_dataxdr;     /**< XDR representation (may be null) */
 
     /* full representation (c.f. MPI_Type_create_struct) */
 
     struct {
-        lam_datatype_kind_t kind;     /**< creation function */
-        int count;              /**< number of blocks */
-        int *blocklengths;      /**< number of elements in each block */
-        MPI_Aint *offset;       /**< stride/displacement as appropriate */
-        lam_datatype_t **types; /**< array of types (array) */
-    } creator;
+        lam_datatype_kind_t c_kind;     /**< creation function */
+        int c_count;              /**< number of blocks */
+        int *c_blocklengths;      /**< number of elements in each block */
+        MPI_Aint *c_offset;       /**< stride/displacement as appropriate */
+        lam_datatype_t **c_types; /**< array of types (array) */
+    } d_creator;
 };
 
 
@@ -142,10 +146,10 @@ struct lam_datatype_t {
  * routines
  */
 struct lam_datavec_t {
-    size_t nrepeat;
-    ssize_t repeat_offset;
-    size_t nelement;
-    lam_datavec_element_t *element;
+    size_t dv_nrepeat;
+    ssize_t dv_repeat_offset;
+    size_t dv_nelement;
+    lam_datavec_element_t *dv_element;
 };
 
 
@@ -153,9 +157,9 @@ struct lam_datavec_t {
  * An element of a data type in optimized form
  */
 struct lam_datavec_element_t {
-    size_t size;                /**< size in bytes of element */
-    ssize_t offset;             /**< offset from start of data type */
-    ssize_t seq_offset;         /**< offset from start of packed data type */
+    size_t dve_size;                /**< size in bytes of element */
+    ssize_t dve_offset;             /**< offset from start of data type */
+    ssize_t dve_seq_offset;         /**< offset from start of packed data type */
 };
 
 
@@ -164,8 +168,14 @@ struct lam_datavec_element_t {
  */
 struct lam_dataxdr_element_t {
     /* to be done */
-    void *xdrs;                 /**< XDR stream */
+    void *x_xdrs;                 /**< XDR stream */
 };
+
+
+/**
+ * Function protoype to do a memcpy with checksum
+ */
+typedef void *(*lam_memcpy_fn_t)(void *dst, const void *src, size_t size, void *csum);
 
 
 /* interface **********************************************************/
@@ -187,18 +197,39 @@ int lam_datatype_checksum(const void *addr,
 /**
  * Copy (the contents of) an array of data types
  *
- * @param dest          Output data type array
+ * @param dst           Output data type array
  * @param src           Input data type array
  * @param count         Size of array
  * @param datatype      Datatype descriptor
+ * @param csum          Pointer to checksum or CRC
+ * @return              0 on success, -1 on error
+ */
+int lam_datatype_copy(void *dst,
+                      const void *src,
+                      size_t count,
+                      lam_memcpy_fn_t *memcpy_fn,
+                      void *csum);
+
+/**
+ * Copy (the contents of) an array of data types, and convert to
+ * another datatype
+ *
+ * @param dst           Output data type array
+ * @param dst_count     Size of output array
+ * @param dst_datatype  Output datatype descriptor
+ * @param src           Input data type array
+ * @param src_count     Size of input array
+ * @param src_datatype  Input datatype descriptor
  * @param checksum      Checksum
  * @return              0 on success, -1 on error
  */
-int lam_datatype_copy(void *dest,
-                      const void *src,
-                      size_t count,
-                      lam_datatype_t *datatype,
-                      lam_checksum_t *checksum);
+int lam_datatype_convert(void *dst,
+                         lam_datatype_t *dst_datatype,
+                         size_t dst_count,
+                         const void *src,
+                         lam_datatype_t *src_datatype,
+                         size_t src_count,
+                         lam_checksum_t *checksum);
 
 /**
  * Pack state
@@ -224,7 +255,8 @@ struct lam_pack_state_t {
  * @param typebuf       array of types
  * @param ntype         size of type array
  * @param datatype      type descriptor
- * @param checksum      checksum descriptor
+ * @param memcpy_fn     pointer to memcpy function
+ * @param csum          pointer to checksum
  * @return              0 if complete, non-zero otherwise
  *
  * Incrementally copy data type arrays to/from a packed buffer by
@@ -240,7 +272,8 @@ int lam_datatype_pack(lam_pack_state_t *state,
                       const void *typebuf,
                       size_t ntype,
                       lam_datatype_t *datatype,
-                      lam_checksum_t *checksum);
+                      lam_memcpy_fn_t *memcpy_fn,
+                      void *csum);
 
 
 /**
@@ -252,7 +285,8 @@ int lam_datatype_pack(lam_pack_state_t *state,
  * @param buf           buffer to pack into/unpack from
  * @param bufsize       size of buffer
  * @param datatype      type descriptor
- * @param checksum      checksum descriptor
+ * @param memcpy_fn     pointer to memcpy function
+ * @param csum          pointer to checksum
  * @return              0 complete, non-zero otherwise
  *
  * Incrementally copy data type arrays to/from a packed buffer by
@@ -268,8 +302,8 @@ int lam_datatype_unpack(lam_pack_state_t *state,
                         const void *buf,
                         size_t bufsize,
                         lam_datatype_t *datatype,
-                        lam_checksum_t *checksum);
-
+                        lam_memcpy_fn_t *memcpy_fn,
+                        void *csum);
 
 /**
  * Incrementally generate an iovec for gathering from an array of
@@ -340,6 +374,78 @@ int lam_datatype_scatter_iovec(lam_pack_state_t *state,
                                const void *buf,
                                size_t bufsize,
                                lam_datatype_t *datatype,
-                               lam_checksum_t *checksum);
+                               lam_memcpy_fn_t *memcpy_fn,
+                               void *csum);
+
+
+/*
+ * checksum functions
+ */
+
+/**
+ * Copy data from one buffer to another and calculate a 32-bit checksum
+ *
+ * @param dst      pointer to the dstination buffer
+ * @param src      pointer to the source buffer
+ * @param size     size of the buffer
+ * @param csum32   pointer to a 32-bit unsigned integer to hold the checksum
+ * @return         the original value of dst
+ */
+static inline lam_memcpy(void *dst, const void *src, size_t size, void *dummy)
+{
+    return memcpy(dst, src, size);
+}
+
+
+/**
+ * Copy data from one buffer to another and calculate a 32-bit checksum
+ *
+ * @param dst      pointer to the destination buffer
+ * @param src      pointer to the source buffer
+ * @param size     size of the buffer
+ * @param csum32   pointer to a 32-bit unsigned integer to hold the checksum
+ * @return         the original value of dst
+ */
+void *lam_memcpy_csum32(void *dst, const void *src, size_t size, void *csum32);
+
+/**
+ * Copy data from one buffer to another and calculate a 64-bit checksum
+ *
+ * @param dst      pointer to the destination buffer
+ * @param src      pointer to the source buffer
+ * @param size     size of the buffer
+ * @param csum64   pointer to a 64-bit unsigned integer to hold the checksum
+ * @return         the original value of dst
+ */
+void *lam_memcpy_csum64(void *dst, const void *src, size_t size, void *csum64);
+
+/**
+ * Copy data from one buffer to another and calculate a 32-bit checksum
+ *
+ * @param dst      pointer to the destination buffer
+ * @param src      pointer to the source buffer
+ * @param size     size of the buffer
+ * @param crc32    pointer to a 32-bit unsigned integer to hold the CRC
+ * @return         the original value of dst
+ */
+void *lam_memcpy_crc32(void *dst, const void *src, size_t size, void *crc32);
+
+/**
+ * Copy data from one buffer to another and calculate a 64-bit checksum
+ *
+ * @param dst      pointer to the destination buffer
+ * @param src      pointer to the source buffer
+ * @param size     size of the buffer
+ * @param crc64    pointer to a 64-bit unsigned integer to hold the CRC
+ * @return         the original value of dst
+ */
+void *lam_memcpy_crc64(void *dst, const void *src, size_t size, void *crc64);
+
+
+
+typedef  (ulm_scatterv_t) (void *, int *, int *, ULMType_t *, void *,
+			      int, ULMType_t *, int, int);
+
+
 
 #endif                          /* LAM_DATATYPE_H_INCLUDED */
