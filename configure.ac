@@ -241,77 +241,6 @@ LAM_SETUP_F90
 # va_copy
 
 ##################################
-# MCA
-##################################
-
-# JMS Need to fill this in
-# JMS For the moment:
-
-MCA_coll_STATIC_SUBDIRS=
-MCA_coll_DYNAMIC_SUBDIRS=
-MCA_coll_ALL_SUBDIRS=
-AC_SUBST(MCA_coll_STATIC_SUBDIRS)
-AC_SUBST(MCA_coll_DYNAMIC_SUBDIRS)
-AC_SUBST(MCA_coll_ALL_SUBDIRS)
-
-MCA_io_STATIC_SUBDIRS=
-MCA_io_DYNAMIC_SUBDIRS=
-MCA_io_ALL_SUBDIRS=
-AC_SUBST(MCA_io_STATIC_SUBDIRS)
-AC_SUBST(MCA_io_DYNAMIC_SUBDIRS)
-AC_SUBST(MCA_io_ALL_SUBDIRS)
-
-MCA_one_STATIC_SUBDIRS=
-MCA_one_DYNAMIC_SUBDIRS=
-MCA_one_ALL_SUBDIRS=
-AC_SUBST(MCA_one_STATIC_SUBDIRS)
-AC_SUBST(MCA_one_DYNAMIC_SUBDIRS)
-AC_SUBST(MCA_one_ALL_SUBDIRS)
-
-MCA_pml_STATIC_SUBDIRS=
-MCA_pml_DYNAMIC_SUBDIRS=
-MCA_pml_ALL_SUBDIRS=
-AC_SUBST(MCA_pml_STATIC_SUBDIRS)
-AC_SUBST(MCA_pml_DYNAMIC_SUBDIRS)
-AC_SUBST(MCA_pml_ALL_SUBDIRS)
-
-MCA_ptl_STATIC_SUBDIRS=
-MCA_ptl_DYNAMIC_SUBDIRS=
-MCA_ptl_ALL_SUBDIRS=
-AC_SUBST(MCA_ptl_STATIC_SUBDIRS)
-AC_SUBST(MCA_ptl_DYNAMIC_SUBDIRS)
-AC_SUBST(MCA_ptl_ALL_SUBDIRS)
-
-MCA_topo_STATIC_SUBDIRS=
-MCA_topo_DYNAMIC_SUBDIRS=
-MCA_topo_ALL_SUBDIRS=
-AC_SUBST(MCA_topo_STATIC_SUBDIRS)
-AC_SUBST(MCA_topo_DYNAMIC_SUBDIRS)
-AC_SUBST(MCA_topo_ALL_SUBDIRS)
-
-MCA_oob_STATIC_SUBDIRS="cofs"
-MCA_oob_DYNAMIC_SUBDIRS=
-MCA_oob_ALL_SUBDIRS="${MCA_oob_STATIC_SUBDIRS}"
-AC_SUBST(MCA_oob_STATIC_SUBDIRS)
-AC_SUBST(MCA_oob_DYNAMIC_SUBDIRS)
-AC_SUBST(MCA_oob_ALL_SUBDIRS)
-
-MCA_pcm_STATIC_SUBDIRS=
-MCA_pcm_DYNAMIC_SUBDIRS=
-MCA_pcm_ALL_SUBDIRS=
-AC_SUBST(MCA_pcm_STATIC_SUBDIRS)
-AC_SUBST(MCA_pcm_DYNAMIC_SUBDIRS)
-AC_SUBST(MCA_pcm_ALL_SUBDIRS)
-
-MCA_registry_STATIC_SUBDIRS=
-MCA_registry_DYNAMIC_SUBDIRS=
-MCA_registry_ALL_SUBDIRS=
-AC_SUBST(MCA_registry_STATIC_SUBDIRS)
-AC_SUBST(MCA_registry_DYNAMIC_SUBDIRS)
-AC_SUBST(MCA_registry_ALL_SUBDIRS)
-
-
-##################################
 # System-specific tests
 ##################################
 
@@ -336,6 +265,19 @@ LAM_CASE_SENSITIVE_FS_SETUP
 
 # AIX: FIONBIO in sys/ioctl.h
 # glibc: memcpy
+
+
+##################################
+# MCA
+##################################
+
+lam_show_title "MPI Component Architecture (MCA) setup" 
+
+AC_MSG_CHECKING([for subdir args])
+LAM_CONFIG_SUBDIR_ARGS([lam_subdir_args])
+AC_MSG_RESULT([$lam_subdir_args])
+
+LAM_MCA
 
 
 ############################################################################
@@ -432,29 +374,37 @@ AC_CONFIG_FILES([
     src/mpi/request/Makefile
 
     src/mca/Makefile
+
     src/mca/lam/Makefile
+    src/mca/lam/base/Makefile
+    src/mca/lam/common_lam/Makefile
+    src/mca/lam/common_lam/base/Makefile
     src/mca/lam/oob/Makefile
     src/mca/lam/oob/base/Makefile
-    src/mca/lam/oob/cofs/Makefile
-    src/mca/lam/oob/cofs/src/Makefile
     src/mca/lam/pcm/Makefile
     src/mca/lam/pcm/base/Makefile
     src/mca/lam/registry/Makefile
     src/mca/lam/registry/base/Makefile
+
     src/mca/mpi/Makefile
+    src/mca/mpi/base/Makefile
     src/mca/mpi/coll/Makefile
     src/mca/mpi/coll/base/Makefile
+    src/mca/mpi/common_mpi/Makefile
+    src/mca/mpi/common_mpi/base/Makefile
     src/mca/mpi/io/Makefile
     src/mca/mpi/io/base/Makefile
     src/mca/mpi/one/Makefile
     src/mca/mpi/one/base/Makefile
     src/mca/mpi/pml/Makefile
     src/mca/mpi/pml/base/Makefile
-    src/mca/mpi/pml/teg/Makefile
     src/mca/mpi/ptl/Makefile
     src/mca/mpi/ptl/base/Makefile
     src/mca/mpi/topo/Makefile
     src/mca/mpi/topo/base/Makefile
+
+    src/mca/lam/oob/cofs/Makefile
+    src/mca/lam/oob/cofs/src/Makefile
 
     src/tools/Makefile
     src/tools/wrappers/Makefile

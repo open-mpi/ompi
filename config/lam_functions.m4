@@ -42,6 +42,124 @@ CLEANFILES="*~ .\#*"
 AC_SUBST(CLEANFILES)])dnl
 
 dnl #######################################################################
+dnl #######################################################################
+dnl #######################################################################
+
+AC_DEFUN(LAM_BASIC_SETUP,[
+#
+# Save some stats about this build
+#
+
+LAM_CONFIGURE_USER="`whoami`"
+LAM_CONFIGURE_HOST="`hostname | head -n 1`"
+LAM_CONFIGURE_DATE="`date`"
+
+#
+# Make automake clean emacs ~ files for "make clean"
+#
+
+CLEANFILES="*~"
+AC_SUBST(CLEANFILES)
+
+#
+# This is useful later
+#
+
+AC_CANONICAL_HOST
+
+#
+# See if we can find an old installation of LAM to overwrite
+#
+
+# Stupid autoconf 2.54 has a bug in AC_PREFIX_PROGRAM -- if lamclean
+# is not found in the path and the user did not specify --prefix,
+# we'll get a $prefix of "."
+
+lam_prefix_save="$prefix"
+AC_PREFIX_PROGRAM(lamclean)
+if test "$prefix" = "."; then
+    prefix="$lam_prefix_save"
+fi
+unset lam_prefix_save
+
+#
+# Basic sanity checking; we can't install to a relative path
+#
+
+case "$prefix" in
+  /*/bin)
+    prefix="`dirname $prefix`"
+    echo installing to directory \"$prefix\" 
+    ;;
+  /*) 
+    echo installing to directory \"$prefix\" 
+    ;;
+  NONE)
+    echo installing to directory \"$ac_default_prefix\" 
+    ;;
+  *) 
+    AC_MSG_ERROR(prefix \"$prefix\" must be an absolute directory path) 
+    ;;
+esac
+
+# Allow the --enable-dist flag to be passed in
+
+AC_ARG_ENABLE(dist, 
+    AC_HELP_STRING([--enable-dist],
+		   [guarantee that that the "dist" make target will be functional, although may not guarantee that any other make target will be functional.]),
+    LAM_WANT_DIST=yes, LAM_WANT_DIST=no)
+
+if test "$LAM_WANT_DIST" = "yes"; then
+    AC_MSG_WARN([Configuring in 'make dist' mode])
+    AC_MSG_WARN([Most make targets may be non-functional!])
+fi])dnl
+
+dnl #######################################################################
+dnl #######################################################################
+dnl #######################################################################
+
+AC_DEFUN(LAM_LOG_MSG,[
+# 1 is the message
+# 2 is whether to put a prefix or not
+if test -n "$2"; then
+    echo "configure:__oline__: $1" >&5
+else
+    echo $1 >&5
+fi])dnl
+
+dnl #######################################################################
+dnl #######################################################################
+dnl #######################################################################
+
+AC_DEFUN(LAM_LOG_FILE,[
+# 1 is the filename
+if test -n "$1" -a -f "$1"; then
+    cat $1 >&5
+fi])dnl
+
+dnl #######################################################################
+dnl #######################################################################
+dnl #######################################################################
+
+AC_DEFUN(LAM_LOG_COMMAND,[
+# 1 is the command
+# 2 is actions to do if success
+# 3 is actions to do if fail
+echo "configure:__oline__: $1" >&5
+$1 1>&5 2>&1
+lam_status=$?
+LAM_LOG_MSG([\$? = $lam_status], 1)
+if test "$lam_status" = "0"; then
+    unset lam_status
+    $2
+else
+    unset lam_status
+    $3
+fi])dnl
+
+dnl #######################################################################
+dnl #######################################################################
+dnl #######################################################################
 
 AC_DEFUN(LAM_UNIQ,[
 # 1 is the variable name to be uniq-ized
