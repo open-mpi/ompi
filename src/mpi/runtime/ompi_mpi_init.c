@@ -155,6 +155,12 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         goto error;
     }
 
+    /* initialize module exchange */
+    if (OMPI_SUCCESS != (ret = mca_base_modex_init())) {
+        error = "mca_base_modex_init() failed";
+        goto error;
+    }
+
     /* Select which pml, ptl, and coll modules to use, and determine the
        final thread level */
 
@@ -238,7 +244,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         error = "ompi_attr_init() failed";
         goto error;
     }
-
     /* do module exchange */
     if (OMPI_SUCCESS != (ret = mca_base_modex_exchange())) {
         error = "ompi_base_modex_exchange() failed";

@@ -73,3 +73,38 @@ int mca_base_component_compare(const mca_base_component_t* aa,
     return 0;
 }
 
+/**
+ * compare but exclude the release version - declare compatible 
+ * if the major/minor version are the same.
+ */
+
+int mca_base_component_compatible(
+    const mca_base_component_t* aa, 
+    const mca_base_component_t* bb)
+{
+    /* The priorities were equal, so compare the names */
+    int val = strncmp(aa->mca_component_name, bb->mca_component_name,
+                      MCA_BASE_MAX_COMPONENT_NAME_LEN);
+    if (val != 0) {
+      return -val;
+    }
+
+    /* The names were equal, so compare the versions */
+
+    if (aa->mca_component_major_version > 
+        bb->mca_component_major_version) {
+      return -1;
+    } else if (aa->mca_component_major_version < 
+               bb->mca_component_major_version) {
+      return 1;
+    } else if (aa->mca_component_minor_version > 
+               bb->mca_component_minor_version) {
+      return -1;
+    } else if (aa->mca_component_minor_version < 
+               bb->mca_component_minor_version) {
+      return 1;
+    }
+    return 0;
+}
+
+

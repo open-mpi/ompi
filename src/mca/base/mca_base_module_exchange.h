@@ -113,9 +113,19 @@ extern "C" {
                           void **buffer, size_t *size);
 
   /*
-   *
+   * Called to subscribe to registry.
    */
   int mca_base_modex_exchange(void);
+
+  /**
+   *
+   */
+  int mca_base_modex_init(void);
+
+  /**
+   *
+   */
+  int mca_base_modex_finalize(void);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

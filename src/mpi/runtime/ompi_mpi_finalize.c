@@ -23,6 +23,7 @@
 #include "runtime/ompi_rte_wait.h"
 
 #include "mca/base/base.h"
+#include "mca/base/mca_base_module_exchange.h"
 #include "mca/ptl/ptl.h"
 #include "mca/ptl/base/base.h"
 #include "mca/pml/pml.h"
@@ -132,6 +133,11 @@ int ompi_mpi_finalize(void)
 
   /* free info resources */
   if (OMPI_SUCCESS != (ret = ompi_info_finalize())) {
+      return ret;
+  }
+
+  /* free module exchange resources */
+  if (OMPI_SUCCESS != (ret = mca_base_modex_finalize())) {
       return ret;
   }
 

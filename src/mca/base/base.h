@@ -101,6 +101,8 @@ extern "C" {
                                        mca_base_component_priority_list_item_t *b);
   int mca_base_component_compare(const mca_base_component_t *a,
                               const mca_base_component_t *b);
+  int mca_base_component_compatible(const mca_base_component_t *a,
+                              const mca_base_component_t *b);
 
   /* mca_base_component_find.c */
 
