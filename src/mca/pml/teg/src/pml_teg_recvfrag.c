@@ -62,11 +62,10 @@ bool mca_pml_teg_recv_frag_match(
          */
         if(request->req_base.req_type == MCA_PML_REQUEST_PROBE) {
 
-             ptl->ptl_recv_progress(
-                ptl, 
-                request, 
-                frag->frag_base.frag_header.hdr_frag.hdr_frag_length,
-                frag->frag_base.frag_size);
+             ptl->ptl_recv_progress( ptl, 
+                                     request,
+                                     header->hdr_msg_length,
+                                     header->hdr_msg_length );
              matched = mca_pml_teg_recv_frag_match( ptl, frag, header );
 
         } else {
