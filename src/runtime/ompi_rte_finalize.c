@@ -13,7 +13,7 @@
 #include "mca/pcm/base/base.h"
 #include "mca/oob/oob.h"
 #include "mca/ns/base/base.h"
-
+#include "util/session_dir.h"
 
 /**
  * Leave a OMPI RTE.
@@ -28,6 +28,8 @@ int ompi_rte_finalize(void)
   mca_oob_base_close();
   mca_pcm_base_close();
   mca_ns_base_close();
+
+  ompi_session_dir_finalize();
 
   /* All done */
 

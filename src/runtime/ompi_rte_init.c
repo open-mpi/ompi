@@ -13,7 +13,9 @@
 #include "mca/pcm/base/base.h"
 #include "mca/oob/oob.h"
 #include "mca/ns/base/base.h"
-
+#include "util/proc_info.h"
+#include "util/session_dir.h"
+#include "util/sys_info.h"
 
 /**
  * Initialze and setup a process in the OMPI RTE.
@@ -22,18 +24,72 @@
  * @retval OMPI_ERROR Upon failure.
  *
  * This function performs 
+ * 
+ * Just a note for developer: 
+
+ * So there are 3 ways in which an application can be started
+ * 1) rte_boot, followed by mpirun
+ * 2) mpirun (alone)
+ * 3) singleton (./a.out)
+ * 
+ * Case 1) If the rte has already been booted, then mpirun will accept
+ * an optional command line parameter --universe=<rte universe name>
+ * which says which universe this application wants to be a part
+ * of. mpirun will then package this universe name and send it to the
+ * processes it will be starting off (fork/exec) on local or remote
+ * node.The packaging mechanism can be either command line parameter
+ * to the a.out it forks or make it part of environment
+ * (implementation dependent).  
+ *
+ * Case 2) When mpirun is done alone and no universe is present, then
+ * the mpirun starts off the universe (using rte_boot), then
+ * fork/execs the processes, passin g along the <universe_name>. 
+ *
+ * Case 3) For a singleton, if there is alrady an existing rte
+ * universe which it wants to join, it can specify that using the
+ * --universe command line. So it will do 
+ *
+ * $ ./a.out --universe=<universe_name>
+ * 
+ * In this case, MPI_Init will have to be called as MPI_Init(&argc, &argv)
+
+ * If it does not want to join any existing rte, then it just starts
+ * off as ./a.out with no command line option. In that case, MPI_Init
+ * does not necesaarily needs to passed argc and argv. Infact if argc
+ * and argv are not passed or just have one entry (the command name),
+ * then MPI_Init would assume that new rte universe needs to be
+ * started up.
+ *
+ *
+ * MPI_Init() will look at its argc, argv. If it find the universe
+ * name there, fine. Else it looks at the environment variables for
+ * universe_name. If it finds there, fine again. Under such
+ * conditions, it joins the existing rte universe. If no universe
+ * name is found, it calls rte_boot to start off a new rte universe.
+ *
+ * For singleton, MPI_Init() do:
+ *
+ * if (I am a singleton) and (there is no universe)
+ *    do rte_boot
+ *
+ * But if I am not a singleton, then I have been started by mpirun and
+ * already provided a universe_name to join. So I wont ever start a
+ * universe under such conditons. mpirun will pass me the
+ * universe_name (either mpirun would have started the universe, or it
+ * would have been already started by rte_boot)
  */
 int ompi_rte_init(bool *allow_multi_user_threads, bool *have_hidden_threads)
 {
   int ret;
   bool user_threads, hidden_threads;
+  char *jobid_str=NULL, *procid_str=NULL;
 
   *allow_multi_user_threads = true;
   *have_hidden_threads = false;
 
-  /* Added by JMS: I *think* ns has to come first; feel free to move
-     around */
-  
+  /*
+   * Name Server
+   */
   if (OMPI_SUCCESS != (ret = mca_ns_base_open())) {
     /* JMS show_help */
     printf("show_help: ompi_rte_init failed in ns_base_open\n");
@@ -48,8 +104,9 @@ int ompi_rte_init(bool *allow_multi_user_threads, bool *have_hidden_threads)
   *allow_multi_user_threads &= user_threads;
   *have_hidden_threads |= hidden_threads;
 
-  /* Added by JMS -- feel free to move around */
-
+  /*
+   * Process Control and Monitoring
+   */
   if (OMPI_SUCCESS != (ret = mca_pcm_base_open())) {
     /* JMS show_help */
     printf("show_help: ompi_rte_init failed in pcm_base_open\n");
@@ -64,6 +121,9 @@ int ompi_rte_init(bool *allow_multi_user_threads, bool *have_hidden_threads)
   *allow_multi_user_threads &= user_threads;
   *have_hidden_threads |= hidden_threads;
 
+  /*
+   * Out of Band Messaging
+   */
   if (OMPI_SUCCESS != (ret = mca_oob_base_open())) {
     /* JMS show_help */
     printf("show_help: ompi_rte_init failed in oob_base_open\n");
@@ -78,68 +138,37 @@ int ompi_rte_init(bool *allow_multi_user_threads, bool *have_hidden_threads)
   *allow_multi_user_threads &= user_threads;
   *have_hidden_threads |= hidden_threads;
 
-#if 0
+
   /*
-   * BWB - this comment should be removed at some point in the very
-   * near future
-   *
-   * JMS - will need more #include files to make this work.  Not
-   * filling them in at the moment.  :-)
-   *
-   * This #if 0'ed out block of code is a rough approximation of what
-   * should happen to get this parallel job bootstrapped and ready to
-   * run.  There are probably some bugs in the OOB and PCM interfaces
-   * that are going to make this really interesting (sorry :( ), but I
-   * think it should work once the MPI modules are written...
+   * Fill in the various important structures
    */
+  /* proc structure startup */
+  ompi_proc_info();  
 
-  /* Do the "right" MCA query and init functions to fire up the
-   * run-time environment interfaces.  I'm not exactly sure what these
-   * calls will be (since they are in the base functions, right?), but
-   * do them here
-   *
-   * Order is:
-   *   1) PCM
-   *   2) OOB
-   *   3) Registery
-   *
-   * Don't forget to close down in the reverse order at end of the day
-   * - even the silly COFS implementations are going to leak resources
-   * like crazy if you don't.
-   *
-   * The OOB system may not actually be usable until the end of
-   * pcm_proc_startup, but must be initialized here.
+  /* universe name */
+  /* BWB - fix me fix me fix me */
+
+  /* session directory */
+  if(0 > asprintf(&jobid_str, "%-d", ompi_process_info.name->jobid)) {
+      return OMPI_ERROR;
+  }
+
+  if(0 > asprintf(&procid_str, "%-d", ompi_process_info.name->vpid)) {
+      if (jobid_str != NULL) free(jobid_str);
+      return OMPI_ERROR;
+  }
+
+  if (OMPI_ERROR == ompi_session_dir(true, NULL, ompi_system_info.user, 
+                                     ompi_system_info.nodename, NULL, 
+                                     "bOb", jobid_str, procid_str)) {
+      if (jobid_str != NULL) free(jobid_str);
+      if (procid_str != NULL) free(procid_str);
+      return OMPI_ERROR;
+  }
+
+
+  /* 
+   * All done 
    */
-
-  /* Do the client side of the rendezvous with our launcher (or
-   * whatever is needed for our RTE to figure out how to talk with our
-   * peers and all that.
-   */
-  ret = mca_pcm.pcm_proc_startup();
-  if (ret != MPI_SUCCESS) printf("oops!\n");
-
-  /* at this point, we can use the OOB interface directly if we really
-     need to, but is a bit tricky since we don't have a peers list
-     yet. */
-  mca_pcm.get_peers(&procs, &nprocs);
-
-  /* get a pointer to me */
-  my_proc = mca_pcm.get_me();
-
-  /* get my parents.  need to think about how to do this - i don't
-   *  think this is what we want at all...  We can probably ignore
-   *  this for a little while since we don't have a run time
-   *  environment tha supports spawn just yet, but something to
-   *  remember...
-   */
-  mca_pcm.get_parent(&pprocs, &npprocs);
-
-  /* we should have enough information by now to start running the PML
-   * and PTL interfaces, right?
-   */
-#endif
-
-  /* All done */
-
   return OMPI_SUCCESS;
 }

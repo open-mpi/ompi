@@ -180,8 +180,15 @@ int ompi_session_dir(bool create, char *prefix, char *user, char *hostid, char *
 	free(sessions);
     }
 
-
     return return_code;
 }
 
 
+int
+ompi_session_dir_finalize()
+{
+    /* BWB - fix me, fix me, fix me */
+    printf("WARNING: session directory not removed - "
+           "function not implemented\n");
+    return OMPI_SUCCESS;
+}
