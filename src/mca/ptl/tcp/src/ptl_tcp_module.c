@@ -466,7 +466,6 @@ int mca_ptl_tcp_module_control(int param, void* value, size_t size)
 
 int mca_ptl_tcp_module_progress(mca_ptl_tstamp_t tstamp)
 {
-    ompi_event_loop(OMPI_EVLOOP_ONCE);
     return OMPI_SUCCESS;
 }
 
