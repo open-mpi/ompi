@@ -8,6 +8,7 @@
 #include <string.h>
 
 #include "mpi.h"
+#include "lam/util/strncpy.h"
 #include "lam/lfc/lam_list.h"
 #include "lam/lam.h"
 
@@ -50,6 +51,14 @@ void lam_info_destruct(lam_info_t *info);
 
 void lam_info_entry_construct(lam_info_entry_t *entry);
 void lam_info_entry_destruct(lam_info_entry_t *entry);
+int lam_info_dup (lam_info_t *info, lam_info_t **newinfo);
+int lam_info_set (lam_info_t *info, char *key, char *value);
+int lam_info_free (lam_info_t **info);
+int lam_info_get (lam_info_t *info, char *key, int valuelen,
+                  char *value, int *flag);
+int lam_info_delete (lam_info_t *info, char *key);
+int lam_info_get_valuelen (lam_info_t *info, char *key, int *valuelen,
+                           int *flag);
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
@@ -57,7 +66,7 @@ void lam_info_entry_destruct(lam_info_entry_t *entry);
 /**
  * Iterate through the list and search for "key"
  *
- * @param info MPI_Info handle
+ * @param info pointer to lam_info_t handle
  * @param key Key value to search for
  *
  * @retval (lam_info_entry_t *) to the object having the same key
@@ -71,7 +80,7 @@ void lam_info_entry_destruct(lam_info_entry_t *entry);
  * Assumptions:
  * "info" is a valid key
  */
-static inline lam_info_entry_t *lam_info_find_key (MPI_Info info, 
+static inline lam_info_entry_t *lam_info_find_key (lam_info_t *info, 
                                                    char *key) {
     lam_info_entry_t *iterator;
     int nkeys;
@@ -90,6 +99,49 @@ static inline lam_info_entry_t *lam_info_find_key (MPI_Info info,
         iterator = (lam_info_entry_t *)iterator->super.lam_list_next;
     }
     return (lam_info_entry_t *)0;
+}
+
+/**
+ * Get the number of keys defined on on an MPI_Info object
+ * @param info Pointer to lam_info_t object.
+ * @param nkeys Pointer to nkeys, which needs to be filled up.
+ *
+ * @retval The number of keys defined on info
+ */
+static inline int 
+lam_info_get_nkeys(lam_info_t *info, int *nkeys) {
+    *nkeys = (int) lam_list_get_size(&(info->super));
+    return MPI_SUCCESS;
+}
+
+/**
+ *   lam_info_get_nthkey - Get a key indexed by integer from an 'MPI_Info' o
+ *
+ *   @param info Pointer to lam_info_t object
+ *   @param n index of key to retrieve (integer)
+ *   @param key character string of at least 'MPI_MAX_INFO_KEY' characters
+ *
+ *   @retval MPI_SUCCESS
+ *   @retval MPI_ERR_ARG
+ */
+static inline int 
+lam_info_get_nthkey (lam_info_t *info, int n, char *key) {
+    lam_info_entry_t *iterator;
+    /*
+     * Iterate over and over till we get to the nth key
+     */
+    iterator = (lam_info_entry_t *)lam_list_get_first(&(info->super));
+    for ( ; n > 0; n--) {
+        iterator = (lam_info_entry_t *)
+        iterator->super.lam_list_next;
+    }
+    /*
+     * iterator is of the type lam_list_item_t. We have to
+     * cast it to lam_info_entry_t before we can use it to
+     * access the value
+     */
+    strcpy(key, iterator->ie_key);
+    return MPI_SUCCESS;
 }
 
 #endif /* LAM_INFO_H */
