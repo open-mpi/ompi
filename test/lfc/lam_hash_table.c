@@ -5,8 +5,8 @@
 #include <stdint.h>
 #include <string.h>
 #include "support.h"
-#include "lam/lfc/lam_object.h"
-#include "lam/lfc/lam_hash_table.h"
+#include "lfc/lam_object.h"
+#include "lfc/lam_hash_table.h"
 
 char *num_keys[] = {
     "1234", "1234",

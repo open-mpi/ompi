@@ -13,7 +13,7 @@
 #include <string.h>
 
 #include "support.h"
-#include "lam/lfc/lam_pointer_array.h"
+#include "lfc/lam_pointer_array.h"
 
 static void test(bool thread_usage){
 

@@ -3,7 +3,7 @@
  */
 
 #include <stdio.h>
-#include "lam_bitmap.h"
+#include "lfc/lam_bitmap.h"
 
 #define BSIZE 26
 #define SIZE_OF_CHAR (sizeof(char) * 8)
