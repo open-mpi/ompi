@@ -468,6 +468,7 @@ mca_ptl_elan_matched (mca_ptl_base_module_t * ptl,
 	/* XXX: progress the request based on the status of this recv frag
 	 * It is possible to employ a scheduling logic here.
 	 * Then Done with this fragment, i.e., data */
-	mca_ptl_elan_recv_frag_done (header, frag, request);
+	mca_ptl_elan_recv_frag_done (header, 
+		(mca_ptl_elan_recv_frag_t *)frag, request);
     }
 }

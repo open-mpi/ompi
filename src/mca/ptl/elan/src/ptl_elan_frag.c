@@ -191,8 +191,9 @@ mca_ptl_elan_send_desc_done (
 	    || mca_pml_base_send_request_matched(req)) {
 	if(ompi_atomic_fetch_and_set_int (&frag->frag_progressed, 1) == 0) 
 	{
-	    ptl->super.ptl_send_progress(ptl, req, 
-		    header->hdr_frag.hdr_frag_length);
+	    ptl->super.ptl_send_progress(
+		    (struct mca_ptl_base_module_t*) ptl, 
+		    req, header->hdr_frag.hdr_frag_length);
 	}
 
 	LOG_PRINT(PTL_ELAN_DEBUG_SEND, "return frag %p desc %p type %d\n", 

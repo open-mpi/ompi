@@ -146,7 +146,9 @@ mca_ptl_elan_last_frag_ack (struct mca_ptl_elan_module_t *ptl,
 	     req->req_peer_size);
 
     if(ompi_atomic_fetch_and_set_int (&desc->frag_progressed, 1) == 0) {
-	ptl->super.ptl_send_progress(ptl, req, header->hdr_ack.hdr_dst_size);
+	ptl->super.ptl_send_progress(
+	       	(struct mca_ptl_base_module_t*) ptl,
+		req, header->hdr_ack.hdr_dst_size);
     }
 
     /* Return a frag or if not cached, or it is a follow up */ 
@@ -424,7 +426,8 @@ mca_ptl_elan_init_put_desc (struct mca_ptl_elan_send_frag_t *frag,
 		pml_req->req_peer_size);
 
     /* FIXME: initialize convertor and get the fragment copied out */
-    if(size_in > 0 && 0) {
+#if OMPI_PTL_ELAN_USE_DTP
+    if(size_in > 0) {
 	struct iovec iov;
         ompi_convertor_t *convertor;
 
@@ -458,7 +461,9 @@ mca_ptl_elan_init_put_desc (struct mca_ptl_elan_send_frag_t *frag,
             return;
 	}
         size_out = iov.iov_len;
-    } else {
+    } else 
+#endif
+    {
 	size_out = size_in;
     }
 
