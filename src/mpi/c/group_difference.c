@@ -40,7 +40,7 @@ int MPI_Group_difference(MPI_Group group1, MPI_Group group2,
     int new_group_size, proc1, proc2, found_in_group2, cnt;
     int my_group_rank;
     ompi_group_t *group1_pointer, *group2_pointer, *new_group_pointer;
-    ompi_proc_t *proc1_pointer, *proc2_pointer, *my_proc_pointer;
+    ompi_proc_t *proc1_pointer, *proc2_pointer, *my_proc_pointer = NULL;
 
     /* error checking */
     if( MPI_PARAM_CHECK ) {
