@@ -448,10 +448,31 @@ process_dir() {
 ***   `pwd`
 
 EOF
-	elif test -f .ompi_ignore; then
+	elif test -f .ompi_ignore -a ! -f .ompi_unignore; then
+
+            # Note that if we have an empty (but existant)
+            # .ompi_unignore, then we ignore the .ompi_ignore file
+            # (and therefore build the component)
+
 	    cat <<EOF
 
 *** Found .ompi_ignore file -- skipping entire tree:
+***   `pwd`
+
+EOF
+        elif test -f .ompi_ignore -a \
+             test -s .ompi_unignore -a \
+             test -z "`grep $USER .ompi_unignore`" ; then
+
+            # If we have a non-empty .ompi_unignore and our username
+            # is in there somewhere, we ignore the .ompi_ignore (and
+            # therefore build the component).  Otherwise, this
+            # condition is true and we don't configure.
+
+	    cat <<EOF
+
+*** Found .ompi_ignore file and .ompi_unignore didn't invalidate -- 
+*** skipping entire tree:
 ***   `pwd`
 
 EOF
