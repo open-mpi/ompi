@@ -30,9 +30,7 @@ int topo_base_cart_sub (MPI_Comm comm,
      int key;
      int colfactor;
      int keyfactor;
-#if 0
      int rank;
-#endif
      int ndim;
      int dim;
      int allfalse;
@@ -122,10 +120,8 @@ int topo_base_cart_sub (MPI_Comm comm,
           if (errcode != MPI_SUCCESS) {
              return errcode;
           }
-#if 0
-          errcode = lam_cart_coords (newcomm, rank,
-                                     ndim, newcomm->c_topo_comm->mtc_coords);
-#endif
+          errcode = newcomm->c_topo.topo_cart_coords (newcomm, rank,
+                             ndim, newcomm->c_topo_comm->mtc_coords);
           if (errcode != MPI_SUCCESS) {
              return errcode;
           }
