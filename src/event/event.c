@@ -397,6 +397,7 @@ lam_event_pending(struct lam_event *ev, short event, struct timeval *tv)
 int
 lam_event_add_i(struct lam_event *ev, struct timeval *tv)
 {
+    int rc = 0;
     LOG_DBG((LOG_MISC, 55,
          "event_add: event: %p, %s%s%scall %p",
          ev,
@@ -442,11 +443,11 @@ lam_event_add_i(struct lam_event *ev, struct timeval *tv)
     if ((ev->ev_events & (LAM_EV_READ|LAM_EV_WRITE)) &&
         !(ev->ev_flags & (LAM_EVLIST_INSERTED|LAM_EVLIST_ACTIVE))) {
         lam_event_queue_insert(ev, LAM_EVLIST_INSERTED);
-        return (lam_evsel->add(lam_evbase, ev));
+        rc = (lam_evsel->add(lam_evbase, ev));
     } else if ((ev->ev_events & LAM_EV_SIGNAL) &&
         !(ev->ev_flags & LAM_EVLIST_SIGNAL)) {
         lam_event_queue_insert(ev, LAM_EVLIST_SIGNAL);
-        return (lam_evsel->add(lam_evbase, ev));
+        rc = (lam_evsel->add(lam_evbase, ev));
     }
 
 #if LAM_HAVE_THREADS
@@ -457,7 +458,7 @@ lam_event_add_i(struct lam_event *ev, struct timeval *tv)
         lam_event_pipe_signalled++;
     }
 #endif
-    return (0);
+    return rc;
 }
 
 int
