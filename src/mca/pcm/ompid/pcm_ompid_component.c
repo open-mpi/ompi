@@ -67,8 +67,7 @@ int mca_pcm_ompid_close(void)
 struct mca_pcm_base_module_1_0_0_t *
 mca_pcm_ompid_init(
     int *priority, 
-    bool *allow_multi_user_threads, 
-    bool *have_hidden_threads,
+    bool have_threads,
     int constraints)
 {
     return NULL;

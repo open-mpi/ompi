@@ -20,12 +20,9 @@ char *mca_llm_hostfile_filename = NULL;
 
 struct mca_llm_base_module_1_0_0_t* 
 mca_llm_hostfile_component_init(const char *active_pcm,
-                                int *priority, 
-                                bool *allow_multiple_user_threads,
-                                bool *have_hidden_threads)
+                                bool have_threads,
+                                int *priority)
 {
-  *allow_multiple_user_threads = true;
-  *have_hidden_threads = false;
   *priority = 1;
 
   return &mca_llm_hostfile_module;

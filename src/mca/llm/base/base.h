@@ -26,8 +26,7 @@ extern "C" {
   int mca_llm_base_open(void);
   int mca_llm_base_select(const char *active_pcm,
                           mca_llm_base_module_t *selected, 
-                          bool *allow_multi_user_threads, 
-                          bool *have_hidden_threads);
+                          bool have_threads);
   int mca_llm_base_close(void);
 #if defined(c_plusplus) || defined(__cplusplus)
 }

@@ -8,6 +8,7 @@
 
 #include "include/constants.h"
 #include "runtime/runtime.h"
+#include "runtime/runtime_internal.h"
 #include "event/event.h"
 #include "util/output.h"
 #include "util/proc_info.h"
@@ -37,6 +38,7 @@ int ompi_rte_finalize(void)
   mca_gpr_base_close();
   mca_oob_base_close();
 
+  ompi_rte_internal_fini_spawn();
   ompi_session_dir_finalize();
 
   /* All done */

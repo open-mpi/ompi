@@ -32,9 +32,8 @@ extern "C" {
 
     struct mca_llm_base_module_1_0_0_t* 
     mca_llm_hostfile_component_init(const char *active_pcm,
-                                    int *priority, 
-                                    bool *allow_multiple_user_threads,
-                                    bool *have_hidden_threads);
+                                    bool have_threads,
+                                    int *priority);
 
     int mca_llm_hostfile_component_finalize(void);
 

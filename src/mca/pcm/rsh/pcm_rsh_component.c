@@ -118,8 +118,7 @@ mca_pcm_rsh_component_close(void)
 
 mca_pcm_base_module_t*
 mca_pcm_rsh_init(int *priority, 
-		  bool *allow_multi_user_threads, 
-                 bool *have_hidden_threads,
+                 bool have_threads,
                  int constraints)
 {
     int debug;
@@ -146,12 +145,8 @@ mca_pcm_rsh_init(int *priority,
     mca_base_param_lookup_string(mca_pcm_rsh_param_agent,
                                  &(me->rsh_agent));
 
-    *allow_multi_user_threads = true;
-    *have_hidden_threads = false;
+    ret = mca_llm_base_select("rsh", &(me->llm), have_threads);
 
-    ret = mca_llm_base_select("rsh", &(me->llm),
-                              allow_multi_user_threads,
-                              have_hidden_threads);
     if (OMPI_SUCCESS != ret) {
         /* well, that can't be good.  guess we can't run */
         ompi_output_verbose(5, mca_pcm_rsh_output, "init: no llm found");
@@ -167,17 +162,6 @@ mca_pcm_rsh_init(int *priority,
     me->super.pcm_kill_job = mca_pcm_rsh_kill_job;
     me->super.pcm_deallocate_resources = mca_pcm_rsh_deallocate_resources;
     me->super.pcm_finalize = mca_pcm_rsh_finalize;
-
-    /* DO SOME PARAM "FIXING" */
-    /* BWB - remove param fixing before 1.0 */
-    if (0 == me->no_profile) {
-        printf("WARNING: reseting mca_pcm_rsh_no_profile to 1\n");
-        me->no_profile = 1;
-    }
-    if (0 == me->fast_boot) {
-        printf("WARNING: reseting mca_pcm_rsh_fast to 1\n");
-        me->fast_boot = 1;
-    }
 
     return (mca_pcm_base_module_t*) me;
 }

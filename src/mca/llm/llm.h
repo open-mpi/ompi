@@ -35,20 +35,18 @@
  * @param active_pcm (IN) Name of the currently active PCM module,
  *                       as it might be useful in determining
  *                       useability.
+ * @param have_threads (IN) Whether the current running process is
+ *                       multi-threaded or not.  true means there
+ *                       may be concurrent access into the
+ *                       underlying components *and* that the
+ *                       components may launch new threads.
  * @param priority (OUT) Relative priority or ranking use by MCA to
  *                       select a module.
- * @param allow_multiple_user_threads (OUT) Whether this module can
- *                       run with multiple threads making calls into
- *                       the library (equivalent of MPI_THREAD_MULTIPLE 
- *                       from MPI-land).
- * @param have_hidden_threads (OUT) Whether this module needs to start
- *                       a background thread for operation.
  */
 typedef struct mca_llm_base_module_1_0_0_t* 
 (*mca_llm_base_component_init_fn_t)(const char *active_pcm,
-                                    int *priority, 
-                                    bool *allow_multiple_user_threads,
-                                    bool *have_hidden_threads);
+                                    bool have_threads,
+                                    int *priority);
 
 
 /**

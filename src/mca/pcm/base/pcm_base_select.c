@@ -19,8 +19,6 @@ struct avail_module_t {
     ompi_list_item_t super;
     mca_pcm_base_module_t *module;
     int priority;
-    bool user_threads;
-    bool hidden_threads;
 };
 typedef struct avail_module_t avail_module_t;
 OBJ_CLASS_INSTANCE(avail_module_t, ompi_list_item_t, NULL, NULL);
@@ -54,14 +52,12 @@ insert_module(ompi_list_t *avail_modules, avail_module_t *module)
  * modules.  Otherwise, rerturn module with highest priority.
  */
 int
-mca_pcm_base_select(bool *allow_multi_user_threads, 
-                    bool *have_hidden_threads,
+mca_pcm_base_select(bool have_threads,
                     int constraints,
                     mca_pcm_base_module_t ***modules,
-                    int *modules_len)
+                    size_t *modules_len)
 {
     int priority;
-    bool user_threads, hidden_threads;
     avail_module_t *avail_module;
     ompi_list_item_t *item;
     mca_base_component_list_item_t *cli;
@@ -85,7 +81,6 @@ mca_pcm_base_select(bool *allow_multi_user_threads,
         cli = (mca_base_component_list_item_t *) item;
         component = (mca_pcm_base_component_t *) cli->cli_component;
 
-        hidden_threads = user_threads = false;
         priority = 0;
 
         ompi_output_verbose(10, mca_pcm_base_output, 
@@ -97,8 +92,7 @@ mca_pcm_base_select(bool *allow_multi_user_threads,
                                 "pcm: base: select: "
                                 "no init function; ignoring component");
         } else {
-            module = component->pcm_init(&priority, &user_threads, 
-                                         &hidden_threads, constraints);
+            module = component->pcm_init(&priority, have_threads, constraints);
             if (NULL == module) {
                 ompi_output_verbose(10, mca_pcm_base_output,
                                     "pcm: base: select: init returned failure");
@@ -108,8 +102,6 @@ mca_pcm_base_select(bool *allow_multi_user_threads,
                                     priority);
                 avail_module = OBJ_NEW(avail_module_t);
                 avail_module->priority = priority;
-                avail_module->hidden_threads = hidden_threads;
-                avail_module->user_threads = user_threads;
                 avail_module->module = module;
 
                 insert_module(&avail_module_list, avail_module);

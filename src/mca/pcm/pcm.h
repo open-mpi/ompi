@@ -65,7 +65,6 @@
 #include "mca/mca.h"
 #include "mca/ns/ns.h"
 #include "include/types.h"
-#include "runtime/runtime_types.h"
 
 /*
  * MCA component management functions
@@ -98,8 +97,7 @@
  */
 typedef struct mca_pcm_base_module_1_0_0_t* 
 (*mca_pcm_base_component_init_fn_t)(int *priority, 
-                                    bool *allow_multiple_user_threads,
-                                    bool *have_hidden_threads,
+                                    bool have_threads,
                                     int constraints);
 
 
