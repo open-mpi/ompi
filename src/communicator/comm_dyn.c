@@ -28,7 +28,7 @@ int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
 {
     int size, rsize, rank, rc;
     int namebuflen, rnamebuflen;
-    char *namebuf=NULL, *rnamebuf=NULL;
+    void *namebuf=NULL, *rnamebuf=NULL;
 
     ompi_buffer_t sbuf;
     ompi_buffer_t rbuf;
@@ -36,6 +36,7 @@ int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
     ompi_proc_t **rprocs=NULL;
     ompi_group_t *group=comm->c_local_group;
     ompi_process_name_t *rport=NULL;
+    ompi_buffer_t nbuf, nrbuf;
 
     size = ompi_comm_size ( comm );
     rank = ompi_comm_rank ( comm );
@@ -48,14 +49,13 @@ int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
         rport = ompi_comm_get_rport (port,send_first,group->grp_proc_pointers[rank]);
 
         /* Exchange number of processes and msg length on both sides */
-        ompi_proc_get_namebuf_by_proc (group->grp_proc_pointers,
-                                       size, &namebuf, &namebuflen);
+	ompi_buffer_init (&nbuf, size*sizeof(ompi_process_name_t));
+        ompi_proc_get_namebuf (group->grp_proc_pointers, size, nbuf);
+	ompi_buffer_get(nbuf, &namebuf, &namebuflen);
 
-        ompi_buffer_init(&sbuf, 128);
+        ompi_buffer_init(&sbuf, 64);
         ompi_pack(sbuf, &size, 1, OMPI_INT32);
         ompi_pack(sbuf, &namebuflen, 1, OMPI_INT32);
-        ompi_pack(sbuf, &rsize, 1, OMPI_INT32);
-        ompi_pack(sbuf, &rnamebuflen, 1, OMPI_INT32);
 
         if ( send_first ) {
             rc = mca_oob_send_packed(rport, sbuf, 0, 0);
@@ -66,8 +66,6 @@ int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
             rc = mca_oob_send_packed(rport, sbuf, 0, 0);
         }
 
-        ompi_unpack(rbuf, &size, 1, OMPI_INT32);
-        ompi_unpack(rbuf, &namebuflen, 1, OMPI_INT32);
         ompi_unpack(rbuf, &rsize, 1, OMPI_INT32);
         ompi_unpack(rbuf, &rnamebuflen, 1, OMPI_INT32);
 
@@ -84,46 +82,41 @@ int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
     if ( OMPI_SUCCESS != rc ) {
         goto exit;
     }
-    rnamebuf = (char *) malloc (rnamebuflen);
-    if ( NULL == rnamebuf ) {
-        rc = OMPI_ERR_OUT_OF_RESOURCE;
-        goto exit;
-    }
 
     if ( rank == root ) {
         /* Exchange list of processes in the groups */
         
-        
-        ompi_buffer_init(&sbuf, 128);
-        ompi_pack(sbuf, namebuf, namebuflen, OMPI_BYTE);
-        
         if ( send_first ) {
-            rc = mca_oob_send_packed(rport, sbuf, 0, 0);
-            rc = mca_oob_recv_packed (rport, &rbuf, NULL);
+            rc = mca_oob_send_packed(rport, nbuf, 0, 0);
+            rc = mca_oob_recv_packed (rport, &nrbuf, NULL);
         }
         else {
-            rc = mca_oob_recv_packed(rport, &rbuf, NULL);
-            rc = mca_oob_send_packed(rport, sbuf, 0, 0);
+            rc = mca_oob_recv_packed(rport, &nrbuf, NULL);
+            rc = mca_oob_send_packed(rport, nbuf, 0, 0);
         }
-
-        ompi_unpack(rbuf, rnamebuf, rnamebuflen, OMPI_BYTE);
-
-        ompi_buffer_free(sbuf);
-        ompi_buffer_free(rbuf);
     }
-    
+    else {
+	/* non root processes need to allocate the buffer manually */
+	ompi_buffer_init(&nrbuf, rnamebuflen);
+    }
     /* bcast list of processes to all procs in local group 
        and reconstruct the data. Note that proc_get_proclist
        adds processes, which were not known yet to our
        process pool.
     */
+    ompi_buffer_get(nrbuf, &rnamebuf, &rnamebuflen);
     rc = comm->c_coll.coll_bcast (rnamebuf, rnamebuflen, MPI_BYTE, root, comm );
     if ( OMPI_SUCCESS != rc ) {
         goto exit;
     }
-    rc = ompi_proc_get_proclist (rnamebuf, rnamebuflen, rsize, &rprocs);
+    rc = ompi_proc_get_proclist (nrbuf, rsize, &rprocs);
     if ( OMPI_SUCCESS != rc ) {
         goto exit;
+    }
+
+    ompi_buffer_free (nrbuf);
+    if ( rank == root ) {
+	ompi_buffer_free (nbuf);
     }
 
     /* allocate comm-structure */
@@ -178,12 +171,7 @@ int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
     
     
  exit:
-    if ( NULL != rnamebuf ) {
-        free ( rnamebuf );
-    }
-    if ( NULL != namebuf ) {
-        ompi_proc_namebuf_returnbuf (namebuf);
-    }
+
     if ( NULL != rprocs ) {
         free ( rprocs );
     }
@@ -212,48 +200,33 @@ int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
 ompi_process_name_t *ompi_comm_get_rport (ompi_process_name_t *port, int send_first, 
                                           ompi_proc_t *proc)
 {
-    int namebuflen, rc;
-    char *namebuf=NULL;
-    ompi_proc_t **rproc;
-    ompi_process_name_t *rport;
-    
+    int rc;
+    ompi_process_name_t *rport, tbuf;
+    ompi_proc_t *rproc=NULL;
 
     if ( send_first ) {
         ompi_buffer_t sbuf;
-        ompi_proc_get_namebuf_by_proc(&proc, 1, &namebuf, &namebuflen );
 
-        ompi_buffer_init(&sbuf, sizeof(int));
-        ompi_pack(sbuf, &namebuflen, 1, OMPI_INT32);
+        ompi_buffer_init(&sbuf, sizeof(ompi_process_name_t));
+        ompi_pack(sbuf, &(proc->proc_name), 1, OMPI_NAME);
         rc = mca_oob_send_packed(port, sbuf, 0, 0);
         ompi_buffer_free(sbuf);
 
-        ompi_buffer_init(&sbuf, namebuflen);
-        ompi_pack(sbuf, namebuf, namebuflen, OMPI_BYTE);
-        rc = mca_oob_send_packed(port, sbuf, 0, 0);
-        ompi_buffer_free(sbuf);
-
-        ompi_proc_namebuf_returnbuf (namebuf);
         rport = port;
     }
     else {
         ompi_buffer_t rbuf;
-        rc = mca_oob_recv_packed(MCA_OOB_NAME_ANY, &rbuf, NULL);
-        ompi_unpack(rbuf, &namebuflen, 1, OMPI_INT32);
-        ompi_buffer_free(rbuf);
-
-        namebuf = (char *) malloc (namebuflen);
-        if ( NULL != namebuf ) {
-            return NULL;
-        }
 
         rc = mca_oob_recv_packed(MCA_OOB_NAME_ANY, &rbuf, NULL);
-        ompi_unpack(rbuf, namebuf, namebuflen, OMPI_BYTE);
+        ompi_unpack(rbuf, &tbuf, 1, OMPI_NAME);
         ompi_buffer_free(rbuf);
 
-        ompi_proc_get_proclist (namebuf, namebuflen, 1, &rproc);
-        rport = &(rproc[0]->proc_name);
-        free (rproc);
-        free (namebuf);
+	rproc = ompi_proc_find(&tbuf);
+	if ( NULL == rproc ) {
+	    rproc = OBJ_NEW(ompi_proc_t);
+	    rproc->proc_name = tbuf;
+	}
+        rport = &(rproc->proc_name);
     }
     
     return rport;

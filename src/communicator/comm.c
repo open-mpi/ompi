@@ -28,6 +28,7 @@
 #include "mca/ptl/base/ptl_base_header.h"
 #include "mca/ptl/base/ptl_base_match.h"
 
+
 /*
 ** sort-function for MPI_Comm_split 
 */
@@ -56,7 +57,6 @@ static int ompi_comm_allgather_emulate_intra (void* inbuf, int incount, MPI_Data
                                               void* outbuf, int outcount, 
                                               MPI_Datatype outtype, 
                                               ompi_communicator_t *comm);
-
 
 
 /**********************************************************************/
@@ -655,13 +655,6 @@ int ompi_comm_free ( ompi_communicator_t **comm )
 /**********************************************************************/
 /**********************************************************************/
 /**********************************************************************/
-/* This routine will be very soon cleaned up. We agreed on the
-   required interface with Brian, Rich and Tim W., as soon
-   as the functions are implemented, this function
-   will be simplified significantly.
-*/
-#define PROC local_comm->c_local_group->grp_proc_pointers
-
 ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm, 
                                      ompi_communicator_t *bridge_comm, 
                                      int local_leader,
@@ -674,19 +667,25 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
     int rc;
     int local_rank, local_size;
     ompi_proc_t **rprocs=NULL;
-    char *namebuf=NULL, *rnamebuf=NULL;
-    int len, rlen;
+    char *rnamebuf=NULL;
+    int len, rlen, tlen;
+    ompi_buffer_t sbuf, rbuf;
+    void *sendbuf;
+    char *recvbuf;
     
     local_rank = ompi_comm_rank (local_comm);
     local_size = ompi_comm_size (local_comm);    
 
     if (local_rank == local_leader) {
-        rc = ompi_proc_get_namebuf_by_proc(local_comm->c_local_group->grp_proc_pointers,
-                                           local_size, &namebuf, &len);
+	ompi_buffer_init(&sbuf, local_size*sizeof(ompi_process_name_t));
+
+        rc = ompi_proc_get_namebuf (local_comm->c_local_group->grp_proc_pointers, 
+				    local_size, sbuf);
         if ( OMPI_SUCCESS != rc ) {
             goto err_exit;
         }
-
+	ompi_buffer_get(sbuf, &sendbuf, &len);
+	
         /* send the remote_leader the length of the buffer */
         rc = mca_pml.pml_irecv (&rlen, 1, MPI_INT, remote_leader, tag,
                                 bridge_comm, &req );
@@ -713,20 +712,20 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
     }
     
     /* Allocate temporary buffer */
-    rnamebuf = (char *) malloc ( rlen );
-    if ( NULL == rnamebuf ) {
-        rc = OMPI_ERR_OUT_OF_RESOURCE;
-        goto err_exit;
+    recvbuf = (char *)malloc(rlen);
+    if ( NULL == recvbuf ) {
+	goto err_exit;
     }
+    ompi_buffer_init_preallocated(&rbuf, recvbuf, rlen);
 
     if ( local_rank == local_leader ) {
         /* local leader exchange name lists */
-        rc = mca_pml.pml_irecv (rnamebuf, rlen, MPI_BYTE, remote_leader, tag,
+        rc = mca_pml.pml_irecv (recvbuf, rlen, MPI_BYTE, remote_leader, tag,
                                 bridge_comm, &req );
         if ( OMPI_SUCCESS != rc ) {
             goto err_exit;
         }
-        rc = mca_pml.pml_send (namebuf, len, MPI_BYTE, remote_leader, tag, 
+        rc = mca_pml.pml_send (sendbuf, len, MPI_BYTE, remote_leader, tag, 
                                MCA_PML_BASE_SEND_STANDARD, bridge_comm );
         if ( OMPI_SUCCESS != rc ) {
             goto err_exit;
@@ -736,25 +735,26 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
             goto err_exit;
         }
 
-        ompi_proc_namebuf_returnbuf ( namebuf );
+	ompi_buffer_free(sbuf);
     }
 
     /* broadcast name list to all proceses in local_comm */
-    rc = local_comm->c_coll.coll_bcast( rnamebuf, rlen, MPI_BYTE, 
+    rc = local_comm->c_coll.coll_bcast( recvbuf, rlen, MPI_BYTE, 
                                         local_leader, local_comm );
     if ( OMPI_SUCCESS != rc ) {
         goto err_exit;
     }
     
     /* decode the names into a proc-list */
-    rc = ompi_proc_get_proclist (rnamebuf, rlen, rsize, &rprocs );
+    rc = ompi_proc_get_proclist (rbuf, rsize, &rprocs );
+    ompi_buffer_free (rbuf);
     
  err_exit:
     if ( NULL != rnamebuf) {
         free ( rnamebuf );
     }
-    /* rprocs has to be freed in the level above (i.e. intercomm_create ) */
-
+    /* rprocs isn't freed unless we have an error, 
+       since it is used in the communicator */
     if ( OMPI_SUCCESS !=rc ) {
         printf("%d: Error in ompi_get_rprocs\n", local_rank);
         if ( NULL != rprocs ) {
