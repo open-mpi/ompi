@@ -190,7 +190,7 @@ int mca_base_param_kv_associate(size_t index, int keyval)
   }
 
   len = ompi_value_array_get_size(&mca_base_params);
-  if (0 > index || index > len) {
+  if (index > len) {
     return OMPI_ERROR;
   }
 
