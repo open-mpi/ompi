@@ -50,24 +50,32 @@
 #define DT_LONG_DOUBLE             0x13
 #define DT_COMPLEX_FLOAT           0x14
 #define DT_COMPLEX_DOUBLE          0x15
-#define DT_PACKED                  0x16
-#define DT_LOGIC                   0x17
-#define DT_FLOAT_INT               0x18
-#define DT_DOUBLE_INT              0x19
-#define DT_LONG_INT                0x1A
-#define DT_2INT                    0x1B
-#define DT_SHORT_INT               0x1C
-#define DT_INTEGER                 0x1D
-#define DT_REAL                    0x1E
-#define DT_DBLPREC                 0x1F
-#define DT_2REAL                   0x20
-#define DT_2DBLPREC                0x21
-#define DT_2INTEGER                0x22
-#define DT_LONGDBL_INT             0x23
-#define DT_WCHAR                   0x24
+#define DT_COMPLEX_LONG_DOUBLE     0x16
+#define DT_PACKED                  0x17
+#define DT_LOGIC                   0x18
+#define DT_FLOAT_INT               0x19
+#define DT_DOUBLE_INT              0x1A
+#define DT_LONG_DOUBLE_INT         0x1B
+#define DT_LONG_INT                0x1C
+#define DT_2INT                    0x1D
+#define DT_SHORT_INT               0x1E
+#define DT_INTEGER                 0x1F
+#define DT_REAL                    0x20
+#define DT_DBLPREC                 0x21
+#define DT_2REAL                   0x22
+#define DT_2DBLPREC                0x23
+#define DT_2INTEGER                0x24
+#define DT_LONGDBL_INT             0x25
+#define DT_WCHAR                   0x26
+#define DT_2COMPLEX                0x27
+#define DT_2DOUBLE_COMPLEX         0x28
+#define DT_UNAVAILABLE             0x29
 /* If the number of basic datatype should change update
  * DT_MAX_PREDEFINED in datatype.h
  */
+#if DT_MAX_PREDEFINED <= DT_2DOUBLE_COMPLEX
+#error DT_MAX_PREDEFINED should be updated
+#endif  /* safe check for max predefined datatypes. */
 
 /* flags for the datatypes. */
 #define DT_FLAG_DESTROYED  0x0001  /**< user destroyed but some other layers still have a reference */
@@ -85,10 +93,10 @@
 #define DT_INCREASE_STACK  32
 
 struct __dt_stack {
-    int index;
-    int count;
-    int end_loop;
-    long disp;
+    int32_t index;
+    int32_t count;
+    int32_t end_loop;
+    long    disp;
 };
 
 /* These 2 typedefs are the same as the dt_elem_desc_t except
@@ -121,14 +129,19 @@ typedef struct __dt_endloop_desc {
 #define CONVERTOR_STATE_ALLOC      0x04000000
 
 typedef struct {
-      float r;
-      float i;
+    float r;
+    float i;
 } lam_complex_float_t;
 
 typedef struct {
-      double r;
-      double i;
+    double r;
+    double i;
 } lam_complex_double_t;
+
+typedef struct {
+    long double r;
+    long double i;
+} lam_complex_long_double_t;
 
 extern dt_desc_t basicDatatypes[DT_MAX_PREDEFINED];
 
