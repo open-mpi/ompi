@@ -138,7 +138,9 @@ static void mca_gpr_replica_trigger_list_construct(mca_gpr_replica_trigger_list_
     trig->synch_mode = OMPI_REGISTRY_SYNCHRO_MODE_NONE;
     trig->action = OMPI_REGISTRY_NOTIFY_NONE;
     trig->addr_mode = OMPI_REGISTRY_NONE;
+    trig->num_keys = 0;
     trig->keys = NULL;
+    trig->tokens = NULL;
     trig->trigger = 0;
     trig->count = 0;
     trig->id_tag = MCA_GPR_NOTIFY_ID_MAX;
@@ -147,8 +149,18 @@ static void mca_gpr_replica_trigger_list_construct(mca_gpr_replica_trigger_list_
 /* destructor - used to free any resources held by instance */
 static void mca_gpr_replica_trigger_list_destructor(mca_gpr_replica_trigger_list_t* trig)
 {
+    char **tok;
+    int i;
+
     if (NULL != trig->keys) {
 	free(trig->keys);
+    }
+    if (NULL != trig->tokens) {
+	for (i=0, tok=trig->tokens; i< trig->num_keys; i++) {
+	    free(*tok);
+	    tok++;
+	}
+	free(trig->tokens);
     }
 }
 
