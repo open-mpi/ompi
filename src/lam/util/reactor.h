@@ -7,7 +7,7 @@
 
 #include "lam/types.h"
 #include "lam/lfc/lam_list.h"
-#include "lam/lfc/hash_table.h"
+#include "lam/lfc/lam_hash_table.h"
 #include "lam/threads/mutex.h"
 
 extern const int LAM_REACTOR_NOTIFY_ALL;
