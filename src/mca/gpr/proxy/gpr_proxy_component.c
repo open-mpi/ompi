@@ -215,11 +215,15 @@ void mca_gpr_proxy_notify_recv(int status, ompi_process_name_t* sender,
     goto RETURN_ERROR;
     }
 
-    message->tokens = (char**)malloc(message->num_tokens*sizeof(char*));
-    for (i=0, tokptr=message->tokens; i < message->num_tokens; i++, tokptr++) {
-    if (ompi_unpack_string(buffer, tokptr) < 0) {
-        goto RETURN_ERROR;
-    }
+    if(message->num_tokens > 0) {
+        message->tokens = (char**)malloc(message->num_tokens*sizeof(char*));
+        for (i=0, tokptr=message->tokens; i < message->num_tokens; i++, tokptr++) {
+        if (ompi_unpack_string(buffer, tokptr) < 0) {
+            goto RETURN_ERROR;
+        }
+        }
+    } else {
+        message->tokens = NULL;
     }
 
     /* find the request corresponding to this notify */
