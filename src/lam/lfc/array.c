@@ -3,6 +3,7 @@
  */
 
 #include <string.h>
+
 #include "lam/lfc/array.h"
 
 #define ARR_BLK_SZ      20
@@ -72,7 +73,7 @@ void lam_arr_remove_all(lam_array_t *arr)
     
     for ( i = 0; i < arr->arr_size; i++ )
     {
-        OBJECT_RELEASE(arr->arr_items[i]);
+        OBJ_RELEASE(arr->arr_items[i]);
         arr->arr_items[i] = 0;
     }
     arr->arr_size = 0;
