@@ -78,6 +78,7 @@ static void mca_ptl_ib_peer_construct(mca_ptl_base_peer_t* module_peer)
     module_peer->peer_retries = 0;
     OBJ_CONSTRUCT(&module_peer->peer_send_lock, ompi_mutex_t);
     OBJ_CONSTRUCT(&module_peer->peer_recv_lock, ompi_mutex_t);
+    OBJ_CONSTRUCT(&module_peer->pending_send_frags, ompi_list_t);
 }
 
 /*
@@ -401,15 +402,15 @@ int mca_ptl_ib_peer_send(mca_ptl_base_peer_t* peer,
     switch(peer->peer_state) {
         case MCA_PTL_IB_CONNECTING:
 
-            ompi_list_append(&peer->peer_module->pending_send_frags, 
-                    (ompi_list_item_t*)frag);
+            ompi_list_append(&peer->pending_send_frags,
+                    (ompi_list_item_t *)frag);
             break;
         case MCA_PTL_IB_CLOSED:
 
             D_PRINT("Connection to peer closed ... connecting ...");
 
-            ompi_list_append(&peer->peer_module->pending_send_frags, 
-                    (ompi_list_item_t*)frag);
+            ompi_list_append(&peer->pending_send_frags,
+                    (ompi_list_item_t *)frag);
 
             rc = mca_ptl_ib_peer_start_connect(peer);
             break;

@@ -101,12 +101,6 @@ struct mca_ptl_ib_module_t {
 
     ompi_free_list_t                        recv_free;
     /**< free list of recv buffer descriptors */
-
-    ompi_list_t                             pending_send_frags;
-    /**< list of all pending send fragments */
-
-    ompi_list_t                             pending_recv_frags;
-    /**< list of all pending recv fragments */
 };
 
 typedef struct mca_ptl_ib_module_t mca_ptl_ib_module_t;

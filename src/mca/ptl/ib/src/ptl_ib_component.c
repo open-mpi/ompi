@@ -238,9 +238,6 @@ mca_ptl_base_module_t** mca_ptl_ib_component_init(int *num_ptl_modules,
         }
 
         /* Find a better place for this */
-        OBJ_CONSTRUCT(&(ib_modules[i].pending_send_frags), ompi_list_t);
-        OBJ_CONSTRUCT(&(ib_modules[i].pending_recv_frags), ompi_list_t);
-
         OBJ_CONSTRUCT(&(ib_modules[i].send_free), ompi_free_list_t);
 
         OBJ_CONSTRUCT(&(ib_modules[i].recv_free), ompi_free_list_t);
@@ -332,24 +329,108 @@ int mca_ptl_ib_component_control(int param, void* value, size_t size)
 
 int mca_ptl_ib_component_progress(mca_ptl_tstamp_t tstamp)
 {
-    uint32_t num_modules, i;
+    int i, j, num_procs, num_frags, num_modules;
+    ompi_list_item_t *item, *frag_item;
+    mca_ptl_ib_peer_t *peer;
+    mca_ptl_ib_proc_t *proc;
+    mca_ptl_ib_send_frag_t *sendfrag;
+    VAPI_ret_t ret;
+    VAPI_wc_desc_t comp;
     mca_ptl_ib_module_t *module;
+
+    num_procs = ompi_list_get_size(&(mca_ptl_ib_component.ib_procs));
+
+    /* Traverse the list of procs associated with the
+     * IB component */
+
+    item = ompi_list_get_first(&(mca_ptl_ib_component.ib_procs));
+
+    for(i = 0; i < num_procs; 
+            item = ompi_list_get_next(item), i++) {
+
+
+        proc = (mca_ptl_ib_proc_t *) item;
+
+        /* We only have one peer per proc right now */
+        peer = (mca_ptl_ib_peer_t *) proc->proc_peers[0];
+
+        if(!ompi_list_is_empty(&(peer->pending_send_frags))) {
+
+            /*Check if peer is connected */
+            if(peer->peer_state != MCA_PTL_IB_CONNECTED) {
+                break;
+            }
+
+            /* Go over all the frags */
+            num_frags = 
+                ompi_list_get_size(&(peer->pending_send_frags));
+
+            frag_item = 
+                ompi_list_get_first(&(peer->pending_send_frags));
+
+            for(j = 0; j < num_frags; 
+                    frag_item = ompi_list_get_next(frag_item), j++) {
+
+                sendfrag = (mca_ptl_ib_send_frag_t *) frag_item;
+
+                if(sendfrag->frag_progressed) {
+                    /* We've already posted this one */
+                    continue;
+                } else {
+                    /* We need to post this one */
+                    if(mca_ptl_ib_post_send(peer->peer_module->ib_state,
+                                peer->peer_conn, &sendfrag->ib_buf)
+                            != OMPI_SUCCESS) {
+                        return OMPI_ERROR;
+                    }
+
+                    sendfrag->frag_progressed = 1;
+                }
+            }
+        }
+    }
+
+    /* Poll for completions */
 
     num_modules = mca_ptl_ib_component.ib_num_ptl_modules;
 
-    /* Make progress on outstanding sends for
-     * all IB modules */
     for(i = 0; i < num_modules; i++) {
-
+        
         module = mca_ptl_ib_component.ib_ptl_modules[i];
 
-        if(!ompi_list_is_empty(&((module)->pending_send_frags))) {
-            D_PRINT("Frag to progress");
+        ret = VAPI_poll_cq(mca_ptl_ib_component.ib_ptl_modules[0]->ib_state->nic, 
+                mca_ptl_ib_component.ib_ptl_modules[0]->ib_state->cq_hndl,
+                &comp);
+        if(VAPI_OK == ret) {
+            if(comp.status != VAPI_SUCCESS) {
+                ompi_output(0, "Got error : %s, Vendor code : %d\n",
+                        VAPI_wc_status_sym(comp.status),
+                        comp.vendor_err_syndrome);
+
+            } else {
+                if(VAPI_CQE_SQ_SEND_DATA == comp.opcode) {
+                    D_PRINT("Send completion, id:%d\n",
+                            comp.id);
+                }
+                else if(VAPI_CQE_RQ_SEND_DATA == comp.opcode) {
+                    D_PRINT("Received message completion len = %d, id : %d\n",
+                            comp.byte_len, comp.id);
+                }
+                else {
+                    D_PRINT("Got Unknown completion! Opcode : %d\n", 
+                            comp.opcode);
+                }
+            }
         }
     }
+
+    return OMPI_SUCCESS;
+}
+
+
+
+
 #if 0
-    VAPI_ret_t ret;
-    VAPI_wc_desc_t comp;
 
     mca_ptl_base_header_t *header;
     mca_ptl_ib_recv_buf_t *recv_buf;
@@ -409,6 +490,3 @@ int mca_ptl_ib_component_progress(mca_ptl_tstamp_t tstamp)
         }
     }
 #endif
-
-    return OMPI_SUCCESS;
-}
