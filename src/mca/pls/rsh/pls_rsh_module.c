@@ -41,6 +41,7 @@
 #include "mca/ras/base/ras_base_node.h"
 #include "mca/rmaps/base/rmaps_base_map.h"
 #include "mca/soh/soh.h"
+#include "mca/soh/base/base.h"
 #include "pls_rsh.h"
 
 #define NUM_CONCURRENT 128

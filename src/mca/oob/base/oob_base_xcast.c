@@ -24,7 +24,7 @@
 #include "mca/ns/ns.h"
 #include "mca/gpr/gpr.h"
 #include "mca/errmgr/errmgr.h"
-#include "mca/soh/soh.h"
+#include "mca/soh/base/base.h"
 #include "runtime/runtime.h"
 
 
