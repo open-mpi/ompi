@@ -182,16 +182,18 @@ run_and_check() {
     if test "$?" != 0; then
 	cat <<EOF
 
-It seems that the execution of "$rac_progs" has failed.
-I am gonna abort.  :-(
+-------------------------------------------------------------------------
+It seems that the execution of "$rac_progs" has failed.  See above for
+the specific error message that caused it to abort.
 
-This may be caused by an older version of one of the required
+This *MAY* be caused by an older version of one of the required
 packages.  Please make sure you are using at least the following
 versions:
 
 GNU Autoconf $lam_autoconf_version
 GNU Automake $lam_automake_version
 GNU Libtool  $lam_libtool_version
+-------------------------------------------------------------------------
 
 EOF
 	exit 1
