@@ -25,6 +25,7 @@
 #include <stdio.h>
 
 #include "include/constants.h"
+#include "include/sys/atomic.h"
 #include "class/ompi_object.h"
 
 /*
@@ -43,6 +44,22 @@ ompi_class_t ompi_object_t_class = {
     NULL            /* array of destructors */
 };
 
+/*
+ * Local variables
+ */
+static ompi_lock_t class_lock = { { OMPI_ATOMIC_UNLOCKED } };
+static void** classes = NULL;
+static int num_classes = 0;
+static int max_classes = 0;
+static const int increment = 10;
+
+
+/*
+ * Local functions
+ */
+static void save_class(ompi_class_t *cls);
+static void expand_array(void);
+
 
 /*
  * Lazy initialization of class descriptor.
@@ -53,7 +70,23 @@ void ompi_class_initialize(ompi_class_t *cls)
     int i;
 
     assert(cls);
-    assert(0 == cls->cls_initialized);
+
+    /* Check to see if any other thread got in here and initialized
+       this class before we got a chance to */
+
+    if (1 == cls->cls_initialized) {
+        return;
+    }
+    ompi_atomic_lock(&class_lock);
+
+    /* If another thread initializing this same class came in at
+       roughly the same time, it may have gotten the lock and
+       initialized.  So check again. */
+
+    if (1 == cls->cls_initialized) {
+        ompi_atomic_unlock(&class_lock);
+        return;
+    }
 
     /*
      * First calculate depth of class hierarchy
@@ -68,17 +101,14 @@ void ompi_class_initialize(ompi_class_t *cls)
      * Allocate arrays for hierarchy of constructors and destructors
      */
 
-    cls->cls_construct_array = (void (**)(ompi_object_t*))malloc(cls->cls_depth *
-                                        sizeof(ompi_construct_t));
+    cls->cls_construct_array = 
+        (void (**)(ompi_object_t*))malloc(cls->cls_depth *
+                                          sizeof(ompi_construct_t) * 2);
     if (NULL == cls->cls_construct_array) {
         perror("Out of memory");
+        exit(-1);
     }
-
-    cls->cls_destruct_array = (void (**)(ompi_object_t*))malloc(cls->cls_depth *
-                                       sizeof(ompi_destruct_t));
-    if (NULL == cls->cls_destruct_array) {
-        perror("Out of memory");
-    }
+    cls->cls_destruct_array = cls->cls_construct_array + cls->cls_depth;
     
     c = cls;
     for (i = 0; i < cls->cls_depth; i++) {
@@ -88,4 +118,60 @@ void ompi_class_initialize(ompi_class_t *cls)
     }
 
     cls->cls_initialized = 1;
+    save_class(cls);
+
+    /* All done */
+
+    ompi_atomic_unlock(&class_lock);
 }
+
+
+/*
+ * Note that this is finalize for *all* classes.
+ */
+int ompi_class_finalize(void)
+{
+    int i;
+
+    if (NULL != classes) {
+        for (i = 0; i < num_classes; ++i) {
+            if (NULL != classes[i]) {
+                free(classes[i]);
+            }
+        }
+        free(classes);
+        classes = NULL;
+        num_classes = 0;
+        max_classes = 0;
+    }
+
+    return OMPI_SUCCESS;
+}
+
+
+static void save_class(ompi_class_t *cls)
+{
+    if (num_classes >= max_classes) {
+        expand_array();
+    }
+
+    classes[num_classes] = cls->cls_construct_array;
+    ++num_classes;
+}
+
+
+static void expand_array(void)
+{
+    int i;
+
+    max_classes += increment;
+    classes = realloc(classes, sizeof(void *) * max_classes);
+    if (NULL == classes) {
+        perror("class malloc failed");
+        exit(-1);
+    }
+    for (i = num_classes; i < max_classes; ++i) {
+        classes[i] = NULL;
+    }
+}
+

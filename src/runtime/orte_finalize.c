@@ -68,6 +68,9 @@ int orte_finalize(void)
     /* finalize the output system */
     ompi_output_finalize();
     
+    /* finalize the class/object system */
+    ompi_class_finalize();
+
     /* finalize the memory allocator */
     ompi_malloc_finalize();
 
