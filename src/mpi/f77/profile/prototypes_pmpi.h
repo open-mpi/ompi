@@ -143,7 +143,7 @@ void pmpi_file_iread_f(MPI_Fint *fh, char *buf, MPI_Fint *count, MPI_Fint *datat
 void pmpi_file_iwrite_f(MPI_Fint *fh, char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *request, MPI_Fint *ierr);
 void pmpi_file_seek_f(MPI_Fint *fh, MPI_Offset *offset, MPI_Fint *whence, MPI_Fint *ierr);
 void pmpi_file_get_position_f(MPI_Fint *fh, MPI_Offset *offset, MPI_Fint *ierr);
-void pmpi_file_get_byte_offset_f(MPI_Fint *fh, MPI_Offset *offset, MPI_Fint *disp, MPI_Fint *ierr);
+void pmpi_file_get_byte_offset_f(MPI_Fint *fh, MPI_Offset *offset, MPI_Offset *disp, MPI_Fint *ierr);
 void pmpi_file_read_shared_f(MPI_Fint *fh, char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *status, MPI_Fint *ierr);
 void pmpi_file_write_shared_f(MPI_Fint *fh, char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *status, MPI_Fint *ierr);
 void pmpi_file_iread_shared_f(MPI_Fint *fh, char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *request, MPI_Fint *ierr);
@@ -430,7 +430,7 @@ void pmpi_file_iread(MPI_Fint *fh, char *buf, MPI_Fint *count, MPI_Fint *datatyp
 void pmpi_file_iwrite(MPI_Fint *fh, char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *request, MPI_Fint *ierr);
 void pmpi_file_seek(MPI_Fint *fh, MPI_Offset *offset, MPI_Fint *whence, MPI_Fint *ierr);
 void pmpi_file_get_position(MPI_Fint *fh, MPI_Offset *offset, MPI_Fint *ierr);
-void pmpi_file_get_byte_offset(MPI_Fint *fh, MPI_Offset *offset, MPI_Fint *disp, MPI_Fint *ierr);
+void pmpi_file_get_byte_offset(MPI_Fint *fh, MPI_Offset *offset, MPI_Offset *disp, MPI_Fint *ierr);
 void pmpi_file_read_shared(MPI_Fint *fh, char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *status, MPI_Fint *ierr);
 void pmpi_file_write_shared(MPI_Fint *fh, char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *status, MPI_Fint *ierr);
 void pmpi_file_iread_shared(MPI_Fint *fh, char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *request, MPI_Fint *ierr);
@@ -717,7 +717,7 @@ void pmpi_file_iread_(MPI_Fint *fh, char *buf, MPI_Fint *count, MPI_Fint *dataty
 void pmpi_file_iwrite_(MPI_Fint *fh, char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *request, MPI_Fint *ierr);
 void pmpi_file_seek_(MPI_Fint *fh, MPI_Offset *offset, MPI_Fint *whence, MPI_Fint *ierr);
 void pmpi_file_get_position_(MPI_Fint *fh, MPI_Offset *offset, MPI_Fint *ierr);
-void pmpi_file_get_byte_offset_(MPI_Fint *fh, MPI_Offset *offset, MPI_Fint *disp, MPI_Fint *ierr);
+void pmpi_file_get_byte_offset_(MPI_Fint *fh, MPI_Offset *offset, MPI_Offset *disp, MPI_Fint *ierr);
 void pmpi_file_read_shared_(MPI_Fint *fh, char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *status, MPI_Fint *ierr);
 void pmpi_file_write_shared_(MPI_Fint *fh, char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *status, MPI_Fint *ierr);
 void pmpi_file_iread_shared_(MPI_Fint *fh, char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *request, MPI_Fint *ierr);
@@ -1004,7 +1004,7 @@ void pmpi_file_iread__(MPI_Fint *fh, char *buf, MPI_Fint *count, MPI_Fint *datat
 void pmpi_file_iwrite__(MPI_Fint *fh, char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *request, MPI_Fint *ierr);
 void pmpi_file_seek__(MPI_Fint *fh, MPI_Offset *offset, MPI_Fint *whence, MPI_Fint *ierr);
 void pmpi_file_get_position__(MPI_Fint *fh, MPI_Offset *offset, MPI_Fint *ierr);
-void pmpi_file_get_byte_offset__(MPI_Fint *fh, MPI_Offset *offset, MPI_Fint *disp, MPI_Fint *ierr);
+void pmpi_file_get_byte_offset__(MPI_Fint *fh, MPI_Offset *offset, MPI_Offset *disp, MPI_Fint *ierr);
 void pmpi_file_read_shared__(MPI_Fint *fh, char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *status, MPI_Fint *ierr);
 void pmpi_file_write_shared__(MPI_Fint *fh, char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *status, MPI_Fint *ierr);
 void pmpi_file_iread_shared__(MPI_Fint *fh, char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *request, MPI_Fint *ierr);
@@ -1291,7 +1291,7 @@ void PMPI_FILE_IREAD(MPI_Fint *fh, char *buf, MPI_Fint *count, MPI_Fint *datatyp
 void PMPI_FILE_IWRITE(MPI_Fint *fh, char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *request, MPI_Fint *ierr);
 void PMPI_FILE_SEEK(MPI_Fint *fh, MPI_Offset *offset, MPI_Fint *whence, MPI_Fint *ierr);
 void PMPI_FILE_GET_POSITION(MPI_Fint *fh, MPI_Offset *offset, MPI_Fint *ierr);
-void PMPI_FILE_GET_BYTE_OFFSET(MPI_Fint *fh, MPI_Offset *offset, MPI_Fint *disp, MPI_Fint *ierr);
+void PMPI_FILE_GET_BYTE_OFFSET(MPI_Fint *fh, MPI_Offset *offset, MPI_Offset *disp, MPI_Fint *ierr);
 void PMPI_FILE_READ_SHARED(MPI_Fint *fh, char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *status, MPI_Fint *ierr);
 void PMPI_FILE_WRITE_SHARED(MPI_Fint *fh, char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *status, MPI_Fint *ierr);
 void PMPI_FILE_IREAD_SHARED(MPI_Fint *fh, char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *request, MPI_Fint *ierr);
