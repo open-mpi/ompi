@@ -32,6 +32,8 @@ else
 	LAM_VERSION="${LAM_VERSION}b$LAM_BETA_VERSION"
     fi
 
+    if test "$LAM_SVN_VERSION" = "1"; then
+        LAM_VERSION="${LAM_VERSION}svn"
     if test "`expr $LAM_SVN_VERSION \> 0`" = "1"; then
         if test -d .svn; then
             ver="r`svn info . | grep Revision | cut -d\  -f 2`"
