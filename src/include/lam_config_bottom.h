@@ -11,6 +11,7 @@
  */
 
 /* If we're in C, bring in the bool type and true/false constants. */
+#include <limits.h>
 
 #ifndef __cplusplus
 #ifdef HAVE_STDBOOL_H
@@ -18,4 +19,15 @@
 #else
 typedef enum { false, true } bool;
 #endif
+#endif
+
+/*
+ * Maximum size of a filename path.
+ */
+#if defined(PATH_MAX)
+#define LAM_PATH_MAX	(PATH_MAX + 1)
+#elif defined(_POSIX_PATH_MAX)
+#define LAM_PATH_MAX	(_POSIX_PATH_MAX + 1)
+#else
+#define LAM_PATH_MAX	256
 #endif
