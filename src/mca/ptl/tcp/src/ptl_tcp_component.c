@@ -100,6 +100,7 @@ static inline int mca_ptl_tcp_param_register_int(
 int mca_ptl_tcp_component_open(void)
 {
     /* initialize state */
+    mca_ptl_tcp_component.tcp_listen_sd = -1;
     mca_ptl_tcp_component.tcp_ptl_modules = NULL;
     mca_ptl_tcp_component.tcp_num_ptl_modules = 0;
 
@@ -175,6 +176,9 @@ int mca_ptl_tcp_component_close(void)
     OBJ_DESTRUCT(&mca_ptl_tcp_component.tcp_send_frags);
     OBJ_DESTRUCT(&mca_ptl_tcp_component.tcp_recv_frags);
     OBJ_DESTRUCT(&mca_ptl_tcp_component.tcp_lock);
+
+    if (mca_ptl_tcp_component.tcp_listen_sd >= 0) 
+        close(mca_ptl_tcp_component.tcp_listen_sd);
     return ompi_event_fini();
 }
 

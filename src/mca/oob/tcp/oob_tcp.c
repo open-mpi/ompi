@@ -80,6 +80,9 @@ int mca_oob_tcp_open(void)
         mca_oob_tcp_param_register_int("peer_limit", -1);
     mca_oob_tcp_component.tcp_peer_retries =
         mca_oob_tcp_param_register_int("peer_retries", 60);
+
+    /* initialize state */
+    mca_oob_tcp_component.tcp_listen_sd = -1;
     return OMPI_SUCCESS;
 }
 
@@ -90,6 +93,10 @@ int mca_oob_tcp_open(void)
 
 int mca_oob_tcp_close(void)
 {
+    if (mca_oob_tcp_component.tcp_listen_sd >= 0) {
+        close(mca_oob_tcp_component.tcp_listen_sd);
+    }
+
     OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_peer_list);
     OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_peer_tree);
     OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_peer_free);
@@ -272,7 +279,7 @@ mca_oob_t* mca_oob_tcp_init(bool *allow_multi_user_threads, bool *have_hidden_th
         sizeof(mca_oob_tcp_msg_t),
         OBJ_CLASS(mca_oob_tcp_msg_t),
         8,  /* initial number */
-        -1, /* maximum number */
+       -1,  /* maximum number */
         8,  /* increment to grow by */
         NULL); /* use default allocator */
 
@@ -300,8 +307,7 @@ mca_oob_t* mca_oob_tcp_init(bool *allow_multi_user_threads, bool *have_hidden_th
  */
 int mca_oob_tcp_finalize(void)
 {
-    /* probably want to try to finish all sends and recieves here
-     * before we return */
+    /* TODO: need to cleanup all peers - check for pending send/recvs. etc. */
     return OMPI_SUCCESS;
 }
 
