@@ -109,7 +109,7 @@ extern int mca_pml_teg_add_ptls(
 extern int mca_pml_teg_isend_init(
     void *buf,
     size_t size,
-    struct lam_datatype_t *datatype,
+    lam_datatype_t *datatype,
     int dst,
     int tag,
     mca_pml_base_send_mode_t mode,
@@ -120,7 +120,7 @@ extern int mca_pml_teg_isend_init(
 extern int mca_pml_teg_isend(
     void *buf,
     size_t size,
-    struct lam_datatype_t *datatype,
+    lam_datatype_t *datatype,
     int dst,
     int tag,
     mca_pml_base_send_mode_t mode,
@@ -131,7 +131,7 @@ extern int mca_pml_teg_isend(
 extern int mca_pml_teg_send(
     void *buf,
     size_t size,
-    struct lam_datatype_t *datatype,
+    lam_datatype_t *datatype,
     int dst,
     int tag,
     mca_pml_base_send_mode_t mode,
@@ -141,7 +141,7 @@ extern int mca_pml_teg_send(
 extern int mca_pml_teg_irecv_init(
     void *buf,
     size_t size,
-    struct lam_datatype_t *datatype,
+    lam_datatype_t *datatype,
     int src,
     int tag,
     struct lam_communicator_t* comm,
@@ -151,7 +151,7 @@ extern int mca_pml_teg_irecv_init(
 extern int mca_pml_teg_irecv(
     void *buf,
     size_t size,
-    struct lam_datatype_t *datatype,
+    lam_datatype_t *datatype,
     int src,
     int tag,
     struct lam_communicator_t* comm,
@@ -161,7 +161,7 @@ extern int mca_pml_teg_irecv(
 extern int mca_pml_teg_recv(
     void *buf,
     size_t size,
-    struct lam_datatype_t *datatype,
+    lam_datatype_t *datatype,
     int src,
     int tag,
     struct lam_communicator_t* comm,
