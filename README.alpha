@@ -1,0 +1,381 @@
+Copyright (c) 2004-2005 The Trustees of Indiana University.
+                        All rights reserved.
+Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
+                        All rights reserved.
+Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+                        University of Stuttgart.  All rights reserved.
+Copyright (c) 2004-2005 The Regents of the University of California.
+                        All rights reserved.
+$COPYRIGHT$
+
+Additional copyrights may follow
+
+$HEADER$
+
+Greetings!
+
+The Open MPI development team is pleased to announce an alpha-quality
+release of the current state of our software to a limited set of
+"friends" -- those who are knowledgeable about MPI and can provide
+intelligent feedback to us before a public release.  Our intent with
+this release is to get the Open MPI software onto other people's
+machines and see what creative ways you can come up with to break it,
+and to send us your comments and suggestions.
+
+Let me stress the following points:
+
+- This is an *alpha* quality release.  We're quite aware that there
+  are several things still broken (but report them anyway!).
+
+- Most notably, if you run basic performance testing, you'll notice
+  that, for example, the GM numbers are still a microsecond or two too
+  high (we've been concentrating on functionality for the last month
+  -- performance tuning is coming shortly)
+
+- Since the competition in the HPC community is rather fierce, please
+  do not redistribute this software without our permission.  Also,
+  please do not publish any results (good or bad) because, as I
+  mentioned above, this is pre-release software and we still have
+  performance tuning to do.
+
+===========================================================================
+
+You have probably downloaded this tarball from
+http://www.open-mpi.org/nightly/.  This directory is updated at least
+once a day around 3am US/Indiana time (assuming that there is new code
+to release).  It may be updated more frequently if a critical bug fix
+is reported and fixed -- we can make a new tarball and put it in the
+/nightly/ directory.
+
+The best way to report bugs, send comments, or ask questions is to
+sign up on the devel@open-mpi.org mailing list:
+
+     http://www.open-mpi.org/mailman/listinfo.cgi/devel
+
+Thanks for your time.
+
+===========================================================================
+
+This tarball is an alpha release of Open MPI.  It is not yet complete,
+mainly in the following areas:
+
+- Support for Infiniband (both verbs and OpenIB) is missing
+- Support for Quadrics is missing
+- Support for Myrinet needs performance tuning
+- Support for MX needs performance tuning
+- Support for TCP needs performance tuning
+- Support for shared memory is not fully debugged
+- Striping MPI messages across multiple networks is supported (and
+  happens automatically when multiple networks are available), but
+  needs performance tuning
+
+- The only run-time systems supported are:
+  - rsh / ssh
+  - BProc of the flavor that is used at Los Alamos National Labs (in
+    particular, it must be used with the BJS scheduler)
+
+- Complete user and system administrator documentation is missing
+  (this file comprises the majority of the current user documentation)
+
+- The only systems that have been tested on are:
+  - Linux, 32 bit, with gcc
+- Other systems have been lightly (but not fully tested):
+  - Linux, 64 bit, with gcc
+  - OS X (10.3), 32 bit, with gcc  
+
+- Missing MPI functionality:
+  - The Fortran 90 MPI API is disabled (it is not complete).
+  - MPI-2 dynamic functionality is temporarily broken.
+  - MPI-2 one-sided functionality will not be included in the first
+    few releases of Open MPI
+
+- After running MPI applications, the directory
+  /tmp/openmpi-sessions-<username>@<hostname>* will exist (but will
+  likely be empty).  It is safe to remove.
+
+===========================================================================
+
+Building Open MPI
+-----------------
+
+Open MPI uses a traditional configure script paired with "make" to
+build.  Typical installs can be of the pattern:
+
+---------------------------------------------------------------------------
+shell$ ./configure [...options...]
+shell$ make all install
+---------------------------------------------------------------------------
+
+There are many available configure options; a summary of the more
+important ones follows:
+
+--prefix=<directory>
+  Install Open MPI into the base directory named <directory>.  Hence,
+  Open MPI will place its executables in <directory>/bin, its header
+  files in <directory>/include, its libraries in <directory>/lib, etc.
+
+--with-ptl-gm=<directory>
+  Specify the directory where the GM libraries and header files are
+  located.  This enables GM support in Open MPI.
+
+--with-mpi-param_check(=value)
+  "value" can be one of: always, never, runtime.  If no value is
+  specified, or this option is not used, "always" is the default.
+  Using --without-mpi-param-check is equivalent to "never".
+  - always: the parameters of MPI functions are always checked for
+    errors 
+  - never: the parameters of MPI functions are never checked for
+    errors 
+  - runtime: whether the parameters of MPI functions are checked
+    depends on the value of the MCA parameter mpi_param_check
+    (default: yes).
+
+--with-threads=value
+  Since thread support (both support for MPI_THREAD_MULTIPLE and
+  asynchronous progress) is only partially tested, it is disabled by
+  default.  To enable threading, use "--with-threads=posix".  This is
+  most useful when combined with --enable-mpi-threads and/or
+  --enable-progress-threads.
+
+--enable-mpi-threads
+  Allows the MPI thread level MPI_THREAD_MULTIPLE.  See
+  --with-threads; this is currently disabled by default.
+
+--enable-progress-threads
+  Allows asynchronous progress in some transports.  See
+  --with-threads; this is currently disabled by default.
+
+--disable-shared
+  By default, libmpi is built as a shared library, and all components
+  are built as dynamic shared objects (DSOs).  This switch disables
+  this default; it is really only useful when used with
+  --enable-static.
+
+--enable-static
+  Build libmpi as a static library, and statically link in all
+  components.
+
+There are other options available -- see "./configure --help".
+
+Open MPI supports all the "make" targets that are provided by GNU
+Automake, such as:
+
+all       - build the entire package
+install   - install the package
+uninstall - remove all traces of the package from the $prefix
+clean     - clean out the build tree
+
+Once Open MPI has been built and installed, it is safe to run "make
+clean" and/or remove the entire build tree.
+
+VPATH builds are supported.
+
+Generally speaking, the only thing that users need to do to use Open
+MPI is ensure that <prefix>/bin is in their PATH.  Users may need to
+ensure that this directory is set in their PATH in their shell setup
+files (e.g., .bashrc, .cshrc) so that rsh/ssh-based logins will be
+able to find the Open MPI executables.
+
+Setting LD_LIBRARY_PATH is typically not necessary, but in some cases,
+if libmpi.so cannot be found when MPI applications are run,
+LD_LIBRARY_PATH can be set to <prefix>/lib.
+
+===========================================================================
+
+Checking Your Open MPI Installation
+-----------------------------------
+
+The "ompi_info" command can be used to check the status of your Open
+MPI installation (located in <prefix>/bin/ompi_info).  Running it with
+no arguments provides a summary of information about your Open MPI
+installation.   
+
+Note that the ompi_info command is extremely helpful in determining
+which components are installed as well as listing all the run-time
+settable parameters that are available in each component (as well as
+their default values).
+
+The following options may be helpful:
+
+--all       Show a *lot* of information about your Open MPI
+            installation. 
+--parsable  Display all the information in an easily
+            grep/cut/awk/sed-able format.
+--param <framework> <component>
+            A <framework> of "all" and a <component> of "all" will
+            show all parameters to all components.  Otherwise, the
+            parameters of all the components in a specific framework,
+            or just the parameters of a specific component can be
+            displayed by using an appropriate <framework> and/or
+            <component> name.
+
+Changing the values of these parameters is explained in the "The
+Modular Component Architecture (MCA)" section, below.
+
+===========================================================================
+
+Compiling Open MPI Applications
+-------------------------------
+
+Open MPI provides "wrapper" compilers that should be used for
+compiling MPI applications:
+
+mpicc
+mpiCC (or mpiC++ if your filesystem is case-insensitive)
+mpif77
+mpif90
+
+For example:
+
+shell$ mpicc hello_world_mpi.c -o hello_world_mpi -g
+shell$
+
+All the wrapper compilers do is add a variety of compiler and linker
+flags to the command line and then invoke a back-end compiler.  The
+end result is an MPI executable that is properly linked to all the
+relevant libraries.
+
+===========================================================================
+
+Running Open MPI Applications
+-----------------------------
+
+Open MPI supports both mpirun and mpiexec (they are actually the
+same).  For example:
+
+shell$ mpirun -np 2 hello_world_mpi
+
+or
+
+shell$ mpiexec -np 1 hello_world_mpi : -np 1 hello_world_mpi
+
+are equivalent.  Many of mpiexec's switches (such as -host and -arch)
+are not yet functional, although they will not error if you try to use
+them.  
+
+Since rsh is probably the launcher that you will be using (if you are
+outside of Los Alamos National Laboratory), you can also specify a
+-hostfile or -machinefile parameter, indicating an standard
+mpirun-style hostfile (one hostname per line):
+
+shell$ mpirun -hostfile my_hostfile -np 2 hello_world_mpi
+
+If you intend to run more than one process on a node, the hostfile can
+use the "cpu" attribute.  If "cpu" is not specified, a count of 1 is
+assumed.  For example, using the following hostfile:
+
+---------------------------------------------------------------------------
+node1.example.com
+node2.example.com
+node3.example.com cpu=2
+node4.example.com cpu=4
+---------------------------------------------------------------------------
+
+shell$ mpirun -hostfile my_hostfile -np 8 hello_world_mpi
+
+will launch MPI_COMM_WORLD rank 0 on node1, rank 1 on node2, ranks 2
+and 3 on node3, and ranks 4 through 7 on node4.
+
+Note that the values of component parameters can be changed on the
+mpirun / mpiexec command line.  This is explained in the section
+below, "The Modular Component Architecture (MCA)".
+
+===========================================================================
+
+The Modular Component Architecture (MCA)
+
+The MCA is the backbone of Open MPI -- most services and functionality
+are implemented through MCA components.  Here is a list of all the
+component frameworks in Open MPI:
+
+---------------------------------------------------------------------------
+MPI component frameworks:
+-------------------------
+
+coll    - MPI collective algorithms
+io      - MPI-2 I/O
+pml     - MPI point-to-point management layer
+ptl     - MPI point-to-point transport layer
+topo    - MPI topology routines
+
+Back-end run-time environment component frameworks:
+---------------------------------------------------
+
+errmgr  - RTE error manager
+gpr     - General purpose registry
+iof     - I/O forwarding
+ns      - Name server
+oob     - Out of band messaging
+pls     - Process launch system
+ras     - Resource allocation system
+rds     - Resource discovery system
+rmaps   - Resource mapping system
+rmgr    - Resource manager
+rml     - RTE message layer
+soh     - State of health monitor
+
+Miscellaneous frameworks:
+-------------------------
+
+allocator - Memory allocator
+mpool     - Memory pooling
+---------------------------------------------------------------------------
+
+Each framework typically has one or more components that are used at
+run-time.  For example, the ptl framework is used by MPI to send bytes
+across underlying networks.  The tcp ptl, for example, sends messages
+across TCP-based networks; the gm ptl sends messages across GM
+Myrinet-based networks.
+
+Each component typically has some tunable parameters that can be
+changed at run-time.  Use the ompi_info command to check a component
+to see what its tunable parameters are.  For example:
+
+shell$ ompi_info --param ptl tcp
+
+shows all the parameters (and default values) for the tcp ptl
+component.
+
+These values can be overridden at run-time in several ways.  At
+run-time, the following locations are examined (in order) for new
+values of parameters:
+
+1. <prefix>/etc/openmpi-mca-params.conf
+
+   A simple text file with lots of comments explaining its format.
+   This file is intended to set any system-wide default MCA parameter
+   values -- it will apply, by default, to all users who use this Open
+   MPI installation.
+
+2. $HOME/.openmpi/mca-params.conf
+
+   If this file exists, it should be in the same format as
+   <prefix>/etc/openmpi-pmca-params.conf.  It is intended to provide
+   per-user default parameter values.
+
+3. environment variables of the form OMPI_MCA_<name> set equal to a <value>
+
+   Where <name> is the name of the parameter.  For example, set the
+   variable named OMPI_MCA_ptl_tcp_frag_size to the value 65536.
+
+4. the mpirun command line: --mca <name> <value>
+ 
+   Where <name> is the name of the parameter.  For example:
+   mpirun --mca ptl_tcp_frag_size 65536 -np 2 hello_world_mpi
+
+These locations are checked in order; for example, a parameter value
+passed on the mpirun command line will override an environment
+variable, and an environment variable will override the system-wide
+defaults.  
+
+===========================================================================
+
+Got more questions?
+-------------------
+
+The best way to report bugs, send comments, or ask questions is to
+sign up on the devel@open-mpi.org mailing list:
+
+     http://www.open-mpi.org/mailman/listinfo.cgi/devel
+
+Thanks for your time.
