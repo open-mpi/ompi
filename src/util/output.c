@@ -386,7 +386,7 @@ static int do_open(int output_id, ompi_output_stream_t *lds)
     }
 #else
     if (NULL == (info[i].ldi_syslog_ident = 
-                RegisterEventSource(NULL, TEXT("To be determined: OMPI")))) {
+                 RegisterEventSource(NULL, TEXT("Open MPI: ")))) {
         /* handle the error */
         return OMPI_ERROR;
     }
@@ -412,11 +412,9 @@ static int do_open(int output_id, ompi_output_stream_t *lds)
       strdup(lds->lds_file_suffix);
   info[i].ldi_file_want_append = lds->lds_want_file_append;
   info[i].ldi_file_num_lines_lost = 0;
-  if (lds->lds_want_file) {
-    if (OMPI_SUCCESS != (ret = open_file(i))) {
-      return ret;
-    }
-  }
+  
+  /* Don't open a file in the session directory now -- do that lazily
+     so that if there's no output, we don't have an empty file */
 
   return i;
 }
@@ -451,7 +449,6 @@ static int open_file(int i)
         /* Actually open the file */
 
         info[i].ldi_fd = open(filename, flags, 0644);
-        printf("output: opening file: %s\n", filename);
         if (-1 == info[i].ldi_fd) {
             info[i].ldi_used = false;
             return OMPI_ERR_IN_ERRNO;
@@ -610,7 +607,6 @@ static void output(int output_id, char *format, va_list arglist)
           }
       }
       if (ldi->ldi_fd != -1) {
-          printf("proc session dir: %s\n", ompi_process_info.proc_session_dir);
         write(ldi->ldi_fd, temp_str, total_len);
       }
     }
