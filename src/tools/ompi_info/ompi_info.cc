@@ -117,6 +117,7 @@ int main(int argc, char *argv[])
   mca_base_cmd_line_process_args(cmd_line);
 
   ompi_info::mca_types.push_back("base");
+  ompi_info::mca_types.push_back("mpi");
 
   ompi_info::mca_types.push_back("allocator");
   ompi_info::mca_types.push_back("coll");
