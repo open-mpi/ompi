@@ -24,7 +24,7 @@ int MPI_Win_set_attr(MPI_Win win, int win_keyval, void *attribute_val) {
 
     if (MPI_PARAM_CHECK) {
 	if (MPI_WIN_NULL == win) {
-	    return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_WIN, 
+	    return LAM_ERRHANDLER_INVOKE(win, MPI_ERR_WIN, 
 					 FUNC_NAME);
 	}
     }
