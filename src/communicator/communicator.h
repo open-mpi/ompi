@@ -26,6 +26,7 @@ extern ompi_class_t ompi_communicator_t_class;
 #define OMPI_COMM_NAMEISSET 0x00000008
 #define OMPI_COMM_ISFREED   0x00000010
 #define OMPI_COMM_INTRINSIC 0x00000020
+#define OMPI_COMM_HIDDEN    0x00000040
 
 /* some utility #defines */
 #define OMPI_COMM_IS_INTER(comm) ((comm)->c_flags & OMPI_COMM_INTER)
@@ -33,6 +34,9 @@ extern ompi_class_t ompi_communicator_t_class;
 #define OMPI_COMM_IS_CART(comm) ((comm)->c_flags & OMPI_COMM_CART)
 #define OMPI_COMM_IS_GRAPH(comm) ((comm)->c_flags & OMPI_COMM_GRAPH)
 #define OMPI_COMM_IS_INTRINSIC(comm) ((comm)->c_flags & OMPI_COMM_INTRINSIC)
+#define OMPI_COMM_IS_HIDDEN(comm) ((comm)->c_flags & OMPI_COMM_HIDDEN)
+
+#define OMPI_COMM_SET_HIDDEN(comm) ((comm)->c_flags |= OMPI_COMM_HIDDEN)
 
 /** 
  * Modes reqquired for accquiring the new comm-id.
@@ -41,10 +45,10 @@ extern ompi_class_t ompi_communicator_t_class;
  * whether the new communicator will be an inter/intra 
  *comm
  */
-#define OMPI_COMM_CID_INTRA 0x00000020
-#define OMPI_COMM_CID_INTER 0x00000040
+#define OMPI_COMM_CID_INTRA        0x00000020
+#define OMPI_COMM_CID_INTER        0x00000040
 #define OMPI_COMM_CID_INTRA_BRIDGE 0x00000080
-#define OMPI_COMM_CID_INTRA_OOB 0x00000100
+#define OMPI_COMM_CID_INTRA_OOB    0x00000100
 
 extern ompi_pointer_array_t ompi_mpi_communicators; 
 
