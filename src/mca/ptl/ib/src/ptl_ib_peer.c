@@ -157,6 +157,54 @@ static int mca_ptl_ib_peer_send_conn_info(mca_ptl_base_peer_t* peer)
 }
 
 /*
+ * Send connect ACK to remote peer
+ *
+ */
+
+static void mca_ptl_ib_peer_send_connect_ack(mca_ptl_base_peer_t* peer)
+{
+    int rc;
+    ompi_process_name_t *name;
+    char* sendbuf;
+    int zero = 0;
+
+    name = &peer->peer_proc->proc_guid;
+
+    sendbuf = (char*) malloc(sizeof(char)*50);
+
+    if(NULL == sendbuf) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    /* Zero out the send buffer */
+    memset(sendbuf, 0, 50);
+
+    /* Copy the info in the send buffer */
+
+    /* Format:
+     *
+     * <QP> <LID>
+     * Ofcourse without the <'s and >'s moron!
+     * Size of each field is limited to maximum
+     * 8 characters. This should be enough for all
+     * platforms, and is internal information
+     */
+    sprintf(sendbuf, "%08d %08d", zero, zero);
+
+    /* Send it off */
+    rc = mca_ptl_ib_post_oob_send_nb(name, 
+            (void*)sendbuf, 50);
+
+    if(rc != OMPI_SUCCESS) {
+        return rc;
+    }
+
+    D_PRINT("Sent buffer : %s", sendbuf);
+
+    return OMPI_SUCCESS;
+}
+
+/*
  * Set remote connection info
  *
  * XXX: Currently size is unutilized, this shall change
@@ -259,9 +307,6 @@ static int mca_ptl_ib_peer_reply_start_connect(mca_ptl_ib_peer_t *peer,
         return rc;
     }
 
-    /* Update status of peer to as connected */
-    peer->peer_state = MCA_PTL_IB_CONNECTED;
-
     return rc;
 }
 
@@ -327,7 +372,11 @@ static void mca_ptl_ib_peer_connect_recv_callback(int status,
                      * status of this connection to CONNECTING,
                      * and then reply with our QP information */
 
+#if 0
                     D_PRINT("Start Connect %d",
+                            ib_proc->proc_guid.vpid);
+#endif
+                    ompi_output(0, "Start Connect %d",
                             ib_proc->proc_guid.vpid);
 
                     if(mca_ptl_ib_peer_reply_start_connect(ib_peer,
@@ -337,7 +386,7 @@ static void mca_ptl_ib_peer_connect_recv_callback(int status,
                     }
 
                     /* Setup state as connected */
-                    mca_ptl_ib_peer_connected(ib_peer);
+                    ib_peer->peer_state = MCA_PTL_IB_CONNECT_ACK;
 
                     break;
 
@@ -347,7 +396,11 @@ static void mca_ptl_ib_peer_connect_recv_callback(int status,
                      * with this peer, and the peer is replying.
                      * No need to send him any more stuff */
 
+#if 0
                     D_PRINT("Connect reply %d", 
+                            ib_proc->proc_guid.vpid);
+#endif
+                    ompi_output(0, "Connect reply %d", 
                             ib_proc->proc_guid.vpid);
 
                     mca_ptl_ib_peer_set_remote_info(ib_peer, 
@@ -362,11 +415,21 @@ static void mca_ptl_ib_peer_connect_recv_callback(int status,
                     /* Setup state as connected */
                     mca_ptl_ib_peer_connected(ib_peer);
 
+                    /* Send him an ack */
+                    mca_ptl_ib_peer_send_connect_ack(ib_peer);
+
                     break;
+
+                case MCA_PTL_IB_CONNECT_ACK:
+
+                    mca_ptl_ib_peer_connected(ib_peer);
+
+                    break;
+
                 case MCA_PTL_IB_CONNECTED :
                     break;
                 default :
-                    D_PRINT("Connected -> Connecting not possible.\n");
+                    ompi_output(0, "Connected -> Connecting not possible.\n");
             }
 
             break;
@@ -407,11 +470,24 @@ int mca_ptl_ib_peer_send(mca_ptl_base_peer_t* peer,
     switch(peer->peer_state) {
         case MCA_PTL_IB_CONNECTING:
 
+            D_PRINT("Queing because state is connecting");
+
             ompi_list_append(&peer->pending_send_frags,
                     (ompi_list_item_t *)frag);
 
             rc = OMPI_SUCCESS;
             break;
+
+        case MCA_PTL_IB_CONNECT_ACK:
+
+            D_PRINT("Queuing because waiting for ack");
+
+            ompi_list_append(&peer->pending_send_frags,
+                    (ompi_list_item_t *)frag);
+
+            rc = OMPI_SUCCESS;
+            break;
+
         case MCA_PTL_IB_CLOSED:
 
             D_PRINT("Connection to peer closed ... connecting ...");
@@ -420,6 +496,7 @@ int mca_ptl_ib_peer_send(mca_ptl_base_peer_t* peer,
                     (ompi_list_item_t *)frag);
 
             rc = mca_ptl_ib_peer_start_connect(peer);
+
             break;
         case MCA_PTL_IB_FAILED:
 
@@ -438,6 +515,7 @@ int mca_ptl_ib_peer_send(mca_ptl_base_peer_t* peer,
         default:
             rc = OMPI_ERR_UNREACH;
     }
+
     OMPI_THREAD_UNLOCK(&peer->peer_send_lock);
 
     return rc;

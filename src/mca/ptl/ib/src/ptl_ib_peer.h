@@ -17,9 +17,11 @@ OBJ_CLASS_DECLARATION(mca_ptl_ib_peer_t);
 
 typedef enum {
     /* Defines the state in which this PTL instance
-     * has started the process of connection, and
-     * is waiting for acknowledgement from peer */
+     * has started the process of connection */
     MCA_PTL_IB_CONNECTING,
+
+    /* Waiting for ack from peer */
+    MCA_PTL_IB_CONNECT_ACK,
 
     /* Connected ... both sender & receiver have
      * buffers associated with this connection */
