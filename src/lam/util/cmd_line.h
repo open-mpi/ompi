@@ -10,7 +10,7 @@
 #include "lam_config.h"
 #include "lam/lfc/list.h"
 #include "lam/threads/mutex.h"
-
+#include "lam/constants.h"
 
 struct lam_cmd_line_t {
   /* Keep this instance safe from other threads */
