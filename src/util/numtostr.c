@@ -6,6 +6,7 @@
 #include "util/numtostr.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 
 
 char*
