@@ -491,8 +491,8 @@ mca_gpr_replica_trigger_list_t *gpr_replica_construct_trigger(ompi_registry_sync
 	    tok2++;
 	}
 	trig->num_keys = num_tokens;
+	*tok2 = NULL;
     }
-    *tok2 = NULL;
 
     /* traverse segment entries and initialize trigger count */
     for (reg = (mca_gpr_replica_core_t*)ompi_list_get_first(&seg->registry_entries);
