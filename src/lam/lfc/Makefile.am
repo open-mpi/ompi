@@ -12,6 +12,7 @@ noinst_LTLIBRARIES = liblfc.la
 headers = \
 	array.h \
 	hash_table.h \
+    lam_pointer_array.h \
 	list.h \
 	object.h
 
@@ -19,6 +20,7 @@ liblfc_la_SOURCES = \
 	$(headers) \
 	array.c \
 	hash_table.c \
+    lam_pointer_array.c \
 	list.c \
 	object.c
 
