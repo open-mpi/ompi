@@ -168,7 +168,6 @@ void mca_base_component_repository_finalize(void)
 {
   ompi_list_item_t *item;
   repository_item_t *ri;
-  bool changed;
 
   if (initialized) {
 
