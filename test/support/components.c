@@ -16,6 +16,8 @@
 
 #include "ompi_config.h"
 
+#include <string.h>
+
 #include "include/constants.h"
 #include "libltdl/ltdl.h"
 #include "components.h"
@@ -82,11 +84,22 @@ int test_component_find_symbol(const char *name,
                                test_component_handle_t *handle,
                                test_component_sym_t *sym)
 {
+    /* Use a union to avoid pesky compilers that complain [rightfully,
+       unfortunately] about converting (void*) to a function pointer
+       -- need to wait until the ltdl library has a lt_dlsymfunc()
+       function for a real fix... */
+
+    union {
+        void *vvalue;
+        void (*fvalue)(void);
+    } value;
+
     if (NULL == handle || NULL == sym) {
         return OMPI_ERR_BAD_PARAM;
     }
 
-    sym->tcs_function = (void (*)(void)) lt_dlsym(handle->tch_handle, name);
+    value.vvalue = lt_dlsym(handle->tch_handle, name);
+    sym->tcs_function = value.fvalue;
     return OMPI_SUCCESS;
 }
 
