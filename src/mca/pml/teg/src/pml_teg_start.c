@@ -12,8 +12,6 @@ int mca_pml_teg_start(size_t count, ompi_request_t** requests)
         int state;
         if(NULL == pml_request)
             continue;
-        if(pml_request->req_persistent == false)
-            return OMPI_ERR_REQUEST;
 
         /* If the persistent request is currently active - obtain the request lock
          * and verify the status is incomplete. if the pml layer has not completed
