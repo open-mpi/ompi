@@ -221,7 +221,7 @@ void lam_reactor_dispatch(lam_reactor_t* r, int cnt, lam_fd_set_t* rset, lam_fd_
         lam_reactor_descriptor_t* next = (lam_reactor_descriptor_t*)lam_list_get_next(&r->r_active);
         if(descriptor->rd_flags == 0) {
             lam_fh_remove_value_for_ikey(&r->r_hash, descriptor->rd);
-            lam_list_remove(&r->r_active, (lam_list_item_t*)descriptor);
+            lam_list_remove_item(&r->r_active, (lam_list_item_t*)descriptor);
             if(lam_list_get_size(&r->r_free) < MAX_DESCRIPTOR_POOL_SIZE) {
                 lam_list_append(&r->r_free, &descriptor->super);
             } else {
