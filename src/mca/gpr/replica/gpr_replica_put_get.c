@@ -58,8 +58,10 @@ int mca_gpr_replica_put(ompi_registry_mode_t addr_mode, char *segment,
     /* find the segment */
     seg = mca_gpr_replica_find_seg(true, segment,
 				   ompi_name_server.get_jobid(ompi_rte_get_self()));
+
     if (NULL == seg) { /* couldn't find segment or create it */
-	return OMPI_ERROR;
+        OMPI_THREAD_UNLOCK(&mca_gpr_replica_mutex);
+	   return OMPI_ERROR;
     }
 
     /* convert tokens to array of keys */
@@ -74,7 +76,7 @@ int mca_gpr_replica_put(ompi_registry_mode_t addr_mode, char *segment,
 
     /* release list of keys */
     if (NULL != keys) {
-	free(keys);
+	   free(keys);
     }
 
     OMPI_THREAD_UNLOCK(&mca_gpr_replica_mutex);
@@ -174,11 +176,11 @@ ompi_list_t* mca_gpr_replica_get(ompi_registry_mode_t addr_mode,
 
     /* protect against errors */
     if (NULL == segment) {
-	return list;
+	   return list;
     }
 
     if (mca_gpr_replica_compound_cmd_mode) {
-	mca_gpr_base_pack_get(mca_gpr_replica_compound_cmd, addr_mode, segment, tokens);
+	   mca_gpr_base_pack_get(mca_gpr_replica_compound_cmd, addr_mode, segment, tokens);
 	return list;
     }
 
@@ -187,7 +189,8 @@ ompi_list_t* mca_gpr_replica_get(ompi_registry_mode_t addr_mode,
     /* find the specified segment */
     seg = mca_gpr_replica_find_seg(false, segment, MCA_NS_BASE_JOBID_MAX);
     if (NULL == seg) {  /* segment not found */
-	return list;
+        OMPI_THREAD_UNLOCK(&mca_gpr_replica_mutex);
+	   return list;
     }
 
     /* convert tokens to array of keys */
@@ -196,7 +199,7 @@ ompi_list_t* mca_gpr_replica_get(ompi_registry_mode_t addr_mode,
     mca_gpr_replica_get_nl(list, addr_mode, seg, keys, num_keys);
 
     if (NULL != keys) {
-	free(keys);
+	   free(keys);
     }
 
     OMPI_THREAD_UNLOCK(&mca_gpr_replica_mutex);

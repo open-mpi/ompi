@@ -61,7 +61,7 @@ extern "C" {
 #define OMPI_REGISTRY_NOTIFY_INCLUDE_STARTUP_DATA   (uint16_t)0x0080   /**< Provide data with startup message */
 #define OMPI_REGISTRY_NOTIFY_INCLUDE_SHUTDOWN_DATA  (uint16_t)0x0100   /**< Provide data with shutdown message */
 #define OMPI_REGISTRY_NOTIFY_ONE_SHOT               (uint16_t)0x0200   /**< Only trigger once - then delete subscription */
-#define OMPI_REGISTRY_NOTIFY_ALL                    (uint16_t)0xffff   /**< Notifies subscriber upon any action */
+#define OMPI_REGISTRY_NOTIFY_ALL                    (uint16_t)0x8000   /**< Notifies subscriber upon any action */
 
 typedef uint16_t ompi_registry_notify_action_t;
 
