@@ -45,6 +45,12 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
 				pattr_delete.c \
 				pattr_get.c \
 				pattr_put.c \
+				pbarrier.c \
+				pbcast.c \
+				pbsend_init.c \
+				pbsend.c \
+				pbuffer_attach.c \
+				pbuffer_detach.c \
                 pcomm_get_name.c \
                 pcomm_set_name.c \
                 pfinalize.c \

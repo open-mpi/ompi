@@ -72,6 +72,12 @@ libmpi_c_mpi_la_SOURCES = \
 				attr_delete.c \
 				attr_get.c \
 				attr_put.c \
+				barrier.c \
+				bcast.c \
+				bsend_init.c \
+				bsend.c \
+				buffer_attach.c \
+				buffer_detach.c \
                 comm_get_name.c \
                 comm_set_name.c \
                 finalize.c \
