@@ -21,7 +21,11 @@
    mpiruntime/mpiruntime.h directly */
 #include "mpi/runtime/mpiruntime.h"
 
+/* constants for spawn constraints */
 #define OMPI_RTE_SPAWN_MULTI_CELL 0x0001
+#define OMPI_RTE_SPAWN_DAEMON     0x0002
+#define OMPI_RTE_SPAWN_HIGH_QOS   0x0004
+#define OMPI_RTE_SPAWN_FROM_MPI   0x0008
 
 #ifdef __cplusplus
 extern "C" {

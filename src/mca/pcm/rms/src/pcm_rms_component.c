@@ -18,6 +18,7 @@
 #include "mca/pcm/base/base.h"
 #include "mca/llm/base/base.h"
 #include "util/path.h"
+#include "runtime/runtime.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -49,17 +50,6 @@ mca_pcm_base_component_1_0_0_t mca_pcm_rms_component = {
 };
 
 
-struct mca_pcm_base_module_1_0_0_t mca_pcm_rms_1_0_0 = {
-    mca_pcm_rms_allocate_resources,
-    mca_pcm_rms_can_spawn,
-    mca_pcm_rms_spawn_procs,
-    mca_pcm_rms_kill_proc,
-    mca_pcm_rms_kill_job,
-    mca_pcm_rms_deallocate_resources,
-    mca_pcm_rms_finalize
-};
-
-
 /* need to create output stream to dump in file */
 ompi_output_stream_t mca_pcm_rms_output_stream = {
     false, /* lds_is_debugging  BWB - change me for release */
@@ -81,29 +71,27 @@ ompi_output_stream_t mca_pcm_rms_output_stream = {
  */
 static int mca_pcm_rms_param_priority;
 static int mca_pcm_rms_param_debug;
-static int mca_pcm_rms_param_use_ns;
 
 /*
  * Component variables.  All of these are shared among the module
  * instances, so they don't need to go in a special structure or
  * anything.
  */
-int mca_pcm_rms_output = 0;
-int mca_pcm_rms_use_ns;
+int mca_pcm_rms_output = -1;
+
 
 int
 mca_pcm_rms_component_open(void)
 {
-    mca_pcm_rms_param_debug =
-        mca_base_param_register_int("pcm", "rms", "debug", NULL, 100);
+  mca_pcm_rms_param_debug =
+    mca_base_param_register_int("pcm", "rms", "debug", NULL, 100);
 
   mca_pcm_rms_param_priority =
     mca_base_param_register_int("pcm", "rms", "priority", NULL, 5);
 
-  mca_pcm_rms_param_use_ns =
-    mca_base_param_register_int("pcm", "rms", "use_ns", NULL, 1);
-
   mca_pcm_rms_job_list_init();
+
+  mca_pcm_rms_output = ompi_output_open(&mca_pcm_rms_output_stream);
 
   return OMPI_SUCCESS;
 }
@@ -127,27 +115,49 @@ mca_pcm_rms_init(int *priority,
     int debug;
     char *prun;
     int num_cpus;
+    mca_pcm_base_module_t *me;
 
+    /* debugging gorp */
     mca_base_param_lookup_int(mca_pcm_rms_param_debug, &debug);
-    mca_pcm_rms_output = ompi_output_open(&mca_pcm_rms_output_stream);
     ompi_output_set_verbosity(mca_pcm_rms_output, debug);
 
+    /* get our priority - if 0, we don't run */
     mca_base_param_lookup_int(mca_pcm_rms_param_priority, priority);
+    if (0 == priority) return NULL;
 
-    mca_base_param_lookup_int(mca_pcm_rms_param_use_ns, &mca_pcm_rms_use_ns);
+    /* fill in params */
 
     *allow_multi_user_threads = true;
     *have_hidden_threads = false;
 
+    /* check constrains */
+    /* no daemon */
+    if (0 != (constraints & OMPI_RTE_SPAWN_DAEMON)) return NULL;
+    /* no MPI_COMM_SPAWN* */
+    if (0 != (constraints & OMPI_RTE_SPAWN_FROM_MPI)) return NULL;
+
+    /* see if we are an RMS system */
+    /* BWB - is there a better way to do this */
     num_cpus = rms_numCpus(NULL);
     if (num_cpus <= 0) return NULL;
 
-    /* poke around for prun */
     prun = ompi_path_env_findv("prun", X_OK, environ, NULL);
     if (NULL == prun) return NULL;
     free(prun);
 
-    return &mca_pcm_rms_1_0_0;
+    /* ok, now let's try to fire up */
+    me = malloc(sizeof(mca_pcm_base_module_t));
+    if (NULL == me) return NULL;
+
+    me->pcm_allocate_resources = mca_pcm_rms_allocate_resources;
+    me->pcm_can_spawn = mca_pcm_rms_can_spawn;
+    me->pcm_spawn_procs = mca_pcm_rms_spawn_procs;
+    me->pcm_kill_proc = mca_pcm_rms_kill_proc;
+    me->pcm_kill_job = mca_pcm_rms_kill_job;
+    me->pcm_deallocate_resources = mca_pcm_rms_deallocate_resources;
+    me->pcm_finalize = mca_pcm_rms_finalize;
+
+    return me;
 }
 
 

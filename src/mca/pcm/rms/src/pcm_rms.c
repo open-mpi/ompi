@@ -49,14 +49,8 @@ mca_pcm_rms_allocate_resources(struct mca_pcm_base_module_1_0_0_t* me,
 
     /* For now, just punt on whether we can actually fullfill the request or not */
     total_procs = (nodes == 0) ? procs : nodes * procs;
-    if (mca_pcm_rms_use_ns) {
-        node_alloc->start = 
+    node_alloc->start = 
             (int) ompi_name_server.reserve_range(jobid, total_procs);
-    } else {
-        /* BWB - remove the USE_NS code once the failures in PTL / NS
-           due to unexpected offsets are fixed up */
-        node_alloc->start = 0;
-    }
     node_alloc->nodes = nodes;
     node_alloc->count = procs;
 
