@@ -55,7 +55,7 @@ int ompi_convertor_pack_general( ompi_convertor_t* pConvertor,
     pStack--;
     pConvertor->stack_pos--;
 
-    DUMP_STACK( pConvertor->pStack, pConvertor->stack_pos, pElem, "starting" );
+    DDT_DUMP_STACK( pConvertor->pStack, pConvertor->stack_pos, pElem, "starting" );
     DUMP( "remember position on stack %d last_elem at %d\n", pConvertor->stack_pos, pos_desc );
     DUMP( "top stack info {index = %d, count = %d}\n", 
           pStack->index, pStack->count );
@@ -100,7 +100,7 @@ int ompi_convertor_pack_general( ompi_convertor_t* pConvertor,
                                 pStack->disp, pos_desc + pElem[pos_desc].disp + 1);
                     pos_desc++;
                 } while( pElem[pos_desc].type == DT_LOOP ); /* let's start another loop */
-                DUMP_STACK( pConvertor->pStack, pConvertor->stack_pos, pElem, "advance loops" );
+                DDT_DUMP_STACK( pConvertor->pStack, pConvertor->stack_pos, pElem, "advance loops" );
                 /* update the current state */
                 count_desc = pElem[pos_desc].count;
                 disp_desc = pElem[pos_desc].disp;
@@ -184,8 +184,7 @@ int ompi_convertor_pack_homogeneous_with_memcpy( ompi_convertor_t* pConv,
     pStack--;
     pConv->stack_pos--;
    
- next_loop:
-    while( pos_desc >= 0 ) {
+    while( 1 ) {
 	if( pElems[pos_desc].type == DT_END_LOOP ) { /* end of the current loop */
 	    if( --(pStack->count) == 0 ) { /* end of loop */
 		if( pConv->stack_pos == 0 ) {  /* finish everything */
@@ -208,7 +207,7 @@ int ompi_convertor_pack_homogeneous_with_memcpy( ompi_convertor_t* pConv,
 	    last_count = pElems[pos_desc].count;
 	    last_blength = last_count;
 	    lastDisp = pStack->disp + pElems[pos_desc].disp;
-	    goto next_loop;
+	    continue;
 	}
 	while( pElems[pos_desc].type == DT_LOOP ) {
 	    int stop_in_loop = 0;
@@ -273,11 +272,8 @@ int ompi_convertor_pack_homogeneous_with_memcpy( ompi_convertor_t* pConv,
         bConverted += last_count;
         lastDisp += last_count;
     }
-    if( pos_desc >= 0 )  /* if the pack is not finish add a new entry in the stack */
-        PUSH_STACK( pStack, pConv->stack_pos, pos_desc, last_blength,
-                    lastDisp, pos_desc );
-    /* fake entry just to have the same behaviour as the other cases */
-    PUSH_STACK( pStack, pConv->stack_pos, 0, 0, 0, 0 );
+    /* update the current stack position */
+    PUSH_STACK( pStack, pConv->stack_pos, pos_desc, last_blength, lastDisp, pos_desc );
 
     pConv->bConverted += bConverted;  /* update the byte converted field in the convertor */
     iov[0].iov_len = bConverted;      /* update the length in the iovec */
@@ -335,7 +331,6 @@ int ompi_convertor_pack_no_conversion( ompi_convertor_t* pConv,
     if( iov[0].iov_base == NULL )
 	space_on_iovec = 0;
 
- next_loop:
     while( pos_desc >= 0 ) {
         if( pElems[pos_desc].type == DT_END_LOOP ) { /* end of the current loop */
 	    if( --(pStack->count) == 0 ) { /* end of loop */
@@ -395,7 +390,7 @@ int ompi_convertor_pack_no_conversion( ompi_convertor_t* pConv,
 	    pos_desc++;  /* go to the next element */
 	    lastDisp = pStack->disp + pElems[pos_desc].disp;
 	    last_count = pElems[pos_desc].count;
-	    goto next_loop;
+	    continue;  /* next loop */
 	}
 	while( pElems[pos_desc].type == DT_LOOP ) {
 	    int stop_in_loop = 0;
@@ -756,6 +751,10 @@ int ompi_convertor_init_for_send( ompi_convertor_t* pConv,
 				  int starting_pos,
 				  memalloc_fct_t allocfn )
 {
+    if( !(datatype->flags & DT_FLAG_COMMITED) ) {
+        /* this datatype is improper for conversion. Commit it first */
+        return OMPI_ERROR;
+    }
     convertor_init_generic( pConv, datatype, count, pUserBuf );
 
     pConv->flags = CONVERTOR_SEND | CONVERTOR_HOMOGENEOUS;  /* by default set to homogeneous */

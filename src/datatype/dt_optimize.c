@@ -81,12 +81,12 @@ int ompi_ddt_optimize_short( dt_desc_t* pData, int count,
                        nbElems - pStack->index + 1,  /* # of elems in this loop */
                        pData->desc.desc[pos_desc].disp,
                        pData->desc.desc[pos_desc].extent );
-            pStack--;  /* go down one position on the stack */
             if( --stack_pos >= 0 ) {  /* still something to do ? */
                 pStartLoop = (dt_loop_desc_t*)&(pTypeDesc->desc[pStack->index - 1]);
-                pStartLoop->loops = (pElemDesc - 1)->count;
+                pStartLoop->items = (pElemDesc - 1)->count;
                 totalDisp = pStack->disp;  /* update the displacement position */
             }
+            pStack--;  /* go down one position on the stack */
             pos_desc++;
             continue;
         }
@@ -141,7 +141,7 @@ int ompi_ddt_optimize_short( dt_desc_t* pData, int count,
                 PUSH_STACK( pStack, stack_pos, nbElems, pData->desc.desc[pos_desc].count,
                             totalDisp, pos_desc + pData->desc.desc[pos_desc].disp );
                 pos_desc++;
-                DUMP_STACK( pStack, stack_pos, pData->desc.desc, "advance loops" );
+                DDT_DUMP_STACK( pStack, stack_pos, pData->desc.desc, "advance loops" );
             }
             totalDisp = pStack->disp;  /* update the displacement */
             continue;
@@ -225,11 +225,10 @@ static int ompi_ddt_unroll( dt_desc_t* pData, int count )
       pStack->end_loop = pData->desc.used;
    }
 
-   DUMP_STACK( pStack, stack_pos, pElems, "starting" );
+   DDT_DUMP_STACK( pStack, stack_pos, pElems, "starting" );
    DUMP( "remember position on stack %d last_elem at %d\n", stack_pos, pos_desc );
-   DUMP( "top stack info {index = %d, count = %d}\n", 
-         pStack->index, pStack->count );
-  next_loop:
+   DUMP( "top stack info {index = %d, count = %d}\n", pStack->index, pStack->count );
+
    while( pos_desc >= 0 ) {
       if( pElems[pos_desc].type == DT_END_LOOP ) { /* end of the current loop */
          if( --(pStack->count) == 0 ) { /* end of loop */
@@ -243,7 +242,7 @@ static int ompi_ddt_unroll( dt_desc_t* pData, int count )
                pStack->disp += pElems[pos_desc].extent;
          }
          pos_desc++;
-         goto next_loop;
+         continue;
       }
       if( pElems[pos_desc].type == DT_LOOP ) {
          if( pElems[pos_desc].flags & DT_FLAG_CONTIGUOUS ) {

@@ -21,7 +21,7 @@
 extern int ompi_ddt_dfd;
 
 #if defined(VERBOSE)
-#  define DUMP_STACK( PSTACK, STACK_POS, PDESC, NAME ) \
+#  define DDT_DUMP_STACK( PSTACK, STACK_POS, PDESC, NAME ) \
      ompi_ddt_dump_stack( (PSTACK), (STACK_POS), (PDESC), (NAME) )
 #  if defined(ACCEPT_C99)
 #    define DUMP( ARGS... )          ompi_output(ompi_ddt_dfd, __VA_ARGS__)
@@ -41,7 +41,7 @@ static inline void DUMP( char* fmt, ... )
 #    endif  /* __GNUC__ && !__STDC__ */
 #  endif  /* ACCEPT_C99 */
 #else
-#  define DUMP_STACK( PSTACK, STACK_POS, PDESC, NAME )
+#  define DDT_DUMP_STACK( PSTACK, STACK_POS, PDESC, NAME )
 #  if defined(ACCEPT_C99)
 #    define DUMP(ARGS...)
 #  else
