@@ -29,7 +29,7 @@
 
 void ompi_rte_parse_environ(void)
 {
-    char *enviro_val;
+    char *enviro_val, *tmp;
     int id;
 
     /* ensure that sys_info and proc_info have been run */
