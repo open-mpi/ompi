@@ -22,11 +22,11 @@ int main(int argc, char **argv)
 {
     int i;
     uint64_t count;
-    test_init("ompi_value_array_t");
 
     ompi_value_array_t array;
     OBJ_CONSTRUCT(&array, ompi_value_array_t);
 
+    test_init("ompi_value_array_t");
     ompi_value_array_init(&array, sizeof(int));
     test_verify_int(0, ompi_value_array_get_size(&array));
 
