@@ -24,6 +24,8 @@
 #include "lam/util/few.h"
 #include "lam/util/path.h"
 
+extern char **environ;
+
 using namespace std;
 
 
