@@ -10,6 +10,7 @@
 #include "mca/mca.h"
 #include "mca/base/base.h"
 #include "mca/pcm/pcm.h"
+#include "mca/pcm/base/base.h"
 
 
 int mca_pcm_base_close(void)

@@ -7,7 +7,7 @@
 #include "mca/mca.h"
 #include "mca/base/base.h"
 #include "mca/pcm/pcm.h"
-
+#include "mca/pcm/base/base.h"
 
 /*
  * The following file was created by configure.  It contains extern

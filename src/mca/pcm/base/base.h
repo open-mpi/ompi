@@ -20,15 +20,9 @@
 extern "C" {
 #endif
   int mca_pcm_base_open(void);
-  int mca_oob_base_select(bool *allow_multi_user_threads, 
+  int mca_pcm_base_select(bool *allow_multi_user_threads, 
                           bool *have_hidden_threads);
   int mca_pcm_base_close(void);
-
-  bool mca_pcm_base_is_checkpointable(void);
-
-  int mca_pcm_base_checkpoint(void);
-  int mca_pcm_base_continue(void);
-  int mca_pcm_base_restart(void);
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
@@ -38,7 +32,7 @@ extern "C" {
  * Globals
  */
 extern int mca_pcm_base_output;
-extern ompi_list_t mca_pcm_base_modules_available;
+extern ompi_list_t mca_pcm_base_components_available;
 extern mca_pcm_base_component_t mca_pcm_base_selected_component;
 extern mca_pcm_base_module_t mca_pcm;
 

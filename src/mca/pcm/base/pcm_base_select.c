@@ -11,7 +11,7 @@
 #include "mca/mca.h"
 #include "mca/base/base.h"
 #include "mca/pcm/pcm.h"
-
+#include "mca/pcm/base/base.h"
 
 /**
  * Function for selecting one module from all those that are
@@ -46,13 +46,13 @@ int mca_pcm_base_select(bool *allow_multi_user_threads,
 
     ompi_output_verbose(10, mca_pcm_base_output, 
                        "select: initializing %s component %s",
-                       component->pcmm_version.mca_type_name,
-                       component->pcmm_version.mca_component_name);
-    if (NULL == component->pcmm_init) {
+                       component->pcm_version.mca_type_name,
+                       component->pcm_version.mca_component_name);
+    if (NULL == component->pcm_init) {
       ompi_output_verbose(10, mca_pcm_base_output,
                          "select: no init function; ignoring component");
     } else {
-      module = component->pcmm_init(&priority, &user_threads, &hidden_threads);
+      module = component->pcm_init(&priority, &user_threads, &hidden_threads);
       if (NULL == module) {
         ompi_output_verbose(10, mca_pcm_base_output,
                            "select: init returned failure");
@@ -89,16 +89,16 @@ int mca_pcm_base_select(bool *allow_multi_user_threads,
 
       /* Finalize */
 
-      if (NULL != component->pcmm_finalize) {
+      if (NULL != component->pcm_finalize) {
 
         /* Blatently ignore the return code (what would we do to
            recover, anyway?  This component is going away, so errors
            don't matter anymore) */
 
-        component->pcmm_finalize();
+        component->pcm_finalize();
         ompi_output_verbose(10, mca_pcm_base_output, 
                            "select: component %s finalized",
-                           component->pcmm_version.mca_component_name);
+                           component->pcm_version.mca_component_name);
       }
     }
   }
@@ -118,7 +118,7 @@ int mca_pcm_base_select(bool *allow_multi_user_threads,
   *have_hidden_threads = best_hidden_threads;
   ompi_output_verbose(10, mca_pcm_base_output, 
                      "select: component %s initialized",
-                     component->pcmm_version.mca_component_name);
+                     component->pcm_version.mca_component_name);
 
   /* All done */
 
