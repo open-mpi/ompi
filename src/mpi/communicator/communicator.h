@@ -41,4 +41,19 @@ struct lam_communicator_t {
 };
 typedef struct lam_communicator_t lam_communicator_t;
 
+
+/* return pointer to communicator associated with context id cid,
+ * No error checking is done*/
+static inline lam_communicator_t *get_comm_ptr(uint32_t cid) 
+{ 
+    /* array of pointers to communicators, indexed by context ID */
+    extern lam_communicator_t **lam_cummunicator_ptrs;
+    extern uint32_t len_lam_cummunicator_ptrs;
+#ifdef LAM_ENABLE_DEBUG
+    if(cid >= len_lam_cummunicator_ptrs)
+        return (lam_communicator_t *) NULL;
+#endif
+    return lam_cummunicator_ptrs[cid]; 
+}
+
 #endif /* LAM_COMMUNICATOR_H */
