@@ -6,6 +6,7 @@
 #define LAM_COMMUNICATOR_H
 
 #include "lfc/lam_object.h"
+#include "errhandler/errhandler.h"
 #include "threads/mutex.h"
 #include "util/output.h"
 #include "mpi.h"
@@ -40,9 +41,13 @@ struct lam_communicator_t {
     int *c_topo_index; /**< Graph indices */
     int *c_topo_edges; /**< Graph edges */
 
+    /* index in Fortran <-> C translation array */
+
+    int c_f_to_c_index;
+
     /* Error handling */
 
-    MPI_Errhandler c_error_handler;
+    lam_errhandler_t *c_error_handler;
 
     /* Hooks for PML to hang things */
     struct mca_pml_comm_t* c_pml_comm;
