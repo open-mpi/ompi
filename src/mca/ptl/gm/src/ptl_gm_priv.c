@@ -161,13 +161,43 @@ int mca_ptl_gm_peer_send( mca_ptl_gm_peer_t *ptl_peer,
             size_out += iov.iov_len;
 
             gm_send_to_peer_with_callback( ptl_peer->peer_ptl->gm_port, header,
-                                           GM_SIZE, size_out, GM_LOW_PRIORITY, ptl_peer->local_id,
+                                           GM_SIZE, size_out, GM_LOW_PRIORITY,
+                                           ptl_peer->local_id,
                                            send_callback, (void *)header );
         }
         ptl_peer->peer_ptl->super.ptl_send_progress( (mca_ptl_base_module_t*)ptl_peer->peer_ptl,
-                                                     fragment->send_frag.frag_request, size_out );
+                                                     fragment->send_frag.frag_request,
+                                                     size_out );
         *size = size_out;
     } else {  /* large message */
+        /* For large messages I prefer to use the read semantics. It does not work well
+         * if the receiver does not post the message shortly after it receive the
+         * rdv (as the memory on the sender will be still locked). But the protocol
+         * is easier to implement.
+         */
+        gm_status_t status;
+        mca_ptl_gm_rdv_header_t* header;
+
+        status = gm_register_memory( ptl_peer->peer_ptl->gm_port,
+                                     sendreq->req_base.req_addr,
+                                     size_in );
+        if( status != GM_SUCCESS ) {
+            printf( "Cannot register memory from %p length %ld bytes\n",
+                    (void*)sendreq->req_base.req_addr, size_in );
+            return OMPI_ERROR;
+        }
+        header_length = sizeof(mca_ptl_gm_rdv_header_t);
+        /* Overwrite just in case ... */
+        header->hdr_match.hdr_common.hdr_type = MCA_PTL_HDR_TYPE_RNDV;
+        header->hdr_match.hdr_common.hdr_flags = flags;
+        header->registered_memory.lval = 0;
+        header->registered_memory.pval = (void*)sendreq->req_base.req_addr;
+        header->fragment.lval = 0;
+        header->fragment.pval = (void*)fragment;
+        gm_send_to_peer_with_callback( ptl_peer->peer_ptl->gm_port, header,
+                                       GM_SIZE, header_length, GM_LOW_PRIORITY,
+                                       ptl_peer->local_id,
+                                       send_callback, (void *)header );
         
     }
 
@@ -257,6 +287,10 @@ void send_callback( struct gm_port *port, void * context, gm_status_t status )
 	    OMPI_FREE_LIST_RETURN(&(ptl->gm_send_frags), ((ompi_list_item_t *) frag));
             break;
         case MCA_PTL_HDR_TYPE_RNDV:
+            /* As we actually use the read semantics for long messages, we dont
+             * have to do anything special here.
+             */
+            break;
         case MCA_PTL_HDR_TYPE_FRAG:
             {
                 /* Use by eager messages. It contains just enough informations to be able
@@ -311,7 +345,7 @@ void send_callback( struct gm_port *port, void * context, gm_status_t status )
         break;
 	
     default:
-        ompi_output(0, "[%s:%d] error in message completion\n",__FILE__,__LINE__);
+        ompi_output( 0, "[%s:%d] error in message completion\n", __FILE__, __LINE__ );
         break;
     }
 }
@@ -368,9 +402,9 @@ mca_ptl_gm_recv_frag_match( struct mca_ptl_gm_module_t *ptl,
 {
     mca_ptl_gm_recv_frag_t * recv_frag;
     bool matched;
-    mca_ptl_base_header_t *header;
+    mca_ptl_gm_rdv_header_t *header;
     
-    header = (mca_ptl_base_header_t *)gm_ntohp(event->recv.buffer);
+    header = (mca_ptl_gm_rdv_header_t*)gm_ntohp(event->recv.buffer);
     
     /* allocate a receive fragment */
     recv_frag = mca_ptl_gm_alloc_recv_frag( (struct mca_ptl_base_module_t*)ptl );
@@ -384,10 +418,17 @@ mca_ptl_gm_recv_frag_match( struct mca_ptl_gm_module_t *ptl,
     recv_frag->frag_ack_pending = false;
     recv_frag->frag_progressed = 0;
     
-    recv_frag->frag_recv.frag_base.frag_header = *header;
+    recv_frag->frag_recv.frag_base.frag_header.hdr_match = header->hdr_match;
 
-    recv_frag->frag_recv.frag_base.frag_addr =
-	(char *) header + sizeof(mca_ptl_base_match_header_t);
+    if( MCA_PTL_HDR_TYPE_MATCH == header->hdr_match.hdr_common.hdr_type ) {
+        recv_frag->frag_recv.frag_base.frag_addr =
+            (char *) header + sizeof(mca_ptl_base_match_header_t);
+    } else {
+        assert( MCA_PTL_HDR_TYPE_RNDV == header->hdr_match.hdr_common.hdr_type );
+        recv_frag->frag_recv.frag_base.frag_addr =
+            (char *) header + sizeof(mca_ptl_gm_rdv_header_t);
+        recv_frag->remote_registered_memory.lval = header->registered_memory.lval;
+    }
     recv_frag->frag_recv.frag_base.frag_size = header->hdr_match.hdr_msg_length;
     
     recv_frag->matched = false;
@@ -481,6 +522,7 @@ mca_ptl_gm_recv_frag_t* ptl_gm_handle_recv( struct mca_ptl_gm_module_t *ptl, gm_
     
     switch(header->hdr_common.hdr_type) {
     case MCA_PTL_HDR_TYPE_MATCH:
+    case MCA_PTL_HDR_TYPE_RNDV:
 	frag = mca_ptl_gm_recv_frag_match( ptl, event );
 	break;
     case MCA_PTL_HDR_TYPE_FRAG:

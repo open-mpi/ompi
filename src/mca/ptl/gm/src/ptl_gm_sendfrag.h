@@ -43,6 +43,16 @@ extern "C" {
     };
     typedef struct mca_ptl_gm_eager_header_t mca_ptl_gm_eager_header_t;
 
+    /* specific header for GM rendezvous protocol. It must hold the registered
+     * memory pointer.
+     */
+    struct mca_ptl_gm_rdv_header_t {
+        mca_ptl_base_match_header_t  hdr_match;
+        ompi_ptr_t                   registered_memory;
+        ompi_ptr_t                   fragment;
+    };
+    typedef struct mca_ptl_gm_rdv_header_t mca_ptl_gm_rdv_header_t;
+
     /*struct mca_ptl_base_peer_t;*/
 
     /**
@@ -77,6 +87,8 @@ extern "C" {
         struct mca_ptl_gm_module_t *ptl;
         bool matched;
         bool have_allocated_buffer;
+        bool have_registered_buffer;
+        ompi_ptr_t remote_registered_memory;
     };
     typedef struct mca_ptl_gm_recv_frag_t mca_ptl_gm_recv_frag_t;
 
@@ -99,6 +111,20 @@ extern "C" {
                               size_t offset,
                               size_t* size,
                               int flags );
+
+#define OMPI_FREE_LIST_TRY_GET(fl, item) \
+{ \
+    item = NULL; \
+    if(ompi_using_threads()) { \
+        if( ompi_atomic_trylock(&((fl)->fl_lock)) ) { \
+            /* We get the lock. Now let's remove one of the elements */ \
+            item = ompi_list_remove_first(&((fl)->super)); \
+            ompi_mutex_unlock(&((fl)->fl_lock)); \
+        } \
+    } else { \
+        item = ompi_list_remove_first(&((fl)->super)); \
+    }  \
+}
 
     static inline int
     mca_ptl_gm_init_header_match( struct mca_ptl_gm_send_frag_t* sendfrag,

@@ -92,17 +92,17 @@ mca_ptl_gm_alloc_send_frag( struct mca_ptl_gm_module_t *ptl,
 
 
 int mca_ptl_gm_send_frag_done( mca_ptl_gm_send_frag_t * frag,
-			       mca_pml_base_send_request_t * req )
+                               mca_pml_base_send_request_t * req )
 {
     return OMPI_SUCCESS;
 }
 
 int mca_ptl_gm_send_ack_init( struct mca_ptl_gm_send_frag_t* ack,
-			      struct mca_ptl_gm_module_t *ptl,
-			      struct mca_ptl_gm_peer_t* ptl_peer,
-			      struct mca_ptl_gm_recv_frag_t* frag,
-			      char * buffer,
-			      int size )
+                              struct mca_ptl_gm_module_t *ptl,
+                              struct mca_ptl_gm_peer_t* ptl_peer,
+                              struct mca_ptl_gm_recv_frag_t* frag,
+                              char * buffer,
+                              int size )
 {
     mca_ptl_base_ack_header_t * hdr;
     mca_pml_base_recv_request_t *request;
@@ -120,8 +120,7 @@ int mca_ptl_gm_send_ack_init( struct mca_ptl_gm_send_frag_t* ack,
     hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_ACK;
     hdr->hdr_common.hdr_flags = 0;
 
-    hdr->hdr_src_ptr.pval =
-	frag->frag_recv.frag_base.frag_header.hdr_frag.hdr_src_ptr.pval;
+    hdr->hdr_src_ptr.pval = frag->frag_recv.frag_base.frag_header.hdr_frag.hdr_src_ptr.pval;
 
     hdr->hdr_dst_match.lval = 0;
     hdr->hdr_dst_match.pval = request; /*should this be dst_match */

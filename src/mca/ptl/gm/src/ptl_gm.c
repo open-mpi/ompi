@@ -360,6 +360,30 @@ mca_ptl_gm_get (struct mca_ptl_base_module_t *ptl,
     return OMPI_SUCCESS;
 }
 
+/* This function get called when the gm_get is finish (i.e. when the read from remote memory
+ * is completed. We have to send back the ack.
+ */
+static void mca_ptl_gm_get_callback( struct gm_port *port, void * context, gm_status_t status )
+{
+    int rc;
+    mca_ptl_gm_recv_frag_t* recv_frag = (mca_ptl_gm_recv_frag_t*)context;
+    mca_ptl_gm_send_frag_t *ack;
+    mca_ptl_gm_module_t *gm_ptl;
+    mca_pml_base_recv_request_t *request;
+    size_t size = 0;
+
+    gm_ptl = (mca_ptl_gm_module_t*)recv_frag->frag_recv.frag_base.frag_owner;
+    /* send the registered memory information, send recv request * ptr */
+    request = recv_frag->frag_recv.frag_request;
+    rc = mca_ptl_gm_send_ack_init( ack, gm_ptl, 
+                                   (mca_ptl_gm_peer_t *)(recv_frag->frag_recv.frag_base.frag_peer),
+                                   recv_frag, request->req_base.req_addr, recv_frag->frag_recv.frag_base.frag_size );
+	    
+    mca_ptl_gm_peer_send( (mca_ptl_gm_peer_t *) (ack->send_frag.frag_base.frag_peer),
+                          ack, NULL, 0, &size, 0 );
+    gm_ptl->num_send_tokens--;
+}
+
 /*  A posted receive has been matched - if required send an
  *  ack back to the peer and process the fragment.
  */
@@ -368,57 +392,52 @@ mca_ptl_gm_matched( mca_ptl_base_module_t * ptl,
                     mca_ptl_base_recv_frag_t * frag )
 {
     mca_pml_base_recv_request_t *request;
-    mca_pml_base_send_request_t *srequest;
     mca_ptl_base_header_t *header;
-    int bytes_recv, rc,rc1, total_bytes, bytes_reg;
+    int bytes_recv, rc, total_bytes, bytes_reg;
     mca_ptl_gm_module_t *gm_ptl;
     struct iovec iov;
     mca_ptl_gm_send_frag_t *ack;
     mca_ptl_gm_recv_frag_t *recv_frag;
     char *buffer_ptr;
     gm_status_t status;
-    size_t size = 0;
+    mca_ptl_gm_peer_t* peer;
 
     header = &frag->frag_base.frag_header;
     request = frag->frag_request;
     gm_ptl = (mca_ptl_gm_module_t *)ptl;
+    recv_frag = (mca_ptl_gm_recv_frag_t *)frag;
+    peer = (mca_ptl_gm_peer_t*)recv_frag->frag_recv.frag_base.frag_peer;
 
     if (header->hdr_common.hdr_flags & MCA_PTL_FLAGS_ACK) {
-	/* need to send an ack back */
-	recv_frag = (mca_ptl_gm_recv_frag_t *)frag;
-	
-	ack = mca_ptl_gm_alloc_send_frag( gm_ptl, NULL );
-	if( NULL == ack ) {
-	    ompi_output(0,"[%s:%d] unable to alloc a gm fragment\n",
-			__FILE__,__LINE__);
-	    OMPI_THREAD_LOCK (&mca_ptl_gm_component.gm_lock);
-	    recv_frag->frag_ack_pending = true;
-	    ompi_list_append (&mca_ptl_gm_module.gm_pending_acks,
-			      (ompi_list_item_t *) frag);
-	    OMPI_THREAD_UNLOCK (&mca_ptl_gm_component.gm_lock);
-	} else {
-	    buffer_ptr = (char *)( request->req_base.req_addr );
-	    total_bytes = request->req_bytes_packed;
-	    bytes_recv = frag->frag_base.frag_size; 
-	    bytes_reg = total_bytes - bytes_recv;
-	    buffer_ptr += bytes_recv;
-	    status = gm_register_memory(gm_ptl->gm_port, buffer_ptr, bytes_reg);
-	    recv_frag->registered_buf = buffer_ptr;
-	    
-	    if(GM_SUCCESS != status) {
-		ompi_output(0,"[%s:%d] Unable to register memory\n",__FILE__,__LINE__);
-	    }
-	    
-	    /* send the registered memory information, send recv request * ptr */
-	    rc1 = mca_ptl_gm_send_ack_init( ack, gm_ptl, 
-                                            (mca_ptl_gm_peer_t *)(recv_frag->frag_recv.frag_base.frag_peer),
-                                            recv_frag, buffer_ptr, bytes_reg );
-	    
-	    /*TO DO : put the registered memory in pin-down cache */
-	    mca_ptl_gm_peer_send( (mca_ptl_gm_peer_t *) (ack->send_frag.frag_base.frag_peer),
-                                  ack, srequest, 0, &size, 0 );
-	    gm_ptl->num_send_tokens--;
-	}
+        /* need to send an ack back */
+
+        ack = mca_ptl_gm_alloc_send_frag( gm_ptl, NULL );
+        if( NULL == ack ) {
+            ompi_output(0,"[%s:%d] unable to alloc a gm fragment\n", __FILE__,__LINE__);
+            OMPI_THREAD_LOCK (&mca_ptl_gm_component.gm_lock);
+            recv_frag->frag_ack_pending = true;
+            ompi_list_append (&mca_ptl_gm_module.gm_pending_acks, (ompi_list_item_t *) frag);
+            OMPI_THREAD_UNLOCK (&mca_ptl_gm_component.gm_lock);
+        } else {
+            buffer_ptr = (char*)(request->req_base.req_addr);
+            total_bytes = request->req_bytes_packed;
+            bytes_recv = frag->frag_base.frag_size; 
+            bytes_reg = total_bytes - bytes_recv;
+            buffer_ptr += bytes_recv;
+            /* Register the local operation before */
+            status = gm_register_memory(gm_ptl->gm_port, buffer_ptr, bytes_reg);
+            recv_frag->registered_buf = buffer_ptr;
+            if(GM_SUCCESS != status) {
+                ompi_output(0,"[%s:%d] Unable to register memory\n",__FILE__,__LINE__);
+            }
+            
+            /* And now read from the remote memory in the local memory. The amount used for this
+             * operation should be the minimum one between the server and the client.
+             */
+            gm_get( gm_ptl->gm_port, recv_frag->remote_registered_memory.lval,
+                    buffer_ptr, bytes_reg, GM_HIGH_PRIORITY, peer->peer_addr->global_id,
+                    peer->peer_addr->port_id, mca_ptl_gm_get_callback, frag );
+        }
     }
     
     /* Here we expect that frag_addr is the begin of the buffer header  included */
@@ -427,25 +446,24 @@ mca_ptl_gm_matched( mca_ptl_base_module_t * ptl,
     iov.iov_len = bytes_recv;
     
     if( header->hdr_match.hdr_msg_length > 0 ) {
-	ompi_proc_t *proc;
-	unsigned int max_data, out_size;
-	int freeAfter;
+        unsigned int max_data, out_size;
+        int freeAfter;
 	
-	proc = ompi_comm_peer_lookup( request->req_base.req_comm,
-                                      header->hdr_match.hdr_src );
-	ompi_convertor_copy(proc->proc_convertor,
-			    &frag->frag_base.frag_convertor);
-	ompi_convertor_init_for_recv( &frag->frag_base.frag_convertor,
+        /*peer = ompi_comm_peer_lookup( request->req_base.req_comm,
+          header->hdr_match.hdr_src );*/
+        ompi_convertor_copy( peer->peer_proc->proc_ompi->proc_convertor,
+                             &frag->frag_base.frag_convertor);
+        ompi_convertor_init_for_recv( &frag->frag_base.frag_convertor,
                                       0,
                                       request->req_base.req_datatype,
                                       request->req_base.req_count,
                                       request->req_base.req_addr,
                                       0  /* TO DO which offset ? */, NULL );
-	out_size = 1;
-	max_data = iov.iov_len;
-	rc = ompi_convertor_unpack( &frag->frag_base.frag_convertor, &(iov),
-				    &out_size, &max_data, &freeAfter );
-	assert( rc >= 0 );
+        out_size = 1;
+        max_data = iov.iov_len;
+        rc = ompi_convertor_unpack( &frag->frag_base.frag_convertor, &(iov),
+                                    &out_size, &max_data, &freeAfter );
+        assert( rc >= 0 );
     }
     
     /* update progress*/   
@@ -454,10 +472,11 @@ mca_ptl_gm_matched( mca_ptl_base_module_t * ptl,
     /* Now update the status of the fragment */
     ((mca_ptl_gm_recv_frag_t*)frag)->matched = true;
     if( ((mca_ptl_gm_recv_frag_t*)frag)->have_allocated_buffer == true ) {
-	free( ((mca_ptl_gm_recv_frag_t*)frag)->frag_recv.frag_base.frag_addr);
-	((mca_ptl_gm_recv_frag_t*)frag)->have_allocated_buffer = false;
+        free( ((mca_ptl_gm_recv_frag_t*)frag)->frag_recv.frag_base.frag_addr);
+        ((mca_ptl_gm_recv_frag_t*)frag)->have_allocated_buffer = false;
     }
     
     /* I'm done with this fragment. Return it to the free list */
     OMPI_FREE_LIST_RETURN( &(gm_ptl->gm_recv_frags_free), (ompi_list_item_t*)frag );
 }
+
