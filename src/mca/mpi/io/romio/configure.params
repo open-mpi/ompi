@@ -1,0 +1,10 @@
+# -*- shell-script -*-
+#
+# $HEADER$
+#
+
+# Specific to this module
+
+PARAM_INIT_FILE=src/io_romio_module.c
+PARAM_CONFIG_HEADER_FILE="src/romio_config.h"
+PARAM_CONFIG_FILES="Makefile src/Makefile config/Makefile"
