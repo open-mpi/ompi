@@ -7,7 +7,6 @@
 
 #include "mpi.h"
 #include "lam/util/cmd_line.h"
-#include "lam/lfc/array.h"
 
 /*
  * Types for each function
@@ -69,6 +68,7 @@ typedef struct mca_module_1_0_0_t mca_module_1_0_0_t;
 typedef mca_module_1_0_0_t mca_module_t;
 
 
+
 /*
  * Structure for making priority lists of modules
  */
@@ -82,58 +82,18 @@ typedef struct mca_module_priority_t mca_module_priority_t;
 
 
 /*
- * Types for MCA parameters
- */
-
-typedef enum {
-  MCA_BASE_PARAM_TYPE_INT,
-  MCA_BASE_PARAM_TYPE_STRING,
-
-  MCA_BASE_PARAM_TYPE_MAX
-} mca_base_param_type_t;
-
-typedef union {
-  int intval;
-  char *stringval;
-} mca_base_param_storage_t;
-
-#define MCA_BASE_PARAM_INFO ((void*) -1)
-
-struct mca_base_param_t {
-  mca_base_param_type_t lsbp_type;
-  char *lsbp_type_name;
-  char *lsbp_module_name;
-  char *lsbp_param_name;
-  char *lsbp_full_name;
-
-  int lsbp_keyval;
-  char *lsbp_env_var_name;
-
-  mca_base_param_storage_t lsbp_default_value;
-};
-typedef struct mca_base_param_t mca_base_param_t;
-
-
-/*
- * Variable holding the array of registered MCA parameters
- */
-
-extern lam_array_t mca_base_params;
-
-
-/*
  * Global functions for MCA
  */
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
+  int mca_base_open(lam_cmd_line_t *cmd);
+  int mca_base_close(void);
+
   int mca_base_arg_setup(lam_cmd_line_t *cmd);
   int mca_base_arg_process(lam_cmd_line_t *cmd);
   int mca_base_arg_process_one(char *type, char *arg);
-
-  int mca_base_close(void);
-  int mca_base_open(lam_cmd_line_t *cmd);
 
   int mca_base_module_check(char *name, char *module, int is_default);
   int mca_base_module_compare(mca_module_t *a, mca_module_t *b);
