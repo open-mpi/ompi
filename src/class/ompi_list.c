@@ -61,20 +61,28 @@ static void ompi_list_construct(ompi_list_t *list)
 }
 
 
+/*
+ * Reset all the pointers to be NULL -- do not actually destroy
+ * anything.
+ */
 static void ompi_list_destruct(ompi_list_t *list)
 {
-    /* release all items in list */
     ompi_list_construct(list);
 }
 
-int ompi_list_insert(ompi_list_t *list, ompi_list_item_t *item, long long idx)
+
+/*
+ * Insert an item at a specific place in a list
+ */
+bool ompi_list_insert(ompi_list_t *list, ompi_list_item_t *item, long long idx)
 {
     /* Adds item to list at index and retains item. */
     int     i;
     volatile ompi_list_item_t     *ptr, *next;
     
-    if ( idx >= list->ompi_list_length )
-        return 0;
+    if ( idx >= list->ompi_list_length ) {
+        return false;
+    }
     
     if ( 0 == idx )
     {
@@ -95,6 +103,6 @@ int ompi_list_insert(ompi_list_t *list, ompi_list_item_t *item, long long idx)
     }
     
     list->ompi_list_length++;    
-    return 1;
+    return true;
 }
 
