@@ -245,13 +245,13 @@ int mpich_typeub3( void )
    return err;
 }
 
-void print_double_mat( size_t N, double* mat )
+void print_double_mat( unsigned int N, double* mat )
 {
    int i, j;
    double* pMat;
 
    for( i = 0; i < N; i++ ) {
-      printf( "(%4d) :", i * N * sizeof(double) );
+      printf( "(%4d) :", i * N * (int)sizeof(double) );
       pMat = mat + i * N;
       for( j = 0; j < N; j++ ) {
          printf( "%5.1f ", *pMat );
@@ -261,7 +261,7 @@ void print_double_mat( size_t N, double* mat )
    }
 }
 
-int init_random_upper_matrix( size_t N, double* mat )
+int init_random_upper_matrix( unsigned int N, double* mat )
 {
     int i, j;
 
@@ -276,7 +276,7 @@ int init_random_upper_matrix( size_t N, double* mat )
     return 0;  
 }
 
-int check_diag_matrix( size_t N, double* mat1, double* mat2 )
+int check_diag_matrix( unsigned int N, double* mat1, double* mat2 )
 {
    int i, j;
 
@@ -295,14 +295,14 @@ int check_diag_matrix( size_t N, double* mat1, double* mat2 )
    return 0;
 }
 
-dt_desc_t* upper_matrix( size_t mat_size )
+dt_desc_t* upper_matrix( unsigned int mat_size )
 {
    int *disp, i;
-   size_t *blocklen;
+   unsigned int *blocklen;
    dt_desc_t* upper;
 
    disp = (int*)malloc( sizeof(int) * mat_size );
-   blocklen = (size_t*)malloc( sizeof(size_t) * mat_size );
+   blocklen = (unsigned int*)malloc( sizeof(unsigned int) * mat_size );
 
    for( i = 0; i < mat_size; i++ ) {
       disp[i] = i * mat_size + i;
@@ -316,14 +316,14 @@ dt_desc_t* upper_matrix( size_t mat_size )
    return upper;
 }
 
-dt_desc_t* lower_matrix( size_t mat_size )
+dt_desc_t* lower_matrix( unsigned int mat_size )
 {
    int *disp, i;
-   size_t *blocklen;
+   unsigned int *blocklen;
    dt_desc_t* upper;
 
    disp = (int*)malloc( sizeof(int) * mat_size );
-   blocklen = (size_t*)malloc( sizeof(size_t) * mat_size );
+   blocklen = (unsigned int*)malloc( sizeof(unsigned int) * mat_size );
 
    for( i = 0; i < mat_size; i++ ) {
       disp[i] = i * mat_size;
@@ -339,7 +339,7 @@ dt_desc_t* lower_matrix( size_t mat_size )
 
 extern long conversion_elapsed;
 
-int test_upper( size_t length )
+int test_upper( unsigned int length )
 {
    double *mat1, *mat2, *inbuf;
    dt_desc_t *pdt, *pdt1;
@@ -405,7 +405,7 @@ dt_desc_t* test_matrix_borders( unsigned int size, unsigned int width )
 {
    dt_desc_t *pdt, *pdt_line;
    int disp[2];
-   size_t blocklen[2];
+   unsigned int blocklen[2];
    
    disp[0] = 0;
    blocklen[0] = width;
