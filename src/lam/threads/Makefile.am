@@ -17,6 +17,7 @@ headers = \
 
 libthreads_la_SOURCES = \
 	$(headers) \
+    mutex.c \
 	thread.c
 
 # Conditionally install the header files
