@@ -222,25 +222,19 @@ mca_ptl_gm_send (struct mca_ptl_base_module_t *ptl,
     GM_DBG(PTL_GM_DBG_COMM,"INSIDE PTL GM SEND\n");
 
     gm_ptl = (mca_ptl_gm_module_t *)ptl;
-    sendfrag = mca_ptl_gm_alloc_send_frag( ptl, sendreq );
+    sendfrag = mca_ptl_gm_alloc_send_frag( gm_ptl, sendreq );
     if (NULL == sendfrag) {
 	ompi_output(0,"[%s:%d] Unable to allocate a gm send frag\n",
 		    __FILE__, __LINE__);
 	return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    if (offset == 0) {
-        GM_DBG(PTL_GM_DBG_COMM,"INSIDE PTL GM SEND, OFFSET = 0,request is %p frag is %p\n",
-	       (void*)sendreq, (void*)((mca_ptl_gm_send_request_t *)sendreq)->req_frag);
-    } else {
-    }
-    
     ((struct mca_ptl_gm_send_request_t *)sendreq)->req_frag = sendfrag;
     ((struct mca_ptl_gm_send_request_t *)sendreq)->need_ack = flags;
     
-    rc = mca_ptl_gm_send_frag_init (sendfrag, (mca_ptl_gm_peer_t*)ptl_peer, sendreq, offset, &size, flags);
+    rc = mca_ptl_gm_send_frag_init( sendfrag, (mca_ptl_gm_peer_t*)ptl_peer, sendreq, offset, &size, flags );
     
-    /*initiate the send */
+    /* initiate the send */
     gm_ptl_peer = (mca_ptl_gm_peer_t *)ptl_peer;
     rc = mca_ptl_gm_peer_send( gm_ptl_peer, sendfrag, sendreq, offset, &size, flags );
 
@@ -279,7 +273,7 @@ mca_ptl_gm_put (struct mca_ptl_base_module_t *ptl,
        } 
    }
 
-   putfrag = mca_ptl_gm_alloc_send_frag (ptl,sendreq); /*alloc_put_frag */
+   putfrag = mca_ptl_gm_alloc_send_frag( gm_ptl, sendreq ); /*alloc_put_frag */
    A_PRINT(" INSIDE PTL PUT,request is %p frag is %p\n",sendreq,putfrag);
     
    putfrag->registered_buf = (void *)buffer_ptr;
@@ -350,7 +344,7 @@ mca_ptl_gm_matched( mca_ptl_base_module_t * ptl,
 	recv_frag = (mca_ptl_gm_recv_frag_t *) frag;
 	A_PRINT("the recv_frag inside matched is %p\n",recv_frag);
 	
-	ack = mca_ptl_gm_alloc_send_frag(ptl,NULL);
+	ack = mca_ptl_gm_alloc_send_frag( gm_ptl, NULL );
 	if (NULL == ack) {
 	    ompi_output(0,"[%s:%d] unable to alloc a gm fragment\n",
 			__FILE__,__LINE__);

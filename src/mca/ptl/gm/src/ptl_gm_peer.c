@@ -27,8 +27,8 @@ int mca_ptl_gm_peer_send(mca_ptl_gm_peer_t *ptl_peer,
     size_in = *size;
   
     if(size_in > 0) {
-       ompi_convertor_t *convertor;
-       int rc;
+	ompi_convertor_t *convertor;
+	int rc;
 
         /* first fragment (eager send) and first fragment of long protocol
          * can use the convertor initialized on the request, remaining
@@ -43,12 +43,12 @@ int mca_ptl_gm_peer_send(mca_ptl_gm_peer_t *ptl_peer,
             convertor = &(fragment->frag_base.frag_base.frag_convertor);
             ompi_convertor_copy(&sendreq->req_convertor, convertor);
             ompi_convertor_init_for_send(
-                convertor,
-                0,
-                sendreq->req_base.req_datatype,
-                sendreq->req_base.req_count,
-                sendreq->req_base.req_addr,
-                offset);
+					 convertor,
+					 0,
+					 sendreq->req_base.req_datatype,
+					 sendreq->req_base.req_count,
+					 sendreq->req_base.req_addr,
+					 offset);
         }
 
         /* if data is contigous convertor will return an offset
@@ -56,10 +56,10 @@ int mca_ptl_gm_peer_send(mca_ptl_gm_peer_t *ptl_peer,
          * that holds the packed data
          */
 
-       /*copy the data to the registered buffer*/
+	/*copy the data to the registered buffer*/
         outvec[0].iov_base = fragment->send_buf;
-        if( size_in < GM_SEND_BUF_SIZE ) outvec[0].iov_len = size_in;
-        else outvec[0].iov_len = GM_SEND_BUF_SIZE;
+        if( size_in < GM_BUF_SIZE ) outvec[0].iov_len = size_in;
+        else outvec[0].iov_len = GM_BUF_SIZE;
 
         if((rc = ompi_convertor_pack(convertor, &(outvec[0]), 1)) < 0)
             return OMPI_ERROR;
@@ -69,11 +69,11 @@ int mca_ptl_gm_peer_send(mca_ptl_gm_peer_t *ptl_peer,
         size_out = outvec[0].iov_len;
     }
    
-   /* initiate the gm send */
-   gm_send_with_callback(ptl_peer->peer_ptl->my_port, fragment->send_buf, 
-                        GM_SIZE,size_out,
-                         GM_LOW_PRIORITY, ptl_peer->local_id,
-                         ptl_peer->port_number,send_callback, (void *)sendreq );
+    /* initiate the gm send */
+    gm_send_with_callback(ptl_peer->peer_ptl->my_port, fragment->send_buf, 
+			  30 /*GM_BUF_SIZE*/, size_out,
+			  GM_LOW_PRIORITY, ptl_peer->local_id,
+			  ptl_peer->port_number,send_callback, (void *)sendreq );
    
 
     fragment->frag_base.frag_base.frag_owner = &ptl_peer->peer_ptl->super;
@@ -81,7 +81,7 @@ int mca_ptl_gm_peer_send(mca_ptl_gm_peer_t *ptl_peer,
     fragment->frag_base.frag_base.frag_addr = outvec[0].iov_base;
     fragment->frag_base.frag_base.frag_size = *size; /*XXX: should this be size_out */
 
-   return OMPI_SUCCESS;
+    return OMPI_SUCCESS;
 }
 
 

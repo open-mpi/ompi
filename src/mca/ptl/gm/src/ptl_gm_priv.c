@@ -54,12 +54,10 @@ int mca_ptl_gm_peer_send( mca_ptl_gm_peer_t *ptl_peer,
     A_PRINT("peer send (could be ack) : headerlen is %d \n", header_length);
     size_in = *size;
   
-    outvec.iov_base = (char*)fragment->send_buf;
-   
-    if( (size_in + header_length) <= GM_SEND_BUF_SIZE ) 
-            outvec.iov_len = size_in;
+    if( (size_in + header_length) <= GM_BUF_SIZE ) 
+	outvec.iov_len = size_in;
     else
-            outvec.iov_len = GM_SEND_BUF_SIZE - header_length;
+	outvec.iov_len = GM_BUF_SIZE - header_length;
 
     if(size_in > 0) {
         ompi_convertor_t *convertor;
@@ -67,10 +65,8 @@ int mca_ptl_gm_peer_send( mca_ptl_gm_peer_t *ptl_peer,
 	unsigned int in_size, max_data;
 
         /* first fragment (eager send) and first fragment of long protocol
-         * can use the convertor initialized on the request, remaining
-         * fragments
-         * must copy/reinit the convertor as the transfer could be in
-         * parallel.
+         * can use the convertor initialized on the request. The remaining
+         * fragments must copy/reinit the convertor.
          */
         if( offset <= mca_ptl_gm_module.super.ptl_first_frag_size ) {
             convertor = &sendreq->req_convertor;
@@ -90,24 +86,29 @@ int mca_ptl_gm_peer_send( mca_ptl_gm_peer_t *ptl_peer,
          * that holds the packed data
          */
 
-        /*copy the data to the registered buffer*/
+        /* copy the data to the registered buffer */
         outvec.iov_base = ((char*)fragment->send_buf) + header_length;
 	max_data = outvec.iov_len;
 	in_size = 1;
         if((rc = ompi_convertor_pack(convertor, &(outvec), &in_size, &max_data, &freeAfter)) < 0)
             return OMPI_ERROR;
     }
-    /* update the fields */
-    outvec.iov_len += header_length;
+
+    if( (header->hdr_common.hdr_type == MCA_PTL_HDR_TYPE_FRAG) ||
+	(header->hdr_common.hdr_type == MCA_PTL_HDR_TYPE_MATCH) )
+	header->hdr_frag_length = outvec.iov_len;
 
     /* adjust size and request offset to reflect actual number of bytes
-     * packed by convertor */
-    size_out = outvec.iov_len;
+     * packed by convertor
+     */
+    size_out = outvec.iov_len + header_length;
   
     A_PRINT( "peer_send request is %p\t, frag->req = %p, fragment is %p,size is %d, send_frag is %p\n",
-	     sendreq, fragment->req,fragment,size_out,
+	     sendreq, fragment->req, fragment, size_out,
 	     ((mca_ptl_base_header_t *)header)->hdr_ack.hdr_src_ptr);
  
+    printf( "send pointer %p SIZE %d length %d \n", (void*)fragment->send_buf, GM_BUF_SIZE, size_out );
+
     /* initiate the gm send */
     gm_send_with_callback( ptl_peer->peer_ptl->gm_port, fragment->send_buf, 
                            GM_SIZE, size_out, GM_LOW_PRIORITY, ptl_peer->local_id,
@@ -115,13 +116,9 @@ int mca_ptl_gm_peer_send( mca_ptl_gm_peer_t *ptl_peer,
 
     fragment->send_frag.frag_base.frag_owner = &ptl_peer->peer_ptl->super;
     fragment->send_frag.frag_base.frag_peer = (struct mca_ptl_base_peer_t*)ptl_peer;
-    fragment->send_frag.frag_base.frag_addr = ((char*)outvec.iov_base) + header_length; 
+    fragment->send_frag.frag_base.frag_addr = ((char*)fragment->send_buf) + header_length; 
     fragment->send_frag.frag_base.frag_size = size_out - header_length;
-
     fragment->send_frag.frag_request = sendreq;
-    if( (header->hdr_common.hdr_type == MCA_PTL_HDR_TYPE_FRAG) ||
-	(header->hdr_common.hdr_type == MCA_PTL_HDR_TYPE_MATCH) )
-	header->hdr_frag_length = size_out - header_length;
 
     *size = (size_out - header_length);
     A_PRINT("inside peer send : bytes sent is %d\n",*size);
@@ -487,7 +484,7 @@ int mca_ptl_gm_analyze_recv_event( struct mca_ptl_gm_module_t* ptl, gm_recv_even
 	
 	if( (frag != NULL) && !(frag->matched) ) {
 	    /* allocate temporary buffer: temporary until the fragment will be finally matched */
-	    char* buffer = malloc( GM_SEND_BUF_SIZE );
+	    char* buffer = malloc( GM_BUF_SIZE );
 	    if (NULL == buffer) {
 		ompi_output(0, "[%s:%d] error in allocating memory \n", __FILE__, __LINE__);
 	    }
@@ -498,8 +495,7 @@ int mca_ptl_gm_analyze_recv_event( struct mca_ptl_gm_module_t* ptl, gm_recv_even
 	    /* mark the fragment as having pending buffers */
 	    frag->have_allocated_buffer = true;
 	}
-	gm_provide_receive_buffer( ptl->gm_port, gm_ntohp(event->recv.buffer),
-				   GM_SIZE, GM_LOW_PRIORITY );
+	gm_provide_receive_buffer( ptl->gm_port, mesg, GM_SIZE, GM_LOW_PRIORITY );
 	break;
     case GM_NO_RECV_EVENT:
 	break;
