@@ -52,7 +52,7 @@ void mca_ptl_tcp_peer_init(mca_ptl_peer_t* ptl_peer)
     ptl_peer->peer_recv_frag = 0;
     ptl_peer->peer_state = MCA_PTL_TCP_CLOSED;
     ptl_peer->peer_retries = 0;
-    lam_list_init(&ptl_peer->peer_frags);
+    STATIC_INIT(ptl_peer->peer_frags, &lam_list_cls);
     lam_mutex_init(&ptl_peer->peer_lock);
 }
 

@@ -33,6 +33,10 @@ typedef enum {
 typedef struct {
   /* base request */
   lam_request_t super;
+  /* pointer to application buffer */
+  void *req_addr;
+  /* length of application buffer */
+  size_t req_length;
   /* peer process - rank w/in this communicator */
   int32_t req_peer;
   /* user defined tag */
@@ -45,10 +49,6 @@ typedef struct {
   mca_pml_base_request_type_t req_type;
   /* MPI request status */
   mca_pml_base_request_status_t req_status;
-  /* pointer to application buffer */
-  void *req_addr;
-  /* length of application buffer */
-  size_t req_length;
   /* persistence indicating if the this is a persistent request */
   bool req_persistent;
   /* flag indicating if MPI is done with this request called */

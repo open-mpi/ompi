@@ -59,11 +59,11 @@ static inline int mca_pml_teg_param_register_int(
 int mca_pml_teg_module_open(void)
 {
     mca_pml_teg.teg_free_list_num =
-        mca_pml_teg_param_register_int("free-list-num", 256);
+        mca_pml_teg_param_register_int("free_list_num", 256);
     mca_pml_teg.teg_free_list_max =
-        mca_pml_teg_param_register_int("free-list-max", -1);
+        mca_pml_teg_param_register_int("free_list_max", -1);
     mca_pml_teg.teg_free_list_inc =
-        mca_pml_teg_param_register_int("free-list-inc", 256);
+        mca_pml_teg_param_register_int("free_list_inc", 256);
     return LAM_SUCCESS;
 }
 
@@ -97,6 +97,7 @@ mca_pml_t* mca_pml_teg_module_init(int* priority, int* min_thread, int* max_thre
         
     lam_list_init(&mca_pml_teg.teg_incomplete_sends);
     lam_mutex_init(&mca_pml_teg.teg_lock);
+    mca_pml_teg.teg_recv_sequence = 0;
     return &mca_pml_teg.super;
 }
 

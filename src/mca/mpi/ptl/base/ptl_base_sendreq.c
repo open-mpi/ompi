@@ -15,7 +15,7 @@ lam_class_info_t mca_ptl_base_send_request_cls = {
 void mca_ptl_base_send_request_init(mca_ptl_base_send_request_t* req)
 {
     SUPER_INIT(req, &mca_pml_base_request_cls);
-    lam_list_init(&req->req_unacked_frags);
+    STATIC_INIT(req->req_unacked_frags, &lam_list_cls);
 }
 
 void mca_ptl_base_send_request_destroy(mca_ptl_base_send_request_t* req)

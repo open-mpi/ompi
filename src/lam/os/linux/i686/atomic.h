@@ -24,7 +24,7 @@ typedef struct {
  */
 typedef struct {
     lam_lock_data_t lock;
-    volatile unsigned long long data;
+    volatile uint64_t data;
 } bigAtomicUnsignedInt;
 
 /* JMS This section is commented out */

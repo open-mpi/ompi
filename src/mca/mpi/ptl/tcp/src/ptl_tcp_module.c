@@ -103,28 +103,30 @@ int mca_ptl_tcp_module_open(void)
 {
     /* register TCP module parameters */
     mca_ptl_tcp_module.tcp_if_include =
-        mca_ptl_tcp_param_register_string("if-include", "");
+        mca_ptl_tcp_param_register_string("if_include", "");
     mca_ptl_tcp_module.tcp_if_exclude =
-        mca_ptl_tcp_param_register_string("if-exclude", "");
+        mca_ptl_tcp_param_register_string("if_exclude", "");
     mca_ptl_tcp_module.tcp_free_list_num =
-        mca_ptl_tcp_param_register_int("free-list-num", 256);
+        mca_ptl_tcp_param_register_int("free_list_num", 256);
     mca_ptl_tcp_module.tcp_free_list_max =
-        mca_ptl_tcp_param_register_int("free-list-max", -1);
+        mca_ptl_tcp_param_register_int("free_list_max", -1);
     mca_ptl_tcp_module.tcp_free_list_inc =
-        mca_ptl_tcp_param_register_int("free-list-inc", 256);
+        mca_ptl_tcp_param_register_int("free_list_inc", 256);
     mca_ptl_tcp.super.ptl_exclusivity =
         mca_ptl_tcp_param_register_int("exclusivity", 0);
     mca_ptl_tcp.super.ptl_first_frag_size =
-        mca_ptl_tcp_param_register_int("first-frag-size", 16*1024);
+        mca_ptl_tcp_param_register_int("first_frag_size", 16*1024);
     mca_ptl_tcp.super.ptl_min_frag_size = 
-        mca_ptl_tcp_param_register_int("min-frag-size", 64*1024);
+        mca_ptl_tcp_param_register_int("min_frag_size", 64*1024);
     mca_ptl_tcp.super.ptl_max_frag_size =
-        mca_ptl_tcp_param_register_int("max-frag-size", -1);
+        mca_ptl_tcp_param_register_int("max_frag_size", -1);
     return LAM_SUCCESS;
 }
 
 int mca_ptl_tcp_module_close(void)
 {
+    LAM_FREE(mca_ptl_tcp_module.tcp_if_include);
+    LAM_FREE(mca_ptl_tcp_module.tcp_if_exclude);
     return LAM_SUCCESS;
 }
 
@@ -249,12 +251,8 @@ static int mca_ptl_tcp_module_exchange(void)
          addrs[i].addr_port = mca_ptl_tcp_module.tcp_listen;
          addrs[i].addr_inuse = 0;
      }
-#if TIM_HASNT_IMPLEMENTED_THIS_YET
      return mca_base_modex_send(&mca_ptl_tcp_module.super.ptlm_version,
          addrs, sizeof(mca_ptl_tcp_t),mca_ptl_tcp_module.tcp_num_ptls);
-#else
-     return LAM_ERROR;
-#endif
 }
 
 /*

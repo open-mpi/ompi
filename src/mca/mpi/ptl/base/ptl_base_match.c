@@ -17,6 +17,32 @@
 #include "mca/mpi/ptl/base/ptl_base_header.h"
 #include "mca/mpi/ptl/base/ptl_base_match.h"
 
+
+/*
+ * Specialized matching routines for internal use only.
+ */
+
+static mca_ptl_base_recv_request_t *mca_ptl_base_check_recieves_for_match(
+    mca_ptl_base_header_t *frag_header,
+    mca_pml_comm_t *ptl_comm);
+                                                                                                                            
+static mca_ptl_base_recv_request_t *mca_ptl_base_check_wild_receives_for_match(
+    mca_ptl_base_header_t *frag_header,
+    mca_pml_comm_t *ptl_comm);
+                                                                                                                            
+static mca_ptl_base_recv_request_t *mca_ptl_base_check_specific_receives_for_match(
+    mca_ptl_base_header_t *frag_header,
+    mca_pml_comm_t *ptl_comm);
+                                                                                                                            
+static mca_ptl_base_recv_request_t *mca_ptl_base_check_specific_and_wild_receives_for_match(
+    mca_ptl_base_header_t *frag_header,
+    mca_pml_comm_t *ptl_comm);
+                                                                                                                            
+static void mca_ptl_base_check_cantmatch_for_match(
+    lam_list_t *additional_matches,
+    mca_pml_comm_t *pml_comm, int frag_src);
+
+
 /**
  * RCS/CTS receive side matching
  *
@@ -116,21 +142,21 @@ int mca_ptl_base_match(mca_ptl_base_header_t *frag_header,
             /* if no match found, place on unexpected queue - need to
              * lock to prevent probe from interfering with updating
              * the list */
-            THREAD_LOCK((pml_comm->unexpected_frags_lock)+frag_src);
-            lam_list_append( ((pml_comm->unexpected_frags)+frag_src),
+            THREAD_LOCK((pml_comm->c_unexpected_frags_lock)+frag_src);
+            lam_list_append( ((pml_comm->c_unexpected_frags)+frag_src),
                     (lam_list_item_t *)frag_desc);
-            THREAD_UNLOCK((pml_comm->unexpected_frags_lock)+frag_src);
+            THREAD_UNLOCK((pml_comm->c_unexpected_frags_lock)+frag_src);
 
         }
 
         /* 
          * Now that new message has arrived, check to see if
-         *   any fragments on the c_frags_cant_match list
+         *   any fragments on the c_c_frags_cant_match list
          *   may now be used to form new matchs
          */
-        if (0 < lam_list_get_size((pml_comm->frags_cant_match)+frag_src)) {
+        if (0 < lam_list_get_size((pml_comm->c_frags_cant_match)+frag_src)) {
 
-            lam_check_cantmatch_for_match(additional_matches,pml_comm,frag_src);
+            mca_ptl_base_check_cantmatch_for_match(additional_matches,pml_comm,frag_src);
 
         }
 
@@ -149,7 +175,7 @@ int mca_ptl_base_match(mca_ptl_base_header_t *frag_header,
          * This message comes after the next expected, so it
          * is ahead of sequence.  Save it for later.
          */
-        lam_list_append( ((pml_comm->frags_cant_match)+frag_src),
+        lam_list_append( ((pml_comm->c_frags_cant_match)+frag_src),
                     (lam_list_item_t *)frag_desc);
 
         /* now that the fragment is on the list, ok to
@@ -177,7 +203,7 @@ int mca_ptl_base_match(mca_ptl_base_header_t *frag_header,
  * This routine assumes that the appropriate matching locks are
  * set by the upper level routine.
  */
-mca_ptl_base_recv_request_t *mca_ptl_base_check_recieves_for_match
+static mca_ptl_base_recv_request_t *mca_ptl_base_check_recieves_for_match
   (mca_ptl_base_header_t *frag_header, mca_pml_comm_t *pml_comm)
 {
     /* local parameters */
@@ -194,23 +220,28 @@ mca_ptl_base_recv_request_t *mca_ptl_base_check_recieves_for_match
      */
     frag_src = frag_header->hdr_frag_seq;
 
-    if (lam_list_get_size((pml_comm->specific_receives)+frag_src) == 0 ){
+    if (lam_list_get_size((pml_comm->c_specific_receives)+frag_src) == 0 ){
         /*
          * There are only wild irecvs, so specialize the algorithm.
          */
-        return_match = check_wild_receives_for_match(frag_header, pml_comm);
-    } else if (lam_list_get_size(&(pml_comm->wild_receives)) == 0 ) {
+        THREAD_LOCK(&pml_comm->c_wild_lock);
+        return_match = mca_ptl_base_check_wild_receives_for_match(frag_header, pml_comm);
+        THREAD_UNLOCK(&pml_comm->c_wild_lock);
+
+    } else if (lam_list_get_size(&(pml_comm->c_wild_receives)) == 0 ) {
         /*
          * There are only specific irecvs, so specialize the algorithm.
          */
-        return_match = check_specific_receives_for_match(frag_header, 
+        return_match = mca_ptl_base_check_specific_receives_for_match(frag_header, 
                 pml_comm);
     } else {
         /*
          * There are some of each.
          */
-        return_match = check_specific_and_wild_receives_for_match(frag_header, 
+        THREAD_LOCK(&pml_comm->c_wild_lock);
+        return_match = mca_ptl_base_check_specific_and_wild_receives_for_match(frag_header, 
                 pml_comm);
+        THREAD_UNLOCK(&pml_comm->c_wild_lock);
     }
 
     return return_match;
@@ -231,7 +262,7 @@ mca_ptl_base_recv_request_t *mca_ptl_base_check_recieves_for_match
  * This routine assumes that the appropriate matching locks are
  * set by the upper level routine.
  */
-mca_ptl_base_recv_request_t *check_wild_receives_for_match(
+static mca_ptl_base_recv_request_t *mca_ptl_base_check_wild_receives_for_match(
         mca_ptl_base_header_t *frag_header,
         mca_pml_comm_t *pml_comm)
 {
@@ -249,9 +280,9 @@ mca_ptl_base_recv_request_t *check_wild_receives_for_match(
      * change this list.
      */
     for(wild_recv = (mca_ptl_base_recv_request_t *) 
-            lam_list_get_first(&(pml_comm->wild_receives));
+            lam_list_get_first(&(pml_comm->c_wild_receives));
             wild_recv != (mca_ptl_base_recv_request_t *)
-            lam_list_get_end(&(pml_comm->wild_receives));
+            lam_list_get_end(&(pml_comm->c_wild_receives));
             wild_recv = (mca_ptl_base_recv_request_t *) 
             ((lam_list_item_t *)wild_recv)->lam_list_next) {
 
@@ -271,7 +302,7 @@ mca_ptl_base_recv_request_t *check_wild_receives_for_match(
             return_match = wild_recv;
 
             /* remove this irecv from the postd wild ireceive list */
-            lam_list_remove_item(&(pml_comm->wild_receives),
+            lam_list_remove_item(&(pml_comm->c_wild_receives),
                     (lam_list_item_t *)wild_recv);
 
             /* found match - no need to continue */
@@ -298,7 +329,7 @@ mca_ptl_base_recv_request_t *check_wild_receives_for_match(
  * This routine assumes that the appropriate matching locks are
  * set by the upper level routine.
  */
-mca_ptl_base_recv_request_t *check_specific_receives_for_match(
+static mca_ptl_base_recv_request_t *mca_ptl_base_check_c_specific_receives_for_match(
         mca_ptl_base_header_t *frag_header,
         mca_pml_comm_t *pml_comm)
 {
@@ -316,9 +347,9 @@ mca_ptl_base_recv_request_t *check_specific_receives_for_match(
      * Loop over the specific irecvs.
      */
     for(specific_recv = (mca_ptl_base_recv_request_t *) 
-            lam_list_get_first((pml_comm->specific_receives)+frag_src);
+            lam_list_get_first((pml_comm->c_specific_receives)+frag_src);
             specific_recv != (mca_ptl_base_recv_request_t *)
-            lam_list_get_end((pml_comm->specific_receives)+frag_src);
+            lam_list_get_end((pml_comm->c_specific_receives)+frag_src);
             specific_recv = (mca_ptl_base_recv_request_t *) 
             ((lam_list_item_t *)specific_recv)->lam_list_next) {
         /*
@@ -334,7 +365,7 @@ mca_ptl_base_recv_request_t *check_specific_receives_for_match(
             return_match = specific_recv;
 
             /* remove descriptor from posted specific ireceive list */
-            lam_list_remove_item((pml_comm->specific_receives)+frag_src,
+            lam_list_remove_item((pml_comm->c_specific_receives)+frag_src,
                     (lam_list_item_t *)specific_recv);
 
             break;
@@ -360,7 +391,7 @@ mca_ptl_base_recv_request_t *check_specific_receives_for_match(
  * This routine assumes that the appropriate matching locks are
  * set by the upper level routine.
  */
-mca_ptl_base_recv_request_t *check_specific_and_wild_receives_for_match(
+static mca_ptl_base_recv_request_t *mca_ptl_base_check_specific_and_wild_receives_for_match(
         mca_ptl_base_header_t *frag_header,
         mca_pml_comm_t *pml_comm)
 {
@@ -379,9 +410,9 @@ mca_ptl_base_recv_request_t *check_specific_and_wild_receives_for_match(
      *  have been posted.
      */
     specific_recv = (mca_ptl_base_recv_request_t *) 
-            lam_list_get_first((pml_comm->specific_receives)+frag_src);
+            lam_list_get_first((pml_comm->c_specific_receives)+frag_src);
     wild_recv = (mca_ptl_base_recv_request_t *) 
-            lam_list_get_first(&(pml_comm->wild_receives));
+            lam_list_get_first(&(pml_comm->c_wild_receives));
 
     specific_recv_seq = specific_recv->req_sequence;
     wild_recv_seq = wild_recv->req_sequence;
@@ -404,7 +435,7 @@ mca_ptl_base_recv_request_t *check_specific_and_wild_receives_for_match(
                 return_match=wild_recv;
 
                 /* remove this recv from the wild receive queue */
-                lam_list_remove_item(&(pml_comm->wild_receives),
+                lam_list_remove_item(&(pml_comm->c_wild_receives),
                         (lam_list_item_t *)wild_recv);
 
                 return return_match;
@@ -421,9 +452,9 @@ mca_ptl_base_recv_request_t *check_specific_and_wild_receives_for_match(
              * rest of the specific ones.
              */
             if (wild_recv == (mca_ptl_base_recv_request_t *)
-                    lam_list_get_end(&(pml_comm->wild_receives)) ) 
+                    lam_list_get_end(&(pml_comm->c_wild_receives)) ) 
             { 
-                return_match = check_specific_receives_for_match(frag_header,
+                return_match = mca_ptl_base_check_c_specific_receives_for_match(frag_header,
                         pml_comm);
 
                 return return_match;
@@ -450,7 +481,7 @@ mca_ptl_base_recv_request_t *check_specific_and_wild_receives_for_match(
                 return_match = specific_recv;
 
                 /* remove descriptor from specific receive list */
-                lam_list_remove_item((pml_comm->specific_receives)+frag_src,
+                lam_list_remove_item((pml_comm->c_specific_receives)+frag_src,
                     (lam_list_item_t *)specific_recv);
 
                 return return_match;
@@ -467,9 +498,9 @@ mca_ptl_base_recv_request_t *check_specific_and_wild_receives_for_match(
              * rest of the wild ones.
              */
             if (specific_recv == (mca_ptl_base_recv_request_t *)
-                    lam_list_get_end((pml_comm->specific_receives)+frag_src) )
+                    lam_list_get_end((pml_comm->c_specific_receives)+frag_src) )
             {
-                return_match = check_wild_receives_for_match(frag_header,
+                return_match = mca_ptl_base_check_wild_receives_for_match(frag_header,
                         pml_comm);
 
                 return return_match;
@@ -492,7 +523,7 @@ mca_ptl_base_recv_request_t *check_specific_and_wild_receives_for_match(
  * frags.
  *
  * @param additional_matches List to hold new matches with fragments
- * from the frags_cant_match list. (IN/OUT)
+ * from the c_frags_cant_match list. (IN/OUT)
  *
  * @param pml_comm Pointer to the communicator structure used for
  * matching purposes. (IN)
@@ -501,7 +532,7 @@ mca_ptl_base_recv_request_t *check_specific_and_wild_receives_for_match(
  * set by the upper level routine.
  */
 
-void lam_check_cantmatch_for_match(lam_list_t *additional_matches,
+static void mca_ptl_base_check_cantmatch_for_match(lam_list_t *additional_matches,
         mca_pml_comm_t *pml_comm, int frag_src)
 {
     /* local parameters */
@@ -518,11 +549,11 @@ void lam_check_cantmatch_for_match(lam_list_t *additional_matches,
 
     /*
      * Loop over all the out of sequence messages.  No ordering is assumed
-     * in the frags_cant_match list.
+     * in the c_frags_cant_match list.
      */
 
     match_found = 1;
-    while ((0 < lam_list_get_size((pml_comm->frags_cant_match)+frag_src)) &&
+    while ((0 < lam_list_get_size((pml_comm->c_frags_cant_match)+frag_src)) &&
             match_found) {
 
         /* initialize match flag for this search */
@@ -535,11 +566,11 @@ void lam_check_cantmatch_for_match(lam_list_t *additional_matches,
          * number next_msg_seq_expected
          */
         for(frag_desc = (mca_pml_base_recv_frag_t *) 
-            lam_list_get_first((pml_comm->frags_cant_match)+frag_src);
+            lam_list_get_first((pml_comm->c_frags_cant_match)+frag_src);
             frag_desc != (mca_pml_base_recv_frag_t *)
-            lam_list_get_end((pml_comm->frags_cant_match)+frag_src);
+            lam_list_get_end((pml_comm->c_frags_cant_match)+frag_src);
             frag_desc = (mca_pml_base_recv_frag_t *) 
-            ((lam_list_item_t *)frags_cant_match)->lam_list_next) 
+            ((lam_list_item_t *)c_frags_cant_match)->lam_list_next) 
         {
             /*
              * If the message has the next expected seq from that proc...
@@ -566,7 +597,7 @@ void lam_check_cantmatch_for_match(lam_list_t *additional_matches,
                 /*
                  * remove frag_desc from list
                  */
-                lam_list_remove_item((pml_comm->frags_cant_match)+frag_src,
+                lam_list_remove_item((pml_comm->c_frags_cant_match)+frag_src,
                         (lam_list_item_t *)frag_desc);
 
                 /*
@@ -593,14 +624,14 @@ void lam_check_cantmatch_for_match(lam_list_t *additional_matches,
                     /* if no match found, place on unexpected queue - need to
                      * lock to prevent probe from interfering with updating
                      * the list */
-                    THREAD_LOCK((pml_comm->unexpected_frags_lock)+frag_src);
-                    lam_list_append( ((pml_comm->unexpected_frags)+frag_src),
+                    THREAD_LOCK((pml_comm->c_unexpected_frags_lock)+frag_src);
+                    lam_list_append( ((pml_comm->c_unexpected_frags)+frag_src),
                             (lam_list_item_t *)frag_desc);
-                    THREAD_UNLOCK((pml_comm->unexpected_frags_lock)+frag_src);
+                    THREAD_UNLOCK((pml_comm->c_unexpected_frags_lock)+frag_src);
 
                 }
 
-                /* frags_cant_match is not an ordered list, so exit loop
+                /* c_frags_cant_match is not an ordered list, so exit loop
                  * and re-start search for next sequence number */
                 break;
 

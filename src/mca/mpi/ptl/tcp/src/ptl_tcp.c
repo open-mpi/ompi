@@ -7,6 +7,7 @@
 #include "lam/util/if.h"
 #include "mca/mpi/pml/pml.h"
 #include "mca/mpi/ptl/ptl.h"
+#include "mca/mpi/ptl/base/ptl_base_sendreq.h"
 #include "mca/lam/base/mca_base_module_exchange.h"
 #include "ptl_tcp.h"
 #include "ptl_tcp_addr.h"
@@ -105,7 +106,11 @@ int mca_ptl_tcp_fini(struct mca_ptl_t* ptl)
 int mca_ptl_tcp_request_alloc(struct mca_ptl_t* ptl, struct mca_ptl_base_send_request_t** request)
 {
     int rc;
-    *request = (struct mca_ptl_base_send_request_t*)lam_free_list_get(&mca_ptl_tcp_module.tcp_send_requests, &rc);
+    mca_ptl_base_send_request_t* sendreq =
+        (mca_ptl_base_send_request_t*)lam_free_list_get(&mca_ptl_tcp_module.tcp_send_requests, &rc);
+    if(NULL != sendreq)
+        sendreq->req_owner = ptl;
+    *request = sendreq;
     return rc;
 }
 

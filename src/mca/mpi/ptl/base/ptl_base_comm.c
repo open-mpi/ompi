@@ -11,7 +11,8 @@ lam_class_info_t mca_pml_ptl_comm_cls = {
 void mca_pml_ptl_comm_init(mca_pml_comm_t* comm)
 {
     SUPER_INIT(comm, &lam_object_cls);
-    lam_list_init(&comm->wild_receives);
+    STATIC_INIT(comm->c_wild_receives, &lam_list_cls);
+    lam_mutex_init(&comm->c_wild_lock);
 }
 
 void mca_pml_ptl_comm_destroy(mca_pml_comm_t* comm)
@@ -19,11 +20,11 @@ void mca_pml_ptl_comm_destroy(mca_pml_comm_t* comm)
     LAM_FREE(comm->c_msg_seq);
     LAM_FREE(comm->c_next_msg_seq);
     LAM_FREE(comm->c_matching_lock);
-    LAM_FREE(comm->unexpected_frags);
-    LAM_FREE(comm->unexpected_frags_lock);
-    LAM_FREE(comm->frags_cant_match);
-    LAM_FREE(comm->specific_receives);
-    lam_list_destroy(&comm->wild_receives);
+    LAM_FREE(comm->c_unexpected_frags);
+    LAM_FREE(comm->c_unexpected_frags_lock);
+    LAM_FREE(comm->c_frags_cant_match);
+    LAM_FREE(comm->c_specific_receives);
+    lam_list_destroy(&comm->c_wild_receives);
     SUPER_DESTROY(comm, &lam_object_cls);
 }
 
@@ -50,32 +51,32 @@ int mca_pml_ptl_comm_init_size(mca_pml_comm_t* comm, size_t size)
         lam_mutex_init(comm->c_matching_lock+i);
 
     /* unexpected fragments queues */
-    comm->unexpected_frags = (lam_list_t*)LAM_MALLOC(sizeof(lam_list_t) * size);
-    if(NULL == comm->unexpected_frags)
+    comm->c_unexpected_frags = (lam_list_t*)LAM_MALLOC(sizeof(lam_list_t) * size);
+    if(NULL == comm->c_unexpected_frags)
         return LAM_ERR_OUT_OF_RESOURCE;
     for(i=0; i<size; i++)
-        lam_list_init(comm->unexpected_frags+i);
+        lam_list_init(comm->c_unexpected_frags+i);
 
     /* these locks are needed to avoid a probe interfering with a match */
-    comm->unexpected_frags_lock = (lam_mutex_t*)LAM_MALLOC(sizeof(lam_mutex_t) * size);
-    if(NULL == comm->unexpected_frags_lock)
+    comm->c_unexpected_frags_lock = (lam_mutex_t*)LAM_MALLOC(sizeof(lam_mutex_t) * size);
+    if(NULL == comm->c_unexpected_frags_lock)
         return LAM_ERR_OUT_OF_RESOURCE;
     for(i=0; i<size; i++)
-        lam_mutex_init(comm->unexpected_frags_lock+i);
+        lam_mutex_init(comm->c_unexpected_frags_lock+i);
 
      /* out-of-order fragments queues */
-    comm->frags_cant_match = (lam_list_t*)LAM_MALLOC(sizeof(lam_list_t) * size);
-    if(NULL == comm->frags_cant_match)
+    comm->c_frags_cant_match = (lam_list_t*)LAM_MALLOC(sizeof(lam_list_t) * size);
+    if(NULL == comm->c_frags_cant_match)
         return LAM_ERR_OUT_OF_RESOURCE;
     for(i=0; i<size; i++)
-        lam_list_init(comm->frags_cant_match+i);
+        lam_list_init(comm->c_frags_cant_match+i);
 
     /* queues of unmatched specific (source process specified) receives */
-    comm->specific_receives = (lam_list_t*)LAM_MALLOC(sizeof(lam_list_t) * size);
-    if(NULL == comm->specific_receives)
+    comm->c_specific_receives = (lam_list_t*)LAM_MALLOC(sizeof(lam_list_t) * size);
+    if(NULL == comm->c_specific_receives)
         return LAM_ERR_OUT_OF_RESOURCE;
     for(i=0; i<size; i++)
-        lam_list_init(comm->specific_receives+i);
+        lam_list_init(comm->c_specific_receives+i);
 
     return LAM_SUCCESS;
 }

@@ -6,6 +6,7 @@
 #define LAM_PML_TEG_SEND_REQUEST_H
 
 #include "pml_teg_proc.h"
+#include "mca/mpi/ptl/ptl.h"
 #include "mca/mpi/ptl/base/ptl_base_sendreq.h"
 #include "mca/mpi/ptl/base/ptl_base_sendfrag.h"
 
@@ -26,24 +27,23 @@ static inline mca_ptl_base_send_request_t* mca_pml_teg_send_request_alloc(
     THREAD_SCOPED_LOCK(&proc->proc_lock,
         (ptl_proc = mca_ptl_array_get_next(&proc->proc_ptl_first)));
     ptl = ptl_proc->ptl;
-
     *rc = ptl->ptl_request_alloc(ptl,&sendreq);
     if(NULL != sendreq)
-        sendreq->req_owner = ptl_proc;
-    return LAM_SUCCESS;
+        sendreq->req_peer = ptl_proc->ptl_peer;
+    return sendreq;
 }
 
 static inline void mca_ptl_base_send_request_return(
     mca_ptl_base_send_request_t* request)
 {
-
+    request->super.req_status = MCA_PML_STATUS_INVALID;
+    request->req_owner->ptl_request_return(request->req_owner, request);
 }
 
 static inline int mca_pml_teg_send_request_start(
     mca_ptl_base_send_request_t* req)
 {
-    mca_ptl_proc_t* ptl_proc = req->req_owner;
-    mca_ptl_t* ptl = ptl_proc->ptl;
+    mca_ptl_t* ptl = req->req_owner;
     size_t first_fragment_size = ptl->ptl_first_frag_size;
     int rc;
     bool complete;
@@ -51,7 +51,7 @@ static inline int mca_pml_teg_send_request_start(
     // start the first fragment
     if(req->req_length < first_fragment_size)
         first_fragment_size = req->req_length;
-    rc = ptl->ptl_send(ptl, ptl_proc->ptl_peer, req, first_fragment_size, &complete);
+    rc = ptl->ptl_send(ptl, req->req_peer, req, first_fragment_size, &complete);
     if(rc != LAM_SUCCESS)
         return rc;
 
