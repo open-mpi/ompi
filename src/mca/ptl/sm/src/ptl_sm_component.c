@@ -158,6 +158,9 @@ int mca_ptl_sm_component_open(void)
     OBJ_CONSTRUCT(&mca_ptl_sm.sm_second_frags, ompi_free_list_t);
     OBJ_CONSTRUCT(&mca_ptl_sm.sm_pending_ack_lock, ompi_mutex_t);
     OBJ_CONSTRUCT(&mca_ptl_sm.sm_pending_ack, ompi_list_t);
+/* debug */
+system("echo I am on host `hostname`");
+/* end debug */
 
     return OMPI_SUCCESS;
 }
