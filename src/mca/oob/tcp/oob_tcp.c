@@ -94,6 +94,7 @@ int mca_oob_tcp_open(void)
 int mca_oob_tcp_close(void)
 {
     if (mca_oob_tcp_component.tcp_listen_sd >= 0) {
+        ompi_event_del(&mca_oob_tcp_component.tcp_recv_event);
         close(mca_oob_tcp_component.tcp_listen_sd);
     }
 
