@@ -2,6 +2,11 @@
  * 
  * $HEADER$
  *
+ * BWB: COMPONENT TODO
+ *
+ *  - add process reaping code
+ *  - trigger status change events on process death
+ *
  */
 
 #include "ompi_config.h"
