@@ -24,7 +24,7 @@ gv_run minor   MINOR_VERSION
 gv_run release RELEASE_VERSION
 gv_run alpha   ALPHA_VERSION
 gv_run beta    BETA_VERSION
-gv_run cvs     CVS_VERSION
+gv_run svn     SVN_VERSION
 
 # Clean up
 

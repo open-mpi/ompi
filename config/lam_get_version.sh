@@ -19,7 +19,7 @@ else
     LAM_RELEASE_VERSION="`cat $srcfile | grep release | cut -d= -f2`"
     LAM_ALPHA_VERSION="`cat $srcfile | grep alpha | cut -d= -f2`"
     LAM_BETA_VERSION="`cat $srcfile | grep beta | cut -d= -f2`"
-    LAM_CVS_VERSION="`cat $srcfile | grep cvs | cut -d= -f2`"
+    LAM_SVN_VERSION="`cat $srcfile | grep svn | cut -d= -f2`"
     if test "$LAM_RELEASE_VERSION" != "0" -a "$LAM_RELEASE_VERSION" != ""; then
 	LAM_VERSION="$LAM_MAJOR_VERSION.$LAM_MINOR_VERSION.$LAM_RELEASE_VERSION"
     else
@@ -32,10 +32,10 @@ else
 	LAM_VERSION="${LAM_VERSION}b$LAM_BETA_VERSION"
     fi
 
-    if test "$LAM_CVS_VERSION" = "1"; then
-	LAM_VERSION="${LAM_VERSION}cvs"
-    elif test "`expr $LAM_CVS_VERSION \> 0`" = "1"; then
-	LAM_VERSION="${LAM_VERSION}cvs$LAM_CVS_VERSION"
+    if test "$LAM_SVN_VERSION" = "1"; then
+	LAM_VERSION="${LAM_VERSION}svn"
+    elif test "`expr $LAM_SVN_VERSION \> 0`" = "1"; then
+	LAM_VERSION="${LAM_VERSION}svn$LAM_SVN_VERSION"
     fi
 
     if test "$option" = ""; then
@@ -62,11 +62,11 @@ case "$option" in
     --beta)
 	echo $LAM_BETA_VERSION
 	;;
-    --cvs)
-	echo $LAM_CVS_VERSION
+    --svn)
+	echo $LAM_SVN_VERSION
 	;;
     --all)
-        echo ${LAM_VERSION}:${LAM_MAJOR_VERSION}:${LAM_MINOR_VERSION}:${LAM_RELEASE_VERSION}:${LAM_ALPHA_VERSION}:${LAM_BETA_VERSION}:${LAM_CVS_VERSION}
+        echo ${LAM_VERSION}:${LAM_MAJOR_VERSION}:${LAM_MINOR_VERSION}:${LAM_RELEASE_VERSION}:${LAM_ALPHA_VERSION}:${LAM_BETA_VERSION}:${LAM_SVN_VERSION}
         ;;
     -h|--help)
 	cat <<EOF
@@ -80,7 +80,7 @@ $0 <srcfile> [<option>]
     --release - Release version number
     --alpha   - Alpha version number
     --beta    - Beta version nmumber
-    --cvs     - CVS date stamp
+    --svn     - Subversion repository number
     --all     - Show all version numbers, separated by :
     --help    - This message
 EOF
