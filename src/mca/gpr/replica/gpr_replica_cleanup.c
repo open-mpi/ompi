@@ -70,7 +70,7 @@ void mca_gpr_replica_cleanup_job_nl(mca_ns_base_jobid_t jobid)
 void mca_gpr_replica_cleanup_proc(bool purge, ompi_process_name_t *proc)
 {
     OMPI_THREAD_LOCK(&mca_gpr_replica_mutex);
-    mca_gpr_replica_cleanup_proc_nl(purge, ompi_rte_get_self());
+    mca_gpr_replica_cleanup_proc_nl(purge, proc);
     OMPI_THREAD_UNLOCK(&mca_gpr_replica_mutex);
 }
 
@@ -83,8 +83,8 @@ void mca_gpr_replica_cleanup_proc_nl(bool purge, ompi_process_name_t *proc)
     mca_ns_base_jobid_t jobid;
 
 	if (mca_gpr_replica_debug) {
-		ompi_output(0, "[%d,%d,%d] gpr_replica_cleanup_proc: function entered",
-					OMPI_NAME_ARGS(*ompi_rte_get_self()));
+		ompi_output(0, "[%d,%d,%d] gpr_replica_cleanup_proc: function entered for process [%d,%d,%d]",
+					OMPI_NAME_ARGS(*ompi_rte_get_self()), OMPI_NAME_ARGS(*proc));
 	}
 	
     procname = ompi_name_server.get_proc_name_string(proc);
@@ -96,32 +96,35 @@ void mca_gpr_replica_cleanup_proc_nl(bool purge, ompi_process_name_t *proc)
 	 seg != (mca_gpr_replica_segment_t*)ompi_list_get_end(&mca_gpr_replica_head.registry);
 	 seg = (mca_gpr_replica_segment_t*)ompi_list_get_next(seg)) {
 
-	if (jobid == seg->owning_job) {
-	    /* adjust any startup synchro synchros owned
-	     * by the associated jobid by one.
-	     */
-		if (mca_gpr_replica_debug) {
-			ompi_output(0, "[%d,%d,%d] gpr_replica_cleanup_proc: adjusting synchros for segment %s",
-						OMPI_NAME_ARGS(*ompi_rte_get_self()), seg->name);
-		}
-		
-	    for (trig = (mca_gpr_replica_trigger_list_t*)ompi_list_get_first(&seg->triggers);
-		 	trig != (mca_gpr_replica_trigger_list_t*)ompi_list_get_end(&seg->triggers);
-		 	trig = (mca_gpr_replica_trigger_list_t*)ompi_list_get_next(trig)) {
-			if (OMPI_REGISTRY_SYNCHRO_MODE_STARTUP & trig->synch_mode) {
-				if (mca_gpr_replica_debug) {
-					ompi_output(0, "\tadjusting startup synchro");
-				}
-		    		trig->count--;
-			}
-	    }
-	    mca_gpr_replica_check_synchros(seg);
-	}
+        	if (jobid == seg->owning_job) {
+        	    /* adjust any startup synchro synchros owned
+        	     * by the associated jobid by one.
+        	     */
+        		if (mca_gpr_replica_debug) {
+        			ompi_output(0, "[%d,%d,%d] gpr_replica_cleanup_proc: adjusting synchros for segment %s",
+        						OMPI_NAME_ARGS(*ompi_rte_get_self()), seg->name);
+        		}
+        		
+        	    for (trig = (mca_gpr_replica_trigger_list_t*)ompi_list_get_first(&seg->triggers);
+        		 	trig != (mca_gpr_replica_trigger_list_t*)ompi_list_get_end(&seg->triggers);
+        		 	trig = (mca_gpr_replica_trigger_list_t*)ompi_list_get_next(trig)) {
+        			if (OMPI_REGISTRY_SYNCHRO_MODE_STARTUP & trig->synch_mode) {
+        				if (mca_gpr_replica_debug) {
+        					ompi_output(0, "\tadjusting startup synchro");
+        				}
+        		    		trig->count--;
+        			}
+                 if (mca_gpr_replica_debug) {
+                    ompi_output(0, "\ttrigger level %d current count %d", trig->trigger, trig->count);
+                 }
+        	    }
+        	    mca_gpr_replica_check_synchros(seg);
+        	}
 
-	if (purge) {
-	    /* remove name from the dictionary and set all associated object keys to invalid */
-	    mca_gpr_replica_delete_key(seg, procname);
-	}
+        	if (purge) {
+        	    /* remove name from the dictionary and set all associated object keys to invalid */
+        	    mca_gpr_replica_delete_key(seg, procname);
+        	}
     }
 
     if (purge) {
