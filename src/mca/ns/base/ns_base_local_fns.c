@@ -13,6 +13,7 @@
 #include <stdlib.h>
 
 #include "util/output.h"
+#include "util/printf.h"
 #include "mca/mca.h"
 #include "mca/ns/base/base.h"
 
