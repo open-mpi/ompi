@@ -9,6 +9,7 @@
 #include <libgen.h>
 #include <sys/param.h>
 #include <stdlib.h>
+#include <stdarg.h>
 
 #include "include/constants.h"
 #include "util/os_path.h"
@@ -20,13 +21,8 @@ char *ompi_os_path(bool relative, ...)
     char *element, *path;
     int num_elements, total_length;
 
-#if __STDC__
     va_start(ap, relative);
     va_start(ap1, relative);
-#else
-    va_start(ap);
-    va_start(ap1);
-#endif
 
     /* make sure system info is filled and separator is non-NULL */
     ompi_sys_info();

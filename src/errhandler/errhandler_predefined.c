@@ -3,11 +3,7 @@
  */
 
 #include <stdlib.h>
-#if __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 #include "util/output.h"
 #include "errhandler/errhandler.h"
@@ -33,11 +29,7 @@ void ompi_mpi_errors_are_fatal_comm_handler(struct ompi_communicator_t **comm,
   char *name;
   va_list arglist;
 
-#if __STDC__
   va_start(arglist, error_code);
-#else
-  va_start(arglist);
-#endif
 
   if (NULL != comm) {
       name = (*comm)->c_name;
@@ -54,11 +46,7 @@ void ompi_mpi_errors_are_fatal_file_handler(struct ompi_file_t **file,
   char *name;
   va_list arglist;
 
-#if __STDC__
   va_start(arglist, error_code);
-#else
-  va_start(arglist);
-#endif
 
   if (NULL != file) {
       name = (*file)->f_filename;
@@ -75,11 +63,7 @@ void ompi_mpi_errors_are_fatal_win_handler(struct ompi_win_t **win,
   char *name;
   va_list arglist;
 
-#if __STDC__
   va_start(arglist, error_code);
-#else
-  va_start(arglist);
-#endif
 
   if (NULL != win) {
       name = (*win)->w_name;

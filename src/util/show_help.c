@@ -58,11 +58,7 @@ int ompi_show_help(const char *filename, const char *topic,
         return ret;
     }
 
-#if __STDC__
     va_start(arglist, want_error_header);
-#else
-    va_start(arglist);
-#endif
     output(want_error_header, &array, filename, topic, arglist);
     va_end(arglist);
 

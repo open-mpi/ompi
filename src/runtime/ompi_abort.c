@@ -6,6 +6,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 
 #include "include/constants.h"
 #include "runtime/runtime.h"
@@ -18,11 +19,7 @@ int ompi_abort(int status, char *fmt, ...)
 
   /* If there was a message, output it */
 
-#if __STDC__
   va_start(arglist, fmt);
-#else
-  va_start(arglist);
-#endif
   if (NULL != fmt) {
     ompi_output(0, fmt);
   }
