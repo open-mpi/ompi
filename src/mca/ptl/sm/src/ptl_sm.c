@@ -234,20 +234,22 @@ int mca_ptl_sm_add_procs_same_base_addr(
 
     /* make sure n_to_allocate is greater than 0 */
 
-    /* set the shared memory offset */
-    mca_ptl_sm_component.sm_offset=(size_t *)
-        malloc(n_to_allocate*sizeof(size_t));
-    if(NULL == mca_ptl_sm_component.sm_offset ) {
-        return_code=OMPI_ERR_OUT_OF_RESOURCE;
-        goto CLEANUP;
-    }
+    if ( !mca_ptl_sm[0].ptl_inited ) {
+        /* set the shared memory offset */
+        mca_ptl_sm_component.sm_offset=(size_t *)
+            malloc(n_to_allocate*sizeof(size_t));
+            if(NULL == mca_ptl_sm_component.sm_offset ) {
+            return_code=OMPI_ERR_OUT_OF_RESOURCE;
+            goto CLEANUP;
+        }
 
-    /* create a list of peers */
-    mca_ptl_sm_component.sm_peers=(struct mca_ptl_base_peer_t**)
-        malloc(n_to_allocate*sizeof(struct mca_ptl_base_peer_t*));
-    if(NULL == mca_ptl_sm_component.sm_peers ) {
-        return_code=OMPI_ERR_OUT_OF_RESOURCE;
-        goto CLEANUP;
+        /* create a list of peers */
+        mca_ptl_sm_component.sm_peers=(struct mca_ptl_base_peer_t**)
+            malloc(n_to_allocate*sizeof(struct mca_ptl_base_peer_t*));
+        if(NULL == mca_ptl_sm_component.sm_peers ) {
+            return_code=OMPI_ERR_OUT_OF_RESOURCE;
+            goto CLEANUP;
+        }
     }
 
     /* set local proc's smp rank in the peers structure for
