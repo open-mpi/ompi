@@ -46,12 +46,26 @@
 #include "util/proc_info.h"
 #include "util/show_help.h"
 #include "util/if.h"
+#include "threads/condition.h"
+#include "threads/mutex.h"
 
 /*
  * Internal constants
  */
 #define BOOTAGENT "mca_pcm_rsh_bootproxy"
 #define PRS_BUFSIZE 1024
+
+struct spawn_procs_data_t {
+    struct mca_pcm_base_module_1_0_0_t* me;
+    mca_ns_base_jobid_t jobid;
+    ompi_list_t *schedlist;
+    int ret;
+    ompi_mutex_t mutex;
+    ompi_condition_t cond;
+    volatile bool done;
+};
+typedef struct spawn_procs_data_t spawn_procs_data_t;
+
 
 /*
  * Internal functions
@@ -63,7 +77,69 @@ static int internal_spawn_proc(mca_pcm_rsh_module_t *me,
                                int my_start_vpid, int global_start_vpid,
                                int num_procs);
 static void internal_wait_cb(pid_t pid, int status, void *data);
+static int internal_start_spawn_procs(struct mca_pcm_base_module_1_0_0_t* me_super, 
+                                      mca_ns_base_jobid_t jobid, ompi_list_t *schedlist);
+#if OMPI_THREADS_HAVE_DIFFERENT_PIDS
+static void spawn_procs_callback(int fd, short flags, void *data);
+#endif
 
+int
+mca_pcm_rsh_spawn_procs(struct mca_pcm_base_module_1_0_0_t* me_super, 
+                        mca_ns_base_jobid_t jobid, ompi_list_t *schedlist)
+{
+#if OMPI_THREADS_HAVE_DIFFERENT_PIDS
+    spawn_procs_data_t data;
+    struct timeval tv;
+    struct ompi_event ev;
+
+    if (ompi_event_progress_thread()) {
+        return internal_start_spawn_procs(me_super, jobid, schedlist);
+    }
+
+    data.me = me_super;
+    data.jobid = jobid;
+    data.schedlist = schedlist;
+    data.ret = 0;
+    data.done = false;
+    OBJ_CONSTRUCT(&(data.mutex), ompi_mutex_t);
+    OBJ_CONSTRUCT(&(data.cond), ompi_condition_t);
+
+    OMPI_THREAD_LOCK(&(data.mutex));
+
+    tv.tv_sec = 0;
+    tv.tv_usec = 0;
+
+    ompi_evtimer_set(&ev, spawn_procs_callback, &data);
+    ompi_evtimer_add(&ev, &tv);
+
+    while (data.done == false) {
+        ompi_condition_wait(&(data.cond), &(data.mutex));
+    }
+    OMPI_THREAD_UNLOCK(&(data.mutex));
+
+    OBJ_DESTRUCT(&(data.mutex));
+    OBJ_DESTRUCT(&(data.cond));
+
+    return data.ret;
+#else
+    return internal_start_spawn_procs(me_super, jobid, schedlist);
+#endif
+}
+
+
+#if OMPI_THREADS_HAVE_DIFFERENT_PIDS
+static void
+spawn_procs_callback(int fd, short flags, void *data)
+{
+    spawn_procs_data_t *procs_data = (spawn_procs_data_t*) data;
+
+    procs_data->ret = internal_start_spawn_procs(procs_data->me,
+                                                 procs_data->jobid,
+                                                 procs_data->schedlist);
+    procs_data->done = true;
+    ompi_condition_signal(&(procs_data->cond));
+}
+#endif
 
 /*
  * This function just iterates through the schedule list, slicing it
@@ -76,8 +152,8 @@ static void internal_wait_cb(pid_t pid, int status, void *data);
  * sends it the information passed from this function.
  */
 int
-mca_pcm_rsh_spawn_procs(struct mca_pcm_base_module_1_0_0_t* me_super, 
-                        mca_ns_base_jobid_t jobid, ompi_list_t *schedlist)
+internal_start_spawn_procs(struct mca_pcm_base_module_1_0_0_t* me_super, 
+                           mca_ns_base_jobid_t jobid, ompi_list_t *schedlist)
 {
     mca_pcm_rsh_module_t *me = (mca_pcm_rsh_module_t*) me_super;
     ompi_list_item_t *sched_item, *node_item, *host_item;

@@ -28,22 +28,57 @@
 #include <signal.h>
 #endif
 
+static
+int
+abort_procs(ompi_proc_t **procs, int proc_count, 
+            mca_ns_base_jobid_t my_jobid)
+{
+    int i;
+    int ret = OMPI_SUCCESS;
+    int killret;
+    mca_ns_base_jobid_t jobid;
+
+    for (i = 0 ; i < proc_count ; ++i) {
+        jobid = ompi_name_server.get_jobid(&(procs[i]->proc_name));
+        if (jobid == my_jobid) continue;
+
+        killret = ompi_rte_terminate_job(jobid, 0);
+        if (OMPI_SUCCESS != killret) ret = killret;
+    }
+
+    return ret;
+}
+
+
 int
 ompi_mpi_abort(struct ompi_communicator_t* comm,
                int errcode,
                bool kill_remote_of_intercomm)
 {
-    mca_ns_base_jobid_t jobid;
+    mca_ns_base_jobid_t my_jobid;
     int ret;
     
-    /* XXX - Should probably publish the error code somewhere */
+    /* BWB - XXX - Should probably publish the error code somewhere */
 
     /* Kill everyone in the job.  We may make this better someday to
        actually loop over ompi_rte_kill_proc() to only kill the procs
        in comm, and additionally to somehow use errorcode. */
 
-    jobid = ompi_name_server.get_jobid(ompi_rte_get_self());
-    ret = ompi_rte_terminate_job(jobid, 0);
+    my_jobid = ompi_name_server.get_jobid(ompi_rte_get_self());
+
+    /* kill everyone in the remote group execpt our jobid, if requested */
+    if (kill_remote_of_intercomm && OMPI_COMM_IS_INTER(comm)) {
+        abort_procs(comm->c_remote_group->grp_proc_pointers,
+                    comm->c_remote_group->grp_proc_count,
+                    my_jobid);
+    }
+
+    /* kill everyone in the local group, except our jobid */
+    abort_procs(comm->c_local_group->grp_proc_pointers,
+                comm->c_local_group->grp_proc_count,
+                my_jobid);
+
+    ret = ompi_rte_terminate_job(my_jobid, 0);
 
     if (OMPI_SUCCESS == ret) {
         while (1) {
