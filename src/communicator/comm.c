@@ -1015,19 +1015,26 @@ int ompi_topo_create (ompi_communicator_t *old_comm,
     ompi_proc_t **topo_procs;
     int num_procs;
     int ret;
-    mca_topo_base_comm_t *topo_comm=NULL;
 
-    /* allocate the data for the common good */
-    topo_comm = (mca_topo_base_comm_t *)malloc(sizeof(mca_topo_base_comm_t));
+    /* allocate a new communicator */
 
-    if (NULL == topo_comm) {
-        OBJ_RELEASE(new_comm);
-        return OMPI_ERROR;
+    new_comm = ompi_comm_allocate(ompi_comm_size(old_comm), 0);
+    if (NULL == new_comm) {
+        return MPI_ERR_INTERN;
     }
 
-    /* select the topology compo nent on the communicator */
+    /* allocate the data for the common good */
+
+    new_comm->c_topo_comm = malloc(sizeof(mca_topo_base_comm_t));
+    if (NULL == new_comm->c_topo_comm) {
+        OBJ_RELEASE(new_comm);
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    /* select the topology component on the communicator */
+
     if (OMPI_SUCCESS != (ret = mca_topo_base_comm_select (new_comm, NULL))) {
-        free(new_comm->c_topo_comm); 
+        /* OBJ_RELEASE also frees new_comm->c_topo_comm */
         OBJ_RELEASE(new_comm);
         return ret;
     }
