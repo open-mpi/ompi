@@ -45,7 +45,7 @@ char *orte_os_path(bool relative, ...)
     /* make sure system info is filled and separator is non-NULL */
     orte_sys_info();
     if (NULL == orte_system_info.path_sep) {
-	return(NULL);
+	   return(NULL);
     }
 
     /* no way to protect ourselves from reading too far, so have to trust caller
@@ -54,46 +54,40 @@ char *orte_os_path(bool relative, ...)
     num_elements = 0;
     total_length = 0;
     while (NULL != (element=va_arg(ap, char*))) {
-	num_elements++;
-	total_length = total_length + strlen(element);
+	   num_elements++;
+	   total_length = total_length + strlen(element);
     }
 
     if (0 == num_elements) { /* must be looking for a simple answer */
-	path = (char *)malloc(2);
-        path[0] = 0;
-	if (relative) {
-	    strcpy(path, ".");
-        strcat(path, orte_system_info.path_sep);
-	}
-	else {
+    	path = (char *)malloc(2);
+            path[0] = 0;
+    	if (relative) {
+    	    strcpy(path, ".");
+            strcat(path, orte_system_info.path_sep);
+    	}
+    	else {
 #ifndef WIN32
-	    strcpy(path, orte_system_info.path_sep);
+    	    strcpy(path, orte_system_info.path_sep);
 #endif
-	}
-	return(path);
+    	}
+    	return(path);
     }
 
     /* setup path with enough room for the string terminator, the elements, and
        the separator between each of the elements */
     total_length = total_length + num_elements + 1;
     if (total_length > MAXPATHLEN) {  /* path length is too long - reject it */
-	return(NULL);
+    	return(NULL);
     }
 
     path = (char *)malloc(2 + total_length + num_elements-1);
     if (NULL == path) {
-	return(NULL);
+	   return(NULL);
     }
     path[0] = 0;
 
     if (relative) {
-	strcpy(path, ".");
-    }
-
-    /* get the first element here so that we don't have duplicate first
-       seperators */
-    if (NULL != (element = va_arg(ap1, char*))) {
-        strcat(path, element);    
+	   strcpy(path, ".");
     }
 
     while (NULL != (element=va_arg(ap1, char*))) {

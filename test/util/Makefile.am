@@ -20,11 +20,10 @@ AM_CPPFLAGS = -I$(top_srcdir)/test/support -DOMPI_ENABLE_DEBUG_OVERRIDE=1 -g
 check_PROGRAMS = \
 	ompi_numtostr \
 	ompi_if \
-	ompi_pack \
-	ompi_os_path \
-	ompi_sys_info \
-	ompi_os_create_dirpath \
-        ompi_session_dir \
+	orte_os_path \
+	orte_sys_info \
+	orte_os_create_dirpath \
+        orte_session_dir \
 	ompi_argv 
 
 TESTS = \
@@ -48,33 +47,28 @@ ompi_argv_LDADD = \
         $(top_builddir)/test/support/libsupport.a 
 ompi_argv_DEPENDENCIES = $(ompi_argv_LDADD)
 
-ompi_os_path_SOURCES = ompi_os_path.c
-ompi_os_path_LDADD = \
+orte_os_path_SOURCES = orte_os_path.c
+orte_os_path_LDADD = \
         $(top_builddir)/src/libmpi.la \
         $(top_builddir)/test/support/libsupport.a 
-ompi_os_path_DEPENDENCIES = $(ompi_os_path_LDADD)
+orte_os_path_DEPENDENCIES = $(orte_os_path_LDADD)
 
 
-ompi_sys_info_SOURCES = ompi_sys_info.c
-ompi_sys_info_LDADD = \
+orte_sys_info_SOURCES = orte_sys_info.c
+orte_sys_info_LDADD = \
         $(top_builddir)/src/libmpi.la \
         $(top_builddir)/test/support/libsupport.a 
-ompi_sys_info_DEPENDENCIES = $(ompi_sys_info_LDADD)
+orte_sys_info_DEPENDENCIES = $(orte_sys_info_LDADD)
 
-ompi_os_create_dirpath_SOURCES = ompi_os_create_dirpath.c
-ompi_os_create_dirpath_LDADD = \
+orte_os_create_dirpath_SOURCES = orte_os_create_dirpath.c
+orte_os_create_dirpath_LDADD = \
         $(top_builddir)/src/libmpi.la \
         $(top_builddir)/test/support/libsupport.a 
-ompi_os_create_dirpath_DEPENDENCIES = $(ompi_os_create_dirpath_LDADD)
+orte_os_create_dirpath_DEPENDENCIES = $(orte_os_create_dirpath_LDADD)
 
-ompi_session_dir_SOURCES = ompi_session_dir.c
-ompi_session_dir_LDADD = \
+orte_session_dir_SOURCES = orte_session_dir.c
+orte_session_dir_LDADD = \
         $(top_builddir)/src/libmpi.la \
         $(top_builddir)/test/support/libsupport.a 
-ompi_session_dir_DEPENDENCIES = $(ompi_session_dir_LDADD)
+orte_session_dir_DEPENDENCIES = $(orte_session_dir_LDADD)
 
-ompi_pack_SOURCES = ompi_pack.c
-ompi_pack_LDADD = \
-        $(top_builddir)/src/libmpi.la \
-        $(top_builddir)/test/support/libsupport.a 
-ompi_pack_DEPENDENCIES = $(ompi_pack_LDADD)

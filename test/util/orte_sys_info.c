@@ -22,14 +22,6 @@
 #include <sys/param.h>
 #endif
 
-int main(int argc, char **argv)
-{
-    printf("Test disabled - Does not compile.\n");
-    return 77;
-}
-
-#if 0
-
 #include "util/sys_info.h"
 #include "support.h"
 
@@ -40,20 +32,20 @@ static bool test2(void);   /* test second time through */
 int main(int argc, char* argv[])
 {
 
-    test_init("ompi_sys_info_t");
+    test_init("orte_sys_info_t");
 
     if (test1()) {
         test_success();
     }
     else {
-      test_failure("ompi_sys_info_t test1 failed");
+      test_failure("orte_sys_info_t test1 failed");
     }
 
     if (test2()) {
         test_success();
     }
     else {
-      test_failure("ompi_sys_info_t test2 failed");
+      test_failure("orte_sys_info_t test2 failed");
     }
 
     test_finalize();
@@ -65,16 +57,17 @@ static bool test1(void)
 {
     /* Test trivial functionality. Program should return with init=true and all ptrs non-NULL */
 
-    ompi_sys_info();
-    if (ompi_system_info.init == false)
+    orte_sys_info();
+    if (orte_system_info.init == false)
         return(false);
 
-    if (ompi_system_info.sysname == NULL ||
-        ompi_system_info.nodename == NULL ||
-        ompi_system_info.release == NULL ||
-        ompi_system_info.version == NULL ||
-        ompi_system_info.machine == NULL ||
-        ompi_system_info.path_sep == NULL)
+    if (orte_system_info.sysname == NULL ||
+        orte_system_info.nodename == NULL ||
+        orte_system_info.release == NULL ||
+        orte_system_info.version == NULL ||
+        orte_system_info.machine == NULL ||
+        orte_system_info.user == NULL ||
+        orte_system_info.path_sep == NULL)
         return(false);
 
     return true;
@@ -84,7 +77,6 @@ static bool test1(void)
 static bool test2(void)
 {
 /* test it a second time. system should return without crashing and with init=true */
-    ompi_sys_info();
-    return(ompi_system_info.init);
+    orte_sys_info();
+    return(orte_system_info.init);
 }
-#endif
