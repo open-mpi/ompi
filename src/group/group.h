@@ -11,34 +11,33 @@
 #ifndef OMPI_GROUP_H
 #define OMPI_GROUP_H
 
+#include "util/output.h"
 #include "mpi.h"
 #include "proc/proc.h"
 #include "class/ompi_pointer_array.h"
-
-/** This must correspond to the fortran MPI_GROUP_NULL index */
-#define OMPI_GROUP_NULL_FORTRAN 0
-
-/** This must correspond to the fortran MPI_GROUP_EMPTY index */
-#define OMPI_GROUP_EMPTY_FORTRAN 1
-
 
 /**
  * Group structure
  */
 struct ompi_group_t {
-    ompi_object_t super;     /**< base class */
+    ompi_object_t super;    /**< base class */
     int grp_proc_count;     /**< number of processes in group */
     int grp_my_rank;        /**< rank in group */
     int grp_f_to_c_index;   /**< index in Fortran <-> C translation array */
-    int grp_ok_to_free;     /**< indicates if it is ok to call group_free()
-                                 on this group */
+    uint32_t grp_flags;     /**< flags, e.g. freed, cannot be freed etc.*/
     ompi_proc_t **grp_proc_pointers;
                             /**< list of pointers to ompi_proc_t structures
-                               for each process in the group */
+                                 for each process in the group */
 };
 typedef struct ompi_group_t ompi_group_t;
 OBJ_CLASS_DECLARATION(ompi_group_t);
 
+
+/* Some definitions for the flags */
+#define OMPI_GROUP_ISFREED     0x00000001
+#define OMPI_GROUP_INTRINSIC   0x00000002
+
+#define OMPI_GROUP_IS_INTRINSIC(_group) ((_group)->grp_flags&OMPI_GROUP_INTRINSIC)
 
 /**
  * Table for Fortran <-> C group handle conversion
@@ -107,7 +106,7 @@ static inline int ompi_group_size(ompi_group_t *group)
  */
 static inline int ompi_group_rank(ompi_group_t *group)
 {
-    return group->grp_proc_count;
+    return group->grp_my_rank;
 }
 
 
