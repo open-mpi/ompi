@@ -15,7 +15,7 @@
 
 extern bool lam_uses_threads;
 
-static inline bool lam_use_threads() { return lam_uses_threads; }
+static inline bool lam_use_threads(void) { return lam_uses_threads; }
 
 /*
  * Lock macros
