@@ -76,17 +76,6 @@ static int orte_ras_host_param_register_int(
 }
 
 
-static char* orte_ras_host_param_register_string(
-    const char* param_name,
-    const char* default_value)
-{
-    char *param_value;
-    int id = mca_base_param_register_string("ras","host",param_name,NULL,default_value);
-    mca_base_param_lookup_string(id, &param_value);
-    return param_value;
-}
-
-
 /**
   * component open/close/init function
   */
