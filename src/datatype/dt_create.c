@@ -16,7 +16,7 @@ static void __get_free_dt_struct(  dt_desc_t* pData )
     pData->bdt_used        = 0;
     for( i = 0; i < DT_MAX_PREDEFINED; i++ )
         pData->btypes[i]    = 0;
-    pData->btypes[DT_LOOP] = 1;
+    pData->btypes[DT_LOOP] = 0;
 
     pData->opt_desc.desc   = NULL;
     pData->opt_desc.length = 0;
