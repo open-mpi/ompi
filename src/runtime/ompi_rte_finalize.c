@@ -11,7 +11,7 @@
 #include "util/output.h"
 #include "threads/mutex.h"
 #include "mca/pcm/base/base.h"
-#include "mca/oob/base/base.h"
+#include "mca/oob/oob.h"
 #include "mca/ns/base/base.h"
 
 

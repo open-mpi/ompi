@@ -8,6 +8,7 @@
 #include "ompi_config.h"
 
 #include "mca/oob/oob.h"
+#include "mca/oob/base/base.h"
 #include "include/types.h"
 
 /*

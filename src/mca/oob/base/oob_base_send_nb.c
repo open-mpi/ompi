@@ -1,5 +1,6 @@
 #include "mca/oob/oob.h"
 #include "mca/oob/base/base.h"
+#include <string.h>
 #include <netinet/in.h>
 
 struct mca_oob_base_cb_data_t {

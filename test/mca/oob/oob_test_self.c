@@ -6,6 +6,7 @@
 #include <sys/uio.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <string.h>
 #include "mpi.h"
 #include "support.h"
 #include "mca/oob/oob.h"

@@ -10,6 +10,7 @@
 #include <sys/uio.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <string.h>
 #include "mpi.h"
 #include "support.h"
 #include "mca/oob/oob.h"
@@ -17,8 +18,10 @@
 #define MSG_TYPE_1   1
 #define MSG_TYPE_2   2
 #define NUM_TESTS    8
+#define NUM_TIMES    1
 
-bool testdone[NUM_TESTS];
+int i;
+bool testdone[NUM_TESTS * NUM_TIMES];
 void do_sends(ompi_process_name_t * peer);
 void do_recvs(ompi_process_name_t * peer);
 
@@ -29,7 +32,6 @@ bool compare_iovec(const struct iovec * msg1, const struct iovec * msg2,
     int i;
     for(i = 0; i < n; i++) {
         if(msg1[i].iov_len != msg2[i].iov_len) {
-            fprintf(stderr, "len problem %d", i);
             return false;
         }
         if(0 != memcmp(msg1[i].iov_base, msg2[i].iov_base, msg1[i].iov_len)) {
@@ -49,12 +51,12 @@ void callback(int status, const ompi_process_name_t * peer,
     if(0 != tag) {
         test_failure("Bad tag.");
     }
-    if((int) cbdata >= NUM_TESTS) {
+    if(((int) cbdata + (NUM_TESTS * i)) >= (NUM_TESTS * NUM_TIMES)) {
         test_failure("Bad value in callback function.");
-    } else if (testdone[(int) cbdata]) {
+    } else if (testdone[(int) cbdata + (NUM_TESTS * i)]) {
         test_failure("Callback function called on an already completed test.");
     } else {
-        testdone[(int) cbdata] = true;
+        testdone[(int) cbdata + (NUM_TESTS * i)] = true;
         test_success();
     }
 }
@@ -112,14 +114,18 @@ int main(int argc, char ** argv)
         test_init("oob send then recieve");
         /* local vpid is 1 - peer is 0 */
         peer.vpid = 0;
-        do_sends(&peer);
-        do_recvs(&peer);
+        for(i = 0; i < NUM_TIMES; i++) {
+            do_sends(&peer);
+            do_recvs(&peer);
+        }
     } else {
         test_init("oob recieve then send");
         /* local vpid is 0 - peer is 1 */
         peer.vpid = 1;
-        do_recvs(&peer);
-        do_sends(&peer);
+        for(i = 0; i < NUM_TIMES; i++) {
+            do_recvs(&peer);
+            do_sends(&peer);
+        }
     }
     /* done */
     test_finalize();

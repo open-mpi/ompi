@@ -3,7 +3,7 @@
 /*
  * Similiar to unix readv(2)
  *
- * @param peer (IN)    Opaque name of peer process or MCA_OOB_BASE_ANY for wildcard receive.
+ * @param peer (IN)    Opaque name of peer process or MCA_OOB_NAME_ANY for wildcard receive.
  * @param msg (IN)     Array of iovecs describing user buffers and lengths.
  * @param types (IN)   Parallel array to iovecs describing data type of each iovec element.
  * @param count (IN)   Number of elements in iovec array.
@@ -89,7 +89,7 @@ int mca_oob_tcp_recv(
 /*
  * Non-blocking version of mca_oob_recv().
  *
- * @param peer (IN)    Opaque name of peer process or MCA_OOB_BASE_ANY for wildcard receive.
+ * @param peer (IN)    Opaque name of peer process or MCA_OOB_NAME_ANY for wildcard receive.
  * @param msg (IN)     Array of iovecs describing user buffers and lengths.
  * @param count (IN)   Number of elements in iovec array.
  * @param tag (IN)     User supplied tag for matching send/recv.

@@ -11,6 +11,7 @@
 
 #include "mca/oob/oob.h"
 #include "mca/oob/base/base.h"
+#include "mca/base/base.h"
 #include "class/ompi_free_list.h"
 #include "class/ompi_rb_tree.h"
 #include "event/event.h"
@@ -105,7 +106,7 @@ int mca_oob_tcp_send(
 /**
  * Similiar to unix readv(2)
  *
- * @param peer (IN)    Opaque name of peer process or MCA_OOB_BASE_ANY for wildcard receive.
+ * @param peer (IN)    Opaque name of peer process or MCA_OOB_NAME_ANY for wildcard receive.
  * @param msg (IN)     Array of iovecs describing user buffers and lengths.
  * @param count (IN)   Number of elements in iovec array.
  * @param tag (IN)     User defined tag for matching send/recv.
@@ -152,7 +153,7 @@ int mca_oob_tcp_send_nb(
 /**
  * Non-blocking version of mca_oob_recv().
  *
- * @param peer (IN)    Opaque name of peer process or MCA_OOB_BASE_ANY for wildcard receive.
+ * @param peer (IN)    Opaque name of peer process or MCA_OOB_NAME_ANY for wildcard receive.
  * @param msg (IN)     Array of iovecs describing user buffers and lengths.
  * @param count (IN)   Number of elements in iovec array.
  * @param tag (IN)     User defined tag for matching send/recv.
