@@ -66,9 +66,9 @@ int lam_ddt_add( dt_desc_t* pdtBase, dt_desc_t* pdtAdd, unsigned int count, long
    if( newLength > pdtBase->desc.length ) {
       newLength = ((newLength / DT_INCREASE_STACK) + 1 ) * DT_INCREASE_STACK;
       printf( "increase the size of the data desc array from %d to %d (old ptr = %p ",
-              pdtBase->desc.length, newLength, pdtBase->desc.desc );
+              pdtBase->desc.length, newLength, (void*)pdtBase->desc.desc );
       pdtBase->desc.desc   = (dt_elem_desc_t*)realloc( pdtBase->desc.desc, newLength );
-      printf( "new ptr = %p\n", pdtBase->desc.desc );
+      printf( "new ptr = %p\n", (void*)pdtBase->desc.desc );
       pdtBase->desc.length = newLength;
    }
    pLast = &(pdtBase->desc.desc[pdtBase->desc.used]);

@@ -125,7 +125,7 @@ static int convertor_pack_general( lam_convertor_t* pConvertor, struct iovec* ou
    return 0;
 }
 
-int convertor_pack_homogeneous( lam_convertor_t* pConv, struct iovec* iov, unsigned int out_size )
+static int convertor_pack_homogeneous( lam_convertor_t* pConv, struct iovec* iov, unsigned int out_size )
 {
    dt_stack_t* pStack;   /* pointer to the position on the stack */
    int pos_desc;         /* actual position in the description of the derived datatype */
@@ -377,30 +377,33 @@ int dt_unroll( dt_desc_t* pData, int count )
  */
 int lam_convertor_pack( lam_convertor_t* pConv, struct iovec* out, unsigned int out_size )
 {
-   dt_desc_t* pData = pConv->pDesc;
-   int extent;
+    dt_desc_t* pData = pConv->pDesc;
+    int extent;
 
-   if( pConv->count == 0 ) return 1;  /* nothing to do */
-   if( pData->flags & DT_FLAG_CONTIGUOUS ) {
-      if( pData->size == (extent = (pData->ub - pData->lb)) ) {
-         if( out[0].iov_base == NULL ) {
-            out[0].iov_base = pConv->pBaseBuf + pData->true_lb;
-            out[0].iov_len = pData->size * pConv->count;
-         } else {
-            /* contiguous data just memcpy the smallest data in the user buffer */
-            out[0].iov_len = IMIN( out[0].iov_len, pData->size * pConv->count );
-            MEMCPY( out[0].iov_base, pConv->pBaseBuf + pData->true_lb, out[0].iov_len);
-         }
-         pConv->bConverted += out[0].iov_len;
-         return 0;
-      }         
-   }
-   if( out[0].iov_base == NULL ) {
-      out[0].iov_len = pConv->count * pData->size;
-      out[0].iov_base = (void*)malloc( out[0].iov_len );
-      pConv->freebuf = out[0].iov_base;
-   }
-   return lam_convertor_progress( pConv, out, out_size );
+    if( pConv->count == 0 ) return 1;  /* nothing to do */
+    if( pData->flags & DT_FLAG_CONTIGUOUS ) {
+        if( pData->size == (extent = (pData->ub - pData->lb)) ) {
+            size_t length = pData->size * pConv->count;
+            if( out[0].iov_base == NULL ) {
+                out[0].iov_base = pConv->pBaseBuf + pData->true_lb;
+                if( (out[0].iov_base == 0) ||
+                    ((pConv->bConverted + out[0].iov_len) > length) )
+                    out[0].iov_len = length - pConv->bConverted;
+            } else {
+                /* contiguous data just memcpy the smallest data in the user buffer */
+                out[0].iov_len = IMIN( out[0].iov_len, pData->size * pConv->count );
+                MEMCPY( out[0].iov_base, pConv->pBaseBuf + pData->true_lb, out[0].iov_len);
+            }
+            pConv->bConverted += out[0].iov_len;
+            return 0;
+        }         
+    }
+    if( out[0].iov_base == NULL ) {
+        out[0].iov_len = pConv->count * pData->size;
+        out[0].iov_base = (void*)malloc( out[0].iov_len );
+        pConv->freebuf = out[0].iov_base;
+    }
+    return lam_convertor_progress( pConv, out, out_size );
 }
 
 extern int local_sizes[DT_MAX_PREDEFINED];
