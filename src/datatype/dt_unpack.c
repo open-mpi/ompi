@@ -262,6 +262,7 @@ static int convertor_unpack_homogeneous( lam_convertor_t* pConv, struct iovec* i
       } else {
          MEMCPY( pConv->pBaseBuf + lastDisp, pSrcBuf, lastLength );
          pSrcBuf += lastLength;
+		 printf( "increase by %ld bytes\n", lastLength );
          pConv->bConverted += lastLength;
          lastDisp = pStack->disp + pElems[pos_desc].disp;
          lastLength = pElems[pos_desc].count * basicDatatypes[type].size;
