@@ -3,7 +3,6 @@
  */
 
 #include <stdlib.h>
-#include "lam/mem/malloc.h"
 #include "mca/mpi/pml/pml.h"
 #include "mca/mpi/ptl/ptl.h"
 #include "mca/mpi/ptl/base/base.h"
@@ -72,8 +71,8 @@ int mca_pml_teg_add_ptls(lam_list_t *ptls)
     size_t num_ptls = lam_list_get_size(ptls);
     mca_pml_teg.teg_num_ptls = 0;
     mca_pml_teg.teg_num_ptl_modules = 0;
-    mca_pml_teg.teg_ptls = (mca_ptl_t**)LAM_MALLOC(sizeof(mca_ptl_t*) * num_ptls);
-    mca_pml_teg.teg_ptl_modules = (mca_ptl_base_module_t**)LAM_MALLOC(sizeof(mca_ptl_base_module_t*) * num_ptls);
+    mca_pml_teg.teg_ptls = malloc(sizeof(mca_ptl_t*) * num_ptls);
+    mca_pml_teg.teg_ptl_modules = malloc(sizeof(mca_ptl_base_module_t*) * num_ptls);
     if (NULL == mca_pml_teg.teg_ptls || NULL == mca_pml_teg.teg_ptl_modules)
         return LAM_ERR_OUT_OF_RESOURCE;
 
@@ -117,7 +116,7 @@ int mca_pml_teg_add_procs(lam_proc_t** procs, size_t nprocs)
         if(proc_pml == 0) {
 
             /* allocate pml specific proc data */
-            proc_pml = (mca_pml_proc_t*)LAM_MALLOC(sizeof(mca_pml_proc_t));
+            proc_pml = malloc(sizeof(mca_pml_proc_t));
             if(NULL == proc_pml) {
                 lam_output(0, "mca_pml_teg_add_procs: unable to allocate resources");
                 return LAM_ERR_OUT_OF_RESOURCE;
@@ -251,7 +250,7 @@ int mca_pml_teg_del_procs(lam_proc_t** procs, size_t nprocs)
         
         /* do any required cleanup */
         mca_pml_teg_proc_destroy(proc_pml);
-        LAM_FREE(proc_pml);
+        free(proc_pml);
         proc->proc_pml = 0;
     }
     return LAM_SUCCESS;

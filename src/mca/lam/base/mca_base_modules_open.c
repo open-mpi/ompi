@@ -11,6 +11,7 @@
 #include "lam/lfc/list.h"
 #include "lam/util/strncpy.h"
 #include "lam/util/argv.h"
+#include "lam/util/output.h"
 #include "mca/mca.h"
 #include "mca/lam/base/base.h"
 
@@ -82,7 +83,7 @@ int mca_base_modules_open(const char *type_name, int output_id,
 
   for (item = lam_list_remove_first(&modules_found); NULL != item;
        item = lam_list_remove_first(&modules_found)) {
-    LAM_FREE(item);
+    free(item);
   }
   if (NULL != requested_module_names) {
     lam_argv_free(requested_module_names);
@@ -249,7 +250,7 @@ static int open_modules(const char *type_name, int output_id,
                                       "priority", NULL, 0);
         }
 
-        mli = LAM_MALLOC(sizeof(mca_base_module_list_item_t));
+        mli = malloc(sizeof(mca_base_module_list_item_t));
         if (NULL == mli) {
           return LAM_ERROR;
         }

@@ -226,7 +226,7 @@ void lam_reactor_dispatch(lam_reactor_t* r, int cnt, lam_fd_set_t* rset, lam_fd_
                 lam_list_append(&r->r_free, &descriptor->super);
             } else {
                 lam_reactor_descriptor_destroy(descriptor);
-                LAM_FREE(descriptor);
+                free(descriptor);
             }
         } 
         descriptor = next;
@@ -241,7 +241,7 @@ void lam_reactor_dispatch(lam_reactor_t* r, int cnt, lam_fd_set_t* rset, lam_fd_
                 lam_list_append(&r->r_free, &descriptor->super);
             } else {
                 lam_reactor_descriptor_destroy(descriptor);
-                LAM_FREE(descriptor);
+                free(descriptor);
             }
         } else {
             lam_list_append(&r->r_active, &descriptor->super);

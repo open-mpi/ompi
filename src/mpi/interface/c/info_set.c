@@ -81,7 +81,7 @@ int MPI_Info_set(MPI_Info info, char *key, char *value) {
      * 3. Store the (key, value) pair
      */
 
-    new_value = (char *) LAM_MALLOC(value_length * sizeof(char));
+    new_value = malloc(value_length * sizeof(char));
     if (NULL == new_value) {
         printf ("Unable to malloc memory for new (key, value) pair\n");
         return MPI_ERR_SYSRESOURCE;
@@ -94,7 +94,7 @@ int MPI_Info_set(MPI_Info info, char *key, char *value) {
         /*
          * key already exists. remove the value associated with it
          */
-        LAM_FREE (old_info->ie_value);
+        free(old_info->ie_value);
         old_info->ie_value = new_value;
     } else {
         new_info = OBJ_CREATE(lam_info_entry_t, &lam_info_entry_cls);

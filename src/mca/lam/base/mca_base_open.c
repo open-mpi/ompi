@@ -155,5 +155,5 @@ static void parse_verbose(char *e, lam_output_stream_t *lds)
 
   /* All done */
 
-  LAM_FREE(edup);
+  free(edup);
 }

@@ -9,7 +9,6 @@
 #include <errno.h>
 
 #include "lam/constants.h"
-#include "lam/mem/malloc.h"
 #include "mpi.h"
 #include "mca/mpi/coll/coll.h"
 #include "coll_basic.h"
@@ -48,9 +47,9 @@ int mca_coll_basic_reduce_scatter(void *sbuf, void *rbuf, int *rcounts,
   }
 
   if (0 == rank) {
-    disps = (int *) LAM_MALLOC((unsigned) size * sizeof(int));
+    disps = malloc((unsigned) size * sizeof(int));
     if (NULL == disps) {
-      LAM_FREE(disps);
+      free(disps);
       return errno;
     }
 
@@ -58,7 +57,7 @@ int mca_coll_basic_reduce_scatter(void *sbuf, void *rbuf, int *rcounts,
     /* JMS Need to replace this with lam_datatype_*() functions */
     err = lam_dtbuffer(dtype, count, &buffer, &origin);
     if (MPI_SUCCESS != err) {
-      LAM_FREE(disps);
+      free(disps);
       return err;
     }
 #endif
@@ -73,9 +72,9 @@ int mca_coll_basic_reduce_scatter(void *sbuf, void *rbuf, int *rcounts,
   err = MPI_Reduce(sbuf, origin, count, dtype, op, 0, comm);
   if (MPI_SUCCESS != err) {
     if (NULL != disps)
-      LAM_FREE(disps);
+      free(disps);
     if (NULL != buffer)
-      LAM_FREE(buffer);
+      free(buffer);
     return err;
   }
 
@@ -84,9 +83,9 @@ int mca_coll_basic_reduce_scatter(void *sbuf, void *rbuf, int *rcounts,
   err = MPI_Scatterv(origin, rcounts, disps, dtype,
 		     rbuf, rcounts[rank], dtype, 0, comm);
   if (NULL != disps)
-    LAM_FREE(disps);
+    free(disps);
   if (NULL != buffer)
-    LAM_FREE(buffer);
+    free(buffer);
 
   return err;
 }

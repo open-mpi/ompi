@@ -7,12 +7,15 @@
 #ifndef LAM_MALLOC_H
 #define LAM_MALLOC_H
 
-#include "lam_config.h"
-
 #include <stdlib.h>
 
-#include "lam/util/output.h"
-
+/*
+ * THIS FILE CANNOT INCLUDE ANY OTHER LAM HEADER FILES!!!
+ *
+ * It is included via <lam_config_bottom.h>.  Hence, it should not
+ * include ANY other files, nor should it include "lam_config.h".
+ *
+ */
 
 /*
  * Set LAM_MALLOC_DEBUG_LEVEL to
@@ -28,8 +31,60 @@
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
+  /**
+   * Shut down malloc debug output.
+   *
+   * This function is invoked as part of lam_finalize() to shut down the
+   * output stream for malloc debug messages.
+   */
   void lam_malloc_init(void);
+
+  /**
+   * Initialize malloc debug output.
+   *
+   * This function is invoked to setup a dedicated output stream for
+   * malloc debug functions.  It does \em not (currently) do anything
+   * other than that (i.e., no internal accounting for tracking
+   * malloc/free statements, etc.).
+   *
+   * It is invoked as part of lam_init().  Although this function is
+   * not \em necessary for LAM_MALLOC() and LAM_FREE(), it is strong
+   * recommended because no output messages -- regardless of the
+   * malloc debug level set by lam_malloc_debug() -- will be displayed
+   * unless this function is invoked first.
+   */
   void lam_malloc_finalize(void);
+
+  /**
+   * \internal
+   *
+   * Back-end error-checking malloc function for LAM (you should use
+   * the normal malloc() instead of this function).
+   *
+   * @param size The number of bytes to allocate
+   * @param file Typically the __FILE__ macro
+   * @param line Typically the __LINE__ macro
+   *
+   * This function is only used when --enable-mem-debug was specified to
+   * configure (or by default if you're building in a CVS checkout).
+   */
+  void *lam_malloc(size_t size, char *file, int line);
+
+  /**
+   * \internal
+   *
+   * Back-end error-checking free function for LAM (you should use
+   * free() instead of this function).
+   *
+   * @param addr Address on the heap to free()
+   * @param file Typically the __FILE__ macro
+   * @param line Typically the __LINE__ macro
+   *
+   * This function is only used when --enable-mem-debug was specified
+   * to configure (or by default if you're building in a CVS
+   * checkout).
+   */
+  void lam_free(void *addr, char *file, int line);
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
@@ -38,8 +93,6 @@ extern int lam_malloc_debug_level;
 extern int lam_malloc_output;
 
 static inline void lam_malloc_debug(int level);
-static inline void *lam_malloc(size_t size, char *file, int line);
-static inline void lam_free(void *addr, char *file, int line);
 
 
 /**
@@ -54,92 +107,4 @@ static inline void lam_malloc_debug(int level)
   lam_malloc_debug_level = level;
 }
 
-/**
- * \internal
- *
- * Back-end error-checking malloc function for LAM (you should use the
- * LAM_MALLOC() macro instead of this function).
- *
- * @param size The number of bytes to allocate
- * @param file Typically the __FILE__ macro
- * @param line Typically the __LINE__ macro
- */
-static inline void *lam_malloc(size_t size, char *file, int line)
-{
-    void *addr;
-    if (lam_malloc_debug_level > 1) {
-        if (size <= 0) {
-          lam_output(lam_malloc_output, "Request for %ld bytes (%s, %d)", 
-                     (long) size, file, line);
-        }
-    }
-    addr = malloc(size);
-    if (lam_malloc_debug_level > 0) {
-        if (NULL == addr) {
-            lam_output(lam_malloc_output, 
-                       "Request for %ld bytes failed (%s, %d)",
-                       (long) size, file, line);
-        }
-    }
-
-    return addr;
-}
-
-
-/**
- * \internal
- *
- * Back-end error-checking free function for LAM (you should use the
- * LAM_FREE() macro instead of this function).
- *
- * @param addr Address on the heap to free()
- * @param file Typically the __FILE__ macro
- * @param line Typically the __LINE__ macro
- */
-#include <stdio.h>
-static inline void lam_free(void *addr, char *file, int line)
-{
-    if (lam_malloc_debug_level > 1 && NULL == addr) {
-      printf("INVALID FREE!\n");
-        lam_output(lam_malloc_output, "Invalid free (%s, %d)", file, line);
-    } else {
-      free(addr);
-    }
-}
-
-#if LAM_MALLOC_DEBUG_LEVEL > 0
-
-/**
- * Error-checking malloc function for LAM.  
- *
- * @param SIZE Number of bytes to allocate.
- *
- * This macro will invoke lam_malloc() if compile-time debugging was
- * enabled, or just invoke malloc() directly if compile-time debugging
- * is disabled.
- */
-#define LAM_MALLOC(SIZE) \
-    lam_malloc(SIZE, __FILE__, __LINE__)
-
-/**
- * Error-checking free function for LAM.  
- *
- * @param ADDR Address to free.
- *
- * This macro will invoke lam_free() if compile-time debugging was
- * enabled, or just invoke free() directly if compile-time debugging
- * is disabled.
- *
- * The memory to be freed can be allocated from anywhere (e.g.,
- * strdup()) -- it does not have to be allocated by LAM_MALLOC().
- */
-#define LAM_FREE(ADDR) \
-    do { \
-      lam_free((ADDR), __FILE__, __LINE__); \
-      (ADDR) = NULL; \
-    } while (0)
-#else
-#define LAM_MALLOC(SIZE) malloc(SIZE)
-#define LAM_FREE(ADDR) free(ADDR)
-#endif
-#endif
+#endif /* LAM_MALLOC_H */

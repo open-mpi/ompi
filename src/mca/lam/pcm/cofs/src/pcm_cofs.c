@@ -45,7 +45,7 @@ mca_pcm_cofs_handle_new(lam_job_handle_t parent)
   pid = getpid();
 
   ret_len = sizeof(pid_t) * 8 + strlen("pcm_cofs_job_handle") + sizeof(int) * 8 + 5;
-  ret = LAM_MALLOC(ret_len);
+  ret = malloc(ret_len);
   if (ret == NULL) {
     return NULL;
   }
@@ -71,7 +71,7 @@ mca_pcm_cofs_handle_free(lam_job_handle_t * job_handle)
     printf("WARNING: attempting to free static internal job handle!\n");
     printf("         Did you perhaps try to free the return from handle_get()?\n");
   } else if (*job_handle != NULL) {
-    LAM_FREE(*job_handle);
+    free(*job_handle);
     *job_handle = NULL;
   }
 }
@@ -160,7 +160,7 @@ mca_pcm_cofs_proc_startup(void)
     return LAM_ERR_FATAL;
   }
 
-  mca_pcm_cofs_procs = LAM_MALLOC(sizeof(mca_pcm_proc_t) * mca_pcm_cofs_nprocs);
+  mca_pcm_cofs_procs = malloc(sizeof(mca_pcm_proc_t) * mca_pcm_cofs_nprocs);
   if (mca_pcm_cofs_procs == NULL) {
     return LAM_ERR_OUT_OF_RESOURCE;
   }

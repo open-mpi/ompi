@@ -89,7 +89,7 @@ void lam_obj_destroy(lam_object_t *obj);
 
 static inline lam_object_t* lam_create_object(size_t size, lam_class_info_t* class_info)
 {
-    lam_object_t *obj = (lam_object_t*)LAM_MALLOC(size);
+    lam_object_t *obj = (lam_object_t *) malloc(size);
     if ( NULL != obj ) {
         obj->obj_class = class_info;
         obj->obj_class->cls_init(obj);
@@ -124,7 +124,7 @@ static inline void lam_obj_release(lam_object_t *obj)
     if ( fetchNadd(&obj->obj_refcnt, -1) == 1 )
     {
         obj->obj_class->cls_destroy(obj);
-        LAM_FREE(obj);
+        free(obj);
     }
 }
 

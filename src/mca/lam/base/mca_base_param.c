@@ -253,12 +253,12 @@ int mca_base_param_finalize(void)
       param_free(array[i]);
       /* JMS Memory management of the array may change when array.[ch]
          changes */
-      LAM_FREE(array[i]);
+      free(array[i]);
       lam_arr_remove_item(&mca_base_params, i);
     }
     /* JMS Memory management of the array may change when array.[ch]
        changes */
-    LAM_FREE(array);
+    free(array);
     initialized = false;
   }
 
@@ -286,7 +286,7 @@ static int param_register(const char *type_name, const char *module_name,
   /* Create a parameter entry.  If a keyval is to be used, it will be
      registered elsewhere.  We simply assign -1 here. */
 
-  param = LAM_MALLOC(sizeof(mca_base_param_t));
+  param = malloc(sizeof(mca_base_param_t));
   if (NULL == param) {
     return LAM_ERR_OUT_OF_RESOURCE;
   }
@@ -301,7 +301,7 @@ static int param_register(const char *type_name, const char *module_name,
   if (NULL != module_name) {
     param->mbp_module_name = strdup(module_name);
     if (NULL == param->mbp_module_name) {
-      LAM_FREE(param->mbp_type_name);
+      free(param->mbp_type_name);
       return LAM_ERROR;
     }
   } else {
@@ -310,8 +310,8 @@ static int param_register(const char *type_name, const char *module_name,
   if (param_name != NULL) {
     param->mbp_param_name = strdup(param_name);
     if (NULL == param->mbp_param_name) {
-      LAM_FREE(param->mbp_type_name);
-      LAM_FREE(param->mbp_module_name);
+      free(param->mbp_type_name);
+      free(param->mbp_module_name);
       return LAM_ERROR;
     }
   } else {
@@ -336,16 +336,16 @@ static int param_register(const char *type_name, const char *module_name,
       len += strlen(param_name);
     }
 
-    param->mbp_full_name = LAM_MALLOC(len);
+    param->mbp_full_name = malloc(len);
     if (NULL == param->mbp_full_name) {
       if (NULL != param->mbp_type_name) {
-        LAM_FREE(param->mbp_type_name);
+        free(param->mbp_type_name);
       }
       if (NULL != param->mbp_module_name) {
-        LAM_FREE(param->mbp_module_name);
+        free(param->mbp_module_name);
       }
       if (NULL != param->mbp_param_name) {
-        LAM_FREE(param->mbp_param_name);
+        free(param->mbp_param_name);
       }
       return LAM_ERROR;
     }
@@ -367,12 +367,12 @@ static int param_register(const char *type_name, const char *module_name,
 
   if (MCA_BASE_PARAM_INFO != mca_param_name) {
     len = strlen(param->mbp_full_name) + strlen(mca_prefix) + 16;
-    param->mbp_env_var_name = LAM_MALLOC(len);
+    param->mbp_env_var_name = malloc(len);
     if (NULL == param->mbp_env_var_name) {
-      LAM_FREE(param->mbp_full_name);
-      LAM_FREE(param->mbp_type_name);
-      LAM_FREE(param->mbp_module_name);
-      LAM_FREE(param->mbp_param_name);
+      free(param->mbp_full_name);
+      free(param->mbp_type_name);
+      free(param->mbp_module_name);
+      free(param->mbp_param_name);
       return LAM_ERROR;
     }
     snprintf(param->mbp_env_var_name, len, "%s%s", mca_prefix, 
@@ -402,7 +402,7 @@ static int param_register(const char *type_name, const char *module_name,
 
       if (MCA_BASE_PARAM_TYPE_STRING == array[i]->mbp_type &&
           NULL != array[i]->mbp_default_value.stringval) {
-        LAM_FREE(array[i]->mbp_default_value.stringval);
+        free(array[i]->mbp_default_value.stringval);
       }
       if (MCA_BASE_PARAM_TYPE_STRING == param->mbp_type &&
           NULL != param->mbp_default_value.stringval) {
@@ -411,7 +411,7 @@ static int param_register(const char *type_name, const char *module_name,
       }
 
       param_free(param);
-      LAM_FREE(param);
+      free(param);
       return i;
     }
   }
@@ -498,22 +498,22 @@ static bool param_lookup(int index, mca_base_param_storage_t *storage)
 static void param_free(mca_base_param_t *p)
 {
   if (NULL != p->mbp_type_name) {
-    LAM_FREE(p->mbp_type_name);
+    free(p->mbp_type_name);
   }
   if (NULL != p->mbp_module_name) {
-    LAM_FREE(p->mbp_module_name);
+    free(p->mbp_module_name);
   }
   if (NULL != p->mbp_param_name) {
-    LAM_FREE(p->mbp_param_name);
+    free(p->mbp_param_name);
   }
   if (NULL != p->mbp_env_var_name) {
-    LAM_FREE(p->mbp_env_var_name);
+    free(p->mbp_env_var_name);
   }
   if (NULL != p->mbp_full_name) {
-    LAM_FREE(p->mbp_full_name);
+    free(p->mbp_full_name);
   }
   if (MCA_BASE_PARAM_TYPE_STRING == p->mbp_type &&
       NULL != p->mbp_default_value.stringval) {
-    LAM_FREE(p->mbp_default_value.stringval);
+    free(p->mbp_default_value.stringval);
   }
 }

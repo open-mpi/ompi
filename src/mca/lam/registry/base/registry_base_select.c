@@ -7,6 +7,7 @@
 #include <stdio.h>
 
 #include "lam/runtime/runtime.h"
+#include "lam/util/output.h"
 #include "mca/mca.h"
 #include "mca/lam/base/base.h"
 #include "mca/lam/registry/registry.h"

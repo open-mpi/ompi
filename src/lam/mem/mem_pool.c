@@ -327,7 +327,7 @@ int lam_fmp_init_with(lam_fixed_mpool_t *pool, ssize_t initial_allocation,
     pool->fmp_n_elts_to_add = n_array_elements_to_add;
     pool->fmp_n_pools = n_pools;
     pool->fmp_segments = (lam_memseg_t **) 
-      LAM_MALLOC(sizeof(lam_memseg_t *)*n_pools);
+      malloc(sizeof(lam_memseg_t *)*n_pools);
     if ( !pool->fmp_segments )
     {
       lam_abort(1, "Unable to allocate memory for "
@@ -336,7 +336,7 @@ int lam_fmp_init_with(lam_fixed_mpool_t *pool, ssize_t initial_allocation,
     }
     bzero(pool->fmp_segments, sizeof(lam_memseg_t *)*n_pools);
 
-    pool->fmp_n_segs_in_array = (int *) LAM_MALLOC(sizeof(int) * n_pools);
+    pool->fmp_n_segs_in_array = malloc(sizeof(int) * n_pools);
     if ( !pool->fmp_n_segs_in_array ) {
       lam_abort(1, "Unable to allocate memory for "
                 "pool->fmp_n_segs_in_array, requested %ld bytes, errno %d",
@@ -444,10 +444,9 @@ void *lam_fmp_get_mem_segment(lam_fixed_mpool_t *pool,
             pool->fmp_n_segs_in_array[which_pool])
         {
             /* create a temp version of pool->fmp_segments[] */
-            tmp_seg = (lam_memseg_t *)
-              LAM_MALLOC(sizeof(lam_memseg_t) *
-                         (pool->fmp_n_segments[which_pool] +
-                          pool->fmp_n_elts_to_add));
+            tmp_seg = malloc(sizeof(lam_memseg_t) *
+                             (pool->fmp_n_segments[which_pool] +
+                              pool->fmp_n_elts_to_add));
             if ( !tmp_seg ) {
               lam_abort(1, "Unable to allocate memory for tmp_seg, errno %d",
                         errno);
@@ -465,7 +464,7 @@ void *lam_fmp_get_mem_segment(lam_fixed_mpool_t *pool,
                     pool->fmp_segments[which_pool][seg_idx].ms_mem_available;
             }
             
-            LAM_FREE(pool->fmp_segments[which_pool]);
+            free(pool->fmp_segments[which_pool]);
             pool->fmp_segments[which_pool] = tmp_seg;
             
             /* set the element of pool->fmp_segments to grab */

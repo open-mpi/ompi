@@ -132,7 +132,7 @@ static inline void lam_fh_remove_value_ptrkey(lam_fast_hash_t *htbl, void *key, 
         {
             buckets[i].fhn_is_taken = false;
             buckets[i].fhn_value = 0;
-            LAM_FREE(buckets[i].fhn_key.pval);
+            free(buckets[i].fhn_key.pval);
         }
     }
 }
@@ -152,8 +152,7 @@ static inline int lam_fh_find_empty_bucket(lam_fast_hash_t *htbl, uint32_t hval,
     {
         /* create new array of buckets
         for collision */
-        htbl->fh_nodes[hval] = (lam_fhnode_t *)LAM_MALLOC(sizeof(lam_fhnode_t)
-                                                          * BUCKET_ALLOC_SZ);
+        htbl->fh_nodes[hval] = malloc(sizeof(lam_fhnode_t) * BUCKET_ALLOC_SZ);
         if ( !htbl->fh_nodes[hval] )
             return LAM_ERR_OUT_OF_RESOURCE;
         
@@ -214,7 +213,7 @@ static inline int lam_fh_set_value_ptrkey(lam_fast_hash_t *htbl, void *val,
     /* ASSERT: we have an empty bucket */
     /* found empty bucket */
     buckets = htbl->fh_nodes[hval];
-    buckets[bucket_idx].fhn_key.pval = LAM_MALLOC(keysize);
+    buckets[bucket_idx].fhn_key.pval = malloc(keysize);
     if ( NULL == buckets[bucket_idx].fhn_key.pval )
     {
         return LAM_ERR_OUT_OF_RESOURCE;
@@ -338,7 +337,7 @@ int lam_fh_resize(lam_fast_hash_t *htbl, uint32_t size)
                                               sizeof(uint32_t) * power2_size);
     if ( 0 == htbl->fh_bucket_cnt )
     {
-        LAM_FREE(htbl->fh_nodes);
+        free(htbl->fh_nodes);
         return LAM_ERR_OUT_OF_RESOURCE;
     }
 
@@ -375,7 +374,7 @@ void lam_fh_remove_all(lam_fast_hash_t *htbl)
                     buckets[j].fhn_is_taken = false;
                     if ( true == buckets[j].fhn_using_key_ptr )
                     {
-                        LAM_FREE(buckets[j].fhn_key.pval);
+                        free(buckets[j].fhn_key.pval);
                     }
                 }
             }   /* end loop over htbl->fh_bucket_cnt[i]. */

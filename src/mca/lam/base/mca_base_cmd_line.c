@@ -65,7 +65,7 @@ int mca_base_cmd_line_process_args(lam_cmd_line_t *cmd)
 
   for (i = 0; NULL != mca_param_argv[i]; ++i) {
     buflen = strlen(mca_param_argv[i]) + strlen(mca_value_argv[i]) + 32;
-    buf = LAM_MALLOC(buflen);
+    buf = malloc(buflen);
     if (NULL == buf)
       return LAM_ERR_OUT_OF_RESOURCE;
 
@@ -95,9 +95,9 @@ int mca_base_cmd_line_process_arg(const char *param, const char *value)
   for (i = 0; NULL != mca_param_argv && NULL != mca_param_argv[i]; ++i) {
     if (0 == strcmp(param, mca_param_argv[i])) {
       len = strlen(value) + strlen(mca_param_argv[i]);
-      new_str = LAM_MALLOC(len);
+      new_str = malloc(len);
       snprintf(new_str, len, "%s,%s", mca_value_argv[i], value);
-      LAM_FREE(mca_value_argv[i]);
+      free(mca_value_argv[i]);
       mca_value_argv[i] = new_str;
 
       return LAM_SUCCESS;

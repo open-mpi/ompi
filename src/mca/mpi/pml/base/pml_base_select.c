@@ -77,7 +77,7 @@ int mca_pml_base_select(mca_pml_t *selected, bool *allow_multi_user_threads,
           best_module = module;
         }
 
-        om = LAM_MALLOC(sizeof(opened_module_t));
+        om = malloc(sizeof(opened_module_t));
         if (NULL == om) {
           return LAM_ERR_OUT_OF_RESOURCE;
         }
@@ -117,7 +117,7 @@ int mca_pml_base_select(mca_pml_t *selected, bool *allow_multi_user_threads,
                            module->pmlm_version.mca_module_name);
       }
     }
-    LAM_FREE(om);
+    free(om);
   }
 
   /* This base function closes, unloads, and removes from the

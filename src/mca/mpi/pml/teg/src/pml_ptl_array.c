@@ -3,7 +3,6 @@
  */
 
 #include <string.h>
-#include "lam/mem/malloc.h"
 #include "pml_ptl_array.h"
 
 
@@ -27,8 +26,8 @@ void mca_ptl_array_init(mca_ptl_array_t* array)
 
 void mca_ptl_array_destroy(mca_ptl_array_t* array)
 {
-    if(array->ptl_procs != 0)
-        LAM_FREE(array->ptl_procs);
+    if (array->ptl_procs != 0)
+        free(array->ptl_procs);
     SUPER_DESTROY(array, &lam_object_cls);
 }
 
@@ -39,12 +38,12 @@ int mca_ptl_array_reserve(mca_ptl_array_t* array, size_t size)
     if(array->ptl_reserve >= size)
         return LAM_SUCCESS;
     
-    procs = (mca_ptl_proc_t*)LAM_MALLOC(sizeof(mca_ptl_array_t)*size);
+    procs = malloc(sizeof(mca_ptl_array_t)*size);
     if(array == 0)
         return LAM_ERR_OUT_OF_RESOURCE;
     if(array->ptl_size) {
          memcpy(procs, array->ptl_procs, array->ptl_size * sizeof(mca_ptl_proc_t));
-         LAM_FREE(array->ptl_procs);
+         free(array->ptl_procs);
     }
     array->ptl_procs = procs;
     array->ptl_reserve = size;

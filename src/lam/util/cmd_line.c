@@ -97,7 +97,7 @@ static cmd_line_option_t *find_option(lam_cmd_line_t *cmd,
  */
 lam_cmd_line_t *lam_cmd_line_create(void)
 {
-  lam_cmd_line_t *cmd = LAM_MALLOC(sizeof(lam_cmd_line_t));
+  lam_cmd_line_t *cmd = malloc(sizeof(lam_cmd_line_t));
 
   if (NULL == cmd)
     return NULL;
@@ -164,10 +164,10 @@ void lam_cmd_line_free(lam_cmd_line_t *cmd)
        item = lam_list_remove_first(&cmd->lcl_options)) {
     option = (cmd_line_option_t *) item;
     if (NULL != option->clo_long_name)
-      LAM_FREE(option->clo_long_name);
+      free(option->clo_long_name);
     if (NULL != option->clo_description)
-      LAM_FREE(option->clo_description);
-    LAM_FREE(item);
+      free(option->clo_description);
+    free(item);
   }
 
   /* Free any parsed results */
@@ -176,7 +176,7 @@ void lam_cmd_line_free(lam_cmd_line_t *cmd)
 
   /* Now free the cmd itself */
 
-  LAM_FREE(cmd);
+  free(cmd);
 }
 
 
@@ -222,7 +222,7 @@ int lam_cmd_line_make_opt(lam_cmd_line_t *cmd, char short_name,
 
   /* Allocate and fill an option item */
 
-  option = LAM_MALLOC(sizeof(cmd_line_option_t));
+  option = malloc(sizeof(cmd_line_option_t));
   if (NULL == option)
     return LAM_ERR_OUT_OF_RESOURCE;
   lam_list_item_init((lam_list_item_t *) option);
@@ -387,7 +387,7 @@ int lam_cmd_line_parse(lam_cmd_line_t *cmd, bool ignore_unknown,
            them are the special_empty_param (insertted by
            split_shorts()), then print an error and return. */
 
-        param = LAM_MALLOC(sizeof(cmd_line_param_t));
+        param = malloc(sizeof(cmd_line_param_t));
         if (NULL == param) {
           lam_mutex_unlock(&cmd->lcl_mutex);
           return LAM_ERR_OUT_OF_RESOURCE;
@@ -412,7 +412,7 @@ int lam_cmd_line_parse(lam_cmd_line_t *cmd, bool ignore_unknown,
                        cmd->lcl_argv[orig], option->clo_num_params);
             if (NULL != param->clp_argv)
               lam_argv_free(param->clp_argv);
-            LAM_FREE(param);
+            free(param);
             i = cmd->lcl_argc;
             break;
           } else {
@@ -422,7 +422,7 @@ int lam_cmd_line_parse(lam_cmd_line_t *cmd, bool ignore_unknown,
                          cmd->lcl_argv[orig], option->clo_num_params);
               if (NULL != param->clp_argv)
                 lam_argv_free(param->clp_argv);
-              LAM_FREE(param);
+              free(param);
               i = cmd->lcl_argc;
               break;
             } 
@@ -530,9 +530,9 @@ char *lam_cmd_line_get_usage_msg(lam_cmd_line_t *cmd)
 
       if (len > prev_len) {
         if (NULL != line) {
-          LAM_FREE(line);
+          free(line);
         }
-        line = LAM_MALLOC(len * 2);
+        line = malloc(len * 2);
         if (NULL == line) {
           lam_mutex_unlock(&cmd->lcl_mutex);
           return NULL;
@@ -571,7 +571,7 @@ char *lam_cmd_line_get_usage_msg(lam_cmd_line_t *cmd)
     }
   }
   if (line != NULL) {
-    LAM_FREE(line);
+    free(line);
   }
   if (argv != NULL) {
     ret = lam_argv_join(argv, '\n');
@@ -759,7 +759,7 @@ static void free_parse_results(lam_cmd_line_t *cmd)
   for (item = lam_list_remove_first(&cmd->lcl_params);
        NULL != item; 
        item = lam_list_remove_first(&cmd->lcl_params)) {
-    LAM_FREE(item);
+    free(item);
   }
 
   /* Free the argv's */

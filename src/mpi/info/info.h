@@ -5,10 +5,11 @@
 #ifndef LAM_INFO_H
 #define LAM_INFO_H
 
+#include <string.h>
+
 #include "mpi.h"
 #include "lam/lfc/list.h"
 #include "lam/lam.h"
-#include <string.h>
 
 
 /**

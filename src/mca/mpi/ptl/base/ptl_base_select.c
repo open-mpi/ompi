@@ -72,7 +72,7 @@ int mca_ptl_base_select(bool *allow_multi_user_threads,
                            "select: init returned success");
 
         for (i = 0; i < num_ptls; ++i) {
-          sm = LAM_MALLOC(sizeof(mca_ptl_base_selected_module_t));
+          sm = malloc(sizeof(mca_ptl_base_selected_module_t));
           if (NULL == sm) {
             return LAM_ERR_OUT_OF_RESOURCE;
           }
@@ -82,7 +82,7 @@ int mca_ptl_base_select(bool *allow_multi_user_threads,
           lam_list_append(&mca_ptl_base_modules_initialized,
                           (lam_list_item_t*) sm);
         }
-        LAM_FREE(actions);
+        free(actions);
       }
     }
   }

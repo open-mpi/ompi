@@ -8,7 +8,6 @@
 #include <stdio.h>
 
 #include "lam/constants.h"
-#include "lam/mem/malloc.h"
 #include "mpi.h"
 #include "mca/mpi/coll/coll.h"
 #include "coll_basic.h"
@@ -77,7 +76,7 @@ int mca_coll_basic_reduce_lin(void *sbuf, void *rbuf, int count,
   }
   if (MPI_SUCCESS != err) {
     if (NULL != buffer)
-      LAM_FREE(buffer);
+      free(buffer);
     return err;
   }
 
@@ -95,7 +94,7 @@ int mca_coll_basic_reduce_lin(void *sbuf, void *rbuf, int count,
 #endif
       if (MPI_SUCCESS != err) {
 	if (NULL != buffer)
-	  LAM_FREE(buffer);
+	  free(buffer);
 	return err;
       }
 
@@ -115,7 +114,7 @@ int mca_coll_basic_reduce_lin(void *sbuf, void *rbuf, int count,
   }
 
   if (NULL != buffer)
-    LAM_FREE(buffer);
+    free(buffer);
 
   /* All done */
 
@@ -161,7 +160,7 @@ int mca_coll_basic_reduce_log(void *sbuf, void *rbuf, int count,
   err = lam_dtbuffer(dtype, count, &buf2, &origin2);
   if (MPI_SUCCESS != err) {
     if (NULL != buf1)
-      LAM_FREE(buf1);
+      free(buf1);
     return err;
   }
 #endif
@@ -203,9 +202,9 @@ int mca_coll_basic_reduce_log(void *sbuf, void *rbuf, int count,
 #endif
       if (MPI_SUCCESS != err) {
 	if (NULL != buf1)
-	  LAM_FREE(buf1);
+	  free(buf1);
 	if (NULL != buf2)
-	  LAM_FREE(buf2);
+	  free(buf2);
 	return err;
       }
 
@@ -234,9 +233,9 @@ int mca_coll_basic_reduce_log(void *sbuf, void *rbuf, int count,
 #endif
       if (MPI_SUCCESS != err) {
 	if (NULL != buf1)
-	  LAM_FREE(buf1);
+	  free(buf1);
 	if (NULL != buf2)
-	  LAM_FREE(buf2);
+	  free(buf2);
 	return err;
       }
 
@@ -287,9 +286,9 @@ int mca_coll_basic_reduce_log(void *sbuf, void *rbuf, int count,
   }
 
   if (NULL != buf1)
-    LAM_FREE(buf1);
+    free(buf1);
   if (NULL != buf2)
-    LAM_FREE(buf2);
+    free(buf2);
 
   /* All done */
 

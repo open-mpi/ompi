@@ -90,7 +90,7 @@ int mca_base_module_registry_retain(char *type, lt_dlhandle module_handle,
 
   /* Allocate a new registry item */
 
-  ri = LAM_MALLOC(sizeof(registry_item_t));
+  ri = malloc(sizeof(registry_item_t));
   if (NULL == ri)
     return LAM_ERR_OUT_OF_RESOURCE;
 
@@ -228,7 +228,7 @@ static int link_items(registry_item_t *src, registry_item_t *depend)
 
   /* Make a new depedency item */
 
-  di = LAM_MALLOC(sizeof(dependency_item_t));
+  di = malloc(sizeof(dependency_item_t));
   if (NULL == di)
     return LAM_ERR_OUT_OF_RESOURCE;
 
@@ -275,7 +275,7 @@ static void release_registry_item(registry_item_t *ri)
          item = lam_list_remove_first(&ri->ri_dependencies)) {
       di = (dependency_item_t *) item;
       --di->di_registry_entry->ri_refcount;
-      LAM_FREE(di);
+      free(di);
     }
 
     /* It should be obvious, but I'll state it anyway because it bit
@@ -285,6 +285,6 @@ static void release_registry_item(registry_item_t *ri)
 
     lam_list_destroy(&di->di_registry_entry->ri_dependencies);
     lam_list_remove_item(&registry, (lam_list_item_t *) ri);
-    LAM_FREE(ri);
+    free(ri);
   }
 }

@@ -2,7 +2,6 @@
  * $HEADER$
  */
 
-#include "lam/mem/malloc.h"
 #include "lam/util/output.h"
 #include "lam/util/if.h"
 #include "mca/mpi/pml/pml.h"
@@ -40,7 +39,7 @@ mca_ptl_tcp_t mca_ptl_tcp = {
 
 int mca_ptl_tcp_create(int if_index)
 {
-    mca_ptl_tcp_t* ptl = (mca_ptl_tcp_t*)LAM_MALLOC(sizeof(mca_ptl_tcp_t));
+    mca_ptl_tcp_t* ptl = malloc(sizeof(mca_ptl_tcp_t));
     if(NULL == ptl)
         return LAM_ERR_OUT_OF_RESOURCE;
     memcpy(ptl, &mca_ptl_tcp, sizeof(mca_ptl_tcp));
@@ -103,7 +102,7 @@ int mca_ptl_tcp_del_proc(struct mca_ptl_t* ptl, struct lam_proc_t *proc, struct 
 
 int mca_ptl_tcp_finalize(struct mca_ptl_t* ptl)
 {
-    LAM_FREE(ptl);
+    free(ptl);
     return LAM_SUCCESS;
 }
 
