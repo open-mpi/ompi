@@ -265,7 +265,7 @@ bool mca_ptl_tcp_peer_accept(mca_ptl_base_peer_t* ptl_peer, struct sockaddr_in* 
             mca_ptl_tcp_peer_event_init(ptl_peer, sd);
             ompi_event_add(&ptl_peer->peer_recv_event, 0);
             mca_ptl_tcp_peer_connected(ptl_peer);
-#if OMPI_ENABLE_DEBUG
+#if OMPI_ENABLE_DEBUG && 0
             mca_ptl_tcp_peer_dump(ptl_peer, "accepted");
 #endif
             OMPI_THREAD_UNLOCK(&ptl_peer->peer_send_lock);
@@ -375,7 +375,7 @@ static int mca_ptl_tcp_peer_recv_connect_ack(mca_ptl_base_peer_t* ptl_peer)
 
     /* connected */
     mca_ptl_tcp_peer_connected(ptl_peer);
-#if OMPI_ENABLE_DEBUG
+#if OMPI_ENABLE_DEBUG && 0
     mca_ptl_tcp_peer_dump(ptl_peer, "connected");
 #endif
     return OMPI_SUCCESS;

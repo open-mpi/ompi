@@ -115,7 +115,7 @@ int mca_ptl_tcp_component_open(void)
     mca_ptl_tcp_component.tcp_if_include =
         mca_ptl_tcp_param_register_string("if_include", "");
     mca_ptl_tcp_component.tcp_if_exclude =
-        mca_ptl_tcp_param_register_string("if_exclude", "");
+        mca_ptl_tcp_param_register_string("if_exclude", "lo");
     mca_ptl_tcp_component.tcp_free_list_num =
         mca_ptl_tcp_param_register_int("free_list_num", 256);
     mca_ptl_tcp_component.tcp_free_list_max =
@@ -209,7 +209,7 @@ static int mca_ptl_tcp_create(int if_index, const char* if_name)
     sprintf(param, "latency_%s", if_name);
     ptl->super.ptl_latency = mca_ptl_tcp_param_register_int(param, 0);
 
-#if OMPI_ENABLE_DEBUG
+#if OMPI_ENABLE_DEBUG && 0
     ompi_output(0,"interface: %s bandwidth %d latency %d\n", 
         if_name, ptl->super.ptl_bandwidth, ptl->super.ptl_latency);
 #endif
@@ -267,7 +267,7 @@ static int mca_ptl_tcp_component_create_instances(void)
         /* check to see if this interface exists in the exclude list */
         argv = exclude;
         while(argv && *argv) {
-            if(strcmp(*argv,if_name) == 0)
+            if(strncmp(*argv,if_name,strlen(*argv)) == 0)
                 break;
             argv++;
         }
@@ -355,15 +355,17 @@ static int mca_ptl_tcp_component_exchange(void)
      int rc;
      size_t i;
      size_t size = mca_ptl_tcp_component.tcp_num_ptl_modules * sizeof(mca_ptl_tcp_addr_t);
-     mca_ptl_tcp_addr_t *addrs = malloc(size);
-     for(i=0; i<mca_ptl_tcp_component.tcp_num_ptl_modules; i++) {
-         mca_ptl_tcp_module_t* ptl = mca_ptl_tcp_component.tcp_ptl_modules[i];
-         addrs[i].addr_inet = ptl->ptl_ifaddr.sin_addr;
-         addrs[i].addr_port = mca_ptl_tcp_component.tcp_listen_port;
-         addrs[i].addr_inuse = 0;
+     if(mca_ptl_tcp_component.tcp_num_ptl_modules != 0) {
+         mca_ptl_tcp_addr_t *addrs = malloc(size);
+         for(i=0; i<mca_ptl_tcp_component.tcp_num_ptl_modules; i++) {
+             mca_ptl_tcp_module_t* ptl = mca_ptl_tcp_component.tcp_ptl_modules[i];
+             addrs[i].addr_inet = ptl->ptl_ifaddr.sin_addr;
+             addrs[i].addr_port = mca_ptl_tcp_component.tcp_listen_port;
+             addrs[i].addr_inuse = 0;
+         }
+         rc =  mca_base_modex_send(&mca_ptl_tcp_component.super.ptlm_version, addrs, size);
+         free(addrs);
      }
-     rc =  mca_base_modex_send(&mca_ptl_tcp_component.super.ptlm_version, addrs, size);
-     free(addrs);
      return rc;
 }
 
