@@ -339,7 +339,7 @@ static ompi_list_t *check_components(ompi_list_t *components,
            giving us a module */
 
         avail = OBJ_NEW(avail_coll_t);
-        avail->ac_priority = 0;
+        avail->ac_priority = priority;
         avail->ac_component = (mca_coll_base_component_1_0_0_t *) component;
         avail->ac_module = module;
 
