@@ -260,9 +260,7 @@ int lam_op_finalize(void)
 }
 
 
-#if 0
-/* JMS Need to fill in -- template off lam_errhandler_create() */
-lam_op_t *lam_op_create(lam_op_type_t object_type,
+lam_op_t *lam_op_create(bool commute,
                         lam_op_fortran_handler_fn_t *func)
 {
   lam_op_t *new_op;
@@ -284,17 +282,18 @@ lam_op_t *lam_op_create(lam_op_type_t object_type,
          it doesn't matter what type it is (we'll cast it to the Right
          type when we *use* it). */
 
-      new_op->o_mpi_object_type = object_type;
+      new_op->o_is_intrinsic = false;
       new_op->o_fortran_function = false;
+      new_op->o_is_assoc = true;
+      new_op->o_is_commute = commute;
       new_op->o_func.fort_fn = func;
     }
   }
 
-
   /* All done */
+
   return LAM_SUCCESS;
 }
-#endif
 
 
 /**************************************************************************

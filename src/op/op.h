@@ -15,19 +15,19 @@
 /*
  * These must correspond to the fortran handle indices
  */
-#define MPI_MAX 0
-#define MPI_MIN 1
-#define MPI_SUM 2
-#define MPI_PROD 3
-#define MPI_LAND 4
-#define MPI_BAND 5
-#define MPI_LOR 6
-#define MPI_BOR 7
-#define MPI_LXOR 8
-#define MPI_BXOR 9
-#define MPI_MAXLOC 10
-#define MPI_MINLOC 11
-#define MPI_REPLACE 12
+#define MPI_OP_MAX_FORTRAN 0
+#define MPI_OP_MIN_FORTRAN 1
+#define MPI_OP_SUM_FORTRAN 2
+#define MPI_OP_PROD_FORTRAN 3
+#define MPI_OP_LAND_FORTRAN 4
+#define MPI_OP_BAND_FORTRAN 5
+#define MPI_OP_LOR_FORTRAN 6
+#define MPI_OP_BOR_FORTRAN 7
+#define MPI_OP_LXOR_FORTRAN 8
+#define MPI_OP_BXOR_FORTRAN 9
+#define MPI_OP_MAXLOC_FORTRAN 10
+#define MPI_OP_MINLOC_FORTRAN 11
+#define MPI_OP_REPLACE_FORTRAN 12
 
 
 /**
@@ -57,7 +57,7 @@ struct lam_op_t {
   bool o_is_intrinsic;
   bool o_fortran_function;
   bool o_is_assoc;
-  bool o_is_commun;
+  bool o_is_commute;
 
   /* Function pointers */
 
@@ -190,16 +190,53 @@ extern "C" {
    */
   int lam_op_finalize(void);
 
-#if 0
   /**
    * Create a lam_op_t
    *
-   * JMS Need to fill in -- template off lam_errhandler_create().
+   * @param commute Boolean indicating whether the operation is
+   *        communative or not
+   * @param func Function pointer of the error handler
+   *
+   * @returns op Pointer to the lam_op_t that will be
+   *   created and returned
+   *
+   * This function is called as the back-end of all the MPI_OP_CREATE
+   * functions.  It creates a new lam_op_t object, initializes it to
+   * the correct object type, and sets the callback function on it.
+   *
+   * The type of the function pointer is (arbitrarily) the fortran
+   * function handler type.  Since this function has to accept 2
+   * different function pointer types (lest we have 2 different
+   * functions to create errhandlers), the fortran one was picked
+   * arbitrarily.  Note that (void*) is not sufficient because at
+   * least theoretically, a sizeof(void*) may not necessarily be the
+   * same as sizeof(void(*)).
+   *
+   * NOTE: It *always* sets the "fortran" flag to false.  The Fortran
+   * wrapper for MPI_OP_CREATE is expected to reset this flag to true
+   * manually.
    */
-  lam_op_t *lam_op_create(lam_op_fortran_handler_fn_t *func);
-#endif
+  lam_op_t *lam_op_create(bool commute, lam_op_fortran_handler_fn_t *func);
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
+
+/**
+ * Check to see if an op is intrinsic.
+ *
+ * @param op The op to check
+ *
+ * @returns true If the op is intrinsic
+ * @returns false If the op is not intrinsic
+ *
+ * Self-explanitory.  This is needed in a few top-level MPI functions;
+ * this function is provided to hide the internal structure field
+ * names.
+ */
+static inline bool lam_op_is_intrinsic(lam_op_t *op)
+{
+  return op->o_is_intrinsic;
+}
 
 #endif /* LAM_OP_H */
