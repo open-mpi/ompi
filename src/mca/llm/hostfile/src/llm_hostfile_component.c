@@ -71,6 +71,9 @@ mca_llm_hostfile_component_open(void)
 int
 mca_llm_hostfile_component_close(void)
 {
+    if (NULL != mca_llm_hostfile_filename) {
+        free(mca_llm_hostfile_filename);
+    }
     return OMPI_SUCCESS;
 }
 
