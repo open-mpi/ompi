@@ -23,6 +23,10 @@ char *ompi_getline_buffer(FILE *fp);
 
 int ompi_write_universe_setup_file(char *filename)
 {
+#if 1
+    ompi_output(0, "WARNING: Called non-functional ompi_write_universe_setup_file\n");
+    return OMPI_ERROR;
+#else
     FILE *fp;
 
     fp = fopen(filename, "w");
@@ -53,10 +57,15 @@ int ompi_write_universe_setup_file(char *filename)
 	    ompi_universe.oob_contact_info);
     fclose(fp);
     return OMPI_SUCCESS;
+#endif
 }
 
 int ompi_read_universe_setup_file(char *filename)
 {
+#if 1
+    ompi_output(0, "WARNING: Called non-functional ompi_read_universe_setup_file\n");
+    return OMPI_ERROR;
+#else
     char persist[20], mode[10];
     FILE *fp;
 
@@ -110,6 +119,7 @@ int ompi_read_universe_setup_file(char *filename)
     fclose(fp);
 
     return OMPI_SUCCESS;
+#endif
 }
 
 char *ompi_getline_buffer(FILE *fp)
