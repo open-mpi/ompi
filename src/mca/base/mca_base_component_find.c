@@ -136,7 +136,8 @@ int mca_base_component_find(const char *directory, const char *type,
  * finally opened in recursive dependency traversals.
  */
 static void find_dyn_components(const char *path, const char *type_name, 
-                             const char *name, ompi_list_t *found_components)
+                                const char *name,
+                                ompi_list_t *found_components)
 {
   ltfn_data_holder_t params;
   char *path_to_use, *dir, *end, *param;
@@ -156,19 +157,22 @@ static void find_dyn_components(const char *path, const char *type_name,
                        type_name, name, NULL);
   }
 
-  /* If directory is NULL, iterate over the set of directories
-     specified by the MCA param mca_base_component_path.  If path is not
-     NULL, then use that as the path. */
+  /* If path is NULL, iterate over the set of directories specified by
+     the MCA param mca_base_component_path.  If path is not NULL, then
+     use that as the path. */
 
   param = NULL;
   if (NULL == path) {
     mca_base_param_lookup_string(mca_base_param_component_path, &param);
-    dir = param;
-  }
-  if (NULL == dir) {
-    path_to_use = NULL;
+    if (NULL == param) {
+      /* If there's no path, then there's nothing to search -- we're
+         done */
+      return;
+    } else {
+      path_to_use = strdup(param);
+    }
   } else {
-    path_to_use = strdup(dir);
+    path_to_use = strdup(path);
   }
 
   /* Iterate over all the files in the directories in the path and
