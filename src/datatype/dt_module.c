@@ -246,7 +246,7 @@ int ompi_ddt_local_sizes[DT_MAX_PREDEFINED];
         ompi_ddt_create_struct( 2, bLength, displ, types, &ptype );     \
         displ[0] = (long)(&(s[1]));                                     \
         displ[0] -= base;                                               \
-        if( displ[0] != sizeof(s[0]) )                                  \
+        if( displ[0] != (displ[1] + (long)sizeof(type2)) )              \
             ptype->ub = displ[0];  /* force a new extent for the datatype */ \
         ptype->flags |= DT_FLAG_FOREVER;                                \
         ptype->id = MPIDDT;                                             \
@@ -535,7 +535,7 @@ static int _dump_data_flags( unsigned short usflags, char* ptr )
             ptr[17] = 'E'; ptr[18] = 'R'; ptr[19] = 'R'; break;
         }
     }
-    return 20;
+    return 21;
 }
 
 static int __dump_data_desc( dt_elem_desc_t* pDesc, int nbElems, char* ptr )
