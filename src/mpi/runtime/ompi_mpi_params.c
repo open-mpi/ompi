@@ -46,7 +46,7 @@ int ompi_mpi_register_params(void)
             value = 1;
         }
         if (0 == value) {
-            ompi_output(0, "WARNING: MCA parameter mpi_param_check set to true, but parameter");
+            ompi_output(0, "WARNING: MCA parameter mpi_param_check set to true, but parameter checking");
             ompi_output(0, "WARNING: has been compiled out of Open MPI.  mpi_param_check value ignored.");
             ompi_mpi_param_check = false;
         }
