@@ -143,6 +143,7 @@ static void mca_ptl_mx_match(void* context, uint64_t match_value, int size)
     mca_ptl_mx_module_t* ptl = (mca_ptl_mx_module_t*)context;
     mca_ptl_mx_recv_frag_t *frag;
     mx_return_t mx_return;
+    mx_segment_t* segments;
     ompi_ptr_t match;
     int rc;
 
@@ -158,9 +159,11 @@ static void mca_ptl_mx_match(void* context, uint64_t match_value, int size)
     /* first fragment - post a buffer */
     if(match_value == 0) {
 
+        frag->frag_recv.frag_base.frag_size = size - sizeof(mca_ptl_base_header_t);
+        frag->frag_recv.frag_base.frag_addr = frag->frag_data;
+        frag->frag_recv.frag_is_buffered = true;
         frag->frag_segment_count = 2;
-        frag->frag_segments[1].segment_ptr = frag->frag_data;
-        frag->frag_segments[1].segment_length = size - sizeof(mca_ptl_base_header_t);
+        segments = frag->frag_segments;
 
     /* fragment has already been matched */
     } else {
@@ -170,7 +173,11 @@ static void mca_ptl_mx_match(void* context, uint64_t match_value, int size)
         ompi_proc_t *proc = ompi_comm_peer_lookup(request->req_base.req_comm,
             request->req_base.req_ompi.req_status.MPI_SOURCE);
         ompi_convertor_t* convertor = &frag->frag_recv.frag_base.frag_convertor;
+
+        frag->frag_size = size;
         frag->frag_recv.frag_base.frag_size = size - sizeof(mca_ptl_base_header_t);
+        frag->frag_recv.frag_base.frag_header.hdr_common.hdr_type =
+            MCA_PTL_HDR_TYPE_MATCH;
 
         /* initialize convertor */
         ompi_convertor_copy(proc->proc_convertor, convertor);
@@ -193,14 +200,16 @@ static void mca_ptl_mx_match(void* context, uint64_t match_value, int size)
             frag->frag_recv.frag_base.frag_addr = ((unsigned char*)request->req_base.req_addr) + offset;
         }
 
-        frag->frag_segments[1].segment_ptr = frag->frag_recv.frag_base.frag_addr;
-        frag->frag_segments[1].segment_length = frag->frag_recv.frag_base.frag_size;
-        frag->frag_segment_count = 2;
+        /* dont receive a header */
+        frag->frag_segment_count = 1;
+        segments = frag->frag_segments+1;
     }
+    frag->frag_segments[1].segment_ptr = frag->frag_recv.frag_base.frag_addr;
+    frag->frag_segments[1].segment_length = frag->frag_recv.frag_base.frag_size;
 
     mx_return = mx_irecv(
         ptl->mx_endpoint,
-        frag->frag_segments,
+        segments,
         frag->frag_segment_count,
         match_value,
         MX_MATCH_MASK_NONE,
