@@ -92,7 +92,7 @@ typedef struct output_desc_t output_desc_t;
 static bool initialized = false;
 static output_desc_t info[OMPI_OUTPUT_MAX_STREAMS];
 static char *temp_str = 0;
-static int temp_str_len = 0;
+static size_t temp_str_len = 0;
 static ompi_mutex_t mutex;
 static bool syslog_opened = false;
 
@@ -508,7 +508,7 @@ static void free_descriptor(int output_id)
  */
 static void output(int output_id, char *format, va_list arglist)
 {
-  int len, total_len;
+  size_t len, total_len;
   bool want_newline = false;
   char *str;
   output_desc_t *ldi;
