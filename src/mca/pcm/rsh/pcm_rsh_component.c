@@ -153,6 +153,8 @@ mca_pcm_rsh_init(int *priority,
         return NULL;
     }
 
+    me->constraints = constraints;
+
     /*
      * fill in the function pointers
      */

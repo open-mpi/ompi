@@ -23,12 +23,16 @@
 #include "include/constants.h"
 #include "mca/pcm/pcm.h"
 #include "mca/pcm/base/base.h"
+#include "mca/pcm/base/base_job_track.h"
+#include "runtime/runtime.h"
 #include "runtime/runtime_types.h"
+#include "runtime/ompi_rte_wait.h"
 #include "event/event.h"
 #include "util/output.h"
 #include "util/argv.h"
 #include "util/numtostr.h"
 #include "mca/ns/base/base.h"
+#include "util/proc_info.h"
 
 
 /*
@@ -41,10 +45,12 @@
  * Internal functions
  */
 static int internal_spawn_proc(mca_pcm_rsh_module_t *me,
-                               mca_ns_base_jobid_t jobid, ompi_rte_node_schedule_t *sched,
+                               mca_ns_base_jobid_t jobid, 
+                               ompi_rte_node_schedule_t *sched,
                                ompi_list_t *hostlist, 
                                int my_start_vpid, int global_start_vpid,
                                int num_procs);
+static void internal_wait_cb(pid_t pid, int status, void *data);
 
 
 /*
@@ -296,11 +302,10 @@ internal_spawn_proc(mca_pcm_rsh_module_t *me,
     int ret;
     pid_t pid;
     FILE *fp;
-#if 0
     int status;			/* exit status */
-#endif
     int i;
     char *tmp;
+    bool high_qos = (0 != (me->constraints & OMPI_RTE_SPAWN_HIGH_QOS));
 
     start_node = (mca_llm_base_hostfile_node_t*) ompi_list_get_first(hostlist);
 
@@ -355,6 +360,11 @@ internal_spawn_proc(mca_pcm_rsh_module_t *me,
     ompi_argv_append(&cmdc, &cmdv, tmp);
     free(tmp);
 
+    /* keep stdio open? */
+    if (high_qos) {
+        ompi_argv_append(&cmdc, &cmdv, "--high_qos");
+    }
+
     /* add the end of the .profile thing if required */
     if (needs_profile) {
         ompi_argv_append(&cmdc, &cmdv, ")");
@@ -395,18 +405,19 @@ internal_spawn_proc(mca_pcm_rsh_module_t *me,
 
     } else {
         /* parent */
-
-#if 0
         if (close(kidstdin[0])) {
             kill(pid, SIGTERM);
             ret = OMPI_ERROR;
             goto proc_cleanup;
         }
-#endif
 
         /* send our stuff down the wire */
         fp = fdopen(kidstdin[1], "a");
-        if (fp == NULL) { perror("fdopen"); abort(); }
+        if (fp == NULL) { 
+            /* BWB - fix me */
+            perror("fdopen"); 
+            abort();
+        }
         ret = mca_pcm_base_send_schedule(fp, jobid, sched, start_node->count);
         fclose(fp);
         if (OMPI_SUCCESS != ret) {
@@ -417,35 +428,26 @@ internal_spawn_proc(mca_pcm_rsh_module_t *me,
     
     ret = OMPI_SUCCESS;
 
- proc_cleanup:
+proc_cleanup:
 
-#if 0
-   /* TSW - this needs to be fixed - however, ssh is not existing - and for
-    * now this at least gives us stdout/stderr.
-   */
-    
-    /* Wait for the command to exit.  */
-  do {
-#if OMPI_HAVE_THREADS
-    int rc = waitpid(pid, &status, 0);
-#else
-    int rc = waitpid(pid, &status, WNOHANG);
-    if(rc == 0) {
-        ompi_event_loop(OMPI_EVLOOP_ONCE);
+    if (high_qos) {
+        mca_pcm_base_add_started_pids(jobid, pid, my_start_vpid,
+                                      my_start_vpid + num_procs - 1);
+        ret = ompi_rte_wait_cb(pid, internal_wait_cb, NULL);
+    } else {
+        /* Wait for the command to exit.  */
+        while (1) {
+            int rc = ompi_rte_waitpid(pid, &status, 0);
+            if (! (rc == -1 && errno == EINTR)) {
+                break;
+            }
+        }
+
+        if (WEXITSTATUS(status)) {
+            errno = WEXITSTATUS(status);
+            ret = OMPI_ERROR;
+        }
     }
-#endif
-    if (rc < 0) {
-        ret = OMPI_ERROR; 
-        break;
-    }
-  } while (!WIFEXITED(status));
-
-  if (WEXITSTATUS(status)) {
-    errno = WEXITSTATUS(status);
-
-    ret = OMPI_ERROR;
-  }
-#endif
 
  cleanup:
     /* free up everything we used on the way */
@@ -457,4 +459,38 @@ internal_spawn_proc(mca_pcm_rsh_module_t *me,
     cmdc = 0;
 
     return ret;
+}
+
+
+static void
+internal_wait_cb(pid_t pid, int status, void *data)
+{
+    mca_ns_base_jobid_t jobid = 0;
+    mca_ns_base_vpid_t upper = 0;
+    mca_ns_base_vpid_t lower = 0;
+    mca_ns_base_vpid_t i = 0;
+    int ret;
+    char *test;
+    ompi_process_name_t *proc_name;
+
+    printf("pcm_rsh was notified that process %d exited with status %d\n",
+           pid, status);
+
+    ret = mca_pcm_base_get_job_info(pid, &jobid, &lower, &upper);
+    if (ret != OMPI_SUCCESS) {
+        printf("Unfortunately, we could not find the associated job info\n");
+    } else {
+        printf("  It appears that this starter was assocated with jobid %d\n"
+               "  vpids %d to %d\n\n",
+               jobid, lower, upper);
+    }
+
+    /* unregister all the procs */
+#if 0
+    /* BWB - fix me when deadlock in gpr is fixed */
+    for (i = lower ; i <= upper ; ++i) {
+        test = ns_base_get_proc_name_string(ns_base_create_process_name(0, jobid, i));
+        ompi_registry.rte_unregister(test);
+    }
+#endif
 }

@@ -89,8 +89,6 @@ mca_pcm_rms_component_open(void)
   mca_pcm_rms_param_priority =
     mca_base_param_register_int("pcm", "rms", "priority", NULL, 5);
 
-  mca_pcm_rms_job_list_init();
-
   mca_pcm_rms_output = ompi_output_open(&mca_pcm_rms_output_stream);
 
   return OMPI_SUCCESS;
@@ -100,8 +98,6 @@ mca_pcm_rms_component_open(void)
 int
 mca_pcm_rms_component_close(void)
 {
-    mca_pcm_rms_job_list_fini();
-
     return OMPI_SUCCESS;
 }
 
