@@ -32,7 +32,8 @@ struct ompi_proc_info_t {
     bool seed;             /**< Indicate whether or not this is seed daemon */
     char *my_universe;     /**< The name of the universe to which this process belongs */
     char *tmpdir_base;    /**< Base directory of the session dir tree */
-    char *universe_session_dir;  /**< Location of universe  temp dir.
+    char *top_session_dir;   /**< Top-most directory of the session tree */
+    char *universe_session_dir;  /**< Location of universe temp dir.
 			    * The session directory has the form
 			    * <prefix><openmpi-sessions-user><universe>, where the prefix
 			    * can either be provided by the user via the
