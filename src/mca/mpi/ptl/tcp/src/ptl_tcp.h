@@ -35,6 +35,7 @@ struct mca_ptl_tcp_module_1_0_0_t {
     lam_free_list_t tcp_send_requests;
     lam_free_list_t tcp_send_frags;
     lam_free_list_t tcp_recv_frags;
+    lam_list_t tcp_procs;
 };
 typedef struct mca_ptl_tcp_module_1_0_0_t mca_ptl_tcp_module_1_0_0_t;
 typedef struct mca_ptl_tcp_module_1_0_0_t mca_ptl_tcp_module_t;

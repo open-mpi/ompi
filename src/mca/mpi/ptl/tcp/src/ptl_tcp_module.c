@@ -127,6 +127,8 @@ int mca_ptl_tcp_module_close(void)
 {
     LAM_FREE(mca_ptl_tcp_module.tcp_if_include);
     LAM_FREE(mca_ptl_tcp_module.tcp_if_exclude);
+    if (NULL != mca_ptl_tcp_module.tcp_ptls)
+        LAM_FREE(mca_ptl_tcp_module.tcp_ptls);
     return LAM_SUCCESS;
 }
 
@@ -251,8 +253,10 @@ static int mca_ptl_tcp_module_exchange(void)
          addrs[i].addr_port = mca_ptl_tcp_module.tcp_listen;
          addrs[i].addr_inuse = 0;
      }
-     return mca_base_modex_send(&mca_ptl_tcp_module.super.ptlm_version,
+     int rc =  mca_base_modex_send(&mca_ptl_tcp_module.super.ptlm_version,
          addrs, sizeof(mca_ptl_tcp_t),mca_ptl_tcp_module.tcp_num_ptls);
+     LAM_FREE(addrs);
+     return rc;
 }
 
 /*
@@ -271,10 +275,10 @@ mca_ptl_t** mca_ptl_tcp_module_init(int *num_ptls,
     *have_hidden_threads = false;
 
     /* initialize containers */
-    lam_reactor_init(&mca_ptl_tcp_module.tcp_reactor);
+    STATIC_INIT(mca_ptl_tcp_module.tcp_reactor, &lam_reactor_cls);
 
     /* initialize free lists */
-    lam_free_list_init(&mca_ptl_tcp_module.tcp_send_requests);
+    STATIC_INIT(mca_ptl_tcp_module.tcp_send_requests, &lam_free_list_cls);
     lam_free_list_init_with(&mca_ptl_tcp_module.tcp_send_requests, 
         sizeof(mca_ptl_base_send_request_t) + sizeof(mca_ptl_tcp_send_frag_t),
         &mca_ptl_base_send_request_cls,
@@ -283,7 +287,7 @@ mca_ptl_t** mca_ptl_tcp_module_init(int *num_ptls,
         mca_ptl_tcp_module.tcp_free_list_inc,
         NULL); /* use default allocator */
 
-    lam_free_list_init(&mca_ptl_tcp_module.tcp_send_frags);
+    STATIC_INIT(mca_ptl_tcp_module.tcp_send_frags, &lam_free_list_cls);
     lam_free_list_init_with(&mca_ptl_tcp_module.tcp_send_frags, 
         sizeof(mca_ptl_tcp_send_frag_t),
         &mca_ptl_tcp_send_frag_cls,
@@ -292,7 +296,7 @@ mca_ptl_t** mca_ptl_tcp_module_init(int *num_ptls,
         mca_ptl_tcp_module.tcp_free_list_inc,
         NULL); /* use default allocator */
 
-    lam_free_list_init(&mca_ptl_tcp_module.tcp_recv_frags);
+    STATIC_INIT(mca_ptl_tcp_module.tcp_recv_frags, &lam_free_list_cls);
     lam_free_list_init_with(&mca_ptl_tcp_module.tcp_recv_frags, 
         sizeof(mca_ptl_tcp_recv_frag_t),
         &mca_ptl_tcp_recv_frag_cls,

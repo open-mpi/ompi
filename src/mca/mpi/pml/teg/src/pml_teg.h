@@ -30,6 +30,7 @@ struct mca_pml_teg_t {
     mca_ptl_t** teg_ptls;
     size_t teg_num_ptls;
 
+    lam_list_t  teg_procs;
     lam_list_t  teg_incomplete_sends; 
     lam_mutex_t teg_lock;
 
@@ -38,6 +39,7 @@ struct mca_pml_teg_t {
     int teg_free_list_inc; /* number of elements to grow free list */
     lam_free_list_t teg_recv_requests;
     mca_ptl_base_sequence_t teg_recv_sequence;
+
 };
 typedef struct mca_pml_teg_t mca_pml_teg_t; 
 

@@ -11,7 +11,7 @@
 #include "lam/mem/seg_list.h"
 #include "lam/mem/mem_pool.h"
 
-extern lam_class_info_t lam_free_lists_cls;
+extern lam_class_info_t lam_free_list_cls;
 
 
 struct lam_free_list_t
