@@ -21,7 +21,6 @@ mcamoduledir = $(libdir)/ompi
 mcamodule_LTLIBRARIES = $(module_install)
 mca_allocator_bucket_la_SOURCES =
 mca_allocator_bucket_la_LIBADD = \
-        src/libmca_allocator_bucket.la \
         $(LIBOMPI_LA)
 mca_allocator_bucket_la_LDFLAGS = -module -avoid-version
 
