@@ -83,6 +83,7 @@ AH_TOP([/* -*- c -*-
 #define LAM_CONFIG_H
 ])
 AH_BOTTOM([
+#include <lam_config.h>
 #endif /* LAM_CONFIG_H */
 ])
 
@@ -136,6 +137,8 @@ LAM_SETUP_CC
 # check for c99 features
 
 AC_C_INLINE
+AC_CHECK_HEADERS(stdbool.h)
+# JMS This macro will be re-written by Dave for licensing reasons
 AX_CREATE_STDINT_H([src/include/lam_stdint.h])
 
 
