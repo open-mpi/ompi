@@ -40,10 +40,6 @@ int MPI_Init(int *argc, char ***argv)
     /* JMS show_help */
     return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER, FUNC_NAME);
   }
-  /* debug */
-  fprintf(stderr," mpi_init called \n");
-  fflush(stderr);
-  /* end debug */
 
   /* check for environment overrides for required thread level.  If
      there is, check to see that it is a valid/supported thread level.
