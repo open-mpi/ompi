@@ -34,6 +34,7 @@ struct mca_ptl_sm_frag_t {
     size_t buff_length;   /**< size of buffer */
     int queue_index;      /**< local process index, cached for fast
                             acking */
+    struct mca_ptl_base_module_t* send_ptl;   /**< PTL that is selected for first fragment */
     void *buff;           /**< pointer to buffer */
     void *buff_offset_from_segment_base;   /**< pointer to buffer,
                                              relative to base of the

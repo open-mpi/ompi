@@ -44,6 +44,9 @@ static void mca_ptl_sm_first_frag_construct(mca_ptl_sm_frag_t* frag)
     /* set local rank */
     frag->queue_index=mca_ptl_sm_component.my_smp_rank;
 
+    /* set pointer to the sending ptl */
+    frag->send_ptl=(mca_ptl_base_module_t *)(&mca_ptl_sm);
+
     /* set buffer pointer */
     ptr=((char *)frag)+sizeof(mca_ptl_sm_frag_t)+
         mca_ptl_sm_component.fragment_alignment;
@@ -76,6 +79,9 @@ static void mca_ptl_sm_second_frag_construct(mca_ptl_sm_frag_t* frag)
 
     /* set local rank */
     frag->queue_index=mca_ptl_sm_component.my_smp_rank;
+
+    /* set pointer to the sending ptl */
+    frag->send_ptl=(mca_ptl_base_module_t *)(&mca_ptl_sm);
 
     /* set buffer pointer */
     ptr=((char *)frag)+sizeof(mca_ptl_sm_frag_t)+
