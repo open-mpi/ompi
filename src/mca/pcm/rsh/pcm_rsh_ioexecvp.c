@@ -27,7 +27,7 @@
 #include <sys/param.h>
 
 #include "include/constants.h"
-#include "mca/pcm/base/base.h"
+#include "mca/pcm/rsh/pcm_rsh.h"
 #include "util/argv.h"
 
 /*
@@ -43,7 +43,7 @@
  *	Returns		- 0 or OMPI_ERROR
  */
 int
-mca_pcm_base_ioexecvp(char **cmdv, int showout, char *outbuff, 
+mca_pcm_rsh_ioexecvp(char **cmdv, int showout, char *outbuff, 
                            int outbuffsize, int stderr_is_err)
 {
   int kidstdout[2];		/* child stdout pipe */

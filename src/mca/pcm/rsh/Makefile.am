@@ -18,6 +18,7 @@ sources = \
 	pcm_rsh.h \
 	pcm_rsh_allocate.c \
 	pcm_rsh_component.c \
+	pcm_rsh_ioexecvp.c \
 	pcm_rsh_kill.c \
 	pcm_rsh_spawn.c
 
