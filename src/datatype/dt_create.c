@@ -88,7 +88,7 @@ int lam_ddt_commit( dt_desc_t** data )
    pData->flags |= DT_FLAG_COMMITED;
    /* If the data is contiguous is useless to generate an optimized version. */
    if( pData->size != (pData->true_ub - pData->true_lb) )
-      (void)dt_optimize_short( pData, 1, &(pData->opt_desc) );
+      (void)lam_ddt_optimize_short( pData, 1, &(pData->opt_desc) );
    return 0;
 }
 
@@ -251,10 +251,10 @@ void lam_ddt_dump_complete( dt_desc_t* data )
    if( pDumpConv == NULL ) {
       pDumpConv = lam_convertor_create( 0, 0 );
    }
-   convertor_init_for_recv( pDumpConv, 0, pData, 1, NULL );
+   lam_convertor_init_for_recv( pDumpConv, 0, pData, 1, NULL, 0 );
    pDumpConv->pFunctions = dump_functions;
 
    fake.iov_len = pData->size;
-   convertor_unpack( pDumpConv, &fake, 1 );
+   lam_convertor_unpack( pDumpConv, &fake, 1 );
    printf( "}\n" );
 }
