@@ -34,7 +34,6 @@ int mca_coll_basic_reduce_lin_intra(void *sbuf, void *rbuf, int count,
   char *free_buffer = NULL;
   char *pml_buffer = NULL;
   char *inbuf;
-  MPI_Fint fint = (MPI_Fint) dtype->id;
 
   /* Initialize */
 
@@ -221,31 +220,9 @@ int mca_coll_basic_reduce_lin_intra(void *sbuf, void *rbuf, int count,
       inbuf = pml_buffer;
     }
 
-    /* Call reduction function.  Two dimensions: a) if both the op and
-       the datatype are intrinsic, we have a series of predefined
-       functions for each datatype, b) if the op has a fortran
-       callback function or not. 
+    /* Perform the reduction */
 
-       NOTE: We assume here that we will get a valid result back from
-       the ompi_op_ddt_map[] (and not -1) -- if we do, then the
-       parameter check in the top-level MPI function should have
-       caught it.  If we get -1 because the top-level parameter check
-       is off, then it's an erroneous program and it's the user's
-       fault.  :-)*/
-
-    if (ompi_op_is_intrinsic(op) && dtype->id < DT_MAX_PREDEFINED) {
-      if (ompi_op_is_fortran(op)) {
-        op->o_func[ompi_op_ddt_map[dtype->id]].fort_fn(inbuf, rbuf,
-                                                       &count, &fint);
-      } else {
-        op->o_func[ompi_op_ddt_map[dtype->id]].c_fn(inbuf, rbuf, &count,
-                                                    &dtype);
-      }
-    } else if (ompi_op_is_fortran(op)) {
-      op->o_func[0].fort_fn(inbuf, rbuf, &count, &fint);
-    } else {
-      op->o_func[0].c_fn(inbuf, rbuf, &count, &dtype);
-    }
+    ompi_op_reduce(op, inbuf, rbuf, count, dtype);
   }
 
   if (NULL != free_buffer) {
@@ -285,7 +262,6 @@ int mca_coll_basic_reduce_log_intra(void *sbuf, void *rbuf, int count,
   char *pml_buffer2 = NULL;
   void *inmsg;
   void *resmsg;
-  MPI_Fint fint = (MPI_Fint) dtype->id;
 
   /* Allocate the incoming and resulting message buffers.  See lengthy
      rationale above. */
@@ -362,26 +338,9 @@ int mca_coll_basic_reduce_log_intra(void *sbuf, void *rbuf, int count,
 	return err;
       }
 
-      /* Call reduction function.  Two dimensions: a) if both the op
-         and the datatype are intrinsic, we have a series of
-         predefined functions for each datatype, b) if the op has a
-         fortran callback function or not. */
+      /* Perform the operation */
 
-      if (ompi_op_is_intrinsic(op) && dtype->id < DT_MAX_PREDEFINED) {
-        if (ompi_op_is_fortran(op)) {
-          op->o_func[ompi_op_ddt_map[dtype->id]].fort_fn((i > 0) ?
-                                                         resmsg : sbuf, inmsg, 
-                                                         &count, &fint);
-        } else {
-          op->o_func[ompi_op_ddt_map[dtype->id]].c_fn((i > 0) ?
-                                                      resmsg : sbuf, inmsg, 
-                                                      &count, &dtype);
-        }
-      } else if (ompi_op_is_fortran(op)) {
-        op->o_func[0].fort_fn((i > 0) ? resmsg : sbuf, inmsg, &count, &fint);
-      } else {
-        op->o_func[0].c_fn((i > 0) ? resmsg : sbuf, inmsg, &count, &dtype);
-      }
+      ompi_op_reduce(op, (i > 0) ? resmsg : sbuf, inmsg, count, dtype);
 
       if (inmsg == pml_buffer1) {
 	resmsg = pml_buffer1;
