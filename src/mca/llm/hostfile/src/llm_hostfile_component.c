@@ -56,7 +56,7 @@ static int param_priority;
 int
 mca_llm_hostfile_component_open(void)
 {
-    char *default_path = ompi_os_path(false, OMPI_PKGDATADIR, 
+    char *default_path = ompi_os_path(false, OMPI_SYSCONFDIR, 
                                       "openmpi-default-hostfile", NULL);
     param_filename = mca_base_param_register_string("llm",
                                                     "hostfile",
