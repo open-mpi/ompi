@@ -360,7 +360,7 @@ int mca_ptl_sm_component_progress(mca_ptl_tstamp_t tstamp)
     int my_local_smp_rank, proc;
     unsigned int peer_local_smp_rank ;
     mca_ptl_sm_frag_t *header_ptr;
-    ompi_fifo_t *send_fifo;
+    ompi_fifo_t *send_fifo = NULL;
     bool frag_matched;
     mca_ptl_base_match_header_t *matching_header;
     mca_pml_base_send_request_t *base_send_req;
