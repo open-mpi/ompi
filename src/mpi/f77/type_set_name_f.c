@@ -24,8 +24,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_SET_NAME,
                            pmpi_type_set_name_,
                            pmpi_type_set_name__,
                            pmpi_type_set_name_f,
-                           (MPI_Fint *type, char *type_name, MPI_Fint *ierr),
-                           (type, type_name, ierr) )
+                           (MPI_Fint *type, char *type_name, MPI_Fint *ierr, int name_len),
+                           (type, type_name, ierr, name_len) )
 #endif
 
 #if OMPI_HAVE_WEAK_SYMBOLS
@@ -41,8 +41,8 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_SET_NAME,
                            mpi_type_set_name_,
                            mpi_type_set_name__,
                            mpi_type_set_name_f,
-                           (MPI_Fint *type, char *type_name, MPI_Fint *ierr),
-                           (type, type_name, ierr) )
+                           (MPI_Fint *type, char *type_name, MPI_Fint *ierr, int name_len),
+                           (type, type_name, ierr, name_len) )
 #endif
 
 

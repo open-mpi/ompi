@@ -25,8 +25,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_SET_NAME,
                            pmpi_win_set_name_,
                            pmpi_win_set_name__,
                            pmpi_win_set_name_f,
-                           (MPI_Fint *win, char *win_name, MPI_Fint *ierr),
-                           (win, win_name, ierr) )
+                           (MPI_Fint *win, char *win_name, MPI_Fint *ierr, int name_len),
+                           (win, win_name, ierr, name_len) )
 #endif
 
 #if OMPI_HAVE_WEAK_SYMBOLS
@@ -42,8 +42,8 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WIN_SET_NAME,
                            mpi_win_set_name_,
                            mpi_win_set_name__,
                            mpi_win_set_name_f,
-                           (MPI_Fint *win, char *win_name, MPI_Fint *ierr),
-                           (win, win_name, ierr) )
+                           (MPI_Fint *win, char *win_name, MPI_Fint *ierr, int name_len),
+                           (win, win_name, ierr, name_len) )
 #endif
 
 

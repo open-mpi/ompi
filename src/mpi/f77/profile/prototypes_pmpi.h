@@ -654,7 +654,7 @@ void pmpi_comm_set_errhandler_(MPI_Fint *comm, MPI_Fint *errhandler, MPI_Fint *i
 void pmpi_comm_set_name_(MPI_Fint *comm, char *comm_name, MPI_Fint *ierr, int name_len);
 void pmpi_comm_size_(MPI_Fint *comm, MPI_Fint *size, MPI_Fint *ierr);
 void pmpi_comm_spawn_(char *command, char *argv, MPI_Fint *maxprocs, MPI_Fint *info, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *intercomm, MPI_Fint *array_of_errcodes, MPI_Fint *ierr, int cmd_len, int argv_len);
-void pmpi_comm_spawn_multiple_(MPI_Fint *count, char *array_of_commands, char *array_of_argv, MPI_Fint *array_of_maxprocs, MPI_Fint *array_of_info, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *intercomm, MPI_Fint *array_of_errcodes, MPI_Fint *ierr);
+void pmpi_comm_spawn_multiple_(MPI_Fint *count, char *array_of_commands, char *array_of_argv, MPI_Fint *array_of_maxprocs, MPI_Fint *array_of_info, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *intercomm, MPI_Fint *array_of_errcodes, MPI_Fint *ierr, int cmd_len, int argv_len);
 void pmpi_comm_split_(MPI_Fint *comm, MPI_Fint *color, MPI_Fint *key, MPI_Fint *newcomm, MPI_Fint *ierr);
 void pmpi_comm_test_inter_(MPI_Fint *comm, MPI_Fint *flag, MPI_Fint *ierr);
 void pmpi_dims_create_(MPI_Fint *nnodes, MPI_Fint *ndims, MPI_Fint *dims, MPI_Fint *ierr);
@@ -941,7 +941,7 @@ void pmpi_comm_set_errhandler__(MPI_Fint *comm, MPI_Fint *errhandler, MPI_Fint *
 void pmpi_comm_set_name__(MPI_Fint *comm, char *comm_name, MPI_Fint *ierr, int name_len);
 void pmpi_comm_size__(MPI_Fint *comm, MPI_Fint *size, MPI_Fint *ierr);
 void pmpi_comm_spawn__(char *command, char *argv, MPI_Fint *maxprocs, MPI_Fint *info, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *intercomm, MPI_Fint *array_of_errcodes, MPI_Fint *ierr, int cmd_len, int argv_len);
-void pmpi_comm_spawn_multiple__(MPI_Fint *count, char *array_of_commands, char *array_of_argv, MPI_Fint *array_of_maxprocs, MPI_Fint *array_of_info, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *intercomm, MPI_Fint *array_of_errcodes, MPI_Fint *ierr);
+void pmpi_comm_spawn_multiple__(MPI_Fint *count, char *array_of_commands, char *array_of_argv, MPI_Fint *array_of_maxprocs, MPI_Fint *array_of_info, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *intercomm, MPI_Fint *array_of_errcodes, MPI_Fint *ierr, int cmd_len, int argv_len);
 void pmpi_comm_split__(MPI_Fint *comm, MPI_Fint *color, MPI_Fint *key, MPI_Fint *newcomm, MPI_Fint *ierr);
 void pmpi_comm_test_inter__(MPI_Fint *comm, MPI_Fint *flag, MPI_Fint *ierr);
 void pmpi_dims_create__(MPI_Fint *nnodes, MPI_Fint *ndims, MPI_Fint *dims, MPI_Fint *ierr);
@@ -1228,7 +1228,7 @@ void PMPI_COMM_SET_ERRHANDLER(MPI_Fint *comm, MPI_Fint *errhandler, MPI_Fint *ie
 void PMPI_COMM_SET_NAME(MPI_Fint *comm, char *comm_name, MPI_Fint *ierr, int name_len);
 void PMPI_COMM_SIZE(MPI_Fint *comm, MPI_Fint *size, MPI_Fint *ierr);
 void PMPI_COMM_SPAWN(char *command, char *argv, MPI_Fint *maxprocs, MPI_Fint *info, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *intercomm, MPI_Fint *array_of_errcodes, MPI_Fint *ierr, int cmd_len, int argv_len);
-void PMPI_COMM_SPAWN_MULTIPLE(MPI_Fint *count, char *array_of_commands, char *array_of_argv, MPI_Fint *array_of_maxprocs, MPI_Fint *array_of_info, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *intercomm, MPI_Fint *array_of_errcodes, MPI_Fint *ierr);
+void PMPI_COMM_SPAWN_MULTIPLE(MPI_Fint *count, char *array_of_commands, char *array_of_argv, MPI_Fint *array_of_maxprocs, MPI_Fint *array_of_info, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *intercomm, MPI_Fint *array_of_errcodes, MPI_Fint *ierr, int cmd_len, int argv_len);
 void PMPI_COMM_SPLIT(MPI_Fint *comm, MPI_Fint *color, MPI_Fint *key, MPI_Fint *newcomm, MPI_Fint *ierr);
 void PMPI_COMM_TEST_INTER(MPI_Fint *comm, MPI_Fint *flag, MPI_Fint *ierr);
 void PMPI_DIMS_CREATE(MPI_Fint *nnodes, MPI_Fint *ndims, MPI_Fint *dims, MPI_Fint *ierr);
