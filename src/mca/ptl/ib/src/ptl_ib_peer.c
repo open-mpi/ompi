@@ -505,13 +505,15 @@ int mca_ptl_ib_peer_send(mca_ptl_base_peer_t* peer,
 
             /* Send the frag off */
 
+            A_PRINT("Send to : %d, len : %d, frag : %p", 
+                    peer->peer_proc->proc_guid.vpid,
+                    frag->ib_buf.desc.sg_entry.len,
+                    frag);
+
             rc = mca_ptl_ib_post_send(peer->peer_module->ib_state,
                     peer->peer_conn, 
                     &frag->ib_buf, (void*) frag);
 
-            A_PRINT("Send to : %d, len : %d", 
-                    peer->peer_proc->proc_guid.vpid,
-                    frag->ib_buf.desc.sg_entry.len);
 
             break;
         default:

@@ -51,7 +51,6 @@ static void mca_ptl_ib_data_frag(mca_ptl_base_module_t *module,
 {
     bool matched;
     int rc;
-    ib_buffer_t *ib_buf;
     ompi_list_item_t *item;
     mca_ptl_ib_recv_frag_t *recv_frag;
 
@@ -171,6 +170,7 @@ void mca_ptl_ib_process_recv(mca_ptl_base_module_t *module, void* addr)
             mca_ptl_ib_ctrl_frag(module, header);
             break;
         case MCA_PTL_HDR_TYPE_FIN :
+            A_PRINT("Fin");
             mca_ptl_ib_last_frag(module, header);
             break;
         default :

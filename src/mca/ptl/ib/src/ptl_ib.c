@@ -75,7 +75,8 @@ int mca_ptl_ib_put( struct mca_ptl_base_module_t* ptl,
     rkey = *(VAPI_rkey_t *)(((mca_ptl_ib_send_request_t *)req)->req_buf);
 
     rc = mca_ptl_ib_rdma_write(ib_state, peer_conn,
-            &send_frag->ib_buf, local_addr, size, remote_addr, rkey);
+            &send_frag->ib_buf, local_addr, size, remote_addr, rkey,
+            (void*) send_frag);
 
     if(rc != OMPI_SUCCESS) {
         return OMPI_ERROR;

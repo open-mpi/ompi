@@ -513,10 +513,14 @@ int mca_ptl_ib_post_send(mca_ptl_ib_state_t *ib_state,
         ib_buffer_t *ib_buf, void* addr)
 {
     VAPI_ret_t ret;
+    int msg_len = ib_buf->desc.sg_entry.len;
 
-    IB_SET_REMOTE_QP_NUM(ib_buf, (peer_conn->rres->qp_num));
+    //IB_SET_REMOTE_QP_NUM(ib_buf, (peer_conn->rres->qp_num));
 
-    IB_SET_SEND_DESC_ID(ib_buf, addr);
+    //IB_SET_SEND_DESC_ID(ib_buf, addr);
+    
+    IB_PREPARE_SEND_DESC(ib_buf, (peer_conn->rres->qp_num),
+                msg_len, addr);
 
     D_PRINT("length : %d, qp_num = %d", 
             ib_buf->desc.sg_entry.len,
@@ -543,9 +547,9 @@ void mca_ptl_ib_drain_network(VAPI_hca_hndl_t nic,
     ret = VAPI_poll_cq(nic, cq_hndl, &comp);
     if(VAPI_OK == ret) {
         if(comp.status != VAPI_SUCCESS) {
-            ompi_output(0, "Got error : %s, Vendor code : %d\n",
+            ompi_output(0, "Got error : %s, Vendor code : %d Frag : %p",
                     VAPI_wc_status_sym(comp.status),
-                    comp.vendor_err_syndrome);
+                    comp.vendor_err_syndrome, comp.id);
 
             *comp_type = IB_COMP_ERROR;
             *comp_addr = NULL;
@@ -630,7 +634,7 @@ void mca_ptl_ib_prepare_ack(mca_ptl_ib_state_t *ib_state,
 int mca_ptl_ib_rdma_write(mca_ptl_ib_state_t *ib_state,
         mca_ptl_ib_peer_conn_t *peer_conn, ib_buffer_t *ib_buf,
         void* send_buf, size_t send_len, void* remote_buf,
-        VAPI_rkey_t remote_key)
+        VAPI_rkey_t remote_key, void* id_buf)
 {
     VAPI_ret_t ret;
     VAPI_mrw_t mr_in, mr_out;
@@ -654,7 +658,8 @@ int mca_ptl_ib_rdma_write(mca_ptl_ib_state_t *ib_state,
 
     /* Prepare descriptor */
     IB_PREPARE_RDMA_W_DESC(ib_buf, (peer_conn->rres->qp_num),
-            send_len, send_buf, (mr_out.l_key), remote_key, remote_buf);
+            send_len, send_buf, (mr_out.l_key), remote_key, 
+            id_buf, remote_buf);
 
     ret = VAPI_post_sr(ib_state->nic,
             peer_conn->lres->qp_hndl,

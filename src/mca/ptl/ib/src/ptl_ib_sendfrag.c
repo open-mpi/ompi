@@ -126,18 +126,10 @@ int mca_ptl_ib_send_frag_init(mca_ptl_ib_send_frag_t* sendfrag,
         /* adjust size and request offset to reflect actual 
          * number of bytes packed by convertor */
         size_out = iov.iov_len;
-#if 0
-        IB_PREPARE_SEND_DESC((&sendfrag->ib_buf), 0, 
-                (header_length + iov.iov_len));
-#endif
         IB_SET_SEND_DESC_LEN((&sendfrag->ib_buf),
                (header_length + iov.iov_len));
     } else {
         size_out = size_in;
-#if 0
-        IB_PREPARE_SEND_DESC((&sendfrag->ib_buf), 0, 
-                (header_length + size_in));
-#endif
         IB_SET_SEND_DESC_LEN((&sendfrag->ib_buf),
                (header_length + size_in));
     }
@@ -227,7 +219,7 @@ int mca_ptl_ib_register_send_frags(mca_ptl_base_module_t *ptl)
         }
 
         IB_PREPARE_SEND_DESC(ib_buf_ptr, 0, 
-                MCA_PTL_IB_FIRST_FRAG_SIZE);
+                MCA_PTL_IB_FIRST_FRAG_SIZE, ib_buf_ptr);
     }
 
     return OMPI_SUCCESS;
@@ -245,6 +237,8 @@ void mca_ptl_ib_process_rdma_w_comp(mca_ptl_base_module_t *module,
     mca_ptl_ib_send_frag_t *sendfrag;
     ompi_free_list_t *flist;
 
+    A_PRINT("Free RDMA send descriptor : %p", comp_addr);
+
     sendfrag = (mca_ptl_ib_send_frag_t *) comp_addr;
 
     flist = &(sendfrag->
@@ -253,6 +247,7 @@ void mca_ptl_ib_process_rdma_w_comp(mca_ptl_base_module_t *module,
 
     OMPI_FREE_LIST_RETURN(flist, 
             ((ompi_list_item_t *) sendfrag));
+
 }
 
 /*
@@ -284,6 +279,18 @@ void mca_ptl_ib_process_send_comp(mca_ptl_base_module_t *module,
 
         OMPI_FREE_LIST_RETURN(flist, 
                 ((ompi_list_item_t *) sendfrag));
+
+    } else if(header->hdr_common.hdr_type == MCA_PTL_HDR_TYPE_FIN) {
+
+        A_PRINT("Completion of fin");
+
+        module->ptl_send_progress(module,
+                sendfrag->frag_send.frag_request,
+                header->hdr_frag.hdr_frag_length);
+
+        OMPI_FREE_LIST_RETURN(flist, 
+                ((ompi_list_item_t *) sendfrag));
+        
     } else if(NULL == req) {
         /* An ack descriptor ? Don't know what to do! */
         OMPI_FREE_LIST_RETURN(flist, 
@@ -354,7 +361,7 @@ int mca_ptl_ib_put_frag_init(mca_ptl_ib_send_frag_t *sendfrag,
         if (rc < 0) {
             ompi_output (0, "[%s:%d] Unable to pack data\n",
                     __FILE__, __LINE__);
-            return;
+            return rc;
         }
         size_out = iov.iov_len;
     } else {
