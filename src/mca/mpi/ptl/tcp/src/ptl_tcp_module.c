@@ -233,6 +233,12 @@ static int mca_ptl_tcp_module_create_listen(void)
     mca_ptl_tcp_module.tcp_port = inaddr.sin_port;
 
     /* register listen port */
+    lam_event_set(
+        &mca_ptl_tcp_module.tcp_recv_event,
+        mca_ptl_tcp_module.tcp_listen, 
+        LAM_EV_READ|LAM_EV_PERSIST, 
+        mca_ptl_tcp_module_recv_handler, 
+        0);
     lam_event_add(&mca_ptl_tcp_module.tcp_recv_event, 0);
     return LAM_SUCCESS;
 }

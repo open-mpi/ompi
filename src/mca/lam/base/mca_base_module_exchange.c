@@ -12,7 +12,7 @@
 int mca_base_modex_send(mca_base_module_t *source_module, 
                         void *buffer, size_t size, size_t count)
 {
-  return LAM_ERR_NOT_IMPLEMENTED;
+  return LAM_SUCCESS;
 }
 
 

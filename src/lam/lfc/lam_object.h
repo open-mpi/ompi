@@ -348,6 +348,9 @@ static inline lam_object_t *lam_obj_new(size_t size,
     assert(size >= sizeof(lam_object_t));
 
     object = (lam_object_t *) malloc(size);
+    if (0 == cls->cls_initialized) {
+        lam_class_initialize(cls);
+    }
     if (NULL != object) {
 	object->obj_class = cls;
         object->obj_reference_count = 1;

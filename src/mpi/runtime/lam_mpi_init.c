@@ -33,80 +33,77 @@ int lam_mpi_thread_provided = MPI_THREAD_SINGLE;
 
 int lam_mpi_init(int argc, char **argv, int requested, int *provided)
 {
-  int ret;
-  bool allow_multi_user_threads;
-  bool have_hidden_threads;
+    int ret;
+    bool allow_multi_user_threads;
+    bool have_hidden_threads;
 
-  /* Become a LAM process */
+    /* Become a LAM process */
 
-  if (LAM_SUCCESS != (ret = lam_init(argc, argv))) {
-    return ret;
-  }
+    if (LAM_SUCCESS != (ret = lam_init(argc, argv))) {
+        return ret;
+    }
 
-  /* Open up the MCA */
+    /* Open up the MCA */
 
-  if (LAM_SUCCESS != (ret = mca_base_open())) {
-    return ret;
-  }
+    if (LAM_SUCCESS != (ret = mca_base_open())) {
+        return ret;
+    }
 
-  /* Join the run-time environment */
+    /* Join the run-time environment */
 
-  if (LAM_SUCCESS != (ret = lam_rte_init(&allow_multi_user_threads,
-                                         &have_hidden_threads))) {
-    return ret;
-  }
+    if (LAM_SUCCESS != (ret = lam_rte_init(&allow_multi_user_threads, &have_hidden_threads))) {
+        return ret;
+    }
 
-  /* Open up relevant MCA modules.  Do not open io, topo, or one
-     module types here -- they are loaded upon demand (i.e., upon
-     relevant constructors). */
+    /* Open up relevant MCA modules.    Do not open io, topo, or one
+         module types here -- they are loaded upon demand (i.e., upon
+         relevant constructors). */
 
-  if (LAM_SUCCESS != (ret = mca_pml_base_open())) {
-    /* JMS show_help */
-    return ret;
-  }
-  if (LAM_SUCCESS != (ret = mca_ptl_base_open())) {
-    /* JMS show_help */
-    return ret;
-  }
-  if (LAM_SUCCESS != (ret = mca_coll_base_open())) {
-    /* JMS show_help */
-    return ret;
-  }
+    if (LAM_SUCCESS != (ret = mca_pml_base_open())) {
+        /* JMS show_help */
+        return ret;
+    }
+    if (LAM_SUCCESS != (ret = mca_ptl_base_open())) {
+        /* JMS show_help */
+        return ret;
+    }
+    if (LAM_SUCCESS != (ret = mca_coll_base_open())) {
+        /* JMS show_help */
+        return ret;
+    }
 
-  /* Select which pml, ptl, and coll modules to use, and determine the
-     final thread level */
+    /* Select which pml, ptl, and coll modules to use, and determine the
+         final thread level */
 
-  if (LAM_SUCCESS != 
-      (ret = mca_mpi_init_select_modules(requested, allow_multi_user_threads,
-                                         have_hidden_threads, provided))) {
-    /* JMS show_help */
-    return ret;
-  }
+    if (LAM_SUCCESS != 
+            (ret = mca_mpi_init_select_modules(requested, allow_multi_user_threads,
+             have_hidden_threads, provided))) {
+        /* JMS show_help */
+        return ret;
+    }
 
-  /* Add MPI_COMM_WORLD lam_proc_t's to PML */
+     /* initialize lam procs */
+     if (LAM_SUCCESS != (ret = lam_proc_init())) {
+         return ret;
+     }
 
-  /* All parent lam_proc_t's to PML */
+     /* initialize communicators */
+     if (LAM_SUCCESS != (ret = lam_comm_init())) {
+         return ret;
+     }
 
-  /* Save the resulting thread levels */
+     /* do module exchange */
 
-  lam_mpi_thread_requested = requested;
-  *provided = lam_mpi_thread_provided;
-  lam_mpi_thread_multiple = (lam_mpi_thread_provided == MPI_THREAD_MULTIPLE);
+     /* add all lam_proc_t's to PML */
 
-#if 0
-  /* Setup MPI_COMM_WORLD */
+     /* save the resulting thread levels */
 
-  lam_comm_init(MPI_COMM_WORLD);
+    lam_mpi_thread_requested = requested;
+    *provided = lam_mpi_thread_provided;
+    lam_mpi_thread_multiple = (lam_mpi_thread_provided == MPI_THREAD_MULTIPLE);
 
-  /* Setup MPI_COMM_SELF */
+    /* All done */
 
-  lam_comm_init(MPI_COMM_SELF);
-#else
-  lam_comm_link_function();
-#endif
-
-  /* All done */
-
-  lam_mpi_initialized = true;
-  return MPI_SUCCESS;
+    lam_mpi_initialized = true;
+    return MPI_SUCCESS;
 }
