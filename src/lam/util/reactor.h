@@ -10,10 +10,10 @@
 #include "lam/lfc/hash_table.h"
 #include "lam/threads/mutex.h"
 
-extern const int LAM_NOTIFY_ALL;
-extern const int LAM_NOTIFY_RECV;
-extern const int LAM_NOTIFY_SEND;
-extern const int LAM_NOTIFY_EXCEPT;
+extern const int LAM_REACTOR_NOTIFY_ALL;
+extern const int LAM_REACTOR_NOTIFY_RECV;
+extern const int LAM_REACTOR_NOTIFY_SEND;
+extern const int LAM_REACTOR_NOTIFY_EXCEPT;
 
 extern lam_class_info_t lam_reactor_cls;
 

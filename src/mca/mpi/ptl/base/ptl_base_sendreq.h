@@ -11,22 +11,24 @@
 #include "mca/mpi/pml/base/pml_base_request.h"
 
 
+extern lam_class_info_t mca_ptl_base_send_request_cls;
+
+
 struct mca_ptl_base_send_request_t {
     /* request object - common data structure for use by wait/test */
     mca_pml_base_request_t super;
-    /* allow send request to be placed on ack list */
-    lam_list_item_t req_ack_item;
-
     /* pointer to user data */
-    void *req_data;
+    unsigned char *req_data;
     /* size of send/recv in bytes */
     size_t req_length;
     /* number of bytes that have already been assigned to a fragment */
-    size_t req_bytes_fragmented;
+    size_t req_offset;
+    /* number of fragments that have been allocated */
+    size_t req_frags;
+    /* number of bytes that have been sent */
+    size_t req_bytes_sent;
     /* number of bytes that have been acked */
     size_t req_bytes_acked;
-    /* number of fragments that have been allocated */
-    size_t req_frags_allocated;
     /* clear to send flag */
     bool req_clear_to_send;
     /* type of send */
@@ -45,7 +47,7 @@ void mca_ptl_base_send_request_init(mca_ptl_base_send_request_t*);
 void mca_ptl_base_send_request_destroy(mca_ptl_base_send_request_t*);
 
 
-static inline void mca_ptl_base_send_request_rinit(
+static inline void mca_ptl_base_send_request_reinit(
     mca_ptl_base_send_request_t *request, 
     void *data, 
     size_t length, 
@@ -59,9 +61,10 @@ static inline void mca_ptl_base_send_request_rinit(
     request->req_data = data; 
     request->req_length = length; 
     request->req_clear_to_send = false; 
-    request->req_bytes_fragmented = 0; 
+    request->req_offset = 0; 
+    request->req_frags = 0; 
+    request->req_bytes_sent = 0; 
     request->req_bytes_acked = 0; 
-    request->req_frags_allocated = 0; 
     request->req_send_mode = sendmode;
     request->super.req_datatype = datatype; 
     request->super.req_peer = peer; 

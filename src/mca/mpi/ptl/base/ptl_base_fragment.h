@@ -15,7 +15,7 @@ extern lam_class_info_t mca_ptl_base_frag_cls;
 
 struct mca_ptl_base_frag_t {
     lam_list_item_t super;
-    mca_ptl_base_reliable_hdr_t frag_header;
+    mca_ptl_base_header_t frag_header;
     struct mca_ptl_t* frag_owner; /**< PTL that allocated this fragment */
 };
 typedef struct mca_ptl_base_frag_t mca_ptl_base_frag_t;

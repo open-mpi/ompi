@@ -47,12 +47,12 @@
  *   - fragments may be corrupt
  *   - this routine may be called simoultaneously by more than one thread
  */
-int mca_ptl_base_match(mca_ptl_base_reliable_hdr_t *frag_header,
+int mca_ptl_base_match(mca_ptl_base_header_t *frag_header,
         mca_ptl_base_recv_frag_t *frag_desc, int *match_made, 
         lam_list_t *additional_matches)
 {
     /* local variables */
-    mca_ptl_base_sequence_t frag_msg_seq_num,next_msg_seq_num_expected;
+    mca_ptl_base_sequence_t frag_msg_seq,next_msg_seq_expected;
     lam_communicator_t *comm_ptr;
     mca_ptl_base_recv_request_t *matched_receive;
     mca_pml_comm_t *pml_comm;
@@ -62,14 +62,14 @@ int mca_ptl_base_match(mca_ptl_base_reliable_hdr_t *frag_header,
     *match_made=0;
 
     /* communicator pointer */
-    comm_ptr=lam_comm_lookup(frag_header->hdr_base.hdr_contextid);
+    comm_ptr=lam_comm_lookup(frag_header->hdr_contextid);
     pml_comm=(mca_pml_comm_t *)comm_ptr->c_pml_comm;
 
     /* source sequence number */
-    frag_msg_seq_num = frag_header->hdr_msg_seq_num;
+    frag_msg_seq = frag_header->hdr_msg_seq;
 
     /* get fragment communicator source rank */
-    frag_src = frag_header->hdr_frag_seq_num;
+    frag_src = frag_header->hdr_frag_seq;
 
     /* get next expected message sequence number - if threaded
      * run, lock to make sure that if another thread is processing 
@@ -81,9 +81,9 @@ int mca_ptl_base_match(mca_ptl_base_reliable_hdr_t *frag_header,
     THREAD_LOCK((pml_comm->c_matching_lock)+frag_src);
 
     /* get sequence number of next message that can be processed */
-    next_msg_seq_num_expected = *((pml_comm->c_next_msg_seq_num)+frag_src);
+    next_msg_seq_expected = *((pml_comm->c_next_msg_seq)+frag_src);
 
-    if (frag_msg_seq_num == next_msg_seq_num_expected) {
+    if (frag_msg_seq == next_msg_seq_expected) {
 
         /*
          * This is the sequence number we were expecting,
@@ -92,7 +92,7 @@ int mca_ptl_base_match(mca_ptl_base_reliable_hdr_t *frag_header,
          */
 
         /* We're now expecting the next sequence number. */
-        (pml_comm->c_next_msg_seq_num[frag_src])++;
+        (pml_comm->c_next_msg_seq[frag_src])++;
 
         /* see if receive has already been posted */
         matched_receive = mca_ptl_base_check_recieves_for_match(frag_header,
@@ -105,7 +105,7 @@ int mca_ptl_base_match(mca_ptl_base_reliable_hdr_t *frag_header,
             *match_made=1;
             /* associate the receive descriptor with the fragment
              * descriptor */
-            frag_desc->matched_recv=matched_receive;
+            frag_desc->frag_match=matched_receive;
 
             /*
              * update deliverd sequence number information,
@@ -178,7 +178,7 @@ int mca_ptl_base_match(mca_ptl_base_reliable_hdr_t *frag_header,
  * set by the upper level routine.
  */
 mca_ptl_base_recv_request_t *mca_ptl_base_check_recieves_for_match
-  (mca_ptl_base_reliable_hdr_t *frag_header, mca_pml_comm_t *pml_comm)
+  (mca_ptl_base_header_t *frag_header, mca_pml_comm_t *pml_comm)
 {
     /* local parameters */
     mca_ptl_base_recv_request_t *return_match;
@@ -192,7 +192,7 @@ mca_ptl_base_recv_request_t *mca_ptl_base_check_recieves_for_match
      *   look only at "specific" recieves, or "wild" receives,
      *   or if we need to traverse both sets at the same time.
      */
-    frag_src = frag_header->hdr_frag_seq_num;
+    frag_src = frag_header->hdr_frag_seq;
 
     if (lam_list_get_size((pml_comm->specific_receives)+frag_src) == 0 ){
         /*
@@ -232,7 +232,7 @@ mca_ptl_base_recv_request_t *mca_ptl_base_check_recieves_for_match
  * set by the upper level routine.
  */
 mca_ptl_base_recv_request_t *check_wild_receives_for_match(
-        mca_ptl_base_reliable_hdr_t *frag_header,
+        mca_ptl_base_header_t *frag_header,
         mca_pml_comm_t *pml_comm)
 {
     /* local parameters */
@@ -241,7 +241,7 @@ mca_ptl_base_recv_request_t *check_wild_receives_for_match(
 
     /* initialization */
     return_match=(mca_ptl_base_recv_request_t *)NULL;
-    frag_user_tag=frag_header->hdr_base.hdr_user_tag;
+    frag_user_tag=frag_header->hdr_user_tag;
 
     /*
      * Loop over the wild irecvs - no need to lock, the upper level
@@ -299,7 +299,7 @@ mca_ptl_base_recv_request_t *check_wild_receives_for_match(
  * set by the upper level routine.
  */
 mca_ptl_base_recv_request_t *check_specific_receives_for_match(
-        mca_ptl_base_reliable_hdr_t *frag_header,
+        mca_ptl_base_header_t *frag_header,
         mca_pml_comm_t *pml_comm)
 {
     /* local variables */
@@ -309,8 +309,8 @@ mca_ptl_base_recv_request_t *check_specific_receives_for_match(
 
     /* initialization */
     return_match=(mca_ptl_base_recv_request_t *)NULL;
-    frag_src = frag_header->hdr_frag_seq_num;
-    frag_user_tag=frag_header->hdr_base.hdr_user_tag;
+    frag_src = frag_header->hdr_frag_seq;
+    frag_user_tag=frag_header->hdr_user_tag;
 
     /*
      * Loop over the specific irecvs.
@@ -361,18 +361,18 @@ mca_ptl_base_recv_request_t *check_specific_receives_for_match(
  * set by the upper level routine.
  */
 mca_ptl_base_recv_request_t *check_specific_and_wild_receives_for_match(
-        mca_ptl_base_reliable_hdr_t *frag_header,
+        mca_ptl_base_header_t *frag_header,
         mca_pml_comm_t *pml_comm)
 {
     /* local variables */
     mca_ptl_base_recv_request_t *specific_recv, *wild_recv, *return_match;
-    mca_ptl_base_sequence_t wild_recv_seq_num, specific_recv_seq_num;
+    mca_ptl_base_sequence_t wild_recv_seq, specific_recv_seq;
     int frag_src,frag_user_tag, wild_recv_tag, specific_recv_tag;
 
     /* initialization */
     return_match=(mca_ptl_base_recv_request_t *)NULL;
-    frag_src = frag_header->hdr_frag_seq_num;
-    frag_user_tag=frag_header->hdr_base.hdr_user_tag;
+    frag_src = frag_header->hdr_frag_seq;
+    frag_user_tag=frag_header->hdr_user_tag;
 
     /*
      * We know that when this is called, both specific and wild irecvs
@@ -383,11 +383,11 @@ mca_ptl_base_recv_request_t *check_specific_and_wild_receives_for_match(
     wild_recv = (mca_ptl_base_recv_request_t *) 
             lam_list_get_first(&(pml_comm->wild_receives));
 
-    specific_recv_seq_num = specific_recv->req_sequence;
-    wild_recv_seq_num = wild_recv->req_sequence;
+    specific_recv_seq = specific_recv->req_sequence;
+    wild_recv_seq = wild_recv->req_sequence;
 
     while (true) {
-        if (wild_recv_seq_num < specific_recv_seq_num) {
+        if (wild_recv_seq < specific_recv_seq) {
             /*
              * wild recv is earlier than the specific one.
              */
@@ -433,7 +433,7 @@ mca_ptl_base_recv_request_t *check_specific_and_wild_receives_for_match(
              * Get the sequence number for this recv, and go
              * back to the top of the loop.
              */
-            wild_recv_seq_num = wild_recv->req_sequence;
+            wild_recv_seq = wild_recv->req_sequence;
 
         } else {
             /*
@@ -478,7 +478,7 @@ mca_ptl_base_recv_request_t *check_specific_and_wild_receives_for_match(
              * Get the sequence number for this recv, and go
              * back to the top of the loop.
              */
-            specific_recv_seq_num = specific_recv->req_sequence;
+            specific_recv_seq = specific_recv->req_sequence;
         }
     }
 }
@@ -506,7 +506,7 @@ void lam_check_cantmatch_for_match(lam_list_t *additional_matches,
 {
     /* local parameters */
     int match_found;
-    mca_pml_base_sequence_t next_msg_seq_num_expected, frag_seq_number;
+    mca_pml_base_sequence_t next_msg_seq_expected, frag_seqber;
     mca_pml_base_recv_frag_t *frag_desc;
     mca_pml_base_recv_request_t *matched_receive;
 
@@ -529,10 +529,10 @@ void lam_check_cantmatch_for_match(lam_list_t *additional_matches,
         match_found = 0;
 
         /* get sequence number of next message that can be processed */
-        next_msg_seq_num_expected = *((pml_comm->c_next_msg_seq_num)+frag_src);
+        next_msg_seq_expected = *((pml_comm->c_next_msg_seq)+frag_src);
 
         /* search the list for a fragment from the send with sequence
-         * number next_msg_seq_num_expected
+         * number next_msg_seq_expected
          */
         for(frag_desc = (mca_pml_base_recv_frag_t *) 
             lam_list_get_first((pml_comm->frags_cant_match)+frag_src);
@@ -544,8 +544,8 @@ void lam_check_cantmatch_for_match(lam_list_t *additional_matches,
             /*
              * If the message has the next expected seq from that proc...
              */
-            frag_seq_number=frag_desc->super.frag_header.hdr_msg_seq_num;
-            if (frag_seq_number == next_msg_seq_num_expected) {
+            frag_seqber=frag_desc->super.frag_header.hdr_msg_seq;
+            if (frag_seqber == next_msg_seq_expected) {
 
                 /* initialize list on first entry - assume that most
                  * of the time nothing is found, so initially we just
@@ -558,7 +558,7 @@ void lam_check_cantmatch_for_match(lam_list_t *additional_matches,
                 }
 
                 /* We're now expecting the next sequence number. */
-                (pml_comm->c_next_msg_seq_num[frag_src])++;
+                (pml_comm->c_next_msg_seq[frag_src])++;
 
                 /* signal that match was made */
                 match_found = 1;
@@ -580,7 +580,7 @@ void lam_check_cantmatch_for_match(lam_list_t *additional_matches,
 
                     /* associate the receive descriptor with the fragment
                      * descriptor */
-                    frag_desc->matched_recv=matched_receive;
+                    frag_desc->frag_match=matched_receive;
 
                     /* add this fragment descriptor to the list of
                      * descriptors to be processed later
@@ -604,7 +604,7 @@ void lam_check_cantmatch_for_match(lam_list_t *additional_matches,
                  * and re-start search for next sequence number */
                 break;
 
-            } /* end if (frag_seq_number == next_msg_seq_num_expected) */
+            } /* end if (frag_seqber == next_msg_seq_expected) */
             
         } /* end for (frag_desc) loop */
         

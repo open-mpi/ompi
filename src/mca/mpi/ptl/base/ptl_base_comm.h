@@ -15,10 +15,10 @@ extern lam_class_info_t mca_ptl_comm_cls;
 struct mca_pml_comm_t {
     
     /* send message sequence-number support - sender side */
-    mca_ptl_base_sequence_t *c_msg_seq_num;
+    mca_ptl_base_sequence_t *c_msg_seq;
 
     /* send message sequence-number support - receiver side */
-    mca_ptl_base_sequence_t *c_next_msg_seq_num;
+    mca_ptl_base_sequence_t *c_next_msg_seq;
 
     /* matching lock */
     lam_mutex_t *c_matching_lock;

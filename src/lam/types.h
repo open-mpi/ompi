@@ -45,5 +45,23 @@ typedef union {
    void*    pval;
 } lam_ptr_t;
 
+/*
+ * handle differences in iovec
+ */
+                                                                                                                           
+#if defined(__APPLE__)
+typedef char* lam_iov_base_ptr_t;
+#else
+typedef void* lam_iov_base_ptr_t;
 #endif
+                                                                                                                           
+/*
+ * handle differences in socklen_t
+ */
 
+#if defined(__linux__)
+typedef socklen_t lam_socklen_t;
+#else
+typedef int lam_socklen_t;
+#endif
+#endif

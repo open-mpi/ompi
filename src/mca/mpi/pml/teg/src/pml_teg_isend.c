@@ -23,7 +23,7 @@ int mca_pml_teg_isend_init(
     if(rc != LAM_SUCCESS)
         return rc;
  
-    mca_ptl_base_send_request_rinit(
+    mca_ptl_base_send_request_reinit(
         sendreq,
         buf,
         size,
@@ -55,7 +55,7 @@ int mca_pml_teg_isend(
     if(rc != LAM_SUCCESS)
         return rc;
 
-    mca_ptl_base_send_request_rinit(
+    mca_ptl_base_send_request_reinit(
         sendreq,
         buf,
         size,

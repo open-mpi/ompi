@@ -2,6 +2,7 @@
  * $HEADER$
  */
 #include <errno.h>
+#include <unistd.h>
 
 #include "lam/constants.h"
 #include "lam/util/if.h"
@@ -10,9 +11,15 @@
 #include "lam/mem/malloc.h"
 #include "mca/mpi/pml/pml.h"
 #include "mca/mpi/ptl/ptl.h"
+#include "mca/mpi/ptl/base/ptl_base_sendreq.h"
 #include "mca/lam/base/mca_base_param.h"
 #include "mca/lam/base/mca_base_module_exchange.h"
 #include "ptl_tcp.h"
+#include "ptl_tcp_addr.h"
+#include "ptl_tcp_proc.h"
+#include "ptl_tcp_recvfrag.h"
+#include "ptl_tcp_sendfrag.h"
+
 
 mca_ptl_tcp_module_1_0_0_t mca_ptl_tcp_module = {
     {
@@ -51,14 +58,15 @@ mca_ptl_tcp_module_1_0_0_t mca_ptl_tcp_module = {
  * data structure for receiving reactor callbacks
  */
 
-static void mca_ptl_tcp_module_recv(int sd, void*);
-static void mca_ptl_tcp_module_send(int sd, void*);
-static void mca_ptl_tcp_module_except(int sd, void*);
+static void mca_ptl_tcp_module_recv_handler(void*, int sd);
+static void mca_ptl_tcp_module_send_handler(void*, int sd);
+static void mca_ptl_tcp_module_except_handler(void*, int sd);
+
 
 static lam_reactor_listener_t mca_ptl_tcp_module_listener = {
-    mca_ptl_tcp_module_recv,
-    mca_ptl_tcp_module_send,
-    mca_ptl_tcp_module_except,
+    mca_ptl_tcp_module_recv_handler,
+    mca_ptl_tcp_module_send_handler,
+    mca_ptl_tcp_module_except_handler,
 };
 
 
@@ -98,6 +106,12 @@ int mca_ptl_tcp_module_open(void)
         mca_ptl_tcp_param_register_string("if-include", "");
     mca_ptl_tcp_module.tcp_if_exclude =
         mca_ptl_tcp_param_register_string("if-exclude", "");
+    mca_ptl_tcp_module.tcp_free_list_num =
+        mca_ptl_tcp_param_register_int("free-list-num", 256);
+    mca_ptl_tcp_module.tcp_free_list_max =
+        mca_ptl_tcp_param_register_int("free-list-max", -1);
+    mca_ptl_tcp_module.tcp_free_list_inc =
+        mca_ptl_tcp_param_register_int("free-list-inc", 256);
     mca_ptl_tcp.super.ptl_exclusivity =
         mca_ptl_tcp_param_register_int("exclusivity", 0);
     mca_ptl_tcp.super.ptl_first_frag_size =
@@ -201,25 +215,20 @@ static int mca_ptl_tcp_module_create_listen(void)
     }
                                                                                                       
     /* resolve system assignend port */
-#if defined(__linux__)
-    socklen_t addrlen = sizeof(struct sockaddr_in);
-#else
-    int addrlen = sizeof(struct sockaddr_in);
-#endif
+    lam_socklen_t addrlen = sizeof(struct sockaddr_in);
     if(getsockname(mca_ptl_tcp_module.tcp_listen, (struct sockaddr*)&inaddr, &addrlen) < 0) {
         lam_output(0, "mca_ptl_tcp_module_init: getsockname() failed with errno=%d", errno);
         return LAM_ERROR;
     }
     mca_ptl_tcp_module.tcp_port = inaddr.sin_port;
 
-    /* initialize reactor and register listen port */
-    lam_reactor_init(&mca_ptl_tcp_module.tcp_reactor);
+    /* register listen port */
     lam_reactor_insert(
         &mca_ptl_tcp_module.tcp_reactor, 
         mca_ptl_tcp_module.tcp_listen,
         &mca_ptl_tcp_module_listener,
         0,
-        LAM_NOTIFY_RECV|LAM_NOTIFY_EXCEPT);
+        LAM_REACTOR_NOTIFY_RECV|LAM_REACTOR_NOTIFY_EXCEPT);
 
     return LAM_SUCCESS;
 }
@@ -227,22 +236,21 @@ static int mca_ptl_tcp_module_create_listen(void)
 /*
  *  Register TCP module addressing information. The MCA framework
  *  will make this available to all peers. 
- *
- *  FIX: just pass around sockaddr_in for now
  */
 
 static int mca_ptl_tcp_module_exchange(void)
 {
      size_t i;
-     struct sockaddr_in* addrs = (struct sockaddr_in*)LAM_MALLOC
-         (mca_ptl_tcp_module.tcp_num_ptls * sizeof(struct sockaddr_in));
+     mca_ptl_tcp_addr_t *addrs = (mca_ptl_tcp_addr_t*)LAM_MALLOC
+         (mca_ptl_tcp_module.tcp_num_ptls * sizeof(mca_ptl_tcp_addr_t));
      for(i=0; i<mca_ptl_tcp_module.tcp_num_ptls; i++) {
          mca_ptl_tcp_t* ptl = mca_ptl_tcp_module.tcp_ptls[i];
-         addrs[i] = ptl->tcp_addr;
-         addrs[i].sin_port = mca_ptl_tcp_module.tcp_listen;
+         addrs[i].addr_inet = ptl->ptl_ifaddr.sin_addr;
+         addrs[i].addr_port = mca_ptl_tcp_module.tcp_listen;
+         addrs[i].addr_inuse = 0;
      }
      return mca_base_modex_send(&mca_ptl_tcp_module.super.ptlm_version,
-         addrs, sizeof(struct sockaddr_in),mca_ptl_tcp_module.tcp_num_ptls);
+         addrs, sizeof(mca_ptl_tcp_t),mca_ptl_tcp_module.tcp_num_ptls);
 }
 
 /*
@@ -257,6 +265,37 @@ mca_ptl_t** mca_ptl_tcp_module_init(int* num_ptls, int* thread_min, int* thread_
     *num_ptls = 0;
     *thread_min = MPI_THREAD_MULTIPLE;
     *thread_max = MPI_THREAD_MULTIPLE;
+
+    /* initialize containers */
+    lam_reactor_init(&mca_ptl_tcp_module.tcp_reactor);
+
+    /* initialize free lists */
+    lam_free_list_init(&mca_ptl_tcp_module.tcp_send_requests);
+    lam_free_list_init_with(&mca_ptl_tcp_module.tcp_send_requests, 
+        sizeof(mca_ptl_base_send_request_t) + sizeof(mca_ptl_tcp_send_frag_t),
+        &mca_ptl_base_send_request_cls,
+        mca_ptl_tcp_module.tcp_free_list_num,
+        mca_ptl_tcp_module.tcp_free_list_max,
+        mca_ptl_tcp_module.tcp_free_list_inc,
+        NULL); /* use default allocator */
+
+    lam_free_list_init(&mca_ptl_tcp_module.tcp_send_frags);
+    lam_free_list_init_with(&mca_ptl_tcp_module.tcp_send_frags, 
+        sizeof(mca_ptl_tcp_send_frag_t),
+        &mca_ptl_tcp_send_frag_cls,
+        mca_ptl_tcp_module.tcp_free_list_num,
+        mca_ptl_tcp_module.tcp_free_list_max,
+        mca_ptl_tcp_module.tcp_free_list_inc,
+        NULL); /* use default allocator */
+
+    lam_free_list_init(&mca_ptl_tcp_module.tcp_recv_frags);
+    lam_free_list_init_with(&mca_ptl_tcp_module.tcp_recv_frags, 
+        sizeof(mca_ptl_tcp_recv_frag_t),
+        &mca_ptl_tcp_recv_frag_cls,
+        mca_ptl_tcp_module.tcp_free_list_num,
+        mca_ptl_tcp_module.tcp_free_list_max,
+        mca_ptl_tcp_module.tcp_free_list_inc,
+        NULL); /* use default allocator */
 
     /* create a PTL TCP module for selected interfaces */
     if(mca_ptl_tcp_module_create_instances() != LAM_SUCCESS)
@@ -291,17 +330,11 @@ void mca_ptl_tcp_module_progress(mca_ptl_base_tstamp_t tstamp)
  *  Called by mca_ptl_tcp_module_recv() when the TCP listen
  *  socket has pending connection requests. Accept incoming
  *  requests and queue for completion of the connection handshake.
- *  We wait for the peer to send a 4 byte global process ID(rank)
- *  to complete the connection.
 */
 
 static void mca_ptl_tcp_module_accept(void)
 {
-#if defined(__linux__)
-    socklen_t addrlen = sizeof(struct sockaddr_in);
-#else
-    int addrlen = sizeof(struct sockaddr_in);
-#endif
+    lam_socklen_t addrlen = sizeof(struct sockaddr_in);
     while(true) {
         struct sockaddr_in addr;
         int sd = accept(mca_ptl_tcp_module.tcp_listen, (struct sockaddr*)&addr, &addrlen);
@@ -312,37 +345,96 @@ static void mca_ptl_tcp_module_accept(void)
                 lam_output(0, "mca_ptl_tcp_module_accept: accept() failed with errno %d.", errno);
             return;
         }
- 
-        /* wait for receipt of data to complete the connect */
+
+        /* wait for receipt of peers process identifier to complete this connection */
         lam_reactor_insert(
             &mca_ptl_tcp_module.tcp_reactor, 
             sd,
             &mca_ptl_tcp_module_listener,
             0,
-            LAM_NOTIFY_RECV|LAM_NOTIFY_EXCEPT);
+            LAM_REACTOR_NOTIFY_RECV|LAM_REACTOR_NOTIFY_EXCEPT);
     }
 }
 
 
 /*
- * Called by reactor when registered socket is ready to read.
+ * Called by reactor when there is data available on the registered 
+ * socket to recv.
  */
-static void mca_ptl_tcp_module_recv(int sd, void* user)
+static void mca_ptl_tcp_module_recv_handler(void* user, int sd)
 {
+    void* guid; 
+    uint32_t size;
+    struct sockaddr_in addr;
+    lam_socklen_t addr_len = sizeof(addr);
+
     /* accept new connections on the listen socket */
     if(mca_ptl_tcp_module.tcp_listen == sd) {
         mca_ptl_tcp_module_accept();
         return;
     }
-    lam_reactor_remove(&mca_ptl_tcp_module.tcp_reactor, sd, LAM_NOTIFY_ALL);
-    
+    lam_reactor_remove(&mca_ptl_tcp_module.tcp_reactor, sd, LAM_REACTOR_NOTIFY_ALL);
+
+    /* recv the size of the process identifier */
+    int retval = recv(sd, &size, sizeof(size), 0);
+    if(retval == 0) {
+        close(sd);
+        return;
+    }
+    if(retval != sizeof(size)) {
+        lam_output(0, "mca_ptl_tcp_module_recv_handler: recv() return value %d != %d, errno = %d", 
+            retval, sizeof(size), errno);
+        close(sd);
+        return;
+    }
+
+    /* recv the identifier */
+    size = ntohl(size);
+    guid = LAM_MALLOC(size);
+    if(guid == 0) {
+        close(sd);
+        return;
+    }
+    retval = recv(sd, guid, size, 0);
+    if(retval != size) {
+        lam_output(0, "mca_ptl_tcp_module_recv_handler: recv() return value %d != %d, errno = %d", 
+            retval, sizeof(size), errno);
+        close(sd);
+        return;
+    }
+
+    /* lookup the corresponding process */
+    mca_ptl_tcp_proc_t* ptl_proc = mca_ptl_tcp_proc_lookup(guid, size);
+    if(NULL == ptl_proc) {
+        lam_output(0, "mca_ptl_tcp_module_recv_handler: unable to locate process");
+        close(sd);
+        return;
+    }
+
+    /* lookup peer address */
+    if(getpeername(sd, (struct sockaddr*)&addr, &addr_len) != 0) {
+        lam_output(0, "mca_ptl_tcp_module_recv_handler: getpeername() failed with errno=%d", errno);
+        close(sd);
+        return;
+    }
+
+    /* are there any existing peer instances will to accept this connection */
+    if(mca_ptl_tcp_proc_accept(ptl_proc, &addr, sd) == false) {
+        close(sd);
+        return;
+    }
 }
 
-static void mca_ptl_tcp_module_send(int sd, void* user)
+
+static void mca_ptl_tcp_module_send_handler(void* user, int sd)
 {
+    lam_output(0, "mca_ptl_tcp_module_send: received invalid event for descriptor(%d)", sd);
+    lam_reactor_remove(&mca_ptl_tcp_module.tcp_reactor, sd, LAM_REACTOR_NOTIFY_ALL);
 }
 
-static void mca_ptl_tcp_module_except(int sd, void* user)
+static void mca_ptl_tcp_module_except_handler(void* user, int sd)
 {
+    lam_output(0, "mca_ptl_tcp_module_except: received invalid event for descriptor(%d)", sd);
+    lam_reactor_remove(&mca_ptl_tcp_module.tcp_reactor, sd, LAM_REACTOR_NOTIFY_ALL);
 }
 

@@ -33,29 +33,29 @@ typedef struct lam_allocator
 
 extern lam_class_info_t      allocator_cls;
 
-void lam_alc_init(lam_allocator_t *allocator);
+void lam_allocator_init(lam_allocator_t *allocator);
 
 void *lam_alg_get_chunk(size_t chunk_size, int is_shared,
                            int mem_protect);
 
-void *lam_alc_alloc(lam_allocator_t *allocator, size_t chunk_size);
-void lam_alc_free(lam_allocator_t *allocator, void *chunk_ptr);
+void *lam_allocator_alloc(lam_allocator_t *allocator, size_t chunk_size);
+void lam_allocator_free(lam_allocator_t *allocator, void *chunk_ptr);
 
-static inline int lam_alc_get_is_shared(lam_allocator_t *allocator) {return allocator->alc_is_shared;}
-static inline void lam_alc_set_is_shared(lam_allocator_t *allocator, int is_shared) {allocator->alc_is_shared = is_shared;}
+static inline int lam_allocator_get_is_shared(lam_allocator_t *allocator) {return allocator->alc_is_shared;}
+static inline void lam_allocator_set_is_shared(lam_allocator_t *allocator, int is_shared) {allocator->alc_is_shared = is_shared;}
 
-static inline int lam_alc_get_mem_prot(lam_allocator_t *allocator) {return allocator->alc_mem_prot;}
-static inline void lam_alc_set_mem_prot(lam_allocator_t *allocator, int mem_prot) {allocator->alc_mem_prot = mem_prot;}
+static inline int lam_allocator_get_mem_prot(lam_allocator_t *allocator) {return allocator->alc_mem_prot;}
+static inline void lam_allocator_set_mem_prot(lam_allocator_t *allocator, int mem_prot) {allocator->alc_mem_prot = mem_prot;}
 
-static inline int lam_alc_get_should_pin(lam_allocator_t *allocator) {return allocator->alc_should_pin;}
-static inline void lam_alc_set_should_pin(lam_allocator_t *allocator, int pin) {allocator->alc_should_pin = pin;}
+static inline int lam_allocator_get_should_pin(lam_allocator_t *allocator) {return allocator->alc_should_pin;}
+static inline void lam_allocator_set_should_pin(lam_allocator_t *allocator, int pin) {allocator->alc_should_pin = pin;}
 
-static inline uint64_t lam_alc_get_pin_offset(lam_allocator_t *allocator) {return allocator->alc_pinned_offset;}
-static inline void lam_alc_set_pin_offset(lam_allocator_t *allocator, uint64_t pin_offset)
+static inline uint64_t lam_allocator_get_pin_offset(lam_allocator_t *allocator) {return allocator->alc_pinned_offset;}
+static inline void lam_allocator_set_pin_offset(lam_allocator_t *allocator, uint64_t pin_offset)
                     {allocator->alc_pinned_offset = pin_offset;}
 
-static inline uint64_t lam_alc_get_pin_size(lam_allocator_t *allocator) {return allocator->alc_pinned_sz;}
-static inline void lam_alc_set_pin_size(lam_allocator_t *allocator, uint64_t pin_sz)
+static inline uint64_t lam_allocator_get_pin_size(lam_allocator_t *allocator) {return allocator->alc_pinned_sz;}
+static inline void lam_allocator_set_pin_size(lam_allocator_t *allocator, uint64_t pin_sz)
                     {allocator->alc_pinned_sz = pin_sz;}
 
 #endif  /* LAM_ALLOCATOR_H */

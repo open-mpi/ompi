@@ -10,6 +10,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include "lam/util/reactor.h"
+#include "lam/mem/free_list.h"
 #include "mca/mpi/pml/pml.h"
 #include "mca/mpi/ptl/ptl.h"
 
@@ -23,11 +24,17 @@ struct mca_ptl_tcp_module_1_0_0_t {
     struct mca_ptl_tcp_t** tcp_ptls;
     size_t tcp_num_ptls;         /**< number of ptls actually used */
     size_t tcp_max_ptls;         /**< maximum number of ptls - available kernel ifs */
-    lam_reactor_t tcp_reactor;
     int tcp_listen;
     unsigned short tcp_port;
     char* tcp_if_include;        /**< comma seperated list of interface to include */
     char* tcp_if_exclude;        /**< comma seperated list of interface to exclude */
+    int   tcp_free_list_num;     /**< initial size of free lists */
+    int   tcp_free_list_max;     /**< maximum size of free lists */
+    int   tcp_free_list_inc;     /**< number of elements to alloc when growing free lists */
+    lam_reactor_t tcp_reactor;
+    lam_free_list_t tcp_send_requests;
+    lam_free_list_t tcp_send_frags;
+    lam_free_list_t tcp_recv_frags;
 };
 typedef struct mca_ptl_tcp_module_1_0_0_t mca_ptl_tcp_module_1_0_0_t;
 typedef struct mca_ptl_tcp_module_1_0_0_t mca_ptl_tcp_module_t;
@@ -54,9 +61,10 @@ extern void mca_ptl_tcp_module_progress(
  */
 
 struct mca_ptl_tcp_t {
-    mca_ptl_t super; 
-    int tcp_ifindex;
-    struct sockaddr_in tcp_addr;
+    mca_ptl_t          super; 
+    int                ptl_ifindex;
+    struct sockaddr_in ptl_ifaddr;
+    struct sockaddr_in ptl_ifmask;
 };
 typedef struct mca_ptl_tcp_t mca_ptl_tcp_t;
 
