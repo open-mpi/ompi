@@ -259,7 +259,7 @@ enum {
 #define MPI_DATATYPE_NULL ((MPI_Datatype) 0)
 #define MPI_REQUEST_NULL ((MPI_Request) 0)
 #define MPI_OP_NULL (&lam_mpi_op_null)
-#define MPI_ERRHANDLER_NULL (&(lam_mpi_errhandler_null)
+#define MPI_ERRHANDLER_NULL (&lam_mpi_errhandler_null)
 #define MPI_INFO_NULL ((MPI_Info) 0)
 #define MPI_WIN_NULL ((MPI_Win) 0)
 #define MPI_FILE_NULL ((MPI_File) 0)
