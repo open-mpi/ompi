@@ -8,7 +8,7 @@
 #include "lam/constants.h"
 #include "lam/mem/mem_pool.h"
 #include "lam/mem/sharedmem_util.h"
-#include "lam/util/lam_log.h"
+#include "lam/util/output.h"
 #include "lam/util/malloc.h"
 #include "lam/os/numa.h"
 
@@ -87,14 +87,14 @@ int lam_mp_init_with(lam_mem_pool_t *pool, uint64_t pool_size,
     
     /* round up pool size to multiple of page size */
     pool_size = ((((pool_size - 1) / chunk_size) + 1) * chunk_size);
-    if (pool_size == 0) {
-        lam_err(("Error: pool_size == 0\n"));
-        return LAM_ERR_BAD_PARAM;
+    if (0 == pool_size) {
+      lam_output(0, "Error: pool_size == 0");
+      return LAM_ERR_BAD_PARAM;
     }
     
     if (pool_size < chunk_size) {
-        lam_err(("Error: pool_size < chunk_size\n"));
-        return LAM_ERR_BAD_PARAM;
+      lam_output(0, "Error: pool_size < chunk_size");
+      return LAM_ERR_BAD_PARAM;
     }
     
     /* add red-zone pages */
@@ -123,22 +123,32 @@ int lam_mp_init_with(lam_mem_pool_t *pool, uint64_t pool_size,
     pool->mp_num_chunks = ((pool_size - 1) / chunk_size) + 1;
     if ((pool->mp_num_chunks > pool->mp_max_chunks) && (pool->mp_max_chunks > 0))
     {
-        lam_err(("Error: NPoolChunks (%ld) > maxNPoolChunks (%ld)\n",
-                 pool->mp_num_chunks, pool->mp_max_chunks));
-        return LAM_ERR_BAD_PARAM;
+      lam_output(0, "Error: NPoolChunks (%ld) > maxNPoolChunks (%ld)",
+                 pool->mp_num_chunks, pool->mp_max_chunks);
+      return LAM_ERR_BAD_PARAM;
     }
     /* change memory protection for red zones */
     retval = mprotect(ptr, page_size, PROT_NONE);
     if (retval != 0)
     {
-        lam_exit((-1, "Error in red zone 1 mprotect\n"));
+      lam_output(0, "Error in red zone 1 mprotect");
+#if NEED_TO_IMPLEMENT_LAM_EXIT
+      lam_exit(1);
+#else
+      exit(1);
+#endif
     }
     /* end red zone */
     retval =
         mprotect(ptr + page_size + wrk_size, page_size, PROT_NONE);
     if (retval != 0)
     {
-        lam_exit((-1, "Error in red zone 2 mprotect\n"));
+      lam_output(0, "Error in red zone 2 mprotect");
+#if NEED_TO_IMPLEMENT_LAM_EXIT
+      lam_exit(1);
+#else
+      exit(1);
+#endif
     }
     
     /* initialize chunk descriptors */
@@ -146,8 +156,8 @@ int lam_mp_init_with(lam_mem_pool_t *pool, uint64_t pool_size,
     pool->mp_chunks = lam_alc_alloc(pool->mp_private_alloc, to_alloc);
     if ( !pool->mp_chunks )
     {
-        lam_err(("Error: Out of memory\n"));
-        return LAM_ERROR;
+      lam_output(0, "Error: Out of memory");
+      return LAM_ERROR;
     }
     
     ptr = (char *) base;
@@ -196,7 +206,7 @@ void *lam_mp_request_chunk(lam_mem_pool_t *pool, int pool_index)
         chunk_desc = lam_alc_alloc(pool->mp_private_alloc, to_alloc);
         if ( !chunk_desc )
         {
-            lam_err(("Error! Out of memory!\n"));
+            lam_output(0, "Error! Out of memory!");
             lam_mutex_unlock(&(pool->mp_lock));
             return 0;
         }
@@ -218,9 +228,9 @@ void *lam_mp_request_chunk(lam_mem_pool_t *pool, int pool_index)
             lam_alc_alloc(pool->mp_dev_alloc, pool->mp_chunk_sz);
         if ( !pool->mp_chunks[pool->mp_num_chunks].chd_base_ptr )
         {
-            lam_err(("Error: Out of memory\n"));
-            lam_mutex_unlock(&(pool->mp_lock));
-            return chunk;
+          lam_output(0, "Error: Out of memory");
+          lam_mutex_unlock(&(pool->mp_lock));
+          return chunk;
         }
         
         /* reset pool chunk counter */
@@ -326,19 +336,27 @@ int lam_fmp_init_with(lam_fixed_mpool_t *pool, ssize_t initial_allocation,
       LAM_MALLOC(sizeof(lam_memseg_t *)*n_pools);
     if ( !pool->fmp_segments )
     {
-        lam_exit((-1,
-                  "Unable to allocate memory for "
-                  "pool->fmp_segments, requested %ld bytes, errno %d\n",
-                  sizeof(int) * n_pools, errno));
+      lam_output(0, "Unable to allocate memory for "
+                 "pool->fmp_segments, requested %ld bytes, errno %d",
+                 sizeof(int) * n_pools, errno);
+#if NEED_TO_IMPLEMENT_LAM_EXIT
+      lam_exit(1);
+#else
+      exit(1);
+#endif
     }
     bzero(pool->fmp_segments, sizeof(lam_memseg_t *)*n_pools);
 
     pool->fmp_n_segs_in_array = (int *) LAM_MALLOC(sizeof(int) * n_pools);
     if ( !pool->fmp_n_segs_in_array ) {
-        lam_exit((-1,
-                  "Unable to allocate memory for "
-                  "pool->fmp_n_segs_in_array, requested %ld bytes, errno %d\n",
-                  sizeof(int) * n_pools, errno));
+      lam_output(0, "Unable to allocate memory for "
+                 "pool->fmp_n_segs_in_array, requested %ld bytes, errno %d",
+                 sizeof(int) * n_pools, errno);
+#if NEED_TO_IMPLEMENT_LAM_EXIT
+      lam_exit(1);
+#else
+      exit(1);
+#endif
     }
     bzero(pool->fmp_n_segs_in_array, sizeof(int) * n_pools);
     
@@ -348,17 +366,26 @@ int lam_fmp_init_with(lam_fixed_mpool_t *pool, ssize_t initial_allocation,
         ptr = lam_zero_alloc(initial_allocation, MMAP_SHARED_PROT,
                                  MMAP_SHARED_FLAGS);
         if ( !ptr ) {
-            lam_exit((-1,
-                      "Unable to allocate "
-                      "memory pool , requested %ld, errno %d\n",
-                      initial_allocation, errno));
+          lam_output(0, "Unable to allocate "
+                     "memory pool , requested %ld, errno %d",
+                     initial_allocation, errno);
+#if NEED_TO_IMPLEMENT_LAM_EXIT
+          lam_exit(1);
+#else
+          exit(1);
+#endif
         }
 
         if ( apply_mem_affinity ) 
         {
             if (!lam_set_affinity(ptr, initial_allocation, pool_idx))
             {
-                lam_exit((-1, "Error: setting memory affinity\n"));
+              lam_output(0, "Error: setting memory affinity");
+#if NEED_TO_IMPLEMENT_LAM_EXIT
+              lam_exit(1);
+#else
+              exit(1);
+#endif
             }
         }
         
@@ -448,9 +475,14 @@ void *lam_fmp_get_mem_segment(lam_fixed_mpool_t *pool,
                          (pool->fmp_n_segments[which_pool] +
                           pool->fmp_n_elts_to_add));
             if ( !tmp_seg ) {
-                lam_exit((-1, "Unable to "
-                          "allocate memory for tmp_seg, errno %d\n",
-                          errno));
+              lam_output(0, "Unable to "
+                         "allocate memory for tmp_seg, errno %d",
+                         errno);
+#if NEED_TO_IMPLEMENT_LAM_EXIT
+              lam_exit(1);
+#else
+              exit(1);
+#endif
             }
             /* copy old version of pool->fmp_segments to tmp copy */
             for (seg_idx = 0; seg_idx < pool->fmp_n_segments[which_pool]; seg_idx++)
@@ -483,14 +515,24 @@ void *lam_fmp_get_mem_segment(lam_fixed_mpool_t *pool,
             lam_zero_alloc(len_to_alloc, MMAP_SHARED_PROT, MMAP_SHARED_FLAGS);
         if ( !tmp_ptr )
         {
-            lam_exit((-1, "Unable to "
-                      "allocate memory pool\n"));
+          lam_output(0, "Unable to allocate memory pool");
+#if NEED_TO_IMPLEMENT_LAM_EXIT
+          lam_exit(1);
+#else
+          exit(1);
+#endif
         }
         
         if ( pool->fmp_apply_affinity )
         {
-            if ( !lam_set_affinity(tmp_ptr, len_to_alloc, which_pool) )
-                lam_exit((-1, "Error: setting memory affinity\n"));
+          if ( !lam_set_affinity(tmp_ptr, len_to_alloc, which_pool) ) {
+            lam_output(0, "Error: setting memory affinity");
+#if NEED_TO_IMPLEMENT_LAM_EXIT
+            lam_exit(1);
+#else
+            exit(1);
+#endif
+          }
         }
         
         /* fill in pool->fmp_segments */

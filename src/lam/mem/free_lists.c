@@ -4,7 +4,7 @@
 
 #include "lam_config.h"
 #include "lam/mem/free_lists.h"
-#include "lam/util/lam_log.h"
+#include "lam/util/output.h"
 #include "lam/os/numa.h"
 #include "lam/os/lam_system.h"
 #include "lam/mem/mem_globals.h"
@@ -179,7 +179,12 @@ int lam_free_lists_init_with(
                    flist->fl_nlists);
     if ( !flist->fl_free_lists )
     {
-        lam_exit((-1, "Error: Out of memory\n"));
+      lam_output(0, "Error: Out of memory");
+#if NEED_TO_IMPLEMENT_LAM_EXIT
+      lam_exit(1);
+#else
+      exit(1);
+#endif      
     }
  
     /* run constructors */
@@ -200,8 +205,14 @@ int lam_free_lists_init_with(
                 (lam_seg_list_t *)malloc(sizeof(lam_seg_list_t));
         }
         
-        if (!flist->fl_free_lists[list])
-            lam_exit((-1, "Error: Out of memory\n"));
+        if (!flist->fl_free_lists[list]) {
+          lam_output(0, "Error: Out of memory");
+#if NEED_TO_IMPLEMENT_LAM_EXIT
+          lam_exit(1);
+#else
+          exit(1);
+#endif      
+        }
 
         STATIC_INIT(flist->fl_free_lists[list], &lam_seg_list_cls);
         
@@ -219,8 +230,14 @@ int lam_free_lists_init_with(
     {
         flist->fl_affinity = (affinity_t *)malloc(sizeof(affinity_t) *
                                     flist->fl_nlists);
-        if ( !flist->fl_affinity )
-            lam_exit((-1, "Error: Out of memory\n"));
+        if ( !flist->fl_affinity ) {
+          lam_output(0, "Error: Out of memory");
+#if NEED_TO_IMPLEMENT_LAM_EXIT
+          lam_exit(1);
+#else
+          exit(1);
+#endif      
+        }
 
         /* copy policies in */
         for ( pool = 0; pool < flist->fl_nlists; pool++ )
@@ -241,8 +258,13 @@ int lam_free_lists_init_with(
             {
                 if (lam_free_lists_create_more_elts(flist, pool) != LAM_SUCCESS)
                 {
-                    lam_exit((-1, "Error: Setting up initial private "
-                              "free list for %s.\n", flist->fl_description));
+                  lam_output(0, "Error: Setting up initial private "
+                             "free list for %s.\n", flist->fl_description);
+#if NEED_TO_IMPLEMENT_LAM_EXIT
+                  lam_exit(1);
+#else
+                  exit(1);
+#endif      
                 }
             }
             
@@ -251,8 +273,13 @@ int lam_free_lists_init_with(
         else
         {
             /* only 1 process should be initializing the list */
-            lam_exit((-1, "Error: Setting up initial private free "
-                      "list %d for %s.\n", pool, flist->fl_description));
+            lam_output(0, "Error: Setting up initial private free "
+                       "list %d for %s.\n", pool, flist->fl_description);
+#if NEED_TO_IMPLEMENT_LAM_EXIT
+            lam_exit(1);
+#else
+            exit(1);
+#endif      
         }
     }   
     
@@ -326,8 +353,8 @@ static void *lam_free_lists_get_mem_chunk(lam_free_lists_t *flist, int index, si
     
     if (index >= flist->fl_nlists)
     {
-        lam_err(("Error: Array out of bounds\n"));
-        return chunk;
+      lam_output(0, "Error: Array out of bounds");
+      return chunk;
     }
         
     if ( lam_sgl_get_max_bytes_pushed(flist->fl_free_lists[index]) != -1 ) 
@@ -341,8 +368,8 @@ static void *lam_free_lists_get_mem_chunk(lam_free_lists_t *flist, int index, si
                 lam_sgl_get_max_consec_fail(flist->fl_free_lists[index]) )
             {
                 *err = LAM_ERR_OUT_OF_RESOURCE;
-                lam_err(("Error: List out of memory in pool for %s\n",
-                         flist->fl_description));
+                lam_output(0, "Error: List out of memory in pool for %s",
+                           flist->fl_description);
                 return chunk;
             } else
                 *err = LAM_ERR_TEMP_OUT_OF_RESOURCE;
@@ -364,8 +391,8 @@ static void *lam_free_lists_get_mem_chunk(lam_free_lists_t *flist, int index, si
              lam_sgl_get_max_consec_fail(flist->fl_free_lists[index]) )
         {
             *err = LAM_ERR_OUT_OF_RESOURCE;
-            lam_err(("Error: List out of memory in pool for %s\n",
-                     flist->fl_description));
+            lam_output(0, "Error: List out of memory in pool for %s\n",
+                       flist->fl_description);
             return chunk;
         } else
             *err = LAM_ERR_TEMP_OUT_OF_RESOURCE;
@@ -422,8 +449,8 @@ static int lam_free_lists_create_more_elts(lam_free_lists_t *flist, int pool_idx
     void *ptr = lam_free_lists_get_mem_chunk(flist, pool_idx, &len_added, &err);
     
     if (0 == ptr ) {
-        lam_err(("Error: Can't get new elements for %s\n", 
-                 flist->fl_description));
+      lam_output(0, "Error: Can't get new elements for %s\n", 
+                 flist->fl_description);
         return err;
     }
     
