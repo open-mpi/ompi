@@ -39,9 +39,9 @@ ompi_errhandler_t ompi_mpi_errhandler_null = {
     { NULL, 0 },
 
     "MPI_ERRHANDLER_NULL",
+    OMPI_ERRHANDLER_TYPE_COMM,
     true,
     false,
-    OMPI_ERRHANDLER_TYPE_COMM,
     { NULL }
 };
 
@@ -53,9 +53,9 @@ ompi_errhandler_t ompi_mpi_errors_are_fatal = {
     { NULL, 0 },
 
     "MPI_ERRORS_ARE_FATAL",
+    OMPI_ERRHANDLER_TYPE_COMM,
     true,
     false,
-    OMPI_ERRHANDLER_TYPE_COMM,
     { ompi_mpi_errors_are_fatal_handler },
     -1
 };
@@ -67,10 +67,10 @@ ompi_errhandler_t ompi_mpi_errors_are_fatal = {
 ompi_errhandler_t ompi_mpi_errors_return = {
     { NULL, 0 },
 
-    "MPI_ERRORS_ARE_RETURN",
+    "MPI_ERRORS_RETURN",
+    OMPI_ERRHANDLER_TYPE_COMM,
     true,
     false,
-    OMPI_ERRHANDLER_TYPE_COMM,
     { ompi_mpi_errors_return_handler },
     -1
 };
