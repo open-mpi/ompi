@@ -88,6 +88,8 @@ mca_ptl_gm_param_register_int( const char *param_name, int default_value )
 int
 mca_ptl_gm_component_open(void)
 {
+    uint32_t default_first_frag_size;
+
     /* initialize state */
     mca_ptl_gm_component.gm_ptl_modules = NULL;
     mca_ptl_gm_component.gm_num_ptl_modules = 0;
@@ -109,8 +111,17 @@ mca_ptl_gm_component_open(void)
 
     mca_ptl_gm_component.gm_segment_size = 
         mca_ptl_gm_param_register_int( "segment_size", 16 * 1024 ); /* 16K by default */
+    default_first_frag_size = mca_ptl_gm_component.gm_segment_size - sizeof(mca_ptl_base_rendezvous_header_t);
+
     mca_ptl_gm_module.super.ptl_first_frag_size =
-        mca_ptl_gm_param_register_int ("first_frag_size", mca_ptl_gm_component.gm_segment_size - sizeof(mca_ptl_base_rendezvous_header_t) );
+        mca_ptl_gm_param_register_int ("first_frag_size", default_first_frag_size );
+    /* the first_frag_size should be always less than the gm_segment_size by at least the
+     * header sizeof.
+     */
+    if( mca_ptl_gm_module.super.ptl_first_frag_size > default_first_frag_size ) {
+        mca_ptl_gm_module.super.ptl_first_frag_size = default_first_frag_size;
+    }
+
     mca_ptl_gm_module.super.ptl_min_frag_size =
         mca_ptl_gm_param_register_int ("min_frag_size", 1<<16);
     mca_ptl_gm_module.super.ptl_max_frag_size =
