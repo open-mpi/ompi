@@ -129,8 +129,9 @@ int ompi_comm_nextcid ( ompi_communicator_t* newcomm,
         else {
             ompi_pointer_array_set_item(&ompi_mpi_communicators, 
                                         nextlocal_cid, NULL);
+	    nextlocal_cid = nextcid;
             flag = ompi_pointer_array_test_and_set_item(&ompi_mpi_communicators, 
-                                                         nextcid, comm );
+                                                         nextlocal_cid, comm );
             if (true == flag) {
                 response = 1; /* works as well */
             }
@@ -142,10 +143,16 @@ int ompi_comm_nextcid ( ompi_communicator_t* newcomm,
         
         (allredfnct)(&response, &glresponse, 1, MPI_MIN, comm, bridgecomm,
                          local_leader, remote_leader, send_first );
-        if (glresponse == 1) {
+        if (1 == glresponse) {
             done = 1;             /* we are done */
             break;
         }
+	else if ( 0 == glresponse ) {
+	    /* we could use that, but other don't agree */
+            ompi_pointer_array_set_item(&ompi_mpi_communicators, 
+                                        nextlocal_cid, NULL);
+	    start = nextcid+1;
+	}
     }
     
     /* set the according values to the newcomm */
