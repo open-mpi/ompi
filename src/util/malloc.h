@@ -44,14 +44,6 @@
 extern "C" {
 #endif
   /**
-   * Shut down malloc debug output.
-   *
-   * This function is invoked as part of ompi_finalize() to shut down the
-   * output stream for malloc debug messages.
-   */
-void ompi_malloc_init(void);
-
-  /**
    * Initialize malloc debug output.
    *
    * This function is invoked to setup a dedicated output stream for
@@ -64,6 +56,14 @@ void ompi_malloc_init(void);
    * recommended because no output messages -- regardless of the
    * malloc debug level set by ompi_malloc_debug() -- will be displayed
    * unless this function is invoked first.
+   */
+void ompi_malloc_init(void);
+
+  /**
+   * Shut down malloc debug output.
+   *
+   * This function is invoked as part of ompi_finalize() to shut down the
+   * output stream for malloc debug messages.
    */
 void ompi_malloc_finalize(void);
 
