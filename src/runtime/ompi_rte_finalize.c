@@ -30,10 +30,6 @@
  */
 int ompi_rte_finalize(void)
 {
-  ompi_rte_unregister();
-
-  /* cleanup the event processing thread first - before doing any other cleanup */
-  ompi_event_fini();
   mca_pcm_base_close();
   mca_llm_base_close();
   mca_pcmclient_base_close();
