@@ -195,6 +195,9 @@ int lam_ddt_set_args( dt_desc_t* pData,
                       int ci, int ** i, 
                       int ca, MPI_Aint* a,
                       int cd, MPI_Datatype* d,int type);
+/* VPS: Added  */
+int lam_ddt_sndrcv(void *sbuf, int scount, MPI_Datatype sdtype, void *rbuf,
+		 int rcount, MPI_Datatype rdtype, int tag, MPI_Comm comm);
 
 #endif  /* DATATYPE_H_HAS_BEEN_INCLUDED */
 
