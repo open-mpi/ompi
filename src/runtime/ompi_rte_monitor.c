@@ -41,6 +41,11 @@ int ompi_rte_register(void)
     void *addr;
     int rc,size;
 
+    /* protect against error */
+    if (NULL == jobid) {
+	return OMPI_ERROR;
+    }
+
     /* setup keys and segment for this job */
     sprintf(segment, "job-%s", jobid);
     keys[0] = ompi_name_server.get_proc_name_string(ompi_process_info.name);
@@ -80,7 +85,12 @@ int ompi_rte_unregister(void)
     char *jobid = ompi_name_server.get_jobid_string(ompi_process_info.name);
     char *keys[2];
     int rc;
-   
+
+    /* protect against error */
+    if (NULL == jobid) {
+	return OMPI_ERROR;
+    }
+
     /* setup keys and segment for this job */
     sprintf(segment, "job-%s", jobid);
     free(jobid);

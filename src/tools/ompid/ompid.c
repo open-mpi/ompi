@@ -52,6 +52,7 @@ int main(int argc, char *argv[])
     bool allow_multi_user_threads   = false;
     bool have_hidden_threads  = false;
     char *jobid_str, *procid_str, *enviro_val, *contact_file;
+    char *filenm;
 
     /*
      * Intialize the Open MPI environment
@@ -239,12 +240,16 @@ int main(int argc, char *argv[])
 	ompi_universe_info.seed_contact_info = mca_oob_get_contact_info();
 	contact_file = ompi_os_path(false, ompi_process_info.universe_session_dir,
 				    "universe-setup.txt", NULL);
+	ompi_output(0, "ompid: contact_file %s", contact_file);
 
 	if (OMPI_SUCCESS != (ret = ompi_write_universe_setup_file(contact_file))) {
 	    if (ompi_daemon_debug) {
 		ompi_output(0, "[%d,%d,%d] ompid: couldn't write setup file", ompi_process_info.name->cellid,
 			    ompi_process_info.name->jobid, ompi_process_info.name->vpid);
 	    }
+	} else if (ompi_daemon_debug) {
+	    ompi_output(0, "[%d,%d,%d] ompid: wrote setup file", ompi_process_info.name->cellid,
+			ompi_process_info.name->jobid, ompi_process_info.name->vpid);
 	}
     }
 
@@ -293,7 +298,11 @@ int main(int argc, char *argv[])
 		    ompi_process_info.name->jobid, ompi_process_info.name->vpid);
     }
 
+    /* remove the universe-setup file */
+    filenm = ompi_os_path(false, ompi_process_info.universe_session_dir, "universe-setup.txt", NULL);
+    unlink(filenm);
 
+    /* finalize the system */
     ompi_rte_finalize();
     mca_base_close();
     ompi_finalize();
@@ -325,10 +334,11 @@ static void ompi_daemon_recv(int status, ompi_process_name_t* sender,
 
     if (OMPI_SUCCESS != ompi_buffer_init(&answer, 0)) {
 	/* RHC -- not sure what to do if this fails */
+	goto DONE;
     }
 
     if (OMPI_SUCCESS != ompi_unpack(buffer, &command, 1, OMPI_DAEMON_OOB_PACK_CMD)) {
-	goto RETURN_ERROR;
+	goto CLEANUP;
     }
 
         /****    EXIT COMMAND    ****/
@@ -355,8 +365,10 @@ static void ompi_daemon_recv(int status, ompi_process_name_t* sender,
 	}
 
     }
+ CLEANUP:
+    ompi_buffer_free(answer);
 
- RETURN_ERROR:
+ DONE:
     /* reissue the non-blocking receive */
     ret = mca_oob_recv_packed_nb(MCA_OOB_NAME_ANY, MCA_OOB_TAG_DAEMON, 0, ompi_daemon_recv, NULL);
     if(ret != OMPI_SUCCESS && ret != OMPI_ERR_NOT_IMPLEMENTED) {

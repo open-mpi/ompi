@@ -155,6 +155,22 @@ int main(int argc, char *argv[])
         return ret;
     }
 
+    /*****    SET MY NAME   *****/
+    jobid = ompi_name_server.create_jobid();
+    vpid = ompi_name_server.reserve_range(jobid, 1);
+    ompi_process_info.name = ompi_name_server.create_process_name(0, jobid, vpid);
+
+    fprintf(stderr, "my name: [%d,%d,%d]\n", ompi_process_info.name->cellid,
+	    ompi_process_info.name->jobid, ompi_process_info.name->vpid);
+
+    /*
+     *  Register my process info with my replica.
+     */
+    if (OMPI_SUCCESS != (ret = ompi_rte_register())) {
+	fprintf(stderr, "ompi_rte_init: failed in ompi_rte_register()\n");
+	return ret;
+    }
+
    /* finalize the rte startup */
     if (OMPI_SUCCESS != (ret = ompi_rte_init_finalstage(&allow_multi_user_threads,
 							&have_hidden_threads))) {
@@ -162,21 +178,6 @@ int main(int argc, char *argv[])
 	return ret;
     }
  
-    /*****    SET MY NAME   *****/
- /*    jobid = ompi_name_server.create_jobid(); */
-/*     vpid = ompi_name_server.reserve_range(jobid, 1); */
-/*     ompi_process_info.name = ompi_name_server.create_process_name(0, jobid, vpid); */
-
-/*     fprintf(stderr, "my name: [%d,%d,%d]\n", ompi_process_info.name->cellid, */
-/* 	    ompi_process_info.name->jobid, ompi_process_info.name->vpid); */
-
-
- /*     /\* register the console callback function *\/ */
-/*     ret = mca_oob_recv_packed_nb(MCA_OOB_NAME_ANY, MCA_OOB_TAG_DAEMON, 0, ompi_console_recv, NULL); */
-/*     if(ret != OMPI_SUCCESS && ret != OMPI_ERR_NOT_IMPLEMENTED) { */
-/* 	printf("daemon callback not registered: error code %d", ret); */
-/* 	return ret; */
-/*     } */
 
     exit_cmd = false;
     while (!exit_cmd) {
@@ -221,10 +222,13 @@ int main(int argc, char *argv[])
 	}
     }
 
+    fprintf(stderr, "finalize rte\n");
     ompi_rte_finalize();
+    fprintf(stderr, "close mca\n");
     mca_base_close();
+    fprintf(stderr, "finalize ompi\n");
     ompi_finalize();
-    return 0;
+    exit(0);
 }
 
 
