@@ -1,3 +1,7 @@
+/*
+ * $HEADER$
+ */
+
 #ifndef _OMPI_PROGRESS_H_
 #define _OMPI_PROGRESS_H_
 #if defined(c_plusplus) || defined(__cplusplus)

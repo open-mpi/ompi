@@ -1,4 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
+/*
+ * $HEADER$
+ */
 
 #ifndef DATATYPE_INTERNAL_H_HAS_BEEN_INCLUDED
 #define DATATYPE_INTERNAL_H_HAS_BEEN_INCLUDED

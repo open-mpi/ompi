@@ -1,5 +1,6 @@
 /* -*- C -*-
  *
+ * $HEADER$
  */
 
 #ifndef MCA_LLM_BASE_PARSE_HOSTFILE_LEX_H_

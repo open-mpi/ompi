@@ -1,4 +1,6 @@
-
+#
+# $HEADER$
+#
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS

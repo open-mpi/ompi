@@ -1,3 +1,6 @@
+/*
+ * $HEADER$
+ */
 
 #include "ompi_config.h"
 #include "include/types.h"

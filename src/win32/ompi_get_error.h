@@ -1,6 +1,6 @@
 /*
- $HEADER$
-  */
+ * $HEADER$
+ */
 #ifndef OMPI_GET_ERROR_H
 #define OMPI_GET_ERROR_H
 

@@ -1,5 +1,5 @@
 /*
-  $HEADER$
+ * $HEADER$
  */
   
 #ifndef OMPI_UTIL_H

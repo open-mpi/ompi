@@ -1,5 +1,8 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 
+/*
+ * $HEADER$
+ */
 #include "gm.h"
 
 struct mca_ptl_gm_send_frag_t;

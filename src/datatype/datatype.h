@@ -1,4 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
+/*
+ * $HEADER$
+ */
 
 /**
  * ompi_datatype_t interface for OMPI internal data type representation

@@ -1,4 +1,7 @@
 #!/usr/bin/perl
+#
+# $HEADER$
+#
 
 if (scalar(@ARGV) != 1) {
     print "Usage: generate_file_list <diff file>\n";

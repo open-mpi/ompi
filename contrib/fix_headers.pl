@@ -1,4 +1,7 @@
 #!/usr/bin/perl
+#
+# $HEADER$
+#
 
 if (scalar(@ARGV) != 1) {
     print "Usage:

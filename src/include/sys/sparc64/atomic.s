@@ -1,3 +1,6 @@
+;; 
+;; $HEADER$
+;; 
 	.file	"atomic.c"
 gcc2_compiled.:
 .section	".text"

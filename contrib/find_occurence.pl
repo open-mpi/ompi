@@ -1,4 +1,7 @@
 #!/usr/bin/perl
+#
+# $HEADER$
+#
 
 if (scalar(@ARGV) != 2) {
     print "Usage: #find_occurence <string> <source-path>\n";

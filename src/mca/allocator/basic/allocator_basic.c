@@ -1,3 +1,7 @@
+/*
+ * $HEADER$
+ */
+
 #include "ompi_config.h"
 #include "util/output.h"
 #include "allocator_basic.h"

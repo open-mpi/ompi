@@ -1,4 +1,8 @@
 %{ /* -*- C -*- */
+/*
+ * $HEADER$
+ */
+
 #include "ompi_config.h"
 
 #include <stdio.h>

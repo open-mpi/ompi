@@ -1,8 +1,11 @@
 #!/bin/sh
 #
-# This is a simple makefile for windows which makes all the components which are 
-# required for super computing. Too lazy to open up visual studio each and every
-# time to compile a component, so just adding this to the svn repository 
+# $HEADER$
+#
+# This is a simple makefile for windows which makes all the components
+# which are required for super computing. Too lazy to open up visual
+# studio each and every time to compile a component, so just adding
+# this to the svn repository
 #
 
 gen_base = ${topdir}/src/win32/generated_include

@@ -1,4 +1,7 @@
 #!/usr/bin/perl
+#
+# $HEADER$
+#
 
 #this is the perl scripty foo which does the following tasks
 # 1. Extract the #include <*.h> files which are present in both header and source files

@@ -1,3 +1,7 @@
+/*
+ * $HEADER$
+ */
+
 #ifndef SYSLOG_H_HAS_BEEN_INCLUDED
 #define SYSLOG_H_HAS_BEEN_INCLUDED
 

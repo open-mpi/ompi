@@ -1,6 +1,6 @@
 /*
-$HEADER$
-*/
+ *$HEADER$
+ */
 
 #ifndef OMPI_TIME_H
 #define OMPI_TIME_H

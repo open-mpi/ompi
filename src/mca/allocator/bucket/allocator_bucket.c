@@ -1,3 +1,7 @@
+/*
+ * $HEADER$
+ */
+
 #include "ompi_config.h"
 #include "mca/allocator/allocator.h"
 #include "include/constants.h"

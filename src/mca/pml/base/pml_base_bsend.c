@@ -1,3 +1,7 @@
+/*
+ * $HEADER$
+ */
+
 #include "ompi_config.h"
 #include "threads/mutex.h"
 #include "threads/condition.h"

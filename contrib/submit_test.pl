@@ -1,4 +1,7 @@
 #!/usr/bin/env perl
+#
+# $HEADER$
+#
 
 use strict;
 use Data::Dumper;

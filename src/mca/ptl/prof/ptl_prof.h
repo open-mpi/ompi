@@ -1,5 +1,5 @@
 /*
- *  *$HEADER$
+ * $HEADER$
  *   */
 /**
  *  * @file

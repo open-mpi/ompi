@@ -1,3 +1,7 @@
+/*
+ * $HEADER$
+ */
+
 #ifndef _MCA_PML_BASE_PTL_
 #define _MCA_PML_BASE_PTL_
 

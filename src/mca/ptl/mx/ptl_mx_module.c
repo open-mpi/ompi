@@ -1,3 +1,7 @@
+/*
+ * $HEADER$
+ */
+
 #include "ptl_mx.h"
 #include "include/constants.h"
 #include "util/output.h"

@@ -1,4 +1,6 @@
 !
+! $HEADER$
+!
 ! test_send.f90 - tests mpi_send variants (calls functions in send_t.c)
 !
 ! Actual tests do not use MPI, they just test parameters and types.

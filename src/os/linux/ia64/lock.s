@@ -1,5 +1,8 @@
+;;
+;; $HEADER$
+;;
+	
 #include <asm.h>
-
 .text
 
 .global spinlock

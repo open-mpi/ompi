@@ -1,6 +1,6 @@
 dnl -*- shell-script -*-
 dnl
-dnl $HEADER
+dnl $HEADER$
 denl
 
 AC_DEFUN([OMPI_CHECK_LINKER_FLAGS],[

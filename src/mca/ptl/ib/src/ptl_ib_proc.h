@@ -1,3 +1,7 @@
+/*
+ * $HEADER$
+ */
+
 #ifndef MCA_PTL_IB_PROC_H
 #define MCA_PTL_IB_PROC_H
 

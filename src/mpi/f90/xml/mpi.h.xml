@@ -1,6 +1,8 @@
 <?xml version="1.0"?>
 <!DOCTYPE library SYSTEM "mapping.dtd">
-
+<!--
+ $HEADER$
+-->
 <!-- mpi.h.xml : automatically generated XML -->
 <!-- Source PDB file : mpi.h.pdb -->
 <library lang="cxx" version="3" name="mpi.h">

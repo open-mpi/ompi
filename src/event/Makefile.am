@@ -1,3 +1,7 @@
+#
+# $HEADER$
+#
+
 include $(top_srcdir)/config/Makefile.options
 
 # OMPI Get the dirs where ompi_config.h and ompi_config_bottom.h live.

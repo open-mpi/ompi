@@ -1,4 +1,7 @@
 #!/usr/bin/perl
+#
+# $HEADER$
+#
 #To keep brian happy
 
 if (scalar(@ARGV) != 1) {

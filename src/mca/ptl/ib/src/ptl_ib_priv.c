@@ -1,3 +1,7 @@
+/*
+ * $HEADER$
+ */
+
 #include "ompi_config.h"
 #include "ptl_ib_vapi.h"
 #include "ptl_ib_priv.h"

@@ -1,3 +1,7 @@
+/*
+ * $HEADER$
+ */
+
 #ifndef DEBUG_H_HAS_BEEN_INCLUDED
 #define DEBUG_H_HAS_BEEN_INCLUDED
 

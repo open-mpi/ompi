@@ -1,3 +1,7 @@
+#
+# $HEADER$
+#
+
 SNL_OBJECTS = ./snipe_lite/msg.c \
 	./snipe_lite/msgbuf2.c \
 	./snipe_lite/memory.c \

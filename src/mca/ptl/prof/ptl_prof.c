@@ -1,3 +1,7 @@
+/*
+ * $HEADER$
+ */
+
 #include "ompi_config.h"
 #include "ptl_prof.h"
 #include "class/ompi_bitmap.h"

@@ -1,6 +1,10 @@
 module mpi_kinds
 
 !
+! $HEADER$
+!
+
+!
 ! kind for 4 byte integer (selected_int_kind(18) for 8 byte integer)
 ! (WARNING, Compiler dependent)
 !

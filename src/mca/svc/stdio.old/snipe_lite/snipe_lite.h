@@ -1,4 +1,6 @@
-
+/*
+ * $HEADER$
+ */
 
 /*
 	HARNESS G_HCORE
