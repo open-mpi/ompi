@@ -23,8 +23,8 @@
  * prototypes (we may not implement all of this interface)
  */
 
-int lam_atomic_cmpset_acq_int(volatile int *p, int old, int new);
-int lam_atomic_cmpset_rel_int(volatile int *p, int old, int new);
+int lam_atomic_cmpset_acq_int(volatile int *p, int old, int fresh);
+int lam_atomic_cmpset_rel_int(volatile int *p, int old, int fresh);
 int lam_atomic_load_acq_int(volatile int *p);
 int lam_atomic_readandclear_int(volatile int *p);
 void lam_atomic_add_acq_int(volatile int *p, int v);
@@ -37,8 +37,8 @@ void lam_atomic_store_rel_int(volatile int *p, int v);
 void lam_atomic_subtract_acq_int(volatile int *p, int v);
 void lam_atomic_subtract_rel_int(volatile int *p, int v);
 
-int lam_atomic_cmpset_acq_long(volatile long *p, long old, long new);
-int lam_atomic_cmpset_rel_long(volatile long *p, long old, long new);
+int lam_atomic_cmpset_acq_long(volatile long *p, long old, long fresh);
+int lam_atomic_cmpset_rel_long(volatile long *p, long old, long fresh);
 long lam_atomic_load_acq_long(volatile long *p);
 long lam_atomic_readandclear_long(volatile long *p);
 void lam_atomic_add_acq_long(volatile long *p, long v);
@@ -51,8 +51,8 @@ void lam_atomic_store_rel_long(volatile long *p, long v);
 void lam_atomic_subtract_acq_long(volatile long *p, long v);
 void lam_atomic_subtract_rel_long(volatile long *p, long v);
 
-int lam_atomic_cmpset_acq_ptr(volatile uintptr_t *p, uintptr_t old, uintptr_t new);
-int lam_atomic_cmpset_rel_ptr(volatile uintptr_t *p, uintptr_t old, uintptr_t new);
+int lam_atomic_cmpset_acq_ptr(volatile uintptr_t *p, uintptr_t old, uintptr_t fresh);
+int lam_atomic_cmpset_rel_ptr(volatile uintptr_t *p, uintptr_t old, uintptr_t fresh);
 uintptr_t lam_atomic_load_acq_ptr(volatile uintptr_t *p);
 uintptr_t lam_atomic_readandclear_ptr(volatile uintptr_t *p);
 void lam_atomic_add_acq_ptr(volatile uintptr_t *p, uintptr_t v);
@@ -65,8 +65,8 @@ void lam_atomic_store_rel_ptr(volatile uintptr_t *p, uintptr_t v);
 void lam_atomic_subtract_acq_ptr(volatile uintptr_t *p, uintptr_t v);
 void lam_atomic_subtract_rel_ptr(volatile uintptr_t *p, uintptr_t v);
 
-int lam_atomic_cmpset_acq_uint32_t(volatile uint32_t *p, uint32_t old, uint32_t new);
-int lam_atomic_cmpset_rel_uint32_t(volatile uint32_t *p, uint32_t old, uint32_t new);
+int lam_atomic_cmpset_acq_uint32_t(volatile uint32_t *p, uint32_t old, uint32_t fresh);
+int lam_atomic_cmpset_rel_uint32_t(volatile uint32_t *p, uint32_t old, uint32_t fresh);
 uint32_t lam_atomic_load_acq_uint32_t(volatile uint32_t *p);
 uint32_t lam_atomic_readandclear_uint32_t(volatile uint32_t *p);
 void lam_atomic_add_acq_uint32_t(volatile uint32_t *p, uint32_t v);
@@ -79,8 +79,8 @@ void lam_atomic_store_rel_uint32_t(volatile uint32_t *p, uint32_t v);
 void lam_atomic_subtract_acq_uint32_t(volatile uint32_t *p, uint32_t v);
 void lam_atomic_subtract_rel_uint32_t(volatile uint32_t *p, uint32_t v);
 
-int lam_atomic_cmpset_acq_uint64_t(volatile uint64_t *p, uint64_t old, uint64_t new);
-int lam_atomic_cmpset_rel_uint64_t(volatile uint64_t *p, uint64_t old, uint64_t new);
+int lam_atomic_cmpset_acq_uint64_t(volatile uint64_t *p, uint64_t old, uint64_t fresh);
+int lam_atomic_cmpset_rel_uint64_t(volatile uint64_t *p, uint64_t old, uint64_t fresh);
 uint64_t lam_atomic_load_acq_uint64_t(volatile uint64_t *p);
 uint64_t lam_atomic_readandclear_uint64_t(volatile uint64_t *p);
 void lam_atomic_add_acq_uint64_t(volatile uint64_t *p, uint64_t v);
