@@ -23,17 +23,17 @@ static inline bool lam_use_threads(void)
  * Lock macros
  */
 #define THREAD_LOCK(a)   if(lam_use_threads()) \
-                              lam_mtx_lock((a));
+                              lam_mutex_lock((a));
 
-#define LOCK(a)          lam_mtx_lock((a))
+#define LOCK(a)          lam_mutex_lock((a))
 
 /*
  * unlock macros
  */
 #define THREAD_UNLOCK(a) if(lam_use_threads()) \
-                              lam_mtx_unlock((a));
+                              lam_mutex_unlock((a));
 
-#define UNLOCK(a)        lam_mtx_unlock((a));
+#define UNLOCK(a)        lam_mutex_unlock((a));
 
 #endif
 

@@ -14,52 +14,52 @@
 
 
 typedef struct lam_mutex {
-     volatile int     mtx_spinlock;
-     volatile int     mtx_waiting;
-     pthread_mutex_t  mtx_lock;
-     pthread_cond_t   mtx_cond;
+     volatile int     mutex_spinlock;
+     volatile int     mutex_waiting;
+     pthread_mutex_t  mutex_lock;
+     pthread_cond_t   mutex_cond;
 } lam_mutex_t;
 
 
-static inline void lam_mtx_init(lam_mutex_t* m) 
+static inline void lam_mutex_init(lam_mutex_t* m) 
 {
-    m->mtx_spinlock = 0;
-    m->mtx_waiting = 0;
-    pthread_mutex_init(&m->mtx_lock, 0);
-    pthread_cond_init(&m->mtx_cond, 0);
+    m->mutex_spinlock = 0;
+    m->mutex_waiting = 0;
+    pthread_mutex_init(&m->mutex_lock, 0);
+    pthread_cond_init(&m->mutex_cond, 0);
 }
 
 
-static inline void lam_mtx_lock(lam_mutex_t* m)
+static inline void lam_mutex_lock(lam_mutex_t* m)
 {
     unsigned long cnt = 0;
     int locked;
 
-    fetchNadd(&m->mtx_waiting, 1);
-    while( ((locked = fetchNset(&m->mtx_spinlock, 1)) == 1)
+    fetchNadd(&m->mutex_waiting, 1);
+    while( ((locked = fetchNset(&m->mutex_spinlock, 1)) == 1)
            && (cnt++ < MUTEX_SPINWAIT) )
         ;
     if(locked) {
-        pthread_mutex_lock(&m->mtx_lock);
-        while(fetchNset(&m->mtx_spinlock, 1) == 1)
-            pthread_cond_wait(&m->mtx_cond, &m->mtx_lock);
-        pthread_mutex_unlock(&m->mtx_lock);
+        pthread_mutex_lock(&m->mutex_lock);
+        while(fetchNset(&m->mutex_spinlock, 1) == 1)
+            pthread_cond_wait(&m->mutex_cond, &m->mutex_lock);
+        pthread_mutex_unlock(&m->mutex_lock);
     }
-    fetchNadd(&m->mtx_waiting, -1);
+    fetchNadd(&m->mutex_waiting, -1);
 }
 
 
-static inline int lam_mtx_trylock(lam_mutex_t* m)
+static inline int lam_mutex_trylock(lam_mutex_t* m)
 {
-    return (fetchNset(&m->mtx_spinlock, 1) == 0);
+    return (fetchNset(&m->mutex_spinlock, 1) == 0);
 }
 
 
-static inline void lam_mtx_unlock(lam_mutex_t* m)
+static inline void lam_mutex_unlock(lam_mutex_t* m)
 {
-    fetchNset(&m->mtx_spinlock, 0); 
-    if(m->mtx_waiting) {
-        pthread_cond_signal(&m->mtx_cond);
+    fetchNset(&m->mutex_spinlock, 0); 
+    if(m->mutex_waiting) {
+        pthread_cond_signal(&m->mutex_cond);
     }
 }
 
