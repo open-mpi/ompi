@@ -6,7 +6,10 @@
 #include "coll_basic.h"
 
 #include "constants.h"
+#include "communicator/communicator.h"
+#include "util/hibit.h"
 #include "mpi.h"
+#include "mca/pml/pml.h"
 #include "mca/coll/coll.h"
 #include "mca/coll/base/coll_tags.h"
 #include "coll_basic.h"
@@ -21,71 +24,51 @@
  */
 int mca_coll_basic_barrier_lin(MPI_Comm comm)
 {
-#if 1
-  return LAM_ERR_NOT_IMPLEMENTED;
-#else
-  int size;
-  int rank;
-  int err;
   int i;
-
-  MPI_Comm_size(comm, &size);
-  MPI_Comm_rank(comm, &rank);
+  int err;
+  int size = lam_comm_size(comm);
+  int rank = lam_comm_rank(comm);
 
   /* All non-root send & receive zero-length message. */
 
   if (rank > 0) {
-#if 0
-    /* JMS: Need to replace this with negative tags and and direct PML
-       calls */
-    err = MPI_Send((void *) 0, 0, MPI_BYTE, 0, BLKMPIBARRIER, comm);
+    err = mca_pml.pml_send(NULL, 0, MPI_BYTE, 0, MCA_COLL_BASE_TAG_BARRIER, 
+                           MCA_PML_BASE_SEND_STANDARD, comm);
     if (MPI_SUCCESS != err) {
       return err;
     }
-#endif
 
-#if 0
-    /* JMS: Need to replace this with negative tags and and direct PML
-       calls */
-    err = MPI_Recv((void *) 0, 0, MPI_BYTE, 0, BLKMPIBARRIER, comm, 
-		   MPI_STATUS_IGNORE);
+    err = mca_pml.pml_recv(NULL, 0, MPI_BYTE, 0, MCA_COLL_BASE_TAG_BARRIER, 
+                           comm, MPI_STATUS_IGNORE);
     if (MPI_SUCCESS != err) {
       return err;
     }
-#endif
   }
 
   /* The root collects and broadcasts the messages. */
 
   else {
     for (i = 1; i < size; ++i) {
-#if 0
-    /* JMS: Need to replace this with negative tags and and direct PML
-       calls */
-      err = MPI_Recv((void *) 0, 0, MPI_BYTE, MPI_ANY_SOURCE,
-		     BLKMPIBARRIER, comm, MPI_STATUS_IGNORE);
+      err = mca_pml.pml_recv(NULL, 0, MPI_BYTE, MPI_ANY_SOURCE,
+                             MCA_COLL_BASE_TAG_BARRIER, 
+                             comm, MPI_STATUS_IGNORE);
       if (MPI_SUCCESS != err) {
         return err;
       }
-#endif
     }
 
     for (i = 1; i < size; ++i) {
-#if 0
-    /* JMS: Need to replace this with negative tags and and direct PML
-       calls */
-      err = MPI_Send((void *) 0, 0, MPI_BYTE, i, BLKMPIBARRIER, comm);
+      err = mca_pml.pml_send(NULL, 0, MPI_BYTE, i, MCA_COLL_BASE_TAG_BARRIER, 
+                             MCA_PML_BASE_SEND_STANDARD, comm);
       if (MPI_SUCCESS != err) {
         return err;
       }
-#endif
     }
   }
 
   /* All done */
 
   return MPI_SUCCESS;
-#endif
 }
 
 
@@ -99,28 +82,20 @@ int mca_coll_basic_barrier_lin(MPI_Comm comm)
 int
 mca_coll_basic_barrier_log(MPI_Comm comm)
 {
-#if 1
-  return LAM_ERR_NOT_IMPLEMENTED;
-#else
-  int size;
-  int rank;
+  int i;
+  int err;
   int peer;
   int dim;
   int hibit;
   int mask;
-  int err;
-  int i;
+  int size = lam_comm_size(comm);
+  int rank = lam_comm_rank(comm);
 
   /* Send null-messages up and down the tree.  Synchronization at the
      root (rank 0). */
 
-  MPI_Comm_rank(comm, &rank);
-  MPI_Comm_size(comm, &size);
-#if 0
-  /* JMS Need to cache this info somewhere */
   dim = comm->c_cube_dim;
   hibit = lam_hibit(rank, dim);
-#endif
   --dim;
 
   /* Receive from children. */
@@ -128,15 +103,12 @@ mca_coll_basic_barrier_log(MPI_Comm comm)
   for (i = dim, mask = 1 << i; i > hibit; --i, mask >>= 1) {
     peer = rank | mask;
     if (peer < size) {
-#if 0
-      /* JMS: Need to replace this with negative tags and and direct PML
-         calls */
-      err = MPI_Recv((void *) 0, 0, MPI_BYTE,
-		     peer, BLKMPIBARRIER, comm, MPI_STATUS_IGNORE);
+      err = mca_pml.pml_recv(NULL, 0, MPI_BYTE, peer,
+                             MCA_COLL_BASE_TAG_BARRIER, 
+                             comm, MPI_STATUS_IGNORE);
       if (MPI_SUCCESS != err) {
 	return err;
       }
-#endif
     }
   }
 
@@ -144,24 +116,15 @@ mca_coll_basic_barrier_log(MPI_Comm comm)
 
   if (rank > 0) {
     peer = rank & ~(1 << hibit);
-#if 0
-    /* JMS: Need to replace this with negative tags and and direct PML
-       calls */
-    err = MPI_Send((void *) 0, 0, MPI_BYTE, peer, BLKMPIBARRIER, comm);
+    err = mca_pml.pml_send(NULL, 0, MPI_BYTE, peer, MCA_COLL_BASE_TAG_BARRIER, 
+                           MCA_PML_BASE_SEND_STANDARD, comm);
     if (MPI_SUCCESS != err) {
       return err;
     }
-#endif
 
-#if 0
-    /* JMS: Need to replace this with negative tags and and direct PML
-       calls */
-    err = MPI_Recv((void *) 0, 0, MPI_BYTE, peer,
-		   BLKMPIBARRIER, comm, MPI_STATUS_IGNORE);
-    if (MPI_SUCCESS != err) {
-      return err;
-    }
-#endif
+    err = mca_pml.pml_recv(NULL, 0, MPI_BYTE, peer,
+                           MCA_COLL_BASE_TAG_BARRIER, 
+                           comm, MPI_STATUS_IGNORE);
   }
 
   /* Send to children. */
@@ -169,19 +132,16 @@ mca_coll_basic_barrier_log(MPI_Comm comm)
   for (i = hibit + 1, mask = 1 << i; i <= dim; ++i, mask <<= 1) {
     peer = rank | mask;
     if (peer < size) {
-#if 0
-      /* JMS: Need to replace this with negative tags and and direct PML
-         calls */
-      err = MPI_Send((void *) 0, 0, MPI_BYTE, peer, BLKMPIBARRIER, comm);
+      err = mca_pml.pml_send(NULL, 0, MPI_BYTE, peer,
+                             MCA_COLL_BASE_TAG_BARRIER, 
+                             MCA_PML_BASE_SEND_STANDARD, comm);
       if (MPI_SUCCESS != err) {
 	return err;
       }
-#endif
     }
   }
 
   /* All done */
 
   return MPI_SUCCESS;
-#endif
 }
