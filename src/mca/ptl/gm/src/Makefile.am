@@ -14,7 +14,9 @@ libmca_ptl_gm_la_SOURCES = \
         ptl_gm.h \
         ptl_gm_component.c \
         ptl_gm_peer.h \
+        ptl_gm_peer.c \
         ptl_gm_priv.h \
+        ptl_gm_priv.c \
         ptl_gm_proc.c \
         ptl_gm_proc.h \
         ptl_gm_req.c \

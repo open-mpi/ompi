@@ -24,7 +24,7 @@
 #include "ptl_gm_addr.h"
 #include "ptl_gm_proc.h"
 #include "ptl_gm_req.h"
-
+#include "ptl_gm_priv.h"
 
 mca_ptl_gm_component_t mca_ptl_gm_component = {
   {
@@ -118,10 +118,10 @@ mca_ptl_gm_component_open (void)
     mca_ptl_gm_module.super.ptl_first_frag_size =
         mca_ptl_gm_param_register_int ("first_frag_size", 16 * 1024);
     mca_ptl_gm_module.super.ptl_min_frag_size =
-        mca_ptl_gm_param_register_int ("min_frag_size", 0);
-    mca_ptl_gm_module.super.ptl_min_frag_size =
+        mca_ptl_gm_param_register_int ("min_frag_size", 1<<16);
+    mca_ptl_gm_component.gm_free_list_num =
         mca_ptl_gm_param_register_int ("free_list_num", 32);
-    mca_ptl_gm_module.super.ptl_min_frag_size =
+    mca_ptl_gm_component.gm_free_list_inc =
         mca_ptl_gm_param_register_int ("free_list_inc", 32);
 
     return OMPI_SUCCESS;
@@ -137,38 +137,36 @@ mca_ptl_gm_component_open (void)
 int
 mca_ptl_gm_component_close (void)
 {
-
-    /* if (OMPI_SUCCESS != ompi_mca_ptl_gm_finalize(&mca_ptl_gm_component)) {
+#ifdef GOPAL_TODO
+    if (OMPI_SUCCESS != ompi_mca_ptl_gm_finalize(&mca_ptl_gm_component)) {
        ompi_output(0,
        "[%s:%d] error in finalizing gm state and PTL's.\n",
        __FILE__, __LINE__);
        return NULL;
-       } */
+       }
 
+#endif
 
     if (NULL != mca_ptl_gm_component.gm_ptl_modules)
         free (mca_ptl_gm_component.gm_ptl_modules);
 
     OBJ_DESTRUCT (&mca_ptl_gm_component.gm_procs);
     OBJ_DESTRUCT (&mca_ptl_gm_component.gm_send_req);
+    OBJ_DESTRUCT (&mca_ptl_gm_component.gm_lock);
 
-    return ompi_event_fini ();
+    return OMPI_SUCCESS;
 }
-
-
-
 
 /*
  *  Create a ptl instance and add to components list.
  */
 
 static int
-mca_ptl_gm_create (void)
+mca_ptl_gm_create (int i)
 {
     mca_ptl_gm_module_t *ptl;
-    char        param[256];
 
-    ptl = malloc (sizeof (mca_ptl_gm_module_t));
+    ptl = (mca_ptl_gm_module_t *)malloc (sizeof (mca_ptl_gm_module_t));
     if (NULL == ptl) {
         ompi_output (0,
                      " ran out of resource to allocate ptl_instance \n");
@@ -176,7 +174,7 @@ mca_ptl_gm_create (void)
     }
 
     memcpy (ptl, &mca_ptl_gm_module, sizeof (mca_ptl_gm_module));
-    mca_ptl_gm_component.gm_ptl_modules[mca_ptl_gm_component.gm_num_ptl_modules++] = ptl;
+    mca_ptl_gm_component.gm_ptl_modules[i] = ptl;
 
     return OMPI_SUCCESS;
 }
@@ -192,20 +190,7 @@ mca_ptl_gm_create (void)
 static int
 mca_ptl_gm_module_create_instances (void)
 {
-
-    int         i;
-    int         maxptls = 1;    /* maxptls set to 1 */
-    /* allocate memory for ptls */
-
-    mca_ptl_gm_component.gm_max_ptl_modules = maxptls;
-    mca_ptl_gm_component.gm_ptl_modules = malloc (maxptls * sizeof (mca_ptl_gm_module_t *));
-    if (NULL == mca_ptl_gm_component.gm_ptl_modules)
-        return OMPI_ERR_OUT_OF_RESOURCE;
-
-    for (i = 0; i < maxptls; i++) {
-        mca_ptl_gm_create ();
-    }
-    return OMPI_SUCCESS;
+    return 0;
 }
 
 
@@ -225,7 +210,7 @@ mca_ptl_gm_module_store_data_toexchange (void)
     mca_ptl_gm_addr_t *addrs;
 
     size = mca_ptl_gm_component.gm_num_ptl_modules * sizeof (mca_ptl_gm_addr_t);
-    addrs = malloc (size);
+    addrs = (mca_ptl_gm_addr_t *)malloc (size);/*XXX: check this out */
 
     if (NULL == addrs) {
         return OMPI_ERR_OUT_OF_RESOURCE;
@@ -233,8 +218,8 @@ mca_ptl_gm_module_store_data_toexchange (void)
 
     for (i = 0; i < mca_ptl_gm_component.gm_num_ptl_modules; i++) {
         mca_ptl_gm_module_t *ptl = mca_ptl_gm_component.gm_ptl_modules[i];
-        addrs[i].local_id = ptl->my_lid;
-        addrs[i].global_id = ptl->my_gid;
+        addrs[i].local_id = ptl->my_local_id;
+        addrs[i].global_id = ptl->my_global_id;
         addrs[i].port_id = ptl->my_port_id;
     }
     rc = mca_base_modex_send (&mca_ptl_gm_component.super.ptlm_version, addrs,
@@ -243,67 +228,60 @@ mca_ptl_gm_module_store_data_toexchange (void)
     return rc;
 }
 
-
-
-
-/*
- * initialize a ptl interface
- * 
- */
-
 static int
 ompi_mca_ptl_gm_init (mca_ptl_gm_component_t * gm)
 {
     mca_ptl_gm_module_t *ptl;
     unsigned int board_no, port_no;
-    char       *buffer_ptr;
     gm_status_t status;
-    int         buf_len;
     int         i;
+    int         maxptls = 1;    /* maxptls set to 1 */
 
-    if (OMPI_SUCCESS != mca_ptl_gm_module_create_instances ()) {
-        return 0;
+    mca_ptl_gm_component.gm_max_ptl_modules = maxptls;
+    mca_ptl_gm_component.gm_ptl_modules = malloc (maxptls * 
+	    sizeof (mca_ptl_gm_module_t *));
+    if (NULL == mca_ptl_gm_component.gm_ptl_modules)
+        return OMPI_ERR_OUT_OF_RESOURCE;
+
+    for (i = 0; i < maxptls; i++) {
+        mca_ptl_gm_create (i);
     }
 
-    /*hack : we have set the gm_max_ptl_modules to 1 */
+    /*Hack : we have set the gm_max_ptl_modules to 1 */
     for (i = 0; i < mca_ptl_gm_component.gm_max_ptl_modules; i++) {
         ptl = mca_ptl_gm_component.gm_ptl_modules[i];
 
         /* open the first available gm port for this board  */
         board_no = i;
-        for (port_no = 2; port_no < MAX_GM_PORTS; port_no++) {
+        for (port_no = 2; port_no < MAX_GM_PORTS; port_no++) { 
+	    printf ("about to call open port\n");
+	    if (port_no == 3) continue;
+	    /* port 0,1,3 reserved  */
+	    status = gm_open (&(ptl->my_port), board_no, 
+		    port_no, "OMPI-GM", GM_API_VERSION_2_0);  
 
-            printf ("about to call open port\n");
-            if (port_no != 3) {
-              status = gm_open (&(ptl->my_port), board_no, port_no, "OMPI-GM", GM_API_VERSION_2_0);   /* port 0,1,3 reserved  */
+	    if (GM_SUCCESS == status) {
+	       	ptl->my_port_id = port_no;
+	       	break;
+	    }
+       	}
 
-                if (GM_SUCCESS == status) {
-                    ptl->my_port_id = port_no;
-                    break;
-                }
-            }
-
-        }
-
+#if 1
         /*  Get node local Id */
-        if (GM_SUCCESS != gm_get_node_id (ptl->my_port, &(ptl->my_lid))) {
+        if (GM_SUCCESS != gm_get_node_id (ptl->my_port, &(ptl->my_local_id))) {
             ompi_output (0, " failure to get local_id \n");
             return 0;
         }
+#endif
 
         /* Convert local id to global id */
         if (GM_SUCCESS !=
-            gm_node_id_to_global_id (ptl->my_port, ptl->my_lid,
-                                     &(ptl->my_gid))) {
+            gm_node_id_to_global_id (ptl->my_port, ptl->my_local_id,
+                                     &(ptl->my_global_id))) {
             ompi_output (0, " Error: Unable to get my GM global id \n");
             return 0;
         }
-
     }
-
-    /* publish GM parameters with the MCA framework */
-    if (OMPI_SUCCESS != mca_ptl_gm_module_store_data_toexchange ())
-        return 0;
 
     return OMPI_SUCCESS;
 
@@ -315,26 +293,56 @@ ompi_mca_ptl_gm_init (mca_ptl_gm_component_t * gm)
 static int
 ompi_mca_ptl_gm_init_sendrecv (mca_ptl_gm_component_t * gm)
 {
-    int         i;
+    int i, rc;
     mca_ptl_gm_module_t *ptl;
     gm_status_t status;
-    int         buf_len;
-    void       *buffer_ptr;
+    void *gm_send_reg_memory , *gm_recv_reg_memory;
+    ompi_free_list_t *fslist, *frlist, *free_rlist;
+    ompi_list_item_t *item;
+    mca_ptl_gm_send_frag_t *sfragment;
+    mca_ptl_gm_recv_frag_t *rfragment, *frag, *free_rfragment;
 
     for (i = 0; i < mca_ptl_gm_component.gm_max_ptl_modules; i++) {
         ptl = mca_ptl_gm_component.gm_ptl_modules[i];
-#if 0
-        /* initialise the free lists */
-        ompi_free_list_init (&(mca_ptl_gm_component.gm_send_req),
-                             sizeof (mca_ptl_gm_send_request_t),
-                             OBJ_CLASS (mca_ptl_gm_send_request_t),
-                             mca_ptl_gm_component.gm_free_list_num,
-                             mca_ptl_gm_component.gm_free_list_max,
-                             mca_ptl_gm_component.gm_free_list_inc, NULL);
 
-#endif
+        ptl->num_send_tokens = gm_num_send_tokens (ptl->my_port);
+        ptl->num_send_tokens -= PTL_GM_ADMIN_SEND_TOKENS;
+        ptl->num_recv_tokens = gm_num_receive_tokens (ptl->my_port);
+        ptl->num_recv_tokens -= PTL_GM_ADMIN_RECV_TOKENS;
 
-        /** Receive part **/
+       /****************SEND****************************/
+        /* construct a list of send fragments */
+        OBJ_CONSTRUCT (&(ptl->gm_send_frags), ompi_free_list_t);
+        OBJ_CONSTRUCT (&(ptl->gm_send_frags_queue), ompi_list_t);
+        fslist = &(ptl->gm_send_frags);
+
+        ompi_free_list_init (&(ptl->gm_send_frags),
+                             sizeof (mca_ptl_gm_send_frag_t),
+                             OBJ_CLASS (mca_ptl_gm_send_frag_t),
+                             32, 32, 1, NULL); /* not using mpool */
+
+        /* allocate the elements */
+        sfragment = (mca_ptl_gm_send_frag_t *)
+            malloc (sizeof(mca_ptl_gm_send_frag_t) *
+                    (ptl->num_send_tokens));
+
+        /* allocate the registered memory */
+        gm_send_reg_memory = gm_dma_malloc ( ptl->my_port,
+                              (GM_SEND_BUF_SIZE * ptl->num_send_tokens) );
+
+        for (i = 0; i < ptl->num_send_tokens; i++) {
+            ompi_list_item_t *item;
+            sfragment->send_buf = gm_send_reg_memory;
+            item = (ompi_list_item_t *) sfragment;
+            ompi_list_append (&(fslist->super), item);
+
+            gm_send_reg_memory = ((char *) gm_send_reg_memory +
+                                                    GM_SEND_BUF_SIZE);
+            sfragment++;
+
+        }
+
+        /*****************RECEIVE*****************************/
         /*allow remote memory access */
         status = gm_allow_remote_memory_access (ptl->my_port);
         if (GM_SUCCESS != status) {
@@ -342,42 +350,65 @@ ompi_mca_ptl_gm_init_sendrecv (mca_ptl_gm_component_t * gm)
 
         }
 
-        ptl->num_send_tokens = gm_num_send_tokens (ptl->my_port);
-        ptl->num_recv_tokens = gm_num_receive_tokens (ptl->my_port);
 
-        /* set acceptable sizes */
-        /*status = gm_set_acceptable_sizes(ptl->my_port, GM_LOW_PRIORITY,
-         * MASK);*/
+        /* construct the list of recv fragments free */
+        OBJ_CONSTRUCT (&(ptl->gm_recv_frags_free), ompi_free_list_t);
+        free_rlist = &(ptl->gm_recv_frags_free);
+   
+        /*allocate the elements */
+        free_rfragment = (mca_ptl_gm_recv_frag_t *)
+                    malloc(sizeof(mca_ptl_gm_recv_frag_t) * NUM_RECV_FRAGS);
 
 
-        /* post receive buffers for each available token */
-        buf_len = THRESHOLD;
-        /*TODO need to provide buffers with two different sizes to distinguish
-         * between header and data */
-
-        for (i = 0; i < ptl->num_recv_tokens; i++) {
-            buffer_ptr = gm_dma_malloc (ptl->my_port, buf_len);
-            gm_provide_receive_buffer (ptl->my_port, buffer_ptr,
-                                       SIZE, GM_LOW_PRIORITY);
+        for (i = 0; i < NUM_RECV_FRAGS; i++) {
+            ompi_list_item_t *item;
+            item = (ompi_list_item_t *) free_rfragment;
+            ompi_list_append (&(free_rlist->super), item); /* XXX: check this */
+            free_rfragment++;
         }
-#if 0
-        /** Send Part **/
-        OBJ_CONSTRUCT (&mca_ptl_gm_module.gm_send_frag, ompi_free_list_t);
-        ompi_free_list_init (&(mca_ptl_gm_component.gm_send_frag),
-                             sizeof (mca_ptl_gm_send_frag_t),
-                             OBJ_CLASS (mca_ptl_gm_send_frag_t));
-        /* allocate send buffers */
-        total_registered_memory = max_send_buf * SIZE;
-        ptl->send_req->req_frag->head =
-            (struct send_buf *) gm_dma_malloc (ptl->my_port,
-                                     total_registered_memory);
 
-#endif
+
+        /*construct the list of recv fragments*/
+        OBJ_CONSTRUCT (&(ptl->gm_recv_frags), ompi_free_list_t);
+        frlist = &(ptl->gm_recv_frags);
+
+        /*allocate the elements */
+        rfragment = (mca_ptl_gm_recv_frag_t *)
+            malloc (sizeof (mca_ptl_gm_recv_frag_t) *
+                    (ptl->num_recv_tokens - 1));
+
+        /*allocate the registered memory */
+        gm_recv_reg_memory =
+            gm_dma_malloc (ptl->my_port,
+                           (GM_RECV_BUF_SIZE * ptl->num_recv_tokens ) );
+
+        for (i = 0; i < ptl->num_recv_tokens ; i++) {
+            ompi_list_item_t *item;
+            rfragment->alloc_recv_buffer = gm_recv_reg_memory;
+            item = (ompi_list_item_t *) rfragment;
+            ompi_list_append (&(frlist->super), item); /* XXX: check this */
+            gm_recv_reg_memory = ((char *)
+                                  gm_recv_reg_memory + GM_RECV_BUF_SIZE);
+            rfragment++;
+        }
+
+         /*TODO : need to provide buffers with two different sizes 
+         * to distinguish between header and data   
+         * post receive buffers */
+        for (i = 0; i < (ptl->num_recv_tokens-1) ; i++) {
+            OMPI_FREE_LIST_GET( &(ptl->gm_recv_frags), item, rc);
+            assert( rc == OMPI_SUCCESS );
+            frag = (mca_ptl_gm_recv_frag_t*)item;
+            gm_provide_receive_buffer (ptl->my_port,frag->alloc_recv_buffer,
+                                           GM_SIZE, GM_LOW_PRIORITY);
+        }
+
     }
 
     return OMPI_SUCCESS;
 
 }
+ 
 
 
 /*
@@ -391,22 +422,11 @@ mca_ptl_gm_component_init (int *num_ptl_modules,
                            bool * have_hidden_threads)
 {
     mca_ptl_base_module_t **ptls;
-    int         rc;
-    unsigned int board_id, port_id;
 
     *num_ptl_modules = 0;
     *allow_multi_user_threads = false;
     *have_hidden_threads = false;
 
-
-/*
-    ompi_free_list_init (&(mca_ptl_gm_component.gm_send_req),
-                         sizeof (mca_ptl_gm_send_request_t),
-                         OBJ_CLASS (mca_ptl_gm_send_request_t),
-                         mca_ptl_gm_component.gm_free_list_num,
-                         mca_ptl_gm_component.gm_free_list_max,
-                         mca_ptl_gm_component.gm_free_list_inc, NULL);
-*/
     if (OMPI_SUCCESS != ompi_mca_ptl_gm_init (&mca_ptl_gm_component)) {
         ompi_output (0,
                      "[%s:%d] error in initializing gm state and PTL's.\n",
@@ -421,13 +441,18 @@ mca_ptl_gm_component_init (int *num_ptl_modules,
         return NULL;
     }
 
+    /* publish GM parameters with the MCA framework */
+    if (OMPI_SUCCESS != mca_ptl_gm_module_store_data_toexchange ())
+        return 0;
+
 
     /* return array of PTLs */
-    ptls = malloc (mca_ptl_gm_component.gm_num_ptl_modules * sizeof (mca_ptl_base_module_t *));
+    ptls = (mca_ptl_base_module_t**) malloc (
+                mca_ptl_gm_component.gm_num_ptl_modules * 
+                sizeof (mca_ptl_base_module_t *));
     if (NULL == ptls) {
         return NULL;
     }
-
 
     memcpy (ptls, mca_ptl_gm_component.gm_ptl_modules,
             mca_ptl_gm_component.gm_num_ptl_modules * sizeof (mca_ptl_gm_module_t *));
@@ -453,16 +478,17 @@ mca_ptl_gm_component_control (int param, void *value, size_t size)
 int
 mca_ptl_gm_component_progress (mca_ptl_tstamp_t tstamp)
 {
-
-
+    int rc;
     /* check the send queue to see if any pending send can proceed */
-
-
-    /* check for recieve and , call ptl_match to send it to the upper
+    /* check for receive and , call ptl_match to send it to the upper
        level */
-
-
-    /* in case matched, do the appropriate queuing. */
+     rc = mca_ptl_gm_incoming_recv(&mca_ptl_gm_component);
 
     return OMPI_SUCCESS;
+
+    /* check the send queue to see if any pending send can proceed */
+    /* check for recieve and , call ptl_match to send it to the upper
+       level */
+    /* in case matched, do the appropriate queuing. */
+
 }
