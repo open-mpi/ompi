@@ -6,6 +6,8 @@
 #include "ompi_config.h"
 #include "support.h"
 
+#include "class/ompi_object.h"
+#include "class/ompi_list.h"
 #include "mca/llm/base/base.h"
 #include "mca/llm/base/base_internal.h"
 
@@ -16,8 +18,8 @@ int
 main(int argc, char *argv[])
 {
     ompi_list_t *hostlist;
-    mca_llm_base_node_t *node;
-    mca_llm_base_valuepair_t *valpair;
+    ompi_rte_node_allocation_t *node;
+    ompi_rte_valuepair_t *valpair;
     ompi_list_item_t *nodeitem, *valpairitem; 
     FILE *test1_out=NULL; /* output file for first test */
     FILE *test2_out=NULL; /* output file for second test */
@@ -47,13 +49,13 @@ main(int argc, char *argv[])
          nodeitem != ompi_list_get_end(hostlist);
          nodeitem = ompi_list_get_next(nodeitem)) {
 
-        node = (mca_llm_base_node_t*) nodeitem;
+        node = (ompi_rte_node_allocation_t*) nodeitem;
         fprintf(test1_out, "\t%s %d\n", node->hostname, node->count);
 
         for (valpairitem = ompi_list_get_first(&(node->info));
              valpairitem != ompi_list_get_end(&(node->info));
              valpairitem = ompi_list_get_next(valpairitem)) {
-            valpair = (mca_llm_base_valuepair_t*) valpairitem;
+            valpair = (ompi_rte_valuepair_t*) valpairitem;
             fprintf(test1_out, "\t\t%s = %s\n", valpair->key, valpair->value);
         }
     }    
@@ -76,13 +78,13 @@ main(int argc, char *argv[])
          nodeitem != ompi_list_get_end(hostlist);
          nodeitem = ompi_list_get_next(nodeitem)) {
 
-        node = (mca_llm_base_node_t*) nodeitem;
+        node = (ompi_rte_node_allocation_t*) nodeitem;
         fprintf(test2_out, "\t%s %d\n", node->hostname, node->count);
 
         for (valpairitem = ompi_list_get_first(&(node->info));
              valpairitem != ompi_list_get_end(&(node->info));
              valpairitem = ompi_list_get_next(valpairitem)) {
-            valpair = (mca_llm_base_valuepair_t*) valpairitem;
+            valpair = (ompi_rte_valuepair_t*) valpairitem;
             fprintf(test2_out, "\t\t%s = %s\n", valpair->key, valpair->value);
         }
     }   
