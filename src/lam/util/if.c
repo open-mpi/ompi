@@ -18,6 +18,7 @@
 #include "lam/mem/malloc.h"
 #include "lam/util/if.h"
 #include "lam/util/output.h"
+#include "lam/util/strncpy.h"
 
 #ifndef IF_NAMESIZE
 #define IF_NAMESIZE 32
