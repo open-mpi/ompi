@@ -10,22 +10,41 @@ AM_CPPFLAGS = \
         -I$(top_ompi_srcdir)/src \
         -I$(top_ompi_srcdir)/src/include
 
+# It is unfortunately necessary to make all the filenames in the ROMIO
+# distribtion confrom to the MCA prefix name rule -- there is at least
+# one or two filename conflicts that potentially create problems when
+# merging everything into onelibmpi.
+
+# In developer's copies, we have the real ROMIO files, and sym links
+# are made.  In distribution tarballs, the sym-linked files turn into
+# real files and the original filenames do not appear.
+
 noinst_LTLIBRARIES = libadio_pfs.la
 libadio_pfs_la_SOURCES = \
-        ad_pfs.c \
-        ad_pfs_close.c \
-        ad_pfs_done.c \
-        ad_pfs_fcntl.c \
-        ad_pfs_flush.c \
+        mca_io_romio_dist_ad_pfs.c \
+        mca_io_romio_dist_ad_pfs_close.c \
+        mca_io_romio_dist_ad_pfs_done.c \
+        mca_io_romio_dist_ad_pfs_fcntl.c \
+        mca_io_romio_dist_ad_pfs_flush.c \
         ad_pfs.h \
-        ad_pfs_hints.c \
-        ad_pfs_iread.c \
-        ad_pfs_iwrite.c \
-        ad_pfs_open.c \
-        ad_pfs_rdcoll.c \
-        ad_pfs_read.c \
-        ad_pfs_resize.c \
-        ad_pfs_seek.c \
-        ad_pfs_wait.c \
-        ad_pfs_wrcoll.c \
-        ad_pfs_write.c
+        mca_io_romio_dist_ad_pfs_hints.c \
+        mca_io_romio_dist_ad_pfs_iread.c \
+        mca_io_romio_dist_ad_pfs_iwrite.c \
+        mca_io_romio_dist_ad_pfs_open.c \
+        mca_io_romio_dist_ad_pfs_rdcoll.c \
+        mca_io_romio_dist_ad_pfs_read.c \
+        mca_io_romio_dist_ad_pfs_resize.c \
+        mca_io_romio_dist_ad_pfs_seek.c \
+        mca_io_romio_dist_ad_pfs_wait.c \
+        mca_io_romio_dist_ad_pfs_wrcoll.c \
+        mca_io_romio_dist_ad_pfs_write.c
+
+#
+# Sym link the sources to conform to the MCA prefix name rule
+#
+dir=$(top_srcdir)/adio/ad_pfs
+$(libadio_pfs_la_SOURCES):
+	if test ! -r $@ ; then \
+		pname=`echo $@ | cut -b '19-'` ; \
+		ln -s $(dir)/$$pname $@ ; \
+	fi

@@ -52,44 +52,67 @@ CONFIG_HEADER = $(top_builddir)/adio/include/romioconf.h
 CONFIG_CLEAN_FILES =
 LTLIBRARIES = $(noinst_LTLIBRARIES)
 libadio_common_la_LIBADD =
-am_libadio_common_la_OBJECTS = ad_aggregate.lo ad_close.lo \
-	ad_delete.lo ad_end.lo ad_flush.lo ad_fstype.lo \
-	ad_get_sh_fp.lo ad_hints.lo ad_init.lo ad_open.lo \
-	ad_read_coll.lo ad_read_str.lo ad_read_str_naive.lo ad_seek.lo \
-	ad_set_sh_fp.lo ad_set_view.lo ad_write_coll.lo \
-	ad_write_str.lo async_list.lo byte_offset.lo cb_config_list.lo \
-	eof_offset.lo error.lo flatten.lo gencheck.lo get_fp_posn.lo \
-	iscontig.lo lock.lo malloc.lo req_malloc.lo setfn.lo \
-	shfp_fname.lo status_setb.lo
+am_libadio_common_la_OBJECTS = mca_io_romio_dist_ad_aggregate.lo \
+	mca_io_romio_dist_ad_close.lo mca_io_romio_dist_ad_delete.lo \
+	mca_io_romio_dist_ad_end.lo mca_io_romio_dist_ad_flush.lo \
+	mca_io_romio_dist_ad_fstype.lo \
+	mca_io_romio_dist_ad_get_sh_fp.lo \
+	mca_io_romio_dist_ad_hints.lo mca_io_romio_dist_ad_init.lo \
+	mca_io_romio_dist_ad_open.lo mca_io_romio_dist_ad_read_coll.lo \
+	mca_io_romio_dist_ad_read_str.lo \
+	mca_io_romio_dist_ad_read_str_naive.lo \
+	mca_io_romio_dist_ad_seek.lo mca_io_romio_dist_ad_set_sh_fp.lo \
+	mca_io_romio_dist_ad_set_view.lo \
+	mca_io_romio_dist_ad_write_coll.lo \
+	mca_io_romio_dist_ad_write_str.lo \
+	mca_io_romio_dist_async_list.lo \
+	mca_io_romio_dist_byte_offset.lo \
+	mca_io_romio_dist_cb_config_list.lo \
+	mca_io_romio_dist_eof_offset.lo mca_io_romio_dist_error.lo \
+	mca_io_romio_dist_flatten.lo mca_io_romio_dist_gencheck.lo \
+	mca_io_romio_dist_get_fp_posn.lo mca_io_romio_dist_iscontig.lo \
+	mca_io_romio_dist_lock.lo mca_io_romio_dist_malloc.lo \
+	mca_io_romio_dist_req_malloc.lo mca_io_romio_dist_setfn.lo \
+	mca_io_romio_dist_shfp_fname.lo \
+	mca_io_romio_dist_status_setb.lo
 libadio_common_la_OBJECTS = $(am_libadio_common_la_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/adio/include
 depcomp = $(SHELL) $(top_srcdir)/../depcomp
 am__depfiles_maybe = depfiles
-@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/ad_aggregate.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/ad_close.Plo ./$(DEPDIR)/ad_delete.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/ad_end.Plo ./$(DEPDIR)/ad_flush.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/ad_fstype.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/ad_get_sh_fp.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/ad_hints.Plo ./$(DEPDIR)/ad_init.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/ad_open.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/ad_read_coll.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/ad_read_str.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/ad_read_str_naive.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/ad_seek.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/ad_set_sh_fp.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/ad_set_view.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/ad_write_coll.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/ad_write_str.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/async_list.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/byte_offset.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/cb_config_list.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/eof_offset.Plo ./$(DEPDIR)/error.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/flatten.Plo ./$(DEPDIR)/gencheck.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/get_fp_posn.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/iscontig.Plo ./$(DEPDIR)/lock.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/malloc.Plo ./$(DEPDIR)/req_malloc.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/setfn.Plo ./$(DEPDIR)/shfp_fname.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/status_setb.Plo
+@AMDEP_TRUE@DEP_FILES =  \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_ad_aggregate.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_ad_close.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_ad_delete.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_ad_end.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_ad_flush.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_ad_fstype.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_ad_get_sh_fp.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_ad_hints.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_ad_init.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_ad_open.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_ad_read_coll.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_ad_read_str.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_ad_read_str_naive.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_ad_seek.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_ad_set_sh_fp.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_ad_set_view.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_ad_write_coll.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_ad_write_str.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_async_list.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_byte_offset.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_cb_config_list.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_eof_offset.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_error.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_flatten.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_gencheck.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_get_fp_posn.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_iscontig.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_lock.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_malloc.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_req_malloc.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_setfn.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_shfp_fname.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_status_setb.Plo
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 LTCOMPILE = $(LIBTOOL) --mode=compile $(CC) $(DEFS) \
@@ -275,42 +298,56 @@ AM_CPPFLAGS = -I$(top_ompi_builddir)/src/include \
         -I$(top_ompi_srcdir)/src \
         -I$(top_ompi_srcdir)/src/include
 
+
+# It is unfortunately necessary to make all the filenames in the ROMIO
+# distribtion confrom to the MCA prefix name rule -- there is at least
+# one or two filename conflicts that potentially create problems when
+# merging everything into onelibmpi.
+
+# In developer's copies, we have the real ROMIO files, and sym links
+# are made.  In distribution tarballs, the sym-linked files turn into
+# real files and the original filenames do not appear.
 noinst_LTLIBRARIES = libadio_common.la
 libadio_common_la_SOURCES = \
-        ad_aggregate.c \
-        ad_close.c \
-        ad_delete.c \
-        ad_end.c \
-        ad_flush.c \
-        ad_fstype.c \
-        ad_get_sh_fp.c \
-        ad_hints.c \
-        ad_init.c \
-        ad_open.c \
-        ad_read_coll.c \
-        ad_read_str.c \
-        ad_read_str_naive.c \
-        ad_seek.c \
-        ad_set_sh_fp.c \
-        ad_set_view.c \
-        ad_write_coll.c \
-        ad_write_str.c \
-        async_list.c \
-        byte_offset.c \
-        cb_config_list.c \
-        eof_offset.c \
-        error.c \
-        flatten.c \
-        gencheck.c \
-        get_fp_posn.c \
-        iscontig.c \
-        lock.c \
-        malloc.c \
-        req_malloc.c \
-        setfn.c \
-        shfp_fname.c \
-        status_setb.c
+        mca_io_romio_dist_ad_aggregate.c \
+        mca_io_romio_dist_ad_close.c \
+        mca_io_romio_dist_ad_delete.c \
+        mca_io_romio_dist_ad_end.c \
+        mca_io_romio_dist_ad_flush.c \
+        mca_io_romio_dist_ad_fstype.c \
+        mca_io_romio_dist_ad_get_sh_fp.c \
+        mca_io_romio_dist_ad_hints.c \
+        mca_io_romio_dist_ad_init.c \
+        mca_io_romio_dist_ad_open.c \
+        mca_io_romio_dist_ad_read_coll.c \
+        mca_io_romio_dist_ad_read_str.c \
+        mca_io_romio_dist_ad_read_str_naive.c \
+        mca_io_romio_dist_ad_seek.c \
+        mca_io_romio_dist_ad_set_sh_fp.c \
+        mca_io_romio_dist_ad_set_view.c \
+        mca_io_romio_dist_ad_write_coll.c \
+        mca_io_romio_dist_ad_write_str.c \
+        mca_io_romio_dist_async_list.c \
+        mca_io_romio_dist_byte_offset.c \
+        mca_io_romio_dist_cb_config_list.c \
+        mca_io_romio_dist_eof_offset.c \
+        mca_io_romio_dist_error.c \
+        mca_io_romio_dist_flatten.c \
+        mca_io_romio_dist_gencheck.c \
+        mca_io_romio_dist_get_fp_posn.c \
+        mca_io_romio_dist_iscontig.c \
+        mca_io_romio_dist_lock.c \
+        mca_io_romio_dist_malloc.c \
+        mca_io_romio_dist_req_malloc.c \
+        mca_io_romio_dist_setfn.c \
+        mca_io_romio_dist_shfp_fname.c \
+        mca_io_romio_dist_status_setb.c
 
+
+#
+# Sym link the sources to conform to the MCA prefix name rule
+#
+dir = $(top_srcdir)/adio/common
 all: all-am
 
 .SUFFIXES:
@@ -362,39 +399,39 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ad_aggregate.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ad_close.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ad_delete.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ad_end.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ad_flush.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ad_fstype.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ad_get_sh_fp.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ad_hints.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ad_init.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ad_open.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ad_read_coll.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ad_read_str.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ad_read_str_naive.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ad_seek.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ad_set_sh_fp.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ad_set_view.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ad_write_coll.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ad_write_str.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/async_list.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/byte_offset.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cb_config_list.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eof_offset.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/error.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/flatten.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gencheck.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/get_fp_posn.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iscontig.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lock.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/malloc.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/req_malloc.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/setfn.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/shfp_fname.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/status_setb.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_ad_aggregate.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_ad_close.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_ad_delete.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_ad_end.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_ad_flush.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_ad_fstype.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_ad_get_sh_fp.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_ad_hints.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_ad_init.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_ad_open.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_ad_read_coll.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_ad_read_str.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_ad_read_str_naive.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_ad_seek.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_ad_set_sh_fp.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_ad_set_view.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_ad_write_coll.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_ad_write_str.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_async_list.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_byte_offset.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_cb_config_list.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_eof_offset.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_error.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_flatten.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_gencheck.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_get_fp_posn.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_iscontig.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_lock.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_malloc.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_req_malloc.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_setfn.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_shfp_fname.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_status_setb.Plo@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	if $(COMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \
@@ -598,6 +635,11 @@ uninstall-am: uninstall-info-am
 
 
 include $(top_ompi_srcdir)/config/Makefile.options
+$(libadio_common_la_SOURCES):
+	if test ! -r $@ ; then \
+		pname=`echo $@ | cut -b '19-'` ; \
+		ln -s $(dir)/$$pname $@ ; \
+	fi
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

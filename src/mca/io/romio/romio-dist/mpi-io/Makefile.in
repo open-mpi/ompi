@@ -56,60 +56,97 @@ CONFIG_HEADER = $(top_builddir)/adio/include/romioconf.h
 CONFIG_CLEAN_FILES =
 LTLIBRARIES = $(noinst_LTLIBRARIES)
 libmpi_io_la_LIBADD =
-am_libmpi_io_la_OBJECTS = close.lo delete.lo fsync.lo get_amode.lo \
-	get_atom.lo get_bytoff.lo get_errh.lo get_extent.lo \
-	get_group.lo get_info.lo get_posn.lo get_posn_sh.lo \
-	get_size.lo get_view.lo ioreq_c2f.lo ioreq_f2c.lo iotest.lo \
-	iowait.lo iread_at.lo iread.lo iread_sh.lo iwrite_at.lo \
-	iwrite.lo iwrite_sh.lo open.lo prealloc.lo rd_atallb.lo \
-	rd_atalle.lo read_allb.lo read_all.lo read_alle.lo \
-	read_atall.lo read_at.lo read.lo read_ordb.lo read_ord.lo \
-	read_orde.lo read_sh.lo seek.lo seek_sh.lo set_atom.lo \
-	set_errh.lo set_info.lo set_size.lo set_view.lo wr_atallb.lo \
-	wr_atalle.lo write_allb.lo write_all.lo write_alle.lo \
-	write_atall.lo write_at.lo write.lo write_ordb.lo write_ord.lo \
-	write_orde.lo write_sh.lo
+am_libmpi_io_la_OBJECTS = mca_io_romio_dist_close.lo \
+	mca_io_romio_dist_delete.lo mca_io_romio_dist_fsync.lo \
+	mca_io_romio_dist_get_amode.lo mca_io_romio_dist_get_atom.lo \
+	mca_io_romio_dist_get_bytoff.lo mca_io_romio_dist_get_errh.lo \
+	mca_io_romio_dist_get_extent.lo mca_io_romio_dist_get_group.lo \
+	mca_io_romio_dist_get_info.lo mca_io_romio_dist_get_posn.lo \
+	mca_io_romio_dist_get_posn_sh.lo mca_io_romio_dist_get_size.lo \
+	mca_io_romio_dist_get_view.lo mca_io_romio_dist_ioreq_c2f.lo \
+	mca_io_romio_dist_ioreq_f2c.lo mca_io_romio_dist_iotest.lo \
+	mca_io_romio_dist_iowait.lo mca_io_romio_dist_iread_at.lo \
+	mca_io_romio_dist_iread.lo mca_io_romio_dist_iread_sh.lo \
+	mca_io_romio_dist_iwrite_at.lo mca_io_romio_dist_iwrite.lo \
+	mca_io_romio_dist_iwrite_sh.lo mca_io_romio_dist_open.lo \
+	mca_io_romio_dist_prealloc.lo mca_io_romio_dist_rd_atallb.lo \
+	mca_io_romio_dist_rd_atalle.lo mca_io_romio_dist_read_allb.lo \
+	mca_io_romio_dist_read_all.lo mca_io_romio_dist_read_alle.lo \
+	mca_io_romio_dist_read_atall.lo mca_io_romio_dist_read_at.lo \
+	mca_io_romio_dist_read.lo mca_io_romio_dist_read_ordb.lo \
+	mca_io_romio_dist_read_ord.lo mca_io_romio_dist_read_orde.lo \
+	mca_io_romio_dist_read_sh.lo mca_io_romio_dist_seek.lo \
+	mca_io_romio_dist_seek_sh.lo mca_io_romio_dist_set_atom.lo \
+	mca_io_romio_dist_set_errh.lo mca_io_romio_dist_set_info.lo \
+	mca_io_romio_dist_set_size.lo mca_io_romio_dist_set_view.lo \
+	mca_io_romio_dist_wr_atallb.lo mca_io_romio_dist_wr_atalle.lo \
+	mca_io_romio_dist_write_allb.lo mca_io_romio_dist_write_all.lo \
+	mca_io_romio_dist_write_alle.lo \
+	mca_io_romio_dist_write_atall.lo mca_io_romio_dist_write_at.lo \
+	mca_io_romio_dist_write.lo mca_io_romio_dist_write_ordb.lo \
+	mca_io_romio_dist_write_ord.lo mca_io_romio_dist_write_orde.lo \
+	mca_io_romio_dist_write_sh.lo
 libmpi_io_la_OBJECTS = $(am_libmpi_io_la_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/adio/include
 depcomp = $(SHELL) $(top_srcdir)/../depcomp
 am__depfiles_maybe = depfiles
-@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/close.Plo ./$(DEPDIR)/delete.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/fsync.Plo ./$(DEPDIR)/get_amode.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/get_atom.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/get_bytoff.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/get_errh.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/get_extent.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/get_group.Plo ./$(DEPDIR)/get_info.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/get_posn.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/get_posn_sh.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/get_size.Plo ./$(DEPDIR)/get_view.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/ioreq_c2f.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/ioreq_f2c.Plo ./$(DEPDIR)/iotest.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/iowait.Plo ./$(DEPDIR)/iread.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/iread_at.Plo ./$(DEPDIR)/iread_sh.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/iwrite.Plo ./$(DEPDIR)/iwrite_at.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/iwrite_sh.Plo ./$(DEPDIR)/open.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/prealloc.Plo ./$(DEPDIR)/rd_atallb.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/rd_atalle.Plo ./$(DEPDIR)/read.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/read_all.Plo ./$(DEPDIR)/read_allb.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/read_alle.Plo ./$(DEPDIR)/read_at.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/read_atall.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/read_ord.Plo ./$(DEPDIR)/read_ordb.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/read_orde.Plo ./$(DEPDIR)/read_sh.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/seek.Plo ./$(DEPDIR)/seek_sh.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/set_atom.Plo ./$(DEPDIR)/set_errh.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/set_info.Plo ./$(DEPDIR)/set_size.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/set_view.Plo ./$(DEPDIR)/wr_atallb.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/wr_atalle.Plo ./$(DEPDIR)/write.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/write_all.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/write_allb.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/write_alle.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/write_at.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/write_atall.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/write_ord.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/write_ordb.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/write_orde.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/write_sh.Plo
+@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/mca_io_romio_dist_close.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_delete.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_fsync.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_get_amode.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_get_atom.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_get_bytoff.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_get_errh.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_get_extent.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_get_group.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_get_info.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_get_posn.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_get_posn_sh.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_get_size.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_get_view.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_ioreq_c2f.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_ioreq_f2c.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_iotest.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_iowait.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_iread.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_iread_at.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_iread_sh.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_iwrite.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_iwrite_at.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_iwrite_sh.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_open.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_prealloc.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_rd_atallb.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_rd_atalle.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_read.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_read_all.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_read_allb.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_read_alle.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_read_at.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_read_atall.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_read_ord.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_read_ordb.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_read_orde.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_read_sh.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_seek.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_seek_sh.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_set_atom.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_set_errh.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_set_info.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_set_size.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_set_view.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_wr_atallb.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_wr_atalle.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_write.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_write_all.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_write_allb.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_write_alle.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_write_at.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_write_atall.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_write_ord.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_write_ordb.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_write_orde.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_write_sh.Plo
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 LTCOMPILE = $(LIBTOOL) --mode=compile $(CC) $(DEFS) \
@@ -297,68 +334,82 @@ AM_CPPFLAGS = \
         -I$(top_ompi_srcdir)/src \
         -I$(top_ompi_srcdir)/src/include
 
+
+# It is unfortunately necessary to make all the filenames in the ROMIO
+# distribtion confrom to the MCA prefix name rule -- there is at least
+# one or two filename conflicts that potentially create problems when
+# merging everything into onelibmpi.
+
+# In developer's copies, we have the real ROMIO files, and sym links
+# are made.  In distribution tarballs, the sym-linked files turn into
+# real files and the original filenames do not appear.
 noinst_LTLIBRARIES = libmpi-io.la
 libmpi_io_la_SOURCES = \
-        close.c \
-        delete.c \
-        fsync.c \
-        get_amode.c \
-        get_atom.c \
-        get_bytoff.c \
-        get_errh.c \
-        get_extent.c \
-        get_group.c \
-        get_info.c \
-        get_posn.c \
-        get_posn_sh.c \
-        get_size.c \
-        get_view.c \
-        ioreq_c2f.c \
-        ioreq_f2c.c \
-        iotest.c \
-        iowait.c \
-        iread_at.c \
-        iread.c \
-        iread_sh.c \
-        iwrite_at.c \
-        iwrite.c \
-        iwrite_sh.c \
+        mca_io_romio_dist_close.c \
+        mca_io_romio_dist_delete.c \
+        mca_io_romio_dist_fsync.c \
+        mca_io_romio_dist_get_amode.c \
+        mca_io_romio_dist_get_atom.c \
+        mca_io_romio_dist_get_bytoff.c \
+        mca_io_romio_dist_get_errh.c \
+        mca_io_romio_dist_get_extent.c \
+        mca_io_romio_dist_get_group.c \
+        mca_io_romio_dist_get_info.c \
+        mca_io_romio_dist_get_posn.c \
+        mca_io_romio_dist_get_posn_sh.c \
+        mca_io_romio_dist_get_size.c \
+        mca_io_romio_dist_get_view.c \
+        mca_io_romio_dist_ioreq_c2f.c \
+        mca_io_romio_dist_ioreq_f2c.c \
+        mca_io_romio_dist_iotest.c \
+        mca_io_romio_dist_iowait.c \
+        mca_io_romio_dist_iread_at.c \
+        mca_io_romio_dist_iread.c \
+        mca_io_romio_dist_iread_sh.c \
+        mca_io_romio_dist_iwrite_at.c \
+        mca_io_romio_dist_iwrite.c \
+        mca_io_romio_dist_iwrite_sh.c \
         mpioimpl.h \
         mpioprof.h \
-        open.c \
-        prealloc.c \
-        rd_atallb.c \
-        rd_atalle.c \
-        read_allb.c \
-        read_all.c \
-        read_alle.c \
-        read_atall.c \
-        read_at.c \
-        read.c \
-        read_ordb.c \
-        read_ord.c \
-        read_orde.c \
-        read_sh.c \
-        seek.c \
-        seek_sh.c \
-        set_atom.c \
-        set_errh.c \
-        set_info.c \
-        set_size.c \
-        set_view.c \
-        wr_atallb.c \
-        wr_atalle.c \
-        write_allb.c \
-        write_all.c \
-        write_alle.c \
-        write_atall.c \
-        write_at.c \
-        write.c \
-        write_ordb.c \
-        write_ord.c \
-        write_orde.c \
-        write_sh.c
+        mca_io_romio_dist_open.c \
+        mca_io_romio_dist_prealloc.c \
+        mca_io_romio_dist_rd_atallb.c \
+        mca_io_romio_dist_rd_atalle.c \
+        mca_io_romio_dist_read_allb.c \
+        mca_io_romio_dist_read_all.c \
+        mca_io_romio_dist_read_alle.c \
+        mca_io_romio_dist_read_atall.c \
+        mca_io_romio_dist_read_at.c \
+        mca_io_romio_dist_read.c \
+        mca_io_romio_dist_read_ordb.c \
+        mca_io_romio_dist_read_ord.c \
+        mca_io_romio_dist_read_orde.c \
+        mca_io_romio_dist_read_sh.c \
+        mca_io_romio_dist_seek.c \
+        mca_io_romio_dist_seek_sh.c \
+        mca_io_romio_dist_set_atom.c \
+        mca_io_romio_dist_set_errh.c \
+        mca_io_romio_dist_set_info.c \
+        mca_io_romio_dist_set_size.c \
+        mca_io_romio_dist_set_view.c \
+        mca_io_romio_dist_wr_atallb.c \
+        mca_io_romio_dist_wr_atalle.c \
+        mca_io_romio_dist_write_allb.c \
+        mca_io_romio_dist_write_all.c \
+        mca_io_romio_dist_write_alle.c \
+        mca_io_romio_dist_write_atall.c \
+        mca_io_romio_dist_write_at.c \
+        mca_io_romio_dist_write.c \
+        mca_io_romio_dist_write_ordb.c \
+        mca_io_romio_dist_write_ord.c \
+        mca_io_romio_dist_write_orde.c \
+        mca_io_romio_dist_write_sh.c
 
+
+#
+# Sym link the sources to conform to the MCA prefix name rule
+#
+dir = $(top_srcdir)/mpi-io
 all: all-am
 
 .SUFFIXES:
@@ -410,63 +461,63 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/close.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/delete.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fsync.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/get_amode.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/get_atom.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/get_bytoff.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/get_errh.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/get_extent.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/get_group.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/get_info.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/get_posn.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/get_posn_sh.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/get_size.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/get_view.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ioreq_c2f.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ioreq_f2c.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iotest.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iowait.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iread.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iread_at.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iread_sh.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iwrite.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iwrite_at.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iwrite_sh.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/open.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/prealloc.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rd_atallb.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rd_atalle.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/read.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/read_all.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/read_allb.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/read_alle.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/read_at.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/read_atall.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/read_ord.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/read_ordb.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/read_orde.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/read_sh.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/seek.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/seek_sh.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/set_atom.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/set_errh.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/set_info.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/set_size.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/set_view.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wr_atallb.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wr_atalle.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/write.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/write_all.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/write_allb.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/write_alle.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/write_at.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/write_atall.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/write_ord.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/write_ordb.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/write_orde.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/write_sh.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_close.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_delete.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_fsync.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_get_amode.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_get_atom.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_get_bytoff.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_get_errh.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_get_extent.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_get_group.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_get_info.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_get_posn.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_get_posn_sh.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_get_size.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_get_view.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_ioreq_c2f.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_ioreq_f2c.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_iotest.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_iowait.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_iread.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_iread_at.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_iread_sh.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_iwrite.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_iwrite_at.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_iwrite_sh.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_open.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_prealloc.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_rd_atallb.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_rd_atalle.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_read.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_read_all.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_read_allb.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_read_alle.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_read_at.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_read_atall.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_read_ord.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_read_ordb.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_read_orde.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_read_sh.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_seek.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_seek_sh.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_set_atom.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_set_errh.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_set_info.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_set_size.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_set_view.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_wr_atallb.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_wr_atalle.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_write.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_write_all.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_write_allb.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_write_alle.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_write_at.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_write_atall.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_write_ord.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_write_ordb.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_write_orde.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_write_sh.Plo@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	if $(COMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \
@@ -670,6 +721,11 @@ uninstall-am: uninstall-info-am
 
 
 include $(top_ompi_srcdir)/config/Makefile.options
+$(libmpi_io_la_SOURCES):
+	if test ! -r $@ ; then \
+		pname=`echo $@ | cut -b '19-'` ; \
+		ln -s $(dir)/$$pname $@ ; \
+	fi
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

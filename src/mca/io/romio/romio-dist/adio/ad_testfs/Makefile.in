@@ -52,36 +52,48 @@ CONFIG_HEADER = $(top_builddir)/adio/include/romioconf.h
 CONFIG_CLEAN_FILES =
 LTLIBRARIES = $(noinst_LTLIBRARIES)
 libadio_testfs_la_LIBADD =
-am_libadio_testfs_la_OBJECTS = ad_testfs.lo ad_testfs_close.lo \
-	ad_testfs_delete.lo ad_testfs_done.lo ad_testfs_fcntl.lo \
-	ad_testfs_flush.lo ad_testfs_getsh.lo ad_testfs_hints.lo \
-	ad_testfs_iread.lo ad_testfs_iwrite.lo ad_testfs_open.lo \
-	ad_testfs_rdcoll.lo ad_testfs_read.lo ad_testfs_resize.lo \
-	ad_testfs_seek.lo ad_testfs_setsh.lo ad_testfs_wait.lo \
-	ad_testfs_wrcoll.lo ad_testfs_write.lo
+am_libadio_testfs_la_OBJECTS = mca_io_romio_dist_ad_testfs.lo \
+	mca_io_romio_dist_ad_testfs_close.lo \
+	mca_io_romio_dist_ad_testfs_delete.lo \
+	mca_io_romio_dist_ad_testfs_done.lo \
+	mca_io_romio_dist_ad_testfs_fcntl.lo \
+	mca_io_romio_dist_ad_testfs_flush.lo \
+	mca_io_romio_dist_ad_testfs_getsh.lo \
+	mca_io_romio_dist_ad_testfs_hints.lo \
+	mca_io_romio_dist_ad_testfs_iread.lo \
+	mca_io_romio_dist_ad_testfs_iwrite.lo \
+	mca_io_romio_dist_ad_testfs_open.lo \
+	mca_io_romio_dist_ad_testfs_rdcoll.lo \
+	mca_io_romio_dist_ad_testfs_read.lo \
+	mca_io_romio_dist_ad_testfs_resize.lo \
+	mca_io_romio_dist_ad_testfs_seek.lo \
+	mca_io_romio_dist_ad_testfs_setsh.lo \
+	mca_io_romio_dist_ad_testfs_wait.lo \
+	mca_io_romio_dist_ad_testfs_wrcoll.lo \
+	mca_io_romio_dist_ad_testfs_write.lo
 libadio_testfs_la_OBJECTS = $(am_libadio_testfs_la_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/adio/include
 depcomp = $(SHELL) $(top_srcdir)/../depcomp
 am__depfiles_maybe = depfiles
-@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/ad_testfs.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/ad_testfs_close.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/ad_testfs_delete.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/ad_testfs_done.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/ad_testfs_fcntl.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/ad_testfs_flush.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/ad_testfs_getsh.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/ad_testfs_hints.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/ad_testfs_iread.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/ad_testfs_iwrite.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/ad_testfs_open.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/ad_testfs_rdcoll.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/ad_testfs_read.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/ad_testfs_resize.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/ad_testfs_seek.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/ad_testfs_setsh.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/ad_testfs_wait.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/ad_testfs_wrcoll.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/ad_testfs_write.Plo
+@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/mca_io_romio_dist_ad_testfs.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_ad_testfs_close.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_ad_testfs_delete.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_ad_testfs_done.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_ad_testfs_fcntl.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_ad_testfs_flush.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_ad_testfs_getsh.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_ad_testfs_hints.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_ad_testfs_iread.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_ad_testfs_iwrite.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_ad_testfs_open.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_ad_testfs_rdcoll.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_ad_testfs_read.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_ad_testfs_resize.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_ad_testfs_seek.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_ad_testfs_setsh.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_ad_testfs_wait.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_ad_testfs_wrcoll.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_ad_testfs_write.Plo
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 LTCOMPILE = $(LIBTOOL) --mode=compile $(CC) $(DEFS) \
@@ -269,29 +281,43 @@ AM_CPPFLAGS = \
         -I$(top_ompi_srcdir)/src \
         -I$(top_ompi_srcdir)/src/include
 
+
+# It is unfortunately necessary to make all the filenames in the ROMIO
+# distribtion confrom to the MCA prefix name rule -- there is at least
+# one or two filename conflicts that potentially create problems when
+# merging everything into onelibmpi.
+
+# In developer's copies, we have the real ROMIO files, and sym links
+# are made.  In distribution tarballs, the sym-linked files turn into
+# real files and the original filenames do not appear.
 noinst_LTLIBRARIES = libadio_testfs.la
 libadio_testfs_la_SOURCES = \
-        ad_testfs.c \
+        mca_io_romio_dist_ad_testfs.c \
         ad_testfs.h \
-        ad_testfs_close.c \
-        ad_testfs_delete.c \
-        ad_testfs_done.c \
-        ad_testfs_fcntl.c \
-        ad_testfs_flush.c \
-        ad_testfs_getsh.c \
-        ad_testfs_hints.c \
-        ad_testfs_iread.c \
-        ad_testfs_iwrite.c \
-        ad_testfs_open.c \
-        ad_testfs_rdcoll.c \
-        ad_testfs_read.c \
-        ad_testfs_resize.c \
-        ad_testfs_seek.c \
-        ad_testfs_setsh.c \
-        ad_testfs_wait.c \
-        ad_testfs_wrcoll.c \
-        ad_testfs_write.c
+        mca_io_romio_dist_ad_testfs_close.c \
+        mca_io_romio_dist_ad_testfs_delete.c \
+        mca_io_romio_dist_ad_testfs_done.c \
+        mca_io_romio_dist_ad_testfs_fcntl.c \
+        mca_io_romio_dist_ad_testfs_flush.c \
+        mca_io_romio_dist_ad_testfs_getsh.c \
+        mca_io_romio_dist_ad_testfs_hints.c \
+        mca_io_romio_dist_ad_testfs_iread.c \
+        mca_io_romio_dist_ad_testfs_iwrite.c \
+        mca_io_romio_dist_ad_testfs_open.c \
+        mca_io_romio_dist_ad_testfs_rdcoll.c \
+        mca_io_romio_dist_ad_testfs_read.c \
+        mca_io_romio_dist_ad_testfs_resize.c \
+        mca_io_romio_dist_ad_testfs_seek.c \
+        mca_io_romio_dist_ad_testfs_setsh.c \
+        mca_io_romio_dist_ad_testfs_wait.c \
+        mca_io_romio_dist_ad_testfs_wrcoll.c \
+        mca_io_romio_dist_ad_testfs_write.c
 
+
+#
+# Sym link the sources to conform to the MCA prefix name rule
+#
+dir = $(top_srcdir)/adio/ad_testfs
 all: all-am
 
 .SUFFIXES:
@@ -343,25 +369,25 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ad_testfs.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ad_testfs_close.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ad_testfs_delete.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ad_testfs_done.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ad_testfs_fcntl.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ad_testfs_flush.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ad_testfs_getsh.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ad_testfs_hints.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ad_testfs_iread.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ad_testfs_iwrite.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ad_testfs_open.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ad_testfs_rdcoll.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ad_testfs_read.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ad_testfs_resize.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ad_testfs_seek.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ad_testfs_setsh.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ad_testfs_wait.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ad_testfs_wrcoll.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ad_testfs_write.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_ad_testfs.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_ad_testfs_close.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_ad_testfs_delete.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_ad_testfs_done.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_ad_testfs_fcntl.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_ad_testfs_flush.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_ad_testfs_getsh.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_ad_testfs_hints.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_ad_testfs_iread.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_ad_testfs_iwrite.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_ad_testfs_open.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_ad_testfs_rdcoll.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_ad_testfs_read.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_ad_testfs_resize.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_ad_testfs_seek.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_ad_testfs_setsh.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_ad_testfs_wait.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_ad_testfs_wrcoll.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_ad_testfs_write.Plo@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	if $(COMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \
@@ -565,6 +591,11 @@ uninstall-am: uninstall-info-am
 
 
 include $(top_ompi_srcdir)/config/Makefile.options
+$(libadio_testfs_la_SOURCES):
+	if test ! -r $@ ; then \
+		pname=`echo $@ | cut -b '19-'` ; \
+		ln -s $(dir)/$$pname $@ ; \
+	fi
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

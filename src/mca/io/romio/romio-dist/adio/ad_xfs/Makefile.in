@@ -52,31 +52,42 @@ CONFIG_HEADER = $(top_builddir)/adio/include/romioconf.h
 CONFIG_CLEAN_FILES =
 LTLIBRARIES = $(noinst_LTLIBRARIES)
 libadio_xfs_la_LIBADD =
-am_libadio_xfs_la_OBJECTS = ad_xfs.lo ad_xfs_close.lo ad_xfs_done.lo \
-	ad_xfs_fcntl.lo ad_xfs_flush.lo ad_xfs_hints.lo \
-	ad_xfs_iread.lo ad_xfs_iwrite.lo ad_xfs_open.lo \
-	ad_xfs_rdcoll.lo ad_xfs_read.lo ad_xfs_resize.lo \
-	ad_xfs_seek.lo ad_xfs_wait.lo ad_xfs_wrcoll.lo ad_xfs_write.lo
+am_libadio_xfs_la_OBJECTS = mca_io_romio_dist_ad_xfs.lo \
+	mca_io_romio_dist_ad_xfs_close.lo \
+	mca_io_romio_dist_ad_xfs_done.lo \
+	mca_io_romio_dist_ad_xfs_fcntl.lo \
+	mca_io_romio_dist_ad_xfs_flush.lo \
+	mca_io_romio_dist_ad_xfs_hints.lo \
+	mca_io_romio_dist_ad_xfs_iread.lo \
+	mca_io_romio_dist_ad_xfs_iwrite.lo \
+	mca_io_romio_dist_ad_xfs_open.lo \
+	mca_io_romio_dist_ad_xfs_rdcoll.lo \
+	mca_io_romio_dist_ad_xfs_read.lo \
+	mca_io_romio_dist_ad_xfs_resize.lo \
+	mca_io_romio_dist_ad_xfs_seek.lo \
+	mca_io_romio_dist_ad_xfs_wait.lo \
+	mca_io_romio_dist_ad_xfs_wrcoll.lo \
+	mca_io_romio_dist_ad_xfs_write.lo
 libadio_xfs_la_OBJECTS = $(am_libadio_xfs_la_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/adio/include
 depcomp = $(SHELL) $(top_srcdir)/../depcomp
 am__depfiles_maybe = depfiles
-@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/ad_xfs.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/ad_xfs_close.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/ad_xfs_done.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/ad_xfs_fcntl.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/ad_xfs_flush.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/ad_xfs_hints.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/ad_xfs_iread.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/ad_xfs_iwrite.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/ad_xfs_open.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/ad_xfs_rdcoll.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/ad_xfs_read.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/ad_xfs_resize.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/ad_xfs_seek.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/ad_xfs_wait.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/ad_xfs_wrcoll.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/ad_xfs_write.Plo
+@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/mca_io_romio_dist_ad_xfs.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_ad_xfs_close.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_ad_xfs_done.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_ad_xfs_fcntl.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_ad_xfs_flush.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_ad_xfs_hints.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_ad_xfs_iread.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_ad_xfs_iwrite.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_ad_xfs_open.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_ad_xfs_rdcoll.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_ad_xfs_read.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_ad_xfs_resize.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_ad_xfs_seek.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_ad_xfs_wait.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_ad_xfs_wrcoll.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_ad_xfs_write.Plo
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 LTCOMPILE = $(LIBTOOL) --mode=compile $(CC) $(DEFS) \
@@ -264,26 +275,40 @@ AM_CPPFLAGS = \
         -I$(top_ompi_srcdir)/src \
         -I$(top_ompi_srcdir)/src/include
 
+
+# It is unfortunately necessary to make all the filenames in the ROMIO
+# distribtion confrom to the MCA prefix name rule -- there is at least
+# one or two filename conflicts that potentially create problems when
+# merging everything into onelibmpi.
+
+# In developer's copies, we have the real ROMIO files, and sym links
+# are made.  In distribution tarballs, the sym-linked files turn into
+# real files and the original filenames do not appear.
 noinst_LTLIBRARIES = libadio_xfs.la
 libadio_xfs_la_SOURCES = \
-        ad_xfs.c \
+        mca_io_romio_dist_ad_xfs.c \
         ad_xfs.h \
-        ad_xfs_close.c \
-        ad_xfs_done.c \
-        ad_xfs_fcntl.c \
-        ad_xfs_flush.c \
-        ad_xfs_hints.c \
-        ad_xfs_iread.c \
-        ad_xfs_iwrite.c \
-        ad_xfs_open.c \
-        ad_xfs_rdcoll.c \
-        ad_xfs_read.c \
-        ad_xfs_resize.c \
-        ad_xfs_seek.c \
-        ad_xfs_wait.c \
-        ad_xfs_wrcoll.c \
-        ad_xfs_write.c
+        mca_io_romio_dist_ad_xfs_close.c \
+        mca_io_romio_dist_ad_xfs_done.c \
+        mca_io_romio_dist_ad_xfs_fcntl.c \
+        mca_io_romio_dist_ad_xfs_flush.c \
+        mca_io_romio_dist_ad_xfs_hints.c \
+        mca_io_romio_dist_ad_xfs_iread.c \
+        mca_io_romio_dist_ad_xfs_iwrite.c \
+        mca_io_romio_dist_ad_xfs_open.c \
+        mca_io_romio_dist_ad_xfs_rdcoll.c \
+        mca_io_romio_dist_ad_xfs_read.c \
+        mca_io_romio_dist_ad_xfs_resize.c \
+        mca_io_romio_dist_ad_xfs_seek.c \
+        mca_io_romio_dist_ad_xfs_wait.c \
+        mca_io_romio_dist_ad_xfs_wrcoll.c \
+        mca_io_romio_dist_ad_xfs_write.c
 
+
+#
+# Sym link the sources to conform to the MCA prefix name rule
+#
+dir = $(top_srcdir)/adio/ad_xfs
 all: all-am
 
 .SUFFIXES:
@@ -335,22 +360,22 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ad_xfs.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ad_xfs_close.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ad_xfs_done.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ad_xfs_fcntl.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ad_xfs_flush.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ad_xfs_hints.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ad_xfs_iread.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ad_xfs_iwrite.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ad_xfs_open.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ad_xfs_rdcoll.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ad_xfs_read.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ad_xfs_resize.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ad_xfs_seek.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ad_xfs_wait.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ad_xfs_wrcoll.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ad_xfs_write.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_ad_xfs.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_ad_xfs_close.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_ad_xfs_done.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_ad_xfs_fcntl.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_ad_xfs_flush.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_ad_xfs_hints.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_ad_xfs_iread.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_ad_xfs_iwrite.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_ad_xfs_open.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_ad_xfs_rdcoll.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_ad_xfs_read.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_ad_xfs_resize.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_ad_xfs_seek.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_ad_xfs_wait.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_ad_xfs_wrcoll.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_ad_xfs_write.Plo@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	if $(COMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \
@@ -554,6 +579,11 @@ uninstall-am: uninstall-info-am
 
 
 include $(top_ompi_srcdir)/config/Makefile.options
+$(libadio_xfs_la_SOURCES):
+	if test ! -r $@ ; then \
+		pname=`echo $@ | cut -b '19-'` ; \
+		ln -s $(dir)/$$pname $@ ; \
+	fi
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:
