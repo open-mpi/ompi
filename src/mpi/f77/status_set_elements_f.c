@@ -53,7 +53,7 @@ void mpi_status_set_elements_f(MPI_Fint *status, MPI_Fint *datatype, MPI_Fint *c
 
     MPI_Status_f2c( status, &c_status );
 
-    *ierr = MPI_Status_set_elements(&c_status, &c_type, *count);
+    *ierr = MPI_Status_set_elements(&c_status, c_type, *count);
 
     /* If datatype is really being set, then that needs to be converted.... */
     if (MPI_SUCCESS == *ierr) {
