@@ -44,7 +44,7 @@ int mca_ns_base_select(bool *allow_multi_user_threads,
     /* Call the component's init function and see if it wants to be
        selected */
 
-    ompi_output(mca_ns_base_output, "calling component init\n");
+    ompi_output(mca_ns_base_output, "base_select: calling component init\n");
     module = component->ns_init(&multi, &hidden, &priority);
 
     /* If we got a non-NULL module back, then the component wants to
@@ -52,7 +52,7 @@ int mca_ns_base_select(bool *allow_multi_user_threads,
        module with the highest priority */
 
     if (NULL != module) {
-
+	ompi_output(mca_ns_base_output, "base_select: got non-NULL module\n");
       /* If this is the best one, save it */
 
       if (priority > best_priority) {
@@ -69,6 +69,9 @@ int mca_ns_base_select(bool *allow_multi_user_threads,
         best_component = component;
         *allow_multi_user_threads = multi;
         *have_hidden_threads = hidden;
+
+	/* update the best priority */
+	best_priority = priority;
       } 
 
       /* If it's not the best one, finalize it */
@@ -88,6 +91,7 @@ int mca_ns_base_select(bool *allow_multi_user_threads,
   /* We have happiness -- save the component and module for later
      usage */
 
+  ompi_output(mca_ns_base_output, "ns_select: best_pri %d\n", best_priority);
   ompi_name_server = *best_module;
   mca_ns_base_selected_component = *best_component;
   mca_ns_base_selected = true;

@@ -21,7 +21,7 @@
 ompi_process_id_t ns_proxy_create_cellid(void)
 {
   /* JMS fill in here */
-  return 0;
+  return 1;
 }
 
 ompi_process_id_t ns_proxy_create_jobid(void)
