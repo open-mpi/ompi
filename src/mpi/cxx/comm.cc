@@ -3,7 +3,8 @@
 // $HEADER$
 //
 
-#include "ompi_config.h"
+// do not include ompi_config.h because it kills the free/malloc defines
+#include "mpi.h"
 #include "mpi/cxx/mpicxx.h"
 #include "threads/mutex.h"
 
