@@ -342,7 +342,6 @@ int main(int argc, char* argv[]) {
         return $ret;
     }
     unlink("hello");
-    print "COMPILE: C ok\n";
 
     # if we have a C++ compiler, try compiling and linking a simple
     # C++ application
@@ -366,7 +365,6 @@ int main(int argc, char* argv[]) {
             return $ret;
         }
         unlink("hello");
-        print "COMPILE: CXX ok\n";
     }
 
     # if we have a F77 compiler, try compiling and linking a simple
@@ -392,7 +390,6 @@ int main(int argc, char* argv[]) {
             return $ret;
         }
         unlink("hello");
-        print "COMPILE: F77 ok\n";
     }
 
     # all done -- clean up (unless user specified --leave-install)
@@ -646,12 +643,8 @@ if (! $config_arg || ! -f $config_arg) {
             # Parse out the parts
 
             my ($name, $want_stderr, $vpath_mode, $config) = split(/:/, $line);
-            if (! $config) {
-                $config = $name;
-            }
-            if (! $config && ! $name) {
+            if (! $name) {
                 $name = "[build-$i]";
-                $config = "CFLAGS=-g";
             }
 
             # try to actually build it
