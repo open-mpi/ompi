@@ -95,6 +95,8 @@ extern "C" {
   /**
    * Finalize the Open MPI MPI environment
    *
+   * Should be called after all MPI functionality is complete (usually
+   * during MPI_FINALIZE) and before \c ompi_rte_finalize().
    */
   int ompi_mpi_finalize(void);
 
