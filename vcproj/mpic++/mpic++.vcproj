@@ -18,6 +18,7 @@
 			CharacterSet="2">
 			<Tool
 				Name="VCCLCompilerTool"
+				AdditionalOptions="/I&quot;../../src/win32/generated_include&quot; /I&quot;../../include&quot; /DWIN32"
 				Optimization="0"
 				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE"
 				MinimalRebuild="TRUE"
@@ -116,16 +117,7 @@
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
 			<File
-				RelativePath="..\..\src\tools\wrappers\mpicxx.cc">
-			</File>
-			<File
-				RelativePath="..\..\src\tools\wrappers\ompi_wrap.h">
-			</File>
-			<File
-				RelativePath="..\..\src\tools\wrappers\wrap.cc">
-			</File>
-			<File
-				RelativePath="..\..\src\tools\wrappers\wrap_engine.cc">
+				RelativePath=".\client.c">
 			</File>
 		</Filter>
 	</Files>
