@@ -84,6 +84,12 @@ mca_gpr_proxy_subscribe(ompi_registry_mode_t mode,
 	goto CLEANUP;
     }
 
+    if (mca_gpr_proxy_debug) {
+	ompi_output(0, "[%d,%d,%d] gpr proxy subscribe: subscribing to segment %s local idtag %d",
+				OMPI_NAME_ARGS(*ompi_rte_get_self()), segment, (int)idtag);
+    }
+
+
     if (0 > mca_oob_send_packed(mca_gpr_my_replica, cmd, MCA_OOB_TAG_GPR, 0)) {
 	goto CLEANUP;
     }

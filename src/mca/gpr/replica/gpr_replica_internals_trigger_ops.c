@@ -232,6 +232,12 @@ bool mca_gpr_replica_process_triggers(mca_gpr_replica_segment_t *seg,
 	cb->user_tag = NULL;
 	cb->message = message;
 	cb->remote_idtag = trackptr->remote_idtag;
+	if (mca_gpr_replica_debug) {
+		ompi_output(0, "[%d,%d,%d] process_trig: queueing message for [%d,%d,%d] with idtag %d using remoteid %d\n",
+					OMPI_NAME_ARGS(*ompi_rte_get_self()), OMPI_NAME_ARGS(*(cb->requestor)),
+					(int)cb->remote_idtag, (int)trackptr->remote_idtag);
+	}
+	
     }
     ompi_list_append(&mca_gpr_replica_callbacks, &cb->item);
 
@@ -316,8 +322,7 @@ mca_gpr_replica_enter_notify_request(mca_gpr_replica_segment_t *seg,
     trackptr->segptr = seg;
     trackptr->action = action;
     trackptr->requestor = ompi_name_server.copy_process_name(requestor);
-    trackptr->local_idtag = idtag;
-    trackptr->remote_idtag = OMPI_REGISTRY_NOTIFY_ID_MAX;
+    trackptr->remote_idtag = idtag;
     trackptr->callback = cb_func;
     trackptr->user_tag = user_tag;
     if (ompi_list_is_empty(&mca_gpr_replica_free_notify_id_tags)) {

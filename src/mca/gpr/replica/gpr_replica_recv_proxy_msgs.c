@@ -926,6 +926,11 @@ static ompi_registry_notify_id_t mca_gpr_replica_recv_subscribe_cmd(ompi_process
 
     if (NULL != sender) {  /* remote sender */
 
+	if (mca_gpr_replica_debug) {
+		ompi_output(0, "[%d,%d,%d] subscribe created for remote sender [%d,%d,%d] on segment %s for idtag %d",
+					OMPI_NAME_ARGS(*ompi_rte_get_self()), OMPI_NAME_ARGS(*sender), segment, id_tag);
+	}
+	
 	/* enter request on local notify tracking system */
 	local_idtag1 = mca_gpr_replica_enter_notify_request(seg, action, sender, id_tag, NULL, NULL);
 

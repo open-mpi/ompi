@@ -249,14 +249,16 @@ void mca_gpr_proxy_notify_recv(int status, ompi_process_name_t* sender,
     char **tokptr;
     mca_gpr_cmd_flag_t command;
     uint32_t num_items;
-    uint32_t i, id_tag;
+    uint32_t i;
+    ompi_registry_notify_id_t id_tag;
     ompi_registry_value_t *regval;
     ompi_registry_notify_message_t *message;
     bool found;
     mca_gpr_proxy_notify_request_tracker_t *trackptr;
 
     if (mca_gpr_proxy_debug) {
-	ompi_output(0, "gpr proxy: received trigger message");
+	ompi_output(0, "[%d,%d,%d] gpr proxy: received trigger message",
+				OMPI_NAME_ARGS(*ompi_rte_get_self()));
     }
 
     message = OBJ_NEW(ompi_registry_notify_message_t);
@@ -275,8 +277,14 @@ void mca_gpr_proxy_notify_recv(int status, ompi_process_name_t* sender,
     }
     message->owning_job = (mca_ns_base_jobid_t)i;
 
-    if (OMPI_SUCCESS != ompi_unpack(buffer, &id_tag, 1, OMPI_INT32)) {
+    if (OMPI_SUCCESS != ompi_unpack(buffer, &i, 1, OMPI_INT32)) {
 	goto RETURN_ERROR;
+    }
+	id_tag = (ompi_registry_notify_id_t)i;
+	
+    if (mca_gpr_proxy_debug) {
+	ompi_output(0, "[%d,%d,%d] trigger from segment %s id %d",
+				OMPI_NAME_ARGS(*ompi_rte_get_self()), message->segment, (int)id_tag);
     }
 
     if (OMPI_SUCCESS != ompi_unpack(buffer, &message->trig_action, 1, MCA_GPR_OOB_PACK_ACTION)) {
@@ -330,6 +338,8 @@ void mca_gpr_proxy_notify_recv(int status, ompi_process_name_t* sender,
     for (trackptr = (mca_gpr_proxy_notify_request_tracker_t*)ompi_list_get_first(&mca_gpr_proxy_notify_request_tracker);
          trackptr != (mca_gpr_proxy_notify_request_tracker_t*)ompi_list_get_end(&mca_gpr_proxy_notify_request_tracker) && !found;
          trackptr = (mca_gpr_proxy_notify_request_tracker_t*)ompi_list_get_next(trackptr)) {
+         	ompi_output(0, "\tchecking trigger %d for segment %s\n", trackptr->local_idtag,
+         			trackptr->segment);
 	if (trackptr->local_idtag == id_tag) {
 	    found = true;
 	}

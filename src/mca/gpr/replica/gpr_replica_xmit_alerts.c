@@ -323,8 +323,7 @@ void mca_gpr_replica_remote_notify(ompi_process_name_t *recipient, int recipient
 	    if (OMPI_SUCCESS != ompi_pack(msg, regval->object, regval->object_size, OMPI_BYTE)) {
 		return;
 	    }
-	    /* TSW - should we add */ 
-	    /* OBJ_RELEASE(regval); */
+	    OBJ_RELEASE(regval);
 	}
     }
     if (OMPI_SUCCESS != ompi_pack(msg, &message->num_tokens, 1, OMPI_INT32)) {
