@@ -16,10 +16,10 @@
  * @retval MPI_SUCCESS
  * @retval MPI_ERR_COMM
  */
-int topo_base_cartdim_get (MPI_Comm comm,
+int mca_topo_base_cartdim_get (MPI_Comm comm,
                            int *ndims){
  
-    *ndims = comm->c_topo_comm->mtc_ndims;
+    *ndims = comm->c_topo_comm->mtc_ndims_or_nnodes;
     return MPI_SUCCESS;
 }
 

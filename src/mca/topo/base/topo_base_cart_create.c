@@ -4,7 +4,9 @@
 
 #include "mca/topo/base/base.h"
 #include "communicator/communicator.h"
+#include "group/group.h"
 #include "mca/topo/topo.h"
+#include "mpi.h"
 
 /*
  * function - makes a new communicator to which topology information
@@ -24,119 +26,68 @@
  * @retval MPI_SUCCESS
  */                       
 
-int topo_base_cart_create (MPI_Comm old_comm,
+int mca_topo_base_cart_create (mca_topo_comm_t *topo_data,
+                           int *proc_count,
+                           ompi_proc_t **proc_pointers,
+                           int *new_rank,
                            int ndims,
                            int *dims,
                            int *periods,
-                           int reorder,
-                           MPI_Comm *comm_cart){
-   MPI_Comm newcomm;
-#if 0
-   MPI_Group newgroup;
-#endif
-   int rank;
-   int size;
+                           bool reorder) {
+
    int nprocs;
-   int err;
-   int range[1][3];
+   int dim;
    int i;
    int *p;
+   int *coords = topo_data->mtc_coords;
 
-  /*
-   * Compute the # of processes in the grid.
-   */
    nprocs = 1;
-   for (i = 0, p = dims; i < ndims; ++i, ++p) {
-      if (*p <= 0) {
-         return MPI_ERR_DIMS;
+   p = topo_data->mtc_dims_or_index;
+
+   /* Calculate the number of processes in this grid */
+   for (i = 0; i < topo_data->mtc_ndims_or_nnodes; ++i, ++p) {
+      if(*p <= 0) {
+          return OMPI_ERROR;
        }
        nprocs *= *p;
    }
-  /*
-   * Create the group for the new communicator.
-   */
-#if 0
-   err = ompi_comm_size (comm, &size);
-#endif
-   if (err != MPI_SUCCESS) {
-       return err;
+
+   /* check for the error condition */
+
+   if (*proc_count < nprocs) {
+       return MPI_ERR_DIMS;
    }
 
-  if (nprocs > size) {
-      return MPI_ERR_DIMS;
+   /* check if we have to trim the list of processes */
+   if (nprocs < *proc_count) {
+       *proc_count = nprocs;
+   }
+   
+   if (*new_rank > (nprocs-1)) {
+       /* sorry, but in our scheme this process is cut off */
+       *new_rank = MPI_UNDEFINED;
+       return MPI_SUCCESS;
    }
 
-   if (nprocs == size) {
-#if 0
-      err = ompi_comm_group (comm, &newgroup);
-#endif
-   } else {
-      range[0][0] = 0;
-      range[0][1] = nprocs - 1;
-      range[0][2] = 1;
-#if 0
-      err = ompi_group_range_incl (comm->c_group, 1, range, &newgroup);
-#endif
+   for (i = 0, p = topo_data->mtc_dims_or_index; i < ndims; ++i, ++p) {
+       *p = (*periods) ? -(*dims) : *dims;
+       ++dims;
+       ++periods;
    }
 
-   if (err != MPI_SUCCESS) {
-       return err;
-   }
-  /*
-   * Create the new communicator.
-   */
-#if 0
-   err = ompi_comm_create (comm, newgroup, comm_cart);
-#endif
-   if (err != MPI_SUCCESS) {
-#if 0
-       ompi_group_free (&newgroup);
-#endif
-       return err;
-   }
-   /*
-    * Fill the communicator with topology information.
-    */
-   newcomm = *comm_cart;
-   if (newcomm != MPI_COMM_NULL) {
-      newcomm->c_flags |= OMPI_COMM_CART;
-      newcomm->c_topo_comm->mtc_type = MPI_CART;
-      newcomm->c_topo_comm->mtc_nprocs = nprocs;
-      newcomm->c_topo_comm->mtc_ndims = ndims;
-      newcomm->c_topo_comm->mtc_dims = (int *)
-                             malloc((unsigned) 2 * ndims * sizeof(int));
-      if (newcomm->c_topo_comm->mtc_dims == 0) {
-         return MPI_ERR_OTHER;
-      }
-      newcomm->c_topo_comm->mtc_coords = newcomm->c_topo_comm->mtc_dims + ndims;
-      for (i = 0, p = newcomm->c_topo_comm->mtc_dims; i < ndims; ++i, ++p) {
-          *p = (*periods) ? -(*dims) : *dims;
-          ++dims;
-          ++periods;
-      }
-      /*
-       * Compute the caller's coordinates.
-       */
-#if 0
-       err = ompi_comm_rank (newcomm, &rank);
-#endif
-       if (err != MPI_SUCCESS) {
-           return err;
-       }
+   /* Have to replace this with the actual function body itself */
+   p = topo_data->mtc_dims_or_index;
+   coords =  topo_data->mtc_coords;
 
-       err = newcomm->c_topo.topo_cart_coords (newcomm, rank,
-                             ndims, newcomm->c_topo_comm->mtc_coords);
-       if (err != MPI_SUCCESS) {
-           return err;
-       }
-   }
+   for (i=0; 
+        (i < topo_data->mtc_ndims_or_nnodes); 
+        ++i, ++p) {
+        dim = (*p > 0) ? *p : -(*p);
+        nprocs /= dim;
+        *coords++ = *new_rank / nprocs;
+        *new_rank %= nprocs;
+    }
 
-#if 0
-   err = ompi_group_free (&newgroup);
-#endif
-   if (err != MPI_SUCCESS) {
-      return err;
-   }
-
+   /* end here */
    return MPI_SUCCESS;
 }

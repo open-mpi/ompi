@@ -24,7 +24,7 @@
  * @retval MPI_ERR_ARG
  */                   
 
-int topo_base_cart_coords (MPI_Comm comm,
+int mca_topo_base_cart_coords (MPI_Comm comm,
                            int rank,
                            int maxdims,
                            int *coords){
@@ -36,13 +36,18 @@ int topo_base_cart_coords (MPI_Comm comm,
     /*
      * loop computing the co-ordinates
      */ 
-    d = comm->c_topo_comm->mtc_dims;
-    remprocs = comm->c_topo_comm->mtc_nprocs;
-    for (i = 0; (i < comm->c_topo_comm->mtc_ndims) && (i < maxdims); ++i, ++d) {
+    d = comm->c_topo_comm->mtc_dims_or_index;
+    remprocs = ompi_comm_size(comm);
+
+    for (i = 0; 
+        (i < comm->c_topo_comm->mtc_ndims_or_nnodes) && (i < maxdims); 
+        ++i, ++d) {
+
         dim = (*d > 0) ? *d : -(*d);
         remprocs /= dim;
         *coords++ = rank / remprocs;
         rank %= remprocs;
     }
+
     return MPI_SUCCESS;
 }

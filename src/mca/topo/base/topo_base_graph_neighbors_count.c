@@ -17,12 +17,13 @@
  * @retval MPI_SUCCESS
  */                             
 
-int topo_base_graph_neighbors_count (MPI_Comm comm,
+int mca_topo_base_graph_neighbors_count (MPI_Comm comm,
                                      int rank,
                                      int *nneighbors){
-   *nneighbors = comm->c_topo_comm->mtc_index[rank];
+
+   *nneighbors = comm->c_topo_comm->mtc_dims_or_index[rank];
    if (rank > 0) {
-      *nneighbors -= comm->c_topo_comm->mtc_index[rank - 1];
+      *nneighbors -= comm->c_topo_comm->mtc_dims_or_index[rank - 1];
     }
 
     return MPI_SUCCESS;

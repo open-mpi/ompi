@@ -21,7 +21,7 @@
  * @retval MPI_ERR_ARG
  */                   
 
-int topo_base_cart_rank (MPI_Comm comm, 
+int mca_topo_base_cart_rank (MPI_Comm comm, 
                          int *coords, 
                          int *rank){
    int prank;
@@ -37,8 +37,9 @@ int topo_base_cart_rank (MPI_Comm comm,
     */
     factor = 1;
     prank = 0;
-    i = comm->c_topo_comm->mtc_ndims - 1;
-    d = comm->c_topo_comm->mtc_dims + i;
+
+    i = comm->c_topo_comm->mtc_ndims_or_nnodes - 1;
+    d = comm->c_topo_comm->mtc_dims_or_index + i;
     c = coords + i;
 
    for (; i >= 0; --i, --c, --d) {
