@@ -1141,8 +1141,10 @@ static void mca_gpr_replica_recv_get_startup_msg_cmd(ompi_buffer_t buffer, ompi_
     ompi_list_t *recipients=NULL;
     ompi_buffer_t msg;
     ompi_name_server_namelist_t *recip=NULL;
-    void *addr=NULL;
-    int32_t size=0, num_recipients=0, i=0;
+    int32_t num_objects=0, num_recipients=0, i=0;
+    char *segment=NULL;
+    ompi_registry_object_t *data_object;
+    ompi_registry_object_size_t data_obj_size;
 
     if (OMPI_SUCCESS != ompi_unpack(buffer, &jobid, 1, OMPI_JOBID)) {
 		return;
@@ -1171,11 +1173,25 @@ static void mca_gpr_replica_recv_get_startup_msg_cmd(ompi_buffer_t buffer, ompi_
 	OBJ_RELEASE(recip);
     }
 
-    ompi_buffer_get(msg, &addr, &size);
+    while (0 < ompi_unpack_string(msg, &segment)) {
+        ompi_output(0, "replica_recv_proxy: transferring startup data for segment %s", segment);
+        ompi_pack_string(answer, segment);
+        ompi_unpack(msg, &num_objects, 1, OMPI_INT32);  /* unpack #data objects */
+        ompi_pack(answer, &num_objects, 1, OMPI_INT32);
 
-    ompi_pack(answer, &size, 1, OMPI_INT32);
-    ompi_pack(answer, &addr, size, OMPI_BYTE);
-
+        if (0 < num_objects) {
+            for (i=0; i < num_objects; i++) {
+                ompi_unpack(msg, &data_obj_size, 1, MCA_GPR_OOB_PACK_OBJECT_SIZE);
+                data_object = (ompi_registry_object_t)malloc(data_obj_size);
+                ompi_unpack(msg, data_object, data_obj_size, OMPI_BYTE);
+                ompi_pack(answer, &data_obj_size, 1, MCA_GPR_OOB_PACK_OBJECT_SIZE);
+                ompi_pack(answer, data_object, data_obj_size, OMPI_BYTE);
+                free(data_object);
+            }
+        }
+        free(segment);
+    }
+    ompi_buffer_free(msg);
 }
 
 

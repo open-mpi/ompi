@@ -44,11 +44,9 @@ int mca_oob_xcast(
 {
     ompi_name_server_namelist_t *ptr;
     int rc;
-    size_t buf_size;
     int tag = MCA_OOB_TAG_XCAST;
-
-    ompi_buffer_size(buffer, &buf_size);
-    
+    ompi_buffer_t rbuf;
+        
     /* check to see if I am the root process name */
     if(NULL != root &&
        0 == ompi_name_server.compare(OMPI_NS_CMP_ALL, root, ompi_rte_get_self())) {
@@ -61,8 +59,7 @@ int mca_oob_xcast(
             }
         }
     } else {
-        ompi_buffer_t rbuf;
-        int rc = mca_oob_recv_packed(MCA_OOB_NAME_ANY, &rbuf, &tag);
+        rc = mca_oob_recv_packed(MCA_OOB_NAME_ANY, &rbuf, &tag);
         if(rc < 0) {
             return rc;
         }
