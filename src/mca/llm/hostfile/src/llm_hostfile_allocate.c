@@ -13,18 +13,18 @@
 
 #include <stdio.h>
 
-extern char *mca_llm_hostfile_filename;
-
 ompi_list_t*
-mca_llm_hostfile_allocate_resources(mca_ns_base_jobid_t jobid, 
+mca_llm_hostfile_allocate_resources(mca_llm_base_module_t *me_base,
+                                    mca_ns_base_jobid_t jobid, 
                                     int nodes, int procs)
 {
+    mca_llm_hostfile_module_t *me = (mca_llm_hostfile_module_t*) me_base;
     ompi_list_t *hostlist = NULL;
     ompi_list_t *nodelist = NULL;
     int ret;
 
     /* start by getting the full list of available resources */
-    hostlist = mca_llm_base_parse_hostfile(mca_llm_hostfile_filename);
+    hostlist = mca_llm_base_parse_hostfile(me->hostfile_filename);
     if (NULL == hostlist) {
         return NULL;
     }

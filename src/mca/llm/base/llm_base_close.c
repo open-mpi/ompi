@@ -15,21 +15,15 @@
 
 int mca_llm_base_close(void)
 {
+    /* This probably shouldn't be here, but I don't know where else to
+       put it */
     OBJ_DESTRUCT(&mca_llm_base_parse_mutex);
 
-  /* Blatently ignore the return code (what would we do to recover,
-     anyway?  This module is going away, so errors don't matter
-     anymore) */
+    /* Close all remaining available modules (may be one if this is a
+       OMPI RTE program, or [possibly] multiple if this is ompi_info) */
 
-  if (NULL != mca_llm_base_selected_component.llm_finalize) {
-    mca_llm_base_selected_component.llm_finalize();
-  }
-
-  /* Close all remaining available modules (may be one if this is a
-     OMPI RTE program, or [possibly] multiple if this is ompi_info) */
-
-  mca_base_components_close(mca_llm_base_output, 
-                            &mca_llm_base_components_available, NULL);
+    mca_base_components_close(mca_llm_base_output, 
+                              &mca_llm_base_components_available, NULL);
 
   /* All done */
 

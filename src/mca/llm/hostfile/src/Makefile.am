@@ -9,7 +9,6 @@ AM_CPPFLAGS = \
 
 noinst_LTLIBRARIES = libmca_llm_hostfile.la
 libmca_llm_hostfile_la_SOURCES = \
-	llm_hostfile.c \
 	llm_hostfile.h \
 	llm_hostfile_component.c \
 	llm_hostfile_allocate.c \

@@ -11,7 +11,8 @@
 #include "mca/llm/base/base_internal.h"
 
 int
-mca_llm_hostfile_deallocate_resources(mca_ns_base_jobid_t jobid,
+mca_llm_hostfile_deallocate_resources(mca_llm_base_module_t *me_base,
+                                      mca_ns_base_jobid_t jobid,
                                       ompi_list_t *nodelist)
 {
     ompi_list_item_t *item;

@@ -7,23 +7,11 @@
 #include "class/ompi_list.h"
 #include "runtime/runtime.h"
 #include "util/output.h"
+#include "util/show_help.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
 #include "mca/llm/llm.h"
 #include "mca/llm/base/base.h"
-
-
-/**
- * Container for list of components opened
- *
- * \internal
- */
-typedef struct opened_component_t {
-  /** make us a list item */
-  ompi_list_item_t super;
-  /** component that has been opened */
-  mca_llm_base_component_t *oc_component;
-} opened_component_t;
 
 
 /**
@@ -38,16 +26,14 @@ typedef struct opened_component_t {
  */
 int
 mca_llm_base_select(const char *active_pcm,
-                    mca_llm_base_module_t *selected, 
+                    mca_llm_base_module_t **selected, 
                     bool have_threads)
 {
   int priority, best_priority;
-  ompi_list_item_t *item;
   mca_base_component_list_item_t *cli;
-  mca_llm_base_component_t *component, *best_component;
+  ompi_list_item_t *item;
   mca_llm_base_module_t *module, *best_module;
-  ompi_list_t opened;
-  opened_component_t *oc;  
+  mca_llm_base_component_t *component;
 
   ompi_output_verbose(10, mca_llm_base_output,
                       "llm: base: select: started selection code");
@@ -56,8 +42,7 @@ mca_llm_base_select(const char *active_pcm,
      functions. */
 
   best_priority = -1;
-  best_component = NULL;
-  OBJ_CONSTRUCT(&opened, ompi_list_t);
+  best_module = NULL;
   for (item = ompi_list_get_first(&mca_llm_base_components_available);
        ompi_list_get_end(&mca_llm_base_components_available) != item;
        item = ompi_list_get_next(item)) {
@@ -82,78 +67,31 @@ mca_llm_base_select(const char *active_pcm,
                            "llm: base: select: init returned priority %d", 
                             priority);
         if (priority > best_priority) {
+          /* start by killing off the previous guy (loser...) */
+          if (NULL != best_module) {
+            best_module->llm_finalize((struct mca_llm_base_module_1_0_0_t*) best_module);
+          }
           best_priority = priority;
-          best_component = component;
           best_module = module;
         }
-
-        oc = malloc(sizeof(opened_component_t));
-        if (NULL == oc) {
-          return OMPI_ERR_OUT_OF_RESOURCE;
-        }
-        OBJ_CONSTRUCT(oc, ompi_list_item_t);
-        oc->oc_component = component;
-        ompi_list_append(&opened, (ompi_list_item_t*) oc);
       }
     }
   }
 
   /* Finished querying all components.  Check for the bozo case. */
 
-  if (NULL == best_component) {
-    /* JMS Replace with show_help */
-    ompi_abort(1, "No llm component available.  This shouldn't happen.");
+  if (NULL == best_module) {
+      ompi_show_help("help-llm-base.txt", "select:no-module-found", true);
+      return OMPI_ERR_NOT_FOUND;
   } 
 
-  /* Finalize all non-selected components */
-
-  for (item = ompi_list_remove_first(&opened);
-       NULL != item;
-       item = ompi_list_remove_first(&opened)) {
-    oc = (opened_component_t *) item;
-    if (oc->oc_component != best_component) {
-
-      /* Finalize */
-
-      if (NULL != oc->oc_component->llm_finalize) {
-
-        /* Blatently ignore the return code (what would we do to
-           recover, anyway?  This component is going away, so errors
-           don't matter anymore) */
-
-        oc->oc_component->llm_finalize();
-        ompi_output_verbose(10, mca_llm_base_output, 
-                           "llm: base: select: "
-                            "component %s not selected / finalized",
-                           component->llm_version.mca_component_name);
-      }
-    }
-    free(oc);
-  }
-
-  /* This base function closes, unloads, and removes from the
-     available list all unselected components.  The available list will
-     contain only the selected component. */
-
-  mca_base_components_close(mca_llm_base_output, 
-                         &mca_llm_base_components_available, 
-                         (mca_base_component_t *) best_component);
-
   /* Save the winner */
-
-  mca_llm_base_selected_component = *best_component;
-  *selected = *best_module;
-  ompi_output_verbose(5, mca_llm_base_output, 
-                     "llm: base: select: component %s selected",
-                     component->llm_version.mca_component_name);
-
-  OBJ_DESTRUCT(&opened);
+  *selected = best_module;
 
   ompi_output_verbose(10, mca_llm_base_output,
                       "llm: base: select: completed");
 
   /* All done */
-
   return OMPI_SUCCESS;
 }
 

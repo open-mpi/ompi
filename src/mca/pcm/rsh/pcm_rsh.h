@@ -51,7 +51,8 @@ extern "C" {
 
     struct mca_pcm_rsh_module_t {
         mca_pcm_base_module_t super;
-        mca_llm_base_module_t llm;
+
+        mca_llm_base_module_t *llm;
 
         int no_profile;
         int fast_boot;

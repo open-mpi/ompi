@@ -42,6 +42,13 @@
  *                       components may launch new threads.
  * @param priority (OUT) Relative priority or ranking use by MCA to
  *                       select a module.
+ *
+ * \warning The only requirement on the returned type is that the
+ * first sizeof(struct mca_llm_base_module_1_0_0_t) bytes have the
+ * same structure as a struct mca_llm_base_module_1_0_0_t.  The llm is
+ * free to return a pointer to a larger structure in order to maintain
+ * per-module information it may need.  Therefore, the caller should
+ * never copy the structure or assume its size.
  */
 typedef struct mca_llm_base_module_1_0_0_t* 
 (*mca_llm_base_component_init_fn_t)(const char *active_pcm,
@@ -55,7 +62,7 @@ typedef struct mca_llm_base_module_1_0_0_t*
  * Called by the MCA framework to finalize the component.  Will be
  * called once per successful call to llm_base_compoenent_init.
  */
-typedef int (*mca_llm_base_component_finalize_fn_t)(void);
+typedef int (*mca_llm_base_finalize_fn_t)(struct mca_llm_base_module_1_0_0_t *me);
 
 
 /** 
@@ -72,8 +79,6 @@ struct mca_llm_base_component_1_0_0_t {
   mca_base_component_data_1_0_0_t llm_data;
   /** Function called when component is initialized  */
   mca_llm_base_component_init_fn_t llm_init;
-  /** Function called when component is finalized */
-  mca_llm_base_component_finalize_fn_t llm_finalize;
 };
 /** shorten mca_llm_base_component_1_0_0_t declaration */
 typedef struct mca_llm_base_component_1_0_0_t mca_llm_base_component_1_0_0_t;
@@ -106,9 +111,10 @@ typedef mca_llm_base_component_1_0_0_t mca_llm_base_component_t;
  *                   describing the allocated resources.
  *
  */
-typedef ompi_list_t *
-(*mca_llm_base_allocate_resources_fn_t)(mca_ns_base_jobid_t jobid, 
-                                        int nodes,int procs);
+typedef ompi_list_t*
+(*mca_llm_base_allocate_resources_fn_t)(struct mca_llm_base_module_1_0_0_t *me,
+                                        mca_ns_base_jobid_t jobid, 
+                                        int nodes, int procs);
 
 
 /**
@@ -120,8 +126,10 @@ typedef ompi_list_t *
  * @param nodes (IN) Nodelist from associated allocate_resource call.
  *                   All associated memory will be freed as appropriate.
  */
-typedef int (*mca_llm_base_deallocate_resources_fn_t)(mca_ns_base_jobid_t jobid,
-                                                      ompi_list_t *nodelist);
+typedef int
+(*mca_llm_base_deallocate_resources_fn_t)(struct mca_llm_base_module_1_0_0_t *me,
+                                          mca_ns_base_jobid_t jobid,
+                                          ompi_list_t *nodelist);
 
 
 /**
@@ -135,6 +143,8 @@ struct mca_llm_base_module_1_0_0_t {
     mca_llm_base_allocate_resources_fn_t llm_allocate_resources;
     /** Function to be called on resource return */ 
     mca_llm_base_deallocate_resources_fn_t llm_deallocate_resources;
+    /** Function called when component is finalized */
+    mca_llm_base_finalize_fn_t llm_finalize;
 };
 /** shorten mca_llm_base_module_1_0_0_t declaration */
 typedef struct mca_llm_base_module_1_0_0_t mca_llm_base_module_1_0_0_t;

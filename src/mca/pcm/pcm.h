@@ -265,6 +265,9 @@ typedef int
  *
  * Base module structure for the PCM - presents the required function
  * pointers to the calling interface. 
+ *
+ * \note See warning for mca_pcm_base_component_init_fn_t regarding
+ * the storage of pcm structures.
  */
 struct mca_pcm_base_module_1_0_0_t {
     mca_pcm_base_allocate_resources_fn_t pcm_allocate_resources;
