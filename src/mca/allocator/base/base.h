@@ -13,19 +13,27 @@
 #include "mca/mca.h"
 #include "mca/allocator/allocator.h"
 
-
+/**
+ * Structure which describes a selected module.
+ */
 struct mca_allocator_base_selected_module_t {
-  ompi_list_item_t super;
-  mca_allocator_base_module_t *allocator_component;
-  mca_allocator_t *allocator_module;
+  ompi_list_item_t super;    /**< Makes this an object of type ompi_list_item */
+  mca_allocator_base_module_t *allocator_component; /**< Info about the module */
+  mca_allocator_t *allocator_module; /**< The function pointers for all the module's functions. */
 };
+/**
+ * Convenience typedef.
+ */
 typedef struct mca_allocator_base_selected_module_t mca_allocator_base_selected_module_t;
-                                                                                                     
+
+/**
+ * Declaces mca_mpool_base_selected_module_t as a class.
+ */
 OBJ_CLASS_DECLARATION(mca_mpool_base_selected_module_t);
                                                                                                      
 
 /*
- * Global functions for MCA: overall PTL open and close
+ * Global functions for MCA: overall allocator open and close
  */
 
 #if defined(c_plusplus) || defined(__cplusplus)
@@ -42,7 +50,9 @@ extern "C" {
 /*
  * Globals
  */
-
+/**
+ * The list of all the selected components.
+ */
 extern ompi_list_t mca_allocator_base_components;
 
 #endif /* MCA_ALLOCATOR_BASE_H */
