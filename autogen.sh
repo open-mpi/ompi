@@ -403,6 +403,16 @@ process_dir() {
     pd_ompi_topdir="$2"
     pd_cur_dir="`pwd`"
 
+    # Convert to absolutes
+
+    cd "$pd_dir"
+    pd_dir="`pwd`"
+
+    cd "$pd_cur_dir"
+    cd "$pd_ompi_topdir"
+    pd_ompi_topdir="`pwd`"
+
+    cd "$pd_cut_dir"
     if test -d "$pd_dir"; then
 	cd "$pd_dir"
 
