@@ -20,8 +20,8 @@
  */
 #define INIT_BASIC_TYPE( TYPE, NAME ) \
     { BASEOBJ_DATA, 0/*size*/, 0/*true_lb*/, 0/*true_ub*/, 0 /*align*/,    \
-      0/*lb*/, 0/*ub*/, DT_FLAG_BASIC | DT_FLAG_DATA, DT_##NAME, 1,  \
-      (((unsigned long long)1)<<(DT_##NAME)), EMPTY_DATA(NAME) }
+      0/*lb*/, 0/*ub*/, DT_FLAG_BASIC | DT_FLAG_DATA, TYPE, 1,  \
+      (((unsigned long long)1)<<(TYPE)), EMPTY_DATA(NAME) }
 /* The upeer bound and the true UB are set to the size of the datatype.
  * If it's not the case then they should be modified in the initialization
  * function.
@@ -29,8 +29,8 @@
 #if OMPI_WANT_F77_BINDINGS
 #define INIT_BASIC_FORTRAN_TYPE( TYPE, NAME, SIZE, ALIGN ) \
     { BASEOBJ_DATA, SIZE, 0/*true_lb*/, SIZE/*true_ub*/, ALIGN, \
-      0/*lb*/, SIZE/*ub*/, DT_FLAG_BASIC | DT_FLAG_DATA, DT_##NAME, 1,  \
-      (((unsigned long long)1)<<(DT_##NAME)), EMPTY_DATA(NAME) }
+            0/*lb*/, SIZE/*ub*/, DT_FLAG_BASIC | DT_FLAG_DATA, (TYPE), 1, \
+      (((unsigned long long)1)<<(TYPE)), EMPTY_DATA(NAME) }
 #else
 #define INIT_BASIC_FORTRAN_TYPE( TYPE, NAME, SIZE, ALIGN ) \
     INIT_BASIC_TYPE( TYPE, NAME )
@@ -106,6 +106,30 @@ ompi_datatype_t ompi_mpi_cxx_bool = INIT_BASIC_DATA( int, OMPI_ALIGNMENT_INT, CX
 ompi_datatype_t ompi_mpi_2cplex = INIT_BASIC_TYPE( DT_2COMPLEX, 2COMPLEX );
 ompi_datatype_t ompi_mpi_2dblcplex = INIT_BASIC_TYPE( DT_2DOUBLE_COMPLEX, 2DOUBLE_COMPLEX );
 ompi_datatype_t ompi_mpi_unavailable = INIT_BASIC_TYPE( DT_UNAVAILABLE, UNAVAILABLE );
+
+ompi_datatype_t ompi_mpi_real4 = INIT_BASIC_FORTRAN_TYPE( DT_FLOAT, REAL4, sizeof(float), 4 );
+ompi_datatype_t ompi_mpi_real8 = INIT_BASIC_FORTRAN_TYPE( DT_DOUBLE, REAL8, sizeof(double), 8 );
+#if HAVE_LONG_DOUBLE
+ompi_datatype_t ompi_mpi_real16 = INIT_BASIC_FORTRAN_TYPE( DT_LONG_DOUBLE, REAL16, sizeof(long double), 16 );
+#else
+ompi_datatype_t ompi_mpi_real16 = INIT_BASIC_TYPE( DT_UNAVAILABLE, REAL16 );
+#endif  /* HAVE_LONG_DOUBLE */
+ompi_datatype_t ompi_mpi_integer1 = INIT_BASIC_FORTRAN_TYPE( DT_CHAR, INTEGER1, sizeof(char), 1 );
+ompi_datatype_t ompi_mpi_integer2 = INIT_BASIC_FORTRAN_TYPE( DT_SHORT, INTEGER2, sizeof(short), 2 );
+ompi_datatype_t ompi_mpi_integer4 = INIT_BASIC_FORTRAN_TYPE( DT_INT, INTEGER4, sizeof(int), sizeof(int) );
+#if HAVE_LONG_LONG
+ompi_datatype_t ompi_mpi_integer8 = INIT_BASIC_FORTRAN_TYPE( DT_LONG_LONG, INTEGER8, sizeof(long long), 8 );
+#else
+ompi_datatype_t ompi_mpi_integer8 = INIT_BASIC_TYPE( DT_UNAVAILABLE, INTEGER8 );
+#endif  /* HAVE_LONG_LONG */
+ompi_datatype_t ompi_mpi_integer16 = INIT_BASIC_TYPE( DT_UNAVAILABLE, INTEGER16 );
+ompi_datatype_t ompi_mpi_complex8 = INIT_BASIC_FORTRAN_TYPE( DT_LOGIC, COMPLEX8, OMPI_SIZEOF_FORTRAN_LOGICAL, OMPI_ALIGNMENT_FORTRAN_LOGICAL );
+ompi_datatype_t ompi_mpi_complex16 = INIT_BASIC_FORTRAN_TYPE( DT_LOGIC, COMPLEX16, OMPI_SIZEOF_FORTRAN_LOGICAL, OMPI_ALIGNMENT_FORTRAN_LOGICAL );
+#if HAVE_LONG_DOUBLE
+ompi_datatype_t ompi_mpi_complex32 = INIT_BASIC_FORTRAN_TYPE( DT_COMPLEX_LONG_DOUBLE, COMPLEX32, OMPI_SIZEOF_FORTRAN_LOGICAL, OMPI_ALIGNMENT_FORTRAN_LOGICAL );
+#else
+ompi_datatype_t ompi_mpi_complex32 = INIT_BASIC_TYPE( DT_UNAVAILABLE, COMPLEX32 );
+#endif  /* HAVE_LONG_DOUBLE */
 
 ompi_datatype_t* basicDatatypes[DT_MAX_PREDEFINED] = {
     &ompi_mpi_loop, &ompi_mpi_end_loop, &ompi_mpi_ub, &ompi_mpi_lb,
