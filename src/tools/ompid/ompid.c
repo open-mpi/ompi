@@ -16,7 +16,6 @@
 #include "util/output.h"
 #include "util/sys_info.h"
 #include "util/cmd_line.h"
-#include "util/common_cmd_line.h"
 #include "util/proc_info.h"
 #include "util/session_dir.h"
 #include "util/printf.h"
@@ -75,24 +74,16 @@ int main(int argc, char *argv[])
     ompi_sys_info();
 
     /* setup to read common command line options that span all Open MPI programs */
-    if (OMPI_SUCCESS != (ret = ompi_common_cmd_line_init(argc, argv))) {
-	exit(ret);
-    }
+    cmd_line = OBJ_NEW(ompi_cmd_line_t);
 
-    if (ompi_cmd_line_is_taken(ompi_common_cmd_line, "help") ||
-        ompi_cmd_line_is_taken(ompi_common_cmd_line, "h")) {
-        printf("...showing ompi_info help message...\n");
-        exit(1);
-    }
+    ompi_cmd_line_make_opt(cmd_line, 'v', "version", 0,
+			   "Show version of Open MPI and this program");
 
-    if (ompi_cmd_line_is_taken(ompi_common_cmd_line, "version") ||
-	ompi_cmd_line_is_taken(ompi_common_cmd_line, "v")) {
-	printf("...showing off my version!\n");
-	exit(1);
-    }
+    ompi_cmd_line_make_opt(cmd_line, 'h', "help", 0,
+			   "Show help for this function");
+
 
     /* setup rte command line arguments */
-    cmd_line = OBJ_NEW(ompi_cmd_line_t);
     ompi_rte_cmd_line_setup(cmd_line);
 
     /*
@@ -115,6 +106,17 @@ int main(int argc, char *argv[])
 	exit(ret);
     }
 
+    if (ompi_cmd_line_is_taken(cmd_line, "help") ||
+        ompi_cmd_line_is_taken(cmd_line, "h")) {
+        printf("...showing ompi_info help message...\n");
+        exit(1);
+    }
+
+    if (ompi_cmd_line_is_taken(cmd_line, "version") ||
+	ompi_cmd_line_is_taken(cmd_line, "v")) {
+	printf("...showing off my version!\n");
+	exit(1);
+    }
 
     /* parse the cmd_line for rte options - provides the universe name
      * and temp directory base, if provided by user. Both loaded into
