@@ -32,19 +32,21 @@ int mca_pml_teg_wait(size_t count,
 #if OMPI_HAVE_THREADS
     /* poll for completion */
     ompi_atomic_mb();
-    for (c = 0; completed < 0 && c < mca_pml_teg.teg_poll_iterations; c++) {
+    for (c = 0; c < mca_pml_teg.teg_poll_iterations; c++) {
+        null_requests = 0;
         for (i = 0; i < count; i++) {
             pml_request = (mca_pml_base_request_t *) request[i];
             if (MPI_REQUEST_NULL == (ompi_request_t*)pml_request) {
                 ++null_requests;
-                continue;
+                if( null_requests == count ) goto out_of_loop;
             }
             if (true == pml_request->req_mpi_done) {
                 completed = i;
-                break;
+                goto out_of_loop;
             }
         }
     }
+ out_of_loop:
 #endif
 
     if ((completed < 0) || (null_requests != count)) {
