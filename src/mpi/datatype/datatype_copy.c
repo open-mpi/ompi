@@ -4,7 +4,8 @@
 
 /** @file dataype copy function */
 
-#include "lam_config.h"
+#include <stdlib.h>
+
 #include "datatype.h"
 
 int lam_datatype_copy(void *dst,
@@ -24,23 +25,23 @@ int lam_datatype_copy(void *dst,
 
     if (LAM_SUCCESS == status) {
         if (NULL == d) {
-            memcpy_fn(dst, src, count, csum);
+            (*memcpy_fn)(dst, src, count, csum);
         } else if (LAM_DATATYPE_STATE_CONTIGUOUS & d->d_flags) {
-            memcpy_fn(dst, src, count * d->d_extent, csum);
+            (*memcpy_fn)(dst, src, count * d->d_extent, csum);
         } else {
-            lam_datavec_t dv = d->d_datavec;
-            size_t datavec_size = d->d_datavec;
+            lam_datavec_t *dv = d->d_datavec;
+            size_t datavec_size = d->d_datavec_size;
             unsigned char *p = ((unsigned char *) dst);
             unsigned char *q = ((unsigned char *) src);
-            size_t i;
+            size_t i, j;
 
             while (count--) {
                 for (i = 0; i < d->d_datavec_size; i++) {
                     for (j = 0; j < dv->dv_nrepeat; i++) {
-                        memcpy_fn(p + dv->dv_element[i].dve_offset,
-                                  q + dv->dv_element[i].dve_offset,
-                                  dv->dv_element[i].dve_size,
-                                  csum);
+                        (*memcpy_fn)(p + dv->dv_element[i].dve_offset,
+                                     q + dv->dv_element[i].dve_offset,
+                                     dv->dv_element[i].dve_size,
+                                     csum);
                     }
                     p += dv->dv_repeat_offset;
                     q += dv->dv_repeat_offset;

@@ -17,9 +17,14 @@
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <string.h>
+#include <stdlib.h>
 
+#include "lam_config.h"
+#include "lam/constants.h"
 #include "lam/lfc/object.h"
 #include "lam/types.h"
+
+#include "mpi.h"
 
 /* typedefs ***********************************************************/
 
@@ -92,16 +97,20 @@ enum lam_checksum_kind_t {
 /* structs ************************************************************/
 
 /**
- * Abstraction of checksum for data
+ * State of incremental memcpy with checksum or CRC
  */
-struct lam_checksum_t {
-    lam_checksum_kind_t kind;
-    union {
-        uint64_t sum64;
-        uint32_t sum32;
-        uint32_t crc32;
-    } sum;
-};
+typedef struct lam_memcpy_state_t {
+    size_t size;           /**< total size in bytes of the object
+                            * being checksummed / CRCed */
+    size_t partial_size;   /**< size of non- uint32_t to be carried
+                            * over to next call */
+    uint32_t partial_int;  /**< value of non- uint32_t to be carried
+                            * over to next call */ 
+    uint32_t sum;          /**< current value of the CRC or
+                            * checksum */
+    bool first_call;       /**< is this the first call for this
+                            * checksum/CRC? */
+} lam_memcpy_state_t;
 
 
 /**
@@ -208,6 +217,7 @@ int lam_datatype_checksum(const void *addr,
 int lam_datatype_copy(void *dst,
                       const void *src,
                       size_t count,
+                      lam_datatype_t *datatype,
                       lam_memcpy_fn_t *memcpy_fn,
                       void *csum);
 
@@ -380,21 +390,20 @@ int lam_datatype_scatter_iovec(lam_pack_state_t *state,
 
 
 /*
- * checksum functions
+ * incremental memcpy with checksum / CRC functions
  */
 
+
 /**
- * Copy data from one buffer to another and calculate a 32-bit checksum
+ * initialize the state for an incremental memcpy with checksum / CRC
  *
- * @param dst      pointer to the dstination buffer
- * @param src      pointer to the source buffer
- * @param size     size of the buffer
- * @param csum32   pointer to a 32-bit unsigned integer to hold the checksum
- * @return         the original value of dst
+ * @param state     pointer to state object for the current sequence of copies
+ * @param sum_size  the length of the entire buffer to be checksummed
  */
-static inline void *lam_memcpy(void *dst, const void *src, size_t size, void *dummy)
+static inline void lam_memcpy_init(lam_memcpy_state_t *state, size_t sum_size)
 {
-    return memcpy(dst, src, size);
+    state->size = sum_size;
+    state->first_call = true;
 }
 
 
@@ -404,21 +413,21 @@ static inline void *lam_memcpy(void *dst, const void *src, size_t size, void *du
  * @param dst      pointer to the destination buffer
  * @param src      pointer to the source buffer
  * @param size     size of the buffer
- * @param csum32   pointer to a 32-bit unsigned integer to hold the checksum
+ * @param state    pointer to a memcpy with checksum/CRC state structure (ignored)
  * @return         the original value of dst
  */
-void *lam_memcpy_csum32(void *dst, const void *src, size_t size, void *csum32);
+static inline void *lam_memcpy(void *dst, const void *src, size_t size,
+                               lam_memcpy_state_t *state)
+{
+    return memcpy(dst, src, size);
+}
 
-/**
- * Copy data from one buffer to another and calculate a 64-bit checksum
- *
- * @param dst      pointer to the destination buffer
- * @param src      pointer to the source buffer
- * @param size     size of the buffer
- * @param csum64   pointer to a 64-bit unsigned integer to hold the checksum
- * @return         the original value of dst
- */
-void *lam_memcpy_csum64(void *dst, const void *src, size_t size, void *csum64);
+uint32_t lam_crc32(const void *restrict buffer, size_t size, uint32_t initial_crc);
+uint32_t lam_sum32(const void *restrict buffer, size_t size, uint32_t initial_crc);
+void *lam_memcpy_sum32(void *dst, const void *src, size_t size,
+                       lam_memcpy_state_t *state);
+void *lam_memcpy_crc32(void *dst, const void *src, size_t size,
+                       lam_memcpy_state_t *state);
 
 /**
  * Copy data from one buffer to another and calculate a 32-bit checksum
@@ -426,27 +435,20 @@ void *lam_memcpy_csum64(void *dst, const void *src, size_t size, void *csum64);
  * @param dst      pointer to the destination buffer
  * @param src      pointer to the source buffer
  * @param size     size of the buffer
- * @param crc32    pointer to a 32-bit unsigned integer to hold the CRC
+ * @param state    pointer to a memcpy with checksum/CRC state structure
  * @return         the original value of dst
  */
-void *lam_memcpy_crc32(void *dst, const void *src, size_t size, void *crc32);
+
 
 /**
- * Copy data from one buffer to another and calculate a 64-bit checksum
+ * Copy data from one buffer to another and calculate a 32-bit checksum
  *
  * @param dst      pointer to the destination buffer
  * @param src      pointer to the source buffer
  * @param size     size of the buffer
- * @param crc64    pointer to a 64-bit unsigned integer to hold the CRC
+ * @param state    pointer to a memcpy with checksum/CRC state structure
  * @return         the original value of dst
  */
-void *lam_memcpy_crc64(void *dst, const void *src, size_t size, void *crc64);
-
-
-#if 0
-typedef  void (ulm_scatterv_t) (void *, int *, int *, ULMType_t *, void *,
-			      int, ULMType_t *, int, int);
-#endif
 
 
 #endif                          /* LAM_DATATYPE_H_INCLUDED */

@@ -13,11 +13,13 @@ headers = \
         datatype.h
 
 libmpi_datatype_la_SOURCES = \
-        $(headers)
-	copy.c \
-	create.c \
-	delete.c \
-        datatype.c
+        $(headers) \
+	datatype_copy.c \
+	datatype_crc32.c \
+	datatype_create.c \
+	datatype_delete.c \
+	datatype_memcpy.c \
+	datatype_sum32.c
 
 # Conditionally install the header files
 
