@@ -30,7 +30,13 @@ struct lam_array_item_t
 };
 typedef struct lam_array_item_t lam_array_item_t;
 
-void lam_arr_item_init(lam_array_item_t *item);
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
+  void lam_arr_item_init(lam_array_item_t *item);
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 /*
  *
@@ -50,15 +56,33 @@ struct lam_array_t
 typedef struct lam_array_t lam_array_t;
 
 
-void lam_arr_init(lam_array_t *arr);
-void lam_arr_destroy(lam_array_t *arr);
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
+  void lam_arr_init(lam_array_t *arr);
+  void lam_arr_destroy(lam_array_t *arr);
 
-/* initializes array with fixed length.
- * lam_arr_init() must have been called first.
- */
-bool lam_arr_init_with(lam_array_t *arr, size_t length);
-
-bool lam_arr_append_item(lam_array_t *arr, lam_object_t *item);
+  /* initializes array with fixed length.
+   * lam_arr_init() must have been called first.
+   */
+  bool lam_arr_init_with(lam_array_t *arr, size_t length);
+  
+  bool lam_arr_append_item(lam_array_t *arr, lam_object_t *item);
+  
+  int lam_arr_index_of_item_matching(lam_array_t *arr, lam_object_t *item,
+                                     lam_arr_cmp_fn cmp_fn);
+  
+  void lam_arr_remove_all(lam_array_t *arr);
+  
+  void lam_arr_remove_item(lam_array_t *arr, int index);
+  
+  void lam_arr_remove_item_matching(lam_array_t *arr, lam_object_t *item,
+                                    lam_arr_cmp_fn cmp_fn);
+  
+  void lam_arr_set_item(lam_array_t *arr, lam_object_t *item, int index);
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 static inline lam_object_t *lam_arr_get_item(lam_array_t *arr, size_t index);
 static inline lam_object_t *lam_arr_get_item(lam_array_t *arr, size_t index)
@@ -75,18 +99,6 @@ static inline size_t lam_arr_get_size(lam_array_t *arr)
 {
     return arr->arr_size;
 }
-
-int lam_arr_index_of_item_matching(lam_array_t *arr, lam_object_t *item,
-                                   lam_arr_cmp_fn cmp_fn);
-
-void lam_arr_remove_all(lam_array_t *arr);
-
-void lam_arr_remove_item(lam_array_t *arr, int index);
-
-void lam_arr_remove_item_matching(lam_array_t *arr, lam_object_t *item,
-                                  lam_arr_cmp_fn cmp_fn);
-
-void lam_arr_set_item(lam_array_t *arr, lam_object_t *item, int index);
 
 static inline lam_object_t **lam_arr_get_c_array(lam_array_t *arr, 
                                                 size_t *size);
