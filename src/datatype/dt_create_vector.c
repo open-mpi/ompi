@@ -22,8 +22,8 @@
  *
  */
 
-int ompi_ddt_create_vector( int count, int bLength, long stride,
-                            const dt_desc_t* oldType, dt_desc_t** newType )
+int32_t ompi_ddt_create_vector( int count, int bLength, long stride,
+                                const dt_desc_t* oldType, dt_desc_t** newType )
 {
     long extent = oldType->ub - oldType->lb;
     dt_desc_t *pTempData, *pData;
@@ -50,8 +50,8 @@ int ompi_ddt_create_vector( int count, int bLength, long stride,
     return OMPI_SUCCESS;
 }
 
-int ompi_ddt_create_hvector( int count, int bLength, long stride,
-                             const dt_desc_t* oldType, dt_desc_t** newType )
+int32_t ompi_ddt_create_hvector( int count, int bLength, long stride,
+                                 const dt_desc_t* oldType, dt_desc_t** newType )
 {
     long extent = oldType->ub - oldType->lb;
     dt_desc_t *pTempData, *pData;
