@@ -262,7 +262,7 @@ static void ompi_comm_destruct(ompi_communicator_t* comm)
     if (NULL != comm->c_remote_group) {
         OBJ_RELEASE ( comm->c_remote_group );
     }
-    if (NULL != comm->c_error_handler) {
+    if (NULL != comm->error_handler) {
         OBJ_RELEASE ( comm->error_handler );
     }
 
