@@ -40,10 +40,10 @@ extern ompi_class_t ompi_communicator_t_class;
  * whether the new communicator will be an inter/intra 
  *comm
  */
-#define OMPI_COMM_INTRA_INTRA 0x00000020
-#define OMPI_COMM_INTRA_INTER 0x00000040
-#define OMPI_COMM_INTER_INTRA 0x00000080
-#define OMPI_COMM_INTER_INTER 0x00000100
+#define OMPI_COMM_CID_INTRA 0x00000020
+#define OMPI_COMM_CID_INTER 0x00000040
+#define OMPI_COMM_CID_INTRA_BRIDGE 0x00000080
+#define OMPI_COMM_CID_INTRA_OOB 0x00000100
 
 extern ompi_pointer_array_t ompi_mpi_communicators; 
 
@@ -229,17 +229,24 @@ extern "C" {
      * @param newcomm:    pointer to the new communicator
      * @param oldcomm:    original comm
      * @param bridgecomm: bridge comm for intercomm_create
-     * @param mode: combination of input and output communicator
-     *              OMPI_COMM_INTRA_INTRA, OMPI_COMM_INTRA_INTER,
-     *              OMPI_COMM_INTER_INTRA, OMPI_COMM_INTER_INTER
+     * @param mode: combination of input 
+     *              OMPI_COMM_CID_INTRA:        intra-comm
+     *              OMPI_COMM_CID_INTER:        inter-comm 
+     *              OMPI_COMM_CID_INTRA_BRIDGE: 2 intracomms connected by 
+     *                                          a bridge comm. local_leader
+     *                                          and remote leader are in this
+     *                                          case an int (rank in bridge-comm).
+     *              OMPI_COMM_CID_INTRA_OOB:    2 intracomms, leaders talk
+     *                                          through OOB. lleader and rleader
+     *                                          are the required contact information.
      *
      * This routine has to be thread safe in the final version.
      */
     int ompi_comm_nextcid ( ompi_communicator_t* newcomm, 
                             ompi_communicator_t* oldcomm, 
                             ompi_communicator_t* bridgecomm, 
-                            int local_leader, 
-                            int remote_leader, 
+                            void* local_leader, 
+                            void* remote_leader, 
                             int mode);
     
 
