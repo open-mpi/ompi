@@ -89,7 +89,8 @@ int MPI_Comm_spawn(char *command, char **argv, int maxprocs, MPI_Info info,
        /* Open a port. The port_name is passed as an environment variable
 	  to the children. */
        ompi_open_port (port_name);
-       ompi_comm_start_processes (command, argv, maxprocs, info, port_name);
+       ompi_comm_start_processes (1, &command, &argv, &maxprocs, 
+                                  &info, port_name);
        tmp_port = ompi_parse_port (port_name, &tag);
        free(tmp_port);
    }

@@ -272,17 +272,24 @@ ompi_process_name_t *ompi_comm_get_rport (ompi_process_name_t *port, int send_fi
 /**********************************************************************/
 /**********************************************************************/
 /**********************************************************************/
-int ompi_comm_start_processes (char *command, char **argv, int maxprocs, 
-			       MPI_Info info,  char *port_name )
+int
+ompi_comm_start_processes(int count, char **array_of_commands,
+                          char ***array_of_argv, 
+                          int *array_of_maxprocs, 
+                          MPI_Info *array_of_info, 
+                          char *port_name)
 {
     mca_ns_base_jobid_t new_jobid;
     ompi_rte_node_schedule_t *sched;
     ompi_rte_spawn_handle_t *spawn_handle;
-    ompi_list_t *nodelist=NULL;
+    ompi_list_t **nodelists = NULL;
     ompi_list_t schedlist;
     char *tmp, *envvarname, *segment, *my_contact_info;
     char cwd[MAXPATHLEN];
     ompi_registry_notify_id_t rc_tag;
+    int i;
+    int total_start_procs = 0;
+    int requires;
 
     /* parse the info object */
     /* check potentially for: 
@@ -298,83 +305,96 @@ int ompi_comm_start_processes (char *command, char **argv, int maxprocs,
     new_jobid = ompi_name_server.create_jobid();
 
     /* get the spawn handle to start spawning stuff */
-    spawn_handle =
-        ompi_rte_get_spawn_handle(OMPI_RTE_SPAWN_FROM_MPI|OMPI_RTE_SPAWN_HIGH_QOS, 
-				  true);
+    requires = OMPI_RTE_SPAWN_FROM_MPI | OMPI_RTE_SPAWN_HIGH_QOS;
+    if (count > 1) requires |= OMPI_RTE_SPAWN_MPMD;
+    spawn_handle = ompi_rte_get_spawn_handle(requires, true);
     if (NULL == spawn_handle) {
         printf("show_help: get_spawn_handle failed\n");
-        return -1;
+        return OMPI_ERROR;
     }
 
-    /* BWB - fix jobid, procs, and nodes */
-    nodelist = ompi_rte_allocate_resources(spawn_handle, new_jobid, 0, maxprocs);
-    if (NULL == nodelist) {
-	/* BWB show_help */
-	printf("show_help: ompi_rte_allocate_resources failed\n");
-	return -1;
-    }
-    
-    /*
-     * Process mapping
-     */
+    /* get our allocations and set them up, one by one */
     OBJ_CONSTRUCT(&schedlist,  ompi_list_t);
-    sched = OBJ_NEW(ompi_rte_node_schedule_t);
-    ompi_list_append(&schedlist, (ompi_list_item_t*) sched);
-    /*  ompi_cmd_line_get_tail(cmd_line, &(sched->argc), &(sched->argv)); */
-    ompi_argv_append (&(sched->argc), &(sched->argv), command);
+    nodelists = malloc(sizeof(ompi_list_t*) * count);
+    if (NULL == nodelists) {
+        return OMPI_ERROR;
+    }
+
+    /* iterate through all the counts, creating an app schema entry
+       for each one */
+    for (i = 0 ; i < count ; ++i) {
+        nodelists[i] = ompi_rte_allocate_resources(spawn_handle, 
+                                                   new_jobid, 0, 
+                                                   array_of_maxprocs[i]);
+        if (NULL == nodelists[i]) {
+            /* BWB - XXX - help - need to unwind what already done */
+            return OMPI_ERROR;
+        }
+        total_start_procs += array_of_maxprocs[i];
+
+        
+        /*
+         * Process mapping
+         */
+        sched = OBJ_NEW(ompi_rte_node_schedule_t);
+        ompi_argv_append (&(sched->argc), &(sched->argv), 
+                          array_of_commands[i]);
     
-    if (argv != MPI_ARGV_NULL ) {
-	int i=0;
-	char *arg=argv[i];
+        if (array_of_argv != MPI_ARGVS_NULL && 
+            array_of_argv[i] != MPI_ARGV_NULL ) {
+            int j = 0;
+            char *arg = array_of_argv[i][j];
 	
-	while ( arg!=NULL ) {
-	    ompi_argv_append(&(sched->argc), &(sched->argv), arg);
-	    arg = argv[++i];
-	} 
-    }
+            while (arg != NULL) {
+                ompi_argv_append(&(sched->argc), &(sched->argv), arg);
+                arg = array_of_argv[i][++j];
+            } 
+        }
 
-    /*
-     * build environment to be passed
-     */
-    mca_pcm_base_build_base_env(environ, &(sched->envc), &(sched->env));
+        /*
+         * build environment to be passed
+         */
+        mca_pcm_base_build_base_env(environ, &(sched->envc), &(sched->env));
 
-    /* set initial contact info */
-    if (ompi_process_info.seed) {
-        my_contact_info = mca_oob_get_contact_info();
-    } else {
-        my_contact_info = strdup(ompi_universe_info.ns_replica);
-    }
+        /* set initial contact info */
+        if (ompi_process_info.seed) {
+            my_contact_info = mca_oob_get_contact_info();
+        } else {
+            my_contact_info = strdup(ompi_universe_info.ns_replica);
+        }
 
-    asprintf(&tmp, "OMPI_MCA_ns_base_replica=%s", my_contact_info);
-    ompi_argv_append(&(sched->envc), &(sched->env), tmp);
-    free(tmp);
+        asprintf(&tmp, "OMPI_MCA_ns_base_replica=%s", my_contact_info);
+        ompi_argv_append(&(sched->envc), &(sched->env), tmp);
+        free(tmp);
 
-    asprintf(&tmp, "OMPI_MCA_gpr_base_replica=%s", my_contact_info);
-    ompi_argv_append(&(sched->envc), &(sched->env), tmp);
-    free(tmp);
+        asprintf(&tmp, "OMPI_MCA_gpr_base_replica=%s", my_contact_info);
+        ompi_argv_append(&(sched->envc), &(sched->env), tmp);
+        free(tmp);
 
-    if (NULL != ompi_universe_info.name) {
-	asprintf(&tmp, "OMPI_universe_name=%s", ompi_universe_info.name);
-	ompi_argv_append(&(sched->envc), &(sched->env), tmp);
-	free(tmp);
-    }
+        if (NULL != ompi_universe_info.name) {
+            asprintf(&tmp, "OMPI_universe_name=%s", ompi_universe_info.name);
+            ompi_argv_append(&(sched->envc), &(sched->env), tmp);
+            free(tmp);
+        }
 
-    /* Add environment variable with the contact information for the 
-       child processes */
-    asprintf(&envvarname, "OMPI_PARENT_PORT_%u", new_jobid);
-    asprintf(&tmp, "%s=%s", envvarname, port_name);
-    ompi_argv_append(&(sched->envc), &(sched->env), tmp);
-    free(tmp);
-    free(envvarname);
-    
-    getcwd(cwd, MAXPATHLEN);
-    sched->cwd = strdup(cwd);
-    sched->nodelist = nodelist;
+        /* Add environment variable with the contact information for the 
+           child processes */
+        asprintf(&envvarname, "OMPI_PARENT_PORT_%u", new_jobid);
+        asprintf(&tmp, "%s=%s", envvarname, port_name);
+        ompi_argv_append(&(sched->envc), &(sched->env), tmp);
+        free(tmp);
+        free(envvarname);
 
-    if (sched->argc == 0) {
-	printf("no app to start\n");
-	return MPI_ERR_ARG;
-    }
+        getcwd(cwd, MAXPATHLEN);
+        sched->cwd = strdup(cwd);
+        sched->nodelist = nodelists[i];
+
+        if (sched->argc == 0) {
+            printf("no app to start\n");
+            return MPI_ERR_ARG;
+        }
+        ompi_list_append(&schedlist, (ompi_list_item_t*) sched);
+    } /* for (i = 0 ; i < count ; ++i) */
 
 
     /*
@@ -391,7 +411,7 @@ int ompi_comm_start_processes (char *command, char **argv, int maxprocs,
 	     OMPI_REGISTRY_OR,
 	     segment,
 	     NULL,
-	     maxprocs,
+             total_start_procs,
 	     ompi_rte_all_procs_registered, NULL);
          
 	free(segment);
@@ -417,8 +437,15 @@ int ompi_comm_start_processes (char *command, char **argv, int maxprocs,
     /*
      * Clean up
      */
-    if (NULL != nodelist) ompi_rte_deallocate_resources(spawn_handle, 
-							new_jobid, nodelist);
+    if (NULL != nodelists) {
+        for (i = 0 ; i < count ; ++i) {
+            if (NULL != nodelists[i]) {
+                ompi_rte_deallocate_resources(spawn_handle, 
+                                              new_jobid, nodelists[i]);
+            }
+        }
+        free(nodelists);
+    }
     if (NULL != spawn_handle) OBJ_RELEASE(spawn_handle); 
     OBJ_DESTRUCT(&schedlist);
 

@@ -39,6 +39,8 @@ int MPI_Comm_spawn_multiple(int count, char **array_of_commands, char ***array_o
     int totalnumprocs=0;
     ompi_communicator_t *newcomp=NULL;
     int send_first=0; /* they are contacting us first */
+    char port_name[MPI_MAX_PORT_NAME];
+    char *tmp_port;
 
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -87,10 +89,6 @@ int MPI_Comm_spawn_multiple(int count, char **array_of_commands, char ***array_o
                return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG,
                                              FUNC_NAME);
          }
-         if ( NULL == array_of_argv ) {
-               return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG,
-                                             FUNC_NAME);
-         }
          if ( NULL ==  array_of_maxprocs ) {
                return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG,
                                              FUNC_NAME);
@@ -104,10 +102,6 @@ int MPI_Comm_spawn_multiple(int count, char **array_of_commands, char ***array_o
                    return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG,
                                                  FUNC_NAME);
            }
-           if ( NULL == array_of_argv[i] ) {
-                   return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG,
-                                                 FUNC_NAME);
-           }
            if ( 0 > array_of_maxprocs[i] ) {
                    return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG,
                                                  FUNC_NAME);
@@ -117,35 +111,19 @@ int MPI_Comm_spawn_multiple(int count, char **array_of_commands, char ***array_o
    }
 
    if ( rank == root ) {
-       for ( i=0; i < count; i++ ) {
-           totalnumprocs += array_of_maxprocs[i];
-       }
-       /* parse the info[i] */
-
-       /* check potentially for: 
-          - "host": desired host where to spawn the processes
-          - "arch": desired architecture
-          - "wdir": directory, where executable can be found
-          - "path": list of directories where to look for the executable
-          - "file": filename, where additional information is provided.
-          - "soft": see page 92 of MPI-2.
-       */
-       
-       /* map potentially array_of_argvs == MPI_ARGVS_NULL to a correct value */
-       /* map potentially array_of_argvs[i] == MPI_ARGV_NULL to a correct value.
-          not required by the standard. */
-       /* start processes */
-       
-       /* publish name, which should be based on the jobid of the children */
-       
-       /* rc = ompi_comm_namepublish (service_name, port_name ); */
+       /* Open a port. The port_name is passed as an environment variable
+	  to the children. */
+       ompi_open_port (port_name);
+       ompi_comm_start_processes(count, array_of_commands,
+                                 array_of_argv, array_of_maxprocs,
+                                 array_of_info, port_name);
+       tmp_port = ompi_parse_port (port_name, &tag);
+       free(tmp_port);
    }
 
    rc = ompi_comm_connect_accept (comm, root, NULL, send_first, &newcomp, tag);
 
-   if ( rank == root ) {
-       /* unpublish name */
-   }
+   /* close the port again. Nothing has to be done for that at the moment.*/
 
    /* set array of errorcodes */
    if (MPI_ERRCODES_IGNORE != array_of_errcodes) {
