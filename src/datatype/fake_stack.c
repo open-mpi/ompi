@@ -155,7 +155,6 @@ int lam_create_stack_with_pos( lam_convertor_t* pConvertor,
     dt_elem_desc_t* pElems;
 
     if( starting_point == 0 ) {
-        
         pConvertor->stack_pos = 1;
         pConvertor->pStack[0].index = 0;
         pConvertor->pStack[0].count = pConvertor->count;
@@ -173,13 +172,39 @@ int lam_create_stack_with_pos( lam_convertor_t* pConvertor,
         pConvertor->pStack[1].count = pElems->count;
         pConvertor->pStack[1].disp = pElems->disp;
         pConvertor->pStack[1].end_loop = pConvertor->pStack[0].end_loop;
+	pConvertor->converted = 0;
+	pConvertor->bConverted = 0;
         return 0;
     }
     /* if the convertor continue from the last position
      * there is nothing to do.
      */
     if( pConvertor->bConverted == starting_point ) return 0;
+    if( pConvertor->flags & DT_FLAG_CONTIGUOUS ) {
+        int cnt;
 
+        cnt = starting_point / pData->size;
+        pConvertor->stack_pos = 1;
+        pConvertor->pStack[0].index = 0;
+        pConvertor->pStack[0].count = pConvertor->count - cnt;
+        pConvertor->pStack[0].disp  = 0;
+        /* first here we should select which data representation will be used for
+         * this operation: normal one or the optimized version ? */
+        if( pData->opt_desc.used > 0 ) {
+            pElems = pData->opt_desc.desc;
+            pConvertor->pStack[0].end_loop = pData->opt_desc.used;
+        } else {
+            pElems = pData->desc.desc;
+            pConvertor->pStack[0].end_loop = pData->desc.used;
+        }
+        cnt = starting_point - cnt * pData->size;
+        pConvertor->pStack[1].index = 0;
+        pConvertor->pStack[1].count = pElems->count - cnt;
+        pConvertor->pStack[1].disp = pElems->disp + cnt;
+        pConvertor->pStack[1].end_loop = pConvertor->pStack[0].end_loop;
+	pConvertor->bConverted = starting_point;
+        return 0;
+    }
     remoteLength = (int*)alloca( sizeof(int) * pConvertor->pDesc->btypes[DT_LOOP] );
     pStack = pConvertor->pStack;
     pStack->count = pConvertor->count;
@@ -194,7 +219,7 @@ int lam_create_stack_with_pos( lam_convertor_t* pConvertor,
   next_loop:
     totalDisp = pStack->disp;
     loop_length = remoteLength[pConvertor->stack_pos];
-    while( pConvertor->stack_pos >= 0 ) {
+    while( pos_desc <= pStack->end_loop )  {
         if( pElems->type == DT_END_LOOP ) { /* end of the current loop */
             /* now we know the length of the loop. We can compute
              * if the the starting_position will happend in one of the

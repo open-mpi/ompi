@@ -471,7 +471,6 @@ int lam_convertor_init_for_recv( lam_convertor_t* pConv, unsigned int flags,
         pConv->pStack = (dt_stack_t*)malloc(sizeof(dt_stack_t) * (pData->btypes[DT_LOOP] + 2) );
         pConv->stack_pos = 0;
     }
-    lam_create_stack_with_pos( pConv, starting_point, local_sizes );
 
     pConv->pBaseBuf = pUserBuf;
     pConv->available_space = count * (pData->ub - pData->lb);
@@ -486,6 +485,7 @@ int lam_convertor_init_for_recv( lam_convertor_t* pConv, unsigned int flags,
     } else {
         pConv->fAdvance = lam_convertor_unpack_homogeneous;
     }
+    lam_create_stack_with_pos( pConv, starting_point, local_sizes );
     return 0;
 }
 
