@@ -105,7 +105,7 @@ OMPI_DECLSPEC int mca_base_modex_send(mca_base_component_t *source_component,
    *
    * @retval OMPI_SUCCESS If a corresponding module buffer is found and
    * is successfully returned to the caller.
-   * @retval OMPI_FAILURE If no corresponding module buffer is found,
+   * @retval OMPI_ERR_OUT_OF_RESOURCE If no corresponding module buffer is found,
    * or if an error occurs wil returning the buffer to the caller.
    *
    * This is the corresponding "get" call to mca_base_modex_send().
