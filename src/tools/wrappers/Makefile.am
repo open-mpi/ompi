@@ -122,4 +122,13 @@ uninstall-local:
 	$(DESTDIR)$(bindir)/hcp \
 	$(DESTDIR)$(bindir)/hf77
 endif
+#
+# Adding this to make sure that make install does not fail. 
+# install-exec-hook needs to be defined or else make install
+# fails quoting that there is not target called
+# install-exec-hook if WANT_DEPRECATED_EXECUTABLE_NAMES is
+# false.
+else
+install-exec-hook:
+uninstall-local:
 endif
