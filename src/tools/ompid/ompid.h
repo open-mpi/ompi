@@ -18,6 +18,7 @@
 
 #define OMPI_DAEMON_HOSTFILE_CMD        0x01
 #define OMPI_DAEMON_SCRIPTFILE_CMD      0x02
+#define OMPI_DAEMON_CONTACT_QUERY_CMD   0x03
 #define OMPI_DAEMON_HEARTBEAT_CMD       0xfe
 #define OMPI_DAEMON_EXIT_CMD            0xff
 
