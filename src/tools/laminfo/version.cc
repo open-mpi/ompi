@@ -68,8 +68,9 @@ void laminfo::do_version(bool want_all, lam_cmd_line_t *cmd_line)
 
   if (want_all) {
     show_lam_version(ver_full);
-    for (i = 0; i < mca_types.size(); ++i)
+    for (i = 0; i < mca_types.size(); ++i) {
       show_module_version(mca_types[i], module_all, ver_full, type_all);
+    }
   } else {
     count = lam_cmd_line_get_ninsts(cmd_line, "version");
     for (i = 0; i < count; ++i) {
