@@ -53,7 +53,12 @@ extern "C" {
   typedef int (MPI_Copy_function)(MPI_Comm, int, void *,
                                 void *, void *, int *);
   typedef int (MPI_Delete_function)(MPI_Comm, int, void *, void *);
+  typedef int (MPI_Datarep_extent_function)(MPI_Datatype, MPI_Aint *,
+                                            void *);
+  typedef int (MPI_Datarep_conversion_function)(void *, MPI_Datatype, 
+                            int, void *, MPI_Offset, void *);
   typedef void (MPI_Comm_errhandler_fn)(MPI_Comm *, int *, ...);
+  typedef void (MPI_File_errhandler_fn)(MPI_File *, int *, ...);
   typedef void (MPI_Win_errhandler_fn)(MPI_Win *, int *, ...);
   typedef void (MPI_Handler_function)(MPI_Comm *, int *, ...);
   typedef void (MPI_User_function)(void *, void *, int *, MPI_Datatype *);
@@ -474,16 +479,113 @@ extern "C" {
    * Anju:
    * Here ends the alphabet C
    */
-  int MPI_Dims_create(int, int, int *);
-  MPI_Fint MPI_Errhandler_c2f(MPI_Errhandler err);
-  int MPI_Errhandler_create(MPI_Handler_function *, MPI_Errhandler *);
-  MPI_Errhandler MPI_Errhandler_f2c(MPI_Fint f_handle);
-  int MPI_Errhandler_free(MPI_Errhandler *);
-  int MPI_Errhandler_get(MPI_Comm, MPI_Errhandler *);
-  int MPI_Errhandler_set(MPI_Comm, MPI_Errhandler);
-  int MPI_Error_class(int, int *);
-  int MPI_Error_string(int, char *, int *);
-  int MPI_Exscan(void *, void *, int, MPI_Datatype, MPI_Op, MPI_Comm);
+  int MPI_Dims_create(int nnodes, int ndims, int *dims);
+  MPI_Fint MPI_Errhandler_c2f(MPI_Errhandler errhandler);
+  int MPI_Errhandler_create(MPI_Handler_function *function, 
+                                MPI_Errhandler *errhandler);
+  MPI_Errhandler MPI_Errhandler_f2c(MPI_Fint errhandler);
+  int MPI_Errhandler_free(MPI_Errhandler *errhandler);
+  int MPI_Errhandler_get(MPI_Comm comm, MPI_Errhandler *errhandler);
+  int MPI_Errhandler_set(MPI_Comm comm, MPI_Errhandler errhandler);
+  int MPI_Error_class(int errorcode, int *errorclass);
+  int MPI_Error_string(int errorcode, char *string, int *resultlen);
+  int MPI_Exscan(void *sendbuf, void *recvbuf, int count, 
+                 MPI_Datatype datatype, MPI_Op op, MPI_Comm comm);
+  /*
+   * Anju:
+   * All file functions go here
+   */
+  MPI_Fint MPI_File_c2f(MPI_File file);
+  MPI_File MPI_File_f2c(MPI_Fint file);
+  int MPI_File_call_errhandler(MPI_File fh, int errorcode);
+  int MPI_File_create_errhandler(MPI_File_errhandler_fn *function,
+                        MPI_Errhandler *errhandler);
+  int MPI_File_set_errhandler( MPI_File file, MPI_Errhandler errhandler);
+  int MPI_File_get_errhandler( MPI_File file, MPI_Errhandler *errhandler);
+  int MPI_File_open(MPI_Comm comm, char *filename, int amode,
+                                    MPI_Info info, MPI_File *fh);
+  int MPI_File_close(MPI_File *fh);
+  int MPI_File_delete(char *filename, MPI_Info info);
+  int MPI_File_set_size(MPI_File fh, MPI_Offset size);
+  int MPI_File_preallocate(MPI_File fh, MPI_Offset size);
+  int MPI_File_get_size(MPI_File fh, MPI_Offset *size);
+  int MPI_File_get_group(MPI_File fh, MPI_Group *group);
+  int MPI_File_get_amode(MPI_File fh, int *amode);
+  int MPI_File_set_info(MPI_File fh, MPI_Info info);
+  int MPI_File_get_info(MPI_File fh, MPI_Info *info_used);
+  int MPI_File_set_view(MPI_File fh, MPI_Offset disp, MPI_Datatype etype,
+                       MPI_Datatype filetype, char *datarep, MPI_Info info);
+  int MPI_File_get_view(MPI_File fh, MPI_Offset *disp,
+                           MPI_Datatype *etype, 
+                           MPI_Datatype *filetype, char *datarep);
+  int MPI_File_read_at(MPI_File fh, MPI_Offset offset, void *buf,
+                        int count, MPI_Datatype datatype, MPI_Status *status);
+  int MPI_File_read_at_all(MPI_File fh, MPI_Offset offset, void *buf,
+                    int count, MPI_Datatype datatype, MPI_Status *status);
+  int MPI_File_write_at(MPI_File fh, MPI_Offset offset, void *buf,
+                    int count, MPI_Datatype datatype, MPI_Status *status);
+  int MPI_File_write_at_all(MPI_File fh, MPI_Offset offset, void *buf,
+                    int count, MPI_Datatype datatype, MPI_Status *status);
+  int MPI_File_iread_at(MPI_File fh, MPI_Offset offset, void *buf,
+                    int count, MPI_Datatype datatype, MPI_Request *request);
+  int MPI_File_iwrite_at(MPI_File fh, MPI_Offset offset, void *buf,
+                    int count, MPI_Datatype datatype, MPI_Request *request);
+  int MPI_File_read(MPI_File fh, void *buf, int count, MPI_Datatype
+                   datatype, MPI_Status *status);
+  int MPI_File_read_all(MPI_File fh, void *buf, int count, MPI_Datatype
+                   datatype, MPI_Status *status);
+  int MPI_File_write(MPI_File fh, void *buf, int count, MPI_Datatype
+                    datatype, MPI_Status *status);
+  int MPI_File_write_all(MPI_File fh, void *buf, int count, MPI_Datatype
+                    datatype, MPI_Status *status);
+  int MPI_File_iread(MPI_File fh, void *buf, int count, MPI_Datatype
+                   datatype, MPI_Request *request);
+  int MPI_File_iwrite(MPI_File fh, void *buf, int count, MPI_Datatype
+                    datatype, MPI_Request *request);
+  int MPI_File_seek(MPI_File fh, MPI_Offset offset, int whence);
+  int MPI_File_get_position(MPI_File fh, MPI_Offset *offset);
+  int MPI_File_get_byte_offset(MPI_File fh, MPI_Offset offset,
+                            MPI_Offset *disp);
+  int MPI_File_read_shared(MPI_File fh, void *buf, int count,
+                            MPI_Datatype datatype, MPI_Status *status);
+  int MPI_File_write_shared(MPI_File fh, void *buf, int count,
+                            MPI_Datatype datatype, MPI_Status *status);
+  int MPI_File_iread_shared(MPI_File fh, void *buf, int count,
+                            MPI_Datatype datatype, MPI_Request *request);
+  int MPI_File_iwrite_shared(MPI_File fh, void *buf, int count,
+                             MPI_Datatype datatype, MPI_Request *request);
+  int MPI_File_read_ordered(MPI_File fh, void *buf, int count,
+                            MPI_Datatype datatype, MPI_Status *status);
+  int MPI_File_write_ordered(MPI_File fh, void *buf, int count,
+                             MPI_Datatype datatype, MPI_Status *status);
+  int MPI_File_seek_shared(MPI_File fh, MPI_Offset offset, int whence);
+  int MPI_File_get_position_shared(MPI_File fh, MPI_Offset *offset);
+  int MPI_File_read_at_all_begin(MPI_File fh, MPI_Offset offset, void *buf,
+                                         int count, MPI_Datatype datatype);
+  int MPI_File_read_at_all_end(MPI_File fh, void *buf, MPI_Status *status);
+  int MPI_File_write_at_all_begin(MPI_File fh, MPI_Offset offset, void *buf,
+                                          int count, MPI_Datatype datatype);
+  int MPI_File_write_at_all_end(MPI_File fh, void *buf, MPI_Status *status);
+  int MPI_File_read_all_begin(MPI_File fh, void *buf, int count,
+                                      MPI_Datatype datatype);
+  int MPI_File_read_all_end(MPI_File fh, void *buf, MPI_Status *status);
+  int MPI_File_write_all_begin(MPI_File fh, void *buf, int count,
+                                       MPI_Datatype datatype);
+  int MPI_File_write_all_end(MPI_File fh, void *buf, MPI_Status *status);
+  int MPI_File_read_ordered_begin(MPI_File fh, void *buf, int count,
+                                          MPI_Datatype datatype);
+  int MPI_File_read_ordered_end(MPI_File fh, void *buf, MPI_Status *status);
+  int MPI_File_write_ordered_begin(MPI_File fh, void *buf, int count,
+                                           MPI_Datatype datatype);
+  int MPI_File_write_ordered_end(MPI_File fh, void *buf, MPI_Status *status);
+  int MPI_File_get_type_extent(MPI_File fh, MPI_Datatype datatype,
+                                               MPI_Aint *extent);
+  int MPI_File_set_atomicity(MPI_File fh, int flag);
+  int MPI_File_get_atomicity(MPI_File fh, int *flag);
+  int MPI_File_sync(MPI_File fh);
+  /*
+   * file functions end
+   */
   int MPI_Finalize(void);
   int MPI_Finalized(int *flag);
   int MPI_Free_mem(void *base);
@@ -815,19 +917,106 @@ extern "C" {
                               int *array_of_errcodes);
   int PMPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm);
   int PMPI_Comm_test_inter(MPI_Comm comm, int *flag);
-  /*
-   * Here ends Aplphabet C
-   */
-  int PMPI_Dims_create(int, int, int *);
-  MPI_Fint PMPI_Errhandler_c2f(MPI_Errhandler err);
-  int PMPI_Errhandler_create(MPI_Handler_function *, MPI_Errhandler *);
-  MPI_Errhandler PMPI_Errhandler_f2c(MPI_Fint f_handle);
-  int PMPI_Errhandler_free(MPI_Errhandler *);
-  int PMPI_Errhandler_get(MPI_Comm, MPI_Errhandler *);
-  int PMPI_Errhandler_set(MPI_Comm, MPI_Errhandler);
-  int PMPI_Error_class(int, int *);
-  int PMPI_Error_string(int, char *, int *);
-  int PMPI_Exscan(void *, void *, int, MPI_Datatype, MPI_Op, MPI_Comm);
+  int PMPI_Dims_create(int nnodes, int ndims, int *dims);
+  MPI_Fint PMPI_Errhandler_c2f(MPI_Errhandler errhandler);
+  int PMPI_Errhandler_create(MPI_Handler_function *function,
+                    MPI_Errhandler *errhandler);
+  MPI_Errhandler PMPI_Errhandler_f2c(MPI_Fint errhandler);
+  int PMPI_Errhandler_free(MPI_Errhandler *errhandler);
+  int PMPI_Errhandler_get(MPI_Comm comm, MPI_Errhandler *errhandler);
+  int PMPI_Errhandler_set(MPI_Comm comm, MPI_Errhandler errhandler);
+  int PMPI_Error_class(int errorcode, int *errorclass);
+  int PMPI_Error_string(int errorcode, char *string, int *resultlen);
+  int PMPI_Exscan(void *sendbuf, void *recvbuf, int count,
+                 MPI_Datatype datatype, MPI_Op op, MPI_Comm comm);
+  MPI_Fint PMPI_File_c2f(MPI_File file);
+  MPI_File PMPI_File_f2c(MPI_Fint file);
+  int PMPI_File_call_errhandler(MPI_File fh, int errorcode);
+  int PMPI_File_create_errhandler(MPI_File_errhandler_fn *function,
+                        MPI_Errhandler *errhandler);
+  int PMPI_File_set_errhandler( MPI_File file, MPI_Errhandler errhandler);
+  int PMPI_File_get_errhandler( MPI_File file, MPI_Errhandler *errhandler);
+  int PMPI_File_open(MPI_Comm comm, char *filename, int amode,
+                                    MPI_Info info, MPI_File *fh);
+  int PMPI_File_close(MPI_File *fh);
+  int PMPI_File_delete(char *filename, MPI_Info info);
+  int PMPI_File_set_size(MPI_File fh, MPI_Offset size);
+  int PMPI_File_preallocate(MPI_File fh, MPI_Offset size);
+  int PMPI_File_get_size(MPI_File fh, MPI_Offset *size);
+  int PMPI_File_get_group(MPI_File fh, MPI_Group *group);
+  int PMPI_File_get_amode(MPI_File fh, int *amode);
+  int PMPI_File_set_info(MPI_File fh, MPI_Info info);
+  int PMPI_File_get_info(MPI_File fh, MPI_Info *info_used);
+  int PMPI_File_set_view(MPI_File fh, MPI_Offset disp, MPI_Datatype etype,
+                       MPI_Datatype filetype, char *datarep, MPI_Info info);
+  int PMPI_File_get_view(MPI_File fh, MPI_Offset *disp,
+                           MPI_Datatype *etype, 
+                           MPI_Datatype *filetype, char *datarep);
+  int PMPI_File_read_at(MPI_File fh, MPI_Offset offset, void *buf,
+                        int count, MPI_Datatype datatype, MPI_Status *status);
+  int PMPI_File_read_at_all(MPI_File fh, MPI_Offset offset, void *buf,
+                    int count, MPI_Datatype datatype, MPI_Status *status);
+  int PMPI_File_write_at(MPI_File fh, MPI_Offset offset, void *buf,
+                    int count, MPI_Datatype datatype, MPI_Status *status);
+  int PMPI_File_write_at_all(MPI_File fh, MPI_Offset offset, void *buf,
+                    int count, MPI_Datatype datatype, MPI_Status *status);
+  int PMPI_File_iread_at(MPI_File fh, MPI_Offset offset, void *buf,
+                    int count, MPI_Datatype datatype, MPI_Request *request);
+  int PMPI_File_iwrite_at(MPI_File fh, MPI_Offset offset, void *buf,
+                    int count, MPI_Datatype datatype, MPI_Request *request);
+  int PMPI_File_read(MPI_File fh, void *buf, int count, MPI_Datatype
+                   datatype, MPI_Status *status);
+  int PMPI_File_read_all(MPI_File fh, void *buf, int count, MPI_Datatype
+                   datatype, MPI_Status *status);
+  int PMPI_File_write(MPI_File fh, void *buf, int count, MPI_Datatype
+                    datatype, MPI_Status *status);
+  int PMPI_File_write_all(MPI_File fh, void *buf, int count, MPI_Datatype
+                    datatype, MPI_Status *status);
+  int PMPI_File_iread(MPI_File fh, void *buf, int count, MPI_Datatype
+                   datatype, MPI_Request *request);
+  int PMPI_File_iwrite(MPI_File fh, void *buf, int count, MPI_Datatype
+                    datatype, MPI_Request *request);
+  int PMPI_File_seek(MPI_File fh, MPI_Offset offset, int whence);
+  int PMPI_File_get_position(MPI_File fh, MPI_Offset *offset);
+  int PMPI_File_get_byte_offset(MPI_File fh, MPI_Offset offset,
+                            MPI_Offset *disp);
+  int PMPI_File_read_shared(MPI_File fh, void *buf, int count,
+                            MPI_Datatype datatype, MPI_Status *status);
+  int PMPI_File_write_shared(MPI_File fh, void *buf, int count,
+                            MPI_Datatype datatype, MPI_Status *status);
+  int PMPI_File_iread_shared(MPI_File fh, void *buf, int count,
+                            MPI_Datatype datatype, MPI_Request *request);
+  int PMPI_File_iwrite_shared(MPI_File fh, void *buf, int count,
+                             MPI_Datatype datatype, MPI_Request *request);
+  int PMPI_File_read_ordered(MPI_File fh, void *buf, int count,
+                            MPI_Datatype datatype, MPI_Status *status);
+  int PMPI_File_write_ordered(MPI_File fh, void *buf, int count,
+                             MPI_Datatype datatype, MPI_Status *status);
+  int PMPI_File_seek_shared(MPI_File fh, MPI_Offset offset, int whence);
+  int PMPI_File_get_position_shared(MPI_File fh, MPI_Offset *offset);
+  int PMPI_File_read_at_all_begin(MPI_File fh, MPI_Offset offset, void *buf,
+                                         int count, MPI_Datatype datatype);
+  int PMPI_File_read_at_all_end(MPI_File fh, void *buf, MPI_Status *status);
+  int PMPI_File_write_at_all_begin(MPI_File fh, MPI_Offset offset, void *buf,
+                                          int count, MPI_Datatype datatype);
+  int PMPI_File_write_at_all_end(MPI_File fh, void *buf, MPI_Status *status);
+  int PMPI_File_read_all_begin(MPI_File fh, void *buf, int count,
+                                      MPI_Datatype datatype);
+  int PMPI_File_read_all_end(MPI_File fh, void *buf, MPI_Status *status);
+  int PMPI_File_write_all_begin(MPI_File fh, void *buf, int count,
+                                       MPI_Datatype datatype);
+  int PMPI_File_write_all_end(MPI_File fh, void *buf, MPI_Status *status);
+  int PMPI_File_read_ordered_begin(MPI_File fh, void *buf, int count,
+                                          MPI_Datatype datatype);
+  int PMPI_File_read_ordered_end(MPI_File fh, void *buf, MPI_Status *status);
+  int PMPI_File_write_ordered_begin(MPI_File fh, void *buf, int count,
+                                           MPI_Datatype datatype);
+  int PMPI_File_write_ordered_end(MPI_File fh, void *buf, MPI_Status *status);
+  int PMPI_File_get_type_extent(MPI_File fh, MPI_Datatype datatype,
+                                               MPI_Aint *extent);
+  int PMPI_File_set_atomicity(MPI_File fh, int flag);
+  int PMPI_File_get_atomicity(MPI_File fh, int *flag);
+  int PMPI_File_sync(MPI_File fh);
   int PMPI_Finalize(void);
   int PMPI_Finalized(int *flag);
   int PMPI_Free_mem(void *base);
