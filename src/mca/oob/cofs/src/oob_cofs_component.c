@@ -47,7 +47,6 @@ mca_oob_t mca_oob_cofs = {
   mca_oob_cofs_recv,
   mca_oob_cofs_send_nb,
   mca_oob_cofs_recv_nb,
-  NULL,
   mca_oob_cofs_module_init,
   mca_oob_cofs_module_fini
 };
@@ -98,7 +97,6 @@ mca_oob_t* mca_oob_cofs_init(bool *allow_multi_user_threads, bool *have_hidden_t
   snprintf(tmp, len, "%s/oob.%d", mca_oob_cofs_comm_loc, mca_oob_cofs_my_procid);
   fp = fopen(tmp, "w");
   if (fp == NULL) {
-    printf("oob_cofs: can not write in communication dir\n");
     free(tmp);
     return NULL;
   }
