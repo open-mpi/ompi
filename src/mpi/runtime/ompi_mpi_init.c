@@ -61,15 +61,12 @@ int ompi_mpi_thread_provided = MPI_THREAD_SINGLE;
 int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 {
     int ret, param;
-    mca_ns_base_jobid_t jobid;
-    mca_ns_base_vpid_t vpid;
     bool allow_multi_user_threads;
     bool have_hidden_threads;
     ompi_proc_t** procs;
     size_t nprocs;
-    char *error, *jobid_str, *procid_str;
-    char *universe, *contact_info;
-    pid_t pid;
+    char *error;
+    char *contact_info;
 
     /* Become an OMPI process */
 
@@ -88,112 +85,9 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     /* Join the run-time environment */
     allow_multi_user_threads = true;
     have_hidden_threads = false;
-    if (OMPI_SUCCESS != (ret = ompi_rte_init_stage1(&allow_multi_user_threads,
-						    &have_hidden_threads))) {
+    if (OMPI_SUCCESS != (ret = ompi_rte_init(NULL, &allow_multi_user_threads,
+					     &have_hidden_threads))) {
 	goto error;
-    }
-
-    /* parse environmental variables and fill corresponding info structures */
-    ompi_rte_parse_environ();
-
-    /* check for existing universe to join */
-    if (OMPI_SUCCESS != (ret = ompi_rte_universe_exists())) {
-	if (ompi_rte_debug_flag) {
-	    ompi_output(0, "ompi_mpi_init: could not join existing universe");
-	}
-	if (OMPI_ERR_NOT_FOUND != ret) {
-	    /* if it exists but no contact could be established,
-	     * define unique name based on current one.
-	     * and start new universe with me as seed
-	     */
-	    universe = strdup(ompi_universe_info.name);
-	    free(ompi_universe_info.name);
-	    ompi_universe_info.name = NULL;
-	    pid = getpid();
-	    if (0 > asprintf(&ompi_universe_info.name, "%s-%d", universe, pid) && ompi_rte_debug_flag) {
-		ompi_output(0, "mpi_init: error creating unique universe name");
-	    }
-	}
-
-	ompi_process_info.my_universe = strdup(ompi_universe_info.name);
-	ompi_process_info.seed = true;
-	if (NULL != ompi_universe_info.ns_replica) {
-	    free(ompi_universe_info.ns_replica);
-	    ompi_universe_info.ns_replica = NULL;
-	}
-	if (NULL != ompi_process_info.ns_replica) {
-	    free(ompi_process_info.ns_replica);
-	    ompi_process_info.ns_replica = NULL;
-	}
-	if (NULL != ompi_universe_info.gpr_replica) {
-	    free(ompi_universe_info.gpr_replica);
-	    ompi_universe_info.gpr_replica = NULL;
-	}
-	if (NULL != ompi_process_info.gpr_replica) {
-	    free(ompi_process_info.gpr_replica);
-	    ompi_process_info.gpr_replica = NULL;
-	}
-    }
-
-    /* start the rest of the rte */
-    if (OMPI_SUCCESS != (ret = ompi_rte_init_stage2(&allow_multi_user_threads,
-						    &have_hidden_threads))) {
-        error = "mca_rte_init() failed";
-        goto error;
-    }
-
-    /*****    SET MY NAME   *****/
-    if (NULL != ompi_process_info.name) {  /* should NOT have been previously set */
-	free(ompi_process_info.name);
-	ompi_process_info.name = NULL;
-    }
-
-    if (NULL != ompi_rte_get_self()) {  /* name set in environment - nonsingleton - record name */
-	ompi_process_info.name = ompi_rte_get_self();
-    } else if (NULL == ompi_process_info.ns_replica) { /* singleton - couldn't join existing univ */
-	ompi_process_info.name = ompi_name_server.create_process_name(0,0,0);
-    } else {  /* singleton - name server exists elsewhere - get a name for me */
-	jobid = ompi_name_server.create_jobid();
-	vpid = ompi_name_server.reserve_range(jobid, 1);
-	ompi_process_info.name = ompi_name_server.create_process_name(0, jobid, vpid);
-    }
-
-    /* setup my session directory */
-    jobid_str = ompi_name_server.get_jobid_string(ompi_process_info.name);
-    procid_str = ompi_name_server.get_vpid_string(ompi_process_info.name);
- 
-    if (ompi_rte_debug_flag) {
-	ompi_output(0, "[%d,%d,%d] setting up session dir with",
-		    ompi_process_info.name->cellid,
-		    ompi_process_info.name->jobid,
-		    ompi_process_info.name->vpid);
-	if (NULL != ompi_process_info.tmpdir_base) {
-	    ompi_output(0, "\ttmpdir %s", ompi_process_info.tmpdir_base);
-	}
-	ompi_output(0, "\tuniverse %s", ompi_process_info.my_universe);
-	ompi_output(0, "\tuser %s", ompi_system_info.user);
-	ompi_output(0, "\thost %s", ompi_system_info.nodename);
-	ompi_output(0, "\tjobid %s", jobid_str);
-	ompi_output(0, "\tprocid %s", procid_str);
-    }
-    if (OMPI_ERROR == ompi_session_dir(true,
-				       ompi_process_info.tmpdir_base,
-				       ompi_system_info.user,
-				       ompi_system_info.nodename, NULL, 
-				       ompi_process_info.my_universe,
-				       jobid_str, procid_str)) {
-	if (jobid_str != NULL) free(jobid_str);
-	if (procid_str != NULL) free(procid_str);
-	error = "session dir not found or created";
-	goto error;
-    }
-
-
-    /* finalize the rte startup */
-    if (OMPI_SUCCESS != (ret = ompi_rte_init_finalstage(&allow_multi_user_threads,
-							 &have_hidden_threads))) {
-        error = "mpi_init: failed in ompi_rte_init\n";
-        goto error;
     }
 
     /*

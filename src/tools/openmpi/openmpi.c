@@ -118,10 +118,10 @@ int main(int argc, char **argv)
 
     multi_thread = true;
     hidden_thread = false;
-    if (OMPI_SUCCESS != ompi_rte_init_stage1(&multi_thread, &hidden_thread)) {
-	printf("show_help: openmpi failed in ompi_rte_init\n");
-	exit(1);
-    }
+/*     if (OMPI_SUCCESS != ompi_rte_init_stage1(&multi_thread, &hidden_thread)) { */
+/* 	printf("show_help: openmpi failed in ompi_rte_init\n"); */
+/* 	exit(1); */
+/*     } */
 
     /* parse environmental variables and fill corresponding info structures
      * need the oob to be open so we can pass the contact info we extract
@@ -194,6 +194,6 @@ int main(int argc, char **argv)
     } else {
 	fprintf(stderr, "local universe check reports not implemented code\n");
     }
-    ompi_rte_init_stage2(&multi_thread, &hidden_thread);  /* stick this in for now just for static compiles */
+/*     ompi_rte_init_stage2(&multi_thread, &hidden_thread);  /\* stick this in for now just for static compiles *\/ */
     return -1;
 }
