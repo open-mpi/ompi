@@ -39,6 +39,7 @@ extern ompi_process_name_t *mca_gpr_my_replica;
 extern ompi_list_t mca_gpr_proxy_notify_request_tracker;
 extern mca_gpr_notify_id_t mca_gpr_proxy_last_notify_id_tag;
 extern ompi_list_t mca_gpr_proxy_free_notify_id_tags;
+extern int mca_gpr_proxy_debug;
 
 /*
  * Implementation of delete_segment().

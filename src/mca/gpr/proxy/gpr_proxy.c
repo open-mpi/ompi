@@ -347,6 +347,8 @@ int gpr_proxy_synchro(ompi_registry_synchro_mode_t synchro_mode,
     mca_gpr_notify_request_tracker_t *trackptr;
     mca_gpr_idtag_list_t *ptr_free_id;
 
+    trackptr = NULL;
+
     /* need to protect against errors */
     if (NULL == segment) {
 	return OMPI_ERROR;
@@ -422,11 +424,8 @@ int gpr_proxy_synchro(ompi_registry_synchro_mode_t synchro_mode,
 	ptr_free_id = (mca_gpr_idtag_list_t*)ompi_list_remove_first(&mca_gpr_proxy_free_notify_id_tags);
 	trackptr->id_tag = ptr_free_id->id_tag;
     }
-    trackptr->synchro = synchro_mode;
 
     if (OMPI_SUCCESS != ompi_pack(cmd, &trackptr->id_tag, 1, OMPI_INT32)) {
-	/* remove entry from lookup list */
-	ompi_list_remove_last(&mca_gpr_proxy_notify_request_tracker);
 	goto CLEANUP;
     }
 
@@ -438,25 +437,29 @@ int gpr_proxy_synchro(ompi_registry_synchro_mode_t synchro_mode,
 	goto CLEANUP;
     }
 
-    ompi_buffer_free(cmd);
-
     if ((OMPI_SUCCESS != ompi_unpack(answer, &command, 1, MCA_GPR_OOB_PACK_CMD))
 	|| (MCA_GPR_SYNCHRO_CMD != command)) {
 	ompi_buffer_free(answer);
-	return OMPI_ERROR;
+	goto CLEANUP;
     }
 
     if ((OMPI_SUCCESS != ompi_unpack(answer, &response, 1, OMPI_INT32)) ||
 	(OMPI_SUCCESS != response)) {
 	ompi_buffer_free(answer);
-	return OMPI_ERROR;
+	goto CLEANUP;
     }
 
     ompi_list_append(&mca_gpr_proxy_notify_request_tracker, &trackptr->item);
     ompi_buffer_free(answer);
+    ompi_buffer_free(cmd);
     return OMPI_SUCCESS;
 
  CLEANUP:
+    if (NULL != trackptr) {
+	ptr_free_id = OBJ_NEW(mca_gpr_idtag_list_t);
+	ptr_free_id->id_tag = trackptr->id_tag;
+	ompi_list_append(&mca_gpr_proxy_free_notify_id_tags, &ptr_free_id->item);
+    }
     ompi_buffer_free(cmd);
     return OMPI_ERROR;
 

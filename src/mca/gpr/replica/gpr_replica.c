@@ -36,9 +36,7 @@ int gpr_replica_delete_segment(char *segment)
 	return OMPI_ERROR;
     }
 
-    if (OMPI_SUCCESS != gpr_replica_empty_segment(seg)) {  /* couldn't empty the segment */
-	return OMPI_ERROR;
-    }
+    OBJ_RELEASE(seg);
 
     if (OMPI_SUCCESS != gpr_replica_delete_key(segment, NULL)) { /* couldn't remove dictionary entry */
 	return OMPI_ERROR;
@@ -56,14 +54,14 @@ int gpr_replica_put(ompi_registry_mode_t addr_mode, char *segment,
     mca_gpr_replica_segment_t *seg;
     mca_gpr_replica_core_t *entry_ptr;
     ompi_registry_mode_t put_mode;
-    mca_gpr_replica_synchro_list_t *synchro;
+    mca_gpr_replica_trigger_list_t *trig;
     ompi_registry_notify_message_t *notify_msg;
     int return_code, num_tokens;
     mca_gpr_replica_key_t *keys, *key2;
 
 
     /* protect ourselves against errors */
-    if (NULL == object || 0 == size || NULL == tokens || NULL == *tokens) {
+    if (NULL == segment || NULL == object || 0 == size || NULL == tokens || NULL == *tokens) {
 	return OMPI_ERROR;
     }
     put_mode = addr_mode & OMPI_REGISTRY_OVERWRITE;  /* only overwrite permission mode flag allowed */
@@ -127,27 +125,31 @@ int gpr_replica_put(ompi_registry_mode_t addr_mode, char *segment,
 
     return_code = OMPI_SUCCESS;
 
-    /* update synchro list and check for trigger conditions */
-    for (synchro = (mca_gpr_replica_synchro_list_t*)ompi_list_get_first(&seg->synchros);
-	 synchro != (mca_gpr_replica_synchro_list_t*)ompi_list_get_end(&seg->synchros);
-	 synchro = (mca_gpr_replica_synchro_list_t*)ompi_list_get_next(synchro)) {
-	if (gpr_replica_check_key_list(synchro->addr_mode, synchro->num_keys, synchro->keys,
+    /* update trigger list and check for trigger conditions */
+    for (trig = (mca_gpr_replica_trigger_list_t*)ompi_list_get_first(&seg->triggers);
+	 trig != (mca_gpr_replica_trigger_list_t*)ompi_list_get_end(&seg->triggers);
+	 trig = (mca_gpr_replica_trigger_list_t*)ompi_list_get_next(trig)) {
+	if (gpr_replica_check_key_list(trig->addr_mode, trig->num_keys, trig->keys,
 				       num_tokens, keys)) {
-	    synchro->count++;
+	    trig->count++;
 	}
-	if ((OMPI_REGISTRY_SYNCHRO_MODE_ASCENDING & synchro->synch_mode && synchro->count >= synchro->trigger) ||
-	    (OMPI_REGISTRY_SYNCHRO_MODE_LEVEL & synchro->synch_mode && synchro->count == synchro->trigger)) {
+	if ((OMPI_REGISTRY_SYNCHRO_MODE_ASCENDING & trig->synch_mode && trig->count >= trig->trigger) ||
+	    (OMPI_REGISTRY_SYNCHRO_MODE_LEVEL & trig->synch_mode && trig->count == trig->trigger) ||
+	    (OMPI_REGISTRY_NOTIFY_ALL & trig->action) ||
+	    (OMPI_REGISTRY_NOTIFY_ADD_ENTRY & trig->action) ||
+	    (OMPI_REGISTRY_NOTIFY_MODIFICATION & trig->action && OMPI_REGISTRY_OVERWRITE & put_mode)) {
 	    notify_msg = gpr_replica_construct_notify_message(addr_mode, segment, tokens);
-	    gpr_replica_process_triggers(notify_msg, synchro->id_tag);
+	    gpr_replica_process_triggers(seg, trig, notify_msg);
 	}
     }
 
 
  CLEANUP:
-    /* release list of keys */
-    while (NULL != (keyptr = (mca_gpr_replica_keytable_t*)ompi_list_remove_last(keylist))) {
-	OBJ_RELEASE(keyptr);
+    if (mca_gpr_replica_debug) {
+	ompi_output(0, "put: releasing list of keys");
     }
+
+    /* release list of keys */
     OBJ_RELEASE(keylist);
 
     return return_code;
@@ -161,11 +163,12 @@ int gpr_replica_delete_object(ompi_registry_mode_t addr_mode,
     ompi_list_t *keylist;
     mca_gpr_replica_key_t *keys, *key2;
     mca_gpr_replica_segment_t *seg;
-    mca_gpr_replica_synchro_list_t *synchro;
+    int num_tokens, return_code;
+    mca_gpr_replica_trigger_list_t *trig;
     ompi_registry_notify_message_t *notify_msg;
-    int num_tokens;
 
     keys = NULL;
+    return_code = OMPI_ERROR;
 
     /* protect against errors */
     if (NULL == segment) {
@@ -192,6 +195,7 @@ int gpr_replica_delete_object(ompi_registry_mode_t addr_mode,
 	     keyptr != (mca_gpr_replica_keytable_t*)ompi_list_get_end(keylist);
 	     keyptr = (mca_gpr_replica_keytable_t*)ompi_list_get_next(keyptr)) {
 	    if (MCA_GPR_REPLICA_KEY_MAX == keyptr->key) { /* unknown token */
+		return_code = OMPI_ERROR;
 		goto CLEANUP;
 	    }
 	    *key2 = keyptr->key;
@@ -213,28 +217,33 @@ int gpr_replica_delete_object(ompi_registry_mode_t addr_mode,
 	}
     }
 
+    return_code = OMPI_SUCCESS;
+
     /* update synchro list and check for trigger conditions */
-    for (synchro = (mca_gpr_replica_synchro_list_t*)ompi_list_get_first(&seg->synchros);
-	 synchro != (mca_gpr_replica_synchro_list_t*)ompi_list_get_end(&seg->synchros);
-	 synchro = (mca_gpr_replica_synchro_list_t*)ompi_list_get_next(synchro)) {
-	if (gpr_replica_check_key_list(synchro->addr_mode, synchro->num_keys, synchro->keys,
+    for (trig = (mca_gpr_replica_trigger_list_t*)ompi_list_get_first(&seg->triggers);
+	 trig != (mca_gpr_replica_trigger_list_t*)ompi_list_get_end(&seg->triggers);
+	 trig = (mca_gpr_replica_trigger_list_t*)ompi_list_get_next(trig)) {
+	if (gpr_replica_check_key_list(trig->addr_mode, trig->num_keys, trig->keys,
 				       num_tokens, keys)) {
-	    synchro->count--;
+	    trig->count--;
 	}
-	if ((OMPI_REGISTRY_SYNCHRO_MODE_DESCENDING & synchro->synch_mode && synchro->count <= synchro->trigger) ||
-	    (OMPI_REGISTRY_SYNCHRO_MODE_LEVEL & synchro->synch_mode && synchro->count == synchro->trigger)) {
+	if ((OMPI_REGISTRY_SYNCHRO_MODE_DESCENDING & trig->synch_mode && trig->count <= trig->trigger) ||
+	    (OMPI_REGISTRY_SYNCHRO_MODE_LEVEL & trig->synch_mode && trig->count == trig->trigger) ||
+	    (OMPI_REGISTRY_NOTIFY_ALL & trig->action) ||
+	    (OMPI_REGISTRY_NOTIFY_DELETE_ENTRY & trig->action)) {
 	    notify_msg = gpr_replica_construct_notify_message(addr_mode, segment, tokens);
-	    gpr_replica_process_triggers(notify_msg, synchro->id_tag);
+	    gpr_replica_process_triggers(seg, trig, notify_msg);
 	}
     }
 
-    return OMPI_SUCCESS;
 
  CLEANUP:
+    OBJ_RELEASE(keylist);
+
     if (NULL != keys) {
 	free(keys);
     }
-    return OMPI_ERROR;
+    return return_code;
 }
 
 ompi_list_t* gpr_replica_index(char *segment)
@@ -274,12 +283,43 @@ ompi_list_t* gpr_replica_index(char *segment)
     return answer;
 }
 
-int gpr_replica_subscribe(ompi_registry_mode_t mode,
+int gpr_replica_subscribe(ompi_registry_mode_t addr_mode,
 			  ompi_registry_notify_action_t action,
 			  char *segment, char **tokens,
 			  ompi_registry_notify_cb_fn_t cb_func, void *user_tag)
 {
-    return OMPI_ERR_NOT_IMPLEMENTED;
+    mca_gpr_notify_request_tracker_t *trackptr;
+    mca_gpr_idtag_list_t *ptr_free_id;
+
+    /* protect against errors */
+    if (NULL == segment) {
+	return OMPI_ERROR;
+    }
+
+    /* enter request on notify tracking system */
+    trackptr = OBJ_NEW(mca_gpr_notify_request_tracker_t);
+    trackptr->requestor = NULL;
+    trackptr->req_tag = 0;
+    trackptr->callback = cb_func;
+    trackptr->user_tag = user_tag;
+    if (ompi_list_is_empty(&mca_gpr_replica_free_notify_id_tags)) {
+	trackptr->id_tag = mca_gpr_replica_last_notify_id_tag;
+	mca_gpr_replica_last_notify_id_tag++;
+    } else {
+	ptr_free_id = (mca_gpr_idtag_list_t*)ompi_list_remove_first(&mca_gpr_replica_free_notify_id_tags);
+	trackptr->id_tag = ptr_free_id->id_tag;
+    }
+
+    /* construct the trigger - add to notify tracking system if success, otherwise dump */
+    if (OMPI_SUCCESS == gpr_replica_construct_trigger(OMPI_REGISTRY_SYNCHRO_MODE_NONE, action,
+						      addr_mode, segment, tokens,
+						      0, trackptr->id_tag)) {
+	ompi_list_append(&mca_gpr_replica_notify_request_tracker, &trackptr->item);
+	return OMPI_SUCCESS;
+    } else {
+	OBJ_RELEASE(trackptr);
+	return OMPI_ERROR;
+    }
 }
 
 int gpr_replica_unsubscribe(ompi_registry_mode_t mode,
@@ -316,10 +356,10 @@ int gpr_replica_synchro(ompi_registry_synchro_mode_t synchro_mode,
 	ptr_free_id = (mca_gpr_idtag_list_t*)ompi_list_remove_first(&mca_gpr_replica_free_notify_id_tags);
 	trackptr->id_tag = ptr_free_id->id_tag;
     }
-    trackptr->synchro = synchro_mode;
 
-    /* construct the synchro - add to notify tracking system if success, otherwise dump */
-    if (OMPI_SUCCESS == gpr_replica_construct_synchro(synchro_mode, addr_mode, segment, tokens,
+    /* construct the trigger - add to notify tracking system if success, otherwise dump */
+    if (OMPI_SUCCESS == gpr_replica_construct_trigger(synchro_mode, OMPI_REGISTRY_NOTIFY_NONE,
+						      addr_mode, segment, tokens,
 						      trigger, trackptr->id_tag)) {
 	ompi_list_append(&mca_gpr_replica_notify_request_tracker, &trackptr->item);
 	return OMPI_SUCCESS;
@@ -396,10 +436,8 @@ ompi_list_t* gpr_replica_get(ompi_registry_mode_t addr_mode,
 
  CLEANUP:
     /* release list of keys */
-    while (NULL != (keyptr = (mca_gpr_replica_keytable_t*)ompi_list_remove_first(keylist))) {
-	OBJ_RELEASE(keyptr);
-    }
     OBJ_RELEASE(keylist);
+
     if (NULL != keys) {
 	free(keys);
     }

@@ -38,8 +38,8 @@
 #define OMPI_REGISTRY_NOTIFY_NONE           0x0000   /**< Null case */
 #define OMPI_REGISTRY_NOTIFY_MODIFICATION   0x0001   /**< Notifies subscriber when object modified */
 #define OMPI_REGISTRY_NOTIFY_ADD_SUBSCRIBER 0x0002   /**< Notifies subscriber when another subscriber added */
-#define OMPI_REGISTRY_NOTIFY_DELETE         0x0004   /**< Notifies subscriber when object deleted */
-#define OMPI_REGISTRY_NOTIFY_SYNCHRO        0x0008   /**< Indicate that synchro trigger occurred - not valid for subscribe command */
+#define OMPI_REGISTRY_NOTIFY_DELETE_ENTRY   0x0004   /**< Notifies subscriber when object deleted */
+#define OMPI_REGISTRY_NOTIFY_ADD_ENTRY      0x0008   /**< Notifies subscriber when object added */
 #define OMPI_REGISTRY_NOTIFY_ALL            0xffff   /**< Notifies subscriber upon any action */
 
 typedef uint16_t ompi_registry_notify_action_t;
@@ -175,7 +175,6 @@ struct mca_gpr_notify_request_tracker_t {
     ompi_registry_notify_cb_fn_t callback;
     void *user_tag;
     mca_gpr_notify_id_t id_tag;
-    ompi_registry_synchro_mode_t synchro;
 };
 typedef struct mca_gpr_notify_request_tracker_t mca_gpr_notify_request_tracker_t;
 
