@@ -77,8 +77,10 @@ void ompi_progress(void)
         events += ret;
     }
 
+#if OMPI_HAVE_THREAD_SUPPORT
     /* release the lock before yielding, for obvious reasons */
     ompi_atomic_unlock(&progress_lock);
+#endif  /* OMPI_HAVE_THREAD_SUPPORT */
 
 #if 1
     /* TSW - disable this until can validate that it doesn't impact SMP
