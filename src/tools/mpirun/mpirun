@@ -1,0 +1,212 @@
+#!/bin/bash
+#
+# $HEADER$
+#
+# Quick and dirty hack of an mpirun to be used only with the cofs
+# "RTE" (if you can call it that).  Does not guarantee cleanup just
+# yet (still trying to figure out how to make that one work..)
+#
+# On the other hand, it will get us to MPI_INIT faster than just about
+# any other idea I have...
+#
+
+######################################################################
+#
+# Some basic defaults
+#
+######################################################################
+lam_numprocs="1"
+lam_hosts="localhost"
+lam_debug=0
+
+
+######################################################################
+#
+# Global variables
+#
+######################################################################
+lam_hostfile=""
+lam_jobhandle=""
+lam_app_args=""
+lam_mydir=""
+lam_cwd="`pwd`"
+
+# Get the dir where this script is
+dir="`dirname $0`"
+if test "$dir" = "."; then
+    lam_mydir=`pwd`
+else
+    lam_mydir="$dir"
+    pushd $lam_mydir 2>&1 > /dev/null
+    lam_mydir="`pwd`"
+    popd 2>&1 > /dev/null
+fi
+unset dir
+
+######################################################################
+#
+# Do argument parsing (not a function so I have the orig $*)
+#
+######################################################################
+args_err=0
+for i ; do
+    case "${i}" in
+        -np)
+            shift
+            lam_numprocs=${1}
+            shift
+            ;;
+        -hostfile)
+            shift
+            lam_hostfile=${1}
+            shift
+            ;;
+        -d)
+            shift
+            lam_debug=1
+            echo "Debugging output enabled"
+            ;;
+        -h)
+            shift
+            args_err=1
+            ;;
+        --)
+            shift
+            lam_app_args="$@"
+            ;;
+    esac
+done
+
+if test "$args_err" != "0" ; then
+    echo "usage: mpirun [-np #] [-hostfile file] [-d]"
+    echo "    -np #            Start # processes across as many hosts as available"
+    echo "    -hostfile file   Read file for list of hosts to use for starting procs"
+    echo "    -d               Enable debugging in the mpirun script"
+fi
+
+
+######################################################################
+#
+# Debugging echo - only prints if debugging is enabled
+#
+######################################################################
+debug_echo() {
+    if test "$lam_debug" != "0"; then
+        echo "$*"
+    fi
+}
+
+
+######################################################################
+#
+# start_proc
+#
+# Start a process on the given node.  Pushes out required environment
+# variables...
+#
+# ARGUMENTS:
+#   hostname   
+#   vpid
+#   argv       argv to start
+#
+######################################################################
+start_proc() {
+    local rmt_hostname=$1 ; shift
+    local rmt_vpid=$1 ; shift
+    local argv="$*"
+    local rmt_boot="${lam_mydir}/mpiboot"
+
+    local cmd="ssh ${rmt_hostname} ${rmt_boot} -myvpid ${rmt_vpid}"
+    cmd="${cmd} -numprocs ${lam_numprocs} -jobhandle ${lam_jobhandle}"
+    cmd="${cmd} -pwd ${lam_cwd}"
+    if test ! -z "${MCA_common_lam_cofs_comm_dir}" ; then
+        cmd="${cmd} -commdir ${MCA_common_lam_cofs_comm_dir}"
+    fi
+    cmd="${cmd} -- ${argv}"
+    debug_echo "* ${cmd}"
+    ${cmd}
+}
+
+
+######################################################################
+#
+# make_hosts_list
+#
+# make the lam_hosts list, if a hostfile was specified
+#
+######################################################################
+make_hosts_list() {
+    if test -z "${lam_hostfile}" ; then
+        return 0
+    fi
+
+    if ! test -f "${lam_hostfile}" ; then
+        echo "Could not fine ${lam_hostfile}.  Aborting"
+        exit 1
+    fi
+
+    lam_hosts=""
+    for i in `cat "${lam_hostfile}"` ; do
+        if test -z "${lam_hosts}" ; then
+            lam_hosts="${i}"
+        else
+            lam_hosts="${lam_hosts} ${i}"
+        fi
+    done
+
+    if test -z "${lam_hosts}" ; then
+        echo "Did not find any valid hostnames in ${lam_hostfile}.  Aborting"
+        exit 1
+    fi
+}
+
+
+######################################################################
+#
+# launch procs
+#
+# fire up a bunch of procs...
+#
+######################################################################
+launch_procs() {
+    local args="$*"
+    set -- ${lam_hosts}
+    local i
+
+    if test -z "${args}" ; then
+        echo "Did not find valid MPI app to start - being a coward and aborting."
+        exit 1
+    fi
+
+    for (( i=0 ; i < ${lam_numprocs} ; i++)) ; do
+        start_proc "${1}" "${i}" "${args}"
+        shift
+        if test -z "${1}" ; then
+            set -- ${lam_hosts}
+        fi
+    done
+}
+
+
+######################################################################
+#
+# Do the prep work
+#
+######################################################################
+lam_jobhandle="pcm_cofs_job_handle_${$}_0"
+
+
+######################################################################
+#
+# exit cleanly
+#
+######################################################################
+make_hosts_list
+launch_procs "${lam_app_args}"
+
+echo ""
+echo "Processes should be running.  I'm going to exit now.  Need to add sleeping"
+echo ""
+
+exit 0
+

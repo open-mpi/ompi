@@ -5,4 +5,5 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-SUBDIRS		= mpirun wrappers
+bin_SCRIPTS = mpirun mpiboot
+

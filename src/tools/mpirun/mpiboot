@@ -1,0 +1,95 @@
+#!/bin/bash
+#
+# $HEADER$
+#
+# Quick and dirty hack of an mpirun to be used only with the cofs
+# "RTE" (if you can call it that).  Does not guarantee cleanup just
+# yet (still trying to figure out how to make that one work..
+#
+# On the other hand, it will get us to MPI_INIT faster than just about
+# any other idea I have...
+#
+# hboot is used to start procs on the remote side.  fun, fun
+
+
+######################################################################
+#
+# Some basic defaults
+#
+######################################################################
+lam_myvpid=""
+lam_numprocs=""
+lam_jobhandle=""
+lam_commdir=""
+
+######################################################################
+#
+# Do argument parsing
+#
+######################################################################
+args_err=1
+for i ; do
+    case "${i}" in
+        -test)
+            exit 0
+            ;;
+        -myvpid)
+            shift
+            lam_myvpid="${1}"
+            shift
+            ;;
+        -numprocs)
+            shift
+            lam_numprocs="${1}"
+            shift
+            ;;
+        -jobhandle)
+            shift
+            lam_jobhandle="${1}"
+            shift
+            ;;
+        -commdir)
+            shift
+            lam_commdir="${1}"
+            shift
+            ;;
+        -pwd)
+            shift
+            cd "${1}"
+            shift
+            ;;
+        --)
+            shift
+            args_err=0
+            ;;
+    esac
+done
+
+if test "${args_err}" != "0" ; then
+    echo "Argument parse error - did not find -- "
+    exit 1
+fi
+if test -z "${1}" ; then
+    echo "Did not find app to execute"
+    exit 2
+fi
+
+######################################################################
+#
+# Set the environment
+#
+######################################################################
+export MCA_common_lam_cofs_my_vpid="${lam_myvpid}"
+export MCA_common_lam_cofs_num_procs="${lam_numprocs}"
+export MCA_common_lam_cofs_job_handle="${lam_jobhandle}"
+if test ! -z "${lam_commdir}"; then
+    export MCA_common_lam_cofs_comm_dir="${lam_commdir}"
+fi
+
+######################################################################
+#
+# Spawn and run
+#
+######################################################################
+exec $@ &
+exit 0
