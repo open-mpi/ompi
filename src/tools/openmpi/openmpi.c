@@ -293,6 +293,7 @@ int main(int argc, char **argv)
 
 	    /* put info on the registry */
 
+fprintf(stderr, "openmpi: entering event loop\n");
 	    /* event loop */
 	    ompi_event_loop(0);
 	}
