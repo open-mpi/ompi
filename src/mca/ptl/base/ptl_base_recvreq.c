@@ -51,7 +51,7 @@ void mca_ptl_base_recv_request_match_specific(mca_ptl_base_recv_request_t* reque
         mca_ptl_t* ptl = frag->super.frag_owner;
         THREAD_UNLOCK(pml_comm->c_matching_lock+req_peer);
         mca_ptl_base_recv_frag_init(frag);
-        ptl->ptl_recv(ptl, frag, &request->super.req_status);
+        ptl->ptl_recv(ptl, frag);
         return; /* match found */
     }
 
@@ -95,8 +95,8 @@ void mca_ptl_base_recv_request_match_wild(mca_ptl_base_recv_request_t* request)
         if ((frag = mca_ptl_base_recv_request_match_specific_proc(request, proc)) != NULL) {
             mca_ptl_t* ptl = frag->super.frag_owner;
             THREAD_UNLOCK(pml_comm->c_matching_lock+proc);
-            mca_ptl_base_recv_frag_init(frag); 
-            ptl->ptl_recv(ptl, frag, &request->super.req_status);
+            mca_ptl_base_recv_frag_init(frag);
+            ptl->ptl_recv(ptl, frag);
             return; /* match found */
         }
         THREAD_UNLOCK(pml_comm->c_matching_lock+proc);

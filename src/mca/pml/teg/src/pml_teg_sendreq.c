@@ -25,19 +25,19 @@ void mca_pml_teg_send_request_schedule(mca_ptl_base_send_request_t* req)
     mca_pml_proc_t* proc_pml = proc->proc_pml;
 
     /* allocate remaining bytes to PTLs */
-    size_t bytes_remaining = req->super.req_length - req->req_offset;
+    size_t bytes_remaining = req->req_packed_size - req->req_offset;
     size_t num_ptl_avail = proc_pml->proc_ptl_next.ptl_size;
     size_t num_ptl = 0;
     while(bytes_remaining > 0 && num_ptl++ < num_ptl_avail) {
         mca_ptl_proc_t* ptl_proc = mca_ptl_array_get_next(&proc_pml->proc_ptl_next);
         mca_ptl_t* ptl = ptl_proc->ptl;
+        int rc;
 
         /* if this is the last PTL that is available to use, or the number of 
          * bytes remaining in the message is less than the PTLs minimum fragment 
          * size, then go ahead and give the rest of the message to this PTL.
          */
         size_t bytes_to_frag;
-		int rc;
         if(num_ptl == num_ptl_avail || bytes_remaining < ptl->ptl_min_frag_size)
             bytes_to_frag = bytes_remaining;
 
@@ -47,14 +47,14 @@ void mca_pml_teg_send_request_schedule(mca_ptl_base_send_request_t* req)
          * previously assigned)
          */
         else {
-            bytes_to_frag = ptl_proc->ptl_weight * req->super.req_length;
+            bytes_to_frag = ptl_proc->ptl_weight * req->req_packed_size;
             if(bytes_to_frag > bytes_remaining)
                 bytes_to_frag = bytes_remaining;
         }
 
         rc = ptl->ptl_send(ptl, ptl_proc->ptl_peer, req, bytes_to_frag, 0);
         if(rc == LAM_SUCCESS)
-            bytes_remaining = req->super.req_length - req->req_offset;
+            bytes_remaining = req->req_packed_size - req->req_offset;
     }
 
     /* unable to complete send - signal request failed */
@@ -76,7 +76,7 @@ void mca_pml_teg_send_request_progress(
     bool complete = false;
     lam_mutex_lock(&mca_pml_teg.teg_request_lock);
     req->req_bytes_sent += frag->super.frag_size;
-    if (req->req_bytes_sent >= req->super.req_length) {
+    if (req->req_bytes_sent >= req->req_packed_size) {
         req->super.req_mpi_done = true;
         req->super.req_pml_done = true;
         if(mca_pml_teg.teg_request_waiting) {

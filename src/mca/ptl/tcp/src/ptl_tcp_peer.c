@@ -2,6 +2,7 @@
  * $HEADER$
  */
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <sys/errno.h>
 #include <sys/types.h>
@@ -331,9 +332,9 @@ static int mca_ptl_tcp_peer_recv_connect_ack(mca_ptl_base_peer_t* ptl_peer)
 
 static int mca_ptl_tcp_peer_start_connect(mca_ptl_base_peer_t* ptl_peer)
 {
-    int rc;
-    int flags;
+    int rc,flags;
     struct sockaddr_in peer_addr;
+
     ptl_peer->peer_sd = socket(AF_INET, SOCK_STREAM, 0);
     if (ptl_peer->peer_sd < 0) {
         ptl_peer->peer_retries++;

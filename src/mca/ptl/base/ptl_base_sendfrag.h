@@ -1,6 +1,9 @@
 /* 
  * $HEADER$
  */
+/**
+ * @file
+ */
 #ifndef MCA_PTL_BASE_SEND_FRAG_H
 #define MCA_PTL_BASE_SEND_FRAG_H
 
@@ -9,10 +12,12 @@
 
 extern lam_class_t mca_ptl_base_send_frag_t_class;
 
-
+/**
+ * Base type for send fragment descriptors 
+ */
 struct mca_ptl_base_send_frag_t {
-    mca_ptl_base_frag_t super;
-    struct mca_ptl_base_send_request_t *frag_request;
+    mca_ptl_base_frag_t super;  /**< base fragment descriptor */
+    struct mca_ptl_base_send_request_t *frag_request;  /**< pointer to send request */
 };
 typedef struct mca_ptl_base_send_frag_t mca_ptl_base_send_frag_t;
 

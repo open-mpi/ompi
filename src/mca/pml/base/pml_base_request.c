@@ -5,6 +5,14 @@
 
 #include "mca/pml/base/pml_base_request.h"
 
+static void mca_pml_base_request_construct(mca_pml_base_request_t* req)
+{
+}
+
+static void mca_pml_base_request_destruct(mca_pml_base_request_t* req)
+{
+}
+
 lam_class_t mca_pml_base_request_t_class = { 
     "mca_pml_base_request_t", 
     OBJ_CLASS(lam_request_t),
@@ -12,11 +20,4 @@ lam_class_t mca_pml_base_request_t_class = {
     (lam_destruct_t) mca_pml_base_request_destruct 
 };
                                                                                                  
-void mca_pml_base_request_construct(mca_pml_base_request_t* req)
-{
-}
-
-void mca_pml_base_request_destruct(mca_pml_base_request_t* req)
-{
-}
 

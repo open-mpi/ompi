@@ -1,7 +1,9 @@
 /*
  * $HEADER$
  */
-
+/**
+ * @file
+ */
 #ifndef LAM_PTL_ARRAY_H
 #define LAM_PTL_ARRAY_H
 
@@ -10,24 +12,40 @@
 
 extern lam_class_t mca_pml_teg_ptl_array_t_class;
 
+/**
+ * A data structure associated with a lam_proc_t that caches
+ * addressing/scheduling attributes for a specific PTL instance
+ * that can be used to reach the process.
+ */
 struct mca_ptl_proc_t {
-    double ptl_weight;               /* PTL weight for scheduling */
-    struct mca_ptl_base_peer_t* ptl_peer; /* PTL addressing info */
-    mca_ptl_t *ptl;                  /* PTL implementation */
+    double ptl_weight;                    /**< PTL weight for scheduling */
+    struct mca_ptl_base_peer_t* ptl_peer; /**< PTL addressing info */
+    mca_ptl_t *ptl;                       /**< PTL implementation */
 };
 typedef struct mca_ptl_proc_t mca_ptl_proc_t;
 
+/**
+ * A dynamically growable array of mca_ptl_proc_t instances.
+ * Maintains an index into the array that is used for round-robin
+ * scheduling across contents.
+ */
 struct mca_ptl_array_t {
     lam_object_t     super;
-    mca_ptl_proc_t*  ptl_procs;   /* array of ptl procs */
-    size_t           ptl_size;    /* number available */
-    size_t           ptl_reserve;
-    size_t           ptl_index;   /* last used index*/
+    mca_ptl_proc_t*  ptl_procs;   /**< array of ptl procs */
+    size_t           ptl_size;    /**< number available */
+    size_t           ptl_reserve; /**< size of allocated ptl_proc array */
+    size_t           ptl_index;   /**< last used index*/
 };
 typedef struct mca_ptl_array_t mca_ptl_array_t;
 typedef struct mca_ptl_array_t mca_pml_teg_ptl_array_t;
 
 
+/**
+ * If required, reallocate (grow) the array to the indicate size.
+ * 
+ * @param array (IN)
+ * @param size (IN)
+ */
 int mca_ptl_array_reserve(mca_ptl_array_t*, size_t);
 
 static inline size_t mca_ptl_array_get_size(mca_ptl_array_t* array)
@@ -35,6 +53,12 @@ static inline size_t mca_ptl_array_get_size(mca_ptl_array_t* array)
     return array->ptl_size;
 }
 
+/**
+ * Grow the array if required, and set the size.
+ * 
+ * @param array (IN)
+ * @param size (IN)
+ */
 static inline void mca_ptl_array_set_size(mca_ptl_array_t* array, size_t size)
 {
     if(array->ptl_size > array->ptl_reserve)
@@ -42,6 +66,11 @@ static inline void mca_ptl_array_set_size(mca_ptl_array_t* array, size_t size)
     array->ptl_size = size;
 }
 
+/**
+ * Grow the array size by one and return the item at that index.
+ * 
+ * @param array (IN)
+ */
 static inline mca_ptl_proc_t* mca_ptl_array_insert(mca_ptl_array_t* array)
 {
 #if LAM_ENABLE_DEBUG
@@ -54,6 +83,12 @@ static inline mca_ptl_proc_t* mca_ptl_array_insert(mca_ptl_array_t* array)
     return &array->ptl_procs[array->ptl_size++];
 }
 
+/**
+ * Return an array item at the specified index.
+ * 
+ * @param array (IN)
+ * @param index (IN)
+ */
 static inline mca_ptl_proc_t* mca_ptl_array_get_index(mca_ptl_array_t* array, size_t index)
 {
 #if LAM_ENABLE_DEBUG
@@ -66,6 +101,12 @@ static inline mca_ptl_proc_t* mca_ptl_array_get_index(mca_ptl_array_t* array, si
     return &array->ptl_procs[index];
 }
 
+/**
+ * Return the next LRU index in the array.
+ * 
+ * @param array (IN)
+ * @param index (IN)
+ */
 static inline mca_ptl_proc_t* mca_ptl_array_get_next(mca_ptl_array_t* array)
 {
     mca_ptl_proc_t* ptl_proc;

@@ -59,7 +59,7 @@ static inline int mca_pml_teg_param_register_int(
 
 int mca_pml_teg_module_open(void)
 {
-    mca_pml_base_request_t* teg_null = &mca_pml_teg.teg_null;
+    mca_pml_base_request_t* teg_null = &mca_pml_teg.teg_request_null;
     OBJ_CONSTRUCT(&mca_pml_teg.teg_lock, lam_mutex_t);
     OBJ_CONSTRUCT(&mca_pml_teg.teg_recv_requests, lam_free_list_t);
     OBJ_CONSTRUCT(&mca_pml_teg.teg_procs, lam_list_t);
@@ -93,13 +93,6 @@ int mca_pml_teg_module_close(void)
     OBJ_DESTRUCT(&mca_pml_teg.teg_procs);
     OBJ_DESTRUCT(&mca_pml_teg.teg_lock);
     return LAM_SUCCESS;
-}
-
-
-static void* mca_pml_teg_thread(lam_object_t* thread)
-{
-    lam_event_dispatch();
-    return NULL;
 }
 
 

@@ -3,6 +3,7 @@
  */
 #include <errno.h>
 #include <unistd.h>
+#include <string.h>
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -54,8 +55,7 @@ mca_ptl_tcp_module_1_0_0_t mca_ptl_tcp_module = {
     false
     },
 
-    mca_ptl_tcp_module_init,    /* module init */
-    mca_ptl_tcp_module_progress /* module progress */
+    mca_ptl_tcp_module_init   /* module init */
     }
 };
 
@@ -124,7 +124,7 @@ int mca_ptl_tcp_module_open(void)
     mca_ptl_tcp.super.ptl_exclusivity =
         mca_ptl_tcp_param_register_int("exclusivity", 0);
     mca_ptl_tcp.super.ptl_first_frag_size =
-        mca_ptl_tcp_param_register_int("first_frag_size", 16*1024);
+        mca_ptl_tcp_param_register_int("first_frag_size", 64*1024);
     mca_ptl_tcp.super.ptl_min_frag_size = 
         mca_ptl_tcp_param_register_int("min_frag_size", 64*1024);
     mca_ptl_tcp.super.ptl_max_frag_size =
@@ -150,6 +150,27 @@ int mca_ptl_tcp_module_close(void)
 
 
 /*
+ *  Create a ptl instance and add to modules list.
+ */
+
+static int mca_ptl_tcp_create(int if_index)
+{
+    mca_ptl_tcp_t* ptl = malloc(sizeof(mca_ptl_tcp_t));
+    if(NULL == ptl)
+        return LAM_ERR_OUT_OF_RESOURCE;
+    memcpy(ptl, &mca_ptl_tcp, sizeof(mca_ptl_tcp));
+    mca_ptl_tcp_module.tcp_ptls[mca_ptl_tcp_module.tcp_num_ptls++] = ptl;
+                                                                                                                                
+    /* initialize the ptl */
+    ptl->ptl_ifindex = if_index;
+    lam_ifindextoaddr(if_index, (struct sockaddr*)&ptl->ptl_ifaddr, sizeof(ptl->ptl_ifaddr));
+    lam_ifindextomask(if_index, (struct sockaddr*)&ptl->ptl_ifmask, sizeof(ptl->ptl_ifmask));
+    return LAM_SUCCESS;
+}
+                                                                                                                                
+                                                                                                                                
+
+/*
  * Create a TCP PTL instance for either:
  * (1) all interfaces specified by the user
  * (2) all available interfaces 
@@ -173,7 +194,7 @@ static int mca_ptl_tcp_module_create_instances(void)
     if(NULL == mca_ptl_tcp_module.tcp_ptls)
         return LAM_ERR_OUT_OF_RESOURCE;
 
-    /* if the user specified an interface list - use these only */
+    /* if the user specified an interface list - use these exclusively */
     argv = include = lam_argv_split(mca_ptl_tcp_module.tcp_if_include,'\'');
     while(argv && *argv) {
         char* if_name = *argv;
@@ -217,8 +238,8 @@ static int mca_ptl_tcp_module_create_instances(void)
 static int mca_ptl_tcp_module_create_listen(void)
 {
     int flags;
-    struct sockaddr_in inaddr;
-    lam_socklen_t addrlen = sizeof(struct sockaddr_in);
+    struct sockaddr_in inaddr; 
+    lam_socklen_t addrlen;
 
     /* create a listen socket for incoming connections */
     mca_ptl_tcp_module.tcp_listen_sd = socket(AF_INET, SOCK_STREAM, 0);
@@ -239,6 +260,7 @@ static int mca_ptl_tcp_module_create_listen(void)
     }
                                                                                                       
     /* resolve system assignend port */
+    addrlen = sizeof(struct sockaddr_in);
     if(getsockname(mca_ptl_tcp_module.tcp_listen_sd, (struct sockaddr*)&inaddr, &addrlen) < 0) {
         lam_output(0, "mca_ptl_tcp_module_init: getsockname() failed with errno=%d", errno);
         return LAM_ERROR;
@@ -281,7 +303,8 @@ static int mca_ptl_tcp_module_create_listen(void)
 
 static int mca_ptl_tcp_module_exchange(void)
 {
-     size_t i, rc;
+     int rc;
+     size_t i;
      size_t size = mca_ptl_tcp_module.tcp_num_ptls * sizeof(mca_ptl_tcp_addr_t);
      mca_ptl_tcp_addr_t *addrs = malloc(size);
      for(i=0; i<mca_ptl_tcp_module.tcp_num_ptls; i++) {
@@ -351,7 +374,7 @@ mca_ptl_t** mca_ptl_tcp_module_init(int *num_ptls,
     if(mca_ptl_tcp_module_create_listen() != LAM_SUCCESS)
         return 0;
 
-    /* register TCP parameters with the MCA framework */
+    /* publish TCP parameters with the MCA framework */
     if(mca_ptl_tcp_module_exchange() != LAM_SUCCESS)
         return 0;
 
@@ -364,19 +387,6 @@ mca_ptl_t** mca_ptl_tcp_module_init(int *num_ptls,
     return ptls;
 }
 
-
-/*
- *  All TCP progress is handled via an event loop based on select. Events
- *  are dispatched to the appropriate callbacks as file descriptors become
- *  available for read/write.
- */
-
-void mca_ptl_tcp_module_progress(mca_ptl_base_tstamp_t tstamp)
-{
-    lam_event_loop(LAM_EVLOOP_NONBLOCK);
-}
-
-                                                                                                                
 /*
  *  Called by mca_ptl_tcp_module_recv() when the TCP listen
  *  socket has pending connection requests. Accept incoming
@@ -388,8 +398,8 @@ static void mca_ptl_tcp_module_accept(void)
     while(true) {
         lam_socklen_t addrlen = sizeof(struct sockaddr_in);
         struct sockaddr_in addr;
-        int sd = accept(mca_ptl_tcp_module.tcp_listen_sd, (struct sockaddr*)&addr, &addrlen);
         lam_event_t* event;
+        int sd = accept(mca_ptl_tcp_module.tcp_listen_sd, (struct sockaddr*)&addr, &addrlen);
         if(sd < 0) {
             if(errno == EINTR)
                 continue;
@@ -415,9 +425,9 @@ static void mca_ptl_tcp_module_recv_handler(int sd, short flags, void* user)
     void* guid; 
     uint32_t size;
     struct sockaddr_in addr;
-    lam_socklen_t addr_len = sizeof(addr);
     int retval;
     mca_ptl_tcp_proc_t* ptl_proc;
+    lam_socklen_t addr_len = sizeof(addr);
 
     /* accept new connections on the listen socket */
     if(mca_ptl_tcp_module.tcp_listen_sd == sd) {

@@ -1,8 +1,9 @@
 /*
  * $HEADER$
  */
-/*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
-
+/**
+ * @file
+ */
 #ifndef MCA_PTL_BASE_RECVFRAG_H
 #define MCA_PTL_BASE_RECVFRAG_H
 
@@ -13,43 +14,85 @@
 
 extern lam_class_t mca_ptl_base_recv_frag_t_class;
 
-
+/**
+ * Base type for receive fragment descriptors.
+ */
 struct mca_ptl_base_recv_frag_t {
-    mca_ptl_base_frag_t super;
-    mca_ptl_base_recv_request_t *frag_request; /* matched posted receive */
+    mca_ptl_base_frag_t super; /**< base fragment descriptor */
+    mca_ptl_base_recv_request_t *frag_request; /**< matched posted receive */
+    bool frag_is_buffered; /**< does fragment need to be unpacked into users buffer */
 };
 typedef struct mca_ptl_base_recv_frag_t mca_ptl_base_recv_frag_t;
 
 
-
+/**
+ * Initialize the receive fragment after a match has been made.
+ * 
+ * @param frag (IN)  Receive fragment descriptor.
+ *
+ * If a buffer has not already been allocated, determine the
+ * offset into the users buffer (if contigous data), or allocate
+ * a buffer for the non-contigous case. 
+ *
+ * TODO: may need to pass in an allocator....
+ */
 static inline void mca_ptl_base_recv_frag_init(mca_ptl_base_recv_frag_t* frag)
 {
     mca_ptl_base_recv_request_t* request = frag->frag_request;
-    mca_ptl_base_frag_header_t* header = &frag->super.frag_header.hdr_frag;
+    mca_ptl_base_match_header_t* header = &frag->super.frag_header.hdr_match;
 
-    /* determine the offset and size of posted buffer */
-    if (request->super.req_length < header->hdr_frag_offset) {
+    /* initialize status */
+    request->super.req_status.MPI_SOURCE = header->hdr_src;
+    request->super.req_status.MPI_TAG = header->hdr_tag;
+    request->super.req_status.MPI_ERROR = LAM_SUCCESS;
+    request->super.req_status._count = header->hdr_msg_length;
 
-        /* user buffer is to small - discard entire fragment */
-        frag->super.frag_addr = 0;
-        frag->super.frag_size = 0;
+    if(header->hdr_frag.hdr_frag_length > 0) {
 
-    } else if (request->super.req_length < header->hdr_frag_offset + header->hdr_frag_length) {
+        /* initialize receive convertor */
+        lam_proc_t *proc = 
+            lam_comm_peer_lookup(request->super.req_comm, request->super.req_peer);
+        lam_convertor_copy(proc->proc_convertor, &frag->super.frag_convertor);
+        lam_convertor_init_for_recv(
+            &frag->super.frag_convertor,  /* convertor */
+            0,                            /* flags */
+            request->super.req_datatype,  /* datatype */
+            request->super.req_count,     /* count elements */
+            request->super.req_addr,      /* users buffer */
+            header->hdr_frag.hdr_frag_offset);  /* offset in bytes into packed buffer */
 
-        /* user buffer is to small - discard part of fragment */
-        frag->super.frag_addr = ((unsigned char*)request->super.req_addr + header->hdr_frag_offset);
-        frag->super.frag_size = request->super.req_length - header->hdr_frag_offset;
+        /* if buffer has not already been allocated for eager
+         * send - go ahead and figure out offset into users 
+         * buffer (for contigous data) - or allocate a buffer
+         * for the receive if required.
+        */
+        if(NULL == frag->super.frag_addr) {
+            struct iovec iov;
+            iov.iov_base = NULL;
+            iov.iov_len = header->hdr_frag.hdr_frag_length;
+            lam_convertor_unpack(&frag->super.frag_convertor, &iov, 1);
 
-    } else {
-
-        /* user buffer is large enough for this fragment */
-        frag->super.frag_addr = ((unsigned char*)request->super.req_addr + header->hdr_frag_offset);
-        frag->super.frag_size = header->hdr_frag_length;
-
+            /* non-contiguous - allocate buffer for receive */
+            if(NULL == iov.iov_base) {
+                frag->super.frag_addr = malloc(iov.iov_len);
+                frag->frag_is_buffered = true;
+            /* we now have correct offset into users buffer */
+            } else {
+                frag->super.frag_addr = iov.iov_base;
+                frag->frag_is_buffered = false;
+            }
+            frag->super.frag_size = header->hdr_frag.hdr_frag_length;
+        }
     }
 }
                                                                                                                    
-
+/**
+ * Called by the PTL to match attempt a match for new fragments.
+ * 
+ * @param frag (IN)     Receive fragment descriptor.
+ * @param header (IN)   Header corresponding to the receive fragment.
+ * @return              LAM_SUCCESS or error status on failure.
+ */
 static inline int mca_ptl_base_recv_frag_match(
     mca_ptl_base_recv_frag_t* frag, 
     mca_ptl_base_match_header_t* header)
@@ -70,7 +113,7 @@ static inline int mca_ptl_base_recv_frag_match(
             mca_ptl_base_recv_frag_init(frag);
             
             /* notify ptl of match */
-            ptl->ptl_recv(ptl, frag, &frag->frag_request->super.req_status);
+            ptl->ptl_recv(ptl, frag);
 
             /* process any additional fragments that arrived out of order */
             frag = (mca_ptl_base_recv_frag_t*)lam_list_remove_first(&matched_frags);

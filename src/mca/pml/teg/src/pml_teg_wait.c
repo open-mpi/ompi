@@ -46,15 +46,13 @@ int mca_pml_teg_wait(
     }
 
     /* return request to pool */
-    if(pml_request->req_persistent == false) {
+    if(false == pml_request->req_persistent) {
         mca_pml_teg_free(request);
     }
-    if (status != NULL) {
+    if (NULL != status) {
        *status = pml_request->req_status;
     }
-    if (index != NULL) {
-       *index = completed;
-    }
+    *index = completed;
     return LAM_SUCCESS;
 }
 
@@ -64,46 +62,58 @@ int mca_pml_teg_wait_all(
     lam_request_t** requests,
     lam_status_public_t* statuses)
 {
-    int completed, i;
-
-    /*
-     * acquire lock and test for completion - if all requests are not completed
-     * pend on condition variable until a request completes 
-     */
-    lam_mutex_lock(&mca_pml_teg.teg_request_lock);
-    mca_pml_teg.teg_request_waiting++;
-    do {
-        completed = 0;
-        for(i=0; i<count; i++) {
-            mca_pml_base_request_t* pml_request = (mca_pml_base_request_t*)requests[i];
-            if(pml_request == NULL || pml_request->req_mpi_done == true) {
-                completed++;
-                continue;
-            }
-        } 
-        if(completed != count)
-            lam_condition_wait(&mca_pml_teg.teg_request_cond, &mca_pml_teg.teg_request_lock);
-    } while (completed != count);
-    mca_pml_teg.teg_request_waiting--;
-    lam_mutex_unlock(&mca_pml_teg.teg_request_lock);
-
-    /* 
-     * fill out completion status and free request if required 
-     */
+    int completed = 0, i;
     for(i=0; i<count; i++) {
         mca_pml_base_request_t* pml_request = (mca_pml_base_request_t*)requests[i];
-        if (NULL == pml_request) {
-            if(NULL != statuses)
-                statuses[i] = mca_pml_teg.teg_null.req_status;
-            continue;
-        }
+        if(pml_request == NULL || pml_request->req_mpi_done == true) {
+            completed++;
+        } 
+    }
 
-        if (NULL != statuses) {
-            statuses[i] = pml_request->req_status;
+    /* if all requests have not completed -- defer requiring lock unless required */
+    if(completed != count) {
+        /*
+         * acquire lock and test for completion - if all requests are not completed
+         * pend on condition variable until a request completes 
+         */
+        lam_mutex_lock(&mca_pml_teg.teg_request_lock);
+        mca_pml_teg.teg_request_waiting++;
+        do {
+            completed = 0;
+            for(i=0; i<count; i++) {
+                mca_pml_base_request_t* pml_request = (mca_pml_base_request_t*)requests[i];
+                if(pml_request == NULL || pml_request->req_mpi_done == true) {
+                    completed++;
+                    continue;
+                }
+            } 
+            if(completed != count)
+                lam_condition_wait(&mca_pml_teg.teg_request_cond, &mca_pml_teg.teg_request_lock);
+        } while (completed != count);
+        mca_pml_teg.teg_request_waiting--;
+        lam_mutex_unlock(&mca_pml_teg.teg_request_lock);
+    }
+
+    if(NULL != statuses) {
+        /* fill out status and free request if required */
+        for(i=0; i<count; i++) {
+            mca_pml_base_request_t* pml_request = (mca_pml_base_request_t*)requests[i];
+            if (NULL == pml_request) {
+                statuses[i] = mca_pml_teg.teg_request_null.req_status;
+            } else {
+                statuses[i] = pml_request->req_status;
+                if (false == pml_request->req_persistent) {
+                    mca_pml_teg_free(&requests[i]);
+                }
+            }
         }
-        if (false == pml_request->req_persistent) {
-            /* return request to pool */
-            mca_pml_teg_free(&requests[i]);
+    } else {
+        /* free request if required */
+        for(i=0; i<count; i++) {
+            mca_pml_base_request_t* pml_request = (mca_pml_base_request_t*)requests[i];
+            if (NULL != pml_request && false == pml_request->req_persistent) {
+                    mca_pml_teg_free(&requests[i]);
+            }
         }
     }
     return LAM_SUCCESS;

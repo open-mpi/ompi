@@ -48,8 +48,10 @@ void mca_ptl_tcp_recv_frag_init(mca_ptl_tcp_recv_frag_t* frag, mca_ptl_base_peer
 {
     frag->frag_owner = &peer->peer_ptl->super;
     frag->super.frag_request = 0;
+    frag->super.super.frag_addr = NULL;
+    frag->super.super.frag_size = 0;
+    frag->super.frag_is_buffered = false;
     frag->frag_peer = peer;
-    frag->frag_buff = NULL;
     frag->frag_hdr_cnt = 0;
     frag->frag_msg_cnt = 0;
     frag->frag_ack_pending = false;
@@ -140,15 +142,11 @@ static bool mca_ptl_tcp_recv_frag_match(mca_ptl_tcp_recv_frag_t* frag, int sd)
 
         /* match was not made - so allocate buffer for eager send */
         if (NULL == frag->super.frag_request) {
-
             if(frag->frag_header.hdr_frag.hdr_frag_length > 0) {
-                frag->frag_buff = malloc(frag->frag_header.hdr_frag.hdr_frag_length);
+                frag->super.super.frag_addr = malloc(frag->frag_header.hdr_frag.hdr_frag_length);
                 frag->super.super.frag_size = frag->frag_header.hdr_frag.hdr_frag_length;
+                frag->super.frag_is_buffered = true;
             }
-
-        /* match was made - use application buffer */
-        } else {
-            frag->frag_buff = (unsigned char*)frag->super.super.frag_addr;
         }
     } 
 
@@ -178,7 +176,6 @@ static bool mca_ptl_tcp_recv_frag_frag(mca_ptl_tcp_recv_frag_t* frag, int sd)
     if(frag->frag_msg_cnt == 0) {
         frag->super.frag_request = frag->frag_header.hdr_frag.hdr_dst_ptr.pval;
         mca_ptl_base_recv_frag_init(&frag->super);
-        frag->frag_buff = frag->super.super.frag_addr;
     }
 
     /* continue to receive user data */
@@ -207,7 +204,7 @@ static bool mca_ptl_tcp_recv_frag_data(mca_ptl_tcp_recv_frag_t* frag, int sd)
 {
     int cnt = -1;
     while(cnt < 0) {
-        cnt = recv(sd, (unsigned char*)frag->frag_buff+frag->frag_msg_cnt,  
+        cnt = recv(sd, (unsigned char*)frag->super.super.frag_addr+frag->frag_msg_cnt,  
             frag->super.super.frag_size-frag->frag_msg_cnt, 0);
         if(cnt == 0) {
             mca_ptl_tcp_peer_close(frag->frag_peer);

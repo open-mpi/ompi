@@ -110,7 +110,7 @@ extern lam_pointer_array_t *lam_errhandler_f_to_c_table;
  * parallel invocation to LAM_ERRHANDLER_CHECK() and LAM_ERRHANDLER_RETURN().
  */
 #define LAM_ERRHANDLER_INVOKE(mpi_object, err_code, message) \
-  lam_errhandler_invoke((mpi_object)->error_handler, (mpi_object), \
+  lam_errhandler_invoke((mpi_object) != NULL ? (mpi_object)->error_handler : NULL, (mpi_object), \
                         (err_code), (message));
 
 /**
@@ -129,7 +129,7 @@ extern lam_pointer_array_t *lam_errhandler_f_to_c_table;
  */
 #define LAM_ERRHANDLER_CHECK(rc, mpi_object, err_code, message) \
   if (rc != LAM_SUCCESS) { \
-    lam_errhandler_invoke((mpi_object)->error_handler, (mpi_object), \
+    lam_errhandler_invoke((mpi_object) != NULL ? (mpi_object)->error_handler : NULL, (mpi_object), \
                           (err_code), (message)); \
     return (err_code); \
   }
@@ -152,7 +152,7 @@ extern lam_pointer_array_t *lam_errhandler_f_to_c_table;
  */
 #define LAM_ERRHANDLER_RETURN(rc, mpi_object, err_code, message) \
   if (rc != LAM_SUCCESS) { \
-    lam_errhandler_invoke((mpi_object)->error_handler, (mpi_object), \
+    lam_errhandler_invoke((mpi_object != NULL) ? (mpi_object)->error_handler : NULL, (mpi_object), \
                           (err_code), (message)); \
     return (err_code); \
   } else { \

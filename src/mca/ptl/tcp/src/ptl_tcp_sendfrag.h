@@ -1,8 +1,9 @@
-/* @file
- *
+/*
  * $HEADER$
  */
-
+/**
+ * @file
+ */
 #ifndef MCA_PTL_TCP_SEND_FRAG_H
 #define MCA_PTL_TCP_SEND_FRAG_H
 
@@ -19,11 +20,14 @@ extern lam_class_t mca_ptl_tcp_send_frag_t_class;
 struct mca_ptl_base_peer_t;
 
 
+/**
+ * TCP send fragment derived type.
+ */
 struct mca_ptl_tcp_send_frag_t {
-   mca_ptl_base_send_frag_t super;
-   struct iovec *frag_vec_ptr;
-   size_t frag_vec_cnt;
-   struct iovec frag_vec[2];
+   mca_ptl_base_send_frag_t super;  /**< base send fragment descriptor */
+   struct iovec *frag_vec_ptr;      /**< pointer into iovec array */
+   size_t frag_vec_cnt;             /**< number of iovec structs left to process */
+   struct iovec frag_vec[2];        /**< array of iovecs for send */
 };
 typedef struct mca_ptl_tcp_send_frag_t mca_ptl_tcp_send_frag_t;
 
@@ -36,7 +40,8 @@ static inline mca_ptl_tcp_send_frag_t* mca_ptl_tcp_send_frag_alloc(int* rc)
 
 bool mca_ptl_tcp_send_frag_handler(mca_ptl_tcp_send_frag_t*, int sd);
 
-void mca_ptl_tcp_send_frag_init(
+
+int mca_ptl_tcp_send_frag_init(
     mca_ptl_tcp_send_frag_t*, 
     struct mca_ptl_base_peer_t*, 
     struct mca_ptl_base_send_request_t*, 

@@ -15,26 +15,27 @@
 
 int MPI_Wait(MPI_Request *request, MPI_Status *status) 
 {
-    int index;
+    int index, rc;
     if ( MPI_PARAM_CHECK ) {
-        int rc = MPI_SUCCESS;
-        if (lam_mpi_finalized) {
+        rc = MPI_SUCCESS;
+        if ( LAM_MPI_INVALID_STATE ) {
             rc = MPI_ERR_INTERN;
         } else if (request == NULL) {
             rc = MPI_ERR_REQUEST;
         }
-        if (rc != MPI_SUCCESS) {
-            return rc;
-        }
+        LAM_ERRHANDLER_CHECK(rc, (lam_communicator_t*)NULL, rc, "MPI_Wait");
     }
 
-    if (*request == NULL) {
-        status->MPI_SOURCE = MPI_PROC_NULL;
-        status->MPI_TAG = MPI_ANY_TAG;
-        status->MPI_ERROR = MPI_SUCCESS;
-        status->_count = 0;
+    if (NULL == *request) {
+        if (NULL != status) {
+            status->MPI_SOURCE = MPI_PROC_NULL;
+            status->MPI_TAG = MPI_ANY_TAG;
+            status->MPI_ERROR = MPI_SUCCESS;
+            status->_count = 0;
+        }
         return MPI_SUCCESS;
     }
-    return mca_pml.pml_wait(1, request, &index, status);
+    rc = mca_pml.pml_wait(1, request, &index, status);
+    LAM_ERRHANDLER_RETURN(rc, (lam_communicator_t*)NULL, rc, "MPI_Wait");
 }
 

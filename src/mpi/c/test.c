@@ -16,18 +16,17 @@
 
 int MPI_Test(MPI_Request *request, int *completed, MPI_Status *status) 
 {
+    int rc, index;
     if ( MPI_PARAM_CHECK ) {
-        int rc = MPI_SUCCESS;
-        if ( lam_mpi_finalized ) {
+        rc = MPI_SUCCESS;
+        if ( LAM_MPI_INVALID_STATE ) {
             rc = MPI_ERR_INTERN;
         } else if (request == NULL) {
             rc = MPI_ERR_REQUEST;
         } else if (completed == NULL) {
             rc = MPI_ERR_ARG;
         }
-        if (rc != MPI_SUCCESS) {
-            return rc;
-        }
+        LAM_ERRHANDLER_CHECK(rc, (lam_communicator_t*)NULL, rc, "MPI_Test");
     }
 
     if(*request == NULL) {
@@ -38,6 +37,9 @@ int MPI_Test(MPI_Request *request, int *completed, MPI_Status *status)
         status->_count = 0;
         return MPI_SUCCESS;
     }
-    return mca_pml.pml_test(request,completed,status);
+    rc = mca_pml.pml_test(1, request, index, completed, status);
+    if(completed < 0)
+        completed = 0;
+    LAM_ERRHANDLER_RETURN(rc, (lam_communicator_t*)NULL, rc, "MPI_Test");
 }
 

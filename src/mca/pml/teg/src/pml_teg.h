@@ -1,10 +1,8 @@
-/** @file 
- *
- *  
- */
-
 /*
  * $HEADER$
+ */
+/**
+ *  @file 
  */
 
 #ifndef MCA_PML_TEG_H
@@ -51,9 +49,7 @@ struct mca_pml_teg_t {
     lam_mutex_t teg_request_lock;
     lam_condition_t teg_request_cond;
     volatile int teg_request_waiting;
-
-    /* null request */
-    mca_pml_base_request_t teg_null;
+    mca_pml_base_request_t teg_request_null;
 };
 typedef struct mca_pml_teg_t mca_pml_teg_t; 
 
@@ -108,7 +104,7 @@ extern int mca_pml_teg_add_ptls(
 
 extern int mca_pml_teg_isend_init(
     void *buf,
-    size_t size,
+    size_t count,
     lam_datatype_t *datatype,
     int dst,
     int tag,
@@ -119,7 +115,7 @@ extern int mca_pml_teg_isend_init(
 
 extern int mca_pml_teg_isend(
     void *buf,
-    size_t size,
+    size_t count,
     lam_datatype_t *datatype,
     int dst,
     int tag,
@@ -130,7 +126,7 @@ extern int mca_pml_teg_isend(
 
 extern int mca_pml_teg_send(
     void *buf,
-    size_t size,
+    size_t count,
     lam_datatype_t *datatype,
     int dst,
     int tag,
@@ -140,7 +136,7 @@ extern int mca_pml_teg_send(
 
 extern int mca_pml_teg_irecv_init(
     void *buf,
-    size_t size,
+    size_t count,
     lam_datatype_t *datatype,
     int src,
     int tag,
@@ -150,7 +146,7 @@ extern int mca_pml_teg_irecv_init(
 
 extern int mca_pml_teg_irecv(
     void *buf,
-    size_t size,
+    size_t count,
     lam_datatype_t *datatype,
     int src,
     int tag,
@@ -160,7 +156,7 @@ extern int mca_pml_teg_irecv(
 
 extern int mca_pml_teg_recv(
     void *buf,
-    size_t size,
+    size_t count,
     lam_datatype_t *datatype,
     int src,
     int tag,
@@ -171,10 +167,20 @@ extern int mca_pml_teg_recv(
 extern int mca_pml_teg_progress(void);
 
 extern int mca_pml_teg_start(
-    lam_request_t** request
+    size_t count,
+    lam_request_t** requests
 );
 
 extern int mca_pml_teg_test(
+    size_t count,
+    lam_request_t** request,
+    int *index,
+    int *completed,
+    lam_status_public_t* status
+);
+
+extern int mca_pml_teg_test_all(
+    size_t count,
     lam_request_t** request,
     int *completed,
     lam_status_public_t* status

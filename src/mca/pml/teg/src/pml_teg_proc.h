@@ -1,7 +1,9 @@
 /*
  * $HEADER$
  */
-
+/**
+ * @file
+ */
 #ifndef MCA_PML_PROC_H
 #define MCA_PML_PROC_H
 
@@ -11,17 +13,16 @@
 #include "proc/proc.h"
 #include "pml_ptl_array.h"
 
-/*
+/**
  *  Structure associated w/ lam_proc_t that contains data specific
  *  to the PML. Note that this name is not PML specific.
  */
-
 struct mca_pml_proc_t {
    lam_list_item_t super;
-   lam_proc_t *proc_lam;
-   lam_mutex_t proc_lock;
-   mca_ptl_array_t proc_ptl_first;
-   mca_ptl_array_t proc_ptl_next;
+   lam_proc_t *proc_lam;             /**< back-pointer to lam_proc_t */
+   lam_mutex_t proc_lock;            /**< lock to protect against concurrent access */
+   mca_ptl_array_t proc_ptl_first;   /**< array of ptls to use for first fragments */
+   mca_ptl_array_t proc_ptl_next;    /**< array of ptls to use for remaining fragments */
 };
 typedef struct mca_pml_proc_t mca_pml_proc_t;
 
@@ -29,12 +30,27 @@ typedef struct mca_pml_proc_t mca_pml_proc_t;
 extern lam_class_t mca_pml_teg_proc_t_class;
 typedef struct mca_pml_proc_t mca_pml_teg_proc_t;
 
+/**
+ * Return the mca_pml_proc_t instance cached in the communicators local group.
+ * 
+ * @param comm   Communicator
+ * @param rank   Peer rank
+ * @return       mca_pml_proc_t instance
+ */
 
 static inline mca_pml_proc_t* mca_pml_teg_proc_lookup_local(lam_communicator_t* comm, int rank)
 {
     lam_proc_t* proc = comm->c_local_group->grp_proc_pointers[rank];
     return proc->proc_pml;
 }
+
+/**
+ * Return the mca_pml_proc_t instance cached on the communicators remote group.
+ * 
+ * @param comm   Communicator
+ * @param rank   Peer rank
+ * @return       mca_pml_proc_t instance
+ */
 
 static inline mca_pml_proc_t* mca_pml_teg_proc_lookup_remote(lam_communicator_t* comm, int rank)
 {

@@ -32,6 +32,10 @@ void lam_proc_construct(lam_proc_t* proc)
     proc->proc_vpid = 0;
     proc->proc_pml = NULL;
     proc->proc_modex = NULL;
+    proc->proc_arch = 0;
+
+    /* FIX - need to determine remote process architecture */
+    proc->proc_convertor = lam_convertor_create(0, 0);
 
     THREAD_LOCK(&lam_proc_lock);
     lam_list_append(&lam_proc_list, (lam_list_item_t*)proc);

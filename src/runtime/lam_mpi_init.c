@@ -142,5 +142,6 @@ int lam_mpi_init(int argc, char **argv, int requested, int *provided)
     /* All done */
 
     lam_mpi_initialized = true;
+    lam_mpi_finalized = false;
     return MPI_SUCCESS;
 }

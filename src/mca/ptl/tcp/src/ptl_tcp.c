@@ -2,6 +2,7 @@
  * $HEADER$
  */
 
+#include <string.h>
 #include "util/output.h"
 #include "util/if.h"
 #include "mca/pml/pml.h"
@@ -35,26 +36,9 @@ mca_ptl_tcp_t mca_ptl_tcp = {
     mca_ptl_tcp_send,
     mca_ptl_tcp_recv,
     mca_ptl_tcp_request_alloc,
-    mca_ptl_tcp_request_return,
-    (mca_ptl_base_frag_return_fn_t)mca_ptl_tcp_recv_frag_return
+    mca_ptl_tcp_request_return
     }
 };
-
-
-int mca_ptl_tcp_create(int if_index)
-{
-    mca_ptl_tcp_t* ptl = malloc(sizeof(mca_ptl_tcp_t));
-    if(NULL == ptl)
-        return LAM_ERR_OUT_OF_RESOURCE;
-    memcpy(ptl, &mca_ptl_tcp, sizeof(mca_ptl_tcp));
-    mca_ptl_tcp_module.tcp_ptls[mca_ptl_tcp_module.tcp_num_ptls++] = ptl;
-
-    /* initialize the ptl */
-    ptl->ptl_ifindex = if_index;
-    lam_ifindextoaddr(if_index, (struct sockaddr*)&ptl->ptl_ifaddr, sizeof(ptl->ptl_ifaddr));
-    lam_ifindextomask(if_index, (struct sockaddr*)&ptl->ptl_ifmask, sizeof(ptl->ptl_ifmask));
-    return LAM_SUCCESS;
-}
 
 
 int mca_ptl_tcp_add_proc(struct mca_ptl_t* ptl, struct lam_proc_t *lam_proc, struct mca_ptl_base_peer_t** peer_ret)
@@ -130,8 +114,7 @@ void mca_ptl_tcp_request_return(struct mca_ptl_t* ptl, struct mca_ptl_base_send_
 
 void mca_ptl_tcp_recv_frag_return(struct mca_ptl_t* ptl, struct mca_ptl_tcp_recv_frag_t* frag)
 {
-    if(frag->frag_buff != NULL && frag->frag_buff != frag->super.super.frag_addr)
-        free(frag->frag_buff);
+    /* FIX - need to cleanup convertor */
     lam_free_list_return(&mca_ptl_tcp_module.tcp_recv_frags, (lam_list_item_t*)frag);
 }
 
@@ -139,8 +122,9 @@ void mca_ptl_tcp_recv_frag_return(struct mca_ptl_t* ptl, struct mca_ptl_tcp_recv
 void mca_ptl_tcp_send_frag_return(struct mca_ptl_t* ptl, struct mca_ptl_tcp_send_frag_t* frag)
 {
     if(lam_list_get_size(&mca_ptl_tcp_module.tcp_pending_acks)) {
-        mca_ptl_tcp_recv_frag_t* pending = (mca_ptl_tcp_recv_frag_t*)
-            lam_list_remove_first(&mca_ptl_tcp_module.tcp_pending_acks);
+        mca_ptl_tcp_recv_frag_t* pending;
+        THREAD_LOCK(&mca_ptl_tcp_module.tcp_lock);
+        pending = (mca_ptl_tcp_recv_frag_t*)lam_list_remove_first(&mca_ptl_tcp_module.tcp_pending_acks);
         THREAD_LOCK(&mca_ptl_tcp_module.tcp_lock);
         if(NULL == pending) {
             THREAD_UNLOCK(&mca_ptl_tcp_module.tcp_lock);
@@ -156,6 +140,12 @@ void mca_ptl_tcp_send_frag_return(struct mca_ptl_t* ptl, struct mca_ptl_tcp_send
     }
 }
 
+/*
+ *  Initiate a send. If this is the first fragment, use the fragment
+ *  descriptor allocated with the send requests, otherwise obtain
+ *  one from the free list. Initialize the fragment and foward
+ *  on to the peer.
+ */
 
 int mca_ptl_tcp_send(
     struct mca_ptl_t* ptl,
@@ -178,20 +168,17 @@ int mca_ptl_tcp_send(
 }
 
 
+/*
+ *  A posted receive has been matched - if required send an
+ *  ack back to the peer and process the fragment.
+ */
+
 void mca_ptl_tcp_recv(
     mca_ptl_t* ptl,
-    mca_ptl_base_recv_frag_t* frag,
-    lam_status_public_t* status)
+    mca_ptl_base_recv_frag_t* frag)
 {
+    /* send ack back to peer? */
     mca_ptl_base_header_t* header = &frag->super.frag_header;
-
-    /* fill in match */
-    status->MPI_SOURCE = header->hdr_match.hdr_src;
-    status->MPI_TAG = header->hdr_match.hdr_tag;
-    status->MPI_ERROR = LAM_SUCCESS;
-    status->_count = header->hdr_match.hdr_msg_length;
-
-    /* send ack back to peer */
     if(header->hdr_common.hdr_flags & MCA_PTL_FLAGS_ACK_MATCHED) {
         int rc;
         mca_ptl_tcp_send_frag_t* ack = mca_ptl_tcp_send_frag_alloc(&rc);

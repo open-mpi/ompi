@@ -1271,13 +1271,12 @@ extern "C" {
                               int count);
   int PMPI_Testall(int count, MPI_Request array_of_requests[], int *flag, 
                   MPI_Status array_of_statuses[]);
-  int PMPI_Testany(int count, MPI_Request array_of_requests[], int *index, 
-                  MPI_Status *status);
+  int PMPI_Testany(int count, MPI_Request array_of_requests[], int *index, int *flag, MPI_Status *status);
   int PMPI_Test(MPI_Request *request, int *flag, MPI_Status *status);
   int PMPI_Test_cancelled(MPI_Status *status, int *flag);
   int PMPI_Testsome(int incount, MPI_Request array_of_requests[], 
-                   int *outcount, int array_of_indices, 
-                   MPI_Status array_of_statuses);
+                   int *outcount, int array_of_indices[], 
+                   MPI_Status array_of_statuses[]);
   int PMPI_Topo_test(MPI_Comm comm, int *status);
   MPI_Fint PMPI_Type_c2f(MPI_Datatype datatype);
   int PMPI_Type_commit(MPI_Datatype *type);

@@ -7,6 +7,7 @@
 
 #include "include/types.h"
 #include "lfc/lam_list.h"
+#include "datatype/datatype.h"
 
 
 extern lam_class_t lam_proc_t_class;
@@ -18,6 +19,8 @@ struct lam_proc_t {
     uint32_t                  proc_vpid;   /* process identifier w/in the job */
     struct mca_pml_proc_t*    proc_pml;    /* PML specific proc data */
     struct mca_base_modex_t*  proc_modex;  /* MCA module exchange data */
+    int                       proc_arch;
+    lam_convertor_t*          proc_convertor;
 
   /* JMS: need to have the following information:
 

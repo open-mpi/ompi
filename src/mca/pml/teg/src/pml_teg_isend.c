@@ -9,7 +9,7 @@
 
 int mca_pml_teg_isend_init(
     void *buf,
-    size_t size,
+    size_t count,
     lam_datatype_t *datatype,
     int dst,
     int tag,
@@ -26,7 +26,7 @@ int mca_pml_teg_isend_init(
     mca_ptl_base_send_request_init(
         sendreq,
         buf,
-        size,
+        count,
         datatype,
         dst,
         tag,
@@ -42,7 +42,7 @@ int mca_pml_teg_isend_init(
 
 int mca_pml_teg_isend(
     void *buf,
-    size_t size,
+    size_t count,
     lam_datatype_t *datatype,
     int dst,
     int tag,
@@ -58,7 +58,7 @@ int mca_pml_teg_isend(
     mca_ptl_base_send_request_init(
         sendreq,
         buf,
-        size,
+        count,
         datatype,
         dst,
         tag,
@@ -76,16 +76,14 @@ int mca_pml_teg_isend(
 
 int mca_pml_teg_send(
     void *buf,
-    size_t size,
+    size_t count,
     lam_datatype_t *datatype,
     int dst,
     int tag,
     mca_pml_base_send_mode_t sendmode,
     lam_communicator_t* comm)
 {
-    int rc;
-    int index;
-
+    int rc, index;
     mca_ptl_base_send_request_t* sendreq = mca_pml_teg_send_request_alloc(comm,dst,&rc);
     if(rc != LAM_SUCCESS)
         return rc;
@@ -93,7 +91,7 @@ int mca_pml_teg_send(
     mca_ptl_base_send_request_init(
         sendreq,
         buf,
-        size,
+        count,
         datatype,
         dst,
         tag,
