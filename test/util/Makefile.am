@@ -25,7 +25,8 @@ ompi_numtostr_LDADD = \
         $(top_builddir)/src/threads/mutex_pthread.lo \
         $(top_builddir)/src/threads/mutex_spinlock.lo \
         $(top_builddir)/src/threads/mutex_spinwait.lo \
-        $(top_builddir)/src/util/numtostr.lo 
+        $(top_builddir)/src/util/numtostr.lo  \
+        $(top_builddir)/test/support/libsupport.la 
 ompi_numtostr_DEPENDENCIES = $(ompi_numtostr_LDADD)
 
 ompi_argv_SOURCES = ompi_argv.c
