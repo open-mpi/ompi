@@ -44,6 +44,10 @@ extern "C" {
  *  @param   array       The array to initialize (IN).
  *  @param   item_size   The sizeof each array element (IN).
  *  @return  LAM error code
+ *
+ * Note that there is no corresponding "finalize" function -- use
+ * OBJ_DESTRUCT (for stack arrays) or OBJ_RELEASE (for heap arrays) to
+ * delete it.
  */
 
 static inline int lam_value_array_init(lam_value_array_t *array, size_t item_sizeof)
