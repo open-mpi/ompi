@@ -2,7 +2,9 @@
  * $HEADER$
  */
 
-/** @file lam_datatype_t implementation */
+/*
+ * lam_datatype_t implementation
+ */
 
 #include "lam_config.h"
 #include "lam/datatype.h"
@@ -14,41 +16,6 @@ lam_class_info_t lam_datatype_t_class_info = {
     (lam_destruct_t) lam_p2p_cdi_destruct
 };
 
-
-static int lam_datatype_init = 0;
-lam_dbl_list_t lam_p2p_cdis;
-
-
-void lam_datatype_t(lam_p2p_cdi_t * cdi)
-{
-    if (fetchNset(&lam_p2p_cdis_init, 1) == 0) {
-	lam_dbl_construct(&lam_p2p_cdis);
-    }
-    lam_dbl_item_construct(&cdi->cdi_base);
-    cdi->cdi_name = 0;
-    cdi->cdi_id = lam_dbl_get_size(&lam_p2p_cdis) + 1;
-    cdi->cdi_frag_first_size = 0;
-    cdi->cdi_frag_min_size = 0;
-    cdi->cdi_frag_max_size = 0;
-    cdi->cdi_endpoint_latency = 0;
-    cdi->cdi_endpoint_bandwidth = 0;
-    cdi->cdi_endpoint_count = 0;
-    lam_dbl_construct(&cdi->cdi_incomplete_sends);
-    lam_dbl_append(&lam_p2p_cdis, &cdi->cdi_base);
-}
-
-
-void lam_p2p_cdi_destruct(lam_p2p_cdi_t * cdi)
-{
-    lam_dbl_remove(&lam_p2p_cdis, &cdi->cdi_base);
-    lam_dbl_destruct(&cdi->cdi_incomplete_sends);
-    lam_dbl_item_destruct(&cdi->cdi_base);
-}
-
-
-/*
- * This random stuff checked in while I think about things ...
- */
 
 /**
  * type_pack -- Incrementally copy data type arrays to/from a packed buffer
@@ -117,11 +84,11 @@ lam_packer_status_t
 lam_packer(lam_packer_direction_t direction,
 	   void *buf,
 	   size_t bufsize,
-	   size_t * offset,
+	   size_t *offset,
 	   void *typebuf,
 	   size_t ntype,
-	   lam_datatype_t * datatype,
-	   lam_pack_state_t * pack_state, lam_checksum_t * checksum)
+	   lam_datatype_t *datatype,
+	   lam_pack_state_t *pack_state, lam_checksum_t *checksum)
 {
     return 0;
 }
@@ -139,8 +106,7 @@ void
 lam_datatype_copy(void *dest,
 		  const void *src,
 		  size_t count,
-		  lam_datatype_t *datatype,
-                  lam_checksum_t *csum)
+		  lam_datatype_t *datatype, lam_checksum_t *csum)
 {
     if (datatype == NULL) {
 	memmove(dest, src, count);

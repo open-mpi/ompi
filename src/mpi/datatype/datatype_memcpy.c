@@ -2,30 +2,22 @@
  * $HEADER$
  */
 
-/** @file alternative memcpy function */
+/* alternative memcpy function */
 
 #include <stdlib.h>
 #include <string.h>
 
 #include "lam_config.h"
-#include "lam/stdint.h"
-
 #include "datatype.h"
 
 #define ALIGNED32(X) (((uint32_t)(X) & (uint32_t) 3) == (uint32_t) 0 ? 1 : 0)
 
-/**
- * Alternative memcpy function
- *
- * @param dst   destination buffer
- * @param src   source buffer
- * @param size  size of buffer
- * @param dummy unused variable
- * @return      the original value of dst
- *
- * On some systems, this performs better than the system memcpy.
+/*
+ * Alternative memcpy function: On some systems, this performs better
+ * than the system memcpy.
  */
-void *lam_memcpy_alt(void *dst, const void *src, size_t size, void *dummy)
+void *lam_memcpy_alt(void *dst, const void *src, size_t size,
+                     lam_memcpy_state_t *dummy)
 {
     if (ALIGNED32(src) && ALIGNED32(dst)) {
         uint32_t *restrict p = (uint32_t *) dst;

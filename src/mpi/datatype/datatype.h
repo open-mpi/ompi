@@ -4,11 +4,11 @@
 
 /** @file
  *
- * Data stuctures and functions related to LAM datatypes.
- */
-
-/*
- * LAM internal data type representation
+ * lam_datatype_t interface for LAM internal data type representation
+ *
+ * lam_datatype_t is a class which represents contiguous or
+ * non-contiguous datat together with constituent type-related
+ * information.  It is the LAM's-eye view of MPI_Datatype.
  */
 
 #ifndef LAM_DATATYPE_H_INCLUDED
@@ -21,10 +21,32 @@
 
 #include "lam_config.h"
 #include "lam/constants.h"
+#include "lam/stdint.h"
 #include "lam/lfc/object.h"
 #include "lam/types.h"
 
 #include "mpi.h"
+
+/* macros *************************************************************/
+
+/**
+ * Test 32-bit alignment of an address
+ *
+ * @param address   An address
+ * @return          true if the address is 32-bit aligned
+ */
+#define LAM_IS_32BIT_ALIGNED(addr) \
+    (((uint32_t) addr & (uint32_t) 3) == (uint32_t) 0 ? true : false)
+
+/**
+ * Test 64-bit alignment of an address
+ *
+ * @param address   An address
+ * @return          true if the address is 32-bit aligned
+ */
+#define LAM_IS_64BIT_ALIGNED(addr) \
+    (((uint64_t) addr & (uint64_t) 7) == (uint64_t) 0 ? true : false)
+
 
 /* typedefs ***********************************************************/
 
@@ -34,7 +56,13 @@ typedef struct lam_datavec_element_t lam_datavec_element_t;
 typedef struct lam_datavec_t lam_datavec_t;
 typedef struct lam_dataxdr_t lam_dataxdr_t;
 typedef struct lam_pack_state_t lam_pack_state_t;
+typedef struct lam_memcpy_state_t lam_memcpy_state_t;
 
+/* Function prototype for a generalized memcpy() */
+typedef void *(lam_memcpy_fn_t) (void *restrict dst,
+				 const void *restrict src,
+				 size_t size,
+                                 lam_memcpy_state_t *check);
 
 /* enums **************************************************************/
 
@@ -50,7 +78,6 @@ enum lam_datatype_state_t {
     LAM_DATATYPE_STATE_XDR = 1 << 5,
     /* etc. */
 };
-typedef enum lam_datatype_state_t lam_datatype_state_t;
 
 
 /**
@@ -78,7 +105,6 @@ enum lam_datatype_kind_t {
     LAM_DATATYPE_KIND_STRUCT_FORTRAN,
     LAM_DATATYPE_KIND_VECTOR_FORTRAN
 };
-typedef enum lam_datatype_kind_t lam_datatype_kind_t;
 
 
 /**
@@ -90,15 +116,18 @@ enum lam_checksum_kind_t {
     LAM_CHECKSUM_KIND_SUM32,
     LAM_CHECKSUM_KIND_SUM64
 };
-typedef enum lam_checksum_kind_t lam_checksum_kind_t;
 
+
+typedef enum lam_datatype_state_t lam_datatype_state_t;
+typedef enum lam_datatype_kind_t lam_datatype_kind_t;
+typedef enum lam_checksum_kind_t lam_checksum_kind_t;
 
 /* structs ************************************************************/
 
 /**
  * State of incremental memcpy with checksum or CRC
  */
-typedef struct lam_memcpy_state_t {
+struct lam_memcpy_state_t {
     size_t size;	   /**< total size in bytes of the object
                             * being checksummed / CRCed */
     size_t partial_size;   /**< size of non- uint32_t to be carried
@@ -109,7 +138,7 @@ typedef struct lam_memcpy_state_t {
                             * checksum */
     bool first_call;	   /**< is this the first call for this
                             * checksum/CRC? */
-} lam_memcpy_state_t;
+};
 
 
 /**
@@ -181,24 +210,6 @@ struct lam_dataxdr_element_t {
 };
 
 
-/**
- * Function protoype for a generalized memcpy()
- *
- * Copy data from one buffer to another and optionally calculate a
- * checksum or CRC
- *
- * @param dst      pointer to the destination buffer
- * @param src      pointer to the source buffer
- * @param size     size of the buffer
- * @param check    pointer to the optional checksum or CRC
- * @return         the original value of dst
- */
-typedef void *(lam_memcpy_fn_t) (void *restrict dst,
-                                 const void *restrict src,
-                                 size_t size,
-                                 lam_memcpy_state_t *check);
-
-
 /* interface **********************************************************/
 
 /**
@@ -230,7 +241,7 @@ int lam_datatype_copy(void *dst,
 		      size_t count,
 		      lam_datatype_t *datatype,
 		      lam_memcpy_fn_t *memcpy_fn,
-                      lam_memcpy_state_t *check);
+		      lam_memcpy_state_t *check);
 
 /**
  * Copy (the contents of) an array of data types, and convert to
@@ -251,8 +262,9 @@ int lam_datatype_convert(void *dst,
 			 const void *src,
 			 lam_datatype_t *src_datatype,
 			 size_t src_count,
-                         lam_memcpy_fn_t *memcpy_fn,
-                         lam_memcpy_state_t *check);
+			 lam_memcpy_fn_t *memcpy_fn,
+			 lam_memcpy_state_t *check);
+
 
 /**
  * Pack state
@@ -296,7 +308,7 @@ int lam_datatype_pack(lam_pack_state_t *state,
 		      size_t ntype,
 		      lam_datatype_t *datatype,
 		      lam_memcpy_fn_t *memcpy_fn,
-                      lam_memcpy_state_t *check);
+		      lam_memcpy_state_t *check);
 
 
 /**
@@ -326,7 +338,7 @@ int lam_datatype_unpack(lam_pack_state_t *state,
 			size_t bufsize,
 			lam_datatype_t *datatype,
 			lam_memcpy_fn_t *memcpy_fn,
-                        lam_memcpy_state_t *check);
+			lam_memcpy_state_t *check);
 
 /**
  * Incrementally generate an iovec for gathering from an array of
@@ -398,7 +410,7 @@ int lam_datatype_scatter_iovec(lam_pack_state_t *state,
 			       size_t bufsize,
 			       lam_datatype_t *datatype,
 			       lam_memcpy_fn_t *memcpy_fn,
-                               lam_memcpy_state_t *check);
+			       lam_memcpy_state_t *check);
 
 
 /*
@@ -419,13 +431,6 @@ lam_memcpy_init(lam_memcpy_state_t *state, size_t sum_size)
     state->first_call = true;
 }
 
-/*
- * prototypes for memcpy functions
- */
-
-extern lam_memcpy_fn_t lam_memcpy_crc32;
-extern lam_memcpy_fn_t lam_memcpy_sum32;
-extern lam_memcpy_fn_t lam_memcpy_sum64;
 
 /**
  * Copy data from one buffer to another
@@ -442,10 +447,89 @@ static inline void *lam_memcpy(void *dst, const void *src, size_t size,
     return memcpy(dst, src, size);
 }
 
+/**
+ * An alternative version of memcpy that may out-perform the system
+ * version on some (silly) systems.
+ *
+ * @param dst      pointer to the destination buffer
+ * @param src      pointer to the source buffer
+ * @param size     size of the buffer
+ * @param state    unused
+ * @return         the original value of dst
+ */
+void *lam_memcpy_alt(void *dst, const void *src, size_t size,
+                     lam_memcpy_state_t *state);
+
+
+/**
+ * Generate a 32-bit CRC for a buffer
+ *
+ * @param buffer      Data buffer
+ * @param size        Size of buffer
+ * @param initial_crc Initial value of the CRC register
+ * @return            The CRC
+ *
+ * Generate a 32-bit for a data buffer starting from a given CRC
+ * value.
+ */
 uint32_t lam_crc32(const void *restrict buffer, size_t size,
 		   uint32_t initial_crc);
-uint32_t lam_sum32(const void *restrict buffer, size_t size,
-		   uint32_t initial_crc);
+
+
+/**
+ * Generate a 32-bit checksum for a buffer
+ *
+ * @param buffer      Data buffer
+ * @param size        Size of buffer
+ * @return            The CRC
+ *
+ * Generate a 32-bit for a data buffer starting from a given CRC
+ * value.
+ */
+uint32_t lam_sum32(const void *restrict buffer, size_t size);
+
+
+/**
+ * Copy data from one buffer to another and calculate a 32-bit CRC
+ *
+ * @param dst      pointer to the destination buffer
+ * @param src      pointer to the source buffer
+ * @param size     size of the buffer
+ * @param state    pointer to a memcpy with checksum/CRC state structure
+ * @return         the original value of dst
+ *
+ * This handles cumulative CRCs for for arbitrary lengths and address
+ * alignments as best as it can. The initial contents of state->sum is
+ * used as the starting value of the CRC.  The final CRC is placed
+ * back in state->sum.
+ */
+void *lam_memcpy_crc32(void *restrict dst,
+                       const void *restrict src,
+                       size_t size,
+                       lam_memcpy_state_t *check);
+
+
+/**
+ * Copy data from one buffer to another and calculate a 32-bit checksum
+ *
+ * @param dst      pointer to the destination buffer
+ * @param src      pointer to the source buffer
+ * @param size     size of the buffer
+ * @param state    pointer to a memcpy with checksum/CRC state structure
+ * @return         the original value of dst
+ *
+ * This handles cumulative checksumming for arbitrary lengths and
+ * address alignments as best as it can; the contents of
+ * lastPartialLong and lastPartialLength are updated to reflected the
+ * last partial word's value and length (in bytes) -- this should
+ * allow proper handling of checksumming contiguous or noncontiguous
+ * buffers via multiple calls of bcopy_csum() - Mitch
+ */
+void *lam_memcpy_sum32(void *restrict dst,
+                       const void *restrict src,
+                       size_t size,
+                       lam_memcpy_state_t *check);
+
 
 /**
  * Copy data from one buffer to another and calculate a 32-bit checksum
@@ -456,18 +540,29 @@ uint32_t lam_sum32(const void *restrict buffer, size_t size,
  * @param state    pointer to a memcpy with checksum/CRC state structure
  * @return         the original value of dst
  */
+void *lam_memcpy_sum64(void *restrict dst,
+                       const void *restrict src,
+                       size_t size,
+                       lam_memcpy_state_t *check);
 
 
 /**
- * Copy data from one buffer to another and calculate a 32-bit checksum
+ * Create a LAM/MPI datatype
  *
- * @param dst      pointer to the destination buffer
- * @param src      pointer to the source buffer
- * @param size     size of the buffer
- * @param state    pointer to a memcpy with checksum/CRC state structure
- * @return         the original value of dst
+ * @param combiner   integer identifying the kind of MPI create function
+ * @param ninteger   number of integers passed to the create function
+ * @param integer    array of integers passed to the create function
+ * @param naddress   number of addresses passed to the create function
+ * @param address    array of addresses passed to the create function
+ * @param ntype      number of data types passed to the create function
+ * @param type       array of data types passed to the create function
+ * @param newtype    pointer to address of new type
+ * @return           LAM_SUCCESS on successful creation, LAM_ERROR otherwise
+ *
+ * This is the central location for creation of data types in LAM/MPI.
+ * All MPI_Type_create functions rely upon this to do the actual type
+ * creation.
  */
-
 int lam_datatype_create(int combiner,
                         int nintegers,
                         int integers[],
@@ -477,8 +572,19 @@ int lam_datatype_create(int combiner,
                         lam_datatype_t *types[],
                         lam_datatype_t **newtype);
 
+
+/**
+ * Delete a LAM/MPI datatype (actually, just mark it for deletion)
+ *
+ * @param type       datatype
+ * @return           LAM_SUCCESS on success, LAM_ERROR otherwise
+ *
+ * This is the central location for creation of data types in LAM/MPI.
+ * All MPI_Type_create functions rely upon this to do the actual type
+ * creation.
+ */
 int lam_datatype_delete(lam_datatype_t *type);
 
-void *lam_memcpy_alt(void *dst, const void *src, size_t size, void *dummy);
+
 
 #endif				/* LAM_DATATYPE_H_INCLUDED */
