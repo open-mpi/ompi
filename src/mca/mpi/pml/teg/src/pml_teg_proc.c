@@ -2,9 +2,9 @@
  * $HEADER$
  */
 
-#include "mca/mpi/pml/teg/proc.h"
 #include "lam/atomic.h"
-#include "mca/mpi/pml/teg/ptl_array.h"
+#include "pml_teg_proc.h"
+#include "pml_teg_ptl_array.h"
 
 lam_class_info_t mca_pml_teg_proc_cls = { 
     "mca_pml_teg_proc_t", 

@@ -6,7 +6,7 @@
 #define MCA_PML_PROC_H
 
 #include "mpi/proc/proc.h"
-#include "mca/mpi/pml/teg/ptl_array.h"
+#include "pml_teg_ptl_array.h"
 
 extern lam_class_info_t mca_pml_teg_proc_cls;
 
