@@ -5,7 +5,7 @@
 /** @file **/
 
 #include "ompi_config.h"
-
+#include <string.h>
 #include "include/constants.h"
 #include "util/proc_info.h"
 #include "util/sys_info.h"
@@ -27,7 +27,6 @@ static ompi_condition_t ompi_rte_condition;
 static bool ompi_rte_job_started = false;
 static bool ompi_rte_job_finished = false;
 
-extern char* mca_oob_base_include;
 
 /*
  * Update the registry with an entry for this process.
@@ -35,46 +34,39 @@ extern char* mca_oob_base_include;
 
 int ompi_rte_register(void)
 {
-    /* temporarily disable this if dont know seed - e.g. using cofs */
-    if(NULL == mca_oob_base_include) {
-        ompi_buffer_t buffer;
-        char segment[32];
-        char *jobid = ompi_name_server.get_jobid_string(ompi_process_info.name);
-        char *keys[2];
-        void *addr;
-        int rc,size;
-       
-        /* setup keys and segment for this job */
-        sprintf(segment, "job-%s", jobid);
-        keys[0] = ompi_name_server.get_proc_name_string(ompi_process_info.name);
-        keys[1] = NULL;
-        free(jobid);
+    ompi_buffer_t buffer;
+    char segment[32];
+    char *jobid = ompi_name_server.get_jobid_string(ompi_process_info.name);
+    char *keys[2];
+    void *addr;
+    int rc,size;
 
-     if (ompi_rte_debug_flag) {
-	ompi_output(0, "rte_register: entered for proc %s", keys[0]);
+    /* setup keys and segment for this job */
+    sprintf(segment, "job-%s", jobid);
+    keys[0] = ompi_name_server.get_proc_name_string(ompi_process_info.name);
+    keys[1] = NULL;
+    free(jobid);
+
+    if (ompi_rte_debug_flag) {
+        ompi_output(0, "rte_register: entered for proc %s", keys[0]);
     }
 
-       /* setup packed buffer of proc info - may expand as needed */
-        ompi_buffer_init(&buffer, 128);
-        ompi_pack(buffer, &ompi_process_info.pid, 1, OMPI_INT32);
-        ompi_pack_string(buffer, ompi_system_info.nodename);
+    /* setup packed buffer of proc info - may expand as needed */
+    ompi_buffer_init(&buffer, 128);
+    ompi_pack(buffer, &ompi_process_info.pid, 1, OMPI_INT32);
+    ompi_pack_string(buffer, ompi_system_info.nodename);
 
-        /* peek the buffer and resulting size */
-        ompi_buffer_get(buffer, &addr, &size);
+    /* peek the buffer and resulting size */
+    ompi_buffer_get(buffer, &addr, &size);
 
-        rc = ompi_registry.put(OMPI_REGISTRY_XAND | OMPI_REGISTRY_OVERWRITE,
-			       segment, keys, addr, size);
+    rc = ompi_registry.put(OMPI_REGISTRY_XAND | OMPI_REGISTRY_OVERWRITE,
+               segment, keys, addr, size);
 
-	if (ompi_rte_debug_flag) {
-	    ompi_output(0, "rte_register: %s %d", keys[0], rc);
-	}
-
-        ompi_buffer_free(buffer);
-        return rc;
-    } else if (ompi_rte_debug_flag) {
-	ompi_output(0, "rte_register: oob does NOT have seed");
+    if (ompi_rte_debug_flag) {
+        ompi_output(0, "rte_register: %s %d", keys[0], rc);
     }
-    return OMPI_SUCCESS;
+    ompi_buffer_free(buffer);
+    return rc;
 }
 
 
@@ -84,25 +76,21 @@ int ompi_rte_register(void)
 
 int ompi_rte_unregister(void)
 {
-    /* temporarily disable this if dont know seed - e.g. using cofs */
-    if(NULL == mca_oob_base_include) {
-        char segment[32];
-        char *jobid = ompi_name_server.get_jobid_string(ompi_process_info.name);
-        char *keys[2];
-        int rc;
+    char segment[32];
+    char *jobid = ompi_name_server.get_jobid_string(ompi_process_info.name);
+    char *keys[2];
+    int rc;
    
-        /* setup keys and segment for this job */
-        sprintf(segment, "job-%s", jobid);
-        free(jobid);
+    /* setup keys and segment for this job */
+    sprintf(segment, "job-%s", jobid);
+    free(jobid);
 
-        keys[0] = ompi_name_server.get_proc_name_string(ompi_process_info.name);
-        keys[1] = NULL;
+    keys[0] = ompi_name_server.get_proc_name_string(ompi_process_info.name);
+    keys[1] = NULL;
         
-        rc = ompi_registry.delete_object(OMPI_REGISTRY_XAND, segment, keys);
-        free(keys[0]);
-        return rc;
-    }
-    return OMPI_SUCCESS;
+    rc = ompi_registry.delete_object(OMPI_REGISTRY_XAND, segment, keys);
+    free(keys[0]);
+    return rc;
 }
 
 
