@@ -34,18 +34,4 @@ static void mca_ptl_mx_send_frag_destruct(mca_ptl_mx_send_frag_t* frag)
 }
 
 
-static void *mca_ptl_mx_alloc(size_t *size)
-{
-    return malloc(*size);
-}
-                                                                                                          
-
-void mca_ptl_mx_send_frag_init_ack(
-    mca_ptl_mx_send_frag_t* ack,
-    mca_ptl_mx_module_t* ptl,
-    struct mca_ptl_mx_recv_frag_t* recv_frag)
-{
-
-}
-                                                                                                       
 

@@ -293,7 +293,7 @@ int mca_ptl_mx_send_continue(
     hdr->hdr_frag.hdr_frag_seq = 0;
     hdr->hdr_frag.hdr_src_ptr.lval = 0; /* for VALGRIND/PURIFY - REPLACE WITH MACRO */
     hdr->hdr_frag.hdr_src_ptr.pval = sendfrag;
-    hdr->hdr_frag.hdr_dst_ptr.lval = 0;
+    hdr->hdr_frag.hdr_dst_ptr = sendreq->req_peer_match;
  
     /* initialize convertor */
     sendfrag->frag_free = 0;
@@ -421,7 +421,7 @@ void mca_ptl_mx_matched(
             OMPI_THREAD_UNLOCK(&mca_ptl_mx_component.mx_lock);
         } else {
             mx_return_t mx_return;
-            mca_ptl_mx_send_frag_init_ack(ack, mx_ptl, mx_frag);
+            MCA_PTL_MX_SEND_FRAG_INIT_ACK(ack, ptl, mx_frag);
             if(ack->frag_send.frag_base.frag_peer->peer_byte_swap) {
                 MCA_PTL_BASE_ACK_HDR_HTON(ack->frag_send.frag_base.frag_header.hdr_ack);
             }
