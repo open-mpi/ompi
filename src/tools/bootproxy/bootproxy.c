@@ -28,7 +28,7 @@ main(int argc, char *argv[])
     pid_t pid;
     int i;
     int ret;
-    int jobid;
+    mca_ns_base_jobid_t jobid;
     ompi_cmd_line_t *cmd_line = NULL;
     int local_vpid_start, global_vpid_start;
     int cellid = 0;

@@ -84,7 +84,7 @@ static int mca_pcm_rms_param_debug;
 /*
  * Module variables
  */
-
+ompi_list_t mca_pcm_rms_jobs;
 int mca_pcm_rms_output = 0;
 
 int
@@ -95,6 +95,8 @@ mca_pcm_rms_component_open(void)
 
   mca_pcm_rms_param_priority =
     mca_base_param_register_int("pcm", "rms", "priority", NULL, 0);
+
+  OBJ_CONSTRUCT(&mca_pcm_rms_jobs, ompi_list_t);
 
   return OMPI_SUCCESS;
 }
@@ -121,7 +123,7 @@ mca_pcm_rms_init(int *priority,
 
     mca_base_param_lookup_int(mca_pcm_rms_param_priority, priority);
 
-    *allow_multi_user_threads = true;
+    *allow_multi_user_threads = false;
     *have_hidden_threads = false;
 
     /* poke around for prun */
@@ -139,5 +141,40 @@ mca_pcm_rms_finalize(void)
         ompi_output_close(mca_pcm_rms_output);
     }
 
+    OBJ_DESTRUCT(&mca_pcm_rms_jobs);
+
     return OMPI_SUCCESS;
 }
+
+
+static
+void
+mca_pcm_rms_job_item_construct(ompi_object_t *obj)
+{
+    mca_pcm_rms_job_item_t *data = (mca_pcm_rms_job_item_t*) obj;
+    data->pids = OBJ_NEW(ompi_list_t);
+}
+
+static
+void
+mca_pcm_rms_job_item_destruct(ompi_object_t *obj)
+{
+    mca_pcm_rms_job_item_t *data = (mca_pcm_rms_job_item_t*) obj;
+    if (data->pids != NULL) {
+        ompi_list_item_t *item;
+        while (NULL != (item = ompi_list_remove_first(data->pids))) {
+            OBJ_RELEASE(item);
+        }
+        OBJ_RELEASE(data->pids);
+    }
+}
+
+OBJ_CLASS_INSTANCE(mca_pcm_rms_job_item_t,
+                   ompi_list_item_t,
+                   mca_pcm_rms_job_item_construct,
+                   mca_pcm_rms_job_item_destruct);
+
+OBJ_CLASS_INSTANCE(mca_pcm_rms_pids_t,
+                   ompi_list_item_t,
+                   NULL, NULL);
+

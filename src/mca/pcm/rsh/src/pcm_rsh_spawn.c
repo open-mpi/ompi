@@ -36,7 +36,7 @@
 #endif
 #define PRS_BUFSIZE 1024
 
-static int internal_spawn_proc(int jobid, ompi_rte_node_schedule_t *sched,
+static int internal_spawn_proc(mca_ns_base_jobid_t jobid, ompi_rte_node_schedule_t *sched,
                                ompi_list_t *hostlist, 
                                int my_start_vpid, int global_start_vpid,
                                int num_procs);
@@ -53,7 +53,7 @@ mca_pcm_rsh_can_spawn(void)
 
 
 int
-mca_pcm_rsh_spawn_procs(int jobid, ompi_list_t *schedlist)
+mca_pcm_rsh_spawn_procs(mca_ns_base_jobid_t jobid, ompi_list_t *schedlist)
 {
     ompi_list_item_t *sched_item, *node_item, *host_item;
     ompi_rte_node_schedule_t *sched;
@@ -272,7 +272,7 @@ cleanup:
 
 
 static int
-internal_spawn_proc(int jobid, ompi_rte_node_schedule_t *sched,
+internal_spawn_proc(mca_ns_base_jobid_t jobid, ompi_rte_node_schedule_t *sched,
                     ompi_list_t *hostlist, int my_start_vpid, 
                     int global_start_vpid, int num_procs)
 {
@@ -288,7 +288,9 @@ internal_spawn_proc(int jobid, ompi_rte_node_schedule_t *sched,
     int ret;
     pid_t pid;
     FILE *fp;
+#if 0
     int status;			/* exit status */
+#endif
     int i;
     char *tmp;
 
