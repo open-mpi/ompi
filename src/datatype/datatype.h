@@ -32,6 +32,20 @@ extern ompi_pointer_array_t *ompi_datatype_f_to_c_table;
 
 #define DT_INCREASE_STACK  32
 
+/* flags for the datatypes. */
+#define DT_FLAG_DESTROYED  0x0001  /**< user destroyed but some other layers still have a reference */
+#define DT_FLAG_COMMITED   0x0002  /**< ready to be used for a send/recv operation */
+#define DT_FLAG_CONTIGUOUS 0x0004  /**< contiguous datatype */
+#define DT_FLAG_OVERLAP    0x0008  /**< datatype is unpropper for a recv operation */
+#define DT_FLAG_USER_LB    0x0010  /**< has a user defined LB */
+#define DT_FLAG_USER_UB    0x0020  /**< has a user defined UB */
+#define DT_FLAG_FOREVER    0x0040  /**< cannot be removed: initial and predefined datatypes */
+#define DT_FLAG_IN_LOOP    0x0080  /**< we are inside a loop */
+#define DT_FLAG_INITIAL    0x0100  /**< one of the initial datatype */
+#define DT_FLAG_DATA       0x0200  /**< data or control structure */
+#define DT_FLAG_ONE_SIDED  0x0400  /**< datatype can be used for one sided operations */
+#define DT_FLAG_BASIC      (DT_FLAG_INITIAL | DT_FLAG_COMMITED | DT_FLAG_FOREVER | DT_FLAG_CONTIGUOUS)
+
 /* the basic element. A data description is composed
  * by a set of basic elements.
  */
@@ -86,6 +100,12 @@ int ompi_ddt_finalize( void );
 dt_desc_t* ompi_ddt_create( int expectedSize );
 int ompi_ddt_commit( dt_desc_t** );
 int ompi_ddt_destroy( dt_desc_t** );
+static inline int ompi_ddt_is_committed( ompi_datatype_t* type ) 
+{ return (type->flags & DT_FLAG_COMMITED); }
+static inline int ompi_ddt_is_overlapped( ompi_datatype_t* type )
+{ return (type->flags & DT_FLAG_OVERLAP); }
+static inline int ompi_ddt_is_acceptable_for_one_sided( ompi_datatype_t* type )
+{ return (type->flags & DT_FLAG_ONE_SIDED); }
 void ompi_ddt_dump( dt_desc_t* pData );
 void ompi_ddt_dump_complete( dt_desc_t* pData );
 /* data creation functions */
