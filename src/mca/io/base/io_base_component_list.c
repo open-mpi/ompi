@@ -20,10 +20,10 @@
 #include "mca/io/io.h"
 #include "mca/io/base/base.h"
 
-
 /*
  * Private variables
  */
+static bool initialized = false;
 static ompi_list_t components_in_use;
 static ompi_mutex_t mutex;
 
@@ -43,6 +43,8 @@ static OBJ_CLASS_INSTANCE(component_item_t, ompi_list_item_t, NULL, NULL);
 int mca_io_base_component_init(void)
 {
     OBJ_CONSTRUCT(&components_in_use, ompi_list_t);
+
+    initialized = true;
 
     return OMPI_SUCCESS;
 }
@@ -157,11 +159,14 @@ int mca_io_base_component_del(mca_io_base_components_t *comp)
 }
 
 
-int mca_io_base_progress(int *num_pending)
+/* in this file so that mutex can be static */
+int mca_io_base_component_run_progress(void)
 {
-    int ret;
+    int ret, count = 0;
     ompi_list_item_t *item;
     component_item_t *citem;
+
+    if (! initialized) return 0;
 
     OMPI_THREAD_LOCK(&mutex);
 
@@ -175,10 +180,9 @@ int mca_io_base_progress(int *num_pending)
 
         switch (citem->version) {
         case MCA_IO_BASE_V_1_0_0:
-            ret = citem->component.v1_0_0.io_progress(num_pending);
-            if (OMPI_SUCCESS != ret) {
-                OMPI_THREAD_UNLOCK(&mutex);
-                return ret;
+            ret = citem->component.v1_0_0.io_progress();
+            if (ret > 0) {
+                count += ret;
             }
             break;
 
@@ -189,7 +193,7 @@ int mca_io_base_progress(int *num_pending)
 
     OMPI_THREAD_UNLOCK(&mutex);
 
-    return OMPI_SUCCESS;
+    return count;
 }
 
 
@@ -198,6 +202,8 @@ int mca_io_base_progress(int *num_pending)
  */
 int mca_io_base_component_finalize(void)
 {
+    initialized = false;
+
     OBJ_DESTRUCT(&components_in_use);
 
     return OMPI_SUCCESS;

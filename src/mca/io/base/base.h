@@ -261,6 +261,8 @@ extern "C" {
      */
     OMPI_DECLSPEC int mca_io_base_close(void);
 
+    OMPI_DECLSPEC int mca_io_base_component_run_progress(void);
+
 
 /*
  * Globals

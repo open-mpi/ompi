@@ -23,6 +23,7 @@
 #include "mca/base/mca_base_param.h"
 #include "mca/io/io.h"
 #include "mca/io/base/base.h"
+#include "mca/io/base/io_base_request.h"
 
 
 /*
@@ -45,6 +46,9 @@ int mca_io_base_output = -1;
 
 bool mca_io_base_components_opened_valid = false;
 ompi_list_t mca_io_base_components_opened;
+
+bool mca_io_base_components_available_valid = false;
+ompi_list_t mca_io_base_components_available;
 
 
 /*
@@ -88,6 +92,10 @@ int mca_io_base_open(void)
     /* Initialize some io framework resrouces */
 
     mca_io_base_component_init();
+
+    /* Intialize the request progression code */
+
+    mca_io_base_request_progress_init();
 
     /* All done */
     

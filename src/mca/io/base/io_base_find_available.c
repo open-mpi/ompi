@@ -28,12 +28,6 @@
 #include "mca/io/base/io_base_request.h"
 
 
-/*
- * Global variables
- */
-bool mca_io_base_components_available_valid = false;
-ompi_list_t mca_io_base_components_available;
-
 
 /*
  * Private functions

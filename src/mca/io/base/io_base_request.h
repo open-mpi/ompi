@@ -23,6 +23,7 @@
 #include "class/ompi_object.h"
 #include "request/request.h"
 #include "file/file.h"
+#include "mca/io/base/base.h"
 
 /**
  * Base request type.
@@ -38,6 +39,9 @@ struct mca_io_base_request_t {
         request (i.e., this defines what follows this entry in
         memory) */
     mca_io_base_version_t req_ver;
+    /** True if free has been called on this request (before it has
+        been finalized */
+    volatile bool free_called;
 };
 /**
  * Convenience typedef
@@ -110,6 +114,47 @@ extern "C" {
      */
     void mca_io_base_request_free(ompi_file_t *file,
                                   mca_io_base_request_t *req);
+
+
+    /*
+     * count of number of pending requests in the IO subsystem.  Should
+     * only be modified with OMPI_THREAD_ADD32.  Probably should not be
+     * used outside of IO components.  Here only for the progress check
+     * optimzation.
+     */
+    OMPI_DECLSPEC extern volatile int32_t mca_io_base_request_num_pending;
+
+    /**
+     * Initialize the request progress code
+     *
+     */
+    void mca_io_base_request_progress_init(void);
+
+    /**
+     *
+     */
+    void mca_io_base_request_progress_add(void);
+
+    /**
+     *
+     */
+    void mca_io_base_request_progress_del(void);
+
+    /**
+     * Finalize the request progress code
+     */
+    void mca_io_base_request_progress_fini(void);
+
+    /**
+     * External progress function; invoked from ompi_progress()
+     */
+    static inline int mca_io_base_request_progress(void)
+    {
+        if (mca_io_base_request_num_pending > 0) {
+            return mca_io_base_component_run_progress();
+        }
+        return 0;
+    }
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
