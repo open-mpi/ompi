@@ -22,7 +22,6 @@ bin_PROGRAMS = \
         mpirun2
 
 mpirun2_SOURCES = \
-        mpirun2.h \
         mpirun2.c 
 
 mpirun2_LDADD = \

@@ -86,6 +86,9 @@ main(int argc, char *argv[])
         printf("num_procs: %d\n", num_procs);
     }
 
+    /* get the rte command line options */
+    ompi_rte_parse_cmd_line(cmd_line);
+
     /*
      * TSW - temporarily force to be a seed - and to use tcp oob.
      * 
