@@ -350,10 +350,6 @@ mca_oob_t* mca_oob_tcp_component_init(int* priority, bool *allow_multi_user_thre
     /* intialize event library */
     memset(&mca_oob_tcp_component.tcp_recv_event, 0, sizeof(ompi_event_t));
     memset(&mca_oob_tcp_component.tcp_send_event, 0, sizeof(ompi_event_t));
-    if(ompi_event_init() != OMPI_SUCCESS) {
-        ompi_output(0, "mca_oob_tcp_init: unable to initialize event library\n");
-        return NULL;
-    }
 
     /* create a listen socket */
     if(mca_oob_tcp_create_listen() != OMPI_SUCCESS) {
@@ -588,9 +584,6 @@ int mca_oob_tcp_fini(void)
         ompi_list_remove_first(&mca_oob_tcp_component.tcp_peer_list))) {
         OBJ_DESTRUCT(peer);
     }
-
-    /* cleanup event handling thread */
-    ompi_event_fini();
     return OMPI_SUCCESS;
 }
 
