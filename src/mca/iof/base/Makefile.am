@@ -24,7 +24,7 @@ AM_CPPFLAGS = -I$(top_builddir)/src
 
 headers = \
         base.h \
-        iof_base_endpoint.h \  
+        iof_base_endpoint.h \
         iof_base_fragment.h
 
 libmca_iof_base_la_SOURCES = \
