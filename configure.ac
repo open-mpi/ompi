@@ -238,7 +238,21 @@ LAM_SETUP_F90
 # yield
 # sched_yield
 # vscanf
-# va_copy
+
+#
+# Make sure we can copy va_lists (need check declared, not linkable)
+#
+
+AC_CHECK_DECL(va_copy, LAM_HAVE_VA_COPY=1, LAM_HAVE_VA_COPY=0, 
+	      [#include <stdarg.h>])
+AC_DEFINE_UNQUOTED(LAM_HAVE_VA_COPY, $LAM_HAVE_VA_COPY,
+    [Whether we have va_copy or not])
+
+AC_CHECK_DECL(__va_copy, LAM_HAVE_UNDERSCORE_VA_COPY=1,
+	      LAM_HAVE_UNDERSCORE_VA_COPY=0, [#include <stdarg.h>])
+AC_DEFINE_UNQUOTED(LAM_HAVE_UNDERSCORE_VA_COPY, $LAM_HAVE_UNDERSCORE_VA_COPY,
+    [Whether we have __va_copy or not])
+
 
 ##################################
 # System-specific tests
@@ -452,6 +466,7 @@ AC_CONFIG_FILES([
     test/unit/Makefile
     test/unit/lam/Makefile
     test/unit/lam/oob_cofs/Makefile
+    test/unit/lam/util/Makefile
     test/unit/mpi/Makefile
     test/unit/mpi/communicator/Makefile
     test/unit/mpi/datatype/Makefile
