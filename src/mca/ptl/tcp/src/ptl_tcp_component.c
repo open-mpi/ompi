@@ -317,14 +317,18 @@ static int mca_ptl_tcp_component_create_instances(void)
         ompi_ifindextoname(if_index, if_name, sizeof(if_name));
 
         /* check to see if this interface exists in the exclude list */
-        argv = exclude;
-        while(argv && *argv) {
-            if(strncmp(*argv,if_name,strlen(*argv)) == 0)
-                break;
-            argv++;
-        }
-        /* if this interface was not found in the excluded list - create a PTL */
-        if(argv == 0 || *argv == 0) {
+        if(ompi_ifcount() > 1) {
+            argv = exclude;
+            while(argv && *argv) {
+                if(strncmp(*argv,if_name,strlen(*argv)) == 0)
+                    break;
+                argv++;
+            }
+            /* if this interface was not found in the excluded list - create a PTL */
+            if(argv == 0 || *argv == 0) {
+                mca_ptl_tcp_create(if_index, if_name);
+            }
+        } else {
             mca_ptl_tcp_create(if_index, if_name);
         }
     }

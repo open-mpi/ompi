@@ -382,6 +382,10 @@ mca_oob_t* mca_oob_tcp_component_init(int* priority, bool *allow_multi_user_thre
     *allow_multi_user_threads = true;
     *have_hidden_threads = OMPI_HAVE_THREADS;
 
+    /* are there any interfaces? */
+    if(ompi_ifcount() == 0)
+        return NULL;
+
     /* initialize data structures */
     ompi_rb_tree_init(&mca_oob_tcp_component.tcp_peer_tree, (ompi_rb_tree_comp_fn_t)mca_oob_tcp_process_name_compare);
     ompi_rb_tree_init(&mca_oob_tcp_component.tcp_peer_names, (ompi_rb_tree_comp_fn_t)mca_oob_tcp_process_name_compare);
@@ -704,7 +708,7 @@ char* mca_oob_tcp_get_addr(void)
     for(i=ompi_ifbegin(); i>0; i=ompi_ifnext(i)) {
         struct sockaddr_in addr;
         ompi_ifindextoaddr(i, (struct sockaddr*)&addr, sizeof(addr));
-        if(addr.sin_addr.s_addr == inet_addr("127.0.0.1"))
+        if(ompi_ifcount() > 1 && addr.sin_addr.s_addr == inet_addr("127.0.0.1"))
             continue;
         if(ptr != contact_info) {
             ptr += sprintf(ptr, ";");
