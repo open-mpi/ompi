@@ -39,7 +39,9 @@
 /*
  * define maximum value for id's in any field
  */
-#define OMPI_NAME_SERVICE_MAX UINT32_MAX
+#define MCA_NS_BASE_CELLID_MAX UINT32_MAX
+#define MCA_NS_BASE_JOBID_MAX  UINT32_MAX
+#define MCA_NS_BASE_VPID_MAX   UINT32_MAX
 
 /*
  * general typedefs & structures
@@ -90,14 +92,16 @@ typedef struct ompi_ns_msg_buffer_t ompi_ns_msg_buffer_t;
  * Create a new cell id.
  * The create_cellid() function allocates a new cell id for use by the caller.
  * The function checks to find the next available cell id, reserves it, and returns that
- * number. No memory for names is allocated by this process.
+ * number. No memory for names is allocated by this process. The range of answers is from
+ * 1 to MCA_NS_BASE_CELLID_MAX-1 (zero is reserved for the seed name and cannot therefore be
+ * allocated).
  *
  * @param None
- * @retval cellid The ompi_process_id_t value of the allocated cell id. There currently
- * is no error indication that a cell id could not be allocated - this represents a very unlikely
+ * @retval cellid The numerical value of the allocated cell id. A value of
+ * MCA_NS_BASE_CELLID_MAX indicates
+ * that an error occurred - this represents a very unlikely
  * event meaning that the system ran out of cell id's. This probably indicates
  * an error in the calling program as the number of available cell id's is extremely large.
- * Some means of returning a value indicative of an error will be devised in the future.
  *
  * @code
  * new_cellid = ompi_name_server.create_cellid()
@@ -109,18 +113,21 @@ typedef mca_ns_base_cellid_t (*mca_ns_base_module_create_cellid_fn_t)(void);
  * Create a new job id.
  * The create_jobid() function  allocates a new job id for use by the caller.
  * The function checks to find the next available job id, reserves it, and returns that
- * number. No memory for names is allocated by this process.
+ * number. No memory for names is allocated by this process. The range of answers is from
+ * 1 to MCA_NS_BASE_JOBID_MAX-1 (zero is reserved for the seed name and cannot therefore be
+ * allocated).
+
  *
  * The 0 job id is reserved for daemons within the system and will not be allocated.
  * Developers should therefore assume that the daemon job id is automatically allocated
  * and proceed to request names against it.
  *
  * @param None
- * @retval jobid The ompi_process_id_t value of the allocated job id. There currently
- * is no error indication that a job id could not be allocated - this represents a very unlikely
+ * @retval jobid The numerical value of the allocated job id. A value of
+ * MCA_NS_BASE_JOBID_MAX indicates
+ * that an error occurred - this represents a very unlikely
  * event meaning that the system ran out of job id's. This probably indicates
  * an error in the calling program as the number of available job id's is extremely large.
- * Some means of returning a value indicative of an error will be devised in the future.
  *
  * @code
  * new_jobid = ompi_name_server.create_jobid()
@@ -156,6 +163,25 @@ typedef ompi_process_name_t* (*mca_ns_base_module_create_proc_name_fn_t)(mca_ns_
 
 
 /**
+ * Convert a string representation to a process name.
+ * The convert_string_to_process_name() function converts a string representation of a process
+ * name into an Open MPI name structure. The string must be of the proper form - i.e., it
+ * must be in the form "cellid.jobid.vpid", where each field is expressed in hexadecimal form.
+ *
+ * @param *name_string A character string representation of a process name.
+ *
+ * @retval *name Pointer to an ompi_process_name_t structure containing the name.
+ * @retval NULL Indicates an error, probably due to inability to allocate memory for
+ * the name structure.
+ *
+ * @code
+ * name = ompi_name_server.convert_string_to_process_name(name_string);
+ * @endcode
+ */
+typedef ompi_process_name_t* (*mca_ns_base_module_convert_string_to_process_name_fn_t)(const char* name);
+
+
+/**
  * Reserve a range of process id's.
  * The reserve_range() function reserves a range of vpid's for the given jobid.
  * Note that the cellid does not factor into this request - jobid's span the entire universe,
@@ -166,9 +192,8 @@ typedef ompi_process_name_t* (*mca_ns_base_module_create_proc_name_fn_t)(mca_ns_
  * next available process id and assign range-number of sequential id's to the caller.
  * These id's will be reserved - i.e., they cannot be assigned to any subsequent caller.
  *
- * @retval startid The starting value of the reserved range of vpid's. At this time,
- * no means for returning an error condition is available. This will be rectified in the
- * near future.
+ * @retval startid The starting value of the reserved range of vpid's. A value of MCA_NS_BASE_VPID_MAX
+ * indicates that an error occurred.
  *
  * @code
  * starting_procid = ompi_name_server.reserve_range(jobid, range)
@@ -290,15 +315,15 @@ typedef char* (*mca_ns_base_module_get_jobid_string_fn_t)(const ompi_process_nam
 typedef char* (*mca_ns_base_module_get_cellid_string_fn_t)(const ompi_process_name_t *name);
 
 /**
- * Get the virtual process id as an ompi_process_id_t value.
- * The get_vpid() function returns the vpid in an ompi_process_id_t representation -
+ * Get the virtual process id as a numeric value.
+ * The get_vpid() function returns the vpid in a numeric representation -
  * i.e., in an integer form.
  *
  * @param *name A pointer to the name structure containing the name.
  *
- * @retval vpid The vpid field of the provided name. There currently
- * is no error indication that this function failed.
- * Some means of returning a value indicative of an error will be devised in the future.
+ * @retval vpid The vpid field of the provided name.
+ * @retval MCA_NS_BASE_VPID_MAX Indicates that an error occurred - in this case, that
+ * the name variable provided was NULL.
  *
  * @code
  * vpid = ompi_name_server.get_vpid(&name)
@@ -307,15 +332,15 @@ typedef char* (*mca_ns_base_module_get_cellid_string_fn_t)(const ompi_process_na
 typedef mca_ns_base_vpid_t (*mca_ns_base_module_get_vpid_fn_t)(const ompi_process_name_t *name);
 
 /**
- * Get the job id as an ompi_process_id_t value.
- * The get_jobid() function returns the job id in an ompi_process_id_t representation -
+ * Get the job id as a numeric value.
+ * The get_jobid() function returns the job id in a numeric representation -
  * i.e., in an integer form.
  *
  * @param *name A pointer to the name structure containing the name.
  *
- * @retval jobid The job id field of the provided name. There currently
- * is no error indication that this function failed.
- * Some means of returning a value indicative of an error will be devised in the future.
+ * @retval jobid The job id field of the provided name.
+ * @retval MCA_NS_BASE_JOBID_MAX Indicates that an error occurred - in this case, that
+ * the name variable provided was NULL.
  *
  * @code
  * jobid = ompi_name_server.get_jobid(&name)
@@ -324,15 +349,15 @@ typedef mca_ns_base_vpid_t (*mca_ns_base_module_get_vpid_fn_t)(const ompi_proces
 typedef mca_ns_base_jobid_t (*mca_ns_base_module_get_jobid_fn_t)(const ompi_process_name_t *name);
 
 /**
- * Get the cell id as an ompi_process_id_t value.
- * The get_cellid() function returns the cell id in an ompi_process_id_t representation -
+ * Get the cell id as a numberic value.
+ * The get_cellid() function returns the cell id in a numeric representation -
  * i.e., in an integer form.
  *
  * @param *name A pointer to the name structure containing the name.
  *
- * @retval cellid The cell id field of the provided name. There currently
- * is no error indication that this function failed.
- * Some means of returning a value indicative of an error will be devised in the future.
+ * @retval cellid The cell id field of the provided name.
+ * @retval MCA_NS_BASE_CELLID_MAX Indicates that an error occurred - in this case, that
+ * the name variable provided was NULL.
  *
  * @code
  * cellid = ompi_name_server.get_cellid(&name)
@@ -378,6 +403,7 @@ struct mca_ns_base_module_1_0_0_t {
     mca_ns_base_module_create_cellid_fn_t create_cellid;
     mca_ns_base_module_create_jobid_fn_t create_jobid;
     mca_ns_base_module_create_proc_name_fn_t create_process_name;
+    mca_ns_base_module_convert_string_to_process_name_fn_t convert_string_to_process_name;
     mca_ns_base_module_reserve_range_fn_t reserve_range;
     mca_ns_base_module_free_name_fn_t free_name;
     mca_ns_base_module_get_proc_name_string_fn_t get_proc_name_string;

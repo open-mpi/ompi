@@ -35,6 +35,8 @@ extern "C" {
 						     mca_ns_base_jobid_t job,
 						     mca_ns_base_vpid_t vpid);
 
+    ompi_process_name_t* ns_base_convert_string_to_process_name(const char* name);
+
     char* ns_base_get_proc_name_string(const ompi_process_name_t* name);
 
     char* ns_base_get_vpid_string(const ompi_process_name_t* name);
