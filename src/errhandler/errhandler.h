@@ -76,17 +76,17 @@ typedef struct lam_errhandler_t lam_errhandler_t;
 /**
  * Global variable for MPI_ERRHANDLER_NULL
  */
-extern lam_errhandler_t lam_mpi_errhandler_null;
+extern lam_errhandler_t *lam_mpi_errhandler_null;
 
 /**
  * Global variable for MPI_ERRORS_ARE_FATAL
  */
-extern lam_errhandler_t lam_mpi_errors_are_fatal;
+extern lam_errhandler_t *lam_mpi_errors_are_fatal;
 
 /**
  * Global variable for MPI_ERRORS_RETURN
  */
-extern lam_errhandler_t lam_mpi_errors_return;
+extern lam_errhandler_t *lam_mpi_errors_return;
 
 /**
  * Table for Fortran <-> C errhandler handle conversion
