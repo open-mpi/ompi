@@ -10,7 +10,6 @@ libmca_pml_teg_la_SOURCES = \
 	pml_teg.h \
 	pml_teg_cancel.c \
 	pml_teg_component.c \
-	pml_teg_free.c \
 	pml_teg_iprobe.c \
 	pml_teg_irecv.c \
 	pml_teg_isend.c \
@@ -26,7 +25,5 @@ libmca_pml_teg_la_SOURCES = \
 	pml_teg_sendreq.c \
 	pml_teg_sendreq.h \
 	pml_teg_start.c \
-	pml_teg_test.c \
-	pml_teg_wait.c \
 	pml_ptl_array.c  \
 	pml_ptl_array.h 

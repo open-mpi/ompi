@@ -42,7 +42,7 @@ int MPI_Test(MPI_Request *request, int *completed, MPI_Status *status)
         status->_count = 0;
         return MPI_SUCCESS;
     }
-    rc = mca_pml.pml_test(1, request, &index, completed, status);
+    rc = ompi_request_test(1, request, &index, completed, status);
     if(*completed < 0) {
         *completed = 0;
     }

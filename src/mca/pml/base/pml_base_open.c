@@ -31,30 +31,22 @@ static int mca_pml_base_progress(void)
  */
 int mca_pml_base_output = -1;
 mca_pml_base_module_t mca_pml = {
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    mca_pml_base_progress,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL
+    NULL,                    /* pml_add_procs */
+    NULL,                    /* pml_del_procs */
+    NULL,                    /* pml_add_ptls */
+    NULL,                    /* pml_control */
+    mca_pml_base_progress,   /* pml_progress */
+    NULL,                    /* pml_add_comm */
+    NULL,                    /* pml_del_comm */
+    NULL,                    /* pml_irecv_init */
+    NULL,                    /* pml_irecv */
+    NULL,                    /* pml_recv */
+    NULL,                    /* pml_isend_init */
+    NULL,                    /* pml_isend */
+    NULL,                    /* pml_send */
+    NULL,                    /* pml_iprobe */
+    NULL,                    /* pml_probe */
+    NULL                     /* pml_start */
 };
 
 ompi_list_t mca_pml_base_components_available;

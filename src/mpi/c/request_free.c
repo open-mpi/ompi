@@ -33,7 +33,7 @@ int MPI_Request_free(MPI_Request *request)
     if( *request == NULL ) {
         return MPI_SUCCESS;
     }
-    rc = mca_pml.pml_free(request);
+    rc = ompi_request_free(request);
 
 error_return:
     OMPI_ERRHANDLER_RETURN(rc, MPI_COMM_WORLD, rc, FUNC_NAME);

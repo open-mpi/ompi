@@ -33,7 +33,7 @@ int MPI_Testall(int count, MPI_Request requests[], int *flag,
         }
         OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
     }
-    rc = mca_pml.pml_test_all(count, requests, flag, statuses);
+    rc = ompi_request_test_all(count, requests, flag, statuses);
     OMPI_ERRHANDLER_RETURN(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
 }
 

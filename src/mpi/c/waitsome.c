@@ -40,7 +40,7 @@ int MPI_Waitsome(int incount, MPI_Request *requests,
     }
 
     /* optimize this in the future */
-    rc = mca_pml.pml_wait(incount, requests, &index, &status);
+    rc = ompi_request_wait(incount, requests, &index, statuses);
     OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
     if( MPI_UNDEFINED ==index ) {
        *outcount = MPI_UNDEFINED;

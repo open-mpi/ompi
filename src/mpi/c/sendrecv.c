@@ -66,8 +66,8 @@ int MPI_Sendrecv(void *sendbuf, int sendcount, MPI_Datatype recvtype,
     }
 
     if (source != MPI_PROC_NULL) { /* wait for recv */
-        int useless;  /* this one is just used to keep the pml_wait happy */
-        rc = mca_pml.pml_wait(1, &req, &useless, status);
+        int index;
+        rc = ompi_request_wait(1, &req, &index, status);
     } else {
         if (MPI_STATUS_IGNORE != status) {
             status->MPI_ERROR = MPI_SUCCESS;

@@ -3,7 +3,7 @@
  */
 
 #include "ompi_config.h"
-
+#include "request/request.h"
 #include "pml_teg_recvreq.h"
 
 
@@ -86,28 +86,26 @@ int mca_pml_teg_recv(void *addr,
         return rc;
     }
 
-    if (recvreq->req_base.req_mpi_done == false) {
+    if (recvreq->req_base.req_ompi.req_complete == false) {
         /* give up and sleep until completion */
         if (ompi_using_threads()) {
-            ompi_mutex_lock(&mca_pml_teg.teg_request_lock);
-            mca_pml_teg.teg_request_waiting++;
-            while (recvreq->req_base.req_mpi_done == false)
-                ompi_condition_wait(&mca_pml_teg.teg_request_cond,
-                                    &mca_pml_teg.teg_request_lock);
-            mca_pml_teg.teg_request_waiting--;
-            ompi_mutex_unlock(&mca_pml_teg.teg_request_lock);
+            ompi_mutex_lock(&ompi_request_lock);
+            ompi_request_waiting++;
+            while (recvreq->req_base.req_ompi.req_complete == false)
+                ompi_condition_wait(&ompi_request_cond, &ompi_request_lock);
+            ompi_request_waiting--;
+            ompi_mutex_unlock(&ompi_request_lock);
         } else {
-            mca_pml_teg.teg_request_waiting++;
-            while (recvreq->req_base.req_mpi_done == false)
-                ompi_condition_wait(&mca_pml_teg.teg_request_cond,
-                                    &mca_pml_teg.teg_request_lock);
-            mca_pml_teg.teg_request_waiting--;
+            ompi_request_waiting++;
+            while (recvreq->req_base.req_ompi.req_complete == false)
+                ompi_condition_wait(&ompi_request_cond, &ompi_request_lock);
+            ompi_request_waiting--;
         }
     }
 
     /* return status */
     if (NULL != status) {
-        *status = recvreq->req_base.req_status;
+        *status = recvreq->req_base.req_ompi.req_status;
     }
 
     MCA_PML_TEG_RECV_REQUEST_RETURN(recvreq);

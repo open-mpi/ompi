@@ -101,7 +101,7 @@ int mca_coll_basic_allreduce_inter(void *sbuf, void *rbuf, int count,
             goto exit;
         }
 
-        err = mca_pml.pml_wait_all(2, req, MPI_STATUSES_IGNORE);
+        err = ompi_request_wait_all(2, req, MPI_STATUSES_IGNORE);
         if (OMPI_SUCCESS != err ) {
             goto exit;
         }
@@ -168,7 +168,7 @@ int mca_coll_basic_allreduce_inter(void *sbuf, void *rbuf, int count,
             }
         }
 
-        err = mca_pml.pml_wait_all (rsize+1, reqs, MPI_STATUSES_IGNORE);
+        err = ompi_request_wait_all (rsize+1, reqs, MPI_STATUSES_IGNORE);
         if ( OMPI_SUCCESS != err ) {
             goto exit;
         }

@@ -89,11 +89,10 @@ int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
         if ( rc != MPI_SUCCESS ) {
             goto err_exit;
         }
-        rc = mca_pml.pml_wait_all ( 1, &req, MPI_STATUS_IGNORE);
+        rc = ompi_request_wait_all ( 1, &req, MPI_STATUS_IGNORE);
         if ( rc != MPI_SUCCESS ) {
             goto err_exit;
         }
-        
     }
     
     /* bcast size and list of remote processes to all processes in local_comm */

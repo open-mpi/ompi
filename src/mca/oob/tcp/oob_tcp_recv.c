@@ -236,7 +236,6 @@ int mca_oob_tcp_recv_cancel(
     ompi_process_name_t* name, 
     int tag)
 {
-    extern ompi_mutex_t ompi_event_lock;
     int matched = 0;
     ompi_list_item_t *item, *next;
 

@@ -10,11 +10,15 @@ noinst_LTLIBRARIES = librequest.la
 # Source code files
 
 headers = \
-        request.h
+    grequest.h \
+    request.h
 
 librequest_la_SOURCES = \
-        $(headers) \
-	request.c
+    $(headers) \
+    grequest.c \
+	request.c \
+    req_test.c \
+    req_wait.c
 
 # Conditionally install the header files
 

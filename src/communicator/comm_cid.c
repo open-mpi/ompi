@@ -432,7 +432,7 @@ static int ompi_comm_allreduce_inter ( int *inbuf, int *outbuf,
         if ( OMPI_SUCCESS != rc ) {
             goto exit;
         }
-        rc = mca_pml.pml_wait_all ( 1, &req, MPI_STATUS_IGNORE );
+        rc = ompi_request_wait_all ( 1, &req, MPI_STATUS_IGNORE );
         if ( OMPI_SUCCESS != rc ) {
             goto exit;
         }
@@ -537,7 +537,7 @@ static int ompi_comm_allreduce_intra_bridge (int *inbuf, int *outbuf,
         if ( OMPI_SUCCESS != rc ) {
             goto exit;
         }
-        rc = mca_pml.pml_wait_all ( 1, &req, MPI_STATUS_IGNORE);
+        rc = ompi_request_wait_all ( 1, &req, MPI_STATUS_IGNORE);
         if ( OMPI_SUCCESS != rc ) {
             goto exit;
         }

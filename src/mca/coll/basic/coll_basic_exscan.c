@@ -101,7 +101,7 @@ int mca_coll_basic_exscan_intra(void *sbuf, void *rbuf, int count,
     /* Finally, wait for the receive to complete (so that we can do
        the reduction).  */
 
-    err = mca_pml.pml_wait(1, &req, &index, MPI_STATUS_IGNORE);
+    err = ompi_request_wait(1, &req, &index, MPI_STATUS_IGNORE);
     if (MPI_SUCCESS != err) {
       goto error;
     }
@@ -114,7 +114,7 @@ int mca_coll_basic_exscan_intra(void *sbuf, void *rbuf, int count,
     /* If we're not commutative, we have to wait for the receive to
        complete and then copy it into the reduce buffer */
 
-    err = mca_pml.pml_wait(1, &req, &index,  MPI_STATUS_IGNORE);
+    err = ompi_request_wait(1, &req, &index,  MPI_STATUS_IGNORE);
     if (MPI_SUCCESS != err) {
       goto error;
     }
@@ -142,8 +142,8 @@ int mca_coll_basic_exscan_intra(void *sbuf, void *rbuf, int count,
 error:
   free(free_buffer);
   if (MPI_REQUEST_NULL != req) {
-    mca_pml.pml_cancel(req);
-    mca_pml.pml_wait(1, &req, &index, MPI_STATUS_IGNORE);
+    ompi_request_cancel(req);
+    ompi_request_wait(1, &req, &index, MPI_STATUS_IGNORE);
   }
 
   /* All done */

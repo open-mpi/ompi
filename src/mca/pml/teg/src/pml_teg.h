@@ -52,15 +52,7 @@ struct mca_pml_teg_t {
     long teg_sends;
     long teg_recvs;
     long teg_waits;
-    long teg_condition_waits;
-    long teg_condition_broadcasts;
 #endif
-
-    /* request completion */
-    ompi_mutex_t           teg_request_lock;
-    ompi_condition_t       teg_request_cond;
-    volatile int           teg_request_waiting;
-    mca_pml_base_request_t teg_request_null;
 };
 typedef struct mca_pml_teg_t mca_pml_teg_t; 
 
@@ -215,52 +207,15 @@ extern int mca_pml_teg_start(
     ompi_request_t** requests
 );
 
-extern int mca_pml_teg_test(
-    size_t count,
-    ompi_request_t** request,
-    int *index,
-    int *completed,
-    ompi_status_public_t* status
-);
-
-extern int mca_pml_teg_test_all(
-    size_t count,
-    ompi_request_t** request,
-    int *completed,
-    ompi_status_public_t* status
-);
-
-extern int mca_pml_teg_wait(
-    size_t count,
-    ompi_request_t** request,
-    int *index,
-    ompi_status_public_t* status
-);
-
-extern int mca_pml_teg_wait_all(
-    size_t count,
-    ompi_request_t** request,
-    ompi_status_public_t* status
-);
-
-extern int mca_pml_teg_null(
-    ompi_request_t** request
-);
-
-extern int mca_pml_teg_free(
-    ompi_request_t** request
-);
-
-
 #define MCA_PML_TEG_FINI(request) \
 { \
     mca_pml_base_request_t* pml_request = *(mca_pml_base_request_t**)(request); \
     if(pml_request->req_persistent) { \
        if(pml_request->req_free_called) { \
            MCA_PML_TEG_FREE(request); \
-       } else { \
+       } else {  \
            pml_request->req_ompi.req_state = OMPI_REQUEST_INACTIVE; \
-       } \
+       }  \
     } else { \
         MCA_PML_TEG_FREE(request); \
     } \
@@ -271,7 +226,7 @@ extern int mca_pml_teg_free(
 { \
     mca_pml_base_request_t* pml_request = *(mca_pml_base_request_t**)(request); \
     pml_request->req_free_called = true; \
-    if(pml_request->req_pml_done == true) \
+    if(pml_request->req_pml_complete == true) \
     { \
         OMPI_REQUEST_FINI(*(request)); \
         switch(pml_request->req_type) { \

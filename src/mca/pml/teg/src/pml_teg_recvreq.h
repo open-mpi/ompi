@@ -12,6 +12,10 @@
 #include "mca/pml/base/pml_base_recvreq.h"
 #include "mca/ptl/base/ptl_base_recvfrag.h"
 
+typedef mca_pml_base_recv_request_t mca_pml_teg_recv_request_t;
+
+OBJ_CLASS_DECLARATION(mca_pml_teg_recv_request_t);
+
 
 /**
  *  Allocate a recv request from the modules free list.

@@ -24,8 +24,9 @@ int MPI_Recv_init(void *buf, int count, MPI_Datatype type, int source,
                   int tag, MPI_Comm comm, MPI_Request *request) 
 {
     int rc;
-    if (source == MPI_PROC_NULL) {
-        return mca_pml.pml_null(request);
+    if (source == MPI_PROC_NULL) { 
+        *request = &ompi_request_null;
+        return MPI_SUCCESS;
     }
 
     if ( MPI_PARAM_CHECK ) {

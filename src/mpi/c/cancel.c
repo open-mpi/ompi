@@ -39,9 +39,7 @@ int MPI_Cancel(MPI_Request *request)
     if (NULL == *request) {
         return MPI_SUCCESS;
     }
-    rc = mca_pml.pml_cancel(*request);
-    /* JMS: Tim will fix to invoke on the communicator/window/file on
-       the request (i.e., not COMM_WORLD) */
+    rc = ompi_request_cancel(*request);
     OMPI_ERRHANDLER_RETURN(rc, MPI_COMM_WORLD, rc, "MPI_Cancel");
 }
 

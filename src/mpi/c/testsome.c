@@ -36,7 +36,7 @@ int MPI_Testsome(int incount, MPI_Request requests[],
     }
 
     /* optimize this in the future */
-    rc = mca_pml.pml_test(incount, requests, &index, &completed, statuses);
+    rc = ompi_request_test(incount, requests, &index, &completed, statuses);
     OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
     if(completed) {
         *outcount = 1;

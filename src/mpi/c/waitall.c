@@ -30,7 +30,7 @@ int MPI_Waitall(int count, MPI_Request *requests, MPI_Status *statuses)
         }
         OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
     }
-    rc = mca_pml.pml_wait_all(count, requests, statuses);
+    rc = ompi_request_wait_all(count, requests, statuses);
     OMPI_ERRHANDLER_RETURN(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
 }
 
