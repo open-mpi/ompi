@@ -1,4 +1,6 @@
 #
+# $HEADER$
+#
 # Copyright 2002-2003. The Regents of the University of California. This material
 # was produced under U.S. Government contract W-7405-ENG-36 for Los Alamos
 # National Laboratory, which is operated by the University of California for
@@ -26,16 +28,18 @@
 # warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU Lesser General Public License for more details.
 #
+# $Id: Makefile.am,v 1.2 2004/01/07 07:54:15 jsquyres Exp $
+#
 
 include $(top_srcdir)/config/Makefile.options
 
-SUBDIRS	= base mem os threads util
+SUBDIRS	= lfc mem os threads util
 
 lib_LTLIBRARIES = liblam.la
 
 liblam_la_SOURCES =
 liblam_la_LIBADD = \
-	$(top_builddir)/src/lam/base/libbase.la \
+	$(top_builddir)/src/lam/lfc/liblfc.la \
 	$(top_builddir)/src/lam/mem/libmem.la \
 	$(top_builddir)/src/lam/threads/libthreads.la \
 	$(top_builddir)/src/lam/util/libutil.la 
