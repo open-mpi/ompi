@@ -61,7 +61,7 @@ int mca_topo_base_graph_create (mca_topo_base_comm_t *topo_data,
     }
 
     /* check if this rank makes the cut. if it does not return -1 */
-    if (*new_rank > nnodes) {
+    if (*new_rank > (nnodes-1)) {
         /* sorry but in our scheme, you are out */
         *new_rank = MPI_UNDEFINED;
         return MPI_SUCCESS;
