@@ -5,8 +5,6 @@
  *                         All rights reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
- *                         University of Stuttgart.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -17,6 +15,7 @@
 #include "ompi_config.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "mpi.h"
 #include "mpi/c/bindings.h"
@@ -36,18 +35,18 @@ static const char FUNC_NAME[] = "MPI_Free_mem";
 
 int MPI_Free_mem(void *baseptr)
 {
-  if (NULL == baseptr) {
-    /* Return error on MPI_COMM_WORLD */
-  }
+    if (MPI_PARAM_CHECK) {
+        if (NULL == baseptr) {
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
+                                          FUNC_NAME);
+        }
+    }
 
-  /* Look and see if this pointer was allocated with a specific
-     MPI_Info that got the memory from a module's alloc_mem function.
-     If so, call the module's corresponding free_mem function.
-     Otherwise, call free().
+    /* For this release, we're just calling malloc(). */
 
-     If either fails, return an error on MPI_COMM_WORLD. */
+    free(*((void **) baseptr));
 
-  /* This function is not yet implemented */
+    /* All done */
 
-  return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INTERN, FUNC_NAME);
+    return MPI_SUCCESS;
 }
