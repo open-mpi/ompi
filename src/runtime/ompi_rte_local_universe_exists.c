@@ -12,6 +12,7 @@
 #include "ompi_config.h"
 
 #include <string.h>
+#include <sys/time.h>
 
 #include "include/constants.h"
 #include "util/output.h"
@@ -28,13 +29,19 @@
 #include "runtime/runtime.h"
 
 
+static struct timeval ompi_rte_ping_wait = {30, 0};
+
 
 int ompi_rte_local_universe_exists()
 {
     char *contact_file;
     int ret;
+    ompi_process_name_t seed={0,0,0};
 
     /* does universe already exist on local host? Check session directory to see */
+    if (ompi_rte_debug_flag) {
+	ompi_output(0, "checking local universe existence: universe %s", ompi_universe_info.name);
+    }
 
     if (0 != strncmp(ompi_universe_info.host, ompi_system_info.nodename, strlen(ompi_system_info.nodename))) { /* remote host specified */
 	ompi_output(0, "remote hosts not supported");
@@ -50,11 +57,13 @@ int ompi_rte_local_universe_exists()
 					 ompi_universe_info.name,
 					 NULL,
 					 NULL)) { /* found */
+
 	/* check for "contact-info" file. if present, read it in. */
 	contact_file = ompi_os_path(false, ompi_process_info.universe_session_dir,
 				    "universe-setup.txt", NULL);
 
 	if (OMPI_SUCCESS != (ret = ompi_read_universe_setup_file(contact_file))) {
+	    ompi_output(0, "could not read contact file %s", contact_file);
 	    return ret;
 	}
 
@@ -63,6 +72,7 @@ int ompi_rte_local_universe_exists()
 	    /* also need to check "local" and that we did not specify the exact
 	     * matching universe name
 	     */
+	    ompi_output(0, "connection not allowed");
 	    return OMPI_ERR_NO_CONNECTION_ALLOWED;
 	}
 
@@ -72,13 +82,16 @@ int ompi_rte_local_universe_exists()
 	    return OMPI_ERR_FATAL;
 	}
 
-	/* 	/\* ...and ping to verify it's alive *\/ */
-	/* 	if (OMPI_SUCCESS != mca_oob_ping(&seed)) { */
-	/* 	    return OMPI_ERR_CONNECTION_FAILED; */
-	/* 	} */
+	mca_oob_parse_contact_info(ompi_universe_info.oob_contact_info, &seed, NULL);
+	/* ...and ping to verify it's alive */
+	if (OMPI_SUCCESS != mca_oob_ping(&seed, &ompi_rte_ping_wait)) {
+	    ompi_output(0, "ping failed");
+	    return OMPI_ERR_CONNECTION_FAILED;
+	}
 
 	/* set the my_universe field */
 	ompi_process_info.my_universe = strdup(ompi_universe_info.name);
+
 	return OMPI_SUCCESS;
     }
 

@@ -28,10 +28,13 @@ static void ompi_console_recv(int status, ompi_process_name_t* sender,
 
 int main(int argc, char *argv[])
 {
-    int ret;
+    int ret, recv_tag;
     ompi_cmd_line_t *cmd_line;
     bool allow_multi_user_threads   = false;
     bool have_hidden_threads  = false;
+    ompi_buffer_t cmd;
+    ompi_daemon_cmd_flag_t command;
+    ompi_process_name_t seed={0,0,0};
 
     /*
      * Intialize the Open MPI environment
@@ -42,6 +45,11 @@ int main(int argc, char *argv[])
         return ret;
     }
 
+    /* get the system info and setup defaults */
+    ompi_sys_info();
+    ompi_universe_info.host = strdup(ompi_system_info.nodename);
+    ompi_universe_info.uid = strdup(ompi_system_info.user);
+
     /* setup to read common command line options that span all Open MPI programs */
     cmd_line = OBJ_NEW(ompi_cmd_line_t);
 
@@ -51,6 +59,7 @@ int main(int argc, char *argv[])
     ompi_cmd_line_make_opt(cmd_line, 'h', "help", 0,
 			   "Show help for this function");
 
+    fprintf(stderr, "setting up cmd_line\n");
 
     /* setup rte command line arguments */
     ompi_rte_cmd_line_setup(cmd_line);
@@ -70,6 +79,8 @@ int main(int argc, char *argv[])
 	return ret;
     }
 
+    fprintf(stderr, "parse commands\n");
+
     /* parse the local commands */
     if (OMPI_SUCCESS != ompi_cmd_line_parse(cmd_line, true, argc, argv)) {
 	exit(ret);
@@ -87,18 +98,27 @@ int main(int argc, char *argv[])
 	exit(1);
     }
 
+    fprintf(stderr, "parse environ\n");
+
+    /* parse the environment */
+    ompi_rte_parse_environ();
+
+    fprintf(stderr, "parse rte cmds\n");
+
     /* parse the cmd_line for rte options - override settings from enviro, where necessary
      * copy everything into enviro variables for passing later on
      */
     ompi_rte_parse_cmd_line(cmd_line);
 
     /* Open up the MCA */
-
+    fprintf(stderr, "open mca\n");
     if (OMPI_SUCCESS != (ret = mca_base_open())) {
         /* JMS show_help */
         printf("show_help: ompid failed in mca_base_open\n");
         return ret;
     }
+
+    fprintf(stderr, "join runtime\n");
 
     /* Join the run-time environment */
     allow_multi_user_threads = true;
@@ -110,16 +130,22 @@ int main(int argc, char *argv[])
         return ret;
     }
 
+    fprintf(stderr, "check hostname for local host: univ %s sys %s\n", ompi_universe_info.host, ompi_system_info.nodename);
+
     /* check for local universe existence */
     if (0 != strncmp(ompi_universe_info.host, ompi_system_info.nodename, strlen(ompi_system_info.nodename))) {
 	fprintf(stderr, "remote universe operations not supported at this time\n");
 	exit(1);
     }
 
+    fprintf(stderr, "check local univ\n");
+
     if (OMPI_SUCCESS != (ret = ompi_rte_local_universe_exists())) {
 	fprintf(stderr, "could not contact local universe %s\n", ompi_universe_info.name);
 	exit(1);
     }
+
+    fprintf(stderr, "init stage 2\n");
 
     /* setup the rest of the rte */
     if (OMPI_SUCCESS != (ret = ompi_rte_init_stage2(&allow_multi_user_threads,
@@ -151,6 +177,12 @@ int main(int argc, char *argv[])
 	printf("daemon callback not registered: error code %d", ret);
 	return ret;
     }
+
+    ompi_buffer_init(&cmd, 0);
+    command = OMPI_DAEMON_EXIT_CMD;
+    recv_tag = MCA_OOB_TAG_DAEMON;
+    ompi_pack(cmd, &command, 1, OMPI_DAEMON_OOB_PACK_CMD);
+    mca_oob_send_packed(&seed, cmd, MCA_OOB_TAG_DAEMON, 0);
 
     ompi_rte_finalize();
     mca_base_close();

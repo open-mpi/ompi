@@ -184,6 +184,10 @@ int gpr_replica_put(ompi_registry_mode_t addr_mode, char *segment,
     if (NULL != keylist) {
 	OBJ_RELEASE(keylist);
     }
+    if (mca_gpr_replica_debug) {
+	ompi_output(0, "[%d,%d,%d] gpr replica-put: complete", ompi_process_info.name->cellid,
+		    ompi_process_info.name->jobid, ompi_process_info.name->vpid);
+    }
 
     return return_code;
 }
@@ -567,6 +571,11 @@ ompi_list_t* gpr_replica_get(ompi_registry_mode_t addr_mode,
     if (NULL == seg) {  /* segment not found */
 	return answer;
     }
+    if (mca_gpr_replica_debug) {
+	ompi_output(0, "[%d,%d,%d] gpr replica-get: segment found", ompi_process_info.name->cellid,
+		    ompi_process_info.name->jobid, ompi_process_info.name->vpid);
+    }
+
     if (NULL == tokens) { /* wildcard case - return everything */
     keylist = NULL;
 	keys = NULL;
@@ -592,6 +601,10 @@ ompi_list_t* gpr_replica_get(ompi_registry_mode_t addr_mode,
 	    key2++;
 	}
     }
+    if (mca_gpr_replica_debug) {
+	ompi_output(0, "[%d,%d,%d] gpr replica-get: got keylist", ompi_process_info.name->cellid,
+		    ompi_process_info.name->jobid, ompi_process_info.name->vpid);
+    }
 
     /* traverse the segment's registry, looking for matching tokens per the specified mode */
     for (reg = (mca_gpr_replica_core_t*)ompi_list_get_first(&seg->registry_entries);
@@ -608,6 +621,10 @@ ompi_list_t* gpr_replica_get(ompi_registry_mode_t addr_mode,
 	    ompi_list_append(answer, &ans->item);
 	}
     }
+    if (mca_gpr_replica_debug) {
+	ompi_output(0, "[%d,%d,%d] gpr replica-get: finished search", ompi_process_info.name->cellid,
+		    ompi_process_info.name->jobid, ompi_process_info.name->vpid);
+    }
 
  CLEANUP:
     /* release list of keys */
@@ -616,6 +633,11 @@ ompi_list_t* gpr_replica_get(ompi_registry_mode_t addr_mode,
 
     if (NULL != keys) {
 	free(keys);
+    }
+
+    if (mca_gpr_replica_debug) {
+	ompi_output(0, "[%d,%d,%d] gpr replica-get: leaving", ompi_process_info.name->cellid,
+		    ompi_process_info.name->jobid, ompi_process_info.name->vpid);
     }
 
     return answer;
