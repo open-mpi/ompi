@@ -18,4 +18,9 @@
 #include "mpi/interface/c/profile/defines.h"
 #endif
 
+/* This variable is actually in src/mpi/runtime/lam_mpi_init.c, but it
+   is used by every MPI function. */
+
+extern bool lam_mpi_param_check;
+
 #endif /* LAM_C_BINDINGS_H */
