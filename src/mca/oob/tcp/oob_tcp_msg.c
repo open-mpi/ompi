@@ -61,7 +61,7 @@ int mca_oob_tcp_msg_wait(mca_oob_tcp_msg_t* msg, int* rc)
             int rc;
             OMPI_THREAD_UNLOCK(&msg->msg_lock);
             rc = ompi_event_loop(OMPI_EVLOOP_ONCE);
-            assert(rc == 0);
+            assert(rc >= 0);
             OMPI_THREAD_LOCK(&msg->msg_lock);
         } else {
            ompi_condition_wait(&msg->msg_condition, &msg->msg_lock);
@@ -105,7 +105,7 @@ int mca_oob_tcp_msg_timedwait(mca_oob_tcp_msg_t* msg, int* rc, struct timespec* 
             int rc;
             OMPI_THREAD_UNLOCK(&msg->msg_lock);
             rc = ompi_event_loop(OMPI_EVLOOP_ONCE);
-            assert(rc == 0);
+            assert(rc >= 0);
             OMPI_THREAD_LOCK(&msg->msg_lock);
         } else {
            ompi_condition_timedwait(&msg->msg_condition, &msg->msg_lock, abstime);
@@ -363,7 +363,7 @@ static void mca_oob_tcp_msg_data(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* pee
      * the message header has already been converted back to host -
      * so must convert back to network to match.
     */
-    post = mca_oob_tcp_msg_match_post(&peer->peer_name, ntohl(msg->msg_hdr.msg_tag),true);
+    post = mca_oob_tcp_msg_match_post(&peer->peer_name, msg->msg_hdr.msg_tag, true);
     if(NULL != post) {
                                                                                                                           
         if(post->msg_flags & MCA_OOB_ALLOC) {
