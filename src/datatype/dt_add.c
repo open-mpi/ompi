@@ -165,7 +165,8 @@ int ompi_ddt_add( dt_desc_t* pdtBase, const dt_desc_t* pdtAdd,
         /* should I add some space until the extent of this datatype ? */
     }
 
-    old_true_ub      = pdtBase->true_ub;
+    if( 0 == pdtBase->nbElems ) old_true_ub = disp;
+    else                        old_true_ub = pdtBase->true_ub;
     pdtBase->size += count * pdtAdd->size;
     pdtBase->true_lb = LMIN( pdtBase->true_lb, pdtAdd->true_lb + disp );
     pdtBase->true_ub = LMAX( pdtBase->true_ub,
@@ -177,7 +178,7 @@ int ompi_ddt_add( dt_desc_t* pdtBase, const dt_desc_t* pdtAdd,
      * In other words to avoid having internal gaps between elements. And the datatypes
      * should ALWAYS follow each other.
      */
-    if( disp != pdtBase->true_ub ) { /* add the initial gap */
+    if( disp != old_true_ub ) { /* is there a gap between the 2 datatypes ? */
         if( disp < old_true_ub ) pdtBase->flags |= DT_FLAG_OVERLAP;
         UNSET_CONTIGUOUS_FLAG(pdtBase->flags);
     } else {
