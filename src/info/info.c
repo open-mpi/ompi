@@ -24,14 +24,40 @@ lam_class_t lam_info_entry_t_class = {
     (lam_destruct_t)lam_info_entry_destruct
 };
 
+/**
+ * The global fortran <-> C translation table
+ */
+lam_pointer_array_t *lam_info_f_to_c_table;
+
 /*
  * lam_info_t interface functions
+ * @param info lam_info_t pointer
+ *
+ * This function is invoked when OBJ_NEW() is called. Here, we add this
+ * info pointer to the table and then store its index as the handle
  */
 void lam_info_construct(lam_info_t *info) {
-    info->i_fhandle = -1;
+    info->i_fhandle = lam_pointer_array_add(lam_info_f_to_c_table, info);
+    return;
 }
 
+/**
+ * lam_info_t interface function
+ * @param info lam_info_t pointer
+ *
+ * This function is called during OBJ_DESTRUCT of "info". When this 
+ * done, we need to remove the entry from the lam fortran to C 
+ * translation table
+ */ 
 void lam_info_destruct(lam_info_t *info) {
+    /* 
+     * reset the lam_info_f_to_c_table entry - make sure that the
+     * entry is in the table 
+     */
+    if (NULL != lam_pointer_array_get_item(lam_info_f_to_c_table, info->i_fhandle)){
+        lam_pointer_array_set_item(lam_info_f_to_c_table, info->i_fhandle, NULL);
+    }
+    return;
 }
 
 /*
@@ -147,13 +173,10 @@ int lam_info_free (lam_info_t **info) {
           trailer_iterator = (lam_info_entry_t *)lam_list_get_prev(iterator);
           OBJ_RELEASE(trailer_iterator);
      }
-     /*
-      * Anju:
-      * Add things to remove the fortran handle from the mapping table
-      */
-      OBJ_RELEASE(*info);
-      *info = MPI_INFO_NULL;
-      return MPI_SUCCESS;
+
+     OBJ_RELEASE(*info);
+     *info = MPI_INFO_NULL;
+     return MPI_SUCCESS;
 }
 
 /**
@@ -264,5 +287,31 @@ int lam_info_get_valuelen (lam_info_t *info, char *key, int *valuelen,
          *valuelen = strlen(search->ie_value);
     }
     return MPI_SUCCESS;
+}
+
+/**
+ * function: lam_info_init
+ *
+ * This function is called during lam_init and initializes the fortran to C
+ * translation table
+ */ 
+int lam_info_init(void) {
+    /* initialize table */
+    lam_info_f_to_c_table = OBJ_NEW(lam_pointer_array_t);
+    if (NULL == lam_info_f_to_c_table) {
+        return LAM_ERROR;
+    }
+    return LAM_SUCCESS;
+}
+
+/**
+ * function: lam_info_finalize
+ *
+ * This functions is called during MPI Finalize
+ */
+int lam_info_finalize(void) {
+    /* finalize */
+    OBJ_RELEASE(lam_info_f_to_c_table);
+    return LAM_SUCCESS;
 }
 

@@ -8,6 +8,8 @@
 #include "mpi/c/bindings.h"
 #include "lfc/lam_list.h"
 #include "info/info.h"
+#include "errhandler/errhandler.h"
+#include "communicator/communicator.h"
 
 #if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILING_DEFINES
 #pragma weak MPI_Info_create = PMPI_Info_create
@@ -36,21 +38,24 @@ int MPI_Info_create(MPI_Info *info) {
      * NOTE:
      * Yet to add stuff for fortran handles
      */
-    if (NULL == info) {
-        printf ("Info handle passed is invalid\n");
-        return MPI_ERR_ARG;
+    if (MPI_PARAM_CHECK) {
+        if (NULL == info) {
+            return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
+                                         "MPI_Info_create");
+        }
     }
 
     /*
      * Call the object create function. This function not only
      * allocates the space for MPI_Info, but also calls all the
-     * relevant init functions.
+     * relevant init functions. Should I check if the fortran 
+     * handle is valid
      */
     (*info) = OBJ_NEW(lam_info_t);
     
     if (NULL == (*info)) {
-        printf ("Malloc failed. Ran out of resources\n");
-        return MPI_ERR_SYSRESOURCE;
+        return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_SYSRESOURCE,
+                                     "MPI_Info_create");
     }
 
     return MPI_SUCCESS;

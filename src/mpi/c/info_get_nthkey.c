@@ -9,6 +9,8 @@
 #include "lfc/lam_list.h"
 #include "info/info.h"
 #include <string.h>
+#include "errhandler/errhandler.h"
+#include "communicator/communicator.h"
 
 #if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILING_DEFINES
 #pragma weak MPI_Info_get_nthkey = PMPI_Info_get_nthkey
@@ -37,16 +39,19 @@ int MPI_Info_get_nthkey(MPI_Info info, int n, char *key) {
      * 2. Check if there are atleast "n" elements
      * 3. If so, give the nth defined key
      */
-    if (NULL == info){
-        printf ("Invalid MPI_Info handle passed\n");
-        return MPI_ERR_ARG;
+    if (MPI_PARAM_CHECK) {
+        if (NULL == info || 0 > n){
+            return LAM_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_ARG,
+                                          "MPI_Info_get_nthkey");
+        }
     }
 
     MPI_Info_get_nkeys(info, &nkeys);
     
     if (nkeys < n) {
-        printf ("Requested key does not exist\n");
-        return MPI_ERR_ARG;
+        return LAM_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_INFO_KEY,
+                                      "MPI_Info_get_nthkey");
+
     } else {
         /*
          * Everything seems alright. Call the back end key copy

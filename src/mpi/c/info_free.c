@@ -8,6 +8,8 @@
 #include "mpi/c/bindings.h"
 #include "lfc/lam_list.h"
 #include "info/info.h"
+#include "errhandler/errhandler.h"
+#include "communicator/communicator.h"
 
 #if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILING_DEFINES
 #pragma weak MPI_Info_free = PMPI_Info_free
@@ -36,9 +38,11 @@ int MPI_Info_free(MPI_Info *info) {
      * Also, something needs to be done about the 
      * fortran handle.
      */
-    if (NULL == info){
-        printf ("Invalid MPI_Info handle passed\n");
-        return MPI_ERR_ARG;
+    if (MPI_PARAM_CHECK) {
+        if (NULL == info){
+            return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
+                                         "MPI_Info_free");
+        }
     }
 
     /*

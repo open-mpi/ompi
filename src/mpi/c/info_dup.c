@@ -8,6 +8,8 @@
 #include "mpi/c/bindings.h"
 #include "lfc/lam_list.h"
 #include "info/info.h"
+#include "errhandler/errhandler.h"
+#include "communicator/communicator.h"
 
 #if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILING_DEFINES
 #pragma weak MPI_Info_dup = PMPI_Info_dup
@@ -44,24 +46,25 @@ int MPI_Info_dup(MPI_Info info, MPI_Info *newinfo) {
      * and copy them to newinfo one by one
      */
 
-    if (NULL == info){
-        printf ("Invalid MPI_Info handle passed\n");
-        return MPI_ERR_ARG;
+    if (MPI_PARAM_CHECK) {
+        if (NULL == info){
+            return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
+                                         "MPI_Info_dup");
+        }
     }
 
     err = MPI_Info_create(newinfo);
     if (MPI_SUCCESS != err) {
-        printf ("Creation of newinfo falied\n");
-        return err;
+        return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, err,
+                                     "MPI_Info_dup");
     }
     /*
      * Now to actually duplicate all the values
      */
     err = lam_info_dup (info, newinfo);
-
     if (err == MPI_ERR_SYSRESOURCE) {
-        printf ("Resources are not sufficient to finish dup'ing\n");
-        return err;
+        return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, err,
+                                     "MPI_Info_dup");
     }  
         
     return MPI_SUCCESS;

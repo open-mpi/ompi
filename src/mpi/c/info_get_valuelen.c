@@ -10,6 +10,8 @@
 #include "info/info.h"
 #include <stdlib.h>
 #include <string.h>
+#include "errhandler/errhandler.h"
+#include "communicator/communicator.h"
 
 #if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILING_DEFINES
 #pragma weak MPI_Info_get_valuelen = PMPI_Info_get_valuelen
@@ -46,19 +48,19 @@ int MPI_Info_get_valuelen(MPI_Info info, char *key, int *valuelen,
      * Simple function. All we need to do is search for the value
      * having the "key" associated with it and return the length
      */
-    if (NULL == info){
-        printf ("Invalid MPI_Info handle passed\n");
-        return MPI_ERR_ARG;
-    }
-
-    key_length = (key) ? strlen (key) : 0;
-    if ( (0 == key_length) || (MPI_MAX_INFO_KEY <= key_length)) {
-        printf ("The key passed to MPI_INFO_SET is too long\n");
-        return MPI_ERR_INFO_KEY;
+    if (MPI_PARAM_CHECK) {
+        if (NULL == info || NULL == key){
+            return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
+                                         "MPI_Info_get_valuelen");
+        }
+        key_length = (key) ? strlen (key) : 0;
+        if ( (0 == key_length) || (MPI_MAX_INFO_KEY <= key_length)) {
+            return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INFO_KEY,
+                                         "MPI_Info_get_valuelen");
+        }
     }
 
     err = lam_info_get_valuelen (info, key, valuelen, flag);
-
     /*
      * Once again, the error problem. lam_info_get_valuelen
      * does not have an obvious error return.
