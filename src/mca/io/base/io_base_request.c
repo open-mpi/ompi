@@ -308,9 +308,9 @@ mca_io_base_request_progress_del()
 void
 mca_io_base_request_progress_fini()
 {
+#if OMPI_HAVE_THREADS
     void *ret;
 
-#if OMPI_HAVE_THREADS
     /* make the helper thread die */
     thread_done = true;
     if (thread_running) {
