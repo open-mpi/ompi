@@ -1,0 +1,8 @@
+.deps
+.libs
+libteg.la
+Makefile
+Makefile.in
+proc.lo
+ptl_array.lo
+teg.lo
