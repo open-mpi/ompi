@@ -427,6 +427,7 @@ int gpr_replica_construct_synchro(ompi_registry_synchro_mode_t synchro_mode,
 
     synch = OBJ_NEW(mca_gpr_replica_synchro_list_t);
 
+    synch->synch_mode = synchro_mode;
     synch->addr_mode = addr_mode;
     synch->trigger = trigger;
     synch->count = 0;
@@ -479,10 +480,6 @@ ompi_registry_notify_message_t *gpr_replica_construct_notify_message(ompi_regist
 
     reg_entries = gpr_replica_get(addr_mode, segment, tokens);
 
-    if (ompi_list_is_empty(reg_entries)) {
-	return NULL;
-    }
-
     /* compute number of tokens */
     tokptr = tokens;
     num_tokens = 0;
@@ -533,10 +530,11 @@ void gpr_replica_process_triggers(ompi_registry_notify_message_t *message,
     /* find corresponding notify request */
     found = false;
     for (trackptr = (mca_gpr_notify_request_tracker_t*)ompi_list_get_first(&mca_gpr_replica_notify_request_tracker);
-	 trackptr != (mca_gpr_notify_request_tracker_t*)ompi_list_get_end(&mca_gpr_replica_notify_request_tracker) && !found;
-	 trackptr = (mca_gpr_notify_request_tracker_t*)ompi_list_get_next(trackptr)) {
+	     trackptr != (mca_gpr_notify_request_tracker_t*)ompi_list_get_end(&mca_gpr_replica_notify_request_tracker);
+	     trackptr = (mca_gpr_notify_request_tracker_t*)ompi_list_get_next(trackptr)) {
 	if (trackptr->id_tag == id_tag) {
 	    found = true;
+        break;
 	}
     }
 
@@ -549,7 +547,7 @@ void gpr_replica_process_triggers(ompi_registry_notify_message_t *message,
     if (NULL == trackptr->requestor) {  /* local request - callback fn with their tag */
 	trackptr->callback(message, trackptr->user_tag);
 	/* dismantle message and free memory */
-	while (NULL != (data = (ompi_registry_object_t*)ompi_list_get_first(&message->data))) {
+	while (NULL != (data = (ompi_registry_object_t*)ompi_list_remove_first(&message->data))) {
 	    OBJ_RELEASE(data);
 	}
 	for (i=0, tokptr=message->tokens; i < message->num_tokens; i++, tokptr++) {
@@ -564,8 +562,8 @@ void gpr_replica_process_triggers(ompi_registry_notify_message_t *message,
 
     /* if one-shot, remove request from tracking system */
     if (OMPI_REGISTRY_SYNCHRO_MODE_ONE_SHOT & trackptr->synchro) {
-	tmpptr = (mca_gpr_notify_request_tracker_t*)ompi_list_remove_item(&message->data, &trackptr->item);
-	OBJ_RELEASE(tmpptr);
+	    ompi_list_remove_item(&mca_gpr_replica_notify_request_tracker, &trackptr->item);
+	    OBJ_RELEASE(trackptr);
     }
 }
 
