@@ -19,6 +19,9 @@
 #include <sys/types.h>
 #endif
 
+#ifndef _OMPI_SYS_INFO_H_
+#define _OMPI_SYS_INFO_H_
+
 /**
  * System information structure
  *
@@ -72,3 +75,4 @@ OMPI_DECLSPEC extern ompi_sys_info_t ompi_system_info;
  * @retval OMPI_ERROR If the system does not provide the requested information.
  */
 OMPI_DECLSPEC int ompi_sys_info(void);
+#endif

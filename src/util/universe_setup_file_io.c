@@ -25,7 +25,7 @@
 
 #define OMPI_UNIV_SETUP_FILE_MAX_LINE_LENGTH 1024
 
-char *ompi_getline(FILE *fp);
+static char *ompi_getline(FILE *fp);
 
 int ompi_write_universe_setup_file(char *filename)
 {
@@ -90,7 +90,6 @@ int ompi_read_universe_setup_file(char *filename)
 
     fp = fopen(filename, "r");
     if (NULL == fp) { /* failed on first read - wait and try again */
-	sleep(1);
 	fp = fopen(filename, "r");
 	if (NULL == fp) { /* failed twice - give up */
 	    return OMPI_ERR_NOT_FOUND;
@@ -164,7 +163,7 @@ int ompi_read_universe_setup_file(char *filename)
     return OMPI_ERROR;
 }
 
-char *ompi_getline(FILE *fp)
+static char *ompi_getline(FILE *fp)
 {
     char *ret, *buff;
     char input[OMPI_UNIV_SETUP_FILE_MAX_LINE_LENGTH];
