@@ -20,7 +20,9 @@
 struct mca_ptl_gm_send_frag_t;
 struct mca_ptl_gm_peer_t;
 
-#define  PTL_GM_FIRST_FRAG_SIZE (1<<14)
+#define PTL_GM_FIRST_FRAG_SIZE     (1<<14)
+#define PTL_FLAG_GM_HAS_FRAGMENT    0x04
+#define PTL_FLAG_GM_LAST_FRAGMENT   0x08
 
 /*#define DO_DEBUG(inst)  inst*/
 #define DO_DEBUG(inst)
@@ -43,11 +45,7 @@ mca_ptl_gm_peer_send_continue( struct mca_ptl_gm_peer_t *ptl_peer,
 			       struct mca_pml_base_send_request_t *sendreq,
 			       size_t offset,
 			       size_t *size,
-			       int flags,
-			       void *target_buffer,
-			       int bytes );
-
-
+			       int flags );
 
 void send_callback(struct gm_port *port,void * context, gm_status_t status);
 

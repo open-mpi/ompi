@@ -86,7 +86,6 @@ mca_ptl_gm_alloc_send_frag( struct mca_ptl_gm_module_t *ptl,
     sendfrag->type          = -1;
     sendfrag->wait_for_ack  =  0;
     sendfrag->put_sent      = -1;
-    sendfrag->send_complete = -1;
     
     return sendfrag;
 }
@@ -114,7 +113,6 @@ int mca_ptl_gm_send_ack_init( struct mca_ptl_gm_send_frag_t* ack,
     ack->type = -1;
     ack->wait_for_ack = 0;
     ack->put_sent = -1;
-    ack->send_complete = -1;
 
     request = frag->frag_recv.frag_request;
 
@@ -135,13 +133,12 @@ int mca_ptl_gm_send_ack_init( struct mca_ptl_gm_send_frag_t* ack,
     ack->send_frag.frag_base.frag_addr = NULL;
     ack->send_frag.frag_base.frag_size = 0;
     ack->status = 1; /* was able to register memory */
-    ack->ptl = ptl;
+    ack->send_frag.frag_base.frag_owner = (mca_ptl_base_module_t*)ptl;
     ack->send_frag.frag_base.frag_header.hdr_ack = *hdr;
     ack->wait_for_ack = 0;
     ack->type = ACK;
 
     return OMPI_SUCCESS;
-
 }
 
 
@@ -170,13 +167,12 @@ int mca_ptl_gm_put_frag_init( struct mca_ptl_gm_send_frag_t* putfrag,
     }
 
     putfrag->status        = -1;
-    putfrag->send_complete = -1;
     putfrag->wait_for_ack  = 0;
     putfrag->put_sent      = 0;
     putfrag->type          = PUT;
     putfrag->req           = sendreq;
-    putfrag->ptl           = gm_ptl;
-    putfrag->peer          = ptl_peer;
+    putfrag->send_frag.frag_base.frag_owner = (mca_ptl_base_module_t*)gm_ptl;
+    putfrag->send_frag.frag_base.frag_peer = (struct mca_ptl_base_peer_t*)ptl_peer;
 
     return OMPI_SUCCESS; 
 }
@@ -195,8 +191,6 @@ ompi_class_t mca_ptl_gm_recv_frag_t_class = {
 static void
 mca_ptl_gm_recv_frag_construct (mca_ptl_gm_recv_frag_t * frag)
 {
-    frag->frag_hdr_cnt = 0;
-    frag->frag_msg_cnt = 0;
 }
 
 static void

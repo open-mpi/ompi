@@ -309,9 +309,7 @@ mca_ptl_gm_put (struct mca_ptl_base_module_t *ptl,
 				  sendreq, offset, &size, flags );
 
    rc = mca_ptl_gm_peer_send_continue( (mca_ptl_gm_peer_t *)ptl_peer, putfrag,
-                                       sendreq, offset, &size, flags,
-                                       ((char*)(sendreq->req_base.req_addr)) + offset,
-                                       size );
+                                       sendreq, offset, &size, flags );
    return OMPI_SUCCESS;
 }
 
@@ -356,7 +354,7 @@ mca_ptl_gm_matched( mca_ptl_base_module_t * ptl,
 	header_length = sizeof(mca_ptl_base_match_header_t);
     }
 
-    if (hdr->hdr_common.hdr_flags & MCA_PTL_FLAGS_ACK) {
+    if( hdr->hdr_common.hdr_flags & MCA_PTL_FLAGS_ACK ) {
         /* need to send an ack back */
         ack = mca_ptl_gm_alloc_send_frag( gm_ptl, NULL );
         if( NULL == ack ) {
@@ -369,9 +367,10 @@ mca_ptl_gm_matched( mca_ptl_base_module_t * ptl,
 	    mca_ptl_base_header_t* ack_hdr = (mca_ptl_base_header_t*)ack->send_buf;
 	    ack_hdr->hdr_ack.hdr_common.hdr_type = MCA_PTL_HDR_TYPE_ACK;
 	    ack_hdr->hdr_ack.hdr_common.hdr_flags = 0;
-	    ack_hdr->hdr_ack.hdr_src_ptr.lval = hdr->hdr_rndv.hdr_src_ptr.lval;
+	    ack_hdr->hdr_ack.hdr_src_ptr = hdr->hdr_rndv.hdr_src_ptr;
 	    ack_hdr->hdr_ack.hdr_dst_match.lval = 0L;
-	    ack_hdr->hdr_ack.hdr_dst_match.pval = frag;
+	    /* just a easy way to remember that there is a request not a fragment */
+	    ack_hdr->hdr_ack.hdr_dst_match.pval = request;
 	    ack_hdr->hdr_ack.hdr_dst_addr.lval = 0L;
 	    ack_hdr->hdr_ack.hdr_dst_size = request->req_bytes_packed;
 	    gm_send_to_peer_with_callback( ((mca_ptl_gm_module_t*)ptl)->gm_port, ack_hdr,
@@ -407,7 +406,7 @@ mca_ptl_gm_matched( mca_ptl_base_module_t * ptl,
         assert( rc >= 0 );
     }
     
-    /* update progress*/   
+    /* update progress*/
     ptl->ptl_recv_progress( ptl, request, bytes_recv, bytes_recv ); 
     
     /* Now update the status of the fragment */
