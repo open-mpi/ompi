@@ -65,7 +65,7 @@ int mca_ptl_base_select(bool *allow_multi_user_threads,
       /* Otherwise, it initialized properly.  Save it. */
 
       else {
-        *allow_multi_user_threads |= user_threads;
+        *allow_multi_user_threads &= user_threads;
         *have_hidden_threads |= hidden_threads;
 
         ompi_output_verbose(10, mca_ptl_base_output,
