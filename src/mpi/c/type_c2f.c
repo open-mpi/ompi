@@ -8,7 +8,7 @@
 #include "mpi/c/bindings.h"
 #include "mpi/f77/fint_2_int.h"
 #include "datatype/datatype.h"
-#include "communicator/communicator.h"
+/*#include "communicator/communicator.h"*/
 #include "errhandler/errhandler.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES

@@ -3,8 +3,10 @@
  */
 
 #include "ompi_config.h"
+
 #include <stdio.h>
 
+#include "include/constants.h"
 #include "util/output.h"
 #include "class/ompi_list.h"
 #include "mca/mca.h"

@@ -4,11 +4,12 @@
 
 #include "ompi_config.h"
 
+#include <unistd.h>
+
 #include "communicator/communicator.h"
 #include "util/show_help.h"
 #include "util/proc_info.h"
 #include "runtime/runtime.h"
-#include "communicator/communicator.h"
 #include "mca/ns/ns.h"
 #include "mca/ns/base/base.h"
 #include "event/event.h"

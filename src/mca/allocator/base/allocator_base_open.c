@@ -5,12 +5,12 @@
 
 #include "ompi_config.h"
 #include <stdio.h>
+#include <string.h>
 
 #include "mca/mca.h"
 #include "mca/base/base.h"
 #include "mca/allocator/allocator.h"
 #include "mca/allocator/base/base.h"
-
 
 /*
  * The following file was created by configure.  It contains extern

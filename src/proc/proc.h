@@ -7,7 +7,6 @@
 
 #include "include/types.h"
 #include "class/ompi_list.h"
-#include "datatype/datatype.h"
 #include "threads/mutex.h"
 #include "mca/ns/ns.h"
 #include "util/bufpack.h"
@@ -22,7 +21,7 @@ struct ompi_proc_t {
     struct mca_pml_proc_t*    proc_pml;    /* PML specific proc data */
     ompi_object_t*            proc_modex;  /* MCA module exchange data */
     uint32_t                  proc_arch;
-    ompi_convertor_t*         proc_convertor;
+    struct ompi_convertor_t*  proc_convertor;
     ompi_mutex_t              proc_lock;
 
   /* JMS: need to have the following information:

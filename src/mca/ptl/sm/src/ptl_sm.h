@@ -194,7 +194,7 @@ extern int mca_ptl_sm_add_procs(
     size_t nprocs,
     struct ompi_proc_t **procs,
     struct mca_ptl_base_peer_t** peers,
-    ompi_bitmap_t* reachability
+    struct ompi_bitmap_t* reachability
 );
 
                                                                                                                

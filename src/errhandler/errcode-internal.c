@@ -8,7 +8,6 @@
 #include <string.h>
 #include "mpi.h"
 
-#include "include/constants.h"
 #include "errhandler/errcode-internal.h"
 
 /* Table holding all error codes */

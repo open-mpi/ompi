@@ -10,11 +10,11 @@
 #if HAVE_SYSLOG_H
 #include <syslog.h>
 #endif
+#include "include/constants.h"
 #include "util/output.h"
 #include "util/printf.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
-
 
 /*
  * Public variables

@@ -46,8 +46,8 @@ ompi_group_t *ompi_group_allocate(int group_size)
         } else {
             /* allocate array of (ompi_proc_t *)'s, one for each
              *   process in the group */
-            new_group->grp_proc_pointers = (ompi_proc_t **)
-                malloc(sizeof(ompi_proc_t *) * group_size);
+            new_group->grp_proc_pointers = (struct ompi_proc_t **)
+                malloc(sizeof(struct ompi_proc_t *) * group_size);
             if (0 < group_size) {
                 /* non-empty group */
                 if (!new_group->grp_proc_pointers) {

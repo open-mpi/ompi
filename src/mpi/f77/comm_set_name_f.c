@@ -6,9 +6,7 @@
 
 #include <stdio.h>
 
-#include "mpi.h"
 #include "include/constants.h"
-#include "errhandler/errhandler.h"
 #include "communicator/communicator.h"
 #include "mpi/f77/bindings.h"
 #include "mpi/f77/strings.h"

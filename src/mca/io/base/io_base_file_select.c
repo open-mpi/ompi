@@ -11,6 +11,7 @@
 #include "mpi.h"
 #include "file/file.h"
 #include "util/argv.h"
+#include "util/output.h"
 #include "class/ompi_list.h"
 #include "class/ompi_object.h"
 #include "mca/mca.h"

@@ -3,7 +3,7 @@
  */
 
 #include "ompi_config.h"
-
+#include <string.h>
 #include "mpi.h"
 #include "mpi/c/bindings.h"
 #include "communicator/communicator.h"

@@ -5,6 +5,7 @@
 #include "ompi_config.h"
 
 #include <stdio.h>
+#include <string.h>
 
 #include "mca/mca.h"
 #include "mca/base/base.h"

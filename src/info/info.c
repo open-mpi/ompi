@@ -4,7 +4,6 @@
 
 #include "ompi_config.h"
 #include "info/info.h"
-#include "include/constants.h"
 #include "mpi/runtime/params.h"
 #include "util/output.h"
 

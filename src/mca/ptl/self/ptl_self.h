@@ -25,15 +25,15 @@ extern "C" {
 struct mca_ptl_self_component_t {
    mca_ptl_base_component_1_0_0_t super;              /**< base PTL component */
    struct mca_ptl_base_module_t** self_ptl_modules;   /**< array of available PTL modules */
-   uint32_t           self_num_ptl_modules;  /**< number of ptl modules actually used */
-   uint32_t           self_max_ptl_modules;  /**< maximum number of ptl modules */
-   uint32_t           self_buf_size;         /**< the size of the internal buffer used to pack/unpack the data */
-   uint32_t           self_is_non_blocking;  /**< how the memcopy operations are done segmented or not */
-   int32_t            self_free_list_num;    /**< initial size of free lists */
-   int32_t            self_free_list_max;    /**< maximum size of free lists */
-   int32_t            self_free_list_inc;    /**< number of elements to alloc when growing free lists */
-   ompi_free_list_t   self_send_requests;    /**< free list of self send requests -- sendreq + sendfrag */
-   ompi_proc_t*       self_local;            /**< the self proc instance corresponding to the local process */
+   uint32_t            self_num_ptl_modules;  /**< number of ptl modules actually used */
+   uint32_t            self_max_ptl_modules;  /**< maximum number of ptl modules */
+   uint32_t            self_buf_size;         /**< the size of the internal buffer used to pack/unpack the data */
+   uint32_t            self_is_non_blocking;  /**< how the memcopy operations are done segmented or not */
+   int32_t             self_free_list_num;    /**< initial size of free lists */
+   int32_t             self_free_list_max;    /**< maximum size of free lists */
+   int32_t             self_free_list_inc;    /**< number of elements to alloc when growing free lists */
+   ompi_free_list_t    self_send_requests;    /**< free list of self send requests -- sendreq + sendfrag */
+   struct ompi_proc_t* self_local;            /**< the self proc instance corresponding to the local process */
 };
 typedef struct mca_ptl_self_component_t mca_ptl_self_component_t;
 
@@ -76,7 +76,7 @@ extern mca_ptl_base_module_t** mca_ptl_self_component_init(
     bool *have_hidden_threads
 );
 
-int  mca_ptl_self_add_proc(struct mca_ptl_base_module_t* ptl, size_t nprocs, struct ompi_proc_t **ompi_proc, struct mca_ptl_base_peer_t** peer_ret, ompi_bitmap_t* reachable);
+int  mca_ptl_self_add_proc(struct mca_ptl_base_module_t* ptl, size_t nprocs, struct ompi_proc_t **ompi_proc, struct mca_ptl_base_peer_t** peer_ret, struct ompi_bitmap_t* reachable);
 int  mca_ptl_self_del_proc(struct mca_ptl_base_module_t* ptl, size_t nprocs, struct ompi_proc_t **proc, struct mca_ptl_base_peer_t** ptl_peer);
 int  mca_ptl_self_finalize(struct mca_ptl_base_module_t* ptl);
 int mca_ptl_self_request_init(struct mca_ptl_base_module_t* ptl, struct mca_pml_base_send_request_t* request);

@@ -9,6 +9,7 @@
 #include "mpi.h"
 #include "mpi/f77/bindings.h"
 #include "attribute/attribute.h"
+#include "communicator/communicator.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_WIN_CREATE_KEYVAL = mpi_win_create_keyval_f

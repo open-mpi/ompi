@@ -1,11 +1,12 @@
 #include "ompi_config.h"
 #include "ptl_prof.h"
+#include "class/ompi_bitmap.h"
 
 static int ptl_prof_add_procs_fn( struct mca_ptl_base_module_t* ptl,
                                   size_t nprocs,
                                   struct ompi_proc_t** procs,
                                   struct mca_ptl_base_peer_t** peer,
-                                  ompi_bitmap_t* reachable )
+                                  struct ompi_bitmap_t* reachable )
 {
    return 0;
 }

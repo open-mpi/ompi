@@ -15,12 +15,10 @@
 #include "mpi.h"
 
 #include "ompi_config.h"
+#include "include/constants.h"
 #include "class/ompi_object.h"
 #include "class/ompi_bitmap.h"
 #include "class/ompi_hash_table.h"
-#include "communicator/communicator.h"
-#include "datatype/datatype.h"
-#include "win/win.h"
 
 #define ATTR_HASH_SIZE 10
 

@@ -9,10 +9,8 @@
 #include "mpi.h"
 #include "event/event.h"
 #include "group/group.h"
-#include "errhandler/errhandler.h"
 #include "errhandler/errcode.h"
 #include "errhandler/errclass.h"
-#include "errhandler/errcode-internal.h"
 #include "communicator/communicator.h"
 #include "datatype/datatype.h"
 #include "op/op.h"
@@ -22,6 +20,7 @@
 #include "runtime/runtime.h"
 #include "runtime/ompi_progress.h"
 #include "runtime/ompi_rte_wait.h"
+#include "attribute/attribute.h"
 
 #include "mca/base/base.h"
 #include "mca/base/mca_base_module_exchange.h"

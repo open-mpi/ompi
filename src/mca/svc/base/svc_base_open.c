@@ -6,6 +6,7 @@
 
 #include <stdio.h>
 
+#include "include/constants.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
 #include "mca/svc/svc.h"

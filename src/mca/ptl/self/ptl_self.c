@@ -23,6 +23,7 @@
 #endif
 
 #include "include/constants.h"
+#include "class/ompi_bitmap.h"
 #include "event/event.h"
 #include "util/argv.h"
 #include "util/output.h"

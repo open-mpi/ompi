@@ -8,7 +8,6 @@
 #include "mpi/c/bindings.h"
 #include "communicator/communicator.h"
 #include "request/grequest.h"
-#include "errhandler/errhandler.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Grequest_complete = PMPI_Grequest_complete
@@ -33,7 +32,7 @@ int MPI_Grequest_complete(MPI_Request request)
     }
 
     switch(request->req_type) {
-        OMPI_REQUEST_GEN:
+        case OMPI_REQUEST_GEN:
             rc = ompi_grequest_complete((ompi_grequest_t*)request);
             break;
         default:
