@@ -230,3 +230,73 @@ int lam_pointer_array_set_item(lam_pointer_array_t *table, size_t index,
     return LAM_SUCCESS;
 }
 
+/**
+ * Test whether a certain element is already in use. If not yet
+ * in use, reserve it.
+ *
+ * @param array Pointer to array (IN)
+ * @param index Index of element to be tested (IN)
+ * @param value New value to be set at element index (IN)
+ *
+ * @return true/false True if element could be reserved
+ *                    False if element could not be reserved (e.g.in use).
+ *
+ * In contrary to array_set, this function does not allow to overwrite 
+ * a value, unless the previous value is NULL ( equiv. to free ).
+ */
+int lam_pointer_array_test_and_set_item (lam_pointer_array_t *table, size_t index,
+                                         void *value)
+{
+    int flag=true;
+
+    assert(table != NULL);
+    assert(index >= 0);
+
+#if 0
+    lam_output(0,"lam_pointer_array_test_and_set_item: IN:  "
+               " table %p (size %ld, lowest free %ld, number free %ld)"
+               " addr[%d] = %p\n",
+               table, table->size, table->lowest_free, table->number_free,
+               index, table->addr[index]);
+#endif
+
+    /* expand table if required to set a specific index */
+    THREAD_LOCK(&(table->lock));
+    if ( index < table->size && table->addr[index] != NULL ) {
+        /* This element is already in use */
+        flag = false;
+        THREAD_UNLOCK(&(table->lock));
+        return flag;
+    }
+
+    if(table->size <= index) {
+        size_t i, new_size = (((index / TABLE_GROW) + 1) * TABLE_GROW);
+	void *p = realloc(table->addr, new_size * sizeof(void *));
+	if (p == NULL) {
+            THREAD_UNLOCK(&(table->lock));
+	    return LAM_ERROR;
+	}
+	table->number_free += new_size - table->size;
+	table->addr = p;
+        for (i = table->size; i < new_size; i++) {
+            table->addr[i] = NULL;
+        }
+	table->size = new_size;
+    }
+
+    /* 
+     * allow a specific index to be changed.
+     */
+    table->addr[index] = value;
+
+#if 0
+    lam_output(0,"lam_pointer_array_test_and_set_item: OUT: "
+               " table %p (size %ld, lowest free %ld, number free %ld)"
+               " addr[%d] = %p\n",
+               table, table->size, table->lowest_free, table->number_free,
+               index, table->addr[index]);
+#endif
+
+    THREAD_UNLOCK(&(table->lock));
+    return flag;
+}

@@ -90,4 +90,21 @@ static inline size_t lam_pointer_array_get_size(lam_pointer_array_t *array)
   return array->size;
 }
 
+/**
+ * Test whether a certain element is already in use. If not yet
+ * in use, reserve it.
+ *
+ * @param array Pointer to array (IN)
+ * @param index Index of element to be tested (IN)
+ * @param value New value to be set at element index (IN)
+ *
+ * @return true/false True if element could be reserved
+ *                    False if element could not be reserved (e.g.in use).
+ *
+ * In contrary to array_set, this function does not allow to overwrite 
+ * a value, unless the previous value is NULL ( equiv. to free ).
+ */
+int lam_pointer_array_test_and_set_item (lam_pointer_array_t *table, size_t index,
+                                         void *value);
+
 #endif /* LAM_POINTER_ARRAY_H */
