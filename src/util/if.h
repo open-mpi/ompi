@@ -24,16 +24,18 @@ extern "C" {
  *  @param if_addr (OUT)  Interface address buffer
  *  @param size    (IN)   Interface address buffer size
  */
-OMPI_DECLSPEC int ompi_ifnametoaddr(const char* if_name, struct sockaddr*, int);
+OMPI_DECLSPEC int ompi_ifnametoaddr(const char* if_name, 
+                                    struct sockaddr* if_addr, int size);
 
 /**
  *  Lookup an interface by address and return its name.
  *  
- *  @param if_name (IN)   Interface address
- *  @param if_addr (OUT)  Interface name buffer
+ *  @param if_addr (IN)   Interface address (hostname or dotted-quad)
+ *  @param if_name (OUT)  Interface name buffer
  *  @param size    (IN)   Interface name buffer size
  */
-OMPI_DECLSPEC int ompi_ifaddrtoname(const char* if_addr, char* if_name, int);
+OMPI_DECLSPEC int ompi_ifaddrtoname(const char* if_addr, 
+                                    char* if_name, int size);
 
 /**
  *  Lookup an interface by name and return its kernel index.
