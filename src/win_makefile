@@ -183,8 +183,6 @@ install:
 	@install -p ${topdir}/src/libmpi.lib ${installdir}/lib/libmpi.lib
 	@install -p ${topdir}/src/libmpi.exp ${installdir}/lib/libmpi.exp
 	@install -p ${topdir}/src/libmpi.dll ${installdir}/lib/libmpi.dll
-	@install -p ${topdir}/src/vc70.idb ${installdir}/lib/vc70.idb
-	@install -p ${topdir}/src/vc70.pdb ${installdir}/lib/vc70.pdb
 	@install -d ${topdir}/include ${installdir}/include/
 	@install -p ${topdir}/include/ompi_config_bottom.h \
                                   ${installdir}/include/ompi_config_bottom.h 
