@@ -91,7 +91,7 @@ int mca_ptl_gm_receiver_advance_pipeline( mca_ptl_gm_recv_frag_t* frag, int only
     mca_ptl_gm_peer_t* peer;
     gm_status_t status;
     mca_ptl_gm_pipeline_line_t *get_line, *reg_line, *dereg_line;
-    size_t length;
+    uint64_t length;
     DO_DEBUG( int count;
 	      char buffer[128]; )
 
@@ -113,8 +113,8 @@ int mca_ptl_gm_receiver_advance_pipeline( mca_ptl_gm_recv_frag_t* frag, int only
     reg_line = &(frag->pipeline.lines[frag->pipeline.pos_register]);
     length = frag->frag_recv.frag_base.frag_size - frag->frag_bytes_processed;
     if( (0 != length) && !(reg_line->flags & PTL_GM_PIPELINE_REGISTER) ) {
-	reg_line->length = length;
 	reg_line->hdr_flags = get_line->hdr_flags;
+	reg_line->length = length;
 	if( reg_line->length > mca_ptl_gm_component.gm_rdma_frag_size )
 	    reg_line->length = mca_ptl_gm_component.gm_rdma_frag_size;
 	reg_line->offset = get_line->offset + get_line->length;
@@ -239,7 +239,7 @@ int mca_ptl_gm_sender_advance_pipeline( mca_ptl_gm_send_frag_t* frag )
 	    status = gm_register_memory( peer->peer_ptl->gm_port, reg_line->local_memory.pval,
 					 reg_line->length );
 	    if( GM_SUCCESS != status ) {
-		ompi_output( 0, "Cannot register receiver memory (%p, %ld) bytes offset %ld\n",
+		ompi_output( 0, "Cannot register sender memory (%p, %ld) bytes offset %ld\n",
 			     reg_line->local_memory.pval, reg_line->length, reg_line->offset );
 		return OMPI_ERROR;
 	    }
@@ -358,7 +358,8 @@ int mca_ptl_gm_peer_send_continue( mca_ptl_gm_peer_t *ptl_peer,
 	if( 0 == pipeline->length )
 	    pipeline->length = mca_ptl_gm_component.gm_rdma_frag_size;
 	else
-	    pipeline->length = (mca_ptl_gm_component.gm_rdma_frag_size >> 1);
+	    if( fragment->frag_send.frag_base.frag_size > mca_ptl_gm_component.gm_rdma_frag_size )
+		pipeline->length = (mca_ptl_gm_component.gm_rdma_frag_size >> 1);
     }
     pipeline->offset = fragment->frag_offset;
     pipeline->hdr_flags = fragment->frag_send.frag_base.frag_header.hdr_common.hdr_flags;
@@ -718,7 +719,8 @@ mca_ptl_gm_recv_frag_frag( struct mca_ptl_gm_module_t* ptl,
 		if( 0 == pipeline->length )
 		    pipeline->length = mca_ptl_gm_component.gm_rdma_frag_size;
 		else
-		    pipeline->length = (mca_ptl_gm_component.gm_rdma_frag_size >> 1);
+		    if( frag->frag_recv.frag_base.frag_size > mca_ptl_gm_component.gm_rdma_frag_size )
+			pipeline->length = (mca_ptl_gm_component.gm_rdma_frag_size >> 1);
 	    }
 	    pipeline->local_memory.lval = 0L;
 	    pipeline->local_memory.pval = (char*)request->req_base.req_addr + hdr->hdr_frag.hdr_frag_offset;

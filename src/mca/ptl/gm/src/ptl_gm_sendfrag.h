@@ -57,7 +57,7 @@ extern "C" {
     struct mca_ptl_gm_pipeline_line_t {
 	uint16_t flags;
 	uint16_t hdr_flags;
-	uint32_t length;
+	uint64_t length;
 	uint64_t offset;
 	ompi_ptr_t local_memory;
 	ompi_ptr_t remote_memory;
