@@ -8,6 +8,7 @@
 
 #include "lam/constants.h"
 #include "lam/runtime/runtime.h"
+#include "lam/mem/malloc.h"
 #include "lam/util/output.h"
 #include "lam/threads/mutex.h"
 
@@ -45,6 +46,10 @@ int lam_init(int argc, char *argv[])
      using threads. */
 
   lam_set_using_threads(false);
+
+  /* For malloc debugging */
+
+  lam_malloc_init();
 
   /* Other things that we'll probably need:
 
