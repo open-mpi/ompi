@@ -21,6 +21,7 @@
 int MPI_Unpublish_name(char *service_name, MPI_Info info,
                        char *port_name) 
 {
+    int rc;
 
     if ( MPI_PARAM_CHECK ) {
         if ( ompi_mpi_finalized )
@@ -34,10 +35,15 @@ int MPI_Unpublish_name(char *service_name, MPI_Info info,
                                           "MPI_Unpublish_name");
     }
 
-    /* parse info-object. No predefined info-objects for this function
-       in MPI-2 */
-    /* delete information from registry, using service_name, 
-       jobid and vpid as keys */
+    /* 
+     * No predefined info-objects for this function in MPI-2,
+     * therefore, we do not parse the info-object at the moment.
+     */
+    rc = ompi_comm_nameunpublish(service_name);
+    if ( OMPI_SUCCESS != rc ) {
+        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_SERVICE,
+                                      "MPI_Unpublish_name");
+    }
 
     return MPI_SUCCESS;
 }

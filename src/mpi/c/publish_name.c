@@ -21,6 +21,8 @@
 int MPI_Publish_name(char *service_name, MPI_Info info,
                      char *port_name) 
 {
+    int rc;
+
     if ( MPI_PARAM_CHECK ) {
         if ( ompi_mpi_finalized )
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INTERN, 
@@ -33,10 +35,16 @@ int MPI_Publish_name(char *service_name, MPI_Info info,
                                           "MPI_Publish_name");
     }
 
-    /* parse info-object. No predefined info-objects for this function
-       in MPI-2 */
-    /* send information to registry, using service_name, jobid 
-       and vpid as keys. */
+    /* 
+     * No predefined info-objects for this function in MPI-2,
+     * therefore, we do not parse the info-object at the moment.
+     */
 
+    rc = ompi_comm_namepublish (service_name, port_name);
+    if ( OMPI_SUCCESS != rc ) {
+        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INTERN,
+                                      "MPI_Publish_name");
+    }
+    
     return MPI_SUCCESS;
 }
