@@ -1023,7 +1023,6 @@ ompi_show_title "Library and Function tests"
 # atoll
 # strtoll
 # yield
-# sched_yield
 # vscanf
 
 AC_CHECK_FUNCS([asprintf snprintf vasprintf vsnprintf])
@@ -1043,6 +1042,16 @@ AC_DEFINE_UNQUOTED(OMPI_HAVE_UNDERSCORE_VA_COPY, $OMPI_HAVE_UNDERSCORE_VA_COPY,
     [Whether we have __va_copy or not])
 
 AC_CHECK_DECLS(__func__)
+
+#
+# Solaris has sched_yield in -lrt
+# 
+
+AC_CHECK_LIB([rt], [sched_yield])
+
+#
+# See if we need the math library explicitly linked in
+#
 
 AC_CHECK_LIB([m], [ceil])
 
