@@ -35,8 +35,7 @@
 #include "lam_config.h"
 
 #include "mca/mca.h"
-
-#include <sys/types.h>
+#include "lam/types.h"
 
 /*
  * Global constants / types
@@ -49,7 +48,7 @@
   /* "Special" vpids */
 #define MCA_OOB_MPIRUN  -1
 
-typedef void (*mca_oob_recv_cb_t)(char* parallel_job_id, int tag, 
+typedef void (*mca_oob_recv_cb_t)(lam_job_handle_t job_handle, int tag, 
                                   int vpid, void* data, size_t data_len, int status);
 
 
@@ -58,13 +57,13 @@ typedef void (*mca_oob_recv_cb_t)(char* parallel_job_id, int tag,
  */
 typedef int (*mca_oob_query_fn_t)(int *priority);
 typedef struct mca_oob_1_0_0* (*mca_oob_init_fn_t)(void);
-typedef int (*mca_oob_send_fn_t)(char* parallel_job_id, int vpid, int tag, 
+typedef int (*mca_oob_send_fn_t)(lam_job_handle_t job_handle, int vpid, int tag, 
                                  void* data, size_t data_len);
-typedef int (*mca_oob_recv_fn_t)(char* parallel_job_id, int* tag, int* vpid, 
+typedef int (*mca_oob_recv_fn_t)(lam_job_handle_t job_handle, int* tag, int* vpid, 
                                  void** data, size_t* data_len);
-typedef int (*mca_oob_recv_nb_fn_t)(char* parallel_job_id, int* tag, int* vpid, 
+typedef int (*mca_oob_recv_nb_fn_t)(lam_job_handle_t job_handle, int* tag, int* vpid, 
                                     void** data, size_t* data_len);
-typedef int (*mca_oob_recv_cb_fn_t)(char* parallel_job_id, int tag, 
+typedef int (*mca_oob_recv_cb_fn_t)(lam_job_handle_t job_handle, int tag, 
                                     mca_oob_recv_cb_t callback);
 typedef int (*mca_oob_finalize_fn_t)(void);
 
@@ -114,8 +113,6 @@ extern "C" {
 /*
  * Global struct holding the selected module's function pointers
  */
-#if 0
 extern mca_oob_t mca_oob;
-#endif /* #if 0 */
 
 #endif

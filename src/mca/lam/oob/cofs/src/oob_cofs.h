@@ -5,6 +5,7 @@
  */
 
 #include "mca/lam/oob/oob.h"
+#include "lam/types.h"
 
 /*
  * Module open / close
@@ -24,11 +25,11 @@ int mca_oob_cofs_finalize(void);
 /*
  * "Action" functions
  */
-int mca_oob_cofs_send(char* parallel_job_id, int vpid, int tag, 
+int mca_oob_cofs_send(lam_job_handle_t job_handle, int vpid, int tag, 
                       void* data, size_t data_len);
-int mca_oob_cofs_recv(char* parallel_job_id, int* tag, int* vpid, 
+int mca_oob_cofs_recv(lam_job_handle_t job_handle, int* tag, int* vpid, 
                       void** data, size_t* data_len);
-int mca_oob_cofs_recv_nb(char* parallel_job_id, int* tag, int* vpid, 
+int mca_oob_cofs_recv_nb(lam_job_handle_t job_handle, int* tag, int* vpid, 
                          void** data, size_t* data_len);
-int mca_oob_cofs_recv_cb(char* parallel_job_id, int tag, 
+int mca_oob_cofs_recv_cb(lam_job_handle_t job_handle, int tag, 
                          mca_oob_recv_cb_t callback);

@@ -56,6 +56,7 @@
 #include "lam_config.h"
 
 #include "mca/mca.h"
+#include "lam/types.h"
 
 /*
  * "PCM" global types
@@ -73,8 +74,6 @@ typedef struct lam_pcm_control_args {
   char* request;
   char* value;
 } lam_pcm_control_args_t;
-
-typedef char* lam_pcm_job_handle_t;
 
 /*
  * functions every module must provide
@@ -128,7 +127,7 @@ typedef int (*mca_pcm_query_get_nodes)(lam_pcm_node_t **nodes, size_t *nodes_len
    *
    * \warning The handle must be released using lam_pcm_handle_free
    */
-typedef lam_pcm_job_handle_t (*mca_pcm_handle_new_fn_t)(lam_pcm_job_handle_t parent);
+typedef lam_job_handle_t (*mca_pcm_handle_new_fn_t)(lam_job_handle_t parent);
 
 
   /**
@@ -141,18 +140,18 @@ typedef lam_pcm_job_handle_t (*mca_pcm_handle_new_fn_t)(lam_pcm_job_handle_t par
    *
    * \warning The handle must be released using lam_pcm_handle_free
    */
-typedef lam_pcm_job_handle_t (*mca_pcm_handle_get_fn_t)(void);
+typedef lam_job_handle_t (*mca_pcm_handle_get_fn_t)(void);
 
 
   /**
    * Free a job handle
    *
-   * @param job_handle Poiner to a lam_pcm_job_handle_t
+   * @param job_handle Poiner to a lam_job_handle_t
    * 
    * Free a job handle returned by lam_pcm_handle_new or
    * lam_pcm_handle_get.
    */
-typedef void (*mca_pcm_handle_free_fn_t)(lam_pcm_job_handle_t *job_handle);
+typedef void (*mca_pcm_handle_free_fn_t)(lam_job_handle_t *job_handle);
 
 
   /**
@@ -168,7 +167,7 @@ typedef void (*mca_pcm_handle_free_fn_t)(lam_pcm_job_handle_t *job_handle);
    * always return LAM_SUCCESS (yes) if called from mpirun.  Useful
    * for asking if MPI_SPAWN and friends can run.
    */
-typedef int (*mca_pcm_job_can_sapwn_fn_t)(lam_pcm_job_handle_t job_handle);
+typedef int (*mca_pcm_job_can_sapwn_fn_t)(lam_job_handle_t job_handle);
 
 
   /**
@@ -191,7 +190,7 @@ typedef int (*mca_pcm_job_can_sapwn_fn_t)(lam_pcm_job_handle_t job_handle);
    * \Warning It is an error to call this function more than once on a single
    * job handle.
    */
-typedef int (*mca_pcm_job_set_arguments_fn_t)(lam_pcm_job_handle_t job_handle, 
+typedef int (*mca_pcm_job_set_arguments_fn_t)(lam_job_handle_t job_handle, 
                                               lam_pcm_control_args_t* opts, 
                                               size_t opts_len);
 
@@ -221,7 +220,7 @@ typedef int (*mca_pcm_job_set_arguments_fn_t)(lam_pcm_job_handle_t job_handle,
    * LAM_ERR_NOT_SUPPORTED will be returned if the mca module does not
    * support spawning of new applications from
    */
-typedef int (*mca_pcm_job_launch_procs_fn_t)(lam_pcm_job_handle_t job_handle, 
+typedef int (*mca_pcm_job_launch_procs_fn_t)(lam_job_handle_t job_handle, 
                                              lam_pcm_node_t *nodes, 
                                              size_t nodes_len, const char* file, 
                                              int argc, const char* argv[], 
@@ -244,7 +243,7 @@ typedef int (*mca_pcm_job_launch_procs_fn_t)(lam_pcm_job_handle_t job_handle,
    * returns, it is safe to assume that all rendezvous is complete
    * (ie, you can exit and not mess anything up
    */
-typedef int (*mca_pcm_job_rendezvous_fn_t)(lam_pcm_job_handle_t job_handle);
+typedef int (*mca_pcm_job_rendezvous_fn_t)(lam_job_handle_t job_handle);
 
 
   /**
@@ -259,7 +258,7 @@ typedef int (*mca_pcm_job_rendezvous_fn_t)(lam_pcm_job_handle_t job_handle);
    * on a job at termination, as job results will be expunged over
    * time as resource limits dictate.
    */
-typedef int (*mca_pcm_job_wait_fn_t)(lam_pcm_job_handle_t job_handle);
+typedef int (*mca_pcm_job_wait_fn_t)(lam_job_handle_t job_handle);
 
 
   /**
@@ -274,7 +273,7 @@ typedef int (*mca_pcm_job_wait_fn_t)(lam_pcm_job_handle_t job_handle);
    * Ask if job is running.  If job has recently finished, this does
    * not imply wait the pcm interface will call wait for you.
    */
-typedef int (*mca_pcm_job_running_fn_t)(lam_pcm_job_handle_t job_handle, 
+typedef int (*mca_pcm_job_running_fn_t)(lam_job_handle_t job_handle, 
                                         int* running);
 
 
@@ -292,7 +291,7 @@ typedef int (*mca_pcm_job_running_fn_t)(lam_pcm_job_handle_t job_handle,
    *
    * \warning This function is not yet implemented.
    */
-typedef int (*mca_pcm_job_list_running_fn_t)(lam_pcm_job_handle_t **handles, 
+typedef int (*mca_pcm_job_list_running_fn_t)(lam_job_handle_t **handles, 
                                              size_t handles_len);
 
 
