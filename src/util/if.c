@@ -249,7 +249,7 @@ int ompi_ifbegin()
     if(ompi_ifinit() != OMPI_SUCCESS)
         return (-1);
     intf = (ompi_if_t*)ompi_list_get_first(&ompi_if_list);
-    if(intf != 0)
+    if(NULL != intf)
         return intf->if_index;
     return (-1);
 }
@@ -273,8 +273,11 @@ int ompi_ifnext(int if_index)
         if(intf->if_index == if_index) {
             do {
                 ompi_if_t* if_next = (ompi_if_t*)ompi_list_get_next(intf);
-                if (if_next == (ompi_if_t*)ompi_list_get_end(&ompi_if_list));
+                ompi_if_t* if_end =  (ompi_if_t*)ompi_list_get_end(&ompi_if_list);
+                if (if_next == if_end) {
                     return -1;
+                }
+                intf = if_next;
             } while(intf->if_index == if_index);
             return intf->if_index;
         }
