@@ -263,7 +263,7 @@ ompi_rte_wait_cb(pid_t wpid, ompi_rte_wait_fn_t callback, void *data)
 void
 ompi_rte_wait_signal_callback(int fd, short event, void *arg)
 {
-    struct ompi_event *signal = arg;
+    struct ompi_event *signal = (struct ompi_event*) arg;
 
     if (SIGCHLD != OMPI_EVENT_SIGNAL(signal)) return;
 
