@@ -19,13 +19,13 @@ int mca_io_romio_Test(MPI_Request *request, int *flag, MPI_Status *status){
     romio_rq = rq->romio_rq;
 
 
-    THREAD_LOCK(&mca_io_romio_mutex);
+    OMPI_THREAD_LOCK(&mca_io_romio_mutex);
     ret=mca_io_romio_MPIO_Test(&romio_rq, flag,status);
     if (*flag) {
         free(*request);  
         *request = MPI_REQUEST_NULL;
     }
-    THREAD_UNLOCK(&mca_io_romio_mutex);
+    OMPI_THREAD_UNLOCK(&mca_io_romio_mutex);
   
     return ret;
 }
@@ -41,9 +41,9 @@ int mca_io_romio_Wait(MPI_Request *request, MPI_Status *status){
     romio_rq = rq->romio_rq;
 
 
-    THREAD_LOCK(&mca_io_romio_mutex);
+    OMPI_THREAD_LOCK(&mca_io_romio_mutex);
     ret=mca_io_romio_MPIO_Wait(&romio_rq, status);
-    THREAD_UNLOCK(&mca_io_romio_mutex);
+    OMPI_THREAD_UNLOCK(&mca_io_romio_mutex);
     
     free(*request);  
     *request = MPI_REQUEST_NULL;

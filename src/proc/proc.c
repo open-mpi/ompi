@@ -38,17 +38,17 @@ void ompi_proc_construct(ompi_proc_t* proc)
     /* FIX - need to determine remote process architecture */
     proc->proc_convertor = ompi_convertor_create(0, 0);
 
-    THREAD_LOCK(&ompi_proc_lock);
+    OMPI_THREAD_LOCK(&ompi_proc_lock);
     ompi_list_append(&ompi_proc_list, (ompi_list_item_t*)proc);
-    THREAD_UNLOCK(&ompi_proc_lock);
+    OMPI_THREAD_UNLOCK(&ompi_proc_lock);
 }
 
 
 void ompi_proc_destruct(ompi_proc_t* proc)
 {
-    THREAD_LOCK(&ompi_proc_lock);
+    OMPI_THREAD_LOCK(&ompi_proc_lock);
     ompi_list_remove_item(&ompi_proc_list, (ompi_list_item_t*)proc);
-    THREAD_UNLOCK(&ompi_proc_lock);
+    OMPI_THREAD_UNLOCK(&ompi_proc_lock);
     OBJ_DESTRUCT(&proc->proc_lock);
 }
 
@@ -104,7 +104,7 @@ ompi_proc_t** ompi_proc_world(size_t *size)
         return NULL;
 
     /* return only the procs that match this jobid */
-    THREAD_LOCK(&ompi_proc_lock);
+    OMPI_THREAD_LOCK(&ompi_proc_lock);
     for(proc =  (ompi_proc_t*)ompi_list_get_first(&ompi_proc_list); 
         proc != (ompi_proc_t*)ompi_list_get_end(&ompi_proc_list);
         proc =  (ompi_proc_t*)ompi_list_get_next(proc)) {
@@ -113,7 +113,7 @@ ompi_proc_t** ompi_proc_world(size_t *size)
             procs[count++] = proc;
         }
     }
-    THREAD_UNLOCK(&ompi_proc_lock);
+    OMPI_THREAD_UNLOCK(&ompi_proc_lock);
     *size = count;
     return procs;
 }
@@ -128,14 +128,14 @@ ompi_proc_t** ompi_proc_all(size_t* size)
     if(NULL == procs)
         return NULL;
 
-    THREAD_LOCK(&ompi_proc_lock);
+    OMPI_THREAD_LOCK(&ompi_proc_lock);
     for(proc =  (ompi_proc_t*)ompi_list_get_first(&ompi_proc_list); 
         proc != (ompi_proc_t*)ompi_list_get_end(&ompi_proc_list);
         proc =  (ompi_proc_t*)ompi_list_get_next(proc)) {
         OBJ_RETAIN(proc);
         procs[count++] = proc;
     }
-    THREAD_UNLOCK(&ompi_proc_lock);
+    OMPI_THREAD_UNLOCK(&ompi_proc_lock);
     *size = count;
     return procs;
 }
@@ -157,7 +157,7 @@ ompi_proc_t * ompi_proc_find ( ompi_job_handle_t jobid, uint32_t vpid )
     ompi_proc_t *proc;
 
     /* return the proc-struct which matches this jobid+process id */
-    THREAD_LOCK(&ompi_proc_lock);
+    OMPI_THREAD_LOCK(&ompi_proc_lock);
     for(proc =  (ompi_proc_t*)ompi_list_get_first(&ompi_proc_list); 
         proc != (ompi_proc_t*)ompi_list_get_end(&ompi_proc_list);
         proc =  (ompi_proc_t*)ompi_list_get_next(proc)) {
@@ -167,6 +167,6 @@ ompi_proc_t * ompi_proc_find ( ompi_job_handle_t jobid, uint32_t vpid )
                 break;
             }
     }
-    THREAD_UNLOCK(&ompi_proc_lock);
+    OMPI_THREAD_UNLOCK(&ompi_proc_lock);
     return proc;
 }

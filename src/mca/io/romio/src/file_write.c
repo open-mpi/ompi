@@ -17,9 +17,9 @@ int mca_io_romio_File_write_at(MPI_File fh, MPI_Offset offset, void *buf,int cou
     mca_romio_fh = (mca_io_romio_file_t *) fh;
     romio_fh = mca_romio_fh->romio_fh;
 
-    THREAD_LOCK(&mca_io_romio_mutex);
+    OMPI_THREAD_LOCK(&mca_io_romio_mutex);
     ret=mca_io_romio_MPI_File_write_at(romio_fh,offset,buf,count,datatype,status);
-    THREAD_UNLOCK(&mca_io_romio_mutex);
+    OMPI_THREAD_UNLOCK(&mca_io_romio_mutex);
   
     return ret;
 }
@@ -35,9 +35,9 @@ int mca_io_romio_File_write_at_all(MPI_File fh, MPI_Offset offset, void *buf, in
     mca_romio_fh = (mca_io_romio_file_t *) fh;
     romio_fh = mca_romio_fh->romio_fh;
 
-    THREAD_LOCK(&mca_io_romio_mutex);
+    OMPI_THREAD_LOCK(&mca_io_romio_mutex);
     ret=mca_io_romio_MPI_File_write_at_all(romio_fh,offset,buf,count,datatype,status);
-    THREAD_UNLOCK(&mca_io_romio_mutex);
+    OMPI_THREAD_UNLOCK(&mca_io_romio_mutex);
   
     return ret;
 }
@@ -64,10 +64,10 @@ int mca_io_romio_File_iwrite_at(MPI_File fh, MPI_Offset offset, void *buf,int co
     romio_fh = mca_romio_fh->romio_fh;
 
 
-    THREAD_LOCK(&mca_io_romio_mutex);
+    OMPI_THREAD_LOCK(&mca_io_romio_mutex);
     ret=mca_io_romio_MPI_File_iwrite_at(romio_fh,offset,buf,count,datatype,
          &romio_rq);
-    THREAD_UNLOCK(&mca_io_romio_mutex);
+    OMPI_THREAD_UNLOCK(&mca_io_romio_mutex);
   
     return ret;
 }
@@ -85,9 +85,9 @@ int mca_io_romio_File_write(MPI_File fh, void *buf, int count, MPI_Datatype data
     mca_romio_fh = (mca_io_romio_file_t *) fh;
     romio_fh = mca_romio_fh->romio_fh;
 
-    THREAD_LOCK(&mca_io_romio_mutex);
+    OMPI_THREAD_LOCK(&mca_io_romio_mutex);
     ret=mca_io_romio_MPI_File_write(romio_fh,buf,count,datatype,status);
-    THREAD_UNLOCK(&mca_io_romio_mutex);
+    OMPI_THREAD_UNLOCK(&mca_io_romio_mutex);
   
     return ret;
 }
@@ -101,9 +101,9 @@ int mca_io_romio_File_write_all(MPI_File fh, void *buf, int count, MPI_Datatype 
     mca_romio_fh = (mca_io_romio_file_t *) fh;
     romio_fh = mca_romio_fh->romio_fh;
 
-    THREAD_LOCK(&mca_io_romio_mutex);
+    OMPI_THREAD_LOCK(&mca_io_romio_mutex);
     ret=mca_io_romio_MPI_File_write_all(romio_fh,buf,count,datatype,status);
-    THREAD_UNLOCK(&mca_io_romio_mutex);
+    OMPI_THREAD_UNLOCK(&mca_io_romio_mutex);
   
     return ret;
 }
@@ -127,9 +127,9 @@ int mca_io_romio_File_iwrite(MPI_File fh, void *buf, int count,
 
     romio_fh = ((mca_io_romio_file_t *) fh)->romio_fh;
 
-    THREAD_LOCK(&mca_io_romio_mutex);
+    OMPI_THREAD_LOCK(&mca_io_romio_mutex);
     ret=mca_io_romio_MPI_File_iwrite(romio_fh, buf, count, datatype, &romio_rq);
-    THREAD_UNLOCK(&mca_io_romio_mutex);
+    OMPI_THREAD_UNLOCK(&mca_io_romio_mutex);
     return ret;
 }
 
@@ -143,9 +143,9 @@ int mca_io_romio_File_write_shared(MPI_File fh, void *buf, int count, MPI_Dataty
     mca_romio_fh = (mca_io_romio_file_t *) fh;
     romio_fh = mca_romio_fh->romio_fh;
 
-    THREAD_LOCK(&mca_io_romio_mutex);
+    OMPI_THREAD_LOCK(&mca_io_romio_mutex);
     ret=mca_io_romio_MPI_File_write_shared(romio_fh,buf,count,datatype,status);
-    THREAD_UNLOCK(&mca_io_romio_mutex);
+    OMPI_THREAD_UNLOCK(&mca_io_romio_mutex);
   
     return ret;
 }
@@ -171,9 +171,9 @@ int mca_io_romio_File_iwrite_shared(MPI_File fh, void *buf, int count,
     romio_fh = mca_romio_fh->romio_fh;
 
 
-    THREAD_LOCK(&mca_io_romio_mutex);
+    OMPI_THREAD_LOCK(&mca_io_romio_mutex);
     ret= mca_io_romio_MPI_File_iwrite_shared(romio_fh,buf,count,datatype,&romio_rq);
-    THREAD_UNLOCK(&mca_io_romio_mutex);
+    OMPI_THREAD_UNLOCK(&mca_io_romio_mutex);
   
     return ret;
 }
@@ -187,9 +187,9 @@ int mca_io_romio_File_write_ordered(MPI_File fh, void *buf, int count,
     mca_romio_fh = (mca_io_romio_file_t *) fh;
     romio_fh = mca_romio_fh->romio_fh;
 
-    THREAD_LOCK(&mca_io_romio_mutex);
+    OMPI_THREAD_LOCK(&mca_io_romio_mutex);
     ret= mca_io_romio_MPI_File_write_ordered(romio_fh,buf,count,datatype,status);
-    THREAD_UNLOCK(&mca_io_romio_mutex);
+    OMPI_THREAD_UNLOCK(&mca_io_romio_mutex);
   
     return ret;
 }
@@ -203,10 +203,10 @@ int mca_io_romio_File_write_at_all_begin(MPI_File fh, MPI_Offset offset, void *b
     mca_romio_fh = (mca_io_romio_file_t *) fh;
     romio_fh = mca_romio_fh->romio_fh;
 
-    THREAD_LOCK(&mca_io_romio_mutex);
+    OMPI_THREAD_LOCK(&mca_io_romio_mutex);
     ret= mca_io_romio_MPI_File_write_at_all_begin(romio_fh,offset, buf,
                                          count, datatype);
-    THREAD_UNLOCK(&mca_io_romio_mutex);
+    OMPI_THREAD_UNLOCK(&mca_io_romio_mutex);
   
     return ret;
 }
@@ -219,9 +219,9 @@ int mca_io_romio_File_write_at_all_end(MPI_File fh, void *buf, MPI_Status *statu
     mca_romio_fh = (mca_io_romio_file_t *) fh;
     romio_fh = mca_romio_fh->romio_fh;
 
-    THREAD_LOCK(&mca_io_romio_mutex);
+    OMPI_THREAD_LOCK(&mca_io_romio_mutex);
     ret=mca_io_romio_MPI_File_write_at_all_end(romio_fh,buf,status);
-    THREAD_UNLOCK(&mca_io_romio_mutex);
+    OMPI_THREAD_UNLOCK(&mca_io_romio_mutex);
   
     return ret;
 }
@@ -235,10 +235,10 @@ int mca_io_romio_File_write_all_begin(MPI_File fh, void *buf, int count,
     mca_romio_fh = (mca_io_romio_file_t *) fh;
     romio_fh = mca_romio_fh->romio_fh;
 
-    THREAD_LOCK(&mca_io_romio_mutex);
+    OMPI_THREAD_LOCK(&mca_io_romio_mutex);
     ret= mca_io_romio_MPI_File_write_all_begin(romio_fh, buf, count, 
                                       datatype);
-    THREAD_UNLOCK(&mca_io_romio_mutex);
+    OMPI_THREAD_UNLOCK(&mca_io_romio_mutex);
   
     return ret;
 }
@@ -251,9 +251,9 @@ int mca_io_romio_File_write_all_end(MPI_File fh, void *buf, MPI_Status *status){
     mca_romio_fh = (mca_io_romio_file_t *) fh;
     romio_fh = mca_romio_fh->romio_fh;
 
-    THREAD_LOCK(&mca_io_romio_mutex);
+    OMPI_THREAD_LOCK(&mca_io_romio_mutex);
     ret= mca_io_romio_MPI_File_write_all_end(romio_fh,buf,status);
-    THREAD_UNLOCK(&mca_io_romio_mutex);
+    OMPI_THREAD_UNLOCK(&mca_io_romio_mutex);
   
     return ret;
 }
@@ -266,9 +266,9 @@ int mca_io_romio_File_write_ordered_begin(MPI_File fh, void *buf, int count,MPI_
     mca_romio_fh = (mca_io_romio_file_t *) fh;
     romio_fh = mca_romio_fh->romio_fh;
 
-    THREAD_LOCK(&mca_io_romio_mutex);
+    OMPI_THREAD_LOCK(&mca_io_romio_mutex);
     ret=mca_io_romio_MPI_File_write_ordered_begin(romio_fh,buf,count,datatype);
-    THREAD_UNLOCK(&mca_io_romio_mutex);
+    OMPI_THREAD_UNLOCK(&mca_io_romio_mutex);
   
     return ret;
 }
@@ -281,9 +281,9 @@ int mca_io_romio_File_write_ordered_end(MPI_File fh, void *buf, MPI_Status *stat
     mca_romio_fh = (mca_io_romio_file_t *) fh;
     romio_fh = mca_romio_fh->romio_fh;
 
-    THREAD_LOCK(&mca_io_romio_mutex);
+    OMPI_THREAD_LOCK(&mca_io_romio_mutex);
     ret=mca_io_romio_MPI_File_write_ordered_end(romio_fh,buf,status);
-    THREAD_UNLOCK(&mca_io_romio_mutex);
+    OMPI_THREAD_UNLOCK(&mca_io_romio_mutex);
   
     return ret;
 }
