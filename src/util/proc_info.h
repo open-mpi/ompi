@@ -12,7 +12,7 @@
 
 #include <stdbool.h>
 #include <sys/types.h>
-#include "ns/name_server.h"
+#include "mca/ns/ns.h"
 
 /**
  * Process information structure
