@@ -25,7 +25,6 @@ int mca_pcmclient_base_output = 0;
 mca_pcmclient_base_module_t mca_pcmclient;
 ompi_list_t mca_pcmclient_base_components_available;
 mca_pcmclient_base_component_t mca_pcmclient_base_selected_component;
-mca_pcmclient_base_module_t mca_pcmclient;
 
 /**
  * Function for finding and opening either all MCA components, or the one
