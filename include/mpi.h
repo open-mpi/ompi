@@ -267,14 +267,30 @@ enum {
 #define MPI_STATUS_IGNORE ((MPI_Status *) 0)
 #define MPI_STATUSES_IGNORE ((MPI_Status *) 0)
 
-#define MPI_NULL_COPY_FN ((MPI_Copy_function *) 0)
-#define MPI_NULL_DELETE_FN ((MPI_Delete_function *) 0)
-#define MPI_COMM_NULL_COPY_FN ((MPI_Comm_copy_attr_function *) 0)
-#define MPI_COMM_NULL_DELETE_FN ((MPI_Comm_delete_attr_function *) 0)
-#define MPI_TYPE_NULL_COPY_FN ((MPI_Type_copy_attr_function *) 0)
-#define MPI_TYPE_NULL_DELETE_FN ((MPI_Type_delete_attr_function *) 0)
-#define MPI_WIN_NULL_COPY_FN ((MPI_Win_copy_attr_function *) 0)
-#define MPI_WIN_NULL_DELETE_FN ((MPI_Win_delete_attr_function *) 0)
+int MPI_TYPE_NULL_DELETE_FN( MPI_Datatype datatype, int type_keyval,
+                             void* attribute_val_out, int* flag );
+int MPI_TYPE_NULL_COPY_FN( MPI_Datatype datatype, int type_keyval, void* extra_state,
+                           void* attribute_val_in, void* attribute_val_out, int* flag );
+int MPI_TYPE_DUP_FN( MPI_Datatype datatype, int type_keyval, void* extra_state,
+                     void* attribute_val_in, void* attribute_val_out, int* flag );
+int MPI_COMM_NULL_DELETE_FN( MPI_Comm comm, int comm_keyval,
+                             void* attribute_val_out, int* flag );
+int MPI_COMM_NULL_COPY_FN( MPI_Comm comm, int comm_keyval, void* extra_state,
+                           void* attribute_val_in, void* attribute_val_out, int* flag );
+int MPI_COMM_DUP_FN( MPI_Comm comm, int comm_keyval, void* extra_state,
+                     void* attribute_val_in, void* attribute_val_out, int* flag );
+int MPI_NULL_DELETE_FN( MPI_Comm comm, int comm_keyval,
+                        void* attribute_val_out, int* flag );
+int MPI_NULL_COPY_FN( MPI_Comm comm, int comm_keyval, void* extra_state,
+                      void* attribute_val_in, void* attribute_val_out, int* flag );
+int MPI_DUP_FN( MPI_Comm comm, int comm_keyval, void* extra_state,
+                void* attribute_val_in, void* attribute_val_out, int* flag );
+int MPI_WIN_NULL_DELETE_FN( MPI_Win window, int win_keyval,
+                            void* attribute_val_out, int* flag );
+int MPI_WIN_NULL_COPY_FN( MPI_Win window, int win_keyval, void* extra_state,
+                          void* attribute_val_in, void* attribute_val_out, int* flag );
+int MPI_WIN_DUP_FN( MPI_Win window, int win_keyval, void* extra_state,
+                    void* attribute_val_in, void* attribute_val_out, int* flag );
 
 /*
  * External variables
