@@ -88,12 +88,13 @@ ompi_wrap_parse_args(int argc, char* argv[], bool& want_flags)
       }
 
       if (have_arg) {
-        if ("compile" == str)
+        if ("compile" == str) {
           showme_compile = true;
-        else if ("link" == str)
+        } else if ("link" == str) {
           showme_link = true;
-        else
+        } else {
           showme_cmd = true;
+        }
       }
     } else if ("-c" == str) {
       fl_libs = false;
@@ -157,19 +158,21 @@ ompi_wrap_get_compiler(const ompi_sv_t& env_list, const string& default_comp,
 
   // If we didn't find any of the environment variables, use the default
 
-  if (out.empty())
+  if (out.empty()) {
     ompi_wrap_split(default_comp, ' ', out);
+  }
 
   // If we're preprocessing, we need to know the basename of argv0
   // (see below).
 
   if (fl_cpp) {
     pos = out[0].find_last_of('/');
-    if (pos != string::npos)
+    if (pos != string::npos) {
       // JMS There has to be a better way to do this
       compiler0 = out[0].substr(pos + 1);
-    else
+    } else {
       compiler0 = out[0];
+    }
   }
     
   // Ugh.  If we're acting as the preprocessor, ditch any libtool
@@ -214,8 +217,9 @@ ompi_wrap_build_cflags(bool want_f77_includes, ompi_sv_t& cflags)
   // of what the prefix is, because the fortran compiler will not
   // -I/usr/include automatically.
 
-  if (want_f77_includes || "/usr/include" != incdir) 
+  if (want_f77_includes || "/usr/include" != incdir) {
     cflags.push_back("-I" + incdir);
+  }
 
 #if OMPI_WANT_CXX_BINDINGS
   cflags.push_back("-I" + incdir + "/ompi");
@@ -281,8 +285,9 @@ ompi_wrap_build_ldflags(ompi_sv_t& ldflags)
   // If we don't want the libs, then we don't want ldflags, either.
   // Hence, return with ldflags empty.
 
-  if (!fl_libs)
+  if (!fl_libs) {
     return;
+  }
 
   // Add in the extra flags passed by configure.  Do the same kinds of
   // checks that we do below -- ensure that we don't add a "-L/usr" to
@@ -365,12 +370,13 @@ ompi_wrap_build_libs(bool want_cxx_libs, ompi_sv_t& libs)
   if (want_cxx_libs) {
     if (!ompi_wrap_check_file(libdir, "libmpi_cxx.a") &&
 	!ompi_wrap_check_file(libdir, "libmpi_cxx.so") && 
-	!ompi_wrap_check_file(libdir, "libmpi_cxx.dylib"))
+	!ompi_wrap_check_file(libdir, "libmpi_cxx.dylib")) {
       cerr << "WARNING: " << cmd_name
 	   << " expected to find libmpi_cxx.* in " << libdir << endl
 	   << "WARNING: MPI C++ support will be disabled" << endl;
-    else
+    } else {
       libs.push_back("-lmpi_cxx");
+    }
   }
 #endif
 
@@ -378,12 +384,13 @@ ompi_wrap_build_libs(bool want_cxx_libs, ompi_sv_t& libs)
 #if 0
 #if BUILD_MPI_F77
   if (!ompi_wrap_check_file(libdir, "libompif77mpi.a") &&
-      !ompi_wrap_check_file(libdir, "libompif77mpi.so"))
+      !ompi_wrap_check_file(libdir, "libompif77mpi.so")) {
       cerr << "WARNING: " << cmd_name
 	   << " expected to find libompif77mpi.* in " << libdir << endl
 	   << "WARNING: MPI Fortran support will be disabled" << endl;
-  else
+  } else {
     libs.push_back("-lompif77mpi");
+  }
 #endif
 #endif
 
@@ -394,8 +401,9 @@ ompi_wrap_build_libs(bool want_cxx_libs, ompi_sv_t& libs)
   // Finally, any system libraries
 #if 0
 #if OMPI_WANT_ROMIO && HAVE_LIBAIO
-  if (want_aio)
+  if (want_aio) {
     libs.push_back("-laio");
+  }
 #endif
 #endif
   ompi_wrap_split_append_sv(WRAPPER_EXTRA_LIBS, libs);
@@ -416,8 +424,9 @@ ompi_wrap_build_libs(bool want_cxx_libs, ompi_sv_t& libs)
 void
 ompi_wrap_build_extra_flags(const string& extra_string, ompi_sv_t& extra_flags)
 {
-  if (!extra_string.empty())
+  if (!extra_string.empty()) {
     ompi_wrap_split_append_sv(extra_string, extra_flags);
+  }
 }
 
 
@@ -431,8 +440,9 @@ ompi_wrap_build_extra_flags(const string& extra_string, ompi_sv_t& extra_flags)
 void
 ompi_wrap_print_sv(const ompi_sv_t& sv)
 {
-  for (int i = 0; (string::size_type) i < sv.size(); ++i)
+  for (int i = 0; (string::size_type) i < sv.size(); ++i) {
     cout << sv[i] << " ";
+  }
 }
 
 
@@ -455,8 +465,9 @@ ompi_wrap_exec_sv(const ompi_sv_t& sv)
 
   // Build up a C array of the args
 
-  for (i = 0; (string::size_type) i < sv.size(); ++i)
+  for (i = 0; (string::size_type) i < sv.size(); ++i) {
     ompi_argv_append(&ac, &av, (char*) sv[i].c_str());
+  }
 
   // There is no way to tell whether ompi_few returned non-zero because
   // the called app returned non-zero or if there was a failure in the
@@ -472,8 +483,9 @@ ompi_wrap_exec_sv(const ompi_sv_t& sv)
   } else {
     free(tmp);
     ret = ompi_few(av, &status);
-    if (0 != ret && 0 != errno && fl_want_show_error)
+    if (0 != ret && 0 != errno && fl_want_show_error) {
       perror(cmd_name.c_str());
+    }
   }
 
   // Free the C array

@@ -122,6 +122,17 @@ endif
 # install-exec-hook if WANT_DEPRECATED_EXECUTABLE_NAMES is
 # false.
 else
+if CASE_SENSITIVE_FS
 install-exec-hook:
+	(cd $(DESTDIR)$(bindir); rm -f mpiCC; ln -s mpic++ mpiCC)
+else
+install-exec-hook:
+	rm -f $(DESTDIR)$(bindir)/mpiCC
+endif
+
+if CASE_SENSITIVE_FS
 uninstall-local:
+else
+uninstall-local:
+endif
 endif
