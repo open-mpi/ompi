@@ -85,8 +85,8 @@ extern "C" {
  * Public variables
  */
 
-extern lam_list_t *mca_base_opened;
-extern lam_list_t *mca_base_available;
+extern lam_list_t *mca_ptl_base_opened;
+extern lam_list_t *mca_ptl_base_available;
 
 /*
  * Global instance of array of pointers to mca_t.  Will
