@@ -43,11 +43,11 @@ main(int argc, char *argv[])
     ompi_list_t schedlist;
     mca_ns_base_jobid_t new_jobid, jobid;
     mca_ns_base_vpid_t vpid;
-    int num_procs = 1;
+    int num_procs = 1, rc;
     ompi_rte_node_schedule_t *sched;
     char cwd[MAXPATHLEN];
     char *my_contact_info, *tmp, *jobid_str, *procid_str;
-    char *contact_file, *filenm, *universe;
+    char *contact_file, *filenm, *universe, *segment;
     pid_t pid;
     ompi_rte_spawn_handle_t *spawn_handle;
 
@@ -131,7 +131,6 @@ main(int argc, char *argv[])
     /* get our numprocs */
     if (ompi_cmd_line_is_taken(cmd_line, "np")) {
         num_procs = atoi(ompi_cmd_line_get_param(cmd_line, "np", 0, 0));
-        printf("num_procs: %d\n", num_procs);
     }
 
     /*
@@ -171,7 +170,7 @@ main(int argc, char *argv[])
     /* check for existing universe to join */
     if (OMPI_SUCCESS != (ret = ompi_rte_universe_exists())) {
 	if (ompi_rte_debug_flag) {
-	    ompi_output(0, "ompi_mpi_init: could not join existing universe");
+	    ompi_output(0, "mpirun: could not join existing universe");
 	}
 	if (OMPI_ERR_NOT_FOUND != ret) {
 	    /* if it exists but no contact could be established,
@@ -303,13 +302,17 @@ main(int argc, char *argv[])
     sched = OBJ_NEW(ompi_rte_node_schedule_t);
     ompi_list_append(&schedlist, (ompi_list_item_t*) sched);
     ompi_cmd_line_get_tail(cmd_line, &(sched->argc), &(sched->argv));
+
+    /*
+     * build environment to be passed
+     */
+    mca_pcm_base_build_base_env(environ, &(sched->envc), &(sched->env));
     /* set initial contact info */
     if (ompi_process_info.seed) {  /* i'm the seed - direct them towards me */
 	my_contact_info = mca_oob_get_contact_info();
     } else { /* i'm not the seed - direct them to it */
 	my_contact_info = strdup(ompi_universe_info.ns_replica);
     }
-    mca_pcm_base_build_base_env(environ, &(sched->envc), &(sched->env));
     asprintf(&tmp, "OMPI_MCA_ns_base_replica=%s", my_contact_info);
     ompi_argv_append(&(sched->envc), &(sched->env), tmp);
     free(tmp);
@@ -338,10 +341,20 @@ main(int argc, char *argv[])
 
 
     /*
-     * register the monitor
+     * register to monitor the startup and shutdown processes
      */
+    /* setup segment for this job */
+    asprintf(&segment, "ompi-job-%d", new_jobid);
 
-    ompi_rte_notify(new_jobid,num_procs);
+    /* register a synchro on the segment so we get notified when everyone registers */
+    rc = ompi_registry.synchro(
+	 OMPI_REGISTRY_SYNCHRO_MODE_LEVEL|OMPI_REGISTRY_SYNCHRO_MODE_ONE_SHOT,
+	 OMPI_REGISTRY_OR,
+	 segment,
+	 NULL,
+	 num_procs,
+	 ompi_rte_all_procs_registered, NULL);
+
 
     /*
      * spawn procs
@@ -351,13 +364,24 @@ main(int argc, char *argv[])
 	return -1;
     }
     
-
-    /*
-     * 
-     */
    
-    ompi_rte_monitor();
+    if (OMPI_SUCCESS != ompi_rte_monitor_procs_registered()) {
+	printf("procs didn't all register - aborting\n");
+    } else {
+	/* register a synchro on the segment so we get notified when everyone is gone
+	 *  this needs to occur after spawning processes so that mpirun gets notified
+	 *  last!
+	 */
+	rc = ompi_registry.synchro(
+	       OMPI_REGISTRY_SYNCHRO_MODE_DESCENDING|OMPI_REGISTRY_SYNCHRO_MODE_ONE_SHOT,
+	       OMPI_REGISTRY_OR,
+	       segment,
+	       NULL,
+	       0,
+	       ompi_rte_all_procs_unregistered, NULL);
 
+	ompi_rte_monitor_procs_unregistered();
+    }
     /*
      *   - ompi_rte_kill_job()
      */
