@@ -65,8 +65,8 @@ typedef struct __dt_elem_desc {
 } dt_elem_desc_t;
 
 typedef struct __dt_struct_desc {
-   int32_t length;  /* the maximum number of elements in the description array */
-   int32_t used;    /* the number of used elements in the description array */
+   u_int32_t length;  /* the maximum number of elements in the description array */
+   u_int32_t used;    /* the number of used elements in the description array */
    dt_elem_desc_t* desc;
 } dt_type_desc_t;
 
@@ -163,8 +163,7 @@ int ompi_ddt_optimize_short( dt_desc_t* pData, int count, dt_type_desc_t* pTypeD
 
 typedef int (*conversion_fct_t)( unsigned int count,
                                  void* from, unsigned int from_len, long from_extent,
-                                 void* to, unsigned int in_length, long to_extent,
-                                 unsigned int* used );
+                                 void* to, unsigned int in_length, long to_extent );
 
 typedef struct __dt_stack dt_stack_t;
 typedef struct ompi_convertor_t ompi_convertor_t;
@@ -177,21 +176,19 @@ typedef void*(*memalloc_fct_t)( unsigned int* pLength );
 
 struct ompi_convertor_t {
     ompi_object_t           super;    /**< basic superclass */
-    dt_desc_t*              pDesc;
-    u_int32_t               remoteArch;
-    dt_stack_t*             pStack;
-    /* the convertor functions pointer */
-    /* the local stack for the actual conversion */
-    u_int32_t               converted;   /* the number of already converted elements */
-    u_int32_t               bConverted;  /* the size of already converted elements in bytes */
-    u_int32_t               flags;
-    u_int32_t               count;
-    u_int32_t               stack_pos;
-    char*                   pBaseBuf;
-    u_int32_t               available_space;
-    convertor_advance_fct_t fAdvance;
-    memalloc_fct_t          memAlloc_fn;
-    conversion_fct_t*       pFunctions;
+    dt_desc_t*              pDesc;    /**< the datatype description associated with the convertor */
+    u_int32_t               remoteArch;  /**< the remote architecture */
+    dt_stack_t*             pStack;  /**< the local stack for the actual conversion */
+    u_int32_t               converted;   /**< the number of already converted elements */
+    u_int32_t               bConverted;  /**< the size of already converted elements in bytes */
+    u_int32_t               flags;  /**< the properties of this convertor */
+    u_int32_t               count;  /**< the total number of full datatype elements */
+    u_int32_t               stack_pos;  /**< the actual position on the stack */
+    char*                   pBaseBuf;  /**< initial buffer as supplied by the user */
+    u_int32_t               available_space;  /**< total available space */
+    convertor_advance_fct_t fAdvance;  /**< pointer to the pack/unpack functions */
+    memalloc_fct_t          memAlloc_fn;  /**< pointer to the memory allocation function */
+    conversion_fct_t*       pFunctions;  /**< the convertor functions pointer */
 };
 OBJ_CLASS_DECLARATION( ompi_convertor_t );
 

@@ -4,6 +4,9 @@
 #include "datatype.h"
 #include "datatype_internal.h"
 
+/* by default the debuging is turned off */
+int ompi_ddt_dfd = -1;
+
 /* other fields starting after bdt_used (index of DT_LOOP should be ONE) */
 #define ZERO_DDT_ARRAY { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, \
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,             \
@@ -414,6 +417,12 @@ int ompi_ddt_init( void )
     MOOG(cxx_dblcplex);
     MOOG(cxx_ldblcplex);
 
+#if defined(VERBOSE)
+    {
+        ompi_ddt_dfd = ompi_output_open( NULL );
+    }
+#endif  /* VERBOSE */
+
     return OMPI_SUCCESS;
 }
 
@@ -434,7 +443,13 @@ int ompi_ddt_finalize( void )
     
     /* Get rid of the Fortran2C translation table */
     OBJ_RELEASE(ompi_datatype_f_to_c_table);
-    
+
+#if defined(VERBOSE)
+    if( ompi_ddt_dfd != -1 )
+        ompi_output_close( ompi_ddt_dfd );
+    ompi_ddt_dfd = -1;
+#endif  /* VERBOSE */
+
     return OMPI_SUCCESS;
 }
 

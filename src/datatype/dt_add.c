@@ -18,7 +18,7 @@
 int ompi_ddt_add( dt_desc_t* pdtBase, dt_desc_t* pdtAdd, 
 		  unsigned int count, long disp, long extent )
 {
-   int newLength, place_needed = 0, i;
+   u_int32_t newLength, place_needed = 0, i;
    short localFlags = 0;  /* no specific options yet */
    dt_elem_desc_t *pLast, *pLoop = NULL;
    long lb, ub;
@@ -91,8 +91,10 @@ int ompi_ddt_add( dt_desc_t* pdtBase, dt_desc_t* pdtAdd,
          if( disp < pdtBase->ub ) pdtBase->flags |= DT_FLAG_OVERLAP;
       }
       /* keep trace of the total number of basic datatypes in the datatype definition */
-      pdtBase->btypes[DT_LOOP] += pdtAdd->btypes[DT_LOOP];
-      pdtBase->btypes[DT_END_LOOP] += pdtAdd->btypes[DT_END_LOOP];
+      pdtBase->btypes[DT_LOOP]     |= pdtAdd->btypes[DT_LOOP];
+      pdtBase->btypes[DT_END_LOOP] |= pdtAdd->btypes[DT_END_LOOP];
+      pdtBase->btypes[DT_LB]       |= pdtAdd->btypes[DT_LB];
+      pdtBase->btypes[DT_UB]       |= pdtAdd->btypes[DT_UB];
       for( i = 4; i < DT_MAX_PREDEFINED; i++ )
          if( pdtAdd->btypes[i] != 0 ) pdtBase->btypes[i] += (count * pdtAdd->btypes[i]);
 

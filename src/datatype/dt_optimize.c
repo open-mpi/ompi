@@ -127,7 +127,7 @@ int ompi_ddt_optimize_short( dt_desc_t* pData, int count,
                 PUSH_STACK( pStack, stack_pos, nbElems, pData->desc.desc[pos_desc].count,
                             totalDisp, pos_desc + pData->desc.desc[pos_desc].disp );
                 pos_desc++;
-                DUMP_STACK( pStack, stack_pos, pData->desc, "advance loops" );
+                DUMP_STACK( pStack, stack_pos, pData->desc.desc, "advance loops" );
             }
             totalDisp = pStack->disp;  /* update the displacement */
             continue;
@@ -307,5 +307,6 @@ int ompi_ddt_commit( dt_desc_t** data )
         pLast->total_extent = pData->ub - pData->lb;
         pLast->size         = pData->size;
     }
+    ompi_ddt_dump( pData );
     return OMPI_SUCCESS;
 }

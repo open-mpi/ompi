@@ -44,13 +44,13 @@ static int ompi_convertor_unpack_general( ompi_convertor_t* pConvertor,
 					  unsigned int* max_data,
 					  int* freeAfter )
 {
-    dt_stack_t* pStack;   /* pointer to the position on the stack */
-    int pos_desc;         /* actual position in the description of the derived datatype */
-    int count_desc;       /* the number of items already done in the actual pos_desc */
-    int type;             /* type at current position */
-    unsigned int advance; /* number of bytes that we should advance the buffer */
-    long disp_desc = 0;   /* compute displacement for truncated data */
-    int bConverted = 0;   /* number of bytes converted this time */
+    dt_stack_t* pStack;    /* pointer to the position on the stack */
+    unsigned int pos_desc; /* actual position in the description of the derived datatype */
+    int count_desc;        /* the number of items already done in the actual pos_desc */
+    int type;              /* type at current position */
+    unsigned int advance;  /* number of bytes that we should advance the buffer */
+    long disp_desc = 0;    /* compute displacement for truncated data */
+    int bConverted = 0;    /* number of bytes converted this time */
     dt_elem_desc_t* pElems;
     int oCount = (pConvertor->pDesc->ub - pConvertor->pDesc->lb) * pConvertor->count;
     char* pInput;
@@ -84,12 +84,12 @@ static int ompi_convertor_unpack_general( ompi_convertor_t* pConvertor,
                     pConvertor->stack_pos--;
                     pStack--;
                 }
-                pos_desc = pStack->index;
-                if( pos_desc == -1 )
+
+                if( pStack->index == -1 ) 
                     pStack->disp += (pConvertor->pDesc->ub - pConvertor->pDesc->lb);
                 else
-                    pStack->disp += pElems[pos_desc].extent;
-                pos_desc++;
+                    pStack->disp += pElems[pStack->index].extent;
+                pos_desc = pStack->index + 1;
                 count_desc = pElems[pos_desc].count;
                 disp_desc = pElems[pos_desc].disp;
             }
@@ -109,9 +109,10 @@ static int ompi_convertor_unpack_general( ompi_convertor_t* pConvertor,
                 /* now here we have a basic datatype */
                 type = pElems[pos_desc].type;
                 rc = pConvertor->pFunctions[type]( count_desc,
-                                                   pInput, iCount, pElems[pos_desc].extent,
-                                                   pConvertor->pBaseBuf + pStack->disp + disp_desc, oCount,
-                                                   pElems[pos_desc].extent, &advance );
+                                                   pInput, iCount, ompi_ddt_basicDatatypes[type]->size,
+                                                   pConvertor->pBaseBuf + pStack->disp + disp_desc,
+                                                   oCount, pElems[pos_desc].extent );
+                advance = rc * ompi_ddt_basicDatatypes[type]->size;
                 iCount -= advance;      /* decrease the available space in the buffer */
                 pInput += advance;      /* increase the pointer to the buffer */
                 bConverted += advance;
@@ -120,10 +121,10 @@ static int ompi_convertor_unpack_general( ompi_convertor_t* pConvertor,
                     count_desc -= rc;
                     disp_desc += rc * pElems[pos_desc].extent;
                     if( iCount != 0 )
-                        printf( "there is still room in the input buffer %d bytes\n", iCount );
+                        printf( "unpack there is still room in the input buffer %d bytes\n", iCount );
                     goto save_and_return;
                 }
-                pConvertor->converted += rc;  /* number of elementd converted so far */
+                pConvertor->converted += rc;  /* number of elements converted so far */
                 pos_desc++;  /* advance to the next data */
                 count_desc = pElems[pos_desc].count;
                 disp_desc = pElems[pos_desc].disp;
@@ -174,7 +175,7 @@ static int ompi_convertor_unpack_homogeneous( ompi_convertor_t* pConv,
     }
     pStack = pConv->pStack + pConv->stack_pos;
     pStack--;
-    DUMP_STACK( pStack, stack_pos, pElems, "starting" );
+    DUMP_STACK( pStack, pConv->stack_pos, pElems, "starting" );
     pos_desc = pStack->index;
     lastDisp = pStack->disp;
     last_count = pStack->count; 
@@ -371,11 +372,10 @@ int ompi_convertor_unpack( ompi_convertor_t* pConvertor,
  *                and there are less data than the size on the remote host of the
  *                basic datatype.
  */
-#define COPY_TYPE( TYPENAME, TYPE, COUNT )                          \
-static int copy_##TYPENAME( unsigned int count,                     \
+#define COPY_TYPE( TYPENAME, TYPE, COUNT )                              \
+static int copy_##TYPENAME( unsigned int count,                         \
                             char* from, unsigned int from_len, long from_extent, \
-                            char* to, unsigned int to_len, long to_extent, \
-                            int* used )                                 \
+                            char* to, unsigned int to_len, long to_extent ) \
 {                                                                       \
     unsigned int i;                                                     \
     unsigned int remote_TYPE_size = sizeof(TYPE) * (COUNT); /* TODO */  \
@@ -403,15 +403,13 @@ static int copy_##TYPENAME( unsigned int count,                     \
             from += from_extent;                                        \
         }                                                               \
     }                                                                   \
-    *used = count * local_TYPE_size;                                    \
     return count;                                                       \
 }
 
 #define COPY_CONTIGUOUS_BYTES( TYPENAME, COUNT )                        \
-static int copy_##TYPENAME##_##COUNT( unsigned int count,                 \
-                                    char* from, unsigned int from_len, long from_extent, \
-                                    char* to, unsigned int to_len, long to_extent, \
-                                    int* used )                         \
+static int copy_##TYPENAME##_##COUNT( unsigned int count,               \
+                                      char* from, unsigned int from_len, long from_extent, \
+                                      char* to, unsigned int to_len, long to_extent) \
 {                                                                       \
     unsigned int i;                                                     \
     unsigned int remote_TYPE_size = (COUNT); /* TODO */                 \
@@ -424,10 +422,10 @@ static int copy_##TYPENAME##_##COUNT( unsigned int count,                 \
                   from_len - (count * remote_TYPE_size) );              \
         }                                                               \
         DUMP( "correct: copy %s count %d from buffer %p with length %d to %p space %d\n", \
-              #TYPENAME, count, from, from_len, to, to_len );               \
+              #TYPENAME, count, from, from_len, to, to_len );           \
     } else                                                              \
         DUMP( "         copy %s count %d from buffer %p with length %d to %p space %d\n", \
-              #TYPENAME, count, from, from_len, to, to_len );               \
+              #TYPENAME, count, from, from_len, to, to_len );           \
                                                                         \
     if( (from_extent == (long)local_TYPE_size) &&                       \
         (to_extent == (long)remote_TYPE_size) ) {                       \
@@ -439,7 +437,6 @@ static int copy_##TYPENAME##_##COUNT( unsigned int count,                 \
             from += from_extent;                                        \
         }                                                               \
     }                                                                   \
-    *used = count * local_TYPE_size;                                    \
     return count;                                                       \
 }
 
@@ -448,7 +445,7 @@ COPY_TYPE( short, short, 1 )
 COPY_TYPE( int, int, 1 )
 COPY_TYPE( float, float, 1 )
 COPY_TYPE( long, long, 1 )
-/*COPY_TYPE( double, double, 1 )*/
+COPY_TYPE( double, double, 1 )
 COPY_TYPE( long_long, long long, 1 )
 COPY_TYPE( long_double, long double, 1 )
 COPY_TYPE( complex_float, ompi_complex_float_t, 1 )
@@ -465,41 +462,6 @@ COPY_CONTIGUOUS_BYTES( bytes, 4 )
 COPY_CONTIGUOUS_BYTES( bytes, 8 )
 COPY_CONTIGUOUS_BYTES( bytes, 12 )
 COPY_CONTIGUOUS_BYTES( bytes, 16 )
-
-static
-int copy_double( unsigned int count,
-                 char* from, unsigned int from_len, long from_extent,
-                 char* to, unsigned int to_len, long to_extent,
-                 int* used )
-{
-    unsigned int i;
-    unsigned int remote_double_size = sizeof(double); /* TODO */
-    
-    if( (remote_double_size * count) > from_len ) {
-        count = from_len / remote_double_size;
-        if( (count * remote_double_size) != from_len ) {
-            DUMP( "oops should I keep this data somewhere (excedent %d bytes)?\n",
-                  from_len - (count * remote_double_size) );
-        }
-        DUMP( "correct: copy %s count %d from buffer %p with length %d to %p space %d\n",
-              "double", count, from, from_len, to, to_len );
-    } else
-        DUMP( "         copy %s count %d from buffer %p with length %d to %p space %d\n",
-              "double", count, from, from_len, to, to_len );
-
-   
-    if( (from_extent == sizeof(double)) && (to_extent == sizeof(double)) ) {
-        MEMCPY( to, from, count * sizeof(double) );
-    } else {
-        for( i = 0; i < count; i++ ) {      
-            MEMCPY( to, from, sizeof(double) );     
-            to += to_extent;
-            from += from_extent;
-        }
-    }
-    *used = count * sizeof(double) ;
-    return count;
-}
 
 conversion_fct_t ompi_ddt_copy_functions[DT_MAX_PREDEFINED] = {
    (conversion_fct_t)NULL,                      /* DT_LOOP                */ 
@@ -617,7 +579,7 @@ int ompi_convertor_init_for_recv( ompi_convertor_t* pConv, unsigned int flags,
 
     /* TODO: work only on homogeneous architectures */
     if( pData->flags & DT_FLAG_CONTIGUOUS ) {
-        pConv->flags |= DT_FLAG_CONTIGUOUS;
+        pConv->flags |= DT_FLAG_CONTIGUOUS | CONVERTOR_HOMOGENEOUS;
         pConv->fAdvance = ompi_convertor_unpack_homogeneous_contig;
     }
     if( starting_point != 0 )
@@ -642,7 +604,7 @@ int ompi_ddt_get_element_count( dt_desc_t* pData, int iSize )
     int rc, nbElems = 0;
     int stack_pos = 0;
 
-    DUMP( "dt_count_elements( %p, %d )\n", pData, iSize );
+    DUMP( "dt_count_elements( %p, %d )\n", (void*)pData, iSize );
     pStack = alloca( sizeof(pStack) * (pData->btypes[DT_LOOP] + 2) );
     pStack->count = 1;
     pStack->index = -1;
@@ -650,7 +612,7 @@ int ompi_ddt_get_element_count( dt_desc_t* pData, int iSize )
     pStack->disp = 0;
     pos_desc  = 0;
 
-    DUMP_STACK( pStack, stack_pos, pElems, "starting" );
+    DUMP_STACK( pStack, stack_pos, pData->desc.desc, "starting" );
     DUMP( "remember position on stack %d last_elem at %d\n", stack_pos, pos_desc );
     DUMP( "top stack info {index = %d, count = %d}\n", 
           pStack->index, pStack->count );
@@ -678,7 +640,7 @@ int ompi_ddt_get_element_count( dt_desc_t* pData, int iSize )
                             0, pos_desc + pData->desc.desc[pos_desc].disp );
                 pos_desc++;
             } while( pData->desc.desc[pos_desc].type == DT_LOOP ); /* let's start another loop */
-            DUMP_STACK( pStack, stack_pos, pData->desc, "advance loops" );
+            DUMP_STACK( pStack, stack_pos, pData->desc.desc, "advance loops" );
             goto next_loop;
         }
         /* now here we have a basic datatype */
