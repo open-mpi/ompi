@@ -29,10 +29,10 @@ bool mca_pml_teg_recv_frag_match(
     mca_ptl_base_match_header_t* header)
 {
     bool matched;
+    bool matches = false;
     ompi_list_t matched_frags;
-    OBJ_CONSTRUCT(&matched_frags, ompi_list_t);
-    if((matched = mca_ptl_base_match(header, frag, &matched_frags)) == false) {
-        frag = (mca_ptl_base_recv_frag_t*)ompi_list_remove_first(&matched_frags);
+    if((matched = mca_ptl_base_match(header, frag, &matched_frags, &matches)) == false) {
+        frag = (matches ? (mca_ptl_base_recv_frag_t*)ompi_list_remove_first(&matched_frags) : NULL);
     }
 
     while(NULL != frag) {
@@ -69,9 +69,10 @@ bool mca_pml_teg_recv_frag_match(
             /* notify ptl of match */
             ptl->ptl_matched(ptl, frag);
 
-            /* process any additional fragments that arrived out of order */
-            frag = (mca_ptl_base_recv_frag_t*)ompi_list_remove_first(&matched_frags);
         };
+
+        /* process any additional fragments that arrived out of order */
+        frag = (matches ? (mca_ptl_base_recv_frag_t*)ompi_list_remove_first(&matched_frags) : NULL);
     };
     return matched;
 }

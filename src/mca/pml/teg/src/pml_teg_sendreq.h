@@ -121,6 +121,7 @@ OBJ_CLASS_DECLARATION(mca_pml_teg_send_request_t);
      * no additional cost                                                  \
     */                                                                     \
     req->req_offset = 0;                                                   \
+    req->req_lock = 0;                                                     \
     req->req_bytes_sent = 0;                                               \
     req->req_peer_match.lval = 0;                                          \
     req->req_peer_addr.lval = 0;                                           \

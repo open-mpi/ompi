@@ -241,6 +241,7 @@ OMPI_COMP_EXPORT extern int mca_pml_teg_start(
         case MCA_PML_REQUEST_SEND: \
             { \
             mca_pml_base_send_request_t* sendreq = (mca_pml_base_send_request_t*)pml_request; \
+            while(sendreq->req_lock > 0); \
             if(sendreq->req_send_mode == MCA_PML_BASE_SEND_BUFFERED) { \
                 mca_pml_base_bsend_request_fini((ompi_request_t*)sendreq); \
             } \

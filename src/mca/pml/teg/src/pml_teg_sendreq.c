@@ -14,6 +14,9 @@
 #include "pml_teg_recvreq.h"
 
 
+#define OMPI_THREAD_ADD(x,y) \
+   (ompi_using_threads() ? ompi_atomic_add_32(x,y) : (*x += y))
+
                                                                                                          
 static int mca_pml_teg_send_request_fini(struct ompi_request_t** request)
 {
@@ -63,55 +66,66 @@ OBJ_CLASS_INSTANCE(
  *
  */
 
+
 int mca_pml_teg_send_request_schedule(mca_pml_base_send_request_t* req)
 {
     ompi_proc_t *proc = ompi_comm_peer_lookup(req->req_base.req_comm, req->req_base.req_peer);
     mca_pml_proc_t* proc_pml = proc->proc_pml;
     int send_count = 0;
+    size_t bytes_remaining;
+    size_t num_ptl_avail;
+    size_t num_ptl;
 
-    /* allocate remaining bytes to PTLs */
-    size_t bytes_remaining = req->req_bytes_packed - req->req_offset;
-    size_t num_ptl_avail = proc_pml->proc_ptl_next.ptl_size;
-    size_t num_ptl = 0;
-    while(bytes_remaining > 0 && num_ptl++ < num_ptl_avail) {
-        mca_ptl_proc_t* ptl_proc = mca_ptl_array_get_next(&proc_pml->proc_ptl_next);
-        mca_ptl_base_module_t* ptl = ptl_proc->ptl;
-        int rc;
-
-        /* if this is the last PTL that is available to use, or the number of 
-         * bytes remaining in the message is less than the PTLs minimum fragment 
-         * size, then go ahead and give the rest of the message to this PTL.
-         */
-        size_t bytes_to_frag;
-        if(num_ptl == num_ptl_avail || bytes_remaining < ptl->ptl_min_frag_size) {
-            bytes_to_frag = bytes_remaining;
-
-        /* otherwise attempt to give the PTL a percentage of the message
-         * based on a weighting factor. for simplicity calculate this as  
-         * a percentage of the overall message length (regardless of amount 
-         * previously assigned)
-         */
-        } else {
-            bytes_to_frag = (ptl_proc->ptl_weight * bytes_remaining) / 100;
-        }
-
-        /* makes sure that we don't exceed ptl_max_frag_size */
-        if(ptl->ptl_max_frag_size != 0 && bytes_to_frag > ptl->ptl_max_frag_size)
-            bytes_to_frag = ptl->ptl_max_frag_size;
-
-        rc = ptl->ptl_put(ptl, ptl_proc->ptl_peer, req, req->req_offset, bytes_to_frag, 0);
-        if(rc == OMPI_SUCCESS) {
-            send_count++;
+    if(OMPI_THREAD_ADD(&req->req_lock,1) == 1) {
+        do {
+            /* allocate remaining bytes to PTLs */
             bytes_remaining = req->req_bytes_packed - req->req_offset;
-        }
-    }
+            num_ptl_avail = proc_pml->proc_ptl_next.ptl_size;
+            num_ptl = 0;
+            while(bytes_remaining > 0 && num_ptl++ < num_ptl_avail) {
+                mca_ptl_proc_t* ptl_proc = mca_ptl_array_get_next(&proc_pml->proc_ptl_next);
+                mca_ptl_base_module_t* ptl = ptl_proc->ptl;
+                int rc;
+        
+                /* if this is the last PTL that is available to use, or the number of 
+                 * bytes remaining in the message is less than the PTLs minimum fragment 
+                 * size, then go ahead and give the rest of the message to this PTL.
+                 */
+                size_t bytes_to_frag;
+                if(num_ptl == num_ptl_avail || bytes_remaining < ptl->ptl_min_frag_size) {
+                    bytes_to_frag = bytes_remaining;
+        
+                /* otherwise attempt to give the PTL a percentage of the message
+                 * based on a weighting factor. for simplicity calculate this as  
+                 * a percentage of the overall message length (regardless of amount 
+                 * previously assigned)
+                 */
+                } else {
+                    bytes_to_frag = (ptl_proc->ptl_weight * bytes_remaining) / 100;
+                }
+    
+                /* makes sure that we don't exceed ptl_max_frag_size */
+                if(ptl->ptl_max_frag_size != 0 && bytes_to_frag > ptl->ptl_max_frag_size)
+                    bytes_to_frag = ptl->ptl_max_frag_size;
+        
+                rc = ptl->ptl_put(ptl, ptl_proc->ptl_peer, req, req->req_offset, bytes_to_frag, 0);
+                if(rc == OMPI_SUCCESS) {
+                    send_count++;
+                    bytes_remaining = req->req_bytes_packed - req->req_offset;
+                }
+            }
+    
+            /* unable to complete send - queue for later */
+            if(send_count == 0) {
+                OMPI_THREAD_LOCK(&mca_pml_teg.teg_lock);
+                ompi_list_append(&mca_pml_teg.teg_send_pending, (ompi_list_item_t*)req);
+                OMPI_THREAD_UNLOCK(&mca_pml_teg.teg_lock);
+                req->req_lock = 0;
+                return OMPI_ERR_OUT_OF_RESOURCE;
+            }
 
-    /* unable to complete send - queue for later */
-    if(send_count == 0) {
-        OMPI_THREAD_LOCK(&mca_pml_teg.teg_lock);
-        ompi_list_append(&mca_pml_teg.teg_send_pending, (ompi_list_item_t*)req);
-        OMPI_THREAD_UNLOCK(&mca_pml_teg.teg_lock);
-        return OMPI_ERR_OUT_OF_RESOURCE;
+        /* fragments completed while scheduling - so retry */
+        } while(OMPI_THREAD_ADD(&req->req_lock,-1) > 0);
     }
     return OMPI_SUCCESS;
 }
@@ -149,9 +163,8 @@ void mca_pml_teg_send_request_progress(
         } else if (req->req_base.req_free_called) {
             MCA_PML_TEG_FREE((ompi_request_t**)&req);
         } 
-    } 
     /* test to see if we have scheduled the entire request */
-    if (req->req_offset < req->req_bytes_packed)
+    } else if (req->req_offset < req->req_bytes_packed)
         schedule = true;
     OMPI_THREAD_UNLOCK(&ompi_request_lock);
 
