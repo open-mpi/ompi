@@ -1,4 +1,6 @@
 /*
+ * $HEADER$
+ *
  * Copyright 2002-2003. The Regents of the University of
  * California. This material was produced under U.S. Government
  * contract W-7405-ENG-36 for Los Alamos National Laboratory, which is
@@ -31,8 +33,8 @@
  */
 /*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
 
-#include "lam/base/object.h"
-#include "lam_constants.h"
+#include "lam/lfc/object.h"
+#include "include/lam_constants.h"
 
 typedef int     affinity_t;
 
