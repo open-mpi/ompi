@@ -368,9 +368,7 @@ int ompi_convertor_create_stack_at_begining( ompi_convertor_t* pConvertor, const
     } else {
         ompi_output( 0, "Here we should have a data in the datatype description\n" );
     }
-    /* And set the correct status */
-    pConvertor->converted          = 0;
-    pConvertor->bConverted         = 0;
+    pConvertor->bConverted = 0;
     return OMPI_SUCCESS;
 }
 
@@ -396,10 +394,7 @@ convertor_init_generic( ompi_convertor_t* pConv, const dt_desc_t* datatype, int 
     }
     
     pConv->pBaseBuf = (void*)pUserBuf;
-    pConv->available_space = count * (datatype->ub - datatype->lb);
     pConv->count = count;
-    pConv->converted = 0;
-    pConv->bConverted = 0;
 }
 
 #if defined(c_plusplus) || defined(__cplusplus)
