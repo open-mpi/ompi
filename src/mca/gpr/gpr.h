@@ -35,29 +35,60 @@
 
 /** Define the notification actions for the subscription system
  */
-typedef enum {OMPI_REGISTRY_NOTIFY_MODIFICATION=0x0001,     /**< Notifies subscriber when object modified */
-	      OMPI_REGISTRY_NOTIFY_ADD_SUBSCRIBER=0x0002,   /**< Notifies subscriber when another subscriber added */
-	      OMPI_REGISTRY_NOTIFY_DELETE=0x0004,           /**< Notifies subscriber when object deleted */
-	      OMPI_REGISTRY_NOTIFY_ALL=0xffff               /**< Notifies subscriber upon any action */
-} ompi_registry_notify_action_t;
+#define OMPI_REGISTRY_NOTIFY_MODIFICATION   0x0001   /**< Notifies subscriber when object modified */
+#define OMPI_REGISTRY_NOTIFY_ADD_SUBSCRIBER 0x0002   /**< Notifies subscriber when another subscriber added */
+#define OMPI_REGISTRY_NOTIFY_DELETE         0x0004   /**< Notifies subscriber when object deleted */
+#define OMPI_REGISTRY_NOTIFY_ALL            0xffff   /**< Notifies subscriber upon any action */
+
+typedef uint16_t ompi_registry_notify_action_t;
 
 
 /** Define the mode bit-masks for registry operations.
  */
-typedef enum {OMPI_REGISTRY_NONE=0x0000,        /**< None */
-	      OMPI_REGISTRY_OVERWRITE=0x0001,   /**< Overwrite Permission */
-	      OMPI_REGISTRY_AND=0x0002,         /**< AND tokens together for search results */
-	      OMPI_REGISTRY_OR=0x0004,          /**< OR tokens for search results */
-	      OMPI_REGISTRY_XAND=0x0008,        /**< All tokens required, nothing else allowed */
-	      OMPI_REGISTRY_XOR=0x0010          /**< Any one of the tokens required, nothing else allowed */
-} ompi_registry_mode_t;
+#define OMPI_REGISTRY_NONE       0x0000   /**< None */
+#define OMPI_REGISTRY_OVERWRITE  0x0001   /**< Overwrite Permission */
+#define OMPI_REGISTRY_AND        0x0002   /**< AND tokens together for search results */
+#define OMPI_REGISTRY_OR         0x0004   /**< OR tokens for search results */
+#define OMPI_REGISTRY_XAND       0x0008   /**< All tokens required, nothing else allowed */
+#define OMPI_REGISTRY_XOR        0x0010   /**< Any one of the tokens required, nothing else allowed */
+
+typedef uint16_t ompi_registry_mode_t;
+
+
+/*
+ * Define flag values for remote commands - only used internally
+ */
+#define MCA_GPR_DEFINE_SEGMENT_CMD     0x0001
+#define MCA_GPR_DELETE_SEGMENT_CMD     0x0002
+#define MCA_GPR_PUT_CMD                0x0004
+#define MCA_GPR_DELETE_OBJECT_CMD      0x0008
+#define MCA_GPR_INDEX_CMD              0x0010
+#define MCA_GPR_SUBSCRIBE_CMD          0x0020
+#define MCA_GPR_UNSUBSCRIBE_CMD        0x0040
+#define MCA_GPR_GET_CMD                0x0080
+#define MCA_GPR_TEST_INTERNALS_CMD     0x0100
+#define MCA_GPR_ERROR                  0xffff
+
+typedef uint16_t mca_gpr_cmd_flag_t;
+
+/*
+ * packing type definitions
+ */
+/* CAUTION - any changes here must also change corresponding
+ * typedefs above
+ */
+#define MCA_GPR_OOB_PACK_CMD           OMPI_INT16
+#define MCA_GPR_OOB_PACK_ACTION        OMPI_INT16
+#define MCA_GPR_OOB_PACK_MODE          OMPI_INT16
+#define MCA_GPR_OOB_PACK_OBJECT_SIZE   OMPI_INT32
+
 
 /*
  * typedefs
  */
 
-typedef ompi_buffer_t ompi_registry_object_t;
-typedef size_t ompi_registry_object_size_t;
+typedef void* ompi_registry_object_t;
+typedef uint32_t ompi_registry_object_size_t;
 
 
 /*
@@ -74,7 +105,7 @@ typedef size_t ompi_registry_object_size_t;
  */
 struct ompi_registry_value_t {
     ompi_list_item_t item;                    /**< Allows this item to be placed on a list */
-    ompi_registry_object_t *object;           /**< Pointer to object being returned */
+    ompi_registry_object_t object;           /**< Pointer to object being returned */
     ompi_registry_object_size_t object_size;  /**< Size of returned object, in bytes */
 };
 typedef struct ompi_registry_value_t ompi_registry_value_t;

@@ -52,7 +52,7 @@ static mca_gpr_base_module_t mca_gpr_proxy = {
     gpr_proxy_delete_segment,
     gpr_proxy_subscribe,
     gpr_proxy_unsubscribe,
-    gpr_proxy_delete,
+    gpr_proxy_delete_object,
     gpr_proxy_index,
     gpr_proxy_test_internals
 };

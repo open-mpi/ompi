@@ -21,7 +21,7 @@
 mca_gpr_replica_key_t gpr_replica_get_key(char *segment, char *token);
 
 /** Add a token to a segment's dictionary.
- * The gpr_replica_definekey() function allows the addition of a new definition to
+ * The gpr_replica_define_key() function allows the addition of a new definition to
  * the registry's token-key dictionaries. The specified token is assigned an integer
  * value within the specified segment, and the entry is added to the segment's token-key
  * dictionary.
@@ -30,10 +30,11 @@ mca_gpr_replica_key_t gpr_replica_get_key(char *segment, char *token);
  * @param token Pointer to a character string containing the token to be defined. If token=NULL,
  * the function adds the token to the segment dictionary, thus defining a new segment name.
  *
- * @retval key Unsigned long integer value corresponding to the specified token within the specified segment.
- * @retval 0 Indicates that the entry could not be created.
+ * @retval OMPI_EXISTS Indicates that the requested dictionary entry already exists.
+ * @retval OMPI_ERR_OUT_OF_RESOURCE Indicates that the dictionary is full.
+ * @retval OMPI_SUCCESS Indicates that the dictionary entry was created.
  */
-mca_gpr_replica_key_t gpr_replica_define_key(char *segment, char *token);
+int gpr_replica_define_key(char *segment, char *token);
 
 /** Delete a token from a segment's dictionary.
  * The gpr_replica_deletekey() function allows the removal of a definition from the

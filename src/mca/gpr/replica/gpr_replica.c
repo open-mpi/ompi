@@ -29,13 +29,18 @@ int gpr_replica_define_segment(char *segment)
 {
     mca_gpr_registry_segment_t *seg;
     mca_gpr_replica_key_t key;
+    int response;
 
-    key = gpr_replica_define_key(segment, NULL);
-     if (MCA_GPR_REPLICA_KEY_MAX == key) {
- 	return(OMPI_ERROR);
+     response = gpr_replica_define_key(segment, NULL);
+     if (0 > response) {  /* got some kind of error code */
+ 	return response;
      }
 
      /* need to add the segment to the registry */
+     key = gpr_replica_get_key(segment, NULL);
+     if (MCA_GPR_REPLICA_KEY_MAX == key) {  /* couldn't retrieve it */
+	 return OMPI_ERROR;
+     }
      seg = OBJ_NEW(mca_gpr_registry_segment_t);
      seg->segment = key;
      ompi_list_append(&mca_gpr_replica_head.registry, &seg->item);
@@ -241,7 +246,7 @@ ompi_list_t* gpr_replica_get(ompi_registry_mode_t mode,
 	if (gpr_replica_check_key_list(mode, keys, reg)) { /* found the key(s) on the list */
 	    ans = OBJ_NEW(ompi_registry_value_t);
 	    ans->object_size = reg->object_size;
-	    ans->object = (ompi_buffer_t*)malloc(ans->object_size);
+	    ans->object = (ompi_registry_object_t*)malloc(ans->object_size);
 	    memcpy(ans->object, reg->object, ans->object_size);
 	    ompi_list_append(answer, &ans->item);
 	}
