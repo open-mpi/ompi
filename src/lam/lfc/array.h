@@ -60,8 +60,8 @@ bool lam_arr_init_with(lam_array_t *arr, size_t length);
 
 bool lam_arr_append_item(lam_array_t *arr, lam_object_t *item);
 
-static inline lam_object_t *lam_arr_get_item(lam_array_t *arr, int index);
-static inline lam_object_t *lam_arr_get_item(lam_array_t *arr, int index)
+static inline lam_object_t *lam_arr_get_item(lam_array_t *arr, size_t index);
+static inline lam_object_t *lam_arr_get_item(lam_array_t *arr, size_t index)
 {
     if ( (index >=0) && (index < arr->arr_length) )
     {
