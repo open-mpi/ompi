@@ -6,6 +6,7 @@
 
 #include "include/constants.h"
 #include "runtime/runtime.h"
+#include "util/malloc.h"
 #include "util/output.h"
 
 
