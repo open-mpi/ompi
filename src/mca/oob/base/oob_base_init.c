@@ -68,18 +68,23 @@ int mca_oob_base_init(bool *user_threads, bool *hidden_threads)
             module = component->oob_init(user_threads, hidden_threads);
             if (NULL == module) {
                 ompi_output_verbose(10, mca_oob_base_output, "mca_oob_base_init: oob_init returned failure");
+            } else {
+              inited = OBJ_NEW(mca_oob_base_module_t);
+              inited->oob_component = component;
+              inited->oob_module = module;
+              ompi_list_append(&mca_oob_base_modules, &inited->super);
             }
         }
-
-        inited = OBJ_NEW(mca_oob_base_module_t);
-        inited->oob_component = component;
-        inited->oob_module = module;
-        ompi_list_append(&mca_oob_base_modules, &inited->super);
     }
     /* set the global variable to point to the first initialize module */
-    first = (mca_oob_base_module_t *) ompi_list_get_first(&mca_oob_base_modules);
-    if(NULL != first)
-        mca_oob = *first->oob_module; 
-    return OMPI_SUCCESS;
+    if (0 < ompi_list_get_size(&mca_oob_base_modules)) {
+      first = (mca_oob_base_module_t *) ompi_list_get_first(&mca_oob_base_modules);
+      mca_oob = *first->oob_module; 
+      return OMPI_SUCCESS;
+    } else {
+      printf("No OOB modules available!\n");
+      fflush(stdout);
+      return OMPI_ERROR;
+    }
 }
 
