@@ -159,11 +159,6 @@ int mca_ptl_sm_component_open(void)
     OBJ_CONSTRUCT(&mca_ptl_sm.sm_pending_ack_lock, ompi_mutex_t);
     OBJ_CONSTRUCT(&mca_ptl_sm.sm_pending_ack, ompi_list_t);
 
-    /* debug */
-    fprintf(stderr," at end of open \n");
-    fflush(stderr);
-    /* end debug */
-   
     return OMPI_SUCCESS;
 }
 
@@ -237,10 +232,6 @@ mca_ptl_base_module_t** mca_ptl_sm_component_init(
 
     /* set flag indicating ptl not inited */
     mca_ptl_sm.ptl_inited=false;
-    /* debug */
-    fprintf(stderr," at end of init \n");
-    fflush(stderr);
-    /* end debug */
 
     return ptls;
 }
@@ -300,7 +291,7 @@ int mca_ptl_sm_component_progress(mca_ptl_tstamp_t tstamp)
         }
 
         send_fifo=&(mca_ptl_sm_component.fifo
-                [my_local_smp_rank][peer_local_smp_rank]);
+                [peer_local_smp_rank][my_local_smp_rank]);
 
         /* if fifo is not yet setup - continue - not data has been sent*/
         if(OMPI_CB_FREE == send_fifo->tail){
@@ -332,11 +323,10 @@ int mca_ptl_sm_component_progress(mca_ptl_tstamp_t tstamp)
          * memory address, to a true virtual address */
         header_ptr = (mca_ptl_sm_frag_t *)( (char *)header_ptr+
                 mca_ptl_sm_component.sm_offset);
-        /* debug */
-        fprintf(stderr," recv :: got it %d from %d \n",
-                my_local_smp_rank,peer_local_smp_rank);
-        fflush(stderr);
-        /* end debug */
+
+        /* set the owning ptl */
+        header_ptr->super.frag_base.frag_owner=(mca_ptl_base_module_t *)
+            (&mca_ptl_sm);
 
         /* figure out what type of message this is */
         switch
@@ -350,7 +340,7 @@ int mca_ptl_sm_component_progress(mca_ptl_tstamp_t tstamp)
                     frag_matched=mca_ptl_base_match_in_order_network_delivery(
                             matching_header,
                             (mca_ptl_base_recv_frag_t *)header_ptr);
-                    if( NULL != frag_matched ) {
+                    if( frag_matched ) {
                         /* deliver data, and ack */
                         mca_ptl_sm_matched((mca_ptl_base_module_t *)&mca_ptl_sm,
                                 (mca_ptl_base_recv_frag_t *)header_ptr);
@@ -416,14 +406,19 @@ int mca_ptl_sm_component_progress(mca_ptl_tstamp_t tstamp)
             sm_frag_desc_rel_to_base= (char *) ( (char *)header_ptr -
                     mca_ptl_sm_component.sm_offset );
 
-            /* try and send an ack */
+            /* try and send an ack - no need to check and see if a send
+             * queue has been allocated, since entries are put here only
+             * if the queue was previously full */
+
+            /* fragment already marked as an ack */
+
             return_status=ompi_fifo_write_to_head( sm_frag_desc_rel_to_base,
                     send_fifo,
                     mca_ptl_sm_component.sm_mpool,
                     mca_ptl_sm_component.sm_offset);
 
             /* if ack failed, break */
-            if( OMPI_SUCCESS != return_status ) {
+            if( 0 > return_status ) {
                 /* put the descriptor back on the list */
                 ompi_list_prepend(&(mca_ptl_sm.sm_pending_ack),item);
                 break;
