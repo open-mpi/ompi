@@ -35,7 +35,10 @@ static int set_all(ompi_bitmap_t *bm);
 static int find_and_set(ompi_bitmap_t *bm, int bit);
 static int find_size(ompi_bitmap_t *bm);
 
+#define WANT_PRINT_BITMAP 0
+#if WANT_PRINT_BITMAP
 static void print_bitmap(ompi_bitmap_t *bm);
+#endif
 
 static FILE *error_out=NULL;
 
@@ -329,6 +332,7 @@ int find_size(ompi_bitmap_t *bm)
 }
 
 
+#if WANT_PRINT_BITMAP
 void print_bitmap(ompi_bitmap_t *bm) 
 {
     /* Accessing the fields within the structure, since its not an
@@ -342,3 +346,4 @@ void print_bitmap(ompi_bitmap_t *bm)
     fprintf(error_out, "========================= \n");
     return;
 }
+#endif
