@@ -3,3 +3,27 @@
 #
 
 include $(top_srcdir)/config/Makefile.options
+
+noinst_LTLIBRARIES = libmca_registry_base.la
+
+# Source code files
+
+headers = \
+        base.h
+
+# Library
+
+libmca_registry_base_la_SOURCES = \
+        $(headers) \
+        registry_base_close.c \
+        registry_base_open.c \
+        registry_base_select.c
+
+# Conditionally install the header files
+
+if WANT_INSTALL_HEADERS
+lamdir = $(includedir)/lam/mca/lam/registry/base
+lam_HEADERS = $(headers)
+else
+lamdir = $(includedir)
+endif

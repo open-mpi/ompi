@@ -34,8 +34,8 @@
 
 #include "lam_config.h"
 
-#include "mca/mca.h"
 #include "lam/types.h"
+#include "mca/mca.h"
 
 /*
  * Global constants / types
@@ -55,8 +55,9 @@ typedef void (*mca_oob_base_recv_cb_t)(lam_job_handle_t job_handle, int tag,
 /*
  * Functions every module instance will have to provide
  */
-typedef int (*mca_oob_base_query_fn_t)(int *priority);
-typedef struct mca_oob_1_0_0_t* (*mca_oob_base_init_fn_t)(void);
+typedef struct mca_oob_1_0_0_t*
+  (*mca_oob_base_init_fn_t)(int *priority, bool *allow_multi_user_threads,
+                            bool *have_hidden_threads);
 typedef int (*mca_oob_base_send_fn_t)(lam_job_handle_t job_handle, int vpid, int tag, 
                                       void* data, size_t data_len);
 typedef int (*mca_oob_base_recv_fn_t)(lam_job_handle_t job_handle,  int vpid, int* tag, 
@@ -75,9 +76,8 @@ struct mca_oob_base_module_1_0_0_t {
   mca_base_module_t oobm_version;
   mca_base_module_data_1_0_0_t oobm_data;
 
-  mca_oob_base_query_fn_t oobm_query;
   mca_oob_base_init_fn_t oobm_init;
-  mca_oob_base_finalize_fn_t oob_finalize;
+  mca_oob_base_finalize_fn_t oobm_finalize;
 };
 typedef struct mca_oob_base_module_1_0_0_t mca_oob_base_module_1_0_0_t;
 
@@ -89,6 +89,9 @@ struct mca_oob_1_0_0_t {
 };
 typedef struct mca_oob_1_0_0_t mca_oob_1_0_0_t;
 
+typedef mca_oob_base_module_1_0_0_t mca_oob_base_module_t;
+typedef mca_oob_1_0_0_t mca_oob_t;
+
 /*
  * Macro for use in modules that are of type coll v1.0.0
  */
@@ -98,32 +101,5 @@ typedef struct mca_oob_1_0_0_t mca_oob_1_0_0_t;
   /* oob v1.0 */ \
   "oob", 1, 0, 0
 
-
-typedef mca_oob_base_module_1_0_0_t mca_oob_base_module_t;
-typedef mca_oob_1_0_0_t mca_oob_t;
-
-
-/*
- * Global functions for MCA overall collective open and close
- */
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
-  int mca_oob_base_open(lam_cmd_line_t *cmd);
-  int mca_oob_base_close(void);
-
-  bool mca_oob_base_is_checkpointable(void);
-
-  int mca_oob_base_checkpoint(void);
-  int mca_oob_base_continue(void);
-  int mca_oob_base_restart(void);
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
-
-/*
- * Global struct holding the selected module's function pointers
- */
-extern mca_oob_t mca_oob;
 
 #endif

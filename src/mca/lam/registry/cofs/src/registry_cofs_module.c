@@ -34,7 +34,6 @@ mca_registry_base_module_1_0_0_t mca_registry_cofs_module = {
   {
     false /* checkpoint / restart */
   },
-  mca_registry_cofs_query,  /* module query */
   mca_registry_cofs_init,    /* module init */
   mca_registry_cofs_finalize
 };
@@ -62,19 +61,16 @@ mca_registry_cofs_close(void)
 }
 
 
-int
-mca_registry_cofs_query(int *priority)
-{
-  *priority = 0;
-  return LAM_SUCCESS;
-}
-
-
 struct mca_registry_1_0_0_t*
-mca_registry_cofs_init(void)
+mca_registry_cofs_init(int *priority, bool *allow_multi_user_threads,
+                       bool *have_hidden_user_threads)
 {
   char *tmp;
   FILE *fp;
+
+  *priority = 0;
+  *allow_multi_user_threads = true;
+  *have_hidden_user_threads = false;
 
   /*
    * BWB - fix me, make register the "right" way...

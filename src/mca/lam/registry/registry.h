@@ -35,8 +35,9 @@
 /*
  * Functions every module instance will have to provide
  */
-typedef int (*mca_registry_base_query_fn_t)(int *priority);
-typedef struct mca_registry_1_0_0_t* (*mca_registry_base_init_fn_t)(void);
+typedef struct mca_registry_1_0_0_t* 
+  (*mca_registry_base_init_fn_t)(int *priority, bool *allow_multi_user_threads,
+                                 bool *have_hidden_threads);
 
   /**
    * Publish a key=value piece of information
@@ -95,7 +96,6 @@ struct mca_registry_base_module_1_0_0_t {
   mca_base_module_t registrym_version;
   mca_base_module_data_1_0_0_t registrym_data;
 
-  mca_registry_base_query_fn_t registrym_query;
   mca_registry_base_init_fn_t registrym_init;
   mca_registry_base_finalize_fn_t registrym_finalize;
 };
@@ -108,6 +108,10 @@ struct mca_registry_1_0_0_t {
 };
 typedef struct mca_registry_1_0_0_t mca_registry_1_0_0_t;
 
+typedef mca_registry_base_module_1_0_0_t mca_registry_base_module_t;
+typedef mca_registry_1_0_0_t mca_registry_t;
+
+
 /*
  * Macro for use in modules that are of type registry v1.0.0
  */
@@ -116,33 +120,5 @@ typedef struct mca_registry_1_0_0_t mca_registry_1_0_0_t;
   MCA_BASE_VERSION_1_0_0, \
   /* registry v1.0 */ \
   "registry", 1, 0, 0
-
-typedef mca_registry_base_module_1_0_0_t mca_registry_base_module_t;
-typedef mca_registry_1_0_0_t mca_registry_t;
-
-
-/*
- * Global functions for MCA overall collective open and close
- */
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
-  int mca_registry_base_open(lam_cmd_line_t *cmd);
-  int mca_registry_base_close(void);
-
-  bool mca_registry_base_is_checkpointable(void);
-
-  int mca_registry_base_checkpoint(void);
-  int mca_registry_base_continue(void);
-  int mca_registry_base_restart(void);
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
-
-
-/*
- * Global struct holding the selected module's function pointers
- */
-extern mca_registry_t mca_registry;
 
 #endif

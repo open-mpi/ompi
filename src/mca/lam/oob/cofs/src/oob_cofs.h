@@ -18,8 +18,9 @@ int mca_oob_cofs_close(void);
 /*
  * Startup / Shutdown
  */
-int mca_oob_cofs_query(int *priority);
-struct mca_oob_1_0_0_t* mca_oob_cofs_init(void);
+struct mca_oob_1_0_0_t* mca_oob_cofs_init(int *priority,
+                                          bool *allow_multi_user_threads,
+                                          bool *have_hidden_threads);
 int mca_oob_cofs_finalize(void);
 
 
