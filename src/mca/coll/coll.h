@@ -23,6 +23,13 @@
 
 
 /*
+ * Forward declaration
+ */
+
+struct mca_coll_base_comm_t;
+
+
+/*
  * Coll component function typedefs
  */
 
@@ -30,9 +37,11 @@ typedef int (*mca_coll_base_component_init_query_fn_t)
   (bool *allow_multi_user_threads, bool *have_hidden_threads);
 typedef const struct mca_coll_base_module_1_0_0_t *
   (*mca_coll_base_component_comm_query_1_0_0_fn_t)
-  (struct ompi_communicator_t *comm, int *priority);
+  (struct ompi_communicator_t *comm, int *priority,
+   struct mca_coll_base_comm_t **data);
 typedef int (*mca_coll_base_component_comm_unquery_fn_t)
-  (struct ompi_communicator_t *comm);
+  (struct ompi_communicator_t *comm,
+   struct mca_coll_base_comm_t *data);
 
 /*
  * Coll module function typedefs

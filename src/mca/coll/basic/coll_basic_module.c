@@ -142,7 +142,8 @@ int mca_coll_basic_init_query(bool *allow_multi_user_threads,
  * priority we want to return.
  */
 const mca_coll_base_module_1_0_0_t *
-mca_coll_basic_comm_query(struct ompi_communicator_t *comm, int *priority)
+mca_coll_basic_comm_query(struct ompi_communicator_t *comm, int *priority,
+                          struct mca_coll_base_comm_t **data)
 {
   if (OMPI_SUCCESS != mca_base_param_lookup_int(mca_coll_basic_priority_param,
                                                 priority)) {
@@ -153,12 +154,8 @@ mca_coll_basic_comm_query(struct ompi_communicator_t *comm, int *priority)
      algorithms. */
 
   if (OMPI_COMM_IS_INTER(comm)) {
-      /* Intercommunicators */
       return &inter_linear;
   } else {
-    
-    /* Intracommunicators */
-
     if (ompi_comm_size(comm) <= mca_coll_base_crossover) {
       return &intra_linear;
     } else {
@@ -181,28 +178,19 @@ mca_coll_basic_module_init(struct ompi_communicator_t *comm)
 
   /* Allocate the data that hangs off the communicator */
 
-  comm->c_coll_basic_data = NULL;
-
   if (OMPI_COMM_IS_INTER(comm)) {
-      /* Intercommunicators */
-      /* JMS Continue here */
       size = ompi_comm_remote_size(comm);
   } else {
-      /* Intracommunicators */
-      /* JMS Continue here */
       size = ompi_comm_size(comm);
   }
   data = malloc(sizeof(struct mca_coll_base_comm_t) +
-                (sizeof(ompi_request_t *) * size * 2));
+                 (sizeof(ompi_request_t *) * size * 2));
   
   if (NULL == data) {
       return NULL;
   }
   data->mccb_reqs = (ompi_request_t **) (data + 1);
   data->mccb_num_reqs = size * 2;
-
-  /* Initialize the communicator */
-
 
   /* All done */
 
@@ -227,14 +215,6 @@ int mca_coll_basic_module_finalize(struct ompi_communicator_t *comm)
   comm->c_coll_basic_data->mccb_reqs = NULL;
   comm->c_coll_basic_data->mccb_num_reqs = 0;
 #endif
-
-  if (OMPI_COMM_IS_INTER(comm)) {
-    /* Intercommunicators */
-    /* JMS Continue here */
-  } else {
-    /* Intracommunicators */
-    /* JMS Continue here */
-  }
 
   /* All done */
 

@@ -42,6 +42,7 @@ int mca_coll_self_priority_param = -1;
  */
 static int self_open(void);
 
+
 /*
  * Instantiate the public struct with all of our public information
  * and pointers to our public functions in it
@@ -83,7 +84,7 @@ const mca_coll_base_component_1_0_0_t mca_coll_self_component = {
 
     mca_coll_self_init_query,
     mca_coll_self_comm_query,
-    NULL
+    NULL,
 };
 
 
@@ -97,3 +98,4 @@ static int self_open(void)
 
     return OMPI_SUCCESS;
 }
+
