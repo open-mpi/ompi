@@ -2,6 +2,7 @@
  * $HEADER$
  */
 
+#include <string.h>
 #include "ptl_base_comm.h"
 
 static void mca_pml_ptl_comm_construct(mca_pml_ptl_comm_t* comm);

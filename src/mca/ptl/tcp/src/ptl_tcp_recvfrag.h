@@ -6,6 +6,7 @@
 #ifndef MCA_PTL_TCP_RECV_FRAG_H
 #define MCA_PTL_TCP_RECV_FRAG_H
 
+#include <string.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>

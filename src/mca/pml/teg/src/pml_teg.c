@@ -3,6 +3,7 @@
  */
 
 #include <stdlib.h>
+#include <string.h>
 #include "mca/pml/pml.h"
 #include "mca/ptl/ptl.h"
 #include "mca/ptl/base/base.h"
@@ -33,6 +34,8 @@ mca_pml_teg_t mca_pml_teg = {
     mca_pml_teg_start,
     mca_pml_teg_test,
     mca_pml_teg_wait,
+    mca_pml_teg_wait_all,
+    mca_pml_teg_free,
     mca_pml_teg_null
     }
 };

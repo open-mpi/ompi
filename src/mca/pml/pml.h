@@ -152,14 +152,14 @@ typedef int (*mca_pml_base_test_fn_t)(
 );
 
 typedef int (*mca_pml_base_wait_fn_t)(
-    int count,
+    size_t count,
     lam_request_t** request,
     int *index,
     lam_status_public_t* status
 );
 
 typedef int (*mca_pml_base_wait_all_fn_t)(
-    int count,                    /* count of request/status arrays */
+    size_t count,                 /* count of request/status arrays */
     lam_request_t** request,      /* array of requests */
     lam_status_public_t *status   /* array of statuses */
 );

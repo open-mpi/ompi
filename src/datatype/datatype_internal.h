@@ -1,5 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 
+#include <string.h>
 #ifndef DATATYPE_INTERNAL_H_HAS_BEEN_INCLUDED
 #define DATATYPE_INTERNAL_H_HAS_BEEN_INCLUDED
 

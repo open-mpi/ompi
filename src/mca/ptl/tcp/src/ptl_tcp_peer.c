@@ -103,7 +103,6 @@ int mca_ptl_tcp_peer_send(mca_ptl_base_peer_t* ptl_peer, mca_ptl_tcp_send_frag_t
         if (NULL != ptl_peer->peer_send_frag) 
             lam_list_append(&ptl_peer->peer_frags, (lam_list_item_t*)frag);
         else {
-            mca_ptl_base_send_request_t* send_request = frag->super.frag_request;
             if(mca_ptl_tcp_send_frag_handler(frag, ptl_peer->peer_sd)) {
                 mca_ptl_tcp_send_frag_progress(frag);
             } else {
@@ -481,7 +480,6 @@ static void mca_ptl_tcp_peer_send_handler(int sd, short flags, void* user)
     case MCA_PTL_TCP_CONNECTED: 
         {
         /* complete the current send */
-        mca_ptl_t *ptl = (mca_ptl_t*)ptl_peer->peer_ptl;
         do {
             mca_ptl_tcp_send_frag_t* frag = ptl_peer->peer_send_frag;
             if(mca_ptl_tcp_send_frag_handler(frag, ptl_peer->peer_sd) == false)
