@@ -10,6 +10,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <sys/types.h>
+#include <unistd.h>
 #include <sys/uio.h>
 #include <netinet/in.h>
 
@@ -93,7 +94,7 @@ static void ompi_buffer_destruct (ompi_buffer_internal_t* buffer)
     int ompi_buffer_init (ompi_buffer_t *buffer)
 {
 ompi_buffer_internal_t* bptr;
-size_t isize=4096;	/* we should check the mca params here */
+size_t isize=getpagesize();	/* we should check the mca params here */
 
 	/* check that we can return a buffer atall.. */
 	if (!buffer) { return (OMPI_ERROR); }
@@ -197,6 +198,51 @@ ompi_buffer_internal_t *bptr;
 	return (OMPI_SUCCESS);
 }
 
+/**
+ * Internal function that resizes (expands) an inuse buffer...
+ * 
+ * Takes the size increase, adds to current size rounds up to pagesize
+ * 
+ */
+static int ompi_buffer_extend (ompi_buffer_internal_t *bptr, size_t increase)
+{
+/* no buffer checking, we should know what we are doing in here */
+
+size_t newsize; 
+size_t pages;
+void*  newbaseptr;
+ssize_t mdiff;		/* difference in memory */
+size_t  sdiff;          /* difference (increase) in space */
+
+/* calculate size of increase by pushing up page count */
+pages = (increase / (size_t) getpagesize())+1;
+
+newsize = bptr->size + (pages*(size_t)getpagesize());
+
+sdiff = newsize - bptr->size; /* actual increase in space */
+/* have to use relative change as no absolute without */
+/* doing pointer maths for some counts such as space */
+
+newbaseptr = realloc (bptr->base_ptr, newsize);
+
+if (!newbaseptr) { return (OMPI_ERROR); }
+
+/* ok, we have new memory */
+
+/* update all the pointers in the buffer DT */
+/* first calc change in memory location */
+mdiff = ((char*)newbaseptr) - ((char*)bptr->base_ptr);
+
+bptr->base_ptr = newbaseptr;
+bptr->data_ptr = ((char*)bptr->data_ptr) + mdiff;
+bptr->from_ptr = ((char*)bptr->from_ptr) + mdiff;
+
+/* now update all pointers */
+bptr->size = newsize;
+bptr->space += sdiff; 
+
+return (OMPI_SUCCESS);
+}
 
 
 /**
@@ -262,12 +308,12 @@ ompi_buffer_internal_t *bptr;
     }
 
     if (op_size > bptr->space) { /* need to expand the buffer */
-	/* todo resize buffer */
+    	rc =  ompi_buffer_extend (bptr, (op_size - bptr->space));
+	if (OMPI_ERROR==rc) { return (rc); }
+
         /* after resizing, if it worked we would need to update the dest */
 	/* as it could have moved. (Learned this bug from Edgar :) */
     	dest = bptr->data_ptr;	/* get location in buffer */
-
-	return (OMPI_ERROR); /* for tonight */
     } 
     
     switch(type) {
