@@ -52,7 +52,7 @@
 #define D_PRINT(fmt, args...)
 #endif
 
-#if 0
+#if 1
 #define A_PRINT(fmt, args...) {                                     \
     ompi_output(0, "[%s:%d:%s] " fmt, __FILE__, __LINE__, __func__, \
         ##args);                                                    \

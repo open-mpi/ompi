@@ -95,7 +95,8 @@ int mca_ptl_ib_component_open(void)
 
     mca_ptl_ib_module.super.ptl_min_frag_size =
         mca_ptl_ib_param_register_int ("min_frag_size",
-                (4096 - sizeof(mca_ptl_base_header_t)));
+                (MCA_PTL_IB_FIRST_FRAG_SIZE 
+                 - sizeof(mca_ptl_base_header_t)));
 
     mca_ptl_ib_module.super.ptl_max_frag_size =
         mca_ptl_ib_param_register_int ("max_frag_size", 2<<30);
@@ -237,6 +238,8 @@ mca_ptl_base_module_t** mca_ptl_ib_component_init(int *num_ptl_modules,
 
         /* Find a better place for this */
         OBJ_CONSTRUCT(&(ib_modules[i].send_free), ompi_free_list_t);
+
+        A_PRINT("Free list addr : %p", &ib_modules[i].send_free);
 
         OBJ_CONSTRUCT(&(ib_modules[i].recv_free), ompi_free_list_t);
 

@@ -85,6 +85,7 @@ int mca_ptl_ib_put( struct mca_ptl_base_module_t* ptl,
     /* Send FIN to receiver */
     send_frag_fin = mca_ptl_ib_alloc_send_frag(ptl, req);
 
+
     if(NULL == send_frag_fin) {
         ompi_output(0, "Unable to allocate send descriptor");
         return OMPI_ERROR;
@@ -183,6 +184,8 @@ int mca_ptl_ib_request_init( struct mca_ptl_base_module_t* ptl,
 {
     mca_ptl_ib_send_request_t *ib_send_req;
     mca_ptl_ib_send_frag_t *ib_send_frag;
+
+    A_PRINT("");
 
     ib_send_frag = mca_ptl_ib_alloc_send_frag(ptl,
             request);
@@ -361,9 +364,6 @@ void mca_ptl_ib_matched(mca_ptl_base_module_t* module,
         } else {
             mca_ptl_ib_start_ack(module, send_frag, recv_frag);
         }
-
-        /* Basic ACK scheme */
-        A_PRINT("Doh, I cannot send an ack!\n");
     }
 
     /* Process the fragment */
