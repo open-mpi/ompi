@@ -422,7 +422,7 @@ static inline bool ompi_op_is_commute(ompi_op_t *op)
 static inline void ompi_op_reduce(ompi_op_t *op, void *source, void *target,
                                   int count, ompi_datatype_t *dtype)
 {
-  MPI_Fint fint = (MPI_Fint) dtype->id;
+  MPI_Fint fint = (MPI_Fint) dtype->d_f_to_c_index;
 
   /*
    * Call the reduction function.  Two dimensions: a) if both the op

@@ -7,6 +7,7 @@
 #include <stdio.h>
 
 #include "mpi.h"
+#include "op/op.h"
 #include "mpi/f77/bindings.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
@@ -54,6 +55,7 @@ void mpi_op_create_f(MPI_Fint *function, MPI_Fint *commute,
     *ierr = OMPI_INT_2_FINT(MPI_Op_create((MPI_User_function *)function,
 					  OMPI_FINT_2_INT(*commute),
 					  &c_op));
+    c_op->o_flags |= OMPI_OP_FLAGS_FORTRAN_FUNC;
 
     *op = MPI_Op_c2f(c_op);
 }
