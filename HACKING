@@ -16,12 +16,19 @@ procedure is unnecessary -- you can even skip reading this section.
 If you are building OMPI/MPI from a developer's tree, you must first
 install fairly recent versions of the GNU tools Autoconf, Automake,
 and Libtool.  As of this writing, you need at least Autoconf v2.58,
-Automake v1.7 (or better), and Libtool v1.5.  You can check what
+Automake v1.8.5 (or better), and Libtool v1.5.  You can check what
 versions you have installed with the following:
 
 shell$ autoconf --version
 shell$ automake --version
 shell$ libtool --version
+
+AUTOMAKE NOTE: It seems that Automake 1.7 (or better) is ok for
+               *building* Open MPI, but you really need later
+               versions for "make dist" to work properly (1.8.5 is
+               known to work; no real testing has been conducted to
+               determine the lowest version number where "make dist"
+               works).
 
 If you need newer versions, you are *strongly* encouraged to heed the
 following advice:
