@@ -74,7 +74,11 @@ int MPI_Comm_join(int fd, MPI_Comm *intercomm)
     ompi_socket_send (fd, name, len);
     ompi_socket_recv (fd, rname, rlen);
     
+#if 0
     port_pname = ompi_name_server.convert_string_to_process_name(rname);
+#else
+    port_pname = NULL;
+#endif
 
     mask = OMPI_NS_CMP_CELLID | OMPI_NS_CMP_JOBID | OMPI_NS_CMP_VPID;
     rc = ompi_name_server.compare (mask, &myproc[0]->proc_name, port_proc_name );

@@ -28,12 +28,6 @@ ompi_process_name_t* ns_base_create_process_name(mca_ns_base_cellid_t cell,
 {
     ompi_process_name_t *newname;
 
-    if (MCA_NS_BASE_CELLID_MAX < cell ||
-        MCA_NS_BASE_JOBID_MAX < job ||
-	MCA_NS_BASE_VPID_MAX < vpid) {
-	return(NULL);
-    }
-
     newname = OBJ_NEW(ompi_process_name_t);
     if (NULL == newname) { /* got an error */
 	return(NULL);
@@ -49,97 +43,39 @@ ompi_process_name_t* ns_base_create_process_name(mca_ns_base_cellid_t cell,
 char* ns_base_get_proc_name_string(const ompi_process_name_t* name)
 {
     char *name_string;
+    int size;
 
     if (NULL == name) { /* got an error */
 	return(NULL);
     }
 
-    if (0 > asprintf(&name_string, "%0X.%0X.%0X", name->cellid, name->jobid, name->vpid)) {
-	return NULL;
+    size = (3*sizeof(name->cellid)/4) + 3;
+    name_string = (char*)malloc(27*sizeof(char));
+    if (NULL == name_string) { /* got an error */
+	return(NULL);
     }
 
+    sprintf(name_string, "%0x.%0x.%0x", name->cellid, name->jobid, name->vpid);
     return(name_string);
-}
-
-ompi_process_name_t* ns_base_convert_string_to_process_name(const char* name)
-{
-    char *temp, *token;
-    mca_ns_base_cellid_t cell;
-    mca_ns_base_jobid_t job;
-    mca_ns_base_vpid_t vpid;
-    unsigned long int tmpint;
-
-    const char delimiters[] = ".";
-    ompi_process_name_t *return_code;
-
-    return_code = NULL;
-
-    /* check for NULL string - error */
-    if (NULL == name) {
-	return NULL;
-    }
-
-    temp = strdup(name);
-    token = strtok(temp, delimiters); /* get first field -> cellid */
-
-    /* convert to largest possible unsigned int - unsigned long long is only supported
-     * in C99, so we have to use unsigned long for backward compatibility - then
-     * check to ensure it is within range of cellid_t before casting */
-
-    tmpint = strtoul(token, NULL, 16);
-    if (MCA_NS_BASE_CELLID_MAX >= tmpint) {
-	cell = (mca_ns_base_cellid_t)tmpint;
-    } else {
-	goto CLEANUP;
-    }
-
-    token = strtok(NULL, delimiters);  /* get second field -> jobid */
-
-    /* convert to largest possible unsigned int - then
-     * check to ensure it is within range of jobid_t before casting */
-
-    tmpint = strtoul(token, NULL, 16);
-    if (MCA_NS_BASE_JOBID_MAX >= tmpint) {
-	job = (mca_ns_base_jobid_t)tmpint;
-    } else {
-	goto CLEANUP;
-    }
-
-    token = strtok(NULL, delimiters);  /* get third field -> vpid */
-
-    /* convert to largest possible unsigned int then
-     * check to ensure it is within range of vpid_t before casting */
-
-    tmpint = strtoul(token, NULL, 16);
-    if (MCA_NS_BASE_VPID_MAX >= tmpint) {
-	vpid = (mca_ns_base_vpid_t)tmpint;
-    } else {
-	goto CLEANUP;
-    }
-
-    return_code = ns_base_create_process_name(cell, job, vpid);
-
- CLEANUP:
-    if (temp) {
-	free(temp);
-    }
-
-    return return_code;
 }
 
 
 char* ns_base_get_vpid_string(const ompi_process_name_t* name)
 {
     char *name_string;
+    int size;
 
     if (NULL == name) { /* got an error */
 	return(NULL);
     }
 
-    if (0 > asprintf(&name_string, "%0X", name->vpid)) {
-	return NULL;
+    size = 1 + sizeof(name->vpid)/4;
+    name_string = (char*)malloc(size*sizeof(char));
+    if (NULL == name_string) { /* got an error */
+	return(NULL);
     }
 
+    sprintf(name_string, "%0x", name->vpid);
     return(name_string);
 }
 
@@ -147,15 +83,19 @@ char* ns_base_get_vpid_string(const ompi_process_name_t* name)
 char* ns_base_get_jobid_string(const ompi_process_name_t* name)
 {
     char *name_string;
+    int size;
 
     if (NULL == name) { /* got an error */
 	return(NULL);
     }
 
-    if (0 > asprintf(&name_string, "%0X", name->jobid)) {
-	return NULL;
+    size = 1 + sizeof(name->jobid);
+    name_string = (char*)malloc(size*sizeof(char));
+    if (NULL == name_string) { /* got an error */
+	return(NULL);
     }
 
+    sprintf(name_string, "%0x", name->jobid);
     return(name_string);
 }
 
@@ -163,15 +103,19 @@ char* ns_base_get_jobid_string(const ompi_process_name_t* name)
 char* ns_base_get_cellid_string(const ompi_process_name_t* name)
 {
     char *name_string;
+    int size;
 
     if (NULL == name) { /* got an error */
 	return(NULL);
     }
 
-    if (0 > asprintf(&name_string, "%0X", name->cellid)) {
-	return NULL;
+    size = 1 + sizeof(name->cellid);
+    name_string = (char*)malloc(size*sizeof(char));
+    if (NULL == name_string) { /* got an error */
+	return(NULL);
     }
 
+    sprintf(name_string, "%0x", name->cellid);
     return(name_string);
 }
 
@@ -179,7 +123,7 @@ char* ns_base_get_cellid_string(const ompi_process_name_t* name)
 mca_ns_base_vpid_t ns_base_get_vpid(const ompi_process_name_t* name)
 {
     if (NULL == name) { /* got an error */
-	return(MCA_NS_BASE_VPID_MAX);
+	return(OMPI_NAME_SERVICE_MAX);
     }
 
     return(name->vpid);
@@ -189,7 +133,7 @@ mca_ns_base_vpid_t ns_base_get_vpid(const ompi_process_name_t* name)
 mca_ns_base_jobid_t ns_base_get_jobid(const ompi_process_name_t* name)
 {
     if (NULL == name) { /* got an error */
-	return(MCA_NS_BASE_JOBID_MAX);
+	return(OMPI_NAME_SERVICE_MAX);
     }
 
     return(name->jobid);
@@ -198,7 +142,7 @@ mca_ns_base_jobid_t ns_base_get_jobid(const ompi_process_name_t* name)
 mca_ns_base_cellid_t ns_base_get_cellid(const ompi_process_name_t* name)
 {
     if (NULL == name) { /* got an error */
-	return(MCA_NS_BASE_CELLID_MAX);
+	return(OMPI_NAME_SERVICE_MAX);
     }
 
     return(name->cellid);
