@@ -26,6 +26,7 @@ static void __get_free_dt_struct(  dt_desc_t* pData )
     pData->true_ub         = LONG_MIN;
     pData->lb              = LONG_MAX;
     pData->ub              = LONG_MIN;
+    pData->d_f_to_c_index  = ompi_pointer_array_add(ompi_datatype_f_to_c_table, pData);
 }
 
 static void __destroy_ddt_struct( dt_desc_t* pData )
@@ -40,6 +41,10 @@ static void __destroy_ddt_struct( dt_desc_t* pData )
     pData->opt_desc.used   = 0;
     if( pData->args != NULL ) free( pData->args );
     pData->args = NULL;
+    if( NULL != ompi_pointer_array_get_item(ompi_datatype_f_to_c_table, pData->d_f_to_c_index) ){
+        ompi_pointer_array_set_item( ompi_datatype_f_to_c_table, pData->d_f_to_c_index, NULL );
+    }
+
 }
 
 OBJ_CLASS_INSTANCE(ompi_datatype_t, ompi_object_t, __get_free_dt_struct, __destroy_ddt_struct );
