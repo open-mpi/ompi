@@ -52,12 +52,15 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_HINDEXED,
 static const char FUNC_NAME[] = "MPI_TYPE_HINDEXED";
 
 
-void mpi_type_hindexed_f(MPI_Fint *count, MPI_Fint *array_of_blocklengths, MPI_Fint *array_of_displacements, MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr)
+void mpi_type_hindexed_f(MPI_Fint *count, MPI_Fint *array_of_blocklengths, 
+			 MPI_Fint *array_of_displacements, 
+			 MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr)
 {
     MPI_Datatype c_old = MPI_Type_f2c(*oldtype);
     MPI_Datatype c_new;
     MPI_Aint *c_disp_array;
     int i;
+    OMPI_ARRAY_NAME_DECL(array_of_blocklengths);
 
     c_disp_array = malloc(*count * sizeof(MPI_Aint));
     if (NULL == c_disp_array) {
@@ -68,12 +71,17 @@ void mpi_type_hindexed_f(MPI_Fint *count, MPI_Fint *array_of_blocklengths, MPI_F
     for (i = 0; i < *count; i++) {
         c_disp_array[i] = (MPI_Aint) array_of_displacements[i];
     }
-    *ierr = MPI_Type_hindexed(*count, array_of_blocklengths, 
-                              c_disp_array, c_old, &c_new);
+
+    OMPI_ARRAY_FINT_2_INT(array_of_blocklengths, *count);
+
+    *ierr = OMPI_INT_2_FINT(MPI_Type_hindexed(OMPI_FINT_2_INT(*count),
+			      OMPI_ARRAY_NAME_CONVERT(array_of_blocklengths), 
+			      c_disp_array, c_old, &c_new));
 
     if (MPI_SUCCESS == *ierr) {
       *newtype = MPI_Type_c2f(c_new);
     }
 
     free(c_disp_array);
+    OMPI_ARRAY_FINT_2_INT_CLEANUP(array_of_blocklengths);
 }

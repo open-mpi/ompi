@@ -46,11 +46,14 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_DELETE_ATTR,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-void mpi_type_delete_attr_f(MPI_Fint *type, MPI_Fint *type_keyval, MPI_Fint *ierr)
+void mpi_type_delete_attr_f(MPI_Fint *type, MPI_Fint *type_keyval,
+			    MPI_Fint *ierr)
 {
     MPI_Datatype c_type = MPI_Type_f2c(*type);
 
-    *ierr = MPI_Type_delete_attr( c_type, *type_keyval ); 
+    *ierr = OMPI_INT_2_FINT(MPI_Type_delete_attr(c_type, 
+						 OMPI_FINT_2_INT(*type_keyval)
+						 )); 
 
     if (MPI_SUCCESS == *ierr) {
       *type = MPI_Type_c2f( c_type );

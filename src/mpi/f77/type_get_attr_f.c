@@ -46,9 +46,16 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_GET_ATTR,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-void mpi_type_get_attr_f(MPI_Fint *type, MPI_Fint *type_keyval, char *attribute_val, MPI_Fint *flag, MPI_Fint *ierr)
+void mpi_type_get_attr_f(MPI_Fint *type, MPI_Fint *type_keyval,
+			 char *attribute_val, MPI_Fint *flag, MPI_Fint *ierr)
 {
     MPI_Datatype c_type = MPI_Type_f2c( *type );
+    OMPI_SINGLE_NAME_DECL(flag);
 
-    *ierr = MPI_Type_get_attr( c_type, *type_keyval, attribute_val, flag );
+    *ierr = OMPI_INT_2_FINT(MPI_Type_get_attr(c_type, 
+					      OMPI_FINT_2_INT(*type_keyval),
+					      attribute_val, 
+					      OMPI_SINGLE_NAME_CONVERT(flag)));
+
+    OMPI_SINGLE_INT_2_FINT(flag);
 }
