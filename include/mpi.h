@@ -423,7 +423,7 @@ OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_cplex, ompi_mpi_packed;
 OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_unsigned_char;
 OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_unsigned_short;
 OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_unsigned, ompi_mpi_datatype_null;
-OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_unsigned_long;
+OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_unsigned_long, ompi_mpi_ldblcplex;
 OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_ub, ompi_mpi_lb;
 OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_float_int, ompi_mpi_double_int;
 OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_long_int, ompi_mpi_2int;
