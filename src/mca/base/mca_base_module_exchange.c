@@ -395,13 +395,15 @@ static int mca_base_modex_subscribe(orte_process_name_t* name)
 
     /* check for an existing subscription */
     OMPI_LOCK(&mca_base_modex_lock);
-    for(item =  ompi_list_get_first(&mca_base_modex_subscriptions);
-        item != ompi_list_get_end(&mca_base_modex_subscriptions);
-        item = ompi_list_get_next(item)) {
-        subscription = (mca_base_modex_subscription_t*)item;
-        if(subscription->jobid == name->jobid) {
-            OMPI_UNLOCK(&mca_base_modex_lock);
-            return OMPI_SUCCESS;
+    if (!ompi_list_is_empty(&mca_base_modex_subscriptions)) {
+        for(item =  ompi_list_get_first(&mca_base_modex_subscriptions);
+            item != ompi_list_get_end(&mca_base_modex_subscriptions);
+            item = ompi_list_get_next(item)) {
+            subscription = (mca_base_modex_subscription_t*)item;
+            if(subscription->jobid == name->jobid) {
+                OMPI_UNLOCK(&mca_base_modex_lock);
+                return OMPI_SUCCESS;
+            }
         }
     }
     OMPI_UNLOCK(&mca_base_modex_lock);
@@ -691,5 +693,3 @@ int mca_base_modex_exchange(void)
 {
     return mca_base_modex_subscribe(orte_process_info.my_name);
 }
-
-
