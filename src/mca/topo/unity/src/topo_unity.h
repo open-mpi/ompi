@@ -20,7 +20,7 @@
  * version information and the four functions (see below) which
  * are needed for this module to function with the MCA framework
  */
-extern struct mca_topo_base_module_1_0_0_t mca_topo_unity_module;
+extern const struct mca_topo_base_module_1_0_0_t mca_topo_unity_module;
 
 /*
  * ******************************************************************
@@ -72,16 +72,16 @@ extern struct mca_topo_base_module_1_0_0_t mca_topo_unity_module;
 #if defined(__cplusplus) || defined(c_plusplus)
     extern "C" {
 #endif
-        int mca_topo_unity_init (lam_communicator_t *comm,
-                                 mca_topo_t **new_topo);
+        int mca_topo_unity_init (MPI_Comm comm,
+                                 const mca_topo_t **new_topo);
 
-        int mca_topo_unity_cart_map (lam_communicator_t *comm,
+        int mca_topo_unity_cart_map (MPI_Comm comm,
                                      int ndims,
                                      int *dims,
                                      int *periods,
                                      int *newrank);
 
-        int mca_topo_unity_graph_map (lam_communicator_t *comm,
+        int mca_topo_unity_graph_map (MPI_Comm comm,
                                       int nnodes,
                                       int *index,
                                       int *edges,

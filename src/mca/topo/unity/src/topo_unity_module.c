@@ -8,14 +8,14 @@
  * modules just to query their version and parameters
  */
 
-#include "mca/topo/unity/topo_unity,h"
+#include "mca/topo/unity/src/topo_unity.h"
 
 /*
  * Public string showing the topo unity module version number
  */
 
 const char *mca_topo_unity_module_version_string = 
-    "LAM/MPI unity topology MCA module version" MCA_TOPO_UNITY_VERSION;
+    "LAM/MPI unity topology MCA module version" MCA_topo_unity_FULL_VERSION;
 
 /*
  * *******************************************************************
@@ -30,19 +30,19 @@ const char *mca_topo_unity_module_version_string =
  */
 const mca_topo_base_module_1_0_0_t mca_topo_unity_module = {
     {
-        MCA_TOPO_UNITY_VERSION_1_0_0, /* version number */
+        MCA_TOPO_BASE_VERSION_1_0_0, /* version number */
         "unity",                      /* module name */
-        MCA_TOPO_UNITY_MAJOR_VERSION, /* major version */
-        MCA_TOPO_UNITY_MINOR_VERSION, /* minor version */
-        MCA_TOPO_UNITY_RELEASE_VERSION, /* release version */
+        MCA_topo_unity_MAJOR_VERSION, /* major version */
+        MCA_topo_unity_MINOR_VERSION, /* minor version */
+        MCA_topo_unity_RELEASE_VERSION, /* release version */
         mca_topo_unity_module_open,   /* fp to open the module */
         mca_topo_unity_module_close   /* fp to close the module */
     },
     {
       false /* whether checkpoint/restart is enabled */
     },
-    mca_topo_unity_comm_query,      /* get priority and actions */
-    mca_topo_unity_comm_finalize    /* undo actions of query */
+    mca_topo_unity_module_query,      /* get priority and actions */
+    mca_topo_unity_module_finalize    /* undo actions of query */
 };
 /*
  * *******************************************************************
@@ -55,7 +55,7 @@ const mca_topo_base_module_1_0_0_t mca_topo_unity_module = {
  * ************************ actions structure ************************
  * *******************************************************************
  */
-static const mca_topo_t unity {
+static mca_topo_t unity =  {
     mca_topo_unity_init, /* initalise after being selected */
     NULL, /* topo_cart_coords */
     NULL, /* topo_cart_create */
@@ -69,7 +69,7 @@ static const mca_topo_t unity {
     NULL, /* topo_graph_get */
     mca_topo_unity_graph_map,
     NULL, /* topo_graph_neighbors */
-    NULL, /* topo_graph_neighbors_count */
+    NULL /* topo_graph_neighbors_count */
 };
 /*
  * *******************************************************************
