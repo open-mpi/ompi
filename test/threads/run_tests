@@ -8,8 +8,8 @@
 # 
 # test_list  =  no args runs all tests
 #              or
-#               condition runs ompi_condition tests
-#               thread runs ompi_thread tests
+#               ompi_condition runs ompi_condition tests
+#               ompi_thread runs ompi_thread tests
 
 # Usage
 #
@@ -24,15 +24,36 @@ umask 007
 if ("x$1" == "x") then
   ./ompi_thread
   ./ompi_condition
-else if ("$1" == "condition") then
-  ./ompi_condition
-else if ("$1" == "thread") then
-  ./ompi_thread
-else
-  echo "correct use: "
-  echo "    run_tests (to run all thread tests)"
-  echo "or  run_tests <condition | thread>"
-  exit -1
+else 
+  foreach target ($argv)
+    switch ($target)
+    case "all":
+      ./ompi_condition
+      ./ompi_thread
+      breaksw
+    case "ompi_condition":
+      ./ompi_condition
+      breaksw
+    case "ompi_thread":
+      ./ompi_thread
+      breaksw
+    case "help"
+      echo "correct use: "
+      echo "    run_tests help (this message)"
+      echo "    run_tests all (to run all thread tests)"
+      echo "or  run_tests and any of the following:"
+      echo "      <omnpi_condition | ompi_thread>"
+      break
+      breaksw
+    default:
+      echo "There is no program <$target> to run"
+      echo "correct use: "
+      echo "    run_tests all (to run all thread tests)"
+      echo "or  run_tests and any of the following:"
+      echo "      <omnpi_condition | ompi_thread>"
+      break
+    endsw
+  end
 endif
 
 
