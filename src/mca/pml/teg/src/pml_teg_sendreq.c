@@ -161,7 +161,8 @@ void mca_pml_teg_send_request_progress(
 {
     bool schedule = false;
 
-    ompi_atomic_add( &(req->req_bytes_sent), bytes_sent );
+    OMPI_THREAD_LOCK(&ompi_request_lock);
+    req->req_bytes_sent += bytes_sent;
     if (req->req_bytes_sent >= req->req_bytes_packed) {
         req->req_base.req_pml_complete = true;
         if (req->req_base.req_ompi.req_complete == false) {
@@ -171,9 +172,7 @@ void mca_pml_teg_send_request_progress(
             req->req_base.req_ompi.req_status._count = req->req_bytes_sent;
             req->req_base.req_ompi.req_complete = true;
             if(ompi_request_waiting) {
-                OMPI_THREAD_LOCK(&ompi_request_lock);
                 ompi_condition_broadcast(&ompi_request_cond);
-                OMPI_THREAD_UNLOCK(&ompi_request_lock);
             }
         } else if (req->req_base.req_free_called) {
             MCA_PML_TEG_FREE((ompi_request_t**)&req);
@@ -181,6 +180,7 @@ void mca_pml_teg_send_request_progress(
     /* test to see if we have scheduled the entire request */
     } else if (req->req_offset < req->req_bytes_packed)
         schedule = true;
+    OMPI_THREAD_UNLOCK(&ompi_request_lock);
 
     /* schedule remaining fragments of this request */
     if(schedule) {
