@@ -10,7 +10,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "constants.h"
+#include "include/constants.h"
 #include "util/few.h"
 
 /** @file **/

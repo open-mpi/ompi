@@ -7,7 +7,7 @@
 #include <string.h>
 
 #include "util/strncpy.h"
-#include "totalview.h"
+#include "include/totalview.h"
 #include "mpi.h"
 #include "mpi/c/bindings.h"
 #include "communicator/communicator.h"

@@ -8,7 +8,7 @@
 #include <sys/errno.h>
 #include <unistd.h>
 
-#include "constants.h"
+#include "include/constants.h"
 #include "runtime/runtime.h"
 #include "mem/mem_pool.h"
 #include "mem/sharedmem_util.h"

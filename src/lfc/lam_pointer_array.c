@@ -11,7 +11,7 @@
 #include <stdio.h>
 #include <assert.h>
 
-#include "constants.h"
+#include "include/constants.h"
 #include "lfc/lam_pointer_array.h"
 #include "util/output.h"
 

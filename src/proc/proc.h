@@ -5,7 +5,7 @@
 #ifndef LAM_PROC
 #define LAM_PROC
 
-#include "types.h"
+#include "include/types.h"
 #include "lfc/lam_list.h"
 
 

@@ -8,7 +8,7 @@
 #define LAM_CMD_LINE_H
 
 #include "lam_config.h"
-#include "constants.h"
+#include "include/constants.h"
 #include "lfc/lam_list.h"
 #include "threads/mutex.h"
 #include "util/argv.h"

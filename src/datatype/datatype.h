@@ -12,10 +12,10 @@
 #define DATATYPE_H_HAS_BEEN_INCLUDED
 
 #include "lam_config.h"
-#include "constants.h"
+#include "include/constants.h"
+#include "include/types.h"
 #include "lfc/lam_object.h"
 #include "lfc/lam_hash_table.h"
-#include "types.h"
 #include "mpi.h"
 
 #define DT_LOOP            0x00

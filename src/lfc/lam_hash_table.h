@@ -13,7 +13,7 @@
 #define LAM_HASH_TABLE_H
 
 #include "lam_config.h"
-#include "types.h"
+#include "include/types.h"
 #include "lfc/lam_list.h"
 
 

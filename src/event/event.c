@@ -60,8 +60,8 @@
 #endif
 
 #include "event.h"
-#include "types.h"
-#include "constants.h"
+#include "include/types.h"
+#include "include/constants.h"
 #include "lfc/lam_object.h"
 #include "threads/mutex.h"
 #include "threads/thread.h"

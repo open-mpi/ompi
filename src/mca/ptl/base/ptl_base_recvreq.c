@@ -3,7 +3,7 @@
  */
 /*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
 
-#include "types.h"
+#include "include/types.h"
 #include "mca/ptl/base/ptl_base_comm.h"
 #include "mca/ptl/base/ptl_base_recvreq.h"
 #include "mca/ptl/base/ptl_base_recvfrag.h"

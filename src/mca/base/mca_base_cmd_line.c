@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "constants.h"
+#include "include/constants.h"
 #include "util/cmd_line.h"
 #include "util/argv.h"
 #include "mca/base/base.h"

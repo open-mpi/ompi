@@ -13,7 +13,7 @@
 #include <net/if.h>
 #include <netdb.h>
 
-#include "constants.h"
+#include "include/constants.h"
 #include "lfc/lam_list.h"
 #include "util/if.h"
 #include "util/output.h"

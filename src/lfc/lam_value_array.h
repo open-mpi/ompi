@@ -7,8 +7,8 @@
 
 #include <string.h>
 #include "lam_config.h"
-#include "constants.h"
-#include "types.h"
+#include "include/constants.h"
+#include "include/types.h"
 #include "lfc/lam_object.h"
 #if LAM_ENABLE_DEBUG
 #include "util/output.h"

@@ -6,7 +6,7 @@
 
 #include <stdio.h>
 
-#include "constants.h"
+#include "include/constants.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
 #include "mca/pml/pml.h"

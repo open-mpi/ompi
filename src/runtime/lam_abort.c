@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "constants.h"
+#include "include/constants.h"
 #include "runtime/runtime.h"
 #include "util/output.h"
 

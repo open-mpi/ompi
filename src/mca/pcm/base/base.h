@@ -8,7 +8,7 @@
 
 #include "lam_config.h"
 
-#include "types.h"
+#include "include/types.h"
 #include "mca/mca.h"
 #include "mca/pcm/pcm.h"
 

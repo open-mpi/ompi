@@ -6,7 +6,7 @@
 #define MCA_PML_H
 
 #include "lam_config.h"
-#include "lam.h"
+#include "include/lam.h"
 #include "lfc/lam_list.h"
 #include "communicator/communicator.h"
 #include "datatype/datatype.h"

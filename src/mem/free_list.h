@@ -7,7 +7,7 @@
 
 #include "lam_config.h"
 #include "lfc/lam_list.h"
-#include "constants.h"
+#include "include/constants.h"
 #include "mem/seg_list.h"
 #include "mem/mem_pool.h"
 
