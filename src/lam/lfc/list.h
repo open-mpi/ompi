@@ -30,8 +30,8 @@ typedef struct lam_list_item
 {
     lam_object_t            super;
     lam_list_type_t         lam_list_type;
-    struct lam_list_item   *lam_list_next;
-    struct lam_list_item   *lam_list_prev;
+    volatile struct lam_list_item   *lam_list_next;
+    volatile struct lam_list_item   *lam_list_prev;
 } lam_list_item_t;
 
 #if defined(c_plusplus) || defined(__cplusplus)
@@ -103,7 +103,7 @@ static inline void lam_list_set_size(lam_list_t* list, size_t size)
  */
 static inline lam_list_item_t* lam_list_get_first(lam_list_t* list)
 {
-    return list->lam_list_head.lam_list_next;
+    return (lam_list_item_t *)list->lam_list_head.lam_list_next;
 }
 
 /* 
@@ -111,7 +111,7 @@ static inline lam_list_item_t* lam_list_get_first(lam_list_t* list)
  */
 static inline lam_list_item_t* lam_list_get_last(lam_list_t* list)
 {
-    return list->lam_list_tail.lam_list_prev;
+    return (lam_list_item_t *)list->lam_list_tail.lam_list_prev;
 }
 
 /* 
@@ -151,8 +151,8 @@ static inline lam_list_item_t *lam_list_remove_item
     /* check to see that the item is in the list */
     for (item_ptr = lam_list_get_first(list);
             item_ptr != lam_list_get_end(list);
-            item_ptr = item_ptr->lam_list_next) {
-        if (item_ptr == item) {
+            item_ptr = (lam_list_item_t *)(item_ptr->lam_list_next)) {
+        if (item_ptr == (lam_list_item_t *) item) {
             found = true;
             break;
         }
@@ -169,7 +169,7 @@ static inline lam_list_item_t *lam_list_remove_item
     /* reset previous pointer of next element */
     item->lam_list_next->lam_list_prev=item->lam_list_prev;
 
-    return item->lam_list_prev;
+    return (lam_list_item_t *)item->lam_list_prev;
 }
 
 #if defined(c_plusplus) || defined(__cplusplus)
