@@ -47,9 +47,7 @@ int mca_ptl_ib_add_procs(struct mca_ptl_base_module_t* base_module,
 {
     int i, rc;
     struct ompi_proc_t* ompi_proc;
-
     mca_ptl_ib_proc_t* module_proc;
-
     mca_ptl_base_peer_t* module_peer;
 
     D_PRINT("Adding %d procs\n", nprocs);
@@ -99,6 +97,9 @@ int mca_ptl_ib_add_procs(struct mca_ptl_base_module_t* base_module,
         OMPI_THREAD_UNLOCK(&module_proc->proc_lock);
         peers[i] = module_peer;
     }
+
+    D_PRINT("Added %d procs\n", nprocs);
+
     return OMPI_SUCCESS;
 }
 
@@ -122,16 +123,16 @@ int mca_ptl_ib_finalize(struct mca_ptl_base_module_t* ptl)
 int mca_ptl_ib_request_init( struct mca_ptl_base_module_t* ptl,
         struct mca_pml_base_send_request_t* request)
 {
-    /* Stub */
-    D_PRINT("Stub\n");
+    D_PRINT("");
+    OBJ_CONSTRUCT(request+1, mca_ptl_ib_send_frag_t);
     return OMPI_SUCCESS;
 }
 
 void mca_ptl_ib_request_fini( struct mca_ptl_base_module_t* ptl,
         struct mca_pml_base_send_request_t* request)
 {
-    /* Stub */
-    D_PRINT("Stub\n");
+    D_PRINT("");
+    OBJ_DESTRUCT(request+1);
 }
 
 /*
@@ -148,95 +149,32 @@ int mca_ptl_ib_send( struct mca_ptl_base_module_t* ptl,
     size_t size,
     int flags)
 {
-    int rc;
-    VAPI_ret_t ret;
     mca_ptl_ib_send_frag_t* sendfrag;
-    ompi_list_item_t* item;
-    vapi_descriptor_t* desc;
-    mca_ptl_base_header_t *hdr;
-    int header_length;
+    int rc;
 
     if (0 == offset) {
         sendfrag = &((mca_ptl_ib_send_request_t*)sendreq)->req_frag;
     } else {
+         ompi_list_item_t* item;
         OMPI_FREE_LIST_GET(&mca_ptl_ib_component.ib_send_frags, item, rc);
         if(NULL == (sendfrag = (mca_ptl_ib_send_frag_t*)item)) {
             return rc;
         }
     }
 
-    hdr = (mca_ptl_base_header_t *) 
-        ptl_peer->peer_module->send_buf[0].buf;
-
-    if(offset == 0) {
-        hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_MATCH;
-        hdr->hdr_common.hdr_flags = flags;
-        hdr->hdr_common.hdr_size = sizeof (mca_ptl_base_match_header_t);
-        hdr->hdr_frag.hdr_frag_offset = offset;
-        hdr->hdr_frag.hdr_frag_seq = 0;
-        /* Frag descriptor, so that incoming ack
-         * will locate it */
-        hdr->hdr_frag.hdr_src_ptr.lval = 0;
-        hdr->hdr_frag.hdr_src_ptr.pval = sendfrag;
-        hdr->hdr_frag.hdr_dst_ptr.pval = 0;
-        hdr->hdr_frag.hdr_dst_ptr.lval = 0;
-
-        hdr->hdr_match.hdr_contextid = sendreq->req_base.req_comm->c_contextid;
-        hdr->hdr_match.hdr_src = sendreq->req_base.req_comm->c_my_rank;
-        hdr->hdr_match.hdr_dst = sendreq->req_base.req_peer;
-        hdr->hdr_match.hdr_tag = sendreq->req_base.req_tag;
-        hdr->hdr_match.hdr_msg_length = sendreq->req_bytes_packed;
-        hdr->hdr_match.hdr_msg_seq = sendreq->req_base.req_sequence;
-        header_length = sizeof (mca_ptl_base_match_header_t);
-    } else {
-        hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_FRAG;
-        hdr->hdr_common.hdr_flags = flags;
-        hdr->hdr_common.hdr_size = sizeof (mca_ptl_base_frag_header_t);
-        hdr->hdr_frag.hdr_frag_offset = offset;
-        hdr->hdr_frag.hdr_frag_seq = 0;
-        hdr->hdr_frag.hdr_src_ptr.lval = 0;
-        hdr->hdr_frag.hdr_src_ptr.pval = sendfrag; /* Frag descriptor */
-        hdr->hdr_frag.hdr_dst_ptr = sendreq->req_peer_match;
-        header_length = sizeof (mca_ptl_base_frag_header_t);
+    rc = mca_ptl_ib_send_frag_init(sendfrag, ptl_peer,
+            sendreq, offset, &size, flags);
+    if(rc != OMPI_SUCCESS) {
+        return rc;
     }
 
-    ptl_peer->peer_module->send_buf[0].req = &sendreq->req_base;
+    /* Update the offset after actual fragment size is determined,
+     * and before attempting to send the fragment */
+    sendreq->req_offset += size;
 
-    desc = &ptl_peer->peer_module->send_buf[0].desc;
+    rc = mca_ptl_ib_peer_send(ptl_peer, sendfrag);
 
-    desc->sr.comp_type = VAPI_SIGNALED;
-    desc->sr.opcode = VAPI_SEND;
-    desc->sr.remote_qkey = 0;
-
-    desc->sr.remote_qp = ptl_peer->peer_proc->proc_addrs[0].qp_num;
-
-    desc->sr.id = &ptl_peer->peer_module->send_buf[0];
-    desc->sr.sg_lst_len = 1;
-    desc->sr.sg_lst_p = &(desc->sg_entry);
-
-    /* Copy the data stuff */
-    /* Check this later on ... */
-    memcpy((void*)((char*)ptl_peer->peer_module->send_buf[0].buf +
-                header_length), sendreq->req_base.req_addr,
-            size);
-
-    desc->sg_entry.len = header_length + size;
-    D_PRINT("Sent length : %d\n", desc->sg_entry.len);
-
-    desc->sg_entry.lkey = ptl_peer->peer_module->send_buf_hndl.lkey;
-    desc->sg_entry.addr = (VAPI_virt_addr_t) (MT_virt_addr_t) 
-        (ptl_peer->peer_module->send_buf[0].buf);
-
-    ret = VAPI_post_sr(ptl_peer->peer_module->nic,
-            ptl_peer->peer_module->my_qp_hndl,
-            &desc->sr);
-
-    if(VAPI_OK != ret) {
-        MCA_PTL_IB_VAPI_RET(ret, "VAPI_post_sr");
-        return OMPI_ERROR;
-    }
-
-    return OMPI_SUCCESS;
+    return rc;
 }
 
 

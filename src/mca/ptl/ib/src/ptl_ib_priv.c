@@ -1,7 +1,14 @@
 #include "ptl_ib_vapi.h"
-#include "ptl_ib.h"
 #include "ptl_ib_priv.h"
+#include "ptl_ib.h"
 
+/*
+ * Asynchronous event handler to detect unforseen
+ * events. Usually, such events are catastrophic.
+ * Should have a robust mechanism to handle these
+ * events and abort the OMPI application if necessary.
+ *
+ */
 static void async_event_handler(VAPI_hca_hndl_t hca_hndl,
         VAPI_event_record_t * event_p,
         void *priv_data)
@@ -40,22 +47,134 @@ static void async_event_handler(VAPI_hca_hndl_t hca_hndl,
 
 }
 
-static void ud_completion_handler(VAPI_hca_hndl_t nic,
-        VAPI_cq_hndl_t cq_hndl, void* priv_data)
+/* 
+ * This function returns the hca_id for each PTL
+ * in a round robin manner. Each PTL gets a different
+ * HCA id ...
+ *
+ * If num PTLs > num HCAs, then those ptls will be
+ * assigned HCA ids beginning from 0 again.
+ *
+ */
+
+static int mca_ptl_ib_get_hca_id(int num, VAPI_hca_id_t* hca_id)
+{
+    uint32_t num_hcas;
+    VAPI_ret_t ret;
+    VAPI_hca_id_t* hca_ids = NULL;
+
+    hca_ids = (VAPI_hca_id_t*) malloc(mca_ptl_ib_component.ib_num_hcas *
+            sizeof(VAPI_hca_id_t));
+
+    if(NULL == hca_ids) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    /* Now get the hca_id from underlying VAPI layer */
+    ret = EVAPI_list_hcas(mca_ptl_ib_component.ib_num_hcas, 
+            &num_hcas, hca_ids);
+
+    /* HACK: right now, I have put VAPI_EAGAIN as
+     * acceptable condition since we are trying to have
+     * only 1 ptl support */
+    if((VAPI_OK != ret) && (VAPI_EAGAIN != ret)) {
+        MCA_PTL_IB_VAPI_RET(ret, "EVAPI_list_hcas");
+        return OMPI_ERROR;
+    } else {
+
+        num = num % num_hcas;
+
+        memcpy(hca_id, hca_ids[num], sizeof(VAPI_hca_id_t));
+    }
+
+    free(hca_ids);
+
+    return OMPI_SUCCESS;
+}
+
+static int mca_ptl_ib_get_hca_hndl(VAPI_hca_id_t hca_id,
+        VAPI_hca_hndl_t* hca_hndl) 
+{
+    VAPI_ret_t ret; 
+
+    /* Open the HCA */
+    ret = EVAPI_get_hca_hndl(hca_id, hca_hndl);
+
+    if(VAPI_OK != ret) {
+        MCA_PTL_IB_VAPI_RET(ret, "EVAPI_get_hca_hndl");
+        return OMPI_ERROR;
+    }
+
+    return OMPI_SUCCESS;
+}
+
+static int mca_ptl_ib_query_hca_prop(VAPI_hca_hndl_t nic,
+        VAPI_hca_port_t* port)
 {
     VAPI_ret_t ret;
 
-    fprintf(stderr,"Got interrupt!!\n");
-    fflush(stderr);
-
-    ret = VAPI_req_comp_notif(nic, cq_hndl, VAPI_NEXT_COMP);
+    /* Querying for port properties */
+    ret = VAPI_query_hca_port_prop(nic,
+            (IB_port_t)DEFAULT_PORT, 
+            port);
 
     if(VAPI_OK != ret) {
-        MCA_PTL_IB_VAPI_RET(ret, "VAPI_req_comp_notif");
+        MCA_PTL_IB_VAPI_RET(ret, "VAPI_query_hca_port_prop");
+        return OMPI_ERROR;
     }
+
+    return OMPI_SUCCESS;
 }
 
-int mca_ptl_ib_create_qp(VAPI_hca_hndl_t nic,
+static int mca_ptl_ib_alloc_pd(VAPI_hca_hndl_t nic,
+        VAPI_pd_hndl_t* ptag)
+{
+    VAPI_ret_t ret;
+
+    ret = VAPI_alloc_pd(nic, ptag);
+
+    if(ret != VAPI_OK) {
+        MCA_PTL_IB_VAPI_RET(ret, "VAPI_alloc_pd");
+        return OMPI_ERROR;
+    }
+
+    return OMPI_SUCCESS;
+}
+
+static int mca_ptl_ib_create_cq(VAPI_hca_hndl_t nic,
+                VAPI_cq_hndl_t* cq_hndl)
+{
+    uint32_t act_num_cqe = 0;
+    VAPI_ret_t ret;
+
+    ret = VAPI_create_cq(nic, DEFAULT_CQ_SIZE,
+            cq_hndl, &act_num_cqe);
+
+    if( (VAPI_OK != ret) || (0 == act_num_cqe)) {
+        MCA_PTL_IB_VAPI_RET(ret, "VAPI_create_cq");
+        return OMPI_ERROR;
+    }
+
+    return OMPI_SUCCESS;
+}
+
+static int mca_ptl_ib_set_async_handler(VAPI_hca_hndl_t nic,
+        EVAPI_async_handler_hndl_t *async_handler)
+{
+    VAPI_ret_t ret;
+
+    ret = EVAPI_set_async_event_handler(nic,
+            async_event_handler, 0, async_handler);
+
+    if(VAPI_OK != ret) {
+        MCA_PTL_IB_VAPI_RET(ret, "EVAPI_set_async_event_handler");
+        return OMPI_ERROR;
+    }
+
+    return OMPI_SUCCESS;
+}
+
+static int mca_ptl_ib_create_qp(VAPI_hca_hndl_t nic,
         VAPI_pd_hndl_t ptag,
         VAPI_cq_hndl_t recv_cq,
         VAPI_cq_hndl_t send_cq,
@@ -68,33 +187,11 @@ int mca_ptl_ib_create_qp(VAPI_hca_hndl_t nic,
 
     switch(transport_type) {
 
-        case VAPI_TS_UD: /* Set up UD qp parameters */
-            qp_init_attr.cap.max_oust_wr_rq = DEFAULT_UD_WQ_SIZE;
-            qp_init_attr.cap.max_oust_wr_sq = DEFAULT_UD_WQ_SIZE;
-            qp_init_attr.cap.max_sg_size_rq = DEFAULT_UD_SG_LIST;
-            qp_init_attr.cap.max_sg_size_sq = DEFAULT_UD_SG_LIST;
-            qp_init_attr.pd_hndl            = ptag;
-
-            /* We don't have Reliable Datagram Handle right now */
-            qp_init_attr.rdd_hndl           = 0;
-
-            /* Set Send and Recv completion queues */
-            qp_init_attr.rq_cq_hndl         = recv_cq;
-            qp_init_attr.sq_cq_hndl         = send_cq;
-
-            /* Signal all work requests on this queue pair */
-            qp_init_attr.rq_sig_type        = VAPI_SIGNAL_REQ_WR;
-            qp_init_attr.sq_sig_type        = VAPI_SIGNAL_REQ_WR;
-
-            /* Use Unreliable Datagram transport service */
-            qp_init_attr.ts_type            = VAPI_TS_UD;
-
-            break;
         case VAPI_TS_RC: /* Set up RC qp parameters */
-            qp_init_attr.cap.max_oust_wr_rq = DEFAULT_UD_WQ_SIZE;
-            qp_init_attr.cap.max_oust_wr_sq = DEFAULT_UD_WQ_SIZE;
-            qp_init_attr.cap.max_sg_size_rq = DEFAULT_UD_SG_LIST;
-            qp_init_attr.cap.max_sg_size_sq = DEFAULT_UD_SG_LIST;
+            qp_init_attr.cap.max_oust_wr_rq = DEFAULT_WQ_SIZE;
+            qp_init_attr.cap.max_oust_wr_sq = DEFAULT_WQ_SIZE;
+            qp_init_attr.cap.max_sg_size_rq = DEFAULT_SG_LIST;
+            qp_init_attr.cap.max_sg_size_sq = DEFAULT_SG_LIST;
             qp_init_attr.pd_hndl            = ptag;
             /* We don't have Reliable Datagram Handle right now */
             qp_init_attr.rdd_hndl           = 0;
@@ -110,6 +207,7 @@ int mca_ptl_ib_create_qp(VAPI_hca_hndl_t nic,
             /* Use Unreliable Datagram transport service */
             qp_init_attr.ts_type            = VAPI_TS_RC;
             break;
+        case VAPI_TS_UD: /* Set up UD qp parameters */
         default:
             return OMPI_ERR_NOT_IMPLEMENTED;
     }
@@ -124,7 +222,53 @@ int mca_ptl_ib_create_qp(VAPI_hca_hndl_t nic,
     return OMPI_SUCCESS;
 }
 
-int mca_ptl_ib_rc_qp_init(VAPI_hca_hndl_t nic,
+int mca_ptl_ib_init_module(mca_ptl_ib_state_t *ib_state, int module_num)
+{
+    /* Get the HCA id ... InfiniHost0, 1 etc */
+    if(mca_ptl_ib_get_hca_id(module_num, &ib_state->hca_id) 
+            != OMPI_SUCCESS) {
+        return OMPI_ERROR;
+    }
+
+    /* Get HCA handle */
+    if(mca_ptl_ib_get_hca_hndl(ib_state->hca_id, &ib_state->nic)
+            != OMPI_SUCCESS) {
+        return OMPI_ERROR;
+    }
+
+    /* Allocate a protection domain for this NIC */
+    if(mca_ptl_ib_alloc_pd(ib_state->nic, &ib_state->ptag)
+            != OMPI_SUCCESS) {
+        return OMPI_ERROR;
+    }
+
+    /* Get the properties of the HCA,
+     * LID etc. are part of the properties */
+    if(mca_ptl_ib_query_hca_prop(ib_state->nic, &ib_state->port)
+            != OMPI_SUCCESS) {
+        return OMPI_ERROR;
+    }
+
+    /* Create Completion Q */
+    /* We use a single completion Q for sends & recvs
+     * This saves us overhead of polling 2 separate Qs */
+    if(mca_ptl_ib_create_cq(ib_state->nic, &ib_state->cq_hndl)
+            != OMPI_SUCCESS) {
+        return OMPI_ERROR;
+    }
+
+    /* Attach asynchronous handler */
+    if(mca_ptl_ib_set_async_handler(ib_state->nic, 
+                &ib_state->async_handler) 
+            != OMPI_SUCCESS) {
+        return OMPI_ERROR;
+    }
+
+    return OMPI_SUCCESS;
+}
+
+
+static int mca_ptl_ib_rc_qp_init(VAPI_hca_hndl_t nic,
         VAPI_qp_hndl_t qp_hndl,
         VAPI_qp_num_t remote_qp,
         IB_lid_t      remote_lid)
@@ -217,79 +361,6 @@ int mca_ptl_ib_rc_qp_init(VAPI_hca_hndl_t nic,
     return OMPI_SUCCESS;
 }
 
-
-/* Initialize UD queue pairs */
-
-int mca_ptl_ib_ud_qp_init(VAPI_hca_hndl_t nic,
-        VAPI_qp_hndl_t ud_qp_hndl)
-{
-    VAPI_qp_attr_t          qp_attr;
-    VAPI_qp_cap_t           qp_cap;
-    VAPI_qp_attr_mask_t     qp_attr_mask;
-    VAPI_ret_t              ret;
-
-    /* Modifying  QP to INIT */
-    QP_ATTR_MASK_CLR_ALL(qp_attr_mask);
-    qp_attr.qp_state = VAPI_INIT;
-    QP_ATTR_MASK_SET(qp_attr_mask,QP_ATTR_QP_STATE);
-    qp_attr.pkey_ix  = DEFAULT_PKEY_IX;
-    QP_ATTR_MASK_SET(qp_attr_mask,QP_ATTR_PKEY_IX);
-    qp_attr.port     = DEFAULT_PORT;
-    QP_ATTR_MASK_SET(qp_attr_mask,QP_ATTR_PORT);
-    qp_attr.qkey = 0;
-    QP_ATTR_MASK_SET(qp_attr_mask,QP_ATTR_QKEY);
-
-    ret = VAPI_modify_qp(nic, 
-            ud_qp_hndl, &qp_attr, 
-            &qp_attr_mask, &qp_cap);
-
-    if(VAPI_OK != ret) {
-        MCA_PTL_IB_VAPI_RET(ret, "VAPI_modify_qp");
-        return OMPI_ERROR;
-    }
-
-    D_PRINT("Modified UD to init..Qp\n");
-
-    /*****************
-     * INIT --> RTR
-     *****************/
-    QP_ATTR_MASK_CLR_ALL(qp_attr_mask);
-    qp_attr.qp_state         = VAPI_RTR;
-    QP_ATTR_MASK_SET(qp_attr_mask,QP_ATTR_QP_STATE);
-
-    ret = VAPI_modify_qp(nic, ud_qp_hndl, &qp_attr, 
-            &qp_attr_mask, &qp_cap);
-
-    if(VAPI_OK != ret) {
-        MCA_PTL_IB_VAPI_RET(ret, "VAPI_modify_qp");
-        return OMPI_ERROR;
-    }
-
-    D_PRINT("Modified UD to RTR..Qp\n");
-
-    /*********************
-     * RTR -->  RTS
-     *********************/
-    QP_ATTR_MASK_CLR_ALL(qp_attr_mask);
-    qp_attr.qp_state         = VAPI_RTS;
-    QP_ATTR_MASK_SET(qp_attr_mask,QP_ATTR_QP_STATE);
-    qp_attr.sq_psn           = DEFAULT_PSN;
-    QP_ATTR_MASK_SET(qp_attr_mask,QP_ATTR_SQ_PSN);
-
-    ret = VAPI_modify_qp(nic, ud_qp_hndl, &qp_attr, 
-            &qp_attr_mask, &qp_cap);
-
-    if(VAPI_OK != ret) {
-        MCA_PTL_IB_VAPI_RET(ret, "VAPI_modify_qp");
-        return OMPI_ERROR;
-    }
-
-    D_PRINT("Modified UD to RTS..Qp\n");
-
-    /* Everything was fine ... return success! */
-    return OMPI_SUCCESS;
-}
-
 int mca_ptl_ib_get_num_hcas(uint32_t* num_hcas)
 {
     VAPI_ret_t ret;
@@ -305,196 +376,7 @@ int mca_ptl_ib_get_num_hcas(uint32_t* num_hcas)
     return OMPI_SUCCESS;
 }
 
-/* This function returns the hca_id for each PTL
- * in a round robin manner. Each PTL gets a different
- * HCA id ...
- *
- * If num PTLs > num HCAs, then those ptls will be
- * assigned HCA ids beginning from 0 again.
- */
-
-int mca_ptl_ib_get_hca_id(int num, VAPI_hca_id_t* hca_id)
-{
-    uint32_t num_hcas;
-    VAPI_ret_t ret;
-    VAPI_hca_id_t* hca_ids = NULL;
-
-    hca_ids = (VAPI_hca_id_t*) malloc(mca_ptl_ib_component.ib_num_hcas *
-            sizeof(VAPI_hca_id_t));
-
-    if(NULL == hca_ids) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-
-    /* Now get the hca_id from underlying VAPI layer */
-    ret = EVAPI_list_hcas(mca_ptl_ib_component.ib_num_hcas, 
-            &num_hcas, hca_ids);
-
-    /* HACK: right now, I have put VAPI_EAGAIN as
-     * acceptable condition since we are trying to have
-     * only 1 ptl support */
-    if((VAPI_OK != ret) && (VAPI_EAGAIN != ret)) {
-        MCA_PTL_IB_VAPI_RET(ret, "EVAPI_list_hcas");
-        return OMPI_ERROR;
-    } else {
-
-        num = num % num_hcas;
-
-        memcpy(hca_id, hca_ids[num], sizeof(VAPI_hca_id_t));
-    }
-
-    free(hca_ids);
-
-    return OMPI_SUCCESS;
-}
-
-int mca_ptl_ib_get_hca_hndl(VAPI_hca_id_t hca_id,
-        VAPI_hca_hndl_t* hca_hndl) 
-{
-    VAPI_ret_t ret; 
-
-    /* Open the HCA */
-    ret = EVAPI_get_hca_hndl(hca_id, hca_hndl);
-
-    if(VAPI_OK != ret) {
-        MCA_PTL_IB_VAPI_RET(ret, "EVAPI_get_hca_hndl");
-        return OMPI_ERROR;
-    }
-
-    return OMPI_SUCCESS;
-}
-
-int mca_ptl_ib_query_hca_prop(VAPI_hca_hndl_t nic,
-        VAPI_hca_port_t* port)
-{
-    VAPI_ret_t ret;
-
-    /* Querying for port properties */
-    ret = VAPI_query_hca_port_prop(nic,
-            (IB_port_t)DEFAULT_PORT, 
-            port);
-
-    if(VAPI_OK != ret) {
-        MCA_PTL_IB_VAPI_RET(ret, "VAPI_query_hca_port_prop");
-        return OMPI_ERROR;
-    }
-
-    return OMPI_SUCCESS;
-}
-
-int mca_ptl_ib_alloc_pd(VAPI_hca_hndl_t nic,
-        VAPI_pd_hndl_t* ptag)
-{
-    VAPI_ret_t ret;
-
-    ret = VAPI_alloc_pd(nic, ptag);
-
-    if(ret != VAPI_OK) {
-        MCA_PTL_IB_VAPI_RET(ret, "VAPI_alloc_pd");
-        return OMPI_ERROR;
-    }
-
-    return OMPI_SUCCESS;
-}
-
-int mca_ptl_ib_create_cq(VAPI_hca_hndl_t nic,
-                VAPI_cq_hndl_t* cq_hndl)
-{
-    uint32_t act_num_cqe = 0;
-    VAPI_ret_t ret;
-
-    ret = VAPI_create_cq(nic, DEFAULT_CQ_SIZE,
-            cq_hndl, &act_num_cqe);
-
-    if( (VAPI_OK != ret) || (0 == act_num_cqe)) {
-        MCA_PTL_IB_VAPI_RET(ret, "VAPI_create_cq");
-        return OMPI_ERROR;
-    }
-
-    return OMPI_SUCCESS;
-}
-
-int mca_ptl_ib_set_async_handler(VAPI_hca_hndl_t nic,
-        EVAPI_async_handler_hndl_t *async_handler)
-{
-    VAPI_ret_t ret;
-
-    ret = EVAPI_set_async_event_handler(nic,
-            async_event_handler, 0, async_handler);
-
-    if(VAPI_OK != ret) {
-        MCA_PTL_IB_VAPI_RET(ret, "EVAPI_set_async_event_handler");
-        return OMPI_ERROR;
-    }
-
-    return OMPI_SUCCESS;
-}
-
-int mca_ptl_ib_prep_ud_bufs(VAPI_hca_hndl_t nic, VAPI_pd_hndl_t ptag,
-        mca_ptl_ib_ud_buf_t* ud_buf, IB_wr_t wr_type, 
-        int num_bufs)
-{
-#if 0
-    int i;
-    vapi_descriptor_t* desc;
-
-    for(i = 0; i < num_bufs; i++) {
-
-        desc = &ud_buf[i].desc;
-        ud_buf[i].buf_data = 
-            malloc(sizeof(mca_ptl_ib_ud_buf_data_t));
-
-        if(NULL == ud_buf[i].buf_data) {
-            return OMPI_ERR_OUT_OF_RESOURCE;
-        }
-
-        if(mca_ptl_ib_register_mem(nic, 
-                    (void*) ud_buf[i].buf_data, ptag,
-                    sizeof(mca_ptl_ib_ud_buf_data_t), 
-                    &ud_buf[i].memhandle)
-                != OMPI_SUCCESS) {
-            return OMPI_ERROR;
-        }
-
-        D_PRINT("databuf = %p, len = %d, lkey = %d\n",
-                (void*) ud_buf[i].buf_data,
-                sizeof(mca_ptl_ib_ud_buf_data_t),
-                ud_buf[i].memhandle.lkey);
-
-        if(IB_RECV == wr_type) {
-            desc->rr.comp_type = VAPI_SIGNALED;
-            desc->rr.opcode = VAPI_RECEIVE;
-            desc->rr.id = (VAPI_virt_addr_t)(MT_virt_addr_t) &(ud_buf[i]);
-            desc->rr.sg_lst_len = 1;
-            desc->rr.sg_lst_p = &(desc->sg_entry);
-            desc->sg_entry.len = sizeof(mca_ptl_ib_ud_buf_data_t);
-            desc->sg_entry.addr = (VAPI_virt_addr_t) (MT_virt_addr_t) ud_buf[i].buf_data;
-            desc->sg_entry.lkey = ud_buf[i].memhandle.lkey; 
-        } else if (IB_SEND == wr_type) {
-            desc->sr.comp_type = VAPI_SIGNALED;
-            desc->sr.opcode = VAPI_SEND;
-            desc->sr.id = (VAPI_virt_addr_t)(MT_virt_addr_t) &(ud_buf[i]);
-            desc->sr.sg_lst_len = 1;
-            desc->sr.sg_lst_p = &(desc->sg_entry);
-            desc->sg_entry.len = sizeof(mca_ptl_ib_ud_buf_data_t);
-            desc->sg_entry.addr = (VAPI_virt_addr_t) (MT_virt_addr_t) ud_buf[i].buf_data;
-            desc->sg_entry.lkey = ud_buf[i].memhandle.lkey; 
-        } else {
-            return OMPI_ERROR;
-        }
-
-
-        D_PRINT("databuf = %p, len = %d, lkey = %d\n",
-                (void*) ud_buf[i].buf_data,
-                sizeof(mca_ptl_ib_ud_buf_data_t),
-                ud_buf[i].memhandle.lkey);
-    }
-#endif
-
-    return OMPI_SUCCESS;
-}
-
-int mca_ptl_ib_register_mem(VAPI_hca_hndl_t nic, VAPI_pd_hndl_t ptag,
+static int mca_ptl_ib_register_mem(VAPI_hca_hndl_t nic, VAPI_pd_hndl_t ptag,
         void* buf, int len, vapi_memhandle_t* memhandle)
 {
     VAPI_ret_t ret;
@@ -528,118 +410,48 @@ int mca_ptl_ib_register_mem(VAPI_hca_hndl_t nic, VAPI_pd_hndl_t ptag,
     return OMPI_SUCCESS;
 }
 
-int mca_ptl_ib_post_ud_recv(VAPI_hca_hndl_t nic,
-        VAPI_qp_hndl_t ud_qp_hndl, 
-        mca_ptl_ib_ud_buf_t* ud_buf, int num_bufs)
+int mca_ptl_ib_init_peer(mca_ptl_ib_state_t *ib_state,
+        mca_ptl_ib_peer_conn_t *peer_conn)
 {
-    int i;
-    VAPI_ret_t ret;
+    /* Allocate resources for the peer connection */
 
-    for(i = 0; i < num_bufs; i++) {
-
-        ret = VAPI_post_rr(nic, ud_qp_hndl, &ud_buf[i].desc.rr);
-
-        if(VAPI_OK != ret) {
-            MCA_PTL_IB_VAPI_RET(ret, "VAPI_post_rr");
-            return OMPI_ERROR;
-        }
-    }
-    return OMPI_SUCCESS;
-}
-
-int mca_ptl_ib_set_comp_ev_hndl(VAPI_hca_hndl_t nic, 
-        VAPI_cq_hndl_t cq_hndl, VAPI_completion_event_handler_t handler, 
-        void* priv_data, EVAPI_compl_handler_hndl_t *handler_hndl)
-{
-    VAPI_ret_t ret;
-
-    ret = EVAPI_set_comp_eventh(nic, cq_hndl, handler, 
-            priv_data, handler_hndl);
-
-    if(VAPI_OK != ret) {
-        MCA_PTL_IB_VAPI_RET(ret, "EVAPI_set_comp_eventh");
-        return OMPI_ERROR;
+    peer_conn->lres = (mca_ptl_ib_peer_local_res_t *)
+        malloc(sizeof(mca_ptl_ib_peer_local_res_t));
+    if(NULL == peer_conn->lres) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    D_PRINT("Completion hander: %p, Handle = %d\n",
-            handler, (int)*handler_hndl);
-    
-    return OMPI_SUCCESS;
-}
+    peer_conn->rres = (mca_ptl_ib_peer_remote_res_t *)
+        malloc(sizeof(mca_ptl_ib_peer_remote_res_t));
+    if(NULL == peer_conn->rres) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
 
-int mca_ptl_ib_req_comp_notif(VAPI_hca_hndl_t nic, VAPI_cq_hndl_t cq_hndl)
-{
-    VAPI_ret_t ret;
-
-    ret = VAPI_req_comp_notif(nic, cq_hndl, VAPI_NEXT_COMP);
-
-    if(VAPI_OK != ret) {
-        MCA_PTL_IB_VAPI_RET(ret, "VAPI_req_comp_notif");
-        return OMPI_ERROR;
+    /* Create the Queue Pair */
+    if(mca_ptl_ib_create_qp(ib_state->nic,
+                    ib_state->ptag,
+                    ib_state->cq_hndl,
+                    ib_state->cq_hndl,
+                    &peer_conn->lres->qp_hndl,
+                    &peer_conn->lres->qp_prop,
+                    VAPI_TS_RC)
+            != OMPI_SUCCESS) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
     return OMPI_SUCCESS;
 }
 
-int mca_ptl_ib_get_comp_ev_hndl(VAPI_completion_event_handler_t* handler_ptr)
+/*
+ * Establish Reliable Connection with peer
+ *
+ */
+
+int mca_ptl_ib_peer_connect(mca_ptl_ib_state_t *ib_state,
+        mca_ptl_ib_peer_conn_t *peer_conn)
 {
-    *handler_ptr = ud_completion_handler;
-
-    D_PRINT("UD Completion Event Handler = %p\n", ud_completion_handler);
-
-    return OMPI_SUCCESS;
-}
-
-void mca_ptl_ib_frag(struct mca_ptl_ib_module_t* module,
-        mca_ptl_base_header_t * header)
-{
-    /* Allocate a recv frag descriptor */
-    mca_ptl_ib_recv_frag_t *recv_frag;
-    ompi_list_item_t *item;
-
-    bool        matched;
-    int         rc = OMPI_SUCCESS;
-
-    OMPI_FREE_LIST_GET(&mca_ptl_ib_component.ib_recv_frags,
-            item, rc);
-
-    while (OMPI_SUCCESS != rc) {
-        /* TODO: progress the recv state machine */
-        D_PRINT("Retry to allocate a recv fragment\n");
-        OMPI_FREE_LIST_GET (&mca_ptl_ib_component.ib_recv_frags,
-                item, rc);
-    }
-
-    recv_frag = (mca_ptl_ib_recv_frag_t *) item;
-    recv_frag->super.frag_base.frag_owner = 
-        (mca_ptl_base_module_t *) module;
-
-    recv_frag->super.frag_base.frag_peer = NULL;
-    recv_frag->super.frag_request = NULL;
-    recv_frag->super.frag_is_buffered = false;
-
-    /* Copy the header, mca_ptl_base_match() does not do what it claims */
-    recv_frag->super.frag_base.frag_header = *header;
-
-    /* Taking the data starting point be default */
-    recv_frag->super.frag_base.frag_addr =
-        (char *) header + sizeof (mca_ptl_base_header_t);
-    recv_frag->super.frag_base.frag_size = header->hdr_frag.hdr_frag_length;
-
-    /* match with preposted requests */
-    matched = module->super.ptl_match(
-            recv_frag->super.frag_base.frag_owner,
-            &recv_frag->super,
-            &recv_frag->super.frag_base.frag_header.hdr_match);
-
-    if (!matched) {
-        /* Oh my GOD !!! */
-        D_PRINT("Can't match buffer. Mama is unhappy\n");
-        memcpy (recv_frag->unex_buf,
-                (char *) header + sizeof (mca_ptl_base_header_t),
-                header->hdr_frag.hdr_frag_length);
-        recv_frag->super.frag_is_buffered = true;
-        recv_frag->super.frag_base.frag_addr = recv_frag->unex_buf;
-
-    }
+    return(mca_ptl_ib_rc_qp_init(ib_state->nic,
+                peer_conn->lres->qp_hndl,
+                peer_conn->rres->qp_num,
+                peer_conn->rres->lid));
 }

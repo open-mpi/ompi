@@ -1,16 +1,27 @@
 #ifndef MCA_PTL_IB_PRIV_H
 #define MCA_PTL_IB_PRIV_H
 
+#include <stdint.h>
 #include "ptl_ib_vapi.h"
 
-/* Posting MAX_UD_PREPOST_DEPTH number of recv
- * buffers at PTL initialization. What happens when
- * more than these number of procs try to send their
- * queue pair handles?
- */
-#define MAX_UD_PREPOST_DEPTH    (1)
-#define BUFSIZE                 (4096)
-#define NUM_BUFS                (5000)
+struct mca_ptl_ib_state_t {
+    VAPI_hca_id_t                   hca_id;     /* ID of HCA */
+    VAPI_hca_port_t                 port;       /* IB port of this PTL */
+    VAPI_hca_hndl_t                 nic;        /* NIC handle */  
+    VAPI_pd_hndl_t                  ptag;       /* Protection Domain tag */
+
+    VAPI_cq_hndl_t                  cq_hndl;    /* Completion Queue handle */
+                                                /* At present Send & Recv
+                                                 * are tied to the same
+                                                 * completion queue */
+
+    EVAPI_async_handler_hndl_t      async_handler; 
+                                                /* Async event handler used
+                                                 * to detect weird/unknown
+                                                 * events */
+};
+
+typedef struct mca_ptl_ib_state_t mca_ptl_ib_state_t;
 
 typedef enum {
     IB_RECV,
@@ -18,89 +29,94 @@ typedef enum {
 } IB_wr_t;
 
 struct vapi_memhandle_t {
-    VAPI_mr_hndl_t hndl;
-    VAPI_lkey_t lkey;
-    VAPI_rkey_t rkey;
+    VAPI_mr_hndl_t                  hndl;
+    /* Memory region handle */
+
+    VAPI_lkey_t                     lkey;
+    /* Local key to registered memory, needed for
+     * posting send/recv requests */
+
+    VAPI_rkey_t                     rkey;
+    /* Remote key to registered memory, need to send this
+     * to remote processes for incoming RDMA ops */
 };
 
 typedef struct vapi_memhandle_t vapi_memhandle_t;
 
 struct vapi_descriptor_t {
     union {
-        VAPI_rr_desc_t rr;
-        VAPI_sr_desc_t sr;
+        VAPI_rr_desc_t              rr;
+        /* Receive descriptor */
+
+        VAPI_sr_desc_t              sr;
+        /* Send descriptor */
     };
 
     VAPI_sg_lst_entry_t sg_entry;
+    /* Scatter/Gather entry */
 };
 
 typedef struct vapi_descriptor_t vapi_descriptor_t;
 
-struct mca_ptl_ib_send_buf_t {
-    mca_pml_base_request_t      *req;
-    vapi_descriptor_t           desc;
-    char                        buf[4096];
+/* mca_ptl_ib_peer_local_res_t contains information
+ * regarding local resources dedicated to this
+ * connection */
+struct mca_ptl_ib_peer_local_res_t {
+
+    VAPI_qp_hndl_t                  qp_hndl;
+    /* Local QP handle */
+
+    VAPI_qp_prop_t                  qp_prop;
+    /* Local QP properties */
 };
 
-typedef struct mca_ptl_ib_send_buf_t mca_ptl_ib_send_buf_t;
+typedef struct mca_ptl_ib_peer_local_res_t mca_ptl_ib_peer_local_res_t;
 
-struct mca_ptl_ib_recv_buf_t {
-    mca_pml_base_request_t      *req;
-    vapi_descriptor_t           desc;
-    char                        buf[4096];
+/* mca_ptl_ib_peer_remote_res_t contains information 
+ * regarding remote resources dedicated to this
+ * connection */
+struct mca_ptl_ib_peer_remote_res_t {
+
+    VAPI_qp_num_t                   qp_num;
+    /* Remote side QP number */
+
+    IB_lid_t                        lid;
+    /* Local identifier of the remote process */
 };
 
-typedef struct mca_ptl_ib_recv_buf_t mca_ptl_ib_recv_buf_t;
+typedef struct mca_ptl_ib_peer_remote_res_t mca_ptl_ib_peer_remote_res_t;
 
-#define MCA_PTL_IB_UD_RECV_DESC(ud_buf, len) {                      \
-        desc->rr.comp_type = VAPI_SIGNALED;                         \
-        desc->rr.opcode = VAPI_RECEIVE;                             \
-        desc->rr.id = (VAPI_virt_addr_t)(MT_virt_addr_t) &(ud_buf); \
-        desc->rr.sg_lst_len = 1;                                    \
-        desc->rr.sg_lst_p = &(desc->sg_entry);                      \
-        desc->sg_entry.len = len;                                   \
-        desc->sg_entry.addr =                                       \
-        (VAPI_virt_addr_t) (MT_virt_addr_t) ud_buf.buf_data;        \
-        desc->sg_entry.lkey = ud_buf.memhandle.lkey;                \
+/* mca_ptl_ib_peer_conn_t contains private information
+ * about the peer. This information is used to describe
+ * the connection oriented information about this peer
+ * and local resources associated with it. */
+struct mca_ptl_ib_peer_conn_t {
+
+    mca_ptl_ib_peer_local_res_t*        lres;
+    /* Local resources associated with this connection */
+
+    mca_ptl_ib_peer_remote_res_t*       rres;
+    /* Remote resources associated with this connection */
+};
+
+typedef struct mca_ptl_ib_peer_conn_t mca_ptl_ib_peer_conn_t;
+
+#define DUMP_IB_STATE(ib_state_ptr) {                               \
+    ompi_output(0, "[%s:%d] ", __FILE__, __LINE__);                 \
+    ompi_output(0, "Dumping IB state");                             \
+    ompi_output(0, "HCA ID : %s", ib_state_ptr->hca_id);            \
+    ompi_output(0, "LID : %d", ib_state_ptr->port.lid);             \
+    ompi_output(0, "HCA handle : %d", ib_state_ptr->nic);           \
+    ompi_output(0, "Protection Domain: %d", ib_state_ptr->ptag);    \
+    ompi_output(0, "Comp Q handle : %d", ib_state_ptr->cq_hndl);    \
+    ompi_output(0, "Async hndl : %d", ib_state_ptr->async_handler); \
 }
 
-#define MCA_PTL_IB_UD_SEND_DESC(ud_buf, len) {                      \
-        desc->sr.comp_type = VAPI_SIGNALED;                         \
-        desc->sr.opcode = VAPI_SEND;                                \
-        desc->sr.id = (VAPI_virt_addr_t)(MT_virt_addr_t) ud_buf;    \
-        desc->sr.sg_lst_len = 1;                                    \
-        desc->sr.sg_lst_p = &(desc->sg_entry);                      \
-        desc->sg_entry.len = len;                                   \
-        desc->sg_entry.addr =                                       \
-        (VAPI_virt_addr_t) (MT_virt_addr_t) ud_buf->buf_data;       \
-        desc->sg_entry.lkey = ud_buf->memhandle.lkey;               \
-}
 
-int mca_ptl_ib_ud_cq_init(VAPI_hca_hndl_t, VAPI_cq_hndl_t*,
-        VAPI_cq_hndl_t*);
-int mca_ptl_ib_ud_qp_init(VAPI_hca_hndl_t, VAPI_qp_hndl_t);
+int mca_ptl_ib_init_module(mca_ptl_ib_state_t*, int);
 int mca_ptl_ib_get_num_hcas(uint32_t*);
-int mca_ptl_ib_get_hca_id(int, VAPI_hca_id_t*);
-int mca_ptl_ib_get_hca_hndl(VAPI_hca_id_t, VAPI_hca_hndl_t*);
-int mca_ptl_ib_query_hca_prop(VAPI_hca_hndl_t, VAPI_hca_port_t*);
-int mca_ptl_ib_alloc_pd(VAPI_hca_hndl_t, VAPI_pd_hndl_t*);
-int mca_ptl_ib_create_cq(VAPI_hca_hndl_t, VAPI_cq_hndl_t*);
-int mca_ptl_ib_set_async_handler(VAPI_hca_hndl_t, 
-        EVAPI_async_handler_hndl_t*);
-int mca_ptl_ib_register_mem(VAPI_hca_hndl_t, VAPI_pd_hndl_t, void*, int, 
-        vapi_memhandle_t*);
-int mca_ptl_ib_set_comp_ev_hndl(VAPI_hca_hndl_t, VAPI_cq_hndl_t,
-        VAPI_completion_event_handler_t, void*, 
-        EVAPI_compl_handler_hndl_t*);
-int mca_ptl_ib_req_comp_notif(VAPI_hca_hndl_t,VAPI_cq_hndl_t);
-int mca_ptl_ib_get_comp_ev_hndl(VAPI_completion_event_handler_t*);
-int mca_ptl_ib_init_send(void*, VAPI_qp_hndl_t, int);
-int mca_ptl_ib_create_qp(VAPI_hca_hndl_t, VAPI_pd_hndl_t,
-        VAPI_cq_hndl_t, VAPI_cq_hndl_t, VAPI_qp_hndl_t*,
-        VAPI_qp_prop_t*, int);
-int mca_ptl_ib_rc_qp_init(VAPI_hca_hndl_t, VAPI_qp_hndl_t,
-        VAPI_qp_num_t, IB_lid_t);
-void mca_ptl_ib_frag(struct mca_ptl_ib_module_t* module,
-        mca_ptl_base_header_t * header);
+int mca_ptl_ib_init_peer(mca_ptl_ib_state_t*, mca_ptl_ib_peer_conn_t*);
+int mca_ptl_ib_peer_connect(mca_ptl_ib_state_t*, 
+        mca_ptl_ib_peer_conn_t*);
 
 #endif  /* MCA_PTL_IB_PRIV_H */

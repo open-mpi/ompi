@@ -4,11 +4,11 @@
 #include "include/types.h"
 #include "mca/pml/base/pml_base_sendreq.h"
 #include "mca/ns/base/base.h"
+#include "mca/oob/base/base.h"
 #include "ptl_ib.h"
 #include "ptl_ib_addr.h"
 #include "ptl_ib_peer.h"
 #include "ptl_ib_proc.h"
-#include "ptl_ib_priv.h"
 #include "ptl_ib_sendfrag.h"
 
 static void mca_ptl_ib_peer_construct(mca_ptl_base_peer_t* module_peer);
@@ -19,14 +19,60 @@ OBJ_CLASS_INSTANCE(mca_ptl_ib_peer_t,
         mca_ptl_ib_peer_destruct);
 
 /*
+ * Callback function for OOB send completion.
+ * Not much to do over here right now ...
+ * 
+ */
+
+static void mca_ptl_ib_peer_connect_send_callback(int status,
+        ompi_process_name_t* peer, ompi_buffer_t buffer,
+        int tag, void* cbdata)
+{
+    D_PRINT("OOB Send to %d complete", peer->vpid);
+}
+
+/*
+ * Wrapper around mca_oob_send_packed_nb
+ *
+ * Post a non-blocking OOB send request to peer with
+ * pre-allocated user buffer
+ *
+ */
+
+static int mca_ptl_ib_post_oob_send_nb(ompi_process_name_t *name,
+        void* user_buf, int len)
+{
+    int rc;
+    ompi_buffer_t buffer;
+
+    rc = ompi_buffer_init_preallocated(&buffer, user_buf,
+            len);
+
+    if(rc != OMPI_SUCCESS) {
+        return rc;
+    }
+
+    rc = mca_oob_send_packed_nb(name, buffer, 
+            131313, 0,
+            (mca_oob_callback_packed_fn_t)mca_ptl_ib_peer_connect_send_callback, 
+            NULL);
+
+    if(rc != OMPI_SUCCESS) {
+        return rc;
+    }
+
+    return rc;
+}
+
+/*
  * Initialize state of the peer instance.
+ *
  */
 
 static void mca_ptl_ib_peer_construct(mca_ptl_base_peer_t* module_peer)
 {
     module_peer->peer_module = 0;
     module_peer->peer_proc = 0;
-    module_peer->peer_addr = 0;
     module_peer->peer_ts = 0.0;
     module_peer->peer_send_frag = 0;
     module_peer->peer_recv_frag = 0;
@@ -39,42 +85,299 @@ static void mca_ptl_ib_peer_construct(mca_ptl_base_peer_t* module_peer)
     OBJ_CONSTRUCT(&module_peer->peer_recv_lock, ompi_mutex_t);
 }
 
+/*
+ * Destroy a peer
+ *
+ */
+
 static void mca_ptl_ib_peer_destruct(mca_ptl_base_peer_t* module_peer)
 {
 }
 
-static int mca_ptl_ib_peer_check_timeout(mca_ptl_base_peer_t* peer)
+/*
+ * Allocate peer connection structures
+ *
+ */
+
+static int mca_ptl_ib_alloc_peer_conn(mca_ptl_base_peer_t* peer)
 {
+    /* Allocate space for peer connection */
+    peer->peer_conn = (mca_ptl_ib_peer_conn_t *)
+        malloc(sizeof(mca_ptl_ib_peer_conn_t));
+    if(NULL == peer->peer_conn) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
     return OMPI_SUCCESS;
 }
 
-static double mca_ptl_ib_get_us(void)
+/*
+ * Send connection information to remote peer using OOB
+ *
+ */
+
+static int mca_ptl_ib_peer_send_conn_info(mca_ptl_base_peer_t* peer)
 {
-    struct timeval t;
-    gettimeofday(&t, NULL);
-    return (double) t.tv_sec * (double) 1e6 + (double) t.tv_usec;
+    int rc;
+    ompi_process_name_t *name;
+    char sendbuf[50];
+
+    name = &peer->peer_proc->proc_guid;
+
+    /* Zero out the send buffer */
+    memset(sendbuf, 0, 50);
+
+    /* Copy the info in the send buffer */
+
+    /* Format:
+     *
+     * <QP> <LID>
+     * Ofcourse without the <'s and >'s moron!
+     * Size of each field is limited to maximum
+     * 8 characters. This should be enough for all
+     * platforms, and is internal information
+     */
+    sprintf(sendbuf, "%08d %08d", 
+            peer->peer_conn->lres->qp_prop.qp_num,
+            peer->peer_module->ib_state->port.lid);
+
+    /* Send it off */
+    rc = mca_ptl_ib_post_oob_send_nb(name, 
+            (void*)sendbuf, 50);
+
+    if(rc != OMPI_SUCCESS) {
+        return rc;
+    }
+    return OMPI_SUCCESS;
 }
+
+/*
+ * Set remote connection info
+ *
+ * XXX: Currently size is unutilized, this shall change
+ * as soon as we add more info to be exchanged at connection
+ * setup.
+ *
+ */
+static void mca_ptl_ib_peer_set_remote_info(mca_ptl_base_peer_t* peer,
+        void* baseptr, size_t size)
+{
+    char tempbuf[8];
+
+    memset(tempbuf, 0, 8);
+    strncpy(tempbuf, (char*)baseptr, 8);
+
+    peer->peer_conn->rres->qp_num = atoi(tempbuf);
+
+    memset(tempbuf, 0, 8);
+    strncpy(tempbuf, (char*)baseptr + 9*sizeof(char), 8);
+
+    peer->peer_conn->rres->lid = atoi(tempbuf);
+
+    D_PRINT("Received QP num = %d, LID = %d",
+            peer->peer_conn->rres->qp_num,
+            peer->peer_conn->rres->lid);
+}
+
+/*
+ * Start to connect to the peer. We send our Queue Pair
+ * information over the TCP OOB communication mechanism.
+ * On completion of our send, a send completion handler 
+ * is called.
+ *
+ */
 
 static int mca_ptl_ib_peer_start_connect(mca_ptl_base_peer_t* peer)
 {
-    int remote_qp_num;
+    int rc;
 
-    peer->peer_addr = (mca_ptl_ib_addr_t*)
-        malloc(sizeof(mca_ptl_ib_addr_t));
+    /* Allocate peer connection structures */
+    rc = mca_ptl_ib_alloc_peer_conn(peer);
+    if(rc != OMPI_SUCCESS) {
+        return rc;
+    }
 
+    /* Initialize the peer */
+    rc = mca_ptl_ib_init_peer(peer->peer_module->ib_state,
+            peer->peer_conn);
+    if(rc != OMPI_SUCCESS) {
+        return rc;
+    }
 
-    D_PRINT("QP num:%d for rank %d:",
-            peer->peer_qp_prop.qp_num,
-            peer->peer_proc->proc_ompi->proc_name.vpid);
-    scanf("%d", &remote_qp_num);
+    /* Send connection info over to remote peer */
+    rc = mca_ptl_ib_peer_send_conn_info(peer);
+    if(rc != OMPI_SUCCESS) {
+        return rc;
+    }
 
-    peer->peer_addr->rc_qp = remote_qp_num;
+    /* Update status of peer to as connecting */
+    peer->peer_state = MCA_PTL_IB_CONNECTING;
 
-    D_PRINT("You entered: %d\n", peer->peer_addr->rc_qp);
+    DUMP_PEER(peer);
 
-
-    return OMPI_SUCCESS;
+    return rc;
 }
+
+/*
+ * Reply to a `start - connect' message
+ *
+ */
+static int mca_ptl_ib_peer_reply_start_connect(mca_ptl_ib_peer_t *peer,
+        void* baseptr, size_t size)
+{
+    int rc;
+
+    /* Allocate peer connection structures */
+    rc = mca_ptl_ib_alloc_peer_conn(peer);
+    if(rc != OMPI_SUCCESS) {
+        return rc;
+    }
+
+    /* Initialize the peer */
+    rc = mca_ptl_ib_init_peer(peer->peer_module->ib_state,
+            peer->peer_conn);
+    if(rc != OMPI_SUCCESS) {
+        return rc;
+    }
+
+    /* Set the remote side info */
+    mca_ptl_ib_peer_set_remote_info(peer, baseptr, size);
+
+    /* Connect to peer */
+    rc = mca_ptl_ib_peer_connect(peer->peer_module->ib_state,
+            peer->peer_conn);
+    if(rc != OMPI_SUCCESS) {
+        return rc;
+    }
+
+    /* Register Buffers */
+
+    /* Post receives */
+
+    /* Send connection info over to remote peer */
+    rc = mca_ptl_ib_peer_send_conn_info(peer);
+    if(rc != OMPI_SUCCESS) {
+        return rc;
+    }
+
+    /* Update status of peer to as connected */
+    peer->peer_state = MCA_PTL_IB_CONNECTED;
+
+    DUMP_PEER(peer);
+
+    return rc;
+}
+
+/*
+ * Non blocking OOB recv callback.
+ * Read incoming QP and other info, and if this peer
+ * is trying to connect, reply with our QP info, 
+ * otherwise try to modify QP's and establish
+ * reliable connection
+ *
+ */
+
+static void mca_ptl_ib_peer_connect_recv_callback(int status,
+        ompi_process_name_t* peer, ompi_buffer_t buffer,
+        int tag, void* cbdata)
+{
+    size_t size;
+    void *baseptr, *dataptr, *fromptr;
+    mca_ptl_ib_proc_t *ib_proc;
+    mca_ptl_ib_peer_t *ib_peer;
+    int peer_state;
+
+    ompi_buffer_size(buffer, &size);
+
+    ompi_buffer_get_ptrs(buffer, &baseptr,
+            &dataptr, &fromptr);
+    
+    D_PRINT("Size recv: %d, Data: %s", size, baseptr);
+
+    for(ib_proc = (mca_ptl_ib_proc_t*)
+            ompi_list_get_first(&mca_ptl_ib_component.ib_procs);
+            ib_proc != (mca_ptl_ib_proc_t*)
+            ompi_list_get_end(&mca_ptl_ib_component.ib_procs);
+            ib_proc  = (mca_ptl_ib_proc_t*)ompi_list_get_next(ib_proc)) {
+
+        if(ib_proc->proc_guid.vpid == peer->vpid) {
+
+            /* Try to get the peer instance of this proc */
+
+            /* Limitation: Right now, we have only 1 peer
+             * for every process. Need several changes, some
+             * in PML/PTL interface to set this right */
+            ib_peer = ib_proc->proc_peers[0];
+
+            peer_state = ib_peer->peer_state;
+
+            /* Update status */
+            switch(peer_state) {
+                case MCA_PTL_IB_CLOSED :
+                    /* We had this connection closed before.
+                     * The peer is trying to connect. Move the
+                     * status of this connection to CONNECTING,
+                     * and then reply with our QP information */
+
+                    D_PRINT("Start Connect %d",
+                            ib_proc->proc_guid.vpid);
+
+                    if(mca_ptl_ib_peer_reply_start_connect(ib_peer,
+                                baseptr, size)
+                            != OMPI_SUCCESS) {
+                        D_PRINT("Connect Error");
+                    }
+
+                    ib_peer->peer_state = MCA_PTL_IB_CONNECTED;
+
+                    break;
+
+                case MCA_PTL_IB_CONNECTING :
+                    /* We are already connecting with this peer,
+                     * this means that we have initiated OOB sends
+                     * with this peer, and the peer is replying.
+                     * No need to send him any more stuff */
+
+                    D_PRINT("Connect reply %d", 
+                            ib_proc->proc_guid.vpid);
+
+                    mca_ptl_ib_peer_set_remote_info(ib_peer, 
+                            baseptr, size);
+
+                    if(mca_ptl_ib_peer_connect(ib_peer->peer_module->ib_state,
+                                ib_peer->peer_conn)
+                            != OMPI_SUCCESS) {
+                        D_PRINT("Connect Error");
+                    }
+
+                    ib_peer->peer_state = MCA_PTL_IB_CONNECTED;
+
+                    break;
+                case MCA_PTL_IB_CONNECTED :
+                    break;
+                default :
+                    D_PRINT("Connected -> Connecting not possible.\n");
+            }
+
+            break;
+        }
+
+    }
+
+    /* Okay, now that we are done receiving,
+     * re-post the buffer */
+    mca_ptl_ib_post_oob_recv_nb();
+}
+
+void mca_ptl_ib_post_oob_recv_nb()
+{
+    D_PRINT("");
+
+    mca_oob_recv_packed_nb(MCA_OOB_NAME_ANY,
+            131313, 0, 
+            (mca_oob_callback_packed_fn_t)mca_ptl_ib_peer_connect_recv_callback,
+            NULL);
+}
+
 
 /*
  * Attempt to send a fragment using a given peer. If the peer is not
@@ -86,6 +389,8 @@ int mca_ptl_ib_peer_send(mca_ptl_base_peer_t* peer,
 {
     int rc;
 
+    D_PRINT("");
+
     OMPI_THREAD_LOCK(&peer->peer_send_lock);
 
     switch(peer->peer_state) {
@@ -96,13 +401,13 @@ int mca_ptl_ib_peer_send(mca_ptl_base_peer_t* peer,
              * to check for timeout */
             ompi_list_append(&peer->peer_frags, (ompi_list_item_t*)frag);
 
-            rc = mca_ptl_ib_peer_check_timeout(peer);
-
             break;
             
         case MCA_PTL_IB_CLOSED:
 
-            ompi_list_append(&peer->peer_frags, (ompi_list_item_t*)frag);
+            D_PRINT("Connection to peer closed ... connecting ...");
+
+            //ompi_list_append(&peer->peer_frags, (ompi_list_item_t*)frag);
 
             rc = mca_ptl_ib_peer_start_connect(peer);
 

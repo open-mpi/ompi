@@ -10,29 +10,26 @@
  * all this stuff should be runtime. Ignoring for now.
  */
 
-#define DEFAULT_PORT        (1)
-#define DEFAULT_CQ_SIZE     (40000)
-#define DEFAULT_UD_WQ_SIZE  (10000)
-#define DEFAULT_UD_SG_LIST  (1)
-#define DEFAULT_PKEY_IX     (0)
-#define DEFAULT_PSN         (0)
-#define DEFAULT_QP_OUS_RD_ATOM  (1)
-#define DEFAULT_MTU             (MTU1024)
-#define DEFAULT_MIN_RNR_TIMER   (5)
-#define DEFAULT_TIME_OUT        (10)
-#define DEFAULT_RETRY_COUNT     (7)
-#define DEFAULT_RNR_RETRY       (7)
-#define  DEFAULT_MAX_RDMA_DST_OPS (16)
+#define DEFAULT_PORT                (1)
+#define DEFAULT_CQ_SIZE             (40000)
+#define DEFAULT_WQ_SIZE             (10000)
+#define DEFAULT_SG_LIST             (1)
+#define DEFAULT_PKEY_IX             (0)
+#define DEFAULT_PSN                 (0)
+#define DEFAULT_QP_OUS_RD_ATOM      (1)
+#define DEFAULT_MTU                 (MTU1024)
+#define DEFAULT_MIN_RNR_TIMER       (5)
+#define DEFAULT_TIME_OUT            (10)
+#define DEFAULT_RETRY_COUNT         (7)
+#define DEFAULT_RNR_RETRY           (7)
+#define DEFAULT_MAX_RDMA_DST_OPS    (16)
 
-#define DEFAULT_TRAFFIC_CLASS   (0)
-#define DEFAULT_HOP_LIMIT       (63)
-#define DEFAULT_FLOW_LABEL      (0)
-#define DEFAULT_SERVICE_LEVEL   (0)
-#define DEFAULT_STATIC_RATE     (0)
-#define DEFAULT_SRC_PATH_BITS   (0)
-
-/* UD has a default offset of 40 bytes */
-#define UD_RECV_BUF_OFF         (40)
+#define DEFAULT_TRAFFIC_CLASS       (0)
+#define DEFAULT_HOP_LIMIT           (63)
+#define DEFAULT_FLOW_LABEL          (0)
+#define DEFAULT_SERVICE_LEVEL       (0)
+#define DEFAULT_STATIC_RATE         (0)
+#define DEFAULT_SRC_PATH_BITS       (0)
 
 /* This is a convinence macro.
  * 

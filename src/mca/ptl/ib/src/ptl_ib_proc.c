@@ -17,7 +17,6 @@ OBJ_CLASS_INSTANCE(mca_ptl_ib_proc_t,
 void mca_ptl_ib_proc_construct(mca_ptl_ib_proc_t* proc)
 {
     proc->proc_ompi = 0;
-    proc->proc_addrs = 0;
     proc->proc_addr_count = 0;
     proc->proc_peers = 0;
     proc->proc_peer_count = 0;
@@ -84,20 +83,21 @@ static mca_ptl_ib_proc_t* mca_ptl_ib_proc_lookup_ompi(ompi_proc_t* ompi_proc)
 
 mca_ptl_ib_proc_t* mca_ptl_ib_proc_create(ompi_proc_t* ompi_proc)
 {
-    int rc, my_rank, i;
     size_t size;
-    char* str_rank;
-    VAPI_ret_t ret;
-
-    mca_ptl_ib_module_t* module = NULL;
-
     mca_ptl_ib_proc_t* module_proc = NULL;
 
+    /* Check if we have already created a IB proc
+     * structure for this ompi process */
     module_proc = mca_ptl_ib_proc_lookup_ompi(ompi_proc);
 
     if(module_proc != NULL) {
+
+        /* Gotcha! */
         return module_proc;
     }
+
+    /* Oops! First time, gotta create a new IB proc
+     * out of the ompi_proc ... */
 
     module_proc = OBJ_NEW(mca_ptl_ib_proc_t);
 
@@ -112,36 +112,15 @@ mca_ptl_ib_proc_t* mca_ptl_ib_proc_create(ompi_proc_t* ompi_proc)
 
     D_PRINT("Creating proc for %d\n", ompi_proc->proc_name.vpid);
 
-    /* lookup ib parameters exported by
-     * this proc */
-    rc = mca_base_modex_recv(
-            &mca_ptl_ib_component.super.ptlm_version,
-            ompi_proc,
-            (void**)&module_proc->proc_addrs,
-            &size);
+    /* IB module doesn't have addresses exported at
+     * initialization, so the addr_count is set to one. */
+    module_proc->proc_addr_count = 1;
 
-    if(rc != OMPI_SUCCESS) {
-        ompi_output(0, "mca_ptl_ib_proc_create: mca_base_modex_recv: "
-                "failed with return value=%d", rc);
-        OBJ_RELEASE(module_proc);
-        return NULL;
-    }
 
-    D_PRINT("UD q.p. obtained is: %d, Lid : %d\n",
-            module_proc->proc_addrs[0].qp_num,
-            module_proc->proc_addrs[0].lid);
-
-    if(0 != (size % sizeof(mca_ptl_ib_ud_addr_t))) {
-        ompi_output(0, "mca_ptl_ib_proc_create: mca_base_modex_recv: "
-                "invalid size %d\n", size);
-        return NULL;
-    }
-
-    module_proc->proc_addr_count = size / sizeof(mca_ptl_ib_ud_addr_t);
-
-    /* allocate space for peer array - one for
-     * each exported address
-     */
+    /* XXX: Right now, there can be only 1 peer associated
+     * with a proc. Needs a little bit change in 
+     * mca_ptl_ib_proc_t to allow on demand increasing of
+     * number of peers for this proc */
 
     module_proc->proc_peers = (mca_ptl_base_peer_t**)
         malloc(module_proc->proc_addr_count * sizeof(mca_ptl_base_peer_t*));
@@ -150,101 +129,6 @@ mca_ptl_ib_proc_t* mca_ptl_ib_proc_create(ompi_proc_t* ompi_proc)
         OBJ_RELEASE(module_proc);
         return NULL;
     }
-
-    /* HACK: Till dyn. connection management comes through,
-     * just establish the RC connection here */
-
-    str_rank = getenv("OMPI_MCA_pcm_cofs_procid");
-    if(NULL != str_rank) {
-        my_rank = atoi(str_rank);
-    } else {
-        D_PRINT("Rank, what rank?");
-    }
-
-    if(my_rank != ompi_proc->proc_name.vpid) {
-        D_PRINT("I %d Have to create connection for %d",
-                my_rank, ompi_proc->proc_name.vpid);
-
-        module = mca_ptl_ib_component.ib_ptl_modules[0];
-
-        /* Make the RC QP transitions */
-        if(mca_ptl_ib_rc_qp_init(module->nic,
-                module->my_qp_hndl,
-                module_proc->proc_addrs[0].qp_num,
-                module_proc->proc_addrs[0].lid)
-                != OMPI_SUCCESS) {
-            return NULL;
-        }
-
-        /* Allocate the send and recv buffers */
-
-        module->send_buf =
-            malloc(sizeof(mca_ptl_ib_send_buf_t) * NUM_BUFS);
-
-        if(NULL == module->send_buf) {
-            return NULL;
-        }
-        memset(module->send_buf,
-                0, sizeof(mca_ptl_ib_send_buf_t) * NUM_BUFS);
-
-        if(mca_ptl_ib_register_mem(module->nic, 
-                    module->ptag,
-                    module->send_buf, 
-                    sizeof(mca_ptl_ib_send_buf_t) * NUM_BUFS, 
-                    &module->send_buf_hndl)
-                != OMPI_SUCCESS) {
-            return NULL;
-        }
-
-        module->recv_buf =
-            malloc(sizeof(mca_ptl_ib_recv_buf_t) * NUM_BUFS);
-
-        if(NULL == module->recv_buf) {
-            return NULL;
-        }
-
-        memset(module->recv_buf,
-                0, sizeof(mca_ptl_ib_recv_buf_t) * NUM_BUFS);
-
-        if(mca_ptl_ib_register_mem(module->nic, 
-                    module->ptag,
-                    module->recv_buf, 
-                    sizeof(mca_ptl_ib_recv_buf_t) * NUM_BUFS, 
-                    &module->recv_buf_hndl)
-                != OMPI_SUCCESS) {
-            return NULL;
-        }
-
-        /* Prepare the receivs */
-        for(i = 0; i < NUM_BUFS; i++) {
-            module->recv_buf[i].desc.rr.comp_type = VAPI_SIGNALED;
-            module->recv_buf[i].desc.rr.opcode = VAPI_RECEIVE;
-            module->recv_buf[i].desc.rr.id = (VAPI_virt_addr_t)
-                (MT_virt_addr_t) &module->recv_buf[i];
-            module->recv_buf[i].desc.rr.sg_lst_len = 1;
-            module->recv_buf[i].desc.rr.sg_lst_p = &(module->recv_buf[i].desc.sg_entry);
-            module->recv_buf[i].desc.sg_entry.len = 4096;
-            module->recv_buf[i].desc.sg_entry.lkey = module->recv_buf_hndl.lkey;
-            module->recv_buf[i].desc.sg_entry.addr = 
-                (VAPI_virt_addr_t) (MT_virt_addr_t) (module->recv_buf[i].buf);
-        }
-
-        /* Post the receives */
-        for(i = 0; i < NUM_BUFS; i++) {
-            ret = VAPI_post_rr(module->nic,
-                    module->my_qp_hndl,
-                    &module->recv_buf[i].desc.rr);
-            if(VAPI_OK != ret) {
-                MCA_PTL_IB_VAPI_RET(ret, "VAPI_post_rr");
-                return NULL;
-            }
-        }
-    }
-
-    if(1 == my_rank) {
-        sleep(2);
-    }
-
     return module_proc;
 }
 
