@@ -1,0 +1,34 @@
+#! /bin/csh -f
+#  Name
+#  ====
+#  run script for include tests
+
+# Arguements
+# ==========
+# 
+# test_list  =  no args runs all tests
+#              or
+#               atomic runs atomic tests
+
+# Usage
+#
+# =====
+# To invoke this script, enter either
+#     run 
+# with no arguments to run all tests, or
+#     run <test_name>
+
+umask 007
+
+if ("x$1" == "x") then
+  ./atomic
+else if ("$1" == "atomic") then
+  ./atomic
+else
+  echo "correct use: "
+  echo "    run    (to run all class tests)"
+  echo "or  run <atomic>"
+  exit -1
+endif
+
+
