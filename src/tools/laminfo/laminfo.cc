@@ -15,6 +15,8 @@
 #include <netdb.h>
 #include <sys/param.h>
 
+#include "lam/runtime/runtime.h"
+#include "lam/util/output.h"
 #include "lam/util/cmd_line.h"
 #include "mca/lam/base/base.h"
 #include "tools/laminfo/laminfo.h"
@@ -225,6 +227,11 @@ int main(int argc, char *argv[])
   bool acted = false;
   bool want_all = false;
 
+  // Start LAM process
+
+  if (LAM_SUCCESS != lam_init(argc, argv))
+    return -1;
+
   // Initialize the argv parsing handle
 
   cmd_line = lam_cmd_line_create();
@@ -235,17 +242,27 @@ int main(int argc, char *argv[])
 #endif
     exit(ret);
   }
-  lam_cmd_line_set_opt1(cmd_line, "h", 0, NULL);
-  lam_cmd_line_set_opt(cmd_line, "version", NULL, 2, NULL);
-  lam_cmd_line_set_opt(cmd_line, "param", NULL, 2, NULL);
-  lam_cmd_line_set_opt(cmd_line, "path", NULL, 1, NULL);
-  lam_cmd_line_set_opt(cmd_line, "arch", NULL, 0, NULL);
-  lam_cmd_line_set_opt(cmd_line, "config", NULL, 0, NULL);
-  lam_cmd_line_set_opt(cmd_line, "help", NULL, 0, NULL);
-  lam_cmd_line_set_opt(cmd_line, "pretty", NULL, 0, NULL);
-  lam_cmd_line_set_opt(cmd_line, "parsable", NULL, 0, NULL);
-  lam_cmd_line_set_opt(cmd_line, "hostname", NULL, 0, NULL);
-  lam_cmd_line_set_opt(cmd_line, "all", NULL, 0, NULL);
+  lam_cmd_line_make_opt(cmd_line, 'v', "version", 2, 
+                        "Show version of LAM/MPI or a module");
+  lam_cmd_line_make_opt(cmd_line, '\0', "param", 2, 
+                        "Show MCA parameters");
+  lam_cmd_line_make_opt(cmd_line, '\0', "path", 1, 
+                        "Show paths that LAM/MPI was configured with");
+  lam_cmd_line_make_opt(cmd_line, '\0', "arch", 0, 
+                        "Show architecture LAM/MPI was compiled on");
+  lam_cmd_line_make_opt(cmd_line, 'c', "config", 0, 
+                        "Show configuration options");
+  lam_cmd_line_make_opt(cmd_line, 'h', "help", 0, 
+                        "Show this help message");
+  lam_cmd_line_make_opt(cmd_line, '\0', "pretty", 0, 
+                        "Display output in 'prettyprint' format (default)");
+  lam_cmd_line_make_opt(cmd_line, '\0', "parsable", 0, 
+                        "Display output in parsable format");
+  lam_cmd_line_make_opt(cmd_line, '\0', "hostname", 0, 
+                        "Show the hostname that LAM/MPI was configured "
+                        "and built on");
+  lam_cmd_line_make_opt(cmd_line, 'a', "all", 0, 
+                        "Show all configuration options and MCA parameters");
 
   // Get MCA parameters, if any */
   
@@ -254,10 +271,12 @@ int main(int argc, char *argv[])
 
   // Do the parsing
 
-  if (lam_cmd_line_parse(cmd_line, &argc, argv) ||
+  if (LAM_SUCCESS != lam_cmd_line_parse(cmd_line, false, argc, argv) ||
       lam_cmd_line_is_taken(cmd_line, "help") || 
       lam_cmd_line_is_taken(cmd_line, "h")) {
-#if 0	  
+#if 1
+    printf("...showing laminfo help message...\n");
+#else
     show_help("laminfo", "usage", NULL);
 #endif
     exit(1);
@@ -309,22 +328,26 @@ int main(int argc, char *argv[])
   // If no command line args are specified, show default set
 
   if (!acted) {
-    show_lam_version(ver_full);
-    show_path(path_prefix, LAM_PREFIX);
-    do_arch(cmd_line);
-    do_config(false);
+    laminfo::show_lam_version(ver_full);
+    laminfo::show_path(path_prefix, LAM_PREFIX);
+    laminfo::do_arch(cmd_line);
+    laminfo::do_config(false);
 #if 0
-    open_modules();
-    show_boot_version(mca_boot_modules, type_all, ver_full, ver_module);
-    show_coll_version(mca_coll_modules, type_all, ver_full, ver_module);
-    show_pml_version(mca_pml_modules, type_all, ver_full, ver_module);
-    show_cr_version(mca_crmpi_modules, type_all, ver_full, ver_module);
+    laminfo::open_modules();
+    laminfo::show_boot_version(mca_boot_modules, type_all, ver_full, 
+                               ver_module);
+    laminfo::show_coll_version(mca_coll_modules, type_all, ver_full, 
+                               ver_module);
+    laminfo::show_pml_version(mca_pml_modules, type_all, ver_full, 
+                              ver_module);
+    laminfo::show_cr_version(mca_crmpi_modules, type_all, ver_full, 
+                             ver_module);
 #endif
   }
 
   // All done
 
-  close_modules();
+  laminfo::close_modules();
   lam_cmd_line_free(cmd_line);
   return 0;
 }

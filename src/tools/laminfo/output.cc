@@ -20,7 +20,7 @@ using namespace laminfo;
 // Private variables
 //
 
-static int centerpoint = 20;
+static int centerpoint = 24;
 static int screen_width = 78;
 
 
