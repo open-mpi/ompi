@@ -8,6 +8,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/test/support -DOMPI_ENABLE_DEBUG_OVERRIDE=1
 
 noinst_PROGRAMS = \
 	ompi_numtostr \
+	ompi_pack \
 	ompi_os_path \
 	ompi_sys_info \
 	ompi_os_create_dirpath \
@@ -97,3 +98,24 @@ ompi_session_dir_LDADD = \
         $(top_builddir)/src/libmpi.la \
         $(top_builddir)/test/support/libsupport.la 
 ompi_session_dir_DEPENDENCIES = $(ompi_session_dir_LDADD)
+
+ompi_pack_SOURCES = ompi_pack.c
+ompi_pack_LDADD = \
+	$(top_builddir)/src/util/sys_info.lo \
+        $(top_builddir)/src/class/ompi_object.lo \
+		$(top_builddir)/src/util/malloc.lo \
+        $(top_builddir)/src/util/output.lo \
+        $(top_builddir)/src/util/argv.lo \
+        $(top_builddir)/src/util/strncpy.lo \
+        $(top_builddir)/src/threads/mutex.lo \
+        $(top_builddir)/src/threads/mutex_pthread.lo \
+        $(top_builddir)/src/threads/mutex_spinlock.lo \
+		$(top_builddir)/src/threads/mutex_spinwait.lo \
+        $(top_builddir)/src/util/os_path.lo \
+        $(top_builddir)/src/util/os_create_dirpath.lo \
+        $(top_builddir)/src/util/proc_info.lo \
+        $(top_builddir)/src/util/session_dir.lo \
+        $(top_builddir)/src/libmpi.la \
+        $(top_builddir)/test/support/libsupport.la 
+ompi_pack_DEPENDENCIES = $(ompi_session_dir_LDADD)
+
