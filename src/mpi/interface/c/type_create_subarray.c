@@ -7,8 +7,8 @@
 #include "mpi.h"
 #include "mpi/interface/c/bindings.h"
 
-#if LAM_WANT_MPI_PROFILING && LAM_HAVE_WEAK_SYMBOLS
-#pragma weak PMPI_Type_create_subarray = MPI_Type_create_subarray
+#if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILING_DEFINES
+#pragma weak MPI_Type_create_subarray = PMPI_Type_create_subarray
 #endif
 
 int
