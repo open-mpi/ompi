@@ -3,7 +3,7 @@
  */
 
 #include "mutex.h"
-#if defined(LAM_USE_SPINLOCK)
+#if (LAM_HAVE_THREADS == 0)
 
 static void lam_mutex_construct(lam_mutex_t* m)
 {

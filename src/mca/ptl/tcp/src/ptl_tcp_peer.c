@@ -19,7 +19,6 @@
 static void mca_ptl_tcp_peer_construct(mca_ptl_base_peer_t* ptl_peer);
 static void mca_ptl_tcp_peer_destruct(mca_ptl_base_peer_t* ptl_peer);
 static int  mca_ptl_tcp_peer_start_connect(mca_ptl_base_peer_t*);
-static void mca_ptl_tcp_peer_close_i(mca_ptl_base_peer_t*);
 static void mca_ptl_tcp_peer_connected(mca_ptl_base_peer_t*);
 static void mca_ptl_tcp_peer_recv_handler(int sd, short flags, void* user);
 static void mca_ptl_tcp_peer_send_handler(int sd, short flags, void* user);
@@ -81,7 +80,7 @@ static inline void mca_ptl_tcp_peer_event_init(mca_ptl_base_peer_t* ptl_peer, in
 static void mca_ptl_tcp_peer_destruct(mca_ptl_base_peer_t* ptl_peer)
 {
     mca_ptl_tcp_proc_remove(ptl_peer->peer_proc, ptl_peer);
-    mca_ptl_tcp_peer_close_i(ptl_peer);
+    mca_ptl_tcp_peer_close(ptl_peer);
 }
 
 
@@ -137,7 +136,7 @@ static int mca_ptl_tcp_peer_send_blocking(mca_ptl_base_peer_t* ptl_peer, void* d
         if(retval < 0) {
             if(errno != EINTR && errno != EAGAIN && errno != EWOULDBLOCK) {
                 lam_output(0, "mca_ptl_tcp_peer_send_blocking: send() failed with errno=%d\n",errno);
-                mca_ptl_tcp_peer_close_i(ptl_peer);
+                mca_ptl_tcp_peer_close(ptl_peer);
                 return -1;
             }
             continue;
@@ -187,10 +186,10 @@ bool mca_ptl_tcp_peer_accept(mca_ptl_base_peer_t* ptl_peer, struct sockaddr_in* 
         if((ptl_peer->peer_sd < 0) ||
            (ptl_peer->peer_state != MCA_PTL_TCP_CONNECTED &&
             peer_proc->proc_lam->proc_vpid < this_proc->proc_lam->proc_vpid)) {
-            mca_ptl_tcp_peer_close_i(ptl_peer);
+            mca_ptl_tcp_peer_close(ptl_peer);
             ptl_peer->peer_sd = sd;
             if(mca_ptl_tcp_peer_send_connect_ack(ptl_peer) != LAM_SUCCESS) {
-                 mca_ptl_tcp_peer_close_i(ptl_peer);
+                 mca_ptl_tcp_peer_close(ptl_peer);
                  THREAD_UNLOCK(&ptl_peer->peer_send_lock);
                  PROGRESS_THREAD_UNLOCK(&ptl_peer->peer_recv_lock);
                  return false;
@@ -208,20 +207,6 @@ bool mca_ptl_tcp_peer_accept(mca_ptl_base_peer_t* ptl_peer, struct sockaddr_in* 
     return false;
 }
 
-/*
- * An external I/F to close a peer. Called in the event of failure
- * on read or write. Note that this must acquire the peer lock
- * prior to delegating to the internal routine.
- */
-
-void mca_ptl_tcp_peer_close(mca_ptl_base_peer_t* ptl_peer)
-{
-    THREAD_LOCK(&ptl_peer->peer_recv_lock);
-    THREAD_LOCK(&ptl_peer->peer_send_lock);
-    mca_ptl_tcp_peer_close_i(ptl_peer);
-    THREAD_UNLOCK(&ptl_peer->peer_send_lock);
-    THREAD_UNLOCK(&ptl_peer->peer_recv_lock);
-}
 
 /*
  * Remove any event registrations associated with the socket
@@ -229,7 +214,7 @@ void mca_ptl_tcp_peer_close(mca_ptl_base_peer_t* ptl_peer)
  * been closed.
  */
 
-static void mca_ptl_tcp_peer_close_i(mca_ptl_base_peer_t* ptl_peer)
+void mca_ptl_tcp_peer_close(mca_ptl_base_peer_t* ptl_peer)
 {
     if(ptl_peer->peer_sd >= 0) {
         lam_event_del(&ptl_peer->peer_recv_event);
@@ -271,7 +256,7 @@ static int mca_ptl_tcp_peer_recv_blocking(mca_ptl_base_peer_t* ptl_peer, void* d
 
         /* remote closed connection */
         if(retval == 0) {
-            mca_ptl_tcp_peer_close_i(ptl_peer);
+            mca_ptl_tcp_peer_close(ptl_peer);
             return -1;
         }
 
@@ -279,7 +264,7 @@ static int mca_ptl_tcp_peer_recv_blocking(mca_ptl_base_peer_t* ptl_peer, void* d
         if(retval < 0) {
             if(errno != EINTR && errno != EAGAIN && errno != EWOULDBLOCK) {
                 lam_output(0, "mca_ptl_tcp_peer_recv_blocking: recv() failed with errno=%d\n",errno);
-                mca_ptl_tcp_peer_close_i(ptl_peer);
+                mca_ptl_tcp_peer_close(ptl_peer);
                 return -1;
             }
             continue;
@@ -323,7 +308,7 @@ static int mca_ptl_tcp_peer_recv_connect_ack(mca_ptl_base_peer_t* ptl_peer)
     /* compare this to the expected values */
     if(size_h != ptl_proc->proc_guid_size || memcmp(ptl_proc->proc_guid, guid, size_h) != 0) {
         lam_output(0, "mca_ptl_tcp_peer_connect: received unexpected process identifier");
-        mca_ptl_tcp_peer_close_i(ptl_peer);
+        mca_ptl_tcp_peer_close(ptl_peer);
         return LAM_ERR_UNREACH;
     }
 
@@ -376,7 +361,7 @@ static int mca_ptl_tcp_peer_start_connect(mca_ptl_base_peer_t* ptl_peer)
             lam_event_add(&ptl_peer->peer_send_event, 0);
             return LAM_SUCCESS;
         }
-        mca_ptl_tcp_peer_close_i(ptl_peer);
+        mca_ptl_tcp_peer_close(ptl_peer);
         ptl_peer->peer_retries++;
         return LAM_ERR_UNREACH;
     }
@@ -386,7 +371,7 @@ static int mca_ptl_tcp_peer_start_connect(mca_ptl_base_peer_t* ptl_peer)
         ptl_peer->peer_state = MCA_PTL_TCP_CONNECT_ACK;
         lam_event_add(&ptl_peer->peer_recv_event, 0);
     } else {
-        mca_ptl_tcp_peer_close_i(ptl_peer);
+        mca_ptl_tcp_peer_close(ptl_peer);
     }
     return rc;
 }
@@ -409,7 +394,7 @@ static void mca_ptl_tcp_peer_complete_connect(mca_ptl_base_peer_t* ptl_peer)
     /* check connect completion status */
     if(getsockopt(ptl_peer->peer_sd, SOL_SOCKET, SO_ERROR, &so_error, &so_length) < 0) {
         lam_output(0, "mca_ptl_tcp_peer_complete_connect: getsockopt() failed with errno=%d\n", errno);
-        mca_ptl_tcp_peer_close_i(ptl_peer);
+        mca_ptl_tcp_peer_close(ptl_peer);
         return;
     }
     if(so_error == EINPROGRESS) {
@@ -418,7 +403,7 @@ static void mca_ptl_tcp_peer_complete_connect(mca_ptl_base_peer_t* ptl_peer)
     }
     if(so_error != 0) {
         lam_output(0, "mca_ptl_tcp_peer_complete_connect: connect() failed with errno=%d\n", so_error);
-        mca_ptl_tcp_peer_close_i(ptl_peer);
+        mca_ptl_tcp_peer_close(ptl_peer);
         return;
     }
 
@@ -426,7 +411,7 @@ static void mca_ptl_tcp_peer_complete_connect(mca_ptl_base_peer_t* ptl_peer)
         ptl_peer->peer_state = MCA_PTL_TCP_CONNECT_ACK;
         lam_event_add(&ptl_peer->peer_recv_event, 0);
     } else {
-        mca_ptl_tcp_peer_close_i(ptl_peer);
+        mca_ptl_tcp_peer_close(ptl_peer);
     }
 }
 
@@ -469,7 +454,7 @@ static void mca_ptl_tcp_peer_recv_handler(int sd, short flags, void* user)
     default:
         {
         lam_output(0, "mca_ptl_tcp_peer_recv_handler: invalid socket state(%d)", ptl_peer->peer_state);
-        mca_ptl_tcp_peer_close_i(ptl_peer);
+        mca_ptl_tcp_peer_close(ptl_peer);
         break;
         }
     }

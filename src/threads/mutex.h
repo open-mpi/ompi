@@ -8,17 +8,10 @@
 #define LAM_MUTEX_H_
 
 #include "lam_config.h"
-#define LAM_USE_PTHREADS
-
-
-#if defined(LAM_USE_SPINLOCK)
-#include "threads/mutex_spinlock.h"
-#elif defined(LAM_USE_SPINWAIT)
-#include "threads/mutex_spinwait.h"
-#elif defined(LAM_USE_PTHREADS)
+#if LAM_HAVE_POSIX_THREADS
 #include "threads/mutex_pthread.h"
 #else
-#error "concurrency model not configured"
+#include "threads/mutex_spinlock.h"
 #endif
 
 /**

@@ -4,7 +4,7 @@
 
 #include "mutex.h"
 #include "condition.h"
-#if defined(LAM_USE_PTHREADS)
+#if LAM_HAVE_POSIX_THREADS
 
 static void lam_condition_construct(lam_condition_t* c)
 {

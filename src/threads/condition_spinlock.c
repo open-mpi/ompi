@@ -5,11 +5,13 @@
 #include "mutex.h"
 #include "condition.h"
 
-#if defined(LAM_USE_SPINLOCK)
+#if (LAM_HAVE_THREADS == 0)
 
                                                                                                              
 static void lam_condition_construct(lam_condition_t* c)
 {
+    c->c_waiting = 0;
+    c->c_signaled = 0;
 }
                                                                                                              
                                                                                                              

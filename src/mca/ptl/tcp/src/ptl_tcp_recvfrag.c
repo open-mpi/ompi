@@ -62,20 +62,17 @@ void mca_ptl_tcp_recv_frag_init(mca_ptl_tcp_recv_frag_t* frag, mca_ptl_base_peer
 bool mca_ptl_tcp_recv_frag_handler(mca_ptl_tcp_recv_frag_t* frag, int sd)
 {
     /* read common header */
-    if(frag->frag_hdr_cnt < sizeof(mca_ptl_base_common_header_t))
-        if(mca_ptl_tcp_recv_frag_header(frag, sd, sizeof(mca_ptl_base_common_header_t)) == false)
+    if(frag->frag_hdr_cnt < sizeof(mca_ptl_base_header_t))
+        if(mca_ptl_tcp_recv_frag_header(frag, sd, sizeof(mca_ptl_base_header_t)) == false)
             return false;
 
     switch(frag->frag_header.hdr_common.hdr_type) {
     case MCA_PTL_HDR_TYPE_MATCH:
-         assert(frag->frag_header.hdr_common.hdr_size == sizeof(mca_ptl_base_match_header_t));
          return mca_ptl_tcp_recv_frag_match(frag, sd);
     case MCA_PTL_HDR_TYPE_FRAG:
-        assert(frag->frag_header.hdr_common.hdr_size == sizeof(mca_ptl_base_frag_header_t));
         return mca_ptl_tcp_recv_frag_frag(frag, sd);
     case MCA_PTL_HDR_TYPE_ACK: 
     case MCA_PTL_HDR_TYPE_NACK:
-        assert(frag->frag_header.hdr_common.hdr_size == sizeof(mca_ptl_base_ack_header_t));
         return mca_ptl_tcp_recv_frag_ack(frag, sd);
     default:
         lam_output(0, "mca_ptl_tcp_recv_frag_handler: invalid message type: %08X", 
@@ -122,10 +119,6 @@ static bool mca_ptl_tcp_recv_frag_ack(mca_ptl_tcp_recv_frag_t* frag, int sd)
 {
     mca_ptl_tcp_send_frag_t* sendfrag;
     mca_ptl_base_send_request_t* sendreq;
-    if (frag->frag_hdr_cnt < sizeof(mca_ptl_base_ack_header_t))
-        if (mca_ptl_tcp_recv_frag_header(frag, sd, sizeof(mca_ptl_base_ack_header_t)) == false)
-            return false;
-
     sendfrag = (mca_ptl_tcp_send_frag_t*)frag->frag_header.hdr_ack.hdr_src_ptr.pval;
     sendreq = sendfrag->super.frag_request;
     sendreq->req_peer_request = frag->frag_header.hdr_ack.hdr_dst_ptr;
@@ -137,10 +130,6 @@ static bool mca_ptl_tcp_recv_frag_ack(mca_ptl_tcp_recv_frag_t* frag, int sd)
 
 static bool mca_ptl_tcp_recv_frag_match(mca_ptl_tcp_recv_frag_t* frag, int sd)
 {
-    if(frag->frag_hdr_cnt < sizeof(mca_ptl_base_match_header_t))
-       if(mca_ptl_tcp_recv_frag_header(frag, sd, sizeof(mca_ptl_base_match_header_t)) == false)
-            return false;
-
     /* first pass through - attempt a match */
     if(NULL == frag->super.frag_request && 0 == frag->frag_msg_cnt) {
         /* attempt to match a posted recv */
@@ -178,10 +167,6 @@ static bool mca_ptl_tcp_recv_frag_match(mca_ptl_tcp_recv_frag_t* frag, int sd)
 
 static bool mca_ptl_tcp_recv_frag_frag(mca_ptl_tcp_recv_frag_t* frag, int sd)
 {
-    if(frag->frag_hdr_cnt < sizeof(mca_ptl_base_frag_header_t))
-       if(mca_ptl_tcp_recv_frag_header(frag, sd, sizeof(mca_ptl_base_frag_header_t)) == false)
-            return false;
-
     /* get request from header */
     if(frag->frag_msg_cnt == 0) {
         frag->super.frag_request = frag->frag_header.hdr_frag.hdr_dst_ptr.pval;

@@ -21,6 +21,7 @@ libruntime_la_SOURCES = \
         lam_init.c \
         lam_mpi_init.c \
         lam_mpi_finalize.c \
+	lam_progress.c \
         lam_rte_finalize.c \
         lam_rte_init.c
 
