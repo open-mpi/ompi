@@ -15,7 +15,8 @@
 #include <netinet/in.h>
 #include "threads/mutex.h"
 #include <string.h>
-#include "mca/oob/tcp/oob_tcp.h"
+#include "oob_tcp.h"
+#include "oob_tcp_msg.h"
 
 /**
  * the state of the connection
@@ -30,84 +31,65 @@ typedef enum {
 
 
 /**
- * tcp interface
- */
-struct mca_oob_tcp_addr_t {
-    int                ifindex; /**< oob interface index */
-    struct sockaddr_in ifaddr;  /**< oob interface address */
-    struct sockaddr_in ifmask;  /**< oob interface netmask */
-};
-typedef struct mca_oob_tcp_addr_t mca_oob_tcp_addr_t;
-
-/**
  * This structire describes a peer
  */
 struct mca_oob_tcp_peer_t {
-    ompi_list_item_t super;         /**< allow this to be on a list */
-    ompi_process_name_t peer_name;  /**< the name of the peer */
-    mca_oob_tcp_state_t peer_state; /**< the state of the connection */
-    int peer_sd;                    /**< socket descriptor of the connection */
-    mca_oob_tcp_addr_t peer_addr;   /**< the address of the peer process */
-    ompi_mutex_t peer_lock;         /**< make sure only one thread accesses it at a time */
-    ompi_list_t peer_send;            /**< list of items to send */
-    ompi_list_t peer_recv;        /**< list of items to recieve */
+    ompi_list_item_t super;           /**< allow this to be on a list */
+    ompi_process_name_t peer_name;    /**< the name of the peer */
+    mca_oob_tcp_state_t peer_state;   /**< the state of the connection */
+    int peer_retries;                 /**< number of times connection attempt has failed */
+    struct sockaddr_in peer_addr;     /**< the address of the peer process */
+    int peer_sd;                      /**< socket descriptor of the connection */
+    ompi_event_t peer_send_event;     /**< registration with event thread for send events */
+    ompi_event_t peer_recv_event;     /**< registration with event thread for recv events */
+    ompi_mutex_t peer_lock;           /**< make sure only one thread accesses critical data structures */
+    ompi_list_t peer_send_queue;      /**< list of messages to send */
+    ompi_list_t peer_recv_queue;      /**< list of pending receives */
+    mca_oob_tcp_msg_t *peer_send_msg; /**< current send in progress */
+    mca_oob_tcp_msg_t *peer_recv_msg; /**< current recv in progress */
 };
 typedef struct mca_oob_tcp_peer_t mca_oob_tcp_peer_t;
+
+                                                                                                                 
+#define MCA_OOB_TCP_PEER_ALLOC(peer, rc) \
+    { \
+    ompi_list_item_t* item; \
+    OMPI_FREE_LIST_GET(&mca_oob_tcp_module.tcp_peer_free, item, rc); \
+    peer = (mca_oob_tcp_peer_t*)item; \
+    }
+                                                                                                                 
+#define MCA_OOB_TCP_PEER_RETURN(peer) \
+    { \
+    OMPI_FREE_LIST_RETURN(&mca_oob_tcp_module.tcp_peer_free, (ompi_list_item_t*)peer); \
+    }
+                                                                                                                 
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
 
 /**
- * This is the constructor function for the mca_oob_tcp_peer
- * struct. Note that this function and OBJ_NEW should NEVER
- * be called directly. Instead, use mca_oob_tcp_add_peer
- *
- * @param peer a pointer to the mca_oob_tcp_peer_t struct to be initialized
- * @retval none
- */
-void mca_oob_tcp_peer_construct(mca_oob_tcp_peer_t* peer);
-
-/**
- * This is the destructor function for the mca_oob_tcp_peer
- * struct. Note that this function and OBJ_RELEASE should NEVER
- * be called directly. Instead, use mca_oob_tcp_del_peer
- *
- * @param peer a pointer to the mca_oob_tcp_peer_t struct to be destroyed
- * @retval none
- */
-void mca_oob_tcp_peer_destruct(mca_oob_tcp_peer_t * peer);
- 
-/**
- * The function to compare 2 peers. Used for the rb tree
- *
- * @param peer1 the first peer
- * @param peer2 the second peer
- *
- * @retval <0 if peer1 < peer2
- * @retval >0 if peer1 > peer2
- * @retval 0 if peer1 == peer2
- */
-int mca_oob_tcp_peer_comp(void * key1, void * key2);
-
-/**
- * Creates a peer structure and adds to the tree and list.
+ * Lookup a peer in the cache - if it doesn't exists
+ * create one and cache it.
  *
  * @param peer_name the name of the peer
  * 
  * @retval pointer to the newly created struture
  * @retval NULL if there was a problem
  */
-mca_oob_tcp_peer_t * mca_oob_tcp_add_peer(ompi_process_name_t peer_name);
+mca_oob_tcp_peer_t *mca_oob_tcp_peer_lookup(const ompi_process_name_t* peer_name);
 
 /**
- * Deletes a peer structure from the tree and lists and frees its memory
+ * Start sending a message to the specified peer. The routine
+ * can return before the send completes.
  *
- * @param peer_name the name of the peer
- *
- * @retval OMPI_SUCCESS
+ * @param peer  The peer process.
+ * @param msg   The message to send.
+ * @retval      OMPI_SUCCESS or error code on failure.
  */
-int mca_oob_tcp_del_peer(ompi_process_name_t peer_name);
+
+int mca_oob_tcp_peer_send(mca_oob_tcp_peer_t* peer, mca_oob_tcp_msg_t* msg);
+
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

@@ -1,4 +1,6 @@
-#include "mca/oob/tcp/oob_tcp.h"
+#include "oob_tcp.h"
+#include "oob_tcp_msg.h"
+#include "oob_tcp_peer.h"
 
 /*
  * Similiar to unix send(2).
@@ -10,9 +12,37 @@
  * @return            OMPI error code (<0) on error number of bytes actually sent.
  */
 
-int mca_oob_tcp_send(const ompi_process_name_t* peer, const struct iovec *msg, int count, int flags)
+int mca_oob_tcp_send(const ompi_process_name_t* name, const struct iovec *iov, int count, int flags)
 {
-    return OMPI_ERR_NOT_IMPLEMENTED;
+    mca_oob_tcp_peer_t* peer = mca_oob_tcp_peer_lookup(name);
+    mca_oob_tcp_msg_t* msg;
+    int rc, sent;
+    if(NULL == peer)
+        return OMPI_ERR_UNREACH;
+
+    MCA_OOB_TCP_MSG_ALLOC(msg, rc);
+    if(NULL == msg) 
+        return rc;
+
+    msg->msg_user = iov;
+    msg->msg_iov = (struct iovec*)malloc(sizeof(struct iovec)*count);
+    msg->msg_rwptr = msg->msg_iov;
+    msg->msg_count = msg->msg_rwcnt = count;
+    memcpy(msg->msg_iov, msg->msg_user, sizeof(struct iovec)*count);
+    msg->msg_cbfunc = NULL;
+    msg->msg_cbdata = NULL;
+    msg->msg_complete = false;
+
+    rc = mca_oob_tcp_peer_send(peer, msg);
+    if(rc != OMPI_SUCCESS) {
+        OBJ_RELEASE(msg);
+        return rc;
+    }
+
+    rc = mca_oob_tcp_msg_wait(msg, &sent);
+    if(rc != OMPI_SUCCESS)
+        return rc;
+    return sent;
 }
 
 /*
@@ -28,9 +58,38 @@ int mca_oob_tcp_send(const ompi_process_name_t* peer, const struct iovec *msg, i
  *
  */
 
-int mca_oob_tcp_send_nb(const ompi_process_name_t* peer, const struct iovec* msg, int count,
-                                    int flags, mca_oob_callback_fn_t cbfunc, void* cbdata)
+int mca_oob_tcp_send_nb(
+    const ompi_process_name_t* name, 
+    const struct iovec* iov, 
+    int count,
+    int flags, 
+    mca_oob_callback_fn_t cbfunc, 
+    void* cbdata)
 {
-    return OMPI_ERR_NOT_IMPLEMENTED;
+    mca_oob_tcp_peer_t* peer = mca_oob_tcp_peer_lookup(name);
+    mca_oob_tcp_msg_t* msg;
+    int rc;
+    if(NULL == peer)
+        return OMPI_ERR_UNREACH;
+
+    MCA_OOB_TCP_MSG_ALLOC(msg, rc);
+    if(NULL == msg) 
+        return rc;
+
+    msg->msg_user = iov;
+    msg->msg_iov = (struct iovec*)malloc(sizeof(struct iovec)*count);
+    msg->msg_rwptr = msg->msg_iov;
+    msg->msg_count = msg->msg_rwcnt = count;
+    memcpy(msg->msg_iov, msg->msg_user, sizeof(struct iovec)*count);
+    msg->msg_cbfunc = cbfunc;
+    msg->msg_cbdata = cbdata;
+    msg->msg_complete = false;
+
+    rc = mca_oob_tcp_peer_send(peer, msg);
+    if(rc != OMPI_SUCCESS) {
+        OBJ_RELEASE(msg);
+        return rc;
+    }
+    return OMPI_SUCCESS;
 }
 
