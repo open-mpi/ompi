@@ -13,11 +13,13 @@
 #include "util/if.h"
 #include "util/argv.h"
 #include "util/output.h"
+#include "util/sys_info.h"
 #include "mca/pml/pml.h"
 #include "mca/ptl/ptl.h"
 #include "mca/ptl/base/ptl_base_sendreq.h"
 #include "mca/base/mca_base_param.h"
 #include "mca/base/mca_base_module_exchange.h"
+#include "mca/ptl/sm/src/ptl_sm.h"
 #include "ptl_sm.h"
 #include "ptl_sm_sendreq.h"
 #include "ptl_sm_sendfrag.h"
@@ -114,6 +116,8 @@ int mca_ptl_sm_module_open(void)
         mca_ptl_sm_param_register_int("free_list_max", -1);
     mca_ptl_sm_module.sm_free_list_inc =
         mca_ptl_sm_param_register_int("free_list_inc", 256);
+    mca_ptl_sm_module.sm_max_procs =
+        mca_ptl_sm_param_register_int("max_procs", -1);
 
     /* initialize objects */
     OBJ_CONSTRUCT(&mca_ptl_sm_module.sm_lock, ompi_mutex_t);
@@ -226,7 +230,40 @@ int mca_ptl_sm_module_progress(mca_ptl_tstamp_t tstamp)
 
 static int mca_ptl_sm_module_exchange()
 {
+    /*
+     *  !!!!  This is temporary, and will be removed when the
+     *  registry is implemented
+     */
+    mca_ptl_sm_exchange_t mca_ptl_sm_setup_info;
+    size_t len,size;
+    char *ptr;
+    int rc;
+
+    /* determine length of host name */
+    len=strlen(ompi_system_info.nodename);
+    /* check if string is zero length or there is an error */
+    if( 0 >= len) {
+        return OMPI_ERROR;
+    }
+    /* check if string is too long */
+    if( MCA_PTL_SM_MAX_HOSTNAME_LEN < (len+1) ){
+        return OMPI_ERROR;
+    }
+
+    /* copy string into structure that will be used to send data around */
+    ptr=NULL;
+    ptr=strncpy(&(mca_ptl_sm_setup_info.host_name[0]),
+            ompi_system_info.nodename, len);
+    if( NULL == ptr ) {
+        return OMPI_ERROR;
+    }
+    mca_ptl_sm_setup_info.host_name[len]='\0';
+
+    /* exchange setup information */
+    size=sizeof(mca_ptl_sm_exchange_t);
+    rc =  mca_base_modex_send(&mca_ptl_sm_module.super.ptlm_version, 
+            &mca_ptl_sm_setup_info, size);
+    
     return OMPI_SUCCESS;
 }
-
 

@@ -30,7 +30,7 @@ static mca_ptl_sm_mmap_t* mca_ptl_sm_mmap_open(size_t size)
 
     while(fd < 0) {
         struct timespec ts;
-        fd = shm_open(mca_ptl_sm_module.sm_mmap_file, O_CREAT|O_RDWR, 0000);
+        /*fd = shm_open(mca_ptl_sm_module.sm_mmap_file, O_CREAT|O_RDWR, 0000); */
         if(fd < 0 && errno != EACCES) {
             ompi_output(0, "mca_ptl_sm_mmap_open: open failed with errno=%d\n", errno);
             return NULL;
@@ -61,6 +61,9 @@ mca_ptl_sm_mmap_t* mca_ptl_sm_mmap_init(size_t size)
 {
     static int segnum = 0;
 
+    /* debug !!!!! */
+    return OMPI_SUCCESS;
+
     ompi_job_handle_t job_handle = mca_pcm.pcm_handle_get();
     char hostname[64];
     int fd;
@@ -69,7 +72,7 @@ mca_ptl_sm_mmap_t* mca_ptl_sm_mmap_init(size_t size)
 
     gethostname(hostname, sizeof(hostname));
     sprintf(mca_ptl_sm_module.sm_mmap_file, "/%s.%s.%d", hostname, job_handle, segnum++);
-    fd = shm_open(mca_ptl_sm_module.sm_mmap_file, O_CREAT|O_RDWR, 0000);
+    /*fd = shm_open(mca_ptl_sm_module.sm_mmap_file, O_CREAT|O_RDWR, 0000); */
     if(fd < 0) {
         if(errno == EACCES)
             return mca_ptl_sm_mmap_open(size);

@@ -45,7 +45,41 @@ int mca_ptl_sm_add_procs(
     struct mca_ptl_base_peer_t **peers,
     ompi_bitmap_t* reachability)
 {
+    int proc,rc;
+    size_t size;
+    mca_ptl_sm_exchange_t **sm_proc_info;
+
+    /* allocate array to hold setup shared memory from all
+     * other procs */
+    sm_proc_info=(mca_ptl_sm_exchange_t **)
+        malloc(nprocs*sizeof(mca_ptl_sm_exchange_t *));
+    if( NULL == sm_proc_info ){
+        rc=OMPI_ERR_OUT_OF_RESOURCE;
+        goto CLEANUP;
+    }
+
+    /* get unique host identifier for each process in the list */
+    for( proc=0 ; proc < nprocs; proc++ ) {
+        rc = mca_base_modex_recv(
+                &mca_ptl_sm_module.super.ptlm_version, proc,
+                (void**)(sm_proc_info+proc), &size);
+        if(rc != OMPI_SUCCESS) {
+            ompi_output(0, "mca_ptl_sm_add_procs: mca_base_modex_recv: failed with return value=%d", rc);
+            goto CLEANUP;
+        }
+    }
+
+    /* free local memory */
+    if(sm_proc_info){
+        free(sm_proc_info);
+    }
+
     return OMPI_SUCCESS;
+
+CLEANUP:
+    if(sm_proc_info){
+        free(sm_proc_info);
+    }
 }
 
 
