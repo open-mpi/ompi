@@ -40,6 +40,7 @@ else
         else
             ver="svn`date '+%m%d%Y'`"
         fi
+        OMPI_SVN_VERSION="$ver"
 	OMPI_VERSION="${OMPI_VERSION}$ver"
     fi
 
