@@ -149,8 +149,7 @@ OMPI_DECLSPEC  int mca_base_components_close(int output_id, ompi_list_t *compone
   /* mca_base_init_select_components.c */
   
 OMPI_DECLSPEC  int mca_base_init_select_components(int requested, 
-                                   bool allow_multi_user_threads,
-                                   bool have_hidden_threads, int *provided);
+                                                   int *provided);
   
 #if 0
   /* JMS Not implemented yet */
