@@ -96,8 +96,7 @@ INCL = \
         /I"${topdir}/src" \
         /I"${topdir}/src/event/compat/" \
         /I"${topdir}/src/event" \
-        /I"${topdir}/src/event/WIN32-Code/" \
-        /I"${topdir}/src/datatype/"
+        /I"${topdir}/src/event/WIN32-Code/"
 
 CFLAGS = \
         /DWIN32 \
