@@ -11,7 +11,11 @@
 #include "include/constants.h"
 #include "class/ompi_value_array.h"
 #include "class/ompi_hash_table.h"
+#if 0
+/* JMS commented out for now -- see lookup_keyvals() below for an
+   explanation */
 #include "attribute/attribute.h"
+#endif
 #include "util/printf.h"
 #include "util/argv.h"
 #include "mca/mca.h"
@@ -662,6 +666,13 @@ static bool lookup_keyvals(mca_base_param_t *param,
                            mca_base_param_storage_t *storage,
                            ompi_hash_table_t *attrs)
 {
+#if 1
+    /* JMS: Comment this out for now, because it drags in all of
+       libmpi.  This is undesirable for programs like mpirun, etc.
+       Need a better solution for this -- perhaps a registration kind
+       of thing...? */
+    return false;
+#else
   int err, flag;
 
   /* If this param has a keyval and we were provided with a hash
@@ -695,6 +706,7 @@ static bool lookup_keyvals(mca_base_param_t *param,
   /* Either this param has not keyval or we didn't find the keyval */
 
   return false;
+#endif
 }
 
 
