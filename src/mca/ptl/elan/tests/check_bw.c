@@ -30,15 +30,15 @@ main (int argc,
     /* Get some environmental variables set for Open MPI, OOB */
     env_init_for_elan();
 
-    MPI_Init (&argc, &argv);
-    MPI_Comm_size (MPI_COMM_WORLD, &numprocs);
-    MPI_Comm_rank (MPI_COMM_WORLD, &myid);
-
-    if (argc < 5) {
+    if (argc < 3) {
         fprintf (stderr, "Usage: %s loop size \n", argv[0]);
         MPI_Finalize ();
         return 0;
     }
+    MPI_Init (&argc, &argv);
+    MPI_Comm_size (MPI_COMM_WORLD, &numprocs);
+    MPI_Comm_rank (MPI_COMM_WORLD, &myid);
+
     size = atoi (argv[2]);
     loop= atoi (argv[1]);
     page_size = getpagesize ();
@@ -58,14 +58,13 @@ main (int argc,
 		       request + j);
 	}
 	MPI_Waitall (loop, request, tmp_stat);
-	MPI_Recv (r_buf, 4, MPI_CHAR, 1, 101, MPI_COMM_WORLD, &tmp_stat[0]);
     } else {
 	for (j = 0; j < loop; j++) {
 	    MPI_Irecv (r_buf, size, MPI_CHAR, 0, 100, MPI_COMM_WORLD,
 		       request + j);
+	    /*MPI_Wait(request, tmp_stat);*/
 	}
 	MPI_Waitall (loop, request, tmp_stat);
-	MPI_Send (s_buf, 4, MPI_CHAR, 0, 101, MPI_COMM_WORLD);
     }
 
     if (myid == 0) {

@@ -52,7 +52,8 @@
 #define  PTL_ELAN_DEBUG_GET     (0x400)
 #define  PTL_ELAN_DEBUG_CHAIN   (0x800)
 
-#define  PTL_ELAN_DEBUG_FLAG (PTL_ELAN_DEBUG_NONE)
+#define  PTL_ELAN_DEBUG_FLAG   (PTL_ELAN_DEBUG_NONE)
+//(PTL_ELAN_DEBUG_GET|PTL_ELAN_DEBUG_PUT|PTL_ELAN_DEBUG_RECV)
 
 #define START_FUNC(flag)                                       \
 do {                                                           \
@@ -99,7 +100,7 @@ do {                                                           \
 
 /* XXX: Potentially configurable parameters */
 #define  OMPI_PTL_ELAN_NUM_QDESCS    (4)
-#define  OMPI_PTL_ELAN_NUM_PUTGET    (2)
+#define  OMPI_PTL_ELAN_NUM_PUTGET    (8)
 #define  OMPI_PTL_ELAN_ZERO_FFRAG    (0)
 
 #define  OMPI_PTL_ELAN_ENABLE_GET    (0)
