@@ -19,6 +19,8 @@
 #include "communicator/communicator.h"
 #include "errhandler/errhandler.h"
 
+#include <float.h>
+
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Type_create_f90_real = PMPI_Type_create_f90_real
 #endif
@@ -33,11 +35,28 @@ static const char FUNC_NAME[] = "MPI_Type_create_f90_real";
 int MPI_Type_create_f90_real(int p, int r, MPI_Datatype *newtype)
 
 {
-  if (MPI_PARAM_CHECK) {
-    OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-  }
+    if (MPI_PARAM_CHECK) {
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+        if( 0 > p ) {
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
+        } else if( 0 > r ) {
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
+        }
+    }
 
-  /* This function is not yet implemented */
+    /* if the user does not care about p or r set them to 0 so the test associate with them will
+     * always succeed.
+     */
+    if( MPI_UNDEFINED == p ) p = 0;
+    if( MPI_UNDEFINED == r ) r = 0;
 
-  return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER, FUNC_NAME);
+    if( (LDBL_DIG < p) || (LDBL_MAX_10_EXP < r) )    *newtype = &ompi_mpi_datatype_null;
+    else if( (DBL_DIG < p) || (DBL_MAX_10_EXP < r) ) *newtype = &ompi_mpi_long_double;
+    else if( (FLT_DIG < p) || (FLT_MAX_10_EXP < r) ) *newtype = &ompi_mpi_double;
+    else                                             *newtype = &ompi_mpi_float;
+
+    if( *newtype != &ompi_mpi_datatype_null )
+        return MPI_SUCCESS;
+
+    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER, FUNC_NAME);
 }
