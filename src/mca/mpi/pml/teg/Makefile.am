@@ -28,7 +28,7 @@ mcamodule_LTLIBRARIES = $(module_install)
 mca_pml_teg_la_SOURCES = 
 mca_pml_teg_la_LIBADD = \
         src/libmca_pml_teg.la \
-        $(top_lam_builddir)/src/lam/liblam.la
+        $(LIBLAM_LA)
 mca_pml_teg_la_LDFLAGS = -module -avoid-version
 
 noinst_LTLIBRARIES = $(module_noinst)

@@ -28,7 +28,7 @@ mcamodule_LTLIBRARIES = $(module_install)
 mca_ptl_tcp_la_SOURCES = 
 mca_ptl_tcp_la_LIBADD = \
         src/libmca_ptl_tcp.la \
-        $(top_lam_builddir)/src/lam/liblam.la
+        $(LIBLAM_LA)
 mca_ptl_tcp_la_LDFLAGS = -module -avoid-version
 
 noinst_LTLIBRARIES = $(module_noinst)
