@@ -7,6 +7,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/test/support -DOMPI_ENABLE_DEBUG_OVERRIDE=1 -g
 
 noinst_PROGRAMS = \
 	ompi_numtostr \
+	ompi_if \
 	ompi_pack \
 	ompi_os_path \
 	ompi_sys_info \
@@ -19,6 +20,12 @@ ompi_numtostr_LDADD = \
         $(top_builddir)/src/libmpi.la \
         $(top_builddir)/test/support/libsupport.la 
 ompi_numtostr_DEPENDENCIES = $(ompi_numtostr_LDADD)
+
+ompi_if_SOURCES = ompi_if.c
+ompi_if_LDADD = \
+        $(top_builddir)/src/libmpi.la \
+        $(top_builddir)/test/support/libsupport.la 
+ompi_if_DEPENDENCIES = $(ompi_if_LDADD)
 
 ompi_argv_SOURCES = ompi_argv.c
 ompi_argv_LDADD = \
