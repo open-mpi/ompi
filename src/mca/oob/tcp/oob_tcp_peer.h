@@ -89,7 +89,7 @@ extern "C" {
  * @retval pointer to the peer's (possibly newly created) struture
  * @retval NULL if there was a problem
  */
-mca_oob_tcp_peer_t *mca_oob_tcp_peer_lookup(const ompi_process_name_t* peer_name, bool get_lock);
+mca_oob_tcp_peer_t *mca_oob_tcp_peer_lookup(ompi_process_name_t* peer_name, bool get_lock);
 
 /**
  * Start sending a message to the specified peer. The routine

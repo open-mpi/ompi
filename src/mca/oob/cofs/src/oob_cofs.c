@@ -20,7 +20,14 @@
 #include <string.h>
 #include <unistd.h>
 
-static int do_recv(mca_ns_base_jobid_t jobid, mca_ns_base_vpid_t procid, const struct iovec* iov, int count, int tag, int flags);
+static int do_recv(
+    mca_ns_base_jobid_t jobid, 
+    mca_ns_base_vpid_t procid, 
+    struct iovec* iov, 
+    int count, 
+    int* tag, 
+    int flags);
+
 
 /*
 *  Similiar to unix send(2).
@@ -33,8 +40,8 @@ static int do_recv(mca_ns_base_jobid_t jobid, mca_ns_base_vpid_t procid, const s
 */
 
 int mca_oob_cofs_send(
-    const ompi_process_name_t* peer, 
-    const struct iovec *iov, 
+    ompi_process_name_t* peer, 
+    struct iovec *iov, 
     int count, 
     int tag,
     int flags)
@@ -88,8 +95,8 @@ int mca_oob_cofs_send(
 
 
 int mca_oob_cofs_send_nb(
-    const ompi_process_name_t* peer, 
-    const struct iovec *iov, 
+    ompi_process_name_t* peer, 
+    struct iovec *iov, 
     int count, 
     int tag,
     int flags,
@@ -106,9 +113,9 @@ int mca_oob_cofs_send_nb(
 int
 mca_oob_cofs_recv(
     ompi_process_name_t* peer, 
-    const struct iovec* iov, 
+    struct iovec* iov, 
     int count, 
-    int tag, 
+    int* tag, 
     int flags)
 {
   int ret = OMPI_ERR_WOULD_BLOCK;
@@ -124,14 +131,14 @@ mca_oob_cofs_recv(
 int
 mca_oob_cofs_recv_nb(
    ompi_process_name_t* peer, 
-   const struct iovec* iov, 
+   struct iovec* iov, 
    int count, 
    int tag,
    int flags,
    mca_oob_callback_fn_t cbfunc, 
    void* cbdata)
 {
-   int status = mca_oob_cofs_recv(peer, iov, count, tag, flags);
+   int status = mca_oob_cofs_recv(peer, iov, count, &tag, flags);
    if(NULL != cbfunc)
        cbfunc(status, peer, iov, count, tag, cbdata);
    return status;
@@ -139,13 +146,14 @@ mca_oob_cofs_recv_nb(
 
 
 static char*
-find_match(mca_ns_base_jobid_t jobid, mca_ns_base_vpid_t procid, int tag)
+find_match(mca_ns_base_jobid_t jobid, mca_ns_base_vpid_t procid, int* tagp)
 {
   DIR* dir;
   struct dirent *ent;
   unsigned long tmp_serial;
   int tmp_jobid, tmp_procid, tmp_myprocid, tmp_tag;
   int ret;
+  int tag = (tagp != NULL) ? *tagp : MCA_OOB_TAG_ANY;
   bool found = false;
   char best_name[OMPI_PATH_MAX];
   uint64_t best_serial = ((1ULL << 63) - 1);
@@ -181,6 +189,7 @@ find_match(mca_ns_base_jobid_t jobid, mca_ns_base_vpid_t procid, int tag)
     if (tmp_serial < best_serial) {
       strcpy(best_name, ent->d_name);
       best_serial = tmp_serial;
+      if(tagp != NULL) *tagp = tmp_tag;
     }
   }
 
@@ -194,7 +203,7 @@ find_match(mca_ns_base_jobid_t jobid, mca_ns_base_vpid_t procid, int tag)
 
 
 static int 
-do_recv(mca_ns_base_jobid_t jobid, mca_ns_base_vpid_t procid, const struct iovec* iov, int count, int tag, int flags)
+do_recv(mca_ns_base_jobid_t jobid, mca_ns_base_vpid_t procid, struct iovec* iov, int count, int* tag, int flags)
 {
   char *fname;
   char full_fname[OMPI_PATH_MAX];

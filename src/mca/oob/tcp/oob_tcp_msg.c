@@ -161,11 +161,11 @@ bool mca_oob_tcp_msg_recv_handler(mca_oob_tcp_msg_t* msg, struct mca_oob_tcp_pee
  *  @retval count      Number of elements in iovec array.
  */
 
-int mca_oob_tcp_msg_copy(mca_oob_tcp_msg_t* msg, const struct iovec* iov, int count)
+int mca_oob_tcp_msg_copy(mca_oob_tcp_msg_t* msg, struct iovec* iov, int count)
 {
     int i;
-    const struct iovec *src = msg->msg_rwiov;
-    const struct iovec *dst = iov;
+    struct iovec *src = msg->msg_rwiov;
+    struct iovec *dst = iov;
     unsigned char* src_ptr = (unsigned char*)src->iov_base;
     size_t src_len = src->iov_len;
     int src_cnt = 0;
@@ -204,7 +204,7 @@ int mca_oob_tcp_msg_copy(mca_oob_tcp_msg_t* msg, const struct iovec* iov, int co
  *  Note - this routine requires the caller to be holding the module lock.
  */
 
-mca_oob_tcp_msg_t* mca_oob_tcp_msg_match_recv(const ompi_process_name_t* name, int tag)
+mca_oob_tcp_msg_t* mca_oob_tcp_msg_match_recv(ompi_process_name_t* name, int tag)
 {
     mca_oob_tcp_msg_t* msg;
     for(msg =  (mca_oob_tcp_msg_t*) ompi_list_get_first(&mca_oob_tcp_component.tcp_msg_recv);
@@ -230,7 +230,7 @@ mca_oob_tcp_msg_t* mca_oob_tcp_msg_match_recv(const ompi_process_name_t* name, i
  *  Note - this routine requires the caller to be holding the module lock.
  */
                                                                                                                     
-mca_oob_tcp_msg_t* mca_oob_tcp_msg_match_post(const ompi_process_name_t* name, int tag, bool peek)
+mca_oob_tcp_msg_t* mca_oob_tcp_msg_match_post(ompi_process_name_t* name, int tag, bool peek)
 {
     mca_oob_tcp_msg_t* msg;
     for(msg =  (mca_oob_tcp_msg_t*) ompi_list_get_first(&mca_oob_tcp_component.tcp_msg_post);

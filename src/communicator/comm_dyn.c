@@ -13,6 +13,7 @@
 #include "proc/proc.h"
 #include "threads/mutex.h"
 #include "util/bit_ops.h"
+#include "util/pack.h"
 #include "include/constants.h"
 #include "mca/pcm/pcm.h"
 #include "mca/pml/pml.h"
@@ -29,8 +30,8 @@ int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
     int namebuflen, rnamebuflen;
     char *namebuf=NULL, *rnamebuf=NULL;
 
-    struct iovec smsg[2], rmsg[2];
-    mca_oob_base_type_t otype[2];
+    ompi_buffer_t sbuf;
+    ompi_buffer_t rbuf;
     ompi_communicator_t *newcomp=MPI_COMM_NULL;
     ompi_proc_t **rprocs=NULL;
     ompi_group_t *group=comm->c_local_group;
@@ -50,30 +51,28 @@ int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
         ompi_proc_get_namebuf_by_proc (group->grp_proc_pointers,
                                        size, &namebuf, &namebuflen);
 
-        smsg[0].iov_base = &size;
-        smsg[0].iov_len  = sizeof(int);
-        otype[0]         = MCA_OOB_BASE_INT32;
-
-        smsg[1].iov_base = &namebuflen;
-        smsg[1].iov_len  = sizeof(int);
-        otype[1]         = MCA_OOB_BASE_INT32;
-
-        rmsg[0].iov_base = &rsize;
-        rmsg[0].iov_len  = sizeof(int);
-        otype[0]         = MCA_OOB_BASE_INT32;
-        
-        rmsg[1].iov_base = &rnamebuflen;
-        rmsg[1].iov_len  = sizeof(int);
-        otype[1]         = MCA_OOB_BASE_INT32;
+        ompi_buffer_init(&sbuf, 128);
+        ompi_pack(sbuf, &size, 1, OMPI_INT32);
+        ompi_pack(sbuf, &namebuflen, 1, OMPI_INT32);
+        ompi_pack(sbuf, &rsize, 1, OMPI_INT32);
+        ompi_pack(sbuf, &rnamebuflen, 1, OMPI_INT32);
 
         if ( send_first ) {
-            rc = mca_oob_send_hton (rport, smsg, otype, 2, 0, 0);
-            rc = mca_oob_recv_ntoh (rport, rmsg, otype, 2, 0, 0);
+            rc = mca_oob_send_packed(rport, sbuf, 0, 0);
+            rc = mca_oob_recv_packed (rport, &rbuf, NULL);
         }
         else {
-            rc = mca_oob_recv_ntoh (rport, rmsg, otype, 2, 0, 0);
-            rc = mca_oob_send_hton (rport, smsg, otype, 2, 0, 0);
+            rc = mca_oob_recv_packed(rport, &rbuf, NULL);
+            rc = mca_oob_send_packed(rport, sbuf, 0, 0);
         }
+
+        ompi_unpack(rbuf, &size, 1, OMPI_INT32);
+        ompi_unpack(rbuf, &namebuflen, 1, OMPI_INT32);
+        ompi_unpack(rbuf, &rsize, 1, OMPI_INT32);
+        ompi_unpack(rbuf, &rnamebuflen, 1, OMPI_INT32);
+
+        ompi_buffer_free(sbuf);
+        ompi_buffer_free(rbuf);
     }
 
     /* bcast the information to all processes in the local comm */
@@ -93,20 +92,24 @@ int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
 
     if ( rank == root ) {
         /* Exchange list of processes in the groups */
-        smsg[0].iov_base = namebuf;
-        smsg[0].iov_len  = namebuflen;
         
-        rmsg[0].iov_base = rnamebuf;
-        rmsg[0].iov_len  = rnamebuflen;
+        
+        ompi_buffer_init(&sbuf, 128);
+        ompi_pack(sbuf, namebuf, namebuflen, OMPI_BYTE);
         
         if ( send_first ) {
-            rc = mca_oob_send (rport, smsg, 1, 0, 0);
-            rc = mca_oob_recv (rport, rmsg, 1, 0, 0);
+            rc = mca_oob_send_packed(rport, sbuf, 0, 0);
+            rc = mca_oob_recv_packed (rport, &rbuf, NULL);
         }
         else {
-            rc = mca_oob_recv (rport, rmsg, 1, 0, 0);
-            rc = mca_oob_send (rport, smsg, 1, 0, 0);
+            rc = mca_oob_recv_packed(rport, &rbuf, NULL);
+            rc = mca_oob_send_packed(rport, sbuf, 0, 0);
         }
+
+        ompi_unpack(rbuf, rnamebuf, rnamebuflen, OMPI_BYTE);
+
+        ompi_buffer_free(sbuf);
+        ompi_buffer_free(rbuf);
     }
     
     /* bcast list of processes to all procs in local group 
@@ -211,41 +214,41 @@ ompi_process_name_t *ompi_comm_get_rport (ompi_process_name_t *port, int send_fi
 {
     int namebuflen, rc;
     char *namebuf=NULL;
-
-    struct iovec msg;
-    mca_oob_base_type_t otype;
     ompi_proc_t **rproc;
     ompi_process_name_t *rport;
     
 
     if ( send_first ) {
+        ompi_buffer_t sbuf;
         ompi_proc_get_namebuf_by_proc(&proc, 1, &namebuf, &namebuflen );
-        msg.iov_base = &namebuflen;
-        msg.iov_len  = sizeof(int);
-        otype         = MCA_OOB_BASE_INT32;
-        rc = mca_oob_send_hton (port, &msg, &otype, 1, 0, 0);
 
-        msg.iov_base = namebuf;
-        msg.iov_len  = namebuflen;
-        rc = mca_oob_send (rport, &msg, 1, 0, 0);
+        ompi_buffer_init(&sbuf, sizeof(int));
+        ompi_pack(sbuf, &namebuflen, 1, OMPI_INT32);
+        rc = mca_oob_send_packed(port, sbuf, 0, 0);
+        ompi_buffer_free(sbuf);
+
+        ompi_buffer_init(&sbuf, namebuflen);
+        ompi_pack(sbuf, namebuf, namebuflen, OMPI_BYTE);
+        rc = mca_oob_send_packed(port, sbuf, 0, 0);
+        ompi_buffer_free(sbuf);
 
         ompi_proc_namebuf_returnbuf (namebuf);
         rport = port;
     }
     else {
-        msg.iov_base = &namebuflen;
-        msg.iov_len  = sizeof(int);
-        otype        = MCA_OOB_BASE_INT32;
-        rc = mca_oob_recv_ntoh(MCA_OOB_NAME_ANY, &msg, &otype, 1, 0, 0);
+        ompi_buffer_t rbuf;
+        rc = mca_oob_recv_packed(MCA_OOB_NAME_ANY, &rbuf, NULL);
+        ompi_unpack(rbuf, &namebuflen, 1, OMPI_INT32);
+        ompi_buffer_free(rbuf);
 
         namebuf = (char *) malloc (namebuflen);
         if ( NULL != namebuf ) {
             return NULL;
         }
 
-        msg.iov_base = namebuf;
-        msg.iov_len  = namebuflen;
-        rc = mca_oob_recv (MCA_OOB_NAME_ANY, &msg, 1, 0, 0);
+        rc = mca_oob_recv_packed(MCA_OOB_NAME_ANY, &rbuf, NULL);
+        ompi_unpack(rbuf, namebuf, namebuflen, OMPI_BYTE);
+        ompi_buffer_free(rbuf);
 
         ompi_proc_get_proclist (namebuf, namebuflen, 1, &rproc);
         rport = &(rproc[0]->proc_name);

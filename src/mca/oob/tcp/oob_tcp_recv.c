@@ -14,13 +14,14 @@
  */
 int mca_oob_tcp_recv(
     ompi_process_name_t* peer, 
-    const struct iovec *iov, 
+    struct iovec *iov, 
     int count, 
-    int tag,
+    int* tagp,
     int flags)
 {
     mca_oob_tcp_msg_t *msg;
     int i, rc, size = 0;
+    int tag = (tagp != NULL) ? *tagp : MCA_OOB_TAG_ANY;
 
     /* lock the tcp struct */
     OMPI_THREAD_LOCK(&mca_oob_tcp_component.tcp_match_lock);
@@ -44,6 +45,9 @@ int mca_oob_tcp_recv(
         if(MCA_OOB_PEEK & flags) {
             OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_match_lock);
             return rc;
+        }
+        if(NULL != tagp) {
+            *tagp = ntohl(msg->msg_hdr.msg_tag);
         }
 
         /* otherwise dequeue the message and return to free list */
@@ -100,7 +104,7 @@ int mca_oob_tcp_recv(
  */
 int mca_oob_tcp_recv_nb(
     ompi_process_name_t* peer, 
-    const struct iovec* iov, 
+    struct iovec* iov, 
     int count,
     int tag,
     int flags, 
@@ -136,7 +140,7 @@ int mca_oob_tcp_recv_nb(
         /* otherwise dequeue the message and return to free list */
         ompi_list_remove_item(&mca_oob_tcp_component.tcp_msg_recv, (ompi_list_item_t *) msg);
         OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_match_lock);
-        cbfunc(rc, &msg->msg_peer, iov, count, tag, cbdata);
+        cbfunc(rc, &msg->msg_peer, iov, count, ntohl(msg->msg_hdr.msg_tag), cbdata);
         MCA_OOB_TCP_MSG_RETURN(msg);
         return 0;
     }
