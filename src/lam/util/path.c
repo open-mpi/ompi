@@ -6,15 +6,9 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <lam_config>
+#include "lam_config.h"
 #include "lam/util/argv.h"
 #include "lam/util/malloc.h"
-
-#if 0
-#include <args.h>
-#include <laminternal.h>
-#include <sfh.h>
-#endif
 
 /** @file **/
 
@@ -27,9 +21,16 @@
 #define PATHENVSEP  ':'
 #endif
 
-static void     path_env_load(char *, int *, char ***);
-static char     *path_access(char *, char *, int);
-static char     *list_env_get(char *, char **);
+/**
+ * Directory seperator
+ */
+
+#define STRDIR '/'
+#define STRSDIR "/"
+
+static void     path_env_load(char *path, int *pargc, char ***pargv);
+static char     *path_access(char *fname, char *path, int mode);
+static char     *list_env_get(char *var, char **list);
 
 /**
  *  Locates a file with certain permissions
@@ -51,30 +52,30 @@ static char     *list_env_get(char *, char **);
 char *
 lam_path_findv(char *fname, char **pathv, int mode, char **envv)
 {
-    char        *fullpath;  /* full pathname of search file */
-    char        *delimit;   /* ptr to first delimiter in prefix */
-    char        *env;       /* ptr to environment var */
-    char        *pfix;      /* prefix directory */
-    int         i;
-/*
- * If absolute path is given, return it without searching.
- */
-    if (*fname == STRDIR) {
+    char    *fullpath;  
+    char    *delimit;  
+    char    *env;     
+    char    *pfix;   
+    int     i;
+    /*
+     * If absolute path is given, return it without searching.
+     */
+    if (STRDIR == *fname) {
         return(path_access(fname, "", mode));
     }
-/*
- * Initialize.
- */
+    /*
+     * Initialize.
+     */
     fullpath = NULL;
     i = 0;
-/*
- * Consider each directory until the file is found.
- * Thus, the order of directories is important.
- */
+    /*
+     * Consider each directory until the file is found.
+     * Thus, the order of directories is important.
+     */
     while (pathv[i] && !fullpath) {
-/*
- * Replace environment variable at the head of the string.
- */
+        /*
+         * Replace environment variable at the head of the string.
+         */
         if ('$' == *pathv[i]) {
             delimit = strchr(pathv[i], STRDIR);
             if (delimit) {
@@ -89,7 +90,7 @@ lam_path_findv(char *fname, char **pathv, int mode, char **envv)
                     fullpath = path_access(fname, env, mode);
                 } else {
                     pfix = LAM_MALLOC((unsigned) strlen(env) + strlen(delimit) + 1);
-                    if (pfix == NULL){
+                    if (NULL == pfix){
                         return(0);
                     }
                     strcpy(pfix, env);
@@ -148,24 +149,24 @@ lam_path_find(char *fname, char **pathv, int mode)
 char *
 lam_path_env_findv(char *fname, int mode, char **envv, char *wrkdir)
 {
-    char        **dirv;     /* search directories */
-    char        *fullpath;  /* full pathname */
-    char        *path;      /* value of PATH */
-    int         dirc;       /* # search directories */
-    int         i;
-    int                 found_dot = 0;
-/*
- * Set the local search paths.
- */
+    char    **dirv;     
+    char    *fullpath; 
+    char    *path;    
+    int     dirc;    
+    int     i;
+    int     found_dot = 0;
+    /*
+     * Set the local search paths.
+     */
     dirc = 0;
     dirv = NULL;
 
     if ((path = list_env_get("PATH", envv))) {
         path_env_load(path, &dirc, &dirv);
     }
-/*
- * Replace the "." path by the working directory.
- */
+    /*
+     * Replace the "." path by the working directory.
+     */
     for (i = 0; i < dirc; ++i) {
         if ((0 == strcmp(dirv[i], ".")) && wrkdir) {
             found_dot = 1;
@@ -176,10 +177,10 @@ lam_path_env_findv(char *fname, int mode, char **envv, char *wrkdir)
             }
         }
     }
-/*
- * If we didn't find "." in the path and we have a wrkdir, append
- * the wrkdir to the end of the path
- */
+    /*
+     * If we didn't find "." in the path and we have a wrkdir, append
+     * the wrkdir to the end of the path
+     */
     if (!found_dot && wrkdir) {
         lam_argv_add(&dirc, &dirv, wrkdir);
     }
@@ -202,8 +203,8 @@ lam_path_env_findv(char *fname, int mode, char **envv, char *wrkdir)
 char *
 lam_path_env_find(char *fname, int mode)
 {
-    char        *cwd;
-    char        *r;
+    char    *cwd;
+    char    *r;
 
     cwd = getworkdir();
     r = lam_path_env_findv(fname, mode, 0, cwd);
@@ -216,20 +217,22 @@ lam_path_env_find(char *fname, int mode)
 /**
  *  Forms a complete pathname and checks it for existance and permissions
  *            
- *  @param fname File name
- *  @param path  Path prefix 
- *  @param mode  Target permissions which must be satisfied
+ *  Accepts:
+ *      -fname File name
+ *      -path  Path prefix 
+ *      -mode  Target permissions which must be satisfied
  *
- *  @retval Full pathname of located file Success
- *  @retval NULL Failure
+ *  Returns:
+ *      -Full pathname of located file Success
+ *      -NULL Failure
  */
 static char *
 path_access(char *fname, char *path, int mode)
 {
-    char        *fullpath;  /* full pathname of search file */
-/*
- * Allocate space for the full pathname.
- */
+    char    *fullpath;  /* full pathname of search file */
+    /*
+     * Allocate space for the full pathname.
+     */
     fullpath = LAM_MALLOC((unsigned) strlen(path) + strlen(fname) + 2);
     if (NULL == fullpath){
         return(0);
@@ -242,10 +245,10 @@ path_access(char *fname, char *path, int mode)
     } else {
         strcpy(fullpath, fname);
     }
-/*
- * Get status on the full path name to check for existance.
- * Then check the permissions.
- */
+    /*
+     * Get status on the full path name to check for existance.
+     * Then check the permissions.
+     */
     if (access(fullpath, mode)) {
         LAM_FREE(fullpath);
         fullpath = 0;
@@ -258,32 +261,33 @@ path_access(char *fname, char *path, int mode)
  *
  *  Loads argument array with $PATH env var.
  *
- *  @param path String contiaing the $PATH
- *  @param argc Pointer to argc
- *  @param argv Pointer to list of argv
+ *  Accepts
+ *      -path String contiaing the $PATH
+ *      -argc Pointer to argc
+ *      -argv Pointer to list of argv
  *
  */
 static void
 path_env_load(char *path, int *pargc, char ***pargv)
 {
-    char        *p;     /* favourite pointer */
-    char        saved;      /* saved character */
+    char    *p;     /* favourite pointer */
+    char    saved;      /* saved character */
 
     if (NULL == path) {
         *pargc =  0;
     return;
     }
-/*
- * Loop through the paths (delimited by PATHENVSEP), adding each one to argv.
- */
+    /*
+     * Loop through the paths (delimited by PATHENVSEP), adding each one to argv.
+     */
     while (*path) {
-/*
- * Locate the delimiter.
- */
+       /*
+        * Locate the delimiter.
+        */
         for (p = path; *p && (*p != PATHENVSEP); ++p);
-/*
- * Add the path.
- */
+        /*
+         * Add the path.
+         */
         if (p != path) {
             saved = *p;
             *p = '\0';
@@ -291,9 +295,9 @@ path_env_load(char *path, int *pargc, char ***pargv)
             *p = saved;
             path = p;
         }
-/*
- * Skip past the delimiter, if present.
- */
+        /*
+         * Skip past the delimiter, if present.
+         */
         if (*path) {
             ++path;
         }
@@ -303,16 +307,18 @@ path_env_load(char *path, int *pargc, char ***pargv)
 /**
  *  Gets value of variable in list or environment. Looks in the list first
  *
- *  @param var  String variable
- *  @param list Pointer to environment list
+ *  Accepts:
+ *      -var  String variable
+ *      -list Pointer to environment list
  *
- *  @retval List Pointer to environment list Success
- *  @retval NULL Failure
+ *  Returns:
+ *      -List Pointer to environment list Success
+ *      -NULL Failure
  */
 static char *
 list_env_get(char *var, char **list)
 {
-    int         n;
+    int n;
 
     if (list) {
         n = strlen(var);
