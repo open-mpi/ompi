@@ -205,7 +205,7 @@ static int ompi_ifinit(void)
         strcpy(intf.if_name, ifr->ifr_name);
         intf.if_flags = ifr->ifr_flags;
 
-#if defined(__APPLE__)
+#ifndef SIOCGIFINDEX
         intf.if_index = ompi_list_get_size(&ompi_if_list)+1;
 #else
         if(ioctl(sd, SIOCGIFINDEX, ifr) < 0) {
@@ -219,7 +219,7 @@ static int ompi_ifinit(void)
 #else
         intf.if_index = -1;
 #endif
-#endif /* __APPLE__ */
+#endif /* SIOCGIFINDEX */
 
         if(ioctl(sd, SIOCGIFADDR, ifr) < 0) {
             ompi_output(0, "ompi_ifinit: ioctl(SIOCGIFADDR) failed with errno=%d", errno);
