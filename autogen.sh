@@ -501,13 +501,13 @@ EOF
 
                 pd_get_ver="../../../../config/ompi_get_version.sh"
                 pd_ver="`sh $pd_get_ver $pd_ver_file --all`"
-                pd_ver_full="`echo $pd_ver | cut -d: -f1`"
-                pd_ver_major="`echo $pd_ver | cut -d: -f2`"
-                pd_ver_minor="`echo $pd_ver | cut -d: -f3`"
-                pd_ver_release="`echo $pd_ver | cut -d: -f4`"
-                pd_ver_alpha="`echo $pd_ver | cut -d: -f5`"
-                pd_ver_beta="`echo $pd_ver | cut -d: -f6`"
-                pd_ver_svn="`echo $pd_ver | cut -d: -f7`"
+                pd_ver_full="`echo $pd_ver | awk '{ print $1 }'`"
+                pd_ver_major="`echo $pd_ver | awk '{ print $2 }'`"
+                pd_ver_minor="`echo $pd_ver | awk '{ print $3 }'`"
+                pd_ver_release="`echo $pd_ver | awk '{ print $4 }'`"
+                pd_ver_alpha="`echo $pd_ver | awk '{ print $5 }'`"
+                pd_ver_beta="`echo $pd_ver | awk '{ print $6 }'`"
+                pd_ver_svn="`echo $pd_ver | awk '{ print $7 }'`"
                 cat >> $pd_list_file <<EOF
 
 MCA_${pd_component_type}_NO_CONFIGURE_SUBDIRS="$pd_dir \$MCA_${pd_component_type}_NO_CONFIGURE_SUBDIRS"
