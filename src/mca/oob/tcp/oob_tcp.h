@@ -31,7 +31,7 @@ extern "C" {
 int mca_oob_tcp_open(void);
 int mca_oob_tcp_close(void);
 mca_oob_t* mca_oob_tcp_init(bool *allow_multi_user_threads, bool *have_hidden_threads);
-int mca_oob_tcp_finalize(void);
+int mca_oob_tcp_finalize(mca_oob_t*);
 
 /**
  * Convert process name from network to host byte order.

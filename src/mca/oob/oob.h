@@ -14,6 +14,19 @@
 #include "include/types.h"
 #include "mca/mca.h"
 #include "mca/oob/base/base.h"
+
+struct mca_oob_1_0_0_t;
+
+/**
+ * Convenience Typedef
+ */
+typedef struct mca_oob_1_0_0_t mca_oob_1_0_0_t;
+/**
+ * Convenience typedef
+ */
+typedef struct mca_oob_1_0_0_t mca_oob_t;
+
+
 /********
  * NOTE: these are functions and prototypes for the use of the modules
  *       and components. 
@@ -109,6 +122,11 @@ typedef int (*mca_oob_base_module_recv_nb_fn_t)(
     void* cbdata);
 
 /**
+ * OOB finalize function
+ */
+typedef int (*mca_oob_base_module_finalize_fn_t)(mca_oob_t*);
+
+/**
  * OOB Module
  */
 struct mca_oob_1_0_0_t {
@@ -116,16 +134,8 @@ struct mca_oob_1_0_0_t {
     mca_oob_base_module_recv_fn_t     oob_recv;
     mca_oob_base_module_send_nb_fn_t  oob_send_nb;
     mca_oob_base_module_recv_nb_fn_t  oob_recv_nb;
+    mca_oob_base_module_finalize_fn_t oob_finalize;
 };
-/**
- * Convenience Typedef
- */
-typedef struct mca_oob_1_0_0_t mca_oob_1_0_0_t;
-/**
- * Convenience typedef
- */
-typedef struct mca_oob_1_0_0_t mca_oob_t;
-
 /**
  * OOB Component
  */
@@ -134,20 +144,14 @@ typedef mca_oob_t* (*mca_oob_base_component_init_fn_t)(
     bool *have_hidden_threads);
 
 /**
- * OOB finalize function
- */
-typedef int (*mca_oob_base_component_finalize_fn_t)(void);
-
-/**
  * the standard component data structure
  */
 struct mca_oob_base_component_1_0_0_t {
    mca_base_component_t oob_version;
    mca_base_component_data_1_0_0_t oob_data;
-
    mca_oob_base_component_init_fn_t oob_init;
-   mca_oob_base_component_finalize_fn_t oob_finalize;
 };
+
 /**
  * Convenience Typedef
  */
