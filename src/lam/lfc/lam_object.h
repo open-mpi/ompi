@@ -152,8 +152,7 @@ struct lam_object_t {
  * @return              Pointer to the object 
  */
 static inline lam_object_t *lam_new(size_t size,
-                                    lam_class_info_t *
-                                    class_info)
+                                    lam_class_info_t *class_info)
 {
     lam_object_t *obj = (lam_object_t *) malloc(size);
     if (NULL != obj) {
