@@ -1,15 +1,21 @@
 /*
  * $HEADER$
  */
+#include "ompi_config.h"
 #include <stdio.h>
 #include <string.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+#ifdef HAVE_LIBGEN_H
 #include <libgen.h>
+#endif
 #include <stdlib.h>
+#ifdef HAVE_PWD_H
 #include <pwd.h>
+#endif
 #include <sys/stat.h>
 
-#include "ompi_config.h"
 
 #include "include/constants.h"
 #include "util/output.h"

@@ -1,3 +1,4 @@
+#include "ompi_config.h"
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>

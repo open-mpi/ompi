@@ -1,3 +1,4 @@
+#include "ompi_config.h"
 #include "request/grequest.h"
 
 

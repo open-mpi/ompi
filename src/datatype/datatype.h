@@ -12,9 +12,15 @@
 #define DATATYPE_H_HAS_BEEN_INCLUDED
 
 #include "ompi_config.h"
+#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_UIO_H
 #include <sys/uio.h>
+#endif
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #include <string.h>
 #include "include/constants.h"
 #include "class/ompi_object.h"

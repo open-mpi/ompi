@@ -2,15 +2,21 @@
  * $HEADER$
  */
 
+#include "ompi_config.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+#ifdef HAVE_LIBGEN_H
 #include <libgen.h>
+#endif
+#ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
+#endif
 #include <sys/stat.h>
 
-#include "ompi_config.h"
 #include "support.h"
 #include "include/constants.h"
 #include "util/sys_info.h"

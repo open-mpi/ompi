@@ -2,6 +2,7 @@
  * $HEADER$
  */
 
+#include "ompi_config.h"
 #include "group/group.h"
 #include "include/constants.h"
 

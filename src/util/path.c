@@ -4,11 +4,13 @@
 
 /** @file **/
 
+#include "ompi_config.h"
 #include <stdlib.h>
 #include <string.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 
-#include "ompi_config.h"
 #include "util/path.h"
 #include "util/argv.h"
 

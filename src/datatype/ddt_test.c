@@ -1,10 +1,13 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 
+#include "ompi_config.h"
 #include "datatype.h"
 #include "datatype_internal.h"
 #include <time.h>
 #include <stdlib.h>
+#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
+#endif
 #include <time.h>
 
 #define TIMER_DATA_TYPE struct timeval

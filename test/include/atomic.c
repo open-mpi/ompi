@@ -1,6 +1,9 @@
+#include "ompi_config.h"
 #include <assert.h>
 #include <getopt.h>
+#ifdef HAVE_PTHREAD_H
 #include <pthread.h>
+#endif
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>

@@ -15,8 +15,12 @@
 #include "mca/ns/ns.h"
 #include "mca/pcm/pcm.h"
 
+#ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
+#endif
+#ifdef HAVE_NETDB_H
 #include <netdb.h>
+#endif
 
 /**
  * Spawn Handle

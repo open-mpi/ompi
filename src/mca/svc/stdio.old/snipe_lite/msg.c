@@ -33,6 +33,7 @@
 
 */
 
+#include "ompi_config.h"
 #include "msgbuf.h"
 #include "msg.h"
 #ifdef WIN32

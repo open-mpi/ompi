@@ -3,6 +3,7 @@
 /*
  *HEADER$
  */
+#include "ompi_config.h"
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/errno.h>

@@ -2,6 +2,7 @@
  * $HEADER$
  */
 
+#include "ompi_config.h"
 #include "include/constants.h"
 #include "mca/allocator/bucket/allocator_bucket_alloc.h"
 /**

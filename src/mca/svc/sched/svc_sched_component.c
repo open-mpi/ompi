@@ -1,3 +1,4 @@
+#include "ompi_config.h"
 #include "svc_sched.h"
 #include "util/proc_info.h"
 

@@ -13,7 +13,9 @@
 
 #include "ompi_config.h"
 
+#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
+#endif
 
 /** typedef for callback function used in \c ompi_rte_wait_cb */
 typedef void (*ompi_rte_wait_fn_t)(pid_t wpid, int status, void *data);

@@ -6,10 +6,16 @@
 
 #include <assert.h>
 #include <errno.h>
+#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
+#endif
+#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
+#endif
 #include <signal.h>
+#ifdef HAVE_SYS_WAIT_H
 #include <sys/wait.h>
+#endif
 
 #include "runtime/ompi_rte_wait.h"
 #include "class/ompi_object.h"

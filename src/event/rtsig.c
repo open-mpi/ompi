@@ -3,7 +3,9 @@
 /* Enable F_SETSIG and F_SETOWN */
 #define _GNU_SOURCE
 
+#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
+#endif
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #else
@@ -21,7 +23,9 @@
 #ifndef HAVE_WORKING_RTSIG
 #include <sys/stat.h>
 #endif
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 
 #define EVLIST_X_NORT	0x1000	/* Skip RT signals (internal) */
 

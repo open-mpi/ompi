@@ -2,7 +2,9 @@
  * $HEADER$
  */
 
+#ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
+#endif
 #include <stdlib.h>
 
 #ifndef OMPI_UNIVERSE_H

@@ -18,7 +18,9 @@
 
 
 #if OMPI_HAVE_POSIX_THREADS
+#ifdef HAVE_PTHREAD_H
 #include <pthread.h>
+#endif
 #endif
 
 #include "class/ompi_object.h"

@@ -1,4 +1,5 @@
 
+#include "ompi_config.h"
 #include <stdio.h>
 #include <math.h>
 #include <sys/time.h>

@@ -4,6 +4,7 @@
  * $HEADER$
  */
 
+#include "ompi_config.h"
 #include <string.h>
 #include "util/output.h"
 #include "util/if.h"

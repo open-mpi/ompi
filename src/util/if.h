@@ -6,8 +6,12 @@
 #ifndef _OMPI_IF_UTIL_
 #define _OMPI_IF_UTIL_
 
+#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
+#endif
 
 /**
  *  Lookup an interface by name and return its primary address.

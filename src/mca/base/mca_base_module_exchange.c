@@ -2,8 +2,8 @@
  * $HEADER$
  */
 
-#include <string.h>
 #include "ompi_config.h"
+#include <string.h>
 #include "class/ompi_hash_table.h"
 #include "threads/condition.h"
 #include "util/proc_info.h"

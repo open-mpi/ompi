@@ -2,9 +2,7 @@
  * $HEADER$
  */
 
-#ifdef HAVE_CONFIG_H
 #include "ompi_config.h"
-#endif
 
 #include "mutex.h"
 #include "condition.h"

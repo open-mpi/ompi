@@ -1,5 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 
+#include "ompi_config.h"
 #include "datatype.h"
 
 int ompi_ddt_create_struct( int count, int* pBlockLength, long* pDisp,

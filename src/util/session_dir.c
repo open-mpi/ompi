@@ -9,24 +9,44 @@
 #include "ompi_config.h"
 
 #include <stdio.h>
+#ifdef HAVE_PWD_H
 #include <pwd.h>
+#endif
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef HAVE_LIBGEN_H
 #include <libgen.h>
+#endif
+#ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
+#endif
+#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
+#endif
 #include <sys/stat.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #include <errno.h>
+#ifdef HAVE_DIRENT_H
 #include <dirent.h>
+#endif
 
 /*
+#ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
-#include <netdb.h>      MAXHOSTNAMELEN in Solaris
+#endif
+#ifdef HAVE_NETDB_H
+#include <netdb.h>
+#endif
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #include <errno.h>
+#ifdef HAVE_DIRENT_H
 #include <dirent.h>
+#endif
    
 #include <ompi_debug.h>
 #include <ompi_internal.h>

@@ -6,9 +6,13 @@
 
 #include <stdio.h>
 #include <errno.h>
+#ifdef HAVE_SYS_WAIT_H
 #include <sys/wait.h>
+#endif
 #include <stdlib.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 
 #include "include/constants.h"
 #include "util/few.h"

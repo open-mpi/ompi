@@ -1,3 +1,4 @@
+#include "ompi_config.h"
 #include "ptl_prof.h"
 
 static int ptl_prof_add_procs_fn( struct mca_ptl_base_module_t* ptl,

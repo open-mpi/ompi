@@ -3,7 +3,9 @@
  */
 #include "ompi_config.h"
 #include <stdio.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #include <string.h>
 
 #include "mpi.h"

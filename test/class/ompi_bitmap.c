@@ -2,6 +2,7 @@
  * Testcase for bitmap
  */
 
+#include "ompi_config.h"
 #include <stdio.h>
 #include "support.h"
 #include "class/ompi_bitmap.h"

@@ -8,7 +8,9 @@
 #ifdef __WINDOWS__
 #include <windows.h>
 #elif OMPI_HAVE_POSIX_THREADS
+#ifdef HAVE_PTHREAD_H
 #include <pthread.h>
+#endif
 #endif
 
 #include "class/ompi_object.h"

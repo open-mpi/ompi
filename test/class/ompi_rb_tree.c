@@ -2,7 +2,10 @@
  * $HEADER$
  */
 
+#include "ompi_config.h"
+#ifdef HAVE_STDINT_H
 #include <stdint.h>
+#endif
 #include <string.h>
 #include "support.h"
 #include "class/ompi_rb_tree.h"

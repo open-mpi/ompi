@@ -6,6 +6,7 @@
  * This test is intended to test the ompi_value_array class
  */
 
+#include "ompi_config.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>

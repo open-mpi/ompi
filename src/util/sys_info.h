@@ -11,8 +11,12 @@
  */
 
 
+#ifdef HAVE_SYS_UTSNAME_H
 #include <sys/utsname.h>
+#endif
+#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
+#endif
 
 /**
  * System information structure

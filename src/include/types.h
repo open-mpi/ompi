@@ -5,9 +5,15 @@
 #ifndef OMPI_TYPES_H
 #define OMPI_TYPES_H
 
+#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
+#endif
+#ifdef HAVE_SYS_SELECT_H
 #include <sys/select.h>
+#endif
 #include "ompi_config.h"
 
 /*

@@ -2,12 +2,12 @@
  * $HEADER$
  */
 
+#include "ompi_config.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 
 #include "support.h"
-#include "ompi_config.h"
 #include "include/constants.h"
 #include "util/argv.h"
 

@@ -4,7 +4,9 @@
 #ifndef OMPI_CONDITION_PTHREAD_H
 #define OMPI_CONDITION_PTHREAD_H
 
+#ifdef HAVE_PTHREAD_H
 #include <pthread.h>
+#endif
 #include "threads/mutex.h"
 
 struct ompi_condition_t {

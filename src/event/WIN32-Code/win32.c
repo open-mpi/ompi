@@ -28,14 +28,20 @@
 #include "config.h"
 
 #include <windows.h>
+#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_QUEUE_H
 #include <sys/queue.h>
+#endif
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#ifdef HAVE_ERR_H
 #include <err.h>
+#endif
 
 #ifdef USE_LOG
 #include "log.h"

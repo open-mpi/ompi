@@ -1,6 +1,7 @@
 /*
  * $HEADER$
  */
+#include "ompi_config.h"
 #include <string.h>
 #include "mca/pml/base/pml_base_sendreq.h"
 

@@ -2,14 +2,18 @@
  * $HEADER$
  */
 
+#include "ompi_config.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
+#endif
+#ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
+#endif
 
 
-#include "ompi_config.h"
 #include "util/sys_info.h"
 #include "support.h"
 #include "../src/util/bufpack.h"
