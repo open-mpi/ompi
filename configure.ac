@@ -1044,10 +1044,30 @@ AC_DEFINE_UNQUOTED(OMPI_HAVE_UNDERSCORE_VA_COPY, $OMPI_HAVE_UNDERSCORE_VA_COPY,
 AC_CHECK_DECLS(__func__)
 
 #
-# Solaris has sched_yield in -lrt
+# Solaris has sched_yield in -lrt.  Can't use a simple AC_CHECK_LIB,
+# though, because Linux has sched_yield in glic (so linking in librt
+# will "find" sched_yield, even though it would have been found anyway
+# -- so -lrt would be useless [and potentially harmful?] in this
+# case).
 # 
 
-AC_CHECK_LIB([rt], [sched_yield])
+AC_MSG_CHECKING([if we need -lrt for sched_yield])
+AC_LINK_IFELSE(AC_LANG_PROGRAM([[extern char *sched_yield;]],
+[[char *bar = sched_yield;]]),
+[MSG=no],[MSG=not_found])
+if test "$MSG" = "not_found"; then
+    LIBS_save="$LIBS"
+    LIBS="$LIBS -lrt"
+    AC_LINK_IFELSE(AC_LANG_PROGRAM([[extern char *sched_yield;]],
+[[char *bar = sched_yield;]]),
+[MSG=yes],[MSG=not_found])
+    if test "$MSG" = "not_found"; then
+        LIBS="$LIBS_save"
+        AC_MSG_RESULT([cannot find sched_yield])
+        AC_MSG_ERROR([Cannot continue])
+    fi
+fi
+AC_MSG_RESULT([$MSG])
 
 #
 # See if we need the math library explicitly linked in
