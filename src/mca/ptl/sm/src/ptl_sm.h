@@ -111,8 +111,8 @@ struct mca_ptl_sm_component_t {
     int *list_smp_procs_different_base_addr;  /* number of procs with different 
                                             base shared memory virtual 
                                             address as this process */
-    int my_smp_rank;    /**< My SMP process rank.  Used for accessing
-                         *   SMP specfic data structures. */
+    uint32_t my_smp_rank;    /**< My SMP process rank.  Used for accessing
+			      *   SMP specfic data structures. */
     ompi_free_list_t sm_first_frags;    /**< free list of sm first
                                              fragments */
     ompi_free_list_t sm_second_frags;   /**< free list of sm second
