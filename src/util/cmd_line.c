@@ -367,6 +367,7 @@ char *ompi_cmd_line_get_usage_msg(ompi_cmd_line_t *cmd)
     argv = NULL;
     ret = NULL;
     line = NULL;
+    temp = NULL;
     for (item = ompi_list_get_first(&cmd->lcl_options); 
          ompi_list_get_end(&cmd->lcl_options) != item;
          item = ompi_list_get_next(item)) {
@@ -428,10 +429,10 @@ char *ompi_cmd_line_get_usage_msg(ompi_cmd_line_t *cmd)
             ompi_argv_append(&argc, &argv, line);
         }
     }
-    if (line != NULL) {
+    if (NULL != line) {
         free(line);
     }
-    if (argv != NULL) {
+    if (NULL != argv) {
         ret = ompi_argv_join(argv, '\n');
         ompi_argv_free(argv);
     }
