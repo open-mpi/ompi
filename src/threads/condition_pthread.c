@@ -14,8 +14,8 @@
 
 #include "ompi_config.h"
 
-#include "mutex.h"
-#include "condition.h"
+#include "threads/mutex.h"
+#include "threads/condition.h"
 
 #if OMPI_HAVE_POSIX_THREADS
 

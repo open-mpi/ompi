@@ -39,7 +39,7 @@
 #include "class/ompi_object.h"
 #include "mca/ns/ns.h"
 
-#include "bufpack.h"
+#include "util/bufpack.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

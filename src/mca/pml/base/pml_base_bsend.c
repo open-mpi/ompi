@@ -21,7 +21,7 @@
 #include "mca/pml/pml.h"
 #include "mca/pml/base/pml_base_request.h"
 #include "mca/pml/base/pml_base_sendreq.h"
-#include "pml_base_bsend.h"
+#include "mca/pml/base/pml_base_bsend.h"
  
 static ompi_mutex_t     mca_pml_bsend_mutex;      /* lock for thread safety */
 static ompi_condition_t mca_pml_bsend_condition;  /* condition variable to block on detach */

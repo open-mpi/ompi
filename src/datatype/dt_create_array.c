@@ -14,7 +14,7 @@
  */
 
 #include "ompi_config.h"
-#include "datatype.h"
+#include "datatype/datatype.h"
 
 int ompi_ddt_create_subarray( int ndims, const int* pSizes, const int* pSubSizes, const int* pStarts,
                              int order, const dt_desc_t* oldType, dt_desc_t** newType )

@@ -14,7 +14,7 @@
  */
 
 #include "ompi_config.h"
-#include "datatype.h"
+#include "datatype/datatype.h"
 
 /* Open questions ...
  *  - how to improuve the handling of these vectors (creating a temporary datatype
