@@ -43,7 +43,7 @@
 static FILE *test_out=NULL;
 
 /* function for exercising the registry */
-void thread_fn(ompi_object_t *object);
+void *thread_fn(ompi_object_t *object);
 
 #if !OMPI_HAVE_THREAD_SUPPORT
 
@@ -65,6 +65,10 @@ int main(int argc, char **argv)
 {
     int i, rc, num_threads;
     ompi_thread_t **threads;
+    union {
+        int ivalue;
+        void *vvalue;
+    } value;
 
     /* protect against sizeof mismatches */
     if (sizeof(i) > sizeof (void*)) {
@@ -110,7 +114,8 @@ int main(int argc, char **argv)
             return ORTE_ERR_OUT_OF_RESOURCE;
         }
         threads[i]->t_run = thread_fn;
-        threads[i]->t_arg = (void*)i;
+        value.ivalue = i;
+        threads[i]->t_arg = value.vvalue;
     }
     
     /* run the threads */
@@ -131,8 +136,9 @@ int main(int argc, char **argv)
     return(0);
 }
 
-void thread_fn(ompi_object_t *obj)
+void *thread_fn(ompi_object_t *obj)
 {
+    return NULL;
 }
 
 #endif /* OMPI_HAVE_THREAD_SUPPORT */
