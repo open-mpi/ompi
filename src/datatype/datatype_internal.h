@@ -74,7 +74,7 @@
 /* If the number of basic datatype should change update
  * DT_MAX_PREDEFINED in datatype.h
  */
-#if DT_MAX_PREDEFINED <= DT_2DOUBLE_COMPLEX
+#if DT_MAX_PREDEFINED <= DT_UNAVAILABLE
 #error DT_MAX_PREDEFINED should be updated
 #endif  /* safe check for max predefined datatypes. */
 
