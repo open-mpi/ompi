@@ -63,8 +63,8 @@ extern struct ompi_event_list ompi_signalqueue;
 
 static short ompi_evsigcaught[NSIG];
 static int ompi_needrecalc;
-static int ompi_event_signal_pipe[2];
 #if 0
+static int ompi_event_signal_pipe[2];
 static ompi_event_t ompi_event_signal_pipe_event;
 #endif
 volatile sig_atomic_t ompi_event_signal_count = 0;
