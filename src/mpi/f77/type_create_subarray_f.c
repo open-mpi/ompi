@@ -46,20 +46,35 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_CREATE_SUBARRAY,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-void mpi_type_create_subarray_f(MPI_Fint *ndims, MPI_Fint *size_array, MPI_Fint *subsize_array, MPI_Fint *start_array, MPI_Fint *order, MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr)
+void mpi_type_create_subarray_f(MPI_Fint *ndims, MPI_Fint *size_array,
+				MPI_Fint *subsize_array, 
+				MPI_Fint *start_array, MPI_Fint *order,
+				MPI_Fint *oldtype, MPI_Fint *newtype, 
+				MPI_Fint *ierr)
 {
     MPI_Datatype c_old;
     MPI_Datatype c_new;
+    OMPI_ARRAY_NAME_DECL(size_array);
+    OMPI_ARRAY_NAME_DECL(subsize_array);
+    OMPI_ARRAY_NAME_DECL(start_array);
 
     c_old = MPI_Type_f2c(*oldtype);
 
-    *ierr = MPI_Type_create_subarray(*ndims,
-                                     size_array,
-                                     subsize_array,
-                                     start_array,
-                                     *order, c_old, &c_new);
+    OMPI_ARRAY_FINT_2_INT(size_array, *ndims);
+    OMPI_ARRAY_FINT_2_INT(subsize_array, *ndims);
+    OMPI_ARRAY_FINT_2_INT(start_array, *ndims);
+
+    *ierr = OMPI_INT_2_FINT(MPI_Type_create_subarray(OMPI_FINT_2_INT(*ndims),
+				     OMPI_ARRAY_NAME_CONVERT(size_array),
+                                     OMPI_ARRAY_NAME_CONVERT(subsize_array),
+                                     OMPI_ARRAY_NAME_CONVERT(start_array),
+                                     *order, c_old, &c_new));
 
     if (MPI_SUCCESS == *ierr) {
         *newtype = MPI_Type_c2f(c_new);
     }
+
+    OMPI_ARRAY_FINT_2_INT_CLEANUP(size_array);
+    OMPI_ARRAY_FINT_2_INT_CLEANUP(subsize_array);
+    OMPI_ARRAY_FINT_2_INT_CLEANUP(start_array);
 }

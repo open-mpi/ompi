@@ -46,11 +46,14 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_CREATE_F90_COMPLEX,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-void mpi_type_create_f90_complex_f(MPI_Fint *p, MPI_Fint *r, MPI_Fint *newtype, MPI_Fint *ierr)
+void mpi_type_create_f90_complex_f(MPI_Fint *p, MPI_Fint *r,
+				   MPI_Fint *newtype, MPI_Fint *ierr)
 {
     MPI_Datatype c_newtype = MPI_Type_f2c(*newtype);
 
-    *ierr = MPI_Type_create_f90_complex(*p, *r, &c_newtype);
+    *ierr = OMPI_INT_2_FINT(MPI_Type_create_f90_complex(OMPI_FINT_2_INT(*p), 
+							OMPI_FINT_2_INT(*r),
+							&c_newtype));
 
     if (MPI_SUCCESS == *ierr) {
       *newtype = MPI_Type_c2f (c_newtype); 

@@ -46,10 +46,26 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_GET_ENVELOPE,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-void mpi_type_get_envelope_f(MPI_Fint *type, MPI_Fint *num_integers, MPI_Fint *num_addresses, MPI_Fint *num_datatypes, MPI_Fint *combiner, MPI_Fint *ierr)
+void mpi_type_get_envelope_f(MPI_Fint *type, MPI_Fint *num_integers,
+			     MPI_Fint *num_addresses, 
+			     MPI_Fint *num_datatypes, MPI_Fint *combiner,
+			     MPI_Fint *ierr)
 {
     MPI_Datatype c_type = MPI_Type_f2c(*type);
+    OMPI_SINGLE_NAME_DECL(num_integers);
+    OMPI_SINGLE_NAME_DECL(num_addresses);
+    OMPI_SINGLE_NAME_DECL(num_datatypes);
+    OMPI_SINGLE_NAME_DECL(combiner);
 
-    *ierr = MPI_Type_get_envelope(c_type, num_integers, num_addresses, 
-                                  num_datatypes, combiner);
+    *ierr = OMPI_INT_2_FINT(MPI_Type_get_envelope(c_type,
+				 OMPI_SINGLE_NAME_CONVERT(num_integers), 
+				 OMPI_SINGLE_NAME_CONVERT(num_addresses), 
+				 OMPI_SINGLE_NAME_CONVERT(num_datatypes), 
+				 OMPI_SINGLE_NAME_CONVERT(combiner)));
+
+    OMPI_SINGLE_INT_2_FINT(num_integers);
+    OMPI_SINGLE_INT_2_FINT(num_addresses);
+    OMPI_SINGLE_INT_2_FINT(num_datatypes);
+    OMPI_SINGLE_INT_2_FINT(combiner);
+
 }
