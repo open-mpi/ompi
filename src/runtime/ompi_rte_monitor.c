@@ -71,6 +71,8 @@ int ompi_rte_register(void)
 
         ompi_buffer_free(buffer);
         return rc;
+    } else if (ompi_rte_debug_flag) {
+	ompi_output(0, "rte_register: oob does NOT have seed");
     }
     return OMPI_SUCCESS;
 }

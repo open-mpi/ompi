@@ -27,55 +27,77 @@ extern "C" {
 
     extern int ompi_rte_debug_flag;
 
-  /**
-   * Initialize the Open MPI support code
-   *
-   * This function initializes the Open MPI support code, including
-   * malloc debugging and threads.  It should be called exactly once
-   * by every application that utilizes any of the Open MPI support
-   * libraries (including MPI applications, mpirun, and mpicc).
-   *
-   * This function should be called before \code ompi_rte_init, if
-   * \code ompi_rte_init is to be called.
-   */
-  int ompi_init(int argc, char* argv[]);
+    /* Define the info structure underlying the Open MPI universe system
+    * instanced in ompi_rte_init.c */
 
-  /**
-   * Finalize the Open MPI support code
-   *
-   * Finalize the Open MPI support code.  Any function calling \code
-   * ompi_init should call \code ompi_finalize.  This function should
-   * be called after \code ompi_rte_finalize, if \code
-   * ompi_rte_finalize is called.
-   */
-  int ompi_finalize(void);
+    struct ompi_universe_t {
+	char *name;
+	char *host;
+	char *uid;
+	bool persistence;
+	char *scope;
+	bool silent_mode;
+	bool script_mode;
+	bool web_server;
+	char *socket_contact_info;
+	char *oob_contact_info;
+	bool console_connected;
+	char *scriptfile;
+	char *hostfile;
+    };
+    typedef struct ompi_universe_t ompi_universe_t;
 
-  /**
-   * Abort the current application with a pretty-print error message
-   *
-   * Aborts currently running application with \code abort(), pretty
-   * printing an error message if possible.  Error message should be
-   * specified using the standard \code printf() format.
-   */
-  int ompi_abort(int status, char *fmt, ...);
+    extern ompi_universe_t ompi_universe_info;
+
+    /**
+     * Initialize the Open MPI support code
+     *
+     * This function initializes the Open MPI support code, including
+     * malloc debugging and threads.  It should be called exactly once
+     * by every application that utilizes any of the Open MPI support
+     * libraries (including MPI applications, mpirun, and mpicc).
+     *
+     * This function should be called before \code ompi_rte_init, if
+     * \code ompi_rte_init is to be called.
+     */
+    int ompi_init(int argc, char* argv[]);
+
+    /**
+     * Finalize the Open MPI support code
+     *
+     * Finalize the Open MPI support code.  Any function calling \code
+     * ompi_init should call \code ompi_finalize.  This function should
+     * be called after \code ompi_rte_finalize, if \code
+     * ompi_rte_finalize is called.
+     */
+    int ompi_finalize(void);
+
+    /**
+     * Abort the current application with a pretty-print error message
+     *
+     * Aborts currently running application with \code abort(), pretty
+     * printing an error message if possible.  Error message should be
+     * specified using the standard \code printf() format.
+     */
+    int ompi_abort(int status, char *fmt, ...);
 
 
-  /**
-   * Initialize the Open MPI run time environment
-   *
-   * Initlize the Open MPI run time environment, including process
-   * control and out of band messaging.  This function should be
-   * called exactly once, after \code ompi_init.  This function should
-   * be called by every application using the RTE interface, including
-   * MPI applications and mpirun.
-   */
-  int ompi_rte_init(bool *allow_multi_user_threads, bool *have_hidden_threads);
+    /**
+     * Initialize the Open MPI run time environment
+     *
+     * Initlize the Open MPI run time environment, including process
+     * control and out of band messaging.  This function should be
+     * called exactly once, after \code ompi_init.  This function should
+     * be called by every application using the RTE interface, including
+     * MPI applications and mpirun.
+     */
+    int ompi_rte_init(bool *allow_multi_user_threads, bool *have_hidden_threads);
 
-  /**
-   * Finalize the Open MPI run time environment
-   *
-   */
-  int ompi_rte_finalize(void);
+    /**
+     * Finalize the Open MPI run time environment
+     *
+     */
+    int ompi_rte_finalize(void);
 
    
     /**
@@ -145,14 +167,14 @@ extern "C" {
 
     /**
      * Setup process info in the registry.
-    */
+     */
 
     int ompi_rte_register(void);
 
     /**
      * Monitor a job - currently implemented by monitoring process 
      * registration/deregistration to/from the GPR.
-    */
+     */
     
     int ompi_rte_notify(mca_ns_base_jobid_t job, int num_procs);
     int ompi_rte_monitor(void);
@@ -214,6 +236,39 @@ extern "C" {
      * @retval None
      */
     void ompi_rte_cmd_line_setup(ompi_cmd_line_t *cmd_line);
+
+
+    /**
+     * Parse the rte command line for options
+     *
+     * Parses the specified command line for rte/seed daemon specific options.
+     * Fills the relevant global structures with the information obtained.
+     *
+     * @param cmd_line Command line to be parsed.
+     * @retval None
+     */
+    void ompi_rte_parse_seed_cmd_line(ompi_cmd_line_t *cmd_line);
+
+    /**
+     * Check for universe existence
+     *
+     * Checks to see if a specified universe exists. If so, attempts
+     * to connect to verify that the universe is accepting connections.
+     *
+     * @param None Reads everything from the process_info and system_info
+     * structures
+     *
+     * @retval OMPI_SUCCESS Universe found and connection accepted
+     * @retval OMPI_NO_CONNECTION_ALLOWED Universe found, but not persistent or
+     * restricted to local scope
+     * @retval OMPI_CONNECTION_FAILED Universe found, but connection attempt
+     * failed. Probably caused by unclean termination of the universe seed
+     * daemon.
+     * @retval OMPI_CONNECTION_REFUSED Universe found and contact made, but
+     * universe refused to allow connection.
+     */
+    int ompi_rte_universe_exists(char *host, char *name, char *tmpdir,
+				 char *oob_contact_inf);
 
 #ifdef __cplusplus
 }

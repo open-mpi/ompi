@@ -26,7 +26,10 @@ enum {
     OMPI_ERR_NOT_FOUND = -16,
     OMPI_ERR_BUFFER = -17, /* equivalent to MPI_ERR_BUFFER */
     OMPI_ERR_REQUEST = -18, /* equivalent to MPI_ERR_REQUEST */
-    OMPI_EXISTS = -20  /* indicates that the specified object already exists */
+    OMPI_EXISTS = -19,  /* indicates that the specified object already exists */
+    OMPI_ERR_NO_CONNECTION_ALLOWED = -20, /* indicates that the receiving process does not allow connections */
+    OMPI_ERR_CONNECTION_REFUSED = -21, /* contact made with process, but it refuses any further communication */
+    OMPI_ERR_CONNECTION_FAILED = -22  /* message sent, but delivery failed */
 };
 
 #endif /* OMPI_CONSTANTS_H */
