@@ -36,7 +36,8 @@ else
         OMPI_VERSION="${OMPI_VERSION}svn"
     elif test "`expr $OMPI_SVN_VERSION \> 0`" = "1"; then
         if test -d .svn; then
-            ver="r`svn info . | grep Revision | cut -d\  -f 2`"
+   #         ver="r`svn info . | grep Revision | cut -d\  -f 2`"
+            ver="r`svnversion .`"
         else
             ver="svn`date '+%m%d%Y'`"
         fi
