@@ -37,13 +37,13 @@ lam_fflags_save="$FFLAGS"
 AC_PROG_F77
 FFLAGS="$lam_fflags_save"
 if test -z "$F77"; then
-    AC_MSG_WARN([*** Could not find Fortran 77 compiler])
+    AC_MSG_WARN([*** Fortran 77 bindings disabled (could not find compiler)])
     LAM_WANT_F77_BINDINGS=0
     F77="none"
     BASEF77="none"
 else
     if test "$LAM_WANT_F77_BINDINGS" = "0" ; then
-        AC_MSG_WARN([*** Fortran 77 disabled by user])
+        AC_MSG_WARN([*** Fortran 77 bindings disabled by user])
         LAM_WANT_F77_BINDINGS=0
         BASEF77="`basename $F77`"
     else
