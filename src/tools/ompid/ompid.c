@@ -27,18 +27,16 @@
 bool pretty = true;
 ompi_cmd_line_t *cmd_line = NULL;
 
-const char *type_all = "all";
+const char *type_all  = "all";
 const char *type_ompi = "ompi";
 const char *type_base = "base";
 
 int main(int argc, char *argv[])
 {
   int ret = 0;
-  bool acted = false;
 
-  bool multi_thread = false;
-  bool hidden_thread = false;
-
+  bool multi_thread   = false;
+  bool hidden_thread  = false;
 
   /* Start OMPI process */
 
@@ -56,26 +54,15 @@ int main(int argc, char *argv[])
 #endif
     exit(ret);
   }
-  ompi_cmd_line_make_opt(cmd_line, 'v', "version", 2, 
-                        "Show version of Open MPI or a component");
+  ompi_cmd_line_make_opt(cmd_line, 'v', "version", 0, 
+                        "Show version of this application");
   ompi_cmd_line_make_opt(cmd_line, 'h', "help", 0, 
                         "Show this help message");
-
-  /* Call some useless functions in order to guarantee to link in some
-   * global variables.  Only check the return value so that the
-   * compiler doesn't optimize out the useless function.
-   */
-
-  if (OMPI_SUCCESS != ompi_comm_link_function()) {
-    /* Stop .. or I'll say stop again! */
-    ++ret;
-  } else {
-    --ret;
-  }
+  ompi_cmd_line_make_opt(cmd_line, 'seed', "seed", 0, 
+                        "Set the daemon seed to true.");
 
   /* Get MCA parameters, if any */
   
-  mca_base_open();
   mca_base_cmd_line_setup(cmd_line);
 
   /* Do the parsing */
@@ -84,6 +71,11 @@ int main(int argc, char *argv[])
       ompi_cmd_line_is_taken(cmd_line, "help") ){
 #if 1
     printf("...showing ompid help message...\n");
+    printf("\nThe following optional arguments are available: --v --h --seeded\n");
+    printf("\t ompid --h      is used to display this information\n");
+    printf("\t ompid --v      is used to display the version of this application\n");
+    printf("\t ompid --seeded is used to start a daemon seed.\n");
+    printf("\n");
 #else
     show_help("ompid", "usage", NULL);
 #endif
@@ -92,52 +84,49 @@ int main(int argc, char *argv[])
 
   mca_base_cmd_line_process_args(cmd_line);
 
+  if (OMPI_SUCCESS != (ret = mca_base_open())) {
+    /* JMS show_help */
+    printf("show_help: mca_base_open failed\n");
+    return ret;
+  }
+
  
   /* Execute the desired action(s) */
 
   if (ompi_cmd_line_is_taken(cmd_line, "version")) {
-    /*do_version(want_all, cmd_line);*/
-    acted = true;
+    printf ("ompid (OpenMpi Daemon) version: 0\n");
   }
  
+  /* If there is a seed argument, this is the magic
+   * seed daemon.
+   */
+  if ( ompi_cmd_line_is_taken(cmd_line, "seed") )
+      ompi_process_info.seed = true;
 
-  /* If no command line args are specified, show default set */
 
-  if (!acted) {
-    ;
-    /*ompid::show_ompi_version(ver_full);*/
-  }
-
-  /* before calling anything (like proc_info) we to call rte init */
-
+  /* before calling anything we to call rte init */
   if (OMPI_SUCCESS != ompi_rte_init(&multi_thread, &hidden_thread)) {
         printf("ompid: ompi_rte_init failed\n");
-        return ret;
+ 
+	/* Do a partial clean-up.  This needs to be reviewed
+	 * at a later date to make certain we are not 
+	 * missing soemthing
+	 */
+	ompi_rte_finalize();
+	ompi_cmd_line_free(cmd_line);
+	mca_base_close();
+
+        return 1;
   }
 
-
-  /* Set proc_info's seed to true.  This is the seed daemon. */
-  if ( ompi_proc_info () == MPI_SUCCESS ){
-    ompi_process_info.seed = true;
-  }
-  else {
-    /* Should probably git-up and die gracefully.
-     * Ask David what I should really do here...
-     */
-  }
-
-  /* Add in the calls to start up the RTE */
   
   /* Add in the calls to initialize the services */
 
-  /* Add the swection for the event loop... */
+  /* Add the section for the event loop... */
 
   /* All done */
 
   /* Close services */
-
- 
-  /*ompid::close_components(); */
 
   ompi_cmd_line_free(cmd_line);
   mca_base_close();
