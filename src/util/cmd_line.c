@@ -30,9 +30,11 @@ struct cmd_line_option_t {
     char *clo_description;
 };
 typedef struct cmd_line_option_t cmd_line_option_t;
+static void option_constructor(cmd_line_option_t *cmd);
+static void option_destructor(cmd_line_option_t *cmd);
 OBJ_CLASS_INSTANCE(cmd_line_option_t,
                    ompi_list_item_t,
-                   NULL, NULL);
+                   option_constructor, option_destructor);
 
 /*
  * An option that was used in the argv that was parsed
@@ -59,9 +61,11 @@ struct cmd_line_param_t {
     char **clp_argv;
 };
 typedef struct cmd_line_param_t cmd_line_param_t;
+static void param_constructor(cmd_line_param_t *cmd);
+static void param_destructor(cmd_line_param_t *cmd);
 OBJ_CLASS_INSTANCE(cmd_line_param_t,
                    ompi_list_item_t,
-                   NULL, NULL);
+                   param_constructor, param_destructor);
 
 /*
  * Instantiate the ompi_cmd_line_t class
@@ -133,19 +137,13 @@ int ompi_cmd_line_make_opt3(ompi_cmd_line_t *cmd, char short_name,
     option->clo_short_name = short_name;
     if (NULL != sd_name) {
         option->clo_single_dash_name = strdup(sd_name);
-    } else {
-        option->clo_single_dash_name = NULL;
     }
     if (NULL != long_name) {
         option->clo_long_name = strdup(long_name);
-    } else {
-        option->clo_long_name = NULL;
     }
     option->clo_num_params = num_params;
     if (NULL != desc) {
         option->clo_description = strdup(desc);
-    } else {
-        option->clo_description = NULL;
     }
 
     /* Append the item, serializing thread access */
@@ -264,8 +262,6 @@ int ompi_cmd_line_parse(ompi_cmd_line_t *cmd, bool ignore_unknown,
                 }
                 param->clp_arg = cmd->lcl_argv[i];
                 param->clp_option = option;
-                param->clp_argc = 0;
-                param->clp_argv = NULL;
 
                 /* If we have any parameters to this option, suck down
                    tokens starting one beyond the token that we just
@@ -380,10 +376,12 @@ char *ompi_cmd_line_get_usage_msg(ompi_cmd_line_t *cmd)
             /* See how much space we need */
 
             len = 5 + strlen(option->clo_description);
-            if ('\0' != option->clo_short_name)
+            if ('\0' != option->clo_short_name) {
                 len += 5;
-            if (NULL != option->clo_long_name)
+            }
+            if (NULL != option->clo_long_name) {
                 len += strlen(option->clo_long_name);
+            }
             len += option->clo_num_params * 10;
 
             /* Do we have enough already? */
@@ -590,6 +588,47 @@ int ompi_cmd_line_get_tail(ompi_cmd_line_t *cmd, int *tailc, char ***tailv)
  * Static functions
  **************************************************************************/
 
+static void option_constructor(cmd_line_option_t *o)
+{
+    o->clo_short_name = '\0';
+    o->clo_single_dash_name = NULL;
+    o->clo_long_name = NULL;
+    o->clo_num_params = 0;
+    o->clo_description = NULL;
+}
+
+
+static void option_destructor(cmd_line_option_t *o)
+{
+    if (NULL != o->clo_single_dash_name) {
+        free(o->clo_single_dash_name);
+    }
+    if (NULL != o->clo_long_name) {
+        free(o->clo_long_name);
+    }
+    if (NULL != o->clo_description) {
+        free(o->clo_description);
+    }
+}
+
+
+static void param_constructor(cmd_line_param_t *p)
+{
+    p->clp_arg = NULL;
+    p->clp_option = NULL;
+    p->clp_argc = 0;
+    p->clp_argv = NULL;
+}
+
+
+static void param_destructor(cmd_line_param_t *p)
+{
+    if (NULL != p->clp_argv) {
+        ompi_argv_free(p->clp_argv);
+    }
+}
+
+
 static void cmd_line_constructor(ompi_cmd_line_t *cmd)
 {
     /* Initialize the mutex.  Since we're creating (and therefore the
@@ -615,7 +654,6 @@ static void cmd_line_constructor(ompi_cmd_line_t *cmd)
 static void cmd_line_destructor(ompi_cmd_line_t *cmd)
 {
     ompi_list_item_t *item;
-    cmd_line_option_t *option;
 
     /* Free the contents of the options list (do not free the list
        itself; it was not allocated from the heap) */
@@ -623,11 +661,6 @@ static void cmd_line_destructor(ompi_cmd_line_t *cmd)
     for (item = ompi_list_remove_first(&cmd->lcl_options);
          NULL != item;
          item = ompi_list_remove_first(&cmd->lcl_options)) {
-        option = (cmd_line_option_t *) item;
-        if (NULL != option->clo_long_name)
-            free(option->clo_long_name);
-        if (NULL != option->clo_description)
-            free(option->clo_description);
         OBJ_RELEASE(item);
     }
 
