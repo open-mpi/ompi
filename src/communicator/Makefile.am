@@ -14,7 +14,7 @@ headers = \
 
 libcommunicator_la_SOURCES = \
         $(headers) \
-        ompi_comm_init.c \
+        comm_init.c \
 	comm.c \
 	comm_cid.c
 
