@@ -34,12 +34,11 @@
 #include "util/os_path.h"
 #include "util/os_create_dirpath.h"
 
-static char *ompi_get_prefix(char *prefix);
-static int ompi_check_dir(char *directory);
+static int ompi_check_dir(bool create, char *directory);
 
 #define OMPI_DEFAULT_TMPDIR "tmp"
 
-static int ompi_check_dir(char *directory)
+static int ompi_check_dir(bool create, char *directory)
 {
     struct stat buf;
     mode_t my_mode = S_IRWXU;  /* at the least, I need to be able to do anything */
@@ -50,10 +49,13 @@ static int ompi_check_dir(char *directory)
             return(LAM_SUCCESS);
         }
     }
-    return(ompi_os_create_dirpath(directory, mode_all)); /* try to create it, but ensure open to all */
+    if (create) {
+	return(ompi_os_create_dirpath(directory, mode_all)); /* try to create it, but ensure open to all */
+    }
+    return(LAM_ERROR);  /* couldn't find it, or don't have access rights, and not asked to create it */
 }
 
-static char *ompi_get_prefix(char *prefix)
+char *ompi_find_session_dir(bool create, char *prefix)
 {
     char *tmpprefix=NULL, *tmp=NULL;
     char *sessions=NULL;
@@ -62,7 +64,7 @@ static char *ompi_get_prefix(char *prefix)
 
     if (NULL != prefix) {
 	tmpprefix = strdup(ompi_os_path(false, prefix, sessions, NULL)); /* make sure it's an absolute pathname */
-	if (LAM_SUCCESS == ompi_check_dir(tmpprefix)) { /* check for existence and access, or create it */
+	if (LAM_SUCCESS == ompi_check_dir(create, tmpprefix)) { /* check for existence and access, or create it */
 	    free(sessions);
 	    return(tmpprefix);
 	}
@@ -74,7 +76,7 @@ static char *ompi_get_prefix(char *prefix)
     if (NULL != getenv("LAM_PREFIX_ENV")) {
 	tmp = strdup(getenv("LAM_PREFIX_ENV"));
 	tmpprefix = strdup(ompi_os_path(false, tmp, sessions, NULL));
-	if (LAM_SUCCESS == ompi_check_dir(tmpprefix)) { /* check for existence and access, or create it */
+	if (LAM_SUCCESS == ompi_check_dir(create, tmpprefix)) { /* check for existence and access, or create it */
 	    free(tmp);
 	    free(sessions);
 	    return(tmpprefix);
@@ -90,7 +92,7 @@ static char *ompi_get_prefix(char *prefix)
     if (NULL != getenv("TMPDIR")) {
 	tmp = strdup(getenv("TMPDIR"));
 	tmpprefix = strdup(ompi_os_path(false, tmp, sessions, NULL));
-	if (LAM_SUCCESS == ompi_check_dir(tmpprefix)) { /* check for existence and access, or create it */
+	if (LAM_SUCCESS == ompi_check_dir(create, tmpprefix)) { /* check for existence and access, or create it */
 	    free(tmp);
 	    free(sessions);
 	    return(tmpprefix);
@@ -106,7 +108,7 @@ static char *ompi_get_prefix(char *prefix)
     if (NULL != getenv("TMP")) {
 	tmp = strdup(getenv("TMP"));
 	tmpprefix = strdup(ompi_os_path(false, tmp, sessions, NULL));
-	if (LAM_SUCCESS == ompi_check_dir(tmpprefix)) { /* check for existence and access, or create it */
+	if (LAM_SUCCESS == ompi_check_dir(create, tmpprefix)) { /* check for existence and access, or create it */
 	    free(tmp);
 	    free(sessions);
 	    return(tmpprefix);
@@ -122,7 +124,7 @@ static char *ompi_get_prefix(char *prefix)
     if (NULL != getenv("HOME")) {
 	tmp = strdup(getenv("HOME"));
 	tmpprefix = strdup(ompi_os_path(false, tmp, sessions, NULL));
-	if (LAM_SUCCESS == ompi_check_dir(tmpprefix)) { /* check for existence and access, or create it */
+	if (LAM_SUCCESS == ompi_check_dir(create, tmpprefix)) { /* check for existence and access, or create it */
 	    free(tmp);
 	    free(sessions);
 	    return(tmpprefix);
@@ -137,7 +139,7 @@ static char *ompi_get_prefix(char *prefix)
 
     tmp = strdup(OMPI_DEFAULT_TMPDIR);
     tmpprefix = strdup(ompi_os_path(false, tmp, sessions, NULL));
-    if (LAM_SUCCESS == ompi_check_dir(tmpprefix)) { /* check for existence and access, or create it */
+    if (LAM_SUCCESS == ompi_check_dir(create, tmpprefix)) { /* check for existence and access, or create it */
 	free(tmp);
 	free(sessions);
 	return(tmpprefix);
@@ -159,14 +161,8 @@ static char *ompi_get_prefix(char *prefix)
 
 /*
  *  ompi_session_dir_init
- *
- *  Function: - set up tmpdir for Open MPI to store stuff
- *      - creates directory, with "good" perms
- *  Accepts:  - prefix to use, if provided by user
- *  Returns:  - LAM_SUCCESS or LAM_ERROR
- *      Notes:           - directory in form of:
- *                         <prefix>/openmpi-sessions/uid
- */
+*/
+
 int ompi_session_dir_init(char *prefix, char *universe)
 {
 
@@ -180,7 +176,7 @@ int ompi_session_dir_init(char *prefix, char *universe)
     }
 
     /* locate the ompi-sessions directory - create it if it doesn't exist */
-    if (NULL == (tmpprefix = ompi_get_prefix(prefix))) { /* couldn't find nor create the sessions directory */
+    if (NULL == (tmpprefix = ompi_find_session_dir(true, prefix))) { /* couldn't find nor create the sessions directory */
 	return (LAM_ERROR);
     }
 

@@ -3,7 +3,7 @@
  */
 /** @file:
  *
- * Creates Open MPI session directory.
+ * Find and/or create Open MPI session directory.
  *
  * The ompi_session_dir_init() function creates a temporary directory that is
  * used by the Open MPI system for storing system-critical information. For a given
@@ -83,3 +83,25 @@
  */
 
 int ompi_session_dir_init(char *prefix, char *universe);
+
+/** The ompi_find_session_dir() function searches either a user-specified location, or a
+ * set of standard locations that might contain the "openmpi-sessions" directory. Once
+ * found, the function returns the pathname of that directory. The function calls the
+ * ompi_check_dir() function.
+ */
+
+/** @param create A boolean variable that indicates whether or not to create the "openmpi-sessions"
+ * directory. If set to "false", the function only checks to see if an existing directory
+ * can be found. This is typically used to locate an already existing universe for reconnection
+ * purposes. If set to "true", then the function creates the "openmpi-sessions" directory, if possible.
+ * @param prefix A string variable indicating where the user stipulated the "openmpi-sessions" directory
+ * should be placed. A value of "NULL" indicates that the user specified no location - hence, the
+ * function explores a range of "standard" locations.
+ *
+ * @retval *path A pointer to a string containing the pathname of the "openmpi-sessions" directory.
+ * A "NULL" value is returned if the directory cannot be found (if create is "false") or created (if
+ * create is "true").
+ */
+
+char *ompi_find_session_dir(bool create, char *prefix);
+

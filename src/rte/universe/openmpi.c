@@ -9,15 +9,17 @@ openmpi.c - main program for spawning persistent universe.
 
 */
 
-#include "lam_config.h"
-
 #include <stdio.h>
 #include <string.h>
+#include <pwd.h>
+
+#include "lam_config.h"
 
 #include "util/sys_info.h"
 #include "util/cmd_line.h"
 
 #include "rte/universe/os_session_dir.h"
+#include "rte/universe/ompi_init.h"
 #include "rte/universe/openmpi.h"
 
 /**
@@ -29,12 +31,18 @@ openmpi.c - main program for spawning persistent universe.
 * will be reported to user but will not terminate processing.
 */
 
-ompi_universe_t universe = {.name = NULL,
-			    .pid = -1,
-			    .session_file = NULL,
-                            .persistence = false,
-			    .web_server = false,
-			    .console_connected = false
+ompi_universe_t universe = {
+    /* .name =              */    NULL,
+    /* .host =              */    NULL,
+    /* .user_name =         */    NULL,
+    /* .user_id =           */    -1,
+    /* .pid =               */    -1,
+    /* .session_file =      */    NULL,
+    /* .persistence =       */    false,
+    /* .silent_mode =       */    false,
+    /* .script_mode =       */    false,
+    /* .web_server =        */    false,
+    /* .console_connected = */    false
 };
 
 
@@ -42,6 +50,11 @@ int main(int argc, char *argv[])
 {
     lam_cmd_line_t *cmd_line = NULL;
     char *tmpdir_option = NULL;
+    char *universe_option = NULL;
+    char *tmp, *universe_name, *remote_host, *remote_uid;
+    struct passwd *pwdent;
+
+    tmp = universe_name = remote_host = remote_uid = NULL;
 
     cmd_line = lam_cmd_line_create();
     if (NULL == cmd_line) {
@@ -57,6 +70,10 @@ int main(int argc, char *argv[])
 			  "Temp directory to be used by universe");
     lam_cmd_line_make_opt(cmd_line, 'w', "webserver", 1,
                           "Web server available");
+    lam_cmd_line_make_opt(cmd_line, 's', "silent", 1,
+                          "No console prompt - operate silently");
+    lam_cmd_line_make_opt(cmd_line, 'f', "script", 1,
+                          "Read commands from script file");
 
     if ((LAM_SUCCESS != lam_cmd_line_parse(cmd_line, false, argc, argv)) ||
         lam_cmd_line_is_taken(cmd_line, "help") || 
@@ -72,9 +89,23 @@ int main(int argc, char *argv[])
 	    fprintf(stderr, "error retrieving universe name - please report error to bugs@open-mpi.org\n");
 		exit(1);
         }
-        universe.name = strdup(lam_cmd_line_get_param(cmd_line, "universe", 0, 0));
+        universe_option = strdup(lam_cmd_line_get_param(cmd_line, "universe", 0, 0));
+
+	if (NULL != (tmp = strchr(universe_option, ':'))) { /* name contains remote host */
+	    /* get the host name, and the universe name separated */
+	    /* could be in form remote-uid@remote-host:universe */
+	    *tmp = '\0';
+	    tmp++;
+	    universe_name = strdup(tmp);
+	    if (NULL != (tmp = strchr(universe_option, '@'))) {  /* remote name includes remote uid */
+		*tmp = '\0';
+		tmp++;
+		remote_host = strdup(tmp);
+		remote_uid = strdup(universe_option);
+	    }
+	}
     } else {
-	universe.name = strdup("ompi-default-universe");
+	universe_name = strdup("default");
     }
 
     /* get the pid and store it for later use */
@@ -87,25 +118,39 @@ int main(int argc, char *argv[])
 	    exit(1);
 	}
 	tmpdir_option = strdup(lam_cmd_line_get_param(cmd_line, "tmpdir", 0, 0));
+    } else {
+	tmpdir_option = NULL;
     }
 
-    /* get the system information */
-    ompi_system_info.init = false;
-    ompi_sys_info();
-    if (!ompi_system_info.init) {
-	fprintf(stderr, "Couldn't get system information\n");
+    /* Store all the information in the Universe structure for later use */
+    universe.name = strdup(universe_name);
+    if (NULL != remote_host) {
+	universe.host = strdup(remote_host);
+    } else {
+	universe.host = (char *)malloc(OMPI_RIDICULOUS_NAMELEN);
+	if (NULL == universe.host) {
+	    fprintf(stderr, "openmpi(error): unable to get memory allocation - please report error to bugs@open-mpi.org\n");
+	    exit(1);
+	}
+	gethostname(universe.host, OMPI_RIDICULOUS_NAMELEN);
+    }
+
+    if (NULL != remote_uid) {
+	universe.user_name = strdup(remote_uid);
+    } else {   /* get the name of the user */
+	if ((pwdent = getpwuid(getuid())) != 0) {
+	    universe.user_name = strdup(pwdent->pw_name);
+	} else {
+	    universe.user_name = strdup("unknown");
+	}
+    }
+
+
+    /* initialize the Open MPI system */
+    if (LAM_ERROR == ompi_init(universe_name, tmpdir_option)) {
+	fprintf(stderr, "Unable to initialize system - please report error to bugs@open-mpi.org\n");
 	exit(1);
     }
 
-    /* create the session directory */
-    if (LAM_ERROR == ompi_session_dir_init(tmpdir_option, "test-universe")) {
-	fprintf(stderr, "error creating session directory - please report error to bugs@open-mpi.org");
-	exit(1);
-    }
-
-    /* store this session information */
-    /* first, check to see if we are rejoining an existing session */
-    /* yes, so read info from file */
-    /* no existing session, so create the file */
     return(0);
 }
