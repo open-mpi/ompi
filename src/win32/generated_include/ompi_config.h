@@ -548,6 +548,8 @@
    this to be _I32_MAX for now FIXME */
 #define OMPI_FORTRAN_HANDLE_MAX _I32_MAX
 
+#define OMPI_ASSEMBLY_ARCH OMPI_WINDOWS
+
 #define OMPI_WANT_MPI2_ONE_SIDED 1
 
 #include "ompi_config_bottom.h"
