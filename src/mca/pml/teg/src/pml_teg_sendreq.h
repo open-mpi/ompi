@@ -39,6 +39,9 @@
             OMPI_THREAD_UNLOCK(&ptl_base->ptl_cache_lock);                 \
             rc = OMPI_SUCCESS;                                             \
         } else if (ptl_base->ptl_cache_alloc < ptl_base->ptl_cache_size) { \
+            /*                                                             \
+             * allocate an additional request to the cache                 \
+            */                                                             \
             mca_ptl_base_module_t* ptl = ptl_base->ptl;                    \
             ompi_list_item_t* item;                                        \
             OMPI_FREE_LIST_WAIT(&mca_pml_teg.teg_send_requests, item, rc); \
