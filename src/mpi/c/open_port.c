@@ -9,6 +9,8 @@
 #include "info/info.h"
 #include "runtime/runtime.h"
 #include "communicator/communicator.h"
+#include "proc/proc.h"
+#include "mca/ns/base/base.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Open_port = PMPI_Open_port
@@ -23,6 +25,10 @@ static const char FUNC_NAME[] = "MPI_Open_port";
 
 int MPI_Open_port(MPI_Info info, char *port_name) 
 {
+    ompi_proc_t **myproc=NULL;
+    char *name=NULL;
+    size_t size;
+
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME); 
 
@@ -35,23 +41,25 @@ int MPI_Open_port(MPI_Info info, char *port_name)
     if ( MPI_INFO_NULL != info ) {
         /* in theory, they user might tell us here
            how to establish the address. Since our communication
-           is relying on OOB, we probably
-           won't use the info-object.
+           is relying on OOB, we probably won't use the info-object.
 
-           potential values defined in MPI-2:
-           - "ip_port" : value contains IP port number
+           Potential values defined in MPI-2:
+           - "ip_port"    : value contains IP port number
            - "ip_address" : value contains IP address
         */
     }
 
-    /* According to our current understanding, the port_name will
-       be the OOB-name. No real port has to be opne, since
-       OOB always accepts new connections (e.g. has a pending accept).
-       
-       memcpy ( port_name, oob-whatever-fcnt, strlen(oob-whatever-fctn));
+    /* The port_name is equal to the OOB-contact information. 
+       No real port has to be open, since OOB always accepts new 
+       connections (e.g. has a pending accept).
     */
+  
+    myproc = ompi_proc_self (&size);
+    name = ompi_name_server.get_proc_name_string (&(myproc[0]->proc_name));
+    strncpy (port_name, name, MPI_MAX_PORT_NAME);
 
-    /* This function is not yet implemented */
-
-    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER, FUNC_NAME);
+    free ( myproc );
+    free ( name );
+    
+    return MPI_SUCCESS;
 }

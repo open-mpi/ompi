@@ -30,12 +30,13 @@ int MPI_Close_port(char *port_name)
                                           FUNC_NAME);
     }
 
-    /* As far as I can see at the moment, this is an empty function.
-       Since we are relying on OOB, we did not allocate any 'address',
-       therefore we don't have to free an 'address'.
-    */
+    /* 
+     *  since the port_name is our own process_name_t structure,
+     *  we do not have to close anything or free a pointer.
+     *  This function is therefore just a dummy function
+     *  and fully implemented. I love these type functions,
+     *  we should have more of them :-). 
+     */
 
-    /* This function is not yet implemented */
-
-    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INTERN, FUNC_NAME);
+    return MPI_SUCCESS;
 }
