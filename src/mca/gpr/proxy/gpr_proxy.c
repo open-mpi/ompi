@@ -18,52 +18,6 @@
  * Implemented registry functions
  */
 
-int gpr_proxy_define_segment(char *segment)
-{
-    ompi_buffer_t cmd;
-    ompi_buffer_t answer;
-    mca_gpr_cmd_flag_t command;
-    int recv_tag;
-    int32_t response;
-
-    command = MCA_GPR_DEFINE_SEGMENT_CMD;
-    recv_tag = MCA_OOB_TAG_GPR;
-
-    if (OMPI_SUCCESS != ompi_buffer_init(&cmd, 0)) { /* got a problem */
-	return OMPI_ERROR;
-    }
-
-    if (OMPI_SUCCESS != ompi_pack(cmd, (void*)&command, 1, MCA_GPR_OOB_PACK_CMD)) {
-	return OMPI_ERROR;
-    }
-
-    if (OMPI_SUCCESS != ompi_pack(cmd, (void*)segment, 1, OMPI_STRING)) {
-	return OMPI_ERROR;
-    }
-
-    if (0 > mca_oob_send_packed(mca_gpr_my_replica, cmd, MCA_OOB_TAG_GPR, 0)) {
-	return OMPI_ERROR;
-    }
-
-    if (0 > mca_oob_recv_packed(mca_gpr_my_replica, &answer, &recv_tag)) {
-	return OMPI_ERROR;
-    }
-
-    if ((OMPI_SUCCESS != ompi_unpack(answer, &command, 1, MCA_GPR_OOB_PACK_CMD))
-	|| (MCA_GPR_DEFINE_SEGMENT_CMD != command)) {
-	ompi_buffer_free(answer);
-	return OMPI_ERROR;
-    }
-
-    if (OMPI_SUCCESS != ompi_unpack(answer, &response, 1, OMPI_INT32)) {
-	ompi_buffer_free(answer);
-	return OMPI_ERROR;
-    } else {
-	ompi_buffer_free(answer);
-	return (int)response;
-    }
-}
-
 
 int gpr_proxy_delete_segment(char *segment)
 {

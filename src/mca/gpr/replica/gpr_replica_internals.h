@@ -72,3 +72,5 @@ int gpr_replica_empty_segment(mca_gpr_registry_segment_t *seg);
 ompi_list_t *gpr_replica_get_key_list(char *segment, char **tokens);
 
 bool gpr_replica_check_key_list(ompi_registry_mode_t mode, ompi_list_t *key_list, mca_gpr_registry_core_t *entry);
+
+int gpr_replica_define_segment(char *segment);

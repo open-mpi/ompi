@@ -34,11 +34,6 @@ extern ompi_process_name_t *mca_gpr_my_replica;
 
 
 /*
- * Implementation of define_segment().
- */
-int gpr_proxy_define_segment(char *segment);
-
-/*
  * Implementation of delete_segment().
  */
  int gpr_proxy_delete_segment(char *segment);

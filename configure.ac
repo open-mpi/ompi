@@ -937,6 +937,7 @@ AC_CONFIG_FILES([
     test/support/Makefile
     test/class/Makefile
     test/mca/Makefile
+    test/mca/gpr/Makefile
     test/mca/oob/Makefile
     test/mca/ns/Makefile
     test/mca/llm/Makefile
@@ -945,6 +946,5 @@ AC_CONFIG_FILES([
     test/mca/pcm/base/Makefile
     test/threads/Makefile
     test/util/Makefile
-    test/rte/Makefile
 ])
 AC_OUTPUT

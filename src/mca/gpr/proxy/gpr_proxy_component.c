@@ -48,7 +48,6 @@ mca_gpr_base_component_t mca_gpr_proxy_component = {
 static mca_gpr_base_module_t mca_gpr_proxy = {
     gpr_proxy_get,
     gpr_proxy_put,
-    gpr_proxy_define_segment,
     gpr_proxy_delete_segment,
     gpr_proxy_subscribe,
     gpr_proxy_unsubscribe,
