@@ -17,7 +17,7 @@
 include $(top_srcdir)/config/Makefile.options
 
 SUBDIRS = config include etc src test
-EXTRA_DIST = README INSTALL VERSION Doxyfile LICENSE
+EXTRA_DIST = README INSTALL VERSION Doxyfile LICENSE README.alpha
 
 dist-hook:
 	csh config/distscript.csh $(PACKAGE)-$(OMPI_VERSION) $(OMPI_VERSION) $(OMPI_SVN_VERSION)
