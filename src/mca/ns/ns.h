@@ -33,7 +33,7 @@
  */
 #define OMPI_NS_CMP_CELLID     0x01
 #define OMPI_NS_CMP_JOBID      0x02
-#define OMPI_NS_CMP_PROCID     0x04
+#define OMPI_NS_CMP_VPID     0x04
 
 /*
  * general typedefs & structures
@@ -44,10 +44,29 @@ typedef uint8_t ompi_ns_cmp_bitmask_t;  /**< Bit mask for comparing process name
 struct ompi_process_name_t {
     ompi_process_id_t cellid;  /**< Cell number */
     ompi_process_id_t jobid; /**< Job number */
-    ompi_process_id_t procid;  /**< Process number */
+    ompi_process_id_t vpid;  /**< Process number */
 };
 typedef struct ompi_process_name_t ompi_process_name_t;
 
+/* constructor - used to initialize state of name instance */
+static void ompi_name_construct(ompi_process_name_t* name)
+{
+    name->cellid = 0;
+    name->jobid = 0;
+    name->vpid = 0;
+}
+
+/* destructor - used to free any resources held by instance */
+static void ompi_name_destructor(ompi_process_name_t* name)
+{
+}
+
+/* define instance of ompi_class_t */
+OBJ_CLASS_INSTANCE(
+		   ompi_process_name_t,   /* type name */
+		   ompi_object_t,         /* parent "class" name */
+		   ompi_name_construct,   /* constructor */
+		   ompi_name_destructor);  /* destructor */
 
 /*
  * Component functions - all MUST be provided!
@@ -70,7 +89,7 @@ typedef struct ompi_process_name_t ompi_process_name_t;
  * new_cellid = ompi_name_server.create_cellid()
  * @endcode
  */
-typedef ompi_process_id_t (*mca_ns_create_cellid_t)(void);
+typedef ompi_process_id_t (*mca_ns_create_cellid_fn_t)(void);
 
 /**
  * Create a new job id.
@@ -93,7 +112,7 @@ typedef ompi_process_id_t (*mca_ns_create_cellid_t)(void);
  * new_jobid = ompi_name_server.create_jobid()
  * @endcode
  */
-typedef ompi_process_id_t (*mca_ns_create_jobid_t)(void);
+typedef ompi_process_id_t (*mca_ns_create_jobid_fn_t)(void);
 
 /**
  * Obtain a single new process name.
@@ -107,33 +126,33 @@ typedef ompi_process_id_t (*mca_ns_create_jobid_t)(void);
  * can have the same process id if and only if they have different jobid's. However,
  * two processes in the same jobid cannot have the same process id, regardless
  * of whether or not they are in the same cell.
- * @param procid The process id for the name. Note that no check is made for uniqueness - 
+ * @param vpid The virtual process id for the name. Note that no check is made for uniqueness - 
  * the caller is responsible for ensuring that the requested name is, in fact, unique
- * by first requesting reservation of an appropriate range of process id's.
+ * by first requesting reservation of an appropriate range of virtual process id's.
  *
  * @retval *name Pointer to an ompi_process_name_t structure containing the name.
  * @retval NULL Indicates an error, probably due to inability to allocate memory for
  * the name structure.
  *
  * @code
- * new_name = ompi_name_server.create_process_name(cell, job);
+ * new_name = ompi_name_server.create_process_name(cell, job, vpid);
  * @endcode
  */
-typedef ompi_process_name_t* (*mca_ns_create_proc_name_t)(ompi_process_id_t cell, ompi_process_id_t job, ompi_process_id_t procid);
+typedef ompi_process_name_t* (*mca_ns_create_proc_name_fn_t)(ompi_process_id_t cell, ompi_process_id_t job, ompi_process_id_t vpid);
 
 
 /**
  * Reserve a range of process id's.
- * The reserve_range() function reserves a range of process id's for the given jobid.
+ * The reserve_range() function reserves a range of vpid's for the given jobid.
  * Note that the cellid does not factor into this request - jobid's span the entire universe,
  * hence the cell where the process is currently executing is irrelevant to this request.
  *
- * @param jobid The id of the job for which the process id's are to be reserved.
- * @param range The number of process id's to be reserved. The function will find the
+ * @param jobid The id of the job for which the vpid's are to be reserved.
+ * @param range The number of vpid's to be reserved. The function will find the
  * next available process id and assign range-number of sequential id's to the caller.
  * These id's will be reserved - i.e., they cannot be assigned to any subsequent caller.
  *
- * @retval startid The starting value of the reserved range of process id's. At this time,
+ * @retval startid The starting value of the reserved range of vpid's. At this time,
  * no means for returning an error condition is available. This will be rectified in the
  * near future.
  *
@@ -141,7 +160,7 @@ typedef ompi_process_name_t* (*mca_ns_create_proc_name_t)(ompi_process_id_t cell
  * starting_procid = ompi_name_server.reserve_range(jobid, range)
  * @endcode
  */
-typedef ompi_process_id_t (*mca_ns_reserve_range_t)(ompi_process_id_t job, ompi_process_id_t range);
+typedef ompi_process_id_t (*mca_ns_reserve_range_fn_t)(ompi_process_id_t job, ompi_process_id_t range);
 
 
 /**
@@ -166,7 +185,7 @@ typedef ompi_process_id_t (*mca_ns_reserve_range_t)(ompi_process_id_t job, ompi_
  *     }
  * @endcode
  */
-typedef int (*mca_ns_free_name_t)(ompi_process_name_t *name);
+typedef int (*mca_ns_free_name_fn_t)(ompi_process_name_t *name);
 
 /**
  * Get the process name as a character string.
@@ -174,7 +193,7 @@ typedef int (*mca_ns_free_name_t)(ompi_process_name_t *name);
  * character string representation. The string is created by expressing each
  * field in hexadecimal separated by periods, as follows:
  *
- * sprintf(string_name, "%x.%x.%x", cellid, jobid, processid)
+ * sprintf(string_name, "%x.%x.%x", cellid, jobid, vpid)
  *
  * The memory required for the string is allocated by the function - releasing
  * that allocation is the responsibility of the calling program.
@@ -191,11 +210,11 @@ typedef int (*mca_ns_free_name_t)(ompi_process_name_t *name);
  * name-string = ompi_name_server.get_proc_name_string(&name)
  * @endcode
  */
-typedef char* (*mca_ns_get_proc_name_string_t)(ompi_process_name_t *name);
+typedef char* (*mca_ns_get_proc_name_string_fn_t)(ompi_process_name_t *name);
 
 /**
- * Get the process id as a character string.
- * The get_procid_string() function returns the process id in a character string
+ * Get the virtual process id as a character string.
+ * The get_vpid_string() function returns the vpid in a character string
  * representation. The string is created by expressing the field in hexadecimal. Memory
  * for the string is allocated by the function - releasing that allocation is the
  * responsibility of the calling program.
@@ -204,15 +223,15 @@ typedef char* (*mca_ns_get_proc_name_string_t)(ompi_process_name_t *name);
  * "translated" to a string.
  *
  * @retval *name_string A pointer to the character string representation of the
- * process id.
+ * vpid.
  * @retval NULL Indicates an error occurred - either no memory could be allocated
  * or the caller provided an incorrect name pointer (e.g., NULL).
  *
  * @code
- * procid-string = ompi_name_server.get_procid_string(&name)
+ * vpid-string = ompi_name_server.get_vpid_string(&name)
  * @endcode
  */
-typedef char* (*mca_ns_get_procid_string_t)(ompi_process_name_t *name);
+typedef char* (*mca_ns_get_vpid_string_fn_t)(ompi_process_name_t *name);
 
 /**
  * Get the job id as a character string.
@@ -233,7 +252,7 @@ typedef char* (*mca_ns_get_procid_string_t)(ompi_process_name_t *name);
  * jobid-string = ompi_name_server.get_jobid_string(&name)
  * @endcode
  */
-typedef char* (*mca_ns_get_jobid_string_t)(ompi_process_name_t *name);
+typedef char* (*mca_ns_get_jobid_string_fn_t)(ompi_process_name_t *name);
 
 /**
  * Get the cell id as a character string.
@@ -254,33 +273,31 @@ typedef char* (*mca_ns_get_jobid_string_t)(ompi_process_name_t *name);
  * cellid-string = ompi_name_server.get_cellid_string(&name)
  * @endcode
  */
-typedef char* (*mca_ns_get_cellid_string_t)(ompi_process_name_t *name);
+typedef char* (*mca_ns_get_cellid_string_fn_t)(ompi_process_name_t *name);
 
 /**
- * Get the process id as an ompi_process_id_t value.
- * The get_procid() function returns the process id in an ompi_process_id_t representation -
+ * Get the virtual process id as an ompi_process_id_t value.
+ * The get_vpid() function returns the vpid in an ompi_process_id_t representation -
  * i.e., in an integer form.
  *
- * @param *name A pointer to the name structure containing the name to be
- * "translated" to a string.
+ * @param *name A pointer to the name structure containing the name.
  *
- * @retval procid The process id field of the provided name. There currently
+ * @retval vpid The vpid field of the provided name. There currently
  * is no error indication that this function failed.
  * Some means of returning a value indicative of an error will be devised in the future.
  *
  * @code
- * procid = ompi_name_server.get_procid(&name)
+ * vpid = ompi_name_server.get_vpid(&name)
  * @endcode
  */
-typedef ompi_process_id_t (*mca_ns_get_procid_t)(ompi_process_name_t *name);
+typedef ompi_process_id_t (*mca_ns_get_vpid_fn_t)(ompi_process_name_t *name);
 
 /**
  * Get the job id as an ompi_process_id_t value.
  * The get_jobid() function returns the job id in an ompi_process_id_t representation -
  * i.e., in an integer form.
  *
- * @param *name A pointer to the name structure containing the name to be
- * "translated" to a string.
+ * @param *name A pointer to the name structure containing the name.
  *
  * @retval jobid The job id field of the provided name. There currently
  * is no error indication that this function failed.
@@ -290,15 +307,14 @@ typedef ompi_process_id_t (*mca_ns_get_procid_t)(ompi_process_name_t *name);
  * jobid = ompi_name_server.get_jobid(&name)
  * @endcode
  */
-typedef ompi_process_id_t (*mca_ns_get_jobid_t)(ompi_process_name_t *name);
+typedef ompi_process_id_t (*mca_ns_get_jobid_fn_t)(ompi_process_name_t *name);
 
 /**
  * Get the cell id as an ompi_process_id_t value.
  * The get_cellid() function returns the cell id in an ompi_process_id_t representation -
  * i.e., in an integer form.
  *
- * @param *name A pointer to the name structure containing the name to be
- * "translated" to a string.
+ * @param *name A pointer to the name structure containing the name.
  *
  * @retval cellid The cell id field of the provided name. There currently
  * is no error indication that this function failed.
@@ -308,21 +324,21 @@ typedef ompi_process_id_t (*mca_ns_get_jobid_t)(ompi_process_name_t *name);
  * cellid = ompi_name_server.get_cellid(&name)
  * @endcode
  */
-typedef ompi_process_id_t (*mca_ns_get_cellid_t)(ompi_process_name_t *name);
+typedef ompi_process_id_t (*mca_ns_get_cellid_fn_t)(ompi_process_name_t *name);
 
 /**
  * Compare two name values.
  * The compare() function checks the value of the fields in the two
  * provided names, and returns a value indicating if the first one is less than, greater
  * than, or equal to the second. The value of each field is compared in a hierarchical
- * fashion, with cellid first, followed by jobid and process id in sequence. The bit-mask
+ * fashion, with cellid first, followed by jobid and vpid in sequence. The bit-mask
  * indicates which fields are to be included in the comparison. Fields not included via the
  * bit-mask are ignored. Thus, the caller may request that any combination of the three fields
  * be included in the comparison.
  *
  * @param fields A bit-mask indicating which fields are to be included in the comparison. The
  * comparison is performed on a hierarchical basis, with cellid being first, followed by
- * jobid and then process id. Each field can be included separately, thus allowing the caller
+ * jobid and then vpid. Each field can be included separately, thus allowing the caller
  * to configure the comparison to meet their needs.
  * @param *name1 A pointer to the first name structure.
  * @param *name2 A pointer to the second name structure.
@@ -341,40 +357,52 @@ typedef ompi_process_id_t (*mca_ns_get_cellid_t)(ompi_process_name_t *name);
  * result = ompi_name_server.compare(bit_mask, &name1, &name2)
  * @endcode
  */
-typedef int (*mca_ns_compare_t)(ompi_ns_cmp_bitmask_t fields, ompi_process_name_t *name1, ompi_process_name_t *name2);
+typedef int (*mca_ns_compare_fn_t)(ompi_ns_cmp_bitmask_t fields, ompi_process_name_t *name1, ompi_process_name_t *name2);
 
 /*
  * Ver 1.0.0
  */
-struct mca_ns_base_module_1_0_0_t {
-    mca_base_module_t nsc_version;
-    mca_base_module_data_1_0_0_t nsc_data;
-#if 0
-    mca_ns_base_init_fn_t nsc_init;
-    mca_ns_base_finalize_fn_t nsc_finalize;
-#endif
-};
-typedef struct mca_ns_base_module_1_0_0_t mca_ns_base_module_1_0_0_t;
-
 struct mca_ns_1_0_0_t {
-    mca_ns_create_cellid_t create_cellid;
-    mca_ns_create_jobid_t create_jobid;
-    mca_ns_create_proc_name_t create_process_name;
-    mca_ns_reserve_range_t reserve_range;
-    mca_ns_free_name_t free_name;
-    mca_ns_get_proc_name_string_t get_proc_name_string;
-    mca_ns_get_procid_string_t get_procid_string;
-    mca_ns_get_jobid_string_t get_jobid_string;
-    mca_ns_get_cellid_string_t get_cellid_string;
-    mca_ns_get_procid_t get_procid;
-    mca_ns_get_jobid_t get_jobid;
-    mca_ns_get_cellid_t get_cellid;
-    mca_ns_compare_t compare;
+    mca_ns_create_cellid_fn_t create_cellid;
+    mca_ns_create_jobid_fn_t create_jobid;
+    mca_ns_create_proc_name_fn_t create_process_name;
+    mca_ns_reserve_range_fn_t reserve_range;
+    mca_ns_free_name_fn_t free_name;
+    mca_ns_get_proc_name_string_fn_t get_proc_name_string;
+    mca_ns_get_vpid_string_fn_t get_vpid_string;
+    mca_ns_get_jobid_string_fn_t get_jobid_string;
+    mca_ns_get_cellid_string_fn_t get_cellid_string;
+    mca_ns_get_vpid_fn_t get_vpid;
+    mca_ns_get_jobid_fn_t get_jobid;
+    mca_ns_get_cellid_fn_t get_cellid;
+    mca_ns_compare_fn_t compare;
 };
 typedef struct mca_ns_1_0_0_t mca_ns_1_0_0_t;
-
-typedef mca_ns_base_module_1_0_0_t mca_ns_base_module_t;
 typedef mca_ns_1_0_0_t mca_ns_t;
+
+/*
+ * NS Component
+ */
+
+typedef mca_ns_t* (*mca_ns_base_init_fn_t)(
+    bool *allow_multi_user_threads,
+    bool *have_hidden_threads);
+                                                                                                         
+typedef int (*mca_ns_base_finalize_fn_t)(void);
+ 
+/*
+ * the standard component data structure
+ */
+
+struct mca_ns_base_module_1_0_0_t {
+    mca_base_module_t ns_version;
+    mca_base_module_data_1_0_0_t ns_data;
+    mca_ns_base_init_fn_t ns_init;
+    mca_ns_base_finalize_fn_t ns_finalize;
+};
+typedef struct mca_ns_base_module_1_0_0_t mca_ns_base_module_1_0_0_t;
+typedef mca_ns_base_module_1_0_0_t mca_ns_base_module_t;
+
 
 
 /*

@@ -1,0 +1,9 @@
+# -*- shell-script -*-
+#
+# $HEADER$
+#
+
+# Specific to this module
+
+PARAM_INIT_FILE=src/ns_replica.c
+PARAM_CONFIG_FILES="Makefile src/Makefile"

@@ -8,13 +8,14 @@
 
 #include "ompi_config.h"
 #include "include/constants.h"
-
+#include "mca/ns/ns.h"
 #include "util/proc_info.h"
 
 ompi_proc_info_t ompi_process_info = {
     /*  .init =                 */   false,
     /*  .pid =                  */   0,
     /*  .name =                 */   NULL,
+    /*  .seed =                 */   false,
     /*  .universe_session_dir = */   NULL,
     /*  .job_session_dir =      */   NULL,
     /*  .proc_session_dir =     */   NULL,
@@ -34,10 +35,13 @@ int ompi_proc_info(void)
     ompi_process_info.pid = getpid();
 
     /* define process name */
-    ompi_process_info.name = (ompi_process_name_t *)malloc(sizeof(ompi_process_name_t));
-    ompi_process_info.name->cellid = 0;
-    ompi_process_info.name->jobid = 1;
-    ompi_process_info.name->procid = 2;
+    if (ompi_process_info.seed) { /* i'm the seed daemon */
+	ompi_process_info.name = OBJ_NEW(ompi_process_name_t);
+	ompi_process_info.name->cellid = 0;
+	ompi_process_info.name->jobid = 0;
+	ompi_process_info.name->vpid = 0;
+    }
+
     ompi_process_info.init = true;
     return(OMPI_SUCCESS);
 }
