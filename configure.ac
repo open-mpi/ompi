@@ -303,7 +303,7 @@ AC_CONFIG_FILES([
     src/lam/os/Makefile
     src/lam/os/cygwin/Makefile
     src/lam/os/darwin/Makefile
-    src/lam/os/darwin/powerpc/Makefile
+    src/lam/os/darwin/ppc_32/Makefile
     src/lam/os/darwin/ppc_64/Makefile
     src/lam/os/irix/Makefile
     src/lam/os/irix/sn0/Makefile
@@ -324,6 +324,17 @@ AC_CONFIG_FILES([
     src/mpi/f77/Makefile
     src/mpi/f77/profile/Makefile
     src/mpi/f90/Makefile
+
+    src/mca/Makefile
+    src/mca/common/Makefile
+    src/mca/lam/Makefile
+    src/mca/mpi/Makefile
+    src/mca/mpi/coll/Makefile
+    src/mca/mpi/io/Makefile
+    src/mca/mpi/one/Makefile
+    src/mca/mpi/pml/Makefile
+    src/mca/mpi/ptl/Makefile
+    src/mca/mpi/topo/Makefile
 
     src/tools/Makefile
     src/tools/wrappers/Makefile
