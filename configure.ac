@@ -1527,7 +1527,7 @@ AC_CONFIG_FILES([
     src/include/sys/mips/Makefile
     src/include/sys/powerpc/Makefile
     src/include/sys/sparc/Makefile
-    src/include/sys/sparc64/Makefile
+    src/include/sys/sparcv9/Makefile
     src/include/sys/win32/Makefile
 
     src/class/Makefile
