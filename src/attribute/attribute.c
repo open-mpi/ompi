@@ -430,7 +430,8 @@ lam_attr_copy_all(lam_attribute_type_t type, void *old_object,
 		  void *new_object)
 {
     int ret = LAM_SUCCESS;
-    int key, flag;
+    uint32_t key;
+    int flag;
     void *node, *in_node, *old_attr, *new_attr;
     lam_attrkey_item_t *hash_value;
     void *object = old_object; /* For consistent interface to
@@ -520,7 +521,7 @@ int
 lam_attr_delete_all(lam_attribute_type_t type, void *object)
 {
     int ret;
-    int key;
+    uint32_t key;
     void *node, *in_node, *old_attr;
     lam_attrkey_item_t *hash_value;
 
