@@ -91,7 +91,7 @@ FULL_PATH_NAMES        = YES
 # only done if one of the specified strings matches the left-hand part of 
 # the path. It is allowed to use relative paths in the argument list.
 
-STRIP_FROM_PATH        = 
+STRIP_FROM_PATH        = src/
 
 # If the SHORT_NAMES tag is set to YES, doxygen will generate much shorter 
 # (but less readable) file names. This can be useful is your file systems 
