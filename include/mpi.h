@@ -254,12 +254,12 @@ enum {
 /*
  * NULL handles
  */
-#define MPI_GROUP_NULL ((MPI_Group) &(lam_mpi_group_null))
-#define MPI_COMM_NULL ((MPI_Comm) (&lam_mpi_comm_null))
+#define MPI_GROUP_NULL (&lam_mpi_group_null)
+#define MPI_COMM_NULL (&lam_mpi_comm_null)
 #define MPI_DATATYPE_NULL ((MPI_Datatype) 0)
 #define MPI_REQUEST_NULL ((MPI_Request) 0)
-#define MPI_OP_NULL ((MPI_Op) 0)
-#define MPI_ERRHANDLER_NULL ((MPI_Errhandler) &(lam_mpi_errhandler_null))
+#define MPI_OP_NULL (&lam_mpi_op_null)
+#define MPI_ERRHANDLER_NULL (&(lam_mpi_errhandler_null)
 #define MPI_INFO_NULL ((MPI_Info) 0)
 #define MPI_WIN_NULL ((MPI_Win) 0)
 #define MPI_FILE_NULL ((MPI_File) 0)
@@ -318,9 +318,9 @@ extern struct lam_datatype_t *lam_mpi_cxx_cplex, *lam_mpi_cxx_dblcplex;
 extern struct lam_datatype_t *lam_mpi_cxx_ldblcplex;
 extern struct lam_datatype_t *lam_mpi_cxx_bool;
 
-extern struct lam_errhandler_t *lam_mpi_errors_null;
-extern struct lam_errhandler_t *lam_mpi_errors_are_fatal;
-extern struct lam_errhandler_t *lam_mpi_errors_return;
+extern struct lam_errhandler_t lam_mpi_errors_null;
+extern struct lam_errhandler_t lam_mpi_errors_are_fatal;
+extern struct lam_errhandler_t lam_mpi_errors_return;
 
 extern MPI_Fint *MPI_F_STATUS_IGNORE;
 extern MPI_Fint *MPI_F_STATUSES_IGNORE;
@@ -333,19 +333,19 @@ extern MPI_Fint *MPI_F_STATUSES_IGNORE;
 
 #define MPI_GROUP_EMPTY (&lam_mpi_group_empty)
 
-#define MPI_MAX (&lam_mpi_max)
-#define MPI_MIN (&lam_mpi_min)
-#define MPI_SUM (&lam_mpi_sum)
-#define MPI_PROD (&lam_mpi_prod)
-#define MPI_LAND (&lam_mpi_land)
-#define MPI_BAND (&lam_mpi_band)
-#define MPI_LOR (&lam_mpi_lor)
-#define MPI_BOR (&lam_mpi_bor)
-#define MPI_LXOR (&lam_mpi_lxor)
-#define MPI_BXOR (&lam_mpi_bxor)
-#define MPI_MAXLOC (&lam_mpi_maxloc)
-#define MPI_MINLOC (&lam_mpi_minloc)
-#define MPI_REPLACE (&lam_mpi_replace)
+#define MPI_MAX (&lam_mpi_op_max)
+#define MPI_MIN (&lam_mpi_op_min)
+#define MPI_SUM (&lam_mpi_op_sum)
+#define MPI_PROD (&lam_mpi_op_prod)
+#define MPI_LAND (&lam_mpi_op_land)
+#define MPI_BAND (&lam_mpi_op_band)
+#define MPI_LOR (&lam_mpi_op_lor)
+#define MPI_BOR (&lam_mpi_op_bor)
+#define MPI_LXOR (&lam_mpi_op_lxor)
+#define MPI_BXOR (&lam_mpi_op_bxor)
+#define MPI_MAXLOC (&lam_mpi_op_maxloc)
+#define MPI_MINLOC (&lam_mpi_op_minloc)
+#define MPI_REPLACE (&lam_mpi_op_replace)
 
 #define MPI_BYTE (lam_mpi_byte)
 #define MPI_PACKED (lam_mpi_packed)
@@ -374,8 +374,9 @@ extern MPI_Fint *MPI_F_STATUSES_IGNORE;
 #define MPI_LONG_LONG (lam_mpi_long_long)
 #define MPI_UNSIGNED_LONG_LONG (lam_mpi_unsigned_long_long)
 #endif  /* HAVE_LONG_LONG */
-#define MPI_ERRORS_ARE_FATAL (lam_mpi_errors_are_fatal)
-#define MPI_ERRORS_RETURN (lam_mpi_errors_return)
+
+#define MPI_ERRORS_ARE_FATAL (&lam_mpi_errors_are_fatal)
+#define MPI_ERRORS_RETURN (&lam_mpi_errors_return)
 
 
 #if defined(c_plusplus) || defined(__cplusplus)
