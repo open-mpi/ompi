@@ -275,7 +275,14 @@ void ompi_info::do_arch(ompi_cmd_line_t *cmd_line)
 //
 void ompi_info::do_config(bool want_all)
 {
-  const string f77(OMPI_WANT_F77_BINDINGS ? "yes" : "no");
+  const string f77(OMPI_WANT_F77_BINDINGS ?
+                   string("yes (") +
+                   (OMPI_HAVE_WEAK_SYMBOLS ? "all" :
+                    (OMPI_F77_CAPS ? "caps" :
+                     (OMPI_F77_PLAIN ? "lower case" :
+                      (OMPI_F77_SINGLE_UNDERSCORE ? "single underscore" : 
+                       "double underscore")))) + string(")")
+                   : "no");
   const string f90(OMPI_WANT_F90_BINDINGS ? "yes" : "no");
   const string sthreads(OMPI_HAVE_SOLARIS_THREADS ? "yes" : "no");
   const string pthreads(OMPI_HAVE_POSIX_THREADS ? "yes" : "no");
