@@ -50,7 +50,7 @@ static void mca_ptl_tcp_send_frag_destruct(mca_ptl_tcp_send_frag_t* frag)
 
 extern mca_ptl_tcp_component_t mca_ptl_tcp_component;
 
-void* mca_ptl_tcp_memalloc( unsigned int* length )
+void* mca_ptl_tcp_memalloc( size_t* length )
 {
    if( (*length) > mca_ptl_tcp_component.tcp_frag_size )
       *length = mca_ptl_tcp_component.tcp_frag_size;
