@@ -31,7 +31,6 @@ int ompi_rte_init_stage2(bool *allow_multi_user_threads, bool *have_hidden_threa
 {
     int ret;
     bool user_threads, hidden_threads;
-    char *jobid_str=NULL, *procid_str=NULL;
 
     /*
      * Name Server
@@ -117,59 +116,6 @@ int ompi_rte_init_stage2(bool *allow_multi_user_threads, bool *have_hidden_threa
     }
     *allow_multi_user_threads &= user_threads;
     *have_hidden_threads |= hidden_threads;
-
-    /*
-     * Fill in the various important structures
-     */
-    /* proc structure startup */
-    ompi_proc_info();  
-
-    if (ompi_rte_debug_flag) {
-	ompi_output(0, "proc info for proc %s", ompi_name_server.get_proc_name_string(ompi_process_info.name));
-    }
-
-    /* session directory */
-    jobid_str = ompi_name_server.get_jobid_string(ompi_process_info.name);
-    procid_str = ompi_name_server.get_vpid_string(ompi_process_info.name);
- 
-    if (ompi_rte_debug_flag) {
-	ompi_output(0, "[%d,%d,%d] setting up session dir with", ompi_process_info.name->cellid, ompi_process_info.name->jobid, ompi_process_info.name->vpid);
-	if (NULL != ompi_process_info.tmpdir_base) {
-	    ompi_output(0, "\ttmpdir %s", ompi_process_info.tmpdir_base);
-	}
-	ompi_output(0, "\tuniverse %s", ompi_process_info.my_universe);
-	ompi_output(0, "\tuser %s", ompi_system_info.user);
-	ompi_output(0, "\thost %s", ompi_system_info.nodename);
-	ompi_output(0, "\tjobid %s", jobid_str);
-	ompi_output(0, "\tprocid %s", procid_str);
-    }
-   if (OMPI_ERROR == ompi_session_dir(true,
-				       ompi_process_info.tmpdir_base,
-				       ompi_system_info.user,
-				       ompi_system_info.nodename, NULL, 
-				       ompi_process_info.my_universe,
-				       jobid_str, procid_str)) {
-	if (jobid_str != NULL) free(jobid_str);
-	if (procid_str != NULL) free(procid_str);
-	return OMPI_ERROR;
-    }
-
-   /*
-    *  Register process info we/ seed daemon.
-    */
-   if (OMPI_SUCCESS != (ret = ompi_rte_register())) {
-       ompi_output(0, "ompi_rte_init: failed in ompi_rte_register()\n");
-       return ret;
-   }
-
-    /*
-     * Call back into OOB to allow do any final initialization
-     * (e.g. put contact info in register).
-     */
-    if (OMPI_SUCCESS != (ret = mca_oob_base_module_init())) {
-       ompi_output(0, "ompi_rte_init: failed in mca_oob_base_module_init()\n");
-       return ret;
-    }
 
     /* 
      * All done 

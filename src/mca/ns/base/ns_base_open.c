@@ -51,6 +51,10 @@ int mca_ns_base_open(void)
 	mca_oob_set_contact_info(replica);
 	ompi_process_info.ns_replica = ns_base_create_process_name(0,0,0);
 	mca_oob_parse_contact_info(replica, ompi_process_info.ns_replica, NULL);
+    } else {
+	if (NULL != ompi_process_info.ns_replica) {
+	    free(ompi_process_info.ns_replica);
+	}
     }
 
 

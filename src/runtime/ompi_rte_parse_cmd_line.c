@@ -5,10 +5,13 @@
 /**
  * @file
  *
- * Parse command line options for the Open MPI Run Time Environment
+ * Parse command line options for the Open MPI Run Time Environment. This program MUST be called before
+ * any call to ompi_rte_init_stage1 and/or ompi_rte_init_stage2 !!!
+ *
  */
 #include "ompi_config.h"
 
+#include <stdlib.h>
 #include <string.h>
 
 #include "mca/oob/base/base.h"
@@ -27,7 +30,10 @@ void ompi_rte_parse_cmd_line(ompi_cmd_line_t *cmd_line)
 
     /* get universe name and store it, if user specified it */
     /* otherwise, stick with default name */
-    universe = strdup(ompi_universe_info.name); /* save the default */
+    if (NULL != ompi_universe_info.name) {
+	universe = strdup(ompi_universe_info.name); /* save the current value, if exists */
+    }
+
     if (ompi_cmd_line_is_taken(cmd_line, "universe") ||
 	ompi_cmd_line_is_taken(cmd_line, "u")) {
 	if (NULL == ompi_cmd_line_get_param(cmd_line, "universe", 0, 0)) {
@@ -35,7 +41,6 @@ void ompi_rte_parse_cmd_line(ompi_cmd_line_t *cmd_line)
 	    return;
         }
         universe = strdup(ompi_cmd_line_get_param(cmd_line, "universe", 0, 0));
-	ompi_output(0, "got universe name %s", universe);
 
 
 	if (NULL != (tmp = strchr(universe, ':'))) { /* name contains remote host */
@@ -56,9 +61,20 @@ void ompi_rte_parse_cmd_line(ompi_cmd_line_t *cmd_line)
 	    ompi_universe_info.name = strdup(universe);
 	}
     }
+
     /* copy the universe name into the process_info structure */
-    ompi_process_info.my_universe = strdup(ompi_universe_info.name);
-    ompi_output(0, "my universe name is %s", ompi_process_info.my_universe);
+    if (NULL != ompi_universe_info.name) {
+	ompi_process_info.my_universe = strdup(ompi_universe_info.name);
+    } else {  /* set it to default value */
+	ompi_universe_info.name = strdup("default-universe");
+	if (NULL != ompi_process_info.my_universe) { /* overwrite it */
+	    free(ompi_process_info.my_universe);
+	}
+	ompi_process_info.my_universe = strdup(ompi_universe_info.name);
+    }
+
+    /* and set the appropriate enviro variable */
+    setenv("OMPI_universe_name", ompi_universe_info.name, 1);
 
     /* get the temporary directory name for the session directory, if provided on command line */
     if (ompi_cmd_line_is_taken(cmd_line, "tmpdir")) {
@@ -66,10 +82,12 @@ void ompi_rte_parse_cmd_line(ompi_cmd_line_t *cmd_line)
 	    ompi_output(0, "error retrieving tmpdir name - please report error to bugs@open-mpi.org\n");
 	    return;
 	}
+	if (NULL != ompi_process_info.tmpdir_base) { /* overwrite it */
+	    free(ompi_process_info.tmpdir_base);
+	}
 	ompi_process_info.tmpdir_base = strdup(ompi_cmd_line_get_param(cmd_line, "tmpdir", 0, 0));
-    } else {
-	ompi_process_info.tmpdir_base = NULL;
-    }
+	setenv("OMPI_tmpdir_base", ompi_process_info.tmpdir_base, 1);
+    } /* otherwise, leave it alone */
 
     /* see if name server replica provided */
     if (ompi_cmd_line_is_taken(cmd_line, "nsreplica")) {
@@ -78,10 +96,8 @@ void ompi_rte_parse_cmd_line(ompi_cmd_line_t *cmd_line)
 	    return;
 	}
 	nsreplica = strdup(ompi_cmd_line_get_param(cmd_line, "nsreplica", 0, 0));
-	mca_oob_parse_contact_info(nsreplica, ompi_process_info.ns_replica, NULL);
-    } else {
-	ompi_process_info.ns_replica = NULL;
-    }
+	setenv("OMPI_MCA_ns_base_replica", nsreplica, 1);  /* set the ns_replica enviro variable */
+    } /* otherwise, leave it alone */
 
     /* see if GPR replica provided */
     if (ompi_cmd_line_is_taken(cmd_line, "gprreplica")) {
@@ -90,12 +106,6 @@ void ompi_rte_parse_cmd_line(ompi_cmd_line_t *cmd_line)
 	    return;
 	}
 	gprreplica = strdup(ompi_cmd_line_get_param(cmd_line, "gprreplica", 0, 0));
-	if (NULL != nsreplica &&
-	    0 != strcmp(nsreplica, gprreplica)) { /* check to see if different */
-	    mca_oob_set_contact_info(gprreplica);
-	}
-	mca_oob_parse_contact_info(gprreplica, ompi_process_info.gpr_replica, NULL);
-    } else {
-	ompi_process_info.gpr_replica = NULL;
-    }
+	setenv("OMPI_MCA_gpr_base_replica", gprreplica, 1);  /* set the gpr_replica enviro variable */
+    }  /* otherwise leave it alone */
 }

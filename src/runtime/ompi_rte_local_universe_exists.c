@@ -33,10 +33,8 @@ int ompi_rte_local_universe_exists()
 {
     char *contact_file;
     int ret;
-    ompi_process_name_t seed={0,0,0};
 
-    /* does universe already exist on specified host? Check session directory to see */
-    /* don't know how to handle remote host yet - only cover localhost */
+    /* does universe already exist on local host? Check session directory to see */
 
     if (0 != strncmp(ompi_universe_info.host, ompi_system_info.nodename, strlen(ompi_system_info.nodename))) { /* remote host specified */
 	ompi_output(0, "remote hosts not supported");

@@ -99,6 +99,7 @@ extern "C" {
      */
     int ompi_rte_init_stage1(bool *allow_multi_user_threads, bool *have_hidden_threads);
     int ompi_rte_init_stage2(bool *allow_multi_user_threads, bool *have_hidden_threads);
+    int ompi_rte_init_finalstage(bool *allow_multi_user_threads, bool *have_hidden_threads);
 
     /**
      * Finalize the Open MPI run time environment
@@ -287,6 +288,18 @@ extern "C" {
      * universe refused to allow connection.
      */
     int ompi_rte_local_universe_exists(void);
+
+    /**
+     * Parse the RTE environmental variables
+     *
+     * Checks the environmental variables and passes their info (where
+     * set) into the respective info structures.
+     *
+     * @param None
+     *
+     * @retval None
+     */
+    void ompi_rte_parse_environ(void);
 
 #ifdef __cplusplus
 }
