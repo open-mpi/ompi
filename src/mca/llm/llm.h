@@ -20,8 +20,7 @@
 #include "ompi_config.h"
 #include "mca/mca.h"
 #include "class/ompi_list.h"
-
-#include <sys/param.h>
+#include "runtime/runtime_types.h"
 
 /*
  * MCA component management functions
@@ -79,42 +78,6 @@ typedef mca_llm_base_component_1_0_0_t mca_llm_base_component_t;
 
 
 /*
- * LLM interface types
- */
-
-/**
- * Container for key = value pairs from the node container.
- *
- * Container used for the \code info member of the \code
- * mca_llm_base_node_t structure.  Ownership of char* strings must be
- * give to the container, who will \code free() them when the
- * container is destroyed.
- */
-struct mca_llm_base_valuepair_t {
-    ompi_list_item_t super;
-    char *key;
-    char *value;
-};
-typedef struct mca_llm_base_valuepair_t mca_llm_base_valuepair_t;
-OBJ_CLASS_DECLARATION(mca_llm_base_valuepair_t);
-
-/**
- * Container for node allocation information.
- *
- * Container used for the allocate and deallocate functions of the
- * LLM.
- */
-struct mca_llm_base_node_t {
-    ompi_list_item_t super;
-    char hostname[MAXHOSTNAMELEN];
-    int count;
-    ompi_list_t info;    
-};
-typedef struct mca_llm_base_node_t mca_llm_base_node_t;
-OBJ_CLASS_DECLARATION(mca_llm_base_node_t);
-
-
-/*
  * LLM interface functions
  */
 
@@ -137,8 +100,8 @@ OBJ_CLASS_DECLARATION(mca_llm_base_node_t);
  *                   <code>nodes</code> nodes
  * @param procs (IN) Number of processors to try to allocate.  See the note
  *                   for <code>nodes</code> for usage.
- * @param nodelist (OUT) List of <code>mca_llm_node_t</code>s describing
- *                   the allocated resources.
+ * @param nodelist (OUT) List of <code>ompi_rte_node_allocation_t</code>s
+ *                   describing the allocated resources.
  *
  * @warning The type for jobid will change in the near future
  */

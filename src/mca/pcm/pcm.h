@@ -65,8 +65,7 @@
 #include "mca/mca.h"
 #include "mca/ns/ns.h"
 #include "include/types.h"
-
-#include <sys/param.h>
+#include "runtime/runtime_types.h"
 
 /*
  * MCA component management functions
@@ -120,72 +119,6 @@ struct mca_pcm_base_component_1_0_0_t {
 };
 typedef struct mca_pcm_base_component_1_0_0_t mca_pcm_base_component_1_0_0_t;
 typedef mca_pcm_base_component_1_0_0_t mca_pcm_base_component_t;
-
-
-/*
- * PCM interface types
- */
-
-/**
- * Container for key = value pairs from the node container.
- *
- * Container used for the \c info member of the \c mca_pcm_base_node_t
- * structure.  Ownership of char* strings must be give to the
- * container, who will \c free() them when the container is destroyed.
- */
-struct mca_pcm_base_valuepair_t {
-    ompi_list_item_t super;
-    char *key;
-    char *value;
-};
-typedef struct mca_pcm_base_valuepair_t mca_pcm_base_valuepair_t;
-OBJ_CLASS_DECLARATION(mca_pcm_base_valuepair_t);
-
-
-/**
- * Container for node allocation information.
- *
- * Container used for the allocate and deallocate functions of the
- * PCM.
- */
-struct mca_pcm_base_node_t {
-    ompi_list_item_t super;
-    char hostname[MAXHOSTNAMELEN];
-    int count;
-    ompi_list_t info;    
-};
-typedef struct mca_pcm_base_node_t mca_pcm_base_node_t;
-OBJ_CLASS_DECLARATION(mca_pcm_base_node_t);
-
-
-/**
- * Container use for process startup information
- *
- */
-struct mca_pcm_base_schedule_t {
-    ompi_list_item_t super;
-    char **argv;
-    int argc;
-    char **env;
-    char *cwd;
-    ompi_list_t nodelist;
-};
-typedef struct mca_pcm_base_schedule_t mca_pcm_base_schedule_t;
-OBJ_CLASS_DECLARATION(mca_pcm_base_schedule_t);
-
-
-/**
- * VPID type
- */
-typedef pid_t ompi_vpid_t;
-
-
-/**
- * Monitor type
- */
-typedef int (*mca_pcm_base_monitor_fn_t)(ompi_process_name_t*,
-                                         int newstate, 
-                                         int status);
 
 
 /*
@@ -249,7 +182,7 @@ typedef int
  */
 typedef int
 (*mca_pcm_base_register_monitor_fn_t)(int jobid,
-                                 mca_pcm_base_monitor_fn_t func);
+                                 ompi_rte_monitor_fn_t func);
 
 
 /** 

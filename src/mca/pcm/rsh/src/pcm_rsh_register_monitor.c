@@ -12,7 +12,7 @@
 #include <string.h>
 
 int
-mca_pcm_rsh_register_monitor(int jobid, mca_pcm_base_monitor_fn_t func)
+mca_pcm_rsh_register_monitor(int jobid, ompi_rte_monitor_fn_t func)
 {
     return OMPI_SUCCESS;
 }

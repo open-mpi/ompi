@@ -39,7 +39,7 @@ extern "C" {
     int mca_pcm_rsh_allocate_resources(int jobid, int nodes, int procs,
                                        ompi_list_t **nodelist);
     int mca_pcm_rsh_register_monitor(int jobid,
-                                     mca_pcm_base_monitor_fn_t func);
+                                     ompi_rte_monitor_fn_t func);
     bool mca_pcm_rsh_can_spawn(void);
     int mca_pcm_rsh_spawn_procs(int jobid, ompi_list_t schedule_list,
                                 ompi_vpid_t start_vpid);

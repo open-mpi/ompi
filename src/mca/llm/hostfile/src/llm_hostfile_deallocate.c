@@ -14,11 +14,11 @@ int
 mca_llm_hostfile_deallocate_resources(int jobid,
                                       ompi_list_t *nodelist)
 {
-    mca_llm_base_node_t *node;
+    ompi_rte_node_allocation_t *node;
     ompi_list_item_t *item;
 
     while (NULL != (item = ompi_list_remove_first(nodelist))) {
-        node = (mca_llm_base_node_t*) item;
+        node = (ompi_rte_node_allocation_t*) item;
         OBJ_RELEASE(node);
     }
 

@@ -8,6 +8,7 @@
 #include "mca/base/base.h"
 #include "mca/llm/llm.h"
 #include "mca/llm/base/base.h"
+#include "runtime/runtime_types.h"
 
 
 /*
@@ -33,7 +34,7 @@ static
 void
 mca_llm_base_node_construct(ompi_object_t *obj)
 {
-    mca_llm_base_node_t *node = (mca_llm_base_node_t*) obj;
+    ompi_rte_node_allocation_t *node = (ompi_rte_node_allocation_t*) obj;
     OBJ_CONSTRUCT(&(node->info), ompi_list_t);
 }
 
@@ -41,7 +42,7 @@ static
 void
 mca_llm_base_node_destruct(ompi_object_t *obj)
 {
-    mca_llm_base_node_t *node = (mca_llm_base_node_t*) obj;
+    ompi_rte_node_allocation_t *node = (ompi_rte_node_allocation_t*) obj;
     OBJ_DESTRUCT(&(node->info));
 }
 
@@ -49,7 +50,7 @@ static
 void
 mca_llm_base_valuepair_construct(ompi_object_t *obj)
 {
-    mca_llm_base_valuepair_t *valpair = (mca_llm_base_valuepair_t*) obj;
+    ompi_rte_valuepair_t *valpair = (ompi_rte_valuepair_t*) obj;
     valpair->key = NULL;
     valpair->value = NULL;
 }
@@ -58,14 +59,14 @@ static
 void
 mca_llm_base_valuepair_destruct(ompi_object_t *obj)
 {
-    mca_llm_base_valuepair_t *valpair = (mca_llm_base_valuepair_t*) obj;
+    ompi_rte_valuepair_t *valpair = (ompi_rte_valuepair_t*) obj;
     if (NULL != valpair->key) free(valpair->key);
     if (NULL != valpair->value) free(valpair->value);
 }
 
-OBJ_CLASS_INSTANCE(mca_llm_base_node_t, ompi_list_item_t, 
+OBJ_CLASS_INSTANCE(ompi_rte_node_allocation_t, ompi_list_item_t, 
                    mca_llm_base_node_construct, mca_llm_base_node_destruct);
-OBJ_CLASS_INSTANCE(mca_llm_base_valuepair_t, ompi_list_item_t, 
+OBJ_CLASS_INSTANCE(ompi_rte_valuepair_t, ompi_list_item_t, 
                    mca_llm_base_valuepair_construct,
                    mca_llm_base_valuepair_destruct);
 

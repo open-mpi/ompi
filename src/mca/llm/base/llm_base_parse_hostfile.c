@@ -13,9 +13,10 @@
 #include "mca/llm/base/base.h"
 #include "mca/llm/base/base_internal.h"
 #include "mca/llm/base/llm_base_parse_hostfile_lex.h"
+#include "runtime/runtime_types.h"
 
 static void parse_error(void);
-static int parse_keyval(int, mca_llm_base_node_t*);
+static int parse_keyval(int, ompi_rte_node_allocation_t*);
 
 static void
 parse_error()
@@ -26,11 +27,11 @@ parse_error()
 
 static
 int
-parse_keyval(int first, mca_llm_base_node_t *node)
+parse_keyval(int first, ompi_rte_node_allocation_t *node)
 {
     int val;
     char *key, *value;
-    mca_llm_base_valuepair_t *keyval;
+    ompi_rte_valuepair_t *keyval;
 
     if (MCA_LLM_BASE_STRING != first) {
         return OMPI_ERROR;
@@ -63,7 +64,7 @@ parse_keyval(int first, mca_llm_base_node_t *node)
     }
 
     /* make a keyval and store it */
-    keyval = OBJ_NEW(mca_llm_base_valuepair_t);
+    keyval = OBJ_NEW(ompi_rte_valuepair_t);
     keyval->key = key;
     keyval->value = value;
 
@@ -88,7 +89,7 @@ parse_count(void)
 
 static
 int
-parse_line(int first, mca_llm_base_node_t *node)
+parse_line(int first, ompi_rte_node_allocation_t *node)
 {
     int val;
     int ret;
@@ -138,7 +139,7 @@ parse_line(int first, mca_llm_base_node_t *node)
 ompi_list_t *
 mca_llm_base_parse_hostfile(const char *hostfile)
 {
-    mca_llm_base_node_t *newnode;
+    ompi_rte_node_allocation_t *newnode;
     ompi_list_t *list;
     int val, ret;
 
@@ -168,7 +169,7 @@ mca_llm_base_parse_hostfile(const char *hostfile)
             break;
 
         case MCA_LLM_BASE_STRING:
-            newnode = OBJ_NEW(mca_llm_base_node_t);
+            newnode = OBJ_NEW(ompi_rte_node_allocation_t);
             ret = parse_line(val, newnode);
             if (OMPI_SUCCESS != ret) {
                 OBJ_RELEASE(newnode);
