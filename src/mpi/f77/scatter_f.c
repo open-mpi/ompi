@@ -52,7 +52,7 @@ void mpi_scatter_f(char *sendbuf, MPI_Fint *sendcount,
 		   MPI_Fint *root, MPI_Fint *comm, MPI_Fint *ierr)
 {
     MPI_Datatype c_sendtype, c_recvtype;
-    MPI_Comm c_comm;
+    MPI_Comm c_comm = MPI_Comm_f2c(*comm);
     
     c_sendtype = MPI_Type_f2c(*sendtype);
     c_recvtype = MPI_Type_f2c(*recvtype);

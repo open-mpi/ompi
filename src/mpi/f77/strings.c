@@ -117,7 +117,7 @@ int ompi_fortran_multiple_argvs_f2c(int count, char *array, int len,
 {
     char ***argv_array;
     int i;
-    char *current_array;
+    char *current_array = array;
     int ret;
 
     argv_array = (char ***) malloc (count * sizeof(char **));
