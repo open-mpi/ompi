@@ -222,9 +222,12 @@ static inline ompi_list_item_t* ompi_list_get_end(ompi_list_t* list)
  * This is an inlined function in compilers that support inlining, so
  * it's usually a cheap operation.
  *
- * \warning In the future, this may become an O(N) operation.  If you
- * only need to check for comparison with 0, please use \c
- * ompi_list_is_empty, which will always be an O(1) operation.
+ * \warning The size of the list is cached as part of the list.  In
+ * the future, calling \c ompi_list_splice or \c ompi_list_join may
+ * result in this function recomputing the list size, which would be
+ * an O(N) operation.  If \c ompi_list_splice or \c ompi_list_join is
+ * never called on the specified list, this function will always be
+ * O(1).
  */
 static inline size_t ompi_list_get_size(ompi_list_t* list)
 {

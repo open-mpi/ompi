@@ -19,7 +19,9 @@
  * \internal
  */
 typedef struct opened_component_t {
+  /** make us a list item */
   ompi_list_item_t super;
+  /** component that has been opened */
   mca_llm_base_component_t *oc_component;
 } opened_component_t;
 

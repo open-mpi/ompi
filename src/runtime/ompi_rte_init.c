@@ -33,7 +33,7 @@
  * 3) singleton (./a.out)
  * 
  * Case 1) If the rte has already been booted, then mpirun will accept
- * an optional command line parameter --universe=<rte universe name>
+ * an optional command line parameter --universe=[rte universe name]
  * which says which universe this application wants to be a part
  * of. mpirun will then package this universe name and send it to the
  * processes it will be starting off (fork/exec) on local or remote
@@ -43,13 +43,13 @@
  *
  * Case 2) When mpirun is done alone and no universe is present, then
  * the mpirun starts off the universe (using rte_boot), then
- * fork/execs the processes, passin g along the <universe_name>. 
+ * fork/execs the processes, passin g along the [universe_name]. 
  *
  * Case 3) For a singleton, if there is alrady an existing rte
  * universe which it wants to join, it can specify that using the
  * --universe command line. So it will do 
  *
- * $ ./a.out --universe=<universe_name>
+ * $ ./a.out --universe=[universe_name]
  * 
  * In this case, MPI_Init will have to be called as MPI_Init(&argc, &argv)
 
@@ -179,6 +179,7 @@ int ompi_rte_init(bool *allow_multi_user_threads, bool *have_hidden_threads)
  *  interface type support
  */
 
+/** constructor for \c ompi_rte_node_schedule_t */
 static
 void
 ompi_rte_int_node_schedule_construct(ompi_object_t *obj)
@@ -188,6 +189,7 @@ ompi_rte_int_node_schedule_construct(ompi_object_t *obj)
 }
 
 
+/** destructor for \c ompi_rte_node_schedule_t */
 static
 void
 ompi_rte_int_node_schedule_destruct(ompi_object_t *obj)
@@ -205,6 +207,7 @@ ompi_rte_int_node_schedule_destruct(ompi_object_t *obj)
 }
 
 
+/** constructor for \c ompi_rte_node_allocation_t */
 static
 void
 ompi_rte_int_node_allocation_construct(ompi_object_t *obj)
@@ -214,6 +217,7 @@ ompi_rte_int_node_allocation_construct(ompi_object_t *obj)
 }
 
 
+/** destructor for \c ompi_rte_node_allocation_t */
 static
 void
 ompi_rte_int_node_allocation_destruct(ompi_object_t *obj)
@@ -231,6 +235,7 @@ ompi_rte_int_node_allocation_destruct(ompi_object_t *obj)
 }
 
 
+/** constructor for \c ompi_rte_valuepair_t */
 static
 void
 ompi_rte_int_valuepair_construct(ompi_object_t *obj)
@@ -241,6 +246,7 @@ ompi_rte_int_valuepair_construct(ompi_object_t *obj)
 }
 
 
+/** destructor for \c ompi_rte_valuepair_t */
 static
 void
 ompi_rte_int_valuepair_destruct(ompi_object_t *obj)
@@ -250,12 +256,15 @@ ompi_rte_int_valuepair_destruct(ompi_object_t *obj)
     if (NULL != valpair->value) free(valpair->value);
 }
 
+/** create instance information for \c ompi_rte_node_schedule_t */
 OBJ_CLASS_INSTANCE(ompi_rte_node_schedule_t, ompi_list_item_t,
                    ompi_rte_int_node_schedule_construct,
                    ompi_rte_int_node_schedule_destruct);
+/** create instance information for \c ompi_rte_node_allocation_t */
 OBJ_CLASS_INSTANCE(ompi_rte_node_allocation_t, ompi_list_item_t, 
                    ompi_rte_int_node_allocation_construct, 
                    ompi_rte_int_node_allocation_destruct);
+/** create instance information for \c ompi_rte_valuepair_t */
 OBJ_CLASS_INSTANCE(ompi_rte_valuepair_t, ompi_list_item_t, 
                    ompi_rte_int_valuepair_construct,
                    ompi_rte_int_valuepair_destruct);

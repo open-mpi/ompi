@@ -68,12 +68,18 @@ typedef int (*mca_llm_base_component_finalize_fn_t)(void);
  * types in the future.
  */
 struct mca_llm_base_component_1_0_0_t {
+  /** component version */
   mca_base_component_t llm_version;
+  /** component data */
   mca_base_component_data_1_0_0_t llm_data;
+  /** Function called when component is initialized  */
   mca_llm_base_component_init_fn_t llm_init;
+  /** Function called when component is finalized */
   mca_llm_base_component_finalize_fn_t llm_finalize;
 };
+/** shorten mca_llm_base_component_1_0_0_t declaration */
 typedef struct mca_llm_base_component_1_0_0_t mca_llm_base_component_1_0_0_t;
+/** shorten mca_llm_base_component_t declaration */
 typedef mca_llm_base_component_1_0_0_t mca_llm_base_component_t;
 
 
@@ -131,10 +137,14 @@ typedef int (*mca_llm_base_deallocate_resources_fn_t)(int jobid,
  * pointers to the calling interface. 
  */
 struct mca_llm_base_module_1_0_0_t {
+  /** Function to be called on resource request */
   mca_llm_base_allocate_resources_fn_t llm_allocate_resources;
+  /** Function to be called on resource return */ 
   mca_llm_base_deallocate_resources_fn_t llm_deallocate_resources;
 };
+/** shorten mca_llm_base_module_1_0_0_t declaration */
 typedef struct mca_llm_base_module_1_0_0_t mca_llm_base_module_1_0_0_t;
+/** shorten mca_llm_base_module_t declaration */
 typedef struct mca_llm_base_module_1_0_0_t mca_llm_base_module_t;
 
 
