@@ -71,11 +71,11 @@ struct mca_ptl_elan_component_t {
     ompi_mutex_t elan_lock;             /**< lock for module state */
 
     ompi_list_t  elan_procs;            /**< elan proc's */
-    ompi_list_t  elan_send_frags;
-    ompi_list_t  elan_recv_frags;
-    ompi_list_t  elan_pending_acks;  
 
-    ompi_free_list_t elan_send_frags_free;
+    ompi_list_t  elan_send_frags;       /**< outstanding send/put/get */
+    ompi_list_t  elan_recv_frags;       /**< outstanding recv's */
+    ompi_list_t  elan_pending_acks;     /**< recv's with ack to send */
+ 
     ompi_free_list_t elan_recv_frags_free;
 };
 typedef struct mca_ptl_elan_component_t mca_ptl_elan_component_t;

@@ -180,7 +180,8 @@ mca_ptl_elan_start_desc (mca_ptl_elan_send_frag_t * desc,
     desc->frag_base.frag_peer = ptl_peer;
     desc->frag_base.frag_addr = NULL;
     desc->frag_base.frag_size = *size;
-    desc->frag_progressed = 0;
+    desc->frag_progressed  = 0;
+    desc->frag_ack_pending = 0; /* this is ack for internal elan */
 
     END_FUNC();
     return OMPI_SUCCESS;
@@ -260,13 +261,24 @@ static void
 mca_ptl_elan_ctrl_frag (struct mca_ptl_elan_module_t *ptl,
                         mca_ptl_base_header_t * header)
 {
-    /* TODO:
-     * 0) First of all, no need to allocate frag descriptors, 
-     *    since control packet does not contain data.
-     * 1) Start successive fragments if it is an ACK
-     * 2) Resend the original fragment if it is a NACK 
-     * 3) Update the request if no more fragment.
-     */
+     /* TODO:
+      * 0) First of all, no need to allocate recv frag descriptors, 
+      *    since control packet does not contain data.
+      * 1) Update the send request, which will start successive fragments 
+      *    if it is an ACK and there are more data to go.
+      * XXX: Resend if it is a NACK, which layer PML/PTL to handle that?
+      */
+     mca_ptl_elan_send_frag_t* desc;
+     mca_pml_base_send_request_t* req;
+ 
+     desc = (mca_ptl_elan_send_frag_t*) header->hdr_ack.hdr_src_ptr.pval;
+     req = (mca_pml_base_send_request_t *) desc->desc->req;
+     req->req_peer_match = header->hdr_ack.hdr_dst_match;
+ 
+     /* FIXME: 
+      * This sort of synchronized fragment release will lead
+      * to race conditions, also see the note insize the follwoing routine */
+     mca_ptl_elan_send_desc_done (desc, req); 
 }
 
 int
@@ -377,7 +389,7 @@ mca_ptl_elan_drain_recv (mca_ptl_elan_component_t * emp)
 }
 
 int
-mca_ptl_elan_update_send (mca_ptl_elan_component_t * emp)
+mca_ptl_elan_update_desc (mca_ptl_elan_component_t * emp)
 {
     struct mca_ptl_elan_module_t *ptl;
     ompi_ptl_elan_queue_ctrl_t *queue;
@@ -417,7 +429,6 @@ mca_ptl_elan_update_send (mca_ptl_elan_component_t * emp)
                 req = desc->desc->req;
 		header = (mca_ptl_base_header_t *)& 
                     ((ompi_ptl_elan_qdma_desc_t *)desc->desc)->buff[0];
-
 		if (CHECK_ELAN) {
 		    char hostname[32];
 		    gethostname(hostname, 32);
@@ -429,29 +440,9 @@ mca_ptl_elan_update_send (mca_ptl_elan_component_t * emp)
 			    header->hdr_common.hdr_flags,
 			    header->hdr_common.hdr_size);
 		}
-
-		if(NULL == req) { /* An ack descriptor */
-		    OMPI_FREE_LIST_RETURN (&queue->tx_desc_free,
-			    (ompi_list_item_t *) desc);
-		} else if (0 == (header->hdr_common.hdr_flags 
-			    & MCA_PTL_FLAGS_ACK_MATCHED)
-		       	|| mca_pml_base_send_request_matched(req)) {
-		    /* XXX: NO_NEED_FOR_MATCH || ALREADY_MATCHED */
-
-		    if(fetchNset (&desc->frag_progressed, 1) == 0) {
-			ptl->super.ptl_send_progress(ptl, req, 
-				header->hdr_frag.hdr_frag_length);
-		    }
-
-		    /* Return a followup frag or if not cached */ 
-		    if((header->hdr_frag.hdr_frag_offset != 0)
-			    || (desc->desc->desc_status 
-				!= MCA_PTL_ELAN_DESC_CACHED)) 
-			OMPI_FREE_LIST_RETURN (&queue->tx_desc_free,
-				(ompi_list_item_t *) desc);
-		} 
-	    } else {
-		/* Stop at any incomplete send desc */
+ 		mca_ptl_elan_send_desc_done (desc, req);
+ 	    } else {
+ 		/* XXX: Stop at any incomplete send desc */
 		break;
 	    }
 	} /* end of the while loop */
