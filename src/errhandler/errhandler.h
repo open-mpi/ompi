@@ -1,6 +1,7 @@
 /*
  * $HEADER$
  */
+/** @file **/
 
 #ifndef LAM_ERRHANDLER_H
 #define LAM_ERRHANDLER_H
@@ -166,14 +167,19 @@ extern "C" {
   /**
    * Initialize the error handler interface.
    *
+   * @returns LAM_SUCCESS Upon success
+   * @returns LAM_ERROR Otherwise
+   *
    * Invoked from lam_mpi_init(); sets up the error handler interface,
    * creates the predefined MPI errorhandlers, and creates the
    * corresopnding F2C translation table.
    */
   int lam_errhandler_init(void);
 
-  /*
+  /**
    * Finalize the error handler interface.
+   *
+   * @returns LAM_SUCCESS Always
    *
    * Invokes from lam_mpi_finalize(); tears down the error handler
    * interface, and destroys the F2C translation table.
@@ -194,10 +200,15 @@ extern "C" {
    * @param message Any additional message; typically the name of the
    *    MPI function that is invoking the error.
    *
+   * @returns err_code The same value as the parameter
+   *
    * This function invokes the MPI exception function on the error
    * handler.  If the errhandler was created from fortran, the error
    * handler will be invoked with fortran linkage.  Otherwise, it is
    * invoked with C linkage.
+   *
+   * If this function returns, it returns the err_code.  Note that it
+   * may not return (e.g., for MPI_ERRORS_ARE_FATAL).
    */
   int lam_errhandler_invoke(lam_errhandler_t *errhandler, void *mpi_object, 
                             int err_code, char *message);
@@ -206,13 +217,28 @@ extern "C" {
   /**
    * Create a lam_errhandler_t
    *
-   * @param mpi_object The object that the errhandler should be cached on
    * @param object_type Enum of the type of MPI object
    * @param func Function pointer of the error handler
-   * @param errhandler Pointer to the lam_errorhandler_t that will be
+   *
+   * @returns errhandler Pointer to the lam_errorhandler_t that will be
    *   created and returned
    *
-   * This function will.... JMS continue here
+   * This function is called as the back-end of all the
+   * MPI_*_CREATE_ERRHANDLER functions.  It creates a new
+   * lam_errhandler_t object, initializes it to the correct object
+   * type, and sets the callback function on it.  
+   *
+   * The type of the function pointer is (arbitrarily) the fortran
+   * function handler type.  Since this function has to accept 4
+   * different function pointer types (lest we have 4 different
+   * functions to create errhandlers), the fortran one was picked
+   * arbitrarily.  Note that (void*) is not sufficient because at
+   * least theoretically, a sizeof(void*) may not necessarily be the
+   * same as sizeof(void(*)).
+   *
+   * NOTE: It *always* sets the "fortran" flag to false.  Fortran
+   * wrappers for MPI_*_CREATE_ERRHANDLER are expected to reset this
+   * flag to false manually.
    */
   lam_errhandler_t *lam_errhandler_create(lam_errhandler_type_t object_type,
                                           lam_errhandler_fortran_handler_fn_t *func);
@@ -228,6 +254,10 @@ extern "C" {
  *
  * @returns true If the errhandler is intrinsic
  * @returns false If the errhandler is not intrinsic
+ *
+ * Self-explanitory.  This is needed in a few top-level MPI functions;
+ * this function is provided to hide the internal structure field
+ * names.
  */
 static inline bool lam_errhandler_is_intrinsic(lam_errhandler_t *errhandler)
 {
