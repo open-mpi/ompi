@@ -80,7 +80,6 @@ static inline void mca_ptl_base_send_request_init(
     request->super.req_mpi_done = false; 
     request->super.req_pml_done = false; 
     request->super.req_free_called = false; 
-    request->super.super.req_type = LAM_REQUEST_PML; 
 
     /* initialize datatype convertor for this request */
     if(count > 0) {

@@ -7,6 +7,7 @@
 
 static void mca_pml_base_request_construct(mca_pml_base_request_t* req)
 {
+    req->super.req_type = LAM_REQUEST_PML;
 }
 
 static void mca_pml_base_request_destruct(mca_pml_base_request_t* req)
