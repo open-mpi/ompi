@@ -25,7 +25,6 @@
 int mca_llm_base_output = -1;
 ompi_list_t mca_llm_base_components_available;
 mca_llm_base_component_t mca_llm_base_selected_component;
-mca_llm_base_module_t mca_llm;
 
 ompi_mutex_t mca_llm_base_parse_mutex;
 

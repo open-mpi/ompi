@@ -5,12 +5,15 @@
 
 #include "ompi_config.h"
 
+#include "mca/ns/ns.h"
 #include "runtime/runtime.h"
 #include "mca/base/base.h"
 #include "util/cmd_line.h"
 #include "include/constants.h"
 
 #include <stdio.h>
+#include <unistd.h>
+#include <sys/param.h>
 
 static long num_running_procs;
 
@@ -31,6 +34,12 @@ main(int argc, char *argv[])
     int ret;
     ompi_cmd_line_t *cmd_line = NULL;
     ompi_list_t *nodelist = NULL;
+    ompi_list_t schedlist;
+    mca_ns_base_jobid_t new_jobid;
+    int num_procs;
+    ompi_rte_node_schedule_t *sched;
+    ompi_list_item_t *nodeitem;
+    char cwd[MAXPATHLEN];
 
     /*
      * Intialize our Open MPI environment
@@ -72,6 +81,11 @@ main(int argc, char *argv[])
         return ret;
     }
 
+    /* get our numprocs */
+    if (ompi_cmd_line_is_taken(cmd_line, "np")) {
+        num_procs = atoi(ompi_cmd_line_get_param(cmd_line, "np", 0, 0));
+        printf("num_procs: %d\n", num_procs);
+    }
 
     /*
      * Start the Open MPI Run Time Environment
@@ -92,11 +106,9 @@ main(int argc, char *argv[])
     /*
      *  Prep for starting a new job
      */
-    /*
-     * BWB: todo:
-     *
-     *   - ompi_rte_get_new_jobid()
-     */
+
+    /* BWB - ompi_rte_get_new_jobid() */
+    new_jobid = getpid();
 
     /* BWB - fix jobid, procs, and nodes */
     nodelist = ompi_rte_allocate_resources(0, 0, 2);
@@ -107,24 +119,45 @@ main(int argc, char *argv[])
     }
 
     /*
-     * BWB: todo:
-     *
-     *   MPI process mapping
-     *   - ompi_rte_register_monitor()
-     *   - ompi_rte_spawn()
-     *   - ompi_rte_monitor()
-     *   - ompi_rte_kill_job()
+     * Process mapping
+     */
+    OBJ_CONSTRUCT(&schedlist,  ompi_list_t);
+    sched = OBJ_NEW(ompi_rte_node_schedule_t);
+    OBJ_CONSTRUCT(&(sched->nodelist), ompi_list_t);
+    ompi_cmd_line_get_tail(cmd_line, &(sched->argc), &(sched->argv));
+    sched->env = NULL;
+    getcwd(cwd, MAXPATHLEN);
+    sched->cwd = strdup(cwd);
+
+    /*
+     * register the monitor
      */
 
 
     /*
+     * spawn procs
+     */
+    if (OMPI_SUCCESS != ompi_rte_spawn_procs(new_jobid, &schedlist)) {
+        printf("show_help: woops!  we didn't spawn :( \n");
+        return -1;
+    }
+
+
+    /*
+     *   - ompi_rte_monitor()
+     *   - ompi_rte_kill_job()
+     */
+
+    /*
      * Clean up
      */
-    if (NULL != nodelist) ompi_rte_deallocate_resources(0, nodelist);
+    if (NULL != nodelist) ompi_rte_deallocate_resources(new_jobid, nodelist);
     if (NULL != cmd_line) ompi_cmd_line_free(cmd_line);
     ompi_rte_finalize();
     mca_base_close();
     ompi_finalize();
+
+    OBJ_DESTRUCT(&sched);
 
     return 0;
 }

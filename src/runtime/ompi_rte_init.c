@@ -11,6 +11,8 @@
 #include "util/output.h"
 #include "threads/mutex.h"
 #include "mca/pcm/base/base.h"
+#include "mca/pcmclient/base/base.h"
+#include "mca/llm/base/base.h"
 #include "mca/oob/oob.h"
 #include "mca/ns/base/base.h"
 #include "util/proc_info.h"
@@ -103,6 +105,32 @@ int ompi_rte_init(bool *allow_multi_user_threads, bool *have_hidden_threads)
   }
   *allow_multi_user_threads &= user_threads;
   *have_hidden_threads |= hidden_threads;
+
+  /*
+   * Process Control and Monitoring Client
+   */
+  if (OMPI_SUCCESS != (ret = mca_pcmclient_base_open())) {
+    /* JMS show_help */
+    printf("show_help: ompi_rte_init failed in pcmclient_base_open\n");
+    return ret;
+  }
+  if (OMPI_SUCCESS != (ret = mca_pcmclient_base_select(&user_threads, 
+                                                       &hidden_threads))) {
+    printf("show_help: ompi_rte_init failed in pcmclient_base_select\n");
+    /* JMS show_help */
+    return ret;
+  }
+  *allow_multi_user_threads &= user_threads;
+  *have_hidden_threads |= hidden_threads;
+
+  /*
+   * Allocation code - open only.  pcm will init if needed
+   */
+  if (OMPI_SUCCESS != (ret = mca_llm_base_open())) {
+    /* JMS show_help */
+    printf("show_help: ompi_rte_init failed in llm_base_open\n");
+    return ret;
+  }
 
   /*
    * Process Control and Monitoring

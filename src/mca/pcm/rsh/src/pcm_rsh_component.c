@@ -9,12 +9,15 @@
 #include "include/constants.h"
 #include "include/types.h"
 #include "util/malloc.h"
+#include "util/output.h"
 #include "class/ompi_list.h"
 #include "mca/mca.h"
 #include "mca/base/mca_base_param.h"
 #include "mca/pcm/pcm.h"
 #include "mca/pcm/base/base.h"
 #include "mca/pcm/rsh/src/pcm_rsh.h"
+#include "mca/llm/llm.h"
+#include "mca/llm/base/base.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -45,53 +48,65 @@ mca_pcm_base_component_1_0_0_t mca_pcm_rsh_component = {
 
 struct mca_pcm_base_module_1_0_0_t mca_pcm_rsh_1_0_0 = {
     mca_pcm_base_no_unique_name,
-    mca_pcm_rsh_allocate_resources,
+    NULL,
     mca_pcm_rsh_register_monitor,
     mca_pcm_rsh_can_spawn,
     mca_pcm_rsh_spawn_procs,
-    mca_pcm_rsh_get_peers,
-    mca_pcm_rsh_get_self,
     mca_pcm_rsh_kill_proc,
     mca_pcm_rsh_kill_job,
-    mca_pcm_rsh_deallocate_resources
+    NULL
+};
+
+
+/* need to create output stream to dump in file */
+ompi_output_stream_t mca_pcm_rsh_output_stream = {
+    false, /* lds_is_debugging  BWB - change me for release */
+    0,     /* lds_verbose_level */
+    false, /* lds_want_syslog */
+    0,     /* lds_syslog_priority */
+    NULL,  /* lds_syslog_ident */
+    "pcm_rsh", /* lds_prefix */
+    true,  /* lds_want_stdout */
+    false, /* lds_want_stderr */
+    true,  /* lds_want_file */
+    true,  /* lds_want_file_append */
+    "pcm_rsh" /* lds_file_suffix */
 };
 
 
 /*
  * Module variables handles
  */
-static int mca_pcm_rsh_param_username;
 static int mca_pcm_rsh_param_no_n;
 static int mca_pcm_rsh_param_no_profile;
 static int mca_pcm_rsh_param_fast;
 static int mca_pcm_rsh_param_ignore_stderr;
 static int mca_pcm_rsh_param_priority;
 static int mca_pcm_rsh_param_agent;
-static int mca_pcm_rsh_param_degree;
-static int mca_pcm_rsh_param_is_client;
+static int mca_pcm_rsh_param_debug;
 
 /*
  * Module variables
  */
-char *mca_pcm_rsh_username;
 int mca_pcm_rsh_no_n;
 int mca_pcm_rsh_no_profile;
 int mca_pcm_rsh_fast;
 int mca_pcm_rsh_ignore_stderr;
-int mca_pcm_rsh_priority;
 char *mca_pcm_rsh_agent;
-int mca_pcm_rsh_degree;
-int mca_pcm_rsh_is_client;
+
+int mca_pcm_rsh_output = 0;
+mca_llm_base_module_t mca_pcm_rsh_llm;
 
 int
 mca_pcm_rsh_component_open(void)
 {
-  mca_pcm_rsh_param_username =
-    mca_base_param_register_string("pcm", "rsh", "username", NULL, NULL);
+    mca_pcm_rsh_param_debug =
+        mca_base_param_register_int("pcm", "rsh", "debug", NULL, 100);
 
   mca_pcm_rsh_param_agent = 
       mca_base_param_register_string("pcm", "rsh", "agent", NULL, 
 				      "ssh");
+
   mca_pcm_rsh_param_no_n =
     mca_base_param_register_int("pcm", "rsh", "no_n", NULL, 0);
   mca_pcm_rsh_param_no_profile =
@@ -103,11 +118,6 @@ mca_pcm_rsh_component_open(void)
 
   mca_pcm_rsh_param_priority =
     mca_base_param_register_int("pcm", "rsh", "priority", NULL, 1);
-  mca_pcm_rsh_param_degree =
-      mca_base_param_register_int("pcm", "rsh", "degree", NULL, 2);
-
-  mca_pcm_rsh_param_is_client = 
-      mca_base_param_register_int("pcm", "rsh", "is_client", NULL, 0);
 
   return OMPI_SUCCESS;
 }
@@ -125,12 +135,17 @@ mca_pcm_rsh_init(int *priority,
 		  bool *allow_multi_user_threads, 
                   bool *have_hidden_threads)
 {
+    int debug;
+    int ret;
+
+    mca_base_param_lookup_int(mca_pcm_rsh_param_debug, &debug);
+    mca_pcm_rsh_output = ompi_output_open(&mca_pcm_rsh_output_stream);
+    ompi_output_set_verbosity(mca_pcm_rsh_output, debug);
+
     mca_base_param_lookup_int(mca_pcm_rsh_param_priority, priority);
  
     mca_base_param_lookup_int(mca_pcm_rsh_param_no_n, 
 			      &mca_pcm_rsh_no_n);
-    mca_base_param_lookup_string(mca_pcm_rsh_param_username, 
-                                 &mca_pcm_rsh_username);
     mca_base_param_lookup_int(mca_pcm_rsh_param_no_profile, 
 			      &mca_pcm_rsh_no_profile);
     mca_base_param_lookup_int(mca_pcm_rsh_param_fast, 
@@ -139,15 +154,27 @@ mca_pcm_rsh_init(int *priority,
 			      &mca_pcm_rsh_ignore_stderr);
     mca_base_param_lookup_int(mca_pcm_rsh_param_ignore_stderr, 
 			      &mca_pcm_rsh_ignore_stderr);
-    mca_base_param_lookup_int(mca_pcm_rsh_param_degree,
-			      &mca_pcm_rsh_degree);
     mca_base_param_lookup_string(mca_pcm_rsh_param_agent,
                                  &mca_pcm_rsh_agent);
-    mca_base_param_lookup_int(mca_pcm_rsh_param_is_client,
-                              &mca_pcm_rsh_is_client);
-
     *allow_multi_user_threads = true;
     *have_hidden_threads = false;
+
+    ompi_output_verbose(10, mca_pcm_rsh_output, "start llm selection");
+    ret = mca_llm_base_select("pcm", &mca_pcm_rsh_llm,
+                              allow_multi_user_threads,
+                              have_hidden_threads);
+    if (OMPI_SUCCESS != ret) {
+        /* well, that can't be good.  guess we can't run */
+        return NULL;
+    }
+
+    /* copy over the function pointers */
+    mca_pcm_rsh_1_0_0.pcm_allocate_resources = 
+        mca_pcm_rsh_llm.llm_allocate_resources;
+    mca_pcm_rsh_1_0_0.pcm_deallocate_resources = 
+        mca_pcm_rsh_llm.llm_deallocate_resources;
+
+    ompi_output_verbose(10, mca_pcm_rsh_output, "stop llm selection");
 
     return &mca_pcm_rsh_1_0_0;
 }
@@ -156,6 +183,10 @@ mca_pcm_rsh_init(int *priority,
 int
 mca_pcm_rsh_finalize(void)
 {
-  return OMPI_SUCCESS;
+    if (mca_pcm_rsh_output > 0) {
+        ompi_output_close(mca_pcm_rsh_output);
+    }
+
+    return OMPI_SUCCESS;
 }
 

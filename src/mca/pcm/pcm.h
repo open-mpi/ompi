@@ -142,6 +142,7 @@ typedef char *
 (*mca_pcm_base_get_unique_name_fn_t)(void);
 
 
+
 /**
  * Allocate requested resources
  *
@@ -211,24 +212,6 @@ typedef int
 
 
 /**
- * Get my name
- *
- * @return my name
- */
-typedef ompi_process_name_t* (*mca_pcm_base_module_get_self_fn_t)(void);
-
-
-/**
- * Get names of peer processes which have been launched
- *
- * @param Nothing
- * @return An array of peer names, including me
- */
-typedef int (*mca_pcm_base_module_get_peers_fn_t)
-     (ompi_process_name_t **peers, size_t *npeers);
-
-
-/**
  * Kill a specific process in this cell
  *
  * @param process_name Which process needs to be killed.
@@ -286,16 +269,12 @@ struct mca_pcm_base_module_1_0_0_t {
     mca_pcm_base_register_monitor_fn_t pcm_register_monitor;
     mca_pcm_base_can_spawn_fn_t pcm_can_spawn;
     mca_pcm_base_spawn_procs_fn_t pcm_spawn_procs;
-    mca_pcm_base_module_get_peers_fn_t pcm_peers;
-    mca_pcm_base_module_get_self_fn_t pcm_self;
     mca_pcm_base_kill_proc_fn_t pcm_kill_proc;
     mca_pcm_base_kill_job_fn_t pcm_kill_job;
     mca_pcm_base_deallocate_resources_fn_t pcm_deallocate_resources;
 };
 typedef struct mca_pcm_base_module_1_0_0_t mca_pcm_base_module_1_0_0_t;
 typedef struct mca_pcm_base_module_1_0_0_t mca_pcm_base_module_t;
-
-extern mca_pcm_base_module_t mca_pcm;
 
 
 /**

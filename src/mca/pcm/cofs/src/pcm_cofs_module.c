@@ -11,6 +11,7 @@
 #include "util/output.h"
 #include "mca/mca.h"
 #include "mca/pcm/pcm.h"
+#include "mca/pcm/base/base.h"
 #include "mca/pcm/cofs/src/pcm_cofs.h"
 #include "mca/base/mca_base_param.h"
 
@@ -42,13 +43,11 @@ mca_pcm_base_component_1_0_0_t mca_pcm_cofs_component = {
 
 
 struct mca_pcm_base_module_1_0_0_t mca_pcm_cofs_1_0_0 = {
-    NULL, /* unique_string */
+    mca_pcm_base_no_unique_name, /* unique_string */
     NULL, /* allocate_resources */
     NULL, /* register_monitor */
     NULL, /* can_spawn */
     NULL, /* spawn_procs */
-    mca_pcm_cofs_get_peers,
-    mca_pcm_cofs_get_self,
     NULL, /* kill_proc */
     NULL, /* kill_job */
     NULL  /* deallocate_resources */

@@ -18,6 +18,7 @@ ompi_list_t*
 mca_llm_hostfile_allocate_resources(int jobid, int nodes, int procs)
 {
     ompi_list_t *nodelist = NULL;
+    ompi_list_item_t *nodeitem;
     int ret;
 
     /* start by getting the full list of available resources */

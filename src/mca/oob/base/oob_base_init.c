@@ -11,6 +11,8 @@
 #include "util/proc_info.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
+#include "mca/pcmclient/pcmclient.h"
+#include "mca/pcmclient/base/base.h"
 #include "mca/ns/base/base.h"
 #include "mca/pcm/pcm.h"
 #include "mca/oob/oob.h"
@@ -77,9 +79,9 @@ int mca_oob_base_init(bool *user_threads, bool *hidden_threads)
     char** uri = NULL;
 
     /* setup local name */
-    self = mca_pcm.pcm_self();
+    self = mca_pcmclient.pcmclient_get_self();
     if(NULL == self) {
-        ompi_output(0, "mca_oob_base_init: could not get PCM self pointer");
+        ompi_output(0, "mca_oob_base_init: could not get pcmclient self pointer");
         return OMPI_ERROR;
     }
     mca_oob_name_self = *self;

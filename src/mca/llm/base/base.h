@@ -39,6 +39,5 @@ extern "C" {
 extern int mca_llm_base_output;
 extern ompi_list_t mca_llm_base_components_available;
 extern mca_llm_base_component_t mca_llm_base_selected_component;
-extern mca_llm_base_module_t mca_llm;
 
 #endif /* MCA_LLM_BASE_H */

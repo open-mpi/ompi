@@ -17,6 +17,7 @@ SUBDIRS = \
         one \
         oob \
         pcm \
+	pcmclient \
         pml \
         ptl \
         topo

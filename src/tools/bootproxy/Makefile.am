@@ -5,8 +5,7 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-#libs = $(top_builddir)/src/libmpi.la 
-libs = 
+libs = $(top_builddir)/src/libmpi.la 
 
 bin_PROGRAMS = mca_pcm_rsh_bootproxy
 
