@@ -8,5 +8,5 @@
  * Global variables and symbols for the MPI layer
  */
 
-int lam_mpi_initialized = 0;
-int lam_mpi_finalized = 0;
+bool lam_mpi_initialized = false;
+bool lam_mpi_finalized = false;
