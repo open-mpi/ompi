@@ -12,8 +12,6 @@
  * $HEADER$
  */
 
-/** @file **/
-
 #include "ompi_config.h"
 #include <stdlib.h>
 #include <string.h>
@@ -24,7 +22,7 @@
 #include "util/path.h"
 #include "util/argv.h"
 
-/**
+/*
  * PATH environment variable separator
  */
 #ifdef WIN32
@@ -33,54 +31,40 @@
 #define PATHENVSEP  ':'
 #endif
 
-static void     path_env_load(char *path, int *pargc, char ***pargv);
-static char     *path_access(char *fname, char *path, int mode);
-static char     *list_env_get(char *var, char **list);
+static void path_env_load(char *path, int *pargc, char ***pargv);
+static char *path_access(char *fname, char *path, int mode);
+static char *list_env_get(char *var, char **list);
+
 
 /**
  *  Locates a file with certain permissions
- *  
- *  @param fname File name
- *  @param pathv Array of search directories
- *  @param mode  Permissions which must be satisfied
- *  @param envv  Pointer to string containing environment
- *
- *  @retval Full pathname of located file Success
- *  @retval NULL Failure
- *
- *  Environment variable can
- *  appear in the form $variable at the start of a prefix path
- *  and will be replaced by the environment value if it is defined otherwise
- *  the whole prefix is ignored. Environment variable must be followed by a
- *  path delimiter or end-of-string
  */
-char *
-ompi_path_findv(char *fname, char **pathv, int mode, char **envv)
+char *ompi_path_find(char *fname, char **pathv, int mode, char **envv)
 {
-    char    *fullpath;  
-    char    *delimit;  
-    char    *env;     
-    char    *pfix;   
-    int     i;
-    /*
-     * If absolute path is given, return it without searching.
-     */
+    char *fullpath;  
+    char *delimit;  
+    char *env;     
+    char *pfix;   
+    int i;
+
+    /* If absolute path is given, return it without searching. */
+
     if ('/' == *fname) {
-        return(path_access(fname, "", mode));
+        return path_access(fname, "", mode);
     }
-    /*
-     * Initialize.
-     */
+
+    /* Initialize. */
+
     fullpath = NULL;
     i = 0;
-    /*
-     * Consider each directory until the file is found.
-     * Thus, the order of directories is important.
-     */
-    while (pathv[i] && !fullpath) {
-        /*
-         * Replace environment variable at the head of the string.
-         */
+
+    /* Consider each directory until the file is found.  Thus, the
+       order of directories is important. */
+
+    while (pathv[i] && NULL == fullpath) {
+
+        /* Replace environment variable at the head of the string. */
+
         if ('$' == *pathv[i]) {
             delimit = strchr(pathv[i], '/');
             if (delimit) {
@@ -90,13 +74,13 @@ ompi_path_findv(char *fname, char **pathv, int mode, char **envv)
             if (delimit) {
                 *delimit = '/';
             }
-            if (env) {
+            if (NULL != env) {
                 if (!delimit) {
                     fullpath = path_access(fname, env, mode);
                 } else {
                     pfix = (char*) malloc(strlen(env) + strlen(delimit) + 1);
-                    if (NULL == pfix){
-                        return(0);
+                    if (NULL == pfix) {
+                        return NULL;
                     }
                     strcpy(pfix, env);
                     strcat(pfix, delimit);
@@ -110,115 +94,62 @@ ompi_path_findv(char *fname, char **pathv, int mode, char **envv)
         }
         i++;
     }
-    return(fullpath);
+    return fullpath;
 }
 
-/**
- *  
- *  Same as ompi_path_findv
- *
- *  @param fname File name
- *  @param pathv Array of search directories
- *  @param mode  Permissions which must be satisfied
- *
- *  @retval Full pathname of located file Success
- *  @retval NULL Failure
- *
- *  Locates a file with certain permissions. Environment variable can 
- *  appear in the form $variable at the start of a prefix path
- *  and will be replaced by the environment value if it is defined otherwise
- *  the whole prefix is ignored. Environment variable must be followed by a
- *  path delimiter or end-of-string
- */
-char *
-ompi_path_find(char *fname, char **pathv, int mode)
-{
-    return(ompi_path_findv(fname, pathv, mode, 0));
-}
 
-/**
- *  Locates a file with certain permissions from a list of search paths
- *
- *  @param fname File name
- *  @param mode  Target permissions which must be satisfied
- *  @param envv  Pointer to environment list
- *  @param wrkdir Working directory
- *
- *  @retval Full pathname of located file Success
- *  @retval NULL Failure
- *
- *  Locates a file with certain permissions from the list of
- *  paths given by the $PATH environment variable. Replaces ./
- *  of found path with working dir
+/*
+ * Locates a file with certain permissions from a list of search paths
  */
-char *
-ompi_path_env_findv(char *fname, int mode, char **envv, char *wrkdir)
+char *ompi_path_findv(char *fname, int mode, char **envv, char *wrkdir)
 {
-    char    **dirv;     
-    char    *fullpath; 
-    char    *path;    
-    int     dirc;    
-    int     i;
-    int     found_dot = 0;
-    /*
-     * Set the local search paths.
-     */
+    char **dirv;     
+    char *fullpath; 
+    char *path;    
+    int dirc;    
+    int i;
+    bool found_dot = false;
+
+    /* Set the local search paths. */
+
     dirc = 0;
     dirv = NULL;
 
-    if ((path = list_env_get("PATH", envv))) {
+    if (NULL != (path = list_env_get("PATH", envv))) {
         path_env_load(path, &dirc, &dirv);
     }
-    /*
-     * Replace the "." path by the working directory.
-     */
-    for (i = 0; i < dirc; ++i) {
-        if ((0 == strcmp(dirv[i], ".")) && wrkdir) {
-            found_dot = 1;
-            free(dirv[i]);
-            dirv[i] = strdup(wrkdir);
-            if (NULL == dirv[i]){
-                 return(0);
+
+    /* Replace the "." path by the working directory. */
+
+    if (NULL != wrkdir) { 
+        for (i = 0; i < dirc; ++i) {
+            if (0 == strcmp(dirv[i], ".")) {
+                found_dot = true;
+                free(dirv[i]);
+                dirv[i] = strdup(wrkdir);
+                if (NULL == dirv[i]){
+                    return NULL;
+                }
             }
         }
     }
-    /*
-     * If we didn't find "." in the path and we have a wrkdir, append
-     * the wrkdir to the end of the path
-     */
-    if (!found_dot && wrkdir) {
+
+    /* If we didn't find "." in the path and we have a wrkdir, append
+       the wrkdir to the end of the path */
+
+    if (!found_dot && NULL != wrkdir) {
         ompi_argv_append(&dirc, &dirv, wrkdir);
     }
 
-    fullpath = ompi_path_findv(fname, dirv, mode, envv);
+    fullpath = ompi_path_find(fname, dirv, mode, envv);
     ompi_argv_free(dirv);
-    return(fullpath);
+    return fullpath;
 }
 
-/**
- *  Locates a file with certain permissions. Replaces ./
- *  of found path with working dir
- *
- *  @param fname File name
- *  @param mode  Target permissions which must be satisfied
- *
- *  @retval Full pathname of located file Success
- *  @retval NULL Failure
- */
-char *
-ompi_path_env_find(char *fname, int mode)
-{
-    char    cwd[OMPI_PATH_MAX];
-    char    *r;
-
-    getcwd(cwd, OMPI_PATH_MAX);
-    r = ompi_path_env_findv(fname, mode, 0, cwd);
-    
-    return(r);
-}
 
 /**
- *  Forms a complete pathname and checks it for existance and permissions
+ *  Forms a complete pathname and checks it for existance and
+ *  permissions
  *            
  *  Accepts:
  *      -fname File name
@@ -229,16 +160,15 @@ ompi_path_env_find(char *fname, int mode)
  *      -Full pathname of located file Success
  *      -NULL Failure
  */
-static char *
-path_access(char *fname, char *path, int mode)
+static char *path_access(char *fname, char *path, int mode)
 {
-    char    *fullpath;  /* full pathname of search file */
-    /*
-     * Allocate space for the full pathname.
-     */
+    char *fullpath;
+
+    /* Allocate space for the full pathname. */
+
     fullpath = (char*) malloc(strlen(path) + strlen(fname) + 2);
-    if (NULL == fullpath){
-        return(0);
+    if (NULL == fullpath) {
+        return NULL;
     }
 
     if (strlen(path) > 0) {
@@ -248,17 +178,18 @@ path_access(char *fname, char *path, int mode)
     } else {
         strcpy(fullpath, fname);
     }
-    /*
-     * Get status on the full path name to check for existance.
-     * Then check the permissions.
-     */
+
+    /* Get status on the full path name to check for existance.  Then
+       check the permissions. */
+
     if (access(fullpath, mode)) {
         free(fullpath);
-        fullpath = 0;
+        fullpath = NULL;
     }
 
-    return(fullpath);
+    return fullpath;
 }
+
 
 /**
  *
@@ -268,29 +199,30 @@ path_access(char *fname, char *path, int mode)
  *      -path String contiaing the $PATH
  *      -argc Pointer to argc
  *      -argv Pointer to list of argv
- *
  */
-static void
-path_env_load(char *path, int *pargc, char ***pargv)
+static void path_env_load(char *path, int *pargc, char ***pargv)
 {
-    char    *p;     /* favourite pointer */
-    char    saved;      /* saved character */
+    char *p;
+    char saved;
 
     if (NULL == path) {
-        *pargc =  0;
-    return;
+        *pargc = 0;
+        return;
     }
-    /*
-     * Loop through the paths (delimited by PATHENVSEP), adding each one to argv.
-     */
-    while (*path) {
-       /*
-        * Locate the delimiter.
-        */
-        for (p = path; *p && (*p != PATHENVSEP); ++p);
-        /*
-         * Add the path.
-         */
+
+    /* Loop through the paths (delimited by PATHENVSEP), adding each
+       one to argv. */
+
+    while ('\0' != *path) {
+
+       /* Locate the delimiter. */
+
+        for (p = path; *p && (*p != PATHENVSEP); ++p) {
+            continue;
+        }
+
+        /* Add the path. */
+
         if (p != path) {
             saved = *p;
             *p = '\0';
@@ -298,14 +230,15 @@ path_env_load(char *path, int *pargc, char ***pargv)
             *p = saved;
             path = p;
         }
-        /*
-         * Skip past the delimiter, if present.
-         */
+
+        /* Skip past the delimiter, if present. */
+
         if (*path) {
             ++path;
         }
     }
 }
+
 
 /**
  *  Gets value of variable in list or environment. Looks in the list first
@@ -318,21 +251,20 @@ path_env_load(char *path, int *pargc, char ***pargv)
  *      -List Pointer to environment list Success
  *      -NULL Failure
  */
-static char *
-list_env_get(char *var, char **list)
+static char *list_env_get(char *var, char **list)
 {
     int n;
 
-    if (list) {
+    if (NULL != list) {
         n = strlen(var);
 
-        while (*list) {
+        while (NULL != *list) {
             if ((0 == strncmp(var, *list, n)) && ('=' == (*list)[n])) {
-                return(*list + n+1);
+                return (*list + n + 1);
             }
-            list++;
+            ++list;
         }
     }
-    return(getenv(var));
+    return getenv(var);
 }
 
