@@ -43,6 +43,7 @@ ompi_automake=""
 mca_no_configure_components_file="config/mca_no_configure_components.m4"
 mca_no_config_list_file="mca_no_config_list"
 mca_no_config_amc_file="mca_no_config_amc"
+autogen_subdir_file="autogen.subdirs"
 
 
 ############################################################################
@@ -655,6 +656,29 @@ EOF
 ***   `pwd`
 
 EOF
+        fi
+
+        # See if there's a file containing additional directories to
+        # traverse.  Shell scripts aren't too good at recursion (no
+        # local state!), so just have a child autogen.sh do the work.
+
+        if test -f $autogen_subdir_file; then
+            pd_subdir_start_dir="`pwd`"
+            echo ""
+            echo "==> Found $autogen_subdir_file -- sub-traversing..."
+            echo ""
+            for dir in `cat $autogen_subdir_file`; do
+                if test -d "$dir"; then
+                    echo "*** Running autogen.sh in $dir"
+                    echo "***   (started in $pd_subdir_start_dir)"
+                    cd "$dir"
+                    $pd_ompi_topdir/autogen.sh -l
+                    cd "$pd_subdir_start_dir"
+                    echo ""
+                fi
+            done
+            echo "<== Back in $pd_subdir_start_dir"
+            echo "<== autogen.sh continuing..."
         fi
 
         # Go back to the topdir
