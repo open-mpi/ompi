@@ -91,6 +91,7 @@ static struct mca_ptl_base_module_t** ptl_prof_component_init_fn(
     *have_hidden_threads = false;
     ptl_array = (mca_ptl_prof_t**)malloc( (*num_ptls) * sizeof(mca_ptl_prof_t*) );
     ptl_array[0] = &mca_ptl_prof;
+    mca_ptl_prof.super.ptl_component = (mca_ptl_base_component_t*)&mca_ptl_prof_component;
     mca_ptl_prof_component.prof_ptls = ptl_array;
     return (struct mca_ptl_base_module_t**)ptl_array;
 }
