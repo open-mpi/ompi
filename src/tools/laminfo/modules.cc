@@ -12,6 +12,8 @@
 
 #include "mca/lam/base/base.h"
 #include "mca/lam/pcm/pcm.h"
+#include "mca/mpi/pml/pml.h"
+#include "mca/mpi/ptl/ptl.h"
 #include "tools/laminfo/laminfo.h"
 
 using namespace std;
@@ -70,50 +72,46 @@ void laminfo::open_modules()
 
 #if 0
   // oob module opening not implemented yet
-  mca_oob_open();
-  module_map("oob") = mca_oob_base_module_list;
+  mca_oob_base_open();
+  module_map["oob"] = &mca_oob_base_modules_available;
 #endif
 
 #if 0
   // registry module opening not implemented yet
-  mca_registry_open();
-  module_map("registry") = mca_registry_base_module_list;
+  mca_registry_base_open();
+  module_map["registry"] = &mca_registry_base_modules_available;
 #endif
 
 #if 0
   // coll module opening not implemented yet
-  mca_coll_open();
-  module_map("coll") = mca_coll_base_module_list;
+  mca_coll_base_open();
+  module_map["coll"] = &mca_coll_base_modules_available;
 #endif
 
 #if 0
   // io module opening not implemented yet
-  mca_io_open();
-  module_map("io") = mca_io_base_module_list;
+  mca_io_base_open();
+  module_map["io"] = &mca_io_base_modules_available;
 #endif
 
 #if 0
   // one module opening not implemented yet
-  mca_one_open();
-  module_map("one") = mca_one_base_module_list;
+  mca_one_base_open();
+  module_map["one"] = &mca_one_base_modules_available;
 #endif
 
-#if 0
   // pml module opening not implemented yet
-  mca_pml_open();
-  module_map("pml") = mca_pml_base_module_list;
-#endif
+  mca_pml_base_open();
+  module_map["pml"] = &mca_pml_base_modules_available;
 
-#if 0
   // ptl module opening not implemented yet
-  mca_ptl_open();
-  module_map("ptl") = mca_ptl_base_module_list;
-#endif
+  mca_ptl_base_open();
+  module_map["ptl"] = &mca_ptl_base_modules_available;
 
 #if 0
   // topo module opening not implemented yet
-  mca_topo_open();
-  module_map("topo") = mca_topo_base_module_list;
+  mca_topo_base_open();
+  module_map["topo"] = &mca_topo_base_modules_available;
 #endif
 
   // All done
@@ -129,7 +127,9 @@ void laminfo::close_modules()
 #if 0
     mca_crmpi_base_close();
     mca_coll_base_close();
+#endif
     mca_pml_base_close();
+#if 0
     mca_boot_close();
     mca_base_close();
 #endif

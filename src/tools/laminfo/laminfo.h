@@ -44,6 +44,10 @@ namespace laminfo {
 
   void do_version(bool want_all, lam_cmd_line_t *cmd_line);
   void show_lam_version(const std::string& scope);
+  void show_module_version(const std::string& type_name, 
+                           const std::string& module_name,
+                           const std::string& scope, 
+                           const std::string& ver_type);
 
   //
   // Parameter/configuration-related functions

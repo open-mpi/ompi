@@ -4,10 +4,12 @@
 
 #include "lam_config.h"
 
+#include <iostream>
 #include <string>
 
 #include <stdio.h>
 
+#include "mca/lam/base/base.h"
 #include "tools/laminfo/laminfo.h"
 
 using namespace std;
@@ -40,9 +42,6 @@ static const string ver_module = "module";
 // Private functions
 //
 
-static void show_module_version(const string& type_name, 
-                                const string& module_name,
-                                const string& scope, const string& ver_type);
 static void show_mca_version(const mca_base_module_t *module,
                              const string& scope, const string& ver_type);
 static string make_version_str(const string& scope,
@@ -119,15 +118,16 @@ void laminfo::show_lam_version(const string& scope)
 // Show all the modules of a specific type/module combo (module may be
 // a wildcard)
 //
-static void show_module_version(const string& type_name, 
-                                const string& module_name,
-                                const string& scope, const string& ver_type)
+void laminfo::show_module_version(const string& type_name, 
+                                  const string& module_name,
+                                  const string& scope, const string& ver_type)
 {
   laminfo::type_list_t::size_type i;
   bool want_all_modules = (type_all == module_name);
   bool found;
   lam_list_item *item;
-  mca_base_module_t *module;
+  mca_base_module_list_item_t *mli;
+  const mca_base_module_t *module;
   lam_list_t *modules;
 
   // Check to see if the type is valid
@@ -150,9 +150,10 @@ static void show_module_version(const string& type_name,
 
   modules = module_map[type_name];
   for (item = lam_list_get_first(modules);
-       lam_list_get_last(modules) != item;
-       item = (lam_list_item *) lam_list_get_next(item)) {
-    module = (mca_base_module_t *) item;
+       lam_list_get_end(modules) != item;
+       item = lam_list_get_next(item)) {
+    mli = (mca_base_module_list_item_t *) item;
+    module = mli->mli_module;
     if (want_all_modules || module->mca_module_name == module_name) {
       show_mca_version(module, scope, ver_type);
     }
