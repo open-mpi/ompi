@@ -346,7 +346,7 @@ int lam_fmp_construct_with(lam_fixed_mpool_t *pool, ssize_t initial_allocation,
                 "pool->fmp_segments, requested %ld bytes, errno %d",
                 sizeof(int) * n_pools, errno);
     }
-    bzero(pool->fmp_segments, sizeof(lam_memseg_t *)*n_pools);
+    memset(pool->fmp_segments, 0, sizeof(lam_memseg_t *)*n_pools);
 
     pool->fmp_n_segs_in_array = malloc(sizeof(int) * n_pools);
     if ( !pool->fmp_n_segs_in_array ) {
