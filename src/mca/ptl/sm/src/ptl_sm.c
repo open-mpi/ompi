@@ -34,12 +34,12 @@ mca_ptl_sm_t mca_ptl_sm = {
     sizeof(mca_ptl_sm_send_request_t) -
         sizeof(mca_pml_base_send_request_t),  /* size of shared memory send
                                            descriptor */
-    1, /* ptl_exclusivity */
+    1, /* ptl_first_frag_size */
+    0, /* ptl_min_frag_size */
+    0, /* ptl_max_frag_size */
+    0, /* ptl_exclusivity */
     0, /* ptl_latency */
-    0, /* ptl_andwidth */
-    0, /* ptl_frag_first_size */
-    0, /* ptl_frag_min_size */
-    0, /* ptl_frag_max_size */
+    0, /* ptl_bandwidth */
     MCA_PTL_PUT,  /* ptl flags */
     mca_ptl_sm_add_procs,
     mca_ptl_sm_del_procs,
