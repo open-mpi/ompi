@@ -171,8 +171,9 @@ int gpr_replica_put_nl(ompi_registry_mode_t addr_mode, char *segment,
 
     /* update trigger list and check for trigger conditions */
     for (trig = (mca_gpr_replica_trigger_list_t*)ompi_list_get_first(&seg->triggers);
-	 trig != (mca_gpr_replica_trigger_list_t*)ompi_list_get_end(&seg->triggers);
-	 trig = (mca_gpr_replica_trigger_list_t*)ompi_list_get_next(trig)) {
+	     trig != (mca_gpr_replica_trigger_list_t*)ompi_list_get_end(&seg->triggers);
+         ) {
+    mca_gpr_replica_trigger_list_t* next = (mca_gpr_replica_trigger_list_t*)ompi_list_get_next(trig);
 	if (gpr_replica_check_key_list(trig->addr_mode, trig->num_keys, trig->keys,
 				       num_tokens, keys)) {
 	    trig->count++;
@@ -199,8 +200,8 @@ int gpr_replica_put_nl(ompi_registry_mode_t addr_mode, char *segment,
 	} else if (trig->count == trig->trigger) {
 	    trig->above_below = MCA_GPR_REPLICA_TRIGGER_AT_LEVEL;
 	}
+    trig = next;
     }
-
 
  CLEANUP:
     /* release list of keys */
@@ -299,8 +300,9 @@ int gpr_replica_delete_object_nl(ompi_registry_mode_t addr_mode,
 
     /* update synchro list and check for trigger conditions */
     for (trig = (mca_gpr_replica_trigger_list_t*)ompi_list_get_first(&seg->triggers);
-	 trig != (mca_gpr_replica_trigger_list_t*)ompi_list_get_end(&seg->triggers);
-	 trig = (mca_gpr_replica_trigger_list_t*)ompi_list_get_next(trig)) {
+	     trig != (mca_gpr_replica_trigger_list_t*)ompi_list_get_end(&seg->triggers);
+	     ) {
+    mca_gpr_replica_trigger_list_t* next = (mca_gpr_replica_trigger_list_t*)ompi_list_get_next(trig);
 	if (gpr_replica_check_key_list(trig->addr_mode, trig->num_keys, trig->keys,
 				       num_tokens, keys)) {
 	    trig->count--;
@@ -325,6 +327,7 @@ int gpr_replica_delete_object_nl(ompi_registry_mode_t addr_mode,
 	} else if (trig->count == trig->trigger) {
 	    trig->above_below = MCA_GPR_REPLICA_TRIGGER_AT_LEVEL;
 	}
+    trig = next;
     }
 
 
