@@ -542,17 +542,18 @@ pids_cmp(const void *leftp, const void *rightp)
 int
 mca_pcm_base_data_store_pids_uniqify(pid_t **pids, size_t *len)
 {
-    int i, j;
+    size_t i, j;
 
     qsort(*pids, *len, sizeof(pid_t), pids_cmp);
 
-    for (i = 0 ; i < (int) *len ; ++i) {
+    for (i = 0 ; i < *len - 1 ;) {
         if ((*pids)[i] == (*pids)[i + 1]) {
-            for (j = i + 1 ; j < (int) *len - 1 ; ++i) {
+            for (j = i + 1 ; j < *len - 1 ; ++j) {
                 (*pids)[j] = (*pids)[j + 1];
             }
             (*len)--;
         }
+        if ((*pids)[i] != (*pids)[i + 1]) i++;
     }
 
     return OMPI_SUCCESS;
