@@ -92,7 +92,7 @@ mca_pcm_cofs_init(int *priority, bool *allow_multi_user_threads,
 
   char *test_ret;
 
-  *priority = 0;
+  *priority = 1;
   *allow_multi_user_threads = true;
   *have_hidden_threads = false;
 
