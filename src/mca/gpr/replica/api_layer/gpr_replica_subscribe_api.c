@@ -106,10 +106,10 @@ orte_gpr_replica_subscribe(orte_gpr_notify_action_t action,
         return rc;
     }
 
+    rc = orte_gpr_replica_process_callbacks();
+    
     OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
 
-    orte_gpr_replica_process_callbacks();
-    
     return rc;
 }
 

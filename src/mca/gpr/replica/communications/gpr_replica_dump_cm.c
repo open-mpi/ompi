@@ -41,9 +41,7 @@ int orte_gpr_replica_recv_dump_all_cmd(orte_buffer_t *answer)
         return rc;
     }
     
-    OMPI_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
     rc = orte_gpr_replica_dump_all_fn(answer);
-    OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
 
     if (ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
@@ -61,9 +59,7 @@ int orte_gpr_replica_recv_dump_segments_cmd(orte_buffer_t *answer)
         return rc;
     }
     
-    OMPI_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
     rc = orte_gpr_replica_dump_segments_fn(answer);
-    OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
 
     if (ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
@@ -81,9 +77,7 @@ int orte_gpr_replica_recv_dump_triggers_cmd(orte_buffer_t *answer)
         return rc;
     }
     
-    OMPI_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
     rc = orte_gpr_replica_dump_triggers_fn(answer);
-    OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
 
     if (ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
@@ -101,9 +95,7 @@ int orte_gpr_replica_recv_dump_callbacks_cmd(orte_buffer_t *answer)
         return rc;
     }
     
-    OMPI_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
     rc = orte_gpr_replica_dump_callbacks_fn(answer);
-    OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
 
     if (ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);

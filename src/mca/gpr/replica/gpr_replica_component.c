@@ -138,7 +138,7 @@ static void orte_gpr_replica_segment_construct(orte_gpr_replica_segment_t* seg)
 /* destructor - used to free any resources held by instance */
 static void orte_gpr_replica_segment_destructor(orte_gpr_replica_segment_t* seg)
 {
-    int i;
+    int i, j;
     orte_gpr_replica_dict_t **dptr;
     orte_gpr_replica_container_t **cptr;
     
@@ -163,7 +163,9 @@ static void orte_gpr_replica_segment_destructor(orte_gpr_replica_segment_t* seg)
         cptr = (orte_gpr_replica_container_t**)((seg->containers)->addr);
         for (i=0; i < (seg->containers)->size; i++) {
             if (NULL != cptr[i]) {
+                j = i;
                 OBJ_RELEASE(cptr[i]);
+                orte_pointer_array_set_item(seg->containers, j, NULL);
             }
         }
         OBJ_RELEASE(seg->containers);
@@ -198,7 +200,7 @@ static void orte_gpr_replica_container_construct(orte_gpr_replica_container_t* r
 static void orte_gpr_replica_container_destructor(orte_gpr_replica_container_t* reg)
 {
     orte_gpr_replica_itagval_t **ptr;
-    int i;
+    int i, j;
 
     if (NULL != reg->itags) {
          free(reg->itags);
@@ -208,7 +210,9 @@ static void orte_gpr_replica_container_destructor(orte_gpr_replica_container_t* 
         ptr = (orte_gpr_replica_itagval_t**)((reg->itagvals)->addr);
         for (i=0; i < (reg->itagvals)->size; i++) {
             if (NULL != ptr[i]) {
+                j = i;
                 OBJ_RELEASE(ptr[i]);
+                orte_pointer_array_set_item(reg->itagvals, j, NULL);
             }
         }
         OBJ_RELEASE(reg->itagvals);
@@ -233,7 +237,7 @@ static void orte_gpr_replica_itagval_construct(orte_gpr_replica_itagval_t* ptr)
     ptr->index = 0;
     ptr->itag = ORTE_GPR_REPLICA_ITAG_MAX;
     ptr->type = ORTE_NULL;
-    (ptr->value).strptr = NULL;
+    (ptr->value).i32 = 0;
 }
 
 /* destructor - used to free any resources held by instance */
@@ -339,7 +343,7 @@ static void orte_gpr_replica_trigger_construct(orte_gpr_replica_triggers_t* trig
 /* destructor - used to free any resources held by instance */
 static void orte_gpr_replica_trigger_destructor(orte_gpr_replica_triggers_t* trig)
 {
-    int i;
+    int i, j;
     orte_gpr_replica_subscribed_data_t **data;
     orte_gpr_replica_counter_t **cntrs;
     
@@ -350,7 +354,11 @@ static void orte_gpr_replica_trigger_destructor(orte_gpr_replica_triggers_t* tri
     if (NULL != trig->subscribed_data) {
        data = (orte_gpr_replica_subscribed_data_t**)((trig->subscribed_data)->addr);
        for (i=0; i < (trig->subscribed_data)->size; i++) {
-            if (NULL != data[i]) OBJ_RELEASE(data[i]);
+            if (NULL != data[i]) {
+                j = i;
+                OBJ_RELEASE(data[i]);
+                orte_pointer_array_set_item(trig->subscribed_data, j, NULL);
+            }
        }
        OBJ_RELEASE(trig->subscribed_data);
     }
@@ -358,7 +366,11 @@ static void orte_gpr_replica_trigger_destructor(orte_gpr_replica_triggers_t* tri
     if (NULL != trig->counters) {
         cntrs = (orte_gpr_replica_counter_t**)((trig->counters)->addr);
         for (i=0; i < (trig->counters)->size; i++) {
-            if (NULL != cntrs[i]) OBJ_RELEASE(cntrs[i]);
+            if (NULL != cntrs[i]) {
+                j = i;
+                OBJ_RELEASE(cntrs[i]);
+                orte_pointer_array_set_item(trig->counters, j, NULL);
+            }
         }
         OBJ_RELEASE(trig->counters);
     }
@@ -609,6 +621,7 @@ int orte_gpr_replica_finalize(void)
              OBJ_RELEASE(seg[i]);
          }
     }
+    OBJ_RELEASE(orte_gpr_replica.segments);
     
     trig = (orte_gpr_replica_triggers_t**)(orte_gpr_replica.triggers)->addr;
     for (i=0; i < (orte_gpr_replica.triggers)->size; i++) {
@@ -616,6 +629,7 @@ int orte_gpr_replica_finalize(void)
              OBJ_RELEASE(trig[i]);
          }
     }
+    OBJ_RELEASE(orte_gpr_replica.triggers);
     
     while (NULL != (cb = (orte_gpr_replica_callbacks_t*)ompi_list_remove_first(&orte_gpr_replica.callbacks))) {
         OBJ_RELEASE(cb);
@@ -628,6 +642,14 @@ int orte_gpr_replica_finalize(void)
         OBJ_RELEASE(orte_gpr_replica_globals.compound_cmd);
     }
     
+    if (NULL != orte_gpr_replica_globals.srch_cptr) {
+        OBJ_RELEASE(orte_gpr_replica_globals.srch_cptr);
+    }
+    
+    if (NULL != orte_gpr_replica_globals.srch_ival) {
+        OBJ_RELEASE(orte_gpr_replica_globals.srch_ival);
+    }
+
     /* All done */
     if (orte_gpr_replica_globals.isolate) {
         return ORTE_SUCCESS;

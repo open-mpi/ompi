@@ -119,8 +119,6 @@ int orte_gpr_replica_delete_entries(orte_gpr_addr_mode_t addr_mode,
         }
     }
     
-    OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
-
     if (NULL != token_itags) {
         free(token_itags);
     }
@@ -135,6 +133,8 @@ int orte_gpr_replica_delete_entries(orte_gpr_addr_mode_t addr_mode,
         }
     }
     
+    OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
+
     return rc;
 }
 

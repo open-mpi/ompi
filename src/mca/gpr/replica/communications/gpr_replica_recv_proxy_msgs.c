@@ -49,6 +49,8 @@ void orte_gpr_replica_recv(int status, orte_process_name_t* sender,
 			    ORTE_NAME_ARGS(orte_process_info.my_name), ORTE_NAME_ARGS(sender));
     }
 
+    OMPI_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
+
     if (ORTE_SUCCESS == orte_gpr_replica_process_command_buffer(buffer, sender, &answer)) {
         if (0 > orte_rml.send_buffer(sender, answer, tag, 0)) {
 		   ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
@@ -64,6 +66,8 @@ void orte_gpr_replica_recv(int status, orte_process_name_t* sender,
     if (ORTE_SUCCESS != (rc = orte_gpr_replica_process_callbacks())) {
         ORTE_ERROR_LOG(rc);
     }
+    
+    OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
 
     /* reissue the non-blocking receive */
     orte_rml.recv_buffer_nb(ORTE_RML_NAME_ANY, ORTE_RML_TAG_GPR, 0, orte_gpr_replica_recv, NULL);

@@ -43,8 +43,6 @@ int orte_gpr_replica_recv_cleanup_job_cmd(orte_buffer_t *input_buffer,
         return rc;
     }
     
-    OMPI_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
-
     n = 1;
     if (ORTE_SUCCESS != (ret = orte_dps.unpack(input_buffer, &jobid, &n, ORTE_JOBID))) {
         ORTE_ERROR_LOG(ret);
@@ -60,11 +58,9 @@ int orte_gpr_replica_recv_cleanup_job_cmd(orte_buffer_t *input_buffer,
 RETURN_ERROR:
     if (ORTE_SUCCESS != (rc = orte_dps.pack(output_buffer, &ret, 1, ORTE_INT))) {
         ORTE_ERROR_LOG(rc);
-        OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
         return rc;
     }
     
-    OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
     return ret;
 }
 
@@ -82,8 +78,6 @@ int orte_gpr_replica_recv_cleanup_proc_cmd(orte_buffer_t *input_buffer,
         return rc;
     }
     
-    OMPI_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
-
     n = 1;
     if (ORTE_SUCCESS != (ret = orte_dps.unpack(input_buffer, &proc, &n, ORTE_NAME))) {
         ORTE_ERROR_LOG(ret);
@@ -99,11 +93,9 @@ int orte_gpr_replica_recv_cleanup_proc_cmd(orte_buffer_t *input_buffer,
 RETURN_ERROR:
     if (ORTE_SUCCESS != (rc = orte_dps.pack(output_buffer, &ret, 1, ORTE_INT))) {
         ORTE_ERROR_LOG(rc);
-        OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
         return rc;
     }
     
-    OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
     return ret;
 }
 
