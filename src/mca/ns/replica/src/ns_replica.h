@@ -11,6 +11,7 @@
 #include "include/types.h"
 #include "include/constants.h"
 #include "class/ompi_list.h"
+#include "mca/oob/oob.h"
 #include "mca/ns/ns.h"
 
 /*
@@ -46,6 +47,14 @@ int mca_ns_replica_close(void);
  */
 mca_ns_t* mca_ns_replica_init(bool *allow_multi_user_threads, bool *have_hidden_threads, int *priority);
 int mca_ns_replica_finalize(void);
+
+/*
+ * oob interface
+ */
+
+mca_oob_callback_fn_t mca_ns_replica_recv(int status, const ompi_process_name_t *sender,
+					  const struct iovec *msg, size_t count,
+					  void *cbdata);
 
 /*
  * Implementation of create_cellid().

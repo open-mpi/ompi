@@ -70,6 +70,11 @@ static mca_ns_t mca_ns_proxy = {
  */
 static bool initialized = false;
 
+/*
+ * globals needed within proxy component
+ */
+ompi_process_name_t mca_ns_my_replica;
+
 
 /*
  * don't really need this function - could just put NULL in the above structure
@@ -106,6 +111,11 @@ mca_ns_t* mca_ns_proxy_init(bool *allow_multi_user_threads, bool *have_hidden_th
 
       *allow_multi_user_threads = true;
       *have_hidden_threads = false;
+
+      /* define the replica for us to use - for now, use only the seed */
+      mca_ns_my_replica.cellid = 0;
+      mca_ns_my_replica.jobid = 0;
+      mca_ns_my_replica.vpid = 0;
 
       /* Return the module */
 

@@ -57,6 +57,28 @@ typedef struct ompi_process_name_t ompi_process_name_t;
 OBJ_CLASS_DECLARATION(ompi_process_name_t);
 
 /*
+ * define the command names/ids for use in OOB buffers.
+ * only needed for remotely executed commands.
+ */
+#define OMPI_NS_CREATE_CELLID     0x01
+#define OMPI_NS_CREATE_JOBID      0x02
+#define OMPI_NS_RESERVE_RANGE     0x04
+#define OMPI_NS_FREE_NAME         0x08
+
+typedef uint8_t ompi_ns_cmd_bitmask_t;
+
+/*
+ * define the actual name server message buffer
+ */
+
+struct ompi_ns_msg_buffer_t {
+    ompi_ns_cmd_bitmask_t command;
+    int buflen;
+    uint8_t *buf;
+};
+typedef struct ompi_ns_msg_buffer_t ompi_ns_msg_buffer_t;
+
+/*
  * Component functions - all MUST be provided!
  */
 
