@@ -5,7 +5,6 @@
 # time to compile a component, so just adding this to the svn repository 
 #
 
-topdir = `echo $(CURDIR) | sed 's/^\//C:\/cygwin\//g' | sed 's/\/src\/mca//g'`
 gen_base = ${topdir}/src/win32/generated_include
 copy_base = ${topdir}/src/mca/
 install_dir = ${prefix}
