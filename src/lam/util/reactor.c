@@ -72,7 +72,7 @@ void lam_reactor_init(lam_reactor_t* r)
     lam_obj_init(&r->r_base);
     r->r_base.obj_class = &lam_reactor_cls;
 
-    lam_mutex_init(&r->r_mutex);
+    lam_mtx_init(&r->r_mutex);
     lam_dbl_init(&r->r_active);
     lam_dbl_init(&r->r_free);
     lam_dbl_init(&r->r_pending);

@@ -32,7 +32,7 @@ lam_class_info_t free_list_cls = {"lam_free_list_t", &lam_object_cls,
 void lam_frl_init(lam_free_list_t *flist)
 {
     SUPER_INIT(flist, free_list_cls.cls_parent);
-    lam_mtutex_init(&flist->fl_lock);
+    lam_mtx_init(&flist->fl_lock);
     flist->fl_pool = NULL;
     flist->fl_elt_cls = NULL;
     flist->fl_description = NULL;
