@@ -948,7 +948,7 @@ AC_CHECK_HEADERS([alloca.h aio.h arpa/inet.h dirent.h dlfcn.h execinfo.h \
     sys/types.h sys/ipc.h sys/mman.h sys/resource.h sys/select.h sys/socket.h \
     sys/ioctl.h err.h sys/statvfs.h sys/time.h sys/uio.h sys/utsname.h sys/wait.h \
     syslog.h termios.h ulimit.h unistd.h sys/param.h sys/tree.h sys/queue.h \
-    sys/sockio.h])
+    sys/sockio.h time.h])
 
 # SA_RESTART in signal.h
 AC_MSG_CHECKING([if SA_RESTART defined in signal.h])
