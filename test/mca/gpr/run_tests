@@ -1,0 +1,34 @@
+#! /bin/csh -f
+#  Name
+#  ====
+#  run script for mca ns tests
+
+# Arguements
+# ==========
+# 
+# test_list  =  no args runs all tests
+#              or
+#               replica runs ompi ns replica tests
+
+# Usage
+#
+# =====
+# To invoke this script, enter either
+#     run_tests 
+# with no arguments to run all tests, or
+#     run_tests <test_name>
+
+umask 007
+
+if ("x$1" == "x") then
+  ./test_ns_replica;
+else if ("$1" == "replica") then
+  ./test_ns_replica;
+else
+  echo "correct use: "
+  echo "    run_tests    (to run all mca ns tests)"
+  echo "or  run_tests < replica >"
+  exit -1
+endif
+
+

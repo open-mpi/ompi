@@ -66,7 +66,6 @@ typedef uint16_t ompi_registry_notify_action_t;
 typedef uint16_t ompi_registry_mode_t;
 typedef ompi_buffer_t ompi_registry_object_t;
 typedef uint32_t ompi_registry_object_size_t;
-typedef char* ompi_registry_token_t;
 
 
 /*
@@ -94,7 +93,7 @@ OBJ_CLASS_DECLARATION(ompi_registry_value_t);
  */
 struct ompi_registry_index_t {
     ompi_list_item_t item;           /**< Allows this item to be placed on a list */
-    ompi_registry_token_t *token;    /**< Pointer to the token string */
+    char *token;                     /**< Pointer to the token string */
 };
 typedef struct ompi_registry_index_t ompi_registry_index_t;
 
@@ -113,11 +112,13 @@ typedef ompi_registry_value_t* (*mca_gpr_base_module_get_fn_t)(ompi_registry_mod
 typedef int (*mca_gpr_base_module_delete_fn_t)(ompi_registry_mode_t mode,
 					char *segment, char **tokens);
 typedef ompi_registry_index_t* (*mca_gpr_base_module_index_fn_t)(char *segment);
-typedef int (*mca_gpr_base_module_subscribe_fn_t)(ompi_registry_mode_t mode,
-					   ompi_registry_notify_action_t action,
-					   char *segment, char **tokens);
-typedef int (*mca_gpr_base_module_unsubscribe_fn_t)(ompi_registry_mode_t mode,
-					     char *segment, char **tokens);
+typedef int (*mca_gpr_base_module_subscribe_fn_t)(ompi_process_name_t* subscriber,
+						  ompi_registry_mode_t mode,
+						  ompi_registry_notify_action_t action,
+						  char *segment, char **tokens);
+typedef int (*mca_gpr_base_module_unsubscribe_fn_t)(ompi_process_name_t* subscriber,
+						    ompi_registry_mode_t mode,
+						    char *segment, char **tokens);
 
 
 /*
