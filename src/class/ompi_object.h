@@ -107,6 +107,8 @@
 #include "ompi_config.h"
 #endif
 
+#include "include/atomic.h"
+
 /*
  * BEGIN_C_DECLS should be used at the beginning of your declarations,
  * so that C++ compilers don't mangle their names.  Use END_C_DECLS at
@@ -393,12 +395,6 @@ static inline ompi_object_t *ompi_obj_new(size_t size, ompi_class_t *cls)
 }
 
 
-static inline int ompi_atomic_cmpset_int(int *addr, int oldval, int newval)
-{
-    *addr = newval;
-    return 1;
-}
-
 /**
  * Atomically update the object's reference count by some increment.
  *
@@ -413,13 +409,13 @@ static inline int ompi_obj_update(ompi_object_t *object, int inc)
 {
     int oldval;
     int newval;
-    int *addr;
+    volatile int *addr;
 
-    addr = &(object->obj_reference_count);
+    addr = (volatile int *) &(object->obj_reference_count);
     do {
         oldval = *addr;
         newval = oldval + inc;
-    } while (ompi_atomic_cmpset_int(addr, oldval, newval) == 0);
+    } while (ompi_atomic_cmpset_int(addr,  oldval, newval) == 0);
 
     return newval;
 }
