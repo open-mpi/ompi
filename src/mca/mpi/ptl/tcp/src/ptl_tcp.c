@@ -8,11 +8,13 @@
 #include "mca/mpi/pml/pml.h"
 #include "mca/mpi/ptl/ptl.h"
 #include "mca/mpi/ptl/base/ptl_base_sendreq.h"
+#include "mca/mpi/ptl/base/ptl_base_sendfrag.h"
 #include "mca/lam/base/mca_base_module_exchange.h"
 #include "ptl_tcp.h"
 #include "ptl_tcp_addr.h"
 #include "ptl_tcp_peer.h"
 #include "ptl_tcp_proc.h"
+#include "ptl_tcp_sendreq.h"
 
 
 mca_ptl_tcp_t mca_ptl_tcp = {
@@ -28,8 +30,10 @@ mca_ptl_tcp_t mca_ptl_tcp = {
     mca_ptl_tcp_del_proc,
     mca_ptl_tcp_finalize,
     mca_ptl_tcp_send,
+    mca_ptl_tcp_cts,
     mca_ptl_tcp_request_alloc,
-    mca_ptl_tcp_request_return
+    mca_ptl_tcp_request_return,
+    mca_ptl_tcp_frag_return
     }
 };
 
@@ -114,8 +118,44 @@ int mca_ptl_tcp_request_alloc(struct mca_ptl_t* ptl, struct mca_ptl_base_send_re
     return rc;
 }
 
+
 void mca_ptl_tcp_request_return(struct mca_ptl_t* ptl, struct mca_ptl_base_send_request_t* request)
 {
     lam_free_list_return(&mca_ptl_tcp_module.tcp_send_requests, (lam_list_item_t*)request);
+}
+
+
+void mca_ptl_tcp_frag_return(struct mca_ptl_t* ptl, struct mca_ptl_base_recv_frag_t* frag)
+{
+    lam_free_list_return(&mca_ptl_tcp_module.tcp_recv_frags, (lam_list_item_t*)frag);
+}
+
+
+int mca_ptl_tcp_send(
+    struct mca_ptl_t* ptl,
+    struct mca_ptl_peer_t* ptl_peer,
+    struct mca_ptl_base_send_request_t* sendreq,
+    size_t size,
+    bool* complete)
+{
+    mca_ptl_tcp_send_frag_t* sendfrag;
+    if (sendreq->req_frags == 0) {
+        sendfrag = &((mca_ptl_tcp_send_request_t*)sendreq)->req_frag;
+    } else {
+        int rc;
+        sendfrag = (mca_ptl_tcp_send_frag_t*)lam_free_list_get(&mca_ptl_tcp_module.tcp_send_frags, &rc);
+        if(sendfrag == 0)
+            return rc;
+    }
+    mca_ptl_tcp_send_frag_reinit(sendfrag, ptl_peer, sendreq, size);
+    return mca_ptl_tcp_peer_send(ptl_peer, sendfrag);
+}
+
+
+int mca_ptl_tcp_cts(
+    struct mca_ptl_t* ptl,
+    struct mca_ptl_base_recv_frag_t* frag)
+{
+    return LAM_ERROR;
 }
 

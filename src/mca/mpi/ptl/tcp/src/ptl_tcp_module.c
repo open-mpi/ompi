@@ -19,6 +19,7 @@
 #include "ptl_tcp_proc.h"
 #include "ptl_tcp_recvfrag.h"
 #include "ptl_tcp_sendfrag.h"
+#include "ptl_tcp_sendreq.h"
 
 
 mca_ptl_tcp_module_1_0_0_t mca_ptl_tcp_module = {
@@ -30,7 +31,7 @@ mca_ptl_tcp_module_1_0_0_t mca_ptl_tcp_module = {
     /* Indicate that we are a pml v1.0.0 module (which also implies a
        specific MCA version) */
                                                                                                                             
-    MCA_PML_BASE_VERSION_1_0_0,
+    MCA_PTL_BASE_VERSION_1_0_0,
                                                                                                                             
     "tcp", /* MCA module name */
     1,  /* MCA module major version */
@@ -280,8 +281,8 @@ mca_ptl_t** mca_ptl_tcp_module_init(int *num_ptls,
     /* initialize free lists */
     STATIC_INIT(mca_ptl_tcp_module.tcp_send_requests, &lam_free_list_cls);
     lam_free_list_init_with(&mca_ptl_tcp_module.tcp_send_requests, 
-        sizeof(mca_ptl_base_send_request_t) + sizeof(mca_ptl_tcp_send_frag_t),
-        &mca_ptl_base_send_request_cls,
+        sizeof(mca_ptl_tcp_send_request_t),
+        &mca_ptl_tcp_send_request_cls,
         mca_ptl_tcp_module.tcp_free_list_num,
         mca_ptl_tcp_module.tcp_free_list_max,
         mca_ptl_tcp_module.tcp_free_list_inc,

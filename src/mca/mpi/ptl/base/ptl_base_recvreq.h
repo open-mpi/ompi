@@ -9,6 +9,7 @@
 #include "mca/mpi/pml/base/pml_base_request.h"
 
 extern lam_class_info_t mca_ptl_base_recv_request_cls;;
+struct mca_ptl_base_recv_frag_t;
 
 
 typedef struct {
@@ -19,8 +20,9 @@ typedef struct {
 
 void mca_ptl_base_recv_request_init(mca_ptl_base_recv_request_t*);
 void mca_ptl_base_recv_request_destroy(mca_ptl_base_recv_request_t*);
-int mca_ptl_base_recv_request_match_wild(mca_ptl_base_recv_request_t*);
-int mca_ptl_base_recv_request_match_specific(mca_ptl_base_recv_request_t*);
+int  mca_ptl_base_recv_request_match_wild(mca_ptl_base_recv_request_t*);
+int  mca_ptl_base_recv_request_match_specific(mca_ptl_base_recv_request_t*);
+void mca_ptl_base_recv_request_progress(mca_ptl_base_recv_request_t*, struct mca_ptl_base_recv_frag_t*);
 
 
 static inline void mca_ptl_base_recv_request_reinit(

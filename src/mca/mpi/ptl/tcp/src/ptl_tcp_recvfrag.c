@@ -21,27 +21,29 @@ static bool mca_ptl_tcp_recv_frag_data(mca_ptl_tcp_recv_frag_t* frag, int sd);
 static bool mca_ptl_tcp_recv_frag_discard(mca_ptl_tcp_recv_frag_t* frag, int sd);
 
 
-
 void mca_ptl_tcp_recv_frag_init(mca_ptl_tcp_recv_frag_t* frag)
 {
     SUPER_INIT(frag, &mca_ptl_base_recv_frag_cls);
 }
+
 
 void mca_ptl_tcp_recv_frag_destroy(mca_ptl_tcp_recv_frag_t* frag)
 {
     SUPER_DESTROY(frag, &mca_ptl_base_recv_frag_cls);
 }
 
+
 void mca_ptl_tcp_recv_frag_reinit(mca_ptl_tcp_recv_frag_t* frag, mca_ptl_peer_t* peer)
 {
     frag->frag_owner = &peer->peer_ptl->super;
-    frag->frag_match = 0;
+    frag->super.frag_request = 0;
     frag->frag_peer = peer;
     frag->frag_addr = 0;
     frag->frag_size = 0;
     frag->frag_hdr_cnt = 0;
     frag->frag_msg_cnt = 0;
 }
+                                                                                                                
 
 bool mca_ptl_tcp_recv_frag_handler(mca_ptl_tcp_recv_frag_t* frag, int sd)
 {
@@ -57,9 +59,13 @@ bool mca_ptl_tcp_recv_frag_handler(mca_ptl_tcp_recv_frag_t* frag, int sd)
         if(mca_ptl_tcp_recv_frag_discard(frag, sd) == false)
             return false;
 
-    /* done - do something */
+    if(NULL != frag->super.frag_request) {
+        /* indicate completion status */
+        mca_ptl_base_recv_request_progress(frag->super.frag_request, &frag->super);
+    }
     return true; 
 }
+
 
 static bool mca_ptl_tcp_recv_frag_header(mca_ptl_tcp_recv_frag_t* frag, int sd)
 {
@@ -94,12 +100,15 @@ static bool mca_ptl_tcp_recv_frag_header(mca_ptl_tcp_recv_frag_t* frag, int sd)
         return false;
 
     /* attempt to match a posted recv */
-    /* FIX */
+    mca_ptl_base_recv_frag_match(&frag->super, &frag->frag_header);
 
     /* match was not made - so allocate buffer for eager send */
-    if(NULL == frag->frag_match) {
+    if(NULL == frag->super.frag_request) {
         frag->frag_addr = (unsigned char*)LAM_MALLOC(frag->frag_header.hdr_frag_length);
         frag->frag_size = frag->frag_header.hdr_frag_length;
+    } else {
+        frag->frag_addr = (unsigned char*)frag->super.super.frag_addr;
+        frag->frag_size = frag->super.super.frag_size;
     }
     return true;
 }

@@ -102,12 +102,22 @@ extern void mca_ptl_tcp_request_return(
     struct mca_ptl_base_send_request_t*
 );
 
+extern void mca_ptl_tcp_frag_return(
+    struct mca_ptl_t* ptl,
+    struct mca_ptl_base_recv_frag_t*
+);
+
 extern int mca_ptl_tcp_send(
     struct mca_ptl_t* ptl,
     struct mca_ptl_peer_t* ptl_peer,
     struct mca_ptl_base_send_request_t*,
     size_t size,
     bool* complete
+);
+                                                                                                 
+extern int mca_ptl_tcp_cts(
+    struct mca_ptl_t* ptl,
+    struct mca_ptl_base_recv_frag_t* frag
 );
                                                                                                  
 

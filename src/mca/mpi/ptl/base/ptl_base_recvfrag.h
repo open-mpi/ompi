@@ -13,15 +13,17 @@
 extern lam_class_info_t mca_ptl_base_recv_frag_cls;
 
 
-typedef struct {
+struct mca_ptl_base_recv_frag_t {
     mca_ptl_base_frag_t super;
-    /* matched receve request corresponding to this fragment */
-    mca_ptl_base_recv_request_t *frag_match;
-} mca_ptl_base_recv_frag_t;
+    mca_ptl_base_recv_request_t *frag_request; /* matched posted receive */
+    struct mca_ptl_peer_t* frag_peer; /* peer received from */
+};
+typedef struct mca_ptl_base_recv_frag_t mca_ptl_base_recv_frag_t;
 
 
 void mca_ptl_base_recv_frag_init(mca_ptl_base_recv_frag_t*);
 void mca_ptl_base_recv_frag_destroy(mca_ptl_base_recv_frag_t*);
+int  mca_ptl_base_recv_frag_match(mca_ptl_base_recv_frag_t*, mca_ptl_base_header_t*);
 
 
 #endif
