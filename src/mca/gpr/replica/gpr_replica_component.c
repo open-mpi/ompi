@@ -315,7 +315,7 @@ int mca_gpr_replica_close(void)
 mca_gpr_base_module_t *mca_gpr_replica_init(bool *allow_multi_user_threads, bool *have_hidden_threads, int *priority)
 {
 
-    ompi_output(0, "entered replica init");
+    /* ompi_output(0, "entered replica init"); */
     /* If we're the seed, then we want to be selected, so do all the
        setup and return the module */
 
