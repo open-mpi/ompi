@@ -1,4 +1,6 @@
 /*
+ * $HEADER$
+ *
  * Copyright 2002-2003. The Regents of the University of California. This material
  * was produced under U.S. Government contract W-7405-ENG-36 for Los Alamos
  * National Laboratory, which is operated by the University of California for
@@ -119,9 +121,9 @@ int lam_frl_init_with(
         int max_pages_per_list,
         int max_consec_req_fail,
         const char *description,
-        bool_t retry_for_more_resources,
+        lam_bool_t retry_for_more_resources,
         lam_affinity_t *affinity,
-        bool_t enforce_affinity,
+        lam_bool_t enforce_affinity,
         lam_mem_pool_t *mem_pool)
 {
     /* lam_frl_init must have been called prior to calling this function */
