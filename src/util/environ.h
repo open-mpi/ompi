@@ -113,6 +113,11 @@ extern "C" {
      */
     OMPI_DECLSPEC int ompi_unsetenv(const char *name, char ***env);
 
+    /**
+     * So that others don't have to declare it
+     */
+    OMPI_DECLSPEC extern char **environ;
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
