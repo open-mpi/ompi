@@ -15,6 +15,7 @@
 include $(top_ompi_srcdir)/config/Makefile.options
 
 AM_CPPFLAGS = \
+        -I$(top_ompi_builddir)/include \
         -I$(top_ompi_builddir)/src \
         -I$(top_ompi_builddir)/src/include \
         -I$(top_ompi_srcdir)/src \
