@@ -56,7 +56,22 @@ libmpi_c_la_LIBADD	= \
 					$(pmpi_lib)
 
 libmpi_c_mpi_la_SOURCES = \
+			    abort.c \
+				accumulate.c \
+				add_error_class.c \
+				add_error_code.c \
+				add_error_string.c \
+				address.c \
+				allgather.c \
+				allgatherv.c \
                 alloc_mem.c \
+				allreduce.c \
+				alltoall.c \
+				alltoallv.c \
+				alltoallw.c \
+				attr_delete.c \
+				attr_get.c \
+				attr_put.c \
                 comm_get_name.c \
                 comm_set_name.c \
                 finalize.c \
