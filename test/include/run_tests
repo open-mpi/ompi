@@ -14,9 +14,9 @@
 #
 # =====
 # To invoke this script, enter either
-#     run 
+#     run_tests 
 # with no arguments to run all tests, or
-#     run <test_name>
+#     run_tests <test_name>
 
 umask 007
 
@@ -26,8 +26,8 @@ else if ("$1" == "atomic") then
   ./atomic
 else
   echo "correct use: "
-  echo "    run    (to run all class tests)"
-  echo "or  run <atomic>"
+  echo "    run_tests (to run all class tests)"
+  echo "or  run_tests <atomic>"
   exit -1
 endif
 
