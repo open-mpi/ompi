@@ -10,8 +10,8 @@ AM_CPPFLAGS = \
         -I$(top_lam_srcdir)/src \
         -I$(top_lam_srcdir)/src/include
 
-noinst_LTLIBRARIES = libmca_coll_basic.la
-libmca_coll_basic_la_SOURCES = \
+noinst_LTLIBRARIES = libmca_pml_teg.la
+libmca_pml_teg_la_SOURCES = \
 	pml_teg.c \
 	pml_teg.h \
 	pml_teg_comm.h \
