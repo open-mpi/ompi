@@ -23,8 +23,8 @@ module_noinst = libmca_mpi_pml_teg.la
 module_install =
 endif
 
-lamssiexecdir = $(libdir)/lam
-lamssiexec_LTLIBRARIES = $(module_install)
+mcamoduledir = $(libdir)/lam
+mcamodule_LTLIBRARIES = $(module_install)
 mca_pml_teg_la_SOURCES = 
 mca_pml_teg_la_LIBADD = \
         src/libmca_pml_teg.la \
