@@ -30,7 +30,7 @@ const char *mca_topo_unity_component_version_string =
  * and finalize() are called during creation/destruction of a comm
  * *******************************************************************
  */
-const mca_topo_base_component_1_0_0_t mca_topo_unity_component = 
+OMPI_COMP_EXPORT mca_topo_base_component_1_0_0_t mca_topo_unity_component = 
 {
     {
         MCA_TOPO_BASE_VERSION_1_0_0, /* version number */

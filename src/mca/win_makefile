@@ -8,6 +8,7 @@
 topdir = `echo $(CURDIR) | sed 's/^\//C:\/cygwin\//g' | sed 's/\/src\/mca//g'`
 gen_base = ${topdir}/src/win32/generated_include
 copy_base = ${topdir}/src/mca/
+install_dir = ${prefix}
 
 # list of components to build with the c compiler
 C_SUBDIRS = \
@@ -45,13 +46,13 @@ INCL = \
 
 CFLAGS = \
         /DWIN32 \
-        /DOMPI_SYSCONFDIR \
+        /DOMPI_SYSCONFDIR="\"${install-dir}/share\"" \
         /nologo \
         /c 
 
 CPPFLAGS = \
         /DWIN32 \
-        /DOMPI_SYSCONFDIR \
+        /DOMPI_SYSCONFDIR="\"${install-dir}/share\"" \
         /c \
         /TP \
         /nologo \
@@ -88,25 +89,41 @@ all: \
     cpplibs
 
 prebuild:
-	cp ${gen_base}/coll-basic-version.h ${copy_base}/coll/basic/
-	cp ${gen_base}/io-romio-version.h ${copy_base}/io/romio/
-	cp ${gen_base}/pcmclient-env-version.h ${copy_base}/pcmclient/env/
-	cp ${gen_base}/pcmclient-seed-version.h ${copy_base}/pcmclient/seed/
-	cp ${gen_base}/pcmclient-singleton-version.h ${copy_base}/pcmclient/singleton/
-	cp ${gen_base}/llm-hostfile-version.h ${copy_base}/llm/hostfile/
-	cp ${gen_base}/topo-unity-version.h ${copy_base}/topo/unity/
+	@cp ${gen_base}/coll-basic-version.h ${copy_base}/coll/basic/
+	@cp ${gen_base}/io-romio-version.h ${copy_base}/io/romio/
+	@cp ${gen_base}/pcmclient-env-version.h ${copy_base}/pcmclient/env/
+	@cp ${gen_base}/pcmclient-seed-version.h ${copy_base}/pcmclient/seed/
+	@cp ${gen_base}/pcmclient-singleton-version.h ${copy_base}/pcmclient/singleton/
+	@cp ${gen_base}/llm-hostfile-version.h ${copy_base}/llm/hostfile/
+	@cp ${gen_base}/topo-unity-version.h ${copy_base}/topo/unity/
             
 
 clibs: ${C_SUBDIRS} prebuild
 	@for dirs in ${C_SUBDIRS}; do \
-	    (echo "Entering $${dirs}"; cd $$dirs; ${CC} ${CFLAGS} ${INCL} *.c; ${LINK} ${LINKFLAGS} ${ADDLIBS} *.obj); \
+	    (libname=`echo mca_$${dirs}.dll | sed 's/\/src[\/]*//g' | sed 's/\//_/g' | sed 's/_\./\./g'` ; cd $$dirs; ${CC} ${CFLAGS} ${INCL} *.c; ${LINK} ${LINKFLAGS} ${ADDLIBS} /OUT:$${libname} *.obj); \
 	done
 
 cpplibs: ${CPP_SUBDIRS} prebuild
 	@for dirs in ${CPP_SUBDIRS}; do \
-	    (echo "Entering $${dirs}"; cd $$dirs; ${CC} ${CPPFLAGS} ${INCL} *.c; ${LINK} ${LINKFLAGS} ${ADDLIBS} *.obj); \
+	    (libname=`echo mca_$${dirs}.dll | sed 's/\/src[\/]*//g' | sed 's/\//_/g' | sed 's/_\./\./g'` ; cd $$dirs; ${CC} ${CPPFLAGS} ${INCL} *.c; ${LINK} ${LINKFLAGS} ${ADDLIBS} /OUT:$${libname} *.obj); \
 	done
 
+install:
+	@echo -n "Installing components ......................."
+	@for dirs in ${CPP_SUBDIRS}; do \
+	    (dll=`echo mca_$${dirs}.dll | sed 's/\/src//g' | sed 's/\//_/g'`; exp=`echo $${dll} | sed 's/dll/exp/g`;  lib=`echo $${dll} | sed 's/dll/lib/g`; \
+        install -c ${CURDIR}/$${dirs}/$${dll} ${install_dir}/$${dll}; \
+        if test -f ${CURDIR}/$${dirs}/$${lib}; then install -c ${CURDIR}/$${dirs}/$${lib} ${install_dir}/$${lib}; fi; \
+        if test -f ${CURDIR}/$${dirs}/$${exp}; then install -c ${CURDIR}/$${dirs}/$${exp} ${install_dir}/$${exp}; fi;); \
+	done
+	@for dirs in ${C_SUBDIRS}; do \
+	    (dll=`echo mca_$${dirs}.dll | sed 's/\/src//g' | sed 's/\//_/g'`; exp=`echo $${dll} | sed 's/dll/exp/g`;  lib=`echo $${dll} | sed 's/dll/lib/g`; \
+        install -c ${CURDIR}/$${dirs}/$${dll} ${install_dir}/$${dll}; \
+        if test -f ${CURDIR}/$${dirs}/$${lib}; then install -c ${CURDIR}/$${dirs}/$${lib} ${install_dir}/$${lib}; fi; \
+        if test -f ${CURDIR}/$${dirs}/$${exp}; then install -c ${CURDIR}/$${dirs}/$${exp} ${install_dir}/$${exp}; fi;); \
+	done
+	@echo "done"
+    
 .PHONY: clean
 
 clean:
