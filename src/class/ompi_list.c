@@ -90,7 +90,7 @@ bool ompi_list_insert(ompi_list_t *list, ompi_list_item_t *item, long long idx)
     int     i;
     volatile ompi_list_item_t *ptr, *next;
     
-    if ( idx >= list->ompi_list_length ) {
+    if ( idx >= (long long)list->ompi_list_length ) {
         return false;
     }
     
