@@ -49,6 +49,8 @@ mca_ptl_gm_recv_frag_t* ptl_gm_data_frag( struct mca_ptl_gm_module_t *ptl,
 mca_ptl_gm_recv_frag_t* ptl_gm_handle_recv( mca_ptl_gm_module_t *ptl,
                                             gm_recv_event_t* event );
 
+int mca_ptl_gm_analyze_recv_event(mca_ptl_gm_module_t* ptl, gm_recv_event_t* event );
+
 int mca_ptl_gm_incoming_recv (mca_ptl_gm_component_t * gm_comp);
 
 

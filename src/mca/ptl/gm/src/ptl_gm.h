@@ -1,3 +1,5 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
+
 /*
  * $HEADER$
  */
@@ -20,7 +22,6 @@
 #define MCA_PTL_GM_STATISTICS 0
 #define GM_SIZE 30
 #define THRESHOLD 16384 
-#define MAX_GM_PORTS 16
 #define MAX_RECV_TOKENS 256
 #define PTL_GM_ADMIN_SEND_TOKENS 0
 #define PTL_GM_ADMIN_RECV_TOKENS 0
@@ -43,6 +44,10 @@ struct mca_ptl_gm_component_t {
     int         gm_free_list_num;        /**< initial size of free lists */
     int         gm_free_list_max;        /**< maximum size of free lists */
     int         gm_free_list_inc;        /**< number of elements to alloc when growing free lists */
+    int         gm_max_port_number;      /**< maximum number of ports by board */
+    int         gm_max_boards_number;    /**< maximum number of boards on the node */
+    int         gm_max_rdma_frag_size;   /**< maximum fragment size used to transfer data over RDMA */
+    char*       gm_port_name;            /**< the name used to get the port */
     struct mca_ptl_gm_proc_t* gm_local;
     ompi_list_t gm_procs;
     ompi_list_t gm_send_req;
@@ -60,10 +65,10 @@ extern mca_ptl_gm_component_t mca_ptl_gm_component;
  */
 struct mca_ptl_gm_module_t {
     mca_ptl_base_module_t super;    /**< base PTL module interface */
-    struct gm_port *my_port;
-    unsigned int my_local_id;
-    unsigned int my_global_id;
-    unsigned int my_port_id;
+    struct gm_port *gm_port;
+    unsigned int local_id;
+    unsigned int global_id;
+    unsigned int port_id;
     unsigned int num_send_tokens;
     unsigned int num_recv_tokens;
     unsigned int max_send_tokens;
@@ -74,6 +79,8 @@ struct mca_ptl_gm_module_t {
     ompi_list_t gm_send_frags_queue;
     ompi_list_t gm_pending_acks;
     ompi_list_t gm_recv_outstanding_queue;
+
+    ompi_thread_t thread;
 #if MCA_PTL_GM_STATISTICS
     size_t      ptl_bytes_sent;
     size_t      ptl_bytes_recv;
