@@ -1,0 +1,52 @@
+#! /bin/csh -f
+#  Name
+#  ====
+#  run script for mca tests
+
+# Arguements
+# ==========
+# 
+# test_list  =  no args runs all tests
+#              or
+#               llm runs ompi llm tests
+#               ns runs ompi ns tests
+#               oob runs ompi oob tests 
+
+# Usage
+#
+# =====
+# To invoke this script, enter either
+#     run_tests 
+# with no arguments to run all tests, or
+#     run_tests <test_name>
+
+umask 007
+
+if ("x$1" == "x") then
+  cd llm;
+  ./run_tests;
+  cd ../ns;
+  ./run_tests;
+  cd ../oob;
+  ./run_tests;
+  cd ..;
+else if ("$1" == "llm") then
+  cd llm;
+  ./run_tests;
+  cd ..;
+else if ("$1" == "ns") then
+  cd ns;
+  ./run_tests;
+  cd ..;
+else if ("$1" == "oob") then
+  cd oob;
+  ./run_tests;
+  cd ..;
+else
+  echo "correct use: "
+  echo "    run_tests    (to run all class tests)"
+  echo "or  run_tests <llm | ns | oob>"
+  exit -1
+endif
+
+
