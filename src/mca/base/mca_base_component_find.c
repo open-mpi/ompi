@@ -530,8 +530,9 @@ static int check_dependency(char *line, component_file_item_t *target_file,
 
   type = line;
   name = strchr(line, ':');
-  if (NULL == name)
+  if (NULL == name) {
     return OMPI_ERR_OUT_OF_RESOURCE;
+  }
   *name = '\0';
   ++name;
 
@@ -547,6 +548,7 @@ static int check_dependency(char *line, component_file_item_t *target_file,
   /* Traverse down the list of files that we have, and see if we can
      find it */
 
+  mitem = NULL;
   target_file->status = CHECKING_CYCLE;
   for (happiness = false, cur = ompi_list_get_first(&found_files);
        ompi_list_get_end(&found_files) != cur;
@@ -620,14 +622,19 @@ static int check_dependency(char *line, component_file_item_t *target_file,
   }
 
   /* The dependency loaded properly.  Increment its refcount so that
-     it doesn't get unloaded before we get unloaded. */
+     it doesn't get unloaded before we get unloaded.  The (NULL !=
+     mitem) check is somewhat redundant -- we won't be here in this
+     function unless there's dependencies to check, but a) it's safer
+     to double check, and b) it fixes a compiler warning.  :-) */
 
-  ditem = OBJ_NEW(dependency_item_t);
-  if (NULL == ditem) {
-    return OMPI_ERR_OUT_OF_RESOURCE;
+  if (NULL != mitem) {
+      ditem = OBJ_NEW(dependency_item_t);
+      if (NULL == ditem) {
+          return OMPI_ERR_OUT_OF_RESOURCE;
+      }
+      ditem->di_component_file_item = mitem;
+      ompi_list_append(dependencies, (ompi_list_item_t*) ditem);
   }
-  ditem->di_component_file_item = mitem;
-  ompi_list_append(dependencies, (ompi_list_item_t*) ditem);
   
   /* All done -- all depenencies satisfied */
 
