@@ -7,22 +7,40 @@ AC_DEFUN(LAM_CONFIGURE_OPTIONS,[
 lam_show_subtitle "Configuration options"
 
 #
-# Purify clean
+# "Purify" clean
 #
 
 AC_MSG_CHECKING([whether to enable memory zeroing])
-AC_ARG_ENABLE(memzero, 
-    AC_HELP_STRING([--enable-memzero],
-                   [enable memory zeroing (debugging only) (default: disabled)]))
-if test "$enable_memzero" = "yes"; then
+AC_ARG_ENABLE(mem-zero, 
+    AC_HELP_STRING([--enable-mem-zero],
+                   [enable memory zeroing for memory-checking debuggers (debugging only) (default: disabled)]))
+if test "$enable_mem-zero" = "yes"; then
     AC_MSG_RESULT([yes])
-    WANT_MEMZERO=1
+    WANT_MEM_ZERO=1
 else
     AC_MSG_RESULT([no])
-    WANT_MEMZERO=0
+    WANT_MEM_ZERO=0
 fi
-AC_DEFINE_UNQUOTED(LAM_ENABLE_MEMZERO, $WANT_MEMZERO,
-    [Whether we want the LAM_MEMZERO macro to memset or not])
+AC_DEFINE_UNQUOTED(LAM_ENABLE_MEM_ZERO, $WANT_MEM_ZERO,
+    [Whether we want the LAM_MEM_ZERO macro to memset or not])
+
+#
+# Memory profiling
+#
+
+AC_MSG_CHECKING([whether to profile memory usage])
+AC_ARG_ENABLE(mem-profile, 
+    AC_HELP_STRING([--enable-mem-profile],
+                   [enable memory profiling (debugging only) (default: disabled)]))
+if test "$enable_mem_profile" = "yes"; then
+    AC_MSG_RESULT([yes])
+    WANT_MEM_PROFILE=1
+else
+    AC_MSG_RESULT([no])
+    WANT_MEM_PROFILE=0
+fi
+AC_DEFINE_UNQUOTED(LAM_ENABLE_MEM_PROFILE, $WANT_MEM_PROFILE,
+    [Whether we want the memory profiling or not])
 
 #
 # Developer debugging
