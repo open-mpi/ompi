@@ -65,22 +65,22 @@
 #include "threads/thread.h"
 #include "util/output.h"
 
-#if HAVE_SELECT
+#if defined(HAVE_SELECT) && HAVE_SELECT
 extern const struct ompi_eventop ompi_selectops;
 #endif
-#if HAVE_POLL
+#if defined(HAVE_POLL) && HAVE_POLL
 extern const struct ompi_eventop ompi_pollops;
 #endif
-#if HAVE_RTSIG
+#if defined(HAVE_RTSIG) && HAVE_RTSIG
 extern const struct ompi_eventop ompi_rtsigops;
 #endif
-#if HAVE_EPOLL
+#if defined(HAVE_EPOLL) && HAVE_EPOLL
 extern const struct ompi_eventop ompi_epollops;
 #endif
-#if HAVE_WORKING_KQUEUE
+#if defined(HAVE_WORKING_KQUEUE) && HAVE_WORKING_KQUEUE
 extern const struct ompi_eventop ompi_kqops;
 #endif
-#if WIN32
+#if defined(WIN32) && WIN32
 extern const struct ompi_eventop ompi_win32ops;
 #endif
 
@@ -97,13 +97,13 @@ static const struct ompi_eventop *ompi_eventops[] = {
     &ompi_rtsigops,
 #endif
 #endif
-#if HAVE_POLL
+#if defined(HAVE_POLL) && HAVE_POLL
     &ompi_pollops,
 #endif
-#if HAVE_SELECT
+#if defined(HAVE_SELECT) && HAVE_SELECT
     &ompi_selectops,
 #endif
-#if WIN32
+#if defined(WIN32) && WIN32
     &ompi_win32ops,
 #endif
     NULL
