@@ -470,7 +470,7 @@ int ompi_op_finalize(void)
  * Create a new MPI_Op
  */
 ompi_op_t *ompi_op_create(bool commute,
-                        ompi_op_fortran_handler_fn_t *func)
+                          ompi_op_fortran_handler_fn_t *func)
 {
   int i;
   ompi_op_t *new_op;
@@ -486,7 +486,7 @@ ompi_op_t *ompi_op_create(bool commute,
 
       /* The new object is valid -- initialize it.  If this is being
          created from fortran, the fortran MPI API wrapper function
-         will override the o_fortran_field directly.  We cast the
+         will override the o_flags field directly.  We cast the
          function pointer type to the fortran type arbitrarily -- it
          only has to be a function pointer in order to store properly,
          it doesn't matter what type it is (we'll cast it to the Right
