@@ -31,7 +31,8 @@ dnl Macro to allow SSI configure.stub files to [effectively] sinclude
 dnl other m4 files
 dnl
 
-define([LAM_INCLUDE], [sinclude($1)])dnl
+dnl JMS Need to fix this somehow -- AM 1.8 doesn't like it
+dnl define([LAM_INCLUDE], [sinclude($1)])dnl
 
 dnl
 dnl This will be replaced with sinclude(configure.stub) if it exists
