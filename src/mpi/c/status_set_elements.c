@@ -20,7 +20,7 @@
 static const char FUNC_NAME[] = "MPI_Status_set_elements";
 
 
-int MPI_Status_set_elements(MPI_Status *status, MPI_Datatype *datatype,
+int MPI_Status_set_elements(MPI_Status *status, MPI_Datatype datatype,
                             int count) 
 {
   if (MPI_PARAM_CHECK) {

@@ -847,7 +847,7 @@ extern "C" {
   int MPI_Status_c2f(MPI_Status *c_status, MPI_Fint *f_status);
   int MPI_Status_f2c(MPI_Fint *f_status, MPI_Status *c_status);
   int MPI_Status_set_cancelled(MPI_Status *status, int flag);
-  int MPI_Status_set_elements(MPI_Status *status, MPI_Datatype *datatype,
+  int MPI_Status_set_elements(MPI_Status *status, MPI_Datatype datatype,
                               int count);
   int MPI_Testall(int count, MPI_Request array_of_requests[], int *flag, 
                   MPI_Status array_of_statuses[]);
@@ -1355,7 +1355,7 @@ extern "C" {
   int PMPI_Status_c2f(MPI_Status *c_status, MPI_Fint *f_status);
   int PMPI_Status_f2c(MPI_Fint *f_status, MPI_Status *c_status);
   int PMPI_Status_set_cancelled(MPI_Status *status, int flag);
-  int PMPI_Status_set_elements(MPI_Status *status, MPI_Datatype *datatype,
+  int PMPI_Status_set_elements(MPI_Status *status, MPI_Datatype datatype,
                               int count);
   int PMPI_Testall(int count, MPI_Request array_of_requests[], int *flag, 
                   MPI_Status array_of_statuses[]);
