@@ -9,15 +9,8 @@
 #ifndef MCA_PTL_GM_H
 #define MCA_PTL_GM_H
 
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
 #include "class/ompi_free_list.h"
-#include "event/event.h"
-#include "mca/pml/pml.h"
 #include "mca/ptl/ptl.h"
-#include "gm.h"
-
 
 #define MCA_PTL_GM_STATISTICS 0
 #define GM_SIZE 30
@@ -58,8 +51,6 @@ struct mca_ptl_gm_component_t {
 typedef struct mca_ptl_gm_component_t mca_ptl_gm_component_t;
 extern mca_ptl_gm_component_t mca_ptl_gm_component;
 
-
-
 /**
  * GM PTL Interface
  */
@@ -90,7 +81,6 @@ struct mca_ptl_gm_module_t {
 typedef struct mca_ptl_gm_module_t mca_ptl_gm_module_t;
 extern mca_ptl_gm_module_t mca_ptl_gm_module;
 
-
 /**
  * Register GM module parameters with the MCA framework
  */
@@ -100,8 +90,6 @@ extern int  mca_ptl_gm_component_open (void);
  * Any final cleanup before being unloaded.
  */
 extern int  mca_ptl_gm_component_close (void);
-
-
 
 /**
  * GM module initialization.
@@ -114,53 +102,39 @@ extern mca_ptl_base_module_t **mca_ptl_gm_component_init (int *num_ptl_modules,
                                                           bool * allow_multi_user_threads,
                                                           bool * have_hidden_threads);
 
-
-
 /**
  * GM module control.
  */
-extern int  mca_ptl_gm_component_control (int param,
-                                          void *value, size_t size);
+extern int  mca_ptl_gm_component_control (int param, void *value, size_t size);
 
 /**
  * GM module progress.
  */
 extern int  mca_ptl_gm_component_progress (mca_ptl_tstamp_t tstamp);
 
-
-
 /**
  *  GM send
  */
-
-extern int  mca_ptl_gm_send (struct mca_ptl_base_module_t *ptl,
-                            struct mca_ptl_base_peer_t *ptl_peer,
-                            struct mca_pml_base_send_request_t *sendreq,
-                            size_t offset, size_t size, int flags);
-
-
-
+extern int  mca_ptl_gm_send( struct mca_ptl_base_module_t *ptl,
+			     struct mca_ptl_base_peer_t *ptl_peer,
+			     struct mca_pml_base_send_request_t *sendreq,
+			     size_t offset, size_t size, int flags);
 
 /**
  *  GM put
  */
-
-extern int  mca_ptl_gm_put (struct mca_ptl_base_module_t *ptl,
+extern int  mca_ptl_gm_put( struct mca_ptl_base_module_t *ptl,
                             struct mca_ptl_base_peer_t *ptl_peer,
                             struct mca_pml_base_send_request_t *sendreq,
                             size_t offset, size_t size, int flags);
 
-
-
 /**
  *  GM get
  */
-
 extern int  mca_ptl_gm_get (struct mca_ptl_base_module_t *ptl,
                             struct mca_ptl_base_peer_t *ptl_peer,
                             struct mca_pml_base_recv_request_t *sendreq,
                             size_t offset, size_t size, int flags);
-
 
 /**
  * PML->PTL notification of change in the process list.
@@ -173,13 +147,11 @@ extern int  mca_ptl_gm_get (struct mca_ptl_base_module_t *ptl,
  * @return     OMPI_SUCCESS or error status on failure.
  * 
  */
-
 extern int  mca_ptl_gm_add_procs (struct mca_ptl_base_module_t *ptl,
                                   size_t nprocs,
                                   struct ompi_proc_t **procs,
                                   struct mca_ptl_base_peer_t **peers,
-                                  ompi_bitmap_t * reachable);
-
+                                  struct ompi_bitmap_t * reachable);
 
 /**
  * PML->PTL notification of change in the process list.
@@ -191,11 +163,10 @@ extern int  mca_ptl_gm_add_procs (struct mca_ptl_base_module_t *ptl,
  * @return             Status indicating if cleanup was successful
  *
  */
-extern int  mca_ptl_gm_del_procs (struct mca_ptl_base_module_t *ptl,
+extern int  mca_ptl_gm_del_procs( struct mca_ptl_base_module_t *ptl,
                                   size_t nprocs,
                                   struct ompi_proc_t **procs,
-                                  struct mca_ptl_base_peer_t **peers);
-
+                                  struct mca_ptl_base_peer_t **peers );
 
 /**
  * PML->PTL Allocate a send request from the PTL modules free list.
@@ -205,19 +176,14 @@ extern int  mca_ptl_gm_del_procs (struct mca_ptl_base_module_t *ptl,
  * @return               Status indicating if allocation was successful.
  *
  */
-extern int  mca_ptl_gm_request_init (struct mca_ptl_base_module_t *ptl,
-                                      struct mca_pml_base_send_request_t
-                                      *req);
-
+extern int  mca_ptl_gm_request_init( struct mca_ptl_base_module_t* ptl,
+				     struct mca_pml_base_send_request_t* req);
 
 /**
  *
  */
-
-extern void mca_ptl_gm_request_fini (struct mca_ptl_base_module_t *ptl,
-                                       struct mca_pml_base_send_request_t
-                                       *);
-
+extern void mca_ptl_gm_request_fini( struct mca_ptl_base_module_t *ptl,
+				     struct mca_pml_base_send_request_t* req);
 
 /**
  * PML->PTL Notification that a receive fragment has been matched.
@@ -229,12 +195,10 @@ extern void mca_ptl_gm_request_fini (struct mca_ptl_base_module_t *ptl,
 extern void mca_ptl_gm_matched (struct mca_ptl_base_module_t *ptl,
                                 struct mca_ptl_base_recv_frag_t *frag);
 
-
 /**
  *
  */
 extern int  mca_ptl_gm_finalize (struct mca_ptl_base_module_t *ptl);
-
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

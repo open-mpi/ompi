@@ -4,30 +4,14 @@
  * $HEADER$
  */
 #include "ompi_config.h"
-#include <errno.h>
-#include <unistd.h>
-#include <string.h>
-#include <fcntl.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-
 #include "include/constants.h"
-#include "event/event.h"
-#include "util/if.h"
-#include "util/argv.h"
 #include "util/output.h"
-#include "mca/pml/pml.h"
 #include "mca/ptl/ptl.h"
-#include "mca/pml/base/pml_base_sendreq.h"
-#include "mca/base/mca_base_param.h"
 #include "mca/base/mca_base_module_exchange.h"
 #include "ptl_gm.h"
-#include "ptl_gm_addr.h"
-#include "ptl_gm_proc.h"
-#include "ptl_gm_req.h"
 #include "ptl_gm_priv.h"
+#include "ptl_gm_peer.h"
+#include "ptl_gm_sendfrag.h"
 
 mca_ptl_gm_component_t mca_ptl_gm_component = {
     {
@@ -161,7 +145,9 @@ mca_ptl_gm_create( mca_ptl_gm_module_t** pptl )
     
     /* copy the basic informations in the new PTL */
     memcpy (ptl, &mca_ptl_gm_module, sizeof (mca_ptl_gm_module));
+#if OMPI_HAVE_POSIX_THREADS
     ptl->thread.t_handle = (pthread_t)-1;
+#endif  /* OMPI_HAVE_POSIX_THREADS */
     *pptl = ptl;
     
     return OMPI_SUCCESS;
@@ -198,6 +184,7 @@ mca_ptl_gm_module_store_data_toexchange (void)
     return rc;
 }
 
+#if OMPI_HAVE_POSIX_THREADS
 static void*
 mca_ptl_gm_thread_progress( ompi_thread_t* thread )
 {
@@ -210,10 +197,12 @@ mca_ptl_gm_thread_progress( ompi_thread_t* thread )
 
     while(1) {
 	event = gm_blocking_receive(ptl->gm_port);
-	mca_ptl_gm_analyze_recv_event( ptl, event );
+	if( GM_NO_RECV_EVENT != gm_ntohc(event->recv.type) )
+	    mca_ptl_gm_analyze_recv_event( ptl, event );
     }
     return PTHREAD_CANCELED;
 }
+#endif  /* OMPI_HAVE_POSIX_THREADS */
 
 /* Scan all ports on the boards. As it's difficult to find the total number of boards
  * we use a predefined maximum.
@@ -271,9 +260,7 @@ static inline int
 mca_ptl_gm_init_sendrecv (mca_ptl_gm_module_t * ptl)
 {
     uint32_t i;
-    gm_status_t status;
     void *gm_send_reg_memory , *gm_recv_reg_memory;
-    ompi_free_list_t *fslist, *free_rlist;
     mca_ptl_gm_send_frag_t *sfragment;
     mca_ptl_gm_recv_frag_t *free_rfragment;
 
@@ -286,7 +273,6 @@ mca_ptl_gm_init_sendrecv (mca_ptl_gm_module_t * ptl)
     /* construct a list of send fragments */
     OBJ_CONSTRUCT (&(ptl->gm_send_frags), ompi_free_list_t);
     OBJ_CONSTRUCT (&(ptl->gm_send_frags_queue), ompi_list_t);
-    fslist = &(ptl->gm_send_frags);
 
     ompi_free_list_init (&(ptl->gm_send_frags),
 			 sizeof (mca_ptl_gm_send_frag_t),
@@ -294,12 +280,11 @@ mca_ptl_gm_init_sendrecv (mca_ptl_gm_module_t * ptl)
 			 ptl->num_send_tokens, ptl->num_send_tokens, 1, NULL); /* not using mpool */
 
     /* allocate the elements */
-    sfragment = (mca_ptl_gm_send_frag_t *)
-	malloc (sizeof(mca_ptl_gm_send_frag_t) * (ptl->num_send_tokens));
+    sfragment = (mca_ptl_gm_send_frag_t *)calloc( ptl->num_send_tokens, sizeof(mca_ptl_gm_send_frag_t) );
 
     /* allocate the registered memory */
-    gm_send_reg_memory = gm_dma_malloc ( ptl->gm_port,
-					 (GM_SEND_BUF_SIZE * ptl->num_send_tokens) );
+    gm_send_reg_memory = gm_dma_malloc( ptl->gm_port,
+					(GM_SEND_BUF_SIZE * ptl->num_send_tokens) );
     if( NULL == gm_send_reg_memory ) {
 	ompi_output( 0, "unable to allocate registered memory\n" );
 	return OMPI_ERR_OUT_OF_RESOURCE;
@@ -308,18 +293,17 @@ mca_ptl_gm_init_sendrecv (mca_ptl_gm_module_t * ptl)
 	ompi_list_item_t *item;
 	sfragment->send_buf = gm_send_reg_memory;
 	item = (ompi_list_item_t *) sfragment;
-	OMPI_FREE_LIST_RETURN( fslist, item );
+	OMPI_FREE_LIST_RETURN( &(ptl->gm_send_frags), item );
 	gm_send_reg_memory = ((char *)gm_send_reg_memory) + GM_SEND_BUF_SIZE;
 	sfragment++;
     }
     A_PRINT( ("recv_tokens = %d send_tokens = %d, allocted free lis = %d\n",
-	      ptl->num_recv_tokens,ptl->num_send_tokens,fslist->fl_num_allocated) );
+	      ptl->num_recv_tokens,ptl->num_send_tokens,ptl->gm_send_frags->fl_num_allocated) );
 
 
     /*****************RECEIVE*****************************/
     /*allow remote memory access */
-    status = gm_allow_remote_memory_access (ptl->gm_port);
-    if (GM_SUCCESS != status) {
+    if( GM_SUCCESS != gm_allow_remote_memory_access (ptl->gm_port) ) {
 	ompi_output (0, "unable to allow remote memory access\n");
     }
 
@@ -327,7 +311,6 @@ mca_ptl_gm_init_sendrecv (mca_ptl_gm_module_t * ptl)
 
     /* construct the list of recv fragments free */
     OBJ_CONSTRUCT (&(ptl->gm_recv_frags_free), ompi_free_list_t);
-    free_rlist = &(ptl->gm_recv_frags_free);
   
     ompi_free_list_init (&(ptl->gm_recv_frags_free),
 			 sizeof (mca_ptl_gm_recv_frag_t),
@@ -336,12 +319,11 @@ mca_ptl_gm_init_sendrecv (mca_ptl_gm_module_t * ptl)
  
     /*allocate the elements */
     free_rfragment = (mca_ptl_gm_recv_frag_t *)
-	malloc(sizeof(mca_ptl_gm_recv_frag_t) * ptl->num_recv_tokens);
+	calloc( ptl->num_recv_tokens, sizeof(mca_ptl_gm_recv_frag_t) );
 
     /*allocate the registered memory */
     gm_recv_reg_memory =
 	gm_dma_malloc (ptl->gm_port, (GM_RECV_BUF_SIZE * ptl->num_recv_tokens ) );
-
     if( NULL == gm_recv_reg_memory ) {
 	ompi_output( 0, "unable to allocate registered memory for receive\n" );
 	return OMPI_ERR_OUT_OF_RESOURCE;
@@ -349,7 +331,7 @@ mca_ptl_gm_init_sendrecv (mca_ptl_gm_module_t * ptl)
 
     for( i = 0; i < ptl->num_recv_tokens; i++ ) {
 	ompi_list_item_t *item = (ompi_list_item_t *) free_rfragment;
-	OMPI_FREE_LIST_RETURN( free_rlist, item );
+	OMPI_FREE_LIST_RETURN( &(ptl->gm_recv_frags_free), item );
 	free_rfragment++;
 
 	gm_provide_receive_buffer( ptl->gm_port, gm_recv_reg_memory,
@@ -396,9 +378,10 @@ mca_ptl_gm_init( mca_ptl_gm_component_t * gm )
 	     */
 	    if( OMPI_SUCCESS != mca_ptl_gm_init_sendrecv( ptl ) )
 		break;
-
+#if OMPI_HAVE_POSIX_THREADS
 	    ptl->thread.t_run = (ompi_thread_fn_t)mca_ptl_gm_thread_progress;
 	    ptl->thread.t_arg = (void*)ptl;
+#endif  /* OMPI_HAVE_POSIX_THREADS */
 	    if( OMPI_SUCCESS != ompi_thread_start( &(ptl->thread) ) )
 		break;
 	}
@@ -430,7 +413,11 @@ mca_ptl_gm_component_init (int *num_ptl_modules,
 
     *num_ptl_modules = 0;
     *allow_multi_user_threads = true;
+#if OMPI_HAVE_POSIX_THREADS
     *have_hidden_threads = true;
+#else
+    *have_hidden_threads = false;
+#endif  /* OMPI_HAVE_POSIX_THREADS */
 
     if (OMPI_SUCCESS != mca_ptl_gm_init (&mca_ptl_gm_component)) {
         ompi_output( 0, "[%s:%d] error in initializing gm state and PTL's.\n",

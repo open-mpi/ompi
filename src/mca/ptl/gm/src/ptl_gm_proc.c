@@ -12,7 +12,6 @@
 #include "class/ompi_hash_table.h"
 #include "mca/base/mca_base_module_exchange.h"
 #include "ptl_gm.h"
-#include "ptl_gm_addr.h"
 #include "ptl_gm_peer.h"
 #include "ptl_gm_proc.h"
 #include "ptl_gm_priv.h"

@@ -1,24 +1,14 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
 
 /*
  * $HEADER$
  */
 
 #include "ompi_config.h"
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <sys/errno.h>
-#include <sys/types.h>
-#include <sys/fcntl.h>
-/*#include <netinet/gm.h>*/
-#include <netinet/in.h>
-#include <arpa/inet.h>
-
 #include "include/types.h"
 #include "mca/pml/base/pml_base_sendreq.h"
 #include "mca/ns/base/base.h"
 #include "ptl_gm.h"
-#include "ptl_gm_addr.h"
 #include "ptl_gm_peer.h"
 #include "ptl_gm_proc.h"
 #include "ptl_gm_sendfrag.h"
