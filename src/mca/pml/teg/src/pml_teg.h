@@ -273,7 +273,7 @@ extern int mca_pml_teg_free(
     pml_request->req_free_called = true; \
     if(pml_request->req_pml_done == true) \
     { \
-        OMPI_REQUEST_FINI(*request); \
+        OMPI_REQUEST_FINI(*(request)); \
         switch(pml_request->req_type) { \
         case MCA_PML_REQUEST_SEND: \
             { \
