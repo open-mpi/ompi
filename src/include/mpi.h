@@ -593,55 +593,94 @@ extern "C" {
   int MPI_Start(MPI_Request *);
   int MPI_Status_c2f(MPI_Status *, MPI_Fint *);
   int MPI_Status_f2c(MPI_Fint *, MPI_Status *);
-  int MPI_Testall(int, MPI_Request *, int *, MPI_Status *);
-  int MPI_Testany(int, MPI_Request *, int *, int *, MPI_Status *);
-  int MPI_Test(MPI_Request *, int *, MPI_Status *);
-  int MPI_Test_cancelled(MPI_Status *, int *);
-  int MPI_Testsome(int, MPI_Request *, int *, int *, MPI_Status *);
-  int MPI_Topo_test(MPI_Comm, int *);
+  int MPI_Testall(int count, MPI_Request array_of_requests[], int *flag, 
+                  MPI_Status array_of_statuses[]);
+  int MPI_Testany(int count, MPI_Request array_of_requests[], int *index, 
+                  MPI_Status *status);
+  int MPI_Test(MPI_Request *request, int *flag, MPI_Status *status);
+  int MPI_Test_cancelled(MPI_Status *status, int *flag);
+  int MPI_Testsome(int incount, MPI_Request array_of_requests[], 
+                   int *outcount, int array_of_indices, 
+                   MPI_Status array_of_statuses);
+  int MPI_Topo_test(MPI_Comm comm, int *status);
   MPI_Fint MPI_Type_c2f(MPI_Datatype);
-  int MPI_Type_commit(MPI_Datatype *);
-  int MPI_Type_contiguous(int, MPI_Datatype, MPI_Datatype *);
-  int MPI_Type_create_darray(int, int, int, int *, int *, int *, 
-                             int*, int, MPI_Datatype, 
-                             MPI_Datatype *);
-  int MPI_Type_create_hindexed(int, int *, MPI_Aint *, 
-                               MPI_Datatype, MPI_Datatype *);
-  int MPI_Type_create_hvector(int, int, MPI_Aint, MPI_Datatype, 
-                              MPI_Datatype *);
-  int MPI_Type_create_keyval(MPI_Type_copy_attr_function *, 
-                             MPI_Type_delete_attr_function *, 
-                             int *, void *);
-  int MPI_Type_create_resized(MPI_Datatype, MPI_Aint, MPI_Aint, 
-                              MPI_Datatype *);
-  int MPI_Type_create_struct(int, int *, MPI_Aint *, 
-                             MPI_Datatype *, MPI_Datatype *);
-  int MPI_Type_create_subarray(int, int *, int *, int *, int, 
-                               MPI_Datatype, MPI_Datatype *);
-  int MPI_Type_delete_attr(MPI_Datatype, int);
-  int MPI_Type_dup(MPI_Datatype, MPI_Datatype *);
-  int MPI_Type_extent(MPI_Datatype, MPI_Aint *);
+  int MPI_Type_commit(MPI_Datatype *type);
+  int MPI_Type_contiguous(int count, MPI_Datatype oldtype, 
+                          MPI_Datatype *newtype);
+  int MPI_Type_create_darray(int size, int rank, int ndims, 
+                             int gsize_array[], int distrib_array[], 
+                             int darg_array[], int psize_array[],
+                             int order, MPI_Datatype oldtype, 
+                             MPI_Datatype *newtype);
+  int MPI_Type_create_f90_complex(int p, int r, MPI_Datatype *newtype);
+  int MPI_Type_create_f90_integer(int r, MPI_Datatype *newtype);
+  int MPI_Type_create_f90_real(int p, int r, MPI_Datatype *newtype);
+  int MPI_Type_create_hindexed(int count, int array_of_blocklengths[], 
+                               MPI_Aint array_of_displacements[], 
+                               MPI_Datatype oldtype, 
+                               MPI_Datatype *newtype);
+  int MPI_Type_create_hvector(int count, int blocklength, MPI_Aint stride, 
+                              MPI_Datatype oldtype, 
+                              MPI_Datatype *newtype);
+  int MPI_Type_create_keyval(MPI_Type_copy_attr_function *type_copy_attr_fn, 
+                             MPI_Type_delete_attr_function *type_delete_attr_fn, 
+                             int *type_keyval, void *extra_state);
+  int MPI_Type_create_indexed_block(int count, int blocklength,
+                                  int array_of_displacements[],
+                                  MPI_Datatype oldtype,
+                                  MPI_Datatype *newtype);
+  int MPI_Type_create_struct(int count, int array_of_block_lengths[], 
+                             MPI_Aint array_of_displacements[], 
+                             MPI_Datatype array_of_types[], 
+                             MPI_Datatype *newtype);
+  int MPI_Type_create_subarray(int ndims, int size_array[], int subsize_array[], 
+                               int start_array[], int order, 
+                               MPI_Datatype oldtype, MPI_Datatype *newtype);
+  int MPI_Type_create_resized(MPI_Datatype oldtype, MPI_Aint lb, 
+                               MPI_Aint extent, MPI_Datatype *newtype); 
+  int MPI_Type_delete_attr(MPI_Datatype type, int type_keyval);
+  int MPI_Type_dup(MPI_Datatype type, MPI_Datatype *newtype);
+  int MPI_Type_extent(MPI_Datatype type, MPI_Aint *extent);
+  int MPI_Type_free(MPI_Datatype *type);
+  int MPI_Type_free_keyval(int *type_keyval);
   MPI_Datatype MPI_Type_f2c(MPI_Fint);
-  int MPI_Type_free(MPI_Datatype *);
-  int MPI_Type_free_keyval(int *);
-  int MPI_Type_get_attr(MPI_Datatype, int, void *, int *);
-  int MPI_Type_get_contents(MPI_Datatype, int, int, int, int *, 
-                            MPI_Aint *, MPI_Datatype *);
-  int MPI_Type_get_envelope(MPI_Datatype, int *, int *, int *, int *);
-  int MPI_Type_get_extent(MPI_Datatype, MPI_Aint *, MPI_Aint *);
-  int MPI_Type_get_name(MPI_Datatype, char *, int *);
-  int MPI_Type_get_true_extent(MPI_Datatype, MPI_Aint *, MPI_Aint *);
-  int MPI_Type_hindexed(int, int *, MPI_Aint *, MPI_Datatype, MPI_Datatype *);
-  int MPI_Type_hvector(int, int, MPI_Aint, MPI_Datatype, MPI_Datatype *);
-  int MPI_Type_indexed(int, int *, int *, MPI_Datatype, MPI_Datatype *);
-  int MPI_Type_lb(MPI_Datatype, MPI_Aint *);
-  int MPI_Type_set_attr(MPI_Datatype, int, void *);
-  int MPI_Type_set_name(MPI_Datatype, char *);
-  int MPI_Type_size(MPI_Datatype, int *);
-  int MPI_Type_struct(int, int *, MPI_Aint *, MPI_Datatype *, 
-                      MPI_Datatype *);
-  int MPI_Type_ub(MPI_Datatype, MPI_Aint *);
-  int MPI_Type_vector(int, int, int, MPI_Datatype, MPI_Datatype *);
+  int MPI_Type_get_attr(MPI_Datatype type, int type_keyval, 
+                        void *attribute_val, int *flag);
+  int MPI_Type_get_contents(MPI_Datatype mtype, int max_integers, 
+                            int max_addresses, int max_datatypes, 
+                            int array_of_integers[], 
+                            MPI_Aint array_of_addresses[], 
+                            MPI_Datatype array_of_datatypes[]);
+  int MPI_Type_get_envelope(MPI_Datatype type, int *num_integers, 
+                            int *num_addresses, int *num_datatypes, 
+                            int *combiner);
+  int MPI_Type_get_extent(MPI_Datatype type, MPI_Aint *lb, 
+                          MPI_Aint *extent);
+  int MPI_Type_get_name(MPI_Datatype type, char *type_name, 
+                        int *resultlen);
+  int MPI_Type_get_true_extent(MPI_Datatype datatype, MPI_Aint *true_lb, 
+                               MPI_Aint *true_extent);
+  int MPI_Type_hindexed(int count, int array_of_blocklengths[], 
+                        MPI_Aint array_of_displacements[], 
+                        MPI_Datatype oldtype, MPI_Datatype *newtype);
+  int MPI_Type_hvector(int count, int blocklength, MPI_Aint stride, 
+                       MPI_Datatype oldtype, MPI_Datatype *newtype);
+  int MPI_Type_indexed(int count, int array_of_blocklengths[], 
+                       int array_of_displacements[], 
+                       MPI_Datatype oldtype, MPI_Datatype *newtype);
+  int MPI_Type_lb(MPI_Datatype type, MPI_Aint *lb);
+  int MPI_Type_match_size(int typeclass, int size, MPI_Datatype *type);
+  int MPI_Type_set_attr(MPI_Datatype type, int type_keyval, 
+                        void *attr_val);
+  int MPI_Type_set_name(MPI_Datatype type, char *type_name);
+  int MPI_Type_size(MPI_Datatype type, int *size);
+  int MPI_Type_struct(int count, int array_of_blocklengths[], 
+                      MPI_Aint array_of_displacements[], 
+                      MPI_Datatype array_of_types[], 
+                      MPI_Datatype *newtype);
+  int MPI_Type_ub(MPI_Datatype mtype, MPI_Aint *ub);
+  int MPI_Type_vector(int count, int blocklength, int stride, 
+                      MPI_Datatype oldtype, MPI_Datatype *newtype);
   int MPI_Unpack(void *, int, int *, void *, int, MPI_Datatype, MPI_Comm);
   int MPI_Unpublish_name(char *, MPI_Info, char *);
   int MPI_Waitall(int, MPI_Request *, MPI_Status *);
@@ -898,55 +937,94 @@ extern "C" {
   int PMPI_Start(MPI_Request *);
   int PMPI_Status_c2f(MPI_Status *, MPI_Fint *);
   int PMPI_Status_f2c(MPI_Fint *, MPI_Status *);
-  int PMPI_Testall(int, MPI_Request *, int *, MPI_Status *);
-  int PMPI_Testany(int, MPI_Request *, int *, int *, MPI_Status *);
-  int PMPI_Test(MPI_Request *, int *, MPI_Status *);
-  int PMPI_Test_cancelled(MPI_Status *, int *);
-  int PMPI_Testsome(int, MPI_Request *, int *, int *, MPI_Status *);
-  int PMPI_Topo_test(MPI_Comm, int *);
+  int PMPI_Testall(int count, MPI_Request array_of_requests[], int *flag, 
+                  MPI_Status array_of_statuses[]);
+  int PMPI_Testany(int count, MPI_Request array_of_requests[], int *index, 
+                  MPI_Status *status);
+  int PMPI_Test(MPI_Request *request, int *flag, MPI_Status *status);
+  int PMPI_Test_cancelled(MPI_Status *status, int *flag);
+  int PMPI_Testsome(int incount, MPI_Request array_of_requests[], 
+                   int *outcount, int array_of_indices, 
+                   MPI_Status array_of_statuses);
+  int PMPI_Topo_test(MPI_Comm comm, int *status);
   MPI_Fint PMPI_Type_c2f(MPI_Datatype);
-  int PMPI_Type_commit(MPI_Datatype *);
-  int PMPI_Type_contiguous(int, MPI_Datatype, MPI_Datatype *);
-  int PMPI_Type_create_darray(int, int, int, int *, int *, int *, 
-                              int*, int, MPI_Datatype, 
-                              MPI_Datatype *);
-  int PMPI_Type_create_hindexed(int, int *, MPI_Aint *, 
-                                MPI_Datatype, MPI_Datatype *);
-  int PMPI_Type_create_hvector(int, int, MPI_Aint, MPI_Datatype, 
-                               MPI_Datatype *);
-  int PMPI_Type_create_keyval(MPI_Type_copy_attr_function *, 
-                              MPI_Type_delete_attr_function *, 
-                              int *, void *);
-  int PMPI_Type_create_resized(MPI_Datatype, MPI_Aint, MPI_Aint, 
-                               MPI_Datatype *);
-  int PMPI_Type_create_struct(int, int *, MPI_Aint *, 
-                              MPI_Datatype *, MPI_Datatype *);
-  int PMPI_Type_create_subarray(int, int *, int *, int *, int, 
-                                MPI_Datatype, MPI_Datatype *);
-  int PMPI_Type_delete_attr(MPI_Datatype, int);
-  int PMPI_Type_dup(MPI_Datatype, MPI_Datatype *);
-  int PMPI_Type_extent(MPI_Datatype, MPI_Aint *);
+  int PMPI_Type_commit(MPI_Datatype *type);
+  int PMPI_Type_contiguous(int count, MPI_Datatype oldtype, 
+                          MPI_Datatype *newtype);
+  int PMPI_Type_create_darray(int size, int rank, int ndims, 
+                             int gsize_array[], int distrib_array[], 
+                             int darg_array[], int psize_array[],
+                             int order, MPI_Datatype oldtype, 
+                             MPI_Datatype *newtype);
+  int PMPI_Type_create_f90_complex(int p, int r, MPI_Datatype *newtype);
+  int PMPI_Type_create_f90_integer(int r, MPI_Datatype *newtype);
+  int PMPI_Type_create_f90_real(int p, int r, MPI_Datatype *newtype);
+  int PMPI_Type_create_hindexed(int count, int array_of_blocklengths[], 
+                               MPI_Aint array_of_displacements[], 
+                               MPI_Datatype oldtype, 
+                               MPI_Datatype *newtype);
+  int PMPI_Type_create_hvector(int count, int blocklength, MPI_Aint stride, 
+                              MPI_Datatype oldtype, 
+                              MPI_Datatype *newtype);
+  int PMPI_Type_create_keyval(MPI_Type_copy_attr_function *type_copy_attr_fn, 
+                             MPI_Type_delete_attr_function *type_delete_attr_fn, 
+                             int *type_keyval, void *extra_state);
+  int PMPI_Type_create_indexed_block(int count, int blocklength,
+                                  int array_of_displacements[],
+                                  MPI_Datatype oldtype,
+                                  MPI_Datatype *newtype);
+  int PMPI_Type_create_struct(int count, int array_of_block_lengths[], 
+                             MPI_Aint array_of_displacements[], 
+                             MPI_Datatype array_of_types[], 
+                             MPI_Datatype *newtype);
+  int PMPI_Type_create_subarray(int ndims, int size_array[], int subsize_array[], 
+                               int start_array[], int order, 
+                               MPI_Datatype oldtype, MPI_Datatype *newtype);
+  int PMPI_Type_create_resized(MPI_Datatype oldtype, MPI_Aint lb, 
+                               MPI_Aint extent, MPI_Datatype *newtype); 
+  int PMPI_Type_delete_attr(MPI_Datatype type, int type_keyval);
+  int PMPI_Type_dup(MPI_Datatype type, MPI_Datatype *newtype);
+  int PMPI_Type_extent(MPI_Datatype type, MPI_Aint *extent);
+  int PMPI_Type_free(MPI_Datatype *type);
+  int PMPI_Type_free_keyval(int *type_keyval);
   MPI_Datatype PMPI_Type_f2c(MPI_Fint);
-  int PMPI_Type_free(MPI_Datatype *);
-  int PMPI_Type_free_keyval(int *);
-  int PMPI_Type_get_attr(MPI_Datatype, int, void *, int *);
-  int PMPI_Type_get_contents(MPI_Datatype, int, int, int, int *, 
-                            MPI_Aint *, MPI_Datatype *);
-  int PMPI_Type_get_envelope(MPI_Datatype, int *, int *, int *, int *);
-  int PMPI_Type_get_extent(MPI_Datatype, MPI_Aint *, MPI_Aint *);
-  int PMPI_Type_get_name(MPI_Datatype, char *, int *);
-  int PMPI_Type_get_true_extent(MPI_Datatype, MPI_Aint *, MPI_Aint *);
-  int PMPI_Type_hindexed(int, int *, MPI_Aint *, MPI_Datatype, MPI_Datatype *);
-  int PMPI_Type_hvector(int, int, MPI_Aint, MPI_Datatype, MPI_Datatype *);
-  int PMPI_Type_indexed(int, int *, int *, MPI_Datatype, MPI_Datatype *);
-  int PMPI_Type_lb(MPI_Datatype, MPI_Aint *);
-  int PMPI_Type_set_attr(MPI_Datatype, int, void *);
-  int PMPI_Type_set_name(MPI_Datatype, char *);
-  int PMPI_Type_size(MPI_Datatype, int *);
-  int PMPI_Type_struct(int, int *, MPI_Aint *, MPI_Datatype *, 
-                       MPI_Datatype *);
-  int PMPI_Type_ub(MPI_Datatype, MPI_Aint *);
-  int PMPI_Type_vector(int, int, int, MPI_Datatype, MPI_Datatype *);
+  int PMPI_Type_get_attr(MPI_Datatype type, int type_keyval, 
+                        void *attribute_val, int *flag);
+  int PMPI_Type_get_contents(MPI_Datatype mtype, int max_integers, 
+                            int max_addresses, int max_datatypes, 
+                            int array_of_integers[], 
+                            MPI_Aint array_of_addresses[], 
+                            MPI_Datatype array_of_datatypes[]);
+  int PMPI_Type_get_envelope(MPI_Datatype type, int *num_integers, 
+                            int *num_addresses, int *num_datatypes, 
+                            int *combiner);
+  int PMPI_Type_get_extent(MPI_Datatype type, MPI_Aint *lb, 
+                          MPI_Aint *extent);
+  int PMPI_Type_get_name(MPI_Datatype type, char *type_name, 
+                        int *resultlen);
+  int PMPI_Type_get_true_extent(MPI_Datatype datatype, MPI_Aint *true_lb, 
+                               MPI_Aint *true_extent);
+  int PMPI_Type_hindexed(int count, int array_of_blocklengths[], 
+                        MPI_Aint array_of_displacements[], 
+                        MPI_Datatype oldtype, MPI_Datatype *newtype);
+  int PMPI_Type_hvector(int count, int blocklength, MPI_Aint stride, 
+                       MPI_Datatype oldtype, MPI_Datatype *newtype);
+  int PMPI_Type_indexed(int count, int array_of_blocklengths[], 
+                       int array_of_displacements[], 
+                       MPI_Datatype oldtype, MPI_Datatype *newtype);
+  int PMPI_Type_lb(MPI_Datatype type, MPI_Aint *lb);
+  int PMPI_Type_match_size(int typeclass, int size, MPI_Datatype *type);
+  int PMPI_Type_set_attr(MPI_Datatype type, int type_keyval, 
+                        void *attr_val);
+  int PMPI_Type_set_name(MPI_Datatype type, char *type_name);
+  int PMPI_Type_size(MPI_Datatype type, int *size);
+  int PMPI_Type_struct(int count, int array_of_blocklengths[], 
+                      MPI_Aint array_of_displacements[], 
+                      MPI_Datatype array_of_types[], 
+                      MPI_Datatype *newtype);
+  int PMPI_Type_ub(MPI_Datatype mtype, MPI_Aint *ub);
+  int PMPI_Type_vector(int count, int blocklength, int stride, 
+                      MPI_Datatype oldtype, MPI_Datatype *newtype);
   int PMPI_Unpack(void *, int, int *, void *, int, MPI_Datatype, MPI_Comm);
   int PMPI_Unpublish_name(char *, MPI_Info, char *);
   int PMPI_Waitall(int, MPI_Request *, MPI_Status *);
