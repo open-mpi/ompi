@@ -25,9 +25,13 @@ endif
 
 lamssiexecdir = $(libdir)/lam
 lamssiexec_LTLIBRARIES = $(module_install)
-mca_pml_teg_la_SOURCES = $(sources)
+mca_pml_teg_la_SOURCES = 
+mca_pml_teg_la_LIBADD = \
+        src/libmca_pml_teg.la \
+        $(top_lam_builddir)/src/lam/liblam.la
 mca_pml_teg_la_LDFLAGS = -module -avoid-version
 
 noinst_LTLIBRARIES = $(module_noinst)
-libmca_mpi_pml_teg_la_SOURCES = $(sources)
+libmca_mpi_pml_teg_la_SOURCES =
+libmca_mpi_pml_teg_la_LIBADD = src/libmca_pml_teg.la
 libmca_mpi_pml_teg_la_LDFLAGS = -module -avoid-version
