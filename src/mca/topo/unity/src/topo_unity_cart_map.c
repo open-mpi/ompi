@@ -1,7 +1,10 @@
 /*
  * $HEADER$
  */ 
+
 #include "mca/topo/unity/src/topo_unity.h"
+
+#include "communicator/communicator.h"
 
 /*
  * function - mca_topo_unity_cart_map
@@ -23,11 +26,11 @@ int mca_topo_unity_cart_map (MPI_Comm comm,
                              int ndims,
                              int *dims,
                              int *periods,
-                             int *newrank){
+                             int *newrank)
+{
     int nprocs;
     int rank;
     int size;
-    int errcode;
     int i;
     int *p;
 
@@ -37,7 +40,6 @@ int mca_topo_unity_cart_map (MPI_Comm comm,
     nprocs = 1;
     for (i = 0, p = dims; i < ndims; ++i, ++p) {
         if (*p <= 0) {
-            printf ("the dimensions are wrong\n");
             return MPI_ERR_DIMS;
         }
         nprocs *= *p;
@@ -45,27 +47,14 @@ int mca_topo_unity_cart_map (MPI_Comm comm,
     /*
      * Check that number of processes <= size of communicator.
      */
-#if 0
-    errcode = ompi_comm_size (comm, &size);
-#endif
-    if (errcode != MPI_SUCCESS) {
-        return errcode;
-    }
-
+    size = ompi_comm_size(comm);
     if (nprocs > size) {
-        printf ("the dimensions are wrong\n");
         return MPI_ERR_DIMS;
     }
     /*
      * Compute my new rank.
      */
-#if 0
-    errcode = ompi_comm_rank (comm, &rank);
-#endif
-    if (errcode != MPI_SUCCESS) {
-        printf ("failed to get a comm rank\n");
-        return errcode;
-    }
+    rank = ompi_comm_rank(comm);
     *newrank = ((rank < 0) || (rank >= nprocs)) ? MPI_UNDEFINED : rank;
 
     return MPI_SUCCESS;

@@ -1,7 +1,10 @@
 /*
  * $HEADER$
  */ 
+
 #include "mca/topo/unity/src/topo_unity.h"
+
+#include "communicator/communicator.h"
 
 /*
  * function - mca_topo_unity_graph_map
@@ -22,16 +25,13 @@ int mca_topo_unity_graph_map (MPI_Comm comm,
                               int nnodes,
                               int *index,
                               int *edges,
-                              int *newrank){
-
+                              int *newrank)
+{
     int errcode;
     int myrank;
 
-#if 0
-    errcode = ompi_comm_rank (comm, &myrank);
-#endif
+    myrank = ompi_comm_rank(comm);
     if (OMPI_SUCCESS != errcode) {
-        printf ("failed to get a comm rank\n");
         return OMPI_ERROR;
     }
 
