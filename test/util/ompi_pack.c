@@ -302,13 +302,13 @@ static bool test8(void)        /* verify string pack and unpack */
 
 	/* we now have a buffer with two strings in it */
     rc = ompi_unpack_string (bufC, &str1);
-    if (OMPI_ERROR==rc) { test_comment ("ompi_pack_string failed"); return(false);}
+    if (OMPI_ERROR==rc) { test_comment ("ompi_unpack_string failed"); return(false);}
 
 	rc = strcmp ("HELLO ", str1);
 	if (rc) { test_comment ("strcmp returns no zero value."); return (false); }
 
     rc = ompi_unpack_string (bufC, &str2);
-    if (OMPI_ERROR==rc) { test_comment ("ompi_pack_string failed"); return(false);}
+    if (OMPI_ERROR==rc) { test_comment ("ompi_unpack_string failed"); return(false);}
 
 	rc = strcmp ("WORLD!", str2);
 	if (rc) { test_comment ("strcmp returns no zero value."); return (false); }
