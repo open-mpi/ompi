@@ -464,66 +464,82 @@ int lam_hash_table_remove_value_ptr(lam_hash_table_t* ht,
 
 int 
 lam_hash_table_get_first_key_uint32(lam_hash_table_t *ht, uint32_t *key, 
-				    void *value, void **node)
+				    void **value, void **node)
 {
-    *node = (void *)(lam_uint32_hash_node_t*) lam_list_get_first(ht->ht_table);
-    if (NULL == *node)
+    lam_uint32_hash_node_t *list_node;
+    list_node = (lam_uint32_hash_node_t*) lam_list_get_first(ht->ht_table);
+    *node = list_node;
+
+    /* Quit if there is no element in the list */
+    if (*node == lam_list_get_end(ht->ht_table)) {
 	return LAM_ERROR;
-    *key = ((lam_uint32_hash_node_t*)(*node))->hn_key;
+    }
+
+    *key = list_node->hn_key;
+    *value = list_node->hn_value;
     return LAM_SUCCESS;
 }
 
 
 int 
 lam_hash_table_get_next_key_uint32(lam_hash_table_t *ht, uint32_t *key,
-				   void *value, void *in_node, void **out_node)
+				   void **value, void *in_node, void **out_node)
 {
     lam_list_t* list = ht->ht_table + (((lam_uint32_hash_node_t*)
 				       in_node)->hn_key & ht->ht_mask);
-    if (in_node == lam_list_get_end(list)) {
+    if (in_node == lam_list_get_last(list)) {
 	++list;
 	*out_node = (void *) lam_list_get_first(list);
 
-	if (NULL == *out_node)
+	if (*out_node == lam_list_get_end(list)) {
 	    return LAM_ERROR;
+	}
 
     } else {
 	*out_node = (void *) lam_list_get_next(in_node);
     }
     *key = ((lam_uint32_hash_node_t*)(*out_node))->hn_key;
+    *value = ((lam_uint32_hash_node_t*)(*out_node))->hn_value;
     return LAM_SUCCESS;
 }
 
 
 int 
 lam_hash_table_get_first_key_uint64(lam_hash_table_t *ht, uint64_t *key,
-				    void *value, void **node)
+				    void **value, void **node)
 {
     *node = (lam_uint64_hash_node_t*) lam_list_get_first(ht->ht_table);
-    if (NULL == *node)
+
+    /* Quit if there is no element in the list */
+    if (*node == lam_list_get_end(ht->ht_table)) {
 	return LAM_ERROR;
+    }
+
     *key = ((lam_uint64_hash_node_t*)(*node))->hn_key;
+    *value = ((lam_uint64_hash_node_t*)(*node))->hn_value;
     return LAM_SUCCESS;
 }
 
 
 int 
 lam_hash_table_get_next_key_uint64(lam_hash_table_t *ht, uint64_t *key,
-				   void *value, void *in_node, void **out_node)
+				   void **value, void *in_node, void **out_node)
 {
     lam_list_t* list = ht->ht_table + (((lam_uint64_hash_node_t*)
 					in_node)->hn_key & ht->ht_mask);
-    if (in_node == lam_list_get_end(list)) {
+    if (in_node == lam_list_get_last(list)) {
 	++list;
 	*out_node = (void *) lam_list_get_first(list);
 
-	if (NULL == *out_node)
+	if (*out_node == lam_list_get_end(list)) {
 	    return LAM_ERROR;
+	}
 
     } else {
 	*out_node = (void *) lam_list_get_next(in_node);
     }
     *key = ((lam_uint64_hash_node_t*)(*out_node))->hn_key;
+    *value = ((lam_uint32_hash_node_t*)(*out_node))->hn_value;
     return LAM_SUCCESS;
 
 }
