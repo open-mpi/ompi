@@ -16,7 +16,6 @@
 
 int MPI_Waitall(int count, MPI_Request *requests, MPI_Status *statuses) 
 {
-    int index;
     if ( MPI_PARAM_CHECK ) {
         int rc = MPI_SUCCESS;
         if (lam_mpi_finalized) {
