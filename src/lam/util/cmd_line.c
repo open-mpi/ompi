@@ -839,8 +839,8 @@ static int split_shorts(lam_cmd_line_t *cmd, bool ignore_unknown)
 
       else {
         lam_argv_append(&argc, &argv, token);
-        for (k = 0; k < option->clo_num_params; ++k) {
-          ++i;
+        ++i;
+        for (k = 0; k < option->clo_num_params; ++k, ++i) {
           if (i < cmd->lcl_argc) {
             lam_argv_append(&argc, &argv, cmd->lcl_argv[i]);
           } else {
