@@ -13,7 +13,7 @@
 
 char        s_buf[MYBUFSIZE];
 char        r_buf[MYBUFSIZE];
-int         skip = 40;
+int         skip = 0;
 
 int
 main (int argc, char *argv[])
@@ -50,7 +50,7 @@ main (int argc, char *argv[])
 
     /* touch the data */
     for (i = 0; i < size; i++) {
-        s_buf[i] = i;
+        s_buf[i] = 'A' + i % 26;
     }
 
     fprintf(stderr, "[proc%d:%s:%d] done with init, to loop %d \n",
@@ -72,8 +72,8 @@ main (int argc, char *argv[])
 
 	if (CHECK && myid != 0) {
 	    for (j=0; j < size; j ++) {
-		if (r_buf[j] != j) {
-		    fprintf(stderr, "[proc%d:%s] byte %d error, %02X \n",
+		if (r_buf[j] != 'A' + j % 26 ) {
+		    fprintf(stderr, "[proc%d:%s] byte %d error, %2x \n",
 			    myid, __FUNCTION__, j, r_buf[j]);
 		    break;
 		} else {
