@@ -48,5 +48,14 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TEST,
 
 void mpi_test_f(MPI_Fint *request, MPI_Fint *flag, MPI_Fint *status, MPI_Fint *ierr)
 {
+    MPI_Request c_req = MPI_Request_f2c(*request);
+    MPI_Status c_status;
+
+    *ierr = MPI_Test(&c_req, flag, &c_status);
+
+    MPI_Status_c2f( &c_status, status); 
+
+    if ( (*ierr == MPI_SUCCESS) && (c_req == NULL) )
+      *request = -1;
 
 }

@@ -48,5 +48,15 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WAIT,
 
 void mpi_wait_f(MPI_Fint *request, MPI_Fint *status, MPI_Fint *ierr)
 {
+    MPI_Request c_req = MPI_Request_f2c(*request);
+    MPI_Status  c_status;
+
+    *ierr = MPI_Wait(&c_req, &c_status);
+
+    if (*ierr == MPI_SUCCESS) {
+        /* reset request handle to MPI_REQUEST_NULL */
+        *request = -1;
+        MPI_Status_c2f(&c_status, status);
+    }
 
 }
