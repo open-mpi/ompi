@@ -297,9 +297,7 @@ OMPI_ALIGNMENT_FORTRAN_COMPLEX=0
 OMPI_ALIGNMENT_FORTRAN_DBLCOMPLEX=0
 
 OMPI_SETUP_F77
-if test "$OMPI_F77" != "none" ; then
-    OMPI_F77_FIND_EXT_SYMBOL_CONVENTION($OMPI_F77)
-fi
+OMPI_F77_FIND_EXT_SYMBOL_CONVENTION($OMPI_F77)
 
 # Even if we don't want fortran support, we have to have a size for
 # INTEGER because it's needed to define MPI_Fint, which is part of
