@@ -48,29 +48,44 @@ int orte_ns_nds_env_get(void)
 
     } else {
 
-        int cellid;
-        int jobid;
-        int vpid;
+        orte_cellid_t cellid;
+        orte_jobid_t jobid;
+        orte_vpid_t vpid;
+        char* cellid_string;
+        char* jobid_string;
+        char* vpid_string;
       
-        id = mca_base_param_register_int("ns", "nds", "cellid", NULL, -1);
-        mca_base_param_lookup_int(id, &cellid);
-        if (cellid < 0) {
+        id = mca_base_param_register_string("ns", "nds", "cellid", NULL, NULL);
+        mca_base_param_lookup_string(id, &cellid_string);
+        if (NULL == cellid_string) {
             ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
             return ORTE_ERR_NOT_FOUND;
+        }
+        if (ORTE_SUCCESS != (rc = orte_ns.convert_string_to_cellid(&cellid, cellid_string))) {
+            ORTE_ERROR_LOG(rc);
+            return(rc);
         }
             
-        id = mca_base_param_register_int("ns", "nds", "jobid", NULL, -1);
-        mca_base_param_lookup_int(id, &jobid);
-        if (jobid < 0) {
+        id = mca_base_param_register_string("ns", "nds", "jobid", NULL, NULL);
+        mca_base_param_lookup_string(id, &jobid_string);
+        if (NULL == jobid_string) {
             ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
             return ORTE_ERR_NOT_FOUND;
         }
+        if (ORTE_SUCCESS != (rc = orte_ns.convert_string_to_jobid(&jobid, jobid_string))) {
+            ORTE_ERROR_LOG(rc);
+            return(rc);
+        }
 
-        id = mca_base_param_register_int("ns", "nds", "vpid", NULL, -1);
-        mca_base_param_lookup_int(id, &vpid);
-        if (vpid < 0) {
+        id = mca_base_param_register_string("ns", "nds", "vpid", NULL, NULL);
+        mca_base_param_lookup_string(id, &vpid_string);
+        if (NULL == vpid_string) {
             ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
             return ORTE_ERR_NOT_FOUND;
+        }
+        if (ORTE_SUCCESS != (rc = orte_ns.convert_string_to_vpid(&vpid, vpid_string))) {
+            ORTE_ERROR_LOG(rc);
+            return(rc);
         }
 
         if (ORTE_SUCCESS != (rc = orte_ns.create_process_name(

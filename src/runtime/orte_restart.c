@@ -80,11 +80,11 @@ int orte_restart(orte_process_name_t *name, const char* uri)
         ORTE_ERROR_LOG(rc);
 	return rc;
     }
-    if (ORTE_SUCCESS != (rc = orte_rml_base_close())) {
+    if (ORTE_SUCCESS != (rc = orte_ns_base_close())) {
         ORTE_ERROR_LOG(rc);
 	return rc;
     }
-    if (ORTE_SUCCESS != (rc = orte_ns_base_close())) {
+    if (ORTE_SUCCESS != (rc = orte_rml_base_close())) {
         ORTE_ERROR_LOG(rc);
 	return rc;
     }
@@ -148,6 +148,18 @@ int orte_restart(orte_process_name_t *name, const char* uri)
     if (ORTE_SUCCESS != (rc = orte_rml.set_uri(uri))) {
         ORTE_ERROR_LOG(rc);
         return rc;
+    }
+    if (NULL != orte_process_info.ns_replica_uri) {
+        if (ORTE_SUCCESS != (rc = orte_rml.set_uri(orte_process_info.ns_replica_uri))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+    }
+    if (NULL != orte_process_info.gpr_replica_uri) {
+        if (ORTE_SUCCESS != (rc = orte_rml.set_uri(orte_process_info.gpr_replica_uri))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
     }
 
     /*

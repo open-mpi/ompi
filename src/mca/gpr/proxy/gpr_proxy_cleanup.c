@@ -59,7 +59,7 @@ int orte_gpr_proxy_cleanup_job(orte_jobid_t jobid)
 	    return rc;
     }
 
-    if (0 > orte_rml.send_buffer(orte_process_info.gpr_replica, cmd, MCA_OOB_TAG_GPR, 0)) {
+    if (0 > orte_rml.send_buffer(orte_process_info.gpr_replica, cmd, ORTE_RML_TAG_GPR, 0)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         OBJ_RELEASE(cmd);
         return ORTE_ERR_COMM_FAILURE;
@@ -72,7 +72,7 @@ int orte_gpr_proxy_cleanup_job(orte_jobid_t jobid)
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
     
-    if (0 > orte_rml.recv_buffer(orte_process_info.gpr_replica, answer, MCA_OOB_TAG_GPR)) {
+    if (0 > orte_rml.recv_buffer(orte_process_info.gpr_replica, answer, ORTE_RML_TAG_GPR)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         OBJ_RELEASE(answer);
         return ORTE_ERR_COMM_FAILURE;
@@ -115,7 +115,7 @@ int orte_gpr_proxy_cleanup_proc(orte_process_name_t *proc)
      return rc;
     }
 
-    if (0 > orte_rml.send_buffer(orte_process_info.gpr_replica, cmd, MCA_OOB_TAG_GPR, 0)) {
+    if (0 > orte_rml.send_buffer(orte_process_info.gpr_replica, cmd, ORTE_RML_TAG_GPR, 0)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         OBJ_RELEASE(cmd);
         return ORTE_ERR_COMM_FAILURE;
@@ -128,7 +128,7 @@ int orte_gpr_proxy_cleanup_proc(orte_process_name_t *proc)
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
     
-    if (0 > orte_rml.recv_buffer(orte_process_info.gpr_replica, answer, MCA_OOB_TAG_GPR)) {
+    if (0 > orte_rml.recv_buffer(orte_process_info.gpr_replica, answer, ORTE_RML_TAG_GPR)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         OBJ_RELEASE(answer);
         return ORTE_ERR_COMM_FAILURE;

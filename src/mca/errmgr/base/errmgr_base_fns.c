@@ -71,7 +71,7 @@ void orte_errmgr_base_abort()
     orte_wait_kill(9);
 
     /* abnormal exit */
-    _exit(-1);
+    exit(-1);
 }
 
 int orte_errmgr_base_register_job(orte_jobid_t job)

@@ -26,7 +26,7 @@
 
 static int orte_ras_lsf_bproc_open(void);
 static int orte_ras_lsf_bproc_close(void);
-static orte_ras_base_module_t* orte_ras_lsf_bproc_init(void);
+static orte_ras_base_module_t* orte_ras_lsf_bproc_init(int* priority);
 
 
 orte_ras_lsf_bproc_component_t mca_ras_lsf_bproc_component = {

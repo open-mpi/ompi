@@ -34,7 +34,6 @@ int orte_gpr_replica_recv_put_cmd(orte_buffer_t *buffer, orte_buffer_t *answer)
     orte_gpr_value_t **values = NULL, *val;
     orte_gpr_replica_segment_t *seg=NULL;
     orte_gpr_replica_itag_t *itags=NULL;
-    orte_gpr_addr_mode_t addr_mode;
     orte_data_type_t type;
     int8_t action_taken=0;
     int i=0, rc, ret;
@@ -92,8 +91,8 @@ int orte_gpr_replica_recv_put_cmd(orte_buffer_t *buffer, orte_buffer_t *answer)
             goto RETURN_ERROR;
         }
     
-        if (ORTE_SUCCESS != (ret = orte_gpr_replica_put_fn(addr_mode, seg, itags, val->num_tokens,
-                   val->cnt, val->keyvals, &action_taken))) {
+        if (ORTE_SUCCESS != (ret = orte_gpr_replica_put_fn(val->addr_mode, seg, itags,
+                    val->num_tokens, val->cnt, val->keyvals, &action_taken))) {
             ORTE_ERROR_LOG(ret);
             goto RETURN_ERROR;
         }
@@ -102,6 +101,7 @@ int orte_gpr_replica_recv_put_cmd(orte_buffer_t *buffer, orte_buffer_t *answer)
             if (ORTE_SUCCESS != 
                 (rc = orte_gpr_replica_check_subscriptions(seg, action_taken))) {
                 ORTE_ERROR_LOG(rc);
+                OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
                 return rc;
             }
         }
@@ -111,8 +111,6 @@ int orte_gpr_replica_recv_put_cmd(orte_buffer_t *buffer, orte_buffer_t *answer)
     }
 
  RETURN_ERROR:
-    OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
-
     /* release list of itags */
     if (NULL != itags) {
         free(itags);
@@ -130,9 +128,11 @@ int orte_gpr_replica_recv_put_cmd(orte_buffer_t *buffer, orte_buffer_t *answer)
     
     if (ORTE_SUCCESS != (rc = orte_dps.pack(answer, &ret, 1, ORTE_INT))) {
         ORTE_ERROR_LOG(rc);
+        OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
         return rc;
     }
     
+    OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
     return ret;
 }
 
@@ -154,6 +154,8 @@ int orte_gpr_replica_recv_get_cmd(orte_buffer_t *input_buffer,
         return rc;
     }
             
+    OMPI_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
+
     n = 1;
     if (ORTE_SUCCESS != (ret = orte_dps.unpack(input_buffer, &addr_mode, &n, ORTE_GPR_ADDR_MODE))) {
         ORTE_ERROR_LOG(ret);
@@ -176,7 +178,8 @@ int orte_gpr_replica_recv_get_cmd(orte_buffer_t *input_buffer,
         tokens = (char**)malloc(num_tokens*sizeof(char*));
         if (NULL == tokens) {
             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-            return ORTE_ERR_OUT_OF_RESOURCE;
+            ret = ORTE_ERR_OUT_OF_RESOURCE;
+            goto RETURN_ERROR;
         }
         n = num_tokens;
         if (ORTE_SUCCESS != (ret = orte_dps.unpack(input_buffer, tokens, &n, ORTE_STRING))) {
@@ -209,8 +212,6 @@ int orte_gpr_replica_recv_get_cmd(orte_buffer_t *input_buffer,
     } else {  /* no keys provided */
         keys = NULL;
     }
-
-    OMPI_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
 
     /* find the segment */
     if (ORTE_SUCCESS != (ret = orte_gpr_replica_find_seg(&seg, true, segment))) {
@@ -257,8 +258,6 @@ int orte_gpr_replica_recv_get_cmd(orte_buffer_t *input_buffer,
         }
     }
         
-    OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
-
     if (NULL != segment) {
         free(segment);
     }
@@ -288,9 +287,10 @@ int orte_gpr_replica_recv_get_cmd(orte_buffer_t *input_buffer,
     /* pack response code */
     if (ORTE_SUCCESS != (rc = orte_dps.pack(output_buffer, &ret, 1, ORTE_INT))) {
         ORTE_ERROR_LOG(rc);
-        goto RETURN_ERROR;
     }
     
+    OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
+
     return ret;
 }
 

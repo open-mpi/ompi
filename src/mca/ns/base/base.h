@@ -58,11 +58,7 @@ typedef uint8_t orte_ns_cmd_bitmask_t;
 /* CAUTION - any changes here must also change corresponding
  * typedefs above
  */
-#define ORTE_NS_OOB_PACK_JOBID   ORTE_INT32
-#define ORTE_NS_OOB_PACK_CELLID  ORTE_INT32
-#define ORTE_NS_OOB_PACK_VPID    ORTE_INT32
-#define ORTE_NS_OOB_PACK_CMD     ORTE_INT16
-#define ORTE_NS_OOB_PACK_OOB_TAG ORTE_INT32
+#define ORTE_NS_CMD     ORTE_INT16
 
 /*
  * define flag values for remote commands - only used internally

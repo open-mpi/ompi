@@ -95,6 +95,7 @@ static int orte_rds_hostfile_open(void)
     OBJ_CONSTRUCT(&mca_rds_hostfile_component.lock, ompi_mutex_t);
     mca_rds_hostfile_component.debug = orte_rds_hostfile_param_register_int("debug",1);
     mca_rds_hostfile_component.path = orte_rds_hostfile_param_register_string("path", path);
+    mca_rds_hostfile_component.default_hostfile = (strcmp(mca_rds_hostfile_component.path,path) == 0);
     return ORTE_SUCCESS;
 }
 

@@ -67,19 +67,26 @@ static  int orte_pls_bproc_param_register_int(
 
 int orte_pls_bproc_seed_component_open(void)
 {
+    int id;
+
     /* init globals */
     OBJ_CONSTRUCT(&mca_pls_bproc_seed_component.lock, ompi_mutex_t);
     OBJ_CONSTRUCT(&mca_pls_bproc_seed_component.condition, ompi_condition_t);
     mca_pls_bproc_seed_component.num_children = 0;
 
     /* init parameters */
-    mca_pls_bproc_seed_component.debug = orte_pls_bproc_param_register_int("debug", 0);
+    mca_pls_bproc_seed_component.debug = orte_pls_bproc_param_register_int("debug", 1);
     mca_pls_bproc_seed_component.reap = orte_pls_bproc_param_register_int("reap", 1);
     mca_pls_bproc_seed_component.image_frag_size = orte_pls_bproc_param_register_int("image_frag_size", 256*1024);
-    mca_pls_bproc_seed_component.name_fd = orte_pls_bproc_param_register_int("name_fd", 3);
     mca_pls_bproc_seed_component.priority = orte_pls_bproc_param_register_int("priority", 100);
     mca_pls_bproc_seed_component.terminate_sig = orte_pls_bproc_param_register_int("terminate_sig", 9);
 
+    id = mca_base_param_find("nds", "pipe", "fd");
+    if(id > 0) {
+         mca_base_param_lookup_int(id, &mca_pls_bproc_seed_component.name_fd);
+    } else {
+         mca_pls_bproc_seed_component.name_fd = 3;
+    }
     return ORTE_SUCCESS;
 }
 
@@ -103,6 +110,7 @@ orte_pls_base_module_t* orte_pls_bproc_seed_init(
 {
     int ret;
     struct bproc_version_t version;
+
  
     /* are we the seed */
     if(orte_process_info.seed == false)
@@ -118,9 +126,6 @@ orte_pls_base_module_t* orte_pls_bproc_seed_init(
     if (bproc_currnode() != BPROC_NODE_MASTER) {
         return NULL;
     }
-
-    /* post a non-blocking receive */
-
 
     *priority = mca_pls_bproc_seed_component.priority;
     return &orte_pls_bproc_seed_module;

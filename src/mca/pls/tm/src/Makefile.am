@@ -22,6 +22,7 @@ AM_CPPFLAGS = -I$(top_ompi_builddir)/src/include \
 noinst_LTLIBRARIES = libmca_pls_tm.la
 libmca_pls_tm_la_SOURCES = \
         pls_tm.h \
+        pls_tm_child.c \
         pls_tm_component.c \
         pls_tm_module.c \
         pls_tm_registry.c

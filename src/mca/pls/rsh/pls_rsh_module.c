@@ -65,24 +65,6 @@ orte_pls_base_module_1_0_0_t orte_pls_rsh_module = {
 
 static void orte_pls_rsh_wait_daemon(pid_t pid, int status, void* cbdata)
 {
-#if 0
-    orte_rmaps_base_node_t* node = (orte_rmaps_base_node_t*)cbdata;
-    ompi_list_item_t *item;
-    int rc;
-
-    /* set the state of all processes launched by this daemon */
-    for(item =  ompi_list_get_first(&node->node_procs);
-        item != ompi_list_get_end(&node->node_procs);
-        item =  ompi_list_get_next(item)) {
-        orte_rmaps_base_proc_t* proc = (orte_rmaps_base_proc_t*)item;
-        rc = orte_soh.set_proc_soh(&proc->proc_name, ORTE_PROC_STATE_TERMINATED, status);
-        if(ORTE_SUCCESS != rc) {
-            ORTE_ERROR_LOG(rc);
-        }
-    }
-    OBJ_RELEASE(node);
-#endif
-
     /* release any waiting threads */
     OMPI_THREAD_LOCK(&mca_pls_rsh_component.lock);
     if(mca_pls_rsh_component.num_children-- >= NUM_CONCURRENT ||
@@ -98,8 +80,9 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
     ompi_list_t nodes;
     ompi_list_item_t* item;
     size_t num_nodes;
-    orte_vpid_t vpid_start;
-    int node_name_index;
+    orte_vpid_t vpid;
+    int node_name_index1;
+    int node_name_index2;
     int proc_name_index;
     char *jobid_string;
     char *uri, *param;
@@ -125,7 +108,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
     if(num_nodes == 0) {
         return ORTE_ERR_BAD_PARAM;
     }
-    rc = orte_ns.reserve_range(0, num_nodes, &vpid_start);
+    rc = orte_ns.reserve_range(0, num_nodes, &vpid);
     if(ORTE_SUCCESS != rc) {
         goto cleanup;
     }
@@ -139,7 +122,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
      */
     argv = ompi_argv_copy(mca_pls_rsh_component.argv);
     argc = mca_pls_rsh_component.argc;
-    node_name_index = argc;
+    node_name_index1 = argc;
     ompi_argv_append(&argc, &argv, "");  /* placeholder for node name */
 
     /* application */
@@ -151,6 +134,9 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
     ompi_argv_append(&argc, &argv, jobid_string);
     ompi_argv_append(&argc, &argv, "--name");
     proc_name_index = argc;
+    ompi_argv_append(&argc, &argv, "");
+    ompi_argv_append(&argc, &argv, "--nodename");
+    node_name_index2 = argc;
     ompi_argv_append(&argc, &argv, "");
 
     /* setup ns contact info */
@@ -187,7 +173,8 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
         pid_t pid;
 
         /* setup node name */
-        argv[node_name_index] = node->node_name;
+        argv[node_name_index1] = node->node_name;
+        argv[node_name_index2] = node->node_name;
 
         /* rsh a child to exec the rsh/ssh session */
         pid = fork();
@@ -201,10 +188,9 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
 
             orte_process_name_t* name;
             char* name_string;
-            int fd = open("/dev/null", O_RDWR);
 
             /* setup process name */
-            rc = orte_ns.create_process_name(&name, node->node_cellid, 0, vpid_start);
+            rc = orte_ns.create_process_name(&name, node->node_cellid, 0, vpid);
             if(ORTE_SUCCESS != rc) {
                 ompi_output(0, "orte_pls_rsh: unable to create process name");
                 exit(-1);
@@ -216,17 +202,20 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
             }
             argv[proc_name_index] = name_string;
 
-            /* debug output */
-            if(mca_pls_rsh_component.debug) {
+            if (mca_pls_rsh_component.debug > 1) {
+                /* debug output */
                 char* cmd = ompi_argv_join(argv, ' ');  
                 ompi_output(0, "orte_pls_rsh: %s\n", cmd);
-            }
+            } 
 
-            /* setup stdin/stdout/stderr */
-            dup2(fd, 0);
-            dup2(fd, 1);
-            dup2(fd, 2);
-            close(fd);
+            if (mca_pls_rsh_component.debug == 0) {
+                 /* setup stdin/stdout/stderr */
+                int fd = open("/dev/null", O_RDWR);
+                dup2(fd, 0);
+                dup2(fd, 1);
+                dup2(fd, 2);
+                close(fd);
+            }
 
             /* exec the daemon */
             execv(mca_pls_rsh_component.path, argv);
@@ -242,6 +231,12 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
 
             OBJ_RETAIN(node);
             orte_wait_cb(pid, orte_pls_rsh_wait_daemon, node);
+            vpid++;
+
+            /* if required - add delay to avoid problems w/ X11 authentication */
+            if (mca_pls_rsh_component.debug && mca_pls_rsh_component.delay) {
+                sleep(mca_pls_rsh_component.delay);
+            }
         }
     }
 

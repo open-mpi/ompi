@@ -87,7 +87,9 @@ int orte_sys_info(void)
         return OMPI_ERROR;
     } else {
         orte_system_info.sysname = strdup(sys_info.sysname);
-        orte_system_info.nodename = strdup(sys_info.nodename);
+        if(NULL == orte_system_info.nodename) {
+            orte_system_info.nodename = strdup(sys_info.nodename);
+        }
         orte_system_info.release = strdup(sys_info.release);
         orte_system_info.version = strdup(sys_info.version);
         orte_system_info.machine = strdup(sys_info.machine);
@@ -108,7 +110,6 @@ int orte_sys_info(void)
     /* we can hardcode windows path seperator to be "\" */
     orte_system_info.path_sep = strdup(sep);
 #endif
-
 
 
 

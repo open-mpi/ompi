@@ -87,7 +87,9 @@ int orte_gpr_replica_put(int cnt, orte_gpr_value_t **values)
             goto CLEANUP;
         }
 
-        free(itags);
+        if (NULL != itags) {
+           free(itags);
+        }
         itags = NULL;
     }
 

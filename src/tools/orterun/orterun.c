@@ -72,6 +72,7 @@ struct globals_t {
     bool verbose;
     bool exit;
     bool no_wait_for_job_completion;
+    bool debug;
     int num_procs;
     char *hostfile;
     char *env_val;
@@ -91,6 +92,9 @@ ompi_cmd_line_init_t cmd_line_init[] = {
     { NULL, NULL, NULL, '\0', NULL, "version", 0,
       &orterun_globals.version, OMPI_CMD_LINE_TYPE_BOOL,
       "Show the orterun version" },
+    { "orte", "debug", NULL, 'd', NULL, "debug", 0,
+      &orterun_globals.debug, OMPI_CMD_LINE_TYPE_BOOL,
+      "Enable debugging" },
     { NULL, NULL, NULL, 'v', NULL, "verbose", 0,
       &orterun_globals.verbose, OMPI_CMD_LINE_TYPE_BOOL,
       "Be verbose" },
@@ -299,6 +303,7 @@ static int init_globals(void)
         false,
         false,
         false,
+        false,
         -1,
         NULL,
         NULL,
@@ -350,6 +355,11 @@ static int parse_globals(int argc, char* argv[])
         wait_for_job_completion = false;
     }
 
+    /* debug */
+    if (orterun_globals.debug) {
+        int id = mca_base_param_register_int("debug",NULL,NULL,NULL,0);
+        mca_base_param_set_int(id,orterun_globals.debug);
+    }
     OBJ_DESTRUCT(&cmd_line);
     return ORTE_SUCCESS;
 }
@@ -515,6 +525,7 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
 
     init_globals();
     ompi_cmd_line_create(&cmd_line, cmd_line_init);
+    mca_base_cmd_line_setup(&cmd_line);
     cmd_line_made = true;
     ompi_cmd_line_make_opt3(&cmd_line, '\0', NULL, "rawmap", 2,
                             "Hidden / internal parameter -- users should not use this!");
@@ -524,6 +535,7 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
     if (OMPI_SUCCESS != rc) {
         goto cleanup;
     }
+    mca_base_cmd_line_process_args(&cmd_line);
 
     /* Is there an appfile in here? */
 
@@ -540,8 +552,8 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
     /* See if we have anything left */
 
     if (0 == app->argc) {
-        ompi_show_help("help-orterun.txt", "orterun:no-application", true,
-                       argv[0], argv[0]);
+        ompi_show_help("help-orterun.txt", "orterun:executable-not-specified",
+                       true, argv[0], argv[0]);
         rc = ORTE_ERR_NOT_FOUND;
         goto cleanup;
     }
@@ -638,8 +650,8 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
 
     app->app = ompi_path_findv(app->argv[0], 0, environ, app->cwd); 
     if (NULL == app->app) {
-        ompi_show_help("help-orterun.txt", "orterun:no-application", true, 
-                       argv[0], app->argv[0], argv[0]);
+        ompi_show_help("help-orterun.txt", "orterun:executable-not-found",
+                       true, argv[0], app->argv[0], argv[0]);
         rc = ORTE_ERR_NOT_FOUND;
         goto cleanup;
     }

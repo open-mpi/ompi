@@ -247,7 +247,7 @@ orte_gpr_proxy_component_init(bool *allow_multi_user_threads, bool *have_hidden_
 int orte_gpr_proxy_module_init(void)
 {
     /* issue the non-blocking receive */
-    return orte_rml.recv_buffer_nb(ORTE_RML_NAME_ANY, MCA_OOB_TAG_GPR_NOTIFY, 0, orte_gpr_proxy_notify_recv, NULL);
+    return orte_rml.recv_buffer_nb(ORTE_RML_NAME_ANY, ORTE_RML_TAG_GPR_NOTIFY, 0, orte_gpr_proxy_notify_recv, NULL);
 }
 
 
@@ -266,7 +266,7 @@ int orte_gpr_proxy_finalize(void)
     }
 
     /* All done */
-    orte_rml.recv_cancel(ORTE_RML_NAME_ANY, MCA_OOB_TAG_GPR_NOTIFY);
+    orte_rml.recv_cancel(ORTE_RML_NAME_ANY, ORTE_RML_TAG_GPR_NOTIFY);
     return ORTE_SUCCESS;
 }
 
@@ -354,7 +354,7 @@ void orte_gpr_proxy_notify_recv(int status, orte_process_name_t* sender,
  RETURN_ERROR:
 
     /* reissue non-blocking receive */
-    orte_rml.recv_buffer_nb(ORTE_RML_NAME_ANY, MCA_OOB_TAG_GPR_NOTIFY, 0, orte_gpr_proxy_notify_recv, NULL);
+    orte_rml.recv_buffer_nb(ORTE_RML_NAME_ANY, ORTE_RML_TAG_GPR_NOTIFY, 0, orte_gpr_proxy_notify_recv, NULL);
 
 }
 

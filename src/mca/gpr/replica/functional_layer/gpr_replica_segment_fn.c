@@ -165,8 +165,6 @@ int orte_gpr_replica_delete_itagval(orte_gpr_replica_segment_t *seg,
                                    orte_gpr_replica_container_t *cptr,
                                    orte_gpr_replica_itagval_t *iptr)
 {
-    int i, rc;
-    
     /* see if anyone cares that this value is deleted */
 /*    trig = (orte_gpr_replica_triggers_t**)((orte_gpr_replica.triggers)->addr);
 
@@ -184,15 +182,6 @@ int orte_gpr_replica_delete_itagval(orte_gpr_replica_segment_t *seg,
     
 */    
 
-    /* remove the itag from the container;s list of itags */
-    for (i=0; i < cptr->num_itags; i++) {
-        if (ORTE_VALUE_ARRAY_GET_ITEM(&(cptr->itaglist), orte_gpr_replica_itag_t, i) == iptr->itag) {
-            orte_value_array_remove_item(&(cptr->itaglist), i);
-            (cptr->num_itags)--;
-            break;
-        }
-    }
-    
     /* remove the entry from the container's itagval array */
     orte_pointer_array_set_item(cptr->itagvals, iptr->index, NULL);
     

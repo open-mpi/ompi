@@ -207,6 +207,9 @@ int mca_io_base_component_finalize(void)
 {
     initialized = false;
 
+    ompi_progress_unregister(mca_io_base_component_run_progress);
+
+
     OBJ_DESTRUCT(&components_in_use);
 
     return OMPI_SUCCESS;

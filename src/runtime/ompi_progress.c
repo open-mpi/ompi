@@ -73,9 +73,11 @@ void ompi_progress(void)
 #endif
 
     for (i = 0 ; i < callbacks_len ; ++i) {
-        ret = (callbacks[i])();
-        if (ret > 0) {
-            events += ret;
+        if (NULL != callbacks[i]) {
+            ret = (callbacks[i])();
+            if (ret > 0) {
+                events += ret;
+            }
         }
     }
 
@@ -138,4 +140,19 @@ ompi_progress_register(ompi_progress_callback_t cb)
     callbacks[callbacks_len++] = cb;
 
     return OMPI_SUCCESS;
+}
+
+int
+ompi_progress_unregister(ompi_progress_callback_t cb)
+{
+    size_t i;
+
+    for (i = 0 ; i < callbacks_len ; ++i) {
+        if (cb == callbacks[i]) {
+            callbacks[i] = NULL;
+            return OMPI_SUCCESS;
+        }
+    }
+
+    return OMPI_ERR_NOT_FOUND;
 }

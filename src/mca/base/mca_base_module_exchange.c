@@ -26,6 +26,7 @@
 #include "mca/errmgr/errmgr.h"
 #include "mca/rml/rml.h"
 #include "mca/gpr/gpr.h"
+#include "mca/gpr/base/base.h"
 #include "mca/ns/ns.h"
 #include "mca/pml/pml.h"
 #include "mca/base/mca_base_module_exchange.h"
@@ -212,6 +213,12 @@ static void mca_base_modex_registry_callback(
     bool isnew = false;
     int rc;
 
+#if 0
+ompi_output(0, "[%d,%d,%d] mca_base_modex_registry_callback\n", 
+    ORTE_NAME_ARGS(orte_process_info.my_name));
+orte_gpr_base_dump_notify_data(data,0);
+#endif
+
     /* process the callback */
     value = data->values;
     for (i=0; i < data->cnt; i++) {
@@ -350,6 +357,15 @@ static void mca_base_modex_registry_callback(
                     modex_module->module_data_size = num_bytes;
 #endif
                     modex_module->module_data_avail = true;
+#if 0
+ompi_output(0, "[%d,%d,%d] mca_base_modex_registry_callback: %s-%s-%d-%d received %d bytes\n",
+    ORTE_NAME_ARGS(orte_process_info.my_name),
+    component.mca_type_name,
+    component.mca_component_name,
+    component.mca_component_major_version,
+    component.mca_component_minor_version,
+    num_bytes);
+#endif
                     ompi_condition_signal(&modex_module->module_data_cond);
                 }
                 OMPI_THREAD_UNLOCK(&proc->proc_lock);
@@ -510,7 +526,7 @@ int mca_base_modex_send(
     const void *data, 
     size_t size)
 {
-    char *jobidstring;
+    orte_jobid_t jobid;
     orte_gpr_value_t *value;
     int rc;
     orte_buffer_t buffer;
@@ -522,28 +538,23 @@ int mca_base_modex_send(
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
 
-    if (ORTE_SUCCESS != (rc = orte_ns.get_jobid_string(&jobidstring, orte_process_info.my_name))) {
+    if (ORTE_SUCCESS != (rc = orte_ns.get_jobid(&jobid, orte_process_info.my_name))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
 
-    if (0 > asprintf(&(value->segment), "%s-%s", ORTE_JOB_SEGMENT, jobidstring)) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-
-    value->tokens = (char**)malloc(sizeof(char*));
-    if (NULL == value->tokens) {
-       ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    value->addr_mode = ORTE_GPR_TOKENS_AND | ORTE_GPR_OVERWRITE;
-    if (ORTE_SUCCESS != (rc = orte_ns.get_proc_name_string(&(value->tokens[0]), orte_process_info.my_name))) {
+    if (ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&(value->segment), jobid))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    value->num_tokens = 1;
 
+
+    if (ORTE_SUCCESS != (rc = orte_schema.get_proc_tokens(&(value->tokens),
+                                &(value->num_tokens), orte_process_info.my_name))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    value->addr_mode = ORTE_GPR_TOKENS_AND | ORTE_GPR_KEYS_OR;
     value->cnt = 1;
     value->keyvals = (orte_gpr_keyval_t**)malloc(sizeof(orte_gpr_keyval_t*));
     value->keyvals[0] = OBJ_NEW(orte_gpr_keyval_t);
@@ -642,6 +653,14 @@ int mca_base_modex_recv(
 
     /* wait until data is available */
     while(modex_module->module_data_avail == false) {
+#if 0
+ompi_output(0, "[%d,%d,%d] mca_base_modex_registry_callback: waiting for %s-%s-%d-%d\n",
+    ORTE_NAME_ARGS(orte_process_info.my_name),
+    component->mca_type_name,
+    component->mca_component_name,
+    component->mca_component_major_version,
+    component->mca_component_minor_version);
+#endif
         ompi_condition_wait(&modex_module->module_data_cond, &proc->proc_lock);
     }
 

@@ -22,16 +22,20 @@
 #include <sys/wait.h>
 #include <fcntl.h>
 
+#include "util/argv.h"
 #include "util/output.h"
+#include "util/environ.h"
 #include "util/proc_info.h"
 #include "event/event.h"
 #include "runtime/orte_wait.h"
 #include "runtime/runtime.h"
 #include "mca/ns/base/base.h"
+#include "mca/ns/base/ns_base_nds.h"
 #include "mca/pls/base/base.h"
 #include "mca/base/mca_base_param.h"
 #include "mca/iof/iof.h"
 #include "mca/rmgr/base/base.h"
+#include "mca/rmaps/base/base.h"
 #include "mca/rml/rml.h"
 #include "mca/errmgr/errmgr.h"
 #include "mca/soh/soh.h"
@@ -40,7 +44,6 @@
 
 #include "pls_bproc_seed.h"
 
-extern int ompi_evsignal_restart(void);
 #if OMPI_HAVE_POSIX_THREADS && OMPI_THREADS_HAVE_DIFFERENT_PIDS
 int orte_pls_bproc_seed_launch_threaded(orte_jobid_t);
 #endif
@@ -160,7 +163,13 @@ cleanup:
  *  Spew out a new child based on the in-memory process image.
  */
 
-static int orte_pls_bproc_undump(orte_rmaps_base_proc_t* proc, uint8_t* image, size_t image_len, pid_t* pid)
+static int orte_pls_bproc_undump(
+    orte_rmaps_base_proc_t* proc, 
+    orte_vpid_t vpid_start, 
+    orte_vpid_t vpid_range, 
+    uint8_t* image, 
+    size_t image_len, 
+    pid_t* pid)
 {
     int p_name[2];
     int p_stdout[2];
@@ -266,7 +275,7 @@ static int orte_pls_bproc_undump(orte_rmaps_base_proc_t* proc, uint8_t* image, s
     close(p_image[1]);
 
     /* write the process name */
-    write(p_name[1], &proc->proc_name, sizeof(proc->proc_name));
+    orte_ns_nds_pipe_put(&proc->proc_name, vpid_start, vpid_range, p_name[1]);
     close(p_name[1]);
     return ORTE_SUCCESS;
 }
@@ -309,14 +318,14 @@ static void orte_pls_bproc_wait_node(pid_t pid, int status, void* cbdata)
     for(item =  ompi_list_get_first(&node->node_procs);
         item != ompi_list_get_end(&node->node_procs);
         item =  ompi_list_get_next(item)) {
+        orte_rmaps_base_proc_t* proc = (orte_rmaps_base_proc_t*)item; 
 
-        orte_rmaps_base_proc_t* proc = (orte_rmaps_base_proc_t*)cbdata;
         int rc = orte_soh.set_proc_soh(&proc->proc_name, ORTE_PROC_STATE_TERMINATED, 0);
         if(ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
         }
     }
-    OBJ_RELEASE(node);
+    /* OBJ_RELEASE(node); */
 
     /* release any waiting threads */
     OMPI_THREAD_LOCK(&mca_pls_bproc_seed_component.lock);
@@ -333,16 +342,23 @@ static void orte_pls_bproc_wait_node(pid_t pid, int status, void* cbdata)
  *      on each of the nodes.
  */
 
-static int orte_pls_bproc_launch_app(orte_jobid_t jobid, orte_rmaps_base_map_t* map)
+static int orte_pls_bproc_launch_app(
+    orte_jobid_t jobid, 
+    orte_rmaps_base_map_t* map, 
+    orte_vpid_t vpid_start, 
+    orte_vpid_t vpid_range)
 {
     uint8_t* image = NULL;
     size_t image_len;
     int* node_list = NULL;
     int* daemon_pids = NULL;
     size_t num_nodes;
-    orte_vpid_t daemon_vpid_start;
+    orte_vpid_t daemon_vpid_start = 0;
     int rc, index;
     char* uri;
+    char *var, *value;
+    char *env[4];
+    char **new_env;
 
     /* convert node names to bproc nodelist */
     if(ORTE_SUCCESS != (rc = orte_pls_bproc_nodelist(map, &node_list, &num_nodes))) {
@@ -359,6 +375,43 @@ static int orte_pls_bproc_launch_app(orte_jobid_t jobid, orte_rmaps_base_map_t* 
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
+
+    var = mca_base_param_environ_variable("ns","nds",NULL);
+    asprintf(&value, "%s=pipe", var);
+    env[0] = value;
+
+    /* ns replica contact info */
+    if(NULL == orte_process_info.ns_replica) {
+        rc = orte_ns.copy_process_name(&orte_process_info.ns_replica,orte_process_info.my_name);
+        if(ORTE_SUCCESS != rc) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
+        orte_process_info.ns_replica_uri = orte_rml.get_uri();
+    }
+    var = mca_base_param_environ_variable("ns","replica","uri");
+    asprintf(&value, "%s=uri%s", var, orte_process_info.ns_replica_uri);
+    env[1] = value;
+
+    /* gpr replica contact info */
+    if(NULL == orte_process_info.gpr_replica) {
+        rc = orte_ns.copy_process_name(&orte_process_info.gpr_replica,orte_process_info.my_name);
+        if(ORTE_SUCCESS != rc) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
+        orte_process_info.gpr_replica_uri = orte_rml.get_uri();
+    }
+    var = mca_base_param_environ_variable("gpr","replica","uri");
+    asprintf(&value, "%s=uri%s", var, orte_process_info.gpr_replica_uri);
+    env[2] = value;
+    env[3] = NULL;
+
+    /* overwrite previously specified values with the above settings */
+    new_env = ompi_environ_merge(map->app->env, env);
+    ompi_argv_free(map->app->env);
+    map->app->env = new_env;
+    map->app->num_env = ompi_argv_count(new_env);
 
     /* read process image */
     if(ORTE_SUCCESS != (rc = orte_pls_bproc_dump(map->app, &image, &image_len))) {
@@ -392,6 +445,7 @@ static int orte_pls_bproc_launch_app(orte_jobid_t jobid, orte_rmaps_base_map_t* 
         orte_rmaps_base_node_t* node = NULL;
         orte_process_name_t* daemon_name;
         int fd;
+        int rank = rc;
         
         /* connect stdin to /dev/null */
         fd = open("/dev/null", O_RDWR);
@@ -413,13 +467,17 @@ static int orte_pls_bproc_launch_app(orte_jobid_t jobid, orte_rmaps_base_map_t* 
         } else {
             _exit(-1); 
         }
-    
+
+        if(mca_pls_bproc_seed_component.debug) {
+            ompi_output(0, "orte_pls_bproc: rank=%d\n", rank);
+        }
+
         /* find this node */
         index = 0;
         for(item =  ompi_list_get_first(&map->nodes);
             item != ompi_list_get_end(&map->nodes);
             item =  ompi_list_get_next(item)) {
-            if(index++ == rc) {
+            if(index++ == rank) {
                 node = (orte_rmaps_base_node_t*)item;
                 break;
             }
@@ -432,14 +490,17 @@ static int orte_pls_bproc_launch_app(orte_jobid_t jobid, orte_rmaps_base_map_t* 
 
         /* setup the daemons process name */
         rc = orte_ns.create_process_name(
-            &daemon_name, orte_process_info.my_name->cellid, 0, daemon_vpid_start + rc);
+            &daemon_name, orte_process_info.my_name->cellid, 0, daemon_vpid_start + rank);
         if(ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
             _exit(-1);
         }
         if(mca_pls_bproc_seed_component.debug) {
-            ompi_output(0, "orte_pls_bproc: node=%s name=%d.%d.%d\n", 
-                node->node_name, orte_process_info.my_name->cellid, 0, daemon_vpid_start+rc);
+            ompi_output(0, "orte_pls_bproc: node=%s name=%d.%d.%d procs=%d\n", 
+                node->node_name, 
+                orte_process_info.my_name->cellid, 0, 
+                daemon_vpid_start+rank,
+                ompi_list_get_size(&node->node_procs));
         }
 
         /* restart the daemon w/ the new process name */
@@ -467,7 +528,7 @@ static int orte_pls_bproc_launch_app(orte_jobid_t jobid, orte_rmaps_base_map_t* 
             if(mca_pls_bproc_seed_component.debug) {
                 ompi_output(0, "orte_pls_bproc: starting: %d.%d.%d\n", ORTE_NAME_ARGS(&proc->proc_name));
             }
-            rc = orte_pls_bproc_undump(proc, image, image_len, &pid);
+            rc = orte_pls_bproc_undump(proc, vpid_start, vpid_range, image, image_len, &pid);
             if(ORTE_SUCCESS != rc) {
                 ORTE_ERROR_LOG(rc);
                 _exit(1);
@@ -514,7 +575,6 @@ static int orte_pls_bproc_launch_app(orte_jobid_t jobid, orte_rmaps_base_map_t* 
             OMPI_THREAD_LOCK(&mca_pls_bproc_seed_component.lock);
             mca_pls_bproc_seed_component.num_children++;
             OMPI_THREAD_UNLOCK(&mca_pls_bproc_seed_component.lock);
- 
             orte_wait_cb(daemon_pids[index++], orte_pls_bproc_wait_node, node);
         }
 
@@ -538,15 +598,21 @@ cleanup:
  * w/ a distinct set of daemons.
  */
 
-static int orte_pls_bproc_seed_launch(orte_jobid_t jobid)
+int orte_pls_bproc_seed_launch(orte_jobid_t jobid)
 {
     ompi_list_item_t* item;
     ompi_list_t mapping;
+    orte_vpid_t vpid_start;
+    orte_vpid_t vpid_range;
     int rc;
 
     /* query for the application context and allocated nodes */
     OBJ_CONSTRUCT(&mapping, ompi_list_t);
     if(ORTE_SUCCESS != (rc = orte_rmaps_base_get_map(jobid, &mapping))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    if(ORTE_SUCCESS != (rc = orte_rmaps_base_get_vpid_range(jobid, &vpid_start, &vpid_range))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -556,7 +622,7 @@ static int orte_pls_bproc_seed_launch(orte_jobid_t jobid)
         item != ompi_list_get_end(&mapping);
         item =  ompi_list_get_next(item)) {
         orte_rmaps_base_map_t* map = (orte_rmaps_base_map_t*)item;
-        rc = orte_pls_bproc_launch_app(jobid, map); 
+        rc = orte_pls_bproc_launch_app(jobid, map, vpid_start, vpid_range); 
         if(rc != ORTE_SUCCESS) {
             ORTE_ERROR_LOG(rc);
             goto cleanup;
@@ -681,9 +747,31 @@ static OBJ_CLASS_INSTANCE(
 static void orte_pls_bproc_seed_launch_cb(int fd, short event, void* args)
 {
     orte_pls_bproc_stack_t *stack = (orte_pls_bproc_stack_t*)args;
+    orte_vpid_t child_vpid;
+    orte_process_name_t* child_name;
+    char* uri;
     int pid;
     int rc;
 
+    /* setup the daemons process name */
+    rc = orte_ns.reserve_range(orte_process_info.my_name->jobid,1,&child_vpid);
+    if(ORTE_SUCCESS != rc) {
+        ORTE_ERROR_LOG(rc);
+        stack->rc = rc;
+        goto complete;
+    }
+    rc = orte_ns.create_process_name(
+        &child_name, orte_process_info.my_name->cellid, 
+        orte_process_info.my_name->jobid,
+        child_vpid);
+    if(ORTE_SUCCESS != rc) {
+        ORTE_ERROR_LOG(rc);
+        stack->rc = rc;
+        goto complete;
+    }
+    uri = orte_rml.get_uri();
+
+    /* fork the child */
     pid = fork();
     if(pid < 0) {
         ompi_output(0, "orte_pls_bproc: fork failed with errno=%d\n", errno);
@@ -693,7 +781,31 @@ static void orte_pls_bproc_seed_launch_cb(int fd, short event, void* args)
 
         pthread_kill_other_threads_np();
         ompi_set_using_threads(false);
-        rc = ompi_event_restart();
+        if(NULL == orte_process_info.ns_replica) {
+            rc = orte_ns.copy_process_name(&orte_process_info.ns_replica,orte_process_info.my_name);
+            if(ORTE_SUCCESS != rc) {
+                ORTE_ERROR_LOG(rc);
+                exit(rc);
+            }
+            orte_process_info.ns_replica_uri = orte_rml.get_uri();
+        }
+
+        if(NULL == orte_process_info.gpr_replica) {
+            rc = orte_ns.copy_process_name(&orte_process_info.gpr_replica,orte_process_info.my_name);
+            if(ORTE_SUCCESS != rc) {
+                ORTE_ERROR_LOG(rc);
+                exit(rc);
+            }
+            orte_process_info.gpr_replica_uri = orte_rml.get_uri();
+        }
+
+        /* restart the daemon w/ the new process name */
+        rc = orte_restart(child_name, uri);
+        if(ORTE_SUCCESS != rc) {
+            ORTE_ERROR_LOG(rc);
+            exit(rc);
+        }
+        
         if(ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
             exit(rc);
@@ -712,6 +824,7 @@ static void orte_pls_bproc_seed_launch_cb(int fd, short event, void* args)
         stack->rc = ORTE_SUCCESS;
     }
 
+complete:
     OMPI_THREAD_LOCK(&stack->mutex);
     stack->complete = true;
     ompi_condition_signal(&stack->cond);
