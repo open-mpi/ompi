@@ -71,6 +71,12 @@ int mca_pml_teg_module_open(void)
 
 int mca_pml_teg_module_close(void)
 {
+    if(NULL != mca_pml_teg.teg_ptl_modules)
+        LAM_FREE(mca_pml_teg.teg_ptl_modules);
+    if(NULL != mca_pml_teg.teg_ptls)
+        LAM_FREE(mca_pml_teg.teg_ptls);
+    STATIC_DESTROY(mca_pml_teg.teg_recv_requests);
+    STATIC_DESTROY(mca_pml_teg.teg_procs);
     return LAM_SUCCESS;
 }
 
@@ -83,12 +89,12 @@ mca_pml_t* mca_pml_teg_module_init(int* priority,
     *allow_multi_user_threads = true;
     *have_hidden_threads = false;
 
-    mca_pml_teg.teg_ptl_modules = 0;
+    mca_pml_teg.teg_ptl_modules = NULL;
     mca_pml_teg.teg_num_ptl_modules = 0;
-    mca_pml_teg.teg_ptls = 0;
+    mca_pml_teg.teg_ptls = NULL;
     mca_pml_teg.teg_num_ptls = 0;
 
-    lam_free_list_init(&mca_pml_teg.teg_recv_requests);
+    STATIC_INIT(mca_pml_teg.teg_recv_requests, &lam_free_list_cls);
     lam_free_list_init_with(
         &mca_pml_teg.teg_recv_requests,
         sizeof(mca_ptl_base_recv_request_t),
@@ -98,7 +104,6 @@ mca_pml_t* mca_pml_teg_module_init(int* priority,
         mca_pml_teg.teg_free_list_inc,
         NULL);
         
-    STATIC_INIT(mca_pml_teg.teg_incomplete_sends, &lam_list_cls);
     STATIC_INIT(mca_pml_teg.teg_procs, &lam_list_cls);
     lam_mutex_init(&mca_pml_teg.teg_lock);
     mca_pml_teg.teg_recv_sequence = 0;

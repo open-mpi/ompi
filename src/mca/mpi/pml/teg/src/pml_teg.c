@@ -6,6 +6,7 @@
 #include "lam/mem/malloc.h"
 #include "mca/mpi/pml/pml.h"
 #include "mca/mpi/ptl/ptl.h"
+#include "mca/mpi/ptl/base/base.h"
 #include "mca/mpi/ptl/base/ptl_base_comm.h"
 #include "mca/mpi/ptl/base/ptl_base_sendreq.h"
 #include "mca/mpi/ptl/base/ptl_base_recvreq.h"
@@ -66,20 +67,32 @@ static int ptl_exclusivity_compare(const void* arg1, const void* arg2)
 
 int mca_pml_teg_add_ptls(lam_list_t *ptls)
 {
-    /* sort the ptls by exclusivity */
-#if TIM_HASNT_IMPLEMENTED_THIS_YET
+    /* build an array of ptls and ptl modules */
+    mca_ptl_base_selected_module_t* selected_ptl;
+    size_t num_ptls = lam_list_get_size(ptls);
+    mca_pml_teg.teg_num_ptls = 0;
+    mca_pml_teg.teg_num_ptl_modules = 0;
+    mca_pml_teg.teg_ptls = (mca_ptl_t**)LAM_MALLOC(sizeof(mca_ptl_t*) * num_ptls);
+    mca_pml_teg.teg_ptl_modules = (mca_ptl_base_module_t**)LAM_MALLOC(sizeof(mca_ptl_base_module_t*) * num_ptls);
+    if (NULL == mca_pml_teg.teg_ptls || NULL == mca_pml_teg.teg_ptl_modules)
+        return LAM_ERR_OUT_OF_RESOURCE;
 
-  /* Tim: you now get a lam_list_t of
-     (mca_ptl_base_selected_module_t*)'s (see
-     mca/mpi/ptl/base/base.h).
+    for(selected_ptl =  (mca_ptl_base_selected_module_t*)lam_list_get_first(ptls);
+        selected_ptl != (mca_ptl_base_selected_module_t*)lam_list_get_last(ptls);
+        selected_ptl =  (mca_ptl_base_selected_module_t*)lam_list_get_next(selected_ptl)) {
+        mca_ptl_t *ptl = selected_ptl->pbsm_actions;
+        size_t i;
 
-     You do not own this memory, and therefore do not need to free
-     anything in the lam_list_t that you receive here. */
+        mca_pml_teg.teg_ptls[mca_pml_teg.teg_num_ptls++] = ptl;
+        for(i=0; i<mca_pml_teg.teg_num_ptl_modules; i++)
+            if(mca_pml_teg.teg_ptl_modules[i] == ptl->ptl_module)
+                break;
+        if(i == mca_pml_teg.teg_num_ptl_modules)
+            mca_pml_teg.teg_ptl_modules[mca_pml_teg.teg_num_ptl_modules++] = ptl->ptl_module;
+    }
 
-    qsort(ptls, nptls, sizeof(struct mca_ptl_t*), ptl_exclusivity_compare);
-    mca_pml_teg.teg_ptls = ptls;
-    mca_pml_teg.teg_num_ptls = nptls;
-#endif
+    /* sort ptl list by exclusivity */
+    qsort(mca_pml_teg.teg_ptls, mca_pml_teg.teg_num_ptls, sizeof(struct mca_ptl_t*), ptl_exclusivity_compare);
     return LAM_SUCCESS;
 }
 

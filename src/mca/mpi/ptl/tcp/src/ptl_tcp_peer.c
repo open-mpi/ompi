@@ -13,14 +13,8 @@
 #include "ptl_tcp_proc.h"
 
 
-lam_class_info_t  mca_ptl_tcp_peer_cls = {
-    "mca_tcp_ptl_peer_t", 
-    &lam_list_cls,
-    (class_init_t)mca_ptl_tcp_peer_init, 
-    (class_destroy_t)mca_ptl_tcp_peer_destroy
-};
-
-
+static void mca_ptl_tcp_peer_init(mca_ptl_base_peer_t* ptl_peer);
+static void mca_ptl_tcp_peer_destroy(mca_ptl_base_peer_t* ptl_peer);
 static int  mca_ptl_tcp_peer_start_connect(mca_ptl_base_peer_t*);
 static void mca_ptl_tcp_peer_close_i(mca_ptl_base_peer_t*);
 static void mca_ptl_tcp_peer_connected(mca_ptl_base_peer_t*);
@@ -28,6 +22,13 @@ static void mca_ptl_tcp_peer_recv_handler(mca_ptl_base_peer_t*, int sd);
 static void mca_ptl_tcp_peer_send_handler(mca_ptl_base_peer_t*, int sd);
 static void mca_ptl_tcp_peer_except_handler(mca_ptl_base_peer_t*, int sd);
 
+
+lam_class_info_t  mca_ptl_tcp_peer_cls = {
+    "mca_tcp_ptl_peer_t", 
+    &lam_list_cls,
+    (class_init_t)mca_ptl_tcp_peer_init, 
+    (class_destroy_t)mca_ptl_tcp_peer_destroy
+};
 
 
 static lam_reactor_listener_t mca_ptl_tcp_peer_listener = {

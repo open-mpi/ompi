@@ -135,8 +135,7 @@ int mca_ptl_tcp_send(
     struct mca_ptl_t* ptl,
     struct mca_ptl_base_peer_t* ptl_peer,
     struct mca_ptl_base_send_request_t* sendreq,
-    size_t size,
-    bool* complete)
+    size_t size)
 {
     mca_ptl_tcp_send_frag_t* sendfrag;
     if (sendreq->req_frags == 0) {

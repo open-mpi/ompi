@@ -136,8 +136,7 @@ typedef int (*mca_ptl_base_send_fn_t)(
     struct mca_ptl_t* ptl, 
     struct mca_ptl_base_peer_t* ptl_base_peer, 
     struct mca_ptl_base_send_request_t* send_request,
-    size_t size,
-    bool* complete
+    size_t size
 );
 
 typedef int (*mca_ptl_base_recv_fn_t)(

@@ -25,7 +25,7 @@ lam_class_info_t  mca_ptl_tcp_send_request_cls = {
 void mca_ptl_tcp_send_request_init(mca_ptl_tcp_send_request_t* request)
 {
     SUPER_INIT(request, &mca_ptl_base_send_request_cls);
-    STATIC_INIT(request->req_frag, &mca_ptl_tcp_send_request_cls);
+    STATIC_INIT(request->req_frag, &mca_ptl_tcp_send_frag_cls);
 }
 
 

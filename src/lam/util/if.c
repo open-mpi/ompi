@@ -29,6 +29,7 @@ struct lam_if_t {
     char                if_name[IF_NAMESIZE];
     int                 if_index;
     int                 if_flags;
+    int                 if_speed;
     struct sockaddr_in  if_addr;
     struct sockaddr_in  if_mask;
     uint32_t            if_bandwidth;

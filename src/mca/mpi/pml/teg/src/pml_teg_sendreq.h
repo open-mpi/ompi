@@ -46,20 +46,13 @@ static inline int mca_pml_teg_send_request_start(
     mca_ptl_t* ptl = req->req_owner;
     size_t first_fragment_size = ptl->ptl_first_frag_size;
     int rc;
-    bool complete;
 
     // start the first fragment
     if(req->req_length < first_fragment_size)
         first_fragment_size = req->req_length;
-    rc = ptl->ptl_send(ptl, req->req_peer, req, first_fragment_size, &complete);
+    rc = ptl->ptl_send(ptl, req->req_peer, req, first_fragment_size);
     if(rc != LAM_SUCCESS)
         return rc;
-
-    // if incomplete queue to retry later
-    if(complete == false) {
-        THREAD_SCOPED_LOCK(&mca_pml_teg.teg_lock,
-            lam_list_append(&mca_pml_teg.teg_incomplete_sends, (lam_list_item_t*)req));
-    }
     return LAM_SUCCESS;
 }
 

@@ -130,6 +130,13 @@ int mca_ptl_tcp_module_close(void)
     LAM_FREE(mca_ptl_tcp_module.tcp_if_exclude);
     if (NULL != mca_ptl_tcp_module.tcp_ptls)
         LAM_FREE(mca_ptl_tcp_module.tcp_ptls);
+ 
+    STATIC_DESTROY(mca_ptl_tcp_module.tcp_reactor);
+    STATIC_DESTROY(mca_ptl_tcp_module.tcp_procs);
+    STATIC_DESTROY(mca_ptl_tcp_module.tcp_send_requests);
+    STATIC_DESTROY(mca_ptl_tcp_module.tcp_send_frags);
+    STATIC_DESTROY(mca_ptl_tcp_module.tcp_recv_frags);
+    lam_mutex_destroy(&mca_ptl_tcp_module.tcp_lock);
     return LAM_SUCCESS;
 }
 
@@ -277,6 +284,8 @@ mca_ptl_t** mca_ptl_tcp_module_init(int *num_ptls,
 
     /* initialize containers */
     STATIC_INIT(mca_ptl_tcp_module.tcp_reactor, &lam_reactor_cls);
+    STATIC_INIT(mca_ptl_tcp_module.tcp_procs, &lam_list_cls);
+    lam_mutex_init(&mca_ptl_tcp_module.tcp_lock);
 
     /* initialize free lists */
     STATIC_INIT(mca_ptl_tcp_module.tcp_send_requests, &lam_free_list_cls);
