@@ -174,7 +174,7 @@ static void ompi_errhandler_construct(ompi_errhandler_t *new_errhandler)
                                    new_errhandler);
   new_errhandler->eh_f_to_c_index = ret_val;
 
-  new_errhandler->eh_fortran_function = NULL;
+  new_errhandler->eh_fortran_function = false;
 
   new_errhandler->eh_comm_fn      = NULL;
   new_errhandler->eh_win_fn       = NULL;
