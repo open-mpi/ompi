@@ -70,7 +70,7 @@ int mca_io_base_find_available(bool *allow_multi_user_threads,
            represent different versions of the io MCA. */
     
         entry = OBJ_NEW(mca_base_component_priority_list_item_t);
-        entry->cpli_component = component;
+        entry->super.cli_component = component;
         entry->cpli_priority = 0;
         if (OMPI_SUCCESS == init_query(component, entry)) {
       

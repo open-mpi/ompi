@@ -15,7 +15,7 @@ int mca_base_components_close(int output_id,
                               const mca_base_component_t *skip)
 {
   ompi_list_item_t *item;
-  mca_base_component_list_item_t *cli;
+  mca_base_component_priority_list_item_t *pcli, *skipped_pcli = NULL;
   const mca_base_component_t *component;
 
   /* Close and unload all components in the available list, except the
@@ -26,8 +26,8 @@ int mca_base_components_close(int output_id,
   for (item = ompi_list_remove_first(components_available);
        NULL != item; 
        item = ompi_list_remove_first(components_available)) {
-    cli = (mca_base_component_list_item_t *) item;
-    component = cli->cli_component;
+    pcli = (mca_base_component_priority_list_item_t *) item;
+    component = pcli->super.cli_component;
 
     if (component != skip) {
 
@@ -47,20 +47,17 @@ int mca_base_components_close(int output_id,
                           "mca: base: close: unloading component %s",
                          component->mca_component_name);
       mca_base_component_repository_release((mca_base_component_t *) component);
+      free(pcli);
+    } else {
+      skipped_pcli = pcli;
     }
-    free(cli);
   }
 
-  /* Re-add the skipped component to the available list (see above
-     comment) */
+  /* If we found it, re-add the skipped component to the available
+     list (see above comment) */
 
-  if (NULL != skip) {
-    cli = malloc(sizeof(mca_base_component_list_item_t));
-    if (NULL == cli) {
-      return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-    cli->cli_component = skip;
-    ompi_list_append(components_available, (ompi_list_item_t *) cli);
+  if (NULL != skipped_pcli) {
+    ompi_list_append(components_available, (ompi_list_item_t *) skipped_pcli);
   }
 
   /* All done */

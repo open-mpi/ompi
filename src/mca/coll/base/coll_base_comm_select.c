@@ -312,7 +312,7 @@ static ompi_list_t *check_components(ompi_list_t *components,
        item != ompi_list_get_end(components); 
        item = ompi_list_get_next(item)) {
     component = ((mca_base_component_priority_list_item_t *) 
-                 item)->cpli_component;
+                 item)->super.cli_component;
 
     /* If we have a list of names, scan through it */
 

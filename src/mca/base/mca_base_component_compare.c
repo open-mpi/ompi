@@ -33,7 +33,8 @@ mca_base_component_compare_priority(mca_base_component_priority_list_item_t *a,
   } else if (a->cpli_priority < b->cpli_priority) {
     return 1;
   } else {
-    return mca_base_component_compare(a->cpli_component, b->cpli_component);
+    return mca_base_component_compare(a->super.cli_component,
+                                      b->super.cli_component);
   }
 }
 
