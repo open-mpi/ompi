@@ -5,7 +5,7 @@
 
 #if defined(VERBOSE)
 #  define DUMP_STACK( PSTACK, STACK_POS, PDESC, NAME ) \
-     dump_stack( (PSTACK), (STACK_POS), (PDESC), (NAME) )
+     ompi_ddt_dump_stack( (PSTACK), (STACK_POS), (PDESC), (NAME) )
 #  if defined(ACCEPT_C99)
 #    define DUMP( ARGS... )          printf(__VA_ARGS__)
 #  else
@@ -153,9 +153,9 @@ static inline int  IMAX( int a, int b ) { return ( a < b ? b : a ); }
 static inline int  IMIN( int a, int b ) { return ( a < b ? a : b ); }
 #endif  /* __GNU__ */
 
-extern conversion_fct_t copy_functions[DT_MAX_PREDEFINED];
+extern conversion_fct_t ompi_ddt_copy_functions[DT_MAX_PREDEFINED];
 
-extern void dump_stack( dt_stack_t* pStack, int stack_pos, dt_elem_desc_t* pDesc, char* name );
+extern void ompi_ddt_dump_stack( dt_stack_t* pStack, int stack_pos, dt_elem_desc_t* pDesc, char* name );
 #define SAVE_STACK( PSTACK, INDEX, COUNT, DISP, END_LOOP) \
 do { \
    (PSTACK)->index    = (INDEX); \

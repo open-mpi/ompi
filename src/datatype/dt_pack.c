@@ -762,7 +762,7 @@ int ompi_convertor_init_for_send( ompi_convertor_t* pConv,
     pConv->pBaseBuf = pUserBuf;
     pConv->available_space = count * (dt->ub - dt->lb);
     pConv->count = count;
-    pConv->pFunctions = copy_functions;
+    pConv->pFunctions = ompi_ddt_copy_functions;
     pConv->converted = 0;
     pConv->bConverted = 0;
     pConv->memAlloc_fn = allocfn;
