@@ -30,8 +30,12 @@ int MPI_Status_f2c(MPI_Fint *f_status, MPI_Status *c_status)
            MPI_STATUS[ES]_IGNORE, it's erroneous */
         
         if (NULL == f_status || 
+#if OMPI_WANT_F77_BINDINGS || OMPI_WANT_F90_BINDINGS
+            /* JMS HACKAROUND: these macros need to move out of the
+               fortran bindings */
             OMPI_IS_FORTRAN_STATUS_IGNORE(f_status) ||
             OMPI_IS_FORTRAN_STATUSES_IGNORE(f_status) ||
+#endif
             NULL == c_status) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, 
                                           MPI_ERR_IN_STATUS, FUNC_NAME);
