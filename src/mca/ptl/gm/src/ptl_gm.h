@@ -65,13 +65,12 @@ struct mca_ptl_gm_module_t {
     unsigned int num_recv_tokens;
     unsigned int max_send_tokens;
     unsigned int max_recv_tokens;
-    /*struct mca_ptl_gm_addr_t *proc_id_table;*/
 
     ompi_free_list_t gm_send_frags;
     ompi_free_list_t gm_recv_frags_free;
     ompi_list_t gm_send_frags_queue;
     ompi_list_t gm_pending_acks;
-
+    ompi_list_t gm_recv_outstanding_queue;
 #if MCA_PTL_GM_STATISTICS
     size_t      ptl_bytes_sent;
     size_t      ptl_bytes_recv;

@@ -28,6 +28,9 @@ mca_ptl_gm_recv_frag_t* ptl_gm_handle_recv( mca_ptl_gm_module_t *ptl,
 
 int mca_ptl_gm_incoming_recv (mca_ptl_gm_component_t * gm_comp);
 
+
+void mca_ptl_gm_outstanding_recv(mca_ptl_gm_module_t *ptl);
+
 int
 mca_ptl_gm_peer_send(mca_ptl_gm_peer_t *ptl_peer,
                      mca_ptl_gm_send_frag_t *fragment,
