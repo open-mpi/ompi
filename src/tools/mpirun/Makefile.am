@@ -4,6 +4,9 @@
 
 include $(top_srcdir)/config/Makefile.options
 
+EXTRA_DIST = $(pkgdata_DATA)
+pkgdata_DATA = help-mpirun.txt
+
 libs = $(top_builddir)/src/libmpi.la
 
 bin_PROGRAMS = mpirun

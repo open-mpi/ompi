@@ -12,6 +12,7 @@
 #ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
 #endif
+#include <errno.h>
 
 #include "include/constants.h"
 
@@ -24,6 +25,7 @@
 #include "util/output.h"
 #include "util/os_path.h"
 #include "util/universe_setup_file_io.h"
+#include "util/show_help.h"
 
 #include "mca/base/base.h"
 #include "mca/ns/ns.h"
@@ -60,12 +62,13 @@ main(int argc, char *argv[])
     cmd_line = OBJ_NEW(ompi_cmd_line_t);
 
     if (OMPI_SUCCESS != (ret = ompi_init(argc, argv))) {
-        /* BWB show_help */
-        printf("show_help: ompi_init failed\n");
+        ompi_show_help("help-mpirun.txt", "mpirun:init-failure", true,
+                       "ompi_init()", ret);
         return ret;
     }
 
-    /* setup to read common command line options that span all Open MPI programs */
+    /* setup to read common command line options that span all Open
+       MPI programs */
     cmd_line = OBJ_NEW(ompi_cmd_line_t);
 
     ompi_cmd_line_make_opt(cmd_line, 'v', "version", 0,
@@ -82,30 +85,40 @@ main(int argc, char *argv[])
      * setup  mca command line arguments
      */
     if (OMPI_SUCCESS != (ret = mca_base_cmd_line_setup(cmd_line))) {
-	/* BWB show_help */
-	printf("show_help: mca_base_cmd_line_setup failed\n");
+        ompi_show_help("help-mpirun.txt", "mpirun:init-failure", true, 
+                       "mca_base_cmd_line_setup()", ret);
 	return ret;
     }
 
     if (OMPI_SUCCESS != mca_base_cmd_line_process_args(cmd_line)) {
-	/* BWB show_help */
-	printf("show_help: mca_base_cmd_line_process_args\n");
+        ompi_show_help("help-mpirun.txt", "mpirun:init-failure", true, 
+                       "mca_base_cmd_line_process_args()", ret);
 	return ret;
     }
 
     /* parse the local commands */
     if (OMPI_SUCCESS != ompi_cmd_line_parse(cmd_line, true, argc, argv)) {
-	exit(ret);
+        char *args = NULL;
+        args = ompi_cmd_line_get_usage_msg(cmd_line);
+        ompi_show_help("help-mpirun.txt", "mpirun:usage", false,
+                       argv[0], args);
+        free(args);
+        return 1;
     }
 
     if (ompi_cmd_line_is_taken(cmd_line, "help") || 
         ompi_cmd_line_is_taken(cmd_line, "h")) {
-        printf("...showing ompi_info help message...\n");
-        exit(1);
+        char *args = NULL;
+        args = ompi_cmd_line_get_usage_msg(cmd_line);
+        ompi_show_help("help-mpirun.txt", "mpirun:usage", false,
+                       argv[0], args);
+        free(args);
+        return 1;
     }
 
     if (ompi_cmd_line_is_taken(cmd_line, "version") ||
 	ompi_cmd_line_is_taken(cmd_line, "v")) {
+        /* BWB - show version message */
 	printf("...showing off my version!\n");
 	exit(1);
     }
@@ -121,13 +134,20 @@ main(int argc, char *argv[])
     if (OMPI_SUCCESS != ompi_cmd_line_parse(cmd_line, true, argc, argv) ||
         ompi_cmd_line_is_taken(cmd_line, "help") || 
         ompi_cmd_line_is_taken(cmd_line, "h")) {
-        printf("...showing ompi_info help message...\n");
+        char *args = NULL;
+        args = ompi_cmd_line_get_usage_msg(cmd_line);
+        ompi_show_help("help-mpirun.txt", "mpirun:usage", false,
+                       argv[0], args);
+        free(args);
         exit(1);
     }
 
     if (OMPI_SUCCESS != mca_base_cmd_line_process_args(cmd_line)) {
-        /* BWB show_help */
-        printf("show_help: mca_base_cmd_line_process_args\n");
+        char *args = NULL;
+        args = ompi_cmd_line_get_usage_msg(cmd_line);
+        ompi_show_help("help-mpirun.txt", "mpirun:usage", false, 
+                       argv[0], args);
+        free(args);
         return ret;
     }
 
@@ -140,16 +160,16 @@ main(int argc, char *argv[])
      * Start the Open MPI Run Time Environment
      */
     if (OMPI_SUCCESS != (ret = mca_base_open())) {
-        /* JMS show_help */
-        printf("show_help: mca_base_open failed\n");
+        ompi_show_help("help-mpirun.txt", "mpirun:init-failure", true, 
+                       "mca_base_open()", ret);
         return ret;
     }
 
     multi_thread = true;
     hidden_thread=false;
     if (OMPI_SUCCESS != ompi_rte_init(cmd_line, &multi_thread, &hidden_thread)) {
-        /* JMS show_help */
-        printf("show_help: mpirun failed in ompi_rte_init\n");
+        ompi_show_help("help-mpirun.txt", "mpirun:init-failure", true,
+                       "mca_rte_init()", ret);
 	return ret;
     }
 
@@ -183,8 +203,8 @@ main(int argc, char *argv[])
     /* BWB - fix jobid, procs, and nodes */
     nodelist = ompi_rte_allocate_resources(spawn_handle, new_jobid, 0, num_procs);
     if (NULL == nodelist) {
-	/* BWB show_help */
-	printf("show_help: ompi_rte_allocate_resources failed\n");
+        ompi_show_help("help-mpirun.txt", "mpirun:allocate-resources",
+                       true, argv[0], errno);
 	return -1;
     }
 
@@ -228,7 +248,8 @@ main(int argc, char *argv[])
     sched->nodelist = nodelist;
 
     if (sched->argc == 0) {
-	printf("no app to start\n");
+        ompi_show_help("help-mpirun.txt", "mpirun:no-application", true,
+                       argv[0], argv[0]);
 	return 1;
     }
 
@@ -257,19 +278,19 @@ main(int argc, char *argv[])
          0,
          ompi_rte_all_procs_unregistered, NULL);
 
-
-
     /*
      * spawn procs
      */
-    if (OMPI_SUCCESS != ompi_rte_spawn_procs(spawn_handle, new_jobid, &schedlist)) {
-	printf("show_help: woops!  we didn't spawn :( \n");
-	return -1;
+    if (OMPI_SUCCESS != (ret = ompi_rte_spawn_procs(spawn_handle, new_jobid, &schedlist))) {
+        ompi_show_help("help-mpirun.txt", "mpirun:error-spawning",
+                       true, ret);
+	return 1;
     }
     
    
-    if (OMPI_SUCCESS != ompi_rte_monitor_procs_registered()) {
-	printf("procs didn't all register - aborting\n");
+    if (OMPI_SUCCESS != (ret = ompi_rte_monitor_procs_registered())) {
+        ompi_show_help("help-mpirun.txt", "mpirun:proc-reg-failed", 
+                       true, argv[0], ret);
     } else {
 	ompi_rte_monitor_procs_unregistered();
     }
