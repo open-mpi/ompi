@@ -118,7 +118,7 @@ void ompi_progress(void)
     if(events == 0) {
 #ifndef WIN32
         /* TODO: Find the windows equivalent for this */
-        /*sched_yield();*/
+        sched_yield();
 #endif
     }
 #endif
