@@ -12,12 +12,14 @@ noinst_LTLIBRARIES = libmpiruntime.la
 # Source code files
 
 headers = \
-	mpiruntime.h
+	mpiruntime.h \
+        params.h
 
 libmpiruntime_la_SOURCES = \
 	$(headers) \
         ompi_mpi_init.c \
-        ompi_mpi_finalize.c
+        ompi_mpi_finalize.c \
+        ompi_mpi_params.c
 
 # Conditionally install the header files
 

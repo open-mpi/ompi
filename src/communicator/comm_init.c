@@ -17,6 +17,7 @@
 #include "mca/topo/topo.h"
 #include "mca/topo/base/base.h"
 #include "mca/ns/base/base.h"
+#include "mpi/runtime/params.h"
 
 
 /*

@@ -45,5 +45,5 @@ MPI_Fint MPI_Info_c2f(MPI_Info info)
     }
 
     /* return the index */
-    return (MPI_Fint)(info->i_fhandle);
+    return (MPI_Fint)(info->i_f_to_c_index);
 }
