@@ -253,7 +253,8 @@ int mca_coll_basic_reduce_scatter_inter(void *sbuf, void *rbuf, int *rcounts,
             tcount += rcounts[i];
         }
 
-        err = ompi_request_wait_all (rsize, reqs, MPI_STATUSES_IGNORE);
+        err = ompi_request_wait_all (rsize, comm->c_coll_basic_data->mccb_reqs,
+                                     MPI_STATUSES_IGNORE);
         if ( OMPI_SUCCESS != err ) {
             goto exit;
         }

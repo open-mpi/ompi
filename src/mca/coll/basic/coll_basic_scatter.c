@@ -135,7 +135,8 @@ int mca_coll_basic_scatter_inter(void *sbuf, int scount,
           }
       }
       
-      err = ompi_request_wait_all (size, reqs, MPI_STATUSES_IGNORE);
+      err = ompi_request_wait_all (size, comm->c_coll_basic_data->mccb_reqs,
+                                   MPI_STATUSES_IGNORE);
   }
   
   return err;
