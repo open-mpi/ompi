@@ -23,16 +23,11 @@ int MPI_Group_range_incl(MPI_Group group, int n_triplets, int ranges[][3],
     return_value = MPI_SUCCESS;
     group_pointer=(lam_group_t *)group;
 
-    /* including anything of the empty group is still the empty group */
-    if ( MPI_GROUP_EMPTY == group ) {
-        *new_group = MPI_GROUP_EMPTY;
-        return return_value;
-    }
-
-    /* special case: if nothing to include return MPI_GROUP_EMPTY */
-    if (n_triplets == 0) {
-        *new_group = (int) MPI_GROUP_EMPTY;
-        return return_value;
+    /* can't act on NULL group */
+    if( MPI_PARAM_CHECK ) {
+        if ( MPI_GROUP_NULL == group ) {
+            return MPI_ERR_GROUP;
+        }
     }
 
     /*
@@ -116,6 +111,20 @@ int MPI_Group_range_incl(MPI_Group group, int n_triplets, int ranges[][3],
             elements_int_list[index] = new_group_size;
             new_group_size++;
         }
+    }
+
+    /* check for empty group */
+    if( 0 == new_group_size ) {
+        *new_group = MPI_GROUP_EMPTY;
+        free(elements_int_list);
+        return MPI_SUCCESS;
+    }
+
+    /* allocate a new lam_group_t structure */
+    new_group_pointer=group_allocate(new_group_size);
+    if( NULL == new_group_pointer ) {
+        free(elements_int_list);
+        return MPI_ERR_GROUP;
     }
 
     /* fill in group list */

@@ -8,6 +8,13 @@
 #include "mpi.h"
 #include "mpi/proc/proc.h"
 #include "lam/lfc/lam_pointer_array.h"
+
+/* This must correspond to the fortran MPI_GROUP_NULL index */
+#define LAM_GROUP_NULL_FORTRAN 0
+
+/* This must correspond to the fortran MPI_GROUP_EMPTY index */
+#define LAM_GROUP_EMPTY_FORTRAN 1
+
 extern lam_class_t lam_group_t_class;
 
 struct lam_group_t {
