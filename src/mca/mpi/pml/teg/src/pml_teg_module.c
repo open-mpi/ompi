@@ -1,5 +1,9 @@
+/*
+ * $HEADER$
+ */
+
 #include "mpi.h"
-#include "lam/util/malloc.h"
+#include "lam/mem/malloc.h"
 #include "mca/mpi/pml/pml.h"
 #include "mca/mpi/ptl/ptl.h"
 #include "mca/mpi/ptl/base/ptl_base_sendreq.h"

@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "lam/util/malloc.h"
+#include "lam/mem/malloc.h"
 #include "mpi.h"
 #include "mca/mca.h"
 #include "mca/mpi/mpi.h"

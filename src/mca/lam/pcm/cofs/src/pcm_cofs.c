@@ -8,7 +8,7 @@
 
 #include "mca/lam/pcm/pcm.h"
 #include "mca/lam/pcm/cofs/src/pcm_cofs.h"
-#include "lam/util/malloc.h"
+#include "lam/mem/malloc.h"
 #include "lam/types.h"
 
 #include <stdio.h>

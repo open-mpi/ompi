@@ -1,3 +1,7 @@
+/*
+ * $HEADER$
+ */
+
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
@@ -8,9 +12,10 @@
 #include <arpa/inet.h>
 #include <net/if.h>
 #include <netdb.h>
+
 #include "lam/constants.h"
 #include "lam/lfc/list.h"
-#include "lam/util/malloc.h"
+#include "lam/mem/malloc.h"
 #include "lam/util/if.h"
 #include "lam/util/output.h"
 
@@ -31,10 +36,10 @@ typedef struct lam_if_t lam_if_t;
 static lam_list_t lam_if_list;
 
 
-//
-//  Discover the list of configured interfaces. Don't care about any
-//  interfaces that are not up or are local loopbacks.
-//
+/*
+ *  Discover the list of configured interfaces. Don't care about any
+ *  interfaces that are not up or are local loopbacks.
+ */
 
 static int lam_ifinit(void) 
 {
@@ -135,10 +140,10 @@ static int lam_ifinit(void)
 }
 
 
-//
-//  Look for interface by name and returns its address 
-//  as a dotted decimal formatted string.
-//
+/*
+ *  Look for interface by name and returns its address 
+ *  as a dotted decimal formatted string.
+ */
 
 int lam_ifnametoaddr(const char* if_name, char* if_addr, int length)
 {
@@ -158,10 +163,10 @@ int lam_ifnametoaddr(const char* if_name, char* if_addr, int length)
     return LAM_ERROR;
 }
 
-//
-//  Attempt to resolve the adddress as either a dotted decimal formated
-//  string or a hostname and lookup corresponding interface.
-//
+/*
+ *  Attempt to resolve the adddress as either a dotted decimal formated
+ *  string or a hostname and lookup corresponding interface.
+ */
 
 int lam_ifaddrtoname(const char* if_addr, char* if_name, int length)
 {
@@ -191,9 +196,9 @@ int lam_ifaddrtoname(const char* if_addr, char* if_name, int length)
     return LAM_SUCCESS;
 }
 
-//
-//  Return the number of discovered interface.
-//
+/*
+ *  Return the number of discovered interface.
+ */
 
 int lam_ifcount()
 {
@@ -203,10 +208,10 @@ int lam_ifcount()
 }
 
 
-//
-//  Return the kernels interface index for the first
-//  interface in our list.
-//
+/*
+ *  Return the kernels interface index for the first
+ *  interface in our list.
+ */
 
 int lam_ifbegin()
 {
@@ -219,11 +224,11 @@ int lam_ifbegin()
 }
 
 
-//
-//  Located the current position in the list by if_index and
-//  return the interface index of the next element in our list
-//  (if it exists).
-//
+/*
+ *  Located the current position in the list by if_index and
+ *  return the interface index of the next element in our list
+ *  (if it exists).
+ */
 
 int lam_ifnext(int if_index)
 {
@@ -243,10 +248,10 @@ int lam_ifnext(int if_index)
 }
 
 
-// 
-//  Lookup the interface by kernel index and return the 
-//  primary address assigned to the interface.
-//
+/* 
+ *  Lookup the interface by kernel index and return the 
+ *  primary address assigned to the interface.
+ */
 
 int lam_ifindextoaddr(int if_index, char* if_addr, int length)
 {
@@ -267,10 +272,10 @@ int lam_ifindextoaddr(int if_index, char* if_addr, int length)
 }
 
 
-// 
-//  Lookup the interface by kernel index and return
-//  the associated name.
-//
+/* 
+ *  Lookup the interface by kernel index and return
+ *  the associated name.
+ */
 
 int lam_ifindextoname(int if_index, char* if_name, int length)
 {
