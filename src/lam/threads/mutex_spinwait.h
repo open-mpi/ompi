@@ -2,8 +2,8 @@
  * $HEADER$
  */
 
-#ifndef _MUTEX_SPINWAIT_
-#define _MUTEX_SPINWAIT_
+#ifndef LAM_MUTEX_SPINWAIT_
+#define LAM_MUTEX_SPINWAIT_
 
 #include <pthread.h>
 #include "os/atomic.h"
@@ -13,12 +13,13 @@
 #endif
 
 
-typedef struct lam_mutex {
+struct lam_mutex_t {
      volatile int     mutex_spinlock;
      volatile int     mutex_waiting;
      pthread_mutex_t  mutex_lock;
      pthread_cond_t   mutex_cond;
-} lam_mutex_t;
+};
+struct lam_mutex_t lam_mutex_t;
 
 
 static inline void lam_mutex_init(lam_mutex_t* m) 
@@ -64,4 +65,3 @@ static inline void lam_mutex_unlock(lam_mutex_t* m)
 }
 
 #endif
-
