@@ -99,12 +99,10 @@ ompi_universe_t ompi_universe_info = {
     /* .persistence =         */    false,
     /* .scope =               */    NULL,
     /* .probe =               */    false,
-    /* .silent_mode =         */    true,
-    /* .ns_replica =          */    false,
-    /* .gpr_replica =         */    false,
-    /* .web_server =          */    false,
-    /* .socket_contact_info = */    NULL,
-    /* .oob_contact_info =    */    NULL,
+    /* .console =             */    false,
+    /* .ns_replica =          */    NULL,
+    /* .gpr_replica =         */    NULL,
+    /* .seed_contact_info =    */   NULL,
     /* .console_connected =   */    false,
     /* .scriptfile =          */    NULL,
     /* .hostfile =            */    NULL
@@ -121,16 +119,6 @@ int ompi_rte_init_stage1(bool *allow_multi_user_threads, bool *have_hidden_threa
 
     ret =  mca_base_param_register_int("ompi", "rte", "debug", NULL, 0);
     mca_base_param_lookup_int(ret, &ompi_rte_debug_flag);
-
-
-    /* check to ensure at least default values in key fields */
-    if (NULL == ompi_universe_info.name) {
-	ompi_universe_info.name = strdup("default-universe");
-	if (NULL != ompi_process_info.my_universe) {  /* overwrite to match */
-	    free(ompi_process_info.my_universe);
-	}
-	ompi_process_info.my_universe = strdup(ompi_universe_info.name);
-    }
 
 
     /*

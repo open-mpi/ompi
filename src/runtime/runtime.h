@@ -43,15 +43,13 @@ extern "C" {
 	bool persistence;
 	char *scope;
 	bool probe;
-	bool silent_mode;
-        bool ns_replica;
-        bool gpr_replica;
-	bool web_server;
-	char *socket_contact_info;
-	char *oob_contact_info;
-	bool console_connected;
-	char *scriptfile;
-	char *hostfile;
+	bool console;
+        char *ns_replica;   /**< OOB contact info for name server */
+        char *gpr_replica;  /**< OOB contact info for GPR */
+	char *seed_contact_info;  /**< OOB contact info for universe seed */
+	bool console_connected;   /**< Indicates if console is connected */
+	char *scriptfile;   /**< Name of file containing commands to be executed */
+	char *hostfile;   /**< Name of file containing list of hosts to be built into virtual machine */
     };
     typedef struct ompi_universe_t ompi_universe_t;
 
@@ -274,8 +272,10 @@ extern "C" {
     /**
      * Check for universe existence
      *
-     * Checks to see if a specified universe exists on the local host. If so, attempts
+     * Checks to see if a specified universe exists. If so, attempts
      * to connect to verify that the universe is accepting connections.
+     * If both ns and gpr replicas provided, first checks for those
+     * connections. Gets any missing info from the universe contact.
      *
      * @param None Reads everything from the process_info and system_info
      * structures
@@ -289,13 +289,14 @@ extern "C" {
      * @retval OMPI_CONNECTION_REFUSED Universe found and contact made, but
      * universe refused to allow connection.
      */
-    int ompi_rte_local_universe_exists(void);
+    int ompi_rte_universe_exists(void);
 
     /**
      * Parse the RTE environmental variables
      *
      * Checks the environmental variables and passes their info (where
-     * set) into the respective info structures.
+     * set) into the respective info structures. Sets ALL Open MPI
+     * default values in universe, process, and system structures.
      *
      * @param None
      *

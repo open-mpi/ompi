@@ -73,14 +73,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         goto error;
     }
 
-    /* get system info and setup defaults*/
-    ompi_sys_info();
-    ompi_universe_info.host = strdup(ompi_system_info.nodename);
-    ompi_universe_info.uid = strdup(ompi_system_info.user);
-
-    /* parse environmental variables and fill corresponding info structures */
-    ompi_rte_parse_environ();
-
     /* Open up the MCA */
 
     if (OMPI_SUCCESS != (ret = mca_base_open())) {
@@ -96,6 +88,9 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 	goto error;
     }
 
+    /* parse environmental variables and fill corresponding info structures */
+    ompi_rte_parse_environ();
+
     /* start the rest of the rte */
     if (OMPI_SUCCESS != (ret = ompi_rte_init_stage2(&allow_multi_user_threads,
 						    &have_hidden_threads))) {
@@ -104,16 +99,10 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     }
 
     /*****    SET MY NAME   *****/
-    if (NULL == ompi_process_info.name) { /* don't overwrite an existing name */
-	if (ompi_process_info.seed) {
-	    ompi_process_info.name = ompi_name_server.create_process_name(0, 0, 0);
-	} else {
-	    ompi_process_info.name = ompi_rte_get_self();
-	}
+    if (NULL != ompi_process_info.name) {  /* should NOT have been previously set */
+	free(ompi_process_info.name);
     }
-
-    /* get my process info */
-    ompi_proc_info();
+    ompi_process_info.name = ompi_rte_get_self();
 
     /* setup my session directory */
     jobid_str = ompi_name_server.get_jobid_string(ompi_process_info.name);

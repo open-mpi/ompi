@@ -60,22 +60,16 @@ int ompi_write_universe_setup_file(char *filename)
     }
     fprintf(fp, "%s\n", ompi_universe_info.scope);
 
-    if (ompi_universe_info.silent_mode) {
-	fprintf(fp, "silent\n");
-    } else {
+    if (ompi_universe_info.console) {
 	fprintf(fp, "console\n");
-    }
-
-    if (ompi_universe_info.web_server && NULL != ompi_universe_info.socket_contact_info) {
-	fprintf(fp, "%s\n", ompi_universe_info.socket_contact_info);
     } else {
-	fprintf(fp, "none\n");
+	fprintf(fp, "silent\n");
     }
 
-    if (NULL == ompi_universe_info.oob_contact_info) {
+    if (NULL == ompi_universe_info.seed_contact_info) {
 	goto CLEANUP;
     }
-    fprintf(fp, "%s\n", ompi_universe_info.oob_contact_info);
+    fprintf(fp, "%s\n", ompi_universe_info.seed_contact_info);
     fclose(fp);
 
     return OMPI_SUCCESS;
@@ -144,27 +138,17 @@ int ompi_read_universe_setup_file(char *filename)
 	goto CLEANUP;
     }
     if (0 == strncmp(input, "silent", strlen("silent"))) {
-	ompi_universe_info.silent_mode = true;
+	ompi_universe_info.console = false;
     } else if (0 == strncmp(input, "console", strlen("console"))) {
-	ompi_universe_info.silent_mode = false;
+	ompi_universe_info.console = true;
     } else {
 	free(input);
 	goto CLEANUP;
     }
     free(input);
 
-    ompi_universe_info.socket_contact_info = ompi_getline(fp);
-    if (NULL == ompi_universe_info.socket_contact_info) {
-	goto CLEANUP;
-    }
-    if (0 == strncmp(ompi_universe_info.socket_contact_info, "none", strlen("none"))) {
-	ompi_universe_info.web_server = false;
-    } else {
-	ompi_universe_info.web_server = true;
-    }
-
-    ompi_universe_info.oob_contact_info = ompi_getline(fp);
-    if (NULL == ompi_universe_info.oob_contact_info) {
+    ompi_universe_info.seed_contact_info = ompi_getline(fp);
+    if (NULL == ompi_universe_info.seed_contact_info) {
 	goto CLEANUP;
     }
 

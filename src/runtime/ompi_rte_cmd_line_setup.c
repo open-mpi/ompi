@@ -38,12 +38,8 @@ void ompi_rte_cmd_line_setup(ompi_cmd_line_t *cmd_line)
 			   "Universe is to be persistent");
 
     ompi_cmd_line_make_opt3(cmd_line,  /* read in ompi_rte_parse_daemon_cmd_line */
-			    'w', "webserver", "webserver", 0,
-			   "Web server available");
-
-    ompi_cmd_line_make_opt3(cmd_line,  /* read in ompi_rte_parse_daemon_cmd_line */
-			    's', "silent", "silent", 0,
-			   "No console prompt - operate silently");
+			    's', "console", "console", 0,
+			   "Provide a console for user interaction");
 
     ompi_cmd_line_make_opt3(cmd_line,  /* read in ompi_rte_parse_daemon_cmd_line */
 			    'f', "script", "script", 1,
@@ -64,4 +60,8 @@ void ompi_rte_cmd_line_setup(ompi_cmd_line_t *cmd_line)
     ompi_cmd_line_make_opt3(cmd_line,  /* read in ompi_rte_parse_cmd_line */
 			    '\0', "gprreplica", "gprreplica", 1,
 			    "OOB contact info for GPR replica assigned to this process");
+
+    ompi_cmd_line_make_opt3(cmd_line,  /* read in ompi_rte_parse_cmd_line */
+			    '\0', "seedcontact", "seedcontact", 1,
+			    "OOB contact info for seed of this universe");
 }

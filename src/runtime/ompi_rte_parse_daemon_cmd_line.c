@@ -28,6 +28,16 @@ void ompi_rte_parse_daemon_cmd_line(ompi_cmd_line_t *cmd_line)
 	setenv("OMPI_universe_seed", "1", 1);
     }
 
+    /* see if seed contact info is provided */
+    if (ompi_cmd_line_is_taken(cmd_line, "seedcontact")) {
+	if (NULL == ompi_cmd_line_get_param(cmd_line, "seedcontact", 0, 0)) {
+	    fprintf(stderr, "error retrieving seed contact info - please report error to bugs@open-mpi.org\n");
+	    exit(1);
+	}
+	ompi_universe_info.seed_contact_info = strdup(ompi_cmd_line_get_param(cmd_line, "seedcontact", 0, 0));
+	setenv("OMPI_universe_contact", ompi_universe_info.seed_contact_info, 1);
+    }
+
     /* see if I'm a probe */
     if (ompi_cmd_line_is_taken(cmd_line, "probe") &&
 	false == ompi_universe_info.probe) {
@@ -51,16 +61,11 @@ void ompi_rte_parse_daemon_cmd_line(ompi_cmd_line_t *cmd_line)
 	ompi_universe_info.persistence = true;
     }
 
-    /* find out if silent */
-    if (ompi_cmd_line_is_taken(cmd_line, "silent")) {
-	setenv("OMPI_universe_silent", "1", 1);
-	ompi_universe_info.silent_mode = true;
-    }
-
-    /* find out if web interface is desired */
-    if (ompi_cmd_line_is_taken(cmd_line, "webserver")) {
-	setenv("OMPI_universe_webserver", "1", 1);
-	ompi_universe_info.web_server = true;
+    /* find out if we desire a console */
+    if (ompi_cmd_line_is_taken(cmd_line, "console")) {
+	setenv("OMPI_universe_console", "1", 1);
+	ompi_universe_info.console = true;
+	ompi_universe_info.console_connected = false;
     }
 
     /* find out if script is to be executed */
