@@ -48,5 +48,5 @@ OMPI_GENERATE_F77_BINDINGS (MPI_PCONTROL,
 
 void mpi_pcontrol_f(MPI_Fint *level)
 {
-
+    MPI_Pcontrol( *level );
 }
