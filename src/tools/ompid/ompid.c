@@ -52,10 +52,11 @@ int main(int argc, char *argv[])
     bool allow_multi_user_threads   = false;
     bool have_hidden_threads  = false;
     char *jobid_str, *procid_str, *enviro_val, *contact_file;
-    char *filenm, *universe;
+    char *filenm, *universe, *contact_info;
     pid_t pid;
     mca_ns_base_jobid_t jobid;
     mca_ns_base_vpid_t vpid;
+    size_t nprocs;
 
     /*
      * Intialize the Open MPI environment
@@ -270,10 +271,20 @@ int main(int argc, char *argv[])
      *  Register my process info with my replica. Note that this must be done
      *  after the rte init is completed.
      */
-    if (OMPI_SUCCESS != (ret = ompi_rte_register())) {
-        ompi_output(0, "ompid: failed in ompi_rte_register()");
+    contact_info = mca_oob_get_contact_info();
+    ompi_rte_get_peers(NULL, &nprocs);
+    if (OMPI_SUCCESS != (ret = ompi_registry.rte_register(contact_info, nprocs,
+							  ompi_rte_all_procs_registered, NULL,
+							  ompi_rte_all_procs_unregistered, NULL))) {
+        ompi_output(0, "ompi_rte_init: failed in ompi_rte_register");;
         return ret;
     } 
+
+    /* wait for all the daemons to have registered so we can be sure to get everyone's contact info */
+    if (OMPI_SUCCESS != (ret = ompi_rte_monitor_procs_registered())) {
+	ompi_output(0, "ompi_rte_init: failed to see all procs register");
+	return ret;
+    }
 
     /* if i'm the seed, get my contact info and write my setup file for others to find */
     if (ompi_process_info.seed) {
