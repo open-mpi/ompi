@@ -82,10 +82,12 @@ void mpi_testany_f(MPI_Fint *count, MPI_Fint *array_of_requests, MPI_Fint *index
 
         /* Increment index by one for fortran conventions */
 
-        if (MPI_UNDEFINED != *(OMPI_SINGLE_NAME_CONVERT(index))) {
-            array_of_requests[*(OMPI_SINGLE_NAME_CONVERT(index))] = 
-                OMPI_INT_2_FINT(MPI_REQUEST_NULL->req_f_to_c_index);
-            ++(OMPI_SINGLE_NAME_CONVERT(index));
+        OMPI_SINGLE_INT_2_FINT(index);
+        if (1 == OMPI_INT_2_FINT(*flag) &&
+            MPI_UNDEFINED != *(OMPI_SINGLE_NAME_CONVERT(index))) {
+            array_of_requests[OMPI_INT_2_FINT(*index)] =
+                c_req[OMPI_INT_2_FINT(*index)]->req_f_to_c_index;
+            ++(*index);
         }
         if (!OMPI_IS_FORTRAN_STATUS_IGNORE(status)) {
             MPI_Status_c2f(&c_status, status); 

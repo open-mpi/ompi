@@ -61,8 +61,8 @@ void mpi_test_f(MPI_Fint *request, MPI_Fint *flag,
 
     OMPI_SINGLE_INT_2_FINT(flag);
 
-    if ( (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) && (NULL == c_req) ) {
-        *request = OMPI_INT_2_FINT(MPI_REQUEST_NULL->req_f_to_c_index);
+    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
+        *request = OMPI_INT_2_FINT(c_req->req_f_to_c_index);
         if (!OMPI_IS_FORTRAN_STATUS_IGNORE(status)) {
             MPI_Status_c2f(&c_status, status); 
         }
