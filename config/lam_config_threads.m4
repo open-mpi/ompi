@@ -2,7 +2,7 @@ dnl
 dnl $HEADER$
 dnl
 
-AC_DEFUN(LAM_CONFIG_THREADS,[
+AC_DEFUN([LAM_CONFIG_THREADS],[
 #
 # Arguments: none
 #

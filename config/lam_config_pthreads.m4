@@ -572,7 +572,7 @@ AC_PROVIDE_IFELSE([LAM_PROG_F77],
 # External macro (aka, the real thing)
 #
 #********************************************************************
-AC_DEFUN(LAM_CONFIG_POSIX_THREADS,[
+AC_DEFUN([LAM_CONFIG_POSIX_THREADS],[
 lam_pthread_c_success=0
 lam_pthread_f77_success=0
 lam_pthread_cxx_success=0

@@ -3,7 +3,7 @@ dnl
 dnl $HEADER$
 dnl
 
-AC_DEFUN(LAM_CONFIGURE_OPTIONS,[
+AC_DEFUN([LAM_CONFIGURE_OPTIONS],[
 lam_show_subtitle "Configuration options"
 
 #
