@@ -38,7 +38,6 @@ libmpi_la_LIBADD = \
         $(LIBLTDL_LTLIB) \
         attribute/libattribute.la \
         communicator/libcommunicator.la \
-        ctnetwork/libctnetwork.la \
         datatype/libdatatype.la \
         errhandler/liberrhandler.la \
         event/libevent.la \
@@ -56,7 +55,5 @@ libmpi_la_LIBADD = \
         win/libwin.la
 
 not_implemented_yet =\
-        errhandler/liberrhandler.la \
-        file/libfile.la \
-        op/libop.la \
-        os/libos.la
+        ctnetwork/libctnetwork.la \
+        file/libfile.la
