@@ -1,0 +1,9 @@
+# -*- shell-script -*-
+#
+# $HEADER$
+#
+
+# Specific to this module
+
+PARAM_INIT_FILE=src/pcm_cofs.c
+PARAM_CONFIG_FILES="Makefile config/Makefile src/Makefile"

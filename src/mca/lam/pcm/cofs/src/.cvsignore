@@ -1,0 +1,9 @@
+.deps
+.libs
+Makefile
+Makefile.in
+*.lo
+libmca_pcm_cofs.la
+pcm_cofs_config.h
+pcm_cofs_config.h.in
+stamp-h1
