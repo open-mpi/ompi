@@ -13,8 +13,8 @@
 #include "util/argv.h"
 #include "runtime/runtime_types.h"
 #include "mca/pcm/base/base.h"
-#include "mca/pcm/base/base.h"
-
+#include "mca/llm/base/base.h"
+#include "mca/llm/base/base_internal.h"
 
 char *
 mca_pcm_base_no_unique_name(void)
@@ -48,13 +48,13 @@ mca_pcm_base_build_base_env(char **in_env, char ***out_envp)
 
 
 char *
-mca_pcm_base_get_username(ompi_rte_node_allocation_t *node)
+mca_pcm_base_get_username(mca_llm_base_hostfile_node_t *host)
 {
     ompi_list_item_t *item;
     ompi_rte_valuepair_t *valpair;
 
-    for (item = ompi_list_get_first(node->info) ;
-         item != ompi_list_get_end(node->info) ;
+    for (item = ompi_list_get_first(host->info) ;
+         item != ompi_list_get_end(host->info) ;
          item = ompi_list_get_next(item)) {
         valpair = (ompi_rte_valuepair_t*) item;
         if (0 == strcmp("user", valpair->key)) return valpair->value;

@@ -14,6 +14,7 @@
 #include "ompi_config.h"
 
 #include "runtime/runtime_types.h"
+#include "mca/ns/ns.h"
 
 /* For backwards compatibility.  If you only need MPI stuff, please include
    mpiruntime/mpiruntime.h directly */
@@ -110,21 +111,23 @@ extern "C" {
      * once per jobid.
      *
      * @param jobid (IN) Jobid with which to associate the given resources.
-     * @param nodes (IN) Number of nodes to try to allocate. If 0, the
-     *                   LLM will try to allocate <code>procs</code>
-     *                   processes on as many nodes as are needed.  If
-     *                   non-zero, will try to fairly distribute
-     *                   <code>procs</code> processes over the nodes.
-     *                   If <code>procs</code> is 0, will attempt to
-     *                   allocate all cpus on <code>nodes</code> nodes
+     * @param nodes (IN) Number of ndoes to try to allocate.  If 0, the
+     *                   allocator will try to allocate \c procs processes
+     *                   on as many nodes as are needed.  If non-zero, 
+     *                   will try to allocate \c procs process slots 
+     *                   per node.
      * @param procs (IN) Number of processors to try to allocate.  See the note
      *                   for <code>nodes</code> for usage.
      * @return List of <code>ompi_rte_node_allocation_t</code>s
      *                   describing the allocated resources.
      *
-     * @warning The type for jobid will change in the near future
+     * @note In the future, a more complex resource allocation
+     *       function may be added, which allows for complicated
+     *       resource requests.  This function will continue to exist
+     *       as a special case of that function.
      */
-    ompi_list_t* ompi_rte_allocate_resources(int jobid, int nodes, int procs);
+    ompi_list_t* ompi_rte_allocate_resources(mca_ns_base_jobid_t jobid, 
+                                             int nodes, int procs);
 
 
     /** 
@@ -144,9 +147,9 @@ extern "C" {
      * of \c mca_pcm_base_schedule_t structures, which give both process
      * and location information.
      *
-     * @warning Parameter list will probably change in the near future.
      */
-    int ompi_rte_spawn_procs(int jobid, ompi_list_t *schedule_list);
+    int ompi_rte_spawn_procs(mca_ns_base_jobid_t jobid, 
+                             ompi_list_t *schedule_list);
 
 
     /**
@@ -210,7 +213,7 @@ extern "C" {
      * future compatibility.  Will be used to specify how to kill
      * processes (0 will be same as a "kill <pid>"
      */
-    int ompi_rte_kill_job(int jobid, int flags);
+    int ompi_rte_kill_job(mca_ns_base_jobid_t jobid, int flags);
 
 
     /**
@@ -221,10 +224,9 @@ extern "C" {
      * @param jobid (IN) Jobid associated with the resources to be freed.
      * @param nodes (IN) Nodelist from associated allocate_resource call.
      *                   All associated memory will be freed as appropriate.
-     *
-     * @warning The type for jobid will change in the near future.
      */
-    int ompi_rte_deallocate_resources(int jobid, ompi_list_t *nodelist);
+    int ompi_rte_deallocate_resources(mca_ns_base_jobid_t jobid, 
+                                      ompi_list_t *nodelist);
 
 
     /**

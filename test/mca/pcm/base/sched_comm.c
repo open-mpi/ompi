@@ -30,6 +30,8 @@ main(int argc, char *argv[])
     FILE *test2_in = NULL;
     int result;           /* result of system call */
     int jobid = 123;
+    int out_num_procs = 5;
+    int in_num_procs = 5;
 
     test_init("sched_comm_t");
 
@@ -52,7 +54,7 @@ main(int argc, char *argv[])
     schedout->cwd = "/foo/bar/baz";
 
     result = mca_pcm_base_send_schedule(test1_out, jobid, schedout, 
-                                        schedout->nodelist);
+                                        out_num_procs);
     if (result != OMPI_SUCCESS) {
         test_failure("send_schedule failed");
         exit(1);
@@ -75,12 +77,12 @@ main(int argc, char *argv[])
     test2_in = fopen("./test1_out", "r");
 
     result = mca_pcm_base_recv_schedule(test2_in, &jobid, schedin,
-                                        schedin->nodelist);
+                                        &in_num_procs);
     if (result != OMPI_SUCCESS) {
         test_failure("recv_schedule failed");
         exit(1);
     }
-    mca_pcm_base_send_schedule(test2_out, jobid, schedin, schedin->nodelist);
+    mca_pcm_base_send_schedule(test2_out, jobid, schedin, in_num_procs);
     if (result != OMPI_SUCCESS) {
         test_failure("send_schedule (2) failed");
         exit(1);

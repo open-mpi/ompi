@@ -13,7 +13,7 @@
 
 static
 bool
-has_conflicts(ompi_rte_node_allocation_t *a, ompi_rte_node_allocation_t *b)
+has_conflicts(mca_llm_base_hostfile_node_t *a, mca_llm_base_hostfile_node_t *b)
 {
     ompi_rte_valuepair_t *a_val, *b_val;
     ompi_list_item_t *a_item, *b_item;
@@ -43,7 +43,8 @@ has_conflicts(ompi_rte_node_allocation_t *a, ompi_rte_node_allocation_t *b)
 
 static
 void
-keyval_merge(ompi_rte_node_allocation_t *new, ompi_rte_node_allocation_t *old)
+keyval_merge(mca_llm_base_hostfile_node_t *new, 
+             mca_llm_base_hostfile_node_t *old)
 {
     ompi_list_item_t *old_item;
 
@@ -56,19 +57,19 @@ keyval_merge(ompi_rte_node_allocation_t *new, ompi_rte_node_allocation_t *old)
 int
 mca_llm_base_collapse_resources(ompi_list_t *hostlist)
 {
-    ompi_rte_node_allocation_t *curr_node, *check_node;
+    mca_llm_base_hostfile_node_t *curr_node, *check_node;
     ompi_list_item_t *curr_nodeitem, *check_nodeitem, *tmp;
 
     for (curr_nodeitem = ompi_list_get_first(hostlist) ;
          curr_nodeitem != ompi_list_get_end(hostlist) ;
          curr_nodeitem = ompi_list_get_next(curr_nodeitem)) {
 
-        curr_node = (ompi_rte_node_allocation_t*) curr_nodeitem;
+        curr_node = (mca_llm_base_hostfile_node_t*) curr_nodeitem;
         for (check_nodeitem = ompi_list_get_next(curr_nodeitem) ;
              check_nodeitem != ompi_list_get_end(hostlist) ;
              check_nodeitem = ompi_list_get_next(check_nodeitem)) {
 
-            check_node = (ompi_rte_node_allocation_t*) check_nodeitem;
+            check_node = (mca_llm_base_hostfile_node_t*) check_nodeitem;
 
             if ((strcmp(curr_node->hostname, check_node->hostname) == 0) &&
                 (!has_conflicts(curr_node, check_node))) {

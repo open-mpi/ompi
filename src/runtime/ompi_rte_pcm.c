@@ -25,7 +25,7 @@ ompi_rte_can_spawn(void)
 
 
 int
-ompi_rte_spawn_procs(int jobid, ompi_list_t *schedule_list)
+ompi_rte_spawn_procs(mca_ns_base_jobid_t jobid, ompi_list_t *schedule_list)
 {
     if (NULL == mca_pcm.pcm_spawn_procs) {
         return OMPI_ERROR;
@@ -69,7 +69,7 @@ ompi_rte_kill_proc(ompi_process_name_t *name, int flags)
 
 
 int
-ompi_rte_kill_job(int jobid, int flags)
+ompi_rte_kill_job(mca_ns_base_jobid_t jobid, int flags)
 {
     if (NULL == mca_pcm.pcm_kill_job) {
         return OMPI_ERROR;

@@ -11,7 +11,7 @@
 #include "include/types.h"
 #include "mca/mca.h"
 #include "mca/pcm/pcm.h"
-
+#include "mca/llm/base/base_internal.h"
 
 /*
  * Global functions for MCA overall collective open and close
@@ -30,19 +30,19 @@ extern "C" {
     int mca_pcm_base_send_schedule(FILE *fd, 
                                    int jobid,
                                    ompi_rte_node_schedule_t *sched,
-                                   ompi_list_t *nodelist);
+                                   int num_procs);
 
     int  mca_pcm_base_recv_schedule(FILE *fd, 
                                     int *jobid,
                                     ompi_rte_node_schedule_t *sched,
-                                    ompi_list_t *nodelist);
+                                    int *num_procs);
 
     int mca_pcm_base_build_base_env(char **in_env, char ***out_envp);
 
     int mca_pcm_base_ioexecvp(char **cmdv, int showout, char *outbuff, 
                                    int outbuffsize, int stderr_is_err);
 
-    char* mca_pcm_base_get_username(ompi_rte_node_allocation_t *node);
+    char* mca_pcm_base_get_username(mca_llm_base_hostfile_node_t *node);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
