@@ -40,8 +40,8 @@ int MPI_Pack_size(int incount, MPI_Datatype datatype, MPI_Comm comm,
     }
 
     local_convertor = OBJ_NEW(ompi_convertor_t);
-    ompi_convertor_init_for_send(local_convertor, 0, datatype, 
-                                 incount, NULL, 0);
+    ompi_convertor_init_for_send(local_convertor, 0, datatype, incount,
+				 NULL, 0, NULL /* never allocate memory */);
     ret = ompi_convertor_get_packed_size(local_convertor, size);
     OBJ_RELEASE(local_convertor);
 
