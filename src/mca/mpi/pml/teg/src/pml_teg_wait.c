@@ -11,7 +11,7 @@ int mca_pml_teg_wait(
     mca_pml_base_request_t* pml_request = *(mca_pml_base_request_t**)request;
     if(pml_request->req_mpi_done == false) {
 
-        /* poll status - primarily for benchmarks */
+        /* poll for completion - primarily for benchmarks */
         int i;
         for(i=0; i<mca_pml_teg.teg_poll_iterations && pml_request->req_mpi_done == false; i++) 
             ; /* do nothing */
@@ -26,6 +26,14 @@ int mca_pml_teg_wait(
             lam_mutex_unlock(&mca_pml_teg.teg_request_lock);
         }
     }
+
+    /* return request to pool */
+    if(pml_request->req_persistent == false) {
+        if(pml_request->req_pml_done == true)
+            mca_pml_teg_request_return(pml_request);
+        *request = NULL;
+    }
+
     if (status != NULL)
        *status = pml_request->req_status;
     return LAM_SUCCESS;

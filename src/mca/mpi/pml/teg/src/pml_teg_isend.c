@@ -14,7 +14,6 @@ int mca_pml_teg_isend_init(
     int dst,
     int tag,
     mca_pml_base_send_mode_t sendmode,
-    bool persistent,
     lam_communicator_t* comm,
     lam_request_t **request)
 {
@@ -33,7 +32,7 @@ int mca_pml_teg_isend_init(
         tag,
         comm,
         sendmode,
-        false
+        true
         );
          
     *request = (lam_request_t*)sendreq;

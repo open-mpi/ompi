@@ -77,6 +77,7 @@ void mca_pml_teg_send_request_progress(
     req->req_bytes_sent += frag->super.frag_size;
     if (req->req_bytes_sent >= req->super.req_length) {
         req->super.req_mpi_done = true;
+        req->super.req_pml_done = true;
         if(mca_pml_teg.teg_request_waiting) {
             lam_condition_broadcast(&mca_pml_teg.teg_request_cond);
         }

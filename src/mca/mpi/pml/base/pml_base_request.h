@@ -47,6 +47,8 @@ struct mca_pml_base_request_t {
     volatile bool req_mpi_done;
     /* flag indicating if the pt-2-pt layer is done with this request */
     volatile bool req_pml_done;
+    /* flag indicating if the user has freed this request */
+    volatile bool req_free_called;
 };
 typedef struct mca_pml_base_request_t mca_pml_base_request_t;
 

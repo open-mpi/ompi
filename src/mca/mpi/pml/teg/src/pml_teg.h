@@ -113,7 +113,6 @@ extern int mca_pml_teg_isend_init(
     int dst,
     int tag,
     mca_pml_base_send_mode_t mode,
-    bool persistent,
     struct lam_communicator_t* comm,
     struct lam_request_t **request
 );
@@ -145,7 +144,6 @@ extern int mca_pml_teg_irecv_init(
     struct lam_datatype_t *datatype,
     int src,
     int tag,
-    bool persistent,
     struct lam_communicator_t* comm,
     struct lam_request_t **request
 );
@@ -173,12 +171,12 @@ extern int mca_pml_teg_recv(
 extern int mca_pml_teg_progress(void);
 
 extern int mca_pml_teg_start(
-    lam_request_t* request
+    lam_request_t** request
 );
 
 extern int mca_pml_teg_test(
-    lam_request_t* request,
-    bool *completed,
+    lam_request_t** request,
+    int *completed,
     lam_status_public_t* status
 );
 
@@ -189,6 +187,10 @@ extern int mca_pml_teg_wait(
 
 extern int mca_pml_teg_null(
     lam_request_t** request
+);
+
+extern void mca_pml_teg_request_return(
+    mca_pml_base_request_t*
 );
 
 #endif
