@@ -46,16 +46,15 @@ int lam_mpi_init(int argc, char **argv, int requested, int *provided)
 
   if (LAM_SUCCESS != (ret = mca_pml_base_open())) {
     /* JMS show_help */
-    return LAM_ERROR;
+    return ret;
   }
   if (LAM_SUCCESS != (ret = mca_ptl_base_open())) {
     /* JMS show_help */
-    return LAM_ERROR;
+    return ret;
   }
-  /* JMS Uncomment when have coll_base_open() implemented */
   if (LAM_SUCCESS != (ret = mca_coll_base_open())) {
     /* JMS show_help */
-    return LAM_ERROR;
+    return ret;
   }
 
   /* Select which pml, ptl, and coll modules to use, and determine the
@@ -64,7 +63,7 @@ int lam_mpi_init(int argc, char **argv, int requested, int *provided)
   if (LAM_SUCCESS != 
       (ret = mca_mpi_init_select_modules(requested, provided))) {
     /* JMS show_help */
-    return LAM_ERROR;
+    return ret;
   }
 
   /* Add MPI_COMM_WORLD lam_proc_t's to PML */
