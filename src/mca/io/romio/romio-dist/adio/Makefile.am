@@ -107,4 +107,5 @@ libadio_la_LIBADD = \
         $(HFS_LIB) $(NFS_LIB) $(NTFS_LIB) $(PFS_LIB) $(PIOFS_LIB) \
         $(PVFS_LIB) $(SFS_LIB) $(TESTFS_LIB) $(UFS_LIB) $(XFS_LIB)
 libadio_la_DEPENDENCIES = \
-        $(adio_la_LIBADD)
+        $(libadio_la_LIBADD)
+
