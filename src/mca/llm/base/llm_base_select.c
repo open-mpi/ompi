@@ -42,7 +42,7 @@ mca_llm_base_select(const char *active_pcm,
   int priority, best_priority;
   mca_base_component_list_item_t *cli;
   ompi_list_item_t *item;
-  mca_llm_base_module_t *module, *best_module;
+  mca_llm_base_module_t *module, *best_module = NULL;
   mca_llm_base_component_t *component;
 
   ompi_output_verbose(10, mca_llm_base_output,

@@ -337,7 +337,7 @@ internal_bproc_vexecmove_io(int nnodes, int *nodes, int *pids,
     ret = bproc_vexecmove_io(nnodes, nodes, pids, io, iolen,
                              cmd, argv, *env);
     loc = ompi_argv_count(*env);
-    ompi_argv_shrink(envc, env, loc - 1, 1);
+    ompi_argv_delete(envc, env, loc - 1, 1);
 
     return ret;
 }
