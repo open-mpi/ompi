@@ -6,6 +6,7 @@
 
 #include <assert.h>
 #include <errno.h>
+#include <sys/signal.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/wait.h>
