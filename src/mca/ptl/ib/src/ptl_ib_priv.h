@@ -6,7 +6,7 @@
 #include "ptl_ib_vapi.h"
 
 #define NUM_IB_SEND_BUF             (10)
-#define NUM_IB_RECV_BUF             (10)
+#define NUM_IB_RECV_BUF             (1000)
 
 #define MCA_PTL_IB_FIRST_FRAG_SIZE  (65536)
 

@@ -83,6 +83,7 @@ int mca_ptl_ib_put( struct mca_ptl_base_module_t* ptl,
     }
 
     /* Send FIN to receiver */
+#if 0
     send_frag_fin = mca_ptl_ib_alloc_send_frag(ptl, req);
 
 
@@ -95,11 +96,17 @@ int mca_ptl_ib_put( struct mca_ptl_base_module_t* ptl,
     if(rc != OMPI_SUCCESS) {
         return rc;
     }
+#endif
+    rc = mca_ptl_ib_put_frag_init(send_frag, ptl_peer,
+            req, offset, &size, flags);
+    if(rc != OMPI_SUCCESS) {
+        return rc;
+    }
 
     /* Update offset */
     req->req_offset += size;
 
-    rc = mca_ptl_ib_peer_send(ptl_peer, send_frag_fin);
+    rc = mca_ptl_ib_peer_send(ptl_peer, send_frag);
 
     return rc;
 }
@@ -182,6 +189,7 @@ int mca_ptl_ib_finalize(struct mca_ptl_base_module_t* ptl)
 int mca_ptl_ib_request_init( struct mca_ptl_base_module_t* ptl,
         struct mca_pml_base_send_request_t* request)
 {
+#if 0
     mca_ptl_ib_send_request_t *ib_send_req;
     mca_ptl_ib_send_frag_t *ib_send_frag;
 
@@ -200,7 +208,8 @@ int mca_ptl_ib_request_init( struct mca_ptl_base_module_t* ptl,
         memset(ib_send_req->req_buf, 7, 8);
     }
 
-    return OMPI_SUCCESS;
+#endif
+    return OMPI_ERROR;
 }
 
 void mca_ptl_ib_request_fini( struct mca_ptl_base_module_t* ptl,
@@ -225,8 +234,23 @@ int mca_ptl_ib_send( struct mca_ptl_base_module_t* ptl,
     int flags)
 {
     mca_ptl_ib_send_frag_t* sendfrag;
+    mca_ptl_ib_send_request_t *ib_send_req;
     int rc = OMPI_SUCCESS;
 
+    sendfrag = mca_ptl_ib_alloc_send_frag(ptl,
+            sendreq);
+
+    if(NULL == sendfrag) {
+        D_PRINT("Unable to allocate ib_send_frag");
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    } else {
+
+        ib_send_req = (mca_ptl_ib_send_request_t *) sendreq;
+        ib_send_req->req_frag = sendfrag;
+        memset(ib_send_req->req_buf, 7, 8);
+    }
+
+#if 0
     if (0 == offset) {
         sendfrag = (mca_ptl_ib_send_frag_t *)
             ((mca_ptl_ib_send_request_t*)sendreq)->req_frag;
@@ -240,6 +264,7 @@ int mca_ptl_ib_send( struct mca_ptl_base_module_t* ptl,
             ompi_output(0,"Unable to allocate send fragment");
         }
     }
+#endif
 
     rc = mca_ptl_ib_send_frag_init(sendfrag, ptl_peer,
             sendreq, offset, &size, flags);

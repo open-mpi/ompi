@@ -103,7 +103,7 @@ int mca_ptl_ib_component_open(void)
 
     /* register IB component parameters */
     mca_ptl_ib_component.ib_free_list_num =
-        mca_ptl_ib_param_register_int ("free_list_num", 32);
+        mca_ptl_ib_param_register_int ("free_list_num", 64);
     mca_ptl_ib_component.ib_free_list_max =
         mca_ptl_ib_param_register_int ("free_list_max", 1024);
     mca_ptl_ib_component.ib_free_list_inc =

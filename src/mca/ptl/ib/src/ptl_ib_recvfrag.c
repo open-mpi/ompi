@@ -91,7 +91,7 @@ static void mca_ptl_ib_data_frag(mca_ptl_base_module_t *module,
     if (!matched) {
         /* Oh my GOD
          * !!! */
-        D_PRINT("Can't match buffer. Mama is unhappy\n");
+        //ompi_output(0, "Can't match buffer. Mama is unhappy\n");
         memcpy (recv_frag->unex_buf,
                 (char *) header + sizeof (mca_ptl_base_header_t),
                 header->hdr_frag.hdr_frag_length);

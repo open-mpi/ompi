@@ -52,13 +52,22 @@
 #define D_PRINT(fmt, args...)
 #endif
 
-#if 1
+#if 0
 #define A_PRINT(fmt, args...) {                                     \
     ompi_output(0, "[%s:%d:%s] " fmt, __FILE__, __LINE__, __func__, \
         ##args);                                                    \
 }
 #else
 #define A_PRINT(fmt, args...)
+#endif
+
+#if 0
+#define B_PRINT(fmt, args...) {                                     \
+    ompi_output(0, "[%s:%d:%s] " fmt, __FILE__, __LINE__, __func__, \
+        ##args);                                                    \
+}
+#else
+#define B_PRINT(fmt, args...)
 #endif
 
 #endif
