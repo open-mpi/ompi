@@ -73,7 +73,7 @@ mca_ptl_self_component_t mca_ptl_self_component = {
             true
         },
         
-        mca_ptl_self_component_init,  
+        mca_ptl_self_component_init,
         NULL,
         NULL,
     }
@@ -155,12 +155,10 @@ int mca_ptl_self_component_close(void)
 
 
 mca_ptl_base_module_t** mca_ptl_self_component_init(int *num_ptl_modules,
-                                                    bool *allow_multi_user_threads,
-                                                    bool *have_hidden_threads)
+                                                    bool enable_progress_threads,
+                                                    bool enable_mpi_threads)
 {
     *num_ptl_modules = 0;
-    *allow_multi_user_threads = true;
-    *have_hidden_threads = false;
 
     mca_ptl_self_component.self_ptl_modules = (mca_ptl_base_module_t **)
                                                 malloc(sizeof(mca_ptl_base_module_t*));

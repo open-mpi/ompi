@@ -32,12 +32,16 @@ ompi_list_t mca_topo_base_modules_available;
 bool mca_topo_base_modules_available_valid = false;
 
 static int init_query(const mca_base_component_t *m,
-                      mca_base_component_priority_list_item_t *entry);
+                      mca_base_component_priority_list_item_t *entry,
+                      bool enable_progress_threads,
+                      bool enable_mpi_threads);
 static int init_query_1_0_0(const mca_base_component_t *component,
-                            mca_base_component_priority_list_item_t *entry);
+                            mca_base_component_priority_list_item_t *entry,
+                            bool enable_progress_threads,
+                            bool enable_mpi_threads);
     
-int mca_topo_base_find_available(bool *allow_multi_user_threads,
-                                 bool *have_hidden_threads) 
+int mca_topo_base_find_available(bool enable_progress_threads,
+                                 bool enable_mpi_threads)
 {
     bool found = false;
     mca_base_component_priority_list_item_t *entry;
@@ -63,7 +67,9 @@ int mca_topo_base_find_available(bool *allow_multi_user_threads,
          /* Now for this entry, we have to determine the thread level. Call 
             a subroutine to do the job for us */
 
-         if (OMPI_SUCCESS == init_query(entry->super.cli_component, entry)) {
+         if (OMPI_SUCCESS == init_query(entry->super.cli_component, entry,
+                                        enable_progress_threads,
+                                        enable_mpi_threads)) {
              /* Save the results in the list. The priority is not relvant at 
                 this point in time. But we save the thread arguments so that
                 the initial selection algorithm can negotiate overall thread
@@ -103,7 +109,10 @@ int mca_topo_base_find_available(bool *allow_multi_user_threads,
               
        
 static int init_query(const mca_base_component_t *m,
-                      mca_base_component_priority_list_item_t *entry) {
+                      mca_base_component_priority_list_item_t *entry,
+                      bool enable_progress_threads,
+                      bool enable_mpi_threads) 
+{
     int ret;
     
     ompi_output_verbose(10, mca_topo_base_output,
@@ -114,7 +123,8 @@ static int init_query(const mca_base_component_t *m,
     if (1 == m->mca_type_major_version &&
         0 == m->mca_type_minor_version &&
         0 == m->mca_type_release_version) {
-        ret = init_query_1_0_0 (m, entry);
+        ret = init_query_1_0_0(m, entry, enable_progress_threads,
+                               enable_mpi_threads);
     } else {
         /* unrecognised API version */
         ompi_output_verbose(10, mca_topo_base_output,
@@ -145,10 +155,12 @@ static int init_query(const mca_base_component_t *m,
 
 
 static int init_query_1_0_0(const mca_base_component_t *component,
-                            mca_base_component_priority_list_item_t *entry) {
-    
+                            mca_base_component_priority_list_item_t *entry,
+                            bool enable_progress_threads,
+                            bool enable_mpi_threads) 
+{
     mca_topo_base_component_1_0_0_t *topo = (mca_topo_base_component_1_0_0_t *) component;
     
-    return topo->topom_init_query(&(entry->cpli_allow_multi_user_threads),
-                                  &(entry->cpli_have_hidden_threads));
+    return topo->topom_init_query(enable_progress_threads,
+                                  enable_mpi_threads);
 }

@@ -21,7 +21,7 @@
 #include "mca/allocator/bucket/allocator_bucket_alloc.h"
 
 struct mca_allocator_base_module_t* mca_allocator_bucket_module_init(
-    bool *allow_multi_user_threads,
+    bool enable_mpi_threads,
     mca_allocator_base_component_segment_alloc_fn_t segment_alloc,
     mca_allocator_base_component_segment_free_fn_t segment_free);
 
@@ -43,7 +43,7 @@ int mca_allocator_bucket_finalize(struct mca_allocator_base_module_t* allocator)
 }
 
 struct mca_allocator_base_module_t* mca_allocator_bucket_module_init(
-    bool *allow_multi_user_threads,
+    bool enable_mpi_threads,
     mca_allocator_base_component_segment_alloc_fn_t segment_alloc,
     mca_allocator_base_component_segment_free_fn_t segment_free)
 {

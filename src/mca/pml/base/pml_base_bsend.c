@@ -60,7 +60,7 @@ static void* mca_pml_bsend_alloc_segment(size_t* size_inout)
 /*
  * One time initialization at startup
  */
-int mca_pml_base_bsend_init(bool* thread_safe)
+int mca_pml_base_bsend_init(bool thread_safe)
 {
     int id = mca_base_param_register_string("pml", "base", "bsend_allocator", NULL, "basic");
     mca_allocator_base_module_t *allocator;
@@ -79,9 +79,11 @@ int mca_pml_base_bsend_init(bool* thread_safe)
     }
     free(name);
 
-    /* try to create an instance of the allocator - to determine thread safety level */
+    /* try to create an instance of the allocator - to determine
+       thread safety level */
+
     allocator = mca_pml_bsend_allocator_component->allocator_init(thread_safe, mca_pml_bsend_alloc_segment, NULL);
-    if(NULL == allocator) {
+    if (NULL == allocator) {
         return OMPI_ERR_BUFFER;
     }
     allocator->alc_finalize(allocator);

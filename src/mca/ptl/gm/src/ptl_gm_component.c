@@ -481,18 +481,12 @@ mca_ptl_gm_init( mca_ptl_gm_component_t * gm )
 
 mca_ptl_base_module_t **
 mca_ptl_gm_component_init (int *num_ptl_modules,
-                           bool * allow_multi_user_threads,
-                           bool * have_hidden_threads)
+                           bool enable_progress_threads,
+                           bool enable_mpi_threads)
 {
     mca_ptl_base_module_t **ptls;
 
     *num_ptl_modules = 0;
-    *allow_multi_user_threads = true;
-#if OMPI_HAVE_POSIX_THREADS
-    *have_hidden_threads = true;
-#else
-    *have_hidden_threads = false;
-#endif  /* OMPI_HAVE_POSIX_THREADS */
 
     if (OMPI_SUCCESS != mca_ptl_gm_init (&mca_ptl_gm_component)) {
         ompi_output( 0, "[%s:%d] error in initializing gm state and PTL's. (%d PTL's)\n",

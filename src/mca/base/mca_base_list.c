@@ -59,6 +59,4 @@ static void cpl_constructor(ompi_object_t *obj)
   mca_base_component_priority_list_item_t *cpli = 
     (mca_base_component_priority_list_item_t *) obj;
   cpli->cpli_priority = -1;
-  cpli->cpli_allow_multi_user_threads = false;
-  cpli->cpli_have_hidden_threads = false;
 }

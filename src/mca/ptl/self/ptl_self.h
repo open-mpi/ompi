@@ -84,8 +84,8 @@ extern int mca_ptl_self_component_close(void);
  */
 extern mca_ptl_base_module_t** mca_ptl_self_component_init(
     int *num_ptls, 
-    bool *allow_multi_user_threads,
-    bool *have_hidden_threads
+    bool enable_progress_threads,
+    bool enable_mpi_threads
 );
 
 int  mca_ptl_self_add_proc(struct mca_ptl_base_module_t* ptl, size_t nprocs, struct ompi_proc_t **ompi_proc, struct mca_ptl_base_peer_t** peer_ret, struct ompi_bitmap_t* reachable);

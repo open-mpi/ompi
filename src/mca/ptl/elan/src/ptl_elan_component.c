@@ -198,18 +198,12 @@ mca_ptl_elan_component_close (void)
  */
 mca_ptl_base_module_t **
 mca_ptl_elan_component_init (int *num_ptls,
-			     bool * allow_multi_user_threads,
-			     bool * have_hidden_threads)
+                             bool enable_progress_threads,
+                             bool enable_mpi_threads)
 {
     mca_ptl_base_module_t **ptls;
  
     *num_ptls = 0;
-    *allow_multi_user_threads = true;
-    *have_hidden_threads = OMPI_ENABLE_PROGRESS_THREADS;
-
-    /* XXX: Set the global variable to be true for threading */
-    if (OMPI_ENABLE_PROGRESS_THREADS)
-        ompi_set_using_threads(true);
 
     ompi_free_list_init (&(elan_mp->elan_recv_frags_free),
                          sizeof (mca_ptl_elan_recv_frag_t),

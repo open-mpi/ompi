@@ -240,15 +240,13 @@ CLEANUP:
  */
 mca_ptl_base_module_t** mca_ptl_sm_component_init(
     int *num_ptls, 
-    bool *allow_multi_user_threads,
-    bool *have_hidden_threads)
+    bool enable_progress_threads,
+    bool enable_mpi_threads)
 {
     mca_ptl_base_module_t **ptls = NULL;
     int i;
 
     *num_ptls = 0;
-    *allow_multi_user_threads = true;
-    *have_hidden_threads = OMPI_ENABLE_PROGRESS_THREADS;
 
     /* lookup shared memory pool */
     mca_ptl_sm_component.sm_mpool =

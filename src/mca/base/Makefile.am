@@ -53,7 +53,6 @@ libmca_base_la_SOURCES = \
         mca_base_component_repository.c \
         mca_base_components_open.c \
         mca_base_components_close.c \
-	mca_base_init_select_components.c \
         mca_base_list.c \
         mca_base_module_exchange.c \
         mca_base_msgbuf.c \

@@ -164,26 +164,17 @@ static int mca_ptl_ib_component_send(void)
  *  (3) register PTL parameters with the MCA
  */
 mca_ptl_base_module_t** mca_ptl_ib_component_init(int *num_ptl_modules, 
-        bool *allow_multi_user_threads,
-        bool *have_hidden_threads)
+                                                  bool enable_progress_threads,
+                                                  bool enable_mpi_threads)
 {
     mca_ptl_base_module_t **modules;
     VAPI_ret_t vapi_ret;
     int i, ret;
-
     mca_ptl_ib_module_t* ib_modules = NULL;
 
     /* initialization */
     *num_ptl_modules = 0;
     mca_ptl_ib_component.ib_num_hcas=0;
-    *allow_multi_user_threads = true;
-    *have_hidden_threads = OMPI_ENABLE_PROGRESS_THREADS;
-
-    /* need to set ompi_using_threads() as ompi_event_init() 
-     * will spawn a thread if supported */
-    if(OMPI_ENABLE_PROGRESS_THREADS) {
-        ompi_set_using_threads(true);
-    }
 
     /* Initialize Receive fragments */
     ompi_free_list_init (&(mca_ptl_ib_component.ib_recv_frags),

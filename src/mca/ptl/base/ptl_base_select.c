@@ -20,6 +20,7 @@
 #include "runtime/runtime.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
+#include "mca/pml/pml.h"
 #include "mca/ptl/ptl.h"
 #include "mca/ptl/base/base.h"
 
@@ -31,11 +32,10 @@
  * components will be closed and unloaded.  The selected modules will
  * be returned to the caller in a ompi_list_t.
  */
-int mca_ptl_base_select(bool *allow_multi_user_threads, 
-                        bool *have_hidden_threads)
+int mca_ptl_base_select(bool enable_progress_threads,
+                        bool enable_mpi_threads)
 {
   int i, num_ptls;
-  bool user_threads, hidden_threads;
   ompi_list_item_t *item;
   mca_base_component_list_item_t *cli;
   mca_ptl_base_component_t *component;
@@ -96,8 +96,8 @@ int mca_ptl_base_select(bool *allow_multi_user_threads,
       ompi_output_verbose(10, mca_ptl_base_output,
                          "select: no init function; ignoring component");
     } else {
-      modules = component->ptlm_init(&num_ptls, &user_threads,
-                                     &hidden_threads);
+      modules = component->ptlm_init(&num_ptls, enable_progress_threads,
+                                     enable_mpi_threads);
 
       /* If the component didn't initialize, remove it from the opened
          list and remove it from the component repository */
@@ -116,9 +116,6 @@ int mca_ptl_base_select(bool *allow_multi_user_threads,
       /* Otherwise, it initialized properly.  Save it. */
 
       else {
-        *allow_multi_user_threads &= user_threads;
-        *have_hidden_threads |= hidden_threads;
-
         ompi_output_verbose(10, mca_ptl_base_output,
                            "select: init returned success");
 
@@ -145,6 +142,10 @@ int mca_ptl_base_select(bool *allow_multi_user_threads,
     /* JMS Replace with show_help */
     orte_abort(1, "No ptl components available.  This shouldn't happen.");
   }
+
+  /* Once we have some modules, tell the PML about them */
+
+  mca_pml.pml_add_ptls(&mca_ptl_base_modules_initialized);
 
   /* All done */
 

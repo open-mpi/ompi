@@ -71,7 +71,7 @@ int mca_allocator_basic_component_close(void);
   * The function used to initialize the component.
   */
 mca_allocator_base_module_t* mca_allocator_basic_component_init(
-    bool *allow_multi_user_threads,
+    bool enable_mpi_threads,
     mca_allocator_base_component_segment_alloc_fn_t segment_alloc,
     mca_allocator_base_component_segment_free_fn_t segment_free
 );

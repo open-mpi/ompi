@@ -24,7 +24,7 @@ extern "C" {
 #endif
 struct mca_ptl_base_send_request_t;
 
-OMPI_DECLSPEC int mca_pml_base_bsend_init(bool*);
+OMPI_DECLSPEC int mca_pml_base_bsend_init(bool enable_mpi_threads);
 OMPI_DECLSPEC int mca_pml_base_bsend_fini(void);
 
 OMPI_DECLSPEC int mca_pml_base_bsend_attach(void* addr, int size);

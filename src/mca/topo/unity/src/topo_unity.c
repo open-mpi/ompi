@@ -59,13 +59,10 @@ static mca_topo_base_module_1_0_0_t unity =  {
  * *******************************************************************
  */
 
-int mca_topo_unity_component_init_query(bool *allow_multi_user_threads,
-                                        bool *have_hidden_threads)
+int mca_topo_unity_component_init_query(bool enable_progress_threads,
+                                        bool enable_mpi_threads)
 {
-   *allow_multi_user_threads = true;
-   *have_hidden_threads = false;
-   
-   /* return success */
+    /* Nothing to do */
    
    return OMPI_SUCCESS;
 }      

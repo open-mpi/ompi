@@ -43,9 +43,13 @@ const mca_coll_base_component_1_0_0_t *mca_coll_base_basic_component = NULL;
  * Private functions
  */
 static int init_query(const mca_base_component_t *ls, 
-                      mca_base_component_priority_list_item_t *entry);
+                      mca_base_component_priority_list_item_t *entry,
+                      bool enable_progress_threads,
+                      bool enable_mpi_threads);
 static int init_query_1_0_0(const mca_base_component_t *ls, 
-                            mca_base_component_priority_list_item_t *entry);
+                            mca_base_component_priority_list_item_t *entry,
+                            bool enable_progress_threads,
+                            bool enable_mpi_threads);
 
 /*
  * Scan down the list of successfully opened components and query each of
@@ -60,8 +64,8 @@ static int init_query_1_0_0(const mca_base_component_t *ls,
  * it in a global variable so that we can find it easily later (e.g.,
  * during scope selection).
  */
-int mca_coll_base_find_available(bool *allow_multi_user_threads,
-                                 bool *have_hidden_threads)
+int mca_coll_base_find_available(bool enable_progress_threads,
+                                 bool enable_mpi_threads)
 {
   bool found = false;
   mca_base_component_priority_list_item_t *entry;
@@ -88,7 +92,9 @@ int mca_coll_base_find_available(bool *allow_multi_user_threads,
     entry = OBJ_NEW(mca_base_component_priority_list_item_t);
     entry->super.cli_component = component;
     entry->cpli_priority = 0;
-    if (OMPI_SUCCESS == init_query(component, entry)) {
+    if (OMPI_SUCCESS == init_query(component, entry, 
+                                   enable_progress_threads,
+                                   enable_mpi_threads)) {
       
       /* Is this the basic component?  If so, save it, because it's
          special.  Keep it off the available list -- we'll use it
@@ -160,7 +166,9 @@ int mca_coll_base_find_available(bool *allow_multi_user_threads,
  * some information.  If it doesn't, close it.
  */
 static int init_query(const mca_base_component_t *m, 
-                      mca_base_component_priority_list_item_t *entry)
+                      mca_base_component_priority_list_item_t *entry,
+                      bool enable_progress_threads,
+                      bool enable_mpi_threads)
 {
   int ret;
 
@@ -174,7 +182,8 @@ static int init_query(const mca_base_component_t *m,
   if (1 == m->mca_type_major_version &&
       0 == m->mca_type_minor_version &&
       0 == m->mca_type_release_version) {
-    ret = init_query_1_0_0(m, entry);
+    ret = init_query_1_0_0(m, entry, enable_progress_threads,
+                           enable_mpi_threads);
   } else {
     /* Unrecognized coll API version */
 
@@ -210,13 +219,14 @@ static int init_query(const mca_base_component_t *m,
 /*
  * Query a specific component, coll v1.0.0
  */
-static int 
-init_query_1_0_0(const mca_base_component_t *component, 
-                 mca_base_component_priority_list_item_t *entry)
+static int init_query_1_0_0(const mca_base_component_t *component, 
+                            mca_base_component_priority_list_item_t *entry,
+                            bool enable_progress_threads,
+                            bool enable_mpi_threads)
 {
     mca_coll_base_component_1_0_0_t *coll = 
 	(mca_coll_base_component_1_0_0_t *) component;
 
-    return coll->collm_init_query(&(entry->cpli_allow_multi_user_threads), 
-				  &(entry->cpli_have_hidden_threads));
+    return coll->collm_init_query(enable_progress_threads,
+                                  enable_mpi_threads);
 }

@@ -100,16 +100,18 @@ typedef enum {
  * @param priority (OUT) Relative priority or ranking used by MCA to
  * selected a component.
  *
- * @param allow_multi_user_threads (OUT) Whether this component can run
- * at MPI_THREAD_MULTIPLE or not.
+ * @param enable_progress_threads (IN) Whether this component is
+ * allowed to run a hidden/progress thread or not.
  *
- * @param have_hidden_threads (OUT) Whether this component may use
- * hidden threads (e.g., progress threads) or not.
+ * @param enable_mpi_threads (IN) Whether support for multiple MPI
+ * threads is enabled or not (i.e., MPI_THREAD_MULTIPLE), which
+ * indicates whether multiple threads may invoke this component
+ * simultaneously or not.
  */
 typedef struct mca_pml_base_module_1_0_0_t * (*mca_pml_base_component_init_fn_t)(
     int *priority, 
-    bool *allow_multi_user_threads,
-    bool *have_hidden_threads);
+    bool enable_progress_threads,
+    bool enable_mpi_threads);
 
 typedef int (*mca_pml_base_component_finalize_fn_t)(void);
 

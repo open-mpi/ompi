@@ -36,7 +36,7 @@ struct mca_coll_base_comm_t;
  */
 
 typedef int (*mca_coll_base_component_init_query_fn_t)
-  (bool *allow_multi_user_threads, bool *have_hidden_threads);
+  (bool enable_progress_threads, bool enable_mpi_threads);
 typedef const struct mca_coll_base_module_1_0_0_t *
   (*mca_coll_base_component_comm_query_1_0_0_fn_t)
   (struct ompi_communicator_t *comm, int *priority,

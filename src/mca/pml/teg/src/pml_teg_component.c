@@ -127,13 +127,12 @@ int mca_pml_teg_component_close(void)
 
 
 mca_pml_base_module_t* mca_pml_teg_component_init(int* priority, 
-                                                  bool *allow_multi_user_threads,
-                                                  bool *have_hidden_threads)
+                                                  bool enable_progress_threads,
+                                                  bool enable_mpi_threads)
 {
     uint32_t proc_arch;
     int rc;
     *priority = 0;
-    *have_hidden_threads = false;
 
     mca_pml_teg.teg_ptl_components = NULL;
     mca_pml_teg.teg_num_ptl_components = 0;
@@ -151,7 +150,7 @@ mca_pml_base_module_t* mca_pml_teg_component_init(int* priority,
         NULL);
 
     /* buffered send */
-    if(mca_pml_base_bsend_init(allow_multi_user_threads) != OMPI_SUCCESS) {
+    if(OMPI_SUCCESS != mca_pml_base_bsend_init(enable_mpi_threads)) {
         ompi_output(0, "mca_pml_teg_component_init: mca_pml_bsend_init failed\n");
         return NULL;
     }
@@ -163,7 +162,6 @@ mca_pml_base_module_t* mca_pml_teg_component_init(int* priority,
     if(rc != OMPI_SUCCESS)
         return NULL;
     
-    *allow_multi_user_threads &= true;
     return &mca_pml_teg.super;
 }
 

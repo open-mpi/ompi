@@ -35,18 +35,13 @@ OBJ_CLASS_INSTANCE(mca_mpool_base_selected_module_t, ompi_list_item_t, NULL, NUL
  * will be closed and unloaded.  The selected modules will be returned
  * to the caller in a ompi_list_t.
  */
-int mca_mpool_base_init(bool *allow_multi_user_threads)
+int mca_mpool_base_init(bool enable_progress_threads, bool enable_mpi_threads)
 {
-  bool user_threads;
   ompi_list_item_t *item;
   mca_base_component_list_item_t *cli;
   mca_mpool_base_component_t *component;
   mca_mpool_base_module_t *module;
   mca_mpool_base_selected_module_t *sm;
-
-  /* Default to true in case there's no modules selected */
-
-  *allow_multi_user_threads = true;
 
   /* Traverse the list of available modules; call their init
      functions. */
@@ -65,7 +60,8 @@ int mca_mpool_base_init(bool *allow_multi_user_threads)
       ompi_output_verbose(10, mca_mpool_base_output,
                           "select: no init function; ignoring module");
     } else {
-       module = component->mpool_init(&user_threads);
+      module = component->mpool_init(enable_progress_threads,
+                                     enable_mpi_threads);
 
       /* If the module didn't initialize, unload it */
 
@@ -82,7 +78,6 @@ int mca_mpool_base_init(bool *allow_multi_user_threads)
       /* Otherwise, it initialized properly.  Save it. */
 
       else {
-         *allow_multi_user_threads &= user_threads;
           ompi_output_verbose(10, mca_mpool_base_output,
                            "select: init returned success");
 

@@ -79,7 +79,7 @@ typedef enum mca_io_base_version_t mca_io_base_version_t;
 
 struct mca_io_base_module_1_0_0_t;
 typedef int (*mca_io_base_component_init_query_fn_t)
-    (bool *allow_multi_user_threads, bool *have_hidden_threads);
+    (bool enable_progress_threads, bool enable_mpi_threads);
 typedef const struct mca_io_base_module_1_0_0_t *
     (*mca_io_base_component_file_query_1_0_0_fn_t)
     (struct ompi_file_t *file, struct mca_io_base_file_t **private_data, 

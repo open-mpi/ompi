@@ -52,8 +52,6 @@ struct mca_base_component_priority_list_item_t {
   mca_base_component_list_item_t super;
 
   int cpli_priority;
-  bool cpli_allow_multi_user_threads;
-  bool cpli_have_hidden_threads;
 };
 typedef struct mca_base_component_priority_list_item_t 
   mca_base_component_priority_list_item_t;
@@ -146,11 +144,6 @@ OMPI_DECLSPEC  int mca_base_components_open(const char *type_name, int output_id
 OMPI_DECLSPEC  int mca_base_components_close(int output_id, ompi_list_t *components_available, 
                              const mca_base_component_t *skip);
 
-  /* mca_base_init_select_components.c */
-  
-OMPI_DECLSPEC  int mca_base_init_select_components(int requested, 
-                                                   int *provided);
-  
 #if 0
   /* JMS Not implemented yet */
   int mca_base_init_callback(mca_base_init_cb_t func);

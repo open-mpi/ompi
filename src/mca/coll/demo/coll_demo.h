@@ -39,8 +39,8 @@ extern "C" {
 
     /* Component functions */
 
-    int mca_coll_demo_init_query(bool *allow_demo_user_threads,
-                                 bool *have_hidden_threads);
+    int mca_coll_demo_init_query(bool enable_progress_threads,
+                                 bool enable_mpi_threads);
     const struct mca_coll_base_module_1_0_0_t *
     mca_coll_demo_comm_query(struct ompi_communicator_t *comm, int *priority,
                              struct mca_coll_base_comm_t **data);

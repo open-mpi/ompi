@@ -284,11 +284,13 @@ typedef enum {
  * @param num_ptls (OUT) Returns the number of ptl instances created, or 0
  *                       if the transport is not available.
  *
- * @param allow_multi_user_threads (OUT) Indicated wether this component can
- * run at MPI_THREAD_MULTIPLE or not.
+ * @param enable_progress_threads (IN) Whether this component is
+ * allowed to run a hidden/progress thread or not.
  *
- * @param have_hidden_threads (OUT) Whether this component uses
- * hidden threads (e.g., progress threads) or not.
+ * @param enable_mpi_threads (IN) Whether support for multiple MPI
+ * threads is enabled or not (i.e., MPI_THREAD_MULTIPLE), which
+ * indicates whether multiple threads may invoke this component
+ * simultaneously or not.
  *
  * @return Array of pointers to PTL modules, or NULL if the transport  
  *         is not available.
@@ -302,8 +304,8 @@ typedef enum {
  */
 typedef struct mca_ptl_base_module_t** (*mca_ptl_base_component_init_fn_t)(
     int *num_ptls, 
-    bool *allow_multi_user_threads,
-    bool *have_hidden_threads
+    bool enable_progress_threads,
+    bool enable_mpi_threads
 );
 
 

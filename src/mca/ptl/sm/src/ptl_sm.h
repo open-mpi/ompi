@@ -151,14 +151,14 @@ extern int mca_ptl_sm_component_close(void);
  * SM module initialization.
  * 
  * @param num_ptls (OUT)                  Number of PTLs returned in PTL array.
- * @param allow_multi_user_threads (OUT)  Flag indicating wether PTL supports user threads (TRUE)
- * @param have_hidden_threads (OUT)       Flag indicating wether PTL uses threads (TRUE)
+ * @param enable_progress_threads (IN)    Flag indicating whether PTL is allowed to have progress threads
+ * @param enable_mpi_threads (IN)         Flag indicating whether PTL must support multilple simultaneous invocations from different threads
  *
  */
 extern mca_ptl_base_module_t** mca_ptl_sm_component_init(
     int *num_ptls, 
-    bool *allow_multi_user_threads,
-    bool *have_hidden_threads
+    bool enable_progress_threads,
+    bool enable_mpi_threads
 );
 
 /**

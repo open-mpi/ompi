@@ -1,7 +1,3 @@
-/** @file
- *
- *
- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University.
  *                         All rights reserved.
@@ -29,14 +25,6 @@
 #include "mca/topo/topo.h"
 
 /*
- * This structure is the interface to the MCA world. It contains the
- * version information and the four functions (see below) which
- * are needed for this module to function with the MCA framework
- */
-/*OMPI_COMP_EXPORT extern struct mca_topo_base_module_1_0_0_t mca_topo_unity_module;*/
-
-
-/*
  * ******************************************************************
  * ******** functions which provide MCA interface comppliance *******
  * ******************************************************************
@@ -52,8 +40,8 @@
 #if defined(__cplusplus) || defined(c_plusplus)
     extern "C" {
 #endif
-        int mca_topo_unity_component_init_query(bool *allow_multi_user_threads,
-                                                bool *have_hidden_threads);
+        int mca_topo_unity_component_init_query(bool enable_progress_threads,
+                                                bool enable_mpi_threads);
         struct mca_topo_base_module_1_0_0_t *
             mca_topo_unity_component_comm_query (int *priority);
         int mca_topo_unity_component_comm_unquery (struct ompi_communicator_t *comm);

@@ -32,9 +32,8 @@ extern "C" {
 #endif
 OMPI_DECLSPEC  int mca_pml_base_open(void);
 OMPI_DECLSPEC  int mca_pml_base_progress(void);
-OMPI_DECLSPEC  int mca_pml_base_select(mca_pml_base_module_t *selected, 
-                          bool *allow_multi_user_threads, 
-                          bool *have_hidden_threads);
+OMPI_DECLSPEC  int mca_pml_base_select(bool enable_progress_threads,
+                                       bool enable_mpi_threads);
 OMPI_DECLSPEC int mca_pml_base_close(void);
 
 
