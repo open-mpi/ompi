@@ -74,7 +74,7 @@ ompi_class_t mca_ptl_elan_recv_frag_t_class = {
 extern mca_ptl_elan_state_t mca_ptl_elan_global_state;
 
 mca_ptl_elan_send_frag_t *
-mca_ptl_elan_alloc_send_desc (struct mca_ptl_t *ptl_ptr,
+mca_ptl_elan_alloc_send_desc (struct mca_ptl_base_module_t *ptl_ptr,
                   struct mca_pml_base_send_request_t *sendreq)
 {
     struct ompi_ptl_elan_queue_ctrl_t *queue;
@@ -88,7 +88,7 @@ mca_ptl_elan_alloc_send_desc (struct mca_ptl_t *ptl_ptr,
 
     /* For now, bind to queue DMA directly */
     {
-        queue = ((mca_ptl_elan_t *) ptl_ptr)->queue;
+        queue = ((mca_ptl_elan_module_t *) ptl_ptr)->queue;
         flist = &queue->tx_desc_free;
 
         if (ompi_using_threads ()) {
@@ -102,7 +102,7 @@ mca_ptl_elan_alloc_send_desc (struct mca_ptl_t *ptl_ptr,
             while (NULL == item) {
                 mca_ptl_tstamp_t tstamp = 0;
 
-                ptl_ptr->ptl_module->ptlm_progress (tstamp);
+                ptl_ptr->ptl_component->ptlm_progress (tstamp);
                 item = ompi_list_remove_first (&((flist)->super));
             }
 	    ompi_mutex_unlock(&flist->fl_lock);
@@ -119,7 +119,7 @@ mca_ptl_elan_alloc_send_desc (struct mca_ptl_t *ptl_ptr,
                  * PTL's from other modules.  Wait for PML to change.
                  * Otherwise have to trigger PML progress from PTL.  Ouch..
                  */
-                ptl_ptr->ptl_module->ptlm_progress (tstamp);
+                ptl_ptr->ptl_component->ptlm_progress (tstamp);
                 item = ompi_list_remove_first (&((flist)->super));
             }
         }

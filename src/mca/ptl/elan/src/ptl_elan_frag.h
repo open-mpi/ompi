@@ -48,7 +48,7 @@ struct mca_ptl_elan_recv_frag_t {
 typedef struct mca_ptl_elan_recv_frag_t mca_ptl_elan_recv_frag_t;
 
 mca_ptl_elan_send_frag_t *
-mca_ptl_elan_alloc_send_desc( struct mca_ptl_t *ptl,
+mca_ptl_elan_alloc_send_desc( struct mca_ptl_base_module_t *ptl,
                   struct mca_pml_base_send_request_t *sendreq);
 
 mca_ptl_elan_recv_frag_t *

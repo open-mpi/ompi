@@ -156,7 +156,7 @@ struct ompi_ptl_elan_qdma_desc_t {
     ELAN_BASE_DESC_FIELDS 
     /* 8 byte aligned */
 
-    mca_ptl_elan_t *ptl;
+    mca_ptl_elan_module_t *ptl;
     RAIL           *rail;
     /* 8 byte aligned */
 
@@ -241,7 +241,7 @@ struct mca_ptl_elan_state_t {
     RAIL      **all_rails;        /**< all rails */
     int        *rail_intcookie;      /**< record the cookies for the rail */
     ADDR_SDRAM *all_estates;
-    mca_ptl_elan_module_1_0_0_t *elan_module;
+    mca_ptl_elan_component_t *elan_component;
 };
 typedef struct mca_ptl_elan_state_t mca_ptl_elan_state_t;
 
@@ -250,15 +250,15 @@ ELAN_SLEEP *ompi_init_elan_sleepdesc (mca_ptl_elan_state_t * ems,
                                       RAIL * rail);
 
 /* Initialization and finalization routines */
-int         ompi_mca_ptl_elan_init (mca_ptl_elan_module_1_0_0_t * emp);
-int         ompi_mca_ptl_elan_finalize (mca_ptl_elan_module_1_0_0_t * emp);
+int         ompi_mca_ptl_elan_init (mca_ptl_elan_component_t * emp);
+int         ompi_mca_ptl_elan_finalize (mca_ptl_elan_component_t * emp);
 
 /* communication initialization prototypes */
-int         ompi_init_elan_qdma (mca_ptl_elan_module_1_0_0_t * emp,
+int         ompi_init_elan_qdma (mca_ptl_elan_component_t * emp,
                                  int num_rails);
-int         ompi_init_elan_rdma (mca_ptl_elan_module_1_0_0_t * emp,
+int         ompi_init_elan_rdma (mca_ptl_elan_component_t * emp,
                                  int num_rails);
-int         ompi_init_elan_stat (mca_ptl_elan_module_1_0_0_t * emp,
+int         ompi_init_elan_stat (mca_ptl_elan_component_t * emp,
                                  int num_rails);
 
 /* communication prototypes */
@@ -273,8 +273,8 @@ int         mca_ptl_elan_poll_desc(mca_ptl_elan_send_frag_t *desc);
 int         mca_ptl_elan_wait_desc(mca_ptl_elan_send_frag_t *desc);
 
 /* control, synchronization and state prototypes */
-int         mca_ptl_elan_drain_recv(mca_ptl_elan_module_1_0_0_t *emp);
-int         mca_ptl_elan_update_send(mca_ptl_elan_module_1_0_0_t *emp);
+int         mca_ptl_elan_drain_recv(mca_ptl_elan_component_t *emp);
+int         mca_ptl_elan_update_send(mca_ptl_elan_component_t *emp);
 
 /**
  * utility routines for parameter registration
