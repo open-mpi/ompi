@@ -30,6 +30,8 @@ struct lam_group_t {
     int grp_proc_count;     /**< number of processes in group */
     int grp_my_rank;        /**< rank in group */
     int grp_f_to_c_index;   /**< index in Fortran <-> C translation array */
+    int grp_ok_to_free;     /**< indicates if it is ok to call group_free()
+                                 on this group */
     lam_proc_t **grp_proc_pointers;
                             /**< list of pointers to lam_proc_t structures
                                for each process in the group */
