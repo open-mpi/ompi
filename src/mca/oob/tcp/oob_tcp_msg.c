@@ -360,10 +360,10 @@ static void mca_oob_tcp_msg_data(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* pee
                 /* first iovec of recv message contains the header -
                  * subsequent contain user data
                 */
-                post->msg_uiov[0].iov_base = msg->msg_rwiov[1].iov_base;
-                post->msg_uiov[0].iov_len = msg->msg_rwiov[1].iov_len;
+                post->msg_uiov[0].iov_base = msg->msg_rwbuf;
+                post->msg_uiov[0].iov_len = msg->msg_hdr.msg_size;
+                post->msg_rc = msg->msg_hdr.msg_size;
                 msg->msg_rwbuf = NULL;
-                post->msg_rc = msg->msg_rwiov[1].iov_len;
             }
                                                                                                                           
         } else {

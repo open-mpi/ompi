@@ -52,8 +52,8 @@ int mca_oob_tcp_recv(
             if(NULL == iov || 0 == count) {
                 return OMPI_ERR_BAD_PARAM;
             }
-            iov[0].iov_base = msg->msg_rwiov[1].iov_base;
-            iov[0].iov_len = msg->msg_rwiov[1].iov_len;
+            iov[0].iov_base = msg->msg_rwbuf;
+            iov[0].iov_len = msg->msg_hdr.msg_size;
             msg->msg_rwbuf = NULL;
  
         } else {
@@ -161,8 +161,8 @@ int mca_oob_tcp_recv_nb(
             if(NULL == iov || 0 == count) {
                 return OMPI_ERR_BAD_PARAM;
             }
-            iov[0].iov_base = msg->msg_rwiov[1].iov_base;
-            iov[0].iov_len = msg->msg_rwiov[1].iov_len;
+            iov[0].iov_base = msg->msg_rwbuf;
+            iov[0].iov_len = msg->msg_hdr.msg_size;
             msg->msg_rwbuf = NULL;
  
         } else {
