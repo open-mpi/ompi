@@ -1,0 +1,12 @@
+Makefile
+Makefile.in
+.libs
+*.o
+*.lo
+*.la
+.deps
+stamp-h
+stamp-h1
+stamp-h.in
+coll_basic_config.h
+coll_basic_config.h.in
