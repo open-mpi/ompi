@@ -245,20 +245,6 @@ done
 unset foo type m components structs outfile outdir total_dir file \
     all_components static_components dso_components static_ltlibs
 
-# Special case for the mca/common directory -- if we don't have any
-# static libraries to build, then don't build the libmca_common.la
-# library at all.  This is because there's no "base" directory in
-# mca/common -- so if all the components are being built as DSO's,
-# then we don't traverse into mca/common (instead, we only traverse
-# into dynamic-mca/common).
-
-AM_CONDITIONAL(OMPI_BUILD_LIBMCA_COMMON_LA, test -n "$MCA_common_STATIC_LTLIBS")
-LIBMCA_COMMON_LA=
-if test -n "$MCA_common_STATIC_LTLIBS"; then
-    LIBMCA_COMMON_LA=common/libmca_common.la
-fi
-AC_SUBST(LIBMCA_COMMON_LA)
-
 # Grumble.  It seems that AC_SUBST and AC_DEFINE don't let you
 # substitue on a variable name that contains a variable (e.g.,
 # OMPI_MCA_$type_SUBDIRS).  So we have to do this manually.  :-(
