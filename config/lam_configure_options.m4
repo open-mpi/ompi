@@ -126,14 +126,11 @@ AC_ARG_ENABLE(mpi-profile,
                    [enable MPI profiling (default: enabled)]))
 if test "$enable_mpi_profile" != "no"; then
     AC_MSG_RESULT([yes])
-    WANT_MPI_PROFILE=1
+    WANT_MPI_PROFILING=1
 else
     AC_MSG_RESULT([no])
-    WANT_MPI_PROFILE=0
+    WANT_MPI_PROFILING=0
 fi
-AC_DEFINE_UNQUOTED(LAM_ENABLE_MPI_PROFILING, $WANT_MPI_PROFILE,
-    [Do we want MPI profiling or not?])
-AM_CONDITIONAL(WANT_MPI_PROFILING, test "$WANT_MPI_PROFILE" = 1)
 
 
 #
