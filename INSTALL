@@ -1,29 +1,26 @@
-Execute the following instructions to install the Open MPI system from within the directory at the top of the tree:
+If you have checked out a DEVELOPER'S COPY of Open MPI (i.e., you
+checked out from subversion), you must first run:
 
-./autogen.sh (if this fails read the HACKING file)
-./configure --prefix=/where/to/install
-make install
+shell$ ./autogen.sh 
 
-To run an MPI program:
+You will need very recent versions of GNU Autoconf, Automake, and
+Libtool.  If autogen.sh fails, read the HACKING file.
 
-mpicc your-code.c
+Everyone must run "configure" and "make" to build Open MPI.  Execute
+the following commands to install the Open MPI system from within
+the directory at the top of the tree:
 
-In order to run the program, you need to set some envs (use export for bash etc)
+shell$ ./configure --prefix=/where/to/install
+shell$ make all install
 
-setenv OMPI_MCA_oob_cofs_dir /tmp/cofs
-setenv OMPI_MCA_pcm_cofs_cellid 1
-setenv OMPI_MCA_pcm_cofs_jobid 1
+To compile an MPI program:
 
-Then if you need to run say N nodes you need to set:
-setenv OMPI_MCA_pcm_cofs_num_procs N
+C programs:   mpicc your-code.c
+C++ programs: mpiCC your-code.cc    or
+              mpic++ your-code.cc   (for case-insensitive filesystems)
+F77 programs: mpif77 your-code.f
 
-Then in the shell for each you would set
-
-setenv OMPI_MCA_pcm_cofs_procid MYRANK
-
-where MYRANK is 0 in one, 1 in the next etc
-
-Or - you can use the mpirun shell script which sets these for you...
-
-This is the world's greatest MPI, version 10.0a1r975.
-
+We do not yet have a proper mpirun program.  There is a script in
+src/mpirun/mpirun that uses ssh to start individual MPI processes
+(along with a bunch of associated environment variables); it will
+eventually be replaced with a real mpirun command.
