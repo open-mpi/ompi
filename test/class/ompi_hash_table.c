@@ -8,6 +8,8 @@
 #include "class/ompi_object.h"
 #include "class/ompi_hash_table.h"
 
+static FILE *error_out=NULL;
+
 char *num_keys[] = {
     "1234", "1234",
     "5678", "5678",
@@ -59,7 +61,7 @@ static void validate_table(ompi_hash_table_t *table, char *keys[], int is_numeri
 static void test_htable(ompi_hash_table_t *table)
 {
     int j;
-    printf("\nTesting integer keys...\n");
+    fprintf(error_out, "\nTesting integer keys...\n");
     for ( j = 0; num_keys[j]; j += 2)
     {
         ompi_hash_table_set_value_uint32(table, atoi(num_keys[j]), num_keys[j+1]);
@@ -70,7 +72,7 @@ static void test_htable(ompi_hash_table_t *table)
     ompi_hash_table_remove_all(table);
     test_verify_int(0, ompi_hash_table_get_size(table));
     
-    printf("\nTesting string keys...\n");
+    fprintf(error_out, "\nTesting string keys...\n");
     for ( j = 0; str_keys[j]; j += 2)
     {
         ompi_hash_table_set_value_ptr(table, str_keys[j], strlen(str_keys[j]), str_keys[j+1]);
@@ -81,7 +83,7 @@ static void test_htable(ompi_hash_table_t *table)
     ompi_hash_table_remove_all(table);
     test_verify_int(0, ompi_hash_table_get_size(table));
     
-    printf("\nTesting collision resolution...\n");
+    fprintf(error_out, "\nTesting collision resolution...\n");
     /* All of the string keys in keys array should
         have the same hash value. */
     for ( j = 0; perm_keys[j]; j += 2)
@@ -95,7 +97,7 @@ static void test_htable(ompi_hash_table_t *table)
     ompi_hash_table_remove_all(table);
     test_verify_int(0, ompi_hash_table_get_size(table));
     
-    printf("\n\n");
+    fprintf(error_out, "\n\n");
 }
 
 
@@ -106,10 +108,10 @@ static void test_dynamic(void)
     table = OBJ_NEW(ompi_hash_table_t);
     if ( NULL == table )
     {
-        printf("Error: Unable to create hash table.\n");
+        fprintf(error_out, "Error: Unable to create hash table.\n");
         exit(-1);
     }
-    printf("Testing with dynamically created table...\n");
+    fprintf(error_out, "Testing with dynamically created table...\n");
     ompi_hash_table_init(table, 4);
     test_htable(table);
     
@@ -124,7 +126,7 @@ static void test_static(void)
     OBJ_CONSTRUCT(&table, ompi_hash_table_t);
     ompi_hash_table_init(&table, 128);
 
-    printf("Testing with statically created table...\n");
+    fprintf(error_out, "Testing with statically created table...\n");
     test_htable(&table);
 
     OBJ_DESTRUCT(&table);
@@ -135,6 +137,13 @@ int main(int argc, char **argv)
 {
     /* local variables */
     test_init("ompi_hash_table_t");
+
+#ifdef STANDALONE
+    error_out = stderr;
+#else
+    error_out = fopen( "./ompi_hash_table_test_out.txt", "w" );
+    if( error_out == NULL ) error_out = stderr;
+#endif
     
     test_dynamic();
     test_static();
