@@ -6,6 +6,7 @@
 #define LAM_MCA_H
 
 #include "mpi.h"
+#include "lam/lfc/list.h"
 #include "lam/util/cmd_line.h"
 
 /*
@@ -91,9 +92,21 @@ typedef struct mca_base_module_data_1_0_0_t mca_base_module_data_1_0_0_t;
 
 
 /*
+ * Lists of modules
+ */
+struct mca_base_module_list_item_t {
+  lam_list_item_t super;
+  mca_base_module_t *mli_module;
+};
+typedef struct mca_base_module_list_item_t mca_base_module_list_item_t;
+
+
+/*
  * Structure for making priority lists of modules
  */
 struct mca_base_module_priority_t {
+  lam_list_item_t super;
+
   int lsm_priority;
   int lsm_thread_min, lsm_thread_max;
   mca_base_module_t *lsm_module;
@@ -108,31 +121,9 @@ typedef struct mca_base_module_priority_t mca_base_module_priority_t;
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
-  int mca_base_open(void);
-  int mca_base_close(void);
-
   int mca_base_arg_setup(lam_cmd_line_t *cmd);
   int mca_base_arg_process(lam_cmd_line_t *cmd);
   int mca_base_arg_process_one(char *type, char *arg);
-
-  int mca_base_module_check(char *name, char *module, int is_default);
-  int mca_base_module_compare(mca_base_module_t *a, mca_base_module_t *b);
-  int mca_base_module_find(char *directory, char *type, 
-                           mca_base_module_t *static_modules[], 
-                           mca_base_module_t ***modules_out);
-#if 0
-  /* JMS add after the lbltdl stuff is done */
-  int mca_base_module_register(char *type, lt_dlhandle module_handle, 
-                               mca_t *module_struct);
-#endif
-  int mca_base_module_registry_init(void);
-  int mca_base_module_registry_finalize(void);
-  int mca_base_module_registry_link(const char *src_type, 
-                                    const char *src_name,
-                                    const char *depend_type,
-                                    const char *depend_name);
-  void mca_base_module_registry_unuse(mca_base_module_t *module);
-  int mca_base_module_registry_use(const char *type, const char *name);
 
 #if 0
   /* JMS Add after debug streams added */
