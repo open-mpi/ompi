@@ -84,8 +84,8 @@ extern lam_class_info_t object_cls;
     dynamically allocated. */
 #define STATIC_INIT(obj, cls_ptr) \
     do {    \
-        OBJECT(obj)->obj_class = cls_ptr;           \
-        OBJECT(obj)->obj_class->cls_init(obj);     \
+        OBJECT(&(obj))->obj_class = cls_ptr;           \
+        OBJECT(&(obj))->obj_class->cls_init(OBJECT(&(obj)));     \
     } while (0)
 
 /* super_cls should be the pointer to the obj's parent
