@@ -22,7 +22,7 @@
 #include "mca/svc/base/base.h"
 
 
-OBJ_CLASS_INSTANCE(mca_svc_base_selected_module_t, ompi_list_item_t, NULL, NULL);
+OBJ_CLASS_INSTANCE(mca_svc_base_module_item_t, ompi_list_item_t, NULL, NULL);
 
 
 /**
