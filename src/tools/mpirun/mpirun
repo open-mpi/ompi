@@ -159,6 +159,17 @@ do_start_proc() {
     cmd="${cmd} -pwd ${ompi_cwd} ${ompi_prepped}"
     if test ! -z "${OMPI_MCA_oob_cofs_dir}" ; then
         cmd="${cmd} -commdir ${OMPI_MCA_oob_cofs_dir}"
+    else
+        if test -d $HOME/cofs; then
+            OMPI_MCA_oob_cofs_dir="$HOME/cofs"
+        elif test -d /tmp/cofs; then
+            OMPI_MCA_oob_cofs_dir="/tmp/cofs"
+        else
+            OMPI_MCA_oob_cofs_dir="$HOME/cofs"
+            mkdir $HOME/cofs
+        fi
+        export OMPI_MCA_OOB_cofs_dir
+        cmd="${cmd} -commdir ${OMPI_MCA_oob_cofs_dir}"
     fi
     cmd="${cmd} -- ${argv}"
     ${cmd}
