@@ -36,10 +36,10 @@ nodist_libmpi_f77_pmpi_la_SOURCES = \
 # Sym link in the sources from the real MPI directory
 #
 $(nodist_libmpi_f77_pmpi_la_SOURCES):
-    if test ! -r $@ ; then \
-        pname=`echo $@ | cut -b '2-'` ; \
-        ln -s $(top_srcdir)/src/mpi/interface/f77/$$pname $@ ; \
-    fi
+	if test ! -r $@ ; then \
+	    pname=`echo $@ | cut -b '2-'` ; \
+	    ln -s $(top_srcdir)/src/mpi/interface/f77/$$pname $@ ; \
+	fi
 #
 # 
 headers = \
