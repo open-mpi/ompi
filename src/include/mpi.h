@@ -12,9 +12,9 @@
 
 #define LAM_MPI 1
 
-typedef struct lam_communicator *MPI_Comm;
-typedef struct lam_group *MPI_Group;
-typedef struct lam_datatype *MPI_Datatype;
+typedef struct lam_communicator_t *MPI_Comm;
+typedef struct lam_group_t *MPI_Group;
+typedef struct lam_datatype_t *MPI_Datatype;
 
 extern MPI_Comm MPI_COMM_NULL;
 extern MPI_Comm MPI_COMM_WORLD;
