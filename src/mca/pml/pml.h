@@ -81,7 +81,7 @@ typedef int (*mca_pml_base_progress_fn_t)(void);
 
 typedef int (*mca_pml_base_irecv_init_fn_t)(
     void *buf,
-    size_t size,
+    size_t count,
     struct lam_datatype_t *datatype,
     int src,
     int tag,
@@ -91,7 +91,7 @@ typedef int (*mca_pml_base_irecv_init_fn_t)(
 
 typedef int (*mca_pml_base_irecv_fn_t)(
     void *buf,
-    size_t size,
+    size_t count,
     struct lam_datatype_t *datatype,
     int src,
     int tag,
@@ -101,7 +101,7 @@ typedef int (*mca_pml_base_irecv_fn_t)(
 
 typedef int (*mca_pml_base_recv_fn_t)(
     void *buf,
-    size_t size,
+    size_t count,
     struct lam_datatype_t *datatype,
     int src,
     int tag,
@@ -111,7 +111,7 @@ typedef int (*mca_pml_base_recv_fn_t)(
 
 typedef int (*mca_pml_base_isend_init_fn_t)(
     void *buf,
-    size_t size,
+    size_t count,
     struct lam_datatype_t *datatype,
     int dst,
     int tag,
@@ -122,7 +122,7 @@ typedef int (*mca_pml_base_isend_init_fn_t)(
 
 typedef int (*mca_pml_base_isend_fn_t)(
     void *buf,
-    size_t size,
+    size_t count,
     struct lam_datatype_t *datatype,
     int dst,
     int tag,
@@ -133,7 +133,7 @@ typedef int (*mca_pml_base_isend_fn_t)(
 
 typedef int (*mca_pml_base_send_fn_t)(
     void *buf,
-    size_t size,
+    size_t count,
     struct lam_datatype_t *datatype,
     int dst,
     int tag,
@@ -159,7 +159,7 @@ typedef int (*mca_pml_base_wait_fn_t)(
 );
 
 typedef int (*mca_pml_base_wait_all_fn_t)(
-    int count,                    /* size of request/status arrays */
+    int count,                    /* count of request/status arrays */
     lam_request_t** request,      /* array of requests */
     lam_status_public_t *status   /* array of statuses */
 );
