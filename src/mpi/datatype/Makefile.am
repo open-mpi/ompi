@@ -13,7 +13,8 @@ headers = \
         datatype.h
 
 libmpi_datatype_la_SOURCES = \
-        $(headers) \
+        $(headers)
+	copy.c \
         datatype.c
 
 # Conditionally install the header files
