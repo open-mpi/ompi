@@ -14,13 +14,13 @@
 #include "util/argv.h"
 #include "util/output.h"
 #include "util/sys_info.h"
-#include "mca/mpool/sm/mpool_sm.h"
 #include "mca/pml/pml.h"
 #include "mca/ptl/ptl.h"
 #include "mca/ptl/base/ptl_base_sendreq.h"
 #include "mca/base/mca_base_param.h"
 #include "mca/base/mca_base_module_exchange.h"
 #include "mca/ptl/sm/src/ptl_sm.h"
+#include "mca/mpool/base/base.h"
 #include "ptl_sm.h"
 #include "ptl_sm_sendreq.h"
 #include "ptl_sm_sendfrag.h"
@@ -113,6 +113,8 @@ int mca_ptl_sm_module_open(void)
         mca_ptl_sm_param_register_int("free_list_inc", 256);
     mca_ptl_sm_module.sm_max_procs =
         mca_ptl_sm_param_register_int("max_procs", -1);
+    mca_ptl_sm_module.sm_mpool_name =
+        mca_ptl_sm_param_register_string("mpool", "sm");
 
     /* initialize objects */
     OBJ_CONSTRUCT(&mca_ptl_sm_module.sm_lock, ompi_mutex_t);
@@ -152,6 +154,15 @@ mca_ptl_t** mca_ptl_sm_module_init(
     *allow_multi_user_threads = true;
     *have_hidden_threads = OMPI_HAVE_THREADS;
 
+    /* lookup shared memory pool */
+    mca_ptl_sm_module.sm_mpool = mca_mpool_module_lookup(mca_ptl_sm_module.sm_mpool_name);
+    if(NULL == mca_ptl_sm_module.sm_mpool) {
+        ompi_output(0, "mca_ptl_sm_module_init: unable to locate shared memory pool: %s\n",
+            mca_ptl_sm_module.sm_mpool_name);
+        return NULL;
+    }
+    mca_ptl_sm_module.sm_mpool_base = mca_ptl_sm_module.sm_mpool->mpool_base();
+
     /* initialize free lists */
     ompi_free_list_init(&mca_ptl_sm_module.sm_send_requests, 
         sizeof(mca_ptl_sm_send_request_t),
@@ -159,7 +170,7 @@ mca_ptl_t** mca_ptl_sm_module_init(
         mca_ptl_sm_module.sm_free_list_num,
         mca_ptl_sm_module.sm_free_list_max,
         mca_ptl_sm_module.sm_free_list_inc,
-        &mca_mpool_sm); /* use shared-memory pool */
+        mca_ptl_sm_module.sm_mpool); /* use shared-memory pool */
 
     ompi_free_list_init(&mca_ptl_sm_module.sm_recv_frags, 
         sizeof(mca_ptl_sm_recv_frag_t),
@@ -167,7 +178,7 @@ mca_ptl_t** mca_ptl_sm_module_init(
         mca_ptl_sm_module.sm_free_list_num,
         mca_ptl_sm_module.sm_free_list_max,
         mca_ptl_sm_module.sm_free_list_inc,
-        &mca_mpool_sm); /* use shared-memory pool */
+        mca_ptl_sm_module.sm_mpool); /* use shared-memory pool */
 
     /* publish shared memory parameters with the MCA framework */
     if(mca_ptl_sm_module_exchange() != OMPI_SUCCESS)

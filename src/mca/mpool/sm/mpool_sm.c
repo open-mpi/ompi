@@ -5,10 +5,12 @@
 #include <string.h>
 #include "util/output.h"
 #include "mca/mpool/sm/mpool_sm.h"
+#include "mca/mpool/sm/mpool_sm_mmap.h"
 
 
 mca_mpool_t mca_mpool_sm = {
     &mca_mpool_sm_module.super,
+    mca_mpool_sm_base,
     mca_mpool_sm_alloc,
     mca_mpool_sm_realloc,
     mca_mpool_sm_free,
@@ -16,6 +18,14 @@ mca_mpool_t mca_mpool_sm = {
     NULL
 };
 
+
+/*
+ * base address of shared memory mapping
+ */
+void* mca_mpool_sm_base()
+{
+    return (mca_mpool_sm_module.sm_mmap != NULL) ? mca_mpool_sm_module.sm_mmap->map_addr : NULL;
+}
 
 /**
   * allocate function 

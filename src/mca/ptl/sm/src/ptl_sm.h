@@ -14,17 +14,20 @@
 #include "class/ompi_free_list.h"
 #include "mca/pml/pml.h"
 #include "mca/ptl/ptl.h"
-
+#include "mca/mpool/mpool.h"
 
 /**
  * Shared Memory (SM) PTL module.
  */
 struct mca_ptl_sm_module_1_0_0_t {
-    mca_ptl_base_module_1_0_0_t super;   /**< base PTL module */
-    int sm_free_list_num;                /**< initial size of free lists */
-    int sm_free_list_max;                /**< maximum size of free lists */
-    int sm_free_list_inc;                /**< number of elements to alloc when growing free lists */
-    int sm_max_procs;                    /**< upper limit on the number of processes using the shared memory pool */
+    mca_ptl_base_module_1_0_0_t super;    /**< base PTL module */
+    int sm_free_list_num;                 /**< initial size of free lists */
+    int sm_free_list_max;                 /**< maximum size of free lists */
+    int sm_free_list_inc;                 /**< number of elements to alloc when growing free lists */
+    int sm_max_procs;                     /**< upper limit on the number of processes using the shared memory pool */
+    char* sm_mpool_name;                  /**< name of shared memory pool module */
+    mca_mpool_t* sm_mpool;                /**< shared memory pool */
+    void* sm_mpool_base;                  /**< base address of shared memory pool */
     ompi_free_list_t sm_send_requests;    /**< free list of sm send requests -- sendreq + sendfrag */
     ompi_free_list_t sm_send_frags;       /**< free list of sm send fragments */
     ompi_free_list_t sm_recv_frags;       /**< free list of sm recv fragments */
