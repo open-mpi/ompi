@@ -27,12 +27,15 @@ MPI_File MPI_File_f2c(MPI_Fint file_f)
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-        if (file_index < 0 ||
-            file_index >= ompi_pointer_array_get_size(&ompi_file_f_to_c_table)) {
-            (void) OMPI_ERRHANDLER_INVOKE(MPI_FILE_NULL, MPI_ERR_FILE,
-                                          FUNC_NAME);
-            return MPI_FILE_NULL;
-        }
+    }
+
+    /* Per MPI-2:4.12.4, do not invoke an error handler if we get an
+       invalid fortran handle */
+
+    if (file_index < 0 ||
+        file_index >= 
+        ompi_pointer_array_get_size(&ompi_file_f_to_c_table)) {
+        return MPI_FILE_NULL;
     }
 
     return ompi_file_f_to_c_table.addr[file_index];

@@ -36,14 +36,16 @@ MPI_Info MPI_Info_f2c(MPI_Fint info)
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-        if (info_index < 0 || 
-            info_index >= ompi_pointer_array_get_size(&ompi_info_f_to_c_table)) {
-            (void) OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INFO,
-                                          FUNC_NAME);
-            return MPI_INFO_NULL;
-        }
     }
 
-    /* return the index */ 
+    /* Per MPI-2:4.12.4, do not invoke an error handler if we get an
+       invalid fortran handle */
+    
+    if (info_index < 0 || 
+        info_index >= 
+        ompi_pointer_array_get_size(&ompi_info_f_to_c_table)) {
+        return MPI_INFO_NULL;
+    }
+
     return ompi_info_f_to_c_table.addr[info_index];
 }

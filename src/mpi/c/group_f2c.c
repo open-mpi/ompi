@@ -28,19 +28,17 @@ MPI_Group MPI_Group_f2c(MPI_Fint group_f)
 
     group_index = (size_t) group_f;
 
-    /* error checks */
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-        if (0 > group_index) {
-            (void) OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_GROUP,
-                                          FUNC_NAME);
-            return MPI_GROUP_NULL;
-        }
-        if (group_index >= ompi_group_f_to_c_table->size) {
-            (void) OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_GROUP,
-                                          FUNC_NAME);
-            return MPI_GROUP_NULL;
-        }
+    }
+
+    /* Per MPI-2:4.12.4, do not invoke an error handler if we get an
+       invalid fortran handle */
+
+    if (group_index < 0 ||
+        group_index >=
+        ompi_pointer_array_get_size(ompi_group_f_to_c_table)) {
+        return MPI_GROUP_NULL;
     }
 
     group_c = ompi_group_f_to_c_table->addr[group_index];

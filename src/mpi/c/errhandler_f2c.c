@@ -22,20 +22,22 @@ static const char FUNC_NAME[] = "MPI_Errhandler_f2c";
 
 MPI_Errhandler MPI_Errhandler_f2c(MPI_Fint errhandler_f)
 {
-  size_t eh_index = (size_t) errhandler_f;
+    size_t eh_index = (size_t) errhandler_f;
 
-  /* Error checking */
+    /* Error checking */
 
-  if (MPI_PARAM_CHECK) {
-    OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-
-    if (0 > eh_index || 
-        eh_index >= ompi_pointer_array_get_size(ompi_errhandler_f_to_c_table)) {
-      return MPI_ERRHANDLER_NULL;
+    if (MPI_PARAM_CHECK) {
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
     }
-  }
+        
+    /* Per MPI-2:4.12.4, do not invoke an error handler if we get an
+       invalid fortran handle */
+    
+    if (eh_index < 0 || 
+        eh_index >= 
+        ompi_pointer_array_get_size(ompi_errhandler_f_to_c_table)) {
+        return MPI_ERRHANDLER_NULL;
+    }
 
-  /* All done */
-
-  return ompi_errhandler_f_to_c_table->addr[eh_index];
+    return ompi_errhandler_f_to_c_table->addr[eh_index];
 }
