@@ -14,13 +14,19 @@ AC_MSG_CHECKING([whether to enable memory zeroing])
 AC_ARG_ENABLE(mem-zero, 
     AC_HELP_STRING([--enable-mem-zero],
                    [enable memory zeroing for memory-checking debuggers (debugging only) (default: disabled)]))
-if test "$enable_mem-zero" = "yes"; then
+if test "$enable_mem_zero" = "yes"; then
     AC_MSG_RESULT([yes])
     WANT_MEM_ZERO=1
 else
     AC_MSG_RESULT([no])
     WANT_MEM_ZERO=0
 fi
+#################### Early development override ####################
+if test "$WANT_MEM_ZERO" = "0" -a -z "$enable_mem_zero" -a -d CVS; then
+    WANT_MEM_ZERO=1
+    echo "--> developer override: enable mem zeroing by default"
+fi
+#################### Early development override ####################
 AC_DEFINE_UNQUOTED(LAM_ENABLE_MEM_ZERO, $WANT_MEM_ZERO,
     [Whether we want the LAM_MEM_ZERO macro to memset or not])
 
@@ -39,6 +45,12 @@ else
     AC_MSG_RESULT([no])
     WANT_MEM_PROFILE=0
 fi
+#################### Early development override ####################
+if test "$WANT_MEM_PROFILE" = "0" -a -z "$enable_mem_zero" -a -d CVS; then
+    WANT_MEM_PROFILE=1
+    echo "--> developer override: enable mem profiling by default"
+fi
+#################### Early development override ####################
 AC_DEFINE_UNQUOTED(LAM_ENABLE_MEM_PROFILE, $WANT_MEM_PROFILE,
     [Whether we want the memory profiling or not])
 
@@ -49,14 +61,20 @@ AC_DEFINE_UNQUOTED(LAM_ENABLE_MEM_PROFILE, $WANT_MEM_PROFILE,
 AC_MSG_CHECKING([if want developer-level compiler pickyness])
 AC_ARG_ENABLE(picky, 
     AC_HELP_STRING([--enable-picky],
-                   [enable developer-level compiler pickyness (not for general MPI users!) (default: enabled in CVS source trees)]))
-if test "$enable_picky" != "no" -a -d CVS; then
+                   [enable developer-level compiler pickyness (not for general MPI users!) (default: enabled)]))
+if test "$enable_picky" != "no"; then
     AC_MSG_RESULT([yes])
     WANT_PICKY_COMPILER=1
 else
     AC_MSG_RESULT([no])
     WANT_PICKY_COMPILER=0
 fi
+#################### Early development override ####################
+if test "$WANT_PICKY_COMPILER" = "0" -a -z "$enable_picky" -a -d CVS; then
+    WANT_PICKY_COMPILER=1
+    echo "--> developer override: enable picky compiler by default"
+fi
+#################### Early development override ####################
 
 #
 # Developer debugging
@@ -73,6 +91,12 @@ else
     AC_MSG_RESULT([no])
     WANT_DEBUG=0
 fi
+#################### Early development override ####################
+if test "$WANT_DEBUG" = "0" -a -z "$enable_debug" -a -d CVS; then
+    WANT_DEBUG=1
+    echo "--> developer override: enable debugging code by default"
+fi
+#################### Early development override ####################
 AC_DEFINE_UNQUOTED(LAM_ENABLE_DEBUG, $WANT_DEBUG,
     [Whether we want developer-level debugging code or not])
 
