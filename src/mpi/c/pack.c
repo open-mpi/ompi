@@ -46,12 +46,12 @@ int MPI_Pack(void *inbuf, int incount, MPI_Datatype datatype,
 
     local_convertor = OBJ_NEW(ompi_convertor_t);
     ompi_convertor_init_for_send(local_convertor, 0, datatype, incount, 
-                                 inbuf, 0);
+                                 inbuf, *position);
 
     /* Check for truncation */
 
     ompi_convertor_get_packed_size(local_convertor, &size);
-    if (*position + size >= outsize) {
+    if (*position + size > outsize) {
         OBJ_RELEASE(local_convertor);
         return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TRUNCATE, FUNC_NAME);
     }

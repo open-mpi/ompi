@@ -57,7 +57,7 @@ int MPI_Unpack(void *inbuf, int insize, int *position,
     /* Check for truncation */
 
     ompi_convertor_get_packed_size(local_convertor, &size);
-    if (*position + size >= insize) {
+    if (*position + size > insize) {
         OBJ_RELEASE(local_convertor);
         return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TRUNCATE, FUNC_NAME);
     }
