@@ -176,8 +176,8 @@ fi
 # 
 AC_MSG_CHECKING(if want deprecated executable names)
 AC_ARG_ENABLE(deprecated-executable-names,
-    AC_HELP_STRING([--disable-deprecated-executable-names], [do not make sym links to deprecated LAM executables (e.g., hcc, hcp, hf77, wipe) (default: enabled)]))
-if test "$enable_deprecated_executable_names" != "no"; then
+    AC_HELP_STRING([--enable-deprecated-executable-names], [make sym links to deprecated LAM executables (e.g., hcc, hcp, hf77, wipe) (default: disabled)]))
+if test "$enable_deprecated_executable_names" = "yes"; then
     AC_MSG_RESULT([yes])
     WANT_DEN=1
 else
