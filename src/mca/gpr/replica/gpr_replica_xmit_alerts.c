@@ -319,5 +319,5 @@ void mca_gpr_replica_remote_notify(ompi_process_name_t *recipient, int recipient
 
     ompi_buffer_free(msg);
 
-    mca_gpr_base_release_notify_msg(message);
+    OBJ_RELEASE(message);
 }

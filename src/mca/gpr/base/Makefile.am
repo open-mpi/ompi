@@ -46,7 +46,6 @@ libmca_gpr_base_la_SOURCES = \
         gpr_base_unpack_synchro.c \
         gpr_base_pack_test_internals.c \
         gpr_base_unpack_test_internals.c \
-        gpr_base_release_notify_msg.c \
         gpr_base_select.c
 
 # Conditionally install the header files
