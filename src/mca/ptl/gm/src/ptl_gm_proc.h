@@ -28,7 +28,7 @@ struct mca_ptl_gm_proc_t {
 typedef struct mca_ptl_gm_proc_t mca_ptl_gm_proc_t;
 
 
-mca_ptl_gm_proc_t *mca_ptl_gm_proc_create (mca_ptl_gm_t * ptl,
+mca_ptl_gm_proc_t *mca_ptl_gm_proc_create (mca_ptl_gm_module_t * ptl,
                                            ompi_proc_t * ompi_proc);
 mca_ptl_gm_proc_t *mca_ptl_gm_proc_lookup (void *guid, size_t size);
 

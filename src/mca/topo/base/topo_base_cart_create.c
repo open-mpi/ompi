@@ -26,14 +26,14 @@
  * @retval MPI_SUCCESS
  */                       
 
-int mca_topo_base_cart_create (mca_topo_comm_t *topo_data,
-                           int *proc_count,
-                           ompi_proc_t **proc_pointers,
-                           int *new_rank,
-                           int ndims,
-                           int *dims,
-                           int *periods,
-                           bool reorder) {
+int mca_topo_base_cart_create (mca_topo_base_comm_t *topo_data,
+                               int *proc_count,
+                               ompi_proc_t **proc_pointers,
+                               int *new_rank,
+                               int ndims,
+                               int *dims,
+                               int *periods,
+                               bool reorder) {
 
    int nprocs;
    int dim;

@@ -139,16 +139,16 @@ void ompi_info::open_components()
 #endif
 
   mca_pcm_base_open();
-  component_map["pcm"] = &mca_pcm_base_modules_available;
+  component_map["pcm"] = &mca_pcm_base_components_available;
 
   mca_pml_base_open();
-  component_map["pml"] = &mca_pml_base_modules_available;
+  component_map["pml"] = &mca_pml_base_components_available;
 
   mca_ptl_base_open();
-  component_map["ptl"] = &mca_ptl_base_modules_available;
+  component_map["ptl"] = &mca_ptl_base_components_available;
 
   mca_topo_base_open();
-  component_map["topo"] = &mca_topo_base_modules_opened;
+  component_map["topo"] = &mca_topo_base_components_opened;
 
   // All done
 

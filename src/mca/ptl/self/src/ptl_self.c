@@ -23,8 +23,8 @@
 #include "mca/base/mca_base_param.h"
 #include "ptl_self.h"
 
-mca_ptl_t mca_ptl_self = {
-    &mca_ptl_self_module.super,
+mca_ptl_base_module_t mca_ptl_self_module = {
+    &mca_ptl_self_component.super,
     8, /* ptl_cache_size */
     sizeof(mca_ptl_base_recv_frag_t), /* ptl_cache_bytes */
     0, /* ptl_frag_first_size */
@@ -48,16 +48,17 @@ mca_ptl_t mca_ptl_self = {
     NULL
 };
 
-extern mca_ptl_self_module_1_0_0_t mca_ptl_self_module ;
+extern mca_ptl_self_component_t mca_ptl_self_component;
 
-int mca_ptl_self_add_proc(struct mca_ptl_t* ptl, size_t nprocs, struct ompi_proc_t **ompi_proc, struct mca_ptl_base_peer_t** peer_ret, ompi_bitmap_t* reachable)
+
+int mca_ptl_self_add_proc(struct mca_ptl_base_module_t* ptl, size_t nprocs, struct ompi_proc_t **ompi_proc, struct mca_ptl_base_peer_t** peer_ret, ompi_bitmap_t* reachable)
 {
     int i, count;
 
-    mca_ptl_self_module.self_local = ompi_proc_local();
+    mca_ptl_self_component.self_local = ompi_proc_local();
 
     for( i = 0, count = 0; i < nprocs; i++ ) {
-        if( ompi_proc[i] == mca_ptl_self_module.self_local ) {
+        if( ompi_proc[i] == mca_ptl_self_component.self_local ) {
             ompi_bitmap_set_bit( reachable, i );
             count++;
         }
@@ -65,24 +66,24 @@ int mca_ptl_self_add_proc(struct mca_ptl_t* ptl, size_t nprocs, struct ompi_proc
     return OMPI_SUCCESS;
 }
 
-int mca_ptl_self_del_proc(struct mca_ptl_t* ptl, size_t nprocs, struct ompi_proc_t **proc, struct mca_ptl_base_peer_t** ptl_peer)
+int mca_ptl_self_del_proc(struct mca_ptl_base_module_t* ptl, size_t nprocs, struct ompi_proc_t **proc, struct mca_ptl_base_peer_t** ptl_peer)
 {
     return OMPI_SUCCESS;
 }
 
 /* before the module is unloaded (called once)*/
-int mca_ptl_self_finalize(struct mca_ptl_t* ptl)
+int mca_ptl_self_finalize(struct mca_ptl_base_module_t* ptl)
 {
     return OMPI_SUCCESS;
 }
 
-int mca_ptl_self_request_init(struct mca_ptl_t* ptl, mca_pml_base_send_request_t* request)
+int mca_ptl_self_request_init(struct mca_ptl_base_module_t* ptl, mca_pml_base_send_request_t* request)
 {
     OBJ_CONSTRUCT(request+1, mca_ptl_base_recv_frag_t);
     return OMPI_SUCCESS;
 }
 
-void mca_ptl_self_request_fini(struct mca_ptl_t* ptl, mca_pml_base_send_request_t* request)
+void mca_ptl_self_request_fini(struct mca_ptl_base_module_t* ptl, mca_pml_base_send_request_t* request)
 {
     OBJ_DESTRUCT(request+1);
 }
@@ -95,7 +96,7 @@ void mca_ptl_self_request_fini(struct mca_ptl_t* ptl, mca_pml_base_send_request_
  */
 
 int mca_ptl_self_send(
-                      struct mca_ptl_t* ptl,
+                      struct mca_ptl_base_module_t* ptl,
                       struct mca_ptl_base_peer_t* ptl_base_peer,
                       struct mca_pml_base_send_request_t* request,
                       size_t offset,
@@ -121,7 +122,7 @@ int mca_ptl_self_send(
     hdr->hdr_frag.hdr_src_ptr.pval = (void*)req;
     req->req_frag.frag_base.frag_peer = ptl_base_peer;
     req->req_frag.frag_base.frag_size = request->req_bytes_packed;
-    req->req_frag.frag_base.frag_owner = &mca_ptl_self;
+    req->req_frag.frag_base.frag_owner = &mca_ptl_self_module;
     req->req_frag.frag_request = NULL;
     req->req_frag.frag_is_buffered = 0;
     ptl->ptl_match( ptl, &(req->req_frag), &(hdr->hdr_match) );
@@ -133,7 +134,7 @@ int mca_ptl_self_send(
  *  A posted receive has been matched - if required send an
  *  ack back to the peer and process the fragment.
  */
-void mca_ptl_self_matched( mca_ptl_t* ptl,
+void mca_ptl_self_matched( mca_ptl_base_module_t* ptl,
                            mca_ptl_base_recv_frag_t* frag)
 {
     mca_ptl_self_send_request_t* sendreq = (mca_ptl_self_send_request_t*)

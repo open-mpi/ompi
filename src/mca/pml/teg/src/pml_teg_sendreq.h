@@ -39,7 +39,7 @@
         if(NULL != sendreq) {                                              \
             rc = OMPI_SUCCESS;                                             \
         } else {                                                           \
-            mca_ptl_t* ptl = ptl_base->ptl;                                \
+            mca_ptl_base_module_t* ptl = ptl_base->ptl;                    \
             ompi_list_item_t* item;                                        \
             OMPI_FREE_LIST_WAIT(&mca_pml_teg.teg_send_requests, item, rc); \
             sendreq = (mca_pml_base_send_request_t*)item;                  \
@@ -61,7 +61,7 @@
 
 #define MCA_PML_TEG_SEND_REQUEST_RETURN(request)                           \
 {                                                                          \
-    mca_ptl_t* ptl = sendreq->req_ptl;                                     \
+    mca_ptl_base_module_t* ptl = sendreq->req_ptl;                         \
     mca_pml_base_ptl_t* ptl_base = ptl->ptl_base;                          \
     /*                                                                     \
      * If there is a cache associated with the ptl - first attempt         \
@@ -89,7 +89,7 @@
 static inline int mca_pml_teg_send_request_start(
     mca_pml_base_send_request_t* req)
 {
-    mca_ptl_t* ptl = req->req_ptl;
+    mca_ptl_base_module_t* ptl = req->req_ptl;
     size_t first_fragment_size = ptl->ptl_first_frag_size;
     size_t offset = req->req_offset;
     int flags, rc;
@@ -120,7 +120,7 @@ void mca_pml_teg_send_request_schedule(mca_pml_base_send_request_t* req);
 
 
 void mca_pml_teg_send_request_progress(
-    struct mca_ptl_t* ptl,
+    struct mca_ptl_base_module_t* ptl,
     mca_pml_base_send_request_t* send_request,
     size_t bytes_sent
 );

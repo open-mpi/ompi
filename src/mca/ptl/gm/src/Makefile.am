@@ -12,7 +12,7 @@ libmca_ptl_gm_la_SOURCES = \
         ptl_gm_addr.h \
         ptl_gm.c \
         ptl_gm.h \
-        ptl_gm_module.c \
+        ptl_gm_component.c \
         ptl_gm_peer.h \
         ptl_gm_priv.h \
         ptl_gm_proc.c \

@@ -19,33 +19,32 @@
 /**
  * Shared Memory (SM) PTL module.
  */
-struct mca_ptl_sm_module_1_0_0_t {
-    mca_ptl_base_module_1_0_0_t super;    /**< base PTL module */
+struct mca_ptl_sm_component_t {
+    mca_ptl_base_component_1_0_0_t super;  /**< base PTL component */
     int sm_free_list_num;                 /**< initial size of free lists */
     int sm_free_list_max;                 /**< maximum size of free lists */
     int sm_free_list_inc;                 /**< number of elements to alloc when growing free lists */
     int sm_max_procs;                     /**< upper limit on the number of processes using the shared memory pool */
     char* sm_mpool_name;                  /**< name of shared memory pool module */
-    mca_mpool_t* sm_mpool;                /**< shared memory pool */
+    mca_mpool_base_component_t* sm_mpool; /**< shared memory pool */
     void* sm_mpool_base;                  /**< base address of shared memory pool */
     ompi_free_list_t sm_send_requests;    /**< free list of sm send requests -- sendreq + sendfrag */
     ompi_free_list_t sm_send_frags;       /**< free list of sm send fragments */
     ompi_free_list_t sm_recv_frags;       /**< free list of sm recv fragments */
     ompi_mutex_t sm_lock;
 };
-typedef struct mca_ptl_sm_module_1_0_0_t mca_ptl_sm_module_1_0_0_t;
-typedef struct mca_ptl_sm_module_1_0_0_t mca_ptl_sm_module_t;
-extern mca_ptl_sm_module_1_0_0_t mca_ptl_sm_module;
+typedef struct mca_ptl_sm_component_t mca_ptl_sm_component_t;
+extern mca_ptl_sm_component_t mca_ptl_sm_component;
 
 /**
  * Register shared memory module parameters with the MCA framework
  */
-extern int mca_ptl_sm_module_open(void);
+extern int mca_ptl_sm_component_open(void);
 
 /**
  * Any final cleanup before being unloaded.
  */
-extern int mca_ptl_sm_module_close(void);
+extern int mca_ptl_sm_component_close(void);
 
 /**
  * SM module initialization.
@@ -55,25 +54,25 @@ extern int mca_ptl_sm_module_close(void);
  * @param have_hidden_threads (OUT)       Flag indicating wether PTL uses threads (TRUE)
  *
  */
-extern mca_ptl_t** mca_ptl_sm_module_init(
+extern mca_ptl_base_module_t** mca_ptl_sm_component_init(
     int *num_ptls, 
     bool *allow_multi_user_threads,
     bool *have_hidden_threads
 );
 
 /**
- * shared memory module control.
+ * shared memory component control.
  */
-extern int mca_ptl_sm_module_control(
+extern int mca_ptl_sm_component_control(
     int param,
     void* value,
     size_t size
 );
 
 /**
- * shared memory module progress.
+ * shared memory component progress.
  */
-extern int mca_ptl_sm_module_progress(
+extern int mca_ptl_sm_component_progress(
    mca_ptl_tstamp_t tstamp
 );
 
@@ -81,7 +80,7 @@ extern int mca_ptl_sm_module_progress(
  * SM PTL Interface
  */
 struct mca_ptl_sm_t {
-    mca_ptl_t  super;       /**< base PTL interface */
+    mca_ptl_base_module_t  super;       /**< base PTL interface */
     int num_smp_procs;      /**< current number of smp procs on this
                               host */
     int my_smp_rank;    /**< My SMP process rank.  Used for accessing
@@ -100,7 +99,7 @@ extern mca_ptl_sm_t mca_ptl_sm;
  */
 
 extern int mca_ptl_sm_finalize(
-    struct mca_ptl_t* ptl
+    struct mca_ptl_base_module_t* ptl
 );
 
 
@@ -115,7 +114,7 @@ extern int mca_ptl_sm_finalize(
  */
 
 extern int mca_ptl_sm_add_procs(
-    struct mca_ptl_t* ptl,
+    struct mca_ptl_base_module_t* ptl,
     size_t nprocs,
     struct ompi_proc_t **procs,
     struct mca_ptl_base_peer_t** peers,
@@ -133,7 +132,7 @@ extern int mca_ptl_sm_add_procs(
  *
  */
 extern int mca_ptl_sm_del_procs(
-    struct mca_ptl_t* ptl,
+    struct mca_ptl_base_module_t* ptl,
     size_t nprocs,
     struct ompi_proc_t **procs,
     struct mca_ptl_base_peer_t **peers
@@ -148,7 +147,7 @@ extern int mca_ptl_sm_del_procs(
  *
  */
 extern int mca_ptl_sm_request_alloc(
-    struct mca_ptl_t* ptl,
+    struct mca_ptl_base_module_t* ptl,
     struct mca_pml_base_send_request_t**
 );
 
@@ -160,7 +159,7 @@ extern int mca_ptl_sm_request_alloc(
  *
  */
 extern void mca_ptl_sm_request_return(
-    struct mca_ptl_t* ptl,
+    struct mca_ptl_base_module_t* ptl,
     struct mca_pml_base_send_request_t*
 );
 
@@ -172,7 +171,7 @@ extern void mca_ptl_sm_request_return(
  *
  */
 extern void mca_ptl_sm_matched(
-    struct mca_ptl_t* ptl,
+    struct mca_ptl_base_module_t* ptl,
     struct mca_ptl_base_recv_frag_t* frag
 );
                                                                                                  
@@ -187,7 +186,7 @@ extern void mca_ptl_sm_matched(
  * @param request (OUT)          OMPI_SUCCESS if the PTL was able to queue one or more fragments
  */
 extern int mca_ptl_sm_send(
-    struct mca_ptl_t* ptl,
+    struct mca_ptl_base_module_t* ptl,
     struct mca_ptl_base_peer_t* ptl_peer,
     struct mca_pml_base_send_request_t*,
     size_t offset,

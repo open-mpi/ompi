@@ -22,15 +22,15 @@
  * @retval MPI_ERR_OUT_OF_RESOURCE
  */
 
-int mca_topo_base_graph_create (mca_topo_comm_t *topo_data,
-                            int *proc_count,
-                            ompi_proc_t **proc_pointers,
-                            int *new_rank,
-                            int nnodes,
-                            int *index,
-                            int *edges,
-                            bool reorder){
-
+int mca_topo_base_graph_create (mca_topo_base_comm_t *topo_data,
+                                int *proc_count,
+                                ompi_proc_t **proc_pointers,
+                                int *new_rank,
+                                int nnodes,
+                                int *index,
+                                int *edges,
+                                bool reorder)
+{
     int  nedges;
     int  i;
     int  *p;

@@ -22,11 +22,11 @@
 /*
  * Local variables
  */
-static mca_coll_1_0_0_t null_actions = {
-  NULL, NULL,  /* init and finalize */
-  /* Checkpoint / restart */
+static mca_coll_base_module_1_0_0_t null_module = {
 
-  NULL, NULL, NULL, NULL,
+  /* Module init and finalize */
+
+  NULL, NULL,
 
   /* Collective function pointers */
 
@@ -43,8 +43,8 @@ struct avail_coll_t {
   ompi_list_item_t super;
 
   int ac_priority;
-  const mca_coll_base_module_1_0_0_t *ac_component;
-  const mca_coll_1_0_0_t *ac_module;
+  const mca_coll_base_component_1_0_0_t *ac_component;
+  const mca_coll_base_module_1_0_0_t *ac_module;
 };
 typedef struct avail_coll_t avail_coll_t;
 
@@ -55,22 +55,22 @@ static ompi_list_t *check_components(ompi_list_t *components,
                                      ompi_communicator_t *comm, 
                                      char **names, int num_names);
 static int check_one_component(ompi_communicator_t *comm, 
-                               const mca_base_module_t *component,
-                               const mca_coll_1_0_0_t **module);
+                               const mca_base_component_t *component,
+                               const mca_coll_base_module_1_0_0_t **module);
 
-static int query(const mca_base_module_t *component, 
+static int query(const mca_base_component_t *component, 
                  ompi_communicator_t *comm, int *priority,
-                 const mca_coll_1_0_0_t **module);
-static int query_1_0_0(const mca_coll_base_module_1_0_0_t *coll_component, 
+                 const mca_coll_base_module_1_0_0_t **module);
+static int query_1_0_0(const mca_coll_base_component_1_0_0_t *coll_component, 
                        ompi_communicator_t *comm, int *priority,
-                       const mca_coll_1_0_0_t **module);
+                       const mca_coll_base_module_1_0_0_t **module);
 
-static void unquery(const mca_coll_base_module_1_0_0_t *coll_component,
+static void unquery(const mca_coll_base_component_1_0_0_t *coll_component,
                     ompi_communicator_t *comm);
-static void unquery_1_0_0(const mca_coll_base_module_1_0_0_t *coll_component, 
+static void unquery_1_0_0(const mca_coll_base_component_1_0_0_t *coll_component, 
                           ompi_communicator_t *comm);
 
-static int module_init(const mca_coll_1_0_0_t *module, 
+static int module_init(const mca_coll_base_module_1_0_0_t *module, 
                        ompi_communicator_t *comm);
 
 static int query_basic(ompi_communicator_t *comm);
@@ -96,7 +96,7 @@ OBJ_CLASS_INSTANCE(avail_coll_t, ompi_list_item_t, NULL, NULL);
  * we construct is probably ok. 
  */
 int mca_coll_base_comm_select(ompi_communicator_t *comm, 
-                              mca_base_module_t *preferred)
+                              mca_base_component_t *preferred)
 {
   bool found, using_basic;
   int err, num_names;
@@ -106,8 +106,8 @@ int mca_coll_base_comm_select(ompi_communicator_t *comm,
   avail_coll_t *avail;
   ompi_list_t *selectable;
   ompi_list_item_t *item;
-  const mca_coll_base_module_1_0_0_t *selected_component, *component;
-  const mca_coll_1_0_0_t *selected_module;
+  const mca_coll_base_component_1_0_0_t *selected_component, *component;
+  const mca_coll_base_module_1_0_0_t *selected_module;
 
   /* Announce */
 
@@ -121,7 +121,7 @@ int mca_coll_base_comm_select(ompi_communicator_t *comm,
   /* Initialize all the relevant pointers, since they're used as
      sentinel values */
   
-  comm->c_coll = null_actions;
+  comm->c_coll = null_module;
 
   comm->c_coll_selected_data = NULL;
   comm->c_coll_selected_module = NULL;
@@ -147,7 +147,7 @@ int mca_coll_base_comm_select(ompi_communicator_t *comm,
 
   err = OMPI_ERROR;
   if (NULL != preferred) {
-    str = &(preferred->mca_module_name[0]);
+    str = &(preferred->mca_component_name[0]);
 
     ompi_output_verbose(10, mca_coll_base_output, 
                        "coll:base:comm_select: Checking preferred module: %s",
@@ -276,7 +276,7 @@ int mca_coll_base_comm_select(ompi_communicator_t *comm,
   
   ompi_output_verbose(10, mca_coll_base_output,
                      "coll:base:comm_select: Selected coll module %s", 
-                     selected_component->collm_version.mca_module_name);
+                     selected_component->collm_version.mca_component_name);
   
   return OMPI_SUCCESS;
 }
@@ -294,9 +294,9 @@ static ompi_list_t *check_components(ompi_list_t *components,
                                      char **names, int num_names)
 {
   int i, priority;
-  const mca_base_module_t *component;
+  const mca_base_component_t *component;
   ompi_list_item_t *item, *next, *item2;
-  const mca_coll_1_0_0_t *actions;
+  const mca_coll_base_module_1_0_0_t *actions;
   bool want_to_check;
   ompi_list_t *selectable;
   avail_coll_t *avail, *avail2;
@@ -323,7 +323,7 @@ static ompi_list_t *check_components(ompi_list_t *components,
     } else {
       want_to_check = false;
       for (i = 0; i < num_names; ++i) {
-        if (0 == strcmp(names[i], component->mca_module_name)) {
+        if (0 == strcmp(names[i], component->mca_component_name)) {
           want_to_check = true;
         }
       }
@@ -341,7 +341,7 @@ static ompi_list_t *check_components(ompi_list_t *components,
 
         avail = OBJ_NEW(avail_coll_t);
         avail->ac_priority = 0;
-        avail->ac_component = (mca_coll_base_module_1_0_0_t *) component;
+        avail->ac_component = (mca_coll_base_component_1_0_0_t *) component;
 
         /* Put this item on the list in priority order (highest
            priority first).  Should it go first? */
@@ -388,8 +388,8 @@ static ompi_list_t *check_components(ompi_list_t *components,
  * Check a single component
  */
 static int check_one_component(ompi_communicator_t *comm, 
-                               const mca_base_module_t *component,
-                               const mca_coll_1_0_0_t **module)
+                               const mca_base_component_t *component,
+                               const mca_coll_base_module_1_0_0_t **module)
 {
   int err;
   int priority = -1;
@@ -400,13 +400,13 @@ static int check_one_component(ompi_communicator_t *comm,
     priority = (priority < 100) ? priority : 100;
     ompi_output_verbose(10, mca_coll_base_output, 
                         "coll:base:comm_select: component available: %s, priority: %d", 
-                        component->mca_module_name, priority);
+                        component->mca_component_name, priority);
 
   } else {
     priority = -1;
     ompi_output_verbose(10, mca_coll_base_output, 
                         "coll:base:comm_select: component not available: %s",
-                        component->mca_module_name);
+                        component->mca_component_name);
   }
 
   return priority;
@@ -421,9 +421,9 @@ static int check_one_component(ompi_communicator_t *comm,
  * Take any version of a coll module, query it, and return the right
  * actions struct
  */
-static int query(const mca_base_module_t *component, 
+static int query(const mca_base_component_t *component, 
                  ompi_communicator_t *comm, 
-                 int *priority, const mca_coll_1_0_0_t **module)
+                 int *priority, const mca_coll_base_module_1_0_0_t **module)
 {
   /* coll v1.0.0 */
 
@@ -431,8 +431,8 @@ static int query(const mca_base_module_t *component,
   if (1 == component->mca_major_version &&
       0 == component->mca_minor_version &&
       0 == component->mca_release_version) {
-    const mca_coll_base_module_1_0_0_t *coll100 = 
-      (mca_coll_base_module_1_0_0_t *) component;
+    const mca_coll_base_component_1_0_0_t *coll100 = 
+      (mca_coll_base_component_1_0_0_t *) component;
 
     return query_1_0_0(coll100, comm, priority, module);
   } 
@@ -443,11 +443,11 @@ static int query(const mca_base_module_t *component,
 }
 
 
-static int query_1_0_0(const mca_coll_base_module_1_0_0_t *component,
+static int query_1_0_0(const mca_coll_base_component_1_0_0_t *component,
                        ompi_communicator_t *comm, int *priority,
-                       const mca_coll_1_0_0_t **module)
+                       const mca_coll_base_module_1_0_0_t **module)
 {
-  const mca_coll_1_0_0_t *ret;
+  const mca_coll_base_module_1_0_0_t *ret;
 
   /* There's currently no need for conversion */
 
@@ -465,14 +465,14 @@ static int query_1_0_0(const mca_coll_base_module_1_0_0_t *component,
  * Unquery functions
  **************************************************************************/
 
-static void unquery(const mca_coll_base_module_1_0_0_t *component, 
+static void unquery(const mca_coll_base_component_1_0_0_t *component, 
                     ompi_communicator_t *comm)
 {
   if (1 == component->collm_version.mca_major_version &&
       0 == component->collm_version.mca_minor_version &&
       0 == component->collm_version.mca_release_version) {
-    const mca_coll_base_module_1_0_0_t *coll100 = 
-      (mca_coll_base_module_1_0_0_t *) component;
+    const mca_coll_base_component_1_0_0_t *coll100 = 
+      (mca_coll_base_component_1_0_0_t *) component;
 
     unquery_1_0_0(coll100, comm);
   }
@@ -482,7 +482,7 @@ static void unquery(const mca_coll_base_module_1_0_0_t *component,
 }
 
 
-static void unquery_1_0_0(const mca_coll_base_module_1_0_0_t *component, 
+static void unquery_1_0_0(const mca_coll_base_component_1_0_0_t *component, 
                           ompi_communicator_t *comm)
 {
   component->collm_comm_unquery(comm);
@@ -496,10 +496,10 @@ static void unquery_1_0_0(const mca_coll_base_module_1_0_0_t *component,
 /*
  * Initialize a module
  */
-static int module_init(const mca_coll_1_0_0_t *module, 
+static int module_init(const mca_coll_base_module_1_0_0_t *module, 
                        ompi_communicator_t *comm)
 {
-  const mca_coll_1_0_0_t *ret;
+  const mca_coll_base_module_1_0_0_t *ret;
 
   /* There's currently no need for conversion */
 
@@ -530,7 +530,7 @@ static int query_basic(ompi_communicator_t *comm)
 
   ret = OMPI_SUCCESS;
   if (NULL == comm->c_coll_basic_module) {
-    ret = query((mca_base_module_t *) mca_coll_base_basic_component, comm, 
+    ret = query((mca_base_component_t *) mca_coll_base_basic_component, comm, 
                 &priority, &comm->c_coll_basic_module);
     if (ret != OMPI_SUCCESS) {
       comm->c_coll_basic_module = NULL;

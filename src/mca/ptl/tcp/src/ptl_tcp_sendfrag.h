@@ -35,7 +35,7 @@ typedef struct mca_ptl_tcp_send_frag_t mca_ptl_tcp_send_frag_t;
 
 
 #define MCA_PTL_TCP_SEND_FRAG_ALLOC(item, rc)  \
-    OMPI_FREE_LIST_GET(&mca_ptl_tcp_module.tcp_send_frags, item, rc);
+    OMPI_FREE_LIST_GET(&mca_ptl_tcp_component.tcp_send_frags, item, rc);
 
 
 bool mca_ptl_tcp_send_frag_handler(mca_ptl_tcp_send_frag_t*, int sd);
@@ -104,7 +104,7 @@ static inline void mca_ptl_tcp_send_frag_progress(mca_ptl_tcp_send_frag_t* frag)
 
 static inline void mca_ptl_tcp_send_frag_init_ack(
     mca_ptl_tcp_send_frag_t* ack,
-    struct mca_ptl_t* ptl,
+    struct mca_ptl_base_module_t* ptl,
     struct mca_ptl_base_peer_t* ptl_peer,
     mca_ptl_tcp_recv_frag_t* frag)
 {

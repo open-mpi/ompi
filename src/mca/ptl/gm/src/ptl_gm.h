@@ -23,13 +23,13 @@
 #define MAX_RECV_TOKENS 256
 
 /**
- * GM PTL module.
+ * GM PTL component
  */
-struct mca_ptl_gm_module_1_0_0_t {
-    mca_ptl_base_module_1_0_0_t super;    /**< base PTL module */
-    struct mca_ptl_gm_t **gm_ptls;      /**< array of available PTLs */
-    size_t      gm_num_ptls;             /**< number of ptls actually used */
-    size_t      gm_max_ptls;             /**< maximum number of ptls - available */
+struct mca_ptl_gm_component_t {
+    mca_ptl_base_component_1_0_0_t super; /**< base PTL module */
+    struct mca_ptl_gm_module_t **gm_ptl_modules; /**< array of available PTL modules */
+    size_t      gm_num_ptl_modules;      /**< number of ptls actually used */
+    size_t      gm_max_ptl_modules;      /**< maximum number of ptls - available */
     int         gm_free_list_num;        /**< initial size of free lists */
     int         gm_free_list_max;        /**< maximum size of free lists */
     int         gm_free_list_inc;        /**< number of elements to alloc when growing free lists */
@@ -40,17 +40,16 @@ struct mca_ptl_gm_module_1_0_0_t {
     ompi_mutex_t gm_lock;                 /**< lock for accessing module state */
 };
 
-typedef struct mca_ptl_gm_module_1_0_0_t mca_ptl_gm_module_1_0_0_t;
-typedef struct mca_ptl_gm_module_1_0_0_t mca_ptl_gm_module_t;
+typedef struct mca_ptl_gm_component_t mca_ptl_gm_component_t;
 
-extern mca_ptl_gm_module_1_0_0_t mca_ptl_gm_module;
+extern mca_ptl_gm_component_t mca_ptl_gm_component;
 
 
 /**
  * GM PTL Interface
  */
-struct mca_ptl_gm_t {
-    mca_ptl_t   super;              /**< base PTL interface */
+struct mca_ptl_gm_module_t {
+    mca_ptl_base_module_t super;    /**< base PTL module interface */
     struct gm_port *my_port;
     unsigned int my_lid;
     unsigned int my_gid;
@@ -70,20 +69,20 @@ struct mca_ptl_gm_t {
 #endif
 };
 
-typedef struct mca_ptl_gm_t mca_ptl_gm_t;
+typedef struct mca_ptl_gm_module_t mca_ptl_gm_module_t;
 
-extern mca_ptl_gm_t mca_ptl_gm;
+extern mca_ptl_gm_module_t mca_ptl_gm_module;
 
 
 /**
  * Register GM module parameters with the MCA framework
  */
-extern int  mca_ptl_gm_module_open (void);
+extern int  mca_ptl_gm_component_open (void);
 
 /**
  * Any final cleanup before being unloaded.
  */
-extern int  mca_ptl_gm_module_close (void);
+extern int  mca_ptl_gm_component_close (void);
 
 
 
@@ -94,29 +93,29 @@ extern int  mca_ptl_gm_module_close (void);
  * @param allow_multi_user_threads (OUT)  Flag indicating wether PTL supports user threads (TRUE)
  * @param have_hidden_threads (OUT)       Flag indicating wether PTL uses threads (TRUE)
  */
-extern mca_ptl_t **mca_ptl_gm_module_init (int *num_ptls,
-                                           bool * allow_multi_user_threads,
-                                           bool * have_hidden_threads);
+extern mca_ptl_base_module_t **mca_ptl_gm_component_init (int *num_ptl_modules,
+                                                          bool * allow_multi_user_threads,
+                                                          bool * have_hidden_threads);
 
 
 
 /**
  * GM module control.
  */
-extern int  mca_ptl_gm_module_control (int param,
-                                       void *value, size_t size);
+extern int  mca_ptl_gm_component_control (int param,
+                                          void *value, size_t size);
 
 /**
  * GM module progress.
  */
-extern int  mca_ptl_gm_module_progress (mca_ptl_tstamp_t tstamp);
+extern int  mca_ptl_gm_component_progress (mca_ptl_tstamp_t tstamp);
 
 
 /**
  *  GM put
  */
 
-extern int  mca_ptl_gm_put (struct mca_ptl_t *ptl,
+extern int  mca_ptl_gm_put (struct mca_ptl_base_module_t *ptl,
                             struct mca_ptl_base_peer_t *ptl_peer,
                             struct mca_pml_base_send_request_t *sendreq,
                             size_t offset, size_t size, int flags);
@@ -126,7 +125,7 @@ extern int  mca_ptl_gm_put (struct mca_ptl_t *ptl,
  *  GM get
  */
 
-extern int  mca_ptl_gm_get (struct mca_ptl_t *ptl,
+extern int  mca_ptl_gm_get (struct mca_ptl_base_module_t *ptl,
                             struct mca_ptl_base_peer_t *ptl_peer,
                             struct mca_pml_base_recv_request_t *sendreq,
                             size_t offset, size_t size, int flags);
@@ -144,7 +143,7 @@ extern int  mca_ptl_gm_get (struct mca_ptl_t *ptl,
  * 
  */
 
-extern int  mca_ptl_gm_add_procs (struct mca_ptl_t *ptl,
+extern int  mca_ptl_gm_add_procs (struct mca_ptl_base_module_t *ptl,
                                   size_t nprocs,
                                   struct ompi_proc_t **procs,
                                   struct mca_ptl_base_peer_t **peers,
@@ -161,7 +160,7 @@ extern int  mca_ptl_gm_add_procs (struct mca_ptl_t *ptl,
  * @return             Status indicating if cleanup was successful
  *
  */
-extern int  mca_ptl_gm_del_procs (struct mca_ptl_t *ptl,
+extern int  mca_ptl_gm_del_procs (struct mca_ptl_base_module_t *ptl,
                                   size_t nprocs,
                                   struct ompi_proc_t **procs,
                                   struct mca_ptl_base_peer_t **peers);
@@ -174,7 +173,7 @@ extern int  mca_ptl_gm_del_procs (struct mca_ptl_t *ptl,
  * @return               Status indicating if allocation was successful.
  *
  */
-extern int  mca_ptl_gm_request_alloc (struct mca_ptl_t *ptl,
+extern int  mca_ptl_gm_request_alloc (struct mca_ptl_base_module_t *ptl,
                                       struct mca_pml_base_send_request_t
                                       **);
 
@@ -183,7 +182,7 @@ extern int  mca_ptl_gm_request_alloc (struct mca_ptl_t *ptl,
  *
  */
 
-extern void mca_ptl_gm_request_return (struct mca_ptl_t *ptl,
+extern void mca_ptl_gm_request_return (struct mca_ptl_base_module_t *ptl,
                                        struct mca_pml_base_send_request_t
                                        *);
 
@@ -195,14 +194,14 @@ extern void mca_ptl_gm_request_return (struct mca_ptl_t *ptl,
  * @param recv_frag (IN)    Receive fragment
  *
  */
-extern void mca_ptl_gm_matched (struct mca_ptl_t *ptl,
+extern void mca_ptl_gm_matched (struct mca_ptl_base_module_t *ptl,
                                 struct mca_ptl_base_recv_frag_t *frag);
 
 
 /**
  *
  */
-extern int  mca_ptl_gm_finalize (struct mca_ptl_t *ptl);
+extern int  mca_ptl_gm_finalize (struct mca_ptl_base_module_t *ptl);
 
 
 #endif

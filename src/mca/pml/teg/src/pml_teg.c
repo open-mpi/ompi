@@ -69,14 +69,15 @@ int mca_pml_teg_del_comm(ompi_communicator_t* comm)
 
 static int ptl_exclusivity_compare(const void* arg1, const void* arg2)
 {
-    mca_ptl_t* ptl1 = *(struct mca_ptl_t**)arg1;
-    mca_ptl_t* ptl2 = *(struct mca_ptl_t**)arg2;
-    if( ptl1->ptl_exclusivity > ptl2->ptl_exclusivity )
+    mca_ptl_base_module_t* ptl1 = *(struct mca_ptl_base_module_t**)arg1;
+    mca_ptl_base_module_t* ptl2 = *(struct mca_ptl_base_module_t**)arg2;
+    if( ptl1->ptl_exclusivity > ptl2->ptl_exclusivity ) {
         return -1;
-    else if (ptl1->ptl_exclusivity == ptl2->ptl_exclusivity )
+    } else if (ptl1->ptl_exclusivity == ptl2->ptl_exclusivity ) {
         return 0;
-    else
+    } else {
         return 1;
+    }
 }
 
 
@@ -86,25 +87,29 @@ int mca_pml_teg_add_ptls(ompi_list_t *ptls)
     mca_ptl_base_selected_module_t* selected_ptl;
     size_t num_ptls = ompi_list_get_size(ptls);
     size_t cache_bytes = 0;
-    mca_pml_teg.teg_num_ptls = 0;
     mca_pml_teg.teg_num_ptl_modules = 0;
-    mca_pml_teg.teg_ptls = malloc(sizeof(mca_ptl_t*) * num_ptls);
+    mca_pml_teg.teg_num_ptl_components = 0;
     mca_pml_teg.teg_ptl_modules = malloc(sizeof(mca_ptl_base_module_t*) * num_ptls);
-    if (NULL == mca_pml_teg.teg_ptls || NULL == mca_pml_teg.teg_ptl_modules)
+    mca_pml_teg.teg_ptl_components = malloc(sizeof(mca_ptl_base_component_t*) * num_ptls);
+    if (NULL == mca_pml_teg.teg_ptl_modules || NULL == mca_pml_teg.teg_ptl_components) {
         return OMPI_ERR_OUT_OF_RESOURCE;
+    }
 
     for(selected_ptl =  (mca_ptl_base_selected_module_t*)ompi_list_get_first(ptls);
         selected_ptl != (mca_ptl_base_selected_module_t*)ompi_list_get_end(ptls);
         selected_ptl =  (mca_ptl_base_selected_module_t*)ompi_list_get_next(selected_ptl)) {
-        mca_ptl_t *ptl = selected_ptl->pbsm_actions;
+        mca_ptl_base_module_t *ptl = selected_ptl->pbsm_module;
         size_t i;
 
-        mca_pml_teg.teg_ptls[mca_pml_teg.teg_num_ptls++] = ptl;
-        for(i=0; i<mca_pml_teg.teg_num_ptl_modules; i++)
-            if(mca_pml_teg.teg_ptl_modules[i] == ptl->ptl_module)
+        mca_pml_teg.teg_ptl_modules[mca_pml_teg.teg_num_ptl_modules++] = ptl;
+        for(i=0; i<mca_pml_teg.teg_num_ptl_components; i++) {
+          if(mca_pml_teg.teg_ptl_components[i] == ptl->ptl_component) {
                 break;
-        if(i == mca_pml_teg.teg_num_ptl_modules)
-            mca_pml_teg.teg_ptl_modules[mca_pml_teg.teg_num_ptl_modules++] = ptl->ptl_module;
+          }
+        }
+        if(i == mca_pml_teg.teg_num_ptl_components) {
+            mca_pml_teg.teg_ptl_components[mca_pml_teg.teg_num_ptl_components++] = ptl->ptl_component;
+        }
 
          /* setup ptl */
          ptl->ptl_match = mca_ptl_base_recv_frag_match;
@@ -114,8 +119,9 @@ int mca_pml_teg_add_ptls(ompi_list_t *ptls)
          ptl->ptl_base = NULL;
 
          /* find maximum required size for cache */
-         if(ptl->ptl_cache_bytes > cache_bytes)
+         if(ptl->ptl_cache_bytes > cache_bytes) {
              cache_bytes = ptl->ptl_cache_bytes;
+         }
     }
 
     /* setup send fragments based on largest required send request */
@@ -129,7 +135,7 @@ int mca_pml_teg_add_ptls(ompi_list_t *ptls)
         NULL);
 
     /* sort ptl list by exclusivity */
-    qsort(mca_pml_teg.teg_ptls, mca_pml_teg.teg_num_ptls, sizeof(struct mca_ptl_t*), ptl_exclusivity_compare);
+    qsort(mca_pml_teg.teg_ptl_modules, mca_pml_teg.teg_num_ptl_modules, sizeof(struct mca_ptl_t*), ptl_exclusivity_compare);
     return OMPI_SUCCESS;
 }
 
@@ -140,9 +146,9 @@ int mca_pml_teg_add_ptls(ompi_list_t *ptls)
 int mca_pml_teg_control(int param, void* value, size_t size)
 {
     size_t i=0;
-    for(i=0; i<mca_pml_teg.teg_num_ptl_modules; i++) {
-        if(NULL != mca_pml_teg.teg_ptl_modules[i]->ptlm_control) {
-            int rc = mca_pml_teg.teg_ptl_modules[i]->ptlm_control(param,value,size);
+    for(i=0; i<mca_pml_teg.teg_num_ptl_components; i++) {
+        if(NULL != mca_pml_teg.teg_ptl_components[i]->ptlm_control) {
+            int rc = mca_pml_teg.teg_ptl_components[i]->ptlm_control(param,value,size);
             if(rc != OMPI_SUCCESS)
                 return rc;
         }
@@ -171,8 +177,8 @@ int mca_pml_teg_add_procs(ompi_proc_t** procs, size_t nprocs)
 
     /* attempt to add all procs to each ptl */
     ptl_peers = malloc(nprocs * sizeof(struct mca_ptl_base_peer_t*));
-    for(p_index = 0; p_index < mca_pml_teg.teg_num_ptls; p_index++) {
-        mca_ptl_t* ptl = mca_pml_teg.teg_ptls[p_index];
+    for(p_index = 0; p_index < mca_pml_teg.teg_num_ptl_modules; p_index++) {
+        mca_ptl_base_module_t* ptl = mca_pml_teg.teg_ptl_modules[p_index];
 
         /* if the ptl can reach the destination proc it sets the
          * corresponding bit (proc index) in the reachable bitmap
@@ -206,8 +212,8 @@ int mca_pml_teg_add_procs(ompi_proc_t** procs, size_t nprocs)
                     }
 
                     /* preallocate space in array for max number of ptls */
-                    mca_ptl_array_reserve(&proc_pml->proc_ptl_first, mca_pml_teg.teg_num_ptls);
-                    mca_ptl_array_reserve(&proc_pml->proc_ptl_next, mca_pml_teg.teg_num_ptls);
+                    mca_ptl_array_reserve(&proc_pml->proc_ptl_first, mca_pml_teg.teg_num_ptl_modules);
+                    mca_ptl_array_reserve(&proc_pml->proc_ptl_next, mca_pml_teg.teg_num_ptl_modules);
                     proc_pml->proc_ompi = proc;
                     proc->proc_pml = proc_pml;
                 }
@@ -243,7 +249,7 @@ int mca_pml_teg_add_procs(ompi_proc_t** procs, size_t nprocs)
         n_size = mca_ptl_array_get_size(&proc_pml->proc_ptl_next); 
         for(n_index = 0; n_index < n_size; n_index++) {
             struct mca_ptl_proc_t* proc_ptl = mca_ptl_array_get_index(&proc_pml->proc_ptl_next, n_index);
-            struct mca_ptl_t* ptl = proc_ptl->ptl;
+            struct mca_ptl_base_module_t* ptl = proc_ptl->ptl;
             total_bandwidth += proc_ptl->ptl->ptl_bandwidth; 
             if(ptl->ptl_latency > latency)
                 latency = ptl->ptl_latency;
@@ -256,7 +262,7 @@ int mca_pml_teg_add_procs(ompi_proc_t** procs, size_t nprocs)
 
         for(n_index = 0; n_index < n_size; n_index++) {
             struct mca_ptl_proc_t* proc_ptl = mca_ptl_array_get_index(&proc_pml->proc_ptl_next, n_index);
-            struct mca_ptl_t *ptl = proc_ptl->ptl;
+            struct mca_ptl_base_module_t *ptl = proc_ptl->ptl;
             double weight;
 
             /* compute weighting factor for this ptl */
@@ -313,11 +319,12 @@ int mca_pml_teg_del_procs(ompi_proc_t** procs, size_t nprocs)
         f_size = mca_ptl_array_get_size(&proc_pml->proc_ptl_first);
         for(f_index = 0; f_index < f_size; f_index++) {
             mca_ptl_proc_t* ptl_proc = mca_ptl_array_get_index(&proc_pml->proc_ptl_first, f_index);
-            mca_ptl_t* ptl = ptl_proc->ptl;
+            mca_ptl_base_module_t* ptl = ptl_proc->ptl;
             
             rc = ptl->ptl_del_procs(ptl,1,&proc,&ptl_proc->ptl_peer);
-            if(OMPI_SUCCESS != rc)
+            if(OMPI_SUCCESS != rc) {
                 return rc;
+            }
 
             /* remove this from next array so that we dont call it twice w/ 
              * the same address pointer
@@ -336,7 +343,7 @@ int mca_pml_teg_del_procs(ompi_proc_t** procs, size_t nprocs)
         n_size = mca_ptl_array_get_size(&proc_pml->proc_ptl_next);
         for(n_index = 0; n_index < n_size; n_index++) {
             mca_ptl_proc_t* ptl_proc = mca_ptl_array_get_index(&proc_pml->proc_ptl_first, n_index);
-            mca_ptl_t* ptl = ptl_proc->ptl;
+            mca_ptl_base_module_t* ptl = ptl_proc->ptl;
             if (ptl != 0) {
                 rc = ptl->ptl_del_procs(ptl,1,&proc,&ptl_proc->ptl_peer);
                 if(OMPI_SUCCESS != rc)
@@ -351,7 +358,7 @@ int mca_pml_teg_del_procs(ompi_proc_t** procs, size_t nprocs)
     return OMPI_SUCCESS;
 }
 
-int mca_pml_teg_module_fini(void)
+int mca_pml_teg_component_fini(void)
 {
     /* FIX */
     return OMPI_SUCCESS;

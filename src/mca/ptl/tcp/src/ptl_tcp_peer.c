@@ -388,16 +388,16 @@ void mca_ptl_tcp_set_socket_options(int sd)
     }
 #endif
 #if defined(SO_SNDBUF)
-    if(mca_ptl_tcp_module.tcp_sndbuf > 0 &&
-       setsockopt(sd, SOL_SOCKET, SO_SNDBUF, (char *)&mca_ptl_tcp_module.tcp_sndbuf, sizeof(int)) < 0) {
+    if(mca_ptl_tcp_component.tcp_sndbuf > 0 &&
+       setsockopt(sd, SOL_SOCKET, SO_SNDBUF, (char *)&mca_ptl_tcp_component.tcp_sndbuf, sizeof(int)) < 0) {
         ompi_output(0, 
             "mca_ptl_tcp_set_socket_options: SO_SNDBUF option: errno %d\n", 
             errno);
     }
 #endif
 #if defined(SO_RCVBUF)
-    if(mca_ptl_tcp_module.tcp_rcvbuf > 0 &&
-       setsockopt(sd, SOL_SOCKET, SO_RCVBUF, (char *)&mca_ptl_tcp_module.tcp_rcvbuf, sizeof(int)) < 0) {
+    if(mca_ptl_tcp_component.tcp_rcvbuf > 0 &&
+       setsockopt(sd, SOL_SOCKET, SO_RCVBUF, (char *)&mca_ptl_tcp_component.tcp_rcvbuf, sizeof(int)) < 0) {
         ompi_output(0, 
             "mca_ptl_tcp_set_socket_options: SO_RCVBUF option: errno %d\n", 
             errno);

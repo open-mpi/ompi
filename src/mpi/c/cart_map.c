@@ -22,9 +22,10 @@ static const char FUNC_NAME[] = "MPI_Cart_map";
 
 
 int MPI_Cart_map(MPI_Comm comm, int ndims, int *dims,
-                int *periods, int *newrank) {
+                int *periods, int *newrank) 
+{
     int err;
-    mca_topo_base_cart_map_fn_t func;
+    mca_topo_base_module_cart_map_fn_t func;
 
     /* check the arguments */
     if (MPI_PARAM_CHECK) {
@@ -49,10 +50,7 @@ int MPI_Cart_map(MPI_Comm comm, int ndims, int *dims,
 
     /* get the function pointer on this communicator */
     func = comm->c_topo->topo_cart_map;
-    if (NULL == func) {
-        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER, 
-                                     FUNC_NAME);
-    }
+
     /* call the function */
     if ( MPI_SUCCESS != 
             (err = func(comm, ndims, dims, periods, newrank))) {

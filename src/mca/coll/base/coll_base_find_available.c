@@ -22,15 +22,15 @@
  */
 bool mca_coll_base_components_available_valid = false;
 ompi_list_t mca_coll_base_components_available;
-const mca_coll_base_module_1_0_0_t *mca_coll_base_basic_component = NULL;
+const mca_coll_base_component_1_0_0_t *mca_coll_base_basic_component = NULL;
 
 
 /*
  * Private functions
  */
-static int init_query(const mca_base_module_t *ls, 
+static int init_query(const mca_base_component_t *ls, 
                       mca_base_component_priority_list_item_t *entry);
-static int init_query_1_0_0(const mca_base_module_t *ls, 
+static int init_query_1_0_0(const mca_base_component_t *ls, 
                             mca_base_component_priority_list_item_t *entry);
 
 /*
@@ -52,7 +52,7 @@ int mca_coll_base_find_available(bool *allow_multi_user_threads,
   bool found = false;
   mca_base_component_priority_list_item_t *entry;
   ompi_list_item_t *p;
-  const mca_base_module_t *component;
+  const mca_base_component_t *component;
 
   /* Initialize the list */
 
@@ -66,7 +66,7 @@ int mca_coll_base_find_available(bool *allow_multi_user_threads,
          p = ompi_list_remove_first(&mca_coll_base_components_opened);
        p != NULL;
        p = ompi_list_remove_first(&mca_coll_base_components_opened)) {
-    component = ((mca_base_module_list_item_t *) p)->mli_module;
+    component = ((mca_base_component_list_item_t *) p)->cli_component;
 
     /* Call a subroutine to do the work, because the component may
        represent different versions of the coll MCA. */
@@ -80,9 +80,9 @@ int mca_coll_base_find_available(bool *allow_multi_user_threads,
          special.  Keep it off the available list -- we'll use it
          specially in the selection process. */
 
-      if (0 == strcmp(component->mca_module_name, "basic")) {
+      if (0 == strcmp(component->mca_component_name, "basic")) {
         mca_coll_base_basic_component = 
-          (mca_coll_base_module_1_0_0_t *) component;
+          (mca_coll_base_component_1_0_0_t *) component;
       }
 
       /* Otherwise, save the results in the list.  The priority isn't
@@ -106,7 +106,7 @@ int mca_coll_base_find_available(bool *allow_multi_user_threads,
          already had its close() method invoked; now close it out of
          the DSO repository (if it's there). */
       
-      mca_base_module_repository_release(component);
+      mca_base_component_repository_release(component);
       OBJ_RELEASE(entry);
     }
 
@@ -143,14 +143,14 @@ int mca_coll_base_find_available(bool *allow_multi_user_threads,
  * Query a component, see if it wants to run at all.  If it does, save
  * some information.  If it doesn't, close it.
  */
-static int init_query(const mca_base_module_t *m, 
+static int init_query(const mca_base_component_t *m, 
                       mca_base_component_priority_list_item_t *entry)
 {
   int ret;
 
   ompi_output_verbose(10, mca_coll_base_output,
                      "coll:find_available: querying coll component %s", 
-                     m->mca_module_name);
+                     m->mca_component_name);
 
   /* This component has already been successfully opened.  So now query
      it. */
@@ -176,14 +176,14 @@ static int init_query(const mca_base_module_t *m,
   if (OMPI_SUCCESS != ret) {
     ompi_output_verbose(10, mca_coll_base_output, 
                         "coll:find_available: coll component %s is not available", 
-                        m->mca_module_name);
-    if (NULL != m->mca_close_module) {
-      m->mca_close_module();
+                        m->mca_component_name);
+    if (NULL != m->mca_close_component) {
+      m->mca_close_component();
     }
   } else {
     ompi_output_verbose(10, mca_coll_base_output, 
                         "coll:find_available: coll component %s is available", 
-                        m->mca_module_name);
+                        m->mca_component_name);
   }      
 
   /* All done */
@@ -196,11 +196,11 @@ static int init_query(const mca_base_module_t *m,
  * Query a specific component, coll v1.0.0
  */
 static int 
-init_query_1_0_0(const mca_base_module_t *component, 
+init_query_1_0_0(const mca_base_component_t *component, 
                  mca_base_component_priority_list_item_t *entry)
 {
-    mca_coll_base_module_1_0_0_t *coll = 
-	(mca_coll_base_module_1_0_0_t *) component;
+    mca_coll_base_component_1_0_0_t *coll = 
+	(mca_coll_base_component_1_0_0_t *) component;
 
     return coll->collm_init_query(&(entry->cpli_allow_multi_user_threads), 
 				  &(entry->cpli_have_hidden_threads));

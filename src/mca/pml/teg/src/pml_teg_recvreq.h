@@ -77,7 +77,7 @@ static inline int mca_pml_teg_recv_request_start(mca_pml_base_recv_request_t* re
  *  @param bytes_delivered (IN)  Bytes delivered to application.
  */
 void mca_pml_teg_recv_request_progress(
-    struct mca_ptl_t* ptl,
+    struct mca_ptl_base_module_t* ptl,
     mca_pml_base_recv_request_t* request,
     size_t bytes_received,
     size_t bytes_delivered

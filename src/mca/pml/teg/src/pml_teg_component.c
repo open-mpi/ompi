@@ -14,35 +14,34 @@
 #include "pml_teg_proc.h"
 
 
+mca_pml_base_component_1_0_0_t mca_pml_teg_component = {
 
-mca_pml_base_module_1_0_0_t mca_pml_teg_module = {
-    /* First, the mca_base_module_t struct containing meta information
-       about the module itself */
-                                                                                                                            
+    /* First, the mca_base_component_t struct containing meta
+       information about the component itself */
+
     {
-    /* Indicate that we are a pml v1.0.0 module (which also implies a
-       specific MCA version) */
-                                                                                                                            
-    MCA_PML_BASE_VERSION_1_0_0,
-                                                                                                                            
-    "teg", /* MCA module name */
-    1,  /* MCA module major version */
-    0,  /* MCA module minor version */
-    0,  /* MCA module release version */
-    mca_pml_teg_module_open,  /* module open */
-    mca_pml_teg_module_close  /* module close */
-    },
-                                                                                                                            
-    /* Next the MCA v1.0.0 module meta data */
-                                                                                                                            
-    {
-    /* Whether the module is checkpointable or not */
-                                                                                                                            
-    false
+      /* Indicate that we are a pml v1.0.0 component (which also implies
+         a specific MCA version) */
+
+      MCA_PML_BASE_VERSION_1_0_0,
+    
+      "teg", /* MCA component name */
+      1,  /* MCA component major version */
+      0,  /* MCA component minor version */
+      0,  /* MCA component release version */
+      mca_pml_teg_component_open,  /* component open */
+      mca_pml_teg_component_close  /* component close */
     },
 
-    mca_pml_teg_module_init,  /* module init */
-    mca_pml_teg_module_fini   /* module finalize */
+    /* Next the MCA v1.0.0 component meta data */
+
+    {
+      /* Whether the component is checkpointable or not */
+      false
+    },
+
+    mca_pml_teg_component_init,  /* component init */
+    mca_pml_teg_component_fini   /* component finalize */
 };
 
 
@@ -58,7 +57,7 @@ static inline int mca_pml_teg_param_register_int(
 }
                                                                                                                         
 
-int mca_pml_teg_module_open(void)
+int mca_pml_teg_component_open(void)
 {
     mca_pml_base_request_t* teg_null = &mca_pml_teg.teg_request_null;
     OBJ_CONSTRUCT(&mca_pml_teg.teg_lock, ompi_mutex_t);
@@ -95,7 +94,7 @@ int mca_pml_teg_module_open(void)
 }
 
 
-int mca_pml_teg_module_close(void)
+int mca_pml_teg_component_close(void)
 {
 #if MCA_PML_TEG_STATISTICS && OMPI_ENABLE_DEBUG
     ompi_output(0, "mca_pml_teg.teg_waits = %d\n", 
@@ -121,10 +120,12 @@ int mca_pml_teg_module_close(void)
             mca_pml_teg.teg_recv_requests.super.ompi_list_length);
     }
 
-    if(NULL != mca_pml_teg.teg_ptl_modules)
-        free(mca_pml_teg.teg_ptl_modules);
-    if(NULL != mca_pml_teg.teg_ptls)
-        free(mca_pml_teg.teg_ptls);
+    if(NULL != mca_pml_teg.teg_ptl_components) {
+        free(mca_pml_teg.teg_ptl_components);
+    }
+    if(NULL != mca_pml_teg.teg_ptl_components) {
+        free(mca_pml_teg.teg_ptl_components);
+    }
     OBJ_DESTRUCT(&mca_pml_teg.teg_send_requests);
     OBJ_DESTRUCT(&mca_pml_teg.teg_recv_requests);
     OBJ_DESTRUCT(&mca_pml_teg.teg_procs);
@@ -133,18 +134,18 @@ int mca_pml_teg_module_close(void)
 }
 
 
-mca_pml_t* mca_pml_teg_module_init(int* priority, 
-                                   bool *allow_multi_user_threads,
-                                   bool *have_hidden_threads)
+mca_pml_base_module_t* mca_pml_teg_component_init(int* priority, 
+                                                  bool *allow_multi_user_threads,
+                                                  bool *have_hidden_threads)
 {
     *priority = 0;
     *have_hidden_threads = false;
 
     OBJ_CONSTRUCT(&mca_pml_teg.teg_lock, ompi_mutex_t);
-    mca_pml_teg.teg_ptl_modules = NULL;
-    mca_pml_teg.teg_num_ptl_modules = 0;
-    mca_pml_teg.teg_ptls = NULL;
-    mca_pml_teg.teg_num_ptls = 0;
+    mca_pml_teg.teg_ptl_components = NULL;
+    mca_pml_teg.teg_num_ptl_components = 0;
+    mca_pml_teg.teg_ptl_components = NULL;
+    mca_pml_teg.teg_num_ptl_components = 0;
 
     /* recv requests */
     ompi_free_list_init(
@@ -163,7 +164,7 @@ mca_pml_t* mca_pml_teg_module_init(int* priority,
 
     /* buffered send */
     if(mca_pml_base_bsend_init(allow_multi_user_threads) != OMPI_SUCCESS) {
-        ompi_output(0, "mca_pml_teg_module_init: mca_pml_bsend_init failed\n");
+        ompi_output(0, "mca_pml_teg_component_init: mca_pml_bsend_init failed\n");
         return NULL;
     }
     *allow_multi_user_threads &= true;

@@ -20,12 +20,12 @@ int mca_coll_base_close(void)
      we're anywhere else). */
 
   if (mca_coll_base_components_opened_valid) {
-    mca_base_modules_close(mca_coll_base_output,
-                           &mca_coll_base_components_opened, NULL);
+    mca_base_components_close(mca_coll_base_output,
+                              &mca_coll_base_components_opened, NULL);
     mca_coll_base_components_opened_valid = false;
   } else if (mca_coll_base_components_available_valid) {
-    mca_base_modules_close(mca_coll_base_output,
-                           &mca_coll_base_components_available, NULL);
+    mca_base_components_close(mca_coll_base_output,
+                              &mca_coll_base_components_available, NULL);
     mca_coll_base_components_available_valid = false;
   }
 

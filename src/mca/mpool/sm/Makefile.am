@@ -7,10 +7,10 @@
 include $(top_ompi_srcdir)/config/Makefile.options
 
 sources = \
-	mpool_sm.c \
 	mpool_sm.h \
 	mpool_sm_mmap.c \
 	mpool_sm_mmap.h \
+	mpool_sm_module.c \
 	mpool_sm_component.c
 
 # Make the output library in this directory, and name it either

@@ -18,7 +18,7 @@
  * Globally exported variable
  */
 
-extern const mca_coll_base_module_1_0_0_t mca_coll_basic_module;
+extern const mca_coll_base_component_1_0_0_t mca_coll_basic_component;
 
 
 /*
@@ -33,11 +33,11 @@ extern "C" {
 
   int mca_coll_basic_init_query(bool *allow_multi_user_threads,
                                 bool *have_hidden_threads);
-  const struct mca_coll_1_0_0_t *
+  const struct mca_coll_base_module_1_0_0_t *
     mca_coll_basic_comm_query(struct ompi_communicator_t *comm, int *priority);
   int mca_coll_basic_comm_unquery(struct ompi_communicator_t *comm);
 
-  const struct mca_coll_1_0_0_t *
+  const struct mca_coll_base_module_1_0_0_t *
     mca_coll_basic_module_init(struct ompi_communicator_t *comm);
   int mca_coll_basic_module_finalize(struct ompi_communicator_t *comm);
 
@@ -238,7 +238,7 @@ static inline void mca_coll_basic_free_reqs(ompi_request_t **reqs, int count)
 /*
  * Data structure for hanging data off the communicator 
  */
-struct mca_coll_comm_t {
+struct mca_coll_base_comm_t {
   ompi_request_t **mccb_reqs;
   int mccb_num_reqs;
 };

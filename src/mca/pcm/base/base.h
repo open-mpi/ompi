@@ -39,7 +39,7 @@ extern "C" {
  */
 extern int mca_pcm_base_output;
 extern ompi_list_t mca_pcm_base_modules_available;
-extern mca_pcm_base_module_t mca_pcm_base_selected_module;
-extern mca_pcm_t mca_pcm;
+extern mca_pcm_base_component_t mca_pcm_base_selected_component;
+extern mca_pcm_base_module_t mca_pcm;
 
 #endif /* MCA_PCM_BASE_H */

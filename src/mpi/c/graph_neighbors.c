@@ -25,7 +25,7 @@ int MPI_Graph_neighbors(MPI_Comm comm, int rank, int maxneighbors,
                         int *neighbors) 
 {
     int err;
-    mca_topo_base_graph_neighbors_fn_t func;
+    mca_topo_base_module_graph_neighbors_fn_t func;
 
     /* check the arguments */
     if (MPI_PARAM_CHECK) {
@@ -54,10 +54,6 @@ int MPI_Graph_neighbors(MPI_Comm comm, int rank, int maxneighbors,
     }
     /* neighbors the function pointer to do the right thing */
     func = comm->c_topo->topo_graph_neighbors;
-    if (NULL == func) {
-        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER, 
-                                      FUNC_NAME);
-    }
 
     /* call the function */
     if ( MPI_SUCCESS != 

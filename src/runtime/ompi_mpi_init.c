@@ -143,10 +143,10 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
          final thread level */
 
     if (OMPI_SUCCESS != 
-            (ret = mca_base_init_select_modules(requested, 
-                                                allow_multi_user_threads,
-                                                have_hidden_threads, 
-                                                provided))) {
+            (ret = mca_base_init_select_components(requested, 
+                                                   allow_multi_user_threads,
+                                                   have_hidden_threads, 
+                                                   provided))) {
         /* JMS show_help */
         printf("show_help: ompi_mpi_init failed in mca_base_init_select_modules\n");
         return ret;

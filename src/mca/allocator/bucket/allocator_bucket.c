@@ -3,32 +3,32 @@
 #include "mca/base/mca_base_param.h"
 #include "mca/allocator/bucket/allocator_bucket_alloc.h"
 
-struct mca_allocator_t* mca_allocator_bucket_module_init(
+struct mca_allocator_base_module_t* mca_allocator_bucket_module_init(
     bool *allow_multi_user_threads,
-    mca_allocator_segment_alloc_fn_t segment_alloc,
-    mca_allocator_segment_free_fn_t segment_free);
+    mca_allocator_base_component_segment_alloc_fn_t segment_alloc,
+    mca_allocator_base_component_segment_free_fn_t segment_free);
 
 int mca_allocator_bucket_module_open(void);
 
 int mca_allocator_bucket_module_close(void);
 
-void * mca_allocator_bucket_alloc_wrapper(struct mca_allocator_t* allocator,
+void * mca_allocator_bucket_alloc_wrapper(struct mca_allocator_base_module_t* allocator,
                                           size_t size, size_t align);
 static int mca_allocator_num_buckets;
 
 
 
-int mca_allocator_bucket_finalize(struct mca_allocator_t* allocator)
+int mca_allocator_bucket_finalize(struct mca_allocator_base_module_t* allocator)
 {
     mca_allocator_bucket_cleanup(allocator);
     free(allocator);
     return(OMPI_SUCCESS);
 }
 
-struct mca_allocator_t* mca_allocator_bucket_module_init(
+struct mca_allocator_base_module_t* mca_allocator_bucket_module_init(
     bool *allow_multi_user_threads,
-    mca_allocator_segment_alloc_fn_t segment_alloc,
-    mca_allocator_segment_free_fn_t segment_free)
+    mca_allocator_base_component_segment_alloc_fn_t segment_alloc,
+    mca_allocator_base_component_segment_free_fn_t segment_free)
 {
     size_t alloc_size = sizeof(mca_allocator_bucket_t);
     mca_allocator_bucket_t * retval;
@@ -36,7 +36,7 @@ struct mca_allocator_t* mca_allocator_bucket_module_init(
     if(NULL == allocator) {
         return(NULL);
     }
-    retval = mca_allocator_bucket_init((mca_allocator_t *) allocator, mca_allocator_num_buckets, 
+    retval = mca_allocator_bucket_init((mca_allocator_base_module_t *) allocator, mca_allocator_num_buckets, 
                                         segment_alloc, segment_free);
     if(NULL == retval) {
         free(allocator);
@@ -48,7 +48,7 @@ struct mca_allocator_t* mca_allocator_bucket_module_init(
     allocator->super.alc_return = mca_allocator_bucket_cleanup;
     allocator->super.alc_finalize = mca_allocator_bucket_finalize;
 
-    return((mca_allocator_t *) allocator);
+    return((mca_allocator_base_module_t *) allocator);
 }
 
 int mca_allocator_bucket_module_open(void) {
@@ -62,7 +62,7 @@ int mca_allocator_bucket_module_close(void) {
     return(OMPI_SUCCESS);
 }
 
-void * mca_allocator_bucket_alloc_wrapper(struct mca_allocator_t* allocator,
+void * mca_allocator_bucket_alloc_wrapper(struct mca_allocator_base_module_t* allocator,
                                           size_t size, size_t align)
 {
     if(0 == align){
@@ -72,10 +72,12 @@ void * mca_allocator_bucket_alloc_wrapper(struct mca_allocator_t* allocator,
 }    
 
 
-mca_allocator_base_module_t mca_allocator_bucket_module = { 
-    /* First, the mca_base_module_t struct containing meta information
-       about the module itself */
-    {
+mca_allocator_base_component_t mca_allocator_bucket_component = { 
+
+  /* First, the mca_base_module_t struct containing meta information
+     about the module itself */
+
+  {
     /* Indicate that we are a allocator v1.0.0 module (which also implies a
        specific MCA version) */
 
@@ -87,14 +89,14 @@ mca_allocator_base_module_t mca_allocator_bucket_module = {
     0,  /* MCA module release version */
     mca_allocator_bucket_module_open,  /* module open */
     mca_allocator_bucket_module_close  /* module close */
-    },
+  },
+  
+  /* Next the MCA v1.0.0 module meta data */
 
-    /* Next the MCA v1.0.0 module meta data */
-
-    {
+  {
     /* Whether the module is checkpointable or not */
     false
-    },
-    mca_allocator_bucket_module_init
+  },
+  mca_allocator_bucket_module_init
 };
 

@@ -40,7 +40,7 @@ ompi_autoconf=""
 ompi_libtoolize=""
 ompi_automake=""
 
-mca_no_configure_modules_file="config/mca_no_configure_modules.m4"
+mca_no_configure_components_file="config/mca_no_configure_components.m4"
 mca_no_config_list_file="mca_no_config_list"
 mca_no_config_amc_file="mca_no_config_amc"
 
@@ -289,7 +289,7 @@ run_gnu_tools() {
 EOF
 	"$rgt_ompi_topdir/config/mca_make_configure.pl" \
 	    --ompidir "$rgt_ompi_topdir" \
-	    --moduledir "`pwd`"
+	    --componentdir "`pwd`"
         if test "$?" != "0"; then
            echo "*** autogen.sh failed to complete!"
            exit 1
@@ -335,7 +335,7 @@ EOF
     run_and_check $ompi_autoconf
 
     # We only need the libltdl stuff for the top-level
-    # configure, not any of the MCA modules.
+    # configure, not any of the MCA components.
 
     if test -f include/mpi.h; then
 	rm -rf libltdl src/libltdl src/ltdl.h
@@ -464,9 +464,9 @@ EOF
 *** Nothing to do -- skipping this directory
 EOF
             else
-                pd_module_name="`basename $pd_dir`"
-                pd_module_type="`dirname $pd_dir`"
-                pd_module_type="`basename $pd_module_type`"
+                pd_component_name="`basename $pd_dir`"
+                pd_component_type="`dirname $pd_dir`"
+                pd_component_type="`basename $pd_component_type`"
                 pd_ver_file="`grep PARAM_VERSION_FILE configure.params`"
                 if test -z "$pd_ver_file"; then
                     pd_ver_file="VERSION"
@@ -482,14 +482,14 @@ EOF
                 cat >> $pd_list_file <<EOF
 dnl ----------------------------------------------------------------
 
-dnl No-configure module: 
+dnl No-configure component: 
 dnl    $pd_dir
 
 EOF
                 cat >> $pd_amc_file <<EOF
 dnl ----------------------------------------------------------------
 
-dnl No-configure module: 
+dnl No-configure component: 
 dnl    $pd_dir
 
 EOF
@@ -510,7 +510,7 @@ EOF
                 pd_ver_svn="`echo $pd_ver | cut -d: -f7`"
                 cat >> $pd_list_file <<EOF
 
-MCA_${pd_module_type}_NO_CONFIGURE_SUBDIRS="$pd_dir \$MCA_${pd_module_type}_NO_CONFIGURE_SUBDIRS"
+MCA_${pd_component_type}_NO_CONFIGURE_SUBDIRS="$pd_dir \$MCA_${pd_component_type}_NO_CONFIGURE_SUBDIRS"
 
 dnl Since AM_CONDITIONAL does not accept a variable name as its first
 dnl argument, we generate it here, and the variable used in the test
@@ -519,32 +519,32 @@ dnl will be filled in later.
 dnl Similarly, AC_DEFINE_UNQUOTED doesn't take a variable first
 dnl argument.  So we have to figure it out here.
 
-AC_DEFINE_UNQUOTED(MCA_${pd_module_type}_${pd_module_name}_MAJOR_VERSION, 
+AC_DEFINE_UNQUOTED(MCA_${pd_component_type}_${pd_component_name}_MAJOR_VERSION, 
     $pd_ver_major,
-    [Major OMPI MCA $pd_module_type $pd_module_name version])
-AC_DEFINE_UNQUOTED(MCA_${pd_module_type}_${pd_module_name}_MINOR_VERSION, 
+    [Major OMPI MCA $pd_component_type $pd_component_name version])
+AC_DEFINE_UNQUOTED(MCA_${pd_component_type}_${pd_component_name}_MINOR_VERSION, 
     $pd_ver_minor,
-    [Minor OMPI MCA $pd_module_type $pd_module_name version])
-AC_DEFINE_UNQUOTED(MCA_${pd_module_type}_${pd_module_name}_RELEASE_VERSION, 
+    [Minor OMPI MCA $pd_component_type $pd_component_name version])
+AC_DEFINE_UNQUOTED(MCA_${pd_component_type}_${pd_component_name}_RELEASE_VERSION, 
     $pd_ver_release,
-    [Release OMPI MCA $pd_module_type $pd_module_name version])
-AC_DEFINE_UNQUOTED(MCA_${pd_module_type}_${pd_module_name}_ALPHA_VERSION, 
+    [Release OMPI MCA $pd_component_type $pd_component_name version])
+AC_DEFINE_UNQUOTED(MCA_${pd_component_type}_${pd_component_name}_ALPHA_VERSION, 
     $pd_ver_alpha,
-    [Alpha OMPI MCA $pd_module_type $pd_module_name version])
-AC_DEFINE_UNQUOTED(MCA_${pd_module_type}_${pd_module_name}_BETA_VERSION, 
+    [Alpha OMPI MCA $pd_component_type $pd_component_name version])
+AC_DEFINE_UNQUOTED(MCA_${pd_component_type}_${pd_component_name}_BETA_VERSION, 
     $pd_ver_beta,
-    [Beta OMPI MCA $pd_module_type $pd_module_name version])
-AC_DEFINE_UNQUOTED(MCA_${pd_module_type}_${pd_module_name}_SVN_VERSION, 
+    [Beta OMPI MCA $pd_component_type $pd_component_name version])
+AC_DEFINE_UNQUOTED(MCA_${pd_component_type}_${pd_component_name}_SVN_VERSION, 
     "$pd_ver_svn",
-    [SVN OMPI MCA $pd_module_type $pd_module_name version])
-AC_DEFINE_UNQUOTED(MCA_${pd_module_type}_${pd_module_name}_FULL_VERSION, 
+    [SVN OMPI MCA $pd_component_type $pd_component_name version])
+AC_DEFINE_UNQUOTED(MCA_${pd_component_type}_${pd_component_name}_FULL_VERSION, 
     "$pd_ver_full",
-    [Full OMPI MCA $pd_module_type $pd_module_name version])
+    [Full OMPI MCA $pd_component_type $pd_component_name version])
 
 EOF
                 cat >> $pd_amc_file <<EOF
-AM_CONDITIONAL(OMPI_BUILD_${pd_module_type}_${pd_module_name}_DSO,
-    test "\$BUILD_${pd_module_type}_${pd_module_name}_DSO" = "1")
+AM_CONDITIONAL(OMPI_BUILD_${pd_component_type}_${pd_component_name}_DSO,
+    test "\$BUILD_${pd_component_type}_${pd_component_name}_DSO" = "1")
 
 EOF
 
@@ -568,13 +568,13 @@ EOF
 
         cd "$pd_cur_dir"
     fi
-    unset pd_dir pd_ompi_topdir pd_cur_dir pd_module_type
+    unset pd_dir pd_ompi_topdir pd_cur_dir pd_component_type
 }
 
 
 ##############################################################################
 #
-# run_global - run the config in the top OMPI dir and all MCA modules
+# run_global - run the config in the top OMPI dir and all MCA components
 #
 # INPUT:
 #    none
@@ -586,11 +586,11 @@ EOF
 #
 ##############################################################################
 run_global() {
-    # [Re-]Create the mca_module_list file
+    # [Re-]Create the mca_component_list file
 
-    rm -f "$mca_no_configure_modules_file" "$mca_no_config_list_file" \
+    rm -f "$mca_no_configure_components_file" "$mca_no_config_list_file" \
         "$mca_no_config_amc_file"
-    touch "$mca_no_configure_modules_file" "$mca_no_config_list_file" \
+    touch "$mca_no_configure_components_file" "$mca_no_config_list_file" \
         "$mca_no_config_amc_file"
 
     # Now run the config in every directory in src/mca/*/*
@@ -600,12 +600,12 @@ run_global() {
     echo $rg_cwd
     for type in src/mca/*; do
 	if test -d "$type"; then
-	    for module in "$type"/*; do
-		if test -d "$module"; then
-		    if test -f "$module/configure.in" -o \
-			-f "$module/configure.params" -o \
-			-f "$module/configure.ac"; then
-			process_dir "$module" "$rg_cwd"
+	    for component in "$type"/*; do
+		if test -d "$component"; then
+		    if test -f "$component/configure.in" -o \
+			-f "$component/configure.params" -o \
+			-f "$component/configure.ac"; then
+			process_dir "$component" "$rg_cwd"
 		    fi
 		fi
 	    done
@@ -614,7 +614,7 @@ run_global() {
 
     # Fill in the final m4 file
 
-    cat > "$mca_no_configure_modules_file" <<EOF
+    cat > "$mca_no_configure_components_file" <<EOF
 dnl
 dnl \$HEADER
 dnl
@@ -622,10 +622,10 @@ dnl
 dnl This file is automatically created by autogen.sh; it should not
 dnl be edited by hand!!
 
-dnl List all the no-configure modules that we found, and AC_DEFINE
+dnl List all the no-configure components that we found, and AC_DEFINE
 dnl their versions
 
-AC_DEFUN([MCA_FIND_NO_CONFIGURE_MODULES],[
+AC_DEFUN([MCA_FIND_NO_CONFIGURE_COMPONENTS],[
 MCA_cofs_NO_CONFIGURE_SUBDIRS=""
 MCA_pcm_NO_CONFIGURE_SUBDIRS=""
 MCA_gpr_NO_CONFIGURE_SUBDIRS=""
@@ -643,11 +643,11 @@ MCA_topo_NO_CONFIGURE_SUBDIRS=""
 ])dnl
 
 dnl Separately have the AM_CONDITIONALS as to whether we build the
-dnl modules static or shared.  This must be done separately from the
+dnl components static or shared.  This must be done separately from the
 dnl list because we have to do it late in the configure script, after
 dnl all the test variable values have been set.
 
-AC_DEFUN([MCA_AMC_NO_CONFIGURE_MODULES],[
+AC_DEFUN([MCA_AMC_NO_CONFIGURE_COMPONENTS],[
 `cat $mca_no_config_amc_file`
 ])dnl
 EOF
@@ -655,12 +655,12 @@ EOF
 
     rm -f $mca_no_config_list_file $mca_no_config_amc_file
 
-    # Finally, after we found all the no-configure MCA modules, run
+    # Finally, after we found all the no-configure MCA components, run
     # the config in the top-level directory
 
     process_dir . .
 
-    unset type module
+    unset type component
 }
 
 
@@ -701,13 +701,13 @@ EOF
     sleep 5
 fi
 
-# figure out if we're at the top level of the OMPI tree, a module's
+# figure out if we're at the top level of the OMPI tree, a component's
 # top-level directory, or somewhere else.
 if test -f VERSION -a -f configure.ac -a -f include/mpi.h ; then
     # Top level of OMPI tree
     ompidir="`pwd`"
 elif test -f configure.in -o -f configure.ac -o -f configure.params ; then
-    # Top level of a module directory
+    # Top level of a component directory
     want_local=yes
     if test -z "$ompidir"; then
         ompidir="../../../.."
@@ -716,7 +716,7 @@ else
     cat <<EOF
 
 You must run this script from either the top level of the OMPI
-directory tree or the top-level of an MCA module directory tree.
+directory tree or the top-level of an MCA component directory tree.
 
 EOF
     exit 1

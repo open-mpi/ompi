@@ -23,7 +23,7 @@
 struct mca_ptl_gm_peer_t {
     ompi_list_item_t super;
 
-    struct mca_ptl_gm_t *peer_ptl;
+    struct mca_ptl_gm_module_t *peer_ptl;
     struct mca_ptl_gm_proc_t *peer_proc;
     struct mca_ptl_gm_addr_t *peer_addr;   /**< address of peer */
 

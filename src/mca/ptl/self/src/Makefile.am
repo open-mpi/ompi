@@ -9,4 +9,4 @@ noinst_LTLIBRARIES = libmca_ptl_self.la
 libmca_ptl_self_la_SOURCES = \
 	ptl_self.c \
 	ptl_self.h \
-	ptl_self_module.c
+	ptl_self_component.c

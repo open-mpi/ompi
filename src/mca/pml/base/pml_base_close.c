@@ -19,15 +19,15 @@ int mca_pml_base_close(void)
      anyway?  This module is going away, so errors don't matter
      anymore) */
 
-  if (NULL != mca_pml_base_selected_module.pmlm_finalize) {
-    mca_pml_base_selected_module.pmlm_finalize();
+  if (NULL != mca_pml_base_selected_component.pmlm_finalize) {
+    mca_pml_base_selected_component.pmlm_finalize();
   }
 
   /* Close all remaining available modules (may be one if this is a
      OMPI RTE program, or [possibly] multiple if this is ompi_info) */
 
-  mca_base_modules_close(mca_pml_base_output, 
-                         &mca_pml_base_modules_available, NULL);
+  mca_base_components_close(mca_pml_base_output, 
+                            &mca_pml_base_components_available, NULL);
 
   /* All done */
 

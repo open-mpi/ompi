@@ -23,7 +23,7 @@
  * ************************ actions structure ************************
  * *******************************************************************
  */
-static mca_topo_t unity =  {
+static mca_topo_base_module_1_0_0_t unity =  {
     mca_topo_unity_module_init, /* initalise after being selected */
     mca_topo_unity_module_finalize, /* close a module on a communicator */
     NULL, /* topo_cart_coords */
@@ -47,8 +47,8 @@ static mca_topo_t unity =  {
  * *******************************************************************
  */
 
-int mca_topo_unity_module_init_query(bool *allow_multi_user_threads,
-                                     bool *have_hidden_threads)
+int mca_topo_unity_component_init_query(bool *allow_multi_user_threads,
+                                        bool *have_hidden_threads)
 {
    *allow_multi_user_threads = true;
    *have_hidden_threads = false;
@@ -58,9 +58,9 @@ int mca_topo_unity_module_init_query(bool *allow_multi_user_threads,
    return OMPI_SUCCESS;
 }      
 
-struct mca_topo_1_0_0_t *
-mca_topo_unity_module_comm_query (int *priority){
-
+struct mca_topo_base_module_1_0_0_t *
+mca_topo_unity_component_comm_query (int *priority)
+{
    /* this is the lowest module on the totem pole */
    *priority = 0;
 
@@ -71,8 +71,8 @@ mca_topo_unity_module_comm_query (int *priority){
    return &unity;
 }
 
-int mca_topo_unity_module_comm_unquery (struct ompi_communicator_t *comm){ 
-    
+int mca_topo_unity_component_comm_unquery (struct ompi_communicator_t *comm)
+{    
    /* This function might be needed for some purposes later. for now it
     * does not have anything to do since there are no steps which need 
     * to be undone if this module is not selected */
@@ -80,8 +80,8 @@ int mca_topo_unity_module_comm_unquery (struct ompi_communicator_t *comm){
    return OMPI_SUCCESS;
 }
 
-int mca_topo_unity_module_init (struct ompi_communicator_t *comm){
-           
+int mca_topo_unity_module_init (struct ompi_communicator_t *comm)
+{
    /* This function is used to initialize the module on the communicator. We
     * need to hang the data off of the communicator. For this we still use the
     * same data structure which was defined in topo.h, mca_topo_comm_1_0_0_t. 
@@ -89,31 +89,29 @@ int mca_topo_unity_module_init (struct ompi_communicator_t *comm){
     * to hang additional data, then it has to have this structure as the first
     * member and then extend. This is a must rule */
 
-   struct mca_topo_comm_1_0_0_t *topo_data;
+   struct mca_topo_base_comm_1_0_0_t *topo_data;
 
    /* allocate the data */
 
    comm->c_topo_comm = NULL;
-   topo_data = (struct mca_topo_comm_1_0_0_t *)
-                    malloc(sizeof(struct mca_topo_comm_1_0_0_t));
-
+   topo_data = malloc(sizeof(struct mca_topo_base_comm_1_0_0_t));
    if (NULL == topo_data) {
        return OMPI_ERROR;
    }
 
    comm->c_topo_comm = topo_data;
-
    return OMPI_SUCCESS;
 }
 
    
-
-int mca_topo_unity_module_finalize (struct ompi_communicator_t *comm) {
-
+int mca_topo_unity_module_finalize (struct ompi_communicator_t *comm) 
+{
     /* All we need to do for now is to remove the allocated data */
-    
-    free (comm->c_topo_comm);
-    comm->c_topo = NULL;
+ 
+    if (NULL != comm->c_topo_comm) {
+        free (comm->c_topo_comm);
+        comm->c_topo = NULL;
+    }
 
     return OMPI_SUCCESS;
 }

@@ -92,11 +92,12 @@ int mca_ptl_tcp_send_frag_init(
        ompi_convertor_t *convertor;
        int rc;
 
-        /* first fragment (eager send) and first fragment of long protocol
-         * can use the convertor initialized on the request, remaining fragments
-         * must copy/reinit the convertor as the transfer could be in parallel.
+        /* first fragment (eager send) and first fragment of long
+         * protocol can use the convertor initialized on the request,
+         * remaining fragments must copy/reinit the convertor as the
+         * transfer could be in parallel.
          */
-        if( offset <= mca_ptl_tcp.super.ptl_first_frag_size ) {
+        if( offset <= mca_ptl_tcp_module.super.ptl_first_frag_size ) {
             convertor = &sendreq->req_convertor;
         } else {
 
@@ -175,10 +176,10 @@ bool mca_ptl_tcp_send_frag_handler(mca_ptl_tcp_send_frag_t* frag, int sd)
     }
 
 #if MCA_PTL_TCP_STATISTICS
-    ((mca_ptl_tcp_t*)frag->frag_owner)->ptl_bytes_sent += cnt;
-    ((mca_ptl_tcp_t*)frag->frag_owner)->ptl_send_handler++;
+    ((mca_ptl_tcp_module_t*)frag->frag_owner)->ptl_bytes_sent += cnt;
+    ((mca_ptl_tcp_module_t*)frag->frag_owner)->ptl_send_handler++;
 #endif
-                                                                                                     
+
     /* if the write didn't complete - update the iovec state */
     num_vecs = frag->frag_vec_cnt;
     for(i=0; i<num_vecs; i++) {

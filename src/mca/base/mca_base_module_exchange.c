@@ -22,7 +22,7 @@
 
 struct mca_base_modex_module_t {
     ompi_list_item_t super;
-    mca_base_module_t *module;
+    mca_base_component_t *component;
     void *module_data;
     size_t module_data_size;
 };
@@ -30,7 +30,7 @@ typedef struct mca_base_modex_module_t mca_base_modex_module_t;
 
 static void mca_base_modex_module_construct(mca_base_modex_module_t *module)
 {
-    module->module = NULL;
+    module->component = NULL;
     module->module_data = NULL;
     module->module_data_size = 0;
 }
@@ -80,15 +80,16 @@ OBJ_CLASS_INSTANCE(
  *  Look to see if there is any data associated with a specified module.
  */
 
-static inline mca_base_modex_module_t* mca_base_modex_lookup_module(
+static mca_base_modex_module_t* mca_base_modex_lookup_module(
     mca_base_modex_t* modex,
-    mca_base_module_t* module)
+    mca_base_component_t* component)
 {
     mca_base_modex_module_t* modex_module;
     for(modex_module =  (mca_base_modex_module_t*)ompi_list_get_first(&modex->modex_modules);
         modex_module != (mca_base_modex_module_t*)ompi_list_get_end(&modex->modex_modules);
         modex_module =  (mca_base_modex_module_t*)ompi_list_get_next(modex_module)) {
-        if(mca_base_module_compare(modex_module->module, module) == 0) {
+        if(mca_base_component_compare(modex_module->component, 
+                                      component) == 0) {
             return modex_module;
         }
     }
@@ -100,16 +101,18 @@ static inline mca_base_modex_module_t* mca_base_modex_lookup_module(
  *  Create a placeholder for data associated with the specified module.
  */
 
-static inline mca_base_modex_module_t* mca_base_modex_create_module(
+static mca_base_modex_module_t* mca_base_modex_create_module(
     mca_base_modex_t* modex,
-    mca_base_module_t* module)
+    mca_base_component_t* component)
 {
     mca_base_modex_module_t* modex_module;
-    if(NULL == (modex_module = mca_base_modex_lookup_module(modex, module))) {
+    if(NULL == (modex_module = mca_base_modex_lookup_module(modex, 
+                                                            component))) {
         modex_module = OBJ_NEW(mca_base_modex_module_t);
         if(NULL != modex_module) {
-            modex_module->module = module;
-            ompi_list_append(&modex->modex_modules, (ompi_list_item_t*)modex_module);
+            modex_module->component = component;
+            ompi_list_append(&modex->modex_modules, 
+                             (ompi_list_item_t*)modex_module);
         }
     }
     return modex_module;
@@ -122,7 +125,8 @@ static inline mca_base_modex_module_t* mca_base_modex_create_module(
  *  during mca_base_modex_exchange().
  */
 
-int mca_base_modex_send(mca_base_module_t *source_module, const void *buffer, size_t size)
+int mca_base_modex_send(mca_base_component_t *source_component, 
+                        const void *buffer, size_t size)
 {
     ompi_proc_t *self = ompi_proc_local();
     mca_base_modex_t* modex;
@@ -136,7 +140,8 @@ int mca_base_modex_send(mca_base_module_t *source_module, const void *buffer, si
         self->proc_modex = modex = OBJ_NEW(mca_base_modex_t);
     }
 
-    if(NULL == (modex_module = mca_base_modex_create_module(modex, source_module))) {
+    if(NULL == (modex_module = mca_base_modex_create_module(modex, 
+                                                            source_component))) {
         OMPI_THREAD_UNLOCK(&self->proc_lock);
         return OMPI_ERROR;
     }
@@ -159,7 +164,8 @@ int mca_base_modex_send(mca_base_module_t *source_module, const void *buffer, si
  *  mca_base_modex_exchange().
  */
 
-int mca_base_modex_recv(mca_base_module_t *module, ompi_proc_t *source_proc, void **buffer, size_t *size)
+int mca_base_modex_recv(mca_base_component_t *component,
+                        ompi_proc_t *source_proc, void **buffer, size_t *size)
 {
     mca_base_modex_t* modex;
     mca_base_modex_module_t* modex_module;
@@ -167,7 +173,8 @@ int mca_base_modex_recv(mca_base_module_t *module, ompi_proc_t *source_proc, voi
     
     OMPI_THREAD_LOCK(&source_proc->proc_lock);
     if(NULL == (modex = source_proc->proc_modex) ||
-       NULL == (modex_module = mca_base_modex_lookup_module(modex, module))) {
+       NULL == (modex_module = mca_base_modex_lookup_module(modex, 
+                                                            component))) {
         OMPI_THREAD_UNLOCK(&source_proc->proc_lock);
         return OMPI_ERR_NOT_FOUND;
     }
@@ -269,7 +276,7 @@ int mca_base_modex_exchange(void)
                     return OMPI_ERR_OUT_OF_RESOURCE;
                 }
             }
-            proc_module = mca_base_modex_create_module(proc->proc_modex, self_module->module);
+            proc_module = mca_base_modex_create_module(proc->proc_modex, self_module->component);
             if(NULL == proc_module) {
                 free(procs);
                 OMPI_THREAD_UNLOCK(&proc->proc_lock);

@@ -21,9 +21,10 @@
 static const char FUNC_NAME[] = "MPI_Cart_sub";
 
 
-int MPI_Cart_sub(MPI_Comm comm, int *remain_dims, MPI_Comm *new_comm) {
+int MPI_Cart_sub(MPI_Comm comm, int *remain_dims, MPI_Comm *new_comm) 
+{
     int err;
-    mca_topo_base_cart_sub_fn_t func;
+    mca_topo_base_module_cart_sub_fn_t func;
 
     /* check the arguments */
     if (MPI_PARAM_CHECK) {
@@ -48,10 +49,7 @@ int MPI_Cart_sub(MPI_Comm comm, int *remain_dims, MPI_Comm *new_comm) {
 
     /* get the function pointer on this communicator */
     func = comm->c_topo->topo_cart_sub;
-    if (NULL == func) {
-        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER, 
-                                     FUNC_NAME);
-    }
+
     /* call the function */
     if ( MPI_SUCCESS != 
             (err = func(comm, remain_dims, new_comm))) {

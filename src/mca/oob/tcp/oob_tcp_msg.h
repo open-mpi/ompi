@@ -46,7 +46,7 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_msg_t);
 #define MCA_OOB_TCP_MSG_ALLOC(msg, rc) \
     { \
     ompi_list_item_t* item; \
-    OMPI_FREE_LIST_GET(&mca_oob_tcp_module.tcp_msgs, item, rc); \
+    OMPI_FREE_LIST_GET(&mca_oob_tcp_component.tcp_msgs, item, rc); \
     msg = (mca_oob_tcp_msg_t*)item; \
     }
 
@@ -57,7 +57,7 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_msg_t);
     { \
     /* frees the iovec allocated during the send/recieve */ \
     if(NULL != msg->msg_iov) free(msg->msg_iov); \
-    OMPI_FREE_LIST_RETURN(&mca_oob_tcp_module.tcp_msgs, (ompi_list_item_t*)msg); \
+    OMPI_FREE_LIST_RETURN(&mca_oob_tcp_component.tcp_msgs, (ompi_list_item_t*)msg); \
     }
 
 /**

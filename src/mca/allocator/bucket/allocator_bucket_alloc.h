@@ -67,12 +67,12 @@ typedef struct mca_allocator_bucket_bucket_t mca_allocator_bucket_bucket_t;
   * Structure that holds the necessary information for each area of memory
   */
 struct mca_allocator_bucket_t {
-    mca_allocator_t super;          /**< makes this a child of class mca_allocator_t */
+    mca_allocator_base_module_t super;          /**< makes this a child of class mca_allocator_t */
     mca_allocator_bucket_bucket_t * buckets; /**< the array of buckets */
     int num_buckets;                         /**< the number of buckets */
-    mca_allocator_segment_alloc_fn_t get_mem_fn; 
+    mca_allocator_base_component_segment_alloc_fn_t get_mem_fn; 
     /**< pointer to the function to get more memory */
-    mca_allocator_segment_free_fn_t free_mem_fn;
+    mca_allocator_base_component_segment_free_fn_t free_mem_fn;
     /**< pointer to the function to free memory */
 };
 /**
@@ -96,10 +96,10 @@ extern "C" {
    * @retval Pointer to the initialized mca_allocator_bucket_options_t structure
    * @retval NULL if there was an error
    */
-    mca_allocator_bucket_t * mca_allocator_bucket_init(mca_allocator_t * mem,
+    mca_allocator_bucket_t *mca_allocator_bucket_init(mca_allocator_base_module_t * mem,
                                        int num_buckets,
-                                       mca_allocator_segment_alloc_fn_t get_mem_funct,
-                                       mca_allocator_segment_free_fn_t free_mem_funct);
+                                       mca_allocator_base_component_segment_alloc_fn_t get_mem_funct,
+                                       mca_allocator_base_component_segment_free_fn_t free_mem_funct);
 /**
    * Accepts a request for memory in a specific region defined by the
    * mca_allocator_bucket_options_t struct and returns a pointer to memory in that
@@ -111,7 +111,7 @@ extern "C" {
    * @retval Pointer to the area of memory if the allocation was successful
    * @retval NULL if the allocation was unsuccessful
    */
-    void * mca_allocator_bucket_alloc(mca_allocator_t * mem, size_t size);
+    void * mca_allocator_bucket_alloc(mca_allocator_base_module_t * mem, size_t size);
 
 /**
    * Accepts a request for memory in a specific region defined by the
@@ -128,8 +128,8 @@ extern "C" {
    * @retval NULL if the allocation was unsuccessful
    *
    */
-    void * mca_allocator_bucket_alloc_align(mca_allocator_t * mem, size_t size,
-                                size_t alignment);
+    void * mca_allocator_bucket_alloc_align(mca_allocator_base_module_t * mem,
+                                            size_t size, size_t alignment);
 
 /**
    * Attempts to resize the passed region of memory into a larger or a smaller
@@ -145,8 +145,8 @@ extern "C" {
    * @retval NULL if the allocation was unsuccessful
    *
    */
-    void * mca_allocator_bucket_realloc(mca_allocator_t * mem, void * ptr,
-                             size_t size);
+    void * mca_allocator_bucket_realloc(mca_allocator_base_module_t * mem, 
+                                        void * ptr, size_t size);
 
 /**
    * Frees the passed region of memory
@@ -158,7 +158,8 @@ extern "C" {
    * @retval None
    *
    */
-    void mca_allocator_bucket_free(mca_allocator_t * mem, void * ptr);
+    void mca_allocator_bucket_free(mca_allocator_base_module_t * mem,
+                                   void * ptr);
 
 /**
    * Frees all the memory from all the buckets back to the system. Note that
@@ -171,7 +172,7 @@ extern "C" {
    * @retval None
    *
    */
-    int mca_allocator_bucket_cleanup(mca_allocator_t * mem);
+    int mca_allocator_bucket_cleanup(mca_allocator_base_module_t * mem);
 
 /**
    * Cleanup all resources held by this allocator.
@@ -182,7 +183,7 @@ extern "C" {
    * @retval None
    *
    */
-    int mca_allocator_bucket_finalize(mca_allocator_t * mem);
+    int mca_allocator_bucket_finalize(mca_allocator_base_module_t * mem);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

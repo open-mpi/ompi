@@ -17,13 +17,13 @@
 /**
  * MCA component open function.
  *
- * @retval MCA_SUCCESS This module can be used in the process. 
+ * @retval MCA_SUCCESS This component can be used in the process. 
  *
- * @retval anything_else The MCA will ignore this module for the
+ * @retval anything_else The MCA will ignore this component for the
  * duration of the process.
  *
  * All MCA components can have an "open" function that is invoked once
- * per process, when the module is located and loaded.  This function
+ * per process, when the component is located and loaded.  This function
  * should register any MCA parameters (using
  * mca_base_param_register_int() and mca_base_param_register_string())
  * that will be used by the component.  Parameter registrations should
@@ -37,7 +37,7 @@
  *
  * This function should return MCA_SUCCESS if it wishes to remain
  * loaded in the process.  Any other return value will cause the MCA
- * base to unload the module.  Although most components do not use
+ * base to unload the component.  Although most components do not use
  * this mechanism to force themselves to be unloaded (because if they
  * are immediately unloaded, ompi_info will not display them), the
  * mechanism is available should the need arise.
@@ -48,7 +48,7 @@
  * function.  In this cause, the MCA will act as if it called the open
  * function and it returned MCA_SUCCESS.
  */
-typedef int (*mca_base_open_module_fn_t)(void);
+typedef int (*mca_base_open_component_fn_t)(void);
 
 /** MCA component close function
  *
@@ -70,7 +70,7 @@ typedef int (*mca_base_open_module_fn_t)(void);
  * this function.  In this case, the MCA will act as if it called the
  * close function and it returned MCA_SUCCESS.
  */
-typedef int (*mca_base_close_module_fn_t)(void);
+typedef int (*mca_base_close_component_fn_t)(void);
 
 
 /**
@@ -80,7 +80,7 @@ typedef int (*mca_base_close_module_fn_t)(void);
 /**
  * Maximum length of MCA component string names.
  */
-#define MCA_BASE_MAX_MODULE_NAME_LEN 64
+#define MCA_BASE_MAX_COMPONENT_NAME_LEN 64
 
 /**
  * Common type for all MCA components.
@@ -90,7 +90,7 @@ typedef int (*mca_base_close_module_fn_t)(void);
  * particular version of a specific framework, and to publish its own
  * name and version.
  */
-struct mca_base_module_t {
+struct mca_base_component_t {
 
   int mca_major_version; 
   /**< Major number of the MCA. */
@@ -111,36 +111,36 @@ struct mca_base_module_t {
   /**< Release version number of the framework that this component
      belongs to. */
 
-  char mca_module_name[MCA_BASE_MAX_MODULE_NAME_LEN];
+  char mca_component_name[MCA_BASE_MAX_COMPONENT_NAME_LEN];
   /**< This comopnent's string name. */
-  int mca_module_major_version;
+  int mca_component_major_version;
   /**< This component's major version number. */
-  int mca_module_minor_version;
+  int mca_component_minor_version;
   /**< This component's minor version number. */
-  int mca_module_release_version;
+  int mca_component_release_version;
   /**< This component's release version number. */
   
-  mca_base_open_module_fn_t mca_open_module;
-  /**< Method for opening this module. */
-  mca_base_close_module_fn_t mca_close_module;
-  /**< Method for closing this module. */
+  mca_base_open_component_fn_t mca_open_component;
+  /**< Method for opening this component. */
+  mca_base_close_component_fn_t mca_close_component;
+  /**< Method for closing this component. */
 };
 /**
  * Convenience typedef.
  */
-typedef struct mca_base_module_t mca_base_module_t;
+typedef struct mca_base_component_t mca_base_component_t;
 
 /**
- * Meta data for MCA v1.0.0 modules.
+ * Meta data for MCA v1.0.0 components.
  */
-struct mca_base_module_data_1_0_0_t {
+struct mca_base_component_data_1_0_0_t {
   bool mca_is_checkpointable;
-  /**< Indicates whether this module is checkpointable or not. */
+  /**< Indicates whether this component is checkpointable or not. */
 };
 /**
  * Convenience typedef.
  */
-typedef struct mca_base_module_data_1_0_0_t mca_base_module_data_1_0_0_t;
+typedef struct mca_base_component_data_1_0_0_t mca_base_component_data_1_0_0_t;
 
 /**
  * Macro for framework author convenience.  

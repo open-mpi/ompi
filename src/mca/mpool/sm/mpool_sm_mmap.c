@@ -126,7 +126,7 @@ mca_mpool_sm_mmap_t* mca_mpool_sm_mmap_init(size_t size)
 
 void* mca_mpool_sm_mmap_alloc(size_t* size)
 {
-    mca_mpool_sm_mmap_t* map = mca_mpool_sm_module.sm_mmap;
+    mca_mpool_sm_mmap_t* map = mca_mpool_sm_component.sm_mmap;
     mca_mpool_sm_segment_t* seg = map->map_seg;
     void* addr;
 

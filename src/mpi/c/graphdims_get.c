@@ -24,7 +24,7 @@ static const char FUNC_NAME[] = "MPI_Graphdims_get";
 int MPI_Graphdims_get(MPI_Comm comm, int *nnodes, int *nedges) 
 {
     int err;
-    mca_topo_base_graphdims_get_fn_t func;
+    mca_topo_base_module_graphdims_get_fn_t func;
 
     /* check the arguments */
     if (MPI_PARAM_CHECK) {
@@ -48,10 +48,6 @@ int MPI_Graphdims_get(MPI_Comm comm, int *nnodes, int *nedges)
     }
     /* get the function pointer to do the right thing */
     func = comm->c_topo->topo_graphdims_get;
-    if (NULL == func) {
-        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER, 
-                                      FUNC_NAME);
-    }
 
     /* call the function */
     if ( MPI_SUCCESS != 

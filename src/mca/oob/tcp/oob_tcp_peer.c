@@ -135,13 +135,13 @@ mca_oob_tcp_peer_t * mca_oob_tcp_peer_lookup(const ompi_process_name_t* name, bo
     mca_oob_tcp_peer_t * peer, * old;
 
     if(get_lock) {
-        OMPI_THREAD_LOCK(&mca_oob_tcp_module.tcp_lock);
+        OMPI_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
     }
-    peer = (mca_oob_tcp_peer_t*)ompi_rb_tree_find(&mca_oob_tcp_module.tcp_peer_tree,
+    peer = (mca_oob_tcp_peer_t*)ompi_rb_tree_find(&mca_oob_tcp_component.tcp_peer_tree,
            (ompi_process_name_t *)  name);
     if(NULL != peer) {
         if(get_lock) {
-            OMPI_THREAD_UNLOCK(&mca_oob_tcp_module.tcp_lock);
+            OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
         }
         return peer;
     }
@@ -149,7 +149,7 @@ mca_oob_tcp_peer_t * mca_oob_tcp_peer_lookup(const ompi_process_name_t* name, bo
     MCA_OOB_TCP_PEER_ALLOC(peer, rc);
     if(NULL == peer) {
         if(get_lock) {
-            OMPI_THREAD_UNLOCK(&mca_oob_tcp_module.tcp_lock);
+            OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
         }
         return NULL;
     }
@@ -160,24 +160,24 @@ mca_oob_tcp_peer_t * mca_oob_tcp_peer_lookup(const ompi_process_name_t* name, bo
      ******/
 
 
-    if(OMPI_SUCCESS != ompi_rb_tree_insert(&mca_oob_tcp_module.tcp_peer_tree, 
+    if(OMPI_SUCCESS != ompi_rb_tree_insert(&mca_oob_tcp_component.tcp_peer_tree, 
                        (ompi_process_name_t *) name, peer)) {
         MCA_OOB_TCP_PEER_RETURN(peer);
         if(get_lock) {
-            OMPI_THREAD_UNLOCK(&mca_oob_tcp_module.tcp_lock);
+            OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
         }
         return NULL;
     }
-    ompi_list_prepend(&mca_oob_tcp_module.tcp_peer_list, (ompi_list_item_t *) peer);
+    ompi_list_prepend(&mca_oob_tcp_component.tcp_peer_list, (ompi_list_item_t *) peer);
     /* if the peer list is over the maximum size, remove one unsed peer */
-    if(ompi_list_get_size(&mca_oob_tcp_module.tcp_peer_list) > 
-        mca_oob_tcp_module.tcp_cache_size) {
+    if(ompi_list_get_size(&mca_oob_tcp_component.tcp_peer_list) > 
+        mca_oob_tcp_component.tcp_cache_size) {
         old = (mca_oob_tcp_peer_t *) 
-              ompi_list_get_last(&mca_oob_tcp_module.tcp_peer_list);
+              ompi_list_get_last(&mca_oob_tcp_component.tcp_peer_list);
         while(1) {
             if(0 == ompi_list_get_size(&(old->peer_send_queue)) &&
                NULL == peer->peer_recv_msg) { 
-                ompi_list_remove_item(&mca_oob_tcp_module.tcp_peer_list, 
+                ompi_list_remove_item(&mca_oob_tcp_component.tcp_peer_list, 
                                       (ompi_list_item_t *) old);
                 MCA_OOB_TCP_PEER_RETURN(old);
                 break;
@@ -192,7 +192,7 @@ mca_oob_tcp_peer_t * mca_oob_tcp_peer_lookup(const ompi_process_name_t* name, bo
         }
     }
     if(get_lock) {
-        OMPI_THREAD_UNLOCK(&mca_oob_tcp_module.tcp_lock);
+        OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
     }
     return peer;
 }

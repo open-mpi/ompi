@@ -22,7 +22,7 @@ struct ompi_file_t {
   /* Hooks for io modules to hang things */
 
   union {
-    mca_io_1_0_0_t f_io;
+    mca_io_base_module_1_0_0_t f_io;
   } mca_io_functions;
 
   /* index in Fortran <-> C translation array */

@@ -47,9 +47,9 @@ mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_lookup(const ompi_process_name_t*);
 
 static inline mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_local(void) 
 {
-    if(NULL == mca_ptl_tcp_module.tcp_local)
-        mca_ptl_tcp_module.tcp_local = mca_ptl_tcp_proc_create(ompi_proc_local());
-    return mca_ptl_tcp_module.tcp_local;
+    if(NULL == mca_ptl_tcp_component.tcp_local)
+        mca_ptl_tcp_component.tcp_local = mca_ptl_tcp_proc_create(ompi_proc_local());
+    return mca_ptl_tcp_component.tcp_local;
 }
 
 int  mca_ptl_tcp_proc_insert(mca_ptl_tcp_proc_t*, mca_ptl_base_peer_t*);

@@ -17,7 +17,7 @@
 struct mca_mpool_base_selected_module_t {
   ompi_list_item_t super;
   mca_mpool_base_component_t *mpool_component;
-  mca_mpool_t *mpool_module;
+  mca_mpool_base_module_t *mpool_module;
 };
 typedef struct mca_mpool_base_selected_module_t mca_mpool_base_selected_module_t;
 
@@ -34,7 +34,7 @@ extern "C" {
   int mca_mpool_base_init(bool *allow_multi_user_threads);
   int mca_mpool_base_close(void);
   mca_mpool_base_component_t* mca_mpool_component_lookup(const char* name);
-  mca_mpool_t* mca_mpool_module_lookup(const char* name);
+  mca_mpool_base_module_t* mca_mpool_module_lookup(const char* name);
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

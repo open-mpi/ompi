@@ -17,19 +17,12 @@
 /*
  * Linear set of collective algorithms
  */
-static const mca_coll_1_0_0_t intra_linear = {
+static const mca_coll_base_module_1_0_0_t intra_linear = {
 
   /* Initialization / finalization functions */
 
   mca_coll_basic_module_init,
   mca_coll_basic_module_finalize,
-
-  /* Checkpoint / restart functions */
-
-  NULL,
-  NULL,
-  NULL,
-  NULL,
 
   /* Collective function pointers */
 
@@ -57,19 +50,12 @@ static const mca_coll_1_0_0_t intra_linear = {
  * collectives have lograthmic algorithms.  For example, scan will use
  * the same algorithm as in the linear set.
  */
-static const mca_coll_1_0_0_t intra_log = {
+static const mca_coll_base_module_1_0_0_t intra_log = {
 
   /* Initialization / finalization functions */
 
   mca_coll_basic_module_init,
   mca_coll_basic_module_finalize,
-
-  /* Checkpoint / restart functions */
-
-  NULL,
-  NULL,
-  NULL,
-  NULL,
 
   /* Collective function pointers */
 
@@ -95,19 +81,12 @@ static const mca_coll_1_0_0_t intra_log = {
 /*
  * Linear set of collective algorithms for intercommunicators
  */
-static const mca_coll_1_0_0_t inter_linear = {
+static const mca_coll_base_module_1_0_0_t inter_linear = {
 
   /* Initialization / finalization functions */
 
   mca_coll_basic_module_init,
   mca_coll_basic_module_finalize,
-
-  /* Checkpoint / restart functions */
-
-  NULL,
-  NULL,
-  NULL,
-  NULL,
 
   /* Collective function pointers */
 
@@ -135,19 +114,12 @@ static const mca_coll_1_0_0_t inter_linear = {
  * collectives have lograthmic algorithms.  For example, scan will use
  * the same algorithm as in the linear set.
  */
-static const mca_coll_1_0_0_t inter_log = {
+static const mca_coll_base_module_1_0_0_t inter_log = {
 
   /* Initialization / finalization functions */
 
   mca_coll_basic_module_init,
   mca_coll_basic_module_finalize,
-
-  /* Checkpoint / restart functions */
-
-  NULL,
-  NULL,
-  NULL,
-  NULL,
 
   /* Collective function pointers */
 
@@ -191,7 +163,7 @@ int mca_coll_basic_init_query(bool *allow_multi_user_threads,
  * Look at the communicator and decide which set of functions and
  * priority we want to return.
  */
-const mca_coll_1_0_0_t *
+const mca_coll_base_module_1_0_0_t *
 mca_coll_basic_comm_query(struct ompi_communicator_t *comm, int *priority)
 {
   /* This module should always have the lowest available priority */
@@ -227,18 +199,18 @@ mca_coll_basic_comm_query(struct ompi_communicator_t *comm, int *priority)
 /*
  * Init module on the communicator
  */
-const struct mca_coll_1_0_0_t *
+const struct mca_coll_base_module_1_0_0_t *
 mca_coll_basic_module_init(struct ompi_communicator_t *comm)
 {
   int size;
-  struct mca_coll_comm_t *data;
+  struct mca_coll_base_comm_t *data;
 
   /* Allocate the data that hangs off the communicator */
 
   comm->c_coll_basic_data = NULL;
 
   size = ompi_comm_size(comm);
-  data = malloc(sizeof(struct mca_coll_comm_t) +
+  data = malloc(sizeof(struct mca_coll_base_comm_t) +
                 (sizeof(ompi_request_t) * size * 2));
 
   if (NULL == data) {

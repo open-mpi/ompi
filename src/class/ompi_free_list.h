@@ -22,7 +22,7 @@ struct ompi_free_list_t
     int fl_num_per_alloc;
     size_t fl_elem_size;
     ompi_class_t* fl_elem_class;
-    mca_mpool_t* fl_mpool;
+    mca_mpool_base_module_t* fl_mpool;
     ompi_mutex_t fl_lock;
 };
 typedef struct ompi_free_list_t ompi_free_list_t;
@@ -35,7 +35,7 @@ int ompi_free_list_init(
     int num_elements_to_alloc,
     int max_elements_to_alloc,
     int num_elements_per_alloc,
-    mca_mpool_t*);
+    mca_mpool_base_module_t*);
 
 int ompi_free_list_grow(ompi_free_list_t* flist, size_t num_elements);
     

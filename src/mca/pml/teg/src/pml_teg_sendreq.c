@@ -29,7 +29,7 @@ void mca_pml_teg_send_request_schedule(mca_pml_base_send_request_t* req)
     size_t num_ptl = 0;
     while(bytes_remaining > 0 && num_ptl++ < num_ptl_avail) {
         mca_ptl_proc_t* ptl_proc = mca_ptl_array_get_next(&proc_pml->proc_ptl_next);
-        mca_ptl_t* ptl = ptl_proc->ptl;
+        mca_ptl_base_module_t* ptl = ptl_proc->ptl;
         int rc;
 
         /* if this is the last PTL that is available to use, or the number of 
@@ -80,7 +80,7 @@ void mca_pml_teg_send_request_schedule(mca_pml_base_send_request_t* req)
  */
 
 void mca_pml_teg_send_request_progress(
-    struct mca_ptl_t* ptl,
+    struct mca_ptl_base_module_t* ptl,
     mca_pml_base_send_request_t* req,
     size_t bytes_sent)
 {

@@ -9,8 +9,8 @@
 /*
  * Struct of function pointers and all that to let us be initialized
  */
-mca_oob_tcp_component_t mca_oob_tcp_module = {
-    {
+mca_oob_tcp_component_t mca_oob_tcp_component = {
+  {
     {
         MCA_OOB_BASE_VERSION_1_0_0,
         "tcp", /* MCA module name */
@@ -25,10 +25,10 @@ mca_oob_tcp_component_t mca_oob_tcp_module = {
     },
     mca_oob_tcp_init,    /* module init */
     mca_oob_tcp_finalize
-    }
+  }
 };
 
-static struct mca_oob_1_0_0_t mca_oob_tcp = {
+static struct mca_oob_base_module_1_0_0_t mca_oob_tcp = {
     mca_oob_tcp_send,
     mca_oob_tcp_recv,
     mca_oob_tcp_send_nb,
@@ -85,7 +85,8 @@ int mca_oob_tcp_close(void)
 * when process names are used as indices.
 */
 
-static int ompi_process_name_compare(ompi_process_name_t* n1, ompi_process_name_t* n2)
+static int ompi_process_name_compare(ompi_process_name_t* n1, 
+                                     ompi_process_name_t* n2)
 {
    if(n1->cellid < n2->cellid)
        return -1;
@@ -106,8 +107,8 @@ static int ompi_process_name_compare(ompi_process_name_t* n1, ompi_process_name_
 /*
  * this function will temporarily return NULL so we don't use it
  */
-struct mca_oob_1_0_0_t* mca_oob_tcp_init(bool *allow_multi_user_threads,
-                                         bool *have_hidden_threads)
+struct mca_oob_base_module_1_0_0_t* mca_oob_tcp_init(bool *allow_multi_user_threads,
+                                                     bool *have_hidden_threads)
 {
 #if 0
     /* initialize data structures */

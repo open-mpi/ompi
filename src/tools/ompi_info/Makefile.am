@@ -1,4 +1,3 @@
-# -*- makefile -*-
 #
 # $HEADER$
 #
@@ -28,9 +27,9 @@ libs = $(top_builddir)/src/libmpi.la
 
 bin_PROGRAMS = ompi_info
 ompi_info_SOURCES = \
+        components.cc \
         ompi_info.h \
         ompi_info.cc \
-        modules.cc \
         output.cc \
         param.cc \
         version.cc 

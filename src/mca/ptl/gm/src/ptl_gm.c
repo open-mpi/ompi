@@ -20,26 +20,33 @@
 #include "ptl_gm_req.c"
 #include "ptl_gm_peer.h"
 
-mca_ptl_gm_t mca_ptl_gm = {
+mca_ptl_gm_module_t mca_ptl_gm_module = {
     {
-     &mca_ptl_gm_module.super,
-     0,                         /* ptl_exclusivity */
-     0,                         /* ptl_latency */
-     0,                         /* ptl_andwidth */
-     0,                         /* ptl_frag_first_size */
-     0,                         /* ptl_frag_min_size */
-     0,                         /* ptl_frag_max_size */
-     MCA_PTL_PUT,               /* ptl flags */
+     &mca_ptl_gm_component.super,
+    1, /* max size of request cache */
+    sizeof(mca_ptl_gm_send_frag_t), /* bytes required by ptl for a request */
+    0, /* max size of first fragment */
+    0, /* min fragment size */
+    0, /* max fragment size */
+    0, /* exclusivity */
+    0, /* latency */
+    0, /* bandwidth */
+    MCA_PTL_PUT,  /* ptl flags */
 
      /* collection of interfaces */
      mca_ptl_gm_add_procs,
      mca_ptl_gm_del_procs,
      mca_ptl_gm_finalize,
+     NULL, /* JMS: Need send here */
      mca_ptl_gm_put,
      mca_ptl_gm_get,
      mca_ptl_gm_matched,
-     mca_ptl_gm_request_alloc,
-     mca_ptl_gm_request_return}
+     NULL, /* JMS need request init here */
+     NULL, /* JMS need request fini here */
+     NULL, /* JMS need match here */
+     NULL, /* JMS need send_progress here */
+     NULL, /* JMS need recv_progress here */
+    }
 };
 
 
@@ -59,7 +66,7 @@ OBJ_CLASS_INSTANCE (mca_ptl_gm_peer_t, ompi_list_item_t, NULL, NULL);
  *
  */
 int
-mca_ptl_gm_add_procs (struct mca_ptl_t *ptl,
+mca_ptl_gm_add_procs (struct mca_ptl_base_module_t *ptl,
                       size_t nprocs,
                       struct ompi_proc_t **ompi_procs,
                       struct mca_ptl_base_peer_t **peers,
@@ -73,7 +80,8 @@ mca_ptl_gm_add_procs (struct mca_ptl_t *ptl,
     for (i = 0; i < nprocs; i++) {
         ompi_proc = ompi_procs[i];
         ptl_proc =
-            mca_ptl_gm_proc_create ((mca_ptl_gm_t *) ptl, ompi_proc);
+            mca_ptl_gm_proc_create ((mca_ptl_gm_module_t *) ptl,
+                                    ompi_proc);
 
         if (NULL == ptl_proc) {
             return OMPI_ERR_OUT_OF_RESOURCE;
@@ -92,7 +100,7 @@ mca_ptl_gm_add_procs (struct mca_ptl_t *ptl,
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
 
-        ptl_peer->peer_ptl = (mca_ptl_gm_t *) ptl;
+        ptl_peer->peer_ptl = (mca_ptl_gm_module_t *) ptl;
         ptl_peer->peer_proc = ptl_proc;
         ptl_proc->peer_arr[ptl_proc->proc_peer_count] = ptl_peer;
         ptl_proc->proc_peer_count++;
@@ -102,7 +110,6 @@ mca_ptl_gm_add_procs (struct mca_ptl_t *ptl,
         OMPI_THREAD_UNLOCK (&ptl_proc->proc_lock);
 
         peers[i] = ptl_peer;
-
     }
 
     return OMPI_SUCCESS;
@@ -115,7 +122,7 @@ mca_ptl_gm_add_procs (struct mca_ptl_t *ptl,
  *
  */
 int
-mca_ptl_gm_del_procs (struct mca_ptl_t *ptl,
+mca_ptl_gm_del_procs (struct mca_ptl_base_module_t *ptl,
                       size_t nprocs,
                       struct ompi_proc_t **procs,
                       struct mca_ptl_base_peer_t **peers)
@@ -135,7 +142,7 @@ mca_ptl_gm_del_procs (struct mca_ptl_t *ptl,
  */
 
 int
-mca_ptl_gm_finalize (struct mca_ptl_t *ptl)
+mca_ptl_gm_finalize (struct mca_ptl_base_module_t *ptl)
 {
     free (ptl);
     return OMPI_SUCCESS;
@@ -149,7 +156,7 @@ mca_ptl_gm_finalize (struct mca_ptl_t *ptl)
  */
 
 int
-mca_ptl_gm_request_alloc (struct mca_ptl_t *ptl,
+mca_ptl_gm_request_alloc (struct mca_ptl_base_module_t *ptl,
                           struct mca_pml_base_send_request_t **request)
 {
     int         rc;
@@ -173,7 +180,7 @@ mca_ptl_gm_request_alloc (struct mca_ptl_t *ptl,
  *
  */
 void
-mca_ptl_gm_request_return (struct mca_ptl_t *ptl,
+mca_ptl_gm_request_return (struct mca_ptl_base_module_t *ptl,
                            struct mca_pml_base_send_request_t *request)
 {
     /*OMPI_FREE_LIST_RETURN(&mca_ptl_gm_module.gm_send_req,
@@ -190,7 +197,7 @@ mca_ptl_gm_request_return (struct mca_ptl_t *ptl,
  */
 
 int
-mca_ptl_gm_put (struct mca_ptl_t *ptl,
+mca_ptl_gm_put (struct mca_ptl_base_module_t *ptl,
                 struct mca_ptl_base_peer_t *ptl_peer,
                 struct mca_pml_base_send_request_t *sendreq,
                 size_t offset, size_t size, int flags)
@@ -229,7 +236,7 @@ mca_ptl_gm_put (struct mca_ptl_t *ptl,
  */
 
 int
-mca_ptl_gm_get (struct mca_ptl_t *ptl,
+mca_ptl_gm_get (struct mca_ptl_base_module_t *ptl,
                 struct mca_ptl_base_peer_t *ptl_base_peer,
                 struct mca_pml_base_recv_request_t *request,
                 size_t offset, size_t size, int flags)
@@ -246,7 +253,8 @@ mca_ptl_gm_get (struct mca_ptl_t *ptl,
  */
 
 void
-mca_ptl_gm_matched (mca_ptl_t * ptl, mca_ptl_base_recv_frag_t * frag)
+mca_ptl_gm_matched (mca_ptl_base_module_t * ptl,
+                    mca_ptl_base_recv_frag_t * frag)
 {
 
 /* might need to send an ack back */
@@ -275,6 +283,6 @@ mca_ptl_gm_matched (mca_ptl_t * ptl, mca_ptl_base_recv_frag_t * frag)
         }
 
     }
-    // process fragment if complete 
+    /* process fragment if complete  */
 #endif
 }
