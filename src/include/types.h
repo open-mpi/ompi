@@ -7,7 +7,7 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
-
+#include <sys/select.h>
 #include "lam_config.h"
 
 /*
@@ -16,6 +16,13 @@
 
 #ifndef LAM_FD_SETSIZE
 #define LAM_FD_SETSIZE          4096
+#endif
+
+#if !defined(NFDBITS) && defined(__NFDBITS)
+/* Linux doesn't expose NFDBITS if -ansi unless there is another #define
+ * so use the internal version
+ */
+#define NFDBITS __NFDBITS
 #endif
 
 struct lam_fd_set_t {
