@@ -40,7 +40,7 @@ int MPI_Group_intersection(MPI_Group group1, MPI_Group group2,
     int my_group_rank;
     int group_size,proc1,proc2,cnt;
     ompi_group_t *group1_pointer, *group2_pointer, *new_group_pointer;
-    ompi_proc_t *proc1_pointer, *proc2_pointer, *my_proc_pointer;
+    ompi_proc_t *proc1_pointer, *proc2_pointer, *my_proc_pointer = NULL;
 
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);

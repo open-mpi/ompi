@@ -39,7 +39,7 @@ int MPI_Group_union(MPI_Group group1, MPI_Group group2, MPI_Group *new_group)
     int new_group_size, proc1, proc2, found_in_group;
     int my_group_rank, cnt;
     ompi_group_t *group1_pointer, *group2_pointer, *new_group_pointer;
-    ompi_proc_t *proc1_pointer, *proc2_pointer, *my_proc_pointer;
+    ompi_proc_t *proc1_pointer, *proc2_pointer, *my_proc_pointer = NULL;
 
     /* check for errors */
     if (MPI_PARAM_CHECK) {
