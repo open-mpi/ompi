@@ -31,13 +31,11 @@ int MPI_Comm_disconnect(MPI_Comm *comm)
                                           FUNC_NAME);
     }
     
-    /* disconnect means, just decrease the refcount, without calling
-       attribute delete fnct. etc. (to be verified.).
-       
-       Question: do we need a flag verifying which communicators
-       we are allowed to disconnect from ? E.g. what happens,
-       if we disconnect from an MPI-1 communicator derived
-       from MPI_COMM_WORLD ? */
+    if (MPI_COMM_WORLD == *comm || MPI_COMM_SELF == *comm ) {
+	return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, FUNC_NAME);
+    }
+
+    (*comm)->c_coll.coll_barrier(*comm);
     OBJ_RETAIN(*comm);
 
     *comm = MPI_COMM_NULL;
