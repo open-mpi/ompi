@@ -103,9 +103,9 @@
 #include <assert.h>
 #include <stdlib.h>
 
+#ifdef HAVE_CONFIG_H
 #include "lam_config.h"
-#include "lam/types.h"
-#include "lam/atomic.h"
+#endif
 
 /*
  * BEGIN_C_DECLS should be used at the beginning of your declarations,
@@ -182,11 +182,14 @@
  *
  * @param object        Pointer to the object
  */
-#define OBJ_RETAIN(object)                              \
-    do {                                                \
-        if (object) {                                   \
-            lam_obj_retain((lam_object_t *) object);    \
-        }                                               \
+#define OBJ_RETAIN(object)                                              \
+    do {                                                                \
+        assert(NULL != object);                                         \
+        assert(NULL != ((lam_object_t *) object)->obj_class);           \
+        if (object) {                                                   \
+            lam_obj_update((lam_object_t *) object, 1);                 \
+        }                                                               \
+        assert(((lam_object_t *) object)->obj_reference_count >= 0);    \
     } while (0)
 
 
@@ -195,13 +198,20 @@
  * reference count reaches zero, destruct (finalize) the object and
  * free its storage.
  *
+ * Note: If the object is freed, then the value of the pointer is set
+ * to NULL.
+ *
  * @param object        Pointer to the object
  */
-#define OBJ_RELEASE(object)                             \
-    do {                                                \
-        if (object) {                                   \
-            lam_obj_release((lam_object_t *) object);   \
-        }                                               \
+#define OBJ_RELEASE(object)                                             \
+    do {                                                                \
+        assert(NULL != object);                                         \
+        assert(NULL != ((lam_object_t *) object)->obj_class);           \
+        if (0 == lam_obj_update((lam_object_t *) object, -1)) {         \
+            lam_obj_run_destructors((lam_object_t *) object);           \
+            free(object);                                               \
+            object = NULL;                                              \
+        }                                                               \
     } while (0)
 
 
@@ -380,50 +390,35 @@ static inline lam_object_t *lam_obj_new(size_t size,
 }
 
 
-/*
- * This function is used by inline functions later in this file, and
- * it must be defined by other header files later (eg., one of the
- * atomic.h's).
- */
-static inline int fetchNadd(volatile int *addr, int inc);
-
-
-/**
- * Retain an object (by incrementing its reference count)
- *
- * Do not use this function directly: use OBJ_RETAIN instead.
- *
- * @param object        Pointer to the object
- */
-static inline void lam_obj_retain(lam_object_t *object)
+static inline int lam_atomic_cmpset_int(int *addr, int oldval, int newval)
 {
-    assert(NULL != object);
-    assert(NULL != object->obj_class);
-
-    fetchNadd(&(object->obj_reference_count), 1);
-
-    assert(object->obj_reference_count >= 0);
+    *addr = newval;
+    return 1;
 }
 
-
 /**
- * Release an object (by decrementing its reference count).  If the
- * reference count reaches zero, destruct (finalize) the object and
- * free its storage.
+ * Atomically update the object's reference count by some increment.
  *
- * Do not use this function directly: use OBJ_RELEASE instead.
+ * This function should not be used directly: it is called via the
+ * macros OBJ_RETAIN and OBJ_RELEASE
  *
  * @param object        Pointer to the object
+ * @param inc           Increment by which to update reference count
+ * @return              New value of the reference count
  */
-static inline void lam_obj_release(lam_object_t *object)
+static inline int lam_obj_update(lam_object_t *object, int inc)
 {
-    assert(NULL != object);
-    assert(NULL != object->obj_class);
+    int oldval;
+    int newval;
+    int *addr;
 
-    if (fetchNadd(&object->obj_reference_count, -1) == 1) {
-	object->obj_class->cls_destruct(object);
-	free(object);
-    }
+    addr = &(object->obj_reference_count);
+    do {
+        oldval = *addr;
+        newval = oldval + inc;
+    } while (lam_atomic_cmpset_int(addr, oldval, newval) != 0);
+
+    return newval;
 }
 
 /**********************************************************************/
