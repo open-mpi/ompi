@@ -96,10 +96,10 @@ int mca_oob_tcp_msg_timedwait(mca_oob_tcp_msg_t* msg, int* rc, struct timespec* 
             rc = ompi_event_loop(OMPI_EVLOOP_ONCE);
             assert(rc == 0);
             OMPI_THREAD_LOCK(&msg->msg_lock);
-            gettimeofday(&tv,NULL);
         } else {
            ompi_condition_timedwait(&msg->msg_condition, &msg->msg_lock, abstime);
         }
+        gettimeofday(&tv,NULL);
     }
     OMPI_THREAD_UNLOCK(&msg->msg_lock);
 
@@ -109,6 +109,7 @@ int mca_oob_tcp_msg_timedwait(mca_oob_tcp_msg_t* msg, int* rc, struct timespec* 
           (tv.tv_sec <= secs ||
           (tv.tv_sec == secs && tv.tv_usec < usecs))) {
         ompi_event_loop(OMPI_EVLOOP_ONCE);
+        gettimeofday(&tv,NULL);
     }
 #endif
 
