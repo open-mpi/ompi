@@ -214,14 +214,14 @@ static void mca_ptl_ib_peer_send_connect_ack(mca_ptl_base_peer_t* peer)
 static void mca_ptl_ib_peer_set_remote_info(mca_ptl_base_peer_t* peer,
         void* baseptr, size_t size)
 {
-    char tempbuf[8];
+    char tempbuf[9];
 
-    memset(tempbuf, 0, 8);
+    memset(tempbuf, 0, 9);
     strncpy(tempbuf, (char*)baseptr, 8);
 
     peer->peer_conn->rres->qp_num = atoi(tempbuf);
 
-    memset(tempbuf, 0, 8);
+    memset(tempbuf, 0, 9);
     strncpy(tempbuf, (char*)baseptr + 9*sizeof(char), 8);
 
     peer->peer_conn->rres->lid = atoi(tempbuf);
