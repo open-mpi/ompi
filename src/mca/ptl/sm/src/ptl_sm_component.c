@@ -18,6 +18,7 @@
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/mman.h>
+#include <sys/stat.h>  /* for mkfifo */
 
 #include "include/constants.h"
 #include "include/sys/cache.h"
