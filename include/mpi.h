@@ -84,7 +84,6 @@ extern "C" {
  * Miscellaneous constants
  * JMS: Some of these may be L7-specific and should be removed...
  */
-#define MPI_SUCCESS     0       /* no errors */
 #define MPI_ANY_SOURCE      -1      /* match any source rank */
 #define MPI_PROC_NULL       -2      /* rank of null process */
 #define MPI_ROOT -4
@@ -163,48 +162,66 @@ enum {
 };
 
 /*
- * Error classes
+ * Error classes and codes
  */
-enum {
-  MPI_ERR_BUFFER = -10000, /* invalid buffer pointer */
-  MPI_ERR_COUNT, /* invalid count argument */
-  MPI_ERR_TYPE, /* invalid datatype argument */
-  MPI_ERR_TAG, /* invalid tag argument */
-  MPI_ERR_COMM, /* invalid communicator */
-  MPI_ERR_RANK, /* invalid rank */
-  MPI_ERR_REQUEST, /* invalid request handle */
-  MPI_ERR_ROOT, /* invalid root */
-  MPI_ERR_GROUP, /* invalid group */
-  MPI_ERR_OP, /* invalid operation */
-  MPI_ERR_TOPOLOGY, /* invalid topology */
-  MPI_ERR_DIMS, /* invalid dimension argument */
-  MPI_ERR_ARG, /* invalid argument */
-  MPI_ERR_UNKNOWN, /* unknown error */
-  MPI_ERR_TRUNCATE, /* message truncated on receive */
-  MPI_ERR_OTHER, /* OMPI error */
-  MPI_ERR_INTERN, /* internal MPI error */
-  MPI_ERR_IN_STATUS, /* error code is in status */
-  MPI_ERR_PENDING, /* pending request */
-  MPI_ERR_SYSRESOURCE, /* out of system resources */
-  MPI_ERR_LOCALDEAD, /* process in local group is dead */
-  MPI_ERR_REMOTEDEAD, /* process in remote group is dead */
-  MPI_ERR_VALUE, /* truncated info value */
-  MPI_ERR_FLAGS, /* mismatched run-time flags */
-  MPI_ERR_SERVICE, /* name publishing service error */
-  MPI_ERR_NAME, /* name not published */
-  MPI_ERR_SPAWN, /* error while spawning processes */
-  MPI_ERR_KEYVAL, /* invalid key value */
-  MPI_ERR_INFO_NOKEY, /* no such info key */
-  MPI_ERR_WIN, /* invalid window */
-  MPI_ERR_EPOCH, /* mismatched one-sided synch. */
-  MPI_ERR_TYPENOTSUP, /* operation not supported on type */
-  MPI_ERR_INFO_KEY, /* invalid info key */
-  MPI_ERR_INFO_VALUE, /* invalid info value */
-  MPI_ERR_NO_MEM, /* no memory left */
-  MPI_ERR_BASE, /* invalid base pointer value */
+#define MPI_SUCCESS                   0  
+#define MPI_ERR_BUFFER                1
+#define MPI_ERR_COUNT                 2
+#define MPI_ERR_TYPE                  3
+#define MPI_ERR_TAG                   4
+#define MPI_ERR_COMM                  5
+#define MPI_ERR_RANK                  6
+#define MPI_ERR_REQUEST               7
+#define MPI_ERR_ROOT                  8
+#define MPI_ERR_GROUP                 9
+#define MPI_ERR_OP                    10
+#define MPI_ERR_TOPOLOGY              11
+#define MPI_ERR_DIMS                  12
+#define MPI_ERR_ARG                   13
+#define MPI_ERR_UNKNOWN               14
+#define MPI_ERR_TRUNCATE              15
+#define MPI_ERR_OTHER                 16
+#define MPI_ERR_INTERN                17
+#define MPI_ERR_IN_STATUS             18
+#define MPI_ERR_PENDING               19
+#define MPI_ERR_ACCESS                20
+#define MPI_ERR_AMODE                 21
+#define MPI_ERR_ASSERT                22
+#define MPI_ERR_BAD_FILE              23
+#define MPI_ERR_BASE                  24
+#define MPI_ERR_CONVERSION            25
+#define MPI_ERR_DISP                  26
+#define MPI_ERR_DUP_DATAREP           27
+#define MPI_ERR_FILE_EXISTS           28
+#define MPI_ERR_FILE_IN_USE           29
+#define MPI_ERR_FILE                  30
+#define MPI_ERR_INFO_KEY              31
+#define MPI_ERR_INFO_NOKEY            32
+#define MPI_ERR_INFO_VALUE            33
+#define MPI_ERR_INFO                  34
+#define MPI_ERR_IO                    35
+#define MPI_ERR_KEYVAL                36
+#define MPI_ERR_LOCKTYPE              37
+#define MPI_ERR_NAME                  38
+#define MPI_ERR_NO_MEM                39
+#define MPI_ERR_NOT_SAME              40
+#define MPI_ERR_NO_SPACE              41
+#define MPI_ERR_NO_SUCH_FILE          42
+#define MPI_ERR_PORT                  43
+#define MPI_ERR_QUOTA                 44
+#define MPI_ERR_READ_ONLY             45
+#define MPI_ERR_RMA_CONFLICT          46
+#define MPI_ERR_RMA_SYNC              47
+#define MPI_ERR_SERVICE               48
+#define MPI_ERR_SIZE                  49
+#define MPI_ERR_SPAWN                 50
+#define MPI_ERR_UNSUPPORTED_DATAREP   51
+#define MPI_ERR_UNSUPPORTED_OPERATION 52
+#define MPI_ERR_WIN                   53
 
-  MPI_ERR_LASTCODE /* last error code */
-};
+#define MPI_ERR_SYSRESOURCE          -2
+#define MPI_ERR_LASTCODE              -1
+
 
 /*
  * Comparison results.  Don't change the order of these, the group
