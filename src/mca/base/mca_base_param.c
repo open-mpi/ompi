@@ -178,9 +178,7 @@ int mca_base_param_register_string(const char *type_name,
   if (NULL != default_value) {
     storage.stringval = (char *) default_value;
   } else {
-    /* Cannot have an initial value of NULL */
-    /* return OMPI_ERR_BAD_PARAM; */
-      storage.stringval = NULL;
+    storage.stringval = NULL;
   }
   return param_register(type_name, component_name, param_name, mca_param_name,
                         MCA_BASE_PARAM_TYPE_STRING, &storage, NULL, NULL);
@@ -300,15 +298,7 @@ int mca_base_param_set_string(int index, char *value)
     mca_base_param_storage_t storage;
 
     mca_base_param_unset(index);
-    if (NULL != value) {
-        storage.stringval = value;
-    }
-    else {
-        storage.stringval = value;
-        /* Cannot have a value of NULL */
-        /* return OMPI_ERR_BAD_PARAM;  */
-    }
-    
+    storage.stringval = value;
     return param_set_override(index, &storage, MCA_BASE_PARAM_TYPE_STRING);
 }
 
