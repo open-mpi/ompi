@@ -14,6 +14,42 @@
 #include "pml_teg_recvreq.h"
 
 
+                                                                                                         
+static int mca_pml_teg_send_request_free(struct ompi_request_t* request)
+{
+    MCA_PML_TEG_FINI(&request);
+    return OMPI_SUCCESS;
+}
+
+
+static int mca_pml_teg_send_request_cancel(struct ompi_request_t* request, int complete)
+{
+    return OMPI_SUCCESS;
+}
+                                                                                                             
+
+static void mca_pml_teg_send_request_construct(mca_pml_base_send_request_t* req)
+{
+    req->req_base.req_type = MCA_PML_REQUEST_SEND;
+    req->req_base.req_ompi.req_query = NULL;
+    req->req_base.req_ompi.req_free = mca_pml_teg_send_request_free;
+    req->req_base.req_ompi.req_cancel = mca_pml_teg_send_request_cancel;
+}
+
+
+static void mca_pml_teg_send_request_destruct(mca_pml_base_send_request_t* req)
+{
+}
+
+
+OBJ_CLASS_INSTANCE(
+    mca_pml_teg_send_request_t,
+    mca_pml_base_request_t,
+    mca_pml_teg_send_request_construct,
+    mca_pml_teg_send_request_destruct);
+                                                                                                                                                     
+
+
 /**
  *  Schedule message delivery across potentially multiple PTLs. 
  *
@@ -63,12 +99,12 @@ void mca_pml_teg_send_request_schedule(mca_pml_base_send_request_t* req)
 
     /* unable to complete send - signal request failed */
     if(bytes_remaining > 0) {
-        OMPI_THREAD_LOCK(&mca_pml_teg.teg_request_lock);
-        req->req_base.req_mpi_done = true;
+        OMPI_THREAD_LOCK(&ompi_request_lock);
+        req->req_base.req_ompi.req_complete = true;
         /* FIX - set status correctly */
-        if(mca_pml_teg.teg_request_waiting)
-            ompi_condition_broadcast(&mca_pml_teg.teg_request_cond);
-        OMPI_THREAD_UNLOCK(&mca_pml_teg.teg_request_lock);
+        if(ompi_request_waiting)
+            ompi_condition_broadcast(&ompi_request_cond);
+        OMPI_THREAD_UNLOCK(&ompi_request_lock);
     }
 }
 
@@ -89,27 +125,27 @@ void mca_pml_teg_send_request_progress(
     size_t bytes_sent)
 {
     bool first_frag;
-    OMPI_THREAD_LOCK(&mca_pml_teg.teg_request_lock);
+    OMPI_THREAD_LOCK(&ompi_request_lock);
     first_frag = (req->req_bytes_sent == 0 && req->req_bytes_packed > 0);
     req->req_bytes_sent += bytes_sent;
     if (req->req_bytes_sent >= req->req_bytes_packed) {
-        req->req_base.req_pml_done = true;
-        if (req->req_base.req_mpi_done == false) {
-            req->req_base.req_status.MPI_SOURCE = req->req_base.req_comm->c_my_rank;
-            req->req_base.req_status.MPI_TAG = req->req_base.req_tag;
-            req->req_base.req_status.MPI_ERROR = OMPI_SUCCESS;
-            req->req_base.req_status._count = req->req_bytes_sent;
-            req->req_base.req_mpi_done = true;
-            if(mca_pml_teg.teg_request_waiting) {
-                ompi_condition_broadcast(&mca_pml_teg.teg_request_cond);
+        req->req_base.req_pml_complete = true;
+        if (req->req_base.req_ompi.req_complete == false) {
+            req->req_base.req_ompi.req_status.MPI_SOURCE = req->req_base.req_comm->c_my_rank;
+            req->req_base.req_ompi.req_status.MPI_TAG = req->req_base.req_tag;
+            req->req_base.req_ompi.req_status.MPI_ERROR = OMPI_SUCCESS;
+            req->req_base.req_ompi.req_status._count = req->req_bytes_sent;
+            req->req_base.req_ompi.req_complete = true;
+            if(ompi_request_waiting) {
+                ompi_condition_broadcast(&ompi_request_cond);
             }
         } else if (req->req_base.req_free_called) {
             MCA_PML_TEG_FREE((ompi_request_t**)&req);
         }
-        OMPI_THREAD_UNLOCK(&mca_pml_teg.teg_request_lock);
+        OMPI_THREAD_UNLOCK(&ompi_request_lock);
         return;
     } 
-    OMPI_THREAD_UNLOCK(&mca_pml_teg.teg_request_lock);
+    OMPI_THREAD_UNLOCK(&ompi_request_lock);
 
     /* if first fragment - schedule remaining fragments */
     if(first_frag == true) {

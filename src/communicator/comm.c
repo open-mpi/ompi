@@ -627,13 +627,13 @@ static int ompi_comm_allgather_emulate_intra( void *inbuf, int incount,
     }
         
     if ( 0 == rank ) {
-        rc = mca_pml.pml_wait_all (rsize, req, MPI_STATUSES_IGNORE);
+        rc = ompi_request_wait_all (rsize, req, MPI_STATUSES_IGNORE);
         if ( OMPI_SUCCESS != rc ) {
             goto exit;       
         }
     }
 
-    rc = mca_pml.pml_wait_all (1, &sendreq, MPI_STATUS_IGNORE);
+    rc = ompi_request_wait_all (1, &sendreq, MPI_STATUS_IGNORE);
     if ( OMPI_SUCCESS != rc ) {
         goto exit;       
     }
@@ -656,7 +656,7 @@ static int ompi_comm_allgather_emulate_intra( void *inbuf, int incount,
         }
     }
 
-    rc = mca_pml.pml_wait_all (1, &sendreq, MPI_STATUS_IGNORE );
+    rc = ompi_request_wait_all (1, &sendreq, MPI_STATUS_IGNORE );
 
  exit:
     if ( NULL != req ) {
@@ -737,7 +737,7 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
         if ( OMPI_SUCCESS != rc ) {
             goto err_exit;
         }
-        rc = mca_pml.pml_wait_all ( 1, &req, MPI_STATUS_IGNORE );
+        rc = ompi_request_wait_all ( 1, &req, MPI_STATUS_IGNORE );
         if ( OMPI_SUCCESS != rc ) {
             goto err_exit;
         }
@@ -770,7 +770,7 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
         if ( OMPI_SUCCESS != rc ) {
             goto err_exit;
         }
-        rc = mca_pml.pml_wait_all ( 1, &req, MPI_STATUS_IGNORE );
+        rc = ompi_request_wait_all ( 1, &req, MPI_STATUS_IGNORE );
         if ( OMPI_SUCCESS != rc ) {
             goto err_exit;
         }

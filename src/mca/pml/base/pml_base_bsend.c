@@ -227,7 +227,7 @@ int mca_pml_base_bsend_request_init(ompi_request_t* request, bool persistent)
 
     /* set flag indicating mpi layer is done */
     sendreq->req_base.req_persistent = persistent;
-    sendreq->req_base.req_mpi_done = true;
+    sendreq->req_base.req_ompi.req_complete = true;
     OMPI_THREAD_UNLOCK(&mca_pml_bsend_mutex);
     return OMPI_SUCCESS;
 }

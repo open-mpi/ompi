@@ -14,6 +14,11 @@
 #include "pml_teg_proc.h"
 #include "pml_teg_ptl.h"
 
+typedef mca_pml_base_send_request_t mca_pml_teg_send_request_t;
+
+OBJ_CLASS_DECLARATION(mca_pml_teg_send_request_t);
+
+
 #define MCA_PML_TEG_SEND_REQUEST_ALLOC(                                    \
     comm,                                                                  \
     dst,                                                                   \

@@ -44,15 +44,16 @@ static inline int ompi_condition_timedwait(ompi_condition_t *c,
                                            const struct timespec *abstime)
 {
     struct timeval tv;
-    uint32_t secs = abstime->tv_sec;
-    uint32_t usecs = abstime->tv_nsec * 1000;
+    struct timeval abs;
+    abs.tv_sec = abstime->tv_sec;
+    abs.tv_usec = abstime->tv_nsec * 1000;
     gettimeofday(&tv,NULL);
 
     c->c_waiting++;
     if (ompi_using_threads()) {
         while (c->c_signaled == 0 &&  
-               (tv.tv_sec <= secs ||
-               (tv.tv_sec == secs && tv.tv_usec < usecs))) {
+               (tv.tv_sec <= abs.tv_sec ||
+               (tv.tv_sec == abs.tv_sec && tv.tv_usec < abs.tv_usec))) {
             ompi_mutex_unlock(m);
             ompi_progress();
             gettimeofday(&tv,NULL);
@@ -60,8 +61,8 @@ static inline int ompi_condition_timedwait(ompi_condition_t *c,
         }
     } else {
         while (c->c_signaled == 0 &&  
-               (tv.tv_sec <= secs ||
-               (tv.tv_sec == secs && tv.tv_usec < usecs))) {
+               (tv.tv_sec <= abs.tv_sec ||
+               (tv.tv_sec == abs.tv_sec && tv.tv_usec < abs.tv_usec))) {
             ompi_progress();
             gettimeofday(&tv,NULL);
         }

@@ -7,6 +7,7 @@
 #include "mpi.h"
 #include "mpi/c/bindings.h"
 #include "communicator/communicator.h"
+#include "request/grequest.h"
 #include "errhandler/errhandler.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
@@ -25,11 +26,12 @@ int MPI_Grequest_start(MPI_Grequest_query_function *query_fn,
                        MPI_Grequest_cancel_function *cancel_fn,
                        void *extra_state, MPI_Request *request) 
 {
-  if (MPI_PARAM_CHECK) {
-    OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-  }
+    int rc;
+    if (MPI_PARAM_CHECK) {
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+    }
 
-  /* This function is not yet implemented */
-
-  return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INTERN, FUNC_NAME);
+    rc = ompi_grequest_start(query_fn,free_fn,cancel_fn,extra_state,request);
+    OMPI_ERRHANDLER_RETURN(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
 }
+

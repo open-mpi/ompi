@@ -101,7 +101,7 @@ int ompi_ddt_sndrcv(void *sbuf, int scount, MPI_Datatype sdtype, void *rbuf,
         if (MPI_SUCCESS != err) {
             return err;
         }
-        err = mca_pml.pml_wait(1, &req, NULL, MPI_STATUS_IGNORE);
+        err = ompi_request_wait(1, &req, NULL, MPI_STATUS_IGNORE);
     }
 
     return err;

@@ -41,10 +41,8 @@ struct mca_pml_base_request_t {
     mca_ptl_sequence_t req_sequence;      /**< sequence number for MPI pt-2-pt ordering */
     ompi_datatype_t *req_datatype;        /**< pointer to data type */
     mca_pml_base_request_type_t req_type; /**< MPI request type - used for test */
-    ompi_status_public_t req_status;      /**< completion status */
     bool req_persistent;                  /**< flag indicating if the this is a persistent request */
-    volatile bool req_mpi_done;           /**< flag indicating if MPI is done with this request */
-    volatile bool req_pml_done;           /**< flag indicating if the pt-2-pt layer is done with this request */
+    volatile bool req_pml_complete;       /**< flag indicating if the pt-2-pt layer is done with this request */
     volatile bool req_free_called;        /**< flag indicating if the user has freed this request */
 };
 typedef struct mca_pml_base_request_t mca_pml_base_request_t;

@@ -95,22 +95,20 @@ int mca_pml_teg_send(void *buf,
         return rc;
     }
 
-    if (sendreq->req_base.req_mpi_done == false) {
+    if (sendreq->req_base.req_ompi.req_complete == false) {
         /* give up and sleep until completion */
         if (ompi_using_threads()) {
-            ompi_mutex_lock(&mca_pml_teg.teg_request_lock);
-            mca_pml_teg.teg_request_waiting++;
-            while (sendreq->req_base.req_mpi_done == false)
-                ompi_condition_wait(&mca_pml_teg.teg_request_cond,
-                                    &mca_pml_teg.teg_request_lock);
-            mca_pml_teg.teg_request_waiting--;
-            ompi_mutex_unlock(&mca_pml_teg.teg_request_lock);
+            ompi_mutex_lock(&ompi_request_lock);
+            ompi_request_waiting++;
+            while (sendreq->req_base.req_ompi.req_complete == false)
+                ompi_condition_wait(&ompi_request_cond, &ompi_request_lock);
+            ompi_request_waiting--;
+            ompi_mutex_unlock(&ompi_request_lock);
         } else {
-            mca_pml_teg.teg_request_waiting++;
-            while (sendreq->req_base.req_mpi_done == false)
-                ompi_condition_wait(&mca_pml_teg.teg_request_cond,
-                                    &mca_pml_teg.teg_request_lock);
-            mca_pml_teg.teg_request_waiting--;
+            ompi_request_waiting++;
+            while (sendreq->req_base.req_ompi.req_complete == false)
+                ompi_condition_wait(&ompi_request_cond, &ompi_request_lock);
+            ompi_request_waiting--;
         }
     }
 

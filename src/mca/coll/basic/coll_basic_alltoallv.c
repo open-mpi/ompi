@@ -118,7 +118,7 @@ mca_coll_basic_alltoallv_intra(void *sbuf, int *scounts, int *sdisps,
      So free them anyway -- even if there was an error, and return the
      error after we free everything. */
 
-  err = mca_pml.pml_wait_all(nreqs, comm->c_coll_basic_data->mccb_reqs,
+  err = ompi_request_wait_all(nreqs, comm->c_coll_basic_data->mccb_reqs,
                              MPI_STATUSES_IGNORE);
 
   /* Free the requests. */
@@ -200,7 +200,7 @@ mca_coll_basic_alltoallv_inter(void *sbuf, int *scounts, int *sdisps,
       }
   }
   
-  err = mca_pml.pml_wait_all(nreqs, preq, MPI_STATUSES_IGNORE);
+  err = ompi_request_wait_all(nreqs, preq, MPI_STATUSES_IGNORE);
   
   /* All done */
   return err;

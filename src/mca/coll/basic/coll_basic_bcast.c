@@ -73,7 +73,7 @@ int mca_coll_basic_bcast_lin_intra(void *buff, int count,
        So free them anyway -- even if there was an error, and return
        the error after we free everything. */
 
-    err = mca_pml.pml_wait_all(i, reqs, MPI_STATUSES_IGNORE);
+    err = ompi_request_wait_all(i, reqs, MPI_STATUSES_IGNORE);
 
     /* Free the reqs */
 
@@ -167,7 +167,7 @@ int mca_coll_basic_bcast_log_intra(void *buff, int count,
          free-able.  So free them anyway -- even if there was an
          error, and return the error after we free everything. */
       
-      err = mca_pml.pml_wait_all(nreqs, reqs, MPI_STATUSES_IGNORE);
+      err = ompi_request_wait_all(nreqs, reqs, MPI_STATUSES_IGNORE);
 
       /* Free the reqs */
       
@@ -221,7 +221,7 @@ int mca_coll_basic_bcast_lin_inter(void *buff, int count,
                 return err;
             }
         }
-        err = mca_pml.pml_wait_all(rsize, reqs, MPI_STATUSES_IGNORE);
+        err = ompi_request_wait_all(rsize, reqs, MPI_STATUSES_IGNORE);
     }
 
     

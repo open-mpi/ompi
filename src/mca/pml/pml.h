@@ -74,10 +74,11 @@ typedef enum {
     MCA_PML_BASE_SEND_READY
 } mca_pml_base_send_mode_t;
 
-/* renamed MPI constants */
+
 #define OMPI_ANY_TAG    MPI_ANY_TAG
 #define OMPI_ANY_SOURCE MPI_ANY_SOURCE
 #define OMPI_PROC_NULL  MPI_PROC_NULL
+
 
 /**
  * MCA->PML Called by MCA framework to initialize the component.
@@ -360,84 +361,6 @@ typedef int (*mca_pml_base_module_start_fn_t)(
 );
 
 /**
- * Non-blocking test for request completion.
- *
- * @param count (IN)     Number of requests
- * @param request (IN)   Array of requests
- * @param index (OUT)    Index of first completed request.
- * @param complete (OUT) Flag indicating if index is valid (a request completed).
- * @param status (OUT)   Status of completed request.
- * @return               OMPI_SUCCESS or failure status.
- *
- * Note that upon completion, the request is freed, and the
- * request handle at index set to NULL.
- */
-typedef int (*mca_pml_base_module_test_fn_t)(
-    size_t count,
-    ompi_request_t** requests,
-    int *index,
-    int *completed,
-    ompi_status_public_t* status
-);
-
-
-/**
- * Non-blocking test for request completion.
- *
- * @param count (IN)      Number of requests
- * @param requests (IN)   Array of requests
- * @param completed (OUT) Flag indicating wether all requests completed.
- * @param statuses (OUT)  Array of completion statuses.
- * @return                OMPI_SUCCESS or failure status.
- *
- * This routine returns completed==true if all requests have completed.
- * The statuses parameter is only updated if all requests completed. Likewise, 
- * the requests array is not modified (no requests freed), unless all requests 
- * have completed.
- */
-typedef int (*mca_pml_base_module_test_all_fn_t)(
-    size_t count,
-    ompi_request_t** requests,
-    int *completed,
-    ompi_status_public_t* statuses
-);
-
-
-/**
- * Wait (blocking-mode) for one of N requests to complete.
- *
- * @param count (IN)      Number of requests
- * @param requests (IN)   Array of requests
- * @param index (OUT)     Index into request array of completed request.
- * @param status (OUT)    Status of completed request.
- * @return                OMPI_SUCCESS or failure status.
- *
- */
-typedef int (*mca_pml_base_module_wait_fn_t)(
-    size_t count,
-    ompi_request_t** request,
-    int *index,
-    ompi_status_public_t* status
-);
-
-
-/**
- * Wait (blocking-mode) for all of N requests to complete.
- *
- * @param count (IN)      Number of requests
- * @param requests (IN)   Array of requests
- * @param statuses (OUT)  Array of completion statuses.
- * @return                OMPI_SUCCESS or failure status.
- *
- */
-typedef int (*mca_pml_base_module_wait_all_fn_t)(
-    size_t count,                
-    ompi_request_t** request,    
-    ompi_status_public_t *status
-);
-
-
-/**
  * Probe to poll for pending recv.
  *
  * @param src (IN)        Source rank w/in communicator.
@@ -543,17 +466,9 @@ struct mca_pml_base_module_1_0_0_t {
     mca_pml_base_module_isend_init_fn_t   pml_isend_init;
     mca_pml_base_module_isend_fn_t        pml_isend;
     mca_pml_base_module_send_fn_t         pml_send;
-    mca_pml_base_module_start_fn_t        pml_start;
-    mca_pml_base_module_test_fn_t         pml_test;
-    mca_pml_base_module_test_all_fn_t     pml_test_all;
-    mca_pml_base_module_wait_fn_t         pml_wait;
-    mca_pml_base_module_wait_all_fn_t     pml_wait_all;
     mca_pml_base_module_iprobe_fn_t       pml_iprobe;
     mca_pml_base_module_probe_fn_t        pml_probe;
-    mca_pml_base_module_cancel_fn_t       pml_cancel;
-    mca_pml_base_module_cancelled_fn_t    pml_cancelled;
-    mca_pml_base_module_free_fn_t         pml_free;
-    mca_pml_base_module_null_fn_t         pml_null;
+    mca_pml_base_module_start_fn_t        pml_start;
 };
 typedef struct mca_pml_base_module_1_0_0_t mca_pml_base_module_1_0_0_t;
 typedef mca_pml_base_module_1_0_0_t mca_pml_base_module_t;

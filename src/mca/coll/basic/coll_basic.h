@@ -231,7 +231,7 @@ static inline void mca_coll_basic_free_reqs(ompi_request_t **reqs, int count)
 {
   int i;
   for (i = 0; i < count; ++i)
-    mca_pml.pml_free(&reqs[i]);
+     ompi_request_free(&reqs[i]);
 }
 
 

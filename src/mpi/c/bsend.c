@@ -59,9 +59,9 @@ int MPI_Bsend(void *buf, int count, MPI_Datatype type, int dest, int tag, MPI_Co
     if(OMPI_SUCCESS != rc)
         goto error_return;
 
-    rc = mca_pml.pml_wait(1, &request, &index, NULL);
+    rc = ompi_request_wait(1, &request, &index, NULL);
     if(OMPI_SUCCESS != rc) {
-        mca_pml.pml_free(&request);
+        ompi_request_free(&request);
         return rc;
     }
 

@@ -25,7 +25,8 @@ int MPI_Irecv(void *buf, int count, MPI_Datatype type, int source,
 {
     int rc;
     if (source == MPI_PROC_NULL) {
-        return mca_pml.pml_null(request);
+        *request = &ompi_request_null;
+        return OMPI_SUCCESS;
     }
 
     if ( MPI_PARAM_CHECK ) {

@@ -36,17 +36,9 @@ mca_pml_teg_t mca_pml_teg = {
     mca_pml_teg_isend_init,
     mca_pml_teg_isend,
     mca_pml_teg_send,
-    mca_pml_teg_start,
-    mca_pml_teg_test,
-    mca_pml_teg_test_all,
-    mca_pml_teg_wait,
-    mca_pml_teg_wait_all,
     mca_pml_teg_iprobe,
     mca_pml_teg_probe,
-    mca_pml_teg_cancel,
-    mca_pml_teg_cancelled,
-    mca_pml_teg_free,
-    mca_pml_teg_null
+    mca_pml_teg_start
     }
 };
 
@@ -136,8 +128,8 @@ int mca_pml_teg_add_ptls(ompi_list_t *ptls)
     /* setup send fragments based on largest required send request */
     ompi_free_list_init(
         &mca_pml_teg.teg_send_requests,
-        sizeof(mca_pml_base_send_request_t) + cache_bytes,
-        OBJ_CLASS(mca_pml_base_send_request_t),
+        sizeof(mca_pml_teg_send_request_t) + cache_bytes,
+        OBJ_CLASS(mca_pml_teg_send_request_t),
         mca_pml_teg.teg_free_list_num,
         mca_pml_teg.teg_free_list_max,
         mca_pml_teg.teg_free_list_inc,
@@ -371,13 +363,6 @@ int mca_pml_teg_del_procs(ompi_proc_t** procs, size_t nprocs)
 int mca_pml_teg_component_fini(void)
 {
     /* FIX */
-    return OMPI_SUCCESS;
-}
-
-
-int mca_pml_teg_null(ompi_request_t** request)
-{
-    *request = (ompi_request_t*)&mca_pml_teg.teg_request_null;
     return OMPI_SUCCESS;
 }
 
