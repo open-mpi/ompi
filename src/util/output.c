@@ -348,7 +348,9 @@ static int do_open(int output_id, ompi_output_stream_t *lds)
   /* Got a stream -- now initialize it and open relevant outputs */
 
   info[i].ldi_used = true;
-  OMPI_THREAD_UNLOCK(&mutex);
+  if (-1 == output_id) {
+      OMPI_THREAD_UNLOCK(&mutex);
+  }
   info[i].ldi_enabled = lds->lds_is_debugging ? 
     (bool) OMPI_ENABLE_DEBUG : true;
   info[i].ldi_verbose_level = lds->lds_verbose_level;
