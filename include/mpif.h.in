@@ -284,13 +284,15 @@
        parameter (MPI_ERRORS_ARE_FATAL=1)
        parameter (MPI_ERRORS_RETURN=2)
 
+       integer MPI_BYTE, MPI_PACKED, MPI_UB, MPI_LB
+       integer MPI_CHARACTER, MPI_LOGICAL
        integer MPI_INTEGER, MPI_INTEGER1, MPI_INTEGER2, MPI_INTEGER4
-       integer MPI_INTEGER8, MPI_REAL, MPI_REAL2, MPI_REAL4, MPI_REAL8
-       integer MPI_REAL16, MPI_DOUBLE_PRECISION
-       integer MPI_COMPLEX, MPI_LOGICAL, MPI_CHARACTER
-       integer MPI_BYTE, MPI_PACKED, MPI_UB, MPI_LB, MPI_2REAL
-       integer MPI_2DOUBLE_PRECISION, MPI_2INTEGER
+       integer MPI_INTEGER8, MPI_INTEGER16
+       integer MPI_REAL, MPI_REAL4, MPI_REAL8, MPI_REAL16
+       integer MPI_DOUBLE_PRECISION
+       integer MPI_COMPLEX, MPI_COMPLEX8, MPI_COMPLEX16, MPI_COMPLEX32
        integer MPI_DOUBLE_COMPLEX
+       integer MPI_2REAL, MPI_2DOUBLE_PRECISION, MPI_2INTEGER
 
        parameter (MPI_BYTE=1)
        parameter (MPI_PACKED=2)
@@ -303,17 +305,20 @@
        parameter (MPI_INTEGER2=9)
        parameter (MPI_INTEGER4=10) 
        parameter (MPI_INTEGER8=11)  
-       parameter (MPI_REAL=12)
-       parameter (MPI_REAL2=13)
+       parameter (MPI_INTEGER16=12)
+       parameter (MPI_REAL=13)
        parameter (MPI_REAL4=14)
        parameter (MPI_REAL8=15)
        parameter (MPI_REAL16=16)
        parameter (MPI_DOUBLE_PRECISION=17)
        parameter (MPI_COMPLEX=18)
-       parameter (MPI_DOUBLE_COMPLEX=19)
-       parameter (MPI_2REAL=20)
-       parameter (MPI_2DOUBLE_PRECISION=21)
-       parameter (MPI_2INTEGER=22)
+       parameter (MPI_COMPLEX8=19)
+       parameter (MPI_COMPLEX16=20)
+       parameter (MPI_COMPLEX32=21)
+       parameter (MPI_DOUBLE_COMPLEX=22)
+       parameter (MPI_2REAL=23)
+       parameter (MPI_2DOUBLE_PRECISION=24)
+       parameter (MPI_2INTEGER=25)
 
        integer MPI_MAX, MPI_MIN, MPI_SUM, MPI_PROD, MPI_LAND
        integer MPI_BAND, MPI_LOR, MPI_BOR, MPI_LXOR, MPI_BXOR

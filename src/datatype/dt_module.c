@@ -266,56 +266,78 @@ int ompi_ddt_init( void )
     for( i = 0; i < DT_MAX_PREDEFINED; i++ )
         local_sizes[i] = basicDatatypes[i]->size;
 
-    /* The order of the data registration should be the same as the one
-     * in the mpif.h file. Any modification here should be reflected there !!!
-     */ 
     /* Start to populate the f2c index translation table */
-    ompi_mpi_datatype_null.d_f_to_c_index = 
-        ompi_pointer_array_add( ompi_datatype_f_to_c_table, &ompi_mpi_datatype_null );
-    ompi_mpi_byte.d_f_to_c_index =
-        ompi_pointer_array_add( ompi_datatype_f_to_c_table, &ompi_mpi_byte );
-    ompi_mpi_packed.d_f_to_c_index =
-        ompi_pointer_array_add( ompi_datatype_f_to_c_table, &ompi_mpi_packed );
-    ompi_mpi_ub.d_f_to_c_index =
-        ompi_pointer_array_add( ompi_datatype_f_to_c_table, &ompi_mpi_ub );
-    ompi_mpi_lb.d_f_to_c_index =
-        ompi_pointer_array_add( ompi_datatype_f_to_c_table, &ompi_mpi_lb );
-    ompi_mpi_character.d_f_to_c_index =
-        ompi_pointer_array_add( ompi_datatype_f_to_c_table, &ompi_mpi_character );
-    ompi_mpi_logic.d_f_to_c_index =
-        ompi_pointer_array_add( ompi_datatype_f_to_c_table, &ompi_mpi_logic );
-    ompi_mpi_integer.d_f_to_c_index = 
-        ompi_pointer_array_add( ompi_datatype_f_to_c_table, &ompi_mpi_integer );
-    ompi_mpi_char.d_f_to_c_index =
-        ompi_pointer_array_add( ompi_datatype_f_to_c_table, &ompi_mpi_char );
-    ompi_mpi_short.d_f_to_c_index =
-        ompi_pointer_array_add( ompi_datatype_f_to_c_table, &ompi_mpi_short );
-    ompi_mpi_int.d_f_to_c_index =
-        ompi_pointer_array_add( ompi_datatype_f_to_c_table, &ompi_mpi_int );
-    ompi_mpi_long_long.d_f_to_c_index =
-        ompi_pointer_array_add( ompi_datatype_f_to_c_table, &ompi_mpi_long_long );
-    ompi_mpi_real.d_f_to_c_index =
-        ompi_pointer_array_add( ompi_datatype_f_to_c_table, &ompi_mpi_real );
-    ompi_mpi_real.d_f_to_c_index =
-        ompi_pointer_array_add( ompi_datatype_f_to_c_table, &ompi_mpi_real );
-    ompi_mpi_real.d_f_to_c_index =
-        ompi_pointer_array_add( ompi_datatype_f_to_c_table, &ompi_mpi_real );
-    ompi_mpi_double.d_f_to_c_index =
-        ompi_pointer_array_add( ompi_datatype_f_to_c_table, &ompi_mpi_double );
-    ompi_mpi_long_double.d_f_to_c_index =
-        ompi_pointer_array_add( ompi_datatype_f_to_c_table, &ompi_mpi_long_double );
-    ompi_mpi_dblprec.d_f_to_c_index =
-        ompi_pointer_array_add( ompi_datatype_f_to_c_table, &ompi_mpi_dblprec );
-    ompi_mpi_cplex.d_f_to_c_index =
-        ompi_pointer_array_add( ompi_datatype_f_to_c_table, &ompi_mpi_cplex );
-    ompi_mpi_dblcplex.d_f_to_c_index =
-        ompi_pointer_array_add( ompi_datatype_f_to_c_table, &ompi_mpi_dblcplex );
-    ompi_mpi_2real.d_f_to_c_index =
-        ompi_pointer_array_add( ompi_datatype_f_to_c_table, &ompi_mpi_2real );
-    ompi_mpi_2dblcplex.d_f_to_c_index =
-        ompi_pointer_array_add( ompi_datatype_f_to_c_table, &ompi_mpi_2dblcplex );
-    ompi_mpi_2integer.d_f_to_c_index =
-        ompi_pointer_array_add( ompi_datatype_f_to_c_table, &ompi_mpi_2integer );
+
+    /* The order of the data registration should be the same as the
+     * one in the mpif.h file. Any modification here should be
+     * reflected there !!!  Do the Fortran types first so that mpif.h
+     * can have consecutive, dense numbers. */ 
+
+    /* This macro makes everything significantly easier to read below.
+       All hail the moog!  :-) */
+
+#define MOOG(name) ompi_mpi_##name.d_f_to_c_index = \
+    ompi_pointer_array_add(ompi_datatype_f_to_c_table, &ompi_mpi_##name);
+
+    MOOG(datatype_null);
+    MOOG(byte);
+    MOOG(packed);
+    MOOG(ub);
+    MOOG(lb);
+    MOOG(character);
+    MOOG(logic);
+    MOOG(integer);
+    MOOG(integer1);
+    MOOG(integer2);
+    MOOG(integer4);
+    MOOG(integer8);
+    MOOG(integer16);
+    MOOG(real);
+    MOOG(real4);
+    MOOG(real8);
+    MOOG(real16);
+    MOOG(dblprec);
+    MOOG(cplex);
+    MOOG(complex8);
+    MOOG(complex16);
+    MOOG(complex32);
+    MOOG(dblcplex);
+    MOOG(2real);
+    MOOG(2dblcplex);
+    MOOG(2integer);
+
+    /* Now the C types */
+
+    MOOG(wchar);
+    MOOG(char);
+    MOOG(unsigned_char);
+    MOOG(short);
+    MOOG(unsigned_short);
+    MOOG(int);
+    MOOG(unsigned);
+    MOOG(long);
+    MOOG(unsigned_long);
+    MOOG(long_long);
+    MOOG(long_long_int);
+    MOOG(unsigned_long_long);
+
+    MOOG(float);
+    MOOG(double);
+    MOOG(long_double);
+
+    MOOG(float_int);
+    MOOG(double_int);
+    MOOG(longdbl_int);
+    MOOG(long_int);
+    MOOG(2int);
+    MOOG(short_int);
+
+    /* C++ types */
+
+    MOOG(cxx_bool);
+    MOOG(cxx_cplex);
+    MOOG(cxx_dblcplex);
+    MOOG(cxx_ldblcplex);
 
     return OMPI_SUCCESS;
 }
