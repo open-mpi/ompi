@@ -65,12 +65,15 @@ static int lam_ifinit(void)
         close(sd);
         return LAM_ERROR;
     }
+    STATIC_INIT(lam_if_list, &lam_list_cls);
 
     for(ptr = buff; ptr < buff + ifconf.ifc_len; ) {
         struct ifreq* ifr = (struct ifreq*)ptr;
         lam_if_t intf;
         lam_if_t *intf_ptr;
         lam_list_item_init(&intf.if_item);
+
+        STATIC_INIT(intf, &lam_list_item_cls);
 
 #if defined(__APPLE__)
         ptr += (sizeof(ifr->ifr_name) + 
@@ -89,7 +92,7 @@ static int lam_ifinit(void)
         if(ifr->ifr_addr.sa_family != AF_INET)
             continue;
 
-        if(ioctl(sd, SIOCGIFFLAGS, &ifr) < 0) {
+        if(ioctl(sd, SIOCGIFFLAGS, ifr) < 0) {
             lam_output(0, "lam_ifinit: ioctl(SIOCGIFFLAGS) failed with errno=%d", errno);
             continue;
         }
@@ -102,7 +105,7 @@ static int lam_ifinit(void)
 #if defined(__APPLE__)
         intf.if_index = lam_list_get_size(&lam_if_list)+1;
 #else
-        if(ioctl(sd, SIOCGIFINDEX, &ifr) < 0) {
+        if(ioctl(sd, SIOCGIFINDEX, ifr) < 0) {
             lam_output(0,"lam_ifinit: ioctl(SIOCGIFINDEX) failed with errno=%d", errno);
             continue;
         }
@@ -115,7 +118,7 @@ static int lam_ifinit(void)
 #endif
 #endif /* __APPLE__ */
 
-        if(ioctl(sd, SIOCGIFADDR, &ifr) < 0) {
+        if(ioctl(sd, SIOCGIFADDR, ifr) < 0) {
             lam_output(0, "lam_ifinit: ioctl(SIOCGIFADDR) failed with errno=%d", errno);
             break;
         }
@@ -123,7 +126,7 @@ static int lam_ifinit(void)
             continue;
 
         memcpy(&intf.if_addr, &ifr->ifr_addr, sizeof(intf.if_addr));
-        if(ioctl(sd, SIOCGIFNETMASK, &ifr) < 0) {
+        if(ioctl(sd, SIOCGIFNETMASK, ifr) < 0) {
             lam_output(0, "lam_ifinit: ioctl(SIOCGIFNETMASK) failed with errno=%d", errno);
             continue;
         }
@@ -134,7 +137,7 @@ static int lam_ifinit(void)
             lam_output(0, "lam_ifinit: unable to allocated %d bytes\n", sizeof(lam_if_t));
             return LAM_ERR_OUT_OF_RESOURCE;
         }
-        memcpy(intf_ptr, &intf, sizeof(lam_if_t));
+        memcpy(intf_ptr, &intf, sizeof(intf));
         lam_list_append(&lam_if_list, (lam_list_item_t*)intf_ptr);
     }
     close(sd);
