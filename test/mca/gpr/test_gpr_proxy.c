@@ -18,6 +18,9 @@
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
 
 #include "support.h"
 
@@ -400,6 +403,7 @@ int run_test()
     }
     */
     test_finalize();
+    unlink("test_gpr_replica_out");
 
     return(0);
 }
