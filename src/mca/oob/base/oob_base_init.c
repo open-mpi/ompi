@@ -246,10 +246,6 @@ int mca_oob_base_module_init(void)
     if (NULL != base->oob_module->oob_init)
         base->oob_module->oob_init();
   }
-
-  /* TSW - this is a temporary hack for standalone singletons */
-  if(memcmp(&mca_oob_name_self, &mca_oob_name_any, sizeof(struct ompi_process_name_t)) == 0) {
-      mca_oob_name_self = *ompi_name_server.create_process_name(0,1,0);
-  }
   return OMPI_SUCCESS;
 }
+
