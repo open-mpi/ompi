@@ -6,6 +6,8 @@
  */
 
 #include "ompi_config.h"
+
+#include <string.h>
 #include "mca/mca.h"
 #include "mca/gpr/base/base.h"
 #include "gpr_proxy.h"
@@ -52,12 +54,13 @@ int gpr_proxy_put(ompi_registry_mode_t mode, char *segment,
 	return OMPI_ERROR;
     }
 
-    if (OMPI_SUCCESS != ompi_pack(cmd, segment, 1, OMPI_STRING)) {
+    if (OMPI_SUCCESS != ompi_pack_string(cmd, segment)) {
 	return OMPI_ERROR;
     }
 
     /* compute number of tokens */
     tokptr = tokens;
+    num_tokens = 0;
     while (NULL != *tokptr) {
 	num_tokens++;
 	tokptr++;
