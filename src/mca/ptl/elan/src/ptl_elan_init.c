@@ -66,6 +66,7 @@ ompi_mca_ptl_elan_setup (mca_ptl_elan_state_t * ems)
         ptl->ptl_elan_ctx  = ems->elan_rail[emp->num_modules]->rail_ctx;
         ptl->elan_vp  = ems->elan_vp;
         ptl->elan_nvp = ems->elan_nvp;
+
 	OBJ_CONSTRUCT (&ptl->recv_frags, ompi_list_t);
 	OBJ_CONSTRUCT (&ptl->send_frags, ompi_list_t);
 	OBJ_CONSTRUCT (&ptl->pending_acks, ompi_list_t);
@@ -651,7 +652,53 @@ mca_ptl_elan_thread_close (mca_ptl_elan_component_t * emp)
     num_rails = emp->num_modules;
 
     for (i = 0; i < num_rails; i ++) {
-	/* FIXME: Generate a QUEUE DMA to each thread */
+	int         header_length;
+	int         destvp;
+       
+	mca_ptl_elan_module_t *ptl;
+	mca_ptl_base_header_t *hdr;
+	struct ompi_ptl_elan_ctrl_desc_t * desc;
+	ELAN4_CTX  *ctx;
+
+	ptl = mca_ptl_elan_component.modules[i];
+
+	header_length = sizeof(mca_ptl_base_header_t);
+	destvp = ptl->elan_vp;
+	ctx    = ptl->ptl_elan_ctx, 
+	desc   = ptl->queue->last;
+
+	hdr = (mca_ptl_base_header_t *) desc->mesg;
+	hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_STOP;
+	hdr->hdr_common.hdr_flags = 0; /* XXX: to change if needed */
+	hdr->hdr_common.hdr_size = sizeof (mca_ptl_base_header_t);
+
+	INITEVENT_WORD (ctx, desc->elan_event, &desc->main_doneWord);
+	RESETEVENT_WORD (&desc->main_doneWord);
+	PRIMEEVENT_WORD (ctx, desc->elan_event, 2);
+
+        /* Initialize some of the dma structures */
+	desc->main_dma.dma_srcEvent = SDRAM2ELAN (ctx, desc->elan_event);
+	desc->main_dma.dma_dstEvent = SDRAM2ELAN (ctx, ptl->queue->input);
+	desc->main_dma.dma_dstAddr  = 0x0ULL;
+	desc->main_dma.dma_srcAddr  = MAIN2ELAN (ctx, hdr);
+	desc->main_dma.dma_typeSize = E4_DMA_TYPE_SIZE (header_length,
+							DMA_DataTypeByte,
+							DMA_QueueWrite, 16);
+	desc->main_dma.dma_cookie = elan4_local_cookie (ptl->queue->tx_cpool, 
+		E4_COOKIE_TYPE_LOCAL_DMA, destvp);
+	desc->main_dma.dma_vproc = destvp;
+
+	/* finish the recv thread */
+	MEMBAR_VISIBLE ();
+        elan4_run_dma_cmd (ptl->queue->tx_cmdq, (DMA *) & desc->main_dma);
+	elan4_flush_cmdq_reorder (ptl->queue->tx_cmdq);
+
+	/* finish the send thread */
+	desc->main_dma.dma_dstEvent = SDRAM2ELAN (ctx, ptl->comp->input);
+	MEMBAR_VISIBLE ();
+        elan4_run_dma_cmd (ptl->queue->tx_cmdq, (DMA *) & desc->main_dma);
+	elan4_flush_cmdq_reorder (ptl->queue->tx_cmdq);
+	MEMBAR_VISIBLE ();
     }
 
     /* Join all threads */

@@ -139,6 +139,11 @@ enum {
     MCA_PTL_ELAN_DESC_CACHED = 0x20
 };
 
+/* XXX: Temporarily a type of header to stop threads */
+enum {
+    MCA_PTL_HDR_TYPE_STOP    = 0xFFFF
+};
+
 struct ompi_ptl_elan_thread_t
 {
     ompi_thread_t thread;
@@ -217,6 +222,17 @@ typedef struct ompi_ptl_elan_comp_queue_t ompi_ptl_elan_comp_queue_t;
     E4_Addr            comp_dstAddr;                         \
     /* 8 byte aligned */
 
+struct ompi_ptl_elan_ctrl_desc_t {
+    E4_DMA64           main_dma; 
+    /* 8 byte aligned */                               
+    volatile E4_uint64 main_doneWord;                  
+    /* 8 byte aligned */                               
+    E4_Event          *elan_event;                     
+    void              *mesg;
+    /* 8 byte aligned */                               
+};
+typedef struct ompi_ptl_elan_ctrl_desc_t ompi_ptl_elan_ctrl_desc_t;
+
 struct ompi_ptl_elan_base_desc_t {
     ELAN_BASE_DESC_FIELDS 
     /* 8 byte aligned */
@@ -251,6 +267,7 @@ struct ompi_ptl_elan_queue_ctrl_t {
 
     /* Recv Queue has to be well-aligned */
     ompi_ptl_elan_recv_queue_t *rxq;
+    ompi_ptl_elan_ctrl_desc_t  *last;
 };
 typedef struct ompi_ptl_elan_queue_ctrl_t ompi_ptl_elan_queue_ctrl_t;
 
