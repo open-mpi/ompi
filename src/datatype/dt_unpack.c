@@ -255,12 +255,6 @@ static int ompi_convertor_unpack_homogeneous( ompi_convertor_t* pConv,
                 last_count -= last_blength;
                 last_blength *= ompi_ddt_basicDatatypes[pElems[pos_desc].type]->size;
                 space -= last_blength;
-                /*  last_blength = last_count;
-                    last_count = space / ompi_ddt_basicDatatypes[pElems[pos_desc].type]->size;
-                    space = (last_count * ompi_ddt_basicDatatypes[pElems[pos_desc].type]->size);
-                    last_count = last_blength - last_count;
-                    last_blength = space;
-                */
                 goto end_loop;  /* or break whatever but go out of this while */
             }
             OMPI_DDT_SAFEGUARD_POINTER( pConv->pBaseBuf + lastDisp, last_blength,
@@ -618,6 +612,7 @@ int ompi_convertor_init_for_recv( ompi_convertor_t* pConv, uint32_t flags,
         /* this datatype is improper for conversion. Commit it first */
         return OMPI_ERROR;
     }
+    assert( datatype != NULL );
     convertor_init_generic( pConv, datatype, count, pUserBuf );
 
     pConv->flags = CONVERTOR_RECV | CONVERTOR_HOMOGENEOUS;
