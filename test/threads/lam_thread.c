@@ -1,7 +1,7 @@
 #include "support.h"
-#include "lam/constants.h"
-#include "lam/threads/thread.h"
-#include "lam/os/atomic.h"
+#include "include/constants.h"
+#include "threads/thread.h"
+#include "os/atomic.h"
 
 
 static volatile int count = 0;

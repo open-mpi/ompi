@@ -7,8 +7,8 @@
 #include <stdlib.h>
 
 #include "lam_config.h"
-#include "lam/constants.h"
-#include "lam/util/argv.h"
+#include "include/constants.h"
+#include "util/argv.h"
 
 static bool test1(void);
 static bool test2(void);
@@ -54,7 +54,7 @@ static bool test1(void)
      value. */
 
   for (i = 0; a[i] != NULL; ++i) {
-    if (lam_argv_add(&argc, &argv, a[i]) != LAM_SUCCESS) {
+    if (lam_argv_append(&argc, &argv, a[i]) != LAM_SUCCESS) {
       return false;
     }
     for (j = 0; j <= i; ++j) {
@@ -95,7 +95,7 @@ static bool test2(void)
   b[i] = NULL;
 
   for (i = 0; b[i] != NULL; ++i) {
-    if (lam_argv_add(&argc, &argv, b[i]) != LAM_SUCCESS) {
+    if (lam_argv_append(&argc, &argv, b[i]) != LAM_SUCCESS) {
       return false;
     }
     ++b[i][0];
@@ -134,7 +134,7 @@ static bool test3(void)
      tries to free it, we should get a seg fault. */
 
   for (i = 0; a[i] != NULL; ++i) {
-    if (lam_argv_add(&argc, &argv, a[i]) != LAM_SUCCESS) {
+    if (lam_argv_append(&argc, &argv, a[i]) != LAM_SUCCESS) {
       return false;
     }
   }
@@ -147,7 +147,7 @@ static bool test3(void)
     b[i] = strdup(a[i]);
   }
   for (i = 0; b[i] != NULL; ++i) {
-    if (lam_argv_add(&argc, &argv, b[i]) != LAM_SUCCESS) {
+    if (lam_argv_append(&argc, &argv, b[i]) != LAM_SUCCESS) {
       return false;
     }
   }

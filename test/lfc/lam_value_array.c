@@ -12,7 +12,7 @@
 #include <string.h>
 
 #include "support.h"
-#include "lam/lfc/lam_value_array.h"
+#include "lfc/lam_value_array.h"
 
 
 #define NUM_ITEMS 10
