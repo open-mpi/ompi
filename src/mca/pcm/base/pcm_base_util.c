@@ -45,4 +45,5 @@ mca_pcm_base_build_base_env(char ***envp)
         }
     }
     
+    return OMPI_SUCCESS;
 }

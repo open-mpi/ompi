@@ -45,7 +45,6 @@ mca_pcm_base_component_1_0_0_t mca_pcm_cofs_component = {
 struct mca_pcm_base_module_1_0_0_t mca_pcm_cofs_1_0_0 = {
     mca_pcm_base_no_unique_name, /* unique_string */
     NULL, /* allocate_resources */
-    NULL, /* register_monitor */
     NULL, /* can_spawn */
     NULL, /* spawn_procs */
     NULL, /* kill_proc */
