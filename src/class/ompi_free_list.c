@@ -60,7 +60,7 @@ int ompi_free_list_grow(ompi_free_list_t* flist, size_t num_elements)
         return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
 
     if (NULL != flist->fl_mpool)
-        ptr = (unsigned char*)flist->fl_mpool->mpool_alloc(flist->fl_mpool, num_elements * flist->fl_elem_size);
+        ptr = (unsigned char*)flist->fl_mpool->mpool_alloc(num_elements * flist->fl_elem_size, 0);
     else
         ptr = malloc(num_elements * flist->fl_elem_size);
     if(NULL == ptr)

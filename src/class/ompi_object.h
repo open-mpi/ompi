@@ -407,8 +407,9 @@ static inline ompi_object_t *ompi_obj_new(size_t size, ompi_class_t *cls)
  */
 static inline int ompi_obj_update(ompi_object_t *object, int inc)
 {
-    int oldval;
     int newval;
+#if 0
+    int oldval;
     volatile int *addr;
 
     addr = (volatile int *) &(object->obj_reference_count);
@@ -416,7 +417,10 @@ static inline int ompi_obj_update(ompi_object_t *object, int inc)
         oldval = *addr;
         newval = oldval + inc;
     } while (ompi_atomic_cmpset_int(addr,  oldval, newval) == 0);
-
+#else
+    object->obj_reference_count += inc;
+    newval = object->obj_reference_count;
+#endif
     return newval;
 }
 
