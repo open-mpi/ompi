@@ -5,9 +5,10 @@
 extern "C" {
 #endif
 
-void align_c(char *w, char *x, char *y, char *z)
+void align_c(char *a, char *w, char *x, char *y, char *z)
 {
     unsigned long aw, ax, ay, az;
+    int diff;
     FILE *f=stdout;
     if (!f) exit(1);
     aw = (unsigned long) w;
@@ -32,8 +33,41 @@ void align_c(char *w, char *x, char *y, char *z)
     else {
         fprintf(f, "  %d\t", 1);
     }
+    diff = a - w;
+    fprintf(f, "%d\t", (diff >= 0) ? diff : -diff);
     fflush(f);
 }
+
+
+void align_c_(char *a, char *w, char *x, char *y, char *z)
+{
+  align_c(a, w, x, y, z);
+}
+
+
+void align_c__(char *a, char *w, char *x, char *y, char *z)
+{
+  align_c(a, w, x, y, z);
+}
+
+
+void ALIGN_C(char *a, char *w, char *x, char *y, char *z)
+{
+  align_c(a, w, x, y, z);
+}
+
+
+void ALIGN_C_(char *a, char *w, char *x, char *y, char *z)
+{
+  align_c(a, w, x, y, z);
+}
+
+
+void ALIGN_C__(char *a, char *w, char *x, char *y, char *z)
+{
+  align_c(a, w, x, y, z);
+}
+
 
 #ifdef __cplusplus
 }

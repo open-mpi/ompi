@@ -32,6 +32,7 @@ module OMPI_TEST_ALIGN
     character b
     real(selected_real_kind(15)) :: x
     real(selected_real_kind(15)) :: y
+
     character c
     real(selected_real_kind(15)) :: z
   end type
@@ -76,15 +77,15 @@ program main
   type(AlignComplex) :: ac
   type(AlignDoubleComplex) :: adc
 
-  call align_c(ar%w, ar%x, ar%y, ar%z)
+  call align_c(ar%a, ar%w, ar%x, ar%y, ar%z)
   print *, "is alignment of real"
-  call align_c(ad%w, ad%x, ad%y, ad%z)
+  call align_c(ad%a, ad%w, ad%x, ad%y, ad%z)
   print *, "is alignment of double"
-  call align_c(aq%w, aq%x, aq%y, aq%z)
+  call align_c(aq%a, aq%w, aq%x, aq%y, aq%z)
   print *, "is alignment of quad"
-  call align_c(ac%w, ac%x, ac%y, ac%z)
+  call align_c(ac%a, ac%w, ac%x, ac%y, ac%z)
   print *, "is alignment of complex"
-  call align_c(adc%w, adc%x, adc%y, adc%z)
+  call align_c(adc%a, adc%w, adc%x, adc%y, adc%z)
   print *, "is alignment of double complex"
 
 end program main
