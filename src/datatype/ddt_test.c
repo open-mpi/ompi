@@ -1,6 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 
 #include "datatype.h"
+#include "datatype_internal.h"
 #include <time.h>
 #include <stdlib.h>
 #include <sys/time.h>
@@ -27,7 +28,7 @@ int mpich_typeub( void )
       errs++;
       printf("extent(type1)=%ld\n",(long)extent);
    }
-                                                                                                                                         
+
    blens[0]=1;
    blens[1]=1;
    displ[0]=0;
@@ -35,7 +36,7 @@ int mpich_typeub( void )
    types[0]=type1;
    types[1]=&(basicDatatypes[DT_UB]);
    extent2 = displ[1];
-                                                                                                                                         
+
    /*    using MPI_UB and Type_struct, monkey with the extent, making it 16
     */
    lam_ddt_create_struct( 2, blens, displ, types, &type2 );
@@ -46,7 +47,7 @@ int mpich_typeub( void )
       errs++;
       printf("extent(type2)=%ld\n",(long)extent);
    }
-                                                                                                                                         
+
    /*    monkey with the extent again, making it 4
     *     ===> MPICH gives 4
     *     ===> MPIF gives 16, the old extent
@@ -55,17 +56,17 @@ int mpich_typeub( void )
    types[0]=type2;
    types[1]=&(basicDatatypes[DT_UB]);
    extent3 = extent2;
-                                                                                                                                         
+
    lam_ddt_create_struct( 2, blens, displ, types, &type3 );
    lam_ddt_commit( &type3 );
-                                                                                                                                         
+
    lam_ddt_get_extent( type3, &lb, &extent );
    if (extent != extent3) {
       printf("EXTENT 3 %ld != %ld\n",extent,extent3);
       errs++;
       printf("extent(type3)=%ld\n",(long)extent);
    }
-                                                                                                                                         
+
    OBJ_RELEASE( type1 );
    assert( type1 == NULL );
    OBJ_RELEASE( type2 );
@@ -90,13 +91,13 @@ int mpich_typeub2( void )
    types[0] = &(basicDatatypes[DT_LB]);
    types[1] = &(basicDatatypes[DT_INT]);
    types[2] = &(basicDatatypes[DT_UB]);
-                                                                                                                         
+
    lam_ddt_create_struct(3,blocklen,disp, types,&dt1);
    lam_ddt_commit(&dt1);
-                                                                                                                         
+
    lam_ddt_type_lb(dt1, &lb);          lam_ddt_type_ub(dt1, &ub);
    lam_ddt_type_extent(dt1,&ex1);      lam_ddt_type_size(dt1,&sz1);
-                                                                                                                         
+
    /* Values should be lb = -3, ub = 6 extent 9; size depends on implementation */
    if (lb != -3 || ub != 6 || ex1 != 9) {
       printf("Example 3.26 type1 lb %d ub %d extent %d size %d\n", (int)lb, (int)ub, (int)ex1, sz1);
@@ -104,7 +105,7 @@ int mpich_typeub2( void )
    }
    else
       printf("Example 3.26 type1 correct\n" );
-                                                                                                                         
+
    lam_ddt_create_contiguous(2,dt1,&dt2);
    lam_ddt_type_lb(dt2, &lb);          lam_ddt_type_ub(dt2, &ub);
    lam_ddt_type_extent(dt2,&ex2);      lam_ddt_type_size(dt2,&sz2);
@@ -116,7 +117,7 @@ int mpich_typeub2( void )
    }
    else
       printf("Example 3.26 type1 correct\n" );
-                                                                                                                         
+   OBJ_RELEASE( dt2 ); assert( dt2 == NULL );
    lam_ddt_create_contiguous(2,dt1,&dt2);
    lam_ddt_type_lb(dt2, &lb);          lam_ddt_type_ub(dt2, &ub);
    lam_ddt_type_extent(dt2,&ex2);      lam_ddt_type_size(dt2,&sz2);
@@ -128,14 +129,14 @@ int mpich_typeub2( void )
    }
    else
       printf( "Example 3.26 type2 correct\n" );
-                                                                                                                         
+
    types[0]=dt1;               types[1]=dt1;
    blocklen[0]=1;              blocklen[1]=1;
    disp[0]=0;                  disp[1]=ex1;
-                                                                                                                         
+
    lam_ddt_create_struct(2, blocklen, disp, types, &dt3);
    lam_ddt_commit(&dt3);
-                                                                                                                         
+
    lam_ddt_type_lb(dt3, &lb);          lam_ddt_type_ub(dt3, &ub);
    lam_ddt_type_extent(dt3,&ex3);      lam_ddt_type_size(dt3,&sz3);
    /* Another way to express type2 */
@@ -146,13 +147,10 @@ int mpich_typeub2( void )
    }
    else
       printf( "type3 correct\n" );
-                                                                                                                         
-   OBJ_RELEASE( dt1 );
-   assert( dt1 == NULL );
-   OBJ_RELEASE( dt2 );
-   assert( dt2 == NULL );
-   OBJ_RELEASE( dt3 );
-   assert( dt3 == NULL );
+
+   OBJ_RELEASE( dt1 ); assert( dt1 == NULL );
+   OBJ_RELEASE( dt2 ); assert( dt2 == NULL );
+   OBJ_RELEASE( dt3 ); assert( dt3 == NULL );
    return err;
 }
 
@@ -177,19 +175,18 @@ int mpich_typeub3( void )
    lam_ddt_create_struct(3,blocklen,disp, types,&dt1);
    lam_ddt_commit(&dt1);
 
-/* This type is the same as in typeub2, and is tested there */
-                                                                                                                         
+   /* This type is the same as in typeub2, and is tested there */
    types[0]=dt1;               types[1]=dt1;
    blocklen[0]=1;              blocklen[1]=1;
    disp[0]=-4;                 disp[1]=7;
    idisp[0]=-4;                idisp[1]=7;
-                                                                                                                         
+
    lam_ddt_create_hindexed( 2, blocklen, disp, dt1, &dt2 );
    lam_ddt_commit( &dt2 );
-                                                                                                                         
+
    lam_ddt_type_lb( dt2, &lb );       lam_ddt_type_ub( dt2, &ub );
    lam_ddt_type_extent( dt2, &ex );   lam_ddt_type_size( dt2, &sz );
-                                                                                                                         
+
    if (lb != -7 || ub != 13 || ex != 20) {
       printf("hindexed lb %d ub %d extent %d size %d\n", (int)-7, (int)13, (int)20, sz);
       printf("hindexed lb %d ub %d extent %d size %d\n", (int)lb, (int)ub, (int)ex, sz);
@@ -200,10 +197,10 @@ int mpich_typeub3( void )
 
    lam_ddt_create_indexed( 2, blocklen, idisp, dt1, &dt3 );
    lam_ddt_commit( &dt3 );
-                                                                                                                         
+
    lam_ddt_type_lb( dt3, &lb );       lam_ddt_type_ub( dt3, &ub );
    lam_ddt_type_extent( dt3, &ex );   lam_ddt_type_size( dt3, &sz );
-                                                                                                                         
+
    if (lb != -39 || ub != 69 || ex != 108) {
       printf("indexed lb %d ub %d extent %d size %d\n", (int)-39, (int)69, (int)108, sz);
       printf("indexed lb %d ub %d extent %d size %d\n", (int)lb, (int)ub, (int)ex, sz);
@@ -214,10 +211,10 @@ int mpich_typeub3( void )
 
    lam_ddt_create_hvector( 2, 1, 14, dt1, &dt4 );
    lam_ddt_commit( &dt4 );
-                                                                                                                         
+
    lam_ddt_type_lb( dt4, &lb );       lam_ddt_type_ub( dt4, &ub );
    lam_ddt_type_extent( dt4, &ex );   lam_ddt_type_size( dt4, &sz );
-                                                                                                                         
+
    if (lb != -3 || ub != 20 || ex != 23) {
       printf("hvector lb %d ub %d extent %d size %d\n", (int)-3, (int)20, (int)23, sz);
       printf("hvector lb %d ub %d extent %d size %d\n", (int)lb, (int)ub, (int)ex, sz);
@@ -228,11 +225,10 @@ int mpich_typeub3( void )
 
    lam_ddt_create_vector( 2, 1, 14, dt1, &dt5 );
    lam_ddt_commit( &dt5 );
-                                                                                                                         
+
    lam_ddt_type_lb( dt5, &lb );       lam_ddt_type_ub( dt5, &ub );
    lam_ddt_type_extent( dt5, &ex );   lam_ddt_type_size( dt5, &sz );
-                                                                                                                         
-                                                                                                                         
+
    if (lb != -3 || ub != 132 || ex != 135) {
       printf("vector lb %d ub %d extent %d size %d\n", (int)-3, (int)132, (int)135, sz);
       printf("vector lb %d ub %d extent %d size %d\n", (int)lb, (int)ub, (int)ex, sz);
@@ -267,15 +263,17 @@ void print_double_mat( size_t N, double* mat )
 
 int init_random_upper_matrix( size_t N, double* mat )
 {
-   int i, j;
+    int i, j;
 
-   srand( time(NULL) );
-   for( i = 0; i < N; i++ )
-      for( j = i; j < N; j++ ) {
-         *mat = (double)random();
-         mat++;
-      }
-   return 0;  
+    srand( time(NULL) );
+    for( i = 0; i < N; i++ ) {
+        mat += i;
+        for( j = i; j < N; j++ ) {
+            *mat = (double)random();
+            mat++;
+        }
+    }
+    return 0;  
 }
 
 int check_diag_matrix( size_t N, double* mat1, double* mat2 )
@@ -361,7 +359,7 @@ int test_upper( size_t length )
    init_random_upper_matrix( length, mat1 );
    mat2 = calloc( length * length, sizeof(double) );
 
-   total_length = length * (length + 1) / 2 * sizeof(double);
+   total_length = length * (length + 1) * ( sizeof(double) / 2);
    inbuf = (double*)malloc( total_length );
    ptr = (char*)inbuf;
    /* copy upper matrix in the array simulating the input buffer */
@@ -375,8 +373,8 @@ int test_upper( size_t length )
    lam_convertor_init_for_recv( pConv, 0, pdt, 1, mat2, 0 );
 
 /* test the automatic destruction pf the data */
-   OBJ_RELEASE( pdt );  assert( pdt == NULL );
-   OBJ_RELEASE( pdt1 ); assert( pdt1 == NULL );
+   lam_ddt_destroy( &pdt ); assert( pdt == NULL );
+   lam_ddt_destroy( &pdt1 ); assert( pdt1 == NULL );
 
    GET_TIME( start );
    split_chunk = (length + 1) * sizeof(double);
@@ -388,6 +386,7 @@ int test_upper( size_t length )
       lam_convertor_unpack( pConv, &a, 1 );
       ptr += split_chunk;
       i -= split_chunk;
+      if( mat2[0] != inbuf[0] ) assert(0);
    }
    GET_TIME( end );
    total_time = ELAPSED_TIME( start, end );
@@ -398,6 +397,7 @@ int test_upper( size_t length )
    rc = check_diag_matrix( length, mat1, mat2 );
    free( mat1 );
    free( mat2 );
+   OBJ_RELEASE( pConv );
    return rc;
 }
 
@@ -479,51 +479,52 @@ typedef struct {
 
 dt_desc_t* create_strange_dt( void )
 {
-   sdata_intern v[2];
-   long displ[3];
-   dt_desc_t* types[3] = { &(basicDatatypes[DT_INT]) };
-   sstrange t[2];
-   int pBlock[3] = {1, 10, 1}, dispi[3];
-   dt_desc_t *pdt, *pdt1, *pdt2, *pdtTemp;
+    sdata_intern v[2];
+    long displ[3];
+    dt_desc_t* types[3] = { &(basicDatatypes[DT_INT]) };
+    sstrange t[2];
+    int pBlock[3] = {1, 10, 1}, dispi[3];
+    dt_desc_t *pdt, *pdt1, *pdt2, *pdtTemp;
 
-   dispi[0] = (int)((char*)&(v[0].i1) - (char*)&(v[0]));  /* 0 */
-   dispi[1] = (int)(((char*)(&(v[0].i2)) - (char*)&(v[0])) / sizeof(int));  /* 2 */
-   lam_ddt_create_indexed_block( 2, 1, dispi, &(basicDatatypes[DT_INT]), &pdtTemp );
+    dispi[0] = (int)((char*)&(v[0].i1) - (char*)&(v[0]));  /* 0 */
+    dispi[1] = (int)(((char*)(&(v[0].i2)) - (char*)&(v[0])) / sizeof(int));  /* 2 */
+    lam_ddt_create_indexed_block( 2, 1, dispi, &(basicDatatypes[DT_INT]), &pdtTemp );
 #ifdef USE_RESIZED
-   /* optional */
-   displ[0] = 0;
-   displ[1] = (char*)&(v[1]) - (char*)&(v[0]);
-   lam_ddt_create_resized( pdtTemp, displ[0], displ[1], &pdt1 );
-   OBJ_RELEASE( pdtTemp ); assert( pdtTemp == NULL );
+    /* optional */
+    displ[0] = 0;
+    displ[1] = (char*)&(v[1]) - (char*)&(v[0]);
+    lam_ddt_create_resized( pdtTemp, displ[0], displ[1], &pdt1 );
+    OBJ_RELEASE( pdtTemp ); assert( pdtTemp == NULL );
 #else
-   pdt1 = pdtTemp;
+    pdt1 = pdtTemp;
 #endif  /* USE_RESIZED */
 
-   types[1] = pdt1;
-   types[2] = &(basicDatatypes[DT_INT]);
-   displ[0] = 0;
-   displ[1] = (long)((char*)&(t[0].v[0]) - (char*)&(t[0]));
-   displ[2] = (long)((char*)&(t[0].last) - (char*)&(t[0]));
-   lam_ddt_create_struct( 3, pBlock, displ, types, &pdtTemp );
+    types[1] = pdt1;
+    types[2] = &(basicDatatypes[DT_INT]);
+    displ[0] = 0;
+    displ[1] = (long)((char*)&(t[0].v[0]) - (char*)&(t[0]));
+    displ[2] = (long)((char*)&(t[0].last) - (char*)&(t[0]));
+    lam_ddt_create_struct( 3, pBlock, displ, types, &pdtTemp );
 #ifdef USE_RESIZED
-   /* optional */
-   displ[1] = (char*)&(t[1]) - (char*)&(t[0]);
-   lam_ddt_create_resized( pdtTemp, displ[0], displ[1], &pdt2 );
-   OBJ_RELEASE( pdtTemp ); assert( pdtTemp == NULL );
+    /* optional */
+    displ[1] = (char*)&(t[1]) - (char*)&(t[0]);
+    lam_ddt_create_resized( pdtTemp, displ[0], displ[1], &pdt2 );
+    OBJ_RELEASE( pdtTemp ); assert( pdtTemp == NULL );
 #else
-   pdt2 = pdtTemp;
+    pdt2 = pdtTemp;
 #endif  /* USE_RESIZED */
 
-   lam_ddt_create_contiguous( SSTRANGE_CNT, pdt2, &pdt );
+    lam_ddt_create_contiguous( SSTRANGE_CNT, pdt2, &pdt );
 
-   OBJ_RELEASE( pdt1 ); assert( pdt1 == NULL );
-   OBJ_RELEASE( pdt2 ); assert( pdt2 == NULL );
-   lam_ddt_dump( pdt );
-   {
-      dt_type_desc_t pElemDesc;
-      lam_ddt_optimize_short( pdt, 1, &pElemDesc );
-   }
-   return pdt;
+    OBJ_RELEASE( pdt1 ); assert( pdt1 == NULL );
+    OBJ_RELEASE( pdt2 ); assert( pdt2 == NULL );
+    lam_ddt_dump( pdt );
+    {
+        dt_type_desc_t pElemDesc = { 0, 0, NULL };
+        lam_ddt_optimize_short( pdt, 1, &pElemDesc );
+        if( pElemDesc.desc != NULL ) free( pElemDesc.desc );
+    }
+    return pdt;
 }
 
 int local_copy_ddt_count( dt_desc_t* pdt, int count )
@@ -539,8 +540,10 @@ int local_copy_ddt_count( dt_desc_t* pdt, int count )
 
    lam_ddt_copy_content_same_ddt( pdt, count, pdst, psrc );
 
-   free(pdst );
+   free( pdst );
    free( psrc );
+
+   OBJ_RELEASE( pdt ); assert( pdt == NULL );
    return 0;
 }
 int main( int argc, char* argv[] )
@@ -551,17 +554,11 @@ int main( int argc, char* argv[] )
    lam_ddt_init();
 
    pdt = create_strange_dt();
-   return 0;
-   /*
-     local_copy_ddt_count(pdt, 10);
-     OBJ_RELEASE( pdt ); assert( pdt == NULL );
-   */
+   OBJ_RELEASE( pdt ); assert( pdt == NULL );
+   
    pdt = upper_matrix(100);
    local_copy_ddt_count(pdt, 1);
    OBJ_RELEASE( pdt ); assert( pdt == NULL );
-   return 0;
-
-   return 0;
 
    mpich_typeub();
    mpich_typeub2();
@@ -607,5 +604,9 @@ int main( int argc, char* argv[] )
    OBJ_RELEASE( pdt1 ); assert( pdt1 == NULL );
    OBJ_RELEASE( pdt2 ); assert( pdt2 == NULL );
    OBJ_RELEASE( pdt3 ); assert( pdt3 == NULL );
+
+   /* clean-ups all data allocations */
+   lam_ddt_finalize();
+
    return 0;
 }
