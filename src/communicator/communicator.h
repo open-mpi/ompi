@@ -152,12 +152,13 @@ extern "C" {
     /** 
      * extract the local group from a communicator 
      */
-    int lam_comm_group ( MPI_Comm comm, MPI_Group *group );
+    int lam_comm_group ( lam_communicator_t *comm, lam_group_t **group );
 
     /**
      * create a communicator based on a group 
      */
-    int lam_comm_create ( MPI_Comm comm, MPI_Group group, MPI_Comm *newcomm );
+    int lam_comm_create ( lam_communicator_t* comm, lam_group_t *group, 
+                          lam_communicator_t** newcomm );
 
     /**
      * split a communicator based on color and key. Parameters
@@ -169,12 +170,13 @@ extern "C" {
      *
      * @
      */
-    int lam_comm_split ( MPI_Comm comm, int color, int key, MPI_Comm *newcomm );
+    int lam_comm_split ( lam_communicator_t *comm, int color, int key, 
+                         lam_communicator_t** newcomm );
     
     /**
      * free a communicator 
      */
-    int lam_comm_free ( MPI_Comm *comm );
+    int lam_comm_free ( lam_communicator_t **comm );
 
     /**
      * allocate a new communicator structure 
@@ -197,7 +199,7 @@ extern "C" {
      *
      * This routine has to be thread safe in the final version.
      */
-    int lam_comm_nextcid (MPI_Comm comm, int mode);
+    int lam_comm_nextcid (lam_communicator_t* comm, int mode);
 
 
     /**
