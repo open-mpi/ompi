@@ -275,18 +275,20 @@ cd "$unzip_root"
 do_command "gunzip -c $scratch_root_arg/downloads/$tarball_name | tar xf -"
 cd openmpi-$version/src/mpi
 
-# count
+# setup output files
 report_c="$logdir/report_c.$$.txt"
 report_f77="$logdir/report_f77.$$.txt"
 rm -f "$report_c" "$report_f77"
 
+# count unimplemented C functions
 cd c
-grep -s implemented *.c | grep not > "$report_c"
+grep -ls "not yet implemented" *.c > "$report_c"
 total_c="`ls -1 *.c | wc -l | awk '{ print $1 }'`"
 num_c="`wc -l $report_c | awk '{ print $1 }'`"
 
+# count unimplemented F77 functions
 cd ../f77
-grep -s implemented *.c | grep not > "$report_f77"
+grep -ls "not yet implemented" *.c > "$report_f77"
 total_f77="`ls -1 *.c | wc -l | awk '{ print $1 }'`"
 num_f77="`wc -l $report_f77 | awk '{ print $1 }'`"
 
