@@ -151,8 +151,8 @@ MPI_Free_mem
 MPI_Gather
 MPI_Gatherv
 MPI_Get_address
-MPI_Get_count
-MPI_Get_elements
+MPI_Get_count				George
+MPI_Get_elements			George
 MPI_Get
 MPI_Get_processor_name
 MPI_Get_version
@@ -209,10 +209,10 @@ MPI_Op_create
 MPI_Open_port
 MPI_Op_f2c
 MPI_Op_free
-MPI_Pack_external
-MPI_Pack_external_size
-MPI_Pack
-MPI_Pack_size
+MPI_Pack_external		George
+MPI_Pack_external_size		George
+MPI_Pack			George
+MPI_Pack_size			George
 MPI_Pcontrol
 MPI_Probe
 MPI_Publish_name
@@ -251,45 +251,45 @@ MPI_Test_cancelled
 MPI_Testsome
 MPI_Topo_test
 MPI_Type_c2f
-MPI_Type_commit
-MPI_Type_contiguous
-MPI_Type_create_darray
-MPI_Type_create_f90_complex
-MPI_Type_create_f90_integer
-MPI_Type_create_f90_real
-MPI_Type_create_hindexed
-MPI_Type_create_hvector
+MPI_Type_commit			George
+MPI_Type_contiguous		George
+MPI_Type_create_darray		George
+MPI_Type_create_f90_complex	George
+MPI_Type_create_f90_integer	George
+MPI_Type_create_f90_real	George
+MPI_Type_create_hindexed	George
+MPI_Type_create_hvector		George
 MPI_Type_create_keyval
-MPI_Type_create_indexed_block
-MPI_Type_create_struct
-MPI_Type_create_subarray
-MPI_Type_create_resized 
+MPI_Type_create_indexed_block	George
+MPI_Type_create_struct		George
+MPI_Type_create_subarray	George
+MPI_Type_create_resized 	George
 MPI_Type_delete_attr
-MPI_Type_dup
-MPI_Type_extent
-MPI_Type_free
+MPI_Type_dup			George
+MPI_Type_extent			George
+MPI_Type_free			George
 MPI_Type_free_keyval
-MPI_Type_f2c
-MPI_Type_get_attr
-MPI_Type_get_contents
-MPI_Type_get_envelope
-MPI_Type_get_extent
-MPI_Type_get_name
-MPI_Type_get_true_extent
-MPI_Type_hindexed
-MPI_Type_hvector
-MPI_Type_indexed
-MPI_Type_lb
-MPI_Type_match_size
+MPI_Type_f2c			George
+MPI_Type_get_attr	
+MPI_Type_get_contents		George
+MPI_Type_get_envelope		George
+MPI_Type_get_extent		George
+MPI_Type_get_name		George
+MPI_Type_get_true_extent	George
+MPI_Type_hindexed		George
+MPI_Type_hvector		George
+MPI_Type_indexed		George
+MPI_Type_lb			George
+MPI_Type_match_size		George
 MPI_Type_set_attr
 MPI_Type_set_name
-MPI_Type_size
-MPI_Type_struct
-MPI_Type_ub
-MPI_Type_vector
-MPI_Unpack
+MPI_Type_size			George
+MPI_Type_struct			George
+MPI_Type_ub			George
+MPI_Type_vector			George
+MPI_Unpack			George
 MPI_Unpublish_name
-MPI_Unpack_external 
+MPI_Unpack_external 		George
 MPI_Waitall
 MPI_Waitany
 MPI_Wait
