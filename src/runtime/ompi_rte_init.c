@@ -36,11 +36,13 @@ int ompi_rte_init(bool *allow_multi_user_threads, bool *have_hidden_threads)
   
   if (OMPI_SUCCESS != (ret = mca_ns_base_open())) {
     /* JMS show_help */
+    printf("show_help: ompi_rte_init failed in ns_base_open\n");
     return ret;
   }
   if (OMPI_SUCCESS != (ret = mca_ns_base_select(&user_threads,
                                                 &hidden_threads))) {
     /* JMS show_help */
+    printf("show_help: ompi_rte_init failed in ns_base_select\n");
     return ret;
   }
   *allow_multi_user_threads &= user_threads;
@@ -50,10 +52,12 @@ int ompi_rte_init(bool *allow_multi_user_threads, bool *have_hidden_threads)
 
   if (OMPI_SUCCESS != (ret = mca_pcm_base_open())) {
     /* JMS show_help */
+    printf("show_help: ompi_rte_init failed in pcm_base_open\n");
     return ret;
   }
   if (OMPI_SUCCESS != (ret = mca_pcm_base_select(&user_threads, 
                                                  &hidden_threads))) {
+    printf("show_help: ompi_rte_init failed in pcm_base_select\n");
     /* JMS show_help */
     return ret;
   }
@@ -62,11 +66,13 @@ int ompi_rte_init(bool *allow_multi_user_threads, bool *have_hidden_threads)
 
   if (OMPI_SUCCESS != (ret = mca_oob_base_open())) {
     /* JMS show_help */
+    printf("show_help: ompi_rte_init failed in oob_base_open\n");
     return ret;
   }
   if (OMPI_SUCCESS != (ret = mca_oob_base_init(&user_threads, 
                                                &hidden_threads))) {
     /* JMS show_help */
+    printf("show_help: ompi_rte_init failed in oob_base_init\n");
     return ret;
   }
   *allow_multi_user_threads &= user_threads;
