@@ -7,13 +7,14 @@
  * Unreliable Datagram address to peers */
 
 struct mca_ptl_ib_ud_addr_t {
-    VAPI_qp_hndl_t      ud_qp;  /* UD qp hndl to be published */
-    IB_lid_t            lid;    /* Local identifier */
+    VAPI_qp_num_t       qp_num;  /* UD qp hndl to be published */
+    IB_lid_t            lid;     /* Local identifier */
 };
 typedef struct mca_ptl_ib_ud_addr_t mca_ptl_ib_ud_addr_t;
 
 struct mca_ptl_ib_addr_t {
-    VAPI_qp_hndl_t      rc_qp;  /* RC qp hndl */
+    VAPI_qp_num_t      rc_qp;  /* RC qp hndl */
+    IB_lid_t           lid;    /* LID of the peer */
 };
 typedef struct mca_ptl_ib_addr_t mca_ptl_ib_addr_t;
 

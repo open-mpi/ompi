@@ -57,62 +57,21 @@ static double mca_ptl_ib_get_us(void)
 
 static int mca_ptl_ib_peer_start_connect(mca_ptl_base_peer_t* peer)
 {
-    VAPI_ret_t ret;
-    VAPI_ud_av_t av;
-    VAPI_ud_av_hndl_t av_hndl;
-    mca_ptl_ib_module_t* peer_module;
-    
-    peer_module = peer->peer_module;
+    int remote_qp_num;
 
-    peer_module->ud_send_buf = malloc(sizeof(mca_ptl_ib_ud_buf_t) *
-            MAX_UD_PREPOST_DEPTH);
+    peer->peer_addr = (mca_ptl_ib_addr_t*)
+        malloc(sizeof(mca_ptl_ib_addr_t));
 
-    mca_ptl_ib_prep_ud_bufs(peer_module->nic, peer_module->ud_send_buf, 
-            IB_SEND, MAX_UD_PREPOST_DEPTH);
 
-    peer_module->ud_send_buf[0].buf_data->qp_hndl = 101;
+    D_PRINT("QP num:%d for rank %d:",
+            peer->peer_qp_prop.qp_num,
+            peer->peer_proc->proc_ompi->proc_name.vpid);
+    scanf("%d", &remote_qp_num);
 
-    av.dgid[0] = 0;
-    av.dlid = peer->peer_proc->proc_addrs[0].lid;
-    av.grh_flag = TRUE;
-    av.flow_label = DEFAULT_FLOW_LABEL;
-    av.hop_limit = DEFAULT_HOP_LIMIT;
-    av.sgid_index = 0;
-    av.sl = DEFAULT_SERVICE_LEVEL;
-    av.port = DEFAULT_PORT;
-    av.src_path_bits = DEFAULT_SRC_PATH_BITS;
-    av.static_rate = DEFAULT_STATIC_RATE;
-    av.traffic_class = DEFAULT_TRAFFIC_CLASS;
+    peer->peer_addr->rc_qp = remote_qp_num;
 
-    ret = VAPI_create_addr_hndl(peer_module->nic, peer_module->ptag,
-            &av, &av_hndl);
+    D_PRINT("You entered: %d\n", peer->peer_addr->rc_qp);
 
-    if (VAPI_OK != ret) {
-        return OMPI_ERROR;
-    }
-
-    peer_module->ud_send_buf[0].desc.sr.remote_qkey = 0;
-    peer_module->ud_send_buf[0].desc.sr.remote_qp = peer->peer_proc->proc_addrs[0].ud_qp;
-    peer_module->ud_send_buf[0].desc.sr.remote_ah = av_hndl;
-    peer_module->ud_send_buf[0].desc.sr.id = (VAPI_virt_addr_t) (MT_virt_addr_t)&peer_module->ud_send_buf[0];
-    peer_module->ud_send_buf[0].desc.sg_entry.addr = (VAPI_virt_addr_t) (MT_virt_addr_t)
-        peer_module->ud_send_buf[0].buf_data;
-    peer_module->ud_send_buf[0].desc.sg_entry.len = 4;
-    peer_module->ud_send_buf[0].desc.sg_entry.lkey = peer_module->ud_send_buf[0].memhandle.lkey;
-    peer_module->ud_send_buf[0].desc.sr.set_se = FALSE;
-    peer_module->ud_send_buf[0].desc.sr.fence = FALSE;
-
-    ret = VAPI_post_sr(peer_module->nic, 
-            peer_module->ud_qp_hndl, 
-            &(peer_module->ud_send_buf[0].desc.sr));
-
-    D_PRINT("Remote QP: %d, Remote LID : %d, Posted sr: %s\n", 
-            peer_module->ud_send_buf[0].desc.sr.remote_qp,
-            av.dlid, VAPI_strerror(ret));
-
-    if(VAPI_OK != ret) {
-        return OMPI_ERROR;
-    }
 
     return OMPI_SUCCESS;
 }

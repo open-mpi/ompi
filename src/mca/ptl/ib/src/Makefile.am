@@ -22,4 +22,5 @@ libmca_ptl_ib_la_SOURCES = \
 	ptl_ib_sendfrag.h \
 	ptl_ib_sendreq.c \
 	ptl_ib_sendreq.h \
+	ptl_ib_ud.h \
 	ptl_ib_vapi.h
