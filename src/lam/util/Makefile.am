@@ -11,6 +11,7 @@ noinst_LTLIBRARIES = libutil.la
 
 headers = \
     argv.h \
+    few.h \
     lam_log.h \
     malloc.h \
     path.h \
@@ -20,6 +21,7 @@ headers = \
 libutil_la_SOURCES = \
     $(headers) \
     argv.c \
+    few.c \
     lam_log.c \
     path.c \
     reactor.c \
