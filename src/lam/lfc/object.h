@@ -10,10 +10,9 @@
  *
  * A class consists of a struct and singly-instantiated "class info"
  * descriptor.  The first element of the struct must be the parent
- * class.  The class descriptor together with a single instance of a
- * class descriptor with a well-known name based upon the class struct
- * name: If the struct is sally_t, the class info descriptor should be
- * xxx_t_class_info
+ * class's struct.  The class descriptor must be given a well-known
+ * name based upon the class struct name: If the struct is sally_t,
+ * the class info descriptor should be xxx_t_class_info.
  *
  * (a) To define a class
  *
