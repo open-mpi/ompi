@@ -733,6 +733,7 @@ int ompi_convertor_pack( ompi_convertor_t* pConv,
 	if( done == 1 ) break;
     }
     *out_size = index;
+    /*printf( "pack return %d iovec with a length of %d\n", index, *max_data );*/
     return done;
 }
 
