@@ -36,17 +36,19 @@ ompi_init_elan_queue_events (mca_ptl_elan_t * ptl,
     rail = (RAIL *) ptl->ptl_elan_rail;
     ctx = (ELAN4_CTX *) ptl->ptl_elan_ctx;
 
-    flist = &queue->tx_desc_free;
 
     /* initialize list */
     OBJ_CONSTRUCT (&queue->tx_desc, ompi_list_t);
     OBJ_CONSTRUCT (&queue->tx_desc_free, ompi_free_list_t);
+
+    flist = &queue->tx_desc_free;
 
     main_align = MAX (sizeof (void *), 8);
     elan_align = MAX (sizeof (int *), 128);
     main_size = ALIGNUP (sizeof (ompi_ptl_elan_qdma_desc_t), main_align);
     elan_size = ALIGNUP (sizeof (ompi_elan_event_t), elan_align);
 
+    OBJ_CONSTRUCT(&flist->fl_lock, ompi_mutex_t);
     flist->fl_elem_size = flist->fl_max_to_alloc = 128;
     flist->fl_num_allocated = 0;
     flist->fl_num_per_alloc = count = 16;
