@@ -4,7 +4,7 @@
 #include "datatype_internal.h"
 
 /* other fields starting after bdt_used (index of DT_LOOP should be ONE) */
-#define EMPTY_DATA(NAME) NULL, "MPI_" # NAME, {0, 0, NULL}, {0, 0, NULL}, NULL, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
+#define EMPTY_DATA(NAME) NULL, 0, "MPI_" # NAME, {0, 0, NULL}, {0, 0, NULL}, NULL, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
 #define BASEOBJ_DATA { OBJ_CLASS(ompi_datatype_t), 1 }
 #define INIT_BASIC_DATA( TYPE, ALIGN, NAME )                             \
     { BASEOBJ_DATA, sizeof(TYPE), 0, sizeof(TYPE), ALIGN,               \
