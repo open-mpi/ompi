@@ -31,16 +31,14 @@
 
 int count = 0;
 
-static void
-callback(pid_t pid, int status, void *data)
+static void callback(pid_t pid, int status, void *data)
 {
     printf("callback for %d, %d\n", pid, status);
     count--;
 }
 
 
-int
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
     pid_t pid, ret;
     int status = -1;
@@ -50,35 +48,41 @@ main(int argc, char *argv[])
     pid = fork();
     if (pid > 0) {
         count++;
+        printf("parent launched child #1 PID %d\n", pid);
         orte_wait_cb(pid, callback, NULL);
     } else {
+        printf("child pid %d sleeping 10 seconds\n", getpid());
         sleep(10);
-        printf("pid %d exiting\n", getpid());
+        printf("pid %d exiting after sleeping 10 seconds\n", getpid());
         exit(0);
     }
 
     pid = fork();
     if (pid > 0) {
+        printf("parent launched child #2 PID %d\n", pid);
         ret = orte_waitpid(pid, &status, 0);
         printf("pid %d waitpid, status %d\n", ret, status);
     } else {
+        printf("child pid %d sleeping 5 seconds\n", getpid());
         sleep(5);
-        printf("pid %d exiting\n", getpid());
+        printf("pid %d exiting after sleeping 5 seconds\n", getpid());
         exit(0);
     }
 
     pid = fork();
     if (pid > 0) {
         count++;
+        printf("parent launched child #3 PID %d\n", pid);
         orte_wait_cb(pid, callback, NULL);
     } else {
-        printf("pid %d exiting\n", getpid());
+        printf("pid %d exiting after not sleeping at all\n", getpid());
         exit(0);
     }
     
-    while (count > 0) { ompi_progress(); }
+    while (count > 0) { 
+        ompi_progress(); 
+    }
 
     orte_finalize();
-
     return 0;
 }
