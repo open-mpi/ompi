@@ -189,6 +189,10 @@ extern int mca_pml_teg_null(
     lam_request_t** request
 );
 
+extern int mca_pml_teg_free(
+    lam_request_t** request
+);
+
 extern void mca_pml_teg_request_return(
     mca_pml_base_request_t*
 );
