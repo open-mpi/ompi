@@ -23,7 +23,7 @@
 #endif
 
 
-void mpi_alloc_mem_(int *size, int *info, char *baseptr, int *ierr)
+void mpi_alloc_mem_f(int *size, int *info, char *baseptr, int *ierr)
 {
 #if 0
   /* JMS Need fortran -> C handle lookups, and a safe way to do the

@@ -13,8 +13,11 @@
 
 #if LAM_PROFILING_DEFINES
 #define MPI_Comm_set_name PMPI_Comm_set_name
+#define MPI_Comm_get_name PMPI_Comm_get_name
 #define MPI_Init PMPI_Init
 #define MPI_Finalize PMPI_Finalize
+#define MPI_Alloc_mem PMPI_Alloc_mem
+#define MPI_Free_mem PMPI_Free_mem
 #endif
 
 #endif /* LAM_C_PROFILE_DEFINES_H */
