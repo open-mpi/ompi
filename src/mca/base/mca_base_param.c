@@ -178,7 +178,9 @@ int mca_base_param_register_string(const char *type_name,
   if (NULL != default_value) {
     storage.stringval = (char *) default_value;
   } else {
-    storage.stringval = NULL;
+    /* Cannot have an initial value of NULL */
+    /* return OMPI_ERR_BAD_PARAM; */
+      storage.stringval = NULL;
   }
   return param_register(type_name, component_name, param_name, mca_param_name,
                         MCA_BASE_PARAM_TYPE_STRING, &storage, NULL, NULL);
@@ -298,7 +300,15 @@ int mca_base_param_set_string(int index, char *value)
     mca_base_param_storage_t storage;
 
     mca_base_param_unset(index);
-    storage.stringval = value;
+    if (NULL != value) {
+        storage.stringval = value;
+    }
+    else {
+        storage.stringval = value;
+        /* Cannot have a value of NULL */
+        /* return OMPI_ERR_BAD_PARAM;  */
+    }
+    
     return param_set_override(index, &storage, MCA_BASE_PARAM_TYPE_STRING);
 }
 
@@ -435,18 +445,20 @@ int mca_base_param_dump(ompi_list_t **info, bool internal)
     len = ompi_value_array_get_size(&mca_base_params);
     array = OMPI_VALUE_ARRAY_GET_BASE(&mca_base_params, mca_base_param_t);
     for (i = 0; i < len; ++i) {
-        p = OBJ_NEW(mca_base_param_info_t);
-        p->mbpp_index = i;
-        p->mbpp_type_name = array[i].mbp_type_name;
-        p->mbpp_component_name = array[i].mbp_component_name;
-        p->mbpp_param_name = array[i].mbp_param_name;
-        p->mbpp_type = array[i].mbp_type;
-
-        /* JMS to be removed? */
-        p->mbpp_env_var_name = array[i].mbp_env_var_name;
-        p->mbpp_full_name = array[i].mbp_full_name;
-
-        ompi_list_append(*info, (ompi_list_item_t*) p);
+        if(array[i].mbp_internal == internal || internal) {
+            p = OBJ_NEW(mca_base_param_info_t);
+            p->mbpp_index = i;
+            p->mbpp_type_name = array[i].mbp_type_name;
+            p->mbpp_component_name = array[i].mbp_component_name;
+            p->mbpp_param_name = array[i].mbp_param_name;
+            p->mbpp_type = array[i].mbp_type;
+            
+            /* JMS to be removed? */
+            p->mbpp_env_var_name = array[i].mbp_env_var_name;
+            p->mbpp_full_name = array[i].mbp_full_name;
+            
+            ompi_list_append(*info, (ompi_list_item_t*) p);
+        }
     }
 
     /* All done */

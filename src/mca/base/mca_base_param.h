@@ -187,13 +187,14 @@ extern "C" {
      * parameter if the user does not supply one.
      *
      * @retval OMPI_ERROR Upon failure to register the parameter.
+     * @retval OMPI_ERR_BAD_PARAM When NULL provided for  default value.
      * @retval index Index value that can be used with
      * mca_base_param_lookup_string() to retrieve the value of the
      * parameter.
      *
      * This function is identical to mca_base_param_register_int()
      * except that you are registering a string parameter with an
-     * associated string default value (which is allowed to be NULL).
+     * associated string default value (which is \em not allowed to be NULL).
      * See mca_base_param_register_int() for all other details.
      */
     OMPI_DECLSPEC int mca_base_param_register_string(const char *type_name, 
@@ -337,6 +338,7 @@ extern "C" {
      * @param value[in] The string value to set
      *
      * @retval OMPI_ERROR If the parameter was not found.
+     * @retval OMPI_ERR_BAD_PARAM value given is NULL
      * @retval OMPI_SUCCESS Upon success.
      *
      * This function sets a string value on the MCA parmeter

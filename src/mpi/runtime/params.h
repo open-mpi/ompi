@@ -61,8 +61,23 @@ OMPI_DECLSPEC extern bool ompi_debug_show_handle_leaks;
  */
 OMPI_DECLSPEC extern bool ompi_debug_no_free_handles;
 
+/**
+ * Whether or not to print MCA parameters on MPI_INIT
+ *
+ * This is good debugging for user applications to see exactly which 
+ * MCA parameters are being used in the current program execution.
+ */
+OMPI_DECLSPEC extern bool ompi_mpi_show_mca_params;
 
-    /**
+/**
+ * Whether or not to print the MCA parameters to a file or to stdout
+ *
+ * If this argument is set then it is used when parameters are dumped
+ * when the mpi_show_mca_params is set.
+ */
+OMPI_DECLSPEC extern char * ompi_mpi_show_mca_params_file;
+
+   /**
      * Register MCA parameters used by the MPI layer.
      *
      * @returns OMPI_SUCCESS
@@ -71,6 +86,15 @@ OMPI_DECLSPEC extern bool ompi_debug_no_free_handles;
      * global variables to the values obtained from the MCA system.
      */
 OMPI_DECLSPEC int ompi_mpi_register_params(void);
+
+    /**
+     * Display all MCA parameters used 
+     * 
+     * @returns OMPI_SUCCESS
+     *
+     * Displays in key = value format
+     */
+    int ompi_show_all_mca_params(int32_t, int, char *);
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
