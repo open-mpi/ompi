@@ -295,7 +295,6 @@ mca_ptl_elan_module_control (int param,
 int
 mca_ptl_elan_module_progress (mca_ptl_tstamp_t tstamp)
 {
-    ompi_event_loop (OMPI_EVLOOP_ONCE);
     return OMPI_SUCCESS;
 }
 

@@ -130,7 +130,22 @@ int mca_ptl_elan_finalize (struct mca_ptl_t *ptl)
 int mca_ptl_elan_req_alloc (struct mca_ptl_t *ptl, 
         struct mca_pml_base_send_request_t **request)
 {
-    int             rc;
+    int       rc = OMPI_SUCCESS;
+    mca_pml_base_send_request_t* sendreq;
+    ompi_list_item_t* item;
+
+#if 0 
+    /* PTL_TCP allocate request from the module
+     * But PTL_ELAN have to allocate from each PTL since
+     * all the descriptors are bound to the PTL related command queue, etc
+     * for their functions.
+     */
+    OMPI_FREE_LIST_GET(&mca_ptl_elan_module.elan_send_requests, item, rc);
+
+    if(NULL != (sendreq = (mca_pml_base_send_request_t*)item))
+        sendreq->req_owner = ptl;
+    *request = sendreq;
+#endif 
     return rc;
 }
 
@@ -138,6 +153,11 @@ int mca_ptl_elan_req_alloc (struct mca_ptl_t *ptl,
 void mca_ptl_elan_req_return (struct mca_ptl_t *ptl, 
         struct mca_pml_base_send_request_t *request)
 {
+    /*OBJ_DESTRUCT(&request->req_convertor);*/
+#if 0
+    OMPI_FREE_LIST_RETURN(&mca_ptl_elan_module.elan_send_requests, 
+            (ompi_list_item_t*)request);
+#endif
     return;
 }
 
