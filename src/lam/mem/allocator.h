@@ -1,4 +1,6 @@
 /*
+ * $HEADER$
+ *
  * Copyright 2002-2003. The Regents of the University of California. This material
  * was produced under U.S. Government contract W-7405-ENG-36 for Los Alamos
  * National Laboratory, which is operated by the University of California for
@@ -28,10 +30,10 @@
  */
 /*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
 
-#ifndef ALLOCATOR_H
-#define ALLOCATOR_H
+#ifndef LAM_ALLOCATOR_H
+#define LAM_ALLOCATOR_H
 
-#include "lam/base/object.h"
+#include "lam/lfc/object.h"
 
 /* This class is used to provide a generic and flexible
     way for the mem pool to allocate memory.  It's meant
@@ -84,5 +86,5 @@ static inline uint64_t lam_alc_get_pin_size(lam_allocator_t *allocator) {return 
 static inline void lam_alc_set_pin_size(lam_allocator_t *allocator, uint64_t pin_sz)
                     {allocator->alc_pinned_sz = pin_sz;}
 
-#endif  /* ALLOCATOR_H */
+#endif  /* LAM_ALLOCATOR_H */
 

@@ -1,4 +1,6 @@
 /*
+ * $HEADER$
+ *
  * Copyright 2002-2003. The Regents of the University of California. This material
  * was produced under U.S. Government contract W-7405-ENG-36 for Los Alamos
  * National Laboratory, which is operated by the University of California for
@@ -27,12 +29,12 @@
  * GNU Lesser General Public License for more details.
  */
 /*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
-                                                                                                                     
-#ifndef _MEMORY_POOL_
-#define _MEMORY_POOL_
 
-#include "lam_types.h"
-#include "lam/base/object.h"
+#ifndef LAM_MEMORY_POOL
+#define LAM_MEMORY_POOL
+
+#include "include/lam_types.h"
+#include "lam/lfc/object.h"
 #include "lam/mem/allocator.h"
 #include "lam/threads/mutex.h"
 
@@ -41,7 +43,7 @@
 #define ALLOCELEMENT_FLAG_INUSE     (2)
 #define ALLOCELEMENT_FLAG_NEVERFREE (4)
 #define ALLOCELEMENT_FLAG_LOANED    (8)
-                                                                                                                      
+
 /*
     To create a process-private pool, use
  CREATE_OBJECT(pool, lam_mem_pool_t, &mem_pool_cls);
@@ -157,5 +159,4 @@ int lam_fmp_init_with(lam_fixed_mpool_t *pool, ssize_t initial_allocation,
 void *lam_fmp_get_mem_segment(lam_fixed_mpool_t *pool,
                               size_t length, size_t align, int which_pool);
 
-#endif
-
+#endif /* LAM_MEMORY_POOL_H */

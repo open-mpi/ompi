@@ -1,4 +1,6 @@
 /*
+ * $HEADER$
+ *
  * Copyright 2002-2003. The Regents of the University of California. This material
  * was produced under U.S. Government contract W-7405-ENG-36 for Los Alamos
  * National Laboratory, which is operated by the University of California for
@@ -28,10 +30,10 @@
  */
 /*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
 
-#ifndef _FREE_LIST_
-#define _FREE_LIST_
+#ifndef LAM_FREE_LIST
+#define LAM_FREE_LIST
 
-#include "lam/base/list.h"
+#include "lam/lfc/list.h"
 #include "lam/threads/mutex.h"
 #include "lam/mem/seg_list.h"
 #include "lam/mem/mem_pool.h"
@@ -104,9 +106,9 @@ int lam_frl_init_with(lam_free_list_t *flist,
                   int max_pages_per_list,
                   int max_consec_req_fail,
                   const char *description,
-                  bool_t retry_for_more_resources,
+                  lam_bool_t retry_for_more_resources,
                   lam_affinity_t *affinity,
-                  bool_t enforce_affinity,
+                  lam_bool_t enforce_affinity,
                   lam_mem_pool_t *pool);
 
 
