@@ -236,8 +236,12 @@ int mca_coll_basic_reduce_scatter_inter(void *sbuf, void *rbuf, int *rcounts,
            has already the correct data AND we avoid a potential 
            deadlock here. 
         */
+        err = mca_pml.pml_irecv (rbuf, rcounts[rank], dtype, root, 
+                                 MCA_COLL_BASE_TAG_REDUCE_SCATTER,
+                                 comm, &req);
+        
         tcount = 0;
-        for ( i=1; i<rsize; i++ ) {
+        for ( i=0; i<rsize; i++ ) {
             tbuf = (char *) tmpbuf + tcount *extent;
             err = mca_pml.pml_isend (tbuf, rcounts[i], dtype,i,
                                      MCA_COLL_BASE_TAG_REDUCE_SCATTER,
@@ -250,6 +254,11 @@ int mca_coll_basic_reduce_scatter_inter(void *sbuf, void *rbuf, int *rcounts,
         }
 
         err = mca_pml.pml_wait_all (rsize, reqs, MPI_STATUSES_IGNORE);
+        if ( OMPI_SUCCESS != err ) {
+            goto exit;
+        }
+
+        err = mca_pml.pml_wait_all (1, &req, MPI_STATUS_IGNORE);
         if ( OMPI_SUCCESS != err ) {
             goto exit;
         }
