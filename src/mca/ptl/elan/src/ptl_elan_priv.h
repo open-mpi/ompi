@@ -56,7 +56,6 @@ struct mca_ptl_elan_state_t {
 
     /* other state parameters */
 
-    int          elan_attached;    /**< 0 until elan_attach() called */
     unsigned int elan_vp;          /**< elan vpid, not ompi vpid */
     unsigned int elan_nvp;         /**< total # of elan vpid */
     int         *elan_localvps;    /**< mapping of localId to elan vp */
@@ -65,6 +64,7 @@ struct mca_ptl_elan_state_t {
     int          elan_maxlocals;   /**< maximum # of local elan vpids */
     int          elan_nrails;      /**< # of rails elan vpids */
     int          elan_rmsid;       /**< rms resource id */
+    int          intcookie;       
     long         elan_pagesize;
     pid_t        elan_pid;
 
@@ -80,12 +80,10 @@ struct mca_ptl_elan_state_t {
     void            *elan_estate; /**< Elan state of the 0th rail */
     ELAN_RAIL      **elan_rail;   /**< pointers to Rail control struct for all rails */
     RAIL           **all_rails;   /**< all rails */
+    ADDR_SDRAM      *all_estates;
     mca_ptl_elan_module_1_0_0_t *elan_module;
 };
 typedef struct mca_ptl_elan_state_t mca_ptl_elan_state_t;
-
-/*struct mca_ptl_elan_state_t *elan_state;  */
-
 
 /* Initialization and finalization routines */
 int ompi_mca_ptl_elan_init( mca_ptl_elan_module_1_0_0_t * emp);
@@ -104,6 +102,5 @@ void elan_localproc_close(struct mca_ptl_elan_proc_t *);
 /* Just to get rid of a warning from elan4 libraies,
  * Many more needed but who cares. */
 int elan4_block_inputter (ELAN4_CTX *ctx, unsigned blocked);
-
 
 #endif

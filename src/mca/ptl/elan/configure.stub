@@ -27,7 +27,6 @@ AC_DEFUN([MCA_CONFIGURE_STUB],[
 	PTL_ELAN_LIBS="-lrmscall -lelan -libelan4"
 	ompi_elan_have_elanlibs=yes
     else
-	ompi_elan_have_elanlibs=yes
 	AC_MSG_NOTICE([Cannot support elan4 without librmscall, 
 	    libelan and libelan4])
     fi
@@ -56,10 +55,11 @@ AC_DEFUN([MCA_CONFIGURE_STUB],[
 		[provide the path to qsnet2lib source]))
     echo "path to qsnet2lib source,  ${with_ptl_elan_qsnet2libsrc:-no}"
 
-    if test "${with_ptl_elan_qsnet2libsrc+set}" = set -a "$ompi_enable_elan" = yes; then
+    if test "${with_ptl_elan_qsnet2libsrc+set}" = set \
+	-a "$ompi_enable_elan" = yes; then
 	withval="$with_ptl_elan_qsnet2libsrc"
 	PTL_ELAN_QSNET2LIBSRC=$with_ptl_elan_qsnet2libsrc
-	PTL_ELAN_CPPFLAGS="-I${with_ptl_elan_qsnet2libsrc}/include -I${with_ptl_elan_qsnet2libsrc}/include -I${with_ptl_elan_qsnet2libsrc}/elan4lib/include -I${with_ptl_elan_qsnet2libsrc}/elan4lib/elan4 -I${with_ptl_elan_qsnet2libsrc}/elan4lib/common"
+	PTL_ELAN_CPPFLAGS="-I${with_ptl_elan_qsnet2libsrc}/include -I${with_ptl_elan_qsnet2libsrc}/elan4lib/include -I${with_ptl_elan_qsnet2libsrc}/elan4lib/elan4 -I${with_ptl_elan_qsnet2libsrc}/elan4lib/common"
        	PTL_ELAN_LDFLAGS=" "
     else
 	PTL_ELAN_QSNET2LIBSRC=" "

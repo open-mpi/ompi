@@ -33,8 +33,8 @@ struct mca_ptl_elan_t {
     mca_ptl_t   super;          /**< base PTL interface */
 
     /**< The following are elan-related control structures */
-    ELAN_RAIL   *elan_rail;     /**< Pointer to this Rail */
-    ELAN_CTX    *elan_ctx;      /**< Elan ctx of this rail */
+    ELAN_RAIL   *ptl_elan_rail;     /**< Pointer to this Rail */
+    ELAN_CTX    *ptl_elan_ctx;      /**< Elan ctx of this rail */
 
     int         ptl_ni_local;   /**< PTL NI local rank */
     int         ptl_ni_total;   /**< PTL NI total */
