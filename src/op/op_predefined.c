@@ -44,9 +44,39 @@
     type *a = (type *) in;                                               \
     type *b = (type *) out;                                              \
     for (i = 0; i < *count; ++i) {                                       \
-      *(b) = current_func(*(b), *(a++));                                 \
+      *(b) = current_func(*(b), *(a));                                   \
       ++b;                                                               \
+      ++a;                                                               \
     }                                                                    \
+  }
+
+/*
+ * Since all the functions in this file are essentially identical, we
+ * use a macro to substitute in names and types.  The core operation
+ * in all functions that use this macro is the same.
+ *
+ * This macro is for minloc and maxloc
+ */
+#define LOC_STRUCT(type_name, type1, type2) \
+  typedef struct { \
+    type1 v; \
+    type2 k; \
+  } ompi_op_predefined_##type_name##_t;
+
+#define LOC_FUNC(name, type_name, op) \
+  void ompi_mpi_op_##name##_##type_name(void *in, void *out, int *count, \
+                                        MPI_Datatype *dtype) \
+  { \
+    int i; \
+    ompi_op_predefined_##type_name##_t *a = (ompi_op_predefined_##type_name##_t*) in; \
+    ompi_op_predefined_##type_name##_t *b = (ompi_op_predefined_##type_name##_t*) out; \
+    for (i = 0; i < *count; ++i) { \
+      if (a->v op b->v) { \
+        *b = *a; \
+      } else if (a->v == b->v) { \
+        b->k = (b->k < a->k ? b->k : a->k); \
+      } \
+    } \
   }
 
 /*************************************************************************
@@ -152,9 +182,11 @@ void ompi_mpi_op_prod_fortran_complex(void *in, void *out, int *count,
   int i;
   ompi_fortran_complex_t *a = (ompi_fortran_complex_t*) in;
   ompi_fortran_complex_t *b = (ompi_fortran_complex_t*) out;
+  ompi_fortran_complex_t temp;
   for (i = 0; i < *count; ++i) {
-    b->real *= a->real;
-    b->imag *= a->imag;
+    temp.real = a->real * b->real - a->imag * b->imag;
+    temp.imag = a->imag * b->real + a->real * b->imag;
+    *b = temp;
   }
 }
 
@@ -260,3 +292,68 @@ FUNC_FUNC(bxor, fortran_integer, MPI_Fint)
 /* Byte */
 FUNC_FUNC(bxor, byte, char)
 
+/*************************************************************************
+ * Min and max location "pair" datatypes
+ *************************************************************************/
+
+LOC_STRUCT(2real, ompi_fortran_real_t, ompi_fortran_real_t)
+LOC_STRUCT(2double_precision, ompi_fortran_dblprec_t, ompi_fortran_dblprec_t)
+LOC_STRUCT(2integer, ompi_fortran_integer_t, ompi_fortran_integer_t)
+LOC_STRUCT(float_int, float, int)
+LOC_STRUCT(double_int, double, int)
+LOC_STRUCT(long_int, long, int)
+LOC_STRUCT(2int, int, int)
+LOC_STRUCT(short_int, short, short)
+LOC_STRUCT(long_double_int, long double, int)
+
+/*************************************************************************
+ * Max location
+ *************************************************************************/
+
+LOC_FUNC(maxloc, 2real, >)
+LOC_FUNC(maxloc, 2double_precision, >)
+LOC_FUNC(maxloc, 2integer, >)
+LOC_FUNC(maxloc, float_int, >)
+LOC_FUNC(maxloc, double_int, >)
+LOC_FUNC(maxloc, long_int, >)
+LOC_FUNC(maxloc, 2int, >)
+LOC_FUNC(maxloc, short_int, >)
+LOC_FUNC(maxloc, long_double_int, >)
+
+/*************************************************************************
+ * Min location
+ *************************************************************************/
+
+LOC_FUNC(minloc, 2real, <)
+LOC_FUNC(minloc, 2double_precision, <)
+LOC_FUNC(minloc, 2integer, <)
+LOC_FUNC(minloc, float_int, <)
+LOC_FUNC(minloc, double_int, <)
+LOC_FUNC(minloc, long_int, <)
+LOC_FUNC(minloc, 2int, <)
+LOC_FUNC(minloc, short_int, <)
+LOC_FUNC(minloc, long_double_int, <)
+
+/*************************************************************************
+ * Replace (for MPI_ACCUMULATE)
+ *************************************************************************/
+
+/* C integer */
+OP_FUNC(replace, int, int, =)
+OP_FUNC(replace, long, long, =)
+OP_FUNC(replace, short, short, =)
+OP_FUNC(replace, unsigned_short, unsigned short, =)
+OP_FUNC(replace, unsigned, unsigned, =)
+OP_FUNC(replace, unsigned_long, unsigned long, =)
+/* Fortran integer */
+OP_FUNC(replace, fortran_integer, MPI_Fint, =)
+/* Floating point */
+OP_FUNC(replace, float, float, =)
+OP_FUNC(replace, double, double, =)
+OP_FUNC(replace, fortran_real, ompi_fortran_real_t, =)
+OP_FUNC(replace, fortran_double_precision, ompi_fortran_dblprec_t, =)
+OP_FUNC(replace, long_double, long double, =)
+/* Complex */
+OP_FUNC(replace, fortran_complex, ompi_fortran_complex_t, =)
+/* Byte */
+OP_FUNC(replace, byte, char, =)

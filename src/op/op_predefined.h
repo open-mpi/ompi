@@ -39,6 +39,17 @@
 #define OMPI_OP_HANDLER_BYTE(name) \
   void ompi_mpi_op_##name##_byte OMPI_OP_PROTO
 
+#define OMPI_OP_HANDLER_2TYPE(name) \
+  void ompi_mpi_op_##name##_2real OMPI_OP_PROTO; \
+  void ompi_mpi_op_##name##_2double_precision OMPI_OP_PROTO; \
+  void ompi_mpi_op_##name##_2integer OMPI_OP_PROTO; \
+  void ompi_mpi_op_##name##_float_int OMPI_OP_PROTO; \
+  void ompi_mpi_op_##name##_double_int OMPI_OP_PROTO; \
+  void ompi_mpi_op_##name##_long_int OMPI_OP_PROTO; \
+  void ompi_mpi_op_##name##_2int OMPI_OP_PROTO; \
+  void ompi_mpi_op_##name##_short_int OMPI_OP_PROTO; \
+  void ompi_mpi_op_##name##_long_double_int OMPI_OP_PROTO
+
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
@@ -115,9 +126,21 @@ extern "C" {
 /**
  * Handler functions for MPI_MAXLOC
  */
+  OMPI_OP_HANDLER_2TYPE(maxloc);
 
 /**
  * Handler functions for MPI_MINLOC
  */
+  OMPI_OP_HANDLER_2TYPE(minloc);
+
+/**
+ * Handler functions for MPI_REPLACE (only for MPI_ACCUMULATE)
+ */
+  OMPI_OP_HANDLER_C_INTEGER(replace);
+  OMPI_OP_HANDLER_FORTRAN_INTEGER(replace);
+  OMPI_OP_HANDLER_FLOATING_POINT(replace);
+  OMPI_OP_HANDLER_LOGICAL(replace);
+  OMPI_OP_HANDLER_COMPLEX(replace);
+  OMPI_OP_HANDLER_BYTE(replace);
 
 #endif /* OMPI_OP_PREDEFINED_H */
