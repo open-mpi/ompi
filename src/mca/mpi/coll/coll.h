@@ -105,7 +105,6 @@ typedef struct mca_coll_module_1_0_0 {
 
   mca_coll_thread_query_fn_t collm_thread_query;
   mca_coll_query_1_0_0_fn_t collm_query;
-  mca_coll_finalize_fn_t collm_finalize;
 
   /* Flags */
 
