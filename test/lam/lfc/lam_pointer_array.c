@@ -137,7 +137,5 @@ int main(int argc, char **argv)
     /* run through tests with thread usage set to true */
     test(true);
 
-    test_finalize();
-
-    return 0;
+    return test_finalize();
 }

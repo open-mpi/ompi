@@ -26,7 +26,7 @@ int main(int argc, char **argv)
     int size_elements,i,indx,error_cnt;
     test_data_t *elements, *ele;
 
-    test_init("List");
+    test_init("lam_list_t");
 
     /* initialize list */
     lam_list_set_size(&list,0Xdeadbeaf);
@@ -301,6 +301,5 @@ int main(int argc, char **argv)
         test_failure(" error in list order - lam_list_remove_item ");
     }
 
-    test_finalize();
-    return 0;
+    return test_finalize();
 }

@@ -51,7 +51,7 @@ static void validate_table(lam_hash_table_t *table, char *keys[], int is_numeric
             val = lam_hash_table_get_value_uint32(table, atoi(keys[j]));
         else
             val = lam_hash_table_get_value_ptr(table, keys[j], strlen(keys[j]));
-        test_verify(keys[j+1], val);
+        test_verify_str(keys[j+1], val);
     }
     test_verify_int(j/2, lam_hash_table_get_size(table));
 }
@@ -134,11 +134,10 @@ static void test_static(void)
 int main(int argc, char **argv)
 {
     /* local variables */
-    test_init("Hash Table");
+    test_init("lam_hash_table_t");
     
     test_dynamic();
     test_static();
     
-    test_finalize();
-    return 0;
+    return test_finalize();
 }
