@@ -119,13 +119,6 @@ int MPI_Group_range_excl(MPI_Group group, int n_triplets, int ranges[][3],
         }
     }  /* end triplet loop */
 
-    /* check for empty group */
-    if( 0 == new_group_size ) {
-        *new_group = MPI_GROUP_EMPTY;
-        free(elements_int_list);
-        return MPI_SUCCESS;
-    }
-
     /* we have counted the procs to exclude from the list */
     new_group_size=group_pointer->grp_proc_count-new_group_size;
 
@@ -147,6 +140,9 @@ int MPI_Group_range_excl(MPI_Group group, int n_triplets, int ranges[][3],
         }
     } /* end of proc loop */
 
+    /* increment proc reference counters */
+    lam_group_increment_proc_count(new_group_pointer);
+
     free(elements_int_list);
 
     /* find my rank */
@@ -155,7 +151,6 @@ int MPI_Group_range_excl(MPI_Group group, int n_triplets, int ranges[][3],
     lam_set_group_rank(new_group_pointer,my_proc_pointer);
    
     *new_group = (MPI_Group)new_group_pointer;
-
 
     return MPI_SUCCESS;
 }
