@@ -75,6 +75,23 @@ extern "C" {
 
     int ompi_buffer_size (ompi_buffer_t buffer, size_t *size);
 
+/** 
+ * This function gets the base/data/from ptrs of data in an ompi_buffer
+ * 
+ * @param buffer handle (IN)
+ * @param pointer to buffer start (base) (OUT)
+ * @param pointer to next data storage in buffer (data) (OUT)
+ * @param pointer to start of next buffer read (from) (OUT)
+ * 
+ * @retval OMPI_SUCCESS 
+ * @retval OMPI_ERROR
+ *
+ */
+
+    int ompi_buffer_get_ptrs (ompi_buffer_t buffer,
+                void**  baseptr, void**  dataptr, void**  fromptr);
+
+
 /**
  * This function frees a given buffer
  * If the buffer has data still, it is lost

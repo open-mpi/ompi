@@ -51,7 +51,6 @@ OBJ_CLASS_DECLARATION (ompi_buffer_internal_t);
 
 /* some internal functions */
 /* which must be declared before creating an instance of the obj class */ 
-static int ompi_buffer_get_ptrs (ompi_buffer_t buffer, void**  baseptr, void**  dataptr, void**  fromptr);
 static void ompi_buffer_construct (ompi_buffer_internal_t* buffer);
 static void ompi_buffer_destruct (ompi_buffer_internal_t* buffer);
 
