@@ -416,4 +416,4 @@ close(PMPI_H);
     
 system("mv prototypes_pmpi.h profile/prototypes_pmpi.h");
 system("mv defines.h profile/defines.h");
-# system("rm -rf .mpif_f.h .mpif.h .mpif_.h .mpif__.h MPIF.h");
+system("rm -rf .mpif_f.h .mpif.h .mpif_.h .mpif__.h MPIF.h");
