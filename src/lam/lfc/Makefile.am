@@ -7,13 +7,26 @@ include $(top_srcdir)/config/Makefile.options
 
 noinst_LTLIBRARIES = liblfc.la
 
-liblfc_la_SOURCES = \
-	array.c \
+# Source code files
+
+headers = \
 	array.h \
-	hash_table.c \
 	hash_table.h \
-	list.c \
 	list.h \
-	object.c \
 	object.h
 
+liblfc_la_SOURCES = \
+	$(headers) \
+	array.c \
+	hash_table.c \
+	list.c \
+	object.c
+
+# Conditionally install the header files
+
+if WANT_INSTALL_HEADERS
+lamdir = $(includedir)/lam/lam/lfc
+lam_HEADERS = $(headers)
+else
+lamdir = $(includedir)
+endif
