@@ -1,13 +1,14 @@
 /*
  * $HEADER$
  */
-#define _GNU_SOURCE
+
+#include "ompi_config.h"
+
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
 
-#include "ompi_config.h"
 #include "include/constants.h"
 #include "runtime/runtime.h"
 #include "mca/ns/ns.h"

@@ -5,7 +5,9 @@
  *
  *  Function: - 
  */
-#define _GNU_SOURCE
+
+#include "ompi_config.h"
+
 #include <stdio.h>
 #include <pwd.h>
 #include <stddef.h>
@@ -30,7 +32,6 @@
 #include <etc_misc.h>
 */
 
-#include "ompi_config.h"
 #include "include/constants.h"
 
 #include "util/sys_info.h"
