@@ -29,7 +29,6 @@
 #define MAX_RECV_TOKENS 256
 #define PTL_GM_ADMIN_SEND_TOKENS 0
 #define PTL_GM_ADMIN_RECV_TOKENS 0
-#define GM_BUF_SIZE 16384
 #define GM_SIZE  30
 #define NUM_RECV_FRAGS 256 
 #define MCA_PTL_GM_FRAG_CACHED
@@ -55,6 +54,7 @@ extern "C" {
                                               **< size of the message is less than this number then GM 
                                               **< use a eager protocol.
                                               */
+	uint32_t    gm_segment_size;         /**< size of the allocated segment */
         char*       gm_port_name;            /**< the name used to get the port */
 
         struct mca_ptl_gm_proc_t* gm_local;

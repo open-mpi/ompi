@@ -260,38 +260,6 @@ mca_ptl_gm_request_fini (struct mca_ptl_base_module_t *ptl,
     OBJ_DESTRUCT(request+1);
 }
 
-#if 0
-int
-mca_ptl_gm_send (struct mca_ptl_base_module_t *ptl,
-                 struct mca_ptl_base_peer_t *ptl_peer,
-                 struct mca_pml_base_send_request_t *sendreq,
-                 size_t offset, size_t size, int flags)
-{
-    mca_ptl_gm_send_frag_t *sendfrag;
-    mca_ptl_gm_peer_t *gm_ptl_peer;
-    mca_ptl_gm_module_t * gm_ptl;
-    int rc;
-
-    gm_ptl = (mca_ptl_gm_module_t *)ptl;
-    sendfrag = mca_ptl_gm_alloc_send_frag( gm_ptl, sendreq );
-    if (NULL == sendfrag) {
-	ompi_output( 0,"[%s:%d] Unable to allocate a gm send frag\n",
-                     __FILE__, __LINE__ );
-	return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-
-    ((struct mca_ptl_gm_send_request_t *)sendreq)->req_frag = sendfrag;
-    ((struct mca_ptl_gm_send_request_t *)sendreq)->need_ack = flags;
-    
-    /* initiate the send */
-    gm_ptl_peer = (mca_ptl_gm_peer_t *)ptl_peer;
-    rc = mca_ptl_gm_init_header_match( sendfrag, sendreq, flags );
-    rc = mca_ptl_gm_peer_send( gm_ptl_peer, sendfrag, sendreq, offset, &size, flags );
-    
-    return OMPI_SUCCESS;
-}
-#endif  /* 0 */
-
 /*
  *  Initiate a put
  */
@@ -380,7 +348,7 @@ mca_ptl_gm_matched( mca_ptl_base_module_t * ptl,
         unsigned int max_data, out_size;
         int freeAfter;
 
-	iov.iov_len = GM_BUF_SIZE - sizeof(mca_ptl_base_rendezvous_header_t);
+	iov.iov_len = mca_ptl_gm_component.gm_segment_size - sizeof(mca_ptl_base_rendezvous_header_t);
 	if( frag->frag_base.frag_size < iov.iov_len ) {
 	    iov.iov_len = frag->frag_base.frag_size;
 	}

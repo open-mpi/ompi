@@ -130,7 +130,7 @@ int mca_ptl_gm_peer_send_continue( mca_ptl_gm_peer_t *ptl_peer,
 		ompi_atomic_sub( &(ptl_peer->peer_ptl->num_send_tokens), 1 );
 	    }
             iov.iov_base = (char*)item + header_length;
-            iov.iov_len = GM_BUF_SIZE - header_length;
+            iov.iov_len = mca_ptl_gm_component.gm_segment_size - header_length;
 	    if( iov.iov_len >= remaining_bytes ) 
 		iov.iov_len = remaining_bytes;
             max_data = iov.iov_len;
@@ -273,10 +273,10 @@ int mca_ptl_gm_peer_send( struct mca_ptl_base_module_t* ptl,
 	  offset, NULL );
 	*/
 
-	if( (size_in + header_length) <= GM_BUF_SIZE ) 
+	if( (size_in + header_length) <= mca_ptl_gm_component.gm_segment_size ) 
 	    iov.iov_len = size_in;
 	else
-	    iov.iov_len = GM_BUF_SIZE - header_length;
+	    iov.iov_len = mca_ptl_gm_component.gm_segment_size - header_length;
 	
 	/* copy the data to the registered buffer */
 	iov.iov_base = ((char*)hdr) + header_length;
@@ -496,7 +496,7 @@ mca_ptl_gm_recv_frag_match( struct mca_ptl_gm_module_t *ptl,
                                     &(recv_frag->frag_recv.frag_base.frag_header.hdr_match) );
     if( true == matched ) return NULL;  /* done and fragment already removed */
 
-    length = GM_BUF_SIZE - sizeof(mca_ptl_base_rendezvous_header_t);
+    length = mca_ptl_gm_component.gm_segment_size - sizeof(mca_ptl_base_rendezvous_header_t);
     if( recv_frag->frag_recv.frag_base.frag_size < length ) {
 	length = recv_frag->frag_recv.frag_base.frag_size;
     }
@@ -607,7 +607,7 @@ mca_ptl_gm_recv_frag_frag( struct mca_ptl_gm_module_t *ptl,
     } else {
 	request = (mca_pml_base_recv_request_t*)hdr->hdr_frag.hdr_dst_ptr.pval;
 
-	if( hdr->hdr_frag.hdr_frag_length <= (GM_BUF_SIZE - sizeof(mca_ptl_base_frag_header_t)) ) {
+	if( hdr->hdr_frag.hdr_frag_length <= (mca_ptl_gm_component.gm_segment_size - sizeof(mca_ptl_base_frag_header_t)) ) {
 	    ompi_proc_t* proc = ompi_comm_peer_lookup( request->req_base.req_comm,
 						       request->req_base.req_ompi.req_status.MPI_SOURCE ); 
 	    convertor = &local_convertor;
