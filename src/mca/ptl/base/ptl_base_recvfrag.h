@@ -41,8 +41,9 @@ static inline bool mca_ptl_base_recv_frag_match(
     bool matched;
     ompi_list_t matched_frags;
     OBJ_CONSTRUCT(&matched_frags, ompi_list_t);
-    if((matched = mca_ptl_base_match(header, frag, &matched_frags)) == false)
+    if((matched = mca_ptl_base_match(header, frag, &matched_frags)) == false) {
         frag = (mca_ptl_base_recv_frag_t*)ompi_list_remove_first(&matched_frags);
+    }
 
     while(NULL != frag) {
         mca_ptl_base_module_t* ptl = frag->frag_base.frag_owner;

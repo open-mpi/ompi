@@ -74,6 +74,7 @@ static  int mca_mpool_sm_param_register_int(
   */
 static int mca_mpool_sm_open(void)
 {
+    fprintf(stderr, "mca_mpool_sm_open\n");
     /* register SM component parameters */
     mca_mpool_sm_component.sm_size =
         mca_mpool_sm_param_register_int("size", 512*1024*1024);

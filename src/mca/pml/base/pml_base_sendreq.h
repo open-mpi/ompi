@@ -23,7 +23,7 @@ struct mca_pml_base_send_request_t {
     size_t req_bytes_packed;                 /**< packed size of a message given the datatype and count */
     size_t req_bytes_sent;                   /**< number of bytes that have been sent */
     mca_pml_base_send_mode_t req_send_mode;  /**< type of send */
-    struct mca_ptl_base_module_t* req_ptl;               /**< PTL that is selected for first fragment */
+    struct mca_ptl_base_module_t* req_ptl;   /**< PTL that is selected for first fragment */
     struct mca_ptl_base_peer_t* req_peer;    /**< PTL peer instance that will be used for first fragment */
     ompi_ptr_t req_peer_match;               /**< matched receive at peer */
     ompi_ptr_t req_peer_addr;                /**< peers remote buffer address */
@@ -58,6 +58,9 @@ typedef struct mca_pml_base_send_request_t mca_pml_base_send_request_t;
     mode,                                                                           \
     persistent)                                                                     \
 {                                                                                   \
+    /* increment reference count on communicator */                                 \
+    OBJ_RETAIN(comm);                                                               \
+                                                                                    \
     OMPI_REQUEST_INIT(&(request)->req_base.req_ompi);                               \
     request->req_offset = 0;                                                        \
     request->req_bytes_sent = 0;                                                    \
