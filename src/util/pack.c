@@ -9,6 +9,7 @@
  */
 #include <string.h>
 #include <stdlib.h>
+#include <sys/uio.h>
 #include <netinet/in.h>
 
 
@@ -94,12 +95,12 @@ ompi_buffer_internal_t* bptr;
 size_t isize=4096;	/* we should check the mca params here */
 
 	/* check that we can return a buffer atall.. */
-	if (!buffer) return (OMPI_ERROR);
+	if (!buffer) { return (OMPI_ERROR); }
 
 	/* create new buffer object */
 	bptr = (ompi_buffer_internal_t *) OBJ_NEW (ompi_buffer_internal_t);
 
-	if (!bptr) return (OMPI_ERROR);
+	if (!bptr) { return (OMPI_ERROR); }
 
 	ompi_buffer_cnts++;
 
@@ -133,9 +134,9 @@ size_t isize=4096;	/* we should check the mca params here */
     int ompi_buffer_size (ompi_buffer_t buffer, size_t *size)
 {
 	/* check that we can return a size atall.. */
-	if (!size) return (OMPI_ERROR);
+	if (!size) { return (OMPI_ERROR); }
 	/* check that buffer is not null */
-	if (!buffer) return (OMPI_ERROR);
+	if (!buffer) { return (OMPI_ERROR); }
 
 	/* deref and pass back */
 	*size = buffer->len;
@@ -160,12 +161,12 @@ size_t isize=4096;	/* we should check the mca params here */
 		void**  baseptr, void**  dataptr, void**  fromptr)
 {
 	/* check that buffer is not null */
-	if (!buffer) return (OMPI_ERROR);
+	if (!buffer) { return (OMPI_ERROR); }
 
 	/* deref and pass back */
-	if (baseptr) *baseptr = buffer->base_ptr;
-	if (dataptr) *dataptr = buffer->data_ptr;
-	if (fromptr) *fromptr = buffer->from_ptr;
+	if (baseptr) { *baseptr = buffer->base_ptr; }
+	if (dataptr) { *dataptr = buffer->data_ptr; }
+	if (fromptr) { *fromptr = buffer->from_ptr; }
 
 	return (OMPI_SUCCESS);
 }
@@ -186,7 +187,7 @@ size_t isize=4096;	/* we should check the mca params here */
 ompi_buffer_internal_t *bptr;
 
 	/* check that buffer is not null */
-	if (!buffer) return (OMPI_ERROR);
+	if (!buffer) { return (OMPI_ERROR); }
 
 	bptr = buffer;
 
@@ -220,7 +221,7 @@ ompi_buffer_internal_t *bptr;
     uint32_t * s32;
 
     /* first find the destination location in the buffer */
-    if (!buffer) return (OMPI_ERROR);
+    if (!buffer) { return (OMPI_ERROR); }
 
     bptr = (ompi_buffer_internal_t *) buffer; /* get buffer */
 
@@ -243,11 +244,11 @@ ompi_buffer_internal_t *bptr;
                  rc = ompi_buffer_get_ptrs ((ompi_buffer_t)src, 
 			&base, &data, &from);
                  /* check if packing from empty buffer.. */
-                 if (NULL==from) return OMPI_ERROR;
+                 if (NULL==from) { return OMPI_ERROR; }
                  else 
                     src = (ompi_buffer_t) from;
             }
-            if (OMPI_ERROR==rc) return OMPI_ERROR;
+            if (OMPI_ERROR==rc) { return OMPI_ERROR; }
             break;
         case OMPI_INT16:
 	    op_size = n*2;
@@ -336,7 +337,7 @@ ompi_buffer_internal_t *bptr;
     uint32_t * s32;
 
     /* first find the source location in the buffer */
-    if (!buffer) return (OMPI_ERROR);
+    if (!buffer) { return (OMPI_ERROR); }
 
     bptr = (ompi_buffer_internal_t *) buffer; /* get buffer */
 
