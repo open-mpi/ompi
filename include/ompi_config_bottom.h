@@ -73,8 +73,21 @@ extern bool ompi_mpi_param_check;
    *not* to include anything else via mem/malloc.h, so we won't
    have Cascading Includes Of Death. */
 #include "util/malloc.h"
+#if defined(malloc)
+#undef malloc
+#endif
 #define malloc(size) ompi_malloc((size), __FILE__, __LINE__)
+#if defined(calloc)
+#undef calloc
+#endif
+#define calloc(nmembers, size) ompi_calloc((nmembers), (size), __FILE__, __LINE__)
+#if defined(realloc)
+#undef realloc
+#endif
 #define realloc(ptr, size) ompi_realloc((ptr), (size), __FILE__, __LINE__)
+#if defined(free)
+#undef free
+#endif
 #define free(ptr) ompi_free((ptr), __FILE__, __LINE__)
 #endif
 
