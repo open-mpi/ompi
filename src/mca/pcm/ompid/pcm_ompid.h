@@ -5,6 +5,7 @@
  */
 #include "ompi_config.h"
 #include "mca/pcm/pcm.h"
+#include "runtime/runtime_types.h"
                                                                                                                  
 /*
  * Module open / close
@@ -29,8 +30,7 @@ OBJ_CLASS_DECLARATION(mca_pcm_ompid_node_t);
  */
 struct mca_pcm_base_module_1_0_0_t* mca_pcm_ompid_init(
     int *priority, 
-    bool *allow_multi_user_threads, 
-    bool *have_hidden_threads,
+    bool have_threads,
     int constraints);
 
 int mca_pcm_ompid_finalize(struct mca_pcm_base_module_1_0_0_t* me);

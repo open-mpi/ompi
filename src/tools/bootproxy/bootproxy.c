@@ -16,7 +16,7 @@
 static void
 show_usage(char *myname)
 {
-    printf("usage: %s --local_start_vpid [vpid] --global_start_vpid [vpid]\n"
+    printf("usage: %s --local_offset [vpid] --global_start_vpid [vpid]\n"
            "         --num_procs [num]\n\n", myname);
 }
 
@@ -37,8 +37,12 @@ main(int argc, char *argv[])
     char *env_buf;
 
     ompi_init(argc, argv);
+
+    /* 
+     * command line parsing
+     */
     cmd_line = OBJ_NEW(ompi_cmd_line_t);
-    ompi_cmd_line_make_opt(cmd_line, '\0', "local_start_vpid", 1, 
+    ompi_cmd_line_make_opt(cmd_line, '\0', "local_offset", 1, 
                            "starting vpid to use when launching");
     ompi_cmd_line_make_opt(cmd_line, '\0', "global_start_vpid", 1, 
                            "starting vpid to use when launching");
@@ -50,12 +54,12 @@ main(int argc, char *argv[])
         exit(1);
     }
 
-    if (!ompi_cmd_line_is_taken(cmd_line, "local_start_vpid")) {
+    if (!ompi_cmd_line_is_taken(cmd_line, "local_offset")) {
         show_usage(argv[0]);
         exit(1);
     }
     local_vpid_start =
-        atoi(ompi_cmd_line_get_param(cmd_line, "local_start_vpid", 0, 0));
+        atoi(ompi_cmd_line_get_param(cmd_line, "local_offset", 0, 0));
 
     if (!ompi_cmd_line_is_taken(cmd_line, "global_start_vpid")) {
         show_usage(argv[0]);
@@ -70,9 +74,15 @@ main(int argc, char *argv[])
     }
     total_num_procs = atoi(ompi_cmd_line_get_param(cmd_line, "num_procs", 0, 0));
 
+    /*
+     * Receive the startup schedule for here
+     */
     sched = OBJ_NEW(ompi_rte_node_schedule_t);
+    if (NULL == sched) {
+        printf("Error in OBJ_NEW.  aborting\n");
+        exit(1);
+    }
 
-    /* recv_schedule wants an already initialized ompi_list_t */
     ret = mca_pcm_base_recv_schedule(stdin, &jobid, sched,
                                      &fork_num_procs);
     if (ret != OMPI_SUCCESS) {

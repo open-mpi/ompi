@@ -39,12 +39,9 @@ typedef struct opened_component_t {
 int
 mca_llm_base_select(const char *active_pcm,
                     mca_llm_base_module_t *selected, 
-                    bool *allow_multi_user_threads, 
-                    bool *have_hidden_threads)
+                    bool have_threads)
 {
   int priority, best_priority;
-  bool user_threads, hidden_threads;
-  bool best_user_threads, best_hidden_threads;
   ompi_list_item_t *item;
   mca_base_component_list_item_t *cli;
   mca_llm_base_component_t *component, *best_component;
@@ -76,8 +73,7 @@ mca_llm_base_select(const char *active_pcm,
                          "llm: base: select: "
                           "no init function; ignoring component");
     } else {
-      module = component->llm_init(active_pcm, &priority, &user_threads,
-                                  &hidden_threads);
+      module = component->llm_init(active_pcm, have_threads, &priority);
       if (NULL == module) {
         ompi_output_verbose(10, mca_llm_base_output,
                            "llm: base: select: init returned failure");
@@ -87,8 +83,6 @@ mca_llm_base_select(const char *active_pcm,
                             priority);
         if (priority > best_priority) {
           best_priority = priority;
-          best_user_threads = user_threads;
-          best_hidden_threads = hidden_threads;
           best_component = component;
           best_module = module;
         }
@@ -149,8 +143,6 @@ mca_llm_base_select(const char *active_pcm,
 
   mca_llm_base_selected_component = *best_component;
   *selected = *best_module;
-  *allow_multi_user_threads = best_user_threads;
-  *have_hidden_threads = best_hidden_threads;
   ompi_output_verbose(5, mca_llm_base_output, 
                      "llm: base: select: component %s selected",
                      component->llm_version.mca_component_name);

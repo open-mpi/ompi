@@ -13,9 +13,31 @@
 
 #include "class/ompi_list.h"
 #include "mca/ns/ns.h"
+#include "mca/pcm/pcm.h"
 
 #include <sys/param.h>
 #include <netdb.h>
+
+/**
+ * Spawn Handle
+ *
+ * Private container for the Run-Time Environment to store mappings of
+ * spawn criteria to PCM components
+ */
+struct ompi_rte_spawn_handle_t {
+    /** make us an object instance */
+    ompi_object_t super;
+    /** criteria used to select this set of pcms */
+    int criteria;
+    /** pointers to the pcms */
+    mca_pcm_base_module_t **modules;
+    /** lentgh of modules */
+    size_t modules_len;
+};
+/** shorten ompi_rte_spawn_handle_t declarations */
+typedef struct ompi_rte_spawn_handle_t ompi_rte_spawn_handle_t;
+/** create the required instance information */
+OBJ_CLASS_DECLARATION(ompi_rte_spawn_handle_t);
 
 
 /**

@@ -26,7 +26,6 @@ mca_pcm_base_get_unique_id(void)
     ompi_list_item_t *item;
     mca_base_component_list_item_t *cli;
     mca_pcm_base_component_t *component;
-    mca_pcm_base_module_t *module;
     int priority, top_priority;
     char *id, *top_id;
     int ret;

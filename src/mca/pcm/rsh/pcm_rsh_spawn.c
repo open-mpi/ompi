@@ -30,9 +30,16 @@
 #include "util/numtostr.h"
 #include "mca/ns/base/base.h"
 
+
+/*
+ * Internal constants
+ */
 #define BOOTAGENT "mca_pcm_rsh_bootproxy"
 #define PRS_BUFSIZE 1024
 
+/*
+ * Internal functions
+ */
 static int internal_spawn_proc(mca_pcm_rsh_module_t *me,
                                mca_ns_base_jobid_t jobid, ompi_rte_node_schedule_t *sched,
                                ompi_list_t *hostlist, 
@@ -40,6 +47,16 @@ static int internal_spawn_proc(mca_pcm_rsh_module_t *me,
                                int num_procs);
 
 
+/*
+ * This function just iterates through the schedule list, slicing it
+ * up into launchable pieces.  While this infrastructure supports a
+ * tree-based or similar launching mechanism, the bootproxy used on
+ * the other side of the ssh tunnel does not yet support non-local
+ * booting.  So some of this code (just the logic in the looping
+ * variable) is perhaps a bit overkill.  The real work is done by
+ * internal_spawn_proc, which starts one process via RSH/SSH and then
+ * sends it the information passed from this function.
+ */
 int
 mca_pcm_rsh_spawn_procs(struct mca_pcm_base_module_1_0_0_t* me_super, 
                         mca_ns_base_jobid_t jobid, ompi_list_t *schedlist)
@@ -53,8 +70,11 @@ mca_pcm_rsh_spawn_procs(struct mca_pcm_base_module_1_0_0_t* me_super,
     ompi_list_t launch;
     ompi_list_t done;
     int ret, i;
-    int width = 1;
-    int local_start_vpid = 0;
+    int width = 1;          /* number of procs to send down the tree
+                               at a time.  Currently must be 1.
+                               bootproxy must be fixed before
+                               this can be changed. */
+    int local_offset = 0;
     int global_start_vpid = 0;
     int num_procs = 0;
     int tmp_count;
@@ -62,6 +82,7 @@ mca_pcm_rsh_spawn_procs(struct mca_pcm_base_module_1_0_0_t* me_super,
     OBJ_CONSTRUCT(&launch, ompi_list_t);
     OBJ_CONSTRUCT(&done, ompi_list_t);
 
+    /* figure out how many procs we have been allocated */
     for (sched_item = ompi_list_get_first(schedlist) ;
          sched_item != ompi_list_get_end(schedlist) ;
          sched_item = ompi_list_get_next(sched_item)) {
@@ -79,11 +100,10 @@ mca_pcm_rsh_spawn_procs(struct mca_pcm_base_module_1_0_0_t* me_super,
         }
     }
     
-    /* BWB - make sure vpids are reserved */
-    local_start_vpid = 0;
+    /* reserve a chunk of vpids */
+    local_offset = 0;
     global_start_vpid = (int) ompi_name_server.reserve_range(jobid, num_procs);
 
-    
     for (sched_item = ompi_list_get_first(schedlist) ;
          sched_item != ompi_list_get_end(schedlist) ;
          sched_item = ompi_list_get_next(sched_item)) {
@@ -92,15 +112,9 @@ mca_pcm_rsh_spawn_procs(struct mca_pcm_base_module_1_0_0_t* me_super,
         for (node_item = ompi_list_get_first(sched->nodelist) ;
              node_item != ompi_list_get_end(sched->nodelist) ;
              node_item = ompi_list_get_next(node_item) ) {
+
             node = (ompi_rte_node_allocation_t*) node_item;
             data = (mca_llm_base_hostfile_data_t*) node->data;
-
-            /*
-             * make sure I'm the first node in the list and then start
-             * our deal.  We rsh me just like everyone else so that we
-             * don't have any unexpected environment oddities...
-             */
-            /* BWB - do front of list check! */
             host_item = ompi_list_get_first(data->hostlist);
 
             while (host_item != ompi_list_get_end(data->hostlist)) {
@@ -127,7 +141,7 @@ mca_pcm_rsh_spawn_procs(struct mca_pcm_base_module_1_0_0_t* me_super,
                 /* do the launch to the first node in the list, passing
                    him the rest of the list */
                 ret = internal_spawn_proc(me, jobid, sched, &launch, 
-                                          local_start_vpid, global_start_vpid, 
+                                          local_offset, global_start_vpid, 
                                           num_procs);
                 if  (OMPI_SUCCESS != ret) {
                     /* well, crap!  put ourselves back together, I guess.
@@ -138,7 +152,7 @@ mca_pcm_rsh_spawn_procs(struct mca_pcm_base_module_1_0_0_t* me_super,
                                    &done);
                     return ret;
                 }
-                local_start_vpid += tmp_count;
+                local_offset += tmp_count;
 
                 /* copy the list over to the done part */
                 ompi_list_join(&done, ompi_list_get_end(&done), &launch);
@@ -325,7 +339,7 @@ internal_spawn_proc(mca_pcm_rsh_module_t *me,
 
     /* starting vpid for launchee's procs */
     tmp = ltostr(my_start_vpid);
-    ompi_argv_append(&cmdc, &cmdv, "--local_start_vpid");
+    ompi_argv_append(&cmdc, &cmdv, "--local_offset");
     ompi_argv_append(&cmdc, &cmdv, tmp);
     free(tmp);
 

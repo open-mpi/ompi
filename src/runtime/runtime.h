@@ -110,43 +110,80 @@ extern "C" {
      */
     int ompi_rte_finalize(void);
 
-   
+
+    /**
+     * Request a handle for spawning jobs
+     *
+     * Request a handle for allocating resources and spawning a job.
+     * This is the first step in starting a new set of processes.  It
+     * will load the best available set of pcm components for starting
+     * a job according to the \c criteria provided.
+     *
+     * The returned job handle should be OBJ_RELEASE()'ed when no
+     * further use of the particular job handle is needed.  It is
+     * possible that consecutive calls to this function with the same
+     * \c criteria will return a pointer to the same object.  In these
+     * situations, the reference count on the object will be adjusted
+     * as appropriate.
+     *
+     * The returned handle can be used to call the process startup
+     * related functions multiple times, both in the same job and in
+     * different jobs.
+     *
+     * @param criteria (IN) Selection criteria.  A bitmask of the
+     *                      constants defined in \c runtime.h starting
+     *                      with \c OMPI_RTE_SPAWN_*
+     * @param have_threads (IN) Whether the current running process is
+     *                      multi-threaded or not.  true means there
+     *                      may be concurrent access into the
+     *                      underlying components *and* that the
+     *                      components may launch new threads.
+     * @return jobhandle (OUT) Pointer to an \c ompi_rte_jobhandle.
+     *                      If no available pcm components are capable
+     *                      of meeting criteria, \c NULL is returned.
+     */
+    ompi_rte_spawn_handle_t* ompi_rte_get_spawn_handle(int criteria,
+                                                       bool have_threads);
+
+
     /**
      * Allocate requested resources
      *
      * Allocate the specified nodes / processes for use in a new job.
-     * Requires a newly created jobid.  The allocation returned may be
-     * smaller than requested - it is up to the caller to proceed as
-     * appropriate should this occur.  This function should only be called
-     * once per jobid.
+     * This function should be called exactly once per call to \c
+     * ompi_rte_spawn_procs.
      *
+     * @param handle (IN) Handle from \c ompi_rte_get_spawn_handle
      * @param jobid (IN) Jobid with which to associate the given resources.
      * @param nodes (IN) Number of ndoes to try to allocate.  If 0, the
      *                   allocator will try to allocate \c procs processes
-     *                   on as many nodes as are needed.  If non-zero, 
+     *                   on as many nodes as are needed.  If positive, 
      *                   will try to allocate \c procs process slots 
-     *                   per node.
+     *                   per node.  If both nodes and procs are 0,
+     *                   will attempt to return as many resources as
+     *                   possible
      * @param procs (IN) Number of processors to try to allocate.  See the note
-     *                   for <code>nodes</code> for usage.
+     *                   for \c nodes for usage.
      * @return List of <code>ompi_rte_node_allocation_t</code>s
-     *                   describing the allocated resources.
+     *                   describing the allocated resources or NULL on
+     *                   error (error will be in errno)
      *
      * @note In the future, a more complex resource allocation
      *       function may be added, which allows for complicated
      *       resource requests.  This function will continue to exist
      *       as a special case of that function.
-     */
-    ompi_list_t* ompi_rte_allocate_resources(mca_ns_base_jobid_t jobid, 
-                                             int nodes, int procs);
-
-
-    /** 
-     * This tells you whether the runtime is capable of spawning new
-     * processes or not
      *
-     * @return True/False
+     *       Some systems are not capable of providing a maximum
+     *       available resource count and there is an inherent race
+     *       condition to do so in many other systems.  On these
+     *       systems, errno will be set to \c OMPI_ERR_NOT_SUPPORTED.
+     *       This is not a fatal error - \c
+     *       ompi_rte_allocate_resources can be called again, but
+     *       without nodes = 0, procs = 0.
      */
-    bool ompi_rte_can_spawn(void);
+    ompi_list_t* ompi_rte_allocate_resources(ompi_rte_spawn_handle_t* handle,
+                                             mca_ns_base_jobid_t jobid, 
+                                             int nodes, int procs);
 
 
     /**
@@ -157,8 +194,10 @@ extern "C" {
      * of \c mca_pcm_base_schedule_t structures, which give both process
      * and location information.
      *
+     * @param handle (IN) Handle from \c ompi_rte_get_spawn_handle
      */
-    int ompi_rte_spawn_procs(mca_ns_base_jobid_t jobid, 
+    int ompi_rte_spawn_procs(ompi_rte_spawn_handle_t* handle,
+                             mca_ns_base_jobid_t jobid, 
                              ompi_list_t *schedule_list);
 
 
@@ -231,11 +270,13 @@ extern "C" {
      *
      * Return the resources for the given jobid to the system.
      *
+     * @param handle (IN) Handle from \c ompi_rte_get_spawn_handle
      * @param jobid (IN) Jobid associated with the resources to be freed.
      * @param nodes (IN) Nodelist from associated allocate_resource call.
      *                   All associated memory will be freed as appropriate.
      */
-    int ompi_rte_deallocate_resources(mca_ns_base_jobid_t jobid, 
+    int ompi_rte_deallocate_resources(ompi_rte_spawn_handle_t *handle,
+                                      mca_ns_base_jobid_t jobid, 
                                       ompi_list_t *nodelist);
 
 

@@ -108,8 +108,7 @@ mca_pcm_rms_component_close(void)
 
 mca_pcm_base_module_t*
 mca_pcm_rms_init(int *priority, 
-                 bool *allow_multi_user_threads, 
-                 bool *have_hidden_threads,
+                 bool have_threads,
                  int constraints)
 {
     int debug;
@@ -124,11 +123,6 @@ mca_pcm_rms_init(int *priority,
     /* get our priority - if 0, we don't run */
     mca_base_param_lookup_int(mca_pcm_rms_param_priority, priority);
     if (0 == priority) return NULL;
-
-    /* fill in params */
-
-    *allow_multi_user_threads = true;
-    *have_hidden_threads = false;
 
     /* check constrains */
     /* no daemon */

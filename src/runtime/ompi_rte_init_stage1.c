@@ -26,6 +26,7 @@
 #include "util/sys_info.h"
 
 #include "runtime/runtime.h"
+#include "runtime/runtime_internal.h"
 
 /**
  * Initialze and setup a process in the OMPI RTE.
@@ -128,6 +129,16 @@ int ompi_rte_init_stage1(bool *allow_multi_user_threads, bool *have_hidden_threa
 	    ompi_output(0, "ompi_rte_init: ompi_event_init failed with error status: %d\n", ret);
 	    return ret;
     }
+
+    /*
+     * Internal startup
+     */
+    if (OMPI_SUCCESS != (ret = ompi_rte_internal_init_spawn())) {
+	/* JMS show_help */
+	printf("show_help: ompi_rte_init failed in ompi_rte_internal_init_spawn\n");
+	return ret;
+    }
+
 
     /*
      * Out of Band Messaging

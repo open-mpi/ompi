@@ -49,6 +49,7 @@ main(int argc, char *argv[])
     char *my_contact_info, *tmp, *jobid_str, *procid_str;
     char *contact_file, *filenm, *universe;
     pid_t pid;
+    ompi_rte_spawn_handle_t *spawn_handle;
 
     /*
      * Intialize our Open MPI environment
@@ -284,8 +285,11 @@ main(int argc, char *argv[])
     /* get the jobid for the application */
     new_jobid = ompi_name_server.create_jobid();
 
+    /* get the spawn handle to start spawning stuff */
+    spawn_handle = ompi_rte_get_spawn_handle(OMPI_RTE_SPAWN_HIGH_QOS, true);
+
     /* BWB - fix jobid, procs, and nodes */
-    nodelist = ompi_rte_allocate_resources(new_jobid, 0, num_procs);
+    nodelist = ompi_rte_allocate_resources(spawn_handle, new_jobid, 0, num_procs);
     if (NULL == nodelist) {
 	/* BWB show_help */
 	printf("show_help: ompi_rte_allocate_resources failed\n");
@@ -342,10 +346,11 @@ main(int argc, char *argv[])
     /*
      * spawn procs
      */
-    if (OMPI_SUCCESS != ompi_rte_spawn_procs(new_jobid, &schedlist)) {
+    if (OMPI_SUCCESS != ompi_rte_spawn_procs(spawn_handle, new_jobid, &schedlist)) {
 	printf("show_help: woops!  we didn't spawn :( \n");
 	return -1;
     }
+    
 
     /*
      * 
@@ -360,8 +365,9 @@ main(int argc, char *argv[])
     /*
      * Clean up
      */
-    if (NULL != nodelist) ompi_rte_deallocate_resources(new_jobid, nodelist);
+    if (NULL != nodelist) ompi_rte_deallocate_resources(spawn_handle, new_jobid, nodelist);
     if (NULL != cmd_line) OBJ_RELEASE(cmd_line);
+    if (NULL != spawn_handle) OBJ_RELEASE(spawn_handle);
 
     /* eventually, mpirun won't be the seed and so won't have to do this.
      * for now, though, remove the universe-setup.txt file so the directories
