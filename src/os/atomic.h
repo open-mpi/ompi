@@ -11,39 +11,43 @@
  * Atomic functions
  */
 
-#ifdef __alpha
-#  ifdef __GNUC__
+#if defined(__alpha)
+#  if defined(__GNUC__)
 #    include "os/linux/alpha/atomic.h"
 #  else
 #    include "os/tru64/atomic.h"
-#  endif
-#endif
+#  endif  /* __GNUC__ */
+#endif  /* __alpha */
 
-#if defined (__linux__) && defined (__i386)
+#if defined(__linux__) && defined(__i386)
 #include "os/linux/i686/atomic.h"
-#endif
+#endif  /* defined(__linux__) && defined(__i386) */
 
-#ifdef __CYGWIN__
+#if defined(__CYGWIN__)
 #include "os/cygwin/atomic.h"
-#endif
+#endif  /* defined(__CYGWIN__) */
 
-#ifdef __ia64
+#if defined(__ia64)
 #include "os/linux/ia64/atomic.h"
-#endif
+#endif  /* defined(__ia64) */
 
-#ifdef __mips
+#if defined(__x86_64)
+#include "os/linux/x86_64/atomic.h"
+#endif  /* defined(__x86_64) */
+
+#if defined(__mips)
 #include "os/irix/atomic.h"
-#endif
+#endif  /* defined(__mpis) */
 
-#ifdef __APPLE__
+#if defined(__APPLE__)
 /* check if PowerPC 970 (G5) */
-#ifdef __ppc_64__
+#if defined(__ppc_64__)
 #include "os/darwin/ppc_64/atomic.h"
 #else
 #include "os/darwin/ppc_32/atomic.h"
-#endif
+#endif  /* defined(__ppc_64__) */
 
-#endif      /* __APPLE__ */
+#endif  /* defined(__APPLE__) */
 
 #ifndef mb
 #define mb()
