@@ -42,6 +42,7 @@ mca_llm_bjs_allocate_resources(mca_llm_base_module_t *me,
 
     node_string = strdup(tmp);
     if (NULL == node_string) return NULL;
+    nodes_len = strlen(node_string);
 
     for (i = 0 ; i < nodes_len ; ++i) {
         /* find the end of this entry and change the comma to end of string */

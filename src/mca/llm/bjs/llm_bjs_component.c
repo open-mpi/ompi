@@ -70,7 +70,7 @@ mca_llm_bjs_component_open(void)
                                                  "bjs",
                                                  "priority",
                                                  NULL,
-                                                 0);
+                                                 5);
 
     return OMPI_SUCCESS;
 }
