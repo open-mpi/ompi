@@ -22,7 +22,7 @@
 #include "runtime/runtime.h"
 #include "runtime/orte_wait.h"
 #include "event/event.h"
-#include "mca/oob/oob.h"
+#include "mca/rml/base/base.h"
 #include "mca/ns/base/base.h"
 #include "mca/gpr/base/base.h"
 #include "mca/iof/base/base.h"
@@ -51,7 +51,7 @@ int orte_finalize(void)
 
     orte_ns_base_close();
     orte_gpr_base_close();
-    mca_oob_base_close();
+    orte_rml_base_close();
 
     ompi_progress_finalize();
 
