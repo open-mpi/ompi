@@ -56,4 +56,6 @@ mca_ptl_ib_send_frag_t* mca_ptl_ib_alloc_send_frag(
         mca_ptl_base_module_t*       ptl,
         mca_pml_base_send_request_t* request);
 
+int mca_ptl_ib_register_send_frags(mca_ptl_base_module_t *ptl);
+
 #endif

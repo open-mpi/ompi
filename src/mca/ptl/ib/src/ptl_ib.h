@@ -28,6 +28,7 @@
 /* Other IB ptl includes */
 #include "ptl_ib_sendreq.h"
 #include "ptl_ib_recvfrag.h"
+#include "ptl_ib_sendfrag.h"
 
 /**
  * IB PTL component.

@@ -250,6 +250,13 @@ mca_ptl_base_module_t** mca_ptl_ib_component_init(int *num_ptl_modules,
                 mca_ptl_ib_component.ib_free_list_inc,
                 NULL);
 
+        /* Initialize the send descriptors */
+        if(mca_ptl_ib_register_send_frags((mca_ptl_base_module_t *) &ib_modules[i])
+                != OMPI_SUCCESS) {
+
+            return NULL;
+        }
+
         DUMP_IB_STATE(ib_modules[i].ib_state);
     }
 

@@ -2,6 +2,7 @@
 #define MCA_PTL_IB_PRIV_H
 
 #include <stdint.h>
+#include "class/ompi_free_list.h"
 #include "ptl_ib_vapi.h"
 
 #define NUM_IB_SEND_BUF             (10)
@@ -89,9 +90,6 @@ struct mca_ptl_ib_peer_local_res_t {
     VAPI_qp_prop_t                  qp_prop;
     /* Local QP properties */
 
-    ib_buffer_t                     *send;
-    /* Pointer to send buffers */
-
     ib_buffer_t                     *recv;
     /* Pointer to recv buffers */
 };
@@ -171,5 +169,7 @@ int mca_ptl_ib_get_num_hcas(uint32_t*);
 int mca_ptl_ib_init_peer(mca_ptl_ib_state_t*, mca_ptl_ib_peer_conn_t*);
 int mca_ptl_ib_peer_connect(mca_ptl_ib_state_t*, 
         mca_ptl_ib_peer_conn_t*);
+int mca_ptl_ib_register_mem(VAPI_hca_hndl_t nic, VAPI_pd_hndl_t ptag,
+        void* buf, int len, vapi_memhandle_t* memhandle);
 
 #endif  /* MCA_PTL_IB_PRIV_H */
