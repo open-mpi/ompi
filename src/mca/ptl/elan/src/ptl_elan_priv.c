@@ -677,7 +677,7 @@ mca_ptl_elan_drain_recv (mca_ptl_elan_component_t * emp)
 
         OMPI_LOCK (&queue->rx_lock);
 
-#if 0
+#if 1
         rc = (*(int *) (&rxq->qr_doneWord));
 #else
         rc = elan4_pollevent_word (ctx, &rxq->qr_doneWord, 2000);
@@ -789,7 +789,7 @@ mca_ptl_elan_update_desc (mca_ptl_elan_component_t * emp)
 	while (ompi_list_get_size (&queue->tx_desc) > 0) {
             desc = (mca_ptl_elan_send_frag_t *)
                 ompi_list_get_first (&queue->tx_desc);
-#if 0
+#if 1
             rc = * ((int *) (&desc->desc->main_doneWord));
 #else
             /* Poll the completion event for 1usec */

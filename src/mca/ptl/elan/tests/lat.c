@@ -27,7 +27,6 @@ main (int argc, char *argv[])
 
     if (argc < 2) {
         fprintf (stderr, "Usage: %s msg_size\n", argv[0]);
-        MPI_Finalize ();
         return 0;
     }
     size = atoi (argv[1]);
@@ -70,7 +69,6 @@ main (int argc, char *argv[])
 	    hostname, __FUNCTION__, __LINE__);
     fflush(stdout);
  
-
     if (myid == 0) {
         double      latency;
         latency = ((1.0e6 * t_end.tv_sec + t_end.tv_usec) 

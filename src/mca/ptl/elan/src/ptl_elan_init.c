@@ -545,7 +545,6 @@ ompi_mca_ptl_elan_finalize (mca_ptl_elan_component_t * emp)
         RAIL       *rail;
 
         rail = ems->all_rails[i];
-
         free (rail->r_railTable);
 
         /* Free the memory from the rail allocator */
@@ -575,4 +574,3 @@ ompi_mca_ptl_elan_finalize (mca_ptl_elan_component_t * emp)
     END_FUNC(PTL_ELAN_DEBUG_FIN);
     return (OMPI_SUCCESS);
 }
-
