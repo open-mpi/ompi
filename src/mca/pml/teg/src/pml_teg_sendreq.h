@@ -44,7 +44,6 @@
             OMPI_FREE_LIST_WAIT(&mca_pml_teg.teg_send_requests, item, rc); \
             sendreq = (mca_pml_base_send_request_t*)item;                  \
             sendreq->req_ptl = ptl;                                        \
-            sendreq->req_peer = ptl_proc->ptl_peer;                        \
             ptl->ptl_request_init(ptl, sendreq);                           \
         }                                                                  \
                                                                            \
@@ -54,8 +53,9 @@
         OMPI_FREE_LIST_WAIT(&mca_pml_teg.teg_send_requests, item, rc);     \
         sendreq = (mca_pml_base_send_request_t*)item;                      \
         sendreq->req_ptl = ptl_proc->ptl;                                  \
-        sendreq->req_peer = ptl_proc->ptl_peer;                            \
     }                                                                      \
+    /* update request to point to current peer */                          \
+    sendreq->req_peer = ptl_proc->ptl_peer;                                \
 }
 
 
