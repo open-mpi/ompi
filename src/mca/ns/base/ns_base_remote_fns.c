@@ -23,7 +23,7 @@ mca_ns_base_cellid_t ns_base_create_cellid(void)
 {
     ompi_buffer_t cmd;
     mca_ns_base_cellid_t cell;
-    ompi_buffer_t *answer;
+    ompi_buffer_t answer;
     mca_ns_cmd_flag_t command;
     int recv_tag;
 
@@ -42,21 +42,21 @@ mca_ns_base_cellid_t ns_base_create_cellid(void)
 	return MCA_NS_BASE_CELLID_MAX;
     }
 
-    if (0 > mca_oob_recv_packed(mca_ns_my_replica, answer, &recv_tag)) {
+    if (0 > mca_oob_recv_packed(mca_ns_my_replica, &answer, &recv_tag)) {
 	return MCA_NS_BASE_CELLID_MAX;
     }
 
-    if ((OMPI_SUCCESS != ompi_unpack(*answer, &command, 1, MCA_NS_OOB_PACK_CMD))
+    if ((OMPI_SUCCESS != ompi_unpack(answer, &command, 1, MCA_NS_OOB_PACK_CMD))
 	|| (MCA_NS_CREATE_CELLID_CMD != command)) {
-	ompi_buffer_free(*answer);
+	ompi_buffer_free(answer);
 	return MCA_NS_BASE_CELLID_MAX;
     }
 
-    if (OMPI_SUCCESS != ompi_unpack(*answer, &cell, 1, MCA_NS_OOB_PACK_CELLID)) {
-	ompi_buffer_free(*answer);
+    if (OMPI_SUCCESS != ompi_unpack(answer, &cell, 1, MCA_NS_OOB_PACK_CELLID)) {
+	ompi_buffer_free(answer);
 	return MCA_NS_BASE_CELLID_MAX;
     } else {
-	ompi_buffer_free(*answer);
+	ompi_buffer_free(answer);
 	return cell;
     }
 }
@@ -66,7 +66,7 @@ mca_ns_base_jobid_t ns_base_create_jobid(void)
 {
     ompi_buffer_t cmd;
     mca_ns_base_jobid_t job;
-    ompi_buffer_t *answer;
+    ompi_buffer_t answer;
     mca_ns_cmd_flag_t command;
     int recv_tag;
 
@@ -85,21 +85,21 @@ mca_ns_base_jobid_t ns_base_create_jobid(void)
 	return MCA_NS_BASE_JOBID_MAX;
     }
 
-    if (0 > mca_oob_recv_packed(mca_ns_my_replica, answer, &recv_tag)) {
+    if (0 > mca_oob_recv_packed(mca_ns_my_replica, &answer, &recv_tag)) {
 	return MCA_NS_BASE_JOBID_MAX;
     }
 
-    if ((OMPI_SUCCESS != ompi_unpack(*answer, &command, 1, MCA_NS_OOB_PACK_CMD))
+    if ((OMPI_SUCCESS != ompi_unpack(answer, &command, 1, MCA_NS_OOB_PACK_CMD))
 	|| (MCA_NS_CREATE_JOBID_CMD != command)) {
-	ompi_buffer_free(*answer);
+	ompi_buffer_free(answer);
 	return MCA_NS_BASE_JOBID_MAX;
     }
 
-    if (OMPI_SUCCESS != ompi_unpack(*answer, &job, 1, MCA_NS_OOB_PACK_JOBID)) {
-	ompi_buffer_free(*answer);
+    if (OMPI_SUCCESS != ompi_unpack(answer, &job, 1, MCA_NS_OOB_PACK_JOBID)) {
+	ompi_buffer_free(answer);
 	return MCA_NS_BASE_JOBID_MAX;
     } else {
-	ompi_buffer_free(*answer);
+	ompi_buffer_free(answer);
 	return job;
     }
 }
@@ -109,7 +109,7 @@ mca_ns_base_vpid_t ns_base_reserve_range(mca_ns_base_jobid_t job, mca_ns_base_vp
 {
     ompi_buffer_t cmd;
     mca_ns_base_vpid_t starting_vpid;
-    ompi_buffer_t *answer;
+    ompi_buffer_t answer;
     mca_ns_cmd_flag_t command;
     int recv_tag;
 
@@ -136,21 +136,21 @@ mca_ns_base_vpid_t ns_base_reserve_range(mca_ns_base_jobid_t job, mca_ns_base_vp
 	return MCA_NS_BASE_VPID_MAX;
     }
 
-    if (0 > mca_oob_recv_packed(mca_ns_my_replica, answer, &recv_tag)) {
+    if (0 > mca_oob_recv_packed(mca_ns_my_replica, &answer, &recv_tag)) {
 	return MCA_NS_BASE_VPID_MAX;
     }
 
-    if ((OMPI_SUCCESS != ompi_unpack(*answer, &command, 1, MCA_NS_OOB_PACK_CMD))
+    if ((OMPI_SUCCESS != ompi_unpack(answer, &command, 1, MCA_NS_OOB_PACK_CMD))
 	|| (MCA_NS_RESERVE_RANGE_CMD != command)) {
-	ompi_buffer_free(*answer);
+	ompi_buffer_free(answer);
 	return MCA_NS_BASE_VPID_MAX;
     }
 
-    if (OMPI_SUCCESS != ompi_unpack(*answer, &starting_vpid, 1, MCA_NS_OOB_PACK_VPID)) {
-	ompi_buffer_free(*answer);
+    if (OMPI_SUCCESS != ompi_unpack(answer, &starting_vpid, 1, MCA_NS_OOB_PACK_VPID)) {
+	ompi_buffer_free(answer);
 	return MCA_NS_BASE_VPID_MAX;
     } else {
-	ompi_buffer_free(*answer);
+	ompi_buffer_free(answer);
 	return starting_vpid;
     }
 }

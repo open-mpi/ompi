@@ -434,6 +434,13 @@ typedef mca_ns_base_cellid_t (*mca_ns_base_module_get_cellid_fn_t)(const ompi_pr
  */
 typedef int (*mca_ns_base_module_compare_fn_t)(ompi_ns_cmp_bitmask_t fields, const ompi_process_name_t *name1, const ompi_process_name_t *name2);
 
+/**
+ * Called after all RTE components have been initialized. Provides the selected
+ * module the chance to perform additional initialization (e.g. register w/ OOB).
+ */
+
+typedef int (*mca_ns_base_module_init_fn_t)(void);
+
 /*
  * Ver 1.0.0
  */
@@ -453,7 +460,9 @@ struct mca_ns_base_module_1_0_0_t {
     mca_ns_base_module_get_jobid_fn_t get_jobid;
     mca_ns_base_module_get_cellid_fn_t get_cellid;
     mca_ns_base_module_compare_fn_t compare;
+    mca_ns_base_module_init_fn_t init;
 };
+
 typedef struct mca_ns_base_module_1_0_0_t mca_ns_base_module_1_0_0_t;
 typedef mca_ns_base_module_1_0_0_t mca_ns_base_module_t;
 
