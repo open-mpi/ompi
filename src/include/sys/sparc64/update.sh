@@ -20,6 +20,7 @@ trap "/bin/rm -f $CFILE; exit 0" 0 1 2 15
 echo Updating atomic.s from atomic.h using gcc
 
 cat > $CFILE<<EOF
+#include "../architecture.h"
 #include <stdlib.h>
 #include <inttypes.h>
 #define static
@@ -29,4 +30,5 @@ cat > $CFILE<<EOF
 #include "atomic.h"
 EOF
 
-gcc -m64 -O1 -I. -S $CFILE -o atomic.s
+gcc -m64 -O3 -DOMPI_ASSEMBLY_ARCH=OMPI_SPARCV9_64 -I. -S $CFILE -o atomic64.s
+gcc -mv8plus -DOMPI_ASSEMBLY_ARCH=OMPI_SPARCV9_32 -O3 -I. -S $CFILE -o atomic32.s

@@ -424,6 +424,32 @@ AC_DEFUN([OMPI_CHECK_POWERPC_64BIT],[
 
 dnl #################################################################
 dnl
+dnl OMPI_CHECK_SPARCV8PLUS
+dnl
+dnl #################################################################
+AC_DEFUN([OMPI_CHECK_SPARCV8PLUS],[
+    AC_REQUIRE([OMPI_CHECK_ASM_TEXT])
+
+    AC_MSG_CHECKING([if have Sparc v8+/v9 support])
+    sparc_result=0
+    OMPI_TRY_ASSEMBLE([$ompi_cv_asm_text
+	casa [%o0] 0x80, %o1, %o2],
+                [sparc_result=1],
+                [sparc_result=0])
+    if test "$sparc_result" = "1" ; then
+        AC_MSG_RESULT([yes])
+        ifelse([$1],,:,[$1])
+    else
+        AC_MSG_RESULT([no])
+        ifelse([$2],,:,[$2])
+    fi
+
+    unset sparc_result
+])dnl
+
+
+dnl #################################################################
+dnl
 dnl OMPI_CHECK_INLINE_GCC
 dnl
 dnl Check if the compiler is capable of doing GCC-style inline
@@ -622,6 +648,14 @@ case "${host}" in
         OMPI_GCC_INLINE_ASSIGN='"bis zero,zero,%0" : "=&r"(ret)'
     ;;
 
+    mips-*)
+        # Should really find some way to make sure that we are on
+        # a MIPS III machine (r4000 and later)
+        ompi_cv_asm_arch="MIPS3"
+        OMPI_ASM_SUPPORT_64BIT=1
+        OMPI_GCC_INLINE_ASSIGN='"or %0,[$]0,[$]0" : "=&r"(ret)'
+    ;;
+
     powerpc-*)
         OMPI_CHECK_POWERPC_REG
         if test "$ac_cv_sizeof_long" = "4" ; then
@@ -642,12 +676,30 @@ case "${host}" in
     ;;
 
     sparc-*)
+        # SPARC v9 (and above) are the only ones with 64bit support
+        # if compiling 32 bit, see if we are v9 (aka v8plus) or
+        # earlier (casa is v8+/v9). 
         if test "$ac_cv_sizeof_long" = "4" ; then
-            OMPI_ASM_SUPPORT_64BIT=0
-            ompi_cv_asm_arch="SPARC32"
+            have_v8plus=0
+            OMPI_CHECK_SPARCV8PLUS([have_v8plus=1])
+            if test "$have_v8plus" = "0" ; then
+                OMPI_ASM_SUPPORT_64BIT=0
+                ompi_cv_asm_arch="SPARC"
+AC_MSG_WARN([Using SPARC V8 assembly for atomic operations.  This])
+AC_MSG_WARN([may result in reduced performance on UltraSparc platforms.])
+AC_MSG_WARN([If you are compiling for the UltraSparc, consider 
+AC_MSG_WARN([specifying the architecture v8plus (cc: -xarch=v8plus, 
+AC_MSG_WARN([gcc: -mv8plus) when compiling Open MPI, as you may see a])
+AC_MSG_WARN([significant performance increase.])
+
+            else
+                OMPI_ASM_SUPPORT_64BIT=1
+                ompi_cv_asm_arch="SPARCV9_32"
+            fi
+
         elif test "$ac_cv_sizeof_long" = "8" ; then
             OMPI_ASM_SUPPORT_64BIT=1
-            ompi_cv_asm_arch="SPARC64"
+            ompi_cv_asm_arch="SPARCV9_64"
         else
           AC_MSG_ERROR([Could not determine Sparc word size: $ac_cv_sizeof_long])
         fi

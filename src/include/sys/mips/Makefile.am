@@ -14,14 +14,12 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-SUBDIRS = alpha amd64 ia32 ia64 mips powerpc sparc sparc64 win32
-
-noinst_HEADERS = atomic.h architecture.h atomic_impl.h cache.h
+noinst_HEADERS = atomic.h 
 
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/include/sys
+ompidir = $(includedir)/openmpi/include/sys/mips
 ompi_HEADERS = $(noinst_HEADERS)
 else
 ompidir = $(includedir)

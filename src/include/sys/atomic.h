@@ -104,13 +104,17 @@ typedef struct ompi_lock_t ompi_lock_t;
 #include "include/sys/ia32/atomic.h"
 #elif OMPI_ASSEMBLY_ARCH == OMPI_IA64
 #include "include/sys/ia64/atomic.h"
+#elif OMPI_ASSEMBLY_ARCH == OMPI_MIPS3
+#include "include/sys/mips/atomic.h"
 #elif OMPI_ASSEMBLY_ARCH == OMPI_POWERPC32
 #include "include/sys/powerpc/atomic.h"
 #elif OMPI_ASSEMBLY_ARCH == OMPI_POWERPC64
 #include "include/sys/powerpc/atomic.h"
-#elif OMPI_ASSEMBLY_ARCH == OMPI_SPARC32
+#elif OMPI_ASSEMBLY_ARCH == OMPI_SPARC
 #include "include/sys/sparc/atomic.h"
-#elif OMPI_ASSEMBLY_ARCH == OMPI_SPARC64
+#elif OMPI_ASSEMBLY_ARCH == OMPI_SPARCV9_32
+#include "include/sys/sparc64/atomic.h"
+#elif OMPI_ASSEMBLY_ARCH == OMPI_SPARCV9_64
 #include "include/sys/sparc64/atomic.h"
 #endif
 

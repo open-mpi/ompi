@@ -28,8 +28,10 @@
 #define OMPI_ALPHA          0040
 #define OMPI_POWERPC32      0050
 #define OMPI_POWERPC64      0051
-#define OMPI_SPARC32        0060
-#define OMPI_SPARC64        0061
+#define OMPI_SPARC          0060
+#define OMPI_SPARCV9_32     0061
+#define OMPI_SPARCV9_64     0062
+#define OMPI_MIPS3          0070
 
 /* Formats */
 #define OMPI_DEFAULT        1000  /* standard for given architecture */

@@ -57,8 +57,12 @@ EXTRA_DIST	= \
 	base/default.conf \
 	base/AMD64.asm \
 	base/IA32.asm \
+	base/MIPS.asm \
 	base/POWERPC32.asm \
-	base/POWERPC64.asm
+	base/POWERPC64.asm \
+	base/SPARC.asm \
+	base/SPARCV9_32.asm \
+	base/SPARCV9_64.asm
 
 ######################################################################
 

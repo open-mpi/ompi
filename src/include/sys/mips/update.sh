@@ -1,3 +1,4 @@
+#!/bin/sh
 #
 # Copyright (c) 2004-2005 The Trustees of Indiana University.
 #                         All rights reserved.
@@ -12,17 +13,21 @@
 # $HEADER$
 #
 
-include $(top_srcdir)/config/Makefile.options
+CFILE=/tmp/ompi_atomic_$$.c
 
-SUBDIRS = alpha amd64 ia32 ia64 mips powerpc sparc sparc64 win32
+trap "/bin/rm -f $CFILE; exit 0" 0 1 2 15
 
-noinst_HEADERS = atomic.h architecture.h atomic_impl.h cache.h
+echo Updating atomic.s from atomic.h using gcc
 
-# Conditionally install the header files
+cat > $CFILE<<EOF
+#include <stdlib.h>
+#include <inttypes.h>
+#define static
+#define inline
+#define OMPI_GCC_INLINE_ASSEMBLY 1
+#define OMPI_WANT_SMP_LOCKS 1
+#include "../architecture.h"
+#include "atomic.h"
+EOF
 
-if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/include/sys
-ompi_HEADERS = $(noinst_HEADERS)
-else
-ompidir = $(includedir)
-endif
+gcc -O1 -I. -S $CFILE -o atomic.s
