@@ -603,7 +603,7 @@ ompi_convertor_pack_no_conv_contig( ompi_convertor_t* pConv,
     /* the number of complete datatypes still to be copied */
     pStack[0].count = pConv->count - (pConv->bConverted / pData->size);
     /* the amount of data (in bytes) that still have to be done on the last data */
-    pStack[1].count = pConv->bConverted - pData->size * pStack[0].count;
+    pStack[1].count = pConv->bConverted - pData->size * (pConv->count - pStack[0].count);
     pStack[1].disp  = pData->size - pStack[1].count;
     pStack[0].disp -= (pData->size - pStack[1].count);
     /* update the return value */
