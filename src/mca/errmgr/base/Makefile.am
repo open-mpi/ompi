@@ -14,36 +14,31 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-SUBDIRS = \
-	allocator \
-        base \
-        coll \
-        common \
-	errmgr \
-        gpr \
-        io \
-        iof \
-	llm \
-        mpool \
-        ns \
-        one \
-        oob \
-        pcm \
-	pcmclient \
-        pml \
-        ptl \
-        soh \
-        svc \
-        topo
+noinst_LTLIBRARIES = libmca_errmgr_base.la
+
+# For VPATH builds, have to specify where static-modules.h will be found
+
+AM_CPPFLAGS = -I$(top_builddir)/src
 
 # Source code files
 
-headers = mca.h
+headers = \
+        base.h
+
+# Library
+
+libmca_errmgr_base_la_SOURCES = \
+        $(headers) \
+        errmgr_base_close.c \
+        errmgr_base_select.c \
+        errmgr_base_open.c \
+        errmgr_base_log.c
+
 
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/mca
+ompidir = $(includedir)/openmpi/mca/errmgr/base
 ompi_HEADERS = $(headers)
 else
 ompidir = $(includedir)

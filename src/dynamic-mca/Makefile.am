@@ -18,6 +18,7 @@ SUBDIRS = \
 	allocator \
         coll \
         common \
+        errmgr \
         gpr \
         io \
         iof \
