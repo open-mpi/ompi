@@ -94,6 +94,9 @@ int main(int argc, char *argv[])
     fprintf(error_out, "\n~~~~~~     Testing complete     ~~~~~~ \n\n");
 
     test_finalize();
+#ifndef STANDALONE
+    fclose(error_out);
+#endif
 
     return 0;
 }
