@@ -147,6 +147,9 @@ int main(int argc, char **argv)
     
     test_dynamic();
     test_static();
+#ifndef STANDALONE
+    fclose( error_out );
+#endif
     
     return test_finalize();
 }
