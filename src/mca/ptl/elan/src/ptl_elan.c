@@ -395,14 +395,31 @@ mca_ptl_elan_matched (mca_ptl_base_module_t * ptl,
     request = frag->frag_request;
     recv_frag = (mca_ptl_elan_recv_frag_t * ) frag;
 
-    if (header->hdr_common.hdr_flags & MCA_PTL_FLAGS_ACK_MATCHED) 
-#if 1 
-    {
+    /* FIXME + TODO: Optimized processing fragments 
+     * Pseudocode, for additional processing of fragments 
+     * a) (ACK:no, Get:No) 
+     *    Remove the frag. no need for further processing
+     * b) (ACK:yes, Get:No) 
+     *    Send an ACK only
+     * c) (ACK:yes, Get:yes) 
+     *     Get a message, update the fragment descriptor and 
+     *     then send an ACK, 
+     * d) Consider moving time-consuming tasks to some BH-like 
+     *    mechanisms.
+     */
+
+    if (header->hdr_common.hdr_flags & MCA_PTL_FLAGS_ACK_MATCHED) {
+	int  desc_type ;
 	/* Basic ACK scheme following TCP cases */
 	mca_ptl_elan_send_frag_t *desc;
 
+#if OMPI_PTL_ELAN_ENABLE_GET
+	desc_type = MCA_PTL_ELAN_DESC_GET;
+#else
+	desc_type = MCA_PTL_ELAN_DESC_QDMA;
+#endif
 	/* Get a frag desc and allocate a send desc */
-	desc = mca_ptl_elan_alloc_desc(ptl, NULL, MCA_PTL_ELAN_DESC_QDMA);
+	desc = mca_ptl_elan_alloc_desc(ptl, NULL, desc_type);
 
 	if (NULL == desc) {
 	    ompi_output(0,
@@ -416,25 +433,13 @@ mca_ptl_elan_matched (mca_ptl_base_module_t * ptl,
 	} else {
 	    /* XXX: recv_frag is released a few lines below,
 	     *      pay more attention to timing of the release */ 
+#if OMPI_PTL_ELAN_ENABLE_GET
+	    mca_ptl_elan_get_with_ack (ptl, desc, recv_frag);
+#else
 	    mca_ptl_elan_start_ack (ptl, desc, recv_frag);
+#endif
         }
     }
-#else
-    {
-	/* TODO: Optimized processing fragments 
-	 * Pseudocode, for additional processing of fragments 
-	 * a) (ACK:no, Get:No) 
-	 *    Remove the frag. no need for further processing
-	 * b) (ACK:yes, Get:No) 
-	 *    Send an ACK only
-	 * c) (ACK:yes, Get:yes) 
-	 *     Get a message, update the fragment descriptor and 
-	 *     then send an ACK, 
-	 * d) Consider moving time-consuming tasks to some BH-like 
-	 *    mechanisms.
-	 */
-    }
-#endif
 
     /* Process the fragment */
     set = fetchNset (&((mca_ptl_elan_recv_frag_t *)frag)->frag_progressed, 1);
