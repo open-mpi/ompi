@@ -9,6 +9,7 @@
 #include "include/constants.h"
 #include "runtime/runtime.h"
 #include "util/output.h"
+#include "util/malloc.h"
 #include "threads/mutex.h"
 #include "event/event.h"
 
