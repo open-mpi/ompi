@@ -189,62 +189,62 @@ libmpi_c_mpi_la_SOURCES = \
         finalize.c \
         finalized.c \
         free_mem.c \
-		gather.c \
-		gatherv.c \
-		get_address.c \
-		get_count.c \
-		get_elements.c \
-		get.c \
-		get_processor_name.c \
-		get_version.c \
-		graph_create.c \
-		graph_get.c \
-		graph_map.c \
-		graph_neighbors_count.c \
-		graph_neighbors.c \
-		graphdims_get.c \
-		grequest_complete.c \
-		grequest_start.c \
-		group_c2f.c \
-		group_compare.c \
-		group_difference.c \
-		group_excl.c \
-		group_f2c.c \
-		group_free.c \
-		group_incl.c \
-		group_intersection.c \
-		group_range_excl.c \
-		group_range_incl.c \
-		group_rank.c \
-		group_size.c \
-		group_translate_ranks.c \
-		group_union.c \
-		ibsend.c \
-		info_c2f.c \
-		info_create.c \
-		info_delete.c \
-		info_dup.c \
-		info_f2c.c \
-		info_free.c \
-		info_get.c \
-		info_get_nkeys.c \
-		info_get_nthkey.c \
-		info_get_valuelen.c \
-		info_set.c \
+        gather.c \
+        gatherv.c \
+        get_address.c \
+        get_count.c \
+        get_elements.c \
+        get.c \
+        get_processor_name.c \
+        get_version.c \
+        graph_create.c \
+        graph_get.c \
+        graph_map.c \
+        graph_neighbors_count.c \
+        graph_neighbors.c \
+        graphdims_get.c \
+        grequest_complete.c \
+        grequest_start.c \
+        group_c2f.c \
+        group_compare.c \
+        group_difference.c \
+        group_excl.c \
+        group_f2c.c \
+        group_free.c \
+        group_incl.c \
+        group_intersection.c \
+        group_range_excl.c \
+        group_range_incl.c \
+        group_rank.c \
+        group_size.c \
+        group_translate_ranks.c \
+        group_union.c \
+        ibsend.c \
+        info_c2f.c \
+        info_create.c \
+        info_delete.c \
+        info_dup.c \
+        info_f2c.c \
+        info_free.c \
+        info_get.c \
+        info_get_nkeys.c \
+        info_get_nthkey.c \
+        info_get_valuelen.c \
+        info_set.c \
         init.c \
-		init_thread.c \
-		initialized.c \
-		intercomm_create.c \
-		intercomm_merge.c \
-		iprobe.c \
-		irecv.c \
-		irsend.c \
-		is_thread_main.c \
-		isend.c \
-		issend.c \
-		keyval_create.c \
-		keyval_free.c \
-		lookup_name.c \
+        init_thread.c \
+        initialized.c \
+        intercomm_create.c \
+        intercomm_merge.c \
+        iprobe.c \
+        irecv.c \
+        irsend.c \
+        is_thread_main.c \
+        isend.c \
+        issend.c \
+        keyval_create.c \
+        keyval_free.c \
+        lookup_name.c \
         testall.c \
         testany.c \
         test.c \
@@ -288,45 +288,39 @@ libmpi_c_mpi_la_SOURCES = \
         type_struct.c \
         type_ub.c \
         type_vector.c \
-		unpack_external.c \
-		unpack.c \
-		unpublish_name.c \
-		wait.c \
-		waitall.c \
-		waitany.c \
-		waitsome.c \
-		win_c2f.c \
-		win_call_errhandler.c \
-		win_complete.c  \
-		win_create_errhandler.c \
-		win_create_keyval.c \
-		win_create.c \
-		win_delete_attr.c \
-		win_f2c.c \
-		win_fence.c \
-		win_free_keyval.c \
-		win_free.c \
-		win_get_attr.c \
-		win_get_errhandler.c \
-		win_get_group.c \
-		win_get_name.c  \
-		win_lock.c \
-		win_post.c \
-		win_set_attr.c \
-		win_set_errhandler.c \
-		win_set_name.c \
-		win_start.c \
-		win_test.c \
-		win_unlock.c \
-		win_wait.c \
-		wtick.c \
-		wtime.c 
-
-
-
-
-
-
+        unpack_external.c \
+        unpack.c \
+        unpublish_name.c \
+        wait.c \
+        waitall.c \
+        waitany.c \
+        waitsome.c \
+        win_c2f.c \
+        win_call_errhandler.c \
+        win_complete.c  \
+        win_create_errhandler.c \
+        win_create_keyval.c \
+        win_create.c \
+        win_delete_attr.c \
+        win_f2c.c \
+        win_fence.c \
+        win_free_keyval.c \
+        win_free.c \
+        win_get_attr.c \
+        win_get_errhandler.c \
+        win_get_group.c \
+        win_get_name.c  \
+        win_lock.c \
+        win_post.c \
+        win_set_attr.c \
+        win_set_errhandler.c \
+        win_set_name.c \
+        win_start.c \
+        win_test.c \
+        win_unlock.c \
+        win_wait.c \
+        wtick.c \
+        wtime.c 
 
 EXTRA_DIST = $(libmpi_c_mpi_la_SOURCES) 
 # Conditionally install the header files
