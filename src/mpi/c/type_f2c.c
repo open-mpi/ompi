@@ -6,6 +6,9 @@
 
 #include "mpi.h"
 #include "mpi/c/bindings.h"
+#include "errhandler/errhandler.h"
+#include "communicator/communicator.h"
+#include "datatype/datatype.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Type_f2c = PMPI_Type_f2c
@@ -15,6 +18,15 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
-MPI_Datatype MPI_Type_f2c(MPI_Fint datatype) {
-    return (MPI_Datatype)0;
+MPI_Datatype MPI_Type_f2c(MPI_Fint datatype)
+{
+    /* check the arguments */
+    if (MPI_PARAM_CHECK) {
+        if (0 > datatype || datatype >= ompi_pointer_array_get_size(ompi_datatype_f_to_c_table)) {
+            return MPI_DATATYPE_NULL;
+        }
+    }
+    /* return the index */
+    return ompi_datatype_f_to_c_table->addr[datatype];
 }
+
