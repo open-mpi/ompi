@@ -46,6 +46,22 @@ AC_DEFINE_UNQUOTED(LAM_ENABLE_MEM_PROFILE, $WANT_MEM_PROFILE,
 # Developer debugging
 #
 
+AC_MSG_CHECKING([if want developer-level compiler pickyness])
+AC_ARG_ENABLE(picky, 
+    AC_HELP_STRING([--enable-picky],
+                   [enable developer-level compiler pickyness (not for general MPI users!) (default: enabled in CVS source trees)]))
+if test "$enable_picky" != "no" -a -d CVS; then
+    AC_MSG_RESULT([yes])
+    WANT_PICKY_COMPILER=1
+else
+    AC_MSG_RESULT([no])
+    WANT_PICKY_COMPILER=0
+fi
+
+#
+# Developer debugging
+#
+
 AC_MSG_CHECKING([if want developer-level debugging code])
 AC_ARG_ENABLE(debug, 
     AC_HELP_STRING([--enable-debug],
