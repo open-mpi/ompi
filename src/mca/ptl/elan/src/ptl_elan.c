@@ -267,6 +267,11 @@ mca_ptl_elan_isend (struct mca_ptl_base_module_t *ptl,
 	}
     }
 
+#if OMPI_PTL_ELAN_ZERO_FFRAG
+    if (size > (OMPI_PTL_ELAN_MAX_QSIZE - sizeof(mca_ptl_base_header_t)))
+	size = 0;
+#endif
+
     ((struct mca_ptl_elan_send_request_t *)sendreq)->req_frag = desc;
     rc = mca_ptl_elan_start_desc(desc, 
 	    (struct mca_ptl_elan_peer_t *)ptl_peer,
