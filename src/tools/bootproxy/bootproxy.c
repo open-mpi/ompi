@@ -25,9 +25,6 @@ main(int argc, char *argv[])
 
     ompi_init(argc, argv);
 
-    /* print our contact information */
-    fprintf(stdout, "@BOOTPROXY@\n");
-
     sched = OBJ_NEW(ompi_rte_node_schedule_t);
 
     /* recv_schedule wants an already initialized ompi_list_t */

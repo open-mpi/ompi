@@ -44,4 +44,18 @@ extern "C" {
 }
 #endif
 
+/*
+ * Module variables
+ */
+/* should we avoid running .profile, even if the shell says we should */
+extern int mca_pcm_rsh_no_profile;
+/* should we assume same shell on remote as locally? */
+extern int mca_pcm_rsh_fast;
+/* should we ignore things on stderr? */
+extern int mca_pcm_rsh_ignore_stderr;
+/* how should we fire procs up on the remote side? */
+extern char *mca_pcm_rsh_agent;
+
+extern int mca_pcm_rsh_output;
+
 #endif /* MCA_PCM_RSH_H_ */

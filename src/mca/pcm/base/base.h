@@ -39,6 +39,11 @@ extern "C" {
 
     int mca_pcm_base_build_base_env(char **in_env, char ***out_envp);
 
+    int mca_pcm_base_ioexecvp(char **cmdv, int showout, char *outbuff, 
+                                   int outbuffsize, int stderr_is_err);
+
+    char* mca_pcm_base_get_username(ompi_rte_node_allocation_t *node);
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

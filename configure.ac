@@ -411,7 +411,7 @@ ompi_show_title "Header file tests"
 # SA_RESTART in signal.h
 # sa_len in struct sockaddr
 # union semun in sys/sem.h
-AC_CHECK_HEADERS([alloca.h])
+AC_CHECK_HEADERS([alloca.h sys/select.h strings.h])
 AC_CHECK_HEADERS([stdbool.h], [have_stdbool_h=1], [have_stdbool_h=0])
 
 # Note that sometimes we have <stdbool.h>, but it doesn't work (e.g.,

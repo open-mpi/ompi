@@ -110,9 +110,9 @@ mca_pcm_rsh_component_open(void)
 				      "ssh");
 
   mca_pcm_rsh_param_no_profile =
-    mca_base_param_register_int("pcm", "rsh", "no_profile", NULL, 0);
+    mca_base_param_register_int("pcm", "rsh", "no_profile", NULL, 1);
   mca_pcm_rsh_param_fast =
-    mca_base_param_register_int("pcm", "rsh", "fast", NULL, 0);
+    mca_base_param_register_int("pcm", "rsh", "fast", NULL, 1);
   mca_pcm_rsh_param_ignore_stderr =
     mca_base_param_register_int("pcm", "rsh", "ignore_stderr", NULL, 0);
 
@@ -173,6 +173,17 @@ mca_pcm_rsh_init(int *priority,
         mca_pcm_rsh_llm.llm_deallocate_resources;
 
     ompi_output_verbose(10, mca_pcm_rsh_output, "stop llm selection");
+
+    /* DO SOME PARAM "FIXING" */
+    /* BWB - remove param fixing before 1.0 */
+    if (0 == mca_pcm_rsh_no_profile) {
+        printf("WARNING: reseting mca_pcm_rsh_no_profile to 1\n");
+        mca_pcm_rsh_no_profile = 1;
+    }
+    if (0 == mca_pcm_rsh_fast) {
+        printf("WARNING: reseting mca_pcm_rsh_fast to 1\n");
+        mca_pcm_rsh_fast = 1;
+    }
 
     return &mca_pcm_rsh_1_0_0;
 }
