@@ -3,7 +3,6 @@
  */
 
 #include "mca/allocator/bucket/allocator_bucket_alloc.h"
-#include <stdio.h> 
 /**
   * The define controls the size in bytes of the 1st bucket and hence every one
   * afterwards.
@@ -134,9 +133,6 @@ void * mca_allocator_bucket_alloc(mca_allocator_t * mem, size_t size)
   */
 void * mca_allocator_bucket_alloc_align(mca_allocator_t * mem, size_t size, size_t alignment)
 {
-    /** 
-      * not yet working correctly 
-     **/
     mca_allocator_bucket_t * mem_options = (mca_allocator_bucket_t *) mem; 
     int bucket_num = 1;
     void * ptr;
@@ -167,9 +163,8 @@ void * mca_allocator_bucket_alloc_align(mca_allocator_t * mem, size_t size, size
     /* we want to align the memory right after the header, so we go past the header */
     aligned_memory = (char *) (first_chunk + 1);
     /* figure out how much the alignment is off by */ 
-    alignment_off = (unsigned int)  aligned_memory % alignment;
-    printf("%d ", alignment_off);
-    aligned_memory += alignment_off;
+    alignment_off = ((size_t)  aligned_memory) % alignment;
+    aligned_memory += (alignment - alignment_off);
     /* we now have an aligned piece of memory. Now we have to put the chunk header
      * right before the aligned memory                           */
     first_chunk = (mca_allocator_bucket_chunk_header_t *) aligned_memory - 1;
@@ -189,8 +184,6 @@ void * mca_allocator_bucket_alloc_align(mca_allocator_t * mem, size_t size, size
     /* add the segment into the segment list */
     segment_header->next_segment = mem_options->buckets[bucket_num].segment_head;
     mem_options->buckets[bucket_num].segment_head = segment_header;
-    printf("break3\n");
-    fflush(stdout);
     if(allocated_size >= bucket_size) {
         mem_options->buckets[bucket_num].free_chunk =
                         (mca_allocator_bucket_chunk_header_t *) ((char *) chunk + bucket_size);
