@@ -4,11 +4,11 @@ function, put "DONE" in the column.  If the function has been fully
 tested, put "TESTED" in the column.  If a function does not apply to a
 given bindings, put "NA" in the column.
 
-                            C       F77       C++      F90
+                                C       F77       C++      F90
 
-errors_are_fatal handler    DONE    NA
-errors_return handler       DONE    NA                 NA
-errors_throw_exceptions     NA      NA                 NA
+errors_are_fatal handler        DONE    NA
+errors_return handler           DONE    NA                 NA
+errors_throw_exceptions         NA      NA                 NA
 
 MPI_DUP_FN
 MPI_COMM_DUP_FN
@@ -21,79 +21,79 @@ MPI_Add_error_class
 MPI_Add_error_code
 MPI_Add_error_string
 MPI_Address
-MPI_Allgather
-MPI_Allgatherv
+MPI_Allgather                   DONE
+MPI_Allgatherv                  Jeff
 MPI_Alloc_mem
-MPI_Allreduce 
-MPI_Alltoall
-MPI_Alltoallv
-MPI_Alltoallw
-MPI_Attr_delete
-MPI_Attr_get
-MPI_Attr_put
-MPI_Barrier
-MPI_Bcast
+MPI_Allreduce                   Jeff
+MPI_Alltoall                    DONE
+MPI_Alltoallv                   Jeff
+MPI_Alltoallw                   Jeff
+MPI_Attr_delete                 Vishal
+MPI_Attr_get                    Vishal
+MPI_Attr_put                    Vishal
+MPI_Barrier                     DONE
+MPI_Bcast                       DONE
 MPI_Bsend
 MPI_Bsend_init 
 MPI_Buffer_attach
 MPI_Buffer_detach
 MPI_Cancel
-MPI_Cart_coords
-MPI_Cart_create
-MPI_Cart_get
-MPI_Cart_map
-MPI_Cart_rank
-MPI_Cart_shift
-MPI_Cart_sub
-MPI_Cartdim_get
+MPI_Cart_coords                 Anju
+MPI_Cart_create                 Anju
+MPI_Cart_get                    Anju
+MPI_Cart_map                    Anju
+MPI_Cart_rank                   Anju
+MPI_Cart_shift                  Anju
+MPI_Cart_sub                    Anju
+MPI_Cartdim_get                 Anju
 MPI_Close_port
 MPI_Comm_accept
 MPI_Comm_c2f
-MPI_Comm_call_errhandler    DONE
-MPI_Comm_compare            Edgar
+MPI_Comm_call_errhandler        DONE
+MPI_Comm_compare                Edgar
 MPI_Comm_connect
-MPI_Comm_create_errhandler  DONE
-MPI_Comm_create_keyval
-MPI_Comm_create             Edgar
-MPI_Comm_delete_attr
+MPI_Comm_create_errhandler      DONE
+MPI_Comm_create_keyval          Vishal
+MPI_Comm_create                 Edgar
+MPI_Comm_delete_attr            Vishal
 MPI_Comm_disconnect
-MPI_Comm_dup                Edgar
-MPI_Comm_f2c
-MPI_Comm_free_keyval
-MPI_Comm_free               Edgar
-MPI_Comm_get_attr
-MPI_Comm_get_errhandler     DONE
-MPI_Comm_get_name           Edgar
+MPI_Comm_dup                    Edgar
+MPI_Comm_f2c                    Edgar
+MPI_Comm_free_keyval            Vishal
+MPI_Comm_free                   Edgar
+MPI_Comm_get_attr               Vishal
+MPI_Comm_get_errhandler         DONE
+MPI_Comm_get_name               Edgar
 MPI_Comm_get_parent
-MPI_Comm_group              Edgar
+MPI_Comm_group                  Edgar
 MPI_Comm_join
-MPI_Comm_rank               Edgar
-MPI_Comm_remote_group       Edgar
-MPI_Comm_remote_size        Edgar
-MPI_Comm_set_attr
-MPI_Comm_set_errhandler     DONE
-MPI_Comm_set_name           Edgar
-MPI_Comm_size               Edgar
+MPI_Comm_rank                   Edgar
+MPI_Comm_remote_group           Edgar
+MPI_Comm_remote_size            Edgar
+MPI_Comm_set_attr               Vishal
+MPI_Comm_set_errhandler         DONE
+MPI_Comm_set_name               Edgar
+MPI_Comm_size                   Edgar
 MPI_Comm_spawn
 MPI_Comm_spawn_multiple
-MPI_Comm_split              Edgar
-MPI_Comm_test_inter         Edgar
-MPI_Dims_create
-MPI_Errhandler_c2f          DONE
-MPI_Errhandler_create       DONE
-MPI_Errhandler_f2c          DONE
-MPI_Errhandler_free         DONE
-MPI_Errhandler_get          DONE
-MPI_Errhandler_set          DONE
-MPI_Error_class
-MPI_Error_string
-MPI_Exscan
+MPI_Comm_split                  Edgar
+MPI_Comm_test_inter             Edgar
+MPI_Dims_create                 Anju
+MPI_Errhandler_c2f              DONE
+MPI_Errhandler_create           DONE
+MPI_Errhandler_f2c              DONE
+MPI_Errhandler_free             DONE
+MPI_Errhandler_get              DONE
+MPI_Errhandler_set              DONE
+MPI_Error_class                 
+MPI_Error_string                
+MPI_Exscan                      Jeff
 MPI_File_c2f
 MPI_File_f2c
-MPI_File_call_errhandler
-MPI_File_create_errhandler
-MPI_File_set_errhandler
-MPI_File_get_errhandler
+MPI_File_call_errhandler        Jeff
+MPI_File_create_errhandler      Jeff
+MPI_File_set_errhandler         Jeff
+MPI_File_get_errhandler         Jeff
 MPI_File_open
 MPI_File_close
 MPI_File_delete
@@ -145,74 +145,74 @@ MPI_File_get_type_extent
 MPI_File_set_atomicity
 MPI_File_get_atomicity
 MPI_File_sync
-MPI_Finalize
+MPI_Finalize                    DONE
 MPI_Finalized
 MPI_Free_mem
-MPI_Gather
-MPI_Gatherv
+MPI_Gather                      DONE 
+MPI_Gatherv                     Jeff
 MPI_Get_address
-MPI_Get_count				George
-MPI_Get_elements			George
+MPI_Get_count                   George
+MPI_Get_elements                George
 MPI_Get
 MPI_Get_processor_name
 MPI_Get_version
-MPI_Graph_create
-MPI_Graph_get
-MPI_Graph_map
-MPI_Graph_neighbors_count
-MPI_Graph_neighbors
-MPI_Graphdims_get
+MPI_Graph_create                Anju
+MPI_Graph_get                   Anju
+MPI_Graph_map                   Anju
+MPI_Graph_neighbors_count       Anju
+MPI_Graph_neighbors             Anju 
+MPI_Graphdims_get               Anju
 MPI_Grequest_complete
 MPI_Grequest_start
-MPI_Group_c2f
-MPI_Group_compare
-MPI_Group_difference
-MPI_Group_excl
-MPI_Group_f2c
-MPI_Group_free
-MPI_Group_incl
-MPI_Group_intersection
-MPI_Group_range_excl
-MPI_Group_range_incl
-MPI_Group_rank
-MPI_Group_size
-MPI_Group_translate_ranks
-MPI_Group_union
+MPI_Group_c2f                   Rich
+MPI_Group_compare               Rich
+MPI_Group_difference            Rich
+MPI_Group_excl                  DONE
+MPI_Group_f2c                   Rich
+MPI_Group_free                  Rich
+MPI_Group_incl                  Rich
+MPI_Group_intersection          Rich
+MPI_Group_range_excl            Rich
+MPI_Group_range_incl            Rich
+MPI_Group_rank                  Rich
+MPI_Group_size                  Rich
+MPI_Group_translate_ranks       Rich
+MPI_Group_union                 Rich
 MPI_Ibsend
-MPI_Info_c2f
-MPI_Info_create
-MPI_Info_delete
-MPI_Info_dup
-MPI_Info_f2c
-MPI_Info_free
-MPI_Info_get
-MPI_Info_get_nkeys
-MPI_Info_get_nthkey
-MPI_Info_get_valuelen
-MPI_Info_set
-MPI_Init
+MPI_Info_c2f                    Anju
+MPI_Info_create                 Anju
+MPI_Info_delete                 Anju
+MPI_Info_dup                    Anju
+MPI_Info_f2c                    Anju
+MPI_Info_free                   Anju
+MPI_Info_get                    Anju
+MPI_Info_get_nkeys              Anju
+MPI_Info_get_nthkey             Anju
+MPI_Info_get_valuelen           Anju
+MPI_Info_set                    Anju
+MPI_Init                        DONE
 MPI_Initialized
 MPI_Init_thread
-MPI_Intercomm_create        Edgar
-MPI_Intercomm_merge         Edgar
+MPI_Intercomm_create            Edgar
+MPI_Intercomm_merge             Edgar
 MPI_Iprobe
 MPI_Irecv
 MPI_Irsend
 MPI_Isend
 MPI_Issend
 MPI_Is_thread_main
-MPI_Keyval_create
-MPI_Keyval_free
+MPI_Keyval_create               Vishal
+MPI_Keyval_free                 Vishal
 MPI_Lookup_name
-MPI_Op_c2f                  DONE
-MPI_Op_create               DONE     
+MPI_Op_c2f                      DONE
+MPI_Op_create                   DONE     
 MPI_Open_port
-MPI_Op_f2c                  DONE
-MPI_Op_free                 DONE
-MPI_Pack_external		George
-MPI_Pack_external_size		George
-MPI_Pack			George
-MPI_Pack_size			George
+MPI_Op_f2c                      DONE
+MPI_Op_free                     DONE
+MPI_Pack_external               George
+MPI_Pack_external_size          George
+MPI_Pack                        DONE
+MPI_Pack_size                   DONE
 MPI_Pcontrol
 MPI_Probe
 MPI_Publish_name
@@ -220,8 +220,8 @@ MPI_Put
 MPI_Query_thread
 MPI_Recv_init
 MPI_Recv
-MPI_Reduce
-MPI_Reduce_scatter
+MPI_Reduce                      Jeff
+MPI_Reduce_scatter              Jeff
 MPI_Register_datarep
 MPI_Request_c2f
 MPI_Request_f2c
@@ -229,9 +229,9 @@ MPI_Request_free
 MPI_Request_get_status
 MPI_Rsend
 MPI_Rsend_init
-MPI_Scan
-MPI_Scatter
-MPI_Scatterv
+MPI_Scan                        Jeff
+MPI_Scatter                     Jeff
+MPI_Scatterv                    Jeff
 MPI_Send_init
 MPI_Send
 MPI_Sendrecv
@@ -249,8 +249,8 @@ MPI_Testany
 MPI_Test
 MPI_Test_cancelled
 MPI_Testsome
-MPI_Topo_test
-MPI_Type_c2f
+MPI_Topo_test                   Anju
+MPI_Type_c2f                    George
 MPI_Type_commit			George
 MPI_Type_contiguous		George
 MPI_Type_create_darray		George
@@ -259,18 +259,18 @@ MPI_Type_create_f90_integer	George
 MPI_Type_create_f90_real	George
 MPI_Type_create_hindexed	George
 MPI_Type_create_hvector		George
-MPI_Type_create_keyval
+MPI_Type_create_keyval          Vishal
 MPI_Type_create_indexed_block	George
 MPI_Type_create_struct		George
 MPI_Type_create_subarray	George
 MPI_Type_create_resized 	George
-MPI_Type_delete_attr
+MPI_Type_delete_attr            Vishal
 MPI_Type_dup			George
 MPI_Type_extent			George
 MPI_Type_free			George
-MPI_Type_free_keyval
+MPI_Type_free_keyval            Vishal
 MPI_Type_f2c			George
-MPI_Type_get_attr	
+MPI_Type_get_attr               Vishal
 MPI_Type_get_contents		George
 MPI_Type_get_envelope		George
 MPI_Type_get_extent		George
@@ -281,13 +281,13 @@ MPI_Type_hvector		George
 MPI_Type_indexed		George
 MPI_Type_lb			George
 MPI_Type_match_size		George
-MPI_Type_set_attr
+MPI_Type_set_attr               Vishal
 MPI_Type_set_name
 MPI_Type_size			George
 MPI_Type_struct			George
 MPI_Type_ub			George
 MPI_Type_vector			George
-MPI_Unpack			George
+MPI_Unpack			DONE
 MPI_Unpublish_name
 MPI_Unpack_external 		George
 MPI_Waitall
@@ -295,24 +295,24 @@ MPI_Waitany
 MPI_Wait
 MPI_Waitsome
 MPI_Win_c2f
-MPI_Win_call_errhandler
+MPI_Win_call_errhandler         Jeff
 MPI_Win_complete
 MPI_Win_create
-MPI_Win_create_errhandler
-MPI_Win_create_keyval
-MPI_Win_delete_attr
+MPI_Win_create_errhandler       Jeff
+MPI_Win_create_keyval           Vishal
+MPI_Win_delete_attr             Vishal
 MPI_Win_f2c
 MPI_Win_fence
 MPI_Win_free
-MPI_Win_free_keyval
-MPI_Win_get_attr
-MPI_Win_get_errhandler
+MPI_Win_free_keyval             Vishal
+MPI_Win_get_attr                Vishal
+MPI_Win_get_errhandler          Jeff
 MPI_Win_get_group
 MPI_Win_get_name
 MPI_Win_lock
 MPI_Win_post
-MPI_Win_set_attr
-MPI_Win_set_errhandler
+MPI_Win_set_attr                Vishal
+MPI_Win_set_errhandler          Jeff
 MPI_Win_set_name
 MPI_Win_start
 MPI_Win_test
