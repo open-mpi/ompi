@@ -229,6 +229,7 @@ ompi_attr_create_keyval(ompi_attribute_type_t type,
 int 
 ompi_attr_free_keyval(ompi_attribute_type_t type, int *key, bool predefined)
 {
+    int ret;
     ompi_attrkey_item_t *key_item;
 
     /* Protect against the user calling ompi_attr_destroy and then
@@ -240,11 +241,11 @@ ompi_attr_free_keyval(ompi_attribute_type_t type, int *key, bool predefined)
     /* Find the key-value pair */
 
     OMPI_THREAD_LOCK(&alock);
-    key_item = (ompi_attrkey_item_t*) 
-	ompi_hash_table_get_value_uint32(keyval_hash, *key);
+    ret = ompi_hash_table_get_value_uint32(keyval_hash, *key, 
+					   (void **) &key_item);
     OMPI_THREAD_UNLOCK(&alock);
   
-    if ((NULL == key_item) || (key_item->attr_type != type) ||
+    if ((OMPI_SUCCESS != ret) || (NULL == key_item) || (key_item->attr_type != type) ||
 	((!predefined) && (key_item->attr_flag & OMPI_KEYVAL_PREDEFINED))) {
 	return OMPI_ERR_BAD_PARAM;
     }
@@ -269,7 +270,7 @@ ompi_attr_delete(ompi_attribute_type_t type, void *object,
                  bool predefined, bool need_lock) 
 {
     ompi_attrkey_item_t *key_item;
-    int ret, err;
+    int ret = OMPI_SUCCESS, err;
     void *attr;
 
     /* Protect against the user calling ompi_attr_destroy and then
@@ -290,62 +291,65 @@ ompi_attr_delete(ompi_attribute_type_t type, void *object,
 
     /* Check if the key is valid in the key-attribute hash */
 
-    key_item = (ompi_attrkey_item_t*) 
-	ompi_hash_table_get_value_uint32(keyval_hash, key);
+    ret = ompi_hash_table_get_value_uint32(keyval_hash, key, 
+					   (void **) &key_item);
 
-    if ((NULL == key_item) || (key_item->attr_type!= type) ||
+    if ( (OMPI_SUCCESS != ret)||(NULL == key_item)||(key_item->attr_type!= type)||
 	((!predefined) && (key_item->attr_flag & OMPI_KEYVAL_PREDEFINED))) {
-        if (need_lock) {
-            OMPI_THREAD_UNLOCK(&alock);
-        }
-	return OMPI_ERR_BAD_PARAM;
+	ret = OMPI_ERR_BAD_PARAM;
+	goto exit;
     }
 
     /* Ensure that we don't have an empty keyhash */
 
     if (NULL == keyhash) {
-        if (need_lock) {
-            OMPI_THREAD_UNLOCK(&alock);
-        }
-        return OMPI_ERR_BAD_PARAM;
+        ret = OMPI_ERR_BAD_PARAM;
+	goto exit;
     }
 
     /* Check if the key is valid for the communicator/window/dtype. If
        yes, then delete the attribute and key entry from the CWD hash */
 
-    attr = ompi_hash_table_get_value_uint32(keyhash, key);
-    switch(type) {
-    case COMM_ATTR:
-	DELETE_ATTR_OBJECT(communicator, attr);
-	break;
+    ret = ompi_hash_table_get_value_uint32(keyhash, key, &attr);
 
-    case WIN_ATTR:
-	DELETE_ATTR_OBJECT(win, attr);
-	break;
-
-    case TYPE_ATTR:
-	DELETE_ATTR_OBJECT(datatype, attr);
-	break;
-
-    default:
-        /* show_help */
-        return MPI_ERR_INTERN;
-    }
-
-    ret = ompi_hash_table_remove_value_uint32(keyhash, key);
-    if (need_lock) {
-        OMPI_THREAD_UNLOCK(&alock);
-    }
-    if (OMPI_SUCCESS != ret) {
-        return ret; 
-    }
+    if ( OMPI_SUCCESS == ret ) {
+	switch(type) {
+	    case COMM_ATTR:
+		DELETE_ATTR_OBJECT(communicator, attr);
+		break;
+		
+	    case WIN_ATTR:
+		DELETE_ATTR_OBJECT(win, attr);
+		break;
+		
+	    case TYPE_ATTR:
+		DELETE_ATTR_OBJECT(datatype, attr);
+		break;
+		
+	    default:
+		/* show_help */
+		ret = MPI_ERR_INTERN;
+		goto exit;
+	}
     
+	ret = ompi_hash_table_remove_value_uint32(keyhash, key);
+	if (OMPI_SUCCESS != ret) {
+	    goto exit;
+	}
+    }
+
+
+ exit:
+    if (need_lock) {
+	OMPI_THREAD_UNLOCK(&alock);
+    }	
+
     /* Decrement the ref count for the key, and if ref count is 0,
        remove the key (the destructor deletes the key implicitly for
        this object */
-
+    
     OBJ_RELEASE(key_item);
-    return MPI_SUCCESS;
+    return ret;
 }
 
 
@@ -377,12 +381,12 @@ ompi_attr_set(ompi_attribute_type_t type, void *object,
     if (need_lock) {
         OMPI_THREAD_LOCK(&alock);
     }
-    key_item = (ompi_attrkey_item_t *) 
-	ompi_hash_table_get_value_uint32(keyval_hash, key);
+    ret = ompi_hash_table_get_value_uint32(keyval_hash, key, 
+					   (void **) &key_item);
 
     /* If key not found */
 
-    if ((NULL == key_item) || (key_item->attr_type != type) ||
+    if ( (OMPI_SUCCESS != ret )||(NULL == key_item) || (key_item->attr_type != type) ||
 	((!predefined) && (key_item->attr_flag & OMPI_KEYVAL_PREDEFINED))) {
         if (need_lock) {
             OMPI_THREAD_UNLOCK(&alock);
@@ -399,8 +403,8 @@ ompi_attr_set(ompi_attribute_type_t type, void *object,
     /* Now see if the key is present in the CWD object. If so, delete
        the old attribute in the key */
 
-    oldattr = ompi_hash_table_get_value_uint32(*keyhash, key);
-    if (oldattr != NULL) {
+    ret = ompi_hash_table_get_value_uint32(*keyhash, key, &oldattr);
+    if ( OMPI_SUCCESS == ret )  {
 	switch(type) {
 	case COMM_ATTR:
 	    DELETE_ATTR_OBJECT(communicator, oldattr);
@@ -443,6 +447,7 @@ int
 ompi_attr_get(ompi_hash_table_t *keyhash, int key, void *attribute,
               int *flag)
 {
+    int ret;
     void *attr;
     ompi_attrkey_item_t *key_item;
 
@@ -453,10 +458,10 @@ ompi_attr_get(ompi_hash_table_t *keyhash, int key, void *attribute,
 
     *flag = 0;
     OMPI_THREAD_LOCK(&alock);
-    key_item = (ompi_attrkey_item_t *) 
-	ompi_hash_table_get_value_uint32(keyval_hash, key);
+    ret = ompi_hash_table_get_value_uint32(keyval_hash, key, 
+					   (void**) &key_item);
 
-    if (NULL == key_item) {
+    if ( OMPI_ERR_NOT_FOUND == ret ) {
         OMPI_THREAD_UNLOCK(&alock);
 	return MPI_KEYVAL_INVALID;
     }
@@ -469,9 +474,9 @@ ompi_attr_get(ompi_hash_table_t *keyhash, int key, void *attribute,
         return MPI_SUCCESS;
     }
 
-    attr = ompi_hash_table_get_value_uint32(keyhash, key);
+    ret = ompi_hash_table_get_value_uint32(keyhash, key, &attr);
     OMPI_THREAD_UNLOCK(&alock);
-    if (NULL != attr) {
+    if ( OMPI_SUCCESS == ret ) {
 	*((void **) attribute) = attr;
 	*flag = 1;
     }
@@ -522,10 +527,10 @@ ompi_attr_copy_all(ompi_attribute_type_t type, void *old_object,
         /* Get the attr_item in the main hash - so that we know what
            the copy_attr_fn is */
 
-        hash_value = (ompi_attrkey_item_t *)
-            ompi_hash_table_get_value_uint32(keyval_hash, key);
+	err = ompi_hash_table_get_value_uint32(keyval_hash, key, 
+					       (void **) &hash_value);
 
-        assert (hash_value != NULL);
+	/* assert (err == OMPI_SUCCESS); */
 
         switch (type) {
         case COMM_ATTR:
