@@ -55,7 +55,12 @@ AC_DEFUN([MCA_CONFIGURE_STUB],[
         fi
     fi
 
-    io_romio_flags="CFLAGS="'"'"$CFLAGS"'"'" CPPFLAGS="'"'"$CPPFLAGS"'"'" FFLAGS="'"'"$FFLAGS"'"'" LDFLAGS="'"'"$LSFLAGS"'"'" --$shared-shared --$static-static $io_romio_flags"
+    prefix_arg=
+    if test -n "$prefix" -a "$prefix" != "NONE"; then
+        prefix_arg="--prefix=$prefix"
+    fi
+
+    io_romio_flags="CFLAGS="'"'"$CFLAGS"'"'" CPPFLAGS="'"'"$CPPFLAGS"'"'" FFLAGS="'"'"$FFLAGS"'"'" LDFLAGS="'"'"$LSFLAGS"'"'" --$shared-shared --$static-static $io_romio_flags $prefix_arg"
     AC_MSG_RESULT([$io_romio_flags])
 
     ompi_show_subtitle "Configuring ROMIO distribution"
