@@ -316,7 +316,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         goto error;
     }
 
-#if OMPI_HAVE_THREADS
+#if OMPI_HAVE_THREADS == 0
     ompi_progress_events(0);
 #endif
 
