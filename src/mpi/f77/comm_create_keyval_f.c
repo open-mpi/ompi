@@ -83,6 +83,6 @@ void mpi_comm_create_keyval_f(void *comm_copy_attr_fn,
 				       FUNC_NAME)
 	*ierr = OMPI_INT_2_FINT(c_err);
     } else {
-        *ierr = MPI_SUCCESS;
+        *ierr = OMPI_INT_2_FINT(MPI_SUCCESS);
     }
 }

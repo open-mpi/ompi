@@ -79,6 +79,6 @@ void mpi_keyval_create_f(void *copy_attr_fn, void *delete_attr_fn,
 				       FUNC_NAME);
 	*ierr = OMPI_INT_2_FINT(c_err);
     } else {
-        *ierr = MPI_SUCCESS;
+        *ierr = OMPI_INT_2_FINT(MPI_SUCCESS);
     }
 }
