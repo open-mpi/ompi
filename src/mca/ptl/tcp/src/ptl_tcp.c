@@ -24,14 +24,14 @@
 mca_ptl_tcp_t mca_ptl_tcp = {
     {
     &mca_ptl_tcp_module.super,
-    1,
-    sizeof(mca_ptl_tcp_send_frag_t),
-    0, /* ptl_exclusivity */
-    0, /* ptl_latency */
-    0, /* ptl_andwidth */
-    0, /* ptl_frag_first_size */
-    0, /* ptl_frag_min_size */
-    0, /* ptl_frag_max_size */
+    1, /* max size of request cache */
+    sizeof(mca_ptl_tcp_send_frag_t), /* bytes required by ptl for a request */
+    0, /* max size of first fragment */
+    0, /* min fragment size */
+    0, /* max fragment size */
+    0, /* exclusivity */
+    0, /* latency */
+    0, /* bandwidth */
     MCA_PTL_PUT,  /* ptl flags */
     mca_ptl_tcp_add_procs,
     mca_ptl_tcp_del_procs,
