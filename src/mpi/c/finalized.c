@@ -23,7 +23,6 @@ static const char FUNC_NAME[] = "MPI_Finalized";
 int MPI_Finalized(int *flag) 
 {
   if (MPI_PARAM_CHECK) {
-    OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
     if (NULL == flag) {
       return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
     }
