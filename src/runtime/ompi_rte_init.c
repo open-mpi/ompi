@@ -495,6 +495,26 @@ ompi_rte_int_valuepair_destruct(ompi_object_t *obj)
     if (NULL != valpair->value) free(valpair->value);
 }
 
+/** constructor for \c ompi_startup_shutdown_message_t */
+static
+void
+ompi_startup_shutdown_message_construct(ompi_startup_shutdown_message_t *msg)
+{
+    msg->msg = NULL;
+}
+
+
+/** destructor for \c ompi_startup_shutdown_message_t */
+static
+void
+ompi_startup_shutdown_message_destruct(ompi_startup_shutdown_message_t *msg)
+{
+    if (NULL != msg->msg) {
+	OBJ_RELEASE(msg->msg);
+    }
+}
+
+
 /** create instance information for \c ompi_rte_node_schedule_t */
 OBJ_CLASS_INSTANCE(ompi_rte_node_schedule_t, ompi_list_item_t,
                    ompi_rte_int_node_schedule_construct,
@@ -510,3 +530,7 @@ OBJ_CLASS_INSTANCE(ompi_rte_valuepair_t, ompi_list_item_t,
 /** create instance information for \c ompi_rte_node_allocation_data_t */
 OBJ_CLASS_INSTANCE(ompi_rte_node_allocation_data_t, ompi_object_t, 
                    NULL, NULL);
+/** create instance information for \c ompi_startup_shutdown_message_t */
+OBJ_CLASS_INSTANCE(ompi_startup_shutdown_message_t, ompi_list_item_t,
+                   ompi_startup_shutdown_message_construct,
+                   ompi_startup_shutdown_message_destruct);
