@@ -163,48 +163,45 @@ void mca_gpr_proxy_triggers_inactive(mca_ns_base_jobid_t jobid)
 }
 
 
-int mca_gpr_proxy_assume_ownership(char *segment)
+int mca_gpr_proxy_assign_ownership(char *segment, mca_ns_base_jobid_t jobid)
 {
     ompi_buffer_t cmd, answer;
     mca_gpr_cmd_flag_t command;
     int recv_tag=MCA_OOB_TAG_GPR;
     int32_t response;
-    mca_ns_base_jobid_t jobid;
 
     if (mca_gpr_proxy_debug) {
-	ompi_output(0, "gpr_proxy_assume_ownership entered for segment %s", segment);
+	ompi_output(0, "gpr_proxy_assign_ownership entered for segment %s", segment);
     }
 
-    jobid = ompi_name_server.get_jobid(ompi_rte_get_self());
-
     if (mca_gpr_proxy_compound_cmd_mode) {
-	return mca_gpr_base_pack_assume_ownership(mca_gpr_proxy_compound_cmd,
+	return mca_gpr_base_pack_assign_ownership(mca_gpr_proxy_compound_cmd,
 						  mca_gpr_proxy_silent_mode,
 						  jobid, segment);
     }
 
     if (OMPI_SUCCESS != ompi_buffer_init(&cmd, 0)) {
-	return OMPI_ERROR;
+	   return OMPI_ERROR;
     }
-    if (OMPI_SUCCESS != mca_gpr_base_pack_assume_ownership(cmd, mca_gpr_proxy_silent_mode,
+    if (OMPI_SUCCESS != mca_gpr_base_pack_assign_ownership(cmd, mca_gpr_proxy_silent_mode,
 							   jobid, segment)) {
-	goto CLEANUP;
+	   goto CLEANUP;
     }
 
     if (0 > mca_oob_send_packed(mca_gpr_my_replica, cmd, MCA_OOB_TAG_GPR, 0)) {
-	goto CLEANUP;
+	   goto CLEANUP;
     }
 
 
     if (mca_gpr_proxy_silent_mode) {
-	return OMPI_SUCCESS;
+	   return OMPI_SUCCESS;
     } else {
 	if (0 > mca_oob_recv_packed(mca_gpr_my_replica, &answer, &recv_tag)) {
 	    goto CLEANUP;
 	}
 
 	if ((OMPI_SUCCESS != ompi_unpack(answer, &command, 1, MCA_GPR_OOB_PACK_CMD))
-	    || (MCA_GPR_ASSUME_OWNERSHIP_CMD != command)) {
+	    || (MCA_GPR_ASSIGN_OWNERSHIP_CMD != command)) {
 	    ompi_buffer_free(answer);
 	    goto CLEANUP;
 	}

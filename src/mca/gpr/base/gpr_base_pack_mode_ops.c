@@ -108,13 +108,13 @@ int mca_gpr_base_pack_notify_off(ompi_buffer_t cmd,
     return OMPI_SUCCESS;
 }
 
-int mca_gpr_base_pack_assume_ownership(ompi_buffer_t cmd, bool silent,
+int mca_gpr_base_pack_assign_ownership(ompi_buffer_t cmd, bool silent,
 				       mca_ns_base_jobid_t jobid, char *segment)
 {
     mca_gpr_cmd_flag_t command;
     int8_t tmp_bool;
 
-    command = MCA_GPR_ASSUME_OWNERSHIP_CMD;
+    command = MCA_GPR_ASSIGN_OWNERSHIP_CMD;
 
     if (OMPI_SUCCESS != ompi_pack(cmd, &command, 1, MCA_GPR_OOB_PACK_CMD)) {
 	return OMPI_ERROR;

@@ -136,7 +136,7 @@ typedef uint16_t ompi_registry_mode_t;
 #define MCA_GPR_TEST_INTERNALS_CMD     (uint16_t)0x0200
 #define MCA_GPR_NOTIFY_CMD             (uint16_t)0x0400   /**< Indicates a notify message */
 #define MCA_GPR_DUMP_CMD               (uint16_t)0x0800
-#define MCA_GPR_ASSUME_OWNERSHIP_CMD   (uint16_t)0x1000
+#define MCA_GPR_ASSIGN_OWNERSHIP_CMD   (uint16_t)0x1000
 #define MCA_GPR_NOTIFY_ON_CMD          (uint16_t)0x2000
 #define MCA_GPR_NOTIFY_OFF_CMD         (uint16_t)0x4000
 #define MCA_GPR_COMPOUND_CMD           (uint16_t)0x8000
@@ -749,18 +749,18 @@ typedef void (*mca_gpr_base_module_dump_fn_t)(int output_id);
  * segments can occur when the segment is shared by multiple jobs, one or more of which subsequently
  * terminate. In this case, another job must assume "ownership" of the segment.
  *
- * @param segment A character string indicating the segment for which this process is
- * assuming ownership.
+ * @param segment A character string indicating the segment whose ownership is being assigned.
+ * @param jobid The jobid to be given ownership of the segment.
  *
  * @retval OMPI_SUCCESS Ownership successfully transferred.
  * @retval OMPI_ERROR Ownership could not be transferred, most likely due to specifying a non-existing
  * segment (or one that has been previously removed).
  *
  * @code
- * status_code = ompi_registry.assume_ownership(segment);
+ * status_code = ompi_registry.assign_ownership(segment, jobid);
  * @endcode
  */
-typedef int (*mca_gpr_base_module_assume_ownership_fn_t)(char *segment);
+typedef int (*mca_gpr_base_module_assign_ownership_fn_t)(char *segment, mca_ns_base_jobid_t jobid);
 
 /* Deliver a notify message.
  * The registry generates notify messages whenever a subscription or synchro is fired. Normally,
@@ -826,7 +826,7 @@ struct mca_gpr_base_module_1_0_0_t {
     mca_gpr_base_module_silent_mode_off_fn_t silent_mode_off;
     mca_gpr_base_module_notify_off_fn_t notify_off;
     mca_gpr_base_module_notify_on_fn_t notify_on;
-    mca_gpr_base_module_assume_ownership_fn_t assume_ownership;
+    mca_gpr_base_module_assign_ownership_fn_t assign_ownership;
     mca_gpr_base_module_triggers_active_fn_t triggers_active;
     mca_gpr_base_module_triggers_inactive_fn_t triggers_inactive;
     mca_gpr_base_module_get_startup_msg_fn_t get_startup_msg;

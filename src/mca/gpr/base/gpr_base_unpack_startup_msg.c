@@ -39,19 +39,25 @@ mca_gpr_base_unpack_get_startup_msg(ompi_buffer_t buffer,
 
     if ((OMPI_SUCCESS != ompi_unpack(buffer, &command, 1, MCA_GPR_OOB_PACK_CMD))
 	|| (MCA_GPR_GET_STARTUP_MSG_CMD != command)) {
-	return NULL;
+        ompi_output(0, "unpacking startup msg: got bad command %d", (int)command);
+        	return NULL;
     }
 
     if (OMPI_SUCCESS != ompi_unpack(buffer, &num_recipients, 1, OMPI_INT32)) {
+        ompi_output(0, "unpacking startup msg: got bad num recipients");
 	return NULL;
     }
 
+    ompi_output(0, "unpacking startup msg: %d recipients", num_recipients);
+    
     for (i=0; i<num_recipients; i++) {
 	if (OMPI_SUCCESS != ompi_unpack(buffer, &proc, 1, OMPI_NAME)) {
 	    return NULL;
 	}
 	peer = OBJ_NEW(ompi_name_server_namelist_t);
-	peer->name = ompi_name_server.copy_process_name(&proc);;
+	peer->name = ompi_name_server.copy_process_name(&proc);
+    ompi_output(0, "\tproc [%d,%d,%d] added to list as [%d,%d,%d]",
+            OMPI_NAME_ARGS(proc), OMPI_NAME_ARGS(*(peer->name)));
 	ompi_list_append(recipients, &peer->item);
     }
 

@@ -46,7 +46,7 @@ static void mca_gpr_replica_recv_cleanup_job_cmd(ompi_buffer_t buffer);
 static void mca_gpr_replica_recv_cleanup_proc_cmd(ompi_buffer_t buffer);
 static void mca_gpr_replica_recv_notify_on_cmd(ompi_buffer_t buffer);
 static void mca_gpr_replica_recv_notify_off_cmd(ompi_buffer_t buffer);
-static int32_t  mca_gpr_replica_recv_assume_ownership_cmd(ompi_buffer_t buffer);
+static int32_t  mca_gpr_replica_recv_assign_ownership_cmd(ompi_buffer_t buffer);
 
 static bool mca_gpr_replica_recv_silent_mode(ompi_buffer_t buffer);
 
@@ -463,15 +463,15 @@ ompi_buffer_t mca_gpr_replica_process_command_buffer(ompi_buffer_t buffer,
 
 
 	    
-	case MCA_GPR_ASSUME_OWNERSHIP_CMD:  /*****     ASSUME OWNERSHIP     *****/
+	case MCA_GPR_ASSIGN_OWNERSHIP_CMD:  /*****     ASSIGN OWNERSHIP     *****/
 
 	    if (mca_gpr_replica_debug) {
-		ompi_output(0, "\tassume ownership command");
+		ompi_output(0, "\tassign ownership command");
 	    }
 
 	    tmp_bool = mca_gpr_replica_recv_silent_mode(buffer);
 
-	    if (OMPI_ERROR == (response = mca_gpr_replica_recv_assume_ownership_cmd(buffer))) {
+	    if (OMPI_ERROR == (response = mca_gpr_replica_recv_assign_ownership_cmd(buffer))) {
 		goto RETURN_ERROR;
 	    }
 
@@ -1136,6 +1136,7 @@ static void mca_gpr_replica_recv_dump_cmd(ompi_buffer_t answer)
 
 static void mca_gpr_replica_recv_get_startup_msg_cmd(ompi_buffer_t buffer, ompi_buffer_t answer)
 {
+    mca_gpr_cmd_flag_t command=MCA_GPR_GET_STARTUP_MSG_CMD;
     mca_ns_base_jobid_t jobid=0;
     ompi_list_t *recipients=NULL;
     ompi_buffer_t msg;
@@ -1155,6 +1156,10 @@ static void mca_gpr_replica_recv_get_startup_msg_cmd(ompi_buffer_t buffer, ompi_
 
     OMPI_THREAD_UNLOCK(&mca_gpr_replica_mutex);
 
+    if (OMPI_SUCCESS != ompi_pack(answer, &command, 1, MCA_GPR_OOB_PACK_CMD)) {
+        return;
+    }
+    
     num_recipients = (int32_t)ompi_list_get_size(recipients);
     if (OMPI_SUCCESS != ompi_pack(answer, &num_recipients, 1, OMPI_INT32)) {
 	return;
@@ -1272,7 +1277,7 @@ static void mca_gpr_replica_recv_notify_off_cmd(ompi_buffer_t cmd)
 }
 
 
-static int32_t mca_gpr_replica_recv_assume_ownership_cmd(ompi_buffer_t cmd)
+static int32_t mca_gpr_replica_recv_assign_ownership_cmd(ompi_buffer_t cmd)
 {
     mca_ns_base_jobid_t jobid=0;
     mca_gpr_replica_segment_t *seg=NULL;
@@ -1296,7 +1301,7 @@ static int32_t mca_gpr_replica_recv_assume_ownership_cmd(ompi_buffer_t cmd)
 	return OMPI_ERROR;
     }
 
-    rc = (int32_t)mca_gpr_replica_assume_ownership_nl(seg, jobid);
+    rc = (int32_t)mca_gpr_replica_assign_ownership_nl(seg, jobid);
 
     OMPI_THREAD_UNLOCK(&mca_gpr_replica_mutex);
 

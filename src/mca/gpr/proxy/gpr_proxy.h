@@ -95,7 +95,7 @@ void mca_gpr_proxy_triggers_active(mca_ns_base_jobid_t jobid);
 
 void mca_gpr_proxy_triggers_inactive(mca_ns_base_jobid_t jobid);
 
-int mca_gpr_proxy_assume_ownership(char *segment);
+int mca_gpr_proxy_assign_ownership(char *segment, mca_ns_base_jobid_t jobid);
 
 /*
  * Delete-index functions

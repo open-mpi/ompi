@@ -51,8 +51,8 @@ ompi_buffer_t mca_gpr_proxy_get_startup_msg(mca_ns_base_jobid_t jobid,
     }
 
 	if (mca_gpr_proxy_debug) {
-		ompi_output(0, "[%d,%d,%d] gpr_proxy: getting startup msg",
-					OMPI_NAME_ARGS(*ompi_rte_get_self()));
+		ompi_output(0, "[%d,%d,%d] gpr_proxy: getting startup msg for job %d",
+					OMPI_NAME_ARGS(*ompi_rte_get_self()), (int)jobid);
 	}
 
     if (0 > mca_oob_send_packed(mca_gpr_my_replica, cmd, MCA_OOB_TAG_GPR, 0)) {

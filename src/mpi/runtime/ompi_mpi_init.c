@@ -82,6 +82,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     size_t nprocs;
     char *error = NULL;
     char *segment, *jobid_string;
+    mca_ns_base_jobid_t jobid;
 
     /* Become an OMPI process */
 
@@ -262,13 +263,14 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
      *
      *  Ensure we own the job status and the oob segments first
      */
+    jobid = ompi_name_server.get_jobid(ompi_rte_get_self());
     jobid_string = ompi_name_server.get_jobid_string(ompi_rte_get_self());
     asprintf(&segment, "%s-%s", OMPI_RTE_JOB_STATUS_SEGMENT, jobid_string);
-    ompi_registry.assume_ownership(segment);
+    ompi_registry.assign_ownership(segment, jobid);
     free(segment);
 
     asprintf(&segment, "%s-%s", OMPI_RTE_OOB_SEGMENT, jobid_string);
-    ompi_registry.assume_ownership(segment);
+    ompi_registry.assign_ownership(segment, jobid);
     free(segment);
 
     my_status.rank = mca_ns_base_get_vpid(ompi_rte_get_self());

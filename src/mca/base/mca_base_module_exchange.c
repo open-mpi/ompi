@@ -337,6 +337,9 @@ static int mca_base_modex_subscribe(ompi_process_name_t* name)
     }
     OMPI_UNLOCK(&mca_base_modex_lock);
 
+ompi_output(0, "[%d,%d,%d] modex_subscribe for [%d,%d,%d]",
+    OMPI_NAME_ARGS(*ompi_rte_get_self()), OMPI_NAME_ARGS(*name));
+ 
     /* otherwise - subscribe */
     asprintf(&segment, "%s-%s", OMPI_RTE_MODEX_SEGMENT, mca_ns_base_get_jobid_string(name));
     rctag = ompi_registry.subscribe(
@@ -344,8 +347,7 @@ static int mca_base_modex_subscribe(ompi_process_name_t* name)
         	OMPI_REGISTRY_NOTIFY_ADD_ENTRY|OMPI_REGISTRY_NOTIFY_DELETE_ENTRY|
         	OMPI_REGISTRY_NOTIFY_MODIFICATION|
 		OMPI_REGISTRY_NOTIFY_ON_STARTUP|OMPI_REGISTRY_NOTIFY_INCLUDE_STARTUP_DATA|
-		OMPI_REGISTRY_NOTIFY_PRE_EXISTING|
-		OMPI_REGISTRY_NOTIFY_ON_SHUTDOWN,
+		OMPI_REGISTRY_NOTIFY_PRE_EXISTING,
         	segment,
         	NULL,
         	mca_base_modex_registry_callback,
@@ -452,6 +454,8 @@ int mca_base_modex_recv(
         OMPI_THREAD_UNLOCK(&proc->proc_lock);
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
+
+ompi_output(0, "[%d,%d,%d] modex_recv: waiting for data", OMPI_NAME_ARGS(*ompi_rte_get_self()));
 
     /* wait until data is available */
     while(modex_module->module_data_avail == false) {

@@ -71,7 +71,7 @@ static mca_gpr_base_module_t mca_gpr_proxy = {
     mca_gpr_proxy_silent_mode_off,
     mca_gpr_proxy_notify_off,
     mca_gpr_proxy_notify_on,
-    mca_gpr_proxy_assume_ownership,
+    mca_gpr_proxy_assign_ownership,
     mca_gpr_proxy_triggers_active,
     mca_gpr_proxy_triggers_inactive,
     mca_gpr_proxy_get_startup_msg,

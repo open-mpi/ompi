@@ -70,7 +70,7 @@ static mca_gpr_base_module_t mca_gpr_replica = {
     mca_gpr_replica_silent_mode_off,
     mca_gpr_replica_notify_off,
     mca_gpr_replica_notify_on,
-    mca_gpr_replica_assume_ownership,
+    mca_gpr_replica_assign_ownership,
     mca_gpr_replica_triggers_active,
     mca_gpr_replica_triggers_inactive,
     mca_gpr_replica_get_startup_msg,

@@ -39,8 +39,8 @@ int ompi_rte_job_startup(mca_ns_base_jobid_t jobid)
     int num_procs;
 
     if (ompi_rte_debug_flag) {
-        	ompi_output(0, "[%d,%d,%d] entered rte_job_startup",
-        		    OMPI_NAME_ARGS(*ompi_rte_get_self()));
+        	ompi_output(0, "[%d,%d,%d] entered rte_job_startup for job %d",
+        		    OMPI_NAME_ARGS(*ompi_rte_get_self()), (int)jobid);
     }
 
     recipients = OBJ_NEW(ompi_list_t);
@@ -57,6 +57,11 @@ int ompi_rte_job_startup(mca_ns_base_jobid_t jobid)
     /* check to ensure there are recipients on list - don't send if not */
     if (0 < (num_procs = (int)ompi_list_get_size(recipients))) {
 	mca_oob_xcast(ompi_rte_get_self(), recipients, startup_msg, NULL);
+
+    if (ompi_rte_debug_flag) {
+         ompi_output(0, "[%d,%d,%d] rte_job_startup: completed xcast of startup message",
+                 OMPI_NAME_ARGS(*ompi_rte_get_self()));
+    }
 
         /* for each recipient, set process status to "running" */
 

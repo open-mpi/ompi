@@ -306,8 +306,8 @@ void mca_gpr_replica_triggers_inactive_nl(mca_ns_base_jobid_t jobid);
 void mca_gpr_replica_notify_on(ompi_registry_notify_id_t sub_number);
 void mca_gpr_replica_notify_on_nl(ompi_process_name_t *proc, ompi_registry_notify_id_t sub_number);
 
-int mca_gpr_replica_assume_ownership(char *segment);
-int mca_gpr_replica_assume_ownership_nl(mca_gpr_replica_segment_t *seg,
+int mca_gpr_replica_assign_ownership(char *segment, mca_ns_base_jobid_t jobid);
+int mca_gpr_replica_assign_ownership_nl(mca_gpr_replica_segment_t *seg,
 					mca_ns_base_jobid_t jobid);
 
 /*

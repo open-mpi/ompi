@@ -164,9 +164,9 @@ extern "C" {
 				    ompi_registry_notify_id_t sub_number);
     OMPI_DECLSPEC int mca_gpr_base_unpack_notify_on(ompi_buffer_t buffer);
 
-    OMPI_DECLSPEC int mca_gpr_base_pack_assume_ownership(ompi_buffer_t cmd, bool silent,
+    OMPI_DECLSPEC int mca_gpr_base_pack_assign_ownership(ompi_buffer_t cmd, bool silent,
 					   mca_ns_base_jobid_t jobid, char *segment);
-    OMPI_DECLSPEC int mca_gpr_base_unpack_assume_ownership(ompi_buffer_t buffer);
+    OMPI_DECLSPEC int mca_gpr_base_unpack_assign_ownership(ompi_buffer_t buffer);
 
     OMPI_DECLSPEC int mca_gpr_base_pack_get_startup_msg(ompi_buffer_t cmd, mca_ns_base_jobid_t jobid);
     OMPI_DECLSPEC ompi_buffer_t mca_gpr_base_unpack_get_startup_msg(ompi_buffer_t buffer, ompi_list_t *recipients);

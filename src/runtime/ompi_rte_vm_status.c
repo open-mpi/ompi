@@ -35,22 +35,19 @@
 ompi_rte_vm_status_t
 *ompi_rte_get_vm_status(mca_ns_base_cellid_t cellid, char *nodename)
 {
-    char *segment, *tokens[2];
+    char *tokens[3];
     ompi_registry_value_t *value;
     ompi_rte_vm_status_t *stat_ptr;
     ompi_list_t *returned_list;
     
-    /* setup the segment */
-    asprintf(&segment, "%s-%s", OMPI_RTE_VM_STATUS_SEGMENT,
-             mca_ns_base_convert_cellid_to_string(cellid));
-
-    tokens[0] = strdup(nodename);
-    tokens[1] = NULL;
+    tokens[0] = ompi_name_server.convert_cellid_to_string(cellid);
+    tokens[1] = strdup(nodename);
+    tokens[2] = NULL;
     
-    returned_list = ompi_registry.get(OMPI_REGISTRY_XAND, segment, tokens);
+    returned_list = ompi_registry.get(OMPI_REGISTRY_XAND, OMPI_RTE_VM_STATUS_SEGMENT, tokens);
     
-    free(segment);
     free(tokens[0]);
+    free(tokens[1]);
     
     if (NULL != (value = (ompi_registry_value_t*)ompi_list_remove_first(returned_list))) {
         stat_ptr = ompi_rte_unpack_vm_status(value);
@@ -63,17 +60,14 @@ ompi_rte_vm_status_t
 
 int ompi_rte_set_vm_status(ompi_rte_vm_status_t *status)
 {
-    char *segment, *tokens[2];
+    char *tokens[3];
     void *addr;
     int size;
     ompi_buffer_t buffer;
     
-    /* setup the segment */
-    asprintf(&segment, "%s-%s", OMPI_RTE_VM_STATUS_SEGMENT,
-             mca_ns_base_convert_cellid_to_string(status->cell));
-
-    tokens[0] = strdup(status->nodename);
-    tokens[1] = NULL;
+    tokens[0] = ompi_name_server.convert_cellid_to_string(status->cell);
+    tokens[1] = strdup(status->nodename);
+    tokens[2] = NULL;
     
     /* create the buffer to store the status information */
     ompi_buffer_init(&buffer, 0);
@@ -93,11 +87,11 @@ int ompi_rte_set_vm_status(ompi_rte_vm_status_t *status)
     ompi_buffer_get(buffer, &addr, &size);
 
     ompi_registry.put(OMPI_REGISTRY_XAND | OMPI_REGISTRY_OVERWRITE,
-             segment, tokens, addr, size);
+             OMPI_RTE_VM_STATUS_SEGMENT, tokens, addr, size);
 
     /* cleanup */
     free(tokens[0]);
-    free(segment);
+    free(tokens[1]);
     ompi_buffer_free(buffer);
 
     return OMPI_SUCCESS;
@@ -136,7 +130,8 @@ ompi_rte_vm_status_t
 int ompi_rte_vm_register(void)
 {
     ompi_rte_vm_status_t status;
-    
+    int ret_code=OMPI_SUCCESS;
+        
     status.cell = ompi_name_server.get_cellid(ompi_rte_get_self());
     status.nodename = strdup(ompi_system_info.nodename);
     status.arch = strdup(ompi_system_info.machine);
@@ -169,7 +164,12 @@ int ompi_rte_vm_register(void)
     status.mem_size = 500;
 #endif  /* BPROC */
 
-    return ompi_rte_set_vm_status(&status);
+    ret_code = ompi_rte_set_vm_status(&status);
+    
+    /* ensure that segment ownership is set to "everyone" */
+    ompi_registry.assign_ownership(OMPI_RTE_VM_STATUS_SEGMENT, MCA_NS_BASE_JOBID_MAX);
+
+    return ret_code;
 }
 
 

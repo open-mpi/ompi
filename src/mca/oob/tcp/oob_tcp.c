@@ -525,7 +525,7 @@ int mca_oob_tcp_resolve(mca_oob_tcp_peer_t* peer)
      mca_oob_tcp_subscription_t* subscription;
      ompi_list_item_t* item;
      char *segment, *jobid;
-     int rc;
+     ompi_registry_notify_id_t rctag;
   
      /* if the address is already cached - simply return it */
      OMPI_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
@@ -558,7 +558,7 @@ int mca_oob_tcp_resolve(mca_oob_tcp_peer_t* peer)
      /* subscribe */
      jobid = ompi_name_server.get_jobid_string(&peer->peer_name);
      asprintf(&segment, "%s-%s", OMPI_RTE_OOB_SEGMENT, jobid);
-     rc = ompi_registry.subscribe(
+     rctag = ompi_registry.subscribe(
         	OMPI_REGISTRY_OR,
         	OMPI_REGISTRY_NOTIFY_ADD_ENTRY|OMPI_REGISTRY_NOTIFY_DELETE_ENTRY|
         	OMPI_REGISTRY_NOTIFY_MODIFICATION|
@@ -568,9 +568,9 @@ int mca_oob_tcp_resolve(mca_oob_tcp_peer_t* peer)
         	NULL,
         	mca_oob_tcp_registry_callback,
         	NULL);
-     if(rc != OMPI_SUCCESS) {
-         ompi_output(0, "mca_oob_tcp_resolve: ompi_registry.subscribe failed with error status: %d\n", rc);
-         return rc;
+     if(rctag == OMPI_REGISTRY_NOTIFY_ID_MAX) {
+         ompi_output(0, "mca_oob_tcp_resolve: ompi_registry.subscribe failed with error status: %d\n", (int)rctag);
+         return OMPI_ERROR;
      }
      free(jobid);
      return OMPI_SUCCESS;
