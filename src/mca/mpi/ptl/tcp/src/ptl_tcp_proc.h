@@ -11,6 +11,7 @@
 #include <netinet/in.h>
 #include "lam/lfc/object.h"
 #include "mpi/proc/proc.h"
+#include "ptl_tcp.h"
 #include "ptl_tcp_peer.h"
 
 extern lam_class_info_t mca_ptl_tcp_proc_cls;
@@ -35,18 +36,15 @@ struct mca_ptl_tcp_proc_t {
 typedef struct mca_ptl_tcp_proc_t mca_ptl_tcp_proc_t;
 
 
-void mca_ptl_tcp_proc_init(mca_ptl_tcp_proc_t*);
-void mca_ptl_tcp_proc_destroy(mca_ptl_tcp_proc_t*);
-
 mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_create(lam_proc_t* lam_proc);
 mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_lookup(void *guid, size_t size);
 
+
 static inline mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_local(void) 
 {
-    extern mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_self;
-    if(NULL == mca_ptl_tcp_proc_self)
-        mca_ptl_tcp_proc_self = mca_ptl_tcp_proc_create(lam_proc_local());
-    return mca_ptl_tcp_proc_self;
+    if(NULL == mca_ptl_tcp_module.tcp_local)
+        mca_ptl_tcp_module.tcp_local = mca_ptl_tcp_proc_create(lam_proc_local());
+    return mca_ptl_tcp_module.tcp_local;
 }
 
 int  mca_ptl_tcp_proc_insert(mca_ptl_tcp_proc_t*, mca_ptl_base_peer_t*);

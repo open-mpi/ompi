@@ -10,6 +10,10 @@
 #include "ptl_tcp_proc.h"
 
 
+static void mca_ptl_tcp_proc_init(mca_ptl_tcp_proc_t* proc);
+static void mca_ptl_tcp_proc_destroy(mca_ptl_tcp_proc_t* proc);
+static mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_lookup_lam(lam_proc_t* lam_proc);
+
 lam_class_info_t  mca_ptl_tcp_proc_cls = {
     "mca_ptl_tcp_proc_t",
     &lam_list_item_cls,
@@ -17,21 +21,9 @@ lam_class_info_t  mca_ptl_tcp_proc_cls = {
     (class_destroy_t)mca_ptl_tcp_proc_destroy
 };
  
-static lam_list_t mca_ptl_tcp_procs;
-static lam_mutex_t mca_ptl_tcp_proc_mutex;
-static mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_lookup_lam(lam_proc_t* lam_proc);
-mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_self = 0;
-
-
 
 void mca_ptl_tcp_proc_init(mca_ptl_tcp_proc_t* proc)
 {
-    static int inited = 0;
-    if(fetchNset(&inited, 1) == 0) {
-        lam_list_init(&mca_ptl_tcp_procs);
-        lam_mutex_init(&mca_ptl_tcp_proc_mutex);
-    }
-
     SUPER_INIT(proc, &lam_list_item_cls);
     proc->proc_lam = 0;
     proc->proc_addrs = 0;
@@ -41,16 +33,18 @@ void mca_ptl_tcp_proc_init(mca_ptl_tcp_proc_t* proc)
     lam_mutex_init(&proc->proc_lock);
 
     /* add to list of all proc instance */
-    THREAD_LOCK(&mca_ptl_tcp_proc_mutex);
-    lam_list_append(&mca_ptl_tcp_procs, &proc->super);
-    THREAD_UNLOCK(&mca_ptl_tcp_proc_mutex);
+    THREAD_LOCK(&mca_ptl_tcp_module.tcp_lock);
+    lam_list_append(&mca_ptl_tcp_module.tcp_procs, &proc->super);
+    THREAD_UNLOCK(&mca_ptl_tcp_module.tcp_lock);
 }
 
 
 void mca_ptl_tcp_proc_destroy(mca_ptl_tcp_proc_t* proc)
 {
     /* remove from list of all proc instances */
-    lam_list_remove_item(&mca_ptl_tcp_procs, &proc->super);
+    THREAD_LOCK(&mca_ptl_tcp_module.tcp_lock);
+    lam_list_remove_item(&mca_ptl_tcp_module.tcp_procs, &proc->super);
+    THREAD_UNLOCK(&mca_ptl_tcp_module.tcp_lock);
 
     /* release resources */
     if(NULL != proc->proc_peers) 
@@ -116,8 +110,8 @@ mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_create(lam_proc_t* lam_proc)
         OBJ_RELEASE(ptl_proc);
         return NULL;
     }
-    if(NULL == mca_ptl_tcp_proc_self && lam_proc == lam_proc_local())
-        mca_ptl_tcp_proc_self = ptl_proc;
+    if(NULL == mca_ptl_tcp_module.tcp_local && lam_proc == lam_proc_local())
+        mca_ptl_tcp_module.tcp_local = ptl_proc;
     return ptl_proc;
 }
 
@@ -128,16 +122,16 @@ mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_create(lam_proc_t* lam_proc)
 static mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_lookup_lam(lam_proc_t* lam_proc)
 {
     mca_ptl_tcp_proc_t* tcp_proc;
-    THREAD_LOCK(&mca_ptl_tcp_proc_mutex);
-    for(tcp_proc  = (mca_ptl_tcp_proc_t*)lam_list_get_first(&mca_ptl_tcp_procs);
-        tcp_proc != (mca_ptl_tcp_proc_t*)lam_list_get_end(&mca_ptl_tcp_procs);
+    THREAD_LOCK(&mca_ptl_tcp_module.tcp_lock);
+    for(tcp_proc  = (mca_ptl_tcp_proc_t*)lam_list_get_first(&mca_ptl_tcp_module.tcp_procs);
+        tcp_proc != (mca_ptl_tcp_proc_t*)lam_list_get_end(&mca_ptl_tcp_module.tcp_procs);
         tcp_proc  = (mca_ptl_tcp_proc_t*)lam_list_get_next(tcp_proc)) {
         if(tcp_proc->proc_lam == lam_proc) {
-            THREAD_UNLOCK(&mca_ptl_tcp_proc_mutex);
+            THREAD_UNLOCK(&mca_ptl_tcp_module.tcp_lock);
             return tcp_proc;
         }
     }
-    THREAD_UNLOCK(&mca_ptl_tcp_proc_mutex);
+    THREAD_UNLOCK(&mca_ptl_tcp_module.tcp_lock);
     return NULL;
 }
 
@@ -149,16 +143,16 @@ static mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_lookup_lam(lam_proc_t* lam_proc)
 mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_lookup(void *guid, size_t size)
 {
     mca_ptl_tcp_proc_t* tcp_proc;
-    THREAD_LOCK(&mca_ptl_tcp_proc_mutex);
-    for(tcp_proc  = (mca_ptl_tcp_proc_t*)lam_list_get_first(&mca_ptl_tcp_procs);
-        tcp_proc != (mca_ptl_tcp_proc_t*)lam_list_get_end(&mca_ptl_tcp_procs);
+    THREAD_LOCK(&mca_ptl_tcp_module.tcp_lock);
+    for(tcp_proc  = (mca_ptl_tcp_proc_t*)lam_list_get_first(&mca_ptl_tcp_module.tcp_procs);
+        tcp_proc != (mca_ptl_tcp_proc_t*)lam_list_get_end(&mca_ptl_tcp_module.tcp_procs);
         tcp_proc  = (mca_ptl_tcp_proc_t*)lam_list_get_next(tcp_proc)) {
         if(tcp_proc->proc_guid_size == size && memcmp(tcp_proc->proc_guid, guid, size) == 0) {
-            THREAD_UNLOCK(&mca_ptl_tcp_proc_mutex);
+            THREAD_UNLOCK(&mca_ptl_tcp_module.tcp_lock);
             return tcp_proc;
         }
     }
-    THREAD_UNLOCK(&mca_ptl_tcp_proc_mutex);
+    THREAD_UNLOCK(&mca_ptl_tcp_module.tcp_lock);
     return NULL;
 }
 

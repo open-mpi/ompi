@@ -3,7 +3,7 @@
  * $HEADER$
  */
 
-#ifndef MCA_PTL_TCP_H_
+#ifndef MCA_PTL_TCP_H
 #define MCA_PTL_TCP_H
 
 #include <sys/types.h>
@@ -36,6 +36,8 @@ struct mca_ptl_tcp_module_1_0_0_t {
     lam_free_list_t tcp_send_frags;
     lam_free_list_t tcp_recv_frags;
     lam_list_t tcp_procs;
+    struct mca_ptl_tcp_proc_t* tcp_local;
+    lam_mutex_t tcp_lock;
 };
 typedef struct mca_ptl_tcp_module_1_0_0_t mca_ptl_tcp_module_1_0_0_t;
 typedef struct mca_ptl_tcp_module_1_0_0_t mca_ptl_tcp_module_t;
@@ -111,8 +113,7 @@ extern int mca_ptl_tcp_send(
     struct mca_ptl_t* ptl,
     struct mca_ptl_base_peer_t* ptl_peer,
     struct mca_ptl_base_send_request_t*,
-    size_t size,
-    bool* complete
+    size_t size
 );
                                                                                                  
 extern int mca_ptl_tcp_recv(

@@ -31,7 +31,6 @@ struct mca_pml_teg_t {
     size_t teg_num_ptls;
 
     lam_list_t  teg_procs;
-    lam_list_t  teg_incomplete_sends; 
     lam_mutex_t teg_lock;
 
     int teg_free_list_num; /* initial size of free list */
