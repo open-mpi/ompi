@@ -82,7 +82,7 @@ int mca_pml_teg_send_request_schedule(mca_pml_base_send_request_t* req)
          * size, then go ahead and give the rest of the message to this PTL.
          */
         size_t bytes_to_frag;
-        if(num_ptl == num_ptl_avail || bytes_remaining < ptl->ptl_min_frag_size)
+        if(num_ptl == num_ptl_avail || bytes_remaining < ptl->ptl_min_frag_size) {
             bytes_to_frag = bytes_remaining;
 
         /* otherwise attempt to give the PTL a percentage of the message
@@ -90,11 +90,13 @@ int mca_pml_teg_send_request_schedule(mca_pml_base_send_request_t* req)
          * a percentage of the overall message length (regardless of amount 
          * previously assigned)
          */
-        else {
+        } else {
             bytes_to_frag = (ptl_proc->ptl_weight * bytes_remaining) / 100;
-            if(ptl->ptl_max_frag_size != 0 && bytes_to_frag > ptl->ptl_max_frag_size)
-                bytes_to_frag = ptl->ptl_max_frag_size;
         }
+
+        /* makes sure that we don't exceed ptl_max_frag_size */
+        if(ptl->ptl_max_frag_size != 0 && bytes_to_frag > ptl->ptl_max_frag_size)
+            bytes_to_frag = ptl->ptl_max_frag_size;
 
         rc = ptl->ptl_put(ptl, ptl_proc->ptl_peer, req, req->req_offset, bytes_to_frag, 0);
         if(rc == OMPI_SUCCESS) {
