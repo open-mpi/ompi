@@ -10,7 +10,7 @@
 #include "mca/pcmclient/pcmclient.h"
 #include "mca/pcmclient/base/base.h"
 
-mca_pcm_base_module_t mca_pcm;
+extern mca_pcm_base_module_t mca_pcm;
 
 bool
 ompi_rte_can_spawn(void)
