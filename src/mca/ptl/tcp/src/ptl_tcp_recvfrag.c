@@ -157,7 +157,7 @@ static bool mca_ptl_tcp_recv_frag_match(mca_ptl_tcp_recv_frag_t* frag, int sd)
     /* first pass through - attempt a match */
     if(NULL == frag->super.frag_request && 0 == frag->frag_msg_cnt) {
         /* attempt to match a posted recv */
-        if(mca_ptl_base_recv_frag_match(&frag->super, &frag->super.super.frag_header.hdr_match)) {
+        if(mca_ptl_base_recv_frag_match( frag->super.super.frag_owner, &frag->super, &frag->super.super.frag_header.hdr_match)) {
             mca_ptl_tcp_recv_frag_matched(frag);
         } else {
             /* match was not made - so allocate buffer for eager send */

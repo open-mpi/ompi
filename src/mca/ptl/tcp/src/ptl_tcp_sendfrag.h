@@ -87,7 +87,7 @@ static inline void mca_ptl_tcp_send_frag_progress(mca_ptl_tcp_send_frag_t* frag)
         if(fetchNset(&frag->frag_progressed,1) == 0) {
 
             /* update request status */ 
-            frag->super.super.frag_owner->ptl_send_progress(request, &frag->super); 
+            frag->super.super.frag_owner->ptl_send_progress(frag->super.super.frag_owner, request, &frag->super); 
 
             /* the first fragment is allocated with the request, 
              * all others need to be returned to free list  
