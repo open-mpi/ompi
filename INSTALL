@@ -13,6 +13,15 @@ the directory at the top of the tree:
 shell$ ./configure --prefix=/where/to/install
 shell$ make all install
 
+--> NOTE:                    
+          If a user is going to do a parallel build, they should just use
+          make -j 8 install
+
+          make -j 8 all install
+          it will build and only install the /include directory.
+          if you re-run "make -j 8 all install" again, then all the proper files and
+          directories will be installed.
+
 To compile an MPI program:
 
 C programs:   mpicc your-code.c
