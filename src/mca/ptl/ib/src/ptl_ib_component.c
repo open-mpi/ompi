@@ -121,6 +121,8 @@ int mca_ptl_ib_component_open(void)
         mca_ptl_ib_param_register_int ("free_list_max", 1024);
     mca_ptl_ib_component.ib_free_list_inc =
         mca_ptl_ib_param_register_int ("free_list_inc", 32);
+    mca_ptl_ib_component.ib_mem_registry_hints_log_size = 
+        mca_ptl_ib_param_register_int ("hints_log_size", 8);
 
     OBJ_CONSTRUCT(&mca_ptl_ib_component.ib_procs, ompi_list_t);
 

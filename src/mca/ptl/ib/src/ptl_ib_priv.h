@@ -20,6 +20,7 @@
 #include <stdint.h>
 #include "class/ompi_free_list.h"
 #include "ptl_ib_vapi.h"
+#include "ptl_ib_memory.h"
 
 #define NUM_IB_SEND_BUF             (10)
 #define NUM_IB_RECV_BUF             (1000)
@@ -45,6 +46,9 @@ struct mca_ptl_ib_state_t {
 
     EVAPI_async_handler_hndl_t      async_handler; 
     /* Async event handler used to detect weird/unknown events */
+
+    mca_ptl_ib_mem_registry_t       mem_registry;
+    /* registry of memory regions */
 };
 
 typedef struct mca_ptl_ib_state_t mca_ptl_ib_state_t;
