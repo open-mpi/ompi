@@ -14,12 +14,13 @@
 #include "mca/coll/coll.h"
 #include "mca/coll/base/coll_tags.h"
 #include "coll_basic.h"
+#include "mca/pml/pml.h"
 
 
 /*
  *	alltoall
  *
- *	Function:	- MPI_Alltoall for non-lamd RPI's
+ *	Function:	- MPI_Alltoall 
  *	Accepts:	- same as MPI_Alltoall()
  *	Returns:	- MPI_SUCCESS or an MPI error code
  */
@@ -28,125 +29,121 @@ int mca_coll_basic_alltoall(void *sbuf, int scount,
                             int rcount, MPI_Datatype rdtype,
                             MPI_Comm comm)
 {
-#if 1
-  return LAM_ERR_NOT_IMPLEMENTED;
-#else
-  int i;
-  int rank;
-  int size;
-  int nreqs;
-  int err;
-  char *psnd;
-  char *prcv;
-  MPI_Aint sndinc;
-  MPI_Aint rcvinc;
-  MPI_Request *req;
-  MPI_Request *preq;
-  MPI_Request *qreq;
+    int i;
+    int rank;
+    int size;
+    int nreqs;
+    int err;
+    char *psnd;
+    char *prcv;
+    MPI_Aint lb;
+    MPI_Aint sndinc;
+    MPI_Aint rcvinc;
 
-  /* Initialize. */
+    lam_request_t **req;
+    lam_request_t **sreq;
+    lam_request_t **rreq;
 
-  MPI_Comm_size(comm, &size);
-  MPI_Comm_rank(comm, &rank);
-  MPI_Type_extent(sdtype, &sndinc);
-  MPI_Type_extent(rdtype, &rcvinc);
-  sndinc *= scount;
-  rcvinc *= rcount;
+    /* Initialize. */
 
-  /* Allocate arrays of requests. */
+    size = lam_comm_size(comm);
+    rank = lam_comm_rank(comm);
 
-  nreqs = 2 * (size - 1);
-  if (nreqs > 0) {
-    req = malloc(nreqs * sizeof(MPI_Request));
-    if (NULL == req) {
-      free(req);
-      return ENOMEM;
+
+    err = lam_ddt_get_extent(sdtype, &lb, &sndinc);
+    if (0 != err) {
+	return LAM_ERROR;
     }
-  } else {
-    req = NULL;
-  }
 
-  /* simple optimization */
+    err = lam_ddt_get_extent(rdtype, &lb, &rcvinc);
+    if (0 != err) {
+	return LAM_ERROR;
+    }
 
-  psnd = ((char *) sbuf) + (rank * sndinc);
-  prcv = ((char *) rbuf) + (rank * rcvinc);
-#if 0
-  /* JMS: Need a lam_datatype_something() here that allows two
-     different datatypes */
-  err = lam_dtsndrcv(psnd, scount, sdtype,
-		     prcv, rcount, rdtype, BLKMPIALLTOALL, comm);
-  if (MPI_SUCCESS != err) {
-    if (NULL != req)
-      LAM_FREE(req);
-    lam_mkpt(comm);
-    return err;
-  }
-#endif
+    sndinc *= scount;
+    rcvinc *= rcount;
 
-  /* If only one process, we're done. */
+    /* Allocate arrays of requests. */
 
-  if (1 == size) {
+    nreqs = 2 * (size - 1);
+    if (nreqs > 0) {
+	req = malloc(nreqs * sizeof(lam_request_t *));
+	if (NULL == req) {
+	    return ENOMEM;
+	}
+    } else {
+	req = NULL;
+    }
+    
+    /* simple optimization */
+
+    psnd = ((char *) sbuf) + (rank * sndinc);
+    prcv = ((char *) rbuf) + (rank * rcvinc);
+
+    err = lam_ddt_sndrcv(psnd, scount, sdtype,
+			 prcv, rcount, rdtype, 
+			 MCA_COLL_BASE_TAG_ALLTOALL, comm);
+
+    if (MPI_SUCCESS != err) {
+	if (NULL != req)
+	    free(req);
+	return err;
+    }
+
+    /* If only one process, we're done. */
+
+    if (1 == size) {
+	return MPI_SUCCESS;
+    }
+
+    /* Initiate all send/recv to/from others. */
+
+    rreq = req;
+    sreq = req + size - 1;
+
+    prcv = (char*) rbuf;
+    psnd = (char*) sbuf;
+
+    for (i = (rank + 1) % size; i != rank; 
+	 i = (i + 1) % size, ++rreq, ++sreq) {
+	
+	err = mca_pml.pml_irecv_init(prcv + (i * rcvinc), rcount, rdtype, i,
+				     MCA_COLL_BASE_TAG_ALLTOALL, comm, rreq);
+	if (MPI_SUCCESS != err) {
+	    free(req);
+	    return err;
+	}
+
+	err = mca_pml.pml_isend(psnd + (i * sndinc), scount, sdtype, i,
+				MCA_COLL_BASE_TAG_ALLTOALL, 
+				MCA_PML_BASE_SEND_STANDARD, comm, sreq);
+	if (MPI_SUCCESS != err) {
+	    free(req);
+	    return err;
+	}
+    }
+
+    if (MPI_SUCCESS != err) {
+	free(req);
+	return err;
+    }
+
+    /* Wait for them all. */
+
+    err = mca_pml.pml_wait_all(nreqs, req, MPI_STATUSES_IGNORE);
+    if (MPI_SUCCESS != err) {
+	free(req);
+	return err;
+    }
+
+    /* Free the reqs */
+
+    for (i = 0, rreq = req; i < nreqs; ++i, ++rreq) {
+	mca_pml.pml_free(rreq);
+    }
+
+    /* All done */
+
+    free(req);
     return MPI_SUCCESS;
-  }
-
-  /* Initiate all send/recv to/from others. */
-
-  preq = req;
-  qreq = req + size - 1;
-  prcv = (char*) rbuf;
-  psnd = (char*) sbuf;
-  for (i = (rank + 1) % size; i != rank; 
-       i = (i + 1) % size, ++preq, ++qreq) {
-#if 0
-    /* JMS: Need to replace this with negative tags and and direct PML
-       calls */
-    err = MPI_Recv_init(prcv + (i * rcvinc), rcount, rdtype, i,
-			BLKMPIALLTOALL, comm, preq);
-    if (MPI_SUCCESS != err) {
-      LAM_FREE(req);
-      return err;
-    }
-#endif
-
-#if 0
-    /* JMS: Need to replace this with negative tags and and direct PML
-       calls */
-    err = MPI_Send_init(psnd + (i * sndinc), scount, sdtype, i,
-			BLKMPIALLTOALL, comm, qreq);
-    if (MPI_SUCCESS != err) {
-      LAM_FREE(req);
-      return err;
-    }
-#endif
-  }
-
-  /* Start all the requests. */
-
-  err = MPI_Startall(nreqs, req);
-  if (MPI_SUCCESS != err) {
-    free(req);
-    return err;
-  }
-
-  /* Wait for them all. */
-
-  err = MPI_Waitall(nreqs, req, MPI_STATUSES_IGNORE);
-  if (MPI_SUCCESS != err) {
-    free(req);
-    return err;
-  }
-
-  for (i = 0, preq = req; i < nreqs; ++i, ++preq) {
-    err = MPI_Request_free(preq);
-    if (MPI_SUCCESS != err) {
-      free(req);
-      return err;
-    }
-  }
-
-  /* All done */
-
-  free(req);
-  return MPI_SUCCESS;
-#endif
 }
