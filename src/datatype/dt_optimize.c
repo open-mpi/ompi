@@ -64,7 +64,7 @@ int ompi_ddt_optimize_short( dt_desc_t* pData, int count,
    pStack->disp = 0;
    pos_desc  = 0;
    
-  next_loop:
+   /* JMS: removed next_loop here */
    totalDisp = pStack->disp;
    while( stack_pos >= 0 ) {
       if( pData->desc.desc[pos_desc].type == DT_END_LOOP ) { /* end of the current loop */
@@ -81,9 +81,14 @@ int ompi_ddt_optimize_short( dt_desc_t* pData, int count,
                     pData->desc.desc[pos_desc].extent );
          stack_pos--;
          pStack--;
-         if( stack_pos >= 0 ) pStartLoop->disp = (pElemDesc - 1)->count;
+         /* JMS: made this into a block and added the totalDisp= line */
+         if( stack_pos >= 0 ) {
+             pStartLoop->disp = (pElemDesc - 1)->count;
+             totalDisp = pStack->disp;
+         }
          pos_desc++;
-         goto next_loop;
+         /* JMS: changed this from "goto next_loop" to "continue" */
+         continue;
       }
       if( pData->desc.desc[pos_desc].type == DT_LOOP ) {
          dt_elem_desc_t* pEndLoop = &(pData->desc.desc[pos_desc + pData->desc.desc[pos_desc].disp]);
@@ -134,7 +139,12 @@ int ompi_ddt_optimize_short( dt_desc_t* pData, int count,
             pos_desc++;
             DUMP_STACK( pStack, stack_pos, pData->desc, "advance loops" );
          }
-         goto next_loop;
+         /* JMS: added block */
+         if( stack_pos >= 0 ) {
+             totalDisp = pStack->disp;
+         }
+         /* JMS: changed "goto next_loop" to "continue" */
+         continue;
       }
       /* now here we have a basic datatype */
       type = pData->desc.desc[pos_desc].type;
