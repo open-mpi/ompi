@@ -150,7 +150,7 @@ int ompi_group_init(void)
     /* add MPI_GROUP_EMPTRY to table */
     OBJ_CONSTRUCT(&ompi_mpi_group_empty, ompi_group_t);
     ompi_mpi_group_empty.grp_proc_count    = 0;
-    ompi_mpi_group_empty.grp_my_rank       = MPI_PROC_NULL;
+    ompi_mpi_group_empty.grp_my_rank       = MPI_UNDEFINED;
     ompi_mpi_group_empty.grp_proc_pointers = NULL;
     ompi_mpi_group_empty.grp_flags        |= OMPI_GROUP_INTRINSIC;
 
