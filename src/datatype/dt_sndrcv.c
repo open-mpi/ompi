@@ -47,10 +47,12 @@ int32_t ompi_ddt_sndrcv( void *sbuf, int32_t scount, const ompi_datatype_t* sdty
    int32_t freeAfter;
 
    /* First check if we really have something to do */
-   if( 0 == (rcount * scount) ) {
-      if( (0 == rcount) && (0 != scount) )
-         return MPI_ERR_TRUNCATE;
-      return MPI_SUCCESS;
+   if (0 == rcount) {
+       if (0 == scount) {
+           return MPI_SUCCESS;
+       } else {
+           return MPI_ERR_TRUNCATE;
+       }
    }
    
    /* If same datatypes used, just copy. */
