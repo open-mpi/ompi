@@ -130,14 +130,24 @@ int mca_ptl_tcp_del_procs(struct mca_ptl_base_module_t* ptl, size_t nprocs, stru
 
 int mca_ptl_tcp_finalize(struct mca_ptl_base_module_t* ptl)
 {
+    extern ompi_mutex_t ompi_event_lock;
     ompi_list_item_t* item;
     mca_ptl_tcp_module_t *ptl_tcp = (mca_ptl_tcp_module_t*)ptl;
 
+    for( item  = ompi_list_get_first(&ptl_tcp->ptl_peers);
+         item != ompi_list_get_end(&ptl_tcp->ptl_peers);
+         item  = ompi_list_get_next(item)) {
+        mca_ptl_tcp_peer_t *peer = (mca_ptl_tcp_peer_t*)item;
+        mca_ptl_tcp_peer_shutdown(peer);
+    }
+
+    OMPI_THREAD_LOCK(&ompi_event_lock);
     for( item = ompi_list_remove_first(&ptl_tcp->ptl_peers);
          item != NULL;
          item = ompi_list_remove_first(&ptl_tcp->ptl_peers)) {
         OBJ_RELEASE(item);
     }
+    OMPI_THREAD_UNLOCK(&ompi_event_lock);
     return OMPI_SUCCESS;
 }
 

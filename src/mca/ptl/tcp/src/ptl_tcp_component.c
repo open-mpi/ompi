@@ -20,6 +20,7 @@
 #include "mca/pml/base/pml_base_sendreq.h"
 #include "mca/base/mca_base_param.h"
 #include "mca/base/mca_base_module_exchange.h"
+#include "mca/oob/base/base.h"
 #include "ptl_tcp.h"
 #include "ptl_tcp_addr.h"
 #include "ptl_tcp_proc.h"
@@ -172,6 +173,7 @@ int mca_ptl_tcp_component_close(void)
     if (mca_ptl_tcp_component.tcp_listen_sd >= 0) {
         ompi_event_del(&mca_ptl_tcp_component.tcp_recv_event);
         close(mca_ptl_tcp_component.tcp_listen_sd);
+        mca_ptl_tcp_component.tcp_listen_sd = -1;
     }
     return OMPI_SUCCESS;
 }
@@ -459,6 +461,7 @@ int mca_ptl_tcp_component_progress(mca_ptl_tstamp_t tstamp)
  *  requests and queue for completion of the connection handshake.
 */
 
+
 static void mca_ptl_tcp_component_accept(void)
 {
     while(true) {
@@ -477,7 +480,7 @@ static void mca_ptl_tcp_component_accept(void)
 
         /* wait for receipt of peers process identifier to complete this connection */
         event = malloc(sizeof(ompi_event_t));
-        ompi_event_set(event, sd, OMPI_EV_READ|OMPI_EV_PERSIST, mca_ptl_tcp_component_recv_handler, event);
+        ompi_event_set(event, sd, OMPI_EV_READ, mca_ptl_tcp_component_recv_handler, event);
         ompi_event_add(event, 0);
     }
 }
@@ -500,7 +503,6 @@ static void mca_ptl_tcp_component_recv_handler(int sd, short flags, void* user)
         mca_ptl_tcp_component_accept();
         return;
     }
-    ompi_event_del((ompi_event_t*)user);
     free(user);
 
     /* recv the process identifier */
