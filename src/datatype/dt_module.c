@@ -199,6 +199,13 @@ int ompi_ddt_init( void )
 {
     int i;
 
+    /* Create the f2c translation table */
+    ompi_datatype_f_to_c_table = OBJ_NEW(ompi_pointer_array_t);
+    if (NULL == ompi_datatype_f_to_c_table) {
+        return OMPI_ERROR;
+    }
+    
+
     for( i = 0; i < DT_MAX_PREDEFINED; i++ ) {
         basicDatatypes[i].desc.desc = (dt_elem_desc_t*)malloc(sizeof(dt_elem_desc_t));
         basicDatatypes[i].desc.desc->flags  = DT_FLAG_BASIC | DT_FLAG_CONTIGUOUS;
@@ -240,12 +247,6 @@ int ompi_ddt_init( void )
        this will be removed sometime */
     ompi_convertor = ompi_convertor_create(0,0);
 
-    /* Create the f2c translation table */
-    ompi_datatype_f_to_c_table = OBJ_NEW(ompi_pointer_array_t);
-    if (NULL == ompi_datatype_f_to_c_table) {
-        return OMPI_ERROR;
-    }
-    
     /* Start to populate the f2c index translation table */
     ompi_pointer_array_add( ompi_datatype_f_to_c_table, NULL );  /* why not ? */
     ompi_pointer_array_add(ompi_datatype_f_to_c_table, ompi_mpi_byte );
