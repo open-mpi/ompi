@@ -29,10 +29,13 @@ int mca_gpr_proxy_begin_compound_cmd(void)
     }
 
     mca_gpr_proxy_compound_cmd_mode = true;
-    ompi_buffer_size(mca_gpr_proxy_compound_cmd, &size);
-    if (0 < size) {
-	ompi_buffer_free(mca_gpr_proxy_compound_cmd);
+    if (NULL != mca_gpr_proxy_compound_cmd) {  /* first time through, pointer is NULL, so just perform init */
+        ompi_buffer_size(mca_gpr_proxy_compound_cmd, &size);
+        if (0 < size) {
+	    ompi_buffer_free(mca_gpr_proxy_compound_cmd);
+        }
     }
+
     ompi_buffer_init(&mca_gpr_proxy_compound_cmd, 0);
 
     OMPI_THREAD_UNLOCK(&mca_gpr_proxy_wait_for_compound_mutex);
@@ -47,9 +50,11 @@ int mca_gpr_proxy_stop_compound_cmd(void)
     OMPI_THREAD_LOCK(&mca_gpr_proxy_wait_for_compound_mutex);
 
     mca_gpr_proxy_compound_cmd_mode = false;
-    ompi_buffer_size(mca_gpr_proxy_compound_cmd, &size);
-    if (0 < size) {
-	ompi_buffer_free(mca_gpr_proxy_compound_cmd);
+    if (NULL != mca_gpr_proxy_compound_cmd) {
+	ompi_buffer_size(mca_gpr_proxy_compound_cmd, &size);
+	if (0 < size) {
+	    ompi_buffer_free(mca_gpr_proxy_compound_cmd);
+	}
     }
 
     if (mca_gpr_proxy_compound_cmd_waiting) {
@@ -101,10 +106,13 @@ ompi_list_t* mca_gpr_proxy_exec_compound_cmd(bool return_requested)
 
  CLEANUP:
     mca_gpr_proxy_compound_cmd_mode = false;
-    ompi_buffer_size(mca_gpr_proxy_compound_cmd, &size);
-    if (0 < size) {
-	ompi_buffer_free(mca_gpr_proxy_compound_cmd);
+    if (NULL != mca_gpr_proxy_compound_cmd) {  /* shouldn't be any way this could be true, but just to be safe... */
+	ompi_buffer_size(mca_gpr_proxy_compound_cmd, &size);
+	if (0 < size) {
+	    ompi_buffer_free(mca_gpr_proxy_compound_cmd);
+	}
     }
+
     if (mca_gpr_proxy_compound_cmd_waiting) {
 	ompi_condition_signal(&mca_gpr_proxy_compound_cmd_condition);
     }
