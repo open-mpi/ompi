@@ -47,25 +47,6 @@ static void mca_ptl_tcp_recv_frag_destruct(mca_ptl_tcp_recv_frag_t* frag)
 {
 }
 
-
-/*
- * Initialize a TCP receive fragment for a specific peer.
- */
-
-void mca_ptl_tcp_recv_frag_init(mca_ptl_tcp_recv_frag_t* frag, mca_ptl_base_peer_t* peer)
-{
-    frag->frag_recv.frag_base.frag_owner = &peer->peer_ptl->super;
-    frag->frag_recv.frag_base.frag_addr = NULL;
-    frag->frag_recv.frag_base.frag_size = 0;
-    frag->frag_recv.frag_base.frag_peer = peer;
-    frag->frag_recv.frag_request = 0;
-    frag->frag_recv.frag_is_buffered = false;
-    frag->frag_hdr_cnt = 0;
-    frag->frag_msg_cnt = 0;
-    frag->frag_ack_pending = false;
-    frag->frag_progressed = 0;
-}
-                                                                                                                
 /*
  * Callback from event library when socket has data available
  * for receive.
@@ -91,7 +72,7 @@ bool mca_ptl_tcp_recv_frag_handler(mca_ptl_tcp_recv_frag_t* frag, int sd)
                     break;
                 case MCA_PTL_HDR_TYPE_ACK: 
                 case MCA_PTL_HDR_TYPE_NACK:
-                    MCA_PTL_BASE_FRAG_HDR_NTOH(frag->frag_recv.frag_base.frag_header.hdr_frag);
+                    MCA_PTL_BASE_ACK_HDR_NTOH(frag->frag_recv.frag_base.frag_header.hdr_ack);
                     break;
                 default:
                     ompi_output(0, "mca_ptl_tcp_recv_frag_handler: invalid message type: %08X", 

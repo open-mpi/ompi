@@ -12,14 +12,13 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include "ompi_config.h"
 #include "include/sys/atomic.h"
-#include "mca/ptl/ptl.h"
 #include "mca/ptl/base/ptl_base_recvfrag.h"
+#include "ptl_tcp_peer.h"
 #include "ptl_tcp.h"
 
-
 extern ompi_class_t mca_ptl_tcp_recv_frag_t_class;
-
 
 /**
  *  TCP received fragment derived type.
@@ -41,9 +40,25 @@ typedef struct mca_ptl_tcp_recv_frag_t mca_ptl_tcp_recv_frag_t;
     frag = (mca_ptl_tcp_recv_frag_t*)item; \
     }
 
-
 bool mca_ptl_tcp_recv_frag_handler(mca_ptl_tcp_recv_frag_t*, int sd);
-void mca_ptl_tcp_recv_frag_init(mca_ptl_tcp_recv_frag_t* frag, struct mca_ptl_base_peer_t* peer);
+
+/*
+ * Initialize a TCP receive fragment for a specific peer.
+ */
+static inline void mca_ptl_tcp_recv_frag_init(mca_ptl_tcp_recv_frag_t* frag, struct mca_ptl_base_peer_t* peer)
+{
+    frag->frag_recv.frag_base.frag_owner = &(peer->peer_ptl->super);
+    frag->frag_recv.frag_base.frag_addr = NULL;
+    frag->frag_recv.frag_base.frag_size = 0;
+    frag->frag_recv.frag_base.frag_peer = peer;
+    frag->frag_recv.frag_request = 0;
+    frag->frag_recv.frag_is_buffered = false;
+    frag->frag_hdr_cnt = 0;
+    frag->frag_msg_cnt = 0;
+    frag->frag_ack_pending = false;
+    frag->frag_progressed = 0;
+}
+                                                                                                                
 bool mca_ptl_tcp_recv_frag_send_ack(mca_ptl_tcp_recv_frag_t* frag);
 
 extern void* ptl_tcp_memalloc( unsigned int* length );
@@ -109,14 +124,14 @@ static inline void mca_ptl_tcp_recv_frag_progress(mca_ptl_tcp_recv_frag_t* frag)
                         request->req_base.req_count,       /* count elements */ 
                         request->req_base.req_addr,        /* users buffer */ 
                         header->hdr_frag.hdr_frag_offset,  /* offset in bytes into packed buffer */ 
-			NULL );                            /* dont allocate memory */
+                        NULL );                            /* dont allocate memory */
 		
                 iov.iov_base = frag->frag_recv.frag_base.frag_addr; 
                 iov.iov_len = frag->frag_recv.frag_base.frag_size;
-		iov_count = 1;
-		max_data = iov.iov_len;
-                ompi_convertor_unpack(&frag->frag_recv.frag_base.frag_convertor,
-				      &iov, &iov_count, &max_data, &freeAfter ); 
+                iov_count = 1;
+                max_data = iov.iov_len;
+                ompi_convertor_unpack( &frag->frag_recv.frag_base.frag_convertor,
+                                       &iov, &iov_count, &max_data, &freeAfter ); 
             } 
 
             /* progress the request */ 
