@@ -828,5 +828,11 @@ AC_CONFIG_FILES([
     src/tools/mpirun/Makefile
     src/tools/wrappers/Makefile
 
+    test/Makefile
+    test/support/Makefile
+    test/lfc/Makefile
+    test/threads/Makefile
+    test/util/Makefile
+
 ])
 AC_OUTPUT
