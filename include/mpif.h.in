@@ -331,7 +331,7 @@
        parameter (MPI_BXOR=10)
        parameter (MPI_MAXLOC=11)
        parameter (MPI_MINLOC=12)
-       parameter (MPI_REPLACE=12)
+       parameter (MPI_REPLACE=13)
 !
 ! attribute functions
 !
