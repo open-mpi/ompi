@@ -41,7 +41,7 @@ static int delete_query(char *filename, struct ompi_info_t *info,
                         bool *usable, int *priorty);
 static int delete_select(char *filename, struct ompi_info_t *info,
                          struct mca_io_base_delete_t *private_data);
-static int progress(void);
+static int progress(int *count);
 
 /*
  * Private variables
@@ -238,15 +238,16 @@ static int delete_select(char *filename, struct ompi_info_t *info,
 }
 
 
-static int progress(void)
+static int progress(int *count)
 {
     ompi_list_item_t *item, *next;
-    int ret, flag, count = 0;
+    int ret, flag;
     ROMIO_PREFIX(MPIO_Request) romio_rq;
 
     /* Troll through all pending requests and try to progress them.
        If a request finishes, remove it from the list. */
 
+    *count = 0;
     OMPI_THREAD_LOCK (&mca_io_romio_mutex);
     for (item = ompi_list_get_first(&mca_io_romio_pending_requests);
          item != ompi_list_get_end(&mca_io_romio_pending_requests); 
@@ -259,7 +260,7 @@ static int progress(void)
         if (ret < 0) {
             return ret;
         } else if (1 == flag) {
-            ++count;
+            ++(*count);
             ompi_request_complete((ompi_request_t*) item);
             OMPI_REQUEST_FINI((ompi_request_t*) item);
             ompi_list_remove_item(&mca_io_romio_pending_requests, item);
@@ -271,5 +272,5 @@ static int progress(void)
 
     /* Return how many requests completed */
 
-    return count;
+    return OMPI_SUCCESS;
 }
