@@ -41,17 +41,15 @@ int mca_coll_basic_gather_intra(void *sbuf, int scount,
     /* Everyone but root sends data and returns. */
 
     if (rank != root) {
-	err = mca_pml.pml_send(sbuf, scount, sdtype, root,
-			       MCA_COLL_BASE_TAG_GATHER, 
-			       MCA_PML_BASE_SEND_STANDARD, comm);
-	return err;
+        return mca_pml.pml_send(sbuf, scount, sdtype, root,
+                                MCA_COLL_BASE_TAG_GATHER, 
+                                MCA_PML_BASE_SEND_STANDARD, comm);
     }
 
     /* I am the root, loop receiving the data. */
 
-    err = ompi_ddt_get_extent(rdtype, &lb, &extent);
-    if (OMPI_SUCCESS != err) {
-	return OMPI_ERROR;
+    if (OMPI_SUCCESS != (err = ompi_ddt_get_extent(rdtype, &lb, &extent))) {
+	return err;
     }
 
     incr = extent * rcount;
