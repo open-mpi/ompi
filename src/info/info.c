@@ -130,7 +130,7 @@ int ompi_info_finalize(void)
          just take a lot of thread locks / unlocks and since we're
          destroying everything, it isn't worth it */
 
-      if (!found) {
+      if (!found && ompi_debug_show_handle_leaks) {
         ompi_output(0, "WARNING:   (no keys)");
       }
     }
