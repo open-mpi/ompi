@@ -129,14 +129,14 @@ static inline int ompi_atomic_cmpset_rel_64( volatile int64_t *addr,
 #endif  /* HOW_TO_DECIDE_IF_THE_ARCHI_SUPPORT_64_BITS_ATOMICS */
 
 #define OMPI_ARCHITECTURE_DEFINE_ATOMIC_ADD_32
-static inline int ompi_atomic_add_32(volatile int32_t* v, int inc)
+static inline int32_t ompi_atomic_add_32(volatile int32_t* v, int inc)
 {
-   int t;
+   int32_t t;
 
    __asm__ __volatile__(
-                        "1:   lwarx %0,0,%3     # atomic_add\n\t"
-                        "     add  %0,%2,%0                \n\t"
-                        "     stwcx.   %0,0,%3              \n\t"
+                        "1:   lwarx %0, 0, %3 \n\t"
+                        "     add  %0, %2, %0                \n\t"
+                        "     stwcx.   %0, 0, %3              \n\t"
                         "     bne-  1b                      \n\t"
                         : "=&r" (t), "=m" (*v)
                         : "r" (inc), "r" (v), "m" (*v)
@@ -146,12 +146,12 @@ static inline int ompi_atomic_add_32(volatile int32_t* v, int inc)
 }
 
 #define OMPI_ARCHITECTURE_DEFINE_ATOMIC_SUB_32
-static inline int ompi_atomic_sub_32(volatile int32_t* v, int dec)
+static inline int32_t ompi_atomic_sub_32(volatile int32_t* v, int dec)
 {
-   int t;
+   int32_t t;
 
    __asm__ __volatile__(
-                        "1:   lwarx %0,0,%3     # atomic_add\n\t"
+                        "1:   lwarx %0,0,%3\n\t"
                         "     subf  %0,%2,%0                \n\t"
                         "     stwcx.   %0,0,%3              \n\t"
                         "     bne-  1b                      \n\t"
