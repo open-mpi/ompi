@@ -723,6 +723,7 @@ AC_DEFUN([OMPI_ASM_FIND_FILE], [
         if test ! "$PERL" = "" ; then
             # we have perl...  Can we generate a file?
             AC_MSG_CHECKING([whether possible to generate assembly file])
+            mkdir -p src/asm/generated
             ompi_cv_asm_file="atomic-local.s"
             ompi_try="$PERL \"$top_ompi_srcdir/src/asm/generate-asm.pl\" \"$ompi_cv_asm_arch\" \"$ompi_cv_asm_format\" \"$top_ompi_srcdir/src/asm/base\" \"$top_ompi_builddir/src/asm/generated/$ompi_cv_asm_file\" >conftest.out 2>&1"
             if AC_TRY_EVAL(ompi_try) ; then
