@@ -544,6 +544,8 @@ mca_pcm_base_data_store_pids_uniqify(pid_t **pids, size_t *len)
 {
     size_t i, j;
 
+    if (0 == *len) return OMPI_SUCCESS;
+
     qsort(*pids, *len, sizeof(pid_t), pids_cmp);
 
     for (i = 0 ; i < *len - 1 ;) {
