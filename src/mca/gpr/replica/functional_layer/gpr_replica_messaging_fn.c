@@ -368,8 +368,8 @@ MOVEON:
                 ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
                 return ORTE_ERR_OUT_OF_RESOURCE;
             }
+            kptr = &((*data_values)->keyvals[(*data_values)->cnt]);
             (*data_values)->cnt = n;
-            kptr = &((*data_values)->keyvals[n-cnt]);
         } else {
             (*data_values)->keyvals = (orte_gpr_keyval_t**)malloc(values[i]->cnt * sizeof(orte_gpr_keyval_t*));
             if (NULL == (*data_values)->keyvals) {
@@ -401,7 +401,9 @@ MOVEON:
         }
         OBJ_RELEASE(values[i]);
     }  /* for i */
-    free(values);
+   if (NULL != values) {
+       free(values);
+   }
     
     return ORTE_SUCCESS;
 }
