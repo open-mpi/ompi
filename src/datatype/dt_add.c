@@ -81,7 +81,8 @@ int ompi_ddt_add( dt_desc_t* pdtBase, dt_desc_t* pdtAdd,
       newLength = ((newLength / DT_INCREASE_STACK) + 1 ) * DT_INCREASE_STACK;
       printf( "increase the size of the data desc array from %d to %d (old ptr = %p ",
               pdtBase->desc.length, newLength, (void*)pdtBase->desc.desc );
-      pdtBase->desc.desc   = (dt_elem_desc_t*)realloc( pdtBase->desc.desc, newLength );
+      pdtBase->desc.desc   = (dt_elem_desc_t*)realloc( pdtBase->desc.desc,
+                                                       sizeof(dt_elem_desc_t) * newLength );
       printf( "new ptr = %p\n", (void*)pdtBase->desc.desc );
       pdtBase->desc.length = newLength;
    }
