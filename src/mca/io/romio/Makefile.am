@@ -6,7 +6,7 @@
 
 include $(top_ompi_srcdir)/config/Makefile.options
 
-SUBDIRS = src
+SUBDIRS = src romio-dist
 
 EXTRA_DIST = VERSION
 
