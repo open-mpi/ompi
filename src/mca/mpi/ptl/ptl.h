@@ -125,12 +125,12 @@ struct mca_ptl_t {
 
     /* PTL common attributes */
     mca_ptl_base_module_t* ptl_module;
-    size_t      ptl_frag_first_size;     /**< maximum size of first fragment */
-    size_t      ptl_frag_min_size;       /**< threshold below which the CDI will not fragment */
-    size_t      ptl_frag_max_size;       /**< maximum fragment size supported by the CDI */
-    uint32_t    ptl_endpoint_latency;    /**< relative/absolute measure of latency */
-    uint64_t    ptl_endpoint_bandwidth;  /**< bandwidth (bytes/sec) supported by each endpoint */
-    size_t      ptl_endpoint_count;      /**< number endpoints supported by this CDI */
+    bool        ptl_exclusive;         /**< indicates this PTL should be used exclusively */
+    size_t      ptl_first_frag_size;   /**< maximum size of first fragment */
+    size_t      ptl_min_frag_size;     /**< threshold below which the PTL will not fragment */
+    size_t      ptl_max_frag_size;     /**< maximum fragment size supported by the PTL */
+    uint32_t    ptl_latency;           /**< relative/absolute measure of latency */
+    uint64_t    ptl_bandwidth;         /**< bandwidth (bytes/sec) supported by each endpoint */
 
     /* PTL function table */
     mca_ptl_base_add_procs_fn_t      ptl_add_procs;
