@@ -46,7 +46,15 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_ACCEPT,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-void mpi_comm_accept_f(char *port_name, MPI_Fint *info, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *newcomm, MPI_Fint *ierr)
+void mpi_comm_accept_f(char *port_name, MPI_Fint *info, MPI_Fint *root, 
+		       MPI_Fint *comm, MPI_Fint *newcomm, MPI_Fint *ierr)
 {
-  /* This function not yet implemented */
+    MPI_Comm c_comm, c_new_comm;
+    MPI_Info c_info;
+
+    c_comm = MPI_Comm_f2c(*comm);
+    c_new_comm = MPI_Comm_f2c(*newcomm);
+    c_info = MPI_Info_f2c(*info);
+
+    *ierr = MPI_Comm_accept(port_name, c_info, *root, c_comm, &c_new_comm);
 }

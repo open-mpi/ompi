@@ -46,7 +46,12 @@ OMPI_GENERATE_F77_BINDINGS (MPI_ATTR_GET,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-void mpi_attr_get_f(MPI_Fint *comm, MPI_Fint *keyval, char *attribute_val, MPI_Fint *flag, MPI_Fint *ierr)
+void mpi_attr_get_f(MPI_Fint *comm, MPI_Fint *keyval,
+		    char *attribute_val, MPI_Fint *flag, MPI_Fint *ierr)
 {
-  /* This function not yet implemented */
+    MPI_Comm c_comm;
+
+    c_comm = MPI_Comm_f2c(*comm);
+
+    *ierr = MPI_Attr_get(c_comm, *keyval, attribute_val, flag);
 }

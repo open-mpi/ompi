@@ -46,7 +46,15 @@ OMPI_GENERATE_F77_BINDINGS (MPI_CART_CREATE,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-void mpi_cart_create_f(MPI_Fint *old_comm, MPI_Fint *ndims, MPI_Fint *dims, MPI_Fint *periods, MPI_Fint *reorder, MPI_Fint *comm_cart, MPI_Fint *ierr)
+void mpi_cart_create_f(MPI_Fint *old_comm, MPI_Fint *ndims, MPI_Fint *dims,
+		       MPI_Fint *periods, MPI_Fint *reorder,
+		       MPI_Fint *comm_cart, MPI_Fint *ierr)
 {
-  /* This function not yet implemented */
+    MPI_Comm c_comm1, c_comm2;
+    
+    c_comm1 = MPI_Comm_f2c(*old_comm);
+    c_comm2 = MPI_Comm_f2c(*comm_cart);
+
+    *ierr = MPI_Cart_create(c_comm1, *ndims, dims, periods, 
+			    *reorder, &c_comm2);
 }
