@@ -265,16 +265,17 @@ char **ompi_argv_copy(char **argv)
 }
 
 
-int ompi_argv_delete(char **argv, int start, int num_to_delete)
+int ompi_argv_delete(int *argc, char ***argv, int start, int num_to_delete)
 {
     int i;
     int count;
     int suffix_count;
+    char **tmp;
 
     /* Check for the bozo cases */
 
-    count = ompi_argv_count(argv);
-    if (NULL == argv || start > count || 0 == num_to_delete) {
+    count = ompi_argv_count(*argv);
+    if (NULL == argv || NULL == *argv || start > count || 0 == num_to_delete) {
         return OMPI_SUCCESS;
     } else if (start < 0 || num_to_delete < 0) {
         return OMPI_ERR_BAD_PARAM;
@@ -291,18 +292,22 @@ int ompi_argv_delete(char **argv, int start, int num_to_delete)
     /* Free all items that are being deleted */
 
     for (i = start; i < count && i < start + num_to_delete; ++i) {
-        free(argv[i]);
+        free(*argv[i]);
     }
 
     /* Copy the suffix over the deleted items */
 
     for (i = start; i < start + suffix_count; ++i) {
-        argv[i] = argv[i + num_to_delete];
+        *argv[i] = *argv[i + num_to_delete];
     }
 
     /* Add the trailing NULL */
 
-    argv[i] = NULL;
+    *argv[i] = NULL;
+
+    /* adjust the argv array */
+    tmp = realloc(*argv, sizeof(char**) * (i + 1));
+    if (NULL != tmp) *argv = tmp;
 
     return OMPI_SUCCESS;
 }

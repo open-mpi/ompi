@@ -155,7 +155,8 @@ OMPI_DECLSPEC  char **ompi_argv_copy(char **argv);
      *
      * Delete some tokens from within an existing argv.  The start
      * parameter specifies the first token to delete, and will delete
-     * (num_to_delete-1) tokens following it.
+     * (num_to_delete-1) tokens following it.  argv will be realloc()ed
+     * to *argc - num_deleted size.
      *
      * If start is beyond the end of the argv array, this function is
      * a no-op.
@@ -168,7 +169,8 @@ OMPI_DECLSPEC  char **ompi_argv_copy(char **argv);
      * free()ed (it is assumed that the argv "owns" the memory that
      * the pointer points to).
      */
-OMPI_DECLSPEC  int ompi_argv_delete(char **argv, int start, int num_to_delete);
+OMPI_DECLSPEC  int ompi_argv_delete(int *argc, char ***argv, 
+                                    int start, int num_to_delete);
 
     /**
      * Insert one argv array into the middle of another

@@ -265,7 +265,8 @@ int ompi_cmd_line_parse(ompi_cmd_line_t *cmd, bool ignore_unknown,
                     option = find_option(cmd, shortsv[0] + 1);
 
                     if (NULL != option) {
-                        ompi_argv_delete(cmd->lcl_argv, i,
+                        ompi_argv_delete(&cmd->lcl_argc,
+			                 &cmd->lcl_argv, i,
                                          1 + num_args_used);
                         ompi_argv_insert(&cmd->lcl_argv, i, shortsv);
                         cmd->lcl_argc = ompi_argv_count(cmd->lcl_argv);
