@@ -17,21 +17,23 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
+static char FUNC_NAME[] = "MPI_Comm_set_errhandler";
+
 
 int MPI_Comm_set_errhandler(MPI_Comm comm, MPI_Errhandler errhandler) 
 {
   /* Error checking */
 
   if (MPI_PARAM_CHECK) {
-    if (NULL == comm || 
-        MPI_COMM_NULL == comm) {
-      return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
-                                   "MPI_Comm_set_errhandler");
+    OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+    if (ompi_comm_invalid(comm)) {
+      return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM,
+                                    FUNC_NAME);
     } else if (NULL == errhandler ||
                MPI_ERRHANDLER_NULL == errhandler ||
                OMPI_ERRHANDLER_TYPE_COMM != errhandler->eh_mpi_object_type) {
       return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG,
-                               "MPI_Comm_set_errhandler");
+                                    FUNC_NAME);
     }
   }
 
