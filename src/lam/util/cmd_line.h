@@ -8,9 +8,11 @@
 /** @file **/
 
 #include "lam_config.h"
+#include "lam/constants.h"
 #include "lam/lfc/list.h"
 #include "lam/threads/mutex.h"
-#include "lam/constants.h"
+#include "lam/util/argv.h"
+
 
 struct lam_cmd_line_t {
   /* Keep this instance safe from other threads */
@@ -66,7 +68,8 @@ extern "C" {
   char *lam_cmd_line_get_param(lam_cmd_line_t *cmd, const char *opt, int inst, 
                                int idx);
 
-  int lam_cmd_line_get_tail(lam_cmd_line_t *cmd, int *tailc, char ***tailv);
+  static inline int lam_cmd_line_get_tail(lam_cmd_line_t *cmd, int *tailc, 
+                                          char ***tailv);
 #ifdef __cplusplus
 }
 #endif
@@ -89,9 +92,68 @@ static inline int lam_cmd_line_get_argc(lam_cmd_line_t *cmd)
 }
 
 
-static char *lam_cmd_line_get_argv(lam_cmd_line_t *cmd, int index)
+/**
+ * Return a string argument parsed on a LAM command line handle.
+ *
+ * @param cmd A pointer to the LAM command line handle.
+ * @param index The nth argument from the command line (0 is argv[0], etc.).
+ *
+ * @returns NULL If cmd is NULL or index is invalid
+ * @returns argument String of original argv[index]
+ *
+ * This function returns a single token from the arguments parsed on
+ * this handle.  Arguments are added bia the lam_cmd_line_parse()
+ * function.
+ *
+ * What is returned is a pointer to the actual string that is on the
+ * handle; it should not be modified or freed.
+ */
+static inline char *lam_cmd_line_get_argv(lam_cmd_line_t *cmd, int index)
 {
-  return (NULL != cmd) ? cmd->lcl_argv : LAM_ERROR;
+  return (NULL == cmd) ? NULL :
+    (index >= cmd->lcl_argc || index < 0) ? NULL : cmd->lcl_argv[index];
+}
+
+
+/**
+ * Return the entire "tail" of unprocessed argv from a LAM command
+ * line handle.
+ *
+ * @param cmd A pointer to the LAM command line handle.
+ * @param tailc Pointer to the output length of the null-terminated
+ * tail argv array.
+ * @param tailv Pointer to the output null-terminated argv of all
+ * unprocessed arguments from the command line.
+ *
+ * @return LAM_ERROR If cmd is NULL or otherwise invalid.
+ * @return LAM_SUCCESS Upon success.
+ *
+ * The "tail" is all the arguments on the command line that were not
+ * processed for some reason.  Reasons for not processing arguments
+ * include:
+ *
+ * \sa The argument was not recognized
+ * \sa The argument "--" was seen, and therefore all arguments
+ * following it were not processed
+ *
+ * The output tailc parameter will be filled in with the integer
+ * length of the null-terminated tailv array (length including the
+ * final NULL entry).  The output tailv parameter will be a copy of
+ * the tail parameters, and must be freed (likely with a call to
+ * lam_argv_free()) by the caller.
+ */
+static inline int lam_cmd_line_get_tail(lam_cmd_line_t *cmd, int *tailc, 
+                                        char ***tailv)
+{
+  if (NULL != cmd) {
+    lam_mtx_lock(&cmd->lcl_mutex);
+    *tailc = cmd->lcl_tail_argc;
+    *tailv = lam_argv_copy(cmd->lcl_tail_argv);
+    lam_mtx_unlock(&cmd->lcl_mutex);
+    return LAM_SUCCESS;
+  } else {
+    return LAM_ERROR;
+  }
 }
 
 #endif /* LAM_CMD_LINE_H */
