@@ -148,7 +148,7 @@ int ompi_request_wait_all(
             rc = request->req_free(request);
             if(rc != OMPI_SUCCESS)
                 return rc;
-            *rptr = NULL;
+            *rptr = MPI_REQUEST_NULL;
             rptr++;
         }
     } else {
@@ -160,7 +160,7 @@ int ompi_request_wait_all(
             rc = request->req_free(request);
             if(rc != OMPI_SUCCESS)
                 return rc;
-            *rptr = NULL;
+            *rptr = MPI_REQUEST_NULL;
             rptr++;
         }
     }

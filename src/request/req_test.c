@@ -24,18 +24,18 @@ int ompi_request_test(
     rptr = requests;
     for (i = 0; i < count; i++) {
         request = *rptr;
-        if (request == NULL)
+        if (request == MPI_REQUEST_NULL)
             continue;
         if (request->req_complete) {
             *index = i;
             *completed = true;
-            if (NULL != status) {
+            if (MPI_STATUS_IGNORE != status) {
                 *status = request->req_status;
             }
             rc = request->req_free(request);
             if(rc != OMPI_SUCCESS)
                 return rc;
-            *rptr = NULL;
+            *rptr = MPI_REQUEST_NULL;
             return OMPI_SUCCESS;
         }
         rptr++;
@@ -43,7 +43,7 @@ int ompi_request_test(
 
     *index = MPI_UNDEFINED;
     *completed = false;
-    if (NULL != status)
+    if (MPI_STATUS_IGNORE != status)
         *status = ompi_request_null.req_status;
     return OMPI_SUCCESS;
 }
@@ -64,7 +64,7 @@ int ompi_request_test_all(
     rptr = requests;
     for (i = 0; i < count; i++) {
         request = *rptr;
-        if (request == NULL || request->req_complete) {
+        if (request == MPI_REQUEST_NULL || request->req_complete) {
             num_completed++;
         }
         rptr++;
@@ -76,21 +76,17 @@ int ompi_request_test_all(
     }
 
     *completed = true;
-    if (NULL != statuses) {
+    if (MPI_STATUS_IGNORE != statuses) {
         /* fill out completion status and free request if required */
         rptr = requests;
         for (i = 0; i < count; i++) {
+            int rc;
             request  = *rptr;
-            if (NULL == request) {
-                statuses[i] = ompi_request_null.req_status;
-            } else {
-                int rc;
-                statuses[i] = request->req_status;
-                rc = request->req_free(request);
-                if(rc != OMPI_SUCCESS)
-                    return rc;
-                *rptr = NULL;
-            }
+            statuses[i] = request->req_status;
+            rc = request->req_free(request);
+            if(rc != OMPI_SUCCESS)
+                return rc;
+            *rptr = MPI_REQUEST_NULL;
             rptr++;
         }
     } else {
@@ -98,11 +94,10 @@ int ompi_request_test_all(
         rptr = requests;
         for (i = 0; i < count; i++) {
             ompi_request_t *request = *rptr;
-            if (NULL != request) {
-                int rc = request->req_free(request);
-                if(rc != OMPI_SUCCESS)
-                    return rc;
-            }
+            int rc = request->req_free(request);
+            if(rc != OMPI_SUCCESS)
+                return rc;
+            *rptr = MPI_REQUEST_NULL;
             rptr++;
         }
     }
