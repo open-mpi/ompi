@@ -872,9 +872,13 @@ void mca_gpr_replica_recv(int status, ompi_process_name_t* sender,
 	}
 	ompi_list_append(&mca_gpr_replica_notify_request_tracker, &trackptr->item);
 
-	response = (int32_t)gpr_replica_construct_trigger(synchro_mode, OMPI_REGISTRY_NOTIFY_NONE,
+	if(NULL != gpr_replica_construct_trigger(synchro_mode, OMPI_REGISTRY_NOTIFY_NONE,
 							  mode, segment, tokens,
-							  trigger, trackptr->id_tag);
+							  trigger, trackptr->id_tag)) {
+        response = OMPI_SUCCESS;
+    } else {
+        response = OMPI_ERROR;
+    }
 
 	if (OMPI_SUCCESS != ompi_pack(answer, &command, 1, MCA_GPR_OOB_PACK_CMD)) {
 	    goto RETURN_ERROR;
