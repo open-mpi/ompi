@@ -9,6 +9,7 @@
 
 #include "mpi.h"
 #include "communicator/communicator.h"
+#include "mca/base/mca_base_param.h"
 #include "mca/coll/coll.h"
 #include "mca/coll/base/base.h"
 #include "coll_basic.h"
@@ -133,9 +134,14 @@ int mca_coll_basic_init_query(bool *allow_multi_user_threads,
 const mca_coll_base_module_1_0_0_t *
 mca_coll_basic_comm_query(struct ompi_communicator_t *comm, int *priority)
 {
+  int param;
+
   /* Use a low priority, but allow other components to be lower */
 
-  *priority = 10;
+  param = mca_base_param_register_int("coll", "basic", "priority", NULL, 10);
+  if (OMPI_SUCCESS != mca_base_param_lookup_int(param, priority)) {
+    return NULL;
+  }
 
   /* Choose whether to use [intra|inter], and [linear|log]-based
      algorithms. */
