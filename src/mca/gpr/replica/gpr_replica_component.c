@@ -269,7 +269,7 @@ mca_gpr_base_module_t *mca_gpr_replica_init(bool *allow_multi_user_threads, bool
        setup and return the module */
 
     if (ompi_process_info.seed) {
-
+        int rc;
 
 	/* Return a module (choose an arbitrary, positive priority --
 	   it's only relevant compared to other ns components).  If
@@ -292,7 +292,10 @@ mca_gpr_base_module_t *mca_gpr_replica_init(bool *allow_multi_user_threads, bool
 	mca_gpr_replica_head.lastkey = 0;
 
 	/* issue the non-blocking receive */
-/*       	mca_oob_recv_packed_nb(MCA_OOB_NAME_ANY, MCA_OOB_TAG_GPR, 0, mca_gpr_replica_recv, NULL); */
+    rc = mca_oob_recv_packed_nb(MCA_OOB_NAME_ANY, MCA_OOB_TAG_GPR, 0, mca_gpr_replica_recv, NULL);
+    if(rc != OMPI_SUCCESS && rc != OMPI_ERR_NOT_IMPLEMENTED) {
+        return NULL;
+    }
 
 	/* Return the module */
 

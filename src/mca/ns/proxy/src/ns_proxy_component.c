@@ -25,10 +25,6 @@
 #include "mca/ns/base/base.h"
 #include "ns_proxy.h"
 
-/* empty stub for proxy */
-static int ns_proxy_init(void) 
-{ return OMPI_SUCCESS; }
-
 
 /*
  * Struct of function pointers that need to be initialized
@@ -70,8 +66,7 @@ static mca_ns_base_module_t mca_ns_proxy = {
     ns_base_get_vpid,
     ns_base_get_jobid,
     ns_base_get_cellid,
-    ns_base_compare,
-    ns_proxy_init
+    ns_base_compare
 };
 
 /*

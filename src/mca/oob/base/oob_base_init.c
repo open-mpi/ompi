@@ -33,9 +33,9 @@ OBJ_CLASS_INSTANCE(
     NULL
 );
 
-ompi_process_name_t mca_oob_name_seed;
-ompi_process_name_t mca_oob_name_self;
-ompi_process_name_t mca_oob_name_any;                                                                                                                          
+ompi_process_name_t mca_oob_name_seed = { 0, 0, 0 };
+ompi_process_name_t mca_oob_name_self = { MCA_NS_BASE_CELLID_MAX, MCA_NS_BASE_JOBID_MAX, MCA_NS_BASE_VPID_MAX };
+ompi_process_name_t mca_oob_name_any  = { MCA_NS_BASE_CELLID_MAX, MCA_NS_BASE_JOBID_MAX, MCA_NS_BASE_VPID_MAX };
 
 /**
  * Parse contact info string into process name and list of uri strings.
@@ -74,27 +74,12 @@ int mca_oob_base_init(bool *user_threads, bool *hidden_threads)
     mca_oob_base_component_t *component;
     mca_oob_t *module;
     extern ompi_list_t mca_oob_base_components;
-    ompi_process_name_t *self;
     int i, id;
     char* seed;
     char** uri = NULL;
 
     char** include = ompi_argv_split(mca_oob_base_include, ',');
     char** exclude = ompi_argv_split(mca_oob_base_exclude, ',');
-
-    /* setup local name */
-    self = mca_pcmclient.pcmclient_get_self();
-    if(NULL == self) {
-        ompi_output(0, "mca_oob_base_init: could not get pcmclient self pointer");
-        return OMPI_ERROR;
-    }
-    mca_oob_name_self = *self;
-
-    /* setup wildcard name */
-    mca_oob_name_any = *ompi_name_server.create_process_name(
-        MCA_NS_BASE_CELLID_MAX,
-        MCA_NS_BASE_JOBID_MAX,
-        MCA_NS_BASE_VPID_MAX);
 
     /* setup seed daemons name and address */
     id = mca_base_param_register_string("oob","base","seed",NULL,NULL);
@@ -231,22 +216,18 @@ int mca_oob_set_contact_info(const char* seed)
 }
                                                                                   
 /**
-*  Obtains the contact info (oob implementation specific) URI strings through
-*  which this process can be contacted on an OOB channel.
-*
-*  @return  A null terminated string.
-*
-*  The caller is responsible for freeing the returned string.
-*/
-                                                                                                             
-/**
 * Called to request the selected oob components to
 * register their address with the seed deamon.
 */
 
-int mca_oob_base_register(void)
+int mca_oob_base_module_init(void)
 {
   ompi_list_item_t* item;
+
+  /* setup self to point to actual process name */
+  if(ompi_name_server.compare(OMPI_NS_CMP_ALL, &mca_oob_name_self, &mca_oob_name_any) == 0) {
+      mca_oob_name_self = *mca_pcmclient.pcmclient_get_self();
+  }
 
   /* Initialize all modules after oob/gpr/ns have initialized */
   for (item =  ompi_list_get_first(&mca_oob_base_modules);

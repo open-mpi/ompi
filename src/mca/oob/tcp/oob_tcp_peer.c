@@ -1,3 +1,6 @@
+/*
+ * $HEADER$
+ */
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/uio.h>
@@ -350,10 +353,16 @@ void mca_oob_tcp_peer_close(mca_oob_tcp_peer_t* peer)
  */
 static int mca_oob_tcp_peer_send_connect_ack(mca_oob_tcp_peer_t* peer)
 {
-    /* send process identifier to remote peer */
-    ompi_process_name_t guid = mca_oob_name_self;
-    OMPI_PROCESS_NAME_HTON(guid);
-    if(mca_oob_tcp_peer_send_blocking( peer, &guid, sizeof(guid)) != sizeof(guid)) {
+    /* send process identifier of self and peer - note that we may 
+     * have assigned the peer a unique process name - if it came up
+     * without one.
+    */
+    ompi_process_name_t guid[2];
+    guid[0] = mca_oob_name_self;
+    guid[1] = peer->peer_name;
+    OMPI_PROCESS_NAME_HTON(guid[0]);
+    OMPI_PROCESS_NAME_HTON(guid[1]);
+    if(mca_oob_tcp_peer_send_blocking(peer, guid, sizeof(guid)) != sizeof(guid)) {
         return OMPI_ERR_UNREACH;
     }
     return OMPI_SUCCESS;
@@ -366,17 +375,23 @@ static int mca_oob_tcp_peer_send_connect_ack(mca_oob_tcp_peer_t* peer)
  */
 static int mca_oob_tcp_peer_recv_connect_ack(mca_oob_tcp_peer_t* peer)
 {
-    ompi_process_name_t guid;
-    if((mca_oob_tcp_peer_recv_blocking(peer, &guid, sizeof(ompi_process_name_t))) != sizeof(ompi_process_name_t)) {
+    ompi_process_name_t guid[2];
+    if((mca_oob_tcp_peer_recv_blocking(peer, guid, sizeof(guid))) != sizeof(guid)) {
         return OMPI_ERR_UNREACH;
     }
-    OMPI_PROCESS_NAME_NTOH(guid);
+    OMPI_PROCESS_NAME_NTOH(guid[0]);
+    OMPI_PROCESS_NAME_NTOH(guid[1]);
                                                                                                             
-    /* compare this to the expected values */
-    if(memcmp(&peer->peer_name, &guid, sizeof(ompi_process_name_t)) != 0) {
+    /* compare the peers name to the expected value */
+    if(memcmp(&peer->peer_name, &guid[0], sizeof(ompi_process_name_t)) != 0) {
         ompi_output(0, "mca_oob_tcp_peer_connect: received unexpected process identifier");
         mca_oob_tcp_peer_close(peer);
         return OMPI_ERR_UNREACH;
+    }
+
+    /* if we have a wildcard name - use the name returned by the peer */
+    if(mca_oob_tcp_process_name_compare(&mca_oob_name_self, &mca_oob_name_any) == 0) {
+        mca_oob_name_self = guid[1];
     }
 
     /* connected */

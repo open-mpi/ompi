@@ -1,7 +1,5 @@
-/* -*- C -*-
- * 
+/* 
  * $HEADER$
- *
  */
 
 #include <unistd.h>
@@ -15,6 +13,8 @@
 #include "mca/ns/ns.h"
 #include "mca/gpr/base/base.h"
 #include "mca/gpr/gpr.h"
+#include "mca/pcmclient/pcmclient.h"
+#include "mca/pcmclient/base/base.h"
 
 
 static int  mca_oob_tcp_create_listen(void);
@@ -265,6 +265,15 @@ static void mca_oob_tcp_recv_handler(int sd, short flags, void* user)
         }
     }
 
+    /* check for wildcard name - if this is true - we allocate a name from the name server 
+     * and return to the peer 
+     */
+    if(mca_oob_tcp_process_name_compare(&name, MCA_OOB_NAME_ANY) == 0) {
+        name.jobid = ompi_name_server.create_jobid();
+        name.vpid = ompi_name_server.reserve_range(name.jobid,1);
+        ompi_name_server.assign_cellid_to_process(&name);
+    }
+
     /* lookup the corresponding process */
     peer = mca_oob_tcp_peer_lookup(&name, true);
     if(NULL == peer) {
@@ -331,13 +340,18 @@ int mca_oob_tcp_init(void)
     char *addr;
     int rc;
 
+    /* setup self to point to actual process name */
+    if(mca_oob_tcp_process_name_compare(&mca_oob_name_self, &mca_oob_name_any) == 0) {
+        mca_oob_name_self = *mca_pcmclient.pcmclient_get_self();
+    }
+
     /* put contact info in registry */
     keys[0] = "tcp";
     keys[1] = ompi_name_server.get_proc_name_string(&mca_oob_name_self);
     keys[2] = NULL;
 
     addr = mca_oob_tcp_get_addr();
-    rc = ompi_registry.put(OMPI_REGISTRY_OVERWRITE, "oob", keys, addr, strlen(addr)+1);
+    rc = ompi_registry.put(OMPI_REGISTRY_OVERWRITE, "oob", keys, (ompi_registry_object_t)addr, strlen(addr)+1);
     free(addr);
     if(rc != OMPI_SUCCESS) {
         ompi_output(0, "mca_oob_tcp_init: unable to contact registry.");

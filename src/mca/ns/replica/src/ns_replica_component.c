@@ -25,7 +25,6 @@
 #include "mca/ns/base/base.h"
 #include "ns_replica.h"
 
-static int mca_ns_replica_module_init(void);
 
 /*
  * Struct of function pointers that need to be initialized
@@ -67,8 +66,7 @@ static mca_ns_base_module_t mca_ns_replica = {
     ns_base_get_vpid,
     ns_base_get_jobid,
     ns_base_get_cellid,
-    ns_base_compare,
-    mca_ns_replica_module_init
+    ns_base_compare
 };
 
 /*
@@ -122,12 +120,12 @@ int mca_ns_replica_close(void)
 
 mca_ns_base_module_t* mca_ns_replica_init(bool *allow_multi_user_threads, bool *have_hidden_threads, int *priority)
 {
-
     /* If we're the seed, then we want to be selected, so do all the
        setup and return the module */
 
     if (ompi_process_info.seed) {
 
+      int rc;
       mca_ns_replica_last_used_cellid = 0;
       mca_ns_replica_last_used_jobid = 0;
 
@@ -156,6 +154,11 @@ mca_ns_base_module_t* mca_ns_replica_init(bool *allow_multi_user_threads, bool *
       initialized = true;
 
       /* issue non-blocking receive for call_back function */
+      rc = mca_oob_recv_packed_nb(MCA_OOB_NAME_ANY, MCA_OOB_TAG_NS, 0, mca_ns_replica_recv, NULL);
+      if(rc != OMPI_SUCCESS && rc != OMPI_ERR_NOT_IMPLEMENTED) {
+          ompi_output(0, "mca_ns_replica_init: unable to post non-blocking recv\n");
+          return NULL;
+      }
 
       return &mca_ns_replica;
     } else {
@@ -258,16 +261,5 @@ void mca_ns_replica_recv(int status, ompi_process_name_t* sender,
 
     /* reissue the non-blocking receive */
     mca_oob_recv_packed_nb(MCA_OOB_NAME_ANY, MCA_OOB_TAG_NS, 0, mca_ns_replica_recv, NULL);
-}
-
-
-/*
- * init the selected module - this is called after all RTE components
- * have been initialized
- */ 
-
-static int mca_ns_replica_module_init(void)
-{
-    return mca_oob_recv_packed_nb(MCA_OOB_NAME_ANY, MCA_OOB_TAG_NS, 0, mca_ns_replica_recv, NULL);
 }
 
