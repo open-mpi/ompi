@@ -35,8 +35,8 @@ extern "C" {
 #if 0
   /* JMS Are these necessary in L8? */
   struct in_addr mca_mpi_hostmap(struct in_addr *addr, char *keyname);
-#endif
   void mca_mpi_hostmap_finalize(void);
+#endif
 
   int mca_mpi_param_associate(int index, int keyval);
   int mca_mpi_param_lookup_int(int index, MPI_Comm comm);
