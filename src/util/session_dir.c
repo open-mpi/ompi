@@ -42,18 +42,21 @@
 #include "util/output.h"
 #include "util/os_path.h"
 #include "util/os_create_dirpath.h"
+
+#include "runtime/runtime.h"
+
 #include "util/session_dir.h"
 
-int ompi_check_dir(bool create, char *directory);
+static int ompi_check_dir(bool create, char *directory);
 
-void ompi_dir_empty(char *pathname);
+static void ompi_dir_empty(char *pathname);
 
-bool ompi_no_subdirs(char *pathname);
+static bool ompi_is_empty(char *pathname);
 
 
 #define OMPI_DEFAULT_TMPDIR "tmp"
 
-int ompi_check_dir(bool create, char *directory)
+static int ompi_check_dir(bool create, char *directory)
 {
     struct stat buf;
     mode_t my_mode = S_IRWXU;  /* at the least, I need to be able to do anything */
@@ -233,6 +236,14 @@ int ompi_session_dir(bool create, char *prfx, char *usr, char *hostid,
         ompi_process_info.universe_session_dir = strdup(fulldirpath);
     }
 
+    if (ompi_rte_debug_flag) {
+	ompi_output(0, "procdir: %s", ompi_process_info.proc_session_dir);
+	ompi_output(0, "jobdir: %s", ompi_process_info.job_session_dir);
+	ompi_output(0, "unidir: %s", ompi_process_info.universe_session_dir);
+	ompi_output(0, "top: %s", ompi_process_info.top_session_dir);
+	ompi_output(0, "tmp: %s", ompi_process_info.tmpdir_base);
+    }
+
  CLEANUP:
     if (tmp) {
         free(tmp);
@@ -260,33 +271,62 @@ int ompi_session_dir(bool create, char *prfx, char *usr, char *hostid,
 int
 ompi_session_dir_finalize()
 {
+    ompi_dir_empty(ompi_process_info.proc_session_dir);
+    ompi_dir_empty(ompi_process_info.job_session_dir);
+    ompi_dir_empty(ompi_process_info.universe_session_dir);
+    ompi_dir_empty(ompi_process_info.top_session_dir);
 
-    if (ompi_no_subdirs(ompi_process_info.proc_session_dir)) {
-	ompi_dir_empty(ompi_process_info.proc_session_dir);
+    if (ompi_is_empty(ompi_process_info.proc_session_dir)) {
+	if (ompi_rte_debug_flag) {
+	    ompi_output(0, "sess_dir_finalize: found proc session dir empty - deleting");
+	}
+	rmdir(ompi_process_info.proc_session_dir);
     } else {
+	if (ompi_rte_debug_flag) {
+	    ompi_output(0, "sess_dir_finalize: proc session dir not empty - leaving");
+	}
 	return OMPI_SUCCESS;
     }
 
-    if (ompi_no_subdirs(ompi_process_info.job_session_dir)) {
-	ompi_dir_empty(ompi_process_info.job_session_dir);
+    if (ompi_is_empty(ompi_process_info.job_session_dir)) {
+	if (ompi_rte_debug_flag) {
+	    ompi_output(0, "sess_dir_finalize: found job session dir empty - deleting");
+	}
+	rmdir(ompi_process_info.job_session_dir);
     } else {
+	if (ompi_rte_debug_flag) {
+	    ompi_output(0, "sess_dir_finalize: job session dir not empty - leaving");
+	}
 	return OMPI_SUCCESS;
     }
 
-    if (ompi_no_subdirs(ompi_process_info.universe_session_dir)) {
-	ompi_dir_empty(ompi_process_info.universe_session_dir);
+    if (ompi_is_empty(ompi_process_info.universe_session_dir)) {
+	if (ompi_rte_debug_flag) {
+	    ompi_output(0, "sess_dir_finalize: found univ session dir empty - deleting");
+	}
+	rmdir(ompi_process_info.universe_session_dir);
     } else {
+	if (ompi_rte_debug_flag) {
+	    ompi_output(0, "sess_dir_finalize: univ session dir not empty - leaving");
+	}
 	return OMPI_SUCCESS;
     }
 
-    if (ompi_no_subdirs(ompi_process_info.top_session_dir)) {
-	ompi_dir_empty(ompi_process_info.top_session_dir);
+    if (ompi_is_empty(ompi_process_info.top_session_dir)) {
+	if (ompi_rte_debug_flag) {
+	    ompi_output(0, "sess_dir_finalize: found top session dir empty - deleting");
+	}
+	rmdir(ompi_process_info.top_session_dir);
+    } else {
+	if (ompi_rte_debug_flag) {
+	    ompi_output(0, "sess_dir_finalize: top session dir not empty - leaving");
+	}
     }
 
     return OMPI_SUCCESS;
 }
 
-void
+static void
 ompi_dir_empty(char *pathname)
 {
     DIR *dp;
@@ -302,18 +342,18 @@ ompi_dir_empty(char *pathname)
 	    while ((ep = readdir(dp))) {
 		if ((0 != strcmp(ep->d_name, ".")) &&
 		    (0 != strcmp(ep->d_name, "..")) &&
-		    (DT_DIR != ep->d_type)) {
+		    (DT_DIR != ep->d_type) &&
+		    (0 != strncmp(ep->d_name, "output-", strlen("output-")))) {
 		    filenm = ompi_os_path(false, pathname, ep->d_name, NULL);
 		    unlink(filenm);
 		}
 	    }
 	    closedir(dp);
 	}
-	rmdir(pathname);
     }
 }
 
-bool ompi_no_subdirs(char *pathname)
+static bool ompi_is_empty(char *pathname)
 {
     DIR *dp;
     struct dirent *ep;
@@ -323,8 +363,7 @@ bool ompi_no_subdirs(char *pathname)
 	if (NULL != dp) {
 	    while ((ep = readdir(dp))) {
 		if ((0 != strcmp(ep->d_name, ".")) &&
-		    (0 != strcmp(ep->d_name, "..")) &&
-		    (DT_DIR == ep->d_type)) {
+		    (0 != strcmp(ep->d_name, ".."))) {
 		    return false;
 		}
 	    }
