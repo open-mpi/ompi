@@ -2,6 +2,7 @@
  * $HEADER$
  */
 
+#include <stdlib.h>
 #include "lam/mem/malloc.h"
 #include "mca/mpi/pml/pml.h"
 #include "mca/mpi/ptl/ptl.h"
@@ -35,6 +36,8 @@ int mca_pml_teg_add_comm(lam_communicator_t* comm)
 {
     /* allocate pml specific comm data */
     struct mca_pml_comm_t* pml_comm = (mca_pml_comm_t*)LAM_MALLOC(sizeof(mca_pml_comm_t));
+    if(pml_comm == 0)
+        return LAM_ERR_OUT_OF_RESOURCE;
     mca_pml_ptl_comm_init(pml_comm, comm->c_remote_group->g_proc_count);
     comm->c_pml_comm = pml_comm;
     return LAM_SUCCESS;
@@ -47,21 +50,43 @@ int mca_pml_teg_del_comm(lam_communicator_t* comm)
     return LAM_SUCCESS;
 }
 
+static int ptl_exclusivity_compare(const void* arg1, const void* arg2)
+{
+    mca_ptl_t* ptl1 = *(struct mca_ptl_t**)arg1;
+    mca_ptl_t* ptl2 = *(struct mca_ptl_t**)arg2;
+    if( ptl1->ptl_exclusivity > ptl2->ptl_exclusivity )
+        return 1;
+    else if (ptl1->ptl_exclusivity == ptl2->ptl_exclusivity )
+        return 0;
+    else
+        return -1;
+}
+
+
 int mca_pml_teg_add_ptls(struct mca_ptl_t** ptls, size_t nptls)
 {
     /* sort the ptls by exclusivity */
+    qsort(ptls, nptls, sizeof(struct mca_ptl_t*), ptl_exclusivity_compare);
     mca_pml_teg.teg_ptls = ptls;
     mca_pml_teg.teg_num_ptls = nptls;
     return LAM_SUCCESS;
 }
 
+/*
+ *   For each proc setup a datastructure that indicates the PTLs
+ *   that can be used to reach the destination.
+ *
+ */
+
 int mca_pml_teg_add_procs(lam_proc_t** procs, size_t nprocs)
 {
-    size_t i;
     size_t p;
-
     for(p=0; p<nprocs; p++) {
         lam_proc_t *proc = procs[p];
+        uint64_t total_bandwidth = 0;
+        uint32_t latency = 0;
+        size_t n_index, p_index; 
+        size_t n_size;
 
         /* initialize each proc */
         mca_pml_proc_t* proc_pml = proc->proc_pml;
@@ -83,8 +108,8 @@ int mca_pml_teg_add_procs(lam_proc_t** procs, size_t nprocs)
         }
 
         /* allow each ptl to register with the proc */
-        for(i=0; i<mca_pml_teg.teg_num_ptls; i++) {
-            mca_ptl_t* ptl = mca_pml_teg.teg_ptls[i];
+        for(p_index = 0; p_index < mca_pml_teg.teg_num_ptls; p_index++) {
+            mca_ptl_t* ptl = mca_pml_teg.teg_ptls[p_index];
  
             /* if the ptl can reach the destination proc it will return 
              * addressing information that will be cached on the proc
@@ -102,35 +127,108 @@ int mca_pml_teg_add_procs(lam_proc_t** procs, size_t nprocs)
                 /* if this ptl supports exclusive access then don't allow 
                  * subsequent ptls to register
                  */
-                if(ptl->ptl_exclusive)
+                if(ptl->ptl_exclusivity)
                     break;
             }
         }
 
-        /* compute a weighting factor for each ptl */
-        for(i=0; i<mca_ptl_array_get_size(&proc_pml->proc_ptl_next); i++) {
-            
+        /* (1) determine the total bandwidth available across all ptls
+         *     note that we need to do this here, as we may already have ptls configured
+         * (2) determine the highest priority ranking for latency
+         */
+        n_size = mca_ptl_array_get_size(&proc_pml->proc_ptl_next); 
+        for(n_index = 0; n_index < n_size; n_index++) {
+            struct mca_ptl_proc_t* ptl_proc = mca_ptl_array_get_index(&proc_pml->proc_ptl_next, n_index);
+            struct mca_ptl_t* ptl = ptl_proc->ptl;
+            total_bandwidth += ptl_proc->ptl->ptl_bandwidth; 
+            if(ptl->ptl_latency > latency)
+                latency = ptl->ptl_latency;
+        }
+
+        /* (1) set the weight of each ptl as a percentage of overall bandwidth
+         * (2) copy all ptl instances at the highest priority ranking into the
+         *     list of ptls used for first fragments
+         */
+
+        for(n_index = 0; n_index < n_size; n_index++) {
+            struct mca_ptl_proc_t* ptl_proc = mca_ptl_array_get_index(&proc_pml->proc_ptl_next, n_index);
+            struct mca_ptl_t *ptl = ptl_proc->ptl;
+            if(ptl->ptl_bandwidth)
+                ptl_proc->ptl_weight = total_bandwidth / ptl_proc->ptl->ptl_bandwidth;
+
+            /* check to see if this ptl is already in the array of ptls used for first
+             * fragments - if not add it.
+             */
+            if(ptl->ptl_latency == latency) {
+                size_t f_index;
+                size_t f_size = mca_ptl_array_get_size(&proc_pml->proc_ptl_first);
+                for(f_index=0; f_index < f_size; f_index++) {
+                    struct mca_ptl_proc_t* existing_proc = mca_ptl_array_get_index(&proc_pml->proc_ptl_first, f_index);
+                    if(existing_proc->ptl == ptl) {
+                        *existing_proc = *ptl_proc; /* update existing definition */
+                        break;
+                    }
+                }
+                /* not found add a new entry */
+                if(f_index == f_size) {
+                    struct mca_ptl_proc_t* new_proc = mca_ptl_array_insert(&proc_pml->proc_ptl_first);
+                    *new_proc = *ptl_proc;
+                }
+            }
         }
     }
     return LAM_SUCCESS;
 }
 
+/*
+ * iterate through each proc and notify any PTLs associated
+ * with the proc that it is/has gone away
+ */
+
 int mca_pml_teg_del_procs(lam_proc_t** procs, size_t nprocs)
 {
-#if 0
-    size_t i;
-    for(i=0; i<nprocs; i++) {
-        lam_proc_t *proc = procs[i];
+    size_t p;
+    for(p = 0; p < nprocs; p++) {
+        lam_proc_t *proc = procs[p];
         mca_pml_proc_t* proc_pml = proc->proc_pml;
+        size_t f_index, f_size;
+        size_t n_index, n_size;
  
         /* notify each ptl that the proc is going away */
-        size_t p;
-        for(p=0; p<proc_pml->proc_ptl_first.ptl_size; p++) {
-            mca_ptl_info_t* ptl_info = proc_pml->proc_ptl_first.ptl_array[p];
-            ptl_info->ptl->ptl_del_proc(proc);
+        f_size = mca_ptl_array_get_size(&proc_pml->proc_ptl_first);
+        for(f_index = 0; f_index < f_size; f_index++) {
+            mca_ptl_proc_t* ptl_proc = mca_ptl_array_get_index(&proc_pml->proc_ptl_first, f_index);
+            mca_ptl_t* ptl = ptl_proc->ptl;
+            
+            ptl->ptl_del_proc(ptl,proc,ptl_proc->ptl_addr);
+
+            /* remove this from next array so that we dont call it twice w/ 
+             * the same address pointer
+             */
+            f_size = mca_ptl_array_get_size(&proc_pml->proc_ptl_first);
+            for(n_index = 0; n_index < n_size; n_index++) {
+                mca_ptl_proc_t* next_proc = mca_ptl_array_get_index(&proc_pml->proc_ptl_next, n_index);
+                if(next_proc->ptl == ptl) {
+                    memset(next_proc, 0, sizeof(mca_ptl_proc_t));
+                    break;
+                }
+            }
         }
+
+        /* notify each ptl that was not in the array of ptls for first fragments */
+        n_size = mca_ptl_array_get_size(&proc_pml->proc_ptl_next);
+        for(n_index = 0; n_index < n_size; n_index++) {
+            mca_ptl_proc_t* ptl_proc = mca_ptl_array_get_index(&proc_pml->proc_ptl_first, n_index);
+            mca_ptl_t* ptl = ptl_proc->ptl;
+            if (ptl != 0)
+                ptl->ptl_del_proc(ptl,proc,ptl_proc->ptl_addr);
+        }
+        
+        /* do any required cleanup */
+        mca_pml_teg_proc_destroy(proc_pml);
+        LAM_FREE(proc_pml);
+        proc->proc_pml = 0;
     }
-#endif
     return LAM_SUCCESS;
 }
 

@@ -55,6 +55,18 @@ static inline mca_ptl_proc_t* mca_ptl_array_insert(mca_ptl_array_t* array)
     return &array->ptl_procs[array->ptl_size++];
 }
 
+static inline mca_ptl_proc_t* mca_ptl_array_get_index(mca_ptl_array_t* array, size_t index)
+{
+#if LAM_ENABLE_DEBUG
+    if(index >= array->ptl_size) {
+        lam_output(0, "mca_ptl_array_get_index: invalid array index %d >= %d",
+            index, array->ptl_size);
+        return 0;
+    }
+#endif
+    return &array->ptl_procs[index];
+}
+
 static inline mca_ptl_proc_t* mca_ptl_array_get_next(mca_ptl_array_t* array)
 {
 #if LAM_ENABLE_DEBUG

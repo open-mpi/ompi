@@ -128,16 +128,6 @@ typedef int (*mca_pml_base_wait_fn_t)(
     lam_status_public_t* status
 );
 
-/**
- * PTL->PML Upcall from PTL to PML to add themself to proc array
- */
-
-typedef int (*mca_ptl_pml_add_proc_fn_t)(
-    struct lam_proc_t* proc,
-    struct mca_ptl_t* ptl,
-    struct mca_ptl_addr_t*
-);
-
 
 /**
  *  PML instance interface functions.
@@ -161,9 +151,6 @@ struct mca_pml_t {
     mca_pml_base_start_fn_t        pml_start;
     mca_pml_base_test_fn_t         pml_test;
     mca_pml_base_wait_fn_t         pml_wait;
-
-    /* upcalls from PTL to PML */
-    mca_ptl_pml_add_proc_fn_t      ptl_pml_add_proc;
 };
 typedef struct mca_pml_t mca_pml_t;
 

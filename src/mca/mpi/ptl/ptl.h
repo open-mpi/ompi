@@ -90,6 +90,20 @@ typedef int (*mca_ptl_base_add_proc_fn_t)(
 );
 
 /**
+ *  PML->PTL notification of change in the process list.
+ *
+ *  @param ptl (IN)     
+ *  @param procs (IN)   
+ *  @param nprocs (IN)  
+ *  @return            
+ */
+typedef int (*mca_ptl_base_del_proc_fn_t)(
+    struct mca_ptl_t* ptl, 
+    struct lam_proc_t* proc, 
+    struct mca_ptl_addr_t*
+);
+
+/**
  *  MCA->PTL Clean up any resources held by PTL instance before the module is unloaded.
  *  
  *  @param ptl (IN)   The PTL module instance that is being unloaded.
@@ -127,15 +141,16 @@ struct mca_ptl_t {
 
     /* PTL common attributes */
     mca_ptl_base_module_t* ptl_module;
-    int         ptl_exclusive;         /**< indicates this PTL should be used exclusively */
     size_t      ptl_first_frag_size;   /**< maximum size of first fragment */
     size_t      ptl_min_frag_size;     /**< threshold below which the PTL will not fragment */
     size_t      ptl_max_frag_size;     /**< maximum fragment size supported by the PTL */
-    uint32_t    ptl_latency;           /**< relative/absolute measure of latency */
-    uint64_t    ptl_bandwidth;         /**< bandwidth (bytes/sec) supported by each endpoint */
+    uint32_t    ptl_exclusivity;       /**< indicates this PTL should be used exclusively */
+    uint32_t    ptl_latency;           /**< relative ranking of latency used to prioritize ptls */
+    uint32_t    ptl_bandwidth;         /**< bandwidth (Mbytes/sec) supported by each endpoint */
 
     /* PTL function table */
     mca_ptl_base_add_proc_fn_t       ptl_add_proc;
+    mca_ptl_base_del_proc_fn_t       ptl_del_proc;
     mca_ptl_base_fini_fn_t           ptl_fini;
     mca_ptl_base_send_fn_t           ptl_send;
     mca_ptl_base_request_alloc_fn_t  ptl_request_alloc;
