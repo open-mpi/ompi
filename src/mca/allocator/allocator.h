@@ -78,5 +78,7 @@ typedef struct mca_allocator_base_module_1_0_0_t mca_allocator_base_module_t;
   /* ptl v1.0 */ \
   "allocator", 1, 0, 0
 
+extern int mca_allocator_base_output;
+
 #endif /* MCA_ALLOCATOR_H */
 

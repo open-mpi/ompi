@@ -16,11 +16,13 @@
 
 struct mca_allocator_base_selected_module_t {
   ompi_list_item_t super;
-  mca_allocator_base_module_t *apsm_module;
-  mca_allocator_t *absm_actions;
+  mca_allocator_base_module_t *allocator_component;
+  mca_allocator_t *allocator_module;
 };
 typedef struct mca_allocator_base_selected_module_t mca_allocator_base_selected_module_t;
-
+                                                                                                     
+OBJ_CLASS_DECLARATION(mca_mpool_base_selected_module_t);
+                                                                                                     
 
 /*
  * Global functions for MCA: overall PTL open and close
@@ -32,7 +34,7 @@ extern "C" {
   int mca_allocator_base_open(void);
   int mca_allocator_base_init(bool *allow_multi_user_threads);
   int mca_allocator_base_close(void);
-  mca_allocator_t* mca_allocator_lookup(const char* name);
+  mca_allocator_base_module_t* mca_allocator_module_lookup(const char* name);
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
@@ -43,8 +45,7 @@ extern "C" {
  */
 
 
-extern int mca_allocator_base_output;
-extern ompi_list_t mca_allocator_base_modules_available;
-extern ompi_list_t mca_allocator_base_modules_initialized;
+extern ompi_list_t mca_allocator_base_components;
+extern ompi_list_t mca_allocator_base_modules;
 
 #endif /* MCA_ALLOCATOR_BASE_H */

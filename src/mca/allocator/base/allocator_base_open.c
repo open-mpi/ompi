@@ -24,10 +24,9 @@
 /*
  * Global variables
  */
+ompi_list_t mca_allocator_base_components;
+ompi_list_t mca_allocator_base_modules;
 int mca_allocator_base_output = -1;
-ompi_list_t mca_allocator_base_modules_available;
-ompi_list_t mca_allocator_base_modules_initialized;
-
 
 /**
  * Function for finding and opening either all MCA modules, or the one
@@ -39,18 +38,10 @@ int mca_allocator_base_open(void)
 
   if (OMPI_SUCCESS != 
       mca_base_modules_open("allocator", 0, mca_allocator_base_static_modules, 
-                            &mca_allocator_base_modules_available)) {
+                            &mca_allocator_base_components)) {
     return OMPI_ERROR;
   }
-
-  /* Initialize the list so that in mca_allocator_base_close(), we can
-     iterate over it (even if it's empty, as in the case of
-     ompi_info) */
-
-  OBJ_CONSTRUCT(&mca_allocator_base_modules_initialized, ompi_list_t);
-
   /* All done */
-
   return OMPI_SUCCESS;
 }
 

@@ -16,11 +16,12 @@
 
 struct mca_mpool_base_selected_module_t {
   ompi_list_item_t super;
-  mca_mpool_base_module_t *mbsm_module;
-  mca_mpool_t *mbsm_actions;
+  mca_mpool_base_component_t *mpool_component;
+  mca_mpool_t *mpool_module;
 };
 typedef struct mca_mpool_base_selected_module_t mca_mpool_base_selected_module_t;
 
+OBJ_CLASS_DECLARATION(mca_mpool_base_selected_module_t);
 
 /*
  * Global functions for MCA: overall PTL open and close
@@ -30,8 +31,9 @@ typedef struct mca_mpool_base_selected_module_t mca_mpool_base_selected_module_t
 extern "C" {
 #endif
   int mca_mpool_base_open(void);
-  int mca_mpool_base_select(bool *allow_multi_user_threads);
+  int mca_mpool_base_init(bool *allow_multi_user_threads);
   int mca_mpool_base_close(void);
+  mca_mpool_t* mca_mpool_lookup(const char* name);
   void* mca_mpool_base_is_registered(void* addr, size_t size);
 #if defined(c_plusplus) || defined(__cplusplus)
 }

@@ -104,12 +104,6 @@ static inline int mca_ptl_sm_param_register_int(
 int mca_ptl_sm_module_open(void)
 {
     /* register SM module parameters */
-    mca_ptl_sm_module.sm_min_alloc =
-        mca_ptl_sm_param_register_int("min_alloc", 64*1024*1024);
-    mca_ptl_sm_module.sm_max_alloc =
-        mca_ptl_sm_param_register_int("max_alloc", 512*1024*1024);
-    mca_ptl_sm_module.sm_base_addr = (void*)
-        mca_ptl_sm_param_register_int("base_addr", 0x7fffffff);
     mca_ptl_sm_module.sm_free_list_num =
         mca_ptl_sm_param_register_int("free_list_num", 256);
     mca_ptl_sm_module.sm_free_list_max =
