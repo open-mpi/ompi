@@ -2,6 +2,8 @@
  * $HEADER$
  */
 
+/** @file **/
+
 #include "lam_config.h"
 
 #include <stdio.h>
@@ -12,22 +14,37 @@
 #include "lam/lfc/array.h"
 #include "lam/mem/malloc.h"
 #include "mca/mca.h"
-#include "mca/lam/base/param.h"
+#include "mca/lam/base/mca_lam_param.h"
 
-/** @file **/
 
-/*
- * public variables
- */
-/** 
- * @internal 
- */
-lam_array_t mca_base_params;
+typedef enum {
+  MCA_BASE_PARAM_TYPE_INT,
+  MCA_BASE_PARAM_TYPE_STRING,
+
+  MCA_BASE_PARAM_TYPE_MAX
+} mca_base_param_type_t;
+
+struct mca_base_param_t {
+  lam_array_item_t super;
+
+  mca_base_param_type_t mbp_type;
+  char *mbp_type_name;
+  char *mbp_module_name;
+  char *mbp_param_name;
+  char *mbp_full_name;
+
+  int mbp_keyval;
+  char *mbp_env_var_name;
+
+  mca_base_param_storage_t mbp_default_value;
+};
+typedef struct mca_base_param_t mca_base_param_t;
 
 
 /*
  * local variables
  */
+static lam_array_t mca_base_params;
 static char *mca_prefix = "LAM_MPI_MCA_";
 static bool initialized = false;
 
