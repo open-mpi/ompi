@@ -59,7 +59,7 @@ int MPI_Comm_dup(MPI_Comm comm, MPI_Comm *newcomm) {
                               rprocs,                                 /* remote_procs */
                               comp->c_keyhash,                        /* attrs */
                               comp->error_handler,                    /* error handler */
-                              NULL,                              /* coll module,t.b.d */
+                              (mca_base_module_t*) comp->c_coll_selected_module,           /* coll module,t.b.d */
                               NULL                              /* topo module, t.b.d */
                              );
 

@@ -127,7 +127,7 @@ ompi_communicator_t * ompi_comm_set ( ompi_communicator_t* oldcomm,
     /* Initialize the coll modules */
     /* Let the collectives modules fight over who will do
        collective on this new comm.  */
-    if (OMPI_ERROR == mca_coll_base_comm_select(newcomm, NULL)) {
+    if (OMPI_ERROR == mca_coll_base_comm_select(newcomm, collmodule)) {
 	goto err_exit;
     }
 
