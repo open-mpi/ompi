@@ -1,4 +1,3 @@
-# -*- makefile -*-
 #
 # $HEADER$
 #
@@ -10,4 +9,4 @@ SUBDIRS = config include src
 EXTRA_DIST = README INSTALL VERSION Doxyfile
 
 dist-hook:
-	csh config/distscript.csh
+	csh config/distscript.csh $(PACKAGE)-$(OMPI_VERSION) $(OMPI_VERSION)
