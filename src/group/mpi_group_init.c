@@ -28,6 +28,7 @@ lam_group_t lam_mpi_group_empty = {
     0,                        /* number of processes in group */
     MPI_PROC_NULL,            /* rank in group */
     LAM_ERROR,                /* index in Fortran <-> C translation array */
+    false,                    /* can't free group */
     (lam_proc_t **)NULL       /* pointers to lam_proc_t structures */
 };
 
@@ -40,6 +41,7 @@ lam_group_t lam_mpi_group_null = {
     0,                        /* number of processes in group */
     MPI_PROC_NULL,            /* rank in group */
     LAM_ERROR,                /* index in Fortran <-> C translation array */
+    false,                    /* can't free group */
     (lam_proc_t **)NULL       /* pointers to lam_proc_t structures */
 };
 
