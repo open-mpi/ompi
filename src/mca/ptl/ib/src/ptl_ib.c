@@ -35,7 +35,10 @@ mca_ptl_ib_module_t mca_ptl_ib_module = {
         NULL,
         mca_ptl_ib_matched,
         mca_ptl_ib_request_init,
-        mca_ptl_ib_request_fini
+        mca_ptl_ib_request_fini,
+        NULL,
+        NULL,
+        NULL
     }
 };
 
