@@ -1,4 +1,6 @@
 /*
+ * $HEADER$
+ *
  * Copyright 2002-2003. The Regents of the University of California. This material
  * was produced under U.S. Government contract W-7405-ENG-36 for Los Alamos
  * National Laboratory, which is operated by the University of California for
@@ -350,7 +352,8 @@ int lam_fmp_init_with(lam_fixed_mpool_t *pool, ssize_t initial_allocation,
         pool->fmp_min_alloc_size = getpagesize();
     pool->fmp_n_elts_to_add = n_array_elements_to_add;
     pool->fmp_n_pools = n_pools;
-    pool->fmp_segments = (lam_memseg_t **)lam_malloc(sizeof(lam_memseg_t *)*n_pools);
+    pool->fmp_segments = (lam_memseg_t **) 
+      LAM_MALLOC(sizeof(lam_memseg_t *)*n_pools);
     if ( !pool->fmp_segments )
     {
         lam_exit((-1,
@@ -360,7 +363,7 @@ int lam_fmp_init_with(lam_fixed_mpool_t *pool, ssize_t initial_allocation,
     }
     bzero(pool->fmp_segments, sizeof(lam_memseg_t *)*n_pools);
 
-    pool->fmp_n_segs_in_array = (int *) lam_malloc(sizeof(int) * n_pools);
+    pool->fmp_n_segs_in_array = (int *) LAM_MALLOC(sizeof(int) * n_pools);
     if ( !pool->fmp_n_segs_in_array ) {
         lam_exit((-1,
                   "Unable to allocate memory for "
@@ -471,9 +474,9 @@ void *lam_fmp_get_mem_segment(lam_fixed_mpool_t *pool,
         {
             /* create a temp version of pool->fmp_segments[] */
             tmp_seg = (lam_memseg_t *)
-            lam_malloc(sizeof(lam_memseg_t) *
-                       (pool->fmp_n_segments[which_pool] +
-                        pool->fmp_n_elts_to_add));
+              LAM_MALLOC(sizeof(lam_memseg_t) *
+                         (pool->fmp_n_segments[which_pool] +
+                          pool->fmp_n_elts_to_add));
             if ( !tmp_seg ) {
                 lam_exit((-1, "Unable to "
                           "allocate memory for tmp_seg, errno %d\n",
@@ -492,7 +495,7 @@ void *lam_fmp_get_mem_segment(lam_fixed_mpool_t *pool,
                     pool->fmp_segments[which_pool][seg_idx].ms_mem_available;
             }
             
-            lam_free(pool->fmp_segments[which_pool]);
+            LAM_FREE(pool->fmp_segments[which_pool]);
             pool->fmp_segments[which_pool] = tmp_seg;
             
             /* set the element of pool->fmp_segments to grab */
