@@ -39,7 +39,6 @@ int orte_dps_peek(orte_buffer_t *buffer,
     size_t mem_left;
     size_t num_bytes, hdr_bytes;
     void *src;
-    uint32_t * s32;
     orte_data_type_t stored_type;
 
     /* check for errors */
@@ -66,17 +65,21 @@ int orte_dps_peek(orte_buffer_t *buffer,
     src = (void*)((char*)src + hdr_bytes);
 
     /* got enough left for num_vals? */
-    if (sizeof(uint32_t) > mem_left) { /* not enough memory  */
+    if (sizeof(size_t) > mem_left) { /* not enough memory  */
         return ORTE_ERR_UNPACK_FAILURE;
     }
 
     /* unpack the number of values */
-    s32 = (uint32_t *) src;
-    num_vals = (size_t)ntohl(*s32);
+    if (ORTE_SUCCESS != (rc =orte_dps_unpack_nobuffer(&num_vals, src, 1,
+                                    DPS_TYPE_SIZE_T, &mem_left, &num_bytes))) {
+        return rc;
+    }
  
-    if (type != NULL)
+    if (type != NULL) {
         *type = stored_type;
-    if (number != NULL)
+    }
+    if (number != NULL) {
         *number = num_vals;
+    }
     return ORTE_SUCCESS;
 }

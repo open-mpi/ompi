@@ -184,6 +184,7 @@ fi
 AC_CHECK_SIZEOF(float)
 AC_CHECK_SIZEOF(double)
 AC_CHECK_SIZEOF(void *)
+AC_CHECK_SIZEOF(size_t)
 
 #
 # Check for type alignments
