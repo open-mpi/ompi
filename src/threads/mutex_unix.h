@@ -26,14 +26,8 @@
 
 struct ompi_mutex_t {
     ompi_object_t super;
-    union {
-#if OMPI_HAVE_POSIX_THREADS
-        pthread_mutex_t thread;
-#endif
-#if OMPI_SYS_ARCH_ATOMIC_H
-        ompi_lock_t atomic;
-#endif
-    } m_lock;
+    pthread_mutex_t m_lock_pthread;
+    ompi_lock_t m_lock_atomic;
 };
 
 OBJ_CLASS_DECLARATION(ompi_mutex_t);
@@ -46,35 +40,35 @@ OBJ_CLASS_DECLARATION(ompi_mutex_t);
  * ompi_mutex_atomic_* implemented using atomic operations
  */
 
-static inline int ompi_mutex_trylock(ompi_mutex_t * m)
+static inline int ompi_mutex_trylock(ompi_mutex_t *m)
 {
-    return pthread_mutex_trylock(&m->m_lock.thread);
+    return pthread_mutex_trylock(&m->m_lock_pthread);
 }
 
-static inline void ompi_mutex_lock(ompi_mutex_t * m)
+static inline void ompi_mutex_lock(ompi_mutex_t *m)
 {
-    pthread_mutex_lock(&m->m_lock.thread);
+    pthread_mutex_lock(&m->m_lock_pthread);
 }
 
-static inline void ompi_mutex_unlock(ompi_mutex_t * m)
+static inline void ompi_mutex_unlock(ompi_mutex_t *m)
 {
-    pthread_mutex_unlock(&m->m_lock.thread);
+    pthread_mutex_unlock(&m->m_lock_pthread);
 }
 
 
-static inline void ompi_mutex_atomic_lock(ompi_mutex_t * m)
+static inline void ompi_mutex_atomic_lock(ompi_mutex_t *m)
 {
-    ompi_atomic_lock(&m->m_lock.atomic);
+    ompi_atomic_lock(&m->m_lock_atomic);
 }
 
-static inline int ompi_mutex_atomic_trylock(ompi_mutex_t * m)
+static inline int ompi_mutex_atomic_trylock(ompi_mutex_t *m)
 {
-    return ompi_atomic_trylock(&m->m_lock.atomic);
+    return ompi_atomic_trylock(&m->m_lock_atomic);
 }
 
-static inline void ompi_mutex_atomic_unlock(ompi_mutex_t * m)
+static inline void ompi_mutex_atomic_unlock(ompi_mutex_t *m)
 {
-    ompi_atomic_unlock(&m->m_lock.atomic);
+    ompi_atomic_unlock(&m->m_lock_atomic);
 }
 
 
@@ -84,33 +78,33 @@ static inline void ompi_mutex_atomic_unlock(ompi_mutex_t * m)
  * ompi_mutex_* and ompi_mutex_atomic_* implemented using pthreads
  */
 
-static inline int ompi_mutex_trylock(ompi_mutex_t * m)
+static inline int ompi_mutex_trylock(ompi_mutex_t *m)
 {
-    return pthread_mutex_trylock(&m->m_lock.thread);
+    return pthread_mutex_trylock(&m->m_lock_pthread);
 }
 
-static inline void ompi_mutex_lock(ompi_mutex_t * m)
+static inline void ompi_mutex_lock(ompi_mutex_t *m)
 {
-    pthread_mutex_lock(&m->m_lock.thread);
+    pthread_mutex_lock(&m->m_lock_pthread);
 }
 
-static inline void ompi_mutex_unlock(ompi_mutex_t * m)
+static inline void ompi_mutex_unlock(ompi_mutex_t *m)
 {
-    pthread_mutex_unlock(&m->m_lock.thread);
+    pthread_mutex_unlock(&m->m_lock_pthread);
 }
 
 
-static inline int ompi_mutex_atomic_trylock(ompi_mutex_t * m)
+static inline int ompi_mutex_atomic_trylock(ompi_mutex_t *m)
 {
     return ompi_mutex_trylock(m);
 }
 
-static inline void ompi_mutex_atomic_lock(ompi_mutex_t * m)
+static inline void ompi_mutex_atomic_lock(ompi_mutex_t *m)
 {
     ompi_mutex_lock(m);
 }
 
-static inline void ompi_mutex_atomic_unlock(ompi_mutex_t * m)
+static inline void ompi_mutex_atomic_unlock(ompi_mutex_t *m)
 {
     ompi_mutex_unlock(m);
 }
@@ -123,33 +117,33 @@ static inline void ompi_mutex_atomic_unlock(ompi_mutex_t * m)
  * operations
  */
 
-static inline int ompi_mutex_trylock(ompi_mutex_t * m)
+static inline int ompi_mutex_trylock(ompi_mutex_t *m)
 {
-    return ompi_atomic_trylock(&m->m_lock.atomic);
+    return ompi_atomic_trylock(&m->m_lock_atomic);
 }
 
-static inline void ompi_mutex_lock(ompi_mutex_t * m)
+static inline void ompi_mutex_lock(ompi_mutex_t *m)
 {
-    ompi_atomic_lock(&m->m_lock.atomic);
+    ompi_atomic_lock(&m->m_lock_atomic);
 }
 
-static inline void ompi_mutex_unlock(ompi_mutex_t * m)
+static inline void ompi_mutex_unlock(ompi_mutex_t *m)
 {
-    ompi_atomic_unlock(&m->m_lock.atomic);
+    ompi_atomic_unlock(&m->m_lock_atomic);
 }
 
 
-static inline int ompi_mutex_atomic_trylock(ompi_mutex_t * m)
+static inline int ompi_mutex_atomic_trylock(ompi_mutex_t *m)
 {
     return ompi_mutex_trylock(m);
 }
 
-static inline void ompi_mutex_atomic_lock(ompi_mutex_t * m)
+static inline void ompi_mutex_atomic_lock(ompi_mutex_t *m)
 {
     ompi_mutex_lock(m);
 }
 
-static inline void ompi_mutex_atomic_unlock(ompi_mutex_t * m)
+static inline void ompi_mutex_atomic_unlock(ompi_mutex_t *m)
 {
     ompi_mutex_unlock(m);
 }
