@@ -24,6 +24,7 @@
 #include "ptl_ib_proc.h"
 #include "ptl_ib_peer.h"
 #include "ptl_ib_priv.h"
+#include "ptl_ib_ud.h"
 
 /* Other IB ptl includes */
 #include "ptl_ib_sendreq.h"
@@ -66,21 +67,32 @@ struct mca_ptl_ib_module_t {
     VAPI_pd_hndl_t                  ptag;       /* Protection Domain tag */
 
     VAPI_cq_hndl_t                  cq_hndl;    /* Completion Queue handle */
-    VAPI_qp_hndl_t                  *qp_hndl;   /* Array of Queue Pair handles */
 
     EVAPI_async_handler_hndl_t      async_handler; /* Async event handler used to detect
                                                       weird events */
 
     VAPI_cq_hndl_t                  ud_scq_hndl;/* UD send completion queue handle */
     VAPI_cq_hndl_t                  ud_rcq_hndl;/* UD recv completion queue handle */
-    mca_ptl_ib_ud_buf_t*            ud_recv_buf;/* Link to UD recv buffer structures */
-    mca_ptl_ib_ud_buf_t*            ud_send_buf;/* Link to UD bufs which are used for sending */
+    mca_ptl_ib_ud_buf_ctrl_t*       ud_recv;    /* Link to UD recv buffer structures */
+    mca_ptl_ib_ud_buf_ctrl_t*       ud_send;    /* Link to UD bufs which are used for sending */
 
     VAPI_qp_hndl_t                  ud_qp_hndl; /* UD queue pair handle */
     VAPI_qp_prop_t                  ud_qp_prop; /* UD queue pair properties */
     VAPI_rr_desc_t*                 ud_rr_hndl; /* UD receive descriptor pool */
     VAPI_completion_event_handler_t ud_comp_ev_handler; /* UD completion handler */
     EVAPI_compl_handler_hndl_t      ud_comp_ev_hndl; /* UD completion handler handle */
+
+    /* Temporary fields remove after dynamic connection
+     * management is in place */
+    VAPI_qp_hndl_t                  my_qp_hndl;
+    VAPI_qp_prop_t                  my_qp_prop;
+    /* Circular buffers */
+    mca_ptl_ib_send_buf_t*          send_buf;
+    int                             send_index;
+    mca_ptl_ib_recv_buf_t*          recv_buf;
+    int                             recv_index;
+    vapi_memhandle_t                send_buf_hndl;
+    vapi_memhandle_t                recv_buf_hndl;
 };
 
 typedef struct mca_ptl_ib_module_t mca_ptl_ib_module_t;
@@ -184,17 +196,28 @@ extern int mca_ptl_ib_del_procs(
 );
 
 /**
- * PML->PTL Allocate a send request from the PTL modules free list.
+ * PML->PTL Initialize a send request for TCP cache.
  *
  * @param ptl (IN)       PTL instance
- * @param request (OUT)  Pointer to allocated request.
- * @return               Status indicating if allocation was successful.
+ * @param request (IN)   Pointer to allocated request.
  *
- */
-extern int mca_ptl_ib_request_alloc(
-    struct mca_ptl_base_module_t* ptl,
-    struct mca_pml_base_send_request_t**
-);
+ **/
+extern int mca_ptl_ib_request_init(
+        struct mca_ptl_base_module_t* ptl,
+        struct mca_pml_base_send_request_t*
+        );
+
+/**
+ * PML->PTL Cleanup a send request that is being removed from the cache.
+ *
+ * @param ptl (IN)       PTL instance
+ * @param request (IN)   Pointer to allocated request.
+ *
+ **/
+extern void mca_ptl_ib_request_fini(
+        struct mca_ptl_base_module_t* ptl,
+        struct mca_pml_base_send_request_t*
+        );
 
 /**
  * PML->PTL Return a send request to the PTL modules free list.

@@ -1,8 +1,6 @@
-
 #ifndef MCA_PTL_IB_SEND_FRAG_H
 #define MCA_PTL_IB_SEND_FRAG_H
 
-#include "include/sys/atomic.h"
 #include "ompi_config.h"
 #include "mca/pml/base/pml_base_sendreq.h"
 #include "mca/ptl/base/ptl_base_sendfrag.h"

@@ -56,6 +56,8 @@ struct mca_ptl_base_peer_t {
     ompi_mutex_t                peer_recv_lock;   /**< lock for concurrent access to peer state */
     ompi_event_t                peer_send_event;  /**< event for async processing of send frags */
     ompi_event_t                peer_recv_event;  /**< event for async processing of recv frags */
+    VAPI_qp_hndl_t              peer_qp_hndl;     /**< My QP for the peer */
+    VAPI_qp_prop_t              peer_qp_prop;     /**< My QP properties */
 };
 typedef struct mca_ptl_base_peer_t mca_ptl_base_peer_t;
 typedef struct mca_ptl_base_peer_t mca_ptl_ib_peer_t;

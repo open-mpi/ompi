@@ -90,8 +90,6 @@ static inline int mca_ptl_ib_param_register_int(
 
 int mca_ptl_ib_component_open(void)
 {
-    OBJ_CONSTRUCT(&mca_ptl_ib_component.ib_procs, ompi_list_t);
-    
     /* register super component parameters */
     mca_ptl_ib_module.super.ptl_exclusivity =
         mca_ptl_ib_param_register_int ("exclusivity", 0);
@@ -111,6 +109,10 @@ int mca_ptl_ib_component_open(void)
         mca_ptl_ib_param_register_int ("free_list_max", 1024);
     mca_ptl_ib_component.ib_free_list_inc =
         mca_ptl_ib_param_register_int ("free_list_inc", 32);
+
+    OBJ_CONSTRUCT(&mca_ptl_ib_component.ib_procs, ompi_list_t);
+
+    OBJ_CONSTRUCT (&mca_ptl_ib_component.ib_recv_frags, ompi_free_list_t);
 
     return OMPI_SUCCESS;
 }
@@ -146,12 +148,18 @@ static int mca_ptl_ib_component_send(void)
 
     for(i = 0; i < mca_ptl_ib_component.ib_num_ptl_modules; i++) {
         mca_ptl_ib_module_t* ptl = mca_ptl_ib_component.ib_ptl_modules[i];
-        ud_qp_addr[i].ud_qp = ptl->ud_qp_hndl;
+        /* This is for the UD dynamic connection interface
+        ud_qp_addr[i].qp_num = ptl->ud_qp_prop.qp_num;
+        ud_qp_addr[i].lid = ptl->port.lid;
+        */
+        
+        /* Just a quick hack for 1-to-1 communications */
+        ud_qp_addr[i].qp_num = ptl->my_qp_prop.qp_num;
         ud_qp_addr[i].lid = ptl->port.lid;
     }
 
-    D_PRINT("ud_qp_addr[0].ud_qp = %d\n",(int)ud_qp_addr[0].ud_qp);
-    D_PRINT("ud_qp_addr[0].lid = %d\n", (int)ud_qp_addr[0].lid);
+    D_PRINT("QP num sent = %d, LID sent = %d\n",
+            ud_qp_addr[0].qp_num, ud_qp_addr[0].lid);
 
     rc =  mca_base_modex_send(&mca_ptl_ib_component.super.ptlm_version, 
             ud_qp_addr, size);
@@ -198,6 +206,15 @@ mca_ptl_base_module_t** mca_ptl_ib_component_init(int *num_ptl_modules,
         return NULL;
     }
 
+    /* Initialize Receive fragments */
+    ompi_free_list_init (&(mca_ptl_ib_component.ib_recv_frags),
+            sizeof (mca_ptl_ib_recv_frag_t),
+            OBJ_CLASS (mca_ptl_ib_recv_frag_t),
+            mca_ptl_ib_component.ib_free_list_num,
+            mca_ptl_ib_component.ib_free_list_max,
+            mca_ptl_ib_component.ib_free_list_inc, NULL);
+
+
     ret = mca_ptl_ib_get_num_hcas(&num_hcas);
 
     if ((0 == num_hcas) || (OMPI_SUCCESS != ret)) {
@@ -238,7 +255,7 @@ mca_ptl_base_module_t** mca_ptl_ib_component_init(int *num_ptl_modules,
                 sizeof(mca_ptl_ib_module));
     }
 
-    /* For each ptl, do this */
+    /* For each module, do this */
     for(i = 0; i < mca_ptl_ib_component.ib_num_ptl_modules; i++) {
 
         if(mca_ptl_ib_get_hca_id(i, &ib_modules[i].hca_id) 
@@ -255,6 +272,13 @@ mca_ptl_base_module_t** mca_ptl_ib_component_init(int *num_ptl_modules,
 
         D_PRINT("hca_hndl: %d\n", ib_modules[i].nic);
 
+        if(mca_ptl_ib_alloc_pd(ib_modules[i].nic, &ib_modules[i].ptag)
+                != OMPI_SUCCESS) {
+            return NULL;
+        }
+
+        D_PRINT("Protection Domain: %d\n", ib_modules[i].ptag);
+
         /* Each HCA uses only port 1. Need to change
          * this so that each ptl can choose different
          * ports */
@@ -266,29 +290,39 @@ mca_ptl_base_module_t** mca_ptl_ib_component_init(int *num_ptl_modules,
 
         D_PRINT("LID: %d\n", ib_modules[i].port.lid);
 
-        if(mca_ptl_ib_alloc_pd(ib_modules[i].nic, &ib_modules[i].ptag)
-                != OMPI_SUCCESS) {
-            return NULL;
-        }
-
-        D_PRINT("Protection Domain: %d\n", (int)ib_modules[i].ptag);
 
         if(mca_ptl_ib_create_cq(ib_modules[i].nic, &ib_modules[i].cq_hndl)
                 != OMPI_SUCCESS) {
             return NULL;
         }
 
-        D_PRINT("CQ handle: %d\n", (int)ib_modules[i].cq_hndl);
+        D_PRINT("CQ handle: %d\n", ib_modules[i].cq_hndl);
 
-        if(mca_ptl_ib_ud_cq_init(ib_modules[i].nic, &ib_modules[i].ud_scq_hndl,
-                    &ib_modules[i].ud_rcq_hndl)
+        if(mca_ptl_ib_create_cq(ib_modules[i].nic, &ib_modules[i].ud_scq_hndl)
                 != OMPI_SUCCESS) {
             return NULL;
         }
 
-        if(mca_ptl_ib_ud_qp_init(ib_modules[i].nic, ib_modules[i].ud_rcq_hndl,
-                    ib_modules[i].ud_scq_hndl, ib_modules[i].ptag,
-                    &ib_modules[i].ud_qp_hndl, &ib_modules[i].ud_qp_prop)
+        if(mca_ptl_ib_create_cq(ib_modules[i].nic, &ib_modules[i].ud_rcq_hndl)
+                != OMPI_SUCCESS) {
+            return NULL;
+        }
+
+        D_PRINT("UD_SCQ handle: %d, UD_RCQ handle: %d\n", 
+                ib_modules[i].ud_scq_hndl, ib_modules[i].ud_rcq_hndl);
+
+        if(mca_ptl_ib_create_qp(ib_modules[i].nic, ib_modules[i].ptag,
+                    ib_modules[i].ud_rcq_hndl, ib_modules[i].ud_scq_hndl,
+                    &ib_modules[i].ud_qp_hndl, &ib_modules[i].ud_qp_prop,
+                    VAPI_TS_UD)
+                != OMPI_SUCCESS) {
+            return NULL;
+        }
+
+        D_PRINT("UD Qp handle: %d, Qp num: %d\n",
+                ib_modules[i].ud_qp_hndl, ib_modules[i].ud_qp_prop.qp_num);
+
+        if(mca_ptl_ib_ud_qp_init(ib_modules[i].nic, ib_modules[i].ud_qp_hndl)
                 != OMPI_SUCCESS) {
             return NULL;
         }
@@ -300,35 +334,7 @@ mca_ptl_base_module_t** mca_ptl_ib_component_init(int *num_ptl_modules,
             return NULL;
         }
 
-        /* Allocate the UD buffers */
-
-        ib_modules[i].ud_recv_buf = NULL;
-
-        ib_modules[i].ud_recv_buf = malloc(MAX_UD_PREPOST_DEPTH *
-                sizeof(mca_ptl_ib_ud_buf_t));
-
-        if(NULL == ib_modules[i].ud_recv_buf) {
-            return NULL;
-        }
-
-        /* Prepare the UD buffers for communication:
-         *
-         * 1. register
-         * 2. fill up descriptors
-         */
-        if(mca_ptl_ib_prep_ud_bufs(ib_modules[i].nic, ib_modules[i].ud_recv_buf,
-                    IB_RECV, MAX_UD_PREPOST_DEPTH) 
-                != OMPI_SUCCESS) {
-            return NULL;
-        }
-
-        /* Post the UD recv descriptors */
-        if(mca_ptl_ib_post_ud_recv(ib_modules[i].nic, ib_modules[i].ud_qp_hndl, 
-                    ib_modules[i].ud_recv_buf, MAX_UD_PREPOST_DEPTH)
-                != OMPI_SUCCESS) {
-            return NULL;
-        }
-
+#if 0
         if(mca_ptl_ib_get_comp_ev_hndl(&ib_modules[i].ud_comp_ev_handler)
                 != OMPI_SUCCESS) {
             return NULL;
@@ -336,7 +342,7 @@ mca_ptl_base_module_t** mca_ptl_ib_component_init(int *num_ptl_modules,
 
         /* Set the completion event handler for the UD recv queue */
         if(mca_ptl_ib_set_comp_ev_hndl(ib_modules[i].nic, 
-                    ib_modules[i].ud_rcq_hndl,
+                    ib_modules[i].cq_hndl,
                     ib_modules[i].ud_comp_ev_handler, 
                     (void*)NULL, &ib_modules[i].ud_comp_ev_hndl) 
                 != OMPI_SUCCESS) {
@@ -344,10 +350,35 @@ mca_ptl_base_module_t** mca_ptl_ib_component_init(int *num_ptl_modules,
         }
 
         /* Request for interrupts on the UD recv queue */
-        if(mca_ptl_ib_req_comp_notif(ib_modules[i].nic, ib_modules[i].ud_rcq_hndl)
+        if(mca_ptl_ib_req_comp_notif(ib_modules[i].nic, 
+                    ib_modules[i].cq_hndl)
                 != OMPI_SUCCESS) {
             return NULL;
         }
+#endif
+
+        /* Just for point-to-point communication */
+        /* Till dynamic connection management comes */
+
+        /* Create the QP I am going to use to communicate
+         * with this peer */
+        if(mca_ptl_ib_create_qp(ib_modules[i].nic,
+                    ib_modules[i].ptag,
+                    ib_modules[i].cq_hndl,
+                    ib_modules[i].cq_hndl,
+                    &ib_modules[i].my_qp_hndl,
+                    &ib_modules[i].my_qp_prop,
+                    VAPI_TS_RC)
+                != OMPI_SUCCESS) {
+        }
+
+        D_PRINT("QP hndl:%d, num: %d for 1-to-1 communication\n", 
+                ib_modules[i].my_qp_hndl,
+                ib_modules[i].my_qp_prop.qp_num);
+
+        ib_modules[i].send_index = 0;
+        ib_modules[i].recv_index = 0;
+
     }
 
     /* Allocate list of IB ptl pointers */
@@ -405,8 +436,6 @@ int mca_ptl_ib_component_control(int param, void* value, size_t size)
         }
     }
 #endif
-    /* Stub */
-    D_PRINT("Stub\n");
     return OMPI_SUCCESS;
 }
 
@@ -417,7 +446,66 @@ int mca_ptl_ib_component_control(int param, void* value, size_t size)
 
 int mca_ptl_ib_component_progress(mca_ptl_tstamp_t tstamp)
 {
-    /* Stub */
-    D_PRINT("Stub\n");
+    VAPI_ret_t ret;
+    VAPI_wc_desc_t comp;
+
+    mca_ptl_base_header_t *header;
+    mca_ptl_ib_recv_buf_t *recv_buf;
+    mca_ptl_ib_send_buf_t *send_buf;
+    mca_pml_base_request_t *req;
+
+    D_PRINT("Checking completions ... \n");
+
+    ret = VAPI_poll_cq(mca_ptl_ib_component.ib_ptl_modules[0]->nic, 
+            mca_ptl_ib_component.ib_ptl_modules[0]->cq_hndl,
+            &comp);
+    if(VAPI_OK == ret) {
+        if(comp.status != VAPI_SUCCESS) {
+            fprintf(stderr,"Got error : %s, Vendor code : %d\n",
+                    VAPI_wc_status_sym(comp.status),
+                    comp.vendor_err_syndrome);
+
+        }
+        if(VAPI_CQE_SQ_SEND_DATA == comp.opcode) {
+            D_PRINT("Send completion, id:%d\n",
+                    comp.id);
+            send_buf = (mca_ptl_ib_send_buf_t*) (unsigned int)comp.id;
+            header = (mca_ptl_base_header_t*) send_buf->buf;
+
+            req = (mca_pml_base_request_t *) send_buf->req;
+
+            mca_ptl_ib_component.ib_ptl_modules[0]->super.ptl_send_progress(
+                    mca_ptl_ib_component.ib_ptl_modules[0], 
+                    req,
+                    header->hdr_frag.hdr_frag_length);
+        }
+        else if(VAPI_CQE_RQ_SEND_DATA == comp.opcode) {
+            D_PRINT("Received message completion len = %d, id : %d\n",
+                    comp.byte_len, comp.id);
+
+            recv_buf = (mca_ptl_ib_recv_buf_t*) (unsigned int)comp.id;
+            header = (mca_ptl_base_header_t*) recv_buf->buf;
+
+            switch(header->hdr_common.hdr_type) {
+                case MCA_PTL_HDR_TYPE_MATCH:
+                    D_PRINT("Header type match\n");
+
+                    mca_ptl_ib_frag(mca_ptl_ib_component.ib_ptl_modules[0],
+                            header);
+                    break;
+                case MCA_PTL_HDR_TYPE_FRAG:
+                    D_PRINT("Header type frag\n");
+                    break;
+                default :
+                    D_PRINT("Header, what header?\n");
+                    break;
+            }
+        }
+        else {
+            D_PRINT("Got Unknown completion! Opcode : %d\n", 
+                    comp.opcode);
+        }
+    }
+
     return OMPI_SUCCESS;
 }

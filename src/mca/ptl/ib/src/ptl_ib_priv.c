@@ -55,87 +55,178 @@ static void ud_completion_handler(VAPI_hca_hndl_t nic,
     }
 }
 
-int mca_ptl_ib_ud_cq_init(VAPI_hca_hndl_t nic,
-        VAPI_cq_hndl_t* ud_scq_hndl,
-        VAPI_cq_hndl_t* ud_rcq_hndl)
-{
-    VAPI_ret_t      ret;
-    VAPI_cqe_num_t  act_num_cqe = 0;
-
-    ret = VAPI_create_cq(nic, DEFAULT_CQ_SIZE, 
-            ud_scq_hndl, &act_num_cqe);
-
-    D_PRINT("UD Send CQ handle :%d\n", (int)*ud_scq_hndl);
-
-    if((VAPI_OK != ret) || (0 == act_num_cqe)) {
-        MCA_PTL_IB_VAPI_RET(ret, "VAPI_create_cq");
-        return OMPI_ERROR;
-    }
-
-    /* Send completion queue was allocated successfully,
-     * proceed to allocate receive completion queue */
-
-    act_num_cqe = 0;
-
-    ret = VAPI_create_cq(nic, DEFAULT_CQ_SIZE, 
-           ud_rcq_hndl, &act_num_cqe);
-
-    D_PRINT("UD Recv CQ handle :%d\n", (int)*ud_rcq_hndl);
-
-    if((VAPI_OK != ret) || (act_num_cqe == 0)) {
-        MCA_PTL_IB_VAPI_RET(ret, "VAPI_create_cq");
-        return OMPI_ERROR;
-    }
-
-    return OMPI_SUCCESS;
-}
-
-/* Set up UD Completion Queue and Queue pair */
-
-int mca_ptl_ib_ud_qp_init(VAPI_hca_hndl_t nic,
-        VAPI_cq_hndl_t ud_rcq_hndl,
-        VAPI_cq_hndl_t ud_scq_hndl,
+int mca_ptl_ib_create_qp(VAPI_hca_hndl_t nic,
         VAPI_pd_hndl_t ptag,
-        VAPI_qp_hndl_t* ud_qp_hndl,
-        VAPI_qp_prop_t* ud_qp_prop)
+        VAPI_cq_hndl_t recv_cq,
+        VAPI_cq_hndl_t send_cq,
+        VAPI_qp_hndl_t* qp_hndl,
+        VAPI_qp_prop_t* qp_prop,
+        int transport_type)
 {
-    VAPI_qp_init_attr_t     qp_init_attr;
-    VAPI_qp_attr_t          qp_attr;
-    VAPI_qp_cap_t           qp_cap;
-    VAPI_qp_attr_mask_t     qp_attr_mask;
-    VAPI_ret_t              ret;
+    VAPI_ret_t ret;
+    VAPI_qp_init_attr_t qp_init_attr;
 
-    qp_init_attr.cap.max_oust_wr_rq = DEFAULT_UD_WQ_SIZE;
-    qp_init_attr.cap.max_oust_wr_sq = DEFAULT_UD_WQ_SIZE;
-    qp_init_attr.cap.max_sg_size_rq = DEFAULT_UD_SG_LIST;
-    qp_init_attr.cap.max_sg_size_sq = DEFAULT_UD_SG_LIST;
-    qp_init_attr.pd_hndl            = ptag;
+    switch(transport_type) {
 
-    /* We don't have Reliable Datagram Handle right now */
-    qp_init_attr.rdd_hndl           = 0;
+        case VAPI_TS_UD: /* Set up UD qp parameters */
+            qp_init_attr.cap.max_oust_wr_rq = DEFAULT_UD_WQ_SIZE;
+            qp_init_attr.cap.max_oust_wr_sq = DEFAULT_UD_WQ_SIZE;
+            qp_init_attr.cap.max_sg_size_rq = DEFAULT_UD_SG_LIST;
+            qp_init_attr.cap.max_sg_size_sq = DEFAULT_UD_SG_LIST;
+            qp_init_attr.pd_hndl            = ptag;
 
-    /* Set Send and Recv completion queues */
-    qp_init_attr.rq_cq_hndl         = ud_rcq_hndl;
-    qp_init_attr.sq_cq_hndl         = ud_scq_hndl;
-    
-    /* Signal all work requests on this queue pair */
-    qp_init_attr.rq_sig_type        = VAPI_SIGNAL_REQ_WR;
-    qp_init_attr.sq_sig_type        = VAPI_SIGNAL_REQ_WR;
+            /* We don't have Reliable Datagram Handle right now */
+            qp_init_attr.rdd_hndl           = 0;
 
-    /* Use Unreliable Datagram transport service */
-    qp_init_attr.ts_type            = VAPI_TS_UD;
+            /* Set Send and Recv completion queues */
+            qp_init_attr.rq_cq_hndl         = recv_cq;
+            qp_init_attr.sq_cq_hndl         = send_cq;
+
+            /* Signal all work requests on this queue pair */
+            qp_init_attr.rq_sig_type        = VAPI_SIGNAL_REQ_WR;
+            qp_init_attr.sq_sig_type        = VAPI_SIGNAL_REQ_WR;
+
+            /* Use Unreliable Datagram transport service */
+            qp_init_attr.ts_type            = VAPI_TS_UD;
+
+            break;
+        case VAPI_TS_RC: /* Set up RC qp parameters */
+            qp_init_attr.cap.max_oust_wr_rq = DEFAULT_UD_WQ_SIZE;
+            qp_init_attr.cap.max_oust_wr_sq = DEFAULT_UD_WQ_SIZE;
+            qp_init_attr.cap.max_sg_size_rq = DEFAULT_UD_SG_LIST;
+            qp_init_attr.cap.max_sg_size_sq = DEFAULT_UD_SG_LIST;
+            qp_init_attr.pd_hndl            = ptag;
+            /* We don't have Reliable Datagram Handle right now */
+            qp_init_attr.rdd_hndl           = 0;
+
+            /* Set Send and Recv completion queues */
+            qp_init_attr.rq_cq_hndl         = recv_cq;
+            qp_init_attr.sq_cq_hndl         = send_cq;
+
+            /* Signal all work requests on this queue pair */
+            qp_init_attr.rq_sig_type        = VAPI_SIGNAL_REQ_WR;
+            qp_init_attr.sq_sig_type        = VAPI_SIGNAL_REQ_WR;
+
+            /* Use Unreliable Datagram transport service */
+            qp_init_attr.ts_type            = VAPI_TS_RC;
+            break;
+        default:
+            return OMPI_ERR_NOT_IMPLEMENTED;
+    }
 
     ret = VAPI_create_qp(nic, &qp_init_attr, 
-            ud_qp_hndl, ud_qp_prop);
+            qp_hndl, qp_prop);
 
     if(VAPI_OK != ret) {
         MCA_PTL_IB_VAPI_RET(ret, "VAPI_create_qp");
         return OMPI_ERROR;
     }
+    return OMPI_SUCCESS;
+}
 
-    D_PRINT("UD QP[%d] created ..hndl=%d\n",
-            ud_qp_prop->qp_num,
-            (int)*ud_qp_hndl);
+int mca_ptl_ib_rc_qp_init(VAPI_hca_hndl_t nic,
+        VAPI_qp_hndl_t qp_hndl,
+        VAPI_qp_num_t remote_qp,
+        IB_lid_t      remote_lid)
+{
+    VAPI_ret_t              ret;
+    VAPI_qp_attr_t          qp_attr;
+    VAPI_qp_attr_mask_t     qp_attr_mask;
+    VAPI_qp_cap_t           qp_cap;
+
+    /* Modifying  QP to INIT */
+    QP_ATTR_MASK_CLR_ALL(qp_attr_mask);
+    qp_attr.qp_state = VAPI_INIT;
+    QP_ATTR_MASK_SET(qp_attr_mask, QP_ATTR_QP_STATE);
+    qp_attr.pkey_ix = DEFAULT_PKEY_IX;
+    QP_ATTR_MASK_SET(qp_attr_mask, QP_ATTR_PKEY_IX);
+    qp_attr.port = DEFAULT_PORT;
+    QP_ATTR_MASK_SET(qp_attr_mask, QP_ATTR_PORT);
+    qp_attr.remote_atomic_flags = VAPI_EN_REM_WRITE | VAPI_EN_REM_READ;
+    QP_ATTR_MASK_SET(qp_attr_mask, QP_ATTR_REMOTE_ATOMIC_FLAGS);
+
+    ret = VAPI_modify_qp(nic, qp_hndl,
+            &qp_attr, &qp_attr_mask, &qp_cap);
+
+    if(VAPI_OK != ret) {
+        MCA_PTL_IB_VAPI_RET(ret, "VAPI_modify_qp");
+        return OMPI_ERROR;
+    }
+
+    D_PRINT("Modified to init..Qp %d", qp_hndl);
+
+    /**********************  INIT --> RTR  ************************/
+    QP_ATTR_MASK_CLR_ALL(qp_attr_mask);
+    qp_attr.qp_state = VAPI_RTR;
+    QP_ATTR_MASK_SET(qp_attr_mask, QP_ATTR_QP_STATE);
+    qp_attr.qp_ous_rd_atom = DEFAULT_QP_OUS_RD_ATOM;
+    QP_ATTR_MASK_SET(qp_attr_mask, QP_ATTR_QP_OUS_RD_ATOM);
+    qp_attr.path_mtu = DEFAULT_MTU;
+    QP_ATTR_MASK_SET(qp_attr_mask, QP_ATTR_PATH_MTU);
+    qp_attr.rq_psn = DEFAULT_PSN;
+    QP_ATTR_MASK_SET(qp_attr_mask, QP_ATTR_RQ_PSN);
+    qp_attr.pkey_ix = DEFAULT_PKEY_IX;
+    QP_ATTR_MASK_SET(qp_attr_mask, QP_ATTR_PKEY_IX);
+    qp_attr.min_rnr_timer = DEFAULT_MIN_RNR_TIMER;
+    QP_ATTR_MASK_SET(qp_attr_mask, QP_ATTR_MIN_RNR_TIMER);
+
+    qp_attr.av.sl = DEFAULT_SERVICE_LEVEL;
+    qp_attr.av.grh_flag = FALSE;
+    qp_attr.av.static_rate = DEFAULT_STATIC_RATE;
+    qp_attr.av.src_path_bits = DEFAULT_SRC_PATH_BITS;
+
+    qp_attr.dest_qp_num = remote_qp;
+    QP_ATTR_MASK_SET(qp_attr_mask, QP_ATTR_DEST_QP_NUM);
+    qp_attr.av.dlid = remote_lid;
+    QP_ATTR_MASK_SET(qp_attr_mask, QP_ATTR_AV);
+
+    ret = VAPI_modify_qp(nic, qp_hndl,
+            &qp_attr, &qp_attr_mask, &qp_cap);
+
+    if(VAPI_OK != ret) {
+        MCA_PTL_IB_VAPI_RET(ret, "VAPI_modify_qp");
+        return OMPI_ERROR;
+    }
+
+    D_PRINT("Modified to RTR..Qp %d", qp_hndl);
+
+    /************** RTS *******************/
+    QP_ATTR_MASK_CLR_ALL(qp_attr_mask);
+    qp_attr.qp_state = VAPI_RTS;
+    QP_ATTR_MASK_SET(qp_attr_mask, QP_ATTR_QP_STATE);
+    qp_attr.sq_psn = DEFAULT_PSN;
+    QP_ATTR_MASK_SET(qp_attr_mask, QP_ATTR_SQ_PSN);
+    qp_attr.timeout = DEFAULT_TIME_OUT;
+    QP_ATTR_MASK_SET(qp_attr_mask, QP_ATTR_TIMEOUT);
+    qp_attr.retry_count = DEFAULT_RETRY_COUNT;
+    QP_ATTR_MASK_SET(qp_attr_mask, QP_ATTR_RETRY_COUNT);
+    qp_attr.rnr_retry = DEFAULT_RNR_RETRY;
+    QP_ATTR_MASK_SET(qp_attr_mask, QP_ATTR_RNR_RETRY);
+    qp_attr.ous_dst_rd_atom = DEFAULT_MAX_RDMA_DST_OPS;
+    QP_ATTR_MASK_SET(qp_attr_mask, QP_ATTR_OUS_DST_RD_ATOM);
+
+    ret = VAPI_modify_qp(nic, qp_hndl,
+            &qp_attr, &qp_attr_mask, &qp_cap);
+
+    if(VAPI_OK != ret) {
+        MCA_PTL_IB_VAPI_RET(ret, "VAPI_modify_qp");
+        return OMPI_ERROR;
+    }
+    D_PRINT("Modified to RTS..Qp %d", qp_hndl);
+
+    return OMPI_SUCCESS;
+}
+
+
+/* Initialize UD queue pairs */
+
+int mca_ptl_ib_ud_qp_init(VAPI_hca_hndl_t nic,
+        VAPI_qp_hndl_t ud_qp_hndl)
+{
+    VAPI_qp_attr_t          qp_attr;
+    VAPI_qp_cap_t           qp_cap;
+    VAPI_qp_attr_mask_t     qp_attr_mask;
+    VAPI_ret_t              ret;
 
     /* Modifying  QP to INIT */
     QP_ATTR_MASK_CLR_ALL(qp_attr_mask);
@@ -149,7 +240,7 @@ int mca_ptl_ib_ud_qp_init(VAPI_hca_hndl_t nic,
     QP_ATTR_MASK_SET(qp_attr_mask,QP_ATTR_QKEY);
 
     ret = VAPI_modify_qp(nic, 
-            (VAPI_qp_hndl_t)*ud_qp_hndl, &qp_attr, 
+            ud_qp_hndl, &qp_attr, 
             &qp_attr_mask, &qp_cap);
 
     if(VAPI_OK != ret) {
@@ -166,8 +257,7 @@ int mca_ptl_ib_ud_qp_init(VAPI_hca_hndl_t nic,
     qp_attr.qp_state         = VAPI_RTR;
     QP_ATTR_MASK_SET(qp_attr_mask,QP_ATTR_QP_STATE);
 
-    ret = VAPI_modify_qp(nic, 
-            (VAPI_qp_hndl_t)*ud_qp_hndl, &qp_attr, 
+    ret = VAPI_modify_qp(nic, ud_qp_hndl, &qp_attr, 
             &qp_attr_mask, &qp_cap);
 
     if(VAPI_OK != ret) {
@@ -186,14 +276,14 @@ int mca_ptl_ib_ud_qp_init(VAPI_hca_hndl_t nic,
     qp_attr.sq_psn           = DEFAULT_PSN;
     QP_ATTR_MASK_SET(qp_attr_mask,QP_ATTR_SQ_PSN);
 
-    ret = VAPI_modify_qp(nic, 
-            (VAPI_qp_hndl_t)*ud_qp_hndl, &qp_attr, 
+    ret = VAPI_modify_qp(nic, ud_qp_hndl, &qp_attr, 
             &qp_attr_mask, &qp_cap);
 
     if(VAPI_OK != ret) {
         MCA_PTL_IB_VAPI_RET(ret, "VAPI_modify_qp");
         return OMPI_ERROR;
     }
+
     D_PRINT("Modified UD to RTS..Qp\n");
 
     /* Everything was fine ... return success! */
@@ -340,10 +430,11 @@ int mca_ptl_ib_set_async_handler(VAPI_hca_hndl_t nic,
     return OMPI_SUCCESS;
 }
 
-int mca_ptl_ib_prep_ud_bufs(VAPI_hca_hndl_t nic,
+int mca_ptl_ib_prep_ud_bufs(VAPI_hca_hndl_t nic, VAPI_pd_hndl_t ptag,
         mca_ptl_ib_ud_buf_t* ud_buf, IB_wr_t wr_type, 
         int num_bufs)
 {
+#if 0
     int i;
     vapi_descriptor_t* desc;
 
@@ -358,7 +449,7 @@ int mca_ptl_ib_prep_ud_bufs(VAPI_hca_hndl_t nic,
         }
 
         if(mca_ptl_ib_register_mem(nic, 
-                    (void*) ud_buf[i].buf_data, 
+                    (void*) ud_buf[i].buf_data, ptag,
                     sizeof(mca_ptl_ib_ud_buf_data_t), 
                     &ud_buf[i].memhandle)
                 != OMPI_SUCCESS) {
@@ -398,11 +489,12 @@ int mca_ptl_ib_prep_ud_bufs(VAPI_hca_hndl_t nic,
                 sizeof(mca_ptl_ib_ud_buf_data_t),
                 ud_buf[i].memhandle.lkey);
     }
+#endif
 
     return OMPI_SUCCESS;
 }
 
-int mca_ptl_ib_register_mem(VAPI_hca_hndl_t nic,
+int mca_ptl_ib_register_mem(VAPI_hca_hndl_t nic, VAPI_pd_hndl_t ptag,
         void* buf, int len, vapi_memhandle_t* memhandle)
 {
     VAPI_ret_t ret;
@@ -412,7 +504,7 @@ int mca_ptl_ib_register_mem(VAPI_hca_hndl_t nic,
     mr_in.acl = VAPI_EN_LOCAL_WRITE | VAPI_EN_REMOTE_WRITE;
     mr_in.l_key = 0;
     mr_in.r_key = 0;
-    mr_in.pd_hndl = nic;
+    mr_in.pd_hndl = ptag;
     mr_in.size = len;
     mr_in.start = (VAPI_virt_addr_t) (MT_virt_addr_t) buf;
     mr_in.type = VAPI_MR;
@@ -496,4 +588,58 @@ int mca_ptl_ib_get_comp_ev_hndl(VAPI_completion_event_handler_t* handler_ptr)
     D_PRINT("UD Completion Event Handler = %p\n", ud_completion_handler);
 
     return OMPI_SUCCESS;
+}
+
+void mca_ptl_ib_frag(struct mca_ptl_ib_module_t* module,
+        mca_ptl_base_header_t * header)
+{
+    /* Allocate a recv frag descriptor */
+    mca_ptl_ib_recv_frag_t *recv_frag;
+    ompi_list_item_t *item;
+
+    bool        matched;
+    int         rc = OMPI_SUCCESS;
+
+    OMPI_FREE_LIST_GET(&mca_ptl_ib_component.ib_recv_frags,
+            item, rc);
+
+    while (OMPI_SUCCESS != rc) {
+        /* TODO: progress the recv state machine */
+        D_PRINT("Retry to allocate a recv fragment\n");
+        OMPI_FREE_LIST_GET (&mca_ptl_ib_component.ib_recv_frags,
+                item, rc);
+    }
+
+    recv_frag = (mca_ptl_ib_recv_frag_t *) item;
+    recv_frag->super.frag_base.frag_owner = 
+        (mca_ptl_base_module_t *) module;
+
+    recv_frag->super.frag_base.frag_peer = NULL;
+    recv_frag->super.frag_request = NULL;
+    recv_frag->super.frag_is_buffered = false;
+
+    /* Copy the header, mca_ptl_base_match() does not do what it claims */
+    recv_frag->super.frag_base.frag_header = *header;
+
+    /* Taking the data starting point be default */
+    recv_frag->super.frag_base.frag_addr =
+        (char *) header + sizeof (mca_ptl_base_header_t);
+    recv_frag->super.frag_base.frag_size = header->hdr_frag.hdr_frag_length;
+
+    /* match with preposted requests */
+    matched = module->super.ptl_match(
+            recv_frag->super.frag_base.frag_owner,
+            &recv_frag->super,
+            &recv_frag->super.frag_base.frag_header.hdr_match);
+
+    if (!matched) {
+        /* Oh my GOD !!! */
+        D_PRINT("Can't match buffer. Mama is unhappy\n");
+        memcpy (recv_frag->unex_buf,
+                (char *) header + sizeof (mca_ptl_base_header_t),
+                header->hdr_frag.hdr_frag_length);
+        recv_frag->super.frag_is_buffered = true;
+        recv_frag->super.frag_base.frag_addr = recv_frag->unex_buf;
+
+    }
 }

@@ -9,6 +9,8 @@
  * queue pair handles?
  */
 #define MAX_UD_PREPOST_DEPTH    (1)
+#define BUFSIZE                 (4096)
+#define NUM_BUFS                (5000)
 
 typedef enum {
     IB_RECV,
@@ -28,25 +30,27 @@ struct vapi_descriptor_t {
         VAPI_rr_desc_t rr;
         VAPI_sr_desc_t sr;
     };
+
     VAPI_sg_lst_entry_t sg_entry;
 };
 
 typedef struct vapi_descriptor_t vapi_descriptor_t;
 
-struct mca_ptl_ib_ud_buf_data_t {
-    VAPI_qp_hndl_t              qp_hndl; /* Remote QP handle */
-};
-
-typedef struct mca_ptl_ib_ud_buf_data_t mca_ptl_ib_ud_buf_data_t;
-
-struct mca_ptl_ib_ud_buf_t {
+struct mca_ptl_ib_send_buf_t {
+    mca_pml_base_request_t      *req;
     vapi_descriptor_t           desc;
-    vapi_memhandle_t            memhandle;
-    mca_ptl_ib_ud_buf_data_t*   buf_data;
+    char                        buf[4096];
 };
 
-typedef struct mca_ptl_ib_ud_buf_t mca_ptl_ib_ud_buf_t;
+typedef struct mca_ptl_ib_send_buf_t mca_ptl_ib_send_buf_t;
 
+struct mca_ptl_ib_recv_buf_t {
+    mca_pml_base_request_t      *req;
+    vapi_descriptor_t           desc;
+    char                        buf[4096];
+};
+
+typedef struct mca_ptl_ib_recv_buf_t mca_ptl_ib_recv_buf_t;
 
 #define MCA_PTL_IB_UD_RECV_DESC(ud_buf, len) {                      \
         desc->rr.comp_type = VAPI_SIGNALED;                         \
@@ -74,9 +78,7 @@ typedef struct mca_ptl_ib_ud_buf_t mca_ptl_ib_ud_buf_t;
 
 int mca_ptl_ib_ud_cq_init(VAPI_hca_hndl_t, VAPI_cq_hndl_t*,
         VAPI_cq_hndl_t*);
-int mca_ptl_ib_ud_qp_init(VAPI_hca_hndl_t, VAPI_cq_hndl_t,
-        VAPI_cq_hndl_t, VAPI_pd_hndl_t, VAPI_qp_hndl_t*,
-        VAPI_qp_prop_t*);
+int mca_ptl_ib_ud_qp_init(VAPI_hca_hndl_t, VAPI_qp_hndl_t);
 int mca_ptl_ib_get_num_hcas(uint32_t*);
 int mca_ptl_ib_get_hca_id(int, VAPI_hca_id_t*);
 int mca_ptl_ib_get_hca_hndl(VAPI_hca_id_t, VAPI_hca_hndl_t*);
@@ -85,10 +87,7 @@ int mca_ptl_ib_alloc_pd(VAPI_hca_hndl_t, VAPI_pd_hndl_t*);
 int mca_ptl_ib_create_cq(VAPI_hca_hndl_t, VAPI_cq_hndl_t*);
 int mca_ptl_ib_set_async_handler(VAPI_hca_hndl_t, 
         EVAPI_async_handler_hndl_t*);
-int mca_ptl_ib_post_ud_recv(VAPI_hca_hndl_t, VAPI_qp_hndl_t, 
-        mca_ptl_ib_ud_buf_t*, int);
-int mca_ptl_ib_prep_ud_bufs(VAPI_hca_hndl_t, mca_ptl_ib_ud_buf_t*, IB_wr_t, int);
-int mca_ptl_ib_register_mem(VAPI_hca_hndl_t, void*, int, 
+int mca_ptl_ib_register_mem(VAPI_hca_hndl_t, VAPI_pd_hndl_t, void*, int, 
         vapi_memhandle_t*);
 int mca_ptl_ib_set_comp_ev_hndl(VAPI_hca_hndl_t, VAPI_cq_hndl_t,
         VAPI_completion_event_handler_t, void*, 
@@ -96,6 +95,12 @@ int mca_ptl_ib_set_comp_ev_hndl(VAPI_hca_hndl_t, VAPI_cq_hndl_t,
 int mca_ptl_ib_req_comp_notif(VAPI_hca_hndl_t,VAPI_cq_hndl_t);
 int mca_ptl_ib_get_comp_ev_hndl(VAPI_completion_event_handler_t*);
 int mca_ptl_ib_init_send(void*, VAPI_qp_hndl_t, int);
-
+int mca_ptl_ib_create_qp(VAPI_hca_hndl_t, VAPI_pd_hndl_t,
+        VAPI_cq_hndl_t, VAPI_cq_hndl_t, VAPI_qp_hndl_t*,
+        VAPI_qp_prop_t*, int);
+int mca_ptl_ib_rc_qp_init(VAPI_hca_hndl_t, VAPI_qp_hndl_t,
+        VAPI_qp_num_t, IB_lid_t);
+void mca_ptl_ib_frag(struct mca_ptl_ib_module_t* module,
+        mca_ptl_base_header_t * header);
 
 #endif  /* MCA_PTL_IB_PRIV_H */
