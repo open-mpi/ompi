@@ -45,7 +45,7 @@ int mca_pml_teg_test_all(size_t count,
                          int *completed, ompi_status_public_t * statuses)
 {
     size_t i;
-    size_t num_completed;
+    size_t num_completed = 0;
 
     ompi_atomic_mb();
     for (i = 0; i < count; i++) {
