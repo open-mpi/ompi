@@ -1,3 +1,5 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
+
 /*
  * $HEADERS$
  */
@@ -26,6 +28,7 @@ int MPI_Waitsome(int incount, MPI_Request *requests,
 {
     int index;
     int rc;
+    MPI_Status status;
 
     if ( MPI_PARAM_CHECK ) {
         int rc = MPI_SUCCESS;
@@ -37,10 +40,17 @@ int MPI_Waitsome(int incount, MPI_Request *requests,
     }
 
     /* optimize this in the future */
-    rc = mca_pml.pml_wait(incount, requests, &index, statuses);
+    rc = mca_pml.pml_wait(incount, requests, &index, &status);
     OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
-    *outcount = 1;
-    indices[0] = index;
+    if( MPI_UNDEFINED ==index ) {
+       *outcount = MPI_UNDEFINED;
+    } else {
+       *outcount = 1;
+       indices[0] = index;
+       if( MPI_STATUSES_IGNORE != statuses ) {
+          statuses[index] = status;
+       }
+    }
     return MPI_SUCCESS;
 }
 
