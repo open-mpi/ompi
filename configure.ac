@@ -553,6 +553,11 @@ AC_DEFINE_UNQUOTED(WRAPPER_EXTRA_LIBS, "$WRAPPER_EXTRA_LIBS",
     [Additional LIBS to pass through the wrapper compilers])
 AC_MSG_RESULT([$WRAPPER_EXTRA_LIBS])
 
+#
+# Delayed the substitution of CFLAGS and CXXFLAGS until now because
+# they may have been modified throughout the course of this script.
+#
+
 AC_SUBST(CFLAGS)
 AC_SUBST(CPPFLAGS)
 AC_SUBST(CXXFLAGS)
