@@ -28,16 +28,19 @@ qsnet_rdma: qsnet_rdma.c
 mpitest: mpi_test.c
 	${HOME}/installs/openmpi/bin/mpicc -g -o mpitest mpi_test.c 
 
-check: % : %.c
+check_bw: %: %.c
+	${HOME}/installs/openmpi/bin/mpicc -g -o $@ check_bw.c
+
+check: %: %.c
 	${HOME}/installs/openmpi/bin/mpicc -g -o $@ check.c
 
-bw: % : %.c
+bw: %: %.c
 	${HOME}/installs/openmpi/bin/mpicc -g -o bw bw.c
 
-lat: % : %.c
+lat: %: %.c
 	${HOME}/installs/openmpi/bin/mpicc -g -o lat lat.c
 
-init_elan: % : %.c
+init_elan: %: %.c
 	gcc -g $< -o $@ -lelan4 -lelan -lrmscall -lelan3
 
 clean:
