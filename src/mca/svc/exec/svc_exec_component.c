@@ -1,6 +1,7 @@
 #include "svc_exec.h"
 
 
+OMPI_EXPORT
 mca_svc_exec_component_t mca_svc_exec_component = {
     {
       /* First, the mca_base_module_t struct containing meta

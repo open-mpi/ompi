@@ -2,6 +2,7 @@
 #include "util/proc_info.h"
 
 
+OMPI_EXPORT
 mca_svc_sched_component_t mca_svc_sched_component = {
     {
       /* First, the mca_base_module_t struct containing meta

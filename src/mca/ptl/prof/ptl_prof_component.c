@@ -31,6 +31,7 @@ static struct mca_ptl_base_module_t** ptl_prof_component_init_fn(
        bool *allow_multi_user_threads, bool *have_hidden_threads );
 static int ptl_prof_component_control_fn( int param, void* value, size_t size );
 
+OMPI_EXPORT
 mca_ptl_prof_module_1_0_0_t mca_ptl_prof_component = {
     {
         /* First, the mca_base_module_t struct containing meta information

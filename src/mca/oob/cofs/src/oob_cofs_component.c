@@ -23,6 +23,7 @@
 /*
  * Struct of function pointers and all that to let us be initialized
  */
+OMPI_EXPORT
 mca_oob_base_component_1_0_0_t mca_oob_cofs_component = {
   {
     MCA_OOB_BASE_VERSION_1_0_0,

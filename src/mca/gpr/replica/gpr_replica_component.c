@@ -34,6 +34,7 @@
 /*
  * Struct of function pointers that need to be initialized
  */
+OMPI_EXPORT
 mca_gpr_base_component_t mca_gpr_replica_component = {
     {
 	MCA_GPR_BASE_VERSION_1_0_0,

@@ -27,6 +27,7 @@ const char *mca_coll_basic_component_version_string =
  * and pointers to our public functions in it
  */
 
+OMPI_EXPORT
 const mca_coll_base_component_1_0_0_t mca_coll_basic_component = {
 
   /* First, the mca_component_t struct containing meta information
