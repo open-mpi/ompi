@@ -7,16 +7,14 @@
 
 #include "lam_config.h"
 #include "lam/stdint.h"
+#include "lam/types.h"
 #include "lam/lfc/object.h"
 
 typedef struct lam_fhnode
 {
-    union{
-        uint32_t    ikey;
-        char        *skey;
-    }               fhn_key;
-    void            *fhn_value;
-    char            fhn_is_taken;       /* 1->node is occupied, 0-> not occupied */
+    lam_ptr_t       fhn_key;
+    void           *fhn_value;
+    char            fhn_is_taken;   /* 1->node is occupied, 0-> not occupied */
 } lam_fhnode_t;
 
 /* Hash table that only allows integer or string keys. */
@@ -48,9 +46,20 @@ void *lam_fh_get_value_for_ikey(lam_fast_hash_t *htbl, uint32_t key);
 void  lam_fh_remove_value_for_ikey(lam_fast_hash_t *htbl, uint32_t key);
 int   lam_fh_set_value_for_ikey(lam_fast_hash_t *htbl, void *val, uint32_t key);
 
+void *lam_fh_get_value_for_lkey(lam_fast_hash_t *htbl, uint64_t key);
+void  lam_fh_remove_value_for_lkey(lam_fast_hash_t *htbl, uint64_t key);
+int   lam_fh_set_value_for_lkey(lam_fast_hash_t *htbl, void *val, uint64_t key);
+
+#if 0
+/*
+ * TSW - This is broken - implementation tried to copy length of string
+ * into space allocated for a pointer
+ */
 void *lam_fh_get_value_for_skey(lam_fast_hash_t *htbl, const char *key);
 void  lam_fh_remove_value_for_skey(lam_fast_hash_t *htbl, const char *key);
 int   lam_fh_set_value_for_skey(lam_fast_hash_t *htbl, void *val, const char *key);
+
+#endif
 
 
 /* returns the number of items in the table */
