@@ -23,7 +23,7 @@
 #    if defined(__GNUC__) && !defined(__STDC__)
 #      define DUMP(ARGS...)
 #    else
-       static inline void DUMP() { /* empty hopefully removed by the compiler */ }
+       static inline void DUMP( char* fmt, ...) { /* empty hopefully removed by the compiler */ }
 #    endif  /* __GNUC__ && !__STDC__ */
 #  endif  /* ACCEPT_C99 */
 #endif  /* VERBOSE */
