@@ -71,23 +71,28 @@ int ompi_ddt_add( dt_desc_t* pdtBase, const dt_desc_t* pdtAdd,
         }
     } else {
         place_needed = pdtAdd->desc.used;
-        if( count != 1 ) place_needed += 2;
+        if( count != 1 ) place_needed += 2;  /* for the loop markers */
     }
 
-    /* the count == 0 is LEGAL for MPI_UB and MPI_LB */
+    /* 
+     * the count == 0 is LEGAL only for MPI_UB and MPI_LB. I accept it just as a nice way to set
+     * the soft UB for a data (without using a real UB marker). This approach can be used to create
+     * the subarray and darray datatype. However from the MPI level this function should never be
+     * called directly with a count set to 0.
+     */
     if( count == 0 ) {
         if( pdtBase->desc.used == 0 ) {  /* empty datatype */
             pdtBase->lb = 0;
             pdtBase->ub = 0;
             pdtBase->true_lb = 0;
             pdtBase->true_ub = 0;
-        }
-        return 0;
+        } else
+            pdtBase->ub += disp;
+        return OMPI_SUCCESS;
     }
-
     /* compute the new memory alignement */
     pdtBase->align = IMAX( pdtBase->align, pdtAdd->align );
-
+    
     pdtBase->bdt_used |= pdtAdd->bdt_used;
     newLength = pdtBase->desc.used + place_needed;
     if( newLength > pdtBase->desc.length ) {
@@ -118,7 +123,7 @@ int ompi_ddt_add( dt_desc_t* pdtBase, const dt_desc_t* pdtAdd,
          * is no easy way to free them in this case ...
          */
         OBJ_RETAIN( pdtAdd );
-      
+        
         /* keep trace of the total number of basic datatypes in the datatype definition */
         pdtBase->btypes[DT_LOOP]     += pdtAdd->btypes[DT_LOOP];
         pdtBase->btypes[DT_END_LOOP] += pdtAdd->btypes[DT_END_LOOP];
@@ -126,7 +131,7 @@ int ompi_ddt_add( dt_desc_t* pdtBase, const dt_desc_t* pdtAdd,
         pdtBase->btypes[DT_UB]       |= pdtAdd->btypes[DT_UB];
         for( i = 4; i < DT_MAX_PREDEFINED; i++ )
             if( pdtAdd->btypes[i] != 0 ) pdtBase->btypes[i] += (count * pdtAdd->btypes[i]);
-
+        
         /* if the extent of the datatype if the same as the extent of the loop
          * description of the datatype then we simply have to update the main loop.
          */
@@ -142,7 +147,7 @@ int ompi_ddt_add( dt_desc_t* pdtBase, const dt_desc_t* pdtAdd,
             pdtBase->desc.used += 2;
             pLast++;
         }
-
+        
         for( i = 0; i < pdtAdd->desc.used; i++ ) {
             pLast->type   = pdtAdd->desc.desc[i].type;
             pLast->flags  = pdtAdd->desc.desc[i].flags | localFlags;
@@ -165,6 +170,7 @@ int ompi_ddt_add( dt_desc_t* pdtBase, const dt_desc_t* pdtAdd,
         /* should I add some space until the extent of this datatype ? */
     }
 
+    /* Recompute the new true_lb and true_ub */
     if( 0 == pdtBase->nbElems ) old_true_ub = disp;
     else                        old_true_ub = pdtBase->true_ub;
     pdtBase->size += count * pdtAdd->size;
@@ -189,7 +195,7 @@ int ompi_ddt_add( dt_desc_t* pdtBase, const dt_desc_t* pdtAdd,
             UNSET_CONTIGUOUS_FLAG(pdtBase->flags);
         }
     }
-
+    
     /* the lower bound should be inherited from the parents if and only
      * if the USER has explicitly set it. The result lb is the MIN between
      * the all lb + disp if and only if all or nobody flags's contain the LB.
