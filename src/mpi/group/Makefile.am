@@ -14,7 +14,8 @@ headers = \
 
 libmpi_group_la_SOURCES = \
 	$(headers) \
-        mpi_group_init.c
+        mpi_group_init.c \
+        mpi_set_group_rank.c
 
 # Conditionally install the header files
 
