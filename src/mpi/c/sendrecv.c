@@ -71,11 +71,12 @@ int MPI_Sendrecv(void *sendbuf, int sendcount, MPI_Datatype recvtype,
         rc = mca_pml.pml_wait(1, &req, NULL, status);
 
     } else {
-
-        status->MPI_ERROR = MPI_SUCCESS;
-        status->MPI_SOURCE = MPI_PROC_NULL;
-        status->MPI_TAG = MPI_ANY_TAG;
-        status->_count = 0;
+        if (MPI_STATUS_IGNORE != status) {
+            status->MPI_ERROR = MPI_SUCCESS;
+            status->MPI_SOURCE = MPI_PROC_NULL;
+            status->MPI_TAG = MPI_ANY_TAG;
+            status->_count = 0;
+        }
         rc = MPI_SUCCESS;
     }
     OMPI_ERRHANDLER_RETURN(rc, comm, rc, FUNC_NAME);
