@@ -8,7 +8,9 @@ static int ompi_progress_event_flag = OMPI_EVLOOP_ONCE;
 
 void ompi_progress_events(int flag)
 {
-    ompi_progress_event_flag = flag;
+    if(flag != 0 || ompi_progress_event_flag == OMPI_EVLOOP_ONCE) {
+        ompi_progress_event_flag = flag;
+    } 
 }
 
 void ompi_progress(void)
