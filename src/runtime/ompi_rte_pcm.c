@@ -57,7 +57,7 @@ ompi_rte_get_spawn_handle(int criteria, bool have_threads)
     
     /* make sure we don't already have a matching criteria */
     for (i = 0 ; i < ompi_pointer_array_get_size(&avail_handles) ; ++i) {
-        ptr = ompi_pointer_array_get_item(&avail_handles, i);
+        ptr = (ompi_rte_spawn_handle_t*) ompi_pointer_array_get_item(&avail_handles, i);
         if (NULL == ptr) continue;
 
         if (ptr->criteria == criteria) {
