@@ -9,7 +9,8 @@ static void mca_oob_tcp_msg_construct(mca_oob_tcp_msg_t*);
 static void mca_oob_tcp_msg_destruct(mca_oob_tcp_msg_t*);
 static void mca_oob_tcp_msg_ident(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* peer);
 static bool mca_oob_tcp_msg_recv(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* peer);
-static void mca_oob_tcp_msg_match(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* peer);
+static void mca_oob_tcp_msg_data(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* peer);
+static void mca_oob_tcp_msg_ping(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* peer);
 
 
 OBJ_CLASS_INSTANCE(
@@ -68,6 +69,56 @@ int mca_oob_tcp_msg_wait(mca_oob_tcp_msg_t* msg, int* rc)
         *rc = msg->msg_rc;
     }
     return OMPI_SUCCESS;
+}
+
+/*
+ *  Wait up to a timeout for the message to complete.
+ *  @param  msg (IN)   Message to wait on.
+ *  @param  rc (OUT)   Return code (number of bytes read on success or error code on failure).
+ *  @retval OMPI_SUCCESS or error code on failure.
+ */
+
+int mca_oob_tcp_msg_timedwait(mca_oob_tcp_msg_t* msg, int* rc, struct timespec* abstime)
+{
+    struct timeval tv;
+    uint32_t secs = abstime->tv_sec;
+    uint32_t usecs = abstime->tv_nsec * 1000;
+    gettimeofday(&tv,NULL);
+
+#if OMPI_HAVE_THREADS
+    OMPI_THREAD_LOCK(&msg->msg_lock);
+    while(msg->msg_complete == false && 
+          (tv.tv_sec <= secs ||
+          (tv.tv_sec == secs && tv.tv_usec < usecs))) {
+        if(ompi_event_progress_thread()) {
+            int rc;
+            OMPI_THREAD_UNLOCK(&msg->msg_lock);
+            rc = ompi_event_loop(OMPI_EVLOOP_ONCE);
+            assert(rc == 0);
+            OMPI_THREAD_LOCK(&msg->msg_lock);
+            gettimeofday(&tv,NULL);
+        } else {
+           ompi_condition_timedwait(&msg->msg_condition, &msg->msg_lock, abstime);
+        }
+    }
+    OMPI_THREAD_UNLOCK(&msg->msg_lock);
+
+#else
+    /* wait for message to complete */
+    while(msg->msg_complete == false &&
+          (tv.tv_sec <= secs ||
+          (tv.tv_sec == secs && tv.tv_usec < usecs))) {
+        ompi_event_loop(OMPI_EVLOOP_ONCE);
+    }
+#endif
+
+    /* return status */
+    if(NULL != rc) {
+        *rc = msg->msg_rc;
+    }
+    if(msg->msg_rc < 0)
+        return msg->msg_rc;
+    return (msg->msg_complete ? OMPI_SUCCESS : OMPI_ERR_TIMEOUT);
 }
 
 /*
@@ -173,7 +224,10 @@ bool mca_oob_tcp_msg_recv_handler(mca_oob_tcp_msg_t* msg, struct mca_oob_tcp_pee
         case MCA_OOB_TCP_IDENT:
             /* done - there is nothing else to receive */
             return true; 
-        case MCA_OOB_TCP_MSG:
+        case MCA_OOB_TCP_PING:
+            /* done - there is nothing else to receive */
+            return true;
+        case MCA_OOB_TCP_DATA:
             /* finish receiving message */
             return mca_oob_tcp_msg_recv(msg, peer);
         default:
@@ -204,10 +258,12 @@ static bool mca_oob_tcp_msg_recv(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* pee
                 return false;
             }
         } else if (rc == 0)  {
-            ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_msg_recv: peer closed connection", 
-               OMPI_NAME_COMPONENTS(mca_oob_name_self),
-               OMPI_NAME_COMPONENTS(peer->peer_name),
-               errno);
+            if(mca_oob_tcp_component.tcp_debug > 3) {
+                ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_msg_recv: peer closed connection", 
+                   OMPI_NAME_COMPONENTS(mca_oob_name_self),
+                   OMPI_NAME_COMPONENTS(peer->peer_name),
+                   errno);
+            }
             mca_oob_tcp_peer_close(peer);
             return false;
         }
@@ -239,8 +295,11 @@ void mca_oob_tcp_msg_recv_complete(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* p
         case MCA_OOB_TCP_IDENT:
             mca_oob_tcp_msg_ident(msg,peer);
             break;
-        case MCA_OOB_TCP_MSG:
-            mca_oob_tcp_msg_match(msg,peer);
+        case MCA_OOB_TCP_PING:
+            mca_oob_tcp_msg_ping(msg,peer);
+            break;
+        case MCA_OOB_TCP_DATA:
+            mca_oob_tcp_msg_data(msg,peer);
             break;
         default:
             ompi_output(0, "[%d,%d,%d] mca_oob_tcp_msg_recv_complete: invalid message type: %d\n",
@@ -266,13 +325,24 @@ static void mca_oob_tcp_msg_ident(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* pe
     OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
 }
 
+
+/**
+ * Process a ping message.
+ */
+
+static void mca_oob_tcp_msg_ping(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* peer)
+{
+    /* for now - we dont do anything - may want to send back a response at some poing */
+}
+
+
 /*
  * Progress a completed recv:
  * (1) signal a posted recv as complete
  * (2) queue an unexpected message in the recv list
  */
 
-static void mca_oob_tcp_msg_match(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* peer)
+static void mca_oob_tcp_msg_data(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* peer)
 {
     /* attempt to match unexpected message to a posted recv */
     mca_oob_tcp_msg_t* post;

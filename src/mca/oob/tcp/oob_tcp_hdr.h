@@ -10,7 +10,8 @@
 #define _MCA_OOB_TCP_HDR_H_
 
 #define MCA_OOB_TCP_IDENT    1
-#define MCA_OOB_TCP_MSG      2
+#define MCA_OOB_TCP_DATA     2
+#define MCA_OOB_TCP_PING     3
 
 /**
  * Header used by tcp oob protocol.

@@ -144,7 +144,7 @@ int mca_oob_tcp_peer_send(mca_oob_tcp_peer_t* peer, mca_oob_tcp_msg_t* msg)
  * @param name  Peers globally unique identifier.
  * @retval      Pointer to the newly created struture or NULL on error.
  */
-mca_oob_tcp_peer_t * mca_oob_tcp_peer_lookup(ompi_process_name_t* name)
+mca_oob_tcp_peer_t * mca_oob_tcp_peer_lookup(const ompi_process_name_t* name)
 {
     int rc;
     mca_oob_tcp_peer_t * peer, *old;
@@ -486,11 +486,13 @@ static int mca_oob_tcp_peer_recv_blocking(mca_oob_tcp_peer_t* peer, void* data, 
 
         /* remote closed connection */
         if(retval == 0) {
-            ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_peer_recv_blocking: "
-                "peer closed connection: peer state %d",
-                OMPI_NAME_COMPONENTS(mca_oob_name_self),
-                OMPI_NAME_COMPONENTS(peer->peer_name),
-                peer->peer_state);
+            if(mca_oob_tcp_component.tcp_debug > 3) {
+                ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_peer_recv_blocking: "
+                    "peer closed connection: peer state %d",
+                    OMPI_NAME_COMPONENTS(mca_oob_name_self),
+                    OMPI_NAME_COMPONENTS(peer->peer_name),
+                    peer->peer_state);
+            }
             mca_oob_tcp_peer_close(peer);
             return -1;
         }

@@ -60,6 +60,7 @@ mca_oob_tcp_component_t mca_oob_tcp_component = {
 static mca_oob_t mca_oob_tcp = {
     mca_oob_tcp_get_addr,
     mca_oob_tcp_set_addr,
+    mca_oob_tcp_ping,
     mca_oob_tcp_send,
     mca_oob_tcp_recv,
     mca_oob_tcp_send_nb,

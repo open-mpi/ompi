@@ -86,8 +86,9 @@ extern "C" {
 char* mca_oob_get_contact_info(void);
 
 /**
-*  Set the MCA parameter (OMPI_MCA_oob_base_seed) used by the OOB to 
-*  bootstrap communication between peers. 
+*  Pre-populate the cache of contact information required by the OOB 
+*  to reach a given destination. This is required to setup a pointer
+*  to initial registry/name server/etc.
 *
 *  @param  uri   The contact information of the peer process obtained
 *  via a call to mca_oob_get_contact_info().
@@ -95,6 +96,19 @@ char* mca_oob_get_contact_info(void);
 */
 
 int mca_oob_set_contact_info(const char*);
+
+/**
+ *  A routine to ping a given process name to determine if it is reachable. 
+ *
+ *  @param  name  The peer name.
+ *  @param  tv    The length of time to wait on a connection/response.
+ *  
+ *  Note that this routine blocks up to the specified timeout waiting for a
+ *  connection / response from the specified peer. If the peer is unavailable
+ *  an error status is returned.
+ */
+
+int mca_oob_ping(ompi_process_name_t* name, struct timeval* tv);
 
 /**
 *  Extract from the contact info the peer process identifier.
