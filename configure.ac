@@ -535,6 +535,7 @@ AC_CONFIG_FILES([
     src/tools/wrappers/Makefile
 
     test/Makefile
+    test/support/Makefile
     test/unit/Makefile
     test/unit/lam/Makefile
     test/unit/lam/oob_cofs/Makefile
