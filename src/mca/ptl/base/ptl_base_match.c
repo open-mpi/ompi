@@ -470,7 +470,7 @@ static mca_pml_base_recv_request_t *mca_ptl_base_check_receives_for_match
         /*
          * There are some of each.
          */
-        MCA_PTL_BASE_CHECK_SPECIFIC_AND_WILD_RECEIVES_FOR_MATCH(frag_header, pml_comm, return_match);
+        return_match = mca_ptl_base_check_specific_and_wild_receives_for_match(frag_header, pml_comm);
     }
     return return_match;
 }
@@ -567,7 +567,7 @@ static bool mca_ptl_base_check_cantmatch_for_match(ompi_list_t *additional_match
                     /*
                      * There are some of each.
                      */
-                    MCA_PTL_BASE_CHECK_SPECIFIC_AND_WILD_RECEIVES_FOR_MATCH(frag_header, pml_comm, matched_receive);
+                    matched_receive = mca_ptl_base_check_specific_and_wild_receives_for_match(frag_header, pml_comm);
                 }
 
                 /* if match found, process data */
@@ -688,7 +688,7 @@ bool mca_ptl_base_match_in_order_network_delivery(
         /*
          * There are some of each.
          */
-        MCA_PTL_BASE_CHECK_SPECIFIC_AND_WILD_RECEIVES_FOR_MATCH(frag_header, pml_comm, matched_receive);
+        matched_receive = mca_ptl_base_check_specific_and_wild_receives_for_match(frag_header, pml_comm);
     }
 
     /* if match found, process data */
