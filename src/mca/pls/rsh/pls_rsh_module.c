@@ -190,10 +190,9 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
     if(ORTE_SUCCESS != rc) {
         goto cleanup;
     }
-    rc = orte_ns.convert_jobid_to_string(&jobid_string, jobid);
-    if(ORTE_SUCCESS != rc) {
-        goto cleanup;
-    }
+
+    /* need integer value for command line parameter - NOT hex */
+    asprintf(&jobid_string, "%d", jobid);
 
     /*
      * Build argv/env arrays.
