@@ -23,7 +23,7 @@ int mca_oob_tcp_recv(
     int flags)
 {
     mca_oob_tcp_msg_t *msg;
-    int i, rc, size = 0;
+    int i, rc = 0, size = 0;
     int tag = (tagp != NULL) ? *tagp : MCA_OOB_TAG_ANY;
 
     if(mca_oob_tcp_component.tcp_debug > 1) {
