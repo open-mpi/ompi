@@ -43,7 +43,6 @@ int lam_comm_init(void)
     /* Setup communicator array */
     OBJ_CONSTRUCT(&lam_mpi_communicators, lam_pointer_array_t); 
 
-    OBJ_RETAIN(group); /* 2 times as the grous is referenced 2 times */
 
     /* Setup MPI_COMM_WORLD */
     OBJ_CONSTRUCT(&lam_mpi_comm_world, lam_communicator_t);
@@ -53,7 +52,6 @@ int lam_comm_init(void)
     group->grp_proc_count    = size;
     group->grp_ok_to_free    = false;
     OBJ_RETAIN(group); /* bump reference count for remote reference */
-    OBJ_RETAIN(group); /* 2 times as the grous is referenced 2 times */
 
     lam_mpi_comm_world.c_contextid    = 0;
     lam_mpi_comm_world.c_f_to_c_index = 0;
@@ -92,7 +90,6 @@ int lam_comm_init(void)
     group->grp_proc_count    = size;
     group->grp_ok_to_free    = false;
     OBJ_RETAIN(group); /* bump reference count for remote reference */
-    OBJ_RETAIN(group); /* 2 times as the grous is referenced 2 times */
 
     lam_mpi_comm_self.c_contextid    = 1;
     lam_mpi_comm_self.c_f_to_c_index = 1;
@@ -104,8 +101,7 @@ int lam_comm_init(void)
     mca_pml.pml_add_comm(&lam_mpi_comm_self);
     lam_pointer_array_set_item (&lam_mpi_communicators, 1, &lam_mpi_comm_self);
 
-    strncpy (lam_mpi_comm_self.c_name, "MPI_COMM_SELF", 
-             strlen("MPI_COMM_SELF")+1 );
+    strncpy(lam_mpi_comm_self.c_name,"MPI_COMM_SELF",strlen("MPI_COMM_SELF")+1);
     lam_mpi_comm_self.c_flags |= LAM_COMM_NAMEISSET;
     lam_attr_hash_init(&lam_mpi_comm_self.c_keyhash);
     
@@ -128,7 +124,7 @@ int lam_comm_init(void)
     group->grp_proc_pointers = NULL;
     group->grp_my_rank       = MPI_PROC_NULL;
     group->grp_proc_count    = 0;
-    group->grp_ok_to_free    = false;
+    group->grp_ok_to_free    = false; 
     OBJ_RETAIN(group); /* bump reference count for remote reference */
 
     lam_mpi_comm_null.c_contextid    = 2;
@@ -140,8 +136,7 @@ int lam_comm_init(void)
     OBJ_RETAIN( &lam_mpi_errors_are_fatal );
     lam_pointer_array_set_item (&lam_mpi_communicators, 2, &lam_mpi_comm_null);
 
-    strncpy (lam_mpi_comm_null.c_name, "MPI_COMM_NULL", 
-             strlen("MPI_COMM_NULL")+1 );
+    strncpy(lam_mpi_comm_null.c_name,"MPI_COMM_NULL",strlen("MPI_COMM_NULL")+1);
     lam_mpi_comm_null.c_flags |= LAM_COMM_NAMEISSET;
 
     /* VPS: Remove this later */
@@ -164,15 +159,16 @@ lam_communicator_t *lam_comm_allocate ( int local_size, int remote_size )
         new_comm->c_flags |= LAM_COMM_INTER;
     }
     else {
-        /* simplifies some operations (e.g. p2p), if 
-         *   we can always use the remote group 
+        /* 
+         * simplifies some operations (e.g. p2p), if 
+         * we can always use the remote group 
          */
         new_comm->c_remote_group = new_comm->c_local_group;
     }
 
     /* fill in the inscribing hyper-cube dimensions */
     new_comm->c_cube_dim = lam_cube_dim(local_size);
-    if (LAM_ERROR == new_comm->c_cube_dim) {
+    if ( LAM_ERROR == new_comm->c_cube_dim ) {
         OBJ_RELEASE(new_comm);
         new_comm = NULL;
     }
@@ -183,17 +179,12 @@ lam_communicator_t *lam_comm_allocate ( int local_size, int remote_size )
 int lam_comm_finalize(void) 
 {
     /* Destroy all predefined communicators */
-    OBJ_RELEASE( lam_mpi_comm_null.c_local_group );
-    OBJ_RELEASE( lam_mpi_comm_null.c_remote_group );
     OBJ_DESTRUCT( &lam_mpi_comm_null );
-    
-    OBJ_RELEASE( lam_mpi_comm_world.c_local_group );
-    OBJ_RELEASE( lam_mpi_comm_world.c_remote_group );
     OBJ_DESTRUCT( &lam_mpi_comm_world );
-
-    OBJ_RELEASE( lam_mpi_comm_self.c_local_group );
-    OBJ_RELEASE( lam_mpi_comm_self.c_remote_group );
     OBJ_DESTRUCT( &lam_mpi_comm_self );
+
+    OBJ_DESTRUCT (&lam_mpi_communicators);
+
     return LAM_SUCCESS;
 }
 
@@ -213,11 +204,11 @@ int lam_comm_link_function(void)
 static void lam_comm_construct(lam_communicator_t* comm)
 {
     comm->c_f_to_c_index = MPI_UNDEFINED;
-    comm->c_name[0]   = '\0';
-    comm->c_contextid = MPI_UNDEFINED;
-    comm->c_flags     = 0;
-    comm->c_my_rank   = 0;
-    comm->c_cube_dim  = 0;
+    comm->c_name[0]      = '\0';
+    comm->c_contextid    = MPI_UNDEFINED;
+    comm->c_flags        = 0;
+    comm->c_my_rank      = 0;
+    comm->c_cube_dim     = 0;
     comm->c_local_group  = NULL;
     comm->c_remote_group = NULL;
     comm->error_handler  = NULL;
@@ -230,26 +221,9 @@ static void lam_comm_construct(lam_communicator_t* comm)
 
 static void lam_comm_destruct(lam_communicator_t* comm)
 {
-    lam_group_t *grp;
-    int proc;
-
-    /* Release local group */
-    grp = comm->c_local_group;
-    for ( proc = 0; proc <grp->grp_proc_count; proc++ ) {
-        OBJ_RELEASE (grp->grp_proc_pointers[proc]);
-    }
     OBJ_RELEASE ( comm->c_local_group );
-
-    /* Release remote group */
-    if ( comm->c_flags & LAM_COMM_INTER ) {
-        grp = comm->c_remote_group;
-        for ( proc = 0; proc <grp->grp_proc_count; proc++ ) {
-            OBJ_RELEASE (grp->grp_proc_pointers[proc]);
-        }
-        OBJ_RELEASE ( comm->c_remote_group );
-    }
-
-    /* Release error handler */
+    OBJ_RELEASE ( comm->c_remote_group );
+    
     OBJ_RELEASE ( comm->error_handler );
 
     /* reset the lam_comm_f_to_c_table entry */
@@ -264,11 +238,14 @@ static void lam_comm_destruct(lam_communicator_t* comm)
 
     /* Release topology information */
 
-
     /******** VPS: this goes away *************/
     /* Release the cached bcast requests */
-    free (comm->bcast_lin_reqs);
-    free (comm->bcast_log_reqs);
+    if ( NULL != comm->bcast_lin_reqs ) {
+        free (comm->bcast_lin_reqs);
+    }
+    if ( NULL != comm->bcast_log_reqs ) {
+        free (comm->bcast_log_reqs);
+    }
 
     return;
 }
