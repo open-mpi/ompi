@@ -19,7 +19,7 @@ lam_libtoolize_search="libtoolize glibtoolize"
 lam_automake_search="automake"
 
 lam_automake_version="1.6"
-lam_autoconf_version="2.57"
+lam_autoconf_version="2.58"
 lam_libtool_version="1.5"
 
 
@@ -184,9 +184,9 @@ This may be caused by an older version of one of the required
 packages.  Please make sure you are using at least the following
 versions:
 
-GNU Autoconf 2.57
-GNU Automake 1.7.8
-GNU Libtool  1.5
+GNU Autoconf $lam_autoconf_version
+GNU Automake $lam_automake_version
+GNU Libtool  $lam_libtool_version
 
 EOF
 	exit 1
