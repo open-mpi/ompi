@@ -57,7 +57,7 @@ int ompi_ddt_optimize_short( dt_desc_t* pData, int count,
 
    if( (count == 0) || (pData->desc.used == 0) ) return 1;
 
-   pStack = alloca( sizeof(dt_stack_t) * (pData->btypes[DT_LOOP]+1) );
+   pStack = alloca( sizeof(dt_stack_t) * (pData->btypes[DT_LOOP]+2) );
    pStack->count = count;
    pStack->index = -1;
    pStack->end_loop = pData->desc.used;
@@ -87,7 +87,7 @@ int ompi_ddt_optimize_short( dt_desc_t* pData, int count,
              totalDisp = pStack->disp;
          }
          pos_desc++;
-         /* JMS: changed this from "goto next_loop" to "continue" */
+         totalDisp = pStack->disp;  /* update the displacement position */
          continue;
       }
       if( pData->desc.desc[pos_desc].type == DT_LOOP ) {
@@ -173,6 +173,7 @@ int ompi_ddt_optimize_short( dt_desc_t* pData, int count,
   __sofar += (LENGTH); \
 }
 
+#if defined(COMPILE_USELSS_CODE)
 static int ompi_ddt_unroll( dt_desc_t* pData, int count )
 {
    dt_stack_t* pStack;   /* pointer to the position on the stack */
@@ -286,6 +287,7 @@ static int ompi_ddt_unroll( dt_desc_t* pData, int count )
    PRINT_MEMCPY( pDestBuf, (char*)lastDisp, lastLength );
    return OMPI_SUCCESS;
 }
+#endif  /* COMPILE_USELSS_CODE */
 
 int ompi_ddt_commit( dt_desc_t** data )
 {
