@@ -32,6 +32,8 @@ void mca_gpr_replica_cleanup_job(mca_ns_base_jobid_t jobid)
     OMPI_THREAD_LOCK(&mca_gpr_replica_mutex);
     mca_gpr_replica_cleanup_job_nl(jobid);
     OMPI_THREAD_UNLOCK(&mca_gpr_replica_mutex);
+    
+    mca_gpr_replica_process_callbacks();
 }
 
 
@@ -72,6 +74,8 @@ void mca_gpr_replica_cleanup_proc(bool purge, ompi_process_name_t *proc)
     OMPI_THREAD_LOCK(&mca_gpr_replica_mutex);
     mca_gpr_replica_cleanup_proc_nl(purge, proc);
     OMPI_THREAD_UNLOCK(&mca_gpr_replica_mutex);
+
+    mca_gpr_replica_process_callbacks();
 }
 
 
