@@ -53,7 +53,7 @@ static inline int ompi_condition_wait(ompi_condition_t *c, ompi_mutex_t *m)
     int rc = 0;
     c->c_waiting++;
     if (ompi_using_threads()) {
-#if OMPI_HAVE_POSIX_THREADS
+#if OMPI_HAVE_POSIX_THREADS && OMPI_ENABLE_PROGRESS_THREADS
         rc = pthread_cond_wait(&c->c_cond, &m->m_lock_pthread);
 #else
         while (c->c_signaled == 0) {
@@ -82,7 +82,7 @@ static inline int ompi_condition_timedwait(ompi_condition_t *c,
 
     c->c_waiting++;
     if (ompi_using_threads()) {
-#if OMPI_HAVE_POSIX_THREADS
+#if OMPI_HAVE_POSIX_THREADS && OMPI_ENABLE_PROGRESS_THREADS
         rc = pthread_cond_timedwait(&c->c_cond, &m->m_lock_pthread, abstime);
 #else
         abs.tv_sec = abstime->tv_sec;
@@ -117,7 +117,7 @@ static inline int ompi_condition_signal(ompi_condition_t *c)
 {
     if (c->c_waiting) {
         c->c_signaled++;
-#if OMPI_HAVE_POSIX_THREADS
+#if OMPI_HAVE_POSIX_THREADS && OMPI_ENABLE_PROGRESS_THREADS
         if(ompi_using_threads()) {
             pthread_cond_signal(&c->c_cond);
         }
@@ -129,7 +129,7 @@ static inline int ompi_condition_signal(ompi_condition_t *c)
 static inline int ompi_condition_broadcast(ompi_condition_t *c)
 {
     c->c_signaled += c->c_waiting;
-#if OMPI_HAVE_POSIX_THREADS
+#if OMPI_HAVE_POSIX_THREADS && OMPI_ENABLE_PROGRESS_THREADS
     if(ompi_using_threads()) {
         pthread_cond_broadcast(&c->c_cond);
     }
