@@ -39,7 +39,7 @@ if test "$WANT_DEBUG" = "1"; then
 fi
 
 LAM_CFLAGS_BEFORE_PICKY="$CFLAGS"
-if test -d CVS -a "$GCC" = "yes" -a "$WANT_PICKY_COMPILER" = 1; then
+if test "$GCC" = "yes" -a "$WANT_PICKY_COMPILER" = 1; then
     add="-Wall -Wundef -Wno-long-long"
     add="$add -Wmissing-prototypes -Wstrict-prototypes"
 
