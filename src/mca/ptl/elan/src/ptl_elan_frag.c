@@ -82,10 +82,9 @@ extern mca_ptl_elan_state_t mca_ptl_elan_global_state;
 
 mca_ptl_elan_send_frag_t *
 mca_ptl_elan_alloc_send_desc (struct mca_ptl_base_module_t *ptl_ptr,
-                  struct mca_pml_base_send_request_t *sendreq)
+                  struct mca_pml_base_send_request_t *sendreq, 
+		  int oneside)
 {
-    struct ompi_ptl_elan_queue_ctrl_t *queue;
-    /*struct mca_ptl_elan_peer_t *peer;*/
 
     ompi_free_list_t *flist;
     ompi_list_item_t *item;
@@ -94,48 +93,52 @@ mca_ptl_elan_alloc_send_desc (struct mca_ptl_base_module_t *ptl_ptr,
     START_FUNC();
 
     /* For now, bind to queue DMA directly */
-    {
-        queue = ((mca_ptl_elan_module_t *) ptl_ptr)->queue;
-        flist = &queue->tx_desc_free;
+    if (oneside) {
+	/*struct mca_ptl_elan_peer_t *peer;*/
+        flist = &(((mca_ptl_elan_module_t *) ptl_ptr)->putget)->tx_desc_free;
+    } else {
+        flist = &(((mca_ptl_elan_module_t *) ptl_ptr)->queue)->tx_desc_free;
+    }
 
-        if (ompi_using_threads ()) {
+    if (ompi_using_threads ()) {
 
-	    ompi_mutex_lock(&flist->fl_lock);
+	ompi_mutex_lock(&flist->fl_lock);
+	item = ompi_list_remove_first (&((flist)->super));
 
-            item = ompi_list_remove_first (&((flist)->super));
+	/* Progress this PTL module to get back a descriptor,
+	 * Is it OK to progress with ptl->ptl_send_progress? */
+	while (NULL == item) {
+	    mca_ptl_tstamp_t tstamp = 0;
 
-            /* Progress this PTL module to get back a descriptor,
-             * Is it OK to progress with ptl->ptl_send_progress? */
-            while (NULL == item) {
-                mca_ptl_tstamp_t tstamp = 0;
+	    ptl_ptr->ptl_component->ptlm_progress (tstamp);
+	    item = ompi_list_remove_first (&((flist)->super));
+	}
+	ompi_mutex_unlock(&flist->fl_lock);
+    } else {
+	item = ompi_list_remove_first (&((flist)->super));
 
-                ptl_ptr->ptl_component->ptlm_progress (tstamp);
-                item = ompi_list_remove_first (&((flist)->super));
-            }
-	    ompi_mutex_unlock(&flist->fl_lock);
-        } else {
-            item = ompi_list_remove_first (&((flist)->super));
+	/* Progress this PTL module to get back a descriptor,
+	 * Is it OK to progress with ptl->ptl_send_progress()? */
+	while (NULL == item) {
+	    mca_ptl_tstamp_t tstamp = 0;
 
-            /* Progress this PTL module to get back a descriptor,
-             * Is it OK to progress with ptl->ptl_send_progress()? */
-            while (NULL == item) {
-                mca_ptl_tstamp_t tstamp = 0;
+	    /* XXX: 
+	     * Well, this still does not trigger the progress on 
+	     * PTL's from other modules.  Wait for PML to change.
+	     * Otherwise have to trigger PML progress from PTL.  Ouch..
+	     */
+	    ptl_ptr->ptl_component->ptlm_progress (tstamp);
+	    item = ompi_list_remove_first (&((flist)->super));
+	}
+    }
+    desc = (mca_ptl_elan_send_frag_t *) item; 
+    desc->desc->req = (struct mca_ptl_elan_send_request_t *) sendreq;
 
-                /* 
-                 * Well, this still does not trigger the progress on 
-                 * PTL's from other modules.  Wait for PML to change.
-                 * Otherwise have to trigger PML progress from PTL.  Ouch..
-                 */
-                ptl_ptr->ptl_component->ptlm_progress (tstamp);
-                item = ompi_list_remove_first (&((flist)->super));
-            }
-        }
-        desc = (mca_ptl_elan_send_frag_t *) item; 
+    if (oneside) {
+	desc->desc->desc_type = MCA_PTL_ELAN_DESC_PUTGET;
+    } else {
 	desc->desc->desc_type = MCA_PTL_ELAN_DESC_QDMA;
     }
-    desc->desc->req = 
-	(struct mca_ptl_elan_send_request_t *) sendreq;
-	/*(struct mca_pml_base_send_request_t *)sendreq;*/
 
     END_FUNC();
     return desc;

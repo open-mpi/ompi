@@ -168,7 +168,7 @@ mca_ptl_elan_req_init (struct mca_ptl_base_module_t *ptl,
 
     START_FUNC();
 
-    desc = mca_ptl_elan_alloc_send_desc(ptl, request);
+    desc = mca_ptl_elan_alloc_send_desc(ptl, request, 0);
     if (NULL == desc) {
         ompi_output(0,
                 "[%s:%d] Unable to allocate an elan send descriptors \n", 
@@ -245,8 +245,7 @@ mca_ptl_elan_isend (struct mca_ptl_base_module_t *ptl,
     if (offset == 0) { /* The first fragment uses a cached desc */
         desc = ((mca_ptl_elan_send_request_t*)sendreq)->req_frag;
     } else {
-
-	desc = mca_ptl_elan_alloc_send_desc(ptl, sendreq);
+	desc = mca_ptl_elan_alloc_send_desc(ptl, sendreq, 0);
 	if (NULL == desc) {
 	    ompi_output(0,
 		    "[%s:%d] Unable to allocate an elan send descriptors \n", 
@@ -280,6 +279,28 @@ mca_ptl_elan_put (struct mca_ptl_base_module_t *ptl,
                   int flags)
 {
     int rc = OMPI_SUCCESS;
+    mca_ptl_elan_send_frag_t *desc;
+
+    /* XXX: 
+     *    Since the address passed down from PML does not provide 
+     *    elan information, so there needs to be a change 
+     */
+
+    START_FUNC();
+
+    desc = mca_ptl_elan_alloc_send_desc(ptl, sendreq, 1);
+    if (NULL == desc) {
+	ompi_output(0,
+		"[%s:%d] Unable to allocate an elan send descriptors \n", 
+		__FILE__, __LINE__);
+    }
+
+    rc = mca_ptl_elan_start_desc(desc, 
+	    (struct mca_ptl_elan_peer_t *)ptl_peer,
+	    sendreq, offset, &size, flags);
+
+    /* Update all the sends until the put is done */
+    END_FUNC();
     return rc;
 }
 
@@ -325,7 +346,7 @@ mca_ptl_elan_matched (mca_ptl_base_module_t * ptl,
 	mca_ptl_elan_send_frag_t *desc;
 
 	/* Get a frag desc and allocate a send desc */
-	desc = mca_ptl_elan_alloc_send_desc(ptl, NULL);
+	desc = mca_ptl_elan_alloc_send_desc(ptl, NULL, 0);
 
 	if (NULL == desc) {
 	    ompi_output(0,

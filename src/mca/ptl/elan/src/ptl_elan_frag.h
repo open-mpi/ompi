@@ -37,10 +37,12 @@ struct mca_ptl_elan_recv_frag_t {
     size_t          frag_msg_cnt; 
     volatile int    frag_progressed;        /* Is it record to request */
     bool            frag_ack_pending;       /* Is there an ack to send */
+#if 0
     union {
-       struct ompi_ptl_elan_qdma_frag_t   *qdma;
-       struct ompi_ptl_elan_putget_frag_t *putget;
+       struct ompi_ptl_elan_qdma_desc_t   *qdma;
+       struct ompi_ptl_elan_putget_desc_t *putget;
     } frag;
+#endif
     char           *alloc_buff;
     char           *unex_buff;
 };
@@ -51,7 +53,8 @@ extern ompi_class_t mca_ptl_elan_recv_frag_t_class;
 
 mca_ptl_elan_send_frag_t *
 mca_ptl_elan_alloc_send_desc( struct mca_ptl_base_module_t *ptl,
-                  struct mca_pml_base_send_request_t *sendreq);
+                  struct mca_pml_base_send_request_t *sendreq,
+		  int oneside);
 
 mca_ptl_elan_recv_frag_t *
 mca_ptl_elan_alloc_recv_desc(struct mca_pml_base_recv_request_t *req);
