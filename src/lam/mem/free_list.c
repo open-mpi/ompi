@@ -59,7 +59,7 @@ int lam_free_list_grow(lam_free_list_t* flist, size_t num_elements)
     for(i=0; i<num_elements; i++) {
         lam_list_item_t* item = (lam_list_item_t*)ptr;
         if (NULL != flist->fl_elem_class)
-            STATIC_INIT(item, flist->fl_elem_class);
+            STATIC_INIT((*item), flist->fl_elem_class);
         lam_list_append(&flist->super, item);
         ptr += flist->fl_elem_size;
     }
