@@ -90,7 +90,7 @@ if test "$enable_single_lib" != "yes"; then
     AC_MSG_RESULT([no])
     WANT_SINGLE_MPI_LIBRARY=0
 else
-    AC_MSG_RESULT([no])
+    AC_MSG_RESULT([yes])
     WANT_SINGLE_MPI_LIBRARY=1
 fi
 AM_CONDITIONAL(WANT_SINGLE_MPI_LIBRARY, test "$WANT_SINGLE_MPI_LIBRARY" = 1)

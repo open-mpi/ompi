@@ -35,14 +35,19 @@ DIST_SUBDIRS	= c cxx f77 f90
 
 if WANT_SINGLE_MPI_LIBRARY
 install_lib		=
-convenince_lib		= libmpi.la
+convenience_lib		= libmpi_convenience.la
 else
 install_lib		= libmpi.la
-convenince_lib		=
+convenience_lib		=
 endif
 
 lib_LTLIBRARIES		= $(install_lib)
 noinst_LTLIBRARIES	= $(convenience_lib)
 
+sources			= c/libmpi_c.la $(f77_lib) $(f90_lib)
+
 libmpi_la_SOURCES	=
-libmpi_la_LIBADD	= c/libmpi_c.la $(f77_lib) $(f90_lib)
+libmpi_la_LIBADD	= $(sources)
+
+libmpi_convenience_la_SOURCES =
+libmpi_convenience_la_LIBADD = $(sources)
