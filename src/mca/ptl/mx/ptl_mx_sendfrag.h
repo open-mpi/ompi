@@ -35,7 +35,18 @@ typedef struct mca_ptl_mx_send_frag_t mca_ptl_mx_send_frag_t;
     }
 
 #define MCA_PTL_MX_SEND_FRAG_RETURN(sendfrag)  \
-    OMPI_FREE_LIST_RETURN(&mca_ptl_mx_component.mx_send_frags, (ompi_list_item_t*)sendfrag);
+    { \
+    int seg_free = sendfrag->frag_free; \
+    mx_segment_t *seg_ptr = sendfrag->frag_segments+1; \
+    while(seg_free) { \
+        if(seg_free & 1) { \
+            free(segment->segment_ptr); \
+        } \
+        seg_free >>= 1; \
+        seg_ptr++; \
+    } \
+    OMPI_FREE_LIST_RETURN(&mca_ptl_mx_component.mx_send_frags, (ompi_list_item_t*)sendfrag); \
+    }
 
 OBJ_CLASS_DECLARATION(mca_ptl_mx_send_frag_t);
 
