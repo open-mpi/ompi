@@ -13,6 +13,7 @@ headers = \
     argv.h \
     cmd_line.h \
     few.h \
+    if.h \
     malloc.h \
     output.h \
     path.h \
@@ -24,6 +25,7 @@ libutil_la_SOURCES = \
     argv.c \
     cmd_line.c \
     few.c \
+    if.c \
     output.c \
     path.c \
     reactor.c \
