@@ -97,6 +97,10 @@ if test "$WANT_DEBUG" = "0" -a -z "$enable_debug" -a -d CVS; then
     echo "--> developer override: enable debugging code by default"
 fi
 #################### Early development override ####################
+if test "$WANT_DEBUG" = "0"; then
+    CFLAGS="-DNDEBUG $CFLAGS"
+    CXXFLAGS="-DNDEBUG $CFLAGS"
+fi
 AC_DEFINE_UNQUOTED(LAM_ENABLE_DEBUG, $WANT_DEBUG,
     [Whether we want developer-level debugging code or not])
 
@@ -117,6 +121,22 @@ else
 fi
 
 #
+# Fortran 90
+#
+
+AC_MSG_CHECKING([if want Fortran 90 bindings])
+AC_ARG_ENABLE(f90, 
+    AC_HELP_STRING([--enable-f90],
+                   [enable f90 MPI bindings (default: enabled)]))
+if test "$enable_f90" != "no"; then
+    AC_MSG_RESULT([yes])
+    WANT_MPI_F90=1
+else
+    AC_MSG_RESULT([no])
+    WANT_MPI_F90=0
+fi
+
+#
 # MPI profiling
 #
 
@@ -134,20 +154,50 @@ fi
 
 
 #
-# Fortran 90
+# Do we want to disable weak symbols for some reason?
 #
 
-AC_MSG_CHECKING([if want Fortran 90 bindings])
-AC_ARG_ENABLE(f90, 
-    AC_HELP_STRING([--enable-f90],
-                   [enable f90 MPI bindings (default: enabled)]))
-if test "$enable_f90" != "no"; then
+AC_MSG_CHECKING([if want to enable weak symbol support])
+AC_ARG_ENABLE(weak-symbols,
+    AC_HELP_STRING([--enable-weak-symbols],
+                   [use weak symbols, if available (default: enabled)]))
+if test "$enable_weak_symbols" != "no"; then
     AC_MSG_RESULT([yes])
-    WANT_MPI_F90=1
+    WANT_WEAK_SYMBOLS=1
 else
     AC_MSG_RESULT([no])
-    WANT_MPI_F90=0
+    WANT_WEAK_SYMBOLS=0
 fi
+
+#
+# Do we want to disable MPI parameter checking at run-time?
+#
+
+AC_MSG_CHECKING([if want run-time MPI parameter checking])
+AC_ARG_ENABLE(mpi-param-check,
+    AC_HELP_STRING([--with-mpi-param-check],
+                   [behavior of MPI function parameter checking.  Valid values are: always, never, runtime (default: runtime)]))
+mpi_param_check=lam_mpi_param_check
+if test "$with_mpi_param_check" = "no" -o \
+    "$with_mpi_param_check" = "never"; then
+    mpi_param_check=0
+    AC_MSG_RESULT([never])
+elif test "$with_mpi_param_check" = "yes" -o \
+    "$with_mpi_param_check" = "always"; then
+    mpi_param_check=1
+    AC_MSG_RESULT([always])
+elif test "$with_mpi_param_check" = "runtime" -o \
+    -z "$with_mpi_params_check"; then
+    AC_MSG_RESULT([runtime])
+else
+    AC_MSG_RESULT([unknown])
+    AC_MSG_WARN([*** Unrecognized --with-mpi-param-check value])
+    AC_MSG_WARN([*** See "configure --help" output])
+    AC_MSG_WARN([*** Defaulting to "runtime"])
+fi
+AC_DEFINE_UNQUOTED(MPI_PARAM_CHECK, $mpi_param_check,
+    [Whether we want to check MPI parameters always, never, or decide at run-time])
+
 
 #
 # Do we want -llam/-lmpi, or just -lmpi?
@@ -190,22 +240,6 @@ else
     WANT_INSTALL_HEADERS=1
 fi
 AM_CONDITIONAL(WANT_INSTALL_HEADERS, test "$WANT_INSTALL_HEADERS" = 1)
-
-#
-# Do we want to disable weak symbols for some reason?
-#
-
-AC_MSG_CHECKING([if want to enable weak symbol support])
-AC_ARG_ENABLE(weak-symbols,
-    AC_HELP_STRING([--enable-weak-symbols],
-                   [use weak symbols, if available (default: enabled)]))
-if test "$enable_weak_symbols" != "no"; then
-    AC_MSG_RESULT([yes])
-    WANT_WEAK_SYMBOLS=1
-else
-    AC_MSG_RESULT([no])
-    WANT_WEAK_SYMBOLS=0
-fi
 
 # --enable-dist
 # ...?

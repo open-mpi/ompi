@@ -26,6 +26,7 @@
 
 bool lam_mpi_initialized = false;
 bool lam_mpi_finalized = false;
+bool lam_mpi_param_check = true;
 
 bool lam_mpi_thread_multiple = false;
 int lam_mpi_thread_requested = MPI_THREAD_SINGLE;
@@ -34,7 +35,7 @@ int lam_mpi_thread_provided = MPI_THREAD_SINGLE;
 
 int lam_mpi_init(int argc, char **argv, int requested, int *provided)
 {
-    int ret;
+    int ret, param, value;
     bool allow_multi_user_threads;
     bool have_hidden_threads;
 
@@ -97,6 +98,15 @@ int lam_mpi_init(int argc, char **argv, int requested, int *provided)
      if (LAM_SUCCESS != (ret = lam_comm_init())) {
          return ret;
      }
+
+     /* If we have run-time MPI parameter checking possible, register
+        an MCA paramter to find out if the user wants it on or off by
+        default */
+
+     param = mca_base_param_register_int("base", NULL, "mpi_param_check", 
+                                         "mpi_param_check", 0);
+     mca_base_param_lookup_int(param, &value);
+     lam_mpi_param_check = (bool) value;
 
      /* do module exchange */
 
