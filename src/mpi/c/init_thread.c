@@ -42,6 +42,10 @@ int MPI_Init_thread(int *argc, char ***argv, int required,
      little in this function as possible so that if it's profiled, we
      don't lose anything) */
 
-  err = ompi_mpi_init(*argc, *argv, required, provided);
+  if (NULL != argc && NULL != argv) {
+      err = ompi_mpi_init(*argc, *argv, required, provided);
+  } else {
+      err = ompi_mpi_init(NULL, NULL, required, provided);
+  }
   OMPI_ERRHANDLER_RETURN(err, null, err, FUNC_NAME);
 }
