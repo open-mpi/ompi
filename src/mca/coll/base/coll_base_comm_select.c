@@ -246,7 +246,7 @@ int mca_coll_base_comm_select(ompi_communicator_t *comm,
       unquery(component, comm);
       OBJ_RELEASE(avail);
     }
-    OBJ_DESTRUCT(selectable);
+    OBJ_RELEASE(selectable);
   }
 
   /* If we're not using the basic module, then set it up, replace all
