@@ -378,7 +378,7 @@ if test "$HAPPY" = "1"; then
 
 	# Now check for the rest of the tags
 
-	for scope in LIBOMPI LIBMPI WRAPPER; do
+	for scope in LIBMPI WRAPPER; do
 	    for flags in CFLAGS CXXFLAGS FFLAGS LDFLAGS LIBS; do
 		var="${scope}_EXTRA_${flags}"
 		line="`grep $var= $infile | cut -d= -f2-`"
