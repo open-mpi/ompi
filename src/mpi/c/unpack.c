@@ -52,29 +52,30 @@ int MPI_Unpack(void *inbuf, int insize, int *position,
 
     local_convertor = OBJ_NEW(ompi_convertor_t);
     ompi_convertor_init_for_recv(local_convertor, 0, datatype, outcount, 
-				inbuf, 0);
+                                 outbuf, 0);
     
-    /* how long is the data ? Can we put it in the user buffer */
+    /* Check for truncation */
+
     ompi_convertor_get_packed_size(local_convertor, &size);
-    if ((outcount - (*position)) < size) {
+    if (*position + size >= insize) {
         OBJ_RELEASE(local_convertor);
-        return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
+        return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TRUNCATE, FUNC_NAME);
     }
 
-    /* Prepare the iovec withh all informations */
-    outvec.iov_base = (char*) inbuf + (*position);
+    /* Prepare the iovec with all informations */
 
-    /* If the position is not ZERO we already start
-     * the packing for this datatype.
-     */
+    outvec.iov_base = (char*) inbuf + (*position);
     outvec.iov_len = insize - (*position);
 
     /* Do the actual unpacking */
+
     rc = ompi_convertor_unpack(local_convertor, &outvec, 1);
     *position += local_convertor->bConverted;
-
-    /* All done */
-
     OBJ_RELEASE(local_convertor);
-    OMPI_ERRHANDLER_RETURN(rc, comm, MPI_ERR_UNKNOWN, FUNC_NAME);
+
+    /* All done.  Note that the convertor returns 1 upon success, not
+       OMPI_SUCCESS. */
+
+    OMPI_ERRHANDLER_RETURN((rc == 1) ? OMPI_SUCCESS : OMPI_ERROR,
+                           comm, MPI_ERR_UNKNOWN, FUNC_NAME);
 }
