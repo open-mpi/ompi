@@ -48,8 +48,9 @@ int orte_dps_unpack(orte_buffer_t *buffer, void *dst,
     size_t mem_left;
     size_t num_bytes, hdr_bytes;
     void *src;
-    uint32_t * s32;
+    char *srcptr;
     orte_data_type_t stored_type;
+	uint32_t tmp_32;
 
 
     /* check for errors */
@@ -108,13 +109,14 @@ int orte_dps_unpack(orte_buffer_t *buffer, void *dst,
     }
 
     /* unpack the number of values */
-    s32 = (uint32_t *) src;
-    num_vals = (size_t)ntohl(*s32);
+	srcptr = (char*) src;
+	memcpy ((char*)&tmp_32, srcptr, sizeof(uint32_t)); 
+    num_vals = (size_t)ntohl(tmp_32);
     if (num_vals > *max_num_vals) {  /* not enough space provided */
         return ORTE_UNPACK_INADEQUATE_SPACE;
     }
-    s32++;
-    src = (void *)s32;
+    srcptr+=sizeof(uint32_t);
+    src = (void *)srcptr;
     mem_left -= sizeof(uint32_t);	/* we do this here but this is normally a function of unpack_nobuffer */
 	hdr_bytes += sizeof(uint32_t);
 
@@ -202,7 +204,7 @@ int orte_dps_unpack_nobuffer(void *dst, void *src, size_t num_vals,
 			elementsize = sizeof (uint16_t);
 
             if(num_vals * elementsize > *mem_left) {
-                num_vals = *mem_left / sizeof(uint16_t);
+                num_vals = *mem_left / elementsize;
                 rc = ORTE_UNPACK_READ_PAST_END_OF_BUFFER;
             }
 
@@ -227,7 +229,7 @@ int orte_dps_unpack_nobuffer(void *dst, void *src, size_t num_vals,
 			elementsize = sizeof (uint32_t);
 
             if(num_vals * elementsize > *mem_left) {
-                num_vals = *mem_left / sizeof(uint32_t);
+                num_vals = *mem_left / elementsize;
                 rc = ORTE_UNPACK_READ_PAST_END_OF_BUFFER;
             }
 
@@ -291,8 +293,9 @@ int orte_dps_unpack_nobuffer(void *dst, void *src, size_t num_vals,
                 if(*mem_left < len) {
                     return ORTE_UNPACK_READ_PAST_END_OF_BUFFER;
                 }
-                if(NULL == (str = malloc(len+1)))
+                if(NULL == (str = malloc(len+1))) {
                     return ORTE_ERR_OUT_OF_RESOURCE;
+                }
                 memcpy(str, srcptr, len);
                 str[len] = '\0';
                 dstr[i] = str;

@@ -192,6 +192,9 @@ int orte_dps_pack_nobuffer(void *dst, void *src, size_t num_vals,
 
     /* initialize the number of bytes */
     *num_bytes = 0;
+
+	elementsize = 1024*1024*1024; /* instant memory fault on error */
+
     
     /* pack the data */
     switch(type) {
