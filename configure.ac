@@ -600,13 +600,28 @@ AC_PROG_LN_S
 AM_PROG_AS
 AM_PROG_LEX
 
-# If we don't have lex and we don't have a generated .c file
+# If we don't have GNU Flex and we don't have a generated .c file
 # (distribution tarballs will have the .c file included, but SVN
-# checkouts will not), then error
-if test -z "$LEX" -o -n "`echo $LEX | grep missing`"; then
-    if -f "$srcdir/mca/llm/base/llm_base_parse_hosefile_lex.c"; then
-        AC_MSG_WARN([*** Could not find lex or flex on your system])
-        AC_MSG_WARN([*** Flex or lex is required for developer builds of Open MPI])
+# checkouts will not), then error.  Must have GNU Flex -- other
+# versions of Lex are not workable (all things being equal, since this
+# is *only* required for developers, we decided that it really was not
+# worth it to be portable between different versions of lex ;-).
+
+if test -z "$LEX" -o -n "`echo $LEX | grep missing`" -o \
+    "`basename $LEX`" != "flex"; then
+    if test ! -f "$srcdir/src/util/show_help_lex.c"; then
+        AC_MSG_WARN([*** Could not find GNU Flex on your system.])
+        AC_MSG_WARN([*** GNU Flex required for developer builds of Open MPI.])
+        AC_MSG_WARN([*** Other versions of Lex are not supported.])
+        AC_MSG_WARN([*** YOU DO NOT NEED FLEX FOR DISTRIBUTION TARBALLS!])
+        AC_MSG_WARN([*** If you absolutely cannot install GNU Flex on this system])
+        AC_MSG_WARN([*** consider using a distribution tarball, or generate the])
+        AC_MSG_WARN([*** following files on another system (using Flex) and])
+        AC_MSG_WARN([*** copy them here:])
+        for lfile in `find . -name \*.l -print`; do
+            cfile="`echo $lfile | cut -d. -f-2`"
+            AC_MSG_WARN([***     $cfile.c])
+        done
         AC_MSG_ERROR([Cannot continue])
     fi
 fi
