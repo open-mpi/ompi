@@ -321,11 +321,17 @@ LAM_MCA
 
 
 ############################################################################
+# Final top-level LAM configuration
+############################################################################
+
+lam_show_title "Final top-level LAM configuration"
+
+############################################################################
 # Libtool: part two
 # (after C compiler setup)
 ############################################################################
 
-lam_show_title "Libtool / libltdl configuration"
+lam_show_subtitle "Libtool / libltdl configuration"
 
 # Use convenience libltdl for the moment, because we need to force the
 # use of the newest libltdl (i.e., the one that ships with libtool
@@ -369,6 +375,8 @@ else
     lam_subdir_args="$lam_subdir_args --disable-static"
 fi
 
+CFLAGS_save="$CFLAGS"
+CFLAGS="$LAM_CFLAGS_BEFORE_PICKY"
 LAM_CONFIG_SUBDIR(src/mca/libltdl, [$lam_subdir_args], [HAPPY=1], [HAPPY=0])
 if test "$HAPPY" = "1"; then
     LIBLTDL_SUBDIR=libltdl
@@ -387,6 +395,7 @@ else
     LIBLTDL_LTLIB=
     WANT_LIBLTDL=0
 fi
+CFLAGS="$CFLAGS_save"
 AC_SUBST(LIBLTDL_SUBDIR)
 AC_SUBST(LIBLTDL_LTLIB)
 AM_CONDITIONAL(WANT_LIBLTDL, test "$WANT_LIBLTDL" = "1")
@@ -398,7 +407,7 @@ AC_DEFINE_UNQUOTED(LAM_WANT_LIBLTDL, $WANT_LIBLTDL,
 # final wrapper compiler config
 ############################################################################
 
-lam_show_title "Final top-level LAM configuration"
+lam_show_subtitle "Wrapper compiler flags"
 
 #
 # This is needed for VPATH builds, so that it will -I the appropriate
