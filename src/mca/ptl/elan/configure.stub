@@ -7,15 +7,30 @@
 # Main function.  This will be invoked in the middle of the templated
 # configure script.
 #
-AC_DEFUN([MCA_CONFIGURE_STUB],[ 
-    AC_CHECK_LIB([rmscall], [rms_getcap], 
+AC_DEFUN([MCA_CONFIGURE_STUB],[
+    AC_CHECK_LIB([rmscall], [rms_getcap],
 	[ompi_elan_have_librmscall=yes], [])
 
-    AC_CHECK_LIB([elan], [elan_init], 
+    AC_CHECK_LIB([elan], [elan_init],
 	[ompi_elan_have_libelan=yes], [])
 
-    AC_CHECK_LIB([elan4], [elan4_init], 
+    AC_CHECK_LIB([elan4], [elan4_init],
 	[ompi_elan_have_libelan4=yes], [])
+
+    echo "Found librmscall ... ${ompi_elan_have_librmscall:-no}"
+    echo "Found libelan ... ${ompi_elan_have_libelan:-no}"
+    echo "Found libelan4 ... ${ompi_elan_have_libelan4:-no}"
+
+    if test "$ompi_elan_have_librmscall" = "yes" \
+	-a "$ompi_elan_have_libelan" = "yes" \
+	-a "$ompi_elan_have_libelan4" = "yes"; then
+	PTL_ELAN_LIBS="-lrmscall -lelan -libelan4"
+	ompi_elan_have_elanlibs=yes
+    else
+	ompi_elan_have_elanlibs=yes
+	AC_MSG_NOTICE([Cannot support elan4 without librmscall, 
+	    libelan and libelan4])
+    fi
 
     AC_CHECK_LIB([elan3], [elan3_create],  
 	[ompi_elan_have_libelan3=yes], 
@@ -25,47 +40,42 @@ AC_DEFUN([MCA_CONFIGURE_STUB],[
 	[ompi_elan_have_libelanctrl=yes], 
 	[ompi_elan_nolibelanctrl=1])
 
-    if test "$ompi_elan_have_librmscall" != "yes"  \ 
-	-o "ompi_elan_have_libelan" != "yes" \
-	-o "ompi_elan_have_libelan4" != "yes" ; then 
-	AC_MSG_NOTICE([Cannot support elan4 without librmscall, 
-	    libelan and libelan4])
-    else
-	ELAN_LIBS="-lrmscall -lelan -libelan4"
-	ompi_elan_have_elanlibs=yes
-    fi
-
     if test "$ompi_elan_have_libelan3" = "yes"; then
-	ELAN_LIBS="$ELAN_LIBS -lelan3"
+	PTL_ELAN_LIBS="$PTL_ELAN_LIBS -lelan3"
 	test "$ompi_elan_have_elanlibs" = "yes" && ompi_enable_elan="yes"
     elif test "$ompi_elan_have_libelanctrl" = "yes"; then
-	ELAN_LIBS="$ELAN_LIBS -lelanctrl"
+	PTL_ELAN_LIBS="$PTL_ELAN_LIBS -lelanctrl"
 	test "$ompi_elan_have_elanlibs" = "yes" && ompi_enable_elan="yes"
     else
 	AC_MSG_NOTICE([ 
 		Cannot support elan4 without libelan3 or libelanctrl!])
     fi 
 
-    if test "$ompi_enable_elan" = yes; then
-	AC_ARG_WITH(qsnet2libsrc, 
-		AC_HELP_STRING([--with-qsnet2libsrc],
-		    [provide the path to qsnet2lib source]))
-	echo "path to qsnet2lib source,  ${with_qsnet2libsrc:-no}"
+    AC_ARG_WITH(ptl_elan_qsnet2libsrc, 
+	    AC_HELP_STRING([--with-ptl-elan-qsnet2libsrc],
+		[provide the path to qsnet2lib source]))
+    echo "path to qsnet2lib source,  ${with_ptl_elan_qsnet2libsrc:-no}"
+
+    if test "${with_ptl_elan_qsnet2libsrc+set}" = set -a "$ompi_enable_elan" = yes; then
+	withval="$with_ptl_elan_qsnet2libsrc"
+	PTL_ELAN_QSNET2LIBSRC=$with_ptl_elan_qsnet2libsrc
+	PTL_ELAN_CPPFLAGS="-I${with_ptl_elan_qsnet2libsrc}/include -I${with_ptl_elan_qsnet2libsrc}/include -I${with_ptl_elan_qsnet2libsrc}/elan4lib/include -I${with_ptl_elan_qsnet2libsrc}/elan4lib/elan4 -I${with_ptl_elan_qsnet2libsrc}/elan4lib/common"
+       	PTL_ELAN_LDFLAGS=" "
+    else
+	PTL_ELAN_QSNET2LIBSRC=" "
+	PTL_ELAN_CPPFLAGS=" "
+	PTL_ELAN_LDFLAGS=" "
+	echo "Cannot support elan4 without a path to qsnet2lib source " \
+	    "and librmscall+libelan+libelan4"
+        exit 0
     fi
 
-    if test "${with_qsnet2libsrc+set}" = set; then
-	withval="$with_qsnet2libsrc"
-	QSNET2LIBSRC=$with_qsnet2libsrc
-#	CFLAS="CFLAGS -I$with_qsnet2libsrc/include -I${with_qsnet2libsrc}/include -I${with_qsnet2libsrc}/elan4lib/include -I${with_qsnet2libsrc}/elan4lib/elan4 -I${with_qsnet2libsrc}/elan4lib/common "
-    else
-	QSNET2LIBSRC=" "
-	echo "Cannot support elan4 without a path to qsnet2lib source "
-        # Do not exit with error, let it continue
-        exit 0
-    fi;
+    CPPFLAGS="$CPPFLAGS ${PTL_ELAN_CPPFLAGS}"
+    LDFLAGS="$LDFLAGS ${PTL_ELAN_LDFLAGS}"
+    LIBS="$LIBS $PTL_ELAN_LIBS"
 
-    AC_SUBST(QSNET2LIBSRC)
-    AC_SUBST(ELAN_LIBS)
+    AC_SUBST(PTL_ELAN_QSNET2LIBSRC)
+    AC_SUBST(PTL_ELAN_LIBS)
 ])dnl
 
 #
