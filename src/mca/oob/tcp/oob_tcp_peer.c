@@ -652,7 +652,6 @@ static void mca_oob_tcp_peer_send_handler(int sd, short flags, void* user)
 
             /* complete the current send */
             mca_oob_tcp_msg_t* msg = peer->peer_send_msg;
-            ompi_list_item_t item1 = *(ompi_list_item_t*)peer;
             if(mca_oob_tcp_msg_send_handler(msg, peer)) {
                 mca_oob_tcp_msg_complete(msg, &peer->peer_name);
             } else {
@@ -801,6 +800,30 @@ static void mca_oob_tcp_peer_timer_handler(int sd, short flags, void* user)
     OMPI_THREAD_LOCK(&peer->peer_lock);
     if(peer->peer_state == MCA_OOB_TCP_CLOSED)
         mca_oob_tcp_peer_start_connect(peer);
+    OMPI_THREAD_UNLOCK(&peer->peer_lock);
+}
+
+/*
+ * Remove any references to the indicated message.
+ */
+
+void mca_oob_tcp_peer_dequeue_msg(mca_oob_tcp_peer_t* peer, mca_oob_tcp_msg_t* msg)
+{
+    ompi_list_item_t* item;
+    OMPI_THREAD_LOCK(&peer->peer_lock);
+    if (peer->peer_send_msg == msg)
+        peer->peer_send_msg = NULL;
+    if (peer->peer_recv_msg == msg)
+        peer->peer_recv_msg = NULL;
+
+    for( item =  ompi_list_get_first(&peer->peer_send_queue);
+         item != ompi_list_get_end(&peer->peer_send_queue);
+         item != ompi_list_get_next(item)) {
+        if(item == (ompi_list_item_t*)msg) {
+            ompi_list_remove_item(&peer->peer_send_queue, item);
+            break;
+        }
+    }
     OMPI_THREAD_UNLOCK(&peer->peer_lock);
 }
 

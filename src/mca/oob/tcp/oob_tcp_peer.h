@@ -131,6 +131,11 @@ void mca_oob_tcp_peer_resolved(mca_oob_tcp_peer_t* peer, mca_oob_tcp_addr_t* add
  */
 int mca_oob_tcp_peer_send_ident(mca_oob_tcp_peer_t* peer);
 
+/*
+ * Remove any references to the message from the peers send/recv queue.
+ */
+void mca_oob_tcp_peer_dequeue_msg(mca_oob_tcp_peer_t* peer, mca_oob_tcp_msg_t* msg);
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
