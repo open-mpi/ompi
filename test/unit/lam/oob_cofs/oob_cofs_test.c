@@ -1,74 +1,92 @@
+#include "lam/runtime/runtime.h"
 #include "mca/lam/oob/oob.h"
-#include "mca/lam/oob/cofs/src/oob_cofs.h"
+#include "mca/lam/pcm/pcm.h"
+#include "mca/lam/base/base.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 
 int
 main(int argc, char* argv[])
 {
   int ret;
-  char *tmp;
-  struct mca_oob_1_0_0_t *init_ret;
-  int target_vpid, source_vpid, source_tag;
-  size_t source_len;
-  char *source_data;
-  char buffer[2048];
-  int msg_count = 0;
-  int priority = 0;
-  bool allow_threads = false;
-  bool have_hidden_threads = false;
+  mca_pcm_proc_t *procs;
+  size_t nprocs;
+  mca_pcm_proc_t *me;
+  int left_vpid, right_vpid, me_vpid;
+  int count = 2;
+  lam_job_handle_t job;
+  int data = 0xDEADBEEF;
+  int tag = MCA_OOB_ANY_TAG;
+  bool threads, hidden;
 
+  printf("hello, world!\n");
+  ret = lam_init(argc, argv);
+  assert(ret == LAM_SUCCESS);
 
-  if (argc != 3) {
-    printf("usage: %s my_vpid target_vpid\n", argv[0]);
-    exit(1);
+  ret = mca_base_open();
+  assert(ret == LAM_SUCCESS);
+
+  ret = lam_rte_init(&threads, &hidden);
+  assert(ret == LAM_SUCCESS);
+
+  ret = mca_pcm.pcm_proc_startup();
+  assert(ret == LAM_SUCCESS);
+
+  ret = mca_pcm.pcm_proc_get_peers(&procs, &nprocs);
+  assert(ret == LAM_SUCCESS);
+
+  job = mca_pcm.pcm_handle_get();
+  assert(job != NULL);
+
+  me = mca_pcm.pcm_proc_get_me();
+  assert(me != NULL);
+
+  /* time to play the ring game! */
+  me_vpid = me->vpid;
+  printf("Hello, World.  I am vpid %d\n", me_vpid);
+
+  left_vpid = me_vpid == 0 ? nprocs - 1 : me_vpid - 1;
+  right_vpid = (me_vpid + 1) % nprocs;
+
+  if (me_vpid == 0) {
+    printf("vpid %d sending to vpid %d\n", me_vpid, right_vpid);
+    ret = mca_oob.oob_send(job, right_vpid, 0, &data, sizeof(int));
+    assert(ret == LAM_SUCCESS);
+    count--;
   }
 
-  tmp = malloc(strlen("MCA_OOB_BASE_VPID") + strlen(argv[1]) + 2);
-  sprintf(tmp, "MCA_OOB_BASE_VPID=%s", argv[1]);
-  putenv(tmp);
+  while (count > 0) {
+    int *data_ptr;
+    size_t data_ptr_len; 
+    printf("vpid %d recving from vpid %d\n", me_vpid, left_vpid);
+    ret = mca_oob.oob_recv(job, left_vpid, &tag, &data_ptr, &data_ptr_len);
+    assert(ret == LAM_SUCCESS);
+    assert(data_ptr_len == sizeof(int));
+    assert(*data_ptr == data);
 
-  target_vpid = atoi(argv[2]);
-  
-  ret = mca_oob_cofs_open();
-  if (ret != LAM_SUCCESS) {
-    printf("mca_oob_cofs_open returned %d\n", ret);
-    exit(1);
+    printf("vpid %d sending to vpid %d\n", me_vpid, right_vpid);
+    ret = mca_oob.oob_send(job, right_vpid, 0, &data, sizeof(int));
+    assert(ret == LAM_SUCCESS);
+
+    count--;
   }
 
-  init_ret = mca_oob_cofs_init(&priority, &allow_threads, &have_hidden_threads);
-  if (init_ret == NULL) {
-    printf("mca_oob_cofs_init returned NULL\n");
-    exit(1);
-  } else {
-    printf("mca_oob_cofs_query said \"go\" with priority %d\n", priority);
+
+  if (me_vpid == 0) {
+    int *data_ptr;
+    size_t data_ptr_len;
+    printf("vpid %d recving from vpid %d\n", me_vpid, left_vpid);
+    ret = mca_oob.oob_recv(job, left_vpid, &tag, &data_ptr, &data_ptr_len);
+    assert(ret == LAM_SUCCESS);
+    assert(data_ptr_len == sizeof(int));
+    assert(*data_ptr == data);
   }
 
-  printf("#\n# Sending Messages\n#\n\n");
-  for (msg_count = 0 ; msg_count < 20 ; ++msg_count) {
-    sprintf(buffer, "%s's message number %d\n", argv[1], msg_count);
-    printf("%d %d: %s\n", target_vpid, 1, buffer);
-    ret = mca_oob_cofs_send("foobar", target_vpid, 1, buffer, strlen(buffer) + 1);
-    if (ret != LAM_SUCCESS) {
-      printf("mca_oob_cofs_send failed on msg_count %d\n", msg_count);
-      exit(1);
-    }
-  }
+  ret = lam_rte_finalize();
+  assert(ret == LAM_SUCCESS);
 
-  printf("#\n# Receiving Messages\n#\n\n");
-  for (msg_count = 0 ; msg_count < 20 ; ++msg_count) {
-    source_tag = 1;
-    ret = mca_oob_cofs_recv("foobar", target_vpid, &source_tag, (void**) &source_data, &source_len);
-    if (ret != LAM_SUCCESS) {
-      printf("mca_oob_cofs_recv failed on msg_count %d, %d\n", msg_count, ret);
-      exit(1);
-    }
-    printf("%d %d: %s\n", source_vpid, source_tag, source_data);
-    free(source_data);
-  }
-
-  printf("#\n# Finished\n#\n\n");
   return 0;
 }

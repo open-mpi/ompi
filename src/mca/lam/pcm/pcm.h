@@ -58,6 +58,8 @@
 #include "mca/mca.h"
 #include "lam/types.h"
 
+#include <sys/param.h>
+
 /*
  * "PCM" global types
  */
@@ -66,6 +68,7 @@
 #define LAM_PCM_PROC_OTHER  2
 
 struct mca_pcm_rte_node_t {
+  char name[MAXHOSTNAMELEN];
   int32_t node_num;
   int32_t num_procs;
 };

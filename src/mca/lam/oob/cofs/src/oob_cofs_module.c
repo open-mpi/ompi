@@ -110,7 +110,7 @@ mca_oob_cofs_init(int *priority, bool *allow_multi_user_threads,
    * BWB - fix me, make register the "right" way...
    */
   /* find our vpid */
-  tmp = getenv("MCA_OOB_BASE_VPID");
+  tmp = getenv("MCA_common_lam_cofs_my_vpid");
   if (tmp == NULL) {
     printf("oob_cofs can not find vpid\n");
     return NULL;
