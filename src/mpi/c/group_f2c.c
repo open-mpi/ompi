@@ -25,13 +25,13 @@ MPI_Group MPI_Group_f2c(MPI_Fint group_f)
     /* error checks */
     if (MPI_PARAM_CHECK) {
         if (0 > group_index) {
-            return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_GROUP,
-                        "MPI_Group_f2c");
+            (void) LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_GROUP,
+                                         "MPI_Group_f2c");
             return MPI_GROUP_NULL;
         }
         if (group_index >= lam_group_f_to_c_table->size) {
-            return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_GROUP,
-                        "MPI_Group_f2c - II");
+            (void) LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_GROUP,
+                                         "MPI_Group_f2c - II");
             return MPI_GROUP_NULL;
         }
     }
