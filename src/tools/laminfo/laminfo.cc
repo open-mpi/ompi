@@ -285,6 +285,8 @@ int main(int argc, char *argv[])
 
   mca_base_cmd_line_process_args(cmd_line);
 
+  laminfo::mca_types.push_back("base");
+
   laminfo::mca_types.push_back("pcm");
   laminfo::mca_types.push_back("oob");
   laminfo::mca_types.push_back("registry");
