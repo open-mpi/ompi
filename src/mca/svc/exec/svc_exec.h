@@ -10,6 +10,14 @@
 #include "mca/svc/svc.h"
 
 /**
+ * Command definitions
+ */
+#define OMPID_EXEC_CMD  1
+#define OMPID_KILL_CMD  2
+#define OMPID_PING_CMD  3
+
+
+/**
  * Component open/close/init
  */
 int mca_svc_exec_component_open(void);
