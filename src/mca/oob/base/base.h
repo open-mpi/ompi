@@ -47,6 +47,7 @@ extern ompi_process_name_t mca_oob_name_self;
  * OOB API 
  */
 
+#if 0 /* not used anymore */
 /**
  * Supported datatypes for conversion operations.
  */
@@ -57,6 +58,8 @@ typedef enum {
     MCA_OOB_BASE_STRING, /**< a NULL terminated string */
     MCA_OOB_BASE_PACKED /**< already packed data. */
 } mca_oob_base_type_t;
+
+#endif
 
 /**
 *   General flags for send/recv
@@ -288,6 +291,7 @@ int mca_oob_recv_nb(
     mca_oob_callback_fn_t cbfunc,
     void* cbdata);
 
+#if 0 /* not used any more */
 /*
  * functions for pack and unpack routines
  */
@@ -318,6 +322,7 @@ int mca_oob_base_pack(void * dest, void * src, size_t n, mca_oob_base_type_t typ
  */
 
 int mca_oob_base_unpack(void * dest, void * src, size_t n, mca_oob_base_type_t type);
+#endif 
 
 
 #if defined(c_plusplus) || defined(__cplusplus)

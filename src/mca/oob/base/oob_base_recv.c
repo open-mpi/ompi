@@ -56,12 +56,13 @@ int mca_oob_recv_packed (ompi_process_name_t* peer, ompi_buffer_t *buf, int* tag
 
 	if (OMPI_ERROR==insize) { return (rc); }
 
-	rc = ompi_buffer_init (&tmpbuf, insize);
-	if (OMPI_ERROR==rc) { return (rc); }
-	rc = ompi_buffer_get_ptrs (tmpbuf, &targetptr, NULL, NULL);
+	targetptr = (void*) malloc (insize);
+	if (!targetptr) { return (OMPI_ERROR); }
+
+	rc = ompi_buffer_init_preallocated (&tmpbuf, targetptr, insize);
 	if (OMPI_ERROR==rc) { return (rc); }
 
-	/* now update the second IOV */
+	/* now update the IOV */
 	msg[0].iov_base = (char*) targetptr;
 	msg[0].iov_len  = insize;
 
