@@ -132,4 +132,12 @@ AC_DEFUN([MCA_CONFIGURE_STUB],[
     AC_DEFINE_UNQUOTED(OMPI_MCA_PTL_GM_HAVE_RDMA_GET, $HAVE_RDMA_GET,
         [Whether we have get_get() or not])
     AC_MSG_RESULT([$MSG])
+
+    #
+    # Save extra compiler/linker flags so that they can be added in
+    # the wrapper compilers, if necessary
+    #
+
+    WRAPPER_EXTRA_LDFLAGS="$EXTRA_LDFLAGS"
+    WRAPPER_EXTRA_LIBS="-lgm"
 ])dnl

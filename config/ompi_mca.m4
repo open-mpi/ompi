@@ -394,18 +394,30 @@ if test "$HAPPY" = "1"; then
 	    AC_MSG_ERROR([cannot continue])
 	fi
 
-	# Now check for the rest of the tags
+	# Now check for LIBMPI tags
 
-	for scope in LIBMPI WRAPPER; do
-	    for flags in CFLAGS CXXFLAGS FFLAGS LDFLAGS LIBS; do
-		var="${scope}_EXTRA_${flags}"
-		line="`grep $var= $infile | cut -d= -f2-`"
-		if test -n "$line"; then
-		    str="$var="'"$'"$var $line"'"'
-		    eval $str
-		fi
-	    done
-	done
+        for flags in CFLAGS CXXFLAGS FFLAGS LDFLAGS LIBS; do
+            var="LIBMPI_EXTRA_${flags}"
+            line="`grep $var= $infile | cut -d= -f2-`"
+            if test -n "$line"; then
+                str="$var="'"$'"$var $line"'"'
+                eval $str
+            fi
+        done
+
+        # Finally check for WRAPPER flags, but only if this component
+        # is compiling statically
+
+        if test "$compile_mode" = "static"; then
+            for flags in LDFLAGS LIBS; do
+                var="WRAPPER_EXTRA_${flags}"
+                line="`grep $var= $infile | cut -d= -f2-`"
+                if test -n "$line"; then
+                    str="$var="'"$'"$var $line"'"'
+                    eval $str
+                fi
+            done
+        fi
     fi
 elif test "$FOUND" = "1"; then
     AC_MSG_CHECKING([if MCA module $type:$m can compile])
