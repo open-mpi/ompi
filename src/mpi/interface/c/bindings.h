@@ -19,7 +19,7 @@
    header file. */
 
 #if LAM_PROFILING_DEFINES
-#include "mpi/c/profile/defines.h"
+#include "mpi/interface/c/profile/defines.h"
 #endif
 
 #endif /* LAM_C_BINDINGS_H */
