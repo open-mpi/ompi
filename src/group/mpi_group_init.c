@@ -58,6 +58,9 @@ ompi_group_t *ompi_group_allocate(int group_size)
 
             /* set the group size */
             new_group->grp_proc_count = group_size;
+
+            /* initialize our rank to MPI_UNDEFINED */
+            new_group->grp_my_rank    = MPI_UNDEFINED;
         }
     }
 
