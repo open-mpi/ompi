@@ -28,11 +28,6 @@ typedef enum {
     MCA_PML_BASE_SEND_READY
 } mca_pml_base_send_mode_t;
 
-
-struct mca_pml_base_status_t {
-};
-typedef struct mca_pml_base_status_t mca_pml_base_status_t;
-
 #define LAM_ANY_TAG MPI_ANY_TAG
 
 /**
@@ -128,7 +123,7 @@ typedef int (*mca_pml_base_test_fn_t)(
 
 typedef int (*mca_pml_base_wait_fn_t)(
     lam_request_t* request,
-    mca_pml_base_status_t* status
+    lam_status_public_t* status
 );
 
 

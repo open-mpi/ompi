@@ -1,45 +1,12 @@
 #include "lam/util/malloc.h"
 #include "mca/mpi/pml/pml.h"
 #include "mca/mpi/ptl/ptl.h"
+#include "mca/mpi/ptl/base/ptl_base_comm.h"
 #include "mca/mpi/ptl/base/ptl_base_sendreq.h"
 #include "mca/mpi/ptl/base/ptl_base_recvreq.h"
 #include "pml_teg.h"
 #include "pml_teg_proc.h"
 
-#define mca_pml_teg_param_register_int(n,v) \
-    mca_base_param_lookup_int( \
-        mca_base_param_register_int("pml","teg",n,0,v))
-
-
-mca_pml_base_module_1_0_0_t mca_pml_teg_module = {
-    /* First, the mca_base_module_t struct containing meta information
-       about the module itself */
-                                                                                                                            
-    {
-    /* Indicate that we are a pml v1.0.0 module (which also implies a
-       specific MCA version) */
-                                                                                                                            
-    MCA_PML_BASE_VERSION_1_0_0,
-                                                                                                                            
-    "teg", /* MCA module name */
-    1,  /* MCA module major version */
-    0,  /* MCA module minor version */
-    0,  /* MCA module release version */
-    mca_pml_teg_open,  /* module open */
-    mca_pml_teg_close  /* module close */
-    },
-                                                                                                                            
-    /* Next the MCA v1.0.0 module meta data */
-                                                                                                                            
-    {
-    /* Whether the module is checkpointable or not */
-                                                                                                                            
-    false
-    },
-
-    mca_pml_teg_init  /* module init */
-};
-                                                                                                                            
 
 mca_pml_teg_t mca_pml_teg = {
     {
@@ -60,48 +27,27 @@ mca_pml_teg_t mca_pml_teg = {
     }
 };
 
-/**
- *  some comment
- *
- *  @param foo description
- *  @return 
- *
- *  long description
- */
 
-int mca_pml_teg_open(void)
+int mca_pml_teg_add_comm(lam_communicator_t* comm)
 {
+    /* allocate pml specific comm data */
+    struct mca_pml_comm_t* pml_comm = (mca_pml_comm_t*)LAM_MALLOC(sizeof(mca_pml_comm_t));
+    mca_pml_ptl_comm_init(pml_comm);
+    comm->c_pml_comm = pml_comm;
     return LAM_SUCCESS;
 }
 
-
-mca_pml_t* mca_pml_teg_init(int* priority, int* min_thread, int* max_thread)
+int mca_pml_teg_del_comm(lam_communicator_t* comm)
 {
-    *priority = 0;
-    *min_thread = 0;
-    *max_thread = 0;
-    mca_pml_teg.teg_ptls = 0;
-    mca_pml_teg.teg_num_ptls = 0;
-    lam_list_init(&mca_pml_teg.teg_pending_acks);
-    lam_list_init(&mca_pml_teg.teg_incomplete_sends);
-    lam_mutex_init(&mca_pml_teg.teg_lock);
-    return &mca_pml_teg.super;
+    LAM_FREE(comm->c_pml_comm);
+    comm->c_pml_comm = 0;
+    return LAM_SUCCESS;
 }
 
 int mca_pml_teg_add_ptls(struct mca_ptl_t** ptls, size_t nptls)
 {
     mca_pml_teg.teg_ptls = ptls;
     mca_pml_teg.teg_num_ptls = nptls;
-    return LAM_SUCCESS;
-}
-
-int mca_pml_teg_add_comm(lam_communicator_t* comm)
-{
-    return LAM_SUCCESS;
-}
-
-int mca_pml_teg_del_comm(lam_communicator_t* comm)
-{
     return LAM_SUCCESS;
 }
 
@@ -112,9 +58,11 @@ int mca_pml_teg_add_procs(lam_proc_t** procs, size_t nprocs)
     for(i=0; i<nprocs; i++) {
         lam_proc_t *proc = procs[i];
         if(proc->proc_pml == 0) {
+
             /* allocate pml specific proc data */
             mca_pml_proc_t* proc_pml = (mca_pml_proc_t*)LAM_MALLOC(sizeof(mca_pml_proc_t));
             mca_pml_teg_proc_init(proc_pml);
+
             /* preallocate space in array for max number of ptls */
             mca_ptl_array_reserve(&proc_pml->proc_ptl_first, mca_pml_teg.teg_num_ptls);
             mca_ptl_array_reserve(&proc_pml->proc_ptl_first, mca_pml_teg.teg_num_ptls);
@@ -128,6 +76,11 @@ int mca_pml_teg_add_procs(lam_proc_t** procs, size_t nprocs)
         mca_ptl_t* ptl = mca_pml_teg.teg_ptls[i];
         ptl->ptl_add_procs(ptl, procs, nprocs);
     }
+    return LAM_SUCCESS;
+}
+
+int mca_pml_teg_module_fini(void)
+{
     return LAM_SUCCESS;
 }
 

@@ -31,7 +31,6 @@ struct mca_pml_teg_t {
     size_t teg_num_ptls;
 
     lam_list_t  teg_incomplete_sends; 
-    lam_list_t  teg_pending_acks;
     lam_mutex_t teg_lock;
 };
 typedef struct mca_pml_teg_t mca_pml_teg_t;
@@ -46,14 +45,15 @@ extern mca_pml_teg_t mca_pml_teg;
 extern mca_pml_base_module_1_0_0_t mca_pml_teg_module_1_0_0_0;
 
 
-extern int mca_pml_teg_open(void);
-extern int mca_pml_teg_close(void);
+extern int mca_pml_teg_module_open(void);
+extern int mca_pml_teg_module_close(void);
 
-extern mca_pml_t* mca_pml_teg_init(
+extern mca_pml_t* mca_pml_teg_module_init(
     int *priority, 
     int *max_tag, 
     int *max_cid
 );
+
 
 
 /*
@@ -143,7 +143,7 @@ extern int mca_pml_teg_test(
                                                                                                                           
 extern int mca_pml_teg_wait(
     lam_request_t* request,
-    mca_pml_base_status_t* status
+    lam_status_public_t* status
 );
                                                                                                                           
 
