@@ -22,20 +22,20 @@
  * may help the gentle reader to consider this an inverse comparison.
  * :-)
  */
-int mca_base_module_compare(mca_base_module_priority_t *a, 
-                            mca_base_module_priority_t *b)
+int mca_base_module_compare(mca_base_module_priority_list_item_t *a,  
+                            mca_base_module_priority_list_item_t *b)
 {
   int val;
 
   /* First, compare the priorties */
 
-  if (a->lsm_priority > b->lsm_priority)
+  if (a->mpli_priority > b->mpli_priority)
     return -1;
-  else if (a->lsm_priority < b->lsm_priority)
+  else if (a->mpli_priority < b->mpli_priority)
     return 1;
   else {
-    mca_base_module_t *aa = a->lsm_module;
-    mca_base_module_t *bb = b->lsm_module;
+    mca_base_module_t *aa = a->mpli_module;
+    mca_base_module_t *bb = b->mpli_module;
 
     /* The priorities were equal, so compare the names */
 

@@ -92,23 +92,23 @@ static lam_list_t found_files;
  * available modules.
  */
 int mca_base_module_find(const char *directory, const char *type, 
-                         mca_base_module_t *static_modules[], 
+                         const mca_base_module_t *static_modules[], 
                          lam_list_t *found_modules)
 {
   int i;
-  mca_base_module_list_item_t *item;
+  mca_base_module_list_item_t *mli;
 
   /* Find all the modules that were statically linked in */
 
   lam_list_init(found_modules);
   for (i = 0; NULL != static_modules[i]; ++i) {
-    item = LAM_MALLOC(sizeof(mca_base_module_list_item_t));
-    if (NULL == item) {
+    mli = LAM_MALLOC(sizeof(mca_base_module_list_item_t));
+    if (NULL == mli) {
       return LAM_ERR_OUT_OF_RESOURCE;
     }
-    lam_list_item_init((lam_list_item_t *) item);
-    item->mli_module = static_modules[i];
-    lam_list_append(found_modules, (lam_list_item_t *) item);
+    lam_list_item_init((lam_list_item_t *) mli);
+    mli->mli_module = static_modules[i];
+    lam_list_append(found_modules, (lam_list_item_t *) mli);
   }
 
   /* Find any available dynamic modules in the specified directory */
@@ -132,36 +132,40 @@ int mca_base_module_find(const char *directory, const char *type,
  * functionality, we would not get the directory name of the file
  * finally opened in recursive dependency traversals.
  */
-static void find_dyn_modules(const char *path, const char *type, 
+static void find_dyn_modules(const char *path, const char *type_name, 
                              const char *name, lam_list_t *found_modules)
 {
   ltfn_data_holder_t params;
-  char *path_to_use, *dir, *end;
+  char *path_to_use, *dir, *end, *param;
   module_file_item_t *file;
   lam_list_item_t *cur;
 
-  strcpy(params.type, type);
-  strcpy(params.name, name);
+  strcpy(params.type, type_name);
 
   if (NULL == name) {
+    params.name[0] = '\0';
     lam_output_verbose(0, 40, " looking for all dynamic %s MCA modules", 
-                       type, NULL);
+                       type_name, NULL);
   } else {
+    strcpy(params.name, name);
     lam_output_verbose(0, 40,
                        " looking for dynamic %s MCA module named \"%s\"",
-                       type, name, NULL);
+                       type_name, name, NULL);
   }
 
   /* If directory is NULL, iterate over the set of directories
      specified by the MCA param mca_base_module_path.  If path is not
      NULL, then use that as the path. */
 
+  param = NULL;
   if (NULL == path) {
-    mca_base_param_lookup_string(mca_base_param_module_path, &dir);
-    path_to_use = strdup(dir);
+    mca_base_param_lookup_string(mca_base_param_module_path, &param);
+    dir = param;
   }
-  if (NULL == path) {
-    path_to_use = strdup(path);
+  if (NULL == dir) {
+    path_to_use = NULL;
+  } else {
+    path_to_use = strdup(dir);
   }
 
   /* Iterate over all the files in the directories in the path and
@@ -208,7 +212,13 @@ static void find_dyn_modules(const char *path, const char *type,
 
   /* All done */
 
+  if (NULL != param) {
+    LAM_FREE(param);
+  }
+  /* JMS This list memory management may change */
+#if 0
   lam_list_destroy(&found_files);
+#endif
   LAM_FREE(path_to_use);
 }
 
@@ -538,7 +548,7 @@ static int check_dependency(char *line, module_file_item_t *target_file,
 
   target_file->status = CHECKING_CYCLE;
   for (happiness = false, cur = lam_list_get_first(&found_files);
-       lam_list_get_last(&found_files) != cur;
+       lam_list_get_end(&found_files) != cur;
        cur = lam_list_get_next(cur)) {
     mitem = (module_file_item_t *) cur;
 
