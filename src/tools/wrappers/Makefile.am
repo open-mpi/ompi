@@ -115,23 +115,24 @@ uninstall-local:
 	$(DESTDIR)$(bindir)/hcp \
 	$(DESTDIR)$(bindir)/hf77
 endif
-#
-# Adding this to make sure that make install does not fail. 
-# install-exec-hook needs to be defined or else make install
-# fails quoting that there is not target called
-# install-exec-hook if WANT_DEPRECATED_EXECUTABLE_NAMES is
-# false.
+
 else
+#
+# If we don't have deprecated names, just do the mpiCC / mpic++ stuff.
+# If we are on a non-case sensitive file system, don't do anything
+# with mpiCC, since that is the same as mpicc, and there is no way
+# that can end good.
+#
 if CASE_SENSITIVE_FS
 install-exec-hook:
 	(cd $(DESTDIR)$(bindir); rm -f mpiCC; ln -s mpic++ mpiCC)
 else
 install-exec-hook:
-	rm -f $(DESTDIR)$(bindir)/mpiCC
 endif
 
 if CASE_SENSITIVE_FS
 uninstall-local:
+	rm -f $(DESTDIR)$(bindir)/mpiCC
 else
 uninstall-local:
 endif
