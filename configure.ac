@@ -834,6 +834,8 @@ AC_CONFIG_FILES([
     include/Makefile
     include/mpif.h
 
+    etc/Makefile
+
     src/Makefile
     src/include/Makefile
     src/include/sys/Makefile
