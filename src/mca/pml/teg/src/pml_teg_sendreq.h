@@ -24,8 +24,10 @@
     mca_ptl_proc_t* ptl_proc;                                              \
     mca_pml_base_ptl_t* ptl_base;                                          \
                                                                            \
+    /*OMPI_THREAD_SCOPED_LOCK(&proc->proc_lock,*/                          \
+    /*(ptl_proc = mca_ptl_array_get_next(&proc->proc_ptl_first)));*/       \
     OMPI_THREAD_SCOPED_LOCK(&proc->proc_lock,                              \
-        (ptl_proc = mca_ptl_array_get_next(&proc->proc_ptl_first)));       \
+          (ptl_proc = mca_ptl_array_get_index(&proc->proc_ptl_first, 0))); \
     ptl_base = ptl_proc->ptl_base;                                         \
     /*                                                                     \
      * check to see if there is a cache of send requests associated with   \
