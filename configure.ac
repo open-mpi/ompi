@@ -315,6 +315,30 @@ AC_DEFINE_UNQUOTED(LAM_ALIGNMENT_FORTRAN_DBLCOMPLEX,
     $LAM_ALIGNMENT_FORTRAN_DBLCOMPLEX,
     [Size of fortran double complex])
 
+#
+# There are 2 layers to the MPI f77 layer. The only extra thing
+# that determine f77 bindings is that fortran can be disabled by
+# user. In such cases, we need to not build the target at all.
+# One layer generates MPI_f77* bindings. The other layer
+# generates PMPI_f77* bindings. The following conditions
+# determine whether each (or both) these layers are
+# built.
+# Superceeding clause:
+#   - fortran77 bindings should be enabled, else everything is
+#     disabled
+# 1. MPI_f77* bindings are needed if:
+#   - Profiling is not required
+#   - Profiling is required but weak symbols are not
+#     supported
+# 2. PMPI_* bindings are needed if profiling is required.
+# Hence we define 2 AM_CONDITIONALs which tell us whether
+# each of these layers need to be built or NOT
+#
+AM_CONDITIONAL(WANT_MPI_F77_BINDINGS_LAYER,
+               test "$WANT_MPI_PROFILING" = 0 -o "$LAM_PROFILING_COMPILE_SEPARATELY" = 1  -a "$LAM_WANT_F77_BINDINGS" = 1)
+                    
+AM_CONDITIONAL(WANT_PMPI_F77_BINDINGS_LAYER,
+               test "$LAM_WANT_F77_BINDINGS" = 1 -a "$WANT_MPI_PROFILING" = 1)
 
 #
 # Fortran 90 setup

@@ -19,19 +19,25 @@ AM_CPPFLAGS     = -DLAM_PROFILE_LAYER=0
 # 1. When profiling is disabled.
 # 2. When profiling is enabled but weak symbol support is absent.
 #
-if WANT_MPI_BINDINGS_LAYER
+if WANT_MPI_F77_BINDINGS_LAYER
 mpi_lib = libmpi_f77_mpi.la
 else
 mpi_lib = 
 endif
 
-noinst_LTLIBRARIES = libmpi_f77.la $(mpi_lib)
+if LAM_WANT_F77_BINDINGS
+    install_libs = libmpi_f77.la $(mpi_lib)
+else
+    install_libs = 
+endif
+
+noinst_LTLIBRARIES = $(install_libs)
 
 #
 # The profile subdirectory always builds PMPI_* bindings. Hence, this
 # directory needs to be built whenever profiling is enabled
 #
-if WANT_PMPI_BINDINGS_LAYER
+if WANT_PMPI_F77_BINDINGS_LAYER
     pmpi_lib = profile/libmpi_f77_pmpi.la
 else
     pmpi_lib = 
