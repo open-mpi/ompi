@@ -190,7 +190,7 @@ select_dispatch(void *arg, struct timeval *tv)
 
 	if (res == -1) {
 		if (errno != EINTR) {
-            ompi_output("select failed with errno=%d\n", errno);
+            ompi_output(0, "select failed with errno=%d\n", errno);
 		    return (-1);
 		}
 
