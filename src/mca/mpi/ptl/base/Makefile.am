@@ -19,9 +19,11 @@ headers = \
 
 libmca_mpi_ptl_base_la_SOURCES = \
         $(headers) \
+        ptl_base_close.c \
 	ptl_base_comm.c \
         ptl_base_fragment.c \
 	ptl_base_match.c \
+        ptl_base_open.c \
         ptl_base_recvfrag.c \
         ptl_base_recvreq.c \
         ptl_base_sendfrag.c \

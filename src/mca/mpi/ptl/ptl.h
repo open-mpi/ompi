@@ -5,15 +5,14 @@
  *
  * P2P Transport Layer (PTL)
  */
-#ifndef LAM_MCA_PTL_H
-#define LAM_MCA_PTL_H
+#ifndef MCA_PTL_H
+#define MCA_PTL_H
 
 #include "mca/mca.h"
 #include "lam/lam.h"
 #include "lam/lfc/list.h"
 #include "mpi/proc/proc.h"
 #include "mca/mpi/pml/pml.h"
-#include "mca/mpi/ptl/ptl.h"
 
 
 /*
@@ -165,26 +164,19 @@ typedef struct mca_ptl_t mca_ptl_t;
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
-  int mca_ptl_base_close(void);
   int mca_ptl_base_open(void);
-  int mca_ptl_base_query(void);
   int mca_ptl_base_init(void);
+  int mca_ptl_base_close(void);
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
 
 /*
- * Public variables
+ * Globals
  */
-
-extern lam_list_t *mca_ptl_base_opened;
-extern lam_list_t *mca_ptl_base_available;
-
-/*
- * Global instance of array of pointers to mca_t.  Will
- * effectively be filled in by configure.
- */
-
-extern const mca_base_module_t **mca_ptl_base_modules;
+extern int mca_ptl_base_output;
+extern lam_list_t mca_ptl_base_modules_available;
+extern mca_ptl_base_module_t mca_ptl_base_selected_module;
+extern mca_ptl_t mca_ptl;
 
 #endif /* LAM_MCA_PTL_H */
