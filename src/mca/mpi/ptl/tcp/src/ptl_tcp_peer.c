@@ -105,8 +105,10 @@ int mca_ptl_tcp_peer_send(mca_ptl_base_peer_t* ptl_peer, mca_ptl_tcp_send_frag_t
             if(mca_ptl_tcp_send_frag_handler(frag, ptl_peer->peer_sd) == false) {
                 ptl_peer->peer_send_frag = frag;
                 lam_event_add(&mca_ptl_tcp_module.tcp_send_event, 0);
-            } else {
+            /* special case for acks */
+            } else if (NULL != frag->super.frag_request) {
                 ptl_peer->peer_ptl->super.ptl_send_progress(frag->super.frag_request, &frag->super);
+                lam_free_list_return(&mca_ptl_tcp_module.tcp_send_frags, (lam_list_item_t*)frag);
             }
         }
         break;

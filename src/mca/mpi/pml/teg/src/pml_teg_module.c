@@ -69,6 +69,8 @@ int mca_pml_teg_module_open(void)
         mca_pml_teg_param_register_int("free_list_max", -1);
     mca_pml_teg.teg_free_list_inc =
         mca_pml_teg_param_register_int("free_list_inc", 256);
+    mca_pml_teg.teg_poll_iterations =
+        mca_pml_teg_param_register_int("poll_iterations", 10000);
     return LAM_SUCCESS;
 }
 
@@ -107,6 +109,7 @@ mca_pml_t* mca_pml_teg_module_init(int* priority,
     mca_pml_teg.teg_ptls = NULL;
     mca_pml_teg.teg_num_ptls = 0;
 
+    /* recv requests */
     lam_free_list_init(
         &mca_pml_teg.teg_recv_requests,
         sizeof(mca_ptl_base_recv_request_t),
@@ -116,12 +119,20 @@ mca_pml_t* mca_pml_teg_module_init(int* priority,
         mca_pml_teg.teg_free_list_inc,
         NULL);
         
+    /* recv sequence */
+    mca_pml_teg.teg_recv_sequence = 0;
+
+    /* request completion */
+    OBJ_CONSTRUCT(&mca_pml_teg.teg_request_lock, lam_mutex_t);
+    OBJ_CONSTRUCT(&mca_pml_teg.teg_request_cond, lam_condition_t);
+    mca_pml_teg.teg_request_waiting = 0;
+
+    /* event dispatch thread */
     OBJ_CONSTRUCT(&mca_pml_teg.teg_thread, lam_thread_t);
     mca_pml_teg.teg_thread.t_run = mca_pml_teg_thread;
     if(lam_thread_start(&mca_pml_teg.teg_thread) != LAM_SUCCESS)
         return NULL;
 
-    mca_pml_teg.teg_recv_sequence = 0;
     return &mca_pml_teg.super;
 }
 

@@ -32,18 +32,25 @@ struct mca_pml_teg_t {
     mca_ptl_t** teg_ptls;
     size_t teg_num_ptls;
 
-    lam_list_t  teg_procs;
-    lam_mutex_t teg_lock;
-    lam_condition_t teg_condition;
-    int teg_req_waiting;
+    lam_list_t   teg_procs;
+    lam_mutex_t  teg_lock;
     lam_thread_t teg_thread;
 
-    int teg_free_list_num; /* initial size of free list */
-    int teg_free_list_max; /* maximum size of free list */
-    int teg_free_list_inc; /* number of elements to grow free list */
+    int teg_free_list_num;   /* initial size of free list */
+    int teg_free_list_max;   /* maximum size of free list */
+    int teg_free_list_inc;   /* number of elements to grow free list */
+    int teg_poll_iterations; /* number of iterations to poll for completion */
+
+    /* free list of recv requests */
     lam_free_list_t teg_recv_requests;
+
+    /* next recv sequence */
     mca_ptl_base_sequence_t teg_recv_sequence;
 
+    /* request completion */
+    lam_mutex_t teg_request_lock;
+    lam_condition_t teg_request_cond;
+    volatile int teg_request_waiting;
 };
 typedef struct mca_pml_teg_t mca_pml_teg_t; 
 

@@ -82,7 +82,7 @@ int mca_pml_teg_add_ptls(lam_list_t *ptls)
         return LAM_ERR_OUT_OF_RESOURCE;
 
     for(selected_ptl =  (mca_ptl_base_selected_module_t*)lam_list_get_first(ptls);
-        selected_ptl != (mca_ptl_base_selected_module_t*)lam_list_get_last(ptls);
+        selected_ptl != (mca_ptl_base_selected_module_t*)lam_list_get_end(ptls);
         selected_ptl =  (mca_ptl_base_selected_module_t*)lam_list_get_next(selected_ptl)) {
         mca_ptl_t *ptl = selected_ptl->pbsm_actions;
         size_t i;
