@@ -27,7 +27,7 @@
 
 #include "mca/errmgr/errmgr.h"
 #include "mca/ns/ns.h"
-
+#include "util/output.h"
 #include "mca/gpr/replica/transition_layer/gpr_replica_tl.h"
 #include "gpr_replica_fn.h"
 

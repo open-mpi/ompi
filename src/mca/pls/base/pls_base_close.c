@@ -22,6 +22,7 @@
 #include "mca/mca.h"
 #include "mca/base/base.h"
 #include "mca/pls/base/base.h"
+#include "util/output.h"
 
 
 int orte_pls_base_close(void)

@@ -25,6 +25,7 @@
 #include "mca/iof/base/base.h"
 #include "mca/iof/base/iof_base_header.h"
 #include "mca/iof/base/iof_base_fragment.h"
+#include "util/output.h"
 
 /*
  * The following file was created by configure.  It contains extern

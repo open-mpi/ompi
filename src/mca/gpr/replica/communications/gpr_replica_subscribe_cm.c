@@ -28,6 +28,7 @@
 #include "dps/dps.h"
 #include "mca/errmgr/errmgr.h"
 #include "util/proc_info.h"
+#include "util/output.h"
 
 #include "gpr_replica_comm.h"
 
