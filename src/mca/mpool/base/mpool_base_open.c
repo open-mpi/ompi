@@ -47,7 +47,7 @@ int mca_mpool_base_open(void)
      iterate over it (even if it's empty, as in the case of
      ompi_info) */
 
-  OBJ_CONSTRUCT(&mca_mpool_base_components, ompi_list_t);
+  OBJ_CONSTRUCT(&mca_mpool_base_modules, ompi_list_t);
 
   /* All done */
 
