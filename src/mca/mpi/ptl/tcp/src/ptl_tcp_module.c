@@ -102,6 +102,13 @@ static inline int mca_ptl_tcp_param_register_int(
 
 int mca_ptl_tcp_module_open(void)
 {
+    lam_mutex_init(&mca_ptl_tcp_module.tcp_lock);
+    STATIC_INIT(mca_ptl_tcp_module.tcp_reactor, &lam_reactor_cls);
+    STATIC_INIT(mca_ptl_tcp_module.tcp_procs, &lam_list_cls);
+    STATIC_INIT(mca_ptl_tcp_module.tcp_send_requests, &lam_free_list_cls);
+    STATIC_INIT(mca_ptl_tcp_module.tcp_send_frags, &lam_free_list_cls);
+    STATIC_INIT(mca_ptl_tcp_module.tcp_recv_frags, &lam_free_list_cls);
+
     /* register TCP module parameters */
     mca_ptl_tcp_module.tcp_if_include =
         mca_ptl_tcp_param_register_string("if_include", "");
@@ -282,13 +289,8 @@ mca_ptl_t** mca_ptl_tcp_module_init(int *num_ptls,
     *allow_multi_user_threads = true;
     *have_hidden_threads = false;
 
-    /* initialize containers */
-    STATIC_INIT(mca_ptl_tcp_module.tcp_reactor, &lam_reactor_cls);
-    STATIC_INIT(mca_ptl_tcp_module.tcp_procs, &lam_list_cls);
-    lam_mutex_init(&mca_ptl_tcp_module.tcp_lock);
 
     /* initialize free lists */
-    STATIC_INIT(mca_ptl_tcp_module.tcp_send_requests, &lam_free_list_cls);
     lam_free_list_init_with(&mca_ptl_tcp_module.tcp_send_requests, 
         sizeof(mca_ptl_tcp_send_request_t),
         &mca_ptl_tcp_send_request_cls,
@@ -297,7 +299,6 @@ mca_ptl_t** mca_ptl_tcp_module_init(int *num_ptls,
         mca_ptl_tcp_module.tcp_free_list_inc,
         NULL); /* use default allocator */
 
-    STATIC_INIT(mca_ptl_tcp_module.tcp_send_frags, &lam_free_list_cls);
     lam_free_list_init_with(&mca_ptl_tcp_module.tcp_send_frags, 
         sizeof(mca_ptl_tcp_send_frag_t),
         &mca_ptl_tcp_send_frag_cls,
@@ -306,7 +307,6 @@ mca_ptl_t** mca_ptl_tcp_module_init(int *num_ptls,
         mca_ptl_tcp_module.tcp_free_list_inc,
         NULL); /* use default allocator */
 
-    STATIC_INIT(mca_ptl_tcp_module.tcp_recv_frags, &lam_free_list_cls);
     lam_free_list_init_with(&mca_ptl_tcp_module.tcp_recv_frags, 
         sizeof(mca_ptl_tcp_recv_frag_t),
         &mca_ptl_tcp_recv_frag_cls,

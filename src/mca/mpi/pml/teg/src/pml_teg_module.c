@@ -59,6 +59,8 @@ static inline int mca_pml_teg_param_register_int(
 
 int mca_pml_teg_module_open(void)
 {
+    STATIC_INIT(mca_pml_teg.teg_recv_requests, &lam_free_list_cls);
+    STATIC_INIT(mca_pml_teg.teg_procs, &lam_list_cls);
     mca_pml_teg.teg_free_list_num =
         mca_pml_teg_param_register_int("free_list_num", 256);
     mca_pml_teg.teg_free_list_max =
@@ -94,7 +96,6 @@ mca_pml_t* mca_pml_teg_module_init(int* priority,
     mca_pml_teg.teg_ptls = NULL;
     mca_pml_teg.teg_num_ptls = 0;
 
-    STATIC_INIT(mca_pml_teg.teg_recv_requests, &lam_free_list_cls);
     lam_free_list_init_with(
         &mca_pml_teg.teg_recv_requests,
         sizeof(mca_ptl_base_recv_request_t),
@@ -104,7 +105,6 @@ mca_pml_t* mca_pml_teg_module_init(int* priority,
         mca_pml_teg.teg_free_list_inc,
         NULL);
         
-    STATIC_INIT(mca_pml_teg.teg_procs, &lam_list_cls);
     lam_mutex_init(&mca_pml_teg.teg_lock);
     mca_pml_teg.teg_recv_sequence = 0;
     return &mca_pml_teg.super;
