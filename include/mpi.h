@@ -765,12 +765,12 @@ extern "C" {
   int MPI_Testall(int count, MPI_Request array_of_requests[], int *flag, 
                   MPI_Status array_of_statuses[]);
   int MPI_Testany(int count, MPI_Request array_of_requests[], int *index, 
-                  MPI_Status *status);
+                  int *flag, MPI_Status *status);
   int MPI_Test(MPI_Request *request, int *flag, MPI_Status *status);
   int MPI_Test_cancelled(MPI_Status *status, int *flag);
   int MPI_Testsome(int incount, MPI_Request array_of_requests[], 
-                   int *outcount, int array_of_indices, 
-                   MPI_Status array_of_statuses);
+                   int *outcount, int array_of_indices[], 
+                   MPI_Status array_of_statuses[]);
   int MPI_Topo_test(MPI_Comm comm, int *status);
   MPI_Fint MPI_Type_c2f(MPI_Datatype datatype);
   int MPI_Type_commit(MPI_Datatype *type);
