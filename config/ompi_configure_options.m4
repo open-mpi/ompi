@@ -274,7 +274,7 @@ if test "$enable_event_signals" != "no"; then
     use_event_signals=1
 else
     AC_MSG_RESULT([no])
-    use_event_siganls=0
+    use_event_signals=0
 fi
 AC_DEFINE_UNQUOTED(OMPI_EVENT_USE_SIGNALS, $use_event_signals,
     [Do we want to use the event library signal handlers])
