@@ -84,7 +84,8 @@ int mca_ptl_ib_send_frag_init(mca_ptl_ib_send_frag_t* sendfrag,
     /* initialize convertor */
     if(size_in > 0) {
         ompi_convertor_t *convertor;
-        int rc;
+        int rc, freeAfter;
+	unsigned int iov_count, max_data;
 
         /* first fragment (eager send) and first fragment of long
          * protocol can use the convertor initialized on the request,
@@ -94,16 +95,15 @@ int mca_ptl_ib_send_frag_init(mca_ptl_ib_send_frag_t* sendfrag,
         if( offset <= mca_ptl_ib_module.super.ptl_first_frag_size ) {
             convertor = &sendreq->req_convertor;
         } else {
-
             convertor = &sendfrag->frag_send.frag_base.frag_convertor;
             ompi_convertor_copy(&sendreq->req_convertor, convertor);
-            ompi_convertor_init_for_send(
-                    convertor,
-                    0,
-                    sendreq->req_base.req_datatype,
-                    sendreq->req_base.req_count,
-                    sendreq->req_base.req_addr,
-                    offset);
+            ompi_convertor_init_for_send( convertor,
+					  0,
+					  sendreq->req_base.req_datatype,
+					  sendreq->req_base.req_count,
+					  sendreq->req_base.req_addr,
+					  offset,
+					  NULL );
         }
 
 
@@ -113,10 +113,10 @@ int mca_ptl_ib_send_frag_init(mca_ptl_ib_send_frag_t* sendfrag,
          */
         iov.iov_base = &sendfrag->ib_buf.buf[header_length];
         iov.iov_len = size_in;
+	iov_count = 1;
+	max_data = size_in;
 
-        if((rc = ompi_convertor_pack(convertor, 
-                        &iov, 1)) 
-                < 0) {
+        if((rc = ompi_convertor_pack(convertor,&iov, &iov_count, &max_data, &freeAfter)) < 0) {
 
             ompi_output(0, "Unable to pack data");
 
@@ -347,24 +347,28 @@ int mca_ptl_ib_put_frag_init(mca_ptl_ib_send_frag_t *sendfrag,
     if(size_in > 0 && 0) {
         struct iovec iov;
         ompi_convertor_t *convertor;
+	unsigned int iov_count, max_data;
+	int freeAfter;
 
         if( offset <= mca_ptl_ib_module.super.ptl_first_frag_size) {
             convertor = &req->req_convertor;
         } else {
             convertor = &sendfrag->frag_send.frag_base.frag_convertor;
             ompi_convertor_copy(&req->req_convertor, convertor);
-            ompi_convertor_init_for_send(
-                    convertor,
-                    0,
-                    req->req_base.req_datatype,
-                    req->req_base.req_count,
-                    req->req_base.req_addr,
-                    offset);
+            ompi_convertor_init_for_send( convertor,
+					  0,
+					  req->req_base.req_datatype,
+					  req->req_base.req_count,
+					  req->req_base.req_addr,
+					  offset,
+					  NULL );
         }
         iov.iov_base = &sendfrag->ib_buf.buf[sizeof(mca_ptl_base_frag_header_t)];
         iov.iov_len  = size_in;
+	iov_count = 1;
+	max_data = size_in;
 
-        rc = ompi_convertor_pack(convertor, &iov, 1);
+        rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data, &freeAfter);
         if (rc < 0) {
             ompi_output (0, "[%s:%d] Unable to pack data\n",
                     __FILE__, __LINE__);

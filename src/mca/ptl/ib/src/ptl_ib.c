@@ -405,9 +405,10 @@ void mca_ptl_ib_matched(mca_ptl_base_module_t* module,
      * unex_buffer to application buffer */
 
     if (header->hdr_frag.hdr_frag_length > 0) {
-
         struct iovec iov;
         ompi_proc_t *proc;
+	unsigned int iov_count, max_data;
+	int freeAfter;
 
         iov.iov_base = frag->frag_base.frag_addr;
         iov.iov_len  = frag->frag_base.frag_size;
@@ -415,17 +416,16 @@ void mca_ptl_ib_matched(mca_ptl_base_module_t* module,
         proc = ompi_comm_peer_lookup(request->req_base.req_comm,
                 request->req_base.req_peer);
 
-        ompi_convertor_copy(proc->proc_convertor,
-                &frag->frag_base.frag_convertor);
+        ompi_convertor_copy(proc->proc_convertor, &frag->frag_base.frag_convertor);
 
-        ompi_convertor_init_for_recv(
-                &frag->frag_base.frag_convertor,
-                0,
-                request->req_base.req_datatype,
-                request->req_base.req_count,
-                request->req_base.req_addr,
-                header->hdr_frag.hdr_frag_offset);
-        ompi_convertor_unpack(&frag->frag_base.frag_convertor, &iov, 1);
+        ompi_convertor_init_for_recv( &frag->frag_base.frag_convertor,
+				      0,
+				      request->req_base.req_datatype,
+				      request->req_base.req_count,
+				      request->req_base.req_addr,
+				      header->hdr_frag.hdr_frag_offset,
+				      NULL );
+        ompi_convertor_unpack(&frag->frag_base.frag_convertor, &iov, &iov_count, &max_data, &freeAfter);
     }
     mca_ptl_ib_recv_frag_done(header, frag, request);
 }
