@@ -5,7 +5,7 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-bin_PROGRAMS = argv_test
+noinst_PROGRAMS = argv_test
 
 argv_test_SOURCES = argv_test.c
 argv_test_LDADD = \
