@@ -91,11 +91,11 @@ int MPI_Group_compare(MPI_Group group1, MPI_Group group2, int *result) {
 
     /* set comparison result */
     if( identical ) {
-        *result=MPI_UNEQUAL;
+        *result=MPI_IDENT;
     } else if( similar ) {
         *result=MPI_SIMILAR;
     } else {
-        *result=MPI_IDENT;
+        *result=MPI_UNEQUAL;
     }
 
     return return_value;

@@ -72,6 +72,12 @@ int MPI_Group_union(MPI_Group group1, MPI_Group group2, MPI_Group *new_group)
         new_group_size++;
     }                           /* end proc loop */
 
+    if ( 0 == new_group_size ) {
+	*new_group = MPI_GROUP_EMPTY;
+	OBJ_RETAIN(MPI_GROUP_EMPTY);
+	return MPI_SUCCESS;
+    }
+
     /* get new group struct */
     new_group_pointer = ompi_group_allocate(new_group_size);
     if (NULL == new_group_pointer) {

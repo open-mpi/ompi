@@ -69,6 +69,12 @@ int MPI_Group_difference(MPI_Group group1, MPI_Group group2,
         new_group_size++;
     }  /* end proc loop */
 
+    if ( 0 == new_group_size ) {
+	*new_group = MPI_GROUP_EMPTY;
+	OBJ_RETAIN(MPI_GROUP_EMPTY);
+	return MPI_SUCCESS;
+    }
+
     /* allocate a new ompi_group_t structure */
     new_group_pointer=ompi_group_allocate(new_group_size);
     if( NULL == new_group_pointer ) {
