@@ -589,8 +589,9 @@ WRAPPER_EXTRA_LIBS="$WRAPPER_EXTRA_LIBS $THREAD_LIBS"
 AC_PROG_LN_S
 
 #
-# We need lex
+# We need as and lex
 #
+AM_PROG_AS
 AM_PROG_LEX
 
 #
