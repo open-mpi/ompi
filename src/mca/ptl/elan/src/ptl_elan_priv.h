@@ -113,8 +113,9 @@ struct ompi_ptl_elan_recv_queue_t {
 typedef struct ompi_ptl_elan_recv_queue_t ompi_ptl_elan_recv_queue_t;
 
 typedef struct {
-    /* SHOULD BE 128-byte aligned */
-    uint8_t     data[INPUT_QUEUE_MAX];  /* queue req data packet */
+    /* SHOULD BE 128-byte aligned 
+     * queue req data packet */
+    /*uint8_t     data[INPUT_QUEUE_MAX];  For NIC-based tag-matching*/
     /* SHOULD be 32-byte aligned */
     E4_Event32  event32;        /* Local elan completion event */
 } ompi_elan_event_t;
@@ -128,7 +129,7 @@ typedef struct {
     volatile E4_uint64 main_doneWord;                             \
     /* 8 byte aligned */                                          \
     ompi_elan_event_t *elan_data_event;                           \
-    mca_ptl_elan_send_request_t *req;                             \
+    mca_pml_base_send_request_t *req;                             \
     /* 8 byte aligned */                                          \
     int    desc_type;                                             \
     int    desc_status;                                           \
@@ -151,11 +152,12 @@ struct ompi_ptl_elan_qdma_desc_t {
 
     uint8_t         buff[INPUT_QUEUE_MAX];        /**< queue data */
     /* 8 byte aligned */
-    ompi_convertor_t frag_convertor; /**< datatype convertor */
+    //ompi_convertor_t frag_convertor; /**< datatype convertor */
 };
 typedef struct ompi_ptl_elan_qdma_desc_t ompi_ptl_elan_qdma_desc_t;
 
 struct ompi_ptl_elan_queue_ctrl_t {
+
     /* Transmit Queues */
     /** < elan located INPUT_QUEUE_ALIGN'ed with INPUT_QUEUE_SIZE */
     E4_InputQueue *input;
@@ -184,6 +186,45 @@ struct ompi_ptl_elan_queue_ctrl_t {
 };
 typedef struct ompi_ptl_elan_queue_ctrl_t ompi_ptl_elan_queue_ctrl_t;
 
+struct ompi_ptl_elan_putget_desc_t {
+
+    ELAN_BASE_DESC_FIELDS 
+    /* 8 byte aligned */
+
+    mca_ptl_elan_module_t *ptl;
+    RAIL                  *rail;
+    /* 8 byte aligned */
+
+    uint8_t         *src_elan_addr;
+    uint8_t         *dst_elan_addr;
+    /* 8 byte aligned */
+};
+typedef struct ompi_ptl_elan_putget_desc_t ompi_ptl_elan_putget_desc_t;
+
+struct ompi_ptl_elan_putget_ctrl_t {
+
+    /** <transmit queue structures */
+    u_int             putget_throttle;
+    int               putget_retryCount;
+    int               putget_evictCache;
+    int32_t           putget_waitType;
+    ELAN_FLAGS        putget_flags;
+
+    E4_CmdQ          *put_cmdq;
+    E4_CmdQ          *get_cmdq;
+
+    E4_uint64        *pg_cmdStream;
+    ELAN4_COOKIEPOOL *pg_cpool;
+    E4_CmdQParams    *pg_cmdPar;
+
+    u_int            *pg_pendingGetCount; 
+    ompi_list_t       put_desc;
+    ompi_list_t       get_desc;
+                      
+    ompi_free_list_t  put_desc_free;
+    ompi_free_list_t  get_desc_free;
+};
+typedef struct ompi_ptl_elan_putget_ctrl_t ompi_ptl_elan_putget_ctrl_t;
 
 struct mca_ptl_elan_state_t {
 
@@ -203,7 +244,6 @@ struct mca_ptl_elan_state_t {
     void       *elan_base;    /**< Elan memory allocator heap base */
 
     /* other state parameters */
-
     unsigned int elan_vp;          /**< elan vpid, not ompi vpid */
     unsigned int elan_nvp;         /**< total # of elan vpid */
     int        *elan_localvps;     /**< mapping of localId to elan vp */
@@ -245,8 +285,8 @@ int         ompi_mca_ptl_elan_finalize (mca_ptl_elan_component_t * emp);
 /* communication initialization prototypes */
 int         ompi_init_elan_qdma (mca_ptl_elan_component_t * emp,
                                  int num_rails);
-int         ompi_init_elan_rdma (mca_ptl_elan_component_t * emp,
-                                 int num_rails);
+int         ompi_init_elan_putget (mca_ptl_elan_component_t * emp,
+                                   int num_rails);
 int         ompi_init_elan_stat (mca_ptl_elan_component_t * emp,
                                  int num_rails);
 
