@@ -4,7 +4,7 @@
 #include "datatype_internal.h"
 
 /* other fields starting after bdt_used (index of DT_LOOP should be ONE) */
-#define EMPTY_DATA(NAME) NULL, 0, "MPI_" # NAME, {0, 0, NULL}, {0, 0, NULL}, NULL, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
+#define EMPTY_DATA(NAME) NULL, -1, "MPI_" # NAME, {0, 0, NULL}, {0, 0, NULL}, NULL, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
 #define BASEOBJ_DATA { OBJ_CLASS(ompi_datatype_t), 1 }
 #define INIT_BASIC_DATA( TYPE, ALIGN, NAME )                             \
     { BASEOBJ_DATA, sizeof(TYPE), 0, sizeof(TYPE), ALIGN,               \
@@ -120,6 +120,8 @@ ompi_datatype_t* ompi_mpi_cxx_bool;
 ompi_datatype_t* ompi_mpi_2cplex = basicDatatypes + DT_2COMPLEX;
 ompi_datatype_t* ompi_mpi_2dblcplex = basicDatatypes + DT_2DOUBLE_COMPLEX;
 
+ompi_pointer_array_t *ompi_datatype_f_to_c_table = NULL;
+
 int local_sizes[DT_MAX_PREDEFINED];
 
 /* VPS: fake convertor for time being / to provide pack/unpack functions */
@@ -195,49 +197,81 @@ static ompi_convertor_t* pDumpConv = NULL;
 
 int ompi_ddt_init( void )
 {
-   int i;
+    int i;
 
-   for( i = 0; i < DT_MAX_PREDEFINED; i++ ) {
-      basicDatatypes[i].desc.desc = (dt_elem_desc_t*)malloc(sizeof(dt_elem_desc_t));
-      basicDatatypes[i].desc.desc->flags  = DT_FLAG_BASIC | DT_FLAG_CONTIGUOUS;
-      basicDatatypes[i].desc.desc->type   = i;
-      basicDatatypes[i].desc.desc->count  = 1;
-      basicDatatypes[i].desc.desc->disp   = 0;
-      basicDatatypes[i].desc.desc->extent = basicDatatypes[i].size;
-      basicDatatypes[i].desc.length       = 1;
-      basicDatatypes[i].desc.used         = 1;
-      basicDatatypes[i].btypes[i]         = 1;
-   }
+    for( i = 0; i < DT_MAX_PREDEFINED; i++ ) {
+        basicDatatypes[i].desc.desc = (dt_elem_desc_t*)malloc(sizeof(dt_elem_desc_t));
+        basicDatatypes[i].desc.desc->flags  = DT_FLAG_BASIC | DT_FLAG_CONTIGUOUS;
+        basicDatatypes[i].desc.desc->type   = i;
+        basicDatatypes[i].desc.desc->count  = 1;
+        basicDatatypes[i].desc.desc->disp   = 0;
+        basicDatatypes[i].desc.desc->extent = basicDatatypes[i].size;
+        basicDatatypes[i].desc.length       = 1;
+        basicDatatypes[i].desc.used         = 1;
+        basicDatatypes[i].btypes[i]         = 1;
+    }
 
-   /* the 2 complex datatypes (float and double) */
-   DECLARE_MPI2_COMPOSED_STRUCT_DDT( ompi_mpi_cplex, DT_COMPLEX_FLOAT, "MPI_COMPLEX", float, float, DT_FLOAT, DT_FLOAT );
-   DECLARE_MPI2_COMPOSED_STRUCT_DDT( ompi_mpi_dblcplex, DT_COMPLEX_DOUBLE, "MPI_DOUBLE_COMPLEX", double, double, DT_DOUBLE, DT_DOUBLE );
-   /* C++ complex types */
-   DECLARE_MPI2_COMPOSED_STRUCT_DDT( ompi_mpi_cxx_cplex, DT_COMPLEX_FLOAT, "MPI_CXX_COMPLEX", float, float, DT_FLOAT, DT_FLOAT );
-   DECLARE_MPI2_COMPOSED_STRUCT_DDT( ompi_mpi_cxx_dblcplex, DT_COMPLEX_DOUBLE, "MPI_CXX_DOUBLE_COMPLEX", double, double, DT_DOUBLE, DT_DOUBLE );
-   DECLARE_MPI2_COMPOSED_STRUCT_DDT( ompi_mpi_cxx_ldblcplex, DT_COMPLEX_LONG_DOUBLE, "MPI_CXX_LONG_DOUBLE_COMPLEX", long double, long double, DT_LONG_DOUBLE, DT_LONG_DOUBLE );
+    /* the 2 complex datatypes (float and double) */
+    DECLARE_MPI2_COMPOSED_STRUCT_DDT( ompi_mpi_cplex, DT_COMPLEX_FLOAT, "MPI_COMPLEX", float, float, DT_FLOAT, DT_FLOAT );
+    DECLARE_MPI2_COMPOSED_STRUCT_DDT( ompi_mpi_dblcplex, DT_COMPLEX_DOUBLE, "MPI_DOUBLE_COMPLEX", double, double, DT_DOUBLE, DT_DOUBLE );
+    /* C++ complex types */
+    DECLARE_MPI2_COMPOSED_STRUCT_DDT( ompi_mpi_cxx_cplex, DT_COMPLEX_FLOAT, "MPI_CXX_COMPLEX", float, float, DT_FLOAT, DT_FLOAT );
+    DECLARE_MPI2_COMPOSED_STRUCT_DDT( ompi_mpi_cxx_dblcplex, DT_COMPLEX_DOUBLE, "MPI_CXX_DOUBLE_COMPLEX", double, double, DT_DOUBLE, DT_DOUBLE );
+    DECLARE_MPI2_COMPOSED_STRUCT_DDT( ompi_mpi_cxx_ldblcplex, DT_COMPLEX_LONG_DOUBLE, "MPI_CXX_LONG_DOUBLE_COMPLEX", long double, long double, DT_LONG_DOUBLE, DT_LONG_DOUBLE );
 
-   /* Now the predefined MPI2 datatypes (they should last forever!) */
-   DECLARE_MPI2_COMPOSED_STRUCT_DDT( ompi_mpi_float_int, DT_FLOAT_INT, "MPI_FLOAT_INT", float, int, DT_FLOAT, DT_INT );
-   DECLARE_MPI2_COMPOSED_STRUCT_DDT( ompi_mpi_double_int, DT_DOUBLE_INT, "MPI_DOUBLE_INT", double, int, DT_DOUBLE, DT_INT );
-   DECLARE_MPI2_COMPOSED_STRUCT_DDT( ompi_mpi_long_int, DT_LONG_INT, "MPI_LONG_INT", long, int, DT_LONG, DT_INT );
-   DECLARE_MPI2_COMPOSED_STRUCT_DDT( ompi_mpi_short_int, DT_SHORT_INT, "MPI_SHORT_INT", short, int, DT_SHORT, DT_INT );
-   DECLARE_MPI2_COMPOSED_STRUCT_DDT( ompi_mpi_longdbl_int, DT_LONG_DOUBLE_INT, "MPI_LONG_DOUBLE_INT", long double, int, DT_LONG_DOUBLE, DT_INT );
+    /* Now the predefined MPI2 datatypes (they should last forever!) */
+    DECLARE_MPI2_COMPOSED_STRUCT_DDT( ompi_mpi_float_int, DT_FLOAT_INT, "MPI_FLOAT_INT", float, int, DT_FLOAT, DT_INT );
+    DECLARE_MPI2_COMPOSED_STRUCT_DDT( ompi_mpi_double_int, DT_DOUBLE_INT, "MPI_DOUBLE_INT", double, int, DT_DOUBLE, DT_INT );
+    DECLARE_MPI2_COMPOSED_STRUCT_DDT( ompi_mpi_long_int, DT_LONG_INT, "MPI_LONG_INT", long, int, DT_LONG, DT_INT );
+    DECLARE_MPI2_COMPOSED_STRUCT_DDT( ompi_mpi_short_int, DT_SHORT_INT, "MPI_SHORT_INT", short, int, DT_SHORT, DT_INT );
+    DECLARE_MPI2_COMPOSED_STRUCT_DDT( ompi_mpi_longdbl_int, DT_LONG_DOUBLE_INT, "MPI_LONG_DOUBLE_INT", long double, int, DT_LONG_DOUBLE, DT_INT );
 
-   DECLARE_MPI2_COMPOSED_BLOCK_DDT( ompi_mpi_2int, DT_2INT, "MPI_2INT", DT_INT );
-   DECLARE_MPI2_COMPOSED_BLOCK_DDT( ompi_mpi_2integer, DT_2INTEGER, "MPI_2INTEGER", DT_INT );
-   DECLARE_MPI2_COMPOSED_BLOCK_DDT( ompi_mpi_2real, DT_2REAL, "MPI_2REAL", DT_FLOAT );
-   DECLARE_MPI2_COMPOSED_BLOCK_DDT( ompi_mpi_2dblprec, DT_2DBLPREC, "MPI_2DOUBLE_PRECISION", DT_DOUBLE );
-   DECLARE_MPI2_COMPOSED_BLOCK_DDT( ompi_mpi_2cplex, DT_2COMPLEX, "MPI_2COMPLEX", DT_COMPLEX_FLOAT );
-   DECLARE_MPI2_COMPOSED_BLOCK_DDT( ompi_mpi_2dblcplex, DT_2DOUBLE_COMPLEX, "MPI_2DOUBLE_COMPLEX", DT_COMPLEX_DOUBLE );
+    DECLARE_MPI2_COMPOSED_BLOCK_DDT( ompi_mpi_2int, DT_2INT, "MPI_2INT", DT_INT );
+    DECLARE_MPI2_COMPOSED_BLOCK_DDT( ompi_mpi_2integer, DT_2INTEGER, "MPI_2INTEGER", DT_INT );
+    DECLARE_MPI2_COMPOSED_BLOCK_DDT( ompi_mpi_2real, DT_2REAL, "MPI_2REAL", DT_FLOAT );
+    DECLARE_MPI2_COMPOSED_BLOCK_DDT( ompi_mpi_2dblprec, DT_2DBLPREC, "MPI_2DOUBLE_PRECISION", DT_DOUBLE );
+    DECLARE_MPI2_COMPOSED_BLOCK_DDT( ompi_mpi_2cplex, DT_2COMPLEX, "MPI_2COMPLEX", DT_COMPLEX_FLOAT );
+    DECLARE_MPI2_COMPOSED_BLOCK_DDT( ompi_mpi_2dblcplex, DT_2DOUBLE_COMPLEX, "MPI_2DOUBLE_COMPLEX", DT_COMPLEX_DOUBLE );
 
-   for( i = 0; i < DT_MAX_PREDEFINED; i++ )
-       local_sizes[i] = basicDatatypes[i].size;
+    for( i = 0; i < DT_MAX_PREDEFINED; i++ )
+        local_sizes[i] = basicDatatypes[i].size;
 
-   /* VPS: Create a fake convertor. No error checking here now, since
-      this will be removed sometime */
-   ompi_convertor = ompi_convertor_create(0,0);
-   return OMPI_SUCCESS;
+    /* VPS: Create a fake convertor. No error checking here now, since
+       this will be removed sometime */
+    ompi_convertor = ompi_convertor_create(0,0);
+
+    /* Create the f2c translation table */
+    ompi_datatype_f_to_c_table = OBJ_NEW(ompi_pointer_array_t);
+    if (NULL == ompi_datatype_f_to_c_table) {
+        return OMPI_ERROR;
+    }
+    
+    /* Start to populate the f2c index translation table */
+    ompi_pointer_array_add( ompi_datatype_f_to_c_table, NULL );  /* why not ? */
+    ompi_pointer_array_add(ompi_datatype_f_to_c_table, ompi_mpi_byte );
+    ompi_pointer_array_add(ompi_datatype_f_to_c_table, ompi_mpi_packed );
+    ompi_pointer_array_add(ompi_datatype_f_to_c_table, ompi_mpi_ub );
+    ompi_pointer_array_add(ompi_datatype_f_to_c_table, ompi_mpi_lb );
+    ompi_pointer_array_add(ompi_datatype_f_to_c_table, ompi_mpi_character );
+    ompi_pointer_array_add(ompi_datatype_f_to_c_table, ompi_mpi_logic );
+    ompi_pointer_array_add(ompi_datatype_f_to_c_table, ompi_mpi_integer );
+    ompi_pointer_array_add(ompi_datatype_f_to_c_table, ompi_mpi_char );
+    ompi_pointer_array_add(ompi_datatype_f_to_c_table, ompi_mpi_short );
+    ompi_pointer_array_add(ompi_datatype_f_to_c_table, ompi_mpi_int );
+    ompi_pointer_array_add(ompi_datatype_f_to_c_table, ompi_mpi_long_long );
+    ompi_pointer_array_add(ompi_datatype_f_to_c_table, ompi_mpi_real );
+    ompi_pointer_array_add(ompi_datatype_f_to_c_table, ompi_mpi_real );
+    ompi_pointer_array_add(ompi_datatype_f_to_c_table, ompi_mpi_real );
+    ompi_pointer_array_add(ompi_datatype_f_to_c_table, ompi_mpi_double );
+    ompi_pointer_array_add(ompi_datatype_f_to_c_table, ompi_mpi_long_double );
+    ompi_pointer_array_add(ompi_datatype_f_to_c_table, ompi_mpi_dblprec );
+    ompi_pointer_array_add(ompi_datatype_f_to_c_table, ompi_mpi_cplex );
+    ompi_pointer_array_add(ompi_datatype_f_to_c_table, ompi_mpi_dblcplex );
+    ompi_pointer_array_add(ompi_datatype_f_to_c_table, ompi_mpi_2real );
+    ompi_pointer_array_add(ompi_datatype_f_to_c_table, ompi_mpi_2dblcplex );
+    ompi_pointer_array_add(ompi_datatype_f_to_c_table, ompi_mpi_2integer );
+
+    return OMPI_SUCCESS;
 }
 
 int ompi_ddt_finalize( void )
@@ -254,6 +288,9 @@ int ompi_ddt_finalize( void )
    if( pDumpConv != NULL ) {
        OBJ_RELEASE( pDumpConv );
    }
+   /* Get rid of the Fortran2C translation table */
+   OBJ_RELEASE(ompi_datatype_f_to_c_table);
+
    return OMPI_SUCCESS;
 }
 

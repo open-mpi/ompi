@@ -20,7 +20,10 @@
 #include "errhandler/errhandler.h"
 #include "class/ompi_object.h"
 #include "class/ompi_hash_table.h"
+#include "class/ompi_pointer_array.h"
 #include "mpi.h"
+
+extern ompi_pointer_array_t *ompi_datatype_f_to_c_table;
 
 /* if there are more basic datatypes than the number of bytes in the int type
  * the bdt_used field of the data description struct should be changed to long.
