@@ -114,7 +114,10 @@ void mca_pml_teg_recv_request_match_specific(mca_pml_base_recv_request_t* reques
         if(NULL == frag->frag_base.frag_peer) 
             frag->frag_base.frag_peer = mca_pml_teg_proc_lookup_remote_peer(comm,req_peer,ptl);
         OMPI_THREAD_UNLOCK(&pml_comm->c_matching_lock);
-        ptl->ptl_matched(ptl, frag);
+        if( !((MCA_PML_REQUEST_IPROBE == request->req_base.req_type) ||
+              (MCA_PML_REQUEST_PROBE == request->req_base.req_type)) ) {
+            ptl->ptl_matched(ptl, frag);
+        }
         return; /* match found */
     }
 
@@ -165,7 +168,10 @@ void mca_pml_teg_recv_request_match_wild(mca_pml_base_recv_request_t* request)
             if(NULL == frag->frag_base.frag_peer) 
                 frag->frag_base.frag_peer = mca_pml_teg_proc_lookup_remote_peer(comm,proc,ptl);
             OMPI_THREAD_UNLOCK(&pml_comm->c_matching_lock);
-            ptl->ptl_matched(ptl, frag);
+            if( !((MCA_PML_REQUEST_IPROBE == request->req_base.req_type) ||
+                  (MCA_PML_REQUEST_PROBE == request->req_base.req_type)) ) {
+                ptl->ptl_matched(ptl, frag);
+            }
             return; /* match found */
         }
     } 
@@ -191,27 +197,47 @@ static mca_ptl_base_recv_frag_t* mca_pml_teg_recv_request_match_specific_proc(
     mca_pml_ptl_comm_t *pml_comm = request->req_base.req_comm->c_pml_comm;
     ompi_list_t* unexpected_frags = pml_comm->c_unexpected_frags+proc;
     mca_ptl_base_recv_frag_t* frag;
+    mca_ptl_base_match_header_t* header;
     int tag = request->req_base.req_tag;
 
-    for (frag =  (mca_ptl_base_recv_frag_t*)ompi_list_get_first(unexpected_frags);
-         frag != (mca_ptl_base_recv_frag_t*)ompi_list_get_end(unexpected_frags);
-         frag =  (mca_ptl_base_recv_frag_t*)ompi_list_get_next(frag)) {
-        mca_ptl_base_match_header_t* header = &frag->frag_base.frag_header.hdr_match;
-
-        /* check first frag - we assume that process matching has been done already */
-        if (((tag == OMPI_ANY_TAG) || (tag == header->hdr_tag))) {
-
-            if (tag == OMPI_ANY_TAG && header->hdr_tag < 0) {
-                continue;
-            }
-            ompi_list_remove_item(unexpected_frags, (ompi_list_item_t*)frag);
-            request->req_bytes_packed = header->hdr_msg_length;
-            request->req_base.req_ompi.req_status.MPI_TAG = header->hdr_tag;
-            request->req_base.req_ompi.req_status.MPI_SOURCE = header->hdr_src;
-            frag->frag_request = request;
-            return frag;
-        } 
+    if( OMPI_ANY_TAG == tag ) {
+        for (frag =  (mca_ptl_base_recv_frag_t*)ompi_list_get_first(unexpected_frags);
+             frag != (mca_ptl_base_recv_frag_t*)ompi_list_get_end(unexpected_frags);
+             frag =  (mca_ptl_base_recv_frag_t*)ompi_list_get_next(frag)) {
+            header = &(frag->frag_base.frag_header.hdr_match);
+            
+            /* check first frag - we assume that process matching has been done already */
+            if( header->hdr_tag >= 0 ) {
+                goto find_fragment;
+            } 
+        }
+    } else {
+        for (frag =  (mca_ptl_base_recv_frag_t*)ompi_list_get_first(unexpected_frags);
+             frag != (mca_ptl_base_recv_frag_t*)ompi_list_get_end(unexpected_frags);
+             frag =  (mca_ptl_base_recv_frag_t*)ompi_list_get_next(frag)) {
+            header = &(frag->frag_base.frag_header.hdr_match);
+            
+            /* check first frag - we assume that process matching has been done already */
+            if ( tag == header->hdr_tag ) {
+                /* we assume that the tag is correct from MPI point of view (ie. >= 0 ) */
+                goto find_fragment;
+            } 
+        }
     }
     return NULL;
+ find_fragment:
+    request->req_bytes_packed = header->hdr_msg_length;
+    request->req_base.req_ompi.req_status.MPI_TAG = header->hdr_tag;
+    request->req_base.req_ompi.req_status.MPI_SOURCE = header->hdr_src;
+
+    if( !((MCA_PML_REQUEST_IPROBE == request->req_base.req_type) ||
+          (MCA_PML_REQUEST_PROBE == request->req_base.req_type)) ) {
+        ompi_list_remove_item(unexpected_frags, (ompi_list_item_t*)frag);
+        frag->frag_request = request;
+    } else {
+        /* it's a probe, therefore report it's completion */
+        mca_pml_teg_recv_request_progress( NULL, request, header->hdr_msg_length, header->hdr_msg_length );
+    }
+    return frag;
 }
 
