@@ -56,9 +56,9 @@ ompi_init_elan_queue_events (mca_ptl_elan_module_t * ptl,
     elan_size = ALIGNUP (sizeof (E4_Event), elan_align);
 
     OBJ_CONSTRUCT(&flist->fl_lock, ompi_mutex_t);
-    flist->fl_elem_size = flist->fl_max_to_alloc = 128;
+    flist->fl_elem_size = flist->fl_max_to_alloc = OMPI_PTL_ELAN_MAX_QDESCS;
     flist->fl_num_allocated = 0;
-    flist->fl_num_per_alloc = count = 16;
+    flist->fl_num_per_alloc = count = OMPI_PTL_ELAN_NUM_QDESCS;
     flist->fl_elem_class = NULL;     /* leave it null */
     flist->fl_mpool      = NULL;     /* leave it null */
 
@@ -86,14 +86,12 @@ ompi_init_elan_queue_events (mca_ptl_elan_module_t * ptl,
         frag->desc = (ompi_ptl_elan_base_desc_t *)desc;
 
         /* Initialize some of the dma structures */
-        {
-            desc->main_dma.dma_dstAddr = 0;
-            desc->main_dma.dma_srcEvent = SDRAM2ELAN (ctx, desc->elan_event);
-            desc->main_dma.dma_dstEvent = SDRAM2ELAN (ctx, queue->input);
-            INITEVENT_WORD (ctx, desc->elan_event, &desc->main_doneWord);
-            RESETEVENT_WORD (&desc->main_doneWord);
-            PRIMEEVENT_WORD (ctx, desc->elan_event, 1);
-        }
+	desc->main_dma.dma_dstAddr = 0;
+	desc->main_dma.dma_srcEvent = SDRAM2ELAN (ctx, desc->elan_event);
+	desc->main_dma.dma_dstEvent = SDRAM2ELAN (ctx, queue->input);
+	INITEVENT_WORD (ctx, desc->elan_event, &desc->main_doneWord);
+	RESETEVENT_WORD (&desc->main_doneWord);
+	PRIMEEVENT_WORD (ctx, desc->elan_event, 1);
 
         item = (ompi_list_item_t *) frag;
         ompi_list_append (&flist->super, item);
@@ -310,14 +308,13 @@ ompi_init_elan_qdma (mca_ptl_elan_component_t * emp,
          * dma and IRQ etc but more open to update.
          *
          * Initialize a new event list managing this queue */
-
         ompi_init_elan_queue_events (ptl, queue);
 
         /* Allocate a cookie pool */
         queue->tx_cpool = elan4_allocCookiePool (ctx, ptl->elan_vp);
 
         /* Init the Receive Queue structure */
-        queue->rx_nslots = 128;
+        queue->rx_nslots = OMPI_PTL_ELAN_MAX_QSLOTS;
         nslots += ELAN_QUEUE_LOST_SLOTS;
 
         queue->rx_buffsize = (slotsize > INPUT_QUEUE_MAX) ?
@@ -442,11 +439,6 @@ ompi_init_elan_putget (mca_ptl_elan_component_t * emp,
 			CQ_SetEventEnableBit, cqp);
         OMPI_PTL_ELAN_CHECK_UNEX (putget->get_cmdq, NULL, OMPI_ERROR, 0);
 
-	/* XXX: With elan4_disp_cmdq_params(),
-	 * put_cmdq->cmd_flush == elan4_flush_cmdq_reorder
-	 * get_cmdq->cmd_flush == elan4_flush_cmdq_reorder
-	 */
-
 	putget->pg_cmdStream = malloc(PAGESIZE);
         OMPI_PTL_ELAN_CHECK_UNEX (putget->pg_cmdStream, NULL, OMPI_ERROR, 0);
 
@@ -458,7 +450,7 @@ ompi_init_elan_putget (mca_ptl_elan_component_t * emp,
 
 	putget->pg_cpool = elan4_allocCookiePool(ctx, ptl->elan_vp);
 
-       	ompi_ptl_elan_init_putget_ctrl (ptl, rail, putget, 0, 2, 32);
+       	ompi_ptl_elan_init_putget_ctrl (ptl, rail, putget, 0, 8, 32);
     }
 
     END_FUNC(PTL_ELAN_DEBUG_INIT);
