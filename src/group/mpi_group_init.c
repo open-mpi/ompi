@@ -29,7 +29,7 @@ lam_group_t lam_mpi_group_empty = {
     { NULL, 0 },                  /* base class */
     0,                            /* number of processes in group */
     MPI_PROC_NULL,                /* rank in group */
-    -1,                           /* index in Fortran <-> C translation array */
+    LAM_ERROR,                    /* index in Fortran <-> C translation array */
     (lam_proc_t **)NULL           /* pointers to lam_proc_t structures */
 };
 
@@ -41,7 +41,7 @@ lam_group_t lam_mpi_group_null = {
     { NULL, 0 },                  /* base class */
     0,                            /* number of processes in group */
     MPI_PROC_NULL,                /* rank in group */
-    -1,                           /* index in Fortran <-> C translation array */
+    LAM_ERROR,                    /* index in Fortran <-> C translation array */
     (lam_proc_t **)NULL           /* pointers to lam_proc_t structures */
 };
 
@@ -57,11 +57,6 @@ lam_group_t *lam_group_allocate(int group_size)
 
     /* create new group group element */
     new_group=OBJ_NEW(lam_group_t);
-    if( -1 == new_group->grp_f_to_c_index){
-        OBJ_RELEASE(new_group);
-        new_group=NULL;
-    }
-
     if( new_group ) {
         /* allocate array of (lam_proc_t *)'s, one for each
          *   process in the group */
@@ -78,6 +73,11 @@ lam_group_t *lam_group_allocate(int group_size)
 
         /* set the group size */
         new_group->grp_proc_count=group_size;
+    }
+
+    if( LAM_ERROR == new_group->grp_f_to_c_index){
+        OBJ_RELEASE(new_group);
+        new_group=NULL;
     }
 
     /* return */
@@ -154,7 +154,7 @@ int lam_group_init(void)
 
     /* add MPI_GROUP_NULL to table */
     ret_val=lam_pointer_array_add(lam_group_f_to_c_table,&lam_mpi_group_null);
-    if( -1 == ret_val ){
+    if( LAM_ERROR == ret_val ){
         return LAM_ERROR;
     };
     /* make sure that MPI_GROUP_NULL is in location in the table */
@@ -165,7 +165,7 @@ int lam_group_init(void)
 
     /* add MPI_GROUP_EMPTY to table */
     ret_val=lam_pointer_array_add(lam_group_f_to_c_table,&lam_mpi_group_empty);
-    if( -1 == ret_val ){
+    if( LAM_ERROR == ret_val ){
         return LAM_ERROR;
     };
     /* make sure that MPI_GROUP_NULL is in location in the table */
