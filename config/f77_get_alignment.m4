@@ -108,6 +108,7 @@ else
     AC_MSG_WARN([*** See config.log for details.])
     AC_MSG_ERROR([*** Cannot continue.])
 fi
+AC_DEFINE_UNQUOTED($2, $lam_ac_align, [Alignment of Fortran type $1])
 
 unset lam_ac_align HAPPY lam_conftest_h
 /bin/rm -f conftest*])dnl

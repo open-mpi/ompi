@@ -5,7 +5,7 @@ dnl
 
 AC_DEFUN([LAM_F77_GET_SIZEOF],[
 # Determine FORTRAN datatype size.
-# First arg is type, 2nd (optional) arg is config var to define.
+# First arg is type, 2nd arg is config var to define.
 AC_MSG_CHECKING([size of FORTRAN $1])
 lam_ac_size_fn=
 if test "x$lam_ac_doubleunder" = xy || test "x$lam_ac_singleunder" = xy; then
@@ -80,12 +80,11 @@ LAM_LOG_COMMAND([$CC $CFLAGS -I. -c conftest.c],
 	[HAPPY=0]),
     [HAPPY=0])
 
+lam_ac_fortsize=-1
 if test "$HAPPY" = "1" -a -f conftestval; then
     lam_ac_fortsize=`cat conftestval`
     AC_MSG_RESULT([$lam_ac_fortsize])
-    if test -n "$2"; then
-	eval "$2=$lam_ac_fortsize"
-    fi
+    eval "$2=$lam_ac_fortsize"
 else
     AC_MSG_RESULT([unknown])
 
@@ -102,6 +101,7 @@ else
     AC_MSG_WARN([*** See config.log for details.])
     AC_MSG_ERROR([*** Cannot continue.])
 fi
+AC_DEFINE_UNQUOTED($2, $lam_ac_fortsize, [Size of Fortran type $1])
 
 unset lam_ac_fortsize HAPPY lam_conftest_h
 /bin/rm -f conftest*])dnl
