@@ -87,6 +87,7 @@ extern "C" {
 #define MPI_SUCCESS     0       /* no errors */
 #define MPI_ANY_SOURCE      -1      /* match any source rank */
 #define MPI_PROC_NULL       -2      /* rank of null process */
+#define MPI_ROOT -4
 #define MPI_CANCEL_SOURCE   -3      /* successful cancel */
 #define MPI_ANY_TAG     -1      /* match any message tag */
 #define MPI_GER_TAG     -2      /* used for GER protocol */
@@ -319,7 +320,7 @@ extern struct lam_datatype_t *lam_mpi_cxx_ldblcplex;
 extern struct lam_datatype_t *lam_mpi_cxx_bool;
 extern struct lam_datatype_t *lam_mpi_2cplex, *lam_mpi_2dblcplex;
 
-extern struct lam_errhandler_t lam_mpi_errors_null;
+extern struct lam_errhandler_t lam_mpi_errhandler_null;
 extern struct lam_errhandler_t lam_mpi_errors_are_fatal;
 extern struct lam_errhandler_t lam_mpi_errors_return;
 
