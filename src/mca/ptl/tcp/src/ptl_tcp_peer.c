@@ -14,6 +14,7 @@
 #include "include/types.h"
 #include "mca/pml/base/pml_base_sendreq.h"
 #include "mca/ns/base/base.h"
+#include "mca/oob/base/base.h"
 #include "ptl_tcp.h"
 #include "ptl_tcp_addr.h"
 #include "ptl_tcp_peer.h"
@@ -64,12 +65,8 @@ static void mca_ptl_tcp_peer_construct(mca_ptl_base_peer_t* ptl_peer)
 
 static void mca_ptl_tcp_peer_destruct(mca_ptl_base_peer_t* ptl_peer)
 {
-    OMPI_THREAD_LOCK(&ptl_peer->peer_send_lock);
-    OMPI_THREAD_LOCK(&ptl_peer->peer_recv_lock);
     mca_ptl_tcp_proc_remove(ptl_peer->peer_proc, ptl_peer);
     mca_ptl_tcp_peer_close(ptl_peer);
-    OMPI_THREAD_UNLOCK(&ptl_peer->peer_send_lock);
-    OMPI_THREAD_UNLOCK(&ptl_peer->peer_recv_lock);
     OBJ_DESTRUCT(&ptl_peer->peer_frags);
     OBJ_DESTRUCT(&ptl_peer->peer_send_lock);
     OBJ_DESTRUCT(&ptl_peer->peer_recv_lock);
@@ -182,6 +179,9 @@ int mca_ptl_tcp_peer_send(mca_ptl_base_peer_t* ptl_peer, mca_ptl_tcp_send_frag_t
                 ompi_event_add(&ptl_peer->peer_send_event, 0);
             }
         }
+        break;
+    case MCA_PTL_TCP_SHUTDOWN:
+        rc = OMPI_ERROR;
         break;
     }
     OMPI_THREAD_UNLOCK(&ptl_peer->peer_send_lock);
@@ -296,6 +296,17 @@ void mca_ptl_tcp_peer_close(mca_ptl_base_peer_t* ptl_peer)
     ptl_peer->peer_state = MCA_PTL_TCP_CLOSED;
     ptl_peer->peer_retries++;
 }
+
+void mca_ptl_tcp_peer_shutdown(mca_ptl_base_peer_t* ptl_peer)
+{
+    OMPI_THREAD_LOCK(&ptl_peer->peer_recv_lock);
+    OMPI_THREAD_LOCK(&ptl_peer->peer_send_lock);
+    mca_ptl_tcp_peer_close(ptl_peer);
+    ptl_peer->peer_state = MCA_PTL_TCP_SHUTDOWN;
+    OMPI_THREAD_UNLOCK(&ptl_peer->peer_send_lock);
+    OMPI_THREAD_UNLOCK(&ptl_peer->peer_recv_lock);
+}
+
 
 /*
  *  Setup peer state to reflect that connection has been established,
@@ -546,6 +557,10 @@ static void mca_ptl_tcp_peer_recv_handler(int sd, short flags, void* user)
             ptl_peer->peer_recv_frag = recv_frag;
         else
             ptl_peer->peer_recv_frag = 0;
+        break;
+        }
+    case MCA_PTL_TCP_SHUTDOWN:
+        {
         break;
         }
     default:

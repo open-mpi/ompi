@@ -26,6 +26,7 @@ typedef enum {
     MCA_PTL_TCP_CONNECTING,
     MCA_PTL_TCP_CONNECT_ACK,
     MCA_PTL_TCP_CONNECTED,
+    MCA_PTL_TCP_SHUTDOWN,
     MCA_PTL_TCP_FAILED
 } mca_ptl_tcp_state_t;
     
@@ -62,6 +63,7 @@ void mca_ptl_tcp_set_socket_options(int sd);
 void mca_ptl_tcp_peer_close(mca_ptl_base_peer_t*);
 int  mca_ptl_tcp_peer_send(mca_ptl_base_peer_t*, mca_ptl_tcp_send_frag_t*);
 bool mca_ptl_tcp_peer_accept(mca_ptl_base_peer_t*, struct sockaddr_in*, int);
+void mca_ptl_tcp_peer_shutdown(mca_ptl_base_peer_t*);
 
 #endif
 
