@@ -149,7 +149,6 @@ int ompi_convertor_pack_homogeneous_with_memcpy( ompi_convertor_t* pConv,
 {
     dt_stack_t* pStack;   /* pointer to the position on the stack */
     uint32_t pos_desc;    /* actual position in the description of the derived datatype */
-    int type;             /* type at current position */
     int i;                /* index for basic elements with extent */
     int bConverted = 0;   /* number of bytes converted/moved this time */
     long lastDisp = 0, last_count = 0;
@@ -666,7 +665,7 @@ ompi_convertor_pack_no_conv_contig_with_gaps( ompi_convertor_t* pConv,
                     total_bytes_converted += iov[index].iov_len;
                 }
                 *out_size = index;
-                *max_data = total_bytes_converted + - max_allowed;
+                *max_data = total_bytes_converted;
                 pConv->bConverted += total_bytes_converted;
                 return (pConv->bConverted == length );
             }
@@ -684,7 +683,7 @@ ompi_convertor_pack_no_conv_contig_with_gaps( ompi_convertor_t* pConv,
                                             pConv->pBaseBuf, pData, pConv->count );
                 MEMCPY( iov[iov_count].iov_base, pSrc, iov[iov_count].iov_len);
             }
-            *max_data = iov[iov_count].iov_len;
+            total_bytes_converted += iov[iov_count].iov_len;
             total_bytes_converted += iov[iov_count].iov_len;
         } else {
             uint32_t done, counter;
@@ -764,6 +763,8 @@ int ompi_convertor_init_for_send( ompi_convertor_t* pConv,
     pConv->converted = 0;
     pConv->bConverted = 0;
     pConv->memAlloc_fn = allocfn;
+    /* Just to avoid complaint from the compiler */
+    pConv->fAdvance = ompi_convertor_pack_general;
     pConv->fAdvance = ompi_convertor_pack_homogeneous_with_memcpy;
     if( dt->flags & DT_FLAG_CONTIGUOUS ) {
 	pConv->flags |= DT_FLAG_CONTIGUOUS | CONVERTOR_HOMOGENEOUS;
@@ -773,7 +774,6 @@ int ompi_convertor_init_for_send( ompi_convertor_t* pConv,
             pConv->fAdvance = ompi_convertor_pack_no_conv_contig_with_gaps;
 	return ompi_convertor_create_stack_with_pos_contig( pConv, starting_pos, ompi_ddt_local_sizes );
     }
-    pConv->fAdvance = ompi_convertor_pack_general;
     pConv->fAdvance = ompi_convertor_pack_no_conversion;
     if( starting_pos != 0 ) {
 	return ompi_convertor_create_stack_with_pos_general( pConv, starting_pos, ompi_ddt_local_sizes );
