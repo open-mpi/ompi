@@ -175,7 +175,7 @@ int mca_ptl_sm_add_procs(
         }
 
         size=sizeof(mca_ptl_sm_module_resource_t);
-        if(NULL == (mca_ptl_sm_component.mmap_file = mca_common_sm_mmap_init(size,
+        if(NULL==(mca_ptl_sm_component.mmap_file=mca_common_sm_mmap_init(size,
                         mca_ptl_sm_component.sm_resouce_ctl_file,
                         sizeof(mca_ptl_sm_module_resource_t), 8 ))) 
         {
@@ -189,7 +189,7 @@ int mca_ptl_sm_add_procs(
         mca_ptl_sm_component.sm_ctl_header=(mca_ptl_sm_module_resource_t *)
             mca_ptl_sm_component.mmap_file->map_seg;
 
-        /* Allocate a fixed size pointer array for the 2-D Shared memory queues. 
+        /* Allocate a fixed size pointer array for the 2-D Shared memory queues.
          * Excess slots will be allocated for future growth.  One could
          * make this array growable, but then one would need to uses mutexes
          * for any access to these queues to ensure data consistancy when
@@ -250,10 +250,10 @@ int mca_ptl_sm_add_procs(
                     ( (char *)(mca_ptl_sm_component.sm_ctl_header->fifo[i]) -
                     (char *)(mca_ptl_sm_component.sm_mpool->mpool_base()) );
                 /* initialize the ompi_fifo_t structures */
+                fifo_addr=(ompi_fifo_t *) (
+                        ((char *)(mca_ptl_sm_component.sm_ctl_header->fifo[i])) 
+                        + mca_ptl_sm_component.sm_offset);
                 for( j=0 ; j < n_to_allocate ; j++ ) {
-                    fifo_addr=(ompi_fifo_t *) (
-                        ((char *)(mca_ptl_sm_component.sm_ctl_header->fifo[i])) +
-                        mca_ptl_sm_component.sm_offset);
                     fifo_addr[j].head=OMPI_CB_FREE;
                     fifo_addr[j].tail=OMPI_CB_FREE;
                     ompi_atomic_unlock(&(fifo_addr[j].head_lock));
@@ -268,6 +268,12 @@ int mca_ptl_sm_add_procs(
         /* Note:  Need to make sure that proc 0 initializes control
          * structures before any of the other procs can progress */
         if( 0 != mca_ptl_sm_component.my_smp_rank ) {
+
+            /* spin unitl local proc 0 initializes the segment */
+            while(!mca_ptl_sm_component.mmap_file->map_seg->seg_inited)
+                {
+                    ;
+                }
         }
 
         /* Initizlize queue data structures 
