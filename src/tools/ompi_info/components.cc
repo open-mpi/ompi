@@ -100,14 +100,6 @@ void ompi_info::open_components()
   mca_coll_base_open();
   component_map["coll"] = &mca_coll_base_components_opened;
 
-#if 0
-  // common component framework not implemented yet
-  mca_common_base_open();
-  component_map["common"] = &mca_common_base_components_opened;
-#else
-  component_map["common"] = NULL;
-#endif
-
   mca_gpr_base_open();
   component_map["gpr"] = &mca_gpr_base_components_available;
 
