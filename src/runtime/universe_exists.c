@@ -29,7 +29,7 @@
 #include "runtime/runtime.h"
 
 
-static struct timeval ompi_rte_ping_wait = {2, 0};
+static struct timeval ompi_rte_ping_wait = {5, 0};
 
 
 int ompi_rte_universe_exists()
