@@ -5,10 +5,10 @@
 #ifndef LAM_COMMUNICATOR_H
 #define LAM_COMMUNICATOR_H
 
-#include "mpi.h"
-#include "lam/group.h"
 #include "lam/stdint.h"
 #include "lam/threads/mutex.h"
+#include "mpi.h"
+#include "mpi/group/group.h"
 #include "mca/mpi/coll/coll.h"
 
 struct lam_communicator_t {

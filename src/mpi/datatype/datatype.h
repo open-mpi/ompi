@@ -14,15 +14,15 @@
 /* typedefs ***********************************************************/
 
 typedef enum lam_checksum_kind_t lam_checksum_kind_t;
-typedef enum lam_checksum_kind_t lam_checksum_kind_t;
+typedef enum lam_datatype_kind_t lam_datatype_kind_t;
 typedef enum lam_datatype_creator_t lam_dtype_creator_t;
 typedef enum lam_datatype_state_t lam_datatype_state_t;
 typedef struct lam_checksum_t lam_checksum_t;
 typedef struct lam_datatype_t lam_datatype_t;
-typedef struct lam_datatype_t lam_datatype_t;
 typedef struct lam_datavec_element_t lam_datavec_element_t;
 typedef struct lam_datavec_t lam_datavec_t;
 typedef struct lam_dataxdr_t lam_dataxdr_t;
+typedef struct lam_pack_state_t lam_pack_state_t;
 
 
 /* enums **************************************************************/
@@ -201,11 +201,11 @@ int lam_datatype_copy(void *dest,
  * datatype.
  */
 struct lam_pack_state_t {
-    size_t current_offset;         /**< current offset into packed buffer */
+    size_t current_offset_packed;  /**< current offset into packed buffer */
     size_t current_type;           /**< current index of datatype */
     size_t current_repeat;         /**< current index of datavec repeat */
     size_t current_element;        /**< current index of datavec element */
-    size_t current_offset;         /**< current offset into datavec element */
+    size_t current_offset_datavec; /**< current offset into datavec element */
 };
 
 
