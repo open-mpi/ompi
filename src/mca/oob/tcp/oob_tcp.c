@@ -93,11 +93,6 @@ int mca_oob_tcp_open(void)
 
 int mca_oob_tcp_close(void)
 {
-    if (mca_oob_tcp_component.tcp_listen_sd >= 0) {
-        ompi_event_del(&mca_oob_tcp_component.tcp_recv_event);
-        close(mca_oob_tcp_component.tcp_listen_sd);
-    }
-
     OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_peer_list);
     OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_peer_tree);
     OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_peer_free);
@@ -319,6 +314,12 @@ int mca_oob_tcp_finalize(void)
         mca_oob_tcp_peer_close(peer);
         OMPI_THREAD_UNLOCK(&peer->peer_lock);
         OBJ_DESTRUCT(peer);
+    }
+    if (mca_oob_tcp_component.tcp_listen_sd >= 0) {
+        ompi_event_del(&mca_oob_tcp_component.tcp_recv_event);
+        if(0 != close(mca_oob_tcp_component.tcp_listen_sd)) {
+            ompi_output(0, "mca_oob_tcp_finalize: error closing listen socket. errno=%d", errno);
+        }
     }
     ompi_event_fini();
     return OMPI_SUCCESS;

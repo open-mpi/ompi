@@ -18,7 +18,7 @@
 #define MSG_TYPE_1   1
 #define MSG_TYPE_2   2
 #define NUM_TESTS    8
-#define NUM_TIMES    1
+#define NUM_TIMES    5
 
 int i;
 bool testdone[NUM_TESTS * NUM_TIMES];
@@ -51,12 +51,12 @@ void callback(int status, const ompi_process_name_t * peer,
     if(0 != tag) {
         test_failure("Bad tag.");
     }
-    if(((int) cbdata + (NUM_TESTS * i)) >= (NUM_TESTS * NUM_TIMES)) {
+    if(((int) cbdata) >= NUM_TESTS * NUM_TIMES) {
         test_failure("Bad value in callback function.");
-    } else if (testdone[(int) cbdata + (NUM_TESTS * i)]) {
+    } else if (testdone[(int) cbdata]) {
         test_failure("Callback function called on an already completed test.");
     } else {
-        testdone[(int) cbdata + (NUM_TESTS * i)] = true;
+        testdone[(int) cbdata] = true;
         test_success();
     }
 }
@@ -103,8 +103,13 @@ struct iovec recv_msg2[3] = {{(void *) &msg_type, sizeof(msg_type)},
 int main(int argc, char ** argv)
 {
     ompi_process_name_t  peer;
+    bool all_complete = false;
+    int n;
     MPI_Init(&argc, &argv);
-
+   
+    for(i = 0; i < NUM_TESTS * NUM_TIMES; i++) {
+       testdone[i] = false;
+    } 
     /* setup peer address */
     peer = mca_oob_name_self;
     fprintf(stderr, "my vpid %d my jobid %d my cellid %d my pid %d\n",  
@@ -126,21 +131,42 @@ int main(int argc, char ** argv)
             do_recvs(&peer);
             do_sends(&peer);
         }
+
     }
+    /* now we want to make sure all the tests have completed */
     /* done */
+    n = 0;
+    while(!all_complete && n < 10) {
+        all_complete = true;
+        for(i = 0; i < NUM_TESTS * NUM_TIMES; i++) {
+            if(!testdone[i]) {
+                all_complete = false;
+            }
+        }
+        if(!all_complete) {
+            sleep(1);
+        }
+        n++;
+    }
+    if(!all_complete) {
+        test_failure("not all sends or recieves were completed");
+    }
     test_finalize();
+    /* this is to give the oob time to finish all sends */
     MPI_Finalize();
     return 0;
 }
  
 void do_sends(ompi_process_name_t * peer) {
     /* non blocking send without doing any packing */
-    if( 0 > mca_oob_send_nb(peer, send_msg1, 4, 0, 0, &callback, (void *) 0)){
+    if( 0 > mca_oob_send_nb(peer, send_msg1, 4, 0, 0, &callback, 
+                            (void *) (0 +  (NUM_TESTS * i)))) {
         test_failure("mca_oob_send_nb.");
     } else {
         test_success();
     }
-    if( 0 > mca_oob_send_nb(peer, send_msg1, 4, 0, 0, &callback, (void *) 1)){
+    if( 0 > mca_oob_send_nb(peer, send_msg1, 4, 0, 0, &callback, 
+                            (void *) (1 +  (NUM_TESTS * i)))) {
         test_failure("mca_oob_send_nb.");
     } else {
         test_success();
@@ -148,13 +174,13 @@ void do_sends(ompi_process_name_t * peer) {
 
     /* nonblocking send with packing */
     if( 0 > mca_oob_send_hton_nb(peer, send_msg1, types, 4, 0, 0, &callback,
-                                 (void *) 2)) {
+                                 (void *) (2 + (NUM_TESTS * i)))) {
         test_failure("mca_oob_send_hton_nb.");
     } else {
         test_success();
     }
     if( 0 > mca_oob_send_hton_nb(peer, send_msg1, types, 4, 0, 0, &callback,
-                                 (void *) 3)) {
+                                 (void *) (3 + (NUM_TESTS * i)))) {
         test_failure("mca_oob_send_hton_nb.");
     } else {
         test_success();
@@ -188,7 +214,8 @@ void do_sends(ompi_process_name_t * peer) {
 void do_recvs(ompi_process_name_t * peer) {
     /*first, we'll recieve the nonpacked send - assuming we know the
      *  message type */
-    if( 0 > mca_oob_recv_nb(peer, recv_msg1, 4, 0, 0, &callback, (void *) 4)) {
+    if( 0 > mca_oob_recv_nb(peer, recv_msg1, 4, 0, 0, &callback, 
+                            (void *) (4 +  (NUM_TESTS * i)))) {
         test_failure("mca_oob_recv_nb.");
     } else {
         test_success();
@@ -211,7 +238,7 @@ void do_recvs(ompi_process_name_t * peer) {
         test_failure("compare 2 is wrong");
     }
     if( 0 > mca_oob_recv_ntoh_nb(peer, recv_msg1, types, 4, 0, 0, &callback, 
-                                 (void *) 5)) {
+                                 (void *) (5 + (NUM_TESTS * i)))) {
         test_failure("mca_oob_recv_ntoh_nb.");
     } else {
         test_success();
@@ -251,7 +278,8 @@ void do_recvs(ompi_process_name_t * peer) {
             test_failure("Message peek did not return a valid type number.");
             break;
     }
-    if( 0 > mca_oob_recv_nb(peer, recv_msg2, 3, 0, 0, &callback, (void *) 6)) {
+    if( 0 > mca_oob_recv_nb(peer, recv_msg2, 3, 0, 0, &callback, 
+                            (void *) (6 + (NUM_TESTS * i)))) {
         test_failure("mca_oob_recv_nb.");
     } else {
         test_success();
@@ -267,7 +295,7 @@ void do_recvs(ompi_process_name_t * peer) {
         test_failure("compare 5 is wrong");
     }
     if( 0 > mca_oob_recv_ntoh_nb(peer, recv_msg1, types, 4, 0, 0, &callback, 
-                                 (void *) 7)) {
+                                 (void *) (7 + (NUM_TESTS * i)))) {
         test_failure("mca_oob_recv_ntoh_nb.");
     } else {
         test_success();
