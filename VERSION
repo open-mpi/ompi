@@ -7,8 +7,8 @@
 # <major>.<minor>.<release>.  If minor and release are both zero, then
 # release is omitted.
 
-major=1
-minor=0
+major=0
+minor=8
 release=0
 
 # Only one of alpha or beta can be nonzero.  If both are zero, alpha
