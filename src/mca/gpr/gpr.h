@@ -2,10 +2,12 @@
  *
  * $HEADER$
  */
-/** @file **/
+/** @file 
+ * @page gpr_api
+ */
 
 /** 
- *  \brief General Purpose Registry (GPR)
+ *  \brief General Purpose Registry (GPR) API
  *
  * The Open MPI General Purpose Registry (GPR) 
  */
