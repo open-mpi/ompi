@@ -50,7 +50,9 @@ extern ompi_pointer_array_t ompi_mpi_communicators;
 
 struct ompi_communicator_t {
     ompi_object_t              c_base; 
+#ifdef USE_MUTEX_FOR_COMMS
     ompi_mutex_t               c_lock; /* mutex for name and attributes */
+#endif
     char  c_name[MPI_MAX_OBJECT_NAME];
     uint32_t              c_contextid;
     int                     c_my_rank;

@@ -39,8 +39,9 @@ int MPI_Comm_get_name(MPI_Comm comm, char *name, int *length)
             return OMPI_ERRHANDLER_INVOKE ( comm, MPI_ERR_ARG, 
                                             FUNC_NAME);
     }
-
+#ifdef USE_MUTEX_FOR_COMMS
     OMPI_THREAD_LOCK(&(comm->c_lock));
+#endif
     if ( comm->c_flags & OMPI_COMM_NAMEISSET ) {
         strncpy ( name, comm->c_name, MPI_MAX_OBJECT_NAME );
         *length = strlen ( comm->c_name );
@@ -49,7 +50,9 @@ int MPI_Comm_get_name(MPI_Comm comm, char *name, int *length)
         memset ( name, 0, MPI_MAX_OBJECT_NAME );
         *length = 0;
     }
+#ifdef USE_MUTEX_FOR_COMMS
     OMPI_THREAD_UNLOCK(&(comm->c_lock));
+#endif
 
     return MPI_SUCCESS;
 }
