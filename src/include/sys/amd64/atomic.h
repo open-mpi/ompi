@@ -37,77 +37,38 @@ static inline void ompi_atomic_wmb(void)
 }
 
 static inline int ompi_atomic_cmpset_32(volatile uint32_t *addr,
-                                       uint32_t oldval,
-                                       uint32_t newval)
+                                        uint32_t oldval,
+                                        uint32_t newval)
 {
    unsigned long prev;
    __asm__ __volatile__(SMPLOCK "cmpxchgl %k1,%2"
-                 : "=a"(prev)
-                 : "q"(newval), "m"(*addr), "0"(oldval)
-                 : "memory");
+                        : "=a"(prev)
+                        : "q"(newval), "m"(*addr), "0"(oldval)
+                        : "memory");
    return prev == oldval;
-#if 0
-    uint32_t ret = oldval;
-
-    __asm__ __volatile (
-SMPLOCK "cmpxchgl %1,%2   \n\
-      setz     %%al    \n\
-      movzbl   %%al,%0 \n"
-    : "+a" (ret)
-    : "r" (newval), "m" (*(addr))
-    : "memory");
-
-    return (ret == oldval);
-#endif
 }
 
-
-static inline int ompi_atomic_cmpset_acq_32(volatile uint32_t *addr,
-                                            uint32_t oldval,
-                                            uint32_t newval)
-{
-    return ompi_atomic_cmpset_32(addr, oldval, newval);
-}
-
-
-static inline int ompi_atomic_cmpset_rel_32(volatile uint32_t *addr,
-                                            uint32_t oldval,
-                                            uint32_t newval)
-{
-    return ompi_atomic_cmpset_32(addr, oldval, newval);
-}
+#define ompi_atomic_cmpset_acq_32 ompi_atomic_cmpset_32
+#define ompi_atomic_cmpset_rel_32 ompi_atomic_cmpset_32
 
 static inline int ompi_atomic_cmpset_64(volatile uint64_t *addr,
-                                       uint64_t oldval,
-                                       uint64_t newval)
+                                        uint64_t oldval,
+                                        uint64_t newval)
 {
-    uint64_t ret = oldval;
+   uint64_t ret = oldval;
     
-    __asm__ __volatile (
-SMPLOCK "cmpxchgq %1,%2   \n\
-      setz     %%al    \n\
-      movzbl   %%al,%0 \n"
-    : "+a" (ret)
-    : "r" (newval), "m" (*(addr))
-    : "memory");
-
-    return (ret == oldval);
+   __asm__ __volatile (
+                       SMPLOCK "cmpxchgq %1,%2   \n\t"
+                               "setz     %%al    \n\t"
+                               "movzbl   %%al,%0 \n\t"
+                       : "+a" (ret)
+                       : "r" (newval), "m" (*(addr))
+                       : "memory");
+    
+   return (ret == oldval);
 }
 
-
-static inline int ompi_atomic_cmpset_acq_64(volatile uint64_t *addr,
-                                           uint64_t oldval,
-                                           uint64_t newval)
-{
-    return ompi_atomic_cmpset_64( addr, oldval, newval );
-}
-
-
-static inline int ompi_atomic_cmpset_rel_64(volatile uint64_t *addr,
-                                           uint64_t oldval,
-                                           uint64_t newval)
-{
-    return ompi_atomic_cmpset_64( addr, oldval, newval );
-}
+#define ompi_atomic_cmpset_acq_64 ompi_atomic_cmpset_64
+#define ompi_atomic_cmpset_rel_64 ompi_atomic_cmpset_64
 
 #endif /* ! OMPI_SYS_ARCH_ATOMIC_H */

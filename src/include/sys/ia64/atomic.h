@@ -34,7 +34,6 @@ static inline void ompi_atomic_wmb(void)
     MB();
 }
 
-
 static inline int ompi_atomic_cmpset_acq_32(volatile uint32_t *addr,
                                            uint32_t oldval,
                                            uint32_t newval)
@@ -42,80 +41,68 @@ static inline int ompi_atomic_cmpset_acq_32(volatile uint32_t *addr,
     uint32_t ret;
 
     __asm__ __volatile(
-"   mov ar.ccv=%2                \n\
-    cmpxchg4.acq %0=%4,%3,ar.ccv \n"
-    : "=r"(ret), "=m"(*addr)
-    : "r"(oldval), "r"(newval), "m"(*addr)
-    : "memory");
+                       "mov ar.ccv=%2                \n\t"
+                       "cmpxchg4.acq %0=%4,%3,ar.ccv \n\t"
+                       : "=r"(ret), "=m"(*addr)
+                       : "r"(oldval), "r"(newval), "m"(*addr)
+                       : "memory");
 
     return (ret == oldval);
 }
 
 
 static inline int ompi_atomic_cmpset_rel_32(volatile uint32_t *addr,
-                                           uint32_t oldval,
-                                           uint32_t newval)
+                                            uint32_t oldval,
+                                            uint32_t newval)
 {
-    uint32_t ret;
+   uint32_t ret;
 
-    __asm__ __volatile(
-"   mov ar.ccv=%2                \n\
-    cmpxchg4.rel %0=%4,%3,ar.ccv \n"
-    : "=r"(ret), "=m"(*addr)
-    : "r"(oldval), "r"(newval), "m"(*addr)
-    : "memory");
-
-    return (ret == oldval);
+   __asm__ __volatile(
+                      "mov ar.ccv=%2                \n\t"
+                      "cmpxchg4.rel %0=%4,%3,ar.ccv \n\t"
+                      : "=r"(ret), "=m"(*addr)
+                      : "r"(oldval), "r"(newval), "m"(*addr)
+                      : "memory");
+    
+   return (ret == oldval);
 }
 
 
-static inline int ompi_atomic_cmpset_32(volatile uint32_t *addr,
-                                       uint32_t oldval,
-                                       uint32_t newval)
-{
-    return ompi_atomic_cmpset_acq_32(addr, oldval, newval);
-}
-
+#define ompi_atomic_cmpset_32 ompi_atomic_cmpset_acq_32
 
 static inline int ompi_atomic_cmpset_acq_64(volatile uint64_t *addr,
-                                           uint64_t oldval,
-                                           uint64_t newval)
+                                            uint64_t oldval,
+                                            uint64_t newval)
 {
-    uint64_t ret;
+   uint64_t ret;
 
-    __asm__ __volatile(
-"   mov ar.ccv=%2                \n\
-    cmpxchg8.acq %0=%4,%3,ar.ccv \n"
-    : "=r"(ret), "=m"(*addr)
-    : "r"(oldval), "r"(newval), "m"(*addr)
-    : "memory");
-
-    return (ret == oldval);
+   __asm__ __volatile(
+                      "mov ar.ccv=%2                \n\t"
+                      "cmpxchg8.acq %0=%4,%3,ar.ccv \n\t"
+                      : "=r"(ret), "=m"(*addr)
+                      : "r"(oldval), "r"(newval), "m"(*addr)
+                      : "memory");
+    
+   return (ret == oldval);
 }
 
 
 static inline int ompi_atomic_cmpset_rel_64(volatile uint64_t *addr,
-                                           uint64_t oldval,
-                                           uint64_t newval)
+                                            uint64_t oldval,
+                                            uint64_t newval)
 {
-    uint64_t ret;
+   uint64_t ret;
 
-    __asm__ __volatile(
-"   mov ar.ccv=%2                \n\
-    cmpxchg8.rel %0=%4,%3,ar.ccv \n"
-    : "=r"(ret), "=m"(*addr)
-    : "r"(oldval), "r"(newval), "m"(*addr)
-    : "memory");
-    return (ret);
+   __asm__ __volatile(
+                      "mov ar.ccv=%2                \n\t"
+                      "cmpxchg8.rel %0=%4,%3,ar.ccv \n\t"
+                      : "=r"(ret), "=m"(*addr)
+                      : "r"(oldval), "r"(newval), "m"(*addr)
+                      : "memory");
+   return (ret);
 }
 
 
-static inline int ompi_atomic_cmpset_64(volatile uint64_t *addr,
-                                       uint64_t oldval,
-                                       uint64_t newval)
-{
-    return ompi_atomic_cmpset_acq_64(addr, oldval, newval);
-}
-
+#define ompi_atomic_cmpset_64 ompi_atomic_cmpset_acq_64
 
 #endif /* ! OMPI_SYS_ARCH_ATOMIC_H */
