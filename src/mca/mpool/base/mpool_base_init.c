@@ -32,6 +32,10 @@ int mca_mpool_base_init(bool *allow_multi_user_threads)
   mca_mpool_t *module;
   mca_mpool_base_selected_module_t *sm;
 
+  /* Default to true in case there's no modules selected */
+
+  *allow_multi_user_threads = true;
+
   /* Traverse the list of available modules; call their init
      functions. */
 
