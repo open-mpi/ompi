@@ -31,7 +31,8 @@ nodist_libmpi_f77_pmpi_la_SOURCES = \
         pcomm_set_name_f.c \
         pinit_f.c \
         pfinalize_f.c \
-        pfree_mem_f.c
+        pfree_mem_f.c \
+        pgroup_compare_f.c
 #
 # Sym link in the sources from the real MPI directory
 #
