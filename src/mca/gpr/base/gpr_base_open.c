@@ -4,6 +4,12 @@
 
 #include "ompi_config.h"
 
+#include "mca/mca.h"
+#include "mca/base/base.h"
+#include "mca/base/mca_base_param.h"
+#include "util/output.h"
+#include "util/proc_info.h"
+#include "mca/oob/base/base.h"
 #include "mca/gpr/base/base.h"
 
 
@@ -41,26 +47,6 @@ OBJ_CLASS_INSTANCE(
 		   ompi_list_item_t, /* parent "class" name */
 		   ompi_registry_value_construct, /* constructor */
 		   ompi_registry_value_destructor); /* destructor */
-
-
-/* constructor - used to initialize state of compound_cmd_value instance */
-static void ompi_registry_compound_cmd_results_construct(ompi_registry_compound_cmd_results_t* results)
-{
-    OBJ_CONSTRUCT(&results->data, ompi_list_t);
-}
-
-/* destructor - used to free any resources held by instance */
-static void ompi_registry_compound_cmd_results_destructor(ompi_registry_compound_cmd_results_t* results)
-{
-    OBJ_DESTRUCT(&results->data);
-}
-
-/* define instance of ompi_class_t */
-OBJ_CLASS_INSTANCE(
-		   ompi_registry_compound_cmd_results_t,     /* type name */
-		   ompi_list_item_t,                /* parent "class" name */
-		   ompi_registry_compound_cmd_results_construct,   /* constructor */
-		   ompi_registry_compound_cmd_results_destructor); /* destructor */
 
 
 /* constructor - used to initialize state of index_value instance */
@@ -111,10 +97,36 @@ OBJ_CLASS_INSTANCE(
 		   ompi_registry_internal_test_results_destructor);  /* destructor */
 
 
+/* constructor - used to initialize notify message instance */
+static void mca_gpr_notify_request_tracker_construct(mca_gpr_notify_request_tracker_t* req)
+{
+    req->requestor = NULL;
+    req->req_tag = 0;
+    req->callback = NULL;
+    req->user_tag = NULL;
+    req->id_tag = MCA_GPR_NOTIFY_ID_MAX;
+}
+
+/* destructor - used to free any resources held by instance */
+static void mca_gpr_notify_request_tracker_destructor(mca_gpr_notify_request_tracker_t* req)
+{
+    if (NULL != req->requestor) {
+	free(req->requestor);
+    }
+}
+
+/* define instance of ompi_class_t */
+OBJ_CLASS_INSTANCE(
+		   mca_gpr_notify_request_tracker_t,            /* type name */
+		   ompi_list_item_t,                          /* parent "class" name */
+		   mca_gpr_notify_request_tracker_construct,    /* constructor */
+		   mca_gpr_notify_request_tracker_destructor);  /* destructor */
+
+
 /* constructor - used to initialize notify idtag list instance */
 static void mca_gpr_idtag_list_construct(mca_gpr_idtag_list_t* req)
 {
-    req->id_tag = OMPI_REGISTRY_NOTIFY_ID_MAX;
+    req->id_tag = MCA_GPR_NOTIFY_ID_MAX;
 }
 
 /* destructor - used to free any resources held by instance */
@@ -133,8 +145,6 @@ OBJ_CLASS_INSTANCE(
 /* constructor - used to initialize notify message instance */
 static void ompi_registry_notify_message_construct(ompi_registry_notify_message_t* msg)
 {
-    msg->segment = NULL;
-    msg->owning_job = 0;
     OBJ_CONSTRUCT(&msg->data, ompi_list_t);
     msg->trig_action = OMPI_REGISTRY_NOTIFY_NONE;
     msg->trig_synchro = OMPI_REGISTRY_SYNCHRO_MODE_NONE;
@@ -148,10 +158,6 @@ static void ompi_registry_notify_message_destructor(ompi_registry_notify_message
     uint32_t i;
     char **tokptr;
     ompi_registry_value_t *ptr;
-
-    if (NULL != msg->segment) {
-	free(msg->segment);
-    }
 
     while (NULL != (ptr = (ompi_registry_value_t*)ompi_list_remove_first(&msg->data))) {
 	OBJ_RELEASE(ptr);
@@ -183,7 +189,6 @@ mca_gpr_base_module_t ompi_registry;
 bool mca_gpr_base_selected = false;
 ompi_list_t mca_gpr_base_components_available;
 mca_gpr_base_component_t mca_gpr_base_selected_component;
-ompi_mutex_t mca_gpr_mutex;
 
 
 /**
@@ -192,7 +197,6 @@ ompi_mutex_t mca_gpr_mutex;
  */
 int mca_gpr_base_open(void)
 {
-
   /* Open up all available components */
 
   if (OMPI_SUCCESS != 

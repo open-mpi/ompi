@@ -19,8 +19,9 @@
 #include "util/output.h"
 #include "util/if.h"
 #include "mca/oob/tcp/oob_tcp.h"
-#include "mca/ns/base/base.h"
+#include "mca/ns/ns.h"
 #include "mca/gpr/base/base.h"
+#include "mca/gpr/gpr.h"
 #include "mca/pcmclient/pcmclient.h"
 #include "mca/pcmclient/base/base.h"
 
@@ -110,8 +111,6 @@ static mca_oob_t mca_oob_tcp = {
     mca_oob_tcp_recv_cancel,
     mca_oob_tcp_init,
     mca_oob_tcp_fini,
-    mca_oob_tcp_addr_pack,
-    mca_oob_tcp_registry_callback
 };
 
 
@@ -364,7 +363,7 @@ static void mca_oob_tcp_recv_handler(int sd, short flags, void* user)
     /* check for wildcard name - if this is true - we allocate a name from the name server 
      * and return to the peer 
      */
-    if(ompi_name_server.compare(OMPI_NS_CMP_ALL, guid, MCA_OOB_NAME_ANY) == 0) {
+    if(mca_oob_tcp_process_name_compare(guid, MCA_OOB_NAME_ANY) == 0) {
         guid->jobid = ompi_name_server.create_jobid();
         guid->vpid = ompi_name_server.reserve_range(guid->jobid,1);
         ompi_name_server.assign_cellid_to_process(guid);
@@ -410,10 +409,8 @@ mca_oob_t* mca_oob_tcp_component_init(int* priority, bool *allow_multi_user_thre
         return NULL;
 
     /* initialize data structures */
-    ompi_rb_tree_init(&mca_oob_tcp_component.tcp_peer_tree,
-		      (ompi_rb_tree_comp_fn_t)mca_oob_tcp_process_name_compare);
-    ompi_rb_tree_init(&mca_oob_tcp_component.tcp_peer_names,
-		      (ompi_rb_tree_comp_fn_t)mca_oob_tcp_process_name_compare);
+    ompi_rb_tree_init(&mca_oob_tcp_component.tcp_peer_tree, (ompi_rb_tree_comp_fn_t)mca_oob_tcp_process_name_compare);
+    ompi_rb_tree_init(&mca_oob_tcp_component.tcp_peer_names, (ompi_rb_tree_comp_fn_t)mca_oob_tcp_process_name_compare);
 
     ompi_free_list_init(&mca_oob_tcp_component.tcp_peer_free,
         sizeof(mca_oob_tcp_peer_t),
@@ -448,7 +445,7 @@ mca_oob_t* mca_oob_tcp_component_init(int* priority, bool *allow_multi_user_thre
  * Callback from registry on change to subscribed segments.
  */
 
-void mca_oob_tcp_registry_callback(
+static void mca_oob_tcp_registry_callback(
     ompi_registry_notify_message_t* msg,
     void* cbdata)
 {
@@ -514,7 +511,7 @@ int mca_oob_tcp_resolve(mca_oob_tcp_peer_t* peer)
      mca_oob_tcp_addr_t* addr;
      mca_oob_tcp_subscription_t* subscription;
      ompi_list_item_t* item;
-     char *segment, *jobid;
+     char segment[32], *jobid;
      int rc;
   
      /* if the address is already cached - simply return it */
@@ -547,13 +544,11 @@ int mca_oob_tcp_resolve(mca_oob_tcp_peer_t* peer)
 
      /* subscribe */
      jobid = ompi_name_server.get_jobid_string(&peer->peer_name);
-     asprintf(&segment, "%s-%s", OMPI_RTE_OOB_SEGMENT, jobid);
+     sprintf(segment, "oob-tcp-%s", jobid);
      rc = ompi_registry.subscribe(
          OMPI_REGISTRY_OR,
          OMPI_REGISTRY_NOTIFY_ADD_ENTRY|OMPI_REGISTRY_NOTIFY_DELETE_ENTRY|
-         OMPI_REGISTRY_NOTIFY_MODIFICATION|
-	 OMPI_REGISTRY_NOTIFY_ON_STARTUP|OMPI_REGISTRY_NOTIFY_INCLUDE_STARTUP_DATA|
-	 OMPI_REGISTRY_NOTIFY_ON_SHUTDOWN,
+         OMPI_REGISTRY_NOTIFY_MODIFICATION|OMPI_REGISTRY_NOTIFY_PRE_EXISTING,
          segment,
          NULL,
          mca_oob_tcp_registry_callback,
@@ -575,14 +570,13 @@ int mca_oob_tcp_init(void)
     char *keys[2], *jobid;
     void *addr;
     int32_t size;
-    char *segment;
+    char segment[32];
     ompi_buffer_t buffer;
     ompi_process_name_t* peers;
     mca_oob_tcp_subscription_t* subscription;
     size_t npeers;
     int rc;
     ompi_list_item_t* item;
-    ompi_registry_notify_id_t rc_tag;
 
     /* iterate through the open connections and send an ident message to all peers -
      * note that we initially come up w/out knowing our process name - and are assigned
@@ -604,31 +598,31 @@ int mca_oob_tcp_init(void)
     }
 
     jobid = ompi_name_server.get_jobid_string(&mca_oob_name_self);
-    asprintf(&segment, "%s-%s", OMPI_RTE_OOB_SEGMENT, jobid);
+    sprintf(segment, "oob-tcp-%s", jobid);
     if(mca_oob_tcp_component.tcp_debug > 1) {
-        ompi_output(0, "[%d,%d,%d] mca_oob_tcp_init: calling ompi_registry.subscribe(%s,%d)\n", 
+        ompi_output(0, "[%d,%d,%d] mca_oob_tcp_init: calling ompi_registry.synchro(%s,%d)\n", 
             OMPI_NAME_ARGS(mca_oob_name_self),
             segment,
             npeers);
     }
 
-    /* register subscribe callback to receive notification when all processes have registered */
+    /* register synchro callback to receive notification when all processes have registered */
     subscription = OBJ_NEW(mca_oob_tcp_subscription_t);
     subscription->jobid = mca_oob_name_self.jobid;
     ompi_list_append(&mca_oob_tcp_component.tcp_subscriptions, &subscription->item);
     OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
 
-    rc_tag = ompi_registry.subscribe(
+    rc = ompi_registry.synchro(
         OMPI_REGISTRY_OR,
-        OMPI_REGISTRY_NOTIFY_ON_STARTUP|OMPI_REGISTRY_NOTIFY_INCLUDE_STARTUP_DATA|
-	OMPI_REGISTRY_NOTIFY_ON_SHUTDOWN,
+        OMPI_REGISTRY_SYNCHRO_MODE_ASCENDING|OMPI_REGISTRY_SYNCHRO_MODE_ONE_SHOT,
         segment,
         NULL,
+        npeers,
         mca_oob_tcp_registry_callback,
         NULL);
-    if(rc_tag == OMPI_REGISTRY_NOTIFY_ID_MAX) {
-        ompi_output(0, "mca_oob_tcp_init: registry subscription failed");
-        return OMPI_ERROR;
+    if(rc != OMPI_SUCCESS) {
+        ompi_output(0, "mca_oob_tcp_init: registry synchro failed with error code %d.", rc);
+        return rc;
     }
 
     /* put our contact info in registry */
@@ -711,7 +705,19 @@ int mca_oob_tcp_fini(void)
 
 int mca_oob_tcp_process_name_compare(const ompi_process_name_t* n1, const ompi_process_name_t* n2)
 {
-    return mca_ns_base_compare(OMPI_NS_CMP_ALL, n1, n2);
+   if(n1->cellid < n2->cellid)
+       return -1;
+   else if(n1->cellid > n2->cellid)
+       return 1;
+   else if(n1->jobid < n2->jobid)
+       return -1;
+   else if(n1->jobid > n2->jobid)
+       return 1;
+   else if(n1->vpid < n2->vpid)
+       return -1;
+   else if(n1->vpid > n2->vpid)
+       return 1;
+   return(0);
 }
 
 

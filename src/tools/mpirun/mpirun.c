@@ -30,7 +30,6 @@
 #include "mca/base/base.h"
 #include "mca/ns/ns.h"
 #include "mca/ns/base/base.h"
-#include "mca/gpr/base/base.h"
 #include "mca/pcm/base/base.h"
 #include "mca/oob/base/base.h"
 
@@ -50,13 +49,12 @@ main(int argc, char *argv[])
     ompi_list_t *nodelist = NULL;
     ompi_list_t schedlist;
     mca_ns_base_jobid_t new_jobid;
-    int num_procs = 1;
+    int num_procs = 1, rc;
     ompi_rte_node_schedule_t *sched;
     char cwd[MAXPATHLEN];
     char *my_contact_info, *tmp;
     char *contact_file, *filenm, *segment;
     ompi_rte_spawn_handle_t *spawn_handle;
-    ompi_registry_notify_id_t rc_tag;
 
     /*
      * Intialize our Open MPI environment
@@ -272,26 +270,25 @@ main(int argc, char *argv[])
      * register to monitor the startup and shutdown processes
      */
     /* setup segment for this job */
-    asprintf(&segment, "%s-%s", OMPI_RTE_JOB_STATUS_SEGMENT,
-	     ompi_name_server.convert_jobid_to_string(new_jobid));
+    asprintf(&segment, "ompi-job-%X", new_jobid);
 
     /* register a synchro on the segment so we get notified when everyone registers */
-    rc_tag = ompi_registry.synchro(
-	     OMPI_REGISTRY_SYNCHRO_MODE_LEVEL|OMPI_REGISTRY_SYNCHRO_MODE_ONE_SHOT,
-	     OMPI_REGISTRY_OR,
-	     segment,
-	     NULL,
-	     num_procs,
-	     ompi_rte_all_procs_registered, NULL);
+    rc = ompi_registry.synchro(
+	 OMPI_REGISTRY_SYNCHRO_MODE_LEVEL|OMPI_REGISTRY_SYNCHRO_MODE_ONE_SHOT,
+	 OMPI_REGISTRY_OR,
+	 segment,
+	 NULL,
+	 num_procs,
+	 ompi_rte_all_procs_registered, NULL);
     /* register a synchro on the segment so we get notified when everyone is gone
      */
-    rc_tag = ompi_registry.synchro(
-	     OMPI_REGISTRY_SYNCHRO_MODE_DESCENDING|OMPI_REGISTRY_SYNCHRO_MODE_ONE_SHOT,
-	     OMPI_REGISTRY_OR,
-	     segment,
-	     NULL,
-	     0,
-	     ompi_rte_all_procs_unregistered, NULL);
+    rc = ompi_registry.synchro(
+         OMPI_REGISTRY_SYNCHRO_MODE_DESCENDING|OMPI_REGISTRY_SYNCHRO_MODE_ONE_SHOT,
+         OMPI_REGISTRY_OR,
+         segment,
+         NULL,
+         0,
+         ompi_rte_all_procs_unregistered, NULL);
 
     /*
      * spawn procs
@@ -306,11 +303,8 @@ main(int argc, char *argv[])
     if (OMPI_SUCCESS != (ret = ompi_rte_monitor_procs_registered())) {
         ompi_show_help("help-mpirun.txt", "mpirun:proc-reg-failed", 
                        true, argv[0], ret);
-	ompi_rte_job_shutdown(new_jobid);
     } else {
-	ompi_rte_job_startup(new_jobid);
 	ompi_rte_monitor_procs_unregistered();
-	ompi_rte_job_shutdown(new_jobid);
     }
     /*
      *   - ompi_rte_kill_job()

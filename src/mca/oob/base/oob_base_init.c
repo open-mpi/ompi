@@ -59,7 +59,7 @@ int mca_oob_parse_contact_info(
     }
     *ptr = '\0';
     ptr++;
-    proc_name = mca_ns_base_convert_string_to_process_name(cinfo);
+    proc_name = ns_base_convert_string_to_process_name(cinfo);
     *name = *proc_name;
     free(proc_name);
 
@@ -182,7 +182,7 @@ int mca_oob_base_init(bool *user_threads, bool *hidden_threads)
                                                                                                              
 char* mca_oob_get_contact_info()
 {
-    char *proc_name = mca_ns_base_get_proc_name_string(MCA_OOB_NAME_SELF);
+    char *proc_name = ns_base_get_proc_name_string(MCA_OOB_NAME_SELF);
     char *proc_addr = mca_oob.oob_get_addr();
     size_t size = strlen(proc_name) + 1 + strlen(proc_addr) + 1;
     char *contact_info = malloc(size);

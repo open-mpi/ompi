@@ -4,6 +4,21 @@
 
 #include "ompi_config.h"
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+
+#include "runtime/runtime.h"
+#include "util/output.h"
+#include "util/proc_info.h"
+#include "mca/mca.h"
+#include "mca/base/base.h"
 #include "mca/gpr/base/base.h"
 
 

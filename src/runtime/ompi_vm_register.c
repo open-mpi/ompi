@@ -65,7 +65,7 @@ int ompi_vm_register(void)
     keys[0] = ompi_name_server.get_proc_name_string(ompi_rte_get_self());
     keys[1] = NULL;
 
-    ret_code = ompi_registry.put(OMPI_REGISTRY_XAND, OMPI_RTE_VM_STATUS_SEGMENT, keys, buffer, sizeof(buffer));
+    ret_code = ompi_registry.put(OMPI_REGISTRY_XAND, "ompi-vm", keys, buffer, sizeof(buffer));
 
  error:
     ompi_buffer_free(buffer);

@@ -3,9 +3,6 @@
  * $HEADER$
  *
  */
-/** @file 
- */
-
 #ifndef GPR_REPLICA_H
 #define GPR_REPLICA_H
 
@@ -14,9 +11,9 @@
 
 #include <time.h>
 
-#include "threads/mutex.h"
-#include "threads/condition.h"
-
+#include "include/types.h"
+#include "include/constants.h"
+#include "class/ompi_list.h"
 #include "mca/gpr/base/base.h"
 
 /*
@@ -35,7 +32,6 @@ typedef uint32_t mca_gpr_replica_key_t;
 struct mca_gpr_replica_t {
     ompi_list_t registry;
     ompi_list_t segment_dict;
-    ompi_list_t triggers;
     mca_gpr_replica_key_t lastkey;
     ompi_list_t freekeys;
 };
@@ -49,26 +45,14 @@ OBJ_CLASS_DECLARATION(mca_gpr_replica_t);
 struct mca_gpr_replica_callbacks_t {
     ompi_list_item_t item;
     ompi_registry_notify_cb_fn_t cb_func;
-    void *user_tag;
     ompi_registry_notify_message_t *message;
     ompi_process_name_t *requestor;
-    ompi_registry_notify_id_t remote_idtag;
+    int remote_idtag;
+    void *user_tag;
 };
 typedef struct mca_gpr_replica_callbacks_t mca_gpr_replica_callbacks_t;
 
 OBJ_CLASS_DECLARATION(mca_gpr_replica_callbacks_t);
-
-/*
- * List of process names who have notification turned OFF
- */
-struct mca_gpr_replica_notify_off_t {
-    ompi_list_item_t item;
-    ompi_registry_notify_id_t sub_number;
-    ompi_process_name_t *proc;
-};
-typedef struct mca_gpr_replica_notify_off_t mca_gpr_replica_notify_off_t;
-
-OBJ_CLASS_DECLARATION(mca_gpr_replica_notify_off_t);
 
 /** Dictionary of token-key pairs.
  * This structure is used to create a linked list of token-key pairs. All calls to
@@ -107,7 +91,6 @@ OBJ_CLASS_DECLARATION(mca_gpr_replica_keylist_t);
  */
 struct mca_gpr_replica_trigger_list_t {
     ompi_list_item_t item;                     /**< Allows this item to be placed on a list */
-    mca_ns_base_jobid_t owning_job;            /**< Job ID of the process that registered trigger */
     ompi_registry_synchro_mode_t synch_mode;   /**< Synchro mode - ascending, descending, ... */
     ompi_registry_notify_action_t action;      /**< Bit-mask of actions that trigger non-synchro notification */
     ompi_registry_mode_t addr_mode;            /**< Addressing mode */
@@ -117,21 +100,13 @@ struct mca_gpr_replica_trigger_list_t {
     uint32_t trigger;                          /**< Number of objects that trigger notification */
     uint32_t count;                            /**< Number of qualifying objects currently in segment */
     int8_t above_below;                        /**< Tracks transitions across level */
-    ompi_registry_notify_id_t local_idtag;     /**< Tag into the list of notify structures */
+    mca_gpr_notify_id_t id_tag;                /**< Tag into the list of notify structures */
 };
 typedef struct mca_gpr_replica_trigger_list_t mca_gpr_replica_trigger_list_t;
 
-#define MCA_GPR_REPLICA_TRIGGER_ABOVE_LEVEL   (int8_t) 1
-#define MCA_GPR_REPLICA_TRIGGER_BELOW_LEVEL   (int8_t) -1
-#define MCA_GPR_REPLICA_TRIGGER_AT_LEVEL      (int8_t) 0
-
-/* define a few action flags for trigger evaluation
- */
-#define MCA_GPR_REPLICA_OBJECT_ADDED      (int8_t) 1
-#define MCA_GPR_REPLICA_OBJECT_DELETED    (int8_t) 2
-#define MCA_GPR_REPLICA_OBJECT_UPDATED    (int8_t) 3
-#define MCA_GPR_REPLICA_SUBSCRIBER_ADDED  (int8_t) 4
-
+#define MCA_GPR_REPLICA_TRIGGER_ABOVE_LEVEL   1
+#define MCA_GPR_REPLICA_TRIGGER_BELOW_LEVEL  -1
+#define MCA_GPR_REPLICA_TRIGGER_AT_LEVEL      0
 
 OBJ_CLASS_DECLARATION(mca_gpr_replica_trigger_list_t);
 
@@ -200,13 +175,10 @@ OBJ_CLASS_DECLARATION(mca_gpr_replica_core_t);
  */
 struct mca_gpr_replica_segment_t {
     ompi_list_item_t item;             /**< Allows this item to be placed on a list */
-    char *name;                        /**< Name of the segment */
-    mca_ns_base_jobid_t owning_job;    /**< Job that "owns" this segment */
-    mca_gpr_replica_key_t key;         /**< Key corresponding to name of registry segment */
+    mca_gpr_replica_key_t segment;     /**< Key corresponding to name of registry segment */
     mca_gpr_replica_key_t lastkey;     /**< Highest key value used */
     ompi_list_t registry_entries;      /**< Linked list of stored objects within this segment */
     ompi_list_t triggers;              /**< List of triggers on this segment */
-    bool triggers_active;              /**< Indicates if triggers are active or not */
     ompi_list_t keytable;              /**< Token-key dictionary for this segment */
     ompi_list_t freekeys;              /**< List of keys that have been made available */
 };
@@ -215,41 +187,16 @@ typedef struct mca_gpr_replica_segment_t mca_gpr_replica_segment_t;
 OBJ_CLASS_DECLARATION(mca_gpr_replica_segment_t);
 
 
-struct mca_gpr_replica_notify_request_tracker_t {
-    ompi_list_item_t item;                   /**< Allows this item to be placed on a list */
-    ompi_process_name_t *requestor;          /**< Name of requesting process */
-    ompi_registry_notify_cb_fn_t callback;   /**< Function to be called for notificaiton */
-    void *user_tag;                          /**< User-provided tag for callback function */
-    ompi_registry_notify_id_t local_idtag;   /**< Local ID tag of associated subscription */
-    ompi_registry_notify_id_t remote_idtag;  /**< Remote ID tag of subscription */
-    mca_gpr_replica_segment_t *segptr;       /**< Pointer to segment that subscription was
-                                                  placed upon */
-    ompi_registry_notify_action_t action;    /**< The action that triggers the request */
-};
-typedef struct mca_gpr_replica_notify_request_tracker_t mca_gpr_replica_notify_request_tracker_t;
-
-OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_gpr_replica_notify_request_tracker_t);
-
-
 /*
  * globals needed within component
  */
-extern mca_gpr_replica_t mca_gpr_replica_head;                    /**< Head of the entire registry */
-extern ompi_list_t mca_gpr_replica_notify_request_tracker;        /**< List of requested notifications */
-extern ompi_list_t mca_gpr_replica_callbacks;                     /**< List of callbacks currently pending */
-extern ompi_list_t mca_gpr_replica_notify_off_list;               /**< List of processes and subscriptions with notify turned off */
-extern ompi_registry_notify_id_t mca_gpr_replica_last_notify_id_tag;    /**< Next available notify id tag */
-extern ompi_list_t mca_gpr_replica_free_notify_id_tags;           /**< List of free notify id tags */
-extern int mca_gpr_replica_debug;                                 /**< Debug flag to control debugging output */
-extern ompi_mutex_t mca_gpr_replica_mutex;                        /**< Thread lock for registry functions */
-extern bool mca_gpr_replica_compound_cmd_mode;                    /**< Indicates if we are building compound cmd */
-extern bool mca_gpr_replica_exec_compound_cmd_mode;               /**< Indicates if we are executing compound cmd */
-extern ompi_buffer_t mca_gpr_replica_compound_cmd;                /**< Compound cmd buffer */
-extern ompi_mutex_t mca_gpr_replica_wait_for_compound_mutex;      /**< Lock to protect build compound cmd */
-extern ompi_condition_t mca_gpr_replica_compound_cmd_condition;   /**< Condition variable to control thread access to build compound cmd */
-extern int mca_gpr_replica_compound_cmd_waiting;                  /**< Count number of threads waiting to build compound cmd */
-extern bool mca_gpr_replica_silent_mode;                          /**< Indicates if local silent mode active */
-
+extern mca_gpr_replica_t mca_gpr_replica_head;
+extern ompi_list_t mca_gpr_replica_notify_request_tracker;
+extern ompi_list_t mca_gpr_replica_callbacks;
+extern mca_gpr_notify_id_t mca_gpr_replica_last_notify_id_tag;
+extern ompi_list_t mca_gpr_replica_free_notify_id_tags;
+extern int mca_gpr_replica_debug;
+extern ompi_mutex_t mca_gpr_replica_mutex;
 
 /*
  * Module open / close
@@ -265,162 +212,80 @@ mca_gpr_base_module_t *mca_gpr_replica_init(bool *allow_multi_user_threads, bool
 int mca_gpr_replica_finalize(void);
 
 /*
- * Implemented registry functions - see gpr.h for documentation
+ * Implemented registry functions
  */
 
-/*
- * Compound cmd functions
- */
-int mca_gpr_replica_begin_compound_cmd(void);
+int gpr_replica_delete_segment(char *segment);
+int gpr_replica_delete_segment_nl(char *segment);
 
-int mca_gpr_replica_stop_compound_cmd(void);
-
-ompi_list_t* mca_gpr_replica_exec_compound_cmd(bool return_requested);
-
-/*
- * Mode operations
- */
-void mca_gpr_replica_silent_mode_on(void);
-
-void mca_gpr_replica_silent_mode_off(void);
-
-void mca_gpr_replica_notify_off(ompi_registry_notify_id_t sub_number);
-void mca_gpr_replica_notify_off_nl(ompi_process_name_t *proc, ompi_registry_notify_id_t sub_number);
-
-void mca_gpr_replica_triggers_active(mca_ns_base_jobid_t jobid);
-void mca_gpr_replica_triggers_active_nl(mca_ns_base_jobid_t jobid);
-
-void mca_gpr_replica_triggers_inactive(mca_ns_base_jobid_t jobid);
-void mca_gpr_replica_triggers_inactive_nl(mca_ns_base_jobid_t jobid);
-
-void mca_gpr_replica_notify_on(ompi_registry_notify_id_t sub_number);
-void mca_gpr_replica_notify_on_nl(ompi_process_name_t *proc, ompi_registry_notify_id_t sub_number);
-
-int mca_gpr_replica_assume_ownership(char *segment);
-int mca_gpr_replica_assume_ownership_nl(mca_gpr_replica_segment_t *seg,
-					mca_ns_base_jobid_t jobid);
-
-/*
- * Delete-index functions
- */
-int mca_gpr_replica_delete_segment(char *segment);
-void  mca_gpr_replica_delete_segment_nl(mca_gpr_replica_segment_t *seg);
-
-int mca_gpr_replica_delete_object(ompi_registry_mode_t addr_mode,
-			      char *segment, char **tokens);
-int mca_gpr_replica_delete_object_nl(ompi_registry_mode_t addr_mode,
-				     mca_gpr_replica_segment_t *seg,
-				     mca_gpr_replica_key_t *keys,
-				     int num_keys);
-
-ompi_list_t* mca_gpr_replica_index(char *segment);
-ompi_list_t* mca_gpr_replica_index_nl(mca_gpr_replica_segment_t *seg);
-
-/*
- * Cleanup functions
- */
-void mca_gpr_replica_cleanup_job(mca_ns_base_jobid_t jobid);
-void mca_gpr_replica_cleanup_job_nl(mca_ns_base_jobid_t jobid);
-
-void mca_gpr_replica_cleanup_proc(bool purge, ompi_process_name_t *proc);
-void mca_gpr_replica_cleanup_proc_nl(bool purge, ompi_process_name_t *proc);
-
-/*
- * Put-get functions
- */
-int mca_gpr_replica_put(ompi_registry_mode_t addr_mode, char *segment,
+int gpr_replica_put(ompi_registry_mode_t addr_mode, char *segment,
 		    char **tokens, ompi_registry_object_t object,
 		    ompi_registry_object_size_t size);
-int mca_gpr_replica_put_nl(ompi_registry_mode_t addr_mode,
-			   mca_gpr_replica_segment_t *seg,
-			   mca_gpr_replica_key_t *keys,
-			   int num_keys, ompi_registry_object_t object,
-			   ompi_registry_object_size_t size,
-			   int8_t *action_taken);
+int gpr_replica_put_nl(ompi_registry_mode_t addr_mode, char *segment,
+		    char **tokens, ompi_registry_object_t object,
+		    ompi_registry_object_size_t size);
 
-ompi_list_t* mca_gpr_replica_get(ompi_registry_mode_t addr_mode,
-			     char *segment, char **tokens);
-ompi_list_t* mca_gpr_replica_get_nl(ompi_registry_mode_t addr_mode,
-				    mca_gpr_replica_segment_t *seg,
-				    mca_gpr_replica_key_t *keys,
-				    int num_keys);
+int gpr_replica_delete_object(ompi_registry_mode_t addr_mode,
+			      char *segment, char **tokens);
+int gpr_replica_delete_object_nl(ompi_registry_mode_t addr_mode,
+			      char *segment, char **tokens);
 
-/*
- * Subscribe functions
- */
-ompi_registry_notify_id_t mca_gpr_replica_subscribe(ompi_registry_mode_t addr_mode,
+ompi_list_t* gpr_replica_index(char *segment);
+ompi_list_t* gpr_replica_index_nl(char *segment);
+
+int gpr_replica_subscribe(ompi_registry_mode_t addr_mode,
 			  ompi_registry_notify_action_t action,
 			  char *segment, char **tokens,
 			  ompi_registry_notify_cb_fn_t cb_func, void *user_tag);
-int mca_gpr_replica_subscribe_nl(ompi_registry_mode_t addr_mode,
-				 ompi_registry_notify_action_t action,
-				 mca_gpr_replica_segment_t *seg,
-				 mca_gpr_replica_key_t *keys,
-				 int num_keys,
-				 ompi_registry_notify_id_t id_tag);
+int gpr_replica_subscribe_nl(ompi_registry_mode_t addr_mode,
+			     ompi_registry_notify_action_t action,
+			     char *segment, char **tokens, mca_gpr_notify_id_t idtag);
 
-int mca_gpr_replica_unsubscribe(ompi_registry_notify_id_t sub_number);
-ompi_registry_notify_id_t mca_gpr_replica_unsubscribe_nl(ompi_registry_notify_id_t sub_number);
+int gpr_replica_unsubscribe(ompi_registry_mode_t addr_mode,
+			    ompi_registry_notify_action_t action,
+			    char *segment, char **tokens);
+mca_gpr_notify_id_t gpr_replica_unsubscribe_nl(ompi_registry_mode_t addr_mode,
+					       ompi_registry_notify_action_t action,
+					       char *segment, char **tokens);
 
-/*
- * Synchro functions
- */
-ompi_registry_notify_id_t mca_gpr_replica_synchro(ompi_registry_synchro_mode_t synchro_mode,
+int gpr_replica_synchro(ompi_registry_synchro_mode_t synchro_mode,
 			ompi_registry_mode_t addr_mode,
 			char *segment, char **tokens, int trigger,
 			ompi_registry_notify_cb_fn_t cb_func, void *user_tag);
-int mca_gpr_replica_synchro_nl(ompi_registry_synchro_mode_t synchro_mode,
+int gpr_replica_synchro_nl(ompi_registry_synchro_mode_t synchro_mode,
+			   ompi_registry_mode_t addr_mode,
+			   char *segment, char **tokens, int trigger,
+			   mca_gpr_notify_id_t id_tag);
+
+int gpr_replica_cancel_synchro(ompi_registry_synchro_mode_t synchro_mode,
 			       ompi_registry_mode_t addr_mode,
-			       mca_gpr_replica_segment_t *seg,
-			       mca_gpr_replica_key_t *keys,
-			       int num_keys,
-			       int trigger,
-			       ompi_registry_notify_id_t id_tag);
+			       char *segment, char **tokens, int trigger);
+mca_gpr_notify_id_t gpr_replica_cancel_synchro_nl(ompi_registry_synchro_mode_t synchro_mode,
+						  ompi_registry_mode_t addr_mode,
+						  char *segment, char **tokens, int trigger);
 
-int mca_gpr_replica_cancel_synchro(ompi_registry_notify_id_t synch_number);
-ompi_registry_notify_id_t mca_gpr_replica_cancel_synchro_nl(ompi_registry_notify_id_t synch_number);
+ompi_list_t* gpr_replica_get(ompi_registry_mode_t addr_mode,
+			     char *segment, char **tokens);
+ompi_list_t* gpr_replica_get_nl(ompi_registry_mode_t addr_mode,
+				char *segment, char **tokens);
 
-/*
- * Dump function
- */
-void mca_gpr_replica_dump(int output_id);
-void mca_gpr_replica_dump_nl(ompi_buffer_t buffer);
+ompi_list_t* gpr_replica_test_internals(int level);
 
-
-/*
- * Messaging functions
- */
-void mca_gpr_replica_deliver_notify_msg(ompi_registry_notify_action_t state,
-					ompi_registry_notify_message_t *message);
-
-
-/*
- * Test internals
- */
-ompi_list_t* mca_gpr_replica_test_internals(int level);
-
-/*
- * Startup/shutdown functions
- */
-ompi_buffer_t mca_gpr_replica_get_startup_msg(mca_ns_base_jobid_t jobid,
-					      ompi_list_t *recipients);
-
-ompi_buffer_t mca_gpr_replica_get_shutdown_msg(mca_ns_base_jobid_t jobid,
-					       ompi_list_t *recipients);
-
-ompi_buffer_t
-mca_gpr_replica_construct_startup_shutdown_msg_nl(int mode,
-						  mca_ns_base_jobid_t jobid,
-						  ompi_list_t *recipients);
-
-/*
- * Functions that interface to the proxy, but aren't available outside the gpr subsystem
- */
 void mca_gpr_replica_recv(int status, ompi_process_name_t* sender,
 			  ompi_buffer_t buffer, int tag,
 			  void* cbdata);
 
-void mca_gpr_replica_remote_notify(ompi_process_name_t *recipient, int recipient_tag,
+void gpr_replica_remote_notify(ompi_process_name_t *recipient, int recipient_tag,
 			       ompi_registry_notify_message_t *message);
 
+int gpr_replica_rte_register(char *contact_info, size_t num_procs,
+			     ompi_registry_notify_cb_fn_t start_cb_func, void *start_user_tag,
+			     ompi_registry_notify_cb_fn_t end_cb_func, void *end_user_tag);
+
+int gpr_replica_rte_register_nl(char *contact_info, ompi_buffer_t buffer, size_t num_procs,
+				mca_gpr_notify_id_t start_tag, mca_gpr_notify_id_t end_tag);
+
+int gpr_replica_rte_unregister(char *proc_name_string);
+
+int gpr_replica_rte_unregister_nl(char *proc_name_string);
 #endif

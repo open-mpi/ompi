@@ -21,7 +21,7 @@
  * functions
  */
 
-mca_ns_base_cellid_t mca_ns_proxy_create_cellid(void)
+mca_ns_base_cellid_t ns_proxy_create_cellid(void)
 {
     ompi_buffer_t cmd;
     mca_ns_base_cellid_t cell;
@@ -64,7 +64,7 @@ mca_ns_base_cellid_t mca_ns_proxy_create_cellid(void)
 }
 
 
-mca_ns_base_jobid_t mca_ns_proxy_create_jobid(void)
+mca_ns_base_jobid_t ns_proxy_create_jobid(void)
 {
     ompi_buffer_t cmd;
     mca_ns_base_jobid_t job;
@@ -107,7 +107,7 @@ mca_ns_base_jobid_t mca_ns_proxy_create_jobid(void)
 }
 
 
-mca_ns_base_vpid_t mca_ns_proxy_reserve_range(mca_ns_base_jobid_t job, mca_ns_base_vpid_t range)
+mca_ns_base_vpid_t ns_proxy_reserve_range(mca_ns_base_jobid_t job, mca_ns_base_vpid_t range)
 {
     ompi_buffer_t cmd;
     mca_ns_base_vpid_t starting_vpid;

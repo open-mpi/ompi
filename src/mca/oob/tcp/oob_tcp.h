@@ -80,7 +80,8 @@ int mca_oob_tcp_fini(void);
 * when process names are used as indices.
 */
 int mca_oob_tcp_process_name_compare(const ompi_process_name_t* n1, const ompi_process_name_t* n2);
-                                                                                                           /**
+                                                                                                                      
+/**
  *  Obtain contact information for this host (e.g. <ipaddress>:<port>)
  */
 
@@ -217,13 +218,6 @@ int mca_oob_tcp_parse_uri(
     const char* uri, 
     struct sockaddr_in* inaddr
 );
-
-/**
- * Callback from registry on change to subscribed segments
- */
-void mca_oob_tcp_registry_callback(
-     ompi_registry_notify_message_t* msg,
-     void* cbdata);
 
 
 /**

@@ -31,9 +31,9 @@ typedef struct mca_oob_tcp_hdr_t mca_oob_tcp_hdr_t;
 #define MCA_OOB_TCP_HDR_NTOH(h) \
     OMPI_PROCESS_NAME_NTOH((h)->msg_src); \
     OMPI_PROCESS_NAME_NTOH((h)->msg_dst); \
-    (h)->msg_type = ntohl((h)->msg_type);		  \
-    (h)->msg_size = ntohl((h)->msg_size);				  \
-    (h)->msg_tag = ntohl((h)->msg_tag);
+    ntohl((h)->msg_type); \
+    ntohl((h)->msg_size); \
+    ntohl((h)->msg_tag);
 
 /**
  * Convert the message header to network byte order
@@ -41,9 +41,9 @@ typedef struct mca_oob_tcp_hdr_t mca_oob_tcp_hdr_t;
 #define MCA_OOB_TCP_HDR_HTON(h) \
     OMPI_PROCESS_NAME_HTON((h)->msg_src); \
     OMPI_PROCESS_NAME_HTON((h)->msg_dst); \
-    (h)->msg_type = htonl((h)->msg_type);		  \
-    (h)->msg_size = htonl((h)->msg_size);				  \
-    (h)->msg_tag = htonl((h)->msg_tag);
+    htonl((h)->msg_type); \
+    htonl((h)->msg_size); \
+    htonl((h)->msg_tag);
 
 #endif /* _MCA_OOB_TCP_MESSAGE_H_ */
 

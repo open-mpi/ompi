@@ -53,28 +53,23 @@ OMPI_COMP_EXPORT mca_ns_base_component_t mca_ns_replica_component = {
  * setup the function pointers for the module
  */
 static mca_ns_base_module_t mca_ns_replica = {
-    mca_ns_replica_create_cellid,
-    mca_ns_base_assign_cellid_to_process,
-    mca_ns_replica_create_jobid,
-    mca_ns_base_create_process_name,
-    mca_ns_base_copy_process_name,
-    mca_ns_base_convert_string_to_process_name,
-    mca_ns_replica_reserve_range,
-    mca_ns_base_free_name,
-    mca_ns_base_get_proc_name_string,
-    mca_ns_base_get_vpid_string,
-    mca_ns_base_get_jobid_string,
-    mca_ns_base_convert_jobid_to_string,
-    mca_ns_base_convert_string_to_jobid,
-    mca_ns_base_get_cellid_string,
-    mca_ns_base_get_vpid,
-    mca_ns_base_get_jobid,
-    mca_ns_base_get_cellid,
-    mca_ns_base_compare,
-    mca_ns_base_pack_name,
-    mca_ns_base_unpack_name,
-    mca_ns_base_pack_jobid,
-    mca_ns_base_unpack_jobid
+    ns_replica_create_cellid,
+    ns_base_assign_cellid_to_process,
+    ns_replica_create_jobid,
+    ns_base_create_process_name,
+    ns_base_copy_process_name,
+    ns_base_convert_string_to_process_name,
+    ns_replica_reserve_range,
+    ns_replica_free_name,
+    ns_base_get_proc_name_string,
+    ns_base_get_vpid_string,
+    ns_base_get_jobid_string,
+    ns_base_convert_jobid_to_string,
+    ns_base_get_cellid_string,
+    ns_base_get_vpid,
+    ns_base_get_jobid,
+    ns_base_get_cellid,
+    ns_base_compare
 };
 
 /*
@@ -84,14 +79,14 @@ static bool initialized = false;
 
 
 /* constructor - used to initialize state of name_tracker instance */
-static void mca_ns_replica_tracker_construct(mca_ns_replica_name_tracker_t* name_tracker)
+static void ompi_name_tracker_construct(mca_ns_replica_name_tracker_t* name_tracker)
 {
     name_tracker->job = 0;
     name_tracker->last_used_vpid = 0;
 }
 
 /* destructor - used to free any resources held by instance */
-static void mca_ns_replica_tracker_destructor(mca_ns_replica_name_tracker_t* name_tracker)
+static void ompi_name_tracker_destructor(mca_ns_replica_name_tracker_t* name_tracker)
 {
 }
 
@@ -99,8 +94,8 @@ static void mca_ns_replica_tracker_destructor(mca_ns_replica_name_tracker_t* nam
 OBJ_CLASS_INSTANCE(
 		   mca_ns_replica_name_tracker_t,  /* type name */
 		   ompi_list_item_t, /* parent "class" name */
-		   mca_ns_replica_tracker_construct, /* constructor */
-		   mca_ns_replica_tracker_destructor); /* destructor */
+		   ompi_name_tracker_construct, /* constructor */
+		   ompi_name_tracker_destructor); /* destructor */
 
 /*
  * globals needed within replica component

@@ -62,7 +62,7 @@ void ompi_rte_parse_environ(void)
     mca_base_param_lookup_string(id, &ompi_universe_info.gpr_replica);
     if (NULL != ompi_universe_info.gpr_replica) {
 	mca_oob_set_contact_info(ompi_universe_info.gpr_replica);
-	ompi_process_info.gpr_replica = mca_ns_base_create_process_name(0,0,0);
+	ompi_process_info.gpr_replica = ns_base_create_process_name(0,0,0);
 	mca_oob_parse_contact_info(ompi_universe_info.gpr_replica,
 				   ompi_process_info.gpr_replica, NULL);
     } else {
@@ -76,7 +76,7 @@ void ompi_rte_parse_environ(void)
     mca_base_param_lookup_string(id, &ompi_universe_info.ns_replica);
     if (NULL != ompi_universe_info.ns_replica) {
 	mca_oob_set_contact_info(ompi_universe_info.ns_replica);
-	ompi_process_info.ns_replica = mca_ns_base_create_process_name(0,0,0);
+	ompi_process_info.ns_replica = ns_base_create_process_name(0,0,0);
 	mca_oob_parse_contact_info(ompi_universe_info.ns_replica,
 				   ompi_process_info.ns_replica, NULL);
     } else {

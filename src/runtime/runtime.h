@@ -16,7 +16,7 @@
 #include <sys/types.h>
 #endif
 
-#include "mca/gpr/gpr.h"
+#include "mca/gpr/base/base.h"
 #include "util/cmd_line.h"
 
 #include "runtime/runtime_types.h"
@@ -25,15 +25,6 @@
 /* For backwards compatibility.  If you only need MPI stuff, please include
    mpiruntime/mpiruntime.h directly */
 #include "mpi/runtime/mpiruntime.h"
-
-/* constants defining runtime-related segment naming conventions for the
- * registry
- */
-#define OMPI_RTE_JOB_STATUS_SEGMENT "ompi-job-status"
-#define OMPI_RTE_OOB_SEGMENT        "ompi-oob"
-#define OMPI_RTE_VM_STATUS_SEGMENT  "ompi-vm-status"
-#define OMPI_RTE_SCHED_SEGMENT      "ompi-sched"
-#define OMPI_RTE_MODEX_SEGMENT      "ompi_modex"
 
 /* constants for spawn constraints */
 
@@ -90,26 +81,17 @@ extern "C" {
 
 OMPI_DECLSPEC extern ompi_universe_t ompi_universe_info;
 
+    /* Define the startup/shutdown xcast message format for sending information
+     * from compound registry commands at the beginning and end of processes.
+     */
 
-    struct ompi_rte_process_status_t {
-	ompi_status_key_t status_key;
-	ompi_exit_code_t exit_code;
+    struct ompi_startup_shutdown_message_t {
+	ompi_list_item_t item;
+	ompi_registry_notify_message_t *msg;
     };
-    typedef struct ompi_rte_process_status_t ompi_rte_process_status_t;
+    typedef struct ompi_startup_shutdown_message_t ompi_startup_shutdown_message_t;
 
-
-    struct ompi_rte_vm_status_t {
-	char *nodename;
-	ompi_list_t processes;
-    };
-    typedef struct ompi_rte_vm_status_t ompi_rte_vm_status_t;
-
-    struct ompi_rte_vm_process_t {
-	ompi_list_item_t *item;
-	ompi_process_name_t *name;
-	int32_t local_pid;
-    };
-    typedef struct ompi_rte_vm_process_t ompi_rte_vm_process_t;
+    OBJ_CLASS_DECLARATION(ompi_startup_shutdown_message_t);
 
     /**
      * Initialize the Open MPI support code
@@ -289,45 +271,32 @@ OMPI_DECLSPEC    ompi_process_name_t* ompi_rte_get_self(void);
 OMPI_DECLSPEC    int ompi_rte_get_peers(ompi_process_name_t **peers, size_t *npeers);
 
     /**
-     * Get current status of the process
+     * "Hold" until all procs registered, or timeout occurs
      */
-OMPI_DECLSPEC    ompi_rte_process_status_t *ompi_rte_get_process_status(ompi_process_name_t *proc);
+
+OMPI_DECLSPEC    int ompi_rte_monitor_procs_registered(void);
 
     /**
-     * Set process status
+     * "Hold" until all procs unregistered - no timeout.
      */
-
-OMPI_DECLSPEC    int ompi_rte_set_process_status(ompi_rte_process_status_t *status,
-				                 ompi_process_name_t *proc);
+    
+OMPI_DECLSPEC    int ompi_rte_monitor_procs_unregistered(void);
 
     /**
-     * Unpack the process status structure stored on the registry
+     * Callback function for all procs registered
      */
-OMPI_DECLSPEC    ompi_rte_process_status_t *ompi_rte_unpack_process_status(ompi_registry_value_t *value);
-
-    /**
-     * Hold for startup message to arrive, then decode it.
-     */
-
-OMPI_DECLSPEC    int ompi_rte_wait_startup_msg(void);
-
-    /**
-     * Hold for shutdown message to arrive, then decode it.
-     */
-
-OMPI_DECLSPEC    int ompi_rte_wait_shutdown_msg(void);
-
-    /**
-     * Change state as processes complete registration/unregistration
-     */
-
 OMPI_DECLSPEC    void ompi_rte_all_procs_registered(ompi_registry_notify_message_t* match, void* cbdata);
 
+    /**
+     * Callback function for all procs unregistered
+     */
 OMPI_DECLSPEC    void ompi_rte_all_procs_unregistered(ompi_registry_notify_message_t* match, void* cbdata);
 
-OMPI_DECLSPEC	 int ompi_rte_monitor_procs_registered(void);
+    /**
+     * Remove process registration.
+     */
 
-OMPI_DECLSPEC    int ompi_rte_monitor_procs_unregistered(void);
+OMPI_DECLSPEC    int ompi_rte_unregister(void);
 
     /**
      * Kill a specific process in this cell
@@ -452,15 +421,6 @@ OMPI_DECLSPEC    void ompi_rte_parse_environ(void);
      */
 OMPI_DECLSPEC    int ompi_vm_register(void);
 
-    /**
-     * Startup a job - notify processes that all ready to begin
-     */
-OMPI_DECLSPEC   int ompi_rte_job_startup(mca_ns_base_jobid_t jobid);
-
-    /**
-     * Shutdown a job - notify processes that all ready to stop
-     */
-OMPI_DECLSPEC   int ompi_rte_job_shutdown(mca_ns_base_jobid_t jobid);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
