@@ -90,7 +90,7 @@ void ompi_malloc_finalize(void)
 /*
  * Debug version of malloc
  */
-void *ompi_malloc(size_t size, char *file, int line)
+void *ompi_malloc(size_t size, const char *file, int line)
 {
     void *addr;
     if (ompi_malloc_debug_level > 1) {
@@ -115,7 +115,7 @@ void *ompi_malloc(size_t size, char *file, int line)
 /*
  * Debug version of calloc
  */
-void *ompi_calloc(size_t nmembers, size_t size, char *file, int line)
+void *ompi_calloc(size_t nmembers, size_t size, const char *file, int line)
 {
     void *addr;
     if (ompi_malloc_debug_level > 1) {
@@ -141,7 +141,7 @@ void *ompi_calloc(size_t nmembers, size_t size, char *file, int line)
 /*
  * Debug version of realloc
  */
-void *ompi_realloc(void *ptr, size_t size, char *file, int line)
+void *ompi_realloc(void *ptr, size_t size, const char *file, int line)
 {
     void *addr;
 
@@ -173,7 +173,7 @@ void *ompi_realloc(void *ptr, size_t size, char *file, int line)
 /*
  * Debug version of free
  */
-void ompi_free(void *addr, char *file, int line)
+void ompi_free(void *addr, const char *file, int line)
 {
     if (ompi_malloc_debug_level > 1 && NULL == addr) {
       ompi_output(ompi_malloc_output, "Invalid free (%s, %d)", file, line);

@@ -62,7 +62,7 @@ static ompi_output_stream_t verbose = {
 static int do_open(int output_id, ompi_output_stream_t *lds);
 static int open_file(int i);
 static void free_descriptor(int output_id);
-static void output(int output_id, char *format, va_list arglist);
+static void output(int output_id, const char *format, va_list arglist);
 
 
 /*
@@ -272,7 +272,7 @@ void ompi_output_close(int output_id)
 /*
  * Main function to send output to a stream
  */
-void ompi_output(int output_id, char *format, ...)
+void ompi_output(int output_id, const char *format, ...)
 {
   va_list arglist;
   va_start(arglist, format);
@@ -284,7 +284,7 @@ void ompi_output(int output_id, char *format, ...)
 /*
  * Send a message to a stream if the verbose level is high enough
  */
-void ompi_output_verbose(int level, int output_id, char *format, ...)
+void ompi_output_verbose(int level, int output_id, const char *format, ...)
 {
   if (info[output_id].ldi_verbose_level >= level) {
     va_list arglist;
@@ -516,7 +516,7 @@ static void free_descriptor(int output_id)
  * multiple different places, even functions that took "..." as input
  * arguments.
  */
-static void output(int output_id, char *format, va_list arglist)
+static void output(int output_id, const char *format, va_list arglist)
 {
   size_t len, total_len;
   bool want_newline = false;

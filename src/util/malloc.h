@@ -80,7 +80,7 @@ void ompi_malloc_finalize(void);
    * This function is only used when --enable-mem-debug was specified to
    * configure (or by default if you're building in a SVN checkout).
    */
-void *ompi_malloc(size_t size, char *file, int line);
+void *ompi_malloc(size_t size, const char *file, int line);
 
   /**
    * \internal
@@ -96,7 +96,7 @@ void *ompi_malloc(size_t size, char *file, int line);
    * This function is only used when --enable-mem-debug was specified to
    * configure (or by default if you're building in a SVN checkout).
    */
-void *ompi_calloc(size_t nmembers, size_t size, char *file, int line);
+void *ompi_calloc(size_t nmembers, size_t size, const char *file, int line);
 
   /**
    * \internal
@@ -112,7 +112,7 @@ void *ompi_calloc(size_t nmembers, size_t size, char *file, int line);
    * This function is only used when --enable-mem-debug was specified to
    * configure (or by default if you're building in a SVN checkout).
    */
-void *ompi_realloc(void *ptr, size_t size, char *file, int line);
+void *ompi_realloc(void *ptr, size_t size, const char *file, int line);
 
   /**
    * \internal
@@ -128,7 +128,7 @@ void *ompi_realloc(void *ptr, size_t size, char *file, int line);
    * to configure (or by default if you're building in a SVN
    * checkout).
    */
-void ompi_free(void *addr, char *file, int line);
+void ompi_free(void *addr, const char *file, int line);
 
 OMPI_DECLSPEC extern int ompi_malloc_debug_level;
 OMPI_DECLSPEC extern int ompi_malloc_output;

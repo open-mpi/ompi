@@ -330,7 +330,7 @@ OMPI_DECLSPEC   void ompi_output_close(int output_id);
    * created, ompi_output() will automatically create the file and
    * writing to it.
    */
-OMPI_DECLSPEC   void ompi_output(int output_id, char *format, ...);
+OMPI_DECLSPEC   void ompi_output(int output_id, const char *format, ...);
 
   /**
    * Send output to a stream only if the passed verbosity level is
@@ -361,7 +361,7 @@ OMPI_DECLSPEC   void ompi_output(int output_id, char *format, ...);
    * @see ompi_output_set_verbosity()
    */
 OMPI_DECLSPEC   void ompi_output_verbose(int verbose_level, int output_id, 
-                           char *format, ...);
+                                         const char *format, ...);
 
   /**
    * Set the verbosity level for a stream.
