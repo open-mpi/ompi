@@ -10,10 +10,6 @@
 #endif
 #include <stdlib.h>
 
-static int convertor_unpack_homogeneous( lam_convertor_t* pConv, struct iovec* iov, unsigned int out_size );
-static int convertor_unpack_general( lam_convertor_t* pConvertor,
-                                     struct iovec* pInputv, unsigned int inputCount );
-
 void dump_stack( dt_stack_t* pStack, int stack_pos, dt_elem_desc_t* pDesc, char* name )
 {
     printf( "\nStack %p stack_pos %d name %s\n", (void*)pStack, stack_pos, name );
@@ -43,9 +39,8 @@ void dump_stack( dt_stack_t* pStack, int stack_pos, dt_elem_desc_t* pDesc, char*
  *        1 if everything went fine and the data was completly converted
  *       -1 something wrong occurs.
  */
-static int convertor_unpack_general( lam_convertor_t* pConvertor,
-                                     struct iovec* pInputv,
-                                     unsigned int inputCount )
+static int lam_convertor_unpack_general( lam_convertor_t* pConvertor,
+                                         struct iovec* pInputv, unsigned int inputCount )
 {
     dt_stack_t* pStack;   /* pointer to the position on the stack */
     int pos_desc;         /* actual position in the description of the derived datatype */
@@ -165,11 +160,11 @@ static int convertor_unpack_general( lam_convertor_t* pConvertor,
     return 0;
 }
 
-static int convertor_unpack_homogeneous( lam_convertor_t* pConv, struct iovec* iov, unsigned int out_size )
+static int lam_convertor_unpack_homogeneous( lam_convertor_t* pConv,
+                                             struct iovec* iov, unsigned int out_size )
 {
     dt_stack_t* pStack;   /* pointer to the position on the stack */
     int pos_desc;         /* actual position in the description of the derived datatype */
-    int type;             /* type at current position */
     int i;                /* counter for basic datatype with extent */
     int stack_pos = 0;    /* position on the stack */
     long lastDisp = 0, last_count = 0;
@@ -182,31 +177,6 @@ static int convertor_unpack_homogeneous( lam_convertor_t* pConv, struct iovec* i
     int end_desc;
 
     pSrcBuf = iov[0].iov_base;
-
-    if( pData->flags & DT_FLAG_CONTIGUOUS ) {
-        long extent = pData->ub - pData->lb;
-        char* pDstBuf = pConv->pBaseBuf + pData->true_lb + pConv->bConverted;
-
-        if( pData->size == extent ) {
-            long length = pConv->count * pData->size;
-
-            if( length > iov[0].iov_len )
-                length = iov[0].iov_len;
-            /* contiguous data or basic datatype with count */
-            MEMCPY( pDstBuf, pSrcBuf, length );
-            pConv->bConverted += length;
-        } else {
-            type = iov[0].iov_len;
-            for( pos_desc = 0; pos_desc < pConv->count; pos_desc++ ) {
-                MEMCPY( pDstBuf, pSrcBuf, pData->size );
-                pSrcBuf += pData->size;
-                pDstBuf += extent;
-                type -= pData->size;
-            }
-            pConv->bConverted += type;
-        }
-        return (pConv->bConverted == (pData->size * pConv->count));
-    }
 
     if( pData->opt_desc.desc != NULL ) {
         pElems = pData->opt_desc.desc;
@@ -305,6 +275,38 @@ static int convertor_unpack_homogeneous( lam_convertor_t* pConv, struct iovec* i
     return 0;
 }
 
+static int lam_convertor_unpack_homogeneous_contig( lam_convertor_t* pConv,
+                                                    struct iovec* iov, unsigned int out_size )
+{
+    dt_desc_t *pData = pConv->pDesc;
+    char* pDstBuf = pConv->pBaseBuf + pData->true_lb + pConv->bConverted;
+    char* pSrcBuf = iov[0].iov_base;
+    long extent = pData->ub - pData->lb;
+    int length, i;
+
+    if( iov[0].iov_base != NULL ) {
+        if( pData->size == extent ) {
+            length = pConv->count * pData->size - pConv->bConverted;
+        
+            if( length > iov[0].iov_len )
+                length = iov[0].iov_len;
+            /* contiguous data or basic datatype with count */
+            MEMCPY( pDstBuf, pSrcBuf, length );
+        } else {
+            length = iov[0].iov_len;
+            for( i = 0; i < pConv->count; i++ ) {
+                MEMCPY( pDstBuf, pSrcBuf, pData->size );
+                pSrcBuf += pData->size;
+                pDstBuf += extent;
+                length -= pData->size;
+            }
+        }
+        pConv->bConverted += length;
+        return (pConv->bConverted == (pData->size * pConv->count));
+    }
+    return (pConv->bConverted == (pData->size * pConv->count));
+}
+
 int lam_convertor_unpack( lam_convertor_t* pConvertor,
                           struct iovec* pInputv,
                           unsigned int inputCount )
@@ -314,8 +316,10 @@ int lam_convertor_unpack( lam_convertor_t* pConvertor,
     char* pInput = pInputv[0].iov_base;
     int rc;
 
-    if( pConvertor->count == 0 ) return 1;  /* nothing to do */
-
+    if( pConvertor->bConverted == (pData->size * pConvertor->count) ) {
+        pInputv[0].iov_len = 0;
+        return 1;  /* completed */
+    }
     if( pConvertor->flags & DT_FLAG_CONTIGUOUS ) {
         if( pInputv[0].iov_base == NULL ) {
             rc = pConvertor->count * pData->size;
@@ -475,9 +479,13 @@ int lam_convertor_init_for_recv( lam_convertor_t* pConv, unsigned int flags,
     pConv->pFunctions = copy_functions;
     pConv->converted = 0;
     pConv->bConverted = 0;
-    if( (pData->flags & DT_FLAG_CONTIGUOUS) && (pData->size == (pData->ub - pData->lb)) )
+    /* TODO: work only on homogeneous architectures */
+    if( pData->flags & DT_FLAG_CONTIGUOUS ) {
         pConv->flags |= DT_FLAG_CONTIGUOUS;
-    pConv->fAdvance = convertor_unpack_homogeneous;
+        pConv->fAdvance = lam_convertor_unpack_homogeneous_contig;
+    } else {
+        pConv->fAdvance = lam_convertor_unpack_homogeneous;
+    }
     return 0;
 }
 
