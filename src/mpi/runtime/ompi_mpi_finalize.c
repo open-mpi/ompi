@@ -12,6 +12,7 @@
 #include "communicator/communicator.h"
 #include "datatype/datatype.h"
 #include "op/op.h"
+#include "info/info.h"
 #include "runtime/runtime.h"
 #include "mca/base/base.h"
 #include "mca/ptl/ptl.h"
@@ -69,6 +70,9 @@ int ompi_mpi_finalize(void)
   }
 
   /* free info resources */
+  if (OMPI_SUCCESS != (ret = ompi_info_finalize())) {
+      return ret;
+  }
 
   /* Close down MCA modules */
 

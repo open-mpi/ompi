@@ -29,8 +29,8 @@ static const char FUNC_NAME[] = "MPI_Info_dup";
  *   @param newinfo pointer to the new info object (handle)
  *
  *   @retval MPI_SUCCESS
- *   @retval MPI_ERR_ARG
- *   @retval MPI_ERR_SYSRESOURCE
+ *   @retval MPI_ERR_INFO
+ *   @retval MPI_ERR_NO_MEM
  *
  *   Not only will the (key, value) pairs be duplicated, the order of keys
  *   will be the same in 'newinfo' as it is in 'info'.
@@ -51,7 +51,8 @@ int MPI_Info_dup(MPI_Info info, MPI_Info *newinfo) {
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-        if (NULL == info || MPI_INFO_NULL == info || NULL == newinfo) {
+        if (NULL == info || MPI_INFO_NULL == info || NULL == newinfo ||
+            ompi_info_is_freed(info)) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INFO,
                                           FUNC_NAME);
         }

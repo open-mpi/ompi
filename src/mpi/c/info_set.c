@@ -36,7 +36,7 @@ static const char FUNC_NAME[] = "MPI_Info_set";
  *   @retval MPI_ERR_INFO_KEY
  *   @retval MPI_ERR_INFO_VAL
  *   @retval MPI_ERR_INFO_NOKEY
- *   @retval MPI_ERR_INTERN
+ *   @retval MPI_ERR_NO_MEM
  *
  *   MPI_Info_set adds the (key,value) pair to info, and overrides
  *   teh value if for the same key a previsou value was set. key and
@@ -61,7 +61,8 @@ int MPI_Info_set(MPI_Info info, char *key, char *value)
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-        if (NULL == info || MPI_INFO_NULL == info) {
+        if (NULL == info || MPI_INFO_NULL == info ||
+            ompi_info_is_freed(info)) {
             return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_INFO,
                                            FUNC_NAME);
         }

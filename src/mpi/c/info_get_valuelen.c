@@ -35,6 +35,7 @@ static const char FUNC_NAME[] = "MPI_Info_get_valuelen";
  *
  *   @retval MPI_SUCCESS
  *   @retval MPI_ERR_ARG
+ *   @retval MPI_ERR_INFO
  *   @retval MPI_ERR_INFO_KEY
  *
  *   The length returned in C and C++ does not include the end-of-string
@@ -53,7 +54,8 @@ int MPI_Info_get_valuelen(MPI_Info info, char *key, int *valuelen,
      */
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-        if (NULL == info || MPI_INFO_NULL == info) {
+        if (NULL == info || MPI_INFO_NULL == info ||
+            ompi_info_is_freed(info)) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INFO,
                                           FUNC_NAME);
         }

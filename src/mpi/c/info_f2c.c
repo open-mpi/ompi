@@ -26,7 +26,7 @@ static const char FUNC_NAME[] = "MPI_Info_f2c";
  * Converts the MPI_Fint info into a valid C MPI_Info handle
  *
  * @param info Integer handle to an MPI_INFO object
- * @retval C handle corresponding to MPI_INFOO object
+ * @retval C handle corresponding to MPI_INFO object
  */
 MPI_Info MPI_Info_f2c(MPI_Fint info) 
 {

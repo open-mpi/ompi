@@ -12,6 +12,7 @@
 #include "runtime/runtime.h"
 #include "communicator/communicator.h"
 #include "group/group.h"
+#include "info/info.h"
 #include "util/common_cmd_line.h"
 #include "errhandler/errhandler.h"
 #include "errhandler/errcode.h"
@@ -40,10 +41,13 @@
 
 bool ompi_mpi_initialized = false;
 bool ompi_mpi_finalized = false;
-/* As a deviation from the norm, this variable is extern'ed in
+
+/* As a deviation from the norm, ompi_mpi_param_check is extern'ed in
    src/mpi/interface/c/bindings.h because it is already included in
    all MPI function imlementation files */
 bool ompi_mpi_param_check = true;
+bool ompi_debug_show_handle_leaks = false;
+bool ompi_debug_handle_never_free = false;
 
 bool ompi_mpi_thread_multiple = false;
 int ompi_mpi_thread_requested = MPI_THREAD_SINGLE;
@@ -143,6 +147,12 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         return ret;
     }
 
+     /* initialize info */
+     if (OMPI_SUCCESS != (ret = ompi_info_init())) {
+     /* JMS show_help */
+         printf("show_help: ompi_mpi_init failed in ompi_info_init\n");
+         return ret;
+     }
      /* initialize error handlers */
      if (OMPI_SUCCESS != (ret = ompi_errhandler_init())) {
          /* JMS show_help */

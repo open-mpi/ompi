@@ -10,6 +10,7 @@
 #include "mpi/c/bindings.h"
 #include "communicator/communicator.h"
 #include "errhandler/errhandler.h"
+#include "info/info.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Alloc_mem = PMPI_Alloc_mem
@@ -28,6 +29,9 @@ int MPI_Alloc_mem(MPI_Aint size, MPI_Info info, void *baseptr)
     OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
     if (size < 0 || NULL == baseptr) {
       return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
+                                    FUNC_NAME);
+    } else if (NULL == info || ompi_info_is_freed(info)) {
+      return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INFO,
                                     FUNC_NAME);
     }
   }
