@@ -52,7 +52,9 @@ void test_failure(char *a)
     ompi_n_tests++;
     ompi_n_failures++;
 
-    fprintf(stderr, " Failure : %s\n", a);
+    fprintf(stderr, " Failure : ");
+    fprintf(stderr, a);
+    fprintf(stderr, "\n");
     fflush(stderr);
 }
 

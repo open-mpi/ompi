@@ -461,14 +461,30 @@ static void mca_oob_tcp_peer_recv_progress(mca_oob_tcp_peer_t* peer, mca_oob_tcp
         post = mca_oob_tcp_msg_match_post(&peer->peer_name, msg->msg_hdr.msg_tag,true);
         if(NULL != post) {
 
-            /* copy msg data into posted recv */
-            post->msg_rc = mca_oob_tcp_msg_copy(msg, post->msg_uiov, post->msg_ucnt);
-            if(post->msg_flags & MCA_OOB_TRUNC) {
-                 int i, size = 0;
-                 for(i=0; i<msg->msg_rwcnt; i++)
-                     size += msg->msg_rwiov[i].iov_len;
-                 post->msg_rc = size;
+            if(post->msg_flags & MCA_OOB_ALLOC) {
+
+                /* set the users iovec struct to point to pre-allocated buffer */
+                if(NULL == post->msg_uiov || 0 == post->msg_ucnt) {
+                    post->msg_rc = OMPI_ERR_BAD_PARAM;
+                } else {
+                    post->msg_uiov[0].iov_base = msg->msg_rwiov->iov_base;
+                    post->msg_uiov[0].iov_len = msg->msg_rwiov->iov_len;
+                    msg->msg_rwbuf = NULL;
+                    post->msg_rc = msg->msg_rwiov->iov_len;
+                }
+
+            } else {
+       
+                /* copy msg data into posted recv */
+                post->msg_rc = mca_oob_tcp_msg_copy(msg, post->msg_uiov, post->msg_ucnt);
+                if(post->msg_flags & MCA_OOB_TRUNC) {
+                     int i, size = 0;
+                     for(i=0; i<msg->msg_rwcnt; i++)
+                         size += msg->msg_rwiov[i].iov_len;
+                     post->msg_rc = size;
+                }
             }
+
             if(post->msg_flags & MCA_OOB_PEEK) {
                 /* will need message for actual receive */
                 ompi_list_append(&mca_oob_tcp_component.tcp_msg_recv, &msg->super);

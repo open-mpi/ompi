@@ -21,7 +21,7 @@
 #define NUM_TIMES    1
 
 int i;
-bool testdone[NUM_TESTS * NUM_TIMES];
+int testdone = 0;
 void do_sends(ompi_process_name_t * peer);
 void do_recvs(ompi_process_name_t * peer);
 
@@ -42,23 +42,16 @@ bool compare_iovec(const struct iovec * msg1, const struct iovec * msg2,
 }
     
 
-void callback(int status, const ompi_process_name_t * peer,
-              const struct iovec * msg, int count, int tag, void * cbdata);
+void callback(int status, ompi_process_name_t * peer,
+              struct iovec * msg, int count, int tag, void * cbdata);
 
-void callback(int status, const ompi_process_name_t * peer,
-              const struct iovec * msg, int count, int tag, void * cbdata)
+void callback(int status, ompi_process_name_t * peer,
+              struct iovec * msg, int count, int tag, void * cbdata)
 {
     if(0 != tag) {
         test_failure("Bad tag.");
     }
-    if(((int) cbdata) >= NUM_TESTS * NUM_TIMES) {
-        test_failure("Bad value in callback function.");
-    } else if (testdone[(int) cbdata]) {
-        test_failure("Callback function called on an already completed test.");
-    } else {
-        testdone[(int) cbdata] = true;
-        test_success();
-    }
+    testdone++;
 }
 
 /* data */
@@ -78,12 +71,6 @@ struct iovec send_msg1[4] = {{(void *) &msg_type_1, sizeof(msg_type_1)},
 struct iovec send_msg2[3] = {{(void *) &msg_type_2, sizeof(msg_type_2)},
                              {(void *) &send2, sizeof(send2)},
                              {(void *) &send3, sizeof(send3)}};
-
-/* if we want the send/ recieve functions to do the packing for us,
- * we have to provide an array that describes our data types
- */
-/* mca_oob_base_type_t types[] = {MCA_OOB_BASE_INT32, MCA_OOB_BASE_BYTE, */
-/* MCA_OOB_BASE_INT32, MCA_OOB_BASE_INT16}; */
 
 /* we'll pass the array an identical iovec */
 uint32_t msg_type;
@@ -107,16 +94,13 @@ int main(int argc, char ** argv)
     int n;
     MPI_Init(&argc, &argv);
    
-    for(i = 0; i < NUM_TESTS * NUM_TIMES; i++) {
-       testdone[i] = false;
-    } 
     /* setup peer address */
     peer = mca_oob_name_self;
     fprintf(stderr, "my vpid %d my jobid %d my cellid %d my pid %d\n",  
             peer.vpid, peer.jobid, peer.cellid, getpid());
 
     if(peer.vpid == 1) {
-        test_init("oob send then recieve");
+        test_init("oob send then receive");
         /* local vpid is 1 - peer is 0 */
         peer.vpid = 0;
         for(i = 0; i < NUM_TIMES; i++) {
@@ -124,7 +108,7 @@ int main(int argc, char ** argv)
             do_recvs(&peer);
         }
     } else {
-        test_init("oob recieve then send");
+        test_init("oob receive then send");
         /* local vpid is 0 - peer is 1 */
         peer.vpid = 1;
         for(i = 0; i < NUM_TIMES; i++) {
@@ -137,11 +121,8 @@ int main(int argc, char ** argv)
     /* done */
     n = 0;
     while(!all_complete && n < 10) {
-        all_complete = true;
-        for(i = 0; i < NUM_TESTS * NUM_TIMES; i++) {
-            if(!testdone[i]) {
-                all_complete = false;
-            }
+        if(testdone == NUM_TIMES*4) {
+            all_complete = true;
         }
         if(!all_complete) {
             sleep(1);
@@ -149,7 +130,8 @@ int main(int argc, char ** argv)
         n++;
     }
     if(!all_complete) {
-        test_failure("not all sends or recieves were completed");
+        test_failure("not all sends or receives were completed");
+        fprintf(stderr, "%d != %d\n", testdone, NUM_TIMES);
     }
     test_finalize();
     /* this is to give the oob time to finish all sends */
@@ -159,8 +141,7 @@ int main(int argc, char ** argv)
  
 void do_sends(ompi_process_name_t * peer) {
     /* non blocking send without doing any packing */
-    if( 0 > mca_oob_send_nb(peer, send_msg1, 4, 0, 0, &callback, 
-                            (void *) (0 +  (NUM_TESTS * i)))) {
+    if( 0 > mca_oob_send_nb(peer, send_msg1, 4, 0, 0, &callback, (void *) (0 +  (NUM_TESTS * i)))) {
         test_failure("mca_oob_send_nb.");
     } else {
         test_success();
@@ -171,7 +152,6 @@ void do_sends(ompi_process_name_t * peer) {
     } else {
         test_success();
     }
-
 
     /* blocking send  */
     if( 0 > mca_oob_send(peer, send_msg2, 3, 0, 0)) {
@@ -184,12 +164,20 @@ void do_sends(ompi_process_name_t * peer) {
     } else {
         test_success();
     }
-
+    if( 0 > mca_oob_send(peer, send_msg2, 3, 0, 0)) {
+        test_failure("mca_oob_send.");
+    } else {
+        test_success();
+    }
 }
 
 void do_recvs(ompi_process_name_t * peer) {
-    /*first, we'll recieve the nonpacked send - assuming we know the
-     *  message type */
+    struct iovec iov[1];
+    int index;
+    unsigned char* ptr;
+
+    /* first, we'll receive the nonpacked send - assuming we know the
+     * message type */
     if( 0 > mca_oob_recv_nb(peer, recv_msg1, 4, 0, 0, &callback, 
                             (void *) (4 +  (NUM_TESTS * i)))) {
         test_failure("mca_oob_recv_nb.");
@@ -202,7 +190,7 @@ void do_recvs(ompi_process_name_t * peer) {
         test_success();
     }
     if(!compare_iovec(recv_msg1, send_msg1, 4)) {
-        test_failure("compare  1 is wrong");
+        test_failure("compare 1 is wrong");
     }
 
     /* now we'll do a blocking recv - waiting for the 3rd message to arrive 
@@ -239,11 +227,33 @@ void do_recvs(ompi_process_name_t * peer) {
             test_failure("Message peek did not return a valid type number.");
             break;
     }
-    if( 0 > mca_oob_recv_nb(peer, recv_msg2, 3, 0, 0, &callback, 
-                            (void *) (6 + (NUM_TESTS * i)))) {
+
+    /* now we'll do a blocking recv - and have the buffer allocated and returned */
+    if( 0 > mca_oob_recv(peer, iov, 1, NULL, MCA_OOB_ALLOC)) {
+        test_failure("mca_oob_recv(MCA_OOB_ALLOC)");
+    } else {
+        test_success();
+    }
+
+    /* validate the data received with an allocated buffer */
+    ptr = iov->iov_base;
+    for(index=0; index < (sizeof(send_msg2) / sizeof(struct iovec)); index++) {
+        struct iovec *iov = &send_msg2[index];
+        if(memcmp(iov->iov_base, ptr, iov->iov_len) != 0) {
+            test_failure("mca_oob_recv(MCA_OOB_ALLOC)");
+        } else {
+            test_success();
+        }
+        ptr += iov->iov_len;
+    }
+
+    if( 0 > mca_oob_recv_nb(peer, recv_msg2, 3, 0, 0, &callback, 0)) {
         test_failure("mca_oob_recv_nb.");
     } else {
         test_success();
     }
+
+    /* validate the data */
+
 }
 
