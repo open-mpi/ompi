@@ -44,10 +44,10 @@ extern "C" {
 #endif
 
 #define lam_list_get_next(item) \
-    ((item) ? (((lam_list_item_t*)(item))->lam_list_next) : 0)
+    ((item) ? ((lam_list_item_t*) ((lam_list_item_t*)(item))->lam_list_next) : NULL)
 
 #define lam_list_get_prev(item) \
-    ((item) ? (((lam_list_item_t*)(item))->lam_list_prev) : 0)
+    ((item) ? ((lam_list_item_t*) ((lam_list_item_t*)(item))->lam_list_prev) : NULL)
 
 /*
  *
