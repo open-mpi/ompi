@@ -50,7 +50,7 @@ int mca_oob_base_open(void)
   mca_base_param_lookup_string(
       mca_base_param_register_string("oob","base","include",NULL,NULL), &mca_oob_base_include);
   mca_base_param_lookup_string(
-      mca_base_param_register_string("oob","base","exclude",NULL,NULL), &mca_oob_base_exclude);
+      mca_base_param_register_string("oob","base","exclude",NULL,"tcp"), &mca_oob_base_exclude);
 
   /* All done */
   return OMPI_SUCCESS;

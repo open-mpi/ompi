@@ -26,12 +26,23 @@ extern "C" {
 #endif
 
 /*
- * standard module functions
+ * standard component functions
  */
-int mca_oob_tcp_open(void);
-int mca_oob_tcp_close(void);
-mca_oob_t* mca_oob_tcp_init(bool *allow_multi_user_threads, bool *have_hidden_threads);
-int mca_oob_tcp_finalize(mca_oob_t*);
+int        mca_oob_tcp_component_open(void);
+int        mca_oob_tcp_component_close(void);
+mca_oob_t* mca_oob_tcp_component_init(bool *allow_multi_user_threads, bool *have_hidden_threads);
+
+/**
+ * Hook function to allow the selected oob components
+ * to register their contact info with the registry
+*/
+
+int mca_oob_tcp_init(void);
+
+/**
+ * Cleanup resources during shutdown.
+ */
+int mca_oob_tcp_fini(void);
 
 /**
  * Convert process name from network to host byte order.
@@ -165,6 +176,14 @@ int mca_oob_tcp_recv_nb(
     int flags,
     mca_oob_callback_fn_t cbfunc, 
     void* cbdata);
+
+/**
+ *  Parse a URI string into an IP address and port number.
+ */
+int mca_oob_tcp_parse_uri(
+    const char* uri, 
+    struct sockaddr_in* inaddr
+);
 
 
 /**

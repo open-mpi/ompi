@@ -215,3 +215,24 @@ char* mca_oob_get_contact_info()
     return contact_info;
 }
 
+/**
+* Called to request the selected oob components to
+* register their address with the seed deamon.
+*/
+
+int mca_oob_base_register(void)
+{
+  ompi_list_item_t* item;
+
+  /* Initialize all modules after oob/gpr/ns have initialized */
+  for (item =  ompi_list_get_first(&mca_oob_base_modules);
+       item != ompi_list_get_end(&mca_oob_base_modules);
+       item =  ompi_list_get_next(item)) {
+    mca_oob_base_info_t* base = (mca_oob_base_info_t *) item;
+    if (NULL != base->oob_module->oob_init)
+        base->oob_module->oob_init();
+  }
+  return OMPI_SUCCESS;
+}
+                                                                                                                                           
+

@@ -47,7 +47,9 @@ mca_oob_t mca_oob_cofs = {
   mca_oob_cofs_recv,
   mca_oob_cofs_send_nb,
   mca_oob_cofs_recv_nb,
-  mca_oob_cofs_finalize
+  NULL,
+  mca_oob_cofs_module_init,
+  mca_oob_cofs_module_fini
 };
 
 char mca_oob_cofs_comm_loc[OMPI_PATH_MAX];
@@ -109,7 +111,13 @@ mca_oob_t* mca_oob_cofs_init(bool *allow_multi_user_threads, bool *have_hidden_t
 }
 
 
-int mca_oob_cofs_finalize(mca_oob_t* oob)
+int mca_oob_cofs_module_init(void)
 {
-  return OMPI_SUCCESS;
+    return OMPI_SUCCESS;
 }
+
+int mca_oob_cofs_module_fini(void)
+{
+    return OMPI_SUCCESS;
+}
+
