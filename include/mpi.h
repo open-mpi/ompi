@@ -66,6 +66,7 @@ struct ompi_status_public_t {
   int MPI_TAG;
   int MPI_ERROR;
   int _count;
+  int _cancelled;
 };
 typedef struct ompi_status_public_t ompi_status_public_t;
 
