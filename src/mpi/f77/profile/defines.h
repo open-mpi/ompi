@@ -7,6 +7,7 @@
 
 #define mpi_comm_set_name_f pmpi_comm_set_name_f
 #define mpi_comm_get_name_f pmpi_comm_get_name_f
+#define mpi_group_compare_f pmpi_group_compare_f
 #define mpi_init_f pmpi_init_f
 #define mpi_finalize_f pmpi_finalize_f
 #define mpi_alloc_mem_f pmpi_alloc_mem_f

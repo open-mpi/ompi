@@ -28,6 +28,8 @@ void mpi_comm_set_name_f(MPI_Fint *comm, char *name, MPI_Fint *ierror, MPI_Fint 
 void mpi_init_f(MPI_Fint *ierror);
 void mpi_finalize_f(MPI_Fint *ierror);
 void mpi_free_mem_f(char *baseptr, MPI_Fint *ierr);
+void mpi_group_compare_f(MPI_Fint *group1, MPI_Fint *group2,
+                         MPI_Fint *result, MPI_Fint *ierror);
 #endif
 
 /*
@@ -40,6 +42,8 @@ void MPI_COMM_SET_NAME(MPI_Fint *comm, char *name, MPI_Fint *ierror, MPI_Fint ch
 void MPI_INIT(MPI_Fint *ierror);
 void MPI_FINALIZE(MPI_Fint *ierror);
 void MPI_FREE_MEM(char *baseptr, MPI_Fint *ierr);
+void MPI_GROUP_COMPARE(MPI_Fint *group1, MPI_Fint *group2,
+                       MPI_Fint *result, MPI_Fint *ierror);
 
 /*
  * Second, all lower case.
@@ -51,6 +55,8 @@ void mpi_comm_set_name(MPI_Fint *comm, char *name, MPI_Fint *ierror, MPI_Fint ch
 void mpi_init(MPI_Fint *ierror);
 void mpi_finalize(MPI_Fint *ierror);
 void mpi_free_mem(char *baseptr, MPI_Fint *ierr);
+void mpi_group_compare(MPI_Fint *group1, MPI_Fint *group2,
+                       MPI_Fint *result, MPI_Fint *ierror);
 
 /*
  * Third, one trailing underscore.
@@ -62,6 +68,8 @@ void mpi_comm_set_name_(MPI_Fint *comm, char *name, MPI_Fint *ierror, MPI_Fint c
 void mpi_init_(MPI_Fint *ierror);
 void mpi_finalize_(MPI_Fint *ierror);
 void mpi_free_mem_(char *baseptr, MPI_Fint *ierr);
+void mpi_group_compare_(MPI_Fint *group1, MPI_Fint *group2,
+                        MPI_Fint *result, MPI_Fint *ierror);
 
 /*
  * Fourth, two trailing underscores.
@@ -73,5 +81,7 @@ void mpi_comm_set_name__(MPI_Fint *comm, char *name, MPI_Fint *ierror, MPI_Fint 
 void mpi_init__(MPI_Fint *ierror);
 void mpi_finalize__(MPI_Fint *ierror);
 void mpi_free_mem__(char *baseptr, MPI_Fint *ierr);
+void mpi_group_compare__(MPI_Fint *group1, MPI_Fint *group2,
+                         MPI_Fint *result, MPI_Fint *ierror);
 
 #endif /* PROTOTYPE_H */

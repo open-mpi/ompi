@@ -9,7 +9,7 @@
 static void lam_thread_construct(lam_thread_t* t)
 {
     t->t_run = 0;
-    t->t_handle = -1;
+    t->t_handle = (pthread_t) -1;
 }
                                                                                                              
                                                                                                              

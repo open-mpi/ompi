@@ -14,7 +14,7 @@ void lam_set_group_rank(lam_group_t *group, lam_proc_t *proc_pointer)
      *   in this group
      */
     group->grp_my_rank = MPI_PROC_NULL;
-    if( MPI_PROC_NULL != proc_pointer ) {
+    if( NULL != proc_pointer ) {
         /* loop over all procs in the group */
         for ( proc=0 ; proc < group->grp_proc_count ; proc++ ){
             /* check and see if this proc pointer matches proc_pointer
