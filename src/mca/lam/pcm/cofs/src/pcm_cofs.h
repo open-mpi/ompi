@@ -21,6 +21,10 @@ int mca_pcm_cofs_query(int *priority);
 struct mca_pcm_1_0_0_t* mca_pcm_cofs_init(void);
 int mca_pcm_cofs_finalize(void);
 
+
+/*
+ * "Action" functions
+ */
 int mca_pcm_cofs_query_get_nodes(lam_pcm_node_t **nodes, size_t *nodes_len, 
                                             int available_procs);
 
