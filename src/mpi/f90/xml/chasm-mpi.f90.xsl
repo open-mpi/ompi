@@ -81,6 +81,7 @@
   <xsl:param name="module" select="@name"/>
   <xsl:value-of select="$nl"/>
   <xsl:for-each select="method">
+   <xsl:if test="@kind != 'No_F90'">
     <xsl:if test="@template = 'yes'">
 
       <xsl:value-of select="$nl"/>
@@ -99,6 +100,7 @@
       <xsl:value-of select="$nl"/>
 
     </xsl:if>
+   </xsl:if>
   </xsl:for-each>
 
 </xsl:template>
@@ -118,6 +120,8 @@
     <xsl:value-of select="$nl"/>
     <xsl:call-template name="decl-construct-list">
       <xsl:with-param name="ws" select="''"/>
+      <xsl:with-param name="void_type" select="''"/>
+      <xsl:with-param name="void_kind" select="''"/>
     </xsl:call-template>
 
     <xsl:for-each select="return[1]">
@@ -139,6 +143,154 @@ echo
   -->
 <xsl:template name="defineArrayFunctionBody">
 
+    <xsl:text>rank=0</xsl:text>
+    <xsl:value-of select="$nl"/>
+    <xsl:text>for kind in $lkinds</xsl:text>
+    <xsl:value-of select="$nl"/>
+    <xsl:text>do</xsl:text>
+    <xsl:value-of select="$nl"/>
+    <xsl:text>  proc="${procedure}${rank}DL${kind}"</xsl:text>
+    <xsl:value-of select="$nl"/>
+    <xsl:text>  echo "subroutine ${proc}(</xsl:text>
+    <xsl:call-template name="arg-list"/> <xsl:text>)"</xsl:text>
+    <xsl:value-of select="$nl"/>
+    <xsl:text>  echo "  use mpi_kinds"</xsl:text>
+    <xsl:value-of select="$nl"/>
+    <xsl:call-template name="decl-construct-list">
+      <xsl:with-param name="ws" select="'  '"/>
+      <xsl:with-param name="void_type" select="'logical'"/>
+      <xsl:with-param name="void_kind" select="'INTEGER'"/>
+      <xsl:with-param name="has_dim" select="0"/>
+    </xsl:call-template>
+
+    <xsl:for-each select="return[1]">
+      <xsl:if test="@name = 'ierr'">
+       <xsl:text>  echo "  integer, intent(out) :: ierr"</xsl:text>
+      </xsl:if>
+    </xsl:for-each>
+    <xsl:value-of select="$nl"/>
+    <xsl:text>    echo "  call ${procedure}(</xsl:text>
+    <xsl:call-template name="arg-list"/> <xsl:text>)"</xsl:text>
+    <xsl:value-of select="$nl"/>
+
+<xsl:text>
+  echo "end subroutine ${proc}"
+  echo
+done
+
+</xsl:text>
+
+    <xsl:text>rank=0</xsl:text>
+    <xsl:value-of select="$nl"/>
+    <xsl:text>for kind in $ikinds</xsl:text>
+    <xsl:value-of select="$nl"/>
+    <xsl:text>do</xsl:text>
+    <xsl:value-of select="$nl"/>
+    <xsl:text>  proc="${procedure}${rank}DI${kind}"</xsl:text>
+    <xsl:value-of select="$nl"/>
+    <xsl:text>  echo "subroutine ${proc}(</xsl:text>
+    <xsl:call-template name="arg-list"/> <xsl:text>)"</xsl:text>
+    <xsl:value-of select="$nl"/>
+    <xsl:text>  echo "  use mpi_kinds"</xsl:text>
+    <xsl:value-of select="$nl"/>
+    <xsl:call-template name="decl-construct-list">
+      <xsl:with-param name="ws" select="'  '"/>
+      <xsl:with-param name="void_type" select="'integer'"/>
+      <xsl:with-param name="void_kind" select="'INTEGER'"/>
+      <xsl:with-param name="has_dim" select="0"/>
+    </xsl:call-template>
+
+    <xsl:for-each select="return[1]">
+      <xsl:if test="@name = 'ierr'">
+       <xsl:text>  echo "  integer, intent(out) :: ierr"</xsl:text>
+      </xsl:if>
+    </xsl:for-each>
+    <xsl:value-of select="$nl"/>
+    <xsl:text>    echo "  call ${procedure}(</xsl:text>
+    <xsl:call-template name="arg-list"/> <xsl:text>)"</xsl:text>
+    <xsl:value-of select="$nl"/>
+
+<xsl:text>
+  echo "end subroutine ${proc}"
+  echo
+done
+
+</xsl:text>
+
+    <xsl:text>rank=0</xsl:text>
+    <xsl:value-of select="$nl"/>
+    <xsl:text>for kind in $rkinds</xsl:text>
+    <xsl:value-of select="$nl"/>
+    <xsl:text>do</xsl:text>
+    <xsl:value-of select="$nl"/>
+    <xsl:text>  proc="${procedure}${rank}DR${kind}"</xsl:text>
+    <xsl:value-of select="$nl"/>
+    <xsl:text>  echo "subroutine ${proc}(</xsl:text>
+    <xsl:call-template name="arg-list"/> <xsl:text>)"</xsl:text>
+    <xsl:value-of select="$nl"/>
+    <xsl:text>  echo "  use mpi_kinds"</xsl:text>
+    <xsl:value-of select="$nl"/>
+    <xsl:call-template name="decl-construct-list">
+      <xsl:with-param name="ws" select="'  '"/>
+      <xsl:with-param name="void_type" select="'real'"/>
+      <xsl:with-param name="void_kind" select="'REAL'"/>
+      <xsl:with-param name="has_dim" select="0"/>
+    </xsl:call-template>
+
+    <xsl:for-each select="return[1]">
+      <xsl:if test="@name = 'ierr'">
+       <xsl:text>  echo "  integer, intent(out) :: ierr"</xsl:text>
+      </xsl:if>
+    </xsl:for-each>
+    <xsl:value-of select="$nl"/>
+    <xsl:text>    echo "  call ${procedure}(</xsl:text>
+    <xsl:call-template name="arg-list"/> <xsl:text>)"</xsl:text>
+    <xsl:value-of select="$nl"/>
+
+<xsl:text>
+  echo "end subroutine ${proc}"
+  echo
+done
+
+</xsl:text>
+
+    <xsl:text>rank=0</xsl:text>
+    <xsl:value-of select="$nl"/>
+    <xsl:text>for kind in $ckinds</xsl:text>
+    <xsl:value-of select="$nl"/>
+    <xsl:text>do</xsl:text>
+    <xsl:value-of select="$nl"/>
+    <xsl:text>  proc="${procedure}${rank}DC${kind}"</xsl:text>
+    <xsl:value-of select="$nl"/>
+    <xsl:text>  echo "subroutine ${proc}(</xsl:text>
+    <xsl:call-template name="arg-list"/> <xsl:text>)"</xsl:text>
+    <xsl:value-of select="$nl"/>
+    <xsl:text>  echo "  use mpi_kinds"</xsl:text>
+    <xsl:value-of select="$nl"/>
+    <xsl:call-template name="decl-construct-list">
+      <xsl:with-param name="ws" select="'  '"/>
+      <xsl:with-param name="void_type" select="'complex'"/>
+      <xsl:with-param name="void_kind" select="'REAL'"/>
+      <xsl:with-param name="has_dim" select="0"/>
+    </xsl:call-template>
+
+    <xsl:for-each select="return[1]">
+      <xsl:if test="@name = 'ierr'">
+       <xsl:text>  echo "  integer, intent(out) :: ierr"</xsl:text>
+      </xsl:if>
+    </xsl:for-each>
+    <xsl:value-of select="$nl"/>
+    <xsl:text>    echo "  call ${procedure}(</xsl:text>
+    <xsl:call-template name="arg-list"/> <xsl:text>)"</xsl:text>
+    <xsl:value-of select="$nl"/>
+
+<xsl:text>
+  echo "end subroutine ${proc}"
+  echo
+done
+
+</xsl:text>
+
 <xsl:text>
 for rank in $ranks
 do
@@ -149,6 +301,40 @@ do
   case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
   case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
   case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
+
+</xsl:text>
+
+    <xsl:text>  for kind in $lkinds</xsl:text>
+    <xsl:value-of select="$nl"/>
+    <xsl:text>  do</xsl:text>
+    <xsl:value-of select="$nl"/>
+    <xsl:text>    proc="${procedure}${rank}DL${kind}"</xsl:text>
+    <xsl:value-of select="$nl"/>
+    <xsl:text>    echo "subroutine ${proc}(</xsl:text>
+    <xsl:call-template name="arg-list"/> <xsl:text>)"</xsl:text>
+    <xsl:value-of select="$nl"/>
+    <xsl:text>    echo "  use mpi_kinds"</xsl:text>
+    <xsl:value-of select="$nl"/>
+    <xsl:call-template name="decl-construct-list">
+      <xsl:with-param name="ws" select="'    '"/>
+      <xsl:with-param name="void_type" select="'logical'"/>
+      <xsl:with-param name="void_kind" select="'INTEGER'"/>
+    </xsl:call-template>
+
+    <xsl:for-each select="return[1]">
+      <xsl:if test="@name = 'ierr'">
+       <xsl:text>    echo "  integer, intent(out) :: ierr"</xsl:text>
+      </xsl:if>
+    </xsl:for-each>
+    <xsl:value-of select="$nl"/>
+    <xsl:text>    echo "  call ${procedure}(</xsl:text>
+    <xsl:call-template name="arg-list"/> <xsl:text>)"</xsl:text>
+    <xsl:value-of select="$nl"/>
+
+<xsl:text>
+    echo "end subroutine ${proc}"
+    echo
+  done
 
 </xsl:text>
 
@@ -165,6 +351,76 @@ do
     <xsl:value-of select="$nl"/>
     <xsl:call-template name="decl-construct-list">
       <xsl:with-param name="ws" select="'    '"/>
+      <xsl:with-param name="void_type" select="'integer'"/>
+      <xsl:with-param name="void_kind" select="'INTEGER'"/>
+    </xsl:call-template>
+
+    <xsl:for-each select="return[1]">
+      <xsl:if test="@name = 'ierr'">
+       <xsl:text>    echo "  integer, intent(out) :: ierr"</xsl:text>
+      </xsl:if>
+    </xsl:for-each>
+    <xsl:value-of select="$nl"/>
+    <xsl:text>    echo "  call ${procedure}(</xsl:text>
+    <xsl:call-template name="arg-list"/> <xsl:text>)"</xsl:text>
+    <xsl:value-of select="$nl"/>
+
+<xsl:text>
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+</xsl:text>
+
+    <xsl:text>  for kind in $rkinds</xsl:text>
+    <xsl:value-of select="$nl"/>
+    <xsl:text>  do</xsl:text>
+    <xsl:value-of select="$nl"/>
+    <xsl:text>    proc="${procedure}${rank}DR${kind}"</xsl:text>
+    <xsl:value-of select="$nl"/>
+    <xsl:text>    echo "subroutine ${proc}(</xsl:text>
+    <xsl:call-template name="arg-list"/> <xsl:text>)"</xsl:text>
+    <xsl:value-of select="$nl"/>
+    <xsl:text>    echo "  use mpi_kinds"</xsl:text>
+    <xsl:value-of select="$nl"/>
+    <xsl:call-template name="decl-construct-list">
+      <xsl:with-param name="ws" select="'    '"/>
+      <xsl:with-param name="void_type" select="'real'"/>
+      <xsl:with-param name="void_kind" select="'REAL'"/>
+    </xsl:call-template>
+
+    <xsl:for-each select="return[1]">
+      <xsl:if test="@name = 'ierr'">
+       <xsl:text>    echo "  integer, intent(out) :: ierr"</xsl:text>
+      </xsl:if>
+    </xsl:for-each>
+    <xsl:value-of select="$nl"/>
+    <xsl:text>    echo "  call ${procedure}(</xsl:text>
+    <xsl:call-template name="arg-list"/> <xsl:text>)"</xsl:text>
+    <xsl:value-of select="$nl"/>
+
+<xsl:text>
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+</xsl:text>
+
+    <xsl:text>  for kind in $ckinds</xsl:text>
+    <xsl:value-of select="$nl"/>
+    <xsl:text>  do</xsl:text>
+    <xsl:value-of select="$nl"/>
+    <xsl:text>    proc="${procedure}${rank}DC${kind}"</xsl:text>
+    <xsl:value-of select="$nl"/>
+    <xsl:text>    echo "subroutine ${proc}(</xsl:text>
+    <xsl:call-template name="arg-list"/> <xsl:text>)"</xsl:text>
+    <xsl:value-of select="$nl"/>
+    <xsl:text>    echo "  use mpi_kinds"</xsl:text>
+    <xsl:value-of select="$nl"/>
+    <xsl:call-template name="decl-construct-list">
+      <xsl:with-param name="ws" select="'    '"/>
+      <xsl:with-param name="void_type" select="'complex'"/>
+      <xsl:with-param name="void_kind" select="'REAL'"/>
     </xsl:call-template>
 
     <xsl:for-each select="return[1]">
@@ -219,9 +475,15 @@ echo
   -->
 <xsl:template name="decl-construct-list">
   <xsl:param name="ws" select="'  '"/>
+  <xsl:param name="void_type"/>
+  <xsl:param name="void_kind"/>
+  <xsl:param name="has_dim" select="1"/>
   <xsl:for-each select="arg">
     <xsl:call-template name="type-decl-stmt">
       <xsl:with-param name="ws" select="$ws"/>
+      <xsl:with-param name="void_type" select="$void_type"/>
+      <xsl:with-param name="void_kind" select="$void_kind"/>
+      <xsl:with-param name="has_dim" select="$has_dim"/>
     </xsl:call-template>
   </xsl:for-each>
 </xsl:template>
@@ -232,11 +494,18 @@ echo
   -->
 <xsl:template name="type-decl-stmt">
   <xsl:param name="ws" select="'  '"/>
+  <xsl:param name="void_type"/>
+  <xsl:param name="void_kind"/>
+  <xsl:param name="has_dim" select="1"/>
 
   <xsl:value-of select="$ws"/>
   <xsl:text>echo "  </xsl:text>
   <xsl:for-each select="type[1]">
-    <xsl:call-template name="decl-type-spec"/>
+    <xsl:call-template name="decl-type-spec">
+      <xsl:with-param name="void_type" select="$void_type"/>
+      <xsl:with-param name="void_kind" select="$void_kind"/>
+      <xsl:with-param name="has_dim" select="$has_dim"/>
+    </xsl:call-template>
   </xsl:for-each>
 
   <xsl:if test="type/@kind != 'void'">
@@ -251,14 +520,22 @@ echo
   - decl-type-spec <arg>
   -->
 <xsl:template name="decl-type-spec">
+  <xsl:param name="void_type"/>
+  <xsl:param name="void_kind"/>
+  <xsl:param name="has_dim" select="1"/>
 
   <xsl:choose>
 
     <!-- C++ types -->
 
     <xsl:when test="@kind = 'void'">
-      <xsl:text>integer(kind=MPI_INTEGER${kind}_KIND)</xsl:text>
-      <xsl:text>, dimension(${dim})</xsl:text>
+      <xsl:value-of select="$void_type"/>
+      <xsl:text>(kind=MPI_</xsl:text>
+      <xsl:value-of select="$void_kind"/>
+      <xsl:text>${kind}_KIND)</xsl:text>
+      <xsl:if test="$has_dim">
+        <xsl:text>, dimension(${dim})</xsl:text>
+      </xsl:if>
     </xsl:when>
     <xsl:when test="@kind = 'bool'">
       <xsl:text>integer</xsl:text>
