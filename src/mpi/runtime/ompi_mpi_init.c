@@ -299,13 +299,12 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         goto error;
     }
 
-    /* Wait for everyone to initialize */
+#if OMPI_HAVE_THREADS == 0
+    ompi_progress_events(0);
+#endif
 
-    if (MPI_SUCCESS != (ret = 
-                        MPI_COMM_WORLD->c_coll.coll_barrier(MPI_COMM_WORLD))) {
-        error = "Barrier over MPI_COMM_WORLD failed";
-        goto error;
-    }
+    /* Wait for everyone to initialize */
+    mca_oob_barrier();
 
     /* new very last step: check whether we have been spawned or not.
        We introduce that at the very end, since we need collectives,
@@ -315,10 +314,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         error = "ompi_comm_dyn_init() failed";
         goto error;
     }
-
-#if OMPI_HAVE_THREADS == 0
-    ompi_progress_events(0);
-#endif
 
  error:
     if (ret != OMPI_SUCCESS) {
