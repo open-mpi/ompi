@@ -13,3 +13,13 @@ autom4te.cache
 *.la
 *.lo
 .lam*
+config.guess
+config.sub
+depcomp
+install-sh
+ltmain.sh
+missing
+mkinstalldirs
+stamp-h1
+teg_config.h
+teg_config.h.in
