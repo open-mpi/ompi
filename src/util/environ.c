@@ -163,6 +163,12 @@ int ompi_unsetenv(const char *name, char ***env)
     size_t len;
     bool found;
 
+    /* Check for bozo case */
+
+    if (NULL == *env) {
+        return OMPI_SUCCESS;
+    }
+
     /* Make something easy to compare to */
 
     asprintf(&compare, "%s=", name);
