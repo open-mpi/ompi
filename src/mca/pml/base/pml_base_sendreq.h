@@ -65,7 +65,7 @@ typedef struct mca_pml_base_send_request_t mca_pml_base_send_request_t;
  * @param mode (IN)        Send mode (STANDARD,BUFFERED,SYNCHRONOUS,READY)
  * @param persistent (IN)  Is request persistent.
  *
- * Performa any one-time initialization. Note that per-use initialization
+ * Perform a any one-time initialization. Note that per-use initialization
  * is done in the send request start routine.
  */
 
@@ -81,6 +81,7 @@ typedef struct mca_pml_base_send_request_t mca_pml_base_send_request_t;
    {                                                                      \
       /* increment reference count on communicator */                     \
       OBJ_RETAIN(comm);                                                   \
+      OBJ_RETAIN(datatype);                                               \
                                                                           \
       OMPI_REQUEST_INIT(&(request)->req_base.req_ompi);                   \
       request->req_addr = addr;                                           \
@@ -120,6 +121,17 @@ typedef struct mca_pml_base_send_request_t mca_pml_base_send_request_t;
       }                                                                   \
    }
 
+/**
+ *  Release the ref counts on the communicator and datatype.
+ *
+ *  @param request (IN)    The send request.
+ */
+
+#define MCA_PML_BASE_SEND_REQUEST_RETURN( request )                       \
+    do {                                                                  \
+        OBJ_RELEASE(request->req_base.req_comm);                          \
+        OBJ_RELEASE(request->req_base.req_datatype);                      \
+    } while (0)
 
 /**
  * Test to check if an acknowledgment has been received, with the match.

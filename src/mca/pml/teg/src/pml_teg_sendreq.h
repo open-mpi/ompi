@@ -98,8 +98,8 @@ OBJ_CLASS_DECLARATION(mca_pml_teg_send_request_t);
     mca_ptl_base_module_t* ptl = (sendreq)->req_ptl;                       \
     mca_pml_base_ptl_t* ptl_base = ptl->ptl_base;                          \
                                                                            \
-    /*  Decrement reference count on communicator. */                      \
-    OBJ_RELEASE((sendreq)->req_base.req_comm);                             \
+    /*  Let the base handle the reference counts */                        \
+    MCA_PML_BASE_SEND_REQUEST_RETURN(sendreq);                             \
                                                                            \
     /*                                                                     \
      * If there is a cache associated with the ptl - first attempt         \
