@@ -51,9 +51,8 @@ void mpi_file_create_errhandler_f(MPI_Fint *function,
 {
     MPI_Errhandler c_errhandler;
     
-    *ierr = 
-	OMPI_INT_2_FINT(MPI_File_create_errhandler((MPI_File_errhandler_fn *)
-						   function,
+    *ierr = OMPI_INT_2_FINT(MPI_File_create_errhandler(
+                     (MPI_File_errhandler_fn *)*function,
 						   &c_errhandler));
 
     *errhandler = MPI_Errhandler_c2f(c_errhandler);

@@ -52,7 +52,7 @@ void mpi_op_create_f(MPI_Fint *function, MPI_Fint *commute,
 {
     MPI_Op c_op;
 
-    *ierr = OMPI_INT_2_FINT(MPI_Op_create((MPI_User_function *)function,
+    *ierr = OMPI_INT_2_FINT(MPI_Op_create((MPI_User_function *)*function,
 					  OMPI_FINT_2_INT(*commute),
 					  &c_op));
     c_op->o_flags |= OMPI_OP_FLAGS_FORTRAN_FUNC;
