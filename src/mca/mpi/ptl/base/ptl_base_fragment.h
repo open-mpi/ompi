@@ -17,7 +17,7 @@ struct mca_ptl_base_frag_t {
     lam_list_item_t super;
     mca_ptl_base_header_t frag_header;
     struct mca_ptl_t* frag_owner; /**< PTL that allocated this fragment */
-    struct mca_ptl_peer_t* frag_peer; /**< PTL specific addressing info */
+    struct mca_ptl_base_peer_t* frag_peer; /**< PTL specific addressing info */
     void  *frag_addr; /* pointer into request buffer at fragment offset */
     size_t frag_size; /* number of bytes available in request buffer */
 };

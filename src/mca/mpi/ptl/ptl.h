@@ -20,7 +20,7 @@
  */
 
 struct mca_ptl_t;
-struct mca_ptl_peer_t;
+struct mca_ptl_base_peer_t;
 struct mca_ptl_base_fragment_t;
 struct mca_ptl_base_send_request_t;
 struct mca_ptl_base_recv_frag_t;
@@ -91,7 +91,7 @@ typedef struct mca_ptl_base_module_1_0_0_t mca_ptl_base_module_t;
 typedef int (*mca_ptl_base_add_proc_fn_t)(
     struct mca_ptl_t* ptl, 
     struct lam_proc_t* proc, 
-    struct mca_ptl_peer_t**
+    struct mca_ptl_base_peer_t**
 );
 
 /**
@@ -105,7 +105,7 @@ typedef int (*mca_ptl_base_add_proc_fn_t)(
 typedef int (*mca_ptl_base_del_proc_fn_t)(
     struct mca_ptl_t* ptl, 
     struct lam_proc_t* proc, 
-    struct mca_ptl_peer_t*
+    struct mca_ptl_base_peer_t*
 );
 
 /**
@@ -134,13 +134,13 @@ typedef void (*mca_ptl_base_frag_return_fn_t)(
 
 typedef int (*mca_ptl_base_send_fn_t)(
     struct mca_ptl_t* ptl, 
-    struct mca_ptl_peer_t* ptl_peer, 
+    struct mca_ptl_base_peer_t* ptl_base_peer, 
     struct mca_ptl_base_send_request_t* send_request,
     size_t size,
     bool* complete
 );
 
-typedef int (*mca_ptl_base_cts_fn_t)(
+typedef int (*mca_ptl_base_recv_fn_t)(
     struct mca_ptl_t* ptl, 
     struct mca_ptl_base_recv_frag_t* recv_frag
 );
@@ -165,7 +165,7 @@ struct mca_ptl_t {
     mca_ptl_base_del_proc_fn_t         ptl_del_proc;
     mca_ptl_base_finalize_fn_t         ptl_finalize;
     mca_ptl_base_send_fn_t             ptl_send;
-    mca_ptl_base_cts_fn_t              ptl_cts;
+    mca_ptl_base_recv_fn_t             ptl_recv;
     mca_ptl_base_request_alloc_fn_t    ptl_request_alloc;
     mca_ptl_base_request_return_fn_t   ptl_request_return;
     mca_ptl_base_frag_return_fn_t      ptl_frag_return;

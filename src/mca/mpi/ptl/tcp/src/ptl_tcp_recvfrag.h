@@ -29,10 +29,8 @@ struct mca_ptl_tcp_recv_frag_t {
 typedef struct mca_ptl_tcp_recv_frag_t mca_ptl_tcp_recv_frag_t;
 
 
-void mca_ptl_tcp_recv_frag_init(mca_ptl_tcp_recv_frag_t*);
-void mca_ptl_tcp_recv_frag_destroy(mca_ptl_tcp_recv_frag_t*);
 bool mca_ptl_tcp_recv_frag_handler(mca_ptl_tcp_recv_frag_t*, int sd);
-void mca_ptl_tcp_recv_frag_reinit(mca_ptl_tcp_recv_frag_t* frag, struct mca_ptl_peer_t* peer);
+void mca_ptl_tcp_recv_frag_reinit(mca_ptl_tcp_recv_frag_t* frag, struct mca_ptl_base_peer_t* peer);
 
 
 #endif
