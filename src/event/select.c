@@ -65,7 +65,7 @@ extern ompi_mutex_t ompi_event_lock;
 
 extern volatile sig_atomic_t ompi_evsignal_caught;
 
-struct selectop {
+static struct selectop {
 	int event_fds;		/* Highest fd in fd set */
 	int event_fdsz;
 	fd_set *event_readset;

@@ -9,7 +9,7 @@
 #endif
 #include <stdlib.h>
 
-void dump_stack( dt_stack_t* pStack, int stack_pos, dt_elem_desc_t* pDesc, char* name )
+void ompi_ddt_dump_stack( dt_stack_t* pStack, int stack_pos, dt_elem_desc_t* pDesc, char* name )
 {
     printf( "\nStack %p stack_pos %d name %s\n", (void*)pStack, stack_pos, name );
     for( ;stack_pos >= 0; stack_pos-- ) {
@@ -448,7 +448,7 @@ int copy_double( unsigned int count,
    return res * count;
 }
 
-conversion_fct_t copy_functions[DT_MAX_PREDEFINED] = {
+conversion_fct_t ompi_ddt_copy_functions[DT_MAX_PREDEFINED] = {
    (conversion_fct_t)NULL,                 /*    DT_LOOP           */ 
    (conversion_fct_t)NULL,                 /*    DT_LB             */ 
    (conversion_fct_t)NULL,                 /*    DT_UB             */ 
@@ -496,7 +496,7 @@ int ompi_convertor_init_for_recv( ompi_convertor_t* pConv, unsigned int flags,
     pConv->pBaseBuf = pUserBuf;
     pConv->available_space = count * (pData->ub - pData->lb);
     pConv->count = count;
-    pConv->pFunctions = copy_functions;
+    pConv->pFunctions = ompi_ddt_copy_functions;
     pConv->converted = 0;
     pConv->bConverted = 0;
     pConv->fAdvance = ompi_convertor_unpack_homogeneous; /*default behaviour */

@@ -93,7 +93,7 @@ static ompi_list_t pending_pids;
 static ompi_list_t registered_cb;
 static ompi_mutex_t ev_reg_mutex;
 static volatile bool ev_reg_complete = false;
-struct ompi_event handler;
+static struct ompi_event handler;
 
 
 /*********************************************************************
