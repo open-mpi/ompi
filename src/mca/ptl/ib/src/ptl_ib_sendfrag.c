@@ -152,6 +152,38 @@ int mca_ptl_ib_send_frag_init(mca_ptl_ib_send_frag_t* sendfrag,
     return OMPI_SUCCESS;
 }
 
+static  ompi_list_item_t * my_ompi_list_remove_first(ompi_list_t *list)
+{
+    volatile ompi_list_item_t *item;
+    if ( 0 == list->ompi_list_length ) {
+        return (ompi_list_item_t *)NULL; 
+    }
+
+    A_PRINT("");
+    /* reset list length counter */
+    list->ompi_list_length--;
+
+    /* get pointer to first element on the list */
+    item = list->ompi_list_head.ompi_list_next;
+    A_PRINT("item : %p", item);
+
+    /* reset previous pointer of next item on the list */
+    item->ompi_list_next->ompi_list_prev=item->ompi_list_prev;
+    A_PRINT("");
+
+    /* reset the head next pointer */
+    list->ompi_list_head.ompi_list_next=item->ompi_list_next;
+    A_PRINT("");
+
+#if OMPI_ENABLE_DEBUG
+    /* debug code */
+    item->ompi_list_prev=(ompi_list_item_t *)NULL; 
+    item->ompi_list_next=(ompi_list_item_t *)NULL; 
+#endif
+    return (ompi_list_item_t *) item;
+
+}
+
 /*
  * Allocate a IB send descriptor
  *
@@ -166,9 +198,10 @@ mca_ptl_ib_send_frag_t* mca_ptl_ib_alloc_send_frag(
 
     flist = &((mca_ptl_ib_module_t *)ptl)->send_free;
 
-    item = ompi_list_remove_first(&((flist)->super));
+    item = my_ompi_list_remove_first(&((flist)->super));
 
     while(NULL == item) {
+
         mca_ptl_tstamp_t tstamp = 0;
 
         D_PRINT("Gone one NULL descriptor ... trying again");

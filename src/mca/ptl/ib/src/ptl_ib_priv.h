@@ -8,7 +8,7 @@
 #define NUM_IB_SEND_BUF             (10)
 #define NUM_IB_RECV_BUF             (10)
 
-#define MCA_PTL_IB_FIRST_FRAG_SIZE  (4096)
+#define MCA_PTL_IB_FIRST_FRAG_SIZE  (65536)
 
 struct mca_ptl_ib_state_t {
     VAPI_hca_id_t                   hca_id;     
