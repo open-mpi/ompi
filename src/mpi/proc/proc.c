@@ -28,9 +28,10 @@ void lam_proc_construct(lam_proc_t* proc)
         lam_mutex_init(&lam_proc_lock);
     }
 
-    proc->proc_job = 0;
+    proc->proc_job = NULL;
     proc->proc_vpid = 0;
-    proc->proc_pml = 0;
+    proc->proc_pml = NULL;
+    proc->proc_modex = NULL;
 
     THREAD_LOCK(&lam_proc_lock);
     lam_list_append(&lam_proc_list, (lam_list_item_t*)proc);
@@ -75,7 +76,7 @@ int lam_proc_init(void)
         lam_proc_t *proc = OBJ_NEW(lam_proc_t);
         proc->proc_job = strdup(job);
         proc->proc_vpid = vpid;
-        if(proc->proc_vpid == vpid && strcmp(proc->proc_job, job))
+        if(proc->proc_vpid == vpid && strcmp(proc->proc_job, job) == 0)
             lam_proc_local_proc = proc;
     }
     free(procs);
