@@ -72,7 +72,7 @@ static void orte_iof_base_frag_send_cb(
 
 int _orte_iof_base_frag_ack(orte_iof_base_frag_t* frag, const char* file, int line)
 {
-    int rc;
+    int rc = OMPI_SUCCESS;
   
     if(frag->frag_hdr.hdr_msg.msg_len > 0) {
         frag->frag_hdr.hdr_common.hdr_type = ORTE_IOF_BASE_HDR_ACK;
