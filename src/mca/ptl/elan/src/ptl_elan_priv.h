@@ -80,6 +80,14 @@
 #define  PTL_ELAN_DEBUG_FLAG (PTL_ELAN_DEBUG_MAC|PTL_ELAN_DEBUG_ACK|PTL_ELAN_DEBUG_SEND|PTL_ELAN_DEBUG_PUT)
 #endif
 
+#if 1 || (QSNETLIBS_VERSION_CODE <= QSNETLIBS_VERSION(1,6,4))
+#define OMPI_PTL_ELAN_ALLOC_CMDQ(ctx, alloc, size, bits, params) \
+	elan4_alloc_cmdq (ctx, alloc, size, bits, params)
+#else
+#define OMPI_PTL_ELAN_ALLOC_CMDQ(ctx, alloc, size, bits, params) \
+	elan4_alloc_cmdq (ctx, size, bits, params)
+#endif
+
 #define  LOG_PRINT(flag, args...)                              \
 do {                                                           \
     if (PTL_ELAN_DEBUG_FLAG & flag) {                          \

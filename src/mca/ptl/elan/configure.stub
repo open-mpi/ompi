@@ -17,14 +17,13 @@ AC_DEFUN([MCA_CONFIGURE_STUB],[
     if test -n "$with_ptl_elan_qsnet_headers"; then
 	EXTRA_CPPFLAGS="-I$with_ptl_elan_qsnet_headers/include/"
     else
-	EXTRA_CPPFLAGS="-I/usr/include/"
 	AC_MSG_WARN([*** Warning: using default qsnet header path /usr/include])
     fi
 
     # See if we can find a sample kernel header
     CPPFLAGS="$EXTRA_CPPFLAGS $CPPFLAGS "
-    AC_CHECK_HEADERS([qsnet/autoconf.h],,
-	[AC_MSG_ERROR([*** Cannot find qsnet header files, e.g., autoconf.h])])
+    AC_CHECK_HEADERS([qsnet/config.h],,
+	[AC_MSG_ERROR([*** Cannot find qsnet header files, e.g., config.h])])
 
     # Look for a bunch of libraries; abort if we don't have them
     PTL_ELAN_LIBS="$LIBS"
