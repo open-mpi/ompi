@@ -405,9 +405,6 @@ extern "C" {
   int MPI_Attr_delete(MPI_Comm comm, int keyval);
   int MPI_Attr_get(MPI_Comm comm, int keyval, void *attribute_val, int *flag);
   int MPI_Attr_put(MPI_Comm comm, int keyval, void *attribute_val);
-  /* i
-   * Anju: Shell functions done till here 
-   */
   int MPI_Barrier(MPI_Comm comm);
   int MPI_Bcast(void *buffer, int count, MPI_Datatype datatype, 
                 int root, MPI_Comm comm);
@@ -417,6 +414,9 @@ extern "C" {
                      int dest, int tag, MPI_Comm comm, MPI_Request *request); 
   int MPI_Buffer_attach(void *buffer, int size);
   int MPI_Buffer_detach(void *buffer, int *size);
+  /* 
+   * Anju: Shell functions done till here 
+   */
   int MPI_Cancel(MPI_Request *);
   int MPI_Cart_coords(MPI_Comm, int, int, int *);
   int MPI_Cart_create(MPI_Comm, int, int *, int *, int, MPI_Comm *);
