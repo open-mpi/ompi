@@ -1,4 +1,3 @@
-
 /*   
  * Copyright (c) 2004-2005 The Trustees of Indiana University.
  *                         All rights reserved.
@@ -50,8 +49,11 @@ int main(int argc, char **argv) {
     /* local variables */
     ompi_cb_fifo_t fifo;
     int i,size_of_fifo,lazy_free,return_status,error_cnt,loop_cnt;
-	void *ptr;
     bool queue_empty;
+    union {
+        int ivalue;
+        void *vvalue;
+    } value;
 
 #if 0
     /* get queue size */
@@ -76,57 +78,59 @@ int main(int argc, char **argv) {
     if( OMPI_SUCCESS == return_status ) {
         test_success();
     } else {
-        test_failure(" ompi_cv_fifo_init \n");
+        test_failure(" ompi_cv_fifo_init");
     }
 
-	/* populate fifo */
+    /* populate fifo */
     error_cnt=0;
-	for( i=0 ; i < ompi_cb_fifo_size(&fifo); i++ ) {
-		return_status=ompi_cb_fifo_write_to_head((void *)(i+5),&fifo,
-                (size_t)pool.mpool_base());
-		if( OMPI_CB_ERROR == return_status ) {
-	   		test_failure(" ompi_cb_fifo_write_to_head\n");
+    for( i=0 ; i < ompi_cb_fifo_size(&fifo); i++ ) {
+        value.ivalue = i + 5;
+        return_status=ompi_cb_fifo_write_to_head(value.vvalue, &fifo,
+                                                 (size_t)pool.mpool_base());
+        if( OMPI_CB_ERROR == return_status ) {
+            test_failure(" ompi_cb_fifo_write_to_head");
             error_cnt++;
-		}
-	}
+        }
+    }
     if( 0 == error_cnt ) {
         test_success();
     }
 
-	/* try an over-fill the queue */
+    /* try an over-fill the queue */
     error_cnt=0;
-	for( i=0 ; i < 3 ; i++ ) {
-		return_status=ompi_cb_fifo_write_to_head((void *)i,&fifo,
-                (size_t)pool.mpool_base());
-		if( OMPI_CB_ERROR != return_status ) {
-	   		test_failure(" ompi_cb_fifo_write_to_head :: over-fill queue\n");
+    for( i=0 ; i < 3 ; i++ ) {
+        value.ivalue = i;
+        return_status=ompi_cb_fifo_write_to_head(value.vvalue, &fifo,
+                                                 (size_t)pool.mpool_base());
+        if( OMPI_CB_ERROR != return_status ) {
+            test_failure(" ompi_cb_fifo_write_to_head :: over-fill queue");
             error_cnt++;
-		}
-	}
+        }
+    }
     if( 0 == error_cnt ) {
         test_success();
     }
 
-	/* pop items off the queue */
+    /* pop items off the queue */
     error_cnt=0;
-	for( i=0 ; i < ompi_cb_fifo_size(&fifo); i++ ) {
-		ptr=ompi_cb_fifo_read_from_tail(&fifo,0,&queue_empty,
-                (size_t)pool.mpool_base());
-		if( (void *)(i+5) != ptr ) {
-	   		test_failure(" ompi_cb_fifo_read_from_tail\n");
+    for( i=0 ; i < ompi_cb_fifo_size(&fifo); i++ ) {
+        value.vvalue =ompi_cb_fifo_read_from_tail(&fifo,0,&queue_empty,
+                                                  (size_t)pool.mpool_base());
+        if( (i+5) != value.ivalue ) {
+            test_failure(" ompi_cb_fifo_read_from_tail (1)");
             error_cnt++;
-		}
-	}
+        }
+    }
     if( 0 == error_cnt ) {
         test_success();
     }
 
-	/* free fifo */
-	return_status=ompi_cb_fifo_free(&fifo,&pool);
+    /* free fifo */
+    return_status=ompi_cb_fifo_free(&fifo,&pool);
     if( OMPI_SUCCESS == return_status ) {
         test_success();
     } else {
-        test_failure(" ompi_cv_fifo_init \n");
+        test_failure(" ompi_cv_fifo_init");
     }
 
     /* init fifo - lazy_free greater than size ==> should return error*/
@@ -136,7 +140,7 @@ int main(int argc, char **argv) {
     if( OMPI_SUCCESS != return_status ) {
         test_success();
     } else {
-        test_failure(" ompi_cv_fifo_init with lazy_free too large \n");
+        test_failure(" ompi_cv_fifo_init with lazy_free too large");
     }
 
     /* split the writting of data to the slot to a reserve, and then a
@@ -149,31 +153,31 @@ int main(int argc, char **argv) {
     if( OMPI_SUCCESS == return_status ) {
         test_success();
     } else {
-        test_failure(" ompi_cv_fifo_init \n");
+        test_failure(" ompi_cv_fifo_init");
     }
 
-	/* populate fifo */
+    /* populate fifo */
     error_cnt=0;
-	for( i=0 ; i < ompi_cb_fifo_size(&fifo); i++ ) {
-		return_status=ompi_cb_fifo_get_slot(&fifo,(size_t)pool.mpool_base());
-		if( OMPI_CB_ERROR == return_status ) {
-	   		test_failure(" ompi_cb_fifo_get_slot \n");
+    for( i=0 ; i < ompi_cb_fifo_size(&fifo); i++ ) {
+        return_status=ompi_cb_fifo_get_slot(&fifo,(size_t)pool.mpool_base());
+        if( OMPI_CB_ERROR == return_status ) {
+            test_failure(" ompi_cb_fifo_get_slot");
             error_cnt++;
-		}
-	}
+        }
+    }
     if( 0 == error_cnt ) {
         test_success();
     }
 
-	/* try an over-fill the queue */
+    /* try an over-fill the queue */
     error_cnt=0;
-	for( i=0 ; i < 3 ; i++ ) {
-		return_status=ompi_cb_fifo_get_slot(&fifo,(size_t)pool.mpool_base());
-		if( OMPI_CB_ERROR != return_status ) {
-	   		test_failure(" ompi_cb_fifo_get_slot :: over-fill queue\n");
+    for( i=0 ; i < 3 ; i++ ) {
+        return_status=ompi_cb_fifo_get_slot(&fifo,(size_t)pool.mpool_base());
+        if( OMPI_CB_ERROR != return_status ) {
+            test_failure(" ompi_cb_fifo_get_slot :: over-fill queue");
             error_cnt++;
-		}
-	}
+        }
+    }
     if( 0 == error_cnt ) {
         test_success();
     }
@@ -181,96 +185,98 @@ int main(int argc, char **argv) {
     /* write to slot - all slots previously reserved, so just use
      * them now */
     error_cnt=0;
-	for( i=0 ; i < ompi_cb_fifo_size(&fifo); i++ ) {
-		return_status=ompi_cb_fifo_write_to_slot(i,(void *)(i+5),&fifo,
-                (size_t)pool.mpool_base());
-		if( OMPI_CB_ERROR == return_status ) {
-	   		test_failure(" ompi_cb_fifo_write_to_slot \n");
+    for( i=0 ; i < ompi_cb_fifo_size(&fifo); i++ ) {
+        value.ivalue = i + 5;
+        return_status=ompi_cb_fifo_write_to_slot(i, value.vvalue, &fifo,
+                                                 (size_t)pool.mpool_base());
+        if( OMPI_CB_ERROR == return_status ) {
+            test_failure(" ompi_cb_fifo_write_to_slot");
             error_cnt++;
-		}
-	}
+        }
+    }
     if( 0 == error_cnt ) {
         test_success();
     }
 
-	/* pop items off the queue */
+    /* pop items off the queue */
     error_cnt=0;
-	for( i=0 ; i < ompi_cb_fifo_size(&fifo); i++ ) {
-		ptr=ompi_cb_fifo_read_from_tail(&fifo,0,&queue_empty,
-                (size_t)pool.mpool_base());
-		if( (void *)(i+5) != ptr ) {
-	   		test_failure(" ompi_cb_fifo_read_from_tail\n");
+    for( i=0 ; i < ompi_cb_fifo_size(&fifo); i++ ) {
+        value.vvalue = ompi_cb_fifo_read_from_tail(&fifo,0,&queue_empty,
+                                                   (size_t)pool.mpool_base());
+        if( (i+5) != value.ivalue ) {
+            test_failure(" ompi_cb_fifo_read_from_tail (2)");
             error_cnt++;
-		}
-	}
+        }
+    }
     if( 0 == error_cnt ) {
         test_success();
     }
 
-	/* free fifo */
-	return_status=ompi_cb_fifo_free(&fifo,&pool);
+    /* free fifo */
+    return_status=ompi_cb_fifo_free(&fifo,&pool);
     if( OMPI_SUCCESS == return_status ) {
         test_success();
     } else {
-        test_failure(" ompi_cv_fifo_init \n");
+        test_failure(" ompi_cv_fifo_init");
     }
 
     /* go through the fifo multiple times */
 
     /* init fifo */
-    return_status=ompi_cb_fifo_init(size_of_fifo,lazy_free,0,0,0,&fifo,
-            &pool);
+    return_status=ompi_cb_fifo_init(size_of_fifo,lazy_free,0,0,0,&fifo,&pool);
     /* check to see that retrun status is success */
     if( OMPI_SUCCESS == return_status ) {
         test_success();
     } else {
-        test_failure(" ompi_cv_fifo_init \n");
+        test_failure(" ompi_cv_fifo_init");
     }
 
     error_cnt=0;
-	for( i=0 ; i < ompi_cb_fifo_size(&fifo)*loop_cnt ; i++ ) {
+    for( i=0 ; i < ompi_cb_fifo_size(&fifo)*loop_cnt ; i++ ) {
 
         /* populate fifo */
-		return_status=ompi_cb_fifo_get_slot(&fifo,
-                (size_t)pool.mpool_base());
-		if( OMPI_CB_ERROR == return_status ) {
-	   		test_failure(" ompi_cb_fifo_get_slot \n");
+        return_status=ompi_cb_fifo_get_slot(&fifo,
+                                            (size_t)pool.mpool_base());
+        if( OMPI_CB_ERROR == return_status ) {
+            test_failure(" ompi_cb_fifo_get_slot");
             error_cnt++;
-		}
-
+        }
+        
         /* write to the slot */
-		return_status=ompi_cb_fifo_write_to_slot(i%(ompi_cb_fifo_size(&fifo)),
-                (void *)(i+5),&fifo, (size_t)pool.mpool_base());
-		if( OMPI_CB_ERROR == return_status ) {
-	   		test_failure(" ompi_cb_fifo_write_to_slot \n");
+        value.ivalue = i + 5;
+        return_status=ompi_cb_fifo_write_to_slot(i%(ompi_cb_fifo_size(&fifo)),
+                                                 value.vvalue, &fifo,
+                                                 (size_t)pool.mpool_base());
+        if( OMPI_CB_ERROR == return_status ) {
+            test_failure(" ompi_cb_fifo_write_to_slot");
             error_cnt++;
-		}
+        }
 	
         /* pop items off the queue */
         if( (i % ompi_cb_fifo_size(&fifo) ) ==
-                ompi_cb_fifo_size(&fifo)/2  ) {
+            ompi_cb_fifo_size(&fifo)/2  ) {
             /* force a flush */
-            ptr=ompi_cb_fifo_read_from_tail(&fifo,1,&queue_empty,
-                    (size_t)pool.mpool_base());
+            value.vvalue = ompi_cb_fifo_read_from_tail(&fifo,1,&queue_empty,
+                                                       (size_t)pool.mpool_base());
         } else {
-            ptr=ompi_cb_fifo_read_from_tail(&fifo,0,&queue_empty,
-                    (size_t)pool.mpool_base());
+            value.vvalue = ompi_cb_fifo_read_from_tail(&fifo,0,&queue_empty,
+                                                       (size_t)pool.mpool_base());
         }
-		if( (void *)(i+5) != ptr ) {
-	   		test_failure(" ompi_cb_fifo_read_from_tail\n");
+        if( (i+5) != value.ivalue ) {
+            test_failure(" ompi_cb_fifo_read_from_tail (3)");
             error_cnt++;
-		}
-	}
+        }
+    }
     if( 0 == error_cnt ) {
         test_success();
     }
 
-	/* free fifo */
-	return_status=ompi_cb_fifo_free(&fifo,&pool);
+    /* free fifo */
+    return_status=ompi_cb_fifo_free(&fifo,&pool);
     if( OMPI_SUCCESS == return_status ) {
         test_success();
     } else {
-        test_failure(" ompi_cv_fifo_init \n");
+        test_failure(" ompi_cv_fifo_init");
     }
 
     /* finalize result tracking */

@@ -28,15 +28,20 @@
 #include "support.h"
 #include "class/ompi_pointer_array.h"
 
+typedef union {
+    int ivalue;
+    char *cvalue;
+} value_t;
+
 static void test(bool thread_usage){
 
     /* local variables */
     ompi_pointer_array_t *array;
-    char *test_value;
-    char **test_data;
+    value_t *test_data;
     int len_test_data,i,test_len_in_array,error_cnt;
     int ele_index;
     int use_threads,error_code;
+    value_t value;
 
     /* initialize thread levels */
     use_threads=(int)ompi_set_using_threads(thread_usage);
@@ -45,23 +50,21 @@ static void test(bool thread_usage){
     assert(array);
 
     len_test_data=5;
-    test_data=malloc(sizeof(char *)*len_test_data);
+    test_data=malloc(sizeof(value_t)*len_test_data);
     assert(test_data);
 
     for(i=0 ; i < len_test_data ; i++ ) {
-        test_data[i]=(char *)(i+1);
+        test_data[i].ivalue = (i+1);
     }
-
 
     /* add data to table */
     test_len_in_array=3;
     assert(len_test_data>=test_len_in_array);
     for(i=0 ; i < test_len_in_array ; i++ ) {
-        ompi_pointer_array_add(array,test_data[i]);
+        ompi_pointer_array_add(array,test_data[i].cvalue);
     }
     /* check to see that test_len_in_array are in array */
-    if( (array->size - array->number_free) == 
-            test_len_in_array) {
+    if( (array->size - array->number_free) == test_len_in_array) {
         test_success();
     } else {
         test_failure("check on number of elments in array");
@@ -70,8 +73,10 @@ static void test(bool thread_usage){
     /* check order of data */
     error_cnt=0;
     for(i=0 ; i < test_len_in_array ; i++ ) {
-        if( ((char *)(i+1)) != array->addr[i] )
+        value.cvalue = array->addr[i];
+        if( (i+1) != value.ivalue ) {
             error_cnt++;
+        }
     }
     if( 0 == error_cnt ) {
         test_success();
@@ -107,7 +112,8 @@ static void test(bool thread_usage){
     }
     error_cnt=0;
     for(i=0 ; i < array->size ; i++ ) {
-        ele_index=ompi_pointer_array_add(array,((char *)(i+2)) );
+        value.ivalue = i + 2;
+        ele_index=ompi_pointer_array_add(array, value.cvalue);
         if( i != ele_index ) {
             error_cnt++;
         }
@@ -120,8 +126,8 @@ static void test(bool thread_usage){
 
     error_cnt=0;
     for(i=0 ; i < array->size ; i++ ) {
-        test_value=ompi_pointer_array_get_item(array,i);
-        if( ((char *)(i+2)) != test_value ) {
+        value.cvalue = ompi_pointer_array_get_item(array,i);
+        if( (i+2) != value.ivalue ) {
             error_cnt++;
         }
     }
@@ -133,9 +139,8 @@ static void test(bool thread_usage){
 
     free (array);
     free(test_data);
-
-    return;
 }
+
 
 int main(int argc, char **argv)
 {
