@@ -908,6 +908,8 @@ AC_CONFIG_FILES([
     src/mca/pml/base/Makefile
     src/mca/ptl/Makefile
     src/mca/ptl/base/Makefile
+    src/mca/svc/Makefile
+    src/mca/svc/base/Makefile
     src/mca/topo/Makefile
     src/mca/topo/base/Makefile
     src/mca/ns/Makefile
