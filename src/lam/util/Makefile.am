@@ -7,13 +7,27 @@ include $(top_srcdir)/config/Makefile.options
 
 noinst_LTLIBRARIES = libutil.la
 
-libutil_la_SOURCES = \
-	argv.c \
+# Source code files
+
+headers = \
 	argv.h \
-	lam_log.c \
 	lam_log.h \
 	malloc.h \
-	reactor.c \
 	reactor.h \
-	strncpy.c \
 	strncpy.h
+
+libutil_la_SOURCES = \
+	$(headers) \
+	argv.c \
+	lam_log.c \
+	reactor.c \
+	strncpy.c
+
+# Conditionally install the header files
+
+if WANT_INSTALL_HEADERS
+lamdir = $(includedir)/lam/lam/util
+lam_HEADERS = $(headers)
+else
+lamdir = $(includedir)
+endif

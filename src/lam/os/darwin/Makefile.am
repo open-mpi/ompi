@@ -5,6 +5,15 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-SUBDIRS		= powerpc ppc_64
+SUBDIRS = ppc_32 ppc_64
 
-noinst_HEADERS	= ulm_os.h
+headers = ulm_os.h
+
+# Conditionally install the header files
+
+if WANT_INSTALL_HEADERS
+lamdir = $(includedir)/lam/lam/os/darwin
+lam_HEADERS = $(headers)
+else
+lamdir = $(includedir)
+endif
