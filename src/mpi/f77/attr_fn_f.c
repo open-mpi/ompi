@@ -6,7 +6,6 @@
 
 #include <stdio.h>
 
-#include "mpi.h"
 #include "mpi/f77/bindings.h"
 #include "datatype/datatype.h"
 #include "win/win.h"
