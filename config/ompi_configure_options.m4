@@ -260,5 +260,25 @@ fi
 
 AM_CONDITIONAL(WANT_DEPRECATED_EXECUTABLE_NAMES, test "$WANT_DEN" = "1")
 
+
+#
+# Do we want event signal handlers
+# BWB - this needs to be removed before release - XXX
+#
+AC_MSG_CHECKING([if want event library signal handling])
+AC_ARG_ENABLE(event-signals,
+    AC_HELP_STRING([--enable-event-signals],
+                   [Do we want to use the event library signal handlers (default: enabled)]))
+if test "$enable_event_signals" != "no"; then
+    AC_MSG_RESULT([yes])
+    use_event_signals=1
+else
+    AC_MSG_RESULT([no])
+    use_event_siganls=0
+fi
+AC_DEFINE_UNQUOTED(OMPI_EVENT_USE_SIGNALS, $use_event_signals,
+    [Do we want to use the event library signal handlers])
+
+
 #
 ])

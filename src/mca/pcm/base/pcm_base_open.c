@@ -9,6 +9,8 @@
 #include "mca/pcm/pcm.h"
 #include "mca/pcm/base/base.h"
 #include "util/output.h"
+#include "event/event.h"
+#include <signal.h>
 
 /*
  * The following file was created by configure.  It contains extern
@@ -17,6 +19,15 @@
  */
 
 #include "mca/pcm/base/static-components.h"
+
+
+void
+signal_cb(int fd, short event, void *arg)
+{
+    struct ompi_event *signal = arg;
+
+    printf("%s: got signal %d\n", "signal_cb", OMPI_EVENT_SIGNAL(signal));
+}
 
 
 /*
@@ -32,6 +43,22 @@ ompi_list_t mca_pcm_base_components_available;
  */
 int mca_pcm_base_open(void)
 {
+    /*
+     * XXX: BEGIN DEBUGGING CODE BWB NEEDS TO REMOVE 
+     */
+    struct ompi_event *signal_int;
+    signal_int = malloc(sizeof(struct ompi_event));
+
+    /* Initalize one event */
+    ompi_event_set(signal_int, SIGHUP, OMPI_EV_SIGNAL|OMPI_EV_PERSIST, signal_cb,
+                   signal_int);
+
+    ompi_event_add(signal_int, NULL);
+    /*
+     * XXX: END DEBUGGING CODE BWB NEEDS TO REMOVE 
+     */
+
+
   /* Open up all available components */
 
   if (OMPI_SUCCESS != 

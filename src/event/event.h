@@ -64,8 +64,10 @@ extern "C" {
 #define OMPI_EV_SIGNAL	0x08
 #define OMPI_EV_PERSIST	0x10	/* Persistant event */
 
+#if 0
 #ifndef OMPI_EVENT_USE_SIGNALS
 #define OMPI_EVENT_USE_SIGNALS 0
+#endif
 #endif
 
 /* Fix so that ppl dont have to run with <sys/queue.h> */
