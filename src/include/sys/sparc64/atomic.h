@@ -33,7 +33,7 @@
  * Define constants for UltraSparc 64
  *
  *********************************************************************/
-#define OMPI_HAVE_MEM_BARRIER 1
+#define OMPI_HAVE_ATOMIC_MEM_BARRIER 1
 
 #define OMPI_HAVE_ATOMIC_CMPSET_32 1
 
@@ -77,11 +77,19 @@ static inline void ompi_atomic_wmb(void)
 static inline int ompi_atomic_cmpset_32( volatile int32_t *addr,
                                          int32_t oldval, int32_t newval)
 {
-   int32_t ret = oldval;
+   /* casa [reg(rs1)] %asi, reg(rs2), reg(rd)
+    *
+    * if (*(reg(rs1)) == reg(rs1) )
+    *    swap reg(rd), *(reg(rs1))
+    * else
+    *    reg(rd) = *(reg(rs1))
+    */
+
+   int32_t ret = newval;
 
    __asm__ __volatile("casa [%1] " ASI_P ", %2, %0"
                       : "+r" (ret)
-                      : "r" (addr), "r" (newval));
+                      : "r" (addr), "r" (oldval));
    return (ret == oldval);
 }
 
@@ -109,11 +117,18 @@ static inline int ompi_atomic_cmpset_rel_32( volatile int32_t *addr,
 static inline int ompi_atomic_cmpset_64( volatile int64_t *addr,
                                          int64_t oldval, int64_t newval)
 {
-   int64_t ret = oldval;
+    /* casa [reg(rs1)] %asi, reg(rs2), reg(rd)
+     *
+     * if (*(reg(rs1)) == reg(rs1) )
+     *    swap reg(rd), *(reg(rs1))
+     * else
+     *    reg(rd) = *(reg(rs1))
+     */
+   int64_t ret = newval;
 
    __asm__ __volatile("casxa [%1] " ASI_P ", %2, %0"
                       : "+r" (ret)
-                      : "r" (addr), "r" (newval));
+                      : "r" (addr), "r" (oldval));
    return (ret == oldval);
 }
 

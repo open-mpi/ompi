@@ -34,8 +34,8 @@ END_FUNC(ompi_atomic_wmb)
 START_FUNC(ompi_atomic_cmpset_32)
 	!#PROLOGUE# 0
 	!#PROLOGUE# 1
-	mov	%o1, %g1
-	casa [%o0] 0x80, %o2, %g1
+	mov	%o2, %g1
+	casa [%o0] 0x80, %o1, %g1
 	xor	%g1, %o1, %g1
 	subcc	%g0, %g1, %g0
 	retl
@@ -77,8 +77,8 @@ END_FUNC(ompi_atomic_cmpset_rel_32)
 START_FUNC(ompi_atomic_cmpset_64)
 	!#PROLOGUE# 0
 	!#PROLOGUE# 1
-	mov	%o1, %g1
-	casxa [%o0] 0x80, %o2, %g1
+	mov	%o2, %g1
+	casxa [%o0] 0x80, %o1, %g1
 	xor	%g1, %o1, %g1
 	mov	0, %o0
 	retl
