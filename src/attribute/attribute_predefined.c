@@ -167,7 +167,7 @@ static int set(int target_keyval, void *value)
         return err;
     }
     err = ompi_attr_set(COMM_ATTR, MPI_COMM_WORLD,
-                        MPI_COMM_WORLD->c_keyhash, keyval, value, 1);
+                        &MPI_COMM_WORLD->c_keyhash, keyval, value, 1);
     if (OMPI_SUCCESS != err) {
         return err;
     }

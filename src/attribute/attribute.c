@@ -263,6 +263,12 @@ ompi_attr_delete(ompi_attribute_type_t type, void *object,
 	return OMPI_ERR_BAD_PARAM;
     }
 
+    /* Ensure that we don't have an empty keyhash */
+
+    if (NULL == keyhash) {
+        return OMPI_ERR_BAD_PARAM;
+    }
+
     /* Check if the key is valid for the communicator/window/dtype. If
        yes, then delete the attribute and key entry from the CWD hash */
 
@@ -302,7 +308,7 @@ ompi_attr_delete(ompi_attribute_type_t type, void *object,
 
 int
 ompi_attr_set(ompi_attribute_type_t type, void *object, 
-              ompi_hash_table_t *keyhash, int key, void *attribute,
+              ompi_hash_table_t **keyhash, int key, void *attribute,
               int predefined)
 {
     ompi_attrkey_item_t *key_item;
@@ -315,6 +321,9 @@ ompi_attr_set(ompi_attribute_type_t type, void *object,
     if (NULL == keyval_hash) {
 	return MPI_ERR_INTERN;
     }
+    if (NULL == keyhash) {
+        return MPI_ERR_INTERN;
+    }
 
     key_item = (ompi_attrkey_item_t *) 
 	ompi_hash_table_get_value_uint32(keyval_hash, key);
@@ -326,9 +335,15 @@ ompi_attr_set(ompi_attribute_type_t type, void *object,
 	return OMPI_ERR_BAD_PARAM;
     }
 
+    /* Do we need to make a new keyhash? */
+
+    if (NULL == *keyhash) {
+        ompi_attr_hash_init(keyhash);
+    }
+
     /* Now see if the key is present in the CWD object. If so, delete
        the old attribute in the key */
-    oldattr = ompi_hash_table_get_value_uint32(keyhash, key);
+    oldattr = ompi_hash_table_get_value_uint32(*keyhash, key);
 
     if (oldattr != NULL) {
 	switch(type) {
@@ -351,7 +366,7 @@ ompi_attr_set(ompi_attribute_type_t type, void *object,
 	had_old = 1;
     }
 
-    ret = ompi_hash_table_set_value_uint32(keyhash, key, attribute); 
+    ret = ompi_hash_table_set_value_uint32(*keyhash, key, attribute); 
     if (OMPI_SUCCESS != ret) {
 	return ret; 
     }
@@ -386,8 +401,14 @@ ompi_attr_get(ompi_hash_table_t *keyhash, int key, void *attribute,
 	return MPI_KEYVAL_INVALID;
     }
 
-    attr = ompi_hash_table_get_value_uint32(keyhash, key);
+    /* If we have a null keyhash table, that means that nothing has
+       been cached on this object yet.  So just return *flag = 0. */
 
+    if (NULL == keyhash) {
+        return MPI_SUCCESS;
+    }
+
+    attr = ompi_hash_table_get_value_uint32(keyhash, key);
     if (NULL != attr) {
 	*((void **) attribute) = attr;
 	*flag = 1;
@@ -414,6 +435,12 @@ ompi_attr_copy_all(ompi_attribute_type_t type, void *old_object,
        calling any of the functions which use it  */
     if (NULL == keyval_hash) {
 	return MPI_ERR_INTERN;
+    }
+
+    /* If there's nothing to do, just return */
+
+    if (NULL == oldkeyhash) {
+        return MPI_SUCCESS;
     }
 
     /* Get the first key-attr in the CWD hash */
@@ -460,7 +487,7 @@ ompi_attr_copy_all(ompi_attribute_type_t type, void *old_object,
            the copy fn, but since its a pointer in that MPI specs, we
            need to pass *new_attr here  */
         if (flag == 1) {
-            ompi_attr_set(type, new_object, newkeyhash, key, 
+            ompi_attr_set(type, new_object, &newkeyhash, key, 
                           new_attr, 1);
         }
 
@@ -484,6 +511,12 @@ ompi_attr_delete_all(ompi_attribute_type_t type, void *object,
        calling any of the functions which use it  */
     if (NULL == keyval_hash) {
 	return MPI_ERR_INTERN;
+    }
+
+    /* Ensure that the table is not empty */
+
+    if (NULL != keyhash) {
+        return MPI_SUCCESS;
     }
 	
     /* Get the first key in local CWD hash  */

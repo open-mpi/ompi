@@ -177,17 +177,20 @@ int ompi_attr_free_keyval(ompi_attribute_type_t type, int *key, int predefined);
  * Set an attribute on the comm/win/datatype
  * @param type           Type of attribute (COMM/WIN/DTYPE) (IN)
  * @param object         The actual Comm/Win/Datatype object (IN)
- * @param keyhash        The attribute hash table hanging on the object(IN)
+ * @param keyhash        The attribute hash table hanging on the object(IN/OUT)
  * @param key            Key val for the attribute (IN)
  * @param attribute      The actual attribute pointer (IN)
  * @param predefined     Whether the key is predefined or not 0/1 (IN)
  * @return OMPI error code
  *
+ * If (*keyhash) == NULL, a new keyhash will be created and
+ * initialized.
+ *
  */
 
 int ompi_attr_set(ompi_attribute_type_t type, void *object, 
-		 ompi_hash_table_t *keyhash,
-		 int key, void *attribute, int predefined);
+                  ompi_hash_table_t **keyhash,
+                  int key, void *attribute, int predefined);
 
 /**
  * Get an attribute on the comm/win/datatype
