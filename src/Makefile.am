@@ -5,7 +5,7 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-SUBDIRS		= include lam mpi tools
+SUBDIRS		= include lam mpi mca tools
 
 # If the --enable-single-library flag was given to configure, then the
 # user wants to merge liblam and libmpi into a single big, honkin'
