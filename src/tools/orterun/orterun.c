@@ -680,7 +680,8 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
     app->env = NULL;
     app->num_env = 0;
     for (i = 0; NULL != environ[i]; ++i) {
-        if (0 == strncmp("OMPI_MCA_", environ[i], 9)) {
+        //if (0 == strncmp("OMPI_MCA_", environ[i], 9)) {
+        if (0 == strncmp("OMPI_", environ[i], 5)) {
             ompi_argv_append(&app->num_env, &app->env, environ[i]);
         }
     }
