@@ -16,8 +16,6 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
-static const char FUNC_NAME[] = "MPI_Wtime";
-
 
 double MPI_Wtime(void) 
 {

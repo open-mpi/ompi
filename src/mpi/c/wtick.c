@@ -15,8 +15,6 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
-static const char FUNC_NAME[] = "MPI_Wtick";
-
 
 double MPI_Wtick(void) 
 {
