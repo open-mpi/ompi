@@ -49,6 +49,9 @@
 #define LAM_MALLOC_DEBUG_LEVEL 2
 #endif
 
+void *lam_malloc(size_t size, int debug_level, char *file, int line);
+void lam_free(void *addr, int debug_level, char *file, int line);
+
 /**
  * Back-end error-checking malloc function for LAM (you should use the
  * LAM_MALLOC() macro instead of this function).
