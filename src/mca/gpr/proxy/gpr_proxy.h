@@ -102,4 +102,17 @@ void mca_gpr_proxy_notify_recv(int status, ompi_process_name_t* sender,
 			       ompi_buffer_t buffer, int tag,
 			       void* cbdata);
 
+int gpr_proxy_rte_register(char *contact_info, size_t num_procs,
+			   ompi_registry_notify_cb_fn_t start_cb_func, void *start_user_tag,
+			   ompi_registry_notify_cb_fn_t end_cb_func, void *end_user_tag);
+
+int gpr_proxy_rte_unregister(char *proc_name_string);
+
+/* internal functions */
+
+mca_gpr_notify_id_t gpr_proxy_enter_notify_request(ompi_registry_notify_cb_fn_t cb_func,
+						   void *user_tag);
+
+int gpr_proxy_remove_notify_request(mca_gpr_notify_id_t local_idtag);
+
 #endif
