@@ -76,7 +76,9 @@ int ompi_errhandler_init(void)
   ompi_mpi_errhandler_null.eh_fortran_function = false;
   ompi_mpi_errhandler_null.eh_comm_fn = NULL;
   ompi_mpi_errhandler_null.eh_file_fn = NULL;
+#if OMPI_WANT_MPI2_ONE_SIDED
   ompi_mpi_errhandler_null.eh_win_fn  = NULL ;
+#endif
   ompi_mpi_errhandler_null.eh_fort_fn = NULL;
   strncpy (ompi_mpi_errhandler_null.eh_name, "MPI_ERRHANDLER_NULL", 
 	   strlen("MPI_ERRHANDLER_NULL")+1 );
@@ -89,7 +91,9 @@ int ompi_errhandler_init(void)
   ompi_mpi_errors_are_fatal.eh_fortran_function = false;
   ompi_mpi_errors_are_fatal.eh_comm_fn = ompi_mpi_errors_are_fatal_comm_handler;
   ompi_mpi_errors_are_fatal.eh_file_fn = ompi_mpi_errors_are_fatal_file_handler;
+#if OMPI_WANT_MPI2_ONE_SIDED
   ompi_mpi_errors_are_fatal.eh_win_fn  = ompi_mpi_errors_are_fatal_win_handler ;
+#endif
   ompi_mpi_errors_are_fatal.eh_fort_fn = NULL;
   strncpy (ompi_mpi_errors_are_fatal.eh_name, "MPI_ERRORS_ARE_FATAL", 
 	   strlen("MPI_ERRORS_ARE_FATAL")+1 );
@@ -101,7 +105,9 @@ int ompi_errhandler_init(void)
   ompi_mpi_errors_return.eh_fortran_function = false;
   ompi_mpi_errors_return.eh_comm_fn = ompi_mpi_errors_return_comm_handler;
   ompi_mpi_errors_return.eh_file_fn = ompi_mpi_errors_return_file_handler;
+#if OMPI_WANT_MPI2_ONE_SIDED
   ompi_mpi_errors_return.eh_win_fn  = ompi_mpi_errors_return_win_handler;
+#endif
   ompi_mpi_errors_return.eh_fort_fn = NULL;
   strncpy (ompi_mpi_errors_return.eh_name, "MPI_ERRORS_RETURN", 
 	   strlen("MPI_ERRORS_RETURN")+1 );
@@ -179,9 +185,11 @@ ompi_errhandler_t *ompi_errhandler_create(ompi_errhandler_type_t object_type,
 	  case (OMPI_ERRHANDLER_TYPE_FILE):
 	      new_errhandler->eh_file_fn = (MPI_File_errhandler_fn *)func;
 	      break;
+#if OMPI_WANT_MPI2_ONE_SIDED
 	  case (OMPI_ERRHANDLER_TYPE_WIN):
 	      new_errhandler->eh_win_fn = (MPI_Win_errhandler_fn *)func;
 	      break;
+#endif
 	  default:
 	      break;
       }
@@ -218,7 +226,9 @@ static void ompi_errhandler_construct(ompi_errhandler_t *new_errhandler)
   new_errhandler->eh_fortran_function = false;
 
   new_errhandler->eh_comm_fn      = NULL;
+#if OMPI_WANT_MPI2_ONE_SIDED
   new_errhandler->eh_win_fn       = NULL;
+#endif
   new_errhandler->eh_file_fn      = NULL;
   new_errhandler->eh_fort_fn      = NULL;
 

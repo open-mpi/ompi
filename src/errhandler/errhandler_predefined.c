@@ -74,6 +74,7 @@ void ompi_mpi_errors_are_fatal_file_handler(struct ompi_file_t **file,
 }
 
 
+#if OMPI_WANT_MPI2_ONE_SIDED
 void ompi_mpi_errors_are_fatal_win_handler(struct ompi_win_t **win,
 					   int *error_code, ...)
 {
@@ -90,7 +91,7 @@ void ompi_mpi_errors_are_fatal_win_handler(struct ompi_win_t **win,
   }
   backend_fatal("win", abort_comm, name, error_code, arglist);
 }
-
+#endif
 
 void ompi_mpi_errors_return_comm_handler(struct ompi_communicator_t **comm,
 					 int *error_code, ...)
@@ -106,11 +107,13 @@ void ompi_mpi_errors_return_file_handler(struct ompi_file_t **file,
 }
 
 
+#if OMPI_WANT_MPI2_ONE_SIDED
 void ompi_mpi_errors_return_win_handler(struct ompi_win_t **win,
 					int *error_code, ...)
 {
   /* Don't need anything more -- just need this function to exist */
 }
+#endif
 
 
 static void out(char *str, char *arg)

@@ -54,7 +54,9 @@ typedef struct ompi_info_t *MPI_Info;
 typedef struct ompi_op_t *MPI_Op;
 typedef struct ompi_request_t *MPI_Request;
 typedef struct ompi_status_public_t MPI_Status;
+#if OMPI_WANT_MPI2_ONE_SIDED
 typedef struct ompi_win_t *MPI_Win;
+#endif
 
 /*
  * MPI_Status
@@ -78,7 +80,9 @@ typedef int (MPI_Datarep_conversion_function)(void *, MPI_Datatype,
                                               int, void *, MPI_Offset, void *);
 typedef void (MPI_Comm_errhandler_fn)(MPI_Comm *, int *, ...);
 typedef void (MPI_File_errhandler_fn)(MPI_File *, int *, ...);
+#if OMPI_WANT_MPI2_ONE_SIDED
 typedef void (MPI_Win_errhandler_fn)(MPI_Win *, int *, ...);
+#endif
 typedef void (MPI_Handler_function)(MPI_Comm *, int *, ...);
 typedef void (MPI_User_function)(void *, void *, int *, MPI_Datatype *);
 typedef int (MPI_Comm_copy_attr_function)(MPI_Comm, int, void *,
@@ -88,9 +92,11 @@ typedef int (MPI_Type_copy_attr_function)(MPI_Datatype, int, void *,
                                             void *, void *, int *);
 typedef int (MPI_Type_delete_attr_function)(MPI_Datatype, int,
                                               void *, void *);
+#if OMPI_WANT_MPI2_ONE_SIDED
 typedef int (MPI_Win_copy_attr_function)(MPI_Win, int, void *,
                                            void *, void *, int *);
 typedef int (MPI_Win_delete_attr_function)(MPI_Win, int, void *, void *);
+#endif
 typedef int (MPI_Grequest_query_function)(void *, MPI_Status *);
 typedef int (MPI_Grequest_free_function)(void *);
 typedef int (MPI_Grequest_cancel_function)(void *, int); 
@@ -305,7 +311,9 @@ OMPI_DECLSPEC enum {
 #define MPI_OP_NULL (&ompi_mpi_op_null)
 #define MPI_ERRHANDLER_NULL (&ompi_mpi_errhandler_null)
 #define MPI_INFO_NULL (&ompi_mpi_info_null)
+#if OMPI_WANT_MPI2_ONE_SIDED
 #define MPI_WIN_NULL ((MPI_Win) 0)
+#endif
 #define MPI_FILE_NULL (&ompi_mpi_file_null)
 
 #define MPI_STATUS_IGNORE ((MPI_Status *) 0)
@@ -340,9 +348,11 @@ OMPI_DECLSPEC enum {
 #define MPI_COMM_NULL_COPY_FN OMPI_C_MPI_COMM_NULL_COPY_FN
 #define MPI_COMM_DUP_FN OMPI_C_MPI_COMM_DUP_FN
 
+#if OMPI_WANT_MPI2_ONE_SIDED
 #define MPI_WIN_NULL_DELETE_FN OMPI_C_MPI_WIN_NULL_DELETE_FN
 #define MPI_WIN_NULL_COPY_FN OMPI_C_MPI_WIN_NULL_COPY_FN
 #define MPI_WIN_DUP_FN OMPI_C_MPI_WIN_DUP_FN
+#endif
 #endif
 
 OMPI_DECLSPEC int OMPI_C_MPI_TYPE_NULL_DELETE_FN( MPI_Datatype datatype, int type_keyval,
@@ -370,6 +380,7 @@ OMPI_DECLSPEC int OMPI_C_MPI_NULL_COPY_FN( MPI_Comm comm, int comm_keyval, void*
 OMPI_DECLSPEC int OMPI_C_MPI_DUP_FN( MPI_Comm comm, int comm_keyval, void* extra_state,
                                      void* attribute_val_in, void* attribute_val_out,
                                      int* flag );
+#if OMPI_WANT_MPI2_ONE_SIDED
 OMPI_DECLSPEC int OMPI_C_MPI_WIN_NULL_DELETE_FN( MPI_Win window, int win_keyval,
                                                  void* attribute_val_out, void* flag );
 OMPI_DECLSPEC int OMPI_C_MPI_WIN_NULL_COPY_FN( MPI_Win window, int win_keyval, 
@@ -378,6 +389,7 @@ OMPI_DECLSPEC int OMPI_C_MPI_WIN_NULL_COPY_FN( MPI_Win window, int win_keyval,
 OMPI_DECLSPEC int OMPI_C_MPI_WIN_DUP_FN( MPI_Win window, int win_keyval, void* extra_state,
                                          void* attribute_val_in, void* attribute_val_out,
                                          int* flag );
+#endif
 
 
 /*
@@ -531,9 +543,11 @@ OMPI_DECLSPEC extern MPI_Fint *MPI_F_STATUSES_IGNORE;
  */
 
 OMPI_DECLSPEC  int MPI_Abort(MPI_Comm comm, int errorcode);
+#if OMPI_WANT_MPI2_ONE_SIDED
 OMPI_DECLSPEC  int MPI_Accumulate(void *origin_addr, int origin_count, MPI_Datatype origin_datatype,
                                   int target_rank, MPI_Aint target_disp, int target_count,
                                   MPI_Datatype target_datatype, MPI_Op op, MPI_Win win); 
+#endif
 OMPI_DECLSPEC  int MPI_Add_error_class(int *errorclass);
 OMPI_DECLSPEC  int MPI_Add_error_code(int errorclass, int *errorcode);
 OMPI_DECLSPEC  int MPI_Add_error_string(int errorcode, char *string);
@@ -740,10 +754,12 @@ OMPI_DECLSPEC  int MPI_Gatherv(void *sendbuf, int sendcount, MPI_Datatype sendty
 OMPI_DECLSPEC  int MPI_Get_address(void *location, MPI_Aint *address);
 OMPI_DECLSPEC  int MPI_Get_count(MPI_Status *status, MPI_Datatype datatype, int *count);
 OMPI_DECLSPEC  int MPI_Get_elements(MPI_Status *status, MPI_Datatype datatype, int *count);
+#if OMPI_WANT_MPI2_ONE_SIDED
 OMPI_DECLSPEC  int MPI_Get(void *origin_addr, int origin_count, 
                            MPI_Datatype origin_datatype, int target_rank, 
                            MPI_Aint target_disp, int target_count, 
                            MPI_Datatype target_datatype, MPI_Win win);
+#endif
 OMPI_DECLSPEC  int MPI_Get_processor_name(char *name, int *resultlen);
 OMPI_DECLSPEC  int MPI_Get_version(int *version, int *subversion);
 OMPI_DECLSPEC  int MPI_Graph_create(MPI_Comm comm_old, int nnodes, int *index, 
@@ -841,9 +857,11 @@ OMPI_DECLSPEC  int MPI_Pcontrol(const int level, ...);
 OMPI_DECLSPEC  int MPI_Probe(int source, int tag, MPI_Comm comm, MPI_Status *status);
 OMPI_DECLSPEC  int MPI_Publish_name(char *service_name, MPI_Info info, 
                                     char *port_name);
+#if OMPI_WANT_MPI2_ONE_SIDED
 OMPI_DECLSPEC  int MPI_Put(void *origin_addr, int origin_count, MPI_Datatype origin_datatype, 
                            int target_rank, MPI_Aint target_disp, int target_count, 
                            MPI_Datatype target_datatype, MPI_Win win);
+#endif
 OMPI_DECLSPEC  int MPI_Query_thread(int *provided);
 OMPI_DECLSPEC  int MPI_Recv_init(void *buf, int count, MPI_Datatype datatype, int source,
                                  int tag, MPI_Comm comm, MPI_Request *request);
@@ -1003,6 +1021,7 @@ OMPI_DECLSPEC  int MPI_Wait(MPI_Request *request, MPI_Status *status);
 OMPI_DECLSPEC  int MPI_Waitsome(int incount, MPI_Request *array_of_requests, 
                                 int *outcount, int *array_of_indices, 
                                 MPI_Status *array_of_statuses);
+#if OMPI_WANT_MPI2_ONE_SIDED
 OMPI_DECLSPEC  MPI_Fint MPI_Win_c2f(MPI_Win win);
 OMPI_DECLSPEC  int MPI_Win_call_errhandler(MPI_Win win, int errorcode);
 OMPI_DECLSPEC  int MPI_Win_complete(MPI_Win win);
@@ -1032,6 +1051,7 @@ OMPI_DECLSPEC  int MPI_Win_start(MPI_Group group, int assert, MPI_Win win);
 OMPI_DECLSPEC  int MPI_Win_test(MPI_Win win, int *flag);
 OMPI_DECLSPEC  int MPI_Win_unlock(int rank, MPI_Win win);
 OMPI_DECLSPEC  int MPI_Win_wait(MPI_Win win);
+#endif
 OMPI_DECLSPEC  double MPI_Wtick(void);
 OMPI_DECLSPEC  double MPI_Wtime(void);
 
@@ -1039,9 +1059,11 @@ OMPI_DECLSPEC  double MPI_Wtime(void);
    * Profiling MPI API
    */
 OMPI_DECLSPEC  int PMPI_Abort(MPI_Comm comm, int errorcode);
+#if OMPI_WANT_MPI2_ONE_SIDED
 OMPI_DECLSPEC  int PMPI_Accumulate(void *origin_addr, int origin_count, MPI_Datatype origin_datatype,
                                    int target_rank, MPI_Aint target_disp, int target_count,
                                    MPI_Datatype target_datatype, MPI_Op op, MPI_Win win); 
+#endif
 OMPI_DECLSPEC  int PMPI_Add_error_class(int *errorclass);
 OMPI_DECLSPEC  int PMPI_Add_error_code(int errorclass, int *errorcode);
 OMPI_DECLSPEC  int PMPI_Add_error_string(int errorcode, char *string);
@@ -1246,10 +1268,12 @@ OMPI_DECLSPEC  int PMPI_Get_address(void *location, MPI_Aint *address);
 OMPI_DECLSPEC  int PMPI_Get_count(MPI_Status *status, MPI_Datatype datatype, int *count);
 OMPI_DECLSPEC  int PMPI_Get_elements(MPI_Status *status, MPI_Datatype datatype, 
                                      int *count);
+#if OMPI_WANT_MPI2_ONE_SIDED
 OMPI_DECLSPEC  int PMPI_Get(void *origin_addr, int origin_count, 
                             MPI_Datatype origin_datatype, int target_rank, 
                             MPI_Aint target_disp, int target_count, 
                             MPI_Datatype target_datatype, MPI_Win win);
+#endif
 OMPI_DECLSPEC  int PMPI_Get_processor_name(char *name, int *resultlen);
 OMPI_DECLSPEC  int PMPI_Get_version(int *version, int *subversion);
 OMPI_DECLSPEC  int PMPI_Graph_create(MPI_Comm comm_old, int nnodes, int *index, 
@@ -1348,9 +1372,11 @@ OMPI_DECLSPEC  int PMPI_Pcontrol(const int level, ...);
 OMPI_DECLSPEC  int PMPI_Probe(int source, int tag, MPI_Comm comm, MPI_Status *status);
 OMPI_DECLSPEC  int PMPI_Publish_name(char *service_name, MPI_Info info, 
                                      char *port_name);
+#if OMPI_WANT_MPI2_ONE_SIDED
 OMPI_DECLSPEC  int PMPI_Put(void *origin_addr, int origin_count, MPI_Datatype origin_datatype, 
                             int target_rank, MPI_Aint target_disp, int target_count, 
                             MPI_Datatype target_datatype, MPI_Win win);
+#endif
 OMPI_DECLSPEC  int PMPI_Query_thread(int *provided);
 OMPI_DECLSPEC  int PMPI_Recv_init(void *buf, int count, MPI_Datatype datatype, int source,
                                   int tag, MPI_Comm comm, MPI_Request *request);
@@ -1510,6 +1536,7 @@ OMPI_DECLSPEC  int PMPI_Wait(MPI_Request *request, MPI_Status *status);
 OMPI_DECLSPEC  int PMPI_Waitsome(int incount, MPI_Request *array_of_requests, 
                                  int *outcount, int *array_of_indices, 
                                  MPI_Status *array_of_statuses);
+#if OMPI_WANT_MPI2_ONE_SIDED
 OMPI_DECLSPEC  MPI_Fint PMPI_Win_c2f(MPI_Win win);
 OMPI_DECLSPEC  int PMPI_Win_call_errhandler(MPI_Win win, int errorcode);
 OMPI_DECLSPEC  int PMPI_Win_complete(MPI_Win win);
@@ -1539,6 +1566,7 @@ OMPI_DECLSPEC  int PMPI_Win_start(MPI_Group group, int assert, MPI_Win win);
 OMPI_DECLSPEC  int PMPI_Win_test(MPI_Win win, int *flag);
 OMPI_DECLSPEC  int PMPI_Win_unlock(int rank, MPI_Win win);
 OMPI_DECLSPEC  int PMPI_Win_wait(MPI_Win win);
+#endif
 OMPI_DECLSPEC  double PMPI_Wtick(void);
 OMPI_DECLSPEC  double PMPI_Wtime(void);
 

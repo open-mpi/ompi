@@ -272,6 +272,54 @@ AM_CONDITIONAL(WANT_DEPRECATED_EXECUTABLE_NAMES, test "$WANT_DEN" = "1")
 
 
 #
+# Do we want to build MPI-2 one-sided functions?  Currently, they are
+# empty shell functions that simply invoke an MPI exception (i.e., a
+# run-time error vs. a compile/link-time error).
+#
+AC_MSG_CHECKING([if want MPI-2 one-sided empty shell functions])
+AC_ARG_ENABLE(mpi2-one-sided,
+    AC_HELP_STRING([--enable-mpi2-one-sided],
+                   [Do we want to build empty shell functions for the MPI-2 one-sided functionality?  (these functions are currently unimplemented -- all they do is invoke a run-time MPI exception)]))
+if test "$enable_mpi2_one_sided" = "yes"; then
+    mpi2_one_sided=yes
+    value=1
+
+    # Need to set values that will be in mpif.h
+
+    OMPI_F77_WIN_ATTR_KEYS="integer MPI_WIN_BASE, MPI_WIN_SIZE, MPI_WIN_DISP_UNIT"
+    OMPI_F77_WIN_ATTR_BASE_VALUE="parameter (MPI_WIN_BASE=6)"
+    OMPI_F77_WIN_ATTR_SIZE_VALUE="parameter (MPI_WIN_SIZE=7)"
+    OMPI_F77_WIN_ATTR_DISP_VALUE="parameter (MPI_WIN_DISP_UNIT=8)"
+    OMPI_F77_WIN_NULL_COPY_FN="external MPI_WIN_NULL_COPY_FN"
+    OMPI_F77_WIN_NULL_DELETE_FN="external MPI_WIN_NULL_DELETE_FN"
+    OMPI_F77_WIN_DUP_FN="external MPI_WIN_DUP_FN"
+else
+    mpi2_one_sided=no
+    value=0
+
+    # Many values in mpif.h are now blank
+
+    OMPI_F77_WIN_ATTR_KEYS=
+    OMPI_F77_WIN_ATTR_BASE_VALUE=
+    OMPI_F77_WIN_ATTR_SIZE_VALUE=
+    OMPI_F77_WIN_ATTR_DISP_VALUE=
+    OMPI_F77_WIN_NULL_COPY_FN=
+    OMPI_F77_WIN_NULL_DELETE_FN=
+    OMPI_F77_WIN_DUP_FN=
+fi
+AC_MSG_RESULT([$mpi2_one_sided])
+AC_DEFINE_UNQUOTED(OMPI_WANT_MPI2_ONE_SIDED, $value,
+    [Do we want the MPI-2 one-sided functions to be compiled in or left out altogether (i.e., unlinkable)?])
+AM_CONDITIONAL(WANT_MPI2_ONE_SIDED, test "$mpi2_one_sided" = "yes")
+AC_SUBST(OMPI_F77_WIN_ATTR_KEYS)
+AC_SUBST(OMPI_F77_WIN_ATTR_BASE_VALUE)
+AC_SUBST(OMPI_F77_WIN_ATTR_SIZE_VALUE)
+AC_SUBST(OMPI_F77_WIN_ATTR_DISP_VALUE)
+AC_SUBST(OMPI_F77_WIN_NULL_COPY_FN)
+AC_SUBST(OMPI_F77_WIN_NULL_DELETE_FN)
+AC_SUBST(OMPI_F77_WIN_DUP_FN)
+
+#
 # Do we want event signal handlers
 # BWB - this needs to be removed before release - XXX
 #

@@ -78,7 +78,9 @@ struct ompi_errhandler_t {
     /* Function pointers */
     MPI_Comm_errhandler_fn *eh_comm_fn;
     MPI_File_errhandler_fn *eh_file_fn;
+#if OMPI_WANT_MPI2_ONE_SIDED
     MPI_Win_errhandler_fn *eh_win_fn;
+#endif
     ompi_errhandler_fortran_handler_fn_t *eh_fort_fn;
 
     /* index in Fortran <-> C translation array */

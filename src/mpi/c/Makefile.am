@@ -60,7 +60,6 @@ libmpi_c_la_SOURCES = \
 
 libmpi_c_mpi_la_SOURCES = \
         abort.c \
-        accumulate.c \
         add_error_class.c \
         add_error_code.c \
         add_error_string.c \
@@ -197,7 +196,6 @@ libmpi_c_mpi_la_SOURCES = \
         get_address.c \
         get_count.c \
         get_elements.c \
-        get.c \
         get_processor_name.c \
         get_version.c \
         graph_create.c \
@@ -260,7 +258,6 @@ libmpi_c_mpi_la_SOURCES = \
         pcontrol.c \
         probe.c \
         publish_name.c \
-        put.c \
         query_thread.c \
         recv_init.c \
         recv.c \
@@ -337,7 +334,13 @@ libmpi_c_mpi_la_SOURCES = \
         wait.c \
         waitall.c \
         waitany.c \
-        waitsome.c \
+        waitsome.c
+
+if WANT_MPI2_ONE_SIDED
+libmpi_c_mpi_la_SOURCES += \
+        accumulate.c \
+        get.c \
+        put.c \
         win_c2f.c \
         win_call_errhandler.c \
         win_complete.c  \
@@ -362,6 +365,7 @@ libmpi_c_mpi_la_SOURCES = \
         win_test.c \
         win_unlock.c \
         win_wait.c
+endif
 
 # Conditionally install the header files
 

@@ -76,13 +76,13 @@
        integer MPI_CART, MPI_GRAPH, MPI_KEYVAL_INVALID
        integer MPI_STATUS_SIZE, MPI_SOURCE, MPI_TAG, MPI_ERROR
        integer MPI_TAG_UB, MPI_HOST, MPI_IO, MPI_WTIME_IS_GLOBAL
-       integer MPI_UNIVERSE_SIZE, MPI_APPNUM, MPI_WIN_BASE
-       integer MPI_WIN_SIZE, MPI_WIN_DISP_UNIT, MPI_BSEND_OVERHEAD
+       integer MPI_UNIVERSE_SIZE, MPI_APPNUM,  MPI_BSEND_OVERHEAD
        integer MPI_MAX_INFO_KEY, MPI_MAX_INFO_VAL
        integer MPI_MAX_PORT_NAME, MPI_MAX_OBJECT_NAME
        integer MPI_ORDER_C, MPI_ORDER_FORTRAN
        integer MPI_DISTRIBUTE_BLOCK, MPI_DISTRIBUTE_CYCLIC
        integer MPI_DISTRIBUTE_NONE, MPI_DISTRIBUTE_DFLT_DARG
+       @OMPI_F77_WIN_ATTR_KEYS@
 
        parameter (MPI_ANY_SOURCE=-1)
        parameter (MPI_ANY_TAG=-1)
@@ -103,9 +103,9 @@
        parameter (MPI_WTIME_IS_GLOBAL=3)
        parameter (MPI_UNIVERSE_SIZE=4)
        parameter (MPI_APPNUM=5)
-       parameter (MPI_WIN_BASE=6)
-       parameter (MPI_WIN_SIZE=7)
-       parameter (MPI_WIN_DISP_UNIT=8)
+       @OMPI_F77_WIN_ATTR_BASE_VALUE@
+       @OMPI_F77_WIN_ATTR_SIZE_VALUE@
+       @OMPI_F77_WIN_ATTR_DISP_VALUE@
        parameter (MPI_BSEND_OVERHEAD=128)
        parameter (MPI_MAX_INFO_KEY=35)
        parameter (MPI_MAX_INFO_VAL=255)
@@ -353,9 +353,10 @@
        external MPI_NULL_COPY_FN, MPI_NULL_DELETE_FN
        external MPI_COMM_NULL_COPY_FN, MPI_COMM_NULL_DELETE_FN
        external MPI_TYPE_NULL_COPY_FN, MPI_TYPE_NULL_DELETE_FN
-       external MPI_WIN_NULL_COPY_FN, MPI_WIN_NULL_DELETE_FN
-       external MPI_DUP_FN, MPI_COMM_DUP_FN
-       external MPI_TYPE_DUP_FN, MPI_WIN_DUP_FN
+       external MPI_DUP_FN, MPI_COMM_DUP_FN, MPI_TYPE_DUP_FN
+       @OMPI_F77_WIN_NULL_COPY_FN@
+       @OMPI_F77_WIN_NULL_DELETE_FN@
+       @OMPI_F77_WIN_DUP_FN@
 !
 ! double precision functions
 !
