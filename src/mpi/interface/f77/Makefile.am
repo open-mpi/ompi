@@ -62,7 +62,8 @@ libmpi_f77_mpi_la_SOURCES = \
         comm_set_name_f.c \
         init_f.c \
         finalize_f.c \
-        free_mem_f.c
+        free_mem_f.c \
+        group_compare_f.c
 #
 EXTRA_DIST = $(libmpi_f77_mpi_la_SOURCES)
 #
