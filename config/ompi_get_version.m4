@@ -35,13 +35,13 @@ gv_run() {
 }
 
 if test -n "$gv_ver_file" -a -f "$gv_ver_file"; then
-    gv_major_version="`egrep ^major= $gv_ver_file | cut -d= -f2`"
-    gv_minor_version="`egrep ^minor= $gv_ver_file | cut -d= -f2`"
-    gv_release_version="`egrep ^release= $gv_ver_file | cut -d= -f2`"
-    gv_alpha_version="`egrep ^alpha= $gv_ver_file | cut -d= -f2`"
-    gv_beta_version="`egrep ^beta= $gv_ver_file | cut -d= -f2`"
-    gv_want_svn="`egrep ^want_svn= $gv_ver_file | cut -d= -f2`"
-    gv_svn_r="`egrep ^svn_r= $gv_ver_file | cut -d= -f2`"
+    gv_major_version="`egrep '^major=' $gv_ver_file | cut -d= -f2`"
+    gv_minor_version="`egrep '^minor=' $gv_ver_file | cut -d= -f2`"
+    gv_release_version="`egrep '^release=' $gv_ver_file | cut -d= -f2`"
+    gv_alpha_version="`egrep '^alpha=' $gv_ver_file | cut -d= -f2`"
+    gv_beta_version="`egrep '^beta=' $gv_ver_file | cut -d= -f2`"
+    gv_want_svn="`egrep '^want_svn=' $gv_ver_file | cut -d= -f2`"
+    gv_svn_r="`egrep '^svn_r=' $gv_ver_file | cut -d= -f2`"
 
     if test -n "$gv_release_version" -a "$gv_release_version" != "0"; then
 	gv_full_version="$gv_major_version.$gv_minor_version.$gv_release_version"
