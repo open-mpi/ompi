@@ -8,7 +8,6 @@
 
 #include "mca/lam/oob/oob.h"
 #include "mca/lam/oob/cofs/src/oob_cofs.h"
-#include "lam/mem/malloc.h"
 #include "lam/types.h"
 
 #include <stdio.h>

@@ -8,7 +8,6 @@
 
 #include "mca/lam/registry/registry.h"
 #include "mca/lam/registry/cofs/src/registry_cofs.h"
-#include "lam/mem/malloc.h"
 #include "lam/types.h"
 
 #include <stdio.h>

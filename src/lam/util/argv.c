@@ -8,7 +8,6 @@
 #include <string.h>
 
 #include "lam/constants.h"
-#include "lam/mem/malloc.h"
 #include "lam/util/argv.h"
 #include "lam/util/strncpy.h"
 

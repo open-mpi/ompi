@@ -106,7 +106,6 @@
 #include "lam_config.h"
 #include "lam/types.h"
 #include "lam/atomic.h"
-#include "lam/mem/malloc.h"
 
 /*
  * BEGIN_C_DECLS should be used at the beginning of your declarations,

@@ -12,7 +12,6 @@
 
 #include "lam/constants.h"
 #include "lam/lfc/array.h"
-#include "lam/mem/malloc.h"
 #include "mca/mca.h"
 #include "mca/lam/base/mca_lam_param.h"
 

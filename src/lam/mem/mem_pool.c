@@ -12,7 +12,6 @@
 #include "lam/runtime/runtime.h"
 #include "lam/mem/mem_pool.h"
 #include "lam/mem/sharedmem_util.h"
-#include "lam/mem/malloc.h"
 #include "lam/util/output.h"
 #include "lam/os/numa.h"
 

@@ -8,7 +8,6 @@
 
 #include "lam/constants.h"
 #include "lam/types.h"
-#include "lam/mem/malloc.h"
 #include "mca/mca.h"
 #include "mca/lam/pcm/pcm.h"
 #include "mca/lam/pcm/cofs/src/pcm_cofs.h"
