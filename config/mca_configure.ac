@@ -212,7 +212,9 @@ fi
 # purely aesthetic.
 #
 
-CPPFLAGS='-I$(top_ompi_srcdir)/src/include'" $CPPFLAGS"
+CPPFLAGS='-I$(top_ompi_srcdir)/src -I$(top_ompi_srcdir)/include -I$(top_ompi_builddir)/src'" $CPPFLAGS"
+CXXCPPFLAGS='-I$(top_ompi_srcdir)/src -I$(top_ompi_srcdir)/include -I$(top_ompi_builddir)/src'" $CXXCPPFLAGS"
+
 
 #
 # Delayed the substitution of these until now because they may have
