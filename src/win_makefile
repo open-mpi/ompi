@@ -153,7 +153,7 @@ ADDLIBS = \
 .c.obj:
 	$(CXX) $(CXXFLAGS) $*.c
 
-all: libmpi
+all: prebuild libmpi
 
 prebuild:
 	@echo "Creating mca_base_parse_paramfile_lex.c"
