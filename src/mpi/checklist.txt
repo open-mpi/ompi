@@ -30,9 +30,9 @@ MPI_WIN_DUP_FN                  DONE
 
 MPI_Abort
 MPI_Accumulate 
-MPI_Add_error_class             n.n
-MPI_Add_error_code              n.n
-MPI_Add_error_string            n.n
+MPI_Add_error_class             DONE
+MPI_Add_error_code              DONE
+MPI_Add_error_string            DONE
 MPI_Address                     DONE
 MPI_Allgather                   DONE
 MPI_Allgatherv                  Jeff
@@ -98,8 +98,8 @@ MPI_Errhandler_f2c              DONE
 MPI_Errhandler_free             DONE
 MPI_Errhandler_get              DONE
 MPI_Errhandler_set              DONE
-MPI_Error_class                 n.n 
-MPI_Error_string                n.n
+MPI_Error_class                 DONE
+MPI_Error_string                DONE
 MPI_Exscan                      Jeff
 MPI_File_c2f
 MPI_File_f2c
@@ -158,7 +158,7 @@ MPI_File_get_type_extent
 MPI_File_set_atomicity
 MPI_File_get_atomicity
 MPI_File_sync
-MPI_Finalize                    DONE
+MPI_Finalize                    C & f77 DONE
 MPI_Finalized                   Ginger
 MPI_Free_mem                    Tim P.
 MPI_Gather                      DONE 
@@ -203,9 +203,9 @@ MPI_Info_get_nkeys              Anju
 MPI_Info_get_nthkey             Anju
 MPI_Info_get_valuelen           Anju
 MPI_Info_set                    Anju
-MPI_Init                        DONE
+MPI_Init                        C & f77 DONE
 MPI_Initialized                 Ginger
-MPI_Init_thread                 Ginger
+MPI_Init_thread                 C & f77 DONE
 MPI_Intercomm_create            Edgar
 MPI_Intercomm_merge             Edgar
 MPI_Iprobe                      C & F77 done
