@@ -29,28 +29,26 @@ pkgdata_DATA = help-wrapper.txt
 
 bin_PROGRAMS = mpicc mpic++ mpif77 mpif90
 
-noinst_LIBRARIES = libompi_wrap.a
+libs = $(top_builddir)/src/libmpi.la
 
-libs = $(noinst_LIBRARIES) $(top_builddir)/src/libmpi.la
+wrap_sources = wrap.cc wrap_engine.cc ompi_wrap.h
 
-libompi_wrap_a_SOURCES = wrap.cc wrap_engine.cc ompi_wrap.h
-
-mpicc_SOURCES       = mpicc.cc ompi_wrap.h
-mpicc_LDADD         = $(libs) $(LIBOMPI_EXTRA_LIBS)
+mpicc_SOURCES       = mpicc.cc ompi_wrap.h $(wrap_sources)
+mpicc_LDADD         = $(libs)  $(LIBOMPI_EXTRA_LIBS)
 mpicc_LDFLAGS       = $(LIBOMPI_EXTRA_LDFLAGS)
 mpicc_DEPENDENCIES  = $(libs)
 
-mpic___SOURCES      = mpicxx.cc ompi_wrap.h
+mpic___SOURCES      = mpicxx.cc ompi_wrap.h $(wrap_sources)
 mpic___LDADD        = $(libs) $(LIBOMPI_EXTRA_LIBS)
 mpic___LDFLAGS      = $(LIBOMPI_EXTRA_LDFLAGS)
 mpic___DEPENDENCIES = $(libs)
 
-mpif77_SOURCES      = mpif77.cc ompi_wrap.h
+mpif77_SOURCES      = mpif77.cc ompi_wrap.h $(wrap_sources)
 mpif77_LDADD        = $(libs) $(LIBOMPI_EXTRA_LIBS)
 mpif77_LDFLAGS      = $(LIBOMPI_EXTRA_LDFLAGS)
 mpif77_DEPENDENCIES = $(libs)
 
-mpif90_SOURCES      = mpif90.cc ompi_wrap.h
+mpif90_SOURCES      = mpif90.cc ompi_wrap.h $(wrap_sources)
 mpif90_LDADD        = $(libs) $(LIBOMPI_EXTRA_LIBS)
 mpif90_LDFLAGS      = $(LIBOMPI_EXTRA_LDFLAGS)
 mpif90_DEPENDENCIES = $(libs)
