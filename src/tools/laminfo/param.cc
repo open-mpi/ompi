@@ -340,7 +340,7 @@ void laminfo::do_config(bool want_all)
   out("Fortran90 profiling", "option:profiling:f90", f90profiling);
 
   out("C++ exceptions", "option:cxx_exceptions", cxxexceptions);
-  out("Posix thread support", "option:threads", pthreads);
+  out("POSIX thread support", "option:threads", pthreads);
   out("Solaris thread support", "option:threads", sthreads);
 #if 0
   // Anju:
