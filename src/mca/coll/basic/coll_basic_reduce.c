@@ -255,7 +255,6 @@ int mca_coll_basic_reduce_log_intra(void *sbuf, void *rbuf, int count,
    int peer;
    int dim;
    int mask;
-   int fl_recv;
    long true_lb, true_extent, lb, extent;
    char *free_buffer = NULL;
    char *pml_buffer = NULL;
@@ -275,7 +274,7 @@ int mca_coll_basic_reduce_log_intra(void *sbuf, void *rbuf, int count,
    /* Some variables */
    size = ompi_comm_size(comm);
    rank = ompi_comm_rank(comm);                       
-   vrank = ompi_op_is_commute(op) ? (rank - root + size) % size : rank;
+   vrank = rank - root + size) % size;
    dim = comm->c_cube_dim;
 
    /* Allocate the incoming and resulting message buffers.  See lengthy
@@ -291,26 +290,19 @@ int mca_coll_basic_reduce_log_intra(void *sbuf, void *rbuf, int count,
       }
 
       pml_buffer = free_buffer - lb;
-      /* read the comment about commutative operations (few lines down
-         the page) */
-      if( ompi_op_is_commute(op) ) {
-        rcv_buffer = pml_buffer;
-      }
+      rcv_buffer = pml_buffer;
       else rcv_buffer = rbuf;
    }
 
    /* Loop over cube dimensions. High processes send to low ones in the
       dimension. */
 
-   fl_recv = 0;
    for (i = 0, mask = 1; i < dim; ++i, mask <<= 1) {
 
        /* A high-proc sends to low-proc and stops. */
        if (vrank & mask) {
           peer = vrank & ~mask;
-          if (ompi_op_is_commute(op)) {
-             peer = (peer + root) % size;
-          }
+          peer = (peer + root) % size;
 
           err = mca_pml.pml_send( snd_buffer, count,
                                   dtype, peer, MCA_COLL_BASE_TAG_REDUCE, 
@@ -333,11 +325,7 @@ int mca_coll_basic_reduce_log_intra(void *sbuf, void *rbuf, int count,
          if (peer >= size) {
             continue;
          }
-         if (ompi_op_is_commute(op)) {
-            peer = (peer + root) % size;
-         }
-
-         fl_recv = 1;
+         peer = (peer + root) % size;
 
          /* Most of the time (all except the first one for commutative
             operations) we receive in the user provided buffer
@@ -369,13 +357,9 @@ int mca_coll_basic_reduce_log_intra(void *sbuf, void *rbuf, int count,
                If we are not commutative, we have to copy the send
                buffer into a temp buffer (pml_buffer) and then reduce
                what we just received against it. */
-            if( !ompi_op_is_commute(op) ) {
-               ompi_ddt_sndrcv( sbuf, count, dtype, pml_buffer, count, dtype,
-                                MCA_COLL_BASE_TAG_REDUCE, comm);
-               ompi_op_reduce( op, rbuf, pml_buffer, count, dtype );
-            } else {
-               ompi_op_reduce(op, sbuf, pml_buffer, count, dtype);
-            }
+             ompi_ddt_sndrcv( sbuf, count, dtype, pml_buffer, count, dtype,
+                              MCA_COLL_BASE_TAG_REDUCE, comm);
+             ompi_op_reduce( op, rbuf, pml_buffer, count, dtype );
             /* now we have to send the buffer containing the computed data */
             snd_buffer = pml_buffer;  
             /* starting from now we always receive in the user
