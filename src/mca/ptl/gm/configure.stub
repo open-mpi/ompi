@@ -42,7 +42,7 @@ AC_DEFUN([MCA_CONFIGURE_STUB],[
     if test -n "$with_ptl_gm_libdir"; then
         if test -d "$with_ptl_gm_libdir/lib"; then
             EXTRA_LDFLAGS="-L$with_ptl_gm_libdir/lib"
-        elif test -d "$with_ptl_bm_libdir/binary/lib"; then
+        elif test -d "$with_ptl_gm_libdir/binary/lib"; then
             EXTRA_LDFLAGS="-L$with_ptl_gm_libdir/binary/lib"
         else
             AC_MSG_WARN([*** Warning: cannot find $with_ptl_gm_libdir/lib])
@@ -52,7 +52,7 @@ AC_DEFUN([MCA_CONFIGURE_STUB],[
     elif test -n "$with_ptl_gm"; then
         if test -d "$with_ptl_gm/lib"; then
             EXTRA_LDFLAGS="-L$with_ptl_gm/lib"
-        elif test -d "$with_ptl_bm/binary/lib"; then
+        elif test -d "$with_ptl_gm/binary/lib"; then
             EXTRA_LDFLAGS="-L$with_ptl_gm/binary/lib"
         else
             AC_MSG_WARN([*** Warning: cannot find $with_ptl_gm/lib])
