@@ -7,6 +7,7 @@
 #include <stdio.h>
 
 #include "mpi.h"
+#include "request/request.h"
 #include "mpi/f77/bindings.h"
 #include "mpi/f77/constants.h"
 
@@ -54,8 +55,8 @@ void mpi_wait_f(MPI_Fint *request, MPI_Fint *status, MPI_Fint *ierr)
 
     *ierr = OMPI_INT_2_FINT(MPI_Wait(&c_req, &c_status));
 
-    if (MPI_SUCCESS == *ierr) {
-        *request = 0;
+    if (MPI_SUCCESS == OMPI_INT_2_FINT(*ierr)) {
+        *request = OMPI_INT_2_FINT(MPI_REQUEST_NULL->req_f_to_c_index);
         if (!OMPI_IS_FORTRAN_STATUS_IGNORE(status)) {
             MPI_Status_c2f(&c_status, status);
         }
