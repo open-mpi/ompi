@@ -113,6 +113,11 @@ int lam_mpi_init(int argc, char **argv, int requested, int *provided)
          return ret;
      }
 
+     /* initialize attribute meta-data structure for comm/win/dtype */
+     if (LAM_SUCCESS != (ret = lam_attr_init())) {
+	 return ret;
+     }
+
      /* initialize communicators */
      if (LAM_SUCCESS != (ret = lam_comm_init())) {
          return ret;
