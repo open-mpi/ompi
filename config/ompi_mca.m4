@@ -350,6 +350,7 @@ if test "$HAPPY" = "1"; then
 	"$LOADABLE_MODULE_all" = "1"; then
 	compile_mode="dynamic"
 	echo $m >> $outfile.dynamic
+	rm -f "src/dynamic-mca/$type/$m"
 	$LN_S "$OMPI_TOP_BUILDDIR/src/mca/$type/$m" \
 	    "src/dynamic-mca/$type/$m"
     else
