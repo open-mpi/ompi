@@ -84,7 +84,7 @@ int mca_pml_teg_module_open(void)
     mca_pml_teg.teg_free_list_inc =
         mca_pml_teg_param_register_int("free_list_inc", 256);
     mca_pml_teg.teg_poll_iterations =
-        mca_pml_teg_param_register_int("poll_iterations", 10000);
+        mca_pml_teg_param_register_int("poll_iterations", 100000);
     return LAM_SUCCESS;
 }
 
