@@ -8,8 +8,11 @@
 #include "lam/runtime/runtime.h"
 #include "mpi.h"
 #include "mpi/runtime/runtime.h"
+#include "mca/lam/base/base.h"
 #include "mca/mpi/ptl/ptl.h"
+#include "mca/mpi/ptl/base/base.h"
 #include "mca/mpi/pml/pml.h"
+#include "mca/mpi/pml/base/base.h"
 
 
 int lam_mpi_finalize(void)
@@ -31,6 +34,12 @@ int lam_mpi_finalize(void)
   /* Leave the RTE */
 
   if (LAM_SUCCESS != (ret = lam_rte_finalize())) {
+    return ret;
+  }
+
+  /* Close down the MCA */
+
+  if (LAM_SUCCESS != (ret = mca_base_close())) {
     return ret;
   }
 
