@@ -28,7 +28,7 @@ int lam_ddt_create_vector( int count, int bLength, long stride,
             pData = lam_ddt_create( oldType->desc.used + 2 + 2 );
             lam_ddt_add( pTempData, oldType, bLength, 0, extent );
             lam_ddt_add( pData, pTempData, count - 1, 0, stride * extent );
-            OBJ_DESTRUCT( &pTempData );
+            OBJ_RELEASE( pTempData );
          }
       } else {
          pData = lam_ddt_create( oldType->desc.used + 2 );
@@ -55,7 +55,7 @@ int lam_ddt_create_hvector( int count, int bLength, long stride,
          pData = lam_ddt_create( oldType->desc.used + 2 + 2 );
          lam_ddt_add( pTempData, oldType, bLength, 0, extent );
          lam_ddt_add( pData, pTempData, count - 1, 0, stride );
-         OBJ_DESTRUCT( pTempData );
+         OBJ_RELEASE( pTempData );
       } else {
          pData = lam_ddt_create( oldType->desc.used + 2 );
       }
