@@ -128,7 +128,7 @@ int mca_ptl_sm_component_open(void)
     /* initialize objects */
     OBJ_CONSTRUCT(&mca_ptl_sm_component.sm_lock, ompi_mutex_t);
     OBJ_CONSTRUCT(&mca_ptl_sm_component.sm_send_requests, ompi_free_list_t);
-    OBJ_CONSTRUCT(&mca_ptl_sm_component.sm_frags, ompi_free_list_t);
+    OBJ_CONSTRUCT(&mca_ptl_sm_component.sm_first_frags, ompi_free_list_t);
    
     return OMPI_SUCCESS;
 }
@@ -142,7 +142,7 @@ int mca_ptl_sm_component_close(void)
 {
     OBJ_DESTRUCT(&mca_ptl_sm_component.sm_lock);
     OBJ_DESTRUCT(&mca_ptl_sm_component.sm_send_requests);
-    OBJ_DESTRUCT(&mca_ptl_sm_component.sm_frags);
+    OBJ_DESTRUCT(&mca_ptl_sm_component.sm_first_frags);
     return OMPI_SUCCESS;
 }
 
@@ -175,7 +175,7 @@ mca_ptl_base_module_t** mca_ptl_sm_component_init(
     length=sizeof(mca_ptl_sm_frag_t)+mca_ptl_sm_component.fragment_alignment+
         mca_ptl_sm_component.first_fragment_size;
 
-    ompi_free_list_init(&mca_ptl_sm_component.sm_frags, length,
+    ompi_free_list_init(&mca_ptl_sm_component.sm_first_frags, length,
         OBJ_CLASS(mca_ptl_sm_frag_t),
         mca_ptl_sm_component.sm_free_list_num,
         mca_ptl_sm_component.sm_free_list_max,

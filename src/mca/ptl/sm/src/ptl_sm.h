@@ -46,7 +46,10 @@ struct mca_ptl_sm_component_t {
     mca_mpool_base_module_t* sm_mpool; /**< shared memory pool */
     void* sm_mpool_base;                  /**< base address of shared memory pool */
     ompi_free_list_t sm_send_requests;    /**< free list of sm send requests -- sendreq + sendfrag */
-    ompi_free_list_t sm_frags;       /**< free list of sm recv fragments */
+    ompi_free_list_t sm_first_frags;       /**< free list of sm first
+                                             fragments */
+    ompi_free_list_t sm_second_frags;       /**< free list of sm second
+                                              and above fragments */
     size_t first_fragment_size;            /**< first fragment size */
     size_t max_fragment_size;            /**< maximum (second and
                                              beyone) fragment size */
