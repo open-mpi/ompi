@@ -249,9 +249,215 @@ find_and_delete() {
 
 ##############################################################################
 #
+# run_gnu_tools - run the GNU tools on a given directory
+#
+# INPUT:
+#    - directory to run in
+#    - LAM top directory
+#
+# OUTPUT:
+#    none
+#
+# SIDE EFFECTS:
+#    - skips directories with .lam_no_gnu .lam_ignore
+#    - uses provided autogen.sh if available
+#
+##############################################################################
+run_gnu_tools() {
+    rgt_dir="$1"
+    rgt_lam_topdir="$2"
+    rgt_cur_dir="`pwd`"
+    if test -d "$rgt_dir"; then
+	cd "$rgt_dir"
+
+	# See if the package doesn't want us to set it up
+
+	if test -f .lam_no_gnu; then
+	    cat <<EOF
+
+*** Found .lam_no_gnu file -- skipping GNU setup in:
+***   `pwd`
+
+EOF
+	elif test -f .lam_ignore; then
+	    cat <<EOF
+
+*** Found .lam_ignore file -- skipping entire tree:
+***   `pwd`
+
+EOF
+	elif test "$rgt_dir" != "." -a -x autogen.sh; then
+	    cat <<EOF
+
+*** Found custom autogen.sh file in:
+***   `pwd`
+
+EOF
+	    ./autogen.sh
+        else
+	    cat <<EOF
+
+*** Running GNU tools in directory: 
+***   `pwd`
+
+EOF
+	    # Sanity check to ensure that there's a configure.in or
+	    # configure.ac file here, or if there's a configure.params
+	    # file and we need to run make_configure.pl.
+
+	    if test -f configure.params -a \
+		-x "$rgt_lam_topdir/config/mca_make_configure.pl"; then
+		echo "--> Found configure.params.  Running mca_make_configure.pl"
+		"$rgt_lam_topdir/config/mca_make_configure.pl" \
+		    --lamdir "$rgt_lam_topdir" \
+		    --moduledir "`pwd`"
+		happy=1
+		file=configure.ac
+	    elif test -f configure.in; then
+		happy=1
+		file=configure.in
+	    elif test -f configure.ac; then
+		happy=1
+		file=configure.ac
+	    else
+		echo "---> Err... there's no configure.in or configure.ac file in this directory"
+		echo "---> I'm confused, so I'm going to abort"
+		exit 1
+	    fi
+	    unset happy
+
+	    # Find and delete the GNU helper script files
+
+	    find_and_delete config.guess
+	    find_and_delete config.sub
+	    find_and_delete depcomp
+	    find_and_delete install-sh
+	    find_and_delete ltconfig
+	    find_and_delete ltmain.sh
+	    find_and_delete missing
+	    find_and_delete mkinstalldirs
+	    find_and_delete libtool
+
+            # Run the GNU tools
+
+	    run_and_check $lam_aclocal
+	    if test "`grep AC_CONFIG_HEADER $file`" != "" -o \
+		"`grep AM_CONFIG_HEADER $file`" != ""; then
+		run_and_check $lam_autoheader
+	    fi
+	    run_and_check $lam_autoconf
+
+	    # We only need the libltdl stuff for the top-level
+	    # configure, not any of the SSI modules.
+
+	    if test -d src/include/mpi.h; then
+		rm -rf libltdl src/mca/libltdl src/mca/ltdl.h
+		run_and_check $lam_libtoolize --automake --copy --ltdl
+		mv libltdl src/mca
+
+		echo "Adjusting libltdl for LAM :-("
+
+		echo "  -- adding sym link for src/mca/ltdl.h"
+                cd src/mca
+		ln -s libltdl/ltdl.h ltdl.h
+                cd ../..
+
+		echo "  -- patching for argz bugfix in libtool 1.5"
+		cd src/mca/libltdl
+		patch -p0 <<EOF
+--- ltdl.c.old  2003-11-26 16:42:17.000000000 -0500
++++ ltdl.c      2003-12-03 17:06:27.000000000 -0500
+@@ -682,7 +682,7 @@
+   /* This probably indicates a programmer error, but to preserve
+      semantics, scan back to the start of an entry if BEFORE points
+      into the middle of it.  */
+-  while ((before >= *pargz) && (before[-1] != LT_EOS_CHAR))
++  while ((before > *pargz) && (before[-1] != LT_EOS_CHAR))
+     --before;
+
+   {
+EOF
+		cd ../../..
+		echo "  -- patching configure for broken -c/-o compiler test"
+		sed -e 's/chmod -w \./#LAM\/MPI FIX: chmod -w ./' \
+		    configure > configure.new
+		mv configure.new configure
+		chmod a+x configure
+	    else
+		run_and_check $lam_libtoolize --automake --copy
+	    fi
+	    run_and_check $lam_automake --foreign -a --copy --include-deps
+	fi
+	
+	# Go back to the original directory
+
+	cd "$rgt_cur_dir"
+    fi
+    unset rgt_dir rgt_cur_dir
+}
+
+
+##############################################################################
+#
+# run_global - run the config in the top LAM dir and all MCA modules
+#
+# INPUT:
+#    none
+#
+# OUTPUT:
+#    none
+#
+# SIDE EFFECTS:
+#
+##############################################################################
+run_global() {
+    # Run the config in the top-level directory
+
+    run_gnu_tools . .
+
+    # Now run the config in every directory in src/mca/[lam|mpi]/*/*
+    # that has a configure.in or configure.ac script
+
+    rg_cwd="`pwd`"
+    echo $rg_cwd
+    for type in src/mca/lam/* src/mca/mpi/*; do
+	if test -d "$type"; then
+	    for module in "$type"/*; do
+		if test -d "$module"; then
+		    if test -f "$module/configure.in" -o \
+			-f "$module/configure.params" -o \
+			-f "$module/configure.ac"; then
+			run_gnu_tools "$module" "$rg_cwd"
+		    fi
+		fi
+	    done
+	fi
+    done
+    unset type module
+}
+
+
+##############################################################################
+#
 # main - do the real work...
 #
 ##############################################################################
+
+# announce
+echo "[Checking] command line parameters"
+
+# Check the command line to see if we should run the whole shebang, or
+# just in this current directory.
+
+want_local=no
+lamdir=
+for arg in $*; do
+    case $arg in
+    -l) want_local=yes ;;
+    -lamdir|--lamdir|-lam|--lam) lamdir="$1" ;;
+    *) ;;
+    esac
+done
 
 # announce
 echo "[Checking] prerequisites"
@@ -262,20 +468,28 @@ if test ! -d CVS ; then
 
 This doesn't look like a developer copy of LAM/MPI.  You probably do not
 want to run autogen.sh - it is normally not needed for a release source
-tree.  Giving you 2 seconds to reconsider and kill me.
+tree.  Giving you 5 seconds to reconsider and kill me.
 
 EOF
-    sleep 2
+    sleep 5
 fi
 
-
-# make sure we are at the top of the tree
-if test -f VERSION -a -f configure.ac -a -f src/mpi/interface/c/init.c ; then
-    bad=0
+# figure out if we're at the top level of the LAM tree, a module's
+# top-level directory, or somewhere else.
+if test -f VERSION -a -f configure.ac -a -f src/include/mpi.h ; then
+    # Top level of LAM tree
+    lamdir="`pwd`"
+elif test -f configure.in -o -f configure.ac -o -f configure.params ; then
+    # Top level of a module directory
+    want_local=yes
+    if test -z "$lamdir"; then
+        lamdir="../../../../.."
+    fi
 else
     cat <<EOF
 
-You must run this script from the top-level LAM directory.
+You must run this script from either the top level of the LAM
+directory tree or the top-level of an MCA module directory tree.
 
 EOF
     exit 1
@@ -288,32 +502,12 @@ find_app "autoconf"
 find_app "libtoolize"
 find_app "automake"
 
-# Find and delete the GNU helper script files
-find_and_delete config.guess
-find_and_delete config.sub
-find_and_delete depcomp
-find_and_delete install-sh
-find_and_delete ltconfig
-find_and_delete ltmain.sh
-find_and_delete missing
-find_and_delete mkinstalldirs
-find_and_delete libtool
-
-# Run the GNU tools
-run_and_check $lam_aclocal
-if test "`grep AC_CONFIG_HEADER configure.ac`" != "" -o \
-    "`grep AM_CONFIG_HEADER configure.ac`" != ""; then
-    run_and_check $lam_autoheader
+# do the work
+if test "$want_local" = "yes"; then
+    run_gnu_tools . $lamdir
+else
+    run_global
 fi
-run_and_check $lam_autoconf
-echo "[Patching] configure for broken libtool -c/-o compiler test"
-sed -e 's/chmod -w \./#LAM\/MPI FIX: chmod -w ./' \
-    configure > configure.new
-mv configure.new configure
-chmod a+x configure
 
-run_and_check $lam_libtoolize --automake --copy
-run_and_check $lam_automake --foreign -a --copy --include-deps
-	
 # All done
 exit 0
