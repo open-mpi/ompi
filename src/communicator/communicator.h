@@ -46,10 +46,16 @@ OMPI_DECLSPEC extern ompi_class_t ompi_communicator_t_class;
 #define OMPI_COMM_SET_DYNAMIC(comm) ((comm)->c_flags |= OMPI_COMM_DYNAMIC)
 
 
-#define OMPI_COMM_HAVETO_DISCONNECT ((comm)->c_flags & OMPI_COMM_DISCONNECT)
-/* a special tag to recognize an MPI_Comm_join in the comm_connect_accept
-   routine. */
-#define OMPI_COMM_JOIN_TAG  32000
+/* a set of special tags: */
+
+/*  to recognize an MPI_Comm_join in the comm_connect_accept routine. */
+#define OMPI_COMM_JOIN_TAG  -32000
+
+#define OMPI_COMM_ALLGATHER_TAG -31078
+#define OMPI_COMM_BARRIER_TAG   -31079
+#define OMPI_COMM_ALLREDUCE_TAG -31080
+
+
 
 /** 
  * Modes reqquired for accquiring the new comm-id.

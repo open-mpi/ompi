@@ -19,7 +19,6 @@
 #include "mca/coll/base/base.h"
 #include "mca/oob/oob.h"
 
-#define OMPI_COLL_TAG_ALLREDUCE 31000
 #define OMPI_MAX_COMM 32768
 
 #if defined(c_plusplus) || defined(__cplusplus)
@@ -424,13 +423,13 @@ static int ompi_comm_allreduce_inter ( int *inbuf, int *outbuf,
         /* local leader exchange their data and determine the overall result
            for both groups */
         rc = mca_pml.pml_irecv (outbuf, count, MPI_INT, 0, 
-                                OMPI_COLL_TAG_ALLREDUCE
+                                OMPI_COMM_ALLREDUCE_TAG
                                 , intercomm, &req );
         if ( OMPI_SUCCESS != rc ) {
             goto exit;
         }
         rc = mca_pml.pml_send (tmpbuf, count, MPI_INT, 0,
-                               OMPI_COLL_TAG_ALLREDUCE, 
+                               OMPI_COMM_ALLREDUCE_TAG, 
                                MCA_PML_BASE_SEND_STANDARD, intercomm );
         if ( OMPI_SUCCESS != rc ) {
             goto exit;
@@ -529,13 +528,13 @@ static int ompi_comm_allreduce_intra_bridge (int *inbuf, int *outbuf,
         MPI_Request req;
         
         rc = mca_pml.pml_irecv ( outbuf, count, MPI_INT, remote_leader,
-                                 OMPI_COLL_TAG_ALLREDUCE, 
+                                 OMPI_COMM_ALLREDUCE_TAG, 
                                  bcomm, &req );
         if ( OMPI_SUCCESS != rc ) {
             goto exit;       
         }
         rc = mca_pml.pml_send (tmpbuf, count, MPI_INT, remote_leader, 
-                               OMPI_COLL_TAG_ALLREDUCE,
+                               OMPI_COMM_ALLREDUCE_TAG,
                                MCA_PML_BASE_SEND_STANDARD,  bcomm );
         if ( OMPI_SUCCESS != rc ) {
             goto exit;

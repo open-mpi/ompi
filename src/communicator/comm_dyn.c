@@ -489,7 +489,6 @@ int ompi_comm_dyn_finalize (void)
 /**********************************************************************/
 /**********************************************************************/
 /**********************************************************************/
-#define COMM_COLL_BASE_TAG_BARRIER 30303
 
 ompi_comm_disconnect_obj *ompi_comm_disconnect_init ( ompi_communicator_t *comm)
 {
@@ -520,7 +519,7 @@ ompi_comm_disconnect_obj *ompi_comm_disconnect_init ( ompi_communicator_t *comm)
        the object, since we are sending zero size messages anyway. */
     for ( i=0; i < obj->size; i++ ) {
 	ret = mca_pml.pml_irecv (&(obj->buf), 0, MPI_INT, i,
-				 COMM_COLL_BASE_TAG_BARRIER, comm, 
+				 OMPI_COMM_BARRIER_TAG, comm, 
 				 &(obj->reqs[2*i]));
 				 
 	if ( OMPI_SUCCESS != ret ) {
@@ -530,7 +529,7 @@ ompi_comm_disconnect_obj *ompi_comm_disconnect_init ( ompi_communicator_t *comm)
 	}
 
 	ret = mca_pml.pml_isend (&(obj->buf), 0, MPI_INT, i,
-				 COMM_COLL_BASE_TAG_BARRIER, 
+				 OMPI_COMM_BARRIER_TAG, 
 				 MCA_PML_BASE_SEND_STANDARD,
 				 comm, &(obj->reqs[2*i+1]));
 				 
