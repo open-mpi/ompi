@@ -13,7 +13,6 @@
  */
 
 #include "ompi_config.h"
-#include "coll_demo.h"
 
 #include "mpi.h"
 #include "include/constants.h"
@@ -27,7 +26,7 @@
  *	scatterv_intra
  *
  *	Function:	- scatterv operation
- *	Accepts:	- same arguments as MPI_Scatter()
+ *	Accepts:	- same arguments as MPI_Scatterv()
  *	Returns:	- MPI_SUCCESS or error code
  */
 int mca_coll_demo_scatterv_intra(void *sbuf, int *scounts,
@@ -36,10 +35,10 @@ int mca_coll_demo_scatterv_intra(void *sbuf, int *scounts,
                                  struct ompi_datatype_t *rdtype, int root,
                                  struct ompi_communicator_t *comm)
 {
-  ompi_output_verbose(10, mca_coll_base_output, "In demo scatterv_intra");
-  return comm->c_coll_basic_module->coll_scatterv(sbuf, scounts, disps, 
-                                                  sdtype, rbuf, rcount, rdtype,
-                                                  root, comm);
+    ompi_output_verbose(10, mca_coll_base_output, "In demo scatterv_intra");
+    return comm->c_coll_basic_module->coll_scatterv(sbuf, scounts, disps, 
+                                                    sdtype, rbuf, rcount,
+                                                    rdtype, root, comm);
 }
 
 
@@ -47,7 +46,7 @@ int mca_coll_demo_scatterv_intra(void *sbuf, int *scounts,
  *	scatterv_inter
  *
  *	Function:	- scatterv operation
- *	Accepts:	- same arguments as MPI_Scatter()
+ *	Accepts:	- same arguments as MPI_Scatterv()
  *	Returns:	- MPI_SUCCESS or error code
  */
 int mca_coll_demo_scatterv_inter(void *sbuf, int *scounts,
@@ -56,8 +55,8 @@ int mca_coll_demo_scatterv_inter(void *sbuf, int *scounts,
                                  struct ompi_datatype_t *rdtype, int root,
                                  struct ompi_communicator_t *comm)
 {
-  ompi_output_verbose(10, mca_coll_base_output, "In demo scatterv_inter");
-  return comm->c_coll_basic_module->coll_scatterv(sbuf, scounts, disps, 
-                                                  sdtype, rbuf, rcount, rdtype,
-                                                  root, comm);
+    ompi_output_verbose(10, mca_coll_base_output, "In demo scatterv_inter");
+    return comm->c_coll_basic_module->coll_scatterv(sbuf, scounts, disps, 
+                                                    sdtype, rbuf, rcount,
+                                                    rdtype, root, comm);
 }

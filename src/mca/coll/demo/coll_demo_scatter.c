@@ -13,7 +13,6 @@
  */
 
 #include "ompi_config.h"
-#include "coll_demo.h"
 
 #include "mpi.h"
 #include "include/constants.h"
@@ -37,10 +36,10 @@ int mca_coll_demo_scatter_intra(void *sbuf, int scount,
                                 int root, 
                                 struct ompi_communicator_t *comm)
 {
-  ompi_output_verbose(10, mca_coll_base_output, "In demo scatter_intra");
-  return comm->c_coll_basic_module->coll_scatter(sbuf, scount, sdtype,
-                                                 rbuf, rcount, rdtype,
-                                                 root, comm);
+    ompi_output_verbose(10, mca_coll_base_output, "In demo scatter_intra");
+    return comm->c_coll_basic_module->coll_scatter(sbuf, scount, sdtype,
+                                                   rbuf, rcount, rdtype,
+                                                   root, comm);
 }
 
 
@@ -58,8 +57,8 @@ int mca_coll_demo_scatter_inter(void *sbuf, int scount,
                                 int root, 
                                 struct ompi_communicator_t *comm)
 {
-  ompi_output_verbose(10, mca_coll_base_output, "In demo scatter_inter");
-  return comm->c_coll_basic_module->coll_scatter(sbuf, scount, sdtype,
-                                                 rbuf, rcount, rdtype,
-                                                 root, comm);
+    ompi_output_verbose(10, mca_coll_base_output, "In demo scatter_inter");
+    return comm->c_coll_basic_module->coll_scatter(sbuf, scount, sdtype,
+                                                   rbuf, rcount, rdtype,
+                                                   root, comm);
 }

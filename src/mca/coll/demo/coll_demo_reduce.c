@@ -13,9 +13,6 @@
  */
 
 #include "ompi_config.h"
-#include "coll_demo.h"
-
-#include <stdio.h>
 
 #include "mpi.h"
 #include "include/constants.h"
@@ -28,7 +25,7 @@
 /*
  *	reduce_intra
  *
- *	Function:	- reduction using O(N) algorithm
+ *	Function:	- reduction
  *	Accepts:	- same as MPI_Reduce()
  *	Returns:	- MPI_SUCCESS or error code
  */
@@ -37,16 +34,16 @@ int mca_coll_demo_reduce_intra(void *sbuf, void *rbuf, int count,
                                struct ompi_op_t *op,
                                int root, struct ompi_communicator_t *comm)
 {
-  ompi_output_verbose(10, mca_coll_base_output, "In demo reduce_intra");
-  return comm->c_coll_basic_module->coll_reduce(sbuf, rbuf, count, dtype,
-                                                op, root, comm);
+    ompi_output_verbose(10, mca_coll_base_output, "In demo reduce_intra");
+    return comm->c_coll_basic_module->coll_reduce(sbuf, rbuf, count, dtype,
+                                                  op, root, comm);
 }
 
 
 /*
- *	reduce_log_inter
+ *	reduce_inter
  *
- *	Function:	- reduction using O(N) algorithm
+ *	Function:	- reduction 
  *	Accepts:	- same as MPI_Reduce()
  *	Returns:	- MPI_SUCCESS or error code
  */
@@ -55,7 +52,7 @@ int mca_coll_demo_reduce_inter(void *sbuf, void *rbuf, int count,
                                struct ompi_op_t *op,
                                int root, struct ompi_communicator_t *comm)
 {
-  ompi_output_verbose(10, mca_coll_base_output, "In demo reduce_inter");
-  return comm->c_coll_basic_module->coll_reduce(sbuf, rbuf, count, dtype,
-                                                op, root, comm);
+    ompi_output_verbose(10, mca_coll_base_output, "In demo reduce_inter");
+    return comm->c_coll_basic_module->coll_reduce(sbuf, rbuf, count, dtype,
+                                                  op, root, comm);
 }
