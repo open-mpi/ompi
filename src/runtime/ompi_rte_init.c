@@ -27,7 +27,7 @@ int ompi_rte_init(bool *allow_multi_user_threads, bool *have_hidden_threads)
   int ret;
   bool user_threads, hidden_threads;
 
-  *allow_multi_user_threads = false;
+  *allow_multi_user_threads = true;
   *have_hidden_threads = false;
 
   /* Added by JMS -- feel free to move around */
@@ -41,7 +41,7 @@ int ompi_rte_init(bool *allow_multi_user_threads, bool *have_hidden_threads)
     /* JMS show_help */
     return ret;
   }
-  *allow_multi_user_threads |= user_threads;
+  *allow_multi_user_threads &= user_threads;
   *have_hidden_threads |= hidden_threads;
 
   if (OMPI_SUCCESS != (ret = mca_oob_base_open())) {
@@ -53,7 +53,7 @@ int ompi_rte_init(bool *allow_multi_user_threads, bool *have_hidden_threads)
     /* JMS show_help */
     return ret;
   }
-  *allow_multi_user_threads |= user_threads;
+  *allow_multi_user_threads &= user_threads;
   *have_hidden_threads |= hidden_threads;
 
 #if 0

@@ -43,13 +43,13 @@ int mca_base_init_select_modules(int requested,
                                          &user_threads, &hidden_threads)) {
     return OMPI_ERROR;
   }
-  allow_multi_user_threads |= user_threads;
+  allow_multi_user_threads &= user_threads;
   have_hidden_threads |= hidden_threads;
 
   if (OMPI_SUCCESS != mca_ptl_base_select(&user_threads, &hidden_threads)) {
     return OMPI_ERROR;
   }
-  allow_multi_user_threads |= user_threads;
+  allow_multi_user_threads &= user_threads;
   have_hidden_threads |= hidden_threads;
 
   OBJ_CONSTRUCT(&colls, ompi_list_t);
@@ -57,7 +57,7 @@ int mca_base_init_select_modules(int requested,
                                           &hidden_threads)) {
     return OMPI_ERROR;
   }
-  allow_multi_user_threads |= user_threads;
+  allow_multi_user_threads &= user_threads;
   have_hidden_threads |= hidden_threads;
 
   /* Now that we have a final list of all available modules, do the

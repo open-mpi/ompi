@@ -66,7 +66,7 @@ int mca_mpool_base_init(bool *allow_multi_user_threads)
       /* Otherwise, it initialized properly.  Save it. */
 
       else {
-        *allow_multi_user_threads |= user_threads;
+        *allow_multi_user_threads &= user_threads;
 
         ompi_output_verbose(10, mca_mpool_base_output,
                            "select: init returned success");
