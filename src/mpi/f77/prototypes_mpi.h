@@ -384,7 +384,7 @@ void mpi_comm_remote_group(MPI_Fint *comm, MPI_Fint *group, MPI_Fint *ierr);
 void mpi_comm_remote_size(MPI_Fint *comm, MPI_Fint *size, MPI_Fint *ierr);
 void mpi_comm_set_attr(MPI_Fint *comm, MPI_Fint *comm_keyval, char *attribute_val, MPI_Fint *ierr);
 void mpi_comm_set_errhandler(MPI_Fint *comm, MPI_Fint *errhandler, MPI_Fint *ierr);
-void mpi_comm_set_name(MPI_Fint *comm, char *comm_name, MPI_Fint *ierr);
+void mpi_comm_set_name(MPI_Fint *comm, char *comm_name, MPI_Fint *ierr, int name_len);
 void mpi_comm_size(MPI_Fint *comm, MPI_Fint *size, MPI_Fint *ierr);
 void mpi_comm_spawn(char *command, char *argv, MPI_Fint *maxprocs, MPI_Fint *info, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *intercomm, MPI_Fint *array_of_errcodes, MPI_Fint *ierr, int cmd_len, int argv_len);
 void mpi_comm_spawn_multiple(MPI_Fint *count, char *array_of_commands, char *array_of_argv, MPI_Fint *array_of_maxprocs, MPI_Fint *array_of_info, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *intercomm, MPI_Fint *array_of_errcodes, MPI_Fint *ierr);
