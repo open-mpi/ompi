@@ -103,11 +103,8 @@ typedef mca_llm_base_component_1_0_0_t mca_llm_base_component_t;
 /**
  * Allocate requested resources
  *
- * Allocate the specified nodes / processes for use in a new job.
- * Requires a jobid from the PCM interface.  The allocation returned
- * may be smaller than requested - it is up to the caller to proceed
- * as appropriate should this occur.  This function should only be
- * called once per jobid.
+ * See notes for \c ompi_rte_allocate_resources() for complete
+ * description.
  *
  * @param jobid (IN) Jobid with which to associate the given resources.
  * @param nodes (IN) Number of ndoes to try to allocate.  If 0, the

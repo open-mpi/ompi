@@ -119,6 +119,8 @@ mca_pcm_rms_init(int *priority,
     if (0 != (constraints & OMPI_RTE_SPAWN_DAEMON)) return NULL;
     /* no MPI_COMM_SPAWN* */
     if (0 != (constraints & OMPI_RTE_SPAWN_FROM_MPI)) return NULL;
+    /* we don't really have a way of doing MPMD with rms :( */
+    if (0 != (constraints & OMPI_RTE_SPAWN_MPMD)) return NULL;
 
     /* see if we are an RMS system */
     num_cpus = rms_numCpus(NULL);

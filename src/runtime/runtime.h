@@ -69,6 +69,10 @@
     MPI_COMM_SPAWN and MPI_COMM_SPAWN_MULTIPLE.  The calling process
     will follow the semantics of the MPI_COMM_SPAWN_* functions. */
 #define OMPI_RTE_SPAWN_FROM_MPI   0x0008
+/** Spawn constraint - require ability to launch either MPMD (hence
+    the name) applications or applications with specific placement of
+    processes. */
+#define OMPI_RTE_SPAWN_MPMD       0x0010
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -229,7 +233,10 @@ OMPI_DECLSPEC    ompi_rte_spawn_handle_t* ompi_rte_get_spawn_handle(int criteria
      *
      * Allocate the specified nodes / processes for use in a new job.
      * This function should be called exactly once per call to \c
-     * ompi_rte_spawn_procs.
+     * ompi_rte_spawn_procs, unless \c OMPI_RTE_SPAWN_MPMD was
+     * specified as a constraint to \c ompi_rte_get_spawn_handle(), in
+     * which case this function can be called as many times as
+     * necessary.
      *
      * @param handle (IN) Handle from \c ompi_rte_get_spawn_handle
      * @param jobid (IN) Jobid with which to associate the given resources.
@@ -251,11 +258,6 @@ OMPI_DECLSPEC    ompi_rte_spawn_handle_t* ompi_rte_get_spawn_handle(int criteria
      *                   fatal error - \c ompi_rte_allocate_resources
      *                   can be called again, but with a smaller
      *                   resource request.
-     *
-     * @note In the future, a more complex resource allocation
-     *       function may be added, which allows for complicated
-     *       resource requests.  This function will continue to exist
-     *       as a special case of that function.
      *
      *       Some systems are not capable of providing a maximum
      *       available resource count and there is an inherent race

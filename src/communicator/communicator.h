@@ -416,12 +416,14 @@ struct ompi_communicator_t {
     void ompi_comm_reg_init(void);
     void ompi_comm_reg_finalize(void);
 
-
-    /* start the new processes from MPI_Comm_spawn. Initial version,
-     * a version for Comm_spawn_multiple still missing.
+    /* start the new processes from MPI_Comm_spawn_multiple.  Initial
+     * version, very rough 
      */
-    int ompi_comm_start_processes (char *command, char **argv, int maxprocs, 
-				   MPI_Info info,  char *port_name);
+    int ompi_comm_start_processes(int count, char **array_of_commands,
+                                  char ***array_of_argv, 
+                                  int *array_of_maxprocs, 
+                                  MPI_Info *array_of_info, 
+                                  char *port_name);
 
     /*
      * This routine checks, whether an application has been spawned

@@ -133,6 +133,9 @@ mca_pcm_slurm_init(int *priority,
     if (0 != (constraints & OMPI_RTE_SPAWN_DAEMON)) return NULL;
     /* no MPI_COMM_SPAWN* */
     if (0 != (constraints & OMPI_RTE_SPAWN_FROM_MPI)) return NULL;
+    /* BWB - XXX - Fix me.  Disable MPMD with slurm for now.  I think
+       we can make this work later on.... */
+    if (0 != (constraints & OMPI_RTE_SPAWN_MPMD)) return NULL;
 
     srun = ompi_path_env_findv("srun", X_OK, environ, NULL);
     if (NULL == srun) return NULL;
