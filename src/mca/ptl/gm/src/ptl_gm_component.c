@@ -96,8 +96,10 @@ mca_ptl_gm_component_open(void)
     OBJ_CONSTRUCT (&mca_ptl_gm_component.gm_send_req, ompi_list_t);
 
     /* register GM component parameters */
+    mca_ptl_gm_component.gm_segment_size = 
+        mca_ptl_gm_param_register_int( "segment_size", 16 * 1024 ); /* 16K by default */
     mca_ptl_gm_module.super.ptl_first_frag_size =
-        mca_ptl_gm_param_register_int ("first_frag_size", ((PTL_GM_FIRST_FRAG_SIZE) - 64));
+        mca_ptl_gm_param_register_int ("first_frag_size", mca_ptl_gm_component.gm_segment_size - sizeof(mca_ptl_base_rendezvous_header_t) );
     mca_ptl_gm_module.super.ptl_min_frag_size =
         mca_ptl_gm_param_register_int ("min_frag_size", 1<<16);
     mca_ptl_gm_module.super.ptl_max_frag_size =
@@ -313,7 +315,7 @@ mca_ptl_gm_init_sendrecv (mca_ptl_gm_module_t * ptl)
      * as they should be allocated with a special GM function.
      */
     ompi_free_list_init( &(ptl->gm_send_dma_frags),
-                         GM_BUF_SIZE,
+                         mca_ptl_gm_component.gm_segment_size,
                          OBJ_CLASS (ompi_list_item_t),
                          0,  /* do not allocate any items I'll provide them */
                          0,  /* maximum number of list allocated elements will be zero */
@@ -325,7 +327,7 @@ mca_ptl_gm_init_sendrecv (mca_ptl_gm_module_t * ptl)
     ptl->gm_send_fragments = sfragment;
     /* allocate the registered memory */
     ptl->gm_send_dma_memory = gm_dma_malloc( ptl->gm_port,
-                                             (GM_BUF_SIZE * ptl->num_send_tokens) + GM_PAGE_LEN );
+                                             (mca_ptl_gm_component.gm_segment_size * ptl->num_send_tokens) + GM_PAGE_LEN );
     if( NULL == ptl->gm_send_dma_memory ) {
 	ompi_output( 0, "unable to allocate registered memory\n" );
 	return OMPI_ERR_OUT_OF_RESOURCE;
@@ -334,7 +336,8 @@ mca_ptl_gm_init_sendrecv (mca_ptl_gm_module_t * ptl)
 	sfragment->send_buf = NULL;
 	OMPI_FREE_LIST_RETURN( &(ptl->gm_send_frags), (ompi_list_item_t *)sfragment );
 	OMPI_FREE_LIST_RETURN( &(ptl->gm_send_dma_frags),
-                               (ompi_list_item_t *)((char*)ptl->gm_send_dma_memory + i * GM_BUF_SIZE) );
+                               (ompi_list_item_t *)((char*)ptl->gm_send_dma_memory +
+						    i * mca_ptl_gm_component.gm_segment_size) );
 	sfragment++;
     }
 
@@ -364,7 +367,7 @@ mca_ptl_gm_init_sendrecv (mca_ptl_gm_module_t * ptl)
 
     /*allocate the registered memory */
     ptl->gm_recv_dma_memory =
-	gm_dma_malloc( ptl->gm_port, (GM_BUF_SIZE * ptl->num_recv_tokens) + GM_PAGE_LEN );
+	gm_dma_malloc( ptl->gm_port, (mca_ptl_gm_component.gm_segment_size * ptl->num_recv_tokens) + GM_PAGE_LEN );
     if( NULL == ptl->gm_recv_dma_memory ) {
 	ompi_output( 0, "unable to allocate registered memory for receive\n" );
 	return OMPI_ERR_OUT_OF_RESOURCE;
@@ -374,7 +377,7 @@ mca_ptl_gm_init_sendrecv (mca_ptl_gm_module_t * ptl)
 	OMPI_FREE_LIST_RETURN( &(ptl->gm_recv_frags_free), (ompi_list_item_t *)free_rfragment );
 	free_rfragment++;
 
-	gm_provide_receive_buffer( ptl->gm_port, (char*)ptl->gm_recv_dma_memory + i * GM_BUF_SIZE,
+	gm_provide_receive_buffer( ptl->gm_port, (char*)ptl->gm_recv_dma_memory + i * mca_ptl_gm_component.gm_segment_size,
 				   GM_SIZE, GM_LOW_PRIORITY );
 	DO_DEBUG(printf( "%3d : gm register GM receive buffer %p\n", i, (void*)ptl->gm_recv_dma_memory ) );
     }
@@ -498,7 +501,7 @@ mca_ptl_gm_component_control (int param, void *value, size_t size)
 
 char* gm_get_local_buffer( void )
 {
-    return malloc( sizeof(char) * GM_BUF_SIZE );
+    return malloc( sizeof(char) * mca_ptl_gm_component.gm_segment_size );
 }
 
 void gm_release_local_buffer( char* ptr )
