@@ -1,7 +1,12 @@
-#include <ompi_config.h>
-#include <mpi.h>
-#include <datatype.h>
-#include <datatype_internal.h>
+/*
+ * $HEADER$
+ */
+
+#include "ompi_config.h"
+
+#include "mpi.h"
+#include "datatype/datatype.h"
+#include "datatype/datatype_internal.h"
 
 typedef struct __dt_args {
    int create_type;

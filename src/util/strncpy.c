@@ -5,7 +5,7 @@
  * (e.g., Itanium with RedHat Advanced Server glibc).
  */
 
-#include <ompi_config.h>
+#include "ompi_config.h"
 
 #include <string.h>
 
