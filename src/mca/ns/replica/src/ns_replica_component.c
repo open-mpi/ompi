@@ -178,11 +178,11 @@ int mca_ns_replica_finalize(void)
   return OMPI_SUCCESS;
 }
 
-mca_oob_callback_packed_fn_t mca_ns_replica_recv(int status, ompi_process_name_t* sender,
-						 ompi_buffer_t* buffer, int tag,
-						 void* cbdata)
+void mca_ns_replica_recv(int status, ompi_process_name_t* sender,
+			 ompi_buffer_t* buffer, int tag,
+			 void* cbdata)
 {
-    ompi_buffer_t answer, error_answer;
+    ompi_buffer_t *answer, *error_answer;
     mca_ns_cmd_flag_t command;
     mca_ns_base_cellid_t cell;
     mca_ns_base_jobid_t job;
@@ -190,6 +190,10 @@ mca_oob_callback_packed_fn_t mca_ns_replica_recv(int status, ompi_process_name_t
 
     if (OMPI_SUCCESS != ompi_unpack(*buffer, (void*)&command, 1, MCA_NS_OOB_PACK_CMD)) {
 	goto RETURN_ERROR;
+    }
+
+    if (OMPI_SUCCESS != ompi_buffer_init(answer, 0)) {
+	/* RHC -- not sure what to do if this fails */
     }
 
     if (MCA_NS_CREATE_CELLID_CMD == command) {   /* got a command to create a cellid */
@@ -236,10 +240,14 @@ mca_oob_callback_packed_fn_t mca_ns_replica_recv(int status, ompi_process_name_t
 	}
     } else {  /* got an unrecognized command */
     RETURN_ERROR:
+	ompi_buffer_free(*buffer);
+	ompi_buffer_init(error_answer, 0);
 	command = MCA_NS_ERROR;
 	ompi_pack(error_answer, (void*)&command, 1, MCA_NS_OOB_PACK_CMD);
 	mca_oob_send_packed(sender, error_answer, tag, 0);
     }
+
+    ompi_buffer_free(*buffer);
 
     /* reissue the non-blocking receive */
 }
