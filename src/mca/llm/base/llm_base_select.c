@@ -52,6 +52,9 @@ mca_llm_base_select(const char *active_pcm,
   ompi_list_t opened;
   opened_component_t *oc;  
 
+  ompi_output_verbose(10, mca_llm_base_output,
+                      "llm: base: select: started selection code");
+
   /* Traverse the list of available components; call their init
      functions. */
 
@@ -65,21 +68,23 @@ mca_llm_base_select(const char *active_pcm,
     component = (mca_llm_base_component_t *) cli->cli_component;
 
     ompi_output_verbose(10, mca_llm_base_output, 
-                       "select: initializing %s component %s",
+                       "llm: base: select: initializing %s component %s",
                        component->llm_version.mca_type_name,
                        component->llm_version.mca_component_name);
     if (NULL == component->llm_init) {
       ompi_output_verbose(10, mca_llm_base_output,
-                         "select: no init function; ignoring component");
+                         "llm: base: select: "
+                          "no init function; ignoring component");
     } else {
       module = component->llm_init(active_pcm, &priority, &user_threads,
                                   &hidden_threads);
       if (NULL == module) {
         ompi_output_verbose(10, mca_llm_base_output,
-                           "select: init returned failure");
+                           "llm: base: select: init returned failure");
       } else {
         ompi_output_verbose(10, mca_llm_base_output,
-                           "select: init returned priority %d", priority);
+                           "llm: base: select: init returned priority %d", 
+                            priority);
         if (priority > best_priority) {
           best_priority = priority;
           best_user_threads = user_threads;
@@ -124,7 +129,8 @@ mca_llm_base_select(const char *active_pcm,
 
         oc->oc_component->llm_finalize();
         ompi_output_verbose(10, mca_llm_base_output, 
-                           "select: component %s not selected / finalized",
+                           "llm: base: select: "
+                            "component %s not selected / finalized",
                            component->llm_version.mca_component_name);
       }
     }
@@ -145,11 +151,14 @@ mca_llm_base_select(const char *active_pcm,
   *selected = *best_module;
   *allow_multi_user_threads = best_user_threads;
   *have_hidden_threads = best_hidden_threads;
-  ompi_output_verbose(10, mca_llm_base_output, 
-                     "select: component %s selected",
+  ompi_output_verbose(5, mca_llm_base_output, 
+                     "llm: base: select: component %s selected",
                      component->llm_version.mca_component_name);
 
   OBJ_DESTRUCT(&opened);
+
+  ompi_output_verbose(10, mca_llm_base_output,
+                      "llm: base: select: completed");
 
   /* All done */
 

@@ -96,38 +96,48 @@ mca_pcm_cofs_init(int *priority, bool *allow_multi_user_threads,
     /* lookup parameters for local name */
     mca_base_param_lookup_int(mca_pcm_cofs_num_procs_param, &value);
     if(value <= 0) {
-        ompi_output(0, "mca_pcm_cofs_init: missing/invalid value for OMPI_MCA_pcm_cofs_num_procs\n");
+        ompi_output_verbose(1001, 0, 
+                            "pcm: cofs: init: missing/invalid "
+                            "value for OMPI_MCA_pcm_cofs_num_procs");
         return NULL;
     }
     mca_pcm_cofs_num_procs = value;
 
     mca_base_param_lookup_int(mca_pcm_cofs_cellid_param, &value);
     if(value < 0) {
-        ompi_output(0, "mca_pcm_cofs_init: missing/invalid value for OMPI_MCA_pcm_cofs_cellid\n");
+        ompi_output_verbose(1001, 0, 
+                            "pcm: cofs: init: missing/invalid "
+                            "value for OMPI_MCA_pcm_cofs_cellid");
         return NULL;
     }
     cellid = value;
                                                                                                                       
     mca_base_param_lookup_int(mca_pcm_cofs_jobid_param, &value);
     if(value < 0) {
-        ompi_output(0, "mca_pcm_cofs_init: missing/invalid value for OMPI_MCA_pcm_cofs_jobid\n");
+        ompi_output_verbose(1001, 0, 
+                            "pcm: cofs: init: missing/invalid "
+                            "value for OMPI_MCA_pcm_cofs_jobid");
         return NULL;
     }
     jobid = value;
                                                                                                                       
     mca_base_param_lookup_int(mca_pcm_cofs_procid_param, &value);
     if(value < 0) {
-        ompi_output(0, "mca_pcm_cofs_init: missing value for OMPI_MCA_pcm_cofs_procid\n");
+        ompi_output_verbose(1001, 0, 
+                            "pcm: cofs: init: "
+                            "missing value for OMPI_MCA_pcm_cofs_procid");
         return NULL;
     }
     mca_pcm_cofs_procid = value;
 
     mca_pcm_cofs_procs = (ompi_process_name_t*)malloc(sizeof(ompi_process_name_t) * mca_pcm_cofs_num_procs);
     if(NULL == mca_pcm_cofs_procs) {
-        ompi_output(0, "mca_pcm_cofs_init: missing value for OMPI_MCA_pcm_cofs_num_procs\n");
+        ompi_output_verbose(1001, 0,
+                            "pcm: cofs: init: "
+                            "missing value for OMPI_MCA_pcm_cofs_num_procs");
         return NULL;
     }
-
+ 
     for(i=0; i<mca_pcm_cofs_num_procs; i++) {
         mca_pcm_cofs_procs[i].cellid = cellid;
         mca_pcm_cofs_procs[i].jobid = jobid;

@@ -8,6 +8,7 @@
 #include "mca/base/base.h"
 #include "mca/pcm/pcm.h"
 #include "mca/pcm/base/base.h"
+#include "util/output.h"
 
 /*
  * The following file was created by configure.  It contains extern
@@ -38,6 +39,8 @@ int mca_pcm_base_open(void)
   if (OMPI_SUCCESS != 
       mca_base_components_open("pcm", 0, mca_pcm_base_static_components, 
                                &mca_pcm_base_components_available)) {
+      ompi_output_verbose(5, mca_pcm_base_output, 
+                          "pcm: error opening components");
     return OMPI_ERROR;
   }
 
