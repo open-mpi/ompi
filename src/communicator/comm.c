@@ -310,9 +310,7 @@ int ompi_comm_split ( ompi_communicator_t* comm, int color, int key,
     int size, my_size;
     int my_rsize;
     int mode;
-#ifdef HAVE_COMM_SPLIT_FOR_INTERCOMMS
     int rsize;
-#endif
     int i, loc;
     int inter;
     int *results=NULL, *sorted=NULL; 
@@ -321,6 +319,8 @@ int ompi_comm_split ( ompi_communicator_t* comm, int color, int key,
     ompi_proc_t **procs=NULL, **rprocs=NULL;
     ompi_communicator_t *newcomp;
     
+    ompi_comm_allgatherfct *allgatherfct=NULL;
+
     /* Step 1: determine all the information for the local group */
     /* --------------------------------------------------------- */
 
@@ -330,13 +330,19 @@ int ompi_comm_split ( ompi_communicator_t* comm, int color, int key,
 
     size     = ompi_comm_size ( comm );
     inter    = OMPI_COMM_IS_INTER(comm);
+    if ( inter ) {
+        allgatherfct = (ompi_comm_allgatherfct *)ompi_comm_allgather_emulate_intra;
+    }
+    else {
+        allgatherfct = (ompi_comm_allgatherfct *)comm->c_coll.coll_allgather;
+    }
+
     results  = (int*) malloc ( 2 * size * sizeof(int));
     if ( NULL == results ) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    rc = comm->c_coll.coll_allgather( myinfo, 2, MPI_INT,
-                                      results, 2, MPI_INT, comm );
+    rc = allgatherfct( myinfo, 2, MPI_INT, results, 2, MPI_INT, comm );
     if ( OMPI_SUCCESS != rc ) {
         goto exit;
     }
@@ -380,7 +386,6 @@ int ompi_comm_split ( ompi_communicator_t* comm, int color, int key,
     /* Step 2: determine all the information for the remote group */
     /* --------------------------------------------------------- */
     if ( inter ) {
-#ifdef HAVE_COMM_SPLIT_FOR_INTERCOMMS
         rsize    = comm->c_remote_group->grp_proc_count;
         rresults = (int *) malloc ( rsize * 2 * sizeof(int));
         if ( NULL == rresults ) {
@@ -388,9 +393,9 @@ int ompi_comm_split ( ompi_communicator_t* comm, int color, int key,
             goto exit;
         }
 
-        rc = comm->c_coll.coll_allgather_inter ( myinfo, 2, MPI_INT,
-                                                 rresults, 2, MPI_INT,
-                                                 comm );
+        /* this is an allgather on an inter-communicator */
+        rc = comm->c_coll.coll_allgather( myinfo, 2, MPI_INT, rresults, 2, 
+                                          MPI_INT, comm );
         if ( OMPI_SUCCESS != rc ) {
             goto exit;
         }
@@ -429,19 +434,12 @@ int ompi_comm_split ( ompi_communicator_t* comm, int color, int key,
         for (i = 0; i < my_rsize; i++) {
             rprocs[i] = comm->c_remote_group->grp_proc_pointers[rsorted[i*2]];
         }  
-
         mode = OMPI_COMM_CID_INTER;
-#else
-        /* creating an inter-communicator using MPI_Comm_create will
-           be supported soon, but not in this version */
-        rc = MPI_ERR_COMM;
-        goto exit;
-#endif
     }
     else {
         my_rsize  = 0;
-        rprocs = NULL;
-        mode   = OMPI_COMM_CID_INTRA;
+        rprocs    = NULL;
+        mode      = OMPI_COMM_CID_INTRA;
     }
     
     
