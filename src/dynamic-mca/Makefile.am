@@ -21,7 +21,6 @@ SUBDIRS = \
         allocator \
         coll \
         errmgr \
-        errmgr \
         gpr \
         io \
         iof \
