@@ -436,12 +436,14 @@ int ompi_comm_dyn_init (void)
 	 * now we have to decrease the reference counters to the according
 	 * objects 
 	 */
-/*
-	OBJ_RELEASE(&ompi_mpi_comm_null);
-	OBJ_RELEASE(&ompi_mpi_group_null);
-	OBJ_RELEASE(&ompi_mpi_group_null);
-	OBJ_RELEASE(&ompi_mpi_errors_are_fatal);
-*/
+
+	OBJ_RETAIN(&ompi_mpi_comm_null);
+	OBJ_RETAIN(&ompi_mpi_group_null);
+	OBJ_RETAIN(&ompi_mpi_group_null);
+	OBJ_RETAIN(&ompi_mpi_errors_are_fatal);
+
+	/* Set name for debugging purposes */
+	snprintf(newcomm->c_name, MPI_MAX_OBJECT_NAME, "MPI_COMM_PARENT");
     }
     
     return OMPI_SUCCESS;

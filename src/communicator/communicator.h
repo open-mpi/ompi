@@ -31,6 +31,7 @@ OMPI_DECLSPEC extern ompi_class_t ompi_communicator_t_class;
 #define OMPI_COMM_INTRINSIC  0x00000020
 #define OMPI_COMM_HIDDEN     0x00000040
 #define OMPI_COMM_DYNAMIC    0x00000080
+#define OMPI_COMM_INVALID    0x00000100
 
 /* some utility #defines */
 #define OMPI_COMM_IS_INTER(comm) ((comm)->c_flags & OMPI_COMM_INTER)
@@ -41,21 +42,20 @@ OMPI_DECLSPEC extern ompi_class_t ompi_communicator_t_class;
 #define OMPI_COMM_IS_HIDDEN(comm) ((comm)->c_flags & OMPI_COMM_HIDDEN)
 #define OMPI_COMM_IS_FREED(comm) ((comm)->c_flags & OMPI_COMM_ISFREED)
 #define OMPI_COMM_IS_DYNAMIC(comm) ((comm)->c_flags &OMPI_COMM_DYNAMIC)
+#define OMPI_COMM_IS_INVALID(comm) ((comm)->c_flags &OMPI_COMM_INVALID)
 
 #define OMPI_COMM_SET_HIDDEN(comm) ((comm)->c_flags |= OMPI_COMM_HIDDEN)
 #define OMPI_COMM_SET_DYNAMIC(comm) ((comm)->c_flags |= OMPI_COMM_DYNAMIC)
-
+#define OMPI_COMM_SET_INVALID(comm) ((comm)->c_flags |= OMPI_COMM_INVALID)
 
 /* a set of special tags: */
 
 /*  to recognize an MPI_Comm_join in the comm_connect_accept routine. */
-#define OMPI_COMM_JOIN_TAG  -32000
+#define OMPI_COMM_JOIN_TAG      -32000
 
 #define OMPI_COMM_ALLGATHER_TAG -31078
 #define OMPI_COMM_BARRIER_TAG   -31079
 #define OMPI_COMM_ALLREDUCE_TAG -31080
-
-
 
 /** 
  * Modes reqquired for accquiring the new comm-id.
@@ -73,9 +73,8 @@ OMPI_DECLSPEC extern ompi_pointer_array_t ompi_mpi_communicators;
 
 struct ompi_communicator_t {
     ompi_object_t              c_base; 
-#ifdef USE_MUTEX_FOR_COMMS
-    ompi_mutex_t               c_lock; /* mutex for name and attributes */
-#endif
+    ompi_mutex_t               c_lock; /* mutex for name and potentially 
+                                          attributes */
     char  c_name[MPI_MAX_OBJECT_NAME];
     uint32_t              c_contextid;
     int                     c_my_rank;
@@ -139,6 +138,7 @@ struct ompi_communicator_t {
 };
     typedef struct ompi_communicator_t ompi_communicator_t;
     OMPI_DECLSPEC extern ompi_communicator_t *ompi_mpi_comm_parent;
+    OMPI_DECLSPEC extern ompi_communicator_t ompi_mpi_comm_null;
 
 
     /**
@@ -147,7 +147,8 @@ struct ompi_communicator_t {
     static inline int ompi_comm_invalid(ompi_communicator_t* comm)
     {
 	if ((NULL == comm) || (MPI_COMM_NULL == comm) || 
-	    (comm->c_flags & OMPI_COMM_ISFREED ))
+	    (comm->c_flags & OMPI_COMM_ISFREED ) ||
+	    (OMPI_COMM_IS_INVALID(comm)) )
 	    return true;
 	else
 	    return false;

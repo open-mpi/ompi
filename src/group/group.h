@@ -45,6 +45,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_group_t);
  * Table for Fortran <-> C group handle conversion
  */
 OMPI_DECLSPEC extern ompi_pointer_array_t *ompi_group_f_to_c_table;
+OMPI_DECLSPEC extern ompi_group_t ompi_mpi_group_null;
 
 
 /*
