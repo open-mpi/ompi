@@ -9,7 +9,7 @@ noinst_LTLIBRARIES = libmca_mpi_topo_base.la
 headers = \
          base.h
 
-libmca_mpi_coll_base_la_SOURCES = \
+libmca_mpi_topo_base_la_SOURCES = \
         $(headers) \
         topo_base_cart_coords.c \
         topo_base_cart_create.c \
