@@ -403,7 +403,6 @@ main(int argc, char *argv[])
     }
 
     /* finalize the system */
-    ompi_event_fini();
     ompi_rte_finalize();
     mca_base_close();
     ompi_finalize();

@@ -9,6 +9,7 @@
 #include "include/constants.h"
 #include "runtime/runtime.h"
 #include "runtime/runtime_internal.h"
+#include "runtime/ompi_rte_wait.h"
 #include "event/event.h"
 #include "util/output.h"
 #include "util/proc_info.h"
@@ -40,6 +41,10 @@ int ompi_rte_finalize(void)
 
   ompi_rte_internal_fini_spawn();
   ompi_session_dir_finalize();
+
+  ompi_rte_wait_finalize();
+
+  ompi_event_fini();
 
   /* All done */
 

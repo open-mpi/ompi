@@ -135,13 +135,6 @@ int ompi_mpi_finalize(void)
       }
   }
 
-  /* shutdown event library - note that this needs to
-   * occur after everything that uses the event library 
-   */
-  if (OMPI_SUCCESS != (ret = ompi_event_fini())) {
-    return ret;
-  }
-
   /* cleanup */
   if (OMPI_SUCCESS != (ret = mca_ptl_base_close())) {
     return ret;
