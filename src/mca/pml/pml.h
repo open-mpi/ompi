@@ -152,8 +152,16 @@ typedef int (*mca_pml_base_test_fn_t)(
 );
 
 typedef int (*mca_pml_base_wait_fn_t)(
+    int count,
     lam_request_t** request,
+    int *index,
     lam_status_public_t* status
+);
+
+typedef int (*mca_pml_base_wait_all_fn_t)(
+    int count,                    /* size of request/status arrays */
+    lam_request_t** request,      /* array of requests */
+    lam_status_public_t *status   /* array of statuses */
 );
 
 typedef int (*mca_pml_base_free_fn_t)(
@@ -190,6 +198,7 @@ struct mca_pml_1_0_0_t {
     mca_pml_base_start_fn_t        pml_start;
     mca_pml_base_test_fn_t         pml_test;
     mca_pml_base_wait_fn_t         pml_wait;
+    mca_pml_base_wait_all_fn_t     pml_wait_all;
     mca_pml_base_free_fn_t         pml_free;
     mca_pml_base_null_fn_t         pml_null;
 };

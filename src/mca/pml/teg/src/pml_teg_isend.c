@@ -84,6 +84,7 @@ int mca_pml_teg_send(
     lam_communicator_t* comm)
 {
     int rc;
+    int index;
 
     mca_ptl_base_send_request_t* sendreq = mca_pml_teg_send_request_alloc(comm,dst,&rc);
     if(rc != LAM_SUCCESS)
@@ -103,6 +104,6 @@ int mca_pml_teg_send(
          
     if((rc = mca_pml_teg_send_request_start(sendreq)) != LAM_SUCCESS)
         return rc;
-    return mca_pml_teg_wait((lam_request_t**)&sendreq, NULL);
+    return mca_pml_teg_wait(1, (lam_request_t**)&sendreq, &index, NULL);
 }
 

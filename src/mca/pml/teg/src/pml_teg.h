@@ -181,6 +181,14 @@ extern int mca_pml_teg_test(
 );
 
 extern int mca_pml_teg_wait(
+    int count,
+    lam_request_t** request,
+    int *index,
+    lam_status_public_t* status
+);
+
+extern int mca_pml_teg_waitall(
+    int count,
     lam_request_t** request,
     lam_status_public_t* status
 );
@@ -191,10 +199,6 @@ extern int mca_pml_teg_null(
 
 extern int mca_pml_teg_free(
     lam_request_t** request
-);
-
-extern void mca_pml_teg_request_return(
-    mca_pml_base_request_t*
 );
 
 #endif
