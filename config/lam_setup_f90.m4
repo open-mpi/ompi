@@ -34,9 +34,9 @@ else
 	AC_MSG_WARN([*** Could not find Fortran 90/95 compiler])
 	LAM_WANT_F90=0
     elif test "$FC" = "$F77"; then
-	AC_MSG_WARN([*** Found same compiler for Fortran 77 and 90/95])
+	AC_MSG_WARN([*** Found same compiler for Fortran 77 and 90/95.])
 	AC_MSG_WARN([*** Assuming no Fortran 90/95 compiler; disabling])
-	AC_MSG_WARN([*** Fortran 90 MPI bindings])
+	AC_MSG_WARN([*** Fortran 90 MPI bindings.])
 	LAM_WANT_F90=0
     else
 	LAM_WANT_F90=1

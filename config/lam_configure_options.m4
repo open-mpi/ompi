@@ -116,7 +116,7 @@ AM_CONDITIONAL(WANT_MPI_PROFILING, test "$WANT_MPI_PROFILING" = 1)
 # Do we want to disable weak symbols for some reason?
 #
 
-AC_MSG_CHECKING([if want to disable weak symbol support])
+AC_MSG_CHECKING([if want to enable weak symbol support])
 AC_ARG_ENABLE(weak-symbols,
     AC_HELP_STRING([--enable-weak-symbols],
                    [use weak symbols, if available (default: enabled)]))
