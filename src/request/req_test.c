@@ -8,7 +8,7 @@
 #include "request/request.h"
 
 
-int ompi_request_test(
+int ompi_request_test_any(
     size_t count,
     ompi_request_t ** requests,
     int *index,
