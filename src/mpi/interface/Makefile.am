@@ -19,7 +19,7 @@ endif
 
 if BUILD_MPI_F90
 f90_subdir	= f90
-f90_lib		= f90/libmpi_f90.la
+f90_lib		=
 else
 f90_subdir	=
 f90_lib		=
