@@ -325,7 +325,7 @@ void ompi_output_finalize(void)
  */
 static int do_open(int output_id, ompi_output_stream_t *lds)
 {
-  int i, ret;
+  int i;
 
   /* Setup */
 
