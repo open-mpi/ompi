@@ -27,10 +27,10 @@
  * The following #defines will be true / false based on
  * assembly support:
  *
- *  \c OMPI_HAVE_MEM_BARRIER atomic memory barriers
- *  \c OMPI_HAVE_ATOMIC_SPINLOCKS atomic spinlocks
- *  \c OMPI_HAVE_ATOMIC_MATH_32 if 32 bit add/sub/cmpset can be done "atomicly"
- *  \c OMPI_HAVE_ATOMIC_MATH_64 if 32 bit add/sub/cmpset can be done "atomicly"
+ *  - \c OMPI_HAVE_MEM_BARRIER atomic memory barriers
+ *  - \c OMPI_HAVE_ATOMIC_SPINLOCKS atomic spinlocks
+ *  - \c OMPI_HAVE_ATOMIC_MATH_32 if 32 bit add/sub/cmpset can be done "atomicly"
+ *  - \c OMPI_HAVE_ATOMIC_MATH_64 if 32 bit add/sub/cmpset can be done "atomicly"
  *
  * Note that for the Atomic math, atomic add/sub may be implemented as
  * C code using ompi_atomic_cmpset.  The appearance of atomic
@@ -82,6 +82,7 @@ extern "C" {
 #include "include/sys/sparc64/atomic.h"
 #endif
 
+#ifndef DOXYGEN
 /* compare and set operations can't really be emulated from software,
    so if these defines aren't already set, they should be set to 0
    now */
@@ -91,6 +92,7 @@ extern "C" {
 #ifndef OMPI_HAVE_ATOMIC_CMPSET_64
 #define OMPI_HAVE_ATOMIC_CMPSET_64 0
 #endif
+#endif /* DOXYGEN */
 
 /**********************************************************************
  *
@@ -98,7 +100,7 @@ extern "C" {
  *                   but can't inline
  *
  *********************************************************************/
-#ifndef OMPI_HAVE_ATOMIC_MEM_BARRIER
+#if !defined(OMPI_HAVE_ATOMIC_MEM_BARRIER) && !defined(DOXYGEN)
 /* no way to emulate in C code */
 #define OMPI_HAVE_ATOMIC_MEM_BARRIER 0
 #endif
@@ -106,16 +108,38 @@ extern "C" {
 #if defined(DOXYGEN) || OMPI_HAVE_ATOMIC_MEM_BARRIER
 /**
  * Memory barrier
+ *
+ * Will use system-specific features to instruct the processor and
+ * memory controller that all writes and reads that have been posted
+ * before the call to \c ompi_atomic_mb() must appear to have
+ * completed before the next read or write.
+ *
+ * \note This can have some expensive side effects, including flushing
+ * the pipeline, preventing the cpu from reordering instructions, and
+ * generally grinding the memory controller's performance.  Use only
+ * if you need *both* read and write barriers.
  */
 void ompi_atomic_mb(void);
 
 /**
  * Read memory barrier
+ *
+ * Use system-specific features to instruct the processor and memory
+ * conrtoller that all reads that have been posted before the call to
+ * \c ompi_atomic_rmb() must appear to have been completed before the
+ * next read.  Nothing is said about the ordering of writes when using
+ * \c ompi_atomic_rmb().
  */
 void ompi_atomic_rmb(void);
 
 /**
  * Write memory barrier.
+ *
+ * Use system-specific features to instruct the processor and memory
+ * conrtoller that all writes that have been posted before the call to
+ * \c ompi_atomic_rmb() must appear to have been completed before the
+ * next write.  Nothing is said about the ordering of reads when using
+ * \c ompi_atomic_rmb().
  */
 void ompi_atomic_wmb(void);
 
@@ -138,12 +162,11 @@ struct ompi_lock_t {
 };
 typedef struct ompi_lock_t ompi_lock_t;
 
-#ifndef OMPI_HAVE_ATOMIC_SPINLOCKS
+#if !defined(OMPI_HAVE_ATOMIC_SPINLOCKS) && !defined(DOXYGEN)
 #define OMPI_HAVE_ATOMIC_SPINLOCKS (OMPI_HAVE_ATOMIC_CMPSET_32 || OMPI_HAVE_ATOMIC_CMPSET_64)
 #endif
 
 #if defined(DOXYGEN) || OMPI_HAVE_ATOMIC_SPINLOCKS
-
 
 /**
  * Enumeration of lock states
@@ -195,7 +218,7 @@ static inline void ompi_atomic_unlock(ompi_lock_t *lock);
  * Atomic math operations
  *
  *********************************************************************/
-#ifndef OMPI_HAVE_ATOMIC_CMPSET_32
+#if !defined(OMPI_HAVE_ATOMIC_CMPSET_32) && !defined(DOXYGEN)
 #define OMPI_HAVE_ATOMIC_CMPSET_32 0
 #endif
 #if defined(DOXYGEN) || OMPI_HAVE_ATOMIC_CMPSET_32
@@ -208,7 +231,7 @@ int ompi_atomic_cmpset_rel_32(volatile int32_t *addr, int32_t oldval,
 #endif
 
 
-#ifndef OMPI_HAVE_ATOMIC_CMPSET_64
+#if !defined(OMPI_HAVE_ATOMIC_CMPSET_64) && !defined(DOXYGEN)
 #define OMPI_HAVE_ATOMIC_CMPSET_64 0
 #endif
 #if defined(DOXYGEN) || OMPI_HAVE_ATOMIC_CMPSET_64
@@ -220,7 +243,7 @@ int ompi_atomic_cmpset_rel_64(volatile int64_t *addr, int64_t oldval,
                               int64_t newval);
 #endif
 
-#ifndef OMPI_HAVE_ATOMIC_MATH_32
+#if !defined(OMPI_HAVE_ATOMIC_MATH_32) && !defined(DOXYGEN)
 /* define to 0 for these tests.  WIll fix up later. */
 #define OMPI_HAVE_ATOMIC_MATH_32 0
 #endif
@@ -277,11 +300,26 @@ static inline void ompi_atomic_add_xx(volatile void* addr,
 static inline void ompi_atomic_sub_xx(volatile void* addr, 
                                       int32_t value, size_t length);
 
+static inline int ompi_atomic_cmpset_ptr(volatile void* addr, 
+                                         void* oldval, 
+                                         void* newval);
+static inline int ompi_atomic_cmpset_acq_ptr(volatile void* addr, 
+                                             void* oldval, 
+                                             void* newval);
+static inline int ompi_atomic_cmpset_rel_ptr(volatile void* addr, 
+                                             void* oldval, 
+                                             void* newval);
+static inline int ompi_atomic_add_pt(volatile void* addr, 
+                                            void* delta);
+static inline int ompi_atomic_sub_ptr(volatile void* addr, 
+                                             void* delta);
 
 /**
  * Atomic compare and set of pointer with relaxed semantics. This
- * macro detect at compile time the type of the first argument 
- * and choose the correct function to be called.
+ * macro detect at compile time the type of the first argument and
+ * choose the correct function to be called.  
+ *
+ * \note This macro should only be used for integer types.
  *
  * @param addr          Address of <TYPE>.
  * @param oldval        Comparison value <TYPE>.
@@ -293,11 +331,12 @@ static inline void ompi_atomic_sub_xx(volatile void* addr,
    ompi_atomic_cmpset_xx( (volatile void*)(ADDR), (int64_t)(OLDVAL), \
                           (int64_t)(NEWVAL), sizeof(*(ADDR)) )
 
-
 /**
  * Atomic compare and set of pointer with acquire semantics. This
  * macro detect at compile time the type of the first argument 
  * and choose the correct function to be called.
+ *
+ * \note This macro should only be used for integer types.
  *
  * @param addr          Address of <TYPE>.
  * @param oldval        Comparison value <TYPE>.
@@ -315,6 +354,8 @@ static inline void ompi_atomic_sub_xx(volatile void* addr,
  * macro detect at compile time the type of the first argument 
  * and choose the correct function to b
  *
+ * \note This macro should only be used for integer types.
+ *
  * @param addr          Address of <TYPE>.
  * @param oldval        Comparison value <TYPE>.
  * @param newval        New value to set if comparision is true <TYPE>.
@@ -331,6 +372,8 @@ static inline void ompi_atomic_sub_xx(volatile void* addr,
  * macro detect at compile time the type of the first argument 
  * and choose the correct function to be called.
  *
+ * \note This macro should only be used for integer types.
+ *
  * @param addr          Address of <TYPE>
  * @param delta         Value to add (converted to <TYPE>).
  */
@@ -342,6 +385,8 @@ static inline void ompi_atomic_sub_xx(volatile void* addr,
  * Atomically decrement the content depending on the type. This
  * macro detect at compile time the type of the first argument 
  * and choose the correct function to be called.
+ *
+ * \note This macro should only be used for integer types.
  *
  * @param addr          Address of <TYPE>
  * @param delta         Value to substract (converted to <TYPE>).
@@ -365,5 +410,8 @@ static inline void ompi_atomic_sub_xx(volatile void* addr,
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
+
+
+
 
 #endif /* OMPI_SYS_ATOMIC_H */

@@ -221,6 +221,87 @@ ompi_atomic_sub_xx(volatile void* addr, int32_t value, size_t length)
 #endif /* (OMPI_HAVE_ATOMIC_CMPSET_32 || OMPI_HAVE_ATOMIC_CMPSET_64) */
 
 
+static inline int
+ompi_atomic_cmpset_ptr(volatile void* addr, 
+                       void* oldval, 
+                       void* newval)
+{
+#if SIZEOF_VOID_P == 4 && OMPI_HAVE_ATOMIC_CMPSET_32
+    return ompi_atomic_cmpset_32((int32_t*) addr, (unsigned long) oldval, 
+                                 (unsigned long) newval);
+#elif SIZEOF_VOID_P == 8 && OMPI_HAVE_ATOMIC_CMPSET_64
+    return ompi_atomic_cmpset_64((int64_t*) addr, (unsigned long) oldval, 
+                                 (unsigned long) newval);
+#else
+    abort();
+    return 0;
+#endif
+}
+
+
+static inline int
+ompi_atomic_cmpset_acq_ptr(volatile void* addr, 
+                           void* oldval, 
+                           void* newval)
+{
+#if SIZEOF_VOID_P == 4 && OMPI_HAVE_ATOMIC_CMPSET_32
+    return ompi_atomic_cmpset_acq_32((int32_t*) addr, (unsigned long) oldval, 
+                                     (unsigned long) newval);
+#elif SIZEOF_VOID_P == 8 && OMPI_HAVE_ATOMIC_CMPSET_64
+    return ompi_atomic_cmpset_acq_64((int64_t*) addr, (unsigned long) oldval, 
+                                     (unsigned long) newval);
+#else
+    abort();
+    return 0;
+#endif
+}
+
+
+static inline int ompi_atomic_cmpset_rel_ptr(volatile void* addr, 
+                                             void* oldval, 
+                                             void* newval)
+{
+#if SIZEOF_VOID_P == 4 && OMPI_HAVE_ATOMIC_CMPSET_32
+    return ompi_atomic_cmpset_rel_32((int32_t*) addr, (unsigned long) oldval, 
+                                     (unsigned long) newval);
+#elif SIZEOF_VOID_P == 8 && OMPI_HAVE_ATOMIC_CMPSET_64
+    return ompi_atomic_cmpset_rel_64((int64_t*) addr, (unsigned long) oldval, 
+                                     (unsigned long) newval);
+#else
+    abort();
+    return 0;
+#endif
+}
+
+
+static inline int ompi_atomic_add_pt(volatile void* addr, 
+                                            void* delta)
+{
+#if SIZEOF_VOID_P == 4 && OMPI_HAVE_ATOMIC_CMPSET_32
+    return ompi_atomic_add_32((int32_t*) addr, (unsigned long) delta);
+#elif SIZEOF_VOID_P == 8 && OMPI_HAVE_ATOMIC_CMPSET_64
+    return ompi_atomic_add_64((int64_t*) addr, (unsigned long) delta);
+#else
+    abort();
+    return 0;
+#endif
+}
+
+
+static inline int ompi_atomic_sub_ptr(volatile void* addr, 
+                                             void* delta)
+{
+#if SIZEOF_VOID_P == 4 && OMPI_HAVE_ATOMIC_CMPSET_32
+    return ompi_atomic_sub_32((int32_t*) addr, (unsigned long) delta);
+#elif SIZEOF_VOID_P == 8 && OMPI_HAVE_ATOMIC_CMPSET_64
+    return ompi_atomic_sub_64((int64_t*) addr, (unsigned long) delta);
+#else
+    abort();
+    return 0;
+#endif
+}
+
+
 /**********************************************************************
  *
  * Atomic spinlocks

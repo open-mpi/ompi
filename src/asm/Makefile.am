@@ -14,6 +14,8 @@
 
 include $(top_srcdir)/config/Makefile.options
 
+SUBDIRS = . test
+
 ######################################################################
 #
 # This is a bit complicated.  If there is anything in the library,
@@ -54,13 +56,6 @@ EXTRA_DIST	= \
 	base/IA32.asm \
 	base/POWERPC32.asm \
 	base/POWERPC64.asm
-
-######################################################################
-
-TESTS = atomic-test
-check_PROGRAMS = atomic-test
-atomic_test_SOURCES = atomic-test.c
-atomic_test_LDADD = libasm.la
 
 ######################################################################
 
