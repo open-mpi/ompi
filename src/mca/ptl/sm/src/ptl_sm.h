@@ -48,11 +48,6 @@ struct mca_ptl_sm_component_t {
     char* sm_mpool_name;                  /**< name of shared memory pool module */
     mca_mpool_base_module_t* sm_mpool; /**< shared memory pool */
     void* sm_mpool_base;                  /**< base address of shared memory pool */
-    ompi_free_list_t sm_send_requests;    /**< free list of sm send requests -- sendreq + sendfrag */
-    ompi_free_list_t sm_first_frags;       /**< free list of sm first
-                                             fragments */
-    ompi_free_list_t sm_second_frags;       /**< free list of sm second
-                                              and above fragments */
     size_t first_fragment_size;            /**< first fragment size */
     size_t max_fragment_size;            /**< maximum (second and
                                              beyone) fragment size */
@@ -64,6 +59,13 @@ struct mca_ptl_sm_component_t {
                                            file */
     mca_ptl_sm_module_resource_t *sm_ctl_header;  /* control header in
                                                      shared memory */
+    ompi_fifo_t **fifo;    /**< cached copy of the pointer to the 2D
+                             fifo array.  The address in the shared
+                             memory segment sm_ctl_header is a relative,
+                             but this one, in process private memory, is
+                             a real virtual address */
+    size_t size_of_cb_queue; /**< size of each circular buffer queue array */
+    size_t cb_lazy_free_freq; /**< frequency of lazy free */
     size_t sm_offset;        /**< offset to be applied to shared memory
                               addresses */
     int num_smp_procs;      /**< current number of smp procs on this
@@ -119,6 +121,12 @@ extern int mca_ptl_sm_component_progress(
  */
 struct mca_ptl_sm_t {
     mca_ptl_base_module_t  super;       /**< base PTL interface */
+
+    ompi_free_list_t sm_first_frags;    /**< free list of sm first
+                                             fragments */
+    ompi_free_list_t sm_second_frags;   /**< free list of sm second
+                                              and above fragments */
+    ompi_free_list_t sm_send_requests;    /**< free list of sm send requests -- sendreq + sendfrag */
 };
 typedef struct mca_ptl_sm_t mca_ptl_sm_t;
 

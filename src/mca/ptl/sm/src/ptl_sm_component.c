@@ -126,6 +126,23 @@ int mca_ptl_sm_component_open(void)
     mca_ptl_sm_component.fragment_alignment =
         mca_ptl_sm_param_register_int("fragment_alignment",
                 CACHE_LINE_SIZE);
+    mca_ptl_sm_component.size_of_cb_queue =
+        mca_ptl_sm_param_register_int("size_of_cb_queue", 128);
+    mca_ptl_sm_component.cb_lazy_free_freq =
+        mca_ptl_sm_param_register_int("cb_lazy_free_freq", 128);
+    /* make sure that queue size and lazy free frequency are consistent -
+     * want to make sure that slots are freed at a rate they can be
+     * reused, w/o allocating extra new circular buffer fifo arrays */
+    if( (float)(mca_ptl_sm_component.cb_lazy_free_freq) >=
+            0.95*(float)(mca_ptl_sm_component.size_of_cb_queue) ) {
+        /* upper limit */
+        mca_ptl_sm_component.cb_lazy_free_freq=
+            (int)(0.95*(float)(mca_ptl_sm_component.size_of_cb_queue));
+        /* lower limit */
+        if( 0>= mca_ptl_sm_component.cb_lazy_free_freq ) {
+            mca_ptl_sm_component.cb_lazy_free_freq=1;
+        }
+    }
 
     /* default number of extra procs to allow for future growth */
     mca_ptl_sm_component.sm_extra_procs =
@@ -133,8 +150,8 @@ int mca_ptl_sm_component_open(void)
 
     /* initialize objects */
     OBJ_CONSTRUCT(&mca_ptl_sm_component.sm_lock, ompi_mutex_t);
-    OBJ_CONSTRUCT(&mca_ptl_sm_component.sm_send_requests, ompi_free_list_t);
-    OBJ_CONSTRUCT(&mca_ptl_sm_component.sm_first_frags, ompi_free_list_t);
+    OBJ_CONSTRUCT(&mca_ptl_sm.sm_send_requests, ompi_free_list_t);
+    OBJ_CONSTRUCT(&mca_ptl_sm.sm_first_frags, ompi_free_list_t);
    
     return OMPI_SUCCESS;
 }
@@ -147,8 +164,8 @@ int mca_ptl_sm_component_open(void)
 int mca_ptl_sm_component_close(void)
 {
     OBJ_DESTRUCT(&mca_ptl_sm_component.sm_lock);
-    OBJ_DESTRUCT(&mca_ptl_sm_component.sm_send_requests);
-    OBJ_DESTRUCT(&mca_ptl_sm_component.sm_first_frags);
+    OBJ_DESTRUCT(&mca_ptl_sm.sm_send_requests);
+    OBJ_DESTRUCT(&mca_ptl_sm.sm_first_frags);
     return OMPI_SUCCESS;
 }
 
@@ -185,7 +202,7 @@ mca_ptl_base_module_t** mca_ptl_sm_component_init(
     length=sizeof(mca_ptl_sm_frag_t)+mca_ptl_sm_component.fragment_alignment+
         mca_ptl_sm_component.first_fragment_size;
 
-    ompi_free_list_init(&mca_ptl_sm_component.sm_first_frags, length,
+    ompi_free_list_init(&mca_ptl_sm.sm_first_frags, length,
         OBJ_CLASS(mca_ptl_sm_frag_t),
         mca_ptl_sm_component.sm_first_frag_free_list_num,
         mca_ptl_sm_component.sm_first_frag_free_list_max,
@@ -201,7 +218,7 @@ mca_ptl_base_module_t** mca_ptl_sm_component_init(
     length=sizeof(mca_ptl_sm_frag_t)+mca_ptl_sm_component.fragment_alignment+
         mca_ptl_sm_component.max_fragment_size;
 
-    ompi_free_list_init(&mca_ptl_sm_component.sm_second_frags, length,
+    ompi_free_list_init(&mca_ptl_sm.sm_second_frags, length,
         OBJ_CLASS(mca_ptl_sm_frag_t),
         mca_ptl_sm_component.sm_second_frag_free_list_num,
         mca_ptl_sm_component.sm_second_frag_free_list_max,

@@ -6,6 +6,7 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <sys/types.h>
 
 #include "util/output.h"
 #include "util/if.h"
@@ -25,6 +26,9 @@
 #include "util/proc_info.h"
 #include "util/printf.h"
 #include "mca/ptl/sm/src/ptl_sm_sendreq.h"
+#include "class/ompi_fifo.h"
+#include "threads/mutex.h"
+#include "datatype/datatype.h"
 
 mca_ptl_sm_t mca_ptl_sm = {
     {
@@ -44,9 +48,9 @@ mca_ptl_sm_t mca_ptl_sm = {
     mca_ptl_sm_add_procs,
     mca_ptl_sm_del_procs,
     mca_ptl_sm_finalize,
-    mca_ptl_sm_send,
-    mca_ptl_sm_send, /* function */
-    NULL,
+    mca_ptl_sm_send,  /* first fragment send function */
+    mca_ptl_sm_send,  /* second and subsequent send function */
+    NULL,  /* get function */
     mca_ptl_sm_matched, /* function called after match is made */
     mca_ptl_sm_send_request_init, /* initialization routine */
     mca_ptl_sm_request_return
@@ -232,11 +236,6 @@ int mca_ptl_sm_add_procs(
                 return_code=OMPI_ERR_OUT_OF_RESOURCE;
                 goto CLEANUP;
             }
-            mca_ptl_sm_component.sm_ctl_header->fifo=
-                (volatile ompi_fifo_t **)
-                ( (char *)(mca_ptl_sm_component.sm_ctl_header->fifo)-
-                  (char *)(mca_ptl_sm_component.sm_mpool->mpool_base()) );
-
             /* allocate vectors of ompi_fifo_t - one per
              * process - offsets will be stored */
             size=n_to_allocate*sizeof(ompi_fifo_t);
@@ -264,26 +263,34 @@ int mca_ptl_sm_add_procs(
                 }
             }
 
+            /* set the fifo address to be a relative address, so that
+             * it can be used by other procs */
+            mca_ptl_sm_component.sm_ctl_header->fifo=
+                (volatile ompi_fifo_t **)
+                ( (char *)(mca_ptl_sm_component.sm_ctl_header->fifo)-
+                  (char *)(mca_ptl_sm_component.sm_mpool->mpool_base()) );
+
+
             /* allow other procs to use this shared memory map */
             mca_ptl_sm_component.mmap_file->map_seg->seg_inited=true;
         }
    
         /* Note:  Need to make sure that proc 0 initializes control
          * structures before any of the other procs can progress */
-        if( 0 != mca_ptl_sm_component.my_smp_rank ) {
-
+        if( 0 != mca_ptl_sm_component.my_smp_rank ) 
+        {
             /* spin unitl local proc 0 initializes the segment */
             while(!mca_ptl_sm_component.mmap_file->map_seg->seg_inited)
-                {
-                    ;
-                }
+            { ; }
         }
 
-        /* Initizlize queue data structures 
-         *   - proc with lowest local rank does this
-         *   - all the rest of the procs block until the queues are
-         *     initialized
-         *   - initial queue size is zero */
+        /* cache the pointer to the 2d fifo array.  This is a virtual
+         * address, whereas the address in the virtual memory segment
+         * is a relative address */
+        mca_ptl_sm_component.fifo=(ompi_fifo_t **)
+            ( (char *)(mca_ptl_sm_component.sm_ctl_header->fifo) +
+              (size_t)(mca_ptl_sm_component.sm_mpool->mpool_base()) );
+
     }
 
     /* free local memory */
@@ -341,6 +348,9 @@ void mca_ptl_sm_request_return(struct mca_ptl_base_module_t* ptl, struct mca_pml
  *  descriptor allocated with the send requests, otherwise obtain
  *  one from the free list. Initialize the fragment and foward
  *  on to the peer.
+ *
+ *  NOTE: this routine assumes that only one sending thread will be accessing
+ *        the send descriptor at a time.
  */
 
 int mca_ptl_sm_send(
@@ -351,7 +361,101 @@ int mca_ptl_sm_send(
     size_t size,
     int flags)
 {
-    return OMPI_SUCCESS;
+    mca_ptl_sm_send_request_t *sm_request;
+    int my_local_smp_rank, peer_local_smp_rank;
+    int return_status=OMPI_SUCCESS;
+    ompi_fifo_t *send_fifo;
+    mca_ptl_base_header_t* hdr;
+    void *sm_data_ptr, *user_data_ptr;
+
+    /* cast to shared memory send descriptor */
+    sm_request=(mca_ptl_sm_send_request_t *)sendreq;
+
+    /* determine if send descriptor is obtained from the cache.  If
+     * so, all the memory resource needed have been obtained */
+    if( !sm_request->super.req_cached) {
+    }
+
+    /* if needed, pack data in payload buffer */
+    if( 0 <= size ) {
+        ompi_convertor_t *convertor;
+        struct iovec address;
+
+        sm_data_ptr=sm_request->req_frag->buff;
+        user_data_ptr=sendreq->req_base.req_addr;
+
+        /* set up the shared memory iovec */
+        address.iov_base=sm_data_ptr;
+        address.iov_len=sm_request->req_frag->buff_length;
+
+        convertor = &sendreq->req_convertor;
+        return_status=ompi_convertor_pack(convertor,&address,1);
+        if( 0 > return_status ) {
+            return OMPI_ERROR;
+        }
+    }
+
+    /* fill in the fragment descriptor */
+    /* get pointer to the fragment header */
+    hdr = &(sm_request->req_frag->super.frag_base.frag_header);
+
+    hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_MATCH;
+    hdr->hdr_common.hdr_flags = flags;
+    hdr->hdr_common.hdr_size = sizeof(mca_ptl_base_match_header_t);
+    hdr->hdr_frag.hdr_frag_seq = 0;
+    hdr->hdr_frag.hdr_src_ptr.lval = 0; /* for VALGRIND/PURIFY - 
+                                           REPLACE WITH MACRO */
+    hdr->hdr_frag.hdr_src_ptr.pval = sendreq;
+    hdr->hdr_frag.hdr_dst_ptr.lval = 0;
+    hdr->hdr_match.hdr_contextid = sendreq->req_base.req_comm->c_contextid;
+    hdr->hdr_match.hdr_src = sendreq->req_base.req_comm->c_my_rank;
+    hdr->hdr_match.hdr_dst = sendreq->req_base.req_peer;
+    hdr->hdr_match.hdr_tag = sendreq->req_base.req_tag;
+    hdr->hdr_match.hdr_msg_length = sendreq->req_bytes_packed;
+
+    /* update the offset within the payload */
+    sendreq->req_offset += size;
+
+    /* 
+     * post the descriptor in the queue - post with the relative
+     * address 
+     */
+    /* see if queues are allocated */
+    my_local_smp_rank=ptl_peer->my_smp_rank;
+    peer_local_smp_rank=ptl_peer->peer_smp_rank;
+    send_fifo=&(mca_ptl_sm_component.fifo
+            [my_local_smp_rank][peer_local_smp_rank]);
+    if(OMPI_CB_FREE == send_fifo->head){
+        /* no queues have been allocated - allocate now */
+        return_status=ompi_fifo_init(mca_ptl_sm_component.size_of_cb_queue,
+                mca_ptl_sm_component.cb_lazy_free_freq,
+                /* at this stage we are not doing anything with memory
+                 * locality */
+                0,0,0,
+                send_fifo, mca_ptl_sm_component.sm_mpool);
+        if( return_status != OMPI_SUCCESS ) {
+            return return_status;
+        }
+    }
+
+    /* post descriptor */
+    /* lock for thread safety - using atomic lock, not mutex, since
+     * we need shared memory access to these lock, and in some pthread
+     * implementation, such mutex's don't work correctly */
+    if( ompi_using_threads() ) {
+        ompi_atomic_lock(&(send_fifo->head_lock));
+    }
+
+    return_status=ompi_fifo_write_to_head(sm_request->req_frag_offset_from_base,
+            send_fifo, mca_ptl_sm_component.sm_mpool,
+            mca_ptl_sm_component.sm_offset);
+
+    /* release threa lock */
+    if( ompi_using_threads() ) {
+        ompi_atomic_unlock(&(send_fifo->head_lock));
+    }
+    /* return */
+    return return_status;
 }
 
 
