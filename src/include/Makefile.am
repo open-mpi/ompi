@@ -7,7 +7,7 @@
 # information, see the LICENSE file in the top level directory of the
 # CMPI source distribution.
 #
-# $Id: Makefile.am,v 1.3 2003/12/22 16:29:11 twoodall Exp $
+# $Id: Makefile.am,v 1.4 2004/01/07 07:51:23 jsquyres Exp $
 #
 
 include $(top_srcdir)/config/Makefile.options
@@ -16,6 +16,10 @@ noinst_HEADERS	= \
 		communicator.h \
 		datatype.h \
 		group.h \
+		lam_constants.h \
+		lam.h \
+		lam_stdint.h \
+		proc.h \
 		totalview.h
 
 include_HEADERS	= \
@@ -31,7 +35,7 @@ include_HEADERS	= \
 # include with other files.
 
 install-data-hook:
-	sed -e 's/define PACKAGE/define CMPI_PACKAGE/' \
+	sed -e 's/define PACKAGE/define LAM_MPI_PACKAGE/' \
 		$(DESTDIR)$(includedir)/lam_config.h \
 		> $(DESTDIR)$(includedir)/lam_config.h.install
 	mv $(DESTDIR)$(includedir)/lam_config.h.install \
