@@ -5,10 +5,10 @@
 
 include $(top_ompi_srcdir)/config/Makefile.options
 
-AM_CPPFLAGS = \
-        -I$(top_ompi_builddir)/src/include \
-        -I$(top_ompi_srcdir)/src \
-        -I$(top_ompi_srcdir)/src/include
+sources = \
+        allocator_bucket.c \
+        allocator_bucket_alloc.c \
+        allocator_bucket_alloc.h 
 
 if OMPI_BUILD_allocator_bucket_LOADABLE_MODULE
 module_noinst =
