@@ -95,6 +95,8 @@ void mpi_comm_spawn_f(char *command, char *argv, MPI_Fint *maxprocs,
     if (MPI_ARGV_NULL != c_argv && NULL != c_argv) {
         ompi_argv_free(c_argv);
     }
-    OMPI_ARRAY_INT_2_FINT(array_of_errcodes, size);
+    if (!OMPI_IS_FORTRAN_ERRCODES_IGNORE(array_of_errcodes)) {
+	OMPI_ARRAY_INT_2_FINT(array_of_errcodes, size);
+    }
 }
 

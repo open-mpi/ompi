@@ -111,7 +111,10 @@ void mpi_comm_spawn_multiple_f(MPI_Fint *count, char *array_commands,
 				       c_errs));
     
     *intercomm = MPI_Comm_c2f(c_new_comm);
-    OMPI_ARRAY_INT_2_FINT(array_errcds, size);
+
+    if (!OMPI_IS_FORTRAN_ERRCODES_IGNORE(array_errcds)) {
+	OMPI_ARRAY_INT_2_FINT(array_errcds, size);
+    }
     OMPI_ARRAY_FINT_2_INT_CLEANUP(array_maxprocs);
 
     ompi_argv_free(c_array_commands);

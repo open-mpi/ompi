@@ -56,5 +56,4 @@ void mpi_file_read_all_begin_f(MPI_Fint *fh, char *buf,
     *ierr = OMPI_INT_2_FINT(MPI_File_read_all_begin(c_fh, buf, 
 						    OMPI_FINT_2_INT(*count),
 						    c_type));
-    
 }
