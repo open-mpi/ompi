@@ -109,6 +109,7 @@ int topo_base_graph_create (MPI_Comm comm_old,
      * Set the communicator topology information.
      */
     if (*comm_graph != MPI_COMM_NULL) {
+        (*comm_graph)->c_flags |= LAM_COMM_GRAPH;
         (*comm_graph)->c_topo_comm->mtc_type = MPI_GRAPH;
         (*comm_graph)->c_topo_comm->mtc_nprocs = nnodes;
         (*comm_graph)->c_topo_comm->mtc_nedges = nedges;

@@ -99,6 +99,7 @@ int topo_base_cart_create (MPI_Comm old_comm,
     */
    newcomm = *comm_cart;
    if (newcomm != MPI_COMM_NULL) {
+      newcomm->c_flags |= LAM_COMM_CART;
       newcomm->c_topo_comm->mtc_type = MPI_CART;
       newcomm->c_topo_comm->mtc_nprocs = nprocs;
       newcomm->c_topo_comm->mtc_ndims = ndims;
