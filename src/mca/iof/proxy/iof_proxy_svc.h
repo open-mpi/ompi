@@ -26,7 +26,7 @@ extern "C" {
 #endif
 
 /**
- * 
+ *  Publish endpoint to forwarding service.
  */
 
 int mca_iof_proxy_svc_publish(
@@ -41,7 +41,9 @@ int mca_iof_proxy_svc_unpublish(
     );
 
 /**
- * 
+ * Subscribe one/more destination processes as
+ * specified by the process name/mask to one/more
+ * source processes.
  */
 
 int mca_iof_proxy_svc_subscribe(
@@ -54,7 +56,8 @@ int mca_iof_proxy_svc_subscribe(
     );
 
 /**
- * 
+ * Remove subscription from forwarding
+ * service.
  */
 
 int mca_iof_proxy_svc_unsubscribe(
@@ -67,7 +70,8 @@ int mca_iof_proxy_svc_unsubscribe(
     );
 
 /**
- * 
+ * Dispatch messages received from forwarding
+ * service.
  */
 
 void mca_iof_proxy_svc_recv(

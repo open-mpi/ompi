@@ -13,6 +13,10 @@ enum {
     MCA_IOF_EP_CLOSED
 };
 
+/**
+ *  Structure that represents a published endpoint.
+ */
+
 struct mca_iof_base_endpoint_t {
     ompi_list_item_t super;
     mca_iof_base_mode_t ep_mode;
@@ -38,16 +42,12 @@ OBJ_CLASS_DECLARATION(mca_iof_base_endpoint_t);
 
 
 /**
- *
- */
-
-mca_iof_base_endpoint_t* mca_iof_base_endpoint_lookup(
-    const ompi_process_name_t* proc,
-    mca_iof_base_mode_t mode,
-    int tag);
-
-/**
- *
+ * Create a local endpoint.
+ * 
+ * @param name  Process name corresponding to endpoint.
+ * @param mode  Source or sink of data (exclusive).
+ * @param tag   Logical tag for matching.
+ * @aram  fd    Local file descriptor corresponding to endpoint.
  */
 
 int mca_iof_base_endpoint_create(
@@ -57,7 +57,12 @@ int mca_iof_base_endpoint_create(
    int fd);
 
 /**
+ * Delete all local endpoints matching the specified 
+ * name/mask/tag parameters.
  *
+ * @paran name  Process name corresponding to one or more endpoint(s).
+ * @param mask  Mask used for name comparisons.
+ * @param tag   Tag for matching endpoints.
  */
 
 int mca_iof_base_endpoint_delete(
@@ -65,15 +70,16 @@ int mca_iof_base_endpoint_delete(
    ompi_ns_cmp_bitmask_t mask,
    int tag);
 
-/*
- * 
+/**
+ * Disable forwarding through the specified endpoint.
  */
 
 int mca_iof_base_endpoint_close(
     mca_iof_base_endpoint_t* endpoint);
 
 /**
- *
+ * Attempt to match an endpoint based on the destination
+ * process name/mask/tag.
  */
 
 mca_iof_base_endpoint_t* mca_iof_base_endpoint_match(
@@ -82,7 +88,7 @@ mca_iof_base_endpoint_t* mca_iof_base_endpoint_match(
     int dst_tag);
 
 /**
- *
+ * Forward the specified message out the endpoint.
  */
 
 int mca_iof_base_endpoint_forward(
@@ -92,16 +98,17 @@ int mca_iof_base_endpoint_forward(
     const unsigned char* data);
 
 /*
- *
+ * Callback when peer has closed endpoint.
  */
 
 void mca_iof_base_endpoint_closed(
     mca_iof_base_endpoint_t* endpoint);
 
 /**
- *
+ * Callback when the specified sequence has been 
+ * acknowledged.
  */
-                                                                                                                       
+
 int mca_iof_base_endpoint_ack(
     mca_iof_base_endpoint_t* endpoint,
     uint32_t seq);

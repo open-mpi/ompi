@@ -63,7 +63,7 @@ int mca_iof_base_open(void)
     mca_iof_base.iof_window_size = int_value;
 
     id = mca_base_param_register_string("iof","base","service",NULL,"0.0.0");
-    mca_base_param_lookup_int(id,&str_value);
+    mca_base_param_lookup_string(id,&str_value);
     mca_iof_base.iof_service = ompi_name_server.convert_string_to_process_name(str_value);
  
     /* initialize free list */

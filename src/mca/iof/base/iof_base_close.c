@@ -41,7 +41,7 @@ int mca_iof_base_close(void)
     ompi_event_t ev;
     struct timeval tv = { 0, 0 };
     int flushed = 0;
-    int closed = 0;
+    size_t closed = 0;
 
     /* flush any pending output */
     fflush(NULL);
