@@ -8,6 +8,11 @@
 
 #include "mpi.h"
 #include "mpi/f77/bindings.h"
+#include "include/constants.h"
+#include "errhandler/errhandler.h"
+#include "communicator/communicator.h"
+#include "mpi/f77/bindings.h"
+#include "mpi/f77/strings.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_WIN_SET_NAME = mpi_win_set_name_f
@@ -46,7 +51,29 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WIN_SET_NAME,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-void mpi_win_set_name_f(MPI_Fint *win, char *win_name, MPI_Fint *ierr)
+void mpi_win_set_name_f(MPI_Fint *win, char *win_name, MPI_Fint *ierr,
+			int name_len)
 {
-  /* This function not yet implemented */
+    int ret;
+    char *c_name;
+    MPI_Win c_win;
+
+    c_win = MPI_Win_f2c(*win);
+
+    /* Convert the fortran string */
+
+    if (OMPI_SUCCESS != (ret = ompi_fortran_string_f2c(win_name, name_len,
+                                                       &c_name))) {
+        *ierr = OMPI_INT_2_FINT(OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, ret,
+                                                       "MPI_WIN_SET_NAME"));
+        return;
+    }
+
+    /* Call the C function */
+
+    *ierr = OMPI_INT_2_FINT(MPI_Win_set_name(c_win, c_name));
+
+    /* Free the C name */
+
+    free(c_name);
 }

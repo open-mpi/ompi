@@ -7,7 +7,11 @@
 #include <stdio.h>
 
 #include "mpi.h"
+#include "include/constants.h"
+#include "errhandler/errhandler.h"
+#include "communicator/communicator.h"
 #include "mpi/f77/bindings.h"
+#include "mpi/f77/strings.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_TYPE_SET_NAME = mpi_type_set_name_f
@@ -46,11 +50,29 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_SET_NAME,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-void mpi_type_set_name_f(MPI_Fint *type, char *type_name, MPI_Fint *ierr)
+void mpi_type_set_name_f(MPI_Fint *type, char *type_name, MPI_Fint *ierr,
+			 int name_len)
 {
+    int ret;
+    char *c_name;
     MPI_Datatype c_type;
-    
+
     c_type = MPI_Type_f2c(*type);
-    
-    *ierr = OMPI_INT_2_FINT(MPI_Type_set_name(c_type, type_name));
+
+    /* Convert the fortran string */
+
+    if (OMPI_SUCCESS != (ret = ompi_fortran_string_f2c(type_name, name_len,
+                                                       &c_name))) {
+        *ierr = OMPI_INT_2_FINT(OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, ret,
+                                                       "MPI_TYPE_SET_NAME"));
+        return;
+    }
+
+    /* Call the C function */
+
+    *ierr = OMPI_INT_2_FINT(MPI_Type_set_name(c_type, c_name));
+
+    /* Free the C name */
+
+    free(c_name);
 }
