@@ -358,39 +358,64 @@ OMPI_DECLSPEC enum {
 #endif
 #endif
 
-OMPI_DECLSPEC int OMPI_C_MPI_TYPE_NULL_DELETE_FN( MPI_Datatype datatype, int type_keyval,
-                                                  void* attribute_val_out, void* flag );
-OMPI_DECLSPEC int OMPI_C_MPI_TYPE_NULL_COPY_FN( MPI_Datatype datatype, int type_keyval, 
+OMPI_DECLSPEC int OMPI_C_MPI_TYPE_NULL_DELETE_FN( MPI_Datatype datatype, 
+                                                  int type_keyval,
+                                                  void* attribute_val_out, 
+                                                  void* extra_state );
+OMPI_DECLSPEC int OMPI_C_MPI_TYPE_NULL_COPY_FN( MPI_Datatype datatype, 
+                                                int type_keyval, 
                                                 void* extra_state,
                                                 void* attribute_val_in, 
-                                                void* attribute_val_out, int* flag );
-OMPI_DECLSPEC int OMPI_C_MPI_TYPE_DUP_FN( MPI_Datatype datatype, int type_keyval, 
-                                          void* extra_state, void* attribute_val_in, 
-                                          void* attribute_val_out, int* flag );
-OMPI_DECLSPEC int OMPI_C_MPI_COMM_NULL_DELETE_FN( MPI_Comm comm, int comm_keyval,
-                                                  void* attribute_val_out, void* flag );
-OMPI_DECLSPEC int OMPI_C_MPI_COMM_NULL_COPY_FN( MPI_Comm comm, int comm_keyval, 
-                                                void* extra_state, void* attribute_val_in,
-                                                void* attribute_val_out, int* flag );
-OMPI_DECLSPEC int OMPI_C_MPI_COMM_DUP_FN( MPI_Comm comm, int comm_keyval, void* extra_state,
-                                          void* attribute_val_in, void* attribute_val_out,
+                                                void* attribute_val_out, 
+                                                int* flag );
+OMPI_DECLSPEC int OMPI_C_MPI_TYPE_DUP_FN( MPI_Datatype datatype, 
+                                          int type_keyval, 
+                                          void* extra_state, 
+                                          void* attribute_val_in, 
+                                          void* attribute_val_out, 
+                                          int* flag );
+OMPI_DECLSPEC int OMPI_C_MPI_COMM_NULL_DELETE_FN( MPI_Comm comm, 
+                                                  int comm_keyval,
+                                                  void* attribute_val_out, 
+                                                  void* extra_state );
+OMPI_DECLSPEC int OMPI_C_MPI_COMM_NULL_COPY_FN( MPI_Comm comm, 
+                                                int comm_keyval, 
+                                                void* extra_state, 
+                                                void* attribute_val_in,
+                                                void* attribute_val_out, 
+                                                int* flag );
+OMPI_DECLSPEC int OMPI_C_MPI_COMM_DUP_FN( MPI_Comm comm, int comm_keyval, 
+                                          void* extra_state,
+                                          void* attribute_val_in, 
+                                          void* attribute_val_out,
                                           int* flag );
 OMPI_DECLSPEC int OMPI_C_MPI_NULL_DELETE_FN( MPI_Comm comm, int comm_keyval,
-                                             void* attribute_val_out, void* flag );
-OMPI_DECLSPEC int OMPI_C_MPI_NULL_COPY_FN( MPI_Comm comm, int comm_keyval, void* extra_state,
-                                           void* attribute_val_in, void* attribute_val_out,
+                                             void* attribute_val_out, 
+                                             void* extra_state );
+OMPI_DECLSPEC int OMPI_C_MPI_NULL_COPY_FN( MPI_Comm comm, int comm_keyval, 
+                                           void* extra_state,
+                                           void* attribute_val_in, 
+                                           void* attribute_val_out,
                                            int* flag );
-OMPI_DECLSPEC int OMPI_C_MPI_DUP_FN( MPI_Comm comm, int comm_keyval, void* extra_state,
-                                     void* attribute_val_in, void* attribute_val_out,
+OMPI_DECLSPEC int OMPI_C_MPI_DUP_FN( MPI_Comm comm, int comm_keyval, 
+                                     void* extra_state,
+                                     void* attribute_val_in, 
+                                     void* attribute_val_out,
                                      int* flag );
 #if OMPI_WANT_MPI2_ONE_SIDED
-OMPI_DECLSPEC int OMPI_C_MPI_WIN_NULL_DELETE_FN( MPI_Win window, int win_keyval,
-                                                 void* attribute_val_out, void* flag );
+OMPI_DECLSPEC int OMPI_C_MPI_WIN_NULL_DELETE_FN( MPI_Win window, 
+                                                 int win_keyval,
+                                                 void* attribute_val_out, 
+                                                 void* extra_state );
 OMPI_DECLSPEC int OMPI_C_MPI_WIN_NULL_COPY_FN( MPI_Win window, int win_keyval, 
-                                               void* extra_state, void* attribute_val_in,
-                                               void* attribute_val_out, int* flag );
-OMPI_DECLSPEC int OMPI_C_MPI_WIN_DUP_FN( MPI_Win window, int win_keyval, void* extra_state,
-                                         void* attribute_val_in, void* attribute_val_out,
+                                               void* extra_state, 
+                                               void* attribute_val_in,
+                                               void* attribute_val_out, 
+                                               int* flag );
+OMPI_DECLSPEC int OMPI_C_MPI_WIN_DUP_FN( MPI_Win window, int win_keyval, 
+                                         void* extra_state,
+                                         void* attribute_val_in, 
+                                         void* attribute_val_out,
                                          int* flag );
 #endif
 
