@@ -6,10 +6,10 @@
 
 #include "ompi_config.h"
 
+#include "pcm_rsh.h"
 #include "include/constants.h"
 #include "mca/pcm/pcm.h"
 #include "mca/pcm/base/base.h"
-#include "mca/pcm/rsh/src/pcm_rsh.h"
 #include "mca/llm/llm.h"
 
 

@@ -6,6 +6,7 @@
 
 #include "ompi_config.h"
 
+#include "pcm_rms.h"
 #include "include/constants.h"
 #include "include/types.h"
 #include "util/malloc.h"
@@ -15,7 +16,6 @@
 #include "mca/base/mca_base_param.h"
 #include "mca/pcm/pcm.h"
 #include "mca/pcm/base/base.h"
-#include "mca/pcm/rms/pcm_rms.h"
 #include "mca/llm/base/base.h"
 #include "util/path.h"
 

@@ -11,10 +11,10 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include "pcm_rms.h"
 #include "include/constants.h"
 #include "mca/pcm/pcm.h"
 #include "mca/pcm/base/base.h"
-#include "mca/pcm/rms/pcm_rms.h"
 #include "event/event.h"
 #include "class/ompi_list.h"
 #include "mca/ns/ns.h"
