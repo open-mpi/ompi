@@ -5,11 +5,7 @@
 #include "ompi_config.h"
 
 #include <stdio.h>
-#if __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 #include <stdlib.h>
 #include <syslog.h>
 #include <string.h>
@@ -90,6 +86,7 @@ static output_desc_t info[OMPI_OUTPUT_MAX_STREAMS];
 static char *temp_str = 0;
 static int temp_str_len = 0;
 static ompi_mutex_t mutex;
+static bool syslog_opened = false;
 
 
 /*
@@ -233,7 +230,7 @@ void ompi_output_close(int output_id)
       break;
     }
   }
-  if (i >= OMPI_OUTPUT_MAX_STREAMS) {
+  if (i >= OMPI_OUTPUT_MAX_STREAMS && syslog_opened) {
     closelog();
   }
 
@@ -254,11 +251,7 @@ void ompi_output_close(int output_id)
 void ompi_output(int output_id, char *format, ...)
 {
   va_list arglist;
-#if __STDC__
   va_start(arglist, format);
-#else
-  va_start(arglist);
-#endif
   output(output_id, format, arglist);
   va_end(arglist);
 }
@@ -271,11 +264,7 @@ void ompi_output_verbose(int level, int output_id, char *format, ...)
 {
   if (info[output_id].ldi_verbose_level >= level) {
     va_list arglist;
-#if __STDC__
     va_start(arglist, format);
-#else
-    va_start(arglist);
-#endif
     output(output_id, format, arglist);
     va_end(arglist);
   }
@@ -372,6 +361,7 @@ static int do_open(int output_id, ompi_output_stream_t *lds)
       info[i].ldi_syslog_ident = NULL;
       openlog("ompi", LOG_PID, LOG_USER);
     }
+    syslog_opened = true;
     info[i].ldi_syslog_priority = lds->lds_syslog_priority;
   }
 
