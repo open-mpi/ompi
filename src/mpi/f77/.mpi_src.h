@@ -500,5 +500,3 @@
   int MPI_Win_test(MPI_Win win, int *flag);
   int MPI_Win_unlock(int rank, MPI_Win win);
   int MPI_Win_wait(MPI_Win win);
-  double MPI_Wtick(void);
-  double MPI_Wtime(void);
