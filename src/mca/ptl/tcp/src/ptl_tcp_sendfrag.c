@@ -48,6 +48,7 @@ ompi_class_t  mca_ptl_tcp_send_frag_t_class = {
 
 static void mca_ptl_tcp_send_frag_construct(mca_ptl_tcp_send_frag_t* frag)
 {
+   OMPI_DEBUG_ZERO(*frag);
    frag->free_after = 0;
 }
 
