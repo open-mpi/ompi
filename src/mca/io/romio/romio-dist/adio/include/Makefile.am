@@ -12,7 +12,7 @@ noinst_HEADERS = \
         adioi_error.h \
         adioi_fs_proto.h \
         adioi.h \
-        io_adio_conf.h \
+        io_adio_conv.h \
         mpio_error.h \
         mpipr.h \
         mpisgi2.h \
