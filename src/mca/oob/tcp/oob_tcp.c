@@ -559,15 +559,15 @@ int mca_oob_tcp_resolve(mca_oob_tcp_peer_t* peer)
      jobid = ompi_name_server.get_jobid_string(&peer->peer_name);
      asprintf(&segment, "%s-%s", OMPI_RTE_OOB_SEGMENT, jobid);
      rc = ompi_registry.subscribe(
-         OMPI_REGISTRY_OR,
-         OMPI_REGISTRY_NOTIFY_ADD_ENTRY|OMPI_REGISTRY_NOTIFY_DELETE_ENTRY|
-         OMPI_REGISTRY_NOTIFY_MODIFICATION|
-	 OMPI_REGISTRY_NOTIFY_ON_STARTUP|OMPI_REGISTRY_NOTIFY_INCLUDE_STARTUP_DATA|
-	 OMPI_REGISTRY_NOTIFY_ON_SHUTDOWN,
-         segment,
-         NULL,
-         mca_oob_tcp_registry_callback,
-         NULL);
+        	OMPI_REGISTRY_OR,
+        	OMPI_REGISTRY_NOTIFY_ADD_ENTRY|OMPI_REGISTRY_NOTIFY_DELETE_ENTRY|
+        	OMPI_REGISTRY_NOTIFY_MODIFICATION|
+	 	OMPI_REGISTRY_NOTIFY_ON_STARTUP|OMPI_REGISTRY_NOTIFY_INCLUDE_STARTUP_DATA|
+	 	OMPI_REGISTRY_NOTIFY_ON_SHUTDOWN|OMPI_REGISTRY_NOTIFY_INCLUDE_SHUTDOWN_DATA,
+        	segment,
+        	NULL,
+        	mca_oob_tcp_registry_callback,
+        	NULL);
      if(rc != OMPI_SUCCESS) {
          ompi_output(0, "mca_oob_tcp_resolve: ompi_registry.subscribe failed with error status: %d\n", rc);
          return rc;
@@ -629,9 +629,10 @@ int mca_oob_tcp_init(void)
     OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
 
     rc_tag = ompi_registry.subscribe(
-        OMPI_REGISTRY_OR,
-        OMPI_REGISTRY_NOTIFY_ON_STARTUP|OMPI_REGISTRY_NOTIFY_INCLUDE_STARTUP_DATA|
-	OMPI_REGISTRY_NOTIFY_ON_SHUTDOWN,
+        	OMPI_REGISTRY_OR,
+        	OMPI_REGISTRY_NOTIFY_ON_STARTUP|OMPI_REGISTRY_NOTIFY_INCLUDE_STARTUP_DATA|
+		OMPI_REGISTRY_NOTIFY_ON_SHUTDOWN|OMPI_REGISTRY_NOTIFY_INCLUDE_SHUTDOWN_DATA|
+		OMPI_REGISTRY_NOTIFY_PRE_EXISTING,
         segment,
         NULL,
         mca_oob_tcp_registry_callback,

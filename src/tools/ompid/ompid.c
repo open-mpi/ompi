@@ -34,6 +34,7 @@
 #include "threads/condition.h"
 
 #include "util/output.h"
+#include "util/show_help.h"
 #include "util/sys_info.h"
 #include "util/os_path.h"
 #include "util/cmd_line.h"
@@ -74,25 +75,27 @@ int main(int argc, char *argv[])
     /*
      * Intialize the Open MPI environment
      */
-    if (OMPI_SUCCESS != ompi_init(argc, argv)) {
-        /* BWB show_help */
-        printf("show_help: ompi_init failed\n");
+    cmd_line = OBJ_NEW(ompi_cmd_line_t);
+
+    if (OMPI_SUCCESS != (ret = ompi_init(argc, argv))) {
+        ompi_show_help("help-mpirun.txt", "mpirun:init-failure", true,
+                       "ompi_init()", ret);
         return ret;
     }
 
-    /* check for debug flag */
+   /* check for debug flag */
     enviro_val = getenv("OMPI_daemon_debug");
     if (NULL != enviro_val) {  /* flag was set */
-	ompi_daemon_debug = true;
-	ompi_output(0, "ompid: entered daemon");
-    } else {
-	ompi_daemon_debug = false;
+		ompi_daemon_debug = true;
+		ompi_output(0, "ompid: entered daemon");
+	} else {
+		ompi_daemon_debug = false;
     }
 
     ompi_daemon_debug = true;  /**** DEBUGGING PURPOSES */
 
     if (ompi_daemon_debug) {
-	ompi_output(0, "ompid: daemonizing");
+		ompi_output(0, "ompid: daemonizing");
     }
 
     /* daemonize myself */
@@ -105,8 +108,6 @@ int main(int argc, char *argv[])
     OBJ_CONSTRUCT(&ompi_daemon_condition, ompi_condition_t);
 
     /* setup to read common command line options that span all Open MPI programs */
-    cmd_line = OBJ_NEW(ompi_cmd_line_t);
-
     ompi_cmd_line_make_opt(cmd_line, 'v', "version", 0,
 			   "Show version of Open MPI and this program");
 
@@ -121,26 +122,35 @@ int main(int argc, char *argv[])
      * setup  mca command line arguments
      */
     if (OMPI_SUCCESS != (ret = mca_base_cmd_line_setup(cmd_line))) {
-	/* BWB show_help */
-	printf("show_help: mca_base_cmd_line_setup failed\n");
+        ompi_show_help("help-mpirun.txt", "mpirun:init-failure", true, 
+                       "mca_base_cmd_line_setup()", ret);
 	return ret;
     }
 
     if (OMPI_SUCCESS != mca_base_cmd_line_process_args(cmd_line)) {
-	/* BWB show_help */
-	printf("show_help: mca_base_cmd_line_process_args\n");
+        ompi_show_help("help-mpirun.txt", "mpirun:init-failure", true, 
+                       "mca_base_cmd_line_process_args()", ret);
 	return ret;
     }
 
     /* parse the local commands */
     if (OMPI_SUCCESS != ompi_cmd_line_parse(cmd_line, true, argc, argv)) {
-	exit(ret);
+        char *args = NULL;
+        args = ompi_cmd_line_get_usage_msg(cmd_line);
+        ompi_show_help("help-mpirun.txt", "mpirun:usage", false,
+                       argv[0], args);
+        free(args);
+        return 1;
     }
 
     if (ompi_cmd_line_is_taken(cmd_line, "help") || 
         ompi_cmd_line_is_taken(cmd_line, "h")) {
-        printf("...showing ompi_info help message...\n");
-        exit(1);
+        char *args = NULL;
+        args = ompi_cmd_line_get_usage_msg(cmd_line);
+        ompi_show_help("help-mpirun.txt", "mpirun:usage", false,
+                       argv[0], args);
+        free(args);
+        return 1;
     }
 
     if (ompi_cmd_line_is_taken(cmd_line, "version") ||
@@ -152,8 +162,8 @@ int main(int argc, char *argv[])
     /* Open up the MCA */
 
     if (OMPI_SUCCESS != (ret = mca_base_open())) {
-        /* JMS show_help */
-        printf("show_help: ompid failed in mca_base_open\n");
+        ompi_show_help("help-mpirun.txt", "mpirun:init-failure", true, 
+                       "mca_base_open()", ret);
         return ret;
     }
 
@@ -162,14 +172,15 @@ int main(int argc, char *argv[])
     have_hidden_threads = false;
     if (OMPI_SUCCESS != (ret = ompi_rte_init(cmd_line, &allow_multi_user_threads,
 					     &have_hidden_threads))) {
-        /* JMS show_help */
-        printf("show_help: ompid failed in ompi_rte_init\n");
+        ompi_show_help("help-mpirun.txt", "mpirun:init-failure", true,
+                       "mca_rte_init()", ret);
         return ret;
     }
 
-    /* start recording the compound command that starts us up */
-    ompi_registry.begin_compound_cmd();
-
+	if (!ompi_process_info.seed) { /* if I'm not the seed... */
+	    /* start recording the compound command that starts us up */
+	    ompi_registry.begin_compound_cmd();
+	}
     /* Finish setting up the RTE - contains commands
      * that need to be inside the compound command
      */
@@ -195,17 +206,19 @@ int main(int argc, char *argv[])
         return ret;
     } 
 
-    /* execute the compound command - no return data requested
-    *  we'll get it all from the startup message
-    */
-    ompi_registry.exec_compound_cmd(OMPI_REGISTRY_NO_RETURN_REQUESTED);
-
-    /* wait to receive startup message and info distributed */
-    if (OMPI_SUCCESS != (ret = ompi_rte_wait_startup_msg())) {
-	printf("ompid: failed to see all procs register\n");
-	return ret;
-    }
-
+	if (!ompi_process_info.seed) {  /* if I'm not the seed... */
+	    /* execute the compound command - no return data requested
+	    *  we'll get it all from the startup message
+	    */
+	    ompi_registry.exec_compound_cmd(OMPI_REGISTRY_NO_RETURN_REQUESTED);
+		
+	    /* wait to receive startup message and info distributed */
+	    if (OMPI_SUCCESS != (ret = ompi_rte_wait_startup_msg())) {
+		printf("ompid: failed to see all procs register\n");
+		return ret;
+	    }
+	}
+	
     /* if i'm the seed, get my contact info and write my setup file for others to find */
     if (ompi_process_info.seed) {
 	if (NULL != ompi_universe_info.seed_contact_info) {

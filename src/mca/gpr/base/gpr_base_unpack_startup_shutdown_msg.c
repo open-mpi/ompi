@@ -104,7 +104,7 @@ mca_gpr_base_unpack_get_shutdown_msg(ompi_buffer_t buffer,
 
     ompi_buffer_get(buffer, &addr, &size);
     if (0 < size) {
-	ompi_pack(msg, addr, size, OMPI_BYTE);
+		ompi_pack(msg, addr, size, OMPI_BYTE);
     }
 
     return msg;

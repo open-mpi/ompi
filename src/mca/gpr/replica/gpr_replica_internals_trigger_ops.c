@@ -148,7 +148,8 @@ ompi_registry_notify_message_t
     int i;
 
     if (mca_gpr_replica_debug) {
-	ompi_output(0, "trigger fired on segment %s", seg->name);
+	ompi_output(0, "[%d,%d,%d] notification message being created for trig on segment %s",
+				OMPI_NAME_ARGS(*ompi_rte_get_self()), seg->name);
     }
 
     reg_entries = OBJ_NEW(ompi_list_t);
@@ -213,19 +214,22 @@ bool mca_gpr_replica_process_triggers(mca_gpr_replica_segment_t *seg,
 
     if (!found) {  /* didn't find request */
 	ompi_output(0, "Notification error - request not found");
-	/* OMPI_THREAD_UNLOCK(&mca_gpr_replica_internals_mutex); */
 	return true;
     }
 
     /* process request */
     cb = OBJ_NEW(mca_gpr_replica_callbacks_t);
     if (NULL == trackptr->requestor) {  /* local request - queue callback fn with their tag */
-	cb->requestor = NULL;
-	cb->cb_func = trackptr->callback;
-	cb->user_tag = trackptr->user_tag;
-	cb->message = message;
-	cb->remote_idtag = OMPI_REGISTRY_NOTIFY_ID_MAX;
-
+		cb->requestor = NULL;
+		cb->cb_func = trackptr->callback;
+		cb->user_tag = trackptr->user_tag;
+		cb->message = message;
+		cb->remote_idtag = OMPI_REGISTRY_NOTIFY_ID_MAX;
+		if (mca_gpr_replica_debug) {
+			ompi_output(0, "[%d,%d,%d] process_trig: queueing local message\n",
+						OMPI_NAME_ARGS(*ompi_rte_get_self()));
+		}
+	
     } else {  /* remote request - queue remote callback */
 	cb->requestor = ompi_name_server.copy_process_name(trackptr->requestor);
 	cb->cb_func = NULL;
@@ -321,16 +325,20 @@ mca_gpr_replica_enter_notify_request(mca_gpr_replica_segment_t *seg,
     trackptr = OBJ_NEW(mca_gpr_replica_notify_request_tracker_t);
     trackptr->segptr = seg;
     trackptr->action = action;
-    trackptr->requestor = ompi_name_server.copy_process_name(requestor);
+    if (NULL != requestor) {
+    		trackptr->requestor = ompi_name_server.copy_process_name(requestor);
+    } else {
+    		trackptr->requestor = NULL;
+    }
     trackptr->remote_idtag = idtag;
     trackptr->callback = cb_func;
     trackptr->user_tag = user_tag;
     if (ompi_list_is_empty(&mca_gpr_replica_free_notify_id_tags)) {
-	trackptr->local_idtag = mca_gpr_replica_last_notify_id_tag;
-	mca_gpr_replica_last_notify_id_tag++;
+		trackptr->local_idtag = mca_gpr_replica_last_notify_id_tag;
+		mca_gpr_replica_last_notify_id_tag++;
     } else {
-	ptr_free_id = (mca_gpr_idtag_list_t*)ompi_list_remove_first(&mca_gpr_replica_free_notify_id_tags);
-	trackptr->local_idtag = ptr_free_id->id_tag;
+		ptr_free_id = (mca_gpr_idtag_list_t*)ompi_list_remove_first(&mca_gpr_replica_free_notify_id_tags);
+		trackptr->local_idtag = ptr_free_id->id_tag;
     }
     ompi_list_append(&mca_gpr_replica_notify_request_tracker, &trackptr->item);
 
@@ -393,6 +401,10 @@ int mca_gpr_replica_check_synchros(mca_gpr_replica_segment_t *seg)
 	    (OMPI_REGISTRY_SYNCHRO_MODE_LEVEL & trig->synch_mode && trig->count == trig->trigger) ||
 	    (OMPI_REGISTRY_SYNCHRO_MODE_GT_EQUAL & trig->synch_mode && trig->count >= trig->trigger)) {
 
+		if (mca_gpr_replica_debug) {
+			ompi_output(0, "[%d,%d,%d] synchro fired on segment %s trigger level %d",
+						OMPI_NAME_ARGS(*ompi_rte_get_self()), seg->name, trig->trigger);
+		}
 	    notify_msg = mca_gpr_replica_construct_notify_message(seg, trig);
 	    notify_msg->trig_action = OMPI_REGISTRY_NOTIFY_NONE;
 	    notify_msg->trig_synchro = trig->synch_mode;
@@ -431,6 +443,10 @@ void mca_gpr_replica_check_subscriptions(mca_gpr_replica_segment_t *seg, int8_t 
 	    ((OMPI_REGISTRY_NOTIFY_MODIFICATION & trig->action) && (MCA_GPR_REPLICA_OBJECT_UPDATED == action_taken)) ||
 	    ((OMPI_REGISTRY_NOTIFY_DELETE_ENTRY & trig->action) && (MCA_GPR_REPLICA_OBJECT_DELETED == action_taken)) ||
 	    ((OMPI_REGISTRY_NOTIFY_ADD_SUBSCRIBER & trig->action) && (MCA_GPR_REPLICA_SUBSCRIBER_ADDED == action_taken))) {
+		if (mca_gpr_replica_debug) {
+			ompi_output(0, "[%d,%d,%d] trigger fired on segment %s",
+						OMPI_NAME_ARGS(*ompi_rte_get_self()), seg->name);
+		}
 	    notify_msg = mca_gpr_replica_construct_notify_message(seg, trig);
 	    notify_msg->trig_action = trig->action;
 	    notify_msg->trig_synchro = OMPI_REGISTRY_SYNCHRO_MODE_NONE;

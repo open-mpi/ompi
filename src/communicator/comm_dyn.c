@@ -403,13 +403,16 @@ int ompi_comm_start_processes (char *command, char **argv, int maxprocs,
     }
     
     if (OMPI_SUCCESS != ompi_rte_monitor_procs_registered()) {
-	printf("procs didn't all register - returning an error\n");
-	return MPI_ERR_SPAWN;
+		ompi_output(0, "[%d,%d,%d] procs didn't all register - returning an error",
+					OMPI_NAME_ARGS(*ompi_rte_get_self()));
+		return MPI_ERR_SPAWN;
     }  
 
     /*
      * tell processes okay to start by sending startup msg
      */
+     ompi_output(0, "[%d,%d,%d] comm_spawn: sending start message",
+     			OMPI_NAME_ARGS(*ompi_rte_get_self()));
     ompi_rte_job_startup(new_jobid);
 
     /*

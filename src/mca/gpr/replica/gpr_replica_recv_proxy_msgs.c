@@ -66,7 +66,8 @@ void mca_gpr_replica_recv(int status, ompi_process_name_t* sender,
     bool compound_cmd_detected=false;
 
     if (mca_gpr_replica_debug) {
-	ompi_output(0, "gpr replica: received message");
+	ompi_output(0, "[%d,%d,%d] gpr replica: received message from [%d,%d,%d]",
+			    OMPI_NAME_ARGS(*ompi_rte_get_self()), OMPI_NAME_ARGS(*sender));
     }
 
     return_requested = true;
@@ -80,6 +81,10 @@ void mca_gpr_replica_recv(int status, ompi_process_name_t* sender,
 
 	if ((compound_cmd_detected && return_requested) ||
 	    (!compound_cmd_detected && 0 < buf_size)) { /* must be some data or status codes to return */
+		if (mca_gpr_replica_debug) {
+			ompi_output(0, "[%d,%d,%d] gpr replica: sending response of length %d to [%d,%d,%d]",
+						OMPI_NAME_ARGS(*ompi_rte_get_self()), (int)buf_size, OMPI_NAME_ARGS(*sender));
+		}
 	    if (0 > mca_oob_send_packed(sender, answer, tag, 0)) {
 		/* RHC -- not sure what to do if the return send fails */
 	    }
@@ -926,26 +931,26 @@ static ompi_registry_notify_id_t mca_gpr_replica_recv_subscribe_cmd(ompi_process
 
     if (NULL != sender) {  /* remote sender */
 
-	if (mca_gpr_replica_debug) {
-		ompi_output(0, "[%d,%d,%d] subscribe created for remote sender [%d,%d,%d] on segment %s for idtag %d",
-					OMPI_NAME_ARGS(*ompi_rte_get_self()), OMPI_NAME_ARGS(*sender), segment, id_tag);
-	}
+		if (mca_gpr_replica_debug) {
+			ompi_output(0, "[%d,%d,%d] subscribe requested for remote sender [%d,%d,%d] on segment %s for idtag %d",
+						OMPI_NAME_ARGS(*ompi_rte_get_self()), OMPI_NAME_ARGS(*sender), segment, id_tag);
+		}
+		
+		/* enter request on local notify tracking system */
+		local_idtag1 = mca_gpr_replica_enter_notify_request(seg, action, sender, id_tag, NULL, NULL);
 	
-	/* enter request on local notify tracking system */
-	local_idtag1 = mca_gpr_replica_enter_notify_request(seg, action, sender, id_tag, NULL, NULL);
-
-	response = (int32_t)mca_gpr_replica_subscribe_nl(mode, action, seg, keys, num_keys,
-							 local_idtag1);
-	if (OMPI_SUCCESS == response) {
-	    return_tag = local_idtag1;
-	}
+		response = (int32_t)mca_gpr_replica_subscribe_nl(mode, action, seg, keys, num_keys,
+								 local_idtag1);
+		if (OMPI_SUCCESS == response) {
+		    return_tag = local_idtag1;
+		}
 
     } else {  /* local sender - id_tag is for local notify tracking system*/
-	response = (int32_t)mca_gpr_replica_subscribe_nl(mode, action, seg,
-							 keys, num_keys, id_tag);
-	if (OMPI_SUCCESS == response) {
-	    return_tag = id_tag;
-	}
+		response = (int32_t)mca_gpr_replica_subscribe_nl(mode, action, seg,
+								 keys, num_keys, id_tag);
+		if (OMPI_SUCCESS == response) {
+		    return_tag = id_tag;
+		}
     }
 
     mca_gpr_replica_check_subscriptions(seg, MCA_GPR_REPLICA_SUBSCRIBER_ADDED);
@@ -1157,6 +1162,8 @@ static void mca_gpr_replica_recv_get_startup_msg_cmd(ompi_buffer_t buffer, ompi_
 
     jobid = ompi_name_server.convert_string_to_jobid(jobidstring);
 
+    recipients = OBJ_NEW(ompi_list_t);
+
     OMPI_THREAD_LOCK(&mca_gpr_replica_mutex);
 
     msg = mca_gpr_replica_construct_startup_shutdown_msg_nl(OMPI_STARTUP_DETECTED, jobid, recipients);
@@ -1193,10 +1200,14 @@ static void mca_gpr_replica_recv_get_shutdown_msg_cmd(ompi_buffer_t buffer, ompi
     int32_t size=0, num_recipients=0, i=0;
 
     if (OMPI_SUCCESS != ompi_unpack_string(buffer, &jobidstring)) {
-	return;
+    		ompi_output(0, "[%d,%d,%d] recv_get_shutdown_msg: failed to unpack jobidstring",
+    					OMPI_NAME_ARGS(*ompi_rte_get_self()));
+		return;
     }
 
     jobid = ompi_name_server.convert_string_to_jobid(jobidstring);
+
+    recipients = OBJ_NEW(ompi_list_t);
 
     OMPI_THREAD_LOCK(&mca_gpr_replica_mutex);
 
