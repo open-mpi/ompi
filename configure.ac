@@ -736,7 +736,6 @@ if test "$MPI_OFFSET_DATATYPE" = "not found"; then
             MPI_OFFSET_DATATYPE=MPI_INT
         fi
     elif test "$MPI_OFFSET_TYPE" = "int32_t"; then
-        echo in int32_t if block
         if test "$ac_cv_type_long_long" == "yes" -a "$ac_cv_sizeof_long_long" == 4; then
             MPI_OFFSET_DATATYPE=MPI_LONG_LONG
         elif test "$ac_cv_type_long" == "yes" -a "$ac_cv_sizeof_long" == 4; then
