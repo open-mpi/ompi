@@ -91,7 +91,7 @@ static char* orte_rds_hostfile_param_register_string(
   */
 static int orte_rds_hostfile_open(void)
 {
-    char *path = orte_os_path(false, ORTE_SYSCONFDIR, "hosts", NULL);
+    char *path = orte_os_path(false, ORTE_SYSCONFDIR, "openmpi-default-hostfile", NULL);
     OBJ_CONSTRUCT(&mca_rds_hostfile_component.lock, ompi_mutex_t);
     mca_rds_hostfile_component.debug = orte_rds_hostfile_param_register_int("debug",1);
     mca_rds_hostfile_component.path = orte_rds_hostfile_param_register_string("path", path);
