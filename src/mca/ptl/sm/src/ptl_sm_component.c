@@ -91,7 +91,8 @@ static inline int mca_ptl_sm_param_register_int(
     mca_base_param_lookup_int(id,&param_value);
     return param_value;
 }
-                                                                                                                            
+
+
 /*
  *  Called by MCA framework to open the component, registers
  *  component parameters.

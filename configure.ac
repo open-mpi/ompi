@@ -877,7 +877,6 @@ AC_CONFIG_FILES([
     src/mca/Makefile
     src/mca/base/Makefile
     src/mca/common/Makefile
-    src/mca/common/base/Makefile
 
     src/mca/oob/Makefile
     src/mca/oob/base/Makefile

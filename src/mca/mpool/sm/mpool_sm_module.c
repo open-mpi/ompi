@@ -5,7 +5,7 @@
 #include <string.h>
 #include "util/output.h"
 #include "mca/mpool/sm/mpool_sm.h"
-#include "mca/mpool/sm/mpool_sm_mmap.h"
+#include "mca/common/sm/common_sm_mmap.h"
 
 
 mca_mpool_base_module_t mca_mpool_sm_module = {
@@ -24,7 +24,7 @@ mca_mpool_base_module_t mca_mpool_sm_module = {
  */
 void* mca_mpool_sm_base(void)
 {
-    return (mca_mpool_sm_component.sm_mmap != NULL) ? mca_mpool_sm_component.sm_mmap->map_addr : NULL;
+    return (mca_common_sm_mmap != NULL) ? mca_common_sm_mmap->map_addr : NULL;
 }
 
 /**
