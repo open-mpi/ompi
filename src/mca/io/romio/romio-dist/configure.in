@@ -1636,14 +1636,14 @@ AM_PROG_LIBTOOL
 
 # Open MPI: setup the AM_CONDITIONALs to build the different adio devices
 AM_CONDITIONAL(BUILD_HFS, [test -n "`echo $FILE_SYSTEM | grep hfs`"])
-AM_CONDITIONAL(BUILD_NFS, test -n "`echo $FILE_SYSTEM | grep nfs`")
-AM_CONDITIONAL(BUILD_PFS, test -n "`echo $FILE_SYSTEM | grep pfs`")
-AM_CONDITIONAL(BUILD_PIOFS, test -n "`echo $FILE_SYSTEM | grep piofs`")
-AM_CONDITIONAL(BUILD_PVFS, test -n "`echo $FILE_SYSTEM | grep pvfs`")
-AM_CONDITIONAL(BUILD_SFS, test -n "`echo $FILE_SYSTEM | grep sfs`")
-AM_CONDITIONAL(BUILD_TESTFS, test -n "`echo $FILE_SYSTEM | grep testfs`")
-AM_CONDITIONAL(BUILD_UFS, test -n "`echo $FILE_SYSTEM | grep ufs`")
-AM_CONDITIONAL(BUILD_XFS, test -n "`echo $FILE_SYSTEM | grep xfs`")
+AM_CONDITIONAL(BUILD_NFS, [test -n "`echo $FILE_SYSTEM | grep nfs`"])
+AM_CONDITIONAL(BUILD_PFS, [test -n "`echo $FILE_SYSTEM | grep pfs`"])
+AM_CONDITIONAL(BUILD_PIOFS, [test -n "`echo $FILE_SYSTEM | grep piofs`"])
+AM_CONDITIONAL(BUILD_PVFS, [test -n "`echo $FILE_SYSTEM | grep pvfs`"])
+AM_CONDITIONAL(BUILD_SFS, [test -n "`echo $FILE_SYSTEM | grep sfs`"])
+AM_CONDITIONAL(BUILD_TESTFS, [test -n "`echo $FILE_SYSTEM | grep testfs`"])
+AM_CONDITIONAL(BUILD_UFS, [test -n "`echo $FILE_SYSTEM | grep ufs`"])
+AM_CONDITIONAL(BUILD_XFS, [test -n "`echo $FILE_SYSTEM | grep xfs`"])
 
 echo "setting CC to $CC"
 echo "setting F77 to $F77"
