@@ -181,7 +181,7 @@ int mca_pml_teg_add_procs(ompi_proc_t** procs, size_t nprocs)
         uint32_t* proc_arch;
         size_t size = sizeof(uint32_t);
         rc = mca_base_modex_recv(&mca_pml_teg_component.pmlm_version, procs[p], 
-            &proc_arch, &size);
+            (void**)&proc_arch, &size);
         if(rc != OMPI_SUCCESS) 
             return rc;
         if(size != sizeof(uint32_t))

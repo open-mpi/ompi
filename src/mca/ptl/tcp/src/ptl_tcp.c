@@ -239,7 +239,7 @@ int mca_ptl_tcp_send(
     /* must update the offset after actual fragment size is determined -- and very important --
      * before attempting to send the fragment 
      */
-    sendreq->req_offset += size;
+    mca_pml_base_send_request_offset(sendreq, size);
     return mca_ptl_tcp_peer_send(ptl_peer, sendfrag, offset);
 }
 
