@@ -66,9 +66,25 @@ extern "C" {
    * @param line Typically the __LINE__ macro
    *
    * This function is only used when --enable-mem-debug was specified to
-   * configure (or by default if you're building in a CVS checkout).
+   * configure (or by default if you're building in a SVN checkout).
    */
   void *lam_malloc(size_t size, char *file, int line);
+
+  /**
+   * \internal
+   *
+   * Back-end error-checking calloc function for LAM (you should use
+   * the normal calloc() instead of this function).
+   *
+   * @param nmembers Number of elements to malloc
+   * @param size Size of each elements
+   * @param file Typically the __FILE__ macro
+   * @param line Typically the __LINE__ macro
+   *
+   * This function is only used when --enable-mem-debug was specified to
+   * configure (or by default if you're building in a SVN checkout).
+   */
+  void *lam_calloc(size_t nmembers, size_t size, char *file, int line);
 
   /**
    * \internal
@@ -82,7 +98,7 @@ extern "C" {
    * @param line Typically the __LINE__ macro
    *
    * This function is only used when --enable-mem-debug was specified to
-   * configure (or by default if you're building in a CVS checkout).
+   * configure (or by default if you're building in a SVN checkout).
    */
   void *lam_realloc(void *ptr, size_t size, char *file, int line);
 
@@ -97,7 +113,7 @@ extern "C" {
    * @param line Typically the __LINE__ macro
    *
    * This function is only used when --enable-mem-debug was specified
-   * to configure (or by default if you're building in a CVS
+   * to configure (or by default if you're building in a SVN
    * checkout).
    */
   void lam_free(void *addr, char *file, int line);
