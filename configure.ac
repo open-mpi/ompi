@@ -614,6 +614,9 @@ AC_DEFINE_UNQUOTED(MPI_Offset, $MPI_OFFSET_TYPE, [Type of MPI_Offset])
 
 
 # all: endian
+
+AC_WORDS_BIGENDIAN
+
 # all: SYSV semaphores
 # all: SYSV shared memory
 # all: thread flavor
