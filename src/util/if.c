@@ -74,6 +74,7 @@ static bool already_done = false;
 
 #define DEFAULT_NUMBER_INTERFACES 10
 
+#ifndef WIN32
 static int old_ompi_ifinit(void)
 {
     char buff[1024];
@@ -192,7 +193,7 @@ static int old_ompi_ifinit(void)
     close(sd);
     return OMPI_SUCCESS;
 }
-
+#endif
 
 /*
  *  Discover the list of configured interfaces. Don't care about any

@@ -80,8 +80,14 @@ extern const struct ompi_eventop ompi_epollops;
 #if defined(HAVE_WORKING_KQUEUE) && HAVE_WORKING_KQUEUE
 extern const struct ompi_eventop ompi_kqops;
 #endif
+#if 0
+/* This is to prevent event library from picking up the win32_ops since this will 
+   be picked up over select(). By using select, we can pretty much use the OOB and
+   PTL as is. Otherwise, there would have to be a lot of magic to be done to get 
+   this to work */
 #if defined(WIN32) && WIN32
 extern const struct ompi_eventop ompi_win32ops;
+#endif
 #endif
 
 /* In order of preference */
@@ -103,8 +109,14 @@ static const struct ompi_eventop *ompi_eventops[] = {
 #if defined(HAVE_SELECT) && HAVE_SELECT
     &ompi_selectops,
 #endif
+#if 0
+/* This is to prevent event library from picking up the win32_ops since this will 
+   be picked up over select(). By using select, we can pretty much use the OOB and
+   PTL as is. Otherwise, there would have to be a lot of magic to be done to get 
+   this to work */
 #if defined(WIN32) && WIN32
     &ompi_win32ops,
+#endif
 #endif
     NULL
 };

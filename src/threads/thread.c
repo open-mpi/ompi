@@ -91,16 +91,20 @@ int ompi_thread_join(ompi_thread_t *t, void **thr_return)
 
 bool ompi_thread_self_compare(ompi_thread_t *t)
 {
-#error Need Windows thread_self() function
+    DWORD thread_id;
+    thread_id = GetCurrentThreadId();
+    if (thread_id == t->t_handle) {
+        return true;
+    }
+    return false;
 }
 
 
 ompi_thread_t *ompi_thread_get_self(void)
 {
     ompi_thread_t *t = OBJ_NEW(ompi_thread_t);
-#error Need Windows thread_self() function
-    t->t_handle = ....something....
-    return NULL;
+    t->t_handle = GetCurrentThreadId();
+    return t;
 }
 
 

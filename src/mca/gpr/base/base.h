@@ -61,9 +61,15 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+#ifdef HAVE_LIBGEN_H
 #include <libgen.h>
+#endif
+#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
+#endif
 
 #include "include/constants.h"
 
@@ -185,11 +191,11 @@ extern "C" {
 /*
  * globals that might be needed
  */
-extern int mca_gpr_base_output;
-extern mca_gpr_base_module_t ompi_registry; /* holds selected module's function pointers */
-extern bool mca_gpr_base_selected;
-extern ompi_list_t mca_gpr_base_components_available;
-extern mca_gpr_base_component_t mca_gpr_base_selected_component;
+OMPI_DECLSPEC extern int mca_gpr_base_output;
+OMPI_DECLSPEC extern mca_gpr_base_module_t ompi_registry; /* holds selected module's function pointers */
+OMPI_DECLSPEC extern bool mca_gpr_base_selected;
+OMPI_DECLSPEC extern ompi_list_t mca_gpr_base_components_available;
+OMPI_DECLSPEC extern mca_gpr_base_component_t mca_gpr_base_selected_component;
 
 
 #endif

@@ -18,7 +18,7 @@
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
-#include <errno.h>
+#include "include/ompi_socket_errno.h"
 #include "include/types.h"
 #include "datatype/datatype.h"
 #include "mca/pml/base/pml_base_sendreq.h"
@@ -184,7 +184,7 @@ bool mca_ptl_tcp_send_frag_handler(mca_ptl_tcp_send_frag_t* frag, int sd)
     while(cnt < 0) {
         cnt = writev(sd, frag->frag_vec_ptr, frag->frag_vec_cnt);
         if(cnt < 0) {
-            switch(errno) {
+            switch(ompi_socket_errno) {
             case EINTR:
                 continue;
             case EWOULDBLOCK:
@@ -193,10 +193,10 @@ bool mca_ptl_tcp_send_frag_handler(mca_ptl_tcp_send_frag_t* frag, int sd)
 	    case EFAULT:
                 ompi_output( 0, "mca_ptl_tcp_send_frag_handler: writev error (%p, %d)\n\t%s(%d)\n",
                              frag->frag_vec_ptr[0].iov_base, frag->frag_vec_ptr[0].iov_len,
-                             strerror(errno), frag->frag_vec_cnt );
+                             strerror(ompi_socket_errno), frag->frag_vec_cnt );
             default:
                 {
-                ompi_output(0, "mca_ptl_tcp_send_frag_handler: writev failed with errno=%d", errno);
+                ompi_output(0, "mca_ptl_tcp_send_frag_handler: writev failed with errno=%d", ompi_socket_errno);
                 mca_ptl_tcp_peer_close(frag->frag_peer);
                 return false;
                 }

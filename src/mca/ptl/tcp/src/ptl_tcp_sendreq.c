@@ -18,7 +18,7 @@
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
-#include <errno.h>
+#include "include/ompi_socket_errno.h"
 #include "include/types.h"
 #include "mca/pml/base/pml_base_sendreq.h"
 #include "ptl_tcp.h"

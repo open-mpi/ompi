@@ -25,6 +25,11 @@
 #undef WIN32_LEAN_AND_MEAN
 #endif
 
+/* FD_SETSIZE determines how many sockets windows can select() on. If not defined 
+   before including winsock2.h, it is defined to be 64. We are going to go ahead and
+   make it 1024 for now. PLEASE CHECK IF THIS IS RIGHT */
+#define FD_SETSIZE 1024
+
 /* other utility header files */
 #include <cderr.h>
 #include <dde.h>
@@ -46,7 +51,6 @@
 #include "win32/ompi_utsname.h"
 #include "win32/ompi_util.h"
 #include "win32/ompi_misc.h"
-#include "win32/ompi_get_error.h"
 #include "util/printf.h"
 
 #define MAXPATHLEN MAX_PATH
@@ -54,6 +58,8 @@
 typedef unsigned short mode_t;
 typedef long ssize_t;
 typedef DWORD in_port_t;
+typedef int caddr_t;
+typedef unsigned int uint;
 
 /* Anju: some random #defines which I know offhand, but need to configure it */
 #define OMPI_ALIGNMENT_CXX_BOOL OMPI_ALIGNMENT_INT

@@ -57,7 +57,9 @@
 #endif
 
 #include "event.h"
+#if OMPI_EVENT_USE_SIGNALS
 #include "evsignal.h"
+#endif
 #include "threads/mutex.h"
 
 extern struct ompi_event_list ompi_eventqueue;
@@ -67,14 +69,18 @@ extern ompi_mutex_t ompi_event_lock;
 #define        howmany(x, y)   (((x)+((y)-1))/(y))
 #endif
 
+#if OMPI_EVENT_USE_SIGNALS
 extern volatile sig_atomic_t ompi_evsignal_caught;
+#endif
 
 static struct selectop {
 	int event_fds;		/* Highest fd in fd set */
 	int event_fdsz;
 	fd_set *event_readset;
 	fd_set *event_writeset;
+#if OMPI_EVENT_USE_SIGNALS
 	sigset_t evsigmask;
+#endif
 } sop;
 
 static void *select_init	(void);
@@ -88,7 +94,11 @@ const struct ompi_eventop ompi_selectops = {
 	select_init,
 	select_add,
 	select_del,
+#ifdef WIN32
+    NULL,
+#else
 	select_recalc,
+#endif
 	select_dispatch
 };
 
@@ -99,7 +109,15 @@ select_init(void)
 	if (getenv("EVENT_NOSELECT"))
 		return (NULL);
 	memset(&sop, 0, sizeof(sop));
+#ifdef WIN32
+   sop.event_fds = FD_SETSIZE;
+   sop.event_fdsz = FD_SETSIZE;
+   sop.event_readset = malloc (sizeof(fd_set));
+   sop.event_writeset = malloc (sizeof(fd_set));
+#endif
+#if OMPI_EVENT_USE_SIGNALS
 	ompi_evsignal_init(&sop.evsigmask);
+#endif
 	return (&sop);
 }
 
@@ -108,6 +126,7 @@ select_init(void)
  * recalculate everything.
  */
 
+#ifndef WIN32
 static int 
 select_recalc(void *arg, int max)
 {
@@ -153,6 +172,7 @@ select_recalc(void *arg, int max)
 	return (0);
 #endif
 }
+#endif
 
 static int
 select_dispatch(void *arg, struct timeval *tv)
@@ -161,8 +181,10 @@ select_dispatch(void *arg, struct timeval *tv)
 	struct ompi_event *ev, *next;
 	struct selectop *sop = arg;
 
+#ifndef WIN32
 	memset(sop->event_readset, 0, sop->event_fdsz);
 	memset(sop->event_writeset, 0, sop->event_fdsz);
+#endif
 
 	TAILQ_FOREACH(ev, &ompi_eventqueue, ev_next) {
 		if (ev->ev_events & OMPI_EV_WRITE)

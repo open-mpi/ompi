@@ -67,7 +67,20 @@ extern "C" {
 #ifdef OMPI_EVENT_USE_SIGNALS
 #undef OMPI_EVENT_USE_SIGNALS
 #endif
+#ifdef WIN32
+/* We do not have the required framework for EVENT_SIGNALS to work on windows.
+   We currently use the select module on windows without the EVENT_SIGNALS. 
+   This might have adverse effect in 2 cases:
+   1. People using event library for keeping track of file descriptors (NOT
+      socket descriptors) will have to come up with something else since 
+      select() under windows works only on sockets.
+   2. Since the EVENT_SIGNALS are disabled, instances of code which rely on 
+      this mechanism will NOT work under windows
+*/
+#define OMPI_EVENT_USE_SIGNALS 0
+#else
 #define OMPI_EVENT_USE_SIGNALS 1
+#endif
 
 /* Fix so that ppl dont have to run with <sys/queue.h> */
 #ifndef TAILQ_ENTRY

@@ -126,15 +126,15 @@ win32_dispatch(void *arg, struct timeval *tv)
 
 		if(res == WAIT_TIMEOUT || res == WAIT_FAILED) {
 			signal_process();
-			return (0);
+            continue;
 		} else if (signal_caught)
 			signal_process();
 
 		evres = 0;
-		if(ev->ev_events & OMPI_EV_READ)
+		if(ev->ev_events & OMPI_EV_READ) 
 			evres |= OMPI_EV_READ;
 
-		if(ev->ev_events & OMPI_EV_WRITE)
+		if(ev->ev_events & OMPI_EV_WRITE) 
 			evres |= OMPI_EV_WRITE;
 		if(evres) {
 			if(!(ev->ev_events & OMPI_EV_PERSIST))
