@@ -111,26 +111,14 @@ mca_ptl_elan_component_open (void)
     mca_ptl_elan_module.super.ptl_min_frag_size =  GET_MAX(param2, length);
     mca_ptl_elan_module.super.ptl_max_frag_size =  GET_MIN(param3, 2<<31);
 
-    /* XXX: Do not want to make these configuraable, since they are
-     * very much related to number of outstanding operations in elan4
-     * and therefore flow control */
-    elan_mp->elan_free_list_num = 32;
-    elan_mp->elan_free_list_max = 128;
-    elan_mp->elan_free_list_inc = 32;
-
     /* initialize state */
-    elan_mp->elan_ptl_modules = NULL;
-    elan_mp->elan_num_ptl_modules = 0;
     elan_mp->elan_local = NULL; 
+    elan_mp->num_modules = 0;
+    elan_mp->modules = NULL;
 
-    /* initialize lists */
+    /* initialize objects*/
     OBJ_CONSTRUCT (&elan_mp->elan_procs, ompi_list_t);
-    OBJ_CONSTRUCT (&elan_mp->elan_pending_acks, ompi_list_t);
-    OBJ_CONSTRUCT (&elan_mp->elan_recv_frags, ompi_list_t);
-    OBJ_CONSTRUCT (&elan_mp->elan_send_frags, ompi_list_t);
     OBJ_CONSTRUCT (&elan_mp->elan_recv_frags_free, ompi_free_list_t);
-
-    /* initialize other objects */
     OBJ_CONSTRUCT (&elan_mp->elan_lock, ompi_mutex_t);
 
     return OMPI_SUCCESS;
@@ -159,9 +147,6 @@ mca_ptl_elan_component_close (void)
 
     /* Free the empty list holders */
     OBJ_DESTRUCT (&(elan_mp->elan_procs));
-    OBJ_DESTRUCT (&(elan_mp->elan_pending_acks));
-    OBJ_DESTRUCT (&(elan_mp->elan_send_frags));
-    OBJ_DESTRUCT (&(elan_mp->elan_recv_frags));
 
     /* FIXME:
      * We need free all the memory allocated for this list
@@ -234,7 +219,7 @@ mca_ptl_elan_component_init (int *num_ptl_modules,
     }
 
     memcpy (ptls, elan_mp->elan_ptl_modules,
-            elan_mp->elan_num_ptl_modules * sizeof (mca_ptl_elan_module_t *));
+            elan_mp->num_modules * sizeof (mca_ptl_elan_module_t *));
     *num_ptl_modules = elan_mp->elan_num_ptl_modules;
     mca_ptl_elan_component_initialized = true;
 

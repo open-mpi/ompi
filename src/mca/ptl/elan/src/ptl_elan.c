@@ -258,14 +258,12 @@ mca_ptl_elan_isend (struct mca_ptl_base_module_t *ptl,
     }
 
     ((struct mca_ptl_elan_send_request_t *)sendreq)->req_frag = desc;
-
     rc = mca_ptl_elan_start_desc(desc, 
 	    (struct mca_ptl_elan_peer_t *)ptl_peer,
 	    sendreq, offset, &size, flags);
 
     /* Update offset */
     sendreq->req_offset += size;
-
     END_FUNC(PTL_ELAN_DEBUG_SEND);
     return rc;
 }

@@ -45,15 +45,13 @@ ompi_init_elan_queue_events (mca_ptl_elan_module_t * ptl,
     ctx = (ELAN4_CTX *) ptl->ptl_elan_ctx;
 
     /* initialize list */
-    OBJ_CONSTRUCT (&queue->tx_desc, ompi_list_t);
     OBJ_CONSTRUCT (&queue->tx_desc_free, ompi_free_list_t);
-
     flist = &queue->tx_desc_free;
 
     main_align = GET_MAX (sizeof (void *), 8);
     elan_align = GET_MAX (sizeof (int *), ELAN_BLOCK_ALIGN);
-    main_size = ALIGNUP (sizeof (ompi_ptl_elan_qdma_desc_t), main_align);
-    elan_size = ALIGNUP (sizeof (E4_Event), elan_align);
+    main_size  = ALIGNUP (sizeof (ompi_ptl_elan_qdma_desc_t), main_align);
+    elan_size  = ALIGNUP (sizeof (E4_Event), elan_align);
 
     OBJ_CONSTRUCT(&flist->fl_lock, ompi_mutex_t);
     flist->fl_elem_size = flist->fl_max_to_alloc = OMPI_PTL_ELAN_MAX_QDESCS;
@@ -63,7 +61,6 @@ ompi_init_elan_queue_events (mca_ptl_elan_module_t * ptl,
     flist->fl_mpool      = NULL;     /* leave it null */
 
     /* Allocate the elements */
-
     frag = (mca_ptl_elan_send_frag_t *) 
         malloc(sizeof(mca_ptl_elan_send_frag_t) * count);
     OMPI_PTL_ELAN_CHECK_UNEX (frag, NULL, OMPI_ERROR, 0);
@@ -202,7 +199,6 @@ ompi_ptl_elan_init_putget_ctrl (mca_ptl_elan_module_t * ptl,
     ctx  = (ELAN4_CTX *) ptl->ptl_elan_ctx;
 
     /* initialize list */
-    OBJ_CONSTRUCT (&putget->put_desc, ompi_list_t);
     OBJ_CONSTRUCT (&putget->put_desc_free, ompi_free_list_t);
     put_list = &putget->put_desc_free;
     OMPI_PTL_ELAN_CTRL_LIST(put_list, 0, inc_num, max_num);
@@ -223,7 +219,6 @@ ompi_ptl_elan_init_putget_ctrl (mca_ptl_elan_module_t * ptl,
     OMPI_ELAN_PUTGET_GROW(ctx, put_list, frag, put_desc, elan_ptr, 
 	    main_size, elan_size, 1);
 
-    OBJ_CONSTRUCT (&putget->get_desc, ompi_list_t);
     OBJ_CONSTRUCT (&putget->get_desc_free, ompi_free_list_t);
     get_list = &putget->get_desc_free;
     OMPI_PTL_ELAN_CTRL_LIST(get_list, 0, inc_num, max_num);
@@ -243,7 +238,6 @@ ompi_ptl_elan_init_putget_ctrl (mca_ptl_elan_module_t * ptl,
     OMPI_PTL_ELAN_CHECK_UNEX (get_desc, NULL, OMPI_ERROR, 0);
     OMPI_ELAN_PUTGET_GROW(ctx, get_list, frag, get_desc, elan_ptr, 
 	    main_size, elan_size, 0);
-                                                                      
     END_FUNC (PTL_ELAN_DEBUG_INIT);
     return OMPI_SUCCESS;
 }
@@ -262,8 +256,8 @@ ompi_init_elan_qdma (mca_ptl_elan_component_t * emp,
                      int num_rails)
 {
     int         i;
-    int         nslots = 128;
-    int         slotsize = 2048;
+    int         nslots   = OMPI_PTL_ELAN_MAX_QSLOTS;
+    int         slotsize = OMPI_PTL_ELAN_MAX_QSIZE;;
     RAIL       *rail;
     ELAN4_CTX  *ctx;
     struct mca_ptl_elan_module_t *ptl;
@@ -314,7 +308,7 @@ ompi_init_elan_qdma (mca_ptl_elan_component_t * emp,
         queue->tx_cpool = elan4_allocCookiePool (ctx, ptl->elan_vp);
 
         /* Init the Receive Queue structure */
-        queue->rx_nslots = OMPI_PTL_ELAN_MAX_QSLOTS;
+        queue->rx_nslots = nslots;
         nslots += ELAN_QUEUE_LOST_SLOTS;
 
         queue->rx_buffsize = (slotsize > INPUT_QUEUE_MAX) ?
@@ -340,11 +334,11 @@ ompi_init_elan_qdma (mca_ptl_elan_component_t * emp,
         rxq->qr_efitem = (E4_uint64) elan4_main2elan (ctx, rxq->qr_fptr);
 	assert(rxq->qr_efitem != ELAN_BAD_ADDR); 
         rxq->qr_base = rxq->qr_fptr;
-        rxq->qr_top = (void *) ((uintptr_t) rxq->qr_base
-                                + (queue->rx_slotsize * (nslots - 1)));
+        rxq->qr_top = (void *) ((uintptr_t) rxq->qr_base + 
+		(queue->rx_slotsize * (nslots - ELAN_QUEUE_LOST_SLOTS)));
         rxq->qr_efptr = rxq->qr_efitem;
-        rxq->qr_elitem =
-            rxq->qr_efitem + (queue->rx_slotsize * (nslots - 1));
+        rxq->qr_elitem = rxq->qr_efitem + 
+	    (queue->rx_slotsize * (nslots - ELAN_QUEUE_LOST_SLOTS));
 
         /* Event to wait/block on, Bug here for the event */
         rxq->qr_qEvent = rxq->qr_elanDone;
@@ -367,15 +361,12 @@ ompi_init_elan_qdma (mca_ptl_elan_component_t * emp,
                                          CQ_Size1K,
                                          CQ_WriteEnableBit |
                                          CQ_WaitEventEnableBit, NULL);
-
-	/*elan4_disp_cmdq_params (rxq->qr_cmdq);*/
         OMPI_PTL_ELAN_CHECK_UNEX (rxq->qr_cmdq, NULL, OMPI_ERROR, 0);
 
         /* Allocate a sleepDesc for threads to block on */
         rxq->qr_es = ompi_init_elan_sleepdesc (&mca_ptl_elan_global_state,
                                                rxq->qr_rail);
         OMPI_PTL_ELAN_CHECK_UNEX (rxq->qr_es, NULL, OMPI_ERROR, 0);
-
         OBJ_CONSTRUCT (&queue->rx_lock, ompi_mutex_t);
     }
 
@@ -383,13 +374,12 @@ ompi_init_elan_qdma (mca_ptl_elan_component_t * emp,
     return (OMPI_SUCCESS);
 }
 
+
 int
 ompi_init_elan_putget (mca_ptl_elan_component_t * emp,
                        int num_rails)
 {
     int         i;
-    int         nslots = 128;
-    int         slotsize = 2048;
     RAIL       *rail;
     ELAN4_CTX  *ctx;
     struct mca_ptl_elan_module_t *ptl;
@@ -411,8 +401,8 @@ ompi_init_elan_putget (mca_ptl_elan_component_t * emp,
         OMPI_PTL_ELAN_CHECK_UNEX (putget, NULL, OMPI_ERROR, 0);
         memset (putget, 0, sizeof (ompi_ptl_elan_putget_ctrl_t));
 
-	putget->pg_throttle = PUTGET_THROTTLE;
-	putget->pg_flags    = ELAN_PTL_FASTPATH;
+	putget->pg_throttle = OMPI_PTL_ELAN_MAX_PGDESC; 
+	putget->pg_flags    = OMPI_PTL_ELAN_FASTPATH;
 	putget->pg_retryCount = 16;
 	putget->pg_evictCache = TRUE;
 	putget->pg_waitType   = ELAN_POLL_EVENT;
@@ -447,14 +437,12 @@ ompi_init_elan_putget (mca_ptl_elan_component_t * emp,
         OMPI_PTL_ELAN_CHECK_UNEX (putget->pg_pendingGetCount, 
 		NULL, OMPI_ERROR, 0);
 	memset(putget->pg_pendingGetCount, 0, sizeof(u_int)*ptl->elan_nvp);
-
 	putget->pg_cpool = elan4_allocCookiePool(ctx, ptl->elan_vp);
-
-       	ompi_ptl_elan_init_putget_ctrl (ptl, rail, putget, 0, 8, 32);
+       	ompi_ptl_elan_init_putget_ctrl (ptl, rail, putget, 
+		0, OMPI_PTL_ELAN_NUM_PUTGET, OMPI_PTL_ELAN_MAX_PUTGET);
     }
 
     END_FUNC(PTL_ELAN_DEBUG_INIT);
- 
     return (OMPI_SUCCESS);
 }
 

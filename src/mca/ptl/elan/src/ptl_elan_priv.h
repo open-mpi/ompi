@@ -43,20 +43,31 @@
 #define  PTL_ELAN_DEBUG_FIN   (0x002)
 #define  PTL_ELAN_DEBUG_QDESC (0x004)
 #define  PTL_ELAN_DEBUG_RDESC (0x008)
-
 #define  PTL_ELAN_DEBUG_SEND  (0x010)
 #define  PTL_ELAN_DEBUG_RECV  (0x020)
 #define  PTL_ELAN_DEBUG_ACK   (0x040)
 #define  PTL_ELAN_DEBUG_MAC   (0x080)
-
 #define  PTL_ELAN_DEBUG_QDMA  (0x100)
 #define  PTL_ELAN_DEBUG_PUT   (0x200)
 #define  PTL_ELAN_DEBUG_GET   (0x400)
 #define  PTL_ELAN_DEBUG_CHAIN (0x800)
 
-#define  OMPI_PTL_ELAN_MAX_QSLOTS  (128)
-#define  OMPI_PTL_ELAN_MAX_QDESCS  (128)
-#define  OMPI_PTL_ELAN_NUM_QDESCS  (4)
+#define  OMPI_PTL_ELAN_MAX_QSIZE     (2048)
+#define  OMPI_PTL_ELAN_MAX_QSLOTS    (128)
+#define  OMPI_PTL_ELAN_LOST_QSLOTS   (1)
+
+#define  OMPI_PTL_ELAN_MAX_QDESCS    (128)
+#define  OMPI_PTL_ELAN_NUM_QDESCS    (4)
+
+#define  OMPI_PTL_ELAN_MAX_PUTGET    (32)
+#define  OMPI_PTL_ELAN_NUM_PUTGET    (8)
+#define  OMPI_PTL_ELAN_MAX_PGDESC    (8)
+
+#define  OMPI_PTL_ELAN_PTL_FASTPATH  (0x1)
+#define  OMPI_PTL_ELAN_SLOT_ALIGN    (128)
+#define  OMPI_PTL_ELAN_GET_MAX(a,b)  ((a>b)? a:b)
+#define  OMPI_PTL_ELAN_GET_MIN(a,b)  ((a<b)? a:b)
+#define  OMPI_PTL_ELAN_ALIGNUP(x,a)  (((unsigned int)(x) + ((a)-1)) & (-(a)))
 
 /* For now only debug send's */
 #if 0
@@ -103,16 +114,6 @@ do {                                                           \
     }                                                          \
 } while (0)
 
-
-#define  PTL_ELAN_INPUT_QUEUE_MAX  (2048)
-
-#define PUTGET_THROTTLE	           (32)
-#define ELAN_PTL_FASTPATH	   (0x1)
-#define ELAN_QUEUE_LOST_SLOTS      (1)
-#define SLOT_ALIGN                 (128)
-#define GET_MAX(a,b)               ((a>b)? a:b)
-#define GET_MIN(a,b)               ((a<b)? a:b)
-#define ALIGNUP(x,a)	           (((unsigned int)(x) + ((a)-1)) & (-(a)))
 
 enum {
     /* the first four bits for type */
@@ -167,7 +168,7 @@ typedef struct ompi_ptl_elan_recv_queue_t ompi_ptl_elan_recv_queue_t;
     uint8_t           *desc_buff;                         \
     /* 8 byte aligned */                                  \
     mca_pml_base_send_request_t *req;                     \
-    mca_ptl_elan_module_t *ptl;                           \
+    mca_ptl_elan_module_t       *ptl;                     \
     /* 8 byte aligned */                                  \
     int    desc_type;                                     \
     int    desc_status;                                   \
@@ -197,8 +198,6 @@ struct ompi_ptl_elan_queue_ctrl_t {
     void             *tx_q;
     E4_CmdQ          *tx_cmdq;
     ELAN4_COOKIEPOOL *tx_cpool;
-    ompi_event_t     *tx_events;
-    ompi_list_t       tx_desc;
     ompi_free_list_t  tx_desc_free;
 
     /* User progression */
@@ -213,7 +212,6 @@ struct ompi_ptl_elan_queue_ctrl_t {
 typedef struct ompi_ptl_elan_queue_ctrl_t ompi_ptl_elan_queue_ctrl_t;
 
 struct ompi_ptl_elan_putget_desc_t {
-
     ELAN_BASE_DESC_FIELDS 
     /* 8 byte aligned */
 
