@@ -51,18 +51,28 @@ OMPI_DECLSPEC extern ompi_pointer_array_t *ompi_datatype_f_to_c_table;
 #define DT_MAX_PREDEFINED  0x2A
 
 /* flags for the datatypes. */
-#define DT_FLAG_DESTROYED  0x0001  /**< user destroyed but some other layers still have a reference */
-#define DT_FLAG_COMMITED   0x0002  /**< ready to be used for a send/recv operation */
-#define DT_FLAG_CONTIGUOUS 0x0004  /**< contiguous datatype */
-#define DT_FLAG_OVERLAP    0x0008  /**< datatype is unpropper for a recv operation */
-#define DT_FLAG_USER_LB    0x0010  /**< has a user defined LB */
-#define DT_FLAG_USER_UB    0x0020  /**< has a user defined UB */
-#define DT_FLAG_FOREVER    0x0040  /**< cannot be removed: initial and predefined datatypes */
-#define DT_FLAG_IN_LOOP    0x0080  /**< we are inside a loop */
-#define DT_FLAG_INITIAL    0x0100  /**< one of the initial datatype */
-#define DT_FLAG_DATA       0x0200  /**< data or control structure */
-#define DT_FLAG_ONE_SIDED  0x0400  /**< datatype can be used for one sided operations */
-#define DT_FLAG_BASIC      (DT_FLAG_INITIAL | DT_FLAG_COMMITED | DT_FLAG_FOREVER | DT_FLAG_CONTIGUOUS)
+#define DT_FLAG_DESTROYED     0x0001  /**< user destroyed but some other layers still have a reference */
+#define DT_FLAG_COMMITED      0x0002  /**< ready to be used for a send/recv operation */
+#define DT_FLAG_CONTIGUOUS    0x0004  /**< contiguous datatype */
+#define DT_FLAG_OVERLAP       0x0008  /**< datatype is unpropper for a recv operation */
+#define DT_FLAG_USER_LB       0x0010  /**< has a user defined LB */
+#define DT_FLAG_USER_UB       0x0020  /**< has a user defined UB */
+#define DT_FLAG_FOREVER       0x0040  /**< cannot be removed: initial and predefined datatypes */
+#define DT_FLAG_IN_LOOP       0x0080  /**< we are inside a loop */
+#define DT_FLAG_INITIAL       0x0100  /**< one of the initial datatype */
+#define DT_FLAG_DATA          0x0200  /**< data or control structure */
+#define DT_FLAG_ONE_SIDED     0x0400  /**< datatype can be used for one sided operations */
+#define DT_FLAG_BASIC         (DT_FLAG_INITIAL | DT_FLAG_COMMITED | DT_FLAG_FOREVER | DT_FLAG_CONTIGUOUS)
+/* Keep trace of the type of the predefined datatypes */
+#define DT_FLAG_DATA_INT      0x1000
+#define DT_FLAG_DATA_FLOAT    0x2000
+#define DT_FLAG_DATA_COMPLEX  0x3000
+#define DT_FLAG_DATA_TYPE     0x3000
+/* In which language the datatype is intended for to be used */
+#define DT_FLAG_DATA_C        0x4000
+#define DT_FLAG_DATA_CPP      0x8000
+#define DT_FLAG_DATA_FORTRAN  0xC000
+#define DT_FLAG_DATA_LANGUAGE 0xC000
 
 /* the basic element. A data description is composed
  * by a set of basic elements.
@@ -267,6 +277,9 @@ static inline int32_t ompi_convertor_unpack( ompi_convertor_t* pConv,
     }
     return pConv->fAdvance( pConv, iov, out_size, max_data, freeAfter );
 }
+
+/* Base convertor for all external32 operations */
+extern ompi_convertor_t* ompi_mpi_external32_convertor;
 
 /* and finally the convertor functions */
 OMPI_DECLSPEC ompi_convertor_t* ompi_convertor_create( int32_t remote_arch, int32_t mode );
