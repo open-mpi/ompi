@@ -6,6 +6,7 @@
 #include "ompi_config.h"
 
 #include <stdio.h>
+#include <string.h>
 
 #include "include/constants.h"
 
@@ -20,7 +21,7 @@
 
 #include "runtime/runtime.h"
 
-int ompi_vm_register()
+int ompi_vm_register(void)
 {
     ompi_buffer_t buffer;
     int ret_code;
