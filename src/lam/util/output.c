@@ -46,6 +46,8 @@ lam_output_stream_t verbose = {
 /*
  * Private functions
  */
+static int do_open(int output_id, lam_output_stream_t *lds);
+static void free_descriptor(int output_id);
 static void output(int output_id, char *format, va_list arglist);
 static char *lam_vsnprintf(char *format, va_list arglist);
 
@@ -126,7 +128,7 @@ bool lam_output_init(void)
 
 
 /**
- * Opens output streams.
+ * Opens an output stream.
  *
  * @param lds A pointer to lam_output_stream_t describing what the
  * characteristics of the output stream should be.
@@ -142,95 +144,25 @@ bool lam_output_init(void)
  */
 int lam_output_open(lam_output_stream_t *lds)
 {
-  int i;
-  int flags;
-  char *filename;
+  return do_open(-1, lds);
+}
 
-  /* Setup */
 
-  if (!initialized)
-    lam_output_init();
-
-  /* Find an available stream, or return LAM_ERROR */
-
-  THREAD_LOCK(&mutex);
-  for (i = 0; i < LAM_OUTPUT_MAX_STREAMS; ++i)
-    if (!info[i].ldi_used)
-      break;
-  if (i >= LAM_OUTPUT_MAX_STREAMS) {
-    THREAD_UNLOCK(&mutex);
-    return LAM_ERR_OUT_OF_RESOURCE;
-  }
-
-  /* Got a stream -- now initialize it and open relevant outputs */
-
-  info[i].ldi_used = true;
-  THREAD_UNLOCK(&mutex);
-  info[i].ldi_enabled = lds->lds_is_debugging ? (bool) LAM_ENABLE_DEBUG : true;
-  info[i].ldi_verbose_level = 0;
-
-  info[i].ldi_syslog = lds->lds_want_syslog;
-  if (lds->lds_want_syslog) {
-    if (NULL != lds->lds_syslog_ident) {
-      info[i].ldi_syslog_ident = strdup(lds->lds_syslog_ident);
-      openlog(lds->lds_syslog_ident, LOG_PID, LOG_USER);
-    } else {
-      info[i].ldi_syslog_ident = NULL;
-      openlog("lam", LOG_PID, LOG_USER);
-    }
-    info[i].ldi_syslog_priority = lds->lds_syslog_priority;
-  }
-
-  if (NULL != lds->lds_prefix) {
-    info[i].ldi_prefix = strdup(lds->lds_prefix);
-    info[i].ldi_prefix_len = strlen(lds->lds_prefix);
-  } else {
-    info[i].ldi_prefix = NULL;
-    info[i].ldi_prefix_len = 0;
-  }
-
-  info[i].ldi_stdout = lds->lds_want_stdout;
-  info[i].ldi_stderr = lds->lds_want_stderr;
-
-  info[i].ldi_fd = -1;
-  if (lds->lds_want_file) {
-
-    /* Setup the filename and open flags */
-
-#if NEED_TO_IMPLEMENT_SESSION_DIRECTORY
-    filename = lam_get_tmpdir();
-#else
-    filename = LAM_MALLOC(256);
-    strcpy(filename, "/tmp");
-#endif
-    strcat(filename, "/lam-");
-    if (lds->lds_file_suffix != NULL) {
-      info[i].ldi_file_suffix = strdup(lds->lds_file_suffix);
-      strcat(filename, lds->lds_file_suffix);
-    } else {
-      info[i].ldi_file_suffix = NULL;
-      strcat(filename, "output.txt");
-    }
-    flags = O_CREAT | O_RDWR;
-    if (!lds->lds_want_file_append)
-      flags |= O_TRUNC;
-
-    /* Actually open the file */
-
-    info[i].ldi_fd = open(filename, flags, 0644);
-    if (-1 == info[i].ldi_fd) {
-      info[i].ldi_used = false;
-      return LAM_ERR_IN_ERRNO;
-    }
-
-    /* Make the file be close-on-exec to prevent child inheritance
-       problems */
-
-    fcntl(info[i].ldi_fd, F_SETFD, 1);
-    LAM_FREE(filename);
-  }
-
-  return i;
+/**
+ * Re-opens / redirects an output stream.
+ *
+ * @param output_id Stream handle to reopen
+ * @param lds A pointer to lam_output_stream_t describing what the
+ * characteristics of the reopened output stream should be.
+ *
+ * This function redirects an existing stream into a new [set of]
+ * location[s], as specified by the lds parameter.  If the output_is
+ * passed is invalid, this call is effectively the same as opening a
+ * new stream with a specific stream handle.
+ */
+int lam_output_reopen(int output_id, lam_output_stream_t *lds)
+{
+  return do_open(output_id, lds);
 }
 
 
@@ -328,7 +260,6 @@ void lam_output_reopen_all(void)
 void lam_output_close(int output_id)
 {
   int i;
-  output_desc_t *ldi;
 
   /* Setup */
 
@@ -336,32 +267,13 @@ void lam_output_close(int output_id)
     lam_output_init();
 
   /* If it's valid, used, enabled, and has an open file descriptor,
-     close it */
+     free the resources associated with the descriptor */
 
-  if (output_id >= 0 && output_id < LAM_OUTPUT_MAX_STREAMS &&
+   if (output_id >= 0 && output_id < LAM_OUTPUT_MAX_STREAMS &&
       info[output_id].ldi_used && 
       info[output_id].ldi_enabled) {
-
-    ldi = &info[output_id];
-
-    if (-1 != ldi->ldi_fd)
-      close(ldi->ldi_fd);
-    ldi->ldi_used = false;
-
-    /* If we strduped a prefix, suffix, or syslog ident, free it */
-
-    if (NULL != ldi->ldi_prefix)
-      LAM_FREE(ldi->ldi_prefix);
-    ldi->ldi_prefix = NULL;
-
-    if (NULL != ldi->ldi_file_suffix)
-      LAM_FREE(ldi->ldi_file_suffix);
-    ldi->ldi_file_suffix = NULL;
-
-    if (NULL != ldi->ldi_syslog_ident)
-      LAM_FREE(ldi->ldi_syslog_ident);
-    ldi->ldi_syslog_ident = NULL;
-  }  
+     free_descriptor(output_id);
+   }
 
   /* If no one has the syslog open, we should close it */
 
@@ -485,6 +397,151 @@ void lam_output_finalize(void)
     verbose_stream = -1;
   }
 }
+
+
+/*
+ * Back-end of open() and reopen().  Necessary to have it as a
+ * back-end function so that we can do the thread locking properly
+ * (especially upon reopen).
+ */
+static int do_open(int output_id, lam_output_stream_t *lds)
+  {
+  int i;
+  int flags;
+  char *filename;
+
+  /* Setup */
+
+  if (!initialized)
+    lam_output_init();
+
+  /* If output_id == -1, find an available stream, or return
+     LAM_ERROR */
+
+  if (-1 == output_id) {
+    THREAD_LOCK(&mutex);
+    for (i = 0; i < LAM_OUTPUT_MAX_STREAMS; ++i)
+      if (!info[i].ldi_used)
+        break;
+    if (i >= LAM_OUTPUT_MAX_STREAMS) {
+      THREAD_UNLOCK(&mutex);
+      return LAM_ERR_OUT_OF_RESOURCE;
+    }
+  } 
+
+  /* Otherwise, we're reopening, so we need to free all previous
+     resources, close files, etc. */
+
+  else {
+    free_descriptor(output_id);
+    i = output_id;
+  }
+
+  /* Got a stream -- now initialize it and open relevant outputs */
+
+  info[i].ldi_used = true;
+  THREAD_UNLOCK(&mutex);
+  info[i].ldi_enabled = lds->lds_is_debugging ? (bool) LAM_ENABLE_DEBUG : true;
+  info[i].ldi_verbose_level = 0;
+
+  info[i].ldi_syslog = lds->lds_want_syslog;
+  if (lds->lds_want_syslog) {
+    if (NULL != lds->lds_syslog_ident) {
+      info[i].ldi_syslog_ident = strdup(lds->lds_syslog_ident);
+      openlog(lds->lds_syslog_ident, LOG_PID, LOG_USER);
+    } else {
+      info[i].ldi_syslog_ident = NULL;
+      openlog("lam", LOG_PID, LOG_USER);
+    }
+    info[i].ldi_syslog_priority = lds->lds_syslog_priority;
+  }
+
+  if (NULL != lds->lds_prefix) {
+    info[i].ldi_prefix = strdup(lds->lds_prefix);
+    info[i].ldi_prefix_len = strlen(lds->lds_prefix);
+  } else {
+    info[i].ldi_prefix = NULL;
+    info[i].ldi_prefix_len = 0;
+  }
+
+  info[i].ldi_stdout = lds->lds_want_stdout;
+  info[i].ldi_stderr = lds->lds_want_stderr;
+
+  info[i].ldi_fd = -1;
+  if (lds->lds_want_file) {
+
+    /* Setup the filename and open flags */
+
+#if NEED_TO_IMPLEMENT_SESSION_DIRECTORY
+    filename = lam_get_tmpdir();
+#else
+    filename = LAM_MALLOC(256);
+    strcpy(filename, "/tmp");
+#endif
+    strcat(filename, "/lam-");
+    if (lds->lds_file_suffix != NULL) {
+      info[i].ldi_file_suffix = strdup(lds->lds_file_suffix);
+      strcat(filename, lds->lds_file_suffix);
+    } else {
+      info[i].ldi_file_suffix = NULL;
+      strcat(filename, "output.txt");
+    }
+    flags = O_CREAT | O_RDWR;
+    if (!lds->lds_want_file_append)
+      flags |= O_TRUNC;
+
+    /* Actually open the file */
+
+    info[i].ldi_fd = open(filename, flags, 0644);
+    if (-1 == info[i].ldi_fd) {
+      info[i].ldi_used = false;
+      return LAM_ERR_IN_ERRNO;
+    }
+
+    /* Make the file be close-on-exec to prevent child inheritance
+       problems */
+
+    fcntl(info[i].ldi_fd, F_SETFD, 1);
+    LAM_FREE(filename);
+  }
+
+  return i;
+}
+
+
+/*
+ * Free all the resources associated with a descriptor.
+ */
+static void free_descriptor(int output_id)
+{
+  output_desc_t *ldi;
+
+  if (output_id >= 0 && output_id < LAM_OUTPUT_MAX_STREAMS &&
+      info[output_id].ldi_used && 
+      info[output_id].ldi_enabled) {
+
+    ldi = &info[output_id];
+
+    if (-1 != ldi->ldi_fd)
+      close(ldi->ldi_fd);
+    ldi->ldi_used = false;
+
+    /* If we strduped a prefix, suffix, or syslog ident, free it */
+
+    if (NULL != ldi->ldi_prefix)
+      LAM_FREE(ldi->ldi_prefix);
+    ldi->ldi_prefix = NULL;
+
+    if (NULL != ldi->ldi_file_suffix)
+      LAM_FREE(ldi->ldi_file_suffix);
+    ldi->ldi_file_suffix = NULL;
+
+    if (NULL != ldi->ldi_syslog_ident)
+      LAM_FREE(ldi->ldi_syslog_ident);
+    ldi->ldi_syslog_ident = NULL;
+  }  
+}
+
 
 /*
  * Do the actual output.  Take a va_list so that we can be called from

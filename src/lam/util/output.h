@@ -91,7 +91,7 @@ struct lam_output_stream_t {
    * information").  Higher verbosity levels generally indicate that
    * more output and diagnostics should be displayed.
    */
-  int lda_verbose_level;
+  int lds_verbose_level;
 
   /**
    * Indicates whether output of the stream should be sent to the
@@ -188,6 +188,7 @@ extern "C" {
   void lam_output_finalize(void);
 
   int lam_output_open(lam_output_stream_t *lds);
+  int lam_output_reopen(int output_id, lam_output_stream_t *lds);
   bool lam_output_switch(int output_id, bool enable);
   void lam_output_reopen_all(void);
   void lam_output_close(int output_id);
