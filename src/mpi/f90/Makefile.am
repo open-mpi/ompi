@@ -42,9 +42,10 @@ lib_LTLIBRARIES +=
 endif
 
 libmpi_f90_la_SOURCES = \
-    mpi.f90
+     mpi.f90
 
 nodist_libmpi_f90_la_SOURCES = \
+     mpi.i.h \
      mpi_address_f90.f90 \
      mpi_bcast_f90.f90 \
      mpi_bsend_f90.f90 \
@@ -127,6 +128,8 @@ endif
 #        win_unlock_f.c \
 #        win_wait_f.c
 
+BUILT_SOURCES = \
+     mpi.i.h
 
 #
 # Sym link in the sources from the real MPI directory
@@ -138,4 +141,4 @@ $(nodist_libmpi_f90_la_SOURCES):
 
 MOSTLYCLEANFILES = *.mod
 
-DISTCLEANFILES = $(nodist_libmpi_f90_la_SOURCES)
+DISTCLEANFILES = $(nodist_libmpi_f90_la_SOURCES) $(BUILT_SOURCES)

@@ -16,6 +16,7 @@
 include $(top_srcdir)/config/Makefile.options
 
 noinst_SCRIPTS = \
+     mpi.i.h.sh \
      mpi_address_f90.f90.sh \
      mpi_bcast_f90.f90.sh \
      mpi_bsend_f90.f90.sh \
