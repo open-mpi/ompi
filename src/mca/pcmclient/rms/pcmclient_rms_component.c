@@ -46,16 +46,35 @@ struct mca_pcmclient_base_module_1_0_0_t mca_pcmclient_rms_1_0_0 = {
     mca_pcmclient_rms_get_peers,
 };
 
-int mca_pcmclient_rms_cellid;
-int mca_pcmclient_rms_jobid;
+/*
+ * component-global variables
+ */
 int mca_pcmclient_rms_num_procs;
 int mca_pcmclient_rms_procid;
 
 ompi_process_name_t *mca_pcmclient_rms_procs = NULL;
 
+/*
+ * local variables
+ */
+
+static int rms_jobid_handle;
+static int rms_start_vpid_handle;
+static int rms_cellid_handle;
+
+int mca_pcmclient_rms_cellid;
+int mca_pcmclient_rms_jobid;
+
 int
 mca_pcmclient_rms_open(void)
 {
+    rms_jobid_handle = 
+        mca_base_param_register_int("pcmclient", "rms", "jobid", NULL, -1);
+    rms_start_vpid_handle = 
+        mca_base_param_register_int("pcmclient", "rms", "start_vpid", NULL, 0);
+    rms_cellid_handle =
+        mca_base_param_register_int("pcmclient", "rms", "cellid", NULL, 0);
+
     return OMPI_SUCCESS;
 }
 
@@ -74,17 +93,21 @@ mca_pcmclient_rms_init(int *priority,
 {
     int i;
     char *tmp;
+    int start_vpid;
 
     *priority = 5; /* make sure we are above env / singleton */
     *allow_multiple_user_threads = true;
     *have_hidden_threads = false;
 
-    /* BWB: Fix me */
-    mca_pcmclient_rms_cellid = 0;
+    mca_base_param_lookup_int(rms_jobid_handle, &mca_pcmclient_rms_jobid);
+    mca_base_param_lookup_int(rms_cellid_handle, &mca_pcmclient_rms_cellid);
+    mca_base_param_lookup_int(rms_start_vpid_handle, &start_vpid);
 
-    tmp = getenv("RMS_JOBID");
-    if (NULL == tmp) return NULL;
-    mca_pcmclient_rms_jobid = atoi(tmp);
+    if (mca_pcmclient_rms_jobid < 0) {
+        tmp = getenv("RMS_JOBID");
+        if (NULL == tmp) return NULL;
+        mca_pcmclient_rms_jobid = atoi(tmp);
+    }
 
     tmp = getenv("RMS_RANK");
     if (NULL == tmp) return NULL;
@@ -102,7 +125,7 @@ mca_pcmclient_rms_init(int *priority,
     for ( i = 0 ; i < mca_pcmclient_rms_num_procs ; ++i) {
         mca_pcmclient_rms_procs[i].cellid = mca_pcmclient_rms_cellid;
         mca_pcmclient_rms_procs[i].jobid = mca_pcmclient_rms_jobid;
-        mca_pcmclient_rms_procs[i].vpid = i;
+        mca_pcmclient_rms_procs[i].vpid = start_vpid + i;
     }
     
     return &mca_pcmclient_rms_1_0_0;
