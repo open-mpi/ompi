@@ -63,7 +63,7 @@
 #define  OMPI_PTL_ELAN_NUM_PUTGET    (8)
 #define  OMPI_PTL_ELAN_MAX_PGDESC    (8)
 
-#define  OMPI_PTL_ELAN_PTL_FASTPATH  (0x1)
+#define  OMPI_PTL_ELAN_FASTPATH      (0x1)
 #define  OMPI_PTL_ELAN_SLOT_ALIGN    (128)
 #define  OMPI_PTL_ELAN_GET_MAX(a,b)  ((a>b)? a:b)
 #define  OMPI_PTL_ELAN_GET_MIN(a,b)  ((a<b)? a:b)

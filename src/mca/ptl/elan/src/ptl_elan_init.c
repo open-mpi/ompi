@@ -68,6 +68,7 @@ ompi_mca_ptl_elan_setup (mca_ptl_elan_state_t * ems)
         ptl->elan_nvp = ems->elan_nvp;
 	OBJ_CONSTRUCT (&ptl->recv_frags, ompi_list_t);
 	OBJ_CONSTRUCT (&ptl->send_frags, ompi_list_t);
+	OBJ_CONSTRUCT (&ptl->pending_acks, ompi_list_t);
         emp->num_modules++;
     } while (emp->num_modules < rail_count);
 
@@ -248,6 +249,7 @@ ompi_module_elan_close_ptls (mca_ptl_elan_component_t * emp,
 	if (NULL == ptl) continue;
 	OBJ_DESTRUCT (&(ptl->recv_frags));
 	OBJ_DESTRUCT (&(ptl->send_frags));
+	OBJ_DESTRUCT (&(ptl->pending_acks));
     }
 }
 

@@ -155,8 +155,8 @@ mca_ptl_elan_finalize (struct mca_ptl_base_module_t *ptl)
     free (elan_ptl);
 
     /* Record the missing of this entry */
-    mca_ptl_elan_component.elan_ptl_modules[rail_index] = NULL;
-    mca_ptl_elan_component.elan_num_ptl_modules--;
+    mca_ptl_elan_component.modules[rail_index] = NULL;
+    mca_ptl_elan_component.num_modules--;
 
     return OMPI_SUCCESS;
 }
@@ -383,7 +383,7 @@ mca_ptl_elan_matched (mca_ptl_base_module_t * ptl,
 		    __FILE__, __LINE__);
             OMPI_THREAD_LOCK(&mca_ptl_elan_component.elan_lock);
 	    recv_frag->frag_ack_pending = true;
-            ompi_list_append(&mca_ptl_elan_component.elan_pending_acks, 
+            ompi_list_append(&((mca_ptl_elan_module_t * )ptl)->pending_acks, 
 		    (ompi_list_item_t*)frag);
             OMPI_THREAD_UNLOCK(&mca_ptl_elan_component.elan_lock);
 	} else {
