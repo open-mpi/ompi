@@ -70,7 +70,7 @@ int MPI_Group_compare(MPI_Group group1, MPI_Group group2, int *result) {
         /* loop over group2 processes to find "match" */
         match=-1;
         for(proc2=0 ; proc2 < group2_pointer->grp_proc_count ; proc2++ ) {
-            proc2_pointer=group1_pointer->grp_proc_pointers[proc2];
+            proc2_pointer=group2_pointer->grp_proc_pointers[proc2];
             if( proc1_pointer == proc2_pointer ) {
                 if(proc1 != proc2 ) {
                     identical=0;
