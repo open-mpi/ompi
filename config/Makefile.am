@@ -17,4 +17,6 @@ EXTRA_DIST		= \
 			lam_get_version.m4 \
 			lam_get_version.sh \
 			lam_setup_cc.m4 \
-			lam_setup_cxx.m4
+			lam_setup_cxx.m4 \
+			lam_setup_f77.m4 \
+			lam_setup_f90.m4
