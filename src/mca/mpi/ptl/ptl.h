@@ -155,25 +155,12 @@ struct mca_ptl_t {
 typedef struct mca_ptl_t mca_ptl_t;
 
 /*
- * Global functions for MCA: overall PTL open and close
+ * Macro for use in modules that are of type ptl v1.0.0
  */
-
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
-  int mca_ptl_base_open(void);
-  int mca_ptl_base_init(void);
-  int mca_ptl_base_close(void);
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
-
-/*
- * Globals
- */
-extern int mca_ptl_base_output;
-extern lam_list_t mca_ptl_base_modules_available;
-extern mca_ptl_base_module_t mca_ptl_base_selected_module;
-extern mca_ptl_t mca_ptl;
+#define MCA_PTL_BASE_VERSION_1_0_0 \
+  /* coll v1.0 is chained to MCA v1.0 */ \
+  MCA_BASE_VERSION_1_0_0, \
+  /* ptl v1.0 */ \
+  "ptl", 1, 0, 0
 
 #endif /* LAM_MCA_PTL_H */

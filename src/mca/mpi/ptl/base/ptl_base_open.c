@@ -5,12 +5,11 @@
 #include "lam_config.h"
 
 #include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
 
 #include "mca/mca.h"
 #include "mca/lam/base/base.h"
 #include "mca/mpi/ptl/ptl.h"
+#include "mca/mpi/ptl/base/base.h"
 
 
 /*
@@ -26,9 +25,7 @@
  * Global variables
  */
 int mca_ptl_base_output = -1;
-mca_ptl_t mca_ptl;
 lam_list_t mca_ptl_base_modules_available;
-mca_ptl_base_module_t mca_ptl_base_selected_module;
 
 
 /**
