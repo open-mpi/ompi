@@ -18,7 +18,7 @@
 program main
 
   type AlignReal
-    character a
+    integer(selected_int_kind(1)) :: a
     real(selected_real_kind(6)) :: w
     character b
     real(selected_real_kind(6)) :: x
@@ -28,7 +28,7 @@ program main
   end type
 
   type AlignDouble
-    character a
+    integer(selected_int_kind(1)) :: a
     real(selected_real_kind(15)) :: w
     character b
     real(selected_real_kind(15)) :: x
@@ -39,7 +39,7 @@ program main
   end type
 
   type AlignQuad
-    character a
+    integer(selected_int_kind(1)) :: a
     real(selected_real_kind(31)) :: w
     character b
     real(selected_real_kind(31)) :: x
@@ -49,7 +49,7 @@ program main
   end type
 
   type AlignComplex
-    character a
+    integer(selected_int_kind(1)) :: a
     complex(selected_real_kind(6)) :: w
     character b
     complex(selected_real_kind(6)) :: x
@@ -59,7 +59,7 @@ program main
   end type
 
   type AlignDoubleComplex
-    character a
+    integer(selected_int_kind(1)) :: a
     complex(selected_real_kind(15)) :: w
     character b
     complex(selected_real_kind(15)) :: x
@@ -69,7 +69,7 @@ program main
   end type
 
   type AlignQuadComplex
-    character a
+    integer(selected_int_kind(1)) :: a
     complex(selected_real_kind(31)) :: w
     character b
     complex(selected_real_kind(31)) :: x
@@ -88,16 +88,16 @@ program main
   type(AlignQuadComplex) :: aqc
 
   call align_c(ar%a, ar%w, ar%x, ar%y, ar%z)
-  print *, "is alignment of real"
+  print *, "alignment of real: ", ar%a
   call align_c(ad%a, ad%w, ad%x, ad%y, ad%z)
-  print *, "is alignment of double"
+  print *, "alignment of double: ", ad%a
   call align_c(aq%a, aq%w, aq%x, aq%y, aq%z)
-  print *, "is alignment of quad"
+  print *, "alignment of quad: ", aq%a
   call align_c(ac%a, ac%w, ac%x, ac%y, ac%z)
-  print *, "is alignment of complex"
+  print *, "alignment of complex: ", ac%a
   call align_c(adc%a, adc%w, adc%x, adc%y, adc%z)
-  print *, "is alignment of double complex"
+  print *, "alignment of double complex: ", adc%a
   call align_c(aqc%a, aqc%w, aqc%x, aqc%y, aqc%z)
-  print *, "is alignment of quad complex"
+  print *, "alignment of quad complex: ", aqc%a
 
 end program main

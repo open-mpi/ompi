@@ -1,41 +1,43 @@
-#include <stdio.h>
-#include <stdlib.h>
+#include <assert.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+void PRINT_INT(int* i);
+
 void align_c(char *a, char *w, char *x, char *y, char *z)
 {
     unsigned long aw, ax, ay, az;
-    int diff;
-    FILE *f=stdout;
-    if (!f) exit(1);
+    int diff, diff4;
+
     aw = (unsigned long) w;
     ax = (unsigned long) x;
     ay = (unsigned long) y;
     az = (unsigned long) z;
+
     if (! ((aw%16)||(ax%16)||(ay%16)||(az%16))) {
-        fprintf(f, "  %d\t", 16);
+        diff4 = 16;
     }
     else if (! ((aw%12)||(ax%12)||(ay%12)||(az%12))) {
-        fprintf(f, "  %d\t", 12);
+        diff4 = 12;
     }
     else if (! ((aw%8)||(ax%8)||(ay%8)||(az%8))) {
-        fprintf(f, "  %d\t", 8);
+        diff4 = 8;
     }
     else if (! ((aw%4)||(ax%4)||(ay%4)||(az%4))) {
-        fprintf(f, "  %d\t", 4);
+        diff4 = 4;
     }
     else if (! ((aw%2)||(ax%2)||(ay%2)||(az%2))) {
-        fprintf(f, "  %d\t", 2);
+        diff4 = 2;
     }
     else {
-        fprintf(f, "  %d\t", 1);
+        diff4 = 1;
     }
     diff = a - w;
-    fprintf(f, "%d\t", (diff >= 0) ? diff : -diff);
-    fflush(f);
+    diff = (diff >= 0) ? diff : -diff;
+    *a = diff;
+    assert(diff4 == diff);
 }
 
 
