@@ -28,11 +28,6 @@
 #include "mca/mca.h"
 #include "mca/ns/base/base.h"
 
-/*
- * typedefs
- */
-typedef uint32_t ompi_process_id_t;  /**< Set the allowed range for id's in each space */
-
 
 /*
  * Component functions - all MUST be provided!
@@ -151,7 +146,7 @@ typedef int (*mca_ns_free_name_t)(ompi_process_name_t *name);
  * name-string = ompi_name_server.get_proc_name_string(&name)
  * @endcode
  */
-typedef char* (*mca_ns_get_proc_name_string)(ompi_process_name_t *name);
+typedef char* (*mca_ns_get_proc_name_string_t)(ompi_process_name_t *name);
 
 /**
  * Get the process id as a character string.
@@ -172,7 +167,7 @@ typedef char* (*mca_ns_get_proc_name_string)(ompi_process_name_t *name);
  * procid-string = ompi_name_server.get_procid_string(&name)
  * @endcode
  */
-typedef char* (*mca_ns_get_procid_string)(ompi_process_name_t *name);
+typedef char* (*mca_ns_get_procid_string_t)(ompi_process_name_t *name);
 
 /**
  * Get the job id as a character string.
@@ -193,7 +188,7 @@ typedef char* (*mca_ns_get_procid_string)(ompi_process_name_t *name);
  * jobid-string = ompi_name_server.get_jobid_string(&name)
  * @endcode
  */
-typedef char* (*mca_ns_get_jobid_string)(ompi_process_name_t *name);
+typedef char* (*mca_ns_get_jobid_string_t)(ompi_process_name_t *name);
 
 /**
  * Get the cell id as a character string.
@@ -214,7 +209,7 @@ typedef char* (*mca_ns_get_jobid_string)(ompi_process_name_t *name);
  * cellid-string = ompi_name_server.get_cellid_string(&name)
  * @endcode
  */
-typedef char* (*mca_ns_get_cellid_string)(ompi_process_name_t *name);
+typedef char* (*mca_ns_get_cellid_string_t)(ompi_process_name_t *name);
 
 /**
  * Get the process id as an ompi_process_id_t value.
@@ -301,9 +296,10 @@ typedef int (*mca_ns_compare_t)(ompi_process_name_t *name1, ompi_process_name_t 
 struct mca_ns_base_module_1_0_0_t {
     mca_base_module_t nsc_version;
     mca_base_module_data_1_0_0_t nsc_data;
-
+#if 0
     mca_ns_base_init_fn_t nsc_init;
     mca_ns_base_finalize_fn_t nsc_finalize;
+#endif
 };
 typedef struct mca_ns_base_module_1_0_0_t mca_ns_base_module_1_0_0_t;
 

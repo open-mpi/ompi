@@ -19,6 +19,9 @@
 /*
  * typedefs
  */
+typedef uint32_t ompi_process_id_t;  /**< Set the allowed range for id's in each space */
+                                                                                                                      
+
 struct ompi_process_name_t {
     ompi_process_id_t cellid;  /**< Cell number */
     ompi_process_id_t jobid; /**< Job number */
@@ -46,9 +49,9 @@ extern "C" {
  * globals that might be needed
  */
 
-extern mca_ns_t ompi_name_server;  /* holds selected module's function pointers */
+extern struct mca_ns_1_0_0_t ompi_name_server;  /* holds selected module's function pointers */
 extern ompi_list_t mca_ns_base_modules_available;
-extern mca_ns_base_module_t mca_ns_base_selected_module;
+extern struct mca_ns_base_module_1_0_0_t mca_ns_base_selected_module;
 
 /*
  * external API functions will be documented in the mca/ns/ns.h file
