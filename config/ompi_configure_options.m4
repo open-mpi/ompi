@@ -156,6 +156,23 @@ else
 fi
 
 
+#                                                                              
+# C++                                                                          
+#                                                                              
+
+AC_MSG_CHECKING([if want C++ bindings])
+AC_ARG_ENABLE(cxx,
+    AC_HELP_STRING([--enable-cxx],
+                   [enable C++ MPI bindings (default: enabled)]))
+if test "$enable_cxx" != "no"; then
+    AC_MSG_RESULT([yes])
+    WANT_MPI_CXX_SUPPORT=1
+else
+    AC_MSG_RESULT([no])
+    WANT_MPI_CXX_SUPPORT=0
+fi
+
+
 #
 # Do we want to disable weak symbols for some reason?
 #

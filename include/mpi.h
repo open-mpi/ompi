@@ -1442,4 +1442,19 @@ extern "C" {
 }
 #endif
 
+/*                                                                             
+ * Conditional MPI 2 C++ bindings support.  Include if:
+ *   - We want C++ bindings support
+ *   - We are not building OMPI itself
+ *   - We are using a C++ compiler
+ */
+
+#if defined(OMPI_WANT_CXX_BINDINGS)
+#if !defined(OMPI_BUILDING) || !OMPI_BUILDING
+#if defined(__cplusplus) || defined(c_plusplus) 
+#include "mpi/cxx/mpicxx.h"
+#endif
+#endif
+#endif
+
 #endif /* OMPI_MPI_H */

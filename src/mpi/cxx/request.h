@@ -1,0 +1,176 @@
+// -*- c++ -*-
+//
+// $HEADER$
+//
+
+
+class Request {
+#if 0 /* OMPI_ENABLE_MPI_PROFILING */
+  //    friend class PMPI::Request;
+#endif
+public:
+#if 0 /* OMPI_ENABLE_MPI_PROFILING */
+
+  // construction
+  Request() { }
+  Request(const MPI_Request &i) : pmpi_request(i) { }
+
+  // copy / assignment
+  Request(const Request& r) : pmpi_request(r.pmpi_request) { }
+
+  Request(const PMPI::Request& r) : pmpi_request(r) { }
+
+  virtual ~Request() {}
+
+  Request& operator=(const Request& r) {
+    pmpi_request = r.pmpi_request; return *this; }
+
+  // comparison
+  bool operator== (const Request &a) 
+  { return (bool)(pmpi_request == a.pmpi_request); }
+  bool operator!= (const Request &a) 
+  { return (bool)!(*this == a); }
+
+  // inter-language operability
+  Request& operator= (const MPI_Request &i) {
+    pmpi_request = i; return *this;  }
+
+  operator MPI_Request () const { return pmpi_request; }
+  //  operator MPI_Request* () const { return pmpi_request; }
+  operator const PMPI::Request&() const { return pmpi_request; }
+
+#else
+
+  // construction / destruction
+  Request() { mpi_request = MPI_REQUEST_NULL; }
+  virtual ~Request() {}
+  Request(const MPI_Request &i) : mpi_request(i) { }
+
+  // copy / assignment
+  Request(const Request& r) : mpi_request(r.mpi_request) { }
+
+  Request& operator=(const Request& r) {
+    mpi_request = r.mpi_request; return *this; }
+
+  // comparison
+  bool operator== (const Request &a) 
+  { return (bool)(mpi_request == a.mpi_request); }
+  bool operator!= (const Request &a) 
+  { return (bool)!(*this == a); }
+
+  // inter-language operability
+  Request& operator= (const MPI_Request &i) {
+    mpi_request = i; return *this; }
+  operator MPI_Request () const { return mpi_request; }
+  //  operator MPI_Request* () const { return (MPI_Request*)&mpi_request; }
+
+#endif
+
+  //
+  // Point-to-Point Communication
+  //
+
+  virtual void Wait(Status &status);
+
+  virtual void Wait();
+
+  virtual bool Test(Status &status);
+
+  virtual bool Test();
+
+  virtual void Free(void);
+
+  static int Waitany(int count, Request array[], Status& status);
+
+  static int Waitany(int count, Request array[]);
+
+  static bool Testany(int count, Request array[], int& index, Status& status);
+
+  static bool Testany(int count, Request array[], int& index);
+
+  static void Waitall(int count, Request req_array[], Status stat_array[]);
+ 
+  static void Waitall(int count, Request req_array[]);
+
+  static bool Testall(int count, Request req_array[], Status stat_array[]);
+ 
+  static bool Testall(int count, Request req_array[]);
+
+  static int Waitsome(int incount, Request req_array[],
+			     int array_of_indices[], Status stat_array[]) ;
+
+  static int Waitsome(int incount, Request req_array[],
+			     int array_of_indices[]);
+
+  static int Testsome(int incount, Request req_array[],
+			     int array_of_indices[], Status stat_array[]);
+
+  static int Testsome(int incount, Request req_array[],
+			     int array_of_indices[]);
+
+  virtual void Cancel(void) const;
+
+
+protected:
+#if ! 0 /* OMPI_ENABLE_MPI_PROFILING */
+  MPI_Request mpi_request;
+#endif
+
+private:
+
+#if 0 /* OMPI_ENABLE_MPI_PROFILING */
+  PMPI::Request pmpi_request;
+#endif 
+
+};
+
+
+class Prequest : public Request {
+#if 0 /* OMPI_ENABLE_MPI_PROFILING */
+  //  friend class PMPI::Prequest;
+#endif
+public:
+
+  Prequest() { }
+
+#if 0 /* OMPI_ENABLE_MPI_PROFILING */
+  Prequest(const Request& p) : Request(p), pmpi_request(p) { }
+
+  Prequest(const PMPI::Prequest& r) : 
+    Request((const PMPI::Request&)r),
+    pmpi_request(r) { }
+
+  Prequest(const MPI_Request &i) : Request(i), pmpi_request(i) { }
+  
+  virtual ~Prequest() { }
+
+  Prequest& operator=(const Request& r) {
+    Request::operator=(r);
+    pmpi_request = (PMPI::Prequest)r; return *this; }
+
+  Prequest& operator=(const Prequest& r) {
+    Request::operator=(r);
+    pmpi_request = r.pmpi_request; return *this; }
+#else
+  Prequest(const Request& p) : Request(p) { }
+
+  Prequest(const MPI_Request &i) : Request(i) { }
+
+  virtual ~Prequest() { }
+
+  Prequest& operator=(const Request& r) {
+    mpi_request = r; return *this; }
+
+  Prequest& operator=(const Prequest& r) {
+    mpi_request = r.mpi_request; return *this; }
+#endif
+
+  virtual void Start();
+
+  static void Startall(int count, Prequest array_of_requests[]);
+
+#if 0 /* OMPI_ENABLE_MPI_PROFILING */
+private:
+  PMPI::Prequest pmpi_request;
+#endif 
+};
