@@ -46,6 +46,8 @@ struct ompi_rte_node_schedule_t {
     int argc;
     /** environ array for process to start (NULL terminated array) */
     char **env;
+    /** length of env */
+    int envc;
     /** working directory in which to start the application */
     char *cwd;
     /** list of nodes to start the process on (list of 

@@ -37,7 +37,7 @@ extern "C" {
                                     ompi_rte_node_schedule_t *sched,
                                     int *num_procs);
 
-    int mca_pcm_base_build_base_env(char **in_env, char ***out_envp);
+    int mca_pcm_base_build_base_env(char **in_env, int *envc, char ***out_envp);
 
     int mca_pcm_base_ioexecvp(char **cmdv, int showout, char *outbuff, 
                                    int outbuffsize, int stderr_is_err);

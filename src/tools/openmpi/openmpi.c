@@ -128,11 +128,6 @@ int main(int argc, char **argv)
     ompi_rte_parse_cmd_line(cmd_line);
 
 
-    /**  RHC - THIS NEEDS TO BE FIXED **/
-    ompi_process_info.seed = true;
-    setenv("OMPI_MCA_oob_base_include", "tcp", 1);
-
-
     /* start the initial barebones RTE (just OOB) so we can check universe existence */
     if (OMPI_SUCCESS != (ret = mca_base_open())) {
         /* JMS show_help */
@@ -162,6 +157,11 @@ int main(int argc, char **argv)
 
 	ompi_process_info.my_universe = strdup(ompi_universe_info.name);
 
+	/* startup rest of RTE - needed for handshake with seed */
+	ompi_process_info.ns_replica = NULL;
+	ompi_process_info.gpr_replica = NULL;
+    ompi_rte_init_stage2(&multi_thread, &hidden_thread);
+
 	/* parse command line for rest of seed options */
 	ompi_rte_parse_daemon_cmd_line(cmd_line);
 
@@ -173,7 +173,7 @@ int main(int argc, char **argv)
 	    exit(-1);
 	} else if (pid == 0) { /* child process does the exec */
 
-	    /* build the command line options for the seed
+	    /* build the environment for the seed
 	     * including universe name and tmpdir_base
 	     */
 	    seed_argv = NULL;
@@ -196,9 +196,9 @@ int main(int argc, char **argv)
 		ompi_argv_append(&seed_argc, &seed_argv, "-hostfile");
 		ompi_argv_append(&seed_argc, &seed_argv, ompi_universe_info.hostfile);
 	    }
-	    /* provide my contact info */
+	    /* provide my contact info as the temporary registry replica*/
 	    contact_info = mca_oob_get_contact_info();
-	    ompi_argv_append(&seed_argc, &seed_argv, "-initcontact");
+	    ompi_argv_append(&seed_argc, &seed_argv, "-gprreplica");
 	    ompi_argv_append(&seed_argc, &seed_argv, contact_info);
 	    /* add options for universe name and tmpdir_base, if provided */
 	    ompi_argv_append(&seed_argc, &seed_argv, "-universe");

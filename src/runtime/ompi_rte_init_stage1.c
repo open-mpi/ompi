@@ -92,7 +92,7 @@
 /* globals used by RTE */
 int ompi_rte_debug_flag=0;
 ompi_universe_t ompi_universe_info = {
-    /* .name =                */    "default-universe",
+    /* .name =                */    NULL,
     /* .host =                */    "localhost",
     /* .uid =                 */    NULL,
     /* .pid =                 */    0,
@@ -115,12 +115,27 @@ int ompi_rte_init_stage1(bool *allow_multi_user_threads, bool *have_hidden_threa
 {
     int ret;
     bool user_threads, hidden_threads;
+    char *enviro_val;
 
     *allow_multi_user_threads = true;
     *have_hidden_threads = false;
 
     ret =  mca_base_param_register_int("ompi", "rte", "debug", NULL, 0);
     mca_base_param_lookup_int(ret, &ompi_rte_debug_flag);
+
+    enviro_val = getenv("OMPI_universe_name");
+    if (NULL != enviro_val) {  /* universe name passed in environment */
+	ompi_universe_info.name = strdup(enviro_val);
+	ompi_process_info.my_universe = strdup(enviro_val);
+    } else {
+	ompi_universe_info.name = strdup("default-universe");
+	ompi_process_info.my_universe = strdup("default-universe");
+    }
+
+    enviro_val = getenv("OMPI_tmpdir_base");
+    if (NULL != enviro_val) {  /* tmpdir base passed in environment */
+	ompi_process_info.tmpdir_base = strdup(enviro_val);
+    }
 
     /*
      * Initialize the event library 

@@ -56,5 +56,4 @@ ompi_pack_SOURCES = ompi_pack.c
 ompi_pack_LDADD = \
         $(top_builddir)/src/libmpi.la \
         $(top_builddir)/test/support/libsupport.la 
-ompi_pack_DEPENDENCIES = $(ompi_session_dir_LDADD)
-
+ompi_pack_DEPENDENCIES = $(ompi_pack_LDADD)
