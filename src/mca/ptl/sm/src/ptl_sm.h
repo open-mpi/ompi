@@ -127,6 +127,9 @@ struct mca_ptl_sm_t {
     ompi_free_list_t sm_second_frags;   /**< free list of sm second
                                               and above fragments */
     ompi_free_list_t sm_send_requests;    /**< free list of sm send requests -- sendreq + sendfrag */
+    ompi_free_list_t sm_first_frags_to_progress;  /**< list of first
+                                                    fragments that are
+                                                    awaiting resources */
 };
 typedef struct mca_ptl_sm_t mca_ptl_sm_t;
 
@@ -228,6 +231,25 @@ extern void mca_ptl_sm_matched(
  * @param request (OUT)          OMPI_SUCCESS if the PTL was able to queue one or more fragments
  */
 extern int mca_ptl_sm_send(
+    struct mca_ptl_base_module_t* ptl,
+    struct mca_ptl_base_peer_t* ptl_peer,
+    struct mca_pml_base_send_request_t*,
+    size_t offset,
+    size_t size,
+    int flags
+);
+
+/**
+ * PML->PTL send second and subsequent fragments
+ *
+ * @param ptl (IN)               PTL instance
+ * @param ptl_base_peer (IN)     PTL peer addressing
+ * @param send_request (IN/OUT)  Send request (allocated by PML via mca_ptl_base_request_alloc_fn_t)
+ * @param size (IN)              Number of bytes PML is requesting PTL to deliver
+ * @param flags (IN)             Flags that should be passed to the peer via the message header.
+ * @param request (OUT)          OMPI_SUCCESS if the PTL was able to queue one or more fragments
+ */
+extern int mca_ptl_sm_send_continue(
     struct mca_ptl_base_module_t* ptl,
     struct mca_ptl_base_peer_t* ptl_peer,
     struct mca_pml_base_send_request_t*,

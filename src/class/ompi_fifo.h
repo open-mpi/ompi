@@ -190,6 +190,8 @@ static inline int ompi_fifo_free( ompi_fifo_t *fifo,
  *
  * @param data Pointer value to write in specified slot (IN)
  *
+ * @param offset Offset relative to base of the memory segement (IN)
+ *
  * @returncode Slot index data written to
  *
  */
@@ -205,6 +207,8 @@ static inline int ompi_fifo_write_to_slot(cb_slot_t *slot, void* data,
  * @param data Pointer value to write in specified slot (IN)
  *
  * @param fifo Pointer to data structure defining this fifo (IN)
+ *
+ * @param offset Offset relative to base of the memory segement (IN)
  *
  * @returncode Slot index to which data is written
  *
@@ -288,6 +292,8 @@ static inline int ompi_fifo_write_to_head(void *data, ompi_fifo_t
  *
  * @returncode Slot index to which data is written
  *
+ * @param offset Offset relative to base of the memory segement (IN)
+ *
  * @returncode OMPI_CB_ERROR failed to allocate index
  *
  */
@@ -366,11 +372,11 @@ static inline cb_slot_t ompi_fifo_get_slot(ompi_fifo_t *fifo,
 /**
  * Try to read pointer from the tail of the queue
  *
- * @param data Pointer to where data was be written (out)
- *
  * @param fifo Pointer to data structure defining this fifo (IN)
  *
- * @returncode Slot index to which data is written
+ * @param offset Offset relative to base of the memory segement (IN)
+ *
+ * @returncode Pointer - OMPI_CB_FREE indicates no data to read
  *
  */
 static inline void *ompi_fifo_read_from_tail(ompi_fifo_t *fifo, size_t
