@@ -56,7 +56,7 @@ int mca_ptl_base_select(bool *allow_multi_user_threads,
         lam_output_verbose(10, mca_ptl_base_output,
                            "select: init returned failure");
 
-        mca_base_module_registry_release((mca_base_module_t *) module);
+        mca_base_module_repository_release((mca_base_module_t *) module);
         lam_output_verbose(10, mca_ptl_base_output,
                            "select: module %s unloaded",
                            module->ptlm_version.mca_module_name);
