@@ -420,7 +420,37 @@ ompi_show_title "Header file tests"
 # SA_RESTART in signal.h
 # sa_len in struct sockaddr
 # union semun in sys/sem.h
-AC_CHECK_HEADERS([stdbool.h alloca.h])
+AC_CHECK_HEADERS([alloca.h])
+AC_CHECK_HEADERS([stdbool.h], [have_stdbool_h=1], [have_stdbool_h=0])
+
+# Note that sometimes we have <stdbool.h>, but it doesn't work (e.g.,
+# have both Portland and GNU installed; using pgcc will find GNU's
+# <stdbool.h>, which all it does -- by standard -- is define "bool" to
+# "_Bool" [see
+# http://www.opengroup.org/onlinepubs/009695399/basedefs/stdbool.h.html],
+# and Portland has no idea what to do with _Bool).
+
+# So first figure out if we have <stdbool.h> (i.e., check the value of
+# the macro HAVE_STDBOOL_H from the result of AC_CHECK_HEADERS,
+# above).  If we do have it, then check to see if it actually works.
+# Define OMPI_USE_STDBOOL_H as approrpaite.
+
+AC_MSG_CHECKING([if <stdbool.h> works])
+if test "$have_stdbool_h" = "1"; then
+    AC_COMPILE_IFELSE(AC_LANG_PROGRAM([[
+AC_INCLUDES_DEFAULT
+#if HAVE_STDBOOL_H
+#include <stdbool.h>
+#endif]], 
+[[bool bar, foo = true; bar = foo;]]),
+[OMPI_USE_STDBOOL_H=1 MSG=yes],[OMPI_USE_STDBOOL_H=0 MSG=no])
+else
+    OMPI_USE_STDBOOL_H=0
+    MSG="no (don't have <stdbool.h>)"
+fi
+AC_DEFINE_UNQUOTED(OMPI_USE_STDBOOL_H, $OMPI_USE_STDBOOL_H,
+    [Whether to use <stdbool.h> or not])
+AC_MSG_RESULT([$MSG])
 
 
 ##################################
