@@ -17,7 +17,7 @@ headers = \
 	mem_globals.h \
 	mem_pool.h \
 	seg_list.h \
-	sharedmem_util.h
+	sharedmem_util.h 
 
 libmem_la_SOURCES = \
 	$(headers) \
@@ -28,7 +28,7 @@ libmem_la_SOURCES = \
 	mem_globals.c \
 	mem_pool.c \
 	seg_list.c \
-	sharedmem_util.c
+	sharedmem_util.c 
 
 # Conditionally install the header files
 

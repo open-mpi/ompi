@@ -43,7 +43,7 @@ unset msg
 # The list of MCA types (it's fixed)
 
 AC_MSG_CHECKING([for MCA types])
-found_types="oob pcm registry coll io one pml ptl topo"
+found_types="oob pcm registry coll io mem one pml ptl topo"
 AC_MSG_RESULT([$found_types])
 
 # Get the list of all the non-configure MCA modules that were found by
@@ -256,6 +256,11 @@ AC_SUBST(MCA_io_ALL_SUBDIRS)
 AC_SUBST(MCA_io_STATIC_SUBDIRS)
 AC_SUBST(MCA_io_DYNAMIC_SUBDIRS)
 AC_SUBST(MCA_io_STATIC_LTLIBS)
+
+AC_SUBST(MCA_mem_ALL_SUBDIRS)
+AC_SUBST(MCA_mem_STATIC_SUBDIRS)
+AC_SUBST(MCA_mem_DYNAMIC_SUBDIRS)
+AC_SUBST(MCA_mem_STATIC_LTLIBS)
 
 AC_SUBST(MCA_one_ALL_SUBDIRS)
 AC_SUBST(MCA_one_STATIC_SUBDIRS)

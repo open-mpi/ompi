@@ -9,6 +9,7 @@ SUBDIRS = \
         coll \
         common \
         io \
+	mem \
         one \
         oob \
         pcm \
@@ -29,6 +30,7 @@ libmca_la_SOURCES =
 libmca_la_LIBADD = \
         base/libmca_base.la \
         coll/libmca_coll.la \
+	mem/libmca_mem.la \
         oob/libmca_oob.la \
         pcm/libmca_pcm.la \
         pml/libmca_pml.la \
