@@ -29,15 +29,15 @@
 #include "runtime/runtime.h"
 
 
-static struct timeval ompi_rte_ping_wait = {30, 0};
+static struct timeval ompi_rte_ping_wait = {2, 0};
 
 
 int ompi_rte_universe_exists()
 {
     char *contact_file;
-    int ret;
+    int ret, i;
     ompi_process_name_t proc={0,0,0};
-    bool ns_found, gpr_found;
+    bool ns_found, gpr_found, ping_success;
 
     /* if both ns_replica and gpr_replica were provided, check for contact with them */
     if (NULL != ompi_universe_info.ns_replica && NULL != ompi_universe_info.gpr_replica) {
@@ -154,7 +154,13 @@ int ompi_rte_universe_exists()
 
 
 	/* ...and ping to verify it's alive */
-	if (OMPI_SUCCESS != mca_oob_ping(&proc, &ompi_rte_ping_wait)) {
+	ping_success = false;
+	for (i=0; i<5 && !ping_success; i++) {
+	    if (OMPI_SUCCESS == mca_oob_ping(&proc, &ompi_rte_ping_wait)) {
+		ping_success = true;
+	    }
+	}
+	if (!ping_success) {
 	    if (ompi_rte_debug_flag) {
 		ompi_output(0, "ping failed");
 	    }
