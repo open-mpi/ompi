@@ -85,11 +85,15 @@ ompi_init_elan_queue_events (mca_ptl_elan_module_t * ptl,
 
         /* Initialize some of the dma structures */
 	desc->main_dma.dma_dstAddr = 0;
+#if OMPI_PTL_ELAN_COMP_QUEUE
+	/* Have all the source event fired to the Queue */
+#else
 	desc->main_dma.dma_srcEvent = SDRAM2ELAN (ctx, desc->elan_event);
 	desc->main_dma.dma_dstEvent = SDRAM2ELAN (ctx, queue->input);
 	INITEVENT_WORD (ctx, desc->elan_event, &desc->main_doneWord);
 	RESETEVENT_WORD (&desc->main_doneWord);
 	PRIMEEVENT_WORD (ctx, desc->elan_event, 1);
+#endif
 
         item = (ompi_list_item_t *) frag;
         ompi_list_append (&flist->super, item);
@@ -134,6 +138,9 @@ mca_ptl_elan_putget_desc_contruct (
     desc->main_dma.dma_srcAddr = src_elan4_addr;
     desc->main_dma.dma_dstAddr = dst_elan4_addr;
 
+#if OMPI_PTL_ELAN_COMP_QUEUE
+	/* Have all the source event fired to the Queue */
+#else
     if (local) {
 	desc->main_dma.dma_srcEvent = elan4_main2elan(ctx, elan_event);
     } else {
@@ -144,6 +151,7 @@ mca_ptl_elan_putget_desc_contruct (
     INITEVENT_WORD (ctx, elan_event, &desc->main_doneWord);
     RESETEVENT_WORD (&desc->main_doneWord);
     PRIMEEVENT_WORD (ctx, elan_event, 1);
+#endif
 
     /* Make PCI write visable */
     mb();
@@ -285,7 +293,7 @@ ompi_init_elan_qdma (mca_ptl_elan_component_t * emp,
         OMPI_PTL_ELAN_CHECK_UNEX (queue, NULL, OMPI_ERROR, 0);
         memset (queue, 0, sizeof (ompi_ptl_elan_queue_ctrl_t));
 
-        /* Allocate input queue */
+        /* TODO: move the input queue into ptl->comp */
         queue->input = (E4_InputQueue *) elan4_allocElan (rail->r_alloc,
                                                           INPUT_QUEUE_ALIGN,
                                                           INPUT_QUEUE_SIZE);
@@ -376,6 +384,92 @@ ompi_init_elan_qdma (mca_ptl_elan_component_t * emp,
         OMPI_PTL_ELAN_CHECK_UNEX (rxq->qr_es, NULL, OMPI_ERROR, 0);
         OBJ_CONSTRUCT (&queue->rx_lock, ompi_mutex_t);
     }
+
+#if OMPI_PTL_ELAN_COMP_QUEUE || 1
+    /* Create a complete queue here, later use the queue above directly */
+    /* Init the Transmit Queue structure */
+    for (i = 0; i < num_rails; i++) {
+
+        ompi_ptl_elan_recv_queue_t *rxq;
+        ompi_ptl_elan_comp_queue_t *comp;
+
+        ptl = emp->modules[i];
+        rail = (RAIL *) ptl->ptl_elan_rail;
+        ctx = (ELAN4_CTX *) ptl->ptl_elan_ctx;
+
+        comp = ptl->comp = (ompi_ptl_elan_comp_queue_t *)
+            malloc (sizeof (ompi_ptl_elan_comp_queue_t));
+        OMPI_PTL_ELAN_CHECK_UNEX (comp, NULL, OMPI_ERROR, 0);
+        memset (comp, 0, sizeof (ompi_ptl_elan_comp_queue_t));
+
+        /* Allocate input queue */
+        comp->input = (E4_InputQueue *) elan4_allocElan (rail->r_alloc,
+                                                          INPUT_QUEUE_ALIGN,
+                                                          INPUT_QUEUE_SIZE);
+        OMPI_PTL_ELAN_CHECK_UNEX (comp->input, NULL, OMPI_ERROR, 0);
+
+        /* Init the Receive Queue structure */
+        comp->rx_nslots = nslots;
+        nslots += OMPI_PTL_ELAN_LOST_QSLOTS;
+        comp->rx_buffsize = (slotsize > INPUT_QUEUE_MAX) ?
+            INPUT_QUEUE_MAX : slotsize;
+        comp->rx_slotsize = ELAN_ALIGNUP (slotsize, OMPI_PTL_ELAN_SLOT_ALIGN);
+        rxq = comp->rxq = (ompi_ptl_elan_recv_queue_t *)
+            elan4_allocMain (rail->r_alloc, 64,
+                             sizeof (ompi_ptl_elan_recv_queue_t));
+        OMPI_PTL_ELAN_CHECK_UNEX (rxq, NULL, OMPI_ERROR, 0);
+        memset (rxq, 0, sizeof (ompi_ptl_elan_recv_queue_t));
+
+        rxq->qr_rail = rail;
+        rxq->qr_fptr = elan4_allocMain (rail->r_alloc,
+                                        128, nslots * comp->rx_slotsize);
+        OMPI_PTL_ELAN_CHECK_UNEX (rxq->qr_fptr, NULL, OMPI_ERROR, 0);
+        memset (rxq->qr_fptr, 0xeb, nslots * comp->rx_slotsize);
+
+        rxq->qr_elanDone = ALLOC_ELAN (rail, 
+		OMPI_PTL_ELAN_SLOT_ALIGN, sizeof (EVENT32));
+        OMPI_PTL_ELAN_CHECK_UNEX (rxq->qr_elanDone, NULL, OMPI_ERROR, 0);
+
+        /* Set the top et al */
+        rxq->qr_efitem = (E4_uint64) elan4_main2elan (ctx, rxq->qr_fptr);
+	assert(rxq->qr_efitem != ELAN_BAD_ADDR); 
+        rxq->qr_base = rxq->qr_fptr;
+        rxq->qr_top = (void *) ((uintptr_t) rxq->qr_base + 
+		(comp->rx_slotsize * (nslots - OMPI_PTL_ELAN_LOST_QSLOTS)));
+        rxq->qr_efptr = rxq->qr_efitem;
+        rxq->qr_elitem = rxq->qr_efitem + 
+	    (comp->rx_slotsize * (nslots - OMPI_PTL_ELAN_LOST_QSLOTS));
+
+        /* Event to wait/block on, Bug here for the event */
+        rxq->qr_qEvent = rxq->qr_elanDone;
+
+        comp->input->q_event =
+            SDRAM2ELAN (ctx, (void *) rxq->qr_elanDone);
+        comp->input->q_fptr = rxq->qr_efitem;
+        comp->input->q_bptr = rxq->qr_efitem;
+        comp->input->q_control =
+            E4_InputQueueControl (rxq->qr_efitem, rxq->qr_elitem,
+                                  comp->rx_slotsize);
+
+        /* The event */
+        INITEVENT_WORD (ctx, (EVENT *) rxq->qr_elanDone,
+                        &rxq->qr_doneWord);
+        RESETEVENT_WORD (&rxq->qr_doneWord);
+        PRIMEEVENT_WORD (ctx, (EVENT *) rxq->qr_elanDone, 1);
+
+        rxq->qr_cmdq = elan4_alloc_cmdq (ctx, rail->r_alloc,
+                                         CQ_Size1K,
+                                         CQ_WriteEnableBit |
+                                         CQ_WaitEventEnableBit, NULL);
+        OMPI_PTL_ELAN_CHECK_UNEX (rxq->qr_cmdq, NULL, OMPI_ERROR, 0);
+
+        /* Allocate a sleepDesc for threads to block on */
+        rxq->qr_es = ompi_init_elan_sleepdesc (&mca_ptl_elan_global_state,
+                                               rxq->qr_rail);
+        OMPI_PTL_ELAN_CHECK_UNEX (rxq->qr_es, NULL, OMPI_ERROR, 0);
+        OBJ_CONSTRUCT (&comp->rx_lock, ompi_mutex_t);
+    }
+#endif
 
     END_FUNC(PTL_ELAN_DEBUG_INIT);
     return (OMPI_SUCCESS);

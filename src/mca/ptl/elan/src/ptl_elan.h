@@ -45,8 +45,9 @@ struct mca_ptl_elan_module_t {
     ompi_list_t  recv_frags;   /**< outstanding recv's */
     ompi_list_t  pending_acks;
 
+    struct ompi_ptl_elan_comp_queue_t  *comp;  /**< completion queue */
     struct ompi_ptl_elan_queue_ctrl_t  *queue; /**< Queue ctrl struct*/
-    struct ompi_ptl_elan_putget_ctrl_t *putget; /**< putget ctrl struct */
+    struct ompi_ptl_elan_putget_ctrl_t *putget;/**< putget ctrl struct */
 };
 typedef struct mca_ptl_elan_module_t mca_ptl_elan_module_t;
 extern mca_ptl_elan_module_t mca_ptl_elan_module;
