@@ -34,6 +34,8 @@ libruntime_la_SOURCES = \
     ompi_progress.c \
     orte_finalize.c \
     orte_init.c \
+    orte_init_stage1.c \
+    orte_init_stage2.c \
     orte_monitor.c \
     orte_universe_exists.c \
     orte_restart.c \

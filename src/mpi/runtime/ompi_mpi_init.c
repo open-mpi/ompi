@@ -78,19 +78,41 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     int ret, param;
     bool allow_multi_user_threads;
     bool have_hidden_threads;
+    bool compound_cmd=false;
     ompi_proc_t** procs;
     size_t nprocs;
     char *error = NULL;
     
-    /* Join the run-time environment */
-    if (ORTE_SUCCESS != (ret = orte_init())) {
-	   goto error;
+    /* Join the run-time environment - do the things that don't hit the registry */
+    if (ORTE_SUCCESS != (ret = orte_init_stage1())) {
+        error = "ompi_mpi_init: orte_init_stage1 failed";
+	    goto error;
     }
 
-    /* start recording the compound command that starts us up */
-    /* orte_gpr.begin_compound_cmd();
-     */
+    /* if we are not the seed nor a singleton, AND we have not set the
+     * orte_debug flag, then 
+     * start recording the compound command that starts us up.
+     * if we are the seed or a singleton, then don't do this - the registry is
+     * local, so we'll just drive it directly */
+    if (orte_process_info.seed ||
+        NULL == orte_process_info.ns_replica ||
+        orte_debug_flag) {
+        compound_cmd = false;
+    } else {
+        if (ORTE_SUCCESS != (ret = orte_gpr.begin_compound_cmd())) {
+            ORTE_ERROR_LOG(ret);
+            error = "ompi_mpi_init: orte_gpr.begin_compound_cmd failed";
+            goto error;
+        }
+        compound_cmd = true;
+    }
 
+    /* Now do the things that hit the registry */
+    if (ORTE_SUCCESS != (ret = orte_init_stage2())) {
+        ORTE_ERROR_LOG(ret);
+        error = "ompi_mpi_init: orte_init_stage2 failed";
+        goto error;
+    }
     /* Once we've joined the RTE, see if any MCA parameters were
        passed to the MPI level */
 
@@ -242,13 +264,16 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         goto error;
     }
 
-    /* execute the compound command 
+    /* if the compound command is operative, execute it 
     */
-/*    if (OMPI_SUCCESS != (ret = orte_gpr.exec_compound_cmd())) {
-	    error = "ompi_rte_init: orte_gpr.exec_compound_cmd failed";
-	    goto error;
+    if (compound_cmd) {
+        if (OMPI_SUCCESS != (ret = orte_gpr.exec_compound_cmd())) {
+            ORTE_ERROR_LOG(ret);
+    	    error = "ompi_rte_init: orte_gpr.exec_compound_cmd failed";
+    	    goto error;
+        }
     }
-*/
+
 
     /* FIRST BARRIER - WAIT FOR MSG FROM RMGR_PROC_STAGE_GATE_MGR TO ARRIVE */
     if (ORTE_SUCCESS != (ret = orte_rml.xcast(NULL, NULL, 0, NULL, NULL))) {

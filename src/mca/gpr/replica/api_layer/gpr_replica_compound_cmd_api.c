@@ -28,6 +28,7 @@
 #include "util/proc_info.h"
 
 #include "mca/ns/ns_types.h"
+#include "mca/errmgr/errmgr.h"
 
 #include "mca/gpr/replica/gpr_replica.h"
 #include "mca/gpr/replica/communications/gpr_replica_comm.h"
@@ -58,12 +59,14 @@ int orte_gpr_replica_begin_compound_cmd(void)
     
     orte_gpr_replica_globals.compound_cmd = OBJ_NEW(orte_buffer_t);
     if (NULL == orte_gpr_replica_globals.compound_cmd) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         orte_gpr_replica_globals.compound_cmd_mode = false;
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
     
     if (ORTE_SUCCESS != (rc = orte_dps.pack(orte_gpr_replica_globals.compound_cmd, &command,
                                             1, ORTE_GPR_CMD))) {
+        ORTE_ERROR_LOG(rc);
         orte_gpr_replica_globals.compound_cmd_mode = false;
         OBJ_RELEASE(orte_gpr_replica_globals.compound_cmd);
         return rc;
@@ -104,8 +107,10 @@ int orte_gpr_replica_exec_compound_cmd(void)
 
     OMPI_THREAD_LOCK(&orte_gpr_replica_globals.wait_for_compound_mutex);
 
-    rc = orte_gpr_replica_process_command_buffer(orte_gpr_replica_globals.compound_cmd,
-                                        NULL, &answer);
+    if (ORTE_SUCCESS != (rc = orte_gpr_replica_process_command_buffer(orte_gpr_replica_globals.compound_cmd,
+                                        NULL, &answer))) {
+        ORTE_ERROR_LOG(rc);
+    }
 
     orte_gpr_replica_globals.compound_cmd_mode = false;
     if (NULL != orte_gpr_replica_globals.compound_cmd) {  /* shouldn't be any way this could be true, but just to be safe... */

@@ -40,6 +40,7 @@ int orte_gpr_replica_process_command_buffer(orte_buffer_t *input_buffer,
     orte_gpr_cmd_flag_t command;
     int rc, ret, rc2;
     size_t n;
+    bool compound_cmd=false;
 
 
     *output_buffer = OBJ_NEW(orte_buffer_t);
@@ -61,6 +62,8 @@ int orte_gpr_replica_process_command_buffer(orte_buffer_t *input_buffer,
             	    if (orte_gpr_replica_globals.debug) {
             		    ompi_output(0, "\tcompound cmd");
             	    }
+                    
+                    compound_cmd = true;
             	    break;
                    
             	
@@ -274,6 +277,28 @@ int orte_gpr_replica_process_command_buffer(orte_buffer_t *input_buffer,
         n = 1;  /* unpack a single command */
     } /* end while */
 
+    /* deal with compound cmds to ensure proper return values */
+    if (compound_cmd) {
+        OBJ_RELEASE(answer);
+        *output_buffer = OBJ_NEW(orte_buffer_t);
+        if (NULL == *output_buffer) {
+            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+            return ORTE_ERR_OUT_OF_RESOURCE;
+        }
+        
+        command = ORTE_GPR_COMPOUND_CMD;
+        if (ORTE_SUCCESS != (rc = orte_dps.pack(*output_buffer, (void*)&command, 1, ORTE_GPR_CMD))) {
+            ORTE_ERROR_LOG(rc);
+            goto RETURN_ERROR;
+        }
+        
+        ret = ORTE_SUCCESS;
+        if (ORTE_SUCCESS != (rc = orte_dps.pack(*output_buffer, &ret, 1, ORTE_INT))) {
+            ORTE_ERROR_LOG(rc);
+            goto RETURN_ERROR;
+        }
+    }
+    
     return ORTE_SUCCESS;
     
 RETURN_ERROR:
