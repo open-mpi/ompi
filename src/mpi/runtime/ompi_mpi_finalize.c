@@ -143,7 +143,6 @@ int ompi_mpi_finalize(void)
   everything that depends on the event library here (rather than the
   rte_finalize where it should be).*/
   ompi_rte_wait_finalize();
-  ompi_event_fini();
   /* BWB - end fix me hack */
 
   /* cleanup */

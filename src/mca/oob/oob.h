@@ -147,6 +147,16 @@ typedef int (*mca_oob_base_module_recv_nb_fn_t)(
     void* cbdata);
 
 /**
+* Implementation of mca_oob_recv_cancel().
+*
+* @param peer (IN)    Opaque name of peer process or MCA_OOB_NAME_ANY for wildcard receive.
+* @param tag (IN)     User defined tag for matching send/recv.
+* @return             OMPI error code (<0) on error or number of bytes actually received.
+*/
+
+typedef int (*mca_oob_base_module_recv_cancel_fn_t)(ompi_process_name_t* peer, int tag);
+
+/**
  * Hook function called by mca_oob_base_register to allow
  * the oob component a chance to register contact information
  */
@@ -161,15 +171,16 @@ typedef int (*mca_oob_base_module_fini_fn_t)(void);
  * OOB Module
  */
 struct mca_oob_1_0_0_t {
-    mca_oob_base_module_get_addr_fn_t  oob_get_addr;
-    mca_oob_base_module_set_addr_fn_t  oob_set_addr;
-    mca_oob_base_module_ping_fn_t      oob_ping;
-    mca_oob_base_module_send_fn_t      oob_send;
-    mca_oob_base_module_recv_fn_t      oob_recv;
-    mca_oob_base_module_send_nb_fn_t   oob_send_nb;
-    mca_oob_base_module_recv_nb_fn_t   oob_recv_nb;
-    mca_oob_base_module_init_fn_t      oob_init;
-    mca_oob_base_module_fini_fn_t      oob_fini;
+    mca_oob_base_module_get_addr_fn_t    oob_get_addr;
+    mca_oob_base_module_set_addr_fn_t    oob_set_addr;
+    mca_oob_base_module_ping_fn_t        oob_ping;
+    mca_oob_base_module_send_fn_t        oob_send;
+    mca_oob_base_module_recv_fn_t        oob_recv;
+    mca_oob_base_module_send_nb_fn_t     oob_send_nb;
+    mca_oob_base_module_recv_nb_fn_t     oob_recv_nb;
+    mca_oob_base_module_recv_cancel_fn_t oob_recv_cancel;
+    mca_oob_base_module_init_fn_t        oob_init;
+    mca_oob_base_module_fini_fn_t        oob_fini;
 };
 
 /**

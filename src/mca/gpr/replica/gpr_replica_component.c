@@ -466,6 +466,7 @@ int mca_gpr_replica_finalize(void)
 
     /* All done */
 
+	mca_oob_recv_cancel(MCA_OOB_NAME_ANY, MCA_OOB_TAG_GPR);
     return OMPI_SUCCESS;
 }
 

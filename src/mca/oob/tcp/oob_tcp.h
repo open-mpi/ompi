@@ -195,6 +195,18 @@ int mca_oob_tcp_recv_nb(
     void* cbdata);
 
 /**
+ * Cancel non-blocking receive.
+ *
+ * @param peer (IN)    Opaque name of peer process or MCA_OOB_NAME_ANY for wildcard receive.
+ * @param tag (IN)     User defined tag for matching send/recv.
+ * @return             OMPI error code (<0) on error or number of bytes actually received.
+ */
+
+int mca_oob_tcp_recv_cancel(
+    ompi_process_name_t* peer, 
+    int tag);
+
+/**
  * Attempt to map a peer name to its corresponding address.
  */
 
@@ -227,9 +239,12 @@ struct mca_oob_tcp_component_t {
     ompi_event_t       tcp_send_event;       /**< event structure for sends */
     ompi_event_t       tcp_recv_event;       /**< event structure for recvs */
     ompi_mutex_t       tcp_lock;             /**< lock for accessing module state */
+    ompi_list_t        tcp_events;           /**< list of pending events (accepts) */
     ompi_list_t        tcp_msg_post;         /**< list of recieves user has posted */
     ompi_list_t        tcp_msg_recv;         /**< list of recieved messages */
     ompi_mutex_t       tcp_match_lock;       /**< lock held while searching/posting messages */
+    ompi_condition_t   tcp_match_cond;       /**< condition variable used in finalize */
+    int                tcp_match_count;      /**< number of matched recvs in progress */
     int                tcp_debug;            /**< debug level */
 };
 

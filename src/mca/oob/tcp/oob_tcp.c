@@ -16,6 +16,40 @@
 #include "mca/pcmclient/pcmclient.h"
 #include "mca/pcmclient/base/base.h"
 
+                                                                  
+/*
+ * Data structure for accepting connections.
+ */
+                                                                                                      
+struct mca_oob_tcp_event_t {
+    ompi_list_item_t item;
+    ompi_event_t event;
+};
+typedef struct mca_oob_tcp_event_t mca_oob_tcp_event_t;
+                                                                                                      
+static void mca_oob_tcp_event_construct(mca_oob_tcp_event_t* event)
+{
+    OMPI_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
+    ompi_list_append(&mca_oob_tcp_component.tcp_events, &event->item);
+    OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
+}
+                                                                                                      
+static void mca_oob_tcp_event_destruct(mca_oob_tcp_event_t* event)
+{
+    OMPI_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
+    ompi_list_remove_item(&mca_oob_tcp_component.tcp_events, &event->item);
+    OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
+}
+                                                                                                      
+OBJ_CLASS_INSTANCE(
+    mca_oob_tcp_event_t,
+    ompi_list_item_t,
+    mca_oob_tcp_event_construct,
+    mca_oob_tcp_event_destruct);
+                                                                                                      
+/*
+ * Local utility functions
+ */
 
 static int  mca_oob_tcp_create_listen(void);
 static void mca_oob_tcp_recv_handler(int sd, short flags, void* user);
@@ -65,6 +99,7 @@ static mca_oob_t mca_oob_tcp = {
     mca_oob_tcp_recv,
     mca_oob_tcp_send_nb,
     mca_oob_tcp_recv_nb,
+    mca_oob_tcp_recv_cancel,
     mca_oob_tcp_init,
     mca_oob_tcp_fini,
 };
@@ -108,9 +143,11 @@ int mca_oob_tcp_component_open(void)
     OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_peer_free,     ompi_free_list_t);
     OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_msgs,          ompi_free_list_t);
     OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_lock,          ompi_mutex_t);
+    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_events,        ompi_list_t);
     OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_msg_post,      ompi_list_t);
     OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_msg_recv,      ompi_list_t);
     OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_match_lock,    ompi_mutex_t);
+    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_match_cond,    ompi_condition_t);
 
     /* register oob module parameters */
     mca_oob_tcp_component.tcp_peer_limit =
@@ -122,6 +159,7 @@ int mca_oob_tcp_component_open(void)
 
     /* initialize state */
     mca_oob_tcp_component.tcp_listen_sd = -1;
+    mca_oob_tcp_component.tcp_match_count = 0;
     return OMPI_SUCCESS;
 }
 
@@ -132,15 +170,18 @@ int mca_oob_tcp_component_open(void)
 
 int mca_oob_tcp_component_close(void)
 {
+    /* cleanup resources */
     OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_peer_list);
     OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_peer_tree);
     OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_peer_free);
+    OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_events);
     OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_subscriptions);
     OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_msgs);
     OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_lock);
     OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_msg_post);
     OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_msg_recv);
     OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_match_lock);
+    OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_match_cond);
     return OMPI_SUCCESS;
 }
 
@@ -156,8 +197,10 @@ static void mca_oob_tcp_accept(void)
     while(true) {
         ompi_socklen_t addrlen = sizeof(struct sockaddr_in);
         struct sockaddr_in addr;
-        ompi_event_t* event;
-        int sd = accept(mca_oob_tcp_component.tcp_listen_sd, (struct sockaddr*)&addr, &addrlen);
+        mca_oob_tcp_event_t* event;
+        int sd;
+ 
+        sd = accept(mca_oob_tcp_component.tcp_listen_sd, (struct sockaddr*)&addr, &addrlen);
         if(sd < 0) {
             if(errno == EINTR)
                 continue;
@@ -167,9 +210,9 @@ static void mca_oob_tcp_accept(void)
         }
                                                                                                                    
         /* wait for receipt of peers process identifier to complete this connection */
-        event = malloc(sizeof(ompi_event_t));
-        ompi_event_set(event, sd, OMPI_EV_READ|OMPI_EV_PERSIST, mca_oob_tcp_recv_handler, event);
-        ompi_event_add(event, 0);
+        event = OBJ_NEW(mca_oob_tcp_event_t);
+        ompi_event_set(&event->event, sd, OMPI_EV_READ, mca_oob_tcp_recv_handler, event);
+        ompi_event_add(&event->event, 0);
     }
 }
 
@@ -255,14 +298,14 @@ static void mca_oob_tcp_recv_handler(int sd, short flags, void* user)
     ompi_process_name_t guid[2];
     mca_oob_tcp_peer_t* peer;
     int rc;
+    mca_oob_tcp_event_t* event = user;
 
     /* accept new connections on the listen socket */
     if(mca_oob_tcp_component.tcp_listen_sd == sd) {
         mca_oob_tcp_accept();
         return;
     }
-    ompi_event_del((ompi_event_t*)user);
-    free(user);
+    OBJ_RELEASE(event);
 
     /* recv the process identifier */
     while((rc = recv(sd, guid, sizeof(guid), 0)) != sizeof(guid)) {
@@ -581,23 +624,39 @@ int mca_oob_tcp_init(void)
  */
 int mca_oob_tcp_fini(void)
 {
-    mca_oob_tcp_peer_t * peer;
- 
+    ompi_list_item_t *item;
+    OMPI_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
+    ompi_event_disable(); /* disable event processing */
+
     /* close listen socket */
     if (mca_oob_tcp_component.tcp_listen_sd >= 0) {
         ompi_event_del(&mca_oob_tcp_component.tcp_recv_event); 
-        if(0 != close(mca_oob_tcp_component.tcp_listen_sd)) {
-            ompi_output(0, "mca_oob_tcp_finalize: error closing listen socket. errno=%d", errno);
-        }
+        close(mca_oob_tcp_component.tcp_listen_sd);
+        mca_oob_tcp_component.tcp_listen_sd = -1;
     }
 
     /* cleanup all peers */
-    while(NULL != (peer = (mca_oob_tcp_peer_t *) 
-        ompi_list_remove_first(&mca_oob_tcp_component.tcp_peer_list))) {
-        OBJ_DESTRUCT(peer);
+    for(item = ompi_list_remove_first(&mca_oob_tcp_component.tcp_peer_list);
+        item != NULL;
+        item = ompi_list_remove_first(&mca_oob_tcp_component.tcp_peer_list)) {
+        mca_oob_tcp_peer_t* peer = (mca_oob_tcp_peer_t*)item;
+        MCA_OOB_TCP_PEER_RETURN(peer);
     }
+
+    /* delete any pending events */
+    for(item =  ompi_list_remove_first(&mca_oob_tcp_component.tcp_events);
+        item != NULL;
+        item =  ompi_list_remove_first(&mca_oob_tcp_component.tcp_events)) {
+        mca_oob_tcp_event_t* event = (mca_oob_tcp_event_t*)item;
+        ompi_event_del(&event->event);
+        OBJ_RELEASE(event);
+    }
+
+    ompi_event_enable();
+    OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
     return OMPI_SUCCESS;
 }
+
 
 /*
 * Compare two process names for equality.

@@ -223,3 +223,48 @@ int mca_oob_tcp_recv_nb(
     return 0;
 }
 
+
+/*
+ * Cancel non-blocking recv.
+ *
+ * @param peer (IN)    Opaque name of peer process or MCA_OOB_NAME_ANY for wildcard receive.
+ * @param tag (IN)     User supplied tag for matching send/recv.
+ * @return             OMPI error code (<0) on error or number of bytes actually received.
+ */
+
+int mca_oob_tcp_recv_cancel(
+    ompi_process_name_t* name, 
+    int tag)
+{
+    extern ompi_mutex_t ompi_event_lock;
+    int matched = 0;
+    ompi_list_item_t *item, *next;
+
+    /* wait for any previously matched messages to be processed */
+    OMPI_THREAD_LOCK(&mca_oob_tcp_component.tcp_match_lock);
+    while(mca_oob_tcp_component.tcp_match_count) {
+        ompi_condition_wait(
+            &mca_oob_tcp_component.tcp_match_cond, 
+            &mca_oob_tcp_component.tcp_match_lock);
+    }
+
+    /* remove any matching posted receives */
+    for(item =  ompi_list_get_first(&mca_oob_tcp_component.tcp_msg_post);
+        item != ompi_list_get_end(&mca_oob_tcp_component.tcp_msg_post);
+        item =  next) {
+        mca_oob_tcp_msg_t* msg = (mca_oob_tcp_msg_t*)item;
+        next = ompi_list_get_next(item);
+
+        if((0 == mca_oob_tcp_process_name_compare(name,MCA_OOB_NAME_ANY) ||
+           (0 == mca_oob_tcp_process_name_compare(&msg->msg_peer,name)))) {
+            if (tag == MCA_OOB_TAG_ANY || msg->msg_hdr.msg_tag == tag) {
+                ompi_list_remove_item(&mca_oob_tcp_component.tcp_msg_post, &msg->super);
+                MCA_OOB_TCP_MSG_RETURN(msg);
+                matched++;
+            }
+        }
+    }
+    OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_match_lock);
+    return (matched > 0) ? OMPI_SUCCESS : OMPI_ERR_NOT_FOUND;
+}
+

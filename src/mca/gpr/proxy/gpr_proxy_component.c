@@ -176,7 +176,7 @@ int mca_gpr_proxy_finalize(void)
     }
 
     /* All done */
-
+    mca_oob_recv_cancel(MCA_OOB_NAME_ANY, MCA_OOB_TAG_GPR_NOTIFY);
     return OMPI_SUCCESS;
 }
 

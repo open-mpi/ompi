@@ -77,6 +77,8 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_peer_t);
  */
 #define MCA_OOB_TCP_PEER_RETURN(peer) \
     { \
+    mca_oob_tcp_peer_close(peer); \
+    ompi_rb_tree_delete(&mca_oob_tcp_component.tcp_peer_tree, &peer->peer_name); \
     OMPI_FREE_LIST_RETURN(&mca_oob_tcp_component.tcp_peer_free, (ompi_list_item_t*)peer); \
     }
 

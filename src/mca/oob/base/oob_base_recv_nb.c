@@ -49,6 +49,18 @@ int mca_oob_recv_nb(ompi_process_name_t* peer, struct iovec* msg, int count, int
 }
 
 
+/*
+ * Cancel non-blocking recv.j
+ *
+ * @param peer (IN)    Opaque name of peer process or MCA_OOB_NAME_ANY for wildcard receive.
+ * @param tag (IN)     User defined tag for message matching.
+ * @return             OMPI success or error code (<0) on error.
+ */
+int mca_oob_recv_cancel(ompi_process_name_t* peer, int tag)
+{
+    return(mca_oob.oob_recv_cancel(peer, tag));
+}
+
 
 /**
 * Non-blocking version of mca_oob_recv_packed().
