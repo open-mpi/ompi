@@ -183,7 +183,7 @@ mca_coll_basic_module_init(struct ompi_communicator_t *comm)
       size = ompi_comm_size(comm);
   }
   data = malloc(sizeof(struct mca_coll_base_comm_t) +
-                (sizeof(ompi_request_t) * size * 2));
+                (sizeof(ompi_request_t *) * size * 2));
   
   if (NULL == data) {
       return NULL;
