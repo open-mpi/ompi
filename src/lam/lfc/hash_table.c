@@ -23,7 +23,7 @@ lam_class_info_t lam_fast_hash_cls = {
  */
 #define MULTIPLIER		31
 
-static inline uint32_t lam_hash_value(const char * key, uint32_t keysize)
+static inline uint32_t lam_hash_value(const unsigned char * key, uint32_t keysize)
 {
     uint32_t		h, i;
     const char      *p;
@@ -234,6 +234,23 @@ int lam_fh_set_value_for_ikey(lam_fast_hash_t *htbl, void *val, uint32_t key)
     return lam_fh_set_value(htbl, val, &key, sizeof(key));
 }
 
+
+void *lam_fh_get_value_for_lkey(lam_fast_hash_t *htbl, uint64_t key)
+{
+    return lam_fh_get_value(htbl, &key, sizeof(key));
+}
+
+
+void lam_fh_remove_value_for_lkey(lam_fast_hash_t *htbl, uint64_t key)
+{
+    lam_fh_remove_value(htbl, &key, sizeof(key));
+}
+
+
+int lam_fh_set_value_for_lkey(lam_fast_hash_t *htbl, void *val, uint64_t key)
+{
+    return lam_fh_set_value(htbl, val, &key, sizeof(key));
+}
 
 
 void *lam_fh_get_value_for_skey(lam_fast_hash_t *htbl, const char *key)
