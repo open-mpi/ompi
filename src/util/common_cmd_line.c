@@ -27,16 +27,18 @@ int ompi_common_cmd_line_init(int argc, char **argv)
 
     /* Setup the options that are allowable */
 
-    ompi_cmd_line_make_opt(ompi_common_cmd_line, 
-                           'u', "--universe", 1,
-                           "Specify the Open MPI universe");
-    ompi_cmd_line_make_opt(ompi_common_cmd_line, 
-                           't', "--tmpdir", 1,
-                           "Specify the Open MPI prefix for the session directory");
+    ompi_cmd_line_make_opt(ompi_common_cmd_line, 'v', "version", 0,
+			   "Show version of Open MPI and this program");
+
+    ompi_cmd_line_make_opt(ompi_common_cmd_line, 'h', "help", 0,
+			   "Show help for this function");
+
 
     /* Parse the command line */
 
-    ompi_cmd_line_parse(ompi_common_cmd_line, true, argc, argv);
+    if (OMPI_SUCCESS != ompi_cmd_line_parse(ompi_common_cmd_line, true, argc, argv)) {
+	return OMPI_ERROR;
+    }
 
     /* Done */
 
