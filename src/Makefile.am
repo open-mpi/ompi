@@ -14,6 +14,7 @@ SUBDIRS = \
         datatype \
         errhandler \
         event \
+        file \
         group \
         info \
         lfc \
@@ -30,9 +31,6 @@ SUBDIRS = \
         win \
         . \
         tools
-
-not_yet = \
-        file
 
 lib_LTLIBRARIES = libmpi.la
 libmpi_la_SOURCES =

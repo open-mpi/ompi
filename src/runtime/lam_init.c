@@ -11,6 +11,8 @@
 #include "util/output.h"
 #include "threads/mutex.h"
 #include "event/event.h"
+#include "mem/malloc.h"
+
 
 /**
  * First function that must be called in a LAM process.
