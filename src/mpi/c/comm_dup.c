@@ -43,12 +43,12 @@ int MPI_Comm_dup(MPI_Comm comm, MPI_Comm *newcomm) {
     if ( OMPI_COMM_IS_INTER ( comp ) ){
         rsize  = comp->c_remote_group->grp_proc_count;
         rprocs = comp->c_remote_group->grp_proc_pointers;
-        mode   = OMPI_COMM_INTER_INTER;
+        mode   = OMPI_COMM_CID_INTER;
     }
     else {
         rsize  = 0;
         rprocs = NULL;
-        mode   = OMPI_COMM_INTRA_INTRA;
+        mode   = OMPI_COMM_CID_INTRA;
     }
 
     newcomp = ompi_comm_set ( comp,                                   /* old comm */
@@ -67,12 +67,12 @@ int MPI_Comm_dup(MPI_Comm comm, MPI_Comm *newcomm) {
     }
 
     /* Determine context id. It is identical to f_2_c_handle */
-    rc = ompi_comm_nextcid ( newcomp,       /* new communicator */ 
-                             comp,          /* old comm */
-                             NULL,          /* bridge comm */
-                             MPI_UNDEFINED, /* local leader */
-                             MPI_UNDEFINED, /* remote_leader */
-                             mode );        /* mode */
+    rc = ompi_comm_nextcid ( newcomp,  /* new communicator */ 
+                             comp,     /* old comm */
+                             NULL,     /* bridge comm */
+                             NULL,     /* local leader */
+                             NULL,     /* remote_leader */
+                             mode );   /* mode */
     if ( OMPI_SUCCESS != rc ) {
         *newcomm = MPI_COMM_NULL;
         OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_INTERN, "MPI_Comm_dup");

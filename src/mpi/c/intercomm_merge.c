@@ -85,12 +85,12 @@ int MPI_Intercomm_merge(MPI_Comm intercomm, int high,
     }
 
     /* Determine context id. It is identical to f_2_c_handle */
-    rc = ompi_comm_nextcid ( newcomp,                /* new comm */ 
-                             intercomm,              /* old comm */
-                             NULL,                   /* bridge comm */
-                             MPI_UNDEFINED,          /* local leader */
-                             MPI_UNDEFINED,          /* remote_leader */
-                             OMPI_COMM_INTER_INTRA); /* mode */
+    rc = ompi_comm_nextcid ( newcomp,              /* new comm */ 
+                             intercomm,            /* old comm */
+                             NULL,                 /* bridge comm */
+                             NULL,                 /* local leader */
+                             NULL,                 /* remote_leader */
+                             OMPI_COMM_CID_INTER); /* mode */
     if ( OMPI_SUCCESS != rc ) {
         goto exit;
     }

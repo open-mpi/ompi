@@ -118,12 +118,12 @@ int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
     }
 
     /* Determine context id. It is identical to f_2_c_handle */
-    rc = ompi_comm_nextcid ( newcomp,                /* new comm */ 
-                             local_comm,             /* old comm */
-                             bridge_comm,            /* bridge comm */
-                             local_leader,           /* local leader */
-                             remote_leader,          /* remote_leader */
-                             OMPI_COMM_INTRA_INTER); /* mode */
+    rc = ompi_comm_nextcid ( newcomp,                     /* new comm */ 
+                             local_comm,                  /* old comm */
+                             bridge_comm,                 /* bridge comm */
+                             &local_leader,               /* local leader */
+                             &remote_leader,              /* remote_leader */
+                             OMPI_COMM_CID_INTRA_BRIDGE); /* mode */
  err_exit:
     if ( NULL == rprocs ) {
         free ( rprocs );

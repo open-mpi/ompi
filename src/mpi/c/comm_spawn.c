@@ -25,9 +25,9 @@ int MPI_Comm_spawn(char *command, char **argv, int maxprocs, MPI_Info info,
 {
     int rank, rc, i;
     ompi_communicator_t *comp, *newcomp;
-    int mode; /* probably need a different mode */
     uint32_t *rprocs=NULL;
-    
+    uint32_t lleader=0, rleader=0; /* OOB contact information of me and the other root */
+ 
     comp = (ompi_communicator_t *) comm;
 
     if ( MPI_PARAM_CHECK ) {
@@ -130,12 +130,12 @@ int MPI_Comm_spawn(char *command, char **argv, int maxprocs, MPI_Info info,
     }
 
     /* Determine context id. It is identical to f_2_c_handle */
-    rc = ompi_comm_nextcid ( newcomp,       /* new communicator */ 
-                             comp,          /* old comm */
-                             NULL,          /* bridge comm */
-                             MPI_UNDEFINED, /* local leader */
-                             MPI_UNDEFINED, /* remote_leader */
-                             mode );        /* mode */
+    rc = ompi_comm_nextcid ( newcomp,                   /* new comm */ 
+                             comp,                      /* old comm */
+                             NULL,                      /* bridge comm */
+                             &lleader,                  /* local leader */
+                             &rleader,                  /* remote_leader */
+                             OMPI_COMM_CID_INTRA_OOB ); /* mode */
     if ( OMPI_SUCCESS != rc ) {
         goto exit;
     }
