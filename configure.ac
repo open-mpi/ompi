@@ -794,6 +794,8 @@ AC_CONFIG_FILES([
 
     src/mca/coll/Makefile
     src/mca/coll/base/Makefile
+    src/mca/topo/Makefile
+    src/mca/topo/base/Makefile
     src/mca/io/Makefile
     src/mca/io/base/Makefile
     src/mca/one/Makefile
