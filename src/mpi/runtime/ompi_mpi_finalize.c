@@ -58,7 +58,7 @@ int ompi_mpi_finalize(void)
 
     ompi_mpi_finalized = true;
 #if OMPI_HAVE_THREADS == 0
-    ompi_progress_events(OMPI_EVLOOP_ONCE);
+    ompi_progress_events(OMPI_EVLOOP_NONBLOCK);
 #endif
 
     /* begin recording compound command */

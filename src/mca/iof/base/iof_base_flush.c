@@ -61,7 +61,7 @@ int mca_iof_base_flush(void)
                                                                                                                               
     /* wait for all of the endpoints to reach an idle state */
     pending = ompi_list_get_size(&mca_iof_base.iof_endpoints);
-    while(pending == ompi_list_get_size(&mca_iof_base.iof_endpoints)) {
+    while(pending > 0 && pending == ompi_list_get_size(&mca_iof_base.iof_endpoints)) {
         pending = 0;
         for(item = ompi_list_get_first(&mca_iof_base.iof_endpoints);
             item != ompi_list_get_end(&mca_iof_base.iof_endpoints);

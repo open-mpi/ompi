@@ -46,9 +46,7 @@ int ompi_rte_finalize(void)
   ompi_rte_wait_finalize();
   ompi_rte_internal_fini_spawn();
 
-#if 0
   mca_iof_base_close();
-#endif
   mca_pcm_base_close();
   mca_llm_base_close();
   mca_pcmclient_base_close();
