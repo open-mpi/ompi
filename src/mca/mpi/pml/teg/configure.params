@@ -1,0 +1,10 @@
+# -*- shell-script -*-
+#
+# $HEADER$
+#
+
+# Specific to this module
+
+PARAM_INIT_FILE=pml_teg.c
+PARAM_CONFIG_HEADER_FILE="teg_config.h"
+PARAM_CONFIG_FILES="Makefile"
