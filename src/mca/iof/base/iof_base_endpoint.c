@@ -107,6 +107,7 @@ static void orte_iof_base_endpoint_read_handler(int fd, short flags, void *cbdat
     hdr = &frag->frag_hdr;
     hdr->hdr_common.hdr_type = ORTE_IOF_BASE_HDR_MSG;
     hdr->hdr_msg.msg_src = endpoint->ep_name;
+    hdr->hdr_msg.msg_proxy = *ORTE_RML_NAME_SELF;
     hdr->hdr_msg.msg_tag = endpoint->ep_tag;
     hdr->hdr_msg.msg_seq = endpoint->ep_seq;
     hdr->hdr_msg.msg_len = frag->frag_len;
@@ -183,6 +184,20 @@ static orte_iof_base_endpoint_t* orte_iof_base_endpoint_lookup(
     orte_iof_base_mode_t mode,
     int tag)
 {
+    ompi_list_item_t* item;
+    OMPI_THREAD_LOCK(&orte_iof_base.iof_lock);
+    for(item =  ompi_list_get_first(&orte_iof_base.iof_endpoints);
+        item != ompi_list_get_end(&orte_iof_base.iof_endpoints);
+        item =  ompi_list_get_next(item)) {
+        orte_iof_base_endpoint_t* endpoint = (orte_iof_base_endpoint_t*)item;
+        if(orte_ns.compare(ORTE_NS_CMP_ALL,proc,&endpoint->ep_name) == 0 &&
+           endpoint->ep_tag == tag && endpoint->ep_mode == mode) {
+            OBJ_RETAIN(endpoint);
+            OMPI_THREAD_UNLOCK(&orte_iof_base.iof_lock);
+            return endpoint;
+        }
+    }
+    OMPI_THREAD_UNLOCK(&orte_iof_base.iof_lock);
     return NULL;
 }
 
@@ -249,7 +264,7 @@ int orte_iof_base_endpoint_create(
 
     ompi_list_append(&orte_iof_base.iof_endpoints, &endpoint->super);
     OMPI_THREAD_UNLOCK(&orte_iof_base.iof_lock);
-    return OMPI_SUCCESS;
+    return ORTE_SUCCESS;
 }
 
 
@@ -262,7 +277,21 @@ int orte_iof_base_endpoint_delete(
     orte_ns_cmp_bitmask_t mask,
     int tag)
 {
-    return OMPI_ERROR;
+    ompi_list_item_t* item;
+    OMPI_THREAD_LOCK(&orte_iof_base.iof_lock);
+    item =  ompi_list_get_first(&orte_iof_base.iof_endpoints);
+    while(item != ompi_list_get_end(&orte_iof_base.iof_endpoints)) {
+        ompi_list_item_t* next =  ompi_list_get_next(item);
+        orte_iof_base_endpoint_t* endpoint = (orte_iof_base_endpoint_t*)item;
+        if(orte_ns.compare(mask,proc,&endpoint->ep_name) == 0 &&
+           endpoint->ep_tag == tag) {
+            OBJ_RELEASE(endpoint);
+            ompi_list_remove_item(&orte_iof_base.iof_endpoints,&endpoint->super);
+        }
+        item = next;
+    }
+    OMPI_THREAD_UNLOCK(&orte_iof_base.iof_lock);
+    return ORTE_ERR_NOT_FOUND;
 }
 
 /*
@@ -285,7 +314,7 @@ int orte_iof_base_endpoint_close(orte_iof_base_endpoint_t* endpoint)
         }
         break;
     }
-    return OMPI_SUCCESS;
+    return ORTE_SUCCESS;
 }
 
 /*
@@ -362,7 +391,7 @@ int orte_iof_base_endpoint_forward(
         if(rc < 0) {
             orte_iof_base_endpoint_closed(endpoint);
             OMPI_THREAD_UNLOCK(&orte_iof_base.iof_lock);
-            return OMPI_SUCCESS;
+            return ORTE_SUCCESS;
          } 
     } 
 
@@ -377,11 +406,11 @@ int orte_iof_base_endpoint_forward(
         }
     } else {
         /* acknowledge fragment */
-        endpoint->ep_ack = frag->frag_hdr.hdr_msg.msg_seq + frag->frag_hdr.hdr_msg.msg_len;
+        orte_iof_base_endpoint_ack(endpoint, frag->frag_hdr.hdr_msg.msg_seq + frag->frag_hdr.hdr_msg.msg_len);
         orte_iof_base_frag_ack(frag);
     }
     OMPI_THREAD_UNLOCK(&orte_iof_base.iof_lock);
-    return OMPI_SUCCESS;
+    return ORTE_SUCCESS;
 }
 
 
@@ -414,6 +443,6 @@ int orte_iof_base_endpoint_ack(
         ompi_event_add(&endpoint->ep_event, 0);
     }
     OMPI_THREAD_UNLOCK(&orte_iof_base.iof_lock);
-    return OMPI_SUCCESS;
+    return ORTE_SUCCESS;
 }
 

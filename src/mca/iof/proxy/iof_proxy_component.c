@@ -131,7 +131,7 @@ orte_iof_proxy_init(int* priority, bool *allow_multi_user_threads, bool *have_hi
         orte_iof_proxy_svc_recv,
         NULL
     );
-    if(rc != OMPI_SUCCESS) {
+    if(rc < 0) {
         ompi_output(0, "orte_iof_proxy_init: unable to post non-blocking recv");
         return NULL;
     }
