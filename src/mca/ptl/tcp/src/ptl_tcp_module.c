@@ -394,6 +394,8 @@ mca_ptl_t** mca_ptl_tcp_module_init(int *num_ptls,
     /* create a PTL TCP module for selected interfaces */
     if(mca_ptl_tcp_module_create_instances() != LAM_SUCCESS)
         return 0;
+    if(mca_ptl_tcp_module.tcp_num_ptls == 1)
+        mca_ptl_tcp_module.tcp_ptls[0]->super.ptl_max_frag_size = 1024 * 1024;
 
     /* create a TCP listen socket for incoming connection attempts */
     if(mca_ptl_tcp_module_create_listen() != LAM_SUCCESS)

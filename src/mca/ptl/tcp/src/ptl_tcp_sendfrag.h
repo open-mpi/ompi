@@ -91,7 +91,7 @@ static inline void mca_ptl_tcp_send_frag_init_ack(
     ack->super.super.frag_size = 0;
     ack->frag_vec_ptr = ack->frag_vec;
     ack->frag_vec[0].iov_base = (lam_iov_base_ptr_t)hdr;
-    ack->frag_vec[0].iov_len = sizeof(mca_ptl_base_ack_header_t);
+    ack->frag_vec[0].iov_len = sizeof(mca_ptl_base_header_t);
     ack->frag_vec_cnt = 1;
 }
 
