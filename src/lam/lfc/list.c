@@ -113,18 +113,6 @@ int lam_list_insert(lam_list_t *list, lam_list_item_t *item, long long idx)
     return 1;
 }
 
-lam_list_item_t *lam_list_get_first_item(lam_list_t *list)
-{
-    /* Returns first item on list, but does not remove it from the list. */
-    return list->lam_list_head;
-}
-
-lam_list_item_t *lam_list_get_last_item(lam_list_t *list)
-{
-    /* Returns last item on list, but does not remove it from the list. */
-    return list->lam_list_tail;
-}
-
 void lam_list_prepend(lam_list_t *list, lam_list_item_t *item)
 {
     /* Adds item to the front of the list and retains item. */
