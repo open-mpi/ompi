@@ -30,7 +30,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_GET_BYTE_OFFSET,
                            pmpi_file_get_byte_offset_,
                            pmpi_file_get_byte_offset__,
                            pmpi_file_get_byte_offset_f,
-                           (MPI_Fint *fh, MPI_Offset *offset, MPI_Fint *disp, MPI_Fint *ierr),
+                           (MPI_Fint *fh, MPI_Offset *offset, MPI_Offset *disp, MPI_Fint *ierr),
                            (fh, offset, disp, ierr) )
 #endif
 
@@ -47,7 +47,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_GET_BYTE_OFFSET,
                            mpi_file_get_byte_offset_,
                            mpi_file_get_byte_offset__,
                            mpi_file_get_byte_offset_f,
-                           (MPI_Fint *fh, MPI_Offset *offset, MPI_Fint *disp, MPI_Fint *ierr),
+                           (MPI_Fint *fh, MPI_Offset *offset, MPI_Offset *disp, MPI_Fint *ierr),
                            (fh, offset, disp, ierr) )
 #endif
 
@@ -57,16 +57,13 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_GET_BYTE_OFFSET,
 #endif
 
 void mpi_file_get_byte_offset_f(MPI_Fint *fh, MPI_Offset *offset,
-				MPI_Fint *disp, MPI_Fint *ierr)
+				MPI_Offset *disp, MPI_Fint *ierr)
 {
     MPI_File c_fh;
-    MPI_Offset c_disp;
 
     c_fh = MPI_File_f2c(*fh);
 
     *ierr = OMPI_INT_2_FINT(MPI_File_get_byte_offset(c_fh, 
 						     (MPI_Offset) *offset,
-						     &c_disp));
-
-    *disp = (MPI_Fint) c_disp;
+						     disp));
 }
