@@ -31,9 +31,6 @@ SUBDIRS = \
         . \
         dynamic-mca \
         tools
-# JMS Temporary hack to make "make dist" function properly.  Directories
-# mentioned here will eventually move into SUBDIRS.
-DIST_SUBDIRS = $(SUBDIRS) rte
 
 lib_LTLIBRARIES = libmpi.la
 libmpi_la_SOURCES =
