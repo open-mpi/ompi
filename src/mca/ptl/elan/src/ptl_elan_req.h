@@ -25,20 +25,23 @@
 #include "ptl_elan.h"
 #include "ptl_elan_frag.h"
 
+enum {
+    MCA_PTL_ELAN_NULL_DESC,
+    MCA_PTL_ELAN_QDMA_DESC,
+    MCA_PTL_ELAN_PUTGET_DESC
+};
+
 OBJ_CLASS_DECLARATION(mca_ptl_elan_send_request_t);
 OBJ_CLASS_DECLARATION(mca_ptl_elan_recv_request_t);
-/*extern ompi_class_t mca_ptl_elan_send_request_t_class;*/
-/*extern ompi_class_t mca_ptl_elan_recv_request_t_class;*/
 
 /**
- * ELAN send request derived type. The send request contains both the
- * base send request, and space for the first ELAN send fragment descriptor.
- * This avoids the overhead of a second allocation for the initial send 
- * fragment on every send request.
+ * ELAN send request derived type. The send request contains 
+ * the base send request and a point to the elan fragment descriptor
  */
 struct mca_ptl_elan_send_request_t {
-   mca_pml_base_send_request_t super;
-   mca_ptl_elan_send_frag_t req_frag; /* first fragment */
+    mca_pml_base_send_request_t super;
+    int    desc_type;
+    mca_ptl_elan_desc_item_t *req_frag; 
 };
 typedef struct mca_ptl_elan_send_request_t mca_ptl_elan_send_request_t;
 #endif

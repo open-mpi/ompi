@@ -31,8 +31,8 @@ struct mca_ptl_elan_t {
     mca_ptl_t   super;          /**< base PTL interface */
 
     /**< The following are elan-related control structures */
-    ELAN_RAIL   *ptl_elan_rail;     /**< Pointer to this Rail */
-    ELAN_CTX    *ptl_elan_ctx;      /**< Elan ctx of this rail */
+    ELAN_RAIL   *ptl_elan_rail; /**< Pointer to this Rail */
+    ELAN_CTX    *ptl_elan_ctx;  /**< Elan ctx of this rail */
 
     int         ptl_ni_local;   /**< PTL NI local rank */
     int         ptl_ni_total;   /**< PTL NI total */
@@ -43,30 +43,7 @@ struct mca_ptl_elan_t {
 
     struct ompi_ptl_elan_queue_ctrl_t *queue; /**< Queue control structures */
 
-    int         elan_sten_size; /**< sten packet len */
-    int         elan_rdma_size; /**< qdma packet length */
-    int         elan_qdma_size; /**< qdma packet length */
-
-    int         sten_total;     /**< total sten descriptors */
-    int         rdma_total;     /**< total rdma descriptors */
-    int         qdma_total;     /**< total rdma descriptors */
-                                
-    int         sten_num;       /**< num of outstanding sten packets */
-    int         rdma_num;       /**< num of outstanding rdma packets */
-    int         qdma_num;       /**< num of outstanding rdma packets */
-                                
     int         max_num_dmas;   /**< total rdma descriptors */
-                                
-    ompi_list_t elan_stens;     /**< used elan sten descriptors*/
-    ompi_list_t elan_dmas;      /**< used elan dma descriptors*/
-    ompi_list_t elan_rdmas;     /**< used elan rdma descriptors */
-    ompi_list_t elan_frags;     /**< used elan fragments */
-
-    ompi_free_list_t elan_dmas_free;   /**< free elan dma descriptors*/
-    ompi_free_list_t elan_stens_free;  /**< free elan sten descriptors*/
-    ompi_free_list_t elan_rdmas_free;  /**< free elan rdma descriptors */
-    ompi_free_list_t elan_frags_free;  /**< free elan rdma fragments */
-
 };
 typedef struct mca_ptl_elan_t mca_ptl_elan_t;
 extern mca_ptl_elan_t mca_ptl_elan;
@@ -91,17 +68,13 @@ struct mca_ptl_elan_module_1_0_0_t {
     struct mca_ptl_elan_t **elan_ptls;  /**< array of available PTLs */
     size_t elan_num_ptls;               /**< number of ptls activated */
 
-    ompi_list_t elan_reqs;        /**< all elan requests */
-    ompi_list_t elan_prog_events; /**< events in progress */
-    ompi_list_t elan_comp_events; /**< events completed, but to reclaim */
     ompi_list_t  elan_procs;       /**< elan proc's */
+    ompi_list_t  elan_reqs;        /**< all elan requests */
+    ompi_list_t  elan_recv_frags;
     ompi_list_t  elan_pending_acks;  
 
-    ompi_free_list_t elan_events_free;/**< free events */
     ompi_free_list_t elan_reqs_free;  /**< all elan requests */
-
-    ompi_event_t elan_send_event;  /**< event structure for sends */
-    ompi_event_t elan_recv_event;  /**< event structure for recvs */
+    ompi_free_list_t elan_recv_frags_free;
 
     struct mca_ptl_elan_proc_t *elan_local; 
 

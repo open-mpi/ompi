@@ -4,7 +4,7 @@
 #include <stdio.h>
 
 #define _ELAN4
-#define __elan4__
+#define __elan4
 
 #include "ptl_elan.h"
 #include "ptl_elan_priv.h"
@@ -15,21 +15,12 @@
 
 mca_ptl_elan_state_t mca_ptl_elan_global_state;
 
-static int ompi_mca_ptl_elan_setup (mca_ptl_elan_state_t * ems)
+static int
+ompi_mca_ptl_elan_setup (mca_ptl_elan_state_t * ems)
 {
-    /* TODO: 
-     * a) create elan PTL instances 
-     * b) init transport structure for all rails 
-     *    including STEN, QDMA and RDMA 
-     * c) For each possible transport mechanism, allocate:
-     *    send/recv descriptors; 
-     *    system buffer;
-     *    event structure for transport control
-     * d) initialize STAT (including SYNC) structures.
-     */
-    mca_ptl_elan_module_1_0_0_t * emp;
+    mca_ptl_elan_module_1_0_0_t *emp;
     int         rail_count;
-   
+
     emp = ems->elan_module;
     emp->elan_ptls = malloc (rail_count * sizeof (mca_ptl_elan_t *));
     if (NULL == emp->elan_ptls) {
@@ -41,43 +32,42 @@ static int ompi_mca_ptl_elan_setup (mca_ptl_elan_state_t * ems)
 
     /* Initialiaze PTL's */
     do {
-	char param[256];
-	mca_ptl_elan_t *ptl;
-       
-	ptl = malloc(sizeof(mca_ptl_elan_t));
-	if(NULL == ptl) {
-	    ompi_output (0,
-			 "[%s:%d] error in malloc for ptl structures \n",
-			 __FILE__, __LINE__);
-	    return OMPI_ERR_OUT_OF_RESOURCE;
-	}
+        char        param[256];
+        mca_ptl_elan_t *ptl;
 
-	memcpy(ptl, &mca_ptl_elan, sizeof(mca_ptl_elan));
-	emp->elan_ptls[emp->elan_num_ptls] = ptl;
+        ptl = malloc (sizeof (mca_ptl_elan_t));
+        if (NULL == ptl) {
+            ompi_output (0,
+                         "[%s:%d] error in malloc for ptl structures \n",
+                         __FILE__, __LINE__);
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
 
-	/* MCA related structures */
+        memcpy (ptl, &mca_ptl_elan, sizeof (mca_ptl_elan));
+        emp->elan_ptls[emp->elan_num_ptls] = ptl;
 
-	ptl->ptl_ni_local = emp->elan_num_ptls;
-	ptl->ptl_ni_total = rail_count;
-	emp->elan_num_ptls ++;
+        /* MCA related structures */
 
-	/* allow user to specify per rail bandwidth and latency */
-	sprintf(param, "bandwidth_elanrail%d", emp->elan_num_ptls);
-	ptl->super.ptl_bandwidth = 
-	    mca_ptl_elan_param_register_int(param, 1000);
-	sprintf(param, "latency_elanrail%d", emp->elan_num_ptls);
-	ptl->super.ptl_latency = mca_ptl_elan_param_register_int(param, 1);
+        ptl->ptl_ni_local = emp->elan_num_ptls;
+        ptl->ptl_ni_total = rail_count;
+        emp->elan_num_ptls++;
 
-	/* Setup elan related structures such as ctx, rail */
-	ptl->ptl_elan_rail = ems->elan_rail[rail_count];
-	ptl->ptl_elan_ctx  = ems->elan_rail[rail_count]->rail_ctx;
-	ptl->elan_vp       = ems->elan_vp;
-	ptl->elan_nvp      = ems->elan_nvp;
+        /* allow user to specify per rail bandwidth and latency */
+        sprintf (param, "bandwidth_elanrail%d", emp->elan_num_ptls);
+        ptl->super.ptl_bandwidth =
+            mca_ptl_elan_param_register_int (param, 1000);
+        sprintf (param, "latency_elanrail%d", emp->elan_num_ptls);
+        ptl->super.ptl_latency =
+            mca_ptl_elan_param_register_int (param, 1);
+
+        /* Setup elan related structures such as ctx, rail */
+        ptl->ptl_elan_rail = ems->elan_rail[rail_count];
+        ptl->ptl_elan_ctx  = ems->elan_rail[rail_count]->rail_ctx;
+        ptl->elan_vp = ems->elan_vp;
+        ptl->elan_nvp = ems->elan_nvp;
     } while (emp->elan_num_ptls < rail_count);
 
-    /* Allocating all the communication strcutures for PTL's,
-     * XXX: Leave it later after finalization is done 
-     */
+    /* Allocating all the communication strcutures for PTL's, */
     if (OMPI_SUCCESS != ompi_init_elan_qdma (emp, rail_count)) {
         return OMPI_ERROR;
     }
@@ -89,10 +79,9 @@ static int ompi_mca_ptl_elan_setup (mca_ptl_elan_state_t * ems)
         return OMPI_ERROR;
     }
 
-    if (OMPI_SUCCESS != ompi_init_elan_sten (emp, rail_count)) {
-        return OMPI_ERROR;
-    }
-
+    /* 
+     * XXX: initialize STAT (including SYNC) structures.
+     */
     if (OMPI_SUCCESS != ompi_init_elan_stat (emp, rail_count)) {
         return OMPI_ERROR;
     }
@@ -100,17 +89,7 @@ static int ompi_mca_ptl_elan_setup (mca_ptl_elan_state_t * ems)
     return (OMPI_SUCCESS);
 }
 
-/* Attach to the network:
- * a) First add myself into the capability
- * b) For each rail, 
- *    Block the inputter for any incoming traffic
- *    attach to the device
- *    Find out the location
- *    Fill out the vp in main and elan structures.
- *    create a cookiePool for threading control
- * c) Allocate a cookiePool for export Oth Rail
- * d) Find out total vpids, localVpids, localId and number of locals
- */
+/* Attach to the network */
 static int
 ompi_elan_attach_network (mca_ptl_elan_state_t * ems)
 {
@@ -236,69 +215,73 @@ ompi_elan_attach_network (mca_ptl_elan_state_t * ems)
     return (OMPI_SUCCESS);
 }
 
-static void 
-ompi_module_elan_close_ptls (mca_ptl_elan_module_1_0_0_t* emp, int num_rails)
+static void
+ompi_module_elan_close_ptls (mca_ptl_elan_module_1_0_0_t * emp,
+                             int num_rails)
 {
-
+    /* TODO: find the ones that are still there and free them */
 }
 
-static void 
-ompi_module_elan_close_procs (mca_ptl_elan_module_1_0_0_t* emp, int num_rails)
+static void
+ompi_module_elan_close_procs (mca_ptl_elan_module_1_0_0_t * emp,
+                              int num_rails)
 {
-
+    /* TODO: find the ones that are still there and free them */
 }
 
-static void ompi_init_elan_queue_events(ompi_ptl_elan_queue_ctrl_t *queue) 
+static void
+ompi_init_elan_queue_events (ompi_ptl_elan_queue_ctrl_t * queue)
 {
 
 }
 
 ELAN_SLEEP *
-ompi_init_elan_sleepdesc(mca_ptl_elan_state_t * ems, RAIL *rail)
+ompi_init_elan_sleepdesc (mca_ptl_elan_state_t * ems,
+                          RAIL * rail)
 {
     ELAN_SLEEP *es;
 
     /* XXX: asking the caller to hold the lock */
 
-    es = MALLOC(sizeof(ELAN_SLEEP));
-    OMPI_PTL_ELAN_CHECK_UNEX(es, NULL, NULL, 0);
-    memset(es, 0, sizeof(ELAN_SLEEP));
+    es = MALLOC (sizeof (ELAN_SLEEP));
+    OMPI_PTL_ELAN_CHECK_UNEX (es, NULL, NULL, 0);
+    memset (es, 0, sizeof (ELAN_SLEEP));
 
     /* Assign next interrupt cookie value */
     es->es_cookie = ems->intcookie++;
-    
+
     /* XXX, rail[0] is choosen instead this rail */
-    if (elan4_alloc_intcookie(ems->elan_rail[0]->rail_ctx, 
-                es->es_cookie) < 0) {
-        ompi_output(0, 
-                "[%s:%d] Failed to allocate IRQ cookie \n",
-                __FILE__, __LINE__);
+    if (elan4_alloc_intcookie (ems->elan_rail[0]->rail_ctx,
+                               es->es_cookie) < 0) {
+        ompi_output (0,
+                     "[%s:%d] Failed to allocate IRQ cookie \n",
+                     __FILE__, __LINE__);
     }
 
-    es->es_cmdBlk = ALLOC_ELAN(rail, E4_EVENTBLOCK_SIZE,
-            E4_EVENTBLOCK_SIZE); 
+    es->es_cmdBlk = ALLOC_ELAN (rail, E4_EVENTBLOCK_SIZE,
+                                E4_EVENTBLOCK_SIZE);
 
-    OMPI_PTL_ELAN_CHECK_UNEX(es->es_cmdBlk, 0, NULL, 0);
+    OMPI_PTL_ELAN_CHECK_UNEX (es->es_cmdBlk, 0, NULL, 0);
 
-    /*Allocate a pair of command queues for blocking waits with*/
-    es->es_cmdq = elan4_alloc_cmdq(rail->r_ctx, rail->r_alloc, 
-            CQ_Size1K, CQ_WriteEnableBit | CQ_WaitEventEnableBit, 
-            NULL);
-    OMPI_PTL_ELAN_CHECK_UNEX(es->es_cmdq, NULL, NULL, 0);
+    /*Allocate a pair of command queues for blocking waits with */
+    es->es_cmdq = elan4_alloc_cmdq (rail->r_ctx, rail->r_alloc,
+                                    CQ_Size1K,
+                                    CQ_WriteEnableBit |
+                                    CQ_WaitEventEnableBit, NULL);
+    OMPI_PTL_ELAN_CHECK_UNEX (es->es_cmdq, NULL, NULL, 0);
 
     /* This command queue used to fire the IRQ via 
        a cmd port copy event */
-    es->es_ecmdq = elan4_alloc_cmdq(rail->r_ctx, 
-            rail->r_alloc, CQ_Size1K, /* CQ_EnableAllBits, */
-            CQ_WriteEnableBit | CQ_InterruptEnableBit, NULL);
-    OMPI_PTL_ELAN_CHECK_UNEX(es->es_ecmdq, NULL, NULL, 0);
+    es->es_ecmdq = elan4_alloc_cmdq (rail->r_ctx, rail->r_alloc, CQ_Size1K,     /* CQ_EnableAllBits, */
+                                     CQ_WriteEnableBit |
+                                     CQ_InterruptEnableBit, NULL);
+    OMPI_PTL_ELAN_CHECK_UNEX (es->es_ecmdq, NULL, NULL, 0);
     es->es_next = NULL;
 
     /* XXX: asking the caller to release the lock */
 
     return es;
 }
-
 
 int
 ompi_mca_ptl_elan_init (mca_ptl_elan_module_1_0_0_t * emp)
@@ -333,7 +316,7 @@ ompi_mca_ptl_elan_init (mca_ptl_elan_module_1_0_0_t * emp)
 
     /* Default allocator parameters */
     ems->elan_flags = 0;
-    ems->elan_waittype = ELAN_POLL_EVENT; /* or ELAN_WAIT_EVENT */
+    ems->elan_waittype = ELAN_POLL_EVENT;       /* or ELAN_WAIT_EVENT */
     ems->main_size = ELAN_ALLOC_SIZE;
     ems->elan_size = ELAN_ALLOCELAN_SIZE;
     ems->elan_flags |= (EXCEPTIONCORE | EXCEPTIONTRACE | EXCEPTIONDBGDUMP);
@@ -342,16 +325,16 @@ ompi_mca_ptl_elan_init (mca_ptl_elan_module_1_0_0_t * emp)
 
 #ifdef ELAN_VERSION
     if (!elan_checkVersion (ELAN_VERSION)) {
-        ompi_output (0, 
-                "Elan version is not compatible with %s \n",
-                ELAN_VERSION);
+        ompi_output (0,
+                     "Elan version is not compatible with %s \n",
+                     ELAN_VERSION);
         return OMPI_ERROR;
     }
 #endif
 
     /* Allocate elan capability from the heap */
     ems->elan_cap = (ELAN_CAPABILITY *) malloc (sizeof (ELAN_CAPABILITY));
-    OMPI_PTL_ELAN_CHECK_UNEX(ems->elan_cap, NULL, OMPI_ERROR, 0);
+    OMPI_PTL_ELAN_CHECK_UNEX (ems->elan_cap, NULL, OMPI_ERROR, 0);
     memset (ems->elan_cap, 0, sizeof (ELAN_CAPABILITY));
 
     /* Process the capability info supplied by RMS */
@@ -373,22 +356,22 @@ ompi_mca_ptl_elan_init (mca_ptl_elan_module_1_0_0_t * emp)
     }
 
     ems->all_rails = (RAIL **) malloc (sizeof (RAIL *) * num_rails);
-    OMPI_PTL_ELAN_CHECK_UNEX(ems->all_rails, NULL, 
-            OMPI_ERR_OUT_OF_RESOURCE, 0);
+    OMPI_PTL_ELAN_CHECK_UNEX (ems->all_rails, NULL,
+                              OMPI_ERR_OUT_OF_RESOURCE, 0);
 
     ems->all_estates = (ADDR_SDRAM *)
         malloc (sizeof (ELAN_ESTATE *) * num_rails);
-    OMPI_PTL_ELAN_CHECK_UNEX(ems->all_estates, NULL, 
-            OMPI_ERR_OUT_OF_RESOURCE, 0);
+    OMPI_PTL_ELAN_CHECK_UNEX (ems->all_estates, NULL,
+                              OMPI_ERR_OUT_OF_RESOURCE, 0);
 
     rails = (int *) malloc (sizeof (int) * num_rails);
-    OMPI_PTL_ELAN_CHECK_UNEX(rails, NULL, OMPI_ERR_OUT_OF_RESOURCE, 0);
+    OMPI_PTL_ELAN_CHECK_UNEX (rails, NULL, OMPI_ERR_OUT_OF_RESOURCE, 0);
     (void) elan_rails (ems->elan_cap, rails);
 
-    ems->elan_rail = (ELAN_RAIL **) malloc (sizeof (ELAN_RAIL **) 
-            * (num_rails + 1));
-    OMPI_PTL_ELAN_CHECK_UNEX(ems->elan_rail, NULL, 
-            OMPI_ERR_OUT_OF_RESOURCE, 0);
+    ems->elan_rail = (ELAN_RAIL **) malloc (sizeof (ELAN_RAIL **)
+                                            * (num_rails + 1));
+    OMPI_PTL_ELAN_CHECK_UNEX (ems->elan_rail, NULL,
+                              OMPI_ERR_OUT_OF_RESOURCE, 0);
     ems->elan_rail[num_rails] = NULL;
 
     alloc_mainsize = ELAN_ALIGNUP (ems->main_size, ems->elan_pagesize);
@@ -398,11 +381,11 @@ ompi_mca_ptl_elan_init (mca_ptl_elan_module_1_0_0_t * emp)
 
     /* Magic quadrics number for the starting cookie value */
     ems->intcookie = 42;
-    ems->rail_intcookie = (int*) malloc (sizeof (int)*(num_rails + 1));
-    OMPI_PTL_ELAN_CHECK_UNEX(ems->rail_intcookie, NULL, 
-            OMPI_ERR_OUT_OF_RESOURCE, 0);
-    memset (ems->elan_cap, 0, (num_rails + 1) * sizeof (int));
-    ems->rail_intcookie[num_rails] = NULL;
+    ems->rail_intcookie = (int *) malloc (sizeof (int) * (num_rails + 1));
+    OMPI_PTL_ELAN_CHECK_UNEX (ems->rail_intcookie, NULL,
+                              OMPI_ERR_OUT_OF_RESOURCE, 0);
+    memset ((void*)ems->elan_cap, 0, (num_rails + 1) * sizeof (int));
+    ems->rail_intcookie[num_rails] = 0;
 
     for (i = 0; i < num_rails; i++) {
 
@@ -413,18 +396,19 @@ ompi_mca_ptl_elan_init (mca_ptl_elan_module_1_0_0_t * emp)
 
         /* Allocate the Main memory control structure for this rail */
         rail = ems->all_rails[i] = (RAIL *) malloc (sizeof (RAIL));
-        OMPI_PTL_ELAN_CHECK_UNEX(rail, NULL, OMPI_ERROR, 0);
+        OMPI_PTL_ELAN_CHECK_UNEX (rail, NULL, OMPI_ERROR, 0);
         memset (rail, 0, sizeof (RAIL));
 
         rail->r_ctx = elan4_init (rails[i]);
-        OMPI_PTL_ELAN_CHECK_UNEX(rail->r_ctx, NULL, OMPI_ERROR, 0);
+        OMPI_PTL_ELAN_CHECK_UNEX (rail->r_ctx, NULL, OMPI_ERROR, 0);
 
         rail->r_sdram = elan4_open_sdram (rails[i], 0, alloc_elansize);
-        OMPI_PTL_ELAN_CHECK_UNEX(rail->r_sdram, NULL, OMPI_ERROR, 0);
+        OMPI_PTL_ELAN_CHECK_UNEX (rail->r_sdram, NULL, OMPI_ERROR, 0);
 
-        rail->r_alloc = elan4_createAllocator (ems->main_size, 
-                rail->r_sdram, 0, ems->elan_size);
-        OMPI_PTL_ELAN_CHECK_UNEX(rail->r_alloc, NULL, OMPI_ERROR, 0);
+        rail->r_alloc = elan4_createAllocator (ems->main_size,
+                                               rail->r_sdram, 0,
+                                               ems->elan_size);
+        OMPI_PTL_ELAN_CHECK_UNEX (rail->r_alloc, NULL, OMPI_ERROR, 0);
 
         if (elan4_set_standard_mappings (rail->r_ctx) < 0
             || elan4_set_required_mappings (rail->r_ctx) < 0) {
@@ -434,46 +418,42 @@ ompi_mca_ptl_elan_init (mca_ptl_elan_module_1_0_0_t * emp)
             return OMPI_ERROR;
         }
 
-#if 0     /* Is this only needed for TPORT support? */ 
-       if (elan4_register_trap_handler(rail->r_ctx, UTS_UNIMP_INSTR, 
-                   UTS_TPROC, elan_unimp_handler, NULL) < 0) {
-           ompi_output(0, "elan_init(%d): Failed elan4_register_unimp()", i);
-           return OMPI_ERROR;
-       }
-#endif
-
         /* Now allocate the SDRAM Elan control structure for this rail */
-        estate = ems->all_estates[i] = elan4_allocElan (rail->r_alloc, 
-                    ELAN_ALIGN, sizeof (ELAN_EPRIVSTATE));
-        OMPI_PTL_ELAN_CHECK_UNEX(estate, NULL, OMPI_ERROR, 0);
+        estate = ems->all_estates[i] = elan4_allocElan (rail->r_alloc,
+                                                        ELAN_ALIGN,
+                                                        sizeof
+                                                        (ELAN_EPRIVSTATE));
+        OMPI_PTL_ELAN_CHECK_UNEX (estate, NULL, OMPI_ERROR, 0);
 
         priv_estate = (ELAN_EPRIVSTATE *) estate;
         memset (priv_estate, 0, sizeof (ELAN_EPRIVSTATE));
 
         /* Allocate a command port for non sten functions etc */
         rail->r_cmdq = elan4_alloc_cmdq (rail->r_ctx,
-                rail->r_alloc,
-                CQ_Size8K,
-                CQ_ModifyEnableBit | CQ_WriteEnableBit | CQ_WaitEventEnableBit
-                | CQ_SetEventEnableBit | CQ_ThreadStartEnableBit,
-                NULL);
-        OMPI_PTL_ELAN_CHECK_UNEX(rail->r_cmdq, NULL, OMPI_ERROR, 0);
+                                         rail->r_alloc,
+                                         CQ_Size8K,
+                                         CQ_ModifyEnableBit |
+                                         CQ_WriteEnableBit |
+                                         CQ_WaitEventEnableBit |
+                                         CQ_SetEventEnableBit |
+                                         CQ_ThreadStartEnableBit, NULL);
+        OMPI_PTL_ELAN_CHECK_UNEX (rail->r_cmdq, NULL, OMPI_ERROR, 0);
 
         /* Allocate a command port for thread rescheduling etc */
         rail->r_ecmdq = elan4_alloc_cmdq (rail->r_ctx, rail->r_alloc,
-                CQ_Size8K, CQ_EnableAllBits, NULL);
-        OMPI_PTL_ELAN_CHECK_UNEX(rail->r_ecmdq, NULL, OMPI_ERROR, 0);
+                                          CQ_Size8K, CQ_EnableAllBits,
+                                          NULL);
+        OMPI_PTL_ELAN_CHECK_UNEX (rail->r_ecmdq, NULL, OMPI_ERROR, 0);
 
         priv_estate->cport = MAIN2ELAN (rail->r_ctx,
                                         rail->r_ecmdq->cmdq_mapping);
-       
-        /* save the rail pointers */
+
+        /* Save the rail pointers */
         ems->elan_rail[i] = (ELAN_RAIL *) rail;
         ems->rail_intcookie[i] = ems->intcookie;
 
         /* Allocate a Sleep Desc */
-
-        es = ompi_init_elan_sleepdesc(ems, rail);
+        es = ompi_init_elan_sleepdesc (ems, rail);
 
         /* XXX: put a lock and hold a lock */
         es->es_next = rail->r_sleepDescs;
@@ -492,7 +472,7 @@ ompi_mca_ptl_elan_init (mca_ptl_elan_module_1_0_0_t * emp)
             /*ompi_elan_railtable_t *rt; */
             struct railtable *rt;
             rt = (struct railtable *) malloc (sizeof (struct railtable));
-            OMPI_PTL_ELAN_CHECK_UNEX(rt, NULL, OMPI_ERROR, 0);
+            OMPI_PTL_ELAN_CHECK_UNEX (rt, NULL, OMPI_ERROR, 0);
             memset (rt, 0, sizeof (struct railtable));
 
             rt->rt_nrails = 1;
@@ -539,8 +519,8 @@ ompi_mca_ptl_elan_init (mca_ptl_elan_module_1_0_0_t * emp)
 int
 ompi_mca_ptl_elan_finalize (mca_ptl_elan_module_1_0_0_t * emp)
 {
-    int i;
-    int num_rails;
+    int     i;
+    int     num_rails;
     mca_ptl_elan_state_t *ems;
 
     ems = &mca_ptl_elan_global_state;
@@ -548,44 +528,37 @@ ompi_mca_ptl_elan_finalize (mca_ptl_elan_module_1_0_0_t * emp)
 
     ompi_module_elan_close_ptls (emp, num_rails);
     ompi_module_elan_close_procs (emp, num_rails);
-    
-    /* Cleanup the global state 
-     * Free per rail structures, then the references to them */
 
     for (i = 0; i < num_rails; i++) {
         RAIL       *rail;
 
-	rail = ems->all_rails[i];
+        rail = ems->all_rails[i];
 
-	free (rail->r_railTable);
+        free (rail->r_railTable);
 
-	/* Free the memory from the rail allocator */
-        elan4_freeMain(rail->r_alloc, rail->r_ecmdq);
-        elan4_freeMain(rail->r_alloc, rail->r_cmdq);
-        elan4_freeElan(rail->r_alloc, ems->all_estates[i]);
-
-	/* Free cookie value, Destroy allocator and SDRAM handler and 
-           then close device */
+        /* Free the memory from the rail allocator */
+        elan4_freeMain (rail->r_alloc, rail->r_ecmdq);
+        elan4_freeMain (rail->r_alloc, rail->r_cmdq);
+        elan4_freeElan (rail->r_alloc, ems->all_estates[i]);
 
         /* Since the cookie allocated from rail[0], be consistent here */
-        elan4_free_intcookie (ems->all_rails[0]->r_ctx, 
-                ems->rail_intcookie[i]);
+        elan4_free_intcookie (ems->all_rails[0]->r_ctx,
+                              ems->rail_intcookie[i]);
 
-	elan4_destroyAllocator (rail->r_alloc);
-	elan4_close_sdram (rail->r_sdram);
+        elan4_destroyAllocator (rail->r_alloc);
+        elan4_close_sdram (rail->r_sdram);
 
-	/*elan4_fini (rail->r_ctx); Not working yet */
+        /*elan4_fini (rail->r_ctx); Not working yet */
 
-	/* Free the rail structure, why two pointers are used to 
-	 * point to the same RAIL, all_rails and elan_rails */
-        /*free (ems->elan_rail[i]);*/
+        /* Free the rail structure used one the array of pointers 
+         * to the RAILs, either all_rails for elan_rails */
         free (ems->all_rails[i]);
     }
 
-    free(ems->elan_rail);
-    free(ems->all_estates);
-    free(ems->all_rails);
-    free(ems->elan_cap);
+    free (ems->elan_rail);
+    free (ems->all_estates);
+    free (ems->all_rails);
+    free (ems->elan_cap);
 
     return (OMPI_SUCCESS);
 }

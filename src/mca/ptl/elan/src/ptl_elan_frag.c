@@ -12,163 +12,20 @@
 #include "ptl_elan_peer.h"
 #include "ptl_elan_proc.h"
 #include "ptl_elan_frag.h"
+#include "ptl_elan_req.h"
+#include "ptl_elan_priv.h"
 
-#define frag_header     super.super.frag_header
-#define frag_owner      super.super.frag_owner
-#define frag_peer       super.super.frag_peer
-#define frag_convertor  super.super.frag_convertor
+#if 0
+static void
+mca_ptl_elan_send_frag_construct (mca_ptl_elan_send_frag_t * frag)
+{
 
-
-static void mca_ptl_elan_send_frag_construct (mca_ptl_elan_send_frag_t *
-                                              frag);
-static void mca_ptl_elan_send_frag_destruct (mca_ptl_elan_send_frag_t *
-                                             frag);
-
-static void mca_ptl_elan_recv_frag_construct (mca_ptl_elan_recv_frag_t *
-                                              frag);
-static void mca_ptl_elan_recv_frag_destruct (mca_ptl_elan_recv_frag_t *
-                                             frag);
-static bool mca_ptl_elan_recv_frag_header (mca_ptl_elan_recv_frag_t * frag,
-                                           int sd,
-                                           size_t);
-static      bool
-mca_ptl_elan_recv_frag_ack (mca_ptl_elan_recv_frag_t * frag,
-                            int sd);
-static      bool
-mca_ptl_elan_recv_frag_frag (mca_ptl_elan_recv_frag_t * frag,
-                             int sd);
-static      bool
-mca_ptl_elan_recv_frag_match (mca_ptl_elan_recv_frag_t * frag,
-                              int sd);
-static      bool
-mca_ptl_elan_recv_frag_data (mca_ptl_elan_recv_frag_t * frag,
-                             int sd);
-static      bool
-mca_ptl_elan_recv_frag_discard (mca_ptl_elan_recv_frag_t * frag,
-                                int sd);
-
-
-ompi_class_t mca_ptl_elan_recv_frag_t_class = {
-    "mca_ptl_elan_recv_frag_t",
-    OBJ_CLASS (mca_ptl_base_recv_frag_t),
-    (ompi_construct_t) mca_ptl_elan_recv_frag_construct,
-    (ompi_destruct_t) mca_ptl_elan_recv_frag_destruct
-};
-
-/*
- * ELAN fragment constructor
- */
+}
 
 static void
-mca_ptl_elan_recv_frag_construct (mca_ptl_elan_recv_frag_t * frag)
+mca_ptl_elan_send_frag_destruct (mca_ptl_elan_send_frag_t * frag)
 {
-}
 
-
-/*
- * ELAN fragment destructor
- */
-
-static void
-mca_ptl_elan_recv_frag_destruct (mca_ptl_elan_recv_frag_t * frag)
-{
-}
-
-
-/*
- * Initialize a ELAN receive fragment for a specific peer.
- */
-
-void
-mca_ptl_elan_recv_frag_init (mca_ptl_elan_recv_frag_t * frag,
-                             mca_ptl_elan_peer_t * peer)
-{
-}
-
-/*
- * Callback from event library when socket has data available
- * for receive.
- */
-
-bool
-mca_ptl_elan_recv_frag_handler (mca_ptl_elan_recv_frag_t * frag,
-                                int sd)
-{
-    return false;
-}
-
-/*
- * Receive fragment header 
- */
-
-static      bool
-mca_ptl_elan_recv_frag_header (mca_ptl_elan_recv_frag_t * frag,
-                               int sd,
-                               size_t size)
-{
-    return true;
-}
-
-
-/*
- * Receive and process an ack.
- */
-
-static      bool
-mca_ptl_elan_recv_frag_ack (mca_ptl_elan_recv_frag_t * frag,
-                            int sd)
-{
-    return true;
-}
-
-
-/*
- * Receive and process a match request - first fragment.
- */
-
-static      bool
-mca_ptl_elan_recv_frag_match (mca_ptl_elan_recv_frag_t * frag,
-                              int sd)
-{
-    return true;
-}
-
-
-/*
- * Receive and process 2nd+ fragments of a multi-fragment message.
- */
-
-static      bool
-mca_ptl_elan_recv_frag_frag (mca_ptl_elan_recv_frag_t * frag,
-                             int sd)
-{
-    return true;
-}
-
-
-/*
- * Continue with non-blocking recv() calls until the entire
- * fragment is received.
- */
-
-static      bool
-mca_ptl_elan_recv_frag_data (mca_ptl_elan_recv_frag_t * frag,
-                             int sd)
-{
-    return true;
-}
-
-
-/*
- *  If the app posted a receive buffer smaller than the
- *  fragment, receive and discard remaining bytes.
-*/
-
-static      bool
-mca_ptl_elan_recv_frag_discard (mca_ptl_elan_recv_frag_t * frag,
-                                int sd)
-{
-    return true;
 }
 
 ompi_class_t mca_ptl_elan_send_frag_t_class = {
@@ -177,48 +34,112 @@ ompi_class_t mca_ptl_elan_send_frag_t_class = {
     (ompi_construct_t) mca_ptl_elan_send_frag_construct,
     (ompi_destruct_t) mca_ptl_elan_send_frag_destruct
 };
-
-/*
- * Placeholders for send fragment constructor/destructors.
- */
+#endif
 
 static void
-mca_ptl_elan_send_frag_construct (mca_ptl_elan_send_frag_t * frag)
+mca_ptl_elan_recv_frag_construct (mca_ptl_elan_recv_frag_t * frag)
 {
+    OBJ_CONSTRUCT (frag, mca_ptl_elan_recv_frag_t);
+    frag->frag_hdr_cnt = 0;
+    frag->frag_msg_cnt = 0;
+    frag->frag.qdma = NULL;
+    frag->alloc_buff = (char *) malloc (sizeof (char) * 2048 + 32);
+    if (NULL == frag->alloc_buff) {
+        ompi_output (0,
+                     "[%s:%d] Fatal error, unable to allocate recv buff \n",
+                     __FILE__, __LINE__);
+    }
+    frag->unex_buff = (char *) (((int) frag->alloc_buff + 32) >> 5 << 5);
 }
-
 
 static void
-mca_ptl_elan_send_frag_destruct (mca_ptl_elan_send_frag_t * frag)
+mca_ptl_elan_recv_frag_destruct (mca_ptl_elan_recv_frag_t * frag)
 {
+    /* Does this destruct free the memory? since OBJ_DESTRUCT,
+     * works only for non-dynamically allocated objects */
+    frag->frag_hdr_cnt = 0;
+    frag->frag_msg_cnt = 0;
+    frag->frag.qdma = NULL;
+    free (frag->alloc_buff);
+    frag->alloc_buff = NULL;
+    frag->unex_buff = NULL;
+    OBJ_DESTRUCT (frag);
 }
 
+ompi_class_t mca_ptl_elan_recv_frag_t_class = {
+    "mca_ptl_elan_recv_frag_t",
+    OBJ_CLASS (mca_ptl_base_recv_frag_t),
+    (ompi_construct_t) mca_ptl_elan_recv_frag_construct,
+    (ompi_destruct_t) mca_ptl_elan_recv_frag_destruct
+};
 
-/*
- *  Initialize the fragment based on the current offset into the users
- *  data buffer, and the indicated size.
- */
+extern mca_ptl_elan_state_t mca_ptl_elan_global_state;
 
-int
-mca_ptl_elan_send_frag_init (mca_ptl_elan_send_frag_t * sendfrag,
-                             mca_ptl_elan_peer_t * ptl_peer,
-                             mca_pml_base_send_request_t * sendreq,
-                             size_t offset,
-                             size_t * size,
-                             int flags)
+mca_ptl_elan_desc_item_t *
+mca_ptl_elan_alloc_send_desc (struct mca_pml_base_send_request_t *req)
 {
-    return OMPI_SUCCESS;
+    struct ompi_ptl_elan_queue_ctrl_t *queue;
+    mca_ptl_elan_t *ptl;
+    struct mca_ptl_elan_peer_t *peer;
+    size_t      offset;
+    size_t      size;
+
+    ompi_free_list_t *flist;
+    ompi_list_item_t *item;
+    mca_ptl_elan_desc_item_t *desc;
+
+    ptl = (mca_ptl_elan_t *) req->req_owner;
+    peer = (mca_ptl_elan_peer_t *) req->req_peer;
+    offset = req->req_offset;
+    size = ptl->super.ptl_first_frag_size;
+
+    /* For now, bind to queue DMA directly */
+    {
+        queue = ptl->queue;
+        flist = &queue->tx_desc_free;
+
+        if (ompi_using_threads ()) {
+
+            ompi_mutex_lock (&((flist)->fl_lock));
+            item = ompi_list_remove_first (&((flist)->super));
+
+            /* Progress this PTL module to get back a descriptor,
+             * Is it OK to progress with ptl->ptl_send_progress? */
+            while (NULL == item) {
+                mca_ptl_tstamp_t tstamp = 0;
+
+                ptl->super.ptl_module->ptlm_progress (tstamp);
+                item = ompi_list_remove_first (&((flist)->super));
+            }
+            ompi_mutex_unlock (&((flist)->fl_lock));
+        } else {
+            item = ompi_list_remove_first (&((flist)->super));
+
+            /* Progress this PTL module to get back a descriptor,
+             * Is it OK to progress with ptl->ptl_send_progress? */
+            while (NULL == item) {
+                mca_ptl_tstamp_t tstamp = 0;
+
+                /* 
+                 * Well, this still does not trigger the progress on 
+                 * PTL's from other modules.  Wait for PML to change.
+                 * Otherwise have to trigger PML progress from PTL.  Ouch..
+                 */
+                ptl->super.ptl_module->ptlm_progress (tstamp);
+                item = ompi_list_remove_first (&((flist)->super));
+            }
+        }
+
+        ((struct mca_ptl_elan_send_request_t *) req)->desc_type
+            = MCA_PTL_ELAN_QDMA_DESC;
+        desc = (mca_ptl_elan_desc_item_t *) item;
+    }
+
+    return desc;
 }
 
-
-/*
- * The socket is setup as non-blocking, writes are handled asynchronously,
- * with event callbacks when the socket is ready for writes.
- */
-
-bool
-mca_ptl_elan_send_frag_handler (mca_ptl_elan_send_frag_t * frag,
-                                int sd)
+mca_ptl_elan_recv_frag_t *
+mca_ptl_elan_alloc_recv_desc (struct mca_pml_base_recv_request_t * req)
 {
-    return true;
+    return NULL;
 }

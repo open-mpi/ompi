@@ -9,10 +9,22 @@
 #include "ptl_elan_req.h"
 #include "ptl_elan.h"
 
-static void 
-mca_ptl_elan_send_request_construct (mca_ptl_elan_send_request_t *);
-static void 
-mca_ptl_elan_send_request_destruct (mca_ptl_elan_send_request_t *);
+void
+mca_ptl_elan_send_request_construct (mca_ptl_elan_send_request_t * request)
+{
+    OBJ_CONSTRUCT (&request->super, mca_pml_base_send_request_t);
+    request->desc_type = 0;
+    request->req_frag = NULL;
+}
+
+
+void
+mca_ptl_elan_send_request_destruct (mca_ptl_elan_send_request_t * request)
+{
+    OBJ_DESTRUCT (&request->super);
+    request->desc_type = 0;
+    request->req_frag = NULL;
+}
 
 ompi_class_t mca_ptl_elan_send_request_t_class = {
     "mca_ptl_elan_send_request_t",
@@ -20,17 +32,3 @@ ompi_class_t mca_ptl_elan_send_request_t_class = {
     (ompi_construct_t) mca_ptl_elan_send_request_construct,
     (ompi_destruct_t) mca_ptl_elan_send_request_destruct
 };
-
-
-void
-mca_ptl_elan_send_request_construct (mca_ptl_elan_send_request_t * request)
-{
-    OBJ_CONSTRUCT (&request->req_frag, mca_ptl_elan_send_frag_t);
-}
-
-
-void
-mca_ptl_elan_send_request_destruct (mca_ptl_elan_send_request_t * request)
-{
-    OBJ_DESTRUCT (&request->req_frag);
-}
