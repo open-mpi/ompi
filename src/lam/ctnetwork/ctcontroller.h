@@ -54,13 +54,13 @@ typedef struct lam_ctcontroller
 void lam_ctl_init(lam_ctctrl_t *ctrl);
 void lam_ctl_destroy(lam_ctctrl_t *ctrl);
 
-INLINE void lam_ctl_set_recvd_callback(lam_ctctrl_t *ctrl, lam_ctmsg_recvd_fn callback)
+inline void lam_ctl_set_recvd_callback(lam_ctctrl_t *ctrl, lam_ctmsg_recvd_fn callback)
 {
     ctrl->ctl_msg_recvd_callback = callback;
 }
 
 
-INLINE void lam_ctl_set_failed_callback(lam_ctctrl_t *ctrl, lam_ctnode_failed_fn callback)
+inline void lam_ctl_set_failed_callback(lam_ctctrl_t *ctrl, lam_ctnode_failed_fn callback)
 {
     ctrl->ctl_node_failed_callback = callback;
 }

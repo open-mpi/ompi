@@ -1,6 +1,4 @@
 /*
- * $HEADER$
- *
  * Copyright 2002-2003. The Regents of the University of California. This material
  * was produced under U.S. Government contract W-7405-ENG-36 for Los Alamos
  * National Laboratory, which is operated by the University of California for
@@ -30,9 +28,10 @@
  */
 /*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
 
-#ifndef LAM_SEG_LIST_H
-#define LAM_SEG_LIST_H
+#ifndef SEG_LIST_H
+#define SEG_LIST_H
 
+#include "lam_config.h"
 #include "lam/lfc/list.h"
 #include "lam/threads/mutex.h"
 
@@ -68,7 +67,7 @@ void lam_sgl_append_elt_chunk(
 #define lam_sgl_lock_list(slist)  lam_mtx_trylock(&slist->sgl_lock)
 #define lam_sgl_unlock_list(slist) lam_mtx_unlock(&slist->sgl_lock)
 
-static inline int lam_sgl_is_locked(lam_seg_list_t *slist)
+inline int lam_sgl_is_locked(lam_seg_list_t *slist)
 {
     /* returns 1 if list is currently locked, otherwise 0. */
     int     ret;
@@ -102,4 +101,7 @@ static inline int lam_sgl_is_locked(lam_seg_list_t *slist)
 #define lam_sgl_inc_consec_fail(slist) \
     ((slist)->sgl_consec_fail++)
 
-#endif  /* LAM_SEG_LIST_H */
+#endif  /* SEG_LIST_H */
+
+
+

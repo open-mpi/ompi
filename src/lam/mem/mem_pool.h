@@ -30,8 +30,8 @@
  */
 /*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
 
-#ifndef LAM_MEMORY_POOL
-#define LAM_MEMORY_POOL
+#ifndef LAM_MEMORY_POOL_H
+#define LAM_MEMORY_POOL_H
 
 #include "include/lam_types.h"
 #include "lam/lfc/object.h"

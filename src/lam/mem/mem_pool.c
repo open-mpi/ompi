@@ -40,11 +40,11 @@
 #include "lam/util/malloc.h"
 #include "lam/os/numa.h"
 
-lam_class_info_t mem_pool_cls = {"lam_mem_pool_t", &object_cls, 
+lam_class_info_t mem_pool_cls = {"lam_mem_pool_t", &lam_object_cls, 
                             (class_init_t)lam_mp_init, (class_destroy_t)lam_mp_destroy};
 
 /* process-shared mem pool class */
-lam_class_info_t     shmem_pool_cls = {"shmem_pool_t", &object_cls, 
+lam_class_info_t     shmem_pool_cls = {"shmem_pool_t", &lam_object_cls, 
     (class_init_t)lam_mp_shared_init, (class_destroy_t)lam_mp_destroy};
 
 void lam_mp_init(lam_mem_pool_t *pool)
@@ -73,7 +73,7 @@ void lam_mp_destroy(lam_mem_pool_t *pool)
         OBJ_RELEASE(pool->mp_dev_alloc);
     OBJ_RELEASE(pool->mp_private_alloc);
     
-    SUPER_DESTROY(pool, &object_cls);
+    SUPER_DESTROY(pool, &lam_object_cls);
 }
 
 int lam_mp_init_with(lam_mem_pool_t *pool, uint64_t pool_size,
@@ -295,12 +295,12 @@ void *lam_mp_request_chunk(lam_mem_pool_t *pool, int pool_index)
  */
 
 
-lam_class_info_t    fixed_mem_pool_cls = {"lam_fixed_mpool_t", &object_cls, 
+lam_class_info_t    fixed_mem_pool_cls = {"lam_fixed_mpool_t", &lam_object_cls, 
     (class_init_t)lam_fmp_init, (class_destroy_t)lam_fmp_destroy};
 
 void lam_fmp_init(lam_fixed_mpool_t *pool)
 {
-    SUPER_INIT(pool, &object_cls);
+    SUPER_INIT(pool, &lam_object_cls);
     
     CREATE_OBJECT(pool->fmp_private_alloc, lam_allocator_t, &allocator_cls);
     lam_alc_set_is_shared(pool->fmp_private_alloc, 1);
@@ -333,7 +333,7 @@ void lam_fmp_destroy(lam_fixed_mpool_t *pool)
     if ( pool->fmp_n_segs_in_array )
         free(pool->fmp_n_segs_in_array);
     
-    SUPER_DESTROY(pool, &object_cls);
+    SUPER_DESTROY(pool, &lam_object_cls);
 }
 
 

@@ -31,6 +31,7 @@
 #ifndef LAM_HASH_TABLE_H
 #define LAM_HASH_TABLE_H
 
+#include "lam_config.h"
 #include "include/lam_stdint.h"
 #include "lam/lfc/object.h"
 
@@ -79,6 +80,6 @@ int   lam_fh_set_value_for_skey(lam_fast_hash_t *htbl, void *val, const char *ke
 
 
 /* returns the number of items in the table */
-static inline uint32_t lam_fh_count(lam_fast_hash_t *htbl) {return htbl->fh_count;}
+inline uint32_t lam_fh_count(lam_fast_hash_t *htbl) {return htbl->fh_count;}
 
 #endif  /* LAM_HASH_TABLE_H */

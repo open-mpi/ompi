@@ -67,7 +67,6 @@ typedef int lam_affinity_t;
 typedef struct lam_free_list
 {
     lam_object_t        super;
-    lam_mutex_t         fl_lock;
     int                 fl_is_shared;
     lam_mem_pool_t     *fl_pool;
     const char         *fl_description;
@@ -112,11 +111,9 @@ int lam_frl_init_with(lam_free_list_t *flist,
                   lam_mem_pool_t *pool);
 
 
-lam_flist_elt_t *lam_frl_get_elt(lam_free_list_t *flist, int index, int *err);
-lam_flist_elt_t *lam_frl_get_elt_nl(lam_free_list_t *flist, int index, int *err);
+lam_flist_elt_t *lam_frl_get_elt(lam_free_list_t *flist, int index, int *error);
 
 int lam_frl_return_elt(lam_free_list_t *flist, int index, lam_flist_elt_t *item);
-int lam_frl_return_elt_nl(lam_free_list_t *flist, int index, lam_flist_elt_t *item);
 
 /*
  *      Accessor functions

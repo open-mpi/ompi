@@ -52,7 +52,7 @@ static inline int lam_get_cpu_set(void)
 
 #else
 
-# OS / architecture specific implementation elsewhere
+/* OS / architecture specific implementation elsewhere */
 
 int lam_set_affinity(void *addr, size_t size, affinity_t affinity);
 

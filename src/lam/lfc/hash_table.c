@@ -40,7 +40,7 @@
 #define     BUCKET_ALLOC_SZ         5
 
 lam_class_info_t lam_fast_hash_cls = {
-    "lam_fast_hash_t", &object_cls, (class_init_t)lam_fh_init,
+    "lam_fast_hash_t", &lam_object_cls, (class_init_t)lam_fh_init,
     (class_destroy_t)lam_fh_destroy
 };
 

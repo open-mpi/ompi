@@ -70,7 +70,7 @@ __asm__ __volatile__("wmb": : :"memory")
  *    A value of 0 indicates that the lock is available
  *               1 or more the lock is held by someone
  */
-    INLINE void spinlock(lam_lock_data_t *lock)
+    inline void spinlock(lam_lock_data_t *lock)
     {
         /*** sungeun *** ref: alpha-linux spinlock sources ***/
         int tmp = 0;
@@ -100,7 +100,7 @@ __asm__ __volatile__("wmb": : :"memory")
 /*
  * This routine tries once to obtain the lock
  */
-    INLINE int spintrylock(lam_lock_data_t *lock)
+    inline int spintrylock(lam_lock_data_t *lock)
     {
         int got_lock = 0;
         int tmp = 0;
@@ -125,13 +125,13 @@ __asm__ __volatile__("wmb": : :"memory")
 /*
  * Clear the lock - alpha specific - need memory barrier
  */
-    INLINE void spinunlock(lam_lock_data_t *lock)
+    inline void spinunlock(lam_lock_data_t *lock)
     {
         mb();
         lock->data.lockData_m = 0;
     }
 
-    INLINE int fetchNadd(volatile int *addr, int inc)
+    inline int fetchNadd(volatile int *addr, int inc)
     {
         int oldval = 0;
         int tmp = 0;
@@ -155,7 +155,7 @@ __asm__ __volatile__("wmb": : :"memory")
 
 
 
-    INLINE int fetchNset(volatile int *addr, int val)
+    inline int fetchNset(volatile int *addr, int val)
     {
         int oldval = 0;
         int tmp = 0;
@@ -178,7 +178,7 @@ __asm__ __volatile__("wmb": : :"memory")
     }
 
 
-    INLINE unsigned long long fetchNaddLong(bigAtomicUnsignedInt *addr, int inc)
+    inline unsigned long long fetchNaddLong(bigAtomicUnsignedInt *addr, int inc)
     {
         unsigned long long oldval = 0;
         unsigned long long tmp = 0;
@@ -206,7 +206,7 @@ __asm__ __volatile__("wmb": : :"memory")
     }
 
 
-    INLINE unsigned long long fetchNaddLongNoLock(bigAtomicUnsignedInt *addr,
+    inline unsigned long long fetchNaddLongNoLock(bigAtomicUnsignedInt *addr,
                                                          int inc)
     {
         unsigned long long val;
@@ -217,7 +217,7 @@ __asm__ __volatile__("wmb": : :"memory")
         return val;
     }
 
-    INLINE unsigned long long fetchNsetLong(volatile unsigned long long *addr,
+    inline unsigned long long fetchNsetLong(volatile unsigned long long *addr,
                                                    unsigned long long val)
     {
         unsigned long long oldval = 0;
@@ -241,7 +241,7 @@ __asm__ __volatile__("wmb": : :"memory")
     }
 
 
-    INLINE void setBigAtomicUnsignedInt(bigAtomicUnsignedInt *addr,
+    inline void setBigAtomicUnsignedInt(bigAtomicUnsignedInt *addr,
                                                unsigned long long val)
     {
         *addr = val;

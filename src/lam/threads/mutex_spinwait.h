@@ -62,7 +62,8 @@ static inline void lam_mtx_lock(lam_mutex_t* m)
     int locked;
 
     fetchNadd(&m->mtx_waiting, 1);
-    while((locked = fetchNset(&m->mtx_spinlock, 1)) == 1 && cnt++ < MUTEX_SPINWAIT)
+    while( ((locked = fetchNset(&m->mtx_spinlock, 1)) == 1)
+           && (cnt++ < MUTEX_SPINWAIT) )
         ;
     if(locked) {
         pthread_mutex_lock(&m->mtx_lock);

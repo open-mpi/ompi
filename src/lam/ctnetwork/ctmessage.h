@@ -125,43 +125,43 @@ void lam_pk_ctc_set_info(uint8_t *buffer, uint8_t *info);
  * Accessor functions
  */
 
-INLINE uint16_t lam_ctc_get_is_user_msg(lam_ct_ctrl_t *ctrl) {return ctrl->ctc_is_user_msg;}
-INLINE uint16_t lam_ctc_set_is_user_msg(lam_ct_ctrl_t *ctrl, uint16_t yn)
+inline uint16_t lam_ctc_get_is_user_msg(lam_ct_ctrl_t *ctrl) {return ctrl->ctc_is_user_msg;}
+inline uint16_t lam_ctc_set_is_user_msg(lam_ct_ctrl_t *ctrl, uint16_t yn)
 {
     ctrl->ctc_is_user_msg = yn;
 }
 
-INLINE uint16_t lam_ctc_get_routing_type(lam_ct_ctrl_t *ctrl) {return ctrl->ctc_routing_type;}
-INLINE uint16_t lam_ctc_set_routing_type(lam_ct_ctrl_t *ctrl, int rtype)
+inline uint16_t lam_ctc_get_routing_type(lam_ct_ctrl_t *ctrl) {return ctrl->ctc_routing_type;}
+inline uint16_t lam_ctc_set_routing_type(lam_ct_ctrl_t *ctrl, int rtype)
 {
     ctrl->ctc_routing_type = rtype;
 }
 
-INLINE uint32_t lam_ctc_get_sender(lam_ct_ctrl_t *ctrl) {return ctrl->ctc_sender;}
-INLINE void lam_ctc_set_sender(lam_ct_ctrl_t *ctrl, uint32_t sender)
+inline uint32_t lam_ctc_get_sender(lam_ct_ctrl_t *ctrl) {return ctrl->ctc_sender;}
+inline void lam_ctc_set_sender(lam_ct_ctrl_t *ctrl, uint32_t sender)
 {
     ctrl->ctc_sender = sender;
 }
 
-INLINE uint32_t lam_ctc_get_dest(lam_ct_ctrl_t *ctrl) {return ctrl->ctc_dest;}
-INLINE void lam_ctc_set_dest(lam_ct_ctrl_t *ctrl, uint32_t dest)
+inline uint32_t lam_ctc_get_dest(lam_ct_ctrl_t *ctrl) {return ctrl->ctc_dest;}
+inline void lam_ctc_set_dest(lam_ct_ctrl_t *ctrl, uint32_t dest)
 {
     ctrl->ctc_dest = dest;
 }
 
-INLINE uint32_t lam_ctc_get_forwarding(lam_ct_ctrl_t *ctrl) {return ctrl->ctc_forwarding;}
-INLINE void lam_ctc_set_forwarding(lam_ct_ctrl_t *ctrl, uint32_t node)
+inline uint32_t lam_ctc_get_forwarding(lam_ct_ctrl_t *ctrl) {return ctrl->ctc_forwarding;}
+inline void lam_ctc_set_forwarding(lam_ct_ctrl_t *ctrl, uint32_t node)
 {
     ctrl->ctc_forwarding = node;
 }
 
-INLINE uint8_t *lam_ctc_get_info(lam_ct_ctrl_t *ctrl, uint32_t *len)
+inline uint8_t *lam_ctc_get_info(lam_ct_ctrl_t *ctrl, uint32_t *len)
 {
     *len = ctrl->ctc_info_len;
     return ctrl->ctc_info;
 }
 
-INLINE void lam_ctc_set_info(lam_ct_ctrl_t *ctrl, uint32_t len, uint8_t *info)
+inline void lam_ctc_set_info(lam_ct_ctrl_t *ctrl, uint32_t len, uint8_t *info)
 {
     ctrl->ctc_info_len = len;
     ctrl->ctc_info = info;
@@ -212,8 +212,8 @@ uint8_t *lam_pk_ctm_get_data(uint8_t *buffer, uint32_t *len);
  *
  */
 
-INLINE lam_ct_ctrl_t *lam_ctm_get_control(lam_ctmsg_t *msg) {return msg->ctm_ctrl;}
-INLINE void lam_ctm_set_control(lam_ctmsg_t *msg, lam_ct_ctrl_t *ctrl)
+inline lam_ct_ctrl_t *lam_ctm_get_control(lam_ctmsg_t *msg) {return msg->ctm_ctrl;}
+inline void lam_ctm_set_control(lam_ctmsg_t *msg, lam_ct_ctrl_t *ctrl)
 {
     msg->ctm_ctrl = ctrl;
 }

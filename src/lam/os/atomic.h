@@ -36,6 +36,8 @@
 #ifndef LAM_ATOMIC_H_INCLUDED
 #define LAM_ATOMIC_H_INCLUDED
 
+#include "lam_config.h"
+
 /*
  * Atomic functions
  */

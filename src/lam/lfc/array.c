@@ -33,32 +33,77 @@
 #include <string.h>
 #include "lam/lfc/array.h"
 
-lam_class_info_t array_cls = {"lam_array_t", &object_cls, 
+#define ARR_BLK_SZ      20
+
+lam_class_info_t lam_array_cls = {"lam_array_t", &lam_object_cls, 
     (class_init_t) lam_arr_init, (class_destroy_t)lam_arr_destroy};
 
 void lam_arr_init(lam_array_t *arr)
 {
-    SUPER_INIT(arr, array_cls.cls_parent);
+    SUPER_INIT(arr, lam_array_cls.cls_parent);
     arr->arr_items = NULL;
+    arr->arr_size = 0;
     arr->arr_length = 0;
 }
 
 void lam_arr_destroy(lam_array_t *arr)
 {
+    lam_arr_remove_all(arr);
     free(arr->arr_items);
-    SUPER_DESTROY(arr, array_cls.cls_parent);
+    SUPER_DESTROY(arr, lam_array_cls.cls_parent);
 }
 
-void lam_arr_init_with(lam_array_t *arr, size_t length)
+lam_bool_t lam_arr_init_with(lam_array_t *arr, size_t length)
 {
     /* initializes array with fixed length.
     lam_arr_init() must have been called first. */
-    if ( !arr->arr_items )
+    if ( arr->arr_items )
     {
-        arr->arr_items = malloc(sizeof(lam_object_t *)*length);
-        arr->arr_length = length;
-        bzero(arr->arr_items, sizeof(lam_object_t *)*length);
+        lam_arr_remove_all(arr);
     }
+    
+    arr->arr_items = malloc(sizeof(lam_object_t *)*length);
+    if ( arr->arr_items )
+    {
+        arr->arr_length = length;
+        bzero(arr->arr_items, sizeof(lam_object_t *)*length);            
+    }
+    else
+        return LAM_FALSE;
+    
+    return LAM_TRUE;
+}
+
+lam_bool_t lam_arr_append_item(lam_array_t *arr, lam_object_t *item)
+{
+    if ( arr->arr_size == arr->arr_length )
+    {
+        arr->arr_items = (lam_object_t **)realloc(arr->arr_items,
+                        sizeof(lam_object_t *)*(arr->arr_length + ARR_BLK_SZ));
+        if ( arr->arr_items )
+        {
+            arr->arr_length += ARR_BLK_SZ;
+        }
+        else
+        {
+            return LAM_FALSE;
+        }
+    }
+    arr->arr_items[arr->arr_size++] = item;
+    
+    return LAM_TRUE;
+}
+
+void lam_arr_remove_all(lam_array_t *arr)
+{
+    size_t      i;
+    
+    for ( i = 0; i < arr->arr_size; i++ )
+    {
+        OBJECT_RELEASE(arr->arr_items[i]);
+        arr->arr_items[i] = 0;
+    }
+    arr->arr_size = 0;
 }
 
 
