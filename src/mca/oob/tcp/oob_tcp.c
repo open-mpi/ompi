@@ -282,7 +282,6 @@ static void mca_oob_tcp_accept(void)
 static int mca_oob_tcp_create_listen(void)
 {
     int flags;
-    int optval = 1;
     struct sockaddr_in inaddr;
     ompi_socklen_t addrlen;
 
@@ -636,7 +635,7 @@ int mca_oob_tcp_init(void)
     ompi_list_item_t* item;
 
     /* random delay to stagger connections back to seed */
-    usleep((orte_process_info.num_procs % 100) * 10000);
+    usleep((orte_process_info.my_name->vpid % orte_process_info.num_procs % 1000) * 1000);
 
     /* get my jobid */
     if (ORTE_SUCCESS != (rc = orte_ns.get_jobid(&jobid, 

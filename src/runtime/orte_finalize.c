@@ -60,6 +60,13 @@ int orte_finalize(void)
     orte_proc_info_finalize();
     orte_univ_info_finalize();
     
+    /* finalize the mca */
+    mca_base_close();
+
+    /* finalize the output system */
+    ompi_output_finalize();
+    
+    /* finalize the memory allocator */
     ompi_malloc_finalize();
 
     return ORTE_SUCCESS;

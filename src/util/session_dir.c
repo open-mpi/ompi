@@ -128,204 +128,218 @@ int orte_session_dir(bool create, char *prfx, char *usr, char *hostid,
     orte_sys_info();
 
     if (NULL == usr) {  /* check if user set elsewhere */
-	if (NULL == orte_system_info.user) { /* error condition */
-	    return OMPI_ERROR;
-	} else {
-	    user = strdup(orte_system_info.user);
-	}
+    	if (NULL == orte_system_info.user) { /* error condition */
+    	    return OMPI_ERROR;
+    	} else {
+    	    user = strdup(orte_system_info.user);
+    	}
     } else {
-	user = strdup(usr);
+    	user = strdup(usr);
     }
 
     if (NULL == univ) { /* see if universe set elsewhere */
-	if (NULL == orte_universe_info.name) {  /* error condition */
-	    return OMPI_ERROR;
-	} else {
-	    universe = strdup(orte_universe_info.name);
-	}
+    	if (NULL == orte_universe_info.name) {  /* error condition */
+    	    return OMPI_ERROR;
+    	} else {
+    	    universe = strdup(orte_universe_info.name);
+    	}
     } else {
-	universe = strdup(univ);
+    	universe = strdup(univ);
     }
 
     if (NULL == job && NULL != proc) { /* can't give a proc without a job */
-	return OMPI_ERROR;
+    	return OMPI_ERROR;
     }
 
     if (NULL == hostid) {  /* check if hostname set elsewhere */
-	if (NULL == orte_system_info.nodename) { /* don't have a hostname anywhere  - error */
-	    return_code = OMPI_ERROR;
-	    goto CLEANUP;
-	} else {
-	    hostname = strdup(orte_system_info.nodename);
-	}
+    	if (NULL == orte_system_info.nodename) { /* don't have a hostname anywhere  - error */
+    	    return_code = OMPI_ERROR;
+    	    goto CLEANUP;
+    	} else {
+    	    hostname = strdup(orte_system_info.nodename);
+    	}
     } else {
-	hostname = strdup(hostid);
+    	hostname = strdup(hostid);
     }
 
     if (NULL == batchid) {
-	batchname = strdup("0");
+    	batchname = strdup("0");
     } else {
-	batchname = batchid;
+    	batchname = batchid;
     }
 
     if (NULL == orte_process_info.top_session_dir) {
-	if (0 > asprintf(&frontend, "openmpi-sessions-%s@%s_%s", user, hostname, batchname)) {
-	    return_code = OMPI_ERROR;
-	    goto CLEANUP;
-	}
+    	if (0 > asprintf(&frontend, "openmpi-sessions-%s@%s_%s", user, hostname, batchname)) {
+    	    return_code = OMPI_ERROR;
+    	    goto CLEANUP;
+    	}
     } else {
-	frontend = strdup(orte_process_info.top_session_dir);
+    	frontend = strdup(orte_process_info.top_session_dir);
     }
 
 
     if (NULL != proc) {
-	if (0 > asprintf(&sessions, "%s%s%s%s%s%s%s", frontend,
-			 orte_system_info.path_sep, universe,
-		         orte_system_info.path_sep, job,
-			 orte_system_info.path_sep, proc)) {
-	    return_code = OMPI_ERROR;
-	    goto CLEANUP;
-	}
+    	if (0 > asprintf(&sessions, "%s%s%s%s%s%s%s", frontend,
+    			 orte_system_info.path_sep, universe,
+    		         orte_system_info.path_sep, job,
+    			 orte_system_info.path_sep, proc)) {
+    	    return_code = OMPI_ERROR;
+    	    goto CLEANUP;
+    	}
     } else if (NULL != job) {
-	if (0 > asprintf(&sessions, "%s%s%s%s%s", frontend,
-			 orte_system_info.path_sep, universe,
-			 orte_system_info.path_sep, job)) {
-	    return_code = OMPI_ERROR;
-	    goto CLEANUP;
-	}
+    	if (0 > asprintf(&sessions, "%s%s%s%s%s", frontend,
+    			 orte_system_info.path_sep, universe,
+    			 orte_system_info.path_sep, job)) {
+    	    return_code = OMPI_ERROR;
+    	    goto CLEANUP;
+    	}
     } else {
-	if (0 > asprintf(&sessions, "%s%s%s", frontend, orte_system_info.path_sep, universe)) {
-	    return_code = OMPI_ERROR;
-	    goto CLEANUP;
-	}
+    	if (0 > asprintf(&sessions, "%s%s%s", frontend, orte_system_info.path_sep, universe)) {
+    	    return_code = OMPI_ERROR;
+    	    goto CLEANUP;
+    	}
     }
 
 
     if (NULL != prefix) {  /* if a prefix is specified, start looking here */
-	tmp = strdup(prefix);
-	fulldirpath = strdup(orte_os_path(false, tmp, sessions, NULL)); /* make sure it's an absolute pathname */
-	if (OMPI_SUCCESS == orte_check_dir(create, fulldirpath)) { /* check for existence and access, or create it */
-	    return_code = OMPI_SUCCESS;
-	    goto COMPLETE;
-	}
+    	tmp = strdup(prefix);
+    	fulldirpath = strdup(orte_os_path(false, tmp, sessions, NULL)); /* make sure it's an absolute pathname */
+    	if (OMPI_SUCCESS == orte_check_dir(create, fulldirpath)) { /* check for existence and access, or create it */
+    	    return_code = OMPI_SUCCESS;
+    	    goto COMPLETE;
+    	}
    }
- 
+
+    /* didn't find it, so first clear fulldirpath and tmp */
+    if (NULL != fulldirpath) {
+        free(fulldirpath); fulldirpath = NULL;
+    }
+    if (NULL != tmp) {
+        free(tmp); tmp = NULL;
+    }
+    
     /* no prefix was specified, so check other options in order */
     if (NULL != orte_process_info.tmpdir_base) {  /* stored value previously */
-	tmp = strdup(orte_process_info.tmpdir_base);
-	fulldirpath = strdup(orte_os_path(false, tmp, sessions, NULL));
-	if (OMPI_SUCCESS == orte_check_dir(create, fulldirpath)) { /* check for existence and access, or create it */
-	    return_code = OMPI_SUCCESS;
-	    goto COMPLETE;
-	}
+    	tmp = strdup(orte_process_info.tmpdir_base);
+    	fulldirpath = strdup(orte_os_path(false, tmp, sessions, NULL));
+    	if (OMPI_SUCCESS == orte_check_dir(create, fulldirpath)) { /* check for existence and access, or create it */
+    	    return_code = OMPI_SUCCESS;
+    	    goto COMPLETE;
+    	}
+        free(tmp); tmp = NULL;
+        free(fulldirpath); fulldirpath = NULL;
    } else if (NULL != getenv("OMPI_PREFIX_ENV")) {  /* we have prefix enviro var - try that next */
-	tmp = strdup(getenv("OMPI_PREFIX_ENV"));
-	fulldirpath = strdup(orte_os_path(false, tmp, sessions, NULL));
-	if (OMPI_SUCCESS == orte_check_dir(create, fulldirpath)) { /* check for existence and access, or create it */
-	    return_code = OMPI_SUCCESS;
-	    goto COMPLETE;
-	}
+    	tmp = strdup(getenv("OMPI_PREFIX_ENV"));
+    	fulldirpath = strdup(orte_os_path(false, tmp, sessions, NULL));
+    	if (OMPI_SUCCESS == orte_check_dir(create, fulldirpath)) { /* check for existence and access, or create it */
+    	    return_code = OMPI_SUCCESS;
+    	    goto COMPLETE;
+    	}
+        free(tmp); tmp = NULL;
+        free(fulldirpath); fulldirpath = NULL;
     } else if (NULL != getenv("TMPDIR")) {
-	tmp = strdup(getenv("TMPDIR"));
-	fulldirpath = strdup(orte_os_path(false, tmp, sessions, NULL));
-	if (OMPI_SUCCESS == orte_check_dir(create, fulldirpath)) { /* check for existence and access, or create it */
-	    return_code = OMPI_SUCCESS;
-	    goto COMPLETE;
-	}
+    	tmp = strdup(getenv("TMPDIR"));
+    	fulldirpath = strdup(orte_os_path(false, tmp, sessions, NULL));
+    	if (OMPI_SUCCESS == orte_check_dir(create, fulldirpath)) { /* check for existence and access, or create it */
+    	    return_code = OMPI_SUCCESS;
+    	    goto COMPLETE;
+    	}
+        free(tmp); tmp = NULL;
+        free(fulldirpath); fulldirpath = NULL;
     } else if (NULL != getenv("TMP")) {
-	tmp = strdup(getenv("TMP"));
-	fulldirpath = strdup(orte_os_path(false, tmp, sessions, NULL));
-	if (OMPI_SUCCESS == orte_check_dir(create, fulldirpath)) { /* check for existence and access, or create it */
-	    return_code = OMPI_SUCCESS;
-	    goto COMPLETE;
-	}
+    	tmp = strdup(getenv("TMP"));
+    	fulldirpath = strdup(orte_os_path(false, tmp, sessions, NULL));
+    	if (OMPI_SUCCESS == orte_check_dir(create, fulldirpath)) { /* check for existence and access, or create it */
+    	    return_code = OMPI_SUCCESS;
+    	    goto COMPLETE;
+    	}
+        free(tmp); tmp = NULL;
+        free(fulldirpath); fulldirpath = NULL;
     } else {
-	tmp = strdup(OMPI_DEFAULT_TMPDIR);
-	fulldirpath = strdup(orte_os_path(false, tmp, sessions, NULL));
-	if (OMPI_SUCCESS == orte_check_dir(create, fulldirpath)) { /* check for existence and access, or create it */
-	    return_code = OMPI_SUCCESS;
-	    goto COMPLETE;
-	}
-    }
+    	tmp = strdup(OMPI_DEFAULT_TMPDIR);
+    	fulldirpath = strdup(orte_os_path(false, tmp, sessions, NULL));
+    	if (OMPI_SUCCESS == orte_check_dir(create, fulldirpath)) { /* check for existence and access, or create it */
+    	    return_code = OMPI_SUCCESS;
+    	    goto COMPLETE;
+    	}
+        free(tmp); tmp = NULL;
+        free(fulldirpath); fulldirpath = NULL;
+   }
 
-    fulldirpath = strdup(orte_os_path(false, tmp, sessions, NULL));
-    if (OMPI_SUCCESS == orte_check_dir(create, fulldirpath)) { /* check for existence and access, or create it */
-	return_code = OMPI_SUCCESS;
-	goto COMPLETE;
-    } else {
+    /* couldn't find anything - return error */
 	return_code = OMPI_ERROR;
 	goto CLEANUP;
-    }
+
 
  COMPLETE:
     if (create) {  /* if creating the dir tree, overwrite the fields */
-	if (NULL != orte_process_info.tmpdir_base) {
-	    free(orte_process_info.tmpdir_base);
-	    orte_process_info.tmpdir_base = NULL;
-	}
-
-	if (NULL != orte_process_info.top_session_dir) {
-	    free(orte_process_info.top_session_dir);
-	    orte_process_info.top_session_dir = NULL;
-	}
+    	if (NULL != orte_process_info.tmpdir_base) {
+    	    free(orte_process_info.tmpdir_base);
+    	    orte_process_info.tmpdir_base = NULL;
+    	}
+    
+    	if (NULL != orte_process_info.top_session_dir) {
+    	    free(orte_process_info.top_session_dir);
+    	    orte_process_info.top_session_dir = NULL;
+    	}
     }
 
     if (NULL == orte_process_info.tmpdir_base) {
-	orte_process_info.tmpdir_base = strdup(tmp); /* fill in if empty */
+    	orte_process_info.tmpdir_base = strdup(tmp); /* fill in if empty */
     }
 
     if (NULL == orte_process_info.top_session_dir) {
-	orte_process_info.top_session_dir = strdup(frontend);
+    	orte_process_info.top_session_dir = strdup(frontend);
     }
 
     if (NULL != proc) {
-	if (create) { /* overwrite if creating */
-	    if (NULL != orte_process_info.proc_session_dir) {
-		free(orte_process_info.proc_session_dir);
-		orte_process_info.proc_session_dir = NULL;
-	    }
-	}
-	if (NULL == orte_process_info.proc_session_dir) {
-	    orte_process_info.proc_session_dir = strdup(fulldirpath);
-	}
-	sav = strdup(fulldirpath);
-	free(fulldirpath);
-	fulldirpath = strdup(dirname(sav));
-	free(sav);
+    	if (create) { /* overwrite if creating */
+    	    if (NULL != orte_process_info.proc_session_dir) {
+    		free(orte_process_info.proc_session_dir);
+    		orte_process_info.proc_session_dir = NULL;
+    	    }
+    	}
+    	if (NULL == orte_process_info.proc_session_dir) {
+    	    orte_process_info.proc_session_dir = strdup(fulldirpath);
+    	}
+    	sav = strdup(fulldirpath);
+    	free(fulldirpath);
+    	fulldirpath = strdup(dirname(sav));
+    	free(sav);
     }
 
     if (NULL != job) {
-	if (create) { /* overwrite if creating */
-	    if (NULL != orte_process_info.job_session_dir) {
-		free(orte_process_info.job_session_dir);
-		orte_process_info.job_session_dir = NULL;
-	    }
-	}
-	if (NULL == orte_process_info.job_session_dir) {
-	    orte_process_info.job_session_dir = strdup(fulldirpath);
-	}
-	sav = strdup(fulldirpath);
-	free(fulldirpath);
-	fulldirpath = strdup(dirname(sav));
-	free(sav);
+    	if (create) { /* overwrite if creating */
+    	    if (NULL != orte_process_info.job_session_dir) {
+    		free(orte_process_info.job_session_dir);
+    		orte_process_info.job_session_dir = NULL;
+    	    }
+    	}
+    	if (NULL == orte_process_info.job_session_dir) {
+    	    orte_process_info.job_session_dir = strdup(fulldirpath);
+    	}
+    	sav = strdup(fulldirpath);
+    	free(fulldirpath);
+    	fulldirpath = strdup(dirname(sav));
+    	free(sav);
     }
 
     if (create) { /* overwrite if creating */
-	if (NULL != orte_process_info.universe_session_dir) {
-	    free(orte_process_info.universe_session_dir);
-	    orte_process_info.universe_session_dir = NULL;
-	}
+    	if (NULL != orte_process_info.universe_session_dir) {
+    	    free(orte_process_info.universe_session_dir);
+    	    orte_process_info.universe_session_dir = NULL;
+    	}
     }
     if (NULL == orte_process_info.universe_session_dir) {
         orte_process_info.universe_session_dir = strdup(fulldirpath);
     }
 
     if (orte_debug_flag) {
-	ompi_output(0, "procdir: %s", orte_process_info.proc_session_dir);
-	ompi_output(0, "jobdir: %s", orte_process_info.job_session_dir);
-	ompi_output(0, "unidir: %s", orte_process_info.universe_session_dir);
-	ompi_output(0, "top: %s", orte_process_info.top_session_dir);
-	ompi_output(0, "tmp: %s", orte_process_info.tmpdir_base);
+    	ompi_output(0, "procdir: %s", orte_process_info.proc_session_dir);
+    	ompi_output(0, "jobdir: %s", orte_process_info.job_session_dir);
+    	ompi_output(0, "unidir: %s", orte_process_info.universe_session_dir);
+    	ompi_output(0, "top: %s", orte_process_info.top_session_dir);
+    	ompi_output(0, "tmp: %s", orte_process_info.tmpdir_base);
     }
 
  CLEANUP:
@@ -336,18 +350,24 @@ int orte_session_dir(bool create, char *prfx, char *usr, char *hostid,
         free(fulldirpath);
     }
     if (frontend) {
-	free(frontend);
+	   free(frontend);
     }
     if (batchname) {
-	free(batchname);
+	   free(batchname);
     }
     if (hostname) {
-	free(hostname);
+	   free(hostname);
+    }
+    if (universe) {
+       free(universe);
     }
     if (sessions) {
-	free(sessions);
+	   free(sessions);
     }
-
+    if (user) {
+        free(user);
+    }
+    
     return return_code;
 }
 

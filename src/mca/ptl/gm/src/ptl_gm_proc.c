@@ -131,7 +131,6 @@ mca_ptl_gm_proc_create (mca_ptl_gm_module_t * ptl, ompi_proc_t * ompi_proc)
     }
     ptl_proc->proc_addr_count = size / sizeof (mca_ptl_gm_addr_t);
 
-
     /* allocate space for peer array - one for each exported address */
     ptl_proc->peer_arr = (mca_ptl_gm_peer_t **)
         malloc (ptl_proc->proc_addr_count * sizeof (mca_ptl_gm_peer_t *));
@@ -143,8 +142,10 @@ mca_ptl_gm_proc_create (mca_ptl_gm_module_t * ptl, ompi_proc_t * ompi_proc)
         return NULL;
     }
 
-    if(NULL == mca_ptl_gm_component.gm_local && ompi_proc == ompi_proc_local() )
+    if(NULL == mca_ptl_gm_component.gm_local && 
+       ompi_proc == ompi_proc_local() ) {
         mca_ptl_gm_component.gm_local = ptl_proc;
+    }
 
     return ptl_proc;
 }

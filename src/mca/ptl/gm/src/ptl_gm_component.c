@@ -245,12 +245,18 @@ mca_ptl_gm_discover_boards( mca_ptl_gm_module_t** pptl,
 
         /* open the first available gm port for this board  */
         for( port_no = 2; port_no < max_port; port_no++ ) {
-            if (port_no == 3) continue;  /* port 0,1,3 reserved  */
-            if( GM_SUCCESS == gm_open( &gm_port, board_no, port_no,
-				       mca_ptl_gm_component.gm_port_name, GM_API_VERSION_2_0) )
+            if (3 == port_no) {
+                continue;  /* port 0,1,3 reserved  */
+            } else if (GM_SUCCESS == 
+                       gm_open(&gm_port, board_no, port_no,
+                               mca_ptl_gm_component.gm_port_name, 
+                               GM_API_VERSION_2_0) ) {
 		break;
+            }
         }
-        if( port_no == max_port ) continue;
+        if( port_no == max_port ) {
+            continue;
+        }
 
         /*  Get node local Id */
         if( GM_SUCCESS != gm_get_node_id( gm_port, &local_id) ) {
@@ -265,8 +271,9 @@ mca_ptl_gm_discover_boards( mca_ptl_gm_module_t** pptl,
         }
 
 	/* Create the ptl. If fail return the number of already created */
-	if( OMPI_SUCCESS != mca_ptl_gm_create( &(pptl[index]) ) )
+	if( OMPI_SUCCESS != mca_ptl_gm_create( &(pptl[index]) ) ) {
 	    return index;
+        }
 
         pptl[index]->port_id   = port_no;
         pptl[index]->gm_port   = gm_port;
@@ -274,13 +281,15 @@ mca_ptl_gm_discover_boards( mca_ptl_gm_module_t** pptl,
 	pptl[index]->global_id = global_id;
 
 	/* everything is OK let's mark it as usable and go to the next one */
-	if( (++index) >= max_ptls ) break;
+	if( (++index) >= max_ptls ) {
+            break;
+        }
     }
 
     return index;
 }
 
-static inline int
+static int
 mca_ptl_gm_init_sendrecv (mca_ptl_gm_module_t * ptl)
 {
     uint32_t i;
@@ -420,14 +429,14 @@ mca_ptl_gm_init( mca_ptl_gm_component_t * gm )
 				    mca_ptl_gm_component.gm_max_boards_number,
 				    mca_ptl_gm_component.gm_max_port_number );
 
-    /* In the case when we are in a multi-threaded environment each PTL will have it's
-     * own thread. At this point all structures are correctly initialized, each thread
-     * will grab one and use it.
+    /* In the case when we are in a multi-threaded environment each
+     * PTL will have its own thread. At this point all structures are
+     * correctly initialized, each thread will grab one and use it.
      */
     for( index = 0; index < mca_ptl_gm_component.gm_num_ptl_modules; index++ ) {
         ptl = mca_ptl_gm_component.gm_ptl_modules[index];
-        /* Now prepost some received and allocate some sends. After this step the PTL
-         * is fully initialized.
+        /* Now prepost some received and allocate some sends. After
+         * this step the PTL is fully initialized.
          */
         if( OMPI_SUCCESS != mca_ptl_gm_init_sendrecv( ptl ) )
             break;
@@ -436,8 +445,9 @@ mca_ptl_gm_init( mca_ptl_gm_component_t * gm )
 	    ptl->thread.t_run = (ompi_thread_fn_t)mca_ptl_gm_thread_progress;
 	    ptl->thread.t_arg = (void*)ptl;
 #endif  /* OMPI_HAVE_POSIX_THREADS */
-	    if( OMPI_SUCCESS != ompi_thread_start( &(ptl->thread) ) )
+	    if( OMPI_SUCCESS != ompi_thread_start( &(ptl->thread) ) ) {
 		break;
+            }
         }
     }
     save_counter = index;

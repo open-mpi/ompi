@@ -90,7 +90,7 @@ static void orte_gpr_value_destructor(orte_gpr_value_t* reg_val)
     
     if (0 < reg_val->cnt && NULL != reg_val->keyvals) {
         for (i=0; i < reg_val->cnt; i++) {
-            if(NULL != reg_val->keyvals[i])
+            if (NULL != reg_val->keyvals[i])
                 OBJ_RELEASE(reg_val->keyvals[i]);
         }
 	   free(reg_val->keyvals);
@@ -134,7 +134,7 @@ static void orte_gpr_notify_data_destructor(orte_gpr_notify_data_t* ptr)
     
     if (0 < ptr->cnt && NULL != ptr->values) {
         for (i=0; i < ptr->cnt; i++) {
-            if(NULL != ptr->values[i])
+            if (NULL != ptr->values[i])
                 OBJ_RELEASE(ptr->values[i]);
         }
        free(ptr->values);
@@ -215,7 +215,7 @@ static void orte_gpr_notify_message_destructor(orte_gpr_notify_message_t* msg)
     
     if (0 < msg->cnt && NULL != msg->data) {
         for (i=0; i < msg->cnt; i++) {
-            OBJ_RELEASE(msg->data[i]);
+            if (NULL != msg->data[i]) OBJ_RELEASE(msg->data[i]);
         }
         free(msg->data);
     }

@@ -29,7 +29,6 @@ libmca_ptl_gm_la_SOURCES = \
         ptl_gm_priv.c \
         ptl_gm_proc.c \
         ptl_gm_proc.h \
-        ptl_gm_req.c \
         ptl_gm_req.h \
         ptl_gm_sendfrag.c \
         ptl_gm_sendfrag.h

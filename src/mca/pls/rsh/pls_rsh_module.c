@@ -35,8 +35,10 @@
 #include "mca/ns/ns.h"
 #include "mca/pls/pls.h"
 #include "mca/rml/rml.h"
+#include "mca/errmgr/errmgr.h"
 #include "mca/ras/base/ras_base_node.h"
 #include "mca/rmaps/base/rmaps_base_map.h"
+#include "mca/soh/soh.h"
 #include "pls_rsh.h"
 
 #define NUM_CONCURRENT 128
@@ -58,6 +60,17 @@ orte_pls_base_module_1_0_0_t orte_pls_rsh_module = {
     orte_pls_rsh_finalize
 };
 
+/* struct used to have enough information to clean up the state of the
+   universe if a daemon aborts */
+struct rsh_daemon_info_t {
+    ompi_object_t super;
+    orte_ras_base_node_t* node;
+    orte_jobid_t jobid;
+};
+typedef struct rsh_daemon_info_t rsh_daemon_info_t;
+static OBJ_CLASS_INSTANCE(rsh_daemon_info_t,
+                          ompi_object_t,
+                          NULL, NULL);
 
 /**
  * Callback on daemon exit.
@@ -65,6 +78,63 @@ orte_pls_base_module_1_0_0_t orte_pls_rsh_module = {
 
 static void orte_pls_rsh_wait_daemon(pid_t pid, int status, void* cbdata)
 {
+    rsh_daemon_info_t *info = (rsh_daemon_info_t*) cbdata;
+    ompi_list_t map;
+    ompi_list_item_t* item;
+    int rc;
+
+    /* get the mapping for our node so we can cancel the right things */
+    OBJ_CONSTRUCT(&map, ompi_list_t);
+    rc = orte_rmaps_base_get_node_map(orte_process_info.my_name->cellid,
+                                      info->jobid,
+                                      info->node->node_name,
+                                      &map);
+    if(ORTE_SUCCESS != rc) {
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
+    }
+
+    /* set state of all processes associated with the daemon as terminated */
+    for(item =  ompi_list_get_first(&map);
+        item != ompi_list_get_end(&map);
+        item =  ompi_list_get_next(item)) {
+        orte_rmaps_base_map_t* map = (orte_rmaps_base_map_t*) item;
+        size_t i;
+
+        for (i = 0 ; i < map->num_procs ; ++i) {
+            rc = orte_soh.set_proc_soh(&(map->procs[i]->proc_name), 
+                                       ORTE_PROC_STATE_ABORTED, status);
+        }
+        if(ORTE_SUCCESS != rc) {
+            ORTE_ERROR_LOG(rc);
+        }
+    }
+    OBJ_DESTRUCT(&map);
+
+ cleanup:
+    /* BWB - XXX - FIXME - this should be made prettier in some way.  We
+       have something of a problem here, since it's a callback, so we
+       don't have a good way to propogate back up to the user :/ */
+    /* tell the user something went wrong */
+    if (! WIFEXITED(status) || ! WEXITSTATUS(status) == 0) {
+        ompi_output(0, "A daemon on node %s failed to start as expected."
+               "There may be more information available above from the"
+               "remote shell.", info->node->node_name);
+        if (WIFEXITED(status)) {
+            ompi_output(0, "The daemon exited unexpectedly with status %d.",
+                   WEXITSTATUS(status));
+        } else if (WIFSIGNALED(status)) {
+            ompi_output(0, "The daemon received a signal %d.", WTERMSIG(status));
+#ifdef WCOREDUMP
+            if (WCOREDUMP(status)) {
+                ompi_output(0, "The daemon process dumped core.");
+            }
+#endif /* WCOREDUMP */
+        } else {
+            ompi_output(0, "No status information is available: %d.", status);
+        }
+    }
+
     /* release any waiting threads */
     OMPI_THREAD_LOCK(&mca_pls_rsh_component.lock);
     if(mca_pls_rsh_component.num_children-- >= NUM_CONCURRENT ||
@@ -72,6 +142,10 @@ static void orte_pls_rsh_wait_daemon(pid_t pid, int status, void* cbdata)
         ompi_condition_signal(&mca_pls_rsh_component.cond);
     }
     OMPI_THREAD_UNLOCK(&mca_pls_rsh_component.lock);
+
+    /* cleanup */
+    OBJ_RELEASE(info->node);
+    OBJ_RELEASE(info);
 }
 
 
@@ -209,11 +283,9 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
             } 
 
             if (mca_pls_rsh_component.debug == 0) {
-                 /* setup stdin/stdout/stderr */
+                 /* setup stdin */
                 int fd = open("/dev/null", O_RDWR);
                 dup2(fd, 0);
-                dup2(fd, 1);
-                dup2(fd, 2);
                 close(fd);
             }
 
@@ -223,14 +295,18 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
             exit(-1);
 
         } else {
+            rsh_daemon_info_t *daemon_info;
 
             OMPI_THREAD_LOCK(&mca_pls_rsh_component.lock);
             if(mca_pls_rsh_component.num_children++ >= NUM_CONCURRENT)
                  ompi_condition_wait(&mca_pls_rsh_component.cond, &mca_pls_rsh_component.lock);
             OMPI_THREAD_UNLOCK(&mca_pls_rsh_component.lock);
 
+            daemon_info = OBJ_NEW(rsh_daemon_info_t);
             OBJ_RETAIN(node);
-            orte_wait_cb(pid, orte_pls_rsh_wait_daemon, node);
+            daemon_info->node = node;
+            daemon_info->jobid = jobid;
+            orte_wait_cb(pid, orte_pls_rsh_wait_daemon, daemon_info);
             vpid++;
 
             /* if required - add delay to avoid problems w/ X11 authentication */

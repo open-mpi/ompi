@@ -22,42 +22,25 @@
 #include "ptl_gm_sendfrag.h"
 #include "ptl_gm_priv.h"
 
-static void mca_ptl_gm_send_frag_construct (mca_ptl_gm_send_frag_t* frag);
-static void mca_ptl_gm_send_frag_destruct (mca_ptl_gm_send_frag_t* frag);
-
-static void mca_ptl_gm_recv_frag_construct (mca_ptl_gm_recv_frag_t* frag);
-static void mca_ptl_gm_recv_frag_destruct (mca_ptl_gm_recv_frag_t* frag);
-
 /*
  * send fragment constructor/destructors.
  */
 
-static void
-mca_ptl_gm_send_frag_construct (mca_ptl_gm_send_frag_t* frag)
-{
-}
+OBJ_CLASS_INSTANCE(mca_ptl_gm_send_frag_t,
+                   mca_ptl_base_send_frag_t,
+                   NULL, NULL);
 
-static void
-mca_ptl_gm_send_frag_destruct (mca_ptl_gm_send_frag_t* frag)
-{
-}
-
-ompi_class_t mca_ptl_gm_send_frag_t_class = {
-    "mca_ptl_gm_send_frag_t",
-    OBJ_CLASS (mca_ptl_base_send_frag_t),
-    (ompi_construct_t) mca_ptl_gm_send_frag_construct,
-    (ompi_destruct_t) mca_ptl_gm_send_frag_destruct
-};
-
-/* It's not yet clear for me what's the best solution here. Block until we
- * get a free request or allocate a new one. The fist case allow us to never
- * take care of the gm allocated DMA buffer as all send fragments already have
- * one attached, but it can stop the application progression. The second case
- * require special cases: we should set the data in the header inside the fragment
- * and later when we get some free fragments with DMA memory attached we should
+/* It's not yet clear for me what's the best solution here. Block
+ * until we get a free request or allocate a new one. The fist case
+ * allow us to never take care of the gm allocated DMA buffer as all
+ * send fragments already have one attached, but it can stop the
+ * application progression. The second case require special cases: we
+ * should set the data in the header inside the fragment and later
+ * when we get some free fragments with DMA memory attached we should
  * put the header back there, and send it.
  *
- * I will implement the first case and add the second one in my TODO list.
+ * I will implement the first case and add the second one in my TODO
+ * list.
  */
 mca_ptl_gm_send_frag_t*
 mca_ptl_gm_alloc_send_frag( struct mca_ptl_gm_module_t* ptl,
@@ -121,20 +104,6 @@ int mca_ptl_gm_put_frag_init( struct mca_ptl_gm_send_frag_t** putfrag,
  * recv fragment constructor/destructors.
  */
 
-static void
-mca_ptl_gm_recv_frag_construct (mca_ptl_gm_recv_frag_t* frag)
-{
-}
-
-static void
-mca_ptl_gm_recv_frag_destruct (mca_ptl_gm_recv_frag_t* frag)
-{
-}
-
-ompi_class_t mca_ptl_gm_recv_frag_t_class = {
-    "mca_ptl_gm_recv_frag_t",
-    OBJ_CLASS (mca_ptl_base_recv_frag_t),
-    (ompi_construct_t) mca_ptl_gm_recv_frag_construct,
-    (ompi_construct_t) mca_ptl_gm_recv_frag_destruct
-};
-
+OBJ_CLASS_INSTANCE(mca_ptl_gm_recv_frag_t,
+                   mca_ptl_base_recv_frag_t,
+                   NULL, NULL);

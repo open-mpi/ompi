@@ -82,6 +82,7 @@ struct globals_t {
     ompi_mutex_t lock;
     ompi_condition_t cond;
 } orterun_globals;
+static bool globals_init = false;
 
 
 ompi_cmd_line_init_t cmd_line_init[] = {
@@ -315,9 +316,20 @@ static int init_globals(void)
         NULL
     };
 
+    /* Only CONSTRUCT things once */
+    
+    if (!globals_init) {
+        OBJ_CONSTRUCT(&orterun_globals.lock, ompi_mutex_t);
+        OBJ_CONSTRUCT(&orterun_globals.cond, ompi_condition_t);
+    }
+
+    /* Reset this every time */
+
     orterun_globals = tmp;
-    OBJ_CONSTRUCT(&orterun_globals.lock, ompi_mutex_t);
-    OBJ_CONSTRUCT(&orterun_globals.cond, ompi_condition_t);
+
+    /* All done */
+
+    globals_init = true;
     return ORTE_SUCCESS;
 }
 

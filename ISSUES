@@ -3,17 +3,31 @@ Undecided timing:
 
 - if an MPI process fails (e.g., it seg faults), it causes orterun to
   hang.  This is with the rsh pls.
+  --> Looks like the problem is with what happens when you set the
+      state of the process in the soh to ORTE_PROC_STATE_ABORTED.
+  --> Ralph is looking at this
 
 - if the daemon is not found or fails to start, orterun will hang.  No
   indication is given to the users that something went wrong.
+  --> Brian thinks he fixed this, but since he sets the state to
+      ORTE_PROC_STATE_ABORTED, it won't be really clear until the
+      above issue is fixed.  But it at least tells you what went
+      wrong.
 
 - $prefix/etc/hosts vs. $prefix/etc/openmpi-default-hostfile
+  --> Brian temporarily added symlink in $prefix/etc/ for
+      openmpi-default-hostfile -> hosts if there isn't already
+      a hosts file so that he doesn't have to create one every
+      time he does "rm -rf $prefix && make install".  Will file
+      bug so that this can be fixed (and will fix in the trunk)
 
 
 Pre-milestone:
 --------------
 
 - singleton mpi doesn't work
+
+- Ralph: Populate orte_finalize()
 
 
 Post-milestone:
@@ -42,8 +56,6 @@ Post-milestone:
 
 - ?: Friendlier error messages (e.g., if no nodes -- need something
   meaningful to tell the user)
-
-- ?: Populate orte_finalize()
 
 - Ralph: compare and set function in GPR
 

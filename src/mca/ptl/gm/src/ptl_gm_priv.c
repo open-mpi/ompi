@@ -21,7 +21,6 @@
 #include "mca/pml/base/pml_base_sendreq.h"
 #include "mca/ptl/base/ptl_base_header.h"
 #include "ptl_gm.h"
-#include "ptl_gm_req.h"
 #include "ptl_gm_peer.h"
 #include "ptl_gm_proc.h"
 #include "ptl_gm_sendfrag.h"
@@ -195,10 +194,12 @@ int mca_ptl_gm_sender_advance_pipeline( mca_ptl_gm_send_frag_t* frag )
 	hdr->hdr_frag.hdr_frag_length      = send_line->length;
 	hdr->registered_memory             = send_line->local_memory;
 	
-	gm_send_to_peer_with_callback( peer->peer_ptl->gm_port, hdr,
-				       GM_SIZE, sizeof(mca_ptl_gm_frag_header_t),
-				       GM_HIGH_PRIORITY, peer->local_id,
-				       send_continue_callback, (void*)hdr );
+	gm_send_with_callback( peer->peer_ptl->gm_port, hdr,
+                               GM_SIZE, sizeof(mca_ptl_gm_frag_header_t),
+                               GM_HIGH_PRIORITY,
+                               peer->local_id,
+                               peer->port_number,
+                               send_continue_callback, (void*)hdr );
 	
 	send_line->flags ^= PTL_GM_PIPELINE_REMOTE;
 	frag->pipeline.pos_transfert = (frag->pipeline.pos_transfert + 1) % GM_PIPELINE_DEPTH;
@@ -318,10 +319,14 @@ int mca_ptl_gm_peer_send_continue( mca_ptl_gm_peer_t *ptl_peer,
 		hdr->hdr_frag.hdr_common.hdr_flags |= PTL_FLAG_GM_LAST_FRAGMENT;
 
 	    /* for the last piece set the header type to FIN */
-            gm_send_to_peer_with_callback( ptl_peer->peer_ptl->gm_port, hdr,
-                                           GM_SIZE, iov.iov_len + sizeof(mca_ptl_base_frag_header_t),
-					   GM_LOW_PRIORITY, ptl_peer->local_id,
-                                           send_continue_callback, (void*)hdr );
+            gm_send_with_callback( ptl_peer->peer_ptl->gm_port, hdr,
+                                   GM_SIZE, 
+                                   iov.iov_len + 
+                                   sizeof(mca_ptl_base_frag_header_t),
+                                   GM_LOW_PRIORITY, 
+                                   ptl_peer->local_id,
+                                   ptl_peer->port_number,
+                                   send_continue_callback, (void*)hdr );
 	    item = NULL;  /* force to retrieve a new one on the next loop */
         }
         *size = fragment->frag_bytes_processed;
@@ -348,10 +353,14 @@ int mca_ptl_gm_peer_send_continue( mca_ptl_gm_peer_t *ptl_peer,
     hdr->registered_memory.lval        = 0L;
     hdr->registered_memory.pval        = NULL; 
     
-    gm_send_to_peer_with_callback( ptl_peer->peer_ptl->gm_port, hdr,
-				   GM_SIZE, sizeof(mca_ptl_base_frag_header_t) + sizeof(ompi_ptr_t),
-                                   GM_LOW_PRIORITY, ptl_peer->local_id,
-				   mca_ptl_gm_basic_frag_callback, (void *)hdr );
+    gm_send_with_callback( ptl_peer->peer_ptl->gm_port, hdr,
+                           GM_SIZE, 
+                           sizeof(mca_ptl_base_frag_header_t) + 
+                           sizeof(ompi_ptr_t),
+                           GM_LOW_PRIORITY, 
+                           ptl_peer->local_id,
+                           ptl_peer->port_number,
+                           mca_ptl_gm_basic_frag_callback, (void *)hdr );
    
     pipeline->length = fragment->frag_send.frag_base.frag_size % mca_ptl_gm_component.gm_rdma_frag_size;
     if( pipeline->length < (mca_ptl_gm_component.gm_rdma_frag_size >> 1) ) {
@@ -463,10 +472,12 @@ int mca_ptl_gm_peer_send( struct mca_ptl_base_module_t* ptl,
     size_out = iov.iov_len + header_length;
     
     /* Send the first fragment */
-    gm_send_to_peer_with_callback( ptl_peer->peer_ptl->gm_port, hdr,
-				   GM_SIZE, size_out, GM_LOW_PRIORITY, ptl_peer->local_id,
-				   send_match_callback, (void *)hdr );
-
+    gm_send_with_callback(ptl_peer->peer_ptl->gm_port, hdr,
+                          GM_SIZE, size_out, GM_LOW_PRIORITY, 
+                          ptl_peer->local_id,
+                          ptl_peer->port_number,
+                          send_match_callback, (void *)hdr );
+    
     if( !(flags & MCA_PTL_FLAGS_ACK) ) {
 	ptl_peer->peer_ptl->super.ptl_send_progress( (mca_ptl_base_module_t*)ptl_peer->peer_ptl,
 						     sendreq,
@@ -608,9 +619,12 @@ static int mca_ptl_gm_send_quick_fin_message( struct mca_ptl_gm_peer_t* ptl_peer
     hdr->hdr_ack.hdr_dst_addr.pval  = NULL;
     hdr->hdr_ack.hdr_dst_size       = frag->frag_header.hdr_frag.hdr_frag_length;
 
-    gm_send_to_peer_with_callback( ptl_peer->peer_ptl->gm_port, hdr, GM_SIZE, sizeof(mca_ptl_base_ack_header_t),
-				   GM_HIGH_PRIORITY, ptl_peer->local_id,
-				   recv_short_callback, (void*)hdr );
+    gm_send_with_callback(ptl_peer->peer_ptl->gm_port, hdr,
+                          GM_SIZE, sizeof(mca_ptl_base_ack_header_t),
+                          GM_HIGH_PRIORITY, 
+                          ptl_peer->local_id,
+                          ptl_peer->port_number,
+                          recv_short_callback, (void*)hdr );
     return OMPI_SUCCESS;
 }
 
