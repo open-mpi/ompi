@@ -35,7 +35,7 @@ main (int argc, char *argv[])
     }
 
     /* Get some environmental variables set for Open MPI, OOB */
-    /*env_init_for_elan();*/
+    env_init_for_elan();
 
     MPI_Init (&argc, &argv);
     MPI_Comm_size (MPI_COMM_WORLD, &numprocs);
