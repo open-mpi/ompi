@@ -192,6 +192,11 @@ int gpr_proxy_delete_object(ompi_registry_mode_t mode,
     int recv_tag, i;
     int32_t num_tokens, response;
 
+    if (mca_gpr_proxy_debug) {
+	    ompi_output(0, "[%d,%d,%d] gpr_proxy_delete_object", 
+            ompi_process_info.name->cellid, ompi_process_info.name->jobid, ompi_process_info.name->vpid);
+    }
+
     /* need to protect against errors */
     if (NULL == segment || NULL == tokens || NULL == *tokens) {
 	return OMPI_ERROR;
@@ -236,13 +241,29 @@ int gpr_proxy_delete_object(ompi_registry_mode_t mode,
 	tokptr++;
     }
 
+    if (mca_gpr_proxy_debug) {
+	    ompi_output(0, "[%d,%d,%d] gpr_proxy_delete_object: calling mca_oob_send_packed", 
+            ompi_process_info.name->cellid, ompi_process_info.name->jobid, ompi_process_info.name->vpid);
+    }
+
     if (0 > mca_oob_send_packed(mca_gpr_my_replica, cmd, MCA_OOB_TAG_GPR, 0)) {
 	goto CLEANUP;
+    }
+
+    if (mca_gpr_proxy_debug) {
+	    ompi_output(0, "[%d,%d,%d] gpr_proxy_delete_object: calling mca_oob_recv_packed", 
+            ompi_process_info.name->cellid, ompi_process_info.name->jobid, ompi_process_info.name->vpid);
     }
 
     if (0 > mca_oob_recv_packed(mca_gpr_my_replica, &answer, &recv_tag)) {
 	goto CLEANUP;
     }
+
+    if (mca_gpr_proxy_debug) {
+	    ompi_output(0, "[%d,%d,%d] gpr_proxy_delete_object: mca_oob_recv_packed returned", 
+            ompi_process_info.name->cellid, ompi_process_info.name->jobid, ompi_process_info.name->vpid);
+    }
+
 
     if ((OMPI_SUCCESS != ompi_unpack(answer, &command, 1, MCA_GPR_OOB_PACK_CMD))
 	|| (MCA_GPR_DELETE_OBJECT_CMD != command)) {
@@ -251,17 +272,28 @@ int gpr_proxy_delete_object(ompi_registry_mode_t mode,
     }
 
     if (OMPI_SUCCESS != ompi_unpack(answer, &response, 1, OMPI_INT32)) {
-	ompi_buffer_free(answer);
-	return OMPI_ERROR;
+	    ompi_buffer_free(answer);
+        if (mca_gpr_proxy_debug) {
+	        ompi_output(0, "[%d,%d,%d] gpr_proxy_delete_object: unable to unpack response", 
+                ompi_process_info.name->cellid, ompi_process_info.name->jobid, ompi_process_info.name->vpid);
+        }
+	    return OMPI_ERROR;
     } else {
-	ompi_buffer_free(answer);
-	return (int)response;
+        if (mca_gpr_proxy_debug) {
+	        ompi_output(0, "[%d,%d,%d] gpr_proxy_delete_object: returning with status %d", 
+                ompi_process_info.name->cellid, ompi_process_info.name->jobid, ompi_process_info.name->vpid, response);
+        }
+	    ompi_buffer_free(answer);
+	    return (int)response;
     }
 
  CLEANUP:
+    if (mca_gpr_proxy_debug) {
+	   ompi_output(0, "[%d,%d,%d] gpr_proxy_delete_object: cleanup\n",
+           ompi_process_info.name->cellid, ompi_process_info.name->jobid, ompi_process_info.name->vpid);
+    }
     ompi_buffer_free(cmd);
     return OMPI_ERROR;
-
 }
 
 
@@ -679,6 +711,8 @@ int gpr_proxy_synchro(ompi_registry_synchro_mode_t synchro_mode,
 	ptr_free_id = (mca_gpr_idtag_list_t*)ompi_list_remove_first(&mca_gpr_proxy_free_notify_id_tags);
 	trackptr->id_tag = ptr_free_id->id_tag;
     }
+    ompi_list_append(&mca_gpr_proxy_notify_request_tracker, &trackptr->item);
+    OMPI_THREAD_UNLOCK(&mca_gpr_proxy_mutex);
 
     if (OMPI_SUCCESS != ompi_pack(cmd, &trackptr->id_tag, 1, OMPI_INT32)) {
 	goto CLEANUP;
@@ -704,15 +738,14 @@ int gpr_proxy_synchro(ompi_registry_synchro_mode_t synchro_mode,
 	goto CLEANUP;
     }
 
-    ompi_list_append(&mca_gpr_proxy_notify_request_tracker, &trackptr->item);
     ompi_buffer_free(answer);
     ompi_buffer_free(cmd);
-    OMPI_THREAD_UNLOCK(&mca_gpr_proxy_mutex);
     return OMPI_SUCCESS;
 
  CLEANUP:
     if (NULL != trackptr) {
 	mca_gpr_proxy_last_notify_id_tag--;
+    ompi_list_remove_item(&mca_gpr_proxy_notify_request_tracker, &trackptr->item);
 	OBJ_RELEASE(trackptr);
     }
     ompi_buffer_free(cmd);
