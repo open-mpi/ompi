@@ -14,7 +14,15 @@
 /* These function #defines are separated from the MPI_File_* (and
    related) #defines mainly on principle */
 
-/* Internal ROMIO functions -- found by the illegal symbol report */
+/* Some places only include adio.h, not mpio.h, but still use
+   MPIR_Status_set_bytes.  So add a #define here for it for those
+   cases */
+
+#ifndef MPIR_Status_set_bytes
+#define MPIR_Status_set_bytes ROMIO_PREFIX(MPIR_Status_set_bytes)
+#endif
+
+/* Internal ROMIO functions (found by the illegal symbol report) */
 
 #define ADIO_Close ROMIO_PREFIX(ADIO_Close)
 #define ADIO_End ROMIO_PREFIX(ADIO_End)

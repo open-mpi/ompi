@@ -111,6 +111,8 @@
 #undef MPI_FILE_NULL
 
 /* Let's not use MPIR_Status_set_bytes */
+#ifndef MPIR_Status_set_bytes
 #define MPIR_Status_set_bytes ROMIO_PREFIX(MPIR_Status_set_bytes)
+#endif
 
 #endif /* MCA_IO_ROMIO_CONV_H */
