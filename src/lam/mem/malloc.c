@@ -20,6 +20,9 @@
 #if defined(free)
 #undef free
 #endif
+#if defined(realloc)
+#undef realloc
+#endif
 
 /*
  * Public variables
