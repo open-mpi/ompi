@@ -13,8 +13,15 @@
 #ifndef OMPI_CONFIG_BOTTOM_H 
 #define OMPI_CONFIG_BOTTOM_H
  
-#if defined(WIN32)
+#ifdef WIN32
 #include "win32/win_compat.h"
+#define OMPI_COMP_EXPORT __declspec(dllexport)
+#endif
+
+#if defined(WIN32) && defined(OMPI_BUILDING)
+#define OMPI_DECLSPEC __declspec(dllexport)
+#else
+#define OMPI_DECLSPEC __declspec(dllimport)
 #endif
 
 #ifndef OMPI_DECLSPEC
@@ -30,7 +37,7 @@
  * constants.  OMPI_NEED_C_BOOL will be true if the compiler either
  * needs <stdbool.h> or doesn't define the bool type at all.
  */
-#ifndef __cplusplus
+#ifndef __cplusplus && defined(OMPI_BUILDING) && OMPI_BUILDING
 #    if OMPI_NEED_C_BOOL
 #        if OMPI_USE_STDBOOL_H
              /* If we're using <stdbool.h>, there is an implicit
