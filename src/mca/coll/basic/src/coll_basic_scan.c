@@ -33,7 +33,6 @@ int mca_coll_basic_scan_intra(void *sbuf, void *rbuf, int count,
   long true_lb, true_extent, lb, extent;
   char *free_buffer = NULL;
   char *pml_buffer = NULL;
-  MPI_Fint fint = (MPI_Fint) dtype->id;
 
   /* Initialize */
 
@@ -98,19 +97,7 @@ int mca_coll_basic_scan_intra(void *sbuf, void *rbuf, int count,
 
     /* Perform the operation */
 
-    if (ompi_op_is_intrinsic(op) && dtype->id < DT_MAX_PREDEFINED) {
-      if (ompi_op_is_fortran(op)) {
-        op->o_func[ompi_op_ddt_map[dtype->id]].fort_fn(pml_buffer, rbuf,
-                                                       &count, &fint);
-      } else {
-        op->o_func[ompi_op_ddt_map[dtype->id]].c_fn(pml_buffer, rbuf, &count,
-                                                    &dtype);
-      }
-    } else if (ompi_op_is_fortran(op)) {
-      op->o_func[0].fort_fn(pml_buffer, rbuf, &count, &fint);
-    } else {
-      op->o_func[0].c_fn(pml_buffer, rbuf, &count, &dtype);
-    }
+    ompi_op_reduce(op, pml_buffer, rbuf, count, dtype);
 
     /* All done */
 

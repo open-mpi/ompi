@@ -9,9 +9,11 @@
 
 #include "mpi.h"
 #include "include/constants.h"
+#include "op/op.h"
+#include "datatype/datatype.h"
+#include "mca/pml/pml.h"
 #include "mca/coll/coll.h"
 #include "mca/coll/base/coll_tags.h"
-#include "mca/op/op.h"
 #include "coll_basic.h"
 
 
@@ -27,145 +29,126 @@ int mca_coll_basic_exscan_intra(void *sbuf, void *rbuf, int count,
                                 struct ompi_op_t *op, 
                                 struct ompi_communicator_t *comm)
 {
-#if 0
   int size;
   int rank;
   int err;
-  char *origin, *tmpbuf = NULL;
-  char *gathered_buffer = NULL, *gathered_origin;
+  int index;
+  long true_lb, true_extent, lb, extent;
+  char *free_buffer = NULL;
+  char *reduce_buffer = NULL;
+  char *source;
+  MPI_Request req = MPI_REQUEST_NULL;
 
   /* Initialize. */
 
   rank = ompi_comm_rank(comm);
   size = ompi_comm_size(comm);
 
-  /* Otherwise receive previous buffer and reduce. Store the recieved
-     buffer in different array and then send the reduced array to the
-     next process */
+  /* If we're rank 0, then we send our sbuf to the next rank */
 
-  /* JMS Need to replace this with some ompi_datatype_*() function */
-  err = ompi_dtbuffer(dtype, count, &gathered_buffer, &gathered_origin);
+  if (0 == rank) {
+    return mca_pml.pml_send(sbuf, count, dtype, rank + 1, 
+                            MCA_COLL_BASE_TAG_EXSCAN,
+                            MCA_PML_BASE_SEND_STANDARD, comm);
+  }
+
+  /* If we're the last rank, then just receive the result from the
+     prior rank */
+
+  else if ((size - 1) == rank) {
+    return mca_pml.pml_recv(rbuf, count, dtype, rank - 1, 
+                            MCA_COLL_BASE_TAG_EXSCAN, comm, MPI_STATUS_IGNORE);
+  }
+
+  /* Otherwise, get the result from the prior rank, combine it with my
+     data, and send it to the next rank */
+  
+  /* Start the receive for the prior rank's answer */
+      
+  err = mca_pml.pml_irecv(rbuf, count, dtype, rank - 1,
+                          MCA_COLL_BASE_TAG_EXSCAN, comm, &req);
   if (MPI_SUCCESS != err) {
-    return err;
+    goto error;
   }
 
-  if (0 != rank) {
-    if (!op->op_commute) {
-
-      /* JMS Need to replace with this some ompi_datatype_*() function */
-      err = ompi_dtbuffer(dtype, count, &tmpbuf, &origin);
-      if (MPI_SUCCESS != err) {
-	if (NULL != gathered_buffer) {
-	  OMPI_FREE(gathered_buffer);
-        }
-	return err;
-      }
-      
-      /* Copy the send buffer into the receive buffer. */
-      
-      /* JMS Need to replace with this some ompi_datatype_*() function */
-      err = ompi_dtsndrcv(sbuf, count, dtype, rbuf,
-			 count, dtype, BLKMPIEXSCAN, comm);
-      if (MPI_SUCCESS != err) {
-	if (NULL != gathered_buffer) {
-	  OMPI_FREE(gathered_buffer);
-        }
-	if (NULL != tmpbuf) {
-	  OMPI_FREE(tmpbuf);
-        }
-	return err;
-      }
-      
-      /* JMS Need to replace this with negative tags and PML entry
-         point */
-      err = MPI_Recv(origin, count, dtype,
-		     rank - 1, BLKMPIEXSCAN, comm, MPI_STATUS_IGNORE);
-      /* JMS Need to add error checking here */
-
-      /* JMS Need to replace with this some ompi_datatype_*() function */
-      err = ompi_dtsndrcv(origin, count, dtype, gathered_origin,
-			 count, dtype, BLKMPIEXSCAN, comm);
-    } else {
-      origin = sbuf;
-      
-      /* JMS Need to replace this with negative tags and PML entry
-         point */
-      err = MPI_Recv(rbuf, count, dtype,
-		     rank - 1, BLKMPIEXSCAN, comm, MPI_STATUS_IGNORE);
-      
-      if (MPI_SUCCESS != err) {
-	if (NULL != gathered_buffer) {
-	  OMPI_FREE(gathered_buffer);
-        }
-	if (NULL != tmpbuf) {
-	  OMPI_FREE(tmpbuf);
-        }
-	return err;
-      }
-      
-      /* JMS Need to replace with this some ompi_datatype_*() function */
-      err = ompi_dtsndrcv(rbuf, count, dtype, gathered_origin,
-			 count, dtype, BLKMPIEXSCAN, comm);
-    }
+  /* Get a temporary buffer to perform the reduction into.  Rationale
+     for malloc'ing this size is provided in coll_basic_reduce.c. */
+  
+  ompi_ddt_get_extent(dtype, &lb, &extent);
+  ompi_ddt_get_true_extent(dtype, &true_lb, &true_extent);
     
-    if (err != MPI_SUCCESS) {
-      if (NULL != gathered_buffer) {
-	OMPI_FREE(gathered_buffer);
-      }
-      if (NULL != tmpbuf) {
-	OMPI_FREE(tmpbuf);
-      }
-      return err;
-    }
-    
-    if (op->op_flags & OMPI_LANGF77) {
-      (op->op_func)(origin, rbuf, &count, &dtype->dt_f77handle);
-    } else {
-      (op->op_func)(origin, rbuf, &count, &dtype);
-    }
-  }  
+  free_buffer = malloc(true_extent + (count - 1) * extent);
+  if (NULL == free_buffer) {
+    return OMPI_ERR_OUT_OF_RESOURCE;
+  }
+  reduce_buffer = free_buffer - lb;
 
-  /* Send the result to next process. */
-  
-  if (rank < (size - 1)) {
-    if (0 == rank)
-      err = MPI_Send(sbuf, count, dtype, rank + 1, BLKMPIEXSCAN, comm);
-    else 
-      err = MPI_Send(rbuf, count, dtype, rank + 1, BLKMPIEXSCAN, comm);
+  if (ompi_op_is_commute(op)) {
+      
+    /* If we're commutative, we can copy my sbuf into the reduction
+       buffer before the receive completes */
+    
+    err = ompi_ddt_sndrcv(sbuf, count, dtype, reduce_buffer, count, dtype,
+                          MCA_COLL_BASE_TAG_EXSCAN, comm);
     if (MPI_SUCCESS != err) {
-      if (NULL != gathered_buffer) {
-	OMPI_FREE(gathered_buffer);
-      }
-      if (NULL != tmpbuf) {
-	OMPI_FREE(tmpbuf);
-      }
-      return err;
+      goto error;
+    }
+
+    /* Now setup the reduction */
+
+    source = rbuf;
+    
+    /* Finally, wait for the receive to complete (so that we can do
+       the reduction).  */
+
+    err = mca_pml.pml_wait(1, &req, &index, MPI_STATUS_IGNORE);
+    if (MPI_SUCCESS != err) {
+      goto error;
+    }
+  } else {
+
+    /* Setup the reduction */
+
+    source = sbuf;
+
+    /* If we're not commutative, we have to wait for the receive to
+       complete and then copy it into the reduce buffer */
+
+    err = mca_pml.pml_wait(1, &req, &index,  MPI_STATUS_IGNORE);
+    if (MPI_SUCCESS != err) {
+      goto error;
+    }
+
+    err = ompi_ddt_sndrcv(rbuf, count, dtype, reduce_buffer, count, dtype,
+                          MCA_COLL_BASE_TAG_EXSCAN, comm);
+    if (MPI_SUCCESS != err) {
+      goto error;
     }
   }
-  
-  if (rank != 0) {
-    err = ompi_dtsndrcv(gathered_origin, count, dtype, rbuf,
-		       count, dtype, BLKMPIEXSCAN, comm);
-    if (MPI_SUCCESS != err) {
-      if (NULL != gathered_buffer) {
-	OMPI_FREE(gathered_buffer);
-      }
-      if (NULL != tmpbuf) {
-	OMPI_FREE(tmpbuf);
-      }
-      return err;
-    }
+
+  /* Now reduce the received answer with my source into the answer
+     that we send off to the next rank */
+
+  ompi_op_reduce(op, source, reduce_buffer, count, dtype);
+
+  /* Send my result off to the next rank */
+
+  err = mca_pml.pml_send(reduce_buffer, count, dtype, rank + 1, 
+                         MCA_COLL_BASE_TAG_EXSCAN, 
+                         MCA_PML_BASE_SEND_STANDARD, comm);
+
+  /* Error */
+
+error:
+  free(free_buffer);
+  if (MPI_REQUEST_NULL != req) {
+    mca_pml.pml_cancel(req);
+    mca_pml.pml_wait(1, &req, &index, MPI_STATUS_IGNORE);
   }
-  
-  if (NULL != gathered_buffer)
-    OMPI_FREE(gathered_buffer);
-  if (NULL != tmpbuf)
-    OMPI_FREE(tmpbuf);
-#endif
 
   /* All done */
 
-  return MPI_SUCCESS;
+  return err;
 }
 
 

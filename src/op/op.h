@@ -372,23 +372,6 @@ static inline bool ompi_op_is_intrinsic(ompi_op_t *op)
 
 
 /**
- * Check to see if an op's callback function is fortran.
- *
- * @param op The op to check
- *
- * @returns true If the callback function is in fortran
- * @returns false If the callback function is not in fortran
- *
- * Self-explanitory.  This is needed in a few top-level MPI functions;
- * this function is provided to hide the internal structure field
- * names.
- */
-static inline bool ompi_op_is_fortran(ompi_op_t *op)
-{
-  return (bool) (0 != (op->o_flags & OMPI_OP_FLAGS_FORTRAN_FUNC));
-}
-
-/**
  * Check to see if an op is communative or not
  *
  * @param op The op to check
@@ -403,6 +386,75 @@ static inline bool ompi_op_is_fortran(ompi_op_t *op)
 static inline bool ompi_op_is_commute(ompi_op_t *op)
 {
   return (bool) (0 != (op->o_flags & OMPI_OP_FLAGS_COMMUTE));
+}
+
+
+/**
+ * Perform a reduction operation.
+ *
+ * @param op The operation (IN)
+ * @param source Source (input) buffer (IN)
+ * @param target Target (output) buffer (IN/OUT)
+ * @param count Number of elements (IN)
+ * @param dtype MPI datatype (IN)
+ *
+ * @returns void As with MPI user-defined reduction functions, there
+ * is no return code from this function.
+ *
+ * Perform a reduction operation with count elements of type dtype in
+ * the buffers source and target.  The target buffer obtains the
+ * result (i.e., the original values in the target buffer are reduced
+ * with the values in the source buffer and the result is stored in
+ * the target buffer).
+ *
+ * This function figures out which reduction operation function to
+ * invoke and wehther to invoke it with C- or Fortran-style invocation
+ * methods.  If the op is intrinsic and has the operation defined for
+ * dtype, the appropriate bacl-end function will be invoked.
+ * Otherwise, the op is assumed to be a user op and the first function
+ * pointer in the op array will be used.
+ *
+ * NOTE: This function assumes that a correct combination will be
+ * given to it; it makes no provision for errors (in the name of
+ * optimization).  If you give it an intrinsic op with a datatype that
+ * is note defined to have that operation, it is likely to seg fault.
+ */
+static inline void ompi_op_reduce(ompi_op_t *op, void *source, void *target,
+                                  int count, ompi_datatype_t *dtype)
+{
+  MPI_Fint fint = (MPI_Fint) dtype->id;
+
+  /*
+   * Call the reduction function.  Two dimensions: a) if both the op
+   * and the datatype are intrinsic, we have a series of predefined
+   * functions for each datatype, b) if the op has a fortran callback
+   * function or not.
+   *
+   * NOTE: We assume here that we will get a valid result back from
+   * the ompi_op_ddt_map[] (and not -1) -- if we do, then the
+   * parameter check in the top-level MPI function should have caught
+   * it.  If we get -1 because the top-level parameter check is off,
+   * then it's an erroneous program and it's the user's fault.  :-)
+   */
+
+  if (0 != (op->o_flags & OMPI_OP_FLAGS_INTRINSIC) &&
+      dtype->id < DT_MAX_PREDEFINED) {
+    if (0 != (op->o_flags & OMPI_OP_FLAGS_FORTRAN_FUNC)) {
+      op->o_func[ompi_op_ddt_map[dtype->id]].fort_fn(source, target,
+                                                     &count, &fint);
+    } else {
+      op->o_func[ompi_op_ddt_map[dtype->id]].c_fn(source, target, &count,
+                                                  &dtype);
+    }
+  } 
+
+  /* User-defined function */
+
+  else if (0 != (op->o_flags & OMPI_OP_FLAGS_FORTRAN_FUNC)) {
+    op->o_func[0].fort_fn(source, target, &count, &fint);
+  } else {
+    op->o_func[0].c_fn(source, target, &count, &dtype);
+  }
 }
 
 #endif /* OMPI_OP_H */
