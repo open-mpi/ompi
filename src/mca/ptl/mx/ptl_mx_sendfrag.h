@@ -66,7 +66,7 @@ OBJ_CLASS_DECLARATION(mca_ptl_mx_send_frag_t);
     hdr->hdr_ack.hdr_dst_addr.pval = request->req_base.req_addr; \
     hdr->hdr_ack.hdr_dst_size = request->req_bytes_packed; \
     (ack)->frag_send.frag_request = NULL; \
-    (ack)->frag_send.frag_base.frag_peer = NULL; \
+    (ack)->frag_send.frag_base.frag_peer = (frag)->frag_recv.frag_base.frag_peer; \
     (ack)->frag_send.frag_base.frag_owner = ptl; \
     (ack)->frag_send.frag_base.frag_addr = NULL; \
     (ack)->frag_send.frag_base.frag_size = 0; \
