@@ -133,6 +133,55 @@ extern "C" {
    * as the input argv, and strcmp(argv_in[i], argv_out[i]) will be 0.
    */
   char **ompi_argv_copy(char **argv);
+
+    /**
+     * Delete one or more tokens from the middle of an argv.
+     *
+     * @param argv The argv to delete from
+     * @param start The index of the first token to delete
+     * @param num_to_delete How many tokens to delete
+     *
+     * @retval OMPI_SUCCESS Always
+     *
+     * Delete some tokens from within an existing argv.  The start
+     * parameter specifies the first token to delete, and will delete
+     * (num_to_delete-1) tokens following it.
+     *
+     * If start is beyond the end of the argv array, this function is
+     * a no-op.
+     *
+     * If num_to_delete runs beyond the end of the argv array, this
+     * function will delete all tokens starting with start to the end
+     * of the array.
+     *
+     * All deleted items in the argv array will have their contents
+     * free()ed (it is assumed that the argv "owns" the memory that
+     * the pointer points to).
+     */
+    int ompi_argv_delete(char **argv, int start, int num_to_delete);
+
+    /**
+     * Insert one argv array into the middle of another
+     *
+     * @param target The argv to insert tokens into
+     * @param start Index where the first token will be placed in target
+     * @param source The argv to copy tokens from
+     *
+     * @retval OMPI_SUCCESS upon success
+     * @retval OMPI_BAD_PARAM if any parameters are non-sensical
+     *
+     * This function takes one arg and inserts it in the middle of
+     * another.  The first token in source will be insertted at index
+     * start in the target argv; all other tokens will follow it.
+     * Similar to ompi_argv_append(), the target may be realloc()'ed
+     * to accomodate the new storage requirements.
+     *
+     * The source array is left unaffected -- its contents are copied
+     * by value over to the target array (i.e., the strings that
+     * source points to are strdup'ed into the new locations in
+     * target).
+     */
+    int ompi_argv_insert(char ***target, int start, char **source);
 #ifdef __cplusplus
 }
 #endif
