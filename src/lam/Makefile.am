@@ -28,8 +28,6 @@
 # warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU Lesser General Public License for more details.
 #
-# $Id: Makefile.am,v 1.2 2004/01/07 07:54:15 jsquyres Exp $
-#
 
 include $(top_srcdir)/config/Makefile.options
 
@@ -39,8 +37,8 @@ lib_LTLIBRARIES = liblam.la
 
 liblam_la_SOURCES =
 liblam_la_LIBADD = \
-	$(top_builddir)/src/lam/lfc/liblfc.la \
-	$(top_builddir)/src/lam/mem/libmem.la \
-	$(top_builddir)/src/lam/threads/libthreads.la \
-	$(top_builddir)/src/lam/util/libutil.la 
+	lfc/liblfc.la \
+	mem/libmem.la \
+	threads/libthreads.la \
+	util/libutil.la 
 
