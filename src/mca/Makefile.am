@@ -4,7 +4,19 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-SUBDIRS = $(LIBLTDL_SUBDIR) lam mpi
+SUBDIRS = \
+        base \
+        common_lam \
+        common_mpi \
+        coll \
+        io \
+        one \
+        oob \
+        pcm \
+        pml \
+        ptl \
+        registry \
+        topo
 
 # Source code files
 
@@ -12,16 +24,23 @@ headers = mca.h
 
 # Library
 
-noinst_LTLIBRARIES = libmca_lam.la libmca_mpi.la
+noinst_LTLIBRARIES = libmca.la
 
-libmca_mpi_la_SOURCES =
-libmca_mpi_la_LIBADD = mpi/libmca_mpi_convenience.la
-libmca_mpi_la_DEPENDENCIES = $(libmca_mpi_la_LIBADD)
+libmca_la_SOURCES =
+libmca_la_LIBADD = $(LIBLTDL_LTLIB) \
+        base/libmca_base.la \
+        common/libmca_common.la \
+        coll/libmca_coll.la \
+        io/libmca_io.la \
+        one/libmca_one.la \
+        oob/libmca_oob.la \
+        pcm/libmca_pcm.la \
+        pml/libmca_pml.la \
+        ptl/libmca_ptl.la \
+        registry/libmca_registry.la \
+        topo/libmca_topo.la
 
-libmca_lam_la_SOURCES =
-libmca_lam_la_LIBADD = $(LIBLTDL_LTLIB) \
-        lam/libmca_lam_convenience.la
-libmca_lam_la_DEPENDENCIES = $(libmca_lam_la_LIBADD)
+libmca_la_DEPENDENCIES = $(libmca_lam_la_LIBADD)
 
 # Conditionally install the header files
 
