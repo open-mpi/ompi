@@ -65,6 +65,7 @@ void mca_ptl_tcp_proc_destruct(mca_ptl_tcp_proc_t* proc)
     /* release resources */
     if(NULL != proc->proc_peers) 
         free(proc->proc_peers);
+    OBJ_DESTRUCT(&proc->proc_lock);
 }
 
 
@@ -195,7 +196,9 @@ int mca_ptl_tcp_proc_remove(mca_ptl_tcp_proc_t* ptl_proc, mca_ptl_base_peer_t* p
             memmove(ptl_proc->proc_peers+i, ptl_proc->proc_peers+i+1,
                 (ptl_proc->proc_peer_count-i-1)*sizeof(mca_ptl_base_peer_t*));
             if(--ptl_proc->proc_peer_count == 0) {
+                OMPI_THREAD_UNLOCK(&ptl_proc->proc_lock);
                 OBJ_RELEASE(ptl_proc);
+                return OMPI_SUCCESS;
             }
             ptl_peer->peer_addr->addr_inuse--;
             break;
