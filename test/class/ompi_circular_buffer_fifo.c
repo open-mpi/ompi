@@ -31,12 +31,13 @@ int main(int argc, char **argv) {
 
     /* local variables */
     ompi_cb_fifo_t fifo;
-    int i,size_of_fifo,lazy_free,return_status,error_cnt;
+    int i,size_of_fifo,lazy_free,return_status,error_cnt,loop_cnt;
 	void *ptr;
 
     /* get queue size */
     size_of_fifo=atoi(argv[1]);
     lazy_free=atoi(argv[2]);
+    loop_cnt=atoi(argv[3]);
 
     /* init result tracking */
     test_init("ompi_circular_buffer_fifo");
@@ -80,7 +81,7 @@ int main(int argc, char **argv) {
 	/* pop items off the queue */
     error_cnt=0;
 	for( i=0 ; i < ompi_cb_fifo_size(&fifo); i++ ) {
-		ptr=ompi_cb_fifo_read_from_tail(&fifo);
+		ptr=ompi_cb_fifo_read_from_tail(&fifo,0);
 		if( (void *)(i+5) != ptr ) {
 	   		test_failure(" ompi_cb_fifo_read_from_tail\n");
             error_cnt++;
@@ -164,7 +165,62 @@ int main(int argc, char **argv) {
 	/* pop items off the queue */
     error_cnt=0;
 	for( i=0 ; i < ompi_cb_fifo_size(&fifo); i++ ) {
-		ptr=ompi_cb_fifo_read_from_tail(&fifo);
+		ptr=ompi_cb_fifo_read_from_tail(&fifo,0);
+		if( (void *)(i+5) != ptr ) {
+	   		test_failure(" ompi_cb_fifo_read_from_tail\n");
+            error_cnt++;
+		}
+	}
+    if( 0 == error_cnt ) {
+        test_success();
+    }
+
+	/* free fifo */
+	return_status=ompi_cb_fifo_free(&fifo,&pool);
+    if( OMPI_SUCCESS == return_status ) {
+        test_success();
+    } else {
+        test_failure(" ompi_cv_fifo_init \n");
+    }
+
+    /* go through the fifo multiple times */
+
+    /* init fifo */
+    return_status=ompi_cb_fifo_init(size_of_fifo,lazy_free,0,0,0,&fifo,
+            &pool);
+    /* check to see that retrun status is success */
+    if( OMPI_SUCCESS == return_status ) {
+        test_success();
+    } else {
+        test_failure(" ompi_cv_fifo_init \n");
+    }
+
+    error_cnt=0;
+	for( i=0 ; i < ompi_cb_fifo_size(&fifo)*loop_cnt ; i++ ) {
+
+        /* populate fifo */
+		return_status=ompi_cb_fifo_get_slot(&fifo);
+		if( OMPI_CB_ERROR == return_status ) {
+	   		test_failure(" ompi_cb_fifo_get_slot \n");
+            error_cnt++;
+		}
+
+        /* write to the slot */
+		return_status=ompi_cb_fifo_write_to_slot(i%(ompi_cb_fifo_size(&fifo)),
+                (void *)(i+5),&fifo);
+		if( OMPI_CB_ERROR == return_status ) {
+	   		test_failure(" ompi_cb_fifo_write_to_slot \n");
+            error_cnt++;
+		}
+	
+        /* pop items off the queue */
+        if( (i % ompi_cb_fifo_size(&fifo) ) ==
+                ompi_cb_fifo_size(&fifo)/2  ) {
+            /* force a flush */
+            ptr=ompi_cb_fifo_read_from_tail(&fifo,1);
+        } else {
+            ptr=ompi_cb_fifo_read_from_tail(&fifo,0);
+        }
 		if( (void *)(i+5) != ptr ) {
 	   		test_failure(" ompi_cb_fifo_read_from_tail\n");
             error_cnt++;
