@@ -195,6 +195,15 @@ int ompi_rte_init(bool *allow_multi_user_threads, bool *have_hidden_threads)
   }
 
 
+  /*
+   * Call back into NS/GPR to allow them to do any final initialization
+   * (e.g. register callbacks w/ OOB).
+  */
+  if (OMPI_SUCCESS != (ret = ompi_name_server.init())) {
+      printf("show_help: ompi_rte_init failed in ompi_name_server.init()\n");
+      return ret;
+  }
+
   /* 
    * All done 
    */
