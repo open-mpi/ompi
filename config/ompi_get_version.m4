@@ -23,7 +23,6 @@ gv_run() {
 }
 
 if test -n "$gv_ver_file" -a -f "$gv_ver_file"; then
-    echo getting version
     gv_major_version="`cat $gv_ver_file | grep major | cut -d= -f2`"
     gv_minor_version="`cat $gv_ver_file | grep minor | cut -d= -f2`"
     gv_release_version="`cat $gv_ver_file | grep release | cut -d= -f2`"
