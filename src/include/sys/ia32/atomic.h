@@ -74,7 +74,7 @@ typedef struct {
 /* On Linux the EBX register is used by the shared libraries
  * to keep the global offset. In same time this register is 
  * required by the cmpxchg8b instruction (as an input parameter).
- * This conflict orce us to save the EBX before the cmpxchg8b 
+ * This conflict force us to save the EBX before the cmpxchg8b 
  * and to restore it afterward.
  */
 static inline int ompi_atomic_cmpset_64(volatile int64_t *addr,
