@@ -197,6 +197,22 @@ extern "C" {
 }
 #endif
 
+/*
+ * Define __func__-preprocessor directive if the compiler does not
+ * already define it.  Define it to __FILE__ so that we at least have
+ * a clue where the developer is trying to indicate where the error is
+ * coming from (assuming that __func__ is typically used for
+ * printf-style debugging).
+ */
+
+#if !HAVE_DECL___FUNC__
+#define __func__ __FILE__
+#endif
+
+/*
+ * One windows machines, ompi_errno will already be defined
+ */
+
 #ifndef ompi_errno
 #define ompi_errno errno
 #endif

@@ -554,6 +554,8 @@ AC_CHECK_DECL(__va_copy, OMPI_HAVE_UNDERSCORE_VA_COPY=1,
 AC_DEFINE_UNQUOTED(OMPI_HAVE_UNDERSCORE_VA_COPY, $OMPI_HAVE_UNDERSCORE_VA_COPY,
     [Whether we have __va_copy or not])
 
+AC_CHECK_DECLS(__func__)
+
 
 ##################################
 # System-specific tests
