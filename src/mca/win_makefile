@@ -22,7 +22,7 @@ topdir := $(shell cygpath -m $(CURDIR))/../..
 gen_base = ${topdir}/src/win32/generated_include
 copy_base = ${topdir}/src/mca/
 prefix = ${topdir}/Debug
-installdir = ${prefix}
+installdir = ${prefix}/lib
 
 # list of components to build with the c compiler
 C_SUBDIRS = \
@@ -38,6 +38,8 @@ C_SUBDIRS = \
 # list of components to build with the cpp compiler
 # (because of the problem with OBJ_CLASS_INSTANCE)
 CPP_SUBDIRS = \
+        allocator/basic \
+        ptl/self \
         ptl/tcp/src \
         oob/tcp/ \
         pml/teg/src \
@@ -105,6 +107,8 @@ LINK = link
 
 LINKFLAGS = \
         /DLL \
+        /OPT:NOICF \
+        /OPT:NOREF \
         /DEFAULTLIB:${OMPILIB} \
         /nologo
 
@@ -151,13 +155,13 @@ install:
 	@echo -n "Installing components ......................."
 	@for dirs in ${CPP_SUBDIRS}; do \
 	    (dll=`echo mca_$${dirs}.dll | sed 's/\/src//g' | sed 's/\//_/g'`; exp=`echo $${dll} | sed 's/dll/exp/g`;  lib=`echo $${dll} | sed 's/dll/lib/g`; \
-        install -c ${CURDIR}/$${dirs}/$${dll} ${install_dir}/$${dll}; \
+        install -p ${CURDIR}/$${dirs}/$${dll} ${install_dir}/$${dll}; \
         if test -f ${CURDIR}/$${dirs}/$${lib}; then install -c ${CURDIR}/$${dirs}/$${lib} ${install_dir}/$${lib}; fi; \
         if test -f ${CURDIR}/$${dirs}/$${exp}; then install -c ${CURDIR}/$${dirs}/$${exp} ${install_dir}/$${exp}; fi;); \
 	done
 	@for dirs in ${C_SUBDIRS}; do \
 	    (dll=`echo mca_$${dirs}.dll | sed 's/\/src//g' | sed 's/\//_/g'`; exp=`echo $${dll} | sed 's/dll/exp/g`;  lib=`echo $${dll} | sed 's/dll/lib/g`; \
-        install -c ${CURDIR}/$${dirs}/$${dll} ${install_dir}/$${dll}; \
+        install -p ${CURDIR}/$${dirs}/$${dll} ${install_dir}/$${dll}; \
         if test -f ${CURDIR}/$${dirs}/$${lib}; then install -c ${CURDIR}/$${dirs}/$${lib} ${install_dir}/$${lib}; fi; \
         if test -f ${CURDIR}/$${dirs}/$${exp}; then install -c ${CURDIR}/$${dirs}/$${exp} ${install_dir}/$${exp}; fi;); \
 	done

@@ -76,7 +76,8 @@ mca_allocator_base_module_t* mca_allocator_basic_component_init(
     mca_allocator_base_component_segment_alloc_fn_t segment_alloc,
     mca_allocator_base_component_segment_free_fn_t segment_free)
 {
-    mca_allocator_basic_module_t* module = malloc(sizeof(mca_allocator_basic_module_t));
+    mca_allocator_basic_module_t *module = (mca_allocator_basic_module_t *)
+                                            malloc(sizeof(mca_allocator_basic_module_t));
     if(module == NULL)
         return NULL;
 
@@ -190,8 +191,8 @@ void *mca_allocator_basic_alloc(
     }
 
     /* request additional block */
-    allocated_size = size;
-    if(NULL == (addr = module->seg_alloc(&allocated_size))) {
+    allocated_size = (unsigned char)size;
+    if(NULL == (addr = (unsigned char *)module->seg_alloc(&allocated_size))) {
         OMPI_THREAD_UNLOCK(&module->seg_lock);
         return NULL;
     }
@@ -240,7 +241,7 @@ void * mca_allocator_basic_realloc(
     size_t alloc_size = *(size_t*)addr;
     if(size <= alloc_size)
         return ptr;
-    addr = mca_allocator_basic_alloc(base,size,0);
+    addr = (unsigned char *)mca_allocator_basic_alloc(base,size,0);
     if(addr == NULL)
         return addr;
     memcpy(addr,ptr,alloc_size);
