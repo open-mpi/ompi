@@ -428,6 +428,12 @@ AC_DEFINE_UNQUOTED(OMPI_ALIGNMENT_FORTRAN_DBLCOMPLEX,
     $OMPI_ALIGNMENT_FORTRAN_DBLCOMPLEX,
     [Alignment of fortran double complex])
 
+# Regardless of whether we have fortran bindings, or even a fortran
+# compiler, get the max value for a fortran MPI handle (this macro
+# handles the case where we don't have a fortran compiler).
+
+OMPI_F77_GET_FORTRAN_HANDLE_MAX
+
 #
 # There are 2 layers to the MPI f77 layer. The only extra thing that
 # determine f77 bindings is that fortran can be disabled by user. In

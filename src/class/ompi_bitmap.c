@@ -5,8 +5,6 @@
 #include "ompi_config.h"
 
 #include <stdio.h>
-#include <limits.h>
-#define OMPI_FORTRAN_HANDLE_MAX INT_MAX
 
 #include "include/constants.h"
 #include "class/ompi_bitmap.h"

@@ -8,9 +8,6 @@
 #include <stdio.h>
 #include <assert.h>
 
-#include <limits.h>
-#define OMPI_FORTRAN_HANDLE_MAX INT_MAX
-
 #include "include/constants.h"
 #include "class/ompi_pointer_array.h"
 #include "util/output.h"
