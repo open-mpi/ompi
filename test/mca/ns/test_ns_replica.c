@@ -26,7 +26,7 @@ int main(int argc, char **argv)
     ompi_process_name_t *test_name;
     ompi_process_id_t test, job, tmpi, tmpj, tmpk;
     bool multi, hidden;
-    int i;
+    int i, j;
     char *tmp;
 
     /* get system info */
@@ -81,7 +81,7 @@ int main(int argc, char **argv)
     test = ompi_name_server.create_cellid();
     if (0 == test) { /* got error */
 	fprintf(stderr, "create cellid: error %d\n", test);
-	/*	exit(1); */
+	exit(1);
     } else {
 	fprintf(stderr, "cellid created: %d\n", test);
     }
@@ -91,38 +91,39 @@ int main(int argc, char **argv)
 	job = ompi_name_server.create_jobid();
 	if (0 == job) { /* got error */
 	    fprintf(stderr, "create jobid: error\n");
-	    /*	    exit(1); */
+	    exit(1);
 	} else {
 	    fprintf(stderr, "jobid created: %d\n", job);
 	}
 
-	/* get range of vpids */
-	test = ompi_name_server.reserve_range(job, 250);
-	if (0 == test) { /* got error */
-	    fprintf(stderr, "get range: error\n");
-	    exit(1);
-	} else {
-	    fprintf(stderr, "range reserved: %d\n", test);
+	for (j=0; j<5; j++) { /* loop through several vpid ranges */
+	    /* get range of vpids */
+	    test = ompi_name_server.reserve_range(job, 250);
+	    if (0 == test) { /* got error */
+		fprintf(stderr, "get range: error\n");
+		exit(1);
+	    } else {
+		fprintf(stderr, "range reserved: %d\n", test);
+	    }
+
+	    /* create a name */
+	    test_name = ompi_name_server.create_process_name((ompi_process_id_t)i, job, test);
+
+	    /* get and print its string values */
+	    tmp = ompi_name_server.get_proc_name_string(test_name);
+	    fprintf(stderr, "(%d) strings: name - %s\n", i, tmp);
+	    tmp = ompi_name_server.get_vpid_string(test_name);
+	    fprintf(stderr, "\tvpid: %s\n", tmp);
+	    tmp = ompi_name_server.get_jobid_string(test_name);
+	    fprintf(stderr, "\tjobid: %s\n", tmp);
+	    tmp = ompi_name_server.get_cellid_string(test_name);
+	    fprintf(stderr, "\tcellid: %s\n", tmp);
+
+	    tmpi = ompi_name_server.get_vpid(test_name);
+	    tmpj = ompi_name_server.get_jobid(test_name);
+	    tmpk = ompi_name_server.get_cellid(test_name);
+	    fprintf(stderr, "(%d) ints cell %x job %x vpid %x\n\n", i, tmpk, tmpj, tmpi);
 	}
-
-	/* create a name */
-	test_name = ompi_name_server.create_process_name((ompi_process_id_t)i, job, test);
-
-	/* get and print its string values */
-	tmp = ompi_name_server.get_proc_name_string(test_name);
-	fprintf(stderr, "(%d) strings: name - %s\n", i, tmp);
-	tmp = ompi_name_server.get_vpid_string(test_name);
-	fprintf(stderr, "\tvpid: %s\n", tmp);
-	tmp = ompi_name_server.get_jobid_string(test_name);
-	fprintf(stderr, "\tjobid: %s\n", tmp);
-	tmp = ompi_name_server.get_cellid_string(test_name);
-	fprintf(stderr, "\tcellid: %s\n", tmp);
-
-	tmpi = ompi_name_server.get_vpid(test_name);
-	tmpj = ompi_name_server.get_jobid(test_name);
-	tmpk = ompi_name_server.get_cellid(test_name);
-	fprintf(stderr, "(%d) ints cell %x job %x vpid %x\n\n", i, tmpk, tmpj, tmpi);
-
     }
 
 
