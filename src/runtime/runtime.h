@@ -7,7 +7,6 @@
  *
  * Interface into the Open MPI Run Time Environment
  */
-
 #ifndef OMPI_RUNTIME_H
 #define OMPI_RUNTIME_H
 
