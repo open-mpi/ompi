@@ -677,7 +677,7 @@ case "${host}" in
         OMPI_GCC_INLINE_ASSIGN='"1: li %0,0" : "=&r"(ret)'
     ;;
 
-    sparc-*)
+    sparc*-*)
         # SPARC v9 (and above) are the only ones with 64bit support
         # if compiling 32 bit, see if we are v9 (aka v8plus) or
         # earlier (casa is v8+/v9). 
