@@ -122,6 +122,9 @@ lam_datatype_t* lam_mpi_2dblcplex = basicDatatypes + DT_2DOUBLE_COMPLEX;
 
 int local_sizes[DT_MAX_PREDEFINED];
 
+/* VPS: fake convertor for time being / to provide pack/unpack functions */
+lam_convertor_t* lam_convertor;
+
 static lam_convertor_t* pDumpConv = NULL;
 
 #define COPY_DATA_DESC( PDST, PSRC )                                    \
@@ -231,6 +234,9 @@ int lam_ddt_init( void )
    for( i = 0; i < DT_MAX_PREDEFINED; i++ )
        local_sizes[i] = basicDatatypes[i].size;
 
+   /* VPS: Create a fake convertor. No error checking here now, since
+      this will be removed sometime */
+   lam_convertor = lam_convertor_create(0,0);
    return 0;
 }
 
