@@ -172,8 +172,8 @@ void mca_ptl_self_matched( mca_ptl_base_module_t* ptl,
             ompi_ddt_copy_content_same_ddt( recvreq->req_base.req_datatype, 
                                             recvreq->req_base.req_count > sendreq->req_send.req_count ?
                                             sendreq->req_send.req_count : recvreq->req_base.req_count,
-                                            recvreq->req_base.req_addr, 
-                                            sendreq->req_send.req_addr );
+                                            (char *)recvreq->req_base.req_addr, 
+                                            (const char *)sendreq->req_send.req_addr );
         } else {
             ompi_convertor_t *pSendConvertor, *pRecvConvertor;
             struct iovec iov[1];
@@ -183,7 +183,7 @@ void mca_ptl_self_matched( mca_ptl_base_module_t* ptl,
             
             /* We use a temporary buffer as it look to be faster on much architectures */
             length = 64 * 1024;
-            buf = malloc( length * sizeof(char) );
+            buf = (char *)malloc( length * sizeof(char) );
             
             ompi_convertor_init_for_recv( &frag->frag_base.frag_convertor, 
                                           0, 
