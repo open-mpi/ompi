@@ -42,6 +42,7 @@ libmpi_la_LIBADD = \
         communicator/libcommunicator.la \
         ctnetwork/libctnetwork.la \
         datatype/libdatatype.la \
+        errhandler/liberrhandler.la \
         event/libevent.la \
         group/libgroup.la \
         info/libinfo.la \

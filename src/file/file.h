@@ -6,6 +6,7 @@
 #define LAM_FILE_H
 
 #include "mpi.h"
+#include "errhandler/errhandler.h"
 #include "mca/io/io.h"
 
 typedef enum {
@@ -15,15 +16,22 @@ typedef enum {
 
 
 struct lam_file_t {
-   char f_name[MPI_MAX_OBJECT_NAME];
-    lam_io_version_t lam_io_version;
+  char f_name[MPI_MAX_OBJECT_NAME];
+  lam_io_version_t lam_io_version;
 
-    /* Hooks for io modules to hang things */
-    union {
-        mca_io_1_0_0_t f_io;
-    } mca_io_functions;
+  /* Hooks for io modules to hang things */
 
+  union {
+    mca_io_1_0_0_t f_io;
+  } mca_io_functions;
 
+  /* index in Fortran <-> C translation array */
+
+  int f_f_to_c_index;
+
+  /* Error handling */
+
+  lam_errhandler_t *f_errhandler;
 };
 typedef struct lam_file_t lam_file_t;
 
