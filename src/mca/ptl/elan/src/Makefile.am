@@ -5,12 +5,6 @@
 
 include $(top_ompi_srcdir)/config/Makefile.options
 
-AM_CPPFLAGS = \
-        -I$(top_ompi_builddir)/src/include \
-        -I$(top_ompi_builddir)/src/ompi/event \
-        -I$(top_ompi_srcdir)/src \
-        -I$(top_ompi_srcdir)/src/include
-
 noinst_LTLIBRARIES = libmca_ptl_elan.la
 libmca_ptl_elan_la_SOURCES = \
 	ptl_elan.h \
