@@ -54,12 +54,29 @@ AC_DEFUN([MCA_CONFIGURE_STUB],[
             AC_MSG_WARN([*** Will still try to configure portals ptl anyway...])
         fi
     fi
+    PORTALS_LIBS="-lp3api -lp3lib -lp3rt"
+
+    # Should we enable special setup magic for UTCP reference
+    # implementation?
+    #
+    # BWB - XXX - FIXME - make this not the default for release
+    PTL_PORTALS_NAL_UTCP=0
+    AC_ARG_ENABLE(ptl-portals-nal-utcp,
+        AC_HELP_STRING([--enable-ptl-portals-nal-utcp],
+                       [enable pre-init code to configure the utcp NAL]))
+    if test "$enable_ptl_portals_utcp" = "no" ; then
+    	PTL_PORTALS_NAL_UTCP=0
+    else
+        PORTALS_LIBS="-lutcpapi -lutcplib -lp3api -lp3lib -lp3rt"
+        PTL_PORTALS_NAL_UTCP=1
+    fi
+    AC_DEFINE_UNQUOTED([PTL_PORTALS_NAL_UTCP], [$PTL_PORTALS_NAL_UTCP],
+                       [enable special startup code for the utcp NAL])
 
     # Try to find all the portals libraries (this is not fun!)
-    PORTALS_LIBS="p3api p3lib"
     AC_ARG_WITH(ptl-portals-libs, 
         AC_HELP_STRING([--with-ptl-portals-libs=LIBS],
-                       [Libraries to link with for portals (default: p3api p3lib)]))
+                       [Libraries to link with for portals]))
     if test -n "$with_ptl_portals_libs" ; then
         PORTALS_LIBS=""
         for lib in $with_ptl_portals_libs ; do
@@ -67,11 +84,19 @@ AC_DEFUN([MCA_CONFIGURE_STUB],[
         done
     fi
 
+    AC_MSG_CHECKING([if possible to link Portals application])
+    LIBS="$LIBS $PORTALS_LIBS"
+    LDFLAGS="$LDFLAGS $EXTRA_LDFLAGS"
+    AC_LINK_IFELSE([AC_LANG_PROGRAM([], [int i; PtlInit(&i);])],
+    	           [AC_MSG_RESULT([yes])],
+		   [AC_MSG_RESULT([no])
+		    AC_MSG_ERROR([Can not link with Portals libraries])])
+
     #
     # Save extra compiler/linker flags so that they can be added in
     # the wrapper compilers, if necessary
     #
 
     WRAPPER_EXTRA_LDFLAGS="$EXTRA_LDFLAGS"
-    WRAPPER_EXTRA_LIBS=""
+    WRAPPER_EXTRA_LIBS="$PORTALS_LIBS"
 ])dnl
