@@ -33,9 +33,9 @@ int mca_ptl_base_select(bool *allow_multi_user_threads,
   /* Traverse the list of opened modules; call their init
      functions. */
 
-  for (item = ompi_list_remove_first(&mca_ptl_base_components_opened);
-       NULL != item;
-       item = ompi_list_remove_first(&mca_ptl_base_components_opened)) {
+  for (item  = ompi_list_get_first(&mca_ptl_base_components_opened);
+       item != ompi_list_get_end(&mca_ptl_base_components_opened);
+       item  = ompi_list_get_next(item)) {
     cli = (mca_base_component_list_item_t *) item;
     component = (mca_ptl_base_component_t *) cli->cli_component;
 
