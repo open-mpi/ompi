@@ -25,6 +25,10 @@
 extern "C" {
 #endif
 
+
+#define OMPI_NAME_COMPONENTS(n)  (n).cellid,(n).jobid,(n).vpid
+
+
 /*
  * standard component functions
  */
@@ -178,6 +182,12 @@ int mca_oob_tcp_recv_nb(
     void* cbdata);
 
 /**
+ * Attempt to map a peer name to its corresponding address.
+ */
+
+int mca_oob_tcp_resolve(mca_oob_tcp_peer_t*);
+
+/**
  *  Parse a URI string into an IP address and port number.
  */
 int mca_oob_tcp_parse_uri(
@@ -194,8 +204,10 @@ struct mca_oob_tcp_component_t {
     int                tcp_listen_sd;        /**< listen socket for incoming connection requests */
     unsigned short     tcp_listen_port;      /**< listen port */
     struct sockaddr_in tcp_seed_addr;        /**< uri string of tcp peer address */
+    ompi_list_t        tcp_subscriptions;    /**< list of registry subscriptions */
     ompi_list_t        tcp_peer_list;        /**< list of peers sorted in mru order */
     ompi_rb_tree_t     tcp_peer_tree;        /**< tree of peers sorted by name */
+    ompi_rb_tree_t     tcp_peer_names;       /**< cache of peer contact info sorted by name */
     ompi_free_list_t   tcp_peer_free;        /**< free list of peers */
     size_t             tcp_peer_limit;       /**< max size of tcp peer cache */
     int                tcp_peer_retries;     /**< max number of retries before declaring peer gone */
@@ -206,6 +218,7 @@ struct mca_oob_tcp_component_t {
     ompi_list_t        tcp_msg_post;         /**< list of recieves user has posted */
     ompi_list_t        tcp_msg_recv;         /**< list of recieved messages */
     ompi_mutex_t       tcp_match_lock;       /**< lock held while searching/posting messages */
+    int                tcp_debug;            /**< debug level */
 };
 
 /**

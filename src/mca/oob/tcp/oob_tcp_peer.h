@@ -9,19 +9,23 @@
 #ifndef _MCA_OOB_TCP_PEER_H_
 #define _MCA_OOB_TCP_PEER_H_
 
-#include "mca/ns/ns.h"
+#include "ompi_config.h"
+#include <netinet/in.h>
+#include <string.h>
+
 #include "class/ompi_list.h"
 #include "class/ompi_rb_tree.h"
-#include <netinet/in.h>
 #include "threads/mutex.h"
-#include <string.h>
-#include "mca/oob/tcp/oob_tcp.h"
-#include "mca/oob/tcp/oob_tcp_msg.h"
+#include "mca/ns/ns.h"
+#include "oob_tcp_msg.h"
+#include "oob_tcp_addr.h"
+
 /**
  * the state of the connection
  */
 typedef enum {
     MCA_OOB_TCP_CLOSED,
+    MCA_OOB_TCP_RESOLVE,
     MCA_OOB_TCP_CONNECTING,
     MCA_OOB_TCP_CONNECT_ACK,
     MCA_OOB_TCP_CONNECTED,
@@ -37,11 +41,11 @@ struct mca_oob_tcp_peer_t {
     ompi_process_name_t peer_name;    /**< the name of the peer */
     mca_oob_tcp_state_t peer_state;   /**< the state of the connection */
     int peer_retries;                 /**< number of times connection attempt has failed */
-    struct sockaddr_in peer_addr;     /**< the address of the peer process */
+    mca_oob_tcp_addr_t* peer_addr;    /**< the addresses of the peer process */
     int peer_sd;                      /**< socket descriptor of the connection */
     ompi_event_t peer_send_event;     /**< registration with event thread for send events */
     ompi_event_t peer_recv_event;     /**< registration with event thread for recv events */
-    ompi_event_t peer_timer_event;    /**< used for timer callback */
+    ompi_event_t peer_timer_event;    /**< timer for retrying connection failures */
     ompi_mutex_t peer_lock;           /**< protect critical data structures */
     ompi_list_t peer_send_queue;      /**< list of messages to send */
     mca_oob_tcp_msg_t *peer_send_msg; /**< current send in progress */
@@ -85,12 +89,10 @@ extern "C" {
  * create one and cache it.
  *
  * @param peer_name the name of the peer
- * @param get_lock get the lock on the tcp struct. This should always be true
- *                 unless the caller already owns the lock.
  * @retval pointer to the peer's (possibly newly created) struture
  * @retval NULL if there was a problem
  */
-mca_oob_tcp_peer_t *mca_oob_tcp_peer_lookup(ompi_process_name_t* peer_name, bool get_lock);
+mca_oob_tcp_peer_t *mca_oob_tcp_peer_lookup(ompi_process_name_t* peer_name);
 
 /**
  * Start sending a message to the specified peer. The routine
@@ -119,9 +121,14 @@ bool mca_oob_tcp_peer_accept(mca_oob_tcp_peer_t* peer, int sd);
 void mca_oob_tcp_peer_close(mca_oob_tcp_peer_t* peer);
 
 /**
- * Attempt to resolve peer address.
+ * The peers address has been resolved.
  */
-int mca_oob_tcp_peer_name_lookup(mca_oob_tcp_peer_t* peer);
+void mca_oob_tcp_peer_resolved(mca_oob_tcp_peer_t* peer, mca_oob_tcp_addr_t* addr);
+
+/*
+ *
+ */
+int mca_oob_tcp_peer_send_ident(mca_oob_tcp_peer_t* peer);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

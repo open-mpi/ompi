@@ -78,7 +78,7 @@ int mca_oob_tcp_msg_complete(mca_oob_tcp_msg_t* msg, ompi_process_name_t * peer)
     ompi_mutex_lock(&msg->msg_lock);
     msg->msg_complete = true;
     if(NULL != msg->msg_cbfunc) {
-        msg->msg_cbfunc(msg->msg_rc, peer, msg->msg_uiov, msg->msg_ucnt, ntohl(msg->msg_hdr.msg_tag), msg->msg_cbdata);
+        msg->msg_cbfunc(msg->msg_rc, peer, msg->msg_uiov, msg->msg_ucnt, msg->msg_hdr.msg_tag, msg->msg_cbdata);
         ompi_mutex_unlock(&msg->msg_lock);
         MCA_OOB_TCP_MSG_RETURN(msg);
     } else {

@@ -26,11 +26,18 @@ int mca_oob_tcp_recv(
     int i, rc, size = 0;
     int tag = (tagp != NULL) ? *tagp : MCA_OOB_TAG_ANY;
 
+    if(mca_oob_tcp_component.tcp_debug > 1) {
+        ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_recv: tag %d\n",
+            OMPI_NAME_COMPONENTS(mca_oob_name_self),
+            OMPI_NAME_COMPONENTS(*peer),
+            tag);
+    }
+
     /* lock the tcp struct */
     OMPI_THREAD_LOCK(&mca_oob_tcp_component.tcp_match_lock);
 
     /* check to see if a matching receive is on the list */
-    msg = mca_oob_tcp_msg_match_recv(peer, htonl(tag));
+    msg = mca_oob_tcp_msg_match_recv(peer, tag);
     if(NULL != msg) {
 
         if(msg->msg_rc < 0)  {
@@ -64,7 +71,7 @@ int mca_oob_tcp_recv(
         }
 
         if(NULL != tagp) {
-            *tagp = ntohl(msg->msg_hdr.msg_tag);
+            *tagp = msg->msg_hdr.msg_tag;
         }
 
         /* otherwise dequeue the message and return to free list */
@@ -87,8 +94,11 @@ int mca_oob_tcp_recv(
     }
 
     /* fill in the struct */
-    msg->msg_hdr.msg_size = htonl(size);
-    msg->msg_hdr.msg_tag = htonl(tag);
+    msg->msg_hdr.msg_size = size;
+    msg->msg_hdr.msg_tag = tag;
+    msg->msg_hdr.msg_type = MCA_OOB_TCP_MSG;
+    msg->msg_hdr.msg_src = *peer;
+    msg->msg_hdr.msg_dst = mca_oob_name_self;
     msg->msg_type = MCA_OOB_TCP_POSTED;
     msg->msg_rc = 0;
     msg->msg_flags = flags;
@@ -137,7 +147,7 @@ int mca_oob_tcp_recv_nb(
     OMPI_THREAD_LOCK(&mca_oob_tcp_component.tcp_match_lock);
 
     /* check to see if a matching receive is on the list */
-    msg = mca_oob_tcp_msg_match_recv(peer, htonl(tag));
+    msg = mca_oob_tcp_msg_match_recv(peer, tag);
     if(NULL != msg) {
 
         if(msg->msg_rc < 0) 
@@ -159,7 +169,7 @@ int mca_oob_tcp_recv_nb(
         /* otherwise dequeue the message and return to free list */
         ompi_list_remove_item(&mca_oob_tcp_component.tcp_msg_recv, (ompi_list_item_t *) msg);
         OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_match_lock);
-        cbfunc(rc, &msg->msg_peer, iov, count, ntohl(msg->msg_hdr.msg_tag), cbdata);
+        cbfunc(rc, &msg->msg_peer, iov, count, msg->msg_hdr.msg_tag, cbdata);
         MCA_OOB_TCP_MSG_RETURN(msg);
         return 0;
     }
@@ -176,9 +186,13 @@ int mca_oob_tcp_recv_nb(
         size += iov[i].iov_len;
     }
 
-    /* fill in the struct */
-    msg->msg_hdr.msg_size = htonl(size);
-    msg->msg_hdr.msg_tag = htonl(tag);
+    /* fill in the header */
+    msg->msg_hdr.msg_src = mca_oob_name_self;
+    msg->msg_hdr.msg_dst = *peer;
+    msg->msg_hdr.msg_size = size;
+    msg->msg_hdr.msg_tag = tag;
+    MCA_OOB_TCP_HDR_HTON(&msg->msg_hdr);
+
     msg->msg_type = MCA_OOB_TCP_POSTED;
     msg->msg_rc = 0;
     msg->msg_flags = flags;
