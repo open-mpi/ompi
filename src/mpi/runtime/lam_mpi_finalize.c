@@ -13,6 +13,8 @@
 #include "mca/mpi/ptl/base/base.h"
 #include "mca/mpi/pml/pml.h"
 #include "mca/mpi/pml/base/base.h"
+#include "mca/mpi/coll/coll.h"
+#include "mca/mpi/coll/base/base.h"
 
 
 int lam_mpi_finalize(void)
@@ -23,10 +25,12 @@ int lam_mpi_finalize(void)
 
   /* Close down MCA modules */
 
+  if (LAM_SUCCESS != (ret = mca_coll_base_close())) {
+    return ret;
+  }
   if (LAM_SUCCESS != (ret = mca_ptl_base_close())) {
     return ret;
   }
-
   if (LAM_SUCCESS != (ret = mca_pml_base_close())) {
     return ret;
   }
