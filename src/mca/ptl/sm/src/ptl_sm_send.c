@@ -16,6 +16,7 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <errno.h>
 #include <sys/types.h>
 
 #include "util/output.h"
@@ -162,7 +163,10 @@ void mca_ptl_sm_matched(
         ompi_list_append(&(mca_ptl_sm_component.sm_pending_ack),
                 (ompi_list_item_t *)sm_frag_desc);
         OMPI_THREAD_UNLOCK(&(mca_ptl_sm_component.sm_pending_ack_lock));
+    } else {
+        MCA_PTL_SM_SIGNAL_PEER(mca_ptl_sm_component.sm_peers[peer_local_smp_rank]);
     }
+
 
     /* return */
     return;

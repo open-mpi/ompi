@@ -17,6 +17,9 @@
 #include <string.h>
 #include <stdlib.h>
 #include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <errno.h>
 
 #include "util/output.h"
 #include "util/if.h"
@@ -28,6 +31,7 @@
 #include "mca/ptl/base/ptl_base_sendfrag.h"
 #include "mca/ptl/base/ptl_base_recvfrag.h"
 #include "mca/base/mca_base_module_exchange.h"
+#include "mca/oob/base/base.h"
 #include "mca/common/sm/common_sm_mmap.h"
 #include "ptl_sm.h"
 #include "util/sys_info.h"
@@ -112,9 +116,6 @@ int mca_ptl_sm_add_procs_same_base_addr(
     ompi_proc_t* my_proc; /* pointer to caller's proc structure */
     mca_ptl_sm_t *ptl_sm;
     ompi_fifo_t *my_fifos;
-/*
-    volatile ompi_fifo_t **fifo_tmp;
-*/
     ompi_fifo_t * volatile *fifo_tmp;
     bool same_sm_base;
     ssize_t diff;
@@ -181,22 +182,34 @@ int mca_ptl_sm_add_procs_same_base_addr(
        if( len == my_len ) {
            if( 0 == strncmp(ompi_system_info.nodename,
                        (char *)(sm_proc_info[proc]),len) ) {
+               struct mca_ptl_base_peer_t *peer = peers[proc];
+#if OMPI_HAVE_THREADS == 1
+               char path[PATH_MAX];
+               int flags;
+#endif
 
                /* initialize the peers information */
-               peers[proc]=malloc(sizeof(struct mca_ptl_base_peer_t));
-               if( NULL == peers[proc] ){
+               peer = peers[proc]=malloc(sizeof(struct mca_ptl_base_peer_t));
+               if( NULL == peer ){
                    return_code=OMPI_ERR_OUT_OF_RESOURCE;
                    goto CLEANUP;
                }
-               peers[proc]->peer_smp_rank=n_local_procs+
+               peer->peer_smp_rank=n_local_procs+
                    mca_ptl_sm_component.num_smp_procs;
                n_local_procs++;
 
-               /* */
+#if OMPI_HAVE_THREADS == 1
+               sprintf(path, "%s/sm_fifo.%d", ompi_process_info.job_session_dir, 
+                   procs[proc]->proc_name.vpid);
+               peer->fifo_fd = open(path, O_WRONLY);
+               if(peer->fifo_fd < 0) {
+                   ompi_output(0, "mca_ptl_sm_add_procs: open(%s) failed with errno=%d\n", path, errno);
+                   goto CLEANUP;
+               }
+#endif
                mca_ptl_sm_component.sm_proc_connect[proc]=SM_CONNECTED;
            }
        }
-
     }
 
     /* make sure that my_smp_rank has been defined */
@@ -205,14 +218,6 @@ int mca_ptl_sm_add_procs_same_base_addr(
         goto CLEANUP;
     }
 
-    /* set local proc's smp rank in the peers structure for
-     * rapid access */
-    for( proc=0 ; proc < nprocs; proc++ ) {
-        if(NULL != peers[proc] ) {
-            peers[proc]->my_smp_rank=mca_ptl_sm_component.my_smp_rank;
-        }
-    }
-            
     /* see if need to allocate space for extra procs */
     if(  0 > mca_ptl_sm_component.sm_max_procs ) {
         /* no limit */
@@ -235,6 +240,24 @@ int mca_ptl_sm_add_procs_same_base_addr(
     if(NULL == mca_ptl_sm_component.sm_offset ) {
         return_code=OMPI_ERR_OUT_OF_RESOURCE;
         goto CLEANUP;
+    }
+
+    /* create a list of peers */
+    mca_ptl_sm_component.sm_peers=(struct mca_ptl_base_peer_t**)
+        malloc(n_to_allocate*sizeof(struct mca_ptl_base_peer_t*));
+    if(NULL == mca_ptl_sm_component.sm_peers ) {
+        return_code=OMPI_ERR_OUT_OF_RESOURCE;
+        goto CLEANUP;
+    }
+
+    /* set local proc's smp rank in the peers structure for
+     * rapid access */
+    for( proc=0 ; proc < nprocs; proc++ ) {
+        struct mca_ptl_base_peer_t* peer = peers[proc];
+        if(NULL != peer) {
+            mca_ptl_sm_component.sm_peers[peer->peer_smp_rank] = peer;
+            peer->my_smp_rank=mca_ptl_sm_component.my_smp_rank;
+        }
     }
 
     /* Allocate Shared Memory PTL process coordination
@@ -768,6 +791,7 @@ int mca_ptl_sm_send(
     return_status=ompi_fifo_write_to_head_same_base_addr(sm_request->req_frag,
             send_fifo, mca_ptl_sm_component.sm_mpool);
     if(  0 <= return_status ) {
+        MCA_PTL_SM_SIGNAL_PEER(ptl_peer);
         return_status=OMPI_SUCCESS;
     }
 
@@ -892,8 +916,9 @@ int mca_ptl_sm_send_continue(
     return_status=ompi_fifo_write_to_head_same_base_addr(send_frag,
             send_fifo, mca_ptl_sm_component.sm_mpool);
     if( 0 <= return_status ) {
+        MCA_PTL_SM_SIGNAL_PEER(ptl_peer);
         return_status=OMPI_SUCCESS;
-    }
+    } 
 
     /* release threa lock */
     if( ompi_using_threads() ) {
