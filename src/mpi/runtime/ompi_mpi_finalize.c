@@ -20,6 +20,7 @@
 #include "info/info.h"
 #include "util/proc_info.h"
 #include "runtime/runtime.h"
+#include "runtime/ompi_rte_wait.h"
 
 #include "mca/base/base.h"
 #include "mca/ptl/ptl.h"
@@ -134,6 +135,16 @@ int ompi_mpi_finalize(void)
 	  ompi_output(0, "mpi_finalize: gave up waiting for other processes to complete");
       }
   }
+
+  /* BWB - fix me hack.  Close down the event library.  This has to
+  happen now and not as part of ompi_rte_finalize (where it should be)
+  because of a bug in the TCP PTL that exists only if the event
+  library is open when the module is shut down.  So shut down
+  everything that depends on the event library here (rather than the
+  rte_finalize where it should be).*/
+  ompi_rte_wait_finalize();
+  ompi_event_fini();
+  /* BWB - end fix me hack */
 
   /* cleanup */
   if (OMPI_SUCCESS != (ret = mca_ptl_base_close())) {

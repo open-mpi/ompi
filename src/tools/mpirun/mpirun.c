@@ -28,6 +28,7 @@
 #include "mca/oob/base/base.h"
 
 #include "runtime/runtime.h"
+#include "runtime/ompi_rte_wait.h"
 
 extern char** environ;
 
@@ -403,6 +404,19 @@ main(int argc, char *argv[])
     }
 
     /* finalize the system */
+    /* BWB - fix me hack.  Close down the event library.  This has to
+       happen now and not as part of ompi_rte_finalize (where it
+       should be) because of a bug in the TCP PTL that exists only if
+       the event library is open when the module is shut down.  So
+       shut down everything that depends on the event library here
+       (rather than the rte_finalize where it should be).
+
+       Further note: we do this before rte_finalize even in MPIRUN so
+       that we match pound for pound the shutdown sequence of
+       MPI_Finalize*/
+    ompi_rte_wait_finalize();
+    ompi_event_fini();
+  /* BWB - end fix me hack */
     ompi_rte_finalize();
     mca_base_close();
     ompi_finalize();

@@ -42,10 +42,6 @@ int ompi_rte_finalize(void)
   ompi_rte_internal_fini_spawn();
   ompi_session_dir_finalize();
 
-  ompi_rte_wait_finalize();
-
-  ompi_event_fini();
-
   /* All done */
 
   return OMPI_SUCCESS;
