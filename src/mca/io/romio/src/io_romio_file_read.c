@@ -7,25 +7,22 @@
 #include "request/request.h"
 #include "io_romio.h"
 
+
 int
-mca_io_romio_File_read_at (MPI_File fh,
+mca_io_romio_file_read_at (ompi_file_t *fh,
                            MPI_Offset offset,
                            void *buf,
                            int count,
-                           MPI_Datatype datatype,
-                           MPI_Status * status)
+                           ompi_datatype_t *datatype,
+                           ompi_status_public_t * status)
 {
     int         ret;
-    mca_io_romio_MPI_File romio_fh;
-    mca_io_romio_file_t *mca_romio_fh;
+    mca_io_romio_data_t *data;
 
-    /* extract the ROMIO file handle: */
-    mca_romio_fh = (mca_io_romio_file_t *) fh;
-    romio_fh = mca_romio_fh->romio_fh;
-
+    data = (mca_io_romio_data_t *) fh->f_io_selected_data;
     OMPI_THREAD_LOCK (&mca_io_romio_mutex);
     ret =
-        mca_io_romio_MPI_File_read_at (romio_fh, offset, buf, count,
+        ROMIO_PREFIX(MPI_File_read_at) (data->romio_fh, offset, buf, count,
                                        datatype, status);
     OMPI_THREAD_UNLOCK (&mca_io_romio_mutex);
 
@@ -34,24 +31,20 @@ mca_io_romio_File_read_at (MPI_File fh,
 
 
 int
-mca_io_romio_File_read_at_all (MPI_File fh,
+mca_io_romio_file_read_at_all (ompi_file_t *fh,
                                MPI_Offset offset,
                                void *buf,
                                int count,
-                               MPI_Datatype datatype,
-                               MPI_Status * status)
+                               ompi_datatype_t *datatype,
+                               ompi_status_public_t * status)
 {
     int         ret;
-    mca_io_romio_MPI_File romio_fh;
-    mca_io_romio_file_t *mca_romio_fh;
+    mca_io_romio_data_t *data;
 
-    /* extract the ROMIO file handle: */
-    mca_romio_fh = (mca_io_romio_file_t *) fh;
-    romio_fh = mca_romio_fh->romio_fh;
-
+    data = (mca_io_romio_data_t *) fh->f_io_selected_data;
     OMPI_THREAD_LOCK (&mca_io_romio_mutex);
     ret =
-        mca_io_romio_MPI_File_read_at_all (romio_fh, offset, buf, count,
+        ROMIO_PREFIX(MPI_File_read_at_all) (data->romio_fh, offset, buf, count,
                                            datatype, status);
     OMPI_THREAD_UNLOCK (&mca_io_romio_mutex);
 
@@ -60,34 +53,23 @@ mca_io_romio_File_read_at_all (MPI_File fh,
 
 
 int
-mca_io_romio_File_iread_at (MPI_File fh,
+mca_io_romio_file_iread_at (ompi_file_t *fh,
                             MPI_Offset offset,
                             void *buf,
                             int count,
-                            MPI_Datatype datatype,
-                            MPI_Request * request)
+                            ompi_datatype_t *datatype,
+                            mca_io_base_request_t *request)
 {
     int         ret;
-    mca_io_romio_MPI_File romio_fh;
-    mca_io_romio_file_t *mca_romio_fh;
+    mca_io_romio_data_t *data;
+    mca_io_romio_request_t *req;
 
-    mca_io_romio_request_t *rq;
-    mca_io_romio_MPIO_Request romio_rq;
-
-    /* create MPI_request */
-    rq = malloc (sizeof (mca_io_romio_request_t));
-    (*request) = (ompi_request_t *) rq;
-    (*request)->req_type = OMPI_REQUEST_IO;
-
-    /* extract the ROMIO file handle: */
-    mca_romio_fh = (mca_io_romio_file_t *) fh;
-    romio_fh = mca_romio_fh->romio_fh;
-
-
+    data = (mca_io_romio_data_t *) fh->f_io_selected_data;
+    req = (mca_io_romio_request_t *) request;
     OMPI_THREAD_LOCK (&mca_io_romio_mutex);
     ret =
-        mca_io_romio_MPI_File_iread_at (romio_fh, offset, buf, count,
-                                        datatype, &romio_rq);
+        ROMIO_PREFIX(MPI_File_iread_at) (data->romio_fh, offset, buf, count,
+                                        datatype, &req->romio_rq);
     OMPI_THREAD_UNLOCK (&mca_io_romio_mutex);
 
     return ret;
@@ -95,23 +77,19 @@ mca_io_romio_File_iread_at (MPI_File fh,
 
 
 int
-mca_io_romio_File_read (MPI_File fh,
+mca_io_romio_file_read (ompi_file_t *fh,
                         void *buf,
                         int count,
-                        MPI_Datatype datatype,
-                        MPI_Status * status)
+                        ompi_datatype_t *datatype,
+                        ompi_status_public_t * status)
 {
     int         ret;
-    mca_io_romio_MPI_File romio_fh;
-    mca_io_romio_file_t *mca_romio_fh;
+    mca_io_romio_data_t *data;
 
-    /* extract the ROMIO file handle: */
-    mca_romio_fh = (mca_io_romio_file_t *) fh;
-    romio_fh = mca_romio_fh->romio_fh;
-
+    data = (mca_io_romio_data_t *) fh->f_io_selected_data;
     OMPI_THREAD_LOCK (&mca_io_romio_mutex);
     ret =
-        mca_io_romio_MPI_File_read (romio_fh, buf, count, datatype,
+        ROMIO_PREFIX(MPI_File_read) (data->romio_fh, buf, count, datatype,
                                     status);
     OMPI_THREAD_UNLOCK (&mca_io_romio_mutex);
 
@@ -120,23 +98,19 @@ mca_io_romio_File_read (MPI_File fh,
 
 
 int
-mca_io_romio_File_read_all (MPI_File fh,
+mca_io_romio_file_read_all (ompi_file_t *fh,
                             void *buf,
                             int count,
-                            MPI_Datatype datatype,
-                            MPI_Status * status)
+                            ompi_datatype_t *datatype,
+                            ompi_status_public_t * status)
 {
     int         ret;
-    mca_io_romio_MPI_File romio_fh;
-    mca_io_romio_file_t *mca_romio_fh;
+    mca_io_romio_data_t *data;
 
-    /* extract the ROMIO file handle: */
-    mca_romio_fh = (mca_io_romio_file_t *) fh;
-    romio_fh = mca_romio_fh->romio_fh;
-
+    data = (mca_io_romio_data_t *) fh->f_io_selected_data;
     OMPI_THREAD_LOCK (&mca_io_romio_mutex);
     ret =
-        mca_io_romio_MPI_File_read_all (romio_fh, buf, count, datatype,
+        ROMIO_PREFIX(MPI_File_read_all) (data->romio_fh, buf, count, datatype,
                                         status);
     OMPI_THREAD_UNLOCK (&mca_io_romio_mutex);
 
@@ -145,36 +119,22 @@ mca_io_romio_File_read_all (MPI_File fh,
 
 
 int
-mca_io_romio_File_iread (MPI_File fh,
+mca_io_romio_file_iread (ompi_file_t *fh,
                          void *buf,
                          int count,
-                         MPI_Datatype datatype,
-                         MPI_Request * request)
+                         ompi_datatype_t *datatype,
+                         mca_io_base_request_t * request)
 {
     int         ret;
-    mca_io_romio_MPI_File romio_fh;
-    mca_io_romio_file_t *mca_romio_fh;
+    mca_io_romio_data_t *data;
+    mca_io_romio_request_t *req;
 
-    mca_io_romio_request_t *rq;
-    mca_io_romio_MPIO_Request romio_rq;
-
-    /* create MPI_request */
-    rq = malloc (sizeof (mca_io_romio_request_t));
-    (*request) = (ompi_request_t *) rq;
-    (*request)->req_type = OMPI_REQUEST_IO;
-
-    /* extract the ROMIO request */
-    romio_rq = rq->romio_rq;
-
-    /* extract the ROMIO file handle: */
-    mca_romio_fh = (mca_io_romio_file_t *) fh;
-    romio_fh = mca_romio_fh->romio_fh;
-
-
+    data = (mca_io_romio_data_t *) fh->f_io_selected_data;
+    req = (mca_io_romio_request_t *) request;
     OMPI_THREAD_LOCK (&mca_io_romio_mutex);
     ret =
-        mca_io_romio_MPI_File_iread (romio_fh, buf, count, datatype,
-                                     &romio_rq);
+        ROMIO_PREFIX(MPI_File_iread) (data->romio_fh, buf, count, datatype,
+                                     &req->romio_rq);
     OMPI_THREAD_UNLOCK (&mca_io_romio_mutex);
 
     return ret;
@@ -182,24 +142,20 @@ mca_io_romio_File_iread (MPI_File fh,
 
 
 int
-mca_io_romio_File_read_shared (MPI_File fh,
+mca_io_romio_file_read_shared (ompi_file_t *fh,
                                void *buf,
                                int count,
-                               MPI_Datatype datatype,
-                               MPI_Status * status)
+                               ompi_datatype_t *datatype,
+                               ompi_status_public_t * status)
 {
     int         ret;
-    mca_io_romio_MPI_File romio_fh;
-    mca_io_romio_file_t *mca_romio_fh;
+    mca_io_romio_data_t *data;
 
-    /* extract the ROMIO file handle: */
-    mca_romio_fh = (mca_io_romio_file_t *) fh;
-    romio_fh = mca_romio_fh->romio_fh;
-
+    data = (mca_io_romio_data_t *) fh->f_io_selected_data;
     OMPI_THREAD_LOCK (&mca_io_romio_mutex);
     ret =
-        mca_io_romio_MPI_File_read_shared (romio_fh, buf, count, datatype,
-                                           status);
+        ROMIO_PREFIX(MPI_File_read_shared) (data->romio_fh, buf, count, 
+                                            datatype, status);
     OMPI_THREAD_UNLOCK (&mca_io_romio_mutex);
 
     return ret;
@@ -207,36 +163,22 @@ mca_io_romio_File_read_shared (MPI_File fh,
 
 
 int
-mca_io_romio_File_iread_shared (MPI_File fh,
+mca_io_romio_file_iread_shared (ompi_file_t *fh,
                                 void *buf,
                                 int count,
-                                MPI_Datatype datatype,
-                                MPI_Request * request)
+                                ompi_datatype_t *datatype,
+                                mca_io_base_request_t * request)
 {
     int         ret;
-    mca_io_romio_MPI_File romio_fh;
-    mca_io_romio_file_t *mca_romio_fh;
+    mca_io_romio_data_t *data;
+    mca_io_romio_request_t *req;
 
-    mca_io_romio_request_t *rq;
-    mca_io_romio_MPIO_Request romio_rq;
-
-    /* create MPI_request */
-    rq = malloc (sizeof (mca_io_romio_request_t));
-    (*request) = (ompi_request_t *) rq;
-    (*request)->req_type = OMPI_REQUEST_IO;
-
-    /* extract the ROMIO request */
-    romio_rq = rq->romio_rq;
-
-    /* extract the ROMIO file handle: */
-    mca_romio_fh = (mca_io_romio_file_t *) fh;
-    romio_fh = mca_romio_fh->romio_fh;
-
-
+    data = (mca_io_romio_data_t *) fh->f_io_selected_data;
+    req = (mca_io_romio_request_t *) request;
     OMPI_THREAD_LOCK (&mca_io_romio_mutex);
     ret =
-        mca_io_romio_MPI_File_iread_shared (romio_fh, buf, count, datatype,
-                                            &romio_rq);
+        ROMIO_PREFIX(MPI_File_iread_shared) (data->romio_fh, buf, count, 
+                                             datatype, &req->romio_rq);
     OMPI_THREAD_UNLOCK (&mca_io_romio_mutex);
 
     return ret;
@@ -244,24 +186,20 @@ mca_io_romio_File_iread_shared (MPI_File fh,
 
 
 int
-mca_io_romio_File_read_ordered (MPI_File fh,
+mca_io_romio_file_read_ordered (ompi_file_t *fh,
                                 void *buf,
                                 int count,
-                                MPI_Datatype datatype,
-                                MPI_Status * status)
+                                ompi_datatype_t *datatype,
+                                ompi_status_public_t * status)
 {
     int         ret;
-    mca_io_romio_MPI_File romio_fh;
-    mca_io_romio_file_t *mca_romio_fh;
+    mca_io_romio_data_t *data;
 
-    /* extract the ROMIO file handle: */
-    mca_romio_fh = (mca_io_romio_file_t *) fh;
-    romio_fh = mca_romio_fh->romio_fh;
-
+    data = (mca_io_romio_data_t *) fh->f_io_selected_data;
     OMPI_THREAD_LOCK (&mca_io_romio_mutex);
     ret =
-        mca_io_romio_MPI_File_read_ordered (romio_fh, buf, count, datatype,
-                                            status);
+        ROMIO_PREFIX(MPI_File_read_ordered) (data->romio_fh, buf, count,
+                                             datatype, status);
     OMPI_THREAD_UNLOCK (&mca_io_romio_mutex);
 
     return ret;
@@ -269,23 +207,19 @@ mca_io_romio_File_read_ordered (MPI_File fh,
 
 
 int
-mca_io_romio_File_read_at_all_begin (MPI_File fh,
+mca_io_romio_file_read_at_all_begin (ompi_file_t *fh,
                                      MPI_Offset offset,
                                      void *buf,
                                      int count,
-                                     MPI_Datatype datatype)
+                                     ompi_datatype_t *datatype)
 {
     int         ret;
-    mca_io_romio_MPI_File romio_fh;
-    mca_io_romio_file_t *mca_romio_fh;
+    mca_io_romio_data_t *data;
 
-    /* extract the ROMIO file handle: */
-    mca_romio_fh = (mca_io_romio_file_t *) fh;
-    romio_fh = mca_romio_fh->romio_fh;
-
+    data = (mca_io_romio_data_t *) fh->f_io_selected_data;
     OMPI_THREAD_LOCK (&mca_io_romio_mutex);
     ret =
-        mca_io_romio_MPI_File_read_at_all_begin (romio_fh, offset, buf,
+        ROMIO_PREFIX(MPI_File_read_at_all_begin) (data->romio_fh, offset, buf,
                                                  count, datatype);
     OMPI_THREAD_UNLOCK (&mca_io_romio_mutex);
 
@@ -294,20 +228,16 @@ mca_io_romio_File_read_at_all_begin (MPI_File fh,
 
 
 int
-mca_io_romio_File_read_at_all_end (MPI_File fh,
+mca_io_romio_file_read_at_all_end (ompi_file_t *fh,
                                    void *buf,
-                                   MPI_Status * status)
+                                   ompi_status_public_t * status)
 {
     int         ret;
-    mca_io_romio_MPI_File romio_fh;
-    mca_io_romio_file_t *mca_romio_fh;
+    mca_io_romio_data_t *data;
 
-    /* extract the ROMIO file handle: */
-    mca_romio_fh = (mca_io_romio_file_t *) fh;
-    romio_fh = mca_romio_fh->romio_fh;
-
+    data = (mca_io_romio_data_t *) fh->f_io_selected_data;
     OMPI_THREAD_LOCK (&mca_io_romio_mutex);
-    ret = mca_io_romio_MPI_File_read_at_all_end (romio_fh, buf, status);
+    ret = ROMIO_PREFIX(MPI_File_read_at_all_end) (data->romio_fh, buf, status);
     OMPI_THREAD_UNLOCK (&mca_io_romio_mutex);
 
     return ret;
@@ -315,22 +245,18 @@ mca_io_romio_File_read_at_all_end (MPI_File fh,
 
 
 int
-mca_io_romio_File_read_all_begin (MPI_File fh,
+mca_io_romio_file_read_all_begin (ompi_file_t *fh,
                                   void *buf,
                                   int count,
-                                  MPI_Datatype datatype)
+                                  ompi_datatype_t *datatype)
 {
     int         ret;
-    mca_io_romio_MPI_File romio_fh;
-    mca_io_romio_file_t *mca_romio_fh;
+    mca_io_romio_data_t *data;
 
-    /* extract the ROMIO file handle: */
-    mca_romio_fh = (mca_io_romio_file_t *) fh;
-    romio_fh = mca_romio_fh->romio_fh;
-
+    data = (mca_io_romio_data_t *) fh->f_io_selected_data;
     OMPI_THREAD_LOCK (&mca_io_romio_mutex);
     ret =
-        mca_io_romio_MPI_File_read_all_begin (romio_fh, buf, count,
+        ROMIO_PREFIX(MPI_File_read_all_begin) (data->romio_fh, buf, count,
                                               datatype);
     OMPI_THREAD_UNLOCK (&mca_io_romio_mutex);
 
@@ -339,20 +265,16 @@ mca_io_romio_File_read_all_begin (MPI_File fh,
 
 
 int
-mca_io_romio_File_read_all_end (MPI_File fh,
+mca_io_romio_file_read_all_end (ompi_file_t *fh,
                                 void *buf,
-                                MPI_Status * status)
+                                ompi_status_public_t * status)
 {
     int         ret;
-    mca_io_romio_MPI_File romio_fh;
-    mca_io_romio_file_t *mca_romio_fh;
+    mca_io_romio_data_t *data;
 
-    /* extract the ROMIO file handle: */
-    mca_romio_fh = (mca_io_romio_file_t *) fh;
-    romio_fh = mca_romio_fh->romio_fh;
-
+    data = (mca_io_romio_data_t *) fh->f_io_selected_data;
     OMPI_THREAD_LOCK (&mca_io_romio_mutex);
-    ret = mca_io_romio_MPI_File_read_all_end (romio_fh, buf, status);
+    ret = ROMIO_PREFIX(MPI_File_read_all_end) (data->romio_fh, buf, status);
     OMPI_THREAD_UNLOCK (&mca_io_romio_mutex);
 
     return ret;
@@ -360,22 +282,18 @@ mca_io_romio_File_read_all_end (MPI_File fh,
 
 
 int
-mca_io_romio_File_read_ordered_begin (MPI_File fh,
+mca_io_romio_file_read_ordered_begin (ompi_file_t *fh,
                                       void *buf,
                                       int count,
-                                      MPI_Datatype datatype)
+                                      ompi_datatype_t *datatype)
 {
     int         ret;
-    mca_io_romio_MPI_File romio_fh;
-    mca_io_romio_file_t *mca_romio_fh;
+    mca_io_romio_data_t *data;
 
-    /* extract the ROMIO file handle: */
-    mca_romio_fh = (mca_io_romio_file_t *) fh;
-    romio_fh = mca_romio_fh->romio_fh;
-
+    data = (mca_io_romio_data_t *) fh->f_io_selected_data;
     OMPI_THREAD_LOCK (&mca_io_romio_mutex);
     ret =
-        mca_io_romio_MPI_File_read_ordered_begin (romio_fh, buf, count,
+        ROMIO_PREFIX(MPI_File_read_ordered_begin) (data->romio_fh, buf, count,
                                                   datatype);
     OMPI_THREAD_UNLOCK (&mca_io_romio_mutex);
 
@@ -384,20 +302,17 @@ mca_io_romio_File_read_ordered_begin (MPI_File fh,
 
 
 int
-mca_io_romio_File_read_ordered_end (MPI_File fh,
+mca_io_romio_file_read_ordered_end (ompi_file_t *fh,
                                     void *buf,
-                                    MPI_Status * status)
+                                    ompi_status_public_t * status)
 {
     int         ret;
-    mca_io_romio_MPI_File romio_fh;
-    mca_io_romio_file_t *mca_romio_fh;
+    mca_io_romio_data_t *data;
 
-    /* extract the ROMIO file handle: */
-    mca_romio_fh = (mca_io_romio_file_t *) fh;
-    romio_fh = mca_romio_fh->romio_fh;
-
+    data = (mca_io_romio_data_t *) fh->f_io_selected_data;
     OMPI_THREAD_LOCK (&mca_io_romio_mutex);
-    ret = mca_io_romio_MPI_File_read_ordered_end (romio_fh, buf, status);
+    ret = ROMIO_PREFIX(MPI_File_read_ordered_end) (data->romio_fh, buf, 
+                                                   status);
     OMPI_THREAD_UNLOCK (&mca_io_romio_mutex);
 
     return ret;

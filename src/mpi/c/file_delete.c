@@ -10,6 +10,7 @@
 #include "errhandler/errhandler.h"
 #include "info/info.h"
 #include "file/file.h"
+#include "mca/io/base/base.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_File_delete = PMPI_File_delete
@@ -24,18 +25,23 @@ static const char FUNC_NAME[] = "MPI_File_delete";
 
 int MPI_File_delete(char *filename, MPI_Info info) 
 {
+    int rc;
+
     if (MPI_PARAM_CHECK) {
+        rc = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (NULL == info || ompi_info_is_freed(info)) {
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INFO,
-                                          FUNC_NAME);
+            rc = MPI_ERR_INFO;
+        } else if (NULL == filename) {
+            rc = MPI_ERR_ARG;
         }
+        OMPI_ERRHANDLER_CHECK(rc, MPI_FILE_NULL, rc, FUNC_NAME);
     }
 
-    /* Note that MPI-2:9.7 (p265) says that errors in MPI_FILE_DELETE
-       should invoke the default error handler on MPI_FILE_NULL */
+    /* Since there is no MPI_File handle associated with this
+       function, the MCA has to do a selection and perform the
+       action */
 
-    /* This function is not yet implemented */
-
-    return OMPI_ERRHANDLER_INVOKE(MPI_FILE_NULL, MPI_ERR_INTERN, FUNC_NAME);
+    rc = mca_io_base_delete(filename, info);
+    OMPI_ERRHANDLER_RETURN(rc, MPI_FILE_NULL, rc, FUNC_NAME);
 }

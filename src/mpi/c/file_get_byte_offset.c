@@ -8,6 +8,8 @@
 #include "mpi/c/bindings.h"
 #include "communicator/communicator.h"
 #include "errhandler/errhandler.h"
+#include "file/file.h"
+#include "datatype/datatype.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_File_get_byte_offset = PMPI_File_get_byte_offset
@@ -23,11 +25,34 @@ static const char FUNC_NAME[] = "MPI_File_get_byte_offset";
 int MPI_File_get_byte_offset(MPI_File fh, MPI_Offset offset,
                              MPI_Offset *disp)
 {
-  if (MPI_PARAM_CHECK) {
-    OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-  }
+    int rc;
 
-  /* This function is not yet implemented */
+    if (MPI_PARAM_CHECK) {
+        rc = MPI_SUCCESS;
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+        if (ompi_file_invalid(fh)) {
+            rc = MPI_ERR_FILE;
+            fh = MPI_FILE_NULL;
+        } else if (NULL == disp) {
+            rc = MPI_ERR_ARG;
+        }
+        OMPI_ERRHANDLER_CHECK(rc, fh, rc, FUNC_NAME);
+    }
 
-  return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INTERN, FUNC_NAME);
+    /* Call the back-end io component function */
+
+    switch (fh->f_io_version) {
+    case MCA_IO_BASE_V_1_0_0:
+        rc = fh->f_io_selected_module.v1_0_0.
+            io_module_file_get_byte_offset(fh, offset, disp);
+        break;
+
+    default:
+        rc = MPI_ERR_INTERN;
+        break;
+    }
+
+    /* All done */
+    
+    OMPI_ERRHANDLER_RETURN(rc, fh, rc, FUNC_NAME);
 }

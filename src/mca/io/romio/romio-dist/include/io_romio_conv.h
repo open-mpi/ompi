@@ -1,5 +1,12 @@
-#ifndef MCA_ROMIO_IO_H
-#define MCA_ROMIO_IO_H
+/*
+ * $HEADER$
+ */
+
+#ifndef MCA_IO_ROMIO_CONV_H
+#define MCA_IO_ROMIO_CONV_H
+
+/* Prefix that we add to all ROMIO symbols */
+#define ROMIO_PREFIX(foo) mca_io_romio_dist_##foo
 
 /* Section 9.2 */
 /* Begin Prototypes */
@@ -76,14 +83,13 @@
 #define MPI_File_get_errhandler ROMIO_PREFIX(MPI_File_get_errhandler)
 /* End Prototypes */
 
-#if 0
 /* Section 4.14.4 */
 #define MPI_Type_create_subarray ROMIO_PREFIX(MPI_Type_create_subarray)
 
 /* Section 4.14.5 */
 #define MPI_Type_create_darray ROMIO_PREFIX(MPI_Type_create_darray)
-#endif
 
+/* JMS these don't seem to work... */
 #define MPI_File_f2c ROMIO_PREFIX(MPI_File_f2c)
 #define MPI_File_c2f ROMIO_PREFIX(MPI_File_c2f)
 
@@ -97,36 +103,8 @@
 #define MPI_File ROMIO_PREFIX(MPI_File)
 #define MPIO_Request ROMIO_PREFIX(MPIO_Request)
 
-/* info functions if not defined in the MPI implementation */
-#if 0
-#ifndef HAVE_MPI_INFO
-int         MPI_Info_create (MPI_Info * info);
-int         MPI_Info_set (MPI_Info info,
-                          char *key,
-                          char *value);
-int         MPI_Info_delete (MPI_Info info,
-                             char *key);
-int         MPI_Info_get (MPI_Info info,
-                          char *key,
-                          int valuelen,
-                          char *value,
-                          int *flag);
-int         MPI_Info_get_valuelen (MPI_Info info,
-                                   char *key,
-                                   int *valuelen,
-                                   int *flag);
-int         MPI_Info_get_nkeys (MPI_Info info,
-                                int *nkeys);
-int         MPI_Info_get_nthkey (MPI_Info info,
-                                 int n,
-                                 char *key);
-int         MPI_Info_dup (MPI_Info info,
-                          MPI_Info * newinfo);
-int         MPI_Info_free (MPI_Info * info);
+/* Open MPI's mpi.h #define's MPI_FILE_NULL, so we need to undef it
+   here and allow it to be re-assigned to whatever ROMIO wants */
+#undef MPI_FILE_NULL
 
-MPI_Fint    MPI_Info_c2f (MPI_Info info);
-MPI_Info    MPI_Info_f2c (MPI_Fint info);
-#endif
-#endif
-
-#endif
+#endif /* MCA_IO_ROMIO_CONV_H */

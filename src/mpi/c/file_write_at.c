@@ -8,6 +8,8 @@
 #include "mpi/c/bindings.h"
 #include "communicator/communicator.h"
 #include "errhandler/errhandler.h"
+#include "file/file.h"
+#include "datatype/datatype.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_File_write_at = PMPI_File_write_at
@@ -24,11 +26,36 @@ int MPI_File_write_at(MPI_File fh, MPI_Offset offset, void *buf,
                       int count, MPI_Datatype datatype, 
                       MPI_Status *status)
 {
-  if (MPI_PARAM_CHECK) {
-    OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-  }
+    int rc;
 
-  /* This function is not yet implemented */
+    if (MPI_PARAM_CHECK) {
+        rc = MPI_SUCCESS;
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+        if (ompi_file_invalid(fh)) {
+            fh = MPI_FILE_NULL;
+            rc = MPI_ERR_FILE;
+        } else if (count < 0) {
+            rc = MPI_ERR_COUNT;
+        } else {
+           OMPI_CHECK_DATATYPE_FOR_SEND(rc, datatype, count);
+        }
+        OMPI_ERRHANDLER_CHECK(rc, fh, rc, FUNC_NAME);
+    }
 
-  return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INTERN, FUNC_NAME);
+    /* Call the back-end io component function */
+
+    switch (fh->f_io_version) {
+    case MCA_IO_BASE_V_1_0_0:
+        rc = fh->f_io_selected_module.v1_0_0.
+            io_module_file_write_at(fh, offset, buf, count, datatype, status);
+        break;
+
+    default:
+        rc = MPI_ERR_INTERN;
+        break;
+    }
+
+    /* All done */
+    
+    OMPI_ERRHANDLER_RETURN(rc, fh, rc, FUNC_NAME);
 }

@@ -36,6 +36,8 @@
 #include "mca/topo/base/base.h"
 #include "mca/gpr/gpr.h"
 #include "mca/gpr/base/base.h"
+#include "mca/io/io.h"
+#include "mca/io/base/base.h"
 #include "tools/ompi_info/ompi_info.h"
 
 using namespace std;
@@ -109,13 +111,8 @@ void ompi_info::open_components()
   mca_llm_base_open();
   component_map["llm"] = &mca_llm_base_components_available;
 
-#if 0
-  // io component opening not implemented yet
   mca_io_base_open();
-  component_map["io"] = &mca_io_base_components_available;
-#else
-  component_map["io"] = NULL;
-#endif
+  component_map["io"] = &mca_io_base_components_opened;
 
   mca_ns_base_open();
   component_map["ns"] = &mca_ns_base_components_available;
