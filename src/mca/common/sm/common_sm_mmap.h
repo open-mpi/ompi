@@ -15,6 +15,8 @@
 #ifndef _COMMON_SM_MMAP_H_
 #define _COMMON_SM_MMAP_H_
 
+#include "ompi_config.h"
+
 #include "class/ompi_object.h"
 #include "class/ompi_list.h"
 #include "include/sys/atomic.h"
@@ -54,7 +56,7 @@ struct mca_common_sm_mmap_t {
     /* base address of data segment */
     unsigned char  *data_addr;
     size_t map_size;
-    char map_path[PATH_MAX];
+    char map_path[OMPI_PATH_MAX];
 };
 typedef struct mca_common_sm_mmap_t mca_common_sm_mmap_t;
 

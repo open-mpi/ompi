@@ -157,7 +157,7 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
 
     /* set up the map object */
     map = OBJ_NEW(mca_common_sm_mmap_t);
-    strncpy(map->map_path, file_name, PATH_MAX);
+    strncpy(map->map_path, file_name, OMPI_PATH_MAX);
     /* the first entry in the file is the control strcuture.  the first
        entry in the control structure is an mca_common_sm_file_header_t
        element */
