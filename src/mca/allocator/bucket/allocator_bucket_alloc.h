@@ -3,9 +3,7 @@
  */
 
 /** @file
- *  A generic memory allocator.
- *
- *
+ *  A generic memory bucket allocator.
  **/
 
 #ifndef ALLOCATOR_BUCKET_ALLOC_H 
@@ -19,25 +17,18 @@
 #include "mca/allocator/allocator.h"
 
 /**
-  * Typedef so we can add a pointer to mca_allocator_bucket_chunk_header_t in
-  * mca_allocator_bucket_chunk_header_t
-  */
-typedef struct mca_allocator_bucket_chunk_header_t * mca_allocator_bucket_chunk_header_ptr_t; 
-
-/**
   * Structure for the header of each memory chunk
   */
 struct mca_allocator_bucket_chunk_header_t {
-    mca_allocator_bucket_chunk_header_ptr_t  next_in_segment; /**< The next chunk in the 
-                                                   memory segment */
+    struct mca_allocator_bucket_chunk_header_t * next_in_segment; 
+               /**< The next chunk in the memory segment */
     /**
       * Union which holds either a pointer to the next free chunk
       * or the bucket number
       */
     union u {
-        mca_allocator_bucket_chunk_header_ptr_t next_free; /**< if the chunk is free this
-                                                will point to the next free
-                                                chunk in the bucket */
+        struct mca_allocator_bucket_chunk_header_t * next_free; 
+        /**< if the chunk is free this will point to the next free chunk in the bucket */
         int bucket;                  /**< the bucket number it belongs to */
     } u; /**< the union */
 };
@@ -47,16 +38,11 @@ struct mca_allocator_bucket_chunk_header_t {
 typedef struct mca_allocator_bucket_chunk_header_t mca_allocator_bucket_chunk_header_t;
 
 /**
-  * Typedef so we can reference a pointer to mca_allocator_bucket_segment_head_t from itself
-  */
-typedef struct mca_allocator_bucket_segment_head_t * mca_allocator_bucket_segment_head_ptr;
-
-/**
   * Structure that heads each segment 
   */
 struct mca_allocator_bucket_segment_head_t {
-    mca_allocator_bucket_chunk_header_t * first_chunk; /**< the first chunk of the header */
-    mca_allocator_bucket_segment_head_ptr next_segment; /**< the next segment in the 
+    struct mca_allocator_bucket_chunk_header_t * first_chunk; /**< the first chunk of the header */
+    struct mca_allocator_bucket_segment_head_t * next_segment; /**< the next segment in the 
                                                  bucket */
 };
 /**
@@ -81,13 +67,13 @@ typedef struct mca_allocator_bucket_bucket_t mca_allocator_bucket_bucket_t;
   * Structure that holds the necessary information for each area of memory
   */
 struct mca_allocator_bucket_t {
-    mca_allocator_t super;
-    mca_allocator_bucket_bucket_t * buckets;     /**< the array of buckets */
-    int num_buckets;                     /**< the number of buckets */
-    mca_allocator_segment_alloc_fn_t get_mem_fn;          /**< pointer to the function to get
-                                              more memory */
-    mca_allocator_segment_free_fn_t free_mem_fn;       /**< pointer to the function to free
-                                              memory */
+    mca_allocator_t super;          /**< makes this a child of class mca_allocator_t */
+    mca_allocator_bucket_bucket_t * buckets; /**< the array of buckets */
+    int num_buckets;                         /**< the number of buckets */
+    mca_allocator_segment_alloc_fn_t get_mem_fn; 
+    /**< pointer to the function to get more memory */
+    mca_allocator_segment_free_fn_t free_mem_fn;
+    /**< pointer to the function to free memory */
 };
 /**
   * Typedef so we don't have to use struct
@@ -100,7 +86,8 @@ extern "C" {
   /**
    * Initializes the mca_allocator_bucket_options_t data structure for the passed
    * parameters.
-   * @param numBuckets The number of buckets the allocator will use
+   * @param mem a pointer to the mca_allocator_t struct to be filled in
+   * @param num_buckets The number of buckets the allocator will use
    * @param get_mem_funct A pointer to the function that the allocator
    * will use to get more memory
    * @param free_mem_funct A pointer to the function that the allocator
@@ -118,27 +105,24 @@ extern "C" {
    * mca_allocator_bucket_options_t struct and returns a pointer to memory in that
    * region or NULL if there was an error
    *
-   * @param mem_options A pointer to the appropriate struct for the area of
-   * memory.
+   * @param mem A pointer to the appropriate struct for the area of memory.
    * @param size The size of the requested area of memory
    *
    * @retval Pointer to the area of memory if the allocation was successful
    * @retval NULL if the allocation was unsuccessful
-   *
    */
     void * mca_allocator_bucket_alloc(mca_allocator_t * mem, size_t size);
 
 /**
    * Accepts a request for memory in a specific region defined by the
-   * mca_allocator_bucket_options_t struct and aligned by the specified amount and returns a
-   * pointer to memory in that region or NULL if there was an error
+   * mca_allocator_bucket_options_t struct and aligned by the specified amount and
+   * returns a pointer to memory in that region or NULL if there was an error
    *
-   * @param mem_options A pointer to the appropriate struct for the area of
+   * @param mem A pointer to the appropriate struct for the area of
    * memory.
    * @param size The size of the requested area of memory
    * @param alignment The requested alignment of the new area of memory. This
-   * MUST be a power of 2. If it is 0 then the memory is aligned on a page
-   * boundry
+   * MUST be a power of 2. 
    *
    * @retval Pointer to the area of memory if the allocation was successful
    * @retval NULL if the allocation was unsuccessful
@@ -152,7 +136,7 @@ extern "C" {
    * region. If it is unsuccessful, it will return NULL and the passed area of
    * memory will be untouched.
    *
-   * @param mem_options A pointer to the appropriate struct for the area of
+   * @param mem A pointer to the appropriate struct for the area of
    * memory.
    * @param size The size of the requested area of memory
    * @param ptr A pointer to the region of memory to be resized
@@ -167,7 +151,7 @@ extern "C" {
 /**
    * Frees the passed region of memory
    *
-   * @param mem_options A pointer to the appropriate struct for the area of
+   * @param mem A pointer to the appropriate struct for the area of
    * memory.
    * @param ptr A pointer to the region of memory to be freed
    *
@@ -181,7 +165,7 @@ extern "C" {
    * this function only frees memory that was previously freed with
    * mca_allocator_bucket_free().
    *
-   * @param mem_options A pointer to the appropriate struct for the area of
+   * @param mem A pointer to the appropriate struct for the area of
    * memory.
    *
    * @retval None
@@ -192,7 +176,7 @@ extern "C" {
 /**
    * Cleanup all resources held by this allocator.
    *
-   * @param mem_options A pointer to the appropriate struct for the area of
+   * @param mem A pointer to the appropriate struct for the area of
    * memory.
    *
    * @retval None

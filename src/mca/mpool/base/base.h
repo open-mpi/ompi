@@ -24,7 +24,7 @@ typedef struct mca_mpool_base_selected_module_t mca_mpool_base_selected_module_t
 OBJ_CLASS_DECLARATION(mca_mpool_base_selected_module_t);
 
 /*
- * Global functions for MCA: overall PTL open and close
+ * Global functions for MCA: overall mpool open and close
  */
 
 #if defined(c_plusplus) || defined(__cplusplus)

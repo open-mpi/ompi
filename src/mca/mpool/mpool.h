@@ -3,6 +3,7 @@
   */
 /**
   * @file
+  * Description of the Memory Pool framework
   */
 #ifndef MCA_MPOOL_H
 #define MCA_MPOOL_H
@@ -53,40 +54,49 @@ typedef void (*mca_mpool_base_finalize_fn_t)(struct mca_mpool_t*);
 
 
 /**
- *  mpool component descriptor. Contains component version information
- *  and open/close/init functions.
+ * initialize
  */
-                                                                                                                         
 typedef struct mca_mpool_t* (*mca_mpool_base_init_fn_t)(bool *allow_multi_user_threads);
 
-
+/**
+ * mpool component descriptor. Contains component version information
+ * and open/close/init functions.
+ */
 struct mca_mpool_base_component_1_0_0_t {
-  mca_base_module_t mpool_version;
-  mca_base_module_data_1_0_0_t mpool_data;
-  mca_mpool_base_init_fn_t mpool_init;
+  mca_base_module_t mpool_version;        /**< version */
+  mca_base_module_data_1_0_0_t mpool_data;/**< metadata */
+  mca_mpool_base_init_fn_t mpool_init;    /**< init function */
 };
+/**
+ * Convenience typedef.
+ */
 typedef struct mca_mpool_base_component_1_0_0_t mca_mpool_base_component_1_0_0_t;
+/**
+  * Convenience typedef
+  */
 typedef struct mca_mpool_base_component_1_0_0_t mca_mpool_base_component_t;
-                                                                                                                         
 
 /**
  *  mpool module descriptor. Contains functions exported
  *  by the component.
  */
 struct mca_mpool_t {
-    mca_mpool_base_component_t *mpool_component;
-    mca_mpool_base_address_fn_t mpool_base;
-    mca_mpool_base_alloc_fn_t mpool_alloc;
-    mca_mpool_base_realloc_fn_t mpool_realloc;
-    mca_mpool_base_free_fn_t mpool_free;
-    mca_mpool_base_register_fn_t mpool_register;
-    mca_mpool_base_deregister_fn_t mpool_deregister;
-    mca_mpool_base_finalize_fn_t mpool_finalize;
+    mca_mpool_base_component_t *mpool_component;  /**< component stuct */
+    mca_mpool_base_address_fn_t mpool_base;       /**< returns the base address */
+    mca_mpool_base_alloc_fn_t mpool_alloc;        /**< allocate function */
+    mca_mpool_base_realloc_fn_t mpool_realloc;    /**< reallocate function */
+    mca_mpool_base_free_fn_t mpool_free;          /**< free function */
+    mca_mpool_base_register_fn_t mpool_register;  /**< register memory */
+    mca_mpool_base_deregister_fn_t mpool_deregister; /**< deregister memory */
+    mca_mpool_base_finalize_fn_t mpool_finalize;  /**< finalize */
 };
+/**
+ * Convenience typedef
+ */
 typedef struct mca_mpool_t mca_mpool_t;
 
-/*
- * Macro for use in modules that are of type ptl v1.0.0
+/**
+ * Macro for use in modules that are of type mpool v1.0.0
  */
 #define MCA_MPOOL_BASE_VERSION_1_0_0 \
   /* mpool v1.0 is chained to MCA v1.0 */ \

@@ -12,7 +12,11 @@
 #include "mca/allocator/allocator.h"
 #include "mca/allocator/base/base.h"
 
-
+/**
+ * Closes all the remaining modules.
+ *
+ * @retval OMPI_SUCCESS
+ */
 int mca_allocator_base_close(void)
 {
   /* Close all remaining available modules (may be one if this is a

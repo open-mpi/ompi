@@ -38,7 +38,15 @@ int mca_allocator_base_open(void)
                             &mca_allocator_base_components);
 }
 
-
+/**
+ * Traverses through the list of available modules, calling their init functions
+ * until it finds the module that has the specified name. It then returns the found
+ * module.
+ *
+ * @param name the name of the module that is being searched for.
+ * @retval mca_allocator_base_module_t* pointer to the requested module
+ * @retval NULL if the requested module is not found
+ */
 mca_allocator_base_module_t* mca_allocator_component_lookup(const char* name)
 {
     /* Traverse the list of available modules; call their init functions. */
