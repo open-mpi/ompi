@@ -6,6 +6,7 @@
 
 #include "mpi.h"
 #include "mpi/c/bindings.h"
+#include "datatype/datatype.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Type_c2f = PMPI_Type_c2f
@@ -15,6 +16,7 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
-MPI_Fint MPI_Type_c2f(MPI_Datatype datatype) {
-    return (MPI_Fint)0;
+MPI_Fint MPI_Type_c2f(MPI_Datatype datatype)
+{
+    return (MPI_Fint)(datatype->d_f_to_c_index);
 }
