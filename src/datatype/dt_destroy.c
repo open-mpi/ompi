@@ -1,3 +1,5 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
+
 #include "datatype.h"
 
 /* This function should never be called directly. It's called by the dt_decrease_ref

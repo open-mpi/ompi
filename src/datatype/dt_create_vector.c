@@ -1,3 +1,5 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
+
 #include "datatype.h"
 
 /* Open questions ...

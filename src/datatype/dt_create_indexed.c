@@ -1,3 +1,5 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
+
 #include "datatype.h"
 
 /* We try to merge together data that are contiguous */

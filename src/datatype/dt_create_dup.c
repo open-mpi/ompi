@@ -1,3 +1,5 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
+
 #include "datatype.h"
 
 int dt_duplicate( dt_desc_t* oldType, dt_desc_t** newType )
