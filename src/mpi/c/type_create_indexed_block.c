@@ -55,7 +55,7 @@ MPI_Type_create_indexed_block(int count,
       a_i[0] = &count;
       a_i[1] = &blocklength;
       a_i[2] = array_of_displacements;
-      ompi_ddt_set_args( *newtype, 2 + count, a_i, 0, NULL, 1, &oldtype, MPI_COMBINER_INDEXED_BLOCK );
+      ompi_ddt_set_args( *newtype, 2 + count, a_i, 0, NULL, 1, &oldtype, MPI_COMBINER_INDEXED_BOMPI_LOCK );
    }
    return MPI_SUCCESS;
 }

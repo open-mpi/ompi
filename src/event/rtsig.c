@@ -161,7 +161,7 @@ rtsig_init(void)
 	sigemptyset(&op->sigs);
 	sigaddset(&op->sigs, SIGIO);
 	sigaddset(&op->sigs, SIGRTMIN);
-	sigprocmask(SIG_BLOCK, &op->sigs, NULL);
+	sigprocmask(SIG_BOMPI_LOCK, &op->sigs, NULL);
 
 	return (op);
 }
@@ -177,7 +177,7 @@ rtsig_add(void *arg, struct event *ev)
 
 	if (ev->ev_events & EV_SIGNAL) {
 		sigaddset(&op->sigs, EVENT_SIGNAL(ev));
-		return sigprocmask(SIG_BLOCK, &op->sigs, NULL);
+		return sigprocmask(SIG_BOMPI_LOCK, &op->sigs, NULL);
 	}
 
 	if (!(ev->ev_events & (EV_READ | EV_WRITE))) return 0;
@@ -232,7 +232,7 @@ rtsig_del(void *arg, struct event *ev)
 
 		sigemptyset(&sigs);
 		sigaddset(&sigs, EVENT_SIGNAL(ev));
-		return (sigprocmask(SIG_UNBLOCK, &sigs, NULL));
+		return (sigprocmask(SIG_UNBOMPI_LOCK, &sigs, NULL));
 	}
 
 	if (!(ev->ev_events & (EV_READ | EV_WRITE)))

@@ -16,7 +16,7 @@ void mca_pml_teg_recv_request_progress(
     mca_pml_base_recv_request_t* req,
     mca_ptl_base_recv_frag_t* frag)
 {
-    THREAD_LOCK(&mca_pml_teg.teg_request_lock);
+    OMPI_THREAD_LOCK(&mca_pml_teg.teg_request_lock);
     req->req_bytes_delivered += frag->super.frag_size;
     req->req_bytes_received += frag->super.frag_header.hdr_frag.hdr_frag_length;
     if (req->req_bytes_received >= req->req_bytes_packed) {
@@ -34,7 +34,7 @@ void mca_pml_teg_recv_request_progress(
             ompi_condition_broadcast(&mca_pml_teg.teg_request_cond);
         }
     }
-    THREAD_UNLOCK(&mca_pml_teg.teg_request_lock);
+    OMPI_THREAD_UNLOCK(&mca_pml_teg.teg_request_lock);
 }
 
 
@@ -52,7 +52,7 @@ void mca_pml_teg_recv_request_match_specific(mca_pml_base_recv_request_t* reques
     mca_ptl_base_recv_frag_t* frag;
    
     /* check for a specific match */
-    THREAD_LOCK(&pml_comm->c_matching_lock);
+    OMPI_THREAD_LOCK(&pml_comm->c_matching_lock);
 
     /* assign sequence number */
     request->super.req_sequence = pml_comm->c_recv_seq++;
@@ -60,7 +60,7 @@ void mca_pml_teg_recv_request_match_specific(mca_pml_base_recv_request_t* reques
     if (ompi_list_get_size(&pml_comm->c_unexpected_frags[req_peer]) > 0 &&
         (frag = mca_pml_teg_recv_request_match_specific_proc(request, req_peer)) != NULL) {
         mca_ptl_t* ptl = frag->super.frag_owner;
-        THREAD_UNLOCK(&pml_comm->c_matching_lock);
+        OMPI_THREAD_UNLOCK(&pml_comm->c_matching_lock);
         ptl->ptl_matched(ptl, frag);
         return; /* match found */
     }
@@ -70,7 +70,7 @@ void mca_pml_teg_recv_request_match_specific(mca_pml_base_recv_request_t* reques
     */
     if(request->super.req_type != MCA_PML_REQUEST_IPROBE)
         ompi_list_append(pml_comm->c_specific_receives+req_peer, (ompi_list_item_t*)request);
-    THREAD_UNLOCK(&pml_comm->c_matching_lock);
+    OMPI_THREAD_UNLOCK(&pml_comm->c_matching_lock);
 }
 
 
@@ -92,7 +92,7 @@ void mca_pml_teg_recv_request_match_wild(mca_pml_base_recv_request_t* request)
      * process, then an inner loop over the messages from the
      * process.
     */
-    THREAD_LOCK(&pml_comm->c_matching_lock);
+    OMPI_THREAD_LOCK(&pml_comm->c_matching_lock);
 
     /* assign sequence number */
     request->super.req_sequence = pml_comm->c_recv_seq++;
@@ -107,7 +107,7 @@ void mca_pml_teg_recv_request_match_wild(mca_pml_base_recv_request_t* request)
         /* loop over messages from the current proc */
         if ((frag = mca_pml_teg_recv_request_match_specific_proc(request, proc)) != NULL) {
             mca_ptl_t* ptl = frag->super.frag_owner;
-            THREAD_UNLOCK(&pml_comm->c_matching_lock);
+            OMPI_THREAD_UNLOCK(&pml_comm->c_matching_lock);
             ptl->ptl_matched(ptl, frag);
             return; /* match found */
         }
@@ -119,7 +119,7 @@ void mca_pml_teg_recv_request_match_wild(mca_pml_base_recv_request_t* request)
  
     if(request->super.req_type != MCA_PML_REQUEST_IPROBE)
         ompi_list_append(&pml_comm->c_wild_receives, (ompi_list_item_t*)request);
-    THREAD_UNLOCK(&pml_comm->c_matching_lock);
+    OMPI_THREAD_UNLOCK(&pml_comm->c_matching_lock);
 }
 
 

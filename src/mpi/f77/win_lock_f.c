@@ -10,12 +10,12 @@
 #include "mpi/f77/bindings.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
-#pragma weak PMPI_WIN_LOCK = mpi_win_lock_f
+#pragma weak PMPI_WIN_OMPI_LOCK = mpi_win_lock_f
 #pragma weak pmpi_win_lock = mpi_win_lock_f
 #pragma weak pmpi_win_lock_ = mpi_win_lock_f
 #pragma weak pmpi_win_lock__ = mpi_win_lock_f
 #elif OMPI_PROFILE_LAYER
-OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_LOCK,
+OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_OMPI_LOCK,
                            pmpi_win_lock,
                            pmpi_win_lock_,
                            pmpi_win_lock__,
@@ -25,14 +25,14 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_LOCK,
 #endif
 
 #if OMPI_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_WIN_LOCK = mpi_win_lock_f
+#pragma weak MPI_WIN_OMPI_LOCK = mpi_win_lock_f
 #pragma weak mpi_win_lock = mpi_win_lock_f
 #pragma weak mpi_win_lock_ = mpi_win_lock_f
 #pragma weak mpi_win_lock__ = mpi_win_lock_f
 #endif
 
 #if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
-OMPI_GENERATE_F77_BINDINGS (MPI_WIN_LOCK,
+OMPI_GENERATE_F77_BINDINGS (MPI_WIN_OMPI_LOCK,
                            mpi_win_lock,
                            mpi_win_lock_,
                            mpi_win_lock__,

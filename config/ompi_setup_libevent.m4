@@ -155,7 +155,7 @@ main(int argc, char **argv)
 
 	if (pipe(fd) == -1)
 		exit(1);
-	if (fcntl(fd[[1]], F_SETFL, O_NONBLOCK) == -1)
+	if (fcntl(fd[[1]], F_SETFL, O_NONBOMPI_LOCK) == -1)
 		exit(1);
 
 	while ((n = write(fd[[1]], buf, sizeof(buf))) == sizeof(buf))

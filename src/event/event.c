@@ -320,13 +320,13 @@ ompi_event_loop(int flags)
     int res, done;
 
     if(ompi_using_threads()) {
-        THREAD_LOCK(&ompi_event_lock);
+        OMPI_THREAD_LOCK(&ompi_event_lock);
     } 
 
     /* Calculate the initial events that we are waiting for */
     if (ompi_evsel->recalc && ompi_evsel->recalc(ompi_evbase, 0) == -1) {
         ompi_output(0, "ompi_event_loop: ompi_evsel->recalc() failed.");
-        THREAD_UNLOCK(&ompi_event_lock);
+        OMPI_THREAD_UNLOCK(&ompi_event_lock);
         return (-1);
     }
 
@@ -339,13 +339,13 @@ ompi_event_loop(int flags)
                 if (res == -1) {
                     ompi_output(0, "ompi_event_loop: ompi_event_sigcb() failed.");
                     errno = EINTR;
-                    THREAD_UNLOCK(&ompi_event_lock);
+                    OMPI_THREAD_UNLOCK(&ompi_event_lock);
                     return (-1);
                 }
             }
         }
 
-        if (!(flags & OMPI_EVLOOP_NONBLOCK)) {
+        if (!(flags & OMPI_EVLOOP_NONBOMPI_LOCK)) {
             static struct timeval dflt = OMPI_TIMEOUT_DEFAULT;
             tv = dflt;
         } else
@@ -360,7 +360,7 @@ ompi_event_loop(int flags)
 #endif
         if (res == -1) {
             ompi_output(0, "ompi_event_loop: ompi_evesel->dispatch() failed.");
-            THREAD_UNLOCK(&ompi_event_lock);
+            OMPI_THREAD_UNLOCK(&ompi_event_lock);
             return (-1);
         }
 
@@ -384,16 +384,16 @@ ompi_event_loop(int flags)
             ompi_event_process_active();
             if (flags & OMPI_EVLOOP_ONCE)
                 done = 1;
-        } else if (flags & (OMPI_EVLOOP_NONBLOCK|OMPI_EVLOOP_ONCE))
+        } else if (flags & (OMPI_EVLOOP_NONBOMPI_LOCK|OMPI_EVLOOP_ONCE))
             done = 1;
 
         if (ompi_evsel->recalc && ompi_evsel->recalc(ompi_evbase, 0) == -1) {
             ompi_output(0, "ompi_event_loop: ompi_evesel->recalc() failed.");
-            THREAD_UNLOCK(&ompi_event_lock);
+            OMPI_THREAD_UNLOCK(&ompi_event_lock);
             return (-1);
         }
     }
-    THREAD_UNLOCK(&ompi_event_lock);
+    OMPI_THREAD_UNLOCK(&ompi_event_lock);
     return (0);
 }
 

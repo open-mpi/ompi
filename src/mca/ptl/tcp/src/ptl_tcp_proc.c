@@ -37,9 +37,9 @@ void mca_ptl_tcp_proc_construct(mca_ptl_tcp_proc_t* proc)
     OBJ_CONSTRUCT(&proc->proc_lock, ompi_mutex_t);
 
     /* add to list of all proc instance */
-    THREAD_LOCK(&mca_ptl_tcp_module.tcp_lock);
+    OMPI_THREAD_LOCK(&mca_ptl_tcp_module.tcp_lock);
     ompi_list_append(&mca_ptl_tcp_module.tcp_procs, &proc->super);
-    THREAD_UNLOCK(&mca_ptl_tcp_module.tcp_lock);
+    OMPI_THREAD_UNLOCK(&mca_ptl_tcp_module.tcp_lock);
 }
 
 
@@ -50,9 +50,9 @@ void mca_ptl_tcp_proc_construct(mca_ptl_tcp_proc_t* proc)
 void mca_ptl_tcp_proc_destruct(mca_ptl_tcp_proc_t* proc)
 {
     /* remove from list of all proc instances */
-    THREAD_LOCK(&mca_ptl_tcp_module.tcp_lock);
+    OMPI_THREAD_LOCK(&mca_ptl_tcp_module.tcp_lock);
     ompi_list_remove_item(&mca_ptl_tcp_module.tcp_procs, &proc->super);
-    THREAD_UNLOCK(&mca_ptl_tcp_module.tcp_lock);
+    OMPI_THREAD_UNLOCK(&mca_ptl_tcp_module.tcp_lock);
 
     /* release resources */
     if(NULL != proc->proc_peers) 
@@ -128,16 +128,16 @@ mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_create(ompi_proc_t* ompi_proc)
 static mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_lookup_ompi(ompi_proc_t* ompi_proc)
 {
     mca_ptl_tcp_proc_t* tcp_proc;
-    THREAD_LOCK(&mca_ptl_tcp_module.tcp_lock);
+    OMPI_THREAD_LOCK(&mca_ptl_tcp_module.tcp_lock);
     for(tcp_proc  = (mca_ptl_tcp_proc_t*)ompi_list_get_first(&mca_ptl_tcp_module.tcp_procs);
         tcp_proc != (mca_ptl_tcp_proc_t*)ompi_list_get_end(&mca_ptl_tcp_module.tcp_procs);
         tcp_proc  = (mca_ptl_tcp_proc_t*)ompi_list_get_next(tcp_proc)) {
         if(tcp_proc->proc_ompi == ompi_proc) {
-            THREAD_UNLOCK(&mca_ptl_tcp_module.tcp_lock);
+            OMPI_THREAD_UNLOCK(&mca_ptl_tcp_module.tcp_lock);
             return tcp_proc;
         }
     }
-    THREAD_UNLOCK(&mca_ptl_tcp_module.tcp_lock);
+    OMPI_THREAD_UNLOCK(&mca_ptl_tcp_module.tcp_lock);
     return NULL;
 }
 
@@ -149,16 +149,16 @@ static mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_lookup_ompi(ompi_proc_t* ompi_proc)
 mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_lookup(void *guid, size_t size)
 {
     mca_ptl_tcp_proc_t* tcp_proc;
-    THREAD_LOCK(&mca_ptl_tcp_module.tcp_lock);
+    OMPI_THREAD_LOCK(&mca_ptl_tcp_module.tcp_lock);
     for(tcp_proc  = (mca_ptl_tcp_proc_t*)ompi_list_get_first(&mca_ptl_tcp_module.tcp_procs);
         tcp_proc != (mca_ptl_tcp_proc_t*)ompi_list_get_end(&mca_ptl_tcp_module.tcp_procs);
         tcp_proc  = (mca_ptl_tcp_proc_t*)ompi_list_get_next(tcp_proc)) {
         if(tcp_proc->proc_guid_size == size && memcmp(tcp_proc->proc_guid, guid, size) == 0) {
-            THREAD_UNLOCK(&mca_ptl_tcp_module.tcp_lock);
+            OMPI_THREAD_UNLOCK(&mca_ptl_tcp_module.tcp_lock);
             return tcp_proc;
         }
     }
-    THREAD_UNLOCK(&mca_ptl_tcp_module.tcp_lock);
+    OMPI_THREAD_UNLOCK(&mca_ptl_tcp_module.tcp_lock);
     return NULL;
 }
 
@@ -205,7 +205,7 @@ int mca_ptl_tcp_proc_insert(mca_ptl_tcp_proc_t* ptl_proc, mca_ptl_base_peer_t* p
 int mca_ptl_tcp_proc_remove(mca_ptl_tcp_proc_t* ptl_proc, mca_ptl_base_peer_t* ptl_peer)
 {
     size_t i;
-    THREAD_LOCK(&ptl_proc->proc_lock);
+    OMPI_THREAD_LOCK(&ptl_proc->proc_lock);
     for(i=0; i<ptl_proc->proc_peer_count; i++) {
         if(ptl_proc->proc_peers[i] == ptl_peer) {
             memmove(&ptl_proc->proc_peers+i,ptl_proc->proc_peers+i+1,
@@ -214,7 +214,7 @@ int mca_ptl_tcp_proc_remove(mca_ptl_tcp_proc_t* ptl_proc, mca_ptl_base_peer_t* p
     }
     ptl_proc->proc_peer_count--;
     ptl_peer->peer_addr->addr_inuse--;
-    THREAD_UNLOCK(&ptl_proc->proc_lock);
+    OMPI_THREAD_UNLOCK(&ptl_proc->proc_lock);
     return OMPI_SUCCESS;
 }
 
@@ -226,15 +226,15 @@ int mca_ptl_tcp_proc_remove(mca_ptl_tcp_proc_t* ptl_proc, mca_ptl_base_peer_t* p
 bool mca_ptl_tcp_proc_accept(mca_ptl_tcp_proc_t* ptl_proc, struct sockaddr_in* addr, int sd)
 {
     size_t i;
-    THREAD_LOCK(&ptl_proc->proc_lock);
+    OMPI_THREAD_LOCK(&ptl_proc->proc_lock);
     for(i=0; i<ptl_proc->proc_peer_count; i++) {
         mca_ptl_base_peer_t* ptl_peer = ptl_proc->proc_peers[i];
         if(mca_ptl_tcp_peer_accept(ptl_peer, addr, sd)) {
-            THREAD_UNLOCK(&ptl_proc->proc_lock);
+            OMPI_THREAD_UNLOCK(&ptl_proc->proc_lock);
             return true;
         }
     }
-    THREAD_UNLOCK(&ptl_proc->proc_lock);
+    OMPI_THREAD_UNLOCK(&ptl_proc->proc_lock);
     return false;
 }
 

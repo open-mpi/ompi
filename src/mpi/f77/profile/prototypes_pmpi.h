@@ -1393,7 +1393,7 @@ void PMPI_TYPE_CREATE_F90_REAL(MPI_Fint *p, MPI_Fint *r, MPI_Fint *newtype, MPI_
 void PMPI_TYPE_CREATE_HINDEXED(MPI_Fint *count, MPI_Fint *array_of_blocklengths, MPI_Fint *array_of_displacements, MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr);
 void PMPI_TYPE_CREATE_HVECTOR(MPI_Fint *count, MPI_Fint *blocklength, MPI_Fint *stride, MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr);
 void PMPI_TYPE_CREATE_KEYVAL(MPI_Fint *type_copy_attr_fn, MPI_Fint *type_delete_attr_fn, MPI_Fint *type_keyval, char *extra_state, MPI_Fint *ierr);
-void PMPI_TYPE_CREATE_INDEXED_BLOCK(MPI_Fint *count, MPI_Fint *blocklength, MPI_Fint *array_of_displacements, MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr);
+void PMPI_TYPE_CREATE_INDEXED_BOMPI_LOCK(MPI_Fint *count, MPI_Fint *blocklength, MPI_Fint *array_of_displacements, MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr);
 void PMPI_TYPE_CREATE_STRUCT(MPI_Fint *count, MPI_Fint *array_of_block_lengths, MPI_Fint *array_of_displacements, MPI_Fint *array_of_types, MPI_Fint *newtype, MPI_Fint *ierr);
 void PMPI_TYPE_CREATE_SUBARRAY(MPI_Fint *ndims, MPI_Fint *size_array, MPI_Fint *subsize_array, MPI_Fint *start_array, MPI_Fint *order, MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr);
 void PMPI_TYPE_CREATE_RESIZED(MPI_Fint *oldtype, MPI_Fint *lb, MPI_Fint *extent, MPI_Fint *newtype, MPI_Fint *ierr);
@@ -1439,14 +1439,14 @@ void PMPI_WIN_GET_ATTR(MPI_Fint *win, MPI_Fint *win_keyval, char *attribute_val,
 void PMPI_WIN_GET_ERRHANDLER(MPI_Fint *win, MPI_Fint *errhandler, MPI_Fint *ierr);
 void PMPI_WIN_GET_GROUP(MPI_Fint *win, MPI_Fint *group, MPI_Fint *ierr);
 void PMPI_WIN_GET_NAME(MPI_Fint *win, char *win_name, MPI_Fint *resultlen, MPI_Fint *ierr);
-void PMPI_WIN_LOCK(MPI_Fint *lock_type, MPI_Fint *rank, MPI_Fint *assert, MPI_Fint *win, MPI_Fint *ierr);
+void PMPI_WIN_OMPI_LOCK(MPI_Fint *lock_type, MPI_Fint *rank, MPI_Fint *assert, MPI_Fint *win, MPI_Fint *ierr);
 void PMPI_WIN_POST(MPI_Fint *group, MPI_Fint *assert, MPI_Fint *win, MPI_Fint *ierr);
 void PMPI_WIN_SET_ATTR(MPI_Fint *win, MPI_Fint *win_keyval, char *attribute_val, MPI_Fint *ierr);
 void PMPI_WIN_SET_ERRHANDLER(MPI_Fint *win, MPI_Fint *errhandler, MPI_Fint *ierr);
 void PMPI_WIN_SET_NAME(MPI_Fint *win, char *win_name, MPI_Fint *ierr);
 void PMPI_WIN_START(MPI_Fint *group, MPI_Fint *assert, MPI_Fint *win, MPI_Fint *ierr);
 void PMPI_WIN_TEST(MPI_Fint *win, MPI_Fint *flag, MPI_Fint *ierr);
-void PMPI_WIN_UNLOCK(MPI_Fint *rank, MPI_Fint *win, MPI_Fint *ierr);
+void PMPI_WIN_OMPI_UNLOCK(MPI_Fint *rank, MPI_Fint *win, MPI_Fint *ierr);
 void PMPI_WIN_WAIT(MPI_Fint *win, MPI_Fint *ierr);
 double *PMPI_WTICK(void);
 double *PMPI_WTIME(void);

@@ -115,7 +115,7 @@ extern "C" {
 #define MPI_MAX_NAME_LEN    MPI_MAX_PORT_NAME /* max port name length */
 #define MPI_ORDER_C     0       /* C row major order */
 #define MPI_ORDER_FORTRAN   1       /* Fortran column major order */
-#define MPI_DISTRIBUTE_BLOCK    0       /* block distribution */
+#define MPI_DISTRIBUTE_BOMPI_LOCK    0       /* block distribution */
 #define MPI_DISTRIBUTE_CYCLIC   1       /* cyclic distribution */
 #define MPI_DISTRIBUTE_NONE     2       /* not distributed */
 #define MPI_DISTRIBUTE_DFLT_DARG (-1)       /* default distribution arg */
@@ -201,7 +201,7 @@ enum {
 #define MPI_ERR_INFO                  34
 #define MPI_ERR_IO                    35
 #define MPI_ERR_KEYVAL                36
-#define MPI_ERR_LOCKTYPE              37
+#define MPI_ERR_OMPI_LOCKTYPE              37
 #define MPI_ERR_NAME                  38
 #define MPI_ERR_NO_MEM                39
 #define MPI_ERR_NOT_SAME              40
@@ -257,7 +257,7 @@ enum {
   MPI_COMBINER_INDEXED,
   MPI_COMBINER_HINDEXED_INTEGER,
   MPI_COMBINER_HINDEXED,
-  MPI_COMBINER_INDEXED_BLOCK,
+  MPI_COMBINER_INDEXED_BOMPI_LOCK,
   MPI_COMBINER_STRUCT_INTEGER,
   MPI_COMBINER_STRUCT,
   MPI_COMBINER_SUBARRAY,
