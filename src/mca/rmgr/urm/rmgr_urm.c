@@ -28,6 +28,7 @@
 #include "mca/gpr/gpr.h"
 #include "mca/iof/iof.h"
 #include "mca/ns/ns.h"
+#include "mca/rml/rml.h"
 #include "rmgr_urm.h"
 
 
@@ -62,6 +63,16 @@ static int orte_rmgr_urm_spawn(
     orte_jobid_t* jobid,
     orte_rmgr_cb_fn_t cbfn);
 
+static int orte_rmgr_urm_finalize(void);
+
+static void orte_rmgr_urm_recv(
+    int status,
+    orte_process_name_t* peer,
+    orte_buffer_t* req,
+    orte_rml_tag_t tag,
+    void* cbdata);
+
+
 orte_rmgr_base_module_t orte_rmgr_urm_module = {
     orte_rmgr_urm_query,
     orte_rmgr_urm_create,
@@ -74,7 +85,7 @@ orte_rmgr_base_module_t orte_rmgr_urm_module = {
     orte_rmgr_urm_spawn,
     orte_rmgr_base_proc_stage_gate_init,
     orte_rmgr_base_proc_stage_gate_mgr,
-    NULL, /* finalize */
+    orte_rmgr_urm_finalize
 };
 
 
@@ -86,6 +97,18 @@ static int orte_rmgr_urm_query(void)
 {
     int rc;
     if(ORTE_SUCCESS != (rc = orte_rds_base_query())) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
+    /* Post non-blocking receive */
+
+    if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(
+        ORTE_RML_NAME_ANY,
+        ORTE_RML_TAG_RMGR_SVC,
+        0,
+        orte_rmgr_urm_recv,
+        NULL))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -293,4 +316,48 @@ static int orte_rmgr_urm_spawn(
 }
 
 
+static int orte_rmgr_urm_finalize(void)
+{
+    /* Cancel pending receive. */
 
+    orte_rml.recv_cancel(ORTE_RML_NAME_ANY, ORTE_RML_TAG_RMGR_SVC);
+
+    return ORTE_SUCCESS;
+}
+
+
+static void orte_rmgr_urm_recv(
+    int status,
+    orte_process_name_t* peer,
+    orte_buffer_t* req,
+    orte_rml_tag_t tag,
+    void* cbdata)
+{
+    int rc;
+    orte_buffer_t rsp;
+    OBJ_CONSTRUCT(&rsp, orte_buffer_t);
+
+    if (ORTE_SUCCESS != (rc = orte_rmgr_base_cmd_dispatch(req,&rsp))) {
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
+    }
+
+    rc = orte_rml.send_buffer(peer, &rsp, ORTE_RML_TAG_RMGR_CLNT, 0);
+    if (rc < 0) {
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
+    }
+
+cleanup:
+  
+    rc = orte_rml.recv_buffer_nb(
+        ORTE_RML_NAME_ANY,
+        ORTE_RML_TAG_RMGR_SVC,
+        0,
+        orte_rmgr_urm_recv,
+        NULL);
+    if(rc < 0) {
+        ORTE_ERROR_LOG(rc);
+    }
+    OBJ_DESTRUCT(&rsp);
+}
