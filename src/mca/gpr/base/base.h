@@ -183,6 +183,12 @@ extern "C" {
     OMPI_DECLSPEC int mca_gpr_base_pack_triggers_inactive_cmd(ompi_buffer_t cmd, mca_ns_base_jobid_t jobid);
     OMPI_DECLSPEC int mca_gpr_base_unpack_triggers_inactive_cmd(ompi_buffer_t cmd);
 
+OMPI_DECLSPEC extern int mca_gpr_base_output;
+OMPI_DECLSPEC extern mca_gpr_base_module_t ompi_registry; /* holds selected module's function pointers */
+OMPI_DECLSPEC extern bool mca_gpr_base_selected;
+OMPI_DECLSPEC extern ompi_list_t mca_gpr_base_components_available;
+OMPI_DECLSPEC extern mca_gpr_base_component_t mca_gpr_base_selected_component;
+
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
@@ -191,11 +197,5 @@ extern "C" {
 /*
  * globals that might be needed
  */
-OMPI_DECLSPEC extern int mca_gpr_base_output;
-OMPI_DECLSPEC extern mca_gpr_base_module_t ompi_registry; /* holds selected module's function pointers */
-OMPI_DECLSPEC extern bool mca_gpr_base_selected;
-OMPI_DECLSPEC extern ompi_list_t mca_gpr_base_components_available;
-OMPI_DECLSPEC extern mca_gpr_base_component_t mca_gpr_base_selected_component;
-
 
 #endif
