@@ -1,4 +1,6 @@
 /*
+ * $HEADER$
+ *
  * Copyright 2002-2003. The Regents of the University of California. This material
  * was produced under U.S. Government contract W-7405-ENG-36 for Los Alamos
  * National Laboratory, which is operated by the University of California for
@@ -28,10 +30,10 @@
  */
 /*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
 
-#ifndef SEG_LIST_H
-#define SEG_LIST_H
+#ifndef LAM_SEG_LIST_H
+#define LAM_SEG_LIST_H
 
-#include "lam/base/list.h"
+#include "lam/lfc/list.h"
 #include "lam/threads/mutex.h"
 
 typedef struct lam_seg_list
@@ -100,7 +102,4 @@ static inline int lam_sgl_is_locked(lam_seg_list_t *slist)
 #define lam_sgl_inc_consec_fail(slist) \
     ((slist)->sgl_consec_fail++)
 
-#endif  /* SEG_LIST_H */
-
-
-
+#endif  /* LAM_SEG_LIST_H */
