@@ -6,7 +6,12 @@
 #define OMPI_F77_BINDINGS_H
 
 #include "ompi_config.h"
+
+#include <stdlib.h>
+
 #include "mpi.h"
+
+
 /*
  * We now build all four fortran bindings and dont care too much about 
  * which convention (lowercase, underscore, double underscore or 
