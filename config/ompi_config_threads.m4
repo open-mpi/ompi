@@ -218,7 +218,7 @@ elif test "$enable_progress_threads" = "no" ; then
     enable_progress_threads="no"
 else
     # they want threaded progress
-    if "$THREAD_TYPE" != "none" ; then
+    if test "$THREAD_TYPE" != "none" ; then
         OMPI_ENABLE_PROGRESS_THREADS=1
         enable_progress_threads="yes"
     else
