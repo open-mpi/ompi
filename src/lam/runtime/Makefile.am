@@ -15,8 +15,9 @@ headers = \
 libruntime_la_SOURCES = \
 	$(headers) \
         lam_abort.c \
-        lam_init.c \
         lam_finalize.c \
+        lam_init.c \
+        lam_rte_finalize.c \
         lam_rte_init.c
 
 # Conditionally install the header files

@@ -13,6 +13,7 @@ extern "C" {
   int lam_init(int argc, char* argv[]);
   int lam_finalize(void);
   int lam_rte_init(void);
+  int lam_rte_finalize(void);
 
 #ifdef __cplusplus
 }
