@@ -9,7 +9,7 @@
 #include "attribute/attribute.h"
 
 #if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILING_DEFINES
-#pragma weak MPI_Type_get_attr = PMPI_Type_get_attr
+#pragma weak MPI_Type_set_attr = PMPI_Type_set_attr
 #endif
 
 int
