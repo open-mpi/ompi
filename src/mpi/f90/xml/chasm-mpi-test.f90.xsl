@@ -232,8 +232,15 @@ echo
     <!-- C++ types -->
 
     <xsl:when test="@kind = 'void'">
-      <xsl:text>integer(kind=MPI_INTEGER${kind}_KIND)</xsl:text>
-      <xsl:text>, dimension(${dim})</xsl:text>
+      <xsl:choose>
+        <xsl:when test="../../../../@template = 'yes'">
+          <xsl:text>integer(kind=MPI_INTEGER${kind}_KIND)</xsl:text>
+          <xsl:text>, dimension(${dim})</xsl:text>
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:text>integer</xsl:text>
+        </xsl:otherwise>
+      </xsl:choose>
     </xsl:when>
     <xsl:when test="@kind = 'bool'">
       <xsl:text>integer</xsl:text>
@@ -425,6 +432,24 @@ echo
         <xsl:when test="@usertype = 'MPI_Status'">
           <xsl:text> = STATUS_VAL</xsl:text>
         </xsl:when>
+        <xsl:when test="@usertype = 'MPI_Comm_errhandler_fn'"/>
+        <xsl:when test="@usertype = 'MPI_Comm_copy_attr_function'"/>
+        <xsl:when test="@usertype = 'MPI_Comm_delete_attr_function'"/>
+        <xsl:when test="@usertype = 'MPI_Handler_function'"/>
+        <xsl:when test="@usertype = 'MPI_File_errhandler_fn'"/>
+        <xsl:when test="@usertype = 'MPI_Grequest_query_function'"/>
+        <xsl:when test="@usertype = 'MPI_Grequest_free_function'"/>
+        <xsl:when test="@usertype = 'MPI_Grequest_cancel_function'"/>
+        <xsl:when test="@usertype = 'MPI_Copy_function'"/>
+        <xsl:when test="@usertype = 'MPI_Delete_function'"/>
+        <xsl:when test="@usertype = 'MPI_User_function'"/>
+        <xsl:when test="@usertype = 'MPI_Datarep_conversion_function'"/>
+        <xsl:when test="@usertype = 'MPI_Datarep_extent_function'"/>
+        <xsl:when test="@usertype = 'MPI_Type_copy_attr_function'"/>
+        <xsl:when test="@usertype = 'MPI_Type_delete_attr_function'"/>
+        <xsl:when test="@usertype = 'MPI_Win_errhandler_fn'"/>
+        <xsl:when test="@usertype = 'MPI_Win_copy_attr_function'"/>
+        <xsl:when test="@usertype = 'MPI_Win_delete_attr_function'"/>
         <xsl:otherwise>
           <xsl:param name="prefix" select="substring-before(@usertype, '_')"/>
           <xsl:if test="$prefix = 'MPI'">
