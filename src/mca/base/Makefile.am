@@ -38,7 +38,7 @@ libmca_base_la_SOURCES = \
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/ompi/mca/base
+ompidir = $(includedir)/openmpi/mca/base
 ompi_HEADERS = $(headers)
 else
 ompidir = $(includedir)

@@ -21,7 +21,7 @@ libmca_allocator_la_DEPENDENCIES = $(libmca_allocator_la_LIBADD)
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/ompi/mca/allocator
+ompidir = $(includedir)/openmpi/mca/allocator
 ompi_HEADERS = $(headers)
 else
 ompidir = $(includedir)

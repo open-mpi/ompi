@@ -23,7 +23,7 @@ module_noinst = libmca_pcm_rsh.la
 module_install =
 endif
 
-mcamoduledir = $(libdir)/ompi
+mcamoduledir = $(libdir)/openmpi
 mcamodule_LTLIBRARIES = $(module_install)
 mca_pcm_rsh_la_SOURCES =
 mca_pcm_rsh_la_LIBADD = \

@@ -22,7 +22,7 @@ module_noinst = libmca_ptl_sm.la
 module_install =
 endif
 
-mcamoduledir = $(libdir)/ompi
+mcamoduledir = $(libdir)/openmpi
 mcamodule_LTLIBRARIES = $(module_install)
 mca_ptl_sm_la_SOURCES = 
 mca_ptl_sm_la_LIBADD = \

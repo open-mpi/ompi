@@ -22,7 +22,7 @@ module_noinst = libmca_mpi_io_romio.la
 module_install =
 endif
 
-mcamoduledir = $(libdir)/ompi
+mcamoduledir = $(libdir)/openmpi
 mcamodule_LTLIBRARIES = $(module_install)
 mca_io_romio_la_SOURCES = 
 mca_io_romio_la_LIBADD = \

@@ -15,7 +15,7 @@ headers = \
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/ompi/os/irix
+ompidir = $(includedir)/openmpi/os/irix
 ompi_HEADERS = $(headers)
 else
 ompidir = $(includedir)

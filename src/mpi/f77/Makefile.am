@@ -354,7 +354,7 @@ EXTRA_DIST = $(libmpi_f77_mpi_la_SOURCES)
 # Conditionally install the header files
 #
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/ompi/mpi/f77
+ompidir = $(includedir)/openmpi/mpi/f77
 ompi_HEADERS = $(headers)
 else
 ompidir = $(includedir)

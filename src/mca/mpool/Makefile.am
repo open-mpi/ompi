@@ -21,7 +21,7 @@ libmca_mpool_la_DEPENDENCIES = $(libmca_mpool_la_LIBADD)
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/ompi/mca/mpool
+ompidir = $(includedir)/openmpi/mca/mpool
 ompi_HEADERS = $(headers)
 else
 ompidir = $(includedir)
