@@ -29,4 +29,4 @@ cat > $CFILE<<EOF
 #include "atomic.h"
 EOF
 
-gcc -I. -S $CFILE -o atomic.s
+gcc -m64 -O1 -I. -S $CFILE -o atomic.s
