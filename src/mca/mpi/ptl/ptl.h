@@ -25,7 +25,7 @@ typedef struct mca_ptl_1_0_0_t mca_ptl_t;
  * PTL module functions.
  */
 
-typedef int (*mca_ptl_init_1_0_0_fn_t)(struct mca_ptl_1_0_0_t** ptls, int* num_ptls, int *thread_min, int *thread_max);
+typedef struct mca_ptl_1_0_0_t** (*mca_ptl_init_1_0_0_fn_t)(int* num_ptls, int *thread_min, int *thread_max);
 typedef int (*mca_ptl_fini_1_0_0_fn_t)(struct mca_ptl_1_0_0_t*);
                                                                                                          
 /*
