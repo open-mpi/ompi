@@ -47,8 +47,6 @@ int mca_pcm_base_open(void)
     return OMPI_ERROR;
   }
 
-  mca_pcm_base_job_list_init();
-
   /* All done */
 
   return OMPI_SUCCESS;

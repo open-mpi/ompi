@@ -36,6 +36,7 @@ struct blk_waitpid_data_t {
     ompi_condition_t *cond;
     volatile int done;
     volatile int status;
+    volatile int free;
 };
 typedef struct blk_waitpid_data_t blk_waitpid_data_t;
 
@@ -68,6 +69,7 @@ blk_waitpid_data_construct(ompi_object_t *obj)
     data->cond = OBJ_NEW(ompi_condition_t);
     data->done = 0;
     data->status = 0;
+    data->free = 0;
 }
 
 
@@ -94,6 +96,7 @@ static OBJ_CLASS_INSTANCE(registered_cb_item_t, ompi_list_item_t, NULL, NULL);
  * Local Variables
  *
  ********************************************************************/
+static volatile int cb_enabled = true;
 static ompi_mutex_t mutex;
 static ompi_list_t pending_pids;
 static ompi_list_t registered_cb;
@@ -111,10 +114,12 @@ static void blk_waitpid_cb(pid_t wpid, int status, void *data);
 static pending_pids_item_t* find_pending_pid(pid_t pid, bool create);
 static registered_cb_item_t* find_waiting_cb(pid_t pid, bool create);
 static void do_waitall(int options);
-static void trigger_callback(registered_cb_item_t *cb, pending_pids_item_t *pending);
+static void trigger_callback(registered_cb_item_t *cb, 
+                             pending_pids_item_t *pending);
 static int register_callback(pid_t pid, ompi_rte_wait_fn_t callback,
                              void *data);
 static void register_sig_event(void);
+static int unregister_callback(pid_t pid);
 void ompi_rte_wait_signal_callback(int fd, short event, void *arg);
 
 
@@ -229,14 +234,31 @@ ompi_rte_waitpid(pid_t wpid, int *status, int options)
 #else
             ompi_event_loop(OMPI_EVLOOP_NONBLOCK);
 #endif
+	    do_waitall(0);
         }
         ompi_mutex_unlock(cond_mutex);
 
         ret = wpid;
         *status = data->status;
 
+        while (0 == data->free) {
+            /* don't free the condition variable until we are positive
+               that the broadcast is done being sent.  Otherwise,
+               pthreads gets really unhappy when we pull the rug out
+               from under it. Yes, it's spinning.  No, we won't spin
+               for long */
+#if OMPI_HAVE_THREADS
+            if (ompi_event_progress_thread()) {
+                ompi_event_loop(OMPI_EVLOOP_NONBLOCK);
+            }
+#else
+            ompi_event_loop(OMPI_EVLOOP_NONBLOCK);
+#endif
+        }
+
         OBJ_RELEASE(data);
         OBJ_RELEASE(cond_mutex);
+        goto done;
 
     } else {
         /* non-blocking - return what waitpid would */
@@ -245,6 +267,8 @@ ompi_rte_waitpid(pid_t wpid, int *status, int options)
 
  cleanup:
     OMPI_THREAD_UNLOCK(&mutex);
+
+ done:
     return ret;
 #else
     printf ("function not implemented in windows yet: file %s, line %d\n", __FILE__, __LINE__);
@@ -276,6 +300,23 @@ ompi_rte_wait_cb(pid_t wpid, ompi_rte_wait_fn_t callback, void *data)
 }
 
 
+int
+ompi_rte_wait_cb_cancel(pid_t wpid)
+{
+    int ret;
+
+    if (wpid <= 0) return OMPI_ERR_BAD_PARAM;
+
+    OMPI_THREAD_LOCK(&mutex);
+    do_waitall(0);
+    ret = unregister_callback(wpid);
+    OMPI_THREAD_UNLOCK(&mutex);
+
+    return ret;
+}
+
+
+/* callback from the event library whenever a SIGCHLD is received */
 void
 ompi_rte_wait_signal_callback(int fd, short event, void *arg)
 {
@@ -291,6 +332,30 @@ ompi_rte_wait_signal_callback(int fd, short event, void *arg)
     printf ("function not implemented in windows yet: file %s, line %d\n", __FILE__, __LINE__);
     abort();
 #endif
+}
+
+
+int
+ompi_rte_wait_cb_disable()
+{
+    OMPI_THREAD_LOCK(&mutex);
+    do_waitall(0);
+    cb_enabled = false;
+    OMPI_THREAD_UNLOCK(&mutex);
+
+    return OMPI_SUCCESS;
+}
+
+
+int
+ompi_rte_wait_cb_enable()
+{
+    OMPI_THREAD_LOCK(&mutex);
+    cb_enabled = true;
+    do_waitall(0);
+    OMPI_THREAD_UNLOCK(&mutex);
+
+    return OMPI_SUCCESS;
 }
 
 
@@ -310,7 +375,8 @@ blk_waitpid_cb(pid_t wpid, int status, void *data)
 
     wp_data->status = status;
     wp_data->done = 1;
-    ompi_condition_broadcast(wp_data->cond);
+    ompi_condition_signal(wp_data->cond);
+    wp_data->free = 1;
 #else
     printf ("function not implemented in windows yet: file %s, line %d\n", __FILE__, __LINE__);
     abort();
@@ -400,6 +466,8 @@ do_waitall(int options)
     pending_pids_item_t *pending;
     registered_cb_item_t *reg_cb;
 
+    if (!cb_enabled) return;
+
     while (1) {
         ret = waitpid(-1, &status, WNOHANG | options);
         if (-1 == ret && EINTR == errno) continue;
@@ -465,6 +533,21 @@ register_callback(pid_t pid, ompi_rte_wait_fn_t callback, void *data)
     printf ("function not implemented in windows yet: file %s, line %d\n", __FILE__, __LINE__);
     abort();
 #endif
+}
+
+
+static int
+unregister_callback(pid_t pid)
+{
+    registered_cb_item_t *reg_cb;
+
+    /* register the callback */
+    reg_cb = find_waiting_cb(pid, false);
+    if (NULL == reg_cb) return OMPI_ERR_BAD_PARAM;
+
+    ompi_list_remove_item(&registered_cb, (ompi_list_item_t*) reg_cb);
+
+    return OMPI_SUCCESS;
 }
 
 

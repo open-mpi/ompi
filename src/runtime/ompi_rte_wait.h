@@ -51,6 +51,11 @@ pid_t ompi_rte_waitpid(pid_t wpid, int *status, int options);
  */
 int ompi_rte_wait_cb(pid_t wpid, ompi_rte_wait_fn_t callback, void *data);
 
+int ompi_rte_wait_cb_cancel(pid_t wpid);
+
+int ompi_rte_wait_cb_disable(void);
+
+int ompi_rte_wait_cb_enable(void);
 
 /**
  * \internal

@@ -20,6 +20,7 @@ static void ompi_rte_spawn_handle_construct(ompi_object_t *);
 static void ompi_rte_spawn_handle_destruct(ompi_object_t *);
 
 static ompi_pointer_array_t avail_handles;
+static ompi_mutex_t avail_handles_mutex;
 
 OBJ_CLASS_INSTANCE(ompi_rte_spawn_handle_t, ompi_object_t, 
                    ompi_rte_spawn_handle_construct, ompi_rte_spawn_handle_destruct);
@@ -29,14 +30,31 @@ int
 ompi_rte_internal_init_spawn(void)
 {
     OBJ_CONSTRUCT(&avail_handles, ompi_pointer_array_t);
+    OBJ_CONSTRUCT(&avail_handles_mutex, ompi_mutex_t);
+
     return OMPI_SUCCESS;
 }
 
 int
 ompi_rte_internal_fini_spawn(void)
 {
-    /* BWB - figure out how to clean up... */
+    int i;
+    ompi_rte_spawn_handle_t *ptr;
+
+    OMPI_THREAD_LOCK(&avail_handles_mutex);
+    for (i = 0 ; i < ompi_pointer_array_get_size(&avail_handles) ; ++i) {
+        ptr = (ompi_rte_spawn_handle_t*) ompi_pointer_array_get_item(&avail_handles, i);
+        if (NULL == ptr) continue;
+
+        OBJ_RELEASE(ptr);
+
+        ompi_pointer_array_set_item(&avail_handles, i, NULL);
+    }
+    OMPI_THREAD_UNLOCK(&avail_handles_mutex);
+
     OBJ_DESTRUCT(&avail_handles);
+    OBJ_DESTRUCT(&avail_handles_mutex);
+
     return OMPI_SUCCESS;
 }
 
@@ -44,7 +62,7 @@ ompi_rte_internal_fini_spawn(void)
 ompi_rte_spawn_handle_t *
 ompi_rte_get_spawn_handle(int criteria, bool have_threads)
 {
-    size_t i;
+    int i;
     ompi_rte_spawn_handle_t *ptr;
     int ret;
 
@@ -54,6 +72,8 @@ ompi_rte_get_spawn_handle(int criteria, bool have_threads)
                "not implemented.  Removing criteria.\n");
         criteria ^= OMPI_RTE_SPAWN_MULTI_CELL;
     }
+
+    OMPI_THREAD_LOCK(&avail_handles_mutex);
     
     /* make sure we don't already have a matching criteria */
     for (i = 0 ; i < ompi_pointer_array_get_size(&avail_handles) ; ++i) {
@@ -62,7 +82,7 @@ ompi_rte_get_spawn_handle(int criteria, bool have_threads)
 
         if (ptr->criteria == criteria) {
             OBJ_RETAIN(ptr);
-            return ptr;
+            goto cleanup;
         }
     }
 
@@ -85,6 +105,10 @@ ompi_rte_get_spawn_handle(int criteria, bool have_threads)
     }
 
     ompi_pointer_array_add(&avail_handles, ptr);
+
+ cleanup:
+    OMPI_THREAD_UNLOCK(&avail_handles_mutex);
+
     return ptr;
 }
 
@@ -97,7 +121,7 @@ ompi_rte_spawn_procs(ompi_rte_spawn_handle_t *handle,
     mca_pcm_base_module_t *active;
 
     if (NULL == handle) return OMPI_ERR_BAD_PARAM;
-    /* BWB - check for invalid jobid */
+    if (MCA_NS_BASE_JOBID_MAX == jobid) return OMPI_ERR_BAD_PARAM;
     if (NULL == schedule_list) return OMPI_ERR_BAD_PARAM;
 
     /* remove for multi-cell */
