@@ -252,11 +252,17 @@ mca_ptl_base_module_t** mca_ptl_sm_component_init(
     mca_ptl_sm_component.sm_mpool =
         mca_mpool_base_module_lookup(mca_ptl_sm_component.sm_mpool_name);
 
-    mca_ptl_sm_component.sm_mpool_base = mca_ptl_sm_component.sm_mpool->mpool_base();
+    /* Sanity check to ensure that we found it */
+    if (NULL == mca_ptl_sm_component.sm_mpool) {
+        return NULL;
+    }
+    mca_ptl_sm_component.sm_mpool_base = 
+        mca_ptl_sm_component.sm_mpool->mpool_base();
 
     /* publish shared memory parameters with the MCA framework */
-    if(mca_ptl_sm_component_exchange() != OMPI_SUCCESS)
+    if (OMPI_SUCCESS != mca_ptl_sm_component_exchange()) {
         return NULL;
+    }
 
 #if OMPI_ENABLE_PROGRESS_THREADS == 1
     /* create a named pipe to receive events  */
@@ -282,8 +288,9 @@ mca_ptl_base_module_t** mca_ptl_sm_component_init(
     /* allocate the Shared Memory PTL */
     *num_ptls = 2;
     ptls = malloc((*num_ptls)*sizeof(mca_ptl_base_module_t*));
-    if(NULL == ptls)
+    if (NULL == ptls) {
         return NULL;
+    }
 
     /* get pointer to the ptls */
     ptls[0] = (mca_ptl_base_module_t *)(&(mca_ptl_sm[0]));
