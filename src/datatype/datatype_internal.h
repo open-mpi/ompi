@@ -371,6 +371,36 @@ int ompi_convertor_create_stack_at_begining( ompi_convertor_t* pConvertor, const
     pConvertor->bConverted         = 0;
     return OMPI_SUCCESS;
 }
+
+static inline void
+convertor_init_generic( ompi_convertor_t* pConv, const dt_desc_t* datatype, int count,
+			const void* pUserBuf )
+{
+    uint32_t required_stack_length = datatype->btypes[DT_LOOP] + 3;
+
+    OBJ_RETAIN( datatype );
+    if( pConv->pDesc != datatype ) {
+        pConv->pDesc = (dt_desc_t*)datatype;
+        if( pConv->pStack != NULL ) {
+            if( pConv->stack_size > DT_STATIC_STACK_SIZE )
+                free( pConv->pStack );
+        }
+        pConv->pStack = pConv->static_stack;
+	pConv->stack_size = DT_STATIC_STACK_SIZE;
+    }
+    if( required_stack_length > pConv->stack_size ) {
+	assert( pConv->stack_size > DT_STATIC_STACK_SIZE );
+	pConv->stack_size = required_stack_length;
+	pConv->pStack     = (dt_stack_t*)malloc(sizeof(dt_stack_t) * pConv->stack_size );
+    }
+    
+    pConv->pBaseBuf = (void*)pUserBuf;
+    pConv->available_space = count * (datatype->ub - datatype->lb);
+    pConv->count = count;
+    pConv->converted = 0;
+    pConv->bConverted = 0;
+}
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

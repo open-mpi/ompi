@@ -756,35 +756,11 @@ int ompi_convertor_init_for_send( ompi_convertor_t* pConv,
 				  int starting_pos,
 				  memalloc_fct_t allocfn )
 {
+    convertor_init_generic( pConv, datatype, count, pUserBuf );
 
-    OBJ_RETAIN( datatype );
-    if( pConv->pDesc != datatype ) {
-        pConv->pDesc = (dt_desc_t*)datatype;
-        if( pConv->pStack != NULL ) {
-            if( pConv->stack_size > DT_STATIC_STACK_SIZE )
-                free( pConv->pStack );
-        }
-        pConv->pStack = NULL;
-    }
-    
-    if( pConv->pStack == NULL ) {
-        pConv->stack_size = datatype->btypes[DT_LOOP] + 3;
-        if( pConv->stack_size > DT_STATIC_STACK_SIZE ) {
-            pConv->pStack = (dt_stack_t*)malloc(sizeof(dt_stack_t) * pConv->stack_size );
-        } else {
-            pConv->pStack = pConv->static_stack;
-        }
-        pConv->stack_pos = 0;  /* just to be sure */
-    }
-    
     pConv->flags = CONVERTOR_SEND | CONVERTOR_HOMOGENEOUS;  /* by default set to homogeneous */
-    pConv->pBaseBuf = (void*)pUserBuf;
-    pConv->available_space = count * (datatype->ub - datatype->lb);
-    pConv->count = count;
-    pConv->pFunctions = ompi_ddt_copy_functions;
-    pConv->converted = 0;
-    pConv->bConverted = 0;
-    pConv->memAlloc_fn = allocfn;
+    pConv->pFunctions      = ompi_ddt_copy_functions;
+    pConv->memAlloc_fn     = allocfn;
     /* Just to avoid complaint from the compiler */
     pConv->fAdvance = ompi_convertor_pack_general;
     pConv->fAdvance = ompi_convertor_pack_homogeneous_with_memcpy;
