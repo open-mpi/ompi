@@ -49,6 +49,9 @@ extern "C" {
                                          mca_ns_base_jobid_t jobid,
                                          ompi_list_t *nodelist);
 
+    int mca_pcm_rsh_ioexecvp(char **cmdv, int showout, char *outbuff, 
+                                   int outbuffsize, int stderr_is_err);
+
     struct mca_pcm_rsh_module_t {
         mca_pcm_base_module_t super;
 

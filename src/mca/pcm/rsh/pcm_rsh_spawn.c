@@ -236,7 +236,7 @@ internal_need_profile(mca_pcm_rsh_module_t *me,
 
         cmd0 = strdup(cmdv[0]);
         shellpath[sizeof(shellpath) - 1] = '\0';
-        if (mca_pcm_base_ioexecvp(cmdv, 0, shellpath,
+        if (mca_pcm_rsh_ioexecvp(cmdv, 0, shellpath,
                                   sizeof(shellpath) - 1, 
                                   stderr_is_error)) {
             if (errno == EFAULT) {

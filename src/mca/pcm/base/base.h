@@ -48,9 +48,6 @@ extern "C" {
      */
     int mca_pcm_base_build_base_env(char **in_env, int *envc, char ***out_envp);
 
-    int mca_pcm_base_ioexecvp(char **cmdv, int showout, char *outbuff, 
-                                   int outbuffsize, int stderr_is_err);
-
     char* mca_pcm_base_get_username(mca_llm_base_hostfile_node_t *node);
 
     /**
