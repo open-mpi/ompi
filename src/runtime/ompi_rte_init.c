@@ -31,6 +31,7 @@
 #include "mca/pcm/base/base.h"
 #include "mca/pcmclient/base/base.h"
 #include "mca/llm/base/base.h"
+#include "mca/iof/base/base.h"
 #include "mca/oob/oob.h"
 #include "mca/ns/base/base.h"
 #include "mca/gpr/base/base.h"
@@ -194,6 +195,15 @@ int ompi_rte_init(ompi_cmd_line_t *cmd_line, bool *allow_multi_user_threads, boo
     if (OMPI_SUCCESS != (ret = mca_pcmclient_base_open())) {
 	/* JMS show_help */
 	printf("show_help: ompi_rte_init failed in pcmclient_base_open\n");
+	return ret;
+    }
+
+    /*
+     * Open I/O forwarding components.
+     */
+    if (OMPI_SUCCESS != (ret = mca_iof_base_open())) {
+	/* JMS show_help */
+	printf("show_help: ompi_rte_init failed in mca_iof_base_open\n");
 	return ret;
     }
 
@@ -398,6 +408,15 @@ int ompi_rte_init(ompi_cmd_line_t *cmd_line, bool *allow_multi_user_threads, boo
 	if (procid_str != NULL) free(procid_str);
 	exit(-1);
     }
+
+    /* setup I/O forwarding */
+    if (OMPI_SUCCESS != (ret = mca_iof_base_select(&user_threads, &hidden_threads))) {
+	/* JMS show_help */
+	printf("show_help: ompi_rte_init failed in mca_iof_base_select()\n");
+	return ret;
+    }
+    *allow_multi_user_threads &= user_threads;
+    *have_hidden_threads |= hidden_threads;
 
      /* 
      * All done 

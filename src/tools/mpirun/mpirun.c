@@ -45,6 +45,7 @@
 #include "mca/pcm/base/base.h"
 #include "mca/oob/oob.h"
 #include "mca/oob/base/base.h"
+#include "mca/iof/iof.h"
 
 #include "runtime/runtime.h"
 #include "runtime/ompi_rte_wait.h"
@@ -103,7 +104,7 @@ main(int argc, char *argv[])
     ompi_rte_process_status_t *proc_status;
     ompi_list_t *status_list;
     ompi_registry_value_t *value;
-        
+    ompi_process_name_t *name;
 
     /*
      * Intialize our Open MPI environment
@@ -353,6 +354,23 @@ main(int argc, char *argv[])
 	     0,
 	     ompi_rte_all_procs_unregistered, NULL);
 
+    /*
+     *  Setup I/O forwarding
+     */
+
+   name = ompi_name_server.create_process_name(0,new_jobid,0);
+   rc_tag = mca_iof.iof_pull(
+         name,
+         OMPI_NS_CMP_JOBID,
+         MCA_IOF_STDOUT,
+         1
+         );
+   rc_tag = mca_iof.iof_pull(
+         name,
+         OMPI_NS_CMP_JOBID,
+         MCA_IOF_STDERR,
+         2
+         );
     /*
      * spawn procs
      */

@@ -28,6 +28,7 @@
 #include "mca/pcm/base/base.h"
 #include "mca/pcmclient/base/base.h"
 #include "mca/oob/oob.h"
+#include "mca/iof/base/base.h"
 #include "mca/ns/base/base.h"
 #include "mca/gpr/base/base.h"
 #include "util/session_dir.h"
@@ -45,6 +46,7 @@ int ompi_rte_finalize(void)
   ompi_rte_wait_finalize();
   ompi_rte_internal_fini_spawn();
 
+  mca_iof_base_close();
   mca_pcm_base_close();
   mca_llm_base_close();
   mca_pcmclient_base_close();

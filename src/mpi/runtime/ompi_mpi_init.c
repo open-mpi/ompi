@@ -349,12 +349,20 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         goto error;
     }
 
-#if OMPI_HAVE_THREADS == 0
-    ompi_progress_events(OMPI_EVLOOP_NONBLOCK);
+#if OMPI_HAVE_THREADS
+    /* setup I/O forwarding */
+    if (OMPI_SUCCESS != (ret = ompi_mpi_init_io())) {
+	error = "ompi_rte_init_io failed";
+	goto error;
+    }
 #endif
 
     /* Wait for everyone to initialize */
     mca_oob_barrier();
+
+#if OMPI_HAVE_THREADS == 0
+    ompi_progress_events(OMPI_EVLOOP_NONBLOCK);
+#endif
 
     /* new very last step: check whether we have been spawned or not.
        We introduce that at the very end, since we need collectives,

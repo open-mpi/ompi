@@ -69,6 +69,12 @@ extern "C" {
   int ompi_mpi_init(int argc, char **argv, int requested, int *provided);
 
   /**
+   * Setup I/O forwarding during MPI_Init through the I/O forwarding
+   * framework.
+   */
+  int ompi_mpi_init_io(void);
+
+  /**
    * Finalize the Open MPI MPI environment
    *
    * @returns MPI_SUCCESS if successful
