@@ -52,6 +52,7 @@ int mca_oob_base_init(bool *user_threads, bool *hidden_threads)
     OBJ_CONSTRUCT(&mca_oob_name_self, ompi_process_name_t);
     self = mca_pcm.pcm_self();
     if(NULL == self) {
+        ompi_output(0, "mca_oob_base_init: could not get PCM self pointer");
         return OMPI_ERROR;
     }
     mca_oob_name_self = *self;
