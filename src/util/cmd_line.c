@@ -171,6 +171,12 @@ int ompi_cmd_line_parse(ompi_cmd_line_t *cmd, bool ignore_unknown,
     bool is_unknown;
     bool is_option;
 
+    /* Bozo check */
+
+    if (0 == argc || NULL == argv) {
+        return OMPI_SUCCESS;
+    }
+
     /* Thread serialization */
 
     ompi_mutex_lock(&cmd->lcl_mutex);
