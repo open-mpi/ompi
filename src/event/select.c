@@ -254,12 +254,12 @@ select_add(void *arg, struct ompi_event *ev)
 static int
 select_del(void *arg, struct ompi_event *ev)
 {
+#if OMPI_EVENT_USE_SIGNALS
 	struct selectop *sop = arg;
 
 	if (!(ev->ev_events & OMPI_EV_SIGNAL))
 		return (0);
 
-#if OMPI_EVENT_USE_SIGNALS
 	return (ompi_evsignal_del(&sop->evsigmask, ev));
 #else
 	return (0);
