@@ -102,6 +102,8 @@ int mca_ptl_mx_component_open(void)
         mca_ptl_mx_param_register_int("free_list_max", -1);
     mca_ptl_mx_component.mx_free_list_inc =
         mca_ptl_mx_param_register_int("free_list_inc", 256);
+    mca_ptl_mx_component.mx_max_ptls = 
+        (uint32_t)mca_ptl_mx_param_register_int("num_nics", -1);
     mca_ptl_mx_module.super.ptl_exclusivity =
         mca_ptl_mx_param_register_int("exclusivity", 0);
     mca_ptl_mx_module.super.ptl_first_frag_size =
@@ -154,7 +156,7 @@ mca_ptl_base_module_t** mca_ptl_mx_component_init(
     mca_ptl_base_module_t** ptls;
     *num_ptls = 0;
     *allow_multi_user_threads = true;
-    *have_hidden_threads = OMPI_HAVE_THREADS;
+    *have_hidden_threads = true; /* MX driver/callbacks are multi-threaded */
 
     ompi_free_list_init(&mca_ptl_mx_component.mx_send_frags, 
         sizeof(mca_ptl_mx_send_frag_t),

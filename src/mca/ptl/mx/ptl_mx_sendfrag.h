@@ -86,7 +86,7 @@ static inline void MCA_PTL_MX_SEND_FRAG_PROGRESS(mca_ptl_mx_send_frag_t* frag)
         MCA_PTL_MX_SEND_FRAG_RETURN(frag);
         return;
     }
-                                                                                                          
+
     /* Done when:
      * (1) send completes and ack is received
      * (2) send completes and ack is not required
@@ -97,13 +97,13 @@ static inline void MCA_PTL_MX_SEND_FRAG_PROGRESS(mca_ptl_mx_send_frag_t* frag)
 
     if((frag_ack == true && frag_progress == 2) ||  
        (frag_ack == false && frag_progress == 1)) {
-                                                                                                          
+
         /* update request status */
         frag->frag_send.frag_base.frag_owner->ptl_send_progress(
             frag->frag_send.frag_base.frag_owner,
             request,
             frag->frag_send.frag_base.frag_size);
-                                                                                                          
+
         /* return any fragment that didnt come from the cache */
         if (request->req_cached == false || 
             frag->frag_send.frag_base.frag_header.hdr_frag.hdr_frag_offset != 0) {
