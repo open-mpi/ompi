@@ -11,11 +11,13 @@
 #include <stdio.h>
 #include <assert.h>
 
+#include "lam/constants.h"
 #include "lam/lfc/lam_pointer_array.h"
 #include "lam/util/output.h"
 
 static void lam_pointer_array_construct(lam_pointer_array_t *);
 static void lam_pointer_array_destruct(lam_pointer_array_t *);
+enum { TABLE_INIT = 1, TABLE_GROW = 2 };
 
 lam_class_t lam_pointer_array_t_class = {
     "lam_pointer_array_t",
@@ -62,7 +64,6 @@ size_t lam_pointer_array_add(lam_pointer_array_t *table, void *ptr)
     void **p;
     int	i;
     size_t index;
-    enum { TABLE_INIT = 1, TABLE_GROW = 2 };
 
     if (LAM_ENABLE_DEBUG) {
         lam_output(0,"lam_pointer_array_add:  IN:  "
@@ -179,50 +180,55 @@ int lam_pointer_array_set_item(lam_pointer_array_t *table, size_t index,
         void * value)
 {
     int return_value;
-
     assert(table != NULL);
-    assert(table->addr != NULL);
-    assert(index >= 0);
-    assert(index < table->size);
 
-    if (LAM_ENABLE_DEBUG) {
-        lam_output(0,"lam_pointer_array_set_item: IN:  "
+#if 0
+    lam_output(0,"lam_pointer_array_set_item: IN:  "
                 " table %p (size %ld, lowest free %ld, number free %ld)"
                 " addr[%d] = %p\n",
                 table, table->size, table->lowest_free, table->number_free,
                 index, table->addr[index]);
-    }
+#endif
 
+    /* expand table if required to set a specific index */
     THREAD_LOCK(&(table->lock));
-
-    /* reset this parameter only if in use - otherwise need to use the
-     * add interface funtion
-     */
-    if( NULL != table->addr[index] ){
-        return_value=0;
-        table->addr[index] = value;
-        /* mark element as free, if NULL element */
-        if( NULL == value ) {
-            if (index < table->lowest_free) {
-                table->lowest_free = index;
-            }
-            table->number_free++;
+    if(table->size <= index) {
+        size_t i, new_size = (((index / TABLE_GROW) + 1) * TABLE_GROW);
+	void *p = realloc(table->addr, new_size * sizeof(void *));
+	if (p == NULL) {
+            THREAD_UNLOCK(&(table->lock));
+	    return -1;
+	}
+	table->number_free += new_size - table->size;
+	table->addr = p;
+        for (i = table->size; i < new_size; i++) {
+            table->addr[i] = NULL;
         }
-    } else {
-        return_value=1;
+	table->size = new_size;
     }
 
-    if (LAM_ENABLE_DEBUG) {
-        lam_output(0,"lam_pointer_array_set_item: OUT: "
+    /* 
+     * allow a specific index to be changed.
+     */
+    table->addr[index] = value;
+    /* mark element as free, if NULL element */
+    if( NULL == value ) {
+        if (index < table->lowest_free) {
+            table->lowest_free = index;
+        }
+        table->number_free++;
+    }
+
+#if 0
+    lam_output(0,"lam_pointer_array_set_item: OUT: "
                 " table %p (size %ld, lowest free %ld, number free %ld)"
                 " addr[%d] = %p\n",
                 table, table->size, table->lowest_free, table->number_free,
                 index, table->addr[index]);
-    }
+#endif
 
     THREAD_UNLOCK(&(table->lock));
-
-    return return_value;
+    return LAM_SUCCESS;
 }
 
 /**
@@ -237,13 +243,13 @@ void *lam_pointer_array_get_item(lam_pointer_array_t *table, size_t index)
 {
     void *p;
 
-    if (LAM_ENABLE_DEBUG) {
-        lam_output(0,"lam_pointer_array_get_item: IN: "
+#if 0
+    lam_output(0,"lam_pointer_array_get_item: IN: "
                 " table %p (size %ld, lowest free %ld, number free %ld)"
                 " addr[%d] = %p\n",
                 table, table->size, table->lowest_free, table->number_free,
                 index, table->addr[index]);
-    }
+#endif
 
     THREAD_LOCK(&(table->lock));
 
@@ -256,14 +262,14 @@ void *lam_pointer_array_get_item(lam_pointer_array_t *table, size_t index)
 
     THREAD_UNLOCK(&(table->lock));
 
-    if (LAM_ENABLE_DEBUG) {
-
-        lam_output(0,"lam_pointer_array_get_item: OUT:"
+#if 0
+    lam_output(0,"lam_pointer_array_get_item: OUT:"
                 " table %p (size %ld, lowest free %ld, number free %ld)"
                 " addr[%d] = %p\n",
                 table, table->size, table->lowest_free, table->number_free,
                 index, table->addr[index]);
-    }
-
+#endif
     return p;
 }
+
+
