@@ -114,17 +114,42 @@ typedef struct mca_pcm_base_module_1_0_0_t*
 typedef int (*mca_pcm_base_component_finalize_fn_t)(struct mca_pcm_base_module_1_0_0_t* me);
 
 
+/**
+ * Return a string uniquely identifying the environment
+ *
+ * Return a string that provides some uniqueness that the system
+ * run-time environment makes available.  In RSH, this function won't
+ * provide any help.  In a PBS job, however, this function will return
+ * the concatentaion of the PBS variables required for uniquely
+ * identifying the PBS job environment (the same is true of LSF, SGE,
+ * etc.).
+ *
+ * @param id_string (OUT) Available uniqueness string (NULL terminated)
+ * @param priority (OUT) Similar to \c init priority.  Used if multiple
+ *           components return useful information.
+ *
+ * @returns OMPI_SUCCESS if there is information in id_string.
+ * OMPI_ERR_NOT_SUPPORTED if there is no information available.
+ *
+ * \note This is a component-level call, so it can (and will) be
+ * called before any calls to module_init.
+ */
+typedef int
+(*mca_pcm_base_component_get_unique_id_fn_t)(char **id_string,
+                                             int *priority);
+
+
 /** 
  * PCM module version and interface functions
  *
- * \note the first two entries have type names that are a bit
- *  misleading.  The plan is to rename the mca_base_module_*
- * types in the future.
+ * \note pcm_get_unique_id can be NULL if no unique information is
+ * possibly going to be available from the pcm component.
  */
 struct mca_pcm_base_component_1_0_0_t {
-  mca_base_component_t pcm_version;
-  mca_base_component_data_1_0_0_t pcm_data;
-  mca_pcm_base_component_init_fn_t pcm_init;
+    mca_base_component_t pcm_version;
+    mca_base_component_data_1_0_0_t pcm_data;
+    mca_pcm_base_component_init_fn_t pcm_init;
+    mca_pcm_base_component_get_unique_id_fn_t pcm_get_unique_id;
 };
 typedef struct mca_pcm_base_component_1_0_0_t mca_pcm_base_component_1_0_0_t;
 typedef mca_pcm_base_component_1_0_0_t mca_pcm_base_component_t;
@@ -133,24 +158,6 @@ typedef mca_pcm_base_component_1_0_0_t mca_pcm_base_component_t;
 /*
  * PCM interface functions
  */
-
-/**
- * Return a string uniquely identifying the environment
- *
- * Return a string that provides some uniqueness that the system
- * run-time environment makes available.  For rsh, this function will
- * return NULL as there is nothing special to be gained.  In a PBS
- * job, however, this function will return the concatentaion of the
- * PBS variables required for uniquely identifying the PBS job
- * environment (the same is true of LSF, SGE, etc.).
- *
- * @param me (IN)    Pointer to the module struct
- *
- * @returns NULL on error or if no uniqueness available
- *          non-null otherwize
- */
-typedef char *
-(*mca_pcm_base_get_unique_name_fn_t)(struct mca_pcm_base_module_1_0_0_t* me);
 
 
 
@@ -275,7 +282,6 @@ typedef int
  * pointers to the calling interface. 
  */
 struct mca_pcm_base_module_1_0_0_t {
-    mca_pcm_base_get_unique_name_fn_t pcm_get_unique_name;    
     mca_pcm_base_allocate_resources_fn_t pcm_allocate_resources;
     mca_pcm_base_can_spawn_fn_t pcm_can_spawn;
     mca_pcm_base_spawn_procs_fn_t pcm_spawn_procs;

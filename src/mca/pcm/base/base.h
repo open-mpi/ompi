@@ -29,8 +29,6 @@ extern "C" {
 
     int mca_pcm_base_close(void);
 
-    char* mca_pcm_base_no_unique_name(struct mca_pcm_base_module_1_0_0_t* me);
-
     int mca_pcm_base_send_schedule(FILE *fd, 
                                    mca_ns_base_jobid_t jobid,
                                    ompi_rte_node_schedule_t *sched,
@@ -47,6 +45,8 @@ extern "C" {
                                    int outbuffsize, int stderr_is_err);
 
     char* mca_pcm_base_get_username(mca_llm_base_hostfile_node_t *node);
+
+    char *mca_pcm_base_get_unique_id(void);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
