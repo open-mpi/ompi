@@ -13,6 +13,10 @@
 #pragma weak MPI_Alloc_mem = PMPI_Alloc_mem
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int MPI_Alloc_mem(MPI_Aint size, MPI_Info info, void *baseptr)
 {
   if (size < 0) {

@@ -15,6 +15,10 @@
 #pragma weak MPI_Info_get_valuelen = PMPI_Info_get_valuelen
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 /**
  *   MPI_Info_get_valuelen - Get the length of a value for a given key in an 'M
  *

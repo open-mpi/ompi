@@ -41,6 +41,11 @@ LAM_GENERATE_F77_BINDINGS (MPI_ALLTOALLV,
                            (sendbuf, sendcounts, sdispls, sendtype, recvbuf, recvcounts, rdispls, recvtype, comm, ierr) )
 #endif
 
+
+#if LAM_PROFILE_LAYER && ! LAM_HAVE_WEAK_SYMBOLS
+#include "mpi/c/profile/defines.h"
+#endif
+
 void mpi_alltoallv_f(char *sendbuf, MPI_Fint *sendcounts, MPI_Fint *sdispls, MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcounts, MPI_Fint *rdispls, MPI_Fint *recvtype, MPI_Fint *comm, MPI_Fint *ierr)
 {
 

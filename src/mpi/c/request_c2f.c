@@ -11,6 +11,10 @@
 #pragma weak MPI_Request_c2f = PMPI_Request_c2f
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 MPI_Fint MPI_Request_c2f(MPI_Request request) {
     return (MPI_Fint)0;
 }

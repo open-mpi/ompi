@@ -13,6 +13,10 @@
 #pragma weak MPI_Intercomm_merge = PMPI_Intercomm_merge
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int MPI_Intercomm_merge(MPI_Comm intercomm, int high,
                         MPI_Comm *newcomm) {
 

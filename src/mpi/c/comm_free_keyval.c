@@ -12,6 +12,10 @@
 #pragma weak MPI_Comm_free_keyval = PMPI_Comm_free_keyval
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int MPI_Comm_free_keyval(int *comm_keyval) 
 {
     int ret;

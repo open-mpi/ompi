@@ -11,6 +11,10 @@
 #pragma weak MPI_Cart_sub = PMPI_Cart_sub
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 
 int MPI_Cart_sub(MPI_Comm comm, int *remain_dims, MPI_Comm *new_comm) {
     return MPI_SUCCESS;

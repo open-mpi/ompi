@@ -14,6 +14,10 @@
 #pragma weak MPI_Sendrecv = PMPI_Sendrecv
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int MPI_Sendrecv(void *sendbuf, int sendcount, MPI_Datatype recvtype,
                  int dest, int sendtag, void *recvbuf, int recvcount,
                  MPI_Datatype sendtype, int source, int recvtag,

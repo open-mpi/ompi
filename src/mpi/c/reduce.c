@@ -11,6 +11,10 @@
 #pragma weak MPI_Reduce = PMPI_Reduce
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int MPI_Reduce(void *sendbuf, void *recvbuf, int count,
                MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm) {
     return MPI_SUCCESS;

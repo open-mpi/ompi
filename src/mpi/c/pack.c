@@ -11,6 +11,10 @@
 #pragma weak MPI_Pack = PMPI_Pack
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int MPI_Pack(void *inbuf, int incount, MPI_Datatype datatype,
              void *outbuf, int outsize, int *position, MPI_Comm comm) {
     return MPI_SUCCESS;

@@ -41,6 +41,11 @@ LAM_GENERATE_F77_BINDINGS (MPI_TYPE_GET_CONTENTS,
                            (mtype, max_integers, max_addresses, max_datatypes, array_of_integers, array_of_addresses, array_of_datatypes, ierr) )
 #endif
 
+
+#if LAM_PROFILE_LAYER && ! LAM_HAVE_WEAK_SYMBOLS
+#include "mpi/c/profile/defines.h"
+#endif
+
 void mpi_type_get_contents_f(MPI_Fint *mtype, MPI_Fint *max_integers, MPI_Fint *max_addresses, MPI_Fint *max_datatypes, MPI_Fint *array_of_integers, MPI_Fint *array_of_addresses, MPI_Fint *array_of_datatypes, MPI_Fint *ierr)
 {
 

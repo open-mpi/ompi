@@ -12,6 +12,10 @@
 #if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILING_DEFINES
 #pragma weak MPI_Comm_call_errhandler = PMPI_Comm_call_errhandler
 #endif
+
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
     
 
 int MPI_Comm_call_errhandler(MPI_Comm comm, int errorcode)

@@ -41,6 +41,11 @@ LAM_GENERATE_F77_BINDINGS (MPI_TYPE_GET_EXTENT,
                            (type, lb, extent, ierr) )
 #endif
 
+
+#if LAM_PROFILE_LAYER && ! LAM_HAVE_WEAK_SYMBOLS
+#include "mpi/c/profile/defines.h"
+#endif
+
 void mpi_type_get_extent_f(MPI_Fint *type, MPI_Fint *lb, MPI_Fint *extent, MPI_Fint *ierr)
 {
 

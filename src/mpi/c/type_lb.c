@@ -11,6 +11,10 @@
 #pragma weak MPI_Type_lb = PMPI_Type_lb
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int
 MPI_Type_lb(MPI_Datatype type, MPI_Aint *lb)
 {

@@ -41,6 +41,11 @@ LAM_GENERATE_F77_BINDINGS (MPI_REGISTER_DATAREP,
                            (datarep, read_conversion_fn, write_conversion_fn, dtype_file_extent_fn, extra_state, ierr) )
 #endif
 
+
+#if LAM_PROFILE_LAYER && ! LAM_HAVE_WEAK_SYMBOLS
+#include "mpi/c/profile/defines.h"
+#endif
+
 void mpi_register_datarep_f(char *datarep, MPI_Fint *read_conversion_fn, MPI_Fint *write_conversion_fn, MPI_Fint *dtype_file_extent_fn, char *extra_state, MPI_Fint *ierr)
 {
 

@@ -11,6 +11,10 @@
 #pragma weak MPI_Add_error_string = PMPI_Add_error_string
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int MPI_Add_error_string(int errorcode, char *string){
 	return MPI_SUCCESS;
 }

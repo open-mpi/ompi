@@ -41,6 +41,11 @@ LAM_GENERATE_F77_BINDINGS (MPI_PACK_EXTERNAL,
                            (datarep, inbuf, incount, datatype, outbuf, outsize, position, ierr) )
 #endif
 
+
+#if LAM_PROFILE_LAYER && ! LAM_HAVE_WEAK_SYMBOLS
+#include "mpi/c/profile/defines.h"
+#endif
+
 void mpi_pack_external_f(char *datarep, char *inbuf, MPI_Fint *incount, MPI_Fint *datatype, char *outbuf, MPI_Fint *outsize, MPI_Fint *position, MPI_Fint *ierr)
 {
 

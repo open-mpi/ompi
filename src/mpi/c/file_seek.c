@@ -11,6 +11,10 @@
 #pragma weak MPI_File_seek = PMPI_File_seek
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int MPI_File_seek(MPI_File fh, MPI_Offset offset, int whence) {
     return MPI_SUCCESS;
 }

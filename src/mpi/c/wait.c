@@ -13,6 +13,10 @@
 #pragma weak MPI_Wait = PMPI_Wait
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int MPI_Wait(MPI_Request *request, MPI_Status *status) 
 {
     int index, rc;

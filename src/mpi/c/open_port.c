@@ -11,6 +11,10 @@
 #pragma weak MPI_Open_port = PMPI_Open_port
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int MPI_Open_port(MPI_Info info, char *port_name) {
     return MPI_SUCCESS;
 }

@@ -12,6 +12,10 @@
 #pragma weak MPI_Type_create_keyval = PMPI_Type_create_keyval
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int
 MPI_Type_create_keyval(MPI_Type_copy_attr_function *type_copy_attr_fn,
                        MPI_Type_delete_attr_function *type_delete_attr_fn,

@@ -41,6 +41,11 @@ LAM_GENERATE_F77_BINDINGS (MPI_OPEN_PORT,
                            (info, port_name, ierr) )
 #endif
 
+
+#if LAM_PROFILE_LAYER && ! LAM_HAVE_WEAK_SYMBOLS
+#include "mpi/c/profile/defines.h"
+#endif
+
 void mpi_open_port_f(MPI_Fint *info, char *port_name, MPI_Fint *ierr)
 {
 

@@ -14,6 +14,10 @@
 #pragma weak MPI_Comm_dup = PMPI_Comm_dup
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int MPI_Comm_dup(MPI_Comm comm, MPI_Comm *newcomm) {
     
     /* local variables */

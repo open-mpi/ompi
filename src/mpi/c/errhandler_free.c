@@ -13,6 +13,10 @@
 #pragma weak MPI_Errhandler_free = PMPI_Errhandler_free
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 
 int MPI_Errhandler_free(MPI_Errhandler *errhandler)
 {

@@ -41,6 +41,11 @@ LAM_GENERATE_F77_BINDINGS (MPI_GRAPH_NEIGHBORS,
                            (comm, rank, maxneighbors, neighbors, ierr) )
 #endif
 
+
+#if LAM_PROFILE_LAYER && ! LAM_HAVE_WEAK_SYMBOLS
+#include "mpi/c/profile/defines.h"
+#endif
+
 void mpi_graph_neighbors_f(MPI_Fint *comm, MPI_Fint *rank, MPI_Fint *maxneighbors, MPI_Fint *neighbors, MPI_Fint *ierr)
 {
 

@@ -14,6 +14,10 @@
 #pragma weak MPI_Group_c2f = PMPI_Group_c2f
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 MPI_Fint MPI_Group_c2f(MPI_Group group) {
 
     /* local variables */

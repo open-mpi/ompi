@@ -13,6 +13,10 @@
 #pragma weak MPI_Comm_create = PMPI_Comm_create
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int MPI_Comm_create(MPI_Comm comm, MPI_Group group, MPI_Comm *newcomm) {
     
     int rc;

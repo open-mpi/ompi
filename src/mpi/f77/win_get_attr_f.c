@@ -41,6 +41,11 @@ LAM_GENERATE_F77_BINDINGS (MPI_WIN_GET_ATTR,
                            (win, win_keyval, attribute_val, flag, ierr) )
 #endif
 
+
+#if LAM_PROFILE_LAYER && ! LAM_HAVE_WEAK_SYMBOLS
+#include "mpi/c/profile/defines.h"
+#endif
+
 void mpi_win_get_attr_f(MPI_Fint *win, MPI_Fint *win_keyval, char *attribute_val, MPI_Fint *flag, MPI_Fint *ierr)
 {
 

@@ -11,6 +11,10 @@
 #pragma weak MPI_Type_create_f90_real = PMPI_Type_create_f90_real
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int
 MPI_Type_create_f90_real(int p, int r, MPI_Datatype *newtype)
 {

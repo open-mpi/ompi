@@ -41,6 +41,11 @@ LAM_GENERATE_F77_BINDINGS (MPI_COMM_GET_ATTR,
                            (comm, comm_keyval, attribute_val, flag, ierr) )
 #endif
 
+
+#if LAM_PROFILE_LAYER && ! LAM_HAVE_WEAK_SYMBOLS
+#include "mpi/c/profile/defines.h"
+#endif
+
 void mpi_comm_get_attr_f(MPI_Fint *comm, MPI_Fint *comm_keyval, char *attribute_val, MPI_Fint *flag, MPI_Fint *ierr)
 {
 

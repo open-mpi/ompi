@@ -11,6 +11,10 @@
 #pragma weak MPI_Win_post = PMPI_Win_post
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int MPI_Win_post(MPI_Group group, int assert, MPI_Win win) {
     return MPI_SUCCESS;
 }

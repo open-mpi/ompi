@@ -41,6 +41,11 @@ LAM_GENERATE_F77_BINDINGS (MPI_GROUP_RANK,
                            (group, rank, ierr) )
 #endif
 
+
+#if LAM_PROFILE_LAYER && ! LAM_HAVE_WEAK_SYMBOLS
+#include "mpi/c/profile/defines.h"
+#endif
+
 void mpi_group_rank_f(MPI_Fint *group, MPI_Fint *rank, MPI_Fint *ierr)
 {
 

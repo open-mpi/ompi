@@ -13,6 +13,10 @@
 #pragma weak MPI_Info_c2f = PMPI_Info_c2f
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 /**
  * Converts info into a fortan handle
  *

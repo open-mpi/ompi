@@ -13,6 +13,10 @@
 #pragma weak MPI_Info_free = PMPI_Info_free
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 /**
  *   MPI_Info_free - Free an 'MPI_Info' object.
  *

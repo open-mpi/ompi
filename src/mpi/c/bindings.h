@@ -14,10 +14,6 @@
    doesn't work to simply list all of the pragmas in a top-level
    header file. */
 
-#if LAM_PROFILING_DEFINES
-#include "mpi/c/profile/defines.h"
-#endif
-
 /* This variable is actually in src/mpi/runtime/lam_mpi_init.c, but it
    is used by every MPI function. */
 

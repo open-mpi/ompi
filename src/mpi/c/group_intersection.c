@@ -14,6 +14,10 @@
 #pragma weak MPI_Group_intersection = PMPI_Group_intersection
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int MPI_Group_intersection(MPI_Group group1, MPI_Group group2,
         MPI_Group *new_group) {
 

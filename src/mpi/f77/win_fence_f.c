@@ -41,6 +41,11 @@ LAM_GENERATE_F77_BINDINGS (MPI_WIN_FENCE,
                            (assert, win, ierr) )
 #endif
 
+
+#if LAM_PROFILE_LAYER && ! LAM_HAVE_WEAK_SYMBOLS
+#include "mpi/c/profile/defines.h"
+#endif
+
 void mpi_win_fence_f(MPI_Fint *assert, MPI_Fint *win, MPI_Fint *ierr)
 {
 

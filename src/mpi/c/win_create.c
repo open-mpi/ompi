@@ -11,6 +11,10 @@
 #pragma weak MPI_Win_create = PMPI_Win_create
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int MPI_Win_create(void *base, MPI_Aint size, int disp_unit,
                    MPI_Info info, MPI_Comm comm, MPI_Win *win) {
     return MPI_SUCCESS;

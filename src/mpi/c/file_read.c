@@ -11,6 +11,10 @@
 #pragma weak MPI_File_read = PMPI_File_read
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int MPI_File_read(MPI_File fh, void *buf, int count, MPI_Datatype
 		                   datatype, MPI_Status *status) {
     return MPI_SUCCESS;

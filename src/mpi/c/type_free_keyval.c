@@ -12,6 +12,10 @@
 #pragma weak MPI_Type_free_keyval = PMPI_Type_free_keyval
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int
 MPI_Type_free_keyval(int *type_keyval)
 {

@@ -41,6 +41,11 @@ LAM_GENERATE_F77_BINDINGS (MPI_TESTANY,
                            (count, array_of_requests, index, flag, status, ierr) )
 #endif
 
+
+#if LAM_PROFILE_LAYER && ! LAM_HAVE_WEAK_SYMBOLS
+#include "mpi/c/profile/defines.h"
+#endif
+
 void mpi_testany_f(MPI_Fint *count, MPI_Fint *array_of_requests, MPI_Fint *index, MPI_Fint *flag, MPI_Fint *status, MPI_Fint *ierr)
 {
 

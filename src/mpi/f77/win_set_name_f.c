@@ -41,6 +41,11 @@ LAM_GENERATE_F77_BINDINGS (MPI_WIN_SET_NAME,
                            (win, win_name, ierr) )
 #endif
 
+
+#if LAM_PROFILE_LAYER && ! LAM_HAVE_WEAK_SYMBOLS
+#include "mpi/c/profile/defines.h"
+#endif
+
 void mpi_win_set_name_f(MPI_Fint *win, char *win_name, MPI_Fint *ierr)
 {
 

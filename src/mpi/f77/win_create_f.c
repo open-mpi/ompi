@@ -41,6 +41,11 @@ LAM_GENERATE_F77_BINDINGS (MPI_WIN_CREATE,
                            (base, size, disp_unit, info, comm, win, ierr) )
 #endif
 
+
+#if LAM_PROFILE_LAYER && ! LAM_HAVE_WEAK_SYMBOLS
+#include "mpi/c/profile/defines.h"
+#endif
+
 void mpi_win_create_f(char *base, MPI_Fint *size, MPI_Fint *disp_unit, MPI_Fint *info, MPI_Fint *comm, MPI_Fint *win, MPI_Fint *ierr)
 {
 

@@ -11,6 +11,10 @@
 #pragma weak MPI_Win_test = PMPI_Win_test
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int MPI_Win_test(MPI_Win win, int *flag) {
     return MPI_SUCCESS;
 }

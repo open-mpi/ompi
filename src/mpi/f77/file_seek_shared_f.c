@@ -41,6 +41,11 @@ LAM_GENERATE_F77_BINDINGS (MPI_FILE_SEEK_SHARED,
                            (fh, offset, whence, ierr) )
 #endif
 
+
+#if LAM_PROFILE_LAYER && ! LAM_HAVE_WEAK_SYMBOLS
+#include "mpi/c/profile/defines.h"
+#endif
+
 void mpi_file_seek_shared_f(MPI_Fint *fh, MPI_Fint *offset, MPI_Fint *whence, MPI_Fint *ierr)
 {
 

@@ -41,6 +41,11 @@ LAM_GENERATE_F77_BINDINGS (MPI_CART_RANK,
                            (comm, coords, rank, ierr) )
 #endif
 
+
+#if LAM_PROFILE_LAYER && ! LAM_HAVE_WEAK_SYMBOLS
+#include "mpi/c/profile/defines.h"
+#endif
+
 void mpi_cart_rank_f(MPI_Fint *comm, MPI_Fint *coords, MPI_Fint *rank, MPI_Fint *ierr)
 {
 

@@ -12,6 +12,10 @@
 #pragma weak MPI_Win_get_attr = PMPI_Win_get_attr
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int MPI_Win_get_attr(MPI_Win win, int win_keyval,
                      void *attribute_val, int *flag) {
     int ret;

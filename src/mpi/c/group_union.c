@@ -14,6 +14,10 @@
 #pragma weak MPI_Group_union = PMPI_Group_union
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int MPI_Group_union(MPI_Group group1, MPI_Group group2, MPI_Group *new_group) 
 {
     /* local variables */

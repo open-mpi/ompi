@@ -14,6 +14,10 @@
 #pragma weak MPI_Info_get_nthkey = PMPI_Info_get_nthkey
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 /**
  *   MPI_Info_get_nthkey - Get a key indexed by integer from an 'MPI_Info' obje
  *

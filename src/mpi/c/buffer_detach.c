@@ -11,6 +11,10 @@
 #pragma weak MPI_Buffer_detach = PMPI_Buffer_detach
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int MPI_Buffer_detach(void *buffer, int *size) {
     return MPI_SUCCESS;
 }

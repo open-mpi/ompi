@@ -11,6 +11,10 @@
 #pragma weak MPI_File_sync = PMPI_File_sync
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int MPI_File_sync(MPI_File fh) {
     return MPI_SUCCESS;
 }

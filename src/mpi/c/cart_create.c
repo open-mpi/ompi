@@ -11,6 +11,10 @@
 #pragma weak MPI_Cart_create = PMPI_Cart_create
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int MPI_Cart_create(MPI_Comm old_comm, int ndims, int *dims,
                     int *periods, int redorder, MPI_Comm *comm_cart) {
     return MPI_SUCCESS;

@@ -11,6 +11,10 @@
 #pragma weak MPI_Graph_neighbors = PMPI_Graph_neighbors
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int MPI_Graph_neighbors(MPI_Comm comm, int rank, int maxneighbors,
                         int *neighbors) {
     return MPI_SUCCESS;

@@ -11,6 +11,10 @@
 #pragma weak MPI_Comm_f2c = PMPI_Comm_f2c
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 
 MPI_Comm MPI_Comm_f2c(MPI_Fint comm) {
     /*

@@ -14,6 +14,10 @@
 #pragma weak MPI_Group_incl = PMPI_Group_incl
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int MPI_Group_incl(MPI_Group group, int n, int *ranks, MPI_Group *new_group) 
 {
     /* local variables */

@@ -41,6 +41,11 @@ LAM_GENERATE_F77_BINDINGS (MPI_TYPE_CREATE_KEYVAL,
                            (type_copy_attr_fn, type_delete_attr_fn, type_keyval, extra_state, ierr) )
 #endif
 
+
+#if LAM_PROFILE_LAYER && ! LAM_HAVE_WEAK_SYMBOLS
+#include "mpi/c/profile/defines.h"
+#endif
+
 void mpi_type_create_keyval_f(MPI_Fint *type_copy_attr_fn, MPI_Fint *type_delete_attr_fn, MPI_Fint *type_keyval, char *extra_state, MPI_Fint *ierr)
 {
 

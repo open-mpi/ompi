@@ -14,6 +14,10 @@
 #pragma weak MPI_Send = PMPI_Send
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int MPI_Send(void *buf, int count, MPI_Datatype type, int dest,
              int tag, MPI_Comm comm) 
 {

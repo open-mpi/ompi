@@ -13,6 +13,10 @@
 #pragma weak MPI_Group_f2c = PMPI_Group_f2c
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 
 MPI_Group MPI_Group_f2c(MPI_Fint group_f)
 {

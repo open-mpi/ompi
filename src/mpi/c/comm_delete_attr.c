@@ -12,6 +12,10 @@
 #pragma weak MPI_Comm_delete_attr = PMPI_Comm_delete_attr
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int MPI_Comm_delete_attr(MPI_Comm comm, int comm_keyval) 
 {
     int ret;

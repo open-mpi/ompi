@@ -11,6 +11,10 @@
 #pragma weak MPI_Cancel = PMPI_Cancel
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int MPI_Cancel(MPI_Request *request) {
     return MPI_SUCCESS;
 }

@@ -41,6 +41,11 @@ LAM_GENERATE_F77_BINDINGS (MPI_LOOKUP_NAME,
                            (service_name, info, port_name, ierr) )
 #endif
 
+
+#if LAM_PROFILE_LAYER && ! LAM_HAVE_WEAK_SYMBOLS
+#include "mpi/c/profile/defines.h"
+#endif
+
 void mpi_lookup_name_f(char *service_name, MPI_Fint *info, char *port_name, MPI_Fint *ierr)
 {
 

@@ -13,6 +13,10 @@
 #pragma weak MPI_Info_get_nkeys = PMPI_Info_get_nkeys
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 /**
  * MPI_Info_get_nkeys - Returns the number of keys defined on an
  * 'MPI_Info' object

@@ -14,6 +14,10 @@
 #pragma weak MPI_Group_size = PMPI_Group_size
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int MPI_Group_size(MPI_Group group, int *size) {
 
     /* error checking */

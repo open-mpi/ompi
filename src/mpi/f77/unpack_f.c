@@ -41,6 +41,11 @@ LAM_GENERATE_F77_BINDINGS (MPI_UNPACK,
                            (inbuf, insize, position, outbuf, outcount, datatype, comm, ierr) )
 #endif
 
+
+#if LAM_PROFILE_LAYER && ! LAM_HAVE_WEAK_SYMBOLS
+#include "mpi/c/profile/defines.h"
+#endif
+
 void mpi_unpack_f(char *inbuf, MPI_Fint *insize, MPI_Fint *position, char *outbuf, MPI_Fint *outcount, MPI_Fint *datatype, MPI_Fint *comm, MPI_Fint *ierr)
 {
 

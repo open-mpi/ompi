@@ -41,6 +41,11 @@ LAM_GENERATE_F77_BINDINGS (MPI_TYPE_GET_ENVELOPE,
                            (type, num_integers, num_addresses, num_datatypes, combiner, ierr) )
 #endif
 
+
+#if LAM_PROFILE_LAYER && ! LAM_HAVE_WEAK_SYMBOLS
+#include "mpi/c/profile/defines.h"
+#endif
+
 void mpi_type_get_envelope_f(MPI_Fint *type, MPI_Fint *num_integers, MPI_Fint *num_addresses, MPI_Fint *num_datatypes, MPI_Fint *combiner, MPI_Fint *ierr)
 {
 

@@ -11,6 +11,10 @@
 #pragma weak MPI_Publish_name = PMPI_Publish_name
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int MPI_Publish_name(char *service_name, MPI_Info info,
                      char *port_name) {
     return MPI_SUCCESS;

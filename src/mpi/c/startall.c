@@ -14,6 +14,10 @@
 #pragma weak MPI_Startall = PMPI_Startall
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 
 int MPI_Startall(int count, MPI_Request *requests) 
 {

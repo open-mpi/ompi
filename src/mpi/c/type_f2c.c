@@ -11,6 +11,10 @@
 #pragma weak MPI_Type_f2c = PMPI_Type_f2c
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 MPI_Datatype MPI_Type_f2c(MPI_Fint datatype) {
     return (MPI_Datatype)0;
 }

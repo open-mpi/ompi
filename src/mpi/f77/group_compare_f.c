@@ -44,6 +44,11 @@ LAM_GENERATE_F77_BINDINGS (MPI_GROUP_COMPARE,
 #endif
 
 
+
+#if LAM_PROFILE_LAYER && ! LAM_HAVE_WEAK_SYMBOLS
+#include "mpi/c/profile/defines.h"
+#endif
+
 void mpi_group_compare_f(MPI_Fint *group1, MPI_Fint *group2,
                          MPI_Fint *result, MPI_Fint *ierror)
 {

@@ -14,6 +14,10 @@
 #pragma weak MPI_Group_rank = PMPI_Group_rank
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int MPI_Group_rank(MPI_Group group, int *rank) {
 
     /* error checking */

@@ -11,6 +11,10 @@
 #pragma weak MPI_File_read_at_all = PMPI_File_read_at_all
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int MPI_File_read_at_all(MPI_File fh, MPI_Offset offset, void *buf,
 		                 int count, MPI_Datatype datatype, 
 						 MPI_Status *status) {

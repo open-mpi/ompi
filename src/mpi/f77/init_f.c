@@ -41,6 +41,11 @@ LAM_GENERATE_F77_BINDINGS (MPI_INIT,
                            (argc, argv, ierr) )
 #endif
 
+
+#if LAM_PROFILE_LAYER && ! LAM_HAVE_WEAK_SYMBOLS
+#include "mpi/c/profile/defines.h"
+#endif
+
 void mpi_init_f(MPI_Fint *argc, char *argv, MPI_Fint *ierr)
 {
 

@@ -41,6 +41,11 @@ LAM_GENERATE_F77_BINDINGS (MPI_WAIT,
                            (request, status, ierr) )
 #endif
 
+
+#if LAM_PROFILE_LAYER && ! LAM_HAVE_WEAK_SYMBOLS
+#include "mpi/c/profile/defines.h"
+#endif
+
 void mpi_wait_f(MPI_Fint *request, MPI_Fint *status, MPI_Fint *ierr)
 {
 

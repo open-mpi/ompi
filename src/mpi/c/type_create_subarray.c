@@ -11,6 +11,10 @@
 #pragma weak MPI_Type_create_subarray = PMPI_Type_create_subarray
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int
 MPI_Type_create_subarray(int ndims,
                          int size_array[],

@@ -41,6 +41,11 @@ LAM_GENERATE_F77_BINDINGS (MPI_GREQUEST_START,
                            (query_fn, free_fn, cancel_fn, extra_state, request, ierr) )
 #endif
 
+
+#if LAM_PROFILE_LAYER && ! LAM_HAVE_WEAK_SYMBOLS
+#include "mpi/c/profile/defines.h"
+#endif
+
 void mpi_grequest_start_f(MPI_Fint *query_fn, MPI_Fint *free_fn, MPI_Fint *cancel_fn, char *extra_state, MPI_Fint *request, MPI_Fint *ierr)
 {
 

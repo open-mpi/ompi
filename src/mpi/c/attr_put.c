@@ -13,6 +13,10 @@
 #pragma weak MPI_Attr_put = PMPI_Attr_put
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int MPI_Attr_put(MPI_Comm comm, int keyval, void *attribute_val) 
 {
     int ret;

@@ -15,6 +15,10 @@
 #pragma weak MPI_Info_set = PMPI_Info_set
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 /**
  *   MPI_Info_set - Set a (key, value) pair in an 'MPI_Info' object
  *

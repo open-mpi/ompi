@@ -12,6 +12,10 @@
 #pragma weak MPI_Alltoallw = PMPI_Alltoallw
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int MPI_Alltoallw(void *sendbuf, int *sendcounts, int *sdispls, MPI_Datatype *sendtypes,
                   void *recvbuf, int *recvcounts, int *rdispls, MPI_Datatype *recvtypes,
                   MPI_Comm comm) {

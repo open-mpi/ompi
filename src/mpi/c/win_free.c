@@ -11,6 +11,10 @@
 #pragma weak MPI_Win_free = PMPI_Win_free
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int MPI_Win_free(MPI_Win *win) {
     return MPI_SUCCESS;
 }

@@ -12,6 +12,10 @@
 #pragma weak MPI_Type_delete_attr = PMPI_Type_delete_attr
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int
 MPI_Type_delete_attr (MPI_Datatype type, int type_keyval)
 {

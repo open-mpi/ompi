@@ -41,6 +41,11 @@ LAM_GENERATE_F77_BINDINGS (MPI_ADD_ERROR_STRING,
                            (errorcode, string, ierr) )
 #endif
 
+
+#if LAM_PROFILE_LAYER && ! LAM_HAVE_WEAK_SYMBOLS
+#include "mpi/c/profile/defines.h"
+#endif
+
 void mpi_add_error_string_f(MPI_Fint *errorcode, char *string, MPI_Fint *ierr)
 {
 

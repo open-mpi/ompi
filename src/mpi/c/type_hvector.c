@@ -11,6 +11,10 @@
 #pragma weak MPI_Type_hvector = PMPI_Type_hvector
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int
 MPI_Type_hvector(int count,
                  int blocklength,

@@ -11,6 +11,10 @@
 #pragma weak MPI_File_seek_shared = PMPI_File_seek_shared
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int MPI_File_seek_shared(MPI_File fh, MPI_Offset offset, int whence) {
     return MPI_SUCCESS;
 }

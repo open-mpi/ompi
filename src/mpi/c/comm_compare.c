@@ -13,6 +13,10 @@
 #pragma weak MPI_Comm_compare = PMPI_Comm_compare
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int MPI_Comm_compare(MPI_Comm comm1, MPI_Comm comm2, int *result) {
 
     /* local variables */

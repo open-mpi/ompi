@@ -14,6 +14,10 @@
 #pragma weak MPI_Rsend = PMPI_Rsend
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int MPI_Rsend(void *buf, int count, MPI_Datatype type, int dest, int tag, MPI_Comm comm) 
 {
     int rc;

@@ -11,6 +11,10 @@
 #pragma weak MPI_Close_port = PMPI_Close_port
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int MPI_Close_port(char *port_name) {
     return MPI_SUCCESS;
 }
