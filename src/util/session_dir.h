@@ -2,7 +2,6 @@
  * $HEADER$
  */
 /** @file:
- * @page os_session_dir
  *
  * Find and/or create Open MPI session directory.
  *
@@ -13,16 +12,16 @@
  * to independently house information for multiple universes, as the user creates
  * them. Thus, the function pursues a directory tree of the form:
  *
- * \par \em <prefix-dir>
+ * \par \em [prefix-dir]
  * An absolute path that identifies a temporary directory that is
  * read-write-execute accessible to everyone. The function first checks to see if
- * the user has specified the <prefix> directory on the command line. If so, then the
- * function will use that <prefix> if the access permissions are correct, or will return
+ * the user has specified the [prefix] directory on the command line. If so, then the
+ * function will use that [prefix] if the access permissions are correct, or will return
  * an error condition if not - the function will not search for alternative locations
- * if the user provides the <prefix> name.
+ * if the user provides the [prefix] name.
  *
  * \par
- * If the <prefix> is not provided by the user, the function searches for a suitable 
+ * If the [prefix] is not provided by the user, the function searches for a suitable 
  * directory in a specific order, taking the first option that meets the access
  * permission requirement, using: (a) the "OMPI_PREFIX_ENV" environment variable;
  * (b) the "TMPDIR" environment variable; and (c) the "TMP" environment variabley. If none of
@@ -32,7 +31,7 @@
  * local system. If none of these options are successful, the function returns an
  * error code.
  *
- * \par \em <openmpi-sessions>-<user-id>
+ * \par \em [openmpi-sessions]-[user-id]
  * This serves as a concentrator for all Open MPI session
  * directories for this user on the local system. If it doesn't already exist, this directory is
  * created with read-write-execute permissions exclusively restricted to the user. If it does exist, the access
@@ -41,24 +40,24 @@
  * an error condition is returned.
  *
  * \par
- * Note: The <prefix>/openmpi-sessions-<user-id> directory is left on the system
+ * Note: The [prefix]/openmpi-sessions-[user-id] directory is left on the system
  * upon termination of an application and/or an Open MPI universe for future use
  * by the user. Thus, when checking a potential location for the directory, the
  * ompi_session_tree_init() function first checks to see if an appropriate directory
  * already exists, and uses it if it does.
  *
- * \par \em <universe-name>
+ * \par \em [universe-name]
  * A directory is created for the specified universe name. This is the directory
  * that will be used to house all information relating to the specific universe. If the
  * directory already exists (indicating that the user is joining an existing universe),
  * then the function ensures that the user has exclusive read-write-execute permissions
  * on the directory.
  *
- * \par \em <job>
+ * \par \em [job]
  * A directory is created for the specified job name. This will house all information relating
  * to that specific job, including directories for each process within that job on this host.
  *
- * \par \em <process>
+ * \par \em [process]
  * A directory for the specific process, will house all information for that process.
  *
  */
@@ -73,9 +72,9 @@
  * @param user Name of the user to whom the universe belongs. This will be used to build the name of the
  * "openmpi-sessions-<user>" branch of the directory tree.
  * @param universe name of the universe being setup.
- * @param job Name of the job for which a session directory is to be created/found. NULL indicates
+ * @param job String version of the jobid for which a session directory is to be created/found. NULL indicates
  * that only the universe directory is to be created/found.
- * @param proc Name of the process for which a session directory is to be created/found. NULL indicates
+ * @param vpid String version of the vpid for which a session directory is to be created/found. NULL indicates
  * that only the job directory is to be created/found.
  *
  * @retval *path A pointer to a string containing the pathname of the directory.
@@ -83,7 +82,7 @@
  * create is "true").
  */
 
-char *ompi_session_dir(bool create, char *prefix, char *user, char *universe, char *job, char *proc);
+char *ompi_session_dir(bool create, char *prefix, char *user, char *universe, char *job, char *vpid);
 
 /** The ompi_session_dir_finalize() function performs a cleanup of the session directory tree. It first
  * removes the session directory for the calling process. It then checks to see if the job-level session
