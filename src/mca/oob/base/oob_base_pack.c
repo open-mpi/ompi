@@ -6,6 +6,9 @@
  *
  * The pack and unpack routines for the oob
  */
+
+#if 0 /* these routines no longer used.. we hope. replaced by higher level util/[buffer] pack routines */
+
 #include "mca/oob/base/base.h"
 #include <string.h>
 #include <netinet/in.h>
@@ -102,3 +105,4 @@ int mca_oob_base_unpack(void * dest, void * src, size_t n, mca_oob_base_type_t t
     return OMPI_SUCCESS;
 }
 
+#endif
