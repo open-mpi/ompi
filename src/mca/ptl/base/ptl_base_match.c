@@ -214,7 +214,7 @@ mca_ptl_base_check_specific_and_wild_receives_for_match(
                     ompi_list_get_end(&(pml_comm->c_wild_receives)) )  
             {  
                 MCA_PTL_BASE_CHECK_SPECIFIC_RECEIVES_FOR_MATCH(frag_header, pml_comm, return_match); 
-                return return_match; 
+                break;
             } 
  
             /* 
