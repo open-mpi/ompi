@@ -17,19 +17,26 @@
 int MPI_Comm_create_errhandler(MPI_Comm_errhandler_fn *function,
                                MPI_Errhandler *errhandler) 
 {
+  int err = MPI_SUCCESS;
+
   /* Error checking */
 
   if (MPI_PARAM_CHECK) {
     if (NULL == function || 
         NULL == errhandler) {
-      return LAM_ERRHDL_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
-                               "MPI_Errhandler_get");
+      return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
+                                   "MPI_Comm_create_errhandler");
     }
   }
 
-  /* JMS Continue here */
+  /* Create and cache the errhandler */
 
-  /* All done */
+  *errhandler = 
+    lam_errhandler_create(LAM_ERRHANDLER_TYPE_COMM,
+                          (lam_errhandler_fortran_handler_fn_t*) function);
+  if (NULL == *errhandler)
+    err = MPI_ERR_INTERN;
 
-  return MPI_SUCCESS;
+  LAM_ERRHANDLER_RETURN(err, MPI_COMM_WORLD, MPI_ERR_INTERN,
+                        "MPI_Comm_create_errhandler");
 }
