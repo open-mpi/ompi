@@ -290,7 +290,7 @@ struct ompi_class_t {
  */
 struct ompi_object_t {
     ompi_class_t *obj_class;        /**< class descriptor */
-    int obj_reference_count;       /**< reference count */
+    volatile int obj_reference_count;       /**< reference count */
 };
 
 OBJ_CLASS_DECLARATION(ompi_object_t);
