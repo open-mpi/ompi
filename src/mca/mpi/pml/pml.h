@@ -5,11 +5,10 @@
 #ifndef LAM_MCA_PML_H
 #define LAM_MCA_PML_H
 
-#include "mca/mca.h"
-#include "proc.h"
 #include "lam.h"
+#include "proc.h"
 #include "lam/lfc/list.h"
-
+#include "mca/mca.h"
 
 /*
  * PML module functions
@@ -17,54 +16,66 @@
 
 typedef int (*mca_pml_query_fn_t)(int *priority);
 typedef struct mca_pml_1_0_0 * (*mca_pml_init_1_0_0_fn_t)(
-    struct lam_proc **procs, 
+    struct lam_proc_t **procs, 
     int nprocs, 
     int *max_tag, 
     int *max_cid
 );
+
+/*
+ * PML types
+ */
+
+typedef uint64_t mca_pml_sequence_t;
+typedef uint64_t mca_pml_tstamp_t;
+typedef lam_dbl_list_t mca_pml_queue_t;
+
+typedef enum {
+    MCA_PML_REQUEST_TYPE_RECV,
+    MCA_PML_REQUEST_TYPE_SEND_STANDARD,
+    MCA_PML_REQUEST_TYPE_SEND_BUFFERED,
+    MCA_PML_REQUEST_TYPE_SEND_SYNCHRONOUS,
+    MCA_PML_REQUEST_TYPE_SEND_READY
+} mca_pml_request_type_t;
 
 
 /*
  * PML interface functions
  */
 
-typedef enum {
-    MCA_PTM_REQUEST_TYPE_RECV,
-    MCA_PTM_REQUEST_TYPE_SEND_STANDARD,
-    MCA_PTM_REQUEST_TYPE_SEND_BUFFERED,
-    MCA_PTM_REQUEST_TYPE_SEND_SYNCHRONOUS,
-    MCA_PTM_REQUEST_TYPE_SEND_READY
-} mca_pml_request_type_t;
+struct lam_communicator_t;
+struct lam_datatype_t;
+struct lam_proc_t;
+struct lam_request_t;
 
-
-typedef int (*mca_pml_progress_fn_t)(lam_time_t);
+typedef int (*mca_pml_progress_fn_t)(mca_pml_tstamp_t);
 
 typedef int (*mca_pml_isend_fn_t)(
     void *buf,
     size_t size,
-    lam_datatype_t *datatype,
+    struct lam_datatype_t *datatype,
     int dest,
     int tag,
-    lam_communicator_t* comm,
+    struct lam_communicator_t* comm,
     mca_pml_request_type_t req_type,
-    lam_request_t **request
+    struct lam_request_t **request
 );
 
-typedef int (*mci_pma_addprocs_fn_t)(lam_proc_t **procs, int nprocs);
+typedef int (*mca_pml_addprocs_fn_t)(lam_proc_t **procs, int nprocs);
 
 
 /*
  * PML module definition.
  */
 
-typedef struct mca_pml_module_1_0_0 {
-  mca_1_0_0_t mp_meta_info;
+struct mca_pml_module_1_0_0_t {
 
-  /* pml API function pointers */
+  mca_1_0_0_t super;
+  mca_pml_query_fn_t pmlm_query;
+  mca_pml_init_1_0_0_fn_t pmlm_init;
 
-  mca_pml_query_fn_t mp_query;
-  mca_pml_init_1_0_0_fn_t mp_init;
-} mca_pml_module_1_0_0_t;
+};
+typedef struct mca_pml_module_1_0_0_t mca_pml_module_1_0_0_t;
 
 
 /*
@@ -72,21 +83,22 @@ typedef struct mca_pml_module_1_0_0 {
  * provided by a PML.
  */
                                                                                                          
-typedef struct mca_pml_1_0_0 {
+struct mca_pml_1_0_0_t {
 
   mca_pml_addprocs_fn_t pml_addprocs;
   mca_pml_isend_fn_t pml_isend;
   mca_pml_progress_fn_t pml_progress;
 
-} mca_pml_1_0_0_t;
+};
+typedef struct mca_pml_1_0_0_t mca_pml_1_0_0_t;
 
 
 /*
  * Set the default type to use version 1.1.0 of the PML
  */
 
-typedef mca_pml_module_1_1_0_t mca_pml_t;
-typedef mca_pml_1_1_0_t mca_pml_t;
+typedef struct mca_pml_module_1_1_0_t mca_pml_module_t;
+typedef struct mca_pml_1_1_0_t mca_pml_t;
 
 
 /*
@@ -108,8 +120,8 @@ extern "C" {
  * Public variables
  */
 
-extern lam_list_t *mca_pml_base_opened;
-extern lam_list_t *mca_pml_base_available;
+extern lam_dbl_list_t *mca_pml_base_opened;
+extern lam_dbl_list_t *mca_pml_base_available;
 
 /*
  * Global instance of array of pointers to lam_ssi_rpi_t.  Will
