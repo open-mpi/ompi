@@ -8,9 +8,15 @@
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
+
+#ifdef HAVE_FCNTL_H
+#include <fcntl.h>
+#else
 #ifdef HAVE_SYS_FCNTL_H
 #include <sys/fcntl.h>
 #endif
+#endif
+
 #include <netinet/in.h>
 #include "util/output.h"
 #include "mca/rml/rml.h"
