@@ -1,0 +1,18 @@
+#
+# Copyright (c) 2004-2005 The Trustees of Indiana University.
+#                         All rights reserved.
+# Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
+#                         All rights reserved.
+# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+#                         University of Stuttgart.  All rights reserved.
+# $COPYRIGHT$
+# 
+# Additional copyrights may follow
+# 
+# $HEADER$
+#
+# Don't really need anything in here -- we just want a configure
+# script so that this can be a standalone component.
+#
+
+AC_DEFUN([MCA_CONFIGURE_STUB],[])
