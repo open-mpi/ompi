@@ -12,7 +12,7 @@ include $(top_srcdir)/config/Makefile.options
 # we need it to be 0
 #
 AM_CPPFLAGS		= -DLAM_PROFILING_DEFINES=0
-			
+
 #
 # The top directory always builds MPI_* bindings. The bottom directory
 # always builds PMPI_* bindings. The cases where the top directory
@@ -25,7 +25,7 @@ mpi_lib = libmpi_c_mpi.la
 else
 mpi_lib = 
 endif
-		
+
 noinst_LTLIBRARIES = libmpi_c.la $(mpi_lib)
 
 #
@@ -56,12 +56,14 @@ libmpi_c_la_LIBADD	= \
 					$(pmpi_lib)
 
 libmpi_c_mpi_la_SOURCES = \
-				alloc_mem.c \
+                alloc_mem.c \
                 comm_get_name.c \
                 comm_set_name.c \
                 finalize.c \
                 free_mem.c \
-                init.c \
+                init.c
+
+bogus_stuff = \
                 type_commit.c \
                 type_contiguous.c \
                 type_create_darray.c \
