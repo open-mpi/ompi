@@ -26,19 +26,17 @@ static char **mca_value_argv = NULL;
 /*
  * Add -mca to the possible command line options list
  */
-int 
-mca_base_cmd_line_setup(lam_cmd_line_t *cmd)
+int mca_base_cmd_line_setup(lam_cmd_line_t *cmd)
 {
-  return lam_cmd_line_set_opt(cmd, "m", "mca", 2,
-                              "General mechanism to pass MCA parameters");
+  return lam_cmd_line_make_opt(cmd, 'm', "mca", 2,
+                               "General mechanism to pass MCA parameters");
 }
 
 
 /*
  * Look for and handle any -mca options on the command line
  */
-int 
-mca_base_cmd_line_process_args(lam_cmd_line_t *cmd)
+int mca_base_cmd_line_process_args(lam_cmd_line_t *cmd)
 {
   int i, num_insts;
   char *buf = 0;
@@ -85,8 +83,7 @@ mca_base_cmd_line_process_args(lam_cmd_line_t *cmd)
  * top-level applications can directly invoke this to effect MCA
  * command line arguments.  
  */
-int 
-mca_base_cmd_line_process_arg(const char *param, const char *value)
+int mca_base_cmd_line_process_arg(const char *param, const char *value)
 {
   int i, len;
   char *new_str;
@@ -110,8 +107,8 @@ mca_base_cmd_line_process_arg(const char *param, const char *value)
   /* If we didn't already have an value for the same param, save this
      one away */
   
-  lam_argv_add(&mca_param_argc, &mca_param_argv, param);
-  lam_argv_add(&mca_value_argc, &mca_value_argv, value);
+  lam_argv_append(&mca_param_argc, &mca_param_argv, param);
+  lam_argv_append(&mca_value_argc, &mca_value_argv, value);
 
   return LAM_SUCCESS;
 }
