@@ -75,7 +75,7 @@ static bool ompi_is_empty(char *pathname);
 
 
 
-#define OMPI_DEFAULT_TMPDIR "tmp"
+#define OMPI_DEFAULT_TMPDIR "C:\\cygwin\\tmp"
 
 static int ompi_check_dir(bool create, char *directory)
 {
@@ -155,7 +155,7 @@ int ompi_session_dir(bool create, char *prfx, char *usr, char *hostid,
     }
 
     if (NULL == ompi_process_info.top_session_dir) {
-	if (0 > asprintf(&frontend, "openmpi-sessions-%s@%s:%s", user, hostname, batchname)) {
+	if (0 > asprintf(&frontend, "openmpi-sessions-%s@%s_%s", user, hostname, batchname)) {
 	    return_code = OMPI_ERROR;
 	    goto CLEANUP;
 	}

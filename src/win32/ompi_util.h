@@ -18,6 +18,10 @@ static __inline int getpagesize(void) {
 static __inline char *basename(char *path) {
     char *p = path;
     char *ret;
+
+    if (path[strlen(path)-1] == '\\') {
+        path[strlen(path)-1] = '\0';
+    }
     
     while (*p != '\0') p++;
     while (*p != '\\') p--;

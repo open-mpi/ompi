@@ -2453,6 +2453,12 @@
 				Name="components"
 				Filter="">
 				<File
+					RelativePath="..\..\src\mca\allocator\basic\allocator_basic.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\allocator\basic\allocator_basic.h">
+				</File>
+				<File
 					RelativePath="..\..\src\mca\allocator\bucket\allocator_bucket.c">
 				</File>
 				<File

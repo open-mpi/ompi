@@ -51,9 +51,12 @@ char *ompi_os_path(bool relative, ...)
         path[0] = 0;
 	if (relative) {
 	    strcpy(path, ".");
+        strcat(path, ompi_system_info.path_sep);
 	}
 	else {
+#ifndef WIN32
 	    strcpy(path, ompi_system_info.path_sep);
+#endif
 	}
 	return(path);
     }
@@ -73,6 +76,12 @@ char *ompi_os_path(bool relative, ...)
 
     if (relative) {
 	strcpy(path, ".");
+    }
+
+    /* get the first element here so that we don't have duplicate first
+       seperators */
+    if (NULL != (element = va_arg(ap1, char*))) {
+        strcat(path, element);    
     }
 
     while (NULL != (element=va_arg(ap1, char*))) {
