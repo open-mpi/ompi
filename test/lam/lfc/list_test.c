@@ -274,6 +274,18 @@ int main(int argc, char **argv)
     } else {
         test_failure(" error in lam_list_remove_item \n");
     }
+
+    i=0;
+    for(ele = (test_data_t *) lam_list_get_first(&list);
+            ele != (test_data_t *) lam_list_get_end(&list);
+            ele = (test_data_t *) ((lam_list_item_t *)ele)->lam_list_next) {
+        i++;
+    }
+    if( size_elements == i ) {
+        test_success();
+    } else {
+        test_failure(" error in lam_list_insert - incorrect list length");
+    }
     i=0;
     error_cnt=0;
     for(ele = (test_data_t *) lam_list_get_first(&list);
