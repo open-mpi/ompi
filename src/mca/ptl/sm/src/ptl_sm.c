@@ -606,7 +606,7 @@ int mca_ptl_sm_send_continue(
     mca_ptl_base_header_t* hdr;
     void *sm_data_ptr, *user_data_ptr;
     ompi_list_item_t* item;
-    mca_ptl_sm_second_frag_t *send_frag;
+    mca_ptl_sm_second_frag_t *send_frag, *write_send_frag;
     ompi_convertor_t *convertor;
     struct iovec address;
     unsigned int max_data,iov_count;
@@ -659,6 +659,9 @@ int mca_ptl_sm_send_continue(
      * at the peer.  Get this value from the first fragment */
     hdr->hdr_frag.hdr_dst_ptr.pval =
         sm_request->req_frag->super.frag_request;
+    send_frag->super.frag_request=
+        ((mca_ptl_base_recv_frag_t *)(sm_request->req_frag))->
+        frag_request;
 
     /* update the offset within the payload */
     sendreq->req_offset += size;
@@ -666,7 +669,7 @@ int mca_ptl_sm_send_continue(
     /* 
      * update the fragment descriptor 
      */
-    sm_request->req_frag->super.frag_base.frag_size=size;
+    send_frag->super.frag_base.frag_size=size;
 
     /* 
      * post the descriptor in the queue - post with the relative
@@ -678,7 +681,6 @@ int mca_ptl_sm_send_continue(
     send_fifo=&(mca_ptl_sm_component.fifo
             [my_local_smp_rank][peer_local_smp_rank]);
     /* since the first fragment has already been posted,
-
      * the queue has already been initialized, so no need to check */
 
     /* post descriptor */
@@ -689,7 +691,8 @@ int mca_ptl_sm_send_continue(
         ompi_atomic_lock(&(send_fifo->head_lock));
     }
 
-    return_status=ompi_fifo_write_to_head(sm_request->req_frag_offset_from_base,
+    write_send_frag=(void *)((char *)send_frag-mca_ptl_sm_component.sm_offset);
+    return_status=ompi_fifo_write_to_head(write_send_frag,
             send_fifo, mca_ptl_sm_component.sm_mpool,
             mca_ptl_sm_component.sm_offset);
     if( 0 <= return_status ) {
