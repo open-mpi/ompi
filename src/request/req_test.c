@@ -22,7 +22,7 @@ int ompi_request_test_any(
 
     ompi_atomic_mb();
     rptr = requests;
-    for (i = 0; i < count; i++) {
+    for (i = 0; i < count; i++, rptr++) {
         request = *rptr;
         if (request == MPI_REQUEST_NULL ||
             request->req_state == OMPI_REQUEST_INACTIVE) {
@@ -37,14 +37,17 @@ int ompi_request_test_any(
             }
             return request->req_fini(rptr);
         }
-        rptr++;
     }
 
     /* Only fall through here if we found nothing */
-    *index = MPI_UNDEFINED;
-    *completed = (num_requests_null_inactive == count) ? true : false;
-    if (MPI_STATUS_IGNORE != status) {
-        *status = ompi_status_empty;
+    if(num_requests_null_inactive != count) {
+        *completed = false;
+    } else {
+        *index = MPI_UNDEFINED;
+        *completed = true;
+        if (MPI_STATUS_IGNORE != status) {
+            *status = ompi_status_empty;
+        }
     }
     return OMPI_SUCCESS;
 }
@@ -63,14 +66,13 @@ int ompi_request_test_all(
 
     ompi_atomic_mb();
     rptr = requests;
-    for (i = 0; i < count; i++) {
+    for (i = 0; i < count; i++, rptr++) {
         request = *rptr;
         if (request == MPI_REQUEST_NULL || 
             request->req_state == OMPI_REQUEST_INACTIVE ||
             request->req_complete) {
             num_completed++;
         }
-        rptr++;
     }
 
     if (num_completed != count) {
