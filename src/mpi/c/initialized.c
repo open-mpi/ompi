@@ -22,14 +22,27 @@ static const char FUNC_NAME[] = "MPI_Initialized";
 
 int MPI_Initialized(int *flag) 
 {
-  if (MPI_PARAM_CHECK) {
-    if (NULL == flag) {
-      return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
+    MPI_Comm null = NULL;
+
+    if (MPI_PARAM_CHECK) {
+        if (NULL == flag) {
+
+            /* If we have an error, the action that we take depends on
+               whether we're currently (after MPI_Init and before
+               MPI_Finalize) or not */
+
+            if (ompi_mpi_initialized && !ompi_mpi_finalized) {
+                return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
+                                              FUNC_NAME);
+            } else {
+                return OMPI_ERRHANDLER_INVOKE(null, MPI_ERR_ARG,
+                                              FUNC_NAME);
+            }
+        }
     }
-  }
+    
+    /* Pretty simple */
 
-  /* Pretty simple */
-
-  *flag = ompi_mpi_initialized;
-  return MPI_SUCCESS;
+    *flag = ompi_mpi_initialized;
+    return MPI_SUCCESS;
 }
