@@ -337,7 +337,7 @@ mca_ptl_gm_matched( mca_ptl_base_module_t * ptl,
 {
     mca_pml_base_recv_request_t *request;
     mca_ptl_base_header_t *hdr;
-    int bytes_recv, rc, header_length;
+    int rc;
     mca_ptl_gm_module_t *gm_ptl;
     mca_ptl_gm_send_frag_t *ack;
     mca_ptl_gm_recv_frag_t *recv_frag;
@@ -348,13 +348,6 @@ mca_ptl_gm_matched( mca_ptl_base_module_t * ptl,
     gm_ptl = (mca_ptl_gm_module_t *)ptl;
     recv_frag = (mca_ptl_gm_recv_frag_t *)frag;
     peer = (mca_ptl_gm_peer_t*)recv_frag->frag_recv.frag_base.frag_peer;
-
-    if( MCA_PTL_HDR_TYPE_RNDV == hdr->hdr_common.hdr_type ) {
-	header_length = sizeof(mca_ptl_base_rendezvous_header_t);
-    } else {
-	assert( MCA_PTL_HDR_TYPE_MATCH == hdr->hdr_common.hdr_type );
-	header_length = sizeof(mca_ptl_base_match_header_t);
-    }
 
     if( hdr->hdr_common.hdr_flags & MCA_PTL_FLAGS_ACK ) {
         /* need to send an ack back */
@@ -382,16 +375,14 @@ mca_ptl_gm_matched( mca_ptl_base_module_t * ptl,
         }
     }
     
-    bytes_recv = frag->frag_base.frag_size; 
-
     if( frag->frag_base.frag_size > 0 ) {
         unsigned int max_data, out_size;
         int freeAfter;
 	struct iovec iov;
 	
 	/* Here we expect that frag_addr is the begin of the buffer header included */
-	iov.iov_base = ((char*)frag->frag_base.frag_addr); 
-	iov.iov_len = bytes_recv;
+	iov.iov_base = frag->frag_base.frag_addr;
+	iov.iov_len = frag->frag_base.frag_size;
     
         ompi_convertor_copy( peer->peer_proc->proc_ompi->proc_convertor,
                              &frag->frag_base.frag_convertor);
@@ -409,7 +400,7 @@ mca_ptl_gm_matched( mca_ptl_base_module_t * ptl,
     }
     
     /* update progress*/
-    ptl->ptl_recv_progress( ptl, request, bytes_recv, bytes_recv ); 
+    ptl->ptl_recv_progress( ptl, request, frag->frag_base.frag_size, frag->frag_base.frag_size ); 
     
     /* Now update the status of the fragment */
     if( ((mca_ptl_gm_recv_frag_t*)frag)->have_allocated_buffer == true ) {

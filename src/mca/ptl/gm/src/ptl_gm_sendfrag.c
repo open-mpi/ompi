@@ -76,7 +76,7 @@ mca_ptl_gm_alloc_send_frag( struct mca_ptl_gm_module_t *ptl,
     assert( ptl->num_send_tokens >= 0 );
     sendfrag->send_buf = (void*)item;
 
-    sendfrag->req                            = sendreq;
+    sendfrag->send_frag.frag_request         = sendreq;
     sendfrag->send_frag.frag_base.frag_owner = (struct mca_ptl_base_module_t*)ptl;
     sendfrag->frag_bytes_processed           = 0;
     sendfrag->status                         = -1;
@@ -161,13 +161,13 @@ int mca_ptl_gm_put_frag_init( struct mca_ptl_gm_send_frag_t* putfrag,
                                       offset, NULL );
     }
 
-    putfrag->status        = -1;
-    putfrag->wait_for_ack  = 0;
-    putfrag->put_sent      = 0;
-    putfrag->type          = PUT;
-    putfrag->req           = sendreq;
+    putfrag->status                         = -1;
+    putfrag->wait_for_ack                   = 0;
+    putfrag->put_sent                       = 0;
+    putfrag->type                           = PUT;
+    putfrag->send_frag.frag_request         = sendreq;
     putfrag->send_frag.frag_base.frag_owner = (mca_ptl_base_module_t*)gm_ptl;
-    putfrag->send_frag.frag_base.frag_peer = (struct mca_ptl_base_peer_t*)ptl_peer;
+    putfrag->send_frag.frag_base.frag_peer  = (struct mca_ptl_base_peer_t*)ptl_peer;
 
     return OMPI_SUCCESS; 
 }
