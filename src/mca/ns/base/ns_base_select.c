@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <types.h>
+#include <sys/types.h>
 
 #include "runtime/runtime.h"
 #include "util/output.h"
