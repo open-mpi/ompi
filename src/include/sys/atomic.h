@@ -20,6 +20,11 @@
 
 #include "ompi_config.h"
 
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+
+
 #if defined(__GNUC__) || defined (WIN32)
 #define STATIC_INLINE static inline
 #else
@@ -222,7 +227,9 @@ static inline int ompi_atomic_cmpset_xx( volatile void* addr, int64_t oldval,
                                     (int64_t)oldval, (int64_t)newval );
 #endif  /* OMPI_ARCHITECTURE_DEFINE_ATOMIC_CMPSET_64 */
    default:
-      *(int*)(NULL) = 0;
+      /* This should never happen, so deliberately cause a seg fault
+         for corefile analysis */
+      *(int*)(0) = 0;
    }
    return 0;  /* always fail */
 }
@@ -257,7 +264,9 @@ static inline int ompi_atomic_cmpset_acq_xx( volatile void* addr, int64_t oldval
                                         (int64_t)oldval, (int64_t)newval );
 #endif  /* OMPI_ARCHITECTURE_DEFINE_ATOMIC_CMPSET_64 */
    default:
-      *(int*)(NULL) = 0;
+      /* This should never happen, so deliberately cause a seg fault
+         for corefile analysis */
+      *(int*)(0) = 0;
    }
    return 0;  /* always fail */
 }
@@ -292,7 +301,9 @@ static inline int ompi_atomic_cmpset_rel_xx( volatile void* addr, int64_t oldval
                                         (int64_t)oldval, (int64_t)newval );
 #endif  /* OMPI_ARCHITECTURE_DEFINE_ATOMIC_CMPSET_64 */
    default:
-      *(int*)(NULL) = 0;
+      /* This should never happen, so deliberately cause a seg fault
+         for corefile analysis */
+      *(int*)(0) = 0;
    }
    return 0;  /* always fail */
 }
@@ -326,7 +337,9 @@ static inline void ompi_atomic_add_xx( volatile void* addr, int32_t value, size_
       break;
 #endif  /* OMPI_ARCHITECTURE_DEFINE_ATOMIC_CMPSET_64 */
    default:
-      *(int*)(NULL) = 0;
+      /* This should never happen, so deliberately cause a seg fault
+         for corefile analysis */
+      *(int*)(0) = 0;
    }
 }
 
@@ -356,7 +369,9 @@ static inline void ompi_atomic_sub_xx( volatile void* addr, int32_t value, size_
       break;
 #endif  /* OMPI_ARCHITECTURE_DEFINE_ATOMIC_CMPSET_64 */
    default:
-      *(int*)(NULL) = 0;
+      /* This should never happen, so deliberately cause a seg fault
+         for corefile analysis */
+      *(int*)(0) = 0;
    }
 }
 
@@ -388,15 +403,14 @@ enum {
 
 static inline int ompi_atomic_trylock(ompi_lock_t *lock)
 {
-   ompi_atomic_cmpset_acq((volatile int*) lock,
-                          OMPI_ATOMIC_UNLOCKED,
-                          OMPI_ATOMIC_LOCKED);
-   return lock->u.lock;
+    return ompi_atomic_cmpset_acq(&lock->u.lock,
+                                  OMPI_ATOMIC_UNLOCKED,
+                                  OMPI_ATOMIC_LOCKED);
 }
 
 static inline void ompi_atomic_lock(ompi_lock_t *lock)
 {
-   while( !ompi_atomic_cmpset_acq((volatile int *) lock,
+   while( !ompi_atomic_cmpset_acq(&lock->u.lock,
                                   OMPI_ATOMIC_UNLOCKED,
                                   OMPI_ATOMIC_LOCKED) ) {
       while (lock->u.lock == OMPI_ATOMIC_LOCKED) {
@@ -407,7 +421,7 @@ static inline void ompi_atomic_lock(ompi_lock_t *lock)
 
 static inline void ompi_atomic_unlock(ompi_lock_t *lock)
 {
-   ompi_atomic_cmpset_rel((volatile int *) lock,
+   ompi_atomic_cmpset_rel(&lock->u.lock,
                           OMPI_ATOMIC_LOCKED,
                           OMPI_ATOMIC_UNLOCKED);
 }
