@@ -10,6 +10,8 @@
 #include "mca/ptl/ptl.h"
 #include "mca/ptl/base/base.h"
 
+extern char* mca_ptl_base_include; /* list of ptls to include */
+extern char* mca_ptl_base_exclude; /* list of ptls to exclude */
 
 /**
  * Function for weeding out ptl components that don't want to run.
@@ -30,6 +32,9 @@ int mca_ptl_base_select(bool *allow_multi_user_threads,
   mca_ptl_base_module_t **modules;
   mca_ptl_base_selected_module_t *sm;
 
+  char** include = ompi_argv_split(mca_ptl_base_include, ',');
+  char** exclude = ompi_argv_split(mca_ptl_base_exclude, ',');
+
   /* Traverse the list of opened modules; call their init
      functions. */
 
@@ -39,6 +44,39 @@ int mca_ptl_base_select(bool *allow_multi_user_threads,
     cli = (mca_base_component_list_item_t *) item;
 
     component = (mca_ptl_base_component_t *) cli->cli_component;
+
+    /* if there is an include list - item must be in the list to be included */
+    if ( NULL != include ) {
+        char** argv = include; 
+        bool found = false;
+        while(argv && *argv) {
+            if(strcmp(component->ptlm_version.mca_component_name,*argv) == 0) {
+                found = true;
+                break;
+            }
+            argv++;
+        }
+        if(found == false) {
+            item = next;
+            continue;
+        }
+
+    /* otherwise - check the exclude list to see if this item has been specifically excluded */
+    } else if ( NULL != exclude ) {
+        char** argv = exclude; 
+        bool found = false;
+        while(argv && *argv) {
+            if(strcmp(component->ptlm_version.mca_component_name,*argv) == 0) {
+                found = true;
+                break;
+            }
+            argv++;
+        }
+        if(found == true) {
+            item = next;
+            continue;
+        }
+    }
 
     ompi_output_verbose(10, mca_ptl_base_output, 
                        "select: initializing %s component %s",
