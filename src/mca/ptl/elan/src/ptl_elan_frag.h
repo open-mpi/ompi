@@ -133,7 +133,6 @@ mca_ptl_elan_send_frag_init_ack (mca_ptl_elan_send_frag_t * ack,
 static inline void 
 mca_ptl_elan_recv_frag_matched (mca_ptl_elan_recv_frag_t * frag)
 {
-    mca_ptl_base_recv_request_t *request = frag->super.frag_request;
     return;
 }
 

@@ -54,7 +54,7 @@ mca_ptl_elan_module_1_0_0_t mca_ptl_elan_module = {
     }
 };
 
-static mca_ptl_elan_module_1_0_0_t *mp = &mca_ptl_elan_module;
+/*static mca_ptl_elan_module_1_0_0_t *mp = &mca_ptl_elan_module;*/
 
 /**
  * utility routines for parameter registration
@@ -190,14 +190,15 @@ mca_ptl_elan_module_init (int *num_ptls,
         return NULL;
     }
 
-#if ELAN_COMP
     /* initialize free lists */
+#if 1
     ompi_free_list_init (&(mca_ptl_elan_module.elan_reqs_free),
                          sizeof (mca_ptl_elan_send_request_t),
                          OBJ_CLASS (mca_ptl_elan_send_request_t),
                          mca_ptl_elan_module.elan_free_list_num,
                          mca_ptl_elan_module.elan_free_list_max,
                          mca_ptl_elan_module.elan_free_list_inc, NULL);
+#endif
 
     /* use default allocator */
     ompi_free_list_init (&mca_ptl_elan_module.elan_events_free,
@@ -206,7 +207,6 @@ mca_ptl_elan_module_init (int *num_ptls,
                          mca_ptl_elan_module.elan_free_list_num,
                          mca_ptl_elan_module.elan_free_list_max,
                          mca_ptl_elan_module.elan_free_list_inc, NULL);
-#endif
 
     /* open basic elan device */
     if (OMPI_SUCCESS != ompi_mca_ptl_elan_init(&mca_ptl_elan_module)) {
@@ -229,7 +229,7 @@ mca_ptl_elan_module_init (int *num_ptls,
      * over elan, there is no need for a oob_based exchange.
      */
 
-    ptls = (mca_ptl_elan_t **) malloc (mca_ptl_elan_module.elan_num_ptls *
+    ptls = (mca_ptl_t **) malloc (mca_ptl_elan_module.elan_num_ptls *
                                        sizeof (mca_ptl_t *));
 
     if (NULL == ptls) {

@@ -28,10 +28,51 @@
 #include "ptl_elan_frag.h"
 #include "ptl_elan_req.h"
 
-/*#include "elan/init.h"*/
-/*#include "elan/sys/misc_sys.h"*/
-/*#include "elan/sys/init_sys.h"*/
-/*#include "elan/elan.h"*/
+#define __elan4__
+
+#include <elan/elan.h>
+#include <elan/init.h>
+#include <rms/rmscall.h>
+#include <elan4/library.h>
+#include <elan4/types.h>
+#include <elan4/intcookie.h>
+/*#include "./elan.h"*/
+/*#include "./misc_sys.h"*/
+/*#include "./init_sys.h"*/
+#include "elan/sys/misc_sys.h"
+#include "elan/sys/init_sys.h"
+
+int elan4_block_inputter (ELAN4_CTX *ctx, unsigned blocked);
+
+struct ompi_elan_railtable_t {
+    int        rt_nrails;  
+    int        rt_rail;   
+    int        rt_railReal;
+    int       *rt_table;  
+    int       *rt_realRail;
+    struct ompi_elan_rail_t *rt_allRails;
+};
+typedef struct ompi_elan_railtable_t ompi_elan_railtable_t;
+
+struct ompi_elan_rail_t {
+    struct elan4_ctx   *rail_ctx;
+    ELAN4_SDRAM        *rail_sdram;
+    E4_CmdQ	       *rail_cmdq;
+    E4_CmdQ	       *rail_ecmdq;
+    ELAN4_ALLOC        *rail_alloc;
+    struct elan_sleep  *rail_sleepDescs;
+    ELAN4_COOKIEPOOL   *rail_cpool;
+    u_int               rail_index;
+    ELAN_TPORT         *rail_tport;
+    ompi_elan_railtable_t   *rail_railTable;
+    
+    void               *rail_estate; /* ADDR_SDRAM  r_estate; */
+    int                 rail_railNo;
+    E4_Addr             rail_tportrecvSym;
+    E4_Addr             rail_atomicSym;
+};
+typedef struct ompi_elan_rail_t ompi_elan_rail_t;
+
 
 /* Initialization and finalization routines */
 int ompi_mca_ptl_elan_init (mca_ptl_elan_module_1_0_0_t *mp);

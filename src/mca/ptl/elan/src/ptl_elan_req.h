@@ -17,7 +17,7 @@
 #include "ptl_elan_frag.h"
 
 /* Again, what is this! */
-/* extern ompi_class_t mca_ptl_elan_send_request_t_class;*/
+ extern ompi_class_t mca_ptl_elan_send_request_t_class;
 
 /**
  * ELAN send request derived type. The send request contains both the
