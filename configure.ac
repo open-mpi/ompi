@@ -856,6 +856,7 @@ AC_CONFIG_FILES([
     src/tools/mpirun/Makefile
     src/tools/wrappers/Makefile
 
+    src/rte/Makefile
     src/rte/universe/Makefile
 
     test/Makefile

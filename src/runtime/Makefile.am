@@ -12,7 +12,8 @@ noinst_LTLIBRARIES = libruntime.la
 # Source code files
 
 headers = \
-	runtime.h
+	runtime.h \
+	ompi_progress.h
 
 libruntime_la_SOURCES = \
 	$(headers) \

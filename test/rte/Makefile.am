@@ -22,9 +22,11 @@ bin_PROGRAMS = \
         openmpi
 
 openmpi_SOURCES = \
+        ompi_session_dir.c
+
+bogus_sources = \
         openmpi.h \
         ompi_init.h \
-        os_session_dir.c \
         ompi_init.c \
         openmpi.c 
 
