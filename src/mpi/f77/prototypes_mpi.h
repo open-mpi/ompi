@@ -12,6 +12,16 @@
  *
  * This is needed ONLY if the lower-level prototypes_pmpi.h has not
  * already been included
+ *
+ * Note about function pointers: all function pointers are prototyped
+ * here as (void*) rather than including the .h file that defines the
+ * proper type (e.g., "op/op.h" defines ompi_op_fortran_handler_fn_t,
+ * which is the function pointer type for fortran op callback
+ * functions).  This is because there is no type checking coming in
+ * from fortran, so why bother?  Also, including "op/op.h" (and
+ * friends) makes the all the f77 bindings files dependant on these
+ * files -- any change to any one of them will cause the recompilation
+ * of the entire set of f77 bindings (ugh!).
  */
 
 #ifndef OMPI_F77_PROTOTYPES_MPI_H
@@ -57,8 +67,8 @@ void mpi_comm_accept_f(char *port_name, MPI_Fint *info, MPI_Fint *root, MPI_Fint
 void mpi_comm_call_errhandler_f(MPI_Fint *comm, MPI_Fint *errorcode, MPI_Fint *ierr);
 void mpi_comm_compare_f(MPI_Fint *comm1, MPI_Fint *comm2, MPI_Fint *result, MPI_Fint *ierr);
 void mpi_comm_connect_f(char *port_name, MPI_Fint *info, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *newcomm, MPI_Fint *ierr);
-void mpi_comm_create_errhandler_f(MPI_Fint *function, MPI_Fint *errhandler, MPI_Fint *ierr);
-void mpi_comm_create_keyval_f(MPI_Fint *comm_copy_attr_fn, MPI_Fint *comm_delete_attr_fn, MPI_Fint *comm_keyval, char *extra_state, MPI_Fint *ierr);
+void mpi_comm_create_errhandler_f(void *function, MPI_Fint *errhandler, MPI_Fint *ierr);
+void mpi_comm_create_keyval_f(void *comm_copy_attr_fn, void *comm_delete_attr_fn, MPI_Fint *comm_keyval, char *extra_state, MPI_Fint *ierr);
 void mpi_comm_create_f(MPI_Fint *comm, MPI_Fint *group, MPI_Fint *newcomm, MPI_Fint *ierr);
 void mpi_comm_delete_attr_f(MPI_Fint *comm, MPI_Fint *comm_keyval, MPI_Fint *ierr);
 void mpi_comm_disconnect_f(MPI_Fint *comm, MPI_Fint *ierr);
@@ -88,7 +98,7 @@ void mpi_comm_spawn_multiple_f(MPI_Fint *count, char *array_of_commands, char *a
 void mpi_comm_split_f(MPI_Fint *comm, MPI_Fint *color, MPI_Fint *key, MPI_Fint *newcomm, MPI_Fint *ierr);
 void mpi_comm_test_inter_f(MPI_Fint *comm, MPI_Fint *flag, MPI_Fint *ierr);
 void mpi_dims_create_f(MPI_Fint *nnodes, MPI_Fint *ndims, MPI_Fint *dims, MPI_Fint *ierr);
-void mpi_errhandler_create_f(MPI_Fint *function, MPI_Fint *errhandler, MPI_Fint *ierr);
+void mpi_errhandler_create_f(void *function, MPI_Fint *errhandler, MPI_Fint *ierr);
 void mpi_errhandler_free_f(MPI_Fint *errhandler, MPI_Fint *ierr);
 void mpi_errhandler_get_f(MPI_Fint *comm, MPI_Fint *errhandler, MPI_Fint *ierr);
 void mpi_errhandler_set_f(MPI_Fint *comm, MPI_Fint *errhandler, MPI_Fint *ierr);
@@ -96,7 +106,7 @@ void mpi_error_class_f(MPI_Fint *errorcode, MPI_Fint *errorclass, MPI_Fint *ierr
 void mpi_error_string_f(MPI_Fint *errorcode, char *string, MPI_Fint *resultlen, MPI_Fint *ierr);
 void mpi_exscan_f(char *sendbuf, char *recvbuf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *op, MPI_Fint *comm, MPI_Fint *ierr);
 void mpi_file_call_errhandler_f(MPI_Fint *fh, MPI_Fint *errorcode, MPI_Fint *ierr);
-void mpi_file_create_errhandler_f(MPI_Fint *function, MPI_Fint *errhandler, MPI_Fint *ierr);
+void mpi_file_create_errhandler_f(void *function, MPI_Fint *errhandler, MPI_Fint *ierr);
 void mpi_file_set_errhandler_f(MPI_Fint *file, MPI_Fint *errhandler, MPI_Fint *ierr);
 void mpi_file_get_errhandler_f(MPI_Fint *file, MPI_Fint *errhandler, MPI_Fint *ierr);
 void mpi_file_open_f(MPI_Fint *comm, char *filename, MPI_Fint *amode, MPI_Fint *info, MPI_Fint *fh, MPI_Fint *ierr);
@@ -205,7 +215,7 @@ void mpi_is_thread_main_f(MPI_Fint *flag, MPI_Fint *ierr);
 void mpi_keyval_create_f(MPI_Fint *copy_fn, MPI_Fint *delete_fn, MPI_Fint *keyval, char *extra_state, MPI_Fint *ierr);
 void mpi_keyval_free_f(MPI_Fint *keyval, MPI_Fint *ierr);
 void mpi_lookup_name_f(char *service_name, MPI_Fint *info, char *port_name, MPI_Fint *ierr);
-void mpi_op_create_f(MPI_Fint *function, MPI_Fint *commute, MPI_Fint *op, MPI_Fint *ierr);
+void mpi_op_create_f(void *function, MPI_Fint *commute, MPI_Fint *op, MPI_Fint *ierr);
 void mpi_open_port_f(MPI_Fint *info, char *port_name, MPI_Fint *ierr);
 void mpi_op_free_f(MPI_Fint *op, MPI_Fint *ierr);
 void mpi_pack_external_f(char *datarep, char *inbuf, MPI_Fint *incount, MPI_Fint *datatype, char *outbuf, MPI_Fint *outsize, MPI_Fint *position, MPI_Fint *ierr);
@@ -253,7 +263,7 @@ void mpi_type_create_f90_integer_f(MPI_Fint *r, MPI_Fint *newtype, MPI_Fint *ier
 void mpi_type_create_f90_real_f(MPI_Fint *p, MPI_Fint *r, MPI_Fint *newtype, MPI_Fint *ierr);
 void mpi_type_create_hindexed_f(MPI_Fint *count, MPI_Fint *array_of_blocklengths, MPI_Fint *array_of_displacements, MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr);
 void mpi_type_create_hvector_f(MPI_Fint *count, MPI_Fint *blocklength, MPI_Fint *stride, MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr);
-void mpi_type_create_keyval_f(MPI_Fint *type_copy_attr_fn, MPI_Fint *type_delete_attr_fn, MPI_Fint *type_keyval, char *extra_state, MPI_Fint *ierr);
+void mpi_type_create_keyval_f(void *type_copy_attr_fn, void *type_delete_attr_fn, MPI_Fint *type_keyval, char *extra_state, MPI_Fint *ierr);
 void mpi_type_create_indexed_block_f(MPI_Fint *count, MPI_Fint *blocklength, MPI_Fint *array_of_displacements, MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr);
 void mpi_type_create_struct_f(MPI_Fint *count, MPI_Fint *array_of_block_lengths, MPI_Fint *array_of_displacements, MPI_Fint *array_of_types, MPI_Fint *newtype, MPI_Fint *ierr);
 void mpi_type_create_subarray_f(MPI_Fint *ndims, MPI_Fint *size_array, MPI_Fint *subsize_array, MPI_Fint *start_array, MPI_Fint *order, MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr);
@@ -291,8 +301,8 @@ void mpi_waitsome_f(MPI_Fint *incount, MPI_Fint *array_of_requests, MPI_Fint *ou
 void mpi_win_call_errhandler_f(MPI_Fint *win, MPI_Fint *errorcode, MPI_Fint *ierr);
 void mpi_win_complete_f(MPI_Fint *win, MPI_Fint *ierr);
 void mpi_win_create_f(char *base, MPI_Fint *size, MPI_Fint *disp_unit, MPI_Fint *info, MPI_Fint *comm, MPI_Fint *win, MPI_Fint *ierr);
-void mpi_win_create_errhandler_f(MPI_Fint *function, MPI_Fint *errhandler, MPI_Fint *ierr);
-void mpi_win_create_keyval_f(MPI_Fint *win_copy_attr_fn, MPI_Fint *win_delete_attr_fn, MPI_Fint *win_keyval, char *extra_state, MPI_Fint *ierr);
+void mpi_win_create_errhandler_f(void *function, MPI_Fint *errhandler, MPI_Fint *ierr);
+void mpi_win_create_keyval_f(void *win_copy_attr_fn, void *win_delete_attr_fn, MPI_Fint *win_keyval, char *extra_state, MPI_Fint *ierr);
 void mpi_win_delete_attr_f(MPI_Fint *win, MPI_Fint *win_keyval, MPI_Fint *ierr);
 void mpi_win_fence_f(MPI_Fint *assert, MPI_Fint *win, MPI_Fint *ierr);
 void mpi_win_free_f(MPI_Fint *win, MPI_Fint *ierr);
@@ -366,8 +376,8 @@ void mpi_comm_accept(char *port_name, MPI_Fint *info, MPI_Fint *root, MPI_Fint *
 void mpi_comm_call_errhandler(MPI_Fint *comm, MPI_Fint *errorcode, MPI_Fint *ierr);
 void mpi_comm_compare(MPI_Fint *comm1, MPI_Fint *comm2, MPI_Fint *result, MPI_Fint *ierr);
 void mpi_comm_connect(char *port_name, MPI_Fint *info, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *newcomm, MPI_Fint *ierr);
-void mpi_comm_create_errhandler(MPI_Fint *function, MPI_Fint *errhandler, MPI_Fint *ierr);
-void mpi_comm_create_keyval(MPI_Fint *comm_copy_attr_fn, MPI_Fint *comm_delete_attr_fn, MPI_Fint *comm_keyval, char *extra_state, MPI_Fint *ierr);
+void mpi_comm_create_errhandler(void *function, MPI_Fint *errhandler, MPI_Fint *ierr);
+void mpi_comm_create_keyval(void *comm_copy_attr_fn, void *comm_delete_attr_fn, MPI_Fint *comm_keyval, char *extra_state, MPI_Fint *ierr);
 void mpi_comm_create(MPI_Fint *comm, MPI_Fint *group, MPI_Fint *newcomm, MPI_Fint *ierr);
 void mpi_comm_delete_attr(MPI_Fint *comm, MPI_Fint *comm_keyval, MPI_Fint *ierr);
 void mpi_comm_disconnect(MPI_Fint *comm, MPI_Fint *ierr);
@@ -392,7 +402,7 @@ void mpi_comm_spawn_multiple(MPI_Fint *count, char *array_of_commands, char *arr
 void mpi_comm_split(MPI_Fint *comm, MPI_Fint *color, MPI_Fint *key, MPI_Fint *newcomm, MPI_Fint *ierr);
 void mpi_comm_test_inter(MPI_Fint *comm, MPI_Fint *flag, MPI_Fint *ierr);
 void mpi_dims_create(MPI_Fint *nnodes, MPI_Fint *ndims, MPI_Fint *dims, MPI_Fint *ierr);
-void mpi_errhandler_create(MPI_Fint *function, MPI_Fint *errhandler, MPI_Fint *ierr);
+void mpi_errhandler_create(void *function, MPI_Fint *errhandler, MPI_Fint *ierr);
 void mpi_errhandler_free(MPI_Fint *errhandler, MPI_Fint *ierr);
 void mpi_errhandler_get(MPI_Fint *comm, MPI_Fint *errhandler, MPI_Fint *ierr);
 void mpi_errhandler_set(MPI_Fint *comm, MPI_Fint *errhandler, MPI_Fint *ierr);
@@ -400,7 +410,7 @@ void mpi_error_class(MPI_Fint *errorcode, MPI_Fint *errorclass, MPI_Fint *ierr);
 void mpi_error_string(MPI_Fint *errorcode, char *string, MPI_Fint *resultlen, MPI_Fint *ierr);
 void mpi_exscan(char *sendbuf, char *recvbuf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *op, MPI_Fint *comm, MPI_Fint *ierr);
 void mpi_file_call_errhandler(MPI_Fint *fh, MPI_Fint *errorcode, MPI_Fint *ierr);
-void mpi_file_create_errhandler(MPI_Fint *function, MPI_Fint *errhandler, MPI_Fint *ierr);
+void mpi_file_create_errhandler(void *function, MPI_Fint *errhandler, MPI_Fint *ierr);
 void mpi_file_set_errhandler(MPI_Fint *file, MPI_Fint *errhandler, MPI_Fint *ierr);
 void mpi_file_get_errhandler(MPI_Fint *file, MPI_Fint *errhandler, MPI_Fint *ierr);
 void mpi_file_open(MPI_Fint *comm, char *filename, MPI_Fint *amode, MPI_Fint *info, MPI_Fint *fh, MPI_Fint *ierr);
@@ -509,7 +519,7 @@ void mpi_is_thread_main(MPI_Fint *flag, MPI_Fint *ierr);
 void mpi_keyval_create(MPI_Fint *copy_fn, MPI_Fint *delete_fn, MPI_Fint *keyval, char *extra_state, MPI_Fint *ierr);
 void mpi_keyval_free(MPI_Fint *keyval, MPI_Fint *ierr);
 void mpi_lookup_name(char *service_name, MPI_Fint *info, char *port_name, MPI_Fint *ierr);
-void mpi_op_create(MPI_Fint *function, MPI_Fint *commute, MPI_Fint *op, MPI_Fint *ierr);
+void mpi_op_create(void *function, MPI_Fint *commute, MPI_Fint *op, MPI_Fint *ierr);
 void mpi_open_port(MPI_Fint *info, char *port_name, MPI_Fint *ierr);
 void mpi_op_free(MPI_Fint *op, MPI_Fint *ierr);
 void mpi_pack_external(char *datarep, char *inbuf, MPI_Fint *incount, MPI_Fint *datatype, char *outbuf, MPI_Fint *outsize, MPI_Fint *position, MPI_Fint *ierr);
@@ -557,7 +567,7 @@ void mpi_type_create_f90_integer(MPI_Fint *r, MPI_Fint *newtype, MPI_Fint *ierr)
 void mpi_type_create_f90_real(MPI_Fint *p, MPI_Fint *r, MPI_Fint *newtype, MPI_Fint *ierr);
 void mpi_type_create_hindexed(MPI_Fint *count, MPI_Fint *array_of_blocklengths, MPI_Fint *array_of_displacements, MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr);
 void mpi_type_create_hvector(MPI_Fint *count, MPI_Fint *blocklength, MPI_Fint *stride, MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr);
-void mpi_type_create_keyval(MPI_Fint *type_copy_attr_fn, MPI_Fint *type_delete_attr_fn, MPI_Fint *type_keyval, char *extra_state, MPI_Fint *ierr);
+void mpi_type_create_keyval(void *type_copy_attr_fn, void *type_delete_attr_fn, MPI_Fint *type_keyval, char *extra_state, MPI_Fint *ierr);
 void mpi_type_create_indexed_block(MPI_Fint *count, MPI_Fint *blocklength, MPI_Fint *array_of_displacements, MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr);
 void mpi_type_create_struct(MPI_Fint *count, MPI_Fint *array_of_block_lengths, MPI_Fint *array_of_displacements, MPI_Fint *array_of_types, MPI_Fint *newtype, MPI_Fint *ierr);
 void mpi_type_create_subarray(MPI_Fint *ndims, MPI_Fint *size_array, MPI_Fint *subsize_array, MPI_Fint *start_array, MPI_Fint *order, MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr);
@@ -594,8 +604,8 @@ void mpi_waitsome(MPI_Fint *incount, MPI_Fint *array_of_requests, MPI_Fint *outc
 void mpi_win_call_errhandler(MPI_Fint *win, MPI_Fint *errorcode, MPI_Fint *ierr);
 void mpi_win_complete(MPI_Fint *win, MPI_Fint *ierr);
 void mpi_win_create(char *base, MPI_Fint *size, MPI_Fint *disp_unit, MPI_Fint *info, MPI_Fint *comm, MPI_Fint *win, MPI_Fint *ierr);
-void mpi_win_create_errhandler(MPI_Fint *function, MPI_Fint *errhandler, MPI_Fint *ierr);
-void mpi_win_create_keyval(MPI_Fint *win_copy_attr_fn, MPI_Fint *win_delete_attr_fn, MPI_Fint *win_keyval, char *extra_state, MPI_Fint *ierr);
+void mpi_win_create_errhandler(void *function, MPI_Fint *errhandler, MPI_Fint *ierr);
+void mpi_win_create_keyval(void *win_copy_attr_fn, void *win_delete_attr_fn, MPI_Fint *win_keyval, char *extra_state, MPI_Fint *ierr);
 void mpi_win_delete_attr(MPI_Fint *win, MPI_Fint *win_keyval, MPI_Fint *ierr);
 void mpi_win_fence(MPI_Fint *assert, MPI_Fint *win, MPI_Fint *ierr);
 void mpi_win_free(MPI_Fint *win, MPI_Fint *ierr);
@@ -667,8 +677,8 @@ void mpi_comm_accept_(char *port_name, MPI_Fint *info, MPI_Fint *root, MPI_Fint 
 void mpi_comm_call_errhandler_(MPI_Fint *comm, MPI_Fint *errorcode, MPI_Fint *ierr);
 void mpi_comm_compare_(MPI_Fint *comm1, MPI_Fint *comm2, MPI_Fint *result, MPI_Fint *ierr);
 void mpi_comm_connect_(char *port_name, MPI_Fint *info, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *newcomm, MPI_Fint *ierr);
-void mpi_comm_create_errhandler_(MPI_Fint *function, MPI_Fint *errhandler, MPI_Fint *ierr);
-void mpi_comm_create_keyval_(MPI_Fint *comm_copy_attr_fn, MPI_Fint *comm_delete_attr_fn, MPI_Fint *comm_keyval, char *extra_state, MPI_Fint *ierr);
+void mpi_comm_create_errhandler_(void *function, MPI_Fint *errhandler, MPI_Fint *ierr);
+void mpi_comm_create_keyval_(void *comm_copy_attr_fn, void *comm_delete_attr_fn, MPI_Fint *comm_keyval, char *extra_state, MPI_Fint *ierr);
 void mpi_comm_create_(MPI_Fint *comm, MPI_Fint *group, MPI_Fint *newcomm, MPI_Fint *ierr);
 void mpi_comm_delete_attr_(MPI_Fint *comm, MPI_Fint *comm_keyval, MPI_Fint *ierr);
 void mpi_comm_disconnect_(MPI_Fint *comm, MPI_Fint *ierr);
@@ -693,7 +703,7 @@ void mpi_comm_spawn_multiple_(MPI_Fint *count, char *array_of_commands, char *ar
 void mpi_comm_split_(MPI_Fint *comm, MPI_Fint *color, MPI_Fint *key, MPI_Fint *newcomm, MPI_Fint *ierr);
 void mpi_comm_test_inter_(MPI_Fint *comm, MPI_Fint *flag, MPI_Fint *ierr);
 void mpi_dims_create_(MPI_Fint *nnodes, MPI_Fint *ndims, MPI_Fint *dims, MPI_Fint *ierr);
-void mpi_errhandler_create_(MPI_Fint *function, MPI_Fint *errhandler, MPI_Fint *ierr);
+void mpi_errhandler_create_(void *function, MPI_Fint *errhandler, MPI_Fint *ierr);
 void mpi_errhandler_free_(MPI_Fint *errhandler, MPI_Fint *ierr);
 void mpi_errhandler_get_(MPI_Fint *comm, MPI_Fint *errhandler, MPI_Fint *ierr);
 void mpi_errhandler_set_(MPI_Fint *comm, MPI_Fint *errhandler, MPI_Fint *ierr);
@@ -701,7 +711,7 @@ void mpi_error_class_(MPI_Fint *errorcode, MPI_Fint *errorclass, MPI_Fint *ierr)
 void mpi_error_string_(MPI_Fint *errorcode, char *string, MPI_Fint *resultlen, MPI_Fint *ierr);
 void mpi_exscan_(char *sendbuf, char *recvbuf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *op, MPI_Fint *comm, MPI_Fint *ierr);
 void mpi_file_call_errhandler_(MPI_Fint *fh, MPI_Fint *errorcode, MPI_Fint *ierr);
-void mpi_file_create_errhandler_(MPI_Fint *function, MPI_Fint *errhandler, MPI_Fint *ierr);
+void mpi_file_create_errhandler_(void *function, MPI_Fint *errhandler, MPI_Fint *ierr);
 void mpi_file_set_errhandler_(MPI_Fint *file, MPI_Fint *errhandler, MPI_Fint *ierr);
 void mpi_file_get_errhandler_(MPI_Fint *file, MPI_Fint *errhandler, MPI_Fint *ierr);
 void mpi_file_open_(MPI_Fint *comm, char *filename, MPI_Fint *amode, MPI_Fint *info, MPI_Fint *fh, MPI_Fint *ierr);
@@ -810,7 +820,7 @@ void mpi_is_thread_main_(MPI_Fint *flag, MPI_Fint *ierr);
 void mpi_keyval_create_(MPI_Fint *copy_fn, MPI_Fint *delete_fn, MPI_Fint *keyval, char *extra_state, MPI_Fint *ierr);
 void mpi_keyval_free_(MPI_Fint *keyval, MPI_Fint *ierr);
 void mpi_lookup_name_(char *service_name, MPI_Fint *info, char *port_name, MPI_Fint *ierr);
-void mpi_op_create_(MPI_Fint *function, MPI_Fint *commute, MPI_Fint *op, MPI_Fint *ierr);
+void mpi_op_create_(void *function, MPI_Fint *commute, MPI_Fint *op, MPI_Fint *ierr);
 void mpi_open_port_(MPI_Fint *info, char *port_name, MPI_Fint *ierr);
 void mpi_op_free_(MPI_Fint *op, MPI_Fint *ierr);
 void mpi_pack_external_(char *datarep, char *inbuf, MPI_Fint *incount, MPI_Fint *datatype, char *outbuf, MPI_Fint *outsize, MPI_Fint *position, MPI_Fint *ierr);
@@ -858,7 +868,7 @@ void mpi_type_create_f90_integer_(MPI_Fint *r, MPI_Fint *newtype, MPI_Fint *ierr
 void mpi_type_create_f90_real_(MPI_Fint *p, MPI_Fint *r, MPI_Fint *newtype, MPI_Fint *ierr);
 void mpi_type_create_hindexed_(MPI_Fint *count, MPI_Fint *array_of_blocklengths, MPI_Fint *array_of_displacements, MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr);
 void mpi_type_create_hvector_(MPI_Fint *count, MPI_Fint *blocklength, MPI_Fint *stride, MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr);
-void mpi_type_create_keyval_(MPI_Fint *type_copy_attr_fn, MPI_Fint *type_delete_attr_fn, MPI_Fint *type_keyval, char *extra_state, MPI_Fint *ierr);
+void mpi_type_create_keyval_(void *type_copy_attr_fn, void *type_delete_attr_fn, MPI_Fint *type_keyval, char *extra_state, MPI_Fint *ierr);
 void mpi_type_create_indexed_block_(MPI_Fint *count, MPI_Fint *blocklength, MPI_Fint *array_of_displacements, MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr);
 void mpi_type_create_struct_(MPI_Fint *count, MPI_Fint *array_of_block_lengths, MPI_Fint *array_of_displacements, MPI_Fint *array_of_types, MPI_Fint *newtype, MPI_Fint *ierr);
 void mpi_type_create_subarray_(MPI_Fint *ndims, MPI_Fint *size_array, MPI_Fint *subsize_array, MPI_Fint *start_array, MPI_Fint *order, MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr);
@@ -895,8 +905,8 @@ void mpi_waitsome_(MPI_Fint *incount, MPI_Fint *array_of_requests, MPI_Fint *out
 void mpi_win_call_errhandler_(MPI_Fint *win, MPI_Fint *errorcode, MPI_Fint *ierr);
 void mpi_win_complete_(MPI_Fint *win, MPI_Fint *ierr);
 void mpi_win_create_(char *base, MPI_Fint *size, MPI_Fint *disp_unit, MPI_Fint *info, MPI_Fint *comm, MPI_Fint *win, MPI_Fint *ierr);
-void mpi_win_create_errhandler_(MPI_Fint *function, MPI_Fint *errhandler, MPI_Fint *ierr);
-void mpi_win_create_keyval_(MPI_Fint *win_copy_attr_fn, MPI_Fint *win_delete_attr_fn, MPI_Fint *win_keyval, char *extra_state, MPI_Fint *ierr);
+void mpi_win_create_errhandler_(void *function, MPI_Fint *errhandler, MPI_Fint *ierr);
+void mpi_win_create_keyval_(void *win_copy_attr_fn, void *win_delete_attr_fn, MPI_Fint *win_keyval, char *extra_state, MPI_Fint *ierr);
 void mpi_win_delete_attr_(MPI_Fint *win, MPI_Fint *win_keyval, MPI_Fint *ierr);
 void mpi_win_fence_(MPI_Fint *assert, MPI_Fint *win, MPI_Fint *ierr);
 void mpi_win_free_(MPI_Fint *win, MPI_Fint *ierr);
@@ -968,8 +978,8 @@ void mpi_comm_accept__(char *port_name, MPI_Fint *info, MPI_Fint *root, MPI_Fint
 void mpi_comm_call_errhandler__(MPI_Fint *comm, MPI_Fint *errorcode, MPI_Fint *ierr);
 void mpi_comm_compare__(MPI_Fint *comm1, MPI_Fint *comm2, MPI_Fint *result, MPI_Fint *ierr);
 void mpi_comm_connect__(char *port_name, MPI_Fint *info, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *newcomm, MPI_Fint *ierr);
-void mpi_comm_create_errhandler__(MPI_Fint *function, MPI_Fint *errhandler, MPI_Fint *ierr);
-void mpi_comm_create_keyval__(MPI_Fint *comm_copy_attr_fn, MPI_Fint *comm_delete_attr_fn, MPI_Fint *comm_keyval, char *extra_state, MPI_Fint *ierr);
+void mpi_comm_create_errhandler__(void *function, MPI_Fint *errhandler, MPI_Fint *ierr);
+void mpi_comm_create_keyval__(void *comm_copy_attr_fn, void *comm_delete_attr_fn, MPI_Fint *comm_keyval, char *extra_state, MPI_Fint *ierr);
 void mpi_comm_create__(MPI_Fint *comm, MPI_Fint *group, MPI_Fint *newcomm, MPI_Fint *ierr);
 void mpi_comm_delete_attr__(MPI_Fint *comm, MPI_Fint *comm_keyval, MPI_Fint *ierr);
 void mpi_comm_disconnect__(MPI_Fint *comm, MPI_Fint *ierr);
@@ -994,7 +1004,7 @@ void mpi_comm_spawn_multiple__(MPI_Fint *count, char *array_of_commands, char *a
 void mpi_comm_split__(MPI_Fint *comm, MPI_Fint *color, MPI_Fint *key, MPI_Fint *newcomm, MPI_Fint *ierr);
 void mpi_comm_test_inter__(MPI_Fint *comm, MPI_Fint *flag, MPI_Fint *ierr);
 void mpi_dims_create__(MPI_Fint *nnodes, MPI_Fint *ndims, MPI_Fint *dims, MPI_Fint *ierr);
-void mpi_errhandler_create__(MPI_Fint *function, MPI_Fint *errhandler, MPI_Fint *ierr);
+void mpi_errhandler_create__(void *function, MPI_Fint *errhandler, MPI_Fint *ierr);
 void mpi_errhandler_free__(MPI_Fint *errhandler, MPI_Fint *ierr);
 void mpi_errhandler_get__(MPI_Fint *comm, MPI_Fint *errhandler, MPI_Fint *ierr);
 void mpi_errhandler_set__(MPI_Fint *comm, MPI_Fint *errhandler, MPI_Fint *ierr);
@@ -1002,7 +1012,7 @@ void mpi_error_class__(MPI_Fint *errorcode, MPI_Fint *errorclass, MPI_Fint *ierr
 void mpi_error_string__(MPI_Fint *errorcode, char *string, MPI_Fint *resultlen, MPI_Fint *ierr);
 void mpi_exscan__(char *sendbuf, char *recvbuf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *op, MPI_Fint *comm, MPI_Fint *ierr);
 void mpi_file_call_errhandler__(MPI_Fint *fh, MPI_Fint *errorcode, MPI_Fint *ierr);
-void mpi_file_create_errhandler__(MPI_Fint *function, MPI_Fint *errhandler, MPI_Fint *ierr);
+void mpi_file_create_errhandler__(void *function, MPI_Fint *errhandler, MPI_Fint *ierr);
 void mpi_file_set_errhandler__(MPI_Fint *file, MPI_Fint *errhandler, MPI_Fint *ierr);
 void mpi_file_get_errhandler__(MPI_Fint *file, MPI_Fint *errhandler, MPI_Fint *ierr);
 void mpi_file_open__(MPI_Fint *comm, char *filename, MPI_Fint *amode, MPI_Fint *info, MPI_Fint *fh, MPI_Fint *ierr);
@@ -1111,7 +1121,7 @@ void mpi_is_thread_main__(MPI_Fint *flag, MPI_Fint *ierr);
 void mpi_keyval_create__(MPI_Fint *copy_fn, MPI_Fint *delete_fn, MPI_Fint *keyval, char *extra_state, MPI_Fint *ierr);
 void mpi_keyval_free__(MPI_Fint *keyval, MPI_Fint *ierr);
 void mpi_lookup_name__(char *service_name, MPI_Fint *info, char *port_name, MPI_Fint *ierr);
-void mpi_op_create__(MPI_Fint *function, MPI_Fint *commute, MPI_Fint *op, MPI_Fint *ierr);
+void mpi_op_create__(void *function, MPI_Fint *commute, MPI_Fint *op, MPI_Fint *ierr);
 void mpi_open_port__(MPI_Fint *info, char *port_name, MPI_Fint *ierr);
 void mpi_op_free__(MPI_Fint *op, MPI_Fint *ierr);
 void mpi_pack_external__(char *datarep, char *inbuf, MPI_Fint *incount, MPI_Fint *datatype, char *outbuf, MPI_Fint *outsize, MPI_Fint *position, MPI_Fint *ierr);
@@ -1159,7 +1169,7 @@ void mpi_type_create_f90_integer__(MPI_Fint *r, MPI_Fint *newtype, MPI_Fint *ier
 void mpi_type_create_f90_real__(MPI_Fint *p, MPI_Fint *r, MPI_Fint *newtype, MPI_Fint *ierr);
 void mpi_type_create_hindexed__(MPI_Fint *count, MPI_Fint *array_of_blocklengths, MPI_Fint *array_of_displacements, MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr);
 void mpi_type_create_hvector__(MPI_Fint *count, MPI_Fint *blocklength, MPI_Fint *stride, MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr);
-void mpi_type_create_keyval__(MPI_Fint *type_copy_attr_fn, MPI_Fint *type_delete_attr_fn, MPI_Fint *type_keyval, char *extra_state, MPI_Fint *ierr);
+void mpi_type_create_keyval__(void *type_copy_attr_fn, void *type_delete_attr_fn, MPI_Fint *type_keyval, char *extra_state, MPI_Fint *ierr);
 void mpi_type_create_indexed_block__(MPI_Fint *count, MPI_Fint *blocklength, MPI_Fint *array_of_displacements, MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr);
 void mpi_type_create_struct__(MPI_Fint *count, MPI_Fint *array_of_block_lengths, MPI_Fint *array_of_displacements, MPI_Fint *array_of_types, MPI_Fint *newtype, MPI_Fint *ierr);
 void mpi_type_create_subarray__(MPI_Fint *ndims, MPI_Fint *size_array, MPI_Fint *subsize_array, MPI_Fint *start_array, MPI_Fint *order, MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr);
@@ -1196,8 +1206,8 @@ void mpi_waitsome__(MPI_Fint *incount, MPI_Fint *array_of_requests, MPI_Fint *ou
 void mpi_win_call_errhandler__(MPI_Fint *win, MPI_Fint *errorcode, MPI_Fint *ierr);
 void mpi_win_complete__(MPI_Fint *win, MPI_Fint *ierr);
 void mpi_win_create__(char *base, MPI_Fint *size, MPI_Fint *disp_unit, MPI_Fint *info, MPI_Fint *comm, MPI_Fint *win, MPI_Fint *ierr);
-void mpi_win_create_errhandler__(MPI_Fint *function, MPI_Fint *errhandler, MPI_Fint *ierr);
-void mpi_win_create_keyval__(MPI_Fint *win_copy_attr_fn, MPI_Fint *win_delete_attr_fn, MPI_Fint *win_keyval, char *extra_state, MPI_Fint *ierr);
+void mpi_win_create_errhandler__(void *function, MPI_Fint *errhandler, MPI_Fint *ierr);
+void mpi_win_create_keyval__(void *win_copy_attr_fn, void *win_delete_attr_fn, MPI_Fint *win_keyval, char *extra_state, MPI_Fint *ierr);
 void mpi_win_delete_attr__(MPI_Fint *win, MPI_Fint *win_keyval, MPI_Fint *ierr);
 void mpi_win_fence__(MPI_Fint *assert, MPI_Fint *win, MPI_Fint *ierr);
 void mpi_win_free__(MPI_Fint *win, MPI_Fint *ierr);
@@ -1269,8 +1279,8 @@ void MPI_COMM_ACCEPT(char *port_name, MPI_Fint *info, MPI_Fint *root, MPI_Fint *
 void MPI_COMM_CALL_ERRHANDLER(MPI_Fint *comm, MPI_Fint *errorcode, MPI_Fint *ierr);
 void MPI_COMM_COMPARE(MPI_Fint *comm1, MPI_Fint *comm2, MPI_Fint *result, MPI_Fint *ierr);
 void MPI_COMM_CONNECT(char *port_name, MPI_Fint *info, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *newcomm, MPI_Fint *ierr);
-void MPI_COMM_CREATE_ERRHANDLER(MPI_Fint *function, MPI_Fint *errhandler, MPI_Fint *ierr);
-void MPI_COMM_CREATE_KEYVAL(MPI_Fint *comm_copy_attr_fn, MPI_Fint *comm_delete_attr_fn, MPI_Fint *comm_keyval, char *extra_state, MPI_Fint *ierr);
+void MPI_COMM_CREATE_ERRHANDLER(void *function, MPI_Fint *errhandler, MPI_Fint *ierr);
+void MPI_COMM_CREATE_KEYVAL(void *comm_copy_attr_fn, void *comm_delete_attr_fn, MPI_Fint *comm_keyval, char *extra_state, MPI_Fint *ierr);
 void MPI_COMM_CREATE(MPI_Fint *comm, MPI_Fint *group, MPI_Fint *newcomm, MPI_Fint *ierr);
 void MPI_COMM_DELETE_ATTR(MPI_Fint *comm, MPI_Fint *comm_keyval, MPI_Fint *ierr);
 void MPI_COMM_DISCONNECT(MPI_Fint *comm, MPI_Fint *ierr);
@@ -1295,7 +1305,7 @@ void MPI_COMM_SPAWN_MULTIPLE(MPI_Fint *count, char *array_of_commands, char *arr
 void MPI_COMM_SPLIT(MPI_Fint *comm, MPI_Fint *color, MPI_Fint *key, MPI_Fint *newcomm, MPI_Fint *ierr);
 void MPI_COMM_TEST_INTER(MPI_Fint *comm, MPI_Fint *flag, MPI_Fint *ierr);
 void MPI_DIMS_CREATE(MPI_Fint *nnodes, MPI_Fint *ndims, MPI_Fint *dims, MPI_Fint *ierr);
-void MPI_ERRHANDLER_CREATE(MPI_Fint *function, MPI_Fint *errhandler, MPI_Fint *ierr);
+void MPI_ERRHANDLER_CREATE(void *function, MPI_Fint *errhandler, MPI_Fint *ierr);
 void MPI_ERRHANDLER_FREE(MPI_Fint *errhandler, MPI_Fint *ierr);
 void MPI_ERRHANDLER_GET(MPI_Fint *comm, MPI_Fint *errhandler, MPI_Fint *ierr);
 void MPI_ERRHANDLER_SET(MPI_Fint *comm, MPI_Fint *errhandler, MPI_Fint *ierr);
@@ -1303,7 +1313,7 @@ void MPI_ERROR_CLASS(MPI_Fint *errorcode, MPI_Fint *errorclass, MPI_Fint *ierr);
 void MPI_ERROR_STRING(MPI_Fint *errorcode, char *string, MPI_Fint *resultlen, MPI_Fint *ierr);
 void MPI_EXSCAN(char *sendbuf, char *recvbuf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *op, MPI_Fint *comm, MPI_Fint *ierr);
 void MPI_FILE_CALL_ERRHANDLER(MPI_Fint *fh, MPI_Fint *errorcode, MPI_Fint *ierr);
-void MPI_FILE_CREATE_ERRHANDLER(MPI_Fint *function, MPI_Fint *errhandler, MPI_Fint *ierr);
+void MPI_FILE_CREATE_ERRHANDLER(void *function, MPI_Fint *errhandler, MPI_Fint *ierr);
 void MPI_FILE_SET_ERRHANDLER(MPI_Fint *file, MPI_Fint *errhandler, MPI_Fint *ierr);
 void MPI_FILE_GET_ERRHANDLER(MPI_Fint *file, MPI_Fint *errhandler, MPI_Fint *ierr);
 void MPI_FILE_OPEN(MPI_Fint *comm, char *filename, MPI_Fint *amode, MPI_Fint *info, MPI_Fint *fh, MPI_Fint *ierr);
@@ -1412,7 +1422,7 @@ void MPI_IS_THREAD_MAIN(MPI_Fint *flag, MPI_Fint *ierr);
 void MPI_KEYVAL_CREATE(MPI_Fint *copy_fn, MPI_Fint *delete_fn, MPI_Fint *keyval, char *extra_state, MPI_Fint *ierr);
 void MPI_KEYVAL_FREE(MPI_Fint *keyval, MPI_Fint *ierr);
 void MPI_LOOKUP_NAME(char *service_name, MPI_Fint *info, char *port_name, MPI_Fint *ierr);
-void MPI_OP_CREATE(MPI_Fint *function, MPI_Fint *commute, MPI_Fint *op, MPI_Fint *ierr);
+void MPI_OP_CREATE(void *function, MPI_Fint *commute, MPI_Fint *op, MPI_Fint *ierr);
 void MPI_OPEN_PORT(MPI_Fint *info, char *port_name, MPI_Fint *ierr);
 void MPI_OP_FREE(MPI_Fint *op, MPI_Fint *ierr);
 void MPI_PACK_EXTERNAL(char *datarep, char *inbuf, MPI_Fint *incount, MPI_Fint *datatype, char *outbuf, MPI_Fint *outsize, MPI_Fint *position, MPI_Fint *ierr);
@@ -1460,7 +1470,7 @@ void MPI_TYPE_CREATE_F90_INTEGER(MPI_Fint *r, MPI_Fint *newtype, MPI_Fint *ierr)
 void MPI_TYPE_CREATE_F90_REAL(MPI_Fint *p, MPI_Fint *r, MPI_Fint *newtype, MPI_Fint *ierr);
 void MPI_TYPE_CREATE_HINDEXED(MPI_Fint *count, MPI_Fint *array_of_blocklengths, MPI_Fint *array_of_displacements, MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr);
 void MPI_TYPE_CREATE_HVECTOR(MPI_Fint *count, MPI_Fint *blocklength, MPI_Fint *stride, MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr);
-void MPI_TYPE_CREATE_KEYVAL(MPI_Fint *type_copy_attr_fn, MPI_Fint *type_delete_attr_fn, MPI_Fint *type_keyval, char *extra_state, MPI_Fint *ierr);
+void MPI_TYPE_CREATE_KEYVAL(void *type_copy_attr_fn, void *type_delete_attr_fn, MPI_Fint *type_keyval, char *extra_state, MPI_Fint *ierr);
 void MPI_TYPE_CREATE_INDEXED_BLOCK(MPI_Fint *count, MPI_Fint *blocklength, MPI_Fint *array_of_displacements, MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr);
 void MPI_TYPE_CREATE_STRUCT(MPI_Fint *count, MPI_Fint *array_of_block_lengths, MPI_Fint *array_of_displacements, MPI_Fint *array_of_types, MPI_Fint *newtype, MPI_Fint *ierr);
 void MPI_TYPE_CREATE_SUBARRAY(MPI_Fint *ndims, MPI_Fint *size_array, MPI_Fint *subsize_array, MPI_Fint *start_array, MPI_Fint *order, MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr);
@@ -1497,8 +1507,8 @@ void MPI_WAITSOME(MPI_Fint *incount, MPI_Fint *array_of_requests, MPI_Fint *outc
 void MPI_WIN_CALL_ERRHANDLER(MPI_Fint *win, MPI_Fint *errorcode, MPI_Fint *ierr);
 void MPI_WIN_COMPLETE(MPI_Fint *win, MPI_Fint *ierr);
 void MPI_WIN_CREATE(char *base, MPI_Fint *size, MPI_Fint *disp_unit, MPI_Fint *info, MPI_Fint *comm, MPI_Fint *win, MPI_Fint *ierr);
-void MPI_WIN_CREATE_ERRHANDLER(MPI_Fint *function, MPI_Fint *errhandler, MPI_Fint *ierr);
-void MPI_WIN_CREATE_KEYVAL(MPI_Fint *win_copy_attr_fn, MPI_Fint *win_delete_attr_fn, MPI_Fint *win_keyval, char *extra_state, MPI_Fint *ierr);
+void MPI_WIN_CREATE_ERRHANDLER(void *function, MPI_Fint *errhandler, MPI_Fint *ierr);
+void MPI_WIN_CREATE_KEYVAL(void *win_copy_attr_fn, void *win_delete_attr_fn, MPI_Fint *win_keyval, char *extra_state, MPI_Fint *ierr);
 void MPI_WIN_DELETE_ATTR(MPI_Fint *win, MPI_Fint *win_keyval, MPI_Fint *ierr);
 void MPI_WIN_FENCE(MPI_Fint *assert, MPI_Fint *win, MPI_Fint *ierr);
 void MPI_WIN_FREE(MPI_Fint *win, MPI_Fint *ierr);
