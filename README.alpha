@@ -12,6 +12,10 @@ Additional copyrights may follow
 
 $HEADER$
 
+*** NOTE TO PACKAGERS: Do *not* include this file in the package.
+    This file will only be included in the alpha release.  Proper
+    documentation will be provided instead of this file.
+
 Greetings!
 
 The Open MPI development team is pleased to announce an alpha-quality
