@@ -16,6 +16,7 @@
 
 #include "runtime/runtime.h"
 #include "runtime/universe_connect.h"
+#include "util/output.h"
 #include "util/os_path.h"
 #include "util/sys_info.h"
 #include "util/cmd_line.h"
@@ -25,6 +26,7 @@
 #include "util/printf.h"
 #include "util/daemon_init.h"
 #include "mca/base/base.h"
+#include "mca/oob/base/base.h"
 #include "tools/openmpi/openmpi.h"
 
 
@@ -47,6 +49,7 @@ int main(int argc, char **argv)
     char *universe = NULL;
     char *tmp, *universe_name, *remote_host, *remote_uid;
     char *script_file, *socket_contact_info, *oob_contact_info;
+    char *contact_file;
     int ret;
     bool persistent, silent, script, webserver;
     bool multi_thread = false;
