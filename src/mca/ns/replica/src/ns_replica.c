@@ -23,13 +23,14 @@
 ompi_process_id_t ns_replica_create_cellid(void)
 {
     ompi_output(mca_ns_base_output, "entered replica create cellid\n");
+    return(1);
     if ((OMPI_NAME_SERVICE_MAX-1) >= mca_ns_replica_last_used_cellid) {
 	ompi_output(mca_ns_base_output, "create cellid: last_used %d\n", mca_ns_replica_last_used_cellid);
 
 	mca_ns_replica_last_used_cellid = mca_ns_replica_last_used_cellid + 1;
 	return(mca_ns_replica_last_used_cellid);
     } else {
-	return(1);
+	return(0);
     }
 }
 
