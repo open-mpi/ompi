@@ -8,7 +8,7 @@ static void mca_pml_ptl_comm_construct(mca_pml_comm_t* comm);
 static void mca_pml_ptl_comm_destruct(mca_pml_comm_t* comm);
 
 
-lam_class_info_t mca_pml_ptl_comm_t_class_info = {
+lam_class_info_t mca_pml_comm_t_class_info = {
     "mca_pml_comm_t",
     CLASS_INFO(lam_object_t),
     (lam_construct_t)mca_pml_ptl_comm_construct,
