@@ -25,20 +25,23 @@
 #include "util/session_dir.h"
 #include "util/printf.h"
 #include "util/daemon_init.h"
+#include "util/universe_setup_file_io.h"
 #include "mca/base/base.h"
 #include "mca/oob/base/base.h"
 #include "tools/openmpi/openmpi.h"
 
 
 ompi_universe_t ompi_universe = {
-    /* .name =              */    NULL,
-    /* .host =              */    NULL,
-    /* .uid =               */    NULL,
-    /* .persistence =       */    false,
-    /* .silent_mode =       */    false,
-    /* .script_mode =       */    false,
-    /* .web_server =        */    false,
-    /* .console_connected = */    false
+    /* .name =                */    NULL,
+    /* .host =                */    NULL,
+    /* .uid =                 */    NULL,
+    /* .persistence =         */    false,
+    /* .silent_mode =         */    false,
+    /* .script_mode =         */    false,
+    /* .web_server =          */    false,
+    /* .socket_contact_info = */    NULL,
+    /* .oob_contact_info =    */    NULL,
+    /* .console_connected =   */    false
 };
 
 
@@ -54,7 +57,6 @@ int main(int argc, char **argv)
     bool persistent, silent, script, webserver;
     bool multi_thread = false;
     bool hidden_thread = false;
-    FILE *fp;
 
     tmp = universe_name = remote_host = remote_uid = script_file = NULL;
     persistent = silent = script = webserver = false;
@@ -198,26 +200,37 @@ int main(int argc, char **argv)
 					     ompi_universe.name, NULL, NULL)) { /* found */
 	    fprintf(stderr, "think i found something\n");
 	    /* check for "contact-info" file. if present, read it in. if not present, wait one second (might
-	     * be race condition) and try again. second failure => abnormal termination, go ahead and create own
-	     * file and assume prior seed daemon died
+	     * be race condition) and try again.
 	     */
-	    /* read the universe info - see if it's persistent */
-	    /* if not persistent, augment universe name until unique, create own universe and continue */
+	    if (OMPI_SUCCESS != ompi_session_dir(true, tmpdir, ompi_system_info.user, ompi_system_info.nodename, NULL,
+						 ompi_universe.name, NULL, NULL)) {
+		fprintf(stderr, "couldn't update the process info structure - please report error to bugs@open-mpi.org\n");
+		exit(1);
+	    }
+	    contact_file = ompi_os_path(false, ompi_process_info.universe_session_dir,
+					"universe-setup.txt", NULL);
+
+	    if (OMPI_SUCCESS != (ret = ompi_read_universe_setup_file(contact_file))) {
+		if (OMPI_ERR_NOT_FOUND == ret) { /* couldn't find file - assume prior seed daemon died */
+		    goto STARTUP;
+		} else {
+		    fprintf(stderr, "couldn't read contact info: %s\n", contact_file);
+		    exit(1);
+		}
+	    }
+
+	    if (!ompi_universe.persistence) {  /* if not persistent, define our own name and start new universe */
+		/* derive unique name based on current one */
+		goto STARTUP;
+	    }
+
 	    /* if persistent, use contact info to connect */
 
-	    /* 	    if (OMPI_ERROR == ompi_universe_connect(tmp)) { /\* try to connect *\/ */
-	    /* 		/\* first failure - try to start universe and then try again *\/ */
-	    /* 		if (NULL == (tmp = ompi_universe_init(tmpdir, ompi_system_info.user, */
-	    /* 						      ompi_universe.name))) { /\* couldn't create universe - error *\/ */
-	    /* 		    fprintf(stderr, "could not create universe session directory tree - please report error to bugs@open-mpi.org\n"); */
-	    /* 		    exit(1); */
-	    /* 		} */
-	    /* 		if (OMPI_ERROR == ompi_universe_connect(tmp)) { /\* try to connect *\/ */
-	    /* 		    /\* second failure - we're doomed *\/ */
-	    /* 		    fprintf(stderr, "could not connect to universe - please report error to bugs@open-mpi.org\n"); */
-	    /* 		    exit(1); */
-	    /* 		} */
-	    /* 	    } */
+	    if (OMPI_ERROR == ompi_universe_connect(ompi_universe.oob_contact_info)) { /* try to connect */
+		/* universe must have died - try starting up new one */
+		goto STARTUP;
+	    }
+
 	} else {
 	    fprintf(stderr, "session dir not found - creating it - calling univ_init\n");
 	    /* setup universe session directory */
@@ -228,6 +241,7 @@ int main(int argc, char **argv)
 	    }
 
 	    /* convert myself to be the seed daemon */
+	STARTUP:
 	    ompi_process_info.seed = true;
 	    ompi_process_info.my_universe = strdup(ompi_universe.name);
 
@@ -259,30 +273,14 @@ int main(int argc, char **argv)
 
 	    /* save all pertinent info in universe file */
 	    contact_file = ompi_os_path(false, ompi_process_info.universe_session_dir,
-				   "universe-setup.txt", NULL);
-	    fp = fopen(contact_file, "w");
-	    if (NULL == fp) {
-		ompi_output(0, "cannot open file to save contact info");
+					"universe-setup.txt", NULL);
+
+	    if (OMPI_SUCCESS != ompi_write_universe_setup_file(contact_file)) {
+		fprintf(stderr, "couldn't write universe setup file: %s\n", contact_file);
 		exit(1);
 	    }
-	    fprintf(fp, "name: %s\n", ompi_universe.name);
-	    fprintf(fp, "host: %s\n", ompi_universe.host);
-	    fprintf(fp, "user: %s\n", ompi_universe.uid);
-	    if (persistent) {
-		fprintf(fp, "state: persistent\n");
-	    } else {
-		fprintf(fp, "state: non-persistent\n");
-	    }
-	    if (silent) {
-		fprintf(fp, "mode: silent\n");
-	    } else {
-		fprintf(fp, "mode: console\n");
-	    }
-	    if (webserver) {
-		fprintf(fp, "socket: %s\n", socket_contact_info);
-	    }
-	    fprintf(fp, "oob: %s\n", oob_contact_info);
-	    fclose(fp);
+
+	    /* put info on the registry */
 
 	}
     }
