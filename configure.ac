@@ -284,6 +284,7 @@ AC_CONFIG_FILES([
     src/include/Makefile
 
     src/lam/Makefile
+    src/lam/ctnetwork/Makefile
     src/lam/lfc/Makefile
     src/lam/mem/Makefile
 
@@ -311,9 +312,6 @@ AC_CONFIG_FILES([
     src/mpi/p2p/base/Makefile
     src/mpi/p2p/interface/Makefile
     src/mpi/p2p/matching/Makefile
-
-    src/runtime/Makefile
-    src/runtime/ctnetwork/Makefile
 
     src/tools/Makefile
     src/tools/wrappers/Makefile

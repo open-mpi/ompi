@@ -31,12 +31,13 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-SUBDIRS	= lfc mem os threads util
+SUBDIRS	= ctnetwork lfc mem os threads util
 
 lib_LTLIBRARIES = liblam.la
 
 liblam_la_SOURCES =
 liblam_la_LIBADD = \
+	ctnetwork/libctnetwork.la \
 	lfc/liblfc.la \
 	mem/libmem.la \
 	threads/libthreads.la \

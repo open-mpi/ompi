@@ -5,4 +5,4 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-SUBDIRS		= include lam mpi runtime tools
+SUBDIRS		= include lam mpi tools
