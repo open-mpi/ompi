@@ -451,10 +451,7 @@ static int lam_free_lists_create_more_elts(lam_free_lists_t *flist, int pool_idx
     current_loc = (char *) ptr;
     for (desc = 0; desc < flist->fl_elt_per_chunk; desc++)
     {
-        /* bypass OBJ_CONSTRUCT() in this case (generic types) */
-        ((lam_object_t *) current_loc)->obj_class = flist->fl_elt_cls;
-        ((lam_object_t *) current_loc)
-            ->obj_class->cls_construct((lam_object_t *) current_loc);
+        OBJ_CONSTRUCT_INTERNAL(current_loc, flist->fl_elt_cls);
         current_loc += flist->fl_elt_size;
     }
     

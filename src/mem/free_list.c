@@ -19,10 +19,18 @@ lam_class_t lam_free_list_t_class = {
 
 static void lam_free_list_construct(lam_free_list_t* fl)
 {
+    OBJ_CONSTRUCT(&fl->fl_lock, lam_mutex_t);
+    fl->fl_max_to_alloc = 0;
+    fl->fl_num_allocated = 0;
+    fl->fl_num_per_alloc = 0;
+    fl->fl_elem_size = 0;
+    fl->fl_elem_class = 0;
+    fl->fl_allocator = 0;
 }
 
 static void lam_free_list_destruct(lam_free_list_t* fl)
 {
+    OBJ_DESTRUCT(&fl->fl_lock);
 }
 
 int lam_free_list_init(
@@ -61,10 +69,7 @@ int lam_free_list_grow(lam_free_list_t* flist, size_t num_elements)
     for(i=0; i<num_elements; i++) {
         lam_list_item_t* item = (lam_list_item_t*)ptr;
         if (NULL != flist->fl_elem_class) {
-            /* bypass OBJ_CONSTRUCT() in this case (generic types) */
-            ((lam_object_t *) item)->obj_class = flist->fl_elem_class;
-            ((lam_object_t *) item)
-                ->obj_class->cls_construct((lam_object_t *) item);
+            OBJ_CONSTRUCT_INTERNAL(item, flist->fl_elem_class);
         }
         lam_list_append(&flist->super, item);
         ptr += flist->fl_elem_size;
