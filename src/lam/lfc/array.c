@@ -26,7 +26,7 @@ void lam_arr_destroy(lam_array_t *arr)
     SUPER_DESTROY(arr, lam_array_cls.cls_parent);
 }
 
-lam_bool_t lam_arr_init_with(lam_array_t *arr, size_t length)
+bool lam_arr_init_with(lam_array_t *arr, size_t length)
 {
     /* initializes array with fixed length.
     lam_arr_init() must have been called first. */
@@ -42,12 +42,12 @@ lam_bool_t lam_arr_init_with(lam_array_t *arr, size_t length)
         bzero(arr->arr_items, sizeof(lam_object_t *)*length);            
     }
     else
-        return LAM_FALSE;
+      return false;
     
-    return LAM_TRUE;
+    return true;
 }
 
-lam_bool_t lam_arr_append_item(lam_array_t *arr, lam_object_t *item)
+bool lam_arr_append_item(lam_array_t *arr, lam_object_t *item)
 {
     if ( arr->arr_size == arr->arr_length )
     {
@@ -59,12 +59,12 @@ lam_bool_t lam_arr_append_item(lam_array_t *arr, lam_object_t *item)
         }
         else
         {
-            return LAM_FALSE;
+          return false;
         }
     }
     arr->arr_items[arr->arr_size++] = item;
     
-    return LAM_TRUE;
+    return true;
 }
 
 void lam_arr_remove_all(lam_array_t *arr)
