@@ -35,16 +35,29 @@
         OMPI_THREAD_LOCK(&ptl_base->ptl_cache_lock);                       \
         sendreq = (mca_pml_base_send_request_t*)                           \
             ompi_list_remove_first(&ptl_base->ptl_cache);                  \
-        OMPI_THREAD_UNLOCK(&ptl_base->ptl_cache_lock);                     \
         if(NULL != sendreq) {                                              \
+            OMPI_THREAD_UNLOCK(&ptl_base->ptl_cache_lock);                 \
             rc = OMPI_SUCCESS;                                             \
-        } else {                                                           \
+        } else if (ptl_base->ptl_cache_alloc < ptl_base->ptl_cache_size) { \
             mca_ptl_base_module_t* ptl = ptl_base->ptl;                    \
             ompi_list_item_t* item;                                        \
             OMPI_FREE_LIST_WAIT(&mca_pml_teg.teg_send_requests, item, rc); \
             sendreq = (mca_pml_base_send_request_t*)item;                  \
             sendreq->req_ptl = ptl;                                        \
-            ptl->ptl_request_init(ptl, sendreq);                           \
+            if(ptl->ptl_request_init(ptl, sendreq) == OMPI_SUCCESS) {      \
+                sendreq->req_cached = true;                                \
+                ptl_base->ptl_cache_alloc++;                               \
+            }                                                              \
+            OMPI_THREAD_UNLOCK(&ptl_base->ptl_cache_lock);                 \
+        } else {                                                           \
+            /*                                                             \
+             * take a request from the global pool                         \
+            */                                                             \
+            ompi_list_item_t* item;                                        \
+            OMPI_THREAD_UNLOCK(&ptl_base->ptl_cache_lock);                 \
+            OMPI_FREE_LIST_WAIT(&mca_pml_teg.teg_send_requests, item, rc); \
+            sendreq = (mca_pml_base_send_request_t*)item;                  \
+            sendreq->req_ptl = ptl_proc->ptl;                              \
         }                                                                  \
                                                                            \
     /* otherwise - take the allocation from the global list */             \
@@ -59,33 +72,26 @@
 }
 
 
-#define MCA_PML_TEG_SEND_REQUEST_RETURN(request)                           \
+#define MCA_PML_TEG_SEND_REQUEST_RETURN(sendreq)                           \
 {                                                                          \
-    mca_ptl_base_module_t* ptl = sendreq->req_ptl;                         \
+    mca_ptl_base_module_t* ptl = (sendreq)->req_ptl;                       \
     mca_pml_base_ptl_t* ptl_base = ptl->ptl_base;                          \
                                                                            \
     /*  Decrement reference count on communicator. */                      \
-    OBJ_RELEASE(request->req_base.req_comm);                               \
+    OBJ_RELEASE((sendreq)->req_base.req_comm);                             \
                                                                            \
     /*                                                                     \
      * If there is a cache associated with the ptl - first attempt         \
      * to return the send descriptor to the cache.                         \
      */                                                                    \
-    if(NULL != ptl->ptl_base) {                                            \
+    if(NULL != ptl->ptl_base && (sendreq)->req_cached) {                   \
         OMPI_THREAD_LOCK(&ptl_base->ptl_cache_lock);                       \
-        if(ompi_list_get_size(&ptl_base->ptl_cache) >= ptl_base->ptl_cache_size) {\
-            /* if cache limit is exceeded - return to global pool */       \
-            ptl->ptl_request_fini(ptl, sendreq);                           \
-            OMPI_FREE_LIST_RETURN(&mca_pml_teg.teg_send_requests,          \
-		(ompi_list_item_t*)sendreq);                               \
-        } else {                                                           \
-             ompi_list_prepend(&ptl_base->ptl_cache,                       \
-		     (ompi_list_item_t*)sendreq);                          \
-        }                                                                  \
+        ompi_list_prepend(&ptl_base->ptl_cache,                            \
+                          (ompi_list_item_t*)sendreq);                     \
         OMPI_THREAD_UNLOCK(&ptl_base->ptl_cache_lock);                     \
     } else {                                                               \
         OMPI_FREE_LIST_RETURN(                                             \
-            &mca_pml_teg.teg_send_requests, (ompi_list_item_t*)request);   \
+            &mca_pml_teg.teg_send_requests, (ompi_list_item_t*)sendreq);   \
     }                                                                      \
 }
 
