@@ -409,6 +409,8 @@ int mca_ptl_ib_peer_send(mca_ptl_base_peer_t* peer,
 
             ompi_list_append(&peer->pending_send_frags,
                     (ompi_list_item_t *)frag);
+
+            rc = OMPI_SUCCESS;
             break;
         case MCA_PTL_IB_CLOSED:
 
@@ -427,6 +429,11 @@ int mca_ptl_ib_peer_send(mca_ptl_base_peer_t* peer,
         case MCA_PTL_IB_CONNECTED:
 
             /* Send the frag off */
+
+            rc = mca_ptl_ib_post_send(peer->peer_module->ib_state,
+                    peer->peer_conn, 
+                    &frag->ib_buf, (void*) frag);
+
             break;
         default:
             rc = OMPI_ERR_UNREACH;
@@ -434,4 +441,42 @@ int mca_ptl_ib_peer_send(mca_ptl_base_peer_t* peer,
     OMPI_THREAD_UNLOCK(&peer->peer_send_lock);
 
     return rc;
+}
+
+void mca_ptl_ib_progress_send_frags(mca_ptl_ib_peer_t* peer)
+{
+    int num_frags, i;
+    ompi_list_item_t *frag_item;
+    mca_ptl_ib_send_frag_t *sendfrag;
+
+    /*Check if peer is connected */
+    if(peer->peer_state != MCA_PTL_IB_CONNECTED) {
+
+        return;
+    }
+
+    /* Go over all the frags */
+    num_frags = 
+        ompi_list_get_size(&(peer->pending_send_frags));
+
+    frag_item = 
+        ompi_list_get_first(&(peer->pending_send_frags));
+
+    for(i = 0; i < num_frags; 
+            frag_item = ompi_list_get_next(frag_item), i++) {
+
+        sendfrag = (mca_ptl_ib_send_frag_t *) frag_item;
+
+        if(!sendfrag->frag_progressed) {
+            /* We need to post this one */
+            if(mca_ptl_ib_post_send(peer->peer_module->ib_state,
+                        peer->peer_conn, &sendfrag->ib_buf,
+                        (void*) sendfrag)
+                    != OMPI_SUCCESS) {
+                ompi_output(0, "Error in posting send");
+            }
+
+            sendfrag->frag_progressed = 1;
+        }
+    }
 }

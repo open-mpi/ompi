@@ -329,14 +329,13 @@ int mca_ptl_ib_component_control(int param, void* value, size_t size)
 
 int mca_ptl_ib_component_progress(mca_ptl_tstamp_t tstamp)
 {
-    int i, j, num_procs, num_frags, num_modules;
-    ompi_list_item_t *item, *frag_item;
+    int i, num_procs, num_modules;
+    ompi_list_item_t *item;
     mca_ptl_ib_peer_t *peer;
     mca_ptl_ib_proc_t *proc;
-    mca_ptl_ib_send_frag_t *sendfrag;
-    VAPI_ret_t ret;
-    VAPI_wc_desc_t comp;
     mca_ptl_ib_module_t *module;
+    int comp_type;
+    void* comp_addr;
 
     num_procs = ompi_list_get_size(&(mca_ptl_ib_component.ib_procs));
 
@@ -348,7 +347,6 @@ int mca_ptl_ib_component_progress(mca_ptl_tstamp_t tstamp)
     for(i = 0; i < num_procs; 
             item = ompi_list_get_next(item), i++) {
 
-
         proc = (mca_ptl_ib_proc_t *) item;
 
         /* We only have one peer per proc right now */
@@ -356,37 +354,7 @@ int mca_ptl_ib_component_progress(mca_ptl_tstamp_t tstamp)
 
         if(!ompi_list_is_empty(&(peer->pending_send_frags))) {
 
-            /*Check if peer is connected */
-            if(peer->peer_state != MCA_PTL_IB_CONNECTED) {
-                break;
-            }
-
-            /* Go over all the frags */
-            num_frags = 
-                ompi_list_get_size(&(peer->pending_send_frags));
-
-            frag_item = 
-                ompi_list_get_first(&(peer->pending_send_frags));
-
-            for(j = 0; j < num_frags; 
-                    frag_item = ompi_list_get_next(frag_item), j++) {
-
-                sendfrag = (mca_ptl_ib_send_frag_t *) frag_item;
-
-                if(sendfrag->frag_progressed) {
-                    /* We've already posted this one */
-                    continue;
-                } else {
-                    /* We need to post this one */
-                    if(mca_ptl_ib_post_send(peer->peer_module->ib_state,
-                                peer->peer_conn, &sendfrag->ib_buf)
-                            != OMPI_SUCCESS) {
-                        return OMPI_ERROR;
-                    }
-
-                    sendfrag->frag_progressed = 1;
-                }
-            }
+            mca_ptl_ib_progress_send_frags(peer);
         }
     }
 
@@ -398,95 +366,36 @@ int mca_ptl_ib_component_progress(mca_ptl_tstamp_t tstamp)
         
         module = mca_ptl_ib_component.ib_ptl_modules[i];
 
-        ret = VAPI_poll_cq(mca_ptl_ib_component.ib_ptl_modules[0]->ib_state->nic, 
-                mca_ptl_ib_component.ib_ptl_modules[0]->ib_state->cq_hndl,
-                &comp);
-        if(VAPI_OK == ret) {
-            if(comp.status != VAPI_SUCCESS) {
-                ompi_output(0, "Got error : %s, Vendor code : %d\n",
-                        VAPI_wc_status_sym(comp.status),
-                        comp.vendor_err_syndrome);
+        mca_ptl_ib_drain_network(module->ib_state->nic,
+                    module->ib_state->cq_hndl,
+                    &comp_type, &comp_addr);
 
-            } else {
-                if(VAPI_CQE_SQ_SEND_DATA == comp.opcode) {
-                    D_PRINT("Send completion, id:%d\n",
-                            comp.id);
-                }
-                else if(VAPI_CQE_RQ_SEND_DATA == comp.opcode) {
-                    D_PRINT("Received message completion len = %d, id : %d\n",
-                            comp.byte_len, comp.id);
-                }
-                else {
-                    D_PRINT("Got Unknown completion! Opcode : %d\n", 
-                            comp.opcode);
-                }
-            }
+        /* Handle n/w completions */
+
+        switch(comp_type) {
+            case IB_COMP_SEND :
+                D_PRINT("Caught a send completion");
+
+                /* Process a completed send */
+                mca_ptl_ib_process_send_comp((mca_ptl_base_module_t *) module,
+                        comp_addr);
+
+                break;
+            case IB_COMP_RECV :
+                D_PRINT("Caught a recv completion");
+
+                /* Process incoming receives */
+                mca_ptl_ib_process_recv((mca_ptl_base_module_t *)module, 
+                        comp_addr);
+                
+                break;
+            case IB_COMP_NOTHING:
+                break;
+            default:
+                ompi_output(0, "Errorneous network completion");
+                break;
         }
     }
 
     return OMPI_SUCCESS;
 }
-
-
-
-
-#if 0
-
-    mca_ptl_base_header_t *header;
-    mca_ptl_ib_recv_buf_t *recv_buf;
-    mca_ptl_ib_send_buf_t *send_buf;
-    mca_pml_base_request_t *req;
-
-    D_PRINT("Checking completions ... \n");
-
-    ret = VAPI_poll_cq(mca_ptl_ib_component.ib_ptl_modules[0]->nic, 
-            mca_ptl_ib_component.ib_ptl_modules[0]->cq_hndl,
-            &comp);
-    if(VAPI_OK == ret) {
-        if(comp.status != VAPI_SUCCESS) {
-            fprintf(stderr,"Got error : %s, Vendor code : %d\n",
-                    VAPI_wc_status_sym(comp.status),
-                    comp.vendor_err_syndrome);
-
-        }
-        if(VAPI_CQE_SQ_SEND_DATA == comp.opcode) {
-            D_PRINT("Send completion, id:%d\n",
-                    comp.id);
-            send_buf = (mca_ptl_ib_send_buf_t*) (unsigned int)comp.id;
-            header = (mca_ptl_base_header_t*) send_buf->buf;
-
-            req = (mca_pml_base_request_t *) send_buf->req;
-
-            mca_ptl_ib_component.ib_ptl_modules[0]->super.ptl_send_progress(
-                    mca_ptl_ib_component.ib_ptl_modules[0], 
-                    req,
-                    header->hdr_frag.hdr_frag_length);
-        }
-        else if(VAPI_CQE_RQ_SEND_DATA == comp.opcode) {
-            D_PRINT("Received message completion len = %d, id : %d\n",
-                    comp.byte_len, comp.id);
-
-            recv_buf = (mca_ptl_ib_recv_buf_t*) (unsigned int)comp.id;
-            header = (mca_ptl_base_header_t*) recv_buf->buf;
-
-            switch(header->hdr_common.hdr_type) {
-                case MCA_PTL_HDR_TYPE_MATCH:
-                    D_PRINT("Header type match\n");
-
-                    mca_ptl_ib_frag(mca_ptl_ib_component.ib_ptl_modules[0],
-                            header);
-                    break;
-                case MCA_PTL_HDR_TYPE_FRAG:
-                    D_PRINT("Header type frag\n");
-                    break;
-                default :
-                    D_PRINT("Header, what header?\n");
-                    break;
-            }
-        }
-        else {
-            D_PRINT("Got Unknown completion! Opcode : %d\n", 
-                    comp.opcode);
-        }
-    }
-#endif

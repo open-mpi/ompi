@@ -17,6 +17,7 @@ typedef struct mca_ptl_ib_recv_frag_t mca_ptl_ib_recv_frag_t;
 
 
 void mca_ptl_ib_recv_frag_done (mca_ptl_base_header_t*,
-        mca_ptl_ib_recv_frag_t*, mca_pml_base_recv_request_t*);
+        mca_ptl_base_recv_frag_t*, mca_pml_base_recv_request_t*);
 
+void mca_ptl_ib_process_recv(mca_ptl_base_module_t* , void*);
 #endif

@@ -36,6 +36,13 @@ typedef enum {
     IB_SEND
 } IB_wr_t;
 
+typedef enum {
+    IB_COMP_ERROR,
+    IB_COMP_RECV,
+    IB_COMP_SEND,
+    IB_COMP_NOTHING
+} IB_comp_t;
+
 struct vapi_memhandle_t {
     VAPI_mr_hndl_t                  hndl;
     /* Memory region handle */
@@ -168,6 +175,10 @@ typedef struct mca_ptl_ib_peer_conn_t mca_ptl_ib_peer_conn_t;
     ib_buf_ptr->desc.sr.remote_qp = qp;                             \
 }
 
+#define IB_SET_SEND_DESC_ID(ib_buf_ptr, addr) {                     \
+    ib_buf_ptr->desc.sr.id = (VAPI_virt_addr_t)                     \
+        (MT_virt_addr_t) addr;                                      \
+}
 int mca_ptl_ib_init_module(mca_ptl_ib_state_t*, int);
 int mca_ptl_ib_get_num_hcas(uint32_t*);
 int mca_ptl_ib_init_peer(mca_ptl_ib_state_t*, mca_ptl_ib_peer_conn_t*);
@@ -177,6 +188,8 @@ int mca_ptl_ib_register_mem(VAPI_hca_hndl_t nic, VAPI_pd_hndl_t ptag,
         void* buf, int len, vapi_memhandle_t* memhandle);
 int mca_ptl_ib_post_send(mca_ptl_ib_state_t *ib_state,
         mca_ptl_ib_peer_conn_t *peer_conn, 
-        ib_buffer_t *ib_buf);
+        ib_buffer_t *ib_buf, void*);
+void mca_ptl_ib_drain_network(VAPI_hca_hndl_t nic,
+        VAPI_cq_hndl_t cq_hndl, int* comp_type, void** comp_addr);
 
 #endif  /* MCA_PTL_IB_PRIV_H */
