@@ -77,7 +77,7 @@ int MPI_Type_indexed(int count,
       a_i[2] = array_of_displacements;
 
       ompi_ddt_set_args( *newtype, 2 * count + 1, a_i, 0, NULL, 1, &oldtype,
-                        MPI_COMBINER_INDEXED );
+                         MPI_COMBINER_INDEXED );
    }
 
    return MPI_SUCCESS;
