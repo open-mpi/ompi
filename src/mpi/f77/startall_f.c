@@ -44,7 +44,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_STARTALL,
 
 
 #if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
-#include "mpi/c/profile/defines.h"
+#include "mpi/f77/profile/defines.h"
 #endif
 
 void mpi_startall_f(MPI_Fint *count, MPI_Fint *array_of_requests, MPI_Fint *ierr)

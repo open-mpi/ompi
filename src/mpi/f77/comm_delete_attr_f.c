@@ -43,7 +43,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_DELETE_ATTR,
 
 
 #if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
-#include "mpi/c/profile/defines.h"
+#include "mpi/f77/profile/defines.h"
 #endif
 
 void mpi_comm_delete_attr_f(MPI_Fint *comm, MPI_Fint *comm_keyval, MPI_Fint *ierr)

@@ -11,7 +11,7 @@ include $(top_srcdir)/config/Makefile.options
 # replaces all MPI_* symbols with PMPI_* symbols. In this directory,
 # we need it to be 0
 #
-AM_CPPFLAGS     = -DOMPI_PROFILE_LAYER=0
+AM_CPPFLAGS = -DOMPI_PROFILE_LAYER=0 -DOMPI_COMPILING_F77_WRAPPERS=1
 #
 # The top directory always builds MPI_* bindings. The bottom directory
 # always builds PMPI_* bindings. The cases where the top directory

@@ -43,7 +43,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GATHER,
 
 
 #if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
-#include "mpi/c/profile/defines.h"
+#include "mpi/f77/profile/defines.h"
 #endif
 
 void mpi_gather_f(char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcount, MPI_Fint *recvtype, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *ierr)

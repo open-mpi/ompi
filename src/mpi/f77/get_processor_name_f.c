@@ -43,7 +43,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GET_PROCESSOR_NAME,
 
 
 #if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
-#include "mpi/c/profile/defines.h"
+#include "mpi/f77/profile/defines.h"
 #endif
 
 void mpi_get_processor_name_f(char *name, MPI_Fint *resultlen, MPI_Fint *ierr)

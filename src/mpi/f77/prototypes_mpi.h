@@ -1,7 +1,6 @@
-#ifndef OMPI_F77_PROTOTYPES_MPI_H
-#define OMPI_F77_PROTOTYPES_MPI_H
 /*
  * $HEADER$
+ *
  * This file prototypes all MPI fortran functions in all four fortran
  * symbol conventions as well as all the internal real OMPI wrapper
  * functions (different from any of the four fortran symbol
@@ -14,10 +13,14 @@
  * This is needed ONLY if the lower-level prototypes_pmpi.h has not
  * already been included
  */
+
+#ifndef OMPI_F77_PROTOTYPES_MPI_H
+#define OMPI_F77_PROTOTYPES_MPI_H
+
 #ifndef OMPI_F77_PROTOTYPES_PMPI_H
-/* 
- * mpi_*_f definitions go here --- .mpif_f.h 
- */
+
+/* These are the prototypes for the "real" back-end fortran functions. */
+
 void mpi_abort_f(MPI_Fint *comm, MPI_Fint *errorcode, MPI_Fint *ierr);
 void mpi_accumulate_f(char *origin_addr, MPI_Fint *origin_count, MPI_Fint *origin_datatype, MPI_Fint *target_rank, MPI_Fint *target_disp, MPI_Fint *target_count, MPI_Fint *target_datatype, MPI_Fint *op, MPI_Fint *win, MPI_Fint *ierr);
 void mpi_add_error_class_f(MPI_Fint *errorclass, MPI_Fint *ierr);
@@ -183,9 +186,9 @@ void mpi_info_get_nkeys_f(MPI_Fint *info, MPI_Fint *nkeys, MPI_Fint *ierr);
 void mpi_info_get_nthkey_f(MPI_Fint *info, MPI_Fint *n, char *key, MPI_Fint *ierr);
 void mpi_info_get_valuelen_f(MPI_Fint *info, char *key, MPI_Fint *valuelen, MPI_Fint *flag, MPI_Fint *ierr);
 void mpi_info_set_f(MPI_Fint *info, char *key, char *value, MPI_Fint *ierr);
-void mpi_init_f( MPI_Fint *ierr );
+void mpi_init_f(MPI_Fint *ierr);
 void mpi_initialized_f(MPI_Fint *flag, MPI_Fint *ierr);
-void mpi_init_thread_f(MPI_Fint *required, MPI_Fint *provided, MPI_Fint *ierr );
+void mpi_init_thread_f(MPI_Fint *required, MPI_Fint *provided, MPI_Fint *ierr);
 void mpi_intercomm_create_f(MPI_Fint *local_comm, MPI_Fint *local_leader, MPI_Fint *bridge_comm, MPI_Fint *remote_leader, MPI_Fint *tag, MPI_Fint *newintercomm, MPI_Fint *ierr);
 void mpi_intercomm_merge_f(MPI_Fint *intercomm, MPI_Fint *high, MPI_Fint *newintercomm, MPI_Fint *ierr);
 void mpi_iprobe_f(MPI_Fint *source, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *flag, MPI_Fint *status, MPI_Fint *ierr);
@@ -303,9 +306,23 @@ void mpi_win_unlock_f(MPI_Fint *rank, MPI_Fint *win, MPI_Fint *ierr);
 void mpi_win_wait_f(MPI_Fint *win, MPI_Fint *ierr);
 double mpi_wtick_f(void);
 double mpi_wtime_f(void);
+
+void mpi_type_null_delete_fn_f(MPI_Fint* type, int* type_keyval, void* attribute_val_out, int* flag, int* ierr);
+void mpi_type_null_copy_fn_f(MPI_Fint* type, int* type_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag, int* ierr);
+void mpi_type_dup_fn_f(MPI_Fint* type, int* type_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag, int* ierr);
+void mpi_win_dup_fn_f(MPI_Fint* window, int* win_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag, int* ierr);
+void mpi_win_null_copy_fn_f(MPI_Fint* window, int* win_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag, int* ierr);
+void mpi_win_null_delete_fn_f(MPI_Fint* window, int* win_keyval, void* attribute_val_out, int* flag, int* ierr);
+void mpi_null_delete_fn_f(MPI_Fint* comm, int* comm_keyval, void* attribute_val_out, int* flag, int* ierr);
+void mpi_null_copy_fn_f(MPI_Fint* comm, int* comm_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag, int* ierr);
+void mpi_dup_fn_f(MPI_Fint* comm, int* comm_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag, int* ierr);
+void mpi_comm_null_delete_fn_f(MPI_Fint* comm, int* comm_keyval, void* attribute_val_out, int* flag, int* ierr);
+void mpi_comm_null_copy_fn_f(MPI_Fint* comm, int* comm_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag, int* ierr);
+void mpi_comm_dup_fn_f(MPI_Fint* comm, int* comm_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag, int* ierr);
+
 #endif
 
-/*These are the all lower case prototypes*/
+/* These are the all lower case prototypes */
 
 void mpi_abort(MPI_Fint *comm, MPI_Fint *errorcode, MPI_Fint *ierr);
 void mpi_accumulate(char *origin_addr, MPI_Fint *origin_count, MPI_Fint *origin_datatype, MPI_Fint *target_rank, MPI_Fint *target_disp, MPI_Fint *target_count, MPI_Fint *target_datatype, MPI_Fint *op, MPI_Fint *win, MPI_Fint *ierr);
@@ -592,7 +609,21 @@ void mpi_win_unlock(MPI_Fint *rank, MPI_Fint *win, MPI_Fint *ierr);
 void mpi_win_wait(MPI_Fint *win, MPI_Fint *ierr);
 double mpi_wtick(void);
 double mpi_wtime(void);
-/*This is the single underscore prototypes*/
+
+void mpi_type_null_delete_fn(MPI_Fint* type, int* type_keyval, void* attribute_val_out, int* flag, int* ierr);
+void mpi_type_null_copy_fn(MPI_Fint* type, int* type_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag, int* ierr);
+void mpi_type_dup_fn(MPI_Fint* type, int* type_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag, int* ierr);
+void mpi_win_dup_fn(MPI_Fint* window, int* win_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag, int* ierr);
+void mpi_win_null_copy_fn(MPI_Fint* window, int* win_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag, int* ierr);
+void mpi_win_null_delete_fn(MPI_Fint* window, int* win_keyval, void* attribute_val_out, int* flag, int* ierr);
+void mpi_null_delete_fn(MPI_Fint* comm, int* comm_keyval, void* attribute_val_out, int* flag, int* ierr);
+void mpi_null_copy_fn(MPI_Fint* comm, int* comm_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag, int* ierr);
+void mpi_dup_fn(MPI_Fint* comm, int* comm_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag, int* ierr);
+void mpi_comm_null_delete_fn(MPI_Fint* comm, int* comm_keyval, void* attribute_val_out, int* flag, int* ierr);
+void mpi_comm_null_copy_fn(MPI_Fint* comm, int* comm_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag, int* ierr);
+void mpi_comm_dup_fn(MPI_Fint* comm, int* comm_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag, int* ierr);
+
+/* These are all the single underscore prototypes */
 
 void mpi_abort_(MPI_Fint *comm, MPI_Fint *errorcode, MPI_Fint *ierr);
 void mpi_accumulate_(char *origin_addr, MPI_Fint *origin_count, MPI_Fint *origin_datatype, MPI_Fint *target_rank, MPI_Fint *target_disp, MPI_Fint *target_count, MPI_Fint *target_datatype, MPI_Fint *op, MPI_Fint *win, MPI_Fint *ierr);
@@ -879,7 +910,21 @@ void mpi_win_unlock_(MPI_Fint *rank, MPI_Fint *win, MPI_Fint *ierr);
 void mpi_win_wait_(MPI_Fint *win, MPI_Fint *ierr);
 double mpi_wtick_(void);
 double mpi_wtime_(void);
-/*This is the double underscore prototypes*/
+
+void mpi_type_null_delete_fn_(MPI_Fint* type, int* type_keyval, void* attribute_val_out, int* flag, int* ierr);
+void mpi_type_null_copy_fn_(MPI_Fint* type, int* type_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag, int* ierr);
+void mpi_type_dup_fn_(MPI_Fint* type, int* type_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag, int* ierr);
+void mpi_win_dup_fn_(MPI_Fint* window, int* win_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag, int* ierr);
+void mpi_win_null_copy_fn_(MPI_Fint* window, int* win_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag, int* ierr);
+void mpi_win_null_delete_fn_(MPI_Fint* window, int* win_keyval, void* attribute_val_out, int* flag, int* ierr);
+void mpi_null_delete_fn_(MPI_Fint* comm, int* comm_keyval, void* attribute_val_out, int* flag, int* ierr);
+void mpi_null_copy_fn_(MPI_Fint* comm, int* comm_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag, int* ierr);
+void mpi_dup_fn_(MPI_Fint* comm, int* comm_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag, int* ierr);
+void mpi_comm_null_delete_fn_(MPI_Fint* comm, int* comm_keyval, void* attribute_val_out, int* flag, int* ierr);
+void mpi_comm_null_copy_fn_(MPI_Fint* comm, int* comm_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag, int* ierr);
+void mpi_comm_dup_fn_(MPI_Fint* comm, int* comm_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag, int* ierr);
+
+/* These are all the double underscore prototypes */
 
 void mpi_abort__(MPI_Fint *comm, MPI_Fint *errorcode, MPI_Fint *ierr);
 void mpi_accumulate__(char *origin_addr, MPI_Fint *origin_count, MPI_Fint *origin_datatype, MPI_Fint *target_rank, MPI_Fint *target_disp, MPI_Fint *target_count, MPI_Fint *target_datatype, MPI_Fint *op, MPI_Fint *win, MPI_Fint *ierr);
@@ -1166,7 +1211,21 @@ void mpi_win_unlock__(MPI_Fint *rank, MPI_Fint *win, MPI_Fint *ierr);
 void mpi_win_wait__(MPI_Fint *win, MPI_Fint *ierr);
 double mpi_wtick__(void);
 double mpi_wtime__(void);
-/*This is the all upper case prototypes*/
+
+void mpi_type_null_delete_fn__(MPI_Fint* type, int* type_keyval, void* attribute_val_out, int* flag, int* ierr);
+void mpi_type_null_copy_fn__(MPI_Fint* type, int* type_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag, int* ierr);
+void mpi_type_dup_fn__(MPI_Fint* type, int* type_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag, int* ierr);
+void mpi_win_dup_fn__(MPI_Fint* window, int* win_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag, int* ierr);
+void mpi_win_null_copy_fn__(MPI_Fint* window, int* win_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag, int* ierr);
+void mpi_win_null_delete_fn__(MPI_Fint* window, int* win_keyval, void* attribute_val_out, int* flag, int* ierr);
+void mpi_null_delete_fn__(MPI_Fint* comm, int* comm_keyval, void* attribute_val_out, int* flag, int* ierr);
+void mpi_null_copy_fn__(MPI_Fint* comm, int* comm_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag, int* ierr);
+void mpi_dup_fn__(MPI_Fint* comm, int* comm_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag, int* ierr);
+void mpi_comm_null_delete_fn__(MPI_Fint* comm, int* comm_keyval, void* attribute_val_out, int* flag, int* ierr);
+void mpi_comm_null_copy_fn__(MPI_Fint* comm, int* comm_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag, int* ierr);
+void mpi_comm_dup_fn__(MPI_Fint* comm, int* comm_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag, int* ierr);
+
+/* These are all the upper case prototypes */
 
 void MPI_ABORT(MPI_Fint *comm, MPI_Fint *errorcode, MPI_Fint *ierr);
 void MPI_ACCUMULATE(char *origin_addr, MPI_Fint *origin_count, MPI_Fint *origin_datatype, MPI_Fint *target_rank, MPI_Fint *target_disp, MPI_Fint *target_count, MPI_Fint *target_datatype, MPI_Fint *op, MPI_Fint *win, MPI_Fint *ierr);
@@ -1453,5 +1512,18 @@ void MPI_WIN_UNLOCK(MPI_Fint *rank, MPI_Fint *win, MPI_Fint *ierr);
 void MPI_WIN_WAIT(MPI_Fint *win, MPI_Fint *ierr);
 double MPI_WTICK(void);
 double MPI_WTIME(void);
-#endif
 
+void MPI_TYPE_NULL_DELETE_FN(MPI_Fint* type, int* type_keyval, void* attribute_val_out, int* flag, int* ierr);
+void MPI_TYPE_NULL_COPY_FN(MPI_Fint* type, int* type_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag, int* ierr);
+void MPI_TYPE_DUP_FN(MPI_Fint* type, int* type_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag, int* ierr);
+void MPI_WIN_DUP_FN(MPI_Fint* window, int* win_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag, int* ierr);
+void MPI_WIN_NULL_COPY_FN(MPI_Fint* window, int* win_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag, int* ierr);
+void MPI_WIN_NULL_DELETE_FN(MPI_Fint* window, int* win_keyval, void* attribute_val_out, int* flag, int* ierr);
+void MPI_NULL_DELETE_FN(MPI_Fint* comm, int* comm_keyval, void* attribute_val_out, int* flag, int* ierr);
+void MPI_NULL_COPY_FN(MPI_Fint* comm, int* comm_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag, int* ierr);
+void MPI_DUP_FN(MPI_Fint* comm, int* comm_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag, int* ierr);
+void MPI_COMM_NULL_DELETE_FN(MPI_Fint* comm, int* comm_keyval, void* attribute_val_out, int* flag, int* ierr);
+void MPI_COMM_NULL_COPY_FN(MPI_Fint* comm, int* comm_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag, int* ierr);
+void MPI_COMM_DUP_FN(MPI_Fint* comm, int* comm_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag, int* ierr);
+
+#endif

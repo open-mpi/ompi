@@ -43,7 +43,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_CREATE_F90_INTEGER,
 
 
 #if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
-#include "mpi/c/profile/defines.h"
+#include "mpi/f77/profile/defines.h"
 #endif
 
 void mpi_type_create_f90_integer_f(MPI_Fint *r, MPI_Fint *newtype, MPI_Fint *ierr)

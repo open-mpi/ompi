@@ -43,7 +43,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_GET_ATOMICITY,
 
 
 #if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
-#include "mpi/c/profile/defines.h"
+#include "mpi/f77/profile/defines.h"
 #endif
 
 void mpi_file_get_atomicity_f(MPI_Fint *fh, MPI_Fint *flag, MPI_Fint *ierr)

@@ -43,7 +43,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_GET_SIZE,
 
 
 #if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
-#include "mpi/c/profile/defines.h"
+#include "mpi/f77/profile/defines.h"
 #endif
 
 void mpi_file_get_size_f(MPI_Fint *fh, MPI_Fint *size, MPI_Fint *ierr)

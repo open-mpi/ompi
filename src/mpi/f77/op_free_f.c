@@ -43,7 +43,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_OP_FREE,
 
 
 #if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
-#include "mpi/c/profile/defines.h"
+#include "mpi/f77/profile/defines.h"
 #endif
 
 void mpi_op_free_f(MPI_Fint *op, MPI_Fint *ierr)

@@ -43,7 +43,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_ATTR_PUT,
 
 
 #if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
-#include "mpi/c/profile/defines.h"
+#include "mpi/f77/profile/defines.h"
 #endif
 
 void mpi_attr_put_f(MPI_Fint *comm, MPI_Fint *keyval, char *attribute_val, MPI_Fint *ierr)

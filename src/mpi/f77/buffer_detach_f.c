@@ -43,7 +43,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_BUFFER_DETACH,
 
 
 #if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
-#include "mpi/c/profile/defines.h"
+#include "mpi/f77/profile/defines.h"
 #endif
 
 void mpi_buffer_detach_f(char *buffer, MPI_Fint *size, MPI_Fint *ierr)
