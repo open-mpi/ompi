@@ -46,7 +46,7 @@ else if ("$1" == "value_array") then
 else
   echo "correct use: "
   echo "    run    (to run all class tests)"
-  echo "or  run <bimmap | hash_table | list | pointer_array | rb_tree | value_array"
+  echo "or  run <bimmap | hash_table | list | pointer_array | rb_tree | value_array>"
   exit -1
 endif
 
