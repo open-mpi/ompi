@@ -118,23 +118,24 @@ static bool mca_ptl_base_recv_request_match_specific_proc(mca_ptl_base_recv_requ
     for (frag =  (mca_ptl_base_recv_frag_t*)lam_list_get_first(unexpected_frags);
          frag != (mca_ptl_base_recv_frag_t*)lam_list_get_end(unexpected_frags);
          frag =  (mca_ptl_base_recv_frag_t*)lam_list_get_next(frag)) {
+        mca_ptl_base_match_header_t* header = &frag->super.frag_header.hdr_match;
 
         /* check first frag - we assume that process matching has been done already */
-        if (((tag == LAM_ANY_TAG) || (tag == frag->super.frag_header.hdr_user_tag))) {
+        if (((tag == LAM_ANY_TAG) || (tag == header->hdr_user_tag))) {
 
-            mca_ptl_t* ptl = frag->super.frag_owner;
-            if (tag == LAM_ANY_TAG && frag->super.frag_header.hdr_user_tag < 0) {
+            if (tag == LAM_ANY_TAG && header->hdr_user_tag < 0) {
                 continue;
             }
 
+            request->req_sequence = header->hdr_msg_seq;
+            request->super.req_tag = tag = header->hdr_user_tag;
+            request->super.req_peer = header->hdr_src_rank;
             frag->frag_request = request;
-            request->req_sequence = frag->super.frag_header.hdr_msg_seq;
-            request->super.req_tag = tag = frag->super.frag_header.hdr_user_tag;
-            request->super.req_peer = frag->super.frag_header.hdr_src_rank;
 
             /* notify ptl fragment has been matched - send cts to peer */
             THREAD_UNLOCK(pml_comm->c_matching_lock+proc);
-            ptl->ptl_cts(ptl, frag);
+
+            mca_ptl_base_recv_frag_process(frag);
             return true;
         } 
     }

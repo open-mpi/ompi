@@ -21,12 +21,12 @@ lam_class_info_t  mca_ptl_tcp_peer_cls = {
 };
 
 
-static int  mca_ptl_tcp_peer_start_connect(mca_ptl_peer_t*);
-static void mca_ptl_tcp_peer_close_i(mca_ptl_peer_t*);
-static void mca_ptl_tcp_peer_connected(mca_ptl_peer_t*);
-static void mca_ptl_tcp_peer_recv_handler(mca_ptl_peer_t*, int sd);
-static void mca_ptl_tcp_peer_send_handler(mca_ptl_peer_t*, int sd);
-static void mca_ptl_tcp_peer_except_handler(mca_ptl_peer_t*, int sd);
+static int  mca_ptl_tcp_peer_start_connect(mca_ptl_base_peer_t*);
+static void mca_ptl_tcp_peer_close_i(mca_ptl_base_peer_t*);
+static void mca_ptl_tcp_peer_connected(mca_ptl_base_peer_t*);
+static void mca_ptl_tcp_peer_recv_handler(mca_ptl_base_peer_t*, int sd);
+static void mca_ptl_tcp_peer_send_handler(mca_ptl_base_peer_t*, int sd);
+static void mca_ptl_tcp_peer_except_handler(mca_ptl_base_peer_t*, int sd);
 
 
 
@@ -41,7 +41,7 @@ static lam_reactor_listener_t mca_ptl_tcp_peer_listener = {
  * Initialize state of the peer instance.
  */
 
-void mca_ptl_tcp_peer_init(mca_ptl_peer_t* ptl_peer)
+void mca_ptl_tcp_peer_init(mca_ptl_base_peer_t* ptl_peer)
 {
     SUPER_INIT(ptl_peer, &lam_list_cls);
     ptl_peer->peer_ptl = 0;
@@ -61,7 +61,7 @@ void mca_ptl_tcp_peer_init(mca_ptl_peer_t* ptl_peer)
  * Cleanup any resources held by the peer.
  */
 
-void mca_ptl_tcp_peer_destroy(mca_ptl_peer_t* ptl_peer)
+void mca_ptl_tcp_peer_destroy(mca_ptl_base_peer_t* ptl_peer)
 {
     mca_ptl_tcp_proc_remove(ptl_peer->peer_proc, ptl_peer);
     mca_ptl_tcp_peer_close_i(ptl_peer);
@@ -74,7 +74,7 @@ void mca_ptl_tcp_peer_destroy(mca_ptl_peer_t* ptl_peer)
  * queue the fragment and start the connection as required.
  */
 
-int mca_ptl_tcp_peer_send(mca_ptl_peer_t* ptl_peer, mca_ptl_tcp_send_frag_t* frag)
+int mca_ptl_tcp_peer_send(mca_ptl_base_peer_t* ptl_peer, mca_ptl_tcp_send_frag_t* frag)
 {
     int rc = LAM_SUCCESS;
     THREAD_LOCK(&ptl_peer->peer_lock);
@@ -118,7 +118,7 @@ int mca_ptl_tcp_peer_send(mca_ptl_peer_t* ptl_peer, mca_ptl_tcp_send_frag_t* fra
  * otherwise, reject the connection and continue with the current connection 
  */
 
-bool mca_ptl_tcp_peer_accept(mca_ptl_peer_t* ptl_peer, struct sockaddr_in* addr, int sd)
+bool mca_ptl_tcp_peer_accept(mca_ptl_base_peer_t* ptl_peer, struct sockaddr_in* addr, int sd)
 {
     mca_ptl_tcp_addr_t* ptl_addr;
     mca_ptl_tcp_proc_t* this_proc = mca_ptl_tcp_proc_local();
@@ -146,7 +146,7 @@ bool mca_ptl_tcp_peer_accept(mca_ptl_peer_t* ptl_peer, struct sockaddr_in* addr,
  * prior to delegating to the internal routine.
  */
 
-void mca_ptl_tcp_peer_close(mca_ptl_peer_t* ptl_peer)
+void mca_ptl_tcp_peer_close(mca_ptl_base_peer_t* ptl_peer)
 {
     THREAD_LOCK(&ptl_peer->peer_lock);
     mca_ptl_tcp_peer_close_i(ptl_peer);
@@ -159,7 +159,7 @@ void mca_ptl_tcp_peer_close(mca_ptl_peer_t* ptl_peer)
  * been closed.
  */
 
-static void mca_ptl_tcp_peer_close_i(mca_ptl_peer_t* ptl_peer)
+static void mca_ptl_tcp_peer_close_i(mca_ptl_base_peer_t* ptl_peer)
 {
     if(ptl_peer->peer_sd >= 0) {
         lam_reactor_remove(
@@ -177,7 +177,7 @@ static void mca_ptl_tcp_peer_close_i(mca_ptl_peer_t* ptl_peer)
  * 
  */
 
-static void mca_ptl_tcp_peer_connected(mca_ptl_peer_t* ptl_peer)
+static void mca_ptl_tcp_peer_connected(mca_ptl_base_peer_t* ptl_peer)
 {
     int flags = LAM_REACTOR_NOTIFY_RECV|LAM_REACTOR_NOTIFY_EXCEPT;
     ptl_peer->peer_state = MCA_PTL_TCP_CONNECTED;
@@ -200,7 +200,7 @@ static void mca_ptl_tcp_peer_connected(mca_ptl_peer_t* ptl_peer)
  * A blocking recv on a non-blocking socket. Used to receive the small amount of connection
  * information that identifies the peers endpoint.
  */
-static int mca_ptl_tcp_peer_recv_blocking(mca_ptl_peer_t* ptl_peer, void* data, size_t size)
+static int mca_ptl_tcp_peer_recv_blocking(mca_ptl_base_peer_t* ptl_peer, void* data, size_t size)
 {
     unsigned char* ptr = (unsigned char*)data;
     size_t cnt = 0;
@@ -233,7 +233,7 @@ static int mca_ptl_tcp_peer_recv_blocking(mca_ptl_peer_t* ptl_peer, void* data, 
  * A blocking send on a non-blocking socket. Used to send the small amount of connection
  * information that identifies the peers endpoint.
  */
-static int mca_ptl_tcp_peer_send_blocking(mca_ptl_peer_t* ptl_peer, void* data, size_t size)
+static int mca_ptl_tcp_peer_send_blocking(mca_ptl_base_peer_t* ptl_peer, void* data, size_t size)
 {
     unsigned char* ptr = (unsigned char*)data;
     size_t cnt = 0;
@@ -260,7 +260,7 @@ static int mca_ptl_tcp_peer_send_blocking(mca_ptl_peer_t* ptl_peer, void* data, 
  *  socket to a connected state.
  */
 
-static int mca_ptl_tcp_peer_recv_connect_ack(mca_ptl_peer_t* ptl_peer)
+static int mca_ptl_tcp_peer_recv_connect_ack(mca_ptl_base_peer_t* ptl_peer)
 {
     uint32_t size_n, size_h;
     void* guid;
@@ -296,7 +296,7 @@ static int mca_ptl_tcp_peer_recv_connect_ack(mca_ptl_peer_t* ptl_peer)
  * a newly connected socket.
  */
 
-static int mca_ptl_tcp_peer_send_connect_ack(mca_ptl_peer_t* ptl_peer)
+static int mca_ptl_tcp_peer_send_connect_ack(mca_ptl_base_peer_t* ptl_peer)
 {
     /* send process identifier to remote peer */
     mca_ptl_tcp_proc_t* ptl_proc = mca_ptl_tcp_proc_local();
@@ -318,7 +318,7 @@ static int mca_ptl_tcp_peer_send_connect_ack(mca_ptl_peer_t* ptl_peer)
  *  the peers response.
  */
 
-static int mca_ptl_tcp_peer_start_connect(mca_ptl_peer_t* ptl_peer)
+static int mca_ptl_tcp_peer_start_connect(mca_ptl_base_peer_t* ptl_peer)
 {
     int rc;
     ptl_peer->peer_sd = socket(AF_INET, SOCK_STREAM, 0);
@@ -378,7 +378,7 @@ static int mca_ptl_tcp_peer_start_connect(mca_ptl_peer_t* ptl_peer)
  * newly connected socket.
  */
 
-static void mca_ptl_tcp_peer_complete_connect(mca_ptl_peer_t* ptl_peer)
+static void mca_ptl_tcp_peer_complete_connect(mca_ptl_base_peer_t* ptl_peer)
 {
     int so_error = 0;
     lam_socklen_t so_length = sizeof(so_error);
@@ -426,7 +426,7 @@ static void mca_ptl_tcp_peer_complete_connect(mca_ptl_peer_t* ptl_peer)
  * of the socket and take the appropriate action.
  */
 
-static void mca_ptl_tcp_peer_recv_handler(mca_ptl_peer_t* ptl_peer, int sd)
+static void mca_ptl_tcp_peer_recv_handler(mca_ptl_base_peer_t* ptl_peer, int sd)
 {
     THREAD_LOCK(&ptl_peer->peer_lock);
     switch(ptl_peer->peer_state) {
@@ -471,7 +471,7 @@ static void mca_ptl_tcp_peer_recv_handler(mca_ptl_peer_t* ptl_peer, int sd)
  * of the socket and take the appropriate action.
  */
 
-static void mca_ptl_tcp_peer_send_handler(mca_ptl_peer_t* ptl_peer, int sd)
+static void mca_ptl_tcp_peer_send_handler(mca_ptl_base_peer_t* ptl_peer, int sd)
 {
     THREAD_LOCK(&ptl_peer->peer_lock);
     switch(ptl_peer->peer_state) {
@@ -507,7 +507,7 @@ static void mca_ptl_tcp_peer_send_handler(mca_ptl_peer_t* ptl_peer, int sd)
  * A file descriptor is in an erroneous state. Close the connection
  * and update the peers state.
  */
-static void mca_ptl_tcp_peer_except_handler(mca_ptl_peer_t* ptl_peer, int sd)
+static void mca_ptl_tcp_peer_except_handler(mca_ptl_base_peer_t* ptl_peer, int sd)
 {
     lam_output(0, "mca_ptl_tcp_peer_except_handler: closing connection");
     mca_ptl_tcp_peer_close_i(ptl_peer);

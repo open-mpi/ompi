@@ -30,7 +30,7 @@ mca_ptl_tcp_t mca_ptl_tcp = {
     mca_ptl_tcp_del_proc,
     mca_ptl_tcp_finalize,
     mca_ptl_tcp_send,
-    mca_ptl_tcp_cts,
+    mca_ptl_tcp_recv,
     mca_ptl_tcp_request_alloc,
     mca_ptl_tcp_request_return,
     mca_ptl_tcp_frag_return
@@ -54,10 +54,10 @@ int mca_ptl_tcp_create(int if_index)
 }
 
 
-int mca_ptl_tcp_add_proc(struct mca_ptl_t* ptl, struct lam_proc_t *lam_proc, struct mca_ptl_peer_t** peer_ret)
+int mca_ptl_tcp_add_proc(struct mca_ptl_t* ptl, struct lam_proc_t *lam_proc, struct mca_ptl_base_peer_t** peer_ret)
 {
     mca_ptl_tcp_proc_t* ptl_proc = mca_ptl_tcp_proc_create(lam_proc);
-    mca_ptl_peer_t* ptl_peer;
+    mca_ptl_base_peer_t* ptl_peer;
     int rc;
 
     if(NULL == ptl_proc)
@@ -77,7 +77,7 @@ int mca_ptl_tcp_add_proc(struct mca_ptl_t* ptl, struct lam_proc_t *lam_proc, str
     /* The ptl_proc datastructure is shared by all TCP PTL instances that are trying 
      * to reach this destination. Cache the peer instance on the ptl_proc.
      */
-    ptl_peer = OBJ_CREATE(mca_ptl_peer_t, &mca_ptl_tcp_peer_cls);
+    ptl_peer = OBJ_CREATE(mca_ptl_base_peer_t, &mca_ptl_tcp_peer_cls);
     if(NULL == ptl_peer) {
         THREAD_UNLOCK(&ptl_proc->proc_lock);
         return LAM_ERR_OUT_OF_RESOURCE;
@@ -95,7 +95,7 @@ int mca_ptl_tcp_add_proc(struct mca_ptl_t* ptl, struct lam_proc_t *lam_proc, str
 }
 
 
-int mca_ptl_tcp_del_proc(struct mca_ptl_t* ptl, struct lam_proc_t *proc, struct mca_ptl_peer_t* ptl_peer)
+int mca_ptl_tcp_del_proc(struct mca_ptl_t* ptl, struct lam_proc_t *proc, struct mca_ptl_base_peer_t* ptl_peer)
 {
     OBJ_RELEASE(ptl_peer);
     return LAM_SUCCESS;
@@ -133,7 +133,7 @@ void mca_ptl_tcp_frag_return(struct mca_ptl_t* ptl, struct mca_ptl_base_recv_fra
 
 int mca_ptl_tcp_send(
     struct mca_ptl_t* ptl,
-    struct mca_ptl_peer_t* ptl_peer,
+    struct mca_ptl_base_peer_t* ptl_peer,
     struct mca_ptl_base_send_request_t* sendreq,
     size_t size,
     bool* complete)
@@ -152,7 +152,7 @@ int mca_ptl_tcp_send(
 }
 
 
-int mca_ptl_tcp_cts(
+int mca_ptl_tcp_recv(
     struct mca_ptl_t* ptl,
     struct mca_ptl_base_recv_frag_t* frag)
 {

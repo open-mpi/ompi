@@ -18,7 +18,7 @@ extern lam_class_info_t mca_ptl_tcp_proc_cls;
 
 /**
  *  Represents the state of a remote process and the set of addresses
- *  that it exports. Also cache an instance or mca_ptl_peer_t for each
+ *  that it exports. Also cache an instance or mca_ptl_base_peer_t for each
  *  PTL instance that attempts to open a connection to the process.
  */
 struct mca_ptl_tcp_proc_t {
@@ -28,7 +28,7 @@ struct mca_ptl_tcp_proc_t {
     size_t proc_guid_size;
     struct mca_ptl_tcp_addr_t *proc_addrs;
     size_t proc_addr_count;
-    struct mca_ptl_peer_t **proc_peers;
+    struct mca_ptl_base_peer_t **proc_peers;
     size_t proc_peer_count;
     lam_mutex_t proc_lock;
 };
@@ -49,8 +49,8 @@ static inline mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_local(void)
     return mca_ptl_tcp_proc_self;
 }
 
-int  mca_ptl_tcp_proc_insert(mca_ptl_tcp_proc_t*, mca_ptl_peer_t*);
-int  mca_ptl_tcp_proc_remove(mca_ptl_tcp_proc_t*, mca_ptl_peer_t*);
+int  mca_ptl_tcp_proc_insert(mca_ptl_tcp_proc_t*, mca_ptl_base_peer_t*);
+int  mca_ptl_tcp_proc_remove(mca_ptl_tcp_proc_t*, mca_ptl_base_peer_t*);
 bool mca_ptl_tcp_proc_accept(mca_ptl_tcp_proc_t*, struct sockaddr_in*, int sd);
 
 #endif

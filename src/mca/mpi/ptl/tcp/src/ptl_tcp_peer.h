@@ -30,12 +30,12 @@ extern lam_class_info_t mca_ptl_tcp_peer_cls;
 
 /**
  *  An abstraction that represents a connection to a peer process.
- *  An instance of mca_ptl_peer_t is associated w/ each process 
+ *  An instance of mca_ptl_base_peer_t is associated w/ each process 
  *  and PTL pair at startup. However, connections to the peer
  *  are established dynamically on an as-needed basis:
 */
                                                                                                                             
-struct mca_ptl_peer_t {
+struct mca_ptl_base_peer_t {
     lam_list_item_t            super;
     struct mca_ptl_tcp_t*      peer_ptl;
     struct mca_ptl_tcp_proc_t* peer_proc;
@@ -48,14 +48,14 @@ struct mca_ptl_peer_t {
     lam_list_t                 peer_frags;
     lam_mutex_t                peer_lock;
 };
-typedef struct mca_ptl_peer_t mca_ptl_peer_t;
+typedef struct mca_ptl_base_peer_t mca_ptl_base_peer_t;
 
 
-void mca_ptl_tcp_peer_destroy(mca_ptl_peer_t*);
-void mca_ptl_tcp_peer_close(mca_ptl_peer_t*);
-void mca_ptl_tcp_peer_init(mca_ptl_peer_t*);
-int  mca_ptl_tcp_peer_send(mca_ptl_peer_t*, mca_ptl_tcp_send_frag_t*);
-bool mca_ptl_tcp_peer_accept(mca_ptl_peer_t*, struct sockaddr_in*, int);
+void mca_ptl_tcp_peer_destroy(mca_ptl_base_peer_t*);
+void mca_ptl_tcp_peer_close(mca_ptl_base_peer_t*);
+void mca_ptl_tcp_peer_init(mca_ptl_base_peer_t*);
+int  mca_ptl_tcp_peer_send(mca_ptl_base_peer_t*, mca_ptl_tcp_send_frag_t*);
+bool mca_ptl_tcp_peer_accept(mca_ptl_base_peer_t*, struct sockaddr_in*, int);
 
 #endif
 

@@ -23,19 +23,19 @@
  */
 
 static mca_ptl_base_recv_request_t *mca_ptl_base_check_receives_for_match(
-    mca_ptl_base_header_t *frag_header,
+    mca_ptl_base_match_header_t *frag_header,
     mca_pml_comm_t *ptl_comm);
                                                                                                                             
 static mca_ptl_base_recv_request_t *mca_ptl_base_check_wild_receives_for_match(
-    mca_ptl_base_header_t *frag_header,
+    mca_ptl_base_match_header_t *frag_header,
     mca_pml_comm_t *ptl_comm);
                                                                                                                             
 static mca_ptl_base_recv_request_t *mca_ptl_base_check_specific_receives_for_match(
-    mca_ptl_base_header_t *frag_header,
+    mca_ptl_base_match_header_t *frag_header,
     mca_pml_comm_t *ptl_comm);
                                                                                                                             
 static mca_ptl_base_recv_request_t *mca_ptl_base_check_specific_and_wild_receives_for_match(
-    mca_ptl_base_header_t *frag_header,
+    mca_ptl_base_match_header_t *frag_header,
     mca_pml_comm_t *ptl_comm);
                                                                                                                             
 static void mca_ptl_base_check_cantmatch_for_match(
@@ -73,7 +73,7 @@ static void mca_ptl_base_check_cantmatch_for_match(
  *   - fragments may be corrupt
  *   - this routine may be called simoultaneously by more than one thread
  */
-int mca_ptl_base_match(mca_ptl_base_header_t *frag_header,
+int mca_ptl_base_match(mca_ptl_base_match_header_t *frag_header,
         mca_ptl_base_recv_frag_t *frag_desc, bool* match_made, 
         lam_list_t *additional_matches)
 {
@@ -95,7 +95,7 @@ int mca_ptl_base_match(mca_ptl_base_header_t *frag_header,
     frag_msg_seq = frag_header->hdr_msg_seq;
 
     /* get fragment communicator source rank */
-    frag_src = frag_header->hdr_frag_seq;
+    frag_src = frag_header->hdr_src_rank;
 
     /* get next expected message sequence number - if threaded
      * run, lock to make sure that if another thread is processing 
@@ -204,7 +204,7 @@ int mca_ptl_base_match(mca_ptl_base_header_t *frag_header,
  * set by the upper level routine.
  */
 static mca_ptl_base_recv_request_t *mca_ptl_base_check_receives_for_match
-  (mca_ptl_base_header_t *frag_header, mca_pml_comm_t *pml_comm)
+  (mca_ptl_base_match_header_t *frag_header, mca_pml_comm_t *pml_comm)
 {
     /* local parameters */
     mca_ptl_base_recv_request_t *return_match;
@@ -218,7 +218,7 @@ static mca_ptl_base_recv_request_t *mca_ptl_base_check_receives_for_match
      *   look only at "specific" receives, or "wild" receives,
      *   or if we need to traverse both sets at the same time.
      */
-    frag_src = frag_header->hdr_frag_seq;
+    frag_src = frag_header->hdr_src_rank;
 
     if (lam_list_get_size((pml_comm->c_specific_receives)+frag_src) == 0 ){
         /*
@@ -263,7 +263,7 @@ static mca_ptl_base_recv_request_t *mca_ptl_base_check_receives_for_match
  * set by the upper level routine.
  */
 static mca_ptl_base_recv_request_t *mca_ptl_base_check_wild_receives_for_match(
-        mca_ptl_base_header_t *frag_header,
+        mca_ptl_base_match_header_t *frag_header,
         mca_pml_comm_t *pml_comm)
 {
     /* local parameters */
@@ -330,7 +330,7 @@ static mca_ptl_base_recv_request_t *mca_ptl_base_check_wild_receives_for_match(
  * set by the upper level routine.
  */
 static mca_ptl_base_recv_request_t *mca_ptl_base_check_specific_receives_for_match(
-        mca_ptl_base_header_t *frag_header,
+        mca_ptl_base_match_header_t *frag_header,
         mca_pml_comm_t *pml_comm)
 {
     /* local variables */
@@ -340,7 +340,7 @@ static mca_ptl_base_recv_request_t *mca_ptl_base_check_specific_receives_for_mat
 
     /* initialization */
     return_match=(mca_ptl_base_recv_request_t *)NULL;
-    frag_src = frag_header->hdr_frag_seq;
+    frag_src = frag_header->hdr_src_rank;
     frag_user_tag=frag_header->hdr_user_tag;
 
     /*
@@ -392,7 +392,7 @@ static mca_ptl_base_recv_request_t *mca_ptl_base_check_specific_receives_for_mat
  * set by the upper level routine.
  */
 static mca_ptl_base_recv_request_t *mca_ptl_base_check_specific_and_wild_receives_for_match(
-        mca_ptl_base_header_t *frag_header,
+        mca_ptl_base_match_header_t *frag_header,
         mca_pml_comm_t *pml_comm)
 {
     /* local variables */
@@ -402,7 +402,7 @@ static mca_ptl_base_recv_request_t *mca_ptl_base_check_specific_and_wild_receive
 
     /* initialization */
     return_match=(mca_ptl_base_recv_request_t *)NULL;
-    frag_src = frag_header->hdr_frag_seq;
+    frag_src = frag_header->hdr_src_rank;
     frag_user_tag=frag_header->hdr_user_tag;
 
     /*
@@ -574,7 +574,7 @@ static void mca_ptl_base_check_cantmatch_for_match(lam_list_t *additional_matche
             /*
              * If the message has the next expected seq from that proc...
              */
-            frag_seqber=frag_desc->super.frag_header.hdr_msg_seq;
+            frag_seqber=frag_desc->super.frag_header.hdr_match.hdr_msg_seq;
             if (frag_seqber == next_msg_seq_expected) {
 
                 /* initialize list on first entry - assume that most
@@ -603,7 +603,7 @@ static void mca_ptl_base_check_cantmatch_for_match(lam_list_t *additional_matche
                  * check to see if this frag matches a posted message
                  */
                 matched_receive = mca_ptl_base_check_receives_for_match(
-                       &frag_desc->super.frag_header, pml_comm);
+                       &frag_desc->super.frag_header.hdr_match, pml_comm);
 
                 /* if match found, process data */
                 if (matched_receive) {

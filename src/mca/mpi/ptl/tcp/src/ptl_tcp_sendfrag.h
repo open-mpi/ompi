@@ -34,7 +34,7 @@ bool mca_ptl_tcp_send_frag_handler(mca_ptl_tcp_send_frag_t*, int sd);
 
 void mca_ptl_tcp_send_frag_reinit(
     mca_ptl_tcp_send_frag_t*, 
-    struct mca_ptl_peer_t*, 
+    struct mca_ptl_base_peer_t*, 
     struct mca_ptl_base_send_request_t*, 
     size_t);
 

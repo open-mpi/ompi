@@ -37,33 +37,47 @@ void mca_ptl_tcp_send_frag_destroy(mca_ptl_tcp_send_frag_t* frag)
 
 void mca_ptl_tcp_send_frag_reinit(
     mca_ptl_tcp_send_frag_t* sendfrag,
-    mca_ptl_peer_t* ptl_peer,
+    mca_ptl_base_peer_t* ptl_peer,
     mca_ptl_base_send_request_t* sendreq,
     size_t size)
 {
     /* message header */
     mca_ptl_base_header_t* hdr = &sendfrag->frag_header;
-    hdr->hdr_contextid = sendreq->super.req_communicator->c_contextid;
-    hdr->hdr_src_rank = sendreq->super.req_communicator->c_rank;
-    hdr->hdr_dst_rank = sendreq->super.req_peer;
-    hdr->hdr_user_tag = sendreq->super.req_tag;
-    hdr->hdr_msg_type = sendreq->req_send_mode;
-    hdr->hdr_msg_length = sendreq->req_length;
-    hdr->hdr_msg_offset = sendreq->req_offset;
-    hdr->hdr_msg_seq = 0;
-    hdr->hdr_frag_seq = 0;
+    if(sendreq->req_frags == 0) {
+        hdr->hdr_type = MCA_PTL_HDR_TYPE_MATCH;
+        hdr->hdr_flags = MCA_PTL_FLAGS_ACK_IMMEDIATE;
+        hdr->hdr_size = sizeof(mca_ptl_base_match_header_t);
+        hdr->hdr_frag.hdr_frag_offset = sendreq->req_offset;
+        hdr->hdr_frag.hdr_frag_seq = 0;
+        hdr->hdr_frag.hdr_src_ptr.pval = sendfrag;
+        hdr->hdr_frag.hdr_dst_ptr.pval = 0;
+        hdr->hdr_match.hdr_contextid = sendreq->super.req_communicator->c_contextid;
+        hdr->hdr_match.hdr_src_rank = sendreq->super.req_communicator->c_rank;
+        hdr->hdr_match.hdr_dst_rank = sendreq->super.req_peer;
+        hdr->hdr_match.hdr_user_tag = sendreq->super.req_tag;
+        hdr->hdr_match.hdr_msg_length = sendreq->req_length;
+        hdr->hdr_match.hdr_msg_seq = 0;
+    } else {
+        hdr->hdr_type = MCA_PTL_HDR_TYPE_FRAG;
+        hdr->hdr_flags = 0;
+        hdr->hdr_size = sizeof(mca_ptl_base_frag_header_t);
+        hdr->hdr_frag.hdr_frag_offset = sendreq->req_offset;
+        hdr->hdr_frag.hdr_frag_seq = 0;
+        hdr->hdr_frag.hdr_src_ptr.pval = sendfrag;
+        hdr->hdr_frag.hdr_dst_ptr = sendreq->req_peer_request;
+    }
 
     /* update request */
     if(sendreq->req_offset + size > sendreq->req_length)
         size = sendreq->req_length = sendreq->req_offset;
-    hdr->hdr_frag_length = size;
+    hdr->hdr_frag.hdr_frag_length = size;
     sendreq->req_offset += size;
     sendreq->req_frags++;
 
     /* fragment state */
     sendfrag->frag_owner = &ptl_peer->peer_ptl->super;
     sendfrag->super.frag_request = sendreq;
-    sendfrag->super.super.frag_addr = sendreq->super.req_addr + hdr->hdr_msg_offset;
+    sendfrag->super.super.frag_addr = sendreq->super.req_addr + hdr->hdr_frag.hdr_frag_offset;
     sendfrag->super.super.frag_size = size;
 
     sendfrag->frag_peer = ptl_peer;

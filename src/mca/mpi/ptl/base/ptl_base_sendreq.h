@@ -40,7 +40,9 @@ struct mca_ptl_base_send_request_t {
     /* PTL that allocated this descriptor */
     struct mca_ptl_t* req_owner;
     /* PTL peer instance that will be used for first fragment */
-    struct mca_ptl_peer_t* req_peer;
+    struct mca_ptl_base_peer_t* req_peer;
+    /* peer matched receive */
+    lam_ptr_t req_peer_request;
 };
 typedef struct mca_ptl_base_send_request_t mca_ptl_base_send_request_t;
 
@@ -62,6 +64,7 @@ static inline void mca_ptl_base_send_request_reinit(
     request->req_bytes_sent = 0; 
     request->req_bytes_acked = 0; 
     request->req_send_mode = sendmode;
+    request->req_peer_request.lval = 0; 
     request->super.req_addr = addr; 
     request->super.req_length = length; 
     request->super.req_datatype = datatype; 

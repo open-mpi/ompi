@@ -126,7 +126,7 @@ int mca_pml_teg_add_procs(lam_proc_t** procs, size_t nprocs)
              * addressing information that will be cached on the proc, if it
              * cannot reach the proc - but another peer
              */
-            struct mca_ptl_peer_t* ptl_peer;
+            struct mca_ptl_base_peer_t* ptl_peer;
             int rc = ptl->ptl_add_proc(ptl, proc, &ptl_peer);
             if(rc == LAM_SUCCESS) {
 

@@ -110,8 +110,8 @@ mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_create(lam_proc_t* lam_proc)
     }
 
     /* allocate space for peer array - one for each exported address */
-    ptl_proc->proc_peers = (mca_ptl_peer_t**)
-        LAM_MALLOC(ptl_proc->proc_addr_count * sizeof(mca_ptl_peer_t*));
+    ptl_proc->proc_peers = (mca_ptl_base_peer_t**)
+        LAM_MALLOC(ptl_proc->proc_addr_count * sizeof(mca_ptl_base_peer_t*));
     if(NULL == ptl_proc->proc_peers) {
         OBJ_RELEASE(ptl_proc);
         return NULL;
@@ -167,7 +167,7 @@ mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_lookup(void *guid, size_t size)
  * Note that this routine must be called with the lock on the process already 
  * held.  Insert a ptl instance into the proc array and assign it an address.
  */
-int mca_ptl_tcp_proc_insert(mca_ptl_tcp_proc_t* ptl_proc, mca_ptl_peer_t* ptl_peer)
+int mca_ptl_tcp_proc_insert(mca_ptl_tcp_proc_t* ptl_proc, mca_ptl_base_peer_t* ptl_peer)
 {
     struct mca_ptl_tcp_t *ptl_tcp = ptl_peer->peer_ptl;
     size_t i;
@@ -202,14 +202,14 @@ int mca_ptl_tcp_proc_insert(mca_ptl_tcp_proc_t* ptl_proc, mca_ptl_peer_t* ptl_pe
  * no longer in use.
  */
 
-int mca_ptl_tcp_proc_remove(mca_ptl_tcp_proc_t* ptl_proc, mca_ptl_peer_t* ptl_peer)
+int mca_ptl_tcp_proc_remove(mca_ptl_tcp_proc_t* ptl_proc, mca_ptl_base_peer_t* ptl_peer)
 {
     size_t i;
     THREAD_LOCK(&ptl_proc->proc_lock);
     for(i=0; i<ptl_proc->proc_peer_count; i++) {
         if(ptl_proc->proc_peers[i] == ptl_peer) {
             memmove(&ptl_proc->proc_peers+i,ptl_proc->proc_peers+i+1,
-                (ptl_proc->proc_peer_count-i)*sizeof(mca_ptl_peer_t*));
+                (ptl_proc->proc_peer_count-i)*sizeof(mca_ptl_base_peer_t*));
         }
     }
     ptl_proc->proc_peer_count--;
@@ -228,7 +228,7 @@ bool mca_ptl_tcp_proc_accept(mca_ptl_tcp_proc_t* ptl_proc, struct sockaddr_in* a
     size_t i;
     THREAD_LOCK(&ptl_proc->proc_lock);
     for(i=0; i<ptl_proc->proc_peer_count; i++) {
-        mca_ptl_peer_t* ptl_peer = ptl_proc->proc_peers[i];
+        mca_ptl_base_peer_t* ptl_peer = ptl_proc->proc_peers[i];
         if(mca_ptl_tcp_peer_accept(ptl_peer, addr, sd))
             return true;
     }
