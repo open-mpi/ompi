@@ -41,8 +41,15 @@ static inline int ompi_atomic_cmpset_32(volatile uint32_t *addr,
                                        uint32_t oldval,
                                        uint32_t newval)
 {
+#if 1
+    uint32_t ret = *addr;
+    if(ret == oldval) {
+       *addr = newval;
+       return 1;
+    }
+    return 0;
+#else
     uint32_t ret = oldval;
-
     __asm__ __volatile (
 SMPLOCK "cmpxchgl %1,%2   \n\
       setz     %%al    \n\
@@ -52,6 +59,7 @@ SMPLOCK "cmpxchgl %1,%2   \n\
     : "memory");
 
     return (ret == oldval);
+#endif
 }
 
 
