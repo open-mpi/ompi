@@ -169,17 +169,19 @@ int orte_dps_pack(orte_buffer_t *buffer, void *src,
 int orte_dps_pack_nobuffer(void *dst, void *src, size_t num_vals,
                     orte_data_type_t type, size_t *num_bytes)
 {
-    size_t i, len, n;
-    uint16_t * d16;
+    size_t i, len, n, elementsize;
+	char *dptr;	/* my moving destination pointer */
+	uint16_t   tmp_16; /* temp location of converted data */
+	uint32_t   tmp_32; /* temp location of converted data */
+	orte_process_name_t   tmp_procname; /* temp location of converted data */
+
     uint16_t * s16;
-    uint32_t * d32;
     uint32_t * s32;
     bool *bool_src;
     uint8_t *bool_dst;
     uint8_t *dbyte;
     char **str;
-    char *dstr;
-    orte_process_name_t *dn, *sn;
+    orte_process_name_t *sn;
     orte_byte_object_t *sbyteptr;
     orte_gpr_keyval_t **keyval;
     orte_gpr_value_t **values;
@@ -211,14 +213,16 @@ int orte_dps_pack_nobuffer(void *dst, void *src, size_t num_vals,
         case ORTE_GPR_CMD:
         case ORTE_INT16:
         case ORTE_UINT16:
-            d16 = (uint16_t *) dst;
-            s16 = (uint16_t *) src;
+			dptr = (char *) dst;
+			s16 = (uint16_t *) src;
+			elementsize = sizeof (uint16_t);
             for (i=0; i<num_vals; i++) {
                 /* convert the host order to network order */
-                *d16 = htons(*s16);
-                d16++; s16++;
+                tmp_16 = htons(*s16);
+				memcpy (dptr, (char*) &tmp_16, elementsize);
+                dptr+=elementsize; s16++;
             }
-            *num_bytes = num_vals * sizeof(uint16_t);
+            *num_bytes = num_vals * elementsize;
             break;
         
         case ORTE_VPID:
@@ -227,16 +231,18 @@ int orte_dps_pack_nobuffer(void *dst, void *src, size_t num_vals,
         case ORTE_GPR_NOTIFY_ID:
         case ORTE_INT32:
         case ORTE_UINT32:
-            d32 = (uint32_t *) dst;
-            s32 = (uint32_t *) src;
+			dptr = (char *) dst;
+			s32 = (uint32_t *) src;
+			elementsize = sizeof (uint32_t);
             for (i=0; i<num_vals; i++) {
                 /* convert the host order to network order */
-                *d32 = htonl(*s32);
-                d32++; s32++;
+                tmp_32 = htonl(*s32);
+				memcpy (dptr, (char*) &tmp_32, elementsize);
+                dptr+=elementsize; s32++;
             }
-            *num_bytes = num_vals * sizeof(uint32_t);
+            *num_bytes = num_vals * elementsize;
             break;
-
+        
         case ORTE_INT64:
         case ORTE_UINT64:
             return ORTE_ERR_NOT_IMPLEMENTED;
@@ -265,26 +271,31 @@ int orte_dps_pack_nobuffer(void *dst, void *src, size_t num_vals,
 
         case ORTE_STRING:
             str = (char **) src;
-            d32 = (uint32_t *) dst;
+			dptr = (char *) dst;
+			elementsize = sizeof (uint32_t);
             for (i=0; i<num_vals; i++) {
                 len = strlen(str[i]);  /* exclude the null terminator */
-                *d32 = htonl(len);
-                d32++;
-                dstr = (char *) d32;
-                memcpy(dstr, str[i], len);
-                d32 = (uint32_t *)(dstr + len);
-                *num_bytes += len + sizeof(uint32_t);
+                tmp_32 = htonl(len);
+				memcpy (dptr, (char*) &tmp_32, elementsize); /* copy str len to buffer */
+
+                dptr+=elementsize;
+                memcpy(dptr, str[i], len); /* copy str to buffer */
+                dptr+=len;
+
+                *num_bytes += len + elementsize;
             }
             break;
             
         case ORTE_NAME:
-            dn = (orte_process_name_t*) dst;
             sn = (orte_process_name_t*) src;
+            dptr = (char *) dst;
+			elementsize = sizeof (orte_process_name_t);
             for (i=0; i<num_vals; i++) {
-                dn->cellid = htonl(sn->cellid);
-                dn->jobid = htonl(sn->jobid);
-                dn->vpid = htonl(sn->vpid);
-                dn++; sn++;
+                tmp_procname.cellid = htonl(sn->cellid);
+                tmp_procname.jobid = htonl(sn->jobid);
+                tmp_procname.vpid = htonl(sn->vpid);
+				memcpy (dptr, (char*) &tmp_procname, elementsize); /* copy converted proc name to buffer */
+                dptr+=elementsize; sn++;
             }
             *num_bytes = num_vals * sizeof(orte_process_name_t);
             break;
@@ -292,16 +303,17 @@ int orte_dps_pack_nobuffer(void *dst, void *src, size_t num_vals,
         case ORTE_BYTE_OBJECT:
             sbyteptr = (orte_byte_object_t *) src;
             dbyte = (uint8_t *) dst;
+			elementsize = sizeof (uint32_t);
             for (i=0; i<num_vals; i++) {
                 /* pack number of bytes */
-                d32 = (uint32_t*)dbyte;
-                *d32 = htonl(sbyteptr->size);
-                d32++;
-                dbyte = (void*)d32;
-                *num_bytes += sizeof(uint32_t);
+                tmp_32 = htonl(sbyteptr->size);
+				memcpy (dbyte, (char*) &tmp_32, elementsize); /* copy byte count to buffer */
+				dbyte += elementsize;
+                *num_bytes += elementsize;
+
                 /* pack actual bytes */
                 memcpy(dbyte, sbyteptr->bytes, sbyteptr->size);
-                dbyte = (uint8_t*)(dbyte + sbyteptr->size);
+                dbyte += sbyteptr->size;
                 *num_bytes += sbyteptr->size;
                 sbyteptr++;
             }
