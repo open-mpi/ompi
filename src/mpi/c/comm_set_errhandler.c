@@ -31,9 +31,14 @@ int MPI_Comm_set_errhandler(MPI_Comm comm, MPI_Errhandler errhandler)
     }
   }
 
+  /* Ditch the old errhandler */
+
+  OBJ_RELEASE(comm->error_handler);
+
   /* We have a valid comm and errhandler */
 
   comm->error_handler = errhandler;
+  OBJ_RETAIN(comm->error_handler);
 
   /* All done */
   

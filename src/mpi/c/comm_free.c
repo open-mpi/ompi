@@ -30,7 +30,7 @@ int MPI_Comm_free(MPI_Comm *comm) {
     
     /* free the object */
 
-    lam_comm_free ( (lam_communicator_t *) comm ); 
+    lam_comm_free ( comm ); 
     
     *comm = MPI_COMM_NULL;
     return MPI_SUCCESS;

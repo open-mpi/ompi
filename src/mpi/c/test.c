@@ -30,16 +30,17 @@ int MPI_Test(MPI_Request *request, int *completed, MPI_Status *status)
     }
 
     if(*request == NULL) {
-        *completed = true;
+        *completed = 1;
         status->MPI_SOURCE = MPI_PROC_NULL;
         status->MPI_TAG = MPI_ANY_TAG;
         status->MPI_ERROR = MPI_SUCCESS;
         status->_count = 0;
         return MPI_SUCCESS;
     }
-    rc = mca_pml.pml_test(1, request, index, completed, status);
-    if(completed < 0)
-        completed = 0;
+    rc = mca_pml.pml_test(1, request, &index, completed, status);
+    if(*completed < 0) {
+        *completed = 0;
+    }
     LAM_ERRHANDLER_RETURN(rc, (lam_communicator_t*)NULL, rc, "MPI_Test");
 }
 
