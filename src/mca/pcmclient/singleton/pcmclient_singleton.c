@@ -6,11 +6,13 @@
 
 #include "mca/pcmclient/pcmclient.h"
 #include "mca/pcmclient/singleton/pcmclient_singleton.h"
+#include "mca/oob/base/base.h"
 #include "include/types.h"
 #include "include/constants.h"
 
 #include <stdio.h>
 #include <sys/types.h>
+#include <sys/errno.h>
 #include <string.h>
 #include <unistd.h>
 
