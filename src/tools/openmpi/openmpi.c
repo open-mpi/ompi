@@ -21,9 +21,12 @@ openmpi.c - main program for spawning persistent universe.
 
 #include "util/proc_info.h"
 #include "util/session_dir.h"
-#include "runtime/universe_init.h"
+/* #include "runtime/universe_init.h" */
 #include "runtime/universe_connect.h"
 #include "tools/openmpi/openmpi.h"
+
+/* BWB - fix me - removed to be cleaned up later... */
+#define ompi_universe_init(a)
 
 
 ompi_universe_t ompi_universe = {

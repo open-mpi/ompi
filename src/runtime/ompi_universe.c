@@ -3,19 +3,20 @@
  *
  */
 
+#include "ompi_config.h"
+#include "include/constants.h"
+
 #include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <string.h>
 #include <sys/stat.h>
 
-#include "ompi_config.h"
-#include "include/constants.h"
-
 #include "util/os_path.h"
 #include "runtime/universe_connect.h"
 
-int ompi_universe_connect(char *tmpdir)
+int
+ompi_universe_connect(char *tmpdir)
 {
     char *uri, tmp[100], *oob_info_path;
     FILE *fp;
