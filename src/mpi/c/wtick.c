@@ -16,5 +16,5 @@
 #endif
 
 double MPI_Wtick(void) {
-    return (double)0;
+    return (double)0.000001;
 }
