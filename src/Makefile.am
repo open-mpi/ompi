@@ -65,7 +65,6 @@ SUBDIRS = \
         class \
         mca \
         mpi \
-	mpiruntime \
         op \
         os \
         proc \
@@ -104,7 +103,7 @@ libmpi_la_LIBADD = \
         mca/topo/base/libmca_topo_base.la $(MCA_topo_STATIC_LTLIBS) \
         $(c_mpi_lib) $(c_pmpi_lib) $(f77_mpi_lib) $(f77_pmpi_lib) \
         $(f90_lib) $(cxx_lib) \
-	mpiruntime/libmpiruntime.la \
+	mpi/runtime/libmpiruntime.la \
         op/libop.la \
         proc/libproc.la \
         request/librequest.la \

@@ -11,7 +11,7 @@
 #include "mpi.h"
 #include "class/ompi_object.h"
 #include "class/ompi_pointer_array.h"
-#include "mpiruntime/mpiruntime.h"
+#include "mpi/runtime/mpiruntime.h"
 #include "errhandler/errhandler_predefined.h"
 
 /*

@@ -839,7 +839,6 @@ AC_CONFIG_FILES([
     src/os/linux/ia64/Makefile
     src/os/linux/x86_64/Makefile
     src/os/tru64/Makefile
-    src/mpiruntime/Makefile
     src/runtime/Makefile
     src/threads/Makefile
     src/util/Makefile
@@ -918,6 +917,7 @@ AC_CONFIG_FILES([
     src/mpi/f77/Makefile
     src/mpi/f77/profile/Makefile
     src/mpi/f90/Makefile
+    src/mpi/runtime/Makefile
 
     src/tools/Makefile
     src/tools/ompid/Makefile
