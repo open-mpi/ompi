@@ -89,15 +89,16 @@ void mpi_testsome_f(MPI_Fint *incount, MPI_Fint *array_of_requests,
     if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
         if (MPI_UNDEFINED != OMPI_FINT_2_INT(*outcount)) {
             for (i = 0; i < OMPI_FINT_2_INT(*outcount); ++i) {
+                array_of_requests[OMPI_INT_2_FINT(array_of_indices[i])] =
+                    c_req[OMPI_INT_2_FINT(array_of_indices[i])]->req_f_to_c_index;
                 ++(OMPI_FINT_2_INT(array_of_indices[i]));
             }
         }
-        for (i = 0; i < OMPI_FINT_2_INT(*outcount); ++i) {
-            array_of_requests[OMPI_FINT_2_INT(array_of_indices[i])] = 
-                OMPI_INT_2_FINT(MPI_REQUEST_NULL->req_f_to_c_index);
-            if (!OMPI_IS_FORTRAN_STATUSES_IGNORE(array_of_statuses) &&
-                !OMPI_IS_FORTRAN_STATUS_IGNORE(&array_of_statuses[i])) {
-                MPI_Status_c2f(&c_status[i], &array_of_statuses[i * 4]);
+        if (!OMPI_IS_FORTRAN_STATUSES_IGNORE(array_of_statuses)) {
+            for (i = 0; i < OMPI_FINT_2_INT(*outcount); ++i) {
+                if (!OMPI_IS_FORTRAN_STATUS_IGNORE(&array_of_statuses[i])) {
+                    MPI_Status_c2f(&c_status[i], &array_of_statuses[i * 4]);
+                }
             }
         }
     }
