@@ -312,18 +312,18 @@ AC_DEFINE_UNQUOTED(OMPI_SIZEOF_FORTRAN_DBLCOMPLEX,
     [Size of fortran double complex])
 
 AC_DEFINE_UNQUOTED(OMPI_ALIGNMENT_FORTRAN_INT, $OMPI_ALIGNMENT_FORTRAN_INT,
-    [Size of fortran integer])
+    [Alignment of fortran integer])
 AC_DEFINE_UNQUOTED(OMPI_ALIGNMENT_FORTRAN_REAL, $OMPI_ALIGNMENT_FORTRAN_REAL,
-    [Size of fortran real])
+    [alignment of fortran real])
 AC_DEFINE_UNQUOTED(OMPI_ALIGNMENT_FORTRAN_DBLPREC, 
     $OMPI_ALIGNMENT_FORTRAN_DBLPREC,
-    [Size of fortran double precision])
+    [Alignment of fortran double precision])
 AC_DEFINE_UNQUOTED(OMPI_ALIGNMENT_FORTRAN_COMPLEX, 
     $OMPI_ALIGNMENT_FORTRAN_COMPLEX,
-    [Size of fortran complex])
+    [Alignment of fortran complex])
 AC_DEFINE_UNQUOTED(OMPI_ALIGNMENT_FORTRAN_DBLCOMPLEX, 
     $OMPI_ALIGNMENT_FORTRAN_DBLCOMPLEX,
-    [Size of fortran double complex])
+    [Alignment of fortran double complex])
 
 #
 # There are 2 layers to the MPI f77 layer. The only extra thing
