@@ -11,7 +11,7 @@ DIST_SUBDIRS = base $(MCA_topo_ALL_SUBDIRS)
 
 headers = topo.h
 
-# Condittoponally install the header files
+# Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
 lamdir = $(includedir)/lam/mca/mpi/topo
