@@ -16,7 +16,7 @@
 
 MPI_Errhandler MPI_Errhandler_f2c(MPI_Fint errhandler_f)
 {
-  int eh_index = (int) errhandler_f;
+  size_t eh_index = (size_t) errhandler_f;
 
   /* Error checking */
 
