@@ -4338,7 +4338,7 @@ do
   echo "  logical(kind=MPI_INTEGER${kind}_KIND), intent(out) :: buf"
   echo "  integer, intent(in) :: count"
   echo "  integer, intent(in) :: datatype"
-  echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -4355,7 +4355,7 @@ do
   echo "  integer(kind=MPI_INTEGER${kind}_KIND), intent(out) :: buf"
   echo "  integer, intent(in) :: count"
   echo "  integer, intent(in) :: datatype"
-  echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -4372,7 +4372,7 @@ do
   echo "  real(kind=MPI_REAL${kind}_KIND), intent(out) :: buf"
   echo "  integer, intent(in) :: count"
   echo "  integer, intent(in) :: datatype"
-  echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -4389,7 +4389,7 @@ do
   echo "  complex(kind=MPI_REAL${kind}_KIND), intent(out) :: buf"
   echo "  integer, intent(in) :: count"
   echo "  integer, intent(in) :: datatype"
-  echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -4416,7 +4416,7 @@ do
     echo "  logical(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(out) :: buf"
     echo "  integer, intent(in) :: count"
     echo "  integer, intent(in) :: datatype"
-    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -4432,7 +4432,7 @@ do
     echo "  integer(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(out) :: buf"
     echo "  integer, intent(in) :: count"
     echo "  integer, intent(in) :: datatype"
-    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -4448,7 +4448,7 @@ do
     echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: buf"
     echo "  integer, intent(in) :: count"
     echo "  integer, intent(in) :: datatype"
-    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -4464,7 +4464,7 @@ do
     echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: buf"
     echo "  integer, intent(in) :: count"
     echo "  integer, intent(in) :: datatype"
-    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -4492,7 +4492,7 @@ do
   echo "  logical(kind=MPI_INTEGER${kind}_KIND), intent(out) :: buf"
   echo "  integer, intent(in) :: count"
   echo "  integer, intent(in) :: datatype"
-  echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -4509,7 +4509,7 @@ do
   echo "  integer(kind=MPI_INTEGER${kind}_KIND), intent(out) :: buf"
   echo "  integer, intent(in) :: count"
   echo "  integer, intent(in) :: datatype"
-  echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -4526,7 +4526,7 @@ do
   echo "  real(kind=MPI_REAL${kind}_KIND), intent(out) :: buf"
   echo "  integer, intent(in) :: count"
   echo "  integer, intent(in) :: datatype"
-  echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -4543,7 +4543,7 @@ do
   echo "  complex(kind=MPI_REAL${kind}_KIND), intent(out) :: buf"
   echo "  integer, intent(in) :: count"
   echo "  integer, intent(in) :: datatype"
-  echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -4570,7 +4570,7 @@ do
     echo "  logical(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(out) :: buf"
     echo "  integer, intent(in) :: count"
     echo "  integer, intent(in) :: datatype"
-    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -4586,7 +4586,7 @@ do
     echo "  integer(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(out) :: buf"
     echo "  integer, intent(in) :: count"
     echo "  integer, intent(in) :: datatype"
-    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -4602,7 +4602,7 @@ do
     echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: buf"
     echo "  integer, intent(in) :: count"
     echo "  integer, intent(in) :: datatype"
-    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -4618,7 +4618,7 @@ do
     echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: buf"
     echo "  integer, intent(in) :: count"
     echo "  integer, intent(in) :: datatype"
-    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -4781,7 +4781,7 @@ do
   echo "  use mpi_kinds"
   echo "  integer, intent(inout) :: fh"
   echo "  logical(kind=MPI_INTEGER${kind}_KIND), intent(out) :: buf"
-  echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -4795,7 +4795,7 @@ do
   echo "  use mpi_kinds"
   echo "  integer, intent(inout) :: fh"
   echo "  integer(kind=MPI_INTEGER${kind}_KIND), intent(out) :: buf"
-  echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -4809,7 +4809,7 @@ do
   echo "  use mpi_kinds"
   echo "  integer, intent(inout) :: fh"
   echo "  real(kind=MPI_REAL${kind}_KIND), intent(out) :: buf"
-  echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -4823,7 +4823,7 @@ do
   echo "  use mpi_kinds"
   echo "  integer, intent(inout) :: fh"
   echo "  complex(kind=MPI_REAL${kind}_KIND), intent(out) :: buf"
-  echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -4847,7 +4847,7 @@ do
     echo "  use mpi_kinds"
     echo "  integer, intent(inout) :: fh"
     echo "  logical(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(out) :: buf"
-    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -4860,7 +4860,7 @@ do
     echo "  use mpi_kinds"
     echo "  integer, intent(inout) :: fh"
     echo "  integer(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(out) :: buf"
-    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -4873,7 +4873,7 @@ do
     echo "  use mpi_kinds"
     echo "  integer, intent(inout) :: fh"
     echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: buf"
-    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -4886,7 +4886,7 @@ do
     echo "  use mpi_kinds"
     echo "  integer, intent(inout) :: fh"
     echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: buf"
-    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -4915,7 +4915,7 @@ do
   echo "  logical(kind=MPI_INTEGER${kind}_KIND), intent(out) :: buf"
   echo "  integer, intent(in) :: count"
   echo "  integer, intent(in) :: datatype"
-  echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -4933,7 +4933,7 @@ do
   echo "  integer(kind=MPI_INTEGER${kind}_KIND), intent(out) :: buf"
   echo "  integer, intent(in) :: count"
   echo "  integer, intent(in) :: datatype"
-  echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -4951,7 +4951,7 @@ do
   echo "  real(kind=MPI_REAL${kind}_KIND), intent(out) :: buf"
   echo "  integer, intent(in) :: count"
   echo "  integer, intent(in) :: datatype"
-  echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -4969,7 +4969,7 @@ do
   echo "  complex(kind=MPI_REAL${kind}_KIND), intent(out) :: buf"
   echo "  integer, intent(in) :: count"
   echo "  integer, intent(in) :: datatype"
-  echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -4997,7 +4997,7 @@ do
     echo "  logical(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(out) :: buf"
     echo "  integer, intent(in) :: count"
     echo "  integer, intent(in) :: datatype"
-    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -5014,7 +5014,7 @@ do
     echo "  integer(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(out) :: buf"
     echo "  integer, intent(in) :: count"
     echo "  integer, intent(in) :: datatype"
-    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -5031,7 +5031,7 @@ do
     echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: buf"
     echo "  integer, intent(in) :: count"
     echo "  integer, intent(in) :: datatype"
-    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -5048,7 +5048,7 @@ do
     echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: buf"
     echo "  integer, intent(in) :: count"
     echo "  integer, intent(in) :: datatype"
-    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -5077,7 +5077,7 @@ do
   echo "  logical(kind=MPI_INTEGER${kind}_KIND), intent(out) :: buf"
   echo "  integer, intent(in) :: count"
   echo "  integer, intent(in) :: datatype"
-  echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -5095,7 +5095,7 @@ do
   echo "  integer(kind=MPI_INTEGER${kind}_KIND), intent(out) :: buf"
   echo "  integer, intent(in) :: count"
   echo "  integer, intent(in) :: datatype"
-  echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -5113,7 +5113,7 @@ do
   echo "  real(kind=MPI_REAL${kind}_KIND), intent(out) :: buf"
   echo "  integer, intent(in) :: count"
   echo "  integer, intent(in) :: datatype"
-  echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -5131,7 +5131,7 @@ do
   echo "  complex(kind=MPI_REAL${kind}_KIND), intent(out) :: buf"
   echo "  integer, intent(in) :: count"
   echo "  integer, intent(in) :: datatype"
-  echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -5159,7 +5159,7 @@ do
     echo "  logical(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(out) :: buf"
     echo "  integer, intent(in) :: count"
     echo "  integer, intent(in) :: datatype"
-    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -5176,7 +5176,7 @@ do
     echo "  integer(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(out) :: buf"
     echo "  integer, intent(in) :: count"
     echo "  integer, intent(in) :: datatype"
-    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -5193,7 +5193,7 @@ do
     echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: buf"
     echo "  integer, intent(in) :: count"
     echo "  integer, intent(in) :: datatype"
-    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -5210,7 +5210,7 @@ do
     echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: buf"
     echo "  integer, intent(in) :: count"
     echo "  integer, intent(in) :: datatype"
-    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -5389,7 +5389,7 @@ do
   echo "  use mpi_kinds"
   echo "  integer, intent(in) :: fh"
   echo "  logical(kind=MPI_INTEGER${kind}_KIND), intent(out) :: buf"
-  echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -5403,7 +5403,7 @@ do
   echo "  use mpi_kinds"
   echo "  integer, intent(in) :: fh"
   echo "  integer(kind=MPI_INTEGER${kind}_KIND), intent(out) :: buf"
-  echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -5417,7 +5417,7 @@ do
   echo "  use mpi_kinds"
   echo "  integer, intent(in) :: fh"
   echo "  real(kind=MPI_REAL${kind}_KIND), intent(out) :: buf"
-  echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -5431,7 +5431,7 @@ do
   echo "  use mpi_kinds"
   echo "  integer, intent(in) :: fh"
   echo "  complex(kind=MPI_REAL${kind}_KIND), intent(out) :: buf"
-  echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -5455,7 +5455,7 @@ do
     echo "  use mpi_kinds"
     echo "  integer, intent(in) :: fh"
     echo "  logical(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(out) :: buf"
-    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -5468,7 +5468,7 @@ do
     echo "  use mpi_kinds"
     echo "  integer, intent(in) :: fh"
     echo "  integer(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(out) :: buf"
-    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -5481,7 +5481,7 @@ do
     echo "  use mpi_kinds"
     echo "  integer, intent(in) :: fh"
     echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: buf"
-    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -5494,7 +5494,7 @@ do
     echo "  use mpi_kinds"
     echo "  integer, intent(in) :: fh"
     echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: buf"
-    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -5522,7 +5522,7 @@ do
   echo "  logical(kind=MPI_INTEGER${kind}_KIND), intent(out) :: buf"
   echo "  integer, intent(in) :: count"
   echo "  integer, intent(in) :: datatype"
-  echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -5539,7 +5539,7 @@ do
   echo "  integer(kind=MPI_INTEGER${kind}_KIND), intent(out) :: buf"
   echo "  integer, intent(in) :: count"
   echo "  integer, intent(in) :: datatype"
-  echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -5556,7 +5556,7 @@ do
   echo "  real(kind=MPI_REAL${kind}_KIND), intent(out) :: buf"
   echo "  integer, intent(in) :: count"
   echo "  integer, intent(in) :: datatype"
-  echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -5573,7 +5573,7 @@ do
   echo "  complex(kind=MPI_REAL${kind}_KIND), intent(out) :: buf"
   echo "  integer, intent(in) :: count"
   echo "  integer, intent(in) :: datatype"
-  echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -5600,7 +5600,7 @@ do
     echo "  logical(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(out) :: buf"
     echo "  integer, intent(in) :: count"
     echo "  integer, intent(in) :: datatype"
-    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -5616,7 +5616,7 @@ do
     echo "  integer(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(out) :: buf"
     echo "  integer, intent(in) :: count"
     echo "  integer, intent(in) :: datatype"
-    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -5632,7 +5632,7 @@ do
     echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: buf"
     echo "  integer, intent(in) :: count"
     echo "  integer, intent(in) :: datatype"
-    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -5648,7 +5648,7 @@ do
     echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: buf"
     echo "  integer, intent(in) :: count"
     echo "  integer, intent(in) :: datatype"
-    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -5811,7 +5811,7 @@ do
   echo "  use mpi_kinds"
   echo "  integer, intent(inout) :: fh"
   echo "  logical(kind=MPI_INTEGER${kind}_KIND), intent(out) :: buf"
-  echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -5825,7 +5825,7 @@ do
   echo "  use mpi_kinds"
   echo "  integer, intent(inout) :: fh"
   echo "  integer(kind=MPI_INTEGER${kind}_KIND), intent(out) :: buf"
-  echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -5839,7 +5839,7 @@ do
   echo "  use mpi_kinds"
   echo "  integer, intent(inout) :: fh"
   echo "  real(kind=MPI_REAL${kind}_KIND), intent(out) :: buf"
-  echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -5853,7 +5853,7 @@ do
   echo "  use mpi_kinds"
   echo "  integer, intent(inout) :: fh"
   echo "  complex(kind=MPI_REAL${kind}_KIND), intent(out) :: buf"
-  echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -5877,7 +5877,7 @@ do
     echo "  use mpi_kinds"
     echo "  integer, intent(inout) :: fh"
     echo "  logical(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(out) :: buf"
-    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -5890,7 +5890,7 @@ do
     echo "  use mpi_kinds"
     echo "  integer, intent(inout) :: fh"
     echo "  integer(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(out) :: buf"
-    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -5903,7 +5903,7 @@ do
     echo "  use mpi_kinds"
     echo "  integer, intent(inout) :: fh"
     echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: buf"
-    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -5916,7 +5916,7 @@ do
     echo "  use mpi_kinds"
     echo "  integer, intent(inout) :: fh"
     echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: buf"
-    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -5944,7 +5944,7 @@ do
   echo "  logical(kind=MPI_INTEGER${kind}_KIND), intent(out) :: buf"
   echo "  integer, intent(in) :: count"
   echo "  integer, intent(in) :: datatype"
-  echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -5961,7 +5961,7 @@ do
   echo "  integer(kind=MPI_INTEGER${kind}_KIND), intent(out) :: buf"
   echo "  integer, intent(in) :: count"
   echo "  integer, intent(in) :: datatype"
-  echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -5978,7 +5978,7 @@ do
   echo "  real(kind=MPI_REAL${kind}_KIND), intent(out) :: buf"
   echo "  integer, intent(in) :: count"
   echo "  integer, intent(in) :: datatype"
-  echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -5995,7 +5995,7 @@ do
   echo "  complex(kind=MPI_REAL${kind}_KIND), intent(out) :: buf"
   echo "  integer, intent(in) :: count"
   echo "  integer, intent(in) :: datatype"
-  echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -6022,7 +6022,7 @@ do
     echo "  logical(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(out) :: buf"
     echo "  integer, intent(in) :: count"
     echo "  integer, intent(in) :: datatype"
-    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -6038,7 +6038,7 @@ do
     echo "  integer(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(out) :: buf"
     echo "  integer, intent(in) :: count"
     echo "  integer, intent(in) :: datatype"
-    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -6054,7 +6054,7 @@ do
     echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: buf"
     echo "  integer, intent(in) :: count"
     echo "  integer, intent(in) :: datatype"
-    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -6070,7 +6070,7 @@ do
     echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: buf"
     echo "  integer, intent(in) :: count"
     echo "  integer, intent(in) :: datatype"
-    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -6240,7 +6240,7 @@ do
   echo "  logical(kind=MPI_INTEGER${kind}_KIND), intent(in) :: buf"
   echo "  integer, intent(in) :: count"
   echo "  integer, intent(in) :: datatype"
-  echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -6257,7 +6257,7 @@ do
   echo "  integer(kind=MPI_INTEGER${kind}_KIND), intent(in) :: buf"
   echo "  integer, intent(in) :: count"
   echo "  integer, intent(in) :: datatype"
-  echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -6274,7 +6274,7 @@ do
   echo "  real(kind=MPI_REAL${kind}_KIND), intent(in) :: buf"
   echo "  integer, intent(in) :: count"
   echo "  integer, intent(in) :: datatype"
-  echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -6291,7 +6291,7 @@ do
   echo "  complex(kind=MPI_REAL${kind}_KIND), intent(in) :: buf"
   echo "  integer, intent(in) :: count"
   echo "  integer, intent(in) :: datatype"
-  echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -6318,7 +6318,7 @@ do
     echo "  logical(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(in) :: buf"
     echo "  integer, intent(in) :: count"
     echo "  integer, intent(in) :: datatype"
-    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -6334,7 +6334,7 @@ do
     echo "  integer(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(in) :: buf"
     echo "  integer, intent(in) :: count"
     echo "  integer, intent(in) :: datatype"
-    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -6350,7 +6350,7 @@ do
     echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: buf"
     echo "  integer, intent(in) :: count"
     echo "  integer, intent(in) :: datatype"
-    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -6366,7 +6366,7 @@ do
     echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: buf"
     echo "  integer, intent(in) :: count"
     echo "  integer, intent(in) :: datatype"
-    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -6394,7 +6394,7 @@ do
   echo "  logical(kind=MPI_INTEGER${kind}_KIND), intent(in) :: buf"
   echo "  integer, intent(in) :: count"
   echo "  integer, intent(in) :: datatype"
-  echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -6411,7 +6411,7 @@ do
   echo "  integer(kind=MPI_INTEGER${kind}_KIND), intent(in) :: buf"
   echo "  integer, intent(in) :: count"
   echo "  integer, intent(in) :: datatype"
-  echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -6428,7 +6428,7 @@ do
   echo "  real(kind=MPI_REAL${kind}_KIND), intent(in) :: buf"
   echo "  integer, intent(in) :: count"
   echo "  integer, intent(in) :: datatype"
-  echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -6445,7 +6445,7 @@ do
   echo "  complex(kind=MPI_REAL${kind}_KIND), intent(in) :: buf"
   echo "  integer, intent(in) :: count"
   echo "  integer, intent(in) :: datatype"
-  echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -6472,7 +6472,7 @@ do
     echo "  logical(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(in) :: buf"
     echo "  integer, intent(in) :: count"
     echo "  integer, intent(in) :: datatype"
-    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -6488,7 +6488,7 @@ do
     echo "  integer(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(in) :: buf"
     echo "  integer, intent(in) :: count"
     echo "  integer, intent(in) :: datatype"
-    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -6504,7 +6504,7 @@ do
     echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: buf"
     echo "  integer, intent(in) :: count"
     echo "  integer, intent(in) :: datatype"
-    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -6520,7 +6520,7 @@ do
     echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: buf"
     echo "  integer, intent(in) :: count"
     echo "  integer, intent(in) :: datatype"
-    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -6683,7 +6683,7 @@ do
   echo "  use mpi_kinds"
   echo "  integer, intent(inout) :: fh"
   echo "  logical(kind=MPI_INTEGER${kind}_KIND), intent(in) :: buf"
-  echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -6697,7 +6697,7 @@ do
   echo "  use mpi_kinds"
   echo "  integer, intent(inout) :: fh"
   echo "  integer(kind=MPI_INTEGER${kind}_KIND), intent(in) :: buf"
-  echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -6711,7 +6711,7 @@ do
   echo "  use mpi_kinds"
   echo "  integer, intent(inout) :: fh"
   echo "  real(kind=MPI_REAL${kind}_KIND), intent(in) :: buf"
-  echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -6725,7 +6725,7 @@ do
   echo "  use mpi_kinds"
   echo "  integer, intent(inout) :: fh"
   echo "  complex(kind=MPI_REAL${kind}_KIND), intent(in) :: buf"
-  echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -6749,7 +6749,7 @@ do
     echo "  use mpi_kinds"
     echo "  integer, intent(inout) :: fh"
     echo "  logical(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(in) :: buf"
-    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -6762,7 +6762,7 @@ do
     echo "  use mpi_kinds"
     echo "  integer, intent(inout) :: fh"
     echo "  integer(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(in) :: buf"
-    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -6775,7 +6775,7 @@ do
     echo "  use mpi_kinds"
     echo "  integer, intent(inout) :: fh"
     echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: buf"
-    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -6788,7 +6788,7 @@ do
     echo "  use mpi_kinds"
     echo "  integer, intent(inout) :: fh"
     echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: buf"
-    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -6817,7 +6817,7 @@ do
   echo "  logical(kind=MPI_INTEGER${kind}_KIND), intent(in) :: buf"
   echo "  integer, intent(in) :: count"
   echo "  integer, intent(in) :: datatype"
-  echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -6835,7 +6835,7 @@ do
   echo "  integer(kind=MPI_INTEGER${kind}_KIND), intent(in) :: buf"
   echo "  integer, intent(in) :: count"
   echo "  integer, intent(in) :: datatype"
-  echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -6853,7 +6853,7 @@ do
   echo "  real(kind=MPI_REAL${kind}_KIND), intent(in) :: buf"
   echo "  integer, intent(in) :: count"
   echo "  integer, intent(in) :: datatype"
-  echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -6871,7 +6871,7 @@ do
   echo "  complex(kind=MPI_REAL${kind}_KIND), intent(in) :: buf"
   echo "  integer, intent(in) :: count"
   echo "  integer, intent(in) :: datatype"
-  echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -6899,7 +6899,7 @@ do
     echo "  logical(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(in) :: buf"
     echo "  integer, intent(in) :: count"
     echo "  integer, intent(in) :: datatype"
-    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -6916,7 +6916,7 @@ do
     echo "  integer(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(in) :: buf"
     echo "  integer, intent(in) :: count"
     echo "  integer, intent(in) :: datatype"
-    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -6933,7 +6933,7 @@ do
     echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: buf"
     echo "  integer, intent(in) :: count"
     echo "  integer, intent(in) :: datatype"
-    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -6950,7 +6950,7 @@ do
     echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: buf"
     echo "  integer, intent(in) :: count"
     echo "  integer, intent(in) :: datatype"
-    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -6979,7 +6979,7 @@ do
   echo "  logical(kind=MPI_INTEGER${kind}_KIND), intent(in) :: buf"
   echo "  integer, intent(in) :: count"
   echo "  integer, intent(in) :: datatype"
-  echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -6997,7 +6997,7 @@ do
   echo "  integer(kind=MPI_INTEGER${kind}_KIND), intent(in) :: buf"
   echo "  integer, intent(in) :: count"
   echo "  integer, intent(in) :: datatype"
-  echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -7015,7 +7015,7 @@ do
   echo "  real(kind=MPI_REAL${kind}_KIND), intent(in) :: buf"
   echo "  integer, intent(in) :: count"
   echo "  integer, intent(in) :: datatype"
-  echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -7033,7 +7033,7 @@ do
   echo "  complex(kind=MPI_REAL${kind}_KIND), intent(in) :: buf"
   echo "  integer, intent(in) :: count"
   echo "  integer, intent(in) :: datatype"
-  echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -7061,7 +7061,7 @@ do
     echo "  logical(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(in) :: buf"
     echo "  integer, intent(in) :: count"
     echo "  integer, intent(in) :: datatype"
-    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -7078,7 +7078,7 @@ do
     echo "  integer(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(in) :: buf"
     echo "  integer, intent(in) :: count"
     echo "  integer, intent(in) :: datatype"
-    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -7095,7 +7095,7 @@ do
     echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: buf"
     echo "  integer, intent(in) :: count"
     echo "  integer, intent(in) :: datatype"
-    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -7112,7 +7112,7 @@ do
     echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: buf"
     echo "  integer, intent(in) :: count"
     echo "  integer, intent(in) :: datatype"
-    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -7291,7 +7291,7 @@ do
   echo "  use mpi_kinds"
   echo "  integer, intent(inout) :: fh"
   echo "  logical(kind=MPI_INTEGER${kind}_KIND), intent(in) :: buf"
-  echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -7305,7 +7305,7 @@ do
   echo "  use mpi_kinds"
   echo "  integer, intent(inout) :: fh"
   echo "  integer(kind=MPI_INTEGER${kind}_KIND), intent(in) :: buf"
-  echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -7319,7 +7319,7 @@ do
   echo "  use mpi_kinds"
   echo "  integer, intent(inout) :: fh"
   echo "  real(kind=MPI_REAL${kind}_KIND), intent(in) :: buf"
-  echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -7333,7 +7333,7 @@ do
   echo "  use mpi_kinds"
   echo "  integer, intent(inout) :: fh"
   echo "  complex(kind=MPI_REAL${kind}_KIND), intent(in) :: buf"
-  echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -7357,7 +7357,7 @@ do
     echo "  use mpi_kinds"
     echo "  integer, intent(inout) :: fh"
     echo "  logical(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(in) :: buf"
-    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -7370,7 +7370,7 @@ do
     echo "  use mpi_kinds"
     echo "  integer, intent(inout) :: fh"
     echo "  integer(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(in) :: buf"
-    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -7383,7 +7383,7 @@ do
     echo "  use mpi_kinds"
     echo "  integer, intent(inout) :: fh"
     echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: buf"
-    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -7396,7 +7396,7 @@ do
     echo "  use mpi_kinds"
     echo "  integer, intent(inout) :: fh"
     echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: buf"
-    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -7424,7 +7424,7 @@ do
   echo "  logical(kind=MPI_INTEGER${kind}_KIND), intent(in) :: buf"
   echo "  integer, intent(in) :: count"
   echo "  integer, intent(in) :: datatype"
-  echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -7441,7 +7441,7 @@ do
   echo "  integer(kind=MPI_INTEGER${kind}_KIND), intent(in) :: buf"
   echo "  integer, intent(in) :: count"
   echo "  integer, intent(in) :: datatype"
-  echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -7458,7 +7458,7 @@ do
   echo "  real(kind=MPI_REAL${kind}_KIND), intent(in) :: buf"
   echo "  integer, intent(in) :: count"
   echo "  integer, intent(in) :: datatype"
-  echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -7475,7 +7475,7 @@ do
   echo "  complex(kind=MPI_REAL${kind}_KIND), intent(in) :: buf"
   echo "  integer, intent(in) :: count"
   echo "  integer, intent(in) :: datatype"
-  echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -7502,7 +7502,7 @@ do
     echo "  logical(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(in) :: buf"
     echo "  integer, intent(in) :: count"
     echo "  integer, intent(in) :: datatype"
-    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -7518,7 +7518,7 @@ do
     echo "  integer(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(in) :: buf"
     echo "  integer, intent(in) :: count"
     echo "  integer, intent(in) :: datatype"
-    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -7534,7 +7534,7 @@ do
     echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: buf"
     echo "  integer, intent(in) :: count"
     echo "  integer, intent(in) :: datatype"
-    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -7550,7 +7550,7 @@ do
     echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: buf"
     echo "  integer, intent(in) :: count"
     echo "  integer, intent(in) :: datatype"
-    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -7713,7 +7713,7 @@ do
   echo "  use mpi_kinds"
   echo "  integer, intent(inout) :: fh"
   echo "  logical(kind=MPI_INTEGER${kind}_KIND), intent(in) :: buf"
-  echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -7727,7 +7727,7 @@ do
   echo "  use mpi_kinds"
   echo "  integer, intent(inout) :: fh"
   echo "  integer(kind=MPI_INTEGER${kind}_KIND), intent(in) :: buf"
-  echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -7741,7 +7741,7 @@ do
   echo "  use mpi_kinds"
   echo "  integer, intent(inout) :: fh"
   echo "  real(kind=MPI_REAL${kind}_KIND), intent(in) :: buf"
-  echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -7755,7 +7755,7 @@ do
   echo "  use mpi_kinds"
   echo "  integer, intent(inout) :: fh"
   echo "  complex(kind=MPI_REAL${kind}_KIND), intent(in) :: buf"
-  echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -7779,7 +7779,7 @@ do
     echo "  use mpi_kinds"
     echo "  integer, intent(inout) :: fh"
     echo "  logical(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(in) :: buf"
-    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -7792,7 +7792,7 @@ do
     echo "  use mpi_kinds"
     echo "  integer, intent(inout) :: fh"
     echo "  integer(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(in) :: buf"
-    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -7805,7 +7805,7 @@ do
     echo "  use mpi_kinds"
     echo "  integer, intent(inout) :: fh"
     echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: buf"
-    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -7818,7 +7818,7 @@ do
     echo "  use mpi_kinds"
     echo "  integer, intent(inout) :: fh"
     echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: buf"
-    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -7846,7 +7846,7 @@ do
   echo "  logical(kind=MPI_INTEGER${kind}_KIND), intent(in) :: buf"
   echo "  integer, intent(in) :: count"
   echo "  integer, intent(in) :: datatype"
-  echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -7863,7 +7863,7 @@ do
   echo "  integer(kind=MPI_INTEGER${kind}_KIND), intent(in) :: buf"
   echo "  integer, intent(in) :: count"
   echo "  integer, intent(in) :: datatype"
-  echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -7880,7 +7880,7 @@ do
   echo "  real(kind=MPI_REAL${kind}_KIND), intent(in) :: buf"
   echo "  integer, intent(in) :: count"
   echo "  integer, intent(in) :: datatype"
-  echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -7897,7 +7897,7 @@ do
   echo "  complex(kind=MPI_REAL${kind}_KIND), intent(in) :: buf"
   echo "  integer, intent(in) :: count"
   echo "  integer, intent(in) :: datatype"
-  echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -7924,7 +7924,7 @@ do
     echo "  logical(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(in) :: buf"
     echo "  integer, intent(in) :: count"
     echo "  integer, intent(in) :: datatype"
-    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -7940,7 +7940,7 @@ do
     echo "  integer(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(in) :: buf"
     echo "  integer, intent(in) :: count"
     echo "  integer, intent(in) :: datatype"
-    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -7956,7 +7956,7 @@ do
     echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: buf"
     echo "  integer, intent(in) :: count"
     echo "  integer, intent(in) :: datatype"
-    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -7972,7 +7972,7 @@ do
     echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: buf"
     echo "  integer, intent(in) :: count"
     echo "  integer, intent(in) :: datatype"
-    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -8801,7 +8801,7 @@ echo
 proc="${procedure}"
 echo "subroutine ${proc}(status, datatype, count, ierr)"
 echo "  use mpi_kinds"
-echo "  integer(MPI_STATUS_SIZE), intent(in) :: status"
+echo "  integer, dimension(MPI_STATUS_SIZE), intent(in) :: status"
 echo "  integer, intent(in) :: datatype"
 echo "  integer, intent(out) :: count"
 echo "  integer, intent(out) :: ierr"
@@ -8819,7 +8819,7 @@ echo
 proc="${procedure}"
 echo "subroutine ${proc}(status, datatype, count, ierr)"
 echo "  use mpi_kinds"
-echo "  integer(MPI_STATUS_SIZE), intent(in) :: status"
+echo "  integer, dimension(MPI_STATUS_SIZE), intent(in) :: status"
 echo "  integer, intent(in) :: datatype"
 echo "  integer, intent(out) :: count"
 echo "  integer, intent(out) :: ierr"
@@ -9668,7 +9668,7 @@ echo "  integer, intent(in) :: source"
 echo "  integer, intent(in) :: tag"
 echo "  integer, intent(in) :: comm"
 echo "  integer, intent(out) :: flag"
-echo "  integer(MPI_STATUS_SIZE), intent(inout) :: status"
+echo "  integer, dimension(MPI_STATUS_SIZE), intent(inout) :: status"
 echo "  integer, intent(out) :: ierr"
 echo "end subroutine ${proc}"
 echo
@@ -10846,7 +10846,7 @@ echo "  use mpi_kinds"
 echo "  integer, intent(in) :: source"
 echo "  integer, intent(in) :: tag"
 echo "  integer, intent(in) :: comm"
-echo "  integer(MPI_STATUS_SIZE), intent(inout) :: status"
+echo "  integer, dimension(MPI_STATUS_SIZE), intent(inout) :: status"
 echo "  integer, intent(out) :: ierr"
 echo "end subroutine ${proc}"
 echo
@@ -11066,7 +11066,7 @@ do
   echo "  integer, intent(in) :: source"
   echo "  integer, intent(in) :: tag"
   echo "  integer, intent(in) :: comm"
-  echo "  integer(MPI_STATUS_SIZE), intent(inout) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(inout) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -11085,7 +11085,7 @@ do
   echo "  integer, intent(in) :: source"
   echo "  integer, intent(in) :: tag"
   echo "  integer, intent(in) :: comm"
-  echo "  integer(MPI_STATUS_SIZE), intent(inout) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(inout) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -11104,7 +11104,7 @@ do
   echo "  integer, intent(in) :: source"
   echo "  integer, intent(in) :: tag"
   echo "  integer, intent(in) :: comm"
-  echo "  integer(MPI_STATUS_SIZE), intent(inout) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(inout) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -11123,7 +11123,7 @@ do
   echo "  integer, intent(in) :: source"
   echo "  integer, intent(in) :: tag"
   echo "  integer, intent(in) :: comm"
-  echo "  integer(MPI_STATUS_SIZE), intent(inout) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(inout) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -11152,7 +11152,7 @@ do
     echo "  integer, intent(in) :: source"
     echo "  integer, intent(in) :: tag"
     echo "  integer, intent(in) :: comm"
-    echo "  integer(MPI_STATUS_SIZE), intent(inout) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(inout) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -11170,7 +11170,7 @@ do
     echo "  integer, intent(in) :: source"
     echo "  integer, intent(in) :: tag"
     echo "  integer, intent(in) :: comm"
-    echo "  integer(MPI_STATUS_SIZE), intent(inout) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(inout) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -11188,7 +11188,7 @@ do
     echo "  integer, intent(in) :: source"
     echo "  integer, intent(in) :: tag"
     echo "  integer, intent(in) :: comm"
-    echo "  integer(MPI_STATUS_SIZE), intent(inout) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(inout) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -11206,7 +11206,7 @@ do
     echo "  integer, intent(in) :: source"
     echo "  integer, intent(in) :: tag"
     echo "  integer, intent(in) :: comm"
-    echo "  integer(MPI_STATUS_SIZE), intent(inout) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(inout) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -11767,7 +11767,7 @@ echo "subroutine ${proc}(request, flag, status, ierr)"
 echo "  use mpi_kinds"
 echo "  integer, intent(in) :: request"
 echo "  integer, intent(out) :: flag"
-echo "  integer(MPI_STATUS_SIZE), intent(inout) :: status"
+echo "  integer, dimension(MPI_STATUS_SIZE), intent(inout) :: status"
 echo "  integer, intent(out) :: ierr"
 echo "end subroutine ${proc}"
 echo
@@ -12988,7 +12988,7 @@ do
   echo "  integer, intent(in) :: source"
   echo "  integer, intent(in) :: recvtag"
   echo "  integer, intent(in) :: comm"
-  echo "  integer(MPI_STATUS_SIZE), intent(inout) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(inout) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -13012,7 +13012,7 @@ do
   echo "  integer, intent(in) :: source"
   echo "  integer, intent(in) :: recvtag"
   echo "  integer, intent(in) :: comm"
-  echo "  integer(MPI_STATUS_SIZE), intent(inout) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(inout) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -13036,7 +13036,7 @@ do
   echo "  integer, intent(in) :: source"
   echo "  integer, intent(in) :: recvtag"
   echo "  integer, intent(in) :: comm"
-  echo "  integer(MPI_STATUS_SIZE), intent(inout) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(inout) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -13060,7 +13060,7 @@ do
   echo "  integer, intent(in) :: source"
   echo "  integer, intent(in) :: recvtag"
   echo "  integer, intent(in) :: comm"
-  echo "  integer(MPI_STATUS_SIZE), intent(inout) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(inout) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -13094,7 +13094,7 @@ do
     echo "  integer, intent(in) :: source"
     echo "  integer, intent(in) :: recvtag"
     echo "  integer, intent(in) :: comm"
-    echo "  integer(MPI_STATUS_SIZE), intent(inout) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(inout) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -13117,7 +13117,7 @@ do
     echo "  integer, intent(in) :: source"
     echo "  integer, intent(in) :: recvtag"
     echo "  integer, intent(in) :: comm"
-    echo "  integer(MPI_STATUS_SIZE), intent(inout) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(inout) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -13140,7 +13140,7 @@ do
     echo "  integer, intent(in) :: source"
     echo "  integer, intent(in) :: recvtag"
     echo "  integer, intent(in) :: comm"
-    echo "  integer(MPI_STATUS_SIZE), intent(inout) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(inout) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -13163,7 +13163,7 @@ do
     echo "  integer, intent(in) :: source"
     echo "  integer, intent(in) :: recvtag"
     echo "  integer, intent(in) :: comm"
-    echo "  integer(MPI_STATUS_SIZE), intent(inout) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(inout) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -13195,7 +13195,7 @@ do
   echo "  integer, intent(in) :: source"
   echo "  integer, intent(in) :: recvtag"
   echo "  integer, intent(in) :: comm"
-  echo "  integer(MPI_STATUS_SIZE), intent(inout) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(inout) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -13216,7 +13216,7 @@ do
   echo "  integer, intent(in) :: source"
   echo "  integer, intent(in) :: recvtag"
   echo "  integer, intent(in) :: comm"
-  echo "  integer(MPI_STATUS_SIZE), intent(inout) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(inout) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -13237,7 +13237,7 @@ do
   echo "  integer, intent(in) :: source"
   echo "  integer, intent(in) :: recvtag"
   echo "  integer, intent(in) :: comm"
-  echo "  integer(MPI_STATUS_SIZE), intent(inout) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(inout) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -13258,7 +13258,7 @@ do
   echo "  integer, intent(in) :: source"
   echo "  integer, intent(in) :: recvtag"
   echo "  integer, intent(in) :: comm"
-  echo "  integer(MPI_STATUS_SIZE), intent(inout) :: status"
+  echo "  integer, dimension(MPI_STATUS_SIZE), intent(inout) :: status"
   echo "  integer, intent(out) :: ierr"
   echo "end subroutine ${proc}"
   echo
@@ -13289,7 +13289,7 @@ do
     echo "  integer, intent(in) :: source"
     echo "  integer, intent(in) :: recvtag"
     echo "  integer, intent(in) :: comm"
-    echo "  integer(MPI_STATUS_SIZE), intent(inout) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(inout) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -13309,7 +13309,7 @@ do
     echo "  integer, intent(in) :: source"
     echo "  integer, intent(in) :: recvtag"
     echo "  integer, intent(in) :: comm"
-    echo "  integer(MPI_STATUS_SIZE), intent(inout) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(inout) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -13329,7 +13329,7 @@ do
     echo "  integer, intent(in) :: source"
     echo "  integer, intent(in) :: recvtag"
     echo "  integer, intent(in) :: comm"
-    echo "  integer(MPI_STATUS_SIZE), intent(inout) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(inout) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -13349,7 +13349,7 @@ do
     echo "  integer, intent(in) :: source"
     echo "  integer, intent(in) :: recvtag"
     echo "  integer, intent(in) :: comm"
-    echo "  integer(MPI_STATUS_SIZE), intent(inout) :: status"
+    echo "  integer, dimension(MPI_STATUS_SIZE), intent(inout) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
     echo
@@ -13856,7 +13856,7 @@ echo
 proc="${procedure}"
 echo "subroutine ${proc}(status, flag, ierr)"
 echo "  use mpi_kinds"
-echo "  integer(MPI_STATUS_SIZE), intent(inout) :: status"
+echo "  integer, dimension(MPI_STATUS_SIZE), intent(inout) :: status"
 echo "  integer, intent(in) :: flag"
 echo "  integer, intent(out) :: ierr"
 echo "end subroutine ${proc}"
@@ -13873,7 +13873,7 @@ echo
 proc="${procedure}"
 echo "subroutine ${proc}(status, datatype, count, ierr)"
 echo "  use mpi_kinds"
-echo "  integer(MPI_STATUS_SIZE), intent(inout) :: status"
+echo "  integer, dimension(MPI_STATUS_SIZE), intent(inout) :: status"
 echo "  integer, intent(in) :: datatype"
 echo "  integer, intent(in) :: count"
 echo "  integer, intent(out) :: ierr"
@@ -13893,7 +13893,7 @@ echo "subroutine ${proc}(request, flag, status, ierr)"
 echo "  use mpi_kinds"
 echo "  integer, intent(inout) :: request"
 echo "  integer, intent(out) :: flag"
-echo "  integer(MPI_STATUS_SIZE), intent(inout) :: status"
+echo "  integer, dimension(MPI_STATUS_SIZE), intent(inout) :: status"
 echo "  integer, intent(out) :: ierr"
 echo "end subroutine ${proc}"
 echo
@@ -13909,7 +13909,7 @@ echo
 proc="${procedure}"
 echo "subroutine ${proc}(status, flag, ierr)"
 echo "  use mpi_kinds"
-echo "  integer(MPI_STATUS_SIZE), intent(in) :: status"
+echo "  integer, dimension(MPI_STATUS_SIZE), intent(in) :: status"
 echo "  integer, intent(out) :: flag"
 echo "  integer, intent(out) :: ierr"
 echo "end subroutine ${proc}"
@@ -13929,7 +13929,7 @@ echo "  use mpi_kinds"
 echo "  integer, intent(in) :: count"
 echo "  integer, dimension(*), intent(inout) :: array_of_requests"
 echo "  integer, intent(out) :: flag"
-echo "  integer(MPI_STATUS_SIZE), dimension(*), intent(inout) :: array_of_statuses"
+echo "  integer, dimension(MPI_STATUS_SIZE,*), intent(inout) :: array_of_statuses"
 echo "  integer, intent(out) :: ierr"
 echo "end subroutine ${proc}"
 echo
@@ -13950,7 +13950,7 @@ echo "  integer, intent(in) :: count"
 echo "  integer, dimension(*), intent(inout) :: array_of_requests"
 echo "  integer, intent(out) :: index"
 echo "  integer, intent(out) :: flag"
-echo "  integer(MPI_STATUS_SIZE), intent(inout) :: status"
+echo "  integer, dimension(MPI_STATUS_SIZE), intent(inout) :: status"
 echo "  integer, intent(out) :: ierr"
 echo "end subroutine ${proc}"
 echo
@@ -13971,7 +13971,7 @@ echo "  integer, intent(in) :: incount"
 echo "  integer, dimension(*), intent(inout) :: array_of_requests"
 echo "  integer, intent(out) :: outcount"
 echo "  integer, dimension(*), intent(out) :: array_of_indices"
-echo "  integer(MPI_STATUS_SIZE), dimension(*), intent(inout) :: array_of_statuses"
+echo "  integer, dimension(MPI_STATUS_SIZE,*), intent(inout) :: array_of_statuses"
 echo "  integer, intent(out) :: ierr"
 echo "end subroutine ${proc}"
 echo
@@ -15012,7 +15012,7 @@ proc="${procedure}"
 echo "subroutine ${proc}(request, status, ierr)"
 echo "  use mpi_kinds"
 echo "  integer, intent(inout) :: request"
-echo "  integer(MPI_STATUS_SIZE), intent(inout) :: status"
+echo "  integer, dimension(MPI_STATUS_SIZE), intent(inout) :: status"
 echo "  integer, intent(out) :: ierr"
 echo "end subroutine ${proc}"
 echo
@@ -15030,7 +15030,7 @@ echo "subroutine ${proc}(count, array_of_requests, array_of_statuses, ierr)"
 echo "  use mpi_kinds"
 echo "  integer, intent(in) :: count"
 echo "  integer, dimension(*), intent(inout) :: array_of_requests"
-echo "  integer(MPI_STATUS_SIZE), dimension(*), intent(inout) :: array_of_statuses"
+echo "  integer, dimension(MPI_STATUS_SIZE,*), intent(inout) :: array_of_statuses"
 echo "  integer, intent(out) :: ierr"
 echo "end subroutine ${proc}"
 echo
@@ -15049,7 +15049,7 @@ echo "  use mpi_kinds"
 echo "  integer, intent(in) :: count"
 echo "  integer, dimension(*), intent(inout) :: array_of_requests"
 echo "  integer, intent(out) :: index"
-echo "  integer(MPI_STATUS_SIZE), intent(inout) :: status"
+echo "  integer, dimension(MPI_STATUS_SIZE), intent(inout) :: status"
 echo "  integer, intent(out) :: ierr"
 echo "end subroutine ${proc}"
 echo
@@ -15070,7 +15070,7 @@ echo "  integer, intent(in) :: incount"
 echo "  integer, dimension(*), intent(inout) :: array_of_requests"
 echo "  integer, intent(out) :: outcount"
 echo "  integer, dimension(*), intent(out) :: array_of_indices"
-echo "  integer(MPI_STATUS_SIZE), dimension(*), intent(inout) :: array_of_statuses"
+echo "  integer, dimension(MPI_STATUS_SIZE,*), intent(inout) :: array_of_statuses"
 echo "  integer, intent(out) :: ierr"
 echo "end subroutine ${proc}"
 echo
