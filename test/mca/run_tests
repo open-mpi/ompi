@@ -44,7 +44,7 @@ else if ("$1" == "oob") then
   cd ..;
 else
   echo "correct use: "
-  echo "    run_tests    (to run all class tests)"
+  echo "    run_tests    (to run all mca tests)"
   echo "or  run_tests <llm | ns | oob>"
   exit -1
 endif
