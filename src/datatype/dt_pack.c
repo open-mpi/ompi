@@ -367,6 +367,7 @@ int ompi_convertor_pack_no_conversion( ompi_convertor_t* pConv,
                     iov[iov_pos].iov_len -= space_on_iovec;
                     last_count = 0;
                     pos_desc = -1;
+                    last_blength = 0;
                     goto end_loop;
                 }
                 pConv->stack_pos--;
@@ -466,8 +467,8 @@ int ompi_convertor_pack_no_conversion( ompi_convertor_t* pConv,
                             bConverted += saveLength;
                             space -= saveLength;
                             saveLength = last_blength;
-                            if( ++iov_pos == (*out_size) ) goto end_loop;
                             last_blength = 0;
+                            if( ++iov_pos == (*out_size) ) goto end_loop;
                             pDestBuf = iov[iov_pos].iov_base;
                             space_on_iovec = iov[iov_pos].iov_len;
                             break;
@@ -526,11 +527,11 @@ int ompi_convertor_pack_no_conversion( ompi_convertor_t* pConv,
             lastDisp = pStack->disp + pElems[pos_desc].disp;
             last_count = pElems[pos_desc].count;
             last_blength = last_count * ompi_ddt_basicDatatypes[pElems[pos_desc].type]->size;
-	}
+        }
     }
  end_loop:
     if( pos_desc >= 0 ) {  /* if the pack is not finish add a new entry in the stack */
-	PUSH_STACK( pStack, pConv->stack_pos, pos_desc, saveLength, lastDisp, pos_desc );
+        PUSH_STACK( pStack, pConv->stack_pos, pos_desc, saveLength, lastDisp, pos_desc );
     }
     assert( last_blength == 0 );
     pConv->bConverted += bConverted;  /* update the byte converted field in the convertor */
