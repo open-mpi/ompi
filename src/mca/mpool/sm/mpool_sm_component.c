@@ -123,9 +123,3 @@ mca_mpool_t* mca_mpool_sm_init(bool *allow_multi_user_threads)
     return &mca_mpool_sm;
 }
 
-
-void* mca_mpool_sm_base()
-{
-    return (mca_mpool_sm_module.sm_mmap != NULL) ? mca_mpool_sm_module.sm_mmap->map_addr : NULL;
-}
-

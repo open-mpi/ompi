@@ -12,6 +12,11 @@ struct mca_mpool_t;
 
 
 /**
+  * if appropriate - returns base address of memory pool
+  */
+typedef void* (*mca_mpool_base_address_fn_t)(void);
+
+/**
   * allocate function typedef
   */
 typedef void* (*mca_mpool_base_alloc_fn_t)(size_t size, size_t align);
@@ -65,6 +70,7 @@ typedef struct mca_mpool_base_component_1_0_0_t mca_mpool_base_component_t;
  */
 struct mca_mpool_t {
     mca_mpool_base_component_t *mpool_component;
+    mca_mpool_base_address_fn_t mpool_base;
     mca_mpool_base_alloc_fn_t mpool_alloc;
     mca_mpool_base_realloc_fn_t mpool_realloc;
     mca_mpool_base_free_fn_t mpool_free;
