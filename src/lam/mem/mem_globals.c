@@ -1,4 +1,6 @@
 /*
+ * $HEADER$
+ *
  * Copyright 2002-2003. The Regents of the University of California. This material
  * was produced under U.S. Government contract W-7405-ENG-36 for Los Alamos
  * National Laboratory, which is operated by the University of California for
@@ -29,8 +31,8 @@
 /*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
 
 #include <unistd.h>
-#include "lam_constants.h"
-#include "lam/base/object.h"
+#include "include/lam_constants.h"
+#include "lam/lfc/object.h"
 #include "lam/mem/mem_globals.h"
 
 lam_fixed_mpool_t    lam_shmem_pools;
