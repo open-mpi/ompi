@@ -97,6 +97,6 @@ static inline void lam_atomic_subtract_rel_uint64_t(volatile uint64_t *p, uint64
  * implementation (system specific)
  */
 
-/* #include "os/XXXX/atomic.h" */
+#include "lam/os/atomic.h"
 
 #endif /* LAM_ATOMIC_H */
