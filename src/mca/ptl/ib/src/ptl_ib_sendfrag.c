@@ -364,10 +364,21 @@ int mca_ptl_ib_put_frag_init(mca_ptl_ib_send_frag_t *sendfrag,
     *size = size_out;
     hdr->hdr_frag.hdr_frag_length = size_out;
 
-    A_PRINT("size_in : %d", size_in);
-
     IB_SET_SEND_DESC_LEN((&sendfrag->ib_buf),
-            (sizeof(mca_ptl_base_frag_header_t) + size_in));
+            (sizeof(mca_ptl_base_frag_header_t)));
+
+    /* fragment state */
+    sendfrag->frag_send.frag_base.frag_owner = 
+        &ptl_peer->peer_module->super;
+    sendfrag->frag_send.frag_request = req;
+
+    sendfrag->frag_send.frag_base.frag_addr = 
+        &sendfrag->ib_buf.buf[sizeof(mca_ptl_base_frag_header_t)];
+
+    sendfrag->frag_send.frag_base.frag_size = size_out;
+
+    sendfrag->frag_send.frag_base.frag_peer = ptl_peer;
+    sendfrag->frag_progressed = 0;
 
     return OMPI_SUCCESS;
 }
