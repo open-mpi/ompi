@@ -24,8 +24,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_ADD_ERROR_STRING,
                            pmpi_add_error_string_,
                            pmpi_add_error_string__,
                            pmpi_add_error_string_f,
-                           (MPI_Fint *errorcode, char *string, MPI_Fint *ierr),
-                           (errorcode, string, ierr) )
+                           (MPI_Fint *errorcode, char *string, MPI_Fint *ierr,int l),
+                           (errorcode, string, ierr, l) )
 #endif
 
 #if OMPI_HAVE_WEAK_SYMBOLS
@@ -41,8 +41,8 @@ OMPI_GENERATE_F77_BINDINGS (MPI_ADD_ERROR_STRING,
                            mpi_add_error_string_,
                            mpi_add_error_string__,
                            mpi_add_error_string_f,
-                           (MPI_Fint *errorcode, char *string, MPI_Fint *ierr),
-                           (errorcode, string, ierr) )
+                           (MPI_Fint *errorcode, char *string, MPI_Fint *ierr, int l),
+                           (errorcode, string, ierr, l) )
 #endif
 
 
