@@ -2,7 +2,7 @@
  * $HEADER$
  */
 #include <string.h>
-#include "atomic.h"
+#include "include/atomic.h"
 #include "class/ompi_hash_table.h"
 #include "mca/base/mca_base_module_exchange.h"
 #include "ptl_tcp.h"
