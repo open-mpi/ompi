@@ -80,7 +80,7 @@ int mca_ptl_base_match(mca_pml_base_reliable_hdr_t *frag_header,
 	 */
     THREAD_LOCK((pml_comm->c_matching_lock)+frag_src);
 
-	//! get sequence number of next message that can be processed
+	/* get sequence number of next message that can be processed */
 	next_msg_seq_num_expected = *((pml_comm->c_next_msg_seq_num)+frag_src);
 
 	if (frag_msg_seq_num == next_msg_seq_num_expected) {
