@@ -68,7 +68,7 @@ open(MPIF__H, "> .mpif_.h") || print "could not open .mpif_.h \n";
 open(MPIF_H, ".mpif.h") || print "could not open .mpif.h \n";
 
 while (<MPIF_H>) {
-    s/(mpi_\w+){1,1}/$1_/g;
+    s/(mpi_\w+){1,1}/$1_/;
     print MPIF__H;
 }
 
@@ -81,8 +81,8 @@ close(MPIF__H);
 open(MPIF_F_H, "> .mpif_f.h") || print "could not open mpif_f.h \n";
 open(MPIF_H, ".mpif.h") || print "could not open mpif.h \n";
 
-while (<MPIF_F>) {
-    s/(mpi_\w+){1,1}/$1_/g;
+while (<MPIF_H>) {
+    s/(mpi_\w+){1,1}/$1_f/;
     print MPIF_F_H;
 }
 
@@ -96,7 +96,7 @@ open(MPIF___H, "> .mpif__.h") || print "could not open mpif__.h \n";
 open(MPIF_H, ".mpif.h") || print "could not open mpif.h \n";
 
 while (<MPIF_H>) {
-    s/(mpi_\w+){1,1}/$1__/g;
+    s/(mpi_\w+){1,1}/$1__/;
     print MPIF___H;
 }
 
@@ -141,7 +141,7 @@ $header =
 #ifndef LAM_F77_PROTOTYPES_PMPI_H
 /* 
  * mpi_*_f definitions go here --- .mpif_f.h 
- */\n ";
+ */\n";
 $endif = "#endif\n\n";
 
 #
@@ -359,7 +359,7 @@ while (<MPIF__H>) {
     print proto;
 }
 
-print proto "/*This is the cdouble underscore prototypes*/\n\n";
+print proto "/*This is the double underscore prototypes*/\n\n";
 
 while (<MPIF___H>) {
     (/^(\w+\s)(mpi_\w+)(.*)/) && ($_ = $1."p".$2.$3."\n"); 
@@ -381,4 +381,33 @@ close(MPIF___H);
 close(MPIF_F_H);
 close(mpif_h);
 close(proto);
+
+#
+# Now to generate the defines for mpi to pmpi
+#
+open(MPI_H, ".mpif_f.h") || print "Error opening .mpif_f.h";
+open(PMPI_H, "> defines.h") || print "Error opening defines.h";
+
+$boiler_plate = "
+/*
+ * \$HEADER\$
+ */
+#ifndef LAM_F77_PROFILE_DEFINES_H
+#define LAM_F77_PROFILE_DEFINES_H\n\n";
+
+print PMPI_H $boiler_plate;
+
+while (<MPI_H>) {
+    (/^(\w+\s)(mpi_\w+)(.*)/) && ($mpi_definition = $2); 
+    $line_to_print = "#define $mpi_definition p$mpi_definition\n";
+    print PMPI_H $line_to_print;
+}
+
+print PMPI_H $endif;
+
+close(MPI_H);
+close(PMPI_H);
+    
 system("mv prototypes_pmpi.h profile/prototypes_pmpi.h");
+system("mv defines.h profile/defines.h");
+system("rm -rf .mpif_f.h .mpif.h .mpif_.h .mpif__.h MPIF.h");
