@@ -145,21 +145,5 @@ int mca_ptl_ib_proc_insert(mca_ptl_ib_proc_t* module_proc,
     module_peer->peer_proc = module_proc;
     module_proc->proc_peers[module_proc->proc_peer_count++] = module_peer;
 
-#if 0 /* TODO: don't quite understand what this means for IB ptl.
-         will come back to it later */
-    /*
-     * Look through the proc instance for an address that is on the
-     * directly attached network. If we don't find one, pick the first
-     * unused address.
-     */
-
-    for(i = 0; i < module_proc->proc_addr_count; i++) {
-
-        mca_ptl_ib_ud_addr_t* peer_addr = module_proc->proc_addrs + i;
-
-        module_peer->peer_addr = peer_addr;
-    }
-#endif
-
     return OMPI_SUCCESS;
 }

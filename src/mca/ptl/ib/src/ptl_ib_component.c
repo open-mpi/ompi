@@ -135,44 +135,6 @@ int mca_ptl_ib_component_close(void)
 
 static int mca_ptl_ib_component_send(void)
 {
-#if 0
-    int i, rc, size;
-    mca_ptl_ib_ud_addr_t* ud_qp_addr = NULL;
-
-    size = sizeof(mca_ptl_ib_ud_addr_t) * mca_ptl_ib_component.ib_num_ptl_modules;
-
-    ud_qp_addr = (mca_ptl_ib_ud_addr_t*) malloc(size);
-
-    if(NULL == ud_qp_addr) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-
-    for(i = 0; i < mca_ptl_ib_component.ib_num_ptl_modules; i++) {
-        mca_ptl_ib_module_t* ptl = mca_ptl_ib_component.ib_ptl_modules[i];
-        /* This is for the UD dynamic connection interface
-        ud_qp_addr[i].qp_num = ptl->ud_qp_prop.qp_num;
-        ud_qp_addr[i].lid = ptl->port.lid;
-        */
-        
-        /* Just a quick hack for 1-to-1 communications */
-        ud_qp_addr[i].qp_num = ptl->my_qp_prop.qp_num;
-        ud_qp_addr[i].lid = ptl->port.lid;
-    }
-
-    D_PRINT("QP num sent = %d, LID sent = %d\n",
-            ud_qp_addr[0].qp_num, ud_qp_addr[0].lid);
-
-    rc =  mca_base_modex_send(&mca_ptl_ib_component.super.ptlm_version, 
-            ud_qp_addr, size);
-
-    if(OMPI_SUCCESS != rc) {
-        D_PRINT("mca_base_modex_send didn't succeed : %d\n", rc);
-    }
-
-    free(ud_qp_addr);
-
-    return rc;
-#endif
     return OMPI_SUCCESS;
 }
 
