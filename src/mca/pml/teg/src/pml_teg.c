@@ -311,7 +311,6 @@ int mca_pml_teg_add_procs(ompi_proc_t** procs, size_t nprocs)
 
                 mca_pml_base_ptl_t* ptl_base = OBJ_NEW(mca_pml_base_ptl_t);
                 ptl_base->ptl = ptl;
-                ptl_base->ptl_cache_alloc = ptl->ptl_cache_size;
                 ptl_base->ptl_cache_size = ptl->ptl_cache_size;
                 proc_ptl->ptl_base = ptl->ptl_base = ptl_base;
             }
