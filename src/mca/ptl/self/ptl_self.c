@@ -171,7 +171,7 @@ void mca_ptl_self_matched( mca_ptl_base_module_t* ptl,
             ompi_convertor_t *pSendConvertor, *pRecvConvertor;
             struct iovec iov[1];
             int completed, freeAfter, length;
-            unsigned int max_data, iov_count;
+            uint32_t max_data, iov_count;
             char* buf;
             
             /* We use a temporary buffer as it look to be faster on much architectures */
