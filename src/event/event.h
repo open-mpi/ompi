@@ -148,6 +148,8 @@ int ompi_event_init(void);
 int ompi_event_fini(void);
 int ompi_event_dispatch(void);
 int ompi_event_loop(int);
+int ompi_event_enable(void);
+int ompi_event_disable(void);
 bool ompi_event_progress_thread(void);
 
 #define ompi_evtimer_add(ev, tv)		ompi_event_add(ev, tv)
