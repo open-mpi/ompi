@@ -326,6 +326,35 @@ int mca_base_param_find(const char *type_name, const char *component_name,
 }
 
 
+int mca_base_param_set_internal(size_t index, bool internal)
+{
+    size_t len;
+    mca_base_param_t *array;
+
+    /* Check for bozo cases */
+    
+    if (!initialized) {
+        return OMPI_ERROR;
+    }
+
+    len = ompi_value_array_get_size(&mca_base_params);
+    if (index > len) {
+        return OMPI_ERROR;
+    }
+
+    /* We have a valid entry (remember that we never delete MCA
+       parameters, so if the index is >0 and <len, it must be good),
+       so save the internal flag */
+
+    array = OMPI_VALUE_ARRAY_GET_BASE(&mca_base_params, mca_base_param_t);
+    array[index].mbp_internal = internal;
+  
+    /* All done */
+
+    return OMPI_SUCCESS;
+}
+
+
 /*
  * Shut down the MCA parameter system (normally only invoked by the
  * MCA framework itself).
@@ -411,6 +440,7 @@ static int param_register(const char *type_name, const char *component_name,
   OBJ_CONSTRUCT(&param, mca_base_param_t);
   param.mbp_type = type;
   param.mbp_keyval = MPI_KEYVAL_INVALID;
+  param.mbp_internal = false;
 
   param.mbp_type_name = strdup(type_name);
   if (NULL == param.mbp_type_name) {
@@ -839,6 +869,7 @@ static bool set(mca_base_param_type_t type,
 static void param_constructor(mca_base_param_t *p)
 {
     p->mbp_type = MCA_BASE_PARAM_TYPE_MAX;
+    p->mbp_internal = false;
 
     p->mbp_type_name = NULL;
     p->mbp_component_name = NULL;

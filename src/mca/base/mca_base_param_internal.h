@@ -84,6 +84,10 @@ struct mca_base_param_t {
     /** Full parameter name, in case it is not
        <type>_<component>_<param> */
     char *mbp_full_name;
+    
+    /** Whether this is internal (not meant to be seen / modified by
+        users) or not */
+    bool mbp_internal;
 
     /** Keyval value for MPI attribute parameters */
     int mbp_keyval;

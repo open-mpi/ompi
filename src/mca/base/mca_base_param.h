@@ -283,6 +283,27 @@ OMPI_DECLSPEC int mca_base_param_find(const char *type, const char *component,
                             const char *param);
 
     /**
+     * Set the "internal" flag on an MCA parameter to true or false.
+     *
+     * @param index[in] Index previous returned from
+     * mca_base_param_register_string() or mca_base_param_register_int(). 
+     * @param internal[in] Boolean indicating whether the MCA
+     * parameter is internal (private) or public.
+     *
+     * @returns OMPI_SUCCESS If it can find the parameter to reset
+     * @returns OMPI_ERROR Otherwise
+     *
+     * "Internal" MCA parameters are ones that are not intentended to
+     * be seen or modified by users or user applications.  These
+     * include values that are set at run time, such as TCP ports, IP
+     * addresses, etc.  By setting the "internal" flag, internal MCA
+     * parameters are not displayed during the output of ompi_info and
+     * MPI_INIT (at least, they're not displayed by default), thus
+     * keeping them away from prying user eyes.
+     */
+OMPI_DECLSPEC int mca_base_param_set_internal(size_t index, bool internal);
+    
+    /**
      * Shut down the MCA parameter system (normally only invoked by the
      * MCA framework itself).
      *
@@ -297,7 +318,7 @@ OMPI_DECLSPEC int mca_base_param_find(const char *type, const char *component,
      * is only documented here for completeness.
      */
 OMPI_DECLSPEC int mca_base_param_finalize(void);
-    
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
