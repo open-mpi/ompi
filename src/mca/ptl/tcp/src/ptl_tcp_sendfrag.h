@@ -25,11 +25,11 @@ struct mca_ptl_base_peer_t;
  * TCP send fragment derived type.
  */
 struct mca_ptl_tcp_send_frag_t {
-   mca_ptl_base_send_frag_t super;  /**< base send fragment descriptor */
-   struct iovec *frag_vec_ptr;      /**< pointer into iovec array */
-   size_t frag_vec_cnt;             /**< number of iovec structs left to process */
-   struct iovec frag_vec[2];        /**< array of iovecs for send */
-   volatile int frag_progressed;    /**< for threaded case - has request status been updated */
+   mca_ptl_base_send_frag_t frag_send;  /**< base send fragment descriptor */
+   struct iovec *frag_vec_ptr;          /**< pointer into iovec array */
+   size_t frag_vec_cnt;                 /**< number of iovec structs left to process */
+   struct iovec frag_vec[2];            /**< array of iovecs for send */
+   volatile int frag_progressed;        /**< for threaded case - has request status been updated */
 };
 typedef struct mca_ptl_tcp_send_frag_t mca_ptl_tcp_send_frag_t;
 
@@ -70,30 +70,33 @@ int mca_ptl_tcp_send_frag_init(
 
 static inline void mca_ptl_tcp_send_frag_progress(mca_ptl_tcp_send_frag_t* frag) 
 { 
-    mca_pml_base_send_request_t* request = frag->super.frag_request; 
+    mca_pml_base_send_request_t* request = frag->frag_send.frag_request; 
 
     /* if this is an ack - simply return to pool */ 
     if(request == NULL) { 
-        mca_ptl_tcp_send_frag_return(frag->super.super.frag_owner, frag); 
+        mca_ptl_tcp_send_frag_return(frag->frag_send.frag_base.frag_owner, frag); 
 
     /* otherwise, if the message has been sent, and an ack has already been 
      * received, go ahead and update the request status 
      */ 
     } else if (frag->frag_vec_cnt == 0 &&  
-         ((frag->super.super.frag_header.hdr_common.hdr_flags & MCA_PTL_FLAGS_ACK_MATCHED) == 0 || 
+         ((frag->frag_send.frag_base.frag_header.hdr_common.hdr_flags & MCA_PTL_FLAGS_ACK_MATCHED) == 0 || 
           mca_pml_base_send_request_matched(request))) { 
 
         /* make sure this only happens once in threaded case */ 
         if(fetchNset(&frag->frag_progressed,1) == 0) {
 
             /* update request status */ 
-            frag->super.super.frag_owner->ptl_send_progress(frag->super.super.frag_owner, request, &frag->super); 
+            frag->frag_send.frag_base.frag_owner->ptl_send_progress(
+                frag->frag_send.frag_base.frag_owner, 
+                request, 
+                frag->frag_send.frag_base.frag_size); 
 
             /* the first fragment is allocated with the request, 
              * all others need to be returned to free list  
              */ 
-            if(frag->super.super.frag_header.hdr_frag.hdr_frag_offset != 0) 
-                mca_ptl_tcp_send_frag_return(frag->super.super.frag_owner, frag); 
+            if(frag->frag_send.frag_base.frag_header.hdr_frag.hdr_frag_offset != 0) 
+                mca_ptl_tcp_send_frag_return(frag->frag_send.frag_base.frag_owner, frag); 
         } 
     }
 } 
@@ -105,22 +108,22 @@ static inline void mca_ptl_tcp_send_frag_init_ack(
     struct mca_ptl_base_peer_t* ptl_peer,
     mca_ptl_tcp_recv_frag_t* frag)
 {
-    mca_ptl_base_header_t* hdr = &ack->super.super.frag_header;
-    mca_pml_base_recv_request_t* request = frag->super.frag_request;
+    mca_ptl_base_header_t* hdr = &ack->frag_send.frag_base.frag_header;
+    mca_pml_base_recv_request_t* request = frag->frag_recv.frag_request;
     hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_ACK;
     hdr->hdr_common.hdr_flags = 0;
     hdr->hdr_common.hdr_size = sizeof(mca_ptl_base_ack_header_t);
-    hdr->hdr_ack.hdr_src_ptr = frag->super.super.frag_header.hdr_frag.hdr_src_ptr;
+    hdr->hdr_ack.hdr_src_ptr = frag->frag_recv.frag_base.frag_header.hdr_frag.hdr_src_ptr;
     hdr->hdr_ack.hdr_dst_match.lval = 0; /* for VALGRIND/PURIFY - REPLACE WITH MACRO */
     hdr->hdr_ack.hdr_dst_match.pval = request;
     hdr->hdr_ack.hdr_dst_addr.lval = 0; /* for VALGRIND/PURIFY - REPLACE WITH MACRO */
-    hdr->hdr_ack.hdr_dst_addr.pval = request->super.req_addr;
+    hdr->hdr_ack.hdr_dst_addr.pval = request->req_base.req_addr;
     hdr->hdr_ack.hdr_dst_size = request->req_bytes_packed;
-    ack->super.frag_request = 0;
-    ack->super.super.frag_peer = ptl_peer;
-    ack->super.super.frag_owner = ptl;
-    ack->super.super.frag_addr = NULL;
-    ack->super.super.frag_size = 0;
+    ack->frag_send.frag_request = 0;
+    ack->frag_send.frag_base.frag_peer = ptl_peer;
+    ack->frag_send.frag_base.frag_owner = ptl;
+    ack->frag_send.frag_base.frag_addr = NULL;
+    ack->frag_send.frag_base.frag_size = 0;
     ack->frag_vec_ptr = ack->frag_vec;
     ack->frag_vec[0].iov_base = (ompi_iov_base_ptr_t)hdr;
     ack->frag_vec[0].iov_len = sizeof(mca_ptl_base_header_t);

@@ -101,18 +101,18 @@ int mca_pml_teg_recv(
         return rc;
     }
 
-    if(recvreq->super.req_mpi_done == false) {
+    if(recvreq->req_base.req_mpi_done == false) {
         /* give up and sleep until completion */
         if(ompi_using_threads()) {
             ompi_mutex_lock(&mca_pml_teg.teg_request_lock);
             mca_pml_teg.teg_request_waiting++;
-            while(recvreq->super.req_mpi_done == false)
+            while(recvreq->req_base.req_mpi_done == false)
                 ompi_condition_wait(&mca_pml_teg.teg_request_cond, &mca_pml_teg.teg_request_lock);
             mca_pml_teg.teg_request_waiting--;
             ompi_mutex_unlock(&mca_pml_teg.teg_request_lock);
         } else {
             mca_pml_teg.teg_request_waiting++;
-            while(recvreq->super.req_mpi_done == false)
+            while(recvreq->req_base.req_mpi_done == false)
                 ompi_condition_wait(&mca_pml_teg.teg_request_cond, &mca_pml_teg.teg_request_lock);
             mca_pml_teg.teg_request_waiting--;
         }

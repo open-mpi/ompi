@@ -13,6 +13,7 @@
 #include "mca/ptl/base/ptl_base_sendfrag.h"
 #include "pml_teg.h"
 #include "pml_teg_proc.h"
+#include "pml_teg_ptl.h"
 #include "pml_teg_recvreq.h"
 #include "pml_teg_sendreq.h"
 
@@ -84,6 +85,7 @@ int mca_pml_teg_add_ptls(ompi_list_t *ptls)
     /* build an array of ptls and ptl modules */
     mca_ptl_base_selected_module_t* selected_ptl;
     size_t num_ptls = ompi_list_get_size(ptls);
+    size_t cache_bytes = 0;
     mca_pml_teg.teg_num_ptls = 0;
     mca_pml_teg.teg_num_ptl_modules = 0;
     mca_pml_teg.teg_ptls = malloc(sizeof(mca_ptl_t*) * num_ptls);
@@ -108,7 +110,23 @@ int mca_pml_teg_add_ptls(ompi_list_t *ptls)
          ptl->ptl_match = mca_ptl_base_recv_frag_match;
          ptl->ptl_send_progress = mca_pml_teg_send_request_progress;
          ptl->ptl_recv_progress = mca_pml_teg_recv_request_progress;
+         ptl->ptl_stack = ptl;
+         ptl->ptl_base = NULL;
+
+         /* find maximum required size for cache */
+         if(ptl->ptl_cache_bytes > cache_bytes)
+             cache_bytes = ptl->ptl_cache_bytes;
     }
+
+    /* setup send fragments based on largest required send request */
+    ompi_free_list_init(
+        &mca_pml_teg.teg_send_requests,
+        sizeof(mca_pml_base_send_request_t) + cache_bytes,
+        OBJ_CLASS(mca_pml_base_send_request_t),
+        mca_pml_teg.teg_free_list_num,
+        mca_pml_teg.teg_free_list_max,
+        mca_pml_teg.teg_free_list_inc,
+        NULL);
 
     /* sort ptl list by exclusivity */
     qsort(mca_pml_teg.teg_ptls, mca_pml_teg.teg_num_ptls, sizeof(struct mca_ptl_t*), ptl_exclusivity_compare);
@@ -199,11 +217,6 @@ int mca_pml_teg_add_procs(ompi_proc_t** procs, size_t nprocs)
                 proc_ptl->ptl = ptl;
                 proc_ptl->ptl_peer = ptl_peers[p];
                 proc_ptl->ptl_weight = 0;
-
-                /* if this ptl supports exclusive access then don't allow 
-                 * subsequent ptls to register
-                 */
-
                 proc_pml->proc_ptl_flags |= ptl->ptl_flags;
             }
         }
@@ -245,11 +258,24 @@ int mca_pml_teg_add_procs(ompi_proc_t** procs, size_t nprocs)
             struct mca_ptl_proc_t* proc_ptl = mca_ptl_array_get_index(&proc_pml->proc_ptl_next, n_index);
             struct mca_ptl_t *ptl = proc_ptl->ptl;
             double weight;
+
+            /* compute weighting factor for this ptl */
             if(ptl->ptl_bandwidth)
                 weight = proc_ptl->ptl->ptl_bandwidth / total_bandwidth;
             else
                 weight = 1.0 / n_size;
             proc_ptl->ptl_weight = (int)(weight * 100);
+
+            /*
+             * save/create ptl extension for use by pml
+             */
+            proc_ptl->ptl_base = ptl->ptl_base;
+            if(NULL == proc_ptl->ptl_base && ptl->ptl_cache_bytes > 0) {
+                mca_pml_base_ptl_t* ptl_base = OBJ_NEW(mca_pml_base_ptl_t);
+                ptl_base->ptl = ptl;
+                ptl_base->ptl_cache_size = ptl->ptl_cache_size;
+                proc_ptl->ptl_base = ptl->ptl_base = ptl_base;
+            }
 
             /* check to see if this ptl is already in the array of ptls used for first
              * fragments - if not add it.
@@ -270,6 +296,7 @@ int mca_pml_teg_add_procs(ompi_proc_t** procs, size_t nprocs)
                     *proc_new = *proc_ptl;
                 }
             }
+        
         }
     }
     return OMPI_SUCCESS;

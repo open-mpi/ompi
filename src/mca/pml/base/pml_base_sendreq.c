@@ -19,7 +19,7 @@ ompi_class_t mca_pml_base_send_request_t_class = {
 static void mca_pml_base_send_request_construct(mca_pml_base_send_request_t* request)
 {
     /* no need to reinit for every send -- never changes */
-    request->super.req_type = MCA_PML_REQUEST_SEND;
+    request->req_base.req_type = MCA_PML_REQUEST_SEND;
     OBJ_CONSTRUCT(&request->req_convertor, ompi_convertor_t);
 }
 

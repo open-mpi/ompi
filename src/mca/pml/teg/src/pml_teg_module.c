@@ -62,6 +62,7 @@ int mca_pml_teg_module_open(void)
 {
     mca_pml_base_request_t* teg_null = &mca_pml_teg.teg_request_null;
     OBJ_CONSTRUCT(&mca_pml_teg.teg_lock, ompi_mutex_t);
+    OBJ_CONSTRUCT(&mca_pml_teg.teg_send_requests, ompi_free_list_t);
     OBJ_CONSTRUCT(&mca_pml_teg.teg_recv_requests, ompi_free_list_t);
     OBJ_CONSTRUCT(&mca_pml_teg.teg_procs, ompi_list_t);
 
@@ -124,6 +125,7 @@ int mca_pml_teg_module_close(void)
         free(mca_pml_teg.teg_ptl_modules);
     if(NULL != mca_pml_teg.teg_ptls)
         free(mca_pml_teg.teg_ptls);
+    OBJ_DESTRUCT(&mca_pml_teg.teg_send_requests);
     OBJ_DESTRUCT(&mca_pml_teg.teg_recv_requests);
     OBJ_DESTRUCT(&mca_pml_teg.teg_procs);
     OBJ_DESTRUCT(&mca_pml_teg.teg_lock);
@@ -153,7 +155,7 @@ mca_pml_t* mca_pml_teg_module_init(int* priority,
         mca_pml_teg.teg_free_list_max,
         mca_pml_teg.teg_free_list_inc,
         NULL);
-        
+
     /* request completion */
     OBJ_CONSTRUCT(&mca_pml_teg.teg_request_lock, ompi_mutex_t);
     OBJ_CONSTRUCT(&mca_pml_teg.teg_request_cond, ompi_condition_t);

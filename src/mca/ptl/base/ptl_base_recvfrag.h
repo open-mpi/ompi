@@ -18,7 +18,7 @@ extern ompi_class_t mca_ptl_base_recv_frag_t_class;
  * Base type for receive fragment descriptors.
  */
 struct mca_ptl_base_recv_frag_t {
-    mca_ptl_base_frag_t super; /**< base fragment descriptor */
+    mca_ptl_base_frag_t frag_base; /**< base fragment descriptor */
     mca_pml_base_recv_request_t *frag_request; /**< matched posted receive */
     bool frag_is_buffered; /**< does fragment need to be unpacked into users buffer */
 };
@@ -45,23 +45,27 @@ static inline bool mca_ptl_base_recv_frag_match(
         frag = (mca_ptl_base_recv_frag_t*)ompi_list_remove_first(&matched_frags);
 
     while(NULL != frag) {
-        mca_ptl_t* ptl = frag->super.frag_owner;
+        mca_ptl_t* ptl = frag->frag_base.frag_owner;
         mca_pml_base_recv_request_t *request = frag->frag_request;
-        mca_ptl_base_match_header_t *header = &frag->super.frag_header.hdr_match;
+        mca_ptl_base_match_header_t *header = &frag->frag_base.frag_header.hdr_match;
 
         /*
          * Initialize request status.
          */
         request->req_bytes_packed = header->hdr_msg_length;
-        request->super.req_peer = header->hdr_src;
-        request->super.req_tag = header->hdr_tag;
+        request->req_base.req_peer = header->hdr_src;
+        request->req_base.req_tag = header->hdr_tag;
 
         /*
          * If probe - signal request is complete - but don't notify PTL
          */
-        if(request->super.req_type == MCA_PML_REQUEST_PROBE) {
+        if(request->req_base.req_type == MCA_PML_REQUEST_PROBE) {
 
-             ptl->ptl_recv_progress(ptl, request, frag);
+             ptl->ptl_recv_progress(
+                ptl, 
+                request, 
+                frag->frag_base.frag_header.hdr_frag.hdr_frag_length,
+                frag->frag_base.frag_size);
              matched = mca_ptl_base_recv_frag_match( ptl, frag, header );
 
         } else {

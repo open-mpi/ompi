@@ -1,4 +1,5 @@
 #include "pml_teg.h"
+#include "pml_teg_sendreq.h"
 #include "mca/ptl/base/ptl_base_comm.h"
 #include "mca/pml/base/pml_base_request.h"
 

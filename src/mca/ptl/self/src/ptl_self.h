@@ -40,7 +40,7 @@ typedef struct mca_ptl_self_module_1_0_0_t mca_ptl_self_module_t;
  * base send request, and the base receive fragment which will be used to do the match.
  */
 struct mca_ptl_self_send_request_t {
-   mca_pml_base_send_request_t super;
+   mca_pml_base_send_request_t req_send;
    mca_ptl_base_recv_frag_t req_frag; /* first fragment */
 };
 typedef struct mca_ptl_self_send_request_t mca_ptl_self_send_request_t;
@@ -74,12 +74,12 @@ extern mca_ptl_t** mca_ptl_self_module_init(
     bool *have_hidden_threads
 );
 
-int mca_ptl_self_add_proc(struct mca_ptl_t* ptl, size_t nprocs, struct ompi_proc_t **ompi_proc, struct mca_ptl_base_peer_t** peer_ret, ompi_bitmap_t* reachable);
-int mca_ptl_self_del_proc(struct mca_ptl_t* ptl, size_t nprocs, struct ompi_proc_t **proc, struct mca_ptl_base_peer_t** ptl_peer);
-int mca_ptl_self_finalize(struct mca_ptl_t* ptl);
-int mca_ptl_self_request_alloc(struct mca_ptl_t* ptl, struct mca_pml_base_send_request_t** request);
-void mca_ptl_self_request_return(struct mca_ptl_t* ptl, struct mca_pml_base_send_request_t* request);
-int mca_ptl_self_send( struct mca_ptl_t* ptl, struct mca_ptl_base_peer_t* ptl_base_peer, struct mca_pml_base_send_request_t* request,
+int  mca_ptl_self_add_proc(struct mca_ptl_t* ptl, size_t nprocs, struct ompi_proc_t **ompi_proc, struct mca_ptl_base_peer_t** peer_ret, ompi_bitmap_t* reachable);
+int  mca_ptl_self_del_proc(struct mca_ptl_t* ptl, size_t nprocs, struct ompi_proc_t **proc, struct mca_ptl_base_peer_t** ptl_peer);
+int  mca_ptl_self_finalize(struct mca_ptl_t* ptl);
+void mca_ptl_self_request_init(struct mca_ptl_t* ptl, struct mca_pml_base_send_request_t* request);
+void mca_ptl_self_request_fini(struct mca_ptl_t* ptl, struct mca_pml_base_send_request_t* request);
+int  mca_ptl_self_send( struct mca_ptl_t* ptl, struct mca_ptl_base_peer_t* ptl_base_peer, struct mca_pml_base_send_request_t* request,
                       size_t offset, size_t size, int flags );
 void mca_ptl_self_matched( mca_ptl_t* ptl, mca_ptl_base_recv_frag_t* frag );
 

@@ -166,26 +166,25 @@ extern int mca_ptl_tcp_del_procs(
 );
 
 /**
- * PML->PTL Allocate a send request from the PTL modules free list.
- *
- * @param ptl (IN)       PTL instance
- * @param request (OUT)  Pointer to allocated request.
- * @return               Status indicating if allocation was successful.
- *
- */
-extern int mca_ptl_tcp_request_alloc(
-    struct mca_ptl_t* ptl,
-    struct mca_pml_base_send_request_t**
-);
-
-/**
- * PML->PTL Return a send request to the PTL modules free list.
+ * PML->PTL Initialize a send request for TCP cache.
  *
  * @param ptl (IN)       PTL instance
  * @param request (IN)   Pointer to allocated request.
  *
  */
-extern void mca_ptl_tcp_request_return(
+extern void mca_ptl_tcp_request_init(
+    struct mca_ptl_t* ptl,
+    struct mca_pml_base_send_request_t*
+);
+
+/**
+ * PML->PTL Cleanup a send request that is being removed from the cache.
+ *
+ * @param ptl (IN)       PTL instance
+ * @param request (IN)   Pointer to allocated request.
+ *
+ */
+extern void mca_ptl_tcp_request_fini(
     struct mca_ptl_t* ptl,
     struct mca_pml_base_send_request_t*
 );
@@ -207,7 +206,7 @@ extern void mca_ptl_tcp_matched(
  *
  * @param ptl (IN)               PTL instance
  * @param ptl_base_peer (IN)     PTL peer addressing
- * @param send_request (IN/OUT)  Send request (allocated by PML via mca_ptl_base_request_alloc_fn_t)
+ * @param send_request (IN/OUT)  Send request (initialized by PML via mca_ptl_base_request_init_fn_t)
  * @param size (IN)              Number of bytes PML is requesting PTL to deliver
  * @param flags (IN)             Flags that should be passed to the peer via the message header.
  * @param request (OUT)          OMPI_SUCCESS if the PTL was able to queue one or more fragments
