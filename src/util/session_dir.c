@@ -77,7 +77,7 @@ int ompi_session_dir(bool create, char *prfx, char *usr, char *hostid,
 {
     char *fulldirpath=NULL, *tmp=NULL, *hostname=NULL, *batchname=NULL;
     char *sessions=NULL, *frontend=NULL, *user=NULL, *universe=NULL;
-    char *prefix=NULL;
+    char *prefix=NULL, *sav=NULL;
     int return_code;
 
     /* ensure that system info is set */
@@ -222,14 +222,18 @@ int ompi_session_dir(bool create, char *prfx, char *usr, char *hostid,
 
     if (NULL == ompi_process_info.proc_session_dir && NULL != proc) {
 	ompi_process_info.proc_session_dir = strdup(fulldirpath);
+	sav = strdup(fulldirpath);
 	free(fulldirpath);
-	fulldirpath = strdup(dirname(ompi_process_info.proc_session_dir));
+	fulldirpath = strdup(dirname(sav));
+	free(sav);
     }
 
     if (NULL == ompi_process_info.job_session_dir && NULL != job) {
 	ompi_process_info.job_session_dir = strdup(fulldirpath);
+	sav = strdup(fulldirpath);
 	free(fulldirpath);
-	fulldirpath = strdup(dirname(ompi_process_info.job_session_dir));
+	fulldirpath = strdup(dirname(sav));
+	free(sav);
     }
 
     if (NULL == ompi_process_info.universe_session_dir) {
