@@ -112,6 +112,11 @@ int lam_mpi_init(int argc, char **argv, int requested, int *provided)
          return ret;
      }
 
+     /* initialize datatypes */
+     if (LAM_SUCCESS != (ret = lam_ddt_init())) {
+         return ret;
+     }
+
      /* If we have run-time MPI parameter checking possible, register
         an MCA paramter to find out if the user wants it on or off by
         default */
