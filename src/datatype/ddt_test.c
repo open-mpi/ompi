@@ -550,20 +550,80 @@ ompi_datatype_t* create_strange_dt( void )
 
 int local_copy_ddt_count( ompi_datatype_t* pdt, int count )
 {
-   long extent;
-   void *pdst, *psrc;
-   ompi_ddt_type_extent( pdt, &extent );
+    long extent;
+    void *pdst, *psrc;
+    ompi_ddt_type_extent( pdt, &extent );
 
-   pdst = malloc( extent * count );
-   psrc = malloc( extent * count );
+    pdst = malloc( extent * count );
+    psrc = malloc( extent * count );
 
-   if( OMPI_SUCCESS != ompi_ddt_copy_content_same_ddt( pdt, count, pdst, psrc ) ) {
-       printf( "Unable to copy the datatype in the function local_copy_ddt_count. Is the datatype committed ?\n" );
-   }
-   free( pdst );
-   free( psrc );
+    if( OMPI_SUCCESS != ompi_ddt_copy_content_same_ddt( pdt, count, pdst, psrc ) ) {
+        printf( "Unable to copy the datatype in the function local_copy_ddt_count. Is the datatype committed ?\n" );
+    }
+    free( pdst );
+    free( psrc );
 
-   return OMPI_SUCCESS;
+    return OMPI_SUCCESS;
+}
+
+int local_copy_with_convertor( ompi_datatype_t* pdt, int count, int chunk )
+{
+    long extent;
+    void *pdst = NULL, *psrc = NULL, *ptemp = NULL;
+    ompi_convertor_t *pSendConvertor = NULL, *pRecvConvertor = NULL;
+    struct iovec iov;
+    uint32_t iov_count, max_data;
+    int32_t free_after = 0, length = 0, done1, done2;
+
+    ompi_ddt_type_extent( pdt, &extent );
+
+    pdst  = malloc( extent * count );
+    psrc  = malloc( extent * count );
+    ptemp = malloc( chunk );
+
+    pSendConvertor = ompi_convertor_create( 0, 0 );
+    if( OMPI_SUCCESS != ompi_convertor_init_for_send( pSendConvertor, 0, pdt, count, psrc, 0, NULL ) ) {
+        printf( "Unable to create the send convertor. Is the datatype committed ?\n" );
+        goto clean_and_return;
+    }
+    pRecvConvertor = ompi_convertor_create( 0, 0 );
+    if( OMPI_SUCCESS != ompi_convertor_init_for_recv( pRecvConvertor, 0, pdt, count, pdst, 0, NULL ) ) {
+        printf( "Unable to create the recv convertor. Is the datatype committed ?\n" );
+        goto clean_and_return;
+    }
+
+    while( (done1 & done2) != 1 ) {
+        max_data = chunk;
+        iov_count = 1;
+        iov.iov_base = ptemp;
+        iov.iov_len = chunk;
+
+        done1 = ompi_convertor_pack( pSendConvertor, &iov, &iov_count, &max_data, &free_after );
+        assert( free_after == 0 );
+        if( 1 == done1 ) {
+            printf( "pack finished\n" );
+        }
+
+        done2 = ompi_convertor_unpack( pRecvConvertor, &iov, &iov_count, &max_data, &free_after );
+        assert( free_after == 0 );
+        if( 1 == done2 ) {
+            printf( "unpack finished\n" );
+        }
+
+        length += max_data;
+    }
+
+ clean_and_return:
+    if( pSendConvertor != NULL ) {
+        OBJ_RELEASE( pSendConvertor ); assert( pSendConvertor == NULL );
+    }
+    if( pRecvConvertor != NULL ) {
+        OBJ_RELEASE( pRecvConvertor ); assert( pRecvConvertor == NULL );
+    }
+    if( NULL != pdst ) free( pdst );
+    if( NULL != psrc ) free( psrc );
+    if( NULL != ptemp ) free( ptemp );
+    return OMPI_SUCCESS;
 }
 
 int main( int argc, char* argv[] )
@@ -573,12 +633,14 @@ int main( int argc, char* argv[] )
 
     ompi_ddt_init();
 
-    pdt = create_strange_dt();
+    /*pdt = create_strange_dt();
     local_copy_ddt_count(pdt, 1);
-    OBJ_RELEASE( pdt ); assert( pdt == NULL );
+    local_copy_with_convertor(pdt, 1, 4008);
+    OBJ_RELEASE( pdt ); assert( pdt == NULL );*/
    
     pdt = upper_matrix(100);
     local_copy_ddt_count(pdt, 1);
+    local_copy_with_convertor(pdt, 1, 4008);
     OBJ_RELEASE( pdt ); assert( pdt == NULL );
 
     mpich_typeub();
