@@ -305,8 +305,8 @@ mca_ptl_base_module_t** mca_ptl_sm_component_init(
 
     /* initialize some PTL data */
     /* start with no SM procs */
-    mca_ptl_sm_component.num_smp_procs=0;
-    mca_ptl_sm_component.my_smp_rank=-1;
+    mca_ptl_sm_component.num_smp_procs = 0;
+    mca_ptl_sm_component.my_smp_rank   = 0xFFFFFFFF;  /* not defined */
 
     /* set flag indicating ptl not inited */
     mca_ptl_sm[0].ptl_inited=false;
@@ -360,7 +360,7 @@ int mca_ptl_sm_component_progress(mca_ptl_tstamp_t tstamp)
     int my_local_smp_rank, proc;
     unsigned int peer_local_smp_rank ;
     mca_ptl_sm_frag_t *header_ptr;
-    volatile ompi_fifo_t *send_fifo;
+    ompi_fifo_t *send_fifo;
     bool frag_matched;
     mca_ptl_base_match_header_t *matching_header;
     mca_pml_base_send_request_t *base_send_req;
@@ -395,13 +395,13 @@ int mca_ptl_sm_component_progress(mca_ptl_tstamp_t tstamp)
 
         /* aquire thread lock */
         if( ompi_using_threads() ) {
-            ompi_atomic_lock(&(send_fifo->tail_lock));
+            ompi_atomic_lock( &(send_fifo->tail_lock) );
         }
 
         /* get pointer - pass in offset to change queue pointer
          * addressing from that of the sender */
-        header_ptr=(mca_ptl_sm_frag_t *)
-            ompi_fifo_read_from_tail_same_base_addr( send_fifo);
+        header_ptr = (mca_ptl_sm_frag_t *)
+	    ompi_fifo_read_from_tail_same_base_addr( send_fifo );
         if( OMPI_CB_FREE == header_ptr ) {
             /* release thread lock */
             if( ompi_using_threads() ) {

@@ -119,7 +119,7 @@ int mca_ptl_sm_add_procs_same_base_addr(
     ompi_fifo_t * volatile *fifo_tmp;
     bool same_sm_base;
     ssize_t diff;
-    char **tmp_ptr;
+    volatile char **tmp_ptr;
 
     /* initializion */
     for(i=0 ; i < nprocs ; i++ ) {
@@ -214,7 +214,7 @@ int mca_ptl_sm_add_procs_same_base_addr(
     }
 
     /* make sure that my_smp_rank has been defined */
-    if(-1 == mca_ptl_sm_component.my_smp_rank){
+    if( 0xFFFFFFFF == mca_ptl_sm_component.my_smp_rank ) {
         return_code=OMPI_ERROR;
         goto CLEANUP;
     }
@@ -600,7 +600,8 @@ int mca_ptl_sm_add_procs(
     struct mca_ptl_base_peer_t **peers,
     ompi_bitmap_t* reachability)
 {
-    int return_code=OMPI_SUCCESS,proc,n_local_procs,tmp_cnt;
+    int return_code = OMPI_SUCCESS, tmp_cnt;
+    uint32_t proc, n_local_procs;
 
     /* initializion */
     for(proc=0 ; proc < nprocs ; proc++ ) {
@@ -845,7 +846,7 @@ int mca_ptl_sm_send(
         return_status=OMPI_SUCCESS;
     }
 
-    /* release threa lock */
+    /* release thread lock */
     if( ompi_using_threads() ) {
         ompi_atomic_unlock(&(send_fifo->head_lock));
     }
@@ -877,7 +878,7 @@ int mca_ptl_sm_send_continue(
     mca_ptl_sm_send_request_t *sm_request;
     int my_local_smp_rank, peer_local_smp_rank, return_code;
     int return_status=OMPI_SUCCESS, free_after=0;
-    volatile ompi_fifo_t *send_fifo;
+    ompi_fifo_t *send_fifo;
     mca_ptl_base_header_t* hdr;
     void *sm_data_ptr ;
     ompi_list_item_t* item;
