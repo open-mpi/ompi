@@ -114,6 +114,33 @@ mca_gpr_replica_key_t gpr_replica_get_key(char *segment, char *token)
 }
 
 
+ompi_list_t *gpr_replica_get_key_list(char *segment, char **tokens)
+{
+    ompi_list_t *keys;
+    char **token;
+    mca_gpr_keytable_t *keyptr, *dict_entry;
+
+    /* protect against errors */
+    if (NULL == segment || NULL == tokens) {
+	return NULL;
+    }
+
+    token = tokens;
+    keys = OBJ_NEW(ompi_list_t);
+    while (NULL != *token) {  /* traverse array of tokens until NULL */
+	keyptr = OBJ_NEW(mca_gpr_keytable_t);
+	if (NULL == (dict_entry = gpr_replica_find_dict_entry(segment, *token))) {
+	    keyptr->key = MCA_GPR_REPLICA_KEY_MAX;  /* indicate unknown token */
+	} else { /* found existing dictionary entry */
+	    keyptr->key = dict_entry->key;
+	    keyptr->token = strdup(dict_entry->token);
+	}
+	ompi_list_append(keys, &keyptr->item);
+	token++;
+    }
+    return keys;
+}
+
 mca_gpr_replica_key_t gpr_replica_define_key(char *segment, char *token)
 {
     mca_gpr_registry_segment_t *seg;
@@ -280,4 +307,9 @@ int gpr_replica_empty_segment(mca_gpr_registry_segment_t *seg)
     ompi_list_remove_item(&mca_gpr_replica_head.registry, &seg->item);
 
     return OMPI_SUCCESS;
+}
+
+bool gpr_replica_check_key_list(ompi_list_t *key_list, mca_gpr_replica_key_t key)
+{
+    return true;
 }

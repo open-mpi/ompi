@@ -20,6 +20,7 @@
 #include "mca/oob/base/base.h"
 #include "mca/gpr/base/base.h"
 #include "gpr_replica.h"
+#include "gpr_replica_internals.h"
 
 
 /*
@@ -53,7 +54,8 @@ static mca_gpr_base_module_t mca_gpr_replica = {
     gpr_replica_delete_segment,
     gpr_replica_subscribe,
     gpr_replica_unsubscribe,
-    gpr_replica_delete_object
+    gpr_replica_delete_object,
+    gpr_replica_index
 };
 
 /*
@@ -91,7 +93,7 @@ OBJ_CLASS_INSTANCE(
 		   mca_gpr_keytable_destructor);  /* destructor */
 
 
-/* constructor - used to initialize state of keytable instance */
+/* constructor - used to initialize state of keylist instance */
 static void mca_gpr_keylist_construct(mca_gpr_keylist_t* keylist)
 {
     keylist->key = 0;
@@ -109,7 +111,29 @@ OBJ_CLASS_INSTANCE(
 		   mca_gpr_keylist_construct,   /* constructor */
 		   mca_gpr_keylist_destructor); /* destructor */
 
-/* constructor - used to initialize state of keytable instance */
+/* constructor - used to initialize state of index_value instance */
+static void mca_gpr_index_value_construct(ompi_registry_index_value_t* value)
+{
+    value->token = NULL;
+}
+
+/* destructor - used to free any resources held by instance */
+static void mca_gpr_index_value_destructor(ompi_registry_index_value_t* value)
+{
+    if (value->token) {
+	free(value->token);
+    }
+}
+
+/* define instance of ompi_class_t */
+OBJ_CLASS_INSTANCE(
+		   ompi_registry_index_value_t,     /* type name */
+		   ompi_list_item_t,                /* parent "class" name */
+		   mca_gpr_index_value_construct,   /* constructor */
+		   mca_gpr_index_value_destructor); /* destructor */
+
+
+/* constructor - used to initialize state of subscriber list instance */
 static void mca_gpr_subscriber_list_construct(mca_gpr_subscriber_list_t* subscriber)
 {
     subscriber->subscriber = NULL;
@@ -230,7 +254,8 @@ int mca_gpr_replica_close(void)
 
 mca_gpr_base_module_t *mca_gpr_replica_init(bool *allow_multi_user_threads, bool *have_hidden_threads, int *priority)
 {
-    /*    ompi_registry_segment_t *seg; */
+    mca_gpr_registry_segment_t *seg;
+    mca_gpr_replica_key_t key;
 
     /* If we're the seed, then we want to be selected, so do all the
        setup and return the module */
@@ -259,15 +284,15 @@ mca_gpr_base_module_t *mca_gpr_replica_init(bool *allow_multi_user_threads, bool
 	mca_gpr_replica_head.lastkey = 0;
 
 	/* define the "universe" segment key */
-	/*	if (0 == gpr_replica_definekey("universe", NULL)) {
-	    ompi_output(0, "registry_init(error): could not create universe dictionary entry\n");
+	key = gpr_replica_define_key("universe", NULL);
+	if (MCA_GPR_REPLICA_KEY_MAX == key) {
+	    ompi_output(mca_gpr_base_output, "registry_init(error): could not create universe dictionary entry\n");
 	    exit(OMPI_ERROR);
 	}
-	*/
 	/* initialize the "universe" segment */
-	/*	seg = OBJ_NEW(ompi_registry_segment_t);
-	seg->segment = gpr_replica_getkey("universe", NULL);
-	ompi_list_append(&mca_gpr_head.registry, &seg->item); */
+	seg = OBJ_NEW(mca_gpr_registry_segment_t);
+	seg->segment = gpr_replica_get_key("universe", NULL);
+	ompi_list_append(&mca_gpr_replica_head.registry, &seg->item);
 
 	/* Return the module */
 
@@ -286,6 +311,7 @@ int mca_gpr_replica_finalize(void)
     /* free all storage, but only if this component was initialized */
 
     if (initialized) {
+	OBJ_DESTRUCT(&mca_gpr_replica_head);
 	initialized = false;
     }
 

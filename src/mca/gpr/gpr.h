@@ -91,13 +91,13 @@ OBJ_CLASS_DECLARATION(ompi_registry_value_t);
 
 /** Return value structure for index requests.
  */
-struct ompi_registry_index_t {
+struct ompi_registry_index_value_t {
     ompi_list_item_t item;           /**< Allows this item to be placed on a list */
     char *token;                     /**< Pointer to the token string */
 };
-typedef struct ompi_registry_index_t ompi_registry_index_t;
+typedef struct ompi_registry_index_value_t ompi_registry_index_value_t;
 
-OBJ_CLASS_DECLARATION(ompi_registry_index_t);
+OBJ_CLASS_DECLARATION(ompi_registry_index_value_t);
 
 /*
  * Component functions that MUST be provided
@@ -107,11 +107,11 @@ typedef int (*mca_gpr_base_module_delete_segment_fn_t)(char *segment);
 typedef int (*mca_gpr_base_module_put_fn_t)(ompi_registry_mode_t mode, char *segment,
 				     char **tokens, ompi_registry_object_t *object,
 				     ompi_registry_object_size_t size);
-typedef ompi_registry_value_t* (*mca_gpr_base_module_get_fn_t)(ompi_registry_mode_t mode,
-							char *segment, char **tokens);
+typedef ompi_list_t* (*mca_gpr_base_module_get_fn_t)(ompi_registry_mode_t mode,
+						     char *segment, char **tokens);
 typedef int (*mca_gpr_base_module_delete_fn_t)(ompi_registry_mode_t mode,
 					char *segment, char **tokens);
-typedef ompi_registry_index_t* (*mca_gpr_base_module_index_fn_t)(char *segment);
+typedef ompi_list_t* (*mca_gpr_base_module_index_fn_t)(char *segment);
 typedef int (*mca_gpr_base_module_subscribe_fn_t)(ompi_process_name_t* subscriber,
 						  ompi_registry_mode_t mode,
 						  ompi_registry_notify_action_t action,
@@ -132,6 +132,7 @@ struct mca_gpr_base_module_1_0_0_t {
     mca_gpr_base_module_subscribe_fn_t subscribe;
     mca_gpr_base_module_unsubscribe_fn_t unsubscribe;
     mca_gpr_base_module_delete_fn_t delete_object;
+    mca_gpr_base_module_index_fn_t index;
 };
 typedef struct mca_gpr_base_module_1_0_0_t mca_gpr_base_module_1_0_0_t;
 typedef mca_gpr_base_module_1_0_0_t mca_gpr_base_module_t;

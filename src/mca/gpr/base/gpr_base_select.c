@@ -34,7 +34,6 @@ int mca_gpr_base_select(bool *allow_multi_user_threads,
 
   /* Iterate through all the available components */
 
-  ompi_output(mca_gpr_base_output, "in gpr_base_select");
   for (item = ompi_list_get_first(&mca_gpr_base_components_available);
        item != ompi_list_get_end(&mca_gpr_base_components_available);
        item = ompi_list_get_next(item)) {
@@ -43,7 +42,6 @@ int mca_gpr_base_select(bool *allow_multi_user_threads,
 
     /* Call the component's init function and see if it wants to be
        selected */
-    ompi_output(mca_gpr_base_output, "checking component");
     module = component->gpr_init(&multi, &hidden, &priority);
 
     /* If we got a non-NULL module back, then the component wants to
@@ -52,7 +50,6 @@ int mca_gpr_base_select(bool *allow_multi_user_threads,
 
     if (NULL != module) {
       /* If this is the best one, save it */
-	ompi_output(mca_gpr_base_output, "priority: %d", priority);
       if (priority > best_priority) {
 
         /* If there was a previous best one, finalize */
@@ -62,7 +59,6 @@ int mca_gpr_base_select(bool *allow_multi_user_threads,
         }
 
         /* Save the new best one */
-
         best_module = module;
         best_component = component;
         *allow_multi_user_threads = multi;

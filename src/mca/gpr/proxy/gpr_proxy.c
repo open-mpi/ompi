@@ -45,9 +45,13 @@ int gpr_proxy_delete(ompi_registry_mode_t mode,
 }
 
 
-ompi_registry_index_t* gpr_proxy_index(char *segment)
+ompi_list_t* gpr_proxy_index(char *segment)
 {
-    return NULL;
+    ompi_list_t *answer;
+
+    answer = OBJ_NEW(ompi_list_t);
+
+    return answer;
 }
 
 
@@ -66,8 +70,12 @@ int gpr_proxy_unsubscribe(ompi_process_name_t *caller, ompi_registry_mode_t mode
 }
 
 
-ompi_registry_value_t* gpr_proxy_get(ompi_registry_mode_t mode, char *segment, char **tokens)
+ompi_list_t* gpr_proxy_get(ompi_registry_mode_t mode, char *segment, char **tokens)
 {
-    return NULL;
+    ompi_list_t *answer;
+
+    answer = OBJ_NEW(ompi_list_t);
+
+    return answer;
 }
 
