@@ -279,7 +279,7 @@ mca_oob_t* mca_oob_tcp_init(bool *allow_multi_user_threads, bool *have_hidden_th
         8,  /* increment to grow by */
         NULL); /* use default allocator */
 
-#if 1
+#if 0
     /* intialize event library */
     memset(&mca_oob_tcp_component.tcp_recv_event, 0, sizeof(ompi_event_t));
     memset(&mca_oob_tcp_component.tcp_send_event, 0, sizeof(ompi_event_t));
