@@ -5,10 +5,7 @@ include $(top_srcdir)/config/Makefile.options
 # of the header files in this directory get included elsewhere in OMPI.
 # #@%@#$...
 AM_CPPFLAGS = \
-        -I$(top_srcdir)/src/event/compat \
-        -I$(top_srcdir)/../include \
-        -I$(top_builddir)/../include \
-        -I$(top_builddir)/..
+        -I$(top_srcdir)/src/event/compat
 
 # OMPI: No need to build the sample or test
 #SUBDIRS = . sample test
