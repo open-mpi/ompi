@@ -14,6 +14,9 @@
  * the first is the real representation of the datatype
  * the second is the internal representation using extents
  * the last is the representation used for send operations
+ * If the count is ZERO we dont have to add the pdtAdd datatype. But we have to
+ * be sure that the pdtBase datatype is correctly initialized with all fields
+ * set to ZERO if it's a empty datatype.
  */
 int ompi_ddt_add( dt_desc_t* pdtBase, dt_desc_t* pdtAdd, 
 		  unsigned int count, long disp, long extent )
@@ -23,7 +26,15 @@ int ompi_ddt_add( dt_desc_t* pdtBase, dt_desc_t* pdtAdd,
    dt_elem_desc_t *pLast, *pLoop = NULL;
    long lb, ub;
 
-   if( count == 0 ) return 0;  /* that was fast :) */
+   if( count == 0 ) {
+       if( pdtBase->desc.used == 0 ) {  /* empty datatype */
+           pdtBase->lb = 0;
+           pdtBase->ub = 0;
+           pdtBase->true_lb = 0;
+           pdtBase->true_ub = 0;
+       }
+       return 0;
+   }
    /* the extent should be always be positive. So a negative
     * value here have a special meaning ie. default extent as
     * computed by ub - lb
