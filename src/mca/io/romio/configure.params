@@ -7,4 +7,4 @@
 
 PARAM_INIT_FILE=src/io_romio_module.c
 PARAM_CONFIG_HEADER_FILE="src/romio_config.h"
-PARAM_CONFIG_FILES="Makefile src/Makefile src/romio-1.2.5.1/Makefile src/romio-1.2.5.1/include/Makefile"
+PARAM_CONFIG_FILES="Makefile src/Makefile"
