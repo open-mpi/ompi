@@ -18,7 +18,6 @@
 #define MCA_PTL_IB_VAPI_H
 
 #include <vapi.h>
-#include <mpga.h>
 #include <mtl_common.h>
 #include <vapi_common.h>
 
