@@ -142,11 +142,22 @@ ompi_rte_get_self(void)
 int
 ompi_rte_get_peers(ompi_process_name_t **peers, size_t *npeers)
 {
+    ompi_process_name_t *useless;
+    ompi_process_name_t **peers_p;
+
     if (NULL == mca_pcmclient.pcmclient_get_peers) {
         return OMPI_ERR_NOT_IMPLEMENTED;
     }
 
-    return mca_pcmclient.pcmclient_get_peers(peers, npeers);
+    if (NULL == peers) {
+        /* the returned value is a pointer to a static buffer, so no
+           free is neeeded.  This is therefore completely safe.  Yay */
+        peers_p = &useless;
+    } else {
+        peers_p = peers;
+    }
+
+    return mca_pcmclient.pcmclient_get_peers(peers_p, npeers);
 }
 
 

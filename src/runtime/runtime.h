@@ -212,8 +212,22 @@ extern "C" {
     /**
      * Get names of peer processes which have been launched
      *
-     * @param Nothing
-     * @return An array of peer names, including me
+     * @param peers (OUT) Pointer to a pointer of
+     *                    ompi_process_name_t. \c *peers will be set
+     *                    to point to a statically allocated buffer
+     *                    containing the array of peer processes
+     *                    started with the current process.  If \c
+     *                    peers is NULL, then only \c npeers is
+     *                    updated.
+     * @param npeers (OUT) pointer to an integer that will be updated
+     *                    with the total number of peers started with
+     *                    the current process.  Also the length of \c
+     *                    *peers array if \c peers is not \c NULL
+     *
+     * @return OMPI_SUCCESS on success
+     *         OMPI_ERR_NOT_IMPLEMENTED if the underlying module is
+     *                     not properly loaded.
+     *
      */
     int ompi_rte_get_peers(ompi_process_name_t **peers, size_t *npeers);
 
