@@ -19,7 +19,8 @@ liberrhandler_la_SOURCES = \
         errhandler_invoke.c \
         errhandler_predefined.c \
 	errcode.c \
-	errclass.c 
+	errclass.c  \
+	errcode-internal.c
 
 # Conditionally install the header files
 
