@@ -519,7 +519,7 @@ void gpr_replica_process_triggers(mca_gpr_replica_segment_t *seg,
 				  mca_gpr_replica_trigger_list_t *trig,
 				  ompi_registry_notify_message_t *message)
 {
-    mca_gpr_notify_request_tracker_t *trackptr, *tmpptr;
+    mca_gpr_notify_request_tracker_t *trackptr;
     ompi_registry_object_t *data;
     char **tokptr;
     int i;
