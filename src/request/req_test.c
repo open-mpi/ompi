@@ -36,10 +36,13 @@ int ompi_request_test_any(
         rptr++;
     }
 
+    /* Only fall through here if we found nothing */
+
     *index = MPI_UNDEFINED;
     *completed = false;
-    if (MPI_STATUS_IGNORE != status)
-        *status = ompi_request_null.req_status;
+    if (MPI_STATUS_IGNORE != status) {
+        *status = ompi_status_empty;
+    }
     return OMPI_SUCCESS;
 }
 

@@ -14,6 +14,7 @@ int                   ompi_request_poll_iterations = 20000;
 ompi_mutex_t          ompi_request_lock;
 ompi_condition_t      ompi_request_cond;
 ompi_request_t        ompi_request_null;
+ompi_status_public_t  ompi_status_empty;
 
 
 static void ompi_request_construct(ompi_request_t* req)
@@ -71,6 +72,12 @@ int ompi_request_init(void)
     if (0 != ompi_request_null.req_f_to_c_index) {
         return OMPI_ERR_REQUEST;
     }
+
+    ompi_status_empty.MPI_SOURCE = MPI_ANY_SOURCE;
+    ompi_status_empty.MPI_TAG = MPI_ANY_TAG;
+    ompi_status_empty.MPI_ERROR = MPI_SUCCESS;
+    ompi_status_empty._count = 0;
+
     return OMPI_SUCCESS;
 }
 
