@@ -30,6 +30,7 @@ typedef void* (*pthread_start_fn_t)(void*);
 
 int ompi_thread_start(ompi_thread_t* t)
 {
+#if OMPI_HAVE_POSIX_THREADS
     int rc;
 #if OMPI_ENABLE_DEBUG
     if(NULL == t->t_run || t->t_handle != -1)
@@ -37,11 +38,18 @@ int ompi_thread_start(ompi_thread_t* t)
 #endif
     rc = pthread_create(&t->t_handle, NULL, (pthread_start_fn_t)t->t_run, t);
     return (rc == 0) ? OMPI_SUCCESS: OMPI_ERROR;
+#else
+    return OMPI_ERROR;
+#endif
 }
 
 int ompi_thread_join(ompi_thread_t* t, void** thr_return)
 {
+#if OMPI_HAVE_POSIX_THREADS
     int rc = pthread_join(t->t_handle, thr_return);
     return (rc == 0) ? OMPI_SUCCESS: OMPI_ERROR;
+#else
+    return OMPI_ERROR;
+#endif
 }
 
