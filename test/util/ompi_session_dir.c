@@ -16,6 +16,27 @@
 #include "util/os_path.h"
 #include "util/session_dir.h"
 
+struct ompi_proc_info_t {
+    bool init;             /**< Certifies that values have been filled.
+			    * Certifies that the ompi_sys_info() function has been
+			    * called at least once so fields have valid values
+			    */
+    char *universe_session_dir;  /**< Location of universe  temp dir.
+			    * The session directory has the form
+			    * <prefix><openmpi-sessions-user><universe>, where the prefix
+			    * can either be provided by the user via the
+			    * --tmpdir command-line flag, the use of one of several
+			    * environmental variables, or else a default location.
+			    */
+
+    char *job_session_dir;  /**< Session directory for job */
+
+    char *proc_session_dir;    /**< Session directory for the process */
+};
+typedef struct ompi_proc_info_t ompi_proc_info_t;
+
+ompi_proc_info_t ompi_process_info;
+
 static bool test1(void);   /* given prefix, both one that works and one that fails */
 static bool test2(void);   /* no prefix given, OMPI_PREFIX_ENV set, one good and one bad */
 static bool test3(void);   /* no prefix given, TMPDIR set, one good and one bad */
@@ -36,6 +57,8 @@ int main(int argc, char* argv[])
     if (test1()) {
         printf("test1 passed\n");
         test1f = true;
+    } else {
+	printf("test1 failed\n");
     }
 
     if (test2()) {
@@ -82,30 +105,32 @@ static bool test1(void)
     /* see if we can create a specified path */
 
     prefix = ompi_os_path(false, "tmp", NULL);
-    if (OMPI_ERROR == ompi_session_dir_init(prefix, "test-universe", ompi_system_info.user, NULL, NULL, NULL, NULL)) {
+    if (OMPI_ERROR == ompi_session_dir(true, prefix, ompi_system_info.user, NULL, NULL, "test-universe", NULL, NULL)) {
+	printf("test1 - couldn't create specified path\n");
         free(prefix);
         return(false);
     }
     /* see if it can access an existing path */
 
-    if (OMPI_ERROR == ompi_session_dir(prefix, "test-universe", ompi_system_info.user, NULL, NULL, NULL, NULL)) {
+    if (OMPI_ERROR == ompi_session_dir(false, prefix, ompi_system_info.user, NULL, NULL, "test-universe", NULL, NULL)) {
+	printf("test1 - couldn't access existing path\n");
         free(prefix);
         return(false);
     }
 
-    rmdir(ompi_system_info.session_dir);
-    tmp = strdup(dirname(ompi_system_info.session_dir));
+    rmdir(ompi_process_info.universe_session_dir);
+    tmp = strdup(dirname(ompi_process_info.universe_session_dir));
     rmdir(tmp);
-    free(ompi_system_info.session_dir);
+    free(ompi_process_info.universe_session_dir);
     free(prefix);
     free(tmp);
 
     /* check what happens when given prefix that won't allow access */
     tmp2 = ompi_os_path(false, "test", NULL); /* assume we don't have root privileges */
-    if (OMPI_SUCCESS == ompi_session_dir(tmp2, "test-universe", ompi_system_info.user, NULL, NULL, NULL, NULL)) {
+    if (OMPI_SUCCESS == ompi_session_dir(true, tmp2, ompi_system_info.user, NULL, NULL, "test-universe", NULL, NULL)) {
         printf("created temp directory in %s - shouldn't have been able to do so\n", tmp2);
-	rmdir(ompi_system_info.session_dir);
-	tmp = strdup(dirname(ompi_system_info.session_dir));
+	rmdir(ompi_process_info.universe_session_dir);
+	tmp = strdup(dirname(ompi_process_info.universe_session_dir));
 	rmdir(tmp);
 	free(tmp);
         free(tmp2);
@@ -124,13 +149,13 @@ static bool test2(void)
 
     setenv("OMPI_PREFIX_ENV", "/tmp/trythis", 1);
 
-    if (OMPI_ERROR == ompi_session_dir(NULL, "test-universe", ompi_system_info.user, NULL, NULL, NULL, NULL)) {
+    if (OMPI_ERROR == ompi_session_dir(true, NULL, ompi_system_info.user, NULL, NULL, "test-universe", NULL, NULL)) {
 	unsetenv("OMPI_PREFIX_ENV");
         return(false);
     }
 
-    rmdir(ompi_system_info.session_dir);
-    tmp = strdup(dirname(ompi_system_info.session_dir));
+    rmdir(ompi_process_info.universe_session_dir);
+    tmp = strdup(dirname(ompi_process_info.universe_session_dir));
     rmdir(tmp);
     free(tmp);
 
@@ -148,13 +173,13 @@ static bool test3(void)
 
     setenv("TMPDIR", "/tmp/trythis", 1);
 
-    if (OMPI_ERROR == ompi_session_dir(NULL, "test-universe", ompi_system_info.user, NULL, NULL, NULL, NULL)) {
+    if (OMPI_ERROR == ompi_session_dir(true, NULL, ompi_system_info.user, NULL, NULL, "test-universe", NULL, NULL)) {
 	unsetenv("TMPDIR");
         return(false);
     }
 
-    rmdir(ompi_system_info.session_dir);
-    tmp = strdup(dirname(ompi_system_info.session_dir));
+    rmdir(ompi_process_info.universe_session_dir);
+    tmp = strdup(dirname(ompi_process_info.universe_session_dir));
     rmdir(tmp);
     free(tmp);
 
@@ -171,13 +196,13 @@ static bool test4(void)
 
     setenv("TMP", "/tmp/trythis", 1);
 
-    if (OMPI_ERROR == ompi_session_dir(NULL, "test-universe", ompi_system_info.user, NULL, NULL, NULL, NULL)) {
+    if (OMPI_ERROR == ompi_session_dir(true, NULL, ompi_system_info.user, NULL, NULL, "test-universe", NULL, NULL)) {
 	unsetenv("TMP");
         return(false);
     }
 
-    rmdir(ompi_system_info.session_dir);
-    tmp = strdup(dirname(ompi_system_info.session_dir));
+    rmdir(ompi_process_info.universe_session_dir);
+    tmp = strdup(dirname(ompi_process_info.universe_session_dir));
     rmdir(tmp);
     free(tmp);
 
@@ -194,13 +219,13 @@ static bool test5(void)
 
     setenv("HOME", "/tmp/trythis", 1);
 
-    if (OMPI_ERROR == ompi_session_dir(NULL, "test-universe", ompi_system_info.user, NULL, NULL, NULL, NULL)) {
+    if (OMPI_ERROR == ompi_session_dir(true, NULL, ompi_system_info.user, NULL, NULL, "test-universe", NULL, NULL)) {
 	unsetenv("HOME");
         return(false);
     }
 
-    rmdir(ompi_system_info.session_dir);
-    tmp = strdup(dirname(ompi_system_info.session_dir));
+    rmdir(ompi_process_info.universe_session_dir);
+    tmp = strdup(dirname(ompi_process_info.universe_session_dir));
     rmdir(tmp);
     free(tmp);
 
@@ -218,12 +243,12 @@ static bool test6(void)
     * Program should turn to default of /tmp (where "/" is whatever
     * top-level directory is appropriate for given system)
     */
-    if (OMPI_ERROR == ompi_session_dir(NULL, "test-universe", ompi_system_info.user, NULL, NULL, NULL, NULL)) {
+    if (OMPI_ERROR == ompi_session_dir(true, NULL, ompi_system_info.user, NULL, NULL, "test-universe", NULL, NULL)) {
         return(false);
     }
 
-    rmdir(ompi_system_info.session_dir);
-    tmp = strdup(dirname(ompi_system_info.session_dir));
+    rmdir(ompi_process_info.universe_session_dir);
+    tmp = strdup(dirname(ompi_process_info.universe_session_dir));
     rmdir(tmp);
 
     return(true);
