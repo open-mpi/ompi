@@ -36,7 +36,7 @@ static inline void ompi_atomic_wmb(void)
     MB();
 }
 
-
+#define OMPI_ARCHITECTURE_DEFINE_ATOMIC_CMPSET_32
 static inline int ompi_atomic_cmpset_32(volatile int32_t *addr,
                                         int32_t oldval,
                                         int32_t newval)
@@ -55,6 +55,7 @@ static inline int ompi_atomic_cmpset_32(volatile int32_t *addr,
 #define ompi_atomic_cmpset_acq_32 ompi_atomic_cmpset_32
 #define ompi_atomic_cmpset_rel_32 ompi_atomic_cmpset_32
 
+#define OMPI_ARCHITECTURE_DEFINE_ATOMIC_CMPSET_64
 typedef struct {
    uint32_t lo;
    uint32_t hi;

@@ -36,9 +36,9 @@ static inline void ompi_atomic_wmb(void)
     MB();
 }
 
-static inline int ompi_atomic_cmpset_32(volatile uint32_t *addr,
-                                        uint32_t oldval,
-                                        uint32_t newval)
+#define OMPI_ARCHITECTURE_DEFINE_ATOMIC_CMPSET_32
+static inline int ompi_atomic_cmpset_32( volatile int32_t *addr,
+                                        int32_t oldval, int32_t newval)
 {
    unsigned long prev;
    __asm__ __volatile__(SMPLOCK "cmpxchgl %k1,%2"
@@ -51,11 +51,11 @@ static inline int ompi_atomic_cmpset_32(volatile uint32_t *addr,
 #define ompi_atomic_cmpset_acq_32 ompi_atomic_cmpset_32
 #define ompi_atomic_cmpset_rel_32 ompi_atomic_cmpset_32
 
-static inline int ompi_atomic_cmpset_64(volatile uint64_t *addr,
-                                        uint64_t oldval,
-                                        uint64_t newval)
+#define OMPI_ARCHITECTURE_DEFINE_ATOMIC_CMPSET_64
+static inline int ompi_atomic_cmpset_64( volatile int64_t *addr,
+                                         int64_t oldval, int64_t newval)
 {
-   uint64_t ret = oldval;
+   int64_t ret = oldval;
     
    __asm__ __volatile (
                        SMPLOCK "cmpxchgq %1,%2   \n\t"

@@ -41,14 +41,13 @@ static inline void ompi_atomic_wmb(void)
     WMB();
 }
 
-
-static inline int ompi_atomic_cmpset_32(volatile uint32_t *addr,
-                                       uint32_t oldval,
-                                       uint32_t newval)
+#define OMPI_ARCHITECTURE_DEFINE_ATOMIC_CMPSET_32
+static inline int ompi_atomic_cmpset_32( volatile int32_t *addr,
+                                         int32_t oldval, int32_t newval)
 {
-    uint32_t ret;
-
-    __asm __volatile__ (
+   int32_t ret;
+   
+   __asm __volatile__ (
 "1:  ldl_l %0, %1        // load oldval value            \n\
      cmpeq %0, %2, %0    // compare                   \n\
      beq %0, 2f          // exit if not equal         \n\
@@ -66,9 +65,9 @@ static inline int ompi_atomic_cmpset_32(volatile uint32_t *addr,
 }
 
 
-static inline int ompi_atomic_cmpset_acq_32(volatile uint32_t *addr,
-                                           uint32_t oldval,
-                                           uint32_t newval)
+static inline int ompi_atomic_cmpset_acq_32(volatile int32_t *addr,
+                                           int32_t oldval,
+                                           int32_t newval)
 {
     int rc;
 
@@ -79,20 +78,19 @@ static inline int ompi_atomic_cmpset_acq_32(volatile uint32_t *addr,
 }
 
 
-static inline int ompi_atomic_cmpset_rel_32(volatile uint32_t *addr,
-                                           uint32_t oldval,
-                                           uint32_t newval)
+static inline int ompi_atomic_cmpset_rel_32(volatile int32_t *addr,
+                                           int32_t oldval,
+                                           int32_t newval)
 {
     ompi_atomic_wmb();
     return ompi_atomic_cmpset_32(addr, oldval, newval);
 }
 
-
-static inline int ompi_atomic_cmpset_64(volatile uint64_t *addr,
-                                       uint64_t oldval,
-                                       uint64_t newval)
+#define OMPI_ARCHITECTURE_DEFINE_ATOMIC_CMPSET_64
+static inline int ompi_atomic_cmpset_64( volatile int64_t *addr,
+                                         int64_t oldval, int64_t newval)
 {
-    uint32_t ret;
+    int32_t ret;
 
     __asm__ __volatile__ (
 "1:  ldq_l %0, %1        // load oldval value            \n\
@@ -112,9 +110,9 @@ static inline int ompi_atomic_cmpset_64(volatile uint64_t *addr,
 }
 
 
-static inline int ompi_atomic_cmpset_acq_64(volatile uint64_t *addr,
-                                           uint64_t oldval,
-                                           uint64_t newval)
+static inline int ompi_atomic_cmpset_acq_64(volatile int64_t *addr,
+                                           int64_t oldval,
+                                           int64_t newval)
 {
     int rc;
 
@@ -125,13 +123,12 @@ static inline int ompi_atomic_cmpset_acq_64(volatile uint64_t *addr,
 }
 
 
-static inline int ompi_atomic_cmpset_rel_64(volatile uint64_t *addr,
-                                           uint64_t oldval,
-                                           uint64_t newval)
+static inline int ompi_atomic_cmpset_rel_64(volatile int64_t *addr,
+                                           int64_t oldval,
+                                           int64_t newval)
 {
     ompi_atomic_wmb();
     return ompi_atomic_cmpset_64(addr, oldval, newval);
 }
-
 
 #endif /* ! OMPI_SYS_ARCH_ATOMIC_H */
