@@ -38,14 +38,7 @@ LAM_CONFIGURE_DATE="`date`"
 #
 AC_SUBST(LAM_CONFIGURE_USER)
 AC_SUBST(LAM_CONFIGURE_HOST)
-AC_SUBST(LAM_CONFIGURE_DATE)
-
-#
-# Make automake clean emacs ~ files for "make clean"
-#
-
-CLEANFILES="*~ .\#*"
-AC_SUBST(CLEANFILES)])dnl
+AC_SUBST(LAM_CONFIGURE_DATE)])dnl
 
 dnl #######################################################################
 dnl #######################################################################
@@ -64,7 +57,7 @@ LAM_CONFIGURE_DATE="`date`"
 # Make automake clean emacs ~ files for "make clean"
 #
 
-CLEANFILES="*~"
+CLEANFILES="*~ .\#*"
 AC_SUBST(CLEANFILES)
 
 #
