@@ -55,6 +55,7 @@ static inline int mca_pml_teg_send_request_start(
         THREAD_SCOPED_LOCK(&mca_pml_teg.teg_lock,
             lam_list_append(&mca_pml_teg.teg_incomplete_sends, (lam_list_item_t*)req));
     }
+    return LAM_SUCCESS;
 }
 
 

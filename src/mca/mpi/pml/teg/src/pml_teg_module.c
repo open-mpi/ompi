@@ -11,9 +11,6 @@
 #include "pml_teg.h"
 #include "pml_teg_proc.h"
 
-#define mca_pml_teg_param_register_int(n,v) \
-    mca_base_param_lookup_int( \
-        mca_base_param_register_int("pml","teg",n,0,v))
 
 
 mca_pml_base_module_1_0_0_t mca_pml_teg_module = {
