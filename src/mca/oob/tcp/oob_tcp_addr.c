@@ -38,19 +38,20 @@ void mca_oob_tcp_addr_pack(ompi_buffer_t buffer)
     int i;
 
     ompi_pack(buffer, &mca_oob_name_self, 1, OMPI_NAME);
+    
     for(i=ompi_ifbegin(); i>0; i=ompi_ifnext(i)) {
         struct sockaddr_in inaddr;
         ompi_ifindextoaddr(i, (struct sockaddr*)&inaddr, sizeof(inaddr));
-        if(inaddr.sin_addr.s_addr == inet_addr("127.0.0.1"))
+        if(ompi_ifcount() > 1 && inaddr.sin_addr.s_addr == inet_addr("127.0.0.1"))
             continue;
         count++;
-    }
+    } 
     ompi_pack(buffer, &count, 1, OMPI_INT32);
 
     for(i=ompi_ifbegin(); i>0; i=ompi_ifnext(i)) {
         struct sockaddr_in inaddr;
         ompi_ifindextoaddr(i, (struct sockaddr*)&inaddr, sizeof(inaddr));
-        if(inaddr.sin_addr.s_addr == inet_addr("127.0.0.1"))
+        if(ompi_ifcount() > 1 && inaddr.sin_addr.s_addr == inet_addr("127.0.0.1"))
             continue;
         inaddr.sin_port = mca_oob_tcp_component.tcp_listen_port;
         ompi_pack(buffer,&inaddr,sizeof(inaddr),OMPI_BYTE);
