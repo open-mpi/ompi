@@ -49,8 +49,13 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TEST_CANCELLED,
 void mpi_test_cancelled_f(MPI_Fint *status, MPI_Fint *flag, MPI_Fint *ierr)
 {
     MPI_Status c_status;
+    OMPI_SINGLE_NAME_DECL(flag);
 
     MPI_Status_f2c( status, &c_status );
 
-    *ierr = MPI_Test_cancelled(&c_status, flag);
+    *ierr = OMPI_INT_2_FINT(MPI_Test_cancelled(&c_status, 
+					       OMPI_SINGLE_NAME_CONVERT(flag)
+					       ));
+    
+    OMPI_SINGLE_INT_2_FINT(flag);
 }
