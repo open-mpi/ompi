@@ -4,6 +4,7 @@
 
 #include "ompi_config.h"
 #include <string.h>
+#include <sys/types.h>
 #include <netinet/in.h>
 
 #include "include/constants.h"
