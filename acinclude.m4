@@ -34,6 +34,8 @@ sinclude(config/f77_get_sizeof.m4)
 
 sinclude(config/f90_check_type.m4)
 sinclude(config/f90_get_alignment.m4)
+sinclude(config/f90_get_precision.m4)
+sinclude(config/f90_get_range.m4)
 sinclude(config/f90_get_sizeof.m4)
 
 sinclude(config/ompi_try_assemble.m4)
