@@ -135,9 +135,8 @@ int gpr_replica_put(ompi_registry_mode_t addr_mode, char *segment,
 				       num_tokens, keys)) {
 	    synchro->count++;
 	}
-	if ((OMPI_REGISTRY_SYNCHRO_MODE_ASCENDING & synchro->synch_mode ||
-	     OMPI_REGISTRY_SYNCHRO_MODE_LEVEL & synchro->synch_mode) &&
-	    synchro->count == synchro->trigger) {
+	if ((OMPI_REGISTRY_SYNCHRO_MODE_ASCENDING & synchro->synch_mode && synchro->count >= synchro->trigger) ||
+	    (OMPI_REGISTRY_SYNCHRO_MODE_LEVEL & synchro->synch_mode && synchro->count == synchro->trigger)) {
 	    notify_msg = gpr_replica_construct_notify_message(addr_mode, segment, tokens);
 	    gpr_replica_process_triggers(notify_msg, synchro->id_tag);
 	}
@@ -162,6 +161,8 @@ int gpr_replica_delete_object(ompi_registry_mode_t addr_mode,
     ompi_list_t *keylist;
     mca_gpr_replica_key_t *keys, *key2;
     mca_gpr_replica_segment_t *seg;
+    mca_gpr_replica_synchro_list_t *synchro;
+    ompi_registry_notify_message_t *notify_msg;
     int num_tokens;
 
     keys = NULL;
@@ -209,6 +210,21 @@ int gpr_replica_delete_object(ompi_registry_mode_t addr_mode,
 	    prev = (mca_gpr_replica_core_t*)ompi_list_get_prev(reg);
 	    ompi_list_remove_item(&seg->registry_entries, &reg->item);
 	    reg = prev;
+	}
+    }
+
+    /* update synchro list and check for trigger conditions */
+    for (synchro = (mca_gpr_replica_synchro_list_t*)ompi_list_get_first(&seg->synchros);
+	 synchro != (mca_gpr_replica_synchro_list_t*)ompi_list_get_end(&seg->synchros);
+	 synchro = (mca_gpr_replica_synchro_list_t*)ompi_list_get_next(synchro)) {
+	if (gpr_replica_check_key_list(synchro->addr_mode, synchro->num_keys, synchro->keys,
+				       num_tokens, keys)) {
+	    synchro->count--;
+	}
+	if ((OMPI_REGISTRY_SYNCHRO_MODE_DESCENDING & synchro->synch_mode && synchro->count <= synchro->trigger) ||
+	    (OMPI_REGISTRY_SYNCHRO_MODE_LEVEL & synchro->synch_mode && synchro->count == synchro->trigger)) {
+	    notify_msg = gpr_replica_construct_notify_message(addr_mode, segment, tokens);
+	    gpr_replica_process_triggers(notify_msg, synchro->id_tag);
 	}
     }
 
