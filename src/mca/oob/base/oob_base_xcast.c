@@ -65,7 +65,6 @@ int mca_oob_xcast(
         }
         if(cbfunc != NULL)
             cbfunc(rc, root, rbuf, tag, NULL);
-        ompi_buffer_free(rbuf);
     }
     return OMPI_SUCCESS;
 }

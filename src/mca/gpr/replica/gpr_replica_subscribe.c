@@ -115,7 +115,6 @@ int mca_gpr_replica_subscribe_nl(ompi_registry_mode_t addr_mode,
 							  0, id_tag))) {
 
 	if ((OMPI_REGISTRY_NOTIFY_PRE_EXISTING & action) && seg->triggers_active) {  /* want list of everything there */
-      ompi_output(0, "Notify pre-existing fired\n");
 	    notify_msg = mca_gpr_replica_construct_notify_message(seg, trig);
 	    notify_msg->trig_action = action;
 	    notify_msg->trig_synchro = OMPI_REGISTRY_SYNCHRO_MODE_NONE;

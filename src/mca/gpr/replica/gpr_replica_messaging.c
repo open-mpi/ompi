@@ -55,6 +55,6 @@ void mca_gpr_replica_deliver_notify_msg(ompi_registry_notify_action_t state,
 			OMPI_THREAD_UNLOCK(&mca_gpr_replica_mutex);
 	    }
 	}
-	OBJ_RELEASE(message);
+	mca_gpr_base_release_notify_msg(message);
 
 }
