@@ -270,7 +270,7 @@ int lam_ifnext(int if_index)
         intf =  (lam_if_t*)lam_list_get_next(intf)) {
         if(intf->if_index == if_index) {
             lam_if_t* if_next = (lam_if_t*)lam_list_get_next(intf);
-            return (if_next ? if_next->if_index : -1);
+            return (if_next == (lam_if_t*)lam_list_get_end(&lam_if_list)) ? -1 : if_next->if_index;
         }
     }
     return (-1);
