@@ -42,3 +42,8 @@ Open MPI was unable to start a process on one or more nodes using the
 rsh startup mechanism.  Open MPI was able to start the bootproxy on
 the remote node, but was unable to send the application schema to the
 remote bootproxy.  The error was %s.
+[spawn:no-process-status]
+Open MPI was unable to find the process status entry for process name
+%s.  This is usually indicitive of an internal bug.  Please let
+the developers know how you came across this message so that it can
+be fixed.

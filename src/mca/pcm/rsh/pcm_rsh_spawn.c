@@ -538,7 +538,7 @@ internal_spawn_proc(mca_pcm_rsh_module_t *me,
 proc_cleanup:
 
     if (high_qos) {
-      for (i = 0 ; i < num_procs ; ++i) {
+      for (i = 0 ; i < start_node->count ; ++i) {
 	ompi_process_name_t *name;
 
 	name = ompi_name_server.create_process_name(0, jobid, my_start_vpid + i);
@@ -612,9 +612,16 @@ internal_wait_cb(pid_t pid, int status, void *data)
     /* unregister all the procs */
     for (i = 0 ; i < procs_len ; ++i) {
         proc_status = ompi_rte_get_process_status(procs[i]);
-        proc_status->status_key = OMPI_PROC_KILLED;
-        proc_status->exit_code = (ompi_exit_code_t)status;
-        ompi_rte_set_process_status(proc_status, procs[i]);
+        if (NULL == proc_status) {
+            char *name = ompi_name_server.get_proc_name_string(procs[i]);
+            ompi_show_help("help-mca-pcm-rsh.txt",
+                           "spawn:no-process-status", true, name, status);
+            free(name);
+        } else {
+            proc_status->status_key = OMPI_PROC_KILLED;
+            proc_status->exit_code = (ompi_exit_code_t)status;
+            ompi_rte_set_process_status(proc_status, procs[i]);
+        }
         free(procs[i]);
     }
 
