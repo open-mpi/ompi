@@ -366,7 +366,7 @@ static inline void *ompi_cb_fifo_read_from_tail(ompi_cb_fifo_t *fifo,
     if ((q_ptr[t_ptr->fifo_index] == OMPI_CB_FREE) ||
             (q_ptr[t_ptr->fifo_index] == OMPI_CB_RESERVED)) 
     {
-        return (void *)OMPI_CB_ERROR;
+        return (void *)OMPI_CB_FREE;
     }
 
     /* set return data */

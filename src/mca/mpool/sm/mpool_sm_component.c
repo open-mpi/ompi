@@ -120,7 +120,7 @@ mca_mpool_sm_init(bool *allow_multi_user_threads)
     if(NULL == 
             (mca_common_sm_mmap = 
              mca_common_sm_mmap_init(mca_mpool_sm_component.sm_size,
-                 &(file_name[0]),sizeof(mca_common_sm_segment_t), 8 )
+                 &(file_name[0]),sizeof(mca_common_sm_mmap_t), 8 )
              )) 
     {
         ompi_output(0, "mca_mpool_sm_init: unable to create shared memory mapping");

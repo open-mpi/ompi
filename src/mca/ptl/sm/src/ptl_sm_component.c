@@ -152,6 +152,7 @@ int mca_ptl_sm_component_open(void)
     OBJ_CONSTRUCT(&mca_ptl_sm_component.sm_lock, ompi_mutex_t);
     OBJ_CONSTRUCT(&mca_ptl_sm.sm_send_requests, ompi_free_list_t);
     OBJ_CONSTRUCT(&mca_ptl_sm.sm_first_frags, ompi_free_list_t);
+    OBJ_CONSTRUCT(&mca_ptl_sm.sm_second_frags, ompi_free_list_t);
    
     return OMPI_SUCCESS;
 }
@@ -166,6 +167,7 @@ int mca_ptl_sm_component_close(void)
     OBJ_DESTRUCT(&mca_ptl_sm_component.sm_lock);
     OBJ_DESTRUCT(&mca_ptl_sm.sm_send_requests);
     OBJ_DESTRUCT(&mca_ptl_sm.sm_first_frags);
+    OBJ_DESTRUCT(&mca_ptl_sm.sm_second_frags);
     return OMPI_SUCCESS;
 }
 
@@ -219,7 +221,7 @@ mca_ptl_base_module_t** mca_ptl_sm_component_init(
         mca_ptl_sm_component.max_fragment_size;
 
     ompi_free_list_init(&mca_ptl_sm.sm_second_frags, length,
-        OBJ_CLASS(mca_ptl_sm_frag_t),
+        OBJ_CLASS(mca_ptl_sm_second_frag_t),
         mca_ptl_sm_component.sm_second_frag_free_list_num,
         mca_ptl_sm_component.sm_second_frag_free_list_max,
         mca_ptl_sm_component.sm_second_frag_free_list_inc,
@@ -281,6 +283,96 @@ int mca_ptl_sm_component_control(int param, void* value, size_t size)
 
 int mca_ptl_sm_component_progress(mca_ptl_tstamp_t tstamp)
 {
+    /* local variables */
+    int peer_local_smp_rank, my_local_smp_rank;
+    mca_ptl_sm_frag_t *header_ptr;
+    ompi_fifo_t *send_fifo;
+    bool frag_matched;
+    mca_ptl_base_match_header_t *matching_header;
+
+    my_local_smp_rank=mca_ptl_sm_component.my_smp_rank;
+
+    /* send progress is made by the PML */
+
+    /* 
+     * receive progress 
+     */
+
+    /* poll each fifo */
+
+    /* loop over fifo's */
+    for( peer_local_smp_rank=0 ; 
+            peer_local_smp_rank < mca_ptl_sm_component.num_smp_procs
+            ; peer_local_smp_rank++ ) 
+    {
+
+        /* we don't use the shared memory ptl to send to ourselves */
+        if( peer_local_smp_rank == my_local_smp_rank ) {
+            continue;
+        }
+
+        send_fifo=&(mca_ptl_sm_component.fifo
+                [my_local_smp_rank][peer_local_smp_rank]);
+
+        /* if fifo is not yet setup - continue - not data has been sent*/
+        if(OMPI_CB_FREE == send_fifo->tail){
+            continue;
+        }
+
+        /* aquire thread lock */
+        if( ompi_using_threads() ) {
+            ompi_atomic_lock(&(send_fifo->tail_lock));
+        }
+
+        /* get pointer */
+        header_ptr=(mca_ptl_sm_frag_t *)ompi_fifo_read_from_tail( send_fifo,
+                mca_ptl_sm_component.sm_offset);
+        if( OMPI_CB_FREE == header_ptr ) {
+            continue;
+        }
+
+        /* release thread lock */
+        if( ompi_using_threads() ) {
+            ompi_atomic_unlock(&(send_fifo->tail_lock));
+        }
+
+        /* change the address from address relative to the shared
+         * memory address, to a true virtual address */
+        header_ptr = (mca_ptl_sm_frag_t *)( (char *)header_ptr+
+                mca_ptl_sm_component.sm_offset);
+
+        /* figure out what type of message this is */
+        switch
+            (header_ptr->super.frag_base.frag_header.hdr_common.hdr_type)
+            {
+        
+                case MCA_PTL_HDR_TYPE_MATCH:
+                    /* attempt match */
+                    matching_header= &(header_ptr->super.frag_base.
+                            frag_header.hdr_match);
+                    frag_matched=mca_ptl_base_match_in_order_network_delivery(
+                            matching_header,
+                            (mca_ptl_base_recv_frag_t *)header_ptr);
+                    if( NULL != frag_matched ) {
+                        /* deliver data, and ack */
+                    }
+                    break;
+
+                case MCA_PTL_HDR_TYPE_FRAG:
+                    /* second and beyond fragment - just need to deliver
+                     * the data, and ack */
+                    break;
+
+                case MCA_PTL_HDR_TYPE_ACK:
+                    /* ack */
+                    break;
+
+                default:
+
+            }
+
+    }  /* end peer_local_smp_rank loop */
+
     return OMPI_SUCCESS;
 }
 

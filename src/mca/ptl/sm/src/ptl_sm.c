@@ -27,6 +27,7 @@
 #include "util/printf.h"
 #include "mca/ptl/sm/src/ptl_sm_sendreq.h"
 #include "class/ompi_fifo.h"
+#include "class/ompi_free_list.h"
 #include "threads/mutex.h"
 #include "datatype/datatype.h"
 
@@ -49,7 +50,7 @@ mca_ptl_sm_t mca_ptl_sm = {
     mca_ptl_sm_del_procs,
     mca_ptl_sm_finalize,
     mca_ptl_sm_send,  /* first fragment send function */
-    mca_ptl_sm_send,  /* second and subsequent send function */
+    mca_ptl_sm_send_continue,  /* second and subsequent send function */
     NULL,  /* get function */
     mca_ptl_sm_matched, /* function called after match is made */
     mca_ptl_sm_send_request_init, /* initialization routine */
@@ -344,10 +345,17 @@ void mca_ptl_sm_request_return(struct mca_ptl_base_module_t* ptl, struct mca_pml
 
 
 /*
- *  Initiate a send. If this is the first fragment, use the fragment
- *  descriptor allocated with the send requests, otherwise obtain
- *  one from the free list. Initialize the fragment and foward
- *  on to the peer.
+ *  Initiate a send.  The fragment descriptor allocated with the 
+ *  send requests.  If the send descriptor is NOT obtained from
+ *  the cache, this implementation will ONLY return an error code.
+ *  If we don't do this, then, because we rely on memory ordering
+ *  to provide the required MPI message ordering, we would need to
+ *  add logic to check and see if there are any other sends waiting
+ *  on resrouces to progress and complete all of them, before the
+ *  current one can continue.  To reduce latency, and because the
+ *  actual amount of shared memory resrouces can be set at run time,
+ *  this ptl implementation does not do this.  Initialize the 
+ *  fragment and foward on to the peer.
  *
  *  NOTE: this routine assumes that only one sending thread will be accessing
  *        the send descriptor at a time.
@@ -374,12 +382,24 @@ int mca_ptl_sm_send(
     /* determine if send descriptor is obtained from the cache.  If
      * so, all the memory resource needed have been obtained */
     if( !sm_request->super.req_cached) {
+        /* in this ptl, we will only use the cache, or fail */
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
     /* if needed, pack data in payload buffer */
     if( 0 <= size ) {
         ompi_convertor_t *convertor;
+        unsigned int iov_count, max_data;
+        int free_after=0;
         struct iovec address;
+
+        convertor = &sendreq->req_convertor;
+        ompi_convertor_copy(&sendreq->req_convertor, convertor);
+        ompi_convertor_init_for_send( convertor, 0, 
+                sendreq->req_base.req_datatype,
+                sendreq->req_base.req_count, 
+                sendreq->req_base.req_addr,
+                offset, NULL);
 
         sm_data_ptr=sm_request->req_frag->buff;
         user_data_ptr=sendreq->req_base.req_addr;
@@ -389,7 +409,10 @@ int mca_ptl_sm_send(
         address.iov_len=sm_request->req_frag->buff_length;
 
         convertor = &sendreq->req_convertor;
-        return_status=ompi_convertor_pack(convertor,&address,1);
+        iov_count=1;
+        max_data=address.iov_len;
+        return_status=ompi_convertor_pack(convertor,&address,&iov_count,
+                &max_data, &free_after);
         if( 0 > return_status ) {
             return OMPI_ERROR;
         }
@@ -401,11 +424,12 @@ int mca_ptl_sm_send(
 
     hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_MATCH;
     hdr->hdr_common.hdr_flags = flags;
+    
     hdr->hdr_common.hdr_size = sizeof(mca_ptl_base_match_header_t);
     hdr->hdr_frag.hdr_frag_seq = 0;
+    hdr->hdr_frag.hdr_src_ptr.pval = sendreq;
     hdr->hdr_frag.hdr_src_ptr.lval = 0; /* for VALGRIND/PURIFY - 
                                            REPLACE WITH MACRO */
-    hdr->hdr_frag.hdr_src_ptr.pval = sendreq;
     hdr->hdr_frag.hdr_dst_ptr.lval = 0;
     hdr->hdr_match.hdr_contextid = sendreq->req_base.req_comm->c_contextid;
     hdr->hdr_match.hdr_src = sendreq->req_base.req_comm->c_my_rank;
@@ -417,14 +441,28 @@ int mca_ptl_sm_send(
     sendreq->req_offset += size;
 
     /* 
+     * update the fragment descriptor 
+     */
+    sm_request->req_frag->super.frag_base.frag_size=size;
+
+    /* 
      * post the descriptor in the queue - post with the relative
      * address 
      */
     /* see if queues are allocated */
     my_local_smp_rank=ptl_peer->my_smp_rank;
     peer_local_smp_rank=ptl_peer->peer_smp_rank;
+
     send_fifo=&(mca_ptl_sm_component.fifo
             [my_local_smp_rank][peer_local_smp_rank]);
+
+    /* lock for thread safety - using atomic lock, not mutex, since
+     * we need shared memory access to these lock, and in some pthread
+     * implementation, such mutex's don't work correctly */
+    if( ompi_using_threads() ) {
+        ompi_atomic_lock(&(send_fifo->head_lock));
+    }
+
     if(OMPI_CB_FREE == send_fifo->head){
         /* no queues have been allocated - allocate now */
         return_status=ompi_fifo_init(mca_ptl_sm_component.size_of_cb_queue,
@@ -437,6 +475,116 @@ int mca_ptl_sm_send(
             return return_status;
         }
     }
+
+    /* post descriptor */
+    return_status=ompi_fifo_write_to_head(sm_request->req_frag_offset_from_base,
+            send_fifo, mca_ptl_sm_component.sm_mpool,
+            mca_ptl_sm_component.sm_offset);
+
+    /* release threa lock */
+    if( ompi_using_threads() ) {
+        ompi_atomic_unlock(&(send_fifo->head_lock));
+    }
+    /* return */
+    return return_status;
+}
+
+/*
+ *  Continue a send. Second fragment and beyond.
+ *
+ *  NOTE: this routine assumes that only one sending thread will be accessing
+ *        the send descriptor at a time.
+ */
+
+int mca_ptl_sm_send_continue(
+    struct mca_ptl_base_module_t* ptl,
+    struct mca_ptl_base_peer_t* ptl_peer,
+    struct mca_pml_base_send_request_t* sendreq,
+    size_t offset,
+    size_t size,
+    int flags)
+{
+    mca_ptl_sm_send_request_t *sm_request;
+    int my_local_smp_rank, peer_local_smp_rank, return_code;
+    int return_status=OMPI_SUCCESS, free_after=0;
+    ompi_fifo_t *send_fifo;
+    mca_ptl_base_header_t* hdr;
+    void *sm_data_ptr, *user_data_ptr;
+    ompi_list_item_t* item;
+    mca_ptl_sm_second_frag_t *send_frag;
+    ompi_convertor_t *convertor;
+    struct iovec address;
+    unsigned int max_data,iov_count;
+
+    /* cast to shared memory send descriptor */
+    sm_request=(mca_ptl_sm_send_request_t *)sendreq;
+
+    /* obtain fragment descriptor and payload from free list */
+    OMPI_FREE_LIST_GET(&mca_ptl_sm.sm_second_frags, item, return_code);
+
+    /* if we don't get a fragment descriptor, return w/o
+     * updating any counters.  The PML will re-issue the
+     * request */
+    if(NULL == (send_frag = (mca_ptl_sm_second_frag_t *)item)){
+        return return_code;
+    }
+
+    /* pack data in payload buffer */
+    convertor = &sendreq->req_convertor;
+    ompi_convertor_copy(&sendreq->req_convertor, convertor);
+    ompi_convertor_init_for_send( convertor, 0, 
+            sendreq->req_base.req_datatype,
+            sendreq->req_base.req_count, 
+            sendreq->req_base.req_addr,
+            offset, NULL);
+
+    sm_data_ptr=sm_request->req_frag->buff;
+    user_data_ptr=sendreq->req_base.req_addr;
+
+    /* set up the shared memory iovec */
+    address.iov_base=sm_data_ptr;
+    address.iov_len=sm_request->req_frag->buff_length;
+
+    convertor = &sendreq->req_convertor;
+    iov_count=1;
+    max_data=address.iov_len;
+    return_status=ompi_convertor_pack(convertor,&address,&iov_count,
+            &max_data, &free_after);
+    if( 0 > return_status ) {
+        return OMPI_ERROR;
+    }
+
+    /* fill in the fragment descriptor */
+    /* get pointer to the fragment header */
+    hdr = &(send_frag->super.frag_base.frag_header);
+
+    hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_FRAG;
+    hdr->hdr_frag.hdr_src_ptr.pval = sendreq;
+    /* set the pointer to the recv descriptor - this is valid only
+     * at the peer.  Get this value from the first fragment */
+    hdr->hdr_frag.hdr_dst_ptr.pval =
+        sm_request->req_frag->super.frag_request;
+
+    /* update the offset within the payload */
+    sendreq->req_offset += size;
+
+    /* 
+     * update the fragment descriptor 
+     */
+    sm_request->req_frag->super.frag_base.frag_size=size;
+
+    /* 
+     * post the descriptor in the queue - post with the relative
+     * address 
+     */
+    /* see if queues are allocated */
+    my_local_smp_rank=ptl_peer->my_smp_rank;
+    peer_local_smp_rank=ptl_peer->peer_smp_rank;
+    send_fifo=&(mca_ptl_sm_component.fifo
+            [my_local_smp_rank][peer_local_smp_rank]);
+    /* since the first fragment has already been posted,
+
+     * the queue has already been initialized, so no need to check */
 
     /* post descriptor */
     /* lock for thread safety - using atomic lock, not mutex, since
@@ -458,16 +606,14 @@ int mca_ptl_sm_send(
     return return_status;
 }
 
-
 /*
- *  A posted receive has been matched - if required send an
- *  ack back to the peer and process the fragment.
+ *  A posted receive has been matched - process the fragment
+ *  and then ack.
  */
 
 void mca_ptl_sm_matched(
     mca_ptl_base_module_t* ptl,
     mca_ptl_base_recv_frag_t* frag)
 {
+
 }
-
-
