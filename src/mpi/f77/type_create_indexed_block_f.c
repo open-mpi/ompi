@@ -48,5 +48,13 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_CREATE_INDEXED_BLOCK,
 
 void mpi_type_create_indexed_block_f(MPI_Fint *count, MPI_Fint *blocklength, MPI_Fint *array_of_displacements, MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr)
 {
+    MPI_Datatype c_old = MPI_Type_f2c(*oldtype);
+    MPI_Datatype c_new;
 
+    *ierr =  MPI_Type_create_indexed_block(*count, *blocklength, array_of_displacements,
+                                           c_old, &c_new);
+    
+    if (*ierr == MPI_SUCCESS)
+      *newtype = MPI_Type_c2f(c_new);
 }
+

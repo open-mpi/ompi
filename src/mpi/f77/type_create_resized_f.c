@@ -48,5 +48,11 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_CREATE_RESIZED,
 
 void mpi_type_create_resized_f(MPI_Fint *oldtype, MPI_Fint *lb, MPI_Fint *extent, MPI_Fint *newtype, MPI_Fint *ierr)
 {
+    MPI_Datatype c_old = MPI_Type_f2c(*oldtype);
+    MPI_Datatype c_new;
 
+    *ierr = MPI_Type_create_resized(c_old, *lb, *extent, &c_new);
+
+    if (*ierr == MPI_SUCCESS)
+      *newtype = MPI_Type_c2f(c_new);
 }

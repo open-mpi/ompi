@@ -48,5 +48,10 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_FREE,
 
 void mpi_type_free_f(MPI_Fint *type, MPI_Fint *ierr)
 {
+    MPI_Datatype c_type = MPI_DATATYPE_NULL;
 
+    *ierr = MPI_Type_free(&c_type);
+
+    if( *ierr == MPI_SUCCESS )
+      type = (MPI_Fint)MPI_DATATYPE_NULL;
 }

@@ -48,5 +48,11 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_EXTENT,
 
 void mpi_type_extent_f(MPI_Fint *type, MPI_Fint *extent, MPI_Fint *ierr)
 {
+    MPI_Datatype c_type = MPI_Type_f2c(*type);
+    MPI_Aint c_extent;
 
+    *ierr = MPI_Type_extent(c_type, &c_extent);
+
+    if (*ierr == MPI_SUCCESS)
+      *extent = (MPI_Fint)c_extent;
 }
