@@ -6,9 +6,6 @@
 #define LAM_MCA_BASE_PARAM_H
 
 #include "mpi.h"
-#include "lam/lfc/array.h"
-#include "lam/lfc/lam_object.h"
-#include "lam/util/cmd_line.h"
 
 /*
  * Types for MCA parameters
