@@ -65,6 +65,9 @@ extern lam_class_info_t lam_object_cls;
 #define OBJECT(obj) ((lam_object_t *)(obj))
 #define OBJ_RETAIN(obj)         if ( obj ) lam_obj_retain(OBJECT(obj))
 #define OBJ_RELEASE(obj)        if ( obj ) lam_obj_release(OBJECT(obj))
+#define CREATE_OBJECT(obj, obj_type, class_info) \
+    (obj = (obj_type*)lam_create_object(sizeof(obj_type, class_info)))
+
 
 typedef struct lam_object
 {
@@ -86,10 +89,21 @@ static inline lam_object_t* lam_create_object(size_t size, lam_class_info_t* cla
     return obj;
 }
 
+/*
+ * C++ Style new/delete macros to allocate/initialize and 
+ * cleanup/free resources.
+ */
+
 #define NEW(obj_type, class_info) \
     ((obj_type*)lam_create_object(sizeof(obj_type), class_info))
-#define CREATE_OBJECT(obj, obj_type, class_info) \
-    (obj = (obj_type*)lam_create_object(sizeof(obj_type, class_info)))
+
+#define DELETE(obj) \
+    do { \
+       if(NULL != obj) { \
+           OBJECT(obj)->obj_class->cls_destroy(OBJECT(obj)); \
+           LAM_FREE(obj); \
+       } \
+    } while(0) 
 
 /*
  * This function is used by inline functions later in this file, and
