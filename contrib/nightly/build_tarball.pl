@@ -50,6 +50,7 @@ my $mail;
 my @email_output;
 my $tarball_name;
 my $ret;
+my $last_test_version_name;
 
 my $scratch_root_arg;
 my $email_arg;
@@ -60,8 +61,6 @@ my $file_arg;
 my $leave_install_arg;
 my $help_arg;
 my $force_arg;
-
-my $last_test_version_name = "last_test_version.txt";
 
 #--------------------------------------------------------------------------
 
@@ -94,6 +93,36 @@ sub test_abort {
     push(@email_output, @$msg);
     send_mail($fail_subject, $email_arg, @email_output);
     exit(1);
+}
+
+#--------------------------------------------------------------------------
+
+# check to see if we've tested this version before
+sub check_last_version {
+    my ($new_version) = @_;
+    my $old_version;
+
+    print "This version: $new_version\n" if ($debug);
+    if (! -f $last_test_version_name) {
+        print "Never tested on this system before\n";
+        return;
+    }
+
+    $old_version = `cat $last_test_version_name`;
+    chomp($old_version);
+    print "Last tested version: $old_version\n" if ($debug);
+
+    # If the version hasn't changed since the last time we tested,
+    # then don't bother testing again.
+
+    if ($new_version eq $old_version) {
+        if ($debug || $force_arg) {
+            print "Test tarball version is the same as the last version we tested\nOnly testing again because we're in --debug or --force mode\n"
+                if ($debug);
+        } else {
+            exit(0);
+        }
+    }
 }
 
 #--------------------------------------------------------------------------
@@ -507,6 +536,20 @@ foreach my $option (qw/n o r m/) {
 }
 push(@email_output, $str . "\n");
 
+# now that we have scratch root, fill in the filename for the last
+# version that we tested -- separate it by hostname and config name so
+# that multiple instances of this script can share a downloads
+# directory
+my $dir = "$scratch_root_arg/last-test-versions";
+if (! -d $dir) {
+    mkdir($dir);
+}
+my $hostname = `uname -n`;
+chomp($hostname);
+my $config = $config_arg ? `basename $config_arg` : "default";
+chomp($config);
+$last_test_version_name = "$dir/$hostname-$config";
+
 # Find a mail program
 $mail = find_program(qw(Mail mailx mail));
 die "Could not find mail program; aborting in despair\n"
@@ -539,30 +582,16 @@ foreach my $dir (qw(downloads)) {
 if ($url_arg) {
     chdir("downloads");
 
-    my $old_version;
-    $old_version = `cat $last_test_version_name`
-        if (-f $latest_name);
-    chomp($old_version);
-
     do_command(1, "$download $url_arg/$latest_name");
     test_abort("Could not download latest snapshot number -- aborting")
         if (! -f $latest_name);
     $version = `cat $latest_name`;
     chomp($version);
+
+    check_last_version($version);
+
     push(@email_output, "Snapshot: $version\n\n");
 
-    # If the version hasn't changed since the last time we tested,
-    # then don't bother testing again.
-
-    if ($version eq $old_version) {
-        if ($debug || $force_arg) {
-            print "Version available on web site is the same as the last version we tested\nOnly testing again because we're in --debug or --force mode\n"
-                if ($debug);
-        } else {
-            exit(0);
-        }
-    }
-    
     # see if we need to download the tarball
     $tarball_name = "openmpi-$version.tar.gz";
     if (! -f $tarball_name) {
@@ -629,6 +658,9 @@ WARNING: checksums.  Proceeding anyway...\n\n");
         if (! -r $tarball_name);
     $version = $tarball_name;
     $version =~ s/.*openmpi-(.+).tar.gz/$1/;
+
+    check_last_version($version);
+
     push(@email_output, "Snapshot: $version\n\n");
 } 
 
@@ -722,7 +754,7 @@ while ($i >= $max_snapshots) {
 }
 
 # save the version that we just tested
-open LAST, ">$scratch_root_arg/downloads/$last_test_version_name";
+open LAST, ">$last_test_version_name";
 print LAST "$version\n";
 close LAST;
 
