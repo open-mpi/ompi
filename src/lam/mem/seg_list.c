@@ -5,12 +5,15 @@
 #include "lam/mem/seg_list.h"
 #include "lam/lfc/list.h"
 
-lam_class_info_t seg_list_cls = {"lam_seg_list_t", &lam_object_cls, 
+/*
+ * Public variable
+ */
+lam_class_info_t lam_seg_list_cls = {"lam_seg_list_t", &lam_object_cls, 
     (class_init_t)lam_sgl_init, (class_destroy_t)lam_sgl_destroy};
 
 void lam_sgl_init(lam_seg_list_t *slist)
 {
-    SUPER_INIT(slist, seg_list_cls.cls_parent);
+    SUPER_INIT(slist, lam_seg_list_cls.cls_parent);
     STATIC_INIT(slist->sgl_list, &lam_list_cls);
     lam_mtx_init(&slist->sgl_lock);
     slist->sgl_min_bytes_pushed = 0;
@@ -23,7 +26,7 @@ void lam_sgl_init(lam_seg_list_t *slist)
 void lam_sgl_destroy(lam_seg_list_t *slist)
 {
     lam_list_empty_list(&(slist->sgl_list));
-    SUPER_DESTROY(slist, seg_list_cls.cls_parent);
+    SUPER_DESTROY(slist, lam_seg_list_cls.cls_parent);
 }
 
 
