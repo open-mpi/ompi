@@ -47,6 +47,9 @@ subject="Unimplemented function report"
 # max number of snapshots to keep downloaded
 max_snapshots=3
 
+# files to not report
+skip='accumulate.c|^get.c$|put.c|^win_'
+
 ############################################################################
 # Shouldn't need to change below this line
 ############################################################################
@@ -292,7 +295,7 @@ rm -f "$report_c" "$report_f77"
 
 # count unimplemented C functions
 cd c
-grep -ls "not yet implemented" *.c > "$report_c"
+grep -ls "not yet implemented" *.c | egrep -v $skip > "$report_c"
 total_c="`ls -1 *.c | wc -l | awk '{ print $1 }'`"
 num_c="`wc -l $report_c | awk '{ print $1 }'`"
 
@@ -318,6 +321,10 @@ $mail -s "$subject" "$email_arg" <<EOF
 Unimplemented MPI function report
 
 Snapshot:   $version
+
+*************
+*** SKIPPING: $skip
+*************
 
 Total C functions: $total_c
 Unimplemented C functions: $num_c
