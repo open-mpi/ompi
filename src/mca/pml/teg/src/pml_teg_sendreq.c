@@ -3,7 +3,7 @@
  */
 /*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
 
-#include "constants.h"
+#include "include/constants.h"
 #include "mca/ptl/ptl.h"
 #include "pml_teg.h"
 #include "pml_teg_proc.h"
