@@ -69,6 +69,10 @@ typedef union {
    uint64_t lval;
    uint32_t ival;
    void*    pval;
+   struct {
+       uint32_t uval;
+       uint32_t lval;
+   } sval;
 } ompi_ptr_t;
 
 /*
