@@ -260,7 +260,40 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         ptype_size.c \
         ptype_struct.c \
         ptype_ub.c \
-        ptype_vector.c  
+        ptype_vector.c  \
+		punpack_external.c \
+		punpack.c \
+		punpublish_name.c \
+		pwait.c \
+		pwaitall.c \
+		pwaitany.c \
+		pwaitsome.c \
+		pwin_c2f.c \
+		pwin_call_errhandler.c \
+		pwin_complete.c  \
+		pwin_create_errhandler.c \
+		pwin_create_keyval.c \
+		pwin_create.c \
+		pwin_delete_attr.c \
+		pwin_f2c.c \
+		pwin_fence.c \
+		pwin_free_keyval.c \
+		pwin_free.c \
+		pwin_get_attr.c \
+		pwin_get_errhandler.c \
+		pwin_get_group.c \
+		pwin_get_name.c  \
+		pwin_lock.c \
+		pwin_post.c \
+		pwin_set_attr.c \
+		pwin_set_errhandler.c \
+		pwin_set_name.c \
+		pwin_start.c \
+		pwin_test.c \
+		pwin_unlock.c \
+		pwin_wait.c \
+		pwtick.c \
+		pwtime.c 
 
 #
 # Sym link in the sources from the real MPI directory

@@ -287,7 +287,46 @@ libmpi_c_mpi_la_SOURCES = \
         type_size.c \
         type_struct.c \
         type_ub.c \
-        type_vector.c  
+        type_vector.c \
+		unpack_external.c \
+		unpack.c \
+		unpublish_name.c \
+		wait.c \
+		waitall.c \
+		waitany.c \
+		waitsome.c \
+		win_c2f.c \
+		win_call_errhandler.c \
+		win_complete.c  \
+		win_create_errhandler.c \
+		win_create_keyval.c \
+		win_create.c \
+		win_delete_attr.c \
+		win_f2c.c \
+		win_fence.c \
+		win_free_keyval.c \
+		win_free.c \
+		win_get_attr.c \
+		win_get_errhandler.c \
+		win_get_group.c \
+		win_get_name.c  \
+		win_lock.c \
+		win_post.c \
+		win_set_attr.c \
+		win_set_errhandler.c \
+		win_set_name.c \
+		win_start.c \
+		win_test.c \
+		win_unlock.c \
+		win_wait.c \
+		wtick.c \
+		wtime.c 
+
+
+
+
+
+
 
 EXTRA_DIST = $(libmpi_c_mpi_la_SOURCES) 
 # Conditionally install the header files
