@@ -21,6 +21,7 @@
 /*
  * Global variables
  */
+mca_oob_t mca_oob;
 int mca_oob_base_output = -1;
 ompi_list_t mca_oob_base_components;
 ompi_list_t mca_oob_base_modules;

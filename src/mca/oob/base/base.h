@@ -19,7 +19,7 @@
  * This is the first module on the list. This is here temporarily
  * to make things work
  */
-mca_oob_t mca_oob;
+extern mca_oob_t mca_oob;
 
 /**
  * the module data structure
