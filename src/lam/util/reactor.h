@@ -26,20 +26,20 @@ extern lam_class_info_t lam_reactor_cls;
  */
 
 struct lam_reactor_listener_t;
-typedef void (*rl_recv_handler_fn_t)(int sd, void* user);
-typedef void (*rl_send_handler_fn_t)(int sd, void* user);
-typedef void (*rl_except_handler_fn_t)(int sd, void* user);
+typedef void (*lam_rl_recv_handler_fn_t)(void* user, int sd);
+typedef void (*lam_rl_send_handler_fn_t)(void* user, int sd);
+typedef void (*lam_rl_except_handler_fn_t)(void* user, int sd);
 
 struct lam_reactor_listener_t {
-    rl_recv_handler_fn_t   rl_recv_handler;
-    rl_send_handler_fn_t   rl_send_handler;
-    rl_except_handler_fn_t rl_except_handler;
+    lam_rl_recv_handler_fn_t   rl_recv_handler;
+    lam_rl_send_handler_fn_t   rl_send_handler;
+    lam_rl_except_handler_fn_t rl_except_handler;
 };
 typedef struct lam_reactor_listener_t lam_reactor_listener_t;
 
 
 struct lam_reactor_descriptor_t {
-    lam_list_item_t         rd_base;
+    lam_list_item_t         super;
     int                     rd;
     volatile int            rd_flags;
     lam_reactor_listener_t* rd_recv;
@@ -57,7 +57,7 @@ void lam_reactor_descriptor_destroy(lam_reactor_descriptor_t*);
 
 
 struct lam_reactor_t {
-    lam_object_t       r_base;
+    lam_object_t       super;
     lam_mutex_t        r_mutex;
     lam_list_t         r_active;
     lam_list_t         r_free;
@@ -76,8 +76,8 @@ typedef struct lam_reactor_t lam_reactor_t;
 void lam_reactor_init(lam_reactor_t*);
 void lam_reactor_destroy(lam_reactor_t*);
 
-bool lam_reactor_insert(lam_reactor_t*, int sd, lam_reactor_listener_t*, void* user, int flags);
-bool lam_reactor_remove(lam_reactor_t*, int sd, int flags);
+int  lam_reactor_insert(lam_reactor_t*, int sd, lam_reactor_listener_t*, void* user, int flags);
+int  lam_reactor_remove(lam_reactor_t*, int sd, int flags);
 void lam_reactor_poll(lam_reactor_t*);
 void lam_reactor_run(lam_reactor_t*);
 void lam_reactor_dispatch(lam_reactor_t* r, int cnt, lam_fd_set_t* rset, lam_fd_set_t* sset, lam_fd_set_t* eset);

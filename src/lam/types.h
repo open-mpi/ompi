@@ -10,6 +10,7 @@
 
 #include "lam_config.h"
 #include "lam/stdint.h"
+#include "lam/types.h"
 
 /*
  *  Increase FD_SETSIZE
@@ -34,6 +35,16 @@ typedef struct lam_fd_set_t lam_fd_set_t;
  */
 typedef char* lam_job_handle_t;
 
+
+/*
+ * portable assignment of pointer to int
+ */
+
+typedef union {
+   uint64_t lval;
+   uint32_t ival;
+   void*    pval;
+} lam_ptr_t;
 
 #endif
 
