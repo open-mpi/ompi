@@ -14,8 +14,6 @@
 
 #include "ompi_config.h"
 
-#include <stdio.h>
-
 #include "include/constants.h"
 #include "communicator/communicator.h"
 #include "mpi/f77/bindings.h"

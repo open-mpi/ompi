@@ -14,7 +14,6 @@
 
 #include "ompi_config.h"
 
-#include <stdio.h>
 
 #include "mpi/f77/bindings.h"
 

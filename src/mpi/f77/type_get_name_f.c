@@ -14,8 +14,6 @@
 
 #include "ompi_config.h"
 
-#include <stdio.h>
-
 #include "mpi.h"
 #include "include/constants.h"
 #include "errhandler/errhandler.h"
