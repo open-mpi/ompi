@@ -58,26 +58,26 @@ lam_group_t *lam_group_allocate(int group_size)
     /* create new group group element */
     new_group=OBJ_NEW(lam_group_t);
     if( new_group ) {
-        /* allocate array of (lam_proc_t *)'s, one for each
-         *   process in the group */
-        new_group->grp_proc_pointers=
-            malloc(sizeof(lam_proc_t *)*group_size);
-        if( 0 < group_size ) {
-            /* non-empty group */
-            if( !new_group->grp_proc_pointers ) {
-                /* grp_proc_pointers allocation failed */
-                free(new_group);
-                new_group=NULL;
+        if( LAM_ERROR == new_group->grp_f_to_c_index){
+            OBJ_RELEASE(new_group);
+            new_group=NULL;
+        } else {
+            /* allocate array of (lam_proc_t *)'s, one for each
+             *   process in the group */
+            new_group->grp_proc_pointers=
+              malloc(sizeof(lam_proc_t *)*group_size);
+            if( 0 < group_size ) {
+                /* non-empty group */
+               if( !new_group->grp_proc_pointers ) {
+                  /* grp_proc_pointers allocation failed */
+                  free(new_group);
+                  new_group=NULL;
+               }
             }
+
+            /* set the group size */
+            new_group->grp_proc_count=group_size;
         }
-
-        /* set the group size */
-        new_group->grp_proc_count=group_size;
-    }
-
-    if( LAM_ERROR == new_group->grp_f_to_c_index){
-        OBJ_RELEASE(new_group);
-        new_group=NULL;
     }
 
     /* return */
