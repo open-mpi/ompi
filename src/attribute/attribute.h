@@ -58,9 +58,14 @@ typedef enum ompi_attribute_type_t ompi_attribute_type_t;
 /* Fortran function pointer declarations for copy and delete. These
    will only be used here and not in the front end functions */
 
-typedef void (MPI_F_copy_function)(int *, int *, int *, int *, int *,
-				   int *, int *);
-typedef void (MPI_F_delete_function)(int *, int *, int *, int *, int *);
+typedef void (MPI_F_copy_function)(MPI_Fint *oldcomm, MPI_Fint *keyval,
+                                   MPI_Fint *extra_state, 
+                                   MPI_Fint *attr_in, MPI_Fint *attr_out,
+                                   ompi_fortran_logical_t *flag, 
+                                   MPI_Fint *ierr);
+typedef void (MPI_F_delete_function)(MPI_Fint *comm, MPI_Fint *keyval,
+                                     MPI_Fint *attr_in,
+                                     MPI_Fint *extra_state, MPI_Fint *ierr);
 
 
 /* Union to take care of proper casting of the function pointers
@@ -125,8 +130,9 @@ int ompi_attr_hash_init(ompi_hash_table_t **keyhash)
 	fprintf(stderr, "Error while creating the local attribute list\n");
 	return MPI_ERR_SYSRESOURCE;
     }
-    if (ompi_hash_table_init(*keyhash, ATTR_HASH_SIZE) != OMPI_SUCCESS)
+    if (OMPI_SUCCESS != ompi_hash_table_init(*keyhash, ATTR_HASH_SIZE)) {
 	return MPI_ERR_SYSRESOURCE;
+    }
   
     return MPI_SUCCESS;
 }
