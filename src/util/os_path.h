@@ -26,7 +26,6 @@
 
 #include <stdio.h>
 #include <stdarg.h>
-#include <stdbool.h>
 
 /** 
  * @param relative A boolean that specifies if the path name is to be constructed

@@ -45,10 +45,10 @@
 /*
  * includes
  */
-#include <sys/types.h>
-#include <stdint.h>
-
 #include "ompi_config.h"
+
+#include <sys/types.h>
+
 #include "class/ompi_list.h"
 #include "mca/mca.h"
 #include "mca/gpr/gpr.h"

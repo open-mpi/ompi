@@ -4,14 +4,14 @@
 /** @file:
  *
  */
-/* #define _GNU_SOURCE */
+
+#include "ompi_config.h"
 
 #include <stdio.h>
 #include <string.h>
 #include <stddef.h>
 #include <stdlib.h>
 
-#include "ompi_config.h"
 #include "util/output.h"
 #include "mca/mca.h"
 #include "mca/ns/base/base.h"

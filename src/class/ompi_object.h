@@ -427,6 +427,8 @@ static inline int ompi_obj_update(ompi_object_t *object, int inc)
 
 #else
 
+    int newval;
+
     object->obj_reference_count += inc;
     newval = object->obj_reference_count;
 

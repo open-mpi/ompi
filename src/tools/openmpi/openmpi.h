@@ -4,7 +4,6 @@
 
 #include <sys/param.h>
 #include <stdlib.h>
-#include <stdbool.h>
 
 /* Define the structures underlying the Open MPI universe system */
 

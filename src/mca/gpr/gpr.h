@@ -19,11 +19,11 @@
  * includes
  */
 
+#include "ompi_config.h"
+
 #include <sys/types.h>
-#include <stdint.h>
 #include <limits.h>
 
-#include "ompi_config.h"
 #include "include/types.h"
 #include "include/constants.h"
 #include "class/ompi_list.h"

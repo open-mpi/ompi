@@ -10,7 +10,6 @@
  */
 
 
-#include <stdbool.h>
 #include <sys/types.h>
 #include "mca/ns/ns.h"
 
