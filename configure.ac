@@ -498,6 +498,7 @@ AC_CONFIG_FILES([
     src/lam/os/linux/x86_64/Makefile
     src/lam/os/tru64/Makefile
 
+    src/lam/runtime/Makefile
     src/lam/threads/Makefile
     src/lam/util/Makefile
 
@@ -518,6 +519,7 @@ AC_CONFIG_FILES([
     src/mpi/op/Makefile
     src/mpi/proc/Makefile
     src/mpi/request/Makefile
+    src/mpi/runtime/Makefile
 
     src/mca/Makefile
 
