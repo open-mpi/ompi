@@ -55,8 +55,10 @@ typedef uint32_t mca_gpr_notify_id_t;
 #define OMPI_REGISTRY_SYNCHRO_MODE_ASCENDING   0x01   /**< Notify when trigger is reached, ascending mode */
 #define OMPI_REGISTRY_SYNCHRO_MODE_DESCENDING  0x02   /**< Notify when trigger is reached, descending mode */
 #define OMPI_REGISTRY_SYNCHRO_MODE_LEVEL       0x04   /**< Notify when trigger is reached, regardless of direction */
-#define OMPI_REGISTRY_SYNCHRO_MODE_CONTINUOUS  0x08   /**< Notify whenever conditions are met */
-#define OMPI_REGISTRY_SYNCHRO_MODE_ONE_SHOT    0x10   /**< Fire once, then terminate synchro command */
+#define OMPI_REGISTRY_SYNCHRO_MODE_GT_EQUAL    0x08   /**< Notify if level greater than or equal */
+#define OMPI_REGISTRY_SYNCHRO_MODE_LT_EQUAL    0x10   /**< Notify if level less than or equal */
+#define OMPI_REGISTRY_SYNCHRO_MODE_CONTINUOUS  0x80   /**< Notify whenever conditions are met */
+#define OMPI_REGISTRY_SYNCHRO_MODE_ONE_SHOT    0x81   /**< Fire once, then terminate synchro command */
 
 typedef uint16_t ompi_registry_synchro_mode_t;
 
