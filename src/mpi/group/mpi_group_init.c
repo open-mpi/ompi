@@ -59,9 +59,6 @@ lam_group_t *group_allocate(int group_size)
  */
 void lam_group_construct(lam_group_t *new_group){
 
-    /* call parent constructor */
-    OBJ_CONSTRUCT_SUPER(new_group,lam_object_t);
-
     /* return */
     return;
 }
@@ -70,9 +67,6 @@ void lam_group_construct(lam_group_t *new_group){
  * group destructor
  */
 void lam_group_destruct(lam_group_t *group){
-
-    /* call parent destructor */
-    OBJ_DESTRUCT_SUPER(group,lam_object_t);
 
     /* return */
     return;
