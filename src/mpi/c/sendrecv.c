@@ -46,7 +46,7 @@ int MPI_Sendrecv(void *sendbuf, int sendcount, MPI_Datatype recvtype,
             rc = MPI_ERR_TYPE;
         } else if (source != MPI_PROC_NULL && source != MPI_ANY_SOURCE && ompi_comm_peer_invalid(comm, source)) {
             rc = MPI_ERR_RANK;
-        } else if (recvtag < MPI_ANY_TAG || recvtag > MPI_TAG_UB_VALUE) {
+        } else if (((recvtag < 0) && (recvtag !=  MPI_ANY_TAG)) || (recvtag > MPI_TAG_UB_VALUE)) {
             rc = MPI_ERR_TAG;
         }
         OMPI_ERRHANDLER_CHECK(rc, comm, rc, "MPI_Sendrecv");
