@@ -484,11 +484,10 @@ mca_ptl_elan_state_init (mca_ptl_elan_component_t * emp)
 
         /* Allocate a Sleep Desc */
         es = ompi_init_elan_sleepdesc (ems, rail);
-
-        /* XXX: put a lock and hold a lock */
+	OMPI_LOCK(&mca_ptl_elan_component.elan_lock);
         es->es_next = rail->r_sleepDescs;
         rail->r_sleepDescs = es;
-        /* XXX: release the lock */
+	OMPI_UNLOCK(&mca_ptl_elan_component.elan_lock);
 
         estate->alloc = rail->r_alloc;
         estate->vp = ems->elan_vp;
@@ -652,12 +651,15 @@ mca_ptl_elan_thread_close (mca_ptl_elan_component_t * emp)
     num_rails = emp->num_modules;
 
     for (i = 0; i < num_rails; i ++) {
+	/* FIXME: Generate a QUEUE DMA to each thread */
+    }
+
+    /* Join all threads */
+    for (i = 0; i < num_rails; i ++) {
 	ompi_ptl_elan_thread_t * tsend, *trecv;
 
 	tsend = emp->send_threads[i];
 	trecv = emp->recv_threads[i];
-
-	/* FIXME: Generate a QUEUE DMA to each thread */
 
         ompi_thread_join(&tsend->thread, NULL);
         ompi_thread_join(&trecv->thread, NULL);
