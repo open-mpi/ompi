@@ -8,6 +8,7 @@
 
 #include "mpi.h"
 #include "mpi/f77/bindings.h"
+#include "group/group.h"
 
 #if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILE_LAYER
 #pragma weak PMPI_GROUP_RANK = mpi_group_rank_f
@@ -48,5 +49,10 @@ LAM_GENERATE_F77_BINDINGS (MPI_GROUP_RANK,
 
 void mpi_group_rank_f(MPI_Fint *group, MPI_Fint *rank, MPI_Fint *ierr)
 {
+  lam_group_t *c_group;
 
+  /* Make the fortran to c representation conversion */
+  c_group = MPI_Group_f2c(*group);
+  
+  *ierr = MPI_Group_rank(c_group, rank);
 }
