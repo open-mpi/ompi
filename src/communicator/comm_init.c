@@ -127,6 +127,10 @@ int ompi_comm_init(void)
     OBJ_RETAIN(&ompi_mpi_group_null);
     OBJ_RETAIN(&ompi_mpi_errors_are_fatal);
 
+    /* initialize the comm_reg stuff for multi-threaded comm_cid
+       allocation */
+    ompi_comm_reg_init();
+
     return OMPI_SUCCESS;
 }
 
@@ -207,6 +211,9 @@ int ompi_comm_finalize(void)
 
 
     OBJ_DESTRUCT (&ompi_mpi_communicators);
+
+    /* finalize the comm_reg stuff */
+    ompi_comm_reg_finalize();
 
     return OMPI_SUCCESS;
 }

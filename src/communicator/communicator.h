@@ -382,6 +382,15 @@ extern "C" {
     
 
 
+    /*
+     * these are the init and finalize functions for the comm_reg
+     * stuff. These routines are necessary for handling multi-threading
+     * scenarious in the communicator_cid allocation
+     */
+    void ompi_comm_reg_init(void);
+    void ompi_comm_reg_finalize(void);
+
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
