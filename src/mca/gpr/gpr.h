@@ -35,6 +35,7 @@
 
 /** Define the notification actions for the subscription system
  */
+#define OMPI_REGISTRY_NOTIFY_NONE           0x0000   /**< Null case */
 #define OMPI_REGISTRY_NOTIFY_MODIFICATION   0x0001   /**< Notifies subscriber when object modified */
 #define OMPI_REGISTRY_NOTIFY_ADD_SUBSCRIBER 0x0002   /**< Notifies subscriber when another subscriber added */
 #define OMPI_REGISTRY_NOTIFY_DELETE         0x0004   /**< Notifies subscriber when object deleted */
