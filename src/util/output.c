@@ -292,6 +292,7 @@ void ompi_output_finalize(void)
     }
     verbose_stream = -1;
   }
+  OBJ_DESTRUCT(&mutex);
 }
 
 /************************************************************************/
