@@ -58,14 +58,16 @@ int ompi_request_test_all(
 {
     size_t i;
     ompi_request_t **rptr;
-    size_t num_completed;
+    size_t num_completed = 0;
     ompi_request_t *request;
 
     ompi_atomic_mb();
     rptr = requests;
     for (i = 0; i < count; i++) {
         request = *rptr;
-        if (request == MPI_REQUEST_NULL || request->req_complete) {
+        if (request == MPI_REQUEST_NULL || 
+            request->req_state == OMPI_REQUEST_INACTIVE ||
+            request->req_complete) {
             num_completed++;
         }
         rptr++;
