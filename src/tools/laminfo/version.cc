@@ -26,7 +26,7 @@ const string laminfo::ver_minor = "minor";
 const string laminfo::ver_release = "release";
 const string laminfo::ver_alpha = "alpha";
 const string laminfo::ver_beta = "beta";
-const string laminfo::ver_cvs = "cvs";
+const string laminfo::ver_svn = "svn";
 
 //
 // Private variables
@@ -46,7 +46,7 @@ static void show_mca_version(const mca_base_module_t *module,
                              const string& scope, const string& ver_type);
 static string make_version_str(const string& scope,
                                int major, int minor, int release, int alpha, 
-                               int beta, int cvs);
+                               int beta, int svn);
 
 //
 // do_version
@@ -111,7 +111,7 @@ void laminfo::show_lam_version(const string& scope)
       make_version_str(scope, 
                        LAM_MAJOR_VERSION, LAM_MINOR_VERSION, 
                        LAM_RELEASE_VERSION, 
-                       LAM_ALPHA_VERSION, LAM_BETA_VERSION, LAM_CVS_VERSION));
+                       LAM_ALPHA_VERSION, LAM_BETA_VERSION, LAM_SVN_VERSION));
 }
 
 
@@ -232,7 +232,7 @@ static void show_mca_version(const mca_base_module_t* module,
 
 static string make_version_str(const string& scope,
                                int major, int minor, int release, int alpha, 
-                               int beta, int cvs)
+                               int beta, int svn)
 {
   string str;
   char temp[BUFSIZ];
@@ -253,10 +253,10 @@ static string make_version_str(const string& scope,
       snprintf(temp, BUFSIZ - 1, "b%d", beta);
       str += temp;
     }
-    if (cvs > 0) {
-      str += "cvs";
-      if (cvs > 1) {
-        snprintf(temp, BUFSIZ - 1, "%d", cvs);
+    if (svn > 0) {
+      str += "svn";
+      if (svn > 1) {
+        snprintf(temp, BUFSIZ - 1, "%d", svn);
         str += temp;
       }
     }
@@ -270,8 +270,8 @@ static string make_version_str(const string& scope,
     snprintf(temp, BUFSIZ - 1, "%d", alpha);
   else if (scope == ver_beta)
     snprintf(temp, BUFSIZ - 1, "%d", beta);
-  else if (scope == ver_cvs)
-    snprintf(temp, BUFSIZ - 1, "%d", cvs);
+  else if (scope == ver_svn)
+    snprintf(temp, BUFSIZ - 1, "%d", svn);
   else {
 #if 0
     show_help("laminfo", "usage");

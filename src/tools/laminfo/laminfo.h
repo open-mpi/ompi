@@ -40,7 +40,7 @@ namespace laminfo {
   extern const std::string ver_release;
   extern const std::string ver_alpha;
   extern const std::string ver_beta;
-  extern const std::string ver_cvs;
+  extern const std::string ver_svn;
 
   void do_version(bool want_all, lam_cmd_line_t *cmd_line);
   void show_lam_version(const std::string& scope);

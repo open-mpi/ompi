@@ -505,7 +505,7 @@ EOF
                 pd_ver_release="`echo $pd_ver | cut -d: -f4`"
                 pd_ver_alpha="`echo $pd_ver | cut -d: -f5`"
                 pd_ver_beta="`echo $pd_ver | cut -d: -f6`"
-                pd_ver_cvs="`echo $pd_ver | cut -d: -f7`"
+                pd_ver_svn="`echo $pd_ver | cut -d: -f7`"
                 cat >> $pd_list_file <<EOF
 
 MCA_${pd_module_type}_NO_CONFIGURE_SUBDIRS="$pd_dir \$MCA_${pd_module_type}_NO_CONFIGURE_SUBDIRS"
@@ -532,9 +532,9 @@ AC_DEFINE_UNQUOTED(MCA_${pd_module_type}_${pd_module_name}_ALPHA_VERSION,
 AC_DEFINE_UNQUOTED(MCA_${pd_module_type}_${pd_module_name}_BETA_VERSION, 
     $pd_ver_beta,
     [Beta LAM MCA $pd_module_type $pd_module_name version])
-AC_DEFINE_UNQUOTED(MCA_${pd_module_type}_${pd_module_name}_CVS_VERSION, 
-    $pd_ver_cvs,
-    [CVS LAM MCA $pd_module_type $pd_module_name version])
+AC_DEFINE_UNQUOTED(MCA_${pd_module_type}_${pd_module_name}_SVN_VERSION, 
+    $pd_ver_svn,
+    [SVN LAM MCA $pd_module_type $pd_module_name version])
 AC_DEFINE_UNQUOTED(MCA_${pd_module_type}_${pd_module_name}_FULL_VERSION, 
     "$pd_ver_full",
     [Full LAM MCA $pd_module_type $pd_module_name version])
@@ -686,7 +686,7 @@ done
 echo "[Checking] prerequisites"
 
 # sanity check to make sure user isn't being stupid
-if test ! -d CVS -a ! -d .svn ; then
+if test ! -d .svn ; then
     cat <<EOF
 
 This doesn't look like a developer copy of LAM/MPI.  You probably do not
