@@ -153,6 +153,7 @@ AC_CHECK_SIZEOF(void *)
 # check for type alignments
 
 AC_C_INLINE
+AC_C_RESTRICT
 AC_CHECK_HEADERS(stdbool.h)
 LAM_C_WEAK_SYMBOLS
 
