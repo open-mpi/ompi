@@ -60,7 +60,6 @@
 #define MCA_PML_H
 
 #include "ompi_config.h"
-#include "include/ompi.h"
 #include "class/ompi_list.h"
 #include "communicator/communicator.h"
 #include "datatype/datatype.h"

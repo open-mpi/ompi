@@ -241,7 +241,6 @@
 #define MCA_PTL_H
 
 #include "mca/mca.h"
-#include "include/ompi.h"
 #include "mca/pml/pml.h"
 #include "include/types.h"
 
