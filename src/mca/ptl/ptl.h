@@ -374,17 +374,16 @@ typedef void (*mca_ptl_base_module_request_fini_fn_t)(
  * @param ptl_base_peer (IN)     PTL peer addressing
  * @param request (IN)           Send request
  * @param offset                 Current offset into packed/contiguous buffer.
- * @param size (IN/OUT)          Number of bytes PML is requesting PTL to deliver,
- *                               PTL returns number of bytes sucessfully fragmented
+ * @param size (IN)              Number of bytes PML is requesting PTL to deliver,
  * @param flags (IN)             Flags that should be passed to the peer via the message header.
  * @param request (OUT)          OMPI_SUCCESS if the PTL was able to queue one or more fragments
  *
  * The PML implements a rendevouz protocol, with up to the PTL defined threshold
  * bytes of the message sent in eager send mode.
  *
- * If the PTL is unable to fragment the requested size, possibly due to resource
- * constraints or datatype alighnment/offset, it should return the number of bytes
- * actually fragmented in the size parameter.
+ * The PTL is responsible for updating the current data offset (req_offset) in the request
+ * with the actual number of bytes fragmented.  This may be less than the requested size, 
+ * due to resource constraints or datatype alighnment/offset.
  */
 typedef int (*mca_ptl_base_module_send_fn_t)(
     struct mca_ptl_base_module_t* ptl,
