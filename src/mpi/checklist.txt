@@ -46,11 +46,12 @@ MPI_Attr_get                    Vishal
 MPI_Attr_put                    Vishal
 MPI_Barrier                     DONE
 MPI_Bcast                       DONE
-MPI_Bsend                       C & F77 done
-MPI_Bsend_init                  C & F77 done
-MPI_Buffer_attach               C & F77 done
-MPI_Buffer_detach               C & F77 done
-MPI_Cancel                      C & F77 done
+                                C       F77       C++      F90
+MPI_Bsend                       DONE    DONE
+MPI_Bsend_init                  DONE    DONE
+MPI_Buffer_attach                       DONE
+MPI_Buffer_detach                       DONE
+MPI_Cancel                      DONE    DONE
 MPI_Cart_coords                 Anju
 MPI_Cart_create                 Anju
 MPI_Cart_get                    Anju
@@ -158,7 +159,7 @@ MPI_File_get_type_extent
 MPI_File_set_atomicity
 MPI_File_get_atomicity
 MPI_File_sync
-MPI_Finalize                    C & f77 DONE
+MPI_Finalize                    DONE    DONE
 MPI_Finalized                   Ginger
 MPI_Free_mem                    Tim P.
 MPI_Gather                      DONE 
@@ -177,21 +178,21 @@ MPI_Graph_neighbors             Anju
 MPI_Graphdims_get               Anju
 MPI_Grequest_complete
 MPI_Grequest_start
-MPI_Group_c2f                   C & F77 done
-MPI_Group_compare               C & F77 done
-MPI_Group_difference            C & F77 done
-MPI_Group_excl                  C & F77 done
-MPI_Group_f2c                   C & F77 done
-MPI_Group_free                  C & F77 done
-MPI_Group_incl                  C & F77 done
-MPI_Group_intersection          C & F77 done
-MPI_Group_range_excl            C & F77 done
-MPI_Group_range_incl            C & F77 done
-MPI_Group_rank                  C & F77 done
-MPI_Group_size                  C & F77 done
-MPI_Group_translate_ranks       C & F77 done
-MPI_Group_union                 C & F77 done
-MPI_Ibsend                      C & F77 done
+MPI_Group_c2f                   DONE    DONE
+MPI_Group_compare               DONE    DONE
+MPI_Group_difference            DONE    DONE
+MPI_Group_excl                  DONE    DONE
+MPI_Group_f2c                   DONE    DONE
+MPI_Group_free                  DONE    DONE
+MPI_Group_incl                  DONE    DONE
+MPI_Group_intersection          DONE    DONE
+MPI_Group_range_excl            DONE    DONE
+MPI_Group_range_incl            DONE    DONE
+MPI_Group_rank                  DONE    DONE
+MPI_Group_size                  DONE    DONE
+MPI_Group_translate_ranks       DONE    DONE
+MPI_Group_union                 DONE    DONE
+MPI_Ibsend                      DONE    DONE
 MPI_Info_c2f                    Anju
 MPI_Info_create                 Anju
 MPI_Info_delete                 Anju
@@ -203,16 +204,16 @@ MPI_Info_get_nkeys              Anju
 MPI_Info_get_nthkey             Anju
 MPI_Info_get_valuelen           Anju
 MPI_Info_set                    Anju
-MPI_Init                        C & f77 DONE
+MPI_Init                        DONE    DONE
 MPI_Initialized                 Ginger
-MPI_Init_thread                 C & f77 DONE
+MPI_Init_thread                         DONE
 MPI_Intercomm_create            Edgar
 MPI_Intercomm_merge             Edgar
-MPI_Iprobe                      C & F77 done
-MPI_Irecv                       C & F77 done
-MPI_Irsend                      C & F77 done
-MPI_Isend                       C & F77 done
-MPI_Issend                      C & F77 done
+MPI_Iprobe                      DONE    DONE
+MPI_Irecv                       DONE    DONE
+MPI_Irsend                      DONE    DONE
+MPI_Isend                       DONE    DONE
+MPI_Issend                      DONE    DONE
 MPI_Is_thread_main              Ginger
 MPI_Keyval_create               Vishal
 MPI_Keyval_free                 Vishal
@@ -227,12 +228,12 @@ MPI_Pack_external_size          DONE
 MPI_Pack                        DONE
 MPI_Pack_size                   DONE
 MPI_Pcontrol                    Ginger
-MPI_Probe                       C & F77 done
+MPI_Probe                       DONE    DONE
 MPI_Publish_name                Edgar
 MPI_Put
-MPI_Query_thread                C & F77 done
-MPI_Recv_init                   C & F77 done
-MPI_Recv                        C & F77 done
+MPI_Query_thread                        DONE
+MPI_Recv_init                   DONE    DONE
+MPI_Recv                        DONE    DONE
 MPI_Reduce                      Jeff
 MPI_Reduce_scatter              Jeff
 MPI_Register_datarep            George
@@ -240,91 +241,91 @@ MPI_Request_c2f                 Ginger
 MPI_Request_f2c                 Ginger
 MPI_Request_free                Ginger
 MPI_Request_get_status          Ginger
-MPI_Rsend                       C & F77 done
-MPI_Rsend_init                  C & F77 done
+MPI_Rsend                       DONE    DONE
+MPI_Rsend_init                  DONE    DONE
 MPI_Scan                        Jeff
 MPI_Scatter                     Jeff
 MPI_Scatterv                    Jeff
-MPI_Send_init                   C & F77 done
-MPI_Send                        C & F77 done
-MPI_Sendrecv                    C & F77 done
-MPI_Sendrecv_replace            C & F77 done
-MPI_Ssend_init                  C & F77 done
-MPI_Ssend                       C & F77 done
-MPI_Start                       C & F77 done
-MPI_Startall                    C & F77 done
+MPI_Send_init                   DONE    DONE
+MPI_Send                        DONE    DONE
+MPI_Sendrecv                    DONE    DONE
+MPI_Sendrecv_replace            DONE    DONE
+MPI_Ssend_init                  DONE    DONE
+MPI_Ssend                       DONE    DONE
+MPI_Start                       DONE    DONE
+MPI_Startall                    DONE    DONE
 MPI_Status_c2f                  Ginger
 MPI_Status_f2c                  Ginger
 MPI_Status_set_cancelled        Ginger
 MPI_Status_set_elements         Ginger
-MPI_Testall                     Ginger
-MPI_Testany                     Ginger
-MPI_Test                        Ginger
+MPI_Testall                             DONE
+MPI_Testany                     DONE    DONE
+MPI_Test                        DONE    DONE
 MPI_Test_cancelled              Ginger
-MPI_Testsome                    Ginger
+MPI_Testsome                    DONE    DONE
 MPI_Topo_test                   Anju
 MPI_Type_c2f                    DONE
-MPI_Type_commit			DONE
-MPI_Type_contiguous		Ginger
-MPI_Type_create_darray		Ginger
-MPI_Type_create_f90_complex	DONE
-MPI_Type_create_f90_integer	DONE
-MPI_Type_create_f90_real	DONE
-MPI_Type_create_hindexed	Ginger
-MPI_Type_create_hvector		Ginger
-MPI_Type_create_keyval          Vishal
-MPI_Type_create_indexed_block	Ginger
-MPI_Type_create_struct		Ginger
-MPI_Type_create_subarray	DONE
-MPI_Type_create_resized 	Ginger
-MPI_Type_delete_attr            Vishal
-MPI_Type_dup			Ginger
-MPI_Type_extent			Ginger
-MPI_Type_free			Ginger
-MPI_Type_free_keyval            Vishal
+MPI_Type_commit			DONE    DONE
+MPI_Type_contiguous		DONE    DONE
+MPI_Type_create_darray		DONE    DONE
+MPI_Type_create_f90_complex	DONE    DONE
+MPI_Type_create_f90_integer	DONE    DONE
+MPI_Type_create_f90_real	DONE    DONE
+MPI_Type_create_hindexed	DONE    DONE
+MPI_Type_create_hvector		DONE    DONE
+MPI_Type_create_keyval          DONE    Ginger
+MPI_Type_create_indexed_block	DONE    DONE
+MPI_Type_create_struct		DONE    DONE
+MPI_Type_create_subarray	        DONE
+MPI_Type_create_resized 	DONE    DONE
+MPI_Type_delete_attr            DONE    Ginger
+MPI_Type_dup			DONE    DONE
+MPI_Type_extent			DONE    DONE
+MPI_Type_free			DONE    DONE
+MPI_Type_free_keyval            DONE  
 MPI_Type_f2c			DONE
-MPI_Type_get_attr               Vishal
-MPI_Type_get_contents		Ginger
-MPI_Type_get_envelope		DONE
-MPI_Type_get_extent		Ginger
-MPI_Type_get_name		DONE
-MPI_Type_get_true_extent	Ginger
-MPI_Type_hindexed		Ginger
-MPI_Type_hvector		Ginger
-MPI_Type_indexed		Ginger
-MPI_Type_lb			Ginger
-MPI_Type_match_size		Ginger
-MPI_Type_set_attr               Vishal
+MPI_Type_get_attr               DONE    Ginger
+MPI_Type_get_contents		        DONE
+MPI_Type_get_envelope		DONE    DONE
+MPI_Type_get_extent		DONE    DONE
+MPI_Type_get_name		DONE    DONE
+MPI_Type_get_true_extent	DONE    DONE
+MPI_Type_hindexed		DONE    DONE
+MPI_Type_hvector		DONE    DONE
+MPI_Type_indexed		DONE    DONE
+MPI_Type_lb			DONE    DONE
+MPI_Type_match_size		        DONE
+MPI_Type_set_attr               DONE    Ginger
 MPI_Type_set_name               George
-MPI_Type_size			DONE
-MPI_Type_struct			DONE
-MPI_Type_ub			Ginger
-MPI_Type_vector			DONE
-MPI_Unpack			DONE
+MPI_Type_size			DONE    DONE
+MPI_Type_struct			DONE    DONE
+MPI_Type_ub			DONE    DONE
+MPI_Type_vector			DONE    DONE
+MPI_Unpack			DONE    DONE
 MPI_Unpublish_name              Edgar
-MPI_Unpack_external 		DONE
-MPI_Waitall                     Ginger
-MPI_Waitany                     Ginger
-MPI_Wait                        Ginger
-MPI_Waitsome                    Ginger
+MPI_Unpack_external 		DONE    DONE
+MPI_Waitall                     DONE    DONE
+MPI_Waitany                     DONE    DONE
+MPI_Wait                        DONE    DONE
+MPI_Waitsome                    DONE    DONE
 MPI_Win_c2f
 MPI_Win_call_errhandler         Jeff
 MPI_Win_complete
 MPI_Win_create
 MPI_Win_create_errhandler       Jeff
-MPI_Win_create_keyval           Vishal
-MPI_Win_delete_attr             Vishal
+MPI_Win_create_keyval           DONE   Ginger
+MPI_Win_delete_attr             DONE   Ginger
 MPI_Win_f2c
 MPI_Win_fence
 MPI_Win_free
-MPI_Win_free_keyval             Vishal
-MPI_Win_get_attr                Vishal
+MPI_Win_free_keyval             DONE   Ginger
+MPI_Win_get_attr                DONE   Ginger
 MPI_Win_get_errhandler          Jeff
 MPI_Win_get_group
 MPI_Win_get_name
 MPI_Win_lock
 MPI_Win_post
-MPI_Win_set_attr                Vishal
+MPI_Win_set_attr                DONE   Ginger
 MPI_Win_set_errhandler          Jeff
 MPI_Win_set_name
 MPI_Win_start
