@@ -247,6 +247,7 @@ int mca_base_modex_exchange(void)
             iov.iov_len = self_module->module_data_size;
             rc = mca_oob_send(&proc->proc_name, &iov, 1, MCA_OOB_TAG_ANY, 0);
             if(rc != iov.iov_len) {
+               ompi_output(0, "mca_base_modex_exchange: mca_oob_send failed, rc=%d\n", rc);
                free(procs); 
                OMPI_THREAD_UNLOCK(&self->proc_lock);
                return rc;
@@ -288,6 +289,7 @@ int mca_base_modex_exchange(void)
 
             size = mca_oob_recv(&proc->proc_name, 0, 0, MCA_OOB_TAG_ANY, MCA_OOB_TRUNC|MCA_OOB_PEEK);
             if(size <= 0) {
+                ompi_output(0, "mca_base_modex_exchange: mca_oob_recv(MCA_OOB_TRUNC|MCA_OOB_PEEK) failed, rc=%d\n", size);
                 free(procs);
                 OMPI_THREAD_UNLOCK(&proc->proc_lock);
                 OMPI_THREAD_UNLOCK(&self->proc_lock);
@@ -301,6 +303,7 @@ int mca_base_modex_exchange(void)
 
             rc = mca_oob_recv(&proc->proc_name, &iov, 1, MCA_OOB_TAG_ANY, 0);
             if(rc != size) {
+                ompi_output(0, "mca_base_modex_exchange: mca_oob_recv() failed, rc=%d\n", rc);
                 free(procs);
                 OMPI_THREAD_UNLOCK(&proc->proc_lock);
                 OMPI_THREAD_UNLOCK(&self->proc_lock);
