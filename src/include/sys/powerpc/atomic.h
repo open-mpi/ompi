@@ -19,7 +19,7 @@
  * On powerpc ...
  */
 
-#ifdef HAVE_SMP
+#if OMPI_WANT_SMP_LOCKS
 
 #define MB()  __asm__ __volatile__ ("sync" : : : "memory")
 #define RMB() __asm__ __volatile__ ("lwsync" : : : "memory")
