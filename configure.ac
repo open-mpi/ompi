@@ -805,7 +805,6 @@ AC_CONFIG_FILES([
     src/include/sys/powerpc/Makefile
     src/include/sys/sparc64/Makefile
 
-    src/ctnetwork/Makefile
     src/class/Makefile
     src/os/Makefile
     src/os/cygwin/Makefile
