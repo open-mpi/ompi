@@ -47,11 +47,25 @@ typedef struct mca_allocator_t mca_allocator_t;
 
 
 /**
+  *
+  */
+
+typedef void* (*mca_allocator_segment_alloc_fn_t)(size_t* size);
+
+/**
+  *
+  */
+typedef void* (*mca_allocator_segment_free_fn_t)(void* segment);
+
+
+/**
   * module initialization function
   */
 
 typedef struct mca_allocator_t* (*mca_allocator_base_module_init_fn_t)(
-    bool *allow_multi_user_threads
+    bool *allow_multi_user_threads,
+    mca_allocator_segment_alloc_fn_t segment_alloc,
+    mca_allocator_segment_free_fn_t segment_free
 );
 
 struct mca_allocator_base_module_1_0_0_t {
