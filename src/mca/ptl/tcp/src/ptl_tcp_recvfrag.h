@@ -81,19 +81,24 @@ static inline void mca_ptl_tcp_recv_frag_matched(mca_ptl_tcp_recv_frag_t* frag)
             request->req_base.req_count,    /* count elements */
             request->req_base.req_addr,     /* users buffer */
             header->hdr_frag_offset,        /* offset in bytes into packed buffer */
-	    ptl_tcp_memalloc );             /* not allocating memory */
+            ptl_tcp_memalloc );             /* not allocating memory */
 
         /* non-contiguous - allocate buffer for receive */
-	if( 1 == ompi_convertor_need_buffers( &frag->frag_recv.frag_base.frag_convertor ) ) {
+        if( 1 == ompi_convertor_need_buffers( &frag->frag_recv.frag_base.frag_convertor ) ) {
             frag->frag_recv.frag_base.frag_addr = malloc(header->hdr_frag_length);
             frag->frag_recv.frag_is_buffered = true;
-	    /* we now have correct offset into users buffer */
+	    /* determine offset into users buffer */
         } else {
             frag->frag_recv.frag_base.frag_addr = ((unsigned char*)request->req_base.req_addr) + 
                 header->hdr_frag_offset;
         }
 	    frag->frag_recv.frag_base.frag_size = header->hdr_frag_length;
-	/* TODO: check for truncation */
+        if(header->hdr_frag_offset + frag->frag_recv.frag_base.frag_size > request->req_bytes_packed) {
+            if(header->hdr_frag_offset > request->req_bytes_packed)
+                frag->frag_size = 0;
+            else
+                frag->frag_size = request->req_bytes_packed - header->hdr_frag_offset;
+        }
     }
 }
 
