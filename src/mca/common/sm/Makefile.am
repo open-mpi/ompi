@@ -20,6 +20,9 @@
 # into the upper-level libmpi.la.  Linkers universally know how to
 # "figure this out" so that we end up with only one copy of the code
 # and data.
+#
+# Note that building this common component statically and linking
+# against other dynamic components is *not* supported!
 
 # Use the top-level Makefile.options
 
@@ -30,12 +33,39 @@ include $(top_ompi_srcdir)/config/Makefile.options
 headers = \
         common_sm_mmap.h
 
-# Make the output library in this directory, and name it
-# libmca_<type>_<name>.la.  This library needs to be installed.
+# Source files
 
-lib_LTLIBRARIES = libmca_common_sm.la
-libmca_common_sm_la_SOURCES =  \
+sources = \
         common_sm_mmap.c
+
+# As per above, we'll either have an installable or noinst result.
+# The installable one should follow the same MCA prefix naming rules
+# (i.e., libmca_<type>_<name>.la).  The noinst one can be named
+# whatever it wants, although libmca_<type>_<name>_noinst.la is
+# recommended.
+
+# To simplify components that link to this library, we will *always*
+# have an output libtool library named libmca_<type>_<name>.la -- even
+# for case 2) described above (i.e., so there's no conditional logic
+# necessary in component Makefile.am's that link to this library).
+# Hence, if we're creating a noinst version of this library (i.e.,
+# case 2), we sym link it to the libmca_<type>_<name>.la name
+# (libtool will do the Right Things under the covers).  See the
+# all-local and clean-local rules, below, for how this is effected.
+
+lib_LTLIBRARIES =
+noinst_LTLIBRARIES =
+comp_inst = libmca_common_sm.la
+comp_noinst = libmca_common_sm_noinst.la
+
+if OMPI_BUILD_common_sm_DSO
+lib_LTLIBRARIES += $(comp_inst)
+else
+noinst_LTLIBRARIES += $(comp_noinst)
+endif
+
+libmca_common_sm_la_SOURCES = $(headers) $(sources)
+libmca_common_sm_noinst_la_SOURCES = $(libmca_common_sm_la_SOURCES)
 
 # Conditionally install the header files
 
@@ -45,3 +75,18 @@ ompi_HEADERS = $(headers)
 else
 ompidir = $(includedir)
 endif
+
+# These two rules will sym link the "noinst" libtool library filename
+# to the installable libtool library filename in the case where we are
+# compiling this component statically (case 2), described above).
+
+all-local:
+	if test -z "$(lib_LTLIBRARIES)"; then \
+	  rm -f "$(comp_inst)"; \
+	  $(LN_S) "$(comp_noinst)" "$(comp_inst)"; \
+	fi
+
+clean-local:
+	if test -z "$(lib_LTLIBRARIES)"; then \
+	  rm -f "$(comp_inst)"; \
+	fi
