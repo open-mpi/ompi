@@ -186,9 +186,8 @@ void mca_base_component_repository_finalize(void)
        technically an error). */
 
     do {
-      changed = false;
       for (item = ompi_list_get_first(&repository);
-           ompi_list_get_end(&repository) != item && changed; ) {
+           ompi_list_get_end(&repository) != item; ) {
         ri = (repository_item_t *) item;
         item = ompi_list_get_next(item);
         OBJ_RELEASE(ri);
