@@ -67,43 +67,43 @@
 #include "threads/thread.h"
 #include "util/output.h"
 
-#ifdef HAVE_SELECT
+#if HAVE_SELECT
 extern const struct lam_eventop lam_selectops;
 #endif
-#ifdef HAVE_POLL
+#if HAVE_POLL
 extern const struct lam_eventop lam_pollops;
 #endif
-#ifdef HAVE_RTSIG
+#if HAVE_RTSIG
 extern const struct lam_eventop lam_rtsigops;
 #endif
-#ifdef HAVE_EPOLL
+#if HAVE_EPOLL
 extern const struct lam_eventop lam_epollops;
 #endif
-#ifdef HAVE_WORKING_KQUEUE
+#if HAVE_WORKING_KQUEUE
 extern const struct lam_eventop lam_kqops;
 #endif
-#ifdef WIN32
+#if WIN32
 extern const struct lam_eventop lam_win32ops;
 #endif
 
 /* In order of preference */
 static const struct lam_eventop *lam_eventops[] = {
-#ifdef HAVE_WORKING_KQUEUE
+#if HAVE_WORKING_KQUEUE
     &lam_kqops,
 #endif
-#ifdef HAVE_EPOLL
+#if HAVE_EPOLL
     &lam_epollops,
 #endif
-#ifdef HAVE_RTSIG
+#if HAVE_RTSIG
     &lam_rtsigops,
 #endif
-#ifdef HAVE_POLL
+#if HAVE_POLL
     &lam_pollops,
 #endif
-#ifdef HAVE_SELECT
+#if HAVE_SELECT
     &lam_selectops,
 #endif
-#ifdef WIN32
+#if WIN32
     &lam_win32ops,
 #endif
     NULL
