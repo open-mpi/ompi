@@ -1,0 +1,1828 @@
+%%
+%% This is file `listings.sty',
+%% generated with the docstrip utility.
+%%
+%% The original source files were:
+%%
+%% listings.dtx  (with options: `kernel')
+%% 
+%% Please read the software license in listings.dtx or listings.dvi.
+%%
+%% (w)(c) 1996 -- 2002 Carsten Heinz and/or any other author
+%% listed elsewhere in this file.
+%%
+%% This file is distributed under the terms of the LaTeX Project Public
+%% License from CTAN archives in directory  macros/latex/base/lppl.txt.
+%% Either version 1.0 or, at your option, any later version.
+%%
+%% Permission is granted to modify the listings package as well as
+%% lstdrvrs.dtx. You are not allowed to distribute a modified version
+%% of the package or lstdrvrs.dtx unless you change the file names and
+%% provide the original files. In any case it is better to contact the
+%% address below; other users will welcome removed bugs, new features,
+%% and additional programming languages.
+%%
+%% The listings package is free software.
+%%
+%% However, if you distribute the package as part of a commercial
+%% product or if you use the package to prepare a commercial document
+%% (books, journals, and so on), I'd like to encourage you to make a
+%% donation to the LaTeX3 fund. The size of this `license fee' should
+%% depend on the value of the package for your product. For more
+%% information about LaTeX see http://www.latex-project.org
+%%
+%% No matter whether you use the package for a commercial or
+%% non-commercial document, please send me a copy of the document (.dvi,
+%% .ps, .pdf, hardcopy, etc.) to support further development---it is
+%% easier to introduce new features or simplify things if I see how the
+%% package is used by other people.
+%%
+%% Send comments and ideas on the package, error reports and additional
+%% programming languages to <cheinz@gmx.de>.
+%%
+\def\filedate{2002/04/01}
+\def\fileversion{1.0}
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{listings}
+             [\filedate\space\fileversion\space(Carsten Heinz)]
+\def\lst@CheckVersion#1{\edef\reserved@a{#1}%
+    \ifx\lst@version\reserved@a \expandafter\@gobble
+                          \else \expandafter\@firstofone \fi}
+\let\lst@version\fileversion
+\def\lst@InputCatcodes{%
+    \makeatletter \catcode`\"12%
+    \catcode`\^^@\active
+    \catcode`\^^I9%
+    \catcode`\^^L9%
+    \catcode`\^^M9%
+    \catcode`\%14%
+    \catcode`\~\active}
+\def\lst@RestoreCatcodes#1{%
+    \ifx\relax#1\else
+        \noexpand\catcode`\noexpand#1\the\catcode`#1\relax
+        \expandafter\lst@RestoreCatcodes
+    \fi}
+\edef\lst@RestoreCatcodes{%
+    \noexpand\lccode`\noexpand\/`\noexpand\/%
+    \lst@RestoreCatcodes\"\^^I\^^M\~\^^@\relax}
+\lst@InputCatcodes
+\AtEndOfPackage{\lst@RestoreCatcodes}
+\def\@lst{lst}
+\def\lst@IfSubstring#1#2{%
+    \def\lst@temp##1#1##2##3\relax{%
+        \ifx \@empty##2\expandafter\@secondoftwo
+                 \else \expandafter\@firstoftwo \fi}%
+    \expandafter\lst@temp#2#1\@empty\relax}
+\def\lst@IfOneOf#1\relax#2{%
+    \def\lst@temp##1,#1,##2##3\relax{%
+        \ifx \@empty##2\expandafter\@secondoftwo
+                 \else \expandafter\@firstoftwo \fi}%
+    \expandafter\lst@temp\expandafter,#2,#1,\@empty\relax}
+\def\lst@DeleteKeysIn#1#2{%
+    \expandafter\lst@DeleteKeysIn@\expandafter#1#2,\relax,}
+\def\lst@DeleteKeysIn@#1#2,{%
+    \ifx\relax#2\@empty
+        \expandafter\@firstoftwo\expandafter\lst@RemoveCommas
+    \else
+        \ifx\@empty#2\@empty\else
+            \def\lst@temp##1,#2,##2{%
+                ##1%
+                \ifx\@empty##2\@empty\else
+                    \expandafter\lst@temp\expandafter,%
+                \fi ##2}%
+            \edef#1{\expandafter\lst@temp\expandafter,#1,#2,\@empty}%
+        \fi
+    \fi
+    \lst@DeleteKeysIn@#1}
+\def\lst@RemoveCommas#1{\edef#1{\expandafter\lst@RC@#1\@empty}}
+\def\lst@RC@#1{\ifx,#1\expandafter\lst@RC@ \else #1\fi}
+\def\lst@ReplaceIn#1#2{%
+    \expandafter\lst@ReplaceIn@\expandafter#1#2\@empty\@empty}
+\def\lst@ReplaceInArg#1#2{\lst@ReplaceIn@#1#2\@empty\@empty}
+\def\lst@ReplaceIn@#1#2#3{%
+    \ifx\@empty#3\relax\else
+        \def\lst@temp##1#2##2{%
+            \ifx\@empty##2%
+                \lst@lAddTo#1{##1}%
+            \else
+                \lst@lAddTo#1{##1#3}\expandafter\lst@temp
+            \fi ##2}%
+        \let\@tempa#1\let#1\@empty
+        \expandafter\lst@temp\@tempa#2\@empty
+        \expandafter\lst@ReplaceIn@\expandafter#1%
+    \fi}
+\providecommand*\@gobblethree[3]{}
+\def\lst@GobbleNil#1\@nil{}
+\def\lst@Swap#1#2{#2#1}
+\def\lst@true{\let\lst@if\iftrue}
+\def\lst@false{\let\lst@if\iffalse}
+\lst@false
+\def\lst@IfNextCharsArg#1{%
+    \def\lst@tofind{#1}\lst@IfNextChars\lst@tofind}
+\def\lst@IfNextChars#1#2#3{%
+    \let\lst@tofind#1\def\@tempa{#2}\def\@tempb{#3}%
+    \let\lst@eaten\@empty \lst@IfNextChars@}
+\def\lst@IfNextChars@{\expandafter\lst@IfNextChars@@\lst@tofind\relax}
+\def\lst@IfNextChars@@#1#2\relax#3{%
+    \def\lst@tofind{#2}\lst@lAddTo\lst@eaten{#3}%
+    \ifx#1#3%
+        \ifx\lst@tofind\@empty
+            \let\lst@next\@tempa
+        \else
+            \let\lst@next\lst@IfNextChars@
+        \fi
+        \expandafter\lst@next
+    \else
+        \expandafter\@tempb
+    \fi}
+\def\lst@IfNextCharActive#1#2#3{%
+    \begingroup \lccode`\~=`#3\lowercase{\endgroup
+    \ifx~}#3%
+        \def\lst@next{#1}%
+    \else
+        \def\lst@next{#2}%
+    \fi \lst@next #3}
+\def\lst@for#1\do#2{%
+    \def\lst@forbody##1{#2}%
+    \@for\lst@forvar:=#1\do
+    {\expandafter\lst@forbody\expandafter{\lst@forvar}}}
+\def\lst@MakeActive#1{%
+    \let\lst@temp\@empty \lst@MakeActive@#1%
+    \relax\relax\relax\relax\relax\relax\relax\relax\relax}
+\begingroup
+\catcode`\^^@=\active \catcode`\^^A=\active \catcode`\^^B=\active
+\catcode`\^^C=\active \catcode`\^^D=\active \catcode`\^^E=\active
+\catcode`\^^F=\active \catcode`\^^G=\active \catcode`\^^H=\active
+\gdef\lst@MakeActive@#1#2#3#4#5#6#7#8#9{\let\lst@next\relax
+    \ifx#1\relax
+    \else \lccode`\^^@=`#1%
+    \ifx#2\relax
+        \lowercase{\lst@lAddTo\lst@temp{^^@}}%
+    \else \lccode`\^^A=`#2%
+    \ifx#3\relax
+        \lowercase{\lst@lAddTo\lst@temp{^^@^^A}}%
+    \else \lccode`\^^B=`#3%
+    \ifx#4\relax
+        \lowercase{\lst@lAddTo\lst@temp{^^@^^A^^B}}%
+    \else \lccode`\^^C=`#4%
+    \ifx#5\relax
+        \lowercase{\lst@lAddTo\lst@temp{^^@^^A^^B^^C}}%
+    \else \lccode`\^^D=`#5%
+    \ifx#6\relax
+        \lowercase{\lst@lAddTo\lst@temp{^^@^^A^^B^^C^^D}}%
+    \else \lccode`\^^E=`#6%
+    \ifx#7\relax
+        \lowercase{\lst@lAddTo\lst@temp{^^@^^A^^B^^C^^D^^E}}%
+    \else \lccode`\^^F=`#7%
+    \ifx#8\relax
+        \lowercase{\lst@lAddTo\lst@temp{^^@^^A^^B^^C^^D^^E^^F}}%
+    \else \lccode`\^^G=`#8%
+    \ifx#9\relax
+        \lowercase{\lst@lAddTo\lst@temp{^^@^^A^^B^^C^^D^^E^^F^^G}}%
+    \else \lccode`\^^H=`#9%
+        \lowercase{\lst@lAddTo\lst@temp{^^@^^A^^B^^C^^D^^E^^F^^G^^H}}%
+        \let\lst@next\lst@MakeActive@
+    \fi \fi \fi \fi \fi \fi \fi \fi \fi
+    \lst@next}
+\endgroup
+\def\lst@DefActive#1#2{\lst@MakeActive{#2}\let#1\lst@temp}
+\def\lst@DefOther#1#2{%
+    \begingroup \def#1{#2}\escapechar\m@ne \expandafter\endgroup
+    \expandafter\lst@DefOther@\meaning#1\relax#1}
+\def\lst@DefOther@#1>#2\relax#3{\edef#3{\zap@space#2 \@empty}}
+\def\lst@InsideConvert#1{\lst@InsideConvert@#1 \@empty}
+\begingroup \lccode`\~=`\ \relax \lowercase{%
+\gdef\lst@InsideConvert@#1 #2{%
+    \lst@MakeActive{#1}%
+    \ifx\@empty#2%
+        \lst@lExtend\lst@arg{\lst@temp}%
+    \else
+        \lst@lExtend\lst@arg{\lst@temp~}%
+        \expandafter\lst@InsideConvert@
+    \fi #2}
+}\endgroup
+\def\lst@XConvert{\@ifnextchar\bgroup \lst@XConvertArg\lst@XConvert@}
+\def\lst@XConvertArg#1{%
+    {\lst@false \let\lst@arg\@empty
+     \lst@XConvert#1\@nil
+     \global\let\@gtempa\lst@arg}%
+    \lst@lExtend\lst@arg{\expandafter{\@gtempa}}%
+    \lst@XConvertNext}
+\def\lst@XConvert@#1{%
+    \ifx\@nil#1\else
+        \begingroup\lccode`\~=`#1\lowercase{\endgroup
+        \lst@lAddTo\lst@arg~}%
+        \expandafter\lst@XConvertNext
+    \fi}
+\def\lst@XConvertNext{%
+    \lst@if \expandafter\lst@XConvertX
+      \else \expandafter\lst@XConvert \fi}
+\def\lst@XConvertX#1{%
+    \ifx\@nil#1\else
+        \lst@XConvertX@#1\relax
+        \expandafter\lst@XConvert
+    \fi}
+\def\lst@XConvertX@#1#2\relax{%
+    \begingroup\lccode`\~=`#1\lowercase{\endgroup
+    \lst@XCConvertX@@~}{#2}}
+\def\lst@XCConvertX@@#1#2{\lst@lAddTo\lst@arg{{#1#2}}}
+\def\lst@Require#1#2#3#4#5{%
+    \begingroup
+    \aftergroup\lst@true
+    \ifx\@empty#3\@empty\else
+        \def\lst@prefix{#2}\let\lst@require\@empty
+        \edef\lst@temp{\expandafter\zap@space#3 \@empty}%
+        \lst@for\lst@temp\do{%
+          \ifx\@empty##1\@empty\else \lstKV@OptArg[]{##1}{%
+            #4[####1]{####2}%
+            \@ifundefined{\@lst\lst@prefix @\lst@malias $\lst@oalias}%
+            {\edef\lst@require{\lst@require,\lst@malias $\lst@oalias}}%
+            {}}%
+          \fi}%
+        \global\let\lst@loadaspects\@empty
+        \lst@InputCatcodes
+        \ifx\lst@require\@empty\else
+            \lst@for{#5}\do{%
+                \ifx\lst@require\@empty\else
+                    \InputIfFileExists{##1}{}{}%
+                \fi}%
+        \fi
+        \ifx\lst@require\@empty\else
+            \PackageError{Listings}{Couldn't load requested #1}%
+            {The following #1s weren't loadable:^^J\@spaces
+             \lst@require^^JThis may cause errors in the sequel.}%
+            \aftergroup\lst@false
+        \fi
+        \ifx\lst@loadaspects\@empty\else
+            \lst@RequireAspects\lst@loadaspects
+        \fi
+    \fi
+    \endgroup}
+\def\lst@IfRequired[#1]#2{%
+    \lst@NormedDef\lst@temp{[#1]#2}%
+    \expandafter\lst@IfRequired@\lst@temp\relax}
+\def\lst@IfRequired@[#1]#2\relax#3{%
+    \lst@IfOneOf #2$#1\relax\lst@require
+        {\lst@DeleteKeysIn@\lst@require#2$#1,\relax,%
+         \global\expandafter\let
+             \csname\@lst\lst@prefix @#2$#1\endcsname\@empty
+         #3}}
+\let\lst@require\@empty
+\def\lst@NoAlias[#1]#2{%
+    \lst@NormedDef\lst@oalias{#1}\lst@NormedDef\lst@malias{#2}}
+\gdef\lst@LAS#1#2#3#4#5#6#7{%
+    \lst@Require{#1}{#2}{#3}#4#5%
+    #4#3%
+    \@ifundefined{lst#2@\lst@malias$\lst@oalias}%
+        {\PackageError{Listings}%
+         {#1 \ifx\@empty\lst@oalias\else \lst@oalias\space of \fi
+          \lst@malias\space undefined}%
+         {The #1 is not loadable. \@ehc}}%
+        {#6\csname\@lst#2@\lst@malias $\lst@oalias\endcsname #7}}
+\def\lst@RequireAspects#1{%
+    \lst@Require{aspect}{asp}{#1}\lst@NoAlias\lstaspectfiles}
+\let\lstloadaspects\lst@RequireAspects
+\@ifundefined{lstaspectfiles}
+    {\newcommand\lstaspectfiles{lstmisc0.sty,lstmisc.sty}}{}
+\gdef\lst@DefDriver#1#2#3#4{%
+    \@ifnextchar[{\lst@DefDriver@{#1}{#2}#3#4}%
+                 {\lst@DefDriver@{#1}{#2}#3#4[]}}
+\gdef\lst@DefDriver@#1#2#3#4[#5]#6{%
+    \def\lst@name{#1}\let\lst@if#4%
+    \lst@NormedDef\lst@driver{\@lst#2@#6$#5}%
+    \lst@IfRequired[#5]{#6}{\begingroup \lst@true}%
+                           {\begingroup}%
+    \lst@setcatcodes
+    \@ifnextchar[{\lst@XDefDriver{#1}#3}{\lst@DefDriver@@#3}}
+\gdef\lst@DefDriver@@#1#2{%
+    \lst@if
+        \global\@namedef{\lst@driver}{#1{#2}}%
+    \fi
+    \endgroup
+    \@ifnextchar[\lst@XXDefDriver\@empty}
+\gdef\lst@XXDefDriver[#1]{%
+    \ifx\@empty#1\@empty\else
+        \lst@if
+            \lstloadaspects{#1}%
+        \else
+            \@ifundefined{\lst@driver}{}%
+            {\xdef\lst@loadaspects{\lst@loadaspects,#1}}%
+        \fi
+    \fi}
+\gdef\lst@XDefDriver#1#2[#3]#4#5{\lst@DefDriver@@#2{also#1=[#3]#4,#5}}
+\let\lst@UserCommand\gdef
+\newcommand*\lst@BeginAspect[2][]{%
+    \def\lst@curraspect{#2}%
+    \ifx \lst@curraspect\@empty
+        \expandafter\lst@GobbleAspect
+    \else
+        \let\lst@next\@empty
+        \lst@IfRequired[]{#2}%
+            {\lst@RequireAspects{#1}%
+             \lst@if\else \let\lst@next\lst@GobbleAspect \fi}%
+            {\let\lst@next\lst@GobbleAspect}%
+        \expandafter\lst@next
+    \fi}
+\def\lst@EndAspect{%
+    \csname\@lst patch@\lst@curraspect\endcsname
+    \let\lst@curraspect\@empty}
+\long\def\lst@GobbleAspect#1\lst@EndAspect{\let\lst@curraspect\@empty}
+\def\lst@Key#1#2{%
+    \@ifnextchar[{\lstKV@def{#1}{#2}}%
+                 {\def\lst@temp{\lst@Key@{#1}{#2}}
+                  \afterassignment\lst@temp
+                  \global\@namedef{KV@\@lst @#1}####1}}
+\def\lstKV@def#1#2[#3]{%
+    \global\@namedef{KV@\@lst @#1@default\expandafter}\expandafter
+        {\csname KV@\@lst @#1\endcsname{#3}}%
+    \def\lst@temp{\lst@Key@{#1}{#2}}\afterassignment\lst@temp
+    \global\@namedef{KV@\@lst @#1}##1}
+\def\lst@Key@#1#2{%
+    \ifx\relax#2\@empty\else
+        \begingroup \globaldefs\@ne
+        \csname KV@\@lst @#1\endcsname{#2}%
+        \endgroup
+    \fi}
+\def\lst@UseHook#1{\csname\@lst hk@#1\endcsname}
+\def\lst@AddToHook{\lst@ATH@\iffalse\lst@AddTo}
+\def\lst@AddToHookExe{\lst@ATH@\iftrue\lst@AddTo}
+\def\lst@AddToHookAtTop{\lst@ATH@\iffalse\lst@AddToAtTop}
+\long\def\lst@ATH@#1#2#3#4{%
+    \@ifundefined{\@lst hk@#3}{%
+        \expandafter\gdef\csname\@lst hk@#3\endcsname{}}{}%
+    \expandafter#2\csname\@lst hk@#3\endcsname{#4}%
+    \def\lst@temp{#4}%
+    #1% \iftrue|false
+        \begingroup \globaldefs\@ne \lst@temp \endgroup
+    \fi}
+\long\def\lst@AddTo#1#2{%
+    \expandafter\gdef\expandafter#1\expandafter{#1#2}}
+\def\lst@AddToAtTop#1#2{\def\lst@temp{#2}%
+    \expandafter\expandafter\expandafter\gdef
+    \expandafter\expandafter\expandafter#1%
+    \expandafter\expandafter\expandafter{\expandafter\lst@temp#1}}
+\def\lst@lAddTo#1#2{\expandafter\def\expandafter#1\expandafter{#1#2}}
+\def\lst@Extend#1#2{%
+    \expandafter\lst@AddTo\expandafter#1\expandafter{#2}}
+\def\lst@lExtend#1#2{%
+    \expandafter\lst@lAddTo\expandafter#1\expandafter{#2}}
+\RequirePackage{keyval}[1997/11/10]
+\def\lstKV@TwoArg#1#2{\gdef\@gtempa##1##2{#2}\@gtempa#1{}{}}
+\def\lstKV@ThreeArg#1#2{\gdef\@gtempa##1##2##3{#2}\@gtempa#1{}{}{}}
+\def\lstKV@FourArg#1#2{\gdef\@gtempa##1##2##3##4{#2}\@gtempa#1{}{}{}{}}
+\def\lstKV@OptArg[#1]#2#3{%
+    \gdef\@gtempa[##1]##2{#3}\lstKV@OptArg@{#1}#2\@}
+\def\lstKV@OptArg@#1{\@ifnextchar[\lstKV@OptArg@@{\lstKV@OptArg@@[#1]}}
+\def\lstKV@OptArg@@[#1]#2\@{\@gtempa[#1]{#2}}
+\def\lstKV@XOptArg[#1]#2#3{%
+    \global\let\@gtempa#3\lstKV@OptArg@{#1}#2\@}
+\def\lstKV@CSTwoArg#1#2{%
+    \gdef\@gtempa##1,##2,##3\relax{#2}%
+    \@gtempa#1,,\relax}
+\def\lstKV@SetIf#1{\lstKV@SetIf@#1\relax}
+\def\lstKV@SetIf@#1#2\relax#3{\lowercase{%
+    \expandafter\let\expandafter#3%
+        \csname if\ifx #1t}true\else false\fi\endcsname}
+\def\lstKV@SwitchCases#1#2#3{%
+    \def\lst@temp##1\\#1&##2\\##3##4\@nil{%
+        \ifx\@empty##3%
+            #3%
+        \else
+            ##2%
+        \fi
+    }%
+    \lst@temp\\#2\\#1&\\\@empty\@nil}
+\lst@UserCommand\lstset{\begingroup \lst@setcatcodes \lstset@}
+\def\lstset@#1{\endgroup \ifx\@empty#1\@empty\else\setkeys{lst}{#1}\fi}
+\def\lst@setcatcodes{\makeatletter \catcode`\"=12\relax}
+\def\lst@NewMode#1{%
+    \ifx\@undefined#1%
+        \lst@mode\lst@newmode\relax \advance\lst@mode\@ne
+        \xdef\lst@newmode{\the\lst@mode}%
+        \global\chardef#1=\lst@mode
+        \lst@mode\lst@nomode
+    \fi}
+\newcount\lst@mode
+\def\lst@newmode{\m@ne}% init
+\lst@NewMode\lst@nomode % init (of \lst@mode :-)
+\def\lst@UseDynamicMode{%
+    \@tempcnta\lst@dynamicmode\relax \advance\@tempcnta\@ne
+    \edef\lst@dynamicmode{\the\@tempcnta}%
+    \expandafter\lst@Swap\expandafter{\expandafter{\lst@dynamicmode}}}
+\lst@AddToHook{InitVars}{\let\lst@dynamicmode\lst@newmode}
+\def\lst@EnterMode#1#2{%
+    \bgroup \lst@mode=#1\relax #2%
+    \lst@FontAdjust
+    \lst@lAddTo\lst@entermodes{\lst@EnterMode{#1}{#2}}}
+\lst@AddToHook{InitVars}{\let\lst@entermodes\@empty}
+\def\lst@LeaveMode{%
+    \ifnum\lst@mode=\lst@nomode\else
+        \egroup \expandafter\lsthk@EndGroup
+    \fi}
+\lst@AddToHook{EndGroup}{}% init
+\def\lst@InterruptModes{%
+    \lst@Extend\lst@modestack{\expandafter{\lst@entermodes}}%
+    \lst@LeaveAllModes}
+\lst@AddToHook{InitVars}{\global\let\lst@modestack\@empty}
+\def\lst@ReenterModes{%
+    \ifx\lst@modestack\@empty\else
+        \lst@LeaveAllModes
+        \global\let\@gtempa\lst@modestack
+        \global\let\lst@modestack\@empty
+        \expandafter\lst@ReenterModes@\@gtempa\relax
+    \fi}
+\def\lst@ReenterModes@#1#2{%
+    \ifx\relax#2\@empty
+        \gdef\@gtempa##1{#1}%
+        \expandafter\@gtempa
+    \else
+        \lst@AddTo\lst@modestack{{#1}}%
+        \expandafter\lst@ReenterModes@
+    \fi
+    {#2}}
+\def\lst@LeaveAllModes{%
+    \ifnum\lst@mode=\lst@nomode
+        \expandafter\lsthk@EndGroup
+    \else
+        \expandafter\egroup\expandafter\lst@LeaveAllModes
+    \fi}
+\lst@AddToHook{ExitVars}{\lst@LeaveAllModes}
+\lst@NewMode\lst@Pmode
+\lst@NewMode\lst@GPmode
+\def\lst@modetrue{\let\lst@ifmode\iftrue \lsthk@ModeTrue}
+\let\lst@ifmode\iffalse % init
+\lst@AddToHook{ModeTrue}{}% init
+\def\lst@Lmodetrue{\let\lst@ifLmode\iftrue}
+\let\lst@ifLmode\iffalse % init
+\lst@AddToHook{EOL}{\@whilesw \lst@ifLmode\fi \lst@LeaveMode}
+\def\lst@NormedDef#1#2{\lowercase{\edef#1{\zap@space#2 \@empty}}}
+\def\lst@NormedNameDef#1#2{%
+    \lowercase{\edef\lst@temp{\zap@space#1 \@empty}%
+    \expandafter\xdef\csname\lst@temp\endcsname{\zap@space#2 \@empty}}}
+\def\lst@GetFreeMacro#1{%
+    \@tempcnta\z@ \def\lst@freemacro{#1\the\@tempcnta}%
+    \lst@GFM@}
+\def\lst@GFM@{%
+    \expandafter\ifx \csname\lst@freemacro\endcsname \relax
+        \edef\lst@freemacro{\csname\lst@freemacro\endcsname}%
+    \else
+        \advance\@tempcnta\@ne
+        \expandafter\lst@GFM@
+    \fi}
+\newbox\lst@gtempboxa
+\newtoks\lst@token \newcount\lst@length
+\def\lst@ResetToken{\lst@token{}\lst@length\z@}
+\lst@AddToHook{InitVarsBOL}{\lst@ResetToken \let\lst@lastother\@empty}
+\lst@AddToHook{EndGroup}{\lst@ResetToken \let\lst@lastother\@empty}
+\def\lst@lettertrue{\let\lst@ifletter\iftrue}
+\def\lst@letterfalse{\let\lst@ifletter\iffalse}
+\lst@AddToHook{InitVars}{\lst@letterfalse}
+\def\lst@Append#1{\advance\lst@length\@ne
+                  \lst@token=\expandafter{\the\lst@token#1}}
+\def\lst@AppendOther{%
+    \lst@ifletter \lst@Output\lst@letterfalse \fi
+    \futurelet\lst@lastother\lst@Append}
+\def\lst@AppendLetter{%
+    \lst@ifletter\else \lst@OutputOther\lst@lettertrue \fi
+    \lst@Append}
+\def\lst@SaveToken{%
+    \global\let\lst@gthestyle\lst@thestyle
+    \xdef\lst@RestoreToken{\noexpand\lst@token{\the\lst@token}%
+                           \noexpand\lst@length\the\lst@length\relax
+                           \noexpand\let\noexpand\lst@thestyle
+                                        \noexpand\lst@gthestyle}}
+\newdimen\lst@currlwidth % \global
+\newcount\lst@column \newcount\lst@pos % \global
+\lst@AddToHook{InitVarsBOL}
+    {\global\lst@currlwidth\z@ \global\lst@pos\z@ \global\lst@column\z@}
+\def\lst@CalcColumn{%
+            \@tempcnta\lst@column
+    \advance\@tempcnta\lst@length
+    \advance\@tempcnta-\lst@pos}
+\newdimen\lst@lostspace % \global
+\lst@AddToHook{InitVarsBOL}{\global\lst@lostspace\z@}
+\def\lst@UseLostSpace{\ifdim\lst@lostspace>\z@ \lst@InsertLostSpace \fi}
+\def\lst@InsertLostSpace{%
+    \lst@Kern\lst@lostspace \global\lst@lostspace\z@}
+\def\lst@InsertHalfLostSpace{%
+    \global\lst@lostspace.5\lst@lostspace \lst@Kern\lst@lostspace}
+\newdimen\lst@width
+\lst@Key{basewidth}{0.6em,0.45em}{\lstKV@CSTwoArg{#1}%
+    {\def\lst@widthfixed{##1}\def\lst@widthflexible{##2}%
+     \ifx\lst@widthflexible\@empty
+         \let\lst@widthflexible\lst@widthfixed
+     \fi
+     \def\lst@temp{\PackageError{Listings}%
+                                {Negative value(s) treated as zero}%
+                                \@ehc}%
+     \let\lst@error\@empty
+     \ifdim \lst@widthfixed<\z@
+         \let\lst@error\lst@temp \let\lst@widthfixed\z@
+     \fi
+     \ifdim \lst@widthflexible<\z@
+         \let\lst@error\lst@temp \let\lst@widthflexible\z@
+     \fi
+     \lst@error}}
+\lst@AddToHook{FontAdjust}
+    {\lst@width=\lst@ifflexible\lst@widthflexible
+                          \else\lst@widthfixed\fi \relax}
+\lst@Key{fontadjust}{false}[t]{\lstKV@SetIf{#1}\lst@iffontadjust}
+\def\lst@FontAdjust{\lst@iffontadjust \lsthk@FontAdjust \fi}
+\lst@AddToHook{InitVars}{\lsthk@FontAdjust}
+\def\lst@OutputBox#1{\lst@alloverstyle{\box#1}}
+\def\lst@alloverstyle#1{#1}% init
+\def\lst@Kern#1{%
+    \setbox\z@\hbox{{\lst@currstyle{\kern#1}}}%
+    \global\advance\lst@currlwidth \wd\z@
+    \lst@OutputBox\z@}
+\def\lst@CalcLostSpaceAndOutput{%
+    \global\advance\lst@lostspace \lst@length\lst@width
+    \global\advance\lst@lostspace-\wd\@tempboxa
+    \global\advance\lst@currlwidth \wd\@tempboxa
+    \global\advance\lst@pos -\lst@length
+    \setbox\@tempboxa\hbox{\let\lst@OutputBox\box
+        \ifdim\lst@lostspace>\z@ \lst@leftinsert \fi
+        \box\@tempboxa
+        \ifdim\lst@lostspace>\z@ \lst@rightinsert \fi}%
+    \lst@OutputBox\@tempboxa \lsthk@PostOutput}
+\lst@AddToHook{PostOutput}{}% init
+\def\lst@OutputToken{%
+    \lst@TrackNewLines \lst@OutputLostSpace
+    \lst@CheckMerge
+    {\lst@thestyle{\lst@FontAdjust
+     \setbox\@tempboxa\lst@hbox
+        {\lsthk@OutputBox
+         \lst@lefthss
+         \expandafter\lst@FillOutputBox\the\lst@token\@empty
+         \lst@righthss}%
+     \lst@CalcLostSpaceAndOutput}}%
+    \lst@ResetToken}
+\lst@AddToHook{OutputBox}{}% init
+\def\lst@Delay#1{%
+    \lst@CheckDelay
+    #1%
+    \lst@GetOutputMacro\lst@delayedoutput
+    \edef\lst@delayed{\the\lst@token}%
+    \edef\lst@delayedlength{\the\lst@length}%
+    \lst@ResetToken}
+\def\lst@Merge#1{%
+    \lst@CheckMerge
+    #1%
+    \edef\lst@merged{\the\lst@token}%
+    \edef\lst@mergedlength{\the\lst@length}%
+    \lst@ResetToken}
+\def\lst@MergeToken#1#2{%
+    \advance\lst@length#2%
+    \lst@lExtend#1{\the\lst@token}%
+    \expandafter\lst@token\expandafter{#1}%
+    \let#1\@empty}
+\def\lst@CheckDelay{%
+    \ifx\lst@delayed\@empty\else
+        \lst@GetOutputMacro\@gtempa
+        \ifx\lst@delayedoutput\@gtempa
+            \lst@MergeToken\lst@delayed\lst@delayedlength
+        \else
+            {\lst@ResetToken
+             \lst@MergeToken\lst@delayed\lst@delayedlength
+             \lst@delayedoutput}%
+            \let\lst@delayed\@empty
+        \fi
+    \fi}
+\def\lst@CheckMerge{%
+    \ifx\lst@merged\@empty\else
+        \lst@MergeToken\lst@merged\lst@mergedlength
+    \fi}
+\let\lst@delayed\@empty % init
+\let\lst@merged\@empty % init
+\def\lst@column@fixed{%
+    \lst@flexiblefalse
+    \lst@width\lst@widthfixed\relax
+    \let\lst@OutputLostSpace\lst@UseLostSpace
+    \let\lst@FillOutputBox\lst@FillFixed
+    \let\lst@hss\hss
+    \def\lst@hbox{\hbox to\lst@length\lst@width}}
+\def\lst@FillFixed#1{#1\lst@FillFixed@}
+\def\lst@FillFixed@#1{%
+    \ifx\@empty#1\else \lst@hss#1\expandafter\lst@FillFixed@ \fi}
+\def\lst@column@flexible{%
+    \lst@flexibletrue
+    \lst@width\lst@widthflexible\relax
+    \let\lst@OutputLostSpace\lst@UseLostSpace
+    \let\lst@FillOutputBox\@empty
+    \let\lst@hss\@empty
+    \let\lst@hbox\hbox}
+\def\lst@column@fullflexible{%
+    \lst@column@flexible
+    \def\lst@OutputLostSpace{\lst@ifnewline \lst@UseLostSpace\fi}%
+    \let\lst@leftinsert\@empty
+    \let\lst@rightinsert\@empty}
+\def\lst@outputpos#1#2\relax{%
+    \def\lst@lefthss{\lst@hss}\let\lst@righthss\lst@lefthss
+    \let\lst@rightinsert\lst@InsertLostSpace
+    \ifx #1c%
+        \let\lst@leftinsert\lst@InsertHalfLostSpace
+    \else\ifx #1r%
+        \let\lst@righthss\@empty
+        \let\lst@leftinsert\lst@InsertLostSpace
+        \let\lst@rightinsert\@empty
+    \else
+        \let\lst@lefthss\@empty
+        \let\lst@leftinsert\@empty
+        \ifx #1l\else \PackageWarning{Listings}%
+            {Unknown positioning for output boxes}%
+        \fi
+    \fi\fi}
+\def\lst@flexibletrue{\let\lst@ifflexible\iftrue}
+\def\lst@flexiblefalse{\let\lst@ifflexible\iffalse}
+\lst@Key{columns}{[c]fixed}{\lstKV@OptArg[]{#1}{%
+    \ifx\@empty##1\@empty\else \lst@outputpos##1\relax\relax \fi
+    \expandafter\let\expandafter\lst@arg
+                                \csname\@lst @column@##2\endcsname
+    \lst@arg
+    \ifx\lst@arg\relax
+        \PackageWarning{Listings}{Unknown column format `##2'}%
+    \else
+        \lst@ifflexible
+            \let\lst@columnsflexible\lst@arg
+        \else
+            \let\lst@columnsfixed\lst@arg
+        \fi
+    \fi}}
+\let\lst@columnsfixed\lst@column@fixed % init
+\let\lst@columnsflexible\lst@column@flexible % init
+\lst@Key{flexiblecolumns}\relax[t]{%
+    \lstKV@SetIf{#1}\lst@ifflexible
+    \lst@ifflexible \lst@columnsflexible
+              \else \lst@columnsfixed \fi}
+\newcount\lst@newlines
+\lst@AddToHook{InitVars}{\global\lst@newlines\z@}
+\lst@AddToHook{InitVarsBOL}{\global\advance\lst@newlines\@ne}
+\def\lst@NewLine{%
+    \ifx\lst@OutputBox\@gobble\else
+        \par\noindent \hbox{}%
+    \fi
+    \global\advance\lst@newlines\m@ne
+    \lst@newlinetrue}
+\def\lst@newlinetrue{\global\let\lst@ifnewline\iftrue}
+\lst@AddToHookExe{PostOutput}{\global\let\lst@ifnewline\iffalse}% init
+\def\lst@TrackNewLines{%
+    \ifnum\lst@newlines>\z@
+        \lsthk@OnNewLine
+        \lst@DoNewLines
+    \fi}
+\lst@AddToHook{OnNewLine}{}% init
+\lst@Key{emptylines}\maxdimen{%
+    \@ifstar{\lst@true\@tempcnta\@gobble#1\relax\lst@GobbleNil}%
+            {\lst@false\@tempcnta#1\relax\lst@GobbleNil}#1\@nil
+    \advance\@tempcnta\@ne
+    \edef\lst@maxempty{\the\@tempcnta\relax}%
+    \let\lst@ifpreservenumber\lst@if}
+\def\lst@DoNewLines{
+    \@whilenum\lst@newlines>\lst@maxempty \do
+        {\lst@ifpreservenumber
+            \lsthk@OnEmptyLine
+            \global\advance\c@lstnumber\lst@advancelstnum
+         \fi
+         \global\advance\lst@newlines\m@ne}%
+    \@whilenum \lst@newlines>\@ne \do
+        {\lsthk@OnEmptyLine \lst@NewLine}%
+    \ifnum\lst@newlines>\z@ \lst@NewLine \fi}
+\lst@AddToHook{OnEmptyLine}{}% init
+\lst@Key{identifierstyle}{}{\def\lst@identifierstyle{#1}}
+\lst@AddToHook{EmptyStyle}{\let\lst@identifierstyle\@empty}
+\def\lst@GotoTabStop{%
+    \ifnum\lst@newlines=\z@
+        \setbox\@tempboxa\hbox{\lst@outputspace}%
+        \setbox\@tempboxa\hbox to\wd\@tempboxa{{\lst@currstyle{\hss}}}%
+        \lst@CalcLostSpaceAndOutput
+    \else
+        \global\advance\lst@lostspace \lst@length\lst@width
+        \global\advance\lst@column\lst@length \lst@length\z@
+    \fi}
+\def\lst@OutputOther{%
+    \lst@CheckDelay
+    \ifnum\lst@length=\z@\else
+        \let\lst@thestyle\lst@currstyle
+        \lsthk@OutputOther
+        \lst@OutputToken
+    \fi}
+\lst@AddToHook{OutputOther}{}% init
+\let\lst@currstyle\relax % init
+\def\lst@Output{%
+    \lst@CheckDelay
+    \ifnum\lst@length=\z@\else
+        \ifx\lst@currstyle\relax
+            \let\lst@thestyle\lst@identifierstyle
+        \else
+            \let\lst@thestyle\lst@currstyle
+        \fi
+        \lsthk@Output
+        \lst@OutputToken
+    \fi
+    \let\lst@lastother\relax}
+\lst@AddToHook{Output}{}% init
+\def\lst@GetOutputMacro#1{%
+    \lst@ifletter \global\let#1\lst@Output
+            \else \global\let#1\lst@OutputOther\fi}
+\def\lst@PrintToken{%
+    \lst@ifletter \lst@Output \lst@letterfalse
+            \else \lst@OutputOther \let\lst@lastother\@empty \fi}
+\def\lst@XPrintToken{%
+    \lst@PrintToken \lst@CheckMerge
+    \ifnum\lst@length=\z@\else \lst@PrintToken \fi}
+\def\lst@BeginDropOutput#1{%
+    \xdef\lst@BDOnewlines{\the\lst@newlines}%
+    \global\let\lst@BDOifnewline\lst@ifnewline
+    \lst@EnterMode{#1}%
+        {\lst@modetrue
+         \let\lst@OutputBox\@gobble
+         \aftergroup\lst@BDORestore}}
+\def\lst@BDORestore{%
+    \global\lst@newlines\lst@BDOnewlines
+    \global\let\lst@ifnewline\lst@BDOifnewline}
+\let\lst@EndDropOutput\lst@LeaveMode
+\def\lst@ProcessLetter{\lst@whitespacefalse \lst@AppendLetter}
+\def\lst@ProcessOther{\lst@whitespacefalse \lst@AppendOther}
+\def\lst@ProcessDigit{%
+    \lst@whitespacefalse
+    \lst@ifletter \expandafter\lst@AppendLetter
+            \else \expandafter\lst@AppendOther\fi}
+\def\lst@whitespacetrue{\global\let\lst@ifwhitespace\iftrue}
+\def\lst@whitespacefalse{\global\let\lst@ifwhitespace\iffalse}
+\lst@AddToHook{InitVarsBOL}{\lst@whitespacetrue}
+\lst@Key{tabsize}{8}
+    {\ifnum#1>\z@ \def\lst@tabsize{#1}\else
+         \PackageError{Listings}{Strict positive integer expected}%
+         {You can't use `#1' as tabsize. \@ehc}%
+     \fi}
+\lst@Key{showtabs}f[t]{\lstKV@SetIf{#1}\lst@ifshowtabs}
+\lst@Key{tab}{\kern.06em\hbox{\vrule\@height.3ex}%
+              \hrulefill\hbox{\vrule\@height.3ex}}
+    {\def\lst@tab{#1}}
+\def\lst@ProcessTabulator{%
+    \lst@XPrintToken \lst@whitespacetrue
+    \global\advance\lst@column -\lst@pos
+    \@whilenum \lst@pos<\@ne \do
+        {\global\advance\lst@pos\lst@tabsize}%
+    \lst@length\lst@pos
+    \lst@PreGotoTabStop}
+\def\lst@PreGotoTabStop{%
+    \lst@ifshowtabs
+        \lst@TrackNewLines
+        \setbox\@tempboxa\hbox to\lst@length\lst@width
+            {{\lst@currstyle{\hss\lst@tab}}}%
+        \lst@CalcLostSpaceAndOutput
+    \else
+        \lst@ifkeepspaces
+            \@tempcnta\lst@length \lst@length\z@
+            \@whilenum \@tempcnta>\z@ \do
+                {\lst@AppendOther\lst@outputspace
+                 \advance\@tempcnta\m@ne}%
+            \lst@OutputOther
+        \else
+            \lst@GotoTabStop
+        \fi
+    \fi
+    \lst@length\z@ \global\lst@pos\z@}
+\def\lst@outputspace{\ }
+\def\lst@visiblespace{\lst@ttfamily{\char32}\textvisiblespace}
+\lst@Key{showspaces}{false}[t]{\lstKV@SetIf{#1}\lst@ifshowspaces}
+\lst@Key{keepspaces}{false}[t]{\lstKV@SetIf{#1}\lst@ifkeepspaces}
+\lst@AddToHook{Init}
+    {\lst@ifshowspaces
+         \let\lst@outputspace\lst@visiblespace
+         \lst@keepspacestrue
+     \fi}
+\def\lst@keepspacestrue{\let\lst@ifkeepspaces\iftrue}
+\def\lst@ProcessSpace{%
+    \lst@ifkeepspaces
+        \lst@AppendOther\lst@outputspace
+    \else \ifnum\lst@newlines=\z@
+        \lst@AppendSpecialSpace
+    \else \ifnum\lst@length=\z@
+            \global\advance\lst@lostspace\lst@width
+            \global\advance\lst@pos\m@ne
+        \else
+            \lst@AppendSpecialSpace
+        \fi
+    \fi \fi
+    \lst@whitespacetrue}
+\def\lst@AppendSpecialSpace{%
+    \lst@ifwhitespace
+        \lst@PrintToken
+        \global\advance\lst@lostspace\lst@width
+        \global\advance\lst@pos\m@ne
+    \else
+        \lst@AppendOther\lst@outputspace
+    \fi}
+\lst@Key{formfeed}{\bigbreak}{\def\lst@formfeed{#1}}
+\def\lst@ProcessFormFeed{%
+    \lst@XPrintToken
+    \ifnum\lst@newlines=\z@
+        \lst@EOLUpdate \lsthk@InitVarsBOL
+    \fi
+    \lst@formfeed
+    \lst@whitespacetrue}
+\def\lst@Def#1{\lccode`\~=#1\lowercase{\def~}}
+\def\lst@Let#1{\lccode`\~=#1\lowercase{\let~}}
+\lst@AddToAtTop{\try@load@fontshape}{\def\space{ }}
+\def\lst@SelectStdCharTable{%
+    \lst@Def{9}{\lst@ProcessTabulator}%
+    \lst@Def{12}{\lst@ProcessFormFeed}%
+    \lst@Def{32}{\lst@ProcessSpace}}
+\def\lst@CCPut#1#2{%
+    \ifnum#2=\z@
+        \expandafter\@gobbletwo
+    \else
+        \lccode`\~=#2\lccode`\/=#2\lowercase{\lst@CCPut@~{#1/}}%
+    \fi
+    \lst@CCPut#1}
+\def\lst@CCPut@#1#2{\lst@lAddTo\lst@SelectStdCharTable{\def#1{#2}}}
+\lst@CCPut \lst@ProcessOther
+    {"21}{"22}{"27}{"28}{"29}{"2B}{"2C}{"2E}{"2F}
+    {"3A}{"3B}{"3D}{"3F}{"5B}{"5D}{"60}
+    \z@
+\lst@CCPut \lst@ProcessDigit
+    {"30}{"31}{"32}{"33}{"34}{"35}{"36}{"37}{"38}{"39}
+    \z@
+\lst@CCPut \lst@ProcessLetter
+    {"40}{"41}{"42}{"43}{"44}{"45}{"46}{"47}
+    {"48}{"49}{"4A}{"4B}{"4C}{"4D}{"4E}{"4F}
+    {"50}{"51}{"52}{"53}{"54}{"55}{"56}{"57}
+    {"58}{"59}{"5A}
+         {"61}{"62}{"63}{"64}{"65}{"66}{"67}
+    {"68}{"69}{"6A}{"6B}{"6C}{"6D}{"6E}{"6F}
+    {"70}{"71}{"72}{"73}{"74}{"75}{"76}{"77}
+    {"78}{"79}{"7A}
+    \z@
+\def\lst@CCPutMacro#1#2#3{%
+    \ifnum#2=\z@ \else
+        \begingroup\lccode`\~=#2\relax \lccode`\/=#2\relax
+        \lowercase{\endgroup\expandafter\lst@CCPutMacro@
+            \csname\@lst @um/\expandafter\endcsname
+            \csname\@lst @um/@\endcsname /~}#1{#3}%
+        \expandafter\lst@CCPutMacro
+    \fi}
+\def\lst@CCPutMacro@#1#2#3#4#5#6{%
+    \lst@lAddTo\lst@SelectStdCharTable{\def#4{#5#1}}%
+    \def#1{\lst@UM#3}%
+    \def#2{#6}}
+\def\lst@UM#1{\csname\@lst @um#1@\endcsname}
+\lst@CCPutMacro
+    \lst@ProcessOther {"23}\#
+    \lst@ProcessLetter{"24}\textdollar
+    \lst@ProcessOther {"25}\%
+    \lst@ProcessOther {"26}\&
+    \lst@ProcessOther {"2A}{\lst@ttfamily*\textasteriskcentered}
+    \lst@ProcessOther {"2D}{\lst@ttfamily{-{}}{$-$}}
+    \lst@ProcessOther {"3C}{\lst@ttfamily<\textless}
+    \lst@ProcessOther {"3E}{\lst@ttfamily>\textgreater}
+    \lst@ProcessOther {"5C}{\lst@ttfamily{\char92}\textbackslash}
+    \lst@ProcessOther {"5E}\textasciicircum
+    \lst@ProcessLetter{"5F}{\lst@ttfamily{\char95}\textunderscore}
+    \lst@ProcessOther {"7B}{\lst@ttfamily{\char123}\textbraceleft}
+    \lst@ProcessOther {"7C}{\lst@ttfamily|\textbar}
+    \lst@ProcessOther {"7D}{\lst@ttfamily{\char125}\textbraceright}
+    \lst@ProcessOther {"7E}\textasciitilde
+    \lst@ProcessOther {"7F}-
+    \@empty\z@\@empty
+\def\lst@ttfamily#1#2{\ifx\f@family\ttdefault#1\relax\else#2\fi}
+\lst@AddToHook{Init}{\edef\ttdefault{\ttdefault}}
+\def\lst@activecharstrue{\let\lst@ifactivechars\iftrue}
+\def\lst@activecharsfalse{\let\lst@ifactivechars\iffalse}
+\lst@activecharstrue
+\def\lst@SelectCharTable{%
+    \lst@SelectStdCharTable
+    \lst@ifactivechars
+        \catcode9\active \catcode12\active \catcode13\active
+        \@tempcnta=32\relax
+        \@whilenum\@tempcnta<128\do
+            {\catcode\@tempcnta\active\advance\@tempcnta\@ne}%
+    \fi
+    \lst@ifec \lst@DefEC \fi
+    \let\do@noligs\lst@do@noligs \verbatim@nolig@list
+    \lsthk@SelectCharTable
+    \lst@DeveloperSCT
+    \ifx\lst@Backslash\relax\else
+        \lst@LetSaveDef{"5C}\lsts@backslash\lst@Backslash
+    \fi}
+\lst@Key{SelectCharTable}{}{\def\lst@DeveloperSCT{#1}}
+\lst@Key{MoreSelectCharTable}\relax{\lst@lAddTo\lst@DeveloperSCT{#1}}
+\lst@AddToHook{SetLanguage}{\let\lst@DeveloperSCT\@empty}
+\def\lst@do@noligs#1{%
+    \begingroup \lccode`\~=`#1\lowercase{\endgroup
+    \lst@do@noligs@~}}
+\def\lst@do@noligs#1#2{%
+    \expandafter\expandafter\expandafter\def
+    \expandafter\expandafter\expandafter#1%
+    \expandafter\expandafter\expandafter{\expandafter\lst@NoLig#1}}
+\def\lst@NoLig{\advance\lst@length\m@ne \lst@Append\lst@nolig}
+\def\lst@nolig{\lst@UM\@empty}%
+\@namedef{\@lst @um@}{\leavevmode\kern\z@}
+\def\lst@SaveOutputDef#1#2{%
+    \begingroup \lccode`\~=#1\relax \lowercase{\endgroup
+    \def\lst@temp##1\def~##2##3\relax}{%
+        \global\expandafter\let\expandafter#2\@gobble##2\relax}%
+    \expandafter\lst@temp\lst@SelectStdCharTable\relax}
+\lst@SaveOutputDef{"5C}\lstum@backslash
+\lst@Key{extendedchars}{false}[t]{\lstKV@SetIf{#1}\lst@ifec}
+\def\lst@DefEC{%
+    \lst@CCECUse \lst@ProcessLetter
+      ^^80^^81^^82^^83^^84^^85^^86^^87^^88^^89^^8a^^8b^^8c^^8d^^8e^^8f%
+      ^^90^^91^^92^^93^^94^^95^^96^^97^^98^^99^^9a^^9b^^9c^^9d^^9e^^9f%
+      ^^a0^^a1^^a2^^a3^^a4^^a5^^a6^^a7^^a8^^a9^^aa^^ab^^ac^^ad^^ae^^af%
+      ^^b0^^b1^^b2^^b3^^b4^^b5^^b6^^b7^^b8^^b9^^ba^^bb^^bc^^bd^^be^^bf%
+      ^^c0^^c1^^c2^^c3^^c4^^c5^^c6^^c7^^c8^^c9^^ca^^cb^^cc^^cd^^ce^^cf%
+      ^^d0^^d1^^d2^^d3^^d4^^d5^^d6^^d7^^d8^^d9^^da^^db^^dc^^dd^^de^^df%
+      ^^e0^^e1^^e2^^e3^^e4^^e5^^e6^^e7^^e8^^e9^^ea^^eb^^ec^^ed^^ee^^ef%
+      ^^f0^^f1^^f2^^f3^^f4^^f5^^f6^^f7^^f8^^f9^^fa^^fb^^fc^^fd^^fe^^ff%
+      ^^00}
+\def\lst@CCECUse#1#2{%
+    \ifnum`#2=\z@
+        \expandafter\@gobbletwo
+    \else
+        \ifnum\catcode`#2=\active
+            \lccode`\~=`#2\lccode`\/=`#2\lowercase{\lst@CCECUse@#1~/}%
+        \else
+            \lst@ifactivechars \catcode`#2=\active \fi
+            \lccode`\~=`#2\lccode`\/=`#2\lowercase{\def~{#1/}}%
+        \fi
+    \fi
+    \lst@CCECUse#1}
+\def\lst@CCECUse@#1#2#3{%
+    \expandafter\def\csname\@lst @EC#3\endcsname{\lst@UM#3}%
+    \expandafter\let\csname\@lst @um#3@\endcsname #2%
+    \edef#2{\noexpand#1%
+            \expandafter\noexpand\csname\@lst @EC#3\endcsname}}
+\lst@AddToHook{Init}
+    {\let\lsts@nfss@catcodes\nfss@catcodes
+     \let\nfss@catcodes\lst@nfss@catcodes}
+\def\lst@nfss@catcodes{%
+    \lst@makeletter
+        ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz\relax
+    \@makeother 0\@makeother 1\@makeother 2\@makeother 3\@makeother 4%
+    \@makeother 5\@makeother 6\@makeother 7\@makeother 8\@makeother 9%
+    \@makeother =\lsts@nfss@catcodes}
+\def\lst@makeletter#1{%
+    \ifx\relax#1\else\catcode`#111\relax \expandafter\lst@makeletter\fi}
+\lst@AddToHook{Init}
+{\edef\lst@OrgOutput{\the\output}%
+ \output{\global\setbox\lst@gtempboxa\box\@cclv
+         \expandafter\egroup
+         \lst@SaveToken
+     \lst@InterruptModes
+     \setbox\@cclv\box\lst@gtempboxa
+     \bgroup\lst@OrgOutput\egroup
+     \bgroup
+     \aftergroup\pagegoal\aftergroup\vsize
+     \aftergroup\lst@ReenterModes\aftergroup\lst@RestoreToken}}
+\lst@Key{alsoletter}\relax{%
+    \lst@DoAlso{#1}\lst@alsoletter\lst@ProcessLetter}
+\lst@Key{alsodigit}\relax{%
+    \lst@DoAlso{#1}\lst@alsodigit\lst@ProcessDigit}
+\lst@Key{alsoother}\relax{%
+    \lst@DoAlso{#1}\lst@alsoother\lst@ProcessOther}
+\lst@AddToHook{SelectCharTable}
+    {\lst@alsoother \lst@alsodigit \lst@alsoletter}
+\lst@AddToHookExe{SetLanguage}% init
+    {\let\lst@alsoletter\@empty
+     \let\lst@alsodigit\@empty
+     \let\lst@alsoother\@empty}
+\def\lst@DoAlso#1#2#3{%
+    \lst@DefOther\lst@arg{#1}\let#2\@empty
+    \expandafter\lst@DoAlso@\expandafter#2\expandafter#3\lst@arg\relax}
+\def\lst@DoAlso@#1#2#3{%
+    \ifx\relax#3\expandafter\@gobblethree \else
+        \begingroup \lccode`\~=`#3\relax \lowercase{\endgroup
+        \def\lst@temp##1\def~##2##3\relax{%
+            \edef\lst@arg{\def\noexpand~{\noexpand#2\expandafter
+                                         \noexpand\@gobble##2}}}}%
+        \expandafter\lst@temp\lst@SelectStdCharTable\relax
+        \lst@lExtend#1{\lst@arg}%
+    \fi
+    \lst@DoAlso@#1#2}
+\def\lst@SaveDef#1#2{%
+    \begingroup \lccode`\~=#1\relax \lowercase{\endgroup\let#2~}}
+\def\lst@DefSaveDef#1#2{%
+    \begingroup \lccode`\~=#1\relax \lowercase{\endgroup\let#2~\def~}}
+\def\lst@LetSaveDef#1#2{%
+    \begingroup \lccode`\~=#1\relax \lowercase{\endgroup\let#2~\let~}}
+\def\lst@CDef#1{\lst@CDef@#1}
+\def\lst@CDef@#1#2#3#4{\lst@CDefIt#1{#2}{#3}{#4#2#3}#4}
+\def\lst@CDefX#1{\lst@CDefX@#1}
+\def\lst@CDefX@#1#2#3{\lst@CDefIt#1{#2}{#3}{}}
+\def\lst@CDefIt#1#2#3#4#5#6#7#8{%
+    \ifx\@empty#2\@empty
+        \def#1{#6\def\lst@next{#7#4#8}\lst@next}%
+    \else \ifx\@empty#3\@empty
+        \def#1##1{%
+            #6%
+            \ifx##1#2\def\lst@next{#7#4#8}\else
+                     \def\lst@next{#5##1}\fi
+            \lst@next}%
+    \else
+        \def#1{%
+            #6%
+            \lst@IfNextCharsArg{#2#3}{#7#4#8}%
+                                     {\expandafter#5\lst@eaten}}%
+    \fi \fi}
+\def\lst@CArgX#1#2\relax{%
+    \lst@DefActive\lst@arg{#1#2}%
+    \expandafter\lst@CArg\lst@arg\relax}
+\def\lst@CArg#1#2\relax{%
+    \lccode`\/=`#1\lowercase{\def\lst@temp{/}}%
+    \lst@GetFreeMacro{lst@c\lst@temp}%
+    \expandafter\lst@CArg@\lst@freemacro#1#2\@empty\@empty\relax}
+\def\lst@CArg@#1#2#3#4\@empty#5\relax#6{%
+    \let#1#2%
+    \ifx\@empty#3\@empty
+        \def\lst@next{#6{#2{}{}}}%
+    \else
+        \def\lst@next{#6{#2#3{#4}}}%
+    \fi
+    \lst@next #1}
+\def\lst@CArgEmpty#1\@empty{#1}
+\lst@Key{excludedelims}\relax
+    {\lsthk@ExcludeDelims \lst@NormedDef\lst@temp{#1}%
+     \expandafter\lst@for\lst@temp\do
+     {\expandafter\let\csname\@lst @ifex##1\endcsname\iftrue}}
+\def\lst@DelimPrint#1#2{%
+    #1%
+      \begingroup
+        \lst@mode\lst@nomode \lst@modetrue
+        #2\lst@XPrintToken
+      \endgroup
+      \lst@ResetToken
+    \fi}
+\def\lst@DelimOpen#1#2#3#4#5#6\@empty{%
+    \lst@TrackNewLines \lst@XPrintToken
+    \lst@DelimPrint#1{#6}%
+    \lst@EnterMode{#4}{\def\lst@currstyle#5}%
+    \lst@DelimPrint{#1#2}{#6}%
+    #3}
+\def\lst@DelimClose#1#2#3\@empty{%
+    \lst@TrackNewLines \lst@XPrintToken
+    \lst@DelimPrint{#1#2}{#3}%
+    \lst@LeaveMode
+    \lst@DelimPrint{#1}{#3}}
+\def\lst@BeginDelim{\lst@DelimOpen\iffalse\else{}}
+\def\lst@EndDelim{\lst@DelimClose\iffalse\else}
+\def\lst@BeginIDelim{\lst@DelimOpen\iffalse{}{}}
+\def\lst@EndIDelim{\lst@DelimClose\iffalse{}}
+\lst@AddToHook{SelectCharTable}{\lst@DefDelims}
+\lst@AddToHookExe{SetLanguage}{\let\lst@DefDelims\@empty}
+\def\lst@Delim#1{%
+    \lst@false \let\lst@cumulative\@empty \let\lst@arg\@empty
+    \@ifstar{\@ifstar{\lst@Delim@{#1}}%
+                     {\let\lst@cumulative\relax
+                      \lst@Delim@{#1}}}%
+            {\lst@true\lst@Delim@{#1}}}
+\def\lst@Delim@#1[#2]{%
+    \gdef\lst@delimtype{#2}%
+    \@ifnextchar[\lst@Delim@sty
+                 {\lst@Delim@sty[#1]}}
+\def\lst@Delim@sty[#1]{%
+    \def\lst@delimstyle{#1}%
+    \ifx\@empty#1\@empty\else
+        \lst@Delim@sty@ #1\@nil
+    \fi
+    \@ifnextchar[\lst@Delim@option
+                 \lst@Delim@delim}
+\def\lst@Delim@option[#1]{\def\lst@arg{#1}\lst@Delim@delim}
+\def\lst@Delim@sty@#1#2\@nil{%
+    \if\relax\noexpand#1\else
+        \edef\lst@delimstyle{\expandafter\noexpand
+                             \csname\@lst @\lst@delimstyle\endcsname}%
+    \fi}
+\def\lst@Delim@delim#1\relax#2#3#4#5#6#7#8{%
+    \ifx #4\@empty \lst@Delim@delall{#2}\fi
+    \ifx\@empty#1\@empty
+        \ifx #4\@nil
+            \@ifundefined{\@lst @#2DM@\lst@delimtype}%
+                {\lst@Delim@delall{#2@\lst@delimtype}}%
+                {\lst@Delim@delall{#2DM@\lst@delimtype}}%
+        \fi
+    \else
+        \expandafter\lst@Delim@args\expandafter
+            {\lst@delimtype}{#1}{#5}#6{#7}{#8}#4%
+        \let\lst@delim\@empty
+        \expandafter\lst@IfOneOf\lst@delimtype\relax#3%
+        {\@ifundefined{\@lst @#2DM@\lst@delimtype}%
+             {\lst@lExtend\lst@delim{\csname\@lst @#2@\lst@delimtype
+                                     \expandafter\endcsname\lst@arg}}%
+             {\lst@lExtend\lst@delim{\expandafter\lst@UseDynamicMode
+                                     \csname\@lst @#2DM@\lst@delimtype
+                                     \expandafter\endcsname\lst@arg}}%
+         \ifx #4\@nil
+             \let\lst@temp\lst@DefDelims \let\lst@DefDelims\@empty
+             \expandafter\lst@Delim@del\lst@temp\@empty\@nil\@nil\@nil
+         \else
+             \lst@lExtend\lst@DefDelims\lst@delim
+         \fi}%
+        {\PackageError{Listings}{Illegal type `\lst@delimtype'}%
+                                {#2 types are #3.}}%
+     \fi}
+\def\lst@Delim@args#1#2#3#4#5#6#7{%
+    \begingroup
+    \lst@false \let\lst@next\lst@XConvert
+    \@ifnextchar #4{\xdef\lst@delimtype{\expandafter\@gobble
+                                        \lst@delimtype}%
+                    #5\lst@next#2\@nil
+                    \lst@lAddTo\lst@arg{\@empty#6}%
+                    \lst@GobbleNil}%
+                   {\lst@next#2\@nil
+                    \lst@lAddTo\lst@arg{\@empty#3}%
+                    \lst@GobbleNil}%
+                 #1\@nil
+    \global\let\@gtempa\lst@arg
+    \endgroup
+    \let\lst@arg\@gtempa
+    \ifx #7\@nil\else
+        \expandafter\lst@Delim@args@\expandafter{\lst@delimstyle}%
+    \fi}
+\def\lst@Delim@args@#1{%
+    \lst@if
+        \lst@lAddTo\lst@arg{{{#1}\lst@modetrue}}%
+    \else
+        \ifx\lst@cumulative\@empty
+            \lst@lAddTo\lst@arg{{{}#1}}%
+        \else
+            \lst@lAddTo\lst@arg{{{#1}}}%
+        \fi
+    \fi}
+\def\lst@Delim@del#1\@empty#2#3#4{%
+    \ifx #2\@nil\else
+        \def\lst@temp{#1\@empty#2#3}%
+        \ifx\lst@temp\lst@delim\else
+            \lst@lAddTo\lst@DefDelims{#1\@empty#2#3{#4}}%
+        \fi
+        \expandafter\lst@Delim@del
+    \fi}
+\def\lst@Delim@delall#1{%
+    \begingroup
+    \edef\lst@delim{\expandafter\string\csname\@lst @#1\endcsname}%
+    \lst@false \global\let\@gtempa\@empty
+    \expandafter\lst@Delim@delall@\lst@DefDelims\@empty
+    \endgroup
+    \let\lst@DefDelims\@gtempa}
+\def\lst@Delim@delall@#1{%
+    \ifx #1\@empty\else
+        \ifx #1\lst@UseDynamicMode
+            \lst@true
+            \let\lst@next\lst@Delim@delall@do
+        \else
+            \def\lst@next{\lst@Delim@delall@do#1}%
+        \fi
+        \expandafter\lst@next
+    \fi}
+\def\lst@Delim@delall@do#1#2\@empty#3#4#5{%
+    \expandafter\lst@IfSubstring\expandafter{\lst@delim}{\string#1}%
+      {}%
+      {\lst@if \lst@AddTo\@gtempa\lst@UseDynamicMode \fi
+       \lst@AddTo\@gtempa{#1#2\@empty#3#4{#5}}}%
+    \lst@false \lst@Delim@delall@}
+\gdef\lst@DefDelimB#1#2#3#4#5#6#7#8{%
+    \lst@CDef{#1}#2%
+        {#3}%
+        {\let\lst@bnext\lst@CArgEmpty
+         \lst@ifmode #4\else
+             #5%
+             \def\lst@bnext{#6{#7}{#8}}%
+         \fi
+         \lst@bnext}%
+        \@empty}
+\gdef\lst@DefDelimE#1#2#3#4#5#6#7{%
+    \lst@CDef{#1}#2%
+        {#3}%
+        {\let\lst@enext\lst@CArgEmpty
+         \ifnum #7=\lst@mode%
+             #4%
+             \let\lst@enext#6%
+         \else
+             #5%
+         \fi
+         \lst@enext}%
+        \@empty}
+\lst@AddToHook{Init}{\let\lst@bnext\relax \let\lst@enext\relax}
+\gdef\lst@DefDelimBE#1#2#3#4#5#6#7#8#9{%
+    \lst@CDef{#1}#2%
+        {#3}%
+        {\let\lst@bnext\lst@CArgEmpty
+         \ifnum #7=\lst@mode
+             #4%
+             \let\lst@bnext#9%
+         \else
+             \lst@ifmode\else
+                 #5%
+                 \def\lst@bnext{#6{#7}{#8}}%
+             \fi
+         \fi
+         \lst@bnext}%
+        \@empty}
+\gdef\lst@delimtypes{s,l}
+\gdef\lst@DelimKey#1#2{%
+    \lst@Delim{}#2\relax
+        {Delim}\lst@delimtypes #1%
+                {\lst@BeginDelim\lst@EndDelim}
+        i\@empty{\lst@BeginIDelim\lst@EndIDelim}}
+\lst@Key{delim}\relax{\lst@DelimKey\@empty{#1}}
+\lst@Key{moredelim}\relax{\lst@DelimKey\relax{#1}}
+\lst@Key{deletedelim}\relax{\lst@DelimKey\@nil{#1}}
+\gdef\lst@DelimDM@l#1#2\@empty#3#4#5{%
+    \lst@CArg #2\relax\lst@DefDelimB{}{}{}#3{#1}{#5\lst@Lmodetrue}}
+\gdef\lst@DelimDM@s#1#2#3\@empty#4#5#6{%
+    \lst@CArg #2\relax\lst@DefDelimB{}{}{}#4{#1}{#6}%
+    \lst@CArg #3\relax\lst@DefDelimE{}{}{}#5{#1}}
+\def\lst@ReplaceInput#1{\lst@CArgX #1\relax\lst@CDefX{}{}}
+\lst@Key{literate}{}{\def\lst@literate{#1}}
+\lst@AddToHook{SelectCharTable}
+    {\ifx\lst@literate\@empty\else
+         \expandafter\lst@Literate\lst@literate{}\relax\z@
+     \fi}
+\def\lst@Literate#1#2#3{%
+    \ifx\relax#2\@empty\else
+        \lst@ReplaceInput{#1}%
+            {\lst@XPrintToken \lst@letterfalse
+             \lst@token{#2}\lst@length#3\relax
+             \lst@XPrintToken}%
+        \expandafter\lst@Literate
+    \fi}
+\def\lst@BeginDropInput#1{%
+    \lst@EnterMode{#1}%
+    {\lst@modetrue
+     \let\lst@ifdropinput\iftrue
+     \let\lst@ProcessLetter\@gobble
+     \let\lst@ProcessDigit\@gobble
+     \let\lst@ProcessOther\@gobble
+     \let\lst@ProcessSpace\@empty
+     \let\lst@ProcessTabulator\@empty
+     \let\lst@ProcessFormFeed\@empty}}
+\let\lst@ifdropinput\iffalse % init
+\lst@Key{basicstyle}\relax{\def\lst@basicstyle{#1}}
+\lst@Key{inputencoding}\relax{\def\lst@inputenc{#1}}
+\lst@AddToHook{Init}
+    {\lst@basicstyle
+     \ifx\lst@inputenc\@empty\else
+         \@ifundefined{inputencoding}{}%
+            {\inputencoding\lst@inputenc}%
+     \fi}
+\lst@AddToHookExe{EmptyStyle}
+    {\let\lst@basicstyle\@empty
+     \let\lst@inputenc\@empty}
+\def\lst@parshape{\parshape\@ne \z@ \linewidth}
+\lst@AddToHookAtTop{EveryLine}{\lst@parshape}
+\lst@AddToHookAtTop{EndGroup}{\lst@parshape}
+\newcount\lst@lineno % \global
+\lst@AddToHook{InitVars}{\global\lst@lineno\@ne}
+\lst@Key{print}{true}[t]{\lstKV@SetIf{#1}\lst@ifprint}
+\lst@Key{firstline}\relax{\def\lst@firstline{#1\relax}}
+\lst@Key{lastline}\relax{\def\lst@lastline{#1\relax}}
+\lst@AddToHook{PreSet}
+    {\let\lst@firstline\@ne \def\lst@lastline{9999999\relax}}
+\lst@Key{nolol}{false}[t]{\lstKV@SetIf{#1}\lst@ifnolol}
+\def\lst@nololtrue{\let\lst@ifnolol\iftrue}
+\let\lst@ifnolol\iffalse % init
+\lst@Key{captionpos}{t}{\def\lst@captionpos{#1}}
+\lst@Key{abovecaptionskip}\smallskipamount{\def\lst@abovecaption{#1}}
+\lst@Key{belowcaptionskip}\smallskipamount{\def\lst@belowcaption{#1}}
+\lst@Key{label}\relax{\def\lst@label{#1}}
+\lst@Key{title}\relax{\def\lst@title{#1}\let\lst@caption\relax}
+\lst@Key{caption}\relax{\lstKV@OptArg[{#1}]{#1}%
+    {\def\lst@caption{##2}\def\lst@@caption{##1}}%
+     \let\lst@title\@empty}
+\lst@AddToHookExe{TextStyle}
+    {\let\lst@caption\@empty \let\lst@@caption\@empty
+     \let\lst@title\@empty \let\lst@label\@empty}
+\@ifundefined{thechapter}
+    {\newcounter{lstlisting}
+     \renewcommand\thelstlisting{\@arabic\c@lstlisting}}
+    {\newcounter{lstlisting}[chapter]
+     \renewcommand\thelstlisting
+         {\ifnum \c@chapter>\z@ \thechapter.\fi \@arabic\c@lstlisting}}
+\lst@UserCommand\lstlistingname{Listing}
+\@ifundefined{abovecaptionskip}
+{\newskip\abovecaptionskip
+ \newskip\belowcaptionskip
+ \long\def\@makecaption#1#2{%
+   \vskip\abovecaptionskip
+   \sbox\@tempboxa{#1: #2}%
+   \ifdim \wd\@tempboxa >\hsize
+     #1: #2\par
+   \else
+     \global \@minipagefalse
+     \hb@xt@\hsize{\hfil\box\@tempboxa\hfil}%
+   \fi
+   \vskip\belowcaptionskip}%
+}{}
+\def\lst@MakeCaption#1{%
+    \ifx #1t%
+        \ifx\lst@@caption\@empty\expandafter\lst@HRefStepCounter \else
+                                \expandafter\refstepcounter
+        \fi {lstlisting}%
+        \ifx\lst@label\@empty\else \label{\lst@label}\fi
+    \fi
+    \ifx\lst@caption\@empty\else
+        \lst@IfSubstring #1\lst@captionpos
+            {\begingroup \let\@@vskip\vskip
+             \def\vskip{\afterassignment\lst@vskip \@tempskipa}%
+             \def\lst@vskip{\nobreak\@@vskip\@tempskipa\nobreak}%
+             \par\normalsize\normalfont
+             \ifx #1t\allowbreak \fi
+             \ifx\lst@title\@empty
+                 \expandafter\@makecaption
+             \else
+                 \expandafter\lst@maketitle
+             \fi
+                {\noindent\lstlistingname
+                 \ifx\lst@@caption\@empty\else~\thelstlisting\fi}%
+                \lst@caption
+             \ifx #1b\allowbreak \fi
+             \endgroup}{}%
+    \fi}
+\def\lst@maketitle#1#2{\@makecaption\lst@title@dropdelim\lst@title}
+\def\lst@title@dropdelim#1{\ignorespaces}
+\AtBeginDocument{%
+\@ifundefined{caption@make}{}{%
+\def\lst@maketitle#1#2{%
+    \begingroup
+    \captionstyle{lsttitle}\@makecaption{}\lst@title
+    \endgroup}
+\newcaptionstyle{lsttitle}{\caption@make{lsttitle}}%
+\def\caption@@@lsttitle{\captiontext\par}%
+}}
+\def\lst@HRefStepCounter#1{%
+    \begingroup
+    \c@lstlisting\lst@neglisting
+    \advance\c@lstlisting\m@ne \xdef\lst@neglisting{\the\c@lstlisting}%
+    \ifx\hyper@refstepcounter\@undefined\else
+        \hyper@refstepcounter{#1}%
+    \fi
+    \endgroup}
+\gdef\lst@neglisting{\z@}% init
+\lst@Key{boxpos}{c}{\def\lst@boxpos{#1}}
+\def\lst@boxtrue{\let\lst@ifbox\iftrue}
+\let\lst@ifbox\iffalse
+\lst@Key{float}\relax[\lst@floatplacement]{%
+    \def\lst@next{\@ifstar{\let\lst@beginfloat\@dblfloat
+                           \let\lst@endfloat\end@dblfloat
+                           \lst@KFloat}%
+                          {\let\lst@beginfloat\@float
+                           \let\lst@endfloat\end@float
+                           \lst@KFloat}}
+    \edef\lst@float{#1}%
+    \expandafter\lst@next\lst@float\relax}
+\def\lst@KFloat#1\relax{%
+    \ifx\@empty#1\@empty
+        \let\lst@float\lst@floatplacement
+    \else
+        \def\lst@float{#1}%
+    \fi}
+\lst@Key{floatplacement}{tbp}{\def\lst@floatplacement{#1}}
+\lst@AddToHook{PreSet}{\let\lst@float\relax}
+\lst@AddToHook{TextStyle}{\let\lst@float\relax}
+\AtBeginDocument{%
+\@ifundefined{c@float@type}%
+    {\edef\ftype@lstlisting{\ifx\c@figure\@undefined 1\else 4\fi}}
+    {\edef\ftype@lstlisting{\the\c@float@type}%
+     \addtocounter{float@type}{\value{float@type}}}%
+}
+\lst@Key{aboveskip}\medskipamount{\def\lst@aboveskip{#1}}
+\lst@Key{belowskip}\medskipamount{\def\lst@belowskip{#1}}
+\lst@AddToHook{TextStyle}
+    {\let\lst@aboveskip\z@ \let\lst@belowskip\z@}
+\lst@Key{everydisplay}{}{\def\lst@EveryDisplay{#1}}
+\lst@AddToHook{TextStyle}{\let\lst@ifdisplaystyle\iffalse}
+\lst@AddToHook{DisplayStyle}{\let\lst@ifdisplaystyle\iftrue}
+\let\lst@ifdisplaystyle\iffalse
+\def\lst@Init#1{%
+    \begingroup
+    \ifx\lst@float\relax\else
+        \edef\@tempa{\noexpand\lst@beginfloat{lstlisting}[\lst@float]}%
+        \expandafter\@tempa
+    \fi
+    \ifhmode\ifinner \lst@boxtrue \fi\fi
+    \lst@ifbox
+        \lsthk@BoxUnsafe
+        \hbox to\z@\bgroup
+             $\if t\lst@boxpos \vtop
+        \else \if b\lst@boxpos \vbox
+        \else \vcenter \fi\fi
+        \bgroup \par\noindent
+    \else
+        \lst@ifdisplaystyle
+            \lst@EveryDisplay
+            \par\penalty-50\relax
+            \vspace\lst@aboveskip
+        \fi
+    \fi
+    \normalbaselines
+    \abovecaptionskip\lst@abovecaption\relax
+    \belowcaptionskip\lst@belowcaption\relax
+    \lst@MakeCaption t%
+    \lsthk@PreInit \lsthk@Init
+    \lst@ifdisplaystyle
+        \global\let\lst@ltxlabel\@empty
+        \if@inlabel
+            \lst@ifresetmargins
+                \leavevmode
+            \else
+                \xdef\lst@ltxlabel{\the\everypar}%
+                \lst@AddTo\lst@ltxlabel{%
+                    \global\let\lst@ltxlabel\@empty
+                    \everypar{\lsthk@EveryLine\lsthk@EveryPar}}%
+            \fi
+        \fi
+        \everypar\expandafter{\lst@ltxlabel
+                              \lsthk@EveryLine\lsthk@EveryPar}%
+    \else
+        \everypar{}\let\lst@NewLine\@empty
+    \fi
+    \lsthk@InitVars \lsthk@InitVarsBOL
+    \lst@Let{13}\lst@MProcessListing
+    \let\lst@Backslash#1%
+    \lst@EnterMode{\lst@Pmode}{\lst@SelectCharTable}}
+\lst@AddToHook{InitVars}
+    {\rightskip\z@ \leftskip\z@ \parfillskip=\z@ plus 1fil
+     \let\par\@@par}
+\lst@AddToHook{EveryLine}{}% init
+\lst@AddToHook{EveryPar}{}% init
+\lst@Key{showlines}f[t]{\lstKV@SetIf{#1}\lst@ifshowlines}
+\def\lst@DeInit{%
+    \lst@XPrintToken \lst@EOLUpdate
+    \global\advance\lst@newlines\m@ne
+    \lst@ifshowlines
+        \lst@DoNewLines
+    \else
+        \setbox\@tempboxa\vbox{\lst@DoNewLines}%
+    \fi
+    \lst@ifdisplaystyle \par\removelastskip \fi
+    \everypar{}\lsthk@ExitVars \lsthk@DeInit
+    \lst@MakeCaption b%
+    \lst@ifbox
+        \egroup $\hss \egroup
+        \vrule\@width\lst@maxwidth\@height\z@\@depth\z@
+    \else
+        \lst@ifdisplaystyle
+            \par\penalty-50\vspace\lst@belowskip
+        \fi
+    \fi
+    \ifx\lst@float\relax\else
+        \expandafter\lst@endfloat
+    \fi
+    \endgroup}
+\newdimen\lst@maxwidth % \global
+\lst@AddToHook{InitVars}{\global\lst@maxwidth\z@}
+\lst@AddToHook{InitVarsEOL}
+    {\ifdim\lst@currlwidth>\lst@maxwidth
+         \global\lst@maxwidth\lst@currlwidth
+     \fi}
+\def\lst@EOLUpdate{\lsthk@EOL \lsthk@InitVarsEOL}
+\def\lst@MProcessListing{%
+    \lst@XPrintToken \lst@EOLUpdate \lsthk@InitVarsBOL
+    \global\advance\lst@lineno\@ne
+    \ifnum \lst@lineno>\lst@lastline
+        \expandafter\lst@EndProcessListing
+    \else
+        \expandafter\lst@BOLGobble
+    \fi}
+\let\lst@EndProcessListing\endinput
+\lst@Key{gobble}{0}{\def\lst@gobble{#1}}
+\def\lst@BOLGobble{%
+    \ifnum\lst@gobble>\z@
+        \@tempcnta\lst@gobble\relax
+        \expandafter\lst@BOLGobble@
+\fi}
+\def\lst@BOLGobble@@{%
+    \ifnum\@tempcnta>\z@
+        \expandafter\lst@BOLGobble@
+    \fi}
+\def\lstenv@BOLGobble@@{%
+    \lst@IfNextChars\lstenv@endstring{\lstenv@End}%
+    {\advance\@tempcnta\m@ne \expandafter\lst@BOLGobble@@\lst@eaten}}
+\def\lst@BOLGobble@#1{%
+    \let\lst@next#1%
+    \ifx \lst@next\relax\else
+    \ifx \lst@next\lst@MProcessListing\else
+    \ifx \lst@next\lst@ProcessFormFeed\else
+    \ifx \lst@next\lstenv@backslash
+        \let\lst@next\lstenv@BOLGobble@@
+    \else
+        \let\lst@next\lst@BOLGobble@@
+        \ifx #1\lst@ProcessTabulator
+            \advance\@tempcnta-\lst@tabsize\relax
+            \ifnum\@tempcnta<\z@
+                \lst@length-\@tempcnta \lst@PreGotoTabStop
+            \fi
+        \else
+            \advance\@tempcnta\m@ne
+        \fi
+    \fi \fi \fi \fi
+    \lst@next}
+\lst@Key{name}\relax{\def\lst@intname{#1}}
+\lst@AddToHookExe{PreSet}{\global\let\lst@intname\@empty}
+\lst@AddToHook{PreInit}{%
+    \let\lst@arg\lst@intname \lst@ReplaceIn\lst@arg\lst@filenamerpl
+    \global\let\lst@name\lst@arg \global\let\lstname\lst@name}
+\def\lst@filenamerpl{_\textunderscore $\textdollar -\textendash}
+\def\l@lstlisting#1#2{\@dottedtocline{1}{1.5em}{2.3em}{#1}{#2}}
+\lst@AddToHook{Init}
+    {\lst@ifnolol\else
+         \ifx\lst@@caption\@empty
+             \ifx\lst@caption\@empty
+                 \ifx\lst@intname\@empty \else \def\lst@temp{ }%
+                 \ifx\lst@intname\lst@temp \else
+                     \addcontentsline{lol}{lstlisting}\lst@name
+                 \fi\fi
+             \fi
+        \else
+             \addcontentsline{lol}{lstlisting}%
+                 {\protect\numberline{\thelstlisting}\lst@@caption}%
+        \fi
+     \fi}
+\lst@UserCommand\lstlistlistingname{Listings}
+\lst@UserCommand\lstlistoflistings{\bgroup
+    \let\contentsname\lstlistlistingname
+    \let\lst@temp\@starttoc \def\@starttoc##1{\lst@temp{lol}}%
+    \tableofcontents \egroup}
+\newcommand\lstinline[1][]{%
+    \leavevmode\bgroup % \hbox\bgroup --> \bgroup
+      \def\lst@boxpos{b}%
+      \lsthk@PreSet\lstset{flexiblecolumns,#1}%
+      \lsthk@TextStyle
+      \@ifnextchar\bgroup{\afterassignment\lst@InlineG \let\@let@token}%
+                         \lstinline@}
+\def\lstinline@#1{%
+    \lst@Init\relax
+    \lst@IfNextCharActive{\lst@InlineM#1}{\lst@InlineJ#1}}
+\lst@AddToHook{TextStyle}{}% init
+\lst@AddToHook{SelectCharTable}{\lst@inlinechars}
+\global\let\lst@inlinechars\@empty
+\def\lst@InlineM#1{\gdef\lst@inlinechars{%
+    \lst@Def{`#1}{\lst@DeInit\egroup\global\let\lst@inlinechars\@empty}%
+    \lst@Def{13}{\lst@DeInit\egroup \global\let\lst@inlinechars\@empty
+        \PackageError{Listings}{lstinline ended by EOL}\@ehc}}%
+    \lst@inlinechars}
+\def\lst@InlineJ#1{%
+    \def\lst@temp##1#1{%
+        \let\lst@arg\@empty \lst@InsideConvert{##1}\lst@arg
+        \lst@DeInit\egroup}%
+    \lst@temp}
+\def\lst@InlineG{%
+    \lst@Init\relax
+    \lst@IfNextCharActive{\lst@InlineM\}}%
+                         {\let\lst@arg\@empty \lst@InlineGJ}}
+\def\lst@InlineGJ{\futurelet\@let@token\lst@InlineGJTest}
+\def\lst@InlineGJTest{%
+    \ifx\@let@token\egroup
+        \afterassignment\lst@InlineGJEnd
+        \expandafter\let\expandafter\@let@token
+    \else
+        \ifx\@let@token\@sptoken
+            \let\lst@next\lst@InlineGJReadSp
+        \else
+            \let\lst@next\lst@InlineGJRead
+        \fi
+        \expandafter\lst@next
+    \fi}
+\def\lst@InlineGJEnd{\lst@arg\lst@DeInit\egroup}
+\def\lst@InlineGJRead#1{%
+    \lccode`\~=`#1\lowercase{\lst@lAddTo\lst@arg~}%
+    \lst@InlineGJ}
+\def\lst@InlineGJReadSp#1{%
+    \lccode`\~=`\ \lowercase{\lst@lAddTo\lst@arg~}%
+    \lst@InlineGJ#1}
+\newcommand\lstinputlisting[2][]{%
+    \def\lst@set{#1}%
+    \IfFileExists{#2}%
+        {\lst@InputListing{#2}}%
+        {\filename@parse{#2}%
+         \edef\reserved@a{\noexpand\lst@MissingFileError
+             {\filename@area\filename@base}%
+             {\ifx\filename@ext\relax tex\else\filename@ext\fi}}%
+         \reserved@a}%
+    \@doendpe \@newlistfalse \ignorespaces}
+\def\lst@MissingFileError#1#2{%
+    \typeout{^^J! Package Listings Error: File `#1.#2' not found.^^J^^J%
+        Type X to quit or <RETURN> to proceed,^^J%
+        or enter new name. (Default extension: #2)^^J}%
+    \message{Enter file name: }%
+    {\endlinechar\m@ne \global\read\m@ne to\@gtempa}%
+    \ifx\@gtempa\@empty \else
+        \def\reserved@a{x}\ifx\reserved@a\@gtempa\batchmode\@@end\fi
+        \def\reserved@a{X}\ifx\reserved@a\@gtempa\batchmode\@@end\fi
+        \filename@parse\@gtempa
+        \edef\filename@ext{%
+            \ifx\filename@ext\relax#2\else\filename@ext\fi}%
+        \edef\reserved@a{\noexpand\IfFileExists %
+                {\filename@area\filename@base.\filename@ext}%
+            {\noexpand\lst@InputListing %
+                {\filename@area\filename@base.\filename@ext}}%
+            {\noexpand\lst@MissingFileError
+                {\filename@area\filename@base}{\filename@ext}}}%
+        \expandafter\reserved@a %
+    \fi}
+\let\lst@ifdraft\iffalse
+\DeclareOption{draft}{\let\lst@ifdraft\iftrue}
+\lst@AddToHook{PreSet}
+    {\lst@ifdraft
+         \let\lst@ifprint\iffalse
+         \@gobbletwo\fi\fi
+     \fi}
+\def\lst@InputListing#1{%
+    \begingroup
+      \lsthk@PreSet \gdef\lst@intname{#1}%
+      \expandafter\lstset\expandafter{\lst@set}%
+      \lsthk@DisplayStyle
+      \lst@Init\relax \let\lst@gobble\z@
+      \lst@SkipToFirst
+      \lst@ifprint \def\lst@next{\input{#1}}%
+             \else \let\lst@next\@empty \fi
+      \lst@next
+      \lst@DeInit
+    \endgroup}
+\def\lst@SkipToFirst{%
+    \ifnum \lst@lineno<\lst@firstline
+        \lst@BeginDropInput\lst@Pmode
+        \lst@Let{13}\lst@MSkipToFirst
+        \lst@Let{10}\lst@MSkipToFirst
+    \else
+        \expandafter\lst@BOLGobble
+    \fi}
+\def\lst@MSkipToFirst{%
+    \global\advance\lst@lineno\@ne
+    \ifnum \lst@lineno=\lst@firstline
+        \lst@LeaveMode \global\lst@newlines\z@
+        \lsthk@InitVarsBOL
+        \expandafter\lst@BOLGobble
+    \fi}
+\def\lstenv@DroppedWarning{%
+    \ifx\lst@dropped\@undefined\else
+        \PackageWarning{Listings}{Text dropped after begin of listing}%
+    \fi}
+\let\lst@dropped\@undefined % init
+\begingroup \lccode`\~=`\^^M\lowercase{%
+\gdef\lstenv@Process#1{%
+    \ifx~#1%
+        \lstenv@DroppedWarning \let\lst@next\lst@SkipToFirst
+    \else\ifx^^J#1%
+        \lstenv@DroppedWarning \let\lst@next\lstenv@ProcessJ
+    \else
+        \let\lst@dropped#1\let\lst@next\lstenv@Process
+    \fi \fi
+    \lst@next}
+}\endgroup
+\def\lstenv@ProcessJ{%
+    \let\lst@arg\@empty
+    \ifx\@currenvir\lstenv@name
+        \expandafter\lstenv@ProcessJEnv
+    \else
+        \expandafter\def\expandafter\lst@temp\expandafter##1%
+            \csname end\lstenv@name\endcsname
+                {\lst@InsideConvert{##1}\lstenv@ProcessJ@}%
+        \expandafter\lst@temp
+    \fi}
+\begingroup \lccode`\~=`\\\lowercase{%
+\gdef\lstenv@ProcessJ@{%
+    \lst@lExtend\lst@arg
+        {\expandafter\ \expandafter~\lstenv@endstring}%
+    \catcode10=\active \lst@Let{10}\lst@MProcessListing
+    \lst@SkipToFirst \lst@arg}
+}\endgroup
+\def\lstenv@ProcessJEnv#1\end#2{\def\lst@temp{#2}%
+    \ifx\lstenv@name\lst@temp
+        \lst@InsideConvert{#1}%
+        \expandafter\lstenv@ProcessJ@
+    \else
+        \lst@InsideConvert{#1\\end\{#2\}}%
+        \expandafter\lstenv@ProcessJEnv
+    \fi}
+\def\lstenv@backslash{%
+    \lst@IfNextChars\lstenv@endstring
+        {\lstenv@End}%
+        {\expandafter\lsts@backslash \lst@eaten}}%
+\def\lstenv@End{%
+    \ifx\@currenvir\lstenv@name
+        \edef\lst@next{\noexpand\end{\lstenv@name}}%
+    \else
+        \def\lst@next{\csname end\lstenv@name\endcsname}%
+    \fi
+    \lst@next}
+\lst@UserCommand\lstnewenvironment#1#2#{%
+    \@ifundefined{#1}%
+        {\let\lst@arg\@empty
+         \lst@XConvert{#1}\@nil
+         \expandafter\lstnewenvironment@\lst@arg{#1}{#2}}%
+        {\PackageError{Listings}{Environment `#1' already defined}\@eha
+         \@gobbletwo}}
+\def\@tempa#1#2#3{%
+\gdef\lstnewenvironment@##1##2##3##4##5{%
+    \begingroup
+    \global\@namedef{end##2}{\lstenv@Error{##2}}%
+    \global\@namedef{##2}{\def\lstenv@name{##2}%
+        \begingroup \catcode\active=\active \csname##2@\endcsname}%
+    \let\l@ngrel@x\global
+    \let\@xargdef\lstenv@xargdef
+    \expandafter\new@command\csname##2@\endcsname##3%
+        {\lsthk@PreSet ##4%
+         \ifx\@currenvir\lstenv@name
+             \def\lstenv@endstring{#1#2##1#3}%
+         \else
+             \def\lstenv@endstring{#1##1}%
+         \fi
+         \@namedef{end##2}{\lst@DeInit ##5\endgroup
+                          \@doendpe \@ignoretrue}%
+         \lsthk@DisplayStyle
+         \lst@Init\lstenv@backslash
+         \let\lst@EndProcessListing\lstenv@SkipToEnd
+         \lst@ifprint
+             \expandafter\expandafter\expandafter\lstenv@Process
+         \else
+             \expandafter\lstenv@SkipToEnd
+         \fi
+         \lst@insertargs}%
+    \endgroup}%
+}
+\let\lst@arg\@empty \lst@XConvert{end}\{\}\@nil
+\expandafter\@tempa\lst@arg
+\let\lst@insertargs\@empty
+\def\lstenv@xargdef#1{
+    \expandafter\lstenv@xargdef@\csname\string#1\endcsname#1}
+\def\lstenv@xargdef@#1#2[#3][#4]#5{%
+  \@ifdefinable#2{%
+       \gdef#2{%
+          \ifx\protect\@typeset@protect
+            \expandafter\lstenv@testopt
+          \else
+            \@x@protect#2%
+          \fi
+          #1%
+          {#4}}%
+       \@yargdef
+          #1%
+           \tw@
+           {#3}%
+           {#5}}}
+\long\def\lstenv@testopt#1#2{%
+  \@ifnextchar[{\catcode\active5\relax \lstenv@testopt@#1}%
+               {#1[{#2}]}}
+\def\lstenv@testopt@#1[#2]{%
+    \catcode\active\active
+    #1[#2]}
+\begingroup \lccode`\~=`\\\lowercase{%
+\gdef\lstenv@SkipToEnd{%
+    \long\expandafter\def\expandafter\lst@temp\expandafter##\expandafter
+        1\expandafter~\lstenv@endstring{\lstenv@End}%
+    \lst@temp}
+}\endgroup
+\def\lstenv@Error#1{\PackageError{Listings}{Extra \string\end#1}%
+    {I'm ignoring this, since I wasn't doing a \csname#1\endcsname.}}
+\begingroup \lccode`\~=`\^^M\lowercase{%
+\gdef\lst@TestEOLChar#1{%
+    \def\lst@insertargs{#1}%
+    \ifx ~#1\@empty \else
+    \ifx^^J#1\@empty \else
+        \global\let\lst@intname\lst@insertargs
+        \let\lst@insertargs\@empty
+    \fi \fi}
+}\endgroup
+\lstnewenvironment{lstlisting}[2][]
+    {\lst@TestEOLChar{#2}%
+     \lstset{#1}%
+     \csname\@lst @SetFirstNumber\endcsname}
+    {\csname\@lst @SaveFirstNumber\endcsname}
+\lst@Key{fancyvrb}\relax[t]{%
+    \lstKV@SetIf{#1}\lst@iffancyvrb
+    \lstFV@fancyvrb}
+\ifx\lstFV@fancyvrb\@undefined
+    \gdef\lstFV@fancyvrb{\lst@RequireAspects{fancyvrb}\lstFV@fancyvrb}
+\fi
+\@ifundefined{ocp}{}
+    {\lst@AddToHook{OutputBox}%
+         {\let\lst@ProcessLetter\@firstofone
+          \let\lst@ProcessDigit\@firstofone
+          \let\lst@ProcessOther\@firstofone}}
+\DeclareOption*{\expandafter\lst@ProcessOption\CurrentOption\relax}
+\def\lst@ProcessOption#1#2\relax{%
+    \ifx #1!%
+        \lst@DeleteKeysIn\lst@loadaspects{#2}%
+    \else
+        \lst@lAddTo\lst@loadaspects{,#1#2}%
+    \fi}
+\@ifundefined{lst@loadaspects}
+  {\def\lst@loadaspects{strings,comments,escape,style,language,%
+      keywords,labels,lineshape,frames,emph,index}%
+  }{}
+\InputIfFileExists{lstpatch.sty}{}{}
+\let\lst@ifsavemem\iffalse
+\DeclareOption{savemem}{\let\lst@ifsavemem\iftrue}
+\DeclareOption{noaspects}{\let\lst@loadaspects\@empty}
+\ProcessOptions
+\lst@RequireAspects\lst@loadaspects
+\let\lst@loadaspects\@empty
+\lst@UseHook{SetStyle}\lst@UseHook{EmptyStyle}
+\lst@UseHook{SetLanguage}\lst@UseHook{EmptyLanguage}
+\InputIfFileExists{listings.cfg}{}{}
+\InputIfFileExists{lstlocal.cfg}{}{}
+\endinput
+%%
+%% End of file `listings.sty'.
