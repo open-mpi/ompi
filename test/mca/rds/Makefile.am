@@ -19,13 +19,13 @@ include $(top_srcdir)/config/Makefile.options
 AM_CPPFLAGS = -I$(top_srcdir)/test/support -DOMPI_ENABLE_DEBUG_OVERRIDE=1
 
 check_PROGRAMS = \
-	test_rds_resfile
+	test_rds
 
 TESTS = \
 	$(check_PROGRAMS)
 
-test_rds_resfile_SOURCES = test_rds_resfile.c
-test_rds_resfile_LDADD = \
+test_rds_SOURCES = test_rds.c
+test_rds_LDADD = \
         $(top_builddir)/test/support/libsupport.a \
         $(top_builddir)/src/libmpi.la 
-test_rds_resfile_DEPENDENCIES = $(test_rds_resfile_LDADD)
+test_rds_DEPENDENCIES = $(test_rds_LDADD)

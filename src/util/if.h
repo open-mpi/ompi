@@ -111,6 +111,15 @@ OMPI_DECLSPEC int ompi_ifindextomask(int if_index, struct sockaddr*, int);
  */
 OMPI_DECLSPEC bool ompi_ifislocal(char *hostname);
 
+/**
+ * Finalize the functions to release malloc'd data
+ * 
+ * @param none
+ * @return OMPI_SUCCESS if no problems encountered
+ * @return OMPI_ERROR if data could not be released
+ */
+OMPI_DECLSPEC int ompi_iffinalize(void);
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

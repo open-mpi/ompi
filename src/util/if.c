@@ -255,6 +255,7 @@ static int ompi_ifinit(void)
         memcpy(intf_ptr, &intf, sizeof(intf));
         ompi_list_append(&ompi_if_list, (ompi_list_item_t*)intf_ptr);
     }
+    free(ifconf.ifc_req);
     close(sd);
     
 #else /* WIN32 implementation begins */
@@ -356,6 +357,23 @@ static int ompi_ifinit(void)
         }
     }
     
+#endif
+    return OMPI_SUCCESS;
+}
+
+
+/*
+ *  Finalize the list of configured interfaces to free malloc'd memory
+ */
+
+int ompi_iffinalize(void) 
+{
+#ifndef WIN32
+    ompi_if_t *intf_ptr;
+    
+    while (NULL != (intf_ptr = (ompi_if_t*)ompi_list_remove_first(&ompi_if_list))) {
+        OBJ_RELEASE(intf_ptr);
+    }
 #endif
     return OMPI_SUCCESS;
 }

@@ -606,7 +606,7 @@ int orte_gpr_replica_module_init(void)
  */
 int orte_gpr_replica_finalize(void)
 {
-    int i;
+    int i, j;
     orte_gpr_replica_segment_t** seg;
     orte_gpr_replica_triggers_t** trig;
     orte_gpr_replica_callbacks_t* cb;
@@ -618,7 +618,9 @@ int orte_gpr_replica_finalize(void)
     seg = (orte_gpr_replica_segment_t**)(orte_gpr_replica.segments)->addr;
     for (i=0; i < (orte_gpr_replica.segments)->size; i++) {
          if (NULL != seg[i]) {
+            j = i;
              OBJ_RELEASE(seg[i]);
+             orte_pointer_array_set_item(orte_gpr_replica.segments, j, NULL);
          }
     }
     OBJ_RELEASE(orte_gpr_replica.segments);
@@ -626,7 +628,9 @@ int orte_gpr_replica_finalize(void)
     trig = (orte_gpr_replica_triggers_t**)(orte_gpr_replica.triggers)->addr;
     for (i=0; i < (orte_gpr_replica.triggers)->size; i++) {
          if (NULL != trig[i]) {
+             j = i;
              OBJ_RELEASE(trig[i]);
+             orte_pointer_array_set_item(orte_gpr_replica.triggers, j, NULL);
          }
     }
     OBJ_RELEASE(orte_gpr_replica.triggers);

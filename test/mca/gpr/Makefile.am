@@ -25,6 +25,7 @@ check_PROGRAMS = \
     gpr_mem_leaks \
     gpr_overwrite \
     gpr_put_get \
+    gpr_threads \
     gpr_triggers
 
 TESTS = \
@@ -61,6 +62,13 @@ gpr_put_get_LDADD = \
         $(replica) \
         $(top_builddir)/test/support/libsupport.a 
 gpr_put_get_DEPENDENCIES = $(gpr_put_get_LDADD)
+
+gpr_threads_SOURCES = gpr_threads.c
+gpr_threads_LDADD = \
+        $(top_builddir)/src/libmpi.la \
+        $(replica) \
+        $(top_builddir)/test/support/libsupport.a 
+gpr_threads_DEPENDENCIES = $(gpr_threads_LDADD)
 
 gpr_triggers_SOURCES = gpr_triggers.c
 gpr_triggers_LDADD = \

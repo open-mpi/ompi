@@ -27,6 +27,7 @@
 #include "mca/gpr/base/base.h"
 #include "mca/iof/base/base.h"
 #include "mca/rmgr/base/base.h"
+#include "util/if.h"
 #include "util/malloc.h"
 #include "util/output.h"
 #include "util/session_dir.h"
@@ -65,6 +66,9 @@ int orte_finalize(void)
     orte_sys_info_finalize();
     orte_proc_info_finalize();
     orte_univ_info_finalize();
+    
+    /* cleanup the if data */
+    ompi_iffinalize();
     
     /* finalize the mca */
     mca_base_close();
