@@ -91,6 +91,9 @@ static inline int mca_ptl_ib_param_register_int(
 int mca_ptl_ib_component_open(void)
 {
     D_PRINT("Opening InfiniBand component ...\n");
+
+    OBJ_CONSTRUCT(&mca_ptl_ib_component.ib_procs, ompi_list_t);
+    
     /* register super component parameters */
     mca_ptl_ib_module.super.ptl_exclusivity =
         mca_ptl_ib_param_register_int ("exclusivity", 0);
@@ -390,7 +393,7 @@ mca_ptl_base_module_t** mca_ptl_ib_component_init(int *num_ptl_modules,
 int mca_ptl_ib_component_control(int param, void* value, size_t size)
 {
     /* Stub */
-    fprintf(stderr,"[%s][%d]\n", __FILE__, __LINE__);
+    D_PRINT("Stub\n");
     return OMPI_SUCCESS;
 }
 
@@ -402,6 +405,6 @@ int mca_ptl_ib_component_control(int param, void* value, size_t size)
 int mca_ptl_ib_component_progress(mca_ptl_tstamp_t tstamp)
 {
     /* Stub */
-    fprintf(stderr,"[%s][%d]\n", __FILE__, __LINE__);
+    D_PRINT("Stub\n");
     return OMPI_SUCCESS;
 }

@@ -52,35 +52,26 @@ OBJ_CLASS_INSTANCE(mca_ptl_ib_send_request_t,
         mca_pml_base_send_request_t,
         NULL, NULL);
 
-OBJ_CLASS_INSTANCE(mca_ptl_ib_peer_t, 
-        ompi_list_item_t,
-        NULL, NULL);
 
-OBJ_CLASS_INSTANCE(mca_ptl_ib_proc_t, 
-        ompi_list_item_t,
-        NULL, NULL);
-
-int mca_ptl_ib_add_procs(
-    struct mca_ptl_base_module_t* ptl, 
-    size_t nprocs, 
-    struct ompi_proc_t **ompi_procs, 
-    struct mca_ptl_base_peer_t** peers, 
-    ompi_bitmap_t* reachable)
+int mca_ptl_ib_add_procs(struct mca_ptl_base_module_t* base_module, 
+        size_t nprocs, struct ompi_proc_t **ompi_procs, 
+        struct mca_ptl_base_peer_t** peers, ompi_bitmap_t* reachable)
 {
-    int i;
+    int i, rc;
     struct ompi_proc_t* ompi_proc;
-    mca_ptl_ib_proc_t* ptl_proc;
-    mca_ptl_base_peer_t* ptl_peer;
+
+    mca_ptl_ib_proc_t* module_proc;
+
+    mca_ptl_base_peer_t* module_peer;
 
     D_PRINT("Adding %d procs\n", nprocs);
-
 
     for(i = 0; i < nprocs; i++) {
 
         ompi_proc = ompi_procs[i];
-        ptl_proc = mca_ptl_ib_proc_create(ompi_proc);
+        module_proc = mca_ptl_ib_proc_create(ompi_proc);
 
-        if(NULL == ptl_proc) {
+        if(NULL == module_proc) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
 
@@ -90,9 +81,9 @@ int mca_ptl_ib_add_procs(
          * don't bind this PTL instance to the proc.
          */
 
-        OMPI_THREAD_LOCK(&ptl_proc->proc_lock);
-        if(ptl_proc->proc_addr_count == ptl_proc->proc_peer_count) {
-            OMPI_THREAD_UNLOCK(&ptl_proc->proc_lock);
+        OMPI_THREAD_LOCK(&module_proc->proc_lock);
+        if(module_proc->proc_addr_count == module_proc->proc_peer_count) {
+            OMPI_THREAD_UNLOCK(&module_proc->proc_lock);
             return OMPI_ERR_UNREACH;
         }
 
@@ -100,26 +91,25 @@ int mca_ptl_ib_add_procs(
          * instances that are trying to reach this destination. 
          * Cache the peer instance on the ptl_proc.
          */
-        ptl_peer = OBJ_NEW(mca_ptl_ib_peer_t);
+        module_peer = OBJ_NEW(mca_ptl_ib_peer_t);
 
-        if(NULL == ptl_peer) {
-            OMPI_THREAD_UNLOCK(&ptl_proc->proc_lock);
+        if(NULL == module_peer) {
+            OMPI_THREAD_UNLOCK(&module_proc->proc_lock);
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
 
-        ptl_peer->peer_ptl = (mca_ptl_ib_module_t*)ptl;
+        module_peer->peer_module = (mca_ptl_ib_module_t*)base_module;
 
-        /*
-        rc = mca_ptl_ib_proc_insert(ptl_proc, ptl_peer);
+        rc = mca_ptl_ib_proc_insert(module_proc, module_peer);
         if(rc != OMPI_SUCCESS) {
-            OBJ_RELEASE(ptl_peer);
-            OMPI_THREAD_UNLOCK(&ptl_proc->proc_lock);
+            OBJ_RELEASE(module_peer);
+            OMPI_THREAD_UNLOCK(&module_proc->proc_lock);
             return rc;
         }
-        */
+
         ompi_bitmap_set_bit(reachable, i);
-        OMPI_THREAD_UNLOCK(&ptl_proc->proc_lock);
-        peers[i] = ptl_peer;
+        OMPI_THREAD_UNLOCK(&module_proc->proc_lock);
+        peers[i] = module_peer;
     }
     return OMPI_SUCCESS;
 }
@@ -130,14 +120,14 @@ int mca_ptl_ib_del_procs(struct mca_ptl_base_module_t* ptl,
         struct mca_ptl_base_peer_t ** peers)
 {
     /* Stub */
-    fprintf(stderr,"[%s][%d]\n", __FILE__, __LINE__);
+    D_PRINT("Stub\n");
     return OMPI_SUCCESS;
 }
 
 int mca_ptl_ib_finalize(struct mca_ptl_base_module_t* ptl)
 {
     /* Stub */
-    fprintf(stderr,"[%s][%d]\n", __FILE__, __LINE__);
+    D_PRINT("Stub\n");
     return OMPI_SUCCESS;
 }
 
@@ -145,7 +135,7 @@ int mca_ptl_ib_request_alloc(struct mca_ptl_base_module_t* ptl,
         struct mca_pml_base_send_request_t** request)
 {
     /* Stub */
-    fprintf(stderr,"[%s][%d]\n", __FILE__, __LINE__);
+    D_PRINT("Stub\n");
     return OMPI_SUCCESS;
 }
 
@@ -154,7 +144,7 @@ void mca_ptl_ib_request_return(struct mca_ptl_base_module_t* ptl,
         struct mca_pml_base_send_request_t* request)
 {
     /* Stub */
-    fprintf(stderr,"[%s][%d]\n", __FILE__, __LINE__);
+    D_PRINT("Stub\n");
 }
 
 /*
@@ -173,7 +163,7 @@ int mca_ptl_ib_send(
     int flags)
 {
     /* Stub */
-    fprintf(stderr,"[%s][%d]\n", __FILE__, __LINE__);
+    D_PRINT("Stub\n");
     return OMPI_SUCCESS;
 }
 
@@ -187,6 +177,6 @@ void mca_ptl_ib_matched(
     mca_ptl_base_module_t* ptl,
     mca_ptl_base_recv_frag_t* frag)
 {
-    fprintf(stderr,"[%s][%d]\n", __FILE__, __LINE__);
     /* Stub */
+    D_PRINT("Stub\n");
 }

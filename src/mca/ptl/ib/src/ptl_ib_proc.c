@@ -6,29 +6,72 @@
 #include "ptl_ib_vapi.h"
 #include "ptl_ib_proc.h"
 
+static void mca_ptl_ib_proc_construct(mca_ptl_ib_proc_t* proc);
+static void mca_ptl_ib_proc_destruct(mca_ptl_ib_proc_t* proc);
+
+OBJ_CLASS_INSTANCE(mca_ptl_ib_proc_t, 
+        ompi_list_item_t, mca_ptl_ib_proc_construct, 
+        mca_ptl_ib_proc_destruct);
+
+void mca_ptl_ib_proc_construct(mca_ptl_ib_proc_t* proc)
+{
+    proc->proc_ompi = 0;
+    proc->proc_addrs = 0;
+    proc->proc_addr_count = 0;
+    proc->proc_peers = 0;
+    proc->proc_peer_count = 0;
+    OBJ_CONSTRUCT(&proc->proc_lock, ompi_mutex_t);
+    /* add to list of all proc instance */
+    OMPI_THREAD_LOCK(&mca_ptl_ib_component.ib_lock);
+    ompi_list_append(&mca_ptl_ib_component.ib_procs, &proc->super);
+    OMPI_THREAD_UNLOCK(&mca_ptl_ib_component.ib_lock);
+}
+
+/*
+ * Cleanup ib proc instance
+ */
+
+void mca_ptl_ib_proc_destruct(mca_ptl_ib_proc_t* proc)
+{
+    /* remove from list of all proc instances */
+    OMPI_THREAD_LOCK(&mca_ptl_ib_component.ib_lock);
+    ompi_list_remove_item(&mca_ptl_ib_component.ib_procs, &proc->super);
+    OMPI_THREAD_UNLOCK(&mca_ptl_ib_component.ib_lock);
+
+    /* release resources */
+    if(NULL != proc->proc_peers) {
+        free(proc->proc_peers);
+    }
+}
+
+
 /*
  * Look for an existing IB process instances based on the associated
  * ompi_proc_t instance.
  */
-/*
-mca_ptl_ib_proc_t* mca_ptl_ib_proc_lookup_ompi(ompi_proc_t* ompi_proc)
+static mca_ptl_ib_proc_t* mca_ptl_ib_proc_lookup_ompi(ompi_proc_t* ompi_proc)
 {
     mca_ptl_ib_proc_t* ib_proc;
-    OMPI_THREAD_LOCK(&mca_ptl_ib_module.ib_lock);
+
+    OMPI_THREAD_LOCK(&mca_ptl_ib_component.ib_lock);
+
     for(ib_proc = (mca_ptl_ib_proc_t*)
-            ompi_list_get_first(&mca_ptl_ib_module.ib_procs);
+            ompi_list_get_first(&mca_ptl_ib_component.ib_procs);
             ib_proc != (mca_ptl_ib_proc_t*)
-            ompi_list_get_end(&mca_ptl_ib_module.ib_procs);
+            ompi_list_get_end(&mca_ptl_ib_component.ib_procs);
             ib_proc  = (mca_ptl_ib_proc_t*)ompi_list_get_next(ib_proc)) {
+
         if(ib_proc->proc_ompi == ompi_proc) {
-            OMPI_THREAD_UNLOCK(&mca_ptl_ib_module.ib_lock);
+            OMPI_THREAD_UNLOCK(&mca_ptl_ib_component.ib_lock);
             return ib_proc;
         }
+
     }
-    OMPI_THREAD_UNLOCK(&mca_ptl_ib_module.ib_lock);
+
+    OMPI_THREAD_UNLOCK(&mca_ptl_ib_component.ib_lock);
+
     return NULL;
 }
-*/
 
 /*
  * Create a IB process structure. There is a one-to-one correspondence
@@ -43,27 +86,26 @@ mca_ptl_ib_proc_t* mca_ptl_ib_proc_create(ompi_proc_t* ompi_proc)
     int rc;
     size_t size;
 
-    mca_ptl_ib_proc_t* ptl_proc = NULL;
+    mca_ptl_ib_proc_t* module_proc = NULL;
 
     /*
-    mca_ptl_ib_proc_t* ptl_proc = 
-        mca_ptl_ib_proc_lookup_ompi(ompi_proc);
+    module_proc = mca_ptl_ib_proc_lookup_ompi(ompi_proc);
 
-    if(ptl_proc != NULL) {
-        return ptl_proc;
+    if(module_proc != NULL) {
+        return module_proc;
     }
     */
 
-    ptl_proc = OBJ_NEW(mca_ptl_ib_proc_t);
+    module_proc = OBJ_NEW(mca_ptl_ib_proc_t);
 
     /* Initialize number of peer */
-    ptl_proc->proc_peer_count = 0;
+    module_proc->proc_peer_count = 0;
 
-    ptl_proc->proc_ompi = ompi_proc;
+    module_proc->proc_ompi = ompi_proc;
 
     /* build a unique identifier (of arbitrary
      * size) to represent the proc */
-    ptl_proc->proc_guid = ompi_proc->proc_name;
+    module_proc->proc_guid = ompi_proc->proc_name;
 
     D_PRINT("Creating proc for %d\n", ompi_proc->proc_name.vpid);
 
@@ -72,15 +114,19 @@ mca_ptl_ib_proc_t* mca_ptl_ib_proc_create(ompi_proc_t* ompi_proc)
     rc = mca_base_modex_recv(
             &mca_ptl_ib_component.super.ptlm_version,
             ompi_proc,
-            (void**)&ptl_proc->proc_addrs,
+            (void**)&module_proc->proc_addrs,
             &size);
 
     if(rc != OMPI_SUCCESS) {
         ompi_output(0, "mca_ptl_ib_proc_create: mca_base_modex_recv: "
                 "failed with return value=%d", rc);
-        OBJ_RELEASE(ptl_proc);
+        OBJ_RELEASE(module_proc);
         return NULL;
     }
+
+    D_PRINT("UD q.p. obtained is: %d, Lid : %d\n",
+            (int)module_proc->proc_addrs[0].ud_qp,
+            (int)module_proc->proc_addrs[0].lid);
 
     if(0 != (size % sizeof(mca_ptl_ib_ud_addr_t))) {
         ompi_output(0, "mca_ptl_ib_proc_create: mca_base_modex_recv: "
@@ -88,21 +134,21 @@ mca_ptl_ib_proc_t* mca_ptl_ib_proc_create(ompi_proc_t* ompi_proc)
         return NULL;
     }
 
-    ptl_proc->proc_addr_count = size / sizeof(mca_ptl_ib_ud_addr_t);
+    module_proc->proc_addr_count = size / sizeof(mca_ptl_ib_ud_addr_t);
 
     /* allocate space for peer array - one for
      * each exported address
      */
 
-    ptl_proc->proc_peers = (mca_ptl_base_peer_t**)
-        malloc(ptl_proc->proc_addr_count * sizeof(mca_ptl_base_peer_t*));
+    module_proc->proc_peers = (mca_ptl_base_peer_t**)
+        malloc(module_proc->proc_addr_count * sizeof(mca_ptl_base_peer_t*));
 
-    if(NULL == ptl_proc->proc_peers) {
-        OBJ_RELEASE(ptl_proc);
+    if(NULL == module_proc->proc_peers) {
+        OBJ_RELEASE(module_proc);
         return NULL;
     }
 
-    return ptl_proc;
+    return module_proc;
 }
 
 
@@ -111,15 +157,14 @@ mca_ptl_ib_proc_t* mca_ptl_ib_proc_create(ompi_proc_t* ompi_proc)
  * already held.  Insert a ptl instance into the proc array and assign 
  * it an address.
  */
-int mca_ptl_ib_proc_insert(mca_ptl_ib_proc_t* ptl_proc, 
-        mca_ptl_base_peer_t* ptl_peer)
+int mca_ptl_ib_proc_insert(mca_ptl_ib_proc_t* module_proc, 
+        mca_ptl_base_peer_t* module_peer)
 {
     int i;
-    struct mca_ptl_ib_module_t *ptl_ib = ptl_peer->peer_ptl;
 
     /* insert into peer array */
-    ptl_peer->peer_proc = ptl_proc;
-    ptl_proc->proc_peers[ptl_proc->proc_peer_count++] = ptl_peer;
+    module_peer->peer_proc = module_proc;
+    module_proc->proc_peers[module_proc->proc_peer_count++] = module_peer;
 
     /*
      * Look through the proc instance for an address that is on the
@@ -127,26 +172,12 @@ int mca_ptl_ib_proc_insert(mca_ptl_ib_proc_t* ptl_proc,
      * unused address.
      */
 
-    for(i=0; i<ptl_proc->proc_addr_count; i++) {
-        /*
-        mca_ptl_ib_ud_addr_t* peer_addr = ptl_proc->proc_addrs + i;
-        */
+    for(i = 0; i < module_proc->proc_addr_count; i++) {
 
-#if 0
-        unsigned long net1 = ptl_ib->ptl_ifaddr.sin_addr.s_addr & ptl_ib->ptl_ifmask.sin_addr.s_addr;
-        unsigned long net2 = peer_addr->addr_inet.s_addr & ptl_ib->ptl_ifmask.sin_addr.s_addr;
+        mca_ptl_ib_ud_addr_t* peer_addr = module_proc->proc_addrs + i;
 
-        if(peer_addr->addr_inuse != 0)
-            continue;
-        if(net1 == net2) {
-            ptl_peer->peer_addr = peer_addr;
-            break;
-        } else if(ptl_peer->peer_addr != 0)
-            ptl_peer->peer_addr = peer_addr;
-#endif
+        module_peer->peer_addr = peer_addr;
     }
-    /*
-    ptl_peer->peer_addr->addr_inuse++;
-    */
+
     return OMPI_SUCCESS;
 }

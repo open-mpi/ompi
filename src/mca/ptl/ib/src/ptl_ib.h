@@ -44,6 +44,7 @@ struct mca_ptl_ib_component_t {
     int   ib_free_list_inc;              /**< number of elements to alloc when growing free lists */
     ompi_free_list_t ib_send_requests;    /**< free list of ib send requests -- sendreq + IB */
     ompi_free_list_t ib_recv_frags;       /**< free list of ib recv fragments */
+    ompi_list_t ib_procs;                 /**< list of ib proc structures */
     ompi_event_t ib_send_event;           /**< event structure for sends */
     ompi_event_t ib_recv_event;           /**< event structure for recvs */
     ompi_mutex_t ib_lock;                 /**< lock for accessing module state */
