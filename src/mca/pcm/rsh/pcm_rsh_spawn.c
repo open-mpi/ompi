@@ -507,10 +507,18 @@ internal_wait_cb(pid_t pid, int status, void *data)
     int ret;
     ompi_process_name_t *proc_name;
     mca_pcm_rsh_module_t *me = (mca_pcm_rsh_module_t*) data;
-    ompi_rte_process_status_t proc_status;
+    ompi_rte_process_status_t *proc_status;
+    volatile int spin = 0;
 
     ompi_output_verbose(10, mca_pcm_base_output, 
                         "process %d exited with status %d", pid, status);
+
+    if (me->debug_callback) {
+        printf("internal_wait_cb in pid %d spinning for attach.\n", getpid());
+	printf("use \"set variable spin = 0\" to stop spinning\n");
+	spin = 1;
+	while (spin != 0) ;
+    }
 
     ret = mca_pcm_base_job_list_get_job_info(me->jobs, pid, &jobid, 
                                              &lower, &upper, true);
@@ -521,11 +529,13 @@ internal_wait_cb(pid_t pid, int status, void *data)
     }
 
     /* unregister all the procs */
-    proc_status.status_key = OMPI_PROC_KILLED;
-    proc_status.exit_code = (ompi_exit_code_t)status;
     for (i = lower ; i <= upper ; ++i) {
-        proc_name = mca_ns_base_create_process_name(0, jobid, i);
-        ompi_rte_set_process_status(&proc_status, proc_name);
+	proc_name = mca_ns_base_create_process_name(0, jobid, i);
+        proc_status = ompi_rte_get_process_status(proc_name);
+        proc_status->status_key = OMPI_PROC_KILLED;
+        proc_status->exit_code = (ompi_exit_code_t)status;
+	printf("setting process status\n");
+        ompi_rte_set_process_status(proc_status, proc_name);
         free(proc_name);
     }
 
