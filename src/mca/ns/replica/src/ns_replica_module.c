@@ -49,17 +49,17 @@ mca_ns_base_module_t mca_ns_replica_module = {
 mca_ns_t mca_ns_replica = {
     ns_replica_create_cellid,
     ns_replica_create_jobid,
-    ns_replica_create_process_name,
+    ns_base_create_process_name,
     ns_replica_reserve_range,
     ns_replica_free_name,
-    ns_replica_get_proc_name_string,
-    ns_replica_get_vpid_string,
-    ns_replica_get_jobid_string,
-    ns_replica_get_cellid_string,
-    ns_replica_get_vpid,
-    ns_replica_get_jobid,
-    ns_replica_get_cellid,
-    ns_replica_compare
+    ns_base_get_proc_name_string,
+    ns_base_get_vpid_string,
+    ns_base_get_jobid_string,
+    ns_base_get_cellid_string,
+    ns_base_get_vpid,
+    ns_base_get_jobid,
+    ns_base_get_cellid,
+    ns_base_compare
 };
 
 
@@ -96,12 +96,6 @@ ompi_list_t ompi_name_tracker;
 int
 mca_ns_replica_open(void)
 {
-    last_used_cellid = 0;
-    last_used_jobid = 0;
-
-    /* initialize the name tracker */
-    OBJ_CONSTRUCT(&ompi_name_tracker, ompi_list_t);
-
     return OMPI_SUCCESS;
 }
 
@@ -116,12 +110,13 @@ mca_ns_replica_close(void)
 
 mca_ns_t* mca_ns_replica_init(bool *allow_multi_user_threads, bool *have_hidden_threads)
 {
-    return NULL;
-    /* should I be a replica or not? */
+    last_used_cellid = 0;
+    last_used_jobid = 0;
 
-    /* if no, return NULL */
+    /* initialize the name tracker */
+    OBJ_CONSTRUCT(&ompi_name_tracker, ompi_list_t);
 
-    /* if yes, setup storage for tracking names and return &mca_ns_replica */
+    return &mca_ns_replica;
 }
 
 /*
