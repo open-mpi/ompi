@@ -9,18 +9,23 @@
 #include "include/constants.h"
 #include "mca/mca.h"
 #include "mca/oob/oob.h"
-#include "mca/oob/cofs/src/oob_cofs.h"
+#include "oob_cofs.h"
 #include "include/types.h"
+#include "util/proc_info.h"
+#include "util/output.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
+
+
+
 /*
  * Struct of function pointers and all that to let us be initialized
  */
-mca_oob_base_module_1_0_0_t mca_oob_cofs_module = {
+mca_oob_base_component_1_0_0_t mca_oob_cofs_module = {
   {
     MCA_OOB_BASE_VERSION_1_0_0,
 
@@ -38,15 +43,16 @@ mca_oob_base_module_1_0_0_t mca_oob_cofs_module = {
   mca_oob_cofs_finalize
 };
 
-struct mca_oob_1_0_0_t mca_oob_cofs_1_0_0 = {
+mca_oob_t mca_oob_cofs = {
   mca_oob_cofs_send,
   mca_oob_cofs_recv,
-  mca_oob_cofs_recv_nb,
-  mca_oob_cofs_recv_cb
+  mca_oob_cofs_send_nb,
+  mca_oob_cofs_recv_nb
 };
 
 char mca_oob_cofs_comm_loc[OMPI_PATH_MAX];
-int mca_oob_cofs_my_vpid;
+int mca_oob_cofs_my_jobid;
+int mca_oob_cofs_my_procid;
 uint64_t mca_oob_cofs_serial;
 
 int
@@ -64,54 +70,30 @@ mca_oob_cofs_close(void)
 
 
 struct mca_oob_1_0_0_t*
-mca_oob_cofs_init(int *priority, bool *allow_multi_user_threads,
-                  bool *have_hidden_threads)
+mca_oob_cofs_init(bool *allow_multi_user_threads, bool *have_hidden_threads)
 {
   int len;
   char *tmp;
   FILE *fp;
 
-  *priority = 0;
-  *allow_multi_user_threads = true;
-  *have_hidden_threads = true;
-
-  /*
-   * BWB - fix me, make register the "right" way...
-   */
-  tmp = getenv("MCA_common_ompi_cofs_comm_dir");
-  if (tmp == NULL) {
-    /* make it $HOME */
-    tmp = getenv("HOME");
-    if (tmp == NULL) {
-      printf("oob_cofs can not find communication dir\n");
-      return NULL;
-    }
-    snprintf(mca_oob_cofs_comm_loc, OMPI_PATH_MAX, "%s/cofs", tmp);
-  } else {
-    snprintf(mca_oob_cofs_comm_loc, OMPI_PATH_MAX, "%s", tmp);
-  }
-
-  /*
-   * BWB - fix me, make register the "right" way...
-   */
-  /* find our vpid */
-  tmp = getenv("MCA_common_ompi_cofs_my_vpid");
-  if (tmp == NULL) {
-    printf("oob_cofs can not find vpid\n");
-    return NULL;
-  }
-  mca_oob_cofs_my_vpid = atoi(tmp);
+  *allow_multi_user_threads &= true;
 
   /*
    * See if we can write in our directory...
    */
-  len = strlen(mca_oob_cofs_comm_loc) + 32;
+  if((tmp = getenv("OMPI_MCA_oob_cofs_dir")) == NULL) {
+      ompi_output(0, "mca_oob_cofs_init: invalid/missing OMPI_MCA_oob_cofs_dir\n");
+      return NULL;
+  }
+  strncpy(mca_oob_cofs_comm_loc, tmp, sizeof(mca_oob_cofs_comm_loc));
+
+  len = strlen(tmp) + 32;
   tmp = malloc(len);
   if (tmp == NULL) return NULL;
-  snprintf(tmp, len, "%s/oob.%d", mca_oob_cofs_comm_loc, mca_oob_cofs_my_vpid);
+  snprintf(tmp, len, "%s/oob.%d", mca_oob_cofs_comm_loc, mca_oob_cofs_my_procid);
   fp = fopen(tmp, "w");
   if (fp == NULL) {
-    printf("oob_cofs can not write in communication dir\n");
+    printf("oob_cofs: can not write in communication dir\n");
     free(tmp);
     return NULL;
   }
@@ -120,8 +102,7 @@ mca_oob_cofs_init(int *priority, bool *allow_multi_user_threads,
   free(tmp);
 
   mca_oob_cofs_serial = 0;
-  
-  return &mca_oob_cofs_1_0_0;
+  return &mca_oob_cofs;
 }
 
 

@@ -228,18 +228,16 @@ int mca_base_modex_exchange(void)
         size_t i;
         for(i=0; i<nprocs; i++) {
             ompi_proc_t *proc = procs[i];
+            struct iovec iov;
             int rc;
 
             if(proc == self) 
                 continue;
 
-            rc = mca_oob.oob_send(
-                proc->proc_job, 
-                proc->proc_vpid, 
-                0, 
-                self_module->module_data, 
-                self_module->module_data_size);
-            if(rc != OMPI_SUCCESS) {
+            iov.iov_base = self_module->module_data;
+            iov.iov_len = self_module->module_data_size;
+            rc = mca_oob_send(&proc->proc_name, &iov, 1, 0);
+            if(rc != iov.iov_len) {
                free(procs); 
                OMPI_THREAD_UNLOCK(&self->proc_lock);
                return rc;
@@ -255,8 +253,9 @@ int mca_base_modex_exchange(void)
         for(i=0; i<nprocs; i++) {
             ompi_proc_t *proc = procs[i];
             mca_base_modex_module_t* proc_module;
-            int tag = 0;
             int rc;
+            int size;
+            struct iovec iov;
 
             if(proc == self) 
                 continue;
@@ -278,13 +277,21 @@ int mca_base_modex_exchange(void)
                 return OMPI_ERR_OUT_OF_RESOURCE;
             }
 
-            rc = mca_oob.oob_recv(
-                proc->proc_job, 
-                proc->proc_vpid, 
-                &tag, 
-                &proc_module->module_data, 
-                &proc_module->module_data_size);
-            if(rc != OMPI_SUCCESS) {
+            size = mca_oob_recv(&proc->proc_name, 0, 0, MCA_OOB_TRUNC|MCA_OOB_PEEK);
+            if(size <= 0) {
+                free(procs);
+                OMPI_THREAD_UNLOCK(&proc->proc_lock);
+                OMPI_THREAD_UNLOCK(&self->proc_lock);
+                return rc;
+            }
+ 
+            proc_module->module_data = malloc(size); 
+            proc_module->module_data_size = size;
+            iov.iov_base = proc_module->module_data;
+            iov.iov_len = size;
+
+            rc = mca_oob_recv(&proc->proc_name, &iov, 1, 0);
+            if(rc != size) {
                 free(procs);
                 OMPI_THREAD_UNLOCK(&proc->proc_lock);
                 OMPI_THREAD_UNLOCK(&self->proc_lock);

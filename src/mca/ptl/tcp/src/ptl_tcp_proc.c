@@ -57,8 +57,6 @@ void mca_ptl_tcp_proc_destruct(mca_ptl_tcp_proc_t* proc)
     /* release resources */
     if(NULL != proc->proc_peers) 
         free(proc->proc_peers);
-    if(NULL != proc->proc_guid)
-        free(proc->proc_guid);
 }
 
 
@@ -72,9 +70,7 @@ void mca_ptl_tcp_proc_destruct(mca_ptl_tcp_proc_t* proc)
 mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_create(ompi_proc_t* ompi_proc)
 {
     int rc;
-    size_t size = strlen(ompi_proc->proc_job) + 1;
-    uint32_t vpid = htonl(ompi_proc->proc_vpid);
-
+    size_t size;
     mca_ptl_tcp_proc_t* ptl_proc = mca_ptl_tcp_proc_lookup_ompi(ompi_proc);
     if(ptl_proc != NULL)
         return ptl_proc;
@@ -83,14 +79,7 @@ mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_create(ompi_proc_t* ompi_proc)
     ptl_proc->proc_ompi = ompi_proc;
 
     /* build a unique identifier (of arbitrary size) to represent the proc */
-    ptl_proc->proc_guid_size = size + sizeof(uint32_t);
-    ptl_proc->proc_guid = malloc(ptl_proc->proc_guid_size);
-    if(ptl_proc->proc_guid == 0) {
-        OBJ_RELEASE(ptl_proc);
-        return 0;
-    }
-    memcpy(ptl_proc->proc_guid, ompi_proc->proc_job, size);
-    memcpy(((unsigned char*)ptl_proc->proc_guid)+size, &vpid, sizeof(uint32_t));
+    ptl_proc->proc_guid = ompi_proc->proc_name;
 
     /* lookup tcp parameters exported by this proc */
     rc = mca_base_modex_recv(
@@ -146,14 +135,15 @@ static mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_lookup_ompi(ompi_proc_t* ompi_proc)
  * Look for an existing TCP process instance based on the globally unique 
  * process identifier.
  */
-mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_lookup(void *guid, size_t size)
+mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_lookup(const ompi_process_name_t *name)
 {
     mca_ptl_tcp_proc_t* tcp_proc;
+    ompi_process_name_t guid = *name;
     OMPI_THREAD_LOCK(&mca_ptl_tcp_module.tcp_lock);
     for(tcp_proc  = (mca_ptl_tcp_proc_t*)ompi_list_get_first(&mca_ptl_tcp_module.tcp_procs);
         tcp_proc != (mca_ptl_tcp_proc_t*)ompi_list_get_end(&mca_ptl_tcp_module.tcp_procs);
         tcp_proc  = (mca_ptl_tcp_proc_t*)ompi_list_get_next(tcp_proc)) {
-        if(tcp_proc->proc_guid_size == size && memcmp(tcp_proc->proc_guid, guid, size) == 0) {
+        if(memcmp(&tcp_proc->proc_guid, &guid, sizeof(guid)) == 0) {
             OMPI_THREAD_UNLOCK(&mca_ptl_tcp_module.tcp_lock);
             return tcp_proc;
         }

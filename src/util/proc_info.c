@@ -38,12 +38,6 @@ int ompi_proc_info(void)
     ompi_process_info.name->cellid = 0;
     ompi_process_info.name->jobid = 1;
     ompi_process_info.name->procid = 2;
-    sprintf(ompi_process_info.name->name, "%0x.%0x.%0x",
-	    ompi_process_info.name->cellid,
-	    ompi_process_info.name->jobid,
-	    ompi_process_info.name->procid);
-
-
     ompi_process_info.init = true;
     return(OMPI_SUCCESS);
 }

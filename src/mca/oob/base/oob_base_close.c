@@ -18,9 +18,8 @@ int mca_oob_base_close(void)
   /* Close all remaining available modules (may be one if this is a
      OMPI RTE program, or [possibly] multiple if this is ompi_info) */
 
-  mca_base_modules_close(mca_oob_base_output, 
-                         &mca_oob_base_modules_available, NULL);
-
+  OBJ_DESTRUCT(&mca_oob_base_modules);
+  mca_base_modules_close(mca_oob_base_output, &mca_oob_base_components, NULL);
   /* All done */
 
   return OMPI_SUCCESS;

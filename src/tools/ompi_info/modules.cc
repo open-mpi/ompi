@@ -80,7 +80,7 @@ void ompi_info::open_modules()
 
   // oob module opening not implemented yet
   mca_oob_base_open();
-  module_map["oob"] = &mca_oob_base_modules_available;
+  module_map["oob"] = &mca_oob_base_components;
 
   // coll module opening not implemented yet
   mca_coll_base_open();

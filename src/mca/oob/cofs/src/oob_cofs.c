@@ -4,6 +4,9 @@
  *
  */
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include "ompi_config.h"
 
 #include "mca/oob/oob.h"
@@ -16,104 +19,121 @@
 #include <string.h>
 #include <unistd.h>
 
-static int blocking_recv_posted = 0;
-static int do_recv(ompi_job_handle_t job_handle, int vpid, int* tag,
-                   void** data, size_t* data_len);
+static int do_recv(ompi_process_id_t jobid, ompi_process_id_t procid, const struct iovec* iov, int count, int flags);
 
-int
-mca_oob_cofs_send(ompi_job_handle_t job_handle, int vpid, int tag, 
-                  void* data, size_t data_len)
+/**
+*  Similiar to unix send(2).
+*
+* @param peer (IN)   Opaque name of peer process.
+* @param msg (IN)    Array of iovecs describing user buffers and lengths.
+* @param count (IN)  Number of elements in iovec array.
+* @param flags (IN)  Currently unused.
+* @return            OMPI error code (<0) on error number of bytes actually sent.
+*/
+
+int mca_oob_cofs_send(
+    const ompi_process_name_t* peer, 
+    const struct iovec *iov, 
+    int count, 
+    int flags)
 {
   FILE *fp;
-  size_t wlen;
+  int i, wlen;
+  size_t size = 0;
   char msg_file[OMPI_PATH_MAX];
   char msg_file_tmp[OMPI_PATH_MAX];
 
   /* create the file and open it... */
-  snprintf(msg_file, OMPI_PATH_MAX, "%s/%s_%d_%d_%d_%lld.msg", mca_oob_cofs_comm_loc,
-           job_handle, mca_oob_cofs_my_vpid, vpid, tag, mca_oob_cofs_serial);
-  snprintf(msg_file_tmp, OMPI_PATH_MAX, "%s/.%s_%d_%d_%d_%lld.msg", mca_oob_cofs_comm_loc,
-           job_handle, mca_oob_cofs_my_vpid, vpid, tag, mca_oob_cofs_serial);
+  snprintf(msg_file, OMPI_PATH_MAX, "%s/%d_%d_%d_%lld.msg", mca_oob_cofs_comm_loc,
+           mca_oob_base_self.jobid, mca_oob_base_self.procid, peer->procid, mca_oob_cofs_serial);
+  snprintf(msg_file_tmp, OMPI_PATH_MAX, "%s/.%d_%d_%d_%lld.msg", mca_oob_cofs_comm_loc,
+           mca_oob_base_self.jobid, mca_oob_base_self.procid, peer->procid, mca_oob_cofs_serial);
 
   fp = fopen(msg_file_tmp, "w");
   if (fp == NULL) {
     return OMPI_ERR_OUT_OF_RESOURCE;
   }
 
-  /* BWB - do network byte ordering... */
   /* write size */
-  wlen = fwrite(&data_len, sizeof(size_t), 1, fp);
+  for(i=0; i<count; i++)
+      size += iov[i].iov_len;
+  wlen = fwrite(&size, sizeof(size), 1, fp);
   if (wlen != 1) {
     fclose(fp);
     unlink(msg_file_tmp);
     return OMPI_ERR_OUT_OF_RESOURCE;
   }
+  fflush(fp);
 
-  /* write packet */
-  wlen = fwrite(data, 1, data_len, fp);
-  if (wlen != data_len) {
+  /* write msg */
+  wlen = writev(fileno(fp), iov, count);
+  if (wlen != size) {
     fclose(fp);
     unlink(msg_file_tmp);
-    return OMPI_ERR_OUT_OF_RESOURCE;
+    return OMPI_ERROR;
   }
 
   /* publish the thing... */
   fclose(fp);
   rename(msg_file_tmp, msg_file);
-
   mca_oob_cofs_serial++;
+  return wlen;
+}
 
-  return OMPI_SUCCESS;
+
+int mca_oob_cofs_send_nb(
+    const ompi_process_name_t* peer, 
+    const struct iovec *iov, 
+    int count, 
+    int flags,
+    mca_oob_callback_fn_t cbfunc, 
+    void* cbdata)
+{
+    int status = mca_oob_cofs_send(peer, iov, count, flags);
+    if(NULL != cbfunc)
+        cbfunc(status, peer, iov, count, cbdata);
+    return status;
 }
 
 
 int
-mca_oob_cofs_recv(ompi_job_handle_t job_handle, int vpid, int* tag,
-                  void** data, size_t* data_len)
+mca_oob_cofs_recv(ompi_process_name_t* peer, const struct iovec* iov, int count, int flags)
 {
   int ret = OMPI_ERR_WOULD_BLOCK;
-  blocking_recv_posted = 1;
   while (ret == OMPI_ERR_WOULD_BLOCK) {
-    ret = do_recv(job_handle, vpid, tag, data, data_len);
+    ret = do_recv(peer->jobid, peer->procid, iov, count, flags);
     sleep(1);
   }
-  blocking_recv_posted = 0;
   return ret;
 }
 
 
 int
-mca_oob_cofs_recv_nb(ompi_job_handle_t job_handle, int vpid, int* tag,
-                     void** data, size_t* data_len)
+mca_oob_cofs_recv_nb(
+   ompi_process_name_t* peer, 
+   const struct iovec* iov, 
+   int count, 
+   int flags,
+   mca_oob_callback_fn_t cbfunc, 
+   void* cbdata)
 {
-  if (blocking_recv_posted != 0) {
-    return OMPI_ERR_WOULD_BLOCK;
-  }
-
-  return do_recv(job_handle, vpid, tag, data, data_len);
-}
-
-
-int
-mca_oob_cofs_recv_cb(ompi_job_handle_t job_handle, int vpid, int tag, 
-                     mca_oob_base_recv_cb_t callback)
-{
-  return OMPI_ERR_NOT_SUPPORTED;
+   int status = mca_oob_cofs_recv(peer, iov, count, flags);
+   if(NULL != cbfunc)
+       cbfunc(status, peer, iov, count, cbdata);
+   return status;
 }
 
 
 static char*
-find_match(ompi_job_handle_t job_handle, int vpid, int* tag)
+find_match(ompi_process_id_t jobid, ompi_process_id_t procid)
 {
   DIR* dir;
   struct dirent *ent;
-  char tmp_handle[OMPI_PATH_MAX];
   uint64_t tmp_serial;
-  int tmp_tag, tmp_vpid, tmp_myvpid;
+  int tmp_jobid, tmp_procid, tmp_myprocid;
   int ret;
   bool found = false;
   char best_name[OMPI_PATH_MAX];
-  int best_tag;
   uint64_t best_serial = ((1ULL << 63) - 1);
 
   dir = opendir(mca_oob_cofs_comm_loc);
@@ -124,22 +144,19 @@ find_match(ompi_job_handle_t job_handle, int vpid, int* tag)
   while ((ent = readdir(dir)) != NULL) {
     if (ent->d_name[0] == '.') continue;
 
-    ret = sscanf(ent->d_name, "%[^_]_%d_%d_%d_%llu.msg", tmp_handle, &tmp_vpid, 
-                 &tmp_myvpid, &tmp_tag, &tmp_serial);
-    if (ret != 5) {
+    ret = sscanf(ent->d_name, "%d_%d_%d_%llu.msg", &tmp_jobid, &tmp_procid, 
+                 &tmp_myprocid, &tmp_serial);
+    if (ret != 4) {
       continue;
     }
     
-    if (strcmp(tmp_handle, job_handle)) {
+    if (tmp_jobid != jobid) {
       continue;
     }
-    if (tmp_myvpid != mca_oob_cofs_my_vpid) {
+    if (tmp_myprocid != mca_oob_base_self.procid) {
       continue;
     }
-    if (*tag != MCA_OOB_ANY_TAG && tmp_tag != *tag) {
-      continue;
-    }
-    if (tmp_vpid != vpid) {
+    if (tmp_procid != procid) {
       continue;
     }
 
@@ -147,14 +164,12 @@ find_match(ompi_job_handle_t job_handle, int vpid, int* tag)
     found = true;
     if (tmp_serial < best_serial) {
       strcpy(best_name, ent->d_name);
-      best_tag = tmp_tag;
       best_serial = tmp_serial;
     }
   }
 
   closedir(dir);
   if (found) {
-    *tag = best_tag;
     return strdup(best_name);
   } else {
     return NULL;
@@ -162,51 +177,39 @@ find_match(ompi_job_handle_t job_handle, int vpid, int* tag)
 }
 
 
-static int
-do_recv(ompi_job_handle_t job_handle, int vpid, int* tag,
-        void** data, size_t* data_len)
+static int 
+do_recv(ompi_process_id_t jobid, ompi_process_id_t procid, const struct iovec* iov, int count, int flags)
 {
   char *fname;
   char full_fname[OMPI_PATH_MAX];
-  FILE *fp;
+  int fd;
   size_t rlen;
+  size_t size;
 
-  fname = find_match(job_handle, vpid, tag);
+  fname = find_match(jobid, procid);
   if (fname == NULL) {
     return OMPI_ERR_WOULD_BLOCK;
   }
   snprintf(full_fname, OMPI_PATH_MAX, "%s/%s", mca_oob_cofs_comm_loc, fname);
   free(fname);
 
-  fp = fopen(full_fname, "r");
-  if (fp == NULL) {
+  fd = open(full_fname, O_RDONLY);
+  if (fd < 0) {
+    return OMPI_ERROR;
+  }
+  if((flags & MCA_OOB_PEEK) == 0)
+      unlink(full_fname);
+
+  rlen = read(fd, &size, sizeof(size));
+  if (rlen != sizeof(size)) {
+    close(fd);
     return OMPI_ERROR;
   }
 
-  unlink(full_fname);
-
-  rlen = fread(data_len, sizeof(size_t), 1, fp);
-  if (rlen != 1) {
-    fclose(fp);
-    return OMPI_ERROR;
+  if(iov != NULL && count > 0) {
+      rlen = readv(fd, iov, count);
   }
-
-  *data = (void*) malloc(*data_len);
-  if (*data == NULL) {
-    fclose(fp);
-    *data_len = 0;
-    return OMPI_ERROR;
-  }
-
-  rlen = fread(*data, 1, *data_len, fp);
-  if (rlen != *data_len) {
-    fclose(fp);
-    free(*data);
-    *data_len = 0;
-    return OMPI_ERROR;
-  }
-
-  fclose(fp);
-
-  return OMPI_SUCCESS;
+  close(fd);
+  return (flags & MCA_OOB_TRUNC) ? size : rlen;
 }
+

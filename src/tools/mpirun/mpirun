@@ -26,7 +26,7 @@ ompi_debug=0
 #
 ######################################################################
 ompi_hostfile=""
-ompi_jobhandle=""
+ompi_jobid=""
 ompi_app_args=""
 ompi_mydir=""
 ompi_cwd="`pwd`"
@@ -155,7 +155,7 @@ do_start_proc() {
 
     cmd="ssh ${rmt_hostname} -f -n ${rmt_boot} "
     cmd="${cmd} -myvpid ${rmt_vpid}"
-    cmd="${cmd} -numprocs ${ompi_numprocs} -jobhandle ${ompi_jobhandle}"
+    cmd="${cmd} -numprocs ${ompi_numprocs} -cellid 1 -jobid ${ompi_jobid}"
     cmd="${cmd} -pwd ${ompi_cwd} ${ompi_prepped}"
     if test ! -z "${MCA_common_ompi_cofs_comm_dir}" ; then
         cmd="${cmd} -commdir ${MCA_common_ompi_cofs_comm_dir}"
@@ -231,7 +231,7 @@ launch_procs() {
 # Do the prep work
 #
 ######################################################################
-ompi_jobhandle="pcm-cofs-job-handle-${$}-0"
+ompi_jobid="${$}"
 
 
 ######################################################################

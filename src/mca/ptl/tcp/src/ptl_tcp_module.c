@@ -507,8 +507,7 @@ static void mca_ptl_tcp_module_accept(void)
  */
 static void mca_ptl_tcp_module_recv_handler(int sd, short flags, void* user)
 {
-    void* guid; 
-    uint32_t size;
+    ompi_process_name_t guid;
     struct sockaddr_in addr;
     int retval;
     mca_ptl_tcp_proc_t* ptl_proc;
@@ -522,30 +521,11 @@ static void mca_ptl_tcp_module_recv_handler(int sd, short flags, void* user)
     ompi_event_del((ompi_event_t*)user);
     free(user);
 
-    /* recv the size of the process identifier */
-    retval = recv(sd, &size, sizeof(size), 0);
-    if(retval == 0) {
-        close(sd);
-        return;
-    }
-    if(retval != sizeof(size)) {
+    /* recv the process identifier */
+    retval = recv(sd, &guid, sizeof(guid), 0);
+    if(retval != sizeof(guid)) {
         ompi_output(0, "mca_ptl_tcp_module_recv_handler: recv() return value %d != %d, errno = %d", 
-            retval, sizeof(size), errno);
-        close(sd);
-        return;
-    }
-
-    /* recv the identifier */
-    size = ntohl(size);
-    guid = malloc(size);
-    if(guid == 0) {
-        close(sd);
-        return;
-    }
-    retval = recv(sd, guid, size, 0);
-    if(retval != size) {
-        ompi_output(0, "mca_ptl_tcp_module_recv_handler: recv() return value %d != %d, errno = %d", 
-            retval, sizeof(size), errno);
+            retval, sizeof(guid), errno);
         close(sd);
         return;
     }
@@ -561,7 +541,7 @@ static void mca_ptl_tcp_module_recv_handler(int sd, short flags, void* user)
     }
    
     /* lookup the corresponding process */
-    ptl_proc = mca_ptl_tcp_proc_lookup(guid, size);
+    ptl_proc = mca_ptl_tcp_proc_lookup(&guid);
     if(NULL == ptl_proc) {
         ompi_output(0, "mca_ptl_tcp_module_recv_handler: unable to locate process");
         close(sd);

@@ -23,9 +23,8 @@
  * Global variables
  */
 int mca_oob_base_output = -1;
-mca_oob_t mca_oob;
-ompi_list_t mca_oob_base_modules_available;
-mca_oob_base_module_t mca_oob_base_selected_module;
+ompi_list_t mca_oob_base_components;
+ompi_list_t mca_oob_base_modules;
 
 
 /**
@@ -38,11 +37,12 @@ int mca_oob_base_open(void)
 
   if (OMPI_SUCCESS != 
       mca_base_modules_open("oob", 0, mca_oob_base_static_modules, 
-                            &mca_oob_base_modules_available)) {
+                            &mca_oob_base_components)) {
     return OMPI_ERROR;
   }
 
   /* All done */
-
+  OBJ_CONSTRUCT(&mca_oob_base_modules, ompi_list_t);
   return OMPI_SUCCESS;
 }
+
