@@ -1,1 +1,30 @@
+Execute the following instructions to install the Open MPI system from within the directory at the top of the tree:
+
+./autogen.sh
+./configure --prefix=/where/to/install
+make install
+
+To run an MPI program:
+
+mpicc your-code.c
+
+In order to run the program, you need to set some envs (use export for bash etc)
+
+setenv MCA_common_lam_cofs_job_handle pcm-cofs-job-handle
+setenv MCA_common_lam_cofs_comm_dir "/tmp/COFS"
+setenv MCA_OOB_BASE_VPID 0
+setenv MCA_REGISTRY_BASE_VPID 0
+
+
+Then if you need to run say N nodes you need to set
+setenv MCA_common_lam_cofs_num_procs N
+
+Then in the shell for each you would set
+
+setenv MCA_common_lam_cofs_my_vpid MYRANK
+
+where MYRANK is 0 in one, 1 in the next etc
+
+This rather cumbersome process will be replaced soon (we promise).
+
 This is the world's greatest MPI, version 10.0a1r975.
