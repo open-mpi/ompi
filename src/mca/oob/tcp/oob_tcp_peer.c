@@ -502,6 +502,7 @@ static void mca_oob_tcp_peer_recv_start(mca_oob_tcp_peer_t* peer)
     */
     OMPI_THREAD_LOCK(&mca_oob_tcp_component.tcp_match_lock);
     msg = mca_oob_tcp_msg_match_post(&peer->peer_name, hdr.msg_tag, false);
+    OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_match_lock);
     if(NULL != msg) {
         uint32_t posted_size = 0;
         int i;
@@ -530,8 +531,6 @@ static void mca_oob_tcp_peer_recv_start(mca_oob_tcp_peer_t* peer)
         int rc;
         MCA_OOB_TCP_MSG_ALLOC(msg, rc);
         if(NULL == msg) {
-            OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
-            OMPI_THREAD_UNLOCK(&peer->peer_lock);
             return;
         } 
         msg->msg_type = MCA_OOB_TCP_UNEXPECTED;
@@ -555,7 +554,6 @@ static void mca_oob_tcp_peer_recv_start(mca_oob_tcp_peer_t* peer)
        /* continue processing until complete */
        peer->peer_recv_msg = msg;
     }
-    OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_match_lock);
 }
 
 

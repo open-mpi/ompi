@@ -40,21 +40,21 @@ int mca_oob_tcp_recv(
                rc += msg->msg_rwiov[i].iov_len;
         }
         if(MCA_OOB_PEEK & flags) {
-            OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
+            OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_match_lock);
             return rc;
         }
 
         /* otherwise dequeue the message and return to free list */
         ompi_list_remove_item(&mca_oob_tcp_component.tcp_msg_recv, (ompi_list_item_t *) msg);
         MCA_OOB_TCP_MSG_RETURN(msg);
-        OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
+        OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_match_lock);
         return rc;
     }
 
     /* the message has not already been received. So we add it to the receive queue */
     MCA_OOB_TCP_MSG_ALLOC(msg, rc);
     if(NULL == msg) {
-        OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
+        OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_match_lock);
         return rc;
     }
 
@@ -74,7 +74,7 @@ int mca_oob_tcp_recv(
     msg->msg_complete = false;
     msg->msg_peer = *peer;
     ompi_list_append(&mca_oob_tcp_component.tcp_msg_post, (ompi_list_item_t *) msg);
-    OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
+    OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_match_lock);
 
     /* wait for the receive to complete */
     mca_oob_tcp_msg_wait(msg, &rc);
@@ -107,7 +107,7 @@ int mca_oob_tcp_recv_nb(
     int i, rc, size = 0;
 
     /* lock the tcp struct */
-    OMPI_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
+    OMPI_THREAD_LOCK(&mca_oob_tcp_component.tcp_match_lock);
 
     /* check to see if a matching receive is on the list */
     msg = mca_oob_tcp_msg_match_recv(peer, tag);
@@ -124,14 +124,14 @@ int mca_oob_tcp_recv_nb(
                rc += msg->msg_rwiov[i].iov_len;
         }
         if(MCA_OOB_PEEK & flags) {
-             OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
+             OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_match_lock);
              cbfunc(rc, &msg->msg_peer, iov, count, tag, cbdata);
              return 0;
         }
 
         /* otherwise dequeue the message and return to free list */
         ompi_list_remove_item(&mca_oob_tcp_component.tcp_msg_recv, (ompi_list_item_t *) msg);
-        OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
+        OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_match_lock);
         cbfunc(rc, &msg->msg_peer, iov, count, tag, cbdata);
         MCA_OOB_TCP_MSG_RETURN(msg);
         return 0;
@@ -140,7 +140,7 @@ int mca_oob_tcp_recv_nb(
     /* the message has not already been received. So we add it to the receive queue */
     MCA_OOB_TCP_MSG_ALLOC(msg, rc);
     if(NULL == msg) {
-        OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
+        OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_match_lock);
         return rc;
     }
 
@@ -160,7 +160,7 @@ int mca_oob_tcp_recv_nb(
     msg->msg_complete = false;
     msg->msg_peer = *peer;
     ompi_list_append(&mca_oob_tcp_component.tcp_msg_post, (ompi_list_item_t *) msg);
-    OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
+    OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_match_lock);
     return 0;
 }
 
