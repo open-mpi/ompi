@@ -60,7 +60,11 @@ int mca_base_open(void)
 
   /* Register some params */
 
+#ifdef WIN32
+  asprintf(&value, "%s;~/.openmpi/components", OMPI_PKGLIBDIR);
+#else
   asprintf(&value, "%s:~/.openmpi/components", OMPI_PKGLIBDIR);
+#endif
   mca_base_param_component_path = 
     mca_base_param_register_string("base", NULL, "component_path",
                                    "component_path", value);
