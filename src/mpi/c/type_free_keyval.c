@@ -27,7 +27,7 @@ MPI_Type_free_keyval(int *type_keyval)
 
     if (MPI_PARAM_CHECK) {
 	if (NULL == type_keyval) {
-	    return LAM_ERRHANDLER_INVOKE((lam_communicator_t *) NULL,
+	    return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD,
 					 MPI_ERR_ARG, 
 					 FUNC_NAME);
 	}
@@ -35,6 +35,6 @@ MPI_Type_free_keyval(int *type_keyval)
 
     ret = lam_attr_free_keyval(TYPE_ATTR, type_keyval, 0);
 
-    LAM_ERRHANDLER_RETURN(ret, (lam_communicator_t *)NULL,
+    LAM_ERRHANDLER_RETURN(ret, MPI_COMM_WORLD,
 			  MPI_ERR_OTHER, FUNC_NAME);
 }
