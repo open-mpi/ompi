@@ -22,10 +22,12 @@ noinst_LTLIBRARIES = libmpi_c.la
 headers = bindings.h
 
 libmpi_c_la_SOURCES = \
+        alloc_mem.c \
 	comm_get_name.c \
 	comm_set_name.c \
 	init.c \
-	finalize.c
+	finalize.c \
+        free_mem.c
 
 libmpi_c_la_LIBADD	= $(profile_lib)
 

@@ -27,10 +27,12 @@ noinst_LTLIBRARIES = $(f77_lib)
 headers = defines.h
 
 nodist_libmpi_f77_profile_la_SOURCES = \
+        palloc_mem_f.c \
 	pcomm_get_name_f.c \
 	pcomm_set_name_f.c \
 	pinit_f.c \
-	pfinalize_f.c
+	pfinalize_f.c \
+        pfree_mem_f.c
 
 # Sym link in the sources from the real MPI directory
 

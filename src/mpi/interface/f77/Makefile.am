@@ -36,10 +36,12 @@ headers = \
 	prototypes.h
 
 libmpi_f77_la_SOURCES = \
+        alloc_mem_f.c \
 	comm_get_name_f.c \
 	comm_set_name_f.c \
 	init_f.c \
-	finalize_f.c
+	finalize_f.c \
+        free_mem_f.c
 
 libmpi_f77_la_LIBADD	= $(profile_lib)
 
