@@ -340,6 +340,7 @@ void *lam_memcpy_sum32(void *restrict dst,
             state->partial_size = 0;
             state->partial_int = 0;
         }
+#if 0
         if (intaligned(q)) {
             for (i = 0; i < csumlenresidue / sizeof(uint32_t); i++) {
                 csum += *q++;
@@ -351,6 +352,7 @@ void *lam_memcpy_sum32(void *restrict dst,
                 q++;
             }
         }
+#endif
         csumlenresidue -= i * sizeof(uint32_t);
         if (csumlenresidue) {
             temp = 0;
