@@ -162,8 +162,9 @@ OMPI_DECLSPEC int ompi_request_finalize(void);
 
 static inline int ompi_request_cancel(ompi_request_t* request)
 {
-    if(request->req_cancel != NULL)
+    if (request->req_cancel != NULL) {
         return request->req_cancel(request, true);
+    }
     return OMPI_SUCCESS;
 }
 
@@ -178,7 +179,7 @@ OMPI_DECLSPEC int ompi_request_complete(ompi_request_t* request);
 /**
  * Free a request.
  *
- * @param request (IN)   Pointer to request.
+ * @param request (INOUT)   Pointer to request.
  */
 
 static inline int ompi_request_free(ompi_request_t** request)
