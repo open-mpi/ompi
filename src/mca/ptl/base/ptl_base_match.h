@@ -23,11 +23,8 @@ struct mca_ptl_base_recv_frag_t;
  * @param additional_matches (OUT)  List of additional matches 
  * @return                          OMPI_SUCCESS or error status on failure.
  */
-OMPI_DECLSPEC bool mca_ptl_base_match(
-    mca_ptl_base_match_header_t *frag_header,
-    struct mca_ptl_base_recv_frag_t *frag_desc, 
-    ompi_list_t *additional_matches,
-    bool* additional_match);
+OMPI_DECLSPEC bool mca_ptl_base_match(mca_ptl_base_match_header_t *frag_header,
+    struct mca_ptl_base_recv_frag_t *frag_desc, ompi_list_t *additional_matches);
 
 /**
  * RCS/CTS receive side matching

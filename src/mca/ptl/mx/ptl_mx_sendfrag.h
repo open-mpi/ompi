@@ -82,7 +82,7 @@ do { \
     /* if this is an ack - simply return to pool */ \
     if(request == NULL) { \
         MCA_PTL_MX_SEND_FRAG_RETURN(frag); \
-        return; \
+        break; \
     } \
  \
     /* Done when: \
