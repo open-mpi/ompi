@@ -18,8 +18,8 @@ int lam_setup_per_proc_shmem_pools(int npools)
     ssize_t min_alloc_size = 4 * getpagesize();
     int n_array_elts_add = 10;
     
-    STATIC_INIT(lam_per_proc_shmem_pools, &fixed_mem_pool_cls);
-    lam_fmp_init_with(&lam_per_proc_shmem_pools,
+    OBJ_CONSTRUCT(&lam_per_proc_shmem_pools, lam_fixed_mpool_t);
+    lam_fmp_construct_with(&lam_per_proc_shmem_pools,
                                   initial_alloc, min_alloc_size,
                                   npools, n_array_elts_add, 1);
     

@@ -10,3 +10,7 @@ doxygen
 bin
 lib
 include
+cscope.*
+etags
+
+

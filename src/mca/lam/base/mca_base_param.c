@@ -279,7 +279,7 @@ static int param_register(const char *type_name, const char *module_name,
   /* Initialize the array if it has never been initialized */
 
   if (!initialized) {
-    lam_arr_init(&mca_base_params);
+    lam_arr_construct(&mca_base_params);
     initialized = true;
   }
 
@@ -290,7 +290,7 @@ static int param_register(const char *type_name, const char *module_name,
   if (NULL == param) {
     return LAM_ERR_OUT_OF_RESOURCE;
   }
-  SUPER_INIT(&(param->super), &lam_object_cls);
+  OBJ_CONSTRUCT_SUPER(&(param->super), lam_object_t);
   param->mbp_type = type;
   param->mbp_keyval = -1;
 

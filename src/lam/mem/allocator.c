@@ -8,12 +8,17 @@
 void *lam_allocator_malloc(lam_allocator_t *allocator, size_t chunk_size);
 void lam_allocator_default_free(lam_allocator_t *allocator, void *base_ptr);
 
-lam_class_info_t      allocator_cls = {"lam_allocator_t", &lam_object_cls, 
-                                (class_init_t)lam_allocator_init, (class_destroy_t)lam_obj_destroy};
+lam_class_info_t lam_allocator_t_class_info = {
+    "lam_allocator_t",
+    CLASS_INFO(lam_object_t), 
+    (lam_construct_t) lam_allocator_construct,
+    (lam_destruct_t) lam_object_destruct
+};
 
-void lam_allocator_init(lam_allocator_t *allocator)
+
+void lam_allocator_construct(lam_allocator_t *allocator)
 {
-    SUPER_INIT(allocator, &lam_object_cls);
+    OBJ_CONSTRUCT_SUPER(allocator, lam_object_t);
     allocator->alc_alloc_fn = lam_allocator_malloc;
     allocator->alc_free_fn = lam_allocator_free;
     allocator->alc_is_shared = 0;

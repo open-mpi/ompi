@@ -25,19 +25,23 @@ static int lam_free_lists_create_more_elts(lam_free_lists_t *flist, int pool_idx
 
 static void *lam_free_lists_get_mem_chunk(lam_free_lists_t *flist, int index, size_t *len, int *err);
 
-static int lam_free_lists_mem_pool_init(lam_free_lists_t *flist, int nlists, long pages_per_list, ssize_t chunk_size,
+static int lam_free_lists_mem_pool_construct(lam_free_lists_t *flist, int nlists, long pages_per_list, ssize_t chunk_size,
                       size_t page_size, long min_pages_per_list,
                       long default_min_pages_per_list, long default_pages_per_list,
                       long max_pages_per_list, ssize_t max_mem_in_pool);
 
-lam_class_info_t lam_free_lists_cls = {"lam_free_lists_t", &lam_object_cls, 
-    (class_init_t)lam_free_lists_init, (class_destroy_t)lam_free_lists_destroy};
+lam_class_info_t lam_free_lists_t_class_info = {
+    "lam_free_lists_t",
+    CLASS_INFO(lam_object_t), 
+    (lam_construct_t) lam_free_lists_construct,
+    (lam_destruct_t) lam_free_lists_destruct
+};
 
 
-void lam_free_lists_init(lam_free_lists_t *flist)
+void lam_free_lists_construct(lam_free_lists_t *flist)
 {
-    SUPER_INIT(flist, lam_free_lists_cls.cls_parent);
-    lam_mutex_init(&flist->fl_lock);
+    OBJ_CONSTRUCT_SUPER(flist, lam_object_t);
+    lam_mutex_construct(&flist->fl_lock);
     flist->fl_pool = NULL;
     flist->fl_elt_cls = NULL;
     flist->fl_description = NULL;
@@ -62,7 +66,7 @@ void lam_free_lists_init(lam_free_lists_t *flist)
 }
 
 
-void lam_free_lists_destroy(lam_free_lists_t *flist)
+void lam_free_lists_destruct(lam_free_lists_t *flist)
 {
     int         i;
     
@@ -93,11 +97,11 @@ void lam_free_lists_destroy(lam_free_lists_t *flist)
         free(flist->fl_chunks_returned);
 #endif
     
-    SUPER_DESTROY(flist, lam_free_lists_cls.cls_parent);
+    OBJ_DESTRUCT_SUPER(flist, lam_object_t);
 }
 
 
-int lam_free_lists_init_with(
+int lam_free_lists_construct_with(
         lam_free_lists_t *flist, 
         int nlists,
         int pages_per_list,
@@ -113,7 +117,7 @@ int lam_free_lists_init_with(
         bool enforce_affinity,
         lam_mem_pool_t *mem_pool)
 {
-    /* lam_free_lists_init must have been called prior to calling this function */
+    /* lam_free_lists_construct must have been called prior to calling this function */
     size_t  max_mem_in_pool;
     size_t  initial_mem_per_list;
     long    max_mem_per_list;
@@ -133,7 +137,7 @@ int lam_free_lists_init_with(
     {
         /* instantiate memory pool */
         max_mem_in_pool = max_pages_per_list * page_size;
-        err = lam_free_lists_mem_pool_init(
+        err = lam_free_lists_mem_pool_construct(
             flist,
             nlists, 
             pages_per_list, 
@@ -205,7 +209,7 @@ int lam_free_lists_init_with(
           lam_abort(1, "Error: Out of memory");
         }
 
-        STATIC_INIT(flist->fl_free_lists[list], &lam_seg_list_cls);
+        OBJ_CONSTRUCT(&flist->fl_free_lists[list], lam_seg_list_t);
         
         lam_sgl_set_min_bytes_pushed(flist->fl_free_lists[list],
                                      initial_mem_per_list);
@@ -264,7 +268,7 @@ int lam_free_lists_init_with(
 }
 
 
-static int lam_free_lists_mem_pool_init(lam_free_lists_t *flist,
+static int lam_free_lists_mem_pool_construct(lam_free_lists_t *flist,
                       int nlists, long pages_per_list, ssize_t chunk_size,
                       size_t page_size, long min_pages_per_list,
                       long default_min_pages_per_list, long default_pages_per_list,
@@ -297,14 +301,15 @@ static int lam_free_lists_mem_pool_init(lam_free_lists_t *flist,
             (lam_mem_pool_t *)lam_fmp_get_mem_segment(&lam_shmem_pools,
                                                       to_alloc, 
                                                       CACHE_ALIGNMENT, 0);
-        if ( flist->fl_pool )
-            STATIC_INIT(flist->fl_pool, &shmem_pool_cls);
+        if ( flist->fl_pool ) {
+            OBJ_CONSTRUCT(&flist->fl_pool, shmem_pool_t);
+        }
     } else {
         /* process private memory allocation */
-        flist->fl_pool = OBJ_CREATE(lam_mem_pool_t, &mem_pool_cls);
+        flist->fl_pool = OBJ_NEW(lam_mem_pool_t);
     }
 
-    err = lam_mp_init_with(
+    err = lam_mp_construct_with(
         flist->fl_pool, 
         mem_in_pool, 
         max_mem_in_pool,
@@ -449,7 +454,9 @@ static int lam_free_lists_create_more_elts(lam_free_lists_t *flist, int pool_idx
     current_loc = (char *) ptr;
     for (desc = 0; desc < flist->fl_elt_per_chunk; desc++)
     {
-        STATIC_INIT(*(lam_list_item_t *)current_loc, flist->fl_elt_cls);
+        /* bypass OBJ_CONSTRUCT() */
+        OBJECT(current_loc)->obj_class_info = flist->fl_elt_cls;
+        OBJECT(current_loc)->obj_class_info->cls_construct(OBJECT(current_loc));
         current_loc += flist->fl_elt_size;
     }
     

@@ -13,7 +13,7 @@ int lam_datatype_copy(void *dst,
                       size_t count,
                       lam_datatype_t *d,
                       lam_memcpy_fn_t *memcpy_fn,
-                      void *csum)
+                      lam_memcpy_state_t *csum)
 {
     int status;
 

@@ -14,7 +14,7 @@
 #include "ptl_tcp_sendfrag.h"
 
 
-extern lam_class_info_t mca_ptl_tcp_send_request_cls;
+extern lam_class_info_t mca_ptl_tcp_send_request_t_class_info;
 
 struct mca_ptl_tcp_send_request_t {
    mca_ptl_base_send_request_t super;

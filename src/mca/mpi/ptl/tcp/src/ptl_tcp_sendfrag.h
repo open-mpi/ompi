@@ -13,7 +13,7 @@
 #include "mca/mpi/ptl/base/ptl_base_sendfrag.h"
 
 
-extern lam_class_info_t mca_ptl_tcp_send_frag_cls;
+extern lam_class_info_t mca_ptl_tcp_send_frag_t_class_info;
 
 
 struct mca_ptl_tcp_send_frag_t {
@@ -28,8 +28,8 @@ struct mca_ptl_tcp_send_frag_t {
 typedef struct mca_ptl_tcp_send_frag_t mca_ptl_tcp_send_frag_t;
 
 
-void mca_ptl_tcp_send_frag_init(mca_ptl_tcp_send_frag_t*);
-void mca_ptl_tcp_send_frag_destroy(mca_ptl_tcp_send_frag_t*);
+void mca_ptl_tcp_send_frag_construct(mca_ptl_tcp_send_frag_t*);
+void mca_ptl_tcp_send_frag_destruct(mca_ptl_tcp_send_frag_t*);
 bool mca_ptl_tcp_send_frag_handler(mca_ptl_tcp_send_frag_t*, int sd);
 
 void mca_ptl_tcp_send_frag_reinit(

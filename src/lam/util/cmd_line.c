@@ -106,12 +106,12 @@ lam_cmd_line_t *lam_cmd_line_create(void)
      only thread that has this instance), there's no need to lock it
      right now. */
 
-  lam_mutex_init(&cmd->lcl_mutex);
+  lam_mutex_construct(&cmd->lcl_mutex);
 
   /* Initialize the lists */
 
-  lam_list_init(&cmd->lcl_options);
-  lam_list_init(&cmd->lcl_params);
+  lam_list_construct(&cmd->lcl_options);
+  lam_list_construct(&cmd->lcl_params);
 
   /* Initialize the argc/argv pairs */
 
@@ -225,7 +225,7 @@ int lam_cmd_line_make_opt(lam_cmd_line_t *cmd, char short_name,
   option = malloc(sizeof(cmd_line_option_t));
   if (NULL == option)
     return LAM_ERR_OUT_OF_RESOURCE;
-  lam_list_item_init((lam_list_item_t *) option);
+  lam_list_item_construct((lam_list_item_t *) option);
 
   option->clo_short_name = short_name;
   if (NULL != long_name) {
@@ -393,7 +393,7 @@ int lam_cmd_line_parse(lam_cmd_line_t *cmd, bool ignore_unknown,
           return LAM_ERR_OUT_OF_RESOURCE;
         }
         item = (lam_list_item_t *) param;
-        lam_list_item_init(item);
+        lam_list_item_construct(item);
         param->clp_arg = cmd->lcl_argv[i];
         param->clp_option = option;
         param->clp_argc = 0;

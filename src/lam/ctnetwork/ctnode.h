@@ -40,7 +40,7 @@ typedef struct lam_ctnode_class
  */
 
 
-extern lam_ctnode_class_t     hypercube_cls;
+extern lam_ctnode_class_t     hypercube_t_class_info;
 
 
 
@@ -64,8 +64,8 @@ typedef struct lam_ctnode
 } lam_ctnode_t;
 
 
-void lam_ctn_init(lam_ctnode_t *node);
-void lam_ctn_destroy(lam_ctnode_t *node);
+void lam_ctn_construct(lam_ctnode_t *node);
+void lam_ctn_destruct(lam_ctnode_t *node);
 
 /*
  *
@@ -153,6 +153,6 @@ typedef struct lam_hcube
     unsigned int    hc_hsize;           /* hc_hsize = log2(# nodes in network) */
 } lam_hcube_t;
 
-extern lam_class_info_t     hcube_cls;
+extern lam_class_info_t     hcube_t_class_info;
 
 #endif  /* LAM_CT_NODE_H */

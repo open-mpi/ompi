@@ -23,30 +23,30 @@ const int LAM_REACTOR_NOTIFY_ALL = 7;
 #define MAX_DESCRIPTOR_POOL_SIZE 256
 
                                                                             
-lam_class_info_t lam_reactor_cls = {
+lam_class_info_t lam_reactor_t_class_info = {
     "lam_reactor_t", 
-    &lam_object_cls, 
-    (class_init_t)lam_reactor_init,
-    (class_destroy_t)lam_reactor_destroy
-};
-                                                                                                                
-lam_class_info_t lam_reactor_descriptor_cls = {
-    "lam_reactor_t", 
-    &lam_list_item_cls, 
-    (class_init_t)lam_reactor_descriptor_init,
-    (class_destroy_t)lam_reactor_descriptor_destroy
+    CLASS_INFO(lam_object_t), 
+    (lam_construct_t)lam_reactor_construct,
+    (lam_destruct_t)lam_reactor_destruct
 };
 
-                                                                                                                
-void lam_reactor_descriptor_init(lam_reactor_descriptor_t* rd)
+lam_class_info_t lam_reactor_descriptor_t_class_info = {
+    "lam_reactor_descriptor_t", 
+    CLASS_INFO(lam_list_item_t), 
+    (lam_construct_t)lam_reactor_descriptor_construct,
+    (lam_destruct_t)lam_reactor_descriptor_destruct
+};
+
+
+void lam_reactor_descriptor_construct(lam_reactor_descriptor_t* rd)
 {
-    SUPER_INIT(rd, &lam_list_item_cls);
+    OBJ_CONSTRUCT_SUPER(rd, lam_list_item_t);
 }
 
 
-void lam_reactor_descriptor_destroy(lam_reactor_descriptor_t* rd)
+void lam_reactor_descriptor_destruct(lam_reactor_descriptor_t* rd)
 {
-    SUPER_DESTROY(rd, &lam_list_item_cls);
+    OBJ_DESTRUCT_SUPER(rd, lam_object_t);
 }
 
 
@@ -56,7 +56,7 @@ static inline lam_reactor_descriptor_t* lam_reactor_get_descriptor(lam_reactor_t
     if(lam_list_get_size(&r->r_free)) {
         descriptor = (lam_reactor_descriptor_t*)lam_list_remove_first(&r->r_free);
     } else {
-        descriptor = OBJ_CREATE(lam_reactor_descriptor_t, &lam_reactor_descriptor_cls);
+        descriptor = OBJ_NEW(lam_reactor_descriptor_t);
     }
     if (NULL == descriptor) {
       return 0;
@@ -70,15 +70,15 @@ static inline lam_reactor_descriptor_t* lam_reactor_get_descriptor(lam_reactor_t
 }
 
 
-void lam_reactor_init(lam_reactor_t* r)
+void lam_reactor_construct(lam_reactor_t* r)
 { 
-    SUPER_INIT(r, &lam_object_cls);
+    OBJ_CONSTRUCT_SUPER(r, lam_object_t);
 
-    lam_mutex_init(&r->r_mutex);
-    lam_list_init(&r->r_active);
-    lam_list_init(&r->r_free);
-    lam_list_init(&r->r_pending);
-    lam_fh_init(&r->r_hash);
+    lam_mutex_construct(&r->r_mutex);
+    lam_list_construct(&r->r_active);
+    lam_list_construct(&r->r_free);
+    lam_list_construct(&r->r_pending);
+    lam_fh_construct(&r->r_hash);
     lam_fh_resize(&r->r_hash, 1024);
 
     r->r_max = -1;
@@ -91,13 +91,13 @@ void lam_reactor_init(lam_reactor_t* r)
 }
 
 
-void lam_reactor_destroy(lam_reactor_t* r)
+void lam_reactor_destruct(lam_reactor_t* r)
 {
-    lam_list_destroy(&r->r_active);
-    lam_list_destroy(&r->r_free);
-    lam_list_destroy(&r->r_pending);
-    lam_fh_destroy(&r->r_hash);
-    SUPER_DESTROY(r, &lam_object_cls);
+    lam_list_destruct(&r->r_active);
+    lam_list_destruct(&r->r_free);
+    lam_list_destruct(&r->r_pending);
+    lam_fh_destruct(&r->r_hash);
+    OBJ_DESTRUCT_SUPER(r, lam_object_t);
 }
 
 
@@ -225,7 +225,7 @@ void lam_reactor_dispatch(lam_reactor_t* r, int cnt, lam_fd_set_t* rset, lam_fd_
             if(lam_list_get_size(&r->r_free) < MAX_DESCRIPTOR_POOL_SIZE) {
                 lam_list_append(&r->r_free, &descriptor->super);
             } else {
-                lam_reactor_descriptor_destroy(descriptor);
+                lam_reactor_descriptor_destruct(descriptor);
                 free(descriptor);
             }
         } 
@@ -240,7 +240,7 @@ void lam_reactor_dispatch(lam_reactor_t* r, int cnt, lam_fd_set_t* rset, lam_fd_
             if(lam_list_get_size(&r->r_free) < MAX_DESCRIPTOR_POOL_SIZE) {
                 lam_list_append(&r->r_free, &descriptor->super);
             } else {
-                lam_reactor_descriptor_destroy(descriptor);
+                lam_reactor_descriptor_destruct(descriptor);
                 free(descriptor);
             }
         } else {

@@ -9,8 +9,12 @@
 #define ARR_BLK_SZ      20
 
 
-lam_class_info_t lam_array_cls = {"lam_array_t", &lam_object_cls, 
-    (class_init_t) lam_arr_init, (class_destroy_t) lam_arr_destroy};
+lam_class_info_t lam_array_t_class_info = {
+    "lam_array_t",
+    CLASS_INFO(lam_object_t), 
+    (lam_construct_t) lam_arr_construct,
+    (lam_destruct_t) lam_arr_destruct
+};
 
 /*
  *
@@ -18,25 +22,25 @@ lam_class_info_t lam_array_cls = {"lam_array_t", &lam_object_cls,
  *
  */
 
-void lam_arr_init(lam_array_t *arr)
+void lam_arr_construct(lam_array_t *arr)
 {
-    SUPER_INIT(arr, lam_array_cls.cls_parent);
+    OBJ_CONSTRUCT_SUPER(arr, lam_object_t);
     arr->arr_items = NULL;
     arr->arr_size = 0;
     arr->arr_length = 0;
 }
 
-void lam_arr_destroy(lam_array_t *arr)
+void lam_arr_destruct(lam_array_t *arr)
 {
     lam_arr_remove_all(arr);
     free(arr->arr_items);
-    SUPER_DESTROY(arr, lam_array_cls.cls_parent);
+    OBJ_DESTRUCT_SUPER(arr, lam_object_t);
 }
 
-bool lam_arr_init_with(lam_array_t *arr, size_t length)
+bool lam_arr_construct_with(lam_array_t *arr, size_t length)
 {
     /* initializes array with fixed length.
-    lam_arr_init() must have been called first. */
+    lam_arr_construct() must have been called first. */
     if ( arr->arr_items )
     {
         lam_arr_remove_all(arr);

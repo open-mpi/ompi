@@ -5,25 +5,25 @@
 #include "lam/mem/free_list.h"
 
 
-lam_class_info_t lam_free_list_cls = {
+lam_class_info_t lam_free_list_t_class_info = {
     "lam_free_list_t", 
-    &lam_list_cls,
-    (class_init_t)lam_free_list_init, 
-    (class_destroy_t)lam_free_list_destroy
+    CLASS_INFO(lam_list_t),
+    (lam_construct_t)lam_free_list_construct, 
+    (lam_destruct_t)lam_free_list_destruct
 };
                                                                                                                              
 
-void lam_free_list_init(lam_free_list_t* fl)
+void lam_free_list_construct(lam_free_list_t* fl)
 {
-    SUPER_INIT(fl, &lam_list_cls);
+    OBJ_CONSTRUCT_SUPER(fl, lam_list_t);
 }
 
-void lam_free_list_destroy(lam_free_list_t* fl)
+void lam_free_list_destruct(lam_free_list_t* fl)
 {
-    SUPER_DESTROY(fl, &lam_list_cls);
+    OBJ_DESTRUCT_SUPER(fl, lam_object_t);
 }
 
-int lam_free_list_init_with(
+int lam_free_list_construct_with(
     lam_free_list_t *flist,
     size_t elem_size,
     lam_class_info_t* elem_class,
@@ -58,8 +58,11 @@ int lam_free_list_grow(lam_free_list_t* flist, size_t num_elements)
 
     for(i=0; i<num_elements; i++) {
         lam_list_item_t* item = (lam_list_item_t*)ptr;
-        if (NULL != flist->fl_elem_class)
-            STATIC_INIT((*item), flist->fl_elem_class);
+        if (NULL != flist->fl_elem_class) {
+            /* by-pass OBJ_CONSTRUCT() in this case */
+            OBJECT(item)->obj_class_info = flist->fl_elem_class;
+            OBJECT(item)->obj_class_info->cls_construct(OBJECT(item));
+        }
         lam_list_append(&flist->super, item);
         ptr += flist->fl_elem_size;
     }

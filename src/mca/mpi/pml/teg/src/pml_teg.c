@@ -35,7 +35,7 @@ mca_pml_teg_t mca_pml_teg = {
 int mca_pml_teg_add_comm(lam_communicator_t* comm)
 {
     /* allocate pml specific comm data */
-    mca_pml_comm_t* pml_comm = OBJ_CREATE(mca_pml_comm_t, &mca_pml_ptl_comm_cls);
+    mca_pml_comm_t* pml_comm = OBJ_NEW(mca_pml_comm_t);
     if (NULL == pml_comm) {
         return LAM_ERR_OUT_OF_RESOURCE;
     }
@@ -249,14 +249,14 @@ int mca_pml_teg_del_procs(lam_proc_t** procs, size_t nprocs)
         }
         
         /* do any required cleanup */
-        mca_pml_teg_proc_destroy(proc_pml);
+        mca_pml_teg_proc_destruct(proc_pml);
         free(proc_pml);
         proc->proc_pml = 0;
     }
     return LAM_SUCCESS;
 }
 
-int mca_pml_teg_module_fini(void)
+int mca_pml_teg_module_destruct(void)
 {
     /* FIX */
     return LAM_SUCCESS;

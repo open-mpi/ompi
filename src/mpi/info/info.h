@@ -37,19 +37,19 @@ struct lam_info_entry_t {
 typedef struct lam_info_entry_t lam_info_entry_t;
 
 /**
- * Some declarations needed to use OBJ_CREATE and OBJ_DESTROY macros
+ * Some declarations needed to use OBJ_NEW and OBJ_DESTRUCT macros
  */
-extern lam_class_info_t lam_info_cls;
-extern lam_class_info_t lam_info_entry_cls;
+extern lam_class_info_t lam_info_t_class_info;
+extern lam_class_info_t lam_info_entry_t_class_info;
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
-void lam_info_init(lam_info_t *info);
-void lam_info_destroy(lam_info_t *info);
+void lam_info_construct(lam_info_t *info);
+void lam_info_destruct(lam_info_t *info);
 
-void lam_info_entry_init(lam_info_entry_t *entry);
-void lam_info_entry_destroy(lam_info_entry_t *entry);
+void lam_info_entry_construct(lam_info_entry_t *entry);
+void lam_info_entry_destruct(lam_info_entry_t *entry);
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

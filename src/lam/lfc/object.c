@@ -2,17 +2,30 @@
  * $HEADER$
  */
 
+/**
+ * @file Implementation of lam_object_t, the base lam foundation class
+ */
+
 #include "lam/lfc/object.h"
 
-lam_class_info_t lam_object_cls = { "lam_object_t", 0, lam_obj_init, lam_obj_destroy };
-
-void lam_obj_init(lam_object_t *obj)
+void lam_object_construct(lam_object_t * obj)
 {
-    obj->obj_refcnt = 1;
+    obj->obj_reference_count = 1;
 }
 
-void lam_obj_destroy(lam_object_t *obj)
+
+void lam_object_destruct(lam_object_t * obj)
 {
     /* Move along, nothing to see here! */
 }
+
+
+lam_class_info_t lam_object_t_class_info = {
+    "lam_object_t",
+    0,
+    lam_object_construct,
+    lam_object_destruct
+};
+
+
 

@@ -47,7 +47,7 @@ struct lam_fast_hash_t
 
 typedef struct lam_fast_hash_t lam_fast_hash_t;
 
-extern lam_class_info_t lam_fast_hash_cls;
+extern lam_class_info_t lam_fast_hash_t_class_info;
 
 /*
  *
@@ -67,8 +67,8 @@ extern "C" {
  * This is a simple function that does not very much.  It's just a test
  * so that I can show what Doxygen does.
  */
-void lam_fh_init(lam_fast_hash_t *htbl);
-void lam_fh_destroy(lam_fast_hash_t *htbl);
+void lam_fh_construct(lam_fast_hash_t *htbl);
+void lam_fh_destruct(lam_fast_hash_t *htbl);
 
 /* resize hash table to size */
 int lam_fh_resize(lam_fast_hash_t *htbl, uint32_t size);

@@ -9,7 +9,7 @@
 #include "lam/lfc/list.h"
 
 
-extern lam_class_info_t lam_proc_cls;
+extern lam_class_info_t lam_proc_t_class_info;
 
 
 struct lam_proc_t {
@@ -30,8 +30,8 @@ struct lam_proc_t {
 typedef struct lam_proc_t lam_proc_t;
 
 
-void  lam_proc_init(lam_proc_t*);
-void  lam_proc_destroy(lam_proc_t*);
+void  lam_proc_construct(lam_proc_t*);
+void  lam_proc_destruct(lam_proc_t*);
 
 static inline lam_proc_t* lam_proc_local(void) 
 {

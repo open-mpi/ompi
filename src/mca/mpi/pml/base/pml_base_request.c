@@ -5,20 +5,20 @@
 
 #include "mca/mpi/pml/base/pml_base_request.h"
 
-lam_class_info_t mca_pml_base_request_cls = { 
+lam_class_info_t mca_pml_base_request_t_class_info = { 
     "mca_pml_base_request_t", 
-    &lam_request_cls,
-    (class_init_t) mca_pml_base_request_init, 
-    (class_destroy_t) mca_pml_base_request_destroy 
+    CLASS_INFO(lam_request_t),
+    (lam_construct_t) mca_pml_base_request_construct, 
+    (lam_destruct_t) mca_pml_base_request_destruct 
 };
                                                                                                  
-void mca_pml_base_request_init(mca_pml_base_request_t* req)
+void mca_pml_base_request_construct(mca_pml_base_request_t* req)
 {
-    SUPER_INIT(req, &lam_request_cls);
+    OBJ_CONSTRUCT_SUPER(req, lam_request_t);
 }
 
-void mca_pml_base_request_destroy(mca_pml_base_request_t* req)
+void mca_pml_base_request_destruct(mca_pml_base_request_t* req)
 {
-    SUPER_DESTROY(req, &lam_request_cls);
+    OBJ_DESTRUCT_SUPER(req, lam_request_t);
 }
 

@@ -9,8 +9,8 @@
 #include "ptl_tcp_recvfrag.h"
 
 
-static void mca_ptl_tcp_recv_frag_init(mca_ptl_tcp_recv_frag_t* frag);
-static void mca_ptl_tcp_recv_frag_destroy(mca_ptl_tcp_recv_frag_t* frag);
+static void mca_ptl_tcp_recv_frag_construct(mca_ptl_tcp_recv_frag_t* frag);
+static void mca_ptl_tcp_recv_frag_destruct(mca_ptl_tcp_recv_frag_t* frag);
 static bool mca_ptl_tcp_recv_frag_header(mca_ptl_tcp_recv_frag_t* frag, int sd, size_t);
 static bool mca_ptl_tcp_recv_frag_ack(mca_ptl_tcp_recv_frag_t* frag, int sd);
 static bool mca_ptl_tcp_recv_frag_frag(mca_ptl_tcp_recv_frag_t* frag, int sd);
@@ -19,23 +19,23 @@ static bool mca_ptl_tcp_recv_frag_data(mca_ptl_tcp_recv_frag_t* frag, int sd);
 static bool mca_ptl_tcp_recv_frag_discard(mca_ptl_tcp_recv_frag_t* frag, int sd);
 
 
-lam_class_info_t  mca_ptl_tcp_recv_frag_cls = {
+lam_class_info_t  mca_ptl_tcp_recv_frag_t_class_info = {
     "mca_ptl_tcp_recv_frag_t",
-    &mca_ptl_base_recv_frag_cls,
-    (class_init_t)mca_ptl_tcp_recv_frag_init,
-    (class_destroy_t)mca_ptl_tcp_recv_frag_destroy
+    CLASS_INFO(mca_ptl_base_recv_frag_t),
+    (lam_construct_t)mca_ptl_tcp_recv_frag_construct,
+    (lam_destruct_t)mca_ptl_tcp_recv_frag_destruct
 };
                                                                                                            
 
-static void mca_ptl_tcp_recv_frag_init(mca_ptl_tcp_recv_frag_t* frag)
+static void mca_ptl_tcp_recv_frag_construct(mca_ptl_tcp_recv_frag_t* frag)
 {
-    SUPER_INIT(frag, &mca_ptl_base_recv_frag_cls);
+    OBJ_CONSTRUCT_SUPER(frag, mca_ptl_base_recv_frag_t);
 }
 
 
-static void mca_ptl_tcp_recv_frag_destroy(mca_ptl_tcp_recv_frag_t* frag)
+static void mca_ptl_tcp_recv_frag_destruct(mca_ptl_tcp_recv_frag_t* frag)
 {
-    SUPER_DESTROY(frag, &mca_ptl_base_recv_frag_cls);
+    OBJ_DESTRUCT_SUPER(frag, mca_ptl_base_recv_frag_t);
 }
 
 

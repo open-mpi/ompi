@@ -9,28 +9,28 @@
 #include "mca/mpi/ptl/base/ptl_base_recvfrag.h"
 
 
-static void mca_ptl_base_recv_request_init(mca_ptl_base_recv_request_t*);
-static void mca_ptl_base_recv_request_destroy(mca_ptl_base_recv_request_t*);
+static void mca_ptl_base_recv_request_construct(mca_ptl_base_recv_request_t*);
+static void mca_ptl_base_recv_request_destruct(mca_ptl_base_recv_request_t*);
 static bool mca_ptl_base_recv_request_match_specific_proc(mca_ptl_base_recv_request_t*, int);
 
 
-lam_class_info_t mca_ptl_base_recv_request_cls = { 
+lam_class_info_t mca_ptl_base_recv_request_t_class_info = { 
     "mca_ptl_base_recv_request_t", 
-    &mca_pml_base_request_cls,
-    (class_init_t) mca_ptl_base_recv_request_init, 
-    (class_destroy_t) mca_ptl_base_recv_request_destroy 
+    CLASS_INFO(mca_pml_base_request_t),
+    (lam_construct_t) mca_ptl_base_recv_request_construct, 
+    (lam_destruct_t) mca_ptl_base_recv_request_destruct 
 };
                                                                                                  
 
-static void mca_ptl_base_recv_request_init(mca_ptl_base_recv_request_t* request)
+static void mca_ptl_base_recv_request_construct(mca_ptl_base_recv_request_t* request)
 {
-    SUPER_INIT(request, &mca_pml_base_request_cls);
+    OBJ_CONSTRUCT_SUPER(request, mca_pml_base_request_t);
 }
 
 
-static void mca_ptl_base_recv_request_destroy(mca_ptl_base_recv_request_t* request)
+static void mca_ptl_base_recv_request_destruct(mca_ptl_base_recv_request_t* request)
 {
-    SUPER_DESTROY(request, &mca_pml_base_request_cls);
+    OBJ_DESTRUCT_SUPER(request, mca_pml_base_request_t);
 }
 
                                                                                                                     

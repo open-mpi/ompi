@@ -10,27 +10,27 @@
 #include "ptl_tcp_proc.h"
 
 
-static void mca_ptl_tcp_proc_init(mca_ptl_tcp_proc_t* proc);
-static void mca_ptl_tcp_proc_destroy(mca_ptl_tcp_proc_t* proc);
+static void mca_ptl_tcp_proc_construct(mca_ptl_tcp_proc_t* proc);
+static void mca_ptl_tcp_proc_destruct(mca_ptl_tcp_proc_t* proc);
 static mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_lookup_lam(lam_proc_t* lam_proc);
 
-lam_class_info_t  mca_ptl_tcp_proc_cls = {
+lam_class_info_t  mca_ptl_tcp_proc_t_class_info = {
     "mca_ptl_tcp_proc_t",
-    &lam_list_item_cls,
-    (class_init_t)mca_ptl_tcp_proc_init,
-    (class_destroy_t)mca_ptl_tcp_proc_destroy
+    CLASS_INFO(lam_list_item_t),
+    (lam_construct_t)mca_ptl_tcp_proc_construct,
+    (lam_destruct_t)mca_ptl_tcp_proc_destruct
 };
  
 
-void mca_ptl_tcp_proc_init(mca_ptl_tcp_proc_t* proc)
+void mca_ptl_tcp_proc_construct(mca_ptl_tcp_proc_t* proc)
 {
-    SUPER_INIT(proc, &lam_list_item_cls);
+    OBJ_CONSTRUCT_SUPER(proc, lam_list_item_t);
     proc->proc_lam = 0;
     proc->proc_addrs = 0;
     proc->proc_addr_count = 0;
     proc->proc_peers = 0;
     proc->proc_peer_count = 0;
-    lam_mutex_init(&proc->proc_lock);
+    lam_mutex_construct(&proc->proc_lock);
 
     /* add to list of all proc instance */
     THREAD_LOCK(&mca_ptl_tcp_module.tcp_lock);
@@ -39,7 +39,7 @@ void mca_ptl_tcp_proc_init(mca_ptl_tcp_proc_t* proc)
 }
 
 
-void mca_ptl_tcp_proc_destroy(mca_ptl_tcp_proc_t* proc)
+void mca_ptl_tcp_proc_destruct(mca_ptl_tcp_proc_t* proc)
 {
     /* remove from list of all proc instances */
     THREAD_LOCK(&mca_ptl_tcp_module.tcp_lock);
@@ -51,7 +51,7 @@ void mca_ptl_tcp_proc_destroy(mca_ptl_tcp_proc_t* proc)
         free(proc->proc_peers);
     if(NULL != proc->proc_guid)
         free(proc->proc_guid);
-    SUPER_DESTROY(proc, &lam_list_item_cls);
+    OBJ_DESTRUCT_SUPER(proc, lam_list_item_t);
 }
 
 
@@ -72,7 +72,7 @@ mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_create(lam_proc_t* lam_proc)
     if(ptl_proc != NULL)
         return ptl_proc;
 
-    ptl_proc = OBJ_CREATE(mca_ptl_tcp_proc_t, &mca_ptl_tcp_proc_cls);
+    ptl_proc = OBJ_NEW(mca_ptl_tcp_proc_t);
     ptl_proc->proc_lam = lam_proc;
 
     /* build a unique identifier (of arbitrary size) to represent the proc */

@@ -14,8 +14,8 @@
  *
  */
 
-extern lam_class_info_t     lam_ctctrl_cls;
-extern lam_class_info_t     lam_ctmsg_cls;
+extern lam_class_info_t     lam_ct_ctrl_t_class_info;
+extern lam_class_info_t     lam_ctmsg_t_class_info;
 
 /*
  *
@@ -62,10 +62,10 @@ typedef struct lam_ct_ctrl
 } lam_ct_ctrl_t;
 
 
-void lam_ctc_init(lam_ct_ctrl_t *ctrl);
-void lam_ctc_destroy(lam_ct_ctrl_t *ctrl);
+void lam_ctc_construct(lam_ct_ctrl_t *ctrl);
+void lam_ctc_destruct(lam_ct_ctrl_t *ctrl);
 
-void lam_ctc_init_with(lam_ct_ctrl_t *ctrl, int routing_type,
+void lam_ctc_construct_with(lam_ct_ctrl_t *ctrl, int routing_type,
                        uint32_t sender,
                        uint32_t dest);
 
@@ -187,8 +187,8 @@ typedef struct lam_ctmsg
 } lam_ctmsg_t;
 
 
-void lam_ctm_init(lam_ctmsg_t *msg);
-void lam_ctm_destroy(lam_ctmsg_t *msg);
+void lam_ctm_construct(lam_ctmsg_t *msg);
+void lam_ctm_destruct(lam_ctmsg_t *msg);
 
 lam_ctmsg_t *lam_ctm_create_with(int is_user_msg, int routing_type,
                                  uint32_t sender,

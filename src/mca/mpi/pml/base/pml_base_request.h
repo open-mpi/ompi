@@ -11,7 +11,7 @@
 #include "mpi/datatype/datatype.h"
 #include "mpi/communicator/communicator.h"
 
-extern lam_class_info_t mca_pml_base_request_cls;
+extern lam_class_info_t mca_pml_base_request_t_class_info;
 
 /* MPI request status */
 typedef enum {
@@ -58,8 +58,8 @@ typedef struct {
 } mca_pml_base_request_t;
 
 
-void mca_pml_base_request_init(mca_pml_base_request_t*);
-void mca_pml_base_request_destroy(mca_pml_base_request_t*);
+void mca_pml_base_request_construct(mca_pml_base_request_t*);
+void mca_pml_base_request_destruct(mca_pml_base_request_t*);
 
 #endif
 

@@ -18,10 +18,10 @@
 
 /*
     To create a process-private pool, use
- CREATE_OBJECT(pool, lam_mem_pool_t, &mem_pool_cls);
+pool = OBJ_NEW(lam_mem_pool_t);
  
     To create a process-shared pool, use
- CREATE_OBJECT(pool, lam_mem_pool_t, &shmem_pool_cls);
+pool = OBJ_NEW(lam_shmem_pool_t);
  */
 
 typedef struct lam_chunk_desc
@@ -46,16 +46,16 @@ typedef struct lam_mem_pool
 } lam_mem_pool_t;
 
 /* process-private mem pool class */
-extern lam_class_info_t mem_pool_cls;
+extern lam_class_info_t lam_mem_pool_t_class_info;
 
 /* process-shared mem pool class */
-extern lam_class_info_t shmem_pool_cls;
+extern lam_class_info_t shmem_pool_t_class_info;
 
-void lam_mp_init(lam_mem_pool_t *pool);
-void lam_mp_shared_init(lam_mem_pool_t *pool);
-void lam_mp_destroy(lam_mem_pool_t *pool);
+void lam_mp_construct(lam_mem_pool_t *pool);
+void lam_mp_shared_construct(lam_mem_pool_t *pool);
+void lam_mp_destruct(lam_mem_pool_t *pool);
 
-int lam_mp_init_with(lam_mem_pool_t *pool, uint64_t pool_size,
+int lam_mp_construct_with(lam_mem_pool_t *pool, uint64_t pool_size,
                   uint64_t max_len,
                   uint64_t chunk_size, size_t pg_size);
 
@@ -121,11 +121,11 @@ typedef struct lam_fixed_mpool
     int                 fmp_apply_affinity;
 } lam_fixed_mpool_t;
 
-extern lam_class_info_t fixed_mem_pool_cls;
+extern lam_class_info_t lam_fixed_mpool_t_class_info;
 
-void lam_fmp_init(lam_fixed_mpool_t *pool);
-void lam_fmp_destroy(lam_fixed_mpool_t *pool);
-int  lam_fmp_init_with(lam_fixed_mpool_t *pool, ssize_t initial_allocation, 
+void lam_fmp_construct(lam_fixed_mpool_t *pool);
+void lam_fmp_destruct(lam_fixed_mpool_t *pool);
+int  lam_fmp_construct_with(lam_fixed_mpool_t *pool, ssize_t initial_allocation, 
                        ssize_t min_allocation_size,
                        int n_pools, int n_array_elements_to_add, int apply_mem_affinity);
 void *lam_fmp_get_mem_segment(lam_fixed_mpool_t *pool,

@@ -12,9 +12,11 @@
 
 #define     BUCKET_ALLOC_SZ         5
 
-lam_class_info_t lam_fast_hash_cls = {
-    "lam_fast_hash_t", &lam_object_cls, (class_init_t)lam_fh_init,
-    (class_destroy_t)lam_fh_destroy
+lam_class_info_t lam_fast_hash_t_class_info = {
+    "lam_fast_hash_t",
+    CLASS_INFO(lam_object_t),
+    (lam_construct_t) lam_fh_construct,
+    (lam_destruct_t) lam_fh_destruct
 };
 
 /*
@@ -44,7 +46,7 @@ static inline void *lam_fh_get_value_nkey(lam_fast_hash_t *htbl, void *key, uint
     lam_fhnode_t    *buckets;
     
     /* ASSERT: table size is power of 2 and table
-        has been initialized using lam_fh_init_with().
+        has been initialized using lam_fh_construct_with().
         */
     hval = lam_hash_value((const char *)key, keysize) & htbl->fh_mask;
     buckets = htbl->fh_nodes[hval];
@@ -68,7 +70,7 @@ static inline void *lam_fh_get_value_ptrkey(lam_fast_hash_t *htbl, void *key, ui
     lam_fhnode_t    *buckets;
     
     /* ASSERT: table size is power of 2 and table
-        has been initialized using lam_fh_init_with().
+        has been initialized using lam_fh_construct_with().
         */
     hval = lam_hash_value((const char *)key, keysize) & htbl->fh_mask;
     buckets = htbl->fh_nodes[hval];
@@ -93,7 +95,7 @@ static inline void lam_fh_remove_value_nkey(lam_fast_hash_t *htbl, void *key, ui
     lam_fhnode_t    *buckets;
     
     /* ASSERT: table size is power of 2 and table
-        has been initialized using lam_fh_init_with().
+        has been initialized using lam_fh_construct_with().
         */
     hval = lam_hash_value((const char *)key, keysize) & htbl->fh_mask;
     buckets = htbl->fh_nodes[hval];
@@ -117,7 +119,7 @@ static inline void lam_fh_remove_value_ptrkey(lam_fast_hash_t *htbl, void *key, 
     lam_fhnode_t    *buckets;
     
     /* ASSERT: table size is power of 2 and table
-        has been initialized using lam_fh_init_with().
+        has been initialized using lam_fh_construct_with().
         */
     hval = lam_hash_value((const char *)key, keysize) & htbl->fh_mask;
     buckets = htbl->fh_nodes[hval];
@@ -145,7 +147,7 @@ static inline int lam_fh_find_empty_bucket(lam_fast_hash_t *htbl, uint32_t hval,
     lam_fhnode_t    *buckets;
     
     /* ASSERT: table size is power of 2 and table
-        has been initialized using lam_fh_init_with().
+        has been initialized using lam_fh_construct_with().
         */
     buckets = htbl->fh_nodes[hval];
     if ( !buckets )
@@ -203,7 +205,7 @@ static inline int lam_fh_set_value_ptrkey(lam_fast_hash_t *htbl, void *val,
     lam_fhnode_t    *buckets;
     
     /* ASSERT: table size is power of 2 and table
-        has been initialized using lam_fh_init_with().
+        has been initialized using lam_fh_construct_with().
         */
     hval = lam_hash_value((const char *)key, keysize) & htbl->fh_mask;
     err = lam_fh_find_empty_bucket(htbl, hval, &bucket_idx);
@@ -238,7 +240,7 @@ static inline int lam_fh_set_value_nkey(lam_fast_hash_t *htbl, void *val,
     lam_fhnode_t    *buckets;
     
     /* ASSERT: table size is power of 2 and table
-        has been initialized using lam_fh_init_with().
+        has been initialized using lam_fh_construct_with().
         */
     hval = lam_hash_value((const char *)key, keysize) & htbl->fh_mask;
     err = lam_fh_find_empty_bucket(htbl, hval, &bucket_idx);
@@ -287,9 +289,9 @@ static uint32_t lam_log2(unsigned int n)
 
 #define DEFAULT_SIZE        128
 
-void lam_fh_init(lam_fast_hash_t *htbl)
+void lam_fh_construct(lam_fast_hash_t *htbl)
 {
-    SUPER_INIT(htbl, lam_fast_hash_cls.cls_parent);
+    OBJ_CONSTRUCT_SUPER(htbl, lam_object_t);
     htbl->fh_nodes = 0;
     htbl->fh_count = 0;
     htbl->fh_size = 0;
@@ -298,7 +300,7 @@ void lam_fh_init(lam_fast_hash_t *htbl)
     lam_fh_resize(htbl, DEFAULT_SIZE);
 }
 
-void lam_fh_destroy(lam_fast_hash_t *htbl)
+void lam_fh_destruct(lam_fast_hash_t *htbl)
 {
     int     i;
     
@@ -314,7 +316,7 @@ void lam_fh_destroy(lam_fast_hash_t *htbl)
         free(htbl->fh_bucket_cnt);
     }
     
-    SUPER_DESTROY(htbl, lam_fast_hash_cls.cls_parent);
+    OBJ_DESTRUCT_SUPER(htbl, lam_object_t);
 }
 
 

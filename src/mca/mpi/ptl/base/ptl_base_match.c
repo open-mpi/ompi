@@ -584,7 +584,7 @@ static void mca_ptl_base_check_cantmatch_for_match(lam_list_t *additional_matche
                  */
                 if(0 == lam_list_get_size(additional_matches))
                 {
-                        lam_list_init(additional_matches);
+                        lam_list_construct(additional_matches);
                 }
 
                 /* We're now expecting the next sequence number. */

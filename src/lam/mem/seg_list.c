@@ -8,14 +8,18 @@
 /*
  * Public variable
  */
-lam_class_info_t lam_seg_list_cls = {"lam_seg_list_t", &lam_object_cls, 
-    (class_init_t)lam_sgl_init, (class_destroy_t)lam_sgl_destroy};
+lam_class_info_t lam_seg_list_t_class_info = {
+    "lam_seg_list_t",
+    CLASS_INFO(lam_object_t), 
+    (lam_construct_t) lam_sgl_construct,
+    (lam_destruct_t) lam_sgl_destruct
+};
 
-void lam_sgl_init(lam_seg_list_t *slist)
+void lam_sgl_construct(lam_seg_list_t *slist)
 {
-    SUPER_INIT(slist, lam_seg_list_cls.cls_parent);
-    STATIC_INIT(slist->sgl_list, &lam_list_cls);
-    lam_mutex_init(&slist->sgl_lock);
+    OBJ_CONSTRUCT_SUPER(slist, lam_object_t);
+    OBJ_CONSTRUCT(&slist->sgl_list, lam_list_t);
+    lam_mutex_construct(&slist->sgl_lock);
     slist->sgl_min_bytes_pushed = 0;
     slist->sgl_max_bytes_pushed = 0;
     slist->sgl_bytes_pushed = 0;
@@ -23,10 +27,10 @@ void lam_sgl_init(lam_seg_list_t *slist)
     slist->sgl_consec_fail = 0;
 }
 
-void lam_sgl_destroy(lam_seg_list_t *slist)
+void lam_sgl_destruct(lam_seg_list_t *slist)
 {
-    lam_list_destroy(&(slist->sgl_list));
-    SUPER_DESTROY(slist, lam_seg_list_cls.cls_parent);
+    lam_list_destruct(&(slist->sgl_list));
+    OBJ_DESTRUCT_SUPER(slist, lam_object_t);
 }
 
 

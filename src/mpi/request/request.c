@@ -4,23 +4,23 @@
 
 #include "mpi/request/request.h"
 
-lam_class_info_t lam_request_cls = { 
+lam_class_info_t lam_request_t_class_info = { 
     "lam_request_t", 
-    &lam_object_cls,
-    (class_init_t) lam_request_init,
-    (class_destroy_t) lam_request_destroy,
+    CLASS_INFO(lam_object_t),
+    (lam_construct_t) lam_request_construct,
+    (lam_destruct_t) lam_request_destruct,
 };
 
 
-void lam_request_init(lam_request_t* rq)
+void lam_request_construct(lam_request_t* rq)
 {
-    SUPER_INIT(rq, &lam_object_cls);
+    OBJ_CONSTRUCT_SUPER(rq, lam_object_t);
 }
 
 
-void lam_request_destroy(lam_request_t* rq)
+void lam_request_destruct(lam_request_t* rq)
 {
-    SUPER_DESTROY(rq, &lam_object_cls);
+    OBJ_DESTRUCT_SUPER(rq, lam_object_t);
 }
 
 

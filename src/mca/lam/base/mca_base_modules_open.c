@@ -172,7 +172,7 @@ static int open_modules(const char *type_name, int output_id,
 
   /* Traverse the list of found modules */
 
-  lam_list_init(modules_available);
+  lam_list_construct(modules_available);
   for (item = lam_list_get_first(modules_found);
        lam_list_get_end(modules_found) != item;
        item = lam_list_get_next(item)) {
@@ -254,7 +254,7 @@ static int open_modules(const char *type_name, int output_id,
         if (NULL == mli) {
           return LAM_ERROR;
         }
-        lam_list_item_init(&mli->super);
+        lam_list_item_construct(&mli->super);
         mli->mli_module = module;
         lam_list_append(modules_available, (lam_list_item_t *) mli);
       }

@@ -53,7 +53,7 @@ int mca_mpi_init_select_modules(int requested,
   allow_multi_user_threads |= user_threads;
   have_hidden_threads |= hidden_threads;
 
-  lam_list_init(&colls);
+  lam_list_construct(&colls);
   if (LAM_SUCCESS != mca_coll_base_select(&colls, &user_threads, 
                                           &hidden_threads)) {
     return LAM_ERROR;
