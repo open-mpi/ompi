@@ -371,14 +371,15 @@ int ompi_convertor_unpack( ompi_convertor_t* pConvertor,
  *                and there are less data than the size on the remote host of the
  *                basic datatype.
  */
-#define COPY_TYPE( TYPENAME, TYPE )                                     \
+#define COPY_TYPE( TYPENAME, TYPE, COUNT )                          \
 static int copy_##TYPENAME( unsigned int count,                     \
                             char* from, unsigned int from_len, long from_extent, \
                             char* to, unsigned int to_len, long to_extent, \
                             int* used )                                 \
 {                                                                       \
     unsigned int i;                                                     \
-    unsigned int remote_TYPE_size = sizeof(TYPE); /* TODO */            \
+    unsigned int remote_TYPE_size = sizeof(TYPE) * (COUNT); /* TODO */  \
+    unsigned int local_TYPE_size = (COUNT) * sizeof(TYPE);              \
                                                                         \
     if( (remote_TYPE_size * count) > from_len ) {                       \
         count = from_len / remote_TYPE_size;                            \
@@ -392,30 +393,78 @@ static int copy_##TYPENAME( unsigned int count,                     \
         DUMP( "         copy %s count %d from buffer %p with length %d to %p space %d\n", \
               #TYPE, count, from, from_len, to, to_len );               \
                                                                         \
-    if( (from_extent == sizeof(TYPE)) && (to_extent == sizeof(TYPE)) ) { \
-        MEMCPY( to, from, count * sizeof(TYPE) );                       \
+    if( (from_extent == (long)local_TYPE_size) &&                       \
+        (to_extent == (long)remote_TYPE_size) ) {                       \
+        MEMCPY( to, from, count * local_TYPE_size );                    \
     } else {                                                            \
         for( i = 0; i < count; i++ ) {                                  \
-            MEMCPY( to, from, sizeof(TYPE) );                           \
+            MEMCPY( to, from, local_TYPE_size );                        \
             to += to_extent;                                            \
             from += from_extent;                                        \
         }                                                               \
     }                                                                   \
-    *used = count * sizeof(TYPE) ;                                      \
+    *used = count * local_TYPE_size;                                    \
     return count;                                                       \
 }
 
-COPY_TYPE( char, char )
-COPY_TYPE( short, short )
-COPY_TYPE( int, int )
-COPY_TYPE( float, float )
-COPY_TYPE( long, long )
-/*COPY_TYPE( double, double )*/
-COPY_TYPE( long_long, long long )
-COPY_TYPE( long_double, long double )
-COPY_TYPE( complex_float, ompi_complex_float_t )
-COPY_TYPE( complex_double, ompi_complex_double_t )
-COPY_TYPE( complex_long_double, ompi_complex_long_double_t )
+#define COPY_CONTIGUOUS_BYTES( TYPENAME, COUNT )                        \
+static int copy_##TYPENAME##_##COUNT( unsigned int count,                 \
+                                    char* from, unsigned int from_len, long from_extent, \
+                                    char* to, unsigned int to_len, long to_extent, \
+                                    int* used )                         \
+{                                                                       \
+    unsigned int i;                                                     \
+    unsigned int remote_TYPE_size = (COUNT); /* TODO */                 \
+    unsigned int local_TYPE_size = (COUNT);                             \
+                                                                        \
+    if( (remote_TYPE_size * count) > from_len ) {                       \
+        count = from_len / remote_TYPE_size;                            \
+        if( (count * remote_TYPE_size) != from_len ) {                  \
+            DUMP( "oops should I keep this data somewhere (excedent %d bytes)?\n", \
+                  from_len - (count * remote_TYPE_size) );              \
+        }                                                               \
+        DUMP( "correct: copy %s count %d from buffer %p with length %d to %p space %d\n", \
+              #TYPENAME, count, from, from_len, to, to_len );               \
+    } else                                                              \
+        DUMP( "         copy %s count %d from buffer %p with length %d to %p space %d\n", \
+              #TYPENAME, count, from, from_len, to, to_len );               \
+                                                                        \
+    if( (from_extent == (long)local_TYPE_size) &&                       \
+        (to_extent == (long)remote_TYPE_size) ) {                       \
+        MEMCPY( to, from, count * local_TYPE_size );                    \
+    } else {                                                            \
+        for( i = 0; i < count; i++ ) {                                  \
+            MEMCPY( to, from, local_TYPE_size );                        \
+            to += to_extent;                                            \
+            from += from_extent;                                        \
+        }                                                               \
+    }                                                                   \
+    *used = count * local_TYPE_size;                                    \
+    return count;                                                       \
+}
+
+COPY_TYPE( char, char, 1 )
+COPY_TYPE( short, short, 1 )
+COPY_TYPE( int, int, 1 )
+COPY_TYPE( float, float, 1 )
+COPY_TYPE( long, long, 1 )
+/*COPY_TYPE( double, double, 1 )*/
+COPY_TYPE( long_long, long long, 1 )
+COPY_TYPE( long_double, long double, 1 )
+COPY_TYPE( complex_float, ompi_complex_float_t, 1 )
+COPY_TYPE( complex_double, ompi_complex_double_t, 1 )
+COPY_TYPE( complex_long_double, ompi_complex_long_double_t, 1 )
+COPY_TYPE( wchar, wchar_t, 1 )
+COPY_TYPE( 2int, int, 2 )
+COPY_TYPE( 2float, float, 2 )
+COPY_TYPE( 2double, double, 2 )
+COPY_TYPE( 2complex_float, ompi_complex_float_t, 2 )
+COPY_TYPE( 2complex_double, ompi_complex_double_t, 2 )
+COPY_CONTIGUOUS_BYTES( bytes, 1 )
+COPY_CONTIGUOUS_BYTES( bytes, 4 )
+COPY_CONTIGUOUS_BYTES( bytes, 8 )
+COPY_CONTIGUOUS_BYTES( bytes, 12 )
+COPY_CONTIGUOUS_BYTES( bytes, 16 )
 
 static
 int copy_double( unsigned int count,
@@ -476,24 +525,54 @@ conversion_fct_t ompi_ddt_copy_functions[DT_MAX_PREDEFINED] = {
    (conversion_fct_t)copy_complex_float,        /* DT_COMPLEX_FLOAT       */ 
    (conversion_fct_t)copy_complex_double,       /* DT_COMPLEX_DOUBLE      */ 
    (conversion_fct_t)copy_complex_long_double,  /* DT_COMPLEX_LONG_DOUBLE */ 
-   (conversion_fct_t)NULL,                      /* DT_PACKED              */ 
-   (conversion_fct_t)NULL,                      /* DT_LOGIC               */ 
-   (conversion_fct_t)NULL,                      /* DT_FLOAT_INT           */ 
-   (conversion_fct_t)NULL,                      /* DT_DOUBLE_INT          */ 
-   (conversion_fct_t)NULL,                      /* DT_LONG_DOUBLE_INT     */ 
-   (conversion_fct_t)NULL,                      /* DT_LONG_INT            */ 
-   (conversion_fct_t)NULL,                      /* DT_2INT                */ 
+   (conversion_fct_t)NULL,                      /* DT_PACKED              */
+#if OMPI_SIZEOF_FORTRAN_LOGICAL == 1
+   (conversion_fct_t)copy_bytes_1,              /* DT_LOGIC               */
+#elif OMPI_SIZEOF_FORTRAN_LOGICAL == 4
+   (conversion_fct_t)copy_bytes_4,              /* DT_LOGIC               */
+#elif
+   NULL,                                        /* DT_LOGIC               */
+#endif
+#if (SIZEOF_FLOAT + SIZEOF_INT) == 8
+   (conversion_fct_t)copy_bytes_8,              /* DT_FLOAT_INT           */
+#else
+#error Complete me please
+#endif
+#if (SIZEOF_DOUBLE + SIZEOF_INT) == 12
+   (conversion_fct_t)copy_bytes_12,             /* DT_DOUBLE_INT          */
+#else
+#error Complete me please
+#endif
+#if (SIZEOF_LONG_DOUBLE + SIZEOF_INT) == 16
+   (conversion_fct_t)copy_bytes_16,             /* DT_LONG_DOUBLE_INT     */ 
+#else
+#error Complete me please
+#endif
+#if (SIZEOF_LONG + SIZEOF_INT) == 8
+   (conversion_fct_t)copy_bytes_8,              /* DT_LONG_INT            */ 
+#elif (SIZEOF_LONG + SIZEOF_INT) == 12
+   (conversion_fct_t)copy_bytes_12,              /* DT_LONG_INT            */ 
+#else
+#error Complete me please
+#endif
+   (conversion_fct_t)copy_2int,                 /* DT_2INT                */ 
    (conversion_fct_t)NULL,                      /* DT_SHORT_INT           */ 
    (conversion_fct_t)copy_int,                  /* DT_INTEGER             */ 
    (conversion_fct_t)copy_float,                /* DT_REAL                */ 
    (conversion_fct_t)copy_double,               /* DT_DBLPREC             */ 
-   (conversion_fct_t)NULL,                      /* DT_2REAL               */ 
-   (conversion_fct_t)NULL,                      /* DT_2DBLPREC            */ 
-   (conversion_fct_t)NULL,                      /* DT_2INTEGER            */ 
-   (conversion_fct_t)NULL,                      /* DT_WCHAR               */ 
-   (conversion_fct_t)NULL,                      /* DT_2COMPLEX            */ 
-   (conversion_fct_t)NULL,                      /* DT_2DOUBLE_COMPLEX     */ 
-   (conversion_fct_t)NULL,                      /* DT_CXX_BOOL            */ 
+   (conversion_fct_t)copy_2float,               /* DT_2REAL               */ 
+   (conversion_fct_t)copy_2double,              /* DT_2DBLPREC            */ 
+   (conversion_fct_t)copy_2int,                 /* DT_2INTEGER            */ 
+   (conversion_fct_t)copy_wchar,                /* DT_WCHAR               */ 
+   (conversion_fct_t)copy_2complex_float,       /* DT_2COMPLEX            */ 
+   (conversion_fct_t)copy_2complex_double,      /* DT_2DOUBLE_COMPLEX     */ 
+#if SIZEOF_BOOL == 1
+   (conversion_fct_t)copy_bytes_1,              /* DT_CXX_BOOL            */
+#elif SIZEOF_BOOL == 4
+   (conversion_fct_t)copy_bytes_4,              /* DT_CXX_BOOL            */
+#else
+#error Complete me please
+#endif
    (conversion_fct_t)NULL,                      /* DT_UNAVAILABLE         */ 
 };
 
