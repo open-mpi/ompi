@@ -7,6 +7,7 @@
 #include "include/constants.h"
 #include "runtime/runtime.h"
 #include "mpi.h"
+#include "event/event.h"
 #include "group/group.h"
 #include "errhandler/errhandler.h"
 #include "errhandler/errcode.h"
@@ -119,9 +120,19 @@ int ompi_mpi_finalize(void)
     return ret;
   }
 
-  fprintf(stderr, "[%d,%d,%d] ompi_mpi_finalize\n",
-      mca_oob_name_self.cellid,mca_oob_name_self.jobid,mca_oob_name_self.vpid);
+  /* unregister process */
+  if (OMPI_SUCCESS != (ret = ompi_rte_unregister())) {
+    return ret;
+  }
 
+  /* shutdown event library - note that this needs to
+   * occur before anything that uses the event library 
+   */
+  if (OMPI_SUCCESS != (ret = ompi_event_fini())) {
+    return ret;
+  }
+
+  /* cleanup */
   if (OMPI_SUCCESS != (ret = mca_ptl_base_close())) {
     return ret;
   }
