@@ -91,13 +91,13 @@ int ompi_convertor_create_stack_with_pos_general( ompi_convertor_t* pConvertor,
         }
         /* now here we have a basic datatype */
         type = pElems->type;
-        lastLength = pElems->count * basicDatatypes[type]->size;
+        lastLength = pElems->count * ompi_ddt_basicDatatypes[type]->size;
         if( resting_place > lastLength ) {
             resting_place -= lastLength;
             loop_length += lastLength;
         } else {
-            int cnt = resting_place / basicDatatypes[type]->size;
-            resting_place -= cnt * basicDatatypes[type]->size;
+            int cnt = resting_place / ompi_ddt_basicDatatypes[type]->size;
+            resting_place -= cnt * ompi_ddt_basicDatatypes[type]->size;
             PUSH_STACK( pStack, pConvertor->stack_pos, pos_desc, 
                         pElems->count - cnt,
                         totalDisp + pElems->disp + cnt * pElems->extent,
@@ -219,13 +219,13 @@ int ompi_convertor_create_stack_with_pos( ompi_convertor_t* pConvertor,
         }
         /* now here we have a basic datatype */
         type = pElems->type;
-        lastLength = pElems->count * basicDatatypes[type]->size;
+        lastLength = pElems->count * ompi_ddt_basicDatatypes[type]->size;
         if( resting_place > lastLength ) {
             resting_place -= lastLength;
             loop_length += lastLength;
         } else {
-            int cnt = resting_place / basicDatatypes[type]->size;
-            resting_place -= cnt * basicDatatypes[type]->size;
+            int cnt = resting_place / ompi_ddt_basicDatatypes[type]->size;
+            resting_place -= cnt * ompi_ddt_basicDatatypes[type]->size;
             PUSH_STACK( pStack, pConvertor->stack_pos, pos_desc, 
                         pElems->count - cnt,
                         totalDisp + pElems->disp + cnt * pElems->extent,

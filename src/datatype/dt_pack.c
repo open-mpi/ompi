@@ -254,11 +254,11 @@ int ompi_convertor_pack_homogeneous_with_memcpy( ompi_convertor_t* pConv,
 	/* now here we have a basic datatype */
 	while( pElems[pos_desc].flags & DT_FLAG_DATA ) {
 	    /* do we have enough space in the buffer ? */
-	    last_blength = last_count * basicDatatypes[pElems[pos_desc].type]->size;
+	    last_blength = last_count * ompi_ddt_basicDatatypes[pElems[pos_desc].type]->size;
 	    if( space < last_blength ) {
 		last_blength = last_count;
-		last_count = space / basicDatatypes[pElems[pos_desc].type]->size;
-		space -= (last_count * basicDatatypes[pElems[pos_desc].type]->size);
+		last_count = space / ompi_ddt_basicDatatypes[pElems[pos_desc].type]->size;
+		space -= (last_count * ompi_ddt_basicDatatypes[pElems[pos_desc].type]->size);
 		last_blength -= last_count;
 		goto end_loop;  /* or break whatever but go out of this while */
 	    }
@@ -448,7 +448,7 @@ int ompi_convertor_pack_homogeneous( ompi_convertor_t* pConv,
 	/* now here we have a basic datatype */
 	while( pElems[pos_desc].flags & DT_FLAG_DATA ) {
 	    /* do we have enough space in the buffer ? */
-	    last_blength = last_count * basicDatatypes[pElems[pos_desc].type]->size;
+	    last_blength = last_count * ompi_ddt_basicDatatypes[pElems[pos_desc].type]->size;
 
 	    /* first let's see if it's contiguous with the previous chunk of memory */
 	    if( (savePos + saveLength) == (pConv->pBaseBuf + lastDisp) ) {
@@ -736,7 +736,7 @@ int ompi_convertor_pack( ompi_convertor_t* pConv,
     return done;
 }
 
-extern int local_sizes[DT_MAX_PREDEFINED];
+extern int ompi_ddt_local_sizes[DT_MAX_PREDEFINED];
 int ompi_convertor_init_for_send( ompi_convertor_t* pConv,
 				  unsigned int flags,
 				  dt_desc_t* dt,
@@ -779,9 +779,9 @@ int ompi_convertor_init_for_send( ompi_convertor_t* pConv,
 #endif  /* ONE_STEP */
     }
     if( starting_pos != 0 ) {
-	return ompi_convertor_create_stack_with_pos( pConv, starting_pos, local_sizes );
+	return ompi_convertor_create_stack_with_pos( pConv, starting_pos, ompi_ddt_local_sizes );
     }
-    return ompi_convertor_create_stack_at_begining( pConv, local_sizes );
+    return ompi_convertor_create_stack_at_begining( pConv, ompi_ddt_local_sizes );
 }
 
 ompi_convertor_t* ompi_convertor_create( int remote_arch, int mode )
@@ -865,7 +865,7 @@ int ompi_convertor_get_unpacked_size( ompi_convertor_t* pConv, unsigned int* pSi
    for( i = DT_CHAR; i < DT_MAX_PREDEFINED; i++ ) {
       if( pData->bdt_used & (((unsigned long long)1)<<i) ) {
          /* TODO replace with the remote size */
-         *pSize += (pData->btypes[i] * basicDatatypes[i]->size);
+         *pSize += (pData->btypes[i] * ompi_ddt_basicDatatypes[i]->size);
       }
    }
    *pSize *= pConv->count;

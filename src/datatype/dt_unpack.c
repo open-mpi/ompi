@@ -251,11 +251,11 @@ static int ompi_convertor_unpack_homogeneous( ompi_convertor_t* pConv,
         /* now here we have a basic datatype */
         while( pElems[pos_desc].flags & DT_FLAG_DATA ) {
             /* do we have enough space in the buffer ? */
-            last_blength = last_count * basicDatatypes[pElems[pos_desc].type]->size;
+            last_blength = last_count * ompi_ddt_basicDatatypes[pElems[pos_desc].type]->size;
             if( space < last_blength ) {
                 last_blength = last_count;
-                last_count = space / basicDatatypes[pElems[pos_desc].type]->size;
-                space -= (last_count * basicDatatypes[pElems[pos_desc].type]->size);
+                last_count = space / ompi_ddt_basicDatatypes[pElems[pos_desc].type]->size;
+                space -= (last_count * ompi_ddt_basicDatatypes[pElems[pos_desc].type]->size);
                 last_blength -= last_count;
                 goto end_loop;  /* or break whatever but go out of this while */
             }
@@ -475,7 +475,7 @@ int ompi_convertor_need_buffers( ompi_convertor_t* pConvertor )
     return 1;
 }
 
-extern int local_sizes[DT_MAX_PREDEFINED];
+extern int ompi_ddt_local_sizes[DT_MAX_PREDEFINED];
 int ompi_convertor_init_for_recv( ompi_convertor_t* pConv, unsigned int flags,
 				  dt_desc_t* pData, int count,
 				  void* pUserBuf, int starting_point,
@@ -508,8 +508,8 @@ int ompi_convertor_init_for_recv( ompi_convertor_t* pConv, unsigned int flags,
         pConv->fAdvance = ompi_convertor_unpack_homogeneous_contig;
     }
     if( starting_point != 0 )
-	return ompi_convertor_create_stack_with_pos( pConv, starting_point, local_sizes );
-    return ompi_convertor_create_stack_at_begining( pConv, local_sizes );
+	return ompi_convertor_create_stack_with_pos( pConv, starting_point, ompi_ddt_local_sizes );
+    return ompi_convertor_create_stack_at_begining( pConv, ompi_ddt_local_sizes );
 }
 
 /* Get the number of elements from the data associated with this convertor that can be
@@ -570,9 +570,9 @@ int ompi_ddt_get_element_count( dt_desc_t* pData, int iSize )
         }
         /* now here we have a basic datatype */
         type = pData->desc.desc[pos_desc].type;
-        rc = pData->desc.desc[pos_desc].count * basicDatatypes[type]->size;
+        rc = pData->desc.desc[pos_desc].count * ompi_ddt_basicDatatypes[type]->size;
         if( rc >= iSize ) {
-            nbElems += iSize / basicDatatypes[type]->size;
+            nbElems += iSize / ompi_ddt_basicDatatypes[type]->size;
             break;
         }
         nbElems += pData->desc.desc[pos_desc].count;
@@ -648,11 +648,11 @@ int ompi_ddt_copy_content_same_ddt( dt_desc_t* pData, int count,
         /* now here we have a basic datatype */
         type = pElems[pos_desc].type;
         if( (lastDisp + lastLength) == (pStack->disp + pElems[pos_desc].disp) ) {
-            lastLength += pElems[pos_desc].count * basicDatatypes[type]->size;
+            lastLength += pElems[pos_desc].count * ompi_ddt_basicDatatypes[type]->size;
         } else {
             MEMCPY( pDestBuf + lastDisp, pSrcBuf + lastDisp, lastLength );
             lastDisp = pStack->disp + pElems[pos_desc].disp;
-            lastLength = pElems[pos_desc].count * basicDatatypes[type]->size;
+            lastLength = pElems[pos_desc].count * ompi_ddt_basicDatatypes[type]->size;
         }
         pos_desc++;  /* advance to the next data */
     }

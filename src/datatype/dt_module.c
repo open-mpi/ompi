@@ -102,6 +102,7 @@ ompi_datatype_t ompi_mpi_cxx_ldblcplex = INIT_BASIC_DATA( ompi_complex_long_doub
 ompi_datatype_t ompi_mpi_cxx_ldblcplex = INIT_BASIC_DATA( void*, 0, UNAVAILABLE );
 #endif  /* HAVE_LONG_DOUBLE */
 
+/* JMS this doesn't look right */
 ompi_datatype_t ompi_mpi_cxx_bool = INIT_BASIC_DATA( int, OMPI_ALIGNMENT_INT, CXX_BOOL );
 ompi_datatype_t ompi_mpi_2cplex = INIT_BASIC_TYPE( DT_2COMPLEX, 2COMPLEX );
 ompi_datatype_t ompi_mpi_2dblcplex = INIT_BASIC_TYPE( DT_2DOUBLE_COMPLEX, 2DOUBLE_COMPLEX );
@@ -123,35 +124,69 @@ ompi_datatype_t ompi_mpi_integer8 = INIT_BASIC_FORTRAN_TYPE( DT_LONG_LONG, INTEG
 ompi_datatype_t ompi_mpi_integer8 = INIT_BASIC_TYPE( DT_UNAVAILABLE, INTEGER8 );
 #endif  /* HAVE_LONG_LONG */
 ompi_datatype_t ompi_mpi_integer16 = INIT_BASIC_TYPE( DT_UNAVAILABLE, INTEGER16 );
+/* JMS this doesn't look right */
 ompi_datatype_t ompi_mpi_complex8 = INIT_BASIC_FORTRAN_TYPE( DT_COMPLEX_FLOAT, COMPLEX8, OMPI_SIZEOF_FORTRAN_LOGICAL, OMPI_ALIGNMENT_FORTRAN_REAL );
+/* JMS this doesn't look right */
 ompi_datatype_t ompi_mpi_complex16 = INIT_BASIC_FORTRAN_TYPE( DT_COMPLEX_DOUBLE, COMPLEX16, OMPI_SIZEOF_FORTRAN_LOGICAL, OMPI_ALIGNMENT_FORTRAN_DBLPREC );
 #if HAVE_LONG_DOUBLE
+/* JMS this doesn't look right */
 ompi_datatype_t ompi_mpi_complex32 = INIT_BASIC_FORTRAN_TYPE( DT_COMPLEX_LONG_DOUBLE, COMPLEX32, OMPI_SIZEOF_FORTRAN_LOGICAL, OMPI_ALIGNMENT_FORTRAN_DBLPREC );
 #else
 ompi_datatype_t ompi_mpi_complex32 = INIT_BASIC_TYPE( DT_UNAVAILABLE, COMPLEX32 );
 #endif  /* HAVE_LONG_DOUBLE */
 
-ompi_datatype_t* basicDatatypes[DT_MAX_PREDEFINED] = {
-    &ompi_mpi_loop, &ompi_mpi_end_loop, &ompi_mpi_ub, &ompi_mpi_lb,
-    &ompi_mpi_char, &ompi_mpi_character, &ompi_mpi_unsigned_char,
-    &ompi_mpi_byte, &ompi_mpi_short, &ompi_mpi_unsigned_short,
-    &ompi_mpi_int, &ompi_mpi_unsigned, &ompi_mpi_long,
-    &ompi_mpi_unsigned_long, &ompi_mpi_long_long, &ompi_mpi_long_long_int,
-    &ompi_mpi_unsigned_long_long, &ompi_mpi_float, &ompi_mpi_double,
-    &ompi_mpi_long_double, &ompi_mpi_cplex, &ompi_mpi_dblcplex,
-    &ompi_mpi_ldblcplex, &ompi_mpi_packed, &ompi_mpi_logic,
-    &ompi_mpi_float_int, &ompi_mpi_double_int, &ompi_mpi_longdbl_int,
-    &ompi_mpi_long_int, &ompi_mpi_2int, &ompi_mpi_short_int,
-    &ompi_mpi_integer, &ompi_mpi_real, &ompi_mpi_dblprec,
-    &ompi_mpi_2real, &ompi_mpi_2dblprec, &ompi_mpi_2integer,
-    &ompi_mpi_wchar, &ompi_mpi_2cplex, &ompi_mpi_2dblcplex, 
-    &ompi_mpi_cxx_bool, &ompi_mpi_unavailable
+/*
+ * NOTE: The order of this array *MUST* match what is listed in
+ * datatype_internal.h
+ */
+ompi_datatype_t* ompi_ddt_basicDatatypes[DT_MAX_PREDEFINED] = {
+    &ompi_mpi_loop,
+    &ompi_mpi_end_loop,
+    &ompi_mpi_lb,
+    &ompi_mpi_ub,
+    &ompi_mpi_char,
+    &ompi_mpi_character,
+    &ompi_mpi_unsigned_char,
+    &ompi_mpi_byte,
+    &ompi_mpi_short,
+    &ompi_mpi_unsigned_short,
+    &ompi_mpi_int,
+    &ompi_mpi_unsigned,
+    &ompi_mpi_long,
+    &ompi_mpi_unsigned_long,
+    &ompi_mpi_long_long,
+    &ompi_mpi_long_long_int,
+    &ompi_mpi_unsigned_long_long,
+    &ompi_mpi_float,
+    &ompi_mpi_double,
+    &ompi_mpi_long_double,
+    &ompi_mpi_cplex,
+    &ompi_mpi_dblcplex,
+    &ompi_mpi_ldblcplex,
+    &ompi_mpi_packed,
+    &ompi_mpi_logic,
+    &ompi_mpi_float_int,
+    &ompi_mpi_double_int,
+    &ompi_mpi_longdbl_int,
+    &ompi_mpi_long_int,
+    &ompi_mpi_2int,
+    &ompi_mpi_short_int,
+    &ompi_mpi_integer,
+    &ompi_mpi_real,
+    &ompi_mpi_dblprec,
+    &ompi_mpi_2real,
+    &ompi_mpi_2dblprec,
+    &ompi_mpi_2integer,
+    &ompi_mpi_wchar,
+    &ompi_mpi_2cplex,
+    &ompi_mpi_2dblcplex,
+    &ompi_mpi_cxx_bool,
+    &ompi_mpi_unavailable
 };
-/* &ompi_mpi_cxx_cplex, &ompi_mpi_cxx_dblcplex, &ompi_mpi_cxx_ldblcplex, */
 
 ompi_pointer_array_t *ompi_datatype_f_to_c_table = NULL;
 
-int local_sizes[DT_MAX_PREDEFINED];
+int ompi_ddt_local_sizes[DT_MAX_PREDEFINED];
 
 #define COPY_DATA_DESC( PDST, PSRC )                                    \
     do {                                                                \
@@ -182,8 +217,8 @@ int local_sizes[DT_MAX_PREDEFINED];
         int bLength[2] = {1, 1};                                        \
         long base, displ[2];                                            \
                                                                         \
-        types[0] = basicDatatypes[MPIType1];                           \
-        types[1] = basicDatatypes[MPIType2];                           \
+        types[0] = ompi_ddt_basicDatatypes[MPIType1];                           \
+        types[1] = ompi_ddt_basicDatatypes[MPIType2];                           \
         base = (long)(&(s[0]));                                         \
         displ[0] = (long)(&(s[0].v1));                                  \
         displ[0] -= base;                                               \
@@ -208,7 +243,7 @@ int local_sizes[DT_MAX_PREDEFINED];
 #define DECLARE_MPI2_COMPOSED_BLOCK_DDT( PDATA, MPIDDT, MPIDDTNAME, MPIType ) \
     do {                                                                \
         ompi_datatype_t *ptype;						\
-        ompi_ddt_create_contiguous( 2, basicDatatypes[MPIType], &ptype ); \
+        ompi_ddt_create_contiguous( 2, ompi_ddt_basicDatatypes[MPIType], &ptype ); \
         ptype->flags |= DT_FLAG_FOREVER;                                \
         ptype->id = (MPIDDT);						\
         ompi_ddt_commit( &ptype );					\
@@ -224,15 +259,15 @@ int ompi_ddt_init( void )
     int i;
 
     for( i = 0; i < DT_MAX_PREDEFINED; i++ ) {
-        basicDatatypes[i]->desc.desc = (dt_elem_desc_t*)malloc(sizeof(dt_elem_desc_t));
-        basicDatatypes[i]->desc.desc->flags  = DT_FLAG_BASIC | DT_FLAG_CONTIGUOUS;
-        basicDatatypes[i]->desc.desc->type   = i;
-        basicDatatypes[i]->desc.desc->count  = 1;
-        basicDatatypes[i]->desc.desc->disp   = 0;
-        basicDatatypes[i]->desc.desc->extent = basicDatatypes[i]->size;
-        basicDatatypes[i]->desc.length       = 1;
-        basicDatatypes[i]->desc.used         = 1;
-        basicDatatypes[i]->btypes[i]         = 1;
+        ompi_ddt_basicDatatypes[i]->desc.desc = (dt_elem_desc_t*)malloc(sizeof(dt_elem_desc_t));
+        ompi_ddt_basicDatatypes[i]->desc.desc->flags  = DT_FLAG_BASIC | DT_FLAG_CONTIGUOUS;
+        ompi_ddt_basicDatatypes[i]->desc.desc->type   = i;
+        ompi_ddt_basicDatatypes[i]->desc.desc->count  = 1;
+        ompi_ddt_basicDatatypes[i]->desc.desc->disp   = 0;
+        ompi_ddt_basicDatatypes[i]->desc.desc->extent = ompi_ddt_basicDatatypes[i]->size;
+        ompi_ddt_basicDatatypes[i]->desc.length       = 1;
+        ompi_ddt_basicDatatypes[i]->desc.used         = 1;
+        ompi_ddt_basicDatatypes[i]->btypes[i]         = 1;
     }
 
     /* Create the f2c translation table */
@@ -263,8 +298,32 @@ int ompi_ddt_init( void )
     DECLARE_MPI2_COMPOSED_BLOCK_DDT( &ompi_mpi_2cplex, DT_2COMPLEX, "MPI_2COMPLEX", DT_COMPLEX_FLOAT );
     DECLARE_MPI2_COMPOSED_BLOCK_DDT( &ompi_mpi_2dblcplex, DT_2DOUBLE_COMPLEX, "MPI_2DOUBLE_COMPLEX", DT_COMPLEX_DOUBLE );
 
-    for( i = 0; i < DT_MAX_PREDEFINED; i++ )
-        local_sizes[i] = basicDatatypes[i]->size;
+    for( i = 0; i < DT_MAX_PREDEFINED; ++i ) {
+        ompi_ddt_local_sizes[i] = ompi_ddt_basicDatatypes[i]->size;
+    }
+
+    /* Copy the desc pointer from the <DT_MAX_PREDEFINED datatypes to
+       the synonym types */
+
+    ompi_mpi_cxx_cplex.desc = ompi_mpi_cplex.desc;
+    ompi_mpi_cxx_dblcplex.desc = ompi_mpi_dblcplex.desc;
+    ompi_mpi_cxx_ldblcplex.desc = ompi_mpi_ldblcplex.desc;
+    /* JMS this doesn't look right */
+    ompi_mpi_cxx_bool.desc = ompi_mpi_int.desc;
+    ompi_mpi_real4.desc = ompi_mpi_float.desc;
+    ompi_mpi_real8.desc = ompi_mpi_double.desc;
+    ompi_mpi_real16.desc = ompi_mpi_longdbl_int.desc;
+    ompi_mpi_integer1.desc = ompi_mpi_char.desc;
+    ompi_mpi_integer2.desc = ompi_mpi_short.desc;
+    ompi_mpi_integer4.desc = ompi_mpi_int.desc;
+    ompi_mpi_integer8.desc = ompi_mpi_long_long.desc;
+    ompi_mpi_integer16.desc = ompi_mpi_unavailable.desc;
+    /* JMS this doesn't looks right */
+    ompi_mpi_complex8.desc = ompi_mpi_cplex.desc;
+    /* JMS this doesn't looks right */
+    ompi_mpi_complex16.desc = ompi_mpi_dblcplex.desc;
+    /* JMS this doesn't looks right */
+    ompi_mpi_complex32.desc = ompi_mpi_ldblcplex.desc;
 
     /* Start to populate the f2c index translation table */
 
@@ -344,13 +403,32 @@ int ompi_ddt_init( void )
 
 int ompi_ddt_finalize( void )
 {
-   int i;
+    int i;
+
+    /* Remove all synonym desc copied pointers so that they don't get
+       freed twice */
+
+    ompi_mpi_cxx_cplex.desc.desc = NULL;
+    ompi_mpi_cxx_dblcplex.desc.desc = NULL;
+    ompi_mpi_cxx_ldblcplex.desc.desc = NULL;
+    ompi_mpi_cxx_bool.desc.desc = NULL;
+    ompi_mpi_real4.desc.desc = NULL;
+    ompi_mpi_real8.desc.desc = NULL;
+    ompi_mpi_real16.desc.desc = NULL;
+    ompi_mpi_integer1.desc.desc = NULL;
+    ompi_mpi_integer2.desc.desc = NULL;
+    ompi_mpi_integer4.desc.desc = NULL;
+    ompi_mpi_integer8.desc.desc = NULL;
+    ompi_mpi_integer16.desc.desc = NULL;
+    ompi_mpi_complex8.desc.desc = NULL;
+    ompi_mpi_complex16.desc.desc = NULL;
+    ompi_mpi_complex32.desc.desc = NULL;
 
    /* As they are statically allocated they cannot be released. But we 
     * can call OBJ_DESTRUCT, just to free all internally allocated ressources.
     */
    for( i = 0; i < DT_MAX_PREDEFINED; i++ ) {
-       OBJ_DESTRUCT( basicDatatypes[i] );
+       OBJ_DESTRUCT( ompi_ddt_basicDatatypes[i] );
    }
 
    /* Get rid of the Fortran2C translation table */
@@ -390,15 +468,15 @@ static int __dump_data_desc( dt_elem_desc_t* pDesc, int nbElems )
         _dump_data_flags( pDesc->flags );
         if( pDesc->type == DT_LOOP )
             printf( "%15s %d times the next %d elements extent %d\n",
-                    basicDatatypes[pDesc->type]->name,
+                    ompi_ddt_basicDatatypes[pDesc->type]->name,
                     pDesc->count, (int)pDesc->disp, pDesc->extent );
 	else if( pDesc->type == DT_END_LOOP )
 	    printf( "%15s prev %d elements total true extent %d size of data %d\n",
-                    basicDatatypes[pDesc->type]->name,
+                    ompi_ddt_basicDatatypes[pDesc->type]->name,
                     pDesc->count, (int)pDesc->disp, pDesc->extent );
         else
             printf( "%15s count %d disp 0x%lx (%ld) extent %d\n",
-                    basicDatatypes[pDesc->type]->name,
+                    ompi_ddt_basicDatatypes[pDesc->type]->name,
                     pDesc->count, pDesc->disp, pDesc->disp, pDesc->extent );
         pDesc++;
     }
@@ -414,7 +492,7 @@ static void __dt_contain_basic_datatypes( dt_desc_t* pData )
    if( pData->flags & DT_FLAG_USER_UB ) printf( "ub " );
    for( i = 0; i < DT_MAX_PREDEFINED; i++ ) {
       if( pData->bdt_used & mask )
-         printf( "%s ", basicDatatypes[i]->name );
+         printf( "%s ", ompi_ddt_basicDatatypes[i]->name );
       mask <<= 1;
    }
 }
