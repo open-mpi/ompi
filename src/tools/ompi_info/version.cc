@@ -127,7 +127,7 @@ void ompi_info::show_component_version(const string& type_name,
   ompi_info::type_vector_t::size_type i;
   bool want_all_components = (type_all == component_name);
   bool found;
-  ompi_list_item *item;
+  ompi_list_item_t *item;
   mca_base_component_list_item_t *cli;
   const mca_base_component_t *component;
   ompi_list_t *components;
