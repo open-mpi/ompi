@@ -34,6 +34,7 @@ typedef enum {
     OMPI_INT16, /**< a 16 bit integer */
     OMPI_INT32, /**< a 32 bit integer */
     OMPI_STRING, /**< a NULL terminated string */
+    OMPI_NAME,  /**< an ompi_process_name_t */
     OMPI_PACKED /**< already packed data. */
 } ompi_pack_type_t;
 

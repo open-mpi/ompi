@@ -19,6 +19,7 @@
 
 #include "include/constants.h"
 #include "class/ompi_object.h"
+#include "mca/ns/ns.h"
 
 #include "pack.h"
 
@@ -359,6 +360,8 @@ return (OMPI_SUCCESS);
     uint32_t * d32;
     uint16_t * s16;
     uint32_t * s32;
+    ompi_process_name_t *dn;
+    ompi_process_name_t *sn;
 
     /* first find the destination location in the buffer */
     if (!buffer) { return (OMPI_ERROR); }
@@ -391,13 +394,16 @@ return (OMPI_SUCCESS);
             if (OMPI_ERROR==rc) { return OMPI_ERROR; }
             break;
         case OMPI_INT16:
-	    op_size = n*2;
+	    op_size = n*sizeof(uint16_t);
 	    break;
         case OMPI_INT32:
-	    op_size = n*4;
+	    op_size = n*sizeof(uint32_t);
 	    break;
+        case OMPI_NAME:
+        op_size = n*sizeof(ompi_process_name_t);
+        break;
         default:
-            return OMPI_ERROR;
+        return OMPI_ERROR;
     }
 
     if (op_size > bptr->space) { /* need to expand the buffer */
@@ -436,6 +442,16 @@ return (OMPI_SUCCESS);
             strncpy(dest, src, n);
             *((char *) dest + n - 1) = '\0';
             break;
+        case OMPI_NAME:
+            dn = (ompi_process_name_t*) dest;
+            sn = (ompi_process_name_t*) src;
+            for (i=0; i<n; i++) {
+                dn->cellid = htonl(sn->cellid);
+                dn->jobid = htonl(sn->jobid);
+                dn->vpid = htonl(sn->vpid);
+                dn++; sn++;
+            }
+            break;
         default:
             return OMPI_ERROR;
     }
@@ -472,6 +488,8 @@ return (OMPI_SUCCESS);
     uint32_t * d32;
     uint16_t * s16;
     uint32_t * s32;
+    ompi_process_name_t *dn;
+    ompi_process_name_t *sn;
 
     /* first find the source location in the buffer */
     if (!buffer) { return (OMPI_ERROR); }
@@ -491,11 +509,14 @@ return (OMPI_SUCCESS);
             /* so you cannot do a recursive unpack.. sorry. GEF */
             return OMPI_ERROR;
         case OMPI_INT16:
-	    op_size = n*2;
+	    op_size = n*sizeof(uint16_t);
 	    break;
         case OMPI_INT32:
-	    op_size = n*4;
+	    op_size = n*sizeof(uint32_t);
 	    break;
+        case OMPI_NAME:
+        op_size = n*sizeof(ompi_process_name_t);
+        break;
         default:
             return OMPI_ERROR;
     }
@@ -536,6 +557,16 @@ return (OMPI_SUCCESS);
         case OMPI_STRING:
             strncpy(dest, src, n);
             *((char *) dest + n - 1) = '\0';
+            break;
+        case OMPI_NAME:
+            dn = (ompi_process_name_t*) dest;
+            sn = (ompi_process_name_t*) src;
+            for (i=0; i<n; i++) {
+                dn->cellid = ntohl(sn->cellid);
+                dn->jobid = ntohl(sn->jobid);
+                dn->vpid = ntohl(sn->vpid);
+                dn++; sn++;
+            }
             break;
         default:
             return OMPI_ERROR;
