@@ -294,6 +294,60 @@ echo
         <xsl:when test="@usertype = 'MPI_Status'">
           <xsl:text>integer(MPI_STATUS_SIZE)</xsl:text>
         </xsl:when>
+        <xsl:when test="@usertype = 'MPI_Comm_errhandler_fn'">
+          <xsl:text>external</xsl:text>
+        </xsl:when>
+        <xsl:when test="@usertype = 'MPI_Comm_copy_attr_function'">
+          <xsl:text>external</xsl:text>
+        </xsl:when>
+        <xsl:when test="@usertype = 'MPI_Comm_delete_attr_function'">
+          <xsl:text>external</xsl:text>
+        </xsl:when>
+        <xsl:when test="@usertype = 'MPI_Handler_function'">
+          <xsl:text>external</xsl:text>
+        </xsl:when>
+        <xsl:when test="@usertype = 'MPI_File_errhandler_fn'">
+          <xsl:text>external</xsl:text>
+        </xsl:when>
+        <xsl:when test="@usertype = 'MPI_Grequest_query_function'">
+          <xsl:text>external</xsl:text>
+        </xsl:when>
+        <xsl:when test="@usertype = 'MPI_Grequest_free_function'">
+          <xsl:text>external</xsl:text>
+        </xsl:when>
+        <xsl:when test="@usertype = 'MPI_Grequest_cancel_function'">
+          <xsl:text>external</xsl:text>
+        </xsl:when>
+        <xsl:when test="@usertype = 'MPI_Copy_function'">
+          <xsl:text>external</xsl:text>
+        </xsl:when>
+        <xsl:when test="@usertype = 'MPI_Delete_function'">
+          <xsl:text>external</xsl:text>
+        </xsl:when>
+        <xsl:when test="@usertype = 'MPI_User_function'">
+          <xsl:text>external</xsl:text>
+        </xsl:when>
+        <xsl:when test="@usertype = 'MPI_Datarep_conversion_function'">
+          <xsl:text>external</xsl:text>
+        </xsl:when>
+        <xsl:when test="@usertype = 'MPI_Datarep_extent_function'">
+          <xsl:text>external</xsl:text>
+        </xsl:when>
+        <xsl:when test="@usertype = 'MPI_Type_copy_attr_function'">
+          <xsl:text>external</xsl:text>
+        </xsl:when>
+        <xsl:when test="@usertype = 'MPI_Type_delete_attr_function'">
+          <xsl:text>external</xsl:text>
+        </xsl:when>
+        <xsl:when test="@usertype = 'MPI_Win_errhandler_fn'">
+          <xsl:text>external</xsl:text>
+        </xsl:when>
+        <xsl:when test="@usertype = 'MPI_Win_copy_attr_function'">
+          <xsl:text>external</xsl:text>
+        </xsl:when>
+        <xsl:when test="@usertype = 'MPI_Win_delete_attr_function'">
+          <xsl:text>external</xsl:text>
+        </xsl:when>
         <xsl:otherwise>
           <xsl:param name="prefix" select="substring-before(@usertype, '_')"/>
           <xsl:if test="$prefix = 'MPI'">
