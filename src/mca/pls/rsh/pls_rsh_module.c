@@ -87,40 +87,46 @@ static void orte_pls_rsh_wait_daemon(pid_t pid, int status, void* cbdata)
     ompi_list_item_t* item;
     int rc;
 
-    /* get the mapping for our node so we can cancel the right things */
-    OBJ_CONSTRUCT(&map, ompi_list_t);
-    rc = orte_rmaps_base_get_node_map(orte_process_info.my_name->cellid,
-                                      info->jobid,
-                                      info->node->node_name,
-                                      &map);
-    if(ORTE_SUCCESS != rc) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
+    /* if ssh exited abnormally, set the child processes to aborted
+       and print something useful to the user.  The usual reasons for
+       ssh to exit abnormally all are a pretty good indication that
+       the child processes aren't going to start up properly. 
 
-    /* set state of all processes associated with the daemon as terminated */
-    for(item =  ompi_list_get_first(&map);
-        item != ompi_list_get_end(&map);
-        item =  ompi_list_get_next(item)) {
-        orte_rmaps_base_map_t* map = (orte_rmaps_base_map_t*) item;
-        size_t i;
-
-        for (i = 0 ; i < map->num_procs ; ++i) {
-            rc = orte_soh.set_proc_soh(&(map->procs[i]->proc_name), 
-                                       ORTE_PROC_STATE_ABORTED, status);
-        }
+       This should somehow be pushed up to the calling level, but we
+       don't really have a way to do that just yet.
+    */
+    if (! WIFEXITED(status) || ! WEXITSTATUS(status) == 0) {
+        /* get the mapping for our node so we can cancel the right things */
+        OBJ_CONSTRUCT(&map, ompi_list_t);
+        rc = orte_rmaps_base_get_node_map(orte_process_info.my_name->cellid,
+                                          info->jobid,
+                                          info->node->node_name,
+                                          &map);
         if(ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
+            goto cleanup;
         }
-    }
-    OBJ_DESTRUCT(&map);
+
+        /* set state of all processes associated with the daemon as
+           terminated */
+        for(item =  ompi_list_get_first(&map);
+            item != ompi_list_get_end(&map);
+            item =  ompi_list_get_next(item)) {
+            orte_rmaps_base_map_t* map = (orte_rmaps_base_map_t*) item;
+            size_t i;
+
+            for (i = 0 ; i < map->num_procs ; ++i) {
+                rc = orte_soh.set_proc_soh(&(map->procs[i]->proc_name), 
+                                           ORTE_PROC_STATE_ABORTED, status);
+            }
+            if(ORTE_SUCCESS != rc) {
+                ORTE_ERROR_LOG(rc);
+            }
+        }
+        OBJ_DESTRUCT(&map);
 
  cleanup:
-    /* BWB - XXX - FIXME - this should be made prettier in some way.  We
-       have something of a problem here, since it's a callback, so we
-       don't have a good way to propogate back up to the user :/ */
-    /* tell the user something went wrong */
-    if (! WIFEXITED(status) || ! WEXITSTATUS(status) == 0) {
+        /* tell the user something went wrong */
         ompi_output(0, "A daemon on node %s failed to start as expected."
                "There may be more information available above from the"
                "remote shell.", info->node->node_name);
