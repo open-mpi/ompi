@@ -30,8 +30,14 @@ mca_svc_base_module_t* mca_svc_exec_component_init(void);
 int mca_svc_exec_module_init(mca_svc_base_module_t*);
 int mca_svc_exec_module_fini(mca_svc_base_module_t*);
 
+struct mca_svc_exec_component_t {
+    mca_svc_base_component_t exec_base;
+    int exec_debug;
+};
+typedef struct mca_svc_exec_component_t mca_svc_exec_component_t;                                                                                                                                               
+
 extern mca_svc_base_module_t mca_svc_exec_module;
-extern mca_svc_base_component_t mca_svc_exec_component;
+extern mca_svc_exec_component_t mca_svc_exec_component;
 
 #endif
 
