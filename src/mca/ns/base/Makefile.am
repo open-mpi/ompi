@@ -22,7 +22,8 @@ libmca_ns_base_la_SOURCES = \
         ns_base_close.c \
         ns_base_select.c \
         ns_base_open.c \
-        ns_base_functions.c
+        ns_base_local_fns.c \
+        ns_base_remote_fns.c
 
 
 # Conditionally install the header files

@@ -47,6 +47,7 @@ OBJ_CLASS_INSTANCE(
  */
 int mca_ns_base_output = -1;
 mca_ns_t ompi_name_server;
+ompi_process_name_t mca_ns_my_replica;
 bool mca_ns_base_selected = false;
 ompi_list_t mca_ns_base_components_available;
 mca_ns_base_component_t mca_ns_base_selected_component;
