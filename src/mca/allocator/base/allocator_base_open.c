@@ -41,6 +41,17 @@ int mca_allocator_base_open(void)
 
 mca_allocator_base_module_t* mca_allocator_component_lookup(const char* name)
 {
+    /* Traverse the list of available modules; call their init functions. */
+    ompi_list_item_t* item;
+    for (item = ompi_list_get_first(&mca_allocator_base_components);
+         item != ompi_list_get_end(&mca_allocator_base_components);
+         item = ompi_list_get_next(item)) {
+         mca_base_module_list_item_t *mli = (mca_base_module_list_item_t *) item;
+         mca_allocator_base_module_t* component = (mca_allocator_base_module_t *) mli->mli_module;
+         if(strcmp(component->allocator_version.mca_module_name,name) == 0) {
+             return component;
+         }
+    }
     return NULL;
 }
 

@@ -33,7 +33,7 @@ mca_allocator_bucket_t * mca_allocator_bucket_init(mca_allocator_t * mem,
     }
     /* initialize the array of buckets */
     size = sizeof(mca_allocator_bucket_bucket_t) * num_buckets;
-    mem_options->buckets = (mca_allocator_bucket_bucket_t*) get_mem_funct(&size);
+    mem_options->buckets = (mca_allocator_bucket_bucket_t*) malloc(size);
     if(NULL == mem_options->buckets) {
         return(NULL);
     }

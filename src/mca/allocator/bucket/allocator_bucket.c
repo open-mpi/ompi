@@ -25,14 +25,14 @@ struct mca_allocator_t* mca_allocator_bucket_module_init(
 {
     size_t alloc_size = sizeof(mca_allocator_bucket_t);
     mca_allocator_bucket_t * retval;
-    mca_allocator_bucket_t * allocator = segment_alloc(&alloc_size);
+    mca_allocator_bucket_t * allocator = malloc(alloc_size);
     if(NULL == allocator) {
         return(NULL);
     }
     retval = mca_allocator_bucket_init((mca_allocator_t *) allocator, mca_allocator_num_buckets, 
                                         segment_alloc, segment_free);
     if(NULL == retval) {
-        segment_free(allocator);
+        free(allocator);
         return(NULL);
     }
     allocator->super.alc_alloc =  mca_allocator_bucket_alloc_wrapper;

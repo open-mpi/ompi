@@ -6,6 +6,7 @@
 #include "mpool_sm_mmap.h"
 
 
+
 mca_mpool_sm_component_t mca_mpool_sm_module = {
     {
     /* First, the mca_base_module_t struct containing meta information
@@ -117,8 +118,14 @@ mca_mpool_t* mca_mpool_sm_init(bool *allow_multi_user_threads)
         ompi_output(0, "mca_mpool_sm_init: unable to initialize allocator");
         return NULL;
     }
-    return NULL;
+
+    *allow_multi_user_threads = true;
+    return &mca_mpool_sm;
 }
 
 
+void* mca_mpool_sm_base()
+{
+    return (mca_mpool_sm_module.sm_mmap != NULL) ? mca_mpool_sm_module.sm_mmap->map_addr : NULL;
+}
 

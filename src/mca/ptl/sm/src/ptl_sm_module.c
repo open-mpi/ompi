@@ -14,6 +14,7 @@
 #include "util/argv.h"
 #include "util/output.h"
 #include "util/sys_info.h"
+#include "mca/mpool/sm/mpool_sm.h"
 #include "mca/pml/pml.h"
 #include "mca/ptl/ptl.h"
 #include "mca/ptl/base/ptl_base_sendreq.h"
@@ -151,31 +152,22 @@ mca_ptl_t** mca_ptl_sm_module_init(
     *allow_multi_user_threads = true;
     *have_hidden_threads = OMPI_HAVE_THREADS;
 
-    /* allocate a block of shared memory */
-/*
-    mca_ptl_sm_module.sm_mmap = mca_ptl_sm_mmap_init(mca_ptl_sm_module.sm_min_alloc);
-    if(NULL == mca_ptl_sm_module.sm_mmap)
-         return NULL;
-*/
-
     /* initialize free lists */
-/*
     ompi_free_list_init(&mca_ptl_sm_module.sm_send_requests, 
         sizeof(mca_ptl_sm_send_request_t),
         OBJ_CLASS(mca_ptl_sm_send_request_t),
         mca_ptl_sm_module.sm_free_list_num,
         mca_ptl_sm_module.sm_free_list_max,
         mca_ptl_sm_module.sm_free_list_inc,
-        &mca_ptl_sm_module.sm_allocator); *//* use shared-memory allocator */
+        &mca_mpool_sm); /* use shared-memory pool */
 
-/*
     ompi_free_list_init(&mca_ptl_sm_module.sm_recv_frags, 
         sizeof(mca_ptl_sm_recv_frag_t),
         OBJ_CLASS(mca_ptl_sm_recv_frag_t),
         mca_ptl_sm_module.sm_free_list_num,
         mca_ptl_sm_module.sm_free_list_max,
         mca_ptl_sm_module.sm_free_list_inc,
-        &mca_ptl_sm_module.sm_allocator); *//* use default allocator */
+        &mca_mpool_sm); /* use shared-memory pool */
 
     /* publish shared memory parameters with the MCA framework */
     if(mca_ptl_sm_module_exchange() != OMPI_SUCCESS)
