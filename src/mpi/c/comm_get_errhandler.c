@@ -29,7 +29,8 @@ int MPI_Comm_get_errhandler(MPI_Comm comm, MPI_Errhandler *errhandler)
     }
   }
 
-  /* Return the errhandler */
+  /* Return the errhandler.  Do not increase the refcount here; we
+     only refcount on communicators */
 
   *errhandler = comm->error_handler;
 

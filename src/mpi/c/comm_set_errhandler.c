@@ -31,11 +31,11 @@ int MPI_Comm_set_errhandler(MPI_Comm comm, MPI_Errhandler errhandler)
     }
   }
 
-  /* Ditch the old errhandler */
+  /* Ditch the old errhandler, and decrement its refcount */
 
   OBJ_RELEASE(comm->error_handler);
 
-  /* We have a valid comm and errhandler */
+  /* We have a valid comm and errhandler, so increment its refcount */
 
   comm->error_handler = errhandler;
   OBJ_RETAIN(comm->error_handler);
