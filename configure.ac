@@ -7,7 +7,7 @@
 # information, see the LICENSE file in the top level directory of the
 # CMPI source distribution.
 #
-# $Id: configure.ac,v 1.2 2003/11/22 16:40:48 jsquyres Exp $
+# $Id: configure.ac,v 1.3 2003/11/22 16:57:54 jsquyres Exp $
 #
 
 
@@ -94,6 +94,7 @@ AH_TOP([/* -*- c -*-
 #ifndef CMPI_CONFIG_H
 #define CMPI_CONFIG_H
 ])
+AH_BOTTOM([#endif /* CMPI_CONFIG_H */])
 
 # What kind of machine are we on?
 
@@ -298,9 +299,11 @@ AC_CONFIG_FILES([
 
     src/Makefile
     src/include/Makefile
+
     src/mpi/Makefile
     src/mpi/communicator/Makefile
     src/mpi/datatype/Makefile
+
     src/tools/Makefile
     src/tools/wrappers/Makefile
 

@@ -7,14 +7,16 @@
 # information, see the LICENSE file in the top level directory of the
 # CMPI source distribution.
 #
-# $Id: Makefile.am,v 1.1 2003/11/22 16:36:25 jsquyres Exp $
+# $Id: Makefile.am,v 1.2 2003/11/22 16:57:54 jsquyres Exp $
 #
 
 include $(top_srcdir)/config/Makefile.options
 
 noinst_HEADERS	= \
 		communicator.h \
-		datatype.h
+		datatype.h \
+		group.h \
+		totalview.h
 
 include_HEADERS	= \
 		cmpi_config.h \
