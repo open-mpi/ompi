@@ -160,32 +160,6 @@ int ompi_convertor_pack_homogeneous_with_memcpy( ompi_convertor_t* pConv,
 
     pDestBuf = iov[0].iov_base;
    
-    if( pData->flags & DT_FLAG_CONTIGUOUS ) {
-	long true_extent = pData->true_ub - pData->true_lb;
-	char* pSrcBuf = pConv->pBaseBuf + pData->true_lb + pConv->bConverted;
-      
-	type = pConv->count * pData->size;
-	if( (long)pData->size == true_extent ) {
-	    /* we can do it with just one memcpy */
-            OMPI_DDT_SAFEGUARD_POINTER( pSrcBuf, iov[0].iov_len, pConv->pBaseBuf, pData, pConv->count );
-	    MEMCPY( pDestBuf, pSrcBuf, iov[0].iov_len );
-	    space -= iov[0].iov_len;
-	    bConverted += iov[0].iov_len;
-	} else {
-	    for( pos_desc = 0; pos_desc < pConv->count; pos_desc++ ) {
-                OMPI_DDT_SAFEGUARD_POINTER( pSrcBuf, pData->size, pConv->pBaseBuf, pData, pConv->count );
-		MEMCPY( pDestBuf, pSrcBuf, pData->size );
-		space -= pData->size;
-		pSrcBuf += true_extent;
-		pDestBuf += pData->size;
-	    }
-	    bConverted += type;
-	}
-	pConv->bConverted += bConverted;
-	iov[0].iov_len = bConverted;
-	return (pConv->bConverted == (pData->size * pConv->count));
-    }
-   
     if( pData->opt_desc.desc != NULL ) {
 	pElems = pData->opt_desc.desc;
     } else {
