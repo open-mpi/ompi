@@ -51,7 +51,7 @@ void mpi_type_lb_f(MPI_Fint *type, MPI_Fint *lb, MPI_Fint *ierr)
     MPI_Datatype c_type = MPI_Type_f2c(*type);
     MPI_Aint c_lb;
 
-    *ierr = MPI_Type_lb(c_type, &c_lb);
+    *ierr = OMPI_INT_2_FINT(MPI_Type_lb(c_type, &c_lb));
 
     if (MPI_SUCCESS == *ierr) {
       *lb = (MPI_Fint)c_lb;

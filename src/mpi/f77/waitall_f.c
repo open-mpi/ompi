@@ -52,7 +52,8 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WAITALL,
 static const char FUNC_NAME[] = "MPI_WAITALL";
 
 
-void mpi_waitall_f(MPI_Fint *count, MPI_Fint *array_of_requests, MPI_Fint *array_of_statuses, MPI_Fint *ierr)
+void mpi_waitall_f(MPI_Fint *count, MPI_Fint *array_of_requests,
+		   MPI_Fint *array_of_statuses, MPI_Fint *ierr)
 {
     MPI_Request *c_req;
     MPI_Status *c_status;
@@ -70,7 +71,8 @@ void mpi_waitall_f(MPI_Fint *count, MPI_Fint *array_of_requests, MPI_Fint *array
         c_req[i] = MPI_Request_f2c(array_of_requests[i]);
     }
 
-    *ierr = MPI_Waitall(*count, c_req, c_status);
+    *ierr = OMPI_INT_2_FINT(MPI_Waitall(OMPI_FINT_2_INT(*count),
+					c_req, c_status));
 
     if (MPI_SUCCESS == *ierr) {
         for (i = 0; i < *count; i++) {

@@ -52,16 +52,19 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WAITANY,
 static const char FUNC_NAME[] = "MPI_WAITANY";
 
 
-void mpi_waitany_f(MPI_Fint *count, MPI_Fint *array_of_requests, MPI_Fint *index, MPI_Fint *status, MPI_Fint *ierr)
+void mpi_waitany_f(MPI_Fint *count, MPI_Fint *array_of_requests,
+		   MPI_Fint *index, MPI_Fint *status, MPI_Fint *ierr)
 {
     MPI_Request *c_req;
     MPI_Status c_status;
-    int i;
+    int i, c_err;
+    OMPI_SINGLE_NAME_DECL(index);
 
     c_req = malloc(*count * sizeof(MPI_Request));
     if (NULL == c_req) {
-        *ierr = OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_NO_MEM,
+        c_err = OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_NO_MEM,
                                      FUNC_NAME);
+	*ierr = OMPI_INT_2_FINT(c_err);
         return;
     }
 
@@ -69,9 +72,13 @@ void mpi_waitany_f(MPI_Fint *count, MPI_Fint *array_of_requests, MPI_Fint *index
         c_req[i] = MPI_Request_f2c(array_of_requests[i]);
     }
 
-    *ierr = MPI_Waitany(*count, c_req, index, &c_status);
+    *ierr = OMPI_INT_2_FINT(MPI_Waitany(OMPI_FINT_2_INT(*count), c_req, 
+					OMPI_SINGLE_NAME_CONVERT(index), 
+					&c_status));
 
     if (MPI_SUCCESS == *ierr) {
+
+	OMPI_SINGLE_INT_2_FINT(index);
         /*
          * Increment index by one for fortran conventions
          */
@@ -79,6 +86,7 @@ void mpi_waitany_f(MPI_Fint *count, MPI_Fint *array_of_requests, MPI_Fint *index
             *index += 1;
         }
         MPI_Status_c2f( &c_status, status); 
+
     }
     free(c_req);
 }

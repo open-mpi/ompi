@@ -56,7 +56,7 @@ void mpi_pack_size_f(MPI_Fint *incount, MPI_Fint *datatype,
     c_comm = MPI_Comm_f2c(*comm);
     c_type = MPI_Type_f2c(*datatype);
 
-    *ierr = OMPI_FINT_2_INT(MPI_Pack_size(OMPI_FINT_2_INT(*incount),
+    *ierr = OMPI_INT_2_FINT(MPI_Pack_size(OMPI_FINT_2_INT(*incount),
 					  c_type, c_comm, 
 					  OMPI_SINGLE_NAME_CONVERT(size)));
 
