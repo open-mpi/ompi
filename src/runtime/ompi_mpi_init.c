@@ -56,6 +56,8 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     /* Save command line parameters */
 
     if (OMPI_SUCCESS != (ret = ompi_common_cmd_line_init(argc, argv))) {
+        /* JMS show_help */
+        printf("show_help: ompi_mpi_init failed in ompi_common_cmd_line_init\n");
         return ret;
     }
 
@@ -68,23 +70,31 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     /* Become a OMPI process */
 
     if (OMPI_SUCCESS != (ret = ompi_init(argc, argv))) {
+        /* JMS show_help */
+        printf("show_help: ompi_mpi_init failed in ompi_init\n");
         return ret;
     }
 
     /* Open up the MCA */
 
     if (OMPI_SUCCESS != (ret = mca_base_open())) {
+        /* JMS show_help */
+        printf("show_help: ompi_mpi_init failed in mca_base_open\n");
         return ret;
     }
 
     /* Join the run-time environment */
     if (OMPI_SUCCESS != (ret = ompi_rte_init(&allow_multi_user_threads,
                                              &have_hidden_threads))) {
+        /* JMS show_help */
+        printf("show_help: ompi_mpi_init failed in mca_rte_init\n");
         return ret;
     }
 
     /* initialize ompi procs */
     if (OMPI_SUCCESS != (ret = ompi_proc_init())) {
+        /* JMS show_help */
+        printf("show_help: ompi_mpi_init failed in mca_proc_init\n");
         return ret;
     }
 
@@ -93,22 +103,27 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
          relevant constructors). */
     if (OMPI_SUCCESS != (ret = mca_allocator_base_open())) {
         /* JMS show_help */
+        printf("show_help: ompi_mpi_init failed in mca_allocator_base_init\n");
         return ret;
     }
     if (OMPI_SUCCESS != (ret = mca_mpool_base_open())) {
         /* JMS show_help */
+        printf("show_help: ompi_mpi_init failed in mca_mpool_base_init\n");
         return ret;
     }
     if (OMPI_SUCCESS != (ret = mca_pml_base_open())) {
         /* JMS show_help */
+        printf("show_help: ompi_mpi_init failed in mca_pml_base_init\n");
         return ret;
     }
     if (OMPI_SUCCESS != (ret = mca_ptl_base_open())) {
         /* JMS show_help */
+        printf("show_help: ompi_mpi_init failed in mca_ptl_base_init\n");
         return ret;
     }
     if (OMPI_SUCCESS != (ret = mca_coll_base_open())) {
         /* JMS show_help */
+        printf("show_help: ompi_mpi_init failed in mca_coll_base_init\n");
         return ret;
     }
 
@@ -121,36 +136,49 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
                                                 have_hidden_threads, 
                                                 provided))) {
         /* JMS show_help */
+        printf("show_help: ompi_mpi_init failed in mca_base_init_select_modules\n");
         return ret;
     }
 
      /* initialize error handlers */
      if (OMPI_SUCCESS != (ret = ompi_errhandler_init())) {
+         /* JMS show_help */
+         printf("show_help: ompi_mpi_init failed in ompi_errhandler_init\n");
          return ret;
      }
      
      /* initialize groups  */
      if (OMPI_SUCCESS != (ret = ompi_group_init())) {
+         /* JMS show_help */
+         printf("show_help: ompi_mpi_init failed in ompi_group_init\n");
          return ret;
      }
 
      /* initialize attribute meta-data structure for comm/win/dtype */
      if (OMPI_SUCCESS != (ret = ompi_attr_init())) {
+         /* JMS show_help */
+         printf("show_help: ompi_mpi_init failed in ompi_attr_init\n");
 	 return ret;
      }
 
      /* initialize communicators */
      if (OMPI_SUCCESS != (ret = ompi_comm_init())) {
+         /* JMS show_help */
+         printf("show_help: ompi_mpi_init failed in ompi_comm_init\n");
          return ret;
      }
 
      /* initialize datatypes */
      if (OMPI_SUCCESS != (ret = ompi_ddt_init())) {
+         /* JMS show_help */
+         printf("show_help: ompi_mpi_init failed in ompi_ddt_init\n");
          return ret;
      }
 
      /* initialize ops */
      if (OMPI_SUCCESS != (ret = ompi_op_init())) {
+         /* JMS show_help */
+         printf("show_help: ompi_mpi_init failed in ompi_op_init\n");
          return ret;
      }
 
@@ -163,13 +191,20 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 
      /* do module exchange */
      if (OMPI_SUCCESS != (ret = mca_base_modex_exchange())) {
+         /* JMS show_help */
+         printf("show_help: ompi_mpi_init failed in mca_base_modex_exchange\n");
          return ret;
      }
 
      /* add all ompi_proc_t's to PML */
-     if (NULL == (procs = ompi_proc_world(&nprocs)))
+     if (NULL == (procs = ompi_proc_world(&nprocs))) {
+         /* JMS show_help */
+         printf("show_help: ompi_mpi_init failed in NULL proc world!\n");
          return OMPI_ERROR;
+     }
      if (OMPI_SUCCESS != (ret = mca_pml.pml_add_procs(procs, nprocs))) {
+         /* JMS show_help */
+         printf("show_help: ompi_mpi_init failed in pml_add_procs!\n");
          free(procs);
          return ret;
      }
@@ -178,8 +213,11 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
      /* start PTL's */
      param = 1;
      if (OMPI_SUCCESS != 
-         (ret = mca_pml.pml_control(MCA_PTL_ENABLE, &param, sizeof(param))))
+         (ret = mca_pml.pml_control(MCA_PTL_ENABLE, &param, sizeof(param)))) {
+         /* JMS show_help */
+         printf("show_help: ompi_mpi_init failed in pml_control!\n");
          return ret;
+     }
 
      /* save the resulting thread levels */
 
@@ -190,17 +228,25 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 
     /* Init coll for the comms */
 
-    if (OMPI_ERROR == mca_coll_base_comm_select(MPI_COMM_SELF, NULL))
+    if (OMPI_ERROR == mca_coll_base_comm_select(MPI_COMM_SELF, NULL)) {
+         /* JMS show_help */
+         printf("show_help: ompi_mpi_init failed in mca_coll_base_comm_select SELF!\n");
 	return OMPI_ERROR;
+    }
 
-    if (OMPI_ERROR == mca_coll_base_comm_select(MPI_COMM_WORLD, NULL))
+    if (OMPI_ERROR == mca_coll_base_comm_select(MPI_COMM_WORLD, NULL)) {
+         /* JMS show_help */
+         printf("show_help: ompi_mpi_init failed in mca_coll_base_comm_select WORLD!\n");
 	return OMPI_ERROR;
+    }
 
     /* Wait for everyone to initialize */
     /* Change the Barrier call to the backend call */
 
     if (MPI_SUCCESS != (ret = 
                         MPI_COMM_WORLD->c_coll.coll_barrier(MPI_COMM_WORLD))) {
+         /* JMS show_help */
+         printf("show_help: ompi_mpi_init failed in WORLD barrier!\n");
 	return ret;
     }
 
