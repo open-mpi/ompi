@@ -133,6 +133,75 @@ size_t isize = 0;
 	return (OMPI_SUCCESS);	
 }
 
+
+/**
+ * This function creates a buffer using USER allocated memory
+ *
+ * users can then pack MORE into this buffer if needed 
+ * as the buffer is managed, we grow it as needed
+ *
+ * the user should not free the memory handed to the buffer
+ * this will be done by buffer_free
+ *
+ * This routine is really only used by the OOB
+ *
+ * @param pointer to new buffer handle (OUT)
+ * @param pointer to USER allocated memory (IN)
+ * @param to initial USER memory allocated length (IN)
+ * 
+ * @retval OMPI_SUCCESS 
+ * @retval OMPI_ERROR
+ * 
+ */
+
+    int ompi_buffer_init_preallocated (ompi_buffer_t *buffer, void *usermemory,
+size_t usermemorylen)
+{
+ompi_buffer_internal_t* bptr;
+
+	/* check that we can return a buffer atall.. */
+	if (!buffer) { return (OMPI_ERROR); }
+
+	/* check that we have a valid user memory buffer atall.. */
+	if (!usermemory) { return (OMPI_ERROR); }
+
+    /* check the requested initial size */
+     if (usermemorylen<0) { return (OMPI_ERROR); }
+
+	/* create new buffer object */
+	bptr = (ompi_buffer_internal_t *) OBJ_NEW (ompi_buffer_internal_t);
+
+	if (!bptr) { return (OMPI_ERROR); }
+
+	ompi_buffer_cnts++;
+
+
+	/* we have a buffer now, so lets populate it */
+
+	/* allocate initial buffer space */
+
+	bptr->base_ptr = usermemory; /* set the start of the buffer */
+
+	/* set data pointer to END of the buffer */
+	bptr->data_ptr = ((char*)bptr->base_ptr) + usermemorylen; 
+
+	bptr->from_ptr = bptr->base_ptr; /* set the unpack start at start */
+
+	/* set counts for size and space */
+	bptr->size = usermemorylen;
+	bptr->len  = usermemorylen;		/* users buffer is expected 2 be full */
+	bptr->space = 0;                /* ditto */
+	bptr->toend = usermemorylen;    /* ditto */
+	bptr->cnt = ompi_buffer_cnts;
+
+	/* ok, all is well, return the buffer back to the user */
+	*buffer = bptr;
+
+	return (OMPI_SUCCESS);	
+}
+
+
+
 /** 
  * This function gets the size of packed data in an ompi_buffer
  * 

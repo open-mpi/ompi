@@ -62,6 +62,29 @@ extern "C" {
 
     int ompi_buffer_init (ompi_buffer_t *buffer, size_t reqinitsize);
 
+
+/**
+ * This function creates a buffer using USER allocated memory
+ *
+ * users can then pack MORE into this buffer if needed 
+ * as the buffer is managed, we grow it as needed
+ *
+ * the user should not free the memory handed to the buffer
+ * this will be done by buffer_free
+ *
+ * This routine is really only used by the OOB
+ *
+ * @param pointer to new buffer handle (OUT)
+ * @param pointer to USER allocated memory (IN)
+ * @param to initial USER memory allocated length (IN)
+ * 
+ * @retval OMPI_SUCCESS 
+ * @retval OMPI_ERROR
+ * 
+ */
+
+    int ompi_buffer_init_preallocated (ompi_buffer_t *buffer, void *usermemory, size_t usermemorylen);
+
 /** 
  * This function gets the size of packed data in a ompi_buffer
  * 
