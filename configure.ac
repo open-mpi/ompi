@@ -814,6 +814,8 @@ AC_CONFIG_FILES([
     src/mca/pml/base/Makefile
     src/mca/ptl/Makefile
     src/mca/ptl/base/Makefile
+    src/mca/mem/Makefile
+    src/mca/mem/base/Makefile
     src/mca/gpr/Makefile
 
     src/mpi/Makefile
@@ -837,6 +839,6 @@ AC_CONFIG_FILES([
     test/threads/Makefile
     test/util/Makefile
     test/rte/Makefile
-
+    test/mem/Makefile
 ])
 AC_OUTPUT
