@@ -54,7 +54,7 @@ static inline int lam_value_array_init(lam_value_array_t *array, size_t item_siz
 {
     array->array_item_sizeof = item_sizeof;
     array->array_alloc_size = 1;
-    array->array_items = malloc(item_sizeof * array->array_alloc_size);
+    array->array_items = (unsigned char*) malloc(item_sizeof * array->array_alloc_size);
     return (NULL != array->array_items) ? LAM_SUCCESS : LAM_ERR_OUT_OF_RESOURCE;
 }
 
