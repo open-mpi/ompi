@@ -49,7 +49,7 @@ int mca_ptl_base_match(mca_pml_base_reliable_hdr_t *frag_header,
         lam_list_t *additional_matches)
 {
 	/* local variables */
-	mca_pml_sequence_t frag_msg_seq_num,next_msg_seq_num_expected;
+	mca_pml_base_sequence_t frag_msg_seq_num,next_msg_seq_num_expected;
 	lam_communicator_t *comm_ptr;
 	mca_pml_base_recv_request_t *matched_receive;
 	int frag_src;

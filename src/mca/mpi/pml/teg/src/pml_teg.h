@@ -5,15 +5,17 @@
 #ifndef MCA_PML_TEG_H_
 #define MCA_PML_TEG_H
 
-#include "mca/mpi/pml/pml.h"
 #include "lam/mem/free_list.h"
+#include "lam/util/cmd_line.h"
+#include "mpi/request/request.h"
+#include "mca/mpi/pml/pml.h"
 
 
 /*
  * PML module functions.
  */
 
-extern mca_pml_module_1_0_0_t mca_pml_teg_module_1_0_0_0;
+extern mca_pml_base_module_1_0_0_t mca_pml_teg_module_1_0_0_0;
 
 
 extern int mca_pml_teg_open(
@@ -29,7 +31,7 @@ extern int mca_pml_teg_query(
 );
 
 extern mca_pml_1_0_0_t* mca_pml_teg_init(
-    struct lam_proc_t **procs, 
+    lam_proc_t **procs, 
     int nprocs, 
     int *max_tag, 
     int *max_cid
@@ -38,6 +40,14 @@ extern mca_pml_1_0_0_t* mca_pml_teg_init(
 
 /*
  * TEG PML Interface
+ *
+ * JMS: Tim--Note that you don't have to do versioning here.
+ * Versioning is only for the MCA framework (i.e., able to load
+ * modules of different versions).  This type is going to be used
+ * specifically within your module, and the framework will never see
+ * it.  Ergo, no other teg modules (even those of different versions)
+ * will ever see it, either.  So while you can do the 1_0_0 stuff
+ * here, it isn't strictly necessary.
  */
 
 struct mca_pml_teg_1_0_0_t {
@@ -60,12 +70,12 @@ extern int mca_pml_teg_isend(
     int dest,
     int tag,
     struct lam_communicator_t* comm,
-    mca_pml_request_type_t req_type,
+    mca_pml_base_request_type_t req_type,
     struct lam_request_t **request
 );
 
 extern int mca_pml_teg_progress(
-    mca_pml_tstamp_t
+    mca_pml_base_tstamp_t tstamp
 );
 
 extern int mca_pml_teg_addprocs(

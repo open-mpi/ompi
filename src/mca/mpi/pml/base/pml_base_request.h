@@ -22,10 +22,10 @@ typedef enum {
     LAM_STATUS_INCOMPLETE = 3,
     LAM_STATUS_COMPLETE = 4,
     LAM_STATUS_INACTIVE = 5
-} mca_pml_request_status_t;
+} mca_pml_base_request_status_t;
 
 
-/* MPI request */
+/* MPI pml (point-to-point) request */
 typedef struct {
   /* base request */
   lam_request_t super;
@@ -38,9 +38,9 @@ typedef struct {
   /* pointer to data type */
   lam_datatype_t *req_datatype;
   /* MPI request status */
-  mca_pml_request_status_t req_status;
+  mca_pml_base_request_status_t req_status;
   /* type of message - standard,buffered,synchronous,ready,recv */
-  mca_pml_request_type_t req_type;
+  mca_pml_base_request_type_t req_type;
   /* persistence indicating if the this is a persistent request */
   bool req_persistent;
   /* flag indicating if MPI is done with this request called */

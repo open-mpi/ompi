@@ -1,2 +1,7 @@
 Makefile
 Makefile.in
+*.lo
+*.la
+.libs
+.deps
+static-modules.h
