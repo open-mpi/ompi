@@ -21,7 +21,7 @@ public:
   inline Comm_Null(const PMPI::Comm_Null& data) : pmpi_comm(data) { }
 
   // destruction
-  //JGS  virtual inline ~Comm_Null() { }
+  virtual inline ~Comm_Null() { }
 
   inline Comm_Null& operator=(const Comm_Null& data) {
     pmpi_comm = data.pmpi_comm; 
