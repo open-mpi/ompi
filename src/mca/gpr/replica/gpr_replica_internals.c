@@ -471,6 +471,17 @@ mca_gpr_replica_trigger_list_t *gpr_replica_construct_trigger(ompi_registry_sync
 	}
     }
 
+    /* check synchro levels */
+    if (OMPI_REGISTRY_SYNCHRO_MODE_NONE != trig->synch_mode) { /* looking at synchro event */
+	if (trig->count > trig->trigger) {
+	    trig->above_below = MCA_GPR_REPLICA_TRIGGER_ABOVE_LEVEL;
+	} else if (trig->count < trig->trigger) {
+	    trig->above_below = MCA_GPR_REPLICA_TRIGGER_BELOW_LEVEL;
+	} else {
+	    trig->above_below = MCA_GPR_REPLICA_TRIGGER_AT_LEVEL;
+	}
+    }
+
 
     ompi_list_append(&seg->triggers, &trig->item);
 

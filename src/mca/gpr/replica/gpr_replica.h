@@ -83,9 +83,14 @@ struct mca_gpr_replica_trigger_list_t {
     mca_gpr_replica_key_t *keys;               /**< Array of keys describing objects to be counted */
     uint32_t trigger;                          /**< Number of objects that trigger notification */
     uint32_t count;                            /**< Number of qualifying objects currently in segment */
+    int8_t above_below;                        /**< Tracks transitions across level */
     mca_gpr_notify_id_t id_tag;                /**< Tag into the list of notify structures */
 };
 typedef struct mca_gpr_replica_trigger_list_t mca_gpr_replica_trigger_list_t;
+
+#define MCA_GPR_REPLICA_TRIGGER_ABOVE_LEVEL   1
+#define MCA_GPR_REPLICA_TRIGGER_BELOW_LEVEL  -1
+#define MCA_GPR_REPLICA_TRIGGER_AT_LEVEL      0
 
 OBJ_CLASS_DECLARATION(mca_gpr_replica_trigger_list_t);
 
