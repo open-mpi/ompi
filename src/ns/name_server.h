@@ -73,3 +73,18 @@ int ompi_process_name_free(ompi_process_name_t name);
  */
 
 int ompi_process_name_free_range(ompi_process_name_t name, ompi_process_name_t range);
+
+/**
+ * Convert the process name to a string.
+ *
+ * In a number of places within Open MPI (e.g., the General Purpose Registry), it
+ * is helpful/required that the process name be treated as a string. This function
+ * converts the name into a string by expressing the name in hex.
+ *
+ * @param name The ompi_process_name_t value to be converted.
+ *
+ * @return name_string The name converted to a string expressed in hex format.
+ *
+ */
+
+char *ompi_convert_process_name_to_string(ompi_process_name_t name);
