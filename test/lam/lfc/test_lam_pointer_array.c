@@ -15,7 +15,7 @@
 #include "support.h"
 #include "lam/lfc/lam_pointer_array.h"
 
-void test(bool thread_usage){
+static void test(bool thread_usage){
 
     /* local variables */
     lam_pointer_array_t *array;
