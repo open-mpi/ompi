@@ -6,8 +6,9 @@
 #include <string.h>
 
 #include "lam/util/argv.h"
+#include "lam/util/strncpy.h"
 
-#define ARGSIZE		128
+#define ARGSIZE 128
 
 
 /**
