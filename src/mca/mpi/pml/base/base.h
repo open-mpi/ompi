@@ -19,7 +19,9 @@
 extern "C" {
 #endif
   int mca_pml_base_open(void);
-  int mca_pml_base_select(mca_pml_t *selected);
+  int mca_pml_base_select(mca_pml_t *selected, 
+                          bool *allow_multi_user_threads, 
+                          bool *have_hidden_threads);
   int mca_pml_base_close(void);
 #if defined(c_plusplus) || defined(__cplusplus)
 }

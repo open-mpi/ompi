@@ -19,10 +19,11 @@
  * will be closed and unloaded.  The selected modules will be returned
  * to the caller in a lam_list_t.
  */
-int mca_ptl_base_select(void)
+int mca_ptl_base_select(bool *allow_multi_user_threads, 
+                        bool *have_hidden_threads)
 {
   int i, num_ptls;
-  bool allow_multi_user_threads, have_hidden_threads;
+  bool user_threads, hidden_threads;
   lam_list_item_t *item;
   mca_base_module_list_item_t *mli;
   mca_ptl_base_module_t *module;
@@ -46,8 +47,8 @@ int mca_ptl_base_select(void)
       lam_output_verbose(10, mca_ptl_base_output,
                          "select: no init function; ignoring module");
     } else {
-      actions = module->ptlm_init(&num_ptls, &allow_multi_user_threads,
-                                  &have_hidden_threads);
+      actions = module->ptlm_init(&num_ptls, &user_threads,
+                                  &hidden_threads);
 
       /* If the module didn't initialize, unload it */
 
@@ -64,6 +65,9 @@ int mca_ptl_base_select(void)
       /* Otherwise, it initialized properly.  Save it. */
 
       else {
+        *allow_multi_user_threads |= user_threads;
+        *have_hidden_threads |= hidden_threads;
+
         lam_output_verbose(10, mca_ptl_base_output,
                            "select: init returned success");
 
