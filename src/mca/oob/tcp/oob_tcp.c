@@ -315,7 +315,9 @@ int mca_oob_tcp_finalize(void)
                 "mca_oob_tcp_finalize: setsockopt(SO_REUSEADDR) failed with errno=%d\n",
                  errno);
         }
-        ompi_event_del(&mca_oob_tcp_component.tcp_recv_event);
+        /*** temporarily disable the removal of the revieve event
+         * to prevent segfaults
+         * ompi_event_del(&mca_oob_tcp_component.tcp_recv_event); */
         if(0 != close(mca_oob_tcp_component.tcp_listen_sd)) {
             ompi_output(0, "mca_oob_tcp_finalize: error closing listen socket. errno=%d", errno);
         }
