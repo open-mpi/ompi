@@ -152,11 +152,12 @@ int mca_ptl_tcp_component_open(void)
 
     /* initialize objects */
     OBJ_CONSTRUCT(&mca_ptl_tcp_component.tcp_lock, ompi_mutex_t);
-    OBJ_CONSTRUCT(&mca_ptl_tcp_component.tcp_procs, ompi_list_t);
+    OBJ_CONSTRUCT(&mca_ptl_tcp_component.tcp_procs, ompi_hash_table_t);
     OBJ_CONSTRUCT(&mca_ptl_tcp_component.tcp_pending_acks, ompi_list_t);
     OBJ_CONSTRUCT(&mca_ptl_tcp_component.tcp_events, ompi_list_t);
     OBJ_CONSTRUCT(&mca_ptl_tcp_component.tcp_send_frags, ompi_free_list_t);
     OBJ_CONSTRUCT(&mca_ptl_tcp_component.tcp_recv_frags, ompi_free_list_t);
+    ompi_hash_table_init(&mca_ptl_tcp_component.tcp_procs, 256);
 
     /* register TCP module parameters */
     mca_ptl_tcp_component.tcp_if_include =

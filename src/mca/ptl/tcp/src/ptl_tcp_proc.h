@@ -25,7 +25,6 @@
 extern "C" {
 #endif
 
-extern ompi_class_t mca_ptl_tcp_proc_t_class;
 
 
 /**
@@ -36,7 +35,7 @@ extern ompi_class_t mca_ptl_tcp_proc_t_class;
 struct mca_ptl_tcp_proc_t {
     ompi_list_item_t super;                  /**< allow proc to be placed on a list */
     ompi_proc_t *proc_ompi;                  /**< pointer to corresponding ompi_proc_t */
-    ompi_process_name_t proc_guid;           /**< globally unique identifier for the process */
+    ompi_process_name_t proc_name;           /**< globally unique identifier for the process */
     struct mca_ptl_tcp_addr_t *proc_addrs;   /**< array of addresses published by peer */
     size_t proc_addr_count;                  /**< number of addresses published by peer */
     struct mca_ptl_base_peer_t **proc_peers; /**< array of peers that have been created to access this proc */
@@ -44,6 +43,9 @@ struct mca_ptl_tcp_proc_t {
     ompi_mutex_t proc_lock;                  /**< lock to protect against concurrent access to proc state */
 };
 typedef struct mca_ptl_tcp_proc_t mca_ptl_tcp_proc_t;
+
+
+OBJ_CLASS_DECLARATION(mca_ptl_tcp_proc_t);
 
 
 mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_create(ompi_proc_t* ompi_proc);

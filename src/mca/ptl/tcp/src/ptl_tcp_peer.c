@@ -240,8 +240,8 @@ static int mca_ptl_tcp_peer_send_connect_ack(mca_ptl_base_peer_t* ptl_peer)
 {
     /* send process identifier to remote peer */
     mca_ptl_tcp_proc_t* ptl_proc = mca_ptl_tcp_proc_local();
-    if(mca_ptl_tcp_peer_send_blocking(ptl_peer, &ptl_proc->proc_guid, sizeof(ptl_proc->proc_guid)) != 
-          sizeof(ptl_proc->proc_guid)) {
+    if(mca_ptl_tcp_peer_send_blocking(ptl_peer, &ptl_proc->proc_name, sizeof(ptl_proc->proc_name)) != 
+          sizeof(ptl_proc->proc_name)) {
         return OMPI_ERR_UNREACH;
     }
     return OMPI_SUCCESS;
@@ -396,7 +396,7 @@ static int mca_ptl_tcp_peer_recv_connect_ack(mca_ptl_base_peer_t* ptl_peer)
     }
 
     /* compare this to the expected values */
-    if(memcmp(&ptl_proc->proc_guid, &guid, sizeof(ompi_process_name_t)) != 0) {
+    if(memcmp(&ptl_proc->proc_name, &guid, sizeof(ompi_process_name_t)) != 0) {
         ompi_output(0, "mca_ptl_tcp_peer_connect: received unexpected process identifier");
         mca_ptl_tcp_peer_close(ptl_peer);
         return OMPI_ERR_UNREACH;
