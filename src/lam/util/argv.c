@@ -2,16 +2,17 @@
  * $HEADER$
  */
 
+/** @file **/
+
 #include <stdlib.h>
 #include <string.h>
 
 #include "lam/constants.h"
+#include "lam/mem/malloc.h"
 #include "lam/util/argv.h"
 #include "lam/util/strncpy.h"
 
 #define ARGSIZE 128
-
-/** @file **/
 
 /**
  * Append a string to an new or existing NULL-terminated argv array.
@@ -38,12 +39,12 @@
  * string (i.e., the arg parameter) after invoking this function.
  */
 int
-lam_argv_add(int *argc, char ***argv, char *arg)
+lam_argv_add(int *argc, char ***argv, const char *arg)
 {
   /* Create new argv. */
 
   if (NULL == *argv) {
-    *argv = (char **) malloc(2 * sizeof(char *));
+    *argv = LAM_MALLOC(2 * sizeof(char *));
     if (NULL == *argv)
       return LAM_ERROR;
     *argc = 0;
@@ -54,15 +55,14 @@ lam_argv_add(int *argc, char ***argv, char *arg)
   /* Extend existing argv. */
 
   else {
-    *argv = (char **) realloc((char *) *argv,
-			      (unsigned) (*argc + 2) * sizeof(char *));
+    *argv = realloc(*argv, (*argc + 2) * sizeof(char *));
     if (NULL == *argv)
       return LAM_ERROR;
   }
 
   /* Set the newest element to point to a copy of the arg string */
 
-  (*argv)[*argc] = (char *) malloc((unsigned) strlen(arg) + 1);
+  (*argv)[*argc] = LAM_MALLOC(strlen(arg) + 1);
   if (NULL == (*argv)[*argc])
     return LAM_ERROR;
 
@@ -95,10 +95,10 @@ lam_argv_free(char **argv)
     return;
 
   for (p = argv; NULL != *p; ++p) {
-    free(*p);
+    LAM_FREE(*p);
   }
 
-  free(argv);
+  LAM_FREE(argv);
 }
 
 
@@ -117,11 +117,11 @@ lam_argv_free(char **argv)
  * invalidating the output argv).
  */
 char **
-lam_argv_split(char *src_string, int delimiter)
+lam_argv_split(const char *src_string, int delimiter)
 {
   char arg[ARGSIZE];
-  char **argv = 0;
-  char *p;
+  char **argv = NULL;
+  const char *p;
   char *argtemp;
   int argc = 0;
   size_t arglen;
@@ -151,7 +151,7 @@ lam_argv_split(char *src_string, int delimiter)
     /* long argument, malloc buffer, copy and add */
 
     else if (arglen > (ARGSIZE - 1)) {
-      argtemp = (char *) malloc(arglen + 1);
+      argtemp = LAM_MALLOC(arglen + 1);
       if (NULL == argtemp)
 	return NULL;
 
@@ -159,11 +159,11 @@ lam_argv_split(char *src_string, int delimiter)
       argtemp[arglen] = '\0';
 
       if (LAM_ERROR == lam_argv_add(&argc, &argv, argtemp)) {
-	free(argtemp);
+	LAM_FREE(argtemp);
 	return NULL;
       }
 
-      free(argtemp);
+      LAM_FREE(argtemp);
     }
 
     /* short argument, copy to buffer and add */
@@ -245,7 +245,7 @@ lam_argv_join(char **argv, int delimiter)
 
   /* Allocate the string. */
 
-  if (NULL == (str = (char *) malloc(str_len)))
+  if (NULL == (str = LAM_MALLOC(str_len)))
     return NULL;
 
   /* Loop filling in the string. */
