@@ -11,7 +11,7 @@ noinst_LTLIBRARIES = libmem.la
 
 headers = \
 	allocator.h \
-	free_list.h \
+	free_lists.h \
 	mem_globals.h \
 	mem_pool.h \
 	seg_list.h \
@@ -21,6 +21,7 @@ libmem_la_SOURCES = \
 	$(headers) \
 	allocator.c \
 	free_list.c \
+	free_lists.c \
 	mem_globals.c \
 	mem_pool.c \
 	seg_list.c \

@@ -125,7 +125,7 @@ extern lam_class_info_t fixed_mem_pool_cls;
 
 void lam_fmp_init(lam_fixed_mpool_t *pool);
 void lam_fmp_destroy(lam_fixed_mpool_t *pool);
-int lam_fmp_init_with(lam_fixed_mpool_t *pool, ssize_t initial_allocation, 
+int  lam_fmp_init_with(lam_fixed_mpool_t *pool, ssize_t initial_allocation, 
                        ssize_t min_allocation_size,
                        int n_pools, int n_array_elements_to_add, int apply_mem_affinity);
 void *lam_fmp_get_mem_segment(lam_fixed_mpool_t *pool,

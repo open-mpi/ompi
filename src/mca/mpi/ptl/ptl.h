@@ -6,9 +6,11 @@
 #define LAM_MCA_PTL_H
 
 #include "mca/mca.h"
-#include "proc.h"
-#include "lam.h"
+#include "lam/lam.h"
 #include "lam/lfc/list.h"
+#include "mpi/proc/proc.h"
+#include "mca/mpi/pml/pml.h"
+#include "mca/mpi/pml/base/pml_base_sendreq.h"
 
 
 /*
@@ -22,8 +24,8 @@ typedef struct mca_ptl_1_0_0* (*mca_ptl_init_1_0_0_fn_t)();
  * PTL action functions.
  */
 
-typedef int (*mca_ptl_fragment_fn_t)(mca_ptl_send_request_t*, size_t);
-typedef int (*mca_ptl_progress_fn_t)(mca_time_t);
+typedef int (*mca_ptl_fragment_fn_t)(mca_pml_base_send_request_t*, size_t);
+typedef int (*mca_ptl_progress_fn_t)(mca_pml_base_tstamp_t);
 
 /*
  * Struct used to pass PTL module information from the each PTL 
@@ -31,7 +33,9 @@ typedef int (*mca_ptl_progress_fn_t)(mca_time_t);
  */
 
 typedef struct mca_ptl_module_1_0_0 {
-  mca_1_0_0_t super;
+  mca_base_module_t ptlm_version;
+  mca_base_module_data_1_0_0_t ptlm_data;
+
   mca_ptl_query_fn_t ptlm_query;
   mca_ptl_init_1_0_0_fn_t ptlm_init;
 } mca_ptl_module_1_0_0_t;
@@ -59,11 +63,11 @@ typedef struct mca_ptl_1_0_0 {
 
 
 /*
- * Set the default type to use version 1.1.0 of the PTL 
+ * Set the default type to use version 1.0.0 of the PTL 
  */
 
-typedef mca_ptl_module_1_1_0_t mca_ptl_module_t;
-typedef mca_ptl_1_1_0_t mca_ptl_t;
+typedef mca_ptl_module_1_0_0_t mca_ptl_module_t;
+typedef mca_ptl_1_0_0_t mca_ptl_t;
 
 
 /*
@@ -93,6 +97,6 @@ extern lam_list_t *mca_ptl_base_available;
  * effectively be filled in by configure.
  */
 
-extern const mca_t **mca_ptl_modules;
+extern const mca_base_module_t **mca_ptl_base_modules;
 
 #endif /* LAM_MCA_PTL_H */
