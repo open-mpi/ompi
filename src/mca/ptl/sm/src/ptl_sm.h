@@ -26,7 +26,7 @@ struct mca_ptl_sm_component_t {
     int sm_free_list_inc;                 /**< number of elements to alloc when growing free lists */
     int sm_max_procs;                     /**< upper limit on the number of processes using the shared memory pool */
     char* sm_mpool_name;                  /**< name of shared memory pool module */
-    mca_mpool_base_component_t* sm_mpool; /**< shared memory pool */
+    mca_mpool_base_module_t* sm_mpool; /**< shared memory pool */
     void* sm_mpool_base;                  /**< base address of shared memory pool */
     ompi_free_list_t sm_send_requests;    /**< free list of sm send requests -- sendreq + sendfrag */
     ompi_free_list_t sm_send_frags;       /**< free list of sm send fragments */

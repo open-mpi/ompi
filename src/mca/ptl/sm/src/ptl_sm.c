@@ -16,31 +16,31 @@
 #include "ptl_sm.h"
 #include "util/sys_info.h"
 #include "mca/ptl/sm/src/ptl_sm_peer.h"
-#include "mca/ptl/sm/src/ptl_sm_sendfrag.h"
+#include "mca/mpool/sm/mpool_sm.h"
 
 
 mca_ptl_sm_t mca_ptl_sm = {
-  {
-      /* RICH: I have no idea what should be here -- you need to check
-         all these values. --JMS */
+    {
     &mca_ptl_sm_component.super,
-    0, /* max size of request cache */
-    sizeof(mca_ptl_sm_send_frag_t), /* bytes required by ptl for a request */
-    0, /* max size of first fragment */
-    0, /* min fragment size */
-    0, /* max fragment size */
-    1, /* exclusivity */
-    0, /* latency */
-    0, /* bandwidth */
+    5, /* number of elements in the send descriptor cache: RLG - this is
+        garbage, need to fix. */
+    5, /* size needs for the cache: RLG - this is garbage, need to fix.  */
+    1, /* ptl_exclusivity */
+    0, /* ptl_latency */
+    0, /* ptl_andwidth */
+    0, /* ptl_frag_first_size */
+    0, /* ptl_frag_min_size */
+    0, /* ptl_frag_max_size */
     MCA_PTL_PUT,  /* ptl flags */
     mca_ptl_sm_add_procs,
     mca_ptl_sm_del_procs,
     mca_ptl_sm_finalize,
     mca_ptl_sm_send,
+    mca_ptl_sm_send, /* function */
     NULL,
-    NULL, /* RICH: need matched function here */
-    NULL, /* RICH: need request_init function here */
-    NULL /* RICH: need request_fini function here */
+    mca_ptl_sm_matched,
+    NULL, /* mca_ptl_sm_request_alloc, RLG - need to fix, arg list has changed */
+    mca_ptl_sm_request_return
     }
 };
 
@@ -57,6 +57,11 @@ int mca_ptl_sm_add_procs(
     mca_ptl_sm_exchange_t **sm_proc_info;
     ompi_proc_t* my_proc; /* pointer to caller's proc structure */
     mca_ptl_sm_t *ptl_sm;
+    bool threads;
+
+    /* initialize the shared memory pool */
+    /*mca_mpool_component_lookup("sm"); */
+    /*mca_mpool_sm_init(&threads); */
 
     /* initializion */
     for(i=0 ; i < nprocs ; i++ ) {
