@@ -37,10 +37,9 @@ typedef uint32_t orte_rml_tag_t;
 #define ORTE_RML_TAG_GPR_NOTIFY  3
 #define ORTE_RML_TAG_DAEMON      4
 #define ORTE_RML_TAG_IOF_SVC     5
-#define ORTE_RML_TAG_IOF_CLT     6
+#define ORTE_RML_TAG_IOF_CLNT    6
 #define ORTE_RML_TAG_XCAST       7
-#define ORTE_RML_TAG_BPROC_SVC   8
-#define ORTE_RML_TAG_BPROC_CLT   9
+#define ORTE_RML_TAG_RMGR        8
 #define ORTE_RML_TAG_DYNAMIC     2000
 #define ORTE_RML_TAG_MAX UINT32_MAX
 

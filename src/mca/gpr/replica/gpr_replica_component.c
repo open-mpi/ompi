@@ -34,6 +34,7 @@
 #include "gpr_replica.h"
 #include "mca/gpr/replica/api_layer/gpr_replica_api.h"
 #include "mca/gpr/replica/communications/gpr_replica_comm.h"
+#include "mca/errmgr/errmgr.h"
 
 
 /*
@@ -547,7 +548,11 @@ int orte_gpr_replica_module_init(void)
 {
     /* issue the non-blocking receive */ 
     if (!orte_gpr_replica_globals.isolate) {
-        return orte_rml.recv_buffer_nb(ORTE_RML_NAME_ANY, ORTE_RML_TAG_GPR, 0, orte_gpr_replica_recv, NULL);
+        int rc = orte_rml.recv_buffer_nb(ORTE_RML_NAME_ANY, ORTE_RML_TAG_GPR, 0, orte_gpr_replica_recv, NULL);
+        if(rc < 0) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
     }
     return ORTE_SUCCESS;
 }

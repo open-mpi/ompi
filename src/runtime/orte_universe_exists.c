@@ -54,9 +54,6 @@ int orte_universe_exists()
     orte_process_name_t proc={0,0,0};
 /*    bool ns_found=false, gpr_found=false; */
 
-    /* ensure that system info has been populated */
-    orte_sys_info();
-    
     /* if both ns_replica and gpr_replica were provided, check for contact with them */
     if (NULL != orte_process_info.ns_replica_uri && NULL != orte_process_info.gpr_replica_uri) {
        orte_process_name_t name;

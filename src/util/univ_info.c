@@ -38,7 +38,7 @@
 orte_universe_t orte_universe_info = {
     /* .init =                */    false,
     /* .path =                */    NULL,
-    /* .name =                */    NULL,
+    /* .name =                */    "default-universe",
     /* .host =                */    NULL,
     /* .uid =                 */    NULL,
     /* .persistence =         */    false,
@@ -55,42 +55,33 @@ int orte_univ_info(void)
     int id, tmp;
     
     if (!orte_universe_info.init) {
-        id = mca_base_param_register_string("universe", "path", NULL, NULL, NULL);
+        id = mca_base_param_register_string("universe", "path", NULL, NULL, orte_universe_info.path);
         mca_base_param_lookup_string(id, &(orte_universe_info.path));
     
-        id = mca_base_param_register_string("universe", "name", NULL, NULL, "default-universe");
+        id = mca_base_param_register_string("universe", "name", NULL, NULL, orte_universe_info.name);
         mca_base_param_lookup_string(id, &(orte_universe_info.name));
     
-        id = mca_base_param_register_string("universe", "host", NULL, NULL, NULL);
+        id = mca_base_param_register_string("universe", "host", NULL, NULL, orte_universe_info.host);
         mca_base_param_lookup_string(id, &(orte_universe_info.host));
     
         /* uid is not set via parameter, but is determined elsewhere */
         
-        id = mca_base_param_register_int("universe", "persistence", NULL, NULL, (int)false);
+        id = mca_base_param_register_int("universe", "persistence", NULL, NULL, orte_universe_info.persistence);
         mca_base_param_lookup_int(id, &tmp);
-        if (tmp) {
-            orte_universe_info.persistence = true;
-        } else {
-            orte_universe_info.persistence = false;
-        }
+        orte_universe_info.persistence = (tmp ? true : false);
     
-        id = mca_base_param_register_string("universe", "scope", NULL, NULL, NULL);
+        id = mca_base_param_register_string("universe", "scope", NULL, NULL, orte_universe_info.scope);
         mca_base_param_lookup_string(id, &(orte_universe_info.scope));
     
-        id = mca_base_param_register_int("universe", "console", NULL, NULL, (int)false);
+        id = mca_base_param_register_int("universe", "console", NULL, NULL, orte_universe_info.console);
         mca_base_param_lookup_int(id, &tmp);
-        if (tmp) {
-            orte_universe_info.console = true;
-        } else {
-            orte_universe_info.console = false;
-        }
+        orte_universe_info.console = (tmp ? true : false);
     
-        id = mca_base_param_register_string("universe", "uri", NULL, NULL, NULL);
+        id = mca_base_param_register_string("universe", "uri", NULL, NULL, orte_universe_info.seed_uri);
         mca_base_param_lookup_string(id, &(orte_universe_info.seed_uri));
     
         /* console connected is set elsewhere */
-        
-        id = mca_base_param_register_string("universe", "script", NULL, NULL, NULL);
+        id = mca_base_param_register_string("universe", "script", NULL, NULL, orte_universe_info.scriptfile);
         mca_base_param_lookup_string(id, &(orte_universe_info.scriptfile));
 
         orte_universe_info.init = true;
