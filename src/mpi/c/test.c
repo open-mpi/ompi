@@ -30,7 +30,10 @@ int MPI_Test(MPI_Request *request, int *completed, MPI_Status *status)
         } else if (completed == NULL) {
             rc = MPI_ERR_ARG;
         }
-        OMPI_ERRHANDLER_CHECK(rc, (ompi_communicator_t*)NULL, rc, "MPI_Test");
+        /* JMS: Tim will fix to invoke on the communicator/window/file
+           on the request (i.e., not COMM_WORLD), if the request is
+           available/valid */
+        OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, "MPI_Test");
     }
 
     if(*request == NULL) {
@@ -45,6 +48,8 @@ int MPI_Test(MPI_Request *request, int *completed, MPI_Status *status)
     if(*completed < 0) {
         *completed = 0;
     }
-    OMPI_ERRHANDLER_RETURN(rc, (ompi_communicator_t*)NULL, rc, "MPI_Test");
+    /* JMS: Tim will fix to invoke on the communicator/window/file on
+       the request (i.e., not COMM_WORLD) */
+    OMPI_ERRHANDLER_RETURN(rc, MPI_COMM_WORLD, rc, "MPI_Test");
 }
 

@@ -28,9 +28,9 @@ int MPI_Waitall(int count, MPI_Request *requests, MPI_Status *statuses)
         } else if (requests == NULL) {
             rc = MPI_ERR_REQUEST;
         }
-        OMPI_ERRHANDLER_CHECK(rc, (ompi_communicator_t*)NULL, rc, "MPI_Waitall");
+        OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, "MPI_Waitall");
     }
     rc = mca_pml.pml_wait_all(count, requests, statuses);
-    OMPI_ERRHANDLER_RETURN(rc, (ompi_communicator_t*)NULL, rc, "MPI_Waitall");
+    OMPI_ERRHANDLER_RETURN(rc, MPI_COMM_WORLD, rc, "MPI_Waitall");
 }
 

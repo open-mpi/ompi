@@ -34,7 +34,7 @@ MPI_Type_get_contents(MPI_Datatype mtype,
 
    if( MPI_PARAM_CHECK ) {
       if( OMPI_MPI_INVALID_STATE ) {
-         OMPI_ERRHANDLER_RETURN( MPI_ERR_INTERN, (ompi_communicator_t*)NULL,
+         OMPI_ERRHANDLER_RETURN( MPI_ERR_INTERN, MPI_COMM_WORLD,
                                 MPI_ERR_INTERN, FUNC_NAME );
       }
    }
@@ -43,7 +43,7 @@ MPI_Type_get_contents(MPI_Datatype mtype,
                           &max_addresses, array_of_addresses,
                           &max_datatypes, array_of_datatypes, NULL );
    if( rc != MPI_SUCCESS ) {
-      OMPI_ERRHANDLER_RETURN( MPI_ERR_INTERN, (ompi_communicator_t*)NULL,
+      OMPI_ERRHANDLER_RETURN( MPI_ERR_INTERN, MPI_COMM_WORLD,
                              MPI_ERR_INTERN, FUNC_NAME );
    }
 

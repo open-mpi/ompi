@@ -30,17 +30,17 @@ MPI_Type_contiguous(int count,
 
    if( MPI_PARAM_CHECK ) {
       if( OMPI_MPI_INVALID_STATE ) {
-         OMPI_ERRHANDLER_RETURN( MPI_ERR_INTERN, (ompi_communicator_t*)NULL,
+         OMPI_ERRHANDLER_RETURN( MPI_ERR_INTERN, MPI_COMM_WORLD,
                                 MPI_ERR_INTERN, FUNC_NAME );
       }
       if( count < 0 ) {
-         OMPI_ERRHANDLER_RETURN( MPI_ERR_COUNT, (ompi_communicator_t*)NULL,
+         OMPI_ERRHANDLER_RETURN( MPI_ERR_COUNT, MPI_COMM_WORLD,
                                 MPI_ERR_COUNT, FUNC_NAME );
       }
    }
    
    rc = ompi_ddt_create_contiguous( count, oldtype, newtype );
-   OMPI_ERRHANDLER_CHECK(rc, (ompi_communicator_t*)NULL, rc, FUNC_NAME );
+   OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, FUNC_NAME );
 
    /* data description */
    {
@@ -49,5 +49,5 @@ MPI_Type_contiguous(int count,
       ompi_ddt_set_args( *newtype, 1, a_i, 0, NULL, 1, &oldtype, MPI_COMBINER_CONTIGUOUS );
    }
 
-   OMPI_ERRHANDLER_RETURN(rc, (ompi_communicator_t*)NULL, rc, FUNC_NAME );
+   OMPI_ERRHANDLER_RETURN(rc, MPI_COMM_WORLD, rc, FUNC_NAME );
 }

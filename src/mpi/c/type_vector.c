@@ -32,21 +32,21 @@ MPI_Type_vector(int count,
 
    if( MPI_PARAM_CHECK ) {
       if( OMPI_MPI_INVALID_STATE ) {
-         OMPI_ERRHANDLER_RETURN( MPI_ERR_INTERN, (ompi_communicator_t*)NULL,
+         OMPI_ERRHANDLER_RETURN( MPI_ERR_INTERN, MPI_COMM_WORLD,
                                 MPI_ERR_INTERN, FUNC_NAME );
       }
       if( count < 0 ) {
-         OMPI_ERRHANDLER_RETURN( MPI_ERR_COUNT, (ompi_communicator_t*)NULL,
+         OMPI_ERRHANDLER_RETURN( MPI_ERR_COUNT, MPI_COMM_WORLD,
                                 MPI_ERR_COUNT, FUNC_NAME );
       }
       if( blocklength < 0) {
-         OMPI_ERRHANDLER_RETURN( MPI_ERR_ARG, (ompi_communicator_t*)NULL,
+         OMPI_ERRHANDLER_RETURN( MPI_ERR_ARG, MPI_COMM_WORLD,
                                 MPI_ERR_ARG, FUNC_NAME );
       }
    }
 
    rc = ompi_ddt_create_vector ( count, blocklength, stride, oldtype, newtype );
-   OMPI_ERRHANDLER_CHECK(rc, (ompi_communicator_t*)NULL, rc, FUNC_NAME );
+   OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, FUNC_NAME );
 
    {
       int* a_i[3];

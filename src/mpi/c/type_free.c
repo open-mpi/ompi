@@ -28,14 +28,14 @@ MPI_Type_free(MPI_Datatype *type)
 
    if( MPI_PARAM_CHECK ) {
       if( OMPI_MPI_INVALID_STATE ) {
-         OMPI_ERRHANDLER_RETURN( MPI_ERR_INTERN, (ompi_communicator_t*)NULL,
+         OMPI_ERRHANDLER_RETURN( MPI_ERR_INTERN, MPI_COMM_WORLD,
                                 MPI_ERR_INTERN, FUNC_NAME );
       }
    }
 
    rc = ompi_ddt_destroy( type );
    if( rc != MPI_SUCCESS ) {
-      OMPI_ERRHANDLER_RETURN( MPI_ERR_INTERN, (ompi_communicator_t*)NULL,
+      OMPI_ERRHANDLER_RETURN( MPI_ERR_INTERN, MPI_COMM_WORLD,
                              MPI_ERR_INTERN, FUNC_NAME );
    }
    *type = MPI_DATATYPE_NULL;
