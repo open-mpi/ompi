@@ -107,16 +107,12 @@ int mca_oob_base_init(bool *user_threads, bool *hidden_threads)
 *  Obtains the contact info (oob implementation specific) URI strings through
 *  which this process can be contacted on an OOB channel.
 *
-*  @return  A null terminated array of strings.
+*  @return  A null terminated string.
 *
-*  The caller is responsible for freeing both the array and the strings that
-*  it points to.
+*  The caller is responsible for freeing the returned string.
 */
                                                                                                              
-char** mca_oob_get_contact_info()
+char* mca_oob_get_contact_info()
 {
-    char** contact_info = malloc(sizeof(char*) * (ompi_list_get_size(&mca_oob_base_modules)+1));
-    contact_info[0] = strdup("tcp:localhost:5000");
-    contact_info[1] = NULL;
-    return contact_info;
+    return strdup("tcp:localhost:5000");
 }
