@@ -7,7 +7,7 @@
 # information, see the LICENSE file in the top level directory of the
 # CMPI source distribution.
 #
-# $Id: configure.ac,v 1.1 2003/11/22 16:36:20 jsquyres Exp $
+# $Id: configure.ac,v 1.2 2003/11/22 16:40:48 jsquyres Exp $
 #
 
 
@@ -17,7 +17,7 @@
 
 # Init autoconf
 
-AC_INIT(./src/mpi/datatype/get_name.c)
+AC_INIT(./src/mpi/datatype/d_get_name.c)
 AC_PREREQ(2.52)
 AC_CONFIG_AUX_DIR(./config)
 
