@@ -435,6 +435,7 @@ if test "$HAPPY" = "1"; then
         for flags in CFLAGS CXXFLAGS FFLAGS LDFLAGS LIBS; do
             var="LIBMPI_EXTRA_${flags}"
             line="`grep $var= $infile | cut -d= -f2-`"
+	    eval "line=$line"
             if test -n "$line"; then
                 str="$var="'"$'"$var $line"'"'
                 eval $str
@@ -448,6 +449,7 @@ if test "$HAPPY" = "1"; then
             for flags in LDFLAGS LIBS; do
                 var="WRAPPER_EXTRA_${flags}"
                 line="`grep $var= $infile | cut -d= -f2-`"
+		eval "line=$line"
                 if test -n "$line"; then
                     str="$var="'"$'"$var $line"'"'
                     eval $str
