@@ -8,14 +8,24 @@
 extern "C" {
 #endif
 struct mca_common_sm_file_header_t {
+
     /* lock to control atomic access */
     ompi_lock_t seg_lock;
     /* is the segment ready for use */
+    
     volatile bool seg_inited;
     /* Offset to next available memory location available for allocation */
     size_t seg_offset;
+
     /* total size of the segment */
     size_t seg_size;
+
+    /* array of pointers to the base of the shared memory address - one per
+     * local process */
+    volatile char **base_shared_mem_segment;
+
+    /* array of flags indicating base_shared_mem_segment is set */
+    volatile int *base_shared_mem_flags;
 };
 typedef struct mca_common_sm_file_header_t mca_common_sm_file_header_t;
 
