@@ -23,8 +23,6 @@ ompi_process_name_t* ns_base_create_process_name(ompi_process_id_t cell,
 {
     ompi_process_name_t *newname;
 
-    ompi_output(mca_ns_base_output, "create_process_name\n");
-
     newname = OBJ_NEW(ompi_process_name_t);
     if (NULL == newname) { /* got an error */
 	return(NULL);
