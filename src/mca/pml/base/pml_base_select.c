@@ -47,6 +47,8 @@ int mca_pml_base_select(mca_pml_base_module_t *selected,
 
   best_priority = -1;
   best_component = NULL;
+  user_threads = true;
+  hidden_threads = false;
   OBJ_CONSTRUCT(&opened, ompi_list_t);
   for (item = ompi_list_get_first(&mca_pml_base_components_available);
        ompi_list_get_end(&mca_pml_base_components_available) != item;
@@ -132,8 +134,8 @@ int mca_pml_base_select(mca_pml_base_module_t *selected,
   mca_pml_base_selected_component = *best_component;
   mca_pml = *modules;
   *selected = *modules;
-  *allow_multi_user_threads = best_user_threads;
-  *have_hidden_threads = best_hidden_threads;
+  *allow_multi_user_threads &= best_user_threads;
+  *have_hidden_threads |= best_hidden_threads;
   ompi_output_verbose(10, mca_pml_base_output, 
                      "select: component %s selected",
                      component->pmlm_version.mca_component_name);
