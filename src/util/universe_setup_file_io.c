@@ -47,6 +47,8 @@ int ompi_write_universe_setup_file(char *filename)
     }
     fprintf(fp, "%s\n", ompi_universe_info.uid);
 
+    fprintf(fp, "%d\n", ompi_universe_info.pid);
+
     if (ompi_universe_info.persistence) {
 	fprintf(fp, "persistent\n");
     } else {
@@ -111,6 +113,12 @@ int ompi_read_universe_setup_file(char *filename)
     if (NULL == ompi_universe_info.uid) {
 	goto CLEANUP;
     }
+
+    input = ompi_getline(fp);
+    if (NULL == input) {
+	goto CLEANUP;
+    }
+    ompi_universe_info.pid = (pid_t)atoi(input);
 
     input = ompi_getline(fp);
     if (NULL == input) {

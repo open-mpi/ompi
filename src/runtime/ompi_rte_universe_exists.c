@@ -24,10 +24,6 @@
 
 #include "runtime/runtime.h"
 
-#define OMPI_DAEMON_OOB_PACK_CMD OMPI_INT16
-
-#define OMPI_DAEMON_INITIAL_CONTACT_CMD 0x01
-#define OMPI_DAEMON_CONTACT_ACK_CMD     0x02
 
 
 int ompi_rte_universe_exists(char *host, char *name, char *tmpdir, char *oob_contact_info)
@@ -35,7 +31,6 @@ int ompi_rte_universe_exists(char *host, char *name, char *tmpdir, char *oob_con
     char *contact_file;
     int32_t command, recv_tag;
     int ret;
-    ompi_buffer_t msg, response;
     ompi_process_name_t seed={0,0,0};
 
     /* does universe already exist on specified host? Check session directory to see */
@@ -62,40 +57,15 @@ int ompi_rte_universe_exists(char *host, char *name, char *tmpdir, char *oob_con
 	    return OMPI_ERR_NO_CONNECTION_ALLOWED;
 	}
 
-	/* if persistent, use contact info to connect */
+	/* if persistent, set contact info... */
 	if (OMPI_SUCCESS != mca_oob_set_contact_info(ompi_universe_info.oob_contact_info)) { /* set contact info */
 	    fprintf(stderr, "error setting oob contact info - please report error to bugs@open-mpi.org\n");
 	    return OMPI_ERR_FATAL;
 	}
 
-	command = OMPI_DAEMON_INITIAL_CONTACT_CMD;
-	recv_tag = MCA_OOB_TAG_DAEMON;
-
-	if (OMPI_SUCCESS != ompi_buffer_init(&msg, 0) ||
-	    OMPI_SUCCESS != ompi_buffer_init(&response, 0)) { /* can't get a message buffer */
-	    fprintf(stderr, "can't get message buffer - please report error to bugs@open-mpi.org\n");
-	    return OMPI_ERR_FATAL;
-	}
-
-	ompi_pack(msg, &command, 1, OMPI_DAEMON_OOB_PACK_CMD);
-	if (0 > mca_oob_send_packed(&seed, msg, MCA_OOB_TAG_DAEMON, 0)) {
-	    /* failure means contact couldn't be made - probably universe has failed,
-	     * but could be that it just isn't available for some reason like swapping,
-	     * timeout for other reasons, etc. regardless, must start new universe */
-	    /* for safety, will restart with "unique"-ified name */
-	    return OMPI_ERR_CONNECTION_FAILED;
-	}
-
-	if (0 > mca_oob_recv_packed(&seed, &response, &recv_tag)) {
-	    fprintf(stderr, "garbled response\n");
-	}
-
-	ompi_unpack(response, &command, 1, OMPI_DAEMON_OOB_PACK_CMD);
-	if (OMPI_DAEMON_CONTACT_ACK_CMD != command) {
-	    /* universe refuses to acknowledge contact - probably local scope
-	     * so need to start our own universe instead */
-	    return OMPI_ERR_CONNECTION_REFUSED;
-	}
-
+/* 	/\* ...and ping to verify it's alive *\/ */
+/* 	if (OMPI_SUCCESS != mca_oob_ping(&seed)) { */
+/* 	    return OMPI_ERR_CONNECTION_FAILED; */
+/* 	} */
     }
 }
