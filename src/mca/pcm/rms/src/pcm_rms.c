@@ -25,6 +25,7 @@
 #include "util/numtostr.h"
 #include "runtime/ompi_rte_wait.h"
 #include "util/show_help.h"
+#include "util/output.h"
 
 
 static void internal_wait_cb(pid_t pid, int status, void *data);
