@@ -11,6 +11,12 @@
 #ifndef LAM_DATATYPE_H_INCLUDED
 #define LAM_DATATYPE_H_INCLUDED 1
 
+#include <sys/types.h>
+#include <sys/uio.h>
+
+#include "lam/lfc/object.h"
+#include "lam/types.h"
+
 /* typedefs ***********************************************************/
 
 typedef enum lam_checksum_kind_t lam_checksum_kind_t;
