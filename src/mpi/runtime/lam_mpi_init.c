@@ -26,6 +26,9 @@
 
 bool lam_mpi_initialized = false;
 bool lam_mpi_finalized = false;
+/* As a deviation from the norm, this variable is extern'ed in
+   src/mpi/interface/c/bindings.h because it is already included in
+   all MPI function imlementation files */
 bool lam_mpi_param_check = true;
 
 bool lam_mpi_thread_multiple = false;
