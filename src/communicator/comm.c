@@ -668,7 +668,7 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
     int local_rank, local_size;
     ompi_proc_t **rprocs=NULL;
     char *rnamebuf=NULL;
-    int len, rlen, tlen;
+    int len, rlen;
     ompi_buffer_t sbuf, rbuf;
     void *sendbuf;
     char *recvbuf;

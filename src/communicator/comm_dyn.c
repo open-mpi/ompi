@@ -24,7 +24,7 @@
 
 int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
                                ompi_process_name_t *port, int send_first,
-                               ompi_communicator_t **newcomm )
+                               ompi_communicator_t **newcomm, int tag )
 {
     int size, rsize, rank, rc;
     int namebuflen, rnamebuflen;
@@ -46,7 +46,7 @@ int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
            information of the remote process. Therefore, we have to
            exchange that.
         */
-        rport = ompi_comm_get_rport (port,send_first,group->grp_proc_pointers[rank]);
+        rport = ompi_comm_get_rport (port,send_first,group->grp_proc_pointers[rank], tag);
 
         /* Exchange number of processes and msg length on both sides */
 	ompi_buffer_init (&nbuf, size*sizeof(ompi_process_name_t));
@@ -58,12 +58,12 @@ int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
         ompi_pack(sbuf, &namebuflen, 1, OMPI_INT32);
 
         if ( send_first ) {
-            rc = mca_oob_send_packed(rport, sbuf, 0, 0);
-            rc = mca_oob_recv_packed (rport, &rbuf, NULL);
+            rc = mca_oob_send_packed(rport, sbuf, tag, 0);
+            rc = mca_oob_recv_packed (rport, &rbuf, &tag);
         }
         else {
-            rc = mca_oob_recv_packed(rport, &rbuf, NULL);
-            rc = mca_oob_send_packed(rport, sbuf, 0, 0);
+            rc = mca_oob_recv_packed(rport, &rbuf, &tag);
+            rc = mca_oob_send_packed(rport, sbuf, tag, 0);
         }
 
         ompi_unpack(rbuf, &rsize, 1, OMPI_INT32);
@@ -87,12 +87,12 @@ int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
         /* Exchange list of processes in the groups */
         
         if ( send_first ) {
-            rc = mca_oob_send_packed(rport, nbuf, 0, 0);
-            rc = mca_oob_recv_packed (rport, &nrbuf, NULL);
+            rc = mca_oob_send_packed(rport, nbuf, tag, 0);
+            rc = mca_oob_recv_packed (rport, &nrbuf, &tag);
         }
         else {
-            rc = mca_oob_recv_packed(rport, &nrbuf, NULL);
-            rc = mca_oob_send_packed(rport, nbuf, 0, 0);
+            rc = mca_oob_recv_packed(rport, &nrbuf, &tag);
+            rc = mca_oob_send_packed(rport, nbuf, tag, 0);
         }
     }
     else {
@@ -198,7 +198,7 @@ int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
  *
  */
 ompi_process_name_t *ompi_comm_get_rport (ompi_process_name_t *port, int send_first, 
-                                          ompi_proc_t *proc)
+                                          ompi_proc_t *proc, int tag)
 {
     int rc;
     ompi_process_name_t *rport, tbuf;
@@ -209,7 +209,7 @@ ompi_process_name_t *ompi_comm_get_rport (ompi_process_name_t *port, int send_fi
 
         ompi_buffer_init(&sbuf, sizeof(ompi_process_name_t));
         ompi_pack(sbuf, &(proc->proc_name), 1, OMPI_NAME);
-        rc = mca_oob_send_packed(port, sbuf, 0, 0);
+        rc = mca_oob_send_packed(port, sbuf, tag, 0);
         ompi_buffer_free(sbuf);
 
         rport = port;
@@ -217,15 +217,11 @@ ompi_process_name_t *ompi_comm_get_rport (ompi_process_name_t *port, int send_fi
     else {
         ompi_buffer_t rbuf;
 
-        rc = mca_oob_recv_packed(MCA_OOB_NAME_ANY, &rbuf, NULL);
+        rc = mca_oob_recv_packed(MCA_OOB_NAME_ANY, &rbuf, &tag);
         ompi_unpack(rbuf, &tbuf, 1, OMPI_NAME);
         ompi_buffer_free(rbuf);
 
-	rproc = ompi_proc_find(&tbuf);
-	if ( NULL == rproc ) {
-	    rproc = OBJ_NEW(ompi_proc_t);
-	    rproc->proc_name = tbuf;
-	}
+	rproc = ompi_proc_find_and_add(&tbuf);
         rport = &(rproc->proc_name);
     }
     

@@ -333,7 +333,16 @@ extern "C" {
      */
     int ompi_comm_dump ( ompi_communicator_t *comm );
 
+    /** 
+     * a simple function to determint a port number
+     */
+    int ompi_open_port (char *port_name);
 
+    /**
+     * takes a port_name and returns the oob-contact information
+     * and the tag
+     */
+    char * ompi_parse_port (char *port_name, int *tag) ;
 
     /** 
      * routines handling name publishing, lookup and unpublishing
@@ -351,7 +360,7 @@ extern "C" {
     */
     int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
                                    ompi_process_name_t *port, int send_first,
-                                   ompi_communicator_t **newcomm);
+                                   ompi_communicator_t **newcomm, int tag);
 
     /* A helper routine for ompi_comm_connect_accept.
      * This routine is necessary, since in the connect/accept case, the processes
@@ -364,7 +373,8 @@ extern "C" {
      *
      */
     ompi_process_name_t *ompi_comm_get_rport (ompi_process_name_t *port,
-                                              int send_first, ompi_proc_t *proc);
+                                              int send_first, ompi_proc_t *proc,
+					      int tag);
     
 
 
