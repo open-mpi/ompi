@@ -253,7 +253,6 @@ int mca_ptl_mx_send_continue(
     mca_ptl_base_header_t* hdr;
     ompi_ptr_t match;
     mx_return_t mx_return;
-    uint64_t match_value;
     int rc;
 
     /* allocate fragment */
@@ -445,7 +444,8 @@ void mca_ptl_mx_matched(
             request->req_base.req_addr,     /* users buffer */
             hdr->hdr_frag.hdr_frag_offset,  /* offset in bytes into packed buffer */
             NULL );                         /* not allocating memory */
-                                                                                                             
+        ompi_convertor_get_packed_size(convertor, &request->req_bytes_packed);
+
         iov.iov_base = mx_frag->frag_data;
         iov.iov_len = hdr->hdr_frag.hdr_frag_length;
         ompi_convertor_unpack(convertor, &iov, &iov_count, &bytes_delivered, &free_after );

@@ -48,7 +48,6 @@ do {                                                                            
             mca_ptl_mx_recv_frag_t* recvfrag = (mca_ptl_mx_recv_frag_t*)frag;       \
             mca_ptl_base_header_t* hdr =                                            \
                 &recvfrag->frag_recv.frag_base.frag_header;                         \
-            int rc;                                                                 \
             switch(hdr->hdr_common.hdr_type) {                                      \
                 case MCA_PTL_HDR_TYPE_MATCH:                                        \
                 {                                                                   \

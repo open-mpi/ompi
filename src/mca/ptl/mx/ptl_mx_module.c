@@ -159,7 +159,8 @@ static void mca_ptl_mx_match(void* context, uint64_t match_value, int size)
     /* first fragment - post a buffer */
     if(match_value == 0) {
 
-        frag->frag_recv.frag_base.frag_size = size - sizeof(mca_ptl_base_header_t);
+        frag->frag_size = size - sizeof(mca_ptl_base_header_t);
+        frag->frag_recv.frag_base.frag_size = frag->frag_size;
         frag->frag_recv.frag_base.frag_addr = frag->frag_data;
         frag->frag_recv.frag_is_buffered = true;
         frag->frag_segment_count = 2;
@@ -175,7 +176,7 @@ static void mca_ptl_mx_match(void* context, uint64_t match_value, int size)
         ompi_convertor_t* convertor = &frag->frag_recv.frag_base.frag_convertor;
 
         frag->frag_size = size;
-        frag->frag_recv.frag_base.frag_size = size - sizeof(mca_ptl_base_header_t);
+        frag->frag_recv.frag_base.frag_size = size;
         frag->frag_recv.frag_base.frag_header.hdr_common.hdr_type =
             MCA_PTL_HDR_TYPE_FRAG;
 
@@ -192,12 +193,29 @@ static void mca_ptl_mx_match(void* context, uint64_t match_value, int size)
                                                                                                           
         /* non-contiguous - allocate buffer for receive */
         if( 1 == ompi_convertor_need_buffers( convertor )  ||
-            request->req_bytes_packed < offset + frag->frag_recv.frag_base.frag_size) {
-            frag->frag_recv.frag_base.frag_addr = malloc(frag->frag_recv.frag_base.frag_size);
+            request->req_bytes_packed < offset + frag->frag_size ) {
+
+            /* TODO - use a fixed fragment size for non-contigous and convert 
+             * this to a free-list of buffers.
+            */
             frag->frag_recv.frag_is_buffered = true;
+            frag->frag_recv.frag_base.frag_addr = malloc(frag->frag_size);
+            if( NULL == frag->frag_recv.frag_base.frag_addr ) {
+                ompi_output(0, "mca_ptl_mx_match: unable to allocate buffer (%d)\n", frag->frag_size);
+                MCA_PTL_MX_RECV_FRAG_RETURN(frag);
+                return;
+            }
+
+            /* check for sending more than receiving */
+            if( offset > request->req_bytes_packed ) {
+                frag->frag_recv.frag_base.frag_size = 0;
+            } else if (offset + frag->frag_size > request->req_bytes_packed ) {
+                frag->frag_recv.frag_base.frag_size = request->req_bytes_packed - offset;
+            }
         /* calculate offset into users buffer */
         } else {
             frag->frag_recv.frag_base.frag_addr = ((unsigned char*)request->req_base.req_addr) + offset;
+            frag->frag_recv.frag_is_buffered = false;
         }
 
         /* dont receive a header */
@@ -205,7 +223,7 @@ static void mca_ptl_mx_match(void* context, uint64_t match_value, int size)
         segments = frag->frag_segments+1;
     }
     frag->frag_segments[1].segment_ptr = frag->frag_recv.frag_base.frag_addr;
-    frag->frag_segments[1].segment_length = frag->frag_recv.frag_base.frag_size;
+    frag->frag_segments[1].segment_length = frag->frag_size;
 
     mx_return = mx_irecv(
         ptl->mx_endpoint,
@@ -217,6 +235,7 @@ static void mca_ptl_mx_match(void* context, uint64_t match_value, int size)
         &frag->frag_request);
     if(mx_return != MX_SUCCESS) {
         ompi_output(0, "mca_ptl_mx_match: mx_irecv() failed with status=%dn", mx_return);
+        MCA_PTL_MX_RECV_FRAG_RETURN(frag);
     }
 }
 
