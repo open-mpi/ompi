@@ -167,9 +167,11 @@ do_command "svn co $svnroot ompi"
 cd ompi
 svnversion="`svnversion .`"
 
-# remove all the unignore files so that we don't include anything that
-# shouldn't be in the tarball
-find . -name .ompi_unignore -exec rm -f {} \;
+# lie about our username in $USER so that autogen will skip all
+# .ompi_ignore'ed directories (i.e., so that we won't get 
+# .ompi_unignore'ed)
+USER="ompibuilder"
+export USER
 
 # autogen is our friend
 do_command "./autogen.sh"
