@@ -35,8 +35,8 @@
 /*
  * Functions every module instance will have to provide
  */
-typedef int (*mca_registry_query_fn_t)(int *priority);
-typedef struct mca_registry_1_0_0* (*mca_registry_init_fn_t)(void);
+typedef int (*mca_registry_base_query_fn_t)(int *priority);
+typedef struct mca_registry_1_0_0_t* (*mca_registry_base_init_fn_t)(void);
 
   /**
    * Publish a key=value piece of information
@@ -56,7 +56,7 @@ typedef struct mca_registry_1_0_0* (*mca_registry_init_fn_t)(void);
    * \warning May block if the registry entry for key is currently
    * locked by another process.
    */
-typedef int (*mca_registry_publish_fn_t)(char* key, void* data, size_t data_len);
+typedef int (*mca_registry_base_publish_fn_t)(char* key, void* data, size_t data_len);
 
   /**
    * Get the value for given key
@@ -81,31 +81,43 @@ typedef int (*mca_registry_publish_fn_t)(char* key, void* data, size_t data_len)
    * \warning May block if the registry entry for key is currently
    * locked by another process.
    */
-typedef int (*mca_registry_lookup_fn_t)(char* key, void** data, size_t* data_len);
+typedef int (*mca_registry_base_lookup_fn_t)(char* key, void** data, size_t* data_len);
 
-typedef int (*mca_registry_finalize_fn_t)(void);
+typedef int (*mca_registry_base_unpublish_fn_t)(char* key);
+
+typedef int (*mca_registry_base_finalize_fn_t)(void);
 
 
 /*
  * Ver 1.0.0
  */
-typedef struct mca_registry_module_1_0_0 {
-  mca_module_1_0_0_t super;
+struct mca_registry_base_module_1_0_0_t {
+  mca_base_module_t registrym_version;
+  mca_base_module_data_1_0_0_t registrym_data;
 
-  mca_registry_query_fn_t registry_m_query;
-  mca_registry_init_fn_t registry_m_init;
+  mca_registry_base_query_fn_t registrym_query;
+  mca_registry_base_init_fn_t registrym_init;
+  mca_registry_base_finalize_fn_t registrym_finalize;
+};
+typedef struct mca_registry_base_module_1_0_0_t mca_registry_base_module_1_0_0_t;
 
-  mca_registry_finalize_fn_t registry_m_finalize;
-} mca_registry_module_1_0_0_t;
+struct mca_registry_1_0_0_t {
+  mca_registry_base_publish_fn_t registry_publish;
+  mca_registry_base_lookup_fn_t registry_lookup;
+  mca_registry_base_unpublish_fn_t registry_unpublish;
+};
+typedef struct mca_registry_1_0_0_t mca_registry_1_0_0_t;
 
-typedef struct mca_registry_1_0_0 {
-  mca_1_0_0_t super;
+/*
+ * Macro for use in modules that are of type registry v1.0.0
+ */
+#define MCA_REGISTRY_BASE_VERSION_1_0_0 \
+  /* registry v1.0 is chained to MCA v1.0 */ \
+  MCA_BASE_VERSION_1_0_0, \
+  /* registry v1.0 */ \
+  "registry", 1, 0, 0
 
-  mca_registry_publish_fn_t registry_publish;
-  mca_registry_lookup_fn_t registry_lookup;
-} mca_registry_module_1_0_0_t;
-
-typedef mca_registry_module_1_0_0_t mca_registry_module_t;
+typedef mca_registry_base_module_1_0_0_t mca_registry_base_module_t;
 typedef mca_registry_1_0_0_t mca_registry_t;
 
 
@@ -118,7 +130,7 @@ extern "C" {
   int mca_registry_base_open(lam_cmd_line_t *cmd);
   int mca_registry_base_close(void);
 
-  bool mca_registry_base_is_checkpointable(void)
+  bool mca_registry_base_is_checkpointable(void);
 
   int mca_registry_base_checkpoint(void);
   int mca_registry_base_continue(void);

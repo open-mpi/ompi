@@ -1,0 +1,9 @@
+.deps
+.libs
+Makefile
+Makefile.in
+*.lo
+libmca_registry_cofs.la
+registry_cofs_config.h
+registry_cofs_config.h.in
+stamp-h1
