@@ -70,6 +70,7 @@ bool lam_reactor_insert(lam_reactor_t*, int sd, lam_reactor_listener_t*, int fla
 bool lam_reactor_remove(lam_reactor_t*, int sd, lam_reactor_listener_t*, int flags);
 void lam_reactor_poll(lam_reactor_t*);
 void lam_reactor_run(lam_reactor_t*);
+void lam_reactor_dispatch(lam_reactor_t* r, int cnt, lam_fd_set_t* rset, lam_fd_set_t* sset, lam_fd_set_t* eset);
 
 #endif /* LAM_REACTOR_H */
 

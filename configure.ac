@@ -457,6 +457,8 @@ AC_CONFIG_FILES([
 
     test/Makefile
     test/unit/Makefile
+    test/unit/lam/Makefile
+    test/unit/lam/oob_cofs/Makefile
     test/unit/mpi/Makefile
     test/unit/mpi/communicator/Makefile
     test/unit/mpi/datatype/Makefile

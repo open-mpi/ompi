@@ -34,22 +34,22 @@ lam_class_info_t lam_reactor_descriptor_cls = {
                                                                                                                 
 void lam_reactor_descriptor_init(lam_reactor_descriptor_t* rd)
 {
-    lam_dbl_item_init(&rd->rd_base);
+    lam_list_item_init(&rd->rd_base);
     rd->rd_base.super.obj_class = &lam_reactor_descriptor_cls;
 }
 
 
 void lam_reactor_descriptor_destroy(lam_reactor_descriptor_t* rd)
 {
-    lam_dbl_item_destroy(&rd->rd_base);
+    lam_list_item_destroy(&rd->rd_base);
 }
 
 
 static inline lam_reactor_descriptor_t* lam_reactor_get_descriptor(lam_reactor_t* r, int sd)
 {
     lam_reactor_descriptor_t *descriptor;
-    if(lam_dbl_get_size(&r->r_free))
-        descriptor = (lam_reactor_descriptor_t*)lam_dbl_remove_first_item(&r->r_free);
+    if(lam_list_get_size(&r->r_free))
+        descriptor = (lam_reactor_descriptor_t*)lam_list_remove_first(&r->r_free);
     else {
         descriptor = (lam_reactor_descriptor_t*)LAM_MALLOC(sizeof(lam_reactor_descriptor_t));
         lam_reactor_descriptor_init(descriptor);
@@ -73,9 +73,9 @@ void lam_reactor_init(lam_reactor_t* r)
     r->r_base.obj_class = &lam_reactor_cls;
 
     lam_mtx_init(&r->r_mutex);
-    lam_dbl_init(&r->r_active);
-    lam_dbl_init(&r->r_free);
-    lam_dbl_init(&r->r_pending);
+    lam_list_init(&r->r_active);
+    lam_list_init(&r->r_free);
+    lam_list_init(&r->r_pending);
     lam_fh_init(&r->r_hash);
     lam_fh_init_with(&r->r_hash, 1024);
 
@@ -91,9 +91,9 @@ void lam_reactor_init(lam_reactor_t* r)
 
 void lam_reactor_destroy(lam_reactor_t* r)
 {
-    lam_dbl_destroy(&r->r_active);
-    lam_dbl_destroy(&r->r_free);
-    lam_dbl_destroy(&r->r_pending);
+    lam_list_destroy(&r->r_active);
+    lam_list_destroy(&r->r_free);
+    lam_list_destroy(&r->r_pending);
     lam_fh_destroy(&r->r_hash);
     lam_obj_destroy(&r->r_base);
 }
@@ -109,14 +109,14 @@ bool lam_reactor_insert(lam_reactor_t* r, int sd, lam_reactor_listener_t* listen
 #endif
 
     lam_mtx_lock(&r->r_mutex);
-    lam_reactor_descriptor_t *descriptor = (lam_reactor_descriptor_t*)lam_dbl_remove_first(&r->r_free);
+    lam_reactor_descriptor_t *descriptor = (lam_reactor_descriptor_t*)lam_list_remove_first(&r->r_free);
     if(descriptor == 0) {
         descriptor = lam_reactor_get_descriptor(r, sd);
         if(descriptor == 0) {
             lam_mtx_unlock(&r->r_mutex);
             return false;
         }
-        lam_dbl_append(&r->r_pending, &descriptor->rd_base);
+        lam_list_append(&r->r_pending, &descriptor->rd_base);
         lam_fh_set_value_for_ikey(&r->r_hash,descriptor,sd);
     }
 
@@ -184,9 +184,9 @@ void lam_reactor_dispatch(lam_reactor_t* r, int cnt, lam_fd_set_t* rset, lam_fd_
      */
 
     lam_reactor_descriptor_t *descriptor;
-    for(descriptor =  (lam_reactor_descriptor_t*)lam_dbl_get_first(&r->r_active);
+    for(descriptor =  (lam_reactor_descriptor_t*)lam_list_get_first(&r->r_active);
         descriptor != 0;
-        descriptor =  (lam_reactor_descriptor_t*)lam_dbl_get_next(descriptor)) {
+        descriptor =  (lam_reactor_descriptor_t*)lam_list_get_next(descriptor)) {
         int rd = descriptor->rd; 
         int flags = 0;
         if(LAM_FD_ISSET(rd, rset) && descriptor->rd_flags & LAM_NOTIFY_RECV) {
@@ -211,14 +211,14 @@ void lam_reactor_dispatch(lam_reactor_t* r, int cnt, lam_fd_set_t* rset, lam_fd_
     }
 
     /* cleanup any pending deletes while holding the lock */
-    descriptor = (lam_reactor_descriptor_t*)lam_dbl_get_first(&r->r_active);
+    descriptor = (lam_reactor_descriptor_t*)lam_list_get_first(&r->r_active);
     while(descriptor != 0) {
-        lam_reactor_descriptor_t* next = (lam_reactor_descriptor_t*)lam_dbl_get_next(&r->r_active);
+        lam_reactor_descriptor_t* next = (lam_reactor_descriptor_t*)lam_list_get_next(&r->r_active);
         if(descriptor->rd_flags == 0) {
             lam_fh_remove_value_for_ikey(&r->r_hash, descriptor->rd);
-            lam_dbl_list_remove(&r->r_active, descriptor);
-            if(lam_dbl_get_size(&r->r_free) < MAX_DESCRIPTOR_POOL_SIZE) {
-                lam_dbl_append(&r->r_free, &descriptor->rd_base);
+            lam_list_remove(&r->r_active, descriptor);
+            if(lam_list_get_size(&r->r_free) < MAX_DESCRIPTOR_POOL_SIZE) {
+                lam_list_append(&r->r_free, &descriptor->rd_base);
             } else {
                 lam_reactor_descriptor_destroy(descriptor);
                 LAM_FREE(descriptor);
@@ -228,18 +228,18 @@ void lam_reactor_dispatch(lam_reactor_t* r, int cnt, lam_fd_set_t* rset, lam_fd_
     } 
 
     /* add any other pending inserts/deletes */
-    while(lam_dbl_get_size(&r->r_pending)) {
-        lam_reactor_descriptor_t* descriptor = (lam_reactor_descriptor_t*)lam_dbl_remove_first(&r->r_pending);
+    while(lam_list_get_size(&r->r_pending)) {
+        lam_reactor_descriptor_t* descriptor = (lam_reactor_descriptor_t*)lam_list_remove_first(&r->r_pending);
         if(descriptor->rd_flags == 0) {
             lam_fh_remove_value_for_ikey(&r->r_hash, descriptor->rd);
-            if(lam_dbl_get_size(&r->r_free) < MAX_DESCRIPTOR_POOL_SIZE) {
-                lam_dbl_append(&r->r_free, &descriptor->rd_base);
+            if(lam_list_get_size(&r->r_free) < MAX_DESCRIPTOR_POOL_SIZE) {
+                lam_list_append(&r->r_free, &descriptor->rd_base);
             } else {
                 lam_reactor_descriptor_destroy(descriptor);
                 LAM_FREE(descriptor);
             }
         } else {
-            lam_dbl_append(&r->r_active, &descriptor->rd_base);
+            lam_list_append(&r->r_active, &descriptor->rd_base);
             if(descriptor->rd > r->r_max)
                 r->r_max = descriptor->rd;
         }

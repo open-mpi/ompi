@@ -5,4 +5,4 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-SUBDIRS		= mpi
+SUBDIRS		= mpi lam
