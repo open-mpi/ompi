@@ -322,14 +322,14 @@ static void mca_ptl_ib_start_ack(mca_ptl_base_module_t *module,
 
     /* Amount of data we have already received */
     recv_len = 
-        recv_frag->super.frag_base.frag_header.hdr_frag.hdr_frag_length;
+        recv_frag->super.frag_base.frag_header.hdr_rndv.hdr_frag_length;
 
     hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_ACK;
     hdr->hdr_common.hdr_flags = 0;
 
     /* Remote side send descriptor */
     hdr->hdr_ack.hdr_src_ptr =
-        recv_frag->super.frag_base.frag_header.hdr_frag.hdr_src_ptr;
+        recv_frag->super.frag_base.frag_header.hdr_rndv.hdr_src_ptr;
 
     /* Matched request from recv side */
     hdr->hdr_ack.hdr_dst_match.lval = 0;

@@ -56,24 +56,22 @@ int mca_ptl_ib_send_frag_init(mca_ptl_ib_send_frag_t* sendfrag,
 {
     size_t size_in = *size;
     size_t size_out;
-    mca_ptl_base_header_t *hdr;
+    mca_ptl_base_rendezvous_header_t *hdr;
     struct iovec iov;
     int header_length;
 
     /* Start of the IB buffer */
-    hdr = (mca_ptl_base_header_t *) &sendfrag->ib_buf.buf[0];
+    hdr = (mca_ptl_base_rendezvous_header_t *) &sendfrag->ib_buf.buf[0];
 
     /* Fill up the header for PML to make a match */
     if(offset == 0) { 
-        hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_MATCH;
-        hdr->hdr_common.hdr_flags = flags;
-        hdr->hdr_frag.hdr_frag_offset = offset; 
-        hdr->hdr_frag.hdr_src_ptr.lval = 0; /* for VALGRIND/PURIFY - REPLACE WITH MACRO */
+        hdr->hdr_match.hdr_common.hdr_type = MCA_PTL_HDR_TYPE_MATCH;
+        hdr->hdr_match.hdr_common.hdr_flags = flags;
+        hdr->hdr_src_ptr.lval = 0; /* for VALGRIND/PURIFY - REPLACE WITH MACRO */
 
         /* Ptr to send frag, so incoming ACK can locate the frag */
-        hdr->hdr_frag.hdr_src_ptr.pval = sendfrag;
+        hdr->hdr_src_ptr.pval = sendfrag;
 
-        hdr->hdr_frag.hdr_dst_ptr.lval = 0;
         hdr->hdr_match.hdr_contextid = sendreq->req_base.req_comm->c_contextid;
         hdr->hdr_match.hdr_src = sendreq->req_base.req_comm->c_my_rank;
         hdr->hdr_match.hdr_dst = sendreq->req_base.req_peer;
@@ -81,18 +79,16 @@ int mca_ptl_ib_send_frag_init(mca_ptl_ib_send_frag_t* sendfrag,
         hdr->hdr_match.hdr_msg_length = sendreq->req_bytes_packed;
         hdr->hdr_match.hdr_msg_seq = sendreq->req_base.req_sequence;
 
-        header_length = sizeof(mca_ptl_base_match_header_t);
+        header_length = sizeof(mca_ptl_base_rendezvous_header_t);
 
     } else {
 
-        hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_FRAG;
-        hdr->hdr_common.hdr_flags = flags;
-        hdr->hdr_frag.hdr_frag_offset = offset; 
-        hdr->hdr_frag.hdr_src_ptr.lval = 0; /* for VALGRIND/PURIFY - REPLACE WITH MACRO */
-        hdr->hdr_frag.hdr_src_ptr.pval = sendfrag;
-        hdr->hdr_frag.hdr_dst_ptr = sendreq->req_peer_match;
+        hdr->hdr_match.hdr_common.hdr_type = MCA_PTL_HDR_TYPE_FRAG;
+        hdr->hdr_match.hdr_common.hdr_flags = flags;
+        hdr->hdr_src_ptr.lval = 0; /* for VALGRIND/PURIFY - REPLACE WITH MACRO */
+        hdr->hdr_src_ptr.pval = sendfrag;
 
-        header_length = sizeof(mca_ptl_base_frag_header_t);
+        header_length = sizeof(mca_ptl_base_rendezvous_header_t);
     }
 
     /* initialize convertor */
@@ -148,7 +144,7 @@ int mca_ptl_ib_send_frag_init(mca_ptl_ib_send_frag_t* sendfrag,
                (header_length + size_in));
     }
 
-    hdr->hdr_frag.hdr_frag_length = size_out;
+    hdr->hdr_frag_length = size_out;
 
     /* fragment state */
     sendfrag->frag_send.frag_base.frag_owner = 
