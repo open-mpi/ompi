@@ -69,8 +69,9 @@ void mca_pml_teg_recv_request_match_specific(mca_pml_base_recv_request_t* reques
     /* We didn't find any matches.  Record this irecv so we can match 
      * it when the message comes in.
     */
-    if(request->req_base.req_type != MCA_PML_REQUEST_IPROBE)
+    if(request->req_base.req_type != MCA_PML_REQUEST_IPROBE) { 
         ompi_list_append(pml_comm->c_specific_receives+req_peer, (ompi_list_item_t*)request);
+    }
     OMPI_THREAD_UNLOCK(&pml_comm->c_matching_lock);
 }
 

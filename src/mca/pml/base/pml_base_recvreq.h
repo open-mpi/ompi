@@ -61,6 +61,9 @@ typedef struct mca_pml_base_recv_request_t mca_pml_base_recv_request_t;
     (request)->req_base.req_mpi_done = false;             \
     (request)->req_base.req_pml_done = false;             \
     (request)->req_base.req_free_called = false;          \
+                                                          \
+    /* increment reference count on communicator */       \
+    OBJ_RETAIN(comm);                                     \
 }
 
 #endif

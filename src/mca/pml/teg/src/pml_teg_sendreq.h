@@ -63,6 +63,10 @@
 {                                                                          \
     mca_ptl_base_module_t* ptl = sendreq->req_ptl;                         \
     mca_pml_base_ptl_t* ptl_base = ptl->ptl_base;                          \
+                                                                           \
+    /*  Decrement reference count on communicator. */                      \
+    OBJ_RELEASE(request->req_base.req_comm);                               \
+                                                                           \
     /*                                                                     \
      * If there is a cache associated with the ptl - first attempt         \
      * to return the send descriptor to the cache.                         \
