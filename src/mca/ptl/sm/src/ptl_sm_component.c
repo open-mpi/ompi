@@ -118,6 +118,8 @@ int mca_ptl_sm_component_open(void)
         mca_ptl_sm_param_register_int("second_frag_free_list_inc", 256);
     mca_ptl_sm_component.sm_max_procs =
         mca_ptl_sm_param_register_int("max_procs", -1);
+    mca_ptl_sm_component.sm_extra_procs =
+        mca_ptl_sm_param_register_int("sm_extra_procs", -1);
     mca_ptl_sm_component.sm_mpool_name =
         mca_ptl_sm_param_register_string("mpool", "sm");
     mca_ptl_sm_component.first_fragment_size =
@@ -186,7 +188,6 @@ mca_ptl_base_module_t** mca_ptl_sm_component_init(
     bool *have_hidden_threads)
 {
     mca_ptl_base_module_t **ptls = NULL;
-    size_t length;
 
     *num_ptls = 0;
     *allow_multi_user_threads = true;
@@ -197,40 +198,6 @@ mca_ptl_base_module_t** mca_ptl_sm_component_init(
         mca_mpool_module_lookup(mca_ptl_sm_component.sm_mpool_name);
 
     mca_ptl_sm_component.sm_mpool_base = mca_ptl_sm_component.sm_mpool->mpool_base();
-
-    /* initialize fragment descriptor free list */
-
-    /* 
-     * first fragment 
-     */
-
-    /* allocation will be for the fragment descriptor, payload buffer,
-     * and padding to ensure proper alignment can be acheived */
-    length=sizeof(mca_ptl_sm_frag_t)+mca_ptl_sm_component.fragment_alignment+
-        mca_ptl_sm_component.first_fragment_size;
-
-    ompi_free_list_init(&mca_ptl_sm.sm_first_frags, length,
-        OBJ_CLASS(mca_ptl_sm_frag_t),
-        mca_ptl_sm_component.sm_first_frag_free_list_num,
-        mca_ptl_sm_component.sm_first_frag_free_list_max,
-        mca_ptl_sm_component.sm_first_frag_free_list_inc,
-        mca_ptl_sm_component.sm_mpool); /* use shared-memory pool */
-
-    /* 
-     * second and beyond fragments 
-     */
-
-    /* allocation will be for the fragment descriptor, payload buffer,
-     * and padding to ensure proper alignment can be acheived */
-    length=sizeof(mca_ptl_sm_frag_t)+mca_ptl_sm_component.fragment_alignment+
-        mca_ptl_sm_component.max_fragment_size;
-
-    ompi_free_list_init(&mca_ptl_sm.sm_second_frags, length,
-        OBJ_CLASS(mca_ptl_sm_second_frag_t),
-        mca_ptl_sm_component.sm_second_frag_free_list_num,
-        mca_ptl_sm_component.sm_second_frag_free_list_max,
-        mca_ptl_sm_component.sm_second_frag_free_list_inc,
-        mca_ptl_sm_component.sm_mpool); /* use shared-memory pool */
 
     /* publish shared memory parameters with the MCA framework */
     if(mca_ptl_sm_component_exchange() != OMPI_SUCCESS)
@@ -262,6 +229,9 @@ mca_ptl_base_module_t** mca_ptl_sm_component_init(
     /* start with no SM procs */
     mca_ptl_sm_component.num_smp_procs=0;
     mca_ptl_sm_component.my_smp_rank=-1;
+
+    /* set flag indicating ptl not inited */
+    mca_ptl_sm.ptl_inited=false;
 
     return ptls;
 }

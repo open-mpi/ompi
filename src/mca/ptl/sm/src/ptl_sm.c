@@ -70,11 +70,10 @@ int mca_ptl_sm_add_procs(
     ompi_bitmap_t* reachability)
 {
     int return_code=OMPI_SUCCESS;
-    size_t i,j,proc,size,len,my_len,n_local_procs,n_to_allocate;
+    size_t i,j,proc,size,len,my_len,n_local_procs,n_to_allocate,length;
     mca_ptl_sm_exchange_t **sm_proc_info;
     ompi_proc_t* my_proc; /* pointer to caller's proc structure */
     mca_ptl_sm_t *ptl_sm;
-    bool threads;
     ompi_fifo_t *fifo_addr;
 
     /* initializion */
@@ -197,6 +196,21 @@ int mca_ptl_sm_add_procs(
         mca_ptl_sm_component.sm_ctl_header=(mca_ptl_sm_module_resource_t *)
             mca_ptl_sm_component.mmap_file->map_seg;
 
+            
+        /* see if need to allocate space for extra procs */
+        if(  0 > mca_ptl_sm_component.sm_max_procs ) {
+            /* no limit */
+            if( 0 <= mca_ptl_sm_component.sm_extra_procs ) {
+                /* limit */
+                mca_ptl_sm_component.sm_max_procs=n_local_procs+
+                    mca_ptl_sm_component.sm_extra_procs;
+            } else {
+                /* no limit */
+                mca_ptl_sm_component.sm_max_procs=2*n_local_procs;
+            }
+        }
+        n_to_allocate=mca_ptl_sm_component.sm_max_procs;
+
         /* Allocate a fixed size pointer array for the 2-D Shared memory queues.
          * Excess slots will be allocated for future growth.  One could
          * make this array growable, but then one would need to uses mutexes
@@ -214,17 +228,6 @@ int mca_ptl_sm_add_procs(
                 return_code=OMPI_ERROR;
                 goto CLEANUP;
             }
-
-            /* see if need to allocate space for extra procs */
-            if(  0 > mca_ptl_sm_component.sm_max_procs ) {
-                if( 0 < mca_ptl_sm_component.sm_extra_procs ) {
-                    mca_ptl_sm_component.sm_max_procs=
-                        n_local_procs+mca_ptl_sm_component.sm_extra_procs;
-                } else {
-                    mca_ptl_sm_component.sm_max_procs=n_local_procs;
-                }
-            }
-            n_to_allocate=mca_ptl_sm_component.sm_max_procs;
 
             /* allocate array of ompi_fifo_t* elements -
              * offset relative to base segement is stored, so that
@@ -303,6 +306,49 @@ int mca_ptl_sm_add_procs(
             }
         }
         free(sm_proc_info);
+    }
+
+    /* initialize some of the free-lists */
+    if( !mca_ptl_sm.ptl_inited ) {
+        /* some initialization happens only the first time this routine
+         * is called, i.e. when ptl_inited is false */
+
+        /* initialize fragment descriptor free list */
+
+        /* 
+         * first fragment 
+         */
+
+        /* allocation will be for the fragment descriptor, payload buffer,
+         * and padding to ensure proper alignment can be acheived */
+        length=sizeof(mca_ptl_sm_frag_t)+mca_ptl_sm_component.fragment_alignment+
+            mca_ptl_sm_component.first_fragment_size;
+
+        ompi_free_list_init(&mca_ptl_sm.sm_first_frags, length,
+                OBJ_CLASS(mca_ptl_sm_frag_t),
+                mca_ptl_sm_component.sm_first_frag_free_list_num,
+                mca_ptl_sm_component.sm_first_frag_free_list_max,
+                mca_ptl_sm_component.sm_first_frag_free_list_inc,
+                mca_ptl_sm_component.sm_mpool); /* use shared-memory pool */
+
+        /* 
+         * second and beyond fragments 
+         */
+
+        /* allocation will be for the fragment descriptor, payload buffer,
+         * and padding to ensure proper alignment can be acheived */
+        length=sizeof(mca_ptl_sm_frag_t)+mca_ptl_sm_component.fragment_alignment+
+            mca_ptl_sm_component.max_fragment_size;
+
+        ompi_free_list_init(&mca_ptl_sm.sm_second_frags, length,
+                OBJ_CLASS(mca_ptl_sm_second_frag_t),
+                mca_ptl_sm_component.sm_second_frag_free_list_num,
+                mca_ptl_sm_component.sm_second_frag_free_list_max,
+                mca_ptl_sm_component.sm_second_frag_free_list_inc,
+                mca_ptl_sm_component.sm_mpool); /* use shared-memory pool */
+
+        /* set flag indicating ptl has been inited */
+        mca_ptl_sm.ptl_inited=true;
     }
 
     /* update the local smp process count */

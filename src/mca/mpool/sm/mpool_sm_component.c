@@ -87,7 +87,9 @@ static int mca_mpool_sm_open(void)
 static mca_mpool_base_module_t* 
 mca_mpool_sm_init(bool *allow_multi_user_threads)
 {
-    char file_name[PATH_MAX];
+    char *file_name;
+    size_t len;
+
     mca_allocator_base_component_t* allocator_component = mca_allocator_component_lookup(
         mca_mpool_sm_component.sm_allocator_name);
 
@@ -107,26 +109,24 @@ mca_mpool_sm_init(bool *allow_multi_user_threads)
     }
     
     /* create initial shared memory mapping */
-    memset(&(file_name[0]),0,PATH_MAX);
-    if( (strlen(ompi_process_info.job_session_dir) +
-            strlen(ompi_system_info.nodename)+
-            /* length of fixe name part */
-            17 ) >= PATH_MAX ) {
-            ompi_output(0, "mca_mpool_sm_init: name of backing file too long \n");
-            return NULL;
-    }
-    sprintf(&(file_name[0]),"%s/shared_mem_pool.%s",
+    len=asprintf(&file_name,"%s/shared_mem_pool.%s",
             ompi_process_info.job_session_dir,
             ompi_system_info.nodename);
+    if ( 0 > len ) {
+        return NULL;
+    }
+
     if(NULL == 
             (mca_common_sm_mmap = 
              mca_common_sm_mmap_init(mca_mpool_sm_component.sm_size,
-                 &(file_name[0]),sizeof(mca_common_sm_mmap_t), 8 )
+                 file_name,sizeof(mca_common_sm_mmap_t), 8 )
              )) 
     {
+        free(file_name);
         ompi_output(0, "mca_mpool_sm_init: unable to create shared memory mapping");
         return NULL;
     }
+    free(file_name);
 
     /* setup function pointers */
 
