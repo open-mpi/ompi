@@ -7,6 +7,7 @@
 #include <unistd.h>
 
 #include "lam_config.h"
+#include "lam/util/path.h"
 #include "lam/util/argv.h"
 #include "lam/util/malloc.h"
 
