@@ -93,8 +93,9 @@ static orte_gpr_base_module_t orte_gpr_replica_module = {
     orte_gpr_replica_dump_all,
     orte_gpr_replica_dump_segments,
     orte_gpr_replica_dump_triggers,
-    orte_gpr_base_dump_notify_msg,
-    orte_gpr_base_dump_notify_data,
+    orte_gpr_replica_dump_callbacks,
+    orte_gpr_replica_dump_notify_msg,
+    orte_gpr_replica_dump_notify_data,
     /* CLEANUP OPERATIONS */
     orte_gpr_replica_cleanup_job,
     orte_gpr_replica_cleanup_proc
@@ -321,6 +322,7 @@ static void orte_gpr_replica_trigger_construct(orte_gpr_replica_triggers_t* trig
 {
     trig->index = 0;
     trig->action = 0;
+    trig->one_shot_fired = false;
     
     trig->requestor = NULL;
     trig->remote_idtag = ORTE_GPR_NOTIFY_ID_MAX;
@@ -369,26 +371,54 @@ OBJ_CLASS_INSTANCE(
          orte_gpr_replica_trigger_destructor); /* destructor */
 
 
+/* NOTIFY MSG LIST */
+/* constructor - used to initialize state of notify msg list instance */
+static void orte_gpr_replica_notify_msg_list_construct(orte_gpr_replica_notify_msg_list_t* msg)
+{
+    msg->message = NULL;
+}
+
+/* destructor - used to free any resources held by instance */
+static void orte_gpr_replica_notify_msg_list_destructor(orte_gpr_replica_notify_msg_list_t* msg)
+{
+    if (NULL != msg->message) {
+        OBJ_RELEASE(msg->message);
+    }
+}
+
+/* define instance of ompi_class_t */
+OBJ_CLASS_INSTANCE(
+         orte_gpr_replica_notify_msg_list_t,           /* type name */
+         ompi_list_item_t,            /* parent "class" name */
+         orte_gpr_replica_notify_msg_list_construct,   /* constructor */
+         orte_gpr_replica_notify_msg_list_destructor); /* destructor */
+
+
 /* CALLBACKS */
 /* constructor - used to initialize state of callback list instance */
 static void orte_gpr_replica_callbacks_construct(orte_gpr_replica_callbacks_t* cb)
 {
-    cb->message = NULL;
+    OBJ_CONSTRUCT(&(cb->messages), ompi_list_t);
     cb->requestor = NULL;
-    cb->remote_idtag = 0;
 }
 
 /* destructor - used to free any resources held by instance */
 static void orte_gpr_replica_callbacks_destructor(orte_gpr_replica_callbacks_t* cb)
 {
+    orte_gpr_replica_notify_msg_list_t *msg;
+    
     if (NULL != cb->requestor) {
         free(cb->requestor);
         cb->requestor = NULL;
     }
     
-    if (NULL != cb->message) {
-        OBJ_RELEASE(cb->message);
+    if (0 < ompi_list_get_size(&(cb->messages))) {
+        while (NULL != (msg = (orte_gpr_replica_notify_msg_list_t*)ompi_list_remove_first(&(cb->messages)))) {
+            OBJ_RELEASE(msg);
+        }
     }
+    OBJ_DESTRUCT(&(cb->messages));
+
 }
 
 /* define instance of ompi_class_t */

@@ -55,24 +55,24 @@ static FILE *test_out=NULL;
 
 static char *cmd_str="diff ./test_gpr_replica_out ./test_gpr_replica_out_std";
 
-static void test_cbfunc(orte_gpr_notify_data_t *data, void *user_tag);
+static void test_cbfunc1(orte_gpr_notify_data_t *data, void *user_tag);
+static void test_cbfunc2(orte_gpr_notify_data_t *data, void *user_tag);
+static void test_cbfunc3(orte_gpr_notify_data_t *data, void *user_tag);
+static void test_cbfunc4(orte_gpr_notify_data_t *data, void *user_tag);
+static void test_cbfunc5(orte_gpr_notify_data_t *data, void *user_tag);
 
 
 int main(int argc, char **argv)
 {
-    int rc, num_names, num_found, num_counters=6;
+    int rc, num_names, num_found;
     int i, j, cnt, ret;
     orte_gpr_value_t *values, value, trig, *trigs;
-    orte_gpr_subscription_t *subscription;
-    orte_gpr_notify_id_t sub;
+    orte_gpr_subscription_t *subscriptions[5];
+    orte_gpr_notify_id_t sub[5];
     char* keys[] = {
         /* changes to this ordering need to be reflected in code below */
-        ORTE_PROC_NUM_AT_STG1,
-        ORTE_PROC_NUM_AT_STG2,
-        ORTE_PROC_NUM_AT_STG3,
-        ORTE_PROC_NUM_FINALIZED,
-        ORTE_PROC_NUM_ABORTED,
-        ORTE_PROC_NUM_TERMINATED
+        "setpoint",
+        "counter",
     };
 
     test_init("test_gpr_replica_trigs");
@@ -152,34 +152,10 @@ int main(int argc, char **argv)
         exit (1);
     }
     
-    subscription = OBJ_NEW(orte_gpr_subscription_t);
-    subscription->addr_mode = ORTE_GPR_TOKENS_OR;
-    subscription->segment = strdup("test-segment");
-    subscription->num_tokens = 0;
-    subscription->tokens = NULL;
-    subscription->num_keys = 0;
-    subscription->keys = NULL;
-    subscription->cbfunc = test_cbfunc;
-    subscription->user_tag = NULL;
-    
-    fprintf(test_out, "register subscription on segment\n");
-    if (ORTE_SUCCESS != (rc = orte_gpr_replica_subscribe(
-                                    ORTE_GPR_NOTIFY_ADD_ENTRY,
-                                    1, &subscription,
-                                    0, NULL,
-                                    &sub))) {
-        fprintf(test_out, "gpr_test_trigs: subscribe on seg failed with error %s\n",
-                        ORTE_ERROR_NAME(rc));
-        test_failure("gpr_test_trigs: subscribe on seg failed");
-        test_finalize();
-        return rc;
-    } else {
-        fprintf(test_out, "gpr_test_trigs: subscribe on seg registered\n");
-    }
-    
-    orte_gpr.dump_all(0);
-
-    /* setup some test counters */
+    /* setup a pair of counters on the registry - one is the actual
+     * counter, and the other will hold the end condition when the
+     * trigger(s) should fire
+     */
     OBJ_CONSTRUCT(&value, orte_gpr_value_t);
     value.addr_mode = ORTE_GPR_TOKENS_XAND | ORTE_GPR_KEYS_OR;
     value.segment = strdup("test-segment");
@@ -189,16 +165,16 @@ int main(int argc, char **argv)
         OBJ_DESTRUCT(&value);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
-    value.tokens[0] = strdup(ORTE_JOB_GLOBALS); /* put counters in the segment's globals container */
+    value.tokens[0] = strdup("test-container");
     value.num_tokens = 1;
-    value.cnt = num_counters;
-    value.keyvals = (orte_gpr_keyval_t**)malloc(num_counters * sizeof(orte_gpr_keyval_t*));
+    value.cnt = 2;
+    value.keyvals = (orte_gpr_keyval_t**)malloc(2 * sizeof(orte_gpr_keyval_t*));
     if (NULL == value.keyvals) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         OBJ_DESTRUCT(&value);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
-    for (i=0; i < num_counters; i++) {
+    for (i=0; i < 2; i++) {
         value.keyvals[i] = OBJ_NEW(orte_gpr_keyval_t);
         if (NULL == value.keyvals[i]) {
             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
@@ -222,46 +198,150 @@ int main(int argc, char **argv)
         OBJ_DESTRUCT(&value);
         return rc;
     }
+    OBJ_DESTRUCT(&value); /* clean up */
     
-    orte_gpr.dump_segments(0);
-
-    fprintf(test_out, "incrementing all counters\n");
+    /* put some data on the registry that the subscriptions can return
+     * we'll first put several keyvals in one container that have different
+     * keys, plus a few that have the same key.
+     */
+    OBJ_CONSTRUCT(&value, orte_gpr_value_t);
+    value.addr_mode = ORTE_GPR_NO_OVERWRITE |
+                      ORTE_GPR_TOKENS_XAND |
+                      ORTE_GPR_KEYS_OR;
+    value.segment = strdup("test-segment");
+    value.num_tokens = 2;
+    value.tokens = (char**)malloc(value.num_tokens * sizeof(char*));
+    for (i=0; i < 2; i++) {
+        asprintf(&(value.tokens[i]), "dummy%d", i);
+    }
+    value.cnt = 5;
+    value.keyvals = (orte_gpr_keyval_t**)malloc(5*sizeof(orte_gpr_keyval_t*));
+    for (i=0; i < 5; i++) value.keyvals[i] = OBJ_NEW(orte_gpr_keyval_t);
+    (value.keyvals[0])->key = strdup("stupid-value-one");
+    (value.keyvals[0])->type = ORTE_INT32;
+    (value.keyvals[0])->value.i32 = 654321;
+    (value.keyvals[1])->key = strdup("stupid-value-two");
+    (value.keyvals[1])->type = ORTE_INT16;
+    (value.keyvals[1])->value.i16 = 128;
+    for (i=2; i < 5; i++) {
+        (value.keyvals[i])->key = strdup("stupid-value-multi");
+        (value.keyvals[i])->type = ORTE_INT32;
+        (value.keyvals[i])->value.i32 = i * 10;
+    }
+    values = &value;
     
-    /* increment the counters */
-    if (ORTE_SUCCESS != (rc = orte_gpr.increment_value(&value))) {
+    if (ORTE_SUCCESS != (rc = orte_gpr.put(1, &values))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&value);
         return rc;
     }
+    OBJ_DESTRUCT(&value); /* clean up */
     
-    orte_gpr.dump_segments(0);
+    /* now put some data in a second container, some of it with
+     * matching keys
+     */
+    OBJ_CONSTRUCT(&value, orte_gpr_value_t);
+    value.addr_mode = ORTE_GPR_NO_OVERWRITE |
+                      ORTE_GPR_TOKENS_XAND |
+                      ORTE_GPR_KEYS_OR;
+    value.segment = strdup("test-segment");
+    value.num_tokens = 2;
+    value.tokens = (char**)malloc(value.num_tokens * sizeof(char*));
+    for (i=0; i < 2; i++) {
+        asprintf(&(value.tokens[i]), "dummy%d", i+5);
+    }
+    value.cnt = 3;
+    value.keyvals = (orte_gpr_keyval_t**)malloc(5*sizeof(orte_gpr_keyval_t*));
+    for (i=0; i < 3; i++) value.keyvals[i] = OBJ_NEW(orte_gpr_keyval_t);
+    (value.keyvals[0])->key = strdup("stupid-value-one");
+    (value.keyvals[0])->type = ORTE_INT32;
+    (value.keyvals[0])->value.i32 = 123456;
+    (value.keyvals[1])->key = strdup("stupid-value-three");
+    (value.keyvals[1])->type = ORTE_INT16;
+    (value.keyvals[1])->value.i16 = 821;
+    (value.keyvals[2])->key = strdup("stupid-value-multi");
+    (value.keyvals[2])->type = ORTE_INT32;
+    (value.keyvals[2])->value.i32 = 2348;
+    values = &value;
     
-    fprintf(test_out, "decrementing all counters\n");
-    
-    /* decrement the counters */
-    if (ORTE_SUCCESS != (rc = orte_gpr.decrement_value(&value))) {
+    if (ORTE_SUCCESS != (rc = orte_gpr.put(1, &values))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&value);
         return rc;
     }
-    OBJ_DESTRUCT(&value);
+    OBJ_DESTRUCT(&value); /* clean up */
     
-    orte_gpr.dump_segments(0);
+    /* setup the subscriptions, each defining a set of data that is to be
+     * returned to the corresponding callback function
+     */
+    for (i=0; i < 5; i++) {
+        subscriptions[i] = OBJ_NEW(orte_gpr_subscription_t);
+        subscriptions[i]->addr_mode = ORTE_GPR_TOKENS_OR;
+        subscriptions[i]->segment = strdup("test-segment");
+        subscriptions[i]->user_tag = NULL;
+    }
+    /* sub-0 asks for the stupid-value-one data from the first
+     * container ONLY
+     */
+    subscriptions[0]->num_tokens = 2;
+    subscriptions[0]->tokens = (char**)malloc(2*sizeof(char*));
+    for (i=0; i < 2; i++) {
+        asprintf(&(subscriptions[0]->tokens[i]), "dummy%d", i);
+    }
+    subscriptions[0]->num_keys = 1;
+    subscriptions[0]->keys =(char**)malloc(sizeof(char*));
+    subscriptions[0]->keys[0] = strdup("stupid-value-one");
+    subscriptions[0]->cbfunc = test_cbfunc1;
 
+    /* sub-1 asks for the stupid-value-one data from ALL containers
+     */
+    subscriptions[1]->num_tokens = 0;
+    subscriptions[1]->tokens = NULL;
+    subscriptions[1]->num_keys = 1;
+    subscriptions[1]->keys =(char**)malloc(sizeof(char*));
+    subscriptions[1]->keys[0] = strdup("stupid-value-one");
+    subscriptions[1]->cbfunc = test_cbfunc2;
 
-    /* for testing the trigger, we'll just use the prior subscription setup.
-     * setup the trigger information - initialize the common elements */
+    /* sub-2 asks for the stupid-value-multi data from the first
+     * container ONLY
+     */
+    subscriptions[2]->num_tokens = 2;
+    subscriptions[2]->tokens = (char**)malloc(2*sizeof(char*));
+    for (i=0; i < 2; i++) {
+        asprintf(&(subscriptions[2]->tokens[i]), "dummy%d", i);
+    }
+    subscriptions[2]->num_keys = 1;
+    subscriptions[2]->keys =(char**)malloc(sizeof(char*));
+    subscriptions[2]->keys[0] = strdup("stupid-value-multi");
+    subscriptions[2]->cbfunc = test_cbfunc3;
+
+    /* sub-3 asks for the stupid-value-three data from ALL containers */
+    subscriptions[3]->num_tokens = 0;
+    subscriptions[3]->tokens = NULL;
+    subscriptions[3]->num_keys = 1;
+    subscriptions[3]->keys =(char**)malloc(sizeof(char*));
+    subscriptions[3]->keys[0] = strdup("stupid-value-three");
+    subscriptions[3]->cbfunc = test_cbfunc4;
+
+    /* sub-4 asks for ALL data from ALL containers */
+    subscriptions[4]->num_tokens = 0;
+    subscriptions[4]->tokens = NULL;
+    subscriptions[4]->num_keys = 0;
+    subscriptions[4]->keys = NULL;
+    subscriptions[4]->cbfunc = test_cbfunc5;
+
+    /* setup the trigger information - initialize the common elements */
     OBJ_CONSTRUCT(&trig, orte_gpr_value_t);
     trig.addr_mode = ORTE_GPR_TOKENS_XAND;
     trig.segment = strdup("test-segment");
     trig.tokens = (char**)malloc(sizeof(char*));
     if (NULL == trig.tokens) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        OBJ_DESTRUCT(&value);
+        for (i=0; i < 5; i++) OBJ_RELEASE(subscriptions[i]);
         OBJ_DESTRUCT(&trig);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
-    trig.tokens[0] = strdup(ORTE_JOB_GLOBALS);
+    trig.tokens[0] = strdup("test-container");
     trig.num_tokens = 1;
     trig.cnt = 2;
     trig.keyvals = (orte_gpr_keyval_t**)malloc(2*sizeof(orte_gpr_keyval_t*));
@@ -276,75 +356,77 @@ int main(int argc, char **argv)
    fprintf(test_out, "setting trigger\n");
    
    trigs = &trig;
+   
+   /* enter things as three different subscriptions */
    rc = orte_gpr.subscribe(
          ORTE_GPR_TRIG_CMP_LEVELS | ORTE_GPR_TRIG_MONITOR_ONLY,
-         1, &subscription,
+         2, subscriptions,
          1, &trigs,
-         &sub);
+         sub);
 
-     OBJ_RELEASE(subscription);
-     OBJ_DESTRUCT(&trig);
 
-     if(ORTE_SUCCESS != rc) {
-         ORTE_ERROR_LOG(rc);
-         return rc;
-     }
+   rc = orte_gpr.subscribe(
+         ORTE_GPR_TRIG_CMP_LEVELS | ORTE_GPR_TRIG_MONITOR_ONLY,
+         2, &(subscriptions[2]),
+         1, &trigs,
+         sub);
+
+   rc = orte_gpr.subscribe(
+         ORTE_GPR_TRIG_CMP_LEVELS | ORTE_GPR_TRIG_MONITOR_ONLY,
+         1, &(subscriptions[4]),
+         1, &trigs,
+         sub);
+
+    for (i=0; i < 5; i++) OBJ_RELEASE(subscriptions[i]);
+    OBJ_DESTRUCT(&trig);
+
+    if(ORTE_SUCCESS != rc) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
 
     orte_gpr.dump_triggers(0);
     
-    for (j=0; j < 2; j++) {
-        fprintf(test_out, "incrementing until trigger\n");
-        /* increment the value in keys[1] until the trig fires */
-        OBJ_CONSTRUCT(&value, orte_gpr_value_t);
-        value.addr_mode = ORTE_GPR_TOKENS_XAND | ORTE_GPR_KEYS_OR;
-        value.segment = strdup("test-segment");
-        value.tokens = (char**)malloc(sizeof(char*));
-        if (NULL == value.tokens) {
-            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-            OBJ_DESTRUCT(&value);
-            return ORTE_ERR_OUT_OF_RESOURCE;
-        }
-        value.tokens[0] = strdup(ORTE_JOB_GLOBALS); /* put counters in the segment's globals container */
-        value.num_tokens = 1;
-        value.keyvals = (orte_gpr_keyval_t**)malloc(sizeof(orte_gpr_keyval_t*));
-        if (NULL == value.keyvals) {
-            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-            OBJ_DESTRUCT(&value);
-            return ORTE_ERR_OUT_OF_RESOURCE;
-        }
-        value.cnt = 1;
-        value.keyvals[0] = OBJ_NEW(orte_gpr_keyval_t);
-        if (NULL == value.keyvals[0]) {
-            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-            OBJ_DESTRUCT(&value);
-            return ORTE_ERR_OUT_OF_RESOURCE;
-        }
-        value.keyvals[0]->key = strdup(keys[1]);
-        value.keyvals[0]->type = ORTE_NULL;
-        
-        for (i=0; i < 10; i++) {
-            fprintf(test_out, "\tincrement %s\n", keys[1]);
-            if (ORTE_SUCCESS != (rc = orte_gpr.increment_value(&value))) {
-                ORTE_ERROR_LOG(rc);
-                OBJ_DESTRUCT(&value);
-                return rc;
-            }
-        }
-    
-        orte_gpr.dump_all(0);
-        
-        if (j == 0) {
-            fprintf(test_out, "updating value in keys[1] to test update_storage_locations\n");
-            /* now update the value in keys[1] and do it again */
-            value.addr_mode = value.addr_mode | ORTE_GPR_OVERWRITE;
-            value.keyvals[0]->type = ORTE_UINT32;
-            value.keyvals[0]->value.ui32 = 0;
-            values = &value;
-            orte_gpr.put(1, &values);
-        }
-        
+    fprintf(test_out, "incrementing until trigger\n");
+    /* increment the value in keys[1] until the trig fires */
+    OBJ_CONSTRUCT(&value, orte_gpr_value_t);
+    value.addr_mode = ORTE_GPR_TOKENS_XAND | ORTE_GPR_KEYS_OR;
+    value.segment = strdup("test-segment");
+    value.tokens = (char**)malloc(sizeof(char*));
+    if (NULL == value.tokens) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         OBJ_DESTRUCT(&value);
+        return ORTE_ERR_OUT_OF_RESOURCE;
     }
+    value.tokens[0] = strdup("test-container");
+    value.num_tokens = 1;
+    value.keyvals = (orte_gpr_keyval_t**)malloc(sizeof(orte_gpr_keyval_t*));
+    if (NULL == value.keyvals) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        OBJ_DESTRUCT(&value);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    value.cnt = 1;
+    value.keyvals[0] = OBJ_NEW(orte_gpr_keyval_t);
+    if (NULL == value.keyvals[0]) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        OBJ_DESTRUCT(&value);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    value.keyvals[0]->key = strdup(keys[1]);
+    value.keyvals[0]->type = ORTE_NULL;
+    
+    for (i=0; i < 10; i++) {
+        fprintf(test_out, "\tincrement %s\n", keys[1]);
+        if (ORTE_SUCCESS != (rc = orte_gpr.increment_value(&value))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_DESTRUCT(&value);
+            return rc;
+        }
+    }
+
+    orte_gpr.dump_all(0);
+    OBJ_DESTRUCT(&value);
     
     orte_dps_close();
     orte_gpr_base_close();
@@ -370,9 +452,37 @@ int main(int argc, char **argv)
     return(0);
 }
 
-void test_cbfunc(orte_gpr_notify_data_t *data, void *tag)
+void test_cbfunc1(orte_gpr_notify_data_t *data, void *tag)
 {
-    fprintf(test_out, "TRIGGER FIRED AND RECEIVED\n");
+    fprintf(test_out, "\n\n\nTRIGGER FIRED AND RECEIVED AT CALLBACK 1\n");
+    
+    orte_gpr.dump_notify_data(data, 0);
+}
+
+void test_cbfunc2(orte_gpr_notify_data_t *data, void *tag)
+{
+    fprintf(test_out, "\n\n\nTRIGGER FIRED AND RECEIVED AT CALLBACK 2\n");
+    
+    orte_gpr.dump_notify_data(data, 0);
+}
+
+void test_cbfunc3(orte_gpr_notify_data_t *data, void *tag)
+{
+    fprintf(test_out, "\n\n\nTRIGGER FIRED AND RECEIVED AT CALLBACK 3\n");
+    
+    orte_gpr.dump_notify_data(data, 0);
+}
+
+void test_cbfunc4(orte_gpr_notify_data_t *data, void *tag)
+{
+    fprintf(test_out, "\n\n\nTRIGGER FIRED AND RECEIVED AT CALLBACK 4\n");
+    
+    orte_gpr.dump_notify_data(data, 0);
+}
+
+void test_cbfunc5(orte_gpr_notify_data_t *data, void *tag)
+{
+    fprintf(test_out, "\n\n\nTRIGGER FIRED AND RECEIVED AT CALLBACK 5\n");
     
     orte_gpr.dump_notify_data(data, 0);
 }

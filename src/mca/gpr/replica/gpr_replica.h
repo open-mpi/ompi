@@ -217,6 +217,10 @@ struct orte_gpr_replica_triggers_t {
     ompi_object_t super;                            /**< Make this an object */
     /* index of this trigger in the triggers array */
     int index;
+    /* flag that indicates this trigger is a one-shot, has fired and
+     * now should be cleaned up
+     */
+    bool one_shot_fired;
     /* the action that causes a notification message to be sent out */
     orte_gpr_notify_action_t action;
     /* to whom the notification messages go - set to NULL if local */
@@ -245,13 +249,23 @@ typedef struct orte_gpr_replica_triggers_t orte_gpr_replica_triggers_t;
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(orte_gpr_replica_triggers_t);
 
 /*
+ * Notify message list objects - used to track individual messages going to
+ * the same recipient
+ */
+typedef struct {
+    ompi_list_item_t item;
+    orte_gpr_notify_message_t *message;
+} orte_gpr_replica_notify_msg_list_t;
+
+OBJ_CLASS_DECLARATION(orte_gpr_replica_notify_msg_list_t);
+
+/*
  * Callback list objects
  */
 struct orte_gpr_replica_callbacks_t {
     ompi_list_item_t item;
-    orte_gpr_notify_message_t *message;
+    ompi_list_t messages;
     orte_process_name_t *requestor;
-    orte_gpr_notify_id_t remote_idtag;
 };
 typedef struct orte_gpr_replica_callbacks_t orte_gpr_replica_callbacks_t;
 

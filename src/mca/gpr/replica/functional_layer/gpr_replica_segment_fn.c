@@ -109,8 +109,9 @@ int orte_gpr_replica_release_container(orte_gpr_replica_segment_t *seg,
     }
 
     /* remove container from segment and release it */
-    orte_pointer_array_set_item(seg->containers, cptr->index, NULL);
+    i = cptr->index;
     OBJ_RELEASE(cptr);
+    orte_pointer_array_set_item(seg->containers, i, NULL);
     
     return ORTE_SUCCESS;
 }
@@ -167,6 +168,8 @@ int orte_gpr_replica_delete_itagval(orte_gpr_replica_segment_t *seg,
                                    orte_gpr_replica_container_t *cptr,
                                    orte_gpr_replica_itagval_t *iptr)
 {
+    int i;
+    
     /* see if anyone cares that this value is deleted */
 /*    trig = (orte_gpr_replica_triggers_t**)((orte_gpr_replica.triggers)->addr);
 
@@ -184,11 +187,12 @@ int orte_gpr_replica_delete_itagval(orte_gpr_replica_segment_t *seg,
     
 */    
 
-    /* remove the entry from the container's itagval array */
-    orte_pointer_array_set_item(cptr->itagvals, iptr->index, NULL);
-    
     /* release the data storage */
+    i = iptr->index;
     OBJ_RELEASE(iptr);
+    
+    /* remove the entry from the container's itagval array */
+    orte_pointer_array_set_item(cptr->itagvals, i, NULL);
     
     return ORTE_SUCCESS;
 }
@@ -490,13 +494,14 @@ int orte_gpr_replica_xfer_payload(orte_gpr_value_union_t *dest,
 
 int orte_gpr_replica_release_segment(orte_gpr_replica_segment_t **seg)
 {
-    int rc;
+    int rc, i;
     
-    if (0 > (rc = orte_pointer_array_set_item(orte_gpr_replica.segments, (*seg)->itag, NULL))) {
-        return rc;
-    }
+    i = (*seg)->itag;
     OBJ_RELEASE(*seg);
     
+    if (0 > (rc = orte_pointer_array_set_item(orte_gpr_replica.segments, i, NULL))) {
+        return rc;
+    }
     return ORTE_SUCCESS;
 }
 

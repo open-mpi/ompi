@@ -33,11 +33,13 @@
 
 #include "gpr_replica_comm.h"
 
-int orte_gpr_replica_remote_notify(orte_process_name_t *recipient, orte_gpr_notify_id_t remote_idtag,
-                 orte_gpr_notify_message_t *message)
+int orte_gpr_replica_remote_notify(orte_process_name_t *recipient, ompi_list_t *messages)
 {
-    orte_buffer_t msg;
+    orte_buffer_t buffer;
+    orte_gpr_replica_notify_msg_list_t *msg;
+    orte_gpr_notify_message_t *message;
     orte_gpr_cmd_flag_t command;
+    int32_t count;
     int rc;
 
     if (orte_gpr_replica_globals.debug) {
@@ -46,36 +48,47 @@ int orte_gpr_replica_remote_notify(orte_process_name_t *recipient, orte_gpr_noti
 
     command = ORTE_GPR_NOTIFY_CMD;
 
-    OBJ_CONSTRUCT(&msg, orte_buffer_t);
+    OBJ_CONSTRUCT(&buffer, orte_buffer_t);
 
-    if (ORTE_SUCCESS != (rc = orte_dps.pack(&msg, &command, 1, ORTE_GPR_CMD))) {
+    if (ORTE_SUCCESS != (rc = orte_dps.pack(&buffer, &command, 1, ORTE_GPR_CMD))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
 
-    if (ORTE_SUCCESS != (rc = orte_dps.pack(&msg, &remote_idtag, 1, ORTE_GPR_NOTIFY_ID))) {
+    count = (int32_t)ompi_list_get_size(messages);
+    if (ORTE_SUCCESS != (rc = orte_dps.pack(&buffer, &count, 1, ORTE_INT32))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-
-    if (ORTE_SUCCESS != (rc = orte_dps.pack(&msg, &message->cnt, 1, ORTE_INT32))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-
-    if(message->cnt > 0) {
-        if (ORTE_SUCCESS != (rc = orte_dps.pack(&msg, message->data, message->cnt, ORTE_GPR_NOTIFY_DATA))) {
+    
+    while (NULL != (msg = (orte_gpr_replica_notify_msg_list_t*)ompi_list_remove_first(messages))) {
+        
+        message = msg->message;
+        
+        if (ORTE_SUCCESS != (rc = orte_dps.pack(&buffer, &(message->idtag), 1, ORTE_GPR_NOTIFY_ID))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-
-        if (0 > orte_rml.send_buffer(recipient, &msg, ORTE_RML_TAG_GPR_NOTIFY, 0)) {
-            ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
-            return ORTE_ERR_COMM_FAILURE;
+    
+        if (ORTE_SUCCESS != (rc = orte_dps.pack(&buffer, &(message->cnt), 1, ORTE_INT32))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
         }
+    
+        if(message->cnt > 0) {
+            if (ORTE_SUCCESS != (rc = orte_dps.pack(&buffer, message->data, message->cnt, ORTE_GPR_NOTIFY_DATA))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+        }
+        
+        OBJ_RELEASE(msg);
     }
 
-    OBJ_DESTRUCT(&msg);
+    if (0 > orte_rml.send_buffer(recipient, &buffer, ORTE_RML_TAG_GPR_NOTIFY, 0)) {
+        ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+        return ORTE_ERR_COMM_FAILURE;
+    }
 
     return ORTE_SUCCESS;
 }

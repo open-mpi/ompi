@@ -208,6 +208,20 @@ int orte_gpr_replica_process_command_buffer(orte_buffer_t *input_buffer,
             
             
                    
+                case ORTE_GPR_DUMP_CALLBACKS_CMD:  /*****     DUMP     *****/
+            
+                   if (orte_gpr_replica_globals.debug) {
+                      ompi_output(0, "\tdump cmd");
+                  }
+            
+                 if (ORTE_SUCCESS != (ret = orte_gpr_replica_recv_dump_callbacks_cmd(answer))) {
+                     ORTE_ERROR_LOG(ret);
+                     goto RETURN_ERROR;
+                 }
+                 break;
+            
+            
+                   
             	case ORTE_GPR_INCREMENT_VALUE_CMD:  /*****     INCREMENT_VALUE     *****/
             
             	    if (orte_gpr_replica_globals.debug) {

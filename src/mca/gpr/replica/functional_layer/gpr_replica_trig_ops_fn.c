@@ -150,7 +150,7 @@ int orte_gpr_replica_check_subscriptions(orte_gpr_replica_segment_t *seg,
                                          orte_gpr_replica_action_t action_taken)
 {
     orte_gpr_replica_triggers_t **trig;
-    int i, rc;
+     int i, rc;
 
     trig = (orte_gpr_replica_triggers_t**)((orte_gpr_replica.triggers)->addr);
     for (i=0; i < (orte_gpr_replica.triggers)->size; i++) {
@@ -239,6 +239,13 @@ FIRED:
         trig->action = trig->action & ~ORTE_GPR_TRIG_NOTIFY_START;
     }
 
+    /* if one-shot, set flag to indicate it has fired so it can be cleaned
+     * up later
+     */
+    if (ORTE_GPR_TRIG_ONE_SHOT & trig->action) {
+        trig->one_shot_fired = true;
+    }
+    
     return ORTE_SUCCESS;
 }
 

@@ -126,6 +126,7 @@ int orte_gpr_replica_dump_segments_fn(orte_buffer_t *buffer);
 
 int orte_gpr_replica_dump_triggers_fn(orte_buffer_t *buffer);
 
+int orte_gpr_replica_dump_callbacks_fn(orte_buffer_t *buffer);
 
 /*
  * *********    INTERNAL UTILITY FUNCTIONS     **********

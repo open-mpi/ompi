@@ -127,6 +127,12 @@ int orte_gpr_replica_dump_segments(int output_id);
 
 int orte_gpr_replica_dump_triggers(int output_id);
 
+int orte_gpr_replica_dump_callbacks(int output_id);
+
+int orte_gpr_replica_dump_notify_msg(orte_gpr_notify_message_t *msg, int output_id);
+
+int orte_gpr_replica_dump_notify_data(orte_gpr_notify_data_t *data, int output_id);
+
 
 /*
  * General functions

@@ -18,6 +18,7 @@
 #include <string.h>
 
 #include "include/constants.h"
+#include "util/output.h"
 #include "util/proc_info.h"
 #include "mca/oob/oob.h"
 #include "mca/oob/base/base.h"
