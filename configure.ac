@@ -118,8 +118,8 @@ OMPI_CONFIGURE_OPTIONS
 
 ompi_enable_shared="$enable_shared"
 ompi_enable_static="$enable_static"
-AM_DISABLE_SHARED
-AM_ENABLE_STATIC
+AM_ENABLE_SHARED
+AM_DISABLE_STATIC
 
 
 ############################################################################

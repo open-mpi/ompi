@@ -4,7 +4,7 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-SUBDIRS			= $(MCA_pcm_DYNAMIC_SUBDIRS)
+SUBDIRS			= $(MCA_pcm_DSO_SUBDIRS)
 DISTCLEANFILES		= $(SUBDIRS)
 
 # Every directory under here is a sym link to something in the main

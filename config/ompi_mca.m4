@@ -8,42 +8,54 @@ AC_DEFUN([OMPI_MCA],[
 # Find which modules should be built as run-time loadable modules
 # Acceptable combinations:
 #
-# --with-modules
-# --with-modules=[.+,]*MODULE_TYPE[.+,]*
-# --with-modules=[.+,]*MODULE_TYPE-MODULE_NAME[.+,]*
-# --without-modules
+# [default -- no option given]
+# --enable-mca-dso
+# --enable-mca-dso=[.+,]*COMPONENT_TYPE[.+,]*
+# --enable-mca-dso=[.+,]*COMPONENT_TYPE-COMPONENT_NAME[.+,]*
+# --disable-mca-dso
 #
 
 AC_MSG_CHECKING([which modules should be run-time loadable])
-AC_ARG_WITH(modules,
-    AC_HELP_STRING([--with-modules=LIST],
-		   [comma-separated list of types and/or type-module pairs of modules that will be built as run-time loadable modules (as opposed to statically linked in OMPI/MPI (if supported on this platform).  This directly implies "--enable-shared=LIST and --disable-static=LIST".]))
+AC_ARG_ENABLE(mca-dso,
+    AC_HELP_STRING([--enable-mca-dso=LIST],
+		   [comma-separated list of types and/or type-component pairs that will be built as run-time loadable modules (as opposed to statically linked in), if supported on this platform.  The default is to build all components as DSOs; the --disable-mca-dso[=LIST] form can be used to disable building all or some types/components as DSOs]))
 
-if test "$with_modules" = "" -o "$with_modules" = "no"; then
-    LOADABLE_MODULE_all=0
+# First, check to see if we're only building static libraries.  If so,
+# then override everything and only build components as static
+# libraries.
+
+if test "$enable_shared" = "no"; then
+    DSO_all=0
     msg=none
-elif test "$with_modules" = "yes"; then
-    LOADABLE_MODULE_all=1
+elif test -z "$enable_mca_dso" -o "$enable_mca_dso" = "yes"; then
+    DSO_all=1
     msg=all
+elif test "$enable_mca_dso" = "no"; then
+    DSO_all=0
+    msg=none
 else
-    LOADABLE_MODULE_all=0
+    DSO_all=0
     ifs_save="$IFS"
     IFS="${IFS}$PATH_SEPARATOR,"
     msg=
-    for module in $with_modules; do
-	str="`echo LOADABLE_MODULE_$module=1 | sed s/-/_/g`"
+    for item in $enable_mca_dso; do
+	str="`echo DSO_$item=1 | sed s/-/_/g`"
 	eval $str
-	msg="$module $msg"
+	msg="$item $msg"
     done
     IFS="$ifs_save"
 fi
 AC_MSG_RESULT([$msg])
 unset msg
+if test "$enable_shared" = "no"; then
+    AC_MSG_WARN([*** Shared libraries have been disabled (--disable-shared])
+    AC_MSG_WARN([*** Building MCA components as DSOs automatically disabled])
+fi
 
 # The list of MCA types (it's fixed)
 
 AC_MSG_CHECKING([for MCA types])
-found_types="allocator coll common io gpr mpool oob one pcm pml ptl topo"
+found_types="allocator coll common gpr io mpool ns one oob op pcm pml ptl topo"
 AC_MSG_RESULT([$found_types])
 
 # Get the list of all the non-configure MCA modules that were found by
@@ -53,15 +65,16 @@ AC_MSG_RESULT([$found_types])
 MCA_FIND_NO_CONFIGURE_MODULES
 
 # Now determine the configurable modules in each of the types.  This
-# is a little redundant and could be combined into the loop above, but
-# we separate it out for clarity.  The extern statements and array of
-# pointers to the module global structs are written to a file for each
-# type that is #include'd in the flue file for each type.
+# is a little redundant and could be combined into
+# MCA_FIND_NO_CONFIGURE_MODULES, but we separate it out for clarity.
+# The extern statements and array of pointers to the module global
+# structs are written to a file for each type that is #include'd in
+# the file for each type.
 
 for type in $found_types; do
     all_modules=
     static_modules=
-    dynamic_modules=
+    dso_modules=
     static_ltlibs=
 
     # Ensure that the directory where the #include file is to live
@@ -80,7 +93,7 @@ for type in $found_types; do
     # Also ensure that the dynamic-mca base directory exists
 
     total_dir="."
-    dyndir=src/mca/dynamic/$type
+    dyndir=src/dynamic-mca/$type
     for dir_part in `IFS='/\\'; set X $dyndir; shift; echo "$[@]"`; do
 	total_dir=$total_dir/$dir_part
 	test -d "$total_dir" ||
@@ -94,7 +107,7 @@ for type in $found_types; do
     rm -f $outfile $outfile.struct $outfile.extern \
 	$outfile.all $outfile.static $outfile.dyanmic
     touch $outfile.struct $outfile.extern \
-	$outfile.all $outfile.static $outfile.dynamic
+	$outfile.all $outfile.static $outfile.dso
 
     # Manual conversion of $type to its generic name (e.g., crmpi->cr,
     # crompi->cr).
@@ -125,7 +138,7 @@ for type in $found_types; do
 
 	    # Remove any possible sym link in the mca-dynamic tree
             
-	    rm -f src/mca/dyanmic/$type/$m
+	    rm -f src/dynamic-mca/$type/$m
 
             # Now process the module
 
@@ -139,12 +152,12 @@ for type in $found_types; do
             # generated the AM_CONDITIONAL directly.  Here, we fill in
             # the variable that is used in that AM_CONDITIONAL.
 
-            if test "$compile_mode" = "dynamic"; then
+            if test "$compile_mode" = "dso"; then
                 value=1
             else
                 value=0
             fi
-            foo="BUILD_${type}_${m}_LOADABLE_MODULE=$value"
+            foo="BUILD_${type}_${m}_DSO=$value"
             eval $foo
         fi
     done
@@ -166,7 +179,7 @@ for type in $found_types; do
 
 	    # Remove any possible sym link in the mca-dynamic tree
 
-	    rm -f src/mca/dyanmic/$type/$m
+	    rm -f src/dyanmic-mca/$type/$m
 
             # Configure the module subdirectory
 
@@ -187,9 +200,9 @@ for type in $found_types; do
     all_modules="`echo $all_modules`"
     static_modules="`sort $outfile.static`"
     static_modules="`echo $static_modules`"
-    dynamic_modules="`sort $outfile.dynamic`"
-    dynamic_modules="`echo $dynamic_modules`"
-    rm -f $outfile $outfile.all $outfile.static $outfile.dynamic
+    dso_modules="`sort $outfile.dso`"
+    dso_modules="`echo $dso_modules`"
+    rm -f $outfile $outfile.all $outfile.static $outfile.dso
 
     # Create the final .h file that will be included in the type's
     # top-level glue.  This lists all the static modules.
@@ -216,13 +229,13 @@ EOF
     eval "$foo"
     foo="MCA_${type}_STATIC_SUBDIRS"'="$static_modules"'
     eval "$foo"
-    foo="MCA_${type}_DYNAMIC_SUBDIRS"'="$dynamic_modules"'
+    foo="MCA_${type}_DSO_SUBDIRS"'="$dso_modules"'
     eval "$foo"
     foo="MCA_${type}_STATIC_LTLIBS"'="$static_ltlibs"'
     eval "$foo"
 done
 unset foo type m modules structs outfile outdir total_dir file \
-    all_modules static_modules dynamic_modules static_ltlibs
+    all_modules static_modules dso_modules static_ltlibs
 
 # Grumble.  It seems that AC_SUBST and AC_DEFINE don't let you
 # substitue on a variable name that contains a variable (e.g.,
@@ -232,66 +245,66 @@ unset foo type m modules structs outfile outdir total_dir file \
 
 AC_SUBST(MCA_common_ALL_SUBDIRS)
 AC_SUBST(MCA_common_STATIC_SUBDIRS)
-AC_SUBST(MCA_common_DYNAMIC_SUBDIRS)
+AC_SUBST(MCA_common_DSO_SUBDIRS)
 AC_SUBST(MCA_common_STATIC_LTLIBS)
 
 # OMPI types
 
 AC_SUBST(MCA_oob_ALL_SUBDIRS)
 AC_SUBST(MCA_oob_STATIC_SUBDIRS)
-AC_SUBST(MCA_oob_DYNAMIC_SUBDIRS)
+AC_SUBST(MCA_oob_DSO_SUBDIRS)
 AC_SUBST(MCA_oob_STATIC_LTLIBS)
 
 AC_SUBST(MCA_pcm_ALL_SUBDIRS)
 AC_SUBST(MCA_pcm_STATIC_SUBDIRS)
-AC_SUBST(MCA_pcm_DYNAMIC_SUBDIRS)
+AC_SUBST(MCA_pcm_DSO_SUBDIRS)
 AC_SUBST(MCA_pcm_STATIC_LTLIBS)
 
 AC_SUBST(MCA_gpr_ALL_SUBDIRS)
 AC_SUBST(MCA_gpr_STATIC_SUBDIRS)
-AC_SUBST(MCA_gpr_DYNAMIC_SUBDIRS)
+AC_SUBST(MCA_gpr_DSO_SUBDIRS)
 AC_SUBST(MCA_gpr_STATIC_LTLIBS)
 
 # MPI types
 
 AC_SUBST(MCA_allocator_ALL_SUBDIRS)
 AC_SUBST(MCA_allocator_STATIC_SUBDIRS)
-AC_SUBST(MCA_allocator_DYNAMIC_SUBDIRS)
+AC_SUBST(MCA_allocator_DSO_SUBDIRS)
 AC_SUBST(MCA_allocator_STATIC_LTLIBS)
 
 AC_SUBST(MCA_coll_ALL_SUBDIRS)
 AC_SUBST(MCA_coll_STATIC_SUBDIRS)
-AC_SUBST(MCA_coll_DYNAMIC_SUBDIRS)
+AC_SUBST(MCA_coll_DSO_SUBDIRS)
 AC_SUBST(MCA_coll_STATIC_LTLIBS)
 
 AC_SUBST(MCA_io_ALL_SUBDIRS)
 AC_SUBST(MCA_io_STATIC_SUBDIRS)
-AC_SUBST(MCA_io_DYNAMIC_SUBDIRS)
+AC_SUBST(MCA_io_DSO_SUBDIRS)
 AC_SUBST(MCA_io_STATIC_LTLIBS)
 
 AC_SUBST(MCA_mpool_ALL_SUBDIRS)
 AC_SUBST(MCA_mpool_STATIC_SUBDIRS)
-AC_SUBST(MCA_mpool_DYNAMIC_SUBDIRS)
+AC_SUBST(MCA_mpool_DSO_SUBDIRS)
 AC_SUBST(MCA_mpool_STATIC_LTLIBS)
 
 AC_SUBST(MCA_one_ALL_SUBDIRS)
 AC_SUBST(MCA_one_STATIC_SUBDIRS)
-AC_SUBST(MCA_one_DYNAMIC_SUBDIRS)
+AC_SUBST(MCA_one_DSO_SUBDIRS)
 AC_SUBST(MCA_one_STATIC_LTLIBS)
 
 AC_SUBST(MCA_pml_ALL_SUBDIRS)
 AC_SUBST(MCA_pml_STATIC_SUBDIRS)
-AC_SUBST(MCA_pml_DYNAMIC_SUBDIRS)
+AC_SUBST(MCA_pml_DSO_SUBDIRS)
 AC_SUBST(MCA_pml_STATIC_LTLIBS)
 
 AC_SUBST(MCA_ptl_ALL_SUBDIRS)
 AC_SUBST(MCA_ptl_STATIC_SUBDIRS)
-AC_SUBST(MCA_ptl_DYNAMIC_SUBDIRS)
+AC_SUBST(MCA_ptl_DSO_SUBDIRS)
 AC_SUBST(MCA_ptl_STATIC_LTLIBS)
 
 AC_SUBST(MCA_topo_ALL_SUBDIRS)
 AC_SUBST(MCA_topo_STATIC_SUBDIRS)
-AC_SUBST(MCA_topo_DYNAMIC_SUBDIRS)
+AC_SUBST(MCA_topo_DSO_SUBDIRS)
 AC_SUBST(MCA_topo_STATIC_LTLIBS)
 
 # Finally, now that we've filled in all the test variables, get all
@@ -327,24 +340,24 @@ if test "$HAPPY" = "1"; then
 
     # Is this module going to built staic or shared?
 
-    str="SHARED_TYPE=\$LOADABLE_MODULE_$type"
+    str="SHARED_TYPE=\$DSO_$type"
     eval $str
-    str="SHARED_GENERIC_TYPE=\$LOADABLE_MODULE_$generic_type"
+    str="SHARED_GENERIC_TYPE=\$DSO_$generic_type"
     eval $str
-    str="SHARED_MODULE=\$LOADABLE_MODULE_${type}_$m"
+    str="SHARED_MODULE=\$DSO_${type}_$m"
     eval $str
 
     shared_mode_override=static
 
     # Setup for either shared or static
 
-    if test "$shared_mode_override" = "dynamic" -o \
+    if test "$shared_mode_override" = "dso" -o \
 	"$SHARED_TYPE" = "1" -o \
 	"$SHARED_GENERIC_TYPE" = "1" -o \
 	"$SHARED_MODULE" = "1" -o \
-	"$LOADABLE_MODULE_all" = "1"; then
-	compile_mode="dynamic"
-	echo $m >> $outfile.dynamic
+	"$DSO_all" = "1"; then
+	compile_mode="dso"
+	echo $m >> $outfile.dso
 	rm -f "src/dynamic-mca/$type/$m"
 	$LN_S "$OMPI_TOP_BUILDDIR/src/mca/$type/$m" \
 	    "src/dynamic-mca/$type/$m"

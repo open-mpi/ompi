@@ -541,8 +541,8 @@ AC_DEFINE_UNQUOTED(MCA_${pd_module_type}_${pd_module_name}_FULL_VERSION,
 
 EOF
                 cat >> $pd_amc_file <<EOF
-AM_CONDITIONAL(OMPI_BUILD_${pd_module_type}_${pd_module_name}_LOADABLE_MODULE,
-    test "\$BUILD_${pd_module_type}_${pd_module_name}_LOADABLE_MODULE" = "1")
+AM_CONDITIONAL(OMPI_BUILD_${pd_module_type}_${pd_module_name}_DSO,
+    test "\$BUILD_${pd_module_type}_${pd_module_name}_DSO" = "1")
 
 EOF
 
