@@ -20,14 +20,6 @@
 
 #include "mca/pcm/base/static-components.h"
 
-static void
-signal_cb(int fd, short event, void *arg)
-{
-    struct ompi_event *signal = arg;
-
-    printf("%s: got signal %d\n", "signal_cb", OMPI_EVENT_SIGNAL(signal));
-}
-
 
 /*
  * Global variables
@@ -42,23 +34,6 @@ ompi_list_t mca_pcm_base_components_available;
  */
 int mca_pcm_base_open(void)
 {
-    /*
-     * XXX: BEGIN DEBUGGING CODE BWB NEEDS TO REMOVE 
-     */
-    struct ompi_event *signal_int;
-    signal_int = malloc(sizeof(struct ompi_event));
-
-    /* Initalize one event (only after the event library was initialized) */
-    ompi_event_init();
-    ompi_event_set(signal_int, SIGHUP, OMPI_EV_SIGNAL|OMPI_EV_PERSIST, signal_cb,
-                   signal_int);
-
-    ompi_event_add(signal_int, NULL);
-    /*
-     * XXX: END DEBUGGING CODE BWB NEEDS TO REMOVE 
-     */
-
-
   /* Open up all available components */
 
   if (OMPI_SUCCESS != 
