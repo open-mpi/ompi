@@ -548,6 +548,22 @@ OMPI_ALIGNMENT_F90_COMPLEX8=0
 OMPI_ALIGNMENT_F90_COMPLEX16=0
 OMPI_ALIGNMENT_F90_COMPLEX32=0
 
+OMPI_PRECISION_F90_REAL4=0
+OMPI_PRECISION_F90_REAL8=0
+OMPI_PRECISION_F90_REAL16=0
+
+OMPI_PRECISION_F90_COMPLEX8=0
+OMPI_PRECISION_F90_COMPLEX16=0
+OMPI_PRECISION_F90_COMPLEX32=0
+
+OMPI_RANGE_F90_REAL4=0
+OMPI_RANGE_F90_REAL8=0
+OMPI_RANGE_F90_REAL16=0
+
+OMPI_RANGE_F90_COMPLEX8=0
+OMPI_RANGE_F90_COMPLEX16=0
+OMPI_RANGE_F90_COMPLEX32=0
+
 #
 # lists of supported Fortran types
 #
@@ -569,6 +585,8 @@ else
 
     OMPI_F90_CHECK_TYPE(selected_int_kind(2),  OMPI_HAVE_F90_INTEGER1)
     if test "$OMPI_HAVE_F90_INTEGER1" = "1"; then
+        OMPI_FORTRAN_LKINDS="${OMPI_FORTRAN_LKINDS}1 "
+        OMPI_FORTRAN_IKINDS="${OMPI_FORTRAN_IKINDS}1 "
         OMPI_F90_GET_SIZEOF(integer(selected_int_kind(2)), 
                             OMPI_SIZEOF_F90_INT1)
         OMPI_F90_GET_ALIGNMENT(integer(selected_int_kind(2)),
@@ -577,6 +595,8 @@ else
 
     OMPI_F90_CHECK_TYPE(selected_int_kind(4),  OMPI_HAVE_F90_INTEGER2)
     if test "$OMPI_HAVE_F90_INTEGER2" = "1"; then
+        OMPI_FORTRAN_LKINDS="${OMPI_FORTRAN_LKINDS}2 "
+        OMPI_FORTRAN_IKINDS="${OMPI_FORTRAN_IKINDS}2 "
         OMPI_F90_GET_SIZEOF(integer(selected_int_kind(4)), 
                             OMPI_SIZEOF_F90_INT2)
         OMPI_F90_GET_ALIGNMENT(integer(selected_int_kind(4)),
@@ -585,6 +605,8 @@ else
 
     OMPI_F90_CHECK_TYPE(selected_int_kind(9),  OMPI_HAVE_F90_INTEGER4)
     if test "$OMPI_HAVE_F90_INTEGER4" = "1"; then
+        OMPI_FORTRAN_LKINDS="${OMPI_FORTRAN_LKINDS}4 "
+        OMPI_FORTRAN_IKINDS="${OMPI_FORTRAN_IKINDS}4 "
         OMPI_F90_GET_SIZEOF(integer(selected_int_kind(9)),
                             OMPI_SIZEOF_F90_INT4)
         OMPI_F90_GET_ALIGNMENT(integer(selected_int_kind(9)),
@@ -593,6 +615,8 @@ else
 
     OMPI_F90_CHECK_TYPE(selected_int_kind(18), OMPI_HAVE_F90_INTEGER8)
     if test "$OMPI_HAVE_F90_INTEGER8" = "1"; then
+        OMPI_FORTRAN_LKINDS="${OMPI_FORTRAN_LKINDS}8 "
+        OMPI_FORTRAN_IKINDS="${OMPI_FORTRAN_IKINDS}8 "
         OMPI_F90_GET_SIZEOF(integer(selected_int_kind(18)), 
                             OMPI_SIZEOF_F90_INT8)
         OMPI_F90_GET_ALIGNMENT(integer(selected_int_kind(18)),
@@ -601,6 +625,8 @@ else
 
     OMPI_F90_CHECK_TYPE(selected_int_kind(19), OMPI_HAVE_F90_INTEGER16)
     if test "$OMPI_HAVE_F90_INTEGER16" = "1"; then
+        OMPI_FORTRAN_LKINDS="${OMPI_FORTRAN_LKINDS}16 "
+        OMPI_FORTRAN_IKINDS="${OMPI_FORTRAN_IKINDS}16 "
         OMPI_F90_GET_SIZEOF(integer(selected_int_kind(19)), 
                             OMPI_SIZEOF_F90_INT16)
         OMPI_F90_GET_ALIGNMENT(integer(selected_int_kind(19)),
@@ -609,6 +635,9 @@ else
 
     OMPI_F90_CHECK_TYPE(selected_real_kind(6), OMPI_HAVE_F90_REAL4)
     if test "$OMPI_HAVE_F90_REAL4" = "1"; then
+        OMPI_HAVE_F90_COMPLEX8=1
+        OMPI_FORTRAN_RKINDS="${OMPI_FORTRAN_RKINDS}4 "
+        OMPI_FORTRAN_CKINDS="${OMPI_FORTRAN_CKINDS}4 "
         OMPI_F90_GET_SIZEOF(real(selected_real_kind(6)), OMPI_SIZEOF_F90_REAL4)
         OMPI_F90_GET_SIZEOF(complex(selected_real_kind(6)),
                             OMPI_SIZEOF_F90_COMPLEX8)
@@ -616,10 +645,21 @@ else
                                OMPI_ALIGNMENT_F90_REAL4)
         OMPI_F90_GET_ALIGNMENT(complex(selected_real_kind(6)),
                                OMPI_ALIGNMENT_F90_COMPLEX8)
+        OMPI_F90_GET_PRECISION(real(selected_real_kind(6)),
+                               OMPI_PRECISION_F90_REAL4)
+        OMPI_F90_GET_PRECISION(complex(selected_real_kind(6)),
+                               OMPI_PRECISION_F90_COMPLEX8)
+        OMPI_F90_GET_RANGE(real(selected_real_kind(6)),
+                           OMPI_RANGE_F90_REAL4)
+        OMPI_F90_GET_RANGE(complex(selected_real_kind(6)),
+                           OMPI_RANGE_F90_COMPLEX8)
     fi
 
     OMPI_F90_CHECK_TYPE(selected_real_kind(15), OMPI_HAVE_F90_REAL8)
     if test "$OMPI_HAVE_F90_REAL8" = "1"; then
+        OMPI_HAVE_F90_COMPLEX16=1
+        OMPI_FORTRAN_RKINDS="${OMPI_FORTRAN_RKINDS}8 "
+        OMPI_FORTRAN_CKINDS="${OMPI_FORTRAN_CKINDS}8 "
         OMPI_F90_GET_SIZEOF(real(selected_real_kind(15)), 
                             OMPI_SIZEOF_F90_REAL8)
         OMPI_F90_GET_SIZEOF(complex(selected_real_kind(15)),
@@ -628,10 +668,21 @@ else
                                OMPI_ALIGNMENT_F90_REAL8)
         OMPI_F90_GET_ALIGNMENT(complex(selected_real_kind(15)),
                                OMPI_ALIGNMENT_F90_COMPLEX16)
+        OMPI_F90_GET_PRECISION(real(selected_real_kind(15)),
+                               OMPI_PRECISION_F90_REAL8)
+        OMPI_F90_GET_PRECISION(complex(selected_real_kind(15)),
+                               OMPI_PRECISION_F90_COMPLEX16)
+        OMPI_F90_GET_RANGE(real(selected_real_kind(15)),
+                           OMPI_RANGE_F90_REAL8)
+        OMPI_F90_GET_RANGE(complex(selected_real_kind(15)),
+                           OMPI_RANGE_F90_COMPLEX16)
     fi
 
     OMPI_F90_CHECK_TYPE(selected_real_kind(31), OMPI_HAVE_F90_REAL16)
     if test "$OMPI_HAVE_F90_REAL16" = "1"; then
+        OMPI_HAVE_F90_COMPLEX32=1
+        OMPI_FORTRAN_RKINDS="${OMPI_FORTRAN_RKINDS}16 "
+        OMPI_FORTRAN_CKINDS="${OMPI_FORTRAN_CKINDS}16 "
         OMPI_F90_GET_SIZEOF(real(selected_real_kind(31)), 
                             OMPI_SIZEOF_F90_REAL16)
         OMPI_F90_GET_SIZEOF(complex(selected_real_kind(31)),
@@ -640,6 +691,14 @@ else
                                OMPI_ALIGNMENT_F90_REAL16)
         OMPI_F90_GET_ALIGNMENT(complex(selected_real_kind(31)),
                                OMPI_ALIGNMENT_F90_COMPLEX32)
+        OMPI_F90_GET_PRECISION(real(selected_real_kind(31)),
+                               OMPI_PRECISION_F90_REAL16)
+        OMPI_F90_GET_PRECISION(complex(selected_real_kind(31)),
+                               OMPI_PRECISION_F90_COMPLEX32)
+        OMPI_F90_GET_RANGE(real(selected_real_kind(31)),
+                                OMPI_RANGE_F90_REAL16)
+        OMPI_F90_GET_RANGE(complex(selected_real_kind(31)),
+                           OMPI_RANGE_F90_COMPLEX32)
     fi
 
     OMPI_F90_GET_SIZEOF(logical, OMPI_SIZEOF_F90_LOGICAL)
@@ -694,67 +753,45 @@ fi
 if test "$OMPI_SIZEOF_F90_REAL4" != "4" ; then
     OMPI_SIZEOF_F90_REAL4=0
     OMPI_ALIGNMENT_F90_REAL4=0
+    OMPI_PRECISION_F90_REAL4=0
+    OMPI_RANGE_F90_REAL4=0
     OMPI_HAVE_F90_REAL4=0
 fi
 if test "$OMPI_SIZEOF_F90_REAL8" != "8" ; then
     OMPI_SIZEOF_F90_REAL8=0
     OMPI_ALIGNMENT_F90_REAL8=0
+    OMPI_PRECISION_F90_REAL8=0
+    OMPI_RANGE_F90_REAL8=0
     OMPI_HAVE_F90_REAL8=0
 fi
 if test "$OMPI_SIZEOF_F90_REAL16" != "16" ; then
     OMPI_SIZEOF_F90_REAL16=0
     OMPI_ALIGNMENT_F90_REAL16=0
+    OMPI_PRECISION_F90_REAL16=0
+    OMPI_RANGE_F90_REAL16=0
     OMPI_HAVE_F90_REAL16=0
 fi
 
 if test "$OMPI_SIZEOF_F90_COMPLEX8" != "8" ; then
     OMPI_SIZEOF_F90_COMPLEX8=0
     OMPI_ALIGNMENT_F90_COMPLEX8=0
+    OMPI_PRECISION_F90_COMPLEX8=0
+    OMPI_RANGE_F90_COMPLEX8=0
     OMPI_HAVE_F90_COMPLEX8=0
 fi
 if test "$OMPI_SIZEOF_F90_COMPLEX16" != "16" ; then
     OMPI_SIZEOF_F90_COMPLEX16=0
-    OMPI_ALIGNMENT_F90_COMPLEX8=0
+    OMPI_ALIGNMENT_F90_COMPLEX16=0
+    OMPI_PRECISION_F90_COMPLEX16=0
+    OMPI_RANGE_F90_COMPLEX16=0
     OMPI_HAVE_F90_COMPLEX16=0
 fi
 if test "$OMPI_SIZEOF_F90_COMPLEX32" != "32" ; then
     OMPI_SIZEOF_F90_COMPLEX32=0
-    OMPI_ALIGNMENT_F90_COMPLEX8=0
+    OMPI_ALIGNMENT_F90_COMPLEX32=0
+    OMPI_PRECISION_F90_COMPLEX32=0
+    OMPI_RANGE_F90_COMPLEX32=0
     OMPI_HAVE_F90_COMPLEX32=0
-fi
-
-if test "$OMPI_HAVE_F90_INTEGER1" = "1" ; then
-    OMPI_FORTRAN_LKINDS="${OMPI_FORTRAN_LKINDS}1 "
-    OMPI_FORTRAN_IKINDS="${OMPI_FORTRAN_IKINDS}1 "
-fi
-if test "$OMPI_HAVE_F90_INTEGER2" = "1" ; then
-    OMPI_FORTRAN_LKINDS="${OMPI_FORTRAN_LKINDS}2 "
-    OMPI_FORTRAN_IKINDS="${OMPI_FORTRAN_IKINDS}2 "
-fi
-if test "$OMPI_HAVE_F90_INTEGER4" = "1" ; then
-    OMPI_FORTRAN_LKINDS="${OMPI_FORTRAN_LKINDS}4 "
-    OMPI_FORTRAN_IKINDS="${OMPI_FORTRAN_IKINDS}4 "
-fi
-if test "$OMPI_HAVE_F90_INTEGER8" = "1" ; then
-    OMPI_FORTRAN_LKINDS="${OMPI_FORTRAN_LKINDS}8 "
-    OMPI_FORTRAN_IKINDS="${OMPI_FORTRAN_IKINDS}8 "
-fi
-if test "$OMPI_HAVE_F90_INTEGER16" = "1" ; then
-    OMPI_FORTRAN_LKINDS="${OMPI_FORTRAN_LKINDS}16 "
-    OMPI_FORTRAN_IKINDS="${OMPI_FORTRAN_IKINDS}16 "
-fi
-
-if test "$OMPI_HAVE_F90_REAL4" = "1" ; then
-    OMPI_FORTRAN_RKINDS="${OMPI_FORTRAN_RKINDS}4 "
-    OMPI_FORTRAN_CKINDS="${OMPI_FORTRAN_CKINDS}4 "
-fi
-if test "$OMPI_HAVE_F90_REAL8" = "1" ; then
-    OMPI_FORTRAN_RKINDS="${OMPI_FORTRAN_RKINDS}8 "
-    OMPI_FORTRAN_CKINDS="${OMPI_FORTRAN_CKINDS}8 "
-fi
-if test "$OMPI_HAVE_F90_REAL16" = "1" ; then
-    OMPI_FORTRAN_RKINDS="${OMPI_FORTRAN_RKINDS}16 "
-    OMPI_FORTRAN_CKINDS="${OMPI_FORTRAN_CKINDS}16 "
 fi
 
 AC_SUBST(OMPI_FORTRAN_LKINDS)
@@ -865,6 +902,33 @@ AC_DEFINE_UNQUOTED(OMPI_ALIGNMENT_F90_COMPLEX16, $OMPI_ALIGNMENT_F90_COMPLEX16,
 AC_DEFINE_UNQUOTED(OMPI_ALIGNMENT_F90_COMPLEX32, $OMPI_ALIGNMENT_F90_COMPLEX32,
     [alignment of fortran complex*32])
 
+AC_DEFINE_UNQUOTED(OMPI_PRECISION_F90_REAL4, $OMPI_PRECISION_F90_REAL4,
+    [precision of fortran real*4])
+AC_DEFINE_UNQUOTED(OMPI_PRECISION_F90_REAL8, $OMPI_PRECISION_F90_REAL8,
+    [precision of fortran real*8])
+AC_DEFINE_UNQUOTED(OMPI_PRECISION_F90_REAL16, $OMPI_PRECISION_F90_REAL16,
+    [precision of fortran real*16])
+
+AC_DEFINE_UNQUOTED(OMPI_PRECISION_F90_COMPLEX8, $OMPI_PRECISION_F90_COMPLEX8,
+    [precision of fortran complex*8])
+AC_DEFINE_UNQUOTED(OMPI_PRECISION_F90_COMPLEX16, $OMPI_PRECISION_F90_COMPLEX16,
+    [precision of fortran complex*16])
+AC_DEFINE_UNQUOTED(OMPI_PRECISION_F90_COMPLEX32, $OMPI_PRECISION_F90_COMPLEX32,
+    [precision of fortran complex*32])
+
+AC_DEFINE_UNQUOTED(OMPI_RANGE_F90_REAL4, $OMPI_RANGE_F90_REAL4,
+    [range of fortran real*4])
+AC_DEFINE_UNQUOTED(OMPI_RANGE_F90_REAL8, $OMPI_RANGE_F90_REAL8,
+    [range of fortran real*8])
+AC_DEFINE_UNQUOTED(OMPI_RANGE_F90_REAL16, $OMPI_RANGE_F90_REAL16,
+    [range of fortran real*16])
+
+AC_DEFINE_UNQUOTED(OMPI_RANGE_F90_COMPLEX8, $OMPI_RANGE_F90_COMPLEX8,
+    [range of fortran complex*8])
+AC_DEFINE_UNQUOTED(OMPI_RANGE_F90_COMPLEX16, $OMPI_RANGE_F90_COMPLEX16,
+    [range of fortran complex*16])
+AC_DEFINE_UNQUOTED(OMPI_RANGE_F90_COMPLEX32, $OMPI_RANGE_F90_COMPLEX32,
+    [range of fortran complex*32])
 
 ##################################
 # Header files
@@ -1505,6 +1569,7 @@ AC_CONFIG_FILES([
     src/mpi/f90/Makefile
     src/mpi/f90/fortran_kinds.sh
     src/mpi/f90/fortran_sizes.h
+    src/mpi/f90/scripts/Makefile
     src/mpi/runtime/Makefile
 
     src/tools/Makefile
