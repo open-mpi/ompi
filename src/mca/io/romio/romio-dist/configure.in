@@ -429,10 +429,11 @@ case $arg in
      FROM_MPICH=1
      ;;
 
-   -ar=* | --ar=*)
-     package=`echo $arg|sed 's/-*ar=//'`
-     AR="$package"
-     ;;
+# Open MPI: Automake-based systems should not do this.
+#   -ar=* | --ar=*)
+#     package=`echo $arg|sed 's/-*ar=//'`
+#     AR="$package"
+#     ;;
 
      # THESE SHOULD USE CROSS_SIZE_XXX
   -intsize=* | --intsize=*)
@@ -742,7 +743,8 @@ if test -n "$arch_solaris" || test -n "$arch_solaris86" ; then
         MPI_LIB="$MPI_LIB -laio"
         ROMIO_LIBLIST="-laio"
     fi
-    AR="ar cr"
+# Open MPI: Automake-based build systems should not do this
+#    AR="ar cr"
 # solaris does not have l option to ar
 # solaris f90 does not have 8-byte integer type
 # (it does now!!!! 11/29/01)
@@ -828,7 +830,8 @@ if test -n "$arch_paragon"; then
 #           CFLAGS="$CFLAGS -O"
         fi
     fi
-    AR="ar860 cr$AR_LOCAL"
+# Open MPI: Automake-based systems should not do this
+#    AR="ar860 cr$AR_LOCAL"
     MPI_LIB="$MPI_LIB -nx"
     if test -z "$MPI" ; then
         MPI=mpich
@@ -867,7 +870,8 @@ if test -n "$arch_tflop" || test -n "$arch_tflops"; then
 #           CFLAGS="$CFLAGS -O $TFLOP_FLAGS"
        fi
     fi
-    AR="xar cr$AR_LOCAL"
+# Open MPI: Automake-based systems should not do this
+#    AR="xar cr$AR_LOCAL"
         RANLIB="xranlib"
     MPI_LIB="$MPI_LIB"
     if test -z "$MPI" ; then
@@ -1662,18 +1666,21 @@ CFLAGS="$CFLAGS $OMPI_CFLAGS "'-I$(top_builddir)/include'
 
 AC_SUBST(ARCH)
 AC_SUBST(FILE_SYSTEM)
-AC_SUBST(CC)
-AC_SUBST(CFLAGS)
+# Open MPI: Automake-based systems should not do this
+#AC_SUBST(CC)
+#AC_SUBST(CFLAGS)
 AC_SUBST(USER_CFLAGS)
 AC_SUBST(USER_FFLAGS)
 AC_SUBST(MIPS)
 AC_SUBST(BITS)
 AC_SUBST(MPI)
-AC_SUBST(AR)
-AC_SUBST(RANLIB)
+# Open MPI: Automake-based systems should not do this
+#AC_SUBST(AR)
+#AC_SUBST(RANLIB)
 AC_SUBST(MPI_INCLUDE_DIR)
 AC_SUBST(MPI_LIB)
-AC_SUBST(F77)
+# Open MPI: Automake-based systems should not do this
+#AC_SUBST(F77)
 AC_SUBST(NOF77)
 AC_SUBST(NOPROFILE)
 # Open MPI: This is a Bad Thing to do in Automake-based build systems
