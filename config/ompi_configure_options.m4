@@ -318,25 +318,5 @@ AC_SUBST(OMPI_F77_WIN_ATTR_DISP_VALUE)
 AC_SUBST(OMPI_F77_WIN_NULL_COPY_FN)
 AC_SUBST(OMPI_F77_WIN_NULL_DELETE_FN)
 AC_SUBST(OMPI_F77_WIN_DUP_FN)
-
-#
-# Do we want event signal handlers
-# BWB - this needs to be removed before release - XXX
-#
-AC_MSG_CHECKING([if want event library signal handling])
-AC_ARG_ENABLE(event-signals,
-    AC_HELP_STRING([--enable-event-signals],
-                   [Do we want to use the event library signal handlers (default: enabled)]))
-if test "$enable_event_signals" != "no"; then
-    AC_MSG_RESULT([yes])
-    use_event_signals=1
-else
-    AC_MSG_RESULT([no])
-    use_event_signals=0
-fi
-AC_DEFINE_UNQUOTED(OMPI_EVENT_USE_SIGNALS, $use_event_signals,
-    [Do we want to use the event library signal handlers])
-
-
 #
 ])
