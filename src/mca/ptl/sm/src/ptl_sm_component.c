@@ -293,11 +293,6 @@ int mca_ptl_sm_component_progress(mca_ptl_tstamp_t tstamp)
         send_fifo=&(mca_ptl_sm_component.fifo
                 [peer_local_smp_rank][my_local_smp_rank]);
 
-        /* debug 
-        fprintf(stderr," progress peer %d me %d \n",
-                peer_local_smp_rank,my_local_smp_rank);
-        fflush(stderr);
-         end debug */
         /* if fifo is not yet setup - continue - not data has been sent*/
         if(OMPI_CB_FREE == send_fifo->tail){
             continue;

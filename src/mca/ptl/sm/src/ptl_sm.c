@@ -102,7 +102,10 @@ int mca_ptl_sm_add_procs_same_base_addr(
     ompi_proc_t* my_proc; /* pointer to caller's proc structure */
     mca_ptl_sm_t *ptl_sm;
     ompi_fifo_t *my_fifos;
+/*
     volatile ompi_fifo_t **fifo_tmp;
+*/
+    ompi_fifo_t * volatile *fifo_tmp;
     bool same_sm_base;
     ssize_t diff;
 
