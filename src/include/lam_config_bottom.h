@@ -57,5 +57,6 @@ typedef enum { false, true } bool;
    have Cascading Includes Of Death. */
 #include "lam/mem/malloc.h"
 #define malloc(size) lam_malloc((size), __FILE__, __LINE__)
+#define realloc(ptr, size) lam_realloc((ptr), (size), __FILE__, __LINE__)
 #define free(ptr) lam_free((ptr), __FILE__, __LINE__)
 #endif

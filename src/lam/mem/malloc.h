@@ -73,6 +73,22 @@ extern "C" {
   /**
    * \internal
    *
+   * Back-end error-checking realloc function for LAM (you should use
+   * the normal realloc() instead of this function).
+   *
+   * @param ptr Pointer to reallocate
+   * @param size The number of bytes to allocate
+   * @param file Typically the __FILE__ macro
+   * @param line Typically the __LINE__ macro
+   *
+   * This function is only used when --enable-mem-debug was specified to
+   * configure (or by default if you're building in a CVS checkout).
+   */
+  void *lam_realloc(void *ptr, size_t size, char *file, int line);
+
+  /**
+   * \internal
+   *
    * Back-end error-checking free function for LAM (you should use
    * free() instead of this function).
    *

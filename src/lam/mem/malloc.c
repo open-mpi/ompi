@@ -68,18 +68,9 @@ void lam_malloc_finalize(void)
   }
 }
 
-/**
- * \internal
- *
- * Back-end error-checking malloc function for LAM (you should use the
- * LAM_MALLOC() macro instead of this function).
- *
- * @param size The number of bytes to allocate
- * @param file Typically the __FILE__ macro
- * @param line Typically the __LINE__ macro
- *
- * This function is only used when --enable-mem-debug was specified to
- * configure (or by default if you're building in a CVS checkout).
+
+/*
+ * Debug version of malloc
  */
 void *lam_malloc(size_t size, char *file, int line)
 {
@@ -103,18 +94,40 @@ void *lam_malloc(size_t size, char *file, int line)
 }
 
 
-/**
- * \internal
- *
- * Back-end error-checking free function for LAM (you should use
- * free() instead of this function).
- *
- * @param addr Address on the heap to free()
- * @param file Typically the __FILE__ macro
- * @param line Typically the __LINE__ macro
- *
- * This function is only used when --enable-mem-debug was specified to
- * configure (or by default if you're building in a CVS checkout).
+/*
+ * Debug version of realloc
+ */
+void *lam_realloc(void *ptr, size_t size, char *file, int line)
+{
+    void *addr;
+
+    if (lam_malloc_debug_level > 1) {
+        if (size <= 0) {
+          if (NULL == ptr) {
+            lam_output(lam_malloc_output, 
+                       "Realloc NULL for %ld bytes (%s, %d)", 
+                       (long) size, file, line);
+          } else {
+            lam_output(lam_malloc_output, "Realloc %p for %ld bytes (%s, %d)", 
+                       ptr, (long) size, file, line);
+          }
+        }
+    }
+    addr = realloc(ptr, size);
+    if (lam_malloc_debug_level > 0) {
+        if (NULL == addr) {
+            lam_output(lam_malloc_output, 
+                       "Realloc %p for %ld bytes failed (%s, %d)",
+                       ptr, (long) size, file, line);
+        }
+    }
+
+    return addr;
+}
+
+
+/*
+ * Debug version of free
  */
 void lam_free(void *addr, char *file, int line)
 {
@@ -124,4 +137,5 @@ void lam_free(void *addr, char *file, int line)
       free(addr);
     }
 }
+
 
