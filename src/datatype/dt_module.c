@@ -8,13 +8,25 @@
 #define BASEOBJ_DATA { OBJ_CLASS(ompi_datatype_t), 1 }
 #define INIT_BASIC_DATA( TYPE, ALIGN, NAME )                             \
     { BASEOBJ_DATA, sizeof(TYPE), 0, sizeof(TYPE), ALIGN,               \
-            0, sizeof(TYPE), DT_FLAG_BASIC | DT_FLAG_DATA, DT_##NAME, 1, \
-            (((long long)1)<<(DT_##NAME)), EMPTY_DATA(NAME) }
+      0, sizeof(TYPE), DT_FLAG_BASIC | DT_FLAG_DATA, DT_##NAME, 1, \
+      (((long long)1)<<(DT_##NAME)), EMPTY_DATA(NAME) }
+/* Using this macro implies that at this point not all informations needed
+ * to fill up the datatype are known. We fill them with zeros and then later
+ * when the datatype engine will be initialized we complete with the
+ * correct information.
+ */
 #define INIT_BASIC_TYPE( TYPE, NAME ) \
-    { BASEOBJ_DATA, 0, 0, 0, 0,          \
-            0, 0, DT_FLAG_BASIC, DT_##NAME, 1,  \
-            (((long long)1)<<(DT_##NAME)), EMPTY_DATA(NAME) }
-
+    { BASEOBJ_DATA, 0/*size*/, 0/*true_lb*/, 0/*true_ub*/, 0 /*align*/,    \
+      0/*lb*/, 0/*ub*/, DT_FLAG_BASIC | DT_FLAG_DATA, DT_##NAME, 1,  \
+      (((long long)1)<<(DT_##NAME)), EMPTY_DATA(NAME) }
+/* The upeer bound and the true UB are set to the size of the datatype.
+ * If it's not the case then they should be modified in the initialization
+ * function.
+ */
+#define INIT_BASIC_FORTRAN_TYPE( TYPE, NAME, SIZE, ALIGN ) \
+    { BASEOBJ_DATA, SIZE, 0/*true_lb*/, SIZE/*true_ub*/, ALIGN, \
+      0/*lb*/, SIZE/*ub*/, DT_FLAG_BASIC | DT_FLAG_DATA, DT_##NAME, 1,  \
+      (((long long)1)<<(DT_##NAME)), EMPTY_DATA(NAME) }
 ompi_datatype_t basicDatatypes[DT_MAX_PREDEFINED] = {
     INIT_BASIC_TYPE( DT_LOOP, LOOP ),
     INIT_BASIC_TYPE( DT_END_LOOP, END_LOOP ),
@@ -50,7 +62,8 @@ ompi_datatype_t basicDatatypes[DT_MAX_PREDEFINED] = {
     INIT_BASIC_DATA( void*, 0, UNAVAILABLE ),
 #endif  /* HAVE_LONG_DOUBLE */
     INIT_BASIC_DATA( char, OMPI_ALIGNMENT_CHAR, PACKED ),
-    INIT_BASIC_DATA( int, OMPI_ALIGNMENT_INT, LOGIC ),
+    INIT_BASIC_FORTRAN_TYPE( DT_LOGIC, LOGIC,
+         OMPI_SIZEOF_FORTRAN_LOGICAL, OMPI_ALIGNMENT_FORTRAN_LOGICAL ),
     INIT_BASIC_TYPE( DT_FLOAT_INT, FLOAT_INT ),
     INIT_BASIC_TYPE( DT_DOUBLE_INT, DOUBLE_INT ),
 #if HAVE_LONG_DOUBLE
@@ -61,9 +74,12 @@ ompi_datatype_t basicDatatypes[DT_MAX_PREDEFINED] = {
     INIT_BASIC_TYPE( DT_LONG_INT, LONG_INT ),
     INIT_BASIC_TYPE( DT_2INT, 2INT ),
     INIT_BASIC_TYPE( DT_SHORT_INT, SHORT_INT ),
-    INIT_BASIC_TYPE( DT_INTEGER, INTEGER ),
-    INIT_BASIC_TYPE( DT_REAL, REAL ),
-    INIT_BASIC_TYPE( DT_DBLPREC, DBLPREC ),
+    INIT_BASIC_FORTRAN_TYPE( DT_INTEGER, INTEGER, 
+         OMPI_SIZEOF_FORTRAN_INT, OMPI_ALIGNMENT_FORTRAN_INT ),
+    INIT_BASIC_FORTRAN_TYPE( DT_REAL, REAL,
+         OMPI_SIZEOF_FORTRAN_REAL, OMPI_ALIGNMENT_FORTRAN_REAL ),
+    INIT_BASIC_FORTRAN_TYPE( DT_DBLPREC, DBLPREC,
+         OMPI_SIZEOF_FORTRAN_DBLPREC, OMPI_ALIGNMENT_FORTRAN_DBLPREC ),
     INIT_BASIC_TYPE( DT_2REAL, 2REAL ),
     INIT_BASIC_TYPE( DT_2DBLPREC, 2DBLPREC ),
     INIT_BASIC_TYPE( DT_2INTEGER, 2INTEGER ),
