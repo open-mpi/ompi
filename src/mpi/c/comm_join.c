@@ -23,7 +23,7 @@ static const char FUNC_NAME[] = "MPI_Comm_join";
 int MPI_Comm_join(int fd, MPI_Comm *intercomm) 
 {
     int rc;
-    ompi_proc_t rproc;
+    ompi_proc_t *rproc;
     uint32_t lleader=0; /* OOB contact information of our root */
     ompi_communicator_t *comp, *newcomp;
 
@@ -43,17 +43,11 @@ int MPI_Comm_join(int fd, MPI_Comm *intercomm)
        here. */
     /* if proc unknown, set up the proc-structure */
 
-    /* setup the intercomm-structure using ompi_comm_set (); */
-    newcomp = ompi_comm_set ( comp,                                   /* old comm */
-                              comp->c_local_group->grp_proc_count,    /* local_size */
-                              comp->c_local_group->grp_proc_pointers, /* local_procs*/
-                              1,                                      /* remote_size */
-                              &rproc,                                 /* remote_procs */
-                              NULL,                                   /* attrs */
-                              comp->error_handler,                    /* error handler */
-                              NULL,                                   /* coll module */
-                              NULL                                    /* topo module */
-                              );
+    newcomp = ompi_comm_allocate ( comp->c_local_group->grp_proc_count, 1 );
+    if ( NULL == newcomp ) {
+        rc = MPI_ERR_INTERN;
+        goto exit;
+    }
 
     /* setup comm_cid */
     rc = ompi_comm_nextcid ( newcomp,                  /* new comm */ 
@@ -63,13 +57,35 @@ int MPI_Comm_join(int fd, MPI_Comm *intercomm)
                              &rproc,                   /* remote_leader */
                              OMPI_COMM_CID_INTRA_OOB); /* mode */
     if ( OMPI_SUCCESS != rc ) {
-        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_SELF, rc, FUNC_NAME);
+        goto exit;
     }
+
+    /* setup the intercomm-structure using ompi_comm_set (); */
+    rc = ompi_comm_set ( newcomp,                                /* new comm */
+                         comp,                                   /* old comm */
+                         comp->c_local_group->grp_proc_count,    /* local_size */
+                         comp->c_local_group->grp_proc_pointers, /* local_procs*/
+                         1,                                      /* remote_size */
+                         rproc,                                  /* remote_procs */
+                         NULL,                                   /* attrs */
+                         comp->error_handler,                    /* error handler */
+                         NULL,                                   /* coll module */
+                         NULL                                    /* topo module */
+                         );
+    if ( MPI_SUCCESS != rc ) {
+        goto exit;
+    }
+
 
 
     /* PROBLEM: do we have to re-start some low level stuff
        to enable the usage of fast communication devices
        between the two worlds ? */
+ exit:
+    if ( MPI_SUCCESS != rc ) {
+        *intercomm = MPI_COMM_NULL;
+        return OMPI_ERRHANDLER_INVOKE (MPI_COMM_SELF, rc, FUNC_NAME);
+    }
     
     *intercomm = newcomp;
     return MPI_SUCCESS;

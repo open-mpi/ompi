@@ -52,19 +52,9 @@ int MPI_Comm_dup(MPI_Comm comm, MPI_Comm *newcomm)
         mode   = OMPI_COMM_CID_INTRA;
     }
 
-    newcomp = ompi_comm_set ( comp,                                   /* old comm */
-                              comp->c_local_group->grp_proc_count,    /* local_size */
-                              comp->c_local_group->grp_proc_pointers, /* local_procs*/
-                              rsize,                                  /* remote_size */
-                              rprocs,                                 /* remote_procs */
-                              comp->c_keyhash,                        /* attrs */
-                              comp->error_handler,                    /* error handler */
-                              (mca_base_component_t*) comp->c_coll_selected_module,           /* coll module,t.b.d */
-                              NULL                              /* topo module, t.b.d */
-                             );
-
-    if ( MPI_COMM_NULL == newcomp ) { 
-        OMPI_ERRHANDLER_INVOKE (comm, MPI_ERR_INTERN, FUNC_NAME);
+    newcomp = ompi_comm_allocate (comp->c_local_group->grp_proc_count, rsize );
+    if ( NULL == newcomp ) {
+        return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_INTERN, FUNC_NAME);
     }
 
     /* Determine context id. It is identical to f_2_c_handle */
@@ -74,10 +64,26 @@ int MPI_Comm_dup(MPI_Comm comm, MPI_Comm *newcomm)
                              NULL,     /* local leader */
                              NULL,     /* remote_leader */
                              mode );   /* mode */
-    if ( OMPI_SUCCESS != rc ) {
+    if ( MPI_SUCCESS != rc ) {
         *newcomm = MPI_COMM_NULL;
-        OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_INTERN, FUNC_NAME);
+        return OMPI_ERRHANDLER_INVOKE(comm, rc, FUNC_NAME);
     }
+
+    rc =  ompi_comm_set ( newcomp,                                /* new comm */
+                          comp,                                   /* old comm */
+                          comp->c_local_group->grp_proc_count,    /* local_size */
+                          comp->c_local_group->grp_proc_pointers, /* local_procs*/
+                          rsize,                                  /* remote_size */
+                          rprocs,                                 /* remote_procs */
+                          comp->c_keyhash,                        /* attrs */
+                          comp->error_handler,                    /* error handler */
+                          (mca_base_component_t*) comp->c_coll_selected_module, /* coll module */
+                          NULL                                    /* topo module, t.b.d */
+                          );
+    if ( MPI_SUCCESS != rc) { 
+        return OMPI_ERRHANDLER_INVOKE (comm, rc, FUNC_NAME);
+    }
+    
     
     *newcomm = newcomp;
     return ( MPI_SUCCESS );

@@ -32,6 +32,7 @@ int MPI_Intercomm_merge(MPI_Comm intercomm, int high,
     int first;
     int total_size;
     int rc=MPI_SUCCESS;
+    int thigh = high;
 
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME); 
@@ -56,7 +57,7 @@ int MPI_Intercomm_merge(MPI_Comm intercomm, int high,
                                       FUNC_NAME);
     }
     
-    first = ompi_comm_determine_first ( intercomm, high );
+    first = ompi_comm_determine_first ( intercomm, thigh );
     if ( first ) {
         memcpy ( procs, intercomm->c_local_group->grp_proc_pointers, 
                  local_size * sizeof(ompi_proc_t *));
@@ -69,21 +70,11 @@ int MPI_Intercomm_merge(MPI_Comm intercomm, int high,
         memcpy ( &procs[remote_size], intercomm->c_local_group->grp_proc_pointers, 
                  local_size * sizeof(ompi_proc_t *));
     }
-
-    newcomp = ompi_comm_set ( intercomm,                /* old comm */
-                              total_size,               /* local_size */
-                              procs,                    /* local_procs*/
-                              0,                        /* remote_size */
-                              NULL,                     /* remote_procs */
-                              NULL,                     /* attrs */
-                              intercomm->error_handler, /* error handler*/
-                              NULL,                     /* coll module */
-                              NULL                      /* topo mpodule */
-                              );
-
-    if ( newcomp == MPI_COMM_NULL ) {
-        return OMPI_ERRHANDLER_INVOKE (intercomm, MPI_ERR_INTERN, 
-                                       FUNC_NAME);
+    
+    newcomp = ompi_comm_allocate ( total_size, 0 );
+    if ( NULL == newcomp ) {
+        rc = MPI_ERR_INTERN;
+        goto exit;
     }
 
     /* Determine context id. It is identical to f_2_c_handle */
@@ -97,14 +88,29 @@ int MPI_Intercomm_merge(MPI_Comm intercomm, int high,
         goto exit;
     }
 
+    rc = ompi_comm_set ( newcomp,                  /* new comm */
+                         intercomm,                /* old comm */
+                         total_size,               /* local_size */
+                         procs,                    /* local_procs*/
+                         0,                        /* remote_size */
+                         NULL,                     /* remote_procs */
+                         NULL,                     /* attrs */
+                         intercomm->error_handler, /* error handler*/
+                         NULL,                     /* coll module */
+                         NULL                      /* topo mpodule */
+                         );
+    if ( MPI_SUCCESS != rc ) {
+        goto exit;
+    }
+    
+
  exit:
     if ( NULL != procs ) {
         free ( procs );
     }
-    if ( OMPI_SUCCESS != rc ) {
+    if ( MPI_SUCCESS != rc ) {
         *newcomm = MPI_COMM_NULL;
-        return OMPI_ERRHANDLER_INVOKE(intercomm, MPI_ERR_INTERN,
-                                      FUNC_NAME);
+        return OMPI_ERRHANDLER_INVOKE(intercomm, rc,  FUNC_NAME);
     }
 
     *newcomm = newcomp;
