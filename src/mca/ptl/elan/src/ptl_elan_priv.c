@@ -274,36 +274,34 @@ mca_ptl_elan_init_qdma_desc (struct mca_ptl_elan_send_frag_t *frag,
 		pml_req->req_base.req_addr, size_in);
 	size_out = size_in;
 #else
+	int iov_count = 1, max_data = size_in;
+	int freeAfter = 0;
 	struct iovec iov;
         ompi_convertor_t *convertor;
 
-        if( offset <= mca_ptl_elan_module.super.ptl_first_frag_size ) {
-            convertor = &pml_req->req_convertor;
-        } else {
-            convertor = &frag->frag_base.frag_convertor;
-            ompi_convertor_copy(&pml_req->req_convertor, convertor);
-            ompi_convertor_init_for_send( 
-                convertor,
-                0, 
-                pml_req->req_base.req_datatype,
-                pml_req->req_base.req_count,
-                pml_req->req_base.req_addr,
-                offset);
-        }
+        convertor = &frag->frag_base.frag_convertor;
+        ompi_convertor_copy(&pml_req->req_convertor, convertor);
+        ompi_convertor_init_for_send(convertor,
+				    0, 
+				    pml_req->req_base.req_datatype,
+				    pml_req->req_base.req_count,
+				    pml_req->req_base.req_addr,
+				    offset,
+				    NULL);
 
 	/* For now, eager sends are always packed into the descriptor
          * TODO: Inline up to 256 bytes (including the header), then
 	 *       do a chained send for mesg < first_frag_size */
         iov.iov_base = &desc->buff[header_length];
         iov.iov_len  = size_in;
-        rc = ompi_convertor_pack(convertor, &iov, 1);
-       	if (rc < 0) {
+        if((rc = ompi_convertor_pack(convertor, 
+			&iov, &iov_count, &max_data, &freeAfter)) < 0) {
 	    ompi_output (0, "[%s:%d] Unable to pack data\n",
 			 __FILE__, __LINE__);
             return;
 	}
-        size_out = iov.iov_len;
 #endif
+        size_out = max_data;
     } else {
 	size_out = size_in;
     }
@@ -426,42 +424,46 @@ mca_ptl_elan_init_put_desc (struct mca_ptl_elan_send_frag_t *frag,
 		pml_req->req_peer_size);
 
     /* FIXME: initialize convertor and get the fragment copied out */
-#if OMPI_PTL_ELAN_USE_DTP
-    if(size_in > 0) {
+#if OMPI_PTL_ELAN_USE_DTP 
+    if(size_in > 0 && 0) {
+	int iov_count = 1, max_data = size_in;
+	int freeAfter = 0;
 	struct iovec iov;
         ompi_convertor_t *convertor;
 
-        if( offset <= mca_ptl_elan_module.super.ptl_first_frag_size) {
-            convertor = &pml_req->req_convertor;
-        } else {
-            convertor = &frag->frag_base.frag_convertor;
-            ompi_convertor_copy(&pml_req->req_convertor, convertor);
-            ompi_convertor_init_for_send( 
-                convertor,
-                0, 
-                pml_req->req_base.req_datatype,
-                pml_req->req_base.req_count,
-                pml_req->req_base.req_addr,
-                offset);
-        }
-
+       convertor = &frag->frag_base.frag_convertor;
+       ompi_convertor_copy(&pml_req->req_convertor, convertor);
+       ompi_convertor_init_for_send(convertor,
+				    0, 
+				    pml_req->req_base.req_datatype,
+				    pml_req->req_base.req_count,
+				    pml_req->req_base.req_addr,
+				    offset,
+				    NULL);
 	/* TODO: 
 	 *   For now, eager sends are always packed into the descriptor
 	 *   Inline up to 256 bytes (including the header), then
 	 *   do a chained send for mesg < first_frag_size */
 
-	/*desc->src_elan_addr = elan4_main2elan(ctx, desc->desc_buff);*/
-        iov.iov_base = desc->desc_buff;
+        iov.iov_base = NULL; //desc->desc_buff;
         iov.iov_len  = size_in;
-
-        rc = ompi_convertor_pack(convertor, &iov, 1);
-       	if (rc < 0) {
+        if((rc = ompi_convertor_pack(convertor, 
+			&iov, &iov_count, &max_data, &freeAfter)) < 0) {
 	    ompi_output (0, "[%s:%d] Unable to pack data\n",
 			 __FILE__, __LINE__);
             return;
 	}
+
+	/* FIXME: please find if the new memory is allocated 
+	   but this info needs to be obtained from convertor.
+	   Not sure if convertor has a hook to do that.
+	   Then, accordingly need to find out the elan address */
+#if 0
+	desc->src_elan_addr = elan4_main2elan(ctx, iov.iov_base);
+	desc->desc_buff = iov.iov_base;
+#endif
         size_out = iov.iov_len;
-    } else 
+    } else
 #endif
     {
 	size_out = size_in;

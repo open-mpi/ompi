@@ -708,7 +708,11 @@ mca_ptl_elan_thread_close (mca_ptl_elan_component_t * emp)
 	desc   = ptl->queue->last;
 
 	hdr = (mca_ptl_base_header_t *) desc->mesg;
+#if OMPI_PTL_ELAN_ONE_QUEUE
+	hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_STOP + 8;
+#else
 	hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_STOP;
+#endif
 	hdr->hdr_common.hdr_flags = 0; /* XXX: to change if needed */
 	hdr->hdr_common.hdr_size  = sizeof (mca_ptl_base_header_t);
 
@@ -728,10 +732,12 @@ mca_ptl_elan_thread_close (mca_ptl_elan_component_t * emp)
 		E4_COOKIE_TYPE_LOCAL_DMA, destvp);
 	desc->main_dma.dma_vproc = destvp;
 
+#if defined(OMPI_PTL_PCM_RMS)
 	/* finish the recv thread */
 	MEMBAR_VISIBLE ();
         elan4_run_dma_cmd (ptl->queue->tx_cmdq, (DMA *) & desc->main_dma);
 	elan4_flush_cmdq_reorder (ptl->queue->tx_cmdq);
+#endif
 
 #if !OMPI_PTL_ELAN_ONE_QUEUE
 	/* finish the send thread */
@@ -739,7 +745,6 @@ mca_ptl_elan_thread_close (mca_ptl_elan_component_t * emp)
 	MEMBAR_VISIBLE ();
         elan4_run_dma_cmd (ptl->queue->tx_cmdq, (DMA *) & desc->main_dma);
 	elan4_flush_cmdq_reorder (ptl->queue->tx_cmdq);
-	MEMBAR_VISIBLE ();
 #endif
     }
 
