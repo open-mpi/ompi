@@ -21,13 +21,24 @@ mca_pml_teg_t mca_pml_teg = {
     mca_pml_teg_del_procs,
     mca_pml_teg_fini,
     mca_pml_teg_progress,
+#if 0
     mca_pml_teg_irecv_init,
     mca_pml_teg_irecv,
+#else
+    NULL,
+    NULL,
+#endif
     mca_pml_teg_isend_init,
     mca_pml_teg_isend,
+#if 0
     mca_pml_teg_start,
     mca_pml_teg_test,
     mca_pml_teg_wait,
+#else
+    NULL,
+    NULL,
+    NULL
+#endif
     }
 };
 
@@ -36,9 +47,12 @@ int mca_pml_teg_add_comm(lam_communicator_t* comm)
 {
     /* allocate pml specific comm data */
     struct mca_pml_comm_t* pml_comm = (mca_pml_comm_t*)LAM_MALLOC(sizeof(mca_pml_comm_t));
-    if(pml_comm == 0)
+    if (0 == pml_comm) {
         return LAM_ERR_OUT_OF_RESOURCE;
+    }
+#if TIM_HASNT_IMPLEMENTED_THIS_YET
     mca_pml_ptl_comm_init(pml_comm, comm->c_remote_group->g_proc_count);
+#endif
     comm->c_pml_comm = pml_comm;
     return LAM_SUCCESS;
 }
