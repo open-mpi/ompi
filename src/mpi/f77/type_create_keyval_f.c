@@ -51,7 +51,7 @@ static char FUNC_NAME[] = "MPI_Type_create_keyval_f";
 
 void mpi_type_create_keyval_f(MPI_Fint *type_copy_attr_fn, MPI_Fint *type_delete_attr_fn, MPI_Fint *type_keyval, char *extra_state, MPI_Fint *ierr)
 {
-    int ret;
+    int ret, c_err;
     ompi_attribute_fn_ptr_union_t copy_fn;
     ompi_attribute_fn_ptr_union_t del_fn;
 
@@ -59,9 +59,10 @@ void mpi_type_create_keyval_f(MPI_Fint *type_copy_attr_fn, MPI_Fint *type_delete
         if ((NULL == type_copy_attr_fn)   || 
             (NULL == type_delete_attr_fn) ||
             (NULL == type_keyval)              ) {
-            *ierr = OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD,
+            c_err = OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD,
                                            MPI_ERR_ARG,
                                            FUNC_NAME);
+	    *ierr = OMPI_INT_2_FINT(c_err);
         }
     }
 
@@ -72,9 +73,10 @@ void mpi_type_create_keyval_f(MPI_Fint *type_copy_attr_fn, MPI_Fint *type_delete
                                   type_keyval, extra_state, OMPI_KEYVAL_F77);
 
     if (MPI_SUCCESS != ret) {
-        *ierr = OMPI_INT_2_FINT(OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD,
-						       MPI_ERR_OTHER,
-						       FUNC_NAME))
+	c_err = OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD,
+				       MPI_ERR_OTHER,
+				       FUNC_NAME);
+	*ierr = OMPI_INT_2_FINT(c_err);
     } else {
         *ierr = MPI_SUCCESS;
     }

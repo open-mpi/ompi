@@ -54,7 +54,10 @@ void mpi_irsend_f(char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *dest
 
     c_comm = MPI_Comm_f2c (*comm);
 
-    *ierr = MPI_Irsend(buf, *count, c_type, *dest, *tag, c_comm, &c_req);
+    *ierr = OMPI_INT_2_FINT(MPI_Irsend(buf, OMPI_FINT_2_INT(*count),
+				       c_type, OMPI_FINT_2_INT(*dest),
+				       OMPI_FINT_2_INT(*tag), c_comm,
+				       &c_req));
 
     if (MPI_SUCCESS == *ierr) {
         *request = MPI_Request_c2f(c_req);

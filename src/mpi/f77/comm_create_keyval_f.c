@@ -47,14 +47,14 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_CREATE_KEYVAL,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-static const char FUNC_NAME[] = "MPI_Comm_create_keyval_f";
+     static const char FUNC_NAME[] = "MPI_Comm_create_keyval_f";
 
 void mpi_comm_create_keyval_f(MPI_Fint *comm_copy_attr_fn,
 			      MPI_Fint *comm_delete_attr_fn,
 			      MPI_Fint *comm_keyval,
 			      char *extra_state, MPI_Fint *ierr)
 {
-    int ret;
+    int ret, c_err;
     ompi_attribute_fn_ptr_union_t copy_fn;
     ompi_attribute_fn_ptr_union_t del_fn;
 
@@ -62,9 +62,10 @@ void mpi_comm_create_keyval_f(MPI_Fint *comm_copy_attr_fn,
         if ((NULL == comm_copy_attr_fn)   || 
             (NULL == comm_delete_attr_fn) ||
             (NULL == comm_keyval)              ) {
-            *ierr = OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD,
+            c_err = OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD,
                                            MPI_ERR_ARG,
-                                           FUNC_NAME);
+                                           FUNC_NAME)
+	    *ierr = OMPI_INT_2_FINT(c_err);
         }
     }
 
@@ -75,9 +76,10 @@ void mpi_comm_create_keyval_f(MPI_Fint *comm_copy_attr_fn,
                                   comm_keyval, extra_state, OMPI_KEYVAL_F77);
 
     if (MPI_SUCCESS != ret) {
-        *ierr = OMPI_INT_2_FINT(OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD,
-						       MPI_ERR_OTHER,
-						       FUNC_NAME))
+        c_err = OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD,
+				       MPI_ERR_OTHER,
+				       FUNC_NAME)
+	*ierr = OMPI_INT_2_FINT(c_err);
     } else {
         *ierr = MPI_SUCCESS;
     }

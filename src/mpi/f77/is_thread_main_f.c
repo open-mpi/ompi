@@ -48,5 +48,10 @@ OMPI_GENERATE_F77_BINDINGS (MPI_IS_THREAD_MAIN,
 
 void mpi_is_thread_main_f(MPI_Fint *flag, MPI_Fint *ierr)
 {
-    *ierr = MPI_Is_thread_main( flag );
+    OMPI_SINGLE_NAME_DECL(flag);
+
+    *ierr = OMPI_INT_2_FINT(MPI_Is_thread_main(OMPI_SINGLE_NAME_CONVERT(flag)
+					       ));
+
+    OMPI_SINGLE_INT_2_FINT(flag);
 }

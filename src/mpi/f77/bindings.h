@@ -130,7 +130,7 @@
   #define OMPI_2_DIM_ARRAY_FINT_2_INT(in, n, dim2) \
     OMPI_ARRAY_NAME_CONVERT(in) = (int (*)[dim2]) malloc(n * sizeof(*OMPI_ARRAY_NAME_CONVERT(in))); \
     while(n > 0) { \
-      for(dim2_index = 0; dim2_index < dims2; ++i) { \
+      for(dim2_index = 0; dim2_index < dim2; ++dim2_index) { \
         OMPI_ARRAY_NAME_CONVERT(in)[n - 1][dim2_index] = in[n - 1][dim2_index]; \
       } \
       --n; \
@@ -143,7 +143,7 @@
      OMPI_ARRAY_NAME_CONVERT(in) = *(in)
 
   #define OMPI_SINGLE_INT_2_FINT(in) \
-    in = (MPI_Fint) OMPI_ARRAY_NAME_CONVERT(in)
+    *in = (MPI_Fint) OMPI_ARRAY_NAME_CONVERT(in)
 
   #define OMPI_ARRAY_INT_2_FINT(in, n) \
     while(n > 0) {\
