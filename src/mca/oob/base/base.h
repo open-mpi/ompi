@@ -74,12 +74,39 @@ extern "C" {
 #endif
         
 /**
+*  Obtain a string representation of the OOB contact information for
+*  the selected OOB channels. This string may be passed to another 
+*  application via an MCA parameter (OMPI_MCA_oob_base_seed) to bootstrap
+*  communications.
+*
+*  @return  A null terminated string that should be freed by the caller.
+*
+*  Note that mca_oob_base_init() must be called to load and select
+*  an OOB module prior to calling this routine.
+*/
+
+char* mca_oob_get_contact_info(void);
+
+/**
+*  Set the MCA parameter (OMPI_MCA_oob_base_seed) used by the OOB to 
+*  bootstrap communication between peers. 
+*
+*  @param  seed   The contact information of the peer process obtained
+*  via a call to mca_oob_get_contact_info().
+*
+*  Note that this routine currently just sets the MCA parameter - so
+*  this function must be called prior to mca_oob_base_init().
+*/
+
+int mca_oob_set_contact_info(const char*);
+
+/**
 *  Returns a null terminated character string returning contact info
 *  for all supported OOB channels.
 *
-*  @return  A null terminated string.
+*  @return  
 *
-*  The caller is responsible for freeing the returned string.
+*  Note that the caller is responsible for freeing the returned string.
 */
 
 char* mca_oob_get_contact_info(void);
