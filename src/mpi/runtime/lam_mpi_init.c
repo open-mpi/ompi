@@ -53,6 +53,9 @@ int lam_mpi_init(int argc, char **argv, int requested, int *provided)
     if (LAM_SUCCESS != (ret = mca_base_open())) {
         return ret;
     }
+    if (LAM_SUCCESS != (ret = mca_mpi_open())) {
+        return ret;
+    }
 
     /* Join the run-time environment */
 
@@ -106,8 +109,6 @@ int lam_mpi_init(int argc, char **argv, int requested, int *provided)
         an MCA paramter to find out if the user wants it on or off by
         default */
 
-     param = mca_base_param_register_int("base", NULL, "mpi_param_check", 
-                                         "mpi_param_check", 0);
      mca_base_param_lookup_int(param, &value);
      lam_mpi_param_check = (bool) value;
 
