@@ -46,17 +46,17 @@ MPI_Cart_rank                   Anju
 MPI_Cart_shift                  Anju
 MPI_Cart_sub                    Anju
 MPI_Cartdim_get                 Anju
-MPI_Close_port
-MPI_Comm_accept                 
-MPI_Comm_c2f
+MPI_Close_port                  Edgar
+MPI_Comm_accept                 Edgar
+MPI_Comm_c2f                    DONE
 MPI_Comm_call_errhandler        DONE
 MPI_Comm_compare                Edgar
-MPI_Comm_connect
+MPI_Comm_connect	        Edgar
 MPI_Comm_create_errhandler      DONE
 MPI_Comm_create_keyval          Vishal
 MPI_Comm_create                 Edgar
 MPI_Comm_delete_attr            Vishal
-MPI_Comm_disconnect
+MPI_Comm_disconnect             Edgar
 MPI_Comm_dup                    Edgar
 MPI_Comm_f2c                    Edgar
 MPI_Comm_free_keyval            Vishal
@@ -64,9 +64,9 @@ MPI_Comm_free                   Edgar
 MPI_Comm_get_attr               Vishal
 MPI_Comm_get_errhandler         DONE
 MPI_Comm_get_name               Edgar
-MPI_Comm_get_parent
+MPI_Comm_get_parent             Edgar
 MPI_Comm_group                  Edgar
-MPI_Comm_join
+MPI_Comm_join                   Edgar
 MPI_Comm_rank                   Edgar
 MPI_Comm_remote_group           Edgar
 MPI_Comm_remote_size            Edgar
@@ -74,8 +74,8 @@ MPI_Comm_set_attr               Vishal
 MPI_Comm_set_errhandler         DONE
 MPI_Comm_set_name               Edgar
 MPI_Comm_size                   Edgar
-MPI_Comm_spawn
-MPI_Comm_spawn_multiple
+MPI_Comm_spawn                  Edgar
+MPI_Comm_spawn_multiple         Edgar
 MPI_Comm_split                  Edgar
 MPI_Comm_test_inter             Edgar
 MPI_Dims_create                 Anju
@@ -150,11 +150,11 @@ MPI_Finalized
 MPI_Free_mem
 MPI_Gather                      DONE 
 MPI_Gatherv                     Jeff
-MPI_Get_address
+MPI_Get_address                 DONE
 MPI_Get_count                   Ginger
 MPI_Get_elements                Ginger
 MPI_Get
-MPI_Get_processor_name
+MPI_Get_processor_name          Edgar
 MPI_Get_version
 MPI_Graph_create                Anju
 MPI_Graph_get                   Anju
@@ -203,10 +203,10 @@ MPI_Issend                      C & F77 done
 MPI_Is_thread_main              Ginger
 MPI_Keyval_create               Vishal
 MPI_Keyval_free                 Vishal
-MPI_Lookup_name
+MPI_Lookup_name                 Edgar
 MPI_Op_c2f                      DONE
 MPI_Op_create                   DONE     
-MPI_Open_port
+MPI_Open_port                   Edgar
 MPI_Op_f2c                      DONE
 MPI_Op_free                     DONE
 MPI_Pack_external               Ginger
@@ -215,7 +215,7 @@ MPI_Pack                        DONE
 MPI_Pack_size                   DONE
 MPI_Pcontrol
 MPI_Probe                       C & F77 done
-MPI_Publish_name
+MPI_Publish_name                Edgar
 MPI_Put
 MPI_Query_thread                C & F77 done
 MPI_Recv_init                   C & F77 done
@@ -288,7 +288,7 @@ MPI_Type_struct			Ginger
 MPI_Type_ub			Ginger
 MPI_Type_vector			Ginger
 MPI_Unpack			DONE
-MPI_Unpublish_name
+MPI_Unpublish_name              Edgar
 MPI_Unpack_external 		Ginger
 MPI_Waitall                     Ginger
 MPI_Waitany                     Ginger
