@@ -28,11 +28,8 @@ int MPI_Comm_spawn_multiple(int count, char **array_of_commands, char ***array_o
 {
     int i, rc, rank;
     int totalnumprocs=0;
-    uint32_t *rprocs=NULL;
-    ompi_communicator_t *comp, *newcomp;
-    uint32_t lleader=0, rleader=0; /* OOB contact information of root and the other root */
-
-    comp = (ompi_communicator_t *) comm;
+    ompi_communicator_t *newcomp;
+    int send_first=0; /* they are contacting us first */
 
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -102,111 +99,41 @@ int MPI_Comm_spawn_multiple(int count, char **array_of_commands, char ***array_o
    if ( rank == root ) {
        for ( i=0; i < count; i++ ) {
            totalnumprocs += array_of_maxprocs[i];
-
-           /* parse the info[i] */
-
-           /* check potentially for: 
-              - "host": desired host where to spawn the processes
-              - "arch": desired architecture
-              - "wdir": directory, where executable can be found
-              - "path": list of directories where to look for the executable
-              - "file": filename, where additional information is provided.
-              - "soft": see page 92 of MPI-2.
-           */
        }
-   }
+       /* parse the info[i] */
 
-   /* bcast totalnumprocs to all processes in comm and allocate the rprocs array*/
-   rc = comp->c_coll.coll_bcast ( &totalnumprocs, 1, MPI_INT, root, comm);
-   if ( OMPI_SUCCESS != rc ) {
-       goto exit;
-   }
-
-   rprocs = (uint32_t *)malloc (totalnumprocs * sizeof(uint32_t));
-   if ( NULL == rprocs ) {
-       rc = MPI_ERR_INTERN;
-       goto exit;
-   }
-
-   if ( rank == root ) {
+       /* check potentially for: 
+          - "host": desired host where to spawn the processes
+          - "arch": desired architecture
+          - "wdir": directory, where executable can be found
+          - "path": list of directories where to look for the executable
+          - "file": filename, where additional information is provided.
+          - "soft": see page 92 of MPI-2.
+       */
+       
        /* map potentially array_of_argvs == MPI_ARGVS_NULL to a correct value */
        /* map potentially array_of_argvs[i] == MPI_ARGV_NULL to a correct value.
           not required by the standard. */
        /* start processes */
+       
+       /* publish name, which should be based on the jobid of the children */
+       
+       /* rc = ompi_comm_namepublish (service_name, port_name ); */
+   }
 
-       /* publish name */
-       /* accept connection from other group.
-          Root in the new application is rank 0 in their COMM_WORLD ? */
+   rc = ompi_comm_connect_accept (comm, root, NULL, send_first, &newcomp);
+
+   if ( rank == root ) {
        /* unpublish name */
-
-       /* send list of procs from other app */
-       /* receive list of procs from other app */
    }
-   
-   /* bcast list of remote procs to all processes in comm */
-   rc = comp->c_coll.coll_bcast ( &rprocs, totalnumprocs, MPI_UNSIGNED, root, comm);
-   if ( OMPI_SUCCESS != rc ) {
-       goto exit;
-   }
-
-   /* setup the proc-structures for the new processes */
-   for ( i=0; i < totalnumprocs; i++ ) {
-   }
-
-   newcomp = ompi_comm_allocate ( comp->c_local_group->grp_proc_count, totalnumprocs);
-   if ( NULL == newcomp ) {
-       rc = MPI_ERR_INTERN;
-       goto exit;
-   }
-
-   /* Determine context id. It is identical to f_2_c_handle */
-   rc = ompi_comm_nextcid ( newcomp,                   /* new comm */ 
-                            comp,                      /* old comm */
-                            NULL,                      /* bridge comm */
-                            &lleader,                  /* local leader */
-                            &rleader,                  /* remote_leader */
-                            OMPI_COMM_CID_INTRA_OOB ); /* mode */
-   if ( OMPI_SUCCESS != rc ) {
-        goto exit;
-   }
-   
-   /* setup the intercomm-structure using ompi_comm_set (); */
-   rc = ompi_comm_set ( newcomp,                                 /* new comm */
-                        comp,                                   /* old comm */
-                        comp->c_local_group->grp_proc_count,    /* local_size */
-                        comp->c_local_group->grp_proc_pointers, /* local_procs*/
-                        totalnumprocs,                          /* remote_size */
-                        rprocs,                                 /* remote_procs */
-                        NULL,                                   /* attrs */
-                        comp->error_handler,                    /* error handler */
-                        NULL,                                   /* coll module */
-                        NULL                                    /* topo module */
-                        );
-   if ( MPI_SUCCESS != rc ) { 
-       goto exit;
-    }
-   
-
-   /* PROBLEM: do we have to re-start some low level stuff
-      to enable the usage of fast communication devices
-      between the two worlds ? */
 
    /* set array of errorcodes */
-    if (MPI_ERRCODES_IGNORE != array_of_errcodes) {
-        for ( i=0; i < totalnumprocs; i++ ) {
-            array_of_errcodes[i]=MPI_SUCCESS;
-        }
-    }
+   if (MPI_ERRCODES_IGNORE != array_of_errcodes) {
+       for ( i=0; i < totalnumprocs; i++ ) {
+           array_of_errcodes[i]=rc;
+       }
+   }
 
- exit:
-    if ( NULL != rprocs) {
-        free ( rprocs );
-    }
-    if ( MPI_SUCCESS != rc ) {
-        *intercomm = MPI_COMM_NULL;
-        return OMPI_ERRHANDLER_INVOKE(comm, rc, FUNC_NAME);
-    }
-
-
-    return MPI_SUCCESS;
+   *intercomm = newcomp;
+   OMPI_ERRHANDLER_RETURN (rc, comm, rc, FUNC_NAME);
 }

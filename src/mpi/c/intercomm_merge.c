@@ -88,7 +88,8 @@ int MPI_Intercomm_merge(MPI_Comm intercomm, int high,
                              NULL,                 /* bridge comm */
                              NULL,                 /* local leader */
                              NULL,                 /* remote_leader */
-                             OMPI_COMM_CID_INTER); /* mode */
+                             OMPI_COMM_CID_INTER,  /* mode */
+                             -1 );                 /* send_first */
     if ( OMPI_SUCCESS != rc ) {
         goto exit;
     }
@@ -101,10 +102,22 @@ int MPI_Intercomm_merge(MPI_Comm intercomm, int high,
                          NULL,                     /* remote_procs */
                          NULL,                     /* attrs */
                          intercomm->error_handler, /* error handler*/
-                         NULL,                     /* coll module */
                          NULL                      /* topo mpodule */
                          );
     if ( MPI_SUCCESS != rc ) {
+        goto exit;
+    }
+
+    /* activate communicator and init coll-module */
+    rc = ompi_comm_activate ( newcomp,              /* new comm */ 
+                              intercomm,            /* old comm */
+                              NULL,                 /* bridge comm */
+                              NULL,                 /* local leader */
+                              NULL,                 /* remote_leader */
+                              OMPI_COMM_CID_INTER,  /* mode */
+                              -1,                   /* send_first */
+                              NULL );               /* coll module */
+    if ( OMPI_SUCCESS != rc ) {
         goto exit;
     }
     

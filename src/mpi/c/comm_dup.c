@@ -52,6 +52,7 @@ int MPI_Comm_dup(MPI_Comm comm, MPI_Comm *newcomm)
         mode   = OMPI_COMM_CID_INTRA;
     }
 
+    *newcomm = MPI_COMM_NULL;
     newcomp = ompi_comm_allocate (comp->c_local_group->grp_proc_count, rsize );
     if ( NULL == newcomp ) {
         return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_INTERN, FUNC_NAME);
@@ -63,9 +64,9 @@ int MPI_Comm_dup(MPI_Comm comm, MPI_Comm *newcomm)
                              NULL,     /* bridge comm */
                              NULL,     /* local leader */
                              NULL,     /* remote_leader */
-                             mode );   /* mode */
+                             mode,     /* mode */
+                             -1 );     /* send_first */
     if ( MPI_SUCCESS != rc ) {
-        *newcomm = MPI_COMM_NULL;
         return OMPI_ERRHANDLER_INVOKE(comm, rc, FUNC_NAME);
     }
 
@@ -77,11 +78,24 @@ int MPI_Comm_dup(MPI_Comm comm, MPI_Comm *newcomm)
                           rprocs,                                 /* remote_procs */
                           comp->c_keyhash,                        /* attrs */
                           comp->error_handler,                    /* error handler */
-                          (mca_base_component_t*) comp->c_coll_selected_module, /* coll module */
                           NULL                                    /* topo module, t.b.d */
                           );
     if ( MPI_SUCCESS != rc) { 
         return OMPI_ERRHANDLER_INVOKE (comm, rc, FUNC_NAME);
+    }
+
+    /* activate communicator and init coll-module */
+    rc = ompi_comm_activate (newcomp,  /* new communicator */ 
+                             comp,     /* old comm */
+                             NULL,     /* bridge comm */
+                             NULL,     /* local leader */
+                             NULL,     /* remote_leader */
+                             mode,     /* mode */
+                             -1,      /* send_first */
+                             (mca_base_component_t*) comp->c_coll_selected_module /* coll module */
+                             );
+    if ( MPI_SUCCESS != rc ) {
+        return OMPI_ERRHANDLER_INVOKE(comm, rc, FUNC_NAME);
     }
     
     
