@@ -234,12 +234,18 @@ mca_ns_base_module_t* orte_ns_replica_init(int *priority)
 
 int orte_ns_replica_module_init(void)
 {
+    int rc;
     if (orte_ns_replica_isolate) {
         return ORTE_SUCCESS;
     }
     
     /* issue non-blocking receive for call_back function */
-    return orte_rml.recv_buffer_nb(ORTE_RML_NAME_ANY, ORTE_RML_TAG_NS, 0, orte_ns_replica_recv, NULL);
+    rc = orte_rml.recv_buffer_nb(ORTE_RML_NAME_ANY, ORTE_RML_TAG_NS, 0, orte_ns_replica_recv, NULL);
+    if(rc < 0) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    return ORTE_SUCCESS;
 }
 
 

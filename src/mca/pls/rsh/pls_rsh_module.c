@@ -46,13 +46,13 @@
 #define NUM_CONCURRENT 128
 
 
-#if OMPI_HAVE_POSIX_THREADS && OMPI_THREADS_HAVE_DIFFERENT_PIDS
+#if OMPI_HAVE_POSIX_THREADS && OMPI_THREADS_HAVE_DIFFERENT_PIDS && OMPI_ENABLE_PROGRESS_THREADS
 static int orte_pls_rsh_launch_threaded(orte_jobid_t jobid);
 #endif
 
 
 orte_pls_base_module_1_0_0_t orte_pls_rsh_module = {
-#if OMPI_HAVE_POSIX_THREADS && OMPI_THREADS_HAVE_DIFFERENT_PIDS
+#if OMPI_HAVE_POSIX_THREADS && OMPI_THREADS_HAVE_DIFFERENT_PIDS && OMPI_ENABLE_PROGRESS_THREADS
     orte_pls_rsh_launch_threaded,
 #else
     orte_pls_rsh_launch,
@@ -346,7 +346,7 @@ int orte_pls_rsh_finalize(void)
  * Handle threading issues.
  */
 
-#if OMPI_HAVE_POSIX_THREADS && OMPI_THREADS_HAVE_DIFFERENT_PIDS
+#if OMPI_HAVE_POSIX_THREADS && OMPI_THREADS_HAVE_DIFFERENT_PIDS && OMPI_ENABLE_PROGRESS_THREADS
 
 struct orte_pls_rsh_stack_t {
     ompi_condition_t cond;

@@ -96,6 +96,15 @@ ompi_cmd_line_init_t orte_cmd_line_opts[] = {
     { NULL, NULL, NULL, '\0', NULL, "nodename", 1,
       &orte_system_info.nodename, OMPI_CMD_LINE_TYPE_STRING,
       "Node name as specified by host/resource description." },
+    { "seed", NULL, NULL, '\0', NULL, "seed", 0,
+      &orte_process_info.seed, OMPI_CMD_LINE_TYPE_BOOL,
+      "seed"},
+    { "universe", "persistence", NULL, '\0', NULL, "persistent", 0,
+      &orte_universe_info.persistence, OMPI_CMD_LINE_TYPE_BOOL,
+      "persistent"},
+    { "universe", "scope", NULL, '\0', NULL, "scope", 1,
+      &orte_universe_info.scope, OMPI_CMD_LINE_TYPE_STRING,
+      "scope"},
     /* End of list */
     { NULL, NULL, NULL, '\0', NULL, NULL, 0,
       NULL, OMPI_CMD_LINE_TYPE_NULL, NULL }
@@ -138,9 +147,7 @@ int main(int argc, char *argv[])
      * First, ensure the process info structure in instantiated and initialized
      * and set the daemon flag to true
      */
-    orte_proc_info();
     orte_process_info.daemon = true;
-     
 
     /*
      * Attempt to parse the daemon name and save in proc_info
@@ -154,11 +161,6 @@ int main(int argc, char *argv[])
         }
     }
 
-
-    if (!orte_process_info.seed) { /* if I'm not the seed... */
-        /* start recording the compound command that starts us up */
-       /* orte_gpr.begin_compound_cmd(); */
-    }
 
     /* detach from controlling terminal */
     if(orted_globals.debug == false) {
@@ -230,20 +232,6 @@ int main(int argc, char *argv[])
         return ret;
     }
 
-	if (!orte_process_info.seed) {  /* if I'm not the seed... */
-	    /* execute the compound command - no return data requested
-	    *  we'll get it all from the startup message
-	    */
-/*	    orte_gpr.exec_compound_cmd(); */
-		
-	    /* wait to receive startup message and info distributed */
-/*	    if (ORTE_SUCCESS != (ret = orte_wait_startup_msg())) {
-		    printf("ompid: failed to see all procs register\n");
-		    return ret;
-	    }
-*/
-	}
-	
     /* if i'm the seed, get my contact info and write my setup file for others to find */
     if (orte_process_info.seed) {
 	    if (NULL != orte_universe_info.seed_uri) {

@@ -35,6 +35,7 @@
 #include "mca/errmgr/errmgr.h"
 #include "mca/oob/oob_types.h"
 #include "mca/rml/rml.h"
+#include "mca/errmgr/errmgr.h"
 
 #include "gpr_proxy.h"
 
@@ -249,7 +250,13 @@ orte_gpr_proxy_component_init(bool *allow_multi_user_threads, bool *have_hidden_
 int orte_gpr_proxy_module_init(void)
 {
     /* issue the non-blocking receive */
-    return orte_rml.recv_buffer_nb(ORTE_RML_NAME_ANY, ORTE_RML_TAG_GPR_NOTIFY, 0, orte_gpr_proxy_notify_recv, NULL);
+    int rc;
+    rc = orte_rml.recv_buffer_nb(ORTE_RML_NAME_ANY, ORTE_RML_TAG_GPR_NOTIFY, 0, orte_gpr_proxy_notify_recv, NULL);
+    if(rc < 0) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    return ORTE_SUCCESS;
 }
 
 

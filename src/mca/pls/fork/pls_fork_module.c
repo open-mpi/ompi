@@ -54,7 +54,7 @@ static int orte_pls_fork_launch_threaded(orte_jobid_t);
 
 
 orte_pls_base_module_1_0_0_t orte_pls_fork_module = {
-#if OMPI_HAVE_POSIX_THREADS && OMPI_THREADS_HAVE_DIFFERENT_PIDS
+#if OMPI_HAVE_POSIX_THREADS && OMPI_THREADS_HAVE_DIFFERENT_PIDS && OMPI_ENABLE_PROGRESS_THREADS
     orte_pls_fork_launch_threaded,
 #else
     orte_pls_fork_launch,
@@ -276,7 +276,7 @@ int orte_pls_fork_finalize(void)
  * Handle threading issues.
  */
 
-#if OMPI_HAVE_POSIX_THREADS && OMPI_THREADS_HAVE_DIFFERENT_PIDS
+#if OMPI_HAVE_POSIX_THREADS && OMPI_THREADS_HAVE_DIFFERENT_PIDS && OMPI_ENABLE_PROGRESS_THREADS
                                                                                                         
 struct orte_pls_fork_stack_t {
     ompi_condition_t cond;

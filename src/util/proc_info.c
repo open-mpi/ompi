@@ -60,25 +60,17 @@ int orte_proc_info(void)
     
     /* all other params are set elsewhere */
     
-    id = mca_base_param_register_int("seed", NULL, NULL, NULL, (int)false);
+    id = mca_base_param_register_int("seed", NULL, NULL, NULL, orte_process_info.seed);
     mca_base_param_lookup_int(id, &tmp);
-    if (tmp) {
-        orte_process_info.seed = true;
-    } else {
-        orte_process_info.seed = false;
-    }
+    orte_process_info.seed = (tmp ? true : false);
 
-    if (NULL == orte_process_info.gpr_replica_uri) {
-        id = mca_base_param_register_string("gpr", "replica", "uri", NULL, NULL);
-        mca_base_param_lookup_string(id, &(orte_process_info.gpr_replica_uri));
-    }
+    id = mca_base_param_register_string("gpr", "replica", "uri", NULL, orte_process_info.gpr_replica_uri);
+    mca_base_param_lookup_string(id, &(orte_process_info.gpr_replica_uri));
 
-    if (NULL == orte_process_info.ns_replica_uri) {
-        id = mca_base_param_register_string("ns", "replica", "uri", NULL, NULL);
-        mca_base_param_lookup_string(id, &(orte_process_info.ns_replica_uri));
-    }
+    id = mca_base_param_register_string("ns", "replica", "uri", NULL, orte_process_info.ns_replica_uri);
+    mca_base_param_lookup_string(id, &(orte_process_info.ns_replica_uri));
 
-    id = mca_base_param_register_string("tmpdir", "base", NULL, NULL, NULL);
+    id = mca_base_param_register_string("tmpdir", "base", NULL, NULL, orte_process_info.tmpdir_base);
     mca_base_param_lookup_string(id, &(orte_process_info.tmpdir_base));
 
     /* get the process id */

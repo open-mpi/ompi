@@ -251,7 +251,7 @@ int orte_gpr_replica_add_values(orte_gpr_notify_data_t **data,
                                 orte_gpr_replica_subscribed_data_t *sptr)
 {
     int i, rc, j, k, n, m, matches, num_tokens, num_keys, cnt;
-    orte_gpr_value_t **values, **data_values;
+    orte_gpr_value_t **values = NULL, **data_values;
     orte_gpr_keyval_t **kptr;
     
     /* get the data off the registry */
@@ -403,10 +403,9 @@ MOVEON:
         }
         OBJ_RELEASE(values[i]);
     }  /* for i */
-   if (NULL != values) {
-       free(values);
-   }
-    
+    if (NULL != values) {
+        free(values);
+    }
     return ORTE_SUCCESS;
 }
                     
