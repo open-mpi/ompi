@@ -29,7 +29,6 @@
 #include "ptl_elan_frag.h"
 #include "ptl_elan_req.h"
 
-#define __elan4__
 #define _TRACK_MALLOC 0
 
 #include <elan/elan.h>
@@ -44,18 +43,44 @@
         do {                                                           \
             if (value == unexp) {                                      \
                 ompi_output(output,                                    \
-                        "[%s:%d] received unexpect allocated value \n", \
+                        "[%s:%d] received unexpect allocated value \n",\
                         __FILE__, __LINE__);                           \
                 return errno;                                          \
             }                                                          \
 	} while (0)
 
+#define CHECK_ELAN 0
+
+#if CHECK_ELAN
+#define START_FUNC()                                         \
+    do {                                                     \
+	char hostname[32]; gethostname(hostname, 32);        \
+	fprintf(stderr, "[%s:%s:%d] Entering ...\n",         \
+	    hostname, __FUNCTION__, __LINE__);               \
+    } while (0);
+
+#define END_FUNC()                                           \
+    do {                                                     \
+	char hostname[32]; gethostname(hostname, 32);        \
+	fprintf(stderr, "[%s:%s:%d] Completes ...\n",        \
+	    hostname, __FUNCTION__, __LINE__);               \
+    } while (0);
+
+#else
+
+#define START_FUNC()
+#define END_FUNC()
+
+#endif
+
+
 /**
  * Structure used to publish elan information to peers.
  */
 struct mca_ptl_elan_addr_t {
-    int         elan_vp;        /* Right now only elan_vp is needed */
-    int         addr_inuse;
+    int         elan_vp;      
+    int         inuse;
+    ompi_process_name_t gid; 
 };
 typedef struct mca_ptl_elan_addr_t mca_ptl_elan_addr_t;
 
@@ -86,20 +111,37 @@ typedef struct {
     E4_Event32  event32;        /* Local elan completion event */
 } ompi_elan_event_t;
 
-struct ompi_ptl_elan_qdma_desc_t {
-    E4_DMA64    main_dma;               /**< Must be 8-byte aligned */
+/**
+ * ELAN descriptor for send
+ */
+#define ELAN_BASE_DESC_FIELDS  \
+    E4_DMA64           main_dma; /**< Must be 8-byte aligned */   \
+    /* 8 byte aligned */                                          \
+    volatile E4_uint64 main_doneWord;                             \
+    /* 8 byte aligned */                                          \
+    ompi_elan_event_t *elan_data_event;                           \
+    mca_ptl_elan_send_request_t *req;                             \
+    /* 8 byte aligned */                                          \
+    int    desc_type;                                             \
+    int    desc_status;                                           \
     /* 8 byte aligned */
 
-    volatile E4_uint64 main_doneWord;   /**< main memory location to poll */
-    ompi_elan_event_t *elan_data_event; /**< 128-byte aligned copy event */
-    RAIL       *rail;
+struct ompi_ptl_elan_base_desc_t {
+    ELAN_BASE_DESC_FIELDS 
+    /* 8 byte aligned */
+};
+typedef struct ompi_ptl_elan_base_desc_t ompi_ptl_elan_base_desc_t;
+
+struct ompi_ptl_elan_qdma_desc_t {
+
+    ELAN_BASE_DESC_FIELDS 
     /* 8 byte aligned */
 
     mca_ptl_elan_t *ptl;
-    mca_ptl_elan_send_request_t *req;
+    RAIL           *rail;
     /* 8 byte aligned */
 
-    uint8_t     buff[INPUT_QUEUE_MAX];        /**< queue data */
+    uint8_t         buff[INPUT_QUEUE_MAX];        /**< queue data */
     /* 8 byte aligned */
 };
 typedef struct ompi_ptl_elan_qdma_desc_t ompi_ptl_elan_qdma_desc_t;
@@ -200,9 +242,15 @@ int         ompi_init_elan_stat (mca_ptl_elan_module_1_0_0_t * emp,
                                  int num_rails);
 
 /* communication prototypes */
-int         mca_ptl_elan_start_desc(int type, mca_ptl_elan_desc_item_t *desc);
-int         mca_ptl_elan_poll_desc(int type, mca_ptl_elan_desc_item_t *desc);
-int         mca_ptl_elan_wait_desc(int type, mca_ptl_elan_desc_item_t *desc);
+int         mca_ptl_elan_start_desc(mca_ptl_elan_desc_item_t *desc,
+		  struct mca_ptl_elan_peer_t *ptl_peer,
+                  struct mca_pml_base_send_request_t *sendreq,
+                  size_t offset,
+                  size_t size,
+                  int flags);
+
+int         mca_ptl_elan_poll_desc(mca_ptl_elan_desc_item_t *desc);
+int         mca_ptl_elan_wait_desc(mca_ptl_elan_desc_item_t *desc);
 
 /* control, synchronization and state prototypes */
 int         mca_ptl_elan_drain_recv(mca_ptl_elan_module_1_0_0_t *emp);

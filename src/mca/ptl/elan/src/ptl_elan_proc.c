@@ -37,7 +37,7 @@ mca_ptl_elan_proc_construct (mca_ptl_elan_proc_t * proc)
     proc->proc_peer_count = 0;
     proc->proc_guid.cellid = 0;
     proc->proc_guid.jobid = 0;
-    proc->proc_guid.procid = 0;
+    proc->proc_guid.vpid = 0;
 
     OBJ_CONSTRUCT (&proc->proc_lock, ompi_mutex_t);
 
@@ -171,52 +171,6 @@ mca_ptl_elan_proc_lookup (void *guid,
                           size_t size)
 {
     return NULL;
-}
-
-
-/*
- * Note that this routine must be called with the lock on the process already 
- * held.  Insert a ptl instance into the proc array and assign it an address.
- */
-int
-mca_ptl_elan_proc_insert (mca_ptl_elan_proc_t * ptl_proc,
-                          mca_ptl_elan_peer_t * ptl_peer)
-{
-    int         i;
-    struct mca_ptl_elan_t *ptl_elan;
-
-    ptl_elan = ptl_peer->peer_ptl;
-    ptl_peer->peer_proc = ptl_proc;
-
-    ptl_proc->proc_peers[ptl_proc->proc_peer_count] = ptl_peer;
-    ptl_proc->proc_peer_count++;
-
-    /* Look through the proc instance for an address that is on the 
-     * directly attached network. If we don't find one, pick the first
-     * unused address. */
-
-    for (i = 0; i < ptl_proc->proc_addr_count; i++) {
-
-        unsigned    vp_local;
-        unsigned    vp_remote;
-        mca_ptl_elan_addr_t *peer_addr;
-
-        peer_addr = ptl_proc->proc_addrs + i;
-
-        if (peer_addr->addr_inuse != 0) {
-            continue;
-        }
-
-        vp_local = ptl_elan->elan_vp;
-        vp_remote = peer_addr->elan_vp;
-
-	assert (vp_local != vp_remote);
-	ptl_peer->peer_addr = peer_addr;
-    }
-
-    ptl_peer->peer_addr->addr_inuse++;
-
-    return OMPI_SUCCESS;
 }
 
 /*

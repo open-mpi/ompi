@@ -1,8 +1,9 @@
+#include <stdlib.h>
 #include <string.h>
 
 static void env_init_for_elan()
 {
-    char  hostname[32];
+    char  *rms_rank;
 
     setenv("OMPI_MCA_oob_cofs_dir", "/home/1/yuw/tmp", 1);
     /*setenv("OMPI_MCA_oob_cofs_dir", "/tmp/COFS", 1);*/
@@ -10,15 +11,10 @@ static void env_init_for_elan()
     setenv("OMPI_MCA_pcm_cofs_jobid", "1", 1);
     setenv("OMPI_MCA_pcm_cofs_num_procs", "2", 1);
 
-    gethostname(hostname, 32);
-
-    if ( strcmp("quad0", hostname) == 0) {
-	fprintf(stdout, "I am %s rank %d\n", hostname, 0);
-	fflush(stdout);
-	setenv("OMPI_MCA_pcm_cofs_procid", "0", 1);
+    if (NULL != (rms_rank = getenv("RMS_RANK"))) {
+	/* RMS_JOBID:RMS_NNODES:RMS_NPROCS:RMS_NODEID:RMS_RESOURCEID */
+	setenv("OMPI_MCA_pcm_cofs_procid", rms_rank, 1);
     } else {
-	fprintf(stdout, "I am %s rank %d\n", hostname, 1);
-	fflush(stdout);
-	setenv("OMPI_MCA_pcm_cofs_procid", "1", 1);
+	fprintf(stderr, "Hi, please test elan4 from RMS for now\n");
     }
 }

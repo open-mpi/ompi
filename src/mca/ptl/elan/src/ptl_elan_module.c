@@ -28,6 +28,8 @@
 
 /*#define UNIT_TESTING 1*/
 
+extern ompi_proc_t *ompi_proc_local_proc;
+
 mca_ptl_elan_module_1_0_0_t mca_ptl_elan_module = {
     {
         /* Base module information about itself */
@@ -75,7 +77,8 @@ static int mca_ptl_elan_module_register (mca_ptl_elan_module_1_0_0_t  *emp)
      for(i=0; i<emp->elan_num_ptls; i++) {
          mca_ptl_elan_t * ptl = emp->elan_ptls[i];
          addrs[i].elan_vp    = ptl->elan_vp;
-         addrs[i].addr_inuse = 0;
+         addrs[i].inuse      = 0;
+         addrs[i].gid        = ompi_proc_local_proc->proc_name;
      }
 
      rc = mca_base_modex_send(&emp->super.ptlm_version, addrs, size);
@@ -159,14 +162,16 @@ mca_ptl_elan_module_close (void)
     /* Check whether all the entries are return to the free list */
     if (elan_mp->elan_reqs_free.fl_num_allocated !=
         elan_mp->elan_reqs_free.super.ompi_list_length) {
-        ompi_output (0, "elan requests: %d allocated %d returned\n",
+        ompi_output (0, "[%s:%d] send_requests: %d allocated %d returned\n",
+		     __FILE__, __LINE__,
                      elan_mp->elan_reqs_free.fl_num_allocated,
                      elan_mp->elan_reqs_free.super.ompi_list_length);
     }
 
     if (elan_mp->elan_recv_frags_free.fl_num_allocated !=
         elan_mp->elan_recv_frags_free.super.ompi_list_length) {
-        ompi_output (0, "elan requests: %d allocated %d returned\n",
+        ompi_output (0, "[%s:%d] recv_frags : %d allocated %d returned\n",
+		     __FILE__, __LINE__,
                      elan_mp->elan_recv_frags_free.fl_num_allocated,
                      elan_mp->elan_recv_frags_free.super.ompi_list_length);
     }
@@ -207,6 +212,15 @@ mca_ptl_elan_module_init (int *num_ptls,
  
     *num_ptls = 0;
 
+    START_FUNC();
+
+    if (CHECK_ELAN)
+    { 
+	char hostname[32]; gethostname(hostname, 32); 
+	fprintf(stderr, "[%s:%s:%d] debugging ...\n",
+		hostname, __FUNCTION__, __LINE__);
+    }
+
     /* TODO: support multiple threads */
 
     *allow_multi_user_threads = true;
@@ -234,14 +248,12 @@ mca_ptl_elan_module_init (int *num_ptls,
         return NULL;
     }
 
-#ifndef UNIT_TESTING
     if (OMPI_SUCCESS != mca_ptl_elan_module_register(&mca_ptl_elan_module)) {
         ompi_output(0, 
                 "[%s:%d] error in registering with Runtime/OOB \n",
                 __FILE__, __LINE__);
         return NULL;
     }
-#endif
 
     ptls = (mca_ptl_t **) malloc (elan_mp->elan_num_ptls *
             sizeof (mca_ptl_elan_t *));
@@ -257,6 +269,7 @@ mca_ptl_elan_module_init (int *num_ptls,
     *num_ptls = elan_mp->elan_num_ptls;
     mca_ptl_elan_module_initialized = 1; 
 
+    END_FUNC();
     return ptls;
 }
 
@@ -277,10 +290,14 @@ mca_ptl_elan_module_control (int param,
 
 /* TODO: to support event-based module progress later.  */
 
+static int times = 0;
 int
 mca_ptl_elan_module_progress (mca_ptl_tstamp_t tstamp)
 {
+    START_FUNC();
+    /*if ( times == 5) exit(1); else times ++;*/
     mca_ptl_elan_drain_recv(elan_mp);
     mca_ptl_elan_update_send(elan_mp);
+    END_FUNC();
     return OMPI_SUCCESS;
 }

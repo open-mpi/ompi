@@ -21,7 +21,11 @@ ompi_mca_ptl_elan_setup (mca_ptl_elan_state_t * ems)
     mca_ptl_elan_module_1_0_0_t *emp;
     int         rail_count;
 
+    START_FUNC();
+
+    rail_count = ems->elan_nrails;
     emp = ems->elan_module;
+    emp->elan_num_ptls = 0;
     emp->elan_ptls = malloc (rail_count * sizeof (mca_ptl_elan_t *));
     if (NULL == emp->elan_ptls) {
         ompi_output (0,
@@ -50,21 +54,22 @@ ompi_mca_ptl_elan_setup (mca_ptl_elan_state_t * ems)
 
         ptl->ptl_ni_local = emp->elan_num_ptls;
         ptl->ptl_ni_total = rail_count;
-        emp->elan_num_ptls++;
 
         /* allow user to specify per rail bandwidth and latency */
         sprintf (param, "bandwidth_elanrail%d", emp->elan_num_ptls);
         ptl->super.ptl_bandwidth =
             mca_ptl_elan_param_register_int (param, 1000);
         sprintf (param, "latency_elanrail%d", emp->elan_num_ptls);
+
         ptl->super.ptl_latency =
             mca_ptl_elan_param_register_int (param, 1);
 
         /* Setup elan related structures such as ctx, rail */
-        ptl->ptl_elan_rail = ems->elan_rail[rail_count];
-        ptl->ptl_elan_ctx  = ems->elan_rail[rail_count]->rail_ctx;
+        ptl->ptl_elan_rail = ems->elan_rail[emp->elan_num_ptls];
+        ptl->ptl_elan_ctx  = ems->elan_rail[emp->elan_num_ptls]->rail_ctx;
         ptl->elan_vp = ems->elan_vp;
         ptl->elan_nvp = ems->elan_nvp;
+        emp->elan_num_ptls++;
     } while (emp->elan_num_ptls < rail_count);
 
     /* Allocating all the communication strcutures for PTL's, */
@@ -86,6 +91,7 @@ ompi_mca_ptl_elan_setup (mca_ptl_elan_state_t * ems)
         return OMPI_ERROR;
     }
 
+    END_FUNC();
     return (OMPI_SUCCESS);
 }
 
@@ -307,6 +313,8 @@ ompi_mca_ptl_elan_init (mca_ptl_elan_module_1_0_0_t * emp)
 
     mca_ptl_elan_state_t *ems;
 
+    START_FUNC();
+
     ems = &mca_ptl_elan_global_state;
 
     /* Hook two of them togther */
@@ -523,6 +531,7 @@ ompi_mca_ptl_elan_init (mca_ptl_elan_module_1_0_0_t * emp)
         return OMPI_ERROR;
     }
 
+    END_FUNC();
     return (OMPI_SUCCESS);
 }
 

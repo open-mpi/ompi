@@ -16,15 +16,6 @@
 #include "mca/ptl/ptl.h"
 #include "ptl_elan_frag.h"
 
-typedef enum { 
-    MCA_PTL_ELAN_CLOSED, 
-    MCA_PTL_ELAN_CONNECTED,
-    MCA_PTL_ELAN_FAILED,
-    NUM_MCA_PTL_ELAN_STAT
-} mca_ptl_elan_status_t;
-
-
-    
 /**
  *  An abstraction that represents a connection to a peer process.
  */
@@ -32,16 +23,14 @@ struct mca_ptl_elan_peer_t {
     ompi_list_item_t            super;
 
     struct mca_ptl_elan_t*      peer_ptl;    
-    /*struct mca_ptl_elan_remote_t *peer_ptl;  */
     struct mca_ptl_elan_proc_t* peer_proc; 
-    struct mca_ptl_elan_addr_t* peer_addr;   /**< address of peer */
 
-    int     peer_state;  
-    int     num_credits; 
-    int     max_credits; 
-    int     resending;   
-    int     num_resend;  
-    double  known_alive_time;                
+    int     peer_vp;
+    int     peer_rails;
+    int     num_credits;  /* Got to be an arry for rails */
+    int     max_credits;  /* Got to be an arry for rails */
+    int     resending;  
+    int     num_resends;
 };
 typedef struct mca_ptl_elan_peer_t mca_ptl_elan_peer_t;
 

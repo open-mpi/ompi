@@ -55,7 +55,6 @@ mca_ptl_elan_add_procs (struct mca_ptl_t *ptl,
     mca_ptl_elan_proc_t *ptl_proc;
     mca_ptl_elan_peer_t *ptl_peer;
 
-    int         rc;
     int         i;
 
     /* Here nprocs is the number of peer processes */
@@ -83,35 +82,43 @@ mca_ptl_elan_add_procs (struct mca_ptl_t *ptl,
             return OMPI_ERR_UNREACH;
         }
 
-	if (ptl_proc == mca_ptl_elan_module.elan_local) {
-            OMPI_THREAD_UNLOCK (&ptl_proc->proc_lock);
-	    continue;
-	}
-
         /* The ptl_proc datastructure is shared by all PTL 
          * instances that are trying to reach this destination. 
          * Cache the peer instance on the ptl_proc.
          */
+	ptl_peer = OBJ_NEW (mca_ptl_elan_peer_t);
+	if (NULL == ptl_peer) {
+	    OMPI_THREAD_UNLOCK (&ptl_proc->proc_lock);
+	    ompi_output (0, "[%s:%d] unabled to allocate ptl_peer \n",
+		    __FILE__, __LINE__);
+	    return OMPI_ERR_OUT_OF_RESOURCE;
+	}
 
-        ptl_peer = OBJ_NEW (mca_ptl_elan_peer_t);
-        if (NULL == ptl_peer) {
-            OMPI_THREAD_UNLOCK (&ptl_proc->proc_lock);
-            ompi_output (0, "[%s:%d] unabled to allocate ptl_peer \n",
-                    __FILE__, __LINE__);
-            return OMPI_ERR_OUT_OF_RESOURCE;
-        }
-
-        ptl_peer->peer_ptl = (mca_ptl_elan_t *) ptl;
+	/* TODO: Make the add_procs function cleaner and simpler
+	 * 1) Since elan_proc_t will only have one vp to address the
+	 *    remote processes, there will be only one ptl_peer_t per proc.
+	 *    The information to be stored there should be just 
+	 *    the addressing information, which is the elan_vp.
+	 *    If needed, the information can be expanded with memory-handle,
+	 *    queue-handle, put/get-handle, memory-statics.
+	 * 2) XXX: Consider matching elan_vp and ompi_proc_name_t.
+	 */
+        ptl_peer->peer_ptl  = (mca_ptl_elan_t *) ptl;
 	ptl_peer->peer_proc = ptl_proc;
-	ptl_proc->proc_peers[ptl_proc->proc_peer_count] = ptl_peer;
-	ptl_proc->proc_peer_count++;
 
-	/* XXX XXX: There might be no order on this ptl_proc's,
-         * But one-to-one corresponding is still there */
-	ptl_peer->peer_addr = ptl_proc->proc_addrs + i;
-	ptl_peer->peer_addr->addr_inuse++;
+	/* There is only one peer per elan_peer_proc_t. */
+	ptl_proc->proc_peers[0] = ptl_peer;
+	if (ptl_proc == mca_ptl_elan_module.elan_local) {
+	    ptl_peer->peer_vp = ((mca_ptl_elan_t *)ptl)->elan_vp;
+	} else {
+	    ptl_peer->peer_vp = ptl_proc->proc_addrs->elan_vp;
+	    ptl_proc->proc_addrs->inuse = 1;
+	}
+	ptl_peer->peer_rails = ((mca_ptl_elan_t *)ptl)->ptl_ni_total;
+
+	/* There is only one peer per elan_peer_proc_t */
+	ptl_proc->proc_peer_count = 1;
         ompi_bitmap_set_bit (reachable, i);
-
         OMPI_THREAD_UNLOCK (&ptl_proc->proc_lock);
         peers[i] = (struct mca_ptl_base_peer_t *) ptl_peer;
     }
@@ -160,10 +167,7 @@ mca_ptl_elan_req_alloc (struct mca_ptl_t *ptl,
     mca_pml_base_send_request_t *sendreq;
     ompi_list_item_t *item;
 
-    /* FIXME, Error here, rc is passed in by value 
-     * Which will not bring any output from this allocation request */
     OMPI_FREE_LIST_GET (&mca_ptl_elan_module.elan_reqs_free, item, rc);
-
     if (NULL != (sendreq = (mca_pml_base_send_request_t *) item))
         sendreq->req_owner = ptl;
     *request = sendreq;
@@ -211,32 +215,33 @@ mca_ptl_elan_put (struct mca_ptl_t *ptl,
                   size_t size,
                   int flags)
 {
+    int rc = OMPI_SUCCESS;
     mca_ptl_elan_desc_item_t *sd;
 
-    /* XXX: fix pml_send?
-     *   Why presenting so many arguments while each of them is already
-     *   contained in the request descriptors,
-     *
-     * XXX: 
+    /* XXX: 
      *   PML extract an request from PTL module and then use this
      *   a request to ask for a fragment
      *   Is it too deep across stacks to get a request and 
      *   correspondingly multiple LOCKS to go through*/
 
-    sd = mca_ptl_elan_alloc_send_desc(sendreq);
+    START_FUNC();
+    sd = mca_ptl_elan_alloc_send_desc(ptl, sendreq);
     if (NULL == sd) {
         ompi_output(0,
                 "[%s:%d] Unable to allocate an elan send descriptors \n", 
                 __FILE__, __LINE__);
     }
 
-    /* Update offset, in TCP case, this is a must.
-     * XXX: Not sure how it is going to be here */
+    /* Update offset */
     sendreq->req_offset += size;
     ((struct mca_ptl_elan_send_request_t *)sendreq)->req_frag = sd;
 
-    return mca_ptl_elan_start_desc(
-            ((struct mca_ptl_elan_send_request_t *)sendreq)->desc_type, sd);
+    rc = mca_ptl_elan_start_desc(sd, 
+	    (struct mca_ptl_elan_peer_t *)ptl_peer,
+	    sendreq, offset, size, flags);
+
+    END_FUNC();
+    return rc;
 }
 
 /*
@@ -264,5 +269,26 @@ void
 mca_ptl_elan_matched (mca_ptl_t * ptl,
                       mca_ptl_base_recv_frag_t * frag)
 {
+    mca_ptl_base_header_t* header = &frag->super.frag_header;
+
+    /* if (header->hdr_common.hdr_flags & MCA_PTL_FLAGS_ACK_MATCHED) */
+
+    /* XXX: Pseudocode, for additional processing of header fragments 
+     * a) (ACK:no, Get:No) Remove the frag. no need for further processing
+     * b) (ACK:yes, Get:No) Send an ACK only
+     * c) (ACK:yes, Get:yes) Get a message, update the fragment descriptor
+     *     and then send an ACK, 
+     * d) Consider moving time-consuming tasks to some BH-like mechanisms.
+     */
+
+    /* FIXME: skip the acknowledgement part */
+    if (0) {
+	/* Allocate a send descriptor and send an ACK */
+    }
+
+    /* process fragment if complete */
+    mca_ptl_elan_recv_frag_progress((mca_ptl_elan_recv_frag_t*)frag);
+
     return;
 }
+
