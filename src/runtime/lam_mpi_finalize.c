@@ -9,6 +9,9 @@
 #include "mpi.h"
 #include "group/group.h"
 #include "errhandler/errhandler.h"
+#include "communicator/communicator.h"
+#include "datatype/datatype.h"
+#include "op/op.h"
 #include "runtime/runtime.h"
 #include "mca/base/base.h"
 #include "mca/ptl/ptl.h"
@@ -50,6 +53,21 @@ int lam_mpi_finalize(void)
   }
 
   /* Leave LAM */
+
+  /* free op resources */
+  if (LAM_SUCCESS != (ret = lam_op_finalize())) {
+      return ret;
+  }
+
+  /* free ddt resources */
+  if (LAM_SUCCESS != (ret = lam_ddt_finalize())) {
+      return ret;
+  }
+
+  /* free communicator resources */
+  if (LAM_SUCCESS != (ret = lam_comm_finalize())) {
+      return ret;
+  }
 
   /* free group resources */
   if (LAM_SUCCESS != (ret = lam_group_finalize())) {

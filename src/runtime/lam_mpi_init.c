@@ -11,6 +11,7 @@
 #include "communicator/communicator.h"
 #include "group/group.h"
 #include "errhandler/errhandler.h"
+#include "op/op.h"
 #include "mca/base/base.h"
 #include "mca/base/base.h"
 #include "mca/ptl/ptl.h"
@@ -114,6 +115,11 @@ int lam_mpi_init(int argc, char **argv, int requested, int *provided)
 
      /* initialize datatypes */
      if (LAM_SUCCESS != (ret = lam_ddt_init())) {
+         return ret;
+     }
+
+     /* initialize ops */
+     if (LAM_SUCCESS != (ret = lam_op_init())) {
          return ret;
      }
 
