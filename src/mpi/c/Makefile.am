@@ -111,7 +111,7 @@ libmpi_c_mpi_la_SOURCES = \
         comm_rank.c \
         comm_remote_group.c \
         comm_remote_size.c \
-        comm_set_attribute.c \
+        comm_set_attr.c \
         comm_set_errhandler.c \
         comm_set_name.c \
         comm_size.c \

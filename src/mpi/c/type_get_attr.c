@@ -16,6 +16,8 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
+static char FUNC_NAME[] = "MPI_Type_get_attr";
+
 int
 MPI_Type_get_attr (MPI_Datatype type,
                    int type_keyval,
@@ -24,11 +26,15 @@ MPI_Type_get_attr (MPI_Datatype type,
 {
     int ret;
 
-    if ((NULL == attribute_val) || (NULL == flag))
-	return MPI_ERR_ARG;
+    if (MPI_PARAM_CHECK) {
+	if ((NULL == attribute_val) || (NULL == flag)) {
+	    return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, 
+					 FUNC_NAME);
+	}
+    }
 
-    ret = lam_attr_get(TYPE_ATTR, type, type_keyval, 
+    ret = lam_attr_get(type->d_keyhash, type_keyval, 
 		       attribute_val, flag);
-  
-    return ret;
+
+    LAM_ERRHANDLER_RETURN(ret, type, MPI_ERR_OTHER, FUNC_NAME);  
 }

@@ -84,7 +84,7 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         pcomm_rank.c \
         pcomm_remote_group.c \
         pcomm_remote_size.c \
-        pcomm_set_attribute.c \
+        pcomm_set_attr.c \
         pcomm_set_errhandler.c \
         pcomm_set_name.c \
         pcomm_size.c \

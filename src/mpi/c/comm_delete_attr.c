@@ -16,16 +16,20 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
+static char FUNC_NAME[] = "MPI_Comm_delete_attr";
+
 int MPI_Comm_delete_attr(MPI_Comm comm, int comm_keyval) 
 {
     int ret;
 
-    if (MPI_COMM_NULL == comm)
-	return MPI_ERR_COMM;
+    if (MPI_PARAM_CHECK) {
+	if (MPI_COMM_NULL == comm) {
+	    return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
+					 FUNC_NAME);
+	}
+    }
   
-    ret = lam_attr_delete(COMM_ATTR, comm, comm_keyval, 0);
+    ret = lam_attr_delete(COMM_ATTR, comm, comm->c_keyhash, comm_keyval, 0);
 
-    /* Error hanndling code here */
-  
-    return ret;
+    LAM_ERRHANDLER_RETURN(ret, comm, MPI_ERR_OTHER, FUNC_NAME);  
 }

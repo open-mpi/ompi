@@ -16,6 +16,8 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
+static char FUNC_NAME[] = "MPI_Type_free_keyval";
+
 int
 MPI_Type_free_keyval(int *type_keyval)
 {
@@ -23,10 +25,14 @@ MPI_Type_free_keyval(int *type_keyval)
 
     /* Check for valid key pointer */
 
-    if (NULL == type_keyval) 
-	return MPI_ERR_ARG;
+    if (MPI_PARAM_CHECK) {
+	if (NULL == type_keyval) {
+	    return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, 
+					 FUNC_NAME);
+	}
+    }
 
     ret = lam_attr_free_keyval(TYPE_ATTR, type_keyval, 0);
-  
-    return ret;
+
+    LAM_ERRHANDLER_RETURN(ret, MPI_COMM_WORLD, MPI_ERR_OTHER, FUNC_NAME);
 }
