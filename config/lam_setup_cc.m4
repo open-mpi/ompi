@@ -2,7 +2,7 @@ dnl -*- shell-script -*-
 dnl
 dnl $HEADER$
 dnl
-dnl $Id: lam_setup_cc.m4,v 1.1 2004/01/07 07:42:50 jsquyres Exp $
+dnl $Id: lam_setup_cc.m4,v 1.2 2004/01/07 08:31:09 jsquyres Exp $
 dnl
 
 AC_DEFUN(LAM_SETUP_CC,[
@@ -16,22 +16,6 @@ lam_show_subtitle "C compiler and preprocessor"
 # compiler.
 
 dnl AC_AIX
-
-#
-# Do we want debugging? - down here so we can change CFLAGS
-#
-AC_MSG_CHECKING([if want debugging output support])
-AC_ARG_WITH(debug, 
-  [  --with-debug            enable debugging output (maintainers only)])
-
-if test -n "$with_debug" -a "$with_debug" = "yes"; then
-    AC_MSG_RESULT([yes])
-    WANT_DEBUG=1
-else
-    AC_MSG_RESULT([no])
-    WANT_DEBUG=0
-fi
-AC_DEFINE_UNQUOTED(LAM_WANT_DEBUG, $WANT_DEBUG, [LAM debug flag])
 
 #
 # Check for the compiler
