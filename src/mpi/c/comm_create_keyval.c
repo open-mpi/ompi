@@ -16,21 +16,29 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
+static char FUNC_NAME[] = "MPI_Comm_create_keyval";
+
 int MPI_Comm_create_keyval(MPI_Comm_copy_attr_function *comm_copy_attr_fn,
                            MPI_Comm_delete_attr_function *comm_delete_attr_fn,
 			   int *comm_keyval, void *extra_state)
 {
     int ret;
-  
-    if ((NULL == comm_copy_attr_fn) || (NULL == comm_delete_attr_fn) ||
-	(NULL == comm_keyval))
-	return MPI_ERR_ARG;
+    lam_attribute_fn_ptr_union_t copy_fn;
+    lam_attribute_fn_ptr_union_t del_fn;
 
-    ret = lam_attr_create_keyval(COMM_ATTR, (void *)comm_copy_attr_fn, 
-				 (void *)comm_delete_attr_fn,
-				 comm_keyval, extra_state, 0);
+    if (MPI_PARAM_CHECK) {
+	if ((NULL == comm_copy_attr_fn) || (NULL == comm_delete_attr_fn) ||
+	    (NULL == comm_keyval)) {
+	    return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, 
+					 FUNC_NAME);
+	}
+    }
+    
+    copy_fn.attr_communicator_copy_fn = comm_copy_attr_fn;
+    del_fn.attr_communicator_delete_fn = comm_delete_attr_fn;
 
-    /* Error handling code here */  
+    ret = lam_attr_create_keyval(COMM_ATTR, copy_fn, 
+				 del_fn, comm_keyval, extra_state, 0);
 
-    return ret;
+    LAM_ERRHANDLER_RETURN(ret, MPI_COMM_WORLD, MPI_ERR_OTHER, FUNC_NAME);
 }

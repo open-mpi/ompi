@@ -16,16 +16,22 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
+static char FUNC_NAME[] = "MPI_Win_free_keyval";
+
 int MPI_Win_free_keyval(int *win_keyval) {
   
     int ret;
 
     /* Check for valid key pointer */
 
-    if (NULL == win_keyval)
-	return MPI_ERR_ARG;
+    if (MPI_PARAM_CHECK) {
+	if (NULL == win_keyval) {
+	    return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, 
+					 FUNC_NAME);
+	}
+    }
 
     ret = lam_attr_free_keyval(WIN_ATTR, win_keyval, 0);
 
-    return ret;
+    LAM_ERRHANDLER_RETURN(ret, MPI_COMM_WORLD, MPI_ERR_OTHER, FUNC_NAME);
 }

@@ -17,14 +17,20 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
+static char FUNC_NAME[] = "MPI_Attr_get";
+
 int MPI_Attr_get(MPI_Comm comm, int keyval, void *attribute_val, int *flag)
 {
     int ret;
-    if ((NULL == attribute_val) || (NULL == flag))
-	return MPI_ERR_ARG;
+
+    if (MPI_PARAM_CHECK) {
+	if ((NULL == attribute_val) || (NULL == flag)) {
+	    return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, 
+					 FUNC_NAME);
+	}
+    }
+        
+    ret = lam_attr_get(comm->c_keyhash, keyval, attribute_val, flag);
     
-    ret = lam_attr_get(COMM_ATTR, comm, keyval, attribute_val, flag);
-    
-    return ret;
 }
 

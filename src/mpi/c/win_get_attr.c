@@ -16,16 +16,22 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
+static char FUNC_NAME[] = "MPI_Win_get_attr";
+
 int MPI_Win_get_attr(MPI_Win win, int win_keyval,
                      void *attribute_val, int *flag) {
     int ret;
 
-    if ((NULL == attribute_val) || (NULL == flag))
-
-	return MPI_ERR_ARG;
-
-    ret = lam_attr_get(WIN_ATTR, win, win_keyval, 
+    if (MPI_PARAM_CHECK) {
+	if ((NULL == attribute_val) || (NULL == flag)) {
+	    return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, 
+					 FUNC_NAME);
+	}
+    }
+    
+    ret = lam_attr_get(win->w_keyhash, win_keyval, 
 		       attribute_val, flag);
 
-    return ret;
+    LAM_ERRHANDLER_RETURN(ret, win, MPI_ERR_OTHER, FUNC_NAME);  
+
 }
