@@ -36,6 +36,7 @@ struct mca_pml_base_send_request_t {
     size_t req_peer_size;                    /**< size of peers remote buffer */
     bool req_cached;                         /**< has this request been obtained from the ptls cache */
     ompi_convertor_t req_convertor;          /**< convertor that describes this datatype */
+    volatile int32_t req_lock;               /**< lock used by the scheduler */
 };
 typedef struct mca_pml_base_send_request_t mca_pml_base_send_request_t;
 
@@ -134,7 +135,10 @@ static inline void mca_pml_base_send_request_offset(
     mca_pml_base_send_request_t* request,
     size_t offset)
 {
-    ompi_atomic_add( &(request->req_offset), offset );
+    if(ompi_using_threads())
+        ompi_atomic_add( &(request->req_offset), offset );
+    else
+        request->req_offset += offset;
 }
 
 #if defined(c_plusplus) || defined(__cplusplus)
