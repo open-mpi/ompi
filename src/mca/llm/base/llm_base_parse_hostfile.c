@@ -96,7 +96,7 @@ parse_line(int first, mca_llm_base_hostfile_node_t *node)
 
     if (MCA_LLM_BASE_STRING == first) {
         strncpy(node->hostname, mca_llm_base_string, MAXHOSTNAMELEN);
-        node->count = 1;
+        node->given_count = 1;
     } else {
         parse_error();
         return OMPI_ERROR;
@@ -117,7 +117,7 @@ parse_line(int first, mca_llm_base_hostfile_node_t *node)
             ret = parse_count();
             if (ret < 0) return OMPI_ERROR;
 
-            node->count = ret;
+            node->given_count = ret;
             break;
 
         case MCA_LLM_BASE_STRING:

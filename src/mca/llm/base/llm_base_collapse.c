@@ -75,6 +75,7 @@ mca_llm_base_collapse_resources(ompi_list_t *hostlist)
                 (!has_conflicts(curr_node, check_node))) {
                 /* they are mergeable */
                 curr_node->count += check_node->count;
+                curr_node->given_count += check_node->given_count;
                 keyval_merge(curr_node, check_node);
 
                 /* delete from the list */

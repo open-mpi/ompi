@@ -166,7 +166,13 @@ extern "C" {
      *                   for \c nodes for usage.
      * @return List of <code>ompi_rte_node_allocation_t</code>s
      *                   describing the allocated resources or NULL on
-     *                   error (error will be in errno)
+     *                   error (error will be in errno).  If the
+     *                   number of requested resources is not
+     *                   available, errno will be set to \c
+     *                   OMPI_ERR_OUT_OF_RESOURCE.  This is not a
+     *                   fatal error - \c ompi_rte_allocate_resources
+     *                   can be called again, but with a smaller
+     *                   resource request.
      *
      * @note In the future, a more complex resource allocation
      *       function may be added, which allows for complicated

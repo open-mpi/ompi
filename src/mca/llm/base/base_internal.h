@@ -29,6 +29,8 @@ struct mca_llm_base_hostfile_node_t {
     char hostname[MAXHOSTNAMELEN];
     /** number of MPI processes Open MPI can start on this host */
     int count;
+    /** count argument in the hostfile */
+    int given_count;
     /** generic key=value storage mechanism */
     ompi_list_t *info;    
 };

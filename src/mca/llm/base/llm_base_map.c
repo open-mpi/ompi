@@ -31,38 +31,37 @@ mca_llm_base_map_resources(int nodes,
     } else if (0 == nodes && 0 != procs) { 
         /* allocate procs process count as dense as possible */
         int alloc_procs = 0;
+        int iters = 0;
 
-        for (nodeitem = ompi_list_get_first(hostlist);
-             nodeitem != ompi_list_get_end(hostlist);
-             nodeitem = ompi_list_get_next(nodeitem)) {
-            node = (mca_llm_base_hostfile_node_t*) nodeitem;
+        /* loop until we are done */
+        for (iters = 1 ; alloc_procs < procs ; ++iters) {
+            for (nodeitem = ompi_list_get_first(hostlist);
+                 nodeitem != ompi_list_get_end(hostlist);
+                 nodeitem = ompi_list_get_next(nodeitem)) {
+                node = (mca_llm_base_hostfile_node_t*) nodeitem;
 
-            if (alloc_procs >= procs) { 
-                /* we've allocated enough - release this guy from the
-                   list */
-                tmp = ompi_list_remove_item(hostlist, nodeitem);
-                OBJ_RELEASE(nodeitem);
-                nodeitem = tmp;
-            } else if (alloc_procs + node->count < procs) {
-                /* the entire host allocation is needed... */
-                alloc_procs += node->count;
-            } else {
-                /* the entire host allocation isn't needed.  dump the
-                   unneeded parts */
-                node->count = procs - alloc_procs;
-                alloc_procs = procs;
+                if (alloc_procs >= procs) { 
+                    /* we've allocated enough.  If we are on first
+                    loop, remove from list.  Otherwise, break out of
+                    loop */
+                    if (1 == iters) {
+                        tmp = ompi_list_remove_item(hostlist, nodeitem);
+                        OBJ_RELEASE(nodeitem);
+                        nodeitem = tmp;
+                    } else {
+                        break;
+                    }
+                } else if (alloc_procs + node->given_count <= procs) {
+                    /* the entire host allocation is needed... */
+                    node->count += node->given_count;
+                    alloc_procs += node->given_count;
+                } else {
+                    /* the entire host allocation isn't needed.  dump the
+                       unneeded parts */
+                    node->count += procs - alloc_procs;
+                    alloc_procs = procs;
+                }
             }
-        }
-
-    } else if (0 != nodes && 0 == procs) {
-        /* allocate as many nodes as possible with each node having 
-           one slot */
-
-        for (nodeitem = ompi_list_get_first(hostlist);
-             nodeitem != ompi_list_get_end(hostlist);
-             nodeitem = ompi_list_get_next(nodeitem)) {
-            node = (mca_llm_base_hostfile_node_t*) nodeitem;
-            node->count = 1;
         }
 
     } else if (0 != nodes && 0 != procs) {
