@@ -135,6 +135,7 @@ ompi_elan_attach_network (mca_ptl_elan_state_t * ems)
         elan4_block_inputter (rail->r_ctx, 1);
 
         if (elan4_attach (rail->r_ctx, cap)) {
+            perror("can not attach to elan network");
             ompi_output (0,
                          "[%s:%d] error in attaching to the network \n",
                          __FILE__, __LINE__);
@@ -259,57 +260,9 @@ ompi_module_elan_close_procs (mca_ptl_elan_component_t * emp,
     /* FIXME: find the ones that are still there and free them */
 }
 
-ELAN_SLEEP *
-ompi_init_elan_sleepdesc (mca_ptl_elan_state_t * ems,
-                          RAIL * rail)
-{
-    ELAN_SLEEP *es;
-
-    /* XXX: asking the caller to hold the lock */
-    es = MALLOC (sizeof (ELAN_SLEEP));
-    OMPI_PTL_ELAN_CHECK_UNEX (es, NULL, NULL, 0);
-    memset (es, 0, sizeof (ELAN_SLEEP));
-
-    /* Assign next interrupt cookie value */
-    es->es_cookie = ems->intcookie++;
-
-    /* XXX, rail[0] is choosen instead this rail */
-    if (elan4_alloc_intcookie (ems->elan_rail[0]->rail_ctx,
-                               es->es_cookie) < 0) {
-        ompi_output (0,
-                     "[%s:%d] Failed to allocate IRQ cookie \n",
-                     __FILE__, __LINE__);
-    }
-
-    es->es_cmdBlk = ALLOC_ELAN (rail, E4_EVENTBLOCK_SIZE,
-                                E4_EVENTBLOCK_SIZE);
-    OMPI_PTL_ELAN_CHECK_UNEX (es->es_cmdBlk, 0, NULL, 0);
-
-    /*Allocate a pair of command queues for blocking waits with */
-    es->es_cmdq = OMPI_PTL_ELAN_ALLOC_CMDQ(rail->r_ctx, 
-				    rail->r_alloc,
-                                    CQ_Size1K,
-                                    (CQ_WriteEnableBit |
-                                    CQ_WaitEventEnableBit), NULL);
-    OMPI_PTL_ELAN_CHECK_UNEX (es->es_cmdq, NULL, NULL, 0);
-
-    /* This command queue used to fire the IRQ via 
-       a cmd port copy event */
-    es->es_ecmdq = OMPI_PTL_ELAN_ALLOC_CMDQ (rail->r_ctx, 
-				    rail->r_alloc,
-				    CQ_Size1K, /* CQ_EnableAllBits, */
-				    (CQ_WriteEnableBit 
-				    | CQ_InterruptEnableBit), 
-				    NULL);
-    OMPI_PTL_ELAN_CHECK_UNEX (es->es_ecmdq, NULL, NULL, 0);
-    es->es_next = NULL;
-
-    /* XXX: asking the caller to release the lock */
-    return es;
-}
-
-int
-mca_ptl_elan_state_init (mca_ptl_elan_component_t * emp)
+static int
+ompi_elan_device_init (mca_ptl_elan_component_t * emp, 
+		       mca_ptl_elan_state_t *ems)
 {
     int         i;
     int        *rails;
@@ -357,8 +310,6 @@ mca_ptl_elan_state_init (mca_ptl_elan_component_t * emp)
                      ELAN_VERSION);
         return OMPI_ERROR;
     } 
-#else
-    ompi_output (0, "Elan version is %s \n", ELAN_VERSION);
 #endif
 
     /* Allocate elan capability from the heap */
@@ -375,6 +326,12 @@ mca_ptl_elan_state_init (mca_ptl_elan_component_t * emp)
                          __FILE__, __LINE__);
             return OMPI_ERROR;
         }
+    } else if ( elan_getenvCap (ems->elan_cap, 0) < 0 ) {
+       	/* Grab the capability from the user environment */
+	ompi_output (0,
+		     "[%s:%d] Can't get capability from environment \n",
+		     __FILE__, __LINE__);
+	return OMPI_ERROR;
     }
 
     if ((num_rails = ems->elan_nrails = elan_nrails (ems->elan_cap)) <= 0) {
@@ -413,7 +370,7 @@ mca_ptl_elan_state_init (mca_ptl_elan_component_t * emp)
     ems->rail_intcookie = (int *) malloc (sizeof (int) * (num_rails + 1));
     OMPI_PTL_ELAN_CHECK_UNEX (ems->rail_intcookie, NULL,
                               OMPI_ERR_OUT_OF_RESOURCE, 0);
-    memset ((void*)ems->elan_cap, 0, (num_rails + 1) * sizeof (int));
+    memset ((void*)ems->rail_intcookie, 0, (num_rails + 1) * sizeof (int));
     ems->rail_intcookie[num_rails] = 0;
 
     for (i = 0; i < num_rails; i++) {
@@ -515,6 +472,78 @@ mca_ptl_elan_state_init (mca_ptl_elan_component_t * emp)
     /* Free the local variable */
     free (rails);
 
+    END_FUNC(PTL_ELAN_DEBUG_INIT);
+    return OMPI_SUCCESS;
+}
+
+
+ELAN_SLEEP *
+ompi_init_elan_sleepdesc (mca_ptl_elan_state_t * ems,
+                          RAIL * rail)
+{
+    ELAN_SLEEP *es;
+
+    /* XXX: asking the caller to hold the lock */
+    es = MALLOC (sizeof (ELAN_SLEEP));
+    OMPI_PTL_ELAN_CHECK_UNEX (es, NULL, NULL, 0);
+    memset (es, 0, sizeof (ELAN_SLEEP));
+
+    /* Assign next interrupt cookie value */
+    es->es_cookie = ems->intcookie++;
+
+    /* XXX, rail[0] is choosen instead this rail */
+    if (elan4_alloc_intcookie (ems->elan_rail[0]->rail_ctx,
+                               es->es_cookie) < 0) {
+        ompi_output (0,
+                     "[%s:%d] Failed to allocate IRQ cookie \n",
+                     __FILE__, __LINE__);
+    }
+
+    es->es_cmdBlk = ALLOC_ELAN (rail, E4_EVENTBLOCK_SIZE,
+                                E4_EVENTBLOCK_SIZE);
+    OMPI_PTL_ELAN_CHECK_UNEX (es->es_cmdBlk, 0, NULL, 0);
+
+    /*Allocate a pair of command queues for blocking waits with */
+    es->es_cmdq = OMPI_PTL_ELAN_ALLOC_CMDQ(rail->r_ctx, 
+				    rail->r_alloc,
+                                    CQ_Size1K,
+                                    (CQ_WriteEnableBit |
+                                    CQ_WaitEventEnableBit), NULL);
+    OMPI_PTL_ELAN_CHECK_UNEX (es->es_cmdq, NULL, NULL, 0);
+
+    /* This command queue used to fire the IRQ via 
+       a cmd port copy event */
+    es->es_ecmdq = OMPI_PTL_ELAN_ALLOC_CMDQ (rail->r_ctx, 
+				    rail->r_alloc,
+				    CQ_Size1K, /* CQ_EnableAllBits, */
+				    (CQ_WriteEnableBit 
+				    | CQ_InterruptEnableBit), 
+				    NULL);
+    OMPI_PTL_ELAN_CHECK_UNEX (es->es_ecmdq, NULL, NULL, 0);
+    es->es_next = NULL;
+
+    /* XXX: asking the caller to release the lock */
+    return es;
+}
+
+int
+mca_ptl_elan_state_init (mca_ptl_elan_component_t * emp)
+{
+    int i;
+    mca_ptl_elan_state_t * ems = &mca_ptl_elan_global_state;
+
+#if 1 || defined(PTL_ELAN_DEV_INIT)
+    if (OMPI_SUCCESS != ompi_elan_device_init (emp, ems))
+	return OMPI_ERROR;
+#else
+#error Not implemented yet
+    /* Consider using elan_int() later */
+    ELAN_STATE  *elan_state;
+    elan_state = elan_init(0);
+#endif
+
+    START_FUNC (PTL_ELAN_DEBUG_INIT);
+
     ems->elan_ctx = ems->elan_rail[0]->rail_ctx;
     ems->elan_estate = (void *) ems->all_estates[0];
 
@@ -567,8 +596,14 @@ mca_ptl_elan_state_finalize (mca_ptl_elan_component_t * emp)
         free (rail->r_railTable);
 
         /* Free the memory from the rail allocator */
+#if (QSNETLIBS_VERSION_CODE <= QSNETLIBS_VERSION(1,6,6))
         elan4_freeMain (rail->r_alloc, rail->r_ecmdq);
         elan4_freeMain (rail->r_alloc, rail->r_cmdq);
+#else
+	elan4_free_cmdq (rail->r_ctx, rail->r_ecmdq);
+	elan4_free_cmdq (rail->r_ctx, rail->r_cmdq);
+#endif
+
         elan4_freeElan (rail->r_alloc, ems->all_estates[i]);
 
         /* Since the cookie allocated from rail[0], be consistent here */
