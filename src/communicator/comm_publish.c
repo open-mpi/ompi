@@ -59,7 +59,7 @@ int ompi_open_port(char *port_name)
 /* takes a port_name and separates it into the process_name 
    and the tag
 */
-char *ompi_parse_port (char *port_name, int *tag, char **remainder) 
+char *ompi_parse_port (char *port_name, int *tag ) 
 {
     char tmp_port[MPI_MAX_PORT_NAME], *tmp_string;
 
@@ -71,9 +71,6 @@ char *ompi_parse_port (char *port_name, int *tag, char **remainder)
     strncpy (tmp_port, port_name, MPI_MAX_PORT_NAME);
     strncpy (tmp_string, strtok(tmp_port, ":"), MPI_MAX_PORT_NAME);
     sscanf( strtok(NULL, ":"),"%d", tag);
-    if ( NULL != remainder ) {
-	*remainder = strtok(NULL, ":");
-    }
 
     return tmp_string;
 }

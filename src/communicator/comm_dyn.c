@@ -488,8 +488,6 @@ int ompi_comm_dyn_init (void)
     ompi_process_name_t *port_proc_name=NULL;
     ompi_group_t *group = NULL;
     ompi_errhandler_t *errhandler = NULL;
-    char remainder[128];
-    int appnum=0;
 
     /* get jobid */
     /* JMS: Previous was using ompi_proc_self() here, which
@@ -510,9 +508,8 @@ int ompi_comm_dyn_init (void)
 	ompi_communicator_t *oldcomm;
 
 	/* split the content of the environment variable into 
-	   its pieces, which are : port_name, tag, and mpi_appnum. */
-	oob_port = ompi_parse_port (port_name, &tag, &(remainder[0]));
-	sscanf (remainder, "%d", &appnum);
+	   its pieces, which are : port_name and tag */
+	oob_port = ompi_parse_port (port_name, &tag);
 	
 	port_proc_name = ompi_name_server.convert_string_to_process_name(oob_port);
 	ompi_comm_connect_accept (MPI_COMM_WORLD, root, port_proc_name,  

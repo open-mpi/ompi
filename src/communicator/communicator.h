@@ -372,7 +372,7 @@ struct ompi_communicator_t {
      * takes a port_name and returns the oob-contact information
      * and the tag
      */
-    char * ompi_parse_port (char *port_name, int *tag, char **remainder) ;
+    char * ompi_parse_port (char *port_name, int *tag ) ;
 
     /** 
      * routines handling name publishing, lookup and unpublishing
