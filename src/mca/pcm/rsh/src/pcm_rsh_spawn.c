@@ -28,6 +28,7 @@
 #include "util/output.h"
 #include "util/argv.h"
 #include "util/numtostr.h"
+#include "mca/ns/base/base.h"
 
 #if 1
 #define BOOTAGENT "mca_pcm_rsh_bootproxy"
@@ -90,7 +91,12 @@ mca_pcm_rsh_spawn_procs(mca_ns_base_jobid_t jobid, ompi_list_t *schedlist)
     }
     
     /* BWB - make sure vpids are reserved */
-    local_start_vpid = global_start_vpid;
+    local_start_vpid = 0;
+    if (mca_pcm_rsh_use_ns) {
+        global_start_vpid = (int) ompi_name_server.reserve_range(jobid, num_procs);
+    } else {
+        global_start_vpid = 0;
+    }
     
     for (sched_item = ompi_list_get_first(schedlist) ;
          sched_item != ompi_list_get_end(schedlist) ;

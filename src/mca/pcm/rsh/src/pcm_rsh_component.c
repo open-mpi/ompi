@@ -82,6 +82,7 @@ static int mca_pcm_rsh_param_ignore_stderr;
 static int mca_pcm_rsh_param_priority;
 static int mca_pcm_rsh_param_agent;
 static int mca_pcm_rsh_param_debug;
+static int mca_pcm_rsh_param_use_ns;
 
 /*
  * Module variables
@@ -96,6 +97,7 @@ int mca_pcm_rsh_ignore_stderr;
 char *mca_pcm_rsh_agent;
 
 int mca_pcm_rsh_output = 0;
+int mca_pcm_rsh_use_ns;
 
 static mca_llm_base_module_t mca_pcm_rsh_llm;
 
@@ -115,6 +117,8 @@ mca_pcm_rsh_component_open(void)
     mca_base_param_register_int("pcm", "rsh", "fast", NULL, 1);
   mca_pcm_rsh_param_ignore_stderr =
     mca_base_param_register_int("pcm", "rsh", "ignore_stderr", NULL, 0);
+  mca_pcm_rsh_param_use_ns =
+    mca_base_param_register_int("pcm", "rsh", "use_ns", NULL, 0);
 
   mca_pcm_rsh_param_priority =
     mca_base_param_register_int("pcm", "rsh", "priority", NULL, 1);
@@ -156,6 +160,9 @@ mca_pcm_rsh_init(int *priority,
                                  &mca_pcm_rsh_agent);
     *allow_multi_user_threads = true;
     *have_hidden_threads = false;
+
+    mca_base_param_lookup_int(mca_pcm_rsh_param_use_ns, 
+			      &mca_pcm_rsh_use_ns);
 
     ret = mca_llm_base_select("pcm", &mca_pcm_rsh_llm,
                               allow_multi_user_threads,

@@ -71,6 +71,6 @@ extern "C" {
  */
 extern int mca_pcm_rms_output;
 extern ompi_list_t mca_pcm_rms_jobs;
-
+extern int mca_pcm_rms_use_ns;
 
 #endif /* MCA_PCM_RMS_H_ */

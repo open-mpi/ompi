@@ -80,12 +80,14 @@ ompi_output_stream_t mca_pcm_rms_output_stream = {
  */
 static int mca_pcm_rms_param_priority;
 static int mca_pcm_rms_param_debug;
+static int mca_pcm_rms_param_use_ns;
 
 /*
  * Module variables
  */
 ompi_list_t mca_pcm_rms_jobs;
 int mca_pcm_rms_output = 0;
+int mca_pcm_rms_use_ns;
 
 int
 mca_pcm_rms_component_open(void)
@@ -95,6 +97,9 @@ mca_pcm_rms_component_open(void)
 
   mca_pcm_rms_param_priority =
     mca_base_param_register_int("pcm", "rms", "priority", NULL, 0);
+
+  mca_pcm_rms_param_use_ns =
+    mca_base_param_register_int("pcm", "rms", "use_ns", NULL, 0);
 
   OBJ_CONSTRUCT(&mca_pcm_rms_jobs, ompi_list_t);
 
@@ -122,6 +127,8 @@ mca_pcm_rms_init(int *priority,
     ompi_output_set_verbosity(mca_pcm_rms_output, debug);
 
     mca_base_param_lookup_int(mca_pcm_rms_param_priority, priority);
+
+    mca_base_param_lookup_int(mca_pcm_rms_param_use_ns, &mca_pcm_use_ns);
 
     *allow_multi_user_threads = false;
     *have_hidden_threads = false;
