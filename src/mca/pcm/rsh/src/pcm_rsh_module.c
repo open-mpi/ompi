@@ -6,8 +6,8 @@
 
 #include "ompi_config.h"
 
-#include "constants.h"
-#include "types.h"
+#include "include/constants.h"
+#include "include/types.h"
 #include "util/malloc.h"
 #include "class/ompi_list.h"
 #include "mca/mca.h"
