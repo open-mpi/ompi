@@ -246,9 +246,10 @@ mca_ptl_elan_isend (struct mca_ptl_base_module_t *ptl,
      */
 
     START_FUNC(PTL_ELAN_DEBUG_SEND);
+
     {
 	/* FIXME: YUW, remove this block */
-	fprintf(stderr, "[proc%s:%s:%d] here\n", 
+	fprintf(stderr, "[proc%s:%s:%d] here \n", 
 		getenv("RMS_RANK"), __FILE__, __LINE__);
     }
 
@@ -366,7 +367,6 @@ mca_ptl_elan_get (struct mca_ptl_base_module_t *ptl,
 		__FILE__, __LINE__);
     }
 
-    /*rc = mca_ptl_elan_start_desc(desc, */
     rc = mca_ptl_elan_start_get(desc, (struct mca_ptl_elan_peer_t *)ptl_peer,
 	    req, offset, &size, flags);
 
@@ -399,19 +399,6 @@ mca_ptl_elan_matched (mca_ptl_base_module_t * ptl,
     header  = &frag->frag_base.frag_header;
     request = frag->frag_request;
     recv_frag = (mca_ptl_elan_recv_frag_t * ) frag;
-
-    /* FIXME + TODO: Optimized processing fragments 
-     * Pseudocode, for additional processing of fragments 
-     * a) (ACK:no, Get:No) 
-     *    Remove the frag. no need for further processing
-     * b) (ACK:yes, Get:No) 
-     *    Send an ACK only
-     * c) (ACK:yes, Get:yes) 
-     *     Get a message, update the fragment descriptor and 
-     *     then send an ACK, 
-     * d) Consider moving time-consuming tasks to some BH-like 
-     *    mechanisms.
-     */
 
     if (header->hdr_common.hdr_flags & MCA_PTL_FLAGS_ACK_MATCHED) {
 	int  desc_type ;
@@ -450,7 +437,8 @@ mca_ptl_elan_matched (mca_ptl_base_module_t * ptl,
 #if 1
     set = fetchNset (&((mca_ptl_elan_recv_frag_t *)frag)->frag_progressed, 1);
 #else
-    set = ompi_atomic_fetch_and_set_int (&((mca_ptl_elan_recv_frag_t *)frag)->frag_progressed, 1);
+    set = ompi_atomic_fetch_and_set_int (
+	    &((mca_ptl_elan_recv_frag_t *)frag)->frag_progressed, 1);
 #endif
     if (!set) {
 	/* IN TCP case, IO_VEC is first allocated.
@@ -482,39 +470,10 @@ mca_ptl_elan_matched (mca_ptl_base_module_t * ptl,
 		    header->hdr_frag.hdr_frag_offset);  
 	    ompi_convertor_unpack(&frag->frag_base.frag_convertor, &iov, 1); 
 	}
-#if 0
-	 if (header->hdr_common.hdr_flags & MCA_PTL_FLAGS_ACK_MATCHED) {
-	    /* FIXME: Pseudocode, for additional processing of fragments 
-	     * a) (ACK:no, Get:No) 
-	     *    Remove the frag. no need for further processing
-	     * b) (ACK:yes, Get:No) 
-	     *    Send an ACK only
-	     * c) (ACK:yes, Get:yes) 
-	     *     Get a message, update the fragment descriptor and 
-	     *     then send an ACK, 
-	     * d) Consider moving time-consuming tasks to some BH-like 
-	     *    mechanisms.
-	     */
-	 }
-
-	frag->frag_base.frag_owner->ptl_recv_progress (
-                frag->frag_base.frag_owner, 
-                request, 
-                frag->frag_base.frag_size, 
-                frag->frag_base.frag_size);
-
-	/* FIXME: 
-	 * To support the required ACK, do not return
-	 * until the ack is out */
-	if (((mca_ptl_elan_recv_frag_t *) frag)->frag_ack_pending == false)
-	    mca_ptl_elan_recv_frag_return (frag->frag_base.frag_owner,
-		    (mca_ptl_elan_recv_frag_t *) frag);
-#else
 	/* XXX: progress the request based on the status of this recv frag
 	 * It is possible to employ a scheduling logic here.
 	 * Then Done with this fragment, i.e., data */
 	mca_ptl_elan_recv_frag_done (header, frag, request);
-#endif
     }
 }
 

@@ -53,7 +53,7 @@
 #define  PTL_ELAN_DEBUG_CHAIN   (0x800)
 
 #define  PTL_ELAN_DEBUG_FLAG \
-(PTL_ELAN_DEBUG_MAC|PTL_ELAN_DEBUG_SEND|PTL_ELAN_DEBUG_RECV|PTL_ELAN_DEBUG_PUT|PTL_ELAN_DEBUG_GET)
+(PTL_ELAN_DEBUG_PUT|PTL_ELAN_DEBUG_GET)
 
 #define START_FUNC(flag)                                       \
 do {                                                           \
@@ -93,11 +93,11 @@ do {                                                           \
 #define  OMPI_PTL_ELAN_LOST_QSLOTS   (1)
 
 #define  OMPI_PTL_ELAN_MAX_QDESCS    (128)
-#define  OMPI_PTL_ELAN_NUM_QDESCS    (4)
+#define  OMPI_PTL_ELAN_NUM_QDESCS    (2)
 #define  OMPI_PTL_ELAN_QDMA_RETRY    (16)
 
 #define  OMPI_PTL_ELAN_MAX_PUTGET    (32)
-#define  OMPI_PTL_ELAN_NUM_PUTGET    (8)
+#define  OMPI_PTL_ELAN_NUM_PUTGET    (1)
 #define  OMPI_PTL_ELAN_MAX_PGDESC    (8)
 
 #define  OMPI_PTL_ELAN_FASTPATH      (0x1)
@@ -120,7 +120,7 @@ do {                                                           \
 do {                                                           \
     if (value == unexp) {                                      \
 	ompi_output(output,                                    \
-		"[%s:%d] allocate received unexpect value \n", \
+		"[%s:%d] alloc received unexpect value \n",    \
 		__FILE__, __LINE__);                           \
 	return errno;                                          \
     }                                                          \
@@ -260,7 +260,7 @@ struct ompi_ptl_elan_putget_desc_t {
     /* 8 byte aligned */
     volatile E4_uint64 chain_doneWord;
     /* 8 byte aligned */
-    E4_Event32        *chain_event; /* E4_Event plus pad */
+    E4_Event          *chain_event; /* E4_Event plus pad */
     E4_Addr           *chain_buff;
  
     E4_Addr            src_elan_addr;

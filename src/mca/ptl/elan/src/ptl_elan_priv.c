@@ -354,6 +354,16 @@ mca_ptl_elan_init_qdma_desc (struct mca_ptl_elan_send_frag_t *frag,
 	    E4_COOKIE_TYPE_LOCAL_DMA, destvp);
     desc->main_dma.dma_srcEvent= elan4_main2elan(ctx, desc->comp_event);
     desc->main_dma.dma_srcAddr = MAIN2ELAN (ctx, &desc->buff[0]);
+
+    LOG_PRINT (PTL_ELAN_DEBUG_SEND,
+	    " desc %p comp_buff %p comp_event %p "
+	    "comp src_addr %x main dst_addr %x size %d\n",
+	    desc, 
+	    (void *)desc->comp_buff,
+	    (void *)desc->comp_event,
+	    (int)desc->comp_dma.dma_srcAddr, 
+	    (int)desc->main_dma.dma_srcAddr, 
+	    size_out);           
 #else
     desc->main_dma.dma_srcAddr = MAIN2ELAN (ctx, &desc->buff[0]);
     /* XXX: Hardcoded DMA retry count */
@@ -365,6 +375,10 @@ mca_ptl_elan_init_qdma_desc (struct mca_ptl_elan_send_frag_t *frag,
 	    E4_COOKIE_TYPE_LOCAL_DMA, destvp);
     desc->main_dma.dma_vproc = destvp;
 #endif
+
+    LOG_PRINT (PTL_ELAN_DEBUG_SEND,
+	    "dest events main %lx \n",
+	    desc->main_dma.dma_dstEvent);
 
     /* Make main memory coherent with IO domain (IA64) */
     MEMBAR_VISIBLE ();
@@ -471,6 +485,12 @@ mca_ptl_elan_init_put_desc (struct mca_ptl_elan_send_frag_t *frag,
     desc->chain_dma.dma_dstEvent = elan4_main2elan (ctx, 
 	    (void *) ptl->queue->input);
 
+    LOG_PRINT (PTL_ELAN_DEBUG_PUT,
+	    "dest events main %lx chain %lx comp %lx \n",
+	    desc->main_dma.dma_dstEvent, 
+	    desc->chain_dma.dma_dstEvent, 
+	    desc->comp_dma.dma_dstEvent);
+
 #if OMPI_PTL_ELAN_COMP_QUEUE
     /* XXX: Chain a QDMA to each queue and 
      * Have all the srcEvent fired to the Queue 
@@ -484,6 +504,7 @@ mca_ptl_elan_init_put_desc (struct mca_ptl_elan_send_frag_t *frag,
     desc->comp_event->ev_Params[1] = elan4_alloccq_space (ctx, 8, CQ_Size8K);
     desc->comp_event->ev_CountAndType = E4_EVENT_INIT_VALUE(-32,
 	    E4_EVENT_COPY, E4_EVENT_DTYPE_LONG, 8);
+
     desc->comp_dma.dma_cookie   = elan4_local_cookie(ptl->queue->tx_cpool,
 	    E4_COOKIE_TYPE_LOCAL_DMA, ptl->elan_vp);
     desc->comp_dma.dma_srcAddr  = elan4_main2elan (ctx, 
@@ -503,13 +524,6 @@ mca_ptl_elan_init_put_desc (struct mca_ptl_elan_send_frag_t *frag,
     desc->chain_dma.dma_typeSize |= RUN_DMA_CMD;
     desc->chain_dma.dma_pad       = NOP_CMD;
 
-    LOG_PRINT (PTL_ELAN_DEBUG_FLAG,
-	    " desc %p chain_buff %p chain_event %p "
-	    "src_addr %x dst_addr %x size %d\n",
-	    desc, (void *)desc->chain_buff, (void *)desc->chain_event,
-	    (int)desc->src_elan_addr, 
-	    (int)desc->dst_elan_addr, size_out);           
-
     /* Copy down the chain dma to the chain buffer in elan sdram  */
     memcpy ((void *)desc->chain_buff, (void *)&desc->chain_dma, 
 	    sizeof (E4_DMA64));
@@ -521,16 +535,14 @@ mca_ptl_elan_init_put_desc (struct mca_ptl_elan_send_frag_t *frag,
 
     /* XXX: The chain dma will go directly into a command stream
      * so we need addend the command queue control bits.
-     * Allocate space from command queues hanged off the CTX.
-     */
+     * Allocate space from command queues hanged off the CTX. */
     desc->chain_event->ev_Params[1] = elan4_alloccq_space (ctx, 8, CQ_Size8K);
     desc->main_dma.dma_srcAddr = desc->src_elan_addr;
     desc->main_dma.dma_dstAddr = desc->dst_elan_addr;
     desc->main_dma.dma_dstEvent= 0x0ULL; /*disable remote event */
 
     /* Chain an event */
-    desc->main_dma.dma_srcEvent= elan4_main2elan(ctx, 
-	    (E4_Event *)desc->chain_event);
+    desc->main_dma.dma_srcEvent= elan4_main2elan(ctx, desc->chain_event);
 
     /* FIXME: no additional flags for the DMA, remote, shmem, qwrite, 
      *        broadcast, etc. Be sure to correctly setup a chained DMA. */
@@ -543,11 +555,11 @@ mca_ptl_elan_init_put_desc (struct mca_ptl_elan_send_frag_t *frag,
 	    destvp);
     desc->main_dma.dma_vproc = destvp;
 
-    LOG_PRINT(PTL_ELAN_DEBUG_MAC, 
-	    "destvp %d type %d flag %d size %d\n", 
-	    destvp, hdr->hdr_common.hdr_type,
-	    hdr->hdr_common.hdr_flags,
-	    hdr->hdr_common.hdr_size);
+    LOG_PRINT (PTL_ELAN_DEBUG_PUT,
+	    "chain_event %p param0 %lx param1 %lx \n",
+	    desc->chain_event,
+	    desc->chain_event->ev_Params[0],
+	    desc->chain_event->ev_Params[1]);
 
     /* Make main memory coherent with IO domain (IA64) */
     MEMBAR_VISIBLE ();
@@ -878,6 +890,7 @@ mca_ptl_elan_start_ack ( mca_ptl_base_module_t * ptl,
     mca_ptl_base_header_t *hdr;
     mca_pml_base_recv_request_t* request;
     mca_ptl_elan_module_t *elan_ptl;
+    ELAN4_CTX *ctx;
 
     int destvp;
 
@@ -889,7 +902,8 @@ mca_ptl_elan_start_ack ( mca_ptl_base_module_t * ptl,
     elan_ptl = (mca_ptl_elan_module_t *) ptl;
     desc->desc->desc_type = MCA_PTL_ELAN_DESC_QDMA; 
     qdma = (ompi_ptl_elan_qdma_desc_t *)desc->desc;
-    hdr = (mca_ptl_base_header_t *) & qdma->buff[0];
+    ctx  = elan_ptl->ptl_elan_ctx;
+    hdr = &desc->frag_base.frag_header;
     request = recv_frag->frag_recv.frag_request;
 
     hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_ACK;
@@ -904,27 +918,34 @@ mca_ptl_elan_start_ack ( mca_ptl_base_module_t * ptl,
     hdr->hdr_ack.hdr_dst_match.lval = 0; 
     hdr->hdr_ack.hdr_dst_match.pval = request;
 
-    /* FIXME: this needs to be some offsete from the base addr */
+    /* FIXME: this needs to be some offsete from the base addr 
+     *        posted buffer size is the leftover */
     hdr->hdr_ack.hdr_dst_addr.pval = 0; 
-    hdr->hdr_ack.hdr_dst_addr.lval = elan4_main2elan(
-	    elan_ptl->ptl_elan_ctx, request->req_base.req_addr);
-
-    /* FIXME: posted buffer size is the leftover */
+    hdr->hdr_ack.hdr_dst_addr.lval = elan4_main2elan(ctx, 
+	    request->req_base.req_addr);
     hdr->hdr_ack.hdr_dst_size = 
 	request->req_bytes_packed - request->req_bytes_received;
 
-    LOG_PRINT(PTL_ELAN_DEBUG_ACK,
-		"remote frag %p local req %p buffer %p size %d \n",
-	       	hdr->hdr_ack.hdr_src_ptr.pval,
-	       	hdr->hdr_ack.hdr_dst_match.pval,
-	       	hdr->hdr_ack.hdr_dst_addr.pval,
-	       	hdr->hdr_ack.hdr_dst_size);           
+    /* FIXME: save frag descriptor somewhere in the header */
+    ((mca_ptl_elan_ack_header_t *) hdr)->frag = desc; 
 
-    /* Filling up QDMA descriptor */
-    qdma->main_dma.dma_srcAddr = elan4_main2elan(
-	    elan_ptl->ptl_elan_ctx, &qdma->buff[0]);
+    LOG_PRINT(PTL_ELAN_DEBUG_ACK, "desc %p hdr %p \n", desc, hdr);
 
-    /* XXX: Hardcoded DMA retry count */
+#if OMPI_PTL_ELAN_COMP_QUEUE
+    /* XXX: Need to have a way to differentiate different frag */
+    qdma->comp_event->ev_Params[1] = elan4_alloccq_space (ctx, 8, CQ_Size8K);
+    qdma->comp_event->ev_CountAndType = E4_EVENT_INIT_VALUE(-32,
+	    E4_EVENT_COPY, E4_EVENT_DTYPE_LONG, 8);
+    qdma->comp_dma.dma_cookie   = elan4_local_cookie(
+	    elan_ptl->queue->tx_cpool,
+	    E4_COOKIE_TYPE_LOCAL_DMA, 
+	    elan_ptl->elan_vp);
+    qdma->comp_dma.dma_srcAddr  = elan4_main2elan (ctx, (void *) hdr);
+    memcpy ((void *)qdma->comp_buff, (void *)&qdma->comp_dma, 
+	    sizeof (E4_DMA64));
+
+    /* XXX: Hardcoded DMA retry count
+     * Initialize some of the dma structures */
     qdma->main_dma.dma_typeSize = E4_DMA_TYPE_SIZE (
 	    sizeof(mca_ptl_base_ack_header_t),
 	    DMA_DataTypeByte, DMA_QueueWrite, 16);
@@ -932,6 +953,19 @@ mca_ptl_elan_start_ack ( mca_ptl_base_module_t * ptl,
     qdma->main_dma.dma_cookie = elan4_local_cookie (
 	    elan_ptl->queue->tx_cpool, 
 	    E4_COOKIE_TYPE_LOCAL_DMA, destvp);
+    qdma->main_dma.dma_srcAddr = elan4_main2elan(ctx, (void *) hdr);
+    qdma->main_dma.dma_srcEvent= elan4_main2elan(ctx, qdma->comp_event);
+#else
+    /* Filling up QDMA descriptor */
+    qdma->main_dma.dma_typeSize = E4_DMA_TYPE_SIZE (
+	    sizeof(mca_ptl_base_ack_header_t),
+	    DMA_DataTypeByte, DMA_QueueWrite, 16);
+    qdma->main_dma.dma_vproc = destvp;
+    qdma->main_dma.dma_cookie = elan4_local_cookie (
+	    elan_ptl->queue->tx_cpool, 
+	    E4_COOKIE_TYPE_LOCAL_DMA, destvp);
+    qdma->main_dma.dma_srcAddr = elan4_main2elan(ctx, (void*)hdr);
+#endif
 
     /* Make main memory coherent with IO domain (IA64) */
     MEMBAR_VISIBLE ();
@@ -1068,7 +1102,14 @@ mca_ptl_elan_update_desc (struct mca_ptl_elan_module_t *ptl)
 		    header->hdr_common.hdr_flags,
 		    header->hdr_common.hdr_size);
 
-	frag = (mca_ptl_elan_send_frag_t *)header->hdr_frag.hdr_src_ptr.pval; 
+	/* FIXME: To handle other different types of headers
+	 * and use a simplied way checking completion */
+	if (header->hdr_common.hdr_type == MCA_PTL_HDR_TYPE_ACK) {
+	    frag = ((mca_ptl_elan_ack_header_t*)header)->frag;
+	} else {
+	    frag = (mca_ptl_elan_send_frag_t *)
+		header->hdr_frag.hdr_src_ptr.pval; 
+	}
 	basic = (ompi_ptl_elan_base_desc_t*)frag->desc;
 
 	/* XXX: please reset additional chained event for put/get desc */
