@@ -264,7 +264,7 @@ static mca_pml_base_recv_request_t *mca_ptl_base_check_wild_receives_for_match(
             wild_recv = (mca_pml_base_recv_request_t *) 
             ((ompi_list_item_t *)wild_recv)->ompi_list_next) {
 
-        recv_tag = wild_recv->super.req_tag;
+        recv_tag = wild_recv->req_base.req_tag;
         if ( 
                 /* exact tag match */
                 (frag_tag == recv_tag) ||
@@ -332,7 +332,7 @@ static mca_pml_base_recv_request_t *mca_ptl_base_check_specific_receives_for_mat
         /*
          * Check for a match
          */
-        recv_tag = specific_recv->super.req_tag;
+        recv_tag = specific_recv->req_base.req_tag;
         if ( (frag_tag == recv_tag) ||
              ( (recv_tag == OMPI_ANY_TAG) && (0 <= frag_tag) ) ) {
 
@@ -391,8 +391,8 @@ static mca_pml_base_recv_request_t *mca_ptl_base_check_specific_and_wild_receive
     wild_recv = (mca_pml_base_recv_request_t *) 
             ompi_list_get_first(&(pml_comm->c_wild_receives));
 
-    specific_recv_seq = specific_recv->super.req_sequence;
-    wild_recv_seq = wild_recv->super.req_sequence;
+    specific_recv_seq = specific_recv->req_base.req_sequence;
+    wild_recv_seq = wild_recv->req_base.req_sequence;
 
     while (true) {
         if (wild_recv_seq < specific_recv_seq) {
@@ -402,7 +402,7 @@ static mca_pml_base_recv_request_t *mca_ptl_base_check_specific_and_wild_receive
             /*
              * try and match
              */
-            wild_recv_tag = wild_recv->super.req_tag;
+            wild_recv_tag = wild_recv->req_base.req_tag;
             if ( (frag_tag == wild_recv_tag) ||
                  ( (wild_recv_tag == OMPI_ANY_TAG) && (0 <= frag_tag) ) ) {
                     
@@ -441,13 +441,13 @@ static mca_pml_base_recv_request_t *mca_ptl_base_check_specific_and_wild_receive
              * Get the sequence number for this recv, and go
              * back to the top of the loop.
              */
-            wild_recv_seq = wild_recv->super.req_sequence;
+            wild_recv_seq = wild_recv->req_base.req_sequence;
 
         } else {
             /*
              * specific recv is earlier than the wild one.
              */
-            specific_recv_tag=specific_recv->super.req_tag;
+            specific_recv_tag=specific_recv->req_base.req_tag;
             if ( (frag_tag == specific_recv_tag) ||
                  ( (specific_recv_tag == OMPI_ANY_TAG) && (0<=frag_tag)) ) 
             {
@@ -486,7 +486,7 @@ static mca_pml_base_recv_request_t *mca_ptl_base_check_specific_and_wild_receive
              * Get the sequence number for this recv, and go
              * back to the top of the loop.
              */
-            specific_recv_seq = specific_recv->super.req_sequence;
+            specific_recv_seq = specific_recv->req_base.req_sequence;
         }
     }
 }
@@ -545,7 +545,7 @@ static void mca_ptl_base_check_cantmatch_for_match(ompi_list_t *additional_match
             /*
              * If the message has the next expected seq from that proc...
              */
-            frag_seq=frag_desc->super.frag_header.hdr_match.hdr_msg_seq;
+            frag_seq=frag_desc->frag_base.frag_header.hdr_match.hdr_msg_seq;
             if (frag_seq == next_msg_seq_expected) {
 
                 /* We're now expecting the next sequence number. */
@@ -564,7 +564,7 @@ static void mca_ptl_base_check_cantmatch_for_match(ompi_list_t *additional_match
                  * check to see if this frag matches a posted message
                  */
                 matched_receive = mca_ptl_base_check_receives_for_match(
-                       &frag_desc->super.frag_header.hdr_match, pml_comm);
+                       &frag_desc->frag_base.frag_header.hdr_match, pml_comm);
 
                 /* if match found, process data */
                 if (matched_receive) {

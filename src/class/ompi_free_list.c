@@ -48,7 +48,9 @@ int ompi_free_list_init(
     flist->fl_num_allocated = 0;
     flist->fl_num_per_alloc = num_elements_per_alloc;
     flist->fl_mpool = mpool;
-    return ompi_free_list_grow(flist, num_elements_to_alloc);
+    if(num_elements_to_alloc)
+        return ompi_free_list_grow(flist, num_elements_to_alloc);
+    return OMPI_SUCCESS;
 }
 
 

@@ -20,6 +20,7 @@ extern ompi_class_t mca_pml_teg_ptl_array_t_class;
 struct mca_ptl_proc_t {
     int ptl_weight;                       /**< PTL weight for scheduling */
     struct mca_ptl_base_peer_t* ptl_peer; /**< PTL addressing info */
+    struct mca_pml_base_ptl_t* ptl_base;  /**< PML specific PTL info */
     mca_ptl_t *ptl;                       /**< PTL implementation */
 };
 typedef struct mca_ptl_proc_t mca_ptl_proc_t;

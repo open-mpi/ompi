@@ -12,10 +12,10 @@
 #include "ptl_tcp_proc.h"
 #include "ptl_tcp_sendfrag.h"
 
-#define frag_header     super.super.frag_header
-#define frag_owner      super.super.frag_owner
-#define frag_peer       super.super.frag_peer
-#define frag_convertor  super.super.frag_convertor
+#define frag_header     frag_send.frag_base.frag_header
+#define frag_owner      frag_send.frag_base.frag_owner
+#define frag_peer       frag_send.frag_base.frag_peer
+#define frag_convertor  frag_send.frag_base.frag_convertor
 
 
 static void mca_ptl_tcp_send_frag_construct(mca_ptl_tcp_send_frag_t* frag);
@@ -70,12 +70,12 @@ int mca_ptl_tcp_send_frag_init(
         hdr->hdr_frag.hdr_src_ptr.lval = 0; /* for VALGRIND/PURIFY - REPLACE WITH MACRO */
         hdr->hdr_frag.hdr_src_ptr.pval = sendfrag;
         hdr->hdr_frag.hdr_dst_ptr.lval = 0;
-        hdr->hdr_match.hdr_contextid = sendreq->super.req_comm->c_contextid;
-        hdr->hdr_match.hdr_src = sendreq->super.req_comm->c_my_rank;
-        hdr->hdr_match.hdr_dst = sendreq->super.req_peer;
-        hdr->hdr_match.hdr_tag = sendreq->super.req_tag;
+        hdr->hdr_match.hdr_contextid = sendreq->req_base.req_comm->c_contextid;
+        hdr->hdr_match.hdr_src = sendreq->req_base.req_comm->c_my_rank;
+        hdr->hdr_match.hdr_dst = sendreq->req_base.req_peer;
+        hdr->hdr_match.hdr_tag = sendreq->req_base.req_tag;
         hdr->hdr_match.hdr_msg_length = sendreq->req_bytes_packed;
-        hdr->hdr_match.hdr_msg_seq = sendreq->super.req_sequence;
+        hdr->hdr_match.hdr_msg_seq = sendreq->req_base.req_sequence;
     } else {
         hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_FRAG;
         hdr->hdr_common.hdr_flags = flags;
@@ -105,9 +105,9 @@ int mca_ptl_tcp_send_frag_init(
             ompi_convertor_init_for_send( 
                 convertor,
                 0, 
-                sendreq->super.req_datatype,
-                sendreq->super.req_count,
-                sendreq->super.req_addr,
+                sendreq->req_base.req_datatype,
+                sendreq->req_base.req_count,
+                sendreq->req_base.req_addr,
                 offset);
         }
 
@@ -129,9 +129,9 @@ int mca_ptl_tcp_send_frag_init(
 
     /* fragment state */
     sendfrag->frag_owner = &ptl_peer->peer_ptl->super;
-    sendfrag->super.frag_request = sendreq;
-    sendfrag->super.super.frag_addr = sendfrag->frag_vec[1].iov_base;
-    sendfrag->super.super.frag_size = size_out;
+    sendfrag->frag_send.frag_request = sendreq;
+    sendfrag->frag_send.frag_base.frag_addr = sendfrag->frag_vec[1].iov_base;
+    sendfrag->frag_send.frag_base.frag_size = size_out;
 
     sendfrag->frag_peer = ptl_peer;
     sendfrag->frag_vec_ptr = sendfrag->frag_vec;

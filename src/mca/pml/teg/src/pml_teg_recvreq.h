@@ -58,8 +58,8 @@ void mca_pml_teg_recv_request_match_specific(mca_pml_base_recv_request_t* reques
  */
 static inline int mca_pml_teg_recv_request_start(mca_pml_base_recv_request_t* request)
 {
-    request->super.super.req_state = OMPI_REQUEST_ACTIVE;
-    if(request->super.req_peer == OMPI_ANY_SOURCE) {
+    request->req_base.req_ompi.req_state = OMPI_REQUEST_ACTIVE;
+    if(request->req_base.req_peer == OMPI_ANY_SOURCE) {
         mca_pml_teg_recv_request_match_wild(request);
     } else {
         mca_pml_teg_recv_request_match_specific(request);
@@ -71,14 +71,16 @@ static inline int mca_pml_teg_recv_request_start(mca_pml_base_recv_request_t* re
  *  Update status of a recv request based on the completion status of 
  *  the receive fragment.
  *
- *  @param ptl (IN)      The PTL pointer.
- *  @param request (IN)  Receive request.
- *  @param frag (IN)     Receive fragment.
+ *  @param ptl (IN)              The PTL pointer.
+ *  @param request (IN)          Receive request.
+ *  @param bytes_received (IN)   Bytes received from peer.
+ *  @param bytes_delivered (IN)  Bytes delivered to application.
  */
 void mca_pml_teg_recv_request_progress(
     struct mca_ptl_t* ptl,
     mca_pml_base_recv_request_t* request,
-    mca_ptl_base_recv_frag_t* frag
+    size_t bytes_received,
+    size_t bytes_delivered
 );
 
 #endif

@@ -61,8 +61,29 @@ int ompi_free_list_grow(ompi_free_list_t* flist, size_t num_elements);
 } 
 
 
+#define OMPI_FREE_LIST_WAIT(fl, item, rc) \
+{ \
+    if(ompi_using_threads()) { \
+        ompi_mutex_lock(&((fl)->fl_lock)); \
+        item = ompi_list_remove_first(&((fl)->super)); \
+        if(NULL == item) { \
+            ompi_free_list_grow((fl), (fl)->fl_num_per_alloc); \
+            item = ompi_list_remove_first(&((fl)->super)); \
+        } \
+        ompi_mutex_unlock(&((fl)->fl_lock)); \
+    } else { \
+        item = ompi_list_remove_first(&((fl)->super)); \
+        if(NULL == item) { \
+            ompi_free_list_grow((fl), (fl)->fl_num_per_alloc); \
+            item = ompi_list_remove_first(&((fl)->super)); \
+        } \
+    }  \
+    rc = (NULL == item) ?  OMPI_ERR_TEMP_OUT_OF_RESOURCE : OMPI_SUCCESS; \
+} 
+
+
 #define OMPI_FREE_LIST_RETURN(fl, item) \
-    THREAD_SCOPED_LOCK(&((fl)->fl_lock), ompi_list_append(&((fl)->super), (item))); 
+    THREAD_SCOPED_LOCK(&((fl)->fl_lock), ompi_list_prepend(&((fl)->super), (item))); 
 
 #endif 
 

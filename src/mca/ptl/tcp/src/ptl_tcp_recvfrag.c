@@ -54,12 +54,12 @@ static void mca_ptl_tcp_recv_frag_destruct(mca_ptl_tcp_recv_frag_t* frag)
 
 void mca_ptl_tcp_recv_frag_init(mca_ptl_tcp_recv_frag_t* frag, mca_ptl_base_peer_t* peer)
 {
-    frag->super.super.frag_owner = &peer->peer_ptl->super;
-    frag->super.super.frag_addr = NULL;
-    frag->super.super.frag_size = 0;
-    frag->super.super.frag_peer = peer;
-    frag->super.frag_request = 0;
-    frag->super.frag_is_buffered = false;
+    frag->frag_recv.frag_base.frag_owner = &peer->peer_ptl->super;
+    frag->frag_recv.frag_base.frag_addr = NULL;
+    frag->frag_recv.frag_base.frag_size = 0;
+    frag->frag_recv.frag_base.frag_peer = peer;
+    frag->frag_recv.frag_request = 0;
+    frag->frag_recv.frag_is_buffered = false;
     frag->frag_hdr_cnt = 0;
     frag->frag_msg_cnt = 0;
     frag->frag_ack_pending = false;
@@ -78,7 +78,7 @@ bool mca_ptl_tcp_recv_frag_handler(mca_ptl_tcp_recv_frag_t* frag, int sd)
         if(mca_ptl_tcp_recv_frag_header(frag, sd, sizeof(mca_ptl_base_header_t)) == false)
             return false;
 
-    switch(frag->super.super.frag_header.hdr_common.hdr_type) {
+    switch(frag->frag_recv.frag_base.frag_header.hdr_common.hdr_type) {
     case MCA_PTL_HDR_TYPE_MATCH:
          return mca_ptl_tcp_recv_frag_match(frag, sd);
     case MCA_PTL_HDR_TYPE_FRAG:
@@ -88,7 +88,7 @@ bool mca_ptl_tcp_recv_frag_handler(mca_ptl_tcp_recv_frag_t* frag, int sd)
         return mca_ptl_tcp_recv_frag_ack(frag, sd);
     default:
         ompi_output(0, "mca_ptl_tcp_recv_frag_handler: invalid message type: %08X", 
-            *(unsigned long*)&frag->super.super.frag_header);
+            *(unsigned long*)&frag->frag_recv.frag_base.frag_header);
          return false;
     }
 }
@@ -100,11 +100,11 @@ bool mca_ptl_tcp_recv_frag_handler(mca_ptl_tcp_recv_frag_t* frag, int sd)
 static bool mca_ptl_tcp_recv_frag_header(mca_ptl_tcp_recv_frag_t* frag, int sd, size_t size)
 {
     /* non-blocking read - continue if interrupted, otherwise wait until data available */
-    unsigned char* ptr = (unsigned char*)&frag->super.super.frag_header;
+    unsigned char* ptr = (unsigned char*)&frag->frag_recv.frag_base.frag_header;
     while(frag->frag_hdr_cnt < size) {
         int cnt = recv(sd, ptr + frag->frag_hdr_cnt, size - frag->frag_hdr_cnt, 0);
         if(cnt == 0) {
-            mca_ptl_tcp_peer_close(frag->super.super.frag_peer);
+            mca_ptl_tcp_peer_close(frag->frag_recv.frag_base.frag_peer);
             OMPI_FREE_LIST_RETURN(&mca_ptl_tcp_module.tcp_recv_frags, (ompi_list_item_t*)frag);
             return false;
         }
@@ -117,7 +117,7 @@ static bool mca_ptl_tcp_recv_frag_header(mca_ptl_tcp_recv_frag_t* frag, int sd, 
                 return false;
             default:
                 ompi_output(0, "mca_ptl_tcp_recv_frag_header: recv() failed with errno=%d", errno);
-                mca_ptl_tcp_peer_close(frag->super.super.frag_peer);
+                mca_ptl_tcp_peer_close(frag->frag_recv.frag_base.frag_peer);
                 OMPI_FREE_LIST_RETURN(&mca_ptl_tcp_module.tcp_recv_frags, (ompi_list_item_t*)frag);
                 return false;
             }
@@ -139,11 +139,11 @@ static bool mca_ptl_tcp_recv_frag_ack(mca_ptl_tcp_recv_frag_t* frag, int sd)
 {
     mca_ptl_tcp_send_frag_t* sendfrag;
     mca_pml_base_send_request_t* sendreq;
-    sendfrag = (mca_ptl_tcp_send_frag_t*)frag->super.super.frag_header.hdr_ack.hdr_src_ptr.pval;
-    sendreq = sendfrag->super.frag_request;
-    sendreq->req_peer_match = frag->super.super.frag_header.hdr_ack.hdr_dst_match;
+    sendfrag = (mca_ptl_tcp_send_frag_t*)frag->frag_recv.frag_base.frag_header.hdr_ack.hdr_src_ptr.pval;
+    sendreq = sendfrag->frag_send.frag_request;
+    sendreq->req_peer_match = frag->frag_recv.frag_base.frag_header.hdr_ack.hdr_dst_match;
     mca_ptl_tcp_send_frag_progress(sendfrag);
-    mca_ptl_tcp_recv_frag_return(frag->super.super.frag_owner, frag);
+    mca_ptl_tcp_recv_frag_return(frag->frag_recv.frag_base.frag_owner, frag);
     return true;
 }
 
@@ -155,35 +155,40 @@ static bool mca_ptl_tcp_recv_frag_ack(mca_ptl_tcp_recv_frag_t* frag, int sd)
 static bool mca_ptl_tcp_recv_frag_match(mca_ptl_tcp_recv_frag_t* frag, int sd)
 {
     /* first pass through - attempt a match */
-    if(NULL == frag->super.frag_request && 0 == frag->frag_msg_cnt) {
+    if(NULL == frag->frag_recv.frag_request && 0 == frag->frag_msg_cnt) {
         /* attempt to match a posted recv */
-        if(mca_ptl_base_recv_frag_match( frag->super.super.frag_owner, &frag->super, &frag->super.super.frag_header.hdr_match)) {
+        if (mca_ptl_base_recv_frag_match( 
+            frag->frag_recv.frag_base.frag_owner, 
+            &frag->frag_recv, 
+            &frag->frag_recv.frag_base.frag_header.hdr_match)) {
             mca_ptl_tcp_recv_frag_matched(frag);
         } else {
             /* match was not made - so allocate buffer for eager send */
-            if(frag->super.super.frag_header.hdr_frag.hdr_frag_length > 0) {
-                frag->super.super.frag_addr = malloc(frag->super.super.frag_header.hdr_frag.hdr_frag_length);
-                frag->super.super.frag_size = frag->super.super.frag_header.hdr_frag.hdr_frag_length;
-                frag->super.frag_is_buffered = true;
+            if(frag->frag_recv.frag_base.frag_header.hdr_frag.hdr_frag_length > 0) {
+                frag->frag_recv.frag_base.frag_addr = 
+                    malloc(frag->frag_recv.frag_base.frag_header.hdr_frag.hdr_frag_length);
+                frag->frag_recv.frag_base.frag_size = 
+                    frag->frag_recv.frag_base.frag_header.hdr_frag.hdr_frag_length;
+                frag->frag_recv.frag_is_buffered = true;
             }
         }
     } 
 
     /* receive fragment data */
-    if(frag->frag_msg_cnt < frag->super.super.frag_size) {
+    if(frag->frag_msg_cnt < frag->frag_recv.frag_base.frag_size) {
         if(mca_ptl_tcp_recv_frag_data(frag, sd) == false) {
             return false;
         }
     }
 
     /* discard any data that exceeds the posted receive */
-    if(frag->frag_msg_cnt < frag->super.super.frag_header.hdr_frag.hdr_frag_length)
+    if(frag->frag_msg_cnt < frag->frag_recv.frag_base.frag_header.hdr_frag.hdr_frag_length)
         if(mca_ptl_tcp_recv_frag_discard(frag, sd) == false) {
             return false;
     }
 
     /* if fragment has already been matched - go ahead and process */
-    if (NULL != frag->super.frag_request) 
+    if (NULL != frag->frag_recv.frag_request) 
         mca_ptl_tcp_recv_frag_progress(frag);
     return true;
 }
@@ -197,17 +202,17 @@ static bool mca_ptl_tcp_recv_frag_frag(mca_ptl_tcp_recv_frag_t* frag, int sd)
 {
     /* get request from header */
     if(frag->frag_msg_cnt == 0) {
-        frag->super.frag_request = frag->super.super.frag_header.hdr_frag.hdr_dst_ptr.pval;
+        frag->frag_recv.frag_request = frag->frag_recv.frag_base.frag_header.hdr_frag.hdr_dst_ptr.pval;
         mca_ptl_tcp_recv_frag_matched(frag);
     }
 
     /* continue to receive user data */
-    if(frag->frag_msg_cnt < frag->super.super.frag_size) {
+    if(frag->frag_msg_cnt < frag->frag_recv.frag_base.frag_size) {
         if(mca_ptl_tcp_recv_frag_data(frag, sd) == false)
             return false;
     }
 
-    if(frag->frag_msg_cnt < frag->super.super.frag_header.hdr_frag.hdr_frag_length)
+    if(frag->frag_msg_cnt < frag->frag_recv.frag_base.frag_header.hdr_frag.hdr_frag_length)
         if(mca_ptl_tcp_recv_frag_discard(frag, sd) == false)
             return false;
 
@@ -224,11 +229,11 @@ static bool mca_ptl_tcp_recv_frag_frag(mca_ptl_tcp_recv_frag_t* frag, int sd)
 
 static bool mca_ptl_tcp_recv_frag_data(mca_ptl_tcp_recv_frag_t* frag, int sd)
 {
-    while(frag->frag_msg_cnt < frag->super.super.frag_size) {
-        int cnt = recv(sd, (unsigned char*)frag->super.super.frag_addr+frag->frag_msg_cnt,  
-            frag->super.super.frag_size-frag->frag_msg_cnt, 0);
+    while(frag->frag_msg_cnt < frag->frag_recv.frag_base.frag_size) {
+        int cnt = recv(sd, (unsigned char*)frag->frag_recv.frag_base.frag_addr+frag->frag_msg_cnt,  
+            frag->frag_recv.frag_base.frag_size-frag->frag_msg_cnt, 0);
         if(cnt == 0) {
-            mca_ptl_tcp_peer_close(frag->super.super.frag_peer);
+            mca_ptl_tcp_peer_close(frag->frag_recv.frag_base.frag_peer);
             OMPI_FREE_LIST_RETURN(&mca_ptl_tcp_module.tcp_recv_frags, (ompi_list_item_t*)frag);
             return false;
         }
@@ -240,7 +245,7 @@ static bool mca_ptl_tcp_recv_frag_data(mca_ptl_tcp_recv_frag_t* frag, int sd)
                 return false;
             default:
                 ompi_output(0, "mca_ptl_tcp_recv_frag_data: recv() failed with errno=%d", errno);
-                mca_ptl_tcp_peer_close(frag->super.super.frag_peer);
+                mca_ptl_tcp_peer_close(frag->frag_recv.frag_base.frag_peer);
                 OMPI_FREE_LIST_RETURN(&mca_ptl_tcp_module.tcp_recv_frags, (ompi_list_item_t*)frag);
                 return false;
             }
@@ -261,13 +266,13 @@ static bool mca_ptl_tcp_recv_frag_data(mca_ptl_tcp_recv_frag_t* frag, int sd)
 
 static bool mca_ptl_tcp_recv_frag_discard(mca_ptl_tcp_recv_frag_t* frag, int sd)
 {
-    while(frag->frag_msg_cnt < frag->super.super.frag_header.hdr_frag.hdr_frag_length) {
-        size_t count = frag->super.super.frag_header.hdr_frag.hdr_frag_length - frag->frag_msg_cnt;
+    while(frag->frag_msg_cnt < frag->frag_recv.frag_base.frag_header.hdr_frag.hdr_frag_length) {
+        size_t count = frag->frag_recv.frag_base.frag_header.hdr_frag.hdr_frag_length - frag->frag_msg_cnt;
         void *rbuf = malloc(count);
         int cnt = recv(sd, rbuf, count, 0);
         free(rbuf);
         if(cnt == 0) {
-            mca_ptl_tcp_peer_close(frag->super.super.frag_peer);
+            mca_ptl_tcp_peer_close(frag->frag_recv.frag_base.frag_peer);
             OMPI_FREE_LIST_RETURN(&mca_ptl_tcp_module.tcp_recv_frags, (ompi_list_item_t*)frag);
             return false;
         }
@@ -280,7 +285,7 @@ static bool mca_ptl_tcp_recv_frag_discard(mca_ptl_tcp_recv_frag_t* frag, int sd)
                 return false;
             default:
                 ompi_output(0, "mca_ptl_tcp_recv_frag_discard: recv() failed with errno=%d", errno);
-                mca_ptl_tcp_peer_close(frag->super.super.frag_peer);
+                mca_ptl_tcp_peer_close(frag->frag_recv.frag_base.frag_peer);
                 OMPI_FREE_LIST_RETURN(&mca_ptl_tcp_module.tcp_recv_frags, (ompi_list_item_t*)frag);
                 return false;
             }

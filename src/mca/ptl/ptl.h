@@ -299,66 +299,102 @@ typedef int (*mca_ptl_base_del_procs_fn_t)(
 );
 
 /**
- * PML->PTL Allocate a send request from the PTL modules free list.
+ * PML->PTL Initialize a send request for use by the PTL. 
  *
  * @param ptl (IN)       PTL instance
  * @param request (OUT)  Pointer to allocated request.
- * @return               Status indicating if allocation was successful.
  *
- * To reduce latency (number of required allocations), a derived
- * type of mca_pml_base_send_request_t is obtained from the PTL that
- * is selected to send the first fragment. The derived type should contain
- * space for the base request structure, the PTL first fragment,
- * and any other required buffer space.
+ * To reduce latency (number of required allocations), the PML allocates additional
+ * space along w/ each request - that may be used by the PTL for additional control
+ * information (e.g. first fragment descriptor).
+ * 
+ * The init function is called the first time the request is ued by the PTL. On 
+ * completion of the request - the PML will cache the request for later use by the
+ * same PTL. When the request is re-used from the cache, the init function is NOT
+ * called for subsequent sends.
  */
-typedef int (*mca_ptl_base_request_alloc_fn_t)(
+typedef void (*mca_ptl_base_request_init_fn_t)(
     struct mca_ptl_t* ptl, 
-    struct mca_pml_base_send_request_t** request
+    struct mca_pml_base_send_request_t* request
 );
 
+
 /**
- * PML->PTL Return a send request to the PTL modules free list.
+ * PML->PTL Cleanup any resources that may have been associated with the
+ *          request by the PTL.
  *
  * @param ptl (IN)       PTL instance
- * @param request (IN)   Pointer to allocated request.
+ * @param request (OUT)  Pointer to allocated request.
  *
- * Called when the request has been completed at both the MPI
- * and PML layers.
+ * The fini function is called when the PML removes a request from the PTLs
+ * cache (due to resource constraints) or reaching cache limit, prior to re-using 
+ * the request for another PTL. This provides the PTL the chance to cleanup/release 
+ * any resources cached on the send descriptor by the PTL.
  */
-typedef void (*mca_ptl_base_request_return_fn_t)(
+
+typedef void (*mca_ptl_base_request_fini_fn_t)(
     struct mca_ptl_t* ptl, 
     struct mca_pml_base_send_request_t* request
 );
 
 /**
- * PML->PTL Initiate a send/put to the peer.
+ * PML->PTL Initiate a send to the peer.
  *
  * @param ptl (IN)               PTL instance
  * @param ptl_base_peer (IN)     PTL peer addressing
- * @param request (IN)           Send request 
+ * @param request (IN)           Send request
  * @param offset                 Current offset into packed/contiguous buffer.
- * @param size (IN/OUT)          Number of bytes PML is requesting PTL to deliver, 
+ * @param size (IN/OUT)          Number of bytes PML is requesting PTL to deliver,
  *                               PTL returns number of bytes sucessfully fragmented
  * @param flags (IN)             Flags that should be passed to the peer via the message header.
  * @param request (OUT)          OMPI_SUCCESS if the PTL was able to queue one or more fragments
  *
  * The PML implements a rendevouz protocol, with up to the PTL defined threshold
- * bytes of the message sent in eager send mode. On receipt of an acknowledgment
- * from the peer, the PML will schedule the remaining fragments. If the PTL supports
- * RDMA functionality, these subsequent transfers may use RDMA put semantics.
+ * bytes of the message sent in eager send mode.
  *
  * If the PTL is unable to fragment the requested size, possibly due to resource
- * constraints or datatype alighnment/offset, it should return the number of bytes 
+ * constraints or datatype alighnment/offset, it should return the number of bytes
  * actually fragmented in the size parameter.
  */
-typedef int (*mca_ptl_base_put_fn_t)(
-    struct mca_ptl_t* ptl, 
-    struct mca_ptl_base_peer_t* ptl_base_peer, 
+typedef int (*mca_ptl_base_send_fn_t)(
+    struct mca_ptl_t* ptl,
+    struct mca_ptl_base_peer_t* ptl_base_peer,
     struct mca_pml_base_send_request_t* request,
     size_t offset,
     size_t size,
     int flags
 );
+                                                                                                                       
+/**
+ * PML->PTL Initiate a put to the peer.
+ *
+ * @param ptl (IN)               PTL instance
+ * @param ptl_base_peer (IN)     PTL peer addressing
+ * @param request (IN)           Send request
+ * @param offset                 Current offset into packed/contiguous buffer.
+ * @param size (IN/OUT)          Number of bytes PML is requesting PTL to deliver,
+ *                               PTL returns number of bytes sucessfully fragmented
+ * @param flags (IN)             Flags that should be passed to the peer via the message header.
+ * @param request (OUT)          OMPI_SUCCESS if the PTL was able to queue one or more fragments
+ *
+ * The PML implements a rendevouz protocol, with up to the PTL defined threshold
+ * bytes of the message sent in eager send mode (via mca_ptl_base_send_fn_t). On receipt
+ * of an acknowledgment from the peer, the PML will schedule the remaining fragments. If
+ * the PTL supports RDMA functionality, these subsequent transfers may use RDMA put semantics.
+ *
+ * If the PTL is unable to fragment the requested size, possibly due to resource
+ * constraints or datatype alighnment/offset, it should return the number of bytes
+ * actually fragmented in the size parameter.
+ */
+typedef int (*mca_ptl_base_put_fn_t)(
+    struct mca_ptl_t* ptl,
+    struct mca_ptl_base_peer_t* ptl_base_peer,
+    struct mca_pml_base_send_request_t* request,
+    size_t offset,
+    size_t size,
+    int flags
+);
+
 
 /**
  * PML->PTL Initiate a get from a peer.
@@ -429,14 +465,16 @@ typedef void (*mca_ptl_base_matched_fn_t)(
  * PTL->PML Notification from the PTL to the PML that a fragment
  * has completed (e.g. been successfully delivered into users buffer)
  *
- * @param ptr(IN)             PTL instance
- * @param recv_request (IN)   Receive Request
- * @param recv_frag (IN)      Receive Fragment
+ * @param ptr(IN)               PTL instance
+ * @param recv_request (IN)     Receive Request
+ * @param bytes_received (IN)   Number of bytes received from peer.
+ * @param bytes_delivered (IN)  Number of bytes delivered to application.
  */
 typedef void (*mca_ptl_base_recv_progress_fn_t)(
     struct mca_ptl_t* ptl,
     struct mca_pml_base_recv_request_t* recv_request,
-    struct mca_ptl_base_recv_frag_t* recv_frag
+    size_t bytes_received,
+    size_t bytes_delivered
 );
 
 /**
@@ -445,34 +483,13 @@ typedef void (*mca_ptl_base_recv_progress_fn_t)(
  *
  * @param ptr(IN)             PTL instance
  * @param send_request (IN)   Send Request
- * @param send_frag (IN)      Send Fragment
+ * @param bytes_sent (IN)     Number of bytes sent to peer.
  */
 typedef void (*mca_ptl_base_send_progress_fn_t)(
     struct mca_ptl_t* ptl,
     struct mca_pml_base_send_request_t* send_request,
-    struct mca_ptl_base_send_frag_t* send_frag
+    size_t bytes_sent
 );
-
-/**
- * PTL function list. They are mainly used for the stack-based approach on the
- * profilling PTL.
- */
-struct mca_ptl_functions_t {
-    /* PML->PTL function table */
-    mca_ptl_base_add_procs_fn_t        ptl_add_procs;
-    mca_ptl_base_del_procs_fn_t        ptl_del_procs;
-    mca_ptl_base_finalize_fn_t         ptl_finalize;
-    mca_ptl_base_put_fn_t              ptl_put;
-    mca_ptl_base_get_fn_t              ptl_get;
-    mca_ptl_base_matched_fn_t          ptl_matched;
-    mca_ptl_base_request_alloc_fn_t    ptl_request_alloc;
-    mca_ptl_base_request_return_fn_t   ptl_request_return;
-    /* PTL->PML function table - filled in by PML at init */
-    mca_ptl_base_match_fn_t            ptl_match;
-    mca_ptl_base_send_progress_fn_t    ptl_send_progress;
-    mca_ptl_base_recv_progress_fn_t    ptl_recv_progress;
-};
-typedef struct mca_ptl_functions_t mca_ptl_functions_t;
 
 /**
  * PTL instance interface functions and attributes.
@@ -481,6 +498,8 @@ struct mca_ptl_t {
 
     /* PTL common attributes */
     mca_ptl_base_module_t* ptl_module; /**< pointer back to the PTL module structure */
+    size_t      ptl_cache_size;        /**< maximum size of request cache for this PTL */
+    size_t      ptl_cache_bytes;       /**< number of bytes required by PTL for request cache */
     size_t      ptl_first_frag_size;   /**< maximum size of first fragment -- eager send */
     size_t      ptl_min_frag_size;     /**< threshold below which the PTL will not fragment */
     size_t      ptl_max_frag_size;     /**< maximum fragment size supported by the PTL */
@@ -493,11 +512,12 @@ struct mca_ptl_t {
     mca_ptl_base_add_procs_fn_t        ptl_add_procs;
     mca_ptl_base_del_procs_fn_t        ptl_del_procs;
     mca_ptl_base_finalize_fn_t         ptl_finalize;
+    mca_ptl_base_send_fn_t             ptl_send;
     mca_ptl_base_put_fn_t              ptl_put;
     mca_ptl_base_get_fn_t              ptl_get;
     mca_ptl_base_matched_fn_t          ptl_matched;
-    mca_ptl_base_request_alloc_fn_t    ptl_request_alloc;
-    mca_ptl_base_request_return_fn_t   ptl_request_return;
+    mca_ptl_base_request_init_fn_t     ptl_request_init;
+    mca_ptl_base_request_fini_fn_t     ptl_request_fini;
 
     /* PTL->PML function table - filled in by PML at init */
     mca_ptl_base_match_fn_t            ptl_match;
@@ -506,6 +526,9 @@ struct mca_ptl_t {
 
     /* Allow the canibalization of the PTL */
     struct mca_ptl_t*                  ptl_stack;
+
+    /* for use by PML only */
+    struct mca_pml_base_ptl_t*         ptl_base;
 };
 typedef struct mca_ptl_t mca_ptl_t;
 

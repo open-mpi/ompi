@@ -18,7 +18,7 @@ int mca_pml_teg_start(size_t count, ompi_request_t** requests)
          * when the request completes - and create a new request.
          */
 
-        switch(pml_request->super.req_state) {
+        switch(pml_request->req_ompi.req_state) {
             case OMPI_REQUEST_INVALID: 
                 return OMPI_ERR_REQUEST;
             case OMPI_REQUEST_INACTIVE:

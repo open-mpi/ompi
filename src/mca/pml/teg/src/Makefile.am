@@ -15,6 +15,8 @@ libmca_pml_teg_la_SOURCES = \
 	pml_teg_irecv.c \
 	pml_teg_isend.c \
 	pml_teg_module.c \
+	pml_teg_ptl.c \
+	pml_teg_ptl.h \
 	pml_teg_proc.c \
 	pml_teg_proc.h \
 	pml_teg_progress.c \

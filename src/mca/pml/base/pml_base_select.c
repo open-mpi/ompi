@@ -14,7 +14,6 @@
 
 typedef struct opened_module_t {
   ompi_list_item_t super;
-
   mca_pml_base_module_t *om_module;
 } opened_module_t;
 

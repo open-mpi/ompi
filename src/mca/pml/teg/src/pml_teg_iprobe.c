@@ -11,8 +11,8 @@ int mca_pml_teg_iprobe(
     int rc;
 
     mca_pml_base_recv_request_t recvreq;
-    recvreq.super.super.req_type = OMPI_REQUEST_PML;
-    recvreq.super.req_type = MCA_PML_REQUEST_IPROBE;
+    recvreq.req_base.req_ompi.req_type = OMPI_REQUEST_PML;
+    recvreq.req_base.req_type = MCA_PML_REQUEST_IPROBE;
     MCA_PML_BASE_RECV_REQUEST_INIT(
         &recvreq,
         NULL,
@@ -27,8 +27,8 @@ int mca_pml_teg_iprobe(
         OBJ_DESTRUCT(&recvreq);
         return rc;
     }
-    if((*matched = recvreq.super.req_mpi_done) == true && (NULL != status)) {
-        *status = recvreq.super.req_status;
+    if((*matched = recvreq.req_base.req_mpi_done) == true && (NULL != status)) {
+        *status = recvreq.req_base.req_status;
     }
     return OMPI_SUCCESS;
 }
@@ -42,8 +42,8 @@ int mca_pml_teg_probe(
 {
     int rc;
     mca_pml_base_recv_request_t recvreq;
-    recvreq.super.super.req_type = OMPI_REQUEST_PML;
-    recvreq.super.req_type = MCA_PML_REQUEST_PROBE;
+    recvreq.req_base.req_ompi.req_type = OMPI_REQUEST_PML;
+    recvreq.req_base.req_type = MCA_PML_REQUEST_PROBE;
     MCA_PML_BASE_RECV_REQUEST_INIT(
         &recvreq,
         NULL,
@@ -59,25 +59,25 @@ int mca_pml_teg_probe(
         return rc;
     }
 
-    if(recvreq.super.req_mpi_done == false) {
+    if(recvreq.req_base.req_mpi_done == false) {
         /* give up and sleep until completion */
         if(ompi_using_threads()) {
             ompi_mutex_lock(&mca_pml_teg.teg_request_lock);
             mca_pml_teg.teg_request_waiting++;
-            while(recvreq.super.req_mpi_done == false)
+            while(recvreq.req_base.req_mpi_done == false)
                 ompi_condition_wait(&mca_pml_teg.teg_request_cond, &mca_pml_teg.teg_request_lock);
             mca_pml_teg.teg_request_waiting--;
             ompi_mutex_unlock(&mca_pml_teg.teg_request_lock);
         } else {
             mca_pml_teg.teg_request_waiting++;
-            while(recvreq.super.req_mpi_done == false)
+            while(recvreq.req_base.req_mpi_done == false)
                 ompi_condition_wait(&mca_pml_teg.teg_request_cond, &mca_pml_teg.teg_request_lock);
             mca_pml_teg.teg_request_waiting--;
         }
     }
 
     if(NULL != status) {
-        *status = recvreq.super.req_status;
+        *status = recvreq.req_base.req_status;
     }
     return OMPI_SUCCESS;
 }

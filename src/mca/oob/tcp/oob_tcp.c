@@ -109,8 +109,10 @@ static int ompi_process_name_compare(ompi_process_name_t* n1, ompi_process_name_
 struct mca_oob_1_0_0_t* mca_oob_tcp_init(bool *allow_multi_user_threads,
                                          bool *have_hidden_threads)
 {
+#if 0
     /* initialize data structures */
     ompi_rb_tree_init(&mca_oob_tcp_module.tcp_peer_tree, (ompi_rb_tree_comp_fn_t)ompi_process_name_compare);
+#endif
     /* return &mca_oob_tcp; */
     return NULL;
 }
