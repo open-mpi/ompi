@@ -8,7 +8,7 @@
 #include <sys/types.h>
 #include <sys/mman.h>
 
-#include "constants.h"
+#include "include/constants.h"
 #include "event/event.h"
 #include "util/if.h"
 #include "util/argv.h"
@@ -184,12 +184,19 @@ mca_ptl_t** mca_ptl_sm_module_init(
     if(mca_ptl_sm_module_exchange() != OMPI_SUCCESS)
         return 0;
 
+    /* allocate the Shared Memory PTL.  Only one is being allocated */
     ptls = malloc(sizeof(mca_ptl_t*));
     if(NULL == ptls)
         return NULL;
 
     *ptls = &mca_ptl_sm.super;
     *num_ptls = 1;
+
+    /* initialize some PTL data */
+    /* start with no SM procs */
+    mca_ptl_sm.num_smp_procs=0;
+    mca_ptl_sm.my_smp_rank=-1;
+
     return ptls;
 }
 

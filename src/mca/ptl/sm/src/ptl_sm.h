@@ -82,6 +82,10 @@ extern int mca_ptl_sm_module_progress(
  */
 struct mca_ptl_sm_t {
     mca_ptl_t  super;       /**< base PTL interface */
+    int num_smp_procs;      /**< current number of smp procs on this
+                              host */
+    int my_smp_rank;    /**< My SMP process rank.  Used for accessing
+                         *   SMP specfic data structures. */
 };
 typedef struct mca_ptl_sm_t mca_ptl_sm_t;
 

@@ -4,7 +4,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/errno.h>
-#include "types.h"
+#include "include/types.h"
 #include "mca/pml/base/pml_base_sendreq.h"
 #include "ptl_sm.h"
 #include "ptl_sm_sendreq.h"
