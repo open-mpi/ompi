@@ -1,0 +1,10 @@
+# -*- shell-script -*-
+#
+# $HEADER$
+#
+
+# Specific to this module
+
+PARAM_INIT_FILE=ptl_mx.c
+PARAM_CONFIG_HEADER_FILE="mx_config.h"
+PARAM_CONFIG_FILES="Makefile"
