@@ -133,11 +133,22 @@ ompi_progress_events(int flag)
 }
 
 
+/*
+ * Progress the event library and any functions that have registered to 
+ * be called.  We don't propogate errors from the progress functions,
+ * so no action is taken if they return failures.  The functions are
+ * expected to return the number of events progressed, to determine
+ * whether or not we should call sched_yield() during MPI progress.
+ * This is only losely tracked, as an error return can cause the number
+ * of progressed events to appear lower than it actually is.  We don't
+ * care, as the cost of that happening is far outweighed by the cost
+ * of the if checks (they were resulting in bad pipe stalling behabior)
+ */
 void
 ompi_progress(void)
 {
     size_t i;
-    int ret, events = 0;
+    int events = 0;
 
 #if OMPI_HAVE_THREAD_SUPPORT
     /* NOTE: BWB - XXX - FIXME: Currently, there are some progress functions
@@ -159,21 +170,22 @@ ompi_progress(void)
        enabled */
     if (event_progress_counter-- <= 0 && ompi_progress_event_flag != 0) {
         event_progress_counter = event_progress_counter_reset;
-        ret = ompi_event_loop(ompi_progress_event_flag);
-        if (ret > 0) {
-            events += ret;
-        }
+        events += ompi_event_loop(ompi_progress_event_flag);
     }
 #endif
 
     /* progress all registered callbacks */
     for (i = 0 ; i < callbacks_len ; ++i) {
+#if OMPI_ENABLE_DEBUG    
         if (NULL != callbacks[i]) {
-            ret = (callbacks[i])();
-            if (ret > 0) {
-                events += ret;
-            }
-        }
+#endif
+            events += (callbacks[i])();
+#if OMPI_ENABLE_DEBUG
+        } else {
+            ompi_output(0, "WARNING: ompi_progess attempted to call NULL"
+                        " function at line %d, index %d.", __LINE__, i);
+        }  
+#endif
     }
 
 #if OMPI_HAVE_THREAD_SUPPORT
@@ -181,7 +193,7 @@ ompi_progress(void)
     ompi_atomic_unlock(&progress_lock);
 #endif  /* OMPI_HAVE_THREAD_SUPPORT */
 
-    if(call_yield && events == 0) {
+    if (call_yield && events <= 0) {
         /*
          * TSW - BWB - XXX - FIXME: this has a non-zero impact on
          * performance.  Evaluate reasonable defaults.
@@ -246,11 +258,16 @@ ompi_progress_unregister(ompi_progress_callback_t cb)
         if (cb == callbacks[i]) {
             callbacks[i] = NULL;
             ret = OMPI_SUCCESS;
-            goto cleanup;
+            break;
         }
     }
-
- cleanup:
+    
+    /* now tightly pack the array */
+    for ( ; i < callbacks_len - 1 ; ++i) {
+        callbacks[i] = callbacks[i + 1];
+    }
+    callbacks[callbacks_len - 1] = NULL;
+    callbacks_len--;
 
 #if OMPI_HAVE_THREAD_SUPPORT
     ompi_atomic_unlock(&progress_lock);
