@@ -10,11 +10,12 @@ noinst_LTLIBRARIES = libns.la
 # Source code files
 
 headers = \
-    name_server.h
+    base\base.h \
+    ns.h
 
 libns_la_SOURCES = \
     $(headers) \
-    name_server.c
+    replica/name_server.c
 
 # Conditionally install the header files
 

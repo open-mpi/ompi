@@ -26,7 +26,20 @@
 #include "class/ompi_list.h"
 
 #include "mca/mca.h"
-#include "mca/ns/base/base.h"
+
+
+/*
+ * general typedefs & structures
+ */
+typedef uint32_t ompi_process_id_t;  /**< Set the allowed range for id's in each space */
+                                                                                                                      
+
+struct ompi_process_name_t {
+    ompi_process_id_t cellid;  /**< Cell number */
+    ompi_process_id_t jobid; /**< Job number */
+    ompi_process_id_t procid;  /**< Process number */
+};
+typedef struct ompi_process_name_t ompi_process_name_t;
 
 
 /*
