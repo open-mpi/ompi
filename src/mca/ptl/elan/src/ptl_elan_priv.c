@@ -712,7 +712,6 @@ int
 mca_ptl_elan_wait_queue(mca_ptl_elan_module_t * ptl,
        	ompi_ptl_elan_recv_queue_t *rxq, long usecs)
 {
-    int     ret = 1;
     RAIL   *rail; 
     ELAN4_CTX  *ctx; 
     ADDR_SDRAM  ready;
@@ -731,8 +730,8 @@ mca_ptl_elan_wait_queue(mca_ptl_elan_module_t * ptl,
 	    rail, ctx, ready, ready);
 
     /* Poll for usec (at least one), then go to sleep. */
-    if (ret = elan4_pollevent_word(ctx, readyWord, usecs)) {
-	return ret;
+    if (elan4_pollevent_word(ctx, readyWord, usecs)) {
+	return 0xdeadbeef;
     }
 
     LOG_PRINT(PTL_ELAN_DEBUG_THREAD,
@@ -764,9 +763,8 @@ mca_ptl_elan_wait_queue(mca_ptl_elan_module_t * ptl,
 	OMPI_UNLOCK(&mca_ptl_elan_component.elan_lock);
     }
     END_FUNC(PTL_ELAN_DEBUG_THREAD);
-    return ret;
+    return 0xdeadbeef;
 }
-
 
 #if OMPI_PTL_ELAN_ENABLE_GET && defined (HAVE_GET_INTERFACE)
 int
