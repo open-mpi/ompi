@@ -6,6 +6,7 @@
 #define  OMPI_MUTEX_H 1
 
 #include "ompi_config.h"
+#include "include/sys/atomic.h"
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
@@ -213,6 +214,17 @@ static inline bool ompi_set_using_threads(bool have)
         }                                       \
     } while (0)
 
+
+/**
+ * Use an atomic operation for increment/decrement if ompi_using_threads()
+ * indicates that threads are in use by the application or library.
+ */
+
+#define OMPI_THREAD_ADD32(x,y) \
+   (ompi_using_threads() ? ompi_atomic_add_32(x,y) : (*x += y))
+
+#define OMPI_THREAD_ADD64(x,y) \
+   (ompi_using_threads() ? ompi_atomic_add_32(x,y) : (*x += y))
 
 /**
  * Always locks a mutex (never compile- or run-time removed)
