@@ -46,7 +46,20 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WIN_CREATE,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-void mpi_win_create_f(char *base, MPI_Fint *size, MPI_Fint *disp_unit, MPI_Fint *info, MPI_Fint *comm, MPI_Fint *win, MPI_Fint *ierr)
+void mpi_win_create_f(char *base, MPI_Fint *size, MPI_Fint *disp_unit,
+		      MPI_Fint *info, MPI_Fint *comm, MPI_Fint *win,
+		      MPI_Fint *ierr)
 {
-  /* This function not yet implemented */
+    MPI_Win c_win;
+    MPI_Info c_info;
+    MPI_Comm c_comm;
+
+    c_comm = MPI_Comm_f2c(*comm);
+    c_info = MPI_Info_f2c(*info);
+
+    *ierr = OMPI_INT_2_FINT(MPI_Win_create(base, (MPI_Aint)(*size),
+					   OMPI_FINT_2_INT(*disp_unit),
+					   c_info, c_comm, &c_win));
+
+    *win = MPI_Win_c2f(c_win);
 }
