@@ -18,7 +18,7 @@
 #include <unistd.h>
 
 static int blocking_recv_posted = 0;
-static int do_recv(lam_job_handle_t job_handle, int* tag, int* vpid, 
+static int do_recv(lam_job_handle_t job_handle, int vpid, int* tag,
                    void** data, size_t* data_len);
 
 int
@@ -69,13 +69,13 @@ mca_oob_cofs_send(lam_job_handle_t job_handle, int vpid, int tag,
 
 
 int
-mca_oob_cofs_recv(lam_job_handle_t job_handle, int* tag, int* vpid, 
+mca_oob_cofs_recv(lam_job_handle_t job_handle, int vpid, int* tag,
                   void** data, size_t* data_len)
 {
   int ret = LAM_ERR_WOULD_BLOCK;
   blocking_recv_posted = 1;
   while (ret == LAM_ERR_WOULD_BLOCK) {
-    ret = do_recv(job_handle, tag, vpid, data, data_len);
+    ret = do_recv(job_handle, vpid, tag, data, data_len);
   }
   blocking_recv_posted = 0;
   return ret;
@@ -83,19 +83,19 @@ mca_oob_cofs_recv(lam_job_handle_t job_handle, int* tag, int* vpid,
 
 
 int
-mca_oob_cofs_recv_nb(lam_job_handle_t job_handle, int* tag, int* vpid, 
+mca_oob_cofs_recv_nb(lam_job_handle_t job_handle, int vpid, int* tag,
                      void** data, size_t* data_len)
 {
   if (blocking_recv_posted != 0) {
     return LAM_ERR_WOULD_BLOCK;
   }
 
-  return do_recv(job_handle, tag, vpid, data, data_len);
+  return do_recv(job_handle, vpid, tag, data, data_len);
 }
 
 
 int
-mca_oob_cofs_recv_cb(lam_job_handle_t job_handle, int tag, 
+mca_oob_cofs_recv_cb(lam_job_handle_t job_handle, int vpid, int tag, 
                      mca_oob_base_recv_cb_t callback)
 {
   return LAM_ERR_NOT_SUPPORTED;
@@ -103,7 +103,7 @@ mca_oob_cofs_recv_cb(lam_job_handle_t job_handle, int tag,
 
 
 static char*
-find_match(lam_job_handle_t job_handle, int* tag, int* vpid)
+find_match(lam_job_handle_t job_handle, int vpid, int* tag)
 {
   DIR* dir;
   struct dirent *ent;
@@ -113,7 +113,7 @@ find_match(lam_job_handle_t job_handle, int* tag, int* vpid)
   int ret;
   bool found = false;
   char best_name[LAM_PATH_MAX];
-  int best_tag, best_vpid;
+  int best_tag;
   uint64_t best_serial = ((1ULL << 63) - 1);
 
   dir = opendir(mca_oob_cofs_comm_loc);
@@ -139,13 +139,15 @@ find_match(lam_job_handle_t job_handle, int* tag, int* vpid)
     if (*tag != MCA_OOB_ANY_TAG && tmp_tag != *tag) {
       continue;
     }
+    if (tmp_vpid != vpid) {
+      continue;
+    }
 
     /* do best one here... */
     found = true;
     if (tmp_serial < best_serial) {
       strcpy(best_name, ent->d_name);
       best_tag = tmp_tag;
-      best_vpid = tmp_vpid;
       best_serial = tmp_serial;
     }
   }
@@ -153,7 +155,6 @@ find_match(lam_job_handle_t job_handle, int* tag, int* vpid)
   closedir(dir);
   if (found) {
     *tag = best_tag;
-    *vpid = best_vpid;
     return strdup(best_name);
   } else {
     return NULL;
@@ -162,7 +163,7 @@ find_match(lam_job_handle_t job_handle, int* tag, int* vpid)
 
 
 static int
-do_recv(lam_job_handle_t job_handle, int* tag, int* vpid, 
+do_recv(lam_job_handle_t job_handle, int vpid, int* tag,
         void** data, size_t* data_len)
 {
   char *fname;
@@ -170,7 +171,7 @@ do_recv(lam_job_handle_t job_handle, int* tag, int* vpid,
   FILE *fp;
   size_t rlen;
 
-  fname = find_match(job_handle, tag, vpid);
+  fname = find_match(job_handle, vpid, tag);
   if (fname == NULL) {
     return LAM_ERR_WOULD_BLOCK;
   }

@@ -28,11 +28,11 @@ int mca_oob_cofs_finalize(void);
  */
 int mca_oob_cofs_send(lam_job_handle_t job_handle, int vpid, int tag, 
                       void* data, size_t data_len);
-int mca_oob_cofs_recv(lam_job_handle_t job_handle, int* tag, int* vpid, 
+int mca_oob_cofs_recv(lam_job_handle_t job_handle, int vpid, int* tag,
                       void** data, size_t* data_len);
-int mca_oob_cofs_recv_nb(lam_job_handle_t job_handle, int* tag, int* vpid, 
+int mca_oob_cofs_recv_nb(lam_job_handle_t job_handle,  int vpid, int* tag,
                          void** data, size_t* data_len);
-int mca_oob_cofs_recv_cb(lam_job_handle_t job_handle, int tag, 
+int mca_oob_cofs_recv_cb(lam_job_handle_t job_handle, int vpid, int tag, 
                          mca_oob_base_recv_cb_t callback);
 
 
