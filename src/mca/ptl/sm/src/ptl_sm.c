@@ -64,15 +64,6 @@ int mca_ptl_sm_add_procs(
     bool threads;
     char file_name[PATH_MAX];
 
-    /* debug */
-    fprintf(stderr," mca_ptlsm_add_procs \n");
-    fflush(stderr);
-    /* end debug */
-
-    /* initialize the shared memory pool */
-    /*mca_mpool_component_lookup("sm"); */
-    /*mca_mpool_sm_init(&threads); */
-
     /* initializion */
     for(i=0 ; i < nprocs ; i++ ) {
         peers[i]=NULL;
@@ -188,18 +179,14 @@ int mca_ptl_sm_add_procs(
             ompi_process_info.job_session_dir,
             ompi_system_info.nodename);
     size=sizeof(mca_ptl_sm_module_resource_t);
-    /* debug */
-    fprintf(stderr," AAA %s \n",
-            mca_ptl_sm_component.sm_resouce_ctl_file);
-    fflush(stderr);
-    /* end debug */
     if(NULL == 
             (mca_ptl_sm_component.resource_ctl = 
              mca_common_sm_mmap_init(size,
                  mca_ptl_sm_component.sm_resouce_ctl_file,
                  sizeof(mca_ptl_sm_module_resource_t), 8 ))) 
     {
-        ompi_output(0, "mca_ptl_sm_add_procs: unable to create shared memory PTL coordinating strucure\n");
+        ompi_output(0, "mca_ptl_sm_add_procs: unable to create shared memory PTL coordinating strucure :: size %ld \n",
+                size);
         return_code=OMPI_ERROR;
         goto CLEANUP;
     }

@@ -6,18 +6,26 @@
 #include "class/ompi_list.h"
 
 struct mca_common_sm_segment_t {
+    /* lock to control atomic access */
     ompi_lock_data_t seg_lock;
+    /* is the segment ready for use */
     volatile bool seg_inited;
+    /* Offset to next available memory location available for allocation */
     size_t seg_offset;
+    /* total size of the segment */
     size_t seg_size;
 };
 typedef struct mca_common_sm_segment_t mca_common_sm_segment_t;
 
 
 struct mca_common_sm_mmap_t {
+    /* double link list element */
     ompi_list_item_t map_item;
     mca_common_sm_segment_t* map_seg;
+    /* base address of the mmap'ed file */
     unsigned char  *map_addr;
+    /* base address of data segment */
+    unsigned char  *data_addr;
     size_t map_size;
     char map_path[PATH_MAX];
 };

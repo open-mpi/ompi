@@ -127,6 +127,9 @@ mca_mpool_sm_init(bool *allow_multi_user_threads)
         return NULL;
     }
 
+    /* setup function pointers */
+
+
     /* setup allocator */
     mca_mpool_sm_component.sm_allocator = allocator_component->allocator_init(
         allow_multi_user_threads,
