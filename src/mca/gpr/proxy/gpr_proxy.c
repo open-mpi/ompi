@@ -10,6 +10,7 @@
 #include <string.h>
 
 #include "util/output.h"
+#include "util/proc_info.h"
 
 #include "mca/mca.h"
 #include "mca/gpr/base/base.h"
@@ -139,7 +140,11 @@ int gpr_proxy_put(ompi_registry_mode_t mode, char *segment,
     }
 
     if (mca_gpr_proxy_debug) {
-	ompi_output(0, "gpr_proxy_put: initiating send");
+	ompi_output(0, "[%d,%d,%d] gpr_proxy_put: initiating send", ompi_process_info.name->cellid,
+		    ompi_process_info.name->jobid, ompi_process_info.name->vpid);
+	if (NULL == mca_gpr_my_replica) {
+	    ompi_output(0, "\tBAD REPLICA");
+	}
     }
 
     if (0 > (ret = mca_oob_send_packed(mca_gpr_my_replica, cmd, MCA_OOB_TAG_GPR, 0))) {
@@ -147,6 +152,11 @@ int gpr_proxy_put(ompi_registry_mode_t mode, char *segment,
 	    ompi_output(0, "gpr_proxy_put: send failed with return %d", ret);
 	}
 	return OMPI_ERROR;
+    }
+
+    if (mca_gpr_proxy_debug) {
+	ompi_output(0, "[%d,%d,%d] gpr_proxy_put: send complete", ompi_process_info.name->cellid,
+		    ompi_process_info.name->jobid, ompi_process_info.name->vpid);
     }
 
     if (0 > mca_oob_recv_packed(mca_gpr_my_replica, &answer, &recv_tag)) {

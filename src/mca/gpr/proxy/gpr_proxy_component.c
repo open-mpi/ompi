@@ -18,6 +18,7 @@
 #include "util/output.h"
 #include "mca/mca.h"
 #include "mca/base/mca_base_param.h"
+#include "mca/ns/base/base.h"
 #include "mca/gpr/base/base.h"
 #include "gpr_proxy.h"
 
@@ -268,5 +269,9 @@ void mca_gpr_proxy_notify_recv(int status, ompi_process_name_t* sender,
 
  RETURN_ERROR:
     OBJ_RELEASE(message);
+
+    /* reissue non-blocking receive */
+    mca_oob_recv_packed_nb(MCA_OOB_NAME_ANY, MCA_OOB_TAG_GPR_NOTIFY, 0, mca_gpr_proxy_notify_recv, NULL);
+
 }
 
