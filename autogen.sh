@@ -368,7 +368,7 @@ EOF
 
 		echo "  -- patching for argz bugfix in libtool 1.5"
 		cd src/mca/libltdl
-		patch -p0 <<EOF
+		patch -N -p0 <<EOF
 --- ltdl.c.old  2003-11-26 16:42:17.000000000 -0500
 +++ ltdl.c      2003-12-03 17:06:27.000000000 -0500
 @@ -682,7 +682,7 @@
