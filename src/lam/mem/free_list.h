@@ -52,14 +52,17 @@ typedef struct lam_free_list
     lam_affinity_t     *fl_affinity;            /* array of lam_affinity_t */
     int                 fl_threshold_grow;
     lam_class_info_t   *fl_elt_cls;        /* this will be used to create new free list elements. */
+  lam_mutex_t         fl_lock;
     
     /* for mem profiling */
     int           *fl_elt_out;
     int           *fl_elt_max;
     int           *fl_elt_sum;
     int           *fl_nevents;
+#if LAM_ENABLE_DEBUG
     int           *fl_chunks_req;
     int           *fl_chunks_returned;
+#endif
 } lam_free_list_t;
 
 extern lam_class_info_t free_list_cls;
