@@ -135,11 +135,6 @@ extern "C" {
   int mca_base_module_registry_use(const char *type, const char *name);
 
 #if 0
-  /* JMS Are these necessary in L8? */
-  struct in_addr mca_base_hostmap(struct in_addr *addr, char *keyname);
-#endif
-  void mca_base_hostmap_finalize(void);
-#if 0
   /* JMS Add after debug streams added */
   int mca_base_set_verbose(int index, lam_debug_stream_info_t *lds,
                            int *level, int *did);
