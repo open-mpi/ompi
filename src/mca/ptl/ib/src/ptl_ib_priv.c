@@ -561,20 +561,20 @@ void mca_ptl_ib_drain_network(VAPI_hca_hndl_t nic,
                         comp.id);
 
                 *comp_type = IB_COMP_SEND;
-                *comp_addr = (void*) (unsigned int) comp.id;
+                *comp_addr = (void*) (unsigned long) comp.id;
 
             } else if(VAPI_CQE_RQ_SEND_DATA == comp.opcode) {
                 A_PRINT("Received message completion len = %d, id : %d\n",
                         comp.byte_len, comp.id);
 
                 *comp_type = IB_COMP_RECV;
-                *comp_addr = (void*) (unsigned int) comp.id;
+                *comp_addr = (void*) (unsigned long) comp.id;
 
             } else if(VAPI_CQE_SQ_RDMA_WRITE == comp.opcode) {
 
                 A_PRINT("RDMA Write completion");
                 *comp_type = IB_COMP_RDMA_W;
-                *comp_addr = (void*) (unsigned int) comp.id;
+                *comp_addr = (void*) (unsigned long) comp.id;
 
             } else {
                 ompi_output(0, "Got Unknown completion! Opcode : %d\n", 
@@ -599,7 +599,7 @@ void mca_ptl_ib_buffer_repost(VAPI_hca_hndl_t nic,
 
     D_PRINT("");
 
-    ib_buf = (ib_buffer_t *) (unsigned int) addr;
+    ib_buf = (ib_buffer_t *) (unsigned long) addr;
 
     IB_PREPARE_RECV_DESC(ib_buf);
 
