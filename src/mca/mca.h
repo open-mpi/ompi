@@ -16,6 +16,8 @@
 typedef int (*mca_open_module_fn_t)(lam_cmd_line_t *cmd);
 typedef int (*mca_close_module_fn_t)(void);
 typedef int (*mca_mpi_init_callback_fn_t)(void);
+typedef int (*mca_alloc_mem_fn_t)(MPI_Aint size, MPI_Info info, void **base);
+typedef int (*mca_free_mem_fn_t)(void *base);
 
 
 /*
@@ -26,7 +28,7 @@ typedef int (*mca_mpi_init_callback_fn_t)(void);
 #define MCA_BASE_MAX_TYPE_NAME_LEN 32
 #define MCA_BASE_MAX_MODULE_NAME_LEN 64
 
-typedef struct mca_1_0_0 {
+struct mca_module_1_0_0_t {
 
   /* Integer version numbers indicating which MCA API version this
      module conforms to. */
@@ -53,25 +55,30 @@ typedef struct mca_1_0_0 {
 
   mca_open_module_fn_t mca_open_module;
   mca_close_module_fn_t mca_close_module;
-} mca_1_0_0_t;
 
+  /* Does this module support checkpoint or not? */
+
+  bool mca_is_checkpointable;
+};
+typedef struct mca_module_1_0_0_t mca_module_1_0_0_t;
 
 /*
  * Set the default type to use version 1.0.0 of the MCA struct 
  */
 
-typedef mca_1_0_0_t mca_t;
+typedef mca_module_1_0_0_t mca_module_t;
 
 
 /*
  * Structure for making priority lists of modules
  */
 
-typedef struct mca_module {
+struct mca_module_priority_t {
   int lsm_priority;
   int lsm_thread_min, lsm_thread_max;
   mca_t *lsm_module;
-} mca_module_t;
+};
+typedef struct mca_module_priority_t mca_module_priority_t;
 
 
 /*
@@ -92,7 +99,7 @@ typedef union {
 
 #define MCA_BASE_PARAM_INFO ((void*) -1)
 
-typedef struct {
+struct mca_base_param_t {
   mca_base_param_type_t lsbp_type;
   char *lsbp_type_name;
   char *lsbp_module_name;
@@ -103,7 +110,8 @@ typedef struct {
   char *lsbp_env_var_name;
 
   mca_base_param_storage_t lsbp_default_value;
-} mca_base_param_t;
+};
+struct mca_base_param_t mca_base_param_t;
 
 
 /*
