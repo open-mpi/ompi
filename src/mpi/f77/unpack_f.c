@@ -46,7 +46,22 @@ OMPI_GENERATE_F77_BINDINGS (MPI_UNPACK,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-void mpi_unpack_f(char *inbuf, MPI_Fint *insize, MPI_Fint *position, char *outbuf, MPI_Fint *outcount, MPI_Fint *datatype, MPI_Fint *comm, MPI_Fint *ierr)
+void mpi_unpack_f(char *inbuf, MPI_Fint *insize, MPI_Fint *position,
+		  char *outbuf, MPI_Fint *outcount, MPI_Fint *datatype,
+		  MPI_Fint *comm, MPI_Fint *ierr)
 {
-  /* This function not yet implemented */
+    MPI_Comm c_comm;
+    MPI_Datatype c_type;
+    OMPI_SINGLE_NAME_DECL(position);
+
+    c_comm = MPI_Comm_f2c(*comm);
+    c_type = MPI_Type_f2c(*datatype);
+    OMPI_SINGLE_FINT_2_INT(position);
+
+    *ierr = OMPI_INT_2_FINT(MPI_Unpack(inbuf, OMPI_FINT_2_INT(*insize),
+				       OMPI_SINGLE_NAME_CONVERT(position),
+				       outbuf, OMPI_FINT_2_INT(*outcount),
+				       c_type, c_comm));
+    
+    OMPI_SINGLE_INT_2_FINT(position);
 }
