@@ -43,6 +43,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <err.h>
+#include "mca/oob/base/base.h"
 
 #ifdef USE_LOG
 #include "log.h"
@@ -189,8 +190,8 @@ select_dispatch(void *arg, struct timeval *tv)
 
 	if (res == -1) {
 		if (errno != EINTR) {
-			log_error("select");
-			return (-1);
+            ompi_output("select failed with errno=%d\n", errno);
+		    return (-1);
 		}
 
 #if OMPI_EVENT_USE_SIGNALS
@@ -218,12 +219,11 @@ select_dispatch(void *arg, struct timeval *tv)
 				ompi_event_del_i(ev);
 			ompi_event_active_i(ev, res, 1);
 		} 
-                if (ev->ev_fd > maxfd)
-			maxfd = ev->ev_fd;
+        if ((ev->ev_flags & ~OMPI_EVLIST_ACTIVE) == 0 && ev->ev_fd > maxfd)
+            maxfd = ev->ev_fd;
 	}
 
 	sop->event_fds = maxfd;
-
 	return (0);
 }
 

@@ -191,7 +191,8 @@ static int ompi_timeout_next(struct timeval *tv)
 /* run loop for dispatch thread */
 static void* ompi_event_run(ompi_object_t* arg)
 {
-    ompi_event_loop(0);
+    int rc = ompi_event_loop(0);
+    assert(rc == 0);
     return NULL;
 }
 
@@ -483,9 +484,7 @@ ompi_event_add_i(struct ompi_event *ev, struct timeval *tv)
 
 int ompi_event_del_i(struct ompi_event *ev)
 {
-    LOG_DBG((LOG_MISC, 80, "event_del: %p, callback %p",
-         ev, ev->ev_callback));
-
+    int rc = 0;
     assert(!(ev->ev_flags & ~OMPI_EVLIST_ALL));
 
     /* See if we are just active executing this event in a loop */
@@ -502,10 +501,10 @@ int ompi_event_del_i(struct ompi_event *ev)
 
     if (ev->ev_flags & OMPI_EVLIST_INSERTED) {
         ompi_event_queue_remove(ev, OMPI_EVLIST_INSERTED);
-        return (ompi_evsel->del(ompi_evbase, ev));
+        rc = (ompi_evsel->del(ompi_evbase, ev));
     } else if (ev->ev_flags & OMPI_EVLIST_SIGNAL) {
         ompi_event_queue_remove(ev, OMPI_EVLIST_SIGNAL);
-        return (ompi_evsel->del(ompi_evbase, ev));
+        rc = (ompi_evsel->del(ompi_evbase, ev));
     }
 
 #if OMPI_HAVE_THREADS
@@ -516,7 +515,7 @@ int ompi_event_del_i(struct ompi_event *ev)
         ompi_event_pipe_signalled++;
     }
 #endif
-    return (0);
+    return (rc);
 }
 
 
