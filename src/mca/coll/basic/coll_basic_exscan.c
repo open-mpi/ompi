@@ -31,7 +31,7 @@
  *	exscan_intra
  *
  *	Function:	- basic exscan operation
- *	Accepts:	- same arguments as MPI_Exccan()
+ *	Accepts:	- same arguments as MPI_Exscan()
  *	Returns:	- MPI_SUCCESS or error code
  */
 int mca_coll_basic_exscan_intra(void *sbuf, void *rbuf, int count,
@@ -97,8 +97,7 @@ int mca_coll_basic_exscan_intra(void *sbuf, void *rbuf, int count,
     /* If we're commutative, we can copy my sbuf into the reduction
        buffer before the receive completes */
     
-    err = ompi_ddt_sndrcv(sbuf, count, dtype, reduce_buffer, count, dtype,
-                          MCA_COLL_BASE_TAG_EXSCAN, comm);
+    err = ompi_ddt_sndrcv(sbuf, count, dtype, reduce_buffer, count, dtype);
     if (MPI_SUCCESS != err) {
       goto error;
     }
@@ -128,8 +127,7 @@ int mca_coll_basic_exscan_intra(void *sbuf, void *rbuf, int count,
       goto error;
     }
 
-    err = ompi_ddt_sndrcv(rbuf, count, dtype, reduce_buffer, count, dtype,
-                          MCA_COLL_BASE_TAG_EXSCAN, comm);
+    err = ompi_ddt_sndrcv(rbuf, count, dtype, reduce_buffer, count, dtype);
     if (MPI_SUCCESS != err) {
       goto error;
     }
@@ -165,7 +163,7 @@ error:
  *	exscan_inter
  *
  *	Function:	- basic exscan operation
- *	Accepts:	- same arguments as MPI_Exccan()
+ *	Accepts:	- same arguments as MPI_Exscan()
  *	Returns:	- MPI_SUCCESS or error code
  */
 int mca_coll_basic_exscan_inter(void *sbuf, void *rbuf, int count,

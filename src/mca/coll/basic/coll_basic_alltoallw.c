@@ -26,7 +26,7 @@
 /*
  *	alltoallw_intra
  *
- *	Function:	- MPI_Alltoallw for non-ompid RPIs
+ *	Function:	- MPI_Alltoallw
  *	Accepts:	- same as MPI_Alltoallw()
  *	Returns:	- MPI_SUCCESS or an MPI error code
  */
@@ -57,8 +57,7 @@ int mca_coll_basic_alltoallw_intra(void *sbuf, int *scounts, int *sdisps,
 
   if (0 != scounts[rank]) {
       err = ompi_ddt_sndrcv(psnd, scounts[rank], sdtypes[rank],
-                            prcv, rcounts[rank], rdtypes[rank], 
-                            MCA_COLL_BASE_TAG_ALLTOALLW, comm);
+                            prcv, rcounts[rank], rdtypes[rank]);
       if (MPI_SUCCESS != err) {
           return err;
       }
@@ -135,7 +134,7 @@ int mca_coll_basic_alltoallw_intra(void *sbuf, int *scounts, int *sdisps,
 /*
  *	alltoallw_inter
  *
- *	Function:	- MPI_Alltoallw for non-lamd RPIs
+ *	Function:	- MPI_Alltoallw
  *	Accepts:	- same as MPI_Alltoallw()
  *	Returns:	- MPI_SUCCESS or an MPI error code
  */

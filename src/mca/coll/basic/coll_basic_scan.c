@@ -53,7 +53,7 @@ int mca_coll_basic_scan_intra(void *sbuf, void *rbuf, int count,
 
   if (0 == rank) {
     err = ompi_ddt_sndrcv(sbuf, count, dtype,
-                          rbuf, count, dtype, MCA_COLL_BASE_TAG_SCAN, comm);
+                          rbuf, count, dtype);
     if (MPI_SUCCESS != err) {
       return err;
     }
@@ -79,8 +79,7 @@ int mca_coll_basic_scan_intra(void *sbuf, void *rbuf, int count,
 
       /* Copy the send buffer into the receive buffer. */
 
-      err = ompi_ddt_sndrcv(sbuf, count, dtype, rbuf,
-                            count, dtype, MCA_COLL_BASE_TAG_SCAN, comm);
+      err = ompi_ddt_sndrcv(sbuf, count, dtype, rbuf, count, dtype);
       if (MPI_SUCCESS != err) {
 	if (NULL != free_buffer) {
 	  free(free_buffer);

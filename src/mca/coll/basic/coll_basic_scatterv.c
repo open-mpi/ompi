@@ -27,7 +27,7 @@
  *	scatterv_intra
  *
  *	Function:	- scatterv operation
- *	Accepts:	- same arguments as MPI_Scatter()
+ *	Accepts:	- same arguments as MPI_Scatterv()
  *	Returns:	- MPI_SUCCESS or error code
  */
 int mca_coll_basic_scatterv_intra(void *sbuf, int *scounts,
@@ -75,8 +75,7 @@ int mca_coll_basic_scatterv_intra(void *sbuf, int *scounts,
     /* simple optimization */
 
     if (i == rank) {
-      err = ompi_ddt_sndrcv(ptmp, scounts[i], sdtype, rbuf,
-                           rcount, rdtype, MCA_COLL_BASE_TAG_SCATTERV, comm);
+      err = ompi_ddt_sndrcv(ptmp, scounts[i], sdtype, rbuf, rcount, rdtype);
     } else {
       err = mca_pml.pml_send(ptmp, scounts[i], sdtype, i, 
                              MCA_COLL_BASE_TAG_SCATTERV, 
@@ -97,7 +96,7 @@ int mca_coll_basic_scatterv_intra(void *sbuf, int *scounts,
  *	scatterv_inter
  *
  *	Function:	- scatterv operation
- *	Accepts:	- same arguments as MPI_Scatter()
+ *	Accepts:	- same arguments as MPI_Scatterv()
  *	Returns:	- MPI_SUCCESS or error code
  */
 int mca_coll_basic_scatterv_inter(void *sbuf, int *scounts,

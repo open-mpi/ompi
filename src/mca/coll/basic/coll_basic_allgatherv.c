@@ -26,7 +26,7 @@
 /*
  *	allgatherv_intra
  *
- *	Function:	- allgather using other MPI collectives
+ *	Function:	- allgatherv using other MPI collectives
  *	Accepts:	- same as MPI_Allgatherv()
  *	Returns:	- MPI_SUCCESS or error code
  */
@@ -57,7 +57,7 @@ int mca_coll_basic_allgatherv_intra(void *sbuf, int scount,
 /*
  *	allgatherv_inter
  *
- *	Function:	- allgather using other MPI collectives
+ *	Function:	- allgatherv using other MPI collectives
  *	Accepts:	- same as MPI_Allgatherv()
  *	Returns:	- MPI_SUCCESS or error code
  */

@@ -15,7 +15,6 @@
 #include "ompi_config.h"
 
 #include "datatype/datatype.h"
-#include "communicator/communicator.h"
 #include "request/request.h"
 #include "mca/pml/pml.h"
 
@@ -35,8 +34,8 @@
  *			- communicator
  *	Returns:	- MPI_SUCCESS or error code
  */
-int ompi_ddt_sndrcv( void *sbuf, int scount, const ompi_datatype_t* sdtype, void *rbuf,
-                     int rcount, const ompi_datatype_t* rdtype, int tag, MPI_Comm comm )
+int ompi_ddt_sndrcv( void *sbuf, int scount, const ompi_datatype_t* sdtype,
+                     void *rbuf, int rcount, const ompi_datatype_t* rdtype)
 {
    int err;
    ompi_convertor_t *send_convertor, *recv_convertor;

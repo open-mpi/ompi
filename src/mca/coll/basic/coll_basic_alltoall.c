@@ -75,8 +75,7 @@ int mca_coll_basic_alltoall_intra(void *sbuf, int scount,
     prcv = ((char *) rbuf) + (rank * rcvinc);
 
     err = ompi_ddt_sndrcv(psnd, scount, sdtype,
-                          prcv, rcount, rdtype, 
-                          MCA_COLL_BASE_TAG_ALLTOALL, comm);
+                          prcv, rcount, rdtype);
     if (MPI_SUCCESS != err) {
 	return err;
     }
