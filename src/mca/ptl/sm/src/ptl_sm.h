@@ -14,7 +14,6 @@
 #include "class/ompi_free_list.h"
 #include "mca/pml/pml.h"
 #include "mca/ptl/ptl.h"
-#include "ptl_sm_mmap.h"
 
 
 /**
@@ -29,7 +28,6 @@ struct mca_ptl_sm_module_1_0_0_t {
     ompi_free_list_t sm_send_requests;    /**< free list of sm send requests -- sendreq + sendfrag */
     ompi_free_list_t sm_send_frags;       /**< free list of sm send fragments */
     ompi_free_list_t sm_recv_frags;       /**< free list of sm recv fragments */
-    ompi_allocator_t sm_allocator;        /**< shared memory allocator */
     ompi_mutex_t sm_lock;
 };
 typedef struct mca_ptl_sm_module_1_0_0_t mca_ptl_sm_module_1_0_0_t;
