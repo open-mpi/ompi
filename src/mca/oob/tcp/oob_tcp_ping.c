@@ -15,6 +15,7 @@ int mca_oob_tcp_ping(
     const ompi_process_name_t* name, 
     const struct timeval *timeout)
 {
+#if 0
     mca_oob_tcp_peer_t* peer = mca_oob_tcp_peer_lookup(name);
     mca_oob_tcp_msg_t* msg;
     struct timeval tv;
@@ -79,5 +80,8 @@ int mca_oob_tcp_ping(
     rc = mca_oob_tcp_msg_timedwait(msg, NULL, &ts);
     MCA_OOB_TCP_MSG_RETURN(msg);
     return rc;
+#else
+    return OMPI_SUCCESS;
+#endif
 }
 
