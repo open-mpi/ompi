@@ -31,34 +31,44 @@
 
 #include "support.h"
 #include "runtime/runtime.h"
+#include "util/proc_info.h"
 #include "mca/base/base.h"
 #include "mca/ns/ns.h"
 #include "mca/ns/base/base.h"
 
 static bool test1(void);        /* verify different buffer inits */
 static bool test2(void);        /* verify int16 */
-static bool test3(void);        /* verify int32 */
-static bool test4(void);        /* verify string */
-static bool test5(void);        /* verify name */
-static bool test6(void);        /* verify BOOL */
-static bool test7(void);        /* verify OBJECT */
-static bool test8(void);        /* verify composite (multiple types and element counts) */
-static bool test9(void);        /* verify GPR_KEYVAL */
-static bool test10(void);        /* verify GPR_VALUE */
-static bool test11(void);        /* verify APP_INFO */
-static bool test12(void);        /* verify APP_CONTEXT */
 
 FILE *test_out;
 
 int main (int argc, char* argv[])
 {
 
-    test_init("orte_plsnds");
+    test_init("orte_ns_nds");
     test_out = stderr;
     
-    /* open up the mca so we can get parameters */
-    orte_init();
+    /* Open up the output streams */
+    if (!ompi_output_init()) {
+        return OMPI_ERROR;
+    }
+                                                                                                                   
+    /* 
+     * If threads are supported - assume that we are using threads - and reset otherwise. 
+     */
+    ompi_set_using_threads(OMPI_HAVE_THREAD_SUPPORT);
+                                                                                                                   
+    /* For malloc debugging */
+    ompi_malloc_init();
 
+    /* set seed to true to force replica selection */
+    orte_process_info.seed = true;
+
+    /* ensure the replica is isolated */
+    setenv("OMPI_MCA_ns_replica_isolate", "1", 1);
+    
+    /* init the proc info structure */
+    orte_proc_info();
+    
     /* startup the MCA */
     if (OMPI_SUCCESS != mca_base_open()) {
         fprintf(stderr, "can't open mca\n");
@@ -70,12 +80,18 @@ int main (int argc, char* argv[])
         fprintf(stderr, "can't open name services\n");
         exit (1);
     }
-    
-#if 0 /* XXX - what should this be now? */
-    /* setup the plsnds */
-    orte_plsnds_open();
-#endif
-    
+        
+    /* startup the name server */
+    if (OMPI_SUCCESS != orte_ns_base_select()) {
+    fprintf(test_out, "NS could not start\n");
+    test_failure("test_ns_replica mca_ns_base_select failed");
+        test_finalize();
+    exit(1);
+    } else {
+    fprintf(test_out, "NS started\n");
+    test_success();
+    }
+
     fprintf(test_out, "executing test1\n");
     if (test1()) {
         test_success();
@@ -91,89 +107,17 @@ int main (int argc, char* argv[])
     else {
       test_failure("orte_dps test2 failed");
     }
-    
-    fprintf(test_out, "executing test3\n");
-    if (test3()) {
-        test_success();
-    }
-    else {
-      test_failure("orte_dps test3 failed");
-    }
 
-    fprintf(test_out, "executing test4\n");
-    if (test4()) {
-        test_success();
-    }
-    else {
-      test_failure("orte_dps test4 failed");
-    }
+    /* finalize and see if memory cleared */
+    orte_ns_base_close();
+    orte_proc_info_finalize();
+    mca_base_close();
+    ompi_malloc_finalize();
+    ompi_output_finalize();
 
-    fprintf(test_out, "executing test5\n");
-    if (test5()) {
-        test_success();
-    }
-    else {
-      test_failure("orte_dps test5 failed");
-    }
-
-    fprintf(test_out, "executing test6\n");
-    if (test6()) {
-        test_success();
-    }
-    else {
-      test_failure("orte_dps test6 failed");
-    }
-
-    fprintf(test_out, "executing test7\n");
-    if (test7()) {
-        test_success();
-    }
-    else {
-      test_failure("orte_dps test7 failed");
-    }
-
-    fprintf(test_out, "executing test8\n");
-    if (test8()) {
-        test_success();
-    }
-    else {
-      test_failure("orte_dps test8 failed");
-    }
-
-    fprintf(test_out, "executing test9\n");
-    if (test9()) {
-        test_success();
-    }
-    else {
-      test_failure("orte_dps test9 failed");
-    }
-
-    fprintf(test_out, "executing test10\n");
-    if (test10()) {
-        test_success();
-    }
-    else {
-      test_failure("orte_dps test10 failed");
-    }
-
-    fprintf(test_out, "executing test11\n");
-    if (test11()) {
-        test_success();
-    }
-    else {
-      test_failure("orte_dps test11 failed");
-    }
-
-    fprintf(test_out, "executing test12\n");
-    if (test12()) {
-        test_success();
-    }
-    else {
-      test_failure("orte_dps test12 failed");
-    }
-
-    fclose(test_out);
-    return test_finalize();
+    fclose( test_out );
+    test_finalize();
+    return (0);
 }
 
 
@@ -212,7 +156,7 @@ static bool test1(void)        /* check seed/singleton name discovery */
 static bool test2(void) 
 {
     int rc;
-    orte_process_name_t dummy={2,5,21456};
+    orte_process_name_t dummy={2,5,0x21456};
     
     if (NULL != orte_process_info.my_name) {  /* cleanup from prior test */
         free(orte_process_info.my_name);
@@ -220,12 +164,19 @@ static bool test2(void)
     }
     
     orte_process_info.seed = false;
-    orte_ns.copy_process_name(&orte_process_info.ns_replica, &dummy);
-    setenv("OMPI_MCA_CELLID", "2", 1);
-    setenv("OMPI_MCA_JOBID", "5", 1);
-    setenv("OMPI_MCA_PROCID", "21456", 1);
-    setenv("OMPI_MCA_VPID_START", "0", 1);
-    setenv("OMPI_MCA_NUM_PROCS", "100000", 1);
+    if (ORTE_SUCCESS != (rc = orte_ns.copy_process_name(&orte_process_info.ns_replica, &dummy))) {
+        test_comment("unable to copy name");
+        fprintf(test_out, "unable to copy name with return %s\n",
+                    ORTE_ERROR_NAME(rc));
+        return false;
+    }
+    
+    setenv("OMPI_MCA_ns_nds", "env", 1);
+    setenv("OMPI_MCA_ns_nds_cellid", "2", 1);
+    setenv("OMPI_MCA_ns_nds_jobid", "5", 1);
+    setenv("OMPI_MCA_ns_nds_vpid", "21456", 1);
+    setenv("OMPI_MCA_ns_nds_vpid_start", "0", 1);
+    setenv("OMPI_MCA_ns_nds_num_procs", "100000", 1);
     
     if (ORTE_SUCCESS != (rc = orte_ns.set_my_name())) {
         test_comment("set_my_name failed for env case");
@@ -260,134 +211,3 @@ static bool test2(void)
 
     return (true);
 }
-
-/*
- * check RSH
- */
-static bool test3(void)
-{
-    int rc;
-    orte_process_name_t dummy={10,0,160000};
-    
-    if (NULL != orte_process_info.my_name) {  /* cleanup from prior test */
-        free(orte_process_info.my_name);
-        orte_process_info.my_name = NULL;
-    }
-    
-    orte_process_info.seed = false;
-    orte_ns.copy_process_name(&orte_process_info.ns_replica, &dummy);
-    setenv("OMPI_MCA_CELLID", "10", 1);
-    setenv("OMPI_MCA_JOBID", "0", 1);
-    setenv("OMPI_MCA_PROCID", "160000", 1);
-    setenv("OMPI_MCA_VPID_START", "15", 1);
-    setenv("OMPI_MCA_NUM_PROCS", "250000", 1);
-    
-    setenv("OMPI_MCA_PLS_LAUNCHER", "RSH", 1);
-    
-    if (ORTE_SUCCESS != (rc = orte_ns.set_my_name())) {
-        test_comment("set_my_name failed for env case");
-        fprintf(test_out, "set_my_name failed for env case with return %s\n",
-                    ORTE_ERROR_NAME(rc));
-        return false;
-    }
-    
-    if (NULL == orte_process_info.my_name) {
-        test_comment("name_discovery failed for env case - NULL name");
-        fprintf(test_out, "name_discovery failed for env case - NULL name\n");
-        return false;
-    }
-    
-    if (0 != orte_ns.compare(ORTE_NS_CMP_ALL, orte_process_info.my_name, &dummy)) {
-        test_comment("name_discovery failed for env case - name mismatch");
-        fprintf(test_out, "name_discovery failed for env case - name mismatch\n");
-        return false;
-    }
-
-    if (15 != orte_process_info.vpid_start) {
-        test_comment("name_discovery failed for env case - wrong vpid_start");
-        fprintf(test_out, "name_discovery failed for env case - wrong vpid_start\n");
-        return false;
-    }
-
-    if (250000 != orte_process_info.num_procs) {
-        test_comment("name_discovery failed for env case - wrong num_procs");
-        fprintf(test_out, "name_discovery failed for env case - wrong num_procs\n");
-        return false;
-    }
-
-    return (true);
-}
-
-/*
- * 
- */
-
-static bool test4(void)
-{
-    return (true);
-}
-
-
-/**
- *  
- */
-
-static bool test5(void)
-{
-    return(true);
-}
-
-/**
- * 
- */
-
-static bool test6(void)
-{
-    return (true);
-}
-
-/**
- * 
- */
-
-static bool test7(void) 
-{
-    return (true);
-}
-
-/**
- * 
- */
-
-static bool test8(void) 
-{
-    return (true);
-}
-
-/*  */
-static bool test9(void)
-{
-    return (true);
-}
-
-
-/*  */
-static bool test10(void)
-{
-    return (true);
-}
-
-
-/*  */
-static bool test11(void)
-{
-    return (true);
-}
-
-
-/*  */
-static bool test12(void)
-{
-    return (true);
-}
-

@@ -45,6 +45,19 @@ int main(int argc, char **argv)
       exit(1);
     } 
 
+    /* Open up the output streams */
+    if (!ompi_output_init()) {
+        return OMPI_ERROR;
+    }
+                                                                                                                   
+    /* 
+     * If threads are supported - assume that we are using threads - and reset otherwise. 
+     */
+    ompi_set_using_threads(OMPI_HAVE_THREAD_SUPPORT);
+                                                                                                                   
+    /* For malloc debugging */
+    ompi_malloc_init();
+
     /* set seed to true to force replica selection */
     orte_process_info.seed = true;
 
@@ -95,7 +108,8 @@ int main(int argc, char **argv)
 	   fprintf(test_out, "got process name: %0X %0X %0X\n", ORTE_NAME_ARGS(test_name));
 	   test_success();
     }
-
+    free(test_name);
+    
     /* convert a string to a name */
     tmp = strdup("1234.5678.9AEF");
     if (ORTE_SUCCESS != (rc = orte_ns.convert_string_to_process_name(&test_name, tmp))) {  /* got error */
@@ -109,7 +123,9 @@ int main(int argc, char **argv)
 	       ORTE_NAME_ARGS(test_name));
         test_success();
     }
-
+    free(tmp);
+    free(test_name);
+    
     /* create a cellid */
     if (ORTE_SUCCESS != (rc = orte_ns.create_cellid(&cell))) { /* got error */
        test_failure("test_ns_replica orte_ns test create_cellid failed");
@@ -222,6 +238,7 @@ int main(int argc, char **argv)
             }
     	    fprintf(test_out, "(%d) ints cell %0X(%ld) job %0X(%ld) vpid %0x(%ld)\n\n", 
     		    i, cell, (long int)cell, job, (long int)job, vpid, (long int)vpid);
+            free(test_name);
     	}
     }
 
@@ -229,7 +246,10 @@ int main(int argc, char **argv)
     orte_ns_base_close();
     orte_proc_info_finalize();
     mca_base_close();
+    ompi_malloc_finalize();
+    ompi_output_finalize();
 
+    fclose( test_out );
     test_finalize();
 
     return(0);
