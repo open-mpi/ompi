@@ -1,6 +1,7 @@
 If you are working on a bindings function, put your name in the
 appropriate column.  If you have totally and completely finished the
-function, put "DONE" in the column.  If a function does not apply to a
+function, put "DONE" in the column.  If the function has been fully
+tested, put "TESTED" in the column.  If a function does not apply to a
 given bindings, put "NA" in the column.
 
                             C       F77       C++      F90
