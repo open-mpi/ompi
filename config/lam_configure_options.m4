@@ -114,6 +114,23 @@ fi
 AM_CONDITIONAL(WANT_SINGLE_MPI_LIBRARY, test "$WANT_SINGLE_MPI_LIBRARY" = 1)
 
 #
+# Do we want to install all of LAM's header files?
+#
+
+AC_MSG_CHECKING([if want to install LAM header files])
+AC_ARG_WITH(devel-headers,
+    AC_HELP_STRING([--with-devel-headers],
+                   [normal MPI users/applications do not need this (mpi.h and mpif.h are ALWAYS installed).  Developer headers are only necessary for MCA module authors (default: disabled).]))
+if test "$with_devel_headers" != "yes"; then
+    AC_MSG_RESULT([no])
+    WANT_INSTALL_HEADERS=0
+else
+    AC_MSG_RESULT([yes])
+    WANT_INSTALL_HEADERS=1
+fi
+AM_CONDITIONAL(WANT_INSTALL_HEADERS, test "$WANT_INSTALL_HEADERS" = 1)
+
+#
 # Do we want profiling?
 #
 
