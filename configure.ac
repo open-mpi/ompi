@@ -843,6 +843,23 @@ AC_CONFIG_FILES([
     src/mca/topo/base/Makefile
     src/mca/gpr/Makefile
 
+    src/dynamic-mca/common/Makefile
+
+    src/dynamic-mca/oob/Makefile
+    src/dynamic-mca/pcm/Makefile
+    src/dynamic-mca/registry/Makefile
+
+    src/dynamic-mca/Makefile
+    src/dynamic-mca/allocator/Makefile
+    src/dynamic-mca/coll/Makefile
+    src/dynamic-mca/io/Makefile
+    src/dynamic-mca/mpool/Makefile
+    src/dynamic-mca/one/Makefile
+    src/dynamic-mca/pml/Makefile
+    src/dynamic-mca/ptl/Makefile
+    src/dynamic-mca/topo/Makefile
+    src/dynamic-mca/gpr/Makefile
+
     src/mpi/Makefile
     src/mpi/c/Makefile
     src/mpi/c/profile/Makefile

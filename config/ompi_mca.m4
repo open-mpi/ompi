@@ -338,10 +338,8 @@ if test "$HAPPY" = "1"; then
 	"$LOADABLE_MODULE_all" = "1"; then
 	compile_mode="dynamic"
 	echo $m >> $outfile.dynamic
-	ls -l "src/mca/dynamic/$type/$m"
 	$LN_S "$OMPI_TOP_BUILDDIR/src/mca/$type/$m" \
-	    "src/mca/dynamic/$type/$m"
-	ls -l "src/mca/dynamic/$type/$m"
+	    "src/dynamic-mca/$type/$m"
     else
 	static_ltlibs="$m/libmca_${type}_${m}.la $static_ltlibs"
 	echo "extern const mca_base_module_t mca_${type}_${m}_module;" >> $outfile.extern
