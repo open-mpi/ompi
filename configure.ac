@@ -410,6 +410,21 @@ LAM_MCA
 lam_show_title "Final top-level LAM configuration"
 
 ############################################################################
+# Libevent setup
+############################################################################
+
+lam_show_subtitle "Libevent 3rd party event handler"
+CFLAGS_save="$CFLAGS"
+CFLAGS="$LAM_CFLAGS_BEFORE_PICKY"
+LAM_CONFIG_SUBDIR(src/lam/event, [$lam_subdir_args], [HAPPY=1], [HAPPY=0])
+if test "$HAPPY" = "0"; then
+    AC_MSG_WARN([*** libevent failed to configure properly])
+    AC_MSG_ERROR([*** Cannot continue])
+fi
+CFLAGS="$CFLAGS_save"
+
+
+############################################################################
 # Libtool: part two
 # (after C compiler setup)
 ############################################################################

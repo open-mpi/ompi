@@ -250,4 +250,9 @@ AC_TRY_COMPILE([
 	[Define to unsigned int if you dont have it])]
 )
 
+# LAM: Added static/shared default (overrides will be passed in from
+# upper-level configure), and AC_PROG_LIBTOOL
+AM_DISABLE_SHARED
+AM_ENABLE_STATIC
+AC_PROG_LIBTOOL
 AC_OUTPUT(Makefile test/Makefile sample/Makefile)
