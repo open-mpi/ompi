@@ -23,7 +23,7 @@ debug=
 want_success_mail=1
 
 # how many snapshots to keep in the destdir?
-max_snapshots=10
+max_snapshots=5
 
 ############################################################################
 # Shouldn't need to change below this line
@@ -39,12 +39,13 @@ if test -z "$scratch_root" -o -z "$email" -o -z "$svnroot" \
 fi
 
 # send a mail
+# should only be called after logdir is set
 send_error_mail() {
     outfile="$scratch_root/output.txt"
     rm -f "$outfile"
     touch "$outfile"
-    for file in `/bin/ls $scratch_root/logs/* | sort`; do
-	cat "$file" >> "$outfile"
+    for file in `/bin/ls $logdir/* | sort`; do
+        cat "$file" >> "$outfile"
     done
     Mail -s "=== CREATE ERROR ===" "$email" < "$outfile"
     rm -f "$outfile"
@@ -53,7 +54,7 @@ send_error_mail() {
 # send output error message
 die() {
     msg="$*"
-    cat > "$scratch_root/logs/00_announce.txt" <<EOF
+    cat > "$logdir/00_announce.txt" <<EOF
 Creating the nightly tarball ended in error:
 
 $msg
@@ -63,13 +64,14 @@ EOF
 }
 
 # do the work
+# should only be called after logdir is set
 do_command() {
     cmd="$*"
-    logfile="$scratch_root/logs/20-command.txt"
+    logfile="$logdir/20-command.txt"
     rm -f "$logfile"
     if test -n "$debug"; then
         echo "*** Running command: $cmd"
-        eval $cmd 2>&1 | tee "$logfile"
+        eval $cmd > "$logfile" 2>&1
         st=$?
         echo "*** Command complete: exit status: $st"
     else
@@ -77,7 +79,7 @@ do_command() {
         st=$?
     fi
     if test "$st" != "0"; then
-        cat > "$scratch_root/logs/15-error.txt" <<EOF
+        cat > "$logdir/15-error.txt" <<EOF
 
 ERROR: Command returned a non-zero exist status
        $cmd
@@ -87,7 +89,7 @@ End time:   `date`
 
 =======================================================================
 EOF
-        cat > "$scratch_root/logs/25-error.txt" <<EOF
+        cat > "$logdir/25-error.txt" <<EOF
 =======================================================================
 
 Your friendly daemon,
@@ -107,7 +109,8 @@ if test ! -d "$destdir"; then
     die "Could not cd to dest dir: $destdir"
 fi
 
-# move into the scratch directory
+# move into the scratch directory and ensure we have an absolute
+# pathname for it
 if test ! -d "$scratch_root"; then
     mkdir -p "$scratch_root"
 fi
@@ -115,19 +118,22 @@ if test ! -d "$scratch_root"; then
     die "Could not cd to scratch root: $scratch_root"
 fi
 cd "$scratch_root"
+scratch_root="`pwd`"
 
-# cleanup old files before we start
-rm -rf ompi logs
-mkdir logs
+# get the snapshot number
+svn co -N svn+ssh://svn.open-mpi.org/l/svn/ompi > /dev/null 2>&1
+cd ompi
+svnr="r`svn info . | egrep '^Revision: [0-9]+' | awk '{ print $2 }'`"
+cd ..
+rm -rf ompi
+root="$scratch_root/create-$svnr"
+rm -rf "$root"
+mkdir "$root"
+cd "$root"
 
-# start up the log file
-logfile="$scratch_root/logs/10-announce.txt"
-cat > $logfile <<EOF
-Building the nightly snapshot SVN tarball
-
-Start: `date`
-----------------------------------------------------
-EOF
+# startup the logfile
+logdir="$root/logs"
+mkdir "$logdir"
 
 # checkout a clean version
 do_command "svn co $svnroot ompi"
@@ -157,7 +163,14 @@ rm -f latest_snapshot.txt
 echo $version > latest_snapshot.txt
 
 # trim the destdir to $max_snapshots
-# JMS fill in here...
+for ext in gz bz2; do
+    count="`ls openmpi*.tar.$ext | wc -l | awk '{ print $1 }'`"
+    if test "`expr $count \> $max_snapshots`" = "1"; then
+        num_old="`expr $count - $max_snapshots`"
+        old="`ls -rt openmpi*.tar.$ext | head -$num_old`"
+        rm -f $old
+    fi
+done
 
 # generate md5 and sha1 sums
 rm -f md5sums.txt sha1sums.txt
@@ -168,12 +181,13 @@ for file in `/bin/ls *gz *bz2 | grep -v latest`; do
 done
 
 # remove temp dirs
-rm -rf "$scratch_root/logs" "$scratch_root/ompi"
+cd "$scratch_root"
+rm -rf "$root"
 
 # send success mail
 if test "$want_success_mail" = "1"; then
     Mail -s "Success" "$email" <<EOF
-Creating nightly snapshot SVN tarball a success.
+Creating nightly snapshot SVN tarball was a success.
 
 Snapshot:   $version
 Start time: $start_time
