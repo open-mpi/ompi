@@ -119,9 +119,11 @@ int mca_pml_teg_control(int param, void* value, size_t size)
 {
     size_t i=0;
     for(i=0; i<mca_pml_teg.teg_num_ptl_modules; i++) {
-        int rc = mca_pml_teg.teg_ptl_modules[i]->ptlm_control(param,value,size);
-        if(rc != OMPI_SUCCESS)
-            return rc;
+        if(NULL != mca_pml_teg.teg_ptl_modules[i]->ptlm_control) {
+            int rc = mca_pml_teg.teg_ptl_modules[i]->ptlm_control(param,value,size);
+            if(rc != OMPI_SUCCESS)
+                return rc;
+        }
     }
     return OMPI_SUCCESS;
 }
