@@ -328,6 +328,13 @@ static int do_open(int output_id, lam_output_stream_t *lds)
     i = output_id;
   }
 
+  /* Special case: if we got NULL for lds, then just use the default
+     verbose */
+
+  if (NULL == lds) {
+    lds = &verbose;
+  }
+
   /* Got a stream -- now initialize it and open relevant outputs */
 
   info[i].ldi_used = true;
