@@ -48,6 +48,7 @@ libmpi_la_LIBADD = \
         mca/libmca.la \
         mem/libmem.la \
         mpi/libmpi_bindings.la \
+        op/libop.la \
         proc/libproc.la \
         request/librequest.la \
         runtime/libruntime.la \
