@@ -65,8 +65,10 @@ struct mca_ptl_ib_t {
     VAPI_pd_hndl_t      ptag;       /* Protection Domain tag */
     VAPI_cq_hndl_t      cq_hndl;    /* Completion Queue handle */
     VAPI_qp_hndl_t      *qp_hndl;   /* Array of Queue Pair handles */
+
     VAPI_qp_hndl_t      ud_scq_hndl;/* UD send completion queue handle */
-    VAPI_qp_hndl_t      ud_rcq_hndl;/* US recv completion queue handle */
+    VAPI_qp_hndl_t      ud_rcq_hndl;/* UD recv completion queue handle */
+
     VAPI_qp_hndl_t      ud_qp_hndl; /* UD queue pair handle */
     VAPI_qp_prop_t      ud_qp_prop; /* UD queue pair properties */
     VAPI_rr_desc_t*     ud_rr_hndl; /* UD receive descriptor pool */
@@ -155,7 +157,6 @@ extern int mca_ptl_ib_add_procs(
     ompi_bitmap_t* reachable
 );
 
-                                                                                                               
 /**
  * PML->PTL notification of change in the process list.
  *
@@ -240,7 +241,6 @@ extern void mca_ptl_ib_recv_frag_return(
     struct mca_ptl_t* ptl,
     struct mca_ptl_ib_recv_frag_t* frag
 );
-
 
 
 /**

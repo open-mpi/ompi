@@ -91,9 +91,7 @@ static inline int mca_ptl_ib_param_register_int(
 
 int mca_ptl_ib_module_open(void)
 {
-    fprintf(stderr,"[%s:%d] %s\n",
-            __FILE__, __LINE__, __func__);
-    fflush(stderr);
+    D_PRINT("Opening InfiniBand module ...\n");
     /* register super module parameters */
     mca_ptl_ib.super.ptl_exclusivity =
         mca_ptl_ib_param_register_int ("exclusivity", 0);
@@ -152,6 +150,9 @@ static int mca_ptl_ib_module_send(void)
         ud_qp_addr[i].lid = ptl->port.lid;
     }
 
+    D_PRINT("ud_qp_addr[0].ud_qp = %d\n", ud_qp_addr[0].ud_qp);
+    D_PRINT("ud_qp_addr[0].lid = %d\n", ud_qp_addr[0].lid);
+
     rc =  mca_base_modex_send(&mca_ptl_ib_module.super.ptlm_version, 
             ud_qp_addr, size);
 
@@ -172,22 +173,16 @@ mca_ptl_t** mca_ptl_ib_module_init(int *num_ptls,
         bool *have_hidden_threads)
 {
     mca_ptl_t **ptls;
-    int i, rc;
+    int i, ret;
 
     uint32_t  num_hcas;
-    VAPI_ret_t ret;
-    VAPI_hca_id_t* hca_id = NULL;
     mca_ptl_ib_t* ptl_ib = NULL;
     *num_ptls = 0;
-    VAPI_cqe_num_t act_num_cqe;
-
-    act_num_cqe = 0;
 
     *allow_multi_user_threads = true;
     *have_hidden_threads = OMPI_HAVE_THREADS;
 
-    fprintf(stderr,"[%s:%d] %s\n", 
-            __FILE__, __LINE__, __func__);
+    D_PRINT("IB Module Init\n");
 
     /* need to set ompi_using_threads() as ompi_event_init() 
      * will spawn a thread if supported */
@@ -195,44 +190,17 @@ mca_ptl_t** mca_ptl_ib_module_init(int *num_ptls,
         ompi_set_using_threads(true);
     }
 
-    if((rc = ompi_event_init()) != OMPI_SUCCESS) {
+    if((ret = ompi_event_init()) != OMPI_SUCCESS) {
         ompi_output(0, "mca_ptl_ib_module_init: "
-                "unable to initialize event dispatch thread: %d\n", rc);
+                "unable to initialize event dispatch thread: %d\n", ret);
         return NULL;
     }
 
-#if 0
-    /* initialize free lists */
-    ompi_free_list_init(&mca_ptl_ib_module.ib_send_requests, 
-            sizeof(mca_ptl_ib_send_request_t),
-            OBJ_CLASS(mca_ptl_ib_send_request_t),
-            mca_ptl_ib_module.ib_free_list_num,
-            mca_ptl_ib_module.ib_free_list_max,
-            mca_ptl_ib_module.ib_free_list_inc,
-            NULL); /* use default allocator */
+    ret = mca_ptl_ib_get_num_hcas(&num_hcas);
 
-    ompi_free_list_init(&mca_ptl_ib_module.ib_recv_frags, 
-            sizeof(mca_ptl_ib_recv_frag_t),
-            OBJ_CLASS(mca_ptl_ib_recv_frag_t),
-            mca_ptl_ib_module.ib_free_list_num,
-            mca_ptl_ib_module.ib_free_list_max,
-            mca_ptl_ib_module.ib_free_list_inc,
-            NULL); /* use default allocator */
-#endif
+    D_PRINT("Number of HCAs found: %d\n", num_hcas);
 
-
-    /* List all HCAs */
-    ret = EVAPI_list_hcas(0, &num_hcas, NULL);
-
-    /* Don't check for return status, it will be
-     * VAPI_EAGAIN, we are just trying to get the
-     * number of HCAs */
-    if (0 == num_hcas) {
-        return NULL;
-    }
-
-    hca_id = (VAPI_hca_id_t*) malloc(sizeof(VAPI_hca_id_t) * num_hcas);
-    if(NULL == hca_id) {
+    if ((0 == num_hcas) || (OMPI_SUCCESS != ret)) {
         return NULL;
     }
 
@@ -241,29 +209,92 @@ mca_ptl_t** mca_ptl_ib_module_init(int *num_ptls,
 
     /*mca_ptl_ib_module.ib_num_hcas = num_hcas;*/
     mca_ptl_ib_module.ib_num_hcas = 1;
-    mca_ptl_ib_module.ib_num_ptls = 1;
-    mca_ptl_ib_module.ib_max_ptls = 1;
 
-    /* Now get the hca_id from underlying VAPI layer */
-    ret = EVAPI_list_hcas(mca_ptl_ib_module.ib_num_hcas, 
-            &num_hcas, hca_id);
+    /* Number of InfiniBand PTLs is equal to
+     * number of physical HCAs. Is this always the
+     * case, or under some conditions, there can be
+     * multiple PTLs for one HCA? */
+    mca_ptl_ib_module.ib_num_ptls = 
+        mca_ptl_ib_module.ib_num_hcas;
 
-    /* HACK : Don't check return status now,
-     * just opening one ptl ... */
-    /*MCA_PTL_IB_VAPI_RET(NULL, ret, "EVAPI_list_hcas"); */
+    /* Not sure what max_ptls does */
+    mca_ptl_ib_module.ib_max_ptls = 
+        mca_ptl_ib_module.ib_num_hcas;
 
-    /* Number of PTLs are equal to number of HCAs */
+    D_PRINT("num_hcas: %d, num_ptls: %d, max_ptls: %d\n",
+           mca_ptl_ib_module.ib_num_hcas,
+          mca_ptl_ib_module.ib_num_ptls,
+         mca_ptl_ib_module.ib_max_ptls); 
+
     ptl_ib = (mca_ptl_ib_t*) malloc(sizeof(mca_ptl_ib_t) * 
             mca_ptl_ib_module.ib_num_ptls);
     if(NULL == ptl_ib) {
         return NULL;
     }
 
+    /* Zero out the PTL struct memory region */
+    memset((void*)ptl_ib, 0, sizeof(mca_ptl_ib_t) *
+            mca_ptl_ib_module.ib_num_ptls);
+
     /* Copy the function pointers to the IB ptls */
     for(i = 0; i< mca_ptl_ib_module.ib_num_ptls; i++) {
         memcpy((void*)&ptl_ib[i], 
                 &mca_ptl_ib, 
                 sizeof(mca_ptl_ib));
+    }
+
+    D_PRINT("About to initialize IB ptls ...\n");
+
+    /* For each ptl, do this */
+    for(i = 0; i < mca_ptl_ib_module.ib_num_ptls; i++) {
+
+        if(mca_ptl_ib_get_hca_id(i, &ptl_ib[i].hca_id) 
+                != OMPI_SUCCESS) {
+            return NULL;
+        }
+
+        D_PRINT("hca_id: %s\n", ptl_ib[i].hca_id);
+
+        if(mca_ptl_ib_get_hca_hndl(ptl_ib[i].hca_id, &ptl_ib[i].nic)
+                != OMPI_SUCCESS) {
+            return NULL;
+        }
+
+        D_PRINT("hca_hndl: %d\n", ptl_ib[i].nic);
+
+        /* Each HCA uses only port 1. Need to change
+         * this so that each ptl can choose different
+         * ports */
+
+        if(mca_ptl_ib_query_hca_prop(ptl_ib[i].nic, &ptl_ib[i].port)
+                != OMPI_SUCCESS) {
+            return NULL;
+        }
+
+        D_PRINT("LID: %d\n", ptl_ib[i].port.lid);
+
+        if(mca_ptl_ib_alloc_pd(ptl_ib[i].nic, &ptl_ib[i].ptag)
+                != OMPI_SUCCESS) {
+            return NULL;
+        }
+
+        D_PRINT("Protection Domain: %d\n", ptl_ib[i].ptag);
+
+        if(mca_ptl_ib_create_cq(ptl_ib[i].nic, &ptl_ib[i].cq_hndl)
+                != OMPI_SUCCESS) {
+            return NULL;
+        }
+
+        D_PRINT("CQ handle: %d\n", ptl_ib[i].cq_hndl);
+
+
+        if(mca_ptl_ib_ud_cq_init(&ptl_ib[i]) != OMPI_SUCCESS) {
+            return NULL;
+        }
+
+        if(mca_ptl_ib_ud_qp_init(&ptl_ib[i]) != OMPI_SUCCESS) {
+            return NULL;
+        }
     }
 
     /* Allocate list of IB ptl pointers */
@@ -277,54 +308,6 @@ mca_ptl_t** mca_ptl_ib_module_init(int *num_ptls,
     /* Set the pointers for all IB ptls */
     for(i = 0; i < mca_ptl_ib_module.ib_num_ptls; i++) {
         mca_ptl_ib_module.ib_ptls[i] = &ptl_ib[i];
-    }
-
-    /* Open the HCAs asscociated with ptls */
-    for(i = 0; i < mca_ptl_ib_module.ib_num_ptls; i++) {
-
-        strncpy(ptl_ib[i].hca_id, hca_id[i],
-                sizeof(VAPI_hca_id_t));
-        /* Open the HCA */
-        ret = EVAPI_get_hca_hndl(ptl_ib[i].hca_id, 
-                &ptl_ib[i].nic);
-
-        MCA_PTL_IB_VAPI_RET(NULL, ret, "EVAPI_get_hca_hndl");
-
-        /* Querying for port properties */
-        ret = VAPI_query_hca_port_prop(ptl_ib[i].nic,
-                (IB_port_t)DEFAULT_PORT, 
-                (VAPI_hca_port_t *)&(ptl_ib[i].port));
-        MCA_PTL_IB_VAPI_RET(NULL, ret, "VAPI_query_hca_port_prop");
-    }
-
-    /* Create the Completion Queue & Protection handles
-     * before creating the UD Queue Pair */
-    for(i = 0; i < mca_ptl_ib_module.ib_num_ptls; i++) {
-
-        ret = VAPI_alloc_pd(ptl_ib[i].nic, &ptl_ib[i].ptag);
-        MCA_PTL_IB_VAPI_RET(NULL, ret, "VAPI_alloc_pd");
-
-        ret = VAPI_create_cq(ptl_ib[i].nic, DEFAULT_CQ_SIZE,
-                &ptl_ib[i].cq_hndl, &act_num_cqe);
-        MCA_PTL_IB_VAPI_RET(NULL, ret, "VAPI_create_cq");
-
-        /* If we didn't get any CQ entries, then return
-         * failure */
-        if(act_num_cqe == 0) {
-            return NULL;
-        }
-
-        ret = mca_ptl_ib_ud_cq_init(&ptl_ib[i]);
-
-        if(ret != VAPI_OK) {
-            return NULL;
-        }
-
-        ret = mca_ptl_ib_ud_qp_init(&ptl_ib[i]);
-
-        if(ret != VAPI_OK) {
-            return NULL;
-        }
     }
 
     if(mca_ptl_ib_module_send() != OMPI_SUCCESS) {
@@ -344,10 +327,6 @@ mca_ptl_t** mca_ptl_ib_module_init(int *num_ptls,
 
     *num_ptls = mca_ptl_ib_module.ib_num_ptls;
 
-    fprintf(stderr,"ptls = %p, num_ptls = %d\n",
-            ptls, *num_ptls);
-
-    free(hca_id);
     return ptls;
 }
 

@@ -2,19 +2,19 @@
 #include "ptl_ib.h"
 #include "ptl_ib_priv.h"
 
-VAPI_ret_t mca_ptl_ib_ud_cq_init(mca_ptl_ib_t* ptl_ib)
+int mca_ptl_ib_ud_cq_init(mca_ptl_ib_t* ptl_ib)
 {
     VAPI_ret_t      ret;
     VAPI_cqe_num_t  act_num_cqe = 0;
 
     ret = VAPI_create_cq(ptl_ib->nic, DEFAULT_CQ_SIZE, 
             &(ptl_ib->ud_scq_hndl), &act_num_cqe);
-    MCA_PTL_IB_VAPI_RET(ret, ret, "VAPI_create_cq");
 
-    if(act_num_cqe == 0) {
-        /* Couldn't give any CQ entries, not
-         * enough resources */
-        return VAPI_EAGAIN;
+    D_PRINT("UD Send CQ handle :%d\n", ptl_ib->ud_scq_hndl);
+
+    if((VAPI_OK != ret) || (0 == act_num_cqe)) {
+        MCA_PTL_IB_VAPI_RET(ret, "VAPI_create_cq");
+        return OMPI_ERROR;
     }
 
     /* Send completion queue was allocated successfully,
@@ -24,20 +24,20 @@ VAPI_ret_t mca_ptl_ib_ud_cq_init(mca_ptl_ib_t* ptl_ib)
 
     ret = VAPI_create_cq(ptl_ib->nic, DEFAULT_CQ_SIZE, 
             &(ptl_ib->ud_rcq_hndl), &act_num_cqe);
-    MCA_PTL_IB_VAPI_RET(ret, ret, "VAPI_create_cq");
 
-    if(act_num_cqe == 0) {
-        /* Couldn't give any CQ entries, not
-         * enough resources */
-        return VAPI_EAGAIN;
+    D_PRINT("UD Recv CQ handle :%d\n", ptl_ib->ud_rcq_hndl);
+
+    if((VAPI_OK != ret) || (act_num_cqe == 0)) {
+        MCA_PTL_IB_VAPI_RET(ret, "VAPI_create_cq");
+        return OMPI_ERROR;
     }
 
-    return VAPI_OK;
+    return OMPI_SUCCESS;
 }
 
 /* Set up UD Completion Queue and Queue pair */
 
-VAPI_ret_t mca_ptl_ib_ud_qp_init(mca_ptl_ib_t* ptl_ib)
+int mca_ptl_ib_ud_qp_init(mca_ptl_ib_t* ptl_ib)
 {
     VAPI_qp_init_attr_t     qp_init_attr;
     VAPI_qp_attr_t          qp_attr;
@@ -68,7 +68,10 @@ VAPI_ret_t mca_ptl_ib_ud_qp_init(mca_ptl_ib_t* ptl_ib)
     ret = VAPI_create_qp(ptl_ib->nic, &qp_init_attr, 
             &(ptl_ib->ud_qp_hndl), &(ptl_ib->ud_qp_prop));
 
-    MCA_PTL_IB_VAPI_RET(ret, ret, "VAPI_create_qp");
+    if(VAPI_OK != ret) {
+        MCA_PTL_IB_VAPI_RET(ret, "VAPI_create_qp");
+        return OMPI_ERROR;
+    }
 
     D_PRINT("UD QP[%d] created ..hndl=%d\n",
             ptl_ib->ud_qp_prop.qp_num,
@@ -89,7 +92,10 @@ VAPI_ret_t mca_ptl_ib_ud_qp_init(mca_ptl_ib_t* ptl_ib)
             ptl_ib->ud_qp_hndl, &qp_attr, 
             &qp_attr_mask, &qp_cap);
 
-    MCA_PTL_IB_VAPI_RET(ret, ret, "VAPI_modify_qp");
+    if(VAPI_OK != ret) {
+        MCA_PTL_IB_VAPI_RET(ret, "VAPI_modify_qp");
+        return OMPI_ERROR;
+    }
 
     D_PRINT("Modified UD to init..Qp\n");
 
@@ -103,7 +109,11 @@ VAPI_ret_t mca_ptl_ib_ud_qp_init(mca_ptl_ib_t* ptl_ib)
     ret = VAPI_modify_qp(ptl_ib->nic, 
             ptl_ib->ud_qp_hndl, &qp_attr, 
             &qp_attr_mask, &qp_cap);
-    MCA_PTL_IB_VAPI_RET(ret, ret, "VAPI_modify_qp");
+
+    if(VAPI_OK != ret) {
+        MCA_PTL_IB_VAPI_RET(ret, "VAPI_modify_qp");
+        return OMPI_ERROR;
+    }
 
     D_PRINT("Modified UD to RTR..Qp\n");
 
@@ -120,10 +130,132 @@ VAPI_ret_t mca_ptl_ib_ud_qp_init(mca_ptl_ib_t* ptl_ib)
             ptl_ib->ud_qp_hndl, &qp_attr, 
             &qp_attr_mask, &qp_cap);
 
-    MCA_PTL_IB_VAPI_RET(ret, ret, "VAPI_modify_qp");
-
+    if(VAPI_OK != ret) {
+        MCA_PTL_IB_VAPI_RET(ret, "VAPI_modify_qp");
+        return OMPI_ERROR;
+    }
     D_PRINT("Modified UD to RTS..Qp\n");
 
     /* Everything was fine ... return success! */
-    return VAPI_OK;
+    return OMPI_SUCCESS;
+}
+
+int mca_ptl_ib_get_num_hcas(uint32_t* num_hcas)
+{
+    VAPI_ret_t ret;
+
+    /* List all HCAs */
+    ret = EVAPI_list_hcas(0, num_hcas, NULL);
+
+    if( (VAPI_OK != ret) && (VAPI_EAGAIN != ret)) {
+        MCA_PTL_IB_VAPI_RET(ret, "EVAPI_list_hcas");
+        return OMPI_ERROR;
+    }
+
+    return OMPI_SUCCESS;
+}
+
+/* This function returns the hca_id for each PTL
+ * in a round robin manner. Each PTL gets a different
+ * HCA id ...
+ *
+ * If num PTLs > num HCAs, then those ptls will be
+ * assigned HCA ids beginning from 0 again.
+ */
+
+int mca_ptl_ib_get_hca_id(int num, VAPI_hca_id_t* hca_id)
+{
+    int num_hcas;
+    VAPI_ret_t ret;
+    VAPI_hca_id_t* hca_ids = NULL;
+
+    hca_ids = (VAPI_hca_id_t*) malloc(mca_ptl_ib_module.ib_num_hcas *
+            sizeof(VAPI_hca_id_t));
+
+    /* Now get the hca_id from underlying VAPI layer */
+    ret = EVAPI_list_hcas(mca_ptl_ib_module.ib_num_hcas, 
+            &num_hcas, hca_ids);
+
+    /* HACK: right now, I have put VAPI_EAGAIN as
+     * acceptable condition since we are trying to have
+     * only 1 ptl support */
+    if((VAPI_OK != ret) && (VAPI_EAGAIN != ret)) {
+        MCA_PTL_IB_VAPI_RET(ret, "EVAPI_list_hcas");
+        return OMPI_ERROR;
+    } else {
+
+        num = num % num_hcas;
+
+        memcpy(hca_id, hca_ids[num], sizeof(VAPI_hca_id_t));
+    }
+
+    free(hca_ids);
+
+    return OMPI_SUCCESS;
+}
+
+int mca_ptl_ib_get_hca_hndl(VAPI_hca_id_t hca_id,
+        VAPI_hca_hndl_t* hca_hndl) 
+{
+    VAPI_ret_t ret; 
+
+    /* Open the HCA */
+    ret = EVAPI_get_hca_hndl(hca_id, hca_hndl);
+
+    if(VAPI_OK != ret) {
+        MCA_PTL_IB_VAPI_RET(ret, "EVAPI_get_hca_hndl");
+        return OMPI_ERROR;
+    }
+
+    return OMPI_SUCCESS;
+}
+
+int mca_ptl_ib_query_hca_prop(VAPI_hca_hndl_t nic,
+        VAPI_hca_port_t* port)
+{
+    VAPI_ret_t ret;
+
+    /* Querying for port properties */
+    ret = VAPI_query_hca_port_prop(nic,
+            (IB_port_t)DEFAULT_PORT, 
+            port);
+
+    if(VAPI_OK != ret) {
+        MCA_PTL_IB_VAPI_RET(ret, "VAPI_query_hca_port_prop");
+        return OMPI_ERROR;
+    }
+
+    return OMPI_SUCCESS;
+}
+
+int mca_ptl_ib_alloc_pd(VAPI_hca_hndl_t nic,
+        VAPI_pd_hndl_t* ptag)
+{
+    VAPI_ret_t ret;
+
+    ret = VAPI_alloc_pd(nic, ptag);
+
+    if(ret != VAPI_OK) {
+        MCA_PTL_IB_VAPI_RET(ret, "VAPI_alloc_pd");
+        return OMPI_ERROR;
+    }
+
+    return OMPI_SUCCESS;
+}
+
+int mca_ptl_ib_create_cq(VAPI_hca_hndl_t nic,
+                VAPI_cq_hndl_t* cq_hndl)
+{
+    int act_num_cqe = 0;
+    VAPI_ret_t ret;
+
+    ret = VAPI_create_cq(nic, DEFAULT_CQ_SIZE,
+            cq_hndl, &act_num_cqe);
+
+    if( (VAPI_OK != ret) || (0 == act_num_cqe)) {
+        MCA_PTL_IB_VAPI_RET(ret, "VAPI_create_cq");
+        return OMPI_ERROR;
+    }
+
+    return OMPI_SUCCESS;
 }
