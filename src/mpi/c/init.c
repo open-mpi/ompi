@@ -7,8 +7,11 @@
 #include <stdlib.h>
 
 #include "mpi.h"
+#include "include/constants.h"
 #include "mpi/c/bindings.h"
 #include "runtime/runtime.h"
+#include "errhandler/errhandler.h"
+#include "communicator/communicator.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Init = PMPI_Init
@@ -18,22 +21,26 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
+static char FUNC_NAME[] = "MPI_Init";
+
 
 int MPI_Init(int *argc, char ***argv)
 {
+  int err;
   int provided;
   char *env;
-  int requested = MPI_THREAD_SINGLE;
+  int required = MPI_THREAD_SINGLE;
+  MPI_Comm null = NULL;
 
-  /* check for environment overrides for requested thread level.  If
+  /* check for environment overrides for required thread level.  If
      there is, check to see that it is a valid/supported thread level.
      If not, default to MPI_THREAD_SINGLE. */
 
   if (NULL != (env = getenv("OMPI_MPI_THREAD_LEVEL"))) {
-    requested = atoi(env);
-    if (requested < MPI_THREAD_SINGLE || requested > MPI_THREAD_MULTIPLE) {
-      /* JMS call the show_help() interface */
-      exit(1);
+    required = atoi(env);
+    if (required < MPI_THREAD_SINGLE || required > MPI_THREAD_MULTIPLE) {
+      /* JMS show_help */
+      OMPI_ERRHANDLER_INVOKE(null, err, FUNC_NAME);
     }
   } 
 
@@ -41,5 +48,6 @@ int MPI_Init(int *argc, char ***argv)
      little in this function as possible so that if it's profiled, we
      don't lose anything) */
 
-  return ompi_mpi_init(*argc, *argv, requested, &provided);
+  err = ompi_mpi_init(*argc, *argv, required, &provided);
+  OMPI_ERRHANDLER_RETURN(err, null, err, FUNC_NAME);
 }

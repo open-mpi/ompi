@@ -18,6 +18,12 @@ int ompi_errhandler_invoke(ompi_errhandler_t *errhandler, void *mpi_object,
   ompi_win_t *win;
   ompi_file_t *file;
 
+  /* If we got no errorhandler, then just invoke errors_abort */
+  
+  if (NULL == errhandler) {
+    ompi_mpi_errors_are_fatal_handler(NULL, NULL, message);
+  }
+
   /* Figure out what kind of errhandler it is, figure out if it's
      fortran or C, and then invoke it */
 
