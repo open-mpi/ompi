@@ -517,15 +517,14 @@ int ompi_ifindextoname(int if_index, char* if_name, int length)
     return OMPI_ERROR;
 }
 
-
+#define ADDRLEN 100
 bool
 ompi_ifislocal(char *hostname)
 {
-    const int len = 100;
-    char addrname[len - 1];
+    char addrname[ADDRLEN - 1];
     int ret;
 
-    ret = ompi_ifaddrtoname(hostname, addrname, len);
+    ret = ompi_ifaddrtoname(hostname, addrname, ADDRLEN);
     if (OMPI_SUCCESS == ret) return true;
 
     return false;
