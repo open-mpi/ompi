@@ -151,7 +151,7 @@ int mca_coll_basic_reduce_lin_intra(void *sbuf, void *rbuf, int count,
 
      2. If B is what we get back from malloc, but we give A to
         MPI_Send, then the buffer range [A,B) represents "dead space"
-        -- no data will be put there.  So it's safe to give A-LB to
+        -- no data will be put there.  So it's safe to give B-LB to
         MPI_Send.  More specifically, the LB is positive, so B-LB is
         actually A.
 
@@ -166,9 +166,9 @@ int mca_coll_basic_reduce_lin_intra(void *sbuf, void *rbuf, int count,
      Hence, in all cases, we give (return_from_malloc - LB) to MPI_Send.
 
      This works fine and dandy if we only have (count==1), which we
-     rarely do.  ;-) So we need to then allocate ((count-1)*extent) to
-     get enough space for the rest.  This may be more than is
-     necessary, but it's ok.
+     rarely do.  ;-) So we really need to allocate (true_extent +
+     ((count - 1) * extent)) to get enough space for the rest.  This may
+     be more than is necessary, but it's ok.
 
      Simple, no?  :-)
 
