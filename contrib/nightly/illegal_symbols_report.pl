@@ -170,6 +170,31 @@ sub find_program {
 
 #--------------------------------------------------------------------------
 
+# Did we find anything?
+
+sub mail_symbols {
+    my ($bad, $mail) = @_;
+
+    foreach my $file (sort keys(%{$$bad})) {
+        print $mail "File: $file\n";
+        foreach my $location (sort keys(%{$$bad->{$file}})) {
+            print $mail "  Source: $location\n";
+            my $array = $$bad->{$file}->{$location};
+            foreach my $symbol (@$array) {
+                if ($symbol->{line}) {
+                    print $mail "  --> Line $symbol->{line}: $symbol->{symbol}\n";
+                } else {
+                    print $mail "  --> $symbol->{symbol}\n";
+                }
+            }
+            
+        }
+        print $mail "\n";
+    }
+}
+
+#--------------------------------------------------------------------------
+
 #
 # main
 #
@@ -182,6 +207,7 @@ my @compdir_arg;
 my @comp_arg;
 my $prefix_arg;
 my $email_arg;
+my $delete_arg;
 
 # parse the command line
 &Getopt::Long::Configure("bundling", "require_order");
@@ -191,6 +217,7 @@ my $ok = Getopt::Long::GetOptions("libdir|l=s" => \@libdir_arg,
                                   "comp=s" => \@comp_arg,
                                   "prefix|p=s" => \$prefix_arg,
                                   "email|e=s" => \$email_arg,
+                                  "delete" => \$delete_arg,
                                   );
 
 # Check args
@@ -247,29 +274,6 @@ foreach my $dir (@comp_arg) {
 
 my $bad_compsymbols = check_comps(@comps);
 
-# Did we find anything?
-
-sub mail_symbols {
-    my ($bad, $mail) = @_;
-
-    foreach my $file (sort keys(%{$$bad})) {
-        print $mail "File: $file\n";
-        foreach my $location (sort keys(%{$$bad->{$file}})) {
-            print $mail "  Source: $location\n";
-            my $array = $$bad->{$file}->{$location};
-            foreach my $symbol (@$array) {
-                if ($symbol->{line}) {
-                    print $mail "  --> Line $symbol->{line}: $symbol->{symbol}\n";
-                } else {
-                    print $mail "  --> $symbol->{symbol}\n";
-                }
-            }
-            
-        }
-        print $mail "\n";
-    }
-}
-
 if ($$bad_compsymbols || $$bad_libsymbols) {
 
     open MAIL, "|$mail -s \"$subject\" \"$email_arg\"" ||
@@ -285,4 +289,25 @@ if ($$bad_compsymbols || $$bad_libsymbols) {
    
     print MAIL "\nYour friendly server,\nCyrador\n";
     close MAIL;
+}
+
+# If --delete was given, remove all the dirs and files listed on the
+# command line -- ignore any errors in case subdirectories were given.
+
+if ($delete_arg) {
+    foreach my $file (@lib_arg) {
+        system("rm -rf $file >/dev/null 2>/dev/null");
+    }
+    foreach my $file (@comp_arg) {
+        system("rm -rf $file >/dev/null 2>/dev/null");
+    }
+    foreach my $file (@libdir_arg) {
+        system("rm -rf $file >/dev/null 2>/dev/null");
+    }
+    foreach my $file (@compdir_arg) {
+        system("rm -rf $file >/dev/null 2>/dev/null");
+    }
+    if ($prefix_arg) {
+        system("rm -rf $prefix_arg >/dev/null 2>/dev/null");
+    }
 }
