@@ -58,7 +58,7 @@ int MPI_Group_excl(MPI_Group group, int n, int *ranks,
 
     /* put group elements in the list */
     cnt=0;
-    for (proc = 0; proc < n; proc++) {
+    for (proc = 0; proc < group_pointer->grp_proc_count; proc++) {
         found=0;
         /* check to see if this proc is in the exclusion list */
         for( i_excl=0 ; i_excl < n ; ++i_excl ) {
