@@ -30,7 +30,9 @@ int ompi_request_wait_any(
         null_requests = 0;
         for (i = 0; i < count; i++, rptr++) {
             request = *rptr;
-            if (MPI_REQUEST_NULL == request) {
+            /* check for null or completed persistent request */
+            if (MPI_REQUEST_NULL == request || 
+                request->req_state == OMPI_REQUEST_INACTIVE) { 
                 if(++null_requests == count)
                     goto finished;
                 continue;
@@ -51,7 +53,9 @@ int ompi_request_wait_any(
         null_requests = 0;
         for (i = 0; i < count; i++, rptr++) {
             request = *rptr;
-            if (MPI_REQUEST_NULL == request) {
+            /* check for null or completed persistent request */
+            if (MPI_REQUEST_NULL == request || 
+                request->req_state == OMPI_REQUEST_INACTIVE) {
                 null_requests++;
                 continue;
             }
