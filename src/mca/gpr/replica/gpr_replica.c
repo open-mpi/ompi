@@ -492,6 +492,7 @@ ompi_list_t* gpr_replica_get(ompi_registry_mode_t addr_mode,
 	return answer;
     }
     if (NULL == tokens) { /* wildcard case - return everything */
+    keylist = NULL;
 	keys = NULL;
     } else {
 
@@ -534,7 +535,8 @@ ompi_list_t* gpr_replica_get(ompi_registry_mode_t addr_mode,
 
  CLEANUP:
     /* release list of keys */
-    OBJ_RELEASE(keylist);
+    if(NULL != keylist)
+        OBJ_RELEASE(keylist);
 
     if (NULL != keys) {
 	free(keys);
