@@ -194,9 +194,9 @@ fi
 #
 
 AC_MSG_CHECKING([if want run-time MPI parameter checking])
-AC_ARG_ENABLE(mpi-param-check,
-    AC_HELP_STRING([--with-mpi-param-check],
-                   [behavior of MPI function parameter checking.  Valid values are: always, never, runtime (default: runtime)]))
+AC_ARG_WITH(mpi-param-check,
+    AC_HELP_STRING([--with-mpi-param-check(=VALUE)],
+                   [behavior of MPI function parameter checking.  Valid values are: always, never, runtime.  No VALUE specified is equivalent to "always"; --without is equivalent to "never" (default: runtime).]))
 mpi_param_check=ompi_mpi_param_check
 if test "$with_mpi_param_check" = "no" -o \
     "$with_mpi_param_check" = "never"; then
