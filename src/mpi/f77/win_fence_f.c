@@ -48,5 +48,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WIN_FENCE,
 
 void mpi_win_fence_f(MPI_Fint *assert, MPI_Fint *win, MPI_Fint *ierr)
 {
-  /* This function not yet implemented */
+    MPI_Win c_win = MPI_Win_f2c(*win);
+    
+    *ierr = OMPI_INT_2_FINT(MPI_Win_fence(OMPI_FINT_2_INT(*assert), c_win));
 }

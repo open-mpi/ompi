@@ -48,5 +48,10 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WIN_GET_GROUP,
 
 void mpi_win_get_group_f(MPI_Fint *win, MPI_Fint *group, MPI_Fint *ierr)
 {
-  /* This function not yet implemented */
+    MPI_Group c_grp;
+    MPI_Win c_win = MPI_Win_f2c(*win);
+
+    *ierr = OMPI_INT_2_FINT(MPI_Win_get_group(c_win, &c_grp));
+    
+    *group = MPI_Group_c2f(c_grp);
 }

@@ -48,5 +48,8 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WIN_UNLOCK,
 
 void mpi_win_unlock_f(MPI_Fint *rank, MPI_Fint *win, MPI_Fint *ierr)
 {
-  /* This function not yet implemented */
+    MPI_Win c_win = MPI_Win_f2c(*win);
+
+    *ierr = OMPI_INT_2_FINT(MPI_Win_unlock(OMPI_FINT_2_INT(*rank),
+					   c_win));
 }

@@ -46,7 +46,13 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WIN_POST,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-void mpi_win_post_f(MPI_Fint *group, MPI_Fint *assert, MPI_Fint *win, MPI_Fint *ierr)
+void mpi_win_post_f(MPI_Fint *group, MPI_Fint *assert,
+		    MPI_Fint *win, MPI_Fint *ierr)
 {
-  /* This function not yet implemented */
+    MPI_Win c_win = MPI_Win_f2c(*win);
+    MPI_Group c_grp = MPI_Group_f2c(*group);
+
+    *ierr = OMPI_INT_2_FINT(MPI_Win_post(c_grp, 
+					 OMPI_FINT_2_INT(*assert),
+					 c_win));
 }
