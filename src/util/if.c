@@ -126,6 +126,9 @@ static int ompi_ifinit(void)
             return OMPI_ERROR;
         }
 
+        /* initialize the memory so valgrind and purify won't complain */
+        memset(ifconf.ifc_req, 0, ifc_len);
+        
         if(ioctl(sd, SIOCGIFCONF, &ifconf) < 0) {
             /* if we got an einval, we probably don't have enough
                space.  so we'll fall down and try to expand our
