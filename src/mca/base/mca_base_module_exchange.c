@@ -441,7 +441,9 @@ int mca_base_modex_recv(
         proc->proc_modex = &modex->super;
 
         /* verify that we have subscribed to this segment */
+        OMPI_THREAD_UNLOCK(&proc->proc_lock);
         mca_base_modex_subscribe(&proc->proc_name);
+        OMPI_THREAD_LOCK(&proc->proc_lock);
     }
 
     /* lookup/create the module */
