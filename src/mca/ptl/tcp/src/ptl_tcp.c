@@ -21,9 +21,9 @@
 #include "ptl_tcp_recvfrag.h"
 
 
-mca_ptl_tcp_t mca_ptl_tcp = {
+mca_ptl_tcp_module_t mca_ptl_tcp_module = {
     {
-    &mca_ptl_tcp_module.super,
+    &mca_ptl_tcp_component.super,
     1, /* max size of request cache */
     sizeof(mca_ptl_tcp_send_frag_t), /* bytes required by ptl for a request */
     0, /* max size of first fragment */
@@ -47,7 +47,7 @@ mca_ptl_tcp_t mca_ptl_tcp = {
 
 
 int mca_ptl_tcp_add_procs(
-    struct mca_ptl_t* ptl, 
+    struct mca_ptl_base_module_t* ptl, 
     size_t nprocs, 
     struct ompi_proc_t **ompi_procs, 
     struct mca_ptl_base_peer_t** peers, 
@@ -82,7 +82,7 @@ int mca_ptl_tcp_add_procs(
             OMPI_THREAD_UNLOCK(&ptl_proc->proc_lock);
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
-        ptl_peer->peer_ptl = (mca_ptl_tcp_t*)ptl;
+        ptl_peer->peer_ptl = (mca_ptl_tcp_module_t*)ptl;
         rc = mca_ptl_tcp_proc_insert(ptl_proc, ptl_peer);
         if(rc != OMPI_SUCCESS) {
             OBJ_RELEASE(ptl_peer);
@@ -96,7 +96,7 @@ int mca_ptl_tcp_add_procs(
     return OMPI_SUCCESS;
 }
 
-int mca_ptl_tcp_del_procs(struct mca_ptl_t* ptl, size_t nprocs, struct ompi_proc_t **procs, struct mca_ptl_base_peer_t ** peers)
+int mca_ptl_tcp_del_procs(struct mca_ptl_base_module_t* ptl, size_t nprocs, struct ompi_proc_t **procs, struct mca_ptl_base_peer_t ** peers)
 {
     size_t i;
     for(i=0; i<nprocs; i++) {
@@ -105,50 +105,50 @@ int mca_ptl_tcp_del_procs(struct mca_ptl_t* ptl, size_t nprocs, struct ompi_proc
     return OMPI_SUCCESS;
 }
 
-int mca_ptl_tcp_finalize(struct mca_ptl_t* ptl)
+int mca_ptl_tcp_finalize(struct mca_ptl_base_module_t* ptl)
 {
     free(ptl);
     return OMPI_SUCCESS;
 }
 
-int mca_ptl_tcp_request_init(struct mca_ptl_t* ptl, struct mca_pml_base_send_request_t* request)
+int mca_ptl_tcp_request_init(struct mca_ptl_base_module_t* ptl, struct mca_pml_base_send_request_t* request)
 {
     OBJ_CONSTRUCT(request+1, mca_ptl_tcp_send_frag_t);
     return OMPI_SUCCESS;
 }
 
 
-void mca_ptl_tcp_request_fini(struct mca_ptl_t* ptl, struct mca_pml_base_send_request_t* request)
+void mca_ptl_tcp_request_fini(struct mca_ptl_base_module_t* ptl, struct mca_pml_base_send_request_t* request)
 {
     OBJ_DESTRUCT(request+1);
 }
 
 
-void mca_ptl_tcp_recv_frag_return(struct mca_ptl_t* ptl, struct mca_ptl_tcp_recv_frag_t* frag)
+void mca_ptl_tcp_recv_frag_return(struct mca_ptl_base_module_t* ptl, struct mca_ptl_tcp_recv_frag_t* frag)
 {
     if(frag->frag_recv.frag_is_buffered) 
         free(frag->frag_recv.frag_base.frag_addr);
-    OMPI_FREE_LIST_RETURN(&mca_ptl_tcp_module.tcp_recv_frags, (ompi_list_item_t*)frag);
+    OMPI_FREE_LIST_RETURN(&mca_ptl_tcp_component.tcp_recv_frags, (ompi_list_item_t*)frag);
 }
 
 
-void mca_ptl_tcp_send_frag_return(struct mca_ptl_t* ptl, struct mca_ptl_tcp_send_frag_t* frag)
+void mca_ptl_tcp_send_frag_return(struct mca_ptl_base_module_t* ptl, struct mca_ptl_tcp_send_frag_t* frag)
 {
-    if(ompi_list_get_size(&mca_ptl_tcp_module.tcp_pending_acks)) {
+    if(ompi_list_get_size(&mca_ptl_tcp_component.tcp_pending_acks)) {
         mca_ptl_tcp_recv_frag_t* pending;
-        OMPI_THREAD_LOCK(&mca_ptl_tcp_module.tcp_lock);
-        pending = (mca_ptl_tcp_recv_frag_t*)ompi_list_remove_first(&mca_ptl_tcp_module.tcp_pending_acks);
+        OMPI_THREAD_LOCK(&mca_ptl_tcp_component.tcp_lock);
+        pending = (mca_ptl_tcp_recv_frag_t*)ompi_list_remove_first(&mca_ptl_tcp_component.tcp_pending_acks);
         if(NULL == pending) {
-            OMPI_THREAD_UNLOCK(&mca_ptl_tcp_module.tcp_lock);
-            OMPI_FREE_LIST_RETURN(&mca_ptl_tcp_module.tcp_send_frags, (ompi_list_item_t*)frag);
+            OMPI_THREAD_UNLOCK(&mca_ptl_tcp_component.tcp_lock);
+            OMPI_FREE_LIST_RETURN(&mca_ptl_tcp_component.tcp_send_frags, (ompi_list_item_t*)frag);
             return;
         }
-        OMPI_THREAD_UNLOCK(&mca_ptl_tcp_module.tcp_lock);
+        OMPI_THREAD_UNLOCK(&mca_ptl_tcp_component.tcp_lock);
         mca_ptl_tcp_send_frag_init_ack(frag, ptl, pending->frag_recv.frag_base.frag_peer, pending);
         mca_ptl_tcp_peer_send(pending->frag_recv.frag_base.frag_peer, frag);
         mca_ptl_tcp_recv_frag_return(ptl, pending);
     } else {
-        OMPI_FREE_LIST_RETURN(&mca_ptl_tcp_module.tcp_send_frags, (ompi_list_item_t*)frag);
+        OMPI_FREE_LIST_RETURN(&mca_ptl_tcp_component.tcp_send_frags, (ompi_list_item_t*)frag);
     }
 }
 
@@ -160,7 +160,7 @@ void mca_ptl_tcp_send_frag_return(struct mca_ptl_t* ptl, struct mca_ptl_tcp_send
  */
 
 int mca_ptl_tcp_send(
-    struct mca_ptl_t* ptl,
+    struct mca_ptl_base_module_t* ptl,
     struct mca_ptl_base_peer_t* ptl_peer,
     struct mca_pml_base_send_request_t* sendreq,
     size_t offset,
@@ -173,7 +173,7 @@ int mca_ptl_tcp_send(
         sendfrag = &((mca_ptl_tcp_send_request_t*)sendreq)->req_frag;
     } else {
         ompi_list_item_t* item;
-        OMPI_FREE_LIST_GET(&mca_ptl_tcp_module.tcp_send_frags, item, rc);
+        OMPI_FREE_LIST_GET(&mca_ptl_tcp_component.tcp_send_frags, item, rc);
         if(NULL == (sendfrag = (mca_ptl_tcp_send_frag_t*)item))
             return rc;
     }
@@ -194,7 +194,7 @@ int mca_ptl_tcp_send(
  */
 
 void mca_ptl_tcp_matched(
-    mca_ptl_t* ptl,
+    mca_ptl_base_module_t* ptl,
     mca_ptl_base_recv_frag_t* frag)
 {
     /* send ack back to peer? */
@@ -208,10 +208,10 @@ void mca_ptl_tcp_matched(
         ack = (mca_ptl_tcp_send_frag_t*)item;
 
         if(NULL == ack) {
-            OMPI_THREAD_LOCK(&mca_ptl_tcp_module.tcp_lock);
+            OMPI_THREAD_LOCK(&mca_ptl_tcp_component.tcp_lock);
             recv_frag->frag_ack_pending = true;
-            ompi_list_append(&mca_ptl_tcp_module.tcp_pending_acks, (ompi_list_item_t*)frag);
-            OMPI_THREAD_UNLOCK(&mca_ptl_tcp_module.tcp_lock);
+            ompi_list_append(&mca_ptl_tcp_component.tcp_pending_acks, (ompi_list_item_t*)frag);
+            OMPI_THREAD_UNLOCK(&mca_ptl_tcp_component.tcp_lock);
         } else {
             mca_ptl_tcp_send_frag_init_ack(ack, ptl, recv_frag->frag_recv.frag_base.frag_peer, recv_frag);
             mca_ptl_tcp_peer_send(ack->frag_send.frag_base.frag_peer, ack);

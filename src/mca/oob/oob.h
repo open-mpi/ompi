@@ -247,7 +247,7 @@ int mca_oob_recv_ntoh_nb(
 *  @return            OMPI error code (<0) on error number of bytes actually sent.
 */
 
-typedef int (*mca_oob_base_send_fn_t)(
+typedef int (*mca_oob_base_module_send_fn_t)(
     const ompi_process_name_t* peer, 
     const struct iovec *msg, 
     int count, 
@@ -266,7 +266,7 @@ typedef int (*mca_oob_base_send_fn_t)(
 *  @return             OMPI error code (<0) on error or number of bytes actually received.
 */
 
-typedef int (*mca_oob_base_recv_fn_t)(
+typedef int (*mca_oob_base_module_recv_fn_t)(
     ompi_process_name_t* peer, 
     const struct iovec *msg, 
     int count, 
@@ -285,7 +285,7 @@ typedef int (*mca_oob_base_recv_fn_t)(
 *
 */
 
-typedef int (*mca_oob_base_send_nb_fn_t)(
+typedef int (*mca_oob_base_module_send_nb_fn_t)(
     const ompi_process_name_t* peer, 
     const struct iovec* msg, 
     int count, 
@@ -305,7 +305,7 @@ typedef int (*mca_oob_base_send_nb_fn_t)(
 * @return             OMPI error code (<0) on error or number of bytes actually received.
 */
 
-typedef int (*mca_oob_base_recv_nb_fn_t)(
+typedef int (*mca_oob_base_module_recv_nb_fn_t)(
     ompi_process_name_t* peer, 
     const struct iovec* msg,  
     int count, 
@@ -316,34 +316,35 @@ typedef int (*mca_oob_base_recv_nb_fn_t)(
 /*
  * OOB Module
  */
-                                                                                                         
-struct mca_oob_1_0_0_t {
-    mca_oob_base_send_fn_t     oob_send; 
-    mca_oob_base_recv_fn_t     oob_recv;
-    mca_oob_base_send_nb_fn_t  oob_send_nb;
-    mca_oob_base_recv_nb_fn_t  oob_recv_nb;
+
+struct mca_oob_base_module_1_0_0_t {
+    mca_oob_base_module_send_fn_t     oob_send; 
+    mca_oob_base_module_recv_fn_t     oob_recv;
+    mca_oob_base_module_send_nb_fn_t  oob_send_nb;
+    mca_oob_base_module_recv_nb_fn_t  oob_recv_nb;
 };
-typedef struct mca_oob_1_0_0_t mca_oob_1_0_0_t;
-typedef struct mca_oob_1_0_0_t mca_oob_t;
+typedef struct mca_oob_base_module_1_0_0_t mca_oob_base_module_1_0_0_t;
+typedef struct mca_oob_base_module_1_0_0_t mca_oob_base_module_t;
 
 /**
  * OOB Component
  */
 
-typedef mca_oob_t* (*mca_oob_base_init_fn_t)(
+typedef mca_oob_base_module_t* (*mca_oob_base_component_init_fn_t)(
     bool *allow_multi_user_threads,
     bool *have_hidden_threads);
-                                                                                                         
-typedef int (*mca_oob_base_finalize_fn_t)(void);
-                                                                                                         
+
+typedef int (*mca_oob_base_component_finalize_fn_t)(void);
+
 /**
  * the standard component data structure
  */
 struct mca_oob_base_component_1_0_0_t {
-   mca_base_module_t oob_version;
-   mca_base_module_data_1_0_0_t oob_data;
-   mca_oob_base_init_fn_t oob_init;
-   mca_oob_base_finalize_fn_t oob_finalize;
+   mca_base_component_t oob_version;
+   mca_base_component_data_1_0_0_t oob_data;
+
+   mca_oob_base_component_init_fn_t oob_init;
+   mca_oob_base_component_finalize_fn_t oob_finalize;
 };
 typedef struct mca_oob_base_component_1_0_0_t mca_oob_base_component_1_0_0_t;
 typedef mca_oob_base_component_1_0_0_t mca_oob_base_component_t;

@@ -17,8 +17,8 @@
 struct mca_ptl_base_selected_module_t {
   ompi_list_item_t super;
 
+  mca_ptl_base_component_t *pbsm_component;
   mca_ptl_base_module_t *pbsm_module;
-  mca_ptl_t *pbsm_actions;
 };
 typedef struct mca_ptl_base_selected_module_t mca_ptl_base_selected_module_t;
 
@@ -43,7 +43,7 @@ extern "C" {
  * Globals
  */
 extern int mca_ptl_base_output;
-extern ompi_list_t mca_ptl_base_modules_available;
-extern ompi_list_t mca_ptl_base_modules_initialized;
+extern ompi_list_t mca_ptl_base_components_available;
+extern ompi_list_t mca_ptl_base_components_initialized;
 
 #endif /* MCA_PTL_BASE_H */

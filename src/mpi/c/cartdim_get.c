@@ -23,7 +23,7 @@ static const char FUNC_NAME[] = "MPI_Cartdim_get";
 
 int MPI_Cartdim_get(MPI_Comm comm, int *ndims) 
 {
-    mca_topo_base_cartdim_get_fn_t func;
+    mca_topo_base_module_cartdim_get_fn_t func;
     int err;
 
     if (MPI_PARAM_CHECK) {

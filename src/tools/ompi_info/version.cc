@@ -42,7 +42,7 @@ static const string ver_component = "component";
 // Private functions
 //
 
-static void show_mca_version(const mca_base_module_t *component,
+static void show_mca_version(const mca_base_component_t *component,
                              const string& scope, const string& ver_type);
 static string make_version_str(const string& scope,
                                int major, int minor, int release, int alpha, 
@@ -128,8 +128,8 @@ void ompi_info::show_component_version(const string& type_name,
   bool want_all_components = (type_all == component_name);
   bool found;
   ompi_list_item *item;
-  mca_base_module_list_item_t *mli;
-  const mca_base_module_t *component;
+  mca_base_component_list_item_t *cli;
+  const mca_base_component_t *component;
   ompi_list_t *components;
 
   // Check to see if the type is valid
@@ -155,10 +155,10 @@ void ompi_info::show_component_version(const string& type_name,
     for (item = ompi_list_get_first(components);
          ompi_list_get_end(components) != item;
          item = ompi_list_get_next(item)) {
-      mli = (mca_base_module_list_item_t *) item;
-      component = mli->mli_module;
+      cli = (mca_base_component_list_item_t *) item;
+      component = cli->cli_component;
       if (want_all_components || 
-          component->mca_module_name == component_name) {
+          component->mca_component_name == component_name) {
         show_mca_version(component, scope, ver_type);
       }
     }
@@ -169,7 +169,7 @@ void ompi_info::show_component_version(const string& type_name,
 //
 // Given a component, display its relevant version(s)
 //
-static void show_mca_version(const mca_base_module_t* component,
+static void show_mca_version(const mca_base_component_t* component,
                              const string& scope, const string& ver_type)
 {
   bool printed;
@@ -188,9 +188,9 @@ static void show_mca_version(const mca_base_module_t* component,
   api_version = make_version_str(scope, component->mca_type_major_version,
                                  component->mca_type_minor_version,
                                  component->mca_type_release_version, 0, 0, "");
-  component_version = make_version_str(scope, component->mca_module_major_version,
-                                    component->mca_module_minor_version,
-                                    component->mca_module_release_version, 
+  component_version = make_version_str(scope, component->mca_component_major_version,
+                                    component->mca_component_minor_version,
+                                    component->mca_component_release_version, 
                                     0, 0, "");
 
   if (pretty) {
@@ -198,7 +198,7 @@ static void show_mca_version(const mca_base_module_t* component,
     message += component->mca_type_name;
     printed = false;
 
-    content = component->mca_module_name + string(" (");
+    content = component->mca_component_name + string(" (");
     if (want_mca) {
       content += "MCA v" + mca_version;
       printed = true;
@@ -220,7 +220,7 @@ static void show_mca_version(const mca_base_module_t* component,
     message = "mca:";
     message += component->mca_type_name;
     message += ":";
-    message += component->mca_module_name;
+    message += component->mca_component_name;
     message += ":version";
     if (want_mca)
       out(empty, message, "mca:" + mca_version);

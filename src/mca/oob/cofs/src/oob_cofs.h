@@ -20,7 +20,7 @@ int mca_oob_cofs_close(void);
 /*
  * Startup / Shutdown
  */
-mca_oob_t* mca_oob_cofs_init(bool *allow_multi_user_threads, bool *have_hidden_threads);
+mca_oob_base_module_t* mca_oob_cofs_init(bool *allow_multi_user_threads, bool *have_hidden_threads);
 int mca_oob_cofs_finalize(void);
 
 

@@ -7,7 +7,7 @@ struct mca_pml_base_ptl_t {
     ompi_list_t       ptl_cache;       /**< cache of send requests */
     size_t            ptl_cache_size;  /**< maximum size of cache */
     ompi_mutex_t      ptl_cache_lock;  /**< lock for queue access */
-    struct mca_ptl_t* ptl;             /**< back pointer to ptl */
+    struct mca_ptl_base_module_t* ptl; /**< back pointer to ptl */
 };
 typedef struct mca_pml_base_ptl_t mca_pml_base_ptl_t;
 

@@ -22,40 +22,40 @@
 /*
  * Private types
  */
-typedef enum module_status {
+typedef enum component_status {
   UNVISITED,
   FAILED_TO_LOAD,
   CHECKING_CYCLE,
   LOADED,
 
   STATUS_MAX
-} module_status_t;
+} component_status_t;
 
-struct module_file_item_t {
+struct component_file_item_t {
   ompi_list_item_t super;
 
   char type[MCA_BASE_MAX_TYPE_NAME_LEN];
-  char name[MCA_BASE_MAX_MODULE_NAME_LEN];
+  char name[MCA_BASE_MAX_COMPONENT_NAME_LEN];
   char basename[OMPI_PATH_MAX];
   char filename[OMPI_PATH_MAX];
-  module_status_t status;
+  component_status_t status;
 };
-typedef struct module_file_item_t module_file_item_t;
+typedef struct component_file_item_t component_file_item_t;
 
-OBJ_CLASS_INSTANCE(module_file_item_t, ompi_list_item_t, NULL, NULL);
+static OBJ_CLASS_INSTANCE(component_file_item_t, ompi_list_item_t, NULL, NULL);
 
 struct dependency_item_t {
   ompi_list_item_t super;
 
-  module_file_item_t *di_module_file_item;
+  component_file_item_t *di_component_file_item;
 };
 typedef struct dependency_item_t dependency_item_t;
 
-OBJ_CLASS_INSTANCE(dependency_item_t, ompi_list_item_t, NULL, NULL);
+static OBJ_CLASS_INSTANCE(dependency_item_t, ompi_list_item_t, NULL, NULL);
 
 struct ltfn_data_holder_t {
   char type[MCA_BASE_MAX_TYPE_NAME_LEN];
-  char name[MCA_BASE_MAX_MODULE_NAME_LEN];
+  char name[MCA_BASE_MAX_COMPONENT_NAME_LEN];
 };
 typedef struct ltfn_data_holder_t ltfn_data_holder_t;
 
@@ -63,17 +63,17 @@ typedef struct ltfn_data_holder_t ltfn_data_holder_t;
 /*
  * Private functions
  */
-static void find_dyn_modules(const char *path, const char *type, 
-                             const char *name, ompi_list_t *found_modules);
+static void find_dyn_components(const char *path, const char *type, 
+                             const char *name, ompi_list_t *found_components);
 static int save_filename(const char *filename, lt_ptr data);
-static int open_module(module_file_item_t *target_file, 
-                       ompi_list_t *found_modules);
-static int check_ompi_info(module_file_item_t *target_file, 
+static int open_component(component_file_item_t *target_file, 
+                       ompi_list_t *found_components);
+static int check_ompi_info(component_file_item_t *target_file, 
                          ompi_list_t *dependencies,
-                         ompi_list_t *found_modules);
-static int check_dependency(char *line, module_file_item_t *target_file, 
+                         ompi_list_t *found_components);
+static int check_dependency(char *line, component_file_item_t *target_file, 
                             ompi_list_t *dependencies, 
-                            ompi_list_t *found_modules);
+                            ompi_list_t *found_components);
 static void free_dependency_list(ompi_list_t *dependencies);
 
 
@@ -82,42 +82,41 @@ static void free_dependency_list(ompi_list_t *dependencies);
  */
 static const char *ompi_info_suffix = ".ompi_info";
 static const char *key_dependency = "dependency=";
-static const char module_template[] = "mca_%s_";
+static const char component_template[] = "mca_%s_";
 static ompi_list_t found_files;
 
 
 /*
- * Function to find as many modules of a given type as possible.  This
- * includes statically-linked in modules as well as opening up a
- * directory and looking for shared-library MCA modules of the
+ * Function to find as many components of a given type as possible.  This
+ * includes statically-linked in components as well as opening up a
+ * directory and looking for shared-library MCA components of the
  * appropriate type (load them if available).
  *
- * Return one consolidated array of (mca_base_module_t*) pointing to all
- * available modules.
+ * Return one consolidated array of (mca_base_component_t*) pointing to all
+ * available components.
  */
-int mca_base_module_find(const char *directory, const char *type, 
-                         const mca_base_module_t *static_modules[], 
-                         ompi_list_t *found_modules)
+int mca_base_component_find(const char *directory, const char *type, 
+                         const mca_base_component_t *static_components[], 
+                         ompi_list_t *found_components)
 {
   int i;
-  mca_base_module_list_item_t *mli;
+  mca_base_component_list_item_t *cli;
 
-  /* Find all the modules that were statically linked in */
+  /* Find all the components that were statically linked in */
 
-  OBJ_CONSTRUCT(found_modules, ompi_list_t);
-  for (i = 0; NULL != static_modules[i]; ++i) {
-    mli = malloc(sizeof(mca_base_module_list_item_t));
-    if (NULL == mli) {
+  OBJ_CONSTRUCT(found_components, ompi_list_t);
+  for (i = 0; NULL != static_components[i]; ++i) {
+    cli = OBJ_NEW(mca_base_component_list_item_t);
+    if (NULL == cli) {
       return OMPI_ERR_OUT_OF_RESOURCE;
     }
-    OBJ_CONSTRUCT(mli, ompi_list_item_t);
-    mli->mli_module = static_modules[i];
-    ompi_list_append(found_modules, (ompi_list_item_t *) mli);
+    cli->cli_component = static_components[i];
+    ompi_list_append(found_components, (ompi_list_item_t *) cli);
   }
 
-  /* Find any available dynamic modules in the specified directory */
+  /* Find any available dynamic components in the specified directory */
 
-  find_dyn_modules(directory, type, NULL, found_modules);
+  find_dyn_components(directory, type, NULL, found_components);
 
   /* All done */
 
@@ -126,7 +125,7 @@ int mca_base_module_find(const char *directory, const char *type,
 
 
 /*
- * Open up all directories in a given path and search for modules of
+ * Open up all directories in a given path and search for components of
  * the specified type (and possibly of a given name).
  *
  * Note that we use our own path iteration functionality (vs. ltdl's
@@ -136,34 +135,34 @@ int mca_base_module_find(const char *directory, const char *type,
  * functionality, we would not get the directory name of the file
  * finally opened in recursive dependency traversals.
  */
-static void find_dyn_modules(const char *path, const char *type_name, 
-                             const char *name, ompi_list_t *found_modules)
+static void find_dyn_components(const char *path, const char *type_name, 
+                             const char *name, ompi_list_t *found_components)
 {
   ltfn_data_holder_t params;
   char *path_to_use, *dir, *end, *param;
-  module_file_item_t *file;
+  component_file_item_t *file;
   ompi_list_item_t *cur;
 
   strcpy(params.type, type_name);
 
   if (NULL == name) {
     params.name[0] = '\0';
-    ompi_output_verbose(40, 0, " looking for all dynamic %s MCA modules", 
+    ompi_output_verbose(40, 0, " looking for all dynamic %s MCA components", 
                        type_name, NULL);
   } else {
     strcpy(params.name, name);
     ompi_output_verbose(40, 0,
-                       " looking for dynamic %s MCA module named \"%s\"",
+                       " looking for dynamic %s MCA component named \"%s\"",
                        type_name, name, NULL);
   }
 
   /* If directory is NULL, iterate over the set of directories
-     specified by the MCA param mca_base_module_path.  If path is not
+     specified by the MCA param mca_base_component_path.  If path is not
      NULL, then use that as the path. */
 
   param = NULL;
   if (NULL == path) {
-    mca_base_param_lookup_string(mca_base_param_module_path, &param);
+    mca_base_param_lookup_string(mca_base_param_component_path, &param);
     dir = param;
   }
   if (NULL == dir) {
@@ -190,7 +189,7 @@ static void find_dyn_modules(const char *path, const char *type_name,
   } while (NULL != end);
 
   /* Iterate through all the filenames that we found.  Since one
-     module may [try to] call another to be loaded, only try to load
+     component may [try to] call another to be loaded, only try to load
      the UNVISITED files.  Also, ignore the return code -- basically,
      give every file one chance to try to load.  If they load, great.
      If not, great. */
@@ -198,13 +197,13 @@ static void find_dyn_modules(const char *path, const char *type_name,
   for (cur = ompi_list_get_first(&found_files); 
        ompi_list_get_end(&found_files) != cur;
        cur = ompi_list_get_next(cur)) {
-    file = (module_file_item_t *) cur;
+    file = (component_file_item_t *) cur;
     if (UNVISITED == file->status) {
-      open_module(file, found_modules);
+      open_component(file, found_components);
     }
   }
 
-  /* So now we have a final list of loaded modules.  We can free all
+  /* So now we have a final list of loaded components.  We can free all
      the file information. */
   
   for (cur = ompi_list_remove_first(&found_files); 
@@ -233,18 +232,18 @@ static int save_filename(const char *filename, lt_ptr data)
   int len, prefix_len, total_len;
   char *prefix;
   const char *basename;
-  module_file_item_t *module_file;
+  component_file_item_t *component_file;
   ltfn_data_holder_t *params = (ltfn_data_holder_t *) data;
 
   /* Check to see if the file is named what we expect it to be
      named */
 
-  len = sizeof(module_template) + strlen(params->type) + 32;
+  len = sizeof(component_template) + strlen(params->type) + 32;
   if (NULL != params->name) {
     len += strlen(params->name);
   }
   prefix = malloc(len);
-  snprintf(prefix, len, module_template, params->type);
+  snprintf(prefix, len, component_template, params->type);
   prefix_len = strlen(prefix);
   if (NULL != params->name) {
     strcat(prefix, params->name);
@@ -263,18 +262,18 @@ static int save_filename(const char *filename, lt_ptr data)
     return 0;
   }
 
-  /* Save all the info and put it in the list of found modules */
+  /* Save all the info and put it in the list of found components */
 
-  module_file = OBJ_NEW(module_file_item_t);
-  if (NULL == module_file) {
+  component_file = OBJ_NEW(component_file_item_t);
+  if (NULL == component_file) {
     return OMPI_ERR_OUT_OF_RESOURCE;
   }
-  strcpy(module_file->type, params->type);
-  strcpy(module_file->name, basename + prefix_len);
-  strcpy(module_file->basename, basename);
-  strcpy(module_file->filename, filename);
-  module_file->status = UNVISITED;
-  ompi_list_append(&found_files, (ompi_list_item_t *) module_file);
+  strcpy(component_file->type, params->type);
+  strcpy(component_file->name, basename + prefix_len);
+  strcpy(component_file->basename, basename);
+  strcpy(component_file->filename, filename);
+  component_file->status = UNVISITED;
+  ompi_list_append(&found_files, (ompi_list_item_t *) component_file);
 
   /* All done */
 
@@ -284,64 +283,64 @@ static int save_filename(const char *filename, lt_ptr data)
 
 
 /*
- * Open a module, chasing down its dependencies first, if possible.
+ * Open a component, chasing down its dependencies first, if possible.
  */
-static int open_module(module_file_item_t *target_file, 
-                       ompi_list_t *found_modules)
+static int open_component(component_file_item_t *target_file, 
+                       ompi_list_t *found_components)
 {
   int len;
-  lt_dlhandle module_handle;
-  mca_base_module_t *module_struct;
+  lt_dlhandle component_handle;
+  mca_base_component_t *component_struct;
   char *struct_name;
   ompi_list_t dependencies;
   ompi_list_item_t *cur;
-  mca_base_module_list_item_t *mitem;
+  mca_base_component_list_item_t *mitem;
   dependency_item_t *ditem;
 
-  ompi_output_verbose(40, 0, " examining dyanmic %s MCA module \"%s\"",
+  ompi_output_verbose(40, 0, " examining dyanmic %s MCA component \"%s\"",
                      target_file->type, target_file->name, NULL);
   ompi_output_verbose(40, 0, " %s", target_file->filename, NULL);
 
-  /* Was this module already loaded (e.g., via dependency)? */
+  /* Was this component already loaded (e.g., via dependency)? */
 
   if (LOADED == target_file->status) {
     ompi_output_verbose(40, 0, " already loaded (ignored)", NULL);
     return OMPI_SUCCESS;
   }
 
-  /* Ensure that this module is not already loaded (should only happen
+  /* Ensure that this component is not already loaded (should only happen
      if it was statically loaded).  It's an error if it's already
-     loaded because we're evaluating this file -- not this module.
+     loaded because we're evaluating this file -- not this component.
      Hence, returning OMPI_ERR_PARAM indicates that the *file* failed
-     to load, not the module. */
+     to load, not the component. */
 
-  for (cur = ompi_list_get_first(found_modules); 
-       ompi_list_get_end(found_modules) != cur;
+  for (cur = ompi_list_get_first(found_components); 
+       ompi_list_get_end(found_components) != cur;
        cur = ompi_list_get_next(cur)) {
-    mitem = (mca_base_module_list_item_t *) cur;
-    if (0 == strcmp(mitem->mli_module->mca_type_name, target_file->type) &&
-        0 == strcmp(mitem->mli_module->mca_module_name, target_file->name)) {
+    mitem = (mca_base_component_list_item_t *) cur;
+    if (0 == strcmp(mitem->cli_component->mca_type_name, target_file->type) &&
+        0 == strcmp(mitem->cli_component->mca_component_name, target_file->name)) {
       ompi_output_verbose(40, 0, " already loaded (ignored)", NULL);
       target_file->status = FAILED_TO_LOAD;
       return OMPI_ERR_BAD_PARAM;
     }
   }
 
-  /* Look at see if this module has any dependencies.  If so, load
-     them.  If we can't load them, then this module must also fail to
+  /* Look at see if this component has any dependencies.  If so, load
+     them.  If we can't load them, then this component must also fail to
      load. */
 
   OBJ_CONSTRUCT(&dependencies, ompi_list_t);
-  if (0 != check_ompi_info(target_file, &dependencies, found_modules)) {
+  if (0 != check_ompi_info(target_file, &dependencies, found_components)) {
     target_file->status = FAILED_TO_LOAD;
     free_dependency_list(&dependencies);
     return OMPI_ERR_OUT_OF_RESOURCE;
   }
 
-  /* Now try to load the module */
+  /* Now try to load the component */
 
-  module_handle = lt_dlopenext(target_file->filename);
-  if (NULL == module_handle) {
+  component_handle = lt_dlopenext(target_file->filename);
+  if (NULL == component_handle) {
     ompi_output_verbose(40, 0, " unable to open: %s (ignored)", 
                        lt_dlerror(), NULL);
     target_file->status = FAILED_TO_LOAD;
@@ -349,67 +348,66 @@ static int open_module(module_file_item_t *target_file,
     return OMPI_ERR_BAD_PARAM;
   }
 
-  /* Successfully opened the module; now find the public struct.
+  /* Successfully opened the component; now find the public struct.
      Malloc out enough space for it. */
 
   len = strlen(target_file->type) + strlen(target_file->name) + 32;
   struct_name = malloc(len);
   if (NULL == struct_name) {
-    lt_dlclose(module_handle);
+    lt_dlclose(component_handle);
     target_file->status = FAILED_TO_LOAD;
     free_dependency_list(&dependencies);
     return OMPI_ERR_OUT_OF_RESOURCE;
   }
-  snprintf(struct_name, len, "mca_%s_%s_module", target_file->type,
+  snprintf(struct_name, len, "mca_%s_%s_component", target_file->type,
            target_file->name);
 
-  mitem = malloc(sizeof(mca_base_module_list_item_t));
+  mitem = OBJ_NEW(mca_base_component_list_item_t);
   if (NULL == mitem) {
     free(struct_name);
-    lt_dlclose(module_handle);
+    lt_dlclose(component_handle);
     target_file->status = FAILED_TO_LOAD;
     free_dependency_list(&dependencies);
     return OMPI_ERR_OUT_OF_RESOURCE;
   }
-  OBJ_CONSTRUCT(mitem, ompi_list_item_t);
 
-  module_struct = lt_dlsym(module_handle, struct_name);
-  if (NULL == module_struct) {
+  component_struct = lt_dlsym(component_handle, struct_name);
+  if (NULL == component_struct) {
     ompi_output_verbose(40, 0, " \"%s\" does not appear to be a valid "
-                       "%s MCA dynamic module (ignored)", 
+                       "%s MCA dynamic component (ignored)", 
                        target_file->basename, target_file->type, NULL);
     free(mitem);
     free(struct_name);
-    lt_dlclose(module_handle);
+    lt_dlclose(component_handle);
     target_file->status = FAILED_TO_LOAD;
     free_dependency_list(&dependencies);
     return OMPI_ERR_BAD_PARAM;
   }
 
-  /* We found the public struct.  Save it, and register this module to
+  /* We found the public struct.  Save it, and register this component to
      be closed later. */
 
-  mitem->mli_module = module_struct;
-  ompi_list_append(found_modules, (ompi_list_item_t *) mitem);
-  mca_base_module_repository_retain(target_file->type, module_handle, 
-                                    module_struct);
+  mitem->cli_component = component_struct;
+  ompi_list_append(found_components, (ompi_list_item_t *) mitem);
+  mca_base_component_repository_retain(target_file->type, component_handle, 
+                                    component_struct);
 
   /* Now that that's all done, link all the dependencies in to this
-     module's repository entry */
+     component's repository entry */
 
   for (cur = ompi_list_remove_first(&dependencies);
        NULL != cur;
        cur = ompi_list_remove_first(&dependencies)) {
     ditem = (dependency_item_t *) cur;
-    mca_base_module_repository_link(target_file->type,
-                                    target_file->name,
-                                    ditem->di_module_file_item->type,
-                                    ditem->di_module_file_item->name);
+    mca_base_component_repository_link(target_file->type,
+                                       target_file->name,
+                                       ditem->di_component_file_item->type,
+                                       ditem->di_component_file_item->name);
     OBJ_RELEASE(ditem);
   }
   OBJ_DESTRUCT(&dependencies);
 
-  ompi_output_verbose(40, 0, " opened dynamic %s MCA module \"%s\"",
+  ompi_output_verbose(40, 0, " opened dynamic %s MCA component \"%s\"",
                      target_file->type, target_file->name, NULL);
   target_file->status = LOADED;
     
@@ -422,13 +420,13 @@ static int open_module(module_file_item_t *target_file,
 
 /*
  * For a given filename, see if there exists a filename.ompi_info, which
- * lists dependencies that must be loaded before this module is
- * loaded.  If we find this file, try to load those modules first.
+ * lists dependencies that must be loaded before this component is
+ * loaded.  If we find this file, try to load those components first.
  *
  * Detect dependency cycles and error out.
  */
-static int check_ompi_info(module_file_item_t *target_file, 
-                         ompi_list_t *dependencies, ompi_list_t *found_modules)
+static int check_ompi_info(component_file_item_t *target_file, 
+                         ompi_list_t *dependencies, ompi_list_t *found_components)
 {
   int len;
   FILE *fp;
@@ -452,7 +450,7 @@ static int check_ompi_info(module_file_item_t *target_file,
   }
 
   /* Otherwise, loop reading the lines in the file and trying to load
-     them.  Return failure upon the first module that fails to
+     them.  Return failure upon the first component that fails to
      load. */
 
   ompi_output_verbose(40, 0, " opening ompi_info file: %s", depname, NULL);
@@ -481,15 +479,15 @@ static int check_ompi_info(module_file_item_t *target_file,
     else if (0 == strncasecmp(p, key_dependency, strlen(key_dependency))) {
       if (OMPI_SUCCESS != check_dependency(p + strlen(key_dependency), 
                                           target_file, dependencies, 
-                                          found_modules)) {
+                                          found_components)) {
         fclose(fp);
         free(depname);
 
         /* We can leave any successfully loaded dependencies; we might
            need them again later.  But free the dependency list for
-           this module, because since [at least] one of them didn't
+           this component, because since [at least] one of them didn't
            load, we have to pretend like all of them didn't load and
-           disallow loading this module.  So free the dependency
+           disallow loading this component.  So free the dependency
            list. */
 
         free_dependency_list(dependencies);
@@ -510,17 +508,17 @@ static int check_ompi_info(module_file_item_t *target_file,
 
 /*
  * A DEPENDENCY key was found in the ompi_info file.  Chase it down: see
- * if we've already got such a module loaded, or go try to load it if
+ * if we've already got such a component loaded, or go try to load it if
  * it's not already loaded.
  */
-static int check_dependency(char *line, module_file_item_t *target_file,
+static int check_dependency(char *line, component_file_item_t *target_file,
                             ompi_list_t *dependencies,
-                            ompi_list_t *found_modules)
+                            ompi_list_t *found_components)
 {
   bool happiness;
   char buffer[BUFSIZ];
   char *type, *name;
-  module_file_item_t *mitem;
+  component_file_item_t *mitem;
   dependency_item_t *ditem;
   ompi_list_item_t *cur;
 
@@ -533,13 +531,13 @@ static int check_dependency(char *line, module_file_item_t *target_file,
   *name = '\0';
   ++name;
 
-  /* Form the name of the module to compare to */
+  /* Form the name of the component to compare to */
 
   if (strlen(type) + strlen(name) + 32 >= BUFSIZ) {
     target_file->status = FAILED_TO_LOAD;
     return OMPI_ERR_OUT_OF_RESOURCE;
   }
-  snprintf(buffer, BUFSIZ, module_template, type);
+  snprintf(buffer, BUFSIZ, component_template, type);
   strcat(buffer, name);
 
   /* Traverse down the list of files that we have, and see if we can
@@ -549,7 +547,7 @@ static int check_dependency(char *line, module_file_item_t *target_file,
   for (happiness = false, cur = ompi_list_get_first(&found_files);
        ompi_list_get_end(&found_files) != cur;
        cur = ompi_list_get_next(cur)) {
-    mitem = (module_file_item_t *) cur;
+    mitem = (component_file_item_t *) cur;
 
     /* Compare the name to the basename */
 
@@ -560,7 +558,7 @@ static int check_dependency(char *line, module_file_item_t *target_file,
 
     else if (mitem == target_file) {
       ompi_output_verbose(40, 0,
-                         " module depends on itself (ignored dependency)", 
+                         " component depends on itself (ignored dependency)", 
                          NULL);
       happiness = true;
       break;
@@ -600,7 +598,7 @@ static int check_dependency(char *line, module_file_item_t *target_file,
     else if (UNVISITED == mitem->status) {
       ompi_output_verbose(40, 0, " loading dependency (%s)",
                          mitem->basename, NULL);
-      if (OMPI_SUCCESS == open_module(target_file, found_modules)) {
+      if (OMPI_SUCCESS == open_component(target_file, found_components)) {
         happiness = true;
       } else {
         ompi_output_verbose(40, 0, " dependency failed to load (%s)",
@@ -624,7 +622,7 @@ static int check_dependency(char *line, module_file_item_t *target_file,
   if (NULL == ditem) {
     return OMPI_ERR_OUT_OF_RESOURCE;
   }
-  ditem->di_module_file_item = mitem;
+  ditem->di_component_file_item = mitem;
   ompi_list_append(dependencies, (ompi_list_item_t*) ditem);
   
   /* All done -- all depenencies satisfied */

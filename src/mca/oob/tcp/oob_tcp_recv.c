@@ -14,14 +14,14 @@
 int mca_oob_tcp_recv(ompi_process_name_t* peer, const struct iovec *iov, int count, int flags)
 {
     mca_oob_tcp_msg_t * msg = (mca_oob_tcp_msg_t *) 
-                              ompi_list_get_first(&mca_oob_tcp_module.tcp_msg_recv);
+      ompi_list_get_first(&mca_oob_tcp_component.tcp_msg_recv);
     int i, amount, read, size = 0;
     char * base;
     for(i = 0; i < count; i++) {
         size += iov[i].iov_len;
     }
     /* lock the tcp struct */
-    OMPI_THREAD_LOCK(&mca_oob_tcp_module.tcp_lock);
+    OMPI_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
     /* check to see if a matching recieve is on the list */
     while(NULL != msg) {
         if(MCA_OOB_BASE_ANY == peer || 
@@ -39,7 +39,7 @@ int mca_oob_tcp_recv(ompi_process_name_t* peer, const struct iovec *iov, int cou
                     base +=amount;
                     read += amount;
                 }
-                OMPI_THREAD_UNLOCK(&mca_oob_tcp_module.tcp_lock);
+                OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
                 return read;
             }
             /* what are we going to define as matching? we don't know the number
@@ -55,10 +55,10 @@ int mca_oob_tcp_recv(ompi_process_name_t* peer, const struct iovec *iov, int cou
                     base +=amount;
                     read += amount;
                 }
-                ompi_list_remove_item(&mca_oob_tcp_module.tcp_msg_recv, 
+                ompi_list_remove_item(&mca_oob_tcp_component.tcp_msg_recv, 
                                       (ompi_list_item_t *) msg);
                 MCA_OOB_TCP_MSG_RETURN(msg);
-                OMPI_THREAD_UNLOCK(&mca_oob_tcp_module.tcp_lock);
+                OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
                 return read;
             }
             msg = (mca_oob_tcp_msg_t *) ompi_list_get_next(msg);
@@ -67,7 +67,7 @@ int mca_oob_tcp_recv(ompi_process_name_t* peer, const struct iovec *iov, int cou
     /* the message has not already been recieved. So we add it to the recieve queue */
     MCA_OOB_TCP_MSG_ALLOC(msg, i);
     if(NULL == msg) {
-        OMPI_THREAD_UNLOCK(&mca_oob_tcp_module.tcp_lock);
+        OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
         return i;
     }
     /* fill in the struct */
@@ -85,8 +85,8 @@ int mca_oob_tcp_recv(ompi_process_name_t* peer, const struct iovec *iov, int cou
         msg->msg_peer = &other->peer_name;
     }
     /* add to list */
-    ompi_list_append(&mca_oob_tcp_module.tcp_msg_recv, (ompi_list_item_t *) msg);
-    OMPI_THREAD_UNLOCK(&mca_oob_tcp_module.tcp_lock);
+    ompi_list_append(&mca_oob_tcp_component.tcp_msg_recv, (ompi_list_item_t *) msg);
+    OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
     /* wait for the recieve to complete */
     mca_oob_tcp_msg_wait(msg, &read);
     return read;
@@ -107,14 +107,14 @@ int mca_oob_tcp_recv_nb(ompi_process_name_t* peer, const struct iovec* iov, int 
                         int flags, mca_oob_callback_fn_t cbfunc, void* cbdata)
 {
     mca_oob_tcp_msg_t * msg = (mca_oob_tcp_msg_t *)
-                              ompi_list_get_first(&mca_oob_tcp_module.tcp_msg_recv);
+      ompi_list_get_first(&mca_oob_tcp_component.tcp_msg_recv);
     int i, amount, read, size = 0;
     char * base;
     for(i = 0; i < count; i++) {
         size += iov[i].iov_len;
     }
     /* lock the tcp struct */
-    OMPI_THREAD_LOCK(&mca_oob_tcp_module.tcp_lock);
+    OMPI_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
     /* check to see if a matching recieve is on the list */
     while(NULL != msg) {
         if(MCA_OOB_BASE_ANY == peer ||
@@ -133,7 +133,7 @@ int mca_oob_tcp_recv_nb(ompi_process_name_t* peer, const struct iovec* iov, int 
                     read += amount;
                 }
                 cbfunc(read, peer, iov, count, cbdata);
-                OMPI_THREAD_UNLOCK(&mca_oob_tcp_module.tcp_lock);
+                OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
                 return read;
             }
             /* what are we going to define as matching? we don't know the number
@@ -149,10 +149,10 @@ int mca_oob_tcp_recv_nb(ompi_process_name_t* peer, const struct iovec* iov, int 
                     base +=amount;
                     read += amount;
                 }
-                ompi_list_remove_item(&mca_oob_tcp_module.tcp_msg_recv,
+                ompi_list_remove_item(&mca_oob_tcp_component.tcp_msg_recv,
                                       (ompi_list_item_t *) msg);
                 MCA_OOB_TCP_MSG_RETURN(msg);
-                OMPI_THREAD_UNLOCK(&mca_oob_tcp_module.tcp_lock);
+                OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
                 cbfunc(read, peer, iov, count, cbdata);
                 return read;
             }
@@ -162,7 +162,7 @@ int mca_oob_tcp_recv_nb(ompi_process_name_t* peer, const struct iovec* iov, int 
     /* the message has not already been recieved. So we add it to the recieve queue */
     MCA_OOB_TCP_MSG_ALLOC(msg, i);
     if(NULL == msg) {
-        OMPI_THREAD_UNLOCK(&mca_oob_tcp_module.tcp_lock);
+        OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
         return i;
     }
     /* fill in the struct */
@@ -181,8 +181,8 @@ int mca_oob_tcp_recv_nb(ompi_process_name_t* peer, const struct iovec* iov, int 
     }
     msg->msg_complete = false;
     /* add to list */
-    ompi_list_append(&mca_oob_tcp_module.tcp_msg_recv, (ompi_list_item_t *) msg);
-    OMPI_THREAD_UNLOCK(&mca_oob_tcp_module.tcp_lock);
+    ompi_list_append(&mca_oob_tcp_component.tcp_msg_recv, (ompi_list_item_t *) msg);
+    OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
     return OMPI_SUCCESS;
 }
 

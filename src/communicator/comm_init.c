@@ -206,10 +206,10 @@ static void ompi_comm_construct(ompi_communicator_t* comm)
     comm->c_topo_comm    = NULL; 
     comm->c_topo_module = NULL;
 
-    comm->c_coll_selected_module = NULL;
-    comm->c_coll_selected_data   = NULL;
-    comm->c_coll_basic_module    = NULL;
-    comm->c_coll_basic_data      = NULL;
+    comm->c_coll_selected_module    = NULL;
+    comm->c_coll_selected_data      = NULL;
+    comm->c_coll_basic_module       = NULL;
+    comm->c_coll_basic_data         = NULL;
 
     return;
 }

@@ -71,7 +71,7 @@ extern "C" {
  */
 
 extern int mca_ns_base_output;
-extern mca_ns_t ompi_name_server;  /* holds selected module's function pointers */
+extern mca_ns_base_module_t ompi_name_server;  /* holds selected module's function pointers */
 extern ompi_process_name_t mca_ns_my_replica;
 extern bool mca_ns_base_selected;
 extern ompi_list_t mca_ns_base_components_available;

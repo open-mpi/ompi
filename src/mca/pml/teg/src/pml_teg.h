@@ -22,17 +22,17 @@
 #define MCA_PML_TEG_STATISTICS 0
 
 /**
- * TEG PML Interface
+ * TEG PML module
  */
 
 struct mca_pml_teg_t {
-    mca_pml_t super; 
+    mca_pml_base_module_t super; 
 
-    mca_ptl_base_module_t **teg_ptl_modules;
+    mca_ptl_base_component_t **teg_ptl_components;
+    size_t teg_num_ptl_components;
+
+    mca_ptl_base_module_t** teg_ptl_modules;
     size_t teg_num_ptl_modules;
-
-    mca_ptl_t** teg_ptls;
-    size_t teg_num_ptls;
 
     ompi_list_t  teg_procs;
     ompi_mutex_t teg_lock;
@@ -71,19 +71,19 @@ extern mca_pml_teg_t mca_pml_teg;
  * PML module functions.
  */
 
-extern mca_pml_base_module_1_0_0_t mca_pml_teg_module;
+extern mca_pml_base_component_1_0_0_t mca_pml_teg_component;
 
 
-extern int mca_pml_teg_module_open(void);
-extern int mca_pml_teg_module_close(void);
+extern int mca_pml_teg_component_open(void);
+extern int mca_pml_teg_component_close(void);
 
-extern mca_pml_t* mca_pml_teg_module_init(
+extern mca_pml_base_module_t* mca_pml_teg_component_init(
     int *priority, 
     bool *allow_multi_user_threads,
     bool *have_hidden_threads
 );
 
-extern int mca_pml_teg_module_fini(void);
+extern int mca_pml_teg_component_fini(void);
 
 
 

@@ -22,9 +22,10 @@ static const char FUNC_NAME[] = "MPI_Cart_get";
 
 
 int MPI_Cart_get(MPI_Comm comm, int maxdims, int *dims,
-                 int *periods, int *coords) {
+                 int *periods, int *coords) 
+{
     /* local variables */
-    mca_topo_base_cart_get_fn_t func;
+    mca_topo_base_module_cart_get_fn_t func;
     int err;
 
     /* check the arguments */
@@ -47,10 +48,6 @@ int MPI_Cart_get(MPI_Comm comm, int maxdims, int *dims,
     }
     /* get the function pointer to do the right thing */
     func = comm->c_topo->topo_cart_get;
-    if (NULL == func) {
-        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER, 
-                                     FUNC_NAME);
-    }
 
     /* all arguments are checked and now call the back end function */
     if ( MPI_SUCCESS != 

@@ -12,7 +12,7 @@ static mca_ptl_base_recv_frag_t* mca_pml_teg_recv_request_match_specific_proc(
  */
 
 void mca_pml_teg_recv_request_progress(
-    struct mca_ptl_t* ptl,
+    struct mca_ptl_base_module_t* ptl,
     mca_pml_base_recv_request_t* req,
     size_t bytes_received,
     size_t bytes_delivered)
@@ -60,7 +60,7 @@ void mca_pml_teg_recv_request_match_specific(mca_pml_base_recv_request_t* reques
 
     if (ompi_list_get_size(&pml_comm->c_unexpected_frags[req_peer]) > 0 &&
         (frag = mca_pml_teg_recv_request_match_specific_proc(request, req_peer)) != NULL) {
-        mca_ptl_t* ptl = frag->frag_base.frag_owner;
+        mca_ptl_base_module_t* ptl = frag->frag_base.frag_owner;
         OMPI_THREAD_UNLOCK(&pml_comm->c_matching_lock);
         ptl->ptl_matched(ptl, frag);
         return; /* match found */
@@ -107,7 +107,7 @@ void mca_pml_teg_recv_request_match_wild(mca_pml_base_recv_request_t* request)
 
         /* loop over messages from the current proc */
         if ((frag = mca_pml_teg_recv_request_match_specific_proc(request, proc)) != NULL) {
-            mca_ptl_t* ptl = frag->frag_base.frag_owner;
+            mca_ptl_base_module_t* ptl = frag->frag_base.frag_owner;
             OMPI_THREAD_UNLOCK(&pml_comm->c_matching_lock);
             ptl->ptl_matched(ptl, frag);
             return; /* match found */

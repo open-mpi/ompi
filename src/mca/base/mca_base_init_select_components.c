@@ -28,9 +28,9 @@
  *
  * The contents of this function will likely be replaced 
  */
-int mca_base_init_select_modules(int requested, 
-                                bool allow_multi_user_threads,
-                                bool have_hidden_threads, int *provided)
+int mca_base_init_select_components(int requested, 
+                                    bool allow_multi_user_threads,
+                                    bool have_hidden_threads, int *provided)
 {
   bool user_threads, hidden_threads;
 
@@ -88,7 +88,7 @@ int mca_base_init_select_modules(int requested,
   /* Tell the selected pml module about all the selected ptl
      modules */
 
-  mca_pml.pml_add_ptls(&mca_ptl_base_modules_initialized);
+  mca_pml.pml_add_ptls(&mca_ptl_base_components_initialized);
 
   /* All done */
 

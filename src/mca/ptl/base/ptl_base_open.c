@@ -15,31 +15,31 @@
 /*
  * The following file was created by configure.  It contains extern
  * statements and the definition of an array of pointers to each
- * module's public mca_base_module_t struct.
+ * component's public mca_base_component_t struct.
  */
 
-#include "mca/ptl/base/static-modules.h"
+#include "mca/ptl/base/static-components.h"
 
 
 /*
  * Global variables
  */
 int mca_ptl_base_output = -1;
-ompi_list_t mca_ptl_base_modules_available;
-ompi_list_t mca_ptl_base_modules_initialized;
+ompi_list_t mca_ptl_base_components_available;
+ompi_list_t mca_ptl_base_components_initialized;
 
 
 /**
- * Function for finding and opening either all MCA modules, or the one
+ * Function for finding and opening either all MCA components, or the one
  * that was specifically requested via a MCA parameter.
  */
 int mca_ptl_base_open(void)
 {
-  /* Open up all available modules */
+  /* Open up all available components */
 
   if (OMPI_SUCCESS != 
-      mca_base_modules_open("ptl", 0, mca_ptl_base_static_modules, 
-                            &mca_ptl_base_modules_available)) {
+      mca_base_components_open("ptl", 0, mca_ptl_base_static_components, 
+                               &mca_ptl_base_components_available)) {
     return OMPI_ERROR;
   }
 
@@ -47,7 +47,7 @@ int mca_ptl_base_open(void)
      iterate over it (even if it's empty, as in the case of
      ompi_info) */
 
-  OBJ_CONSTRUCT(&mca_ptl_base_modules_initialized, ompi_list_t);
+  OBJ_CONSTRUCT(&mca_ptl_base_components_initialized, ompi_list_t);
 
   /* All done */
 

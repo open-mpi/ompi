@@ -38,21 +38,14 @@ extern const struct mca_topo_base_module_1_0_0_t mca_topo_unity_module;
 #if defined(__cplusplus) || defined(c_plusplus)
     extern "C" {
 #endif
-        int mca_topo_unity_module_init_query (bool *allow_multi_user_threads,
-                                              bool *have_hidden_threads);
-        
-
-        struct mca_topo_1_0_0_t *
-            mca_topo_unity_module_comm_query (int *priority);
-                                              
-
-        int mca_topo_unity_module_comm_unquery (struct ompi_communicator_t *comm);
+        int mca_topo_unity_component_init_query(bool *allow_multi_user_threads,
+                                                bool *have_hidden_threads);
+        struct mca_topo_base_module_1_0_0_t *
+            mca_topo_unity_component_comm_query (int *priority);
+        int mca_topo_unity_component_comm_unquery (struct ompi_communicator_t *comm);
 
         int mca_topo_unity_module_init (struct ompi_communicator_t *comm);
-
-
         int mca_topo_unity_module_finalize (struct ompi_communicator_t *comm);
-
 #if defined(__cplusplus) || defined(c_plusplus)
     }
 #endif
@@ -77,13 +70,13 @@ extern const struct mca_topo_base_module_1_0_0_t mca_topo_unity_module;
 #if defined(__cplusplus) || defined(c_plusplus)
     extern "C" {
 #endif
-        int mca_topo_unity_cart_map (MPI_Comm comm,
+        int mca_topo_unity_cart_map (struct ompi_communicator_t *comm,
                                      int ndims,
                                      int *dims,
                                      int *periods,
                                      int *newrank);
 
-        int mca_topo_unity_graph_map (MPI_Comm comm,
+        int mca_topo_unity_graph_map (struct ompi_communicator_t *comm,
                                       int nnodes,
                                       int *index,
                                       int *edges,

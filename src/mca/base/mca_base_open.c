@@ -16,7 +16,7 @@
 /*
  * Public variables
  */
-int mca_base_param_module_path = -1;
+int mca_base_param_component_path = -1;
 bool mca_base_opened = false;
 
 /*
@@ -43,9 +43,9 @@ int mca_base_open(void)
 
   /* Register some params */
 
-  mca_base_param_module_path = 
-    mca_base_param_register_string("base", NULL, "module_path",
-                                   "module_path", OMPI_PKGLIBDIR);
+  mca_base_param_component_path = 
+    mca_base_param_register_string("base", NULL, "component_path",
+                                   "component_path", OMPI_PKGLIBDIR);
   param_index = mca_base_param_register_string("base", NULL, "verbose",
                                                "verbose", NULL);
 
@@ -61,9 +61,9 @@ int mca_base_open(void)
   ompi_output_reopen(0, &lds);
   ompi_output_verbose(5, 0, " Opening");
 
-  /* Open up the module repository */
+  /* Open up the component repository */
 
-  return mca_base_module_repository_initialize();
+  return mca_base_component_repository_initialize();
 }
 
 

@@ -62,30 +62,36 @@
 
 #include <sys/param.h>
 
-typedef int (*mca_pcm_base_get_peers_fn_t)(ompi_process_name_t **peers, size_t *npeers);
+/* Module functions */
 
-typedef ompi_process_name_t* (*mca_pcm_base_get_self_fn_t)(void);
+typedef int (*mca_pcm_base_module_get_peers_fn_t)
+     (ompi_process_name_t **peers, size_t *npeers);
+typedef ompi_process_name_t* (*mca_pcm_base_module_get_self_fn_t)(void);
 
-typedef struct mca_pcm_1_0_0_t *
-  (*mca_pcm_base_init_fn_t)(int *priority, bool *allow_multi_user_threads,
-                            bool *have_hidden_threads);
+/* Component functions */
 
-typedef int (*mca_pcm_base_finalize_fn_t)(void);
-                                                                                                                                   
+typedef struct mca_pcm_base_module_1_0_0_t *(*mca_pcm_base_component_init_fn_t)
+     (int *priority, bool *allow_multi_user_threads,
+      bool *have_hidden_threads);
+typedef int (*mca_pcm_base_component_finalize_fn_t)(void);
+
 /* Ver 1.0.0 */
+struct mca_pcm_base_component_1_0_0_t {
+  mca_base_component_t pcmm_version;
+  mca_base_component_data_1_0_0_t pcmm_data;
+
+  mca_pcm_base_component_init_fn_t pcmm_init;
+  mca_pcm_base_component_finalize_fn_t pcmm_finalize;
+};
+typedef struct mca_pcm_base_component_1_0_0_t mca_pcm_base_component_1_0_0_t;
+typedef struct mca_pcm_base_component_1_0_0_t mca_pcm_base_component_t;
+
 struct mca_pcm_base_module_1_0_0_t {
-  mca_base_module_t pcmm_version;
-  mca_base_module_data_1_0_0_t pcmm_data;
-  mca_pcm_base_init_fn_t pcmm_init;
-  mca_pcm_base_finalize_fn_t pcmm_finalize;
+  mca_pcm_base_module_get_peers_fn_t pcm_peers;
+  mca_pcm_base_module_get_self_fn_t  pcm_self;
 };
 typedef struct mca_pcm_base_module_1_0_0_t mca_pcm_base_module_1_0_0_t;
-
-struct mca_pcm_1_0_0_t {
-  mca_pcm_base_get_peers_fn_t pcm_peers;
-  mca_pcm_base_get_self_fn_t  pcm_self;
-};
-typedef struct mca_pcm_1_0_0_t mca_pcm_1_0_0_t;
+typedef struct mca_pcm_base_module_1_0_0_t mca_pcm_base_module_t;
 
 /*
  * Macro for use in modules that are of type pcm v1.0.0
@@ -95,9 +101,6 @@ typedef struct mca_pcm_1_0_0_t mca_pcm_1_0_0_t;
   MCA_BASE_VERSION_1_0_0, \
   /* pcm v1.0 */ \
   "pcm", 1, 0, 0
-
-typedef struct mca_pcm_base_module_1_0_0_t mca_pcm_base_module_t;
-typedef struct mca_pcm_1_0_0_t mca_pcm_t;
 
 /*
  * Global functions for MCA overall collective open and close
@@ -128,8 +131,8 @@ extern "C" {
  * Globals
  */
 extern int mca_pcm_base_output;
-extern ompi_list_t mca_pcm_base_modules_available;
-extern mca_pcm_base_module_t mca_pcm_base_selected_module;
-extern mca_pcm_t mca_pcm;
+extern ompi_list_t mca_pcm_base_components_available;
+extern mca_pcm_base_component_t mca_pcm_base_selected_component;
+extern mca_pcm_base_module_t mca_pcm;
 
 #endif

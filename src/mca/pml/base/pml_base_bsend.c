@@ -10,8 +10,8 @@
  
 static ompi_mutex_t     mca_pml_bsend_mutex;      /* lock for thread safety */
 static ompi_condition_t mca_pml_bsend_condition;  /* condition variable to block on detach */
-static mca_allocator_base_module_t* mca_pml_bsend_allocator_component;  
-static mca_allocator_t* mca_pml_bsend_allocator;  /* sub-allocator to manage users buffer */
+static mca_allocator_base_component_t* mca_pml_bsend_allocator_component;  
+static mca_allocator_base_module_t* mca_pml_bsend_allocator;  /* sub-allocator to manage users buffer */
 static unsigned char   *mca_pml_bsend_base;       /* base address of users buffer */
 static unsigned char   *mca_pml_bsend_addr;       /* current offset into users buffer */
 static size_t           mca_pml_bsend_size;       /* size of users buffer */
@@ -57,7 +57,7 @@ static void* mca_pml_bsend_alloc_segment(size_t* size_inout)
 int mca_pml_base_bsend_init(bool* thread_safe)
 {
     int id = mca_base_param_register_string("pml", "base", "bsend_allocator", NULL, "bucket");
-    mca_allocator_t *allocator;
+    mca_allocator_base_module_t *allocator;
     char *name;
     size_t tmp;
 

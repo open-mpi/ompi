@@ -24,7 +24,7 @@ struct mca_ptl_base_recv_frag_t {
 };
 typedef struct mca_ptl_base_recv_frag_t mca_ptl_base_recv_frag_t;
 
-                                                                                                                   
+
 /**
  * Called by the PTL to match attempt a match for new fragments.
  * 
@@ -34,7 +34,7 @@ typedef struct mca_ptl_base_recv_frag_t mca_ptl_base_recv_frag_t;
  * @return              OMPI_SUCCESS or error status on failure.
  */
 static inline bool mca_ptl_base_recv_frag_match(
-    struct mca_ptl_t* ptl,
+    mca_ptl_base_module_t* ptl,
     mca_ptl_base_recv_frag_t* frag, 
     mca_ptl_base_match_header_t* header)
 {
@@ -45,7 +45,7 @@ static inline bool mca_ptl_base_recv_frag_match(
         frag = (mca_ptl_base_recv_frag_t*)ompi_list_remove_first(&matched_frags);
 
     while(NULL != frag) {
-        mca_ptl_t* ptl = frag->frag_base.frag_owner;
+        mca_ptl_base_module_t* ptl = frag->frag_base.frag_owner;
         mca_pml_base_recv_request_t *request = frag->frag_request;
         mca_ptl_base_match_header_t *header = &frag->frag_base.frag_header.hdr_match;
 

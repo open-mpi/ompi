@@ -71,9 +71,9 @@ extern "C" {
  * globals that might be needed
  */
 
-extern mca_gpr_t ompi_registry; /* holds selected module's function pointers */
+extern mca_gpr_base_module_t ompi_registry; /* holds selected module's function pointers */
 extern ompi_list_t mca_gpr_base_modules_available;
-extern mca_gpr_base_module_t mca_gpr_base_selected_module;
+extern mca_gpr_base_component_t mca_gpr_base_selected_component;
 
 /*
  * structures

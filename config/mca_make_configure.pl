@@ -14,12 +14,12 @@ use File::Basename;
 ############################################################################
 
 my $ompi_topdir;
-my $module_topdir;
+my $component_topdir;
 my %config_values;
 my %config_params;
 
 my $initial_cwd = cwd();
-my $announce_str = "OMPI/MPI MCA module configure generator";
+my $announce_str = "OMPI/MPI MCA component configure generator";
 my %config_param_names = (PIFILE => "PARAM_INIT_FILE",
                           PCFGAUXDIR => "PARAM_CONFIG_AUX_DIR",
                           PC => "PARAM_WANT_C",
@@ -37,14 +37,14 @@ my %config_param_names = (PIFILE => "PARAM_INIT_FILE",
 
 Getopt::Long::Configure("bundling", "require_order");
 my $ok = Getopt::Long::GetOptions("ompidir|l=s" => \$ompi_topdir,
-                                  "moduledir|m=s" => \$module_topdir);
+                                  "componentdir|m=s" => \$component_topdir);
 if (!$ok) {
-    print "Usage: $0 [--ompidir=DIR] [--moduledir=DIR]\n";
+    print "Usage: $0 [--ompidir=DIR] [--componentdir=DIR]\n";
     exit(1);
 }
 
 ############################################################################
-# Try to figure out the ompi and module topdirs
+# Try to figure out the ompi and component topdirs
 ############################################################################
 
 print "$announce_str starting\n";
@@ -59,42 +59,42 @@ if (!$ompi_topdir || ! -f "$ompi_topdir/autogen.sh") {
     croak("Unable to find OMPI base directory (try using --ompidir)");
 }
 
-if (!$module_topdir) {
-    $module_topdir = $initial_cwd;
-    if ($module_topdir eq $ompi_topdir) {
-        croak("Unable to determine which module to operate on");
+if (!$component_topdir) {
+    $component_topdir = $initial_cwd;
+    if ($component_topdir eq $ompi_topdir) {
+        croak("Unable to determine which component to operate on");
     }
 }
-chdir($module_topdir);
-$module_topdir = cwd();
+chdir($component_topdir);
+$component_topdir = cwd();
 chdir($initial_cwd);
-if (!$ompi_topdir || ! -d $module_topdir) {
-    croak("Unable to find module directory (try using --moduledir)");
+if (!$ompi_topdir || ! -d $component_topdir) {
+    croak("Unable to find component directory (try using --componentdir)");
 }
 
 # Print them out
 
 print "--> Found OMPI top dir: $ompi_topdir\n";
-print "--> Found module top dir: $module_topdir\n";
+print "--> Found component top dir: $component_topdir\n";
 
-# If we have a configure.params file in the module topdir, we're good to
+# If we have a configure.params file in the component topdir, we're good to
 # go.
 
-if (! -f "$module_topdir/configure.params") {
-    die("No configure.params in module topdir; nothing to do");
+if (! -f "$component_topdir/configure.params") {
+    die("No configure.params in component topdir; nothing to do");
 }
 
 # Make a backup
 
-if (-f "$module_topdir/acinclude.m4") {
-    printf("    *** WARNING: Replacing old acinclude.m4 in $module_topdir\n");
-    unlink("$module_topdir/acinclude.m4.bak");
-    rename("$module_topdir/acinclude.m4", "$module_topdir/acinclude.m4.bak");
+if (-f "$component_topdir/acinclude.m4") {
+    printf("    *** WARNING: Replacing old acinclude.m4\n");
+    unlink("$component_topdir/acinclude.m4.bak");
+    rename("$component_topdir/acinclude.m4", "$component_topdir/acinclude.m4.bak");
 }
-if (-f "$module_topdir/configure.ac") {
-    printf("    *** WARNING: Replacing old configure.ac in $module_topdir\n");
-    unlink("$module_topdir/configure.ac.bak");
-    rename("$module_topdir/configure.ac", "$module_topdir/configure.ac.bak");
+if (-f "$component_topdir/configure.ac") {
+    printf("    *** WARNING: Replacing old configure.ac\n");
+    unlink("$component_topdir/configure.ac.bak");
+    rename("$component_topdir/configure.ac", "$component_topdir/configure.ac.bak");
 }
 
 ############################################################################
@@ -104,7 +104,7 @@ if (-f "$module_topdir/configure.ac") {
 # Unchangeable values
 # MCA_TYPE: calculate
 
-$config_values{"MCA_TYPE"} = dirname($module_topdir);
+$config_values{"MCA_TYPE"} = dirname($component_topdir);
 $config_values{"MCA_TYPE"} = basename($config_values{"MCA_TYPE"});
 
 # PROCESSED_MCA_TYPE: For "special" MCA types, like "crompi" and
@@ -118,12 +118,12 @@ if ($config_values{"PROCESSED_MCA_TYPE"} eq "crompi" ||
 
 # MCA_NAME: calculate
 
-$config_values{"MCA_MODULE_NAME"} = basename($module_topdir);
+$config_values{"MCA_COMPONENT_NAME"} = basename($component_topdir);
 
 # Parameter (changeable) values
 # PARAM_CONFIG_AUX_DIR: set
 
-if (-d "$module_topdir/config") {
+if (-d "$component_topdir/config") {
     $config_params{$config_param_names{PCFGAUXDIR}} = "config";
 } else {
     $config_params{$config_param_names{PCFGAUXDIR}} = ".";
@@ -133,9 +133,9 @@ $config_params{$config_param_names{PCXX}} = 0;
 
 # PARAM_VERSION_FILE: calculate
 
-if (-f "$module_topdir/VERSION") {
+if (-f "$component_topdir/VERSION") {
     $config_params{$config_param_names{PVERFILE}} = "\$srcdir/VERSION";
-} elsif (-f "$module_topdir/$config_params{$config_param_names{PCFGAUXDIR}}/VERSION") {
+} elsif (-f "$component_topdir/$config_params{$config_param_names{PCFGAUXDIR}}/VERSION") {
     $config_params{$config_param_names{PVERFILE}} = 
         "\$srcdir/$config_params{$config_param_names{PCFGAUXDIR}}/VERSION";
 }
@@ -144,36 +144,36 @@ if (-f "$module_topdir/VERSION") {
 
 $config_params{$config_param_names{PVARPREFIX}} = 
     "MCA_" . uc($config_values{"MCA_TYPE"}) .
-    "_" . uc($config_values{"MCA_MODULE_NAME"});
+    "_" . uc($config_values{"MCA_COMPONENT_NAME"});
 
 # PARAM_AM_NAME: calculate
 
 $config_params{$config_param_names{PAMNAME}} = 
     lc($config_values{"MCA_TYPE"}) .
-    "-" . lc($config_values{"MCA_MODULE_NAME"});
+    "-" . lc($config_values{"MCA_COMPONENT_NAME"});
 
 # PARAM_CONFIG_HEADER_FILE: calculate
 
 $config_params{$config_param_names{PCFGHDRFILE}} = 
     "src/" . lc($config_values{"MCA_TYPE"}) .
-    "_" . lc($config_values{"MCA_MODULE_NAME"}) . "_config.h";
+    "_" . lc($config_values{"MCA_COMPONENT_NAME"}) . "_config.h";
 
-# Is there a config.stub file in the module topdir?
+# Is there a config.stub file in the component topdir?
 
-if (-f "$module_topdir/configure.stub") {
+if (-f "$component_topdir/configure.stub") {
     $config_values{CONFIGURE_STUB_SINCLUDE} = "#
-# Module-specific tests
+# Component-specific tests
 #
 
 sinclude(configure.stub)\n";
     $config_values{CONFIGURE_STUB_MACRO} = 
         "ompi_show_subtitle \"MCA " . $config_values{"MCA_TYPE"} . " " .
-        $config_values{"MCA_MODULE_NAME"} . "-specific setup\"
+        $config_values{"MCA_COMPONENT_NAME"} . "-specific setup\"
 MCA_CONFIGURE_STUB";
 
     # See if there's a CONFIGURE_DIST_STUB in configure.stub
 
-    open(STUB, "$module_topdir/configure.stub");
+    open(STUB, "$component_topdir/configure.stub");
     my $found = 0;
     while (<STUB>) {
         $found = 1 
@@ -183,7 +183,7 @@ MCA_CONFIGURE_STUB";
     if ($found == 1) {
         $config_values{CONFIGURE_DIST_STUB_MACRO} = 
             "ompi_show_subtitle \"MCA " . $config_values{"MCA_TYPE"} . " " .
-            $config_values{"MCA_MODULE_NAME"} . 
+            $config_values{"MCA_COMPONENT_NAME"} . 
             "-specific setup (dist specific!)\"
 MCA_CONFIGURE_DIST_STUB";
     } else {
@@ -202,8 +202,8 @@ MCA_CONFIGURE_DIST_STUB";
 
 my $found = 0;
 my @names = values %config_param_names;
-open(PARAMS, "$module_topdir/configure.params") ||
-    die("Could not open configure.params in $module_topdir");
+open(PARAMS, "$component_topdir/configure.params") ||
+    die("Could not open configure.params in $component_topdir");
 while (<PARAMS>) {
     chomp;
 
@@ -226,7 +226,7 @@ while (<PARAMS>) {
     for (my $i = 0; $i <= $#names; ++$i) {
         if ($key eq $names[$i]) {
             if (!$found) {
-                printf("--> Found parameter override:\n");
+                printf("--> Found parameter override(s):\n");
                 $found = 1;
             }
             printf("    $key = $value\n");
@@ -340,9 +340,9 @@ sub make_template {
 # Read and fill in the templates
 
 make_template("$ompi_topdir/config/mca_configure.ac", 
-              "$module_topdir/configure.ac", 0644);
+              "$component_topdir/configure.ac", 0644);
 make_template("$ompi_topdir/config/mca_acinclude.m4",
-              "$module_topdir/acinclude.m4", 0644);
+              "$component_topdir/acinclude.m4", 0644);
 
 ############################################################################
 # All done

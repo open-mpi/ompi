@@ -28,7 +28,7 @@
 /*
  * Struct of function pointers that need to be initialized
  */
-mca_ns_base_component_t mca_ns_proxy_module = {
+mca_ns_base_component_t mca_ns_proxy_component = {
   {
     MCA_NS_BASE_VERSION_1_0_0,
 
@@ -49,7 +49,7 @@ mca_ns_base_component_t mca_ns_proxy_module = {
 /*
  * setup the function pointers for the module
  */
-static mca_ns_t mca_ns_proxy = {
+static mca_ns_base_module_t mca_ns_proxy = {
     ns_base_create_cellid,
     ns_base_create_jobid,
     ns_base_create_process_name,
@@ -92,7 +92,7 @@ int mca_ns_proxy_close(void)
     return OMPI_SUCCESS;
 }
 
-mca_ns_t* mca_ns_proxy_init(bool *allow_multi_user_threads, bool *have_hidden_threads, int *priority)
+mca_ns_base_module_t* mca_ns_proxy_init(bool *allow_multi_user_threads, bool *have_hidden_threads, int *priority)
 {
     /* If we're NOT the seed, then we want to be selected, so do all
        the setup and return the module */

@@ -62,16 +62,19 @@ struct ompi_communicator_t {
 
     ompi_hash_table_t       *c_keyhash;
 
-    int c_cube_dim; /**< inscribing cube dimension */
+    int c_cube_dim; 
+    /**< inscribing cube dimension */
 
     /* Hooks for topo module to hang things */
 
-    const mca_topo_1_0_0_t *c_topo; /**< structure of function pointers */
+    const mca_topo_base_module_1_0_0_t *c_topo; 
+    /**< structure of function pointers */
 
-    mca_topo_comm_t *c_topo_comm; /**<structure containing basic information
-                                    *about the topology */
+    mca_topo_base_comm_t *c_topo_comm; 
+    /**< structure containing basic information about the topology */
 
-    struct mca_topo_module_comm_t *c_topo_module; /**< component specific data */
+    struct mca_topo_base_module_comm_t *c_topo_module; 
+    /**< module specific data */
 
     /* index in Fortran <-> C translation array */
 
@@ -85,23 +88,23 @@ struct ompi_communicator_t {
 
     /* Hooks for PML to hang things */
 
-    struct mca_pml_comm_t* c_pml_comm;
+    struct mca_pml_comm_t *c_pml_comm;
 
-    mca_coll_1_0_0_t c_coll;
+    mca_coll_base_module_1_0_0_t c_coll;
     /**< Selected collective module, saved by value for speed (instead
          of by reference) */
 
-    const mca_coll_1_0_0_t *c_coll_selected_module;
-    /**< The selected module, but only when the selected module is
-         *not* the basic module.  Used during comm_unselect(). */
-    struct mca_coll_comm_t* c_coll_selected_data;
+    const mca_coll_base_module_1_0_0_t *c_coll_selected_module;
+    /**< The selected module, but only when the selected module
+         is not* the basic module.  Used during comm_unselect(). */
+    struct mca_coll_base_comm_t *c_coll_selected_data;
     /**< Allow the selected module to cache data on the communicator */
 
-    const mca_coll_1_0_0_t *c_coll_basic_module;
+    const mca_coll_base_module_1_0_0_t *c_coll_basic_module;
     /**< Save the basic module; only necessary when the selected
-         module is *not* the basic module, but was supplemented with
-         methods from the basic module. */
-    struct mca_coll_comm_t* c_coll_basic_data;
+         module is *not* the basic module, but was supplemented
+         with methods from the basic module. */
+    struct mca_coll_base_comm_t *c_coll_basic_data;
     /**< Allow the basic module to cache data on the communicator */
 };
 typedef struct ompi_communicator_t ompi_communicator_t;
@@ -280,8 +283,8 @@ extern "C" {
                                          ompi_proc_t **remote_procs,
                                          ompi_hash_table_t *attr,
                                          ompi_errhandler_t *errh, 
-                                         mca_base_module_t *collmodule, 
-                                         mca_base_module_t *topomodule );
+                                         mca_base_component_t *collcomponent, 
+                                         mca_base_component_t *topocomponent );
     /**
      * This is a short-hand routine used in intercomm_create.
      * The routine makes sure, that all processes have afterwards

@@ -87,7 +87,7 @@ AH_BOTTOM([
 #endif /* OMPI_CONFIG_H */
 ])
 
-# Other basic setup stuff (shared with modules)
+# Other basic setup stuff (shared with components)
 
 OMPI_BASIC_SETUP
 

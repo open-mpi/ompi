@@ -22,8 +22,8 @@ extern "C" {
    * Send a module-specific buffer to all other corresponding MCA
    * modules in peer processes.
    *
-   * @param source_module A pointer to this module's mca_base_module_t
-   * instance.
+   * @param source_component A pointer to this module's component
+   * structure (i.e., mca_base_component_t)
    * @param buffer A pointer to the beginning of the buffer to send.
    * @param size Number of bytes of each instance in the buffer.
    * @param count Number of instances in the buffer.
@@ -33,16 +33,17 @@ extern "C" {
    * 
    * This function takes a contiguous buffer of network-ordered data
    * and makes it available to all other MCA processes during the
-   * selection process.  Modules sent by one source_module can only be
-   * received by a corresponding module in peer processes.
+   * selection process.  Modules sent by one source_component can only
+   * be received by a corresponding module with the same
+   * source_componennt in peer processes.
    *
-   * Two modules are "corresponding" if:
+   * Two components are "corresponding" if:
    *
    * - they share the same major and minor MCA version number
    * - they have the same type name string
    * - they share the same major and minor type version number
-   * - they have the same module name string
-   * - they share the same major and minor module version number
+   * - they have the same component name string
+   * - they share the same major and minor component version number
    *
    * This function is indended to be used during MCA module
    * initialization \em before \em selection (the selection process is
@@ -71,15 +72,15 @@ extern "C" {
    * in some format that peer processes will be able to read it,
    * regardless of pointer sizes or endian bias.
    */
-  int mca_base_modex_send(mca_base_module_t *source_module, 
+  int mca_base_modex_send(mca_base_component_t *source_component, 
                           const void *buffer, size_t size);
 
   /**
    * Receive a module-specific buffer from a corresponding MCA module
    * in a specific peer process.
    *
-   * @param dest_module A pointer to this module's mca_base_module_t
-   * instance.
+   * @param dest_component A pointer to this module's component struct
+   * (i.e., mca_base_component_t instance).
    * @param source_proc Peer process to receive from.
    * @param buffer A pointer to a (void*) that will be filled with a
    * pointer to the received buffer.
@@ -107,7 +108,7 @@ extern "C" {
    * count).  See the explanation in mca_base_modex_send() for why the
    * number of bytes is split into two parts.
    */
-  int mca_base_modex_recv(mca_base_module_t *dest_module,
+  int mca_base_modex_recv(mca_base_component_t *dest_component,
                           ompi_proc_t *source_proc,
                           void **buffer, size_t *size);
 

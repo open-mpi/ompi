@@ -19,7 +19,7 @@
 extern "C" {
 #endif
   int mca_pml_base_open(void);
-  int mca_pml_base_select(mca_pml_t *selected, 
+  int mca_pml_base_select(mca_pml_base_module_t *selected, 
                           bool *allow_multi_user_threads, 
                           bool *have_hidden_threads);
   int mca_pml_base_close(void);
@@ -32,8 +32,8 @@ extern "C" {
  * Globals
  */
 extern int mca_pml_base_output;
-extern ompi_list_t mca_pml_base_modules_available;
-extern mca_pml_base_module_t mca_pml_base_selected_module;
-extern mca_pml_t mca_pml;
+extern ompi_list_t mca_pml_base_components_available;
+extern mca_pml_base_component_t mca_pml_base_selected_component;
+extern mca_pml_base_module_t mca_pml;
 
 #endif /* MCA_PML_BASE_H */

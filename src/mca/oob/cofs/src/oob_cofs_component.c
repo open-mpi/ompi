@@ -20,12 +20,10 @@
 #include <unistd.h>
 
 
-
-
 /*
  * Struct of function pointers and all that to let us be initialized
  */
-mca_oob_base_component_1_0_0_t mca_oob_cofs_module = {
+mca_oob_base_component_1_0_0_t mca_oob_cofs_component = {
   {
     MCA_OOB_BASE_VERSION_1_0_0,
 
@@ -33,8 +31,8 @@ mca_oob_base_component_1_0_0_t mca_oob_cofs_module = {
     1,  /* MCA module major version */
     0,  /* MCA module minor version */
     0,  /* MCA module release version */
-    mca_oob_cofs_open,  /* module open */
-    mca_oob_cofs_close /* module close */
+    NULL,
+    NULL,
   },
   {
     false /* checkpoint / restart */
@@ -43,7 +41,7 @@ mca_oob_base_component_1_0_0_t mca_oob_cofs_module = {
   mca_oob_cofs_finalize
 };
 
-mca_oob_t mca_oob_cofs = {
+mca_oob_base_module_t mca_oob_cofs = {
   mca_oob_cofs_send,
   mca_oob_cofs_recv,
   mca_oob_cofs_send_nb,
@@ -55,21 +53,8 @@ int mca_oob_cofs_my_jobid;
 int mca_oob_cofs_my_procid;
 uint64_t mca_oob_cofs_serial;
 
-int
-mca_oob_cofs_open(void)
-{
-  return OMPI_SUCCESS;
-}
 
-
-int
-mca_oob_cofs_close(void)
-{
-  return OMPI_SUCCESS;
-}
-
-
-struct mca_oob_1_0_0_t*
+struct mca_oob_base_module_1_0_0_t*
 mca_oob_cofs_init(bool *allow_multi_user_threads, bool *have_hidden_threads)
 {
   int len;
@@ -106,8 +91,7 @@ mca_oob_cofs_init(bool *allow_multi_user_threads, bool *have_hidden_threads)
 }
 
 
-int
-mca_oob_cofs_finalize(void)
+int mca_oob_cofs_finalize(void)
 {
   return OMPI_SUCCESS;
 }

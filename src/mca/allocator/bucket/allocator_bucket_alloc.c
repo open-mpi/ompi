@@ -18,10 +18,10 @@
    * Initializes the mca_allocator_bucket_options_t data structure for the passed
    * parameters.
    */
-mca_allocator_bucket_t * mca_allocator_bucket_init(mca_allocator_t * mem,
+mca_allocator_bucket_t * mca_allocator_bucket_init(mca_allocator_base_module_t * mem,
                                    int num_buckets,
-                                   mca_allocator_segment_alloc_fn_t get_mem_funct,
-                                   mca_allocator_segment_free_fn_t free_mem_funct)
+                                   mca_allocator_base_component_segment_alloc_fn_t get_mem_funct,
+                                   mca_allocator_base_component_segment_free_fn_t free_mem_funct)
 {
     mca_allocator_bucket_t * mem_options = (mca_allocator_bucket_t *) mem;
     int i;
@@ -53,7 +53,8 @@ mca_allocator_bucket_t * mca_allocator_bucket_init(mca_allocator_t * mem,
    * region or NULL if there was an error
    *
    */
-void * mca_allocator_bucket_alloc(mca_allocator_t * mem, size_t size)
+void * mca_allocator_bucket_alloc(mca_allocator_base_module_t * mem,
+                                  size_t size)
 {
     mca_allocator_bucket_t * mem_options = (mca_allocator_bucket_t *) mem;
     int bucket_num = 0;
@@ -131,7 +132,8 @@ void * mca_allocator_bucket_alloc(mca_allocator_t * mem, size_t size)
 /*
   * allocates an aligned region of memory
   */
-void * mca_allocator_bucket_alloc_align(mca_allocator_t * mem, size_t size, size_t alignment)
+void * mca_allocator_bucket_alloc_align(mca_allocator_base_module_t * mem, 
+                                        size_t size, size_t alignment)
 {
     mca_allocator_bucket_t * mem_options = (mca_allocator_bucket_t *) mem; 
     int bucket_num = 1;
@@ -210,8 +212,8 @@ void * mca_allocator_bucket_alloc_align(mca_allocator_t * mem, size_t size, size
 /*
   * function to reallocate the segment of memory
   */
-void * mca_allocator_bucket_realloc(mca_allocator_t * mem, void * ptr, 
-                             size_t size)
+void * mca_allocator_bucket_realloc(mca_allocator_base_module_t * mem,
+                                    void * ptr, size_t size)
 {
     mca_allocator_bucket_t * mem_options = (mca_allocator_bucket_t *) mem;
     /* initialize for later bit shifts */
@@ -232,14 +234,14 @@ void * mca_allocator_bucket_realloc(mca_allocator_t * mem, void * ptr,
         return(ptr);
     }
     /* we need a new space in memory, so let's get it */
-    ret_ptr = mca_allocator_bucket_alloc((mca_allocator_t *) mem_options, size);
+    ret_ptr = mca_allocator_bucket_alloc((mca_allocator_base_module_t *) mem_options, size);
     if(NULL == ret_ptr) {
         return(NULL);
     }
     /* copy what they have in memory to the new spot */
     memcpy(ret_ptr, ptr, bucket_size);
     /* free the old area in memory */
-    mca_allocator_bucket_free((mca_allocator_t *) mem_options, ptr);
+    mca_allocator_bucket_free((mca_allocator_base_module_t *) mem_options, ptr);
     return(ret_ptr); 
 }
 
@@ -248,7 +250,7 @@ void * mca_allocator_bucket_realloc(mca_allocator_t * mem, void * ptr,
    * Frees the passed region of memory
    *
    */
-void mca_allocator_bucket_free(mca_allocator_t * mem, void * ptr)
+void mca_allocator_bucket_free(mca_allocator_base_module_t * mem, void * ptr)
 {
     mca_allocator_bucket_t * mem_options = (mca_allocator_bucket_t *) mem;
     mca_allocator_bucket_chunk_header_t * chunk  = (mca_allocator_bucket_chunk_header_t *) ptr - 1; 
@@ -265,7 +267,7 @@ void mca_allocator_bucket_free(mca_allocator_t * mem, void * ptr)
    * mca_allocator_bucket_free().
    *
    */
-int mca_allocator_bucket_cleanup(mca_allocator_t * mem)
+int mca_allocator_bucket_cleanup(mca_allocator_base_module_t * mem)
 {
     mca_allocator_bucket_t * mem_options = (mca_allocator_bucket_t *) mem;
     int i;

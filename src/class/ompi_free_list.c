@@ -40,7 +40,7 @@ int ompi_free_list_init(
     int num_elements_to_alloc,
     int max_elements_to_alloc,
     int num_elements_per_alloc,
-    mca_mpool_t* mpool)
+    mca_mpool_base_module_t* mpool)
 {
     flist->fl_elem_size = elem_size;
     flist->fl_elem_class = elem_class;

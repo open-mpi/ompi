@@ -27,9 +27,9 @@ int mca_ns_base_select(bool *allow_multi_user_threads,
                        bool *have_hidden_threads)
 {
   ompi_list_item_t *item;
-  mca_base_module_list_item_t *mli;
+  mca_base_component_list_item_t *cli;
   mca_ns_base_component_t *component, *best_component = NULL;
-  mca_ns_t *module, *best_module = NULL;
+  mca_ns_base_module_t *module, *best_module = NULL;
   bool multi, hidden;
   int priority, best_priority = -1;
 
@@ -38,8 +38,8 @@ int mca_ns_base_select(bool *allow_multi_user_threads,
   for (item = ompi_list_get_first(&mca_ns_base_components_available);
        item != ompi_list_get_end(&mca_ns_base_components_available);
        item = ompi_list_get_next(item)) {
-    mli = (mca_base_module_list_item_t *) item;
-    component = (mca_ns_base_component_t *) mli->mli_module;
+    cli = (mca_base_component_list_item_t *) item;
+    component = (mca_ns_base_component_t *) cli->cli_component;
 
     /* Call the component's init function and see if it wants to be
        selected */

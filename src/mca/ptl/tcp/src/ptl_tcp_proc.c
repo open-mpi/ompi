@@ -37,9 +37,9 @@ void mca_ptl_tcp_proc_construct(mca_ptl_tcp_proc_t* proc)
     OBJ_CONSTRUCT(&proc->proc_lock, ompi_mutex_t);
 
     /* add to list of all proc instance */
-    OMPI_THREAD_LOCK(&mca_ptl_tcp_module.tcp_lock);
-    ompi_list_append(&mca_ptl_tcp_module.tcp_procs, &proc->super);
-    OMPI_THREAD_UNLOCK(&mca_ptl_tcp_module.tcp_lock);
+    OMPI_THREAD_LOCK(&mca_ptl_tcp_component.tcp_lock);
+    ompi_list_append(&mca_ptl_tcp_component.tcp_procs, &proc->super);
+    OMPI_THREAD_UNLOCK(&mca_ptl_tcp_component.tcp_lock);
 }
 
 
@@ -50,9 +50,9 @@ void mca_ptl_tcp_proc_construct(mca_ptl_tcp_proc_t* proc)
 void mca_ptl_tcp_proc_destruct(mca_ptl_tcp_proc_t* proc)
 {
     /* remove from list of all proc instances */
-    OMPI_THREAD_LOCK(&mca_ptl_tcp_module.tcp_lock);
-    ompi_list_remove_item(&mca_ptl_tcp_module.tcp_procs, &proc->super);
-    OMPI_THREAD_UNLOCK(&mca_ptl_tcp_module.tcp_lock);
+    OMPI_THREAD_LOCK(&mca_ptl_tcp_component.tcp_lock);
+    ompi_list_remove_item(&mca_ptl_tcp_component.tcp_procs, &proc->super);
+    OMPI_THREAD_UNLOCK(&mca_ptl_tcp_component.tcp_lock);
 
     /* release resources */
     if(NULL != proc->proc_peers) 
@@ -83,7 +83,7 @@ mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_create(ompi_proc_t* ompi_proc)
 
     /* lookup tcp parameters exported by this proc */
     rc = mca_base_modex_recv(
-        &mca_ptl_tcp_module.super.ptlm_version, 
+        &mca_ptl_tcp_component.super.ptlm_version, 
         ompi_proc, 
         (void**)&ptl_proc->proc_addrs, 
         &size);
@@ -105,8 +105,8 @@ mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_create(ompi_proc_t* ompi_proc)
         OBJ_RELEASE(ptl_proc);
         return NULL;
     }
-    if(NULL == mca_ptl_tcp_module.tcp_local && ompi_proc == ompi_proc_local())
-        mca_ptl_tcp_module.tcp_local = ptl_proc;
+    if(NULL == mca_ptl_tcp_component.tcp_local && ompi_proc == ompi_proc_local())
+        mca_ptl_tcp_component.tcp_local = ptl_proc;
     return ptl_proc;
 }
 
@@ -117,16 +117,16 @@ mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_create(ompi_proc_t* ompi_proc)
 static mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_lookup_ompi(ompi_proc_t* ompi_proc)
 {
     mca_ptl_tcp_proc_t* tcp_proc;
-    OMPI_THREAD_LOCK(&mca_ptl_tcp_module.tcp_lock);
-    for(tcp_proc  = (mca_ptl_tcp_proc_t*)ompi_list_get_first(&mca_ptl_tcp_module.tcp_procs);
-        tcp_proc != (mca_ptl_tcp_proc_t*)ompi_list_get_end(&mca_ptl_tcp_module.tcp_procs);
+    OMPI_THREAD_LOCK(&mca_ptl_tcp_component.tcp_lock);
+    for(tcp_proc  = (mca_ptl_tcp_proc_t*)ompi_list_get_first(&mca_ptl_tcp_component.tcp_procs);
+        tcp_proc != (mca_ptl_tcp_proc_t*)ompi_list_get_end(&mca_ptl_tcp_component.tcp_procs);
         tcp_proc  = (mca_ptl_tcp_proc_t*)ompi_list_get_next(tcp_proc)) {
         if(tcp_proc->proc_ompi == ompi_proc) {
-            OMPI_THREAD_UNLOCK(&mca_ptl_tcp_module.tcp_lock);
+            OMPI_THREAD_UNLOCK(&mca_ptl_tcp_component.tcp_lock);
             return tcp_proc;
         }
     }
-    OMPI_THREAD_UNLOCK(&mca_ptl_tcp_module.tcp_lock);
+    OMPI_THREAD_UNLOCK(&mca_ptl_tcp_component.tcp_lock);
     return NULL;
 }
 
@@ -139,16 +139,16 @@ mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_lookup(const ompi_process_name_t *name)
 {
     mca_ptl_tcp_proc_t* tcp_proc;
     ompi_process_name_t guid = *name;
-    OMPI_THREAD_LOCK(&mca_ptl_tcp_module.tcp_lock);
-    for(tcp_proc  = (mca_ptl_tcp_proc_t*)ompi_list_get_first(&mca_ptl_tcp_module.tcp_procs);
-        tcp_proc != (mca_ptl_tcp_proc_t*)ompi_list_get_end(&mca_ptl_tcp_module.tcp_procs);
+    OMPI_THREAD_LOCK(&mca_ptl_tcp_component.tcp_lock);
+    for(tcp_proc  = (mca_ptl_tcp_proc_t*)ompi_list_get_first(&mca_ptl_tcp_component.tcp_procs);
+        tcp_proc != (mca_ptl_tcp_proc_t*)ompi_list_get_end(&mca_ptl_tcp_component.tcp_procs);
         tcp_proc  = (mca_ptl_tcp_proc_t*)ompi_list_get_next(tcp_proc)) {
         if(memcmp(&tcp_proc->proc_guid, &guid, sizeof(guid)) == 0) {
-            OMPI_THREAD_UNLOCK(&mca_ptl_tcp_module.tcp_lock);
+            OMPI_THREAD_UNLOCK(&mca_ptl_tcp_component.tcp_lock);
             return tcp_proc;
         }
     }
-    OMPI_THREAD_UNLOCK(&mca_ptl_tcp_module.tcp_lock);
+    OMPI_THREAD_UNLOCK(&mca_ptl_tcp_component.tcp_lock);
     return NULL;
 }
 
@@ -159,7 +159,7 @@ mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_lookup(const ompi_process_name_t *name)
  */
 int mca_ptl_tcp_proc_insert(mca_ptl_tcp_proc_t* ptl_proc, mca_ptl_base_peer_t* ptl_peer)
 {
-    struct mca_ptl_tcp_t *ptl_tcp = ptl_peer->peer_ptl;
+    struct mca_ptl_tcp_module_t *ptl_tcp = ptl_peer->peer_ptl;
     size_t i;
 
     /* insert into peer array */ 

@@ -29,8 +29,8 @@ extern "C" {
  */
 int mca_oob_tcp_open(void);
 int mca_oob_tcp_close(void);
-struct mca_oob_1_0_0_t* mca_oob_tcp_init(bool *allow_multi_user_threads,
-                                         bool *have_hidden_threads);
+struct mca_oob_base_module_1_0_0_t* mca_oob_tcp_init(bool *allow_multi_user_threads,
+                                                     bool *have_hidden_threads);
 int mca_oob_tcp_finalize(void);
 
 
@@ -117,7 +117,7 @@ struct mca_oob_tcp_component_t {
 };
 typedef struct mca_oob_tcp_component_t mca_oob_tcp_component_t;
 
-extern mca_oob_tcp_component_t mca_oob_tcp_module;
+extern mca_oob_tcp_component_t mca_oob_tcp_component;
 
 
 #if defined(c_plusplus) || defined(__cplusplus)

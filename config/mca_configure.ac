@@ -14,32 +14,32 @@ AC_INIT(@PARAM_INIT_FILE@)
 AC_PREREQ(2.57)
 AC_CONFIG_AUX_DIR(@PARAM_CONFIG_AUX_DIR@)
 
-# Get the version of @MCA_TYPE@ @MCA_MODULE_NAME@ that we are installing.
+# Get the version of @MCA_TYPE@ @MCA_COMPONENT_NAME@ that we are installing.
 
 if test -n "@PARAM_VERSION_FILE@" -a -f "@PARAM_VERSION_FILE@"; then
     OMPI_GET_VERSION(@PARAM_VERSION_FILE@, @PARAM_VAR_PREFIX@)
 
     AC_DEFINE_UNQUOTED(@PARAM_VAR_PREFIX@_MAJOR_VERSION, 
         $@PARAM_VAR_PREFIX@_MAJOR_VERSION, 
-        [Major OMPI MCA @MCA_TYPE@ @MCA_MODULE_NAME@ version])
+        [Major OMPI MCA @MCA_TYPE@ @MCA_COMPONENT_NAME@ version])
     AC_DEFINE_UNQUOTED(@PARAM_VAR_PREFIX@_MINOR_VERSION, 
         $@PARAM_VAR_PREFIX@_MINOR_VERSION, 
-        [Minor OMPI MCA @MCA_TYPE@ @MCA_MODULE_NAME@ version])
+        [Minor OMPI MCA @MCA_TYPE@ @MCA_COMPONENT_NAME@ version])
     AC_DEFINE_UNQUOTED(@PARAM_VAR_PREFIX@_RELEASE_VERSION, 
         $@PARAM_VAR_PREFIX@_RELEASE_VERSION, 
-        [Release OMPI MCA @MCA_TYPE@ @MCA_MODULE_NAME@ version])
+        [Release OMPI MCA @MCA_TYPE@ @MCA_COMPONENT_NAME@ version])
     AC_DEFINE_UNQUOTED(@PARAM_VAR_PREFIX@_ALPHA_VERSION, 
         $@PARAM_VAR_PREFIX@_ALPHA_VERSION, 
-        [Alpha OMPI MCA @MCA_TYPE@ @MCA_MODULE_NAME@ version])
+        [Alpha OMPI MCA @MCA_TYPE@ @MCA_COMPONENT_NAME@ version])
     AC_DEFINE_UNQUOTED(@PARAM_VAR_PREFIX@_BETA_VERSION, 
         $@PARAM_VAR_PREFIX@_BETA_VERSION, 
-        [Beta OMPI MCA @MCA_TYPE@ @MCA_MODULE_NAME@ version])
+        [Beta OMPI MCA @MCA_TYPE@ @MCA_COMPONENT_NAME@ version])
     AC_DEFINE_UNQUOTED(@PARAM_VAR_PREFIX@_CVS_VERSION, 
         $@PARAM_VAR_PREFIX@_CVS_VERSION, 
-        [CVS OMPI MCA @MCA_TYPE@ @MCA_MODULE_NAME@ version])
+        [CVS OMPI MCA @MCA_TYPE@ @MCA_COMPONENT_NAME@ version])
     AC_DEFINE_UNQUOTED(@PARAM_VAR_PREFIX@_VERSION, 
         "$@PARAM_VAR_PREFIX@_VERSION", 
-        [Overall OMPI MCA @MCA_TYPE@ @MCA_MODULE_NAME@ version number])
+        [Overall OMPI MCA @MCA_TYPE@ @MCA_COMPONENT_NAME@ version number])
     version_string="version $@PARAM_VAR_PREFIX@_VERSION"
 else
     version_string=""
@@ -50,7 +50,7 @@ fi
 #
 
 OMPI_CONFIGURE_SETUP
-ompi_show_title "Configuring MCA @MCA_TYPE@ @MCA_MODULE_NAME@ module $version_string"
+ompi_show_title "Configuring MCA @MCA_TYPE@ @MCA_COMPONENT_NAME@ component $version_string"
 ompi_show_subtitle "Initialization, setup" 
 
 #
@@ -61,14 +61,14 @@ ompi_show_subtitle "Initialization, setup"
 
 AM_INIT_AUTOMAKE(@PARAM_AM_NAME@, $@PARAM_VAR_PREFIX@_VERSION, 'no')
 
-# Setup the top-level MCA module config.h file
+# Setup the top-level MCA component config.h file
 
 AH_TOP([/* -*- c -*-
  *
  * $HEADER$
  *
  * Open MPI configuation header file.
- * MCA @MCA_TYPE@: @MCA_MODULE_NAME@ module
+ * MCA @MCA_TYPE@: @MCA_COMPONENT_NAME@ component
  */
 
 #ifndef @PARAM_VAR_PREFIX@_CONFIG_H
@@ -90,18 +90,18 @@ OMPI_BASIC_SETUP
 # Check to see if the user wants this @MCA_TYPE@ to be the default
 #
 
-AC_MSG_CHECKING([if want the @MCA_MODULE_NAME@ @MCA_TYPE@ to be the default])
+AC_MSG_CHECKING([if want the @MCA_COMPONENT_NAME@ @MCA_TYPE@ to be the default])
 want_default=0
 result=no
 AC_ARG_WITH(@PROCESSED_MCA_TYPE@,
     AC_HELP_STRING([--with-@PROCESSED_MCA_TYPE@=name],
-		   [if name is "@MCA_MODULE_NAME@", the @MCA_MODULE_NAME@ @MCA_TYPE@ will be the default]))
-if test "$with_@PROCESSED_MCA_TYPE@" = "@MCA_MODULE_NAME@"; then
+		   [if name is "@MCA_COMPONENT_NAME@", the @MCA_COMPONENT_NAME@ @MCA_TYPE@ will be the default]))
+if test "$with_@PROCESSED_MCA_TYPE@" = "@MCA_COMPONENT_NAME@"; then
     want_default=1
     result=yes
 fi
 AC_DEFINE_UNQUOTED(@PARAM_VAR_PREFIX@_DEFAULT, $want_default,
-    [Whether the @MCA_MODULE_NAME@ @MCA_TYPE@ is the default @PROCESSED_MCA_TYPE@ or not])
+    [Whether the @MCA_COMPONENT_NAME@ @MCA_TYPE@ is the default @PROCESSED_MCA_TYPE@ or not])
 AC_MSG_RESULT([$result])
 
 #
@@ -113,7 +113,7 @@ AM_DISABLE_STATIC
 
 
 #
-# Find which modules should be built as run-time loadable modules
+# Find which components should be built as run-time loadable components
 # Acceptable combinations:
 #
 # [default -- no option given]
@@ -126,7 +126,7 @@ AM_DISABLE_STATIC
 AC_MSG_CHECKING([if want component to be a DSO])
 AC_ARG_ENABLE(mca-dso,
     AC_HELP_STRING([--enable-mca-dso=LIST],
-		   [comma-separated list of types and/or type-component pairs that will be built as run-time loadable modules (as opposed to statically linked in), if supported on this platform.  The default is to build all components as DSOs; the --disable-mca-dso[=LIST] form can be used to disable building all or some types/components as DSOs].  If LIST is "@MCA_TYPE@-@MCA_MODULE_NAME@" or "@MCA_MODULENAME@", then @MCA_MODULE_NAME@ will be compiled as a DSO (if supported on this platform).))
+		   [comma-separated list of types and/or type-component pairs that will be built as run-time loadable components (as opposed to statically linked in), if supported on this platform.  The default is to build all components as DSOs; the --disable-mca-dso[=LIST] form can be used to disable building all or some types/components as DSOs].  If LIST is "@MCA_TYPE@-@MCA_COMPONENT_NAME@" or "@MCA_COMPONENTNAME@", then @MCA_COMPONENT_NAME@ will be compiled as a DSO (if supported on this platform).))
 
 # Manual conversion of $kind to its generic name (e.g., crmpi->cr,
 # crompi->cr).
@@ -143,22 +143,22 @@ crompi)
 ;;
 esac
 
-BUILD_@MCA_TYPE@_@MCA_MODULE_NAME@_DSO=0
+BUILD_@MCA_TYPE@_@MCA_COMPONENT_NAME@_DSO=0
 msg=no
 
 if test "$enable_shared" = "no"; then
     msg=no
 elif test -z "$enable_mca_dso" -o "$enable_mca_dso" = "yes" -o \
  "$enable_mca_dso" = "@MCA_TYPE@" -o "$enable_mca_dso" = "$generic_type"; then
-    BUILD_@MCA_TYPE@_@MCA_MODULE_NAME@_DSO=1
+    BUILD_@MCA_TYPE@_@MCA_COMPONENT_NAME@_DSO=1
     msg=yes
 else
     ifs_save="$IFS"
     IFS="${IFS}$PATH_SEPARATOR,"
     for item in $enable_mca_dso; do
-	if test "$item" = "@MCA_TYPE@-@MCA_MODULE_NAME@" -o \
+	if test "$item" = "@MCA_TYPE@-@MCA_COMPONENT_NAME@" -o \
 	    "$item" = "@MCA_TYPE@" -o "$item" = "$generic_type"; then
-            BUILD_@MCA_TYPE@_@MCA_MODULE_NAME@_DSO=1
+            BUILD_@MCA_TYPE@_@MCA_COMPONENT_NAME@_DSO=1
 	    msg=yes
 	fi
     done
@@ -297,7 +297,7 @@ AC_SUBST(top_ompi_srcdir)
 AC_SUBST(top_ompi_builddir)
 
 ##################################
-# @MCA_TYPE@ @MCA_MODULE_NAME@ module specific setup
+# @MCA_TYPE@ @MCA_COMPONENT_NAME@ component specific setup
 ##################################
 
 #
@@ -387,8 +387,8 @@ AC_SUBST(CXXCPPFLAGS)
 ompi_show_subtitle "GNU libtool setup" 
 
 AM_PROG_LIBTOOL
-AM_CONDITIONAL(OMPI_BUILD_@MCA_TYPE@_@MCA_MODULE_NAME@_DSO, 
-    test "$BUILD_@MCA_TYPE@_@MCA_MODULE_NAME@_DSO" = "1")
+AM_CONDITIONAL(OMPI_BUILD_@MCA_TYPE@_@MCA_COMPONENT_NAME@_DSO, 
+    test "$BUILD_@MCA_TYPE@_@MCA_COMPONENT_NAME@_DSO" = "1")
 
 
 ############################################################################

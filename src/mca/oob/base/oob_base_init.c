@@ -21,9 +21,15 @@ OBJ_CLASS_INSTANCE(
     NULL,
     NULL
 );
+OBJ_CLASS_INSTANCE(
+    mca_oob_base_info_t,
+    ompi_list_item_t,
+    NULL,
+    NULL
+);
 
 ompi_process_name_t mca_oob_base_self;
-ompi_process_name_t mca_oob_base_any;                                                                                                                          
+ompi_process_name_t mca_oob_base_any;
 
 /**
  * Function for selecting one module from all those that are
@@ -34,11 +40,11 @@ ompi_process_name_t mca_oob_base_any;
 int mca_oob_base_init(bool *user_threads, bool *hidden_threads)
 {
     ompi_list_item_t *item;
-    mca_base_module_list_item_t *mli;
-    mca_oob_base_module_t * first;
+    mca_base_component_list_item_t *cli;
+    mca_oob_base_info_t * first;
     mca_oob_base_component_t *component;
-    mca_oob_t *module;
-    extern ompi_list_t mca_oob_base_modules;
+    mca_oob_base_module_t *module;
+    extern ompi_list_t mca_oob_base_components;
     ompi_process_name_t *self;
 
     /* setup local name */
@@ -57,10 +63,10 @@ int mca_oob_base_init(bool *user_threads, bool *hidden_threads)
     for (item = ompi_list_get_first(&mca_oob_base_components);
         item != ompi_list_get_end(&mca_oob_base_components);
         item = ompi_list_get_next(item)) {
-        mca_oob_base_module_t *inited;
+        mca_oob_base_info_t *inited;
 
-        mli = (mca_base_module_list_item_t *) item;
-        component = (mca_oob_base_component_t *) mli->mli_module;
+        cli = (mca_base_component_list_item_t *) item;
+        component = (mca_oob_base_component_t *) cli->cli_component;
 
         if (NULL == component->oob_init) {
             ompi_output_verbose(10, mca_oob_base_output, "mca_oob_base_init: no init function; ignoring component");
@@ -69,7 +75,7 @@ int mca_oob_base_init(bool *user_threads, bool *hidden_threads)
             if (NULL == module) {
                 ompi_output_verbose(10, mca_oob_base_output, "mca_oob_base_init: oob_init returned failure");
             } else {
-              inited = OBJ_NEW(mca_oob_base_module_t);
+              inited = OBJ_NEW(mca_oob_base_info_t);
               inited->oob_component = component;
               inited->oob_module = module;
               ompi_list_append(&mca_oob_base_modules, &inited->super);
@@ -78,7 +84,7 @@ int mca_oob_base_init(bool *user_threads, bool *hidden_threads)
     }
     /* set the global variable to point to the first initialize module */
     if (0 < ompi_list_get_size(&mca_oob_base_modules)) {
-      first = (mca_oob_base_module_t *) ompi_list_get_first(&mca_oob_base_modules);
+      first = (mca_oob_base_info_t *) ompi_list_get_first(&mca_oob_base_modules);
       mca_oob = *first->oob_module; 
       return OMPI_SUCCESS;
     } else {

@@ -40,9 +40,9 @@ mca_ptl_gm_proc_construct (mca_ptl_gm_proc_t * proc)
     OBJ_CONSTRUCT (&proc->proc_lock, ompi_mutex_t);
 
     /* add to list of all proc instance */
-    OMPI_THREAD_LOCK (&mca_ptl_gm_module.gm_lock);
-    ompi_list_append (&mca_ptl_gm_module.gm_procs, &proc->super);
-    OMPI_THREAD_UNLOCK (&mca_ptl_gm_module.gm_lock);
+    OMPI_THREAD_LOCK (&mca_ptl_gm_component.gm_lock);
+    ompi_list_append (&mca_ptl_gm_component.gm_procs, &proc->super);
+    OMPI_THREAD_UNLOCK (&mca_ptl_gm_component.gm_lock);
 
     return;
 }
@@ -56,9 +56,9 @@ void
 mca_ptl_gm_proc_destruct (mca_ptl_gm_proc_t * proc)
 {
     /* remove from list of all proc instances */
-    OMPI_THREAD_LOCK (&mca_ptl_gm_module.gm_lock);
-    ompi_list_remove_item (&mca_ptl_gm_module.gm_procs, &proc->super);
-    OMPI_THREAD_UNLOCK (&mca_ptl_gm_module.gm_lock);
+    OMPI_THREAD_LOCK (&mca_ptl_gm_component.gm_lock);
+    ompi_list_remove_item (&mca_ptl_gm_component.gm_procs, &proc->super);
+    OMPI_THREAD_UNLOCK (&mca_ptl_gm_component.gm_lock);
 
     /* release resources */
     if (NULL != proc->peer_arr)
@@ -76,7 +76,7 @@ mca_ptl_gm_proc_destruct (mca_ptl_gm_proc_t * proc)
  */
 
 mca_ptl_gm_proc_t *
-mca_ptl_gm_proc_create (mca_ptl_gm_t * ptl, ompi_proc_t * ompi_proc)
+mca_ptl_gm_proc_create (mca_ptl_gm_module_t * ptl, ompi_proc_t * ompi_proc)
 {
     int         rc;
     size_t      size;
@@ -88,7 +88,7 @@ mca_ptl_gm_proc_create (mca_ptl_gm_t * ptl, ompi_proc_t * ompi_proc)
     ptl_proc->proc_ompi = ompi_proc;
 
     /* Extract exposed addresses from remote proc */
-    rc = mca_base_modex_recv (&mca_ptl_gm_module.super.ptlm_version,
+    rc = mca_base_modex_recv (&mca_ptl_gm_component.super.ptlm_version,
                               ompi_proc, (void **) &ptl_proc->proc_addrs,
                               &size);
 
@@ -143,20 +143,20 @@ mca_ptl_gm_proc_lookup_ompi (ompi_proc_t * ompi_proc)
 {
     mca_ptl_gm_proc_t *gm_proc;
 
-    OMPI_THREAD_LOCK (&mca_ptl_gm_module.gm_lock);
+    OMPI_THREAD_LOCK (&mca_ptl_gm_component.gm_lock);
 
     gm_proc = (mca_ptl_gm_proc_t *)
-        ompi_list_get_first (&mca_ptl_gm_module.gm_procs);
+        ompi_list_get_first (&mca_ptl_gm_component.gm_procs);
 
     for (; gm_proc != (mca_ptl_gm_proc_t *)
-         ompi_list_get_end (&mca_ptl_gm_module.gm_procs);
+         ompi_list_get_end (&mca_ptl_gm_component.gm_procs);
          gm_proc = (mca_ptl_gm_proc_t *) ompi_list_get_next (gm_proc)) {
         if (gm_proc->proc_ompi == ompi_proc) {
-            OMPI_THREAD_UNLOCK (&mca_ptl_gm_module.gm_lock);
+            OMPI_THREAD_UNLOCK (&mca_ptl_gm_component.gm_lock);
             return gm_proc;
         }
     }
-    OMPI_THREAD_UNLOCK (&mca_ptl_gm_module.gm_lock);
+    OMPI_THREAD_UNLOCK (&mca_ptl_gm_component.gm_lock);
 
     return NULL;
 }

@@ -1,4 +1,3 @@
-# -*- makefile -*-
 #
 # $HEADER$
 #
@@ -17,9 +16,9 @@ libmca_coll_basic_la_SOURCES = \
         coll_basic_alltoallw.c \
         coll_basic_barrier.c \
         coll_basic_bcast.c \
+        coll_basic_component.c \
         coll_basic_gather.c \
         coll_basic_gatherv.c \
-        coll_basic_module.c \
         coll_basic_reduce.c \
         coll_basic_reduce_scatter.c \
         coll_basic_scan.c \

@@ -17,9 +17,12 @@
  * Structure which describes a selected module.
  */
 struct mca_allocator_base_selected_module_t {
-  ompi_list_item_t super;    /**< Makes this an object of type ompi_list_item */
-  mca_allocator_base_module_t *allocator_component; /**< Info about the module */
-  mca_allocator_t *allocator_module; /**< The function pointers for all the module's functions. */
+  ompi_list_item_t super;    
+  /**< Makes this an object of type ompi_list_item */
+  mca_allocator_base_component_t *allocator_component; 
+  /**< Info about the module */
+  mca_allocator_base_module_t *allocator_module; 
+  /**< The function pointers for all the module's functions. */
 };
 /**
  * Convenience typedef.
@@ -41,7 +44,7 @@ extern "C" {
 #endif
   int mca_allocator_base_open(void);
   int mca_allocator_base_close(void);
-  mca_allocator_base_module_t* mca_allocator_component_lookup(const char* name);
+  mca_allocator_base_component_t* mca_allocator_component_lookup(const char* name);
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

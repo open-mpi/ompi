@@ -22,9 +22,10 @@ static const char FUNC_NAME[] = "MPI_Cart_shift";
 
 
 int MPI_Cart_shift(MPI_Comm comm, int direction, int disp,
-                   int *rank_source, int *rank_dest) {
+                   int *rank_source, int *rank_dest) 
+{
     int err;
-    mca_topo_base_cart_shift_fn_t func;
+    mca_topo_base_module_cart_shift_fn_t func;
 
     /* check the arguments */
     if (MPI_PARAM_CHECK) {
@@ -53,10 +54,7 @@ int MPI_Cart_shift(MPI_Comm comm, int direction, int disp,
 
     /* get the function pointer on this communicator */
     func = comm->c_topo->topo_cart_shift;
-    if (NULL == func) {
-        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER, 
-                                     FUNC_NAME);
-    }
+
     /* call the function */
     if ( MPI_SUCCESS != 
             (err = func(comm, direction, disp, rank_source, rank_dest))) {

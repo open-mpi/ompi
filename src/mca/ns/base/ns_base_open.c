@@ -13,10 +13,10 @@
 /*
  * The following file was created by configure.  It contains extern
  * statements and the definition of an array of pointers to each
- * component's public mca_base_module_t struct.
+ * component's public mca_base_component_t struct.
  */
 
-#include "mca/ns/base/static-modules.h"
+#include "mca/ns/base/static-components.h"
 
 /*
  * globals
@@ -46,7 +46,7 @@ OBJ_CLASS_INSTANCE(
  * Global variables
  */
 int mca_ns_base_output = -1;
-mca_ns_t ompi_name_server;
+mca_ns_base_module_t ompi_name_server;
 ompi_process_name_t mca_ns_my_replica;
 bool mca_ns_base_selected = false;
 ompi_list_t mca_ns_base_components_available;
@@ -63,8 +63,8 @@ int mca_ns_base_open(void)
   /* Open up all available components */
 
   if (OMPI_SUCCESS != 
-      mca_base_modules_open("ns", 0, mca_ns_base_static_modules, 
-                            &mca_ns_base_components_available)) {
+      mca_base_components_open("ns", 0, mca_ns_base_static_components, 
+                               &mca_ns_base_components_available)) {
     return OMPI_ERROR;
   }
 

@@ -22,26 +22,26 @@
 /*
  * Struct of function pointers and all that to let us be initialized
  */
-mca_pcm_base_module_1_0_0_t mca_pcm_cofs_module = {
+mca_pcm_base_component_1_0_0_t mca_pcm_cofs_component = {
   {
     MCA_PCM_BASE_VERSION_1_0_0,
 
-    "cofs", /* MCA module name */
-    1,  /* MCA module major version */
-    0,  /* MCA module minor version */
-    0,  /* MCA module release version */
-    mca_pcm_cofs_open,  /* module open */
-    mca_pcm_cofs_close /* module close */
+    "cofs", /* MCA component name */
+    1,  /* MCA component major version */
+    0,  /* MCA component minor version */
+    0,  /* MCA component release version */
+    mca_pcm_cofs_open,  /* component open */
+    mca_pcm_cofs_close /* component close */
   },
   {
     false /* checkpoint / restart */
   },
-  mca_pcm_cofs_init,    /* module init */
+  mca_pcm_cofs_init,    /* component init */
   mca_pcm_cofs_finalize
 };
 
 
-struct mca_pcm_1_0_0_t mca_pcm_cofs_1_0_0 = {
+struct mca_pcm_base_module_1_0_0_t mca_pcm_cofs_1_0_0 = {
   mca_pcm_cofs_get_peers,
   mca_pcm_cofs_get_self
 };
@@ -75,7 +75,7 @@ mca_pcm_cofs_close(void)
 }
 
 
-struct mca_pcm_1_0_0_t *
+struct mca_pcm_base_module_1_0_0_t *
 mca_pcm_cofs_init(int *priority, bool *allow_multi_user_threads, 
                   bool *have_hidden_threads)
 {

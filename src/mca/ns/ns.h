@@ -103,7 +103,7 @@ typedef struct ompi_ns_msg_buffer_t ompi_ns_msg_buffer_t;
  * new_cellid = ompi_name_server.create_cellid()
  * @endcode
  */
-typedef mca_ns_base_cellid_t (*mca_ns_create_cellid_fn_t)(void);
+typedef mca_ns_base_cellid_t (*mca_ns_base_module_create_cellid_fn_t)(void);
 
 /**
  * Create a new job id.
@@ -126,7 +126,7 @@ typedef mca_ns_base_cellid_t (*mca_ns_create_cellid_fn_t)(void);
  * new_jobid = ompi_name_server.create_jobid()
  * @endcode
  */
-typedef mca_ns_base_jobid_t (*mca_ns_create_jobid_fn_t)(void);
+typedef mca_ns_base_jobid_t (*mca_ns_base_module_create_jobid_fn_t)(void);
 
 /**
  * Obtain a single new process name.
@@ -152,7 +152,7 @@ typedef mca_ns_base_jobid_t (*mca_ns_create_jobid_fn_t)(void);
  * new_name = ompi_name_server.create_process_name(cell, job, vpid);
  * @endcode
  */
-typedef ompi_process_name_t* (*mca_ns_create_proc_name_fn_t)(mca_ns_base_cellid_t cell, mca_ns_base_jobid_t job, mca_ns_base_vpid_t vpid);
+typedef ompi_process_name_t* (*mca_ns_base_module_create_proc_name_fn_t)(mca_ns_base_cellid_t cell, mca_ns_base_jobid_t job, mca_ns_base_vpid_t vpid);
 
 
 /**
@@ -174,7 +174,7 @@ typedef ompi_process_name_t* (*mca_ns_create_proc_name_fn_t)(mca_ns_base_cellid_
  * starting_procid = ompi_name_server.reserve_range(jobid, range)
  * @endcode
  */
-typedef mca_ns_base_vpid_t (*mca_ns_reserve_range_fn_t)(mca_ns_base_jobid_t job, mca_ns_base_vpid_t range);
+typedef mca_ns_base_vpid_t (*mca_ns_base_module_reserve_range_fn_t)(mca_ns_base_jobid_t job, mca_ns_base_vpid_t range);
 
 
 /**
@@ -199,7 +199,7 @@ typedef mca_ns_base_vpid_t (*mca_ns_reserve_range_fn_t)(mca_ns_base_jobid_t job,
  *     }
  * @endcode
  */
-typedef int (*mca_ns_free_name_fn_t)(ompi_process_name_t *name);
+typedef int (*mca_ns_base_module_free_name_fn_t)(ompi_process_name_t *name);
 
 /**
  * Get the process name as a character string.
@@ -224,7 +224,7 @@ typedef int (*mca_ns_free_name_fn_t)(ompi_process_name_t *name);
  * name-string = ompi_name_server.get_proc_name_string(&name)
  * @endcode
  */
-typedef char* (*mca_ns_get_proc_name_string_fn_t)(const ompi_process_name_t *name);
+typedef char* (*mca_ns_base_module_get_proc_name_string_fn_t)(const ompi_process_name_t *name);
 
 /**
  * Get the virtual process id as a character string.
@@ -245,7 +245,7 @@ typedef char* (*mca_ns_get_proc_name_string_fn_t)(const ompi_process_name_t *nam
  * vpid-string = ompi_name_server.get_vpid_string(&name)
  * @endcode
  */
-typedef char* (*mca_ns_get_vpid_string_fn_t)(const ompi_process_name_t *name);
+typedef char* (*mca_ns_base_module_get_vpid_string_fn_t)(const ompi_process_name_t *name);
 
 /**
  * Get the job id as a character string.
@@ -266,7 +266,7 @@ typedef char* (*mca_ns_get_vpid_string_fn_t)(const ompi_process_name_t *name);
  * jobid-string = ompi_name_server.get_jobid_string(&name)
  * @endcode
  */
-typedef char* (*mca_ns_get_jobid_string_fn_t)(const ompi_process_name_t *name);
+typedef char* (*mca_ns_base_module_get_jobid_string_fn_t)(const ompi_process_name_t *name);
 
 /**
  * Get the cell id as a character string.
@@ -287,7 +287,7 @@ typedef char* (*mca_ns_get_jobid_string_fn_t)(const ompi_process_name_t *name);
  * cellid-string = ompi_name_server.get_cellid_string(&name)
  * @endcode
  */
-typedef char* (*mca_ns_get_cellid_string_fn_t)(const ompi_process_name_t *name);
+typedef char* (*mca_ns_base_module_get_cellid_string_fn_t)(const ompi_process_name_t *name);
 
 /**
  * Get the virtual process id as an ompi_process_id_t value.
@@ -304,7 +304,7 @@ typedef char* (*mca_ns_get_cellid_string_fn_t)(const ompi_process_name_t *name);
  * vpid = ompi_name_server.get_vpid(&name)
  * @endcode
  */
-typedef mca_ns_base_vpid_t (*mca_ns_get_vpid_fn_t)(const ompi_process_name_t *name);
+typedef mca_ns_base_vpid_t (*mca_ns_base_module_get_vpid_fn_t)(const ompi_process_name_t *name);
 
 /**
  * Get the job id as an ompi_process_id_t value.
@@ -321,7 +321,7 @@ typedef mca_ns_base_vpid_t (*mca_ns_get_vpid_fn_t)(const ompi_process_name_t *na
  * jobid = ompi_name_server.get_jobid(&name)
  * @endcode
  */
-typedef mca_ns_base_jobid_t (*mca_ns_get_jobid_fn_t)(const ompi_process_name_t *name);
+typedef mca_ns_base_jobid_t (*mca_ns_base_module_get_jobid_fn_t)(const ompi_process_name_t *name);
 
 /**
  * Get the cell id as an ompi_process_id_t value.
@@ -338,7 +338,7 @@ typedef mca_ns_base_jobid_t (*mca_ns_get_jobid_fn_t)(const ompi_process_name_t *
  * cellid = ompi_name_server.get_cellid(&name)
  * @endcode
  */
-typedef mca_ns_base_cellid_t (*mca_ns_get_cellid_fn_t)(const ompi_process_name_t *name);
+typedef mca_ns_base_cellid_t (*mca_ns_base_module_get_cellid_fn_t)(const ompi_process_name_t *name);
 
 /**
  * Compare two name values.
@@ -369,49 +369,50 @@ typedef mca_ns_base_cellid_t (*mca_ns_get_cellid_fn_t)(const ompi_process_name_t
  * result = ompi_name_server.compare(bit_mask, &name1, &name2)
  * @endcode
  */
-typedef int (*mca_ns_compare_fn_t)(ompi_ns_cmp_bitmask_t fields, const ompi_process_name_t *name1, const ompi_process_name_t *name2);
+typedef int (*mca_ns_base_module_compare_fn_t)(ompi_ns_cmp_bitmask_t fields, const ompi_process_name_t *name1, const ompi_process_name_t *name2);
 
 /*
  * Ver 1.0.0
  */
-struct mca_ns_1_0_0_t {
-    mca_ns_create_cellid_fn_t create_cellid;
-    mca_ns_create_jobid_fn_t create_jobid;
-    mca_ns_create_proc_name_fn_t create_process_name;
-    mca_ns_reserve_range_fn_t reserve_range;
-    mca_ns_free_name_fn_t free_name;
-    mca_ns_get_proc_name_string_fn_t get_proc_name_string;
-    mca_ns_get_vpid_string_fn_t get_vpid_string;
-    mca_ns_get_jobid_string_fn_t get_jobid_string;
-    mca_ns_get_cellid_string_fn_t get_cellid_string;
-    mca_ns_get_vpid_fn_t get_vpid;
-    mca_ns_get_jobid_fn_t get_jobid;
-    mca_ns_get_cellid_fn_t get_cellid;
-    mca_ns_compare_fn_t compare;
+struct mca_ns_base_module_1_0_0_t {
+    mca_ns_base_module_create_cellid_fn_t create_cellid;
+    mca_ns_base_module_create_jobid_fn_t create_jobid;
+    mca_ns_base_module_create_proc_name_fn_t create_process_name;
+    mca_ns_base_module_reserve_range_fn_t reserve_range;
+    mca_ns_base_module_free_name_fn_t free_name;
+    mca_ns_base_module_get_proc_name_string_fn_t get_proc_name_string;
+    mca_ns_base_module_get_vpid_string_fn_t get_vpid_string;
+    mca_ns_base_module_get_jobid_string_fn_t get_jobid_string;
+    mca_ns_base_module_get_cellid_string_fn_t get_cellid_string;
+    mca_ns_base_module_get_vpid_fn_t get_vpid;
+    mca_ns_base_module_get_jobid_fn_t get_jobid;
+    mca_ns_base_module_get_cellid_fn_t get_cellid;
+    mca_ns_base_module_compare_fn_t compare;
 };
-typedef struct mca_ns_1_0_0_t mca_ns_1_0_0_t;
-typedef mca_ns_1_0_0_t mca_ns_t;
+typedef struct mca_ns_base_module_1_0_0_t mca_ns_base_module_1_0_0_t;
+typedef mca_ns_base_module_1_0_0_t mca_ns_base_module_t;
 
 /*
  * NS Component
  */
 
-typedef mca_ns_t* (*mca_ns_base_init_fn_t)(
+typedef mca_ns_base_module_t* (*mca_ns_base_component_init_fn_t)(
     bool *allow_multi_user_threads,
     bool *have_hidden_threads,
     int *priority);
 
-typedef int (*mca_ns_base_finalize_fn_t)(void);
+typedef int (*mca_ns_base_component_finalize_fn_t)(void);
  
 /*
  * the standard component data structure
  */
 
 struct mca_ns_base_component_1_0_0_t {
-    mca_base_module_t ns_version;
-    mca_base_module_data_1_0_0_t ns_data;
-    mca_ns_base_init_fn_t ns_init;
-    mca_ns_base_finalize_fn_t ns_finalize;
+    mca_base_component_t ns_version;
+    mca_base_component_data_1_0_0_t ns_data;
+
+    mca_ns_base_component_init_fn_t ns_init;
+    mca_ns_base_component_finalize_fn_t ns_finalize;
 };
 typedef struct mca_ns_base_component_1_0_0_t mca_ns_base_component_1_0_0_t;
 typedef mca_ns_base_component_1_0_0_t mca_ns_base_component_t;

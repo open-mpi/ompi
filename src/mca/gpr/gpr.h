@@ -79,79 +79,78 @@ typedef ompi_registry_buf_t ompi_registry_object_t;
 /*
  * utility functions that may be provided, or use defaults
  */
-typedef int (*mca_gpr_base_send_fn_t)(ompi_process_name_t *target,
+typedef int (*mca_gpr_base_module_send_fn_t)(ompi_process_name_t *target,
 				       ompi_registry_buf_t *buf);
-typedef ompi_registry_buf_t (*mca_gpr_base_recv_fn_t)(void);
+typedef ompi_registry_buf_t (*mca_gpr_base_module_recv_fn_t)(void);
 
 
 /*
  * public functions that MUST be provided
  */
-typedef int (*mca_gpr_base_definesegment_fn_t)(char *segment);
-typedef int (*mca_gpr_base_deletesegment_fn_t)(char *segment);
-typedef int (*mca_gpr_base_put_fn_t)(ompi_registry_mode_t mode, char *segment,
+typedef int (*mca_gpr_base_module_definesegment_fn_t)(char *segment);
+typedef int (*mca_gpr_base_module_deletesegment_fn_t)(char *segment);
+typedef int (*mca_gpr_base_module_put_fn_t)(ompi_registry_mode_t mode, char *segment,
 				     char **tokens, ompi_registry_object_t *object,
 				     int size);
-typedef ompi_registry_value_t* (*mca_gpr_base_get_fn_t)(ompi_registry_mode_t mode,
+typedef ompi_registry_value_t* (*mca_gpr_base_module_get_fn_t)(ompi_registry_mode_t mode,
 							char *segment, char **tokens);
-typedef int (*mca_gpr_base_delete_fn_t)(ompi_registry_mode_t mode,
+typedef int (*mca_gpr_base_module_delete_fn_t)(ompi_registry_mode_t mode,
 					char *segment, char **tokens);
-typedef ompi_keytable_t* (*mca_gpr_base_index_fn_t)(char *segment);
-typedef int (*mca_gpr_base_subscribe_fn_t)(ompi_registry_mode_t mode,
+typedef ompi_keytable_t* (*mca_gpr_base_module_index_fn_t)(char *segment);
+typedef int (*mca_gpr_base_module_subscribe_fn_t)(ompi_registry_mode_t mode,
 					   ompi_registry_action_t action,
 					   char *segment, char **tokens);
-typedef int (*mca_gpr_base_unsubscribe_fn_t)(ompi_registry_mode_t mode,
+typedef int (*mca_gpr_base_module_unsubscribe_fn_t)(ompi_registry_mode_t mode,
 					     char *segment, char **tokens);
 
 /*
  * block functions that may be provided, or use defaults
  */
-typedef ompi_registry_buf_t (*mca_gpr_base_getbuf_fn_t)(size_t size);
-typedef int (*mca_gpr_base_packbuf_fn_t)(ompi_registry_buf_t *buf, void *ptr,
+typedef ompi_registry_buf_t (*mca_gpr_base_module_getbuf_fn_t)(size_t size);
+typedef int (*mca_gpr_base_module_packbuf_fn_t)(ompi_registry_buf_t *buf, void *ptr,
 					 size_t num_items, ompi_registry_bufdata_t datatype);
-typedef int (*mca_gpr_base_packstring_fn_t)(ompi_registry_buf_t *buf, char *string);
-typedef int (*mca_gpr_base_unpackstring_fn_t)(ompi_registry_buf_t *buf, char *string, size_t maxlen);
-typedef int (*mca_gpr_base_unpackbuf_fn_t)(ompi_registry_buf_t *buf, void *ptr, size_t num_items,
+typedef int (*mca_gpr_base_module_packstring_fn_t)(ompi_registry_buf_t *buf, char *string);
+typedef int (*mca_gpr_base_module_unpackstring_fn_t)(ompi_registry_buf_t *buf, char *string, size_t maxlen);
+typedef int (*mca_gpr_base_module_unpackbuf_fn_t)(ompi_registry_buf_t *buf, void *ptr, size_t num_items,
 					   ompi_registry_bufdata_t datatype);
-typedef int (*mca_gpr_base_sendbuf_fn_t)(ompi_process_name_t *target, ompi_registry_buf_t *buf, bool freebuf);
+typedef int (*mca_gpr_base_module_sendbuf_fn_t)(ompi_process_name_t *target, ompi_registry_buf_t *buf, bool freebuf);
 
 
 /*
  * Ver 1.0.0
  */
-struct mca_gpr_base_module_1_0_0_t {
-  mca_base_module_t gprc_version;
-  mca_base_module_data_1_0_0_t gprc_data;
+struct mca_gpr_base_component_1_0_0_t {
+  mca_base_component_t gprc_version;
+  mca_base_component_data_1_0_0_t gprc_data;
 
-  mca_gpr_base_init_fn_t gprc_init;
-  mca_gpr_base_finalize_fn_t gprc_finalize;
+  mca_gpr_base_component_init_fn_t gprc_init;
+  mca_gpr_base_component_finalize_fn_t gprc_finalize;
+};
+typedef struct mca_gpr_base_component_1_0_0_t mca_gpr_base_component_1_0_0_t;
+typedef mca_gpr_base_component_1_0_0_t mca_gpr_base_component_t;
+
+struct mca_gpr_base_module_1_0_0_t {
+    /* non-public utility functions - must be provided */
+    mca_gpr_base_module_send_fn_t send;
+    mca_gpr_base_module_recv_fn_t recv;
+    /* public functions - must be provided */
+    mca_gpr_base_module_get_fn_t get;
+    mca_gpr_base_module_put_fn_t put;
+    mca_gpr_base_module_definesegment_fn_t definesegment;
+    mca_gpr_base_module_deletesegment_fn_t deletesegment;
+    mca_gpr_base_module_subscribe_fn_t subscribe;
+    mca_gpr_base_module_unsubscribe_fn_t unsubscribe;
+    mca_gpr_base_module_delete_fn_t delete;
+    /* block functions - may be provided */
+    mca_gpr_base_module_getbuf_fn_t getbuf;
+    mca_gpr_base_module_packbuf_fn_t packbuf;
+    mca_gpr_base_module_packstring_fn_t pack_string;
+    mca_gpr_base_module_unpackstring_fn_t unpack_string;
+    mca_gpr_base_module_unpackbuf_fn_t unpack_buf;
+    mca_gpr_base_module_sendbuf_fn_t sendbuf;
 };
 typedef struct mca_gpr_base_module_1_0_0_t mca_gpr_base_module_1_0_0_t;
-
-struct mca_gpr_1_0_0_t {
-    /* non-public utility functions - must be provided */
-    mca_gpr_base_send_fn_t send;
-    mca_gpr_base_recv_fn_t recv;
-    /* public functions - must be provided */
-    mca_gpr_base_get_fn_t get;
-    mca_gpr_base_put_fn_t put;
-    mca_gpr_base_definesegment_fn_t definesegment;
-    mca_gpr_base_deletesegment_fn_t deletesegment;
-    mca_gpr_base_subscribe_fn_t subscribe;
-    mca_gpr_base_unsubscribe_fn_t unsubscribe;
-    mca_gpr_base_delete_fn_t delete;
-    /* block functions - may be provided */
-    mca_gpr_base_getbuf_fn_t getbuf;
-    mca_gpr_base_packbuf_fn_t packbuf;
-    mca_gpr_base_packstring_fn_t pack_string;
-    mca_gpr_base_unpackstring_fn_t unpack_string;
-    mca_gpr_base_unpackbuf_fn_t unpack_buf;
-    mca_gpr_base_sendbuf_fn_t sendbuf;
-};
-typedef struct mca_gpr_1_0_0_t mca_gpr_1_0_0_t;
-
 typedef mca_gpr_base_module_1_0_0_t mca_gpr_base_module_t;
-typedef mca_gpr_1_0_0_t mca_gpr_t;
 
 /*
  * Macro for use in modules that are of type coll v1.0.0
