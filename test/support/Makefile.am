@@ -14,8 +14,13 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-noinst_LTLIBRARIES = libsupport.la
+#
+# This should be libsupport.a, not libsupport.la.  Automake doesn't
+# support check_LTLIBRARIES, as technically you have to install a
+# shared library before you can use it.
+#
+check_LIBRARIES = libsupport.a
 
-libsupport_la_SOURCES = \
+libsupport_a_SOURCES = \
         support.c \
         support.h

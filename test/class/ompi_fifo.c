@@ -52,11 +52,18 @@ int main(int argc, char **argv) {
     cb_slot_t *slot_data;
     size_t cnt, r_offset;
 
+#if 0
     /* get queue size */
     size_of_fifo=atoi(argv[1]);
     lazy_free=atoi(argv[2]);
     loop_cnt=atoi(argv[3]);
     offset=atol(argv[4]);
+#else
+    size_of_fifo = 5;
+    lazy_free = 1;
+    loop_cnt = 2;
+    offset = 2;
+#endif
 
     /* init result tracking */
     test_init("ompi_circular_buffer_fifo");

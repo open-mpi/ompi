@@ -14,7 +14,7 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-SUBDIRS = config include etc src
+SUBDIRS = config include etc src test
 EXTRA_DIST = README INSTALL VERSION Doxyfile LICENSE
 
 dist-hook:

@@ -17,9 +17,12 @@ include $(top_srcdir)/config/Makefile.options
 AM_CPPFLAGS = -I$(top_srcdir)/test/support -DOMPI_ENABLE_DEBUG_OVERRIDE=1
 AM_LDFLAGS = -lpthread
 
-noinst_PROGRAMS = \
+check_PROGRAMS = \
 	ompi_thread \
 	ompi_condition
+
+TESTS = \
+	$(check_PROGRAMS)
 
 ompi_thread_SOURCES = ompi_thread.c
 ompi_thread_LDADD = \
