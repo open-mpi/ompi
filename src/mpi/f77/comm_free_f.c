@@ -48,8 +48,8 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_FREE,
 
 void mpi_comm_free_f(MPI_Fint *comm, MPI_Fint *ierr)
 {
-    MPI_Comm c_comm = MPI_Comm_f2c (*comm);
+    MPI_Comm c_comm = MPI_Comm_f2c(*comm);
 
-    *ierr = MPI_Comm_free ( &c_comm );
-    *comm = MPI_Comm_c2f (c_comm);
+    *ierr = OMPI_INT_2_FINT(MPI_Comm_free(&c_comm));
+    *comm = OMPI_INT_2_FINT(MPI_Comm_c2f(c_comm));
 }

@@ -113,12 +113,12 @@
        double complex MPI_BOTTOM, MPI_ARGV_NULL
        double complex MPI_ARGVS_NULL, MPI_ERRCODES_IGNORE
        double complex MPI_STATUS_IGNORE, MPI_STATUSES_IGNORE
-       common/mpi_bottom/MPI_BOTTOM
-       common/mpi_argv_null/MPI_ARGV_NULL
-       common/mpi_argvs_null/MPI_ARGVS_NULL
-       common/mpi_errcodes_ignore/MPI_ERRCODES_IGNORE
-       common/mpi_status_ignore/MPI_STATUS_IGNORE
-       common/mpi_statuses_ignore/MPI_STATUSES_IGNORE
+       common/mpi_fortran_bottom/MPI_BOTTOM
+       common/mpi_fortran_argv_null/MPI_ARGV_NULL
+       common/mpi_fortran_argvs_null/MPI_ARGVS_NULL
+       common/mpi_fortran_errcodes_ignore/MPI_ERRCODES_IGNORE
+       common/mpi_fortran_status_ignore/MPI_STATUS_IGNORE
+       common/mpi_fortran_statuses_ignore/MPI_STATUSES_IGNORE
 !
 ! NULL "handles" (indices)
 !

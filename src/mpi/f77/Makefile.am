@@ -39,7 +39,9 @@ endif
 
 headers = \
     bindings.h \
-    prototypes_mpi.h
+    constants.h \
+    prototypes_mpi.h \
+    strings.h
 
 #
 # libmpi_f77.la is always build because it contains some non-profilied
@@ -47,7 +49,9 @@ headers = \
 #
 
 libmpi_f77_la_SOURCES   = \
+        constants_f.c \
         attr_fn_f.c \
+        strings.c \
         wtick_f.c \
         wtime_f.c
 
