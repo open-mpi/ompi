@@ -68,7 +68,6 @@ SUBDIRS = \
         mca \
         mpi \
         op \
-        os \
         proc \
         request \
         runtime \
