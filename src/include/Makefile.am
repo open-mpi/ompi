@@ -6,7 +6,7 @@ include $(top_srcdir)/config/Makefile.options
 
 SUBDIRS = sys
 
-headers = \
+noinst_HEADERS = \
         atomic.h \
         constants.h \
         ompi.h \
@@ -17,7 +17,7 @@ headers = \
 
 if WANT_INSTALL_HEADERS
 ompidir = $(includedir)/openmpi/include
-ompi_HEADERS = $(headers)
+ompi_HEADERS = $(noinst_HEADERS)
 else
 ompidir = $(includedir)
 endif
