@@ -390,7 +390,7 @@ ompi_comm_start_processes(int count, char **array_of_commands,
 	/* Verify for the 'wdir' and later potentially for the
 	   'path' Info object */
 	have_wdir = 0; 
-	if ( array_of_info != NULL && array_of_info[i] == MPI_INFO_NULL ) {
+	if ( array_of_info != NULL && array_of_info[i] != MPI_INFO_NULL ) {
 	    ompi_info_get (array_of_info[i], "wdir", valuelen, cwd, &flag);
 	    if ( flag ) {
 		sched->cwd = cwd;
