@@ -17,27 +17,30 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
+static char FUNC_NAME[] = "MPI_Comm_create";
+
+
 int MPI_Comm_create(MPI_Comm comm, MPI_Group group, MPI_Comm *newcomm) {
     
     int rc;
 
     if ( MPI_PARAM_CHECK ) {
-        OMPI_ERR_INIT_FINALIZE; 
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         
         if ( MPI_COMM_NULL == comm  || ompi_comm_invalid (comm))
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
-                                         "MPI_Comm_create");
+                                          FUNC_NAME);
         
         if ( MPI_GROUP_NULL == group )
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_GROUP, 
-                                         "MPI_Comm_create");
+                                          FUNC_NAME);
         
         if ( NULL == newcomm )
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, 
-                                         "MPI_Comm_create");
+                                          FUNC_NAME);
     }
 
     rc = ompi_comm_create ( (ompi_communicator_t*)comm, (ompi_group_t*)group, 
                            (ompi_communicator_t**)newcomm );
-    OMPI_ERRHANDLER_RETURN ( rc, comm, rc, "MPI_Comm_create");
+    OMPI_ERRHANDLER_RETURN ( rc, comm, rc, FUNC_NAME);
 }

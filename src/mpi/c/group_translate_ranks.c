@@ -18,6 +18,9 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
+static char FUNC_NAME[] = "MPI_Group_translate_ranks";
+
+
 int MPI_Group_translate_ranks(MPI_Group group1, int n_ranks, int *ranks1,
                               MPI_Group group2, int *ranks2) {
 
@@ -30,20 +33,20 @@ int MPI_Group_translate_ranks(MPI_Group group1, int n_ranks, int *ranks1,
 
     /* check for errors */
     if( MPI_PARAM_CHECK ) {
-        OMPI_ERR_INIT_FINALIZE; 
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
         if ((MPI_GROUP_NULL == group1) || (MPI_GROUP_NULL == group2) ||
                 (NULL == group1) || (NULL == group2) ) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_GROUP, 
-                        "MPI_Group_translate_ranks");
+                                          FUNC_NAME);
         }
         if( (n_ranks > group1_pointer->grp_proc_count) || (0 >= n_ranks) ){
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_GROUP, 
-                        "MPI_Group_translate_ranks - II ");
+                                          FUNC_NAME);
         }
         if( (NULL == ranks1) || (NULL == ranks2 ) ) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_GROUP, 
-                        "MPI_Group_translate_ranks - III ");
+                                          FUNC_NAME);
         }
     }
 

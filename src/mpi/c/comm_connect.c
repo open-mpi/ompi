@@ -18,6 +18,9 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
+static char FUNC_NAME[] = "MPI_Comm_connect";
+
+
 int MPI_Comm_connect(char *port_name, MPI_Info info, int root,
                      MPI_Comm comm, MPI_Comm *newcomm) 
 {
@@ -30,20 +33,20 @@ int MPI_Comm_connect(char *port_name, MPI_Info info, int root,
 
     comp = (ompi_communicator_t *) comm;
     if ( MPI_PARAM_CHECK ) {
-        OMPI_ERR_INIT_FINALIZE; 
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
         if ( MPI_COMM_NULL == comm || ompi_comm_invalid (comm))
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
-                                         "MPI_Comm_connect");
+                                          FUNC_NAME);
         if ( OMPI_COMM_IS_INTER(comm))
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COMM,
-                                          "MPI_Comm_connect");
+                                          FUNC_NAME);
         if ( 0 > root || ompi_comm_size(comm) < root ) 
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, 
-                                          "MPI_Comm_connect");
+                                          FUNC_NAME);
         if ( NULL == newcomm )
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, 
-                                          "MPI_Comm_connect");
+                                          FUNC_NAME);
     }
     
     rank = ompi_comm_rank ( comm );
@@ -51,7 +54,7 @@ int MPI_Comm_connect(char *port_name, MPI_Info info, int root,
         if ( rank == root ) {
             if ( NULL == port_name ) 
                 return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, 
-                                              "MPI_Comm_connect");
+                                              FUNC_NAME);
         }
     }
 
@@ -133,7 +136,7 @@ int MPI_Comm_connect(char *port_name, MPI_Info info, int root,
     }
     if ( MPI_SUCCESS != rc ) {
         *newcomm = MPI_COMM_NULL;
-        return OMPI_ERRHANDLER_INVOKE(comm, rc, "MPI_Comm_accept");
+        return OMPI_ERRHANDLER_INVOKE(comm, rc, FUNC_NAME);
     }
     
     *newcomm = newcomp;

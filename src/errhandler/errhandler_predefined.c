@@ -19,15 +19,23 @@
 void ompi_mpi_errors_are_fatal_handler(struct ompi_communicator_t **comm,
                                        int *error_code, ...)
 {
+  char *arg;
   va_list arglist;
+
 #if __STDC__
   va_start(arglist, error_code);
 #else
   va_start(arglist);
 #endif
-  ompi_output(0, "*** An error occurred in %s", va_arg(arglist, char *));
 
-  if (comm != NULL && ompi_mpi_initialized && !ompi_mpi_finalized) {
+  arg = va_arg(arglist, char*);
+  if (NULL != arg) {
+    ompi_output(0, "*** An error occurred in %s", arg);
+  } else {
+    ompi_output(0, "*** An error occurred");
+  }
+
+  if (NULL != comm && ompi_mpi_initialized && !ompi_mpi_finalized) {
     ompi_output(0, "*** on communicator %s", (*comm)->c_name);
   } else if (!ompi_mpi_initialized) {
     ompi_output(0, "*** before MPI was initialized");

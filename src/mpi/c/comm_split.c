@@ -17,27 +17,30 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
+static char FUNC_NAME[] = "MPI_Comm_split";
+
+
 int MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm) {
 
     int rc;
 
     if ( MPI_PARAM_CHECK ) {
-        OMPI_ERR_INIT_FINALIZE; 
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
         if ( comm == MPI_COMM_NULL || ompi_comm_invalid ( comm ))
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
-                                      "MPI_Comm_split");
+                                          FUNC_NAME);
 
         if ( color < 0 &&  MPI_UNDEFINED != color ) 
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, 
-                                      "MPI_Comm_split");
+                                          FUNC_NAME);
         
         if ( NULL == newcomm )
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, 
-                                      "MPI_Comm_split");
+                                          FUNC_NAME);
     }
     
     rc = ompi_comm_split ( (ompi_communicator_t*)comm, color, key, 
                           (ompi_communicator_t**)newcomm );
-    OMPI_ERRHANDLER_RETURN ( rc, comm, rc, "MPI_Comm_split");
+    OMPI_ERRHANDLER_RETURN ( rc, comm, rc, FUNC_NAME);
 }

@@ -19,6 +19,9 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
+static char FUNC_NAME[] = "MPI_Comm_spawn";
+
+
 int MPI_Comm_spawn(char *command, char **argv, int maxprocs, MPI_Info info,
                     int root, MPI_Comm comm, MPI_Comm *intercomm,
                     int *array_of_errcodes) 
@@ -31,23 +34,23 @@ int MPI_Comm_spawn(char *command, char **argv, int maxprocs, MPI_Info info,
     comp = (ompi_communicator_t *) comm;
 
     if ( MPI_PARAM_CHECK ) {
-        OMPI_ERR_INIT_FINALIZE; 
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
         if ( MPI_COMM_NULL == comm || ompi_comm_invalid (comm))
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
-                                         "MPI_Comm_spawn");
+                                          FUNC_NAME);
         if ( OMPI_COMM_IS_INTER(comm))
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COMM,
-                                          "MPI_Comm_spawn");
+                                          FUNC_NAME);
         if ( 0 > root || ompi_comm_size(comm) < root ) 
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, 
-                                          "MPI_Comm_spawn");
+                                          FUNC_NAME);
         if ( NULL == intercomm ) 
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG,
-                                          "MPI_Comm_spawn");
+                                          FUNC_NAME);
         if ( NULL == array_of_errcodes ) 
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG,
-                                          "MPI_Comm_spawn");
+                                          FUNC_NAME);
     }
    
    rank = ompi_comm_rank ( comm );
@@ -55,13 +58,13 @@ int MPI_Comm_spawn(char *command, char **argv, int maxprocs, MPI_Info info,
        if ( rank == root ) {
            if ( NULL == command ) 
                return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG,
-                                             "MPI_Comm_spawn");
+                                             FUNC_NAME);
            if ( NULL == argv ) 
                return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG,
-                                             "MPI_Comm_spawn");
+                                             FUNC_NAME);
            if ( 0 > maxprocs ) 
                return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG,
-                                             "MPI_Comm_spawn");
+                                             FUNC_NAME);
        }
    }
 
@@ -157,7 +160,7 @@ int MPI_Comm_spawn(char *command, char **argv, int maxprocs, MPI_Info info,
     }
     if ( MPI_SUCCESS != rc ) {
         *intercomm = MPI_COMM_NULL;
-        return OMPI_ERRHANDLER_INVOKE(comm, rc, "MPI_Comm_spawn");
+        return OMPI_ERRHANDLER_INVOKE(comm, rc, FUNC_NAME);
     }
     
     *intercomm = newcomp;

@@ -8,6 +8,7 @@
 #include "mpi/c/bindings.h"
 #include "runtime/runtime.h"
 #include "errhandler/errcode.h"
+#include "errhandler/errhandler.h"
 #include "communicator/communicator.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
@@ -18,16 +19,19 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
+static char FUNC_NAME[] = "MPI_Error_string";
+
+
 int MPI_Error_string(int errorcode, char *string, int *resultlen) 
 {
     char *tmpstring;
     
     if ( MPI_PARAM_CHECK ) {
-        OMPI_ERR_INIT_FINALIZE;
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
         if ( ompi_mpi_errcode_is_invalid(errorcode))
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
-                                          "MPI_Error_string");
+                                          FUNC_NAME);
     }
  
     tmpstring = ompi_mpi_errcode_get_string (errorcode);

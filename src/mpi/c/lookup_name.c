@@ -18,20 +18,22 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
+static char FUNC_NAME[] = "MPI_Lookup_name";
+
+
 int MPI_Lookup_name(char *service_name, MPI_Info info, char *port_name) 
 {
-    int rc;
     char *tmp;
 
     if ( MPI_PARAM_CHECK ) {
-        OMPI_ERR_INIT_FINALIZE; 
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME); 
 
         if ( NULL == port_name )
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, 
-                                          "MPI_Lookup_name");
+                                          FUNC_NAME);
         if ( NULL == service_name )
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, 
-                                          "MPI_Lookup_name");
+                                          FUNC_NAME);
     }
 
     /* 
@@ -46,7 +48,7 @@ int MPI_Lookup_name(char *service_name, MPI_Info info, char *port_name)
     tmp = (char *) ompi_comm_namelookup(service_name);
     if ( NULL == tmp ) {
         return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_NAME,
-                                      "MPI_Lookup_name");
+                                      FUNC_NAME);
     }
 
     strncpy ( port_name, tmp, MPI_MAX_PORT_NAME );    

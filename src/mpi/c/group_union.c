@@ -18,6 +18,9 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
+static char FUNC_NAME[] = "MPI_Group_union";
+
+
 int MPI_Group_union(MPI_Group group1, MPI_Group group2, MPI_Group *new_group) 
 {
     /* local variables */
@@ -28,13 +31,13 @@ int MPI_Group_union(MPI_Group group1, MPI_Group group2, MPI_Group *new_group)
 
     /* check for errors */
     if (MPI_PARAM_CHECK) {
-        OMPI_ERR_INIT_FINALIZE; 
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
         if ((MPI_GROUP_NULL == group1) || (MPI_GROUP_NULL == group2) ||
                 (NULL == group1) || (NULL == group2) ) {
             return 
                 OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_GROUP,
-                        "MPI_Group_union");
+                                       FUNC_NAME);
         }
     }
 
@@ -74,7 +77,7 @@ int MPI_Group_union(MPI_Group group1, MPI_Group group2, MPI_Group *new_group)
     if (NULL == new_group_pointer) {
         return 
             OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_GROUP,
-                    "MPI_Group_union - II");
+                                   FUNC_NAME);
     }
 
     /* fill in the new group list */

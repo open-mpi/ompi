@@ -18,20 +18,23 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
+static char FUNC_NAME[] = "MPI_Publish_name";
+
+
 int MPI_Publish_name(char *service_name, MPI_Info info,
                      char *port_name) 
 {
     int rc;
 
     if ( MPI_PARAM_CHECK ) {
-        OMPI_ERR_INIT_FINALIZE; 
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME); 
 
         if ( NULL == port_name )
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, 
-                                          "MPI_Publish_name");
+                                          FUNC_NAME);
         if ( NULL == service_name )
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, 
-                                          "MPI_Publish_name");
+                                          FUNC_NAME);
     }
 
     /* 
@@ -42,7 +45,7 @@ int MPI_Publish_name(char *service_name, MPI_Info info,
     rc = ompi_comm_namepublish (service_name, port_name);
     if ( OMPI_SUCCESS != rc ) {
         return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INTERN,
-                                      "MPI_Publish_name");
+                                      FUNC_NAME);
     }
     
     return MPI_SUCCESS;

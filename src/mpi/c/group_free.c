@@ -18,18 +18,21 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
+static char FUNC_NAME[] = "MPI_Group_free";
+
+
 int MPI_Group_free(MPI_Group *group)
 {
     ompi_group_t *l_group;
 
     /* check to make sure we don't free GROUP_EMPTY or GROUP_NULL */
     if (MPI_PARAM_CHECK) {
-        OMPI_ERR_INIT_FINALIZE; 
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
         if ((MPI_GROUP_NULL == *group) || (MPI_GROUP_EMPTY == *group) ||
                 (NULL == *group) ) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_GROUP,
-                        "MPI_Group_free");
+                                          FUNC_NAME);
         }
 
     }
