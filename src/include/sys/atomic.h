@@ -305,32 +305,51 @@ static inline void ompi_atomic_lock(ompi_lock_t *lock);
 static inline void ompi_atomic_unlock(ompi_lock_t *lock);
 
 
-#ifdef __GNUC__
-
 /*
  * Include system specific inline asm definitions. Otherwise
  * the definitions are in system specific .s files in src/util.
  */
 
 #if   defined(__alpha__)
-# include "alpha/atomic.h"
+# define OMPI_HAVE_ATOMIC 1
+# ifdef __GNUC__
+#  include "alpha/atomic.h"
+# endif
 #elif defined(__amd64__)
-# include "amd64/atomic.h"
+# define OMPI_HAVE_ATOMIC 1
+# ifdef __GNUC__
+#  include "amd64/atomic.h"
+# endif
 #elif defined(__i386__)
-# include "ia32/atomic.h"
+# define OMPI_HAVE_ATOMIC 1
+# ifdef __GNUC__
+#  include "ia32/atomic.h"
+# endif
 #elif defined(__ia64__)
-# include "ia64/atomic.h"
+# define OMPI_HAVE_ATOMIC 1
+# ifdef __GNUC__
+#  include "ia64/atomic.h"
+# endif
 #elif defined(__POWERPC__)
-# include "powerpc/atomic.h"
+# define OMPI_HAVE_ATOMIC 1
+# ifdef __GNUC__
+#  include "powerpc/atomic.h"
+# endif
 #elif defined(__sparc__) || defined(__sparc)
-# include "sparc64/atomic.h"
+# define OMPI_HAVE_ATOMIC 1
+# ifdef __GNUC__
+#  include "sparc64/atomic.h"
+# endif
 #endif
 
+#ifndef OMPI_HAVE_ATOMIC
+#define OMPI_HAVE_ATOMIC 0
 #endif
 
+#if OMPI_HAVE_ATOMIC
 
 /*
- * implementation (derived)
+ * derived operations
  */
 
 #if SIZEOF_INT == 4
@@ -546,5 +565,7 @@ static inline void ompi_atomic_unlock(ompi_lock_t *lock)
         lock->u.lock = OMPI_ATOMIC_UNLOCKED;
     }
 }
+
+#endif /* OMPI_HAVE_ATOMIC */
 
 #endif /* OMPI_SYS_ATOMIC_H */
