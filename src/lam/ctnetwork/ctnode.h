@@ -5,6 +5,7 @@
 #ifndef LAM_CT_NODE_H
 #define LAM_CT_NODE_H
 
+#include "lam_stdint.h"
 #include "lam/lfc/object.h"
 #include "lam/lfc/hash_table.h"
 
@@ -19,11 +20,14 @@
 
 struct lam_ctnode;
 
+typedef uint32_t (*lam_ctl_label_for_link_fn_t)(struct lam_ctnode *, uint32_t);
+typedef char *(*lam_ctl_isa_neighbor_fn_t)(struct lam_ctnode *, uint32_t);
+
 typedef struct lam_ctnode_class
 {
     lam_class_info_t    super;
-    uint32_t            ctl_label_for_link(struct lam_ctnode *, uint32_t);
-    char                *ctl_isa_neighbor(struct lam_ctnode *, uint32_t);
+    lam_ctl_label_for_link_fn_t *ctl_label_for_link;
+    lam_ctl_isa_neighbor_fn_t *ctl_isa_neighbor;
 } lam_ctnode_class_t;
 
 
