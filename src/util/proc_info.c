@@ -24,7 +24,7 @@ ompi_proc_info_t ompi_process_info = {
     /*  .seed =                 */   false,
     /*  .ns_replica =           */   NULL,
     /*  .gpr_replica =          */   NULL,
-    /*  .my_universe            */   "default-universe",
+    /*  .my_universe            */   NULL,
     /*  .tmpdir_base =          */   NULL,
     /*  .top_session_dir =      */   NULL,
     /*  .universe_session_dir = */   NULL,
@@ -48,12 +48,6 @@ int ompi_proc_info(void)
     /* get the process id */
     ompi_process_info.pid = getpid();
 
-    /* set process name */
-    if (ompi_process_info.seed) {
-	ompi_process_info.name = ompi_name_server.create_process_name(0, 0, 0);
-    } else {
-    ompi_process_info.name = ompi_rte_get_self();
-    }
 
     /* set process to inited */
     ompi_process_info.init = true;

@@ -10,6 +10,7 @@
 #include "runtime/runtime.h"
 #include "util/sys_info.h"
 #include "util/proc_info.h"
+#include "util/session_dir.h"
 #include "mpi.h"
 #include "communicator/communicator.h"
 #include "group/group.h"
@@ -63,14 +64,22 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     bool have_hidden_threads;
     ompi_proc_t** procs;
     size_t nprocs;
-    char *error;
+    char *error, *jobid_str, *procid_str;
 
-    /* Become a OMPI process */
+    /* Become an OMPI process */
 
     if (OMPI_SUCCESS != (ret = ompi_init(argc, argv))) {
         error = "ompi_init() failed";
         goto error;
     }
+
+    /* get system info and setup defaults*/
+    ompi_sys_info();
+    ompi_universe_info.host = strdup(ompi_system_info.nodename);
+    ompi_universe_info.uid = strdup(ompi_system_info.user);
+
+    /* parse environmental variables and fill corresponding info structures */
+    ompi_rte_parse_environ();
 
     /* Open up the MCA */
 
@@ -84,13 +93,70 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     have_hidden_threads = false;
     if (OMPI_SUCCESS != (ret = ompi_rte_init_stage1(&allow_multi_user_threads,
 						    &have_hidden_threads))) {
-	return ret;
+	goto error;
     }
 
     /* start the rest of the rte */
-      if (OMPI_SUCCESS != (ret = ompi_rte_init_stage2(&allow_multi_user_threads,
+    if (OMPI_SUCCESS != (ret = ompi_rte_init_stage2(&allow_multi_user_threads,
 						    &have_hidden_threads))) {
         error = "mca_rte_init() failed";
+        goto error;
+    }
+
+    /*****    SET MY NAME   *****/
+    if (NULL == ompi_process_info.name) { /* don't overwrite an existing name */
+	if (ompi_process_info.seed) {
+	    ompi_process_info.name = ompi_name_server.create_process_name(0, 0, 0);
+	} else {
+	    ompi_process_info.name = ompi_rte_get_self();
+	}
+    }
+
+    /* get my process info */
+    ompi_proc_info();
+
+    /* setup my session directory */
+    jobid_str = ompi_name_server.get_jobid_string(ompi_process_info.name);
+    procid_str = ompi_name_server.get_vpid_string(ompi_process_info.name);
+ 
+    if (ompi_rte_debug_flag) {
+	ompi_output(0, "[%d,%d,%d] setting up session dir with",
+		    ompi_process_info.name->cellid,
+		    ompi_process_info.name->jobid,
+		    ompi_process_info.name->vpid);
+	if (NULL != ompi_process_info.tmpdir_base) {
+	    ompi_output(0, "\ttmpdir %s", ompi_process_info.tmpdir_base);
+	}
+	ompi_output(0, "\tuniverse %s", ompi_process_info.my_universe);
+	ompi_output(0, "\tuser %s", ompi_system_info.user);
+	ompi_output(0, "\thost %s", ompi_system_info.nodename);
+	ompi_output(0, "\tjobid %s", jobid_str);
+	ompi_output(0, "\tprocid %s", procid_str);
+    }
+    if (OMPI_ERROR == ompi_session_dir(true,
+				       ompi_process_info.tmpdir_base,
+				       ompi_system_info.user,
+				       ompi_system_info.nodename, NULL, 
+				       ompi_process_info.my_universe,
+				       jobid_str, procid_str)) {
+	if (jobid_str != NULL) free(jobid_str);
+	if (procid_str != NULL) free(procid_str);
+	error = "session dir not found or created";
+	goto error;
+    }
+
+    /*
+     *  Register my process info with my replica.
+     */
+    if (OMPI_SUCCESS != (ret = ompi_rte_register())) {
+	error = "ompi_rte_init: failed in ompi_rte_register()\n";
+	goto error;
+    }
+
+    /* finalize the rte startup */
+    if (OMPI_SUCCESS != (ret = ompi_rte_init_finalstage(&allow_multi_user_threads,
+							 &have_hidden_threads))) {
+        error = "mpi_init: failed in ompi_rte_init\n";
         goto error;
     }
 
@@ -140,13 +206,13 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     }
 
     /* Select which pml, ptl, and coll modules to use, and determine the
-         final thread level */
+       final thread level */
 
     if (OMPI_SUCCESS != 
-            (ret = mca_base_init_select_components(requested, 
-                                                   allow_multi_user_threads,
-                                                   have_hidden_threads, 
-                                                   provided))) {
+	(ret = mca_base_init_select_components(requested, 
+					       allow_multi_user_threads,
+					       have_hidden_threads, 
+					       provided))) {
         error = "mca_base_init_select_components() failed";
         goto error;
     }

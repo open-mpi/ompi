@@ -16,8 +16,6 @@
 #include "util/sys_info.h"
 #include "util/proc_info.h"
 
-#include "mca/ns/base/base.h"
-
 #include "runtime/runtime.h"
 
 void ompi_rte_parse_daemon_cmd_line(ompi_cmd_line_t *cmd_line)
@@ -26,16 +24,18 @@ void ompi_rte_parse_daemon_cmd_line(ompi_cmd_line_t *cmd_line)
     /* see if I'm the seed */
     if (ompi_cmd_line_is_taken(cmd_line, "seed")) {
 	ompi_process_info.seed = true;
-	ompi_process_info.name = ns_base_create_process_name(0,0,0);
+	setenv("OMPI_universe_seed", "1", 1);
     } else {
+	unsetenv("OMPI_universe_seed");
 	ompi_process_info.seed = false;
-	ompi_process_info.name = NULL;
     }
 
     /* see if I'm a probe */
     if (ompi_cmd_line_is_taken(cmd_line, "probe")) {
+	setenv("OMPI_universe_probe", "1", 1);
 	ompi_universe_info.probe = true;
     } else {
+	unsetenv("OMPI_universe_probe");
 	ompi_universe_info.probe = false;
     }
 
@@ -46,26 +46,36 @@ void ompi_rte_parse_daemon_cmd_line(ompi_cmd_line_t *cmd_line)
 	    exit(1);
 	}
 	ompi_universe_info.scope = strdup(ompi_cmd_line_get_param(cmd_line, "scope", 0, 0));
+	setenv("OMPI_universe_scope", ompi_universe_info.scope, 1);
+    } else {
+	unsetenv("OMPI_universe_scope");
+	ompi_universe_info.scope = NULL;
     }
 
     /* find out if persistent */
     if (ompi_cmd_line_is_taken(cmd_line, "persistent")) {
+	setenv("OMPI_universe_persistent", "1", 1);
 	ompi_universe_info.persistence = true;
     } else {
+	unsetenv("OMPI_universe_persistent");
 	ompi_universe_info.persistence = false;
     }
 
     /* find out if silent */
     if (ompi_cmd_line_is_taken(cmd_line, "silent")) {
+	setenv("OMPI_universe_silent", "1", 1);
 	ompi_universe_info.silent_mode = true;
     } else {
+	unsetenv("OMPI_universe_silent");
 	ompi_universe_info.silent_mode = false;
     }
 
     /* find out if web interface is desired */
     if (ompi_cmd_line_is_taken(cmd_line, "webserver")) {
+	setenv("OMPI_universe_webserver", "1", 1);
 	ompi_universe_info.web_server = true;
     } else {
+	unsetenv("OMPI_universe_webserver");
 	ompi_universe_info.web_server = false;
     }
 
@@ -76,7 +86,9 @@ void ompi_rte_parse_daemon_cmd_line(ompi_cmd_line_t *cmd_line)
 	    exit(1);
 	}
 	ompi_universe_info.scriptfile = strdup(ompi_cmd_line_get_param(cmd_line, "script", 0, 0));
+	setenv("OMPI_universe_script", ompi_universe_info.scriptfile, 1);
     } else {
+	unsetenv("OMPI_universe_script");
 	ompi_universe_info.scriptfile = NULL;
     }
 
@@ -87,7 +99,9 @@ void ompi_rte_parse_daemon_cmd_line(ompi_cmd_line_t *cmd_line)
 	    exit(1);
 	}
 	ompi_universe_info.hostfile = strdup(ompi_cmd_line_get_param(cmd_line, "hostfile", 0, 0));
+	setenv("OMPI_universe_hostfile", ompi_universe_info.hostfile, 1);
     } else {
+	unsetenv("OMPI_universe_hostfile");
 	ompi_universe_info.hostfile = NULL;
     }
 }

@@ -14,6 +14,9 @@
 #include "util/argv.h"
 #include "mca/oob/base/base.h"
 #include "util/cmd_line.h"
+#include "util/sys_info.h"
+#include "runtime/runtime.h"
+#include "util/session_dir.h"
 #include "include/constants.h"
 
 #include <stdio.h>
@@ -21,8 +24,6 @@
 #include <sys/param.h>
 
 extern char** environ;
-
-static long num_running_procs;
 
 
 int
@@ -38,7 +39,7 @@ main(int argc, char *argv[])
     int num_procs = 1;
     ompi_rte_node_schedule_t *sched;
     char cwd[MAXPATHLEN];
-    char *my_contact_info, *tmp;
+    char *my_contact_info, *tmp, *jobid_str, *procid_str;
 
     /*
      * Intialize our Open MPI environment
@@ -113,14 +114,63 @@ main(int argc, char *argv[])
         return ret;
     }
 
-    /* init proc info - assigns name, among other things */
+    /*****    SET MY NAME   *****/
+    if (NULL == ompi_process_info.name) { /* don't overwrite an existing name */
+	if (ompi_process_info.seed) {
+	    ompi_process_info.name = ompi_name_server.create_process_name(0, 0, 0);
+	} else {
+	    ompi_process_info.name = ompi_rte_get_self();
+	}
+    }
+
+    /* get my process info */
     ompi_proc_info();
 
-    /*
-     *  Prep for starting a new job
-     */
+/* setup my session directory */
+    jobid_str = ompi_name_server.get_jobid_string(ompi_process_info.name);
+    procid_str = ompi_name_server.get_vpid_string(ompi_process_info.name);
+ 
+    if (ompi_rte_debug_flag) {
+	ompi_output(0, "[%d,%d,%d] setting up session dir with", ompi_process_info.name->cellid, ompi_process_info.name->jobid, ompi_process_info.name->vpid);
+	if (NULL != ompi_process_info.tmpdir_base) {
+	    ompi_output(0, "\ttmpdir %s", ompi_process_info.tmpdir_base);
+	}
+	ompi_output(0, "\tuniverse %s", ompi_process_info.my_universe);
+	ompi_output(0, "\tuser %s", ompi_system_info.user);
+	ompi_output(0, "\thost %s", ompi_system_info.nodename);
+	ompi_output(0, "\tjobid %s", jobid_str);
+	ompi_output(0, "\tprocid %s", procid_str);
+    }
+   if (OMPI_ERROR == ompi_session_dir(true,
+				       ompi_process_info.tmpdir_base,
+				       ompi_system_info.user,
+				       ompi_system_info.nodename, NULL, 
+				       ompi_process_info.my_universe,
+				       jobid_str, procid_str)) {
+	if (jobid_str != NULL) free(jobid_str);
+	if (procid_str != NULL) free(procid_str);
+	exit(-1);
+    }
 
-    /* BWB - ompi_rte_get_new_jobid() */
+   /*
+    *  Register my process info with my replica.
+    */
+   if (OMPI_SUCCESS != (ret = ompi_rte_register())) {
+       ompi_output(0, "ompi_rte_init: failed in ompi_rte_register()\n");
+       return ret;
+   }
+ 
+   /* finalize the rte startup */
+   if (OMPI_SUCCESS != (ret = ompi_rte_init_finalstage(&multi_thread,
+						       &hidden_thread))) {
+        /* JMS show_help */
+        printf("show_help: ompid failed in ompi_rte_init\n");
+        return ret;
+    }
+
+       /*****    PREP TO START THE APPLICATION    *****/
+
+    /* get the jobid for the application */
     new_jobid = ompi_name_server.create_jobid();
 
     /* BWB - fix jobid, procs, and nodes */
