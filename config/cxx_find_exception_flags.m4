@@ -43,13 +43,13 @@ elif test "$GXX" = "yes"; then
 
     AC_LANG_SAVE
     AC_LANG_CPLUSPLUS
-    AC_TRY_COMPILE(, [try { int i = 0; } catch(...) { int j = 2; }], lam_happy=1, lam_happy=0)
+    AC_COMPILE_IFELSE(AC_LANG_PROGRAM([[]], [[try { int i = 0; } catch(...) { int j = 2; }]]), lam_happy=1, lam_happy=0)
 
     if test "$lam_happy" = "1"; then
 	lam_exflags="-fexceptions";
     else
 	CXXFLAGS="$CXXFLAGS_SAVE -fhandle-exceptions"
-	AC_TRY_COMPILE(, [try { int i = 0; } catch(...) { int j = 2; }], lam_happy=1, lam_happy=0)
+	AC_COMPILE_IFELSE(AC_LANG_PROGRAM([[]], [[try { int i = 0; } catch(...) { int j = 2; }]]), lam_happy=1, lam_happy=0)
 	if test "$lam_happy" = "1"; then
 	    lam_exflags="-fhandle-exceptions";
 	fi

@@ -17,7 +17,7 @@ define([LAM_CXX_HAVE_EXCEPTIONS],[
 AC_MSG_CHECKING([for throw/catch])
 AC_LANG_SAVE
 AC_LANG_CPLUSPLUS
-AC_TRY_COMPILE(, int i=1; throw(i);, 
+AC_COMPILE_IFELSE(AC_LANG_PROGRAM([[]], [[int i=1; throw(i);]]), 
     LAM_CXX_EXCEPTIONS=1, LAM_CXX_EXCPTIONS=0)
 if test "$LAM_CXX_EXCEPTIONS" = "1"; then
     AC_MSG_RESULT([yes])
