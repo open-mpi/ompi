@@ -4,7 +4,7 @@
 #include "include/constants.h"
 #include "threads/thread.h"
 #include "threads/condition.h"
-#include "os/atomic.h"
+#include "include/sys/atomic.h"
 
 
 ompi_mutex_t mutex;

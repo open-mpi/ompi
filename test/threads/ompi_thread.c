@@ -1,7 +1,7 @@
 #include "support.h"
 #include "include/constants.h"
 #include "threads/thread.h"
-#include "os/atomic.h"
+#include "include/sys/atomic.h"
 
 
 static volatile int count = 0;
@@ -9,13 +9,13 @@ static volatile int count = 0;
 
 static void* thr1_run(ompi_object_t* obj)
 {
-    fetchNadd(&count, 1);
+    ompi_atomic_add_int(&count, 1);
     return NULL;
 }
 
 static void* thr2_run(ompi_object_t* obj)
 {
-    fetchNadd(&count, 2);
+    ompi_atomic_add_int(&count, 2);
     return NULL;
 }
 
