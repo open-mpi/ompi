@@ -212,9 +212,16 @@ int mca_ptl_sm_component_close(void)
 #if OMPI_HAVE_THREADS == 1
     /* close/cleanup fifo create for event notification */
     if(mca_ptl_sm_component.sm_fifo_fd >= 0) {
+        /* write a done message down the pipe */
+        unsigned char cmd = DONE;
+        if( write(mca_ptl_sm_component.sm_fifo_fd,&cmd,sizeof(cmd)) != 
+                sizeof(cmd)){
+            ompi_output(0, "mca_ptl_sm_component_close: write fifo failed: errno=%d\n",
+                    errno);
+        }
+        ompi_thread_join(&mca_ptl_sm_component.sm_fifo_thread, NULL);
         close(mca_ptl_sm_component.sm_fifo_fd);
         unlink(mca_ptl_sm_component.sm_fifo_path);
-        ompi_thread_join(&mca_ptl_sm_component.sm_fifo_thread, NULL);
     }
 #endif
 
@@ -334,8 +341,13 @@ void mca_ptl_sm_component_event_thread(ompi_object_t* thread)
     while(1) {
         unsigned char cmd;
         if(read(mca_ptl_sm_component.sm_fifo_fd, &cmd, sizeof(cmd)) != sizeof(cmd)) {
+            /* error condition */
             return;
         }
+        if( DONE == cmd ){
+            /* return when done message received */
+            return;
+        } 
         mca_ptl_sm_component_progress(0);
     }
 }

@@ -197,7 +197,6 @@ int mca_ptl_sm_add_procs_same_base_addr(
                }
                peer->peer_smp_rank=n_local_procs+
                    mca_ptl_sm_component.num_smp_procs;
-               n_local_procs++;
 
 #if OMPI_HAVE_THREADS == 1
                sprintf(path, "%s/sm_fifo.%d", ompi_process_info.job_session_dir, 
@@ -208,6 +207,7 @@ int mca_ptl_sm_add_procs_same_base_addr(
                    goto CLEANUP;
                }
 #endif
+               n_local_procs++;
                mca_ptl_sm_component.sm_proc_connect[proc]=SM_CONNECTED;
            }
        }

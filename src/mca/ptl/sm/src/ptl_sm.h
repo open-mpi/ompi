@@ -53,6 +53,10 @@ extern mca_ptl_sm_module_resource_t mca_ptl_sm_module_resource;
 #define SM_CONNECTED_SAME_BASE_ADDR  2
 #define SM_CONNECTED_DIFFERENT_BASE_ADDR  3
 
+#if OMPI_HAVE_THREADS == 1
+#define DATA (char)0
+#define DONE (char)1
+#endif
 /**
  * Shared Memory (SM) PTL module.
  */
@@ -424,7 +428,7 @@ void mca_ptl_sm_component_event_thread(ompi_object_t*);
 #if OMPI_HAVE_THREADS == 1 
 #define MCA_PTL_SM_SIGNAL_PEER(peer) \
 { \
-    unsigned char cmd = 0; \
+    unsigned char cmd = DATA; \
     if(write(peer->fifo_fd, &cmd, sizeof(cmd)) != sizeof(cmd)) { \
         ompi_output(0, "mca_ptl_sm_send: write fifo failed: errno=%d\n", errno); \
     } \

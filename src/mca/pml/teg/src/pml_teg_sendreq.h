@@ -126,10 +126,6 @@ OBJ_CLASS_DECLARATION(mca_pml_teg_send_request_t);
     size_t first_fragment_size = ptl->ptl_first_frag_size;                 \
     int flags;                                                             \
                                                                            \
-    /* init/reinit request - do this here instead of init                  \
-     * as a persistent request may be reused, and there is                 \
-     * no additional cost                                                  \
-    */                                                                     \
     req->req_offset = 0;                                                   \
     req->req_lock = 0;                                                     \
     req->req_bytes_sent = 0;                                               \
