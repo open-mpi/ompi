@@ -13,6 +13,8 @@
 
 #include "ompi_config.h"
 
+#include "communicator/communicator.h"
+
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
