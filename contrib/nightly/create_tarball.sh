@@ -167,6 +167,10 @@ do_command "svn co $svnroot ompi"
 cd ompi
 svnversion="`svnversion .`"
 
+# remove all the unignore files so that we don't include anything that
+# shouldn't be in the tarball
+find . -name .ompi_unignore -exec rm -f {} \;
+
 # autogen is our friend
 do_command "./autogen.sh"
 
