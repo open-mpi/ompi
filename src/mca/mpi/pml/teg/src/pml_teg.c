@@ -114,14 +114,14 @@ int mca_pml_teg_add_procs(lam_proc_t** procs, size_t nprocs)
             /* if the ptl can reach the destination proc it will return 
              * addressing information that will be cached on the proc
              */
-            struct mca_ptl_addr_t* ptl_addr;
-            int rc = ptl->ptl_add_proc(ptl, proc, &ptl_addr);
+            struct mca_ptl_peer_t* ptl_peer;
+            int rc = ptl->ptl_add_proc(ptl, proc, &ptl_peer);
             if(rc == LAM_SUCCESS) {
 
                 /* cache the ptl on the proc */
                 mca_ptl_proc_t* ptl_proc  = mca_ptl_array_insert(&proc_pml->proc_ptl_next);
                 ptl_proc->ptl = ptl;
-                ptl_proc->ptl_addr = ptl_addr;
+                ptl_proc->ptl_peer = ptl_peer;
                 ptl_proc->ptl_weight = 0;
 
                 /* if this ptl supports exclusive access then don't allow 
@@ -200,7 +200,7 @@ int mca_pml_teg_del_procs(lam_proc_t** procs, size_t nprocs)
             mca_ptl_proc_t* ptl_proc = mca_ptl_array_get_index(&proc_pml->proc_ptl_first, f_index);
             mca_ptl_t* ptl = ptl_proc->ptl;
             
-            ptl->ptl_del_proc(ptl,proc,ptl_proc->ptl_addr);
+            ptl->ptl_del_proc(ptl,proc,ptl_proc->ptl_peer);
 
             /* remove this from next array so that we dont call it twice w/ 
              * the same address pointer
@@ -221,7 +221,7 @@ int mca_pml_teg_del_procs(lam_proc_t** procs, size_t nprocs)
             mca_ptl_proc_t* ptl_proc = mca_ptl_array_get_index(&proc_pml->proc_ptl_first, n_index);
             mca_ptl_t* ptl = ptl_proc->ptl;
             if (ptl != 0)
-                ptl->ptl_del_proc(ptl,proc,ptl_proc->ptl_addr);
+                ptl->ptl_del_proc(ptl,proc,ptl_proc->ptl_peer);
         }
         
         /* do any required cleanup */

@@ -21,7 +21,7 @@
  */
 
 struct mca_ptl_t;
-struct mca_ptl_addr_t;
+struct mca_ptl_peer_t;
 struct mca_ptl_base_fragment_t;
 struct mca_ptl_base_send_request_t;
 
@@ -86,7 +86,7 @@ typedef struct mca_ptl_base_module_1_0_0_t mca_ptl_base_module_t;
 typedef int (*mca_ptl_base_add_proc_fn_t)(
     struct mca_ptl_t* ptl, 
     struct lam_proc_t* proc, 
-    struct mca_ptl_addr_t**
+    struct mca_ptl_peer_t**
 );
 
 /**
@@ -100,7 +100,7 @@ typedef int (*mca_ptl_base_add_proc_fn_t)(
 typedef int (*mca_ptl_base_del_proc_fn_t)(
     struct mca_ptl_t* ptl, 
     struct lam_proc_t* proc, 
-    struct mca_ptl_addr_t*
+    struct mca_ptl_peer_t*
 );
 
 /**
@@ -127,7 +127,7 @@ typedef int (*mca_ptl_base_request_alloc_fn_t)(
 
 typedef int (*mca_ptl_base_send_fn_t)(
     struct mca_ptl_t* ptl, 
-    struct mca_ptl_addr_t* ptl_addr, 
+    struct mca_ptl_peer_t* ptl_peer, 
     struct mca_ptl_base_send_request_t* send_request,
     size_t size,
     bool* complete
