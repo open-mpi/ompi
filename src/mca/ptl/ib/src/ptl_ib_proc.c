@@ -1,4 +1,6 @@
-#include "include/atomic.h"
+#include "ompi_config.h"
+
+#include "include/sys/atomic.h"
 #include "class/ompi_hash_table.h"
 #include "mca/base/mca_base_module_exchange.h"
 
