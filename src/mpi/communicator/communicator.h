@@ -69,4 +69,12 @@ static inline lam_proc_t* lam_comm_lookup_peer(lam_communicator_t* comm, size_t 
     return comm->c_remote_group->g_procs[peer_id];
 }
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
+  int lam_comm_init(lam_communicator_t *comm);
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
+
 #endif /* LAM_COMMUNICATOR_H */

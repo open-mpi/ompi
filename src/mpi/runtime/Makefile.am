@@ -15,8 +15,7 @@ headers = \
 libmpi_runtime_la_SOURCES = \
         $(headers) \
         lam_mpi_init.c \
-        lam_mpi_finalize.c \
-        lam_mpi_globals.c
+        lam_mpi_finalize.c
 
 # Conditionally install the header files
 
