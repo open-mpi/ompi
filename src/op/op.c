@@ -409,7 +409,7 @@ int ompi_op_init(void)
   ompi_op_ddt_map[DT_2REAL] = OMPI_OP_TYPE_2REAL;
   ompi_op_ddt_map[DT_2DBLPREC] = OMPI_OP_TYPE_2DOUBLE_PRECISION;
   ompi_op_ddt_map[DT_2INTEGER] = OMPI_OP_TYPE_2INTEGER;
-  ompi_op_ddt_map[DT_LONGDBL_INT] = OMPI_OP_TYPE_LONG_DOUBLE_INT;
+  ompi_op_ddt_map[DT_LONG_DOUBLE_INT] = OMPI_OP_TYPE_LONG_DOUBLE_INT;
   ompi_op_ddt_map[DT_WCHAR] = OMPI_OP_TYPE_WCHAR;
   /* JMS Continue here -- next step is to make the reduce functions
      use this map */
