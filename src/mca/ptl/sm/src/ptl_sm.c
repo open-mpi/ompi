@@ -517,9 +517,13 @@ int mca_ptl_sm_add_procs_same_base_addr(
     cnt=0;
     for(proc = 0 ; proc < nprocs ; proc++ ) {
 
+        struct mca_ptl_base_peer_t* peer = peers[proc];
+        if(peer == NULL)
+            continue;
+
         same_sm_base=mca_ptl_sm_component.sm_ctl_header->
             segment_header.base_shared_mem_segment
-            [proc+mca_ptl_sm_component.num_smp_procs] ==
+            [peer->peer_smp_rank] ==
             mca_ptl_sm_component.sm_ctl_header->
             segment_header.base_shared_mem_segment
             [mca_ptl_sm_component.my_smp_rank];
