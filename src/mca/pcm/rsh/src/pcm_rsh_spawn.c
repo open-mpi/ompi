@@ -16,6 +16,8 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <errno.h>
 
 #include "mca/pcm/pcm.h"
 #include "mca/pcm/base/base.h"
