@@ -5,4 +5,4 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-SUBDIRS		= support mem class util threads 
+SUBDIRS		= support class util threads 
