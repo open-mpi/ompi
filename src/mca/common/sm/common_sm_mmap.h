@@ -5,7 +5,7 @@
 #include "os/atomic.h"
 #include "class/ompi_list.h"
 
-struct mca_common_sm_segment_t {
+struct mca_common_sm_file_header_t {
     /* lock to control atomic access */
     ompi_lock_data_t seg_lock;
     /* is the segment ready for use */
@@ -15,13 +15,14 @@ struct mca_common_sm_segment_t {
     /* total size of the segment */
     size_t seg_size;
 };
-typedef struct mca_common_sm_segment_t mca_common_sm_segment_t;
+typedef struct mca_common_sm_file_header_t mca_common_sm_file_header_t;
 
 
 struct mca_common_sm_mmap_t {
     /* double link list element */
     ompi_list_item_t map_item;
-    mca_common_sm_segment_t* map_seg;
+    /* pointer to header imbeded in the shared memory file */
+    mca_common_sm_file_header_t* map_seg;
     /* base address of the mmap'ed file */
     unsigned char  *map_addr;
     /* base address of data segment */
@@ -46,11 +47,13 @@ OBJ_CLASS_DECLARATION(mca_common_sm_mmap_t);
  *
  *  @param size_ctl_structure  size of the control structure at
  *                             the head of the file. The control structure
- *                             is assumed to have mca_common_sm_segment_t
+ *                             is assumed to have mca_common_sm_file_header_t
  *                             as its first segment (IN)
  *
  *  @param data_set_alignment  alignment of the data segment.  this
  *                             follows the control structure (IN)
+ *
+ *  @returnvalue pointer to control structure at head of file.
  */
 
 mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
