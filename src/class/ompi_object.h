@@ -194,7 +194,7 @@
     do {                                                                \
         assert(NULL != object);                                         \
         assert(NULL != ((ompi_object_t *) (object))->obj_class);        \
-        if (object) {                                                   \
+        if (NULL != object) {                                           \
             ompi_obj_update((ompi_object_t *) (object), 1);             \
         }                                                               \
         assert(((ompi_object_t *) (object))->obj_reference_count >= 0); \
@@ -238,7 +238,7 @@
         if (0 == (type)->cls_initialized) {                             \
             ompi_class_initialize((type));                              \
         }                                                               \
-        if (object) {                                                   \
+        if (NULL != object) {                                          \
             ((ompi_object_t *) (object))->obj_class = (type);           \
             ((ompi_object_t *) (object))->obj_reference_count = 1;      \
             ompi_obj_run_constructors((ompi_object_t *) (object));      \
@@ -253,7 +253,7 @@
  */
 #define OBJ_DESTRUCT(object)                                      \
     do {                                                          \
-        if (object) {                                             \
+        if (NULL != object) {                                     \
             ompi_obj_run_destructors((ompi_object_t *) (object)); \
         }                                                         \
     } while (0)

@@ -29,11 +29,13 @@
 #endif
 
 #if defined(WIN32) 
-#if defined(OMPI_BUILDING) && OMPI_BUILDING
-#define OMPI_DECLSPEC __declspec(dllexport)
-#else
-#define OMPI_DECLSPEC __declspec(dllimport)
-#endif
+#    if defined(OMPI_BUILDING)
+#        if OMPI_BUILDING
+#            define OMPI_DECLSPEC __declspec(dllexport)
+#        else
+#            define OMPI_DECLSPEC __declspec(dllimport)
+#        endif
+#   endif
 #endif
 
 #ifndef OMPI_DECLSPEC
@@ -168,9 +170,11 @@ typedef long long bool;
 /*
  * Do we want to override debugging controls?
  */
-#if defined(OMPI_ENABLE_DEBUG_OVERRIDE) && OMPI_ENABLE_DEBUG_OVERRIDE
-#undef OMPI_ENABLE_DEBUG
-#define OMPI_ENABLE_DEBUG 1
+#if defined(OMPI_ENABLE_DEBUG_OVERRIDE)
+#    if OMPI_ENABLE_DEBUG_OVERRIDE
+#        undef OMPI_ENABLE_DEBUG
+#        define OMPI_ENABLE_DEBUG 1
+#    endif
 #endif
 
 
