@@ -65,5 +65,4 @@ mca_coll_demo_la_LDFLAGS = -module -avoid-version
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_coll_demo_la_SOURCES = $(sources)
-libmca_coll_demo_la_LIBADD = src/libmca_coll_demo.la
 libmca_coll_demo_la_LDFLAGS = -module -avoid-version
