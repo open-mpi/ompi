@@ -104,7 +104,7 @@ static void* mca_ptl_mx_thread(ompi_object_t *arg)
 {
     ompi_thread_t* thr = (ompi_thread_t*)arg;
     mca_ptl_mx_module_t* ptl = thr->t_arg;
-    while(ptl->mx_thread_run) {
+    while(ptl->mx_enabled) {
         mx_request_t mx_request;
         mx_return_t mx_return;
         uint32_t mx_result;
@@ -117,7 +117,7 @@ static void* mca_ptl_mx_thread(ompi_object_t *arg)
             &mx_result);
         if(mx_return == MX_TIMEOUT)
             continue;
-        else if(ptl->mx_thread_run == false)
+        else if(ptl->mx_enabled == false)
             break;
         else if(mx_return != MX_SUCCESS) {
             ompi_output(0, "mca_ptl_mx_thread: mx_probe() failed with status %d\n", 
@@ -301,21 +301,40 @@ static mca_ptl_mx_module_t* mca_ptl_mx_create(uint64_t addr)
     /* register a callback function for matching */
     mx_register_match_callback(ptl->mx_endpoint, mca_ptl_mx_match, ptl);
 
-#if OMPI_HAVE_THREADS
-    /* create a thread to progress requests */
-    OBJ_CONSTRUCT(&ptl->mx_thread, ompi_thread_t);
-    ptl->mx_thread.t_run = mca_ptl_mx_thread;
-    ptl->mx_thread.t_arg = ptl; 
-    ptl->mx_thread_run = true;
-    if(ompi_thread_start(&ptl->mx_thread) != OMPI_SUCCESS) {
-        ompi_output(0, "mca_ptl_mx_create: unable to start progress thread.\n");
-        free(ptl);
-        return NULL;
-    }
-#endif
     return ptl;
 }
 
+void mca_ptl_mx_enable()
+{
+    size_t i;
+    for(i=0; i<mca_ptl_mx_component.mx_num_ptls; i++) {
+        mca_ptl_mx_module_t* ptl = mca_ptl_mx_component.mx_ptls[i];
+        ptl->mx_enabled = true;
+#if OMPI_HAVE_THREADS
+        /* create a thread to progress requests */
+        OBJ_CONSTRUCT(&ptl->mx_thread, ompi_thread_t);
+        ptl->mx_thread.t_run = mca_ptl_mx_thread;
+        ptl->mx_thread.t_arg = ptl; 
+        if(ompi_thread_start(&ptl->mx_thread) != OMPI_SUCCESS) {
+            ompi_output(0, "mca_ptl_mx_create: unable to start progress thread.\n");
+            return;
+        }
+#endif
+    }
+}
+
+void mca_ptl_mx_disable(void)
+{
+    size_t i;
+    for(i=0; i<mca_ptl_mx_component.mx_num_ptls; i++) {
+        mca_ptl_mx_module_t* ptl = mca_ptl_mx_component.mx_ptls[i];
+        ptl->mx_enabled = false;
+#if OMPI_HAVE_THREADS
+        mx_wakeup(ptl->mx_endpoint);
+        ompi_thread_join(&ptl->mx_thread, NULL);
+#endif
+    }
+}
 
 /*
  * Cleanup PTL resources.
@@ -323,14 +342,14 @@ static mca_ptl_mx_module_t* mca_ptl_mx_create(uint64_t addr)
 
 int mca_ptl_mx_finalize(struct mca_ptl_base_module_t* ptl)
 {
-    mca_ptl_mx_module_t* ptl_mx = (mca_ptl_mx_module_t*)ptl;
-    mx_wakeup(ptl_mx->mx_endpoint);
+    mca_ptl_mx_module_t* mx_ptl = (mca_ptl_mx_module_t*)ptl;
+    mx_ptl->mx_enabled = false;
 #if OMPI_HAVE_THREADS
-    ptl_mx->mx_thread_run = false;
-    ompi_thread_join(&ptl_mx->mx_thread, NULL);
+    mx_wakeup(mx_ptl->mx_endpoint);
+    ompi_thread_join(&mx_ptl->mx_thread, NULL);
 #endif
-    mx_close_endpoint(ptl_mx->mx_endpoint);
-    free(ptl_mx);
+    mx_close_endpoint(mx_ptl->mx_endpoint);
+    free(mx_ptl);
     return OMPI_SUCCESS;
 }
                                                                                                                     
