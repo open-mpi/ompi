@@ -137,7 +137,7 @@ mca_ptl_elan_component_close (void)
     if (mca_ptl_elan_component_initialized) {
 
 	/* cleanup the proc, ptl, and the module */
-	ompi_mca_ptl_elan_finalize (&mca_ptl_elan_component);
+	mca_ptl_elan_state_finalize(&mca_ptl_elan_component);
 	if (elan_mp->elan_local) {
 	    free (elan_mp->elan_local);
 	}
@@ -205,7 +205,7 @@ mca_ptl_elan_component_init (int *num_ptls,
                          elan_mp->free_list_inc, NULL);
 
     /* open basic elan device */
-    if (OMPI_SUCCESS != ompi_mca_ptl_elan_init(&mca_ptl_elan_component)) {
+    if (OMPI_SUCCESS != mca_ptl_elan_state_init(&mca_ptl_elan_component)) {
 	ompi_output(0, 
 		"[%s:%d] error in initializing elan state and PTL's.\n",
 		__FILE__, __LINE__);
@@ -247,7 +247,7 @@ mca_ptl_elan_component_init (int *num_ptls,
      *    program and exit accordingly, via a signal/interrupt.
      */
 
-    if ((ompi_ptl_elan_thread_init(elan_mp)) != OMPI_SUCCESS) {
+    if ((mca_ptl_elan_thread_init(elan_mp)) != OMPI_SUCCESS) {
         ompi_output(0, 
 		"unable to initialize %d asynchronous threads\n",
 		elan_mp->num_modules);
