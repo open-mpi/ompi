@@ -30,8 +30,8 @@ else if ("$1" == "thread") then
   ./ompi_thread
 else
   echo "correct use: "
-  echo "    run    (to run all class tests)"
-  echo "or  run <atomic>"
+  echo "    run_tests (to run all thread tests)"
+  echo "or  run_tests <condition | thread>"
   exit -1
 endif
 
