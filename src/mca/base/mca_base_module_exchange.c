@@ -191,7 +191,7 @@ int mca_base_modex_recv(
         keys);
     if(results == NULL || ompi_list_get_size(results) == 0)
         return OMPI_ERR_NOT_FOUND;
-    value = ompi_list_remove_first(results);
+    value = (ompi_registry_value_t*)ompi_list_remove_first(results);
     *buffer = value->object;
     *size = value->object_size;
     value->object = NULL;
