@@ -106,3 +106,66 @@ bool ompi_list_insert(ompi_list_t *list, ompi_list_item_t *item, long long idx)
     return true;
 }
 
+
+static
+void
+ompi_list_transfer(ompi_list_item_t *pos, ompi_list_item_t *begin,
+                   ompi_list_item_t *end)
+{
+    ompi_list_item_t *tmp;
+
+    if (pos != end) {
+        /* remove [begin, end) */
+        end->ompi_list_prev->ompi_list_next = pos;
+        begin->ompi_list_prev->ompi_list_next = end;
+        pos->ompi_list_prev->ompi_list_next = begin;
+
+        /* splice into new position before pos */
+        tmp = pos->ompi_list_prev;
+        pos->ompi_list_prev = end->ompi_list_prev;
+        end->ompi_list_prev = begin->ompi_list_prev;
+        begin->ompi_list_prev = tmp;
+    }
+}
+
+
+void
+ompi_list_join(ompi_list_t *thislist, ompi_list_item_t *pos, 
+               ompi_list_t *xlist)
+{
+    if (0 != ompi_list_get_size(xlist)) {
+        ompi_list_transfer(pos, ompi_list_get_first(xlist),
+                           ompi_list_get_end(xlist));
+
+        /* fix the sizes */
+        thislist->ompi_list_length += xlist->ompi_list_length;
+        xlist->ompi_list_length = 0;
+    }
+}
+
+
+void
+ompi_list_splice(ompi_list_t *thislist, ompi_list_item_t *pos,
+                 ompi_list_t *xlist, ompi_list_item_t *first,
+                 ompi_list_item_t *last)
+{ 
+    size_t change = 0;
+    ompi_list_item_t *tmp;
+
+    if (first != last) {
+        /* figure out how many things we are going to move (have to do
+         * first, since last might be end and then we wouldn't be able
+         * to run the loop) 
+         */
+        for (tmp = first ; tmp != last ; tmp = ompi_list_get_next(tmp)) {
+            change++;
+        }
+
+        ompi_list_transfer(pos, first, last);
+
+        /* fix the sizes */
+        thislist->ompi_list_length += change;
+        xlist->ompi_list_length -= change;
+    }
+}
+

@@ -28,6 +28,7 @@
 #define OMPI_LIST_H
 
 #include <stdio.h>
+#include <stdlib.h>
 #include "class/ompi_object.h"
 
 /**
@@ -108,21 +109,23 @@ typedef struct ompi_list_t ompi_list_t;
 
 
 /**
- * Return the number of items in a list (O(1) operation)
+ * Check for empty list
  *
  * @param list The list container
  *
- * @returns The size of the list (size_t)
+ * @returns true if list's size is 0, false otherwise
  *
- * This is an O(1) lookup to return the size of the list.  
+ * This is an O(1) operation.
  *
- * This is an inlined function in compilers that support inlining, so
- * it's usually a cheap operation.
+ * This is an inlined function in compilers that support inlining,
+ * so it's usually a cheap operation.
  */
-static inline size_t ompi_list_get_size(ompi_list_t* list)
+static inline bool ompi_list_is_empty(ompi_list_t* list)
 {
-    return list->ompi_list_length;
+    return (list->ompi_list_head.ompi_list_next == 
+            &(list->ompi_list_tail));
 }
+
 
 /**
  * Return the first item on the list (does not remove it).
@@ -205,6 +208,50 @@ static inline ompi_list_item_t* ompi_list_get_end(ompi_list_t* list)
 {
     return &(list->ompi_list_tail);
 }
+
+
+/**
+ * Return the number of items in a list
+ *
+ * @param list The list container
+ *
+ * @returns The size of the list (size_t)
+ *
+ * This is an O(1) lookup to return the size of the list.  
+ *
+ * This is an inlined function in compilers that support inlining, so
+ * it's usually a cheap operation.
+ *
+ * \warning In the future, this may become an O(N) operation.  If you
+ * only need to check for comparison with 0, please use \c
+ * ompi_list_is_empty, which will always be an O(1) operation.
+ */
+static inline size_t ompi_list_get_size(ompi_list_t* list)
+{
+#if OMPI_ENABLE_DEBUG && 0
+    /* not sure if we really want this running in devel, as it does
+     * slow things down.  Wanted for development of splice / join to
+     * make sure length was reset properly 
+     */
+    size_t check_len = 0;
+    ompi_list_item_t *item;
+
+    for (item = ompi_list_get_first(list) ;
+         item != ompi_list_get_end(list) ;
+         item = ompi_list_get_next(item)) {
+        check_len++;
+    }
+
+    if (check_len != list->ompi_list_length) {
+        fprintf(stderr," Error :: ompi_list_get_size - ompi_list_length does not match actual list length\n");
+        fflush(stderr);
+        abort();
+    }
+#endif
+
+    return list->ompi_list_length;
+}
+
 
 /**
  * Remove an item from a list.
@@ -449,6 +496,56 @@ extern "C" {
    */
   bool ompi_list_insert(ompi_list_t *list, ompi_list_item_t *item, 
                         long long idx);
+
+
+    /**
+     * Join a list into another list
+     *
+     * @param thislist List container for list being operated on
+     * @param pos List item in \c thislist marking the position before
+     *              which items are inserted
+     * @param xlist List container for list being spliced from
+     *
+     * Join a list into another list.  All of the elements of \c xlist
+     * are inserted before \c pos and removed from \c xlist.  
+     *
+     * This operation is an O(1) operation.  Both \c thislist and \c
+     * xlist must be valid list containsers.  \c xlist will be empty
+     * but valid after the call.  All pointers to \c ompi_list_item_t
+     * containers remain valid, including those that point to elements
+     * in \c xlist.
+     */
+    void ompi_list_join(ompi_list_t *thislist, ompi_list_item_t *pos, 
+                        ompi_list_t *xlist);
+
+
+    /**
+     * Splice a list into another list
+     *
+     * @param thislist List container for list being operated on
+     * @param pos List item in \c thislist marking the position before
+     *             which items are inserted
+     * @param xlist List container for list being spliced from
+     * @param first List item in \c xlist marking the start of elements 
+     *             to be copied into \c thislist
+     * @param last List item in \c xlist marking the end of elements
+     * to be copied into \c thislist
+     *
+     * Splice a subset of a list into another list.  The \c [first,
+     * last) elements of \c xlist are moved into \c thislist,
+     * inserting them before \c pos.  \c pos must be a valid iterator
+     * in \c thislist and \c [first, last) must be a valid range in \c
+     * xlist.  \c postition must not be in the range \c [first, last).
+     * It is, however, valid for \c xlist and \c thislist to be the
+     * same list.
+     *
+     * This is an O(N) operation because the length of both lists must
+     * be recomputed.
+     */
+    void ompi_list_splice(ompi_list_t *thislist, ompi_list_item_t *pos,
+                          ompi_list_t *xlist, ompi_list_item_t *first,
+                          ompi_list_item_t *last);
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
