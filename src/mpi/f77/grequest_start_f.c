@@ -52,9 +52,9 @@ void mpi_grequest_start_f(MPI_Fint *query_fn, MPI_Fint *free_fn,
 {
     MPI_Request c_req;
     *ierr = OMPI_INT_2_FINT(MPI_Grequest_start(
-			       (MPI_Grequest_query_function *)query_fn,
-			       (MPI_Grequest_free_function *)free_fn,
-			       (MPI_Grequest_cancel_function *)cancel_fn, 
+			       (MPI_Grequest_query_function *)*query_fn,
+			       (MPI_Grequest_free_function *)*free_fn,
+			       (MPI_Grequest_cancel_function *)*cancel_fn, 
 			       extra_state, &c_req));
 
     if (MPI_SUCCESS == *ierr) {

@@ -58,8 +58,8 @@ void mpi_comm_create_keyval_f(MPI_Fint *comm_copy_attr_fn,
     ompi_attribute_fn_ptr_union_t copy_fn;
     ompi_attribute_fn_ptr_union_t del_fn;
 
-    copy_fn.attr_F_copy_fn = (MPI_F_copy_function *)comm_copy_attr_fn;
-    del_fn.attr_F_delete_fn = (MPI_F_delete_function *)comm_delete_attr_fn;
+    copy_fn.attr_F_copy_fn = (MPI_F_copy_function *)*comm_copy_attr_fn;
+    del_fn.attr_F_delete_fn = (MPI_F_delete_function *)*comm_delete_attr_fn;
 
     ret = ompi_attr_create_keyval(COMM_ATTR, copy_fn, del_fn,
                                   comm_keyval, extra_state, OMPI_KEYVAL_F77);
