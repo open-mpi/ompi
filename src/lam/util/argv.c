@@ -15,15 +15,20 @@
 #define ARGSIZE 128
 
 /**
- * Append a string to an new or existing NULL-terminated argv array.
+ * Append a string (by value) to an new or existing NULL-terminated
+ * argv array.
  *
  * @param argc Pointer to the length of the argv array.  Must not be
  * NULL.
  * @param argv Pointer to an argv array.
- * @param arg Pointer to the string to append.
+ * @param str Pointer to the string to append.
  *
  * @retval LAM_SUCCESS On success
  * @retval LAM_ERROR On failure
+ *
+ * This function adds a string to an argv array of strings by value;
+ * it is permissable to pass a string on the stack as the str argument
+ * to this function.
  *
  * To add the first entry to an argv array, call this function with
  * (*argv == NULL).  This function will allocate an array of length 2;
@@ -39,7 +44,7 @@
  * string (i.e., the arg parameter) after invoking this function.
  */
 int
-lam_argv_add(int *argc, char ***argv, const char *arg)
+lam_argv_append(int *argc, char ***argv, const char *arg)
 {
   /* Create new argv. */
 
@@ -144,7 +149,7 @@ lam_argv_split(const char *src_string, int delimiter)
     /* tail argument, add straight from the original string */
 
     else if ('\0' == *p) {
-      if (LAM_ERROR == lam_argv_add(&argc, &argv, src_string))
+      if (LAM_ERROR == lam_argv_append(&argc, &argv, src_string))
 	return NULL;
     }
 
@@ -158,7 +163,7 @@ lam_argv_split(const char *src_string, int delimiter)
       strncpy(argtemp, src_string, arglen);
       argtemp[arglen] = '\0';
 
-      if (LAM_ERROR == lam_argv_add(&argc, &argv, argtemp)) {
+      if (LAM_ERROR == lam_argv_append(&argc, &argv, argtemp)) {
 	LAM_FREE(argtemp);
 	return NULL;
       }
@@ -172,7 +177,7 @@ lam_argv_split(const char *src_string, int delimiter)
       strncpy(arg, src_string, arglen);
       arg[arglen] = '\0';
 
-      if (LAM_ERROR == lam_argv_add(&argc, &argv, arg))
+      if (LAM_ERROR == lam_argv_append(&argc, &argv, arg))
 	return NULL;
     }
 
@@ -324,7 +329,7 @@ lam_argv_copy(char **argv)
     return NULL;
 
   while (NULL != *argv) {
-    if (LAM_ERROR == lam_argv_add(&dupc, &dupv, *argv)) {
+    if (LAM_ERROR == lam_argv_append(&dupc, &dupv, *argv)) {
       lam_argv_free(dupv);
       return NULL;
     }
