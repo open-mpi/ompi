@@ -87,6 +87,7 @@ int gpr_replica_put_nl(ompi_registry_mode_t addr_mode, char *segment,
     ompi_registry_notify_message_t *notify_msg;
     int return_code, num_tokens;
     mca_gpr_replica_key_t *keys, *key2;
+    bool still_valid;
 
 
     if (mca_gpr_replica_debug) {
@@ -178,6 +179,7 @@ int gpr_replica_put_nl(ompi_registry_mode_t addr_mode, char *segment,
 				       num_tokens, keys)) {
 	    trig->count++;
 	}
+	still_valid = true;
 	if (((OMPI_REGISTRY_SYNCHRO_MODE_ASCENDING & trig->synch_mode)
 	     && (trig->count >= trig->trigger)
 	     && (MCA_GPR_REPLICA_TRIGGER_BELOW_LEVEL == trig->above_below)) ||
@@ -186,19 +188,21 @@ int gpr_replica_put_nl(ompi_registry_mode_t addr_mode, char *segment,
 	    notify_msg = gpr_replica_construct_notify_message(addr_mode, segment, trig->tokens);
 	    notify_msg->trig_action = OMPI_REGISTRY_NOTIFY_NONE;
 	    notify_msg->trig_synchro = trig->synch_mode;
-	    gpr_replica_process_triggers(segment, trig, notify_msg);
+	    still_valid = gpr_replica_process_triggers(segment, trig, notify_msg);
 	} else if ((OMPI_REGISTRY_NOTIFY_ALL & trig->action) ||
 		   (OMPI_REGISTRY_NOTIFY_ADD_ENTRY & trig->action) ||
 		   (OMPI_REGISTRY_NOTIFY_MODIFICATION & trig->action && OMPI_REGISTRY_OVERWRITE & put_mode)) {
 	    notify_msg = gpr_replica_construct_notify_message(addr_mode, segment, trig->tokens);
 	    notify_msg->trig_action = trig->action;
 	    notify_msg->trig_synchro = OMPI_REGISTRY_SYNCHRO_MODE_NONE;
-	    gpr_replica_process_triggers(segment, trig, notify_msg);
+	    still_valid = gpr_replica_process_triggers(segment, trig, notify_msg);
 	}
-	if (trig->count > trig->trigger) {
-	    trig->above_below = MCA_GPR_REPLICA_TRIGGER_ABOVE_LEVEL;
-	} else if (trig->count == trig->trigger) {
-	    trig->above_below = MCA_GPR_REPLICA_TRIGGER_AT_LEVEL;
+	if (still_valid) {
+	    if (trig->count > trig->trigger) {
+		trig->above_below = MCA_GPR_REPLICA_TRIGGER_ABOVE_LEVEL;
+	    } else if (trig->count == trig->trigger) {
+		trig->above_below = MCA_GPR_REPLICA_TRIGGER_AT_LEVEL;
+	    }
 	}
     trig = next;
     }
@@ -238,6 +242,7 @@ int gpr_replica_delete_object_nl(ompi_registry_mode_t addr_mode,
     int num_tokens, return_code;
     mca_gpr_replica_trigger_list_t *trig;
     ompi_registry_notify_message_t *notify_msg;
+    bool still_valid;
 
     if (mca_gpr_replica_debug) {
 	ompi_output(0, "[%d,%d,%d] gpr replica: delete_object entered: segment 1st token",
@@ -307,6 +312,7 @@ int gpr_replica_delete_object_nl(ompi_registry_mode_t addr_mode,
 				       num_tokens, keys)) {
 	    trig->count--;
 	}
+	still_valid = true;
 	if (((OMPI_REGISTRY_SYNCHRO_MODE_DESCENDING & trig->synch_mode)
 	     && (trig->count <= trig->trigger)
 	     && (MCA_GPR_REPLICA_TRIGGER_ABOVE_LEVEL == trig->above_below)) ||
@@ -314,18 +320,20 @@ int gpr_replica_delete_object_nl(ompi_registry_mode_t addr_mode,
 	    notify_msg = gpr_replica_construct_notify_message(addr_mode, segment, trig->tokens);
 	    notify_msg->trig_action = OMPI_REGISTRY_NOTIFY_NONE;
 	    notify_msg->trig_synchro = trig->synch_mode;
-	    gpr_replica_process_triggers(segment, trig, notify_msg);
+	    still_valid = gpr_replica_process_triggers(segment, trig, notify_msg);
 	} else if ((OMPI_REGISTRY_NOTIFY_ALL & trig->action) ||
 		   (OMPI_REGISTRY_NOTIFY_DELETE_ENTRY & trig->action)) {
 	    notify_msg = gpr_replica_construct_notify_message(addr_mode, segment, trig->tokens);
 	    notify_msg->trig_action = trig->action;
 	    notify_msg->trig_synchro = OMPI_REGISTRY_SYNCHRO_MODE_NONE;
-	    gpr_replica_process_triggers(segment, trig, notify_msg);
+	    still_valid = gpr_replica_process_triggers(segment, trig, notify_msg);
 	}
-	if (trig->count < trig->trigger) {
-	    trig->above_below = MCA_GPR_REPLICA_TRIGGER_BELOW_LEVEL;
-	} else if (trig->count == trig->trigger) {
-	    trig->above_below = MCA_GPR_REPLICA_TRIGGER_AT_LEVEL;
+	if (still_valid) {
+	    if (trig->count < trig->trigger) {
+		trig->above_below = MCA_GPR_REPLICA_TRIGGER_BELOW_LEVEL;
+	    } else if (trig->count == trig->trigger) {
+		trig->above_below = MCA_GPR_REPLICA_TRIGGER_AT_LEVEL;
+	    }
 	}
     trig = next;
     }
