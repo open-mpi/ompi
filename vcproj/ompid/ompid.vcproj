@@ -18,7 +18,7 @@
 			CharacterSet="2">
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalOptions="/I&quot;../../src/win32/generated_include/&quot; /I&quot;../../src&quot; /I&quot;../../include&quot;"
+				AdditionalOptions="/I&quot;../../src/win32/generated_include/&quot; /I&quot;../../src&quot; /I&quot;../../include&quot; /DOMPI_BUILDING=0"
 				Optimization="0"
 				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE"
 				MinimalRebuild="TRUE"
