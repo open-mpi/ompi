@@ -158,11 +158,12 @@ if test "$WANT_MPI_PROFILING" = "1"; then
 else
     LAM_PROFILING_COMPILE_SEPARATELY=0
 fi
-AM_CONDITIONAL(COMPILE_PROFILING_SEPARATELY, test "$LAM_PROFILING_COMPILE_SEPARATELY" = 1)
+AM_CONDITIONAL(COMPILE_PROFILING_SEPARATELY, 
+    test "$LAM_PROFILING_COMPILE_SEPARATELY" = 1)
 AC_DEFINE_UNQUOTED(LAM_WANT_MPI_PROFILING, $WANT_MPI_PROFILING,
-   [Whether we want MPI profiling or not])
+    [Whether we want MPI profiling or not])
 AC_DEFINE_UNQUOTED(LAM_HAVE_WEAK_SYMBOLS, $LAM_C_HAVE_WEAK_SYMBOLS,
-   [Wehther we have weak symbols or not])
+    [Wehther we have weak symbols or not])
 
 
 ##################################
