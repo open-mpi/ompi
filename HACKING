@@ -78,6 +78,15 @@ NOTE: On MacOS/X, the default "libtool" program is different than the
       shell$ ./configure --prefix=PREFIX
       shell$ make all install
 
+      --> NOTE: 
+          If a user is going to do a parallel build, they should just use
+          make -j 8 install
+
+          make -j 8 all install
+          it will build and only install the /include directory.
+          if you re-run "make -j 8 all install" again, then all the proper files and
+          directories will be installed.
+
       --> if on csh or tcsh, run the "rehash" command
 
       shell$ cd ../automake-1.7
