@@ -201,8 +201,8 @@ extern "C" {
    * handle.
    *
    * @param cmd OMPI command line handle.
-   * @param ignore_unknown Whether to ignore unknown tokens in the
-   * middle of the command line or not.
+   * @param ignore_unknown Whether to print an error message upon
+   * finding an unknown token or not
    * @param argc Length of the argv array.
    * @param argv Array of strings from the command line.
    *
@@ -213,6 +213,12 @@ extern "C" {
    * handle can then be queried to see what options were used, what
    * their parameters were, etc.
    *
+   * If an unknown token is found in the command line (i.e., a token
+   * that is not a parameter or a registered option), the parsing will
+   * stop (see below).  If ignore_unknown is false, an error message
+   * is displayed.  If ignore_unknown is true, the error message is
+   * not displayed.
+   *
    * The contents of argc and argv are not changed during parsing.
    * argv[0] is assumed to be the executable name, and is ignored during
    * parsing.  It can later be retrieved with
@@ -221,7 +227,12 @@ extern "C" {
    *
    * - all argv tokens are processed
    * - the token "--" is found
-   * - an unrecognized token is found and ignore_unknown is false
+   * - an unrecognized token is found
+   *
+   * Upon any of these conditions, any remaining tokens will be placed
+   * in the "tail" (and therefore not examined by the parser),
+   * regardless of the value of ignore_unknown.  The set of tail
+   * tokens is available from the ompi_cmd_line_get_tail() function.
    *
    * Note that "--" is ignored if it is found in the middle an expected
    * number of arguments.  For example, if "--foo" is expected to have 3
@@ -232,9 +243,6 @@ extern "C" {
    * This will result in an error, because "--" will be parsed as the
    * third parameter to the first instance of "foo", and "other" will be
    * an unrecognized option.
-   *
-   * Unprocessed tokens are known as the "tail."  Any unprocessed tokens
-   * can be obtained from the ompi_cmd_line_get_tail() function.
    *
    * Invoking this function multiple times on different sets of argv
    * tokens is safe, but will erase any previous parsing results.
