@@ -182,6 +182,9 @@ int mca_pml_teg_add_procs(ompi_proc_t** procs, size_t nprocs)
     struct mca_ptl_base_peer_t** ptl_peers = NULL;
     int rc;
     size_t p_index;
+    
+    if(nprocs == 0)
+        return OMPI_SUCCESS;
 
     OBJ_CONSTRUCT(&reachable, ompi_bitmap_t);
     rc = ompi_bitmap_init(&reachable, nprocs);
