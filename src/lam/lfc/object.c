@@ -1,4 +1,6 @@
 /*
+ * $HEADER$
+ *
  * Copyright 2002-2003. The Regents of the University of California. This material
  * was produced under U.S. Government contract W-7405-ENG-36 for Los Alamos
  * National Laboratory, which is operated by the University of California for
@@ -27,7 +29,8 @@
  * GNU Lesser General Public License for more details.
  */
 /*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
-#include "lam/base/object.h"
+
+#include "lam/lfc/object.h"
 
 lam_class_info_t object_cls = { "lam_object_t", 0, lam_obj_init, lam_obj_destroy };
 

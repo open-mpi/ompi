@@ -27,11 +27,12 @@
  * GNU Lesser General Public License for more details.
  */
 /*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
-#ifndef _OBJECT_H_
-#define _OBJECT_H_
+
+#ifndef LAM_OBJECT_H
+#define LAM_OBJECT_H
 
 #include <stdlib.h>
-#include "lam_types.h"
+#include "include/lam_types.h"
 #include "lam/os/atomic.h"
 
 /*
@@ -131,5 +132,5 @@ static inline void lam_obj_release(lam_object_t *obj)
     }
 }
 
-#endif
+#endif /* LAM_OBJECT_H */
 
