@@ -314,7 +314,7 @@ static bool mca_ptl_base_check_cantmatch_for_match(
  *   - 2nd and greater fragments include a receive descriptor pointer
  *   - fragments may be dropped
  *   - fragments may be corrupt
- *   - this routine may be called simoultaneously by more than one thread
+ *   - this routine may be called simultaneously by more than one thread
  */
 bool mca_ptl_base_match(
     mca_ptl_base_match_header_t *frag_header,
@@ -390,23 +390,25 @@ bool mca_ptl_base_match(
         if (matched_receive) {
 
             /* set flag indicating the input fragment was matched */
-            match_made=true;
-            /* associate the receive descriptor with the fragment
-             * descriptor */
+            match_made = true;
+
+            /* associate the receive descriptor with the fragment descriptor */
             frag_desc->frag_request=matched_receive;
 
             /* set lenght of incoming message */
-            matched_receive->req_bytes_packed=frag_header->hdr_msg_length;
+            matched_receive->req_bytes_packed = frag_header->hdr_msg_length;
 
             /*
-             * update deliverd sequence number information,
-             *   if need be.
+             * update delivered sequence number information, if needed.
              */
-
+            if( (matched_receive->req_base.req_type == MCA_PML_REQUEST_PROBE) ) {
+                /* Match a probe, rollback the next expected sequence number */
+                (pml_comm->c_next_msg_seq[frag_src])--;
+            }
         } else {
             /* if no match found, place on unexpected queue */
             ompi_list_append( ((pml_comm->c_unexpected_frags)+frag_src),
-                    (ompi_list_item_t *)frag_desc);
+                              (ompi_list_item_t *)frag_desc );
         }
 
         /* 
