@@ -164,7 +164,9 @@ int gpr_replica_put(ompi_registry_mode_t addr_mode, char *segment,
     }
 
     /* release list of keys */
-    OBJ_RELEASE(keylist);
+    if (NULL != keylist) {
+	OBJ_RELEASE(keylist);
+    }
 
     return return_code;
 }
@@ -265,7 +267,9 @@ int gpr_replica_delete_object(ompi_registry_mode_t addr_mode,
 
 
  CLEANUP:
-    OBJ_RELEASE(keylist);
+    if (NULL != keylist) {
+	OBJ_RELEASE(keylist);
+    }
 
     if (NULL != keys) {
 	free(keys);
