@@ -1,0 +1,55 @@
+#! /bin/csh -f
+#  Name
+#  ====
+#  run script for mpi environment tests
+
+# Arguements
+# ==========
+# 
+# test_list  =  no args or all runs all tests
+#              or
+#               chello runs the chello environment test
+
+# Usage
+#
+# =====
+# To invoke this script, enter either
+#     run_tests 
+# with no arguments to run all tests, or
+#     run_tests <test_name>
+
+umask 007
+
+if  ("x$1" == "x") then
+  echo "do all - no args"
+  ./chello
+else 
+  foreach target ($argv)
+    switch ($target)
+    case "all":
+      ./chello
+      breaksw
+    case "chello":
+      ./$target
+      breaksw
+    case "help"   
+      echo "correct use: "
+      echo "    run_tests help (this message)"
+      echo "    run_tests all   (to run all mpi environment tests)"
+      echo "or  run_tests with any combination of the following: "
+      echo  "       <chello>"
+      break  
+    default     
+      echo "There is no program <$target> to run"
+      echo "correct use: "
+      echo "    run_tests help (this message)"
+      echo "    run_tests all   (to run all mpi environment tests)"
+      echo "or  run_tests with any combination of the following: "
+      echo  "       <chello>"
+      break
+    endsw
+  end
+
+endif
+
+
