@@ -58,29 +58,38 @@ void mpi_testany_f(MPI_Fint *count, MPI_Fint *array_of_requests, MPI_Fint *index
     MPI_Request *c_req;
     MPI_Status c_status;
     int i;
+    OMPI_SINGLE_NAME_DECL(flag);
+    OMPI_SINGLE_NAME_DECL(index);
 
-    c_req = malloc(*count * sizeof(MPI_Request));
+    c_req = malloc(OMPI_FINT_2_INT(*count) * sizeof(MPI_Request));
     if (c_req == NULL) {
-        *ierr = OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_NO_MEM,
-                                       FUNC_NAME);
+        *ierr = OMPI_INT_2_FINT(OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, 
+                                                       MPI_ERR_NO_MEM,
+                                                       FUNC_NAME));
         return;
     }
 
-    for (i = 0; i < *count; i++) {
+    for (i = 0; i < OMPI_FINT_2_INT(*count); ++i) {
         c_req[i] = MPI_Request_f2c(array_of_requests[i]);
     }
 
-    *ierr = MPI_Testany(*count, c_req, index, flag, &c_status);
+    *ierr = OMPI_INT_2_FINT(MPI_Testany(OMPI_FINT_2_INT(*count), c_req,
+                                        OMPI_SINGLE_NAME_CONVERT(index),
+                                        OMPI_SINGLE_NAME_CONVERT(flag),
+                                        &c_status));
 
-    if (MPI_SUCCESS == *ierr) {
-        if (MPI_UNDEFINED != *index) {
-            *index += 1;
-            array_of_requests[*index] = 0;
+    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
+
+        /* Increment index by one for fortran conventions */
+
+        if (MPI_UNDEFINED != *(OMPI_SINGLE_NAME_CONVERT(index))) {
+            array_of_requests[*(OMPI_SINGLE_NAME_CONVERT(index))] = 
+                OMPI_INT_2_FINT(MPI_REQUEST_NULL->req_f_to_c_index);
+            ++(OMPI_SINGLE_NAME_CONVERT(index));
         }
         if (!OMPI_IS_FORTRAN_STATUS_IGNORE(status)) {
             MPI_Status_c2f(&c_status, status); 
         }
     }
-
     free(c_req);
 }

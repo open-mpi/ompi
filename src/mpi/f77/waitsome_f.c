@@ -63,43 +63,45 @@ void mpi_waitsome_f(MPI_Fint *incount, MPI_Fint *array_of_requests,
     OMPI_SINGLE_NAME_DECL(outcount);
     OMPI_ARRAY_NAME_DECL(array_of_indices);
 
-    c_req = malloc(*incount * (sizeof(MPI_Request) + sizeof(MPI_Status)));
+    c_req = malloc(OMPI_FINT_2_INT(*incount) *
+                   (sizeof(MPI_Request) + sizeof(MPI_Status)));
     if (NULL == c_req) {
-      *ierr = OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_NO_MEM,
-                                     FUNC_NAME);
-      return;
+        *ierr = OMPI_INT_2_FINT(OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD,
+                                                       MPI_ERR_NO_MEM,
+                                                       FUNC_NAME));
+        return;
     }
-    c_status = (MPI_Status*) c_req + *incount;
+    c_status = (MPI_Status*) (c_req + OMPI_FINT_2_INT(*incount));
 
-    for (i = 0; i < *incount; i++) {
+    for (i = 0; i < OMPI_FINT_2_INT(*incount); ++i) {
         c_req[i] = MPI_Request_f2c(array_of_requests[i]);
     }
 
     OMPI_ARRAY_FINT_2_INT_ALLOC(array_of_indices, *incount);
     *ierr = OMPI_INT_2_FINT(MPI_Waitsome(OMPI_FINT_2_INT(*incount), c_req, 
-				 OMPI_SINGLE_NAME_CONVERT(outcount),
-				 OMPI_ARRAY_NAME_CONVERT(array_of_indices), 
-				 c_status));
+                                         OMPI_SINGLE_NAME_CONVERT(outcount),
+                                         OMPI_ARRAY_NAME_CONVERT(array_of_indices), 
+                                         c_status));
 
-    if (MPI_SUCCESS == *ierr) {
+    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
 	OMPI_SINGLE_INT_2_FINT(outcount);
 	OMPI_ARRAY_INT_2_FINT(array_of_indices, *incount);
 
         /* Increment indexes by one for fortran conventions */
 
-        if (MPI_UNDEFINED != *outcount) {
-            for (i = 0; i < *outcount; i++) {
-                array_of_indices[i] += 1;
+        if (MPI_UNDEFINED != OMPI_FINT_2_INT(*outcount)) {
+            for (i = 0; i < OMPI_FINT_2_INT(*outcount); ++i) {
+                ++(OMPI_FINT_2_INT(array_of_indices[i]));
             }
         }
-        for (i = 0; i < *incount; i++) {
-            array_of_requests[array_of_indices[i]] = 0;
+        for (i = 0; i < OMPI_FINT_2_INT(*incount); ++i) {
+            array_of_requests[array_of_indices[i]] = 
+                OMPI_INT_2_FINT(MPI_REQUEST_NULL->req_f_to_c_index);
             if (!OMPI_IS_FORTRAN_STATUSES_IGNORE(array_of_statuses) &&
                 !OMPI_IS_FORTRAN_STATUS_IGNORE(&array_of_statuses[i])) {
-                MPI_Status_c2f(&c_status[i], &array_of_statuses[i]);
+                MPI_Status_c2f(&c_status[i], &array_of_statuses[i * 4]);
             }
         }
     }
-
     free(c_req);
 }
