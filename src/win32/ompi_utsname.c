@@ -2,6 +2,7 @@
  $HEADER$
  */
 
+#include "ompi_config.h"
 #include "ompi_utsname.h"
 
 #ifdef WIN32

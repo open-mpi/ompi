@@ -7,9 +7,7 @@
  * Utility functions to manage fortran <-> c opaque object translation
  */
 
-#ifdef HAVE_CONFIG_H
 #include "ompi_config.h"
-#endif
 
 #include <stdlib.h>
 #include <stdio.h>

@@ -24,13 +24,21 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#ifdef HAVE_STDINT_H
 #include <stdint.h>
+#endif
 
+#ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
+#endif
+#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
+#endif
 #include <sys/syscall.h>
 #include <sys/epoll.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 
 int
 epoll_create(int size)

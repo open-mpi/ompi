@@ -34,7 +34,9 @@
 #undef WIN32_LEAN_AND_MEAN
 #include "misc.h"
 #endif
+#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
+#endif
 #include <sys/tree.h>
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
@@ -45,7 +47,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #ifndef WIN32
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #endif
 #include <errno.h>
 #include <string.h>

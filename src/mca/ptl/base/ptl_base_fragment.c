@@ -3,6 +3,7 @@
  */
 /*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
 
+#include "ompi_config.h"
 #include "class/ompi_list.h"
 #include "mca/ptl/base/ptl_base_fragment.h"
 

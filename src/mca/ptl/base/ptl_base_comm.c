@@ -2,6 +2,7 @@
  * $HEADER$
  */
 
+#include "ompi_config.h"
 #include <string.h>
 #include "ptl_base_comm.h"
 

@@ -1,6 +1,7 @@
 /*
  * $HEADER$
  */
+#include "ompi_config.h"
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/uio.h>

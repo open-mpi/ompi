@@ -2,12 +2,17 @@
  * $HEADER$
  */
 
+#include "ompi_config.h"
 #include "mpi.h"
 #include "runtime/ompi_rte_wait.h"
 #include "runtime/ompi_progress.h"
 
+#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
+#endif
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 

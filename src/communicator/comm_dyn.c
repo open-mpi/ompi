@@ -5,7 +5,9 @@
 #include "ompi_config.h"
 #include <string.h>
 #include <stdio.h>
+#ifdef HAVE_SYS_UIO_H
 #include <sys/uio.h>
+#endif
 #include "mpi.h"
 
 #include "communicator/communicator.h"

@@ -1,3 +1,4 @@
+#include "ompi_config.h"
 #include "svc_sched_node.h"
 
 

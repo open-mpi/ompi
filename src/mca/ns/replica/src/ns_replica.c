@@ -4,11 +4,11 @@
 /** @file:
  *
  */
+#include "ompi_config.h"
 #include <stdio.h>
 
 #include "threads/mutex.h"
 
-#include "ompi_config.h"
 #include "util/output.h"
 #include "mca/mca.h"
 #include "mca/ns/base/base.h"

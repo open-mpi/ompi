@@ -2,6 +2,7 @@
  * $HEADER$
  */
 
+#include "ompi_config.h"
 #include "mca/topo/base/base.h"
 #include "communicator/communicator.h"
 #include "mca/topo/topo.h"

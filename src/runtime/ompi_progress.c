@@ -1,3 +1,4 @@
+#include "ompi_config.h"
 #include "event/event.h"
 #include "mca/pml/pml.h"
 #include "runtime/ompi_progress.h"

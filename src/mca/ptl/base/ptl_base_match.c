@@ -4,6 +4,7 @@
  * $HEADER$
  */
 
+#include "ompi_config.h"
 #include <stdio.h>
 
 #include "class/ompi_list.h"

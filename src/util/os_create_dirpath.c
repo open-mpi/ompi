@@ -6,8 +6,12 @@
 #include "ompi_config.h"
 
 #include <string.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+#ifdef HAVE_LIBGEN_H
 #include <libgen.h>
+#endif
 #include <stdlib.h>
 
 #include "include/constants.h"

@@ -1,3 +1,4 @@
+#include "ompi_config.h"
 #include <stdio.h>
 #include "libsio.h"
 

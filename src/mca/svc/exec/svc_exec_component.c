@@ -1,3 +1,4 @@
+#include "ompi_config.h"
 #include "svc_exec.h"
 
 

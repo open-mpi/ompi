@@ -1,3 +1,4 @@
+#include "ompi_config.h"
 #include "include/types.h"
 #include "datatype/datatype.h"
 #include "mca/pml/base/pml_base_sendreq.h"

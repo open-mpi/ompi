@@ -1,3 +1,4 @@
+#include "ompi_config.h"
 #include "support.h"
 #include "include/constants.h"
 #include "threads/thread.h"

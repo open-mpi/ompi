@@ -1,4 +1,5 @@
 
+#include "ompi_config.h"
 #include <stdio.h>
 #include <sys/types.h>
 #include <unistd.h>

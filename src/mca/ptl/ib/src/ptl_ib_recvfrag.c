@@ -1,3 +1,4 @@
+#include "ompi_config.h"
 #include "mca/pml/base/pml_base_sendreq.h"
 #include "ptl_ib.h"
 #include "ptl_ib_peer.h"

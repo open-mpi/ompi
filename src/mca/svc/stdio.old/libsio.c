@@ -34,6 +34,7 @@
 
 */
 
+#include "ompi_config.h"
 #include "libsio.h"
 #include "debug.h"
 

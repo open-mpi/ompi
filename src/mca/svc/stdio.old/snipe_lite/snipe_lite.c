@@ -42,6 +42,7 @@
 
 */
 
+#include "ompi_config.h"
 #include <stdio.h>
 #include <strings.h>
 #include <string.h>

@@ -7,11 +7,17 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h>
+#ifdef HAVE_SYSLOG_H
 #include <syslog.h>
+#endif
 #include <string.h>
 #include <fcntl.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+#ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
+#endif
 
 #include "include/constants.h"
 #include "util/output.h"

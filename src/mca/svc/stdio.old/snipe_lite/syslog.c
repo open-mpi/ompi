@@ -1,3 +1,4 @@
+#include "ompi_config.h"
 #include "syslog.h"
 #include "debug.h"
 #include <stdarg.h>

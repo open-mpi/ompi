@@ -9,10 +9,10 @@
 
 */
 
+#include "ompi_config.h"
 #include <stdio.h>
 #include <string.h>
 
-#include "ompi_config.h"
 #include "support.h"
 
 #include "include/constants.h"

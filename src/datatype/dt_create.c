@@ -1,5 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 
+#include "ompi_config.h"
 #include "datatype.h"
 #include "datatype_internal.h"
 #include "limits.h"

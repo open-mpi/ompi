@@ -1,8 +1,8 @@
 /*
  * $HEADER$
  */
-#include <string.h>
 #include "ompi_config.h"
+#include <string.h>
 
 #include "mpi.h"
 #include "mpi/c/bindings.h"

@@ -3,6 +3,7 @@
  * $HEADER$
  */
 
+#include "ompi_config.h"
 #include <stdlib.h>
 
 #include "support.h"

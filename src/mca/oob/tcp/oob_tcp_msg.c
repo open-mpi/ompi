@@ -1,6 +1,7 @@
 /* 
  * $HEADER$
  */
+#include "ompi_config.h"
 #include "mca/oob/tcp/oob_tcp.h"
 #include "mca/oob/tcp/oob_tcp_msg.h"
 

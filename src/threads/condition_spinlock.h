@@ -5,7 +5,9 @@
 #define OMPI_CONDITION_SPINLOCK_H
 
 #include "ompi_config.h"
+#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
+#endif
 #include "threads/condition.h"
 #include "threads/mutex.h"
 #include "runtime/ompi_progress.h"

@@ -3,6 +3,7 @@
  */
 
 /* Open MPI includes */
+#include "ompi_config.h"
 #include "include/constants.h"
 #include "event/event.h"
 #include "util/if.h"

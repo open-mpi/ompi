@@ -2,9 +2,7 @@
  * $HEADER$
  */
 
-#ifdef HAVE_CONFIG_H
 #include "ompi_config.h"
-#endif
 
 #include "include/constants.h"
 #include "threads/thread.h"

@@ -1,3 +1,4 @@
+#include "ompi_config.h"
 #include <stdio.h>
 #include "qsnet/fence.h"
 #include "ptl_elan.h"

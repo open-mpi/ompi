@@ -5,7 +5,9 @@
 #ifndef OMPI_STRNCPY_H
 #define OMPI_STRNCPY_H
 
+#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
+#endif
 
 /*
  * Use ompi_strncpy() instead of strncpy()

@@ -12,7 +12,9 @@
 #include "ompi_config.h"
 
 #include <string.h>
+#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
+#endif
 
 #include "include/constants.h"
 #include "util/output.h"

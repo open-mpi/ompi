@@ -4,7 +4,9 @@
 
 #include "ompi_config.h"
 
+#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
+#endif
 
 #include "op/op.h"
 #include "op/op_predefined.h"

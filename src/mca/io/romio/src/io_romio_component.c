@@ -2,6 +2,7 @@
  * $HEADER$
  */
 
+#include "ompi_config.h"
 #include "mpi.h"
 #include "mca/io/io.h"
 #include "io_romio.h"

@@ -7,15 +7,23 @@
  * pack/unpack buffer management functions
  *
  */
+#include "ompi_config.h"
 #include <string.h>
 #include <stdlib.h>
+#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
+#endif
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+#ifdef HAVE_SYS_UIO_H
 #include <sys/uio.h>
+#endif
+#ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
+#endif
 
 
-#include "ompi_config.h"
 
 #include "include/constants.h"
 #include "class/ompi_object.h"
