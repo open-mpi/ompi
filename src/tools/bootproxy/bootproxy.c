@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <sys/wait.h>
 #include <signal.h>
+#include <errno.h>
 
 #include "include/constants.h"
 #include "runtime/runtime.h"
