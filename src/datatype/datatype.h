@@ -88,7 +88,7 @@ typedef struct ompi_datatype_t {
 
    /* Attribute fields */
    ompi_hash_table_t *d_keyhash;
-   size_t             d_f_to_c_index;
+   int                d_f_to_c_index;
    char               name[MPI_MAX_OBJECT_NAME];
    dt_type_desc_t     desc;     /**< the data description */
    dt_type_desc_t     opt_desc; /**< short description of the data used when conversion is useless

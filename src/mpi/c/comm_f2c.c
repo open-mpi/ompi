@@ -6,6 +6,7 @@
 
 #include "mpi.h"
 #include "mpi/c/bindings.h"
+#include "mpi/f77/fint_2_int.h"
 #include "errhandler/errhandler.h"
 #include "communicator/communicator.h"
 
@@ -22,7 +23,7 @@ static const char FUNC_NAME[] = "MPI_Comm_f2c";
 
 MPI_Comm MPI_Comm_f2c(MPI_Fint comm) 
 {
-    size_t o_index= (size_t) comm;
+    int o_index= OMPI_FINT_2_INT(comm);
 
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);

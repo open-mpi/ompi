@@ -6,6 +6,7 @@
 
 #include "mpi.h"
 #include "mpi/c/bindings.h"
+#include "mpi/f77/fint_2_int.h"
 #include "errhandler/errhandler.h"
 #include "communicator/communicator.h"
 
@@ -32,10 +33,10 @@ MPI_Fint MPI_Errhandler_c2f(MPI_Errhandler errhandler)
 	/* not invoking an error handler */
     if (NULL == errhandler ||
         OMPI_ERRHANDLER_TYPE_COMM != errhandler->eh_mpi_object_type) {
-		errhandler = MPI_ERRHANDLER_NULL;
+        errhandler = MPI_ERRHANDLER_NULL;
     }
   }
 
 
-  return (MPI_Fint) errhandler->eh_f_to_c_index;
+  return OMPI_INT_2_FINT(errhandler->eh_f_to_c_index);
 }

@@ -6,6 +6,7 @@
 
 #include "mpi.h"
 #include "mpi/c/bindings.h"
+#include "mpi/f77/fint_2_int.h"
 #include "class/ompi_list.h"
 #include "info/info.h"
 #include "errhandler/errhandler.h"
@@ -22,28 +23,15 @@
 static const char FUNC_NAME[] = "MPI_Info_c2f";
 
 
-/**
- * Converts info into a fortan handle
- *
- * @param info The C handle which has to be converted 
- * @retval Fortran handle corresponding to info.
- *
- * If info is a valid C handle, the MPI_Info_c2f returns a valid 
- * fortran handle to the same MPI_INFO object.
- */
 MPI_Fint MPI_Info_c2f(MPI_Info info) 
 {
-    /* check the arguments */
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
-	    /* mapping an invalid handle to a null handle */
-	    /* not invoking an error handler */
         if (NULL == info || ompi_info_is_freed(info)) {
-			info = MPI_INFO_NULL;
+            info = MPI_INFO_NULL;
         }
     }
 
-    /* return the index */
-    return (MPI_Fint)(info->i_f_to_c_index);
+    return OMPI_INT_2_FINT(info->i_f_to_c_index);
 }

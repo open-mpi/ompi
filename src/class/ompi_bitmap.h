@@ -13,14 +13,20 @@
  *  bit is set -- so the valid functions are set_bit and
  *  find_and_set_bit. Other functions like clear, if passed a bit
  *  outside the initialized range will result in an error.
+ *
+ * Since these bitmaps are only used to track fortran handles (which
+ * MPI defines to be int's), it is assumed that we can never have more
+ * than OMPI_FORTRAN_HANDLE_MAX (which is min(INT_MAX, fortran
+ * INTEGER max)).
  */
 
 #ifndef OMPI_BITMAP_H
 #define OMPI_BITMAP_H
 
+#include "ompi_config.h"
+
 #include <string.h>
 
-#include "ompi_config.h"
 #include "include/types.h"
 #include "class/ompi_object.h"
 
@@ -30,8 +36,8 @@ extern "C" {
 struct ompi_bitmap_t {
     ompi_object_t super; /**< Subclass of ompi_object_t */
     unsigned char *bitmap; /**< The actual bitmap array of characters */
-    size_t array_size;  /**< The actual array size that maintains the bitmap */
-    size_t legal_numbits; /**< The number of bits which are legal (the
+    int array_size;  /**< The actual array size that maintains the bitmap */
+    int legal_numbits; /**< The number of bits which are legal (the
 			    actual bitmap may contain more bits, since
 			    it needs to be rounded to the nearest
 			    char  */
@@ -50,7 +56,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_bitmap_t);
  * @return OMPI error code or success
  *
  */
-OMPI_DECLSPEC int ompi_bitmap_init (ompi_bitmap_t *bm, size_t size);
+OMPI_DECLSPEC int ompi_bitmap_init (ompi_bitmap_t *bm, int size);
 
 
 /**
@@ -63,7 +69,7 @@ OMPI_DECLSPEC int ompi_bitmap_init (ompi_bitmap_t *bm, size_t size);
  * @return OMPI error code or success
  *
  */
-OMPI_DECLSPEC int ompi_bitmap_set_bit(ompi_bitmap_t *bm, size_t bit); 
+OMPI_DECLSPEC int ompi_bitmap_set_bit(ompi_bitmap_t *bm, int bit); 
 
 
 /**
@@ -75,7 +81,7 @@ OMPI_DECLSPEC int ompi_bitmap_set_bit(ompi_bitmap_t *bm, size_t bit);
  * @return OMPI error code if the bit is out of range, else success
  *
  */
-OMPI_DECLSPEC int ompi_bitmap_clear_bit(ompi_bitmap_t *bm, size_t bit);
+OMPI_DECLSPEC int ompi_bitmap_clear_bit(ompi_bitmap_t *bm, int bit);
 
 
 /**
@@ -88,7 +94,7 @@ OMPI_DECLSPEC int ompi_bitmap_clear_bit(ompi_bitmap_t *bm, size_t bit);
   *         0 if the bit is not set
   *
   */
-OMPI_DECLSPEC int ompi_bitmap_is_set_bit(ompi_bitmap_t *bm, size_t bit);
+OMPI_DECLSPEC int ompi_bitmap_is_set_bit(ompi_bitmap_t *bm, int bit);
 
 
 /**
@@ -100,7 +106,7 @@ OMPI_DECLSPEC int ompi_bitmap_is_set_bit(ompi_bitmap_t *bm, size_t bit);
  * @return err        OMPI_SUCCESS on success
  */
 OMPI_DECLSPEC int ompi_bitmap_find_and_set_first_unset_bit(ompi_bitmap_t *bm, 
-                                             size_t *position); 
+                                                           int *position); 
 
 
 /**
@@ -130,7 +136,7 @@ OMPI_DECLSPEC int ompi_bitmap_set_all_bits(ompi_bitmap_t *bm);
  * @return OMPI error code if bm is NULL
  *
  */
-static inline size_t ompi_bitmap_size(ompi_bitmap_t *bm)
+static inline int ompi_bitmap_size(ompi_bitmap_t *bm)
 {
     return (NULL == bm) ? 0 : bm->legal_numbits;
 }

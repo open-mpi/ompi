@@ -3,8 +3,10 @@
  */
 
 #include "ompi_config.h"
+
 #include "mpi.h"
 #include "mpi/c/bindings.h"
+#include "mpi/f77/fint_2_int.h"
 #include "group/group.h"
 #include "errhandler/errhandler.h"
 #include "communicator/communicator.h"
@@ -22,10 +24,7 @@ static const char FUNC_NAME[] = "MPI_Group_f2c";
 
 MPI_Group MPI_Group_f2c(MPI_Fint group_f)
 {
-    /* local variables */
-    size_t group_index;
-
-    group_index = (size_t) group_f;
+    int group_index = OMPI_FINT_2_INT(group_f);
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);

@@ -5,6 +5,8 @@
 #include "ompi_config.h"
 
 #include <stdio.h>
+#include <limits.h>
+#define OMPI_FORTRAN_HANDLE_MAX INT_MAX
 
 #include "include/constants.h"
 #include "class/ompi_bitmap.h"
@@ -38,11 +40,11 @@ ompi_bitmap_destruct(ompi_bitmap_t *bm)
 
 
 int
-ompi_bitmap_init(ompi_bitmap_t *bm, size_t size)
+ompi_bitmap_init(ompi_bitmap_t *bm, int size)
 {
-    size_t actual_size;
+    int actual_size;
 
-    if (((int)size <= 0) || (NULL == bm)) {
+    if ((size <= 0) || (size > OMPI_FORTRAN_HANDLE_MAX) || (NULL == bm)) {
 	return OMPI_ERR_BAD_PARAM;
     }
 
@@ -62,11 +64,12 @@ ompi_bitmap_init(ompi_bitmap_t *bm, size_t size)
   
 
 int
-ompi_bitmap_set_bit(ompi_bitmap_t *bm, size_t bit)
+ompi_bitmap_set_bit(ompi_bitmap_t *bm, int bit)
 {
-    size_t index, offset, new_size, i;
+    int index, offset, new_size, i;
+    size_t new_size_large;
 
-    if ((bit < 0) || (NULL == bm)) {
+    if ((bit < 0) || (bit > OMPI_FORTRAN_HANDLE_MAX) || (NULL == bm)) {
 	return OMPI_ERR_BAD_PARAM;
     }
 
@@ -74,15 +77,36 @@ ompi_bitmap_set_bit(ompi_bitmap_t *bm, size_t bit)
     offset = bit % SIZE_OF_CHAR;
 
     if (index >= bm->array_size) {
+
+        /* If we're already full, return "No vacancy!" */
+
+        if (bm->array_size >= OMPI_FORTRAN_HANDLE_MAX) {
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
+
 	/* We need to allocate more space for the bitmap, since we are
 	   out of range. We dont throw any error here, because this is
 	   valid and we simply expand the bitmap */
 
-	new_size = (index / bm->array_size + 1 ) * bm->array_size;
-	/* New size is just a multiple of the original size to fit in
-	   the index */
+	new_size_large = (index / bm->array_size + 1 ) * bm->array_size;
 
-	bm->bitmap = (unsigned char *) realloc(bm->bitmap, new_size);
+        /* Check to be sure that we still have less than
+           OMPI_FORTRAN_HANDLE_MAX bits */
+
+        if (new_size_large > OMPI_FORTRAN_HANDLE_MAX) {
+            new_size_large = OMPI_FORTRAN_HANDLE_MAX;
+        }
+
+        /* Note that new_size is guaranteed to be <=
+	   OMPI_FORTRAN_HANDLE_MAX, which is guaranteed to fit in a
+	   [signed] int. */
+
+        new_size = (int) new_size_large;
+
+	/* New size is just a multiple of the original size to fit in
+	   the index. */
+
+	bm->bitmap = (unsigned char *) realloc(bm->bitmap, (int) new_size);
 	if (NULL == bm->bitmap) {
 	    return OMPI_ERR_OUT_OF_RESOURCE;
 	}
@@ -105,9 +129,9 @@ ompi_bitmap_set_bit(ompi_bitmap_t *bm, size_t bit)
 
 
 int
-ompi_bitmap_clear_bit(ompi_bitmap_t *bm, size_t bit)
+ompi_bitmap_clear_bit(ompi_bitmap_t *bm, int bit)
 {
-    size_t index, offset;
+    int index, offset;
 
     if ((bit < 0) || (bit > bm->legal_numbits - 1) || (NULL == bm)) {
 	return OMPI_ERR_BAD_PARAM;
@@ -126,9 +150,9 @@ ompi_bitmap_clear_bit(ompi_bitmap_t *bm, size_t bit)
 
 
 int
-ompi_bitmap_is_set_bit(ompi_bitmap_t *bm, size_t bit)
+ompi_bitmap_is_set_bit(ompi_bitmap_t *bm, int bit)
 {
-    size_t index, offset;
+    int index, offset;
   
     if ((bit < 0) || (bit > bm->legal_numbits - 1) || (NULL == bm)) {
 	return OMPI_ERR_BAD_PARAM;
@@ -164,7 +188,7 @@ ompi_bitmap_clear_all_bits(ompi_bitmap_t *bm)
 int
 ompi_bitmap_set_all_bits(ompi_bitmap_t *bm)
 {
-    size_t i;
+    int i;
     
     if (NULL == bm) {
 	return OMPI_ERR_BAD_PARAM;
@@ -178,9 +202,9 @@ ompi_bitmap_set_all_bits(ompi_bitmap_t *bm)
 
 
 int
-ompi_bitmap_find_and_set_first_unset_bit(ompi_bitmap_t *bm, size_t *position)
+ompi_bitmap_find_and_set_first_unset_bit(ompi_bitmap_t *bm, int *position)
 {
-    size_t i = 0;
+    int i = 0;
     unsigned char temp;
     unsigned char all_ones = 0xff;
 
@@ -197,8 +221,7 @@ ompi_bitmap_find_and_set_first_unset_bit(ompi_bitmap_t *bm, size_t *position)
     if (i == bm->array_size) {
 	/* increase the bitmap size then */
 	*position = bm->array_size * SIZE_OF_CHAR;
-	ompi_bitmap_set_bit(bm, *position);
-	return OMPI_SUCCESS;
+	return ompi_bitmap_set_bit(bm, *position);
     }
 
     /* This one has an unset bit, find its bit number */

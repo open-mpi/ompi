@@ -233,7 +233,8 @@ static int output(bool want_error_header, ompi_pointer_array_t *lines,
                   const char *base, const char *topic,
                   va_list arglist)
 {
-    size_t i, len;
+    int i;
+    size_t len;
     char *tmp, *concat, *formatted;
 
     /* See how much space we need */
@@ -297,7 +298,7 @@ static int output(bool want_error_header, ompi_pointer_array_t *lines,
  */
 static int destroy_message(ompi_pointer_array_t *lines)
 {
-    size_t i;
+    int i;
     char *tmp;
 
     for (i = 0; i < ompi_pointer_array_get_size(lines); ++i) {

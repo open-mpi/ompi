@@ -22,6 +22,7 @@ static void ompi_request_construct(ompi_request_t* req)
     req->req_fini = NULL;
     req->req_free = NULL;
     req->req_cancel = NULL;
+    req->req_f_to_c_index = MPI_UNDEFINED;
 }
 
 static void ompi_request_destruct(ompi_request_t* req)

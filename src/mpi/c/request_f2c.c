@@ -2,10 +2,10 @@
  * $HEADER$
  */
 #include "ompi_config.h"
-#include <stdio.h>
 
 #include "mpi.h"
 #include "mpi/c/bindings.h"
+#include "mpi/f77/fint_2_int.h"
 #include "request/request.h"
 #include "errhandler/errhandler.h"
 #include "communicator/communicator.h"
@@ -23,9 +23,7 @@ static const char FUNC_NAME[] = "MPI_Request_f2c";
 
 MPI_Request MPI_Request_f2c(MPI_Fint request) 
 {
-    size_t request_index;
-
-    request_index = (size_t) request;
+    int request_index = OMPI_FINT_2_INT(request);
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);

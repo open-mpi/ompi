@@ -19,19 +19,22 @@
 static const char FUNC_NAME[] = "MPI_Comm_free";
 
 
-int MPI_Comm_free(MPI_Comm *comm) {
-    
+int MPI_Comm_free(MPI_Comm *comm) 
+{
+    int ret;
+
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         
         if ( NULL == *comm  || MPI_COMM_WORLD == *comm ||
-             MPI_COMM_SELF == *comm  || ompi_comm_invalid (*comm))
+             MPI_COMM_SELF == *comm  || ompi_comm_invalid (*comm)) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
                                           FUNC_NAME);
+        }
     }
     
-    ompi_comm_free ( comm ); 
+    ret = ompi_comm_free ( comm ); 
+    OMPI_ERRHANDLER_CHECK(ret, *comm, ret, FUNC_NAME);
     
-    *comm = MPI_COMM_NULL;
     return MPI_SUCCESS;
 }
