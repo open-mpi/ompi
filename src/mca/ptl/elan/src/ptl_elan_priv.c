@@ -1027,20 +1027,20 @@ mca_ptl_elan_drain_recv (struct mca_ptl_elan_module_t *ptl)
 int
 mca_ptl_elan_update_desc (struct mca_ptl_elan_module_t *ptl)
 {
-    struct ompi_ptl_elan_comp_queue_t  *comp;
-    mca_ptl_elan_send_frag_t   *frag;
     ELAN4_CTX  *ctx;
     int         rc = 0;
 
-    ctx = ptl->ptl_elan_ctx;
-
 #if OMPI_PTL_ELAN_COMP_QUEUE 
+    struct ompi_ptl_elan_comp_queue_t  *comp;
+
+    ompi_ptl_elan_recv_queue_t *rxq;
+
     comp = ptl->comp;
+    ctx  = ptl->ptl_elan_ctx;
     rxq  = comp->rxq;
 #if 1
     /* XXX: Just test and go */
     rc = (*(int *) (&rxq->qr_doneWord));
-
 #else
     /* XXX: block on the event without holding a lock */
     rc = elan4_pollevent_word (ctx, &rxq->qr_doneWord, 1);
@@ -1051,6 +1051,12 @@ mca_ptl_elan_update_desc (struct mca_ptl_elan_module_t *ptl)
 
 	OMPI_LOCK (&comp->rx_lock);
 	header = (mca_ptl_base_header_t *) rxq->qr_fptr;
+
+	LOG_PRINT(PTL_ELAN_DEBUG_MAC,
+		    "[comp...] type %d flag %d size %d\n",
+		    header->hdr_common.hdr_type,
+		    header->hdr_common.hdr_flags,
+		    header->hdr_common.hdr_size);
 
 	/* FIXME: please fix this completion queue processing */
 
@@ -1084,7 +1090,10 @@ mca_ptl_elan_update_desc (struct mca_ptl_elan_module_t *ptl)
 	OMPI_UNLOCK (&comp->rx_lock);
     }
 #else
+    ctx  = ptl->ptl_elan_ctx;
     while (ompi_list_get_size (&ptl->send_frags) > 0) {
+	mca_ptl_elan_send_frag_t   *frag;
+
 	frag = (mca_ptl_elan_send_frag_t *)
 	    ompi_list_get_first (&ptl->send_frags);
 	rc = * ((int *) (&frag->desc->main_doneWord));
@@ -1105,8 +1114,8 @@ mca_ptl_elan_update_desc (struct mca_ptl_elan_module_t *ptl)
 	    /* XXX: Stop at any incomplete send desc */
 	    break;
 	}
-#endif 
     } /* end of the while loop */
+#endif 
 
     return OMPI_SUCCESS;
 }
