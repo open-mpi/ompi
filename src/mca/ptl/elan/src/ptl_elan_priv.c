@@ -169,12 +169,13 @@ mca_ptl_elan_init_qdma_desc (struct mca_ptl_elan_send_frag_t *frag,
    
     mca_ptl_base_header_t *hdr;
     struct ompi_ptl_elan_qdma_desc_t * desc;
-   
+    ELAN4_CTX  *ctx;
     START_FUNC(PTL_ELAN_DEBUG_SEND);
 
     desc   = (ompi_ptl_elan_qdma_desc_t *)frag->desc;
     destvp = ptl_peer->peer_vp;
     size_in = *size;
+    ctx = ptl->ptl_elan_ctx, 
 
     hdr = (mca_ptl_base_header_t *) & desc->buff[0];
 
@@ -190,7 +191,7 @@ mca_ptl_elan_init_qdma_desc (struct mca_ptl_elan_send_frag_t *frag,
 	/* Stash local buffer address into the header, for ptl_elan_get */
 	hdr->hdr_frag.hdr_dst_ptr.pval = 0;
 	hdr->hdr_frag.hdr_dst_ptr.lval = elan4_main2elan(
-		ptl->ptl_elan_ctx, pml_req->req_base.req_addr);
+	       	ctx, pml_req->req_base.req_addr);
 
 	hdr->hdr_match.hdr_contextid = pml_req->req_base.req_comm->c_contextid;
 	hdr->hdr_match.hdr_src = pml_req->req_base.req_comm->c_my_rank;
@@ -257,9 +258,36 @@ mca_ptl_elan_init_qdma_desc (struct mca_ptl_elan_send_frag_t *frag,
      *     For now just save the information to the provided header 
      *     Later will use the inline header to report the progress */
     frag->frag_base.frag_header = *hdr; 
-    desc->main_dma.dma_srcAddr = MAIN2ELAN (desc->ptl->ptl_elan_ctx, 
-                                            &desc->buff[0]);
 
+#if OMPI_PTL_ELAN_COMP_QUEUE || 1
+    /* XXX: Chain a QDMA to each queue and 
+     * Have all the srcEvent fired to the Queue */
+
+    desc->comp_dma.dma_cookie   = elan4_local_cookie(ptl->queue->tx_cpool,
+	    E4_COOKIE_TYPE_LOCAL_DMA, ptl->elan_vp);
+    desc->comp_dma.dma_srcAddr  = elan4_main2elan (ctx, 
+	    (void *) &frag->frag_base.frag_header);
+    memcpy ((void *)desc->comp_buff, (void *)&desc->comp_dma, 
+	    sizeof (E4_DMA64));
+
+    /* XXX: The chain dma will go directly into a command stream
+     * so we need addend the command queue control bits.
+     * Allocate space from command queues hanged off the CTX.
+     */
+    desc->comp_event->ev_Params[1] = elan4_alloccq_space (ctx, 8, CQ_Size8K);
+    desc->main_dma.dma_srcEvent= elan4_main2elan(
+	    ctx, (E4_Event *)desc->comp_event);
+    desc->main_dma.dma_srcAddr = MAIN2ELAN (ctx, &desc->buff[0]);
+    /* XXX: Hardcoded DMA retry count */
+    desc->main_dma.dma_typeSize = E4_DMA_TYPE_SIZE ((header_length +
+                                                     size_out),
+                                                    DMA_DataTypeByte,
+                                                    DMA_QueueWrite, 16);
+    desc->main_dma.dma_cookie= elan4_local_cookie (ptl->queue->tx_cpool, 
+	    E4_COOKIE_TYPE_LOCAL_DMA, destvp);
+    desc->main_dma.dma_vproc = destvp;
+#else
+    desc->main_dma.dma_srcAddr = MAIN2ELAN (ctx, &desc->buff[0]);
     /* XXX: Hardcoded DMA retry count */
     desc->main_dma.dma_typeSize = E4_DMA_TYPE_SIZE ((header_length +
                                                      size_out),
@@ -268,6 +296,7 @@ mca_ptl_elan_init_qdma_desc (struct mca_ptl_elan_send_frag_t *frag,
     desc->main_dma.dma_cookie = elan4_local_cookie (ptl->queue->tx_cpool, 
 	    E4_COOKIE_TYPE_LOCAL_DMA, destvp);
     desc->main_dma.dma_vproc = destvp;
+#endif
 
     LOG_PRINT(PTL_ELAN_DEBUG_MAC,
 	    "[ send...] destvp %d type %d flag %d size %d\n",
@@ -381,7 +410,32 @@ mca_ptl_elan_init_putget_desc (struct mca_ptl_elan_send_frag_t *frag,
 	    (void *) ptl->queue->input);
 
 #if OMPI_PTL_ELAN_COMP_QUEUE
-    /* Have all the source event fired to the Queue */
+    /* XXX: Chain a QDMA to each queue and 
+     * Have all the srcEvent fired to the Queue */
+
+    desc->comp_dma.dma_cookie   = elan4_local_cookie(ptl->queue->tx_cpool,
+	    E4_COOKIE_TYPE_LOCAL_DMA, ptl->elan_vp);
+    desc->comp_dma.dma_srcAddr  = elan4_main2elan (ctx, 
+	    (void *) &frag->frag_base.frag_header);
+    memcpy ((void *)desc->comp_buff, (void *)&desc->comp_dma, 
+	    sizeof (E4_DMA64));
+
+    /* XXX: The chain dma will go directly into a command stream
+     * so we need addend the command queue control bits.
+     * Allocate space from command queues hanged off the CTX.
+     */
+    desc->comp_event->ev_Params[1] = elan4_alloccq_space (ctx, 8, CQ_Size8K);
+    desc->main_dma.dma_srcEvent= elan4_main2elan(
+	    ctx, (E4_Event *)desc->comp_event);
+    desc->main_dma.dma_srcAddr = MAIN2ELAN (ctx, &desc->buff[0]);
+    /* XXX: Hardcoded DMA retry count */
+    desc->main_dma.dma_typeSize = E4_DMA_TYPE_SIZE ((header_length +
+                                                     size_out),
+                                                    DMA_DataTypeByte,
+                                                    DMA_QueueWrite, 16);
+    desc->main_dma.dma_cookie= elan4_local_cookie (ptl->queue->tx_cpool, 
+	    E4_COOKIE_TYPE_LOCAL_DMA, destvp);
+    desc->main_dma.dma_vproc = destvp;
 #else
     desc->chain_dma.dma_srcEvent = elan4_main2elan (ctx, desc->elan_event);
     INITEVENT_WORD (ctx, (E4_Event *) desc->elan_event, &desc->main_doneWord);
@@ -497,8 +551,23 @@ mca_ptl_elan_init_get_desc (mca_ptl_elan_module_t *ptl,
     desc->chain_dma.dma_dstEvent = elan4_main2elan (ctx, 
 	    (void *) ptl->queue->input);
 
-#if OMPI_PTL_ELAN_COMP_QUEUE
-    /* Have all the source event fired to the Queue */
+#if OMPI_PTL_ELAN_COMP_QUEUE || 1
+    /* XXX: Chain a QDMA to each queue and 
+     * Have all the srcEvent fired to the Queue */
+    desc->comp_dma.dma_cookie   = elan4_local_cookie(ptl->queue->tx_cpool,
+	    E4_COOKIE_TYPE_LOCAL_DMA, ptl->elan_vp);
+    desc->comp_dma.dma_srcAddr  = elan4_main2elan (ctx, 
+	    (void *) &frag->frag_base.frag_header);
+    memcpy ((void *)desc->comp_buff, (void *)&desc->comp_dma, 
+	    sizeof (E4_DMA64));
+
+    /* XXX: The chained COMP/DMA will go directly into a command stream
+     * so we need addend the command queue control bits.
+     * Allocate space from command queues hanged off the CTX.
+     */
+    desc->comp_event->ev_Params[1] = elan4_alloccq_space (ctx, 8, CQ_Size8K);
+    desc->chain_dma.dma_srcEvent= elan4_main2elan(ctx, 
+	    (E4_Event *)desc->comp_event);
 #else
     desc->chain_dma.dma_srcEvent = elan4_main2elan (ctx, desc->elan_event);
     INITEVENT_WORD (ctx, (E4_Event *) desc->elan_event, &desc->main_doneWord);

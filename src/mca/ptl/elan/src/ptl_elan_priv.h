@@ -175,20 +175,31 @@ typedef struct ompi_ptl_elan_comp_queue_t ompi_ptl_elan_comp_queue_t;
 /**
  * ELAN descriptor for send
  */
-#define ELAN_BASE_DESC_FIELDS  \
-    E4_DMA64           main_dma; /**< 8-byte aligned */   \
-    /* 8 byte aligned */                                  \
-    volatile E4_uint64 main_doneWord;                     \
-    /* 8 byte aligned */                                  \
-    E4_Event          *elan_event;                        \
-    void              *desc_buff;                         \
-    /* 8 byte aligned */                                  \
-    mca_pml_base_request_t *req;                          \
-    mca_ptl_elan_module_t  *ptl;                          \
-    /* 8 byte aligned */                                  \
-    int    desc_type;                                     \
-    int    desc_status;                                   \
-    /* 8 byte aligned */
+#define ELAN_BASE_DESC_FIELDS                                \
+    E4_DMA64           main_dma; /**< 8-byte aligned */      \
+    /* 8 byte aligned */                                     \
+    volatile E4_uint64 main_doneWord;                        \
+    /* 8 byte aligned */                                     \
+    E4_Event          *elan_event;                           \
+    void              *desc_buff;                            \
+    /* 8 byte aligned */                                     \
+    mca_pml_base_request_t *req;                             \
+    mca_ptl_elan_module_t  *ptl;                             \
+    /* 8 byte aligned */                                     \
+    int    desc_type;                                        \
+    int    desc_status;                                      \
+    /* 8 byte aligned */                                     \
+    E4_DMA64           comp_dma;                             \
+    /* 8 byte aligned */                                     \
+    volatile E4_uint64 comp_doneWord;                        \
+    /* 8 byte aligned */                                     \
+    E4_Event32        *comp_event; /* E4_Event plus pad */   \
+    /* 8 byte aligned */                                     \
+    E4_Addr           *comp_buff;                            \
+    E4_Addr           *comp_pad;                             \
+    E4_Addr            comp_srcAddr;                         \
+    E4_Addr            comp_dstAddr;                         \
+    /* 8 byte aligned */                                     \
 
 struct ompi_ptl_elan_base_desc_t {
     ELAN_BASE_DESC_FIELDS 
