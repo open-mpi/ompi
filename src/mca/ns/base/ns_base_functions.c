@@ -8,7 +8,6 @@
 #include "ompi_config.h"
 #include "mca/mca.h"
 #include "mca/ns/base/base.h"
-#include "ns_replica.h"
 
 /**
  * globals
