@@ -17,9 +17,16 @@
 !
 program main
   integer :: i
+  !
+  !  integer(kind(1_LONG)) :: l = 1_LONG
+  !
 
   do i = 1, 24
     print*, "i = ", i, "selected_int_kind(i) = ", selected_int_kind(i)
   end do
 
+  print*, "kind(1) = ", kind(1)
+  !
+  !  print*, "kind(1_LONG) = ", kind(l)
+  !
 end program main
