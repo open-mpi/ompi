@@ -6,7 +6,7 @@
 #define LAM_GROUP_H
 
 #include "mpi.h"
-#include "lam/proc.h"
+#include "mpi/proc/proc.h"
 
 struct lam_group_t {
    char g_name[MPI_MAX_OBJECT_NAME];
