@@ -24,15 +24,34 @@ umask 007
 if ("x$1" == "x") then
   ./sched_comm;
   ./build_env
-else if ("$1" == "sched_comm") then
-  ./sched_comm;
-else if ("$1" == "build_env") then
-  ./build_env
-else
-  echo "correct use: "
-  echo "    run    (to run all mca pcm base tests)"
-  echo "or  run < sched_comm | build_env >"
-  exit -1
+else 
+  foreach target ($argv)
+    switch ($target)
+    case "all"
+      ./sched_comm;
+      ./build_env
+      breaksw
+    case "sched_comm":
+      ./sched_comm;
+      breaksw
+    case "build_env":
+      ./build_env
+      breaksw
+    case "help":
+      echo "correct use: "
+      echo "    run_tests help (this message)"
+      echo "    run_tests all   (to run all mca pcm base tests)"
+      echo "or  run_tests < sched_comm | build_env >"
+      break
+      breaksw
+    default
+      echo "No test named <$target> available to run"
+      echo "correct use: "
+      echo "    run_tests all   (to run all mca pcm base tests)"
+      echo "or  run_tests < sched_comm | build_env >"
+      break
+    endsw
+  end
 endif
 
 
