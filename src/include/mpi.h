@@ -1,7 +1,7 @@
 /*
  * $HEADER$
  * 
- * $Id: mpi.h,v 1.4 2004/01/07 07:53:25 jsquyres Exp $
+ * $Id: mpi.h,v 1.5 2004/01/07 08:32:16 jsquyres Exp $
  */
 
 #ifndef LAM_MPI_H
@@ -22,5 +22,6 @@ extern MPI_Comm MPI_COMM_SELF;
 
 extern MPI_Datatype MPI_TYPE_NULL;
 
+int MPI_Comm_set_name(MPI_Comm comm, char *name);
 
 #endif /* LAM_MPI_H */
