@@ -351,7 +351,7 @@ static int do_open(int output_id, ompi_output_stream_t *lds)
   OMPI_THREAD_UNLOCK(&mutex);
   info[i].ldi_enabled = lds->lds_is_debugging ? 
     (bool) OMPI_ENABLE_DEBUG : true;
-  info[i].ldi_verbose_level = 0;
+  info[i].ldi_verbose_level = lds->lds_verbose_level;
 
   info[i].ldi_syslog = lds->lds_want_syslog;
   if (lds->lds_want_syslog) {
