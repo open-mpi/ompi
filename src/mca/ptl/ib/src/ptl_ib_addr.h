@@ -12,4 +12,9 @@ struct mca_ptl_ib_ud_addr_t {
 };
 typedef struct mca_ptl_ib_ud_addr_t mca_ptl_ib_ud_addr_t;
 
+struct mca_ptl_ib_addr_t {
+    VAPI_qp_hndl_t      rc_qp;  /* RC qp hndl */
+};
+typedef struct mca_ptl_ib_addr_t mca_ptl_ib_addr_t;
+
 #endif

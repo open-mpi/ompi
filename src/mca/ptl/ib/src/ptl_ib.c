@@ -14,6 +14,7 @@
 #include "mca/ptl/base/ptl_base_recvfrag.h"
 #include "mca/base/mca_base_module_exchange.h"
 #include "ptl_ib.h"
+#include "ptl_ib_sendfrag.h"
 
 mca_ptl_ib_module_t mca_ptl_ib_module = {
     {
@@ -43,14 +44,6 @@ mca_ptl_ib_module_t mca_ptl_ib_module = {
 #endif
     }
 };
-
-OBJ_CLASS_INSTANCE(mca_ptl_ib_recv_frag_t, 
-        mca_ptl_base_recv_frag_t,
-        NULL, NULL);
-
-OBJ_CLASS_INSTANCE(mca_ptl_ib_send_request_t, 
-        mca_pml_base_send_request_t,
-        NULL, NULL);
 
 
 int mca_ptl_ib_add_procs(struct mca_ptl_base_module_t* base_module, 
@@ -161,9 +154,33 @@ int mca_ptl_ib_send( struct mca_ptl_base_module_t* ptl,
     size_t size,
     int flags)
 {
-    /* Stub */
-    D_PRINT("Stub\n");
-    return OMPI_SUCCESS;
+    int rc;
+    mca_ptl_ib_send_frag_t* sendfrag;
+    ompi_list_item_t* item;
+
+    if (0 == offset) {
+        sendfrag = &((mca_ptl_ib_send_request_t*)sendreq)->req_frag;
+    } else {
+        OMPI_FREE_LIST_GET(&mca_ptl_ib_component.ib_send_frags, item, rc);
+        if(NULL == (sendfrag = (mca_ptl_ib_send_frag_t*)item)) {
+            return rc;
+        }
+    }
+
+    rc = mca_ptl_ib_send_frag_init(sendfrag, ptl_peer, sendreq, offset, &size, flags);
+
+    if(rc != OMPI_SUCCESS) {
+        return rc;
+    }
+    /* must update the offset after actual fragment
+     * size is determined -- and very important --
+     * before attempting to send the fragment
+     */
+    sendreq->req_offset += size;
+
+    rc = mca_ptl_ib_peer_send(ptl_peer, sendfrag);
+
+    return rc;
 }
 
 

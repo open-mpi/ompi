@@ -90,8 +90,6 @@ static inline int mca_ptl_ib_param_register_int(
 
 int mca_ptl_ib_component_open(void)
 {
-    D_PRINT("Opening InfiniBand component ...\n");
-
     OBJ_CONSTRUCT(&mca_ptl_ib_component.ib_procs, ompi_list_t);
     
     /* register super component parameters */
@@ -188,8 +186,6 @@ mca_ptl_base_module_t** mca_ptl_ib_component_init(int *num_ptl_modules,
     *allow_multi_user_threads = true;
     *have_hidden_threads = OMPI_HAVE_THREADS;
 
-    D_PRINT("IB Component Init\n");
-
     /* need to set ompi_using_threads() as ompi_event_init() 
      * will spawn a thread if supported */
     if(OMPI_HAVE_THREADS) {
@@ -203,8 +199,6 @@ mca_ptl_base_module_t** mca_ptl_ib_component_init(int *num_ptl_modules,
     }
 
     ret = mca_ptl_ib_get_num_hcas(&num_hcas);
-
-    D_PRINT("Number of HCAs found: %d\n", num_hcas);
 
     if ((0 == num_hcas) || (OMPI_SUCCESS != ret)) {
         return NULL;
@@ -227,11 +221,6 @@ mca_ptl_base_module_t** mca_ptl_ib_component_init(int *num_ptl_modules,
     mca_ptl_ib_component.ib_max_ptl_modules = 
         mca_ptl_ib_component.ib_num_hcas;
 
-    D_PRINT("num_hcas: %d, num_ptl_modules: %d, max_ptl_modules: %d\n",
-           mca_ptl_ib_component.ib_num_hcas,
-          mca_ptl_ib_component.ib_num_ptl_modules,
-         mca_ptl_ib_component.ib_max_ptl_modules); 
-
     ib_modules = (mca_ptl_ib_module_t*) malloc(sizeof(mca_ptl_ib_module_t) * 
             mca_ptl_ib_component.ib_num_ptl_modules);
     if(NULL == ib_modules) {
@@ -248,8 +237,6 @@ mca_ptl_base_module_t** mca_ptl_ib_component_init(int *num_ptl_modules,
                 &mca_ptl_ib_module, 
                 sizeof(mca_ptl_ib_module));
     }
-
-    D_PRINT("About to initialize IB modules ...\n");
 
     /* For each ptl, do this */
     for(i = 0; i < mca_ptl_ib_component.ib_num_ptl_modules; i++) {
@@ -313,21 +300,31 @@ mca_ptl_base_module_t** mca_ptl_ib_component_init(int *num_ptl_modules,
             return NULL;
         }
 
+        /* Allocate the UD buffers */
+
+        ib_modules[i].ud_recv_buf = NULL;
+
+        ib_modules[i].ud_recv_buf = malloc(MAX_UD_PREPOST_DEPTH *
+                sizeof(mca_ptl_ib_ud_buf_t));
+
+        if(NULL == ib_modules[i].ud_recv_buf) {
+            return NULL;
+        }
+
         /* Prepare the UD buffers for communication:
          *
          * 1. register
          * 2. fill up descriptors
          */
-        ib_modules[i].ud_buf = NULL;
-
-        if(mca_ptl_ib_prep_ud_bufs(ib_modules[i].nic, &ib_modules[i].ud_buf) 
+        if(mca_ptl_ib_prep_ud_bufs(ib_modules[i].nic, ib_modules[i].ud_recv_buf,
+                    IB_RECV, MAX_UD_PREPOST_DEPTH) 
                 != OMPI_SUCCESS) {
             return NULL;
         }
 
         /* Post the UD recv descriptors */
         if(mca_ptl_ib_post_ud_recv(ib_modules[i].nic, ib_modules[i].ud_qp_hndl, 
-                    ib_modules[i].ud_buf)
+                    ib_modules[i].ud_recv_buf, MAX_UD_PREPOST_DEPTH)
                 != OMPI_SUCCESS) {
             return NULL;
         }
@@ -392,6 +389,22 @@ mca_ptl_base_module_t** mca_ptl_ib_component_init(int *num_ptl_modules,
 
 int mca_ptl_ib_component_control(int param, void* value, size_t size)
 {
+#if 0
+    VAPI_ret_t ret;
+    VAPI_wc_desc_t comp;
+    char* env = NULL;
+
+    if((env = getenv("POLL")) != NULL) {
+
+        while(1) {
+            ret = VAPI_poll_cq(mca_ptl_ib_module.nic, mca_ptl_ib_module.ud_rcq_hndl,
+                    &comp);
+            if(VAPI_OK == ret) {
+                fprintf(stderr,"Something arrived!\n");
+            }
+        }
+    }
+#endif
     /* Stub */
     D_PRINT("Stub\n");
     return OMPI_SUCCESS;

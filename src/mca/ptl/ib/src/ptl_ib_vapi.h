@@ -17,6 +17,13 @@
 #define DEFAULT_PKEY_IX     (0)
 #define DEFAULT_PSN         (0)
 
+#define DEFAULT_TRAFFIC_CLASS   (0)
+#define DEFAULT_HOP_LIMIT       (63)
+#define DEFAULT_FLOW_LABEL      (0)
+#define DEFAULT_SERVICE_LEVEL   (0)
+#define DEFAULT_STATIC_RATE     (0)
+#define DEFAULT_SRC_PATH_BITS   (0)
+
 /* This is a convinence macro.
  * 
  * ret : The value to return if call failed

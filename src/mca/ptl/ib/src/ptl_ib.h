@@ -43,6 +43,7 @@ struct mca_ptl_ib_component_t {
     int   ib_free_list_max;              /**< maximum size of free lists */
     int   ib_free_list_inc;              /**< number of elements to alloc when growing free lists */
     ompi_free_list_t ib_send_requests;    /**< free list of ib send requests -- sendreq + IB */
+    ompi_free_list_t ib_send_frags;       /**< free list of ib send fragments */
     ompi_free_list_t ib_recv_frags;       /**< free list of ib recv fragments */
     ompi_list_t ib_procs;                 /**< list of ib proc structures */
     ompi_event_t ib_send_event;           /**< event structure for sends */
@@ -73,8 +74,8 @@ struct mca_ptl_ib_module_t {
 
     VAPI_cq_hndl_t                  ud_scq_hndl;/* UD send completion queue handle */
     VAPI_cq_hndl_t                  ud_rcq_hndl;/* UD recv completion queue handle */
-    mca_ptl_ib_ud_buf_t*            ud_buf;     /* Link to UD buffer structures
-                                           which are posted on the UD interface */ 
+    mca_ptl_ib_ud_buf_t*            ud_recv_buf;/* Link to UD recv buffer structures */
+    mca_ptl_ib_ud_buf_t*            ud_send_buf;/* Link to UD bufs which are used for sending */
 
     VAPI_qp_hndl_t                  ud_qp_hndl; /* UD queue pair handle */
     VAPI_qp_prop_t                  ud_qp_prop; /* UD queue pair properties */
