@@ -168,7 +168,8 @@ int ompi_session_dir(bool create, char *prfx, char *usr, char *hostid,
  
     /* no prefix was specified, so check other options in order */
     if (NULL != ompi_process_info.tmpdir_base) {  /* stored value previously */
-	fulldirpath = strdup(ompi_os_path(false, ompi_process_info.tmpdir_base, sessions, NULL));
+	tmp = strdup(ompi_process_info.tmpdir_base);
+	fulldirpath = strdup(ompi_os_path(false, tmp, sessions, NULL));
 	if (OMPI_SUCCESS == ompi_check_dir(create, fulldirpath)) { /* check for existence and access, or create it */
 	    return_code = OMPI_SUCCESS;
 	    goto COMPLETE;
@@ -213,29 +214,64 @@ int ompi_session_dir(bool create, char *prfx, char *usr, char *hostid,
     }
 
  COMPLETE:
+    if (create) {  /* if creating the dir tree, overwrite the fields */
+	if (NULL != ompi_process_info.tmpdir_base) {
+	    free(ompi_process_info.tmpdir_base);
+	    ompi_process_info.tmpdir_base = NULL;
+	}
+
+	if (NULL != ompi_process_info.top_session_dir) {
+	    free(ompi_process_info.top_session_dir);
+	    ompi_process_info.top_session_dir = NULL;
+	}
+    }
+
     if (NULL == ompi_process_info.tmpdir_base) {
-	ompi_process_info.tmpdir_base = strdup(tmp);
+	ompi_process_info.tmpdir_base = strdup(tmp); /* fill in if empty */
     }
+
     if (NULL == ompi_process_info.top_session_dir) {
-	ompi_process_info.top_session_dir = strdup(ompi_os_path(false, tmp, frontend, NULL));
+	ompi_process_info.top_session_dir = strdup(frontend);
     }
 
-    if (NULL == ompi_process_info.proc_session_dir && NULL != proc) {
-	ompi_process_info.proc_session_dir = strdup(fulldirpath);
+    if (NULL != proc) {
+	if (create) { /* overwrite if creating */
+	    if (NULL != ompi_process_info.proc_session_dir) {
+		free(ompi_process_info.proc_session_dir);
+		ompi_process_info.proc_session_dir = NULL;
+	    }
+	}
+	if (NULL == ompi_process_info.proc_session_dir) {
+	    ompi_process_info.proc_session_dir = strdup(fulldirpath);
+	}
 	sav = strdup(fulldirpath);
 	free(fulldirpath);
 	fulldirpath = strdup(dirname(sav));
 	free(sav);
     }
 
-    if (NULL == ompi_process_info.job_session_dir && NULL != job) {
-	ompi_process_info.job_session_dir = strdup(fulldirpath);
+    if (NULL != job) {
+	if (create) { /* overwrite if creating */
+	    if (NULL != ompi_process_info.job_session_dir) {
+		free(ompi_process_info.job_session_dir);
+		ompi_process_info.job_session_dir = NULL;
+	    }
+	}
+	if (NULL == ompi_process_info.job_session_dir) {
+	    ompi_process_info.job_session_dir = strdup(fulldirpath);
+	}
 	sav = strdup(fulldirpath);
 	free(fulldirpath);
 	fulldirpath = strdup(dirname(sav));
 	free(sav);
     }
 
+    if (create) { /* overwrite if creating */
+	if (NULL != ompi_process_info.universe_session_dir) {
+	    free(ompi_process_info.universe_session_dir);
+	    ompi_process_info.universe_session_dir = NULL;
+	}
+    }
     if (NULL == ompi_process_info.universe_session_dir) {
         ompi_process_info.universe_session_dir = strdup(fulldirpath);
     }
