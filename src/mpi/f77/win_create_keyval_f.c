@@ -8,6 +8,7 @@
 
 #include "mpi.h"
 #include "mpi/f77/bindings.h"
+#include "attribute/attribute.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_WIN_CREATE_KEYVAL = mpi_win_create_keyval_f
@@ -46,7 +47,33 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WIN_CREATE_KEYVAL,
 #include "mpi/c/profile/defines.h"
 #endif
 
+static char FUNC_NAME[] = "MPI_Win_create_keyval";
+
 void mpi_win_create_keyval_f(MPI_Fint *win_copy_attr_fn, MPI_Fint *win_delete_attr_fn, MPI_Fint *win_keyval, char *extra_state, MPI_Fint *ierr)
 {
+    int ret;
+    ompi_attribute_fn_ptr_union_t copy_fn;
+    ompi_attribute_fn_ptr_union_t del_fn;
 
+    if (MPI_PARAM_CHECK) {
+        if ((NULL == win_copy_attr_fn)   || 
+            (NULL == win_delete_attr_fn) ||
+            (NULL == win_keyval)            ) {
+            *ierr = OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, 
+                                           MPI_ERR_ARG, 
+                                           FUNC_NAME);
+        }
+    }
+    copy_fn.attr_F_copy_fn = (MPI_F_copy_function *)win_copy_attr_fn;
+    del_fn.attr_F_delete_fn = (MPI_F_delete_function *)win_delete_attr_fn;
+
+    ret = ompi_attr_create_keyval(WIN_ATTR, copy_fn, del_fn,
+                                 win_keyval, extra_state, OMPI_KEYVAL_F77);
+
+    if (ret != OMPI_SUCCESS) {
+        OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER, FUNC_NAME);
+    } else {
+        *ierr = MPI_SUCCESS;
+    }
 }
+

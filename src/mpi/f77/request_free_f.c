@@ -48,5 +48,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_REQUEST_FREE,
 
 void mpi_request_free_f(MPI_Fint *request, MPI_Fint *ierr)
 {
+    MPI_Request c_req = MPI_Request_f2c( *request ); 
 
+    *ierr = MPI_Request_free( &c_req );
+
+    *request = MPI_Request_f2c( &c_req );
 }
