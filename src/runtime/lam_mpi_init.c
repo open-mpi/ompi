@@ -10,6 +10,7 @@
 #include "runtime/runtime.h"
 #include "communicator/communicator.h"
 #include "group/group.h"
+#include "errhandler/errhandler.h"
 #include "mca/base/base.h"
 #include "mca/base/base.h"
 #include "mca/ptl/ptl.h"
@@ -95,6 +96,11 @@ int lam_mpi_init(int argc, char **argv, int requested, int *provided)
         /* JMS show_help */
         return ret;
     }
+
+     /* initialize error handlers */
+     if (LAM_SUCCESS != (ret = lam_errhandler_init())) {
+         return ret;
+     }
 
      /* initialize groups  */
      if (LAM_SUCCESS != (ret = lam_group_init())) {

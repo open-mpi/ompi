@@ -45,9 +45,11 @@ struct lam_communicator_t {
 
     int c_f_to_c_index;
 
-    /* Error handling */
+    /* Error handling.  This field does not have the "c_" prefix so
+       that the LAM_ERRHDL_* macros can find it, regardless of whether
+       it's a comm, window, or file. */
 
-    lam_errhandler_t *c_error_handler;
+    lam_errhandler_t *error_handler;
 
     /* Hooks for PML to hang things */
     struct mca_pml_comm_t* c_pml_comm;

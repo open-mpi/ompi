@@ -259,7 +259,7 @@ enum {
 #define MPI_DATATYPE_NULL ((MPI_Datatype) 0)
 #define MPI_REQUEST_NULL ((MPI_Request) 0)
 #define MPI_OP_NULL ((MPI_Op) 0)
-#define MPI_ERRHANDLER_NULL ((MPI_Errhandler) 0)
+#define MPI_ERRHANDLER_NULL ((MPI_Errhandler) &(lam_mpi_errhandler_null))
 #define MPI_INFO_NULL ((MPI_Info) 0)
 #define MPI_WIN_NULL ((MPI_Win) 0)
 
@@ -316,8 +316,9 @@ extern struct lam_datatype_t lam_mpi_cxx_cplex, lam_mpi_cxx_dblcplex;
 extern struct lam_datatype_t lam_mpi_cxx_ldblcplex;
 extern struct lam_datatype_t lam_mpi_cxx_bool;
 
-extern struct lam_errorhandler_t lam_mpi_errors_are_fatal;
-extern struct lam_errorhandler_t lam_mpi_errors_return;
+extern struct lam_errhandler_t lam_mpi_errors_null;
+extern struct lam_errhandler_t lam_mpi_errors_are_fatal;
+extern struct lam_errhandler_t lam_mpi_errors_return;
 
 extern MPI_Fint *MPI_F_STATUS_IGNORE;
 extern MPI_Fint *MPI_F_STATUSES_IGNORE;
