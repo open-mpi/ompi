@@ -11,10 +11,8 @@
 
 #include "ompi_config.h"
 
-#include "tools/openmpi/openmpi.h"
+int ompi_write_universe_setup_file(char *filename);
 
-int ompi_write_universe_setup_file(char *filename, ompi_universe_t *universe);
-
-int ompi_read_universe_setup_file(char *filename, ompi_universe_t *universe);
+int ompi_read_universe_setup_file(char *filename);
 
 #endif

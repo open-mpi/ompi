@@ -17,6 +17,7 @@
 #include "mca/pcmclient/base/base.h"
 #include "mca/oob/oob.h"
 #include "mca/ns/base/base.h"
+#include "mca/gpr/base/base.h"
 #include "util/session_dir.h"
 
 /**
@@ -37,6 +38,7 @@ int ompi_rte_finalize(void)
   mca_llm_base_close();
   mca_pcmclient_base_close();
   mca_ns_base_close();
+  mca_gpr_base_close();
   mca_oob_base_close();
 
   ompi_session_dir_finalize();

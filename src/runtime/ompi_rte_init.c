@@ -89,7 +89,22 @@
  */
 
 /* globals used by RTE */
-int ompi_rte_debug_flag;
+int ompi_rte_debug_flag=0;
+ompi_universe_t ompi_universe_info = {
+    /* .name =                */    "default-universe",
+    /* .host =                */    "localhost",
+    /* .uid =                 */    NULL,
+    /* .persistence =         */    false,
+    /* .scope =               */    "local",
+    /* .silent_mode =         */    true,
+    /* .script_mode =         */    false,
+    /* .web_server =          */    false,
+    /* .socket_contact_info = */    NULL,
+    /* .oob_contact_info =    */    NULL,
+    /* .console_connected =   */    false,
+    /* .scriptfile =          */    NULL,
+    /* .hostfile =            */    NULL
+};
 
 
 int ompi_rte_init(bool *allow_multi_user_threads, bool *have_hidden_threads)

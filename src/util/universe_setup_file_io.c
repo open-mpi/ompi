@@ -16,14 +16,14 @@
 #include "include/constants.h"
 
 #include "util/output.h"
-#include "tools/openmpi/openmpi.h"
+#include "runtime/runtime.h"
 #include "util/universe_setup_file_io.h"
 
 #define OMPI_UNIV_SETUP_FILE_MAX_LINE_LENGTH 1024
 
 char *ompi_getline(FILE *fp);
 
-int ompi_write_universe_setup_file(char *filename, ompi_universe_t *universe)
+int ompi_write_universe_setup_file(char *filename)
 {
     FILE *fp;
 
@@ -32,48 +32,48 @@ int ompi_write_universe_setup_file(char *filename, ompi_universe_t *universe)
 	return OMPI_ERROR;
     }
 
-    if (NULL == universe->name) {
+    if (NULL == ompi_universe_info.name) {
 	goto CLEANUP;
     }
-    fprintf(fp, "%s\n", universe->name);
+    fprintf(fp, "%s\n", ompi_universe_info.name);
 
-    if (NULL == universe->host) {
+    if (NULL == ompi_universe_info.host) {
 	goto CLEANUP;
     }
-    fprintf(fp, "%s\n", universe->host);
+    fprintf(fp, "%s\n", ompi_universe_info.host);
 
-    if (NULL == universe->uid) {
+    if (NULL == ompi_universe_info.uid) {
 	goto CLEANUP;
     }
-    fprintf(fp, "%s\n", universe->uid);
+    fprintf(fp, "%s\n", ompi_universe_info.uid);
 
-    if (universe->persistence) {
+    if (ompi_universe_info.persistence) {
 	fprintf(fp, "persistent\n");
     } else {
 	fprintf(fp, "non-persistent\n");
     }
 
-    if (NULL == universe->scope) {
+    if (NULL == ompi_universe_info.scope) {
 	goto CLEANUP;
     }
-    fprintf(fp, "%s\n", universe->scope);
+    fprintf(fp, "%s\n", ompi_universe_info.scope);
 
-    if (universe->silent_mode) {
+    if (ompi_universe_info.silent_mode) {
 	fprintf(fp, "silent\n");
     } else {
 	fprintf(fp, "console\n");
     }
 
-    if (universe->web_server && NULL != universe->socket_contact_info) {
-	fprintf(fp, "%s\n", universe->socket_contact_info);
+    if (ompi_universe_info.web_server && NULL != ompi_universe_info.socket_contact_info) {
+	fprintf(fp, "%s\n", ompi_universe_info.socket_contact_info);
     } else {
 	fprintf(fp, "none\n");
     }
 
-    if (NULL == universe->oob_contact_info) {
+    if (NULL == ompi_universe_info.oob_contact_info) {
 	goto CLEANUP;
     }
-    fprintf(fp, "%s\n", universe->oob_contact_info);
+    fprintf(fp, "%s\n", ompi_universe_info.oob_contact_info);
     fclose(fp);
 
     return OMPI_SUCCESS;
@@ -83,7 +83,7 @@ int ompi_write_universe_setup_file(char *filename, ompi_universe_t *universe)
     return OMPI_ERROR;
 }
 
-int ompi_read_universe_setup_file(char *filename, ompi_universe_t *universe)
+int ompi_read_universe_setup_file(char *filename)
 {
     char *input;
     FILE *fp;
@@ -97,18 +97,18 @@ int ompi_read_universe_setup_file(char *filename, ompi_universe_t *universe)
 	}
     }
 
-    universe->name = ompi_getline(fp);
-    if (NULL == universe->name) {
+    ompi_universe_info.name = ompi_getline(fp);
+    if (NULL == ompi_universe_info.name) {
 	goto CLEANUP;
     }
 
-    universe->host = ompi_getline(fp);
-    if (NULL == universe->host) {
+    ompi_universe_info.host = ompi_getline(fp);
+    if (NULL == ompi_universe_info.host) {
 	goto CLEANUP;
     }
 
-    universe->uid = ompi_getline(fp);
-    if (NULL == universe->uid) {
+    ompi_universe_info.uid = ompi_getline(fp);
+    if (NULL == ompi_universe_info.uid) {
 	goto CLEANUP;
     }
 
@@ -117,17 +117,17 @@ int ompi_read_universe_setup_file(char *filename, ompi_universe_t *universe)
 	goto CLEANUP;
     }
     if (0 == strncmp(input, "persistent", strlen("persistent"))) {
-	universe->persistence = true;
+	ompi_universe_info.persistence = true;
     } else if (0 == strncmp(input, "non-persistent", strlen("non-persistent"))) {
-	universe->persistence = false;
+	ompi_universe_info.persistence = false;
     } else {
 	free(input);
 	goto CLEANUP;
     }
     free(input);
 
-    universe->scope = ompi_getline(fp);
-    if (NULL == universe->scope) {
+    ompi_universe_info.scope = ompi_getline(fp);
+    if (NULL == ompi_universe_info.scope) {
 	goto CLEANUP;
     }
  
@@ -136,27 +136,27 @@ int ompi_read_universe_setup_file(char *filename, ompi_universe_t *universe)
 	goto CLEANUP;
     }
     if (0 == strncmp(input, "silent", strlen("silent"))) {
-	universe->silent_mode = true;
+	ompi_universe_info.silent_mode = true;
     } else if (0 == strncmp(input, "console", strlen("console"))) {
-	universe->silent_mode = false;
+	ompi_universe_info.silent_mode = false;
     } else {
 	free(input);
 	goto CLEANUP;
     }
     free(input);
 
-    universe->socket_contact_info = ompi_getline(fp);
-    if (NULL == universe->socket_contact_info) {
+    ompi_universe_info.socket_contact_info = ompi_getline(fp);
+    if (NULL == ompi_universe_info.socket_contact_info) {
 	goto CLEANUP;
     }
-    if (0 == strncmp(universe->socket_contact_info, "none", strlen("none"))) {
-	universe->web_server = false;
+    if (0 == strncmp(ompi_universe_info.socket_contact_info, "none", strlen("none"))) {
+	ompi_universe_info.web_server = false;
     } else {
-	universe->web_server = true;
+	ompi_universe_info.web_server = true;
     }
 
-    universe->oob_contact_info = ompi_getline(fp);
-    if (NULL == universe->oob_contact_info) {
+    ompi_universe_info.oob_contact_info = ompi_getline(fp);
+    if (NULL == ompi_universe_info.oob_contact_info) {
 	goto CLEANUP;
     }
 

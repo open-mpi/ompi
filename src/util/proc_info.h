@@ -13,6 +13,7 @@
 #include <sys/types.h>
 #include "mca/ns/ns.h"
 
+
 /**
  * Process information structure
  *
@@ -30,7 +31,7 @@ struct ompi_proc_info_t {
     pid_t pid;             /**< Local process ID for this process */
     ompi_process_name_t *name;  /**< Process name structure */
     bool seed;             /**< Indicate whether or not this is seed daemon */
-    char *my_universe;     /**< The name of the universe to which this process belongs */
+    char *my_universe;     /**< Name of the universe to which this process belongs */
     char *tmpdir_base;    /**< Base directory of the session dir tree */
     char *top_session_dir;   /**< Top-most directory of the session tree */
     char *universe_session_dir;  /**< Location of universe temp dir.
