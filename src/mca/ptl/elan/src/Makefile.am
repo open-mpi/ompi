@@ -26,6 +26,7 @@ libmca_ptl_elan_la_SOURCES = \
 	ptl_elan_module.c \
 	ptl_elan_priv.c \
 	ptl_elan_init.c \
+	ptl_elan_comm_init.c \
 	ptl_elan.c 
 
 

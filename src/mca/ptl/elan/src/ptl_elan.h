@@ -15,13 +15,11 @@
 #include "mca/pml/pml.h"
 #include "mca/ptl/ptl.h"
 
-#define MCA_PTL_ELAN_STATISTICS 0
-
 #include "elan.h"
 #include "init.h"
 
 struct mca_ptl_elan_state_t;
-
+struct ompi_ptl_elan_queue_ctrl_t;
 extern struct mca_ptl_elan_state_t mca_ptl_elan_global_state;
 
 /**
@@ -38,6 +36,12 @@ struct mca_ptl_elan_t {
 
     int         ptl_ni_local;   /**< PTL NI local rank */
     int         ptl_ni_total;   /**< PTL NI total */
+
+    /* common elan structures, each ptl keeps a copy */
+    unsigned int elan_vp;      /**< elan vpid, not ompi vpid */
+    unsigned int elan_nvp;     /**< total # of elan vpid */
+
+    struct ompi_ptl_elan_queue_ctrl_t *queue; /**< Queue control structures */
 
     int         elan_sten_size; /**< sten packet len */
     int         elan_rdma_size; /**< qdma packet length */
@@ -63,11 +67,6 @@ struct mca_ptl_elan_t {
     ompi_free_list_t elan_rdmas_free;  /**< free elan rdma descriptors */
     ompi_free_list_t elan_frags_free;  /**< free elan rdma fragments */
 
-#if MCA_PTL_ELAN_STATISTICS        /* some statistics */
-    size_t      ptl_bytes_sent;
-    size_t      ptl_bytes_recv;
-#endif
-
 };
 typedef struct mca_ptl_elan_t mca_ptl_elan_t;
 extern mca_ptl_elan_t mca_ptl_elan;
@@ -86,8 +85,9 @@ struct mca_ptl_elan_module_1_0_0_t {
     /* 
      * We create our own simplified structure for managing elan state
      * although libelan already provides one. We do not need
-     * all that tport, group structures.
+     * all those tport, group, atomic, shmem and NIC threads support.
      */
+    struct mca_ptl_elan_state_t *elan_ctrl; 
     struct mca_ptl_elan_t **elan_ptls;  /**< array of available PTLs */
     size_t elan_num_ptls;               /**< number of ptls activated */
 

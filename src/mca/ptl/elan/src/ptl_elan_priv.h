@@ -36,9 +36,91 @@
 #include <elan/init.h>
                                                                                  
 #include <rms/rmscall.h>
-                                                                                 
 #include "misc_sys.h"
 #include "init_sys.h"
+#include "elan4/events.h"
+
+#define OMPI_PTL_ELAN_CHECK_UNEX(value, unexp, errno, output)          \
+        do {                                                           \
+            if (value == unexp) {                                      \
+                ompi_output(output,                                    \
+                        "[%s:%d] received unexpect allocated value \n", \
+                        __FILE__, __LINE__);                           \
+                return errno;                                          \
+            }                                                          \
+	} while (0)
+
+struct ompi_ptl_elan_recv_queue_t
+{
+    /* Events needs to be aligned */
+    EVENT_WORD            qr_doneWord;
+    ADDR_SDRAM            qr_qEvent;
+    EVENT32              *qr_elanDone;
+
+    /* The one don't care */
+    E4_uint64             qr_efitem;
+    E4_uint64             qr_efptr;
+    E4_uint64             qr_elitem;
+    void                 *qr_base;
+    void                 *qr_fptr;
+    void                 *qr_top;
+
+    E4_CmdQ              *qr_cmdq;
+    ELAN_SLEEP           *qr_es;
+    RAIL                 *qr_rail;
+};
+typedef  struct ompi_ptl_elan_recv_queue_t ompi_ptl_elan_recv_queue_t;
+
+typedef struct 
+{
+    /* SHOULD BE 128-byte aligned */
+    uint8_t    data[INPUT_QUEUE_MAX]; /* queue req data packet */
+    /* SHOULD be 32-byte aligned */
+    E4_Event32 event32;               /* Local elan completion event */
+} ompi_elan_event_t;
+
+struct ompi_ptl_elan_queue_send_t
+{
+    E4_DMA64           main_dma;        /**< Must be 8-byte aligned */
+    /* 8 byte aligned */
+    volatile E4_uint64 main_doneWord;   /**< main memory location to poll */
+    ompi_elan_event_t *elan_data_event; /**< 128-byte aligned copy event */
+    RAIL              *rail;
+    /* 8 byte aligned */
+    uint8_t            buff[INPUT_QUEUE_MAX]; /**< queue data */
+};
+typedef  struct ompi_ptl_elan_queue_send_t ompi_ptl_elan_queue_send_t;
+
+struct ompi_ptl_elan_queue_ctrl_t
+{
+    /* Transmit Queues */
+    /** < elan located INPUT_QUEUE_ALIGN'ed with INPUT_QUEUE_SIZE */
+    E4_InputQueue        *input; 
+
+    /** <transmit queue structures */
+    void                 *tx_q;
+    E4_CmdQ              *tx_cmdq;
+    ELAN4_COOKIEPOOL     *tx_cpool;
+    ompi_event_t         *tx_events;
+
+    ompi_list_t           tx_desc;
+    ompi_free_list_t      tx_desc_free;
+    
+    /* User progression */
+    ompi_mutex_t          rx_lock;
+    int                   rx_buffsize;
+    int                   rx_slotsize;
+    int                   rx_nslots;
+
+    /*Automatic progression */
+    void                (*rx_fn)(void);
+    void                 *rx_handle;
+
+    /* Recv Queue has to be well-aligned */
+    ompi_ptl_elan_recv_queue_t *rxq;
+};
+typedef struct ompi_ptl_elan_queue_ctrl_t ompi_ptl_elan_queue_ctrl_t;
+
 
 struct mca_ptl_elan_state_t {
 
@@ -51,6 +133,7 @@ struct mca_ptl_elan_state_t {
     FILE        *elan_debugfile; /* Debug output file handle      */
     int          elan_signalnum;
 
+    long         elan_waittype; /**< how to wait for events */
     size_t       main_size;   /**< size of Main memory allocator heap */
     size_t       elan_size;   /**< size of Elan memory allocator heap */
     void        *main_base;   /**< Main memory allocator heap base */
@@ -82,14 +165,25 @@ struct mca_ptl_elan_state_t {
     void            *elan_estate; /**< Elan state of the 0th rail */
     ELAN_RAIL      **elan_rail;   /**< pointers to Rail control struct for all rails */
     RAIL           **all_rails;   /**< all rails */
+    int             *rail_intcookie; /**< record the cookies for the rail */
     ADDR_SDRAM      *all_estates;
     mca_ptl_elan_module_1_0_0_t *elan_module;
 };
 typedef struct mca_ptl_elan_state_t mca_ptl_elan_state_t;
 
+/* Util functions, consider moving into a file ptl_elan_util.h */
+ELAN_SLEEP * 
+ompi_init_elan_sleepdesc(mca_ptl_elan_state_t * ems, RAIL *rail);
+
 /* Initialization and finalization routines */
 int ompi_mca_ptl_elan_init( mca_ptl_elan_module_1_0_0_t * emp);
 int ompi_mca_ptl_elan_finalize (mca_ptl_elan_module_1_0_0_t * emp);
+
+/* communication initialization prototypes */
+int ompi_init_elan_qdma (mca_ptl_elan_module_1_0_0_t* emp, int num_rails);
+int ompi_init_elan_sten (mca_ptl_elan_module_1_0_0_t* emp, int num_rails);
+int ompi_init_elan_rdma (mca_ptl_elan_module_1_0_0_t* emp, int num_rails);
+int ompi_init_elan_stat (mca_ptl_elan_module_1_0_0_t* emp, int num_rails);
 
 /* communication prototypes */
 

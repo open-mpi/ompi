@@ -179,20 +179,7 @@ mca_ptl_elan_module_init (int *num_ptls,
     *allow_multi_user_threads = true;
     *have_hidden_threads = OMPI_HAVE_THREADS;
 
-    /* need to set ompi_using_threads() as ompi_event_init() 
-     * will spawn a thread if supported */
-    if(OMPI_HAVE_THREADS)
-        ompi_set_using_threads(true);
-
-    /* duplicated actions are avoid with a static variable, 
-     * inited in ompi_event_init() */
-    if ((rc = ompi_event_init ()) != OMPI_SUCCESS) {
-	ompi_output(0, 
-		"[%s:%d] mca_ptl_elan_module_init: " 
-		"unable to initialize event dispatch thread: %d\n",
-	       	__FILE__, __LINE__, rc);
-        return NULL;
-    }
+    /* Leave the thread related setting to PML:PTL(TCP) to decide */
 
     /* initialize free lists */
     ompi_free_list_init (&(elan_mp->elan_reqs_free),
@@ -218,6 +205,7 @@ mca_ptl_elan_module_init (int *num_ptls,
 		__FILE__, __LINE__);
         return NULL;
     }
+
     /* 
      * (mca_ptl_elan_module_exchange () != OMPI_SUCCESS)
      *
