@@ -75,7 +75,7 @@ lam_cmd_line_t *lam_cmd_line_create(void)
      only thread that has this instance), there's no need to lock it
      right now. */
 
-  lam_mtx_init(&cmd->lcl_mutex);
+  lam_mutex_init(&cmd->lcl_mutex);
 
   /* Initialize the lists */
 
@@ -120,7 +120,7 @@ int lam_cmd_line_free(lam_cmd_line_t *cmd)
 #if 0
   /* We don't lock the mutex; there's no point.  Just free it. */
 
-  lam_mtx_free(&cmd->lcl_mutex);
+  lam_mutex_free(&cmd->lcl_mutex);
 #endif
 
   /* Free the lists */

@@ -15,7 +15,7 @@ void lam_sgl_init(lam_seg_list_t *slist)
 {
     SUPER_INIT(slist, lam_seg_list_cls.cls_parent);
     STATIC_INIT(slist->sgl_list, &lam_list_cls);
-    lam_mtx_init(&slist->sgl_lock);
+    lam_mutex_init(&slist->sgl_lock);
     slist->sgl_min_bytes_pushed = 0;
     slist->sgl_max_bytes_pushed = 0;
     slist->sgl_bytes_pushed = 0;

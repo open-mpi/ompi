@@ -39,8 +39,8 @@ void lam_sgl_append_elt_chunk(
  *
  */
 
-#define lam_sgl_lock_list(slist)  lam_mtx_trylock(&slist->sgl_lock)
-#define lam_sgl_unlock_list(slist) lam_mtx_unlock(&slist->sgl_lock)
+#define lam_sgl_lock_list(slist)  lam_mutex_trylock(&slist->sgl_lock)
+#define lam_sgl_unlock_list(slist) lam_mutex_unlock(&slist->sgl_lock)
 
 static inline bool lam_sgl_is_locked(lam_seg_list_t *slist);
 static inline bool lam_sgl_is_locked(lam_seg_list_t *slist)
@@ -48,9 +48,9 @@ static inline bool lam_sgl_is_locked(lam_seg_list_t *slist)
     /* returns 1 if list is currently locked, otherwise 0. */
     int     ret;
     
-    ret = lam_mtx_trylock(&slist->sgl_lock);
+    ret = lam_mutex_trylock(&slist->sgl_lock);
     if ( !ret )
-        lam_mtx_unlock(&slist->sgl_lock);
+        lam_mutex_unlock(&slist->sgl_lock);
     return !ret;
 }
 

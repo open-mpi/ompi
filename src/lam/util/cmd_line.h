@@ -146,10 +146,10 @@ static inline int lam_cmd_line_get_tail(lam_cmd_line_t *cmd, int *tailc,
                                         char ***tailv)
 {
   if (NULL != cmd) {
-    lam_mtx_lock(&cmd->lcl_mutex);
+    lam_mutex_lock(&cmd->lcl_mutex);
     *tailc = cmd->lcl_tail_argc;
     *tailv = lam_argv_copy(cmd->lcl_tail_argv);
-    lam_mtx_unlock(&cmd->lcl_mutex);
+    lam_mutex_unlock(&cmd->lcl_mutex);
     return LAM_SUCCESS;
   } else {
     return LAM_ERROR;
