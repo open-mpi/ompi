@@ -60,6 +60,8 @@ void mpi_iprobe_f(MPI_Fint *source, MPI_Fint *tag, MPI_Fint *comm,
 #endif
     OMPI_SINGLE_NAME_DECL(flag);
 
+    c_comm = MPI_Comm_f2c (*comm);
+
     /* Only check for the bad value if we're checking MPI parameters */
 
     if (MPI_PARAM_CHECK) {
@@ -87,8 +89,6 @@ void mpi_iprobe_f(MPI_Fint *source, MPI_Fint *tag, MPI_Fint *comm,
         c_status = &c_status2;
 #endif
     }
-
-    c_comm = MPI_Comm_f2c (*comm);
 
     *ierr = OMPI_INT_2_FINT(MPI_Iprobe(OMPI_FINT_2_INT(*source),
 				       OMPI_FINT_2_INT(*tag),
