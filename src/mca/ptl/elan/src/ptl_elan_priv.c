@@ -118,6 +118,61 @@ mca_ptl_elan_last_frag (struct mca_ptl_elan_module_t *ptl,
 }
 
 static void
+mca_ptl_elan_last_frag_ack (struct mca_ptl_elan_module_t *ptl,
+                        mca_ptl_base_header_t * header)
+{
+     mca_ptl_elan_send_frag_t* desc;
+     mca_pml_base_send_request_t* req;
+
+     START_FUNC(PTL_ELAN_DEBUG_ACK);
+ 
+     LOG_PRINT(PTL_ELAN_DEBUG_ACK, "desc %p \n",
+		header->hdr_ack.hdr_src_ptr.pval);
+
+     /* XXX: Check if the sourc pointer points to the correct fragment */
+     desc = (mca_ptl_elan_send_frag_t*) header->hdr_ack.hdr_src_ptr.pval;
+
+     req  = (mca_pml_base_send_request_t *) desc->desc->req;
+
+     req->req_peer_match = header->hdr_ack.hdr_dst_match;
+     req->req_peer_addr  = header->hdr_ack.hdr_dst_addr;
+     req->req_peer_size  = header->hdr_ack.hdr_dst_size;
+
+     LOG_PRINT(PTL_ELAN_DEBUG_ACK, "desc %p remote req %p addr %p, len %d\n", 
+		header->hdr_ack.hdr_src_ptr.pval,
+		req->req_peer_match.pval,
+		req->req_peer_addr.pval,
+		req->req_peer_size);
+
+#if 1
+    if(fetchNset(&desc->frag_progressed, 1) == 0)
+#else
+    if(ompi_atomic_fetch_and_set_int (&desc->frag_progressed, 1) == 0) 
+#endif
+    {
+	ptl->super.ptl_send_progress(ptl, req, header->hdr_ack.hdr_dst_size);
+    }
+
+    /* Return a frag or if not cached, or it is a follow up */ 
+    if ( (desc->desc->desc_status != MCA_PTL_ELAN_DESC_CACHED)){
+	if (desc->desc->desc_type == MCA_PTL_ELAN_DESC_PUT) {
+	    OMPI_FREE_LIST_RETURN (&ptl->putget->put_desc_free,
+		    (ompi_list_item_t *) desc);
+	} else {
+	    OMPI_FREE_LIST_RETURN (&ptl->queue->tx_desc_free,
+		    (ompi_list_item_t *) desc);
+	}
+    } else {
+	LOG_PRINT(PTL_ELAN_DEBUG_ACK,
+		"PML will return frag to list %p, length %d\n", 
+		&ptl->queue->tx_desc_free,
+		ptl->queue->tx_desc_free.super.ompi_list_length);
+    }
+
+    END_FUNC(PTL_ELAN_DEBUG_RECV);
+}
+
+static void
 mca_ptl_elan_ctrl_frag (struct mca_ptl_elan_module_t *ptl,
                         mca_ptl_base_header_t * header)
 {
@@ -140,7 +195,8 @@ mca_ptl_elan_ctrl_frag (struct mca_ptl_elan_module_t *ptl,
      req->req_peer_addr  = header->hdr_ack.hdr_dst_addr;
      req->req_peer_size  = header->hdr_ack.hdr_dst_size;
 
-    LOG_PRINT(PTL_ELAN_DEBUG_ACK, "remote req %p addr %p, length %d\n", 
+     LOG_PRINT(PTL_ELAN_DEBUG_ACK, "desc %p remote req %p addr %p, len %d\n", 
+	    desc,
 	    req->req_peer_match.pval, 
 	    req->req_peer_addr.pval, 
 	    req->req_peer_size);
@@ -212,9 +268,10 @@ mca_ptl_elan_init_qdma_desc (struct mca_ptl_elan_send_frag_t *frag,
 	header_length = sizeof (mca_ptl_base_frag_header_t);
     }
 
-    LOG_PRINT(PTL_ELAN_DEBUG_SEND, "frag %p req %p \n",
+    LOG_PRINT(PTL_ELAN_DEBUG_SEND, "frag %p req %p addr %p offset %d\n",
 	hdr->hdr_frag.hdr_src_ptr.pval,
-	hdr->hdr_frag.hdr_dst_ptr.pval);           
+	hdr->hdr_frag.hdr_dst_ptr.pval,
+       	pml_req->req_base.req_addr, offset);
 
     /* initialize convertor */
     if(size_in > 0) {
@@ -297,12 +354,6 @@ mca_ptl_elan_init_qdma_desc (struct mca_ptl_elan_send_frag_t *frag,
 	    E4_COOKIE_TYPE_LOCAL_DMA, destvp);
     desc->main_dma.dma_vproc = destvp;
 #endif
-
-    LOG_PRINT(PTL_ELAN_DEBUG_MAC,
-	    "[ send...] destvp %d type %d flag %d size %d\n",
-	    destvp, hdr->hdr_common.hdr_type,
-	    hdr->hdr_common.hdr_flags,
-	    hdr->hdr_common.hdr_size);
 
     /* Make main memory coherent with IO domain (IA64) */
     MEMBAR_VISIBLE ();
@@ -496,6 +547,7 @@ mca_ptl_elan_init_get_desc (mca_ptl_elan_module_t *ptl,
 			    struct mca_ptl_elan_send_frag_t *frag,
 			    mca_ptl_elan_recv_frag_t * recv_frag,
                             mca_pml_base_recv_request_t *pml_req,
+			    mca_ptl_base_header_t *hdr,
 			    size_t *size,
 			    int flags)
 {
@@ -505,14 +557,12 @@ mca_ptl_elan_init_get_desc (mca_ptl_elan_module_t *ptl,
     size_t      offset;
     ELAN4_CTX   *ctx;
     struct ompi_ptl_elan_putget_desc_t * desc;
-    mca_ptl_base_header_t *hdr;
     mca_ptl_base_header_t *recv_header;
     struct mca_ptl_elan_peer_t *ptl_peer;
 
     START_FUNC(PTL_ELAN_DEBUG_GET);
 
     ctx  =  ptl->ptl_elan_ctx;
-    hdr  = &frag->frag_base.frag_header;
     recv_header= &recv_frag->frag_recv.frag_base.frag_header;
     ptl_peer = (struct mca_ptl_elan_peer_t *)
 	recv_frag->frag_recv.frag_base.frag_peer,
@@ -531,7 +581,8 @@ mca_ptl_elan_init_get_desc (mca_ptl_elan_module_t *ptl,
      *   use the convertor hanged over request */
     size_out = size_in;
     *size = size_out;
-    hdr->hdr_frag.hdr_frag_length = size_out;
+
+    /* FIXME: hdr_frag and hdr_ack overlap partially, please be aware */
     desc->chain_dma.dma_typeSize = E4_DMA_TYPE_SIZE (
 	    sizeof(mca_ptl_base_frag_header_t), 
 	    DMA_DataTypeByte, DMA_QueueWrite, 8);
@@ -542,6 +593,14 @@ mca_ptl_elan_init_get_desc (mca_ptl_elan_module_t *ptl,
     desc->chain_dma.dma_dstAddr  = 0x0ULL; 
     desc->chain_dma.dma_dstEvent = elan4_main2elan (ctx, 
 	    (void *) ptl->queue->input);
+
+    LOG_PRINT(PTL_ELAN_DEBUG_ACK,
+		"remote frag %p local req %p buffer %p size %d len %d\n",
+	       	hdr->hdr_ack.hdr_src_ptr.pval,
+	       	hdr->hdr_ack.hdr_dst_match.pval,
+	       	hdr->hdr_ack.hdr_dst_addr.pval,
+	       	hdr->hdr_ack.hdr_dst_size,
+		*size);
 
 #if OMPI_PTL_ELAN_COMP_QUEUE
     /* XXX: Chain a QDMA to each queue and 
@@ -744,7 +803,7 @@ mca_ptl_elan_get_with_ack ( mca_ptl_base_module_t * ptl,
     /* XXX: since send_frag provides a header inside, 
      *      no need to allocate a QDMA descriptor w/ buff */
     remain_len = request->req_bytes_packed - request->req_bytes_received; 
-    hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_FIN;
+    hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_FIN_ACK;
     hdr->hdr_common.hdr_flags= 0;
     hdr->hdr_common.hdr_size = sizeof(mca_ptl_base_ack_header_t);
     hdr->hdr_ack.hdr_src_ptr = 
@@ -756,16 +815,8 @@ mca_ptl_elan_get_with_ack ( mca_ptl_base_module_t * ptl,
 	    elan_ptl->ptl_elan_ctx, request->req_base.req_addr);
     hdr->hdr_ack.hdr_dst_size = remain_len;
 
-    LOG_PRINT(PTL_ELAN_DEBUG_ACK,
-		"remote buff %lx frag %p local req %p buffer %p size %d \n",
-		hdr->hdr_frag.hdr_dst_ptr.lval,
-	       	hdr->hdr_ack.hdr_src_ptr.pval,
-	       	hdr->hdr_ack.hdr_dst_match.pval,
-	       	hdr->hdr_ack.hdr_dst_addr.pval,
-	       	hdr->hdr_ack.hdr_dst_size);           
-
     mca_ptl_elan_init_get_desc (elan_ptl, frag, recv_frag, 
-	    request, &remain_len, flags);
+	    request, hdr, &remain_len, flags);
 
     /* Trigger a STEN packet to the remote side and then from there
      * a elan_get is triggered */
@@ -785,6 +836,14 @@ mca_ptl_elan_get_with_ack ( mca_ptl_base_module_t * ptl,
     frag->frag_base.frag_addr = request->req_base.req_addr;/*final buff*/
     frag->frag_base.frag_size = remain_len;
     frag->frag_progressed     = 0;
+
+    LOG_PRINT(PTL_ELAN_DEBUG_ACK,
+		"remote frag %p local req %p buffer %p size %d len %d\n",
+	       	hdr->hdr_ack.hdr_src_ptr.pval,
+	       	hdr->hdr_ack.hdr_dst_match.pval,
+	       	hdr->hdr_ack.hdr_dst_addr.pval,
+	       	hdr->hdr_ack.hdr_dst_size,
+		remain_len);
 
     END_FUNC(PTL_ELAN_DEBUG_ACK);
     return OMPI_SUCCESS;
@@ -917,12 +976,13 @@ mca_ptl_elan_drain_recv (struct mca_ptl_elan_module_t *ptl)
 	    break;
 	case MCA_PTL_HDR_TYPE_ACK:
 	case MCA_PTL_HDR_TYPE_NACK:
-	    /* a control fragment for a message */
 	    mca_ptl_elan_ctrl_frag (ptl, header);
 	    break;
 	case MCA_PTL_HDR_TYPE_FIN:
-	    /* a control fragment for a message */
 	    mca_ptl_elan_last_frag (ptl, header);
+	    break;
+	case MCA_PTL_HDR_TYPE_FIN_ACK:
+	    mca_ptl_elan_last_frag_ack (ptl, header);
 	    break;
 	default:
 	    fprintf(stderr, "[%s:%d] unknow fragment type %d\n",
