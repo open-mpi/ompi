@@ -65,6 +65,7 @@ int mca_pml_teg_component_open(void)
     OBJ_CONSTRUCT(&mca_pml_teg.teg_send_requests, ompi_free_list_t);
     OBJ_CONSTRUCT(&mca_pml_teg.teg_recv_requests, ompi_free_list_t);
     OBJ_CONSTRUCT(&mca_pml_teg.teg_procs, ompi_list_t);
+    OBJ_CONSTRUCT(&mca_pml_teg.teg_send_pending, ompi_list_t);
 
 #if MCA_PML_TEG_STATISTICS
     mca_pml_teg.teg_sends = 0;
@@ -108,6 +109,7 @@ int mca_pml_teg_component_close(void)
     if(NULL != mca_pml_teg.teg_ptl_components) {
         free(mca_pml_teg.teg_ptl_components);
     }
+    OBJ_DESTRUCT(&mca_pml_teg.teg_send_pending);
     OBJ_DESTRUCT(&mca_pml_teg.teg_send_requests);
     OBJ_DESTRUCT(&mca_pml_teg.teg_recv_requests);
     OBJ_DESTRUCT(&mca_pml_teg.teg_procs);
