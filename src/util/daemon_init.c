@@ -1,7 +1,6 @@
 /*
  * $HEADER$
  */
-/** @file **/
 
 #include "ompi_config.h"
 
@@ -9,6 +8,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <stdlib.h>
 
 #include "include/constants.h"
 #include "util/daemon_init.h"
