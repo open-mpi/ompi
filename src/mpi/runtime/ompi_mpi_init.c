@@ -107,6 +107,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 	     */
 	    universe = strdup(ompi_universe_info.name);
 	    free(ompi_universe_info.name);
+	    ompi_universe_info.name = NULL;
 	    pid = getpid();
 	    if (0 > asprintf(&ompi_universe_info.name, "%s-%d", universe, pid) && ompi_rte_debug_flag) {
 		ompi_output(0, "mpi_init: error creating unique universe name");
@@ -117,15 +118,19 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 	ompi_process_info.seed = true;
 	if (NULL != ompi_universe_info.ns_replica) {
 	    free(ompi_universe_info.ns_replica);
+	    ompi_universe_info.ns_replica = NULL;
 	}
 	if (NULL != ompi_process_info.ns_replica) {
 	    free(ompi_process_info.ns_replica);
+	    ompi_process_info.ns_replica = NULL;
 	}
 	if (NULL != ompi_universe_info.gpr_replica) {
 	    free(ompi_universe_info.gpr_replica);
+	    ompi_universe_info.gpr_replica = NULL;
 	}
 	if (NULL != ompi_process_info.gpr_replica) {
 	    free(ompi_process_info.gpr_replica);
+	    ompi_process_info.gpr_replica = NULL;
 	}
     }
 
@@ -139,6 +144,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     /*****    SET MY NAME   *****/
     if (NULL != ompi_process_info.name) {  /* should NOT have been previously set */
 	free(ompi_process_info.name);
+	ompi_process_info.name = NULL;
     }
 
     if (NULL != ompi_rte_get_self()) {  /* name set in environment - nonsingleton - record name */

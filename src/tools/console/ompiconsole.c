@@ -13,6 +13,10 @@
 #include "util/cmd_line.h"
 #include "util/proc_info.h"
 #include "util/pack.h"
+#include "util/session_dir.h"
+#include "util/output.h"
+#include "util/os_path.h"
+#include "util/universe_setup_file_io.h"
 #include "runtime/runtime.h"
 
 #include "mca/base/base.h"
@@ -27,6 +31,8 @@
 static char *ompi_getinputline(void);
 
 static void ompi_console_sendcmd(ompi_daemon_cmd_flag_t usercmd);
+
+static struct timeval ompi_rte_ping_wait = {2, 0};
 
 
 int main(int argc, char *argv[])
@@ -43,8 +49,8 @@ int main(int argc, char *argv[])
     ompi_cmd_line_t *cmd_line;
     bool allow_multi_user_threads   = false;
     bool have_hidden_threads  = false;
-    bool exit_cmd;
-    char *usercmd, *str_response;
+    bool exit_cmd, ping_success;
+    char *usercmd, *str_response, *contact_file;
     ompi_buffer_t buffer;
     ompi_process_name_t seed={0,0,0};
     int recv_tag;
@@ -140,12 +146,100 @@ int main(int argc, char *argv[])
 
     fprintf(stderr, "check local univ\n");
 
-    if (OMPI_SUCCESS != (ret = ompi_rte_universe_exists())) {
-	fprintf(stderr, "could not contact local universe %s\n", ompi_universe_info.name);
+    /* check to see if local universe already exists */
+    if (OMPI_SUCCESS != ompi_session_dir(false,
+					 ompi_process_info.tmpdir_base,
+					 ompi_system_info.user,
+					 ompi_system_info.nodename,
+					 NULL,
+					 ompi_universe_info.name,
+					 NULL,
+					 NULL)) { /* not found */
+	if (ompi_rte_debug_flag) {
+	    ompi_output(0, "could not find universe session dir");
+	    exit(1);
+	}
+    }
+
+    if (ompi_rte_debug_flag) {
+	ompi_output(0, "check for contact info file");
+    }
+
+    /* check for "contact-info" file. if present, read it in. */
+    contact_file = ompi_os_path(false, ompi_process_info.universe_session_dir,
+				"universe-setup.txt", NULL);
+
+    if (OMPI_SUCCESS != (ret = ompi_read_universe_setup_file(contact_file))) {
+	if (ompi_rte_debug_flag) {
+	    ompi_output(0, "could not read contact file %s", contact_file);
+	}
+	exit(ret);
+    }
+
+    if (ompi_rte_debug_flag) {
+	ompi_output(0, "contact info read");
+    }
+
+    /* if persistent, set contact info... */
+    if (OMPI_SUCCESS != mca_oob_set_contact_info(ompi_universe_info.seed_contact_info)) { /* set contact info */
+	if (ompi_rte_debug_flag) {
+	    ompi_output(0, "error setting oob contact info - please report error to bugs@open-mpi.org\n");
+	}
 	exit(1);
     }
 
-    fprintf(stderr, "init stage 2\n");
+    mca_oob_parse_contact_info(ompi_universe_info.seed_contact_info, &seed, NULL);
+
+    if (ompi_rte_debug_flag) {
+	ompi_output(0, "contact info set: %s", ompi_universe_info.seed_contact_info);
+	ompi_output(0, "issuing ping: %d %d %d", seed.cellid, seed.jobid, seed.vpid);
+    }
+
+
+    /* ...and ping to verify it's alive */
+    ping_success = false;
+    if (OMPI_SUCCESS == mca_oob_ping(&seed, &ompi_rte_ping_wait)) {
+	ping_success = true;
+    }
+    if (!ping_success) {
+	if (ompi_rte_debug_flag) {
+	    ompi_output(0, "ping failed");
+	}
+	exit(1);
+    }
+
+    /* set the my_universe field */
+    if (NULL != ompi_process_info.my_universe) {
+	free(ompi_process_info.my_universe);
+	ompi_process_info.my_universe = NULL;
+    }
+    ompi_process_info.my_universe = strdup(ompi_universe_info.name);
+
+    if (NULL != ompi_process_info.ns_replica) {
+	free(ompi_process_info.ns_replica);
+	ompi_process_info.ns_replica = NULL;
+    }
+    ompi_process_info.ns_replica = ns_base_copy_process_name(&seed);
+
+    if (NULL != ompi_process_info.gpr_replica) {
+	free(ompi_process_info.gpr_replica);
+	ompi_process_info.gpr_replica = NULL;
+    }
+    ompi_process_info.gpr_replica = ns_base_copy_process_name(&seed);
+
+    if (NULL != ompi_universe_info.ns_replica) {
+	free(ompi_universe_info.ns_replica);
+	ompi_universe_info.ns_replica = NULL;
+    }
+    ompi_universe_info.ns_replica = strdup(ompi_universe_info.seed_contact_info);
+
+    if (NULL != ompi_universe_info.gpr_replica) {
+	free(ompi_universe_info.gpr_replica);
+	ompi_universe_info.gpr_replica = NULL;
+    }
+    ompi_universe_info.gpr_replica = strdup(ompi_universe_info.seed_contact_info);
+
+   fprintf(stderr, "init stage 2\n");
 
     /* setup the rest of the rte */
     if (OMPI_SUCCESS != (ret = ompi_rte_init_stage2(&allow_multi_user_threads,
@@ -156,20 +250,17 @@ int main(int argc, char *argv[])
     }
 
     /*****    SET MY NAME   *****/
+    if (NULL != ompi_process_info.name) { /* should not have been previously set */
+	free(ompi_process_info.name);
+	ompi_process_info.name = NULL;
+    }
+
     jobid = ompi_name_server.create_jobid();
     vpid = ompi_name_server.reserve_range(jobid, 1);
     ompi_process_info.name = ompi_name_server.create_process_name(0, jobid, vpid);
 
     fprintf(stderr, "my name: [%d,%d,%d]\n", ompi_process_info.name->cellid,
 	    ompi_process_info.name->jobid, ompi_process_info.name->vpid);
-
-    /*
-     *  Register my process info with my replica.
-     */
-    if (OMPI_SUCCESS != (ret = ompi_rte_register())) {
-	fprintf(stderr, "ompi_rte_init: failed in ompi_rte_register()\n");
-	return ret;
-    }
 
    /* finalize the rte startup */
     if (OMPI_SUCCESS != (ret = ompi_rte_init_finalstage(&allow_multi_user_threads,
@@ -178,6 +269,14 @@ int main(int argc, char *argv[])
 	return ret;
     }
  
+    /*
+     *  Register my process info with my replica.
+     */
+    if (OMPI_SUCCESS != (ret = ompi_rte_register())) {
+	fprintf(stderr, "ompi_rte_init: failed in ompi_rte_register()\n");
+	return ret;
+    }
+
 
     exit_cmd = false;
     while (!exit_cmd) {
