@@ -144,7 +144,7 @@ int lam_info_free (lam_info_t **info) {
      for (iterator = (lam_info_entry_t *)lam_list_get_first(&((*info)->super));
           NULL != iterator;
           iterator = (lam_info_entry_t *)lam_list_get_next(iterator)) {
-          trailer_iterator = (lam_info_entry_t *)lam_get_prev(iterator);
+          trailer_iterator = (lam_info_entry_t *)lam_list_get_prev(iterator);
           OBJ_RELEASE(trailer_iterator);
      }
      /*
