@@ -60,6 +60,8 @@ int lam_comm_init(void)
     lam_mpi_comm_null.c_my_rank = MPI_PROC_NULL;
     lam_mpi_comm_null.c_local_group = group;
     lam_mpi_comm_null.c_remote_group = group;
+    lam_mpi_comm_null.error_handler = &lam_mpi_errors_are_fatal;
+    OBJ_RETAIN( &lam_mpi_errors_are_fatal );
     lam_pointer_array_set_item(&lam_mpi_communicators, 0, &lam_mpi_comm_null);
 
     strncpy (lam_mpi_comm_null.c_name, "MPI_COMM_NULL", 
@@ -80,6 +82,8 @@ int lam_comm_init(void)
     lam_mpi_comm_world.c_local_group = group;
     lam_mpi_comm_world.c_remote_group = group;
     lam_mpi_comm_world.c_cube_dim = lam_cube_dim(size);
+    lam_mpi_comm_world.error_handler = &lam_mpi_errors_are_fatal;
+    OBJ_RETAIN( &lam_mpi_errors_are_fatal );
     mca_pml.pml_add_comm(&lam_mpi_comm_world);
     lam_pointer_array_set_item(&lam_mpi_communicators, 0, &lam_mpi_comm_world);
 
@@ -99,6 +103,8 @@ int lam_comm_init(void)
     lam_mpi_comm_self.c_my_rank = group->grp_my_rank;
     lam_mpi_comm_self.c_local_group = group;
     lam_mpi_comm_self.c_remote_group = group;
+    lam_mpi_comm_self.error_handler = &lam_mpi_errors_are_fatal;
+    OBJ_RETAIN( &lam_mpi_errors_are_fatal );
     mca_pml.pml_add_comm(&lam_mpi_comm_self);
     lam_pointer_array_set_item(&lam_mpi_communicators, 1, &lam_mpi_comm_self);
 
@@ -190,7 +196,7 @@ int lam_comm_split ( lam_communicator_t* comm, int color, int key,
                      lam_communicator_t **newcomm )
 {
     lam_group_t *new_group;
-    int myinfo[2];
+    /*int myinfo[2];*/
     int size, my_size;
     int my_grank;
     int i, loc;
