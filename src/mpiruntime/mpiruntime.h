@@ -35,8 +35,8 @@ extern "C" {
    *
    * Intialize all support code needed for MPI applications.  This
    * function should only be called by MPI applications (including
-   * singletons).  It should only be called after both \code
-   * ompi_init() and \code ompi_rte_init() have been called.
+   * singletons).  If this function is called, ompi_init and
+   * ompi_rte_init should *not* be called.
    */
   int ompi_mpi_init(int argc, char **argv, int requested, int *provided);
 
@@ -44,7 +44,7 @@ extern "C" {
    * Finalize the Open MPI MPI environment
    *
    * Should be called after all MPI functionality is complete (usually
-   * during MPI_FINALIZE) and before \c ompi_rte_finalize().
+   * during MPI_FINALIZE).
    */
   int ompi_mpi_finalize(void);
 
