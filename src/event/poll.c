@@ -58,6 +58,7 @@
 #endif
 
 #include "event.h"
+#include "util/output.h"
 #if OMPI_EVENT_USE_SIGNALS
 #include "evsignal.h"
 #endif
@@ -206,7 +207,7 @@ poll_dispatch(void *arg, struct timeval *tv)
 
 	if (res == -1) {
 		if (errno != EINTR) {
-			log_error("poll");
+			ompi_output(0, "poll failed with errno=%d\n", errno);
 			return (-1);
 		}
 

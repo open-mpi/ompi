@@ -1,11 +1,46 @@
 This file contains information on merging the branches/tim tree into the
 trunk.
 
-UPDATE MERGE:
+UPDATE MERGE 2:
+
+  svn merge -r4892:4922 svn+ssh://svn.open-mpi.org/l/svn/ompi/branches/tim .
+
+U  src/event/poll.c
+U  src/event/select.c
+U  src/runtime/orte_finalize.c
+U  src/runtime/orte_restart.c
+U  src/tools/orterun/orterun.c
+U  src/mca/oob/tcp/oob_tcp_send.c
+U  src/mca/oob/tcp/oob_tcp_peer.c
+U  src/mca/oob/tcp/oob_tcp_recv.c
+C  src/mca/oob/tcp/oob_tcp.c
+C  src/mca/oob/tcp/oob_tcp.h
+U  src/mca/ras/base/ras_base_alloc.c
+U  src/mca/rds/hostfile/rds_hostfile.c
+U  src/mca/rds/hostfile/rds_hostfile_lex.l
+U  src/mca/soh/base/soh_base_get_proc_soh.c
+U  src/mca/pls/bproc_seed/pls_bproc_seed.c
+U  src/mca/pls/rsh/pls_rsh_component.c
+C  src/mca/ptl/gm/src/ptl_gm_priv.c
+U  src/mca/rmgr/base/rmgr_base_stage_gate.c
+U  src/mca/base/mca_base_param.c
+U  src/mca/iof/base/base.h
+U  src/mca/iof/base/iof_base_select.c
+U  src/mca/iof/base/iof_base_open.c
+U  src/mca/iof/base/iof_base_close.c
+U  src/util/univ_info.h
+U  src/util/proc_info.c
+U  src/util/proc_info.h
+U  src/util/sys_info.c
+U  src/util/sys_info.h
+U  src/util/cmd_line.c
+U  src/util/univ_info.c
+A  ISSUES
+
+
+UPDATE MERGE 1:
 
   svn merge -r4821:4892 svn+ssh://svn.open-mpi.org/l/svn/ompi/branches/tim .
-
-RESULTS:
 
  M     test/mca/gpr
  M      test/mca/gpr/gpr_test.c

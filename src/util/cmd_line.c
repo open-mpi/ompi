@@ -55,7 +55,7 @@ struct cmd_line_option_t {
     char *clo_description;
 
     ompi_cmd_line_type_t clo_type;
-    int clo_mca_param_id;
+    char *clo_mca_param_env_var;
     void *clo_variable_dest;
     bool clo_variable_set;
 };
@@ -409,7 +409,7 @@ int ompi_cmd_line_parse(ompi_cmd_line_t *cmd, bool ignore_unknown,
                                variable dest and/or MCA parameter */
 
                             if (0 == j &&
-                                (option->clo_mca_param_id >= 0 ||
+                                (NULL != option->clo_mca_param_env_var ||
                                  NULL != option->clo_variable_dest)) {
                                 set_dest(option, cmd->lcl_argv[i]);
                             }
@@ -805,7 +805,7 @@ static void option_constructor(cmd_line_option_t *o)
     o->clo_description = NULL;
 
     o->clo_type = OMPI_CMD_LINE_TYPE_NULL;
-    o->clo_mca_param_id = -1;
+    o->clo_mca_param_env_var = NULL;
     o->clo_variable_dest = NULL;
     o->clo_variable_set = false;
 }
@@ -821,6 +821,9 @@ static void option_destructor(cmd_line_option_t *o)
     }
     if (NULL != o->clo_description) {
         free(o->clo_description);
+    }
+    if (NULL != o->clo_mca_param_env_var) {
+        free(o->clo_mca_param_env_var);
     }
 }
 
@@ -930,10 +933,10 @@ static int make_opt(ompi_cmd_line_t *cmd, ompi_cmd_line_init_t *e)
     option->clo_type = e->ocl_variable_type;
     option->clo_variable_dest = e->ocl_variable_dest;
     if (NULL != e->ocl_mca_type_name) {
-        option->clo_mca_param_id = 
-            mca_base_param_find(e->ocl_mca_type_name,
-                                e->ocl_mca_component_name,
-                                e->ocl_mca_param_name);
+        option->clo_mca_param_env_var = 
+            mca_base_param_environ_variable(e->ocl_mca_type_name,
+                                            e->ocl_mca_component_name,
+                                            e->ocl_mca_param_name);
     }
 
     /* Append the item, serializing thread access */
@@ -1076,22 +1079,32 @@ static cmd_line_option_t *find_option(ompi_cmd_line_t *cmd,
 static void set_dest(cmd_line_option_t *option, char *sval)
 {
     int ival = atoi(sval);
+    char *str;
 
-    /* Set MCA param */
+    /* Set MCA param.  We do this in the environment because the MCA
+       parameter may not have been registered yet -- and if it isn't
+       registered, we don't really want to register a dummy one
+       because we don't know what it's type and default value should
+       be.  These are solvable problems (e.g., make a re-registration
+       overwrite everything), but it's far simpler to just leave the
+       registered table alone and set an environment variable with the
+       desired value.  The environment variable will get picked up
+       during a nromal parameter lookup, and all will be well. */
     
-    if (option->clo_mca_param_id >= 0) {
+    if (NULL != option->clo_mca_param_env_var) {
         switch(option->clo_type) {
         case OMPI_CMD_LINE_TYPE_STRING:
-            mca_base_param_set_string(option->clo_mca_param_id, sval);
-            break;
         case OMPI_CMD_LINE_TYPE_INT:
-            mca_base_param_set_int(option->clo_mca_param_id, ival);
+            asprintf(&str, "%s=%s", option->clo_mca_param_env_var, sval);
             break;
         case OMPI_CMD_LINE_TYPE_BOOL:
-            mca_base_param_set_int(option->clo_mca_param_id, 1);
+            asprintf(&str, "%s=1", option->clo_mca_param_env_var);
             break;
         default:
             break;
+        }
+        if (NULL != str) {
+            putenv(str);
         }
     }
 

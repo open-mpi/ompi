@@ -356,9 +356,7 @@ static int orte_pls_bproc_launch_app(
     orte_vpid_t daemon_vpid_start = 0;
     int rc, index;
     char* uri;
-    char *var, *value;
-    char *env[4];
-    char **new_env;
+    char *var;
 
     /* convert node names to bproc nodelist */
     if(ORTE_SUCCESS != (rc = orte_pls_bproc_nodelist(map, &node_list, &num_nodes))) {
@@ -377,8 +375,8 @@ static int orte_pls_bproc_launch_app(
     }
 
     var = mca_base_param_environ_variable("ns","nds",NULL);
-    asprintf(&value, "%s=pipe", var);
-    env[0] = value;
+    ompi_setenv(var, "pipe", true, &map->app->env);
+    free(var);
 
     /* ns replica contact info */
     if(NULL == orte_process_info.ns_replica) {
@@ -390,8 +388,8 @@ static int orte_pls_bproc_launch_app(
         orte_process_info.ns_replica_uri = orte_rml.get_uri();
     }
     var = mca_base_param_environ_variable("ns","replica","uri");
-    asprintf(&value, "%s=uri%s", var, orte_process_info.ns_replica_uri);
-    env[1] = value;
+    ompi_setenv(var,orte_process_info.ns_replica_uri, true, &map->app->env);
+    free(var);
 
     /* gpr replica contact info */
     if(NULL == orte_process_info.gpr_replica) {
@@ -403,15 +401,11 @@ static int orte_pls_bproc_launch_app(
         orte_process_info.gpr_replica_uri = orte_rml.get_uri();
     }
     var = mca_base_param_environ_variable("gpr","replica","uri");
-    asprintf(&value, "%s=uri%s", var, orte_process_info.gpr_replica_uri);
-    env[2] = value;
-    env[3] = NULL;
+    ompi_setenv(var,orte_process_info.gpr_replica_uri, true, &map->app->env);
+    free(var);
 
     /* overwrite previously specified values with the above settings */
-    new_env = ompi_environ_merge(map->app->env, env);
-    ompi_argv_free(map->app->env);
-    map->app->env = new_env;
-    map->app->num_env = ompi_argv_count(new_env);
+    map->app->num_env = ompi_argv_count(map->app->env);
 
     /* read process image */
     if(ORTE_SUCCESS != (rc = orte_pls_bproc_dump(map->app, &image, &image_len))) {

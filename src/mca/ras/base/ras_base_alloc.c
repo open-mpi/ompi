@@ -178,6 +178,13 @@ validate:
         }
     }
 
+    /* If we still didn't get enough, it's an error */
+
+    if (num_allocated < num_requested) {
+        rc = ORTE_ERR_OUT_OF_RESOURCE;
+        goto cleanup;
+    }
+
     rc = orte_ras_base_node_assign(&allocated, jobid);
 cleanup:
 

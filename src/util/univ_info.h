@@ -40,6 +40,7 @@ extern "C" {
     * instanced in ompi_rte_init.c */
 
     struct orte_universe_t {
+        bool init;
         char *path;
         char *name;
         char *host;
@@ -67,6 +68,8 @@ OMPI_DECLSPEC extern orte_universe_t orte_universe_info;
  * @retval ORTE_ERROR If the system does not provide the requested information.
  */
 OMPI_DECLSPEC int orte_univ_info(void);
+
+OMPI_DECLSPEC int orte_univ_info_finalize(void);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

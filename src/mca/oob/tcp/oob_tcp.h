@@ -241,8 +241,8 @@ void mca_oob_tcp_registry_callback(
 */
 struct mca_oob_tcp_component_t {
     mca_oob_base_component_1_0_0_t super;  /**< base OOB component */
-    char*              tcp_include;          /**< list of interfaces to include */
-    char*              tcp_exclude;          /**< list of interfaces to exclude */
+    char*              tcp_include;          /**< list of ip interfaces to include */
+    char*              tcp_exclude;          /**< list of ip interfaces to exclude */
     int                tcp_listen_sd;        /**< listen socket for incoming connection requests */
     unsigned short     tcp_listen_port;      /**< listen port */
     ompi_list_t        tcp_subscriptions;    /**< list of registry subscriptions */

@@ -25,6 +25,7 @@
 #include "mca/mca.h"
 #include "mca/base/base.h"
 #include "mca/ras/base/ras_base_node.h"
+#include "mca/errmgr/errmgr.h"
 #include "rds_hostfile.h"
 #include "rds_hostfile_lex.h"
 
@@ -105,9 +106,13 @@ static int orte_rds_hostfile_parse_line(int token, ompi_list_t* existing, ompi_l
                 OBJ_RELEASE(node);
                 return OMPI_ERROR;
             }
-            if(node->node_slots != (size_t)rc) {
+            if (node->node_slots != (size_t)rc) {
                 node->node_slots = rc;
                 update++;
+            }
+            /* Ensure that node_slots_max >= node_slots */
+            if (node->node_slots_max < node->node_slots) {
+                node->node_slots_max = node->node_slots;
             }
             break;
 
@@ -116,10 +121,17 @@ static int orte_rds_hostfile_parse_line(int token, ompi_list_t* existing, ompi_l
             if (rc < 0) {
                 OBJ_RELEASE(node);
                 return OMPI_ERROR;
-             }
-            if(node->node_slots_max != (size_t)rc) {
-                node->node_slots_max = rc;
-                update++;
+            }
+            /* Only take this update if it puts us > node_slots */
+            if (((size_t) rc) > node->node_slots) {
+                if (node->node_slots_max != (size_t)rc) {
+                    node->node_slots_max = rc;
+                    update++;
+                }
+            } else {
+                ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+                OBJ_RELEASE(node);
+                return OMPI_ERROR;
             }
             break;
 
@@ -208,6 +220,8 @@ static int orte_rds_hostfile_query(void)
         goto cleanup;
     }
 
+    rc = mca_base_param_find("rds", "hostfile", "path");
+    mca_base_param_lookup_string(rc, &mca_rds_hostfile_component.path);
     rc = orte_rds_hostfile_parse(mca_rds_hostfile_component.path, &existing, &updates);
     if (ORTE_ERR_NOT_FOUND == rc) {
         if(mca_rds_hostfile_component.default_hostfile) {

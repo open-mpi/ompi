@@ -27,7 +27,7 @@
 #include <sys/stat.h>
 
 
-#include "include/constants.h"
+#include "include/orte_constants.h"
 #include "util/output.h"
 
 #include "util/sys_info.h"
@@ -60,7 +60,7 @@ int orte_sys_info(void)
 #endif
 
 	if (orte_system_info.init) {
-	return OMPI_SUCCESS;
+	return ORTE_SUCCESS;
     }
 
     if (0 > uname(&sys_info)) {  /* have an error - set utsname values to indicate */
@@ -84,7 +84,7 @@ int orte_sys_info(void)
             free(orte_system_info.machine);
             orte_system_info.machine = NULL;
         }
-        return OMPI_ERROR;
+        return ORTE_ERROR;
     } else {
         orte_system_info.sysname = strdup(sys_info.sysname);
         if(NULL == orte_system_info.nodename) {
@@ -105,6 +105,7 @@ int orte_sys_info(void)
         }
         sep[1] = '\0';
         orte_system_info.path_sep = strdup(sep);
+        free(path_name);
     }
 #else
     /* we can hardcode windows path seperator to be "\" */
@@ -131,5 +132,37 @@ int orte_sys_info(void)
     /* set the init flag */
     orte_system_info.init = true;  /* only indicates that we have been through here once - still have to test for NULL values */
 
-    return(OMPI_SUCCESS);
+    return(ORTE_SUCCESS);
+}
+
+int orte_sys_info_finalize(void)
+{
+    if (NULL != orte_system_info.sysname)
+        free(orte_system_info.sysname);
+
+    if (NULL != orte_system_info.nodename)
+        free(orte_system_info.nodename);
+
+    if (NULL != orte_system_info.release)
+        free(orte_system_info.release);
+
+    if (NULL != orte_system_info.version)
+        free(orte_system_info.version);
+        
+    if (NULL != orte_system_info.machine)
+        free(orte_system_info.machine);
+        
+    if (NULL != orte_system_info.path_sep)
+        free(orte_system_info.path_sep);
+        
+    if (NULL != orte_system_info.user)
+        free(orte_system_info.user);
+        
+    if (NULL != orte_system_info.enviro)
+        free(orte_system_info.enviro);
+        
+    if (NULL != orte_system_info.suffix)
+        free(orte_system_info.suffix);
+        
+    return ORTE_SUCCESS;
 }

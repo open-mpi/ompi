@@ -32,9 +32,9 @@ int orte_iof_base_close(void)
     /* We only need to flush if an iof component was successfully
        selected */
 
-    if (orte_iof_base.iof_component_selected) {
+    if (orte_iof_base.iof_flush) {
         orte_iof_base_flush();
-        orte_iof_base.iof_component_selected = false;
+        orte_iof_base.iof_flush = false;
     }
 
     /* shutdown any remaining opened components */

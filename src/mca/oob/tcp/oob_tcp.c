@@ -192,11 +192,16 @@ int mca_oob_tcp_component_open(void)
     mca_oob_tcp_component.tcp_peer_retries =
         mca_oob_tcp_param_register_int("peer_retries", 60);
     mca_oob_tcp_component.tcp_debug =
-        mca_oob_tcp_param_register_int("debug", 1);
+        mca_oob_tcp_param_register_int("debug", 0);
     mca_oob_tcp_component.tcp_include =
         mca_oob_tcp_param_register_str("include", NULL);
     mca_oob_tcp_component.tcp_exclude =
         mca_oob_tcp_param_register_str("exclude", NULL);
+    mca_oob_tcp_component.tcp_include =
+        mca_oob_tcp_param_register_str("include", NULL);
+    mca_oob_tcp_component.tcp_exclude =
+        mca_oob_tcp_param_register_str("exclude", NULL);
+
 
     /* initialize state */
     mca_oob_tcp_component.tcp_listen_sd = -1;
@@ -254,6 +259,14 @@ static void mca_oob_tcp_accept(void)
                 ompi_output(0, "mca_oob_tcp_accept: accept() failed with errno %d.", ompi_socket_errno);
             return;
         }
+
+        /* log the accept */
+        if(mca_oob_tcp_component.tcp_debug) {
+            ompi_output(0, "[%d,%d,%d] mca_oob_tcp_accept: %s:%d\n",
+                ORTE_NAME_ARGS(orte_process_info.my_name),
+                inet_ntoa(addr.sin_addr),
+                addr.sin_port);
+        }
                                                                                                                    
         /* wait for receipt of peers process identifier to complete this connection */
         event = OBJ_NEW(mca_oob_tcp_event_t);
@@ -279,13 +292,6 @@ static int mca_oob_tcp_create_listen(void)
         ompi_output(0,"mca_oob_tcp_component_init: socket() failed with errno=%d", ompi_socket_errno);
         return OMPI_ERROR;
     }
-    /* allow port to be re-used - for temporary fixed port numbers */
-    if (setsockopt(
-        mca_oob_tcp_component.tcp_listen_sd, SOL_SOCKET, SO_REUSEADDR, (char *)&optval, sizeof(optval)) < 0) {
-        ompi_output(0, "mca_oob_tcp_create_listen: setsockopt(SO_REUSEADDR) failed with errno=%d\n", 
-            ompi_socket_errno);
-    }
-
     memset(&inaddr, 0, sizeof(inaddr));
     inaddr.sin_family = AF_INET;
     inaddr.sin_addr.s_addr = INADDR_ANY;
@@ -356,7 +362,7 @@ static void mca_oob_tcp_recv_handler(int sd, short flags, void* user)
     /* recv the process identifier */
     while((rc = recv(sd, (char *)guid, sizeof(guid), 0)) != sizeof(guid)) {
         if(rc >= 0) {
-            if(mca_oob_tcp_component.tcp_debug > 3) {
+            if(mca_oob_tcp_component.tcp_debug > 1) {
                 ompi_output(0, "[%d,%d,%d] mca_oob_tcp_recv_handler: peer closed connection",
                     ORTE_NAME_ARGS(orte_process_info.my_name));
             }
@@ -411,7 +417,7 @@ static void mca_oob_tcp_recv_handler(int sd, short flags, void* user)
     }
     /* is the peer instance willing to accept this connection */
     if(mca_oob_tcp_peer_accept(peer, sd) == false) {
-        if(mca_oob_tcp_component.tcp_debug > 1) {
+        if(mca_oob_tcp_component.tcp_debug > 0) {
             ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_recv_handler: "
                     "rejected connection from [%d,%d,%d] connection state %d",
                     ORTE_NAME_ARGS(orte_process_info.my_name),
@@ -629,8 +635,10 @@ int mca_oob_tcp_init(void)
     int rc;
     ompi_list_item_t* item;
 
-    /* get my jobid */
+    /* random delay to stagger connections back to seed */
+    usleep((orte_process_info.num_procs % 100) * 10000);
 
+    /* get my jobid */
     if (ORTE_SUCCESS != (rc = orte_ns.get_jobid(&jobid, 
                                                 orte_process_info.my_name))) {
         ORTE_ERROR_LOG(rc);
@@ -656,7 +664,7 @@ int mca_oob_tcp_init(void)
     ompi_list_append(&mca_oob_tcp_component.tcp_subscriptions, &subscription->item);
     OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
 
-    if(mca_oob_tcp_component.tcp_debug > 1) {
+    if(mca_oob_tcp_component.tcp_debug > 2) {
         ompi_output(0, "[%d,%d,%d] mca_oob_tcp_init: calling orte_gpr.subscribe\n", 
             ORTE_NAME_ARGS(orte_process_info.my_name));
     }
@@ -800,7 +808,7 @@ int mca_oob_tcp_init(void)
         return rc;
     }
 
-    if(mca_oob_tcp_component.tcp_debug > 1) {
+    if(mca_oob_tcp_component.tcp_debug > 2) {
         ompi_output(0, "[%d,%d,%d] mca_oob_tcp_init: calling orte_gpr.put(%s)\n", 
             ORTE_NAME_ARGS(orte_process_info.my_name),
             value->segment);

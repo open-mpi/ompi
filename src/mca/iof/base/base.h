@@ -44,7 +44,7 @@ extern "C" {
 struct orte_iof_base_t {
    int                  iof_output;
    ompi_list_t          iof_components_opened;
-   bool                 iof_component_selected;
+   bool                 iof_flush;
    ompi_list_t          iof_endpoints;
    ompi_mutex_t         iof_lock;
    ompi_condition_t     iof_condition;

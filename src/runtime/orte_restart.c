@@ -47,9 +47,9 @@
 int orte_restart(orte_process_name_t *name, const char* uri)
 {
     int rc;
-
     orte_process_name_t* old_name;
     orte_process_name_t* new_name;
+
     if (ORTE_SUCCESS != (rc = orte_ns.copy_process_name(&old_name, orte_process_info.my_name))) {
         ORTE_ERROR_LOG(rc);
         return rc;
@@ -72,6 +72,7 @@ int orte_restart(orte_process_name_t *name, const char* uri)
      * Close selected components.
      */
 
+    orte_iof_base.iof_flush = false;
     if (ORTE_SUCCESS != (rc = orte_iof_base_close())) {
         ORTE_ERROR_LOG(rc);
 	return rc;
