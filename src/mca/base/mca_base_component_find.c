@@ -193,7 +193,11 @@ static void find_dyn_components(const char *path, const char *type_name,
   dir = path_to_use;
   if (NULL != dir) {
     do {
+#ifdef WIN32
+      end = strchr(dir, ';');
+#else
       end = strchr(dir, ':');
+#endif
       if (NULL != end) {
         *end = '\0';
       }
