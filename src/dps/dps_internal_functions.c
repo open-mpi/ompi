@@ -22,6 +22,7 @@
 #include <sys/types.h>
 #include <math.h>
 #include <unistd.h>
+#include <string.h>
 
 #include "util/output.h"
 
