@@ -119,7 +119,6 @@ ompi_init_elan_queue_events (mca_ptl_elan_module_t * ptl,
 
 static void
 mca_ptl_elan_putget_desc_contruct (
-	mca_ptl_elan_send_frag_t *frag,
 	ELAN4_CTX *ctx, 
        	ompi_ptl_elan_putget_desc_t *desc, 
 	EVENT *elan_event,
@@ -136,16 +135,9 @@ mca_ptl_elan_putget_desc_contruct (
 
     desc->elan_event = elan_event; 
     desc->chain_event= (E4_Event32 *) 
-	((char *)elan_event + sizeof (E4_Event));
+	((char *)elan_event + sizeof (E4_Event32));
     desc->chain_buff = (E4_Addr *) 
-	((char *)elan_event + 2*sizeof (E4_Event));
-
-    if (PTL_ELAN_DEBUG_PUT & PTL_ELAN_DEBUG_FLAG) {
-	char hostname[32]; gethostname(hostname, 32);    
-	fprintf(stderr, "[%s:%s:%d] frag %p desc %p chain_buff %p chain_event %p \n",
-		hostname, __FUNCTION__, __LINE__,
-		frag, desc, desc->chain_buff, desc->chain_event);           
-    }
+	((char *)elan_event + 2*sizeof (E4_Event32));
 
     /* Remember all the address needs to be converted 
      * before assigning to DMA descritpor */
@@ -175,7 +167,7 @@ do {                                                                      \
         frag->desc = (ompi_ptl_elan_base_desc_t *)dp;                     \
                                                                           \
         /* Initialize some of the dma structures */                       \
-	mca_ptl_elan_putget_desc_contruct (frag, ctx, dp,                 \
+	mca_ptl_elan_putget_desc_contruct (ctx, dp,                       \
 		eptr, 0, 0, local);                                       \
                                                                           \
         item = (ompi_list_item_t *) frag;                                 \
@@ -474,7 +466,7 @@ ompi_init_elan_putget (mca_ptl_elan_component_t * emp,
 
 	putget->pg_cpool = elan4_allocCookiePool(ctx, ptl->elan_vp);
 
-       	ompi_ptl_elan_init_putget_ctrl (ptl, rail, putget, 0, 16, 32);
+       	ompi_ptl_elan_init_putget_ctrl (ptl, rail, putget, 0, 2, 32);
     }
 
     END_FUNC(PTL_ELAN_DEBUG_NONE);

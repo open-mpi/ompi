@@ -275,19 +275,9 @@ int
 mca_ptl_elan_component_progress (mca_ptl_tstamp_t tstamp)
 {
     START_FUNC(PTL_ELAN_DEBUG_NONE);
-#if 0
-    if (times <= -1) 
-    {
-	char hostname[32]; gethostname(hostname, 32); 
-	fprintf(stderr, "[%s:%s:%d] debugging ...\n",
-		hostname, __FUNCTION__, __LINE__);
-	exit(1); 
-    } else {
-	times ++;
-    }
-#endif
     mca_ptl_elan_drain_recv(elan_mp);
     mca_ptl_elan_update_desc(elan_mp);
+    mca_ptl_elan_update_putget(elan_mp);
     END_FUNC(PTL_ELAN_DEBUG_NONE);
     return OMPI_SUCCESS;
 }
