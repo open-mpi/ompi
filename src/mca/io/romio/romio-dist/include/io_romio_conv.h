@@ -6,6 +6,9 @@
 #define MCA_IO_ROMIO_CONV_H
 
 /* Prefix that we add to all ROMIO symbols */
+#ifdef ROMIO_PREFIX
+#undef ROMIO_PREFIX
+#endif
 #define ROMIO_PREFIX(foo) mca_io_romio_dist_##foo
 
 /* Section 9.2 */
