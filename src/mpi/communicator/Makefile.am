@@ -14,7 +14,7 @@ headers = \
 
 libmpi_communicator_la_SOURCES = \
         $(headers) \
-        mpi_comm_globals.c
+        lam_comm_init.c
 
 # Conditionally install the header files
 

@@ -18,6 +18,18 @@
 #include "mca/mpi/coll/base/base.h"
 
 
+/*
+ * Global variables and symbols for the MPI layer
+ */
+
+bool lam_mpi_initialized = false;
+bool lam_mpi_finalized = false;
+
+bool lam_mpi_thread_multiple = false;
+int lam_mpi_thread_requested = MPI_THREAD_SINGLE;
+int lam_mpi_thread_provided = MPI_THREAD_SINGLE;
+
+
 int lam_mpi_init(int argc, char **argv, int requested, int *provided)
 {
   int ret;
@@ -79,6 +91,14 @@ int lam_mpi_init(int argc, char **argv, int requested, int *provided)
   lam_mpi_thread_requested = requested;
   *provided = lam_mpi_thread_provided;
   lam_mpi_thread_multiple = (lam_mpi_thread_provided == MPI_THREAD_MULTIPLE);
+
+  /* Setup MPI_COMM_WORLD */
+
+  lam_comm_init(MPI_COMM_WORLD);
+
+  /* Setup MPI_COMM_SELF */
+
+  lam_comm_init(MPI_COMM_SELF);
 
   /* All done */
 
