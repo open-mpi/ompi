@@ -4,7 +4,7 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-SUBDIRS = base common lam mpi
+SUBDIRS =  lam mpi
 
 # Source code files
 
