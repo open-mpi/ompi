@@ -56,7 +56,11 @@ send_error_mail() {
             cat "$file" >> "$outfile"
         fi
     done
-    Mail -s "=== CREATE ERROR ===" "$email" < "$outfile"
+    if test -n "$version"; then
+        Mail -s "=== CREATE ERROR ($version) ===" "$email" < "$outfile"
+    else
+        Mail -s "=== CREATE ERROR ===" "$email" < "$outfile"
+    fi
     rm -f "$outfile"
 }
 
@@ -195,7 +199,7 @@ rm -rf "$root"
 
 # send success mail
 if test "$want_success_mail" = "1"; then
-    Mail -s "Success (created r$version)" "$email" <<EOF
+    Mail -s "Create success (r$version)" "$email" <<EOF
 Creating nightly snapshot SVN tarball was a success.
 
 Snapshot:   $version
