@@ -24,12 +24,14 @@ extern ompi_class_t ompi_communicator_t_class;
 #define OMPI_COMM_GRAPH     0x00000004
 #define OMPI_COMM_NAMEISSET 0x00000008
 #define OMPI_COMM_ISFREED   0x00000010
+#define OMPI_COMM_INTRINSIC 0x00000020
 
 /* some utility #defines */
 #define OMPI_COMM_IS_INTER(comm) ((comm)->c_flags & OMPI_COMM_INTER)
 #define OMPI_COMM_IS_INTRA(comm) (!((comm)->c_flags & OMPI_COMM_INTER))
 #define OMPI_COMM_IS_CART(comm) ((comm)->c_flags & OMPI_COMM_CART)
 #define OMPI_COMM_IS_GRAPH(comm) ((comm)->c_flags & OMPI_COMM_GRAPH)
+#define OMPI_COMM_IS_INTRINSIC(comm) ((comm)->c_flags & OMPI_COMM_INTRINSIC)
 
 /** 
  * Modes reqquired for accquiring the new comm-id.
