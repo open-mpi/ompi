@@ -113,7 +113,6 @@ mca_ptl_elan_module_open (void)
         mca_ptl_elan_param_register_int ("free_list_inc", 64);
 
     /* initialize state */
-    mca_ptl_elan_module.elan_state = NULL;
     mca_ptl_elan_module.elan_ptls = NULL;
     mca_ptl_elan_module.elan_num_ptls = 0;
     mca_ptl_elan_module.elan_local = NULL; 
@@ -143,12 +142,6 @@ mca_ptl_elan_module_close (void)
             mca_ptl_elan_module.elan_num_ptls);
     elan_localproc_close(mca_ptl_elan_module.elan_local);
 #else
-    /* Free the dynamic memory for aggregated variables */
-    if ( mca_ptl_elan_module.elan_state ) {
-        /* Make sure elan_state is the actual pointer,
-         * Avoid duplicated free memory calls */
-        free(mca_ptl_elan_module.elan_state);
-    }
 
     if (NULL != mca_ptl_elan_module.elan_ptls) {
         int         i;

@@ -32,49 +32,66 @@
 
 #include <elan/elan.h>
 #include <elan/init.h>
+                                                                                 
 #include <rms/rmscall.h>
-#include <elan4/library.h>
-#include <elan4/types.h>
-#include <elan4/intcookie.h>
-/*#include "./elan.h"*/
-/*#include "./misc_sys.h"*/
-/*#include "./init_sys.h"*/
-#include "elan/sys/misc_sys.h"
-#include "elan/sys/init_sys.h"
+                                                                                 
+#include "misc_sys.h"
+#include "init_sys.h"
 
-struct ompi_elan_railtable_t {
-    int        rt_nrails;  
-    int        rt_rail;   
-    int        rt_railReal;
-    int       *rt_table;  
-    int       *rt_realRail;
-    struct ompi_elan_rail_t *rt_allRails;
-};
-typedef struct ompi_elan_railtable_t ompi_elan_railtable_t;
+struct mca_ptl_elan_state_t {
 
-struct ompi_elan_rail_t {
-    struct elan4_ctx   *rail_ctx;
-    ELAN4_SDRAM        *rail_sdram;
-    E4_CmdQ	       *rail_cmdq;
-    E4_CmdQ	       *rail_ecmdq;
-    ELAN4_ALLOC        *rail_alloc;
-    struct elan_sleep  *rail_sleepDescs;
-    ELAN4_COOKIEPOOL   *rail_cpool;
-    u_int               rail_index;
-    ELAN_TPORT         *rail_tport;
-    ompi_elan_railtable_t   *rail_railTable;
-    
-    void               *rail_estate; /* ADDR_SDRAM  r_estate; */
-    int                 rail_railNo;
-    E4_Addr             rail_tportrecvSym;
-    E4_Addr             rail_atomicSym;
+    /* User configurable parameters */
+    int          initialized;
+    char        *elan_version;   /**< Version of the elan library */
+    uint64_t     elan_debug;     /**< elan debug tracing output */
+    uint64_t     elan_traced;    /**< elan TRACE output */
+    uint64_t     elan_flags;
+    FILE        *elan_debugfile; /* Debug output file handle      */
+    int          elan_signalnum;
+
+    size_t       main_size;   /**< size of Main memory allocator heap */
+    size_t       elan_size;   /**< size of Elan memory allocator heap */
+    void        *main_base;   /**< Main memory allocator heap base */
+    void        *elan_base;   /**< Elan memory allocator heap base */
+
+    /* other state parameters */
+
+    int          elan_attached;    /**< 0 until elan_attach() called */
+    unsigned int elan_vp;          /**< elan vpid, not ompi vpid */
+    unsigned int elan_nvp;         /**< total # of elan vpid */
+    int         *elan_localvps;    /**< mapping of localId to elan vp */
+    int          elan_localid;   /**< # of local elan vpids */
+    int          elan_numlocals;   /**< # of local elan vpids */
+    int          elan_maxlocals;   /**< maximum # of local elan vpids */
+    int          elan_nrails;      /**< # of rails elan vpids */
+    int          elan_rmsid;       /**< rms resource id */
+    long         elan_pagesize;
+    pid_t        elan_pid;
+
+    /* TODO:
+     *   Even though the elan threads are not utilized for now. 
+     *   We provide memory/state control structures for later extensions.
+     *   A simple type casting of ELAN_ESTATE can bring
+     *   the complete structure of the ELAN_EPRIVSATE.
+     */
+    ELAN_LOCATION    elan_myloc;
+    void            *elan_cap;    /**< job capability */
+    ELAN_CTX        *elan_ctx;    /**< Elan ctx of the 0th rail */
+    void            *elan_estate; /**< Elan state of the 0th rail */
+    ELAN_RAIL      **elan_rail;   /**< pointers to Rail control struct for all rails */
+    RAIL           **all_rails;   /**< all rails */
+    mca_ptl_elan_module_1_0_0_t *elan_module;
 };
-typedef struct ompi_elan_rail_t ompi_elan_rail_t;
+typedef struct mca_ptl_elan_state_t mca_ptl_elan_state_t;
+
+/*struct mca_ptl_elan_state_t *elan_state;  */
+
 
 /* Initialization and finalization routines */
-int ompi_mca_ptl_elan_init (mca_ptl_elan_module_1_0_0_t *mp);
-int ompi_mca_ptl_elan_setup (mca_ptl_elan_module_1_0_0_t *mp);
-int ompi_mca_ptl_elan_fin (mca_ptl_elan_module_1_0_0_t *mp);
+int ompi_mca_ptl_elan_init( mca_ptl_elan_module_1_0_0_t * emp);
+int ompi_mca_ptl_elan_setup (mca_ptl_elan_state_t *ems);
+int ompi_mca_ptl_elan_fin (mca_ptl_elan_state_t *ems);
+
 /* Accessory functions to deallocate the memory */
 void elan_state_close(struct mca_ptl_elan_state_t *);
 void elan_ptls_close(struct mca_ptl_elan_t **, size_t elan_num_ptls);
