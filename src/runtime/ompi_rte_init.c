@@ -12,6 +12,9 @@
 #include "runtime/runtime.h"
 #include "util/output.h"
 #include "threads/mutex.h"
+#include "mca/mca.h"
+#include "mca/base/base.h"
+#include "mca/base/mca_base_param.h"
 #include "mca/pcm/base/base.h"
 #include "mca/pcmclient/base/base.h"
 #include "mca/llm/base/base.h"
@@ -83,6 +86,11 @@
  * universe_name (either mpirun would have started the universe, or it
  * would have been already started by rte_boot)
  */
+
+/* globals used by RTE */
+int ompi_rte_debug_flag;
+
+
 int ompi_rte_init(bool *allow_multi_user_threads, bool *have_hidden_threads)
 {
     int ret;
@@ -91,6 +99,9 @@ int ompi_rte_init(bool *allow_multi_user_threads, bool *have_hidden_threads)
 
     *allow_multi_user_threads = true;
     *have_hidden_threads = false;
+
+    ret =  mca_base_param_register_int("ompi", "rte", "debug", NULL, 0);
+    mca_base_param_lookup_int(ret, &ompi_rte_debug_flag);
 
     /*
      * Out of Band Messaging
@@ -201,6 +212,10 @@ int ompi_rte_init(bool *allow_multi_user_threads, bool *have_hidden_threads)
      */
     /* proc structure startup */
     ompi_proc_info();  
+
+    if (ompi_rte_debug_flag) {
+	ompi_output(0, "proc info for proc %s", ompi_name_server.get_proc_name_string(ompi_process_info.name));
+    }
 
     /* session directory */
     jobid_str = ompi_name_server.get_jobid_string(ompi_process_info.name);

@@ -23,6 +23,10 @@
 extern "C" {
 #endif
 
+    /* globals used by RTE - instanced in ompi_rte_init.c */
+
+    extern int ompi_rte_debug_flag;
+
   /**
    * Initialize the Open MPI support code
    *
@@ -200,6 +204,16 @@ extern "C" {
      */
     int ompi_rte_deallocate_resources(int jobid, ompi_list_t *nodelist);
 
+
+    /**
+     * Setup rte command line options
+     *
+     * Defines the command line options specific to the rte/seed daemon
+     *
+     * @param cmd_line Pointer to an ompi_cmd_line_t object
+     * @retval None
+     */
+    void ompi_rte_cmd_line_setup(ompi_cmd_line_t *cmd_line);
 
 #ifdef __cplusplus
 }

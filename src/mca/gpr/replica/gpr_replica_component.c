@@ -97,11 +97,17 @@ static void mca_gpr_replica_keytable_destructor(mca_gpr_replica_keytable_t* keyt
 	ompi_output(0, "entered keytable destructor");
     }
 
-    while (NULL != (keyptr = (mca_gpr_replica_keytable_t*)ompi_list_remove_first((ompi_list_t*)keytable))) {
-	if (NULL != keyptr->token) {
-	    free(keyptr->token);
-	}
-	OBJ_RELEASE(keyptr);
+/*     if (NULL != keytable) { */
+/* 	while (NULL != (keyptr = (mca_gpr_replica_keytable_t*)ompi_list_remove_first((ompi_list_t*)keytable))) { */
+/* 	    if (NULL != keyptr->token) { */
+/* 		free(keyptr->token); */
+/* 	    } */
+/* 	    OBJ_RELEASE(keyptr); */
+/* 	} */
+/*     } */
+
+    if (mca_gpr_replica_debug) {
+	ompi_output(0, "exiting keytable destructor");
     }
 }
 
@@ -456,6 +462,10 @@ void mca_gpr_replica_recv(int status, ompi_process_name_t* sender,
     mca_gpr_notify_request_tracker_t *trackptr;
     mca_gpr_idtag_list_t *ptr_free_id;
 
+    if (mca_gpr_replica_debug) {
+	ompi_output(0, "gpr replica: received message");
+    }
+
     if (OMPI_SUCCESS != ompi_buffer_init(&answer, 0)) {
 	/* RHC -- not sure what to do if this fails */
     }
@@ -466,6 +476,11 @@ void mca_gpr_replica_recv(int status, ompi_process_name_t* sender,
 
     /******    DELETE SEGMENT    *****/
     if (MCA_GPR_DELETE_SEGMENT_CMD == command) {   /* got command to delete a segment */
+
+	if (mca_gpr_replica_debug) {
+	    ompi_output(0, "\tdelete segment cmd");
+	}
+
 	if (0 > ompi_unpack_string(buffer, &segment)) {
 	    goto RETURN_ERROR;
 	}
@@ -484,6 +499,10 @@ void mca_gpr_replica_recv(int status, ompi_process_name_t* sender,
 
 	/*****    PUT    *****/
     } else if (MCA_GPR_PUT_CMD == command) {  /* got command to put object on registry */
+
+	if (mca_gpr_replica_debug) {
+	    ompi_output(0, "\tput cmd");
+	}
 
 	if (OMPI_SUCCESS != ompi_unpack(buffer, &mode, 1, MCA_GPR_OOB_PACK_MODE)) {
 	    goto RETURN_ERROR;
@@ -541,6 +560,10 @@ void mca_gpr_replica_recv(int status, ompi_process_name_t* sender,
 	/*****    GET    *****/
     } else if (MCA_GPR_GET_CMD == command) {  /* got command to put object on registry */
 
+	if (mca_gpr_replica_debug) {
+	    ompi_output(0, "\tget cmd");
+	}
+
 	if (OMPI_SUCCESS != ompi_unpack(buffer, &mode, 1, MCA_GPR_OOB_PACK_MODE)) {
 	    goto RETURN_ERROR;
 	}
@@ -597,6 +620,10 @@ void mca_gpr_replica_recv(int status, ompi_process_name_t* sender,
 	/*****     DELETE OBJECT     *****/
     } else if (MCA_GPR_DELETE_OBJECT_CMD == command) {
 
+	if (mca_gpr_replica_debug) {
+	    ompi_output(0, "\tdelete object cmd");
+	}
+
 	if (OMPI_SUCCESS != ompi_unpack(buffer, &mode, 1, MCA_GPR_OOB_PACK_MODE)) {
 	    goto RETURN_ERROR;
 	}
@@ -640,6 +667,10 @@ void mca_gpr_replica_recv(int status, ompi_process_name_t* sender,
 	/*****     INDEX     *****/
     } else if (MCA_GPR_INDEX_CMD == command) {
 
+	if (mca_gpr_replica_debug) {
+	    ompi_output(0, "\tindex cmd");
+	}
+
 	if (OMPI_SUCCESS != ompi_unpack(buffer, &mode, 1, MCA_GPR_OOB_PACK_MODE)) {
 	    goto RETURN_ERROR;
 	}
@@ -679,6 +710,10 @@ void mca_gpr_replica_recv(int status, ompi_process_name_t* sender,
 
 	/*****     SUBSCRIBE     *****/
     } else if (MCA_GPR_SUBSCRIBE_CMD == command) {
+
+	if (mca_gpr_replica_debug) {
+	    ompi_output(0, "\tsubscribe cmd");
+	}
 
 	if (OMPI_SUCCESS != ompi_unpack(buffer, &mode, 1, MCA_GPR_OOB_PACK_MODE)) {
 	    goto RETURN_ERROR;
@@ -748,6 +783,10 @@ void mca_gpr_replica_recv(int status, ompi_process_name_t* sender,
 
 	/*****     UNSUBSCRIBE     *****/
     } else if (MCA_GPR_UNSUBSCRIBE_CMD == command) {
+
+	if (mca_gpr_replica_debug) {
+	    ompi_output(0, "\tunsubscribe cmd");
+	}
 
 	if (OMPI_SUCCESS != ompi_unpack(buffer, &mode, 1, MCA_GPR_OOB_PACK_MODE)) {
 	    goto RETURN_ERROR;
@@ -825,6 +864,11 @@ void mca_gpr_replica_recv(int status, ompi_process_name_t* sender,
 
 	/*****     SYNCHRO     *****/
     } else if (MCA_GPR_SYNCHRO_CMD == command) {
+
+	if (mca_gpr_replica_debug) {
+	    ompi_output(0, "\tsynchro cmd");
+	}
+
 	if (OMPI_SUCCESS != ompi_unpack(buffer, &synchro_mode, 1, OMPI_INT32)) {
 	    goto RETURN_ERROR;
 	}
@@ -904,6 +948,10 @@ void mca_gpr_replica_recv(int status, ompi_process_name_t* sender,
 
 	/*****     CANCEL SYNCHRO    *****/
     } else if (MCA_GPR_CANCEL_SYNCHRO_CMD == command) {
+
+	if (mca_gpr_replica_debug) {
+	    ompi_output(0, "\tcancel synchro cmd");
+	}
 
 	if (OMPI_SUCCESS != ompi_unpack(buffer, &synchro_mode, 1, OMPI_INT32)) {
 	    goto RETURN_ERROR;
