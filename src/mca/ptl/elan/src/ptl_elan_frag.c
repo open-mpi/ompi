@@ -172,8 +172,11 @@ mca_ptl_elan_send_desc_done (
 		& MCA_PTL_FLAGS_ACK_MATCHED)
 	    || mca_pml_base_send_request_matched(req)) {
 
+#if 1
 	if(fetchNset(&desc->frag_progressed, 1) == 0)
-	/*if(ompi_atomic_fetch_and_set_int (&desc->frag_progressed, 1) == 0) */
+#else
+	if(ompi_atomic_fetch_and_set_int (&desc->frag_progressed, 1) == 0) 
+#endif
 	{
 	    ptl->super.ptl_send_progress(ptl, req, 
 		    header->hdr_frag.hdr_frag_length);

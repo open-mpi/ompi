@@ -51,13 +51,14 @@
 #define  PTL_ELAN_DEBUG_PUT     (0x200)
 #define  PTL_ELAN_DEBUG_GET     (0x400)
 #define  PTL_ELAN_DEBUG_CHAIN   (0x800)
-#define  PTL_ELAN_DEBUG_FLAG    PTL_ELAN_DEBUG_NONE
+
+#define  PTL_ELAN_DEBUG_FLAG (PTL_ELAN_DEBUG_GET|PTL_ELAN_DEBUG_ACK|PTL_ELAN_DEBUG_SEND)
 
 #define START_FUNC(flag)                                       \
 do {                                                           \
     if (PTL_ELAN_DEBUG_FLAG & flag) {                          \
 	char hostname[32]; gethostname(hostname, 32);          \
-	fprintf(stdout, "[%s:%s:%d] Entering ...\n",           \
+	fprintf(stderr, "[%s:%s:%d] Entering ...\n",           \
 	    hostname, __FUNCTION__, __LINE__);                 \
     }                                                          \
 } while (0) 
@@ -66,7 +67,7 @@ do {                                                           \
 do {                                                           \
     if (PTL_ELAN_DEBUG_FLAG & flag) {                          \
 	char hostname[32]; gethostname(hostname, 32);          \
-	fprintf(stdout, "[%s:%s:%d] Completes ...\n",          \
+	fprintf(stderr, "[%s:%s:%d] Completes ...\n",          \
 	    hostname, __FUNCTION__, __LINE__);                 \
     }                                                          \
 } while (0)
@@ -75,9 +76,9 @@ do {                                                           \
 do {                                                           \
     if (PTL_ELAN_DEBUG_FLAG & flag) {                          \
 	char hostname[32]; gethostname(hostname, 32);          \
-	fprintf(stdout, "[%s:%s:%d] ",                         \
+	fprintf(stderr, "[%s:%s:%d] ",                         \
 		hostname, __FUNCTION__, __LINE__);             \
-	fprintf(stdout, args);                                 \
+	fprintf(stderr, args);                                 \
     }                                                          \
 } while (0)
 
