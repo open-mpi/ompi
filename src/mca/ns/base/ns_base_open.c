@@ -33,6 +33,7 @@ mca_ns_base_module_t mca_ns_base_selected_module;
  */
 int mca_ns_base_open(void)
 {
+
   /* Open up all available modules */
 
   if (OMPI_SUCCESS != 

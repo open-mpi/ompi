@@ -31,6 +31,7 @@ struct ompi_proc_info_t {
 			    */
     pid_t pid;             /**< Local process ID for this process */
     ompi_process_name_t *name;  /**< Process name structure */
+    bool seed;             /**< Indicate whether or not this is seed daemon */
     char *universe_session_dir;  /**< Location of universe  temp dir.
 			    * The session directory has the form
 			    * <prefix><openmpi-sessions-user><universe>, where the prefix
