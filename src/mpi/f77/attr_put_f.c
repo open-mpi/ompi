@@ -50,7 +50,6 @@ void mpi_attr_put_f(MPI_Fint *comm, MPI_Fint *keyval, MPI_Fint *attribute_val,
 		    MPI_Fint *ierr)
 {
     MPI_Comm c_comm;
-    int *c_value;
 
     c_comm = MPI_Comm_f2c(*comm);
 
@@ -62,11 +61,7 @@ void mpi_attr_put_f(MPI_Fint *comm, MPI_Fint *keyval, MPI_Fint *attribute_val,
        possible that the C value is larger than the Fortran value.
        MPI says that we sign-extend in this case. */
 
-    c_value = (int *) *attribute_val;
     *ierr = OMPI_INT_2_FINT(MPI_Attr_put(c_comm, 
-					 OMPI_FINT_2_INT(*keyval), 
-					 attribute_val));
-    if (MPI_SUCCESS == *ierr) {
-        
-    }
+                                         OMPI_FINT_2_INT(*keyval), 
+                                         attribute_val));
 }
