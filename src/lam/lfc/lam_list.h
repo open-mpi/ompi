@@ -120,16 +120,16 @@ static inline lam_list_item_t* lam_list_get_end(lam_list_t* list)
 static inline lam_list_item_t *lam_list_remove_item
   (lam_list_t *list, lam_list_item_t *item)
 {
-#ifdef LAM_ENABLE_DEBUG
+#if LAM_ENABLE_DEBUG
     lam_list_item_t *item_ptr;
     bool found;
 #endif
 
-#ifdef LAM_ENABLE_DEBUG
+#if LAM_ENABLE_DEBUG
     found = false;
 #endif
 
-#ifdef LAM_ENABLE_DEBUG
+#if LAM_ENABLE_DEBUG
     /* check to see that the item is in the list */
     for (item_ptr = lam_list_get_first(list);
             item_ptr != lam_list_get_end(list);

@@ -175,7 +175,7 @@ lam_list_item_t *lam_list_remove_first(lam_list_t *list)
     /* reset the head next pointer */
     list->lam_list_head.lam_list_next=item->lam_list_next;
 
-#ifdef LAM_ENABLE_DEBUG
+#if LAM_ENABLE_DEBUG
     /* debug code */
     item->lam_list_prev=(lam_list_item_t *)NULL;
     item->lam_list_next=(lam_list_item_t *)NULL;
@@ -207,7 +207,7 @@ lam_list_item_t *lam_list_remove_last(lam_list_t *list)
     /* reset tail's previous pointer */
     list->lam_list_tail.lam_list_prev=item->lam_list_prev;
     
-#ifdef LAM_ENABLE_DEBUG
+#if LAM_ENABLE_DEBUG
     /* debug code */
     item->lam_list_next = item->lam_list_prev = (lam_list_item_t *)NULL;
 #endif
