@@ -154,8 +154,7 @@ void mca_ptl_ib_request_return(struct mca_ptl_base_module_t* ptl,
  *  on to the peer.
  */
 
-int mca_ptl_ib_send(
-    struct mca_ptl_base_module_t* ptl,
+int mca_ptl_ib_send( struct mca_ptl_base_module_t* ptl,
     struct mca_ptl_base_peer_t* ptl_peer,
     struct mca_pml_base_send_request_t* sendreq,
     size_t offset,
