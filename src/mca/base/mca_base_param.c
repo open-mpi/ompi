@@ -12,6 +12,8 @@
 #include "class/ompi_value_array.h"
 #include "class/ompi_hash_table.h"
 #include "attribute/attribute.h"
+#include "util/printf.h"
+#include "util/argv.h"
 #include "mca/mca.h"
 #include "mca/base/mca_base_param.h"
 #include "mca/base/mca_base_param_internal.h"
@@ -25,27 +27,45 @@
  * in ompi_info will provide an extern to see this variable.
  */
 ompi_value_array_t mca_base_params;
+ompi_list_t mca_base_param_file_values;
 
 
 /*
  * local variables
  */
-static char *mca_prefix = "OMPI_MCA_";
+static const char *mca_prefix = "OMPI_MCA_";
+static char *home = NULL;
 static bool initialized = false;
 
 
 /*
  * local functions
  */
+static int read_files(char *file_list);
 static int param_register(const char *type_name, const char *component_name, 
                           const char *param_name,
                           const char *mca_param_name,
                           mca_base_param_type_t type,
-                          mca_base_param_storage_t *default_value);
+                          mca_base_param_storage_t *default_value,
+                          mca_base_param_storage_t *file_value,
+                          mca_base_param_storage_t *override_value);
 static bool param_lookup(int index, mca_base_param_storage_t *storage,
                          ompi_hash_table_t *attrs);
+static bool lookup_keyvals(mca_base_param_t *param,
+                           mca_base_param_storage_t *storage,
+                           ompi_hash_table_t *attrs);
+static bool lookup_env(mca_base_param_t *param,
+                       mca_base_param_storage_t *storage);
+static bool lookup_file(mca_base_param_t *param,
+                        mca_base_param_storage_t *storage);
+static bool lookup_default(mca_base_param_t *param,
+                           mca_base_param_storage_t *storage);
+static bool set(mca_base_param_type_t type,
+                mca_base_param_storage_t *dest, mca_base_param_storage_t *src);
 static void param_constructor(mca_base_param_t *p);
 static void param_destructor(mca_base_param_t *p);
+static void fv_constructor(mca_base_param_file_value_t *p);
+static void fv_destructor(mca_base_param_file_value_t *p);
 
 
 /*
@@ -53,6 +73,57 @@ static void param_destructor(mca_base_param_t *p);
  */
 OBJ_CLASS_INSTANCE(mca_base_param_t, ompi_object_t, 
                    param_constructor, param_destructor);
+OBJ_CLASS_INSTANCE(mca_base_param_file_value_t, ompi_list_item_t,
+                   fv_constructor, fv_destructor);
+
+
+
+/*
+ * Set it up
+ */
+int mca_base_param_init(void)
+{
+    int id;
+    char *files;
+
+    if (!initialized) {
+
+        /* Init the value array for the param storage */
+
+        OBJ_CONSTRUCT(&mca_base_params, ompi_value_array_t);
+        ompi_value_array_init(&mca_base_params, sizeof(mca_base_param_t));
+
+        /* Init the file param value list */
+
+        OBJ_CONSTRUCT(&mca_base_param_file_values, ompi_list_t);
+
+        /* Set this before we register the parameter, below */
+
+        initialized = true;
+
+        /* We may need this later */
+
+        home = getenv("HOME");
+
+        /* Initialize a parameter that says where MCA param files can
+           be found */
+
+        asprintf(&files,
+                 "~/.openmpi/mca-params.conf:%s/openmpi-mca-params.conf",
+                 OMPI_SYSCONFDIR);
+        id = mca_base_param_register_string("base", NULL, "param_files",
+                                            "param_files", files);
+        free(files);
+
+        /* Read in MCA parameters from files */
+        
+        mca_base_param_lookup_string(id, &files);
+        read_files(files);
+        free(files);
+    }
+
+    return OMPI_SUCCESS;
+}
 
 
 /*
@@ -68,7 +139,7 @@ int mca_base_param_register_int(const char *type_name,
 
   storage.intval = default_value;
   return param_register(type_name, component_name, param_name, mca_param_name,
-                        MCA_BASE_PARAM_TYPE_INT, &storage);
+                        MCA_BASE_PARAM_TYPE_INT, &storage, NULL, NULL);
 }
 
 
@@ -88,7 +159,7 @@ int mca_base_param_register_string(const char *type_name,
     storage.stringval = NULL;
   }
   return param_register(type_name, component_name, param_name, mca_param_name,
-                        MCA_BASE_PARAM_TYPE_STRING, &storage);
+                        MCA_BASE_PARAM_TYPE_STRING, &storage, NULL, NULL);
 }
 
 
@@ -120,6 +191,7 @@ int mca_base_param_kv_associate(int index, int keyval)
 
   return OMPI_SUCCESS;
 }
+
 
 /*
  * Look up an integer MCA parameter.
@@ -153,6 +225,14 @@ int mca_base_param_kv_lookup_int(int index, ompi_hash_table_t *attrs,
 
 
 /*
+ * Set an integer parameter
+ */
+#if 0
+#error JMS: Need to figure out what to do here
+#endif
+
+
+/*
  * Look up a string MCA parameter.
  */
 int mca_base_param_lookup_string(int index, char **value)
@@ -181,6 +261,14 @@ int mca_base_param_kv_lookup_string(int index, ompi_hash_table_t *attrs,
   }
   return OMPI_ERROR;
 }
+
+
+/*
+ * Set an string parameter
+ */
+#if 0
+#error JMS: Need to figure out what to do here
+#endif
 
 
 /*
@@ -230,31 +318,62 @@ int mca_base_param_find(const char *type_name, const char *component_name,
  */
 int mca_base_param_finalize(void)
 {
-  mca_base_param_t *array;
+    ompi_list_item_t *item;
+    mca_base_param_t *array;
 
-  if (initialized) {
+    if (initialized) {
 
-    /* This is slow, but effective :-) */
+        /* This is slow, but effective :-) */
 
-    array = OMPI_VALUE_ARRAY_GET_BASE(&mca_base_params, mca_base_param_t);
-    while (0 < ompi_value_array_get_size(&mca_base_params)) {
-      OBJ_DESTRUCT(&array[0]);
-      ompi_value_array_remove_item(&mca_base_params, 0);
+        array = OMPI_VALUE_ARRAY_GET_BASE(&mca_base_params, mca_base_param_t);
+        while (ompi_value_array_get_size(&mca_base_params) > 0) {
+            OBJ_DESTRUCT(&array[0]);
+            ompi_value_array_remove_item(&mca_base_params, 0);
+        }
+        OBJ_DESTRUCT(&mca_base_params);
+
+        for (item = ompi_list_remove_first(&mca_base_param_file_values);
+             NULL != item;
+             item = ompi_list_remove_first(&mca_base_param_file_values)) {
+            OBJ_RELEASE(item);
+        }
+        OBJ_DESTRUCT(&mca_base_param_file_values);
+        initialized = false;
     }
-    OBJ_DESTRUCT(&mca_base_params);
-    initialized = false;
-  }
 
-  return OMPI_SUCCESS;
+    /* All done */
+
+    return OMPI_SUCCESS;
 }
 
 
 /*************************************************************************/
 
+static int read_files(char *file_list)
+{
+    int i;
+    char **files;
+
+    /* Iterate through all the files passed in -- read them in reverse
+       order so that we preserve unix/shell path-like semantics (i.e.,
+       the entries farthest to the left get precedence) */
+
+    files = ompi_argv_split(file_list, ':');
+    for (i = ompi_argv_count(files) - 1; i >= 0; --i) {
+        mca_base_parse_paramfile(files[i]);
+    }
+    ompi_argv_free(files);
+
+    return OMPI_SUCCESS;
+}
+
+
 static int param_register(const char *type_name, const char *component_name, 
                           const char *param_name, const char *mca_param_name,
                           mca_base_param_type_t type,
-                          mca_base_param_storage_t *default_value)
+                          mca_base_param_storage_t *default_value,
+                          mca_base_param_storage_t *file_value,
+                          mca_base_param_storage_t *override_value)
 {
   int ret;
   size_t i, len;
@@ -263,9 +382,7 @@ static int param_register(const char *type_name, const char *component_name,
   /* Initialize the array if it has never been initialized */
 
   if (!initialized) {
-    OBJ_CONSTRUCT(&mca_base_params, ompi_value_array_t);
-    ompi_value_array_init(&mca_base_params, sizeof(mca_base_param_t));
-    initialized = true;
+      mca_base_param_init();
   }
 
   /* Error check */
@@ -370,6 +487,34 @@ static int param_register(const char *type_name, const char *component_name,
     memset(&param.mbp_default_value, 0, sizeof(param.mbp_default_value));
   }
 
+  /* Figure out the file value; zero it out if a file is not
+     provided */
+
+  if (NULL != file_value) {
+    if (MCA_BASE_PARAM_TYPE_STRING == param.mbp_type &&
+        NULL != file_value->stringval) {
+      param.mbp_file_value.stringval = strdup(file_value->stringval);
+    } else {
+      param.mbp_file_value = *file_value;
+    }
+  } else {
+    memset(&param.mbp_file_value, 0, sizeof(param.mbp_file_value));
+  }
+
+  /* Figure out the override value; zero it out if a override is not
+     provided */
+
+  if (NULL != override_value) {
+    if (MCA_BASE_PARAM_TYPE_STRING == param.mbp_type &&
+        NULL != override_value->stringval) {
+      param.mbp_override_value.stringval = strdup(override_value->stringval);
+    } else {
+      param.mbp_override_value = *override_value;
+    }
+  } else {
+    memset(&param.mbp_override_value, 0, sizeof(param.mbp_override_value));
+  }
+
   /* See if this entry is already in the array */
 
   len = ompi_value_array_get_size(&mca_base_params);
@@ -380,9 +525,16 @@ static int param_register(const char *type_name, const char *component_name,
       /* We found an entry with the same param name.  Free the old
          value (if it was a string */
 
-      if (MCA_BASE_PARAM_TYPE_STRING == array[i].mbp_type &&
-          NULL != array[i].mbp_default_value.stringval) {
-        free(array[i].mbp_default_value.stringval);
+      if (MCA_BASE_PARAM_TYPE_STRING == array[i].mbp_type) {
+          if (NULL != array[i].mbp_default_value.stringval) {
+              free(array[i].mbp_default_value.stringval);
+          }
+          if (NULL != array[i].mbp_file_value.stringval) {
+              free(array[i].mbp_file_value.stringval);
+          }
+          if (NULL != array[i].mbp_override_value.stringval) {
+              free(array[i].mbp_override_value.stringval);
+          }
       }
 
       /* Now put in the new value */
@@ -394,9 +546,25 @@ static int param_register(const char *type_name, const char *component_name,
         } else {
           array[i].mbp_default_value.stringval = NULL;
         }
+        if (NULL != param.mbp_file_value.stringval) {
+          array[i].mbp_file_value.stringval =
+            strdup(param.mbp_file_value.stringval);
+        } else {
+          array[i].mbp_file_value.stringval = NULL;
+        }
+        if (NULL != param.mbp_override_value.stringval) {
+          array[i].mbp_override_value.stringval =
+            strdup(param.mbp_override_value.stringval);
+        } else {
+          array[i].mbp_override_value.stringval = NULL;
+        }
       } else {
           array[i].mbp_default_value.intval =
             param.mbp_default_value.intval;
+          array[i].mbp_file_value.intval =
+            param.mbp_file_value.intval;
+          array[i].mbp_override_value.intval =
+            param.mbp_override_value.intval;
       }
 
       /* Just in case we changed type */
@@ -422,43 +590,89 @@ static int param_register(const char *type_name, const char *component_name,
 
 
 /*
- * Lookup a parameter
+ * Lookup a parameter in multiple places
  */
 static bool param_lookup(int index, mca_base_param_storage_t *storage,
                          ompi_hash_table_t *attrs)
 {
-  size_t size;
-  char *env;
+    size_t size;
+    mca_base_param_t *array;
+    char *p, *q;
+
+    /* Lookup the index and see if it's valid */
+
+    if (!initialized) {
+        return false;
+    }
+    size = ompi_value_array_get_size(&mca_base_params);
+    if (index > size) {
+        return false;
+    }
+    array = OMPI_VALUE_ARRAY_GET_BASE(&mca_base_params, mca_base_param_t);
+
+    /* Ensure that MCA param has a good type */
+
+    if (MCA_BASE_PARAM_TYPE_INT != array[index].mbp_type &&
+        MCA_BASE_PARAM_TYPE_STRING != array[index].mbp_type) {
+        return false;
+    }
+
+    /* Check all the places that the param may be hiding, in priority
+       order */
+    
+    if (lookup_keyvals(&array[index], storage, attrs) ||
+        lookup_env(&array[index], storage) ||
+        lookup_file(&array[index], storage) ||
+        lookup_default(&array[index], storage)) {
+        
+        /* If we're returning a string, replace all instances of "~/"
+           with the user's home directory */
+
+        if (MCA_BASE_PARAM_TYPE_STRING == array[index].mbp_type &&
+            NULL != storage->stringval) {
+            if (0 == strncmp(storage->stringval, "~/", 2)) {
+                asprintf(&p, "%s/%s", home, storage->stringval + 2);
+                free(storage->stringval);
+                storage->stringval = p;
+            }
+
+            p = strstr(storage->stringval, ":~/");
+            while (NULL != p) {
+                *p = '\0';
+                asprintf(&q, "%s:%s%s", storage->stringval, home, p + 2);
+                free(storage->stringval);
+                storage->stringval = q;
+                p = strstr(storage->stringval, ":~/");
+            }
+        }
+
+        return true;
+    }
+
+    /* Didn't find it.  Doh! */
+  
+    return false;
+}
+
+
+/*
+ * Lookup a param in the set of attributes/keyvals
+ */
+static bool lookup_keyvals(mca_base_param_t *param,
+                           mca_base_param_storage_t *storage,
+                           ompi_hash_table_t *attrs)
+{
   int err, flag;
-  mca_base_param_t *array;
-
-  /* Lookup the index and see if it's valid */
-
-  if (!initialized) {
-    return false;
-  }
-  if (ompi_value_array_get_size(&mca_base_params) < index) {
-    return false;
-  }
-  size = ompi_value_array_get_size(&mca_base_params);
-  array = OMPI_VALUE_ARRAY_GET_BASE(&mca_base_params, mca_base_param_t);
-
-  /* Ensure that MCA param has a good type */
-
-  if (MCA_BASE_PARAM_TYPE_INT != array[index].mbp_type &&
-      MCA_BASE_PARAM_TYPE_STRING != array[index].mbp_type) {
-    return false;
-  }
 
   /* If this param has a keyval and we were provided with a hash
      table, look it up and see if we can find a value */
 
-  if (-1 != array[index].mbp_keyval) {
+  if (-1 != param->mbp_keyval) {
 
     /* Use the stringval member of the union because it's definitely
        big enough to handle both (int) and (char*) */
 
-    err = ompi_attr_get(attrs, array[index].mbp_keyval, 
+    err = ompi_attr_get(attrs, param->mbp_keyval, 
                         &storage->stringval, &flag);
     if (OMPI_SUCCESS == err && 1 == flag) {
 
@@ -466,7 +680,7 @@ static bool param_lookup(int index, mca_base_param_storage_t *storage,
          must grab the lower sizeof(int) bytes from the (char*) in
          stringval, in case sizeof(int) != sizeof(char*). */
 
-      if (MCA_BASE_PARAM_TYPE_INT == array[index].mbp_type) {
+      if (MCA_BASE_PARAM_TYPE_INT == param->mbp_type) {
         storage->intval = *((int *) (storage->stringval +
                                      sizeof(void *) - sizeof(int)));
       }
@@ -478,42 +692,122 @@ static bool param_lookup(int index, mca_base_param_storage_t *storage,
     }
   }
 
-  /* We either don't have a keyval or didn't find it.  So look in the
-     environment. */
+  /* Either this param has not keyval or we didn't find the keyval */
 
-  if (NULL != array[index].mbp_env_var_name &&
-      NULL != (env = getenv(array[index].mbp_env_var_name))) {
-    if (MCA_BASE_PARAM_TYPE_INT == array[index].mbp_type) {
+  return false;
+}
+
+
+/*
+ * Lookup a param in the environment
+ */
+static bool lookup_env(mca_base_param_t *param,
+                       mca_base_param_storage_t *storage)
+{
+  char *env;
+
+  if (NULL != param->mbp_env_var_name &&
+      NULL != (env = getenv(param->mbp_env_var_name))) {
+    if (MCA_BASE_PARAM_TYPE_INT == param->mbp_type) {
       storage->intval = atoi(env);
-    } else if (MCA_BASE_PARAM_TYPE_STRING == array[index].mbp_type) {
+    } else if (MCA_BASE_PARAM_TYPE_STRING == param->mbp_type) {
       storage->stringval = strdup(env);
     }
 
     return true;
   }
 
-  /* Didn't find it; use the default value. */
+  /* Didn't find it */
 
-  switch (array[index].mbp_type) {
-  case MCA_BASE_PARAM_TYPE_INT:
-    storage->intval = array[index].mbp_default_value.intval;
-    break;
+  return false;
+}
 
-  case MCA_BASE_PARAM_TYPE_STRING:
-    if (NULL != array[index].mbp_default_value.stringval) {
-      storage->stringval = strdup(array[index].mbp_default_value.stringval);
-    } else {
-      storage->stringval = NULL;
+
+/*
+ * Lookup a param in the files
+ */
+static bool lookup_file(mca_base_param_t *param,
+                        mca_base_param_storage_t *storage)
+{
+    ompi_list_item_t *item;
+    mca_base_param_file_value_t *fv;
+
+    /* See if we previously found a match from a file.  If so, just
+       return that */
+
+    if (param->mbp_file_value_set) {
+        return set(param->mbp_type, storage, &param->mbp_file_value);
     }
-    break;
 
-  default:
+    /* Scan through the list of values read in from files and try to
+       find a match.  If we do, cache it on the param (for future
+       lookups) and save it in the storage. */
+
+    for (item = ompi_list_get_first(&mca_base_param_file_values);
+         ompi_list_get_end(&mca_base_param_file_values) != item;
+         item = ompi_list_get_next(item)) {
+        fv = (mca_base_param_file_value_t *) item;
+        if (0 == strcmp(fv->mbpfv_param, param->mbp_full_name)) {
+            if (MCA_BASE_PARAM_TYPE_INT == param->mbp_type) {
+                if (NULL != fv->mbpfv_value) {
+                    param->mbp_file_value.intval = atoi(fv->mbpfv_value);
+                } else {
+                    param->mbp_file_value.intval = 0;
+                }
+            } else {
+                param->mbp_file_value.stringval = fv->mbpfv_value;
+                fv->mbpfv_value = NULL;
+            }
+            param->mbp_file_value_set = true;
+
+            /* Since this is now cached on the param, we might as well
+               remove it from the list and make future file lookups
+               faster */
+
+            ompi_list_remove_item(&mca_base_param_file_values, 
+                                  (ompi_list_item_t *) fv);
+            OBJ_RELEASE(fv);
+
+            return set(param->mbp_type, storage, &param->mbp_file_value);
+        }
+    }
+
     return false;
-  }
+}
 
-  /* All done */
 
-  return true;
+/*
+ * Return the default value for a param
+ */
+static bool lookup_default(mca_base_param_t *param,
+                           mca_base_param_storage_t *storage)
+{
+    return set(param->mbp_type, storage, &param->mbp_default_value);
+}
+
+
+static bool set(mca_base_param_type_t type,
+                mca_base_param_storage_t *dest, mca_base_param_storage_t *src)
+{
+    switch (type) {
+    case MCA_BASE_PARAM_TYPE_INT:
+        dest->intval = src->intval;
+        break;
+        
+    case MCA_BASE_PARAM_TYPE_STRING:
+        if (NULL != src->stringval) {
+            dest->stringval = strdup(src->stringval);
+        } else {
+            dest->stringval = NULL;
+        }
+        break;
+        
+    default:
+        return false;
+        break;
+    }
+
+    return true;
 }
 
 
@@ -522,16 +816,21 @@ static bool param_lookup(int index, mca_base_param_storage_t *storage,
  */
 static void param_constructor(mca_base_param_t *p)
 {
-  p->mbp_type = MCA_BASE_PARAM_TYPE_MAX;
+    p->mbp_type = MCA_BASE_PARAM_TYPE_MAX;
 
-  p->mbp_type_name = NULL;
-  p->mbp_component_name = NULL;
-  p->mbp_param_name = NULL;
-  p->mbp_full_name = NULL;
+    p->mbp_type_name = NULL;
+    p->mbp_component_name = NULL;
+    p->mbp_param_name = NULL;
+    p->mbp_full_name = NULL;
 
-  p->mbp_keyval = -1;
-  p->mbp_env_var_name = NULL;
-  p->mbp_default_value.stringval = NULL;
+    p->mbp_keyval = -1;
+    p->mbp_env_var_name = NULL;
+
+    p->mbp_default_value.stringval = NULL;
+    p->mbp_file_value_set = false;
+    p->mbp_file_value.stringval = NULL;
+    p->mbp_override_value_set = false;
+    p->mbp_override_value.stringval = NULL;
 }
 
 
@@ -540,23 +839,50 @@ static void param_constructor(mca_base_param_t *p)
  */
 static void param_destructor(mca_base_param_t *p)
 {
-  if (NULL != p->mbp_type_name) {
-    free(p->mbp_type_name);
-  }
-  if (NULL != p->mbp_component_name) {
-    free(p->mbp_component_name);
-  }
-  if (NULL != p->mbp_param_name) {
-    free(p->mbp_param_name);
-  }
-  if (NULL != p->mbp_env_var_name) {
-    free(p->mbp_env_var_name);
-  }
-  if (NULL != p->mbp_full_name) {
-    free(p->mbp_full_name);
-  }
-  if (MCA_BASE_PARAM_TYPE_STRING == p->mbp_type &&
-      NULL != p->mbp_default_value.stringval) {
-    free(p->mbp_default_value.stringval);
-  }
+    if (NULL != p->mbp_type_name) {
+        free(p->mbp_type_name);
+    }
+    if (NULL != p->mbp_component_name) {
+        free(p->mbp_component_name);
+    }
+    if (NULL != p->mbp_param_name) {
+        free(p->mbp_param_name);
+    }
+    if (NULL != p->mbp_env_var_name) {
+        free(p->mbp_env_var_name);
+    }
+    if (NULL != p->mbp_full_name) {
+        free(p->mbp_full_name);
+    }
+    if (MCA_BASE_PARAM_TYPE_STRING == p->mbp_type) {
+        if (NULL != p->mbp_default_value.stringval) {
+            free(p->mbp_default_value.stringval);
+        }
+        if (p->mbp_file_value_set &&
+            NULL != p->mbp_file_value.stringval) {
+            free(p->mbp_file_value.stringval);
+        }
+        if (p->mbp_override_value_set && 
+            NULL != p->mbp_override_value.stringval) {
+            free(p->mbp_override_value.stringval);
+        }
+    }
+}
+
+
+static void fv_constructor(mca_base_param_file_value_t *f)
+{
+    f->mbpfv_param = NULL;
+    f->mbpfv_value = NULL;
+}
+
+
+static void fv_destructor(mca_base_param_file_value_t *f)
+{
+    if (NULL != f->mbpfv_param) {
+        free(f->mbpfv_param);
+    }
+    if (NULL != f->mbpfv_value) {
+        free(f->mbpfv_value);
+    }
 }

@@ -7,7 +7,11 @@ include $(top_srcdir)/config/Makefile.options
 # Need this so that the base knows where to load dynamic components from
 # (by default)
 
-AM_CPPFLAGS = -DOMPI_PKGLIBDIR=\"$(pkglibdir)\"
+AM_CPPFLAGS = \
+        -DOMPI_PKGLIBDIR=\"$(pkglibdir)\" \
+        -DOMPI_SYSCONFDIR=\"$(sysconfdir)\"
+AM_LFLAGS = -Pmca_base_yy
+LEX_OUTPUT_ROOT = lex.mca_base_yy
 
 noinst_LTLIBRARIES = libmca_base.la
 
@@ -19,7 +23,14 @@ headers = \
         mca_base_msgbuf.h \
         mca_base_msgbuf_internal.h \
         mca_base_param.h \
-        mca_base_param_internal.h
+        mca_base_param_internal.h \
+        mca_base_parse_paramfile_lex.h
+
+# Test program -- to be removed
+
+noinst_PROGRAMS = paramparse
+paramparse_SOURCES = paramparse.c
+paramparse_LDADD = libmca_base.la
 
 # Library
 
@@ -37,7 +48,9 @@ libmca_base_la_SOURCES = \
         mca_base_module_exchange.c \
         mca_base_msgbuf.c \
         mca_base_open.c \
-        mca_base_param.c
+        mca_base_param.c \
+        mca_base_parse_paramfile.c \
+        mca_base_parse_paramfile_lex.l
 
 
 # Conditionally install the header files

@@ -85,13 +85,16 @@ void ompi_info::open_components()
     }
   }
 
+  // Open up the MCA
+
+  mca_base_open();
+
   // Register the MPI layer's MCA parameters
 
   ompi_mpi_register_params();
 
   // Find / open all components
 
-  mca_base_open();
   component_map["base"] = NULL;
 
   mca_allocator_base_open();

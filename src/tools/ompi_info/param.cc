@@ -12,6 +12,7 @@
 #include <sys/param.h>
 
 #include "class/ompi_value_array.h"
+#include "util/printf.h"
 #include "mca/base/mca_base_param.h"
 #include "mca/base/mca_base_param_internal.h"
 #include "tools/ompi_info/ompi_info.h"
@@ -100,9 +101,10 @@ void ompi_info::show_mca_params(const string& type, const string& component,
                               const string& param)
 {
   size_t i, size;
-  char *default_value_string, temp[BUFSIZ];
+  char *value_string, empty[] = "\0";
   string message, content;
   mca_base_param_t *item;
+  int value_int;
 
   size = ompi_value_array_get_size(&mca_base_params);
   if (0 == size) {
@@ -118,20 +120,25 @@ void ompi_info::show_mca_params(const string& type, const string& component,
            component == item->mbp_component_name)) {
         if (param == param_all || param == item->mbp_param_name) {
 
-          // Make a string for the default value
+          // Make a string for the default value.  Invoke a lookup
+          // because it may transform the string ("~/" -> "<home
+          // dir>/") or get the value from the
+          // environment, a file, etc.
 
-          temp[0] = '\0';
-          if (item->mbp_type == MCA_BASE_PARAM_TYPE_STRING) {
-            if (item->mbp_default_value.stringval != NULL)
-              default_value_string = item->mbp_default_value.stringval;
-            else
-              default_value_string = temp;
+          if (MCA_BASE_PARAM_TYPE_STRING == item->mbp_type) {
+            mca_base_param_lookup_string(i, &value_string);
+
+            // Can't let the string be NULL because we assign it to a
+            // std::string, below
+
+            if (NULL == value_string) {
+              value_string = empty;
+            }
           } else {
-            default_value_string = temp;
-            snprintf(default_value_string, BUFSIZ, "%d", 
-                     item->mbp_default_value.intval);
+            mca_base_param_lookup_int(i, &value_int);
+            asprintf(&value_string, "%d", value_int);
           }
-          content = default_value_string;
+          content = value_string;
 
           // Build up the strings to output.
 
@@ -148,11 +155,11 @@ void ompi_info::show_mca_params(const string& type, const string& component,
             content += (item->mbp_env_var_name != NULL) ?
               "\" (default: " : "\" (value: ";
 
-            if (strlen(default_value_string) == 0)
+            if (strlen(value_string) == 0)
               content += "<none>)";
             else {
               content += "\"";
-              content += default_value_string;
+              content += value_string;
               content += "\")";
             }
 
@@ -175,9 +182,15 @@ void ompi_info::show_mca_params(const string& type, const string& component,
 
             message += item->mbp_full_name;
 
-            content = default_value_string;
+            content = value_string;
 
             out(message, message, content);
+          }
+
+          // If we allocated the string, then free it
+
+          if (value_string != empty) {
+            free(value_string);
           }
         }
       }

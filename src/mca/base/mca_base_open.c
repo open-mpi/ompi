@@ -9,6 +9,7 @@
 #include <syslog.h>
 
 #include "util/output.h"
+#include "util/printf.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
 
@@ -41,11 +42,17 @@ int mca_base_open(void)
     return OMPI_SUCCESS;
   }
 
+  /* Setup the parameter system */
+
+  mca_base_param_init();
+
   /* Register some params */
 
+  asprintf(&value, "%s:~/.openmpi/components", OMPI_PKGLIBDIR);
   mca_base_param_component_path = 
     mca_base_param_register_string("base", NULL, "component_path",
-                                   "component_path", OMPI_PKGLIBDIR);
+                                   "component_path", value);
+  free(value);
   param_index = mca_base_param_register_string("base", NULL, "verbose",
                                                "verbose", NULL);
 
@@ -55,6 +62,7 @@ int mca_base_open(void)
   memset(&lds, 0, sizeof(lds));
   if (NULL != value) {
     parse_verbose(value, &lds);
+    free(value);
   } else {
     set_defaults(&lds);
   }
