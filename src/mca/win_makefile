@@ -21,7 +21,7 @@
 topdir := $(shell cygpath -m $(CURDIR))/../..
 gen_base = ${topdir}/src/win32/generated_include
 copy_base = ${topdir}/src/mca/
-prefix = ${topdir}/Debug
+prefix = ${topdir}/src/Debug
 installdir = ${prefix}/lib
 
 # list of components to build with the c compiler
@@ -41,11 +41,11 @@ CPP_SUBDIRS = \
         allocator/basic \
         ptl/self \
         ptl/tcp/src \
-        oob/tcp/ \
+        oob/tcp \
         pml/teg/src \
         ns/replica/src \
-        gpr/proxy/ \
-        gpr/replica/
+        gpr/proxy \
+        gpr/replica
 
 #list of components that are not working as yet
 CPP_EXCLUDE = pcm/wmi
@@ -151,19 +151,21 @@ cpplibs: ${CPP_SUBDIRS} prebuild
 	    (libname=`echo mca_$${dirs}.dll | sed 's/\/src[\/]*//g' | sed 's/\//_/g' | sed 's/_\./\./g'` ; cd $$dirs; ${CC} ${CPPFLAGS} ${INCL} *.c; ${LINK} ${LINKFLAGS} ${ADDLIBS} /OUT:$${libname} *.obj); \
 	done
 
-install:
+install: win_makefile
 	@echo -n "Installing components ......................."
 	@for dirs in ${CPP_SUBDIRS}; do \
 	    (dll=`echo mca_$${dirs}.dll | sed 's/\/src//g' | sed 's/\//_/g'`; exp=`echo $${dll} | sed 's/dll/exp/g`;  lib=`echo $${dll} | sed 's/dll/lib/g`; \
-        install -p ${CURDIR}/$${dirs}/$${dll} ${install_dir}/$${dll}; \
-        if test -f ${CURDIR}/$${dirs}/$${lib}; then install -c ${CURDIR}/$${dirs}/$${lib} ${install_dir}/$${lib}; fi; \
-        if test -f ${CURDIR}/$${dirs}/$${exp}; then install -c ${CURDIR}/$${dirs}/$${exp} ${install_dir}/$${exp}; fi;); \
+        install -d ${CURDIR}/$${dirs}/ ${installdir}; \
+        install -p ${CURDIR}/$${dirs}/$${dll} ${installdir}/$${dll}; \
+        if test -f ${CURDIR}/$${dirs}/$${lib}; then install -p ${CURDIR}/$${dirs}/$${lib} ${installdir}/$${lib}; fi; \
+        if test -f ${CURDIR}/$${dirs}/$${exp}; then install -p ${CURDIR}/$${dirs}/$${exp} ${installdir}/$${exp}; fi;); \
 	done
 	@for dirs in ${C_SUBDIRS}; do \
 	    (dll=`echo mca_$${dirs}.dll | sed 's/\/src//g' | sed 's/\//_/g'`; exp=`echo $${dll} | sed 's/dll/exp/g`;  lib=`echo $${dll} | sed 's/dll/lib/g`; \
-        install -p ${CURDIR}/$${dirs}/$${dll} ${install_dir}/$${dll}; \
-        if test -f ${CURDIR}/$${dirs}/$${lib}; then install -c ${CURDIR}/$${dirs}/$${lib} ${install_dir}/$${lib}; fi; \
-        if test -f ${CURDIR}/$${dirs}/$${exp}; then install -c ${CURDIR}/$${dirs}/$${exp} ${install_dir}/$${exp}; fi;); \
+        install -d ${CURDIR}/$${dirs}/ ${installdir}; \
+        install -p ${CURDIR}/$${dirs}/$${dll} ${installdir}/$${dll}; \
+        if test -f ${CURDIR}/$${dirs}/$${lib}; then install -p ${CURDIR}/$${dirs}/$${lib} ${installdir}/$${lib}; fi; \
+        if test -f ${CURDIR}/$${dirs}/$${exp}; then install -p ${CURDIR}/$${dirs}/$${exp} ${installdir}/$${exp}; fi;); \
 	done
 	@echo "done"
     
