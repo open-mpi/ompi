@@ -1,4 +1,4 @@
-AUTOMAKE_OPTIONS = foreign no-dependencies
+include $(top_srcdir)/config/Makefile.options
 
 # LAM Get the dirs where lam_config.h and lam_config_bottom.h live.
 # Also specify where we can find this package's config.h because some
@@ -13,9 +13,13 @@ AM_CPPFLAGS = \
 CFLAGS = -Wall @CFLAGS@
 # LAM: No need to build the sample or test
 #SUBDIRS = . sample test
+SUBDIRS = compat
 
-EXTRA_DIST = acconfig.h err.c event.h evsignal.h event.3 kqueue.c \
-	epoll_sub.c epoll.c select.c rtsig.c poll.c signal.c \
+EXTRA_DIST = err.c event.h evsignal.h event.3 kqueue.c \
+	epoll_sub.c epoll.c select.c rtsig.c poll.c signal.c
+
+# LAM: This causes problems
+junk =
 	sample/Makefile.am sample/Makefile.in sample/event-test.c \
 	sample/signal-test.c sample/time-test.c \
 	test/Makefile.am test/Makefile.in test/bench.c test/regress.c \
@@ -37,11 +41,6 @@ noinst_LTLIBRARIES = libevent.la
 objects = $(LAM_LIBEVENT_SOURCES:.c=.lo)
 
 # LAM: Changed to libevent_la_*
-libevent_la_SOURCES = event.c 
+libevent_la_SOURCES = event.c event.h
 libevent_la_LIBADD = $(objects)
 libevent_la_DEPENDENCIES = $(objects)
-include_HEADERS = event.h
-
-man_MANS = event.3
-
-DISTCLEANFILES = *~
