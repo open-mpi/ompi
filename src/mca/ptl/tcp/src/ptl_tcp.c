@@ -117,7 +117,7 @@ int mca_ptl_tcp_add_procs(
         if(rc != OMPI_SUCCESS) {
             OBJ_RELEASE(ptl_peer);
             OMPI_THREAD_UNLOCK(&ptl_proc->proc_lock);
-            return rc;
+            continue;  /* UNREACHABLE it's not a problem, others PTL can be used to send the data */
         }
         /* do we need to convert to/from network byte order */
         if(ompi_proc->proc_arch != proc_self->proc_arch)
