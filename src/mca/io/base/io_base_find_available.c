@@ -42,9 +42,9 @@ static int init_query_1_0_0(const mca_base_component_t *ls,
  * Close all components who do not want to be considered for selection,
  * and destroy the opened list.
  *
- * Also find the basic component while we're doing all of this, and save
- * it in a global variable so that we can find it easily later (e.g.,
- * during scope selection).
+ * It is *not* an error if there are no io components available.
+ * Appropriate run-time MPI exceptions will be invoked during
+ * MPI_FILE_OPEN and MPI_FILE_DELETE.
  */
 int mca_io_base_find_available(bool *allow_multi_user_threads,
                                bool *have_hidden_threads)
@@ -108,18 +108,6 @@ int mca_io_base_find_available(bool *allow_multi_user_threads,
     
     OBJ_DESTRUCT(&mca_io_base_components_opened);
     mca_io_base_components_opened_valid = false;
-
-    /* If we have no io components available, it's an error.  Thanks
-       for playing! */
-    
-    if (!found) {
-        OBJ_DESTRUCT(&mca_io_base_components_available);
-        mca_io_base_components_available_valid = false;
-        ompi_output_verbose(10, mca_io_base_output,
-                            "io:find_available: no io components available!");
-        /* JMS show_help */
-        return OMPI_ERROR;
-    }
 
     /* All done */
 

@@ -507,6 +507,12 @@ if test -z "$ARCH" -a -x $srcdir/util/tarch ; then
        print_error "       set an architecture type with -arch=<value>"
        exit 1
     fi
+    # Open MPI: -arch=freebsd doesn't work as a configure flag anymore
+    # now that we've updated to a modern autoconf.  So add a test here
+    # to do a tech and see if we're on a freebsd-like platform.
+    if test "$ARCH" = "Macintosh"; then
+       ARCH="freebsd"
+    fi
     eval "arch_$ARCH=1"
     AC_MSG_RESULT($ARCH)
 fi
