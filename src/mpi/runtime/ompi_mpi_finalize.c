@@ -53,9 +53,9 @@
 #include "mca/gpr/gpr.h"
 #include "mca/rml/rml.h"
 #include "mca/soh/soh.h"
+#include "mca/soh/base/base.h"
 #include "mca/errmgr/errmgr.h"
 #include "mca/mpool/base/base.h"
-
 
 
 int ompi_mpi_finalize(void)

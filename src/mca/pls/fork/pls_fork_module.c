@@ -45,6 +45,7 @@
 #include "mca/rmaps/base/base.h"
 #include "mca/rmaps/base/rmaps_base_map.h"
 #include "mca/soh/soh.h"
+#include "mca/soh/base/base.h"
 #include "pls_fork.h"
 
 

@@ -137,12 +137,4 @@ typedef orte_soh_base_component_1_0_0_t orte_soh_base_component_t;
   /* soh v1.0 */ \
   "soh", 1, 0, 0
 
-/**
-  * Global structure for accessing SOH functions
-  */
-
-OMPI_DECLSPEC extern orte_soh_base_module_t orte_soh;  /* holds selected module's function pointers */
-
-
-
 #endif /* ORTE_SOH_H */
