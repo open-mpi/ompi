@@ -10,7 +10,7 @@
 
 # Init autoconf
 
-AC_INIT(./src/mpi/c/d_get_name.c)
+AC_INIT(./src/mpi/c/datatype_get_name.c)
 AC_PREREQ(2.52)
 AC_CONFIG_AUX_DIR(./config)
 

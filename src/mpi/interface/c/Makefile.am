@@ -13,8 +13,8 @@ SUBDIRS			= profile
 lib_LTLIBRARIES		= libmpi_c.la
 
 libmpi_c_la_SOURCES	= \
-			c_get_name.c \
-			c_set_name.c \
-			d_get_name.c \
-			d_set_name.c
+			comm_get_name.c \
+			comm_set_name.c \
+			datatype_get_name.c \
+			datatype_set_name.c
 libmpi_c_la_LIBADD	= profile/libmpi_c_profile.la

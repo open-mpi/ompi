@@ -11,10 +11,10 @@ include $(top_srcdir)/config/Makefile.options
 noinst_LTLIBRARIES	= libmpi_f77_profile.la
 
 nodist_libmpi_f77_profile_la_SOURCES= \
-			pc_get_name_f.c \
-			pc_set_name_f.c \
-			pd_get_name_f.c \
-			pd_set_name_f.c
+			pcomm_get_name_f.c \
+			pcomm_set_name_f.c \
+			pdatatype_get_name_f.c \
+			pdatatype_set_name_f.c
 
 # Sym link in the sources from the real MPI directory
 
