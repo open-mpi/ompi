@@ -114,9 +114,9 @@ mca_ptl_elan_putget_desc_contruct (
 	E4_Addr dst_elan4_addr, 
 	int local /* dma_src is local */ )
 {
-    ELAN4_CTX *ctx, 
+    ELAN4_CTX *ctx;
 
-    ctx = ptl->ptl_elan_ctx;
+    ctx = (ELAN4_CTX *)ptl->ptl_elan_ctx;
     memset(desc, 0, sizeof(desc));
     desc->ptl = ptl;
     desc->req = NULL;
@@ -149,7 +149,7 @@ mca_ptl_elan_putget_desc_contruct (
     mb();
 }
 
-#define OMPI_ELAN_PUTGET_GROW(ctx, flist, frag, dp, eptr, msize, esize, local)\
+#define OMPI_ELAN_PUTGET_GROW(ptl, flist, frag, dp, eptr, msize, esize, local)\
 do {                                                                      \
     int i;                                                                \
     for (i = 0; i < flist->fl_num_per_alloc; i++) {                       \
@@ -158,7 +158,7 @@ do {                                                                      \
         frag->desc = (ompi_ptl_elan_base_desc_t *)dp;                     \
                                                                           \
         /* Initialize some of the dma structures */                       \
-	mca_ptl_elan_putget_desc_contruct (ctx, dp,                       \
+	mca_ptl_elan_putget_desc_contruct (ptl, dp,                       \
 		eptr, 0, 0, local);                                       \
                                                                           \
         item = (ompi_list_item_t *) frag;                                 \
@@ -222,7 +222,7 @@ ompi_ptl_elan_init_putget_ctrl (mca_ptl_elan_module_t * ptl,
     put_desc = (ompi_ptl_elan_putget_desc_t *) elan4_allocMain (
 	    rail->r_alloc, main_align, main_size * inc_num);
     OMPI_PTL_ELAN_CHECK_UNEX (put_desc, NULL, OMPI_ERROR, 0);
-    OMPI_ELAN_PUTGET_GROW(ctx, put_list, frag, put_desc, elan_ptr, 
+    OMPI_ELAN_PUTGET_GROW(ptl, put_list, frag, put_desc, elan_ptr, 
 	    main_size, elan_size, 1);
 
     OBJ_CONSTRUCT (&putget->get_desc_free, ompi_free_list_t);
@@ -242,7 +242,7 @@ ompi_ptl_elan_init_putget_ctrl (mca_ptl_elan_module_t * ptl,
     get_desc = (ompi_ptl_elan_putget_desc_t *) elan4_allocMain (
 	    rail->r_alloc, main_align, main_size * inc_num);
     OMPI_PTL_ELAN_CHECK_UNEX (get_desc, NULL, OMPI_ERROR, 0);
-    OMPI_ELAN_PUTGET_GROW(ctx, get_list, frag, get_desc, elan_ptr, 
+    OMPI_ELAN_PUTGET_GROW(ptl, get_list, frag, get_desc, elan_ptr, 
 	    main_size, elan_size, 0);
     END_FUNC (PTL_ELAN_DEBUG_INIT);
     return OMPI_SUCCESS;
