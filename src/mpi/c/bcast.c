@@ -26,6 +26,7 @@ int MPI_Bcast(void *buffer, int count, MPI_Datatype datatype,
     int err;
 
     if (MPI_PARAM_CHECK) {
+      err = MPI_SUCCESS;
       OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
       if (ompi_comm_invalid(comm)) {
 	return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
@@ -34,13 +35,8 @@ int MPI_Bcast(void *buffer, int count, MPI_Datatype datatype,
 
       /* Errors for all ranks */
 
-      if (MPI_DATATYPE_NULL == datatype) {
-	return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TYPE, FUNC_NAME);
-      }
-    
-      if (count < 0) {
-	return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COUNT, FUNC_NAME);
-      }
+      OMPI_CHECK_DATATYPE_FOR_SEND(err, datatype, count);
+      OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
 
       /* Errors for intracommunicators */
 
@@ -54,7 +50,7 @@ int MPI_Bcast(void *buffer, int count, MPI_Datatype datatype,
 
       else {
         if (! ((root >= 0 && root < ompi_comm_remote_size(comm)) ||
-               root == MPI_ROOT || root == MPI_PROC_NULL)) {
+               MPI_ROOT == root || MPI_PROC_NULL == root)) {
 	  return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ROOT, FUNC_NAME);
         }
       } 
@@ -68,7 +64,7 @@ int MPI_Bcast(void *buffer, int count, MPI_Datatype datatype,
 
     /* Can we optimize? */
 
-    if (count == 0 && comm->c_coll.coll_bcast_optimization) {
+    if (count == 0) {
       return MPI_SUCCESS;
     }
 

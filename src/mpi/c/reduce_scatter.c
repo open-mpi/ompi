@@ -28,6 +28,7 @@ int MPI_Reduce_scatter(void *sendbuf, void *recvbuf, int *recvcounts,
     int i, err, size;
 
     if (MPI_PARAM_CHECK) {
+        err = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (ompi_comm_invalid(comm)) {
 	    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
@@ -37,32 +38,26 @@ int MPI_Reduce_scatter(void *sendbuf, void *recvbuf, int *recvcounts,
         /* Unrooted operation; same checks for all ranks on both
            intracommunicators and intercommunicators */
 	
-        if (MPI_DATATYPE_NULL == datatype) {
-          return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TYPE, FUNC_NAME);
+        else if (MPI_OP_NULL == op) {
+          err = MPI_ERR_OP;
+        } else if (ompi_op_is_intrinsic(op) && 
+                   datatype->id < DT_MAX_PREDEFINED &&
+                   -1 == ompi_op_ddt_map[datatype->id]) {
+          err = MPI_ERR_OP;
+        } else if (NULL == recvcounts) {
+          err = MPI_ERR_COUNT;
         }
-	
-        if (MPI_OP_NULL == op) {
-          return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_OP, FUNC_NAME);
-        }
+        OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
 
-        if (ompi_op_is_intrinsic(op) && datatype->id < DT_MAX_PREDEFINED &&
-            -1 == ompi_op_ddt_map[datatype->id]) {
-          return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_OP, FUNC_NAME);
-        }
+      /* We always define the remote group to be the same as the local
+         group in the case of an intracommunicator, so it's safe to
+         get the size of the remote group here for both intra- and
+         intercommunicators */
 
-        if (NULL == recvcounts) {
-          return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COUNT, FUNC_NAME);
-        }
-
-        if (OMPI_COMM_IS_INTRA(comm)) {
-          size = ompi_comm_size(comm);
-        } else {
-          size = ompi_comm_remote_size(comm);
-        }
+        size = ompi_comm_remote_size(comm);
         for (i = 0; i < size; ++i) {
-          if (recvcounts[i] < 0) {
-            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COUNT, FUNC_NAME);
-          }
+          OMPI_CHECK_DATATYPE_FOR_SEND(err, datatype, recvcounts[i]);
+          OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
         }
     }
 

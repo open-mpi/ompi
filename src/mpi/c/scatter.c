@@ -28,6 +28,7 @@ int MPI_Scatter(void *sendbuf, int sendcount, MPI_Datatype sendtype,
     int err;
     
     if (MPI_PARAM_CHECK) {
+        err = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (ompi_comm_invalid(comm)) {
 	    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
@@ -41,15 +42,11 @@ int MPI_Scatter(void *sendbuf, int sendcount, MPI_Datatype sendtype,
           /* Errors for all ranks */
 
           if ((root >= ompi_comm_size(comm)) || (root < 0)) {
-            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ROOT, FUNC_NAME);
-          }
-
-          if (recvcount < 0) {
-            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COUNT, FUNC_NAME);
-          }
-
-          if (recvtype == MPI_DATATYPE_NULL) {
-            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TYPE, FUNC_NAME); 
+            err = MPI_ERR_ROOT;
+          } else if (recvcount < 0) {
+            err = MPI_ERR_COUNT;
+          } else if (MPI_DATATYPE_NULL == recvtype) {
+            err = MPI_ERR_TYPE;
           }
 
           /* Errors for the root.  Some of these could have been
@@ -58,34 +55,27 @@ int MPI_Scatter(void *sendbuf, int sendcount, MPI_Datatype sendtype,
              run time) for efficiency, it's more clear to separate
              them out into individual tests. */
 
-          if (ompi_comm_rank(comm) == root) {
-            if (sendtype == MPI_DATATYPE_NULL) {
-              return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TYPE, FUNC_NAME); 
-            }
-
-            if (sendcount < 0) {
-              return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COUNT, FUNC_NAME);
-            }
+          else if (ompi_comm_rank(comm) == root) {
+            OMPI_CHECK_DATATYPE_FOR_SEND(err, sendtype, sendcount);
           }
+          OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
         }
 
         /* Errors for intercommunicators */
 
         else {
           if (! ((root >= 0 && root < ompi_comm_remote_size(comm)) ||
-                 root == MPI_ROOT || root == MPI_PROC_NULL)) {
-            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ROOT, FUNC_NAME);
+                 MPI_ROOT == root || MPI_PROC_NULL == root)) {
+            err = MPI_ERR_ROOT;
           }
 
           /* Errors for the receivers */
 
-          if (root != MPI_ROOT && root != MPI_PROC_NULL) {
+          else if (MPI_ROOT != root && MPI_PROC_NULL != root) {
             if (recvcount < 0) {
-              return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COUNT, FUNC_NAME);
-            }
-
-            if (recvtype == MPI_DATATYPE_NULL) {
-              return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TYPE, FUNC_NAME); 
+              err = MPI_ERR_COUNT;
+            } else if (MPI_DATATYPE_NULL == recvtype) {
+              err = MPI_ERR_TYPE;
             }
           }
 
@@ -94,14 +84,9 @@ int MPI_Scatter(void *sendbuf, int sendcount, MPI_Datatype sendtype,
              make the code easier to read. */
 
           else if (MPI_ROOT == root) {
-            if (sendcount < 0) {
-              return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COUNT, FUNC_NAME);
-            }
-
-            if (sendtype == MPI_DATATYPE_NULL) {
-              return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TYPE, FUNC_NAME); 
-            }
+            OMPI_CHECK_DATATYPE_FOR_SEND(err, sendtype, sendcount);
           }
+          OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
         }
     }
 

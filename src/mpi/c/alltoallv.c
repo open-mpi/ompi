@@ -32,6 +32,7 @@ int MPI_Alltoallv(void *sendbuf, int *sendcounts, int *sdispls,
 
       /* Unrooted operation -- same checks for all ranks */
 
+      err = MPI_SUCCESS;
       OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
       if (ompi_comm_invalid(comm)) {
 	return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
@@ -43,24 +44,21 @@ int MPI_Alltoallv(void *sendbuf, int *sendcounts, int *sdispls,
         return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
       }
 
-      if ((MPI_DATATYPE_NULL == sendtype) || 
-          (MPI_DATATYPE_NULL == recvtype)) {
-        return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TYPE, FUNC_NAME);
-      }
-
-      /* Use a different size for intracommunicators and
+      /* We always define the remote group to be the same as the local
+         group in the case of an intracommunicator, so it's safe to
+         get the size of the remote group here for both intra- and
          intercommunicators */
 
-      if (OMPI_COMM_IS_INTRA(comm)) {
-        size = ompi_comm_size(comm);
-      } else {
-        size = ompi_comm_remote_size(comm);
-      }
-
+      size = ompi_comm_remote_size(comm);
       for (i = 0; i < size; ++i) {
-        if ((sendcounts[i] < 0) || (recvcounts[i] < 0)) {
-          return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COUNT, FUNC_NAME);
+        if (recvcounts[i] < 0) {
+          err = MPI_ERR_COUNT;
+        } else if (MPI_DATATYPE_NULL == recvtype) {
+          err = MPI_ERR_TYPE;
+        } else {
+          OMPI_CHECK_DATATYPE_FOR_SEND(err, sendtype, sendcounts[i]);
         }
+        OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
       }
     }
 

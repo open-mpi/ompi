@@ -28,6 +28,7 @@ int MPI_Exscan(void *sendbuf, void *recvbuf, int count,
     int err;
 
     if (MPI_PARAM_CHECK) {
+        err = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (ompi_comm_invalid(comm)) {
 	    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
@@ -37,22 +38,16 @@ int MPI_Exscan(void *sendbuf, void *recvbuf, int count,
         /* Unrooted operation -- same checks for intracommunicators
            and intercommunicators */
 
-	if (MPI_DATATYPE_NULL == datatype) {
-	    return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TYPE, FUNC_NAME);
-	}
-	
-	if (MPI_OP_NULL == op) {
-	    return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_OP, FUNC_NAME);
-	}
-
-        if (ompi_op_is_intrinsic(op) && datatype->id < DT_MAX_PREDEFINED &&
-            -1 == ompi_op_ddt_map[datatype->id]) {
-          return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_OP, FUNC_NAME);
+	else if (MPI_OP_NULL == op) {
+          err = MPI_ERR_OP;
+	} else if (ompi_op_is_intrinsic(op) && 
+                   datatype->id < DT_MAX_PREDEFINED &&
+                   -1 == ompi_op_ddt_map[datatype->id]) {
+          err = MPI_ERR_OP;
+        } else {
+          OMPI_CHECK_DATATYPE_FOR_SEND(err, datatype, count);
         }
-
-	if (count < 0) {
-	    return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COUNT, FUNC_NAME);
-	}
+        OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
     }
 
     /* Invoke the coll component to perform the back-end operation */
