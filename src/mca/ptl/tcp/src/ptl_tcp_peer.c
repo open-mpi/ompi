@@ -111,7 +111,6 @@ int mca_ptl_tcp_peer_send(mca_ptl_base_peer_t* ptl_peer, mca_ptl_tcp_send_frag_t
             if(mca_ptl_tcp_send_frag_handler(frag, ptl_peer->peer_sd)) {
                 mca_ptl_tcp_send_frag_progress(frag);
             } else {
-                lam_output(0, "send incomplete\n");
                 ptl_peer->peer_send_frag = frag;
                 lam_event_add(&ptl_peer->peer_send_event, 0);
             }
