@@ -98,11 +98,16 @@ int lam_mpi_init(int argc, char **argv, int requested, int *provided)
         return ret;
     }
 
+    /* Query the coll */
+
+    if (LAM_SUCCESS != (ret = mca_coll_base_query()))
+	return ret;
+
      /* initialize error handlers */
      if (LAM_SUCCESS != (ret = lam_errhandler_init())) {
          return ret;
      }
-
+     
      /* initialize groups  */
      if (LAM_SUCCESS != (ret = lam_group_init())) {
          return ret;
@@ -154,6 +159,20 @@ int lam_mpi_init(int argc, char **argv, int requested, int *provided)
     lam_mpi_thread_requested = requested;
     *provided = lam_mpi_thread_provided;
     lam_mpi_thread_multiple = (lam_mpi_thread_provided == MPI_THREAD_MULTIPLE);
+
+    /* Init coll for the comms */
+
+    if (LAM_ERROR == mca_coll_base_init_comm(MPI_COMM_SELF))
+	return LAM_ERROR;
+
+    if (LAM_ERROR == mca_coll_base_init_comm(MPI_COMM_WORLD))
+	return LAM_ERROR;
+
+    /* Wait for everyone to initialize */
+    /* Change the Barrier call to the backend call */
+
+    if (MPI_SUCCESS != (ret = MPI_Barrier(MPI_COMM_WORLD)))
+	return ret;
 
     /* All done */
 
