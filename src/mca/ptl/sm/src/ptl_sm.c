@@ -221,10 +221,7 @@ int mca_ptl_sm_add_procs_same_base_addr(
 
     /* see if need to allocate space for extra procs */
     if(  0 > mca_ptl_sm_component.sm_max_procs ) {
-    /* initializion */
-    for(i=0 ; i < nprocs ; i++ ) {
-        peers[i]=NULL;
-    }
+
         /* no limit */
         if( 0 <= mca_ptl_sm_component.sm_extra_procs ) {
             /* limit */
