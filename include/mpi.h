@@ -435,7 +435,7 @@ extern "C" {
   int MPI_Cancel(MPI_Request *request);
   int MPI_Cart_coords(MPI_Comm comm, int rank, int maxdims, int *coords);
   int MPI_Cart_create(MPI_Comm old_comm, int ndims, int *dims, 
-                      int *periods, int redorder, MPI_Comm *comm_cart);
+                      int *periods, int reorder, MPI_Comm *comm_cart);
   int MPI_Cart_get(MPI_Comm comm, int maxdims, int *dims, 
                    int *periods, int *coords);
   int MPI_Cart_map(MPI_Comm comm, int ndims, int *dims, 
@@ -946,7 +946,7 @@ extern "C" {
   int PMPI_Cancel(MPI_Request *request);
   int PMPI_Cart_coords(MPI_Comm comm, int rank, int maxdims, int *coords);
   int PMPI_Cart_create(MPI_Comm old_comm, int ndims, int *dims, 
-                      int *periods, int redorder, MPI_Comm *comm_cart);
+                      int *periods, int reorder, MPI_Comm *comm_cart);
   int PMPI_Cart_get(MPI_Comm comm, int maxdims, int *dims, 
                    int *periods, int *coords);
   int PMPI_Cart_map(MPI_Comm comm, int ndims, int *dims, 

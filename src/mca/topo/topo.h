@@ -181,6 +181,11 @@ typedef int (*mca_topo_base_graph_map_fn_t)
                      int *edges, 
                      int *newrank);
 
+typedef int (*mca_topo_base_graphdims_get_fn_t)
+                    (MPI_Comm comm, 
+                     int *nnodes, 
+                     int *nnedges);
+
 typedef int (*mca_topo_base_graph_neighbors_fn_t)
                     (MPI_Comm comm, 
                      int rank, 
@@ -223,6 +228,7 @@ struct mca_topo_1_0_0_t {
     mca_topo_base_graph_create_fn_t topo_graph_create;
     mca_topo_base_graph_get_fn_t topo_graph_get;
     mca_topo_base_graph_map_fn_t topo_graph_map;
+    mca_topo_base_graphdims_get_fn_t topo_graphdims_get;
     mca_topo_base_graph_neighbors_fn_t topo_graph_neighbors;
     mca_topo_base_graph_neighbors_count_fn_t topo_graph_neighbors_count;
 };
