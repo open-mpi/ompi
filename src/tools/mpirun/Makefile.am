@@ -14,6 +14,3 @@ mpirun2_SOURCES = \
 
 mpirun2_LDADD = $(libs) 
 mpirun2_DEPENDENCIES = $(mpirun2_LDADD)
-
-clean-local:
-	test -z "$(OMPI_CXX_TEMPLATE_REPOSITORY)" || $(RM) -rf $(OMPI_CXX_TEMPLATE_REPOSITORY)
