@@ -61,9 +61,6 @@ OBJ_CLASS_INSTANCE (mca_ptl_gm_send_request_t,
 
 OBJ_CLASS_INSTANCE (mca_ptl_gm_peer_t, ompi_list_item_t, NULL, NULL);
 
-
-
-
 /*
  *
  */
@@ -80,9 +77,11 @@ mca_ptl_gm_add_procs (struct mca_ptl_base_module_t *ptl,
     mca_ptl_gm_proc_t *ptl_proc;
     mca_ptl_gm_peer_t *ptl_peer;
     unsigned int lid;
+    ompi_proc_t* local_proc = ompi_proc_local();
 
     for (i = 0; i < nprocs; i++) {
         ompi_proc = ompi_procs[i];
+        if( ompi_proc == local_proc ) continue;
         ptl_proc =
             mca_ptl_gm_proc_create ((mca_ptl_gm_module_t *) ptl,
                                     ompi_proc);
@@ -97,38 +96,37 @@ mca_ptl_gm_add_procs (struct mca_ptl_base_module_t *ptl,
             return OMPI_ERR_UNREACH;
         }
 
-       /* TODO: make this extensible to multiple nics */
-       /* XXX: */
-       /* FIXME: */
+        /* TODO: make this extensible to multiple nics */
+        /* XXX: */
+        /* FIXME: */
 
-       for (j=0; j < num_peer_ptls; j++)
-       {
-         /*XXX: check for self */
+        for (j=0; j < num_peer_ptls; j++) {
+            /*XXX: check for self */
 
-        ptl_peer = OBJ_NEW (mca_ptl_gm_peer_t);
-        if (NULL == ptl_peer) {
-            OMPI_THREAD_UNLOCK (&ptl_proc->proc_lock);
-            return OMPI_ERR_OUT_OF_RESOURCE;
-        }
+            ptl_peer = OBJ_NEW (mca_ptl_gm_peer_t);
+            if (NULL == ptl_peer) {
+                OMPI_THREAD_UNLOCK (&ptl_proc->proc_lock);
+                return OMPI_ERR_OUT_OF_RESOURCE;
+            }
       
-        ptl_peer->peer_ptl = (mca_ptl_gm_module_t *) ptl;
-        ptl_peer->peer_proc = ptl_proc;
-        ptl_peer->global_id = ptl_proc->proc_addrs->global_id;
-        ptl_peer->port_number = ptl_proc->proc_addrs->port_id;
-        if (GM_SUCCESS !=
-            gm_global_id_to_node_id (((mca_ptl_gm_module_t *) ptl)->my_port,
+            ptl_peer->peer_ptl = (mca_ptl_gm_module_t *) ptl;
+            ptl_peer->peer_proc = ptl_proc;
+            ptl_peer->global_id = ptl_proc->proc_addrs->global_id;
+            ptl_peer->port_number = ptl_proc->proc_addrs->port_id;
+            if (GM_SUCCESS !=
+                gm_global_id_to_node_id (((mca_ptl_gm_module_t *) ptl)->my_port,
                                          ptl_proc->proc_addrs[j].global_id,
                                          &lid)) {
-             ompi_output (0,
-    "[%s:%d] error in converting global to local id \n", __FILE__, __LINE__);
+                ompi_output (0,
+                             "[%s:%d] error in converting global to local id \n", __FILE__, __LINE__);
 
-          }
-        ptl_peer->local_id = lid;
+            }
+            ptl_peer->local_id = lid;
 
-        ptl_proc->peer_arr[0] = ptl_peer;
-        ptl_proc->proc_peer_count++;
-        ptl_peer->peer_addr = ptl_proc->proc_addrs + i;
-       }
+            ptl_proc->peer_arr[ptl_proc->proc_peer_count] = ptl_peer;
+            ptl_proc->proc_peer_count++;
+            ptl_peer->peer_addr = ptl_proc->proc_addrs + i;
+        }
         ompi_bitmap_set_bit (reachable, i);
         OMPI_THREAD_UNLOCK (&ptl_proc->proc_lock);
 
@@ -137,9 +135,9 @@ mca_ptl_gm_add_procs (struct mca_ptl_base_module_t *ptl,
         /*printf ("Global_id\t local_id\t port_number\t process name \n");*/
         /*fflush (stdout);*/
         /*printf ("%u %d %d %d\n", ptl_proc->peer_arr[0]->global_id,*/
-                /*ptl_proc->peer_arr[0]->local_id,*/
-                /*ptl_proc->peer_arr[0]->port_number,
- * ptl_proc->proc_guid);*/
+        /*ptl_proc->peer_arr[0]->local_id,*/
+        /*ptl_proc->peer_arr[0]->port_number,
+         * ptl_proc->proc_guid);*/
         /*fflush (stdout);*/
 
     }
@@ -147,9 +145,6 @@ mca_ptl_gm_add_procs (struct mca_ptl_base_module_t *ptl,
     printf ("returning with success from gm_add_procs\n");
     return OMPI_SUCCESS;
 }
-
-
-
 
 /*
  *
@@ -166,9 +161,6 @@ mca_ptl_gm_del_procs (struct mca_ptl_base_module_t *ptl,
     }
     return OMPI_SUCCESS;
 }
-
-
-
 
 /*
  *
@@ -207,12 +199,6 @@ mca_ptl_gm_request_init(struct mca_ptl_base_module_t *ptl,
  
     return OMPI_SUCCESS;
 }
-
-
-
-
-
-
 
 /*
  *
