@@ -28,7 +28,6 @@
  */
 int mca_mpi_init_select_modules(int requested, int *provided)
 {
-  lam_list_t ptls;
   lam_list_t colls;
 
   /* Make final lists of available modules (i.e., call the query/init
@@ -42,7 +41,7 @@ int mca_mpi_init_select_modules(int requested, int *provided)
     return LAM_ERROR;
   }
 
-  if (LAM_SUCCESS != mca_ptl_base_select(&ptls)) {
+  if (LAM_SUCCESS != mca_ptl_base_select()) {
     return LAM_ERROR;
   }
 
@@ -60,7 +59,7 @@ int mca_mpi_init_select_modules(int requested, int *provided)
   /* Tell the selected pml module about all the selected ptl
      modules */
 
-  mca_pml.pml_add_ptls(&ptls);
+  mca_pml.pml_add_ptls(&mca_ptl_base_modules_initialized);
 
   /* All done */
 

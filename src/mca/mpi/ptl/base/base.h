@@ -29,7 +29,7 @@ typedef struct mca_ptl_base_selected_module_t mca_ptl_base_selected_module_t;
 extern "C" {
 #endif
   int mca_ptl_base_open(void);
-  int mca_ptl_base_select(lam_list_t *available);
+  int mca_ptl_base_select(void);
   int mca_ptl_base_close(void);
 #if defined(c_plusplus) || defined(__cplusplus)
 }
