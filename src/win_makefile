@@ -169,7 +169,7 @@ prebuild:
         (dir="mca/$${dirs}/base"; comp_name="$${dirs}_static-components.h"; cp "${topdir}/src/win32/generated_include/$${comp_name}" "$${dir}/static-components.h";); \
      done
 	@for dirs in ${C_SUBDIRS}; do \
-	    (echo "Entering $${dirs}"; cd $$dirs; if test -f .compile_files; then (more .compile_files| xargs -i'{}' ln '{}' ${topdir}/src/Debug/'{}'); else (ls *.c 2>/dev/null | xargs -i'{}' ln '{}' ${topdir}/src/Debug/'{}'); fi); \
+	    (echo "Entering $${dirs}"; cd $$dirs; if test -f .compile_files; then (more .compile_files| xargs -i'{}' ln -f '{}' ${topdir}/src/Debug/'{}'); else (ls *.c 2>/dev/null | xargs -i'{}' ln -f '{}' ${topdir}/src/Debug/'{}'); fi); \
 	done
 	@echo "done"
 
