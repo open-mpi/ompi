@@ -26,6 +26,7 @@ mca_ptl_elan_init_qdma_desc (struct ompi_ptl_elan_qdma_desc_t *desc,
     int         destvp;
     int         size_out;
     int         size_in;
+    int         rc = OMPI_SUCCESS;
    
     START_FUNC();
 
@@ -92,7 +93,7 @@ mca_ptl_elan_init_qdma_desc (struct ompi_ptl_elan_qdma_desc_t *desc,
        	if (rc < 0) {
 	    ompi_output (0, "[%s:%d] Unable to pack data\n",
 			 __FILE__, __LINE__);
-            return OMPI_ERROR;
+            return;
 	}
         size_out = iov.iov_len;
     } else {
@@ -158,7 +159,7 @@ mca_ptl_elan_start_desc (mca_ptl_elan_send_frag_t * desc,
 #endif
 
 
-    if (desc->desc->desc_type == MCA_PTL_ELAN_QDMA_DESC) {
+    if (desc->desc->desc_type == MCA_PTL_ELAN_DESC_QDMA) {
         struct ompi_ptl_elan_qdma_desc_t *qdma;
 
         qdma = (ompi_ptl_elan_qdma_desc_t *)desc->desc;
@@ -197,10 +198,10 @@ mca_ptl_elan_data_frag (struct mca_ptl_elan_t *ptl,
     ompi_list_item_t *item;
     mca_pml_base_recv_request_t *request;
 
-    int         rc;
+    bool        matched; 
+    int         rc = OMPI_SUCCESS;
 
-    rc = OMPI_FREE_LIST_GET (&mca_ptl_elan_module.elan_recv_frags_free,
-	    item, rc);
+    OMPI_FREE_LIST_GET (&mca_ptl_elan_module.elan_recv_frags_free, item, rc);
 
     while (OMPI_SUCCESS != rc) {
 
@@ -208,8 +209,8 @@ mca_ptl_elan_data_frag (struct mca_ptl_elan_t *ptl,
         ompi_output (0,
                      "[%s:%d] Retry to allocate a recv fragment",
                      __FILE__, __LINE__);
-	rc = OMPI_FREE_LIST_GET (&mca_ptl_elan_module.elan_recv_frags_free,
-	       	item, rc);
+	OMPI_FREE_LIST_GET (&mca_ptl_elan_module.elan_recv_frags_free, 
+                item, rc);
     } 
 
     recv_frag = (mca_ptl_elan_recv_frag_t *) item;
@@ -233,8 +234,7 @@ mca_ptl_elan_data_frag (struct mca_ptl_elan_t *ptl,
     /* Taking the data starting point be default */
     recv_frag->frag_recv.frag_base.frag_addr = 
 	(char *) header + sizeof (mca_ptl_base_header_t);
-    recv_frag->frag_recv.frag_base.frag_size = 
-	header->hdr_frag.hdr_frag_length;
+    recv_frag->frag_recv.frag_base.frag_size = header->hdr_frag.hdr_frag_length;
 
     /* match with preposted requests */
     matched = mca_ptl_base_recv_frag_match (
@@ -294,7 +294,7 @@ mca_ptl_elan_drain_recv (mca_ptl_elan_module_1_0_0_t * emp)
         OMPI_LOCK (&queue->rx_lock);
 
 #if 1
-        rc = (int *) (&rxq->qr_doneWord);
+        rc = (*(int *) (&rxq->qr_doneWord));
 #else
         rc = elan4_pollevent_word (ctx, &rxq->qr_doneWord, 1);
 #endif
@@ -402,7 +402,7 @@ mca_ptl_elan_update_send (mca_ptl_elan_module_1_0_0_t * emp)
             desc = (mca_ptl_elan_send_frag_t *)
                 ompi_list_get_first (&queue->tx_desc);
 #if 1
-            rc = (int *) (&desc->desc->main_doneWord);
+            rc = * ((int *) (&desc->desc->main_doneWord));
 #else
             /* Poll the completion event for 1usec */
             rc = elan4_pollevent_word(ctx, &desc->desc->main_doneWord, 1);
@@ -414,14 +414,15 @@ mca_ptl_elan_update_send (mca_ptl_elan_module_1_0_0_t * emp)
                 desc = (mca_ptl_elan_send_frag_t *)
                     ompi_list_remove_first (&queue->tx_desc);
                 req = desc->desc->req;
-		header = (mca_ptl_base_header_t *)&desc->desc->buff[0];
+		header = (mca_ptl_base_header_t *)& 
+                    ((ompi_ptl_elan_qdma_desc_t *)desc->desc)->buff[0];
 
 		if(NULL == req) { /* An ack descriptor */
 		    OMPI_FREE_LIST_RETURN (&queue->tx_desc_free,
 			    (ompi_list_item_t *) desc);
 		} else if (0 == (header->hdr_common.hdr_flags 
 			    & MCA_PTL_FLAGS_ACK_MATCHED)
-		       	|| mca_pml_base_send_request_matched(request)) {
+		       	|| mca_pml_base_send_request_matched(req)) {
 		    /* XXX: NO_NEED_FOR_MATCH || ALREADY_MATCHED */
 
 		    if(fetchNset (&desc->frag_progressed, 1) == 0) {

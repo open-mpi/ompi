@@ -124,7 +124,7 @@ mca_ptl_elan_alloc_send_desc (struct mca_ptl_t *ptl_ptr,
             }
         }
         desc = (mca_ptl_elan_send_frag_t *) item; 
-	desc->desc->desc_type = MCA_PTL_ELAN_QDMA_DESC;
+	desc->desc->desc_type = MCA_PTL_ELAN_DESC_QDMA;
     }
     desc->desc->req = (struct mca_pml_base_send_request_t *)sendreq;
 

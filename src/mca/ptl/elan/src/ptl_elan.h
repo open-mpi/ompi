@@ -167,7 +167,7 @@ mca_ptl_elan_del_procs (struct mca_ptl_t *ptl,
  * @param request (OUT)  Pointer to allocated request.
  * @return               Status indicating if allocation was successful.
  */
-extern int  
+extern int
 mca_ptl_elan_req_init (struct mca_ptl_t *ptl, 
 		       struct mca_pml_base_send_request_t *req);
 
