@@ -8,13 +8,18 @@
  *  List classes
  */
 
+static void lam_list_item_construct(lam_list_item_t*);
+static void lam_list_item_destruct(lam_list_item_t*);
 
 lam_class_info_t  lam_list_item_t_class_info = {
     "lam_list_item_t",
     CLASS_INFO(lam_object_t), 
     (lam_construct_t) lam_list_item_construct,
-    (lam_destruct_t) lam_object_destruct
+    (lam_destruct_t) lam_list_item_destruct
 };
+
+static void lam_list_construct(lam_list_t*);
+static void lam_list_destruct(lam_list_t*);
 
 lam_class_info_t  lam_list_t_class_info = {
     "lam_list_t",
@@ -30,11 +35,16 @@ lam_class_info_t  lam_list_t_class_info = {
  *
  */
 
-void lam_list_item_construct(lam_list_item_t *item)
+static void lam_list_item_construct(lam_list_item_t *item)
 {
     OBJ_CONSTRUCT_SUPER(item, lam_object_t);
     item->lam_list_next = item->lam_list_prev = NULL;
     item->lam_list_type = 0;
+}
+
+static void lam_list_item_destruct(lam_list_item_t *item)
+{
+    OBJ_DESTRUCT_SUPER(item, lam_object_t);
 }
 
 
@@ -44,7 +54,7 @@ void lam_list_item_construct(lam_list_item_t *item)
  *
  */
 
-void lam_list_construct(lam_list_t *list)
+static void lam_list_construct(lam_list_t *list)
 {
     OBJ_CONSTRUCT_SUPER(list, lam_object_t);
     list->lam_list_head.lam_list_prev = NULL;
@@ -56,7 +66,7 @@ void lam_list_construct(lam_list_t *list)
 }
 
 
-void lam_list_destruct(lam_list_t *list)
+static void lam_list_destruct(lam_list_t *list)
 {
     /* release all items in list */
     lam_list_construct(list);

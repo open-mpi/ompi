@@ -34,14 +34,6 @@ typedef struct lam_list_item
     volatile struct lam_list_item   *lam_list_prev;
 } lam_list_item_t;
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
-  void lam_list_item_construct(lam_list_item_t *item);
-  void lam_list_item_destruct(lam_list_item_t *item);
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
 
 #define lam_list_get_next(item) \
     ((item) ? ((lam_list_item_t*) ((lam_list_item_t*)(item))->lam_list_next) : NULL)
@@ -64,15 +56,6 @@ typedef struct lam_list
     volatile size_t     lam_list_length;
 } lam_list_t;
 
-
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
-  void lam_list_construct(lam_list_t *list);
-  void lam_list_destruct(lam_list_t *list);
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
 
 /*
  * Inlined accessor functions

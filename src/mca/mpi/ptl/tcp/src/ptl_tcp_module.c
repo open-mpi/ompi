@@ -104,6 +104,7 @@ int mca_ptl_tcp_module_open(void)
     lam_mutex_construct(&mca_ptl_tcp_module.tcp_lock);
     OBJ_CONSTRUCT(&mca_ptl_tcp_module.tcp_reactor, lam_reactor_t);
     OBJ_CONSTRUCT(&mca_ptl_tcp_module.tcp_procs, lam_list_t);
+    OBJ_CONSTRUCT(&mca_ptl_tcp_module.tcp_acks, lam_list_t);
     OBJ_CONSTRUCT(&mca_ptl_tcp_module.tcp_send_requests, lam_free_list_t);
     OBJ_CONSTRUCT(&mca_ptl_tcp_module.tcp_send_frags, lam_free_list_t);
     OBJ_CONSTRUCT(&mca_ptl_tcp_module.tcp_recv_frags, lam_free_list_t);
@@ -139,6 +140,7 @@ int mca_ptl_tcp_module_close(void)
  
     OBJ_DESTRUCT(&mca_ptl_tcp_module.tcp_reactor);
     OBJ_DESTRUCT(&mca_ptl_tcp_module.tcp_procs);
+    OBJ_DESTRUCT(&mca_ptl_tcp_module.tcp_acks);
     OBJ_DESTRUCT(&mca_ptl_tcp_module.tcp_send_requests);
     OBJ_DESTRUCT(&mca_ptl_tcp_module.tcp_send_frags);
     OBJ_DESTRUCT(&mca_ptl_tcp_module.tcp_recv_frags);

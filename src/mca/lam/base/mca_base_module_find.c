@@ -100,13 +100,13 @@ int mca_base_module_find(const char *directory, const char *type,
 
   /* Find all the modules that were statically linked in */
 
-  lam_list_construct(found_modules);
+  OBJ_CONSTRUCT(found_modules, lam_list_t);
   for (i = 0; NULL != static_modules[i]; ++i) {
     mli = malloc(sizeof(mca_base_module_list_item_t));
     if (NULL == mli) {
       return LAM_ERR_OUT_OF_RESOURCE;
     }
-    lam_list_item_construct((lam_list_item_t *) mli);
+    OBJ_CONSTRUCT(mli, lam_list_item_t);
     mli->mli_module = static_modules[i];
     lam_list_append(found_modules, (lam_list_item_t *) mli);
   }
@@ -172,7 +172,7 @@ static void find_dyn_modules(const char *path, const char *type_name,
      make a master array of all the matching filenames that we
      find. */
 
-  lam_list_construct(&found_files);
+  OBJ_CONSTRUCT(&found_files, lam_list_t);
   dir = path_to_use;
   do {
     end = strchr(dir, ':');
@@ -269,7 +269,7 @@ static int save_filename(const char *filename, lt_ptr data)
   if (NULL == module_file) {
     return LAM_ERR_OUT_OF_RESOURCE;
   }
-  lam_list_item_construct((lam_list_item_t *) module_file);
+  OBJ_CONSTRUCT(module_file, lam_list_item_t);
   strcpy(module_file->type, params->type);
   strcpy(module_file->name, basename + prefix_len);
   strcpy(module_file->basename, basename);
@@ -332,7 +332,7 @@ static int open_module(module_file_item_t *target_file,
      them.  If we can't load them, then this module must also fail to
      load. */
 
-  lam_list_construct(&dependencies);
+  OBJ_CONSTRUCT(&dependencies, lam_list_t);
   if (0 != check_laminfo(target_file, &dependencies, found_modules)) {
     target_file->status = FAILED_TO_LOAD;
     free_dependency_list(&dependencies);
@@ -372,7 +372,7 @@ static int open_module(module_file_item_t *target_file,
     free_dependency_list(&dependencies);
     return LAM_ERR_OUT_OF_RESOURCE;
   }
-  lam_list_item_construct((lam_list_item_t *) mitem);
+  OBJ_CONSTRUCT(mitem, lam_list_item_t);
 
   module_struct = lt_dlsym(module_handle, struct_name);
   if (NULL == module_struct) {
@@ -408,7 +408,7 @@ static int open_module(module_file_item_t *target_file,
                                   ditem->di_module_file_item->name);
     free(ditem);
   }
-  lam_list_destruct(&dependencies);
+  OBJ_DESTRUCT(&dependencies);
 
   lam_output_verbose(0, 40, " opened dynamic %s MCA module \"%s\"",
                      target_file->type, target_file->name, NULL);
@@ -626,7 +626,7 @@ static int check_dependency(char *line, module_file_item_t *target_file,
     return LAM_ERR_OUT_OF_RESOURCE;
   }
   cur = (lam_list_item_t *) ditem;
-  lam_list_item_construct(cur);
+  OBJ_CONSTRUCT(cur, lam_list_item_t);
   lam_list_append(dependencies, cur);
   
   /* All done -- all depenencies satisfied */
@@ -647,5 +647,5 @@ static void free_dependency_list(lam_list_t *dependencies)
        item = lam_list_remove_first(dependencies)) {
     free(item);
   }
-  lam_list_destruct(dependencies);
+  OBJ_DESTRUCT(dependencies);
 }

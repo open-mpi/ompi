@@ -29,7 +29,7 @@ void lam_sgl_construct(lam_seg_list_t *slist)
 
 void lam_sgl_destruct(lam_seg_list_t *slist)
 {
-    lam_list_destruct(&(slist->sgl_list));
+    OBJ_DESTRUCT(&(slist->sgl_list));
     OBJ_DESTRUCT_SUPER(slist, lam_object_t);
 }
 

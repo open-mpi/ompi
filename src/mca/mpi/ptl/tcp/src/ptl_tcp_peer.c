@@ -13,7 +13,7 @@
 #include "ptl_tcp_proc.h"
 
 
-static void mca_ptl_tcp_peer_init(mca_ptl_base_peer_t* ptl_peer);
+static void mca_ptl_tcp_peer_construct(mca_ptl_base_peer_t* ptl_peer);
 static void mca_ptl_tcp_peer_destruct(mca_ptl_base_peer_t* ptl_peer);
 static int  mca_ptl_tcp_peer_start_connect(mca_ptl_base_peer_t*);
 static void mca_ptl_tcp_peer_close_i(mca_ptl_base_peer_t*);
@@ -25,7 +25,7 @@ static void mca_ptl_tcp_peer_except_handler(mca_ptl_base_peer_t*, int sd);
 
 lam_class_info_t  mca_ptl_tcp_peer_t_class_info = {
     "mca_tcp_ptl_peer_t", 
-    CLASS_INFO(lam_list_t),
+    CLASS_INFO(lam_list_item_t),
     (lam_construct_t)mca_ptl_tcp_peer_construct, 
     (lam_destruct_t)mca_ptl_tcp_peer_destruct
 };
@@ -42,9 +42,9 @@ static lam_reactor_listener_t mca_ptl_tcp_peer_listener = {
  * Initialize state of the peer instance.
  */
 
-void mca_ptl_tcp_peer_construct(mca_ptl_base_peer_t* ptl_peer)
+static void mca_ptl_tcp_peer_construct(mca_ptl_base_peer_t* ptl_peer)
 {
-    OBJ_CONSTRUCT_SUPER(ptl_peer, lam_list_t);
+    OBJ_CONSTRUCT_SUPER(ptl_peer, lam_list_item_t);
     ptl_peer->peer_ptl = 0;
     ptl_peer->peer_proc = 0;
     ptl_peer->peer_addr = 0;
@@ -62,11 +62,11 @@ void mca_ptl_tcp_peer_construct(mca_ptl_base_peer_t* ptl_peer)
  * Cleanup any resources held by the peer.
  */
 
-void mca_ptl_tcp_peer_destruct(mca_ptl_base_peer_t* ptl_peer)
+static void mca_ptl_tcp_peer_destruct(mca_ptl_base_peer_t* ptl_peer)
 {
     mca_ptl_tcp_proc_remove(ptl_peer->peer_proc, ptl_peer);
     mca_ptl_tcp_peer_close_i(ptl_peer);
-    OBJ_DESTRUCT_SUPER(ptl_peer, lam_list_t);
+    OBJ_DESTRUCT_SUPER(ptl_peer, lam_list_item_t);
 }
 
 
@@ -384,7 +384,7 @@ static void mca_ptl_tcp_peer_complete_connect(mca_ptl_base_peer_t* ptl_peer)
     int so_error = 0;
     lam_socklen_t so_length = sizeof(so_error);
 
-    /* unregister for event notifications */
+    /* unregister from receiving event notifications */
     lam_reactor_remove(&mca_ptl_tcp_module.tcp_reactor, ptl_peer->peer_sd, LAM_REACTOR_NOTIFY_ALL);
 
     /* check connect completion status */
@@ -441,7 +441,7 @@ static void mca_ptl_tcp_peer_recv_handler(mca_ptl_base_peer_t* ptl_peer, int sd)
         mca_ptl_tcp_recv_frag_t* recv_frag = ptl_peer->peer_recv_frag;
         if(NULL == recv_frag) {
             int rc;
-            recv_frag = (mca_ptl_tcp_recv_frag_t*)lam_free_list_get(&mca_ptl_tcp_module.tcp_recv_frags, &rc);
+            recv_frag = mca_ptl_tcp_recv_frag_alloc(&rc);
             if(recv_frag == 0) {
                 THREAD_UNLOCK(&ptl_peer->peer_lock);
                 return;

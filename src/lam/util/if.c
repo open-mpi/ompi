@@ -25,7 +25,7 @@
 #endif
 
 struct lam_if_t {
-    lam_list_item_t     if_item;
+    lam_list_item_t     super;
     char                if_name[IF_NAMESIZE];
     int                 if_index;
     int                 if_flags;
@@ -72,7 +72,6 @@ static int lam_ifinit(void)
         struct ifreq* ifr = (struct ifreq*)ptr;
         lam_if_t intf;
         lam_if_t *intf_ptr;
-        lam_list_item_construct(&intf.if_item);
 
         OBJ_CONSTRUCT(&intf, lam_list_item_t);
 

@@ -15,6 +15,7 @@ extern const int LAM_REACTOR_NOTIFY_RECV;
 extern const int LAM_REACTOR_NOTIFY_SEND;
 extern const int LAM_REACTOR_NOTIFY_EXCEPT;
 
+extern lam_class_info_t lam_reactor_t_class_info;
 extern lam_class_info_t lam_reactor_descriptor_t_class_info;
 
 
@@ -62,7 +63,7 @@ struct lam_reactor_t {
     lam_list_t         r_active;
     lam_list_t         r_free;
     lam_list_t         r_pending;
-    lam_fast_hash_t    r_hash;
+    lam_hash_table_t   r_hash;
     int                r_max;
     bool               r_run;
     int                r_changes;

@@ -22,7 +22,8 @@ enum {
     LAM_ERR_INTERUPTED = -12,
     LAM_ERR_WOULD_BLOCK = -13,
     LAM_ERR_IN_ERRNO = -14,
-    LAM_ERR_UNREACH = -15
+    LAM_ERR_UNREACH = -15,
+    LAM_ERR_NOT_FOUND = -16
 };
 
 #endif /* LAM_CONSTANTS_H */

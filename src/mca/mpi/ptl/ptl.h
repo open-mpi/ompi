@@ -1,8 +1,7 @@
 /*
  * $HEADER$
  */
-/** @file 
- *
+/*
  * P2P Transport Layer (PTL)
  */
 #ifndef MCA_PTL_H
@@ -22,8 +21,10 @@
 struct mca_ptl_t;
 struct mca_ptl_base_peer_t;
 struct mca_ptl_base_fragment_t;
+struct mca_ptl_base_recv_request_t;
 struct mca_ptl_base_send_request_t;
 struct mca_ptl_base_recv_frag_t;
+struct mca_ptl_base_send_frag_t;
 
 typedef uint64_t mca_ptl_base_sequence_t;
 typedef uint64_t mca_ptl_base_tstamp_t;
@@ -139,9 +140,19 @@ typedef int (*mca_ptl_base_send_fn_t)(
     size_t size
 );
 
-typedef int (*mca_ptl_base_recv_fn_t)(
+typedef void (*mca_ptl_base_recv_fn_t)(
     struct mca_ptl_t* ptl, 
     struct mca_ptl_base_recv_frag_t* recv_frag
+);
+
+typedef void (*mca_ptl_base_recv_progress_fn_t)(
+    struct mca_ptl_base_recv_request_t* recv_request,
+    struct mca_ptl_base_recv_frag_t* recv_frag
+);
+
+typedef void (*mca_ptl_base_send_progress_fn_t)(
+    struct mca_ptl_base_send_request_t* send_request,
+    struct mca_ptl_base_send_frag_t* send_frag
 );
 
 /**
@@ -159,7 +170,7 @@ struct mca_ptl_t {
     uint32_t    ptl_latency;           /**< relative ranking of latency used to prioritize ptls */
     uint32_t    ptl_bandwidth;         /**< bandwidth (Mbytes/sec) supported by each endpoint */
 
-    /* PTL function table */
+    /* PML->PTL function table */
     mca_ptl_base_add_proc_fn_t         ptl_add_proc;
     mca_ptl_base_del_proc_fn_t         ptl_del_proc;
     mca_ptl_base_finalize_fn_t         ptl_finalize;
@@ -168,6 +179,10 @@ struct mca_ptl_t {
     mca_ptl_base_request_alloc_fn_t    ptl_request_alloc;
     mca_ptl_base_request_return_fn_t   ptl_request_return;
     mca_ptl_base_frag_return_fn_t      ptl_frag_return;
+
+    /* PTL->PML function table - filled in by PML at init */
+    mca_ptl_base_send_progress_fn_t    ptl_send_progress;
+    mca_ptl_base_recv_progress_fn_t    ptl_recv_progress;
 };
 typedef struct mca_ptl_t mca_ptl_t;
 

@@ -11,7 +11,7 @@
 #include <netinet/in.h>
 #include "lam_config.h"
 #include "mca/mpi/ptl/base/ptl_base_sendfrag.h"
-
+#include "ptl_tcp.h"
 
 extern lam_class_info_t mca_ptl_tcp_send_frag_t_class_info;
 
@@ -28,10 +28,19 @@ struct mca_ptl_tcp_send_frag_t {
 typedef struct mca_ptl_tcp_send_frag_t mca_ptl_tcp_send_frag_t;
 
 
-void mca_ptl_tcp_send_frag_construct(mca_ptl_tcp_send_frag_t*);
-void mca_ptl_tcp_send_frag_destruct(mca_ptl_tcp_send_frag_t*);
-bool mca_ptl_tcp_send_frag_handler(mca_ptl_tcp_send_frag_t*, int sd);
+static inline mca_ptl_tcp_send_frag_t* mca_ptl_tcp_send_frag_alloc(int* rc) 
+{
+    return (mca_ptl_tcp_send_frag_t*)lam_free_list_get(&mca_ptl_tcp_module.tcp_send_frags, rc);
+}
 
+
+static inline void mca_ptl_tcp_send_frag_return(mca_ptl_tcp_send_frag_t* frag)
+{
+    lam_free_list_return(&mca_ptl_tcp_module.tcp_send_frags, (lam_list_item_t*)frag);
+}
+
+
+bool mca_ptl_tcp_send_frag_handler(mca_ptl_tcp_send_frag_t*, int sd);
 void mca_ptl_tcp_send_frag_reinit(
     mca_ptl_tcp_send_frag_t*, 
     struct mca_ptl_base_peer_t*, 

@@ -76,7 +76,7 @@ int mca_ptl_tcp_add_proc(struct mca_ptl_t* ptl, struct lam_proc_t *lam_proc, str
     /* The ptl_proc datastructure is shared by all TCP PTL instances that are trying 
      * to reach this destination. Cache the peer instance on the ptl_proc.
      */
-    ptl_peer = OBJ_NEW(mca_ptl_base_peer_t);
+    ptl_peer = OBJ_NEW(mca_ptl_tcp_peer_t);
     if(NULL == ptl_peer) {
         THREAD_UNLOCK(&ptl_proc->proc_lock);
         return LAM_ERR_OUT_OF_RESOURCE;
@@ -150,10 +150,12 @@ int mca_ptl_tcp_send(
 }
 
 
-int mca_ptl_tcp_recv(
+void mca_ptl_tcp_recv(
     struct mca_ptl_t* ptl,
     struct mca_ptl_base_recv_frag_t* frag)
 {
-    return LAM_ERROR;
+    if(mca_ptl_tcp_recv_frag_cts((mca_ptl_tcp_recv_frag_t*)frag) == false) {
+        lam_list_append(&mca_ptl_tcp_module.tcp_acks, (lam_list_item_t*)frag);
+    }
 }
 

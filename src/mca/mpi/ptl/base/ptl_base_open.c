@@ -47,7 +47,7 @@ int mca_ptl_base_open(void)
      iterate over it (even if it's empty, as in the case of
      laminfo) */
 
-  lam_list_construct(&mca_ptl_base_modules_initialized);
+  OBJ_CONSTRUCT(&mca_ptl_base_modules_initialized, lam_list_t);
 
   /* All done */
 

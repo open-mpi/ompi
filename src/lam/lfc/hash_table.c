@@ -10,431 +10,249 @@
 #include "lam/constants.h"
 #include "lam/lfc/hash_table.h"
 
-#define     BUCKET_ALLOC_SZ         5
+/*
+ * lam_hash_table_t
+ */
 
-lam_class_info_t lam_fast_hash_t_class_info = {
-    "lam_fast_hash_t",
+#define HASH_MULTIPLIER 31
+
+static void lam_hash_table_construct(lam_hash_table_t* ht);
+static void lam_hash_table_destruct(lam_hash_table_t* ht);
+
+
+lam_class_info_t lam_hash_table_t_class_info = {
+    "lam_hash_table_t", 
     CLASS_INFO(lam_object_t),
-    (lam_construct_t) lam_fh_construct,
-    (lam_destruct_t) lam_fh_destruct
+    (lam_construct_t)lam_hash_table_construct,
+    (lam_destruct_t)lam_hash_table_destruct
 };
 
-/*
- *
- *      Private hash table functions
- *
- */
-#define MULTIPLIER		31
 
-static inline uint32_t lam_hash_value(const unsigned char * key, uint32_t keysize)
+static inline uint32_t lam_hash_value(const unsigned char *key, uint32_t keysize)
 {
-    uint32_t		h, i;
-    const char      *p;
+    uint32_t h, i;
+    const unsigned char *p;
     
     h = 0;
     p = key;
     for (i = 0; i < keysize; i++, p++)
-        h = MULTIPLIER*h + *p;
-    
+        h = HASH_MULTIPLIER*h + *p;
     return h;    
 }
 
 
-static inline void *lam_fh_get_value_nkey(lam_fast_hash_t *htbl, void *key, uint32_t keysize)
+static void lam_hash_table_construct(lam_hash_table_t* ht)
 {
-    uint32_t        hval, i;
-    lam_fhnode_t    *buckets;
-    
-    /* ASSERT: table size is power of 2 and table
-        has been initialized using lam_fh_construct_with().
-        */
-    hval = lam_hash_value((const char *)key, keysize) & htbl->fh_mask;
-    buckets = htbl->fh_nodes[hval];
-    if ( !buckets )
-        return NULL;
-    
-    for ( i = 0; i < htbl->fh_bucket_cnt[hval]; i++ )
-    {
-        if ( (true == buckets[i].fhn_is_taken) &&
-             (0 == memcmp(&(buckets[i].fhn_key), key, keysize)) )
-            return buckets[i].fhn_value;
-    }        
-    
-    return NULL;
+    OBJ_CONSTRUCT_SUPER(ht, lam_object_t);
+    OBJ_CONSTRUCT(&ht->ht_nodes, lam_list_t);
+    ht->ht_table = 0;
+    ht->ht_table_size = 0;
+    ht->ht_size = 0;
 }
 
 
-static inline void *lam_fh_get_value_ptrkey(lam_fast_hash_t *htbl, void *key, uint32_t keysize)
+static void lam_hash_table_destruct(lam_hash_table_t* ht)
 {
-    uint32_t        hval, i;
-    lam_fhnode_t    *buckets;
-    
-    /* ASSERT: table size is power of 2 and table
-        has been initialized using lam_fh_construct_with().
-        */
-    hval = lam_hash_value((const char *)key, keysize) & htbl->fh_mask;
-    buckets = htbl->fh_nodes[hval];
-    if ( !buckets )
-        return NULL;
-    
-    for ( i = 0; i < htbl->fh_bucket_cnt[hval]; i++ )
-    {
-        if ( (true == buckets[i].fhn_is_taken)
-             && (buckets[i].fhn_ptr_key_size == keysize)
-             && (0 == memcmp(buckets[i].fhn_key.pval, key, keysize)) )
-            return buckets[i].fhn_value;
-    }        
-    
-    return NULL;
+    OBJ_DESTRUCT(&ht->ht_nodes);
+    OBJ_DESTRUCT_SUPER(ht, lam_object_t);
 }
 
 
-static inline void lam_fh_remove_value_nkey(lam_fast_hash_t *htbl, void *key, uint32_t keysize)
+int lam_hash_table_init(lam_hash_table_t* ht, size_t table_size)
 {
-    uint32_t        hval, i;
-    lam_fhnode_t    *buckets;
-    
-    /* ASSERT: table size is power of 2 and table
-        has been initialized using lam_fh_construct_with().
-        */
-    hval = lam_hash_value((const char *)key, keysize) & htbl->fh_mask;
-    buckets = htbl->fh_nodes[hval];
-    if ( !buckets )
-        return ;
-    
-    for ( i = 0; i < htbl->fh_bucket_cnt[hval]; i++ )
-    {
-        if ( (true == buckets[i].fhn_is_taken) &&
-             (0 == memcmp(&(buckets[i].fhn_key), key, sizeof(lam_ptr_t))) )
-        {
-            buckets[i].fhn_is_taken = false;
-            buckets[i].fhn_value = 0;
-        }
-    }
-}
-
-static inline void lam_fh_remove_value_ptrkey(lam_fast_hash_t *htbl, void *key, uint32_t keysize)
-{
-    uint32_t        hval, i;
-    lam_fhnode_t    *buckets;
-    
-    /* ASSERT: table size is power of 2 and table
-        has been initialized using lam_fh_construct_with().
-        */
-    hval = lam_hash_value((const char *)key, keysize) & htbl->fh_mask;
-    buckets = htbl->fh_nodes[hval];
-    if ( !buckets )
-        return ;
-    
-    for ( i = 0; i < htbl->fh_bucket_cnt[hval]; i++ )
-    {
-        if ( (true == buckets[i].fhn_is_taken)
-             && (buckets[i].fhn_ptr_key_size == keysize)
-             && (0 == memcmp(&(buckets[i].fhn_key), key, keysize)) )
-        {
-            buckets[i].fhn_is_taken = false;
-            buckets[i].fhn_value = 0;
-            free(buckets[i].fhn_key.pval);
-        }
-    }
-}
-
-
-static inline int lam_fh_find_empty_bucket(lam_fast_hash_t *htbl, uint32_t hval,
-                                           uint32_t *bucket_idx)
-{
-    uint32_t        i;
-    lam_fhnode_t    *buckets;
-    
-    /* ASSERT: table size is power of 2 and table
-        has been initialized using lam_fh_construct_with().
-        */
-    buckets = htbl->fh_nodes[hval];
-    if ( !buckets )
-    {
-        /* create new array of buckets
-        for collision */
-        htbl->fh_nodes[hval] = malloc(sizeof(lam_fhnode_t) * BUCKET_ALLOC_SZ);
-        if ( !htbl->fh_nodes[hval] )
-            return LAM_ERR_OUT_OF_RESOURCE;
-        
-        memset(htbl->fh_nodes[hval], 0, 
-               sizeof(lam_fhnode_t) * BUCKET_ALLOC_SZ);
-        htbl->fh_bucket_cnt[hval] = BUCKET_ALLOC_SZ;  /* keep track of array size. */
-        buckets = htbl->fh_nodes[hval];
-    }
-    
-    /* find an empty bucket. If no empty buckets,
-        then realloc. */
-    for ( i = 0; i < htbl->fh_bucket_cnt[hval]; i++ )
-    {
-        if ( false == buckets[i].fhn_is_taken )
-        {
-            /* found empty bucket */
-            *bucket_idx = i;
-            break;
-        }
-    }
-    
-    if ( i == htbl->fh_bucket_cnt[hval] )
-    {
-        /* no empty buckets! */
-        htbl->fh_nodes[hval] = (lam_fhnode_t *)realloc(htbl->fh_nodes[hval],
-                                                       sizeof(lam_fhnode_t)
-                                                       * (htbl->fh_bucket_cnt[hval] + BUCKET_ALLOC_SZ));
-        
-        if ( !htbl->fh_nodes[hval] )
-            return LAM_ERR_OUT_OF_RESOURCE;
-        
-        /* get ptr to start of newly alloc buckets */
-        buckets = htbl->fh_nodes[hval] + htbl->fh_bucket_cnt[hval];
-        memset(buckets, 0,
-               sizeof(lam_fhnode_t) * BUCKET_ALLOC_SZ);
-        *bucket_idx = htbl->fh_bucket_cnt[hval];
-        htbl->fh_bucket_cnt[hval] += BUCKET_ALLOC_SZ;  /* keep track of array size. */
-    }
-    
-    return LAM_SUCCESS;
-}
-
-static inline int lam_fh_set_value_ptrkey(lam_fast_hash_t *htbl, void *val,
-                                          void *key, uint32_t keysize)
-{
-    int         err;
-    uint32_t        hval, bucket_idx;
-    lam_fhnode_t    *buckets;
-    
-    /* ASSERT: table size is power of 2 and table
-        has been initialized using lam_fh_construct_with().
-        */
-    hval = lam_hash_value((const char *)key, keysize) & htbl->fh_mask;
-    err = lam_fh_find_empty_bucket(htbl, hval, &bucket_idx);
-    if ( LAM_SUCCESS != err )
-        return err;
-    
-    /* ASSERT: we have an empty bucket */
-    /* found empty bucket */
-    buckets = htbl->fh_nodes[hval];
-    buckets[bucket_idx].fhn_key.pval = malloc(keysize);
-    if ( NULL == buckets[bucket_idx].fhn_key.pval )
-    {
+    size_t i;
+    ht->ht_table = realloc(ht->ht_table, table_size * sizeof(lam_list_t));
+    if(NULL == ht->ht_table)
         return LAM_ERR_OUT_OF_RESOURCE;
-    }
-    memcpy(buckets[bucket_idx].fhn_key.pval, key, keysize);
-    buckets[bucket_idx].fhn_using_key_ptr = true;
-    buckets[bucket_idx].fhn_value = val;
-    buckets[bucket_idx].fhn_ptr_key_size = keysize;
-    buckets[bucket_idx].fhn_is_taken = true;
-    
-    htbl->fh_count++;
-    
-    
+    for(i=ht->ht_table_size; i<table_size; i++)
+        OBJ_CONSTRUCT(ht->ht_table+i, lam_list_t);
     return LAM_SUCCESS;
 }
 
-static inline int lam_fh_set_value_nkey(lam_fast_hash_t *htbl, void *val,
-                                          void *key, uint32_t keysize)
+ 
+/*
+ *  lam_uint32_hash_node_t
+ */
+
+struct lam_uint32_hash_node_t
 {
-    int         err;
-    uint32_t        hval, bucket_idx;
-    lam_fhnode_t    *buckets;
-    
-    /* ASSERT: table size is power of 2 and table
-        has been initialized using lam_fh_construct_with().
-        */
-    hval = lam_hash_value((const char *)key, keysize) & htbl->fh_mask;
-    err = lam_fh_find_empty_bucket(htbl, hval, &bucket_idx);
-    if ( LAM_SUCCESS != err )
-        return err;
-    
-    /* ASSERT: we have an empty bucket */
-    /* found empty bucket */
-    buckets = htbl->fh_nodes[hval];
-    memcpy(&(buckets[bucket_idx].fhn_key), key, keysize);
-    buckets[bucket_idx].fhn_using_key_ptr = false;
-    buckets[bucket_idx].fhn_value = val;
-    buckets[bucket_idx].fhn_is_taken = true;
-    /* We don't need to set the key_size field for numeric keys */
-    
-    htbl->fh_count++;
-    
-    
+    lam_list_item_t super;
+    uint32_t hn_key;
+    void *hn_value;
+};
+typedef struct lam_uint32_hash_node_t lam_uint32_hash_node_t;
+
+static void lam_uint32_hash_node_construct(lam_uint32_hash_node_t* hn)
+{
+    OBJ_CONSTRUCT_SUPER(hn, lam_list_item_t);
+}
+
+static void lam_uint32_hash_node_destruct(lam_uint32_hash_node_t* hn)
+{
+    OBJ_DESTRUCT_SUPER(hn, lam_list_item_t);
+}
+
+static lam_class_info_t lam_uint32_hash_node_t_class_info = {
+    "lam_uint32_hash_node_t", 
+    &lam_list_item_t_class_info, 
+    (lam_construct_t)lam_uint32_hash_node_construct,
+    (lam_destruct_t)lam_uint32_hash_node_destruct
+};
+
+
+void* lam_hash_table_get_value_uint32(lam_hash_table_t* ht, uint32_t key)
+{
+    lam_list_t* list = ht->ht_table + (key & ht->ht_mask);
+    lam_uint32_hash_node_t *node;
+
+    for(node =  (lam_uint32_hash_node_t*)lam_list_get_first(list);
+        node != (lam_uint32_hash_node_t*)lam_list_get_last(list);
+        node =  (lam_uint32_hash_node_t*)lam_list_get_next(list)) {
+        if (node->hn_key == key) {
+            return node->hn_value;
+        }
+    } 
+    return NULL;
+}
+
+
+int lam_hash_table_set_value_uint32(lam_hash_table_t* ht, uint32_t key, void* value)
+{
+    lam_list_t* list = ht->ht_table + (key & ht->ht_mask);
+    lam_uint32_hash_node_t *node;
+
+    for(node =  (lam_uint32_hash_node_t*)lam_list_get_first(list);
+        node != (lam_uint32_hash_node_t*)lam_list_get_last(list);
+        node =  (lam_uint32_hash_node_t*)lam_list_get_next(list)) {
+        if (node->hn_key == key) {
+            node->hn_value = value;
+            return LAM_SUCCESS;
+        }
+    } 
+
+    node = (lam_uint32_hash_node_t*)lam_list_remove_first(&ht->ht_nodes); 
+    if(NULL == node) {
+        node = OBJ_NEW(lam_uint32_hash_node_t);
+        if(NULL == node)
+            return LAM_ERR_OUT_OF_RESOURCE;
+    }
+    node->hn_key = key;
+    node->hn_value = value;
+    lam_list_append(list, (lam_list_item_t*)node);
+    ht->ht_size++;
     return LAM_SUCCESS;
 }
 
+
+int lam_hash_table_remove_value_uint32(lam_hash_table_t* ht, uint32_t key)
+{
+    lam_list_t* list = ht->ht_table + (key & ht->ht_mask);
+    lam_uint32_hash_node_t *node;
+
+    for(node =  (lam_uint32_hash_node_t*)lam_list_get_first(list);
+        node != (lam_uint32_hash_node_t*)lam_list_get_last(list);
+        node =  (lam_uint32_hash_node_t*)lam_list_get_next(list)) {
+        if (node->hn_key == key) {
+            lam_list_remove_item(list, (lam_list_item_t*)node);
+            lam_list_append(&ht->ht_nodes, (lam_list_item_t*)node);
+            ht->ht_size--;
+            return LAM_SUCCESS;
+        }
+    } 
+    return LAM_ERR_BAD_PARAM;
+}
 
 
 /*
- *
- *      Fast hash table interface
- *
+ *  lam_uint64_hash_node_t
  */
 
-static uint32_t lam_log2(unsigned int n)
+struct lam_uint64_hash_node_t
 {
-    int overflow;
-    unsigned int cnt, nn;
-    
-    cnt = 0;
-    nn = n;
-    while (nn >>= 1) {
-        cnt++;
-    }
-    overflow = (~(1 << cnt) & n) > 0;
-    
-    return cnt + overflow;
-    
+    lam_list_item_t super;
+    uint64_t hn_key;
+    void* hn_value;
+};
+typedef struct lam_uint64_hash_node_t lam_uint64_hash_node_t;
+
+static void lam_uint64_hash_node_construct(lam_uint64_hash_node_t* hn)
+{
+    OBJ_CONSTRUCT_SUPER(hn, lam_list_item_t);
 }
 
-
-#define DEFAULT_SIZE        128
-
-void lam_fh_construct(lam_fast_hash_t *htbl)
+static void lam_uint64_hash_node_destruct(lam_uint64_hash_node_t* hn)
 {
-    OBJ_CONSTRUCT_SUPER(htbl, lam_object_t);
-    htbl->fh_nodes = 0;
-    htbl->fh_count = 0;
-    htbl->fh_size = 0;
-    htbl->fh_mask = 0;
-    htbl->fh_bucket_cnt = 0;
-    lam_fh_resize(htbl, DEFAULT_SIZE);
+    OBJ_DESTRUCT_SUPER(hn, lam_list_item_t);
 }
 
-void lam_fh_destruct(lam_fast_hash_t *htbl)
+static lam_class_info_t lam_uint64_hash_node_t_class_info = {
+    "lam_uint64_hash_node_t", 
+    CLASS_INFO(lam_list_item_t),
+    (lam_construct_t)lam_uint64_hash_node_construct,
+    (lam_destruct_t)lam_uint64_hash_node_destruct
+};
+
+
+void* lam_hash_table_get_value_uint64(lam_hash_table_t* ht, uint64_t key)
 {
-    int     i;
-    
-    if ( htbl->fh_nodes )
-    {
-        lam_fh_remove_all(htbl);
-        for ( i = 0; i < htbl->fh_size; i++ )
-        {
-            if ( htbl->fh_nodes[i] )
-                free(htbl->fh_nodes[i]);
+    lam_list_t* list = ht->ht_table + (key & ht->ht_mask);
+    lam_uint64_hash_node_t *node;
+
+    for(node =  (lam_uint64_hash_node_t*)lam_list_get_first(list);
+        node != (lam_uint64_hash_node_t*)lam_list_get_last(list);
+        node =  (lam_uint64_hash_node_t*)lam_list_get_next(list)) {
+        if (node->hn_key == key) {
+            return node->hn_value;
         }
-        free(htbl->fh_nodes);
-        free(htbl->fh_bucket_cnt);
-    }
-    
-    OBJ_DESTRUCT_SUPER(htbl, lam_object_t);
+    } 
+    return NULL;
 }
 
 
-/* initialize hash table with fixed size, usually power of 2 or prime */
-int lam_fh_resize(lam_fast_hash_t *htbl, uint32_t size)
+int lam_hash_table_set_value_uint64(lam_hash_table_t* ht, uint64_t key, void* value)
 {
-    uint32_t        power2_size;
-    
-    /* round up size to power of 2, 
-     * if passed size is not power of 2.
-     */
-    power2_size = 1 << lam_log2(size);
-    htbl->fh_mask = power2_size - 1;
-    htbl->fh_nodes = (lam_fhnode_t **)realloc(htbl->fh_nodes, 
-                                              sizeof(lam_fhnode_t *) * power2_size);
-    if ( 0 == htbl->fh_nodes )
-        return LAM_ERR_OUT_OF_RESOURCE;
-    
-    htbl->fh_bucket_cnt = (uint32_t *)realloc(htbl->fh_bucket_cnt, 
-                                              sizeof(uint32_t) * power2_size);
-    if ( 0 == htbl->fh_bucket_cnt )
-    {
-        free(htbl->fh_nodes);
-        return LAM_ERR_OUT_OF_RESOURCE;
-    }
+    lam_list_t* list = ht->ht_table + (key & ht->ht_mask);
+    lam_uint64_hash_node_t *node;
 
-    if ( power2_size > htbl->fh_size )
-    {
-        /* zero out remaining slots, if adding buckets */
-        memset(htbl->fh_nodes + htbl->fh_size, 0, 
-               sizeof(lam_fhnode_t *)*(power2_size - htbl->fh_size));
-        memset(htbl->fh_bucket_cnt + htbl->fh_size, 0, 
-               sizeof(uint32_t)*(power2_size - htbl->fh_size));
+    for(node =  (lam_uint64_hash_node_t*)lam_list_get_first(list);
+        node != (lam_uint64_hash_node_t*)lam_list_get_last(list);
+        node =  (lam_uint64_hash_node_t*)lam_list_get_next(list)) {
+        if (node->hn_key == key) {
+            node->hn_value = value;
+            return LAM_SUCCESS;
+        }
+    } 
+
+    node = (lam_uint64_hash_node_t*)lam_list_remove_first(&ht->ht_nodes); 
+    if(NULL == node) {
+        node = OBJ_NEW(lam_uint64_hash_node_t);
+        if(NULL == node)
+            return LAM_ERR_OUT_OF_RESOURCE;
     }
-    htbl->fh_size = power2_size;
-    
+    node->hn_key = key;
+    node->hn_value = value;
+    lam_list_append(list, (lam_list_item_t*)node);
+    ht->ht_size++;
     return LAM_SUCCESS;
 }
 
 
-void lam_fh_remove_all(lam_fast_hash_t *htbl)
+int lam_hash_table_remove_value_uint64(lam_hash_table_t* ht, uint64_t key)
 {
-    uint32_t        i, j;
-    lam_fhnode_t    *buckets;
-    
-    for ( i = 0; i < htbl->fh_size; i++ )
-    {
-        /* remove all values in nonempty bucket arrays. */
-        if ( htbl->fh_nodes[i] )
-        {
-            buckets = htbl->fh_nodes[i];
-            /* process the bucket array. */
-            for ( j = 0; j < htbl->fh_bucket_cnt[i]; j++ )
-            {
-                if ( true == buckets[j].fhn_is_taken )
-                {
-                    buckets[j].fhn_is_taken = false;
-                    if ( true == buckets[j].fhn_using_key_ptr )
-                    {
-                        free(buckets[j].fhn_key.pval);
-                    }
-                }
-            }   /* end loop over htbl->fh_bucket_cnt[i]. */
+    lam_list_t* list = ht->ht_table + (key & ht->ht_mask);
+    lam_uint64_hash_node_t *node;
+
+    for(node =  (lam_uint64_hash_node_t*)lam_list_get_first(list);
+        node != (lam_uint64_hash_node_t*)lam_list_get_last(list);
+        node =  (lam_uint64_hash_node_t*)lam_list_get_next(list)) {
+        if (node->hn_key == key) {
+            lam_list_remove_item(list, (lam_list_item_t*)node);
+            lam_list_append(&ht->ht_nodes, (lam_list_item_t*)node);
+            ht->ht_size--;
+            return LAM_SUCCESS;
         }
-    }   /* end loop over htbl->fh_nodes */
-    htbl->fh_count = 0;
+    } 
+    return LAM_ERR_BAD_PARAM;
 }
 
-
-void *lam_fh_get_value_for_ikey(lam_fast_hash_t *htbl, uint32_t key)
-{
-    return lam_fh_get_value_nkey(htbl, &key, sizeof(key));
-}
-
-
-
-void lam_fh_remove_value_for_ikey(lam_fast_hash_t *htbl, uint32_t key)
-{
-    lam_fh_remove_value_nkey(htbl, &key, sizeof(key));
-}
-
-
-int lam_fh_set_value_for_ikey(lam_fast_hash_t *htbl, void *val, uint32_t key)
-{
-    return lam_fh_set_value_nkey(htbl, val, &key, sizeof(key));
-}
-
-
-void *lam_fh_get_value_for_lkey(lam_fast_hash_t *htbl, uint64_t key)
-{
-    return lam_fh_get_value_nkey(htbl, &key, sizeof(key));
-}
-
-
-void lam_fh_remove_value_for_lkey(lam_fast_hash_t *htbl, uint64_t key)
-{
-    lam_fh_remove_value_nkey(htbl, &key, sizeof(key));
-}
-
-
-int lam_fh_set_value_for_lkey(lam_fast_hash_t *htbl, void *val, uint64_t key)
-{
-    return lam_fh_set_value_nkey(htbl, val, &key, sizeof(key));
-}
-
-
-void *lam_fh_get_value_for_skey(lam_fast_hash_t *htbl, const char *key)
-{
-    return lam_fh_get_value_ptrkey(htbl, (void *)key, strlen(key)+1);
-}
-
-void lam_fh_remove_value_for_skey(lam_fast_hash_t *htbl, const char *key)
-{
-    lam_fh_remove_value_ptrkey(htbl, (void *)key, strlen(key)+1);
-}
-
-int lam_fh_set_value_for_skey(lam_fast_hash_t *htbl, void *val, const char *key)
-{
-    return lam_fh_set_value_ptrkey(htbl, val, (void *)key, strlen(key)+1);
-}
 
