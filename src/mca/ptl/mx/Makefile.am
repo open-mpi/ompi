@@ -23,6 +23,7 @@ mx_SOURCES = \
     ptl_mx.h \
     ptl_mx_component.c \
     ptl_mx_module.c \
+    ptl_mx_module.h \
     ptl_mx_peer.c \
     ptl_mx_peer.h \
     ptl_mx_proc.c \
