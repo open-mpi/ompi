@@ -92,7 +92,7 @@ ompi_init_elan_queue_events (mca_ptl_elan_module_t * ptl,
 #if OMPI_PTL_ELAN_COMP_QUEUE
 	/* XXX: provide a DMA structure for each chained event */
 	desc->comp_dma.dma_typeSize = E4_DMA_TYPE_SIZE (
-		sizeof(mca_ptl_base_frag_header_t), 
+		sizeof(mca_ptl_base_header_t), 
 		DMA_DataTypeByte, DMA_QueueWrite, 8);
 	desc->comp_dma.dma_cookie   = elan4_local_cookie(ptl->queue->tx_cpool,
 		E4_COOKIE_TYPE_LOCAL_DMA, ptl->elan_vp);
@@ -120,6 +120,10 @@ ompi_init_elan_queue_events (mca_ptl_elan_module_t * ptl,
 	desc->main_dma.dma_srcEvent= elan4_main2elan(ctx, 
 		(E4_Event *)desc->comp_event);
 	desc->main_dma.dma_dstEvent= SDRAM2ELAN (ctx, queue->input);
+
+	LOG_PRINT(PTL_ELAN_DEBUG_NONE, 
+		"desc %p comp_buff %p elan_event %p comp_event %p \n", 
+		desc, desc->comp_buff, desc->elan_event, desc->comp_event);
 #else
         /* Initialize some of the dma structures */
 	desc->main_dma.dma_dstAddr = 0;
@@ -145,7 +149,7 @@ ompi_init_elan_queue_events (mca_ptl_elan_module_t * ptl,
 }
 
 static void
-mca_ptl_elan_putget_desc_contruct (
+mca_ptl_elan_putget_desc_construct (
 	mca_ptl_elan_module_t * ptl,
        	ompi_ptl_elan_putget_desc_t *desc, 
 	EVENT *elan_event,
@@ -170,9 +174,15 @@ mca_ptl_elan_putget_desc_contruct (
     desc->comp_event= (E4_Event *) ((char *)elan_event 
 	    + 2 * ELAN_BLOCK_SIZE + 2 * sizeof (E4_Event32));
 
+    LOG_PRINT(PTL_ELAN_DEBUG_NONE, 
+	    "desc %p chain_buff %p comp_buff %p elan_event %p "
+	    " chain_event %p comp_event %p \n", 
+	    desc, desc->chain_buff, desc->comp_buff, desc->elan_event,
+	    desc->chain_event, desc->comp_event);
+
     /* XXX: provide a DMA structure for each chained event */
     desc->comp_dma.dma_typeSize = E4_DMA_TYPE_SIZE (
-	    sizeof(mca_ptl_base_frag_header_t), 
+	    sizeof(mca_ptl_base_header_t), 
 	    DMA_DataTypeByte, DMA_QueueWrite, 8);
     desc->comp_dma.dma_vproc    = ptl->elan_vp;
     desc->comp_dma.dma_srcAddr  = 0x0ULL; /* To be filled in */
@@ -196,6 +206,7 @@ mca_ptl_elan_putget_desc_contruct (
     desc->main_dma.dma_srcEvent= elan4_main2elan(ctx, 
 	    (E4_Event *)desc->chain_event);
     desc->main_dma.dma_dstEvent= 0x0ULL;
+
 #else
     desc->elan_event = elan_event; 
     desc->chain_event= (E4_Event32 *) 
@@ -228,7 +239,7 @@ do {                                                                      \
         frag->desc = (ompi_ptl_elan_base_desc_t *)dp;                     \
                                                                           \
         /* Initialize some of the dma structures */                       \
-	mca_ptl_elan_putget_desc_contruct (ptl, dp,                       \
+	mca_ptl_elan_putget_desc_construct (ptl, dp,                       \
 		eptr, 0, 0, local);                                       \
                                                                           \
         item = (ompi_list_item_t *) frag;                                 \

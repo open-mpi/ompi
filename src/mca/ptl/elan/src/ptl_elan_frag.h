@@ -22,11 +22,18 @@ struct ompi_ptl_elan_base_desc_t;
 
 struct mca_ptl_elan_send_frag_t {
     mca_ptl_base_frag_t frag_base;  
+    struct ompi_ptl_elan_base_desc_t *desc;
     volatile int    frag_progressed;
     bool            frag_ack_pending;       /* Is there an ack to recv */
-    struct ompi_ptl_elan_base_desc_t *desc;
 };
 typedef struct mca_ptl_elan_send_frag_t mca_ptl_elan_send_frag_t;
+
+/* XXX: Extend the header a bit with an pointer to frag */
+struct mca_ptl_elan_ack_header_t {
+    struct mca_ptl_base_ack_header_t base_ack; /* 32 bytes */
+    struct mca_ptl_elan_send_frag_t *frag;
+};
+typedef struct mca_ptl_elan_ack_header_t mca_ptl_elan_ack_header_t;
 
 /**
  *  ELAN received fragment derived type.
@@ -37,12 +44,6 @@ struct mca_ptl_elan_recv_frag_t {
     size_t          frag_msg_cnt; 
     volatile int    frag_progressed;        /* Is it record to request */
     bool            frag_ack_pending;       /* Is there an ack to send */
-#if 0
-    union {
-       struct ompi_ptl_elan_qdma_desc_t   *qdma;
-       struct ompi_ptl_elan_putget_desc_t *putget;
-    } frag;
-#endif
     char           *alloc_buff;
     char           *unex_buff;
 };
