@@ -48,11 +48,12 @@ void mca_pml_teg_send_request_schedule(mca_ptl_base_send_request_t* req)
          */
         else {
             bytes_to_frag = (ptl_proc->ptl_weight * bytes_remaining) / 100;
+            if(ptl->ptl_max_frag_size != 0 && bytes_to_frag > ptl->ptl_max_frag_size)
+                bytes_to_frag = ptl->ptl_max_frag_size;
         }
 
-        rc = ptl->ptl_put(ptl, ptl_proc->ptl_peer, req, req->req_offset, &bytes_to_frag, 0);
+        rc = ptl->ptl_put(ptl, ptl_proc->ptl_peer, req, req->req_offset, bytes_to_frag, 0);
         if(rc == OMPI_SUCCESS) {
-            req->req_offset += bytes_to_frag;
             bytes_remaining = req->req_bytes_packed - req->req_offset;
         }
     }

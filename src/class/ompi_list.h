@@ -16,7 +16,6 @@
 
 extern ompi_class_t   ompi_list_item_t_class;
 extern ompi_class_t   ompi_list_t_class;
-typedef int               ompi_list_type_t;
 
 
 /*
@@ -28,7 +27,6 @@ typedef int               ompi_list_type_t;
 typedef struct ompi_list_item
 {
     ompi_object_t            super;
-    ompi_list_type_t         ompi_list_type;
     volatile struct ompi_list_item   *ompi_list_next;
     volatile struct ompi_list_item   *ompi_list_prev;
 } ompi_list_item_t;
@@ -48,10 +46,9 @@ typedef struct ompi_list_item
  
 typedef struct ompi_list
 {
-    ompi_object_t        super;
-    ompi_list_item_t     ompi_list_head;
-    ompi_list_item_t     ompi_list_tail;
-    ompi_list_type_t     ompi_list_type;
+    ompi_object_t       super;
+    ompi_list_item_t    ompi_list_head;
+    ompi_list_item_t    ompi_list_tail;
     volatile size_t     ompi_list_length;
 } ompi_list_t;
 
@@ -59,16 +56,6 @@ typedef struct ompi_list
 /*
  * Inlined accessor functions
  */
-
-static inline ompi_list_type_t ompi_list_get_type(ompi_list_t* list)
-{
-    return list->ompi_list_type;
-}
-
-static inline void ompi_list_set_type(ompi_list_t* list, ompi_list_type_t type)
-{
-    list->ompi_list_type = type;
-}
 
 static inline size_t ompi_list_get_size(ompi_list_t* list)
 {

@@ -63,7 +63,8 @@ void mca_ptl_base_recv_request_match_specific(mca_ptl_base_recv_request_t* reque
     /* We didn't find any matches.  Record this irecv so we can match 
      * it when the message comes in.
     */
-    ompi_list_append(pml_comm->c_specific_receives+req_peer, (ompi_list_item_t*)request);
+    if(request->super.req_type != MCA_PML_REQUEST_IPROBE)
+        ompi_list_append(pml_comm->c_specific_receives+req_peer, (ompi_list_item_t*)request);
     THREAD_UNLOCK(&pml_comm->c_matching_lock);
 }
 
@@ -111,7 +112,8 @@ void mca_ptl_base_recv_request_match_wild(mca_ptl_base_recv_request_t* request)
      * it when the message comes in.
     */
  
-    ompi_list_append(&pml_comm->c_wild_receives, (ompi_list_item_t*)request);
+    if(request->super.req_type != MCA_PML_REQUEST_IPROBE)
+        ompi_list_append(&pml_comm->c_wild_receives, (ompi_list_item_t*)request);
     THREAD_UNLOCK(&pml_comm->c_matching_lock);
 }
 

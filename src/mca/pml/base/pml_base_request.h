@@ -21,7 +21,9 @@ extern ompi_class_t mca_pml_base_request_t_class;
 typedef enum {
     MCA_PML_REQUEST_NULL,
     MCA_PML_REQUEST_SEND,
-    MCA_PML_REQUEST_RECV
+    MCA_PML_REQUEST_RECV,
+    MCA_PML_REQUEST_IPROBE,
+    MCA_PML_REQUEST_PROBE
 } mca_pml_base_request_type_t;
 
 

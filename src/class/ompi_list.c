@@ -38,7 +38,6 @@ OBJ_CLASS_INSTANCE(
 static void ompi_list_item_construct(ompi_list_item_t *item)
 {
     item->ompi_list_next = item->ompi_list_prev = NULL;
-    item->ompi_list_type = 0;
 }
 
 static void ompi_list_item_destruct(ompi_list_item_t *item)
@@ -58,7 +57,6 @@ static void ompi_list_construct(ompi_list_t *list)
     list->ompi_list_head.ompi_list_next = &list->ompi_list_tail;
     list->ompi_list_tail.ompi_list_prev = &list->ompi_list_head;
     list->ompi_list_tail.ompi_list_next = NULL;
-    list->ompi_list_type = 0;
     list->ompi_list_length = 0;
 }
 

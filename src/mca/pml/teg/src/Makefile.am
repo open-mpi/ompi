@@ -14,7 +14,9 @@ noinst_LTLIBRARIES = libmca_pml_teg.la
 libmca_pml_teg_la_SOURCES = \
 	pml_teg.c \
 	pml_teg.h \
+	pml_teg_cancel.c \
 	pml_teg_free.c \
+	pml_teg_iprobe.c \
 	pml_teg_irecv.c \
 	pml_teg_isend.c \
 	pml_teg_module.c \

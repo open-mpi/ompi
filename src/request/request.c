@@ -12,12 +12,13 @@ ompi_class_t ompi_request_t_class = {
 };
 
 
-void ompi_request_construct(ompi_request_t* rq)
+void ompi_request_construct(ompi_request_t* req)
 {
+    req->req_mode = OMPI_REQUEST_INVALID;
 }
 
 
-void ompi_request_destruct(ompi_request_t* rq)
+void ompi_request_destruct(ompi_request_t* req)
 {
 }
 
