@@ -37,12 +37,12 @@ mca_pcm_base_component_1_0_0_t mca_pcm_ompid_component = {
   {
     false /* checkpoint / restart */
   },
-  mca_pcm_ompid_init    /* component init */
+  mca_pcm_ompid_init,    /* component init */
+  NULL                   /* unique name */
 };
 
 
 struct mca_pcm_base_module_1_0_0_t mca_pcm_ompid_1_0_0 = {
-    mca_pcm_base_no_unique_name, /* unique_string */
     mca_pcm_ompid_allocate_resources, /* allocate_resources */
     mca_pcm_ompid_can_spawn, /* can_spawn */
     mca_pcm_ompid_spawn_procs, /* spawn_procs */

@@ -41,7 +41,8 @@ mca_pcm_base_component_1_0_0_t mca_pcm_rsh_component = {
   {
     false /* checkpoint / restart */
   },
-  mca_pcm_rsh_init    /* component init */
+  mca_pcm_rsh_init,    /* component init */
+  NULL                 /* unique name */
 };
 
 
@@ -165,7 +166,6 @@ mca_pcm_rsh_init(int *priority,
     /*
      * fill in the function pointers
      */
-    me->super.pcm_get_unique_name = mca_pcm_base_no_unique_name;
     me->super.pcm_allocate_resources = mca_pcm_rsh_allocate_resources;
     me->super.pcm_can_spawn = mca_pcm_rsh_can_spawn;
     me->super.pcm_spawn_procs = mca_pcm_rsh_spawn_procs;

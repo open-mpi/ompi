@@ -15,11 +15,49 @@
 #include "mca/pcm/base/base.h"
 #include "mca/llm/base/base.h"
 #include "mca/llm/base/base_internal.h"
+#include "mca/mca.h"
+#include "mca/base/base.h"
 
-char *
-mca_pcm_base_no_unique_name(struct mca_pcm_base_module_1_0_0_t* me)
+
+char*
+mca_pcm_base_get_unique_id(void)
 {
-    return strdup("0");
+    extern ompi_list_t mca_pcm_base_components_available;
+    ompi_list_item_t *item;
+    mca_base_component_list_item_t *cli;
+    mca_pcm_base_component_t *component;
+    mca_pcm_base_module_t *module;
+    int priority, top_priority;
+    char *id, *top_id;
+    int ret;
+
+    top_priority = -1;
+    top_id = NULL;
+    
+    for (item = ompi_list_get_first(&mca_pcm_base_components_available);
+         ompi_list_get_end(&mca_pcm_base_components_available) != item;
+         item = ompi_list_get_next(item)) {
+        cli = (mca_base_component_list_item_t *) item;
+        component = (mca_pcm_base_component_t *) cli->cli_component;
+
+        if (NULL == component->pcm_get_unique_id) continue;
+
+        priority = 0;
+        id = NULL;
+
+        ret = component->pcm_get_unique_id(&id, &priority);
+        if (OMPI_SUCCESS != ret) continue;
+
+        if (priority > top_priority) {
+            if (NULL != top_id) free(top_id);
+            top_id = id;
+            top_priority = priority;
+        } else {
+            free(id);
+        }
+    }
+
+    return top_id;
 }
 
 
