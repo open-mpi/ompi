@@ -22,6 +22,8 @@
 #include "mca/ns/ns.h"
 #include "util/output.h"
 
+#include <string.h>
+#include <stdlib.h>
 #include <stdio.h>
 
 ompi_list_t*
