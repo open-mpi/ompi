@@ -266,7 +266,7 @@ fi
 
 
 # make sure we are at the top of the tree
-if test -f VERSION -a -f configure.ac -a -f src/mpi/c/d_get_name.c ; then
+if test -f VERSION -a -f configure.ac -a -f src/mpi/c/datatype_get_name.c ; then
     bad=0
 else
     cat <<EOF
