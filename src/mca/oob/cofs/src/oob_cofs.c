@@ -20,7 +20,7 @@
 #include <string.h>
 #include <unistd.h>
 
-static int do_recv(mca_ns_base_jobid_t jobid, mca_ns_base_vpid_t procid, const struct iovec* iov, int count, int flags);
+static int do_recv(mca_ns_base_jobid_t jobid, mca_ns_base_vpid_t procid, const struct iovec* iov, int count, int tag, int flags);
 
 /**
 *  Similiar to unix send(2).
@@ -36,6 +36,7 @@ int mca_oob_cofs_send(
     const ompi_process_name_t* peer, 
     const struct iovec *iov, 
     int count, 
+    int tag,
     int flags)
 {
   FILE *fp;
@@ -45,14 +46,14 @@ int mca_oob_cofs_send(
   char msg_file_tmp[OMPI_PATH_MAX];
 
   /* create the file and open it... */
-  snprintf(msg_file, OMPI_PATH_MAX, "%s/%d_%d_%d_%ld.msg", mca_oob_cofs_comm_loc,
-           ompi_name_server.get_jobid(&mca_oob_base_self),
-           ompi_name_server.get_vpid(&mca_oob_base_self),
-           ompi_name_server.get_vpid(peer), (long)mca_oob_cofs_serial);
-  snprintf(msg_file_tmp, OMPI_PATH_MAX, "%s/.%d_%d_%d_%ld.msg", mca_oob_cofs_comm_loc,
-           ompi_name_server.get_jobid(&mca_oob_base_self), 
-           ompi_name_server.get_vpid(&mca_oob_base_self), 
-           ompi_name_server.get_vpid(peer), (long)mca_oob_cofs_serial);
+  snprintf(msg_file, OMPI_PATH_MAX, "%s/%d_%d_%d_%d_%ld.msg", mca_oob_cofs_comm_loc,
+           ompi_name_server.get_jobid(&mca_oob_name_self),
+           ompi_name_server.get_vpid(&mca_oob_name_self),
+           ompi_name_server.get_vpid(peer), tag, (long)mca_oob_cofs_serial);
+  snprintf(msg_file_tmp, OMPI_PATH_MAX, "%s/.%d_%d_%d_%d_%ld.msg", mca_oob_cofs_comm_loc,
+           ompi_name_server.get_jobid(&mca_oob_name_self), 
+           ompi_name_server.get_vpid(&mca_oob_name_self), 
+           ompi_name_server.get_vpid(peer), tag, (long)mca_oob_cofs_serial);
 
   fp = fopen(msg_file_tmp, "w");
   if (fp == NULL) {
@@ -90,24 +91,30 @@ int mca_oob_cofs_send_nb(
     const ompi_process_name_t* peer, 
     const struct iovec *iov, 
     int count, 
+    int tag,
     int flags,
     mca_oob_callback_fn_t cbfunc, 
     void* cbdata)
 {
-    int status = mca_oob_cofs_send(peer, iov, count, flags);
+    int status = mca_oob_cofs_send(peer, iov, count, tag, flags);
     if(NULL != cbfunc)
-        cbfunc(status, peer, iov, count, cbdata);
+        cbfunc(status, peer, iov, count, tag, cbdata);
     return status;
 }
 
 
 int
-mca_oob_cofs_recv(ompi_process_name_t* peer, const struct iovec* iov, int count, int flags)
+mca_oob_cofs_recv(
+    ompi_process_name_t* peer, 
+    const struct iovec* iov, 
+    int count, 
+    int tag, 
+    int flags)
 {
   int ret = OMPI_ERR_WOULD_BLOCK;
   while (ret == OMPI_ERR_WOULD_BLOCK) {
     ret = do_recv(ompi_name_server.get_jobid(peer),
-                  ompi_name_server.get_vpid(peer), iov, count, flags);
+                  ompi_name_server.get_vpid(peer), iov, count, tag, flags);
     sleep(1);
   }
   return ret;
@@ -119,24 +126,25 @@ mca_oob_cofs_recv_nb(
    ompi_process_name_t* peer, 
    const struct iovec* iov, 
    int count, 
+   int tag,
    int flags,
    mca_oob_callback_fn_t cbfunc, 
    void* cbdata)
 {
-   int status = mca_oob_cofs_recv(peer, iov, count, flags);
+   int status = mca_oob_cofs_recv(peer, iov, count, tag, flags);
    if(NULL != cbfunc)
-       cbfunc(status, peer, iov, count, cbdata);
+       cbfunc(status, peer, iov, count, tag, cbdata);
    return status;
 }
 
 
 static char*
-find_match(mca_ns_base_jobid_t jobid, mca_ns_base_vpid_t procid)
+find_match(mca_ns_base_jobid_t jobid, mca_ns_base_vpid_t procid, int tag)
 {
   DIR* dir;
   struct dirent *ent;
   unsigned long tmp_serial;
-  int tmp_jobid, tmp_procid, tmp_myprocid;
+  int tmp_jobid, tmp_procid, tmp_myprocid, tmp_tag;
   int ret;
   bool found = false;
   char best_name[OMPI_PATH_MAX];
@@ -150,21 +158,23 @@ find_match(mca_ns_base_jobid_t jobid, mca_ns_base_vpid_t procid)
   while ((ent = readdir(dir)) != NULL) {
     if (ent->d_name[0] == '.') continue;
 
-    ret = sscanf(ent->d_name, "%d_%d_%d_%lu.msg", &tmp_jobid, &tmp_procid, 
-                 &tmp_myprocid, &tmp_serial);
-    if (ret != 4) {
+    ret = sscanf(ent->d_name, "%d_%d_%d_%d_%lu.msg", &tmp_jobid, &tmp_procid, 
+                 &tmp_myprocid, &tmp_tag, &tmp_serial);
+    if (ret != 5) {
       continue;
     }
     
     if (tmp_jobid != jobid) {
       continue;
     }
-    if (tmp_myprocid != ompi_name_server.get_vpid(&mca_oob_base_self)) {
+    if (tmp_myprocid != ompi_name_server.get_vpid(&mca_oob_name_self)) {
       continue;
     }
     if (tmp_procid != procid) {
       continue;
     }
+    if (tag != MCA_OOB_TAG_ANY && tag != tmp_tag)
+      continue;
 
     /* do best one here... */
     found = true;
@@ -184,7 +194,7 @@ find_match(mca_ns_base_jobid_t jobid, mca_ns_base_vpid_t procid)
 
 
 static int 
-do_recv(mca_ns_base_jobid_t jobid, mca_ns_base_vpid_t procid, const struct iovec* iov, int count, int flags)
+do_recv(mca_ns_base_jobid_t jobid, mca_ns_base_vpid_t procid, const struct iovec* iov, int count, int tag, int flags)
 {
   char *fname;
   char full_fname[OMPI_PATH_MAX];
@@ -192,7 +202,7 @@ do_recv(mca_ns_base_jobid_t jobid, mca_ns_base_vpid_t procid, const struct iovec
   size_t rlen;
   size_t size;
 
-  fname = find_match(jobid, procid);
+  fname = find_match(jobid, procid, tag);
   if (fname == NULL) {
     return OMPI_ERR_WOULD_BLOCK;
   }

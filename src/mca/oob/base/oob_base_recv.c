@@ -10,13 +10,14 @@
 * @param msg (IN)     Array of iovecs describing user buffers and lengths.
 * @param types (IN)   Parallel array to iovecs describing data type of each iovec element.
 * @param count (IN)   Number of elements in iovec array.
+* @param tag (IN)     User defined tag for matching send/recv.
 * @param flags (IN)   May be MCA_OOB_PEEK to return up to the number of bytes provided in the
 *                     iovec array without removing the message from the queue.
 * @return             OMPI error code (<0) on error or number of bytes actually received.
 */
-int mca_oob_recv(ompi_process_name_t* peer, const struct iovec *msg, int count, int flags)
+int mca_oob_recv(ompi_process_name_t* peer, const struct iovec *msg, int count, int tag, int flags)
 {
-    return(mca_oob.oob_recv(peer, msg, count, flags));
+    return(mca_oob.oob_recv(peer, msg, count, tag, flags));
 }
 
 /*
@@ -26,12 +27,18 @@ int mca_oob_recv(ompi_process_name_t* peer, const struct iovec *msg, int count, 
  * @param msg (IN)     Array of iovecs describing user buffers and lengths.
  * @param types (IN)   Parallel array to iovecs describing data type of each iovec element.
  * @param count (IN)   Number of elements in iovec array.
+ * @param tag (IN)     User defined tag for matching send/recv.
  * @param flags (IN)   May be MCA_OOB_PEEK to return up to the number of bytes provided in the
  *                     iovec array without removing the message from the queue.
  * @return             OMPI error code (<0) on error or number of bytes actually received.
  */
-int mca_oob_recv_ntoh(ompi_process_name_t* peer, const struct iovec *msg,
-                      const mca_oob_base_type_t *types, int count, int flags)
+int mca_oob_recv_ntoh(
+    ompi_process_name_t* peer, 
+    const struct iovec *msg,
+    const mca_oob_base_type_t *types, 
+    int count, 
+    int tag,
+    int flags)
 {
     int rc, num, i = 0;
     struct iovec * orig;
@@ -63,7 +70,7 @@ int mca_oob_recv_ntoh(ompi_process_name_t* peer, const struct iovec *msg,
             }
         }
         /* now the new buffers are ready. do the recieve */
-        rc = mca_oob.oob_recv(peer, orig, count, flags);
+        rc = mca_oob.oob_recv(peer, orig, count, tag, flags);
         /* now we have to do the conversions */
         for(i = 0; i < count; i++) {
             if(types[i] == MCA_OOB_BASE_INT16) {
@@ -85,7 +92,7 @@ int mca_oob_recv_ntoh(ompi_process_name_t* peer, const struct iovec *msg,
         /* free the iovecs we allocated */
         free(orig);
     } else {
-        rc = mca_oob.oob_recv(peer, msg, count, flags);
+        rc = mca_oob.oob_recv(peer, msg, count, tag, flags);
     }
     return rc;
 }

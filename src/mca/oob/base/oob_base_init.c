@@ -16,7 +16,7 @@
 
 
 OBJ_CLASS_INSTANCE(
-    mca_oob_base_module_t,
+    mca_oob_t,
     ompi_list_item_t,
     NULL,
     NULL
@@ -28,8 +28,9 @@ OBJ_CLASS_INSTANCE(
     NULL
 );
 
-ompi_process_name_t mca_oob_base_self;
-ompi_process_name_t mca_oob_base_any;
+ompi_process_name_t mca_oob_name_seed;
+ompi_process_name_t mca_oob_name_self;
+ompi_process_name_t mca_oob_name_any;                                                                                                                          
 
 /**
  * Function for selecting one module from all those that are
@@ -43,21 +44,26 @@ int mca_oob_base_init(bool *user_threads, bool *hidden_threads)
     mca_base_component_list_item_t *cli;
     mca_oob_base_info_t * first;
     mca_oob_base_component_t *component;
-    mca_oob_base_module_t *module;
+    mca_oob_t *module;
     extern ompi_list_t mca_oob_base_components;
     ompi_process_name_t *self;
 
     /* setup local name */
+    OBJ_CONSTRUCT(&mca_oob_name_self, ompi_process_name_t);
     self = mca_pcm.pcm_self();
     if(NULL == self) {
         return OMPI_ERROR;
     }
-    mca_oob_base_self = *self;
+    mca_oob_name_self = *self;
 
     /* setup wildcard name */
-    mca_oob_base_any.cellid = -1;
-    mca_oob_base_any.jobid = -1;
-    mca_oob_base_any.vpid = -1;
+    OBJ_CONSTRUCT(&mca_oob_name_any, ompi_process_name_t);
+    mca_oob_name_any.cellid = -1;
+    mca_oob_name_any.jobid = -1;
+    mca_oob_name_any.vpid = -1;
+
+    /* setup seed daemons name */
+    OBJ_CONSTRUCT(&mca_oob_name_seed, ompi_process_name_t);
 
     /* Traverse the list of available modules; call their init functions. */
     for (item = ompi_list_get_first(&mca_oob_base_components);

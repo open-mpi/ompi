@@ -30,7 +30,9 @@ static inline int ompi_condition_wait(ompi_condition_t* c, ompi_mutex_t* m)
         }
     } else {
         while(c->c_signaled == 0) {
+            ompi_mutex_unlock(m);
             ompi_progress();
+            ompi_mutex_lock(m);
         }
     }
     c->c_signaled--;

@@ -12,11 +12,11 @@ struct mca_oob_base_cb_data_t {
 /* this is the callback function we will register when we have to do any conversion */
 static void mca_oob_base_recv_cb(int status, const ompi_process_name_t* peer,
                                  const struct iovec* msg,
-                                 size_t count, void* cbdata);
+                                 int count, int tag, void* cbdata);
 
 static void mca_oob_base_recv_cb(int status, const ompi_process_name_t* peer,
                                  const struct iovec* msg,
-                                 size_t count, void* cbdata)
+                                 int count, int tag, void* cbdata)
 {
     int i, num;
     struct mca_oob_base_cb_data_t * cb_struct = (struct mca_oob_base_cb_data_t *) cbdata;
@@ -43,7 +43,7 @@ static void mca_oob_base_recv_cb(int status, const ompi_process_name_t* peer,
     /* free the iovecs we allocated */
     free((void *)msg);
     /* call the user callback function */
-    cb_struct->user_callback(status, peer, user_iovec, count, cb_struct->user_data);
+    cb_struct->user_callback(status, peer, user_iovec, count, tag, cb_struct->user_data);
     /* free the cb structure */
     free(cb_struct);
     return;
@@ -60,10 +60,10 @@ static void mca_oob_base_recv_cb(int status, const ompi_process_name_t* peer,
  * @param cbdata (IN)  User data that is passed to callback function.
  * @return             OMPI error code (<0) on error or number of bytes actually received.
  */
-int mca_oob_recv_nb(ompi_process_name_t* peer, const struct iovec* msg, int count, int flags,
+int mca_oob_recv_nb(ompi_process_name_t* peer, const struct iovec* msg, int count, int tag, int flags,
                     mca_oob_callback_fn_t cbfunc, void* cbdata)
 {
-    return(mca_oob.oob_recv_nb(peer, msg, count, flags, cbfunc, cbdata));
+    return(mca_oob.oob_recv_nb(peer, msg, count, tag, flags, cbfunc, cbdata));
 }
 
 /*
@@ -80,7 +80,7 @@ int mca_oob_recv_nb(ompi_process_name_t* peer, const struct iovec* msg, int coun
  */
 
 int mca_oob_recv_ntoh_nb(ompi_process_name_t* peer, const struct iovec* msg,
-                         const mca_oob_base_type_t* types, int count, int flags,
+                         const mca_oob_base_type_t* types, int count, int tag, int flags,
                          mca_oob_callback_fn_t cbfunc, void* cbdata)
 {
     int rc, i = 0;
@@ -120,10 +120,9 @@ int mca_oob_recv_ntoh_nb(ompi_process_name_t* peer, const struct iovec* msg,
             }
         }
         /* now the new buffers are ready. do the recieve */
-        rc = mca_oob.oob_recv_nb(peer, orig, count, flags, &mca_oob_base_recv_cb,
-                                                    (void *) cb_struct);
+        rc = mca_oob.oob_recv_nb(peer, orig, count, tag, flags, mca_oob_base_recv_cb, cb_struct);
     } else {
-        rc = mca_oob.oob_recv_nb(peer, msg, count, flags, cbfunc, cbdata);
+        rc = mca_oob.oob_recv_nb(peer, msg, count, tag, flags, cbfunc, cbdata);
     }
     return rc;
 }

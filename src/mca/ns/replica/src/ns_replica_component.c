@@ -187,7 +187,7 @@ mca_oob_callback_fn_t mca_ns_replica_recv(int status, const ompi_process_name_t 
 
 	    reply.iov_base = (char*)&answer;
 	    reply.iov_len = sizeof(answer);
-	    mca_oob_send(sender, &reply, 1, 0);
+	    mca_oob_send(sender, &reply, 1, MCA_OOB_TAG_ANY, 0);
 	}
     }
     return OMPI_SUCCESS;
