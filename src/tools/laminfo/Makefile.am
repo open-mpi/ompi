@@ -20,6 +20,7 @@ libs = $(LIBMPI_LA)
 
 bin_PROGRAMS = laminfo
 laminfo_SOURCES = \
+        laminfo.h \
         laminfo.cc \
         modules.cc \
         output.cc \
