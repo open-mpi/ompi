@@ -17,7 +17,7 @@
 #include "mca/gpr/gpr.h"
 
 static ompi_mutex_t ompi_port_lock;
-static int port_id=1;
+static int port_id=MCA_OOB_TAG_USER;
 
 int ompi_open_port(char *port_name)
 {
