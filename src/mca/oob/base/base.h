@@ -262,6 +262,26 @@ typedef void (*mca_oob_callback_fn_t)(
     void* cbdata);
 
 /**
+*  Callback function on send/recv completion for buffer PACKED message only.
+*  i.e. only mca_oob_send_packed_nb and mca_oob_recv_packed_nb USE this.
+*
+*  @param status (IN)  Completion status - equivalent to the return value from blocking send/recv.
+*  @param peer (IN)    Opaque name of peer process.
+*  @param buffer (IN)  For sends, this is a pointer to a prepacked buffer
+                       For recvs, OOB creates and returns a buffer 
+*  @param tag (IN)     User defined tag for matching send/recv.
+*  @param cbdata (IN)  User data.
+*/
+
+typedef void (*mca_oob_callback_packed_fn_t)(
+    int status,
+    const ompi_process_name_t* peer, 
+    ompi_buffer_t* buffer,
+    int count,
+    int tag,
+    void* cbdata);
+
+/**
 *  Non-blocking version of mca_oob_send().
 *
 *  @param peer (IN)    Opaque name of peer process.
