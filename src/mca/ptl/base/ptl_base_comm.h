@@ -22,13 +22,12 @@ struct mca_pml_comm_t {
     lam_object_t super;
     mca_ptl_base_sequence_t *c_msg_seq;      /**< send message sequence number - sender side */
     mca_ptl_base_sequence_t *c_next_msg_seq; /**< send message sequence number - receiver side */
-    lam_mutex_t *c_matching_lock;            /**< matching lock */
+    mca_ptl_base_sequence_t c_recv_seq;      /**< recv request sequence number - receiver side */
+    lam_mutex_t c_matching_lock;             /**< matching lock */
     lam_list_t *c_unexpected_frags;          /**< unexpected fragment queues */
-    lam_mutex_t *c_unexpected_frags_lock;    /**< unexpected fragment locks */
     lam_list_t *c_frags_cant_match;          /**< out-of-order fragment queues */
     lam_list_t *c_specific_receives;         /**< queues of unmatched specific (source process specified) receives */
     lam_list_t c_wild_receives;              /**< queue of unmatched wild (source process not specified) receives */
-    lam_mutex_t c_wild_lock;                 /**< lock to protect access to wild receives */
 };
 typedef struct mca_pml_comm_t mca_pml_ptl_comm_t;
 
@@ -54,9 +53,9 @@ extern int mca_pml_ptl_comm_init_size(mca_pml_ptl_comm_t* comm, size_t size);
 static inline mca_ptl_base_sequence_t mca_pml_ptl_comm_send_sequence(mca_pml_ptl_comm_t* comm, int dst)
 {
    mca_ptl_base_sequence_t sequence;
-   lam_mutex_lock(comm->c_matching_lock+dst);
+   lam_mutex_lock(&comm->c_matching_lock);
    sequence = comm->c_msg_seq[dst]++;
-   lam_mutex_unlock(comm->c_matching_lock+dst);
+   lam_mutex_unlock(&comm->c_matching_lock);
    return sequence;
 }
 

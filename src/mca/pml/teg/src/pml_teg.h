@@ -42,9 +42,6 @@ struct mca_pml_teg_t {
     /* free list of recv requests */
     lam_free_list_t teg_recv_requests;
 
-    /* next recv sequence */
-    mca_ptl_base_sequence_t teg_recv_sequence;
-
     /* request completion */
     lam_mutex_t teg_request_lock;
     lam_condition_t teg_request_cond;

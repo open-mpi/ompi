@@ -65,6 +65,8 @@ int mca_base_init_select_modules(int requested,
 
   /* JMS ...Do more here with the thread level, etc.... */
   *provided = requested;
+  if(have_hidden_threads)
+      lam_set_using_threads(true);
 
   /* Tell the selected pml module about all the selected ptl
      modules */

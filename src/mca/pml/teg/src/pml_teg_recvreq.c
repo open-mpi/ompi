@@ -7,8 +7,14 @@ void mca_pml_teg_recv_request_progress(
     mca_ptl_base_recv_frag_t* frag)
 {
     lam_mutex_lock(&mca_pml_teg.teg_request_lock);
-    req->req_bytes_recvd += frag->super.frag_size;
-    if (req->req_bytes_recvd >= req->super.req_status._count) {
+    req->req_bytes_delivered += frag->super.frag_size;
+    req->req_bytes_received += frag->super.frag_header.hdr_frag.hdr_frag_length;
+    if (req->req_bytes_received >= req->req_bytes_msg) {
+        /* initialize request status */
+        req->super.req_status.MPI_SOURCE = req->super.req_peer;
+        req->super.req_status.MPI_TAG = req->super.req_tag;
+        req->super.req_status.MPI_ERROR = LAM_SUCCESS;
+        req->super.req_status._count = req->req_bytes_delivered;
         req->super.req_mpi_done = true;
         req->super.req_pml_done = true; 
         if(mca_pml_teg.teg_request_waiting) {
