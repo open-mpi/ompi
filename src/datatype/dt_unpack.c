@@ -319,17 +319,15 @@ int lam_convertor_unpack( lam_convertor_t* pConvertor,
     if( pConvertor->flags & DT_FLAG_CONTIGUOUS ) {
         if( pInputv[0].iov_base == NULL ) {
             rc = pConvertor->count * pData->size;
+            pInputv[0].iov_base = pConvertor->pBaseBuf + pData->true_lb + pConvertor->bConverted;
             if( pInputv[0].iov_len == 0 ) {  /* give me the whole buffer */
-                pInputv[0].iov_base = pConvertor->pBaseBuf + pData->true_lb;
-                pInputv[0].iov_len = rc;
-                return 1;
+                pInputv[0].iov_len = rc - pConvertor->bConverted;
             } else {  /* what about the next chunk ? */
-                pInputv[0].iov_base = pConvertor->pBaseBuf + pData->true_lb + pConvertor->bConverted;
                 if( pInputv[0].iov_len > (rc - pConvertor->bConverted) )
                     pInputv[0].iov_len = rc - pConvertor->bConverted;
-                pConvertor->bConverted += pInputv[0].iov_len;
-                return (pConvertor->bConverted == rc);
             }
+            pConvertor->bConverted += pInputv[0].iov_len;
+            return (pConvertor->bConverted == rc);
         }
     }
     if( (pInput >= pOutput) && (pInput < (pOutput + pConvertor->count * (pData->ub - pData->lb))) ) {
