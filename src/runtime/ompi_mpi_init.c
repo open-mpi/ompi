@@ -65,7 +65,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
        ompi_system_info structure */
 
     ompi_sys_info();
-    ompi_proc_info();
 
     /* Become a OMPI process */
 
@@ -90,6 +89,10 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         printf("show_help: ompi_mpi_init failed in mca_rte_init\n");
         return ret;
     }
+
+    /* Initialize the ompi_process_info structe.  This must be called 
+     * after the rte is inited */
+    ompi_proc_info();
 
     /* initialize ompi procs */
     if (OMPI_SUCCESS != (ret = ompi_proc_init())) {
