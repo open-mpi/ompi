@@ -14,6 +14,45 @@
 
 include $(top_srcdir)/config/Makefile.options
 
+# Include Windows only files in dist
+WIN32_FILES = win32/ompi_declspec.h \
+              win32/ompi_time.c     \
+              win32/ompi_uio.c      \
+              win32/ompi_util.h     \
+              win32/ompi_utsname.h  \
+              win32/ompi_misc.h     \
+              win32/ompi_time.h     \
+              win32/ompi_uio.h      \
+              win32/ompi_utsname.c  \
+              win32/win_compat.h    \
+              win32/generated_include/allocator_static-components.h  \
+              win32/generated_include/iof_static-components.h   \
+              win32/generated_include/ns_static-components.h    \
+              win32/generated_include/pcmclient-seed-version.h  \
+              win32/generated_include/pml_static-components.h   \
+              win32/generated_include/coll-basic-version.h      \
+              win32/generated_include/io-romio-version.h        \
+              win32/generated_include/ompi_config.h             \
+              win32/generated_include/pcmclient-singleton-version.h  \
+              win32/generated_include/ptl-prof-version.h        \
+              win32/generated_include/coll_static-components.h  \
+              win32/generated_include/oob_static-components.h   \
+              win32/generated_include/pcmclient-slurm-version.h \
+              win32/generated_include/ptl_static-components.h   \
+              win32/generated_include/config.h                  \
+              win32/generated_include/llm-hostfile-version.h    \
+              win32/generated_include/pcmclient-env-version.h   \
+              win32/generated_include/pcmclient_static-components.h  \
+              win32/generated_include/topo_static-components.h  \
+              win32/generated_include/gpr_static-components.h   \
+              win32/generated_include/llm_static-components.h   \
+              win32/generated_include/pcmclient-rms-version.h   \
+              win32/generated_include/pcm_static-components.h   \
+              win32/generated_include/topo-unity-version.h      \
+              win32/generated_include/libltdl/ltdl.h            \
+              win32/generated_source/ltdl.c
+EXTRA_DIST = win_makefile $(WIN32_FILES)
+
 # We always have C bindings, but do we have profiling?
 
 if WANT_MPI_BINDINGS_LAYER
