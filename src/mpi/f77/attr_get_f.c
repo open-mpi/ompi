@@ -20,7 +20,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_ATTR_GET,
                            pmpi_attr_get_,
                            pmpi_attr_get__,
                            pmpi_attr_get_f,
-                           (MPI_Fint *comm, MPI_Fint *keyval, MPI_Fnt *attribute_val, MPI_Fint *flag, MPI_Fint *ierr),
+                           (MPI_Fint *comm, MPI_Fint *keyval, MPI_Fint *attribute_val, MPI_Fint *flag, MPI_Fint *ierr),
                            (comm, keyval, attribute_val, flag, ierr) )
 #endif
 
