@@ -721,6 +721,8 @@ AC_CONFIG_FILES([
     src/util/Makefile
 
     src/event/Makefile
+    src/event/compat/Makefile
+    src/event/compat/sys/Makefile
 
     src/attribute/Makefile
     src/communicator/Makefile
