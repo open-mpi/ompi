@@ -19,6 +19,7 @@ libmca_pml_teg_la_SOURCES = \
 	pml_teg_proc.c \
 	pml_teg_proc.h \
 	pml_teg_progress.c \
+	pml_teg_recvfrag.c \
 	pml_teg_recvreq.c \
 	pml_teg_recvreq.h \
 	pml_teg_sendreq.c \

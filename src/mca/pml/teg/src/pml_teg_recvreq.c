@@ -61,6 +61,9 @@ void mca_pml_teg_recv_request_match_specific(mca_pml_base_recv_request_t* reques
     if (ompi_list_get_size(&pml_comm->c_unexpected_frags[req_peer]) > 0 &&
         (frag = mca_pml_teg_recv_request_match_specific_proc(request, req_peer)) != NULL) {
         mca_ptl_base_module_t* ptl = frag->frag_base.frag_owner;
+        /* setup pointer to ptls peer */
+        if(NULL == frag->frag_base.frag_peer) 
+            frag->frag_base.frag_peer = mca_pml_teg_proc_lookup_remote_peer(comm,req_peer,ptl);
         OMPI_THREAD_UNLOCK(&pml_comm->c_matching_lock);
         ptl->ptl_matched(ptl, frag);
         return; /* match found */
@@ -109,6 +112,9 @@ void mca_pml_teg_recv_request_match_wild(mca_pml_base_recv_request_t* request)
         /* loop over messages from the current proc */
         if ((frag = mca_pml_teg_recv_request_match_specific_proc(request, proc)) != NULL) {
             mca_ptl_base_module_t* ptl = frag->frag_base.frag_owner;
+            /* if required - setup pointer to ptls peer */
+            if(NULL == frag->frag_base.frag_peer) 
+                frag->frag_base.frag_peer = mca_pml_teg_proc_lookup_remote_peer(comm,proc,ptl);
             OMPI_THREAD_UNLOCK(&pml_comm->c_matching_lock);
             ptl->ptl_matched(ptl, frag);
             return; /* match found */
