@@ -43,7 +43,9 @@
  */
 int ompi_rte_finalize(void)
 {
+#ifndef WIN32
   ompi_rte_wait_finalize();
+#endif
   ompi_rte_internal_fini_spawn();
 
   mca_iof_base_close();

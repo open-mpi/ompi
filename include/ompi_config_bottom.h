@@ -236,12 +236,4 @@ extern "C" {
 #define __func__ __FILE__
 #endif
 
-/*
- * One windows machines, ompi_errno will already be defined
- */
-
-#ifndef ompi_errno
-#define ompi_errno errno
-#endif
-
 #endif /* OMPI_CONFIG_BOTTOM_H */

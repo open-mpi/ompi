@@ -12,6 +12,7 @@
  * $HEADER$
  */
 #include "ompi_config.h"
+#include "include/ompi_socket_errno.h"
 #include "mca/oob/tcp/oob_tcp.h"
 #include "mca/oob/tcp/oob_tcp_msg.h"
 
@@ -23,6 +24,11 @@ static bool mca_oob_tcp_msg_recv(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* pee
 static void mca_oob_tcp_msg_data(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* peer);
 static void mca_oob_tcp_msg_ping(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* peer);
 
+#define IMPORTANT_WINDOWS_COMMENT() \ 
+            /* In windows, many of the socket functions return an EWOULDBLOCK instead of \
+               things like EAGAIN, EINPROGRESS, etc. It has been verified that this will \
+               not conflict with other error codes that are returned by these functions \
+               under UNIX/Linux environments */
 
 OBJ_CLASS_INSTANCE(
     mca_oob_tcp_msg_t,
@@ -166,15 +172,16 @@ bool mca_oob_tcp_msg_send_handler(mca_oob_tcp_msg_t* msg, struct mca_oob_tcp_pee
     while(1) {
         rc = writev(peer->peer_sd, msg->msg_rwptr, msg->msg_rwnum);
         if(rc < 0) {
-            if(ompi_errno == EINTR)
+            if(ompi_socket_errno == EINTR)
                 continue;
-            else if (ompi_errno == EAGAIN)
+            IMPORTANT_WINDOWS_COMMENT();
+            else if (ompi_socket_errno == EAGAIN || ompi_socket_errno == EWOULDBLOCK)
                 return false;
             else {
-                ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_msg_send_handler: writev failed with ompi_errno=%d", 
+                ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_msg_send_handler: writev failed with errno=%d", 
                     OMPI_NAME_ARGS(mca_oob_name_self), 
                     OMPI_NAME_ARGS(peer->peer_name), 
-                    ompi_errno);
+                    ompi_socket_errno);
                 mca_oob_tcp_peer_close(peer);
                 return false;
             }
@@ -256,15 +263,16 @@ static bool mca_oob_tcp_msg_recv(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* pee
     while(1) {
         rc = readv(peer->peer_sd, msg->msg_rwptr, msg->msg_rwnum);
         if(rc < 0) {
-            if(ompi_errno == EINTR)
+            if(ompi_socket_errno == EINTR)
                 continue;
-            else if (ompi_errno == EAGAIN)
+            IMPORTANT_WINDOWS_COMMENT();
+            else if (ompi_socket_errno == EAGAIN || ompi_socket_errno == EWOULDBLOCK)
                 return false;
             else {
-                ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_msg_recv: readv failed with ompi_errno=%d", 
+                ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_msg_recv: readv failed with errno=%d", 
                     OMPI_NAME_ARGS(mca_oob_name_self),
                     OMPI_NAME_ARGS(peer->peer_name),
-                    ompi_errno);
+                    ompi_socket_errno);
                 mca_oob_tcp_peer_close(peer);
                 return false;
             }
@@ -273,7 +281,7 @@ static bool mca_oob_tcp_msg_recv(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* pee
                 ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_msg_recv: peer closed connection", 
                    OMPI_NAME_ARGS(mca_oob_name_self),
                    OMPI_NAME_ARGS(peer->peer_name),
-                   ompi_errno);
+                   ompi_socket_errno);
             }
             mca_oob_tcp_peer_close(peer);
             return false;

@@ -119,6 +119,7 @@
 
 /* Define to 1 if you have the `select' function. */
 /* #undef HAVE_SELECT */
+#define HAVE_SELECT 1
 
 /* Define to 1 if you have the <signal.h> header file. */
 #define HAVE_SIGNAL_H 1
@@ -546,6 +547,8 @@
    this is the minimum of _I32_MAX and max fortran integer value. Defining
    this to be _I32_MAX for now FIXME */
 #define OMPI_FORTRAN_HANDLE_MAX _I32_MAX
+
+#define OMPI_WANT_MPI2_ONE_SIDED 1
 
 #include "ompi_config_bottom.h"
 #endif /* OMPI_CONFIG_H */

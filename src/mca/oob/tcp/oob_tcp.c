@@ -26,6 +26,7 @@
 #ifdef HAVE_ARPA_INET_H
 #include <arpa/inet.h>
 #endif
+#include "include/ompi_socket_errno.h"
 #include "util/output.h"
 #include "util/if.h"
 #include "mca/oob/tcp/oob_tcp.h"
@@ -34,6 +35,11 @@
 #include "mca/pcmclient/pcmclient.h"
 #include "mca/pcmclient/base/base.h"
 
+#define IMPORTANT_WINDOWS_COMMENT() \ 
+            /* In windows, many of the socket functions return an EWOULDBLOCK instead of \
+               things like EAGAIN, EINPROGRESS, etc. It has been verified that this will \
+               not conflict with other error codes that are returned by these functions \
+               under UNIX/Linux environments */
                                                                   
 /*
  * Data structure for accepting connections.
@@ -239,10 +245,11 @@ static void mca_oob_tcp_accept(void)
  
         sd = accept(mca_oob_tcp_component.tcp_listen_sd, (struct sockaddr*)&addr, &addrlen);
         if(sd < 0) {
-            if(ompi_errno == EINTR)
+            if(ompi_socket_errno == EINTR)
                 continue;
-            if(ompi_errno != EAGAIN || ompi_errno != EWOULDBLOCK)
-                ompi_output(0, "mca_oob_tcp_accept: accept() failed with ompi_errno %d.", ompi_errno);
+            IMPORTANT_WINDOWS_COMMENT();
+            if(ompi_socket_errno != EAGAIN || ompi_socket_errno != EWOULDBLOCK)
+                ompi_output(0, "mca_oob_tcp_accept: accept() failed with errno %d.", ompi_socket_errno);
             return;
         }
                                                                                                                    
@@ -267,14 +274,14 @@ static int mca_oob_tcp_create_listen(void)
     /* create a listen socket for incoming connections */
     mca_oob_tcp_component.tcp_listen_sd = socket(AF_INET, SOCK_STREAM, 0);
     if(mca_oob_tcp_component.tcp_listen_sd < 0) {
-        ompi_output(0,"mca_oob_tcp_component_init: socket() failed with ompi_errno=%d", ompi_errno);
+        ompi_output(0,"mca_oob_tcp_component_init: socket() failed with errno=%d", ompi_socket_errno);
         return OMPI_ERROR;
     }
     /* allow port to be re-used - for temporary fixed port numbers */
     if (setsockopt(
         mca_oob_tcp_component.tcp_listen_sd, SOL_SOCKET, SO_REUSEADDR, (char *)&optval, sizeof(optval)) < 0) {
-        ompi_output(0, "mca_oob_tcp_create_listen: setsockopt(SO_REUSEADDR) failed with ompi_errno=%d\n", 
-            ompi_errno);
+        ompi_output(0, "mca_oob_tcp_create_listen: setsockopt(SO_REUSEADDR) failed with errno=%d\n", 
+            ompi_socket_errno);
     }
 
     memset(&inaddr, 0, sizeof(inaddr));
@@ -283,32 +290,32 @@ static int mca_oob_tcp_create_listen(void)
     inaddr.sin_port = 0;
 
     if(bind(mca_oob_tcp_component.tcp_listen_sd, (struct sockaddr*)&inaddr, sizeof(inaddr)) < 0) {
-        ompi_output(0,"mca_oob_tcp_create_listen: bind() failed with ompi_errno=%d", ompi_errno);
+        ompi_output(0,"mca_oob_tcp_create_listen: bind() failed with errno=%d", ompi_socket_errno);
         return OMPI_ERROR;
     }
 
     /* resolve system assigned port */
     addrlen = sizeof(struct sockaddr_in);
     if(getsockname(mca_oob_tcp_component.tcp_listen_sd, (struct sockaddr*)&inaddr, &addrlen) < 0) {
-        ompi_output(0, "mca_oob_tcp_create_listen: getsockname() failed with ompi_errno=%d", ompi_errno);
+        ompi_output(0, "mca_oob_tcp_create_listen: getsockname() failed with errno=%d", ompi_socket_errno);
         return OMPI_ERROR;
     }
     mca_oob_tcp_component.tcp_listen_port = inaddr.sin_port;
                                                                                                                    
     /* setup listen backlog to maximum allowed by kernel */
     if(listen(mca_oob_tcp_component.tcp_listen_sd, SOMAXCONN) < 0) {
-        ompi_output(0, "mca_oob_tcp_component_init: listen() failed with ompi_errno=%d", ompi_errno);
+        ompi_output(0, "mca_oob_tcp_component_init: listen() failed with errno=%d", ompi_socket_errno);
         return OMPI_ERROR;
     }
                                                                                                                    
     /* set socket up to be non-blocking, otherwise accept could block */
     if((flags = fcntl(mca_oob_tcp_component.tcp_listen_sd, F_GETFL, 0)) < 0) {
-        ompi_output(0, "mca_oob_tcp_component_init: fcntl(F_GETFL) failed with ompi_errno=%d", ompi_errno);
+        ompi_output(0, "mca_oob_tcp_component_init: fcntl(F_GETFL) failed with errno=%d", ompi_socket_errno);
         return OMPI_ERROR;
     } else {
         flags |= O_NONBLOCK;
         if(fcntl(mca_oob_tcp_component.tcp_listen_sd, F_SETFL, flags) < 0) {
-            ompi_output(0, "mca_oob_tcp_component_init: fcntl(F_SETFL) failed with ompi_errno=%d", ompi_errno);
+            ompi_output(0, "mca_oob_tcp_component_init: fcntl(F_SETFL) failed with errno=%d", ompi_socket_errno);
             return OMPI_ERROR;
         }
     }
@@ -354,9 +361,9 @@ static void mca_oob_tcp_recv_handler(int sd, short flags, void* user)
             close(sd);
             return;
         }
-        if(ompi_errno != EINTR) {
-            ompi_output(0, "[%d,%d,%d] mca_oob_tcp_recv_handler: recv() failed with ompi_errno=%d\n", 
-                OMPI_NAME_ARGS(mca_oob_name_self), ompi_errno);
+        if(ompi_socket_errno != EINTR) {
+            ompi_output(0, "[%d,%d,%d] mca_oob_tcp_recv_handler: recv() failed with errno=%d\n", 
+                OMPI_NAME_ARGS(mca_oob_name_self), ompi_socket_errno);
             close(sd);
             return;
         }
@@ -366,13 +373,13 @@ static void mca_oob_tcp_recv_handler(int sd, short flags, void* user)
 
     /* now set socket up to be non-blocking */
     if((flags = fcntl(sd, F_GETFL, 0)) < 0) {
-        ompi_output(0, "[%d,%d,%d] mca_oob_tcp_recv_handler: fcntl(F_GETFL) failed with ompi_errno=%d", 
-                OMPI_NAME_ARGS(mca_oob_name_self), ompi_errno);
+        ompi_output(0, "[%d,%d,%d] mca_oob_tcp_recv_handler: fcntl(F_GETFL) failed with errno=%d", 
+                OMPI_NAME_ARGS(mca_oob_name_self), ompi_socket_errno);
     } else {
         flags |= O_NONBLOCK;
         if(fcntl(sd, F_SETFL, flags) < 0) {
-            ompi_output(0, "[%d,%d,%d] mca_oob_tcp_recv_handler: fcntl(F_SETFL) failed with ompi_errno=%d", 
-                OMPI_NAME_ARGS(mca_oob_name_self), ompi_errno);
+            ompi_output(0, "[%d,%d,%d] mca_oob_tcp_recv_handler: fcntl(F_SETFL) failed with errno=%d", 
+                OMPI_NAME_ARGS(mca_oob_name_self), ompi_socket_errno);
         }
     }
 

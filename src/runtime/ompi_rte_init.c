@@ -18,8 +18,12 @@
 
 #include "ompi_config.h"
 
+#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
+#endif
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 
 #include "include/constants.h"
 #include "event/event.h"
@@ -161,11 +165,13 @@ int ompi_rte_init(ompi_cmd_line_t *cmd_line, bool *allow_multi_user_threads, boo
 	printf("show_help: ompi_rte_init failed in ompi_rte_internal_init_spawn\n");
 	return ret;
     }
+#ifndef WIN32
     if (OMPI_SUCCESS != (ret = ompi_rte_wait_init())) {
 	/* JMS show_help */
 	printf("show_help: ompi_rte_init failed in ompi_rte_wait_init\n");
 	return ret;
     }
+#endif
 
 
     /*
@@ -278,7 +284,7 @@ int ompi_rte_init(ompi_cmd_line_t *cmd_line, bool *allow_multi_user_threads, boo
 		ompi_output(0, "mpi_init: error creating unique universe name");
 	    }
 	}
-
+    
 	ompi_process_info.my_universe = strdup(ompi_universe_info.name);
 	ompi_process_info.seed = true;
 	if (NULL != ompi_universe_info.ns_replica) {

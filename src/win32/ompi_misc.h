@@ -71,7 +71,7 @@ static __inline int fcntl (int fildes, int cmd, ...) {
     int mode;
 
     switch (cmd) {
-        case F_SETFL: ret = ioctlsocket ((SOCKET)fildes, FIONBIO, (u_long FAR*) &mode);
+        case F_SETFL: mode = 1; ret = ioctlsocket ((SOCKET)fildes, FIONBIO, (u_long FAR*) &mode);
                       break;
         case F_GETFL: ret = 0;
                       break;

@@ -13,7 +13,9 @@
  */
 
 #include "ompi_config.h"
+#ifdef HAVE_SCHED_H
 #include <sched.h>
+#endif
 #include "event/event.h"
 #include "mca/pml/pml.h"
 #include "mca/io/io.h"
@@ -68,7 +70,10 @@ void ompi_progress(void)
      * latency equivalent to the time-slice.
     */
     if(events == 0) {
+#ifndef WIN32
+        /* TODO: Find the windows equivalent for this */
         sched_yield();
+#endif
     }
 #endif
 }

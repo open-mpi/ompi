@@ -18,6 +18,7 @@
 #include <stdlib.h>
 
 #include "mpi.h"
+#include "include/constants.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
 
@@ -29,7 +30,7 @@ int mca_base_alloc_mem(MPI_Aint size, MPI_Info info, void *baseptr)
   /* Error checks */
 
   if (0 == size)
-    return MPI_SUCCESS;
+    return OMPI_SUCCESS;
   else if (size < 0)
     return OMPI_ERROR;
 
@@ -42,7 +43,7 @@ int mca_base_alloc_mem(MPI_Aint size, MPI_Info info, void *baseptr)
   /* All done */
 
   *((void **) baseptr) = temp;
-  return MPI_SUCCESS;
+  return OMPI_SUCCESS;
 }
 
 
@@ -51,6 +52,6 @@ int mca_base_free_mem(void *baseptr)
   if (NULL != baseptr)
     free(baseptr);
 
-  return MPI_SUCCESS;
+  return OMPI_SUCCESS;
 }
 

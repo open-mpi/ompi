@@ -18,7 +18,7 @@
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
-#include <errno.h>
+#include "include/ompi_socket_errno.h"
 #include "mca/pml/base/pml_base_sendreq.h"
 #include "ptl_tcp.h"
 #include "ptl_tcp_peer.h"
@@ -131,14 +131,14 @@ static bool mca_ptl_tcp_recv_frag_header(mca_ptl_tcp_recv_frag_t* frag, int sd, 
             return false;
         }
         if(cnt < 0) {
-            switch(errno) {
+            switch(ompi_socket_errno) {
             case EINTR:
                 continue;
             case EWOULDBLOCK:
                 /* ompi_output(0, "mca_ptl_tcp_recv_frag_header: EWOULDBLOCK\n"); */
                 return false;
             default:
-                ompi_output(0, "mca_ptl_tcp_recv_frag_header: recv() failed with errno=%d", errno);
+                ompi_output(0, "mca_ptl_tcp_recv_frag_header: recv() failed with errno=%d", ompi_socket_errno);
                 mca_ptl_tcp_peer_close(frag->frag_recv.frag_base.frag_peer);
                 OMPI_FREE_LIST_RETURN(&mca_ptl_tcp_component.tcp_recv_frags, (ompi_list_item_t*)frag);
                 return false;
@@ -266,13 +266,13 @@ static bool mca_ptl_tcp_recv_frag_data(mca_ptl_tcp_recv_frag_t* frag, int sd)
             return false;
         }
         if(cnt < 0) {
-            switch(errno) {
+            switch(ompi_socket_errno) {
             case EINTR:
                 continue;
             case EWOULDBLOCK:
                 return false;
             default:
-                ompi_output(0, "mca_ptl_tcp_recv_frag_data: recv() failed with errno=%d", errno);
+                ompi_output(0, "mca_ptl_tcp_recv_frag_data: recv() failed with errno=%d", ompi_socket_errno);
                 mca_ptl_tcp_peer_close(frag->frag_recv.frag_base.frag_peer);
                 OMPI_FREE_LIST_RETURN(&mca_ptl_tcp_component.tcp_recv_frags, (ompi_list_item_t*)frag);
                 return false;
@@ -305,14 +305,14 @@ static bool mca_ptl_tcp_recv_frag_discard(mca_ptl_tcp_recv_frag_t* frag, int sd)
             return false;
         }
         if(cnt < 0) {
-            switch(errno) {
+            switch(ompi_socket_errno) {
             case EINTR:
                 continue;
             case EWOULDBLOCK:
                 /* ompi_output(0, "mca_ptl_tcp_recv_frag_discard: EWOULDBLOCK\n"); */
                 return false;
             default:
-                ompi_output(0, "mca_ptl_tcp_recv_frag_discard: recv() failed with errno=%d", errno);
+                ompi_output(0, "mca_ptl_tcp_recv_frag_discard: recv() failed with errno=%d", ompi_socket_errno);
                 mca_ptl_tcp_peer_close(frag->frag_recv.frag_base.frag_peer);
                 OMPI_FREE_LIST_RETURN(&mca_ptl_tcp_component.tcp_recv_frags, (ompi_list_item_t*)frag);
                 return false;

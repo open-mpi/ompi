@@ -84,7 +84,7 @@ static void ompi_dir_empty(char *pathname);
 static bool ompi_is_empty(char *pathname);
 
 
-#define OMPI_DEFAULT_TMPDIR "/tmp"
+#define OMPI_DEFAULT_TMPDIR "C:\\TEMP"
 
 
 static int ompi_check_dir(bool create, char *directory)
