@@ -123,7 +123,7 @@ ompi_attrkey_item_destruct(ompi_attrkey_item_t *item)
  */
 
 int 
-ompi_attr_init()
+ompi_attr_init(void)
 {
     attr_hash = OBJ_NEW(ompi_attrkey_t);
     if (NULL == attr_hash) {
@@ -147,7 +147,7 @@ ompi_attr_init()
  */
 
 void 
-ompi_attr_destroy()
+ompi_attr_destroy(void)
 {
     OBJ_RELEASE(attr_hash);
     OBJ_RELEASE(key_bitmap);
