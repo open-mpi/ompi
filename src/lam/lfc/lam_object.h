@@ -267,15 +267,6 @@ static inline void lam_obj_release(lam_object_t *obj)
 
 
 /**
- * Return a pointer to the parent of the object
- *
- * @param obj   Pointer to the object
- * @return      Pointer to the parent object
- */
-#define OBJ_SUPER(obj)  (&((obj)->super))
-
-
-/**
  * Create an object: dynamically allocate storage and run the class
  * constructor.
  *
