@@ -20,7 +20,8 @@
 #include "util/output.h"
 #include "mca/pml/pml.h"
 #include "mca/ptl/ptl.h"
-#include "mca/ptl/base/ptl_base_sendreq.h"
+#include "mca/pml/base/pml_base_sendreq.h"
+#include "mca/pml/base/pml_base_recvreq.h"
 #include "mca/base/mca_base_param.h"
 #include "mca/base/mca_base_module_exchange.h"
 #include "ptl_elan.h"
@@ -29,6 +30,7 @@
 #include "ptl_elan_req.h"
 
 #define __elan4__
+#define _TRACK_MALLOC 0
 
 #include <elan/elan.h>
 #include <elan/init.h>

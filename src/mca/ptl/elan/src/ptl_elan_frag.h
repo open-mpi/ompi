@@ -11,8 +11,8 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include "ompi_config.h"
-#include "mca/ptl/base/ptl_base_sendreq.h"
-#include "mca/ptl/base/ptl_base_recvreq.h"
+#include "mca/pml/base/pml_base_sendreq.h"
+#include "mca/pml/base/pml_base_recvreq.h"
 #include "mca/ptl/base/ptl_base_sendfrag.h"
 #include "mca/ptl/base/ptl_base_recvfrag.h"
 #include "ptl_elan.h"
@@ -49,7 +49,7 @@ mca_ptl_elan_send_frag_handler (mca_ptl_elan_send_frag_t *, int sd);
 int 
 mca_ptl_elan_send_frag_init (mca_ptl_elan_send_frag_t *,
                              struct mca_ptl_elan_peer_t *,
-                             struct mca_ptl_base_send_request_t *,
+                             struct mca_pml_base_send_request_t *,
                              size_t offset, size_t * size, int flags);
 
 extern ompi_class_t mca_ptl_elan_recv_frag_t_class;

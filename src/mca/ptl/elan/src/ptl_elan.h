@@ -198,7 +198,7 @@ mca_ptl_elan_del_proc (struct mca_ptl_t *ptl,
  */
 extern int  
 mca_ptl_elan_req_alloc (struct mca_ptl_t *ptl, 
-			struct mca_ptl_base_send_request_t **);
+			struct mca_pml_base_send_request_t **);
 
 /**
  * PML->PTL Return a send request to the PTL modules free list.
@@ -207,7 +207,7 @@ mca_ptl_elan_req_alloc (struct mca_ptl_t *ptl,
  * @param request (IN)   Pointer to allocated request.
  */
 extern void mca_ptl_elan_req_return (struct mca_ptl_t *ptl,
-                                     struct mca_ptl_base_send_request_t *);
+                                     struct mca_pml_base_send_request_t *);
 
 /**
  * PML->PTL Notification that a receive fragment has been matched.
@@ -235,7 +235,7 @@ extern void mca_ptl_elan_matched (struct mca_ptl_t *ptl,
 extern int  
 mca_ptl_elan_put (struct mca_ptl_t* ptl, 
 		  struct mca_ptl_base_peer_t* ptl_base_peer, 
-		  struct mca_ptl_base_send_request_t* request,
+		  struct mca_pml_base_send_request_t* request,
 		  size_t offset,
 		  size_t size,
 		  int flags);
@@ -257,7 +257,7 @@ mca_ptl_elan_put (struct mca_ptl_t* ptl,
 extern int  
 mca_ptl_elan_get (struct mca_ptl_t* ptl, 
 		  struct mca_ptl_base_peer_t* ptl_base_peer, 
-		  struct mca_ptl_base_recv_request_t* request,
+		  struct mca_pml_base_recv_request_t* request,
 		  size_t offset,
 		  size_t size,
 		  int flags);

@@ -6,8 +6,8 @@
 #include <sys/errno.h>
 #include "types.h"
 #include "datatype/datatype.h"
-#include "mca/ptl/base/ptl_base_sendreq.h"
-#include "mca/ptl/base/ptl_base_recvreq.h"
+#include "mca/pml/base/pml_base_sendreq.h"
+#include "mca/pml/base/pml_base_recvreq.h"
 #include "ptl_elan.h"
 #include "ptl_elan_peer.h"
 #include "ptl_elan_proc.h"
@@ -202,7 +202,7 @@ mca_ptl_elan_send_frag_destruct (mca_ptl_elan_send_frag_t * frag)
 int
 mca_ptl_elan_send_frag_init (mca_ptl_elan_send_frag_t * sendfrag,
                              mca_ptl_elan_peer_t * ptl_peer,
-                             mca_ptl_base_send_request_t * sendreq,
+                             mca_pml_base_send_request_t * sendreq,
                              size_t offset,
                              size_t * size,
                              int flags)
