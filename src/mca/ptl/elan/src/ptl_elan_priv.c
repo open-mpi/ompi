@@ -320,6 +320,10 @@ mca_ptl_elan_init_qdma_desc (struct mca_ptl_elan_send_frag_t *frag,
     *size = size_out;
     hdr->hdr_frag.hdr_frag_length = size_out;
 
+    /* FIXME: change this ugly fix for get */
+    hdr->hdr_frag.hdr_dst_ptr.lval = elan4_main2elan(
+	    ctx, (char *)pml_req->req_base.req_addr + size_out);
+
     /* TODO: 
      *     For now just save the information to the provided header 
      *     Later will use the inline header to report the progress */
@@ -596,9 +600,11 @@ mca_ptl_elan_init_get_desc (mca_ptl_elan_module_t *ptl,
     destvp  = ptl_peer->peer_vp;
     size_in = *size;
 
-    /* XXX: If doing get, the first frag will be left as 0-byte */
+    /* XXX: Match this from the sender addr after the first frag */
     desc->src_elan_addr = recv_header->hdr_frag.hdr_dst_ptr.lval;
-    desc->dst_elan_addr = elan4_main2elan(ctx, pml_req->req_base.req_addr);
+
+    /* XXX: on recv side, from the addr after the first frag */
+    desc->dst_elan_addr = hdr->hdr_ack.hdr_dst_addr.lval;
     desc->desc_buff = hdr;
 
     /* FIXME: 
@@ -877,7 +883,7 @@ mca_ptl_elan_get_with_ack ( mca_ptl_base_module_t * ptl,
     mca_ptl_elan_module_t *elan_ptl;
     int    destvp;
     int    flags;
-    size_t remain_len;
+    size_t remain_len, recv_len;
 
     START_FUNC(PTL_ELAN_DEBUG_ACK);
 
@@ -889,10 +895,12 @@ mca_ptl_elan_get_with_ack ( mca_ptl_base_module_t * ptl,
     frag->desc->desc_type = MCA_PTL_ELAN_DESC_PUT; 
     gdesc = (ompi_ptl_elan_putget_desc_t *)frag->desc;
     hdr   = (mca_ptl_base_header_t *) &frag->frag_base.frag_header;
+    recv_len = 
+	 recv_frag->frag_recv.frag_base.frag_header.hdr_frag.hdr_frag_length;
 
     /* XXX: since send_frag provides a header inside, 
      *      no need to allocate a QDMA descriptor w/ buff */
-    remain_len = request->req_bytes_packed - request->req_bytes_received; 
+    remain_len = request->req_bytes_packed - recv_len;
     hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_FIN_ACK;
     hdr->hdr_common.hdr_flags= 0;
     hdr->hdr_common.hdr_size = sizeof(mca_ptl_base_ack_header_t);
@@ -902,8 +910,9 @@ mca_ptl_elan_get_with_ack ( mca_ptl_base_module_t * ptl,
     hdr->hdr_ack.hdr_dst_match.pval = request;
     hdr->hdr_ack.hdr_dst_addr.pval = 0; 
     hdr->hdr_ack.hdr_dst_addr.lval = elan4_main2elan(
-	    elan_ptl->ptl_elan_ctx, request->req_base.req_addr);
-    hdr->hdr_ack.hdr_dst_size = remain_len;
+	    elan_ptl->ptl_elan_ctx, 
+	    ((char*)request->req_base.req_addr + recv_len));
+    hdr->hdr_ack.hdr_dst_size = remain_len + recv_len;
 
     mca_ptl_elan_init_get_desc (elan_ptl, frag, recv_frag, 
 	    request, hdr, &remain_len, flags);
@@ -923,7 +932,8 @@ mca_ptl_elan_get_with_ack ( mca_ptl_base_module_t * ptl,
     frag->desc->desc_status   = MCA_PTL_ELAN_DESC_LOCAL;
     frag->frag_base.frag_owner= ptl;
     frag->frag_base.frag_peer = recv_frag->frag_recv.frag_base.frag_peer; 
-    frag->frag_base.frag_addr = request->req_base.req_addr;/*final buff*/
+    /* FIXME: final buff*/
+    frag->frag_base.frag_addr = request->req_base.req_addr;
     frag->frag_base.frag_size = remain_len;
     frag->frag_progressed     = 0;
 
@@ -952,12 +962,15 @@ mca_ptl_elan_start_ack ( mca_ptl_base_module_t * ptl,
     mca_ptl_elan_module_t *elan_ptl;
     ELAN4_CTX *ctx;
 
+    int recv_len;
     int destvp;
 
     START_FUNC(PTL_ELAN_DEBUG_ACK);
 
     destvp = ((mca_ptl_elan_peer_t *)
 	    recv_frag->frag_recv.frag_base.frag_peer)->peer_vp;
+    recv_len = 
+	 recv_frag->frag_recv.frag_base.frag_header.hdr_frag.hdr_frag_length;
 	
     elan_ptl = (mca_ptl_elan_module_t *) ptl;
     desc->desc->desc_type = MCA_PTL_ELAN_DESC_QDMA; 
@@ -979,19 +992,21 @@ mca_ptl_elan_start_ack ( mca_ptl_base_module_t * ptl,
     hdr->hdr_ack.hdr_dst_match.pval = request;
 
     /* FIXME: this needs to be some offsete from the base addr 
-     *        posted buffer size is the leftover */
+     *        posted buffer size is the leftover. Length is 
+     * recv_frag->frag_recv.frag_base.frag_header.hdr_frag.hdr_frag_length;
+     */
     hdr->hdr_ack.hdr_dst_addr.pval = 0; 
     hdr->hdr_ack.hdr_dst_addr.lval = elan4_main2elan(ctx, 
-	    request->req_base.req_addr);
-    hdr->hdr_ack.hdr_dst_size = 
-	request->req_bytes_packed - request->req_bytes_received;
+	    (char *)request->req_base.req_addr + recv_len);
+    hdr->hdr_ack.hdr_dst_size = request->req_bytes_packed - recv_len;
 
+    LOG_PRINT(PTL_ELAN_DEBUG_ACK, "desc %p hdr %p packed %d received %d\n", 
+	    desc, hdr, request->req_bytes_packed, recv_len);
+
+#if OMPI_PTL_ELAN_COMP_QUEUE
     /* FIXME: save frag descriptor somewhere in the header */
     ((mca_ptl_elan_ack_header_t *) hdr)->frag = desc; 
 
-    LOG_PRINT(PTL_ELAN_DEBUG_ACK, "desc %p hdr %p \n", desc, hdr);
-
-#if OMPI_PTL_ELAN_COMP_QUEUE
     /* XXX: Need to have a way to differentiate different frag */
     qdma->comp_event->ev_Params[1] = elan4_alloccq_space (ctx, 8, CQ_Size8K);
     qdma->comp_event->ev_CountAndType = E4_EVENT_INIT_VALUE(-32,
@@ -1056,7 +1071,7 @@ mca_ptl_elan_drain_recv (struct mca_ptl_elan_module_t *ptl)
     ELAN_CTX   *ctx;
     int         rc;
 
-    START_FUNC(PTL_ELAN_DEBUG_THREAD);
+    START_FUNC(PTL_ELAN_DEBUG_NONE);
     queue = ptl->queue;
     rxq   = queue->rxq;
     ctx   = ptl->ptl_elan_ctx;
@@ -1137,7 +1152,7 @@ ptl_elan_recv_comp:
     goto ptl_elan_recv_comp;
 #endif
 
-    END_FUNC(PTL_ELAN_DEBUG_THREAD);
+    END_FUNC(PTL_ELAN_DEBUG_NONE);
     return OMPI_SUCCESS;
 }
 
@@ -1230,7 +1245,7 @@ ptl_elan_send_comp:
 #if OMPI_PTL_ELAN_THREADING
     goto ptl_elan_send_comp;
 #endif
-
+    END_FUNC(PTL_ELAN_DEBUG_THREAD);
 #else
     ctx  = ptl->ptl_elan_ctx;
     while (ompi_list_get_size (&ptl->send_frags) > 0) {
@@ -1259,7 +1274,6 @@ ptl_elan_send_comp:
     } /* end of the while loop */
 #endif 
 
-    END_FUNC(PTL_ELAN_DEBUG_THREAD);
     return OMPI_SUCCESS;
 }
 

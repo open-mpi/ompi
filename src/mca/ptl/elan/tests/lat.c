@@ -8,8 +8,8 @@
 #include "test_util.h"
 
 #define MYBUFSIZE (4*1024*1024)
-#define CHECK 0
-#define PONG 0
+#define CHECK 1
+#define PONG 1
 
 char        s_buf[MYBUFSIZE];
 char        r_buf[MYBUFSIZE];
@@ -50,7 +50,7 @@ main (int argc, char *argv[])
 
     /* touch the data */
     for (i = 0; i < size; i++) {
-        s_buf[i] = 'A';
+        s_buf[i] = i;
     }
 
     fprintf(stderr, "[proc%d:%s:%d] done with init, to loop %d \n",
@@ -72,9 +72,9 @@ main (int argc, char *argv[])
 
 	if (CHECK && myid != 0) {
 	    for (j=0; j < size; j ++) {
-		if (r_buf[j] != 'A') {
-		    fprintf(stderr, "[proc%d:%s] error from byte %d \n",
-			    myid, __FUNCTION__, j);
+		if (r_buf[j] != j) {
+		    fprintf(stderr, "[proc%d:%s] byte %d error, %02X \n",
+			    myid, __FUNCTION__, j, r_buf[j]);
 		    break;
 		} else {
 		    r_buf[j] = '0';
