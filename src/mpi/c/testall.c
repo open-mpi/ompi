@@ -6,6 +6,8 @@
 
 #include "mpi.h"
 #include "mpi/c/bindings.h"
+#include "mca/pml/pml.h"
+#include "runtime/runtime.h"
 #include "communicator/communicator.h"
 #include "errhandler/errhandler.h"
 
@@ -20,15 +22,19 @@
 static const char FUNC_NAME[] = "MPI_Testall";
 
 
-int MPI_Testall(int count, MPI_Request array_of_requests[], int *flag,
-                MPI_Status array_of_statuses[]) 
-
+int MPI_Testall(int count, MPI_Request requests[], int *flag,
+                MPI_Status statuses[]) 
 {
-  if (MPI_PARAM_CHECK) {
-    OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-  }
-
-  /* This function is not yet implemented */
-
-  return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER, FUNC_NAME);
+    int rc;
+    if ( MPI_PARAM_CHECK ) {
+        rc = MPI_SUCCESS;
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+        if (requests == NULL) {
+            rc = MPI_ERR_REQUEST;
+        }
+        OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
+    }
+    rc = mca_pml.pml_test_all(count, requests, flag, statuses);
+    OMPI_ERRHANDLER_RETURN(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
 }
+
