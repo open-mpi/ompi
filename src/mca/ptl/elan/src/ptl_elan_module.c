@@ -25,6 +25,11 @@
 #include "ptl_elan_frag.h"
 #include "ptl_elan_priv.h"
 
+#ifdef CHECK_ELAN
+#undef CHECK_ELAN
+#define CHECK_ELAN 0
+#endif
+
 extern ompi_proc_t *ompi_proc_local_proc;
 
 mca_ptl_elan_module_1_0_0_t mca_ptl_elan_module = {
@@ -121,6 +126,9 @@ mca_ptl_elan_module_open (void)
     OBJ_CONSTRUCT (&elan_mp->elan_procs, ompi_list_t);
     OBJ_CONSTRUCT (&elan_mp->elan_pending_acks, ompi_list_t);
     OBJ_CONSTRUCT (&elan_mp->elan_recv_frags, ompi_list_t);
+    OBJ_CONSTRUCT (&elan_mp->elan_send_frags, ompi_list_t);
+
+    OBJ_CONSTRUCT (&elan_mp->elan_send_frags_free, ompi_free_list_t);
     OBJ_CONSTRUCT (&elan_mp->elan_recv_frags_free, ompi_free_list_t);
 
     /* initialize other objects */
@@ -216,6 +224,12 @@ mca_ptl_elan_module_init (int *num_ptls,
     *allow_multi_user_threads = true;
     *have_hidden_threads = OMPI_HAVE_THREADS;
 
+    if (CHECK_ELAN) { 
+	char hostname[32]; gethostname(hostname, 32); 
+	fprintf(stderr, "[%s:%s:%d] before list init...\n",
+		hostname, __FUNCTION__, __LINE__);
+    }
+
     ompi_free_list_init (&(elan_mp->elan_send_frags_free),
                          sizeof (mca_ptl_elan_send_frag_t),
                          OBJ_CLASS (mca_ptl_elan_recv_frag_t),
@@ -223,12 +237,25 @@ mca_ptl_elan_module_init (int *num_ptls,
                          elan_mp->elan_free_list_max,
                          elan_mp->elan_free_list_inc, NULL);
 
+    if (CHECK_ELAN) { 
+	char hostname[32]; gethostname(hostname, 32); 
+	fprintf(stderr, "[%s:%s:%d] after list init...\n",
+		hostname, __FUNCTION__, __LINE__);
+    }
+
+
     ompi_free_list_init (&(elan_mp->elan_recv_frags_free),
                          sizeof (mca_ptl_elan_recv_frag_t),
                          OBJ_CLASS (mca_ptl_elan_recv_frag_t),
                          elan_mp->elan_free_list_num,
                          elan_mp->elan_free_list_max,
                          elan_mp->elan_free_list_inc, NULL);
+
+    if (CHECK_ELAN) { 
+	char hostname[32]; gethostname(hostname, 32); 
+	fprintf(stderr, "[%s:%s:%d] after list init...\n",
+		hostname, __FUNCTION__, __LINE__);
+    }
 
     /* open basic elan device */
     if (OMPI_SUCCESS != ompi_mca_ptl_elan_init(&mca_ptl_elan_module)) {
@@ -285,6 +312,16 @@ int
 mca_ptl_elan_module_progress (mca_ptl_tstamp_t tstamp)
 {
     START_FUNC();
+    /*if (times <= -1000)*/
+    if (times <= -1) 
+    {
+	char hostname[32]; gethostname(hostname, 32); 
+	fprintf(stderr, "[%s:%s:%d] debugging ...\n",
+		hostname, __FUNCTION__, __LINE__);
+	exit(1); 
+    } else {
+	times ++;
+    }
     mca_ptl_elan_drain_recv(elan_mp);
     mca_ptl_elan_update_send(elan_mp);
     END_FUNC();

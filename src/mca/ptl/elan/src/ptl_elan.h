@@ -72,8 +72,8 @@ struct mca_ptl_elan_module_1_0_0_t {
 
     ompi_list_t  elan_procs;            /**< elan proc's */
     ompi_list_t  elan_send_frags;
-    ompi_list_t  elan_pending_acks;  
     ompi_list_t  elan_recv_frags;
+    ompi_list_t  elan_pending_acks;  
 
     ompi_free_list_t elan_send_frags_free;
     ompi_free_list_t elan_recv_frags_free;

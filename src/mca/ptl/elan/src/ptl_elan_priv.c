@@ -146,19 +146,6 @@ mca_ptl_elan_start_desc (mca_ptl_elan_send_frag_t * desc,
 
     START_FUNC();
 
-    /* fragment state */
-#if 0
-    sendfrag->frag_owner = &ptl_peer->peer_ptl->super;
-    sendfrag->frag_send.frag_request = sendreq;
-    sendfrag->frag_send.frag_base.frag_addr = sendfrag->frag_vec[1].iov_base;
-    sendfrag->frag_send.frag_base.frag_size = size_out;
-    sendfrag->frag_peer = ptl_peer;
-
-    /* XXX: Fragment state, is this going to be set anywhere in PML */
-    sendfrag->frag_progressed = 0;
-#endif
-
-
     if (desc->desc->desc_type == MCA_PTL_ELAN_DESC_QDMA) {
         struct ompi_ptl_elan_qdma_desc_t *qdma;
 
@@ -181,6 +168,15 @@ mca_ptl_elan_start_desc (mca_ptl_elan_send_frag_t * desc,
                      "Other types of DMA are not supported right now \n");
         return OMPI_ERROR;
     }
+
+    /*mca_ptl_base_frag_t frag_base;  */
+
+    /* fragment state */
+    desc->frag_base.frag_owner = &ptl_peer->peer_ptl->super;
+    desc->frag_base.frag_peer = ptl_peer;
+    desc->frag_base.frag_addr = NULL;
+    desc->frag_base.frag_size = *size;
+    desc->frag_progressed = 0;
 
     END_FUNC();
     return OMPI_SUCCESS;
@@ -293,10 +289,10 @@ mca_ptl_elan_drain_recv (mca_ptl_elan_module_1_0_0_t * emp)
 
         OMPI_LOCK (&queue->rx_lock);
 
-#if 1
+#if 0
         rc = (*(int *) (&rxq->qr_doneWord));
 #else
-        rc = elan4_pollevent_word (ctx, &rxq->qr_doneWord, 1);
+        rc = elan4_pollevent_word (ctx, &rxq->qr_doneWord, 2000);
 #endif
  
         if (rc) {
@@ -310,7 +306,7 @@ mca_ptl_elan_drain_recv (mca_ptl_elan_module_1_0_0_t * emp)
 		gethostname(hostname, 32);
 
 		fprintf(stderr, 
-			"[%s recv...] type %x flag %x size %x\n",
+			"[%s recv...] type %d flag %d size %d\n",
 			hostname,
 			header->hdr_common.hdr_type,
 			header->hdr_common.hdr_flags,
@@ -401,11 +397,11 @@ mca_ptl_elan_update_send (mca_ptl_elan_module_1_0_0_t * emp)
 	while (ompi_list_get_size (&queue->tx_desc) > 0) {
             desc = (mca_ptl_elan_send_frag_t *)
                 ompi_list_get_first (&queue->tx_desc);
-#if 1
+#if 0
             rc = * ((int *) (&desc->desc->main_doneWord));
 #else
             /* Poll the completion event for 1usec */
-            rc = elan4_pollevent_word(ctx, &desc->desc->main_doneWord, 1);
+            rc = elan4_pollevent_word(ctx, &desc->desc->main_doneWord, 2000);
 #endif
 	    if (rc) {
 		mca_ptl_base_header_t *header;
@@ -416,6 +412,18 @@ mca_ptl_elan_update_send (mca_ptl_elan_module_1_0_0_t * emp)
                 req = desc->desc->req;
 		header = (mca_ptl_base_header_t *)& 
                     ((ompi_ptl_elan_qdma_desc_t *)desc->desc)->buff[0];
+
+		if (CHECK_ELAN) {
+		    char hostname[32];
+		    gethostname(hostname, 32);
+
+		    fprintf(stderr, 
+			    "[%s comp sending...] type %d flag %d size %d\n",
+			    hostname,
+			    header->hdr_common.hdr_type,
+			    header->hdr_common.hdr_flags,
+			    header->hdr_common.hdr_size);
+		}
 
 		if(NULL == req) { /* An ack descriptor */
 		    OMPI_FREE_LIST_RETURN (&queue->tx_desc_free,

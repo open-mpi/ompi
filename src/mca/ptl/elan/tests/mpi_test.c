@@ -14,7 +14,7 @@ int main (int argc, char ** argv)
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &proc);
     MPI_Comm_size(MPI_COMM_WORLD, &nproc);
-    MPI_Barrier(MPI_COMM_WORLD);
+    /*MPI_Barrier(MPI_COMM_WORLD);*/
     fprintf(stdout, "[%s:%s:%d] done with init \n",
 	    hostname, __FUNCTION__, __LINE__);
     fflush(stdout);
