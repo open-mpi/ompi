@@ -5,6 +5,7 @@
 #include <stdio.h>
 
 #include "mpi.h"
+#include "runtime/runtime.h"
 #include "mpi/c/bindings.h"
 #include "communicator/communicator.h"
 
@@ -14,6 +15,21 @@
 
 
 int MPI_Comm_rank(MPI_Comm comm, int *rank) {
+    
+    if ( MPI_PARAM_CHECK ) {
+        if ( lam_mpi_finalized )
+            return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INTERN, 
+                                         "MPI_Comm_rank");
+
+        if ( MPI_COMM_NULL == comm || lam_comm_invalid (comm))
+            return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
+                                         "MPI_Comm_rank");
+
+        if ( NULL == rank )
+            return LAM_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, 
+                                         "MPI_Comm_rank");
+    }
+
     *rank = lam_comm_rank(comm);
     return MPI_SUCCESS;
 }
