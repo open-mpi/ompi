@@ -9,7 +9,7 @@
 #include "attribute/attribute.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
-#pragma weak MPI_free_keyval = PMPI_free_keyval
+#pragma weak MPI_Win_free_keyval = PMPI_Win_free_keyval
 #endif
 
 #if OMPI_PROFILING_DEFINES
