@@ -430,7 +430,6 @@ internal_spawn_proc(mca_pcm_rsh_module_t *me,
 
 proc_cleanup:
 
-#if 0
     if (high_qos) {
         mca_pcm_base_add_started_pids(jobid, pid, my_start_vpid,
                                       my_start_vpid + num_procs - 1);
@@ -449,7 +448,6 @@ proc_cleanup:
             ret = OMPI_ERROR;
         }
     }
-#endif
 
  cleanup:
     /* free up everything we used on the way */
