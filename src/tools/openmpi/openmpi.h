@@ -5,6 +5,9 @@
 #include <sys/param.h>
 #include <stdlib.h>
 
+#ifndef OMPI_UNIVERSE_H
+#define OMPI_UNIVERSE_H
+
 /* Define the structures underlying the Open MPI universe system */
 
 struct ompi_universe_t {
@@ -29,3 +32,4 @@ extern ompi_universe_t ompi_universe;
 
 #define OMPI_RIDICULOUS_NAMELEN 1024
 
+#endif

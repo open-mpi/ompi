@@ -210,7 +210,7 @@ int main(int argc, char **argv)
 	    contact_file = ompi_os_path(false, ompi_process_info.universe_session_dir,
 					"universe-setup.txt", NULL);
 
-	    if (OMPI_SUCCESS != (ret = ompi_read_universe_setup_file(contact_file))) {
+	    if (OMPI_SUCCESS != (ret = ompi_read_universe_setup_file(contact_file, &ompi_universe))) {
 		if (OMPI_ERR_NOT_FOUND == ret) { /* couldn't find file - assume prior seed daemon died */
 		    goto STARTUP;
 		} else {
@@ -275,7 +275,7 @@ int main(int argc, char **argv)
 	    contact_file = ompi_os_path(false, ompi_process_info.universe_session_dir,
 					"universe-setup.txt", NULL);
 
-	    if (OMPI_SUCCESS != ompi_write_universe_setup_file(contact_file)) {
+	    if (OMPI_SUCCESS != ompi_write_universe_setup_file(contact_file, &ompi_universe)) {
 		fprintf(stderr, "couldn't write universe setup file: %s\n", contact_file);
 		exit(1);
 	    }
