@@ -264,7 +264,7 @@ static void release_repository_item(repository_item_t *ri)
   /* Decrement this module's refcount.  If zero, close and free it. */
 
   --ri->ri_refcount;
-  if (0 == ri->ri_refcount) {
+  if (0 <= ri->ri_refcount) {
     lt_dlclose(ri->ri_dlhandle);
 
     /* Now go release/close (at a minimum: decrement the refcount) any
@@ -275,6 +275,9 @@ static void release_repository_item(repository_item_t *ri)
          item = ompi_list_remove_first(&ri->ri_dependencies)) {
       di = (dependency_item_t *) item;
       --di->di_repository_entry->ri_refcount;
+      if (0 == di->di_repository_entry->ri_refcount) {
+        release_repository_item(di->di_repository_entry);
+      }
       free(di);
     }
 
