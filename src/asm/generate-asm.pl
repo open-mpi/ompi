@@ -48,9 +48,13 @@ do "$basedir/$CONFIG.conf" or die "Could not open config file $basedir/$CONFIG.c
 while (<INPUT>) {
     s/TEXT/$TEXT/g;
     s/GLOBAL/$GLOBAL/g;
+    s/REFGSYM\((.*)\)/$GSYM$1/g;
+    s/REFLSYM\((.*)\)/$LSYM$1/g;
     s/GSYM\((.*)\)/$GSYM$1$SUFFIX/g;
     s/LSYM\((.*)\)/$LSYM$1$SUFFIX/g;
+
     if ($DEL_R_REG == 0) {
+	s/cr([0-9][0-9]?)/$1/g;
         s/r([0-9][0-9]?)/$1/g;
     }
 

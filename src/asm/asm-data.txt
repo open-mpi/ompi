@@ -29,3 +29,4 @@ POWERPC32	default-.text-.globl-:-_-L--0-1-1-1	powerpc32-64-osx
 POWERPC32	default-.text-.globl-:--.L-@-1-1-0-0	powerpc32-linux
 POWERPC32	aix-.csect .text[PR]-.globl-:-.-L--0-0-0-0	powerpc32-aix
 POWERPC64	default-.text-.globl-:-_-L--0-1-1-1	powerpc64-osx
+POWERPC64	aix-.csect .text[PR]-.globl-:-.-L--0-1-0-1	powerpc64-aix
