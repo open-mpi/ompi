@@ -413,7 +413,7 @@ static inline int ompi_obj_update(ompi_object_t *object, int inc)
     addr = (LONG volatile *) &(object->obj_reference_count);
     newval = (int) InterlockedExchangeAdd(addr, (LONG) inc) + inc;
 
-#elif OMPI_SYS_ARCH_ATOMIC_H
+#elif OMPI_HAVE_ATOMIC
 
     int newval;
     int oldval;

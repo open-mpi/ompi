@@ -5,6 +5,8 @@
 
 include $(top_srcdir)/config/Makefile.options
 
+libutil_la_CCASFLAGS = $(CPPFLAGS)
+
 noinst_LTLIBRARIES = libutil.la
 
 # Source code files
@@ -26,7 +28,7 @@ headers = \
     proc_info.h \
     os_path.h \
     os_create_dirpath.h \
-	pow2.h \
+    pow2.h \
     session_dir.h \
     strncpy.h
 
@@ -48,7 +50,7 @@ libutil_la_SOURCES = \
     sys_info.c \
     os_path.c \
     os_create_dirpath.c \
-	pow2.c \
+    pow2.c \
     session_dir.c \
     strncpy.c
 

@@ -34,7 +34,7 @@ static void ompi_mutex_construct(ompi_mutex_t *m)
 #if OMPI_HAVE_POSIX_THREADS
     pthread_mutex_init(&m->m_lock_pthread, 0);
 #endif
-#if OMPI_SYS_ARCH_ATOMIC_H
+#if OMPI_HAVE_ATOMIC
     ompi_atomic_unlock(&m->m_lock_atomic);
 #endif
 }
