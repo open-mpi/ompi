@@ -24,46 +24,12 @@
 #include "mca/base/mca_base_module_exchange.h"
 #include "ptl_prof.h"
 
-/**
- * This is the moment to grab all existing modules, and then replace their
- * functions with my own. In same time the ptl_stack will be initialized
- * with the pointer to a ptl automatically generate, which will contain
- * the correct pointers.
- */
-static int ptl_prof_component_control_fn( int param, void* value, size_t size )
-{
-    /* check in mca_ptl_base_modules_initialized */
-    return 0;
-}
-
-/* We have to create at least one PTL, just to allow the PML to call the control
- * function associated with this PTL.
- */
-extern mca_ptl_prof_t mca_ptl_prof;
+static int mca_ptl_prof_component_open_fn( void );
+static int mca_ptl_prof_component_close_fn( void );
 static struct mca_ptl_base_module_t** ptl_prof_component_init_fn(
        int *num_ptls,
-       bool *allow_multi_user_threads,
-       bool *have_hidden_threads )
-{
-    struct mca_ptl_base_module_t** ptl_array;
-
-    *num_ptls = 1;
-    *allow_multi_user_threads = true;
-    *have_hidden_threads = false;
-    ptl_array = (struct mca_ptl_base_module_t**)malloc( (*num_ptls) * sizeof(struct mca_ptl_base_module_t*) );
-    ptl_array[0] = (struct mca_ptl_base_module_t*)&mca_ptl_prof;
-    return ptl_array;
-}
-
-static int mca_ptl_prof_component_open_fn( void )
-{
-    return OMPI_SUCCESS;
-}
-
-static int mca_ptl_prof_component_close_fn( void )
-{
-    return OMPI_SUCCESS;
-}
+       bool *allow_multi_user_threads, bool *have_hidden_threads );
+static int ptl_prof_component_control_fn( int param, void* value, size_t size );
 
 mca_ptl_prof_module_1_0_0_t mca_ptl_prof_component = {
     {
@@ -96,3 +62,50 @@ mca_ptl_prof_module_1_0_0_t mca_ptl_prof_component = {
         NULL,
     }
 };
+
+/**
+ * This is the moment to grab all existing modules, and then replace their
+ * functions with my own. In same time the ptl_stack will be initialized
+ * with the pointer to a ptl automatically generate, which will contain
+ * the correct pointers.
+ */
+static int ptl_prof_component_control_fn( int param, void* value, size_t size )
+{
+    /* check in mca_ptl_base_modules_initialized */
+    return 0;
+}
+
+/* We have to create at least one PTL, just to allow the PML to call the control
+ * function associated with this PTL.
+ */
+extern mca_ptl_prof_t mca_ptl_prof;
+static struct mca_ptl_base_module_t** ptl_prof_component_init_fn(
+       int *num_ptls,
+       bool *allow_multi_user_threads,
+       bool *have_hidden_threads )
+{
+    mca_ptl_prof_t** ptl_array;
+
+    *num_ptls = 1;
+    *allow_multi_user_threads = true;
+    *have_hidden_threads = false;
+    ptl_array = (mca_ptl_prof_t**)malloc( (*num_ptls) * sizeof(mca_ptl_prof_t*) );
+    ptl_array[0] = &mca_ptl_prof;
+    mca_ptl_prof_component.prof_ptls = ptl_array;
+    return (struct mca_ptl_base_module_t**)ptl_array;
+}
+
+static int mca_ptl_prof_component_open_fn( void )
+{
+    return OMPI_SUCCESS;
+}
+
+static int mca_ptl_prof_component_close_fn( void )
+{
+    if( NULL != mca_ptl_prof_component.prof_ptls ) {
+        free( mca_ptl_prof_component.prof_ptls );
+        mca_ptl_prof_component.prof_ptls = NULL;
+    }
+    return OMPI_SUCCESS;
+}
+
