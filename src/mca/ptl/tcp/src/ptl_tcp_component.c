@@ -29,6 +29,7 @@
 #include "ptl_tcp_sendreq.h"
 
 
+OMPI_EXPORT
 mca_ptl_tcp_component_t mca_ptl_tcp_component = {
     {
       /* First, the mca_base_module_t struct containing meta
