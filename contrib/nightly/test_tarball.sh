@@ -222,12 +222,14 @@ if test -z "$md5sum"; then
 WARNING: Could not find md5sum executable, so I will not be able to check
 WARNING: the validity of downloaded executables against their known MD5 
 WARNING: checksums.  Proceeding anyway...
+
 EOF
 elif test -z "$md5_file"; then
     cat > $logdir/05_md5sum_warning.txt <<EOF
 WARNING: Could not find md5sum check file, so I will not be able to check
 WARNING: the validity of downloaded executables against their known MD5 
 WARNING: checksums.  Proceeding anyway...
+
 EOF
 else
     md5_actual="`$md5sum $tarball_name 2>&1`"
@@ -239,16 +241,18 @@ fi
 sha1_file="`grep $version.tar.gz $sha1_checksums`"
 find_program sha1sum sha1sum
 if test -z "$sha1sum"; then
-    cat > $logdir/05_md5sum_warning.txt <<EOF
+    cat > $logdir/06_sha1sum_warning.txt <<EOF
 WARNING: Could not find sha1sum executable, so I will not be able to check
 WARNING: the validity of downloaded executables against their known SHA1
 WARNING: checksums.  Proceeding anyway...
+
 EOF
 elif test -z "$sha1_file"; then
-    cat > $logdir/05_md5sum_warning.txt <<EOF
+    cat > $logdir/06_sha1sum_warning.txt <<EOF
 WARNING: Could not find sha1sum check file, so I will not be able to check
 WARNING: the validity of downloaded executables against their known SHA1
 WARNING: checksums.  Proceeding anyway...
+
 EOF
 else
     sha1_actual="`$sha1sum $tarball_name 2>&1`"
