@@ -56,6 +56,9 @@ mca_ptl_ib_proc_t* mca_ptl_ib_proc_create(ompi_proc_t* ompi_proc)
 
     ptl_proc = OBJ_NEW(mca_ptl_ib_proc_t);
 
+    /* Initialize number of peer */
+    ptl_proc->proc_peer_count = 0;
+
     ptl_proc->proc_ompi = ompi_proc;
 
     /* build a unique identifier (of arbitrary
@@ -90,14 +93,14 @@ mca_ptl_ib_proc_t* mca_ptl_ib_proc_create(ompi_proc_t* ompi_proc)
     /* allocate space for peer array - one for
      * each exported address
      */
+
     ptl_proc->proc_peers = (mca_ptl_base_peer_t**)
         malloc(ptl_proc->proc_addr_count * sizeof(mca_ptl_base_peer_t*));
+
     if(NULL == ptl_proc->proc_peers) {
         OBJ_RELEASE(ptl_proc);
         return NULL;
     }
-
-    D_PRINT("returning from proc_create\n");
 
     return ptl_proc;
 }
@@ -111,8 +114,8 @@ mca_ptl_ib_proc_t* mca_ptl_ib_proc_create(ompi_proc_t* ompi_proc)
 int mca_ptl_ib_proc_insert(mca_ptl_ib_proc_t* ptl_proc, 
         mca_ptl_base_peer_t* ptl_peer)
 {
-    struct mca_ptl_ib_t *ptl_ib = ptl_peer->peer_ptl;
     int i;
+    struct mca_ptl_ib_t *ptl_ib = ptl_peer->peer_ptl;
 
     /* insert into peer array */
     ptl_peer->peer_proc = ptl_proc;

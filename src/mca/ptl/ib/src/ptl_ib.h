@@ -24,6 +24,7 @@
 #include "ptl_ib_addr.h"
 #include "ptl_ib_proc.h"
 #include "ptl_ib_peer.h"
+#include "ptl_ib_priv.h"
 
 /* Other IB ptl includes */
 #include "ptl_ib_sendreq.h"
@@ -58,20 +59,28 @@ extern mca_ptl_ib_module_1_0_0_t mca_ptl_ib_module;
  * IB PTL Interface
  */
 struct mca_ptl_ib_t {
-    mca_ptl_t           super;      /**< base PTL interface */
-    VAPI_hca_id_t       hca_id;     /* ID of HCA this PTL is tied to */
-    VAPI_hca_port_t     port;       /* InfiniBand port of this PTL */
-    VAPI_hca_hndl_t     nic;        /* NIC handle */  
-    VAPI_pd_hndl_t      ptag;       /* Protection Domain tag */
-    VAPI_cq_hndl_t      cq_hndl;    /* Completion Queue handle */
-    VAPI_qp_hndl_t      *qp_hndl;   /* Array of Queue Pair handles */
+    mca_ptl_t                       super;      /**< base PTL interface */
+    VAPI_hca_id_t                   hca_id;     /* ID of HCA this PTL is tied to */
+    VAPI_hca_port_t                 port;       /* InfiniBand port of this PTL */
+    VAPI_hca_hndl_t                 nic;        /* NIC handle */  
+    VAPI_pd_hndl_t                  ptag;       /* Protection Domain tag */
 
-    VAPI_qp_hndl_t      ud_scq_hndl;/* UD send completion queue handle */
-    VAPI_qp_hndl_t      ud_rcq_hndl;/* UD recv completion queue handle */
+    VAPI_cq_hndl_t                  cq_hndl;    /* Completion Queue handle */
+    VAPI_qp_hndl_t                  *qp_hndl;   /* Array of Queue Pair handles */
 
-    VAPI_qp_hndl_t      ud_qp_hndl; /* UD queue pair handle */
-    VAPI_qp_prop_t      ud_qp_prop; /* UD queue pair properties */
-    VAPI_rr_desc_t*     ud_rr_hndl; /* UD receive descriptor pool */
+    EVAPI_async_handler_hndl_t      async_handler; /* Async event handler used to detect
+                                                      weird events */
+
+    VAPI_cq_hndl_t                  ud_scq_hndl;/* UD send completion queue handle */
+    VAPI_cq_hndl_t                  ud_rcq_hndl;/* UD recv completion queue handle */
+    mca_ptl_ib_ud_buf_t*            ud_buf;     /* Link to UD buffer structures
+                                           which are posted on the UD interface */ 
+
+    VAPI_qp_hndl_t                  ud_qp_hndl; /* UD queue pair handle */
+    VAPI_qp_prop_t                  ud_qp_prop; /* UD queue pair properties */
+    VAPI_rr_desc_t*                 ud_rr_hndl; /* UD receive descriptor pool */
+    VAPI_completion_event_handler_t ud_comp_ev_handler; /* UD completion handler */
+    EVAPI_compl_handler_hndl_t      ud_comp_ev_hndl; /* UD completion handler handle */
 };
 
 typedef struct mca_ptl_ib_t mca_ptl_ib_t;

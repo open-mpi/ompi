@@ -46,10 +46,6 @@ struct mca_ptl_base_peer_t {
 typedef struct mca_ptl_base_peer_t mca_ptl_base_peer_t;
 typedef struct mca_ptl_base_peer_t mca_ptl_ib_peer_t;
 
-/*
-extern ompi_class_t mca_ptl_ib_peer_t_class;
-*/
-
 OBJ_CLASS_DECLARATION(mca_ptl_ib_peer_t);
 
 

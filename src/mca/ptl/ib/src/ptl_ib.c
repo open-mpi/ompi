@@ -87,7 +87,7 @@ int mca_ptl_ib_add_procs(
             return OMPI_ERR_UNREACH;
         }
 
-        /* The ptl_proc datastructure is shared by all TCP PTL
+        /* The ptl_proc datastructure is shared by all IB PTL
          * instances that are trying to reach this destination. 
          * Cache the peer instance on the ptl_proc.
          */
