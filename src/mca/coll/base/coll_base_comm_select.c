@@ -90,11 +90,6 @@ OBJ_CLASS_INSTANCE(avail_coll_t, ompi_list_item_t, NULL, NULL);
  * active for a given communicator.
  *
  * This selection logic is not for the weak.
- *
- * Note that this is not thread safe.  It's probably ok to just put a
- * lock around this function, though -- this is only called at the end
- * of a communicator constructor, so making a few threads wait while
- * we construct is probably ok. 
  */
 int mca_coll_base_comm_select(ompi_communicator_t *comm, 
                               mca_base_component_t *preferred)
@@ -302,7 +297,7 @@ static ompi_list_t *check_components(ompi_list_t *components,
   bool want_to_check;
   ompi_list_t *selectable;
   avail_coll_t *avail, *avail2;
-
+  
   /* Make a list of the components that query successfully */
 
   selectable = OBJ_NEW(ompi_list_t);
