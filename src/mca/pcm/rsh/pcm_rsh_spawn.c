@@ -91,11 +91,8 @@ mca_pcm_rsh_spawn_procs(struct mca_pcm_base_module_1_0_0_t* me_super,
     
     /* BWB - make sure vpids are reserved */
     local_start_vpid = 0;
-    if (me->use_ns) {
-        global_start_vpid = (int) ompi_name_server.reserve_range(jobid, num_procs);
-    } else {
-        global_start_vpid = 0;
-    }
+    global_start_vpid = (int) ompi_name_server.reserve_range(jobid, num_procs);
+
     
     for (sched_item = ompi_list_get_first(schedlist) ;
          sched_item != ompi_list_get_end(schedlist) ;

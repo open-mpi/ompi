@@ -95,6 +95,5 @@ extern "C" {
  * Module variables
  */
 extern int mca_pcm_rms_output;
-extern int mca_pcm_rms_use_ns;
 
 #endif /* MCA_PCM_RMS_H_ */

@@ -59,7 +59,6 @@ extern "C" {
         int fast_boot;
         int ignore_stderr;
         char* rsh_agent;
-        int use_ns;
     };
     typedef struct mca_pcm_rsh_module_t mca_pcm_rsh_module_t;
 
