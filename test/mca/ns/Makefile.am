@@ -17,24 +17,24 @@ include $(top_srcdir)/config/Makefile.options
 AM_CPPFLAGS = -I$(top_srcdir)/test/support -DOMPI_ENABLE_DEBUG_OVERRIDE=1
 
 check_PROGRAMS = \
-	test_ns_replica \
-	test_ns_proxy \
+	ns_replica \
+	ns_proxy \
 	ns_nds
 
 TESTS = \
 	$(check_PROGRAMS)
 
-test_ns_replica_SOURCES = test_ns_replica.c
-test_ns_replica_LDADD = \
+ns_replica_SOURCES = ns_replica.c
+ns_replica_LDADD = \
         $(top_builddir)/test/support/libsupport.a \
         $(top_builddir)/src/libmpi.la 
-test_ns_replica_DEPENDENCIES = $(test_ns_replica_LDADD)
+ns_replica_DEPENDENCIES = $(ns_replica_LDADD)
 
-test_ns_proxy_SOURCES = test_ns_proxy.c
-test_ns_proxy_LDADD = \
+ns_proxy_SOURCES = ns_proxy.c
+ns_proxy_LDADD = \
         $(top_builddir)/test/support/libsupport.a \
         $(top_builddir)/src/libmpi.la 
-test_ns_proxy_DEPENDENCIES = $(test_ns_proxy_LDADD)
+ns_proxy_DEPENDENCIES = $(ns_proxy_LDADD)
 
 ns_nds_SOURCES = ns_nds.c
 ns_nds_LDADD = \
