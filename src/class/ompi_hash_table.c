@@ -63,7 +63,7 @@ int ompi_hash_table_init(ompi_hash_table_t* ht, size_t table_size)
     }
 
     ht->ht_mask = power2-1;
-    ht->ht_table = realloc(ht->ht_table, power2 * sizeof(ompi_list_t));
+    ht->ht_table = malloc(power2 * sizeof(ompi_list_t));
     if(NULL == ht->ht_table)
         return OMPI_ERR_OUT_OF_RESOURCE;
     for(i=ht->ht_table_size; i<power2; i++) {
