@@ -50,7 +50,7 @@ static inline lam_communicator_t *lam_comm_lookup(uint32_t cid)
 { 
     /* array of pointers to communicators, indexed by context ID */
     extern lam_communicator_t **lam_mpi_comm_array;
-#ifdef LAM_ENABLE_DEBUG
+#if LAM_ENABLE_DEBUG
     extern uint32_t lam_mpi_comm_array_size;
     if (cid >= lam_mpi_comm_array_size) {
         lam_output(0, "lam_comm_lookup: invalid communicator index (%d)", cid);
@@ -62,7 +62,7 @@ static inline lam_communicator_t *lam_comm_lookup(uint32_t cid)
 
 static inline lam_proc_t* lam_comm_lookup_peer(lam_communicator_t* comm, size_t peer_id)
 {
-#ifdef LAM_ENABLE_DEBUG
+#if LAM_ENABLE_DEBUG
     if(peer_id >= comm->c_remote_group->grp_proc_count) {
         lam_output(0, "lam_comm_lookup_peer: invalid peer index (%d)", peer_id);
         return (lam_proc_t *) NULL;
