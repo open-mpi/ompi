@@ -28,6 +28,12 @@ int ompi_ddt_duplicate( const dt_desc_t* oldType, dt_desc_t** newType )
     pdt->id  = 0;
     pdt->args = NULL;
     /* TODO: if the data was commited update the opt_desc field */
+    if( 0 != oldType->opt_desc.used ) {
+        pdt->opt_desc.desc = malloc( oldType->opt_desc.used * sizeof(dt_elem_desc_t) );
+        pdt->opt_desc.length = oldType->opt_desc.used;
+        pdt->opt_desc.used = oldType->opt_desc.used;
+        memcpy( pdt->opt_desc.desc, oldType->opt_desc.desc, oldType->opt_desc.used * sizeof(dt_elem_desc_t) );
+    }
     *newType = pdt;
     return OMPI_SUCCESS;
 }
