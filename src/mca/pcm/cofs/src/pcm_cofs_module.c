@@ -42,8 +42,16 @@ mca_pcm_base_component_1_0_0_t mca_pcm_cofs_component = {
 
 
 struct mca_pcm_base_module_1_0_0_t mca_pcm_cofs_1_0_0 = {
-  mca_pcm_cofs_get_peers,
-  mca_pcm_cofs_get_self
+    NULL, /* unique_string */
+    NULL, /* allocate_resources */
+    NULL, /* register_monitor */
+    NULL, /* can_spawn */
+    NULL, /* spawn_procs */
+    mca_pcm_cofs_get_peers,
+    mca_pcm_cofs_get_self,
+    NULL, /* kill_proc */
+    NULL, /* kill_job */
+    NULL  /* deallocate_resources */
 };
 
 
