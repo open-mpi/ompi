@@ -7,6 +7,7 @@
 #include "mca/pcmclient/pcmclient.h"
 #include "mca/pcmclient/singleton/pcmclient_singleton.h"
 #include "include/types.h"
+#include "include/constants.h"
 
 #include <stdio.h>
 #include <sys/types.h>
@@ -17,7 +18,7 @@ extern ompi_process_name_t *mca_pcmclient_singleton_procs;
 
 static
 int
-init_proclist()
+init_proclist(void)
 {
     if (NULL != mca_pcmclient_singleton_procs) return OMPI_SUCCESS;
 

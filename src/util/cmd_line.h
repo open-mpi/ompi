@@ -6,49 +6,147 @@
  * @file 
  *
  * General command line parsing facility for use throughout Open MPI.
+ *
+ * This scheme is inspired by the GNU getopt package.  Command line
+ * options are registered.  Each option can have up to three different
+ * matching tokens: a "short" name, a "single dash" name, and a "long"
+ * name.  Each option can also take 0 or more arguments.  Finally,
+ * each option can be repeated on the command line an arbitrary number
+ * of times.
+ *
+ * The "short" name can only be a single letter, and will be found
+ * after a single dash (e.g., "-a").  Multiple "short" names can be
+ * combined into a single command line argument (e.g., "-abc" can be
+ * equivalent to "-a -b -c").
+ *
+ * The "single dash" name is a multi-character name that only
+ * requires a single dash.  This only exists to provide backwards
+ * compatability for some well-known command line options in prior
+ * MPI implementations (e.g., "mpirun -np 3").  It should be used
+ * sparingly.
+ *
+ * The "long" name is a multi-character name that is found after a
+ * pair of dashes.  For example, "--some-option-name".  
+ *
+ * A command line option is a combination of 1 or more of a short
+ * name, single dash name, and a long name.  Any of the names may be
+ * used on the command line; they are treated as synonyms.  For
+ * example, say the following was used in for an executable named
+ * "foo":
+ *
+ * \code
+ * ompi_cmd_line_make_opt3(cmd, 'a', NULL, 'add', 1, "Add a user");
+ * \endcode
+ *
+ * In this case, the following command lines are exactly equivalent:
+ *
+ * \verbatim
+ * shell$ foo -a jsmith
+ * shell$ foo --add jsmith
+ * \endverbatim
+ *
+ * Note that this interface can also track multiple invocations of the
+ * same option.  For example, the following is both legal and able to
+ * be retrieved through this interface:
+ *
+ * \verbatim
+ * shell$ foo -a jsmith -add bjones
+ * \endverbatim
+ *
+ * The caller to this interface creates a command line handle
+ * (ompi_cmd_line_t) with OBJ_NEW() and then uses it to register the
+ * desired parameters via ompi_cmd_line_make_opt3() (or the deprecated
+ * ompi_cmd_line_make_opt()).  Once all the parameters have been
+ * registered, the user invokes ompi_cmd_line_parse() with the command
+ * line handle and the argv/argc pair to be parsed (typically the
+ * arguments from main()).  The parser will examine the argv and find
+ * registered options and parameters.  It will stop parsing when it
+ * runs into an recognized string token or the special "--" token.
+ *
+ * After the parse has occurred, various accessor functions can be
+ * used to determine which options were selected, what parameters were
+ * passed to them, etc.:
+ *
+ * - ompi_cmd_line_get_usage_msg() returns a string suitable for "help"
+ *   kinds of messages.
+ * - ompi_cmd_line_is_taken() returns a true or false indicating
+ *   whether a given command line option was found on the command
+ *   line.
+ * - ompi_cmd_line_get_argc() returns the number of tokens parsed on
+ *   the handle.
+ * - ompi_cmd_line_get_argv() returns any particular string from the
+ *   original argv.
+ * - ompi_cmd_line_get_ninsts() returns the number of times a
+ *   particular option was found on a command line.
+ * - ompi_cmd_line_get_param() returns the Nth parameter in the Mth
+ *   instance of a given parameter.
+ * - ompi_cmd_line_get_tail() returns an array of tokens not parsed
+ *   (i.e., if the parser ran into "--" or an unrecognized token).
  */
 
 #ifndef OMPI_CMD_LINE_H
 #define OMPI_CMD_LINE_H
 
 #include "ompi_config.h"
-#include "include/constants.h"
+
+#include "class/ompi_object.h"
 #include "class/ompi_list.h"
 #include "threads/mutex.h"
-#include "util/argv.h"
 
 /**
  * \internal
  *
- * Top-level descriptor.  This type is actually internal to the
- * cmd_line interface, but we can't have the top-level convenience
- * typedef without it.  You should not use the internal members of
- * this struct; please use the interface described in this file.
+ * Main top-level handle.  This interface should not be used by users!
  */
 struct ompi_cmd_line_t {
-  ompi_mutex_t lcl_mutex;
-  /**< Thread safety */
+    /** Make this an OBJ handle */
+    ompi_object_t super;
 
-  ompi_list_t lcl_options;
-  /**< List of cmd_line_option_t's, below */
+    /** Thread safety */
+    ompi_mutex_t lcl_mutex;
 
-  int lcl_argc;
-  /**< Duplicate of argc from ompi_cmd_line_parse() */
-  char **lcl_argv;
-  /**< Duplicate of argv from ompi_cmd_line_parse() */
+    /** List of cmd_line_option_t's (defined internally) */
+    ompi_list_t lcl_options;
 
-  ompi_list_t lcl_params;
-  /**< Parsed output; list of cmd_line_param_t's, below */
+    /** Duplicate of argc from ompi_cmd_line_parse() */
+    int lcl_argc;
+    /** Duplicate of argv from ompi_cmd_line_parse() */
+    char **lcl_argv;
 
-  int lcl_tail_argc;
-  /**< List of tail (unprocessed) arguments */
-  char **lcl_tail_argv;
-  /**< List of tail (unprocessed) arguments */
+    /** Parsed output; list of cmd_line_param_t's (defined internally) */
+    ompi_list_t lcl_params;
+    
+    /** List of tail (unprocessed) arguments */
+    int lcl_tail_argc;
+    /** List of tail (unprocessed) arguments */
+    char **lcl_tail_argv;
 };
 /**
- * Convenience typedef.
+ * \internal
+ *
+ * Convenience typedef
  */
 typedef struct ompi_cmd_line_t ompi_cmd_line_t;
+
+
+/**
+ * Top-level command line handle.
+ *
+ * This handle is used for accessing all command line functionality
+ * (i.e., all ompi_cmd_line*() functions).  Multiple handles can be
+ * created and simultaneously processed; each handle is independant
+ * from others.
+ *
+ * The ompi_cmd_line_t handles are [simplisticly] thread safe;
+ * processing is guaranteed to be mutually exclusive if multiple
+ * threads invoke functions on the same handle at the same time --
+ * access will be serialized in an unspecified order.
+ *
+ * Once finished, handles should be released with OBJ_RELEASE().  The
+ * destructor for ompi_cmd_line_t handles will free all memory
+ * associated with the handle.
+ */
+OBJ_CLASS_DECLARATION(ompi_cmd_line_t);
 
 
 #ifdef __cplusplus
@@ -56,52 +154,23 @@ extern "C" {
 #endif
 
   /**
-   * Create a OMPI command line handle.
+   * Create a command line option.
    *
-   * @retval NULL Upon failure.
-   * @retval cmd A pointer to an empty command line handle upon success.
-   *
-   * This is the first function invoked to start command line parsing.
-   * It creates an independant handle that is used in all other
-   * ompi_cmd_line*() functions.  Multiple handles can be created and
-   * simultaneously processed; each handle is independant from others.
-   *
-   * The ompi_cmd_line_t handles are [simplisticly] thread safe;
-   * processing is guaranteed to be mutually exclusive if multiple
-   * threads invoke functions on the same handle at the same time --
-   * access will be serialized in an unspecified order.
-   *
-   * It is necessary to call ompi_cmd_line_free() with the handle
-   * returned from this function in order to free all memory associated
-   * with it.
+   * This function is an older [deprecated] form of
+   * ompi_cmd_line_make_opt3().  It is exactly equivalent to
+   * ompi_cmd_line_make_opt3(cmd, short_name, NULL, long_name,
+   * num_params, desc).
    */
-  ompi_cmd_line_t *ompi_cmd_line_create(void);
-
-  /*
-   * Free a (ompi_cmd_line_t*) that was initially allocated via
-   * ompi_cmd_line_create().
-   *
-   * @param cmd The OMPI command line handle to free.
-   *
-   * This function frees a OMPI command line handle and all its
-   * associated memory.  This function can be called with any non-NULL
-   * pointer that was returned from ompi_cmd_line_create().  Once called,
-   * the handle is no longer valid.
-   *
-   * Access into this function is not thread safe.  Since, by
-   * definition, calling this function will destroy the handle, it does
-   * not make sense to try to have thread A invoke a different
-   * ompi_cmd_line*() function and thread B invoke ompi_cmd_line_free() --
-   * even if the calls are serialized, there's a race condition where
-   * thread A may try to use a now-invalid handle.
-   */
-  void ompi_cmd_line_free(ompi_cmd_line_t *cmd);
+  int ompi_cmd_line_make_opt(ompi_cmd_line_t *cmd, char short_name, 
+                            const char *long_name, int num_params, 
+                            const char *desc);
 
   /**
    * Create a command line option.
    *
    * @param cmd OMPI command line handle.
    * @param short_name "Short" name of the command line option.
+   * @param sd_name "Single dash" name of the command line option.
    * @param long_name "Long" name of the command line option.
    * @param num_params How many parameters this option takes.
    * @param dest Short string description of this option.
@@ -113,19 +182,20 @@ extern "C" {
    * Adds a command line option to the list of options that a a OMPI
    * command line handle will accept.  The short_name may take the
    * special value '\0' to not have a short name.  Likewise, the
-   * long_name may take the special value NULL to not have a long name.
-   * However, either the long or the short name must take valid value.
+   * sd_name and long_name may take the special value NULL to not have
+   * a single dash or long name, respectively.  However, one of the
+   * three must have a name.
    *
    * num_params indicates how many parameters this option takes.  It
    * must be greater than or equal to 0.
    *
    * Finally, desc is a short string description of this option.  It is
    * used to generate the output from ompi_cmd_line_get_usage_msg().
+   *
    */
-  int ompi_cmd_line_make_opt(ompi_cmd_line_t *cmd, char short_name, 
-                            const char *long_name, int num_params, 
-                            const char *desc);
-
+  int ompi_cmd_line_make_opt3(ompi_cmd_line_t *cmd, char short_name, 
+                              const char *sd_name, const char *long_name, 
+                              int num_params, const char *desc);
   /**
    * Parse a command line according to a pre-built OMPI command line
    * handle.
@@ -214,6 +284,39 @@ extern "C" {
    * Otherwise, it will return false.
    */
   bool ompi_cmd_line_is_taken(ompi_cmd_line_t *cmd, const char *opt);
+
+  /**
+   * Return the number of arguments parsed on a OMPI command line handle.
+   *
+   * @param cmd A pointer to the OMPI command line handle.
+   *
+   * @retval OMPI_ERROR If cmd is NULL.
+   * @retval argc Number of arguments previously added to the handle.
+   *
+   * Arguments are added to the handle via the ompi_cmd_line_parse()
+   * function.
+   */
+  int ompi_cmd_line_get_argc(ompi_cmd_line_t *cmd);
+
+  /**
+   * Return a string argument parsed on a OMPI command line handle.
+   *
+   * @param cmd A pointer to the OMPI command line handle.
+   * @param index The nth argument from the command line (0 is
+   * argv[0], etc.).
+   *
+   * @retval NULL If cmd is NULL or index is invalid
+   * @retval argument String of original argv[index]
+   *
+   * This function returns a single token from the arguments parsed
+   * on this handle.  Arguments are added bia the
+   * ompi_cmd_line_parse() function.
+   *
+   * What is returned is a pointer to the actual string that is on
+   * the handle; it should not be modified or freed.
+   */
+  char *ompi_cmd_line_get_argv(ompi_cmd_line_t *cmd, int index);
+
   /**
    * Return the number of instances of an option found during parsing.
    *
@@ -265,90 +368,39 @@ extern "C" {
    */
   char *ompi_cmd_line_get_param(ompi_cmd_line_t *cmd, const char *opt, 
                                int instance_num, int param_num);
+
+  /**
+   * Return the entire "tail" of unprocessed argv from a OMPI
+   * command line handle.
+   *
+   * @param cmd A pointer to the OMPI command line handle.
+   * @param tailc Pointer to the output length of the null-terminated
+   * tail argv array.
+   * @param tailv Pointer to the output null-terminated argv of all
+   * unprocessed arguments from the command line.
+   *
+   * @retval OMPI_ERROR If cmd is NULL or otherwise invalid.
+   * @retval OMPI_SUCCESS Upon success.
+   *
+   * The "tail" is all the arguments on the command line that were
+   * not processed for some reason.  Reasons for not processing
+   * arguments include:
+   *
+   * \sa The argument was not recognized
+   * \sa The argument "--" was seen, and therefore all arguments
+   * following it were not processed
+   *
+   * The output tailc parameter will be filled in with the integer
+   * length of the null-terminated tailv array (length including the
+   * final NULL entry).  The output tailv parameter will be a copy
+   * of the tail parameters, and must be freed (likely with a call
+   * to ompi_argv_free()) by the caller.
+   */
+  int ompi_cmd_line_get_tail(ompi_cmd_line_t *cmd, int *tailc, 
+                             char ***tailv);
 #ifdef __cplusplus
 }
 #endif
 
-
-/**
- * Return the number of arguments parsed on a OMPI command line handle.
- *
- * @param cmd A pointer to the OMPI command line handle.
- *
- * @retval OMPI_ERROR If cmd is NULL.
- * @retval argc Number of arguments previously added to the handle.
- *
- * Arguments are added to the handle via the ompi_cmd_line_parse()
- * function.
- */
-static inline int ompi_cmd_line_get_argc(ompi_cmd_line_t *cmd)
-{
-  return (NULL != cmd) ? cmd->lcl_argc : OMPI_ERROR;
-}
-
-
-/**
- * Return a string argument parsed on a OMPI command line handle.
- *
- * @param cmd A pointer to the OMPI command line handle.
- * @param index The nth argument from the command line (0 is argv[0], etc.).
- *
- * @retval NULL If cmd is NULL or index is invalid
- * @retval argument String of original argv[index]
- *
- * This function returns a single token from the arguments parsed on
- * this handle.  Arguments are added bia the ompi_cmd_line_parse()
- * function.
- *
- * What is returned is a pointer to the actual string that is on the
- * handle; it should not be modified or freed.
- */
-static inline char *ompi_cmd_line_get_argv(ompi_cmd_line_t *cmd, int index)
-{
-  return (NULL == cmd) ? NULL :
-    (index >= cmd->lcl_argc || index < 0) ? NULL : cmd->lcl_argv[index];
-}
-
-
-/**
- * Return the entire "tail" of unprocessed argv from a OMPI command
- * line handle.
- *
- * @param cmd A pointer to the OMPI command line handle.
- * @param tailc Pointer to the output length of the null-terminated
- * tail argv array.
- * @param tailv Pointer to the output null-terminated argv of all
- * unprocessed arguments from the command line.
- *
- * @retval OMPI_ERROR If cmd is NULL or otherwise invalid.
- * @retval OMPI_SUCCESS Upon success.
- *
- * The "tail" is all the arguments on the command line that were not
- * processed for some reason.  Reasons for not processing arguments
- * include:
- *
- * \sa The argument was not recognized
- * \sa The argument "--" was seen, and therefore all arguments
- * following it were not processed
- *
- * The output tailc parameter will be filled in with the integer
- * length of the null-terminated tailv array (length including the
- * final NULL entry).  The output tailv parameter will be a copy of
- * the tail parameters, and must be freed (likely with a call to
- * ompi_argv_free()) by the caller.
- */
-static inline int ompi_cmd_line_get_tail(ompi_cmd_line_t *cmd, int *tailc, 
-                                        char ***tailv)
-{
-  if (NULL != cmd) {
-    ompi_mutex_lock(&cmd->lcl_mutex);
-    *tailc = cmd->lcl_tail_argc;
-    *tailv = ompi_argv_copy(cmd->lcl_tail_argv);
-    ompi_mutex_unlock(&cmd->lcl_mutex);
-    return OMPI_SUCCESS;
-  } else {
-    return OMPI_ERROR;
-  }
-}
 
 #endif /* OMPI_CMD_LINE_H */

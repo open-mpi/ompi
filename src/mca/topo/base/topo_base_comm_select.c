@@ -5,6 +5,7 @@
 #include "ompi_config.h"
 
 #include "class/ompi_list.h"
+#include "util/argv.h"
 #include "runtime/runtime.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"

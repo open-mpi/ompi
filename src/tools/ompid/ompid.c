@@ -68,7 +68,7 @@ int main(int argc, char *argv[])
     }
 
     /* setup the rte command line arguments */
-    cmd_line = ompi_cmd_line_create();
+    cmd_line = OBJ_NEW(ompi_cmd_line_t);
     ompi_cmd_line_make_opt(cmd_line, 's', "seed", 0, 
 			   "Set the daemon seed to true.");
 
@@ -92,7 +92,7 @@ int main(int argc, char *argv[])
     /*
      * setup  mca command line arguments
      */
-    mca_cmd_line = ompi_cmd_line_create();
+    mca_cmd_line = OBJ_NEW(ompi_cmd_line_t);
     if (OMPI_SUCCESS != (ret = mca_base_cmd_line_setup(mca_cmd_line))) {
 	/* BWB show_help */
 	printf("show_help: mca_base_cmd_line_setup failed\n");
@@ -157,7 +157,7 @@ int main(int argc, char *argv[])
 	 * missing soemthing
 	 */
 	ompi_rte_finalize();
-	ompi_cmd_line_free(cmd_line);
+	OBJ_RELEASE(cmd_line);
 	mca_base_close();
 
 	return 1;
@@ -178,7 +178,7 @@ int main(int argc, char *argv[])
 
     /* Close services */
 
-    ompi_cmd_line_free(cmd_line);
+    OBJ_RELEASE(cmd_line);
     mca_base_close();
     ompi_finalize();
     return 0;

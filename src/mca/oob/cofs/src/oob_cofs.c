@@ -10,6 +10,7 @@
 #include "ompi_config.h"
 
 #include "include/types.h"
+#include "include/constants.h"
 #include "mca/oob/oob.h"
 #include "mca/oob/cofs/src/oob_cofs.h"
 #include "mca/ns/base/base.h"
