@@ -3,5 +3,3 @@
 #
 
 include $(top_srcdir)/config/Makefile.options
-
-SUBDIRS = oob pcm registry
