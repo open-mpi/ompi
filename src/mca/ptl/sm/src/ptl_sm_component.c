@@ -32,7 +32,7 @@
  * Local utility functions.
  */
 
-static int mca_ptl_sm_module_exchange(void);
+static int mca_ptl_sm_component_exchange(void);
 
 
 /*
@@ -40,15 +40,16 @@ static int mca_ptl_sm_module_exchange(void);
  */
 
 mca_ptl_sm_component_t mca_ptl_sm_component = {
-  {
-    /* First, the mca_base_component_t struct containing meta
-       information about the component itself */
     {
-    /* Indicate that we are a pml v1.0.0 component (which also implies
-       a specific MCA version) */
-
+    /* First, the mca_base_component_t struct containing meta information
+       about the component itself */
+                                                                                                                            
+    {
+    /* Indicate that we are a pml v1.0.0 component (which also implies a
+       specific MCA version) */
+                                                                                                                            
     MCA_PTL_BASE_VERSION_1_0_0,
-
+                                                                                                                            
     "sm", /* MCA component name */
     1,  /* MCA component major version */
     0,  /* MCA component minor version */
@@ -56,18 +57,19 @@ mca_ptl_sm_component_t mca_ptl_sm_component = {
     mca_ptl_sm_component_open,  /* component open */
     mca_ptl_sm_component_close  /* component close */
     },
-    
+                                                                                                                            
     /* Next the MCA v1.0.0 component meta data */
-    
+                                                                                                                            
     {
-      /* Whether the component is checkpointable or not */
-      false
+    /* Whether the component is checkpointable or not */
+                                                                                                                            
+    false
     },
-    
+
     mca_ptl_sm_component_init,  
     mca_ptl_sm_component_control,
     mca_ptl_sm_component_progress,
-  }
+    }
 };
 
 
@@ -142,18 +144,24 @@ int mca_ptl_sm_component_close(void)
  *  SM component initialization
  */
 mca_ptl_base_module_t** mca_ptl_sm_component_init(
-    int *num_ptl_modules, 
+    int *num_ptls, 
     bool *allow_multi_user_threads,
     bool *have_hidden_threads)
 {
     mca_ptl_base_module_t **ptls = NULL;
+    mca_mpool_base_component_t *sm_mpool_component; /* RLG */
 
-    *num_ptl_modules = 0;
+    *num_ptls = 0;
     *allow_multi_user_threads = true;
     *have_hidden_threads = OMPI_HAVE_THREADS;
 
     /* lookup shared memory pool */
-    mca_ptl_sm_component.sm_mpool = mca_mpool_component_lookup(mca_ptl_sm_component.sm_mpool_name);
+    sm_mpool_component = mca_mpool_component_lookup(mca_ptl_sm_component.sm_mpool_name);
+
+    mca_ptl_sm_component.sm_mpool =
+        sm_mpool_component->mpool_init(allow_multi_user_threads); /* RLG */
+    /*mca_ptl_sm_component.sm_mpool =
+     * mca_mpool_component_lookup(mca_ptl_sm_component.sm_mpool_name);  RLG */
     if(NULL == mca_ptl_sm_component.sm_mpool) {
         ompi_output(0, "mca_ptl_sm_component_init: unable to locate shared memory pool: %s\n",
             mca_ptl_sm_component.sm_mpool_name);
@@ -179,18 +187,16 @@ mca_ptl_base_module_t** mca_ptl_sm_component_init(
         mca_ptl_sm_component.sm_mpool); /* use shared-memory pool */
 
     /* publish shared memory parameters with the MCA framework */
-    if(mca_ptl_sm_module_exchange() != OMPI_SUCCESS) {
+    if(mca_ptl_sm_component_exchange() != OMPI_SUCCESS)
         return 0;
-    }
 
     /* allocate the Shared Memory PTL.  Only one is being allocated */
     ptls = malloc(sizeof(mca_ptl_base_module_t*));
-    if(NULL == ptls) {
+    if(NULL == ptls)
         return NULL;
-    }
 
     *ptls = &mca_ptl_sm.super;
-    *num_ptl_modules = 1;
+    *num_ptls = 1;
 
     /* initialize some PTL data */
     /* start with no SM procs */
@@ -230,7 +236,7 @@ int mca_ptl_sm_component_progress(mca_ptl_tstamp_t tstamp)
  *
  */
 
-static int mca_ptl_sm_module_exchange()
+static int mca_ptl_sm_component_exchange()
 {
     /*
      *  !!!!  This is temporary, and will be removed when the
