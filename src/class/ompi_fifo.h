@@ -126,7 +126,7 @@ static inline int ompi_fifo_init(int size_of_cb_fifo, int lazy_free_freq,
 
     /* finish head initialization */
     fifo->head->next_fifo_wrapper=
-        (volatile struct ompi_cb_fifo_wrapper_t *)fifo;  /* only one element 
+        (volatile struct ompi_cb_fifo_wrapper_t *)fifo->head;  /* only one element 
                                                             in the link list */
     fifo->head->cb_overflow=false;  /* no attempt to overflow the queue */
     fifo->head->fifo_allocator=memory_allocator; /* set pointer to memory
@@ -212,7 +212,7 @@ static inline int ompi_fifo_write_to_head(void *data, ompi_fifo_t
 {
     int error_code=OMPI_SUCCESS;
     size_t len_to_allocate;
-    ompi_cb_fifo_wrapper_t *next_ff, *tmp_ff;
+    ompi_cb_fifo_wrapper_t *next_ff;
     bool available;
 
     /* attempt to write data to head ompi_fifo_cb_fifo_t */
@@ -229,16 +229,16 @@ static inline int ompi_fifo_write_to_head(void *data, ompi_fifo_t
         /* see if next queue is available - while the next queue
          * has not been emptied, it will be marked as overflowen*/
         next_ff=(ompi_cb_fifo_wrapper_t *)fifo->head->next_fifo_wrapper;
-        available=next_ff->cb_overflow;
+        available=!(next_ff->cb_overflow);
 
         /* if next queue not available, allocate new queue */
         if( !available ) {
 
             /* allocate head ompi_cb_fifo_t structure */
             len_to_allocate=sizeof(ompi_cb_fifo_wrapper_t);
-            tmp_ff=fifo->head->fifo_allocator->mpool_alloc
+            next_ff=fifo->head->fifo_allocator->mpool_alloc
                 (len_to_allocate,CACHE_LINE_SIZE);
-            if ( NULL == tmp_ff) {
+            if ( NULL == next_ff) {
                 return OMPI_ERR_OUT_OF_RESOURCE;
             }
 
@@ -248,7 +248,7 @@ static inline int ompi_fifo_write_to_head(void *data, ompi_fifo_t
                     fifo->head->cb_fifo.fifo_memory_locality_index, 
                     fifo->head->cb_fifo.head_memory_locality_index, 
                     fifo->head->cb_fifo.tail_memory_locality_index, 
-                    &(tmp_ff->cb_fifo), 
+                    &(next_ff->cb_fifo), 
                     fifo->head->fifo_allocator);
             if ( OMPI_SUCCESS != error_code ) {
                 return error_code;
@@ -256,18 +256,18 @@ static inline int ompi_fifo_write_to_head(void *data, ompi_fifo_t
 
 
             /* finish new element initialization */
-            tmp_ff->next_fifo_wrapper=fifo->head->next_fifo_wrapper;  /* only one 
+            next_ff->next_fifo_wrapper=fifo->head->next_fifo_wrapper;  /* only one 
                                                                 element in the 
                                                                 link list */
-            fifo->head->next_fifo_wrapper=tmp_ff;
-            tmp_ff->cb_overflow=false;  /* no attempt to overflow the queue */
-            tmp_ff->fifo_allocator=fifo->head->fifo_allocator; /* set pointer to 
+            next_ff->cb_overflow=false;  /* no attempt to overflow the queue */
+            next_ff->fifo_allocator=fifo->head->fifo_allocator; /* set pointer to 
                                                               memory allocation
                                                               functions */
         }
 
         /* reset head pointer */
-        fifo->head=tmp_ff;
+        fifo->head->next_fifo_wrapper=next_ff;
+        fifo->head=next_ff;
 
         /* write data to new head structure */
         error_code=ompi_cb_fifo_write_to_head(data,
@@ -295,7 +295,7 @@ static inline int ompi_fifo_write_to_head(void *data, ompi_fifo_t
 static inline cb_slot_t ompi_fifo_get_slot(ompi_fifo_t *fifo) {
 
     size_t len_to_allocate;
-    volatile ompi_cb_fifo_wrapper_t *next_ff, *tmp_ff;
+    volatile ompi_cb_fifo_wrapper_t *next_ff;
     bool available;
     cb_slot_t return_params;
 
@@ -313,16 +313,16 @@ static inline cb_slot_t ompi_fifo_get_slot(ompi_fifo_t *fifo) {
         /* see if next queue is available - while the next queue
          * has not been emptied, it will be marked as overflowen*/
         next_ff=fifo->head->next_fifo_wrapper;
-        available=next_ff->cb_overflow;
+        available=!(next_ff->cb_overflow);
 
         /* if next queue not available, allocate new queue */
         if( !available ) {
 
             /* allocate head ompi_cb_fifo_t structure */
             len_to_allocate=sizeof(ompi_cb_fifo_wrapper_t);
-            tmp_ff=fifo->head->fifo_allocator->mpool_alloc
+            next_ff=fifo->head->fifo_allocator->mpool_alloc
                 (len_to_allocate,CACHE_LINE_SIZE);
-            if ( NULL == tmp_ff) {
+            if ( NULL == next_ff) {
                 return_params.index=OMPI_ERR_OUT_OF_RESOURCE;
                 return return_params;
             }
@@ -333,7 +333,7 @@ static inline cb_slot_t ompi_fifo_get_slot(ompi_fifo_t *fifo) {
                     fifo->head->cb_fifo.fifo_memory_locality_index, 
                     fifo->head->cb_fifo.head_memory_locality_index, 
                     fifo->head->cb_fifo.tail_memory_locality_index, 
-                    (ompi_cb_fifo_t *)&(tmp_ff->cb_fifo),
+                    (ompi_cb_fifo_t *)&(next_ff->cb_fifo),
                     fifo->head->fifo_allocator);
             if ( OMPI_SUCCESS != return_params.index ) {
                 return return_params;
@@ -341,16 +341,16 @@ static inline cb_slot_t ompi_fifo_get_slot(ompi_fifo_t *fifo) {
 
 
             /* finish new element initialization */
-            tmp_ff->next_fifo_wrapper=fifo->head->next_fifo_wrapper;  /* only one element in 
+            next_ff->next_fifo_wrapper=fifo->head->next_fifo_wrapper;  /* only one element in 
                                                          the link list */
-            fifo->head->next_fifo_wrapper=tmp_ff;
-            tmp_ff->cb_overflow=false;  /* no attempt to overflow the queue */
-            tmp_ff->fifo_allocator=fifo->head->fifo_allocator; /* set pointer to 
+            next_ff->cb_overflow=false;  /* no attempt to overflow the queue */
+            next_ff->fifo_allocator=fifo->head->fifo_allocator; /* set pointer to 
                                                               memory allocation functions */
         }
 
         /* reset head pointer */
-        fifo->head=tmp_ff;
+        fifo->head->next_fifo_wrapper=next_ff;
+        fifo->head=next_ff;
 
         /* write data to new head structure */
         return_params.index=ompi_cb_fifo_get_slot(
@@ -385,8 +385,9 @@ static inline void *ompi_fifo_read_from_tail(ompi_fifo_t *fifo)
     return_value=ompi_cb_fifo_read_from_tail(
             (ompi_cb_fifo_t *)&(fifo->tail->cb_fifo),
             fifo->tail->cb_overflow,&queue_empty);
+
     /* check to see if need to move on to next cb_fifo in the link list */
-    if( (void *)OMPI_CB_ERROR && queue_empty ) {
+    if( queue_empty ) {
         /* queue_emptied - move on to next element in fifo */
         fifo->tail->cb_overflow=false;
         fifo->tail=fifo->tail->next_fifo_wrapper;
