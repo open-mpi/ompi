@@ -11,7 +11,7 @@ EXTRA_DIST = \
         cxx_find_template_repository.m4 \
         cxx_find_exception_flags.m4 \
         cxx_have_exceptions.m4 \
-        f77_check_sizeof.m4 \
+        f77_check_type.m4 \
         f77_find_ext_symbol_convention.m4 \
         f77_get_alignment.m4 \
         f77_get_sizeof.m4 \
