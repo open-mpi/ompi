@@ -48,58 +48,59 @@ typedef struct mca_pml_base_send_request_t mca_pml_base_send_request_t;
  * @param mode (IN)        Send mode (STANDARD,BUFFERED,SYNCHRONOUS,READY)
  * @param persistent (IN)  Is request persistent.
  */
-#define MCA_PML_BASE_SEND_REQUEST_INIT(                                             \
-    request,                                                                        \
-    addr,                                                                           \
-    count,                                                                          \
-    datatype,                                                                       \
-    peer,                                                                           \
-    tag,                                                                            \
-    comm,                                                                           \
-    mode,                                                                           \
-    persistent)                                                                     \
-{                                                                                   \
-    /* increment reference count on communicator */                                 \
-    OBJ_RETAIN(comm);                                                               \
-                                                                                    \
-    OMPI_REQUEST_INIT(&(request)->req_base.req_ompi);                               \
-    request->req_offset = 0;                                                        \
-    request->req_bytes_sent = 0;                                                    \
-    request->req_send_mode = mode;                                                  \
-    request->req_peer_match.lval = 0;                                               \
-    request->req_peer_addr.lval = 0;                                                \
-    request->req_peer_size = 0;                                                     \
-    request->req_base.req_addr = addr;                                              \
-    request->req_base.req_count = count;                                            \
-    request->req_base.req_datatype = datatype;                                      \
-    request->req_base.req_peer = peer;                                              \
-    request->req_base.req_tag = tag;                                                \
-    request->req_base.req_comm = comm;                                              \
-    request->req_base.req_proc = ompi_comm_peer_lookup(comm,peer);                  \
-    request->req_base.req_persistent = persistent;                                  \
-    request->req_base.req_mpi_done = false;                                         \
-    request->req_base.req_pml_done = false;                                         \
-    request->req_base.req_free_called = false;                                      \
-                                                                                    \
-    /* initialize datatype convertor for this request */                            \
-    if(count > 0) {                                                                 \
-        int packed_size;                                                            \
-        ompi_convertor_copy(                                                        \
-            request->req_base.req_proc->proc_convertor,                             \
-            &request->req_convertor);                                               \
-        ompi_convertor_init_for_send(                                               \
-            &request->req_convertor,                                                \
-            0,                                                                      \
-            request->req_base.req_datatype,                                         \
-            request->req_base.req_count,                                            \
-            request->req_base.req_addr,                                             \
-            0);                                                                     \
-        ompi_convertor_get_packed_size(&request->req_convertor, &packed_size);      \
-        request->req_bytes_packed = packed_size;                                    \
-    } else {                                                                        \
-        request->req_bytes_packed = 0;                                              \
-    }                                                                               \
-}
+#define MCA_PML_BASE_SEND_REQUEST_INIT( request,                        \
+                                        addr,                           \
+                                        count,                          \
+                                        datatype,                       \
+                                        peer,                           \
+                                        tag,                            \
+                                        comm,                           \
+                                        mode,                           \
+                                        persistent)                     \
+   {                                                                    \
+      /* increment reference count on communicator */                   \
+      OBJ_RETAIN(comm);                                                 \
+                                                                        \
+      OMPI_REQUEST_INIT(&(request)->req_base.req_ompi);                 \
+      request->req_offset = 0;                                          \
+      request->req_bytes_sent = 0;                                      \
+      request->req_send_mode = mode;                                    \
+      request->req_peer_match.lval = 0;                                 \
+      request->req_peer_addr.lval = 0;                                  \
+      request->req_peer_size = 0;                                       \
+      request->req_base.req_addr = addr;                                \
+      request->req_base.req_count = count;                              \
+      request->req_base.req_datatype = datatype;                        \
+      request->req_base.req_peer = peer;                                \
+      request->req_base.req_tag = tag;                                  \
+      request->req_base.req_comm = comm;                                \
+      request->req_base.req_proc = ompi_comm_peer_lookup(comm,peer);    \
+      request->req_base.req_persistent = persistent;                    \
+      request->req_base.req_mpi_done = false;                           \
+      request->req_base.req_pml_done = false;                           \
+      request->req_base.req_free_called = false;                        \
+                                                                        \
+      /* initialize datatype convertor for this request */              \
+      if(count > 0) {                                                   \
+         ompi_convertor_copy( request->req_base.req_proc->proc_convertor, \
+                              &request->req_convertor);                 \
+         /* We will create a convertor specialized for send       */    \
+         /* just to be able to get the packed size. This size     */    \
+         /* depend on the conversion used sender side or receiver */    \
+         /* size. BEWARE this convertor is not suitable for the   */    \
+         /* sending operation !!                                  */    \
+         ompi_convertor_init_for_send( &request->req_convertor,         \
+                                       0,                               \
+                                       request->req_base.req_datatype,  \
+                                       request->req_base.req_count,     \
+                                       request->req_base.req_addr,      \
+                                       0, NULL );                       \
+         ompi_convertor_get_packed_size( &request->req_convertor,       \
+                                         &(request->req_bytes_packed) ); \
+      } else {                                                          \
+         request->req_bytes_packed = 0;                                 \
+      }                                                                 \
+   }
 
 
 /**
