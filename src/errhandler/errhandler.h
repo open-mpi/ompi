@@ -12,13 +12,11 @@
 #include "lfc/lam_object.h"
 #include "lfc/lam_pointer_array.h"
 
-/* This must correspond to the fortran MPI_ERRHANDLER_NULL index */
+/*
+ * These must correspond to the fortran handle indices
+ */
 #define LAM_ERRHANDLER_NULL_FORTRAN 0
-
-/* This must correspond to the fortran MPI_ERRORS_ARE_FATAL index */
 #define LAM_ERRORS_ARE_FATAL_FORTRAN 1
-
-/* This must correspond to the fortran MPI_ERRORS_RETURN index */
 #define LAM_ERRORS_RETURN_FORTRAN 2
 
 
@@ -76,17 +74,17 @@ typedef struct lam_errhandler_t lam_errhandler_t;
 /**
  * Global variable for MPI_ERRHANDLER_NULL
  */
-extern lam_errhandler_t *lam_mpi_errhandler_null;
+extern lam_errhandler_t lam_mpi_errhandler_null;
 
 /**
  * Global variable for MPI_ERRORS_ARE_FATAL
  */
-extern lam_errhandler_t *lam_mpi_errors_are_fatal;
+extern lam_errhandler_t lam_mpi_errors_are_fatal;
 
 /**
  * Global variable for MPI_ERRORS_RETURN
  */
-extern lam_errhandler_t *lam_mpi_errors_return;
+extern lam_errhandler_t lam_mpi_errors_return;
 
 /**
  * Table for Fortran <-> C errhandler handle conversion
