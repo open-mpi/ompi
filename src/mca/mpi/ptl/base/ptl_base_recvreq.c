@@ -5,6 +5,7 @@
 
 #include "mca/mpi/ptl/base/ptl_base_comm.h"
 #include "mca/mpi/ptl/base/ptl_base_recvreq.h"
+#include "mca/mpi/ptl/base/ptl_base_recvfrag.h"
 
 
 lam_class_info_t mca_ptl_base_recv_request_cls = { 
@@ -48,4 +49,8 @@ int mca_ptl_base_recv_request_match_wild(mca_ptl_base_recv_request_t* req)
     return LAM_SUCCESS;
 }
 
+void mca_ptl_base_recv_request_progress(mca_ptl_base_recv_request_t* req, mca_ptl_base_recv_frag_t* frag)
+{
+
+}
 

@@ -63,8 +63,8 @@ void mca_ptl_tcp_send_frag_reinit(
     /* fragment state */
     sendfrag->frag_owner = &ptl_peer->peer_ptl->super;
     sendfrag->super.frag_request = sendreq;
-    sendfrag->super.frag_data = sendreq->req_data + hdr->hdr_msg_offset;
-    sendfrag->super.frag_size = size;
+    sendfrag->super.super.frag_addr = sendreq->super.req_addr + hdr->hdr_msg_offset;
+    sendfrag->super.super.frag_size = size;
 
     sendfrag->frag_peer = ptl_peer;
     sendfrag->frag_vec_ptr = sendfrag->frag_vec;
@@ -72,8 +72,8 @@ void mca_ptl_tcp_send_frag_reinit(
     sendfrag->frag_vec[0].iov_len = sizeof(mca_ptl_base_header_t);
     sendfrag->frag_vec_cnt = 1;
     if(size > 0) {
-        sendfrag->frag_vec[1].iov_base = (lam_iov_base_ptr_t)sendfrag->super.frag_data;
-        sendfrag->frag_vec[1].iov_len = sendfrag->super.frag_size;
+        sendfrag->frag_vec[1].iov_base = (lam_iov_base_ptr_t)sendfrag->super.super.frag_addr;
+        sendfrag->frag_vec[1].iov_len = sendfrag->super.super.frag_size;
         sendfrag->frag_vec_cnt++;
     }
 }

@@ -47,15 +47,15 @@ typedef struct lam_communicator_t lam_communicator_t;
 static inline lam_communicator_t *lam_comm_lookup(uint32_t cid) 
 { 
     /* array of pointers to communicators, indexed by context ID */
-    extern lam_communicator_t **lam_communicator_array;
+    extern lam_communicator_t **lam_mpi_comm_array;
 #ifdef LAM_ENABLE_DEBUG
-    extern uint32_t lam_communicator_array_len;
-    if(cid >= lam_communicator_array_len) {
+    extern uint32_t lam_mpi_comm_array_size;
+    if(cid >= lam_mpi_comm_array_size) {
         lam_output(0, "lam_comm_lookup: invalid communicator index (%d)", cid);
         return (lam_communicator_t *) NULL;
     }
 #endif
-    return lam_communicator_array[cid]; 
+    return lam_mpi_comm_array[cid]; 
 }
 
 static inline lam_proc_t* lam_comm_lookup_peer(lam_communicator_t* comm, size_t peer_id)

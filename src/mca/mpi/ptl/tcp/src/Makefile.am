@@ -21,6 +21,7 @@ libmca_ptl_tcp_la_SOURCES = \
 	ptl_tcp_module.c \
 	ptl_tcp_recvfrag.c \
 	ptl_tcp_recvfrag.h \
-	ptl_tcp_send.c \
 	ptl_tcp_sendfrag.c \
-	ptl_tcp_sendfrag.h
+	ptl_tcp_sendfrag.h \
+	ptl_tcp_sendreq.c \
+	ptl_tcp_sendreq.h
