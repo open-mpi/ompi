@@ -342,7 +342,7 @@ mca_ptl_gm_init_sendrecv (mca_ptl_gm_module_t * ptl)
 	OMPI_FREE_LIST_RETURN( &(ptl->gm_recv_frags_free), (ompi_list_item_t *)free_rfragment );
 	free_rfragment++;
 
-	gm_provide_receive_buffer( ptl->gm_port, ptl->gm_recv_dma_memory + i * GM_BUF_SIZE,
+	gm_provide_receive_buffer( ptl->gm_port, (char*)ptl->gm_recv_dma_memory + i * GM_BUF_SIZE,
 				   GM_SIZE, GM_LOW_PRIORITY );
 	DO_DEBUG(printf( "%3d : gm register GM receive buffer %p\n", i, (void*)ptl->gm_recv_dma_memory ) );
     }

@@ -217,7 +217,7 @@ void send_callback(struct gm_port *port,void * context, gm_status_t status)
 		   || mca_pml_base_send_request_matched(gm_send_req)) {
 	    A_PRINT(" send callback : match not required\n");
 	    ptl->super.ptl_send_progress( (mca_ptl_base_module_t*)ptl, frag->send_frag.frag_request,
-					  header->hdr_frag.hdr_frag_length);
+					  header->hdr_match.hdr_msg_length);
 	    
 	    /* Return sendfrag to free list */
 	    A_PRINT("Return frag : %p", frag);
@@ -332,7 +332,7 @@ mca_ptl_gm_recv_frag_match( struct mca_ptl_gm_module_t *ptl,
 
     recv_frag->frag_recv.frag_base.frag_addr =
 	(char *) header + sizeof(mca_ptl_base_match_header_t);
-    recv_frag->frag_recv.frag_base.frag_size = header->hdr_frag.hdr_frag_length;
+    recv_frag->frag_recv.frag_base.frag_size = header->hdr_match.hdr_msg_length;
     
     recv_frag->matched = false;
     recv_frag->have_allocated_buffer = false;

@@ -111,14 +111,14 @@ extern "C" {
             sendfrag->type = MATCH;
         } else {
             hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_FRAG;
+            hdr->hdr_frag.hdr_frag_offset  = offset;
+            hdr->hdr_frag.hdr_frag_length  = *size;
+            hdr->hdr_frag.hdr_src_ptr.lval = 0;
+            hdr->hdr_frag.hdr_src_ptr.pval = sendfrag; /* pointer to the frag */
+            hdr->hdr_frag.hdr_dst_ptr = sendreq->req_peer_match;
 
             sendfrag->type = FRAG;
         }
-        hdr->hdr_frag.hdr_frag_offset  = offset;
-        hdr->hdr_frag.hdr_frag_length  = *size;
-        hdr->hdr_frag.hdr_src_ptr.lval = 0;
-        hdr->hdr_frag.hdr_src_ptr.pval = sendfrag; /* pointer to the frag */
-        hdr->hdr_frag.hdr_dst_ptr = sendreq->req_peer_match;
 
         return OMPI_SUCCESS;
     }

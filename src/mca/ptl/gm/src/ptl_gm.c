@@ -424,7 +424,7 @@ mca_ptl_gm_matched( mca_ptl_base_module_t * ptl,
     bytes_recv = frag->frag_base.frag_size; 
     iov.iov_len = bytes_recv;
     
-    if (header->hdr_frag.hdr_frag_length > 0) {
+    if( header->hdr_match.hdr_msg_length > 0 ) {
 	ompi_proc_t *proc;
 	unsigned int max_data, out_size;
 	int freeAfter;
@@ -438,7 +438,7 @@ mca_ptl_gm_matched( mca_ptl_base_module_t * ptl,
                                       request->req_base.req_datatype,
                                       request->req_base.req_count,
                                       request->req_base.req_addr,
-                                      header->hdr_frag.hdr_frag_offset, NULL );
+                                      0  /* TO DO which offset ? */, NULL );
 	out_size = 1;
 	max_data = iov.iov_len;
 	rc = ompi_convertor_unpack( &frag->frag_base.frag_convertor, &(iov),
@@ -448,7 +448,7 @@ mca_ptl_gm_matched( mca_ptl_base_module_t * ptl,
     }
     
     /* update progress*/   
-    ptl->ptl_recv_progress( ptl, request, bytes_recv,bytes_recv); 
+    ptl->ptl_recv_progress( ptl, request, bytes_recv, bytes_recv ); 
     
     /* Now update the status of the fragment */
     ((mca_ptl_gm_recv_frag_t*)frag)->matched = true;
@@ -457,7 +457,6 @@ mca_ptl_gm_matched( mca_ptl_base_module_t * ptl,
 	((mca_ptl_gm_recv_frag_t*)frag)->have_allocated_buffer = false;
     }
     
-    /* return to free list   */
-    OMPI_FREE_LIST_RETURN( &(gm_ptl->gm_recv_frags_free),
-			   (ompi_list_item_t*)((mca_ptl_gm_recv_frag_t*)frag) );
+    /* I'm done with this fragment. Return it to the free list */
+    OMPI_FREE_LIST_RETURN( &(gm_ptl->gm_recv_frags_free), (ompi_list_item_t*)frag );
 }
