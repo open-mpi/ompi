@@ -69,7 +69,7 @@
 #define  OMPI_PTL_ELAN_GET_MIN(a,b)  ((a<b)? a:b)
 #define  OMPI_PTL_ELAN_ALIGNUP(x,a)  (((unsigned int)(x) + ((a)-1)) & (-(a)))
 
-#define  OMPI_PTL_ELAN_ENABLE_GET  (0)
+#define  OMPI_PTL_ELAN_ENABLE_GET    (0)
 
 /* For now only debug send's */
 #if 1
