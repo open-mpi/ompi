@@ -19,6 +19,7 @@ libmpi_datatype_la_SOURCES = \
 	datatype_create.c \
 	datatype_delete.c \
 	datatype_memcpy.c \
+	datatype_pack.c \
 	datatype_sum32.c
 
 # Conditionally install the header files
