@@ -725,21 +725,20 @@ mca_ptl_elan_wait_queue(mca_ptl_elan_module_t * ptl,
     readyWord = &rxq->qr_doneWord;
 
     /* FIXME: Make sure the event and doneWord are correctly initialized */
-    LOG_PRINT(PTL_ELAN_DEBUG_THREAD,
+    LOG_PRINT(PTL_ELAN_DEBUG_NONE,
 	    "rail %p ctx %p ready %p readyWord %p\n",
-	    rail, ctx, ready, ready);
+	    rail, ctx, ready, readyWord);
 
     /* Poll for usec (at least one), then go to sleep. */
     if (elan4_pollevent_word(ctx, readyWord, usecs)) {
 	return 0xdeadbeef;
     }
 
-    LOG_PRINT(PTL_ELAN_DEBUG_THREAD,
-	    "eventWord(%p) TIMED_OUT: ready %lx [%d.%x] readyWord %p [%d]\n",
+    LOG_PRINT(PTL_ELAN_DEBUG_NONE,
+	    "eventWord(%p) TIMED_OUT: ready %lx [%d.%x] \n",
 	    ready, 
 	    EVENT_COUNT(((EVENT32 *)(ready))),
-	    EVENT_TYPE(((EVENT32 *)(ready))),
-	    readyWord, *readyWord);
+	    EVENT_TYPE(((EVENT32 *)(ready))));
 
     /* XXXX Temporary Elan4 blocking wait code */
     {
@@ -751,7 +750,7 @@ mca_ptl_elan_wait_queue(mca_ptl_elan_module_t * ptl,
 	    rail->r_sleepDescs = es->es_next;
 	OMPI_UNLOCK(&mca_ptl_elan_component.elan_lock);
 
-	LOG_PRINT(PTL_ELAN_DEBUG_THREAD,
+	LOG_PRINT(PTL_ELAN_DEBUG_NONE,
 		"eventWord(%p): es %p cookie %x cmdq %p ecmdq %p\n",
 		ready, es, es->es_cookie, es->es_cmdq, es->es_ecmdq);
 	WAITEVENT_WORD(ctx, es->es_cmdq, es->es_ecmdq, es->es_cmdBlk, 
@@ -1078,6 +1077,7 @@ ptl_elan_recv_comp:
 	if (header->hdr_common.hdr_type == MCA_PTL_HDR_TYPE_STOP) {
 	    /* XXX: release the lock and quit the thread */
 	    OMPI_UNLOCK (&queue->rx_lock);
+	    END_FUNC(PTL_ELAN_DEBUG_THREAD);
 	    return OMPI_SUCCESS;
 	} 
 #endif
@@ -1183,6 +1183,7 @@ ptl_elan_send_comp:
 	if (header->hdr_common.hdr_type == MCA_PTL_HDR_TYPE_STOP) {
 	    /* XXX: release the lock and quit the thread */
 	    OMPI_UNLOCK (&comp->rx_lock);
+	    END_FUNC(PTL_ELAN_DEBUG_THREAD);
 	    return OMPI_SUCCESS;
 	}
 #endif
