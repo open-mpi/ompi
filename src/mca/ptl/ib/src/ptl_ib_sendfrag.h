@@ -5,7 +5,7 @@
 #include "mca/pml/base/pml_base_sendreq.h"
 #include "mca/ptl/base/ptl_base_sendfrag.h"
 
-#include "ptl_ib_vapi.h"
+#include "ptl_ib_priv.h"
 
 OBJ_CLASS_DECLARATION(mca_ptl_ib_send_frag_t);
 
@@ -13,11 +13,14 @@ OBJ_CLASS_DECLARATION(mca_ptl_ib_send_frag_t);
  * IB send fragment derived type.
  */
 struct mca_ptl_ib_send_frag_t {
-   mca_ptl_base_send_frag_t frag_send;  /**< base send fragment descriptor */
-   struct iovec *frag_vec_ptr;
-   size_t frag_vec_cnt;
-   struct iovec frag_vec[2];
-   volatile int frag_progressed;
+   mca_ptl_base_send_frag_t                 frag_send;
+   /**< base send fragment descriptor */
+
+   ib_buffer_t                              ib_buf;
+   /**< IB buffer attached to this frag */
+
+   volatile int                             frag_progressed;
+   bool                                     frag_ack_pending;
 };
 typedef struct mca_ptl_ib_send_frag_t mca_ptl_ib_send_frag_t;
 
@@ -40,5 +43,17 @@ int mca_ptl_ib_send_frag_init(
         size_t* size,
         int flags);
 
+/**
+ * Initialize a fragment descriptor.
+ *
+ * request (IN)      PML base send request
+ * ptl (IN)          PTL module
+ * RETURN            mca_ptl_ib_send_frag_t*
+ *
+ */
+
+mca_ptl_ib_send_frag_t* mca_ptl_ib_alloc_send_frag(
+        mca_ptl_base_module_t*       ptl,
+        mca_pml_base_send_request_t* request);
 
 #endif

@@ -88,11 +88,18 @@ extern mca_ptl_ib_component_t mca_ptl_ib_component;
  * IB PTL Interface
  */
 struct mca_ptl_ib_module_t {
-    mca_ptl_base_module_t           super;      /**< base PTL interface */
+    mca_ptl_base_module_t                   super;  
+    /**< base PTL interface */
 
+    mca_ptl_ib_state_t                      *ib_state;
     /* IB state holds info about queue handles, HCA handles,
      * protection domain etc. which are private to this module */
-    mca_ptl_ib_state_t              *ib_state;
+
+    ompi_free_list_t                        send_free;
+    /**< free list of send buffer descriptors */
+
+    ompi_free_list_t                        recv_free;
+    /**< free list of recv buffer descriptors */
 };
 
 typedef struct mca_ptl_ib_module_t mca_ptl_ib_module_t;

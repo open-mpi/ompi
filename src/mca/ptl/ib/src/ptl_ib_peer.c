@@ -122,6 +122,8 @@ static int mca_ptl_ib_peer_send_conn_info(mca_ptl_base_peer_t* peer)
     ompi_process_name_t *name;
     char sendbuf[50];
 
+    D_PRINT("");
+
     name = &peer->peer_proc->proc_guid;
 
     /* Zero out the send buffer */
@@ -265,6 +267,23 @@ static int mca_ptl_ib_peer_reply_start_connect(mca_ptl_ib_peer_t *peer,
 }
 
 /*
+ *
+ */
+
+static void mca_ptl_ib_peer_connected(mca_ptl_ib_peer_t *peer)
+{
+    peer->peer_state = MCA_PTL_IB_CONNECTED;
+
+    if(ompi_list_get_size(&peer->peer_frags) > 0) {
+        if(NULL == peer->peer_send_frag) {
+
+            peer->peer_send_frag = (mca_ptl_ib_send_frag_t *)
+                ompi_list_remove_first(&peer->peer_frags);
+        }
+    }
+}
+
+/*
  * Non blocking OOB recv callback.
  * Read incoming QP and other info, and if this peer
  * is trying to connect, reply with our QP info, 
@@ -324,7 +343,8 @@ static void mca_ptl_ib_peer_connect_recv_callback(int status,
                         D_PRINT("Connect Error");
                     }
 
-                    ib_peer->peer_state = MCA_PTL_IB_CONNECTED;
+                    /* Setup state as connected */
+                    mca_ptl_ib_peer_connected(ib_peer);
 
                     break;
 
@@ -346,7 +366,8 @@ static void mca_ptl_ib_peer_connect_recv_callback(int status,
                         D_PRINT("Connect Error");
                     }
 
-                    ib_peer->peer_state = MCA_PTL_IB_CONNECTED;
+                    /* Setup state as connected */
+                    mca_ptl_ib_peer_connected(ib_peer);
 
                     break;
                 case MCA_PTL_IB_CONNECTED :
@@ -401,10 +422,9 @@ int mca_ptl_ib_peer_send(mca_ptl_base_peer_t* peer,
 
             D_PRINT("Connection to peer closed ... connecting ...");
 
-            //ompi_list_append(&peer->peer_frags, (ompi_list_item_t*)frag);
+            ompi_list_append(&peer->peer_frags, (ompi_list_item_t*)frag);
 
             rc = mca_ptl_ib_peer_start_connect(peer);
-
             break;
 
         case MCA_PTL_IB_FAILED:
@@ -413,6 +433,29 @@ int mca_ptl_ib_peer_send(mca_ptl_base_peer_t* peer,
             break;
 
         case MCA_PTL_IB_CONNECTED:
+
+            /* Send the frag off */
+            if(NULL != peer->peer_send_frag) {
+                
+                /* Some other frag is being processed */
+                ompi_list_append(&peer->peer_frags, (ompi_list_item_t*)frag);
+
+            } else {
+
+                /* No other frag is being processed */
+
+                if(1) {
+
+                    D_PRINT("I have to send it now ...");
+
+                } else {
+
+                    /* Set the current frag being processed as
+                     * THIS frag */
+                    peer->peer_send_frag = frag;
+                }
+
+            }
             break;
         default:
             rc = OMPI_ERR_UNREACH;
