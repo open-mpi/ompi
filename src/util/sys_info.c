@@ -12,20 +12,21 @@
 #include "include/constants.h"
 #include "util/sys_info.h"
 
-ompi_sys_info_t ompi_system_info = {false,
-                                    NULL,
-                                    NULL,
-                                    NULL,
-                                    NULL,
-                                    NULL,
-                                    NULL,
-                                    NULL,
-                                    NULL,
-                                    NULL,
-                                    NULL,
-                                    NULL,
-                                    NULL,
-                                    NULL};
+ompi_sys_info_t ompi_system_info = {
+                 /* .init =        */     false,
+                 /* .sysname =     */     NULL,
+	         /* .nodename =    */     NULL,
+                 /* .release =     */     NULL,
+                 /* .version =     */     NULL,
+                 /* .machine =     */     NULL,
+                 /* .path_sep =    */     NULL,
+                 /* .user =        */     NULL,
+                 /* .session_dir = */     NULL,
+                 /* .enviro =      */     NULL,
+                 /* .suffix =      */     NULL,
+                 /* .sock_stdin =  */     NULL,
+                 /* .sock_stdout = */     NULL,
+                 /* .sock_stderr = */     NULL};
 
 
 void ompi_sys_info(void)
