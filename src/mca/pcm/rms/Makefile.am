@@ -9,7 +9,8 @@ include $(top_ompi_srcdir)/config/Makefile.options
 sources = \
 	pcm_rms.h \
 	pcm_rms.c \
-	pcm_rms_component.c
+	pcm_rms_component.c \
+	pcm_rms_job_list.c
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la

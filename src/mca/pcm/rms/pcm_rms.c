@@ -23,106 +23,6 @@
 #include "util/numtostr.h"
 
 
-static mca_pcm_rms_job_item_t *
-get_job_item(mca_ns_base_jobid_t jobid)
-{
-    ompi_list_item_t *item;
-
-    for (item = ompi_list_get_first(&mca_pcm_rms_jobs) ;
-         item != ompi_list_get_end(&mca_pcm_rms_jobs) ;
-         item = ompi_list_get_next(item) ) {
-        mca_pcm_rms_job_item_t  *job_item = (mca_pcm_rms_job_item_t*) item;
-        if (job_item->jobid == jobid) return job_item;
-    }
-
-    return NULL;
-}
-
-
-static mca_pcm_rms_pids_t *
-get_pids_entry(mca_pcm_rms_job_item_t *job_item, mca_ns_base_vpid_t vpid)
-{
-    ompi_list_item_t *item;
-    for (item = ompi_list_get_first(job_item->pids) ;
-         item != ompi_list_get_end(job_item->pids) ;
-         item = ompi_list_get_next(item) ) {
-        mca_pcm_rms_pids_t *pids = (mca_pcm_rms_pids_t*) item;
-        if (pids->lower < vpid && pids->upper > vpid) {
-            return pids;
-        }
-    }
-
-    return NULL;
-}
-
-
-static int
-add_started_pids(mca_ns_base_jobid_t jobid, pid_t child_pid,
-                 mca_ns_base_vpid_t lower, mca_ns_base_vpid_t upper)
-{
-    mca_pcm_rms_job_item_t *job_item;
-    mca_pcm_rms_pids_t *pids;
-
-    job_item = get_job_item(jobid);
-    if (NULL == job_item) {
-        job_item = OBJ_NEW(mca_pcm_rms_job_item_t);
-        if (NULL == job_item) return OMPI_ERROR;
-        job_item->jobid = jobid;
-    }
-
-    pids = OBJ_NEW(mca_pcm_rms_pids_t);
-    if (NULL == pids) return OMPI_ERROR;
-    pids->lower = lower;
-    pids->upper = upper;
-    pids->child = child_pid;
-
-    ompi_list_append(job_item->pids, (ompi_list_item_t*) pids);
-
-    return OMPI_SUCCESS;
-}
-
-
-static pid_t
-get_started_pid(mca_ns_base_jobid_t jobid, mca_ns_base_vpid_t vpid)
-{
-    mca_pcm_rms_job_item_t *job_item;
-    mca_pcm_rms_pids_t *pids;
-
-    job_item = get_job_item(jobid);
-    if (NULL == job_item) return -1;
-
-    pids = get_pids_entry(job_item, vpid);
-    if (NULL == pids) return -1;
-
-    return pids->child;
-}
-
-
-static int
-remove_started_pid(pid_t pid)
-{
-    ompi_list_item_t *job_item, *pid_item;
-
-    /* ugh, this is going to suck as an operation */
-    for (job_item = ompi_list_get_first(&mca_pcm_rms_jobs) ;
-         job_item != ompi_list_get_end(&mca_pcm_rms_jobs) ;
-         job_item = ompi_list_get_next(job_item)) {
-        mca_pcm_rms_job_item_t  *job = (mca_pcm_rms_job_item_t*) job_item;
-        for (pid_item = ompi_list_get_first(job->pids) ;
-             pid_item != ompi_list_get_end(job->pids) ;
-             pid_item = ompi_list_get_next(pid_item) ) {
-            mca_pcm_rms_pids_t *pid_ent = (mca_pcm_rms_pids_t*) pid_item;
-            if (pid_ent->child == pid) {
-                /* we have a winner! */
-                ompi_list_remove_item(job->pids, pid_item);
-                return OMPI_SUCCESS;
-            }
-        }
-    }
-
-    return OMPI_ERROR;
-}
-
 
 /* ok, this is fairly simple in the RMS world */
 ompi_list_t *
@@ -264,10 +164,10 @@ mca_pcm_rms_spawn_procs(struct mca_pcm_base_module_1_0_0_t* me,
     } 
 
     /* ok, I'm the parent - stick the pids where they belong */
-    ret = add_started_pids(jobid, child, nodes->start,
-                           nodes->start + (nodes->nodes == 0) ? 
-                                          nodes->count : 
-                                          nodes->nodes * nodes->count);
+    ret = mca_pcm_rms_add_started_pids(jobid, child, nodes->start,
+                                       nodes->start + (nodes->nodes == 0) ? 
+                                         nodes->count : 
+                                         nodes->nodes * nodes->count);
     if (OMPI_SUCCESS != ret) {
         /* BWB show_help */
         printf("show_help: unable to record child pid\n");
@@ -282,19 +182,14 @@ int
 mca_pcm_rms_kill_proc(struct mca_pcm_base_module_1_0_0_t* me,
                       ompi_process_name_t *name, int flags)
 {
-    mca_pcm_rms_job_item_t *job = get_job_item(ns_base_get_jobid(name));
     pid_t doomed;
 
-    doomed = get_started_pid(ns_base_get_jobid(name), ns_base_get_vpid(name));
+    doomed = mca_pcm_rms_get_started_pid(ns_base_get_jobid(name), 
+                                         ns_base_get_vpid(name), true);
     if (doomed > 0) {
         kill(doomed, SIGTERM);
-        remove_started_pid(doomed);
     } else {
         return OMPI_ERROR;
-    }
-
-    if (0 == ompi_list_get_size((ompi_list_t*) job->pids)) {
-        ompi_list_remove_item(&mca_pcm_rms_jobs, (ompi_list_item_t*) job);
     }
 
     return OMPI_SUCCESS;
@@ -305,21 +200,21 @@ int
 mca_pcm_rms_kill_job(struct mca_pcm_base_module_1_0_0_t* me,
                      mca_ns_base_jobid_t jobid, int flags)
 {
-    mca_pcm_rms_job_item_t *job = get_job_item(jobid);
-    ompi_list_item_t *item;
+    pid_t *doomed;
+    size_t doomed_len;
+    int ret, i;
 
-    if (job == NULL) return OMPI_ERROR;
+    ret = mca_pcm_rms_get_started_pid_list(jobid, &doomed, &doomed_len, true);
+    if (OMPI_SUCCESS != ret) return ret;
 
-    for (item = ompi_list_get_first(job->pids) ;
-         item != ompi_list_get_end(job->pids) ;
-         item = ompi_list_get_next(job->pids) ) {
-        mca_pcm_rms_pids_t *pid = (mca_pcm_rms_pids_t*) item;
-        if (pid->child > 0) kill(pid->child, SIGTERM);
-        ompi_list_remove_item(job->pids, item);
+    for (i = 0 ; i < doomed_len ; ++i) {
+        kill(doomed[i], SIGTERM);
     }
 
-    ompi_list_remove_item(&mca_pcm_rms_jobs, (ompi_list_item_t*) job);
- 
+    if (NULL != doomed) {
+        free(doomed);
+    }
+
     return OMPI_SUCCESS;
 }
 
@@ -329,14 +224,9 @@ mca_pcm_rms_deallocate_resources(struct mca_pcm_base_module_1_0_0_t* me,
                                  mca_ns_base_jobid_t jobid,
                                  ompi_list_t *nodelist)
 {
-    mca_pcm_rms_job_item_t *job;
-
     if (nodelist != NULL) OBJ_RELEASE(nodelist);
 
-    job = get_job_item(jobid);
-    if (NULL != job) {
-        ompi_list_remove_item(&mca_pcm_rms_jobs, (ompi_list_item_t*) job);
-    }
+    mca_pcm_rms_remove_job(jobid);
 
     return OMPI_SUCCESS;
 }
