@@ -24,19 +24,18 @@ AM_CPPFLAGS = -DOMPI_PROFILE_LAYER=0 -DOMPI_COMPILING_F77_WRAPPERS=1
 # 2. When profiling is enabled but weak symbol support is absent.
 #
 
+noinst_LTLIBRARIES =
 if WANT_MPI_F77_BINDINGS_LAYER
-mpi_lib = libmpi_f77_mpi.la
+noinst_LTLIBRARIES += libmpi_f77_mpi.la
 else
-mpi_lib = 
+noinst_LTLIBRARIES +=
 endif
 
 if OMPI_WANT_F77_BINDINGS
-f77_libs = libmpi_f77.la $(mpi_lib)
+noinst_LTLIBRARIES += libmpi_f77.la
 else
-f77_libs = 
+noinst_LTLIBRARIES +=
 endif
-
-noinst_LTLIBRARIES = $(f77_libs)
 
 headers = \
     bindings.h \
@@ -340,8 +339,6 @@ libmpi_f77_mpi_la_SOURCES = \
         win_test_f.c \
         win_unlock_f.c \
         win_wait_f.c
-
-EXTRA_DIST = $(libmpi_f77_mpi_la_SOURCES)
 
 #
 # Conditionally install the header files

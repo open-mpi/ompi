@@ -18,13 +18,13 @@ AM_CPPFLAGS = -DOMPI_PROFILING_DEFINES=1
 # Further, this build HAS to go through if profiling is required.
 #
 
+noinst_LTLIBRARIES =
 if WANT_PMPI_BINDINGS_LAYER
-pmpi_lib = libmpi_c_pmpi.la
+noinst_LTLIBRARIES += libmpi_c_pmpi.la
 else
+noinst_LTLIBRARIES +=
 pmpi_lib = 
 endif
-
-noinst_LTLIBRARIES = $(pmpi_lib)
 
 headers = defines.h
 

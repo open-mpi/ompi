@@ -25,13 +25,12 @@ AM_CPPFLAGS     = -DOMPI_PROFILING_DEFINES=0
 # 2. When profiling is enabled but weak symbol support is absent.
 #
 
+noinst_LTLIBRARIES = libmpi_c.la
 if WANT_MPI_BINDINGS_LAYER
-mpi_lib = libmpi_c_mpi.la
+noinst_LTLIBRARIES += libmpi_c_mpi.la
 else
-mpi_lib = 
+noinst_LTLIBRARIES +=
 endif
-
-noinst_LTLIBRARIES = libmpi_c.la $(mpi_lib)
 
 headers = bindings.h
 
@@ -354,7 +353,6 @@ libmpi_c_mpi_la_SOURCES = \
         win_unlock.c \
         win_wait.c
 
-EXTRA_DIST = $(libmpi_c_mpi_la_SOURCES) 
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS

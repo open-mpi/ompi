@@ -17,13 +17,16 @@ AM_CPPFLAGS = -DOMPI_PROFILE_LAYER=1 -DOMPI_COMPILING_F77_WRAPPERS=1
 # Further, this build HAS to go through if profiling is required.
 #
 
+noinst_LTLIBRARIES =
 if WANT_PMPI_F77_BINDINGS_LAYER
-pmpi_lib = libmpi_f77_pmpi.la
+noinst_LTLIBRARIES += libmpi_f77_pmpi.la
 else
-pmpi_lib = 
+noinst_LTLIBRARIES +=
 endif
 
-noinst_LTLIBRARIES = $(pmpi_lib)
+headers = \
+    defines.h \
+    prototypes_pmpi.h
 
 nodist_libmpi_f77_pmpi_la_SOURCES = \
         pabort_f.c \
@@ -318,29 +321,22 @@ $(nodist_libmpi_f77_pmpi_la_SOURCES):
 	    pname=`echo $@ | cut -b '2-'` ; \
 	    ln -s $(top_srcdir)/src/mpi/f77/$$pname $@ ; \
 	fi
-#
-# 
-headers = \
-    defines.h \
-    prototypes_pmpi.h
-#
-# These files were created by targets above
-#
-MAINTAINERCLEANFILES = $(nodist_libmpi_f77_profile_la_SOURCES)
-#
+
 # Conditionally install the header files
-#
-EXTRA_DIST = $(nodist_libmpi_f77_pmpi_la_SOURCES)
-#
+
 if WANT_INSTALL_HEADERS
 ompidir = $(includedir)/openmpi/mpi/f77/profile
 ompi_HEADERS = $(headers)
 else
 ompidir = $(includedir)
 endif
-#
+
+# These files were created by targets above
+
+MAINTAINERCLEANFILES = $(nodist_libmpi_f77_pmpi_la_SOURCES)
+
 # Don't want these targets in here
-#
+
 tags-recursive:
 tags:
 TAGS:
