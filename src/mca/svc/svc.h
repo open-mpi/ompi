@@ -2,8 +2,8 @@
  * $HEADER$
  */
 
-#ifndef MCA_SERVICE_H
-#define MCA_SERVICE_H
+#ifndef MCA_SVC_H
+#define MCA_SVC_H
 
 #include "ompi_config.h"
 
@@ -16,47 +16,38 @@
  * Service component
  **************************************************************************/
 
-typedef const struct mca_service_module_1_0_0_t *(*mca_service_base_select_fn_t) (bool am_seed);
+struct mca_svc_base_module_t;
+typedef struct mca_svc_base_module_t *(*mca_svc_base_component_init_fn_t) (void);
 
 /*
- * Structure for service v1.0.0 components
+ * Structure for svc v1.0.0 components
  * Chained to MCA v1.0.0
  */
-struct mca_service_base_component_1_0_0_t {
-    mca_base_component_t dc_version;
-    mca_base_component_data_1_0_0_t dc_data;
+struct mca_svc_base_component_t {
+    mca_base_component_t svc_version;
+    mca_base_component_data_1_0_0_t svc_data;
 
-    /* Initialization / querying functions */
-
-    mca_service_base_select_fn_t dc_select;
+    /* Initialization functions */
+    mca_svc_base_component_init_fn_t svc_init;
 };
-typedef struct mca_service_base_component_1_0_0_t mca_service_base_component_1_0_0_t;
+typedef struct mca_svc_base_component_t mca_svc_base_component_t;
 
 
 /**************************************************************************
  * Service module
  **************************************************************************/
 
-typedef int (*mca_service_base_init_fn_t) (mca_service_base_module_t *self);
-typedef int (*mca_service_base_finalize_t) (mca_service_base_module_t *self);
+typedef int (*mca_svc_base_module_init_fn_t) (struct mca_svc_base_module_t *self);
+typedef int (*mca_svc_base_module_fini_fn_t) (struct mca_svc_base_module_t *self);
 
-typedef int (*mca_service_base_poll_t) (mca_service_base_module_t *self);
-
-struct mca_service_base_module_1_0_0_t {
-
-    /* Init / finalize */
-
-    mca_service_base_init_fn_t dm_init;
-    mca_service_base_finalize_fn_t dm_finalize;
-
-    /* Polling */
-
-    mca_service_base_poll_fn_t dm_poll;
+struct mca_svc_base_module_t {
+    mca_svc_base_module_init_fn_t svc_init;
+    mca_svc_base_module_fini_fn_t svc_fini;
 };
-typedef struct mca_service_module_1_0_0_t mca_service_module_1_0_0_t;
+typedef struct mca_svc_base_module_t mca_svc_base_module_t;
 
 /*
- * service services (i.e., components), and the initial events that
+ * svc svcs (i.e., components), and the initial events that
  * will trigger scheduling them to run:
  *
  * Service              FD events    incoming OOB  timer  signals
@@ -83,10 +74,9 @@ typedef struct mca_service_module_1_0_0_t mca_service_module_1_0_0_t;
  *
  * Initialization sequence:
  *
- * - find all service components
- * - call select(); if non-NULL reply, keep, otherwise close/unloads
+ * - find all svc components
+ * - call init() on all component - if non-NULL reply, keep, otherwise close/unloads
  * - call init() on all modules
- * - call poll() on all modules once.  poll() can do the following:
  *   - post non-blocking oob receive with callback
  *   - setup a fd and register with libevent with callback
  *   - indicate that it wants to run after receiving a specific signal
@@ -97,7 +87,7 @@ typedef struct mca_service_module_1_0_0_t mca_service_module_1_0_0_t;
  *   --> currently no other mechanisms for progress
  * - post a non-blocking oob receive on a specific tag for shutdown
  *
- * The callback posted by the service for the shutdown message will
+ * The callback posted by the svc for the shutdown message will
  * simply set a global "time_to_shutdown" flag that will be noticed in
  * the main event loop.
  *
@@ -109,7 +99,6 @@ typedef struct mca_service_module_1_0_0_t mca_service_module_1_0_0_t;
  * calling the appropriate callbacks, and checking the global shutdown
  * flag.  Something like this:
  *
- * do_init_stuff();
  * while (1) {
  *   // make progress on fd (including OOB) and timer events in here
  *   err = blocking_libevent_progress();
@@ -122,23 +111,18 @@ typedef struct mca_service_module_1_0_0_t mca_service_module_1_0_0_t;
  *   else if (err == interrupted_by_signal) {
  *     call_handler_for_signal();
  *   }
- *   // see if there's anything on the to-be-run queue
- *   foreach service (@to_be_run) {
- *     service->poll();
  *   }
  * }
- * do_finalize_stuff();
  *
- * open q: how to do oob sending from within the services?
  */
 
 /*
- * Macro for use in modules that are of type service v1.0.0
+ * Macro for use in modules that are of type svc v1.0.0
  */
-#define MCA_SERVICE_BASE_VERSION_1_0_0 \
-  /* service v1.0 is chained to MCA v1.0 */ \
+#define MCA_SVC_BASE_VERSION_1_0_0 \
+  /* svc v1.0 is chained to MCA v1.0 */ \
   MCA_BASE_VERSION_1_0_0, \
-  /* service v1.0 */ \
-  "service", 1, 0, 0
+  /* svc v1.0 */ \
+  "svc", 1, 0, 0
 
-#endif                          /* MCA_SERVICE_H */
+#endif                          /* MCA_SVC_H */
