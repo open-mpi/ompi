@@ -19,7 +19,7 @@
  */
 #include <sys/types.h>
 #include <stdint.h>
-
+#include <limits.h>
 
 #include "ompi_config.h"
 #include "include/types.h"
@@ -36,10 +36,15 @@
 #define OMPI_NS_CMP_VPID     0x04
 
 /*
+ * define maximum value for id's in any field
+ */
+#define OMPI_NAME_SERVICE_MAX = UINT32_MAX
+
+/*
  * general typedefs & structures
  */
 typedef uint32_t ompi_process_id_t;  /**< Set the allowed range for id's in each space */
-typedef uint8_t ompi_ns_cmp_bitmask_t;  /**< Bit mask for comparing process names */                                                                                                                      
+typedef uint8_t ompi_ns_cmp_bitmask_t;  /**< Bit mask for comparing process names */
 
 struct ompi_process_name_t {
     ompi_process_id_t cellid;  /**< Cell number */
@@ -48,25 +53,8 @@ struct ompi_process_name_t {
 };
 typedef struct ompi_process_name_t ompi_process_name_t;
 
-/* constructor - used to initialize state of name instance */
-static void ompi_name_construct(ompi_process_name_t* name)
-{
-    name->cellid = 0;
-    name->jobid = 0;
-    name->vpid = 0;
-}
-
-/* destructor - used to free any resources held by instance */
-static void ompi_name_destructor(ompi_process_name_t* name)
-{
-}
-
-/* define instance of ompi_class_t */
-OBJ_CLASS_INSTANCE(
-		   ompi_process_name_t,   /* type name */
-		   ompi_object_t,         /* parent "class" name */
-		   ompi_name_construct,   /* constructor */
-		   ompi_name_destructor);  /* destructor */
+/* declare the class */
+OBJ_CLASS_DECLARATION(ompi_process_name_t);
 
 /*
  * Component functions - all MUST be provided!
@@ -210,7 +198,7 @@ typedef int (*mca_ns_free_name_fn_t)(ompi_process_name_t *name);
  * name-string = ompi_name_server.get_proc_name_string(&name)
  * @endcode
  */
-typedef char* (*mca_ns_get_proc_name_string_fn_t)(ompi_process_name_t *name);
+typedef char* (*mca_ns_get_proc_name_string_fn_t)(const ompi_process_name_t *name);
 
 /**
  * Get the virtual process id as a character string.
@@ -231,7 +219,7 @@ typedef char* (*mca_ns_get_proc_name_string_fn_t)(ompi_process_name_t *name);
  * vpid-string = ompi_name_server.get_vpid_string(&name)
  * @endcode
  */
-typedef char* (*mca_ns_get_vpid_string_fn_t)(ompi_process_name_t *name);
+typedef char* (*mca_ns_get_vpid_string_fn_t)(const ompi_process_name_t *name);
 
 /**
  * Get the job id as a character string.
@@ -252,7 +240,7 @@ typedef char* (*mca_ns_get_vpid_string_fn_t)(ompi_process_name_t *name);
  * jobid-string = ompi_name_server.get_jobid_string(&name)
  * @endcode
  */
-typedef char* (*mca_ns_get_jobid_string_fn_t)(ompi_process_name_t *name);
+typedef char* (*mca_ns_get_jobid_string_fn_t)(const ompi_process_name_t *name);
 
 /**
  * Get the cell id as a character string.
@@ -273,7 +261,7 @@ typedef char* (*mca_ns_get_jobid_string_fn_t)(ompi_process_name_t *name);
  * cellid-string = ompi_name_server.get_cellid_string(&name)
  * @endcode
  */
-typedef char* (*mca_ns_get_cellid_string_fn_t)(ompi_process_name_t *name);
+typedef char* (*mca_ns_get_cellid_string_fn_t)(const ompi_process_name_t *name);
 
 /**
  * Get the virtual process id as an ompi_process_id_t value.
@@ -290,7 +278,7 @@ typedef char* (*mca_ns_get_cellid_string_fn_t)(ompi_process_name_t *name);
  * vpid = ompi_name_server.get_vpid(&name)
  * @endcode
  */
-typedef ompi_process_id_t (*mca_ns_get_vpid_fn_t)(ompi_process_name_t *name);
+typedef ompi_process_id_t (*mca_ns_get_vpid_fn_t)(const ompi_process_name_t *name);
 
 /**
  * Get the job id as an ompi_process_id_t value.
@@ -307,7 +295,7 @@ typedef ompi_process_id_t (*mca_ns_get_vpid_fn_t)(ompi_process_name_t *name);
  * jobid = ompi_name_server.get_jobid(&name)
  * @endcode
  */
-typedef ompi_process_id_t (*mca_ns_get_jobid_fn_t)(ompi_process_name_t *name);
+typedef ompi_process_id_t (*mca_ns_get_jobid_fn_t)(const ompi_process_name_t *name);
 
 /**
  * Get the cell id as an ompi_process_id_t value.
@@ -324,7 +312,7 @@ typedef ompi_process_id_t (*mca_ns_get_jobid_fn_t)(ompi_process_name_t *name);
  * cellid = ompi_name_server.get_cellid(&name)
  * @endcode
  */
-typedef ompi_process_id_t (*mca_ns_get_cellid_fn_t)(ompi_process_name_t *name);
+typedef ompi_process_id_t (*mca_ns_get_cellid_fn_t)(const ompi_process_name_t *name);
 
 /**
  * Compare two name values.
@@ -357,7 +345,7 @@ typedef ompi_process_id_t (*mca_ns_get_cellid_fn_t)(ompi_process_name_t *name);
  * result = ompi_name_server.compare(bit_mask, &name1, &name2)
  * @endcode
  */
-typedef int (*mca_ns_compare_fn_t)(ompi_ns_cmp_bitmask_t fields, ompi_process_name_t *name1, ompi_process_name_t *name2);
+typedef int (*mca_ns_compare_fn_t)(ompi_ns_cmp_bitmask_t fields, const ompi_process_name_t *name1, const ompi_process_name_t *name2);
 
 /*
  * Ver 1.0.0
