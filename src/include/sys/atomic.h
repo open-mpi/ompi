@@ -112,6 +112,7 @@ static inline void ompi_atomic_unlock(ompi_lock_t *lock);
 #define OMPI_HAVE_ATOMIC_WIN32 1
 #include "include/sys/win32/atomic.h"
 #else /* only now go through this stuff */
+#define OMPI_HAVE_ATOMIC_WIN32 0
 
 #if   defined(__alpha__)
 # define OMPI_HAVE_ATOMIC 1
@@ -191,7 +192,7 @@ static inline int32_t ompi_atomic_sub_32(volatile int32_t *addr, int delta)
  */
 #if defined(OMPI_ARCHITECTURE_DEFINE_ATOMIC_CMPSET_64)
 #if !defined(OMPI_ARCHITECTURE_DEFINE_ATOMIC_ADD_64)
-static inline int64_t ompi_atomic_add_64(volatile int64_t *addr, int delta)
+static inline int64_t ompi_atomic_add_64(volatile int64_t *addr, int64_t delta)
 {
    int64_t oldval;
    
@@ -203,7 +204,7 @@ static inline int64_t ompi_atomic_add_64(volatile int64_t *addr, int delta)
 #endif  /* OMPI_ARCHITECTURE_DEFINE_ATOMIC_ADD_64 */
 
 #if !defined(OMPI_ARCHITECTURE_DEFINE_ATOMIC_SUB_64)
-static inline int64_t ompi_atomic_sub_64(volatile int64_t *addr, int delta)
+static inline int64_t ompi_atomic_sub_64(volatile int64_t *addr, int64_t delta)
 {
     int64_t oldval;
 
