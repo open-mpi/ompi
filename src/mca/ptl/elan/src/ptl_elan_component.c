@@ -73,11 +73,12 @@ static int mca_ptl_elan_component_register (mca_ptl_elan_component_t  *emp)
      size_t i;
      size_t size;
          
-     mca_ptl_elan_addr_t *addrs = (mca_ptl_elan_addr_t*)malloc(size);
+     mca_ptl_elan_addr_t *addrs;
+    
+     size  = emp->elan_num_ptl_modules * sizeof(mca_ptl_elan_addr_t);
+     addrs = (mca_ptl_elan_addr_t *) malloc(size);
 
-     size = emp->elan_num_ptl_modules * sizeof(mca_ptl_elan_addr_t);
-
-     for(i=0; i<emp->elan_num_ptl_modules; i++) {
+     for(i=0; i< emp->elan_num_ptl_modules; i++) {
          mca_ptl_elan_module_t * ptl = emp->elan_ptl_modules[i];
          addrs[i].elan_vp    = ptl->elan_vp;
          addrs[i].inuse      = 0;
@@ -129,7 +130,6 @@ mca_ptl_elan_component_open (void)
     OBJ_CONSTRUCT (&elan_mp->elan_recv_frags, ompi_list_t);
     OBJ_CONSTRUCT (&elan_mp->elan_send_frags, ompi_list_t);
 
-    OBJ_CONSTRUCT (&elan_mp->elan_send_frags_free, ompi_free_list_t);
     OBJ_CONSTRUCT (&elan_mp->elan_recv_frags_free, ompi_free_list_t);
 
     /* initialize other objects */
@@ -161,14 +161,6 @@ mca_ptl_elan_component_close (void)
 	}
     }
 
-    if (elan_mp->elan_send_frags_free.fl_num_allocated !=
-        elan_mp->elan_send_frags_free.super.ompi_list_length) {
-        ompi_output (0, "[%s:%d] send_frags : %d allocated %d returned\n",
-		     __FILE__, __LINE__,
-                     elan_mp->elan_send_frags_free.fl_num_allocated,
-                     elan_mp->elan_send_frags_free.super.ompi_list_length);
-    }
-
     if (elan_mp->elan_recv_frags_free.fl_num_allocated !=
         elan_mp->elan_recv_frags_free.super.ompi_list_length) {
         ompi_output (0, "[%s:%d] recv_frags : %d allocated %d returned\n",
@@ -188,7 +180,6 @@ mca_ptl_elan_component_close (void)
     /* TODO:
      * We need free all the memory allocated for this list
      * before desctructing this free_list */
-    OBJ_DESTRUCT (&(elan_mp->elan_send_frags_free));
     OBJ_DESTRUCT (&(elan_mp->elan_recv_frags_free));
 
     /* Destruct other structures */
@@ -230,13 +221,6 @@ mca_ptl_elan_component_init (int *num_ptl_modules,
 	fprintf(stderr, "[%s:%s:%d] before list init...\n",
 		hostname, __FUNCTION__, __LINE__);
     }
-
-    ompi_free_list_init (&(elan_mp->elan_send_frags_free),
-                         sizeof (mca_ptl_elan_send_frag_t),
-                         OBJ_CLASS (mca_ptl_elan_recv_frag_t),
-                         elan_mp->elan_free_list_num,
-                         elan_mp->elan_free_list_max,
-                         elan_mp->elan_free_list_inc, NULL);
 
     if (CHECK_ELAN) { 
 	char hostname[32]; gethostname(hostname, 32); 
@@ -324,7 +308,7 @@ mca_ptl_elan_component_progress (mca_ptl_tstamp_t tstamp)
 	times ++;
     }
     mca_ptl_elan_drain_recv(elan_mp);
-    mca_ptl_elan_update_send(elan_mp);
+    mca_ptl_elan_update_desc(elan_mp);
     END_FUNC();
     return OMPI_SUCCESS;
 }

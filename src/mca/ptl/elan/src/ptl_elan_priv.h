@@ -120,17 +120,6 @@ typedef struct {
 } ompi_elan_event_t;
 
 /**
- * ELAN send request derived type. The send request contains 
- * the base send request and a point to the elan fragment descriptor
- */
-struct mca_ptl_elan_send_request_t {
-    mca_pml_base_send_request_t super;
-    mca_ptl_elan_send_frag_t *req_frag; 
-};
-typedef struct mca_ptl_elan_send_request_t mca_ptl_elan_send_request_t;
-
-
-/**
  * ELAN descriptor for send
  */
 #define ELAN_BASE_DESC_FIELDS  \
@@ -274,7 +263,7 @@ int         mca_ptl_elan_wait_desc(mca_ptl_elan_send_frag_t *desc);
 
 /* control, synchronization and state prototypes */
 int         mca_ptl_elan_drain_recv(mca_ptl_elan_component_t *emp);
-int         mca_ptl_elan_update_send(mca_ptl_elan_component_t *emp);
+int         mca_ptl_elan_update_desc(mca_ptl_elan_component_t *emp);
 
 /**
  * utility routines for parameter registration
