@@ -462,6 +462,7 @@ COPY_CONTIGUOUS_BYTES( bytes, 4 )
 COPY_CONTIGUOUS_BYTES( bytes, 8 )
 COPY_CONTIGUOUS_BYTES( bytes, 12 )
 COPY_CONTIGUOUS_BYTES( bytes, 16 )
+COPY_CONTIGUOUS_BYTES( bytes, 20 )
 
 conversion_fct_t ompi_ddt_copy_functions[DT_MAX_PREDEFINED] = {
    (conversion_fct_t)NULL,                      /* DT_LOOP                */ 
@@ -509,6 +510,8 @@ conversion_fct_t ompi_ddt_copy_functions[DT_MAX_PREDEFINED] = {
    (conversion_fct_t)copy_bytes_12,             /* DT_LONG_DOUBLE_INT     */ 
 #elif (SIZEOF_LONG_DOUBLE + SIZEOF_INT) == 16
    (conversion_fct_t)copy_bytes_16,             /* DT_LONG_DOUBLE_INT     */ 
+#elif (SIZEOF_LONG_DOUBLE + SIZEOF_INT) == 20
+   (conversion_fct_t)copy_bytes_20,             /* DT_LONG_DOUBLE_INT     */ 
 #else
 #error Complete me please
 #endif
@@ -534,6 +537,8 @@ conversion_fct_t ompi_ddt_copy_functions[DT_MAX_PREDEFINED] = {
    (conversion_fct_t)copy_bytes_1,              /* DT_CXX_BOOL            */
 #elif SIZEOF_BOOL == 4
    (conversion_fct_t)copy_bytes_4,              /* DT_CXX_BOOL            */
+#elif SIZEOF_BOOL == 8
+   (conversion_fct_t)copy_bytes_8,              /* DT_CXX_BOOL            */
 #else
 #error Complete me please
 #endif
