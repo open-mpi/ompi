@@ -44,52 +44,17 @@
  */
 #include <sys/types.h>
 #include <stdint.h>
-#include <limits.h>
 
 #include "ompi_config.h"
-#include "include/constants.h"
 #include "class/ompi_list.h"
-
 #include "mca/gpr/gpr.h"
-
-/** Define the notification actions for the subscription system
- */
-/** Notifies subscriber when object is modified */
-#define OMPI_REGISTRY_NOTIFY_MODIFICATION     0x0001
-/** Notifies subscriber when another subscriber is added */
-#define OMPI_REGISTRY_NOTIFY_ADD_SUBSCRIBER   0x0002
-/** Notifies subscriber when object is removed from registry */
-#define OMPI_REGISTRY_NOTIFY_DELETE           0x0004
-/** Notifies subscriber upon any action - effectively an OR of all other flags */
-#define OMPI_REGISTRY_NOTIFY_ALL              0xffff
-
-
-/** Define the mode bit-masks for registry operations.
- */
-/** Overwrite permission */
-#define OMPI_REGISTRY_OVERWRITE       0x0001
-/** AND tokens together for search results */
-#define OMPI_REGISTRY_AND             0x0002
-/** OR tokens for search results */
-#define OMPI_REGISTRY_OR              0x0004
-/** XAND - all tokens required, nothing else allowed - must be exact match */
-#define OMPI_REGISTRY_XAND            0x0008
-/** XOR - any one of the tokens required, nothing else allowed */
-#define OMPI_REGISTRY_XOR             0x0010
-
-/*
- * typedefs
- */
-
-typedef uint16_t ompi_registry_action_t;
-typedef uint16_t ompi_registry_mode_t;
 
 
 /*
  * globals
  */
 
-mca_gpr_t mca_gpr;
+extern mca_gpr_t ompi_registry;
 
 /*
  * structures
@@ -107,37 +72,15 @@ struct ompi_registry_value_t {
     ompi_list_item_t item;    /**< Allows this item to be placed on a list */
     char *segment;            /**< Name of segment this object came from */
     ompi_key_table_t keylist;  /**< List of keys describing the object */
-    uint8_t *object;   /**< Pointer to object being returned */
+    ompi_registry_object_t *object;   /**< Pointer to object being returned */
     int object_size;   /**< Size of returned object, in bytes */
 };
 typedef struct ompi_registry_value_t ompi_registry_value_t;
 
-/* constructor - used to initialize state of keytable instance */
-static void ompi_registry_value_construct(ompi_registry_value_t* reg_val)
-{
-    reg_val->object = NULL;
-    reg_val->object_size = -1;
-}
-
-/* destructor - used to free any resources held by instance */
-static void ompi_registry_value_destructor(ompi_registry_value_t* reg_val)
-{
-    if (NULL != reg_val->object) {
-	free(reg_val->object);
-    }
-}
-
-/* define instance of ompi_class_t */
-OBJ_CLASS_INSTANCE(
-		   ompi_registry_value_t,  /* type name */
-		   ompi_list_item_t, /* parent "class" name */
-		   ompi_registry_value_construct, /* constructor */
-		   ompi_registry_value_destructor); /* destructor */
-
-
+OBJ_CLASS_DECLARATION(ompi_registry_value_t);
 
 /*
- * external function prototypes
+ * external functions - here for purely documentation purposes
  */
 
 /** @fn int ompi_registry.definesegment(char *segment)
@@ -155,6 +98,20 @@ OBJ_CLASS_INSTANCE(
  * @retval OMPI_SUCCESS Indicates that the operation was successfully completed.
  * @retval OMPI_ERROR Indicates that the operation failed - most likely due to the
  * prior existence of a segment with an identical name.
+ */
+
+/** @fn int ompi_registry.deletesegment(char *segment)
+ *
+ * Delete a registry segment.
+ * The ompi_registry.deletesegment() function removes a segment - and ALL of its stored
+ * objects - from the registry.
+ *
+ * @param segment A pointer to a character string containing the name of the segment
+ * to be created.
+ *
+ * @retval OMPI_SUCCESS Indicates that the operation was successfully completed.
+ * @retval OMPI_ERROR Indicates that the operation failed - most likely due to the
+ * non-existence of the segment.
  */
 
 /** @fn int ompi_registry.put(ompi_registry_mode_t mode, char *segment, char **tokens, uint8_t *object, int size)
@@ -309,4 +266,116 @@ OBJ_CLASS_INSTANCE(
  * unsubscribe request would have resulted in the same end condition.
  * @retval OMPI_ERROR Indicates that the operation failed - most likely caused by specifying
  * an object that did not exist within the specified segment, or a non-existent segment.
+ */
+
+/** @fn ompi_registry_buf_t *ompi_registry.getbuf(size_t size)
+ *
+ * Get a buffer for packing a multi-command request.
+ *
+ * The ompi_registry.getbuf() function creates a buffer for packing multiple commands
+ * into a single registry request. Packing multiple commands saves on messaging overhead,
+ * thus potentially providing faster response. Each command packed into the buffer will
+ * be processed in sequence, and the result of the command packed into a "response" buffer
+ * that will subsequently be returned. The results must then be unpacked by the caller
+ * in the reverse order of the original commands.
+ *
+ * Note: any command that returns an error condition will automatically terminate processing
+ * of the packed command sequence. In such cases, the returned "response" buffer will
+ * contain the results of all commands up to that point, with the error conditions
+ * from the last command being the first item in the buffer.
+ *
+ * @param size The size of the requested buffer in bytes. If a value of zero is provided,
+ * the function will allocate an unlimited buffer.
+ *
+ * @retval buffer A pointer to the requested buffer.
+ * @retval NULL Indicates that a buffer could not be obtained - most likely due to lack
+ * of sufficient available memory or a problem in the OOB subsystem.
+ */
+
+/** @fn int ompi_registry.packbuf(ompi_registry_buf_t *buf, void *ptr, size_t num_items, ompi_registry_bufdata_t datatype)
+ *
+ * Pack non-string data types into a buffer.
+ * Pack arbitrary bytes and previously packed buffers for recursive
+ * packing commands.
+ *
+ * @param buf A pointer to the buffer to which the packed info is to be added. A NULL value will
+ * cause the function to return OMPI_ERROR, but not fail.
+ *
+ * @param ptr A pointer (cast as void) to the data to be packed into the buffer.
+ *
+ * @param num_items The number of items in the data to be packed into the buffer. The items must all
+ * be of the same type.
+ *
+ * @param datatype One of the defined datatype flags indicating the type of the data to be packed
+ * into the buffer.
+ *
+ * @retval OMPI_SUCCESS Indicates that the operation was successful.
+ * @retval OMPI_ERROR Indicates that the operation failed.
+ */
+
+/** @fn int ompi_registry.pack_string(ompi_registry_buf_t *buf, char *string)
+ *
+ * Pack a string into a buffer.
+ * Due to their use as tokens in the registry, the packing of strings into the buffer is a fairly
+ * common operation. This function packs strings - and only strings - into the specified buffer.
+ *
+ * @param buf A pointer to the buffer to which the string is being added. A NULL value will cause
+ * the function to return OMPI_ERROR, but not fail.
+ * @param string A pointer to the string to be added to the buffer.
+ *
+ * @retval OMPI_SUCCESS Indicates that the operation was successful.
+ * @retval OMPI_ERROR Indicates that the operation failed.
+ */
+
+/** @fn int ompi_registry.unpack_string(ompi_registry_buf_t *buf, char *string, size_t maxlen)
+ *
+ * Unpack a string from buffer.
+ * Due to their use as tokens in the registry, the packing of strings into the buffer is a fairly
+ * common operation. This function unpacks strings - and only strings - from the specified buffer.
+ *
+ * @param buf A pointer to the buffer from which the string is to be extracted. A NULL value will cause
+ * the function to return OMPI_ERROR, but not fail.
+ * @param string A pointer to where the string is to be placed.
+ * @param maxlen The maximum length of the string that can be placed into the provided storage location.
+ * Strings longer than the maximum length will be truncated, but the function will still return
+ * "success".
+ *
+ * @retval OMPI_SUCCESS Indicates that the operation was successful.
+ * @retval OMPI_ERROR Indicates that the operation failed.
+ */
+
+/** @fn int ompi_registry.unpack_buf(ompi_registry_buf_t *buf, void *ptr, size_t num_items, ompi_registry_bufdata_t datatype)
+ *
+ * Unpack non-string data types from a buffer.
+ * Unpack arbitrary bytes and previously packed buffers for recursive
+ * packing commands.
+ *
+ * @param buf A pointer to the buffer from which the packed info is to be extracted. A NULL value will
+ * cause the function to return OMPI_ERROR, but not fail.
+ *
+ * @param ptr A pointer (cast as void) to the location where the packed data is to be placed.
+ *
+ * @param num_items The number of items in the data to be extracted from the buffer. The items must all
+ * be of the same type.
+ *
+ * @param datatype One of the defined datatype flags indicating the type of the data to be extracted
+ * from the buffer.
+ *
+ * @retval OMPI_SUCCESS Indicates that the operation was successful.
+ * @retval OMPI_ERROR Indicates that the operation failed.
+ */
+
+/** @fn int ompi_registry.sendbuf(ompi_process_name_t *target, ompi_registry_buf_t *buf, bool freebuf)
+ *
+ * Send a previously packed buffer to a target process.
+ * Once a buffer has been packed with commands, this function will send it to the target process.
+ *
+ * @param target The name of the process to which the buffer is to be sent.
+ * @param buf A pointer to the buffer to be sent. A NULL value will cause the function to return
+ * OMPI_ERROR, but not fail.
+ * @param freebuf A boolean value indicating if the buffer is to be released (true) or not (false)
+ * once the send has been completed.
+ *
+ * @retval OMPI_SUCCESS Indicates that the operation was successful.
+ * @retval OMPI_ERROR Indicates that the operation failed.
  */
