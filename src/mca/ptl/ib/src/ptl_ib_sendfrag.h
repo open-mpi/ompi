@@ -58,6 +58,7 @@ mca_ptl_ib_send_frag_t* mca_ptl_ib_alloc_send_frag(
 
 int mca_ptl_ib_register_send_frags(mca_ptl_base_module_t *ptl);
 
-void mca_ptl_ib_process_send_comp(mca_ptl_base_module_t *, void*);
+void mca_ptl_ib_process_send_comp(mca_ptl_base_module_t *, 
+        void*, ompi_free_list_t*);
 
 #endif

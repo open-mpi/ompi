@@ -225,7 +225,7 @@ int mca_ptl_ib_register_send_frags(mca_ptl_base_module_t *ptl)
  */
 
 void mca_ptl_ib_process_send_comp(mca_ptl_base_module_t *module, 
-        void* addr)
+        void* addr, ompi_free_list_t *flist)
 {
     mca_ptl_ib_send_frag_t *sendfrag;
     mca_ptl_base_header_t *header;
@@ -236,4 +236,8 @@ void mca_ptl_ib_process_send_comp(mca_ptl_base_module_t *module,
     module->ptl_send_progress(module,
             sendfrag->frag_send.frag_request,
             header->hdr_frag.hdr_frag_length);
+
+    /* Return sendfrag to free list */
+
+    OMPI_FREE_LIST_RETURN(flist, ((ompi_list_item_t *) sendfrag));
 }

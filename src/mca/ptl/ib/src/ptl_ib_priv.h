@@ -191,5 +191,7 @@ int mca_ptl_ib_post_send(mca_ptl_ib_state_t *ib_state,
         ib_buffer_t *ib_buf, void*);
 void mca_ptl_ib_drain_network(VAPI_hca_hndl_t nic,
         VAPI_cq_hndl_t cq_hndl, int* comp_type, void** comp_addr);
+void mca_ptl_ib_buffer_repost(VAPI_hca_hndl_t nic,
+        VAPI_qp_hndl_t qp_hndl, void* addr);
 
 #endif  /* MCA_PTL_IB_PRIV_H */

@@ -52,12 +52,6 @@ mca_ptl_ib_component_t mca_ptl_ib_component = {
     }
 };
 
-/*
- * functions for receiving event callbacks
- */
-
-static void mca_ptl_ib_component_recv_handler(int, short, void*);
-
 
 /*
  * utility routines for parameter registration
@@ -123,7 +117,7 @@ int mca_ptl_ib_component_open(void)
 
 int mca_ptl_ib_component_close(void)
 {
-    fprintf(stderr,"[%s][%d]\n", __FILE__, __LINE__);
+    D_PRINT("");
     /* Stub */
     return OMPI_SUCCESS;
 }
@@ -303,22 +297,6 @@ mca_ptl_base_module_t** mca_ptl_ib_component_init(int *num_ptl_modules,
 
 int mca_ptl_ib_component_control(int param, void* value, size_t size)
 {
-#if 0
-    VAPI_ret_t ret;
-    VAPI_wc_desc_t comp;
-    char* env = NULL;
-
-    if((env = getenv("POLL")) != NULL) {
-
-        while(1) {
-            ret = VAPI_poll_cq(mca_ptl_ib_module.nic, mca_ptl_ib_module.ud_rcq_hndl,
-                    &comp);
-            if(VAPI_OK == ret) {
-                fprintf(stderr,"Something arrived!\n");
-            }
-        }
-    }
-#endif
     return OMPI_SUCCESS;
 }
 
@@ -377,8 +355,9 @@ int mca_ptl_ib_component_progress(mca_ptl_tstamp_t tstamp)
                 D_PRINT("Caught a send completion");
 
                 /* Process a completed send */
-                mca_ptl_ib_process_send_comp((mca_ptl_base_module_t *) module,
-                        comp_addr);
+                mca_ptl_ib_process_send_comp(
+                        (mca_ptl_base_module_t *) module,
+                        comp_addr, &(module->send_free));
 
                 break;
             case IB_COMP_RECV :
@@ -387,6 +366,11 @@ int mca_ptl_ib_component_progress(mca_ptl_tstamp_t tstamp)
                 /* Process incoming receives */
                 mca_ptl_ib_process_recv((mca_ptl_base_module_t *)module, 
                         comp_addr);
+#if 0
+                /* Re post recv buffers */
+                mca_ptl_ib_buffer_repost(module->ib_state->nic,
+                        peer->peer_conn->lres->qp_hndl, comp_addr);
+#endif
                 
                 break;
             case IB_COMP_NOTHING:

@@ -575,3 +575,31 @@ void mca_ptl_ib_drain_network(VAPI_hca_hndl_t nic,
         *comp_addr = NULL;
     }
 }
+
+void mca_ptl_ib_buffer_repost(VAPI_hca_hndl_t nic,
+        VAPI_qp_hndl_t qp_hndl, void* addr)
+{
+    VAPI_ret_t ret;
+    ib_buffer_t *ib_buf;
+
+    D_PRINT("Entering, comp_addr = %p", addr);
+
+    ib_buf = (ib_buffer_t *) (unsigned int) addr;
+
+    D_PRINT("NIC : %d, Qp hndl : %d, &desc.rr : %p",
+            nic, qp_hndl,
+            &(ib_buf->desc.rr));
+
+    IB_PREPARE_RECV_DESC(ib_buf);
+
+    ret = VAPI_post_rr(nic, qp_hndl, &(ib_buf->desc.rr));
+
+    D_PRINT("");
+
+    if(VAPI_OK != ret) {
+        MCA_PTL_IB_VAPI_RET(ret, "VAPI_post_rr");
+        ompi_output(0, "Error in buffer reposting");
+    }
+
+    D_PRINT("Leaving");
+}
