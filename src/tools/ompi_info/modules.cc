@@ -11,6 +11,10 @@
 #include <string.h>
 
 #include "mca/base/base.h"
+#include "mca/allocator/allocator.h"
+#include "mca/allocator/base/base.h"
+#include "mca/mpool/mpool.h"
+#include "mca/mpool/base/base.h"
 #include "mca/pcm/pcm.h"
 #include "mca/pcm/base/base.h"
 #include "mca/oob/oob.h"
@@ -21,6 +25,8 @@
 #include "mca/ptl/base/base.h"
 #include "mca/coll/coll.h"
 #include "mca/coll/base/base.h"
+#include "mca/ns/ns.h"
+#include "mca/ns/base/base.h"
 #include "tools/ompi_info/ompi_info.h"
 
 using namespace std;
@@ -70,21 +76,32 @@ void ompi_info::open_modules()
     }
   }
 
-  // Open all modules
+  // Find / open all components
 
   mca_base_open();
   module_map["base"] = NULL;
 
-  mca_pcm_base_open();
-  module_map["pcm"] = &mca_pcm_base_modules_available;
+  mca_allocator_base_open();
+  module_map["allocator"] = &mca_allocator_base_components;
 
-  // oob module opening not implemented yet
-  mca_oob_base_open();
-  module_map["oob"] = &mca_oob_base_components;
-
-  // coll module opening not implemented yet
   mca_coll_base_open();
   module_map["coll"] = &mca_coll_base_components_opened;
+
+#if 0
+  // common component framework not implemented yet
+  mca_common_base_open();
+  module_map["common"] = &mca_common_base_components_opened;
+#else
+  module_map["common"] = NULL;
+#endif
+
+#if 0
+  // waiting for gpr to be implemented
+  mca_gpr_base_open();
+  module_map["gpr"] = &mca_ns_base_components_available;
+#else
+  module_map["gpr"] = NULL;
+#endif
 
 #if 0
   // io module opening not implemented yet
@@ -94,6 +111,12 @@ void ompi_info::open_modules()
   module_map["io"] = NULL;
 #endif
 
+  mca_ns_base_open();
+  module_map["ns"] = &mca_ns_base_components_available;
+
+  mca_mpool_base_open();
+  module_map["mpool"] = &mca_mpool_base_components;
+
 #if 0
   // one module opening not implemented yet
   mca_one_base_open();
@@ -102,11 +125,23 @@ void ompi_info::open_modules()
   module_map["one"] = NULL;
 #endif
 
-  // pml module opening not implemented yet
+  mca_oob_base_open();
+  module_map["oob"] = &mca_oob_base_components;
+
+#if 0
+  // op component framework not yet implemented
+  mca_op_base_open();
+  module_map["op"] = &mca_oob_base_components;
+#else
+  module_map["op"] = NULL;
+#endif
+
+  mca_pcm_base_open();
+  module_map["pcm"] = &mca_pcm_base_modules_available;
+
   mca_pml_base_open();
   module_map["pml"] = &mca_pml_base_modules_available;
 
-  // ptl module opening not implemented yet
   mca_ptl_base_open();
   module_map["ptl"] = &mca_ptl_base_modules_available;
 
@@ -129,6 +164,7 @@ void ompi_info::close_modules()
   if (opened_modules) {
     mca_pcm_base_close();
     mca_oob_base_close();
+    mca_ns_base_close();
     mca_coll_base_close();
     mca_pml_base_close();
     mca_ptl_base_close();
