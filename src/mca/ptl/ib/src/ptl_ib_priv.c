@@ -453,6 +453,8 @@ int mca_ptl_ib_peer_connect(mca_ptl_ib_state_t *ib_state,
 {
     int rc, i;
     VAPI_ret_t ret;
+    VAPI_qp_num_t qp_num;
+    ib_buffer_t *ib_buf_ptr;
 
     /* Establish Reliable Connection */
     rc = mca_ptl_ib_rc_qp_init(ib_state->nic,
@@ -479,6 +481,8 @@ int mca_ptl_ib_peer_connect(mca_ptl_ib_state_t *ib_state,
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
+    qp_num = peer_conn->rres->qp_num;
+
     /* Register the buffers */
     for(i = 0; i < NUM_IB_SEND_BUF; i++) {
 
@@ -488,11 +492,13 @@ int mca_ptl_ib_peer_connect(mca_ptl_ib_state_t *ib_state,
         if(rc != OMPI_SUCCESS) {
             return OMPI_ERROR;
         }
+
+        ib_buf_ptr = &peer_conn->lres->send[i];
+
+        IB_PREPARE_SEND_DESC(ib_buf_ptr, qp_num);
     }
 
     for(i = 0; i < NUM_IB_RECV_BUF; i++) {
-
-        ib_buffer_t *ib_buf_ptr;
 
         rc = mca_ptl_ib_register_mem(ib_state->nic, ib_state->ptag,
                 (void*) peer_conn->lres->recv[i].buf, 
@@ -501,7 +507,9 @@ int mca_ptl_ib_peer_connect(mca_ptl_ib_state_t *ib_state,
             return OMPI_ERROR;
         }
 
-        IB_PREPARE_RECV_DESC((&peer_conn->lres->recv[i]));
+        ib_buf_ptr = &peer_conn->lres->recv[i];
+
+        IB_PREPARE_RECV_DESC(ib_buf_ptr);
     }
 
     /* Post receives */
