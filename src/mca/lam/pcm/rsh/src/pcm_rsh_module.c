@@ -76,14 +76,10 @@ mca_pcm_rsh_open(void)
 {
   int id;
 
-  OBJ_CONSTRUCT(&mca_pcm_rsh_connections, lam_list_t);
-
-  /* BWB - we should really make sure that we have an RSH in the path 
-     somewhere and make that a configure option and all that */
   id = mca_base_param_register_string("pcm", "rsh", "rsh", NULL, "ssh");
   mca_base_param_lookup_string(id, &mca_pcm_rsh_rsh);
 
-  id = mca_base_param_register_int("pcm", "rsh", "vpid", NULL, 0);
+  id = mca_base_param_register_int("pcm", "rsh", "vpid", NULL, -1);
   mca_base_param_lookup_int(id, &mca_pcm_rsh_my_vpid);
 
   id = mca_base_param_register_string("pcm", "rsh", "job_handle", NULL, NULL);
