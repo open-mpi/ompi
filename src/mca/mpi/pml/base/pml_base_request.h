@@ -44,7 +44,7 @@ typedef struct {
   /* pointer to data type */
   lam_datatype_t *req_datatype;
   /* MPI request type - used for test */
-   mca_pml_base_request_type_t req_type;
+  mca_pml_base_request_type_t req_type;
   /* MPI request status */
   mca_pml_base_request_status_t req_status;
   /* persistence indicating if the this is a persistent request */

@@ -244,8 +244,7 @@ mca_pml_base_recv_request_t *check_wild_receives_for_match(
         mca_pml_comm_t *pml_comm)
 {
     /* local parameters */
-    mca_pml_base_recv_request_t *return_match;
-    mca_pml_base_recv_request_t *wild_recv;
+    mca_pml_base_recv_request_t *return_match, *wild_recv;
     int frag_user_tag,recv_user_tag;
 
     /* initialization */
@@ -312,15 +311,14 @@ mca_pml_base_recv_request_t *check_specific_receives_for_match(
         mca_pml_comm_t *pml_comm)
 {
     /* local variables */
-    mca_pml_base_recv_request_t *specific_recv;
-    mca_pml_base_recv_request_t *return_match;
+    mca_pml_base_recv_request_t *specific_recv, *return_match;
     int frag_src,recv_user_tag,frag_user_tag;
 
-    frag_user_tag=frag_header->hdr_base.hdr_user_tag;
 
     /* initialization */
     return_match=(mca_pml_base_recv_request_t *)NULL;
     frag_src = frag_header->hdr_frag_seq_num;
+    frag_user_tag=frag_header->hdr_base.hdr_user_tag;
 
     /*
      * Loop over the specific irecvs.
@@ -352,4 +350,143 @@ mca_pml_base_recv_request_t *check_specific_receives_for_match(
     }
 
     return return_match;
+}
+
+/**
+ * Try and match the incoming message fragment to the list of
+ * "wild" receives and "specific" receives.  Used when both types
+ * of receives have been posted,  i.e. when we need to coordinate
+ * between multiple lists to make sure ordered delivery occurs.
+ *
+ * @param frag_header Matching data from recived fragment (IN)
+ *
+ * @param pml_comm Pointer to the communicator structure used for
+ * matching purposes. (IN)
+ *
+ * @return Matched receive
+ *
+ * This routine assumes that the appropriate matching locks are
+ * set by the upper level routine.
+ */
+mca_pml_base_recv_request_t *check_specific_and_wild_receives_for_match(
+        mca_pml_base_reliable_hdr_t *frag_header,
+        mca_pml_comm_t *pml_comm)
+{
+    /* local variables */
+    mca_pml_base_recv_request_t *specific_recv, *wild_recv, *return_match;
+    mca_pml_base_sequence_t wild_recv_seq_num, specific_recv_seq_num;
+    int frag_src,frag_user_tag, wild_recv_tag, specific_recv_tag;
+
+    /* initialization */
+    return_match=(mca_pml_base_recv_request_t *)NULL;
+    frag_src = frag_header->hdr_frag_seq_num;
+    frag_user_tag=frag_header->hdr_base.hdr_user_tag;
+
+    /*
+     * We know that when this is called, both specific and wild irecvs
+     *  have been posted.
+     */
+    specific_recv = (mca_pml_base_recv_request_t *) 
+            lam_list_get_first((pml_comm->specific_receives)+frag_src);
+    wild_recv = (mca_pml_base_recv_request_t *) 
+            lam_list_get_first(&(pml_comm->wild_receives));
+
+    specific_recv_seq_num = specific_recv->sequence_number;
+    wild_recv_seq_num = wild_recv->sequence_number;
+
+    while (true) {
+        if (wild_recv_seq_num < specific_recv_seq_num) {
+            /*
+             * wild recv is earlier than the specific one.
+             */
+            /*
+             * try and match
+             */
+            wild_recv_tag = wild_recv->super.req_tag;
+            if ( (frag_user_tag == wild_recv_tag) ||
+                 ( (wild_recv_tag == LAM_ANY_TAG) && (0 <= frag_user_tag) ) ) {
+                    
+                /*
+                 * Match made
+                 */
+                return_match=wild_recv;
+
+                /* remove this recv from the wild receive queue */
+                lam_list_remove_item(&(pml_comm->wild_receives),
+                        (lam_list_item_t *)wild_recv);
+
+                return return_match;
+            }
+
+            /*
+             * No match, go to the next.
+             */
+            wild_recv=(mca_pml_base_recv_request_t *)
+                ((lam_list_item_t *)wild_recv)->lam_list_next;
+
+            /*
+             * If that was the last wild one, just look at the
+             * rest of the specific ones.
+             */
+            if (wild_recv == (mca_pml_base_recv_request_t *)
+                    lam_list_get_end(&(pml_comm->wild_receives)) ) 
+            { 
+                return_match = check_specific_receives_for_match(frag_header,
+                        pml_comm);
+
+                return return_match;
+            }
+
+            /*
+             * Get the sequence number for this recv, and go
+             * back to the top of the loop.
+             */
+            wild_recv_seq_num = wild_recv->sequence_number;
+
+        } else {
+            /*
+             * specific recv is earlier than the wild one.
+             */
+            specific_recv_tag=specific_recv->super.req_tag;
+            if ( (frag_user_tag == specific_recv_tag) ||
+                 ( (specific_recv_tag == LAM_ANY_TAG) && (0<=frag_user_tag)) ) 
+            {
+
+                /*
+                 * Match made
+                 */
+                return_match = specific_recv;
+
+                /* remove descriptor from specific receive list */
+                lam_list_remove_item((pml_comm->specific_receives)+frag_src,
+                    (lam_list_item_t *)specific_recv);
+
+                return return_match;
+            }
+
+            /*
+             * No match, go on to the next specific irecv.
+             */
+            specific_recv = (mca_pml_base_recv_request_t *)
+                ((lam_list_item_t *)specific_recv)->lam_list_next;
+
+            /*
+             * If that was the last specific irecv, process the
+             * rest of the wild ones.
+             */
+            if (specific_recv == (mca_pml_base_recv_request_t *)
+                    lam_list_get_end((pml_comm->specific_receives)+frag_src) )
+            {
+                return_match = check_wild_receives_for_match(frag_header,
+                        pml_comm);
+
+                return return_match;
+            }
+            /*
+             * Get the sequence number for this recv, and go
+             * back to the top of the loop.
+             */
+            specific_recv_seq_num = specific_recv->sequence_number;
+        }
+    }
 }
