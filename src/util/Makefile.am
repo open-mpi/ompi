@@ -18,7 +18,6 @@ headers = \
     argv.h \
     bit_ops.h \
     cmd_line.h \
-    common_cmd_line.h \
     few.h \
     if.h \
     malloc.h \
@@ -44,7 +43,6 @@ libutil_la_SOURCES = \
     asm.S \
     argv.c \
     cmd_line.c \
-    common_cmd_line.c \
     few.c \
     if.c \
     malloc.c \

@@ -14,7 +14,6 @@
 #include "communicator/communicator.h"
 #include "group/group.h"
 #include "info/info.h"
-#include "util/common_cmd_line.h"
 #include "util/show_help.h"
 #include "errhandler/errhandler.h"
 #include "errhandler/errcode.h"
@@ -67,13 +66,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     ompi_cmd_line_t *cmd_line=NULL;
     char *contact=NULL, **tmp, *nsreplica=NULL, *gprreplica=NULL;
     char *error;
-
-    /* Save command line parameters */
-
-    if (OMPI_SUCCESS != (ret = ompi_common_cmd_line_init(argc, argv))) {
-        error = "ompi_common_cmd_line_init() failed";
-        goto error;
-    }
 
     /* Become a OMPI process */
 

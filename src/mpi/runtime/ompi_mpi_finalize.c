@@ -18,7 +18,6 @@
 #include "file/file.h"
 #include "info/info.h"
 #include "runtime/runtime.h"
-#include "util/common_cmd_line.h"
 
 #include "mca/base/base.h"
 #include "mca/ptl/ptl.h"
@@ -137,20 +136,12 @@ int ompi_mpi_finalize(void)
     return ret;
   }
       
-  if (OMPI_SUCCESS != (ret = ompi_common_cmd_line_finalize())) {
-    return ret;
-  }
-
   /* Leave OMPI land */
 
   if (OMPI_SUCCESS != (ret = ompi_finalize())) {
     return ret;
   }
       
-  if (OMPI_SUCCESS != (ret = ompi_common_cmd_line_finalize())) {
-    return ret;
-  }
-
   /* All done */
 
   return MPI_SUCCESS;
