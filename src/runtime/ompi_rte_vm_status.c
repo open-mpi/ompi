@@ -51,6 +51,8 @@ ompi_rte_vm_status_t
     
     if (NULL != (value = (ompi_registry_value_t*)ompi_list_remove_first(returned_list))) {
         stat_ptr = ompi_rte_unpack_vm_status(value);
+        OBJ_RELEASE(value);
+        OBJ_RELEASE(returned_list);
         return stat_ptr;
     }
     

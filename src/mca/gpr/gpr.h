@@ -86,6 +86,7 @@ typedef uint16_t ompi_registry_synchro_mode_t;
 /** Return value for notify requests
  */
 struct ompi_registry_notify_message_t {
+    ompi_object_t super;                         /**< Make this an object */
     char *segment;                               /**< Name of originating segment */
     mca_ns_base_jobid_t owning_job;              /**< Job that owns that segment */
     ompi_list_t data;                            /**< List of data objects */

@@ -176,8 +176,7 @@ extern "C" {
 
     OMPI_DECLSPEC int mca_gpr_base_pack_triggers_inactive_cmd(ompi_buffer_t cmd, mca_ns_base_jobid_t jobid);
     OMPI_DECLSPEC int mca_gpr_base_unpack_triggers_inactive_cmd(ompi_buffer_t cmd);
-    
-    OMPI_DECLSPEC void mca_gpr_base_release_notify_msg(ompi_registry_notify_message_t *msg);
+
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

@@ -180,7 +180,7 @@ static void ompi_registry_notify_message_destructor(ompi_registry_notify_message
 /* define instance of ompi_class_t */
 OBJ_CLASS_INSTANCE(
 		   ompi_registry_notify_message_t,            /* type name */
-		   ompi_list_item_t,                          /* parent "class" name */
+		   ompi_object_t,                             /* parent "class" name */
 		   ompi_registry_notify_message_construct,    /* constructor */
 		   ompi_registry_notify_message_destructor);  /* destructor */
 
