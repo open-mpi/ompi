@@ -87,11 +87,11 @@ int ompi_rte_set_process_status(ompi_rte_process_status_t *status,
 		      segment, tokens, addr, size);
 
     if ((OMPI_PROC_STOPPED == status->status_key) ||
-	(OMPI_PROC_KILLED == status->status_key) ||
-	(OMPI_PROC_EXITED == status->status_key)) {
-	ompi_registry.cleanup_process(true, proc);  /* purge subscriptions */
+		(OMPI_PROC_KILLED == status->status_key) ||
+		(OMPI_PROC_EXITED == status->status_key)) {
+		ompi_registry.cleanup_process(true, proc);  /* purge subscriptions */
     } else if (OMPI_PROC_TERMINATING == status->status_key) {
-	ompi_registry.cleanup_process(false, proc);  /* just cleanup - don't purge subs */
+		ompi_registry.cleanup_process(false, proc);  /* just cleanup - don't purge subs */
     }
 
     /* cleanup */

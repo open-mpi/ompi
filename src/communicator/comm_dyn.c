@@ -272,6 +272,20 @@ ompi_process_name_t *ompi_comm_get_rport (ompi_process_name_t *port, int send_fi
 /**********************************************************************/
 /**********************************************************************/
 /**********************************************************************/
+void ompi_comm_shutdown_cbfunc(ompi_registry_notify_message_t* match, void* cbdata)
+{
+	mca_ns_base_jobid_t *jobid;
+	
+	jobid = (mca_ns_base_jobid_t*)cbdata;
+	ompi_rte_job_shutdown(*jobid);
+	free(jobid);
+	OBJ_RELEASE(match);
+}
+
+
+/**********************************************************************/
+/**********************************************************************/
+/**********************************************************************/
 int ompi_comm_start_processes (char *command, char **argv, int maxprocs, 
 			       MPI_Info info,  char *port_name )
 {
@@ -283,7 +297,8 @@ int ompi_comm_start_processes (char *command, char **argv, int maxprocs,
     char *tmp, *envvarname, *segment, *my_contact_info;
     char cwd[MAXPATHLEN];
     ompi_registry_notify_id_t rc_tag;
-    
+	mca_ns_base_jobid_t *jobid;
+
     /* parse the info object */
     /* check potentially for: 
        - "host": desired host where to spawn the processes
@@ -386,14 +401,26 @@ int ompi_comm_start_processes (char *command, char **argv, int maxprocs,
 
     /* register a synchro on the segment so we get notified when everyone registers */
     rc_tag = ompi_registry.synchro(
-	     OMPI_REGISTRY_SYNCHRO_MODE_LEVEL|OMPI_REGISTRY_SYNCHRO_MODE_ONE_SHOT,
+	     OMPI_REGISTRY_SYNCHRO_MODE_LEVEL|OMPI_REGISTRY_SYNCHRO_MODE_ONE_SHOT|
+	     OMPI_REGISTRY_SYNCHRO_MODE_STARTUP,
 	     OMPI_REGISTRY_OR,
 	     segment,
 	     NULL,
 	     maxprocs,
 	     ompi_rte_all_procs_registered, NULL);
 
-
+    /* register a synchro on the segment so we get notified when everyone completes */
+    jobid = (mca_ns_base_jobid_t*)malloc(sizeof(mca_ns_base_jobid_t));
+    *jobid = new_jobid;
+    rc_tag = ompi_registry.synchro(
+         OMPI_REGISTRY_SYNCHRO_MODE_DESCENDING|OMPI_REGISTRY_SYNCHRO_MODE_ONE_SHOT|
+         OMPI_REGISTRY_SYNCHRO_MODE_SHUTDOWN,
+	     OMPI_REGISTRY_OR,
+	     segment,
+	     NULL,
+	     0,
+	     ompi_comm_shutdown_cbfunc, (void*)jobid);
+	     
     /*
      * spawn procs
      */
