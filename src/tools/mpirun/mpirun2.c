@@ -18,6 +18,7 @@
 #include "runtime/runtime.h"
 #include "util/session_dir.h"
 #include "include/constants.h"
+#include "util/output.h"
 
 #include <stdio.h>
 #include <unistd.h>
