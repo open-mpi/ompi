@@ -9,6 +9,7 @@
 
 #include "mpi.h"
 #include "mpi/f77/bindings.h"
+#include "mpi/f77/constants.h"
 #include "errhandler/errhandler.h"
 #include "communicator/communicator.h"
 
@@ -92,7 +93,11 @@ void mpi_testsome_f(MPI_Fint *incount, MPI_Fint *array_of_requests,
             }
         }
         for (i = 0; i < *outcount; i++) {
-          MPI_Status_c2f(&c_status[i], &array_of_statuses[i]);
+            array_of_requests[array_of_indices[i]] = 0;
+            if (!OMPI_IS_FORTRAN_STATUSES_IGNORE(array_of_statuses) &&
+                !OMPI_IS_FORTRAN_STATUS_IGNORE(&array_of_statuses[i])) {
+                MPI_Status_c2f(&c_status[i], &array_of_statuses[i]);
+            }
         }
     }
 

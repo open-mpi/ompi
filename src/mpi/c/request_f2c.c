@@ -36,9 +36,10 @@ MPI_Request MPI_Request_f2c(MPI_Fint request)
     
     if (request_index < 0 || 
         request_index >= 
-        ompi_pointer_array_get_size(ompi_req_f_to_c_table)) {
+        ompi_pointer_array_get_size(&ompi_request_f_to_c_table)) {
         return MPI_REQUEST_NULL;
     }
 
-    return ompi_pointer_array_get_item(ompi_req_f_to_c_table, request_index);
+    return ompi_pointer_array_get_item(&ompi_request_f_to_c_table,
+                                       request_index);
 }

@@ -9,6 +9,7 @@
 
 #include "mpi.h"
 #include "mpi/f77/bindings.h"
+#include "mpi/f77/constants.h"
 #include "errhandler/errhandler.h"
 #include "communicator/communicator.h"
 
@@ -83,16 +84,20 @@ void mpi_waitsome_f(MPI_Fint *incount, MPI_Fint *array_of_requests,
     if (MPI_SUCCESS == *ierr) {
 	OMPI_SINGLE_INT_2_FINT(outcount);
 	OMPI_ARRAY_INT_2_FINT(array_of_indices, *incount);
-        /*
-         * Increment indexes by one for fortran conventions
-         */
+
+        /* Increment indexes by one for fortran conventions */
+
         if (MPI_UNDEFINED != *outcount) {
             for (i = 0; i < *outcount; i++) {
                 array_of_indices[i] += 1;
             }
         }
         for (i = 0; i < *incount; i++) {
-          MPI_Status_c2f(&c_status[i], &array_of_statuses[i]);
+            array_of_requests[array_of_indices[i]] = 0;
+            if (!OMPI_IS_FORTRAN_STATUSES_IGNORE(array_of_statuses) &&
+                !OMPI_IS_FORTRAN_STATUS_IGNORE(&array_of_statuses[i])) {
+                MPI_Status_c2f(&c_status[i], &array_of_statuses[i]);
+            }
         }
     }
 

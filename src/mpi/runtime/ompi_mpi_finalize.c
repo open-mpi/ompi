@@ -81,6 +81,11 @@ int ompi_mpi_finalize(void)
       return ret;
   }
 
+  /* free requests */
+  if (OMPI_SUCCESS != (ret = ompi_request_finalize())) {
+      return ret;
+  }
+
   /* Free secondary resources */
 
   /* free attr resources */
@@ -112,8 +117,6 @@ int ompi_mpi_finalize(void)
   if (OMPI_SUCCESS != (ret = ompi_errhandler_finalize())) {
       return ret;
   }
-
-  /* free request resources */
 
   /* Free all other resources */
 

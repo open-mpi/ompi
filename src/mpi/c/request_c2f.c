@@ -23,21 +23,35 @@ static const char FUNC_NAME[] = "MPI_Request_f2c";
 
 MPI_Fint MPI_Request_c2f(MPI_Request request) 
 {
-    /* local variables */
-    ompi_request_t *request_c;
-
     /* error checking */
     if( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
- 	    /* mapping an invalid handle to a null handle */
-	    /* not invoking an error handler */
-        if( (NULL == request) ) {
-			request = MPI_REQUEST_NULL;
+        /* mapping an invalid handle to a null handle */
+        /* not invoking an error handler */
+
+        if (NULL == request) {
+            request = MPI_REQUEST_NULL;
         }
     }
 
-    request_c=(ompi_request_t *)request;
+    /* We only put requests in the f2c table when this function is
+       invoked.  This is because putting requests in the table
+       involves locking and unlocking the table, which would incur a
+       performance penalty (in the critical performance path) for C
+       applications.  In this way, at least only Fortran applications
+       are penalized.  :-\
 
-    return (MPI_Fint) (request_c->req_f_to_c_index) ;
+       Modifying this one function neatly fixes up all the Fortran
+       bindings because they all call MPI_Request_c2f in order to
+       transmorgify the C MPI_Request that they got back into a
+       fortran integer.
+    */
+
+    if (-1 == request->req_f_to_c_index) {
+        request->req_f_to_c_index = 
+            ompi_pointer_array_add(&ompi_request_f_to_c_table, request);
+    }
+
+    return (MPI_Fint) (request->req_f_to_c_index) ;
 }
