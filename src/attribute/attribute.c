@@ -38,23 +38,25 @@
 #define FREE_KEY(key) lam_bitmap_clear_bit(key_bitmap, (key))
 
 
+/* Not checking for NULL_DELETE_FN here, since according to the
+   MPI-standard it should be a valid function that returns
+   MPI_SUCCESS */
+
+
 #define DELETE_ATTR_OBJECT(type, caps_type, attr) \
-    if ((MPI_##caps_type##_NULL_DELETE_FN != \
-        (MPI_##type##_delete_attr_function *) (key_item->delete_attr_fn)) && \
-	((*((MPI_##type##_delete_attr_function *) \
+    if ((err = (*((MPI_##type##_delete_attr_function *) \
 	   (key_item->delete_attr_fn)))((lam_##type##_t)object, \
 				    key, attr, \
-				    key_item->extra_state) != MPI_SUCCESS)) {\
-	return LAM_ERROR;\
+				    key_item->extra_state)) != MPI_SUCCESS) {\
+	return err;\
     }
 
 #define COPY_ATTR_OBJECT(type, old_object, hash_value) \
-    if ((*(MPI_##type##_copy_attr_function *) (hash_value->copy_attr_fn)) \
+    if ((err = (*(MPI_##type##_copy_attr_function *) (hash_value->copy_attr_fn)) \
           ((lam_##type##_t)old_object, key, hash_value->extra_state, \
-            old_attr, new_attr, &flag) != MPI_SUCCESS) { \
-        return LAM_ERROR; \
+            old_attr, new_attr, &flag)) != MPI_SUCCESS) { \
+        return err; \
     }
-
 
 
 #define GET_ATTR(type) \
@@ -262,7 +264,7 @@ lam_attr_delete(lam_attribute_type_t type, void *object, int key,
 		int predefined) 
 {
     lam_attrkey_item_t *key_item;
-    int ret;
+    int ret, err;
     void *attr;
 
     /* Check if the key is valid in the key-attribute hash */
@@ -318,7 +320,7 @@ lam_attr_set(lam_attribute_type_t type, void *object, int key, void *attribute,
 
 {
     lam_attrkey_item_t *key_item;
-    int ret;
+    int ret, err;
     void *oldattr;
     int had_old = 0;
 
@@ -429,7 +431,8 @@ int
 lam_attr_copy_all(lam_attribute_type_t type, void *old_object, 
 		  void *new_object)
 {
-    int ret = LAM_SUCCESS;
+    int ret;
+    int err;
     uint32_t key;
     int flag;
     void *node, *in_node, *old_attr, *new_attr;
