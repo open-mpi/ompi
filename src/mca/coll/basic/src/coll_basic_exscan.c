@@ -7,26 +7,27 @@
 
 #include <stdio.h>
 
-#include "constants.h"
 #include "mpi.h"
+#include "include/constants.h"
 #include "mca/coll/coll.h"
 #include "mca/coll/base/coll_tags.h"
+#include "mca/op/op.h"
 #include "coll_basic.h"
 
 
 /*
- *	exscan
+ *	exscan_intra
  *
  *	Function:	- basic exscan operation
  *	Accepts:	- same arguments as MPI_Exccan()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int mca_coll_basic_exscan(void *sbuf, void *rbuf, int count,
-                          MPI_Datatype dtype, MPI_Op op, MPI_Comm comm)
+int mca_coll_basic_exscan_intra(void *sbuf, void *rbuf, int count,
+                                struct ompi_datatype_t *dtype, 
+                                struct ompi_op_t *op, 
+                                struct ompi_communicator_t *comm)
 {
-#if 1
-  return OMPI_ERR_NOT_IMPLEMENTED;
-#else
+#if 0
   int size;
   int rank;
   int err;
@@ -35,17 +36,13 @@ int mca_coll_basic_exscan(void *sbuf, void *rbuf, int count,
 
   /* Initialize. */
 
-  MPI_Comm_rank(comm, &rank);
-  MPI_Comm_size(comm, &size);
-
-  /* JMS: Need to replace lots things in this file: ompi_dt* stuff with
-     ompi_datatype_*() functions.  Also need to replace lots of
-     MPI_Send/MPI_Recv with negative tags and PML entry points. */
+  rank = ompi_comm_rank(comm);
+  size = ompi_comm_size(comm);
 
   /* Otherwise receive previous buffer and reduce. Store the recieved
      buffer in different array and then send the reduced array to the
      next process */
-  
+
   /* JMS Need to replace this with some ompi_datatype_*() function */
   err = ompi_dtbuffer(dtype, count, &gathered_buffer, &gathered_origin);
   if (MPI_SUCCESS != err) {
@@ -164,9 +161,25 @@ int mca_coll_basic_exscan(void *sbuf, void *rbuf, int count,
     OMPI_FREE(gathered_buffer);
   if (NULL != tmpbuf)
     OMPI_FREE(tmpbuf);
+#endif
 
   /* All done */
 
   return MPI_SUCCESS;
-#endif /* 0 */
+}
+
+
+/*
+ *	exscan_inter
+ *
+ *	Function:	- basic exscan operation
+ *	Accepts:	- same arguments as MPI_Exccan()
+ *	Returns:	- MPI_SUCCESS or error code
+ */
+int mca_coll_basic_exscan_inter(void *sbuf, void *rbuf, int count,
+                                struct ompi_datatype_t *dtype, 
+                                struct ompi_op_t *op, 
+                                struct ompi_communicator_t *comm)
+{
+  return OMPI_ERR_NOT_IMPLEMENTED;
 }

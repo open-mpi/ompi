@@ -4,97 +4,259 @@
 
 #include "ompi_config.h"
 
+#include <sys/types.h>
+
 #include "op/op.h"
 #include "op/op_predefined.h"
 
 
-void ompi_mpi_op_max_func(void *in, void *out, int *count, 
-                         MPI_Datatype *type)
+/*
+ * Since all the functions in this file are essentially identical, we
+ * use a macro to substitute in names and types.  The core operation
+ * in all functions that use this macro is the same.
+ *
+ * This macro is for (out op in).
+ */
+#define OP_FUNC(name, type_name, type, op) \
+  void ompi_mpi_op_##name##_##type_name(void *in, void *out, int *count, \
+                                        MPI_Datatype *dtype)             \
+  {                                                                      \
+    int i;                                                               \
+    type *a = (type *) in;                                               \
+    type *b = (type *) out;                                              \
+    for (i = 0; i < *count; ++i) {                                       \
+      *(b++) op *(a++);                                                  \
+    }                                                                    \
+  }
+
+/*
+ * Since all the functions in this file are essentially identical, we
+ * use a macro to substitute in names and types.  The core operation
+ * in all functions that use this macro is the same.
+ *
+ * This macro is for (out = op(out, in))
+ */
+#define FUNC_FUNC(name, type_name, type) \
+  void ompi_mpi_op_##name##_##type_name(void *in, void *out, int *count, \
+                                        MPI_Datatype *dtype)             \
+  {                                                                      \
+    int i;                                                               \
+    type *a = (type *) in;                                               \
+    type *b = (type *) out;                                              \
+    for (i = 0; i < *count; ++i) {                                       \
+      *(b) = current_func(*(b), *(a++));                                 \
+      ++b;                                                               \
+    }                                                                    \
+  }
+
+/*************************************************************************
+ * Max
+ *************************************************************************/
+
+#undef current_func
+#define current_func(a, b) ((a) > (b) ? (a) : (b))
+/* C integer */
+FUNC_FUNC(max, int, int)
+FUNC_FUNC(max, long, long)
+FUNC_FUNC(max, short, short)
+FUNC_FUNC(max, unsigned_short, unsigned short)
+FUNC_FUNC(max, unsigned, unsigned)
+FUNC_FUNC(max, unsigned_long, unsigned long)
+/* Fortran integer */
+FUNC_FUNC(max, fortran_integer, MPI_Fint)
+/* Floating point */
+FUNC_FUNC(max, float, float)
+FUNC_FUNC(max, double, double)
+FUNC_FUNC(max, fortran_real, ompi_fortran_real_t)
+FUNC_FUNC(max, fortran_double_precision, ompi_fortran_dblprec_t)
+FUNC_FUNC(max, long_double, long double)
+
+
+/*************************************************************************
+ * Min
+ *************************************************************************/
+
+#undef current_func
+#define current_func(a, b) ((a) < (b) ? (a) : (b))
+/* C integer */
+FUNC_FUNC(min, int, int)
+FUNC_FUNC(min, long, long)
+FUNC_FUNC(min, short, short)
+FUNC_FUNC(min, unsigned_short, unsigned short)
+FUNC_FUNC(min, unsigned, unsigned)
+FUNC_FUNC(min, unsigned_long, unsigned long)
+/* Fortran integer */
+FUNC_FUNC(min, fortran_integer, MPI_Fint)
+/* Floating point */
+FUNC_FUNC(min, float, float)
+FUNC_FUNC(min, double, double)
+FUNC_FUNC(min, fortran_real, ompi_fortran_real_t)
+FUNC_FUNC(min, fortran_double_precision, ompi_fortran_dblprec_t)
+FUNC_FUNC(min, long_double, long double)
+
+/*************************************************************************
+ * Sum
+ *************************************************************************/
+
+/* C integer */
+OP_FUNC(sum, int, int, +=)
+OP_FUNC(sum, long, long, +=)
+OP_FUNC(sum, short, short, +=)
+OP_FUNC(sum, unsigned_short, unsigned short, +=)
+OP_FUNC(sum, unsigned, unsigned, +=)
+OP_FUNC(sum, unsigned_long, unsigned long, +=)
+/* Fortran integer */
+OP_FUNC(sum, fortran_integer, MPI_Fint, +=)
+/* Floating point */
+OP_FUNC(sum, float, float, +=)
+OP_FUNC(sum, double, double, +=)
+OP_FUNC(sum, fortran_real, ompi_fortran_real_t, +=)
+OP_FUNC(sum, fortran_double_precision, ompi_fortran_dblprec_t, +=)
+OP_FUNC(sum, long_double, long double, +=)
+/* Complex */
+void ompi_mpi_op_sum_fortran_complex(void *in, void *out, int *count,
+                                     MPI_Datatype *dtype)
 {
-  /* JMS Need to fill in */
+  int i;
+  ompi_fortran_complex_t *a = (ompi_fortran_complex_t*) in;
+  ompi_fortran_complex_t *b = (ompi_fortran_complex_t*) out;
+  for (i = 0; i < *count; ++i) {
+    b->real += a->real;
+    b->imag += a->imag;
+  }
 }
 
+/*************************************************************************
+ * Product
+ *************************************************************************/
 
-void ompi_mpi_op_min_func(void *in, void *out, int *count, 
-                         MPI_Datatype *type)
+/* C integer */
+OP_FUNC(prod, int, int, *=)
+OP_FUNC(prod, long, long, *=)
+OP_FUNC(prod, short, short, *=)
+OP_FUNC(prod, unsigned_short, unsigned short, *=)
+OP_FUNC(prod, unsigned, unsigned, *=)
+OP_FUNC(prod, unsigned_long, unsigned long, *=)
+/* Fortran integer */
+OP_FUNC(prod, fortran_integer, MPI_Fint, *=)
+/* Floating point */
+OP_FUNC(prod, float, float, *=)
+OP_FUNC(prod, double, double, *=)
+OP_FUNC(prod, fortran_real, ompi_fortran_real_t, *=)
+OP_FUNC(prod, fortran_double_precision, ompi_fortran_dblprec_t, *=)
+OP_FUNC(prod, long_double, long double, *=)
+/* Complex */
+void ompi_mpi_op_prod_fortran_complex(void *in, void *out, int *count,
+                                      MPI_Datatype *dtype)
 {
-  /* JMS Need to fill in */
+  int i;
+  ompi_fortran_complex_t *a = (ompi_fortran_complex_t*) in;
+  ompi_fortran_complex_t *b = (ompi_fortran_complex_t*) out;
+  for (i = 0; i < *count; ++i) {
+    b->real *= a->real;
+    b->imag *= a->imag;
+  }
 }
 
+/*************************************************************************
+ * Logical AND
+ *************************************************************************/
 
-void ompi_mpi_op_sum_func(void *in, void *out, int *count, 
-                         MPI_Datatype *type)
-{
-  /* JMS Need to fill in */
-}
+#undef current_func
+#define current_func(a, b) ((a) && (b))
+/* C integer */
+FUNC_FUNC(land, int, int)
+FUNC_FUNC(land, long, long)
+FUNC_FUNC(land, short, short)
+FUNC_FUNC(land, unsigned_short, unsigned short)
+FUNC_FUNC(land, unsigned, unsigned)
+FUNC_FUNC(land, unsigned_long, unsigned long)
+/* Logical */
+FUNC_FUNC(land, fortran_logical, ompi_fortran_logical_t)
 
+/*************************************************************************
+ * Logical OR
+ *************************************************************************/
 
-void ompi_mpi_op_prod_func(void *in, void *out, int *count, 
-                          MPI_Datatype *type)
-{
-  /* JMS Need to fill in */
-}
+#undef current_func
+#define current_func(a, b) ((a) || (b))
+/* C integer */
+FUNC_FUNC(lor, int, int)
+FUNC_FUNC(lor, long, long)
+FUNC_FUNC(lor, short, short)
+FUNC_FUNC(lor, unsigned_short, unsigned short)
+FUNC_FUNC(lor, unsigned, unsigned)
+FUNC_FUNC(lor, unsigned_long, unsigned long)
+/* Logical */
+FUNC_FUNC(lor, fortran_logical, ompi_fortran_logical_t)
 
+/*************************************************************************
+ * Logical XOR
+ *************************************************************************/
 
-void ompi_mpi_op_land_func(void *in, void *out, int *count, 
-                          MPI_Datatype *type)
-{
-  /* JMS Need to fill in */
-}
+#undef current_func
+#define current_func(a, b) ((a) ^ (b))
+/* C integer */
+FUNC_FUNC(lxor, int, int)
+FUNC_FUNC(lxor, long, long)
+FUNC_FUNC(lxor, short, short)
+FUNC_FUNC(lxor, unsigned_short, unsigned short)
+FUNC_FUNC(lxor, unsigned, unsigned)
+FUNC_FUNC(lxor, unsigned_long, unsigned long)
+/* Logical */
+FUNC_FUNC(lxor, fortran_logical, ompi_fortran_logical_t)
 
+/*************************************************************************
+ * Bitwise AND
+ *************************************************************************/
 
-void ompi_mpi_op_band_func(void *in, void *out, int *count, 
-                          MPI_Datatype *type)
-{
-  /* JMS Need to fill in */
-}
+#undef current_func
+#define current_func(a, b) ((a) & (b))
+/* C integer */
+FUNC_FUNC(band, int, int)
+FUNC_FUNC(band, long, long)
+FUNC_FUNC(band, short, short)
+FUNC_FUNC(band, unsigned_short, unsigned short)
+FUNC_FUNC(band, unsigned, unsigned)
+FUNC_FUNC(band, unsigned_long, unsigned long)
+/* Fortran integer */
+FUNC_FUNC(band, fortran_integer, MPI_Fint)
+/* Byte */
+FUNC_FUNC(band, byte, char)
 
+/*************************************************************************
+ * Bitwise OR
+ *************************************************************************/
 
-void ompi_mpi_op_lor_func(void *in, void *out, int *count, 
-                         MPI_Datatype *type)
-{
-  /* JMS Need to fill in */
-}
+#undef current_func
+#define current_func(a, b) ((a) | (b))
+/* C integer */
+FUNC_FUNC(bor, int, int)
+FUNC_FUNC(bor, long, long)
+FUNC_FUNC(bor, short, short)
+FUNC_FUNC(bor, unsigned_short, unsigned short)
+FUNC_FUNC(bor, unsigned, unsigned)
+FUNC_FUNC(bor, unsigned_long, unsigned long)
+/* Fortran integer */
+FUNC_FUNC(bor, fortran_integer, MPI_Fint)
+/* Byte */
+FUNC_FUNC(bor, byte, char)
 
+/*************************************************************************
+ * Bitwise XOR
+ *************************************************************************/
 
-void ompi_mpi_op_bor_func(void *in, void *out, int *count, 
-                         MPI_Datatype *type)
-{
-  /* JMS Need to fill in */
-}
-
-
-void ompi_mpi_op_lxor_func(void *in, void *out, int *count, 
-                          MPI_Datatype *type)
-{
-  /* JMS Need to fill in */
-}
-
-
-void ompi_mpi_op_bxor_func(void *in, void *out, int *count, 
-                          MPI_Datatype *type)
-{
-  /* JMS Need to fill in */
-}
-
-
-void ompi_mpi_op_maxloc_func(void *in, void *out, int *count, 
-                            MPI_Datatype *type)
-{
-  /* JMS Need to fill in */
-}
-
-
-void ompi_mpi_op_minloc_func(void *in, void *out, int *count, 
-                            MPI_Datatype *type)
-{
-  /* JMS Need to fill in */
-}
-
-
-void ompi_mpi_op_replace_func(void *in, void *out, int *count, 
-                             MPI_Datatype *type)
-{
-  /* JMS Need to fill in */
-}
+#undef current_func
+#define current_func(a, b) ((a) ^ (b))
+/* C integer */
+FUNC_FUNC(bxor, int, int)
+FUNC_FUNC(bxor, long, long)
+FUNC_FUNC(bxor, short, short)
+FUNC_FUNC(bxor, unsigned_short, unsigned short)
+FUNC_FUNC(bxor, unsigned, unsigned)
+FUNC_FUNC(bxor, unsigned_long, unsigned long)
+/* Fortran integer */
+FUNC_FUNC(bxor, fortran_integer, MPI_Fint)
+/* Byte */
+FUNC_FUNC(bxor, byte, char)
 

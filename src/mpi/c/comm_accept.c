@@ -77,7 +77,7 @@ int MPI_Comm_accept(char *port_name, MPI_Info info, int root,
     }
     
     /* bcast maxprocs to all processes in comm and allocate the rprocs array*/
-    rc = comp->c_coll.coll_bcast_intra ( &maxprocs, 1, MPI_INT, root, comm);
+    rc = comp->c_coll.coll_bcast ( &maxprocs, 1, MPI_INT, root, comm);
     if ( OMPI_SUCCESS != rc ) {
         goto exit;
     }
@@ -91,7 +91,7 @@ int MPI_Comm_accept(char *port_name, MPI_Info info, int root,
     }
     
     /* bcast list of remote procs to all processes in comm */
-    rc = comp->c_coll.coll_bcast_intra ( &rprocs, maxprocs, MPI_UNSIGNED, root, comm);
+    rc = comp->c_coll.coll_bcast ( &rprocs, maxprocs, MPI_UNSIGNED, root, comm);
     if ( OMPI_SUCCESS != rc ) {
        goto exit;
     }

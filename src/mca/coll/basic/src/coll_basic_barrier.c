@@ -5,10 +5,10 @@
 #include "ompi_config.h"
 #include "coll_basic.h"
 
-#include "constants.h"
-#include "communicator/communicator.h"
-#include "util/hibit.h"
 #include "mpi.h"
+#include "include/constants.h"
+#include "communicator/communicator.h"
+#include "util/bit_ops.h"
 #include "mca/pml/pml.h"
 #include "mca/coll/coll.h"
 #include "mca/coll/base/coll_tags.h"
@@ -16,13 +16,13 @@
 
 
 /*
- *	barrier_lin
+ *	barrier_intra_lin
  *
  *	Function:	- barrier using O(N) algorithm
  *	Accepts:	- same as MPI_Barrier()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int mca_coll_basic_barrier_lin(MPI_Comm comm)
+int mca_coll_basic_barrier_intra_lin(struct ompi_communicator_t *comm)
 {
   int i;
   int err;
@@ -73,14 +73,13 @@ int mca_coll_basic_barrier_lin(MPI_Comm comm)
 
 
 /*
- *	barrier_log
+ *	barrier_intra_log
  *
  *	Function:	- barrier using O(log(N)) algorithm
  *	Accepts:	- same as MPI_Barrier()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int
-mca_coll_basic_barrier_log(MPI_Comm comm)
+int mca_coll_basic_barrier_intra_log(struct ompi_communicator_t *comm)
 {
   int i;
   int err;
@@ -144,4 +143,30 @@ mca_coll_basic_barrier_log(MPI_Comm comm)
   /* All done */
 
   return MPI_SUCCESS;
+}
+
+
+/*
+ *	barrier_inter_lin
+ *
+ *	Function:	- barrier using O(log(N)) algorithm
+ *	Accepts:	- same as MPI_Barrier()
+ *	Returns:	- MPI_SUCCESS or error code
+ */
+int mca_coll_basic_barrier_inter_lin(struct ompi_communicator_t *comm)
+{
+  return OMPI_ERR_NOT_IMPLEMENTED;
+}
+
+
+/*
+ *	barrier_inter_log
+ *
+ *	Function:	- barrier using O(log(N)) algorithm
+ *	Accepts:	- same as MPI_Barrier()
+ *	Returns:	- MPI_SUCCESS or error code
+ */
+int mca_coll_basic_barrier_inter_log(struct ompi_communicator_t *comm)
+{
+  return OMPI_ERR_NOT_IMPLEMENTED;
 }

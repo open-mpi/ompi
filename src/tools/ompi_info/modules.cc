@@ -84,7 +84,7 @@ void ompi_info::open_modules()
 
   // coll module opening not implemented yet
   mca_coll_base_open();
-  module_map["coll"] = &mca_coll_base_modules_opened;
+  module_map["coll"] = &mca_coll_base_components_opened;
 
 #if 0
   // io module opening not implemented yet

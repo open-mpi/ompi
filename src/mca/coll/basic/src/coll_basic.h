@@ -7,8 +7,11 @@
 
 #include "ompi_config.h"
 
+#include "mpi.h"
 #include "mca/mca.h"
 #include "mca/coll/coll.h"
+#include "request/request.h"
+#include "mca/pml/pml.h"
 
 
 /*
@@ -26,84 +29,218 @@ extern const mca_coll_base_module_1_0_0_t mca_coll_basic_module;
 extern "C" {
 #endif
 
-  /* basic's comm_query function is prototyped in
-     <mca/mpi/coll/coll.h> because other modules may invoke it. */
+  /* API functions */
 
-  int mca_coll_basic_init_query(int *thread_min, int *thread_max);
+  int mca_coll_basic_init_query(bool *allow_multi_user_threads,
+                                bool *have_hidden_threads);
+  const struct mca_coll_1_0_0_t *
+    mca_coll_basic_comm_query(struct ompi_communicator_t *comm, int *priority);
+  int mca_coll_basic_comm_unquery(struct ompi_communicator_t *comm);
 
-  int mca_coll_basic_init(MPI_Comm comm, const mca_coll_1_0_0_t **new_coll);
-  int mca_coll_basic_finalize(MPI_Comm comm);
+  const struct mca_coll_1_0_0_t *
+    mca_coll_basic_module_init(struct ompi_communicator_t *comm);
+  int mca_coll_basic_module_finalize(struct ompi_communicator_t *comm);
 
-  int mca_coll_basic_allgather(void *sbuf, int scount, 
-                               MPI_Datatype sdtype, void *rbuf, 
-                               int rcount, MPI_Datatype rdtype, 
-                               MPI_Comm comm);
-  int mca_coll_basic_allgatherv(void *sbuf, int scount, 
-                                MPI_Datatype sdtype, void * rbuf, 
-                                int *rcounts, int *disps, 
-                                MPI_Datatype rdtype, 
-                                MPI_Comm comm);
-  int mca_coll_basic_allreduce(void *sbuf, void *rbuf, int count, 
-                               MPI_Datatype dtype, MPI_Op op, 
-                               MPI_Comm comm);
-  int mca_coll_basic_alltoall(void *sbuf, int scount, 
-                              MPI_Datatype sdtype, void* rbuf, 
-                              int rcount, MPI_Datatype rdtype, 
-                              MPI_Comm comm);
-  int mca_coll_basic_alltoallv(void *sbuf, int *scounts, 
-                               int *sdisps, MPI_Datatype sdtype, 
-                               void *rbuf, int *rcounts, 
-                               int *rdisps, MPI_Datatype rdtype, 
-                               MPI_Comm comm);
-  int mca_coll_basic_alltoallw(void *sbuf, int *scounts, 
-                               int *sdisps, MPI_Datatype *sdtypes, 
-                               void *rbuf, int *rcounts, 
-                               int *rdisps, MPI_Datatype *rdtypes, 
-                               MPI_Comm comm);
-  int mca_coll_basic_barrier_lin(MPI_Comm comm);
-  int mca_coll_basic_barrier_log(MPI_Comm comm);
-  int mca_coll_basic_bcast_lin(void *buff, int count, 
-                               MPI_Datatype datatype, int root, 
-                               MPI_Comm comm);
-  int mca_coll_basic_bcast_log(void *buff, int count, 
-                               MPI_Datatype datatype, int root, 
-                               MPI_Comm comm);
-  int mca_coll_basic_exscan(void *sbuf, void *rbuf, int count, 
-                            MPI_Datatype dtype, MPI_Op op, 
-                            MPI_Comm comm);
-  int mca_coll_basic_gather(void *sbuf, int scount, 
-                            MPI_Datatype sdtype, void *rbuf, 
-                            int rcount, MPI_Datatype rdtype, 
-                            int root, MPI_Comm comm);
-  int mca_coll_basic_gatherv(void *sbuf, int scount, 
-                             MPI_Datatype sdtype, void *rbuf, 
-                             int *rcounts, int *disps, 
-                             MPI_Datatype rdtype, int root, 
-                             MPI_Comm comm);
-  int mca_coll_basic_reduce_lin(void *sbuf, void* rbuf, int count, 
-                                MPI_Datatype dtype, MPI_Op op, 
-                                int root, MPI_Comm comm);
-  int mca_coll_basic_reduce_log(void *sbuf, void* rbuf, int count, 
-                                MPI_Datatype dtype, MPI_Op op, 
-                                int root, MPI_Comm comm);
-  int mca_coll_basic_reduce_scatter(void *sbuf, void *rbuf, 
-                                    int *rcounts, 
-                                    MPI_Datatype dtype, 
-                                    MPI_Op op, MPI_Comm comm);
-  int mca_coll_basic_scan(void *sbuf, void *rbuf, int count, 
-                          MPI_Datatype dtype, MPI_Op op, 
-                          MPI_Comm comm);
-  int mca_coll_basic_scatter(void *sbuf, int scount, 
-                             MPI_Datatype sdtype, void *rbuf, 
-                             int rcount, MPI_Datatype rdtype, 
-                             int root, MPI_Comm comm);
-  int mca_coll_basic_scatterv(void *sbuf, int *scounts, 
-                              int *disps, MPI_Datatype sdtype, 
-                              void* rbuf, int rcount, 
-                              MPI_Datatype rdtype, int root, 
-                              MPI_Comm comm);
+  int mca_coll_basic_allgather_intra(void *sbuf, int scount, 
+                                     struct ompi_datatype_t *sdtype, 
+                                     void *rbuf, int rcount, 
+                                     struct ompi_datatype_t *rdtype, 
+                                     struct ompi_communicator_t *comm);
+  int mca_coll_basic_allgather_inter(void *sbuf, int scount, 
+                                     struct ompi_datatype_t *sdtype, 
+                                     void *rbuf, int rcount, 
+                                     struct ompi_datatype_t *rdtype, 
+                                     struct ompi_communicator_t *comm);
+
+  int mca_coll_basic_allgatherv_intra(void *sbuf, int scount, 
+                                      struct ompi_datatype_t *sdtype, 
+                                      void * rbuf, int *rcounts, int *disps, 
+                                      struct ompi_datatype_t *rdtype, 
+                                      struct ompi_communicator_t *comm);
+  int mca_coll_basic_allgatherv_inter(void *sbuf, int scount, 
+                                      struct ompi_datatype_t *sdtype, 
+                                      void * rbuf, int *rcounts, int *disps, 
+                                      struct ompi_datatype_t *rdtype, 
+                                      struct ompi_communicator_t *comm);
+
+  int mca_coll_basic_allreduce_intra(void *sbuf, void *rbuf, int count, 
+                                     struct ompi_datatype_t *dtype, 
+                                     struct ompi_op_t *op, 
+                                     struct ompi_communicator_t *comm);
+  int mca_coll_basic_allreduce_inter(void *sbuf, void *rbuf, int count, 
+                                     struct ompi_datatype_t *dtype, 
+                                     struct ompi_op_t *op, 
+                                     struct ompi_communicator_t *comm);
+
+  int mca_coll_basic_alltoall_intra(void *sbuf, int scount, 
+                                    struct ompi_datatype_t *sdtype, 
+                                    void* rbuf, int rcount, 
+                                    struct ompi_datatype_t *rdtype, 
+                                    struct ompi_communicator_t *comm);
+  int mca_coll_basic_alltoall_inter(void *sbuf, int scount, 
+                                    struct ompi_datatype_t *sdtype, 
+                                    void* rbuf, int rcount, 
+                                    struct ompi_datatype_t *rdtype, 
+                                    struct ompi_communicator_t *comm);
+
+  int mca_coll_basic_alltoallv_intra(void *sbuf, int *scounts, int *sdisps, 
+                                     struct ompi_datatype_t *sdtype, 
+                                     void *rbuf, int *rcounts, int *rdisps, 
+                                     struct ompi_datatype_t *rdtype, 
+                                     struct ompi_communicator_t *comm);
+  int mca_coll_basic_alltoallv_inter(void *sbuf, int *scounts, int *sdisps, 
+                                     struct ompi_datatype_t *sdtype, 
+                                     void *rbuf, int *rcounts, int *rdisps, 
+                                     struct ompi_datatype_t *rdtype, 
+                                     struct ompi_communicator_t *comm);
+
+  int mca_coll_basic_alltoallw_intra(void *sbuf, int *scounts, int *sdisps, 
+                                     struct ompi_datatype_t **sdtypes, 
+                                     void *rbuf, int *rcounts, int *rdisps, 
+                                     struct ompi_datatype_t **rdtypes, 
+                                     struct ompi_communicator_t *comm);
+  int mca_coll_basic_alltoallw_inter(void *sbuf, int *scounts, int *sdisps, 
+                                     struct ompi_datatype_t **sdtypes, 
+                                     void *rbuf, int *rcounts, int *rdisps, 
+                                     struct ompi_datatype_t **rdtypes, 
+                                     struct ompi_communicator_t *comm);
+
+  int mca_coll_basic_barrier_intra_lin(struct ompi_communicator_t *comm);
+  int mca_coll_basic_barrier_inter_lin(struct ompi_communicator_t *comm);
+
+  int mca_coll_basic_barrier_intra_log(struct ompi_communicator_t *comm);
+  int mca_coll_basic_barrier_inter_log(struct ompi_communicator_t *comm);
+
+  int mca_coll_basic_bcast_lin_intra(void *buff, int count, 
+                                     struct ompi_datatype_t *datatype,
+                                     int root, 
+                                     struct ompi_communicator_t *comm);
+  int mca_coll_basic_bcast_lin_inter(void *buff, int count, 
+                                     struct ompi_datatype_t *datatype, 
+                                     int root, 
+                                     struct ompi_communicator_t *comm);
+
+  int mca_coll_basic_bcast_log_intra(void *buff, int count, 
+                                     struct ompi_datatype_t *datatype, 
+                                     int root, 
+                                     struct ompi_communicator_t *comm);
+  int mca_coll_basic_bcast_log_inter(void *buff, int count, 
+                                     struct ompi_datatype_t *datatype, 
+                                     int root, 
+                                     struct ompi_communicator_t *comm);
+
+  int mca_coll_basic_exscan_intra(void *sbuf, void *rbuf, int count, 
+                                  struct ompi_datatype_t *dtype, 
+                                  struct ompi_op_t *op, 
+                                  struct ompi_communicator_t *comm);
+  int mca_coll_basic_exscan_inter(void *sbuf, void *rbuf, int count, 
+                                  struct ompi_datatype_t *dtype, 
+                                  struct ompi_op_t *op, 
+                                  struct ompi_communicator_t *comm);
+
+  int mca_coll_basic_gather_intra(void *sbuf, int scount, 
+                                  struct ompi_datatype_t *sdtype, void *rbuf, 
+                                  int rcount, struct ompi_datatype_t *rdtype, 
+                                  int root, struct ompi_communicator_t *comm);
+  int mca_coll_basic_gather_inter(void *sbuf, int scount, 
+                                  struct ompi_datatype_t *sdtype, void *rbuf, 
+                                  int rcount, struct ompi_datatype_t *rdtype, 
+                                  int root, struct ompi_communicator_t *comm);
+
+  int mca_coll_basic_gatherv_intra(void *sbuf, int scount, 
+                                   struct ompi_datatype_t *sdtype, void *rbuf, 
+                                   int *rcounts, int *disps, 
+                                   struct ompi_datatype_t *rdtype, int root, 
+                                   struct ompi_communicator_t *comm);
+  int mca_coll_basic_gatherv_inter(void *sbuf, int scount, 
+                                   struct ompi_datatype_t *sdtype, void *rbuf, 
+                                   int *rcounts, int *disps, 
+                                   struct ompi_datatype_t *rdtype, int root, 
+                                   struct ompi_communicator_t *comm);
+
+  int mca_coll_basic_reduce_lin_intra(void *sbuf, void* rbuf, int count, 
+                                      struct ompi_datatype_t *dtype, 
+                                      struct ompi_op_t *op, 
+                                      int root,
+                                      struct ompi_communicator_t *comm);
+  int mca_coll_basic_reduce_lin_inter(void *sbuf, void* rbuf, int count, 
+                                      struct ompi_datatype_t *dtype,
+                                      struct ompi_op_t *op, 
+                                      int root,
+                                      struct ompi_communicator_t *comm);
+
+  int mca_coll_basic_reduce_log_intra(void *sbuf, void* rbuf, int count, 
+                                      struct ompi_datatype_t *dtype, 
+                                      struct ompi_op_t *op, 
+                                      int root, 
+                                      struct ompi_communicator_t *comm);
+  int mca_coll_basic_reduce_log_inter(void *sbuf, void* rbuf, int count, 
+                                      struct ompi_datatype_t *dtype, 
+                                      struct ompi_op_t *op, 
+                                      int root,
+                                      struct ompi_communicator_t *comm);
+
+  int mca_coll_basic_reduce_scatter_intra(void *sbuf, void *rbuf, 
+                                          int *rcounts, 
+                                          struct ompi_datatype_t *dtype, 
+                                          struct ompi_op_t *op, 
+                                          struct ompi_communicator_t *comm);
+  int mca_coll_basic_reduce_scatter_inter(void *sbuf, void *rbuf, 
+                                          int *rcounts, 
+                                          struct ompi_datatype_t *dtype, 
+                                          struct ompi_op_t *op, 
+                                          struct ompi_communicator_t *comm);
+  
+  int mca_coll_basic_scan_intra(void *sbuf, void *rbuf, int count, 
+                                struct ompi_datatype_t *dtype, 
+                                struct ompi_op_t *op, 
+                                struct ompi_communicator_t *comm);
+  int mca_coll_basic_scan_inter(void *sbuf, void *rbuf, int count, 
+                                struct ompi_datatype_t *dtype, 
+                                struct ompi_op_t *op, 
+                                struct ompi_communicator_t *comm);
+
+  int mca_coll_basic_scatter_intra(void *sbuf, int scount, 
+                                   struct ompi_datatype_t *sdtype, void *rbuf, 
+                                   int rcount, struct ompi_datatype_t *rdtype, 
+                                   int root, struct ompi_communicator_t *comm);
+  int mca_coll_basic_scatter_inter(void *sbuf, int scount, 
+                                   struct ompi_datatype_t *sdtype, void *rbuf, 
+                                   int rcount, struct ompi_datatype_t *rdtype, 
+                                   int root, struct ompi_communicator_t *comm);
+
+  int mca_coll_basic_scatterv_intra(void *sbuf, int *scounts, int *disps, 
+                                    struct ompi_datatype_t *sdtype, 
+                                    void* rbuf, int rcount, 
+                                    struct ompi_datatype_t *rdtype, int root, 
+                                    struct ompi_communicator_t *comm);
+  int mca_coll_basic_scatterv_inter(void *sbuf, int *scounts, int *disps, 
+                                    struct ompi_datatype_t *sdtype, 
+                                    void* rbuf, int rcount, 
+                                    struct ompi_datatype_t *rdtype, int root, 
+                                    struct ompi_communicator_t *comm);
+
 #ifdef __cplusplus
 }
 #endif
+
+
+/* Utility functions */
+
+static inline void mca_coll_basic_free_reqs(ompi_request_t **reqs, int count)
+{
+  int i;
+  for (i = 0; i < count; ++i)
+    mca_pml.pml_free(&reqs[i]);
+}
+
+
+/*
+ * Data structure for hanging data off the communicator 
+ */
+struct mca_coll_comm_t {
+  ompi_request_t **mccb_reqs;
+  int mccb_num_reqs;
+};
 
 #endif /* MCA_COLL_BASIC_EXPORT_H */

@@ -30,14 +30,13 @@ int mca_base_init_select_modules(int requested,
                                 bool allow_multi_user_threads,
                                 bool have_hidden_threads, int *provided)
 {
-  ompi_list_t colls;
   bool user_threads, hidden_threads;
-
 
   /* Make final lists of available modules (i.e., call the query/init
      functions and see if they return happiness).  For pml, there will
      only be one (because there's only one for the whole process), but
      for ptl and coll, we'll get lists back. */
+
   if (OMPI_SUCCESS != mca_mpool_base_init(&user_threads)) {
     return OMPI_ERROR;
   }
@@ -59,9 +58,8 @@ int mca_base_init_select_modules(int requested,
   allow_multi_user_threads &= user_threads;
   have_hidden_threads |= hidden_threads;
 
-  OBJ_CONSTRUCT(&colls, ompi_list_t);
-  if (OMPI_SUCCESS != mca_coll_base_select(&colls, &user_threads, 
-                                          &hidden_threads)) {
+  if (OMPI_SUCCESS != mca_coll_base_find_available(&user_threads, 
+                                                   &hidden_threads)) {
     return OMPI_ERROR;
   }
   allow_multi_user_threads &= user_threads;
@@ -71,9 +69,11 @@ int mca_base_init_select_modules(int requested,
      selection.  pml is already selected. */
 
   /* JMS ...Do more here with the thread level, etc.... */
+
   *provided = requested;
-  if(have_hidden_threads)
+  if (have_hidden_threads) {
       ompi_set_using_threads(true);
+  }
 
   /* Tell the selected pml module about all the selected ptl
      modules */

@@ -75,3 +75,21 @@ extern bool ompi_mpi_param_check;
 #undef OMPI_ENABLE_DEBUG
 #define OMPI_ENABLE_DEBUG 1
 #endif
+
+
+/*
+ * C type for Fortran COMPLEX
+ */
+typedef struct {
+  ompi_fortran_real_t real;
+  ompi_fortran_real_t imag;
+} ompi_fortran_complex_t;
+
+
+/*
+ * C type for Fortran DOUBLE COMPLEX
+ */
+typedef struct {
+  ompi_fortran_dblprec_t real;
+  ompi_fortran_dblprec_t imag;
+} ompi_fortran_dblcomplex_t;

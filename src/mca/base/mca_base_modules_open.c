@@ -53,7 +53,7 @@ int mca_base_modules_open(const char *type_name, int output_id,
   /* Register MCA parameters */
 
   param_verbose = mca_base_param_register_int(type_name, "base", 
-                                              "verbose", NULL, 10);
+                                              "verbose", NULL, 0);
   param_type = mca_base_param_register_string(type_name, "base", NULL, 
                                               type_name, NULL);
 

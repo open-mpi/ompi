@@ -95,8 +95,8 @@ int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
     }
 
     /* bcast size and vpid lists to all processes in local_comm */
-    rc = local_comm->c_coll.coll_bcast_intra ( &rsize, 1, MPI_INT, local_leader, 
-                                               local_comm );
+    rc = local_comm->c_coll.coll_bcast ( &rsize, 1, MPI_INT, local_leader, 
+                                         local_comm );
     if ( rc != MPI_SUCCESS ) {
         goto err_exit;
     }

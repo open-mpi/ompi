@@ -37,7 +37,8 @@ int mca_base_module_compare_priority(
 }
 
 
-int mca_base_module_compare(mca_base_module_t* aa, mca_base_module_t* bb)
+int mca_base_module_compare(const mca_base_module_t* aa, 
+                            const mca_base_module_t* bb)
 {
     /* The priorities were equal, so compare the names */
     int val = strncmp(aa->mca_module_name, bb->mca_module_name,

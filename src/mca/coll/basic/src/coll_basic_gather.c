@@ -5,24 +5,26 @@
 #include "ompi_config.h"
 #include "coll_basic.h"
 
-#include "constants.h"
-#include "coll_basic.h"
 #include "mpi.h"
+#include "include/constants.h"
+#include "coll_basic.h"
 #include "datatype/datatype.h"
 #include "mca/coll/coll.h"
 #include "mca/coll/base/coll_tags.h"
 #include "mca/pml/pml.h"
 
 /*
- *	gather
+ *	gather_intra
  *
  *	Function:	- basic gather operation
  *	Accepts:	- same arguments as MPI_Gather()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int mca_coll_basic_gather(void *sbuf, int scount, MPI_Datatype sdtype, 
-                          void *rbuf, int rcount, MPI_Datatype rdtype, 
-                          int root, MPI_Comm comm)
+int mca_coll_basic_gather_intra(void *sbuf, int scount, 
+                                struct ompi_datatype_t *sdtype, 
+                                void *rbuf, int rcount, 
+                                struct ompi_datatype_t *rdtype, 
+                                int root, struct ompi_communicator_t *comm)
 {
     int i;
     int err;
@@ -48,8 +50,9 @@ int mca_coll_basic_gather(void *sbuf, int scount, MPI_Datatype sdtype,
     /* I am the root, loop receiving the data. */
 
     err = ompi_ddt_get_extent(rdtype, &lb, &extent);
-    if (0 != err)
+    if (OMPI_SUCCESS != err) {
 	return OMPI_ERROR;
+    }
 
     incr = extent * rcount;
     for (i = 0, ptmp = (char *) rbuf; i < size; ++i, ptmp += incr) {
@@ -73,4 +76,21 @@ int mca_coll_basic_gather(void *sbuf, int scount, MPI_Datatype sdtype,
     /* All done */
   
     return MPI_SUCCESS;
+}
+
+
+/*
+ *	gather_inter
+ *
+ *	Function:	- basic gather operation
+ *	Accepts:	- same arguments as MPI_Gather()
+ *	Returns:	- MPI_SUCCESS or error code
+ */
+int mca_coll_basic_gather_inter(void *sbuf, int scount,
+                                struct ompi_datatype_t *sdtype, 
+                                void *rbuf, int rcount, 
+                                struct ompi_datatype_t *rdtype, 
+                                int root, struct ompi_communicator_t *comm)
+{
+  return OMPI_ERR_NOT_IMPLEMENTED;
 }

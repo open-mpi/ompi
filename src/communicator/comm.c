@@ -9,6 +9,7 @@
 
 #include "communicator/communicator.h"
 #include "proc/proc.h"
+#include "util/bit_ops.h"
 #include "include/constants.h"
 #include "mca/pcm/pcm.h"
 #include "mca/pml/pml.h"
@@ -64,7 +65,6 @@ ompi_communicator_t * ompi_comm_set ( ompi_communicator_t* oldcomm,
     ompi_communicator_t *newcomm;
     ompi_proc_t *my_gpointer;
     int my_grank;
-    int rc;
 
     /* Allocate comm structure */
     newcomm = ompi_comm_allocate ( local_size, remote_size );
@@ -97,7 +97,8 @@ ompi_communicator_t * ompi_comm_set ( ompi_communicator_t* oldcomm,
              newcomm->c_contextid);
 
     /* Determine cube_dim */
-    newcomm->c_cube_dim = ompi_cube_dim(newcomm->c_local_group->grp_proc_count);
+    newcomm->c_cube_dim = 
+      ompi_cube_dim(newcomm->c_local_group->grp_proc_count);
 
     /* Set Topology, if required */
     
@@ -125,22 +126,7 @@ ompi_communicator_t * ompi_comm_set ( ompi_communicator_t* oldcomm,
     /* Initialize the coll modules */
     /* Let the collectives modules fight over who will do
        collective on this new comm.  */
-    if (OMPI_ERROR == mca_coll_base_init_comm(newcomm)) {
-	goto err_exit;
-    }
-
-    /* ******* VPS: Remove this later -- need to be in coll module ******  */
-    /* VPS: Cache the reqs for bcast */
-    newcomm->bcast_lin_reqs =
-	malloc (mca_coll_base_bcast_collmaxlin * sizeof(ompi_request_t*));
-    if (NULL ==  newcomm->bcast_lin_reqs) {
-        rc = OMPI_ERR_OUT_OF_RESOURCE;
-        goto err_exit;
-    }
-    newcomm->bcast_log_reqs = 
-	malloc (mca_coll_base_bcast_collmaxdim * sizeof(ompi_request_t*));
-    if (NULL ==  newcomm->bcast_log_reqs) {
-        rc = OMPI_ERR_OUT_OF_RESOURCE;
+    if (OMPI_ERROR == mca_coll_base_comm_select(newcomm, NULL)) {
 	goto err_exit;
     }
 
@@ -313,7 +299,6 @@ int ompi_comm_split ( ompi_communicator_t* comm, int color, int key,
     int rc=OMPI_SUCCESS;
     ompi_proc_t **procs=NULL, **rprocs=NULL;
     ompi_communicator_t *newcomp;
-    ompi_comm_allgatherfct *allgatherfnct;
     
     /* Step 1: determine all the information for the local group */
     /* --------------------------------------------------------- */
@@ -329,19 +314,8 @@ int ompi_comm_split ( ompi_communicator_t* comm, int color, int key,
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-#ifdef HAVE_COMM_SPLIT_FOR_INTERCOMMS
-    if (inter) {
-        allgatherfnct = (ompi_comm_allgatherfct*)ompi_comm_allgather_emulate_intra;
-    }
-    else {
-#endif
-        allgatherfnct = (ompi_comm_allgatherfct*)comm->c_coll.coll_allgather_intra;
-
-#ifdef HAVE_COMM_SPLIT_FOR_INTERCOMMS    
-    }
-#endif
-
-    rc = allgatherfnct ( myinfo, 2, MPI_INT, results, 2, MPI_INT, comm );
+    rc = comm->c_coll.coll_allgather( myinfo, 2, MPI_INT,
+                                      results, 2, MPI_INT, comm );
     if ( OMPI_SUCCESS != rc ) {
         goto exit;
     }
@@ -676,8 +650,8 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
         }
     }
 
-    rc = local_comm->c_coll.coll_bcast_intra ( rvpids, rsize, MPI_UNSIGNED, 
-                                         local_leader, local_comm );
+    rc = local_comm->c_coll.coll_bcast( rvpids, rsize, MPI_UNSIGNED, 
+                                        local_leader, local_comm );
     if ( rc != MPI_SUCCESS ) {
         goto err_exit;
     }
@@ -720,35 +694,35 @@ int ompi_comm_determine_first ( ompi_communicator_t *intercomm, int high )
      */
     if ( lvpid->proc_vpid > rvpid->proc_vpid ) {
         if ( 0 == local_rank  ) {
-            rc = intercomm->c_coll.coll_bcast_inter ( &high, 1, MPI_INT, MPI_ROOT,
-                                                      intercomm );
+            rc = intercomm->c_coll.coll_bcast(&high, 1, MPI_INT, MPI_ROOT,
+                                              intercomm );
         }
         else {
-            rc = intercomm->c_coll.coll_bcast_inter ( &high, 1, MPI_INT, MPI_PROC_NULL,
-                                                      intercomm );
+            rc = intercomm->c_coll.coll_bcast(&high, 1, MPI_INT, MPI_PROC_NULL,
+                                              intercomm );
         }
         if ( rc != MPI_SUCCESS ) {
             return rc;
         }
 
-        rc = intercomm->c_coll.coll_bcast_inter ( &rhigh, 1, MPI_INT, 0, intercomm );
+        rc = intercomm->c_coll.coll_bcast ( &rhigh, 1, MPI_INT, 0, intercomm );
         if ( rc != MPI_SUCCESS ) {
             return rc;
         }
     }
     else {
-        rc = intercomm->c_coll.coll_bcast_inter ( &rhigh, 1, MPI_INT, 0, intercomm );
+        rc = intercomm->c_coll.coll_bcast ( &rhigh, 1, MPI_INT, 0, intercomm );
         if ( rc != MPI_SUCCESS ) {
             return rc;
         }
 
         if ( 0 == local_rank  ) {
-            rc = intercomm->c_coll.coll_bcast_inter ( &high, 1, MPI_INT, MPI_ROOT,
-                                                      intercomm );
+            rc = intercomm->c_coll.coll_bcast ( &high, 1, MPI_INT, MPI_ROOT,
+                                                intercomm );
         }
         else { 
-            rc = intercomm->c_coll.coll_bcast_inter ( &high, 1, MPI_INT, MPI_PROC_NULL,
-                                                      intercomm );
+            rc = intercomm->c_coll.coll_bcast(&high, 1, MPI_INT, MPI_PROC_NULL,
+                                              intercomm);
         }
         if ( rc != MPI_SUCCESS ) {
             return rc;

@@ -2,16 +2,31 @@
  * $HEADER$
  */
 
-/**
- * @file 
+/** @file 
+ * This file presents the MCA parameter interface.
  *
- * Run-time MCA parameter registration and lookup.
+ * Note that there are two scopes for MCA parameters: "normal" and
+ * attributes.  Specifically, all MCA parameters are "normal" -- some
+ * are special and may also be found on attributes on communicators,
+ * datatypes, or windows.
+ *
+ * In general, these functions are intended to be used as follows:
+ *
+ * - Creating MCA parameters
+ * -# Register a parameter, get an index back
+ * -# Optionally associate that index with an attribute keyval
+ * - Using MCA parameters
+ * -# Lookup a "normal" parameter value on a specific index, or
+ * -# Lookup an attribute parameter on a specific index and
+ *    communicator / datatype / window.
  */
 
 #ifndef OMPI_MCA_BASE_PARAM_H
 #define OMPI_MCA_BASE_PARAM_H
 
 #include "mpi.h"
+
+#include "class/ompi_hash_table.h"
 
 /**
  * \internal
@@ -25,7 +40,8 @@ typedef union {
   /**< String value */
 } mca_base_param_storage_t;
 
-/**
+/** \internal
+ *
  * Special name used to indicate that this is an "info" value.
  */
 #define MCA_BASE_PARAM_INFO ((void*) -1)
@@ -92,14 +108,15 @@ extern "C" {
   /**
    * Register an integer MCA parameter.
    *
-   * @param type_name The MCA type (string).
-   * @param module_name The name of the module (string).
-   * @param param_name The name of the parameter being registered (string).
-   * @param mca_param_name If NULL, the user-visible name of the
+   * @param type_name[in] The MCA type (string).
+   * @param module_name[in] The name of the module (string).
+   * @param param_name[in] The name of the parameter being registered
+   * (string).
+   * @param mca_param_name[in] If NULL, the user-visible name of the
    * parameter is {type_name}_{module_name}_{param_name}.  If this
    * parameter is non-NULL, it is used instead of the default name.
-   * @param default_value The value that is used for this parameter if
-   * the user does not supply one.
+   * @param default_value[in] The value that is used for this
+   * parameter if the user does not supply one.
    *
    * @retval OMPI_ERROR Upon failure to register the parameter.
    * @retval index Index value that can be used with
@@ -120,14 +137,15 @@ extern "C" {
   /**
    * Register a string MCA parameter.
    *
-   * @param type_name The MCA type (string).
-   * @param module_name The name of the module (string).
-   * @param param_name The name of the parameter being registered (string).
-   * @param mca_param_name If NULL, the user-visible name of the
+   * @param type_name[in] The MCA type (string).
+   * @param module_name[in] The name of the module (string).
+   * @param param_name[in] The name of the parameter being registered
+   * (string).
+   * @param mca_param_name[in] If NULL, the user-visible name of the
    * parameter is {type_name}_{module_name}_{param_name}.  If this
    * parameter is non-NULL, it is used instead of the default name.
-   * @param default_value The value that is used for this parameter if
-   * the user does not supply one.
+   * @param default_value[in] The value that is used for this
+   * parameter if the user does not supply one.
    *
    * @retval OMPI_ERROR Upon failure to register the parameter.
    * @retval index Index value that can be used with
@@ -145,6 +163,31 @@ extern "C" {
                                      const char *param_name, 
                                      const char *mca_param_name,
                                      const char *default_value);
+
+  /**
+   * Associate a communicator/datatype/window keyval with an MCA
+   * parameter.
+   *
+   * @param index The index of the parameter to use.
+   * @param keyval The keyval to associate it with.
+   *
+   * @returns OMPI_SUCCESS Upon success.
+   * @returns OMPI_ERROR If the index value is invalid.
+   *
+   * For an index value that was previously returned by
+   * mca_base_param_register_int() or
+   * mca_base_param_register_string(), the corresponding MCA parameter
+   * can be associated with a communicator, datatype, or window
+   * attribute keyval.  
+   *
+   * After using this function, you can use any of the four lookup
+   * functions (mca_base_param_lookup_int(),
+   * mca_base_param_lookup_string(), mca_base_param_kv_lookup_int(),
+   * and mca_base_param_kv_lookup_string()), but only the "kv"
+   * versions will cross reference and attempt to find parameter
+   * values on attributes.
+   */
+  int mca_base_param_kv_associate(int index, int keyval);
 
   /**
    * Look up an integer MCA parameter.
@@ -165,6 +208,29 @@ extern "C" {
   int mca_base_param_lookup_int(int index, int *value);
 
   /**
+   * Look up an integer MCA parameter, to include looking in
+   * attributes.
+   *
+   * @param index Index previous returned from
+   * mca_base_param_register_int().
+   * @param attr Object containing attributes to be searched.
+   * @param value Pointer to int where the parameter value will
+   * be stored.
+   *
+   * @retvalue OMPI_ERROR Upon failure.  The contents of value are
+   * undefined.
+   * @retvalue OMPI_SUCCESS Upon success.  value will be filled with the
+   * parameter's current value.
+   *
+   * This function is identical to mca_base_param_lookup_int() except
+   * that it looks in attributes \em first to find the parameter
+   * value.  The function mca_base_param_kv_associate() must have been
+   * called first to associate a keyval with the index.
+   */
+  int mca_base_param_kv_lookup_int(int index, struct ompi_hash_table_t *attrs, 
+                                   int *value);
+
+  /**
    * Look up a string MCA parameter.
    *
    * @param index Index previous returned from
@@ -181,6 +247,29 @@ extern "C" {
    * return value from mca_base_param_register_string().
    */
   int mca_base_param_lookup_string(int index, char **value);
+
+  /**
+   * Look up a string MCA parameter, to include looking in attributes.
+   *
+   * @param index[in] Index previous returned from
+   * mca_base_param_register_string().
+   * @param attr[in] Object containing attributes to be searched.
+   * @param value[out] Pointer to (char *) where the parameter value
+   * will be stored.
+   *
+   * @retvalue OMPI_ERROR Upon failure.  The contents of value are
+   * undefined.
+   * @retvalue OMPI_SUCCESS Upon success.  value will be filled with the
+   * parameter's current value.
+   *
+   * This function is identical to mca_base_param_lookup_string()
+   * except that it looks in attributes \em first to find the
+   * parameter value.  The function mca_base_param_kv_associate() must
+   * have been called first to associate a keyval with the index.
+   */
+  int mca_base_param_kv_lookup_string(int index, 
+                                      struct ompi_hash_table_t *attrs, 
+                                      char **value);
 
   /**
    * Find the index for an MCA parameter based on its names.
@@ -220,12 +309,6 @@ extern "C" {
    */
   int mca_base_param_finalize(void);
 
-#if 0
-  /* JMS these are currently unimplemented */
-  int mca_base_param_kv_associate(int index, int keyval);
-  int mca_base_param_kv_lookup_int(int index, MPI_Comm comm);
-  char *mca_base_param_kv_lookup_string(int index, MPI_Comm comm);
-#endif
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

@@ -21,33 +21,36 @@
 static const char FUNC_NAME[] = "MPI_Barrier";
 
 
-int MPI_Barrier(MPI_Comm comm)
+int MPI_Barrier(MPI_Comm comm) 
 {
-    int err;
-    mca_coll_base_barrier_fn_t func;
+  int err = MPI_SUCCESS;
 
-    if (MPI_PARAM_CHECK) {
-      if (MPI_COMM_NULL == comm) {
-	return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
-                                     FUNC_NAME);
-      }
+  /* Error checking */
+
+  if (MPI_PARAM_CHECK) {
+    OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+    if (ompi_comm_invalid(comm)) {
+      return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
     }
+  }
 
-    /* Obvious case */
+  /* Intracommunicators: Only invoke the back-end coll module barrier
+     function if there's more than one process in the communicator */
 
-    if (ompi_comm_size(comm) <= 1) {
-	return MPI_SUCCESS;
+  if (OMPI_COMM_IS_INTRA(comm)) {
+    if (ompi_comm_size(comm) > 1) {
+      err = comm->c_coll.coll_barrier(comm);
     }
+  } 
 
-    /* VPS: Need to change this to another pointer, because we wont have
-       two pointers - intra and inter - cached in the new design */
-    func = comm->c_coll.coll_barrier_intra;
+  /* Intercommunicators -- always invoke, because, by definition,
+     there's always at least 2 processes in an intercommunicator. */
 
-    if (NULL == func) {
-      return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_OTHER, FUNC_NAME);
-    }
+  else {
+    err = comm->c_coll.coll_barrier(comm);
+  }
 
-    err = func(comm);
-    
-    OMPI_ERRHANDLER_RETURN(err, comm, MPI_ERR_UNKNOWN, FUNC_NAME);
+  /* All done */
+
+  OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }

@@ -333,7 +333,8 @@ extern "C" {
    *
    * @see ompi_output_set_verbosity()
    */
-  void ompi_output_verbose(int output_id, int verbose_level, char *format, ...);
+  void ompi_output_verbose(int verbose_level, int output_id, 
+                           char *format, ...);
 
   /**
    * Set the verbosity level for a stream.

@@ -19,60 +19,94 @@
 
 static const char FUNC_NAME[] = "MPI_Gather";
 
+
 int MPI_Gather(void *sendbuf, int sendcount, MPI_Datatype sendtype,
                void *recvbuf, int recvcount, MPI_Datatype recvtype,
                int root, MPI_Comm comm) 
 {
-    int rank;
-    int size;
     int err;
-    mca_coll_base_gather_fn_t func;
     
     if (MPI_PARAM_CHECK) {
-	if (MPI_COMM_NULL == comm) {
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+        if (ompi_comm_invalid(comm)) {
 	    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
-					 FUNC_NAME);
+                                          FUNC_NAME);
 	}
-    }	
 
-    func = comm->c_coll.coll_gather_intra;
+        /* Errors for intracommunicators */
 
-    if (OMPI_COMM_IS_INTRA(comm)) {
-	/* conditions for intracomm */
-	MPI_Comm_size(comm, &size);
-	MPI_Comm_rank(comm, &rank);
-	if ((root >= size) || (root < 0)) {
-	    return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ROOT, FUNC_NAME);
-	}
-	if ((sendcount < 0) || (rank == root && recvcount < 0)) {
-	    return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COUNT, FUNC_NAME);
-	}
-	if ((sendtype == MPI_DATATYPE_NULL) ||
-	    (rank == root && recvtype == MPI_DATATYPE_NULL)) {
-	    return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TYPE, FUNC_NAME); 
-	}
-    } else {
-	/* Conditions for intercomm */
-	MPI_Comm_remote_size(comm, &size);
-	if (((root != MPI_PROC_NULL) && (sendtype == MPI_DATATYPE_NULL)) ||
-	    (root == MPI_ROOT  && recvtype == MPI_DATATYPE_NULL)) {
-	    return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TYPE, FUNC_NAME); 
-	}
-	if (!(((root < size) && (root >= 0)) 
-	      || (root == MPI_ROOT) || (root == MPI_PROC_NULL))) {
-	    return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ROOT, FUNC_NAME); 
-	}
+        if (OMPI_COMM_IS_INTRA(comm)) {
+
+          /* Errors for all ranks */
+
+          if ((root >= ompi_comm_size(comm)) || (root < 0)) {
+            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ROOT, FUNC_NAME);
+          }
+
+          if (sendcount < 0) {
+            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COUNT, FUNC_NAME);
+          }
+
+          if (sendtype == MPI_DATATYPE_NULL) {
+            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TYPE, FUNC_NAME); 
+          }
+
+          /* Errors for the root.  Some of these could have been
+             combined into compound if statements above, but since
+             this whole section can be compiled out (or turned off at
+             run time) for efficiency, it's more clear to separate
+             them out into individual tests. */
+
+          if (ompi_comm_rank(comm) == root) {
+            if (recvtype == MPI_DATATYPE_NULL) {
+              return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TYPE, FUNC_NAME); 
+            }
+
+            if (recvcount < 0) {
+              return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COUNT, FUNC_NAME);
+            }
+          }
+        }
+
+        /* Errors for intercommunicators */
+
+        else {
+        if (! ((root >= 0 && root < ompi_comm_remote_size(comm)) ||
+               root == MPI_ROOT || root == MPI_PROC_NULL)) {
+            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ROOT, FUNC_NAME);
+          }
+
+          /* Errors for the senders */
+
+          if (root != MPI_ROOT && root != MPI_PROC_NULL) {
+            if (sendcount < 0) {
+              return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COUNT, FUNC_NAME);
+            }
+
+            if (sendtype == MPI_DATATYPE_NULL) {
+              return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TYPE, FUNC_NAME); 
+            }
+          }
+
+          /* Errors for the root.  Ditto on the comment above -- these
+             error checks could have been combined above, but let's
+             make the code easier to read. */
+
+          else if (MPI_ROOT == root) {
+            if (recvcount < 0) {
+              return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COUNT, FUNC_NAME);
+            }
+
+            if (recvtype == MPI_DATATYPE_NULL) {
+              return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TYPE, FUNC_NAME); 
+            }
+          }
+        }
     }
 
-    if (func == NULL) {
-	return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_OTHER, FUNC_NAME); 
-    }
-
-
-    /* Call the coll SSI to actually perform the bcast */
+    /* Invoke the coll component to perform the back-end operation */
 	
-    err = func(sendbuf, sendcount, sendtype, recvbuf,
-	       recvcount, recvtype, root, comm);
-
-    OMPI_ERRHANDLER_RETURN(err, comm, MPI_ERR_UNKNOWN, FUNC_NAME);
+    err = comm->c_coll.coll_gather(sendbuf, sendcount, sendtype, recvbuf,
+                                   recvcount, recvtype, root, comm);
+    OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }

@@ -5,9 +5,11 @@
 #include "ompi_config.h"
 
 #include <stdio.h>
+
 #include "mpi.h"
 
 #include "communicator/communicator.h"
+#include "util/bit_ops.h"
 #include "include/constants.h"
 #include "mca/pml/pml.h"
 #include "mca/coll/coll.h"
@@ -71,19 +73,6 @@ int ompi_comm_init(void)
     ompi_mpi_comm_world.c_flags |= OMPI_COMM_INTRINSIC;
     ompi_attr_hash_init(&ompi_mpi_comm_world.c_keyhash);
 
-    /* VPS: Remove this later */
-    ompi_mpi_comm_world.bcast_lin_reqs =
-	malloc (mca_coll_base_bcast_collmaxlin * sizeof(ompi_request_t*));
-    if (NULL ==  ompi_mpi_comm_world.bcast_lin_reqs) {
-	return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-    ompi_mpi_comm_world.bcast_log_reqs = 
-	malloc (mca_coll_base_bcast_collmaxdim * sizeof(ompi_request_t*));
-    if (NULL ==  ompi_mpi_comm_world.bcast_log_reqs) {
-	return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-    
-
     /* Setup MPI_COMM_SELF */
     OBJ_CONSTRUCT(&ompi_mpi_comm_self, ompi_communicator_t);
     group = OBJ_NEW(ompi_group_t);
@@ -108,19 +97,6 @@ int ompi_comm_init(void)
     ompi_mpi_comm_self.c_flags |= OMPI_COMM_INTRINSIC;
     ompi_attr_hash_init(&ompi_mpi_comm_self.c_keyhash);
     
-    /* VPS: Remove this later */
-    ompi_mpi_comm_self.bcast_lin_reqs =
-	malloc (mca_coll_base_bcast_collmaxlin * sizeof(ompi_request_t*));
-    if (NULL ==  ompi_mpi_comm_self.bcast_lin_reqs) {
-	return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-    ompi_mpi_comm_self.bcast_log_reqs = 
-	malloc (mca_coll_base_bcast_collmaxdim * sizeof(ompi_request_t*));
-    if (NULL ==  ompi_mpi_comm_self.bcast_log_reqs) {
-	return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-
-
     /* Setup MPI_COMM_NULL */
     OBJ_CONSTRUCT(&ompi_mpi_comm_null, ompi_communicator_t);
     ompi_mpi_comm_null.c_local_group  = &ompi_mpi_group_null;
@@ -139,10 +115,6 @@ int ompi_comm_init(void)
     strncpy(ompi_mpi_comm_null.c_name,"MPI_COMM_NULL",strlen("MPI_COMM_NULL")+1);
     ompi_mpi_comm_null.c_flags |= OMPI_COMM_NAMEISSET;
     ompi_mpi_comm_null.c_flags |= OMPI_COMM_INTRINSIC;
-
-    /* VPS: Remove this later */
-    ompi_mpi_comm_null.bcast_lin_reqs = NULL;
-    ompi_mpi_comm_null.bcast_log_reqs = NULL;
 
     /* Initialize the parent communicator to MPI_COMM_NULL */
     ompi_mpi_comm_parent = &ompi_mpi_comm_null;
@@ -227,14 +199,26 @@ static void ompi_comm_construct(ompi_communicator_t* comm)
     comm->c_remote_group = NULL;
     comm->error_handler  = NULL;
     comm->c_pml_comm     = NULL;
-    comm->c_coll_comm    = NULL;
     comm->c_topo_comm    = NULL; 
+
+    comm->c_coll_selected_module = NULL;
+    comm->c_coll_selected_data   = NULL;
+    comm->c_coll_basic_module    = NULL;
+    comm->c_coll_basic_data      = NULL;
 
     return;
 }
 
 static void ompi_comm_destruct(ompi_communicator_t* comm)
 {
+    /* Release the collective module */
+
+    mca_coll_base_comm_unselect(comm);
+
+    /* Release topology information */
+
+    /* ...Anju add more here... */
+
     OBJ_RELEASE ( comm->c_local_group );
     OBJ_RELEASE ( comm->c_remote_group );
     
@@ -247,19 +231,6 @@ static void ompi_comm_destruct(ompi_communicator_t* comm)
                                      comm->c_f_to_c_index, NULL);
     }
 
-
-    /* **************VPS: need a coll_base_finalize ******** */
-
-    /* Release topology information */
-
-    /******** VPS: this goes away *************/
-    /* Release the cached bcast requests */
-    if ( NULL != comm->bcast_lin_reqs ) {
-        free (comm->bcast_lin_reqs);
-    }
-    if ( NULL != comm->bcast_log_reqs ) {
-        free (comm->bcast_log_reqs);
-    }
 
     return;
 }

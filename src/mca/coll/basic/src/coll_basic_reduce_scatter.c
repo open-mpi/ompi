@@ -8,8 +8,8 @@
 #include <stdio.h>
 #include <errno.h>
 
-#include "constants.h"
 #include "mpi.h"
+#include "include/constants.h"
 #include "mca/coll/coll.h"
 #include "mca/coll/base/coll_tags.h"
 #include "coll_basic.h"
@@ -22,24 +22,25 @@
  *	Accepts:	- same as MPI_Reduce_scatter()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int mca_coll_basic_reduce_scatter(void *sbuf, void *rbuf, int *rcounts,
-                                  MPI_Datatype dtype, MPI_Op op,
-                                  MPI_Comm comm)
+int mca_coll_basic_reduce_scatter_intra(void *sbuf, void *rbuf, int *rcounts,
+                                        struct ompi_datatype_t *dtype,
+                                        struct ompi_op_t *op,
+                                        struct ompi_communicator_t *comm)
 {
-#if 1
-  return OMPI_ERR_NOT_IMPLEMENTED;
-#else
   int i;
   int err;
   int rank;
   int size;
   int count;
+  long true_lb, true_extent, lb, extent;
   int *disps = NULL;
-  char *buffer = NULL;
-  char *origin = NULL;
+  char *free_buffer = NULL;
+  char *pml_buffer = NULL;
 
-  MPI_Comm_size(comm, &size);
-  MPI_Comm_rank(comm, &rank);
+  /* Initialize */
+
+  rank = ompi_comm_rank(comm);
+  size = ompi_comm_size(comm);
 
   /* Initialize reduce & scatterv info at the root (rank 0). */
 
@@ -53,44 +54,63 @@ int mca_coll_basic_reduce_scatter(void *sbuf, void *rbuf, int *rcounts,
   if (0 == rank) {
     disps = malloc((unsigned) size * sizeof(int));
     if (NULL == disps) {
-      free(disps);
-      return errno;
+      return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-#if 0
-    /* JMS Need to replace this with ompi_datatype_*() functions */
-    err = ompi_dtbuffer(dtype, count, &buffer, &origin);
-    if (MPI_SUCCESS != err) {
+    /* There is lengthy rationale about how this malloc works in
+       coll_basic_reduce.c */
+
+    ompi_ddt_get_extent(dtype, &lb, &extent);
+    ompi_ddt_get_true_extent(dtype, &true_lb, &true_extent);
+
+    free_buffer = malloc(true_extent + (count - 1) * extent);
+    if (NULL == free_buffer) {
       free(disps);
-      return err;
+      return OMPI_ERR_OUT_OF_RESOURCE;
     }
-#endif
+    pml_buffer = free_buffer - lb;
 
     disps[0] = 0;
-    for (i = 0; i < (size - 1); ++i)
+    for (i = 0; i < (size - 1); ++i) {
       disps[i + 1] = disps[i] + rcounts[i];
+    }
   }
 
   /* reduction */
 
-  err = MPI_Reduce(sbuf, origin, count, dtype, op, 0, comm);
-  if (MPI_SUCCESS != err) {
-    if (NULL != disps)
-      free(disps);
-    if (NULL != buffer)
-      free(buffer);
-    return err;
-  }
+  err = comm->c_coll.coll_reduce(sbuf, pml_buffer, count, dtype, op, 0, comm);
 
   /* scatter */
 
-  err = MPI_Scatterv(origin, rcounts, disps, dtype,
-		     rbuf, rcounts[rank], dtype, 0, comm);
-  if (NULL != disps)
+  if (MPI_SUCCESS == err) {
+    err = comm->c_coll.coll_scatterv(pml_buffer, rcounts, disps, dtype,
+                                     rbuf, rcounts[rank], dtype, 0, comm);
+  }
+
+  /* All done */
+
+  if (NULL != disps) {
     free(disps);
-  if (NULL != buffer)
-    free(buffer);
+  }
+  if (NULL != free_buffer) {
+    free(free_buffer);
+  }
 
   return err;
-#endif
+}
+
+
+/*
+ *	reduce_scatter_inter
+ *
+ *	Function:	- reduce/scatter operation
+ *	Accepts:	- same arguments as MPI_Reduce_scatter()
+ *	Returns:	- MPI_SUCCESS or error code
+ */
+int mca_coll_basic_reduce_scatter_inter(void *sbuf, void *rbuf, int *rcounts,
+                                        struct ompi_datatype_t *dtype,
+                                        struct ompi_op_t *op,
+                                        struct ompi_communicator_t *comm)
+{
+  return OMPI_ERR_NOT_IMPLEMENTED;
 }

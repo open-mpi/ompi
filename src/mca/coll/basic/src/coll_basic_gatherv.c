@@ -5,63 +5,66 @@
 #include "ompi_config.h"
 #include "coll_basic.h"
 
-#include "constants.h"
 #include "mpi.h"
+#include "include/constants.h"
 #include "mca/coll/coll.h"
 #include "mca/coll/base/coll_tags.h"
 #include "coll_basic.h"
 
 
 /*
- *	gatherv
+ *	gatherv_intra
  *
  *	Function:	- basic gatherv operation
  *	Accepts:	- same arguments as MPI_Bcast()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int mca_coll_basic_gatherv(void *sbuf, int scount, MPI_Datatype sdtype,
-                           void *rbuf, int *rcounts, int *disps,
-                           MPI_Datatype rdtype, int root,
-                           MPI_Comm comm)
+int mca_coll_basic_gatherv_intra(void *sbuf, int scount, 
+                                 struct ompi_datatype_t *sdtype,
+                                 void *rbuf, int *rcounts, int *disps,
+                                 struct ompi_datatype_t *rdtype, int root,
+                                 struct ompi_communicator_t *comm)
 {
-#if 1
-  return OMPI_ERR_NOT_IMPLEMENTED;
-#else
   int i;
   int rank;
   int size;
   int err;
   char *ptmp;
-  MPI_Aint extent;
+  long lb;
+  long extent;
 
-  /* JMS: Need to replace lots things in this file: ompi_dt* stuff with
-     ompi_datatype_*() functions.  Also need to replace lots of
-     MPI_Send/MPI_Recv with negative tags and PML entry points. */
-
-  MPI_Comm_size(comm, &size);
-  MPI_Comm_rank(comm, &rank);
+  size = ompi_comm_size(comm);
+  rank = ompi_comm_rank(comm);
 
   /* Everyone but root sends data and returns. */
 
   if (rank != root) {
-    err = MPI_Send(sbuf, scount, sdtype, root, BLKMPIGATHERV, comm);
+    err = mca_pml.pml_send(sbuf, scount, sdtype, root,
+                           MCA_COLL_BASE_TAG_GATHERV, 
+                           MCA_PML_BASE_SEND_STANDARD, comm);
     return err;
   }
 
   /* I am the root, loop receiving data. */
 
-  MPI_Type_extent(rdtype, &extent);
+  err = ompi_ddt_get_extent(rdtype, &lb, &extent);
+  if (OMPI_SUCCESS != err) {
+    return OMPI_ERROR;
+  }
+
   for (i = 0; i < size; ++i) {
     ptmp = ((char *) rbuf) + (extent * disps[i]);
 
     /* simple optimization */
 
     if (i == rank) {
-      err = ompi_dtsndrcv(sbuf, scount, sdtype,
-			 ptmp, rcounts[i], rdtype, BLKMPIGATHERV, comm);
+      err = ompi_ddt_sndrcv(sbuf, scount, sdtype,
+                           ptmp, rcounts[i], rdtype, 
+                           MCA_COLL_BASE_TAG_GATHERV, comm);
     } else {
-      err = MPI_Recv(ptmp, rcounts[i], rdtype, i,
-		     BLKMPIGATHERV, comm, MPI_STATUS_IGNORE);
+      err = mca_pml.pml_recv(ptmp, rcounts[i], rdtype, i,
+                             MCA_COLL_BASE_TAG_GATHERV, 
+                             comm, MPI_STATUS_IGNORE);
     }
 
     if (MPI_SUCCESS != err) {
@@ -72,5 +75,21 @@ int mca_coll_basic_gatherv(void *sbuf, int scount, MPI_Datatype sdtype,
   /* All done */
 
   return MPI_SUCCESS;
-#endif
+}
+
+
+/*
+ *	gatherv_inter
+ *
+ *	Function:	- basic gatherv operation
+ *	Accepts:	- same arguments as MPI_Bcast()
+ *	Returns:	- MPI_SUCCESS or error code
+ */
+int mca_coll_basic_gatherv_inter(void *sbuf, int scount,
+                                 struct ompi_datatype_t *sdtype,
+                                 void *rbuf, int *rcounts, int *disps,
+                                 struct ompi_datatype_t *rdtype, int root,
+                                 struct ompi_communicator_t *comm)
+{
+  return OMPI_ERR_NOT_IMPLEMENTED;
 }

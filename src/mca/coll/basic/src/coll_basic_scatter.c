@@ -5,67 +5,69 @@
 #include "ompi_config.h"
 #include "coll_basic.h"
 
-#include "constants.h"
 #include "mpi.h"
+#include "include/constants.h"
 #include "mca/coll/coll.h"
 #include "mca/coll/base/coll_tags.h"
+#include "mca/pml/pml.h"
 #include "coll_basic.h"
 
 
 /*
- *	scatter
+ *	scatter_intra
  *
  *	Function:	- scatter operation
  *	Accepts:	- same arguments as MPI_Scatter()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int mca_coll_basic_scatter(void *sbuf, int scount, MPI_Datatype sdtype,
-                           void *rbuf, int rcount, MPI_Datatype rdtype,
-                           int root, MPI_Comm comm)
+int mca_coll_basic_scatter_intra(void *sbuf, int scount, 
+                                 struct ompi_datatype_t *sdtype,
+                                 void *rbuf, int rcount, 
+                                 struct ompi_datatype_t *rdtype,
+                                 int root, 
+                                 struct ompi_communicator_t *comm)
 {
-#if 1
-  return OMPI_ERR_NOT_IMPLEMENTED;
-#else
   int i;
   int rank;
   int size;
   int err;
   char *ptmp;
-  MPI_Aint incr;
+  long lb;
+  long incr;
 
-  MPI_Comm_rank(comm, &rank);
-  MPI_Comm_size(comm, &size);
+  /* Initialize */
+
+  rank = ompi_comm_rank(comm);
+  size = ompi_comm_size(comm);
 
   /* If not root, receive data. */
 
   if (rank != root) {
-#if 0
-    /* JMS Need to replace with negative tags and direct PML calls */
-    err = MPI_Recv(rbuf, rcount, rdtype,
-		   root, BLKMPISCATTER, comm, MPI_STATUS_IGNORE);
-#endif
+    err = mca_pml.pml_recv(rbuf, rcount, rdtype, root,
+                           MCA_COLL_BASE_TAG_SCATTER, 
+                           comm, MPI_STATUS_IGNORE);
     return err;
   }
 
   /* I am the root, loop sending data. */
 
-  MPI_Type_extent(sdtype, &incr);
+  err = ompi_ddt_get_extent(rdtype, &lb, &incr);
+  if (OMPI_SUCCESS != err) {
+    return OMPI_ERROR;
+  }
+
   incr *= scount;
   for (i = 0, ptmp = (char *) sbuf; i < size; ++i, ptmp += incr) {
 
     /* simple optimization */
 
     if (i == rank) {
-#if 0
-      /* JMS Need to replace this with ompi_datatype_*() functions */
-      err = ompi_dtsndrcv(ptmp, scount, sdtype, rbuf,
-			 rcount, rdtype, BLKMPISCATTER, comm);
-#endif
+      err = ompi_ddt_sndrcv(ptmp, scount, sdtype, rbuf,
+                           rcount, rdtype, MCA_COLL_BASE_TAG_SCATTER, comm);
     } else {
-#if 0
-    /* JMS Need to replace this with negative tags and direct PML calls */
-      err = MPI_Send(ptmp, scount, sdtype, i, BLKMPISCATTER, comm);
-#endif
+      err = mca_pml.pml_send(ptmp, scount, sdtype, i, 
+                             MCA_COLL_BASE_TAG_SCATTER, 
+                             MCA_PML_BASE_SEND_STANDARD, comm);
     }
     if (MPI_SUCCESS != err) {
       return err;
@@ -75,5 +77,22 @@ int mca_coll_basic_scatter(void *sbuf, int scount, MPI_Datatype sdtype,
   /* All done */
 
   return MPI_SUCCESS;
-#endif
+}
+
+
+/*
+ *	scatter_inter
+ *
+ *	Function:	- scatter operation
+ *	Accepts:	- same arguments as MPI_Scatter()
+ *	Returns:	- MPI_SUCCESS or error code
+ */
+int mca_coll_basic_scatter_inter(void *sbuf, int scount, 
+                                 struct ompi_datatype_t *sdtype,
+                                 void *rbuf, int rcount, 
+                                 struct ompi_datatype_t *rdtype,
+                                 int root, 
+                                 struct ompi_communicator_t *comm)
+{
+  return OMPI_ERR_NOT_IMPLEMENTED;
 }
