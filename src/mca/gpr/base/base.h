@@ -43,12 +43,14 @@
  * includes
  */
 #include <sys/types.h>
-#include <sys/inttypes.h>
+#include <stdint.h>
 #include <limits.h>
 
 #include "ompi_config.h"
 #include "include/constants.h"
 #include "class/ompi_list.h"
+
+#include "mca/gpr/gpr.h"
 
 /** Define the notification actions for the subscription system
  */
@@ -62,7 +64,7 @@
 #define OMPI_REGISTRY_NOTIFY_ALL              0xffff
 
 
-/** Define the action bit-masks for registry put and gets.
+/** Define the mode bit-masks for registry operations.
  */
 /** Overwrite permission */
 #define OMPI_REGISTRY_OVERWRITE       0x0001
@@ -70,12 +72,28 @@
 #define OMPI_REGISTRY_AND             0x0002
 /** OR tokens for search results */
 #define OMPI_REGISTRY_OR              0x0004
+/** XAND - all tokens required, nothing else allowed - must be exact match */
+#define OMPI_REGISTRY_XAND            0x0008
+/** XOR - any one of the tokens required, nothing else allowed */
+#define OMPI_REGISTRY_XOR             0x0010
 
+/*
+ * typedefs
+ */
+
+typedef uint16_t ompi_registry_action_t;
+typedef uint16_t ompi_registry_mode_t;
+
+
+/*
+ * globals
+ */
+
+mca_gpr_t mca_gpr;
 
 /*
  * structures
  */
-
 
 /** Return value structure for registry requests.
  * A request for information stored within the registry returns a linked list of values that
@@ -122,8 +140,10 @@ OBJ_CLASS_INSTANCE(
  * external function prototypes
  */
 
-/** Define a new registry segment.
- * The ompi_registry_definesegment() function allows the caller to create a new registry
+/** @fn int ompi_registry.definesegment(char *segment)
+ *
+ * Define a new registry segment.
+ * The ompi_registry.definesegment() function allows the caller to create a new registry
  * segment with the specified name. Each segment is given its own token-key dictionary and
  * object storage list. There is no limit nor restrictions on the number of segments
  * that can be created and who can create them, or for what they can be used. Attempts to
@@ -136,23 +156,11 @@ OBJ_CLASS_INSTANCE(
  * @retval OMPI_ERROR Indicates that the operation failed - most likely due to the
  * prior existence of a segment with an identical name.
  */
-int ompi_registry_definesegment(char *segment);
 
-/** Define multiple new registry segments.
- * Same functionality as the single segment request ompi_registry_definesegment().
+/** @fn int ompi_registry.put(ompi_registry_mode_t mode, char *segment, char **tokens, uint8_t *object, int size)
  *
- * @param segments A pointer to an array of character strings containing the names of
- * the segments to be created. The last entry in the array must be a string of length
- * zero ("\0").
- *
- * @retval OMPI_SUCCESS Indicates that the operation was successfully completed.
- * @retval OMPI_ERROR Indicates that the operation failed - most likely due to the
- * prior existence of a segment with an identical name.
- */
-int ompi_registry_definesegmentv(char **segments);
-
-/** Place an object on the registry.
- * The ompi_registry_put() function places an object on the registry within the specified
+ * Place an object on the registry.
+ * The ompi_registry.put() function places an object on the registry within the specified
  * registry segment. At least one token describing the object must be provided - an unlimited
  * number of additional tokens may also be provided. Note that placing an object on the
  * registry where another object with all tokens identical already exists will cause the
@@ -160,7 +168,7 @@ int ompi_registry_definesegmentv(char **segments);
  * includes overwrite permission, or (b) generate an error, if the action bit-mask does
  * not include overwrite permission.
  *
- * @param action A bit-mask constructed from the defined action values that controls
+ * @param mode A bit-mask constructed from the defined mode values that controls
  * the behaviour of the function.
  *
  * @param segment A pointer to a character string stating the registry segment to be used.
@@ -184,58 +192,18 @@ int ompi_registry_definesegmentv(char **segments);
  * @retval OMPI_ERROR Indicates that the registry was unable to store the object - most
  * likely due to specifying a non-existent segment or lack of available memory.
  */
-int ompi_registry_put(uint16_t action, char *segment, char **tokens, uint8_t *object, int size);
 
-/** Place multiple objects on the registry.
- * Same functionality as the single object ompi_registry_put() function.
+/** @fn ompi_registry_value_t* ompi_registry.get(ompi_registry_mode_t mode, char *segment, char **tokens)
  *
- * @param actions A pointer to an array of bit-masks constructed from the defined action value
- * that control the behaviour of the function. The number of bit-mask values must equal the
- * number of segments provided.
- *
- * @param segments A pointer to an array of character strings stating the registry segment to
- * be used for each object. The last entry in the array must point to a string of zero length.
- *
- * CAUTION: Failure to correctly
- * terminate the array will result
- * in segmentation violations or bus errors, thus causing the program to catastrophically fail.
- *
- * @param tokens A two-dimensional array of one or more pointers to character strings, each row
- * containing at least one token that defines the corresponding object being stored. The number
- * of rows in the array must match the number of segments provided.
- *
- * CAUTION: Each row in the array of tokens MUST end with a string of zero length ("\0")!
- * Failure to correctly
- * terminate the array will result
- * in segmentation violations or bus errors, thus causing the program to catastrophically fail.
- *
- * @param object A pointer to an array of pre-packed buffers to be stored on the registry.
- * The registry will create
- * a copy of each object. Since the registry has no knowledge of the object's internal structure,
- * each object must be pre-packed by the caller to ensure accurate communication to other
- * requestors on systems of different architecture. The number of entries in the array must
- * match the number of segments provided.
- *
- * @param size Pointer to an array of integer values of the size of the objects being passed,
- * in bytes. The number of entries in the array must match the number of segments provided.
- *
- * @retval OMPI_SUCCESS Indicates that the operation was successful.
- * @retval OMPI_ERROR Indicates that the registry was unable to store the objects - most
- * likely due to specifying a non-existent segment or lack of available memory.
- */
-int ompi_registry_putv(uint16_t *actions, char **segments, char ***tokens, uint8_t **objects, int *sizes);
-
-/** Retrieve an object from the registry.
- * The ompi_registry_get() function retrieves one or more packed buffers, each containing a copy of an
+ * Retrieve an object from the registry.
+ * The ompi_registry.get() function retrieves one or more packed buffers, each containing a copy of an
  * object previously stored on
  * the registry. The caller must provide the registry segment containing the object, and at
  * least one token that describes it. An unlimited number of additional tokens describing the
  * object may be provided. The function will return a linked list of all objects whose description
- * contains: (a) the entire specified collection of tokens, if the action bit-mask includes
- * the AND bit, or (b) any one of the specified tokens, if the action bit-mask includes
- * the OR bit. Failure to provide either of these two bits defaults to the AND condition.
+ * contains the specified tokens, with the tokens used as defined by the specified mode.
  *
- * @param action A bit-mask constructed from the defined registry action flags that controls
+ * @param mode A bit-mask constructed from the defined registry mode flags that controls
  * the behaviour of the function, as previously described.
  *
  * @param segment Pointer to a character string defining the segment of the registry.
@@ -255,134 +223,86 @@ int ompi_registry_putv(uint16_t *actions, char **segments, char ***tokens, uint8
  * the information in the object.
  * @retval NULL Indicates that no object meeting the provided specifications could not be found.
  */
-ompi_registry_value_t *ompi_registry_get(uint16_t action, char *segment, char **tokens);
 
-/** Perform multiple retrieves from the registry.
- * The ompi_registry_getv() function allows the caller to execute multiple ompi_registry_get()
- * calls in a single call, thus saving message overhead for faster response.
+/** @fn int ompi_registry.delete(ompi_registry_mode_t mode, char *segment, char **tokens)
  *
- * @param action An array of bit-masks constructed from the defined registry action flags that control
- * the behaviour of the function for each requested retrieval, as previously described.
- *
- * @param segment An array of pointers to character strings defining the segment of the registry
- * for each retrieval. The last value in the array must be a string of zero length.
- *
- * CAUTION: Failure to correctly
- * terminate the array will result
- * in segmentation violations or bus errors, thus causing the program to catastrophically fail.
- *
- * @param tokens A two-dimensional array of one or more pointers to character strings, each row
- * containing at least one token that defines the corresponding object being stored. The number
- * of rows in the array must match the number of segments provided.
- *
- * CAUTION: Each row in the array of tokens MUST end with a string of zero length ("\0")!
- * Failure to correctly
- * terminate the array will result
- * in segmentation violations or bus errors, thus causing the program to catastrophically fail.
- *
- * @retval object Pointer to a linked list of ompi_registry_value_t structures, each containing
- * the name of the segment, a linked list of the tokens that describe the object,
- * a pointer to a packed buffer containing a copy of the object retrieved from the registry,
- * and the size of the object in bytes. The caller must unpack the buffer to access
- * the information in the object.
- * @retval NULL Indicates that no object meeting the provided specifications could not be found
- * for any of the requested retrievals.
- */
-ompi_registry_value_t *ompi_registry_getv(uint16_t *action, char **segment, char ***tokens);
-
-
-/** Delete an object from the registry.
- * The ompi_registry_del() function removes an object that was previously stored on the registry.
+ * Delete an object from the registry.
+ * The ompi_registry.delete() function removes an object that was previously stored on the registry.
  * The caller must provide the registry segment containing the object, and at
  * least one token that describes it. An unlimited number of additional tokens describing the
  * object may be provided.
  *
+ * @param mode A bit-mask constructed from the defined registry mode flags that controls
+ * the behaviour of the function, as previously described.
+ *
  * CAUTION: The function will delete ALL objects that match the search criteria.
  *
- * CAUTION: The ompi_registry_del() function call MUST end with a NULL parameter! The C variable
- * argument system does not provide for a mechanism by which we can determine the number of
- * arguments that were passed. Failure to terminate the argument list with a NULL will result
+ * @param segment Pointer to a character string defining the segment of the registry.
+ * @param tokens Pointer to an array of pointers to character strings containing one or
+ * more tokens describing the object to be retrieved.
+ *
+ * CAUTION: The array must end with a string of zero length ("\0")! Failure to correctly
+ * terminate the array will result
  * in segmentation violations or bus errors, thus causing the program to catastrophically fail.
  *
- * @param segment Pointer to a character string defining the segment of the registry.
- * @param token Pointer to a character string containing the token to be deleted.
- * @param tokens... Additional tokens (provided as pointers to character strings) can be
- * provided to further identify the object being deleted.
- * @param NULL The last parameter in the function call MUST be a NULL to terminate the
- * variable list of arguments.
  * @retval OMPI_SUCCESS Indicates that the operation was successful.
  * @retval OMPI_ERROR Indicates that the registry was unable to delete the object - most
  * likely due to specifying a non-existent segment or object.
  */
-int ompi_registry_delete(char *segment, char **tokens);
 
-/** Obtain an index of the registry token-key dictionary.
- * The ompi_registry_index() function provides a list of the token-key pairs within
- * a specified dictionary. The caller must provide the name of the segment being
- * queried - this will return a linked list of all token-key pairs within that segment's
- * dictionary. Alternatively, the caller may also provide an unlimited number of tokens
- * which the caller would like to have translated - the function will then return a
- * linked list of token-key pairs. Any tokens not found will be ignored.
+/** @fn ompi_keytable_t* ompi_registry.index(char *segment)
  *
- * CAUTION: The ompi_registry_index() function call MUST end with a NULL parameter! The C variable
- * argument system does not provide for a mechanism by which we can determine the number of
- * arguments that were passed. Failure to terminate the argument list with a NULL will result
- * in segmentation violations or bus errors, thus causing the program to catastrophically fail.
+ * Obtain an index of the registry dictionary.
+ * The ompi_registry.index() function provides a list of the tokens within
+ * a specified dictionary. The caller provides the name of the segment being
+ * queried - this will return a linked list of all tokens within that segment's
+ * dictionary - or a NULL to return the list of tokens in the universe directory.
  *
  * @param segment Pointer to a character string defining the segment of the registry.
- * @param tokens... Additional tokens (provided as pointers to character strings) can be
- * provided that the caller would like to have translated.
- * @param NULL If segment parameter is NULL, then segment index returned.
+ * @param NULL If segment parameter is NULL, then index of universe dictionary is returned.
  *
- * @retval keyvalues A pointer to a linked list of token-key pairs. Any tokens not found
- * will be ignored and will, therefore, not be included in the returned list.
- * @retval NULL Indicates that the operation failed - most likely caused by failing to specify
- * any token that exists within the specified segment, or a non-existent segment.
+ * @retval keyvalues A pointer to a linked list of tokens.
+ * @retval NULL Indicates that the operation failed - most likely caused by specifying a non-existent segment.
  */
-ompi_keytable_t *ompi_registry_index(char *segment);
 
-/** Subscribe to a registry object.
- * The ompi_registry_subscribe() function allows the caller to be notified when specific actions
+/** @fn int ompi_registry.subscribe(ompi_registry_mode_t mode, ompi_registry_action_t action, char *segment, char **tokens)
+ *
+ * Subscribe to a registry object.
+ * The ompi_registry.subscribe() function allows the caller to be notified when specific actions
  * are taken on the specified object. Notification will be sent via the OOB communication channel.
- * The caller must provide an ID that allows the OOB to properly route the notification message.
  *
- * CAUTION: The ompi_registry_subscribe() function call MUST end with a NULL parameter! The C variable
- * argument system does not provide for a mechanism by which we can determine the number of
- * arguments that were passed. Failure to terminate the argument list with a NULL will result
- * in segmentation violations or bus errors, thus causing the program to catastrophically fail.
- *
- * @param caller The ID of the caller - used to route any subsequent notifications.
+ * @param mode A bit-mask constructed from the defined registry mode flags that controls
+ * the behaviour of the function, as previously described.
  * @param action A bit-mask value formed using the OMPI_REGISTRY_NOTIFY flags that indicates
  * the action that shall trigger notification of the caller.
  * @param segment Pointer to a character string defining the segment of the registry.
- * @param token Pointer to a character string containing the token of the object to which
- * the caller is subscribing.
- * @param tokens... Additional tokens (provided as pointers to character strings) can be
- * provided to further identify the object to which the caller is subscribing.
- * @param NULL The last parameter in the function call MUST be a NULL to terminate the
- * variable list of arguments.
+ * @param tokens Pointer to an array of pointers to character strings containing one or
+ * more tokens describing the object to be retrieved.
+ *
+ * CAUTION: The array must end with a string of zero length ("\0")! Failure to correctly
+ * terminate the array will result
+ * in segmentation violations or bus errors, thus causing the program to catastrophically fail.
  *
  * @retval OMPI_SUCCESS Indicates that the operation was successful.
  * @retval OMPI_ERROR Indicates that the operation failed - most likely caused by specifying
  * an object that did not exist within the specified segment, or a non-existent segment.
  */
-int ompi_registry_subscribe(int caller, uint8_t action, char *segment, char **tokens);
 
-/** Unsubscribe from a registry object.
+/** @fn int ompi_registry.unsubscribe(ompi_registry_mode_t mode, char *segment, char **tokens)
  *
- * CAUTION: The ompi_registry_put() function call MUST end with a NULL parameter! The C variable
- * argument system does not provide for a mechanism by which we can determine the number of
- * arguments that were passed. Failure to terminate the argument list with a NULL will result
- * in segmentation violations or bus errors, thus causing the program to catastrophically fail.
+ * Unsubscribe from a registry object.
+ * The ompi_registry.unsubscribe() function allows the caller to cancel a subscription to
+ * one or more objects on the registry.
  *
- * @param caller The ID of the caller wishing to remove its subscription to the object.
+ * @param mode A bit-mask constructed from the defined registry mode flags that controls
+ * the behaviour of the function, as previously described.
  * @param segment Pointer to a character string defining the segment of the registry.
- * @param token Pointer to a character string containing the token of the object to which
- * the caller is subscribed.
- * @param tokens... Additional tokens (provided as pointers to character strings) can be
- * provided to further identify the object to which the caller is subscribed.
- * @param NULL The last parameter in the function call MUST be a NULL to terminate the
- * variable list of arguments.
+ * @param tokens Pointer to an array of pointers to character strings containing one or
+ * more tokens describing the object to be retrieved.
+ *
+ * CAUTION: The array must end with a string of zero length ("\0")! Failure to correctly
+ * terminate the array will result
+ * in segmentation violations or bus errors, thus causing the program to catastrophically fail.
  *
  * @retval OMPI_SUCCESS Indicates that the operation was successful. Note that this value will
  * also be returned if the caller was not previously subscribed to the specified object since an
@@ -390,4 +310,3 @@ int ompi_registry_subscribe(int caller, uint8_t action, char *segment, char **to
  * @retval OMPI_ERROR Indicates that the operation failed - most likely caused by specifying
  * an object that did not exist within the specified segment, or a non-existent segment.
  */
-int ompi_registry_unsubscribe(int caller, uint8_t action, char *segment, char **tokens);
