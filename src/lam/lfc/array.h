@@ -41,9 +41,9 @@ void lam_arr_destroy(lam_array_t *arr);
 /* initializes array with fixed length.
  * lam_arr_init() must have been called first.
  */
-lam_bool_t lam_arr_init_with(lam_array_t *arr, size_t length);
+bool lam_arr_init_with(lam_array_t *arr, size_t length);
 
-lam_bool_t lam_arr_append_item(lam_array_t *arr, lam_object_t *item);
+bool lam_arr_append_item(lam_array_t *arr, lam_object_t *item);
 
 lam_object_t *lam_arr_get_item(lam_array_t *arr, int index);
 inline lam_object_t *lam_arr_get_item(lam_array_t *arr, int index)
@@ -52,6 +52,7 @@ inline lam_object_t *lam_arr_get_item(lam_array_t *arr, int index)
     {
         return arr->arr_items[index];
     }
+    return NULL;
 }
 
 size_t lam_arr_get_size(lam_array_t *arr);
