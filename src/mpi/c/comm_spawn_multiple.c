@@ -117,7 +117,7 @@ int MPI_Comm_spawn_multiple(int count, char **array_of_commands, char ***array_o
        ompi_comm_start_processes(count, array_of_commands,
                                  array_of_argv, array_of_maxprocs,
                                  array_of_info, port_name);
-       tmp_port = ompi_parse_port (port_name, &tag, NULL);
+       tmp_port = ompi_parse_port (port_name, &tag);
        free(tmp_port);
    }
 
