@@ -23,10 +23,7 @@
 #include "ptl_elan.h"
 #include "ptl_elan_proc.h"
 #include "ptl_elan_frag.h"
-#include "ptl_elan_req.h"
 #include "ptl_elan_priv.h"
-
-/*#define UNIT_TESTING 1*/
 
 extern ompi_proc_t *ompi_proc_local_proc;
 
@@ -120,14 +117,10 @@ mca_ptl_elan_module_open (void)
     elan_mp->elan_num_ptls = 0;
     elan_mp->elan_local = NULL; 
 
-    /* initialize list */
-    OBJ_CONSTRUCT (&elan_mp->elan_reqs, ompi_list_t);
+    /* initialize lists */
     OBJ_CONSTRUCT (&elan_mp->elan_procs, ompi_list_t);
     OBJ_CONSTRUCT (&elan_mp->elan_pending_acks, ompi_list_t);
     OBJ_CONSTRUCT (&elan_mp->elan_recv_frags, ompi_list_t);
-
-    /* initialize free list */
-    OBJ_CONSTRUCT (&elan_mp->elan_reqs_free, ompi_free_list_t);
     OBJ_CONSTRUCT (&elan_mp->elan_recv_frags_free, ompi_free_list_t);
 
     /* initialize other objects */
@@ -159,15 +152,6 @@ mca_ptl_elan_module_close (void)
 	}
     }
 
-    /* Check whether all the entries are return to the free list */
-    if (elan_mp->elan_reqs_free.fl_num_allocated !=
-        elan_mp->elan_reqs_free.super.ompi_list_length) {
-        ompi_output (0, "[%s:%d] send_requests: %d allocated %d returned\n",
-		     __FILE__, __LINE__,
-                     elan_mp->elan_reqs_free.fl_num_allocated,
-                     elan_mp->elan_reqs_free.super.ompi_list_length);
-    }
-
     if (elan_mp->elan_recv_frags_free.fl_num_allocated !=
         elan_mp->elan_recv_frags_free.super.ompi_list_length) {
         ompi_output (0, "[%s:%d] recv_frags : %d allocated %d returned\n",
@@ -176,10 +160,9 @@ mca_ptl_elan_module_close (void)
                      elan_mp->elan_recv_frags_free.super.ompi_list_length);
     }
 
-    /* FIXME: free free list entries before destructing lists */
+    /* FIXME: free free_list entries before destructing lists */
 
     /* Free the empty list holders */
-    OBJ_DESTRUCT (&(elan_mp->elan_reqs));
     OBJ_DESTRUCT (&(elan_mp->elan_procs));
     OBJ_DESTRUCT (&(elan_mp->elan_pending_acks));
     OBJ_DESTRUCT (&(elan_mp->elan_recv_frags));
@@ -187,8 +170,6 @@ mca_ptl_elan_module_close (void)
     /* TODO:
      * We need free all the memory allocated for this list
      * before desctructing this free_list */
-    
-    OBJ_DESTRUCT (&(elan_mp->elan_reqs_free));
     OBJ_DESTRUCT (&(elan_mp->elan_recv_frags_free));
 
     /* Destruct other structures */
@@ -214,8 +195,7 @@ mca_ptl_elan_module_init (int *num_ptls,
 
     START_FUNC();
 
-    if (CHECK_ELAN)
-    { 
+    if (CHECK_ELAN) { 
 	char hostname[32]; gethostname(hostname, 32); 
 	fprintf(stderr, "[%s:%s:%d] debugging ...\n",
 		hostname, __FUNCTION__, __LINE__);
@@ -225,13 +205,6 @@ mca_ptl_elan_module_init (int *num_ptls,
 
     *allow_multi_user_threads = true;
     *have_hidden_threads = OMPI_HAVE_THREADS;
-
-    ompi_free_list_init (&(elan_mp->elan_reqs_free),
-                         sizeof (mca_ptl_elan_send_request_t),
-                         OBJ_CLASS (mca_ptl_elan_send_request_t),
-                         elan_mp->elan_free_list_num,
-                         elan_mp->elan_free_list_max,
-                         elan_mp->elan_free_list_inc, NULL);
 
     ompi_free_list_init (&(elan_mp->elan_recv_frags_free),
                          sizeof (mca_ptl_elan_recv_frag_t),
@@ -295,7 +268,6 @@ int
 mca_ptl_elan_module_progress (mca_ptl_tstamp_t tstamp)
 {
     START_FUNC();
-    /*if ( times == 5) exit(1); else times ++;*/
     mca_ptl_elan_drain_recv(elan_mp);
     mca_ptl_elan_update_send(elan_mp);
     END_FUNC();

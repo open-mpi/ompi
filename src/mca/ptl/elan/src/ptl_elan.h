@@ -69,11 +69,8 @@ struct mca_ptl_elan_module_1_0_0_t {
     size_t elan_num_ptls;               /**< number of ptls activated */
 
     ompi_list_t  elan_procs;       /**< elan proc's */
-    ompi_list_t  elan_reqs;        /**< all elan requests */
     ompi_list_t  elan_recv_frags;
     ompi_list_t  elan_pending_acks;  
-
-    ompi_free_list_t elan_reqs_free;  /**< all elan requests */
     ompi_free_list_t elan_recv_frags_free;
 
     struct mca_ptl_elan_proc_t *elan_local; 
@@ -163,24 +160,24 @@ mca_ptl_elan_del_procs (struct mca_ptl_t *ptl,
 		       struct mca_ptl_base_peer_t **peers);
 
 /**
- * PML->PTL Allocate a send request from the PTL modules free list.
+ * PML->PTL acquire and initialize a send desc 
  *
  * @param ptl (IN)       PTL instance
  * @param request (OUT)  Pointer to allocated request.
  * @return               Status indicating if allocation was successful.
  */
 extern int  
-mca_ptl_elan_req_alloc (struct mca_ptl_t *ptl, 
-			struct mca_pml_base_send_request_t **);
+mca_ptl_elan_req_init (struct mca_ptl_t *ptl, 
+		       struct mca_pml_base_send_request_t *req);
 
 /**
- * PML->PTL Return a send request to the PTL modules free list.
+ * PML->PTL free the cached desc 
  *
  * @param ptl (IN)       PTL instance
  * @param request (IN)   Pointer to allocated request.
  */
-extern void mca_ptl_elan_req_return (struct mca_ptl_t *ptl,
-                                     struct mca_pml_base_send_request_t *);
+extern void mca_ptl_elan_req_fini (struct mca_ptl_t *ptl,
+                                   struct mca_pml_base_send_request_t *);
 
 /**
  * PML->PTL Notification that a receive fragment has been matched.
@@ -190,6 +187,28 @@ extern void mca_ptl_elan_req_return (struct mca_ptl_t *ptl,
  */
 extern void mca_ptl_elan_matched (struct mca_ptl_t *ptl,
                                   struct mca_ptl_base_recv_frag_t *frag);
+
+/**
+ * PML->PTL Initiate an isend operation 
+ *
+ * @param ptl (IN)               PTL instance
+ * @param ptl_base_peer (IN)     PTL peer addressing
+ * @param send_request (IN/OUT)  Send request (allocated by PML via 
+ *        mca_ptl_base_request_alloc_fn_t)
+ * @param size (IN)              
+ *        Number of bytes PML is requesting PTL to deliver
+ * @param flags (IN)             
+ *        Flags that should be passed to the peer via the message header.
+ * @param request (OUT)          
+ *        OMPI_SUCCESS if the PTL was able to queue one or more fragments
+ */
+extern int  
+mca_ptl_elan_isend (struct mca_ptl_t* ptl, 
+		    struct mca_ptl_base_peer_t* ptl_base_peer, 
+		    struct mca_pml_base_send_request_t* request,
+		    size_t offset,
+		    size_t size,
+		    int flags);
 
 /**
  * PML->PTL Initiate a put of the specified size.

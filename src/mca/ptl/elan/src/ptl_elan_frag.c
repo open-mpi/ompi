@@ -12,7 +12,6 @@
 #include "ptl_elan_peer.h"
 #include "ptl_elan_proc.h"
 #include "ptl_elan_frag.h"
-#include "ptl_elan_req.h"
 #include "ptl_elan_priv.h"
 
 static void
