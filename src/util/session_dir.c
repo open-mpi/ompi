@@ -5,7 +5,7 @@
  *
  *  Function: - 
  */
-
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <pwd.h>
 #include <stddef.h>
