@@ -323,7 +323,7 @@ void mca_ptl_ib_process_send_comp(mca_ptl_base_module_t *module,
 
         module->ptl_send_progress(module,
                 sendfrag->frag_send.frag_request,
-                header->hdr_frag.hdr_frag_length);
+                header->hdr_rndv.hdr_frag_length);
         /* Return sendfrag to free list */
 
         B_PRINT("Return frag : %p", sendfrag);
