@@ -21,6 +21,8 @@
  */
 int mca_topo_base_output = -1;
 lam_list_t mca_topo_base_modules_available;
+mca_topo_base_module_t mca_topo_base_selected_module;
+mca_topo_t mca_topo;
 
 /**
  * Functions for finding and opening either all the MCA topo modules, or
@@ -35,6 +37,9 @@ int mca_topo_base_open(void) {
                                  &mca_topo_base_modules_available)) {
         return LAM_ERROR;
     }
+    /*
+     * All done
+     */ 
 
     return LAM_SUCCESS;
 }
