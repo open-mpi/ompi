@@ -202,7 +202,7 @@ int lam_hash_table_remove_value_ptr(lam_hash_table_t *table, const void* key, si
  */
 
 int lam_hash_table_get_first_key_uint32(lam_hash_table_t *table, uint32_t *key,
-					void *value, void **node);
+					void **value, void **node);
 
 
 /**
@@ -220,7 +220,7 @@ int lam_hash_table_get_first_key_uint32(lam_hash_table_t *table, uint32_t *key,
  */
 
 int lam_hash_table_get_next_key_uint32(lam_hash_table_t *table, uint32_t *key,
-				       void *value, void *in_node,
+				       void **value, void *in_node,
 				       void **out_node);
 
 
@@ -238,7 +238,7 @@ int lam_hash_table_get_next_key_uint32(lam_hash_table_t *table, uint32_t *key,
  */
 
 int lam_hash_table_get_first_key_uint64(lam_hash_table_t *table, uint64_t *key,
-				       void *value, void **node);
+				       void **value, void **node);
 
 
 /**
@@ -256,7 +256,7 @@ int lam_hash_table_get_first_key_uint64(lam_hash_table_t *table, uint64_t *key,
  */
     
 int lam_hash_table_get_next_key_uint64(lam_hash_table_t *table, uint64_t *key,
-				       void *value, void *in_node,
+				       void **value, void *in_node,
 				       void **out_node);
 
 
