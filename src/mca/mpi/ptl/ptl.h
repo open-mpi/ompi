@@ -14,6 +14,14 @@
 
 
 /*
+ * Set the default type to use version 1.0.0 of the PTL 
+ */
+
+typedef struct mca_ptl_module_1_0_0_t mca_ptl_module_t;
+typedef struct mca_ptl_1_0_0_t mca_ptl_t;
+
+
+/*
  * PTL module functions.
  */
 
@@ -24,28 +32,30 @@ typedef struct mca_ptl_1_0_0* (*mca_ptl_init_1_0_0_fn_t)();
  * PTL action functions.
  */
 
-typedef int (*mca_ptl_fragment_fn_t)(mca_pml_base_send_request_t*, size_t);
-typedef int (*mca_ptl_progress_fn_t)(mca_pml_base_tstamp_t);
+typedef int (*mca_ptl_fragment_fn_t)(mca_ptl_t*, mca_pml_base_send_request_t*, size_t);
+typedef int (*mca_ptl_progress_fn_t)(mca_ptl_t*, mca_pml_base_tstamp_t);
 
 /*
  * Struct used to pass PTL module information from the each PTL 
  * instance back to the MCA framework.
  */
 
-typedef struct mca_ptl_module_1_0_0 {
+struct mca_ptl_module_1_0_0_t {
   mca_base_module_t ptlm_version;
   mca_base_module_data_1_0_0_t ptlm_data;
 
   mca_ptl_query_fn_t ptlm_query;
   mca_ptl_init_1_0_0_fn_t ptlm_init;
-} mca_ptl_module_1_0_0_t;
+};
+
+typedef struct mca_ptl_module_1_0_0_t mca_ptl_module_1_0_0_t;
 
 /*
  * Struct that represents the common state and interface functions
  * provided by a PTL.
  */
 
-typedef struct mca_ptl_1_0_0 {
+struct mca_ptl_1_0_0_t {
 
     /* PTL common attributes */
     size_t       ptl_frag_first_size;     /* maximum size of first fragment */
@@ -59,16 +69,9 @@ typedef struct mca_ptl_1_0_0 {
     mca_ptl_fragment_fn_t  ptl_fragment;
     mca_ptl_progress_fn_t  ptl_progress;
 
-} mca_ptl_1_0_0_t;
+};
 
-
-/*
- * Set the default type to use version 1.0.0 of the PTL 
- */
-
-typedef mca_ptl_module_1_0_0_t mca_ptl_module_t;
-typedef mca_ptl_1_0_0_t mca_ptl_t;
-
+typedef struct mca_ptl_1_0_0_t mca_ptl_1_0_0_t;
 
 /*
  * Global functions for MCA: overall PTL open and close
