@@ -30,7 +30,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_SET_VIEW,
                            pmpi_file_set_view_,
                            pmpi_file_set_view__,
                            pmpi_file_set_view_f,
-                           (MPI_Fint *fh, MPI_Fint *disp, MPI_Fint *etype, MPI_Fint *filetype, char *datarep, MPI_Fint *info, MPI_Fint *ierr),
+                           (MPI_Fint *fh, MPI_Offset *disp, MPI_Fint *etype, MPI_Fint *filetype, char *datarep, MPI_Fint *info, MPI_Fint *ierr),
                            (fh, disp, etype, filetype, datarep, info, ierr) )
 #endif
 
@@ -47,7 +47,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_SET_VIEW,
                            mpi_file_set_view_,
                            mpi_file_set_view__,
                            mpi_file_set_view_f,
-                           (MPI_Fint *fh, MPI_Fint *disp, MPI_Fint *etype, MPI_Fint *filetype, char *datarep, MPI_Fint *info, MPI_Fint *ierr),
+                           (MPI_Fint *fh, MPI_Offset *disp, MPI_Fint *etype, MPI_Fint *filetype, char *datarep, MPI_Fint *info, MPI_Fint *ierr),
                            (fh, disp, etype, filetype, datarep, info, ierr) )
 #endif
 
@@ -56,7 +56,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_SET_VIEW,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-void mpi_file_set_view_f(MPI_Fint *fh, MPI_Fint *disp,
+void mpi_file_set_view_f(MPI_Fint *fh, MPI_Offset *disp,
 			 MPI_Fint *etype, MPI_Fint *filetype,
 			 char *datarep, MPI_Fint *info, MPI_Fint *ierr)
 {

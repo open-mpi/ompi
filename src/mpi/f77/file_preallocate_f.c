@@ -30,7 +30,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_PREALLOCATE,
                            pmpi_file_preallocate_,
                            pmpi_file_preallocate__,
                            pmpi_file_preallocate_f,
-                           (MPI_Fint *fh, MPI_Fint *size, MPI_Fint *ierr),
+                           (MPI_Fint *fh, MPI_Offset *size, MPI_Fint *ierr),
                            (fh, size, ierr) )
 #endif
 
@@ -47,7 +47,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_PREALLOCATE,
                            mpi_file_preallocate_,
                            mpi_file_preallocate__,
                            mpi_file_preallocate_f,
-                           (MPI_Fint *fh, MPI_Fint *size, MPI_Fint *ierr),
+                           (MPI_Fint *fh, MPI_Offset *size, MPI_Fint *ierr),
                            (fh, size, ierr) )
 #endif
 
@@ -56,7 +56,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_PREALLOCATE,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-void mpi_file_preallocate_f(MPI_Fint *fh, MPI_Fint *size, MPI_Fint *ierr)
+void mpi_file_preallocate_f(MPI_Fint *fh, MPI_Offset *size, MPI_Fint *ierr)
 {
     MPI_File c_fh = MPI_File_f2c(*fh);
     
