@@ -1,0 +1,77 @@
+# -*- shell-script -*-
+#
+# Copyright (c) 2004-2005 The Trustees of Indiana University.
+#                         All rights reserved.
+# Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
+#                         All rights reserved.
+# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+#                         University of Stuttgart.  All rights reserved.
+# $COPYRIGHT$
+# 
+# Additional copyrights may follow
+# 
+# $HEADER$
+#
+
+#
+# Main function.  This will be invoked in the middle of the templated
+# configure script.
+#
+AC_DEFUN([MCA_CONFIGURE_STUB],[
+
+    # Additional --with flags that can be specified
+
+    AC_ARG_WITH(ptl-portals, 
+        AC_HELP_STRING([--with-ptl-portals=DIR],
+                       [Specify the installation directory of PORTALS]))
+
+    # Add to CPPFLAGS if necessary
+
+    EXTRA_CPPFLAGS=
+    if test -n "$with_ptl_portals"; then
+        if test -d "$with_ptl_portals/include"; then
+            EXTRA_CPPFLAGS="-I$with_ptl_portals/include"
+        else
+            AC_MSG_WARN([*** Warning: cannot find $with_ptl_portals/include])
+            AC_MSG_WARN([*** Will still try to configure portals ptl anyway...])
+        fi
+    fi
+
+    # See if we can find portals.h
+
+    CPPFLAGS="$CPPFLAGS $EXTRA_CPPFLAGS"
+    AC_CHECK_HEADERS(portals3.h,,
+        AC_MSG_ERROR([*** Cannot find working portals3.h.]))
+
+    # Add to LDFLAGS if necessary
+
+    EXTRA_LDFLAGS=
+    if test -n "$with_ptl_portals"; then
+        if test -d "$with_ptl_portals/lib"; then
+            EXTRA_LDFLAGS="-L$with_ptl_portals/lib"
+        else
+            AC_MSG_WARN([*** Warning: cannot find $with_ptl_portals/lib])
+            AC_MSG_WARN([*** Will still try to configure portals ptl anyway...])
+        fi
+    fi
+
+    # Try to find all the portals libraries (this is not fun!)
+    PORTALS_LIBS="p3api p3lib"
+    AC_ARG_WITH(ptl-portals-libs, 
+        AC_HELP_STRING([--with-ptl-portals-libs=LIBS],
+                       [Libraries to link with for portals (default: p3api p3lib)]))
+    if test -n "$with_ptl_portals_libs" ; then
+        PORTALS_LIBS=""
+        for lib in $with_ptl_portals_libs ; do
+            PORTALS_LIBS="$PORTALS_LIBS -l$lib"
+        done
+    fi
+
+    #
+    # Save extra compiler/linker flags so that they can be added in
+    # the wrapper compilers, if necessary
+    #
+
+    WRAPPER_EXTRA_LDFLAGS="$EXTRA_LDFLAGS"
+    WRAPPER_EXTRA_LIBS=""
+])dnl
