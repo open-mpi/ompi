@@ -216,6 +216,14 @@ ompi_wrap_build_cflags(bool want_f77_includes, ompi_sv_t& cflags)
 
   if (want_f77_includes || "/usr/include" != incdir) 
     cflags.push_back("-I" + incdir);
+
+#if OMPI_WANT_CXX_BINDINGS
+  cflags.push_back("-I" + incdir + "/ompi");
+#endif
+
+#if defined(WIN32) && WIN32
+#error "Anju needs to fix me.  FIX ME FIX ME FIX ME."
+#endif
 }
 
 
@@ -352,18 +360,20 @@ ompi_wrap_build_libs(bool want_cxx_libs, ompi_sv_t& libs)
 #endif
 #endif
 
+#if OMPI_WANT_CXX_BINDINGS
   // The C++ bindings come next
-#if 0
   if (want_cxx_libs) {
-    if (!ompi_wrap_check_file(libdir, "libompi_mpi++.a") &&
-	!ompi_wrap_check_file(libdir, "libompi_mpi++.so"))
+    if (!ompi_wrap_check_file(libdir, "libmpi_cxx.a") &&
+	!ompi_wrap_check_file(libdir, "libmpi_cxx.so") && 
+	!ompi_wrap_check_file(libdir, "libmpi_cxx.dylib"))
       cerr << "WARNING: " << cmd_name
-	   << " expected to find libompi_mpi++.* in " << libdir << endl
+	   << " expected to find libmpi_cxx.* in " << libdir << endl
 	   << "WARNING: MPI C++ support will be disabled" << endl;
     else
-      libs.push_back("-lompi_mpi++");
+      libs.push_back("-lmpi_cxx");
   }
 #endif
+
   // Next comes the fortran MPI library
 #if 0
 #if BUILD_MPI_F77

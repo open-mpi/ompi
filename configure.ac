@@ -281,6 +281,13 @@ AC_CHECK_SIZEOF(bool)
 OMPI_C_GET_ALIGNMENT(bool, OMPI_ALIGNMENT_CXX_BOOL)
 AC_LANG_RESTORE
 
+# check if we want C++ support                                                  
+
+AM_CONDITIONAL(WANT_MPI_CXX_BINDINGS,
+    test "$WANT_MPI_CXX_SUPPORT" = 1)
+AC_DEFINE_UNQUOTED(OMPI_WANT_CXX_BINDINGS, $WANT_MPI_CXX_SUPPORT,
+    [Whether we want MPI cxx support or not])
+    
 
 ##################################
 # Fortran
