@@ -125,12 +125,19 @@ int MPI_Group_union(MPI_Group group1, MPI_Group group2, MPI_Group *new_group)
     my_group_rank = group1_pointer->grp_my_rank;
     if (MPI_UNDEFINED == my_group_rank) {
         my_group_rank = group2_pointer->grp_my_rank;
-        my_proc_pointer = group2_pointer->grp_proc_pointers[my_group_rank];
+	if ( MPI_UNDEFINED != my_group_rank) {
+	    my_proc_pointer = group2_pointer->grp_proc_pointers[my_group_rank];
+	}
     } else {
         my_proc_pointer = group1_pointer->grp_proc_pointers[my_group_rank];
     }
 
-    ompi_set_group_rank(new_group_pointer, my_proc_pointer);
+    if ( MPI_UNDEFINED == my_group_rank ) {
+	new_group_pointer->grp_my_rank = MPI_UNDEFINED;
+    }
+    else {
+	ompi_set_group_rank(new_group_pointer, my_proc_pointer);
+    }
 
     *new_group = (MPI_Group) new_group_pointer;
 
