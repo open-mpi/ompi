@@ -15,23 +15,15 @@ int
 main(int argc, char *argv[])
 {
   int ret;
-  int dummy;
   struct mca_pcm_1_0_0_t* modret;
   mca_pcm_proc_t *procs;
   size_t nprocs;
   mca_pcm_proc_t *my_proc;
-  size_t i;
+  int priority = 0;
+  bool allow_threads = false;
+  bool have_hidden_threads = false;
 
-  /*
-   * Do stuff that would normally be hidden in the mca interface code
-   */
-  ret = mca_pcm_cofs_query(&dummy);
-  if (ret != MPI_SUCCESS) {
-    printf("Failed to query PCM module.  Aborting.\n");
-    exit(1);
-  }
-
-  modret = mca_pcm_cofs_init();
+  modret = mca_pcm_cofs_init(&priority, &allow_threads, &have_hidden_threads);
   if (modret == NULL) {
     printf("failed to init PCM module.  Aborting.\n");
     exit(1);
