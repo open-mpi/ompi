@@ -9,13 +9,30 @@
 
 #include "include/constants.h"
 
+#include "util/sys_info.h"
+#include "util/cmd_line.h"
+#include "util/proc_info.h"
 #include "util/pack.h"
 #include "runtime/runtime.h"
 
+#include "mca/base/base.h"
+#include "mca/oob/base/base.h"
+#include "mca/ns/base/base.h"
+
 #include "tools/ompid/ompid.h"
+
+static void ompi_console_recv(int status, ompi_process_name_t* sender,
+			      ompi_buffer_t buffer, int tag,
+			      void* cbdata);
+
 
 int main(int argc, char *argv[])
 {
+    int ret;
+    ompi_cmd_line_t *cmd_line;
+    bool allow_multi_user_threads   = false;
+    bool have_hidden_threads  = false;
+
     /*
      * Intialize the Open MPI environment
      */
@@ -124,11 +141,14 @@ int main(int argc, char *argv[])
     /* finalize the rte startup */
     if (OMPI_SUCCESS != (ret = ompi_rte_init_finalstage(&allow_multi_user_threads,
 							&have_hidden_threads))) {
+	printf("failed to finalize the rte startup\n");
+	return ret;
+    }
  
     /* register the console callback function */
     ret = mca_oob_recv_packed_nb(MCA_OOB_NAME_ANY, MCA_OOB_TAG_DAEMON, 0, ompi_console_recv, NULL);
     if(ret != OMPI_SUCCESS && ret != OMPI_ERR_NOT_IMPLEMENTED) {
-	ompi_output(0, "daemon callback not registered: error code %d", ret);
+	printf("daemon callback not registered: error code %d", ret);
 	return ret;
     }
 
@@ -149,14 +169,14 @@ static void ompi_console_recv(int status, ompi_process_name_t* sender,
     printf("console - message received from [%d,%d,%d]\n", sender->cellid,
 	   sender->jobid, sender->vpid);
 
-    if (OMPI_SUCCESS != ompi_unpack(buffer, &num_bytes, OMPI_INT32)) {
+    if (OMPI_SUCCESS != ompi_unpack(buffer, &num_bytes, 1, OMPI_INT32)) {
 	printf("\terror unpacking number of bytes\n");
 	return;
     }
 
     outbytes = (uint8_t*)malloc(num_bytes);
 
-    if (OMPI_SUCCESS != ompi_unpack(buffer, &outbytes, OMPI_BYTE)) {
+    if (OMPI_SUCCESS != ompi_unpack(buffer, &outbytes, num_bytes, OMPI_BYTE)) {
 	printf("\terror unpacking number of bytes\n");
 	return;
     }
@@ -168,4 +188,4 @@ static void ompi_console_recv(int status, ompi_process_name_t* sender,
     free(outbytes);
     ompi_buffer_free(buffer);
     return;
- }
+}
