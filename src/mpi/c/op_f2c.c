@@ -23,19 +23,22 @@ static const char FUNC_NAME[] = "MPI_Op_f2c";
 
 MPI_Op MPI_Op_f2c(MPI_Fint op_f)
 {
-  size_t o_index = (size_t) op_f;
+    size_t op_index = (size_t) op_f;
 
-  /* Error checking */
+    /* Error checking */
 
-  if (MPI_PARAM_CHECK) {
-    OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-    if (0 > o_index || 
-        o_index >= ompi_pointer_array_get_size(ompi_op_f_to_c_table)) {
-      return MPI_OP_NULL;
+    if (MPI_PARAM_CHECK) {
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
     }
-  }
+    
+    /* Per MPI-2:4.12.4, do not invoke an error handler if we get an
+       invalid fortran handle */
+    
+    if (op_index < 0 || 
+        op_index >= 
+        ompi_pointer_array_get_size(ompi_op_f_to_c_table)) {
+        return MPI_OP_NULL;
+    }
 
-  /* All done */
-
-  return ompi_op_f_to_c_table->addr[o_index];
+    return ompi_op_f_to_c_table->addr[op_index];
 }

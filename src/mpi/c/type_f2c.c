@@ -23,14 +23,21 @@ static const char FUNC_NAME[] = "MPI_Type_f2c";
 
 MPI_Datatype MPI_Type_f2c(MPI_Fint datatype)
 {
-    /* check the arguments */
+    size_t datatype_index = (size_t) datatype;
+
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-        if (0 > datatype || datatype >= ompi_pointer_array_get_size(ompi_datatype_f_to_c_table)) {
-            return MPI_DATATYPE_NULL;
-        }
     }
-    /* return the index */
+
+    /* Per MPI-2:4.12.4, do not invoke an error handler if we get an
+       invalid fortran handle */
+    
+    if (datatype_index < 0 || 
+        datatype_index >= 
+        ompi_pointer_array_get_size(ompi_datatype_f_to_c_table)) {
+        return MPI_DATATYPE_NULL;
+    }
+
     return ompi_datatype_f_to_c_table->addr[datatype];
 }
 

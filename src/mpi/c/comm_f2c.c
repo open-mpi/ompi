@@ -27,11 +27,14 @@ MPI_Comm MPI_Comm_f2c(MPI_Fint comm)
 
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+    }
 
-        if ( 0 > o_index ||
-             o_index >= ompi_pointer_array_get_size(&ompi_mpi_communicators)) {
-            return MPI_COMM_NULL;
-        }
+    /* Per MPI-2:4.12.4, do not invoke an error handler if we get an
+       invalid fortran handle */
+
+    if ( 0 > o_index ||
+         o_index >= ompi_pointer_array_get_size(&ompi_mpi_communicators)) {
+        return MPI_COMM_NULL;
     }
         
     return ompi_mpi_communicators.addr[o_index];
