@@ -3,6 +3,7 @@
 #include "datatype.h"
 #include "datatype_internal.h"
 #include "limits.h"
+#include "attribute/attribute.h"
 
 static void __get_free_dt_struct(  dt_desc_t* pData )
 {
@@ -27,6 +28,7 @@ static void __get_free_dt_struct(  dt_desc_t* pData )
     pData->lb              = LONG_MAX;
     pData->ub              = LONG_MIN;
     pData->d_f_to_c_index  = ompi_pointer_array_add(ompi_datatype_f_to_c_table, pData);
+    pData->d_keyhash       = NULL;
 }
 
 static void __destroy_ddt_struct( dt_desc_t* pData )
@@ -43,6 +45,11 @@ static void __destroy_ddt_struct( dt_desc_t* pData )
     pData->args = NULL;
     if( NULL != ompi_pointer_array_get_item(ompi_datatype_f_to_c_table, pData->d_f_to_c_index) ){
         ompi_pointer_array_set_item( ompi_datatype_f_to_c_table, pData->d_f_to_c_index, NULL );
+    }
+    /* any pending attributes ? */
+    if (NULL != pData->d_keyhash) {
+        ompi_attr_delete_all( TYPE_ATTR, pData, pData->d_keyhash );
+        OBJ_RELEASE( pData->d_keyhash );
     }
 
 }
