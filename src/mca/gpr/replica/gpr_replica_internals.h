@@ -67,3 +67,7 @@ mca_gpr_registry_segment_t *gpr_replica_find_seg(char *segment);
 mca_gpr_keytable_t *gpr_replica_find_dict_entry(char *segment, char *token);
 
 int gpr_replica_empty_segment(mca_gpr_registry_segment_t *seg);
+
+ompi_list_t *gpr_replica_get_key_list(char *segment, char **tokens);
+
+bool gpr_replica_check_key_list(ompi_list_t *key_list, mca_gpr_replica_key_t key);

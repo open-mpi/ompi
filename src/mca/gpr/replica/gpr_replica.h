@@ -175,13 +175,13 @@ int gpr_replica_put(ompi_registry_mode_t mode, char *segment,
 		    ompi_registry_object_size_t size);
 int gpr_replica_delete_object(ompi_registry_mode_t mode,
 			      char *segment, char **tokens);
-ompi_registry_index_t* gpr_replica_index(char *segment);
+ompi_list_t* gpr_replica_index(char *segment);
 int gpr_replica_subscribe(ompi_process_name_t *caller, ompi_registry_mode_t mode,
 			  ompi_registry_notify_action_t action,
 			  char *segment, char **tokens);
 int gpr_replica_unsubscribe(ompi_process_name_t *caller, ompi_registry_mode_t mode,
 			    char *segment, char **tokens);
-ompi_registry_value_t* gpr_replica_get(ompi_registry_mode_t mode,
-				       char *segment, char **tokens);
+ompi_list_t* gpr_replica_get(ompi_registry_mode_t mode,
+			     char *segment, char **tokens);
 
 #endif

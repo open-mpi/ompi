@@ -59,7 +59,7 @@ int gpr_proxy_delete(ompi_registry_mode_t mode,
 /*
  * Implementation of index()
  */
-ompi_registry_index_t* gpr_proxy_index(char *segment);
+ompi_list_t* gpr_proxy_index(char *segment);
 
 
 /*
@@ -78,8 +78,8 @@ int gpr_proxy_unsubscribe(ompi_process_name_t *caller, ompi_registry_mode_t mode
 /*
  * Implementation of get()
  */
-ompi_registry_value_t* gpr_proxy_get(ompi_registry_mode_t mode,
-				     char *segment, char **tokens);
+ompi_list_t* gpr_proxy_get(ompi_registry_mode_t mode,
+			   char *segment, char **tokens);
 
 
 #endif
