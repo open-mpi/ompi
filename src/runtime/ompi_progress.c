@@ -23,7 +23,7 @@
 
 
 static int ompi_progress_event_flag = OMPI_EVLOOP_ONCE;
-int ompi_progress_pending_io_reqs = false;
+int ompi_progress_pending_io_reqs = 0;
 
 
 void ompi_progress_events(int flag)
