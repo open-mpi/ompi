@@ -68,7 +68,7 @@ int mca_base_cmd_line_process_args(ompi_cmd_line_t *cmd)
     if (NULL == buf)
       return OMPI_ERR_OUT_OF_RESOURCE;
 
-    snprintf(buf, buflen, "OMPI_MPI_MCA_%s=%s", mca_param_argv[i], 
+    snprintf(buf, buflen, "OMPI_MCA_%s=%s", mca_param_argv[i], 
 	     mca_value_argv[i]);
     putenv(buf);
   }
