@@ -27,6 +27,7 @@
 #include "mca/gpr/base/base.h"
 #include "mca/iof/base/base.h"
 #include "mca/rmgr/base/base.h"
+#include "util/malloc.h"
 #include "util/output.h"
 #include "util/session_dir.h"
 #include "util/sys_info.h"

@@ -434,5 +434,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 		    ORTE_NAME_ARGS(orte_process_info.my_name));
     }
 
+    ompi_progress_events(0);
+
     return MPI_SUCCESS;
 }
