@@ -14,6 +14,7 @@
 #               os_path runs ompi_os_path tests, 
 #               session_dir runs ompi_session_dir tests
 #               sys_info runs ompi_sys_info tests
+#               pack runs ompi_pack tests
 
 # Usage
 #
@@ -26,11 +27,12 @@
 umask 007
 
 if ("x$1" == "x") then
-  ./ompi_argv
+#  ./ompi_argv
   ./ompi_numtostr
   ./ompi_os_create_dirpath
+  ./ompi_pack
   ./ompi_os_path
-  ./ompi_session_dir
+#  ./ompi_session_dir
   ./ompi_sys_info
 else if ("$1" == "argv") then
   ./ompi_argv
@@ -40,6 +42,8 @@ else if ("$1" == "os_create_dir_path") then
   ./ompi_os_create_dir_path
 else if ("$1" == "os_path") then
   ./ompi_os_path
+else if ("$1" == "pack") then
+  ./ompi_pack
 else if ("$1" == "session_dir") then
   ./ompi_session_dir
 else if ("$1" == "sys_info") then
