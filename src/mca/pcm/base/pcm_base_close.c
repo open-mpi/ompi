@@ -15,8 +15,6 @@
 
 int mca_pcm_base_close(void)
 {
-    mca_pcm_base_job_list_fini();
-
   /* Close all remaining available modules (may be one if this is a
      OMPI RTE program, or [possibly] multiple if this is ompi_info) */
 

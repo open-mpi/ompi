@@ -434,9 +434,10 @@ internal_spawn_proc(mca_pcm_rsh_module_t *me,
 proc_cleanup:
 
     if (high_qos) {
-        mca_pcm_base_add_started_pids(jobid, pid, my_start_vpid,
-                                      my_start_vpid + num_procs - 1);
-        ret = ompi_rte_wait_cb(pid, internal_wait_cb, NULL);
+        mca_pcm_base_job_list_add_job_info(me->jobs,
+                                           jobid, pid, my_start_vpid,
+                                           my_start_vpid + num_procs - 1);
+        ret = ompi_rte_wait_cb(pid, internal_wait_cb, me);
     } else {
         /* Wait for the command to exit.  */
         while (1) {
@@ -474,11 +475,13 @@ internal_wait_cb(pid_t pid, int status, void *data)
     mca_ns_base_vpid_t i = 0;
     int ret;
     char *proc_name;
+    mca_pcm_rsh_module_t *me = (mca_pcm_rsh_module_t*) data;
 
     ompi_output_verbose(10, mca_pcm_base_output, 
                         "process %d exited with status %d", pid, status);
 
-    ret = mca_pcm_base_get_job_info(pid, &jobid, &lower, &upper);
+    ret = mca_pcm_base_job_list_get_job_info(me->jobs, pid, &jobid, 
+                                             &lower, &upper, true);
     if (ret != OMPI_SUCCESS) {
         ompi_show_help("help-mca-pcm-rsh.txt",
                        "spawn:no-process-record", true, pid, status);
@@ -492,7 +495,4 @@ internal_wait_cb(pid_t pid, int status, void *data)
                              ns_base_create_process_name(0, jobid, i));
         ompi_registry.rte_unregister(proc_name);
     }
-
-    /* BWB - fix me - should only remove this range */
-    mca_pcm_base_remove_job(jobid);
 }

@@ -12,6 +12,7 @@
 #include "ompi_config.h"
 
 #include "mca/pcm/pcm.h"
+#include "mca/pcm/base/base_job_track.h"
 #include "include/types.h"
 #include "class/ompi_list.h"
 
@@ -56,6 +57,8 @@ extern "C" {
 
     struct mca_pcm_rms_module_t {
         mca_pcm_base_module_t super;
+
+        mca_pcm_base_job_list_t *jobs;
 
         char *partition;
         char *prun_args;

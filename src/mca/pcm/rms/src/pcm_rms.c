@@ -178,10 +178,11 @@ mca_pcm_rms_spawn_procs(struct mca_pcm_base_module_1_0_0_t* me_super,
     } 
 
     /* ok, I'm the parent - stick the pids where they belong */
-    ret = mca_pcm_base_add_started_pids(jobid, child, nodes->start,
-                                        nodes->start + (nodes->nodes == 0) ? 
-                                        nodes->count : 
-                                        nodes->nodes * nodes->count);
+    ret = mca_pcm_base_job_list_add_job_info(me->jobs,
+                                             jobid, child, nodes->start,
+                                             nodes->start + (nodes->nodes == 0) ? 
+                                             nodes->count : 
+                                             nodes->nodes * nodes->count);
     if (OMPI_SUCCESS != ret) {
         kill(child, SIGKILL);
         return ret;
@@ -197,13 +198,15 @@ mca_pcm_rms_spawn_procs(struct mca_pcm_base_module_1_0_0_t* me_super,
 
 
 int
-mca_pcm_rms_kill_proc(struct mca_pcm_base_module_1_0_0_t* me,
+mca_pcm_rms_kill_proc(struct mca_pcm_base_module_1_0_0_t* me_super,
                       ompi_process_name_t *name, int flags)
 {
+    mca_pcm_rms_module_t *me = (mca_pcm_rms_module_t*) me_super;
     pid_t doomed;
 
-    doomed = mca_pcm_base_get_started_pid(ns_base_get_jobid(name), 
-                                          ns_base_get_vpid(name), true);
+    doomed = mca_pcm_base_job_list_get_starter(me->jobs, 
+                                               ns_base_get_jobid(name), 
+                                               ns_base_get_vpid(name), true);
     if (doomed > 0) {
         kill(doomed, SIGTERM);
     } else {
@@ -215,14 +218,17 @@ mca_pcm_rms_kill_proc(struct mca_pcm_base_module_1_0_0_t* me,
 
 
 int
-mca_pcm_rms_kill_job(struct mca_pcm_base_module_1_0_0_t* me,
+mca_pcm_rms_kill_job(struct mca_pcm_base_module_1_0_0_t* me_super,
                      mca_ns_base_jobid_t jobid, int flags)
 {
+    mca_pcm_rms_module_t *me = (mca_pcm_rms_module_t*) me_super;
     pid_t *doomed;
     size_t doomed_len, i;
     int ret;
 
-    ret = mca_pcm_base_get_started_pid_list(jobid, &doomed, &doomed_len, true);
+    ret = mca_pcm_base_job_list_get_starters(me->jobs,
+                                             jobid, &doomed, &doomed_len, 
+                                             true);
     if (OMPI_SUCCESS != ret) return ret;
 
     for (i = 0 ; i < doomed_len ; ++i) {
@@ -244,7 +250,7 @@ mca_pcm_rms_deallocate_resources(struct mca_pcm_base_module_1_0_0_t* me,
 {
     if (nodelist != NULL) OBJ_RELEASE(nodelist);
 
-    mca_pcm_base_remove_job(jobid);
+    /* bwb - fix me */
 
     return OMPI_SUCCESS;
 }
@@ -254,6 +260,7 @@ mca_pcm_rms_deallocate_resources(struct mca_pcm_base_module_1_0_0_t* me,
 static void
 internal_wait_cb(pid_t pid, int status, void *data)
 {
+    mca_pcm_rms_module_t *me = (mca_pcm_rms_module_t*) data;
     mca_ns_base_jobid_t jobid = 0;
     mca_ns_base_vpid_t upper = 0;
     mca_ns_base_vpid_t lower = 0;
@@ -264,7 +271,8 @@ internal_wait_cb(pid_t pid, int status, void *data)
     ompi_output_verbose(10, mca_pcm_base_output, 
                         "process %d exited with status %d", pid, status);
 
-    ret = mca_pcm_base_get_job_info(pid, &jobid, &lower, &upper);
+    ret = mca_pcm_base_job_list_get_job_info(me->jobs, pid, &jobid, 
+                                             &lower, &upper, true);
     if (ret != OMPI_SUCCESS) {
         ompi_show_help("help-mca-pcm-rms.txt",
                        "spawn:no-process-record", true, pid, status);
@@ -277,7 +285,4 @@ internal_wait_cb(pid_t pid, int status, void *data)
                                 ns_base_create_process_name(0, jobid, i));
         ompi_registry.rte_unregister(proc_name);
     }
-
-    /* BWB - fix me - should only remove this range */
-    mca_pcm_base_remove_job(jobid);
 }

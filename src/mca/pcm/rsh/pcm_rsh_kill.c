@@ -25,9 +25,10 @@ mca_pcm_rsh_kill_proc(struct mca_pcm_base_module_1_0_0_t* me_super,
     mca_pcm_rsh_module_t *me = (mca_pcm_rsh_module_t*) me_super;
 
     if (0 != (OMPI_RTE_SPAWN_HIGH_QOS &me->constraints)) {
-        pid = mca_pcm_base_get_started_pid(ns_base_get_jobid(name),
-                                           ns_base_get_vpid(name),
-                                           false);
+        pid = mca_pcm_base_job_list_get_starter(me->jobs,
+                                                ns_base_get_jobid(name),
+                                                ns_base_get_vpid(name),
+                                                false);
         if (pid <= 0) return errno;
 
         kill(pid, SIGTERM);
@@ -49,8 +50,10 @@ mca_pcm_rsh_kill_job(struct mca_pcm_base_module_1_0_0_t* me_super,
     mca_pcm_rsh_module_t *me = (mca_pcm_rsh_module_t*) me_super;
 
     if (0 != (OMPI_RTE_SPAWN_HIGH_QOS &me->constraints)) {
-        ret = mca_pcm_base_get_started_pid_list(jobid, &pids,
-                                                &pids_len, false);
+        ret = mca_pcm_base_job_list_get_starters(me->jobs,
+                                                 jobid, 
+                                                 &pids, &pids_len, 
+                                                 false);
         if (ret != OMPI_SUCCESS) return ret;
 
         for (i = 0 ; i < pids_len ; ++i) {

@@ -15,6 +15,7 @@
 #include "errhandler/errhandler.h"
 #include "mca/ns/ns.h"
 #include "mca/ns/base/base.h"
+#include "event/event.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Abort = PMPI_Abort
@@ -30,6 +31,7 @@ static const char FUNC_NAME[] = "MPI_Abort";
 int MPI_Abort(MPI_Comm comm, int errorcode) 
 {
     mca_ns_base_jobid_t jobid;
+    int ret;
 
     /* Don't even bother checking comm and errorcode values for
        errors */
@@ -43,11 +45,24 @@ int MPI_Abort(MPI_Comm comm, int errorcode)
        in comm, and additionally to somehow use errorcode. */
 
     jobid = ompi_name_server.get_jobid(ompi_rte_get_self());
-    ompi_rte_kill_job(jobid, 0);
+    ret = ompi_rte_kill_job(jobid, 0);
 
+    if (OMPI_SUCCESS == ret) {
+        /* we successfully started the kill.  Just sit around and wait
+           to be slaughtered */
+#if OMPI_HAVE_THREADS
+        if (ompi_event_progress_thread()) {
+            ompi_event_loop(OMPI_EVLOOP_NONBLOCK);
+        }
+#else
+        ompi_event_loop(OMPI_EVLOOP_NONBLOCK);
+#endif
+    } else {
     /* If we return from this, then the selected PCM was unable to
        kill the job (and the rte printed an error message).  So just
        die die die. */
+        abort();
+    }
 
-    abort();
+    return MPI_SUCCESS;
 }
