@@ -1,7 +1,6 @@
 //
 // $HEADER$
 //
-/** @file **/
 
 #include "ompi_config.h"
 
@@ -28,13 +27,18 @@ static int screen_width = 78;
 // Prints the passed strings in a pretty or parsable format.
 //
 void ompi_info::out(const string& pretty_message, const string &plain_message,
-                  const string& value)
+                    const string& value)
 {
   if (pretty) {
     string::size_type pos, max_value_width;
-    string spaces(OMPI_max(centerpoint - pretty_message.length(), 0), ' ');
+    string spaces;
     string v = value;
     string filler;
+
+    int num_spaces = centerpoint - pretty_message.length();
+    if (num_spaces > 0) {
+      spaces = string(num_spaces, ' ');
+    }
 
     max_value_width = screen_width - spaces.length() -
       pretty_message.length() - 2;
@@ -88,7 +92,7 @@ void ompi_info::out(const string& pretty_message, const string &plain_message,
 // Prints the passed integer in a pretty or parsable format.
 //
 void ompi_info::out(const string& pretty_message, const string &plain_message, 
-                  int value)
+                    int value)
 {
   if (ompi_info::pretty) {
     string spaces(OMPI_max(centerpoint - pretty_message.length(), 0), ' ');

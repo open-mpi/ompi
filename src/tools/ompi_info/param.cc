@@ -244,7 +244,7 @@ void ompi_info::do_arch(ompi_cmd_line_t *cmd_line)
     gethostname(hostname, MAXHOSTNAMELEN);
     prefix = hostname + string(":");
   }
-  out("Architecture", prefix + "arch", OMPI_ARCH);
+  out("Configured architecture", prefix + "config:arch", OMPI_ARCH);
 }
 
 
@@ -313,29 +313,54 @@ void ompi_info::do_config(bool want_all)
   out("Fortran90 compiler", "compiler:f90:command", OMPI_F90);
 
   if (want_all) {
+
+    // Will always have the size of Fortran integer
+
     out("Fort integer size", "compiler:fortran:sizeof:integer", 
         OMPI_SIZEOF_FORTRAN_INT);
-    out("Fort real size", "compiler:fortran:sizeof:real", 
-        OMPI_SIZEOF_FORTRAN_REAL);
-    out("Fort dbl prec size", 
-        "compiler:fortran:sizeof:double_precision", OMPI_SIZEOF_FORTRAN_REAL);
-    out("Fort cplx size", "compiler:fortran:sizeof:complex", 
-        OMPI_SIZEOF_FORTRAN_REAL);
-    out("Fort dbl cplx size",
-        "compiler:fortran:sizeof:double_complex", 
-        OMPI_SIZEOF_FORTRAN_REAL);
 
-    out("Fort integer align", "compiler:fortran:align:integer", 
-        OMPI_ALIGNMENT_FORTRAN_INT);
-    out("Fort real align", "compiler:fortran:align:real", 
-        OMPI_ALIGNMENT_FORTRAN_REAL);
-    out("Fort dbl prec align", 
-        "compiler:fortran:align:double_precision", OMPI_ALIGNMENT_FORTRAN_REAL);
-    out("Fort cplx align", "compiler:fortran:align:complex", 
-        OMPI_ALIGNMENT_FORTRAN_REAL);
-    out("Fort dbl cplx align",
-        "compiler:fortran:align:double_complex", 
-        OMPI_ALIGNMENT_FORTRAN_REAL);
+    // May or may not have the other Fortran sizes
+
+    if (OMPI_WANT_F77_BINDINGS || OMPI_WANT_F90_BINDINGS) {
+      out("Fort real size", "compiler:fortran:sizeof:real", 
+          OMPI_SIZEOF_FORTRAN_REAL);
+      out("Fort dbl prec size", 
+          "compiler:fortran:sizeof:double_precision",
+          OMPI_SIZEOF_FORTRAN_REAL);
+      out("Fort cplx size", "compiler:fortran:sizeof:complex", 
+          OMPI_SIZEOF_FORTRAN_REAL);
+      out("Fort dbl cplx size",
+          "compiler:fortran:sizeof:double_complex", 
+          OMPI_SIZEOF_FORTRAN_REAL);
+      
+      out("Fort integer align", "compiler:fortran:align:integer", 
+          OMPI_ALIGNMENT_FORTRAN_INT);
+      out("Fort real align", "compiler:fortran:align:real", 
+          OMPI_ALIGNMENT_FORTRAN_REAL);
+      out("Fort dbl prec align", 
+          "compiler:fortran:align:double_precision",
+          OMPI_ALIGNMENT_FORTRAN_REAL);
+      out("Fort cplx align", "compiler:fortran:align:complex", 
+          OMPI_ALIGNMENT_FORTRAN_REAL);
+      out("Fort dbl cplx align",
+          "compiler:fortran:align:double_complex", 
+          OMPI_ALIGNMENT_FORTRAN_REAL);
+    } else {
+      out("Fort real size", "compiler:fortran:sizeof:real", "skipped");
+      out("Fort dbl prec size",
+          "compiler:fortran:sizeof:double_precision", "skipped");
+      out("Fort cplx size", "compiler:fortran:sizeof:complex", "skipped");
+      out("Fort dbl cplx size",
+          "compiler:fortran:sizeof:double_complex", "skipped");
+      
+      out("Fort integer align", "compiler:fortran:align:integer", "skipped");
+      out("Fort real align", "compiler:fortran:align:real", "skipped");
+      out("Fort dbl prec align", 
+          "compiler:fortran:align:double_precision","skipped");
+      out("Fort cplx align", "compiler:fortran:align:complex", "skipped");
+      out("Fort dbl cplx align",
+          "compiler:fortran:align:double_complex", "skipped");
+    }
   }
 
   out("C profiling", "option:profiling:c", cprofiling);
@@ -346,6 +371,33 @@ void ompi_info::do_config(bool want_all)
   out("C++ exceptions", "option:cxx_exceptions", cxxexceptions);
   out("POSIX thread support", "option:pthreads", pthreads);
   out("Solaris thread support", "option:solaris_threads", sthreads);
+
+  if (want_all) {
+    
+    // Don't display the build CPPFLAGS or CXXCPPFLAGS because they're
+    // just -I$(top_srcdir)/include, etc.  Hence, they're a) boring,
+    // and c) specific for ompi_info.
+
+    out("Build CFLAGS", "option:build:cflags", OMPI_BUILD_CFLAGS);
+    out("Build CXXFLAGS", "option:build:cxxflags", OMPI_BUILD_CXXFLAGS);
+    out("Build FFLAGS", "option:build:fflags", OMPI_BUILD_FFLAGS);
+    out("Build FCFLAGS", "option:build:fcflags", OMPI_BUILD_FCFLAGS);
+    out("Build LDFLAGS", "option:build:ldflags", OMPI_BUILD_LDFLAGS);
+    out("Build LIBS", "option:build:libs", OMPI_BUILD_LIBS);
+
+    out("Wrapper extra CFLAGS", "option:wrapper:extra_cflags", 
+        WRAPPER_EXTRA_CFLAGS);
+    out("Wrapper extra CXXFLAGS", "option:wrapper:extra_cxxflags", 
+        WRAPPER_EXTRA_CXXFLAGS);
+    out("Wrapper extra FFLAGS", "option:wrapper:extra_fflags", 
+        WRAPPER_EXTRA_FFLAGS);
+    out("Wrapper extra FCFLAGS", "option:wrapper:extra_fcflags", 
+        WRAPPER_EXTRA_FCFLAGS);
+    out("Wrapper extra LDFLAGS", "option:wrapper:extra_ldflags", 
+        WRAPPER_EXTRA_LDFLAGS);
+    out("Wrapper extra LIBS", "option:wrapper:extra_libs",
+        WRAPPER_EXTRA_LIBS);
+  }
 
   out("Debug support", "option:debug", debug);
   out("MPI parameter check", "option:mpi-param-check", paramcheck);
