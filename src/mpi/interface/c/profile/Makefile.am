@@ -5,8 +5,7 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-# JMS: Need more stuff here:
-# - Do we want a separate compile for profiling (affects SUBDIRS and LIBADD)
+AM_CPPFLAGS		= -DLAM_PROFILING_DEFINES=1
 
 noinst_LTLIBRARIES	= libmpi_c_profile.la
 
