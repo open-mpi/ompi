@@ -78,4 +78,4 @@ extern ompi_sys_info_t ompi_system_info;
  * @retval None
  */
 
-void ompi_sys_info(void);
+int ompi_sys_info(void);

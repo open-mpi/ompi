@@ -42,7 +42,6 @@ static int ompi_check_dir(bool create, char *directory)
 {
     struct stat buf;
     mode_t my_mode = S_IRWXU;  /* at the least, I need to be able to do anything */
-    mode_t mode_all = S_IRWXU | S_IRWXG | S_IRWXO;  /* permissions for ompi-sessions directory - open to all */
 
     if (0 == stat(directory, &buf)) { /* exists - check access */
         if ((buf.st_mode & my_mode) == my_mode) { /* okay, I can work here */
@@ -50,7 +49,7 @@ static int ompi_check_dir(bool create, char *directory)
         }
     }
     if (create) {
-	return(ompi_os_create_dirpath(directory, mode_all)); /* try to create it, but ensure open to all */
+	return(ompi_os_create_dirpath(directory, my_mode)); /* try to create it with proper mode */
     }
     return(OMPI_ERROR);  /* couldn't find it, or don't have access rights, and not asked to create it */
 }
@@ -60,7 +59,7 @@ char *ompi_find_session_dir(bool create, char *prefix)
     char *tmpprefix=NULL, *tmp=NULL;
     char *sessions=NULL;
 
-    sessions = strdup("openmpi-sessions");
+    sprintf(sessions, "openmpi-sessions-%s", ompi_system_info.user);
 
     if (NULL != prefix) {
 	tmpprefix = strdup(ompi_os_path(false, prefix, sessions, NULL)); /* make sure it's an absolute pathname */
@@ -121,22 +120,6 @@ char *ompi_find_session_dir(bool create, char *prefix)
         free(tmpprefix);
     }
 
-    if (NULL != getenv("HOME")) {
-	tmp = strdup(getenv("HOME"));
-	tmpprefix = strdup(ompi_os_path(false, tmp, sessions, NULL));
-	if (OMPI_SUCCESS == ompi_check_dir(create, tmpprefix)) { /* check for existence and access, or create it */
-	    free(tmp);
-	    free(sessions);
-	    return(tmpprefix);
-	}
-    }
-    if (tmp != NULL) {
-        free(tmp);
-    }
-    if (tmpprefix != NULL) {
-        free(tmpprefix);
-    }
-
     tmp = strdup(OMPI_DEFAULT_TMPDIR);
     tmpprefix = strdup(ompi_os_path(false, tmp, sessions, NULL));
     if (OMPI_SUCCESS == ompi_check_dir(create, tmpprefix)) { /* check for existence and access, or create it */
@@ -170,8 +153,13 @@ int ompi_session_dir_init(char *prefix, char *universe)
     char *tmpprefix = NULL;
     char *name;
 
-    /* check if universe is specified - if not, error out */
+    /* check if universe is specified - if not, use "default-universe" */
     if (NULL == universe) {
+	universe = strdup("default-universe");
+    }
+
+    /* check to see if ompi_system_info populated - otherwise, error out */
+    if (!ompi_system_info.init) {
 	return(OMPI_ERROR);
     }
 
@@ -180,8 +168,8 @@ int ompi_session_dir_init(char *prefix, char *universe)
 	return (OMPI_ERROR);
     }
 
-    /* set up the name of the user's session directory, which is prefix/<uid>, and try to create it */
-    name = ompi_os_path(false, tmpprefix, ompi_system_info.user, universe, NULL);
+    /* set up the name of the universe session directory, which is prefix/universe, and try to create it */
+    name = ompi_os_path(false, tmpprefix, universe, NULL);
     if (OMPI_ERROR == ompi_os_create_dirpath(name, S_IRWXU)) { /* couldn't create the user directory */
 	free(tmpprefix);
 	free(name);

@@ -30,6 +30,9 @@ int ompi_common_cmd_line_init(int argc, char **argv)
     ompi_cmd_line_make_opt(ompi_common_cmd_line, 
                            'u', "--universe", 1,
                            "Specify the Open MPI universe");
+    ompi_cmd_line_make_opt(ompi_common_cmd_line, 
+                           't', "--tmpdir", 1,
+                           "Specify the Open MPI prefix for the session directory");
 
     /* Parse the command line */
 
