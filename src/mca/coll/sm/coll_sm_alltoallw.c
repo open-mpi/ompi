@@ -19,13 +19,17 @@
 
 
 /*
- *	barrier
+ *	alltoallw_intra
  *
- *	Function:	- barrier 
- *	Accepts:	- same as MPI_Barrier()
- *	Returns:	- MPI_SUCCESS or error code
+ *	Function:	- MPI_Alltoallw
+ *	Accepts:	- same as MPI_Alltoallw()
+ *	Returns:	- MPI_SUCCESS or an MPI error code
  */
-int mca_coll_sm_barrier_intra(struct ompi_communicator_t *comm)
+int mca_coll_sm_alltoallw_intra(void *sbuf, int *scounts, int *sdisps,
+                                struct ompi_datatype_t **sdtypes, 
+                                void *rbuf, int *rcounts, int *rdisps,
+                                struct ompi_datatype_t **rdtypes, 
+                                struct ompi_communicator_t *comm)
 {
     return OMPI_ERR_NOT_IMPLEMENTED;
 }

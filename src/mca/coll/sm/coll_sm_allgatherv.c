@@ -19,13 +19,17 @@
 
 
 /*
- *	barrier
+ *	allgatherv_intra
  *
- *	Function:	- barrier 
- *	Accepts:	- same as MPI_Barrier()
+ *	Function:	- allgatherv
+ *	Accepts:	- same as MPI_Allgatherv()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int mca_coll_sm_barrier_intra(struct ompi_communicator_t *comm)
+int mca_coll_sm_allgatherv_intra(void *sbuf, int scount, 
+                                 struct ompi_datatype_t *sdtype, 
+                                 void * rbuf, int *rcounts, int *disps, 
+                                 struct ompi_datatype_t *rdtype, 
+                                 struct ompi_communicator_t *comm)
 {
     return OMPI_ERR_NOT_IMPLEMENTED;
 }
