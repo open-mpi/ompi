@@ -15,6 +15,7 @@
 #include "ompi_config.h"
 #include "mpi.h"
 #include "class/ompi_list.h"
+#include "threads/mutex.h"
 #include "mca/base/base.h"
 #include "mca/io/io.h"
 #include "io_romio.h"
@@ -147,8 +148,16 @@ static int close_component(void)
 static int init_query(bool *allow_multi_user_threads,
                       bool *have_hidden_threads)
 {
-    *allow_multi_user_threads = false;
-    *have_hidden_threads = false;
+    /* Note that we say "true" for multi user threads here because we
+       self-enforce only allowing one user thread into ROMIO at a time
+       -- this fact will be clearly documented for users (ROMIO itself
+       is not thread safe). */
+
+    *allow_multi_user_threads = true;
+    *have_hidden_threads = ompi_using_threads();
+
+    /* Don't launch a progress thread here -- we'll launch one the
+       first time a ROMIO module is initialized */
 
     return OMPI_SUCCESS;
 }
