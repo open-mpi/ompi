@@ -6,7 +6,7 @@
 # Arguements
 # ==========
 # 
-# test_list  =  no args runs all tests
+# test_list  =  no args or all runs all tests
 #              or
 #               llm runs ompi mca llm tests
 #               ns runs ompi mca ns tests
@@ -24,32 +24,47 @@
 umask 007
 
 if ("x$1" == "x") then
-  cd llm; ./run_tests;
-#  cd ../ns;  ./run_tests;
-  cd ../oob; ./run_tests;
-  cd ../pcm; ./run_tests;
+  cd gpr; ./run_tests all;
+  cd llm; ./run_tests all;
+#  cd ../ns;  ./run_tests all;
+  cd ../oob; ./run_tests all;
+  cd ../pcm; ./run_tests all;
   cd ..;
-else if ("$1" == "llm") then
-  cd llm;
-  ./run_tests;
-  cd ..;
-#else if ("$1" == "ns") then
-#  cd ns;
-#  ./run_tests;
-#  cd ..;
-else if ("$1" == "oob") then
-  cd oob;
-  ./run_tests;
-  cd ..;
-else if ("$1" == "pcm") then
-  cd pcm;
-  ./run_tests;
-  cd ../;
 else
-  echo "correct use: "
-  echo "    run_tests    (to run all mca tests)"
-  echo "or  run_tests <llm | ns | oob | pcm>"
-  exit -1
+
+  foreach target ($argv)
+    switch ($target)
+    case "all":
+      cd llm; ./run_tests all;
+#      cd ../ns;  ./run_tests all;
+      cd ../oob; ./run_tests all;
+      cd ../pcm; ./run_tests all;
+      cd ..;
+      breaksw
+    case "gpr":
+    case "llm":
+#    case "ns":
+    case "oob":
+    case "pcm":
+      cd $target
+      ./run_tests;
+      cd ..;
+      breaksw
+    case "help":
+      echo "correct use: "
+      echo "    run_tests help (this message)"
+      echo "    run_tests all  (to run all mca tests)"
+      echo "or  run_tests <llm | ns | oob | pcm>"
+      breaksw
+    default
+      echo "There is no part of mca called program <$target> to run"
+      echo "correct use: "
+      echo "    run_tests all   (to run all mca tests)"
+      echo "or  run_tests <llm | ns | oob | pcm>"
+      break
+    endsw
+  end
+
 endif
 
 
