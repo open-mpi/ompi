@@ -182,7 +182,7 @@ int ompi_comm_activate ( ompi_communicator_t* newcomm,
                          int send_first, 
                          mca_base_component_t *collcomponent )
 {
-    int ok, gok;
+    int ok=0, gok=0;
     ompi_comm_cid_allredfct* allredfnct;
 
     /* Step 1: the barrier, after which it is allowed to 
