@@ -51,7 +51,7 @@ int mca_oob_cofs_my_vpid;
 uint64_t mca_oob_cofs_serial;
 
 int
-mca_oob_cofs_open(lam_cmd_line_t *cmd)
+mca_oob_cofs_open(void)
 {
   return LAM_SUCCESS;
 }

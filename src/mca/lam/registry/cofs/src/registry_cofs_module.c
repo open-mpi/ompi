@@ -49,7 +49,7 @@ char mca_registry_cofs_comm_loc[LAM_PATH_MAX];
 int mca_registry_cofs_my_vpid;
 
 int
-mca_registry_cofs_open(lam_cmd_line_t *cmd)
+mca_registry_cofs_open(void)
 {
   return LAM_SUCCESS;
 }
