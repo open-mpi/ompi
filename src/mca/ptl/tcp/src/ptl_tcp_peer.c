@@ -64,7 +64,9 @@ static void mca_ptl_tcp_peer_construct(mca_ptl_base_peer_t* ptl_peer)
 
 static void mca_ptl_tcp_peer_destruct(mca_ptl_base_peer_t* ptl_peer)
 {
+#if 0
     mca_ptl_tcp_proc_remove(ptl_peer->peer_proc, ptl_peer);
+#endif
     mca_ptl_tcp_peer_close(ptl_peer);
 }
 
