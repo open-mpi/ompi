@@ -19,29 +19,47 @@
 
 
 /**
- * Container for key = value pairs from the node allocation container
+ * Process startup description container
  *
- * Container used for the \c info member of the \c
- * ompi_rte_node_allocation_t structure.  Ownership of char* strings must be
- * give to the container, who will \c free() them when the
- * container is destroyed.
+ * Container used to descript the processes to be launched as part of
+ * a job.  A job consists of a number of process started on some set
+ * of resources (specified by \c nodelist).  Each process type (a
+ * unique argv/envp/cwd) is given its own instance of \c
+ * ompi_rte_node_schedule_t and its own unique list of resources to
+ * utilize.
+ *
+ * All memory associated with \c argv, \c env, \c cwd, and \c nodelist
+ * is given to the instance of \c ompi_rte_node_schedule_t and will be
+ * freed when the instance of \c ompi_rte_node_schedule_t is
+ * destructed.
+ *
+ * if nodelist is not NULL, the contents of the list will be
+ * destructed when the instance of the \c ompi_rte_node_schedule_t is
+ * destructed.
  */
-struct ompi_rte_valuepair_t {
-    /** make us an instance of a list item */
+struct ompi_rte_node_schedule_t {
+    /** make us an instance of list item */
     ompi_list_item_t super;
-    /** key string for the info pair */
-    char *key;
-    /** value string for the info pair */
-    char *value;
+    /** argv array for process to start (NULL terminated array) */
+    char **argv;
+    /** length of argv */
+    int argc;
+    /** environ array for process to start (NULL terminated array) */
+    char **env;
+    /** working directory in which to start the application */
+    char *cwd;
+    /** list of nodes to start the process on (list of 
+        \c ompi_rte_node_allocation_t) */
+    ompi_list_t *nodelist;
 };
-/** shorten ompi_rte_valuepair_t declarations */
-typedef struct ompi_rte_valuepair_t ompi_rte_valuepair_t;
+/** shorten ompi_rte_node_schedule_t declarations */
+typedef struct ompi_rte_node_schedule_t ompi_rte_node_schedule_t;
 /** create the required instance information */
-OBJ_CLASS_DECLARATION(ompi_rte_valuepair_t);
+OBJ_CLASS_DECLARATION(ompi_rte_node_schedule_t);
 
 
 /**
- * Container for node allocation information.
+ * Node 
  *
  * Container for allocation and deallocation of resources used to
  * launch parallel jobs.
@@ -65,43 +83,25 @@ OBJ_CLASS_DECLARATION(ompi_rte_node_allocation_t);
 
 
 /**
- * Container use for process startup information
+ * Container for key = value pairs from the node allocation container
  *
- * Container describing a job to be launched.  A job consists of a
- * number of processes started on a number of nodes.  Each process
- * type (a unique argv/envp/cwd) is given its own instance of \c
- * ompi_rte_node_schedule_t and its own unique list of hosts to start
- * on.
- *
- * All memory associated with \c argv, \c env, \c cwd, and \c nodelist
- * is given to the instance of \c ompi_rte_node_schedule_t and will be
- * freed when the instance of \c ompi_rte_node_schedule_t is
- * destructed.
+ * Container used for the \c info member of the \c
+ * ompi_rte_node_allocation_t structure.  Ownership of char* strings must be
+ * give to the container, who will \c free() them when the
+ * container is destroyed.
  */
-struct ompi_rte_node_schedule_t {
-    /** make us an instance of list item */
+struct ompi_rte_valuepair_t {
+    /** make us an instance of a list item */
     ompi_list_item_t super;
-    /** argv array for process to start (NULL terminated array) */
-    char **argv;
-    /** length of argv */
-    int argc;
-    /** environ array for process to start (NULL terminated array) */
-    char **env;
-    /** working directory in which to start the application */
-    char *cwd;
-    /** list of nodes to start the process on */
-    ompi_list_t *nodelist;
+    /** key string for the info pair */
+    char *key;
+    /** value string for the info pair */
+    char *value;
 };
-/** shorten ompi_rte_node_schedule_t declarations */
-typedef struct ompi_rte_node_schedule_t ompi_rte_node_schedule_t;
+/** shorten ompi_rte_valuepair_t declarations */
+typedef struct ompi_rte_valuepair_t ompi_rte_valuepair_t;
 /** create the required instance information */
-OBJ_CLASS_DECLARATION(ompi_rte_node_schedule_t);
-
-
-/**
- * VPID type
- */
-typedef pid_t ompi_vpid_t;
+OBJ_CLASS_DECLARATION(ompi_rte_valuepair_t);
 
 
 /**
