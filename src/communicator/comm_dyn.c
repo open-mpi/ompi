@@ -472,8 +472,6 @@ int ompi_comm_dyn_init (void)
 	OBJ_RELEASE(oldcomm);
         group = &ompi_mpi_group_null;
 	OBJ_RELEASE(group);
-        group = &ompi_mpi_group_null;
-	OBJ_RELEASE(group);
 	errhandler = &ompi_mpi_errors_are_fatal;
 	OBJ_RELEASE(errhandler);
 
