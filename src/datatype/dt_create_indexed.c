@@ -34,7 +34,6 @@ int ompi_ddt_create_indexed( int count, const int* pBlockLength, const int* pDis
     } else {
         pdt = ompi_ddt_create( count * (2 + oldType->desc.used) );
         for( i = 1; i < count; i++ ) {
-            if( pBlockLength[i] == 0 ) continue;
             if( endat == pDisp[i] ) {
                 /* contiguous with the previsious */
                 dLength += pBlockLength[i];
@@ -71,7 +70,6 @@ int ompi_ddt_create_hindexed( int count, const int* pBlockLength, const long* pD
         ompi_ddt_add( pdt, oldType, count * dLength, disp, extent );
     } else {
         for( i = 1; i < count; i++ ) {
-            if( pBlockLength[i] == 0 ) continue;
             if( endat == pDisp[i] ) {
                 /* contiguous with the previsious */
                 dLength += pBlockLength[i];
