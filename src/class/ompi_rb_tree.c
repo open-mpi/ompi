@@ -32,6 +32,7 @@ static void inorder_traversal(ompi_rb_tree_t *tree,
 void ompi_rb_tree_construct(ompi_object_t * object)
 {
     ompi_rb_tree_t * tree = (ompi_rb_tree_t *) object;
+    tree->root_ptr = NULL;
     OBJ_CONSTRUCT(&(tree->free_list), ompi_free_list_t);
     ompi_free_list_init(&(tree->free_list), sizeof(ompi_rb_tree_node_t),
                         OBJ_CLASS(ompi_rb_tree_node_t),
@@ -41,7 +42,9 @@ void ompi_rb_tree_construct(ompi_object_t * object)
 /* the destructor function */
 void ompi_rb_tree_destruct(ompi_object_t * object)
 {
-    ompi_rb_tree_destroy((ompi_rb_tree_t *) object);
+    if(NULL != ((ompi_rb_tree_t *)object)->root_ptr) {
+        ompi_rb_tree_destroy((ompi_rb_tree_t *) object);
+    }
     OBJ_DESTRUCT(&(((ompi_rb_tree_t *)object)->free_list));
     return;
 }
