@@ -182,7 +182,14 @@ int mca_ptl_tcp_component_open(void)
         mca_ptl_tcp_param_register_int("min_frag_size", 64*1024);
     mca_ptl_tcp_module.super.ptl_max_frag_size =
         mca_ptl_tcp_param_register_int("max_frag_size", -1);
-
+    /* the tcp allocator will never allocate buffers with more than this size */
+    mca_ptl_tcp_component.tcp_frag_size =
+        mca_ptl_tcp_param_register_int("frag_size", 16*1024);
+    /* adapt the first fragment size to fit with the allowed fragment size */
+    if( (mca_ptl_tcp_component.tcp_frag_size != 0) &&
+        (mca_ptl_tcp_module.super.ptl_first_frag_size > mca_ptl_tcp_component.tcp_frag_size) ) {
+        mca_ptl_tcp_module.super.ptl_first_frag_size = mca_ptl_tcp_component.tcp_frag_size;
+    }
     return OMPI_SUCCESS;
 }
 
