@@ -24,12 +24,19 @@ struct mca_mpool_sm_component_t {
 typedef struct mca_mpool_sm_component_t mca_mpool_sm_component_t;
 
 extern mca_mpool_sm_component_t mca_mpool_sm_module;
+extern mca_mpool_t mca_mpool_sm;
+
+/*
+ *  Returns base address of shared memory mapping.
+ */
+
+void* mca_mpool_sm_base(void);
+
 
 /**
-  * returns a pointer to an mca_mpool_sm_allocation_t - the allocation
-  * will always be increased by the size of mca_mpool_sm_allocation_t - 
-  * the allocated block follows this header
+  *  Allocate block of shared memory.
   */
+
 void* mca_mpool_sm_alloc(size_t size, size_t align);
                                                                                                                          
 /**
