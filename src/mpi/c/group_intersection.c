@@ -17,7 +17,7 @@ int MPI_Group_intersection(MPI_Group group1, MPI_Group group2,
 
     /* local variables */
     int return_value,my_group_rank;
-    int group_size,proc,proc1,proc2,cnt;
+    int group_size,proc1,proc2,cnt;
     lam_group_t *group1_pointer, *group2_pointer, *new_group_pointer;
     lam_proc_t *proc1_pointer, *proc2_pointer, *my_proc_pointer;
 
@@ -53,7 +53,7 @@ int MPI_Group_intersection(MPI_Group group1, MPI_Group group2,
     }  /* end proc1 loop */
 
     /* fill in new group */
-    new_group_pointer=group_allocate(group_size);
+    new_group_pointer=lam_group_allocate(group_size);
     if( NULL == new_group_pointer ) {
         return MPI_ERR_GROUP;
     }

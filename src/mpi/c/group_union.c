@@ -15,7 +15,7 @@
 int MPI_Group_union(MPI_Group group1, MPI_Group group2, MPI_Group *new_group) 
 {
     /* local variables */
-    int return_value, new_group_size, proc, proc1, proc2, found_in_group;
+    int return_value, new_group_size, proc1, proc2, found_in_group;
     int my_group_rank, cnt;
     lam_group_t *group1_pointer, *group2_pointer, *new_group_pointer;
     lam_proc_t *proc1_pointer, *proc2_pointer, *my_proc_pointer;
@@ -60,7 +60,7 @@ int MPI_Group_union(MPI_Group group1, MPI_Group group2, MPI_Group *new_group)
     }                           /* end proc loop */
 
     /* get new group struct */
-    new_group_pointer = group_allocate(new_group_size);
+    new_group_pointer = lam_group_allocate(new_group_size);
     if (NULL == new_group_pointer) {
         return MPI_ERR_GROUP;
     }

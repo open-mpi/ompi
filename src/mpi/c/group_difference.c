@@ -58,7 +58,7 @@ int MPI_Group_difference(MPI_Group group1, MPI_Group group2,
     }  /* end proc loop */
 
     /* allocate a new lam_group_t structure */
-    new_group_pointer=group_allocate(new_group_size);
+    new_group_pointer=lam_group_allocate(new_group_size);
     if( NULL == new_group_pointer ) {
         return MPI_ERR_GROUP;
     }
