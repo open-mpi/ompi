@@ -11,7 +11,7 @@ include $(top_srcdir)/config/Makefile.options
 # replaces all MPI_* symbols with PMPI_* symbols. In this directory
 # we definately need it to be 1.
 #
-AM_CPPFLAGS	= -DLAM_PROFILE_LAYER=1
+AM_CPPFLAGS = -DLAM_PROFILE_LAYER=1
 #
 # This build needs to go through only if profiling is required.
 # Further, this build HAS to go through if profiling is required.
@@ -26,26 +26,24 @@ endif
 noinst_LTLIBRARIES = $(pmpi_lib)
 
 nodist_libmpi_f77_pmpi_la_SOURCES = \
-        		palloc_mem_f.c 
-
-bogus_stuff = \
-				pcomm_get_name_f.c \
-				pcomm_set_name_f.c \
-				pinit_f.c \
-				pfinalize_f.c \
-        		pfree_mem_f.c
+        palloc_mem_f.c \
+        pcomm_get_name_f.c \
+        pcomm_set_name_f.c \
+        pinit_f.c \
+        pfinalize_f.c \
+        pfree_mem_f.c
 #
 # Sym link in the sources from the real MPI directory
 #
 $(nodist_libmpi_f77_pmpi_la_SOURCES):
-	if test ! -r $@ ; then \
-		pname=`echo $@ | cut -b '2-'` ; \
-		ln -s $(top_srcdir)/src/mpi/interface/f77/$$pname $@ ; \
-	fi
+    if test ! -r $@ ; then \
+        pname=`echo $@ | cut -b '2-'` ; \
+        ln -s $(top_srcdir)/src/mpi/interface/f77/$$pname $@ ; \
+    fi
 #
 # 
 headers = \
-	prototypes_pmpi.h
+    prototypes_pmpi.h
 #
 # These files were created by targets above
 #
