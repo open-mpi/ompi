@@ -262,6 +262,12 @@ int mca_coll_basic_reduce_log_intra(void *sbuf, void *rbuf, int count,
    char *snd_buffer = sbuf;
    char *rcv_buffer = rbuf;
 
+   /* Some variables */
+   size = ompi_comm_size(comm);
+   rank = ompi_comm_rank(comm);                       
+   vrank = ompi_op_is_commute(op) ? (rank - root + size) % size : rank;
+   dim = comm->c_cube_dim;
+
    /* Allocate the incoming and resulting message buffers.  See lengthy
       rationale above. */
 
@@ -276,12 +282,6 @@ int mca_coll_basic_reduce_log_intra(void *sbuf, void *rbuf, int count,
 
       pml_buffer = free_buffer - lb;
    }
-
-   /* Some variables */
-   size = ompi_comm_size(comm);
-   rank = ompi_comm_rank(comm);                       
-   vrank = ompi_op_is_commute(op) ? (rank - root + size) % size : rank;
-   dim = comm->c_cube_dim;
 
    /* Loop over cube dimensions. High processes send to low ones in the
       dimension. */
