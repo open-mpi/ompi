@@ -123,11 +123,11 @@ struct mca_ptl_mx_module_t {
     uint64_t mx_nic_addr;                /**< NIC MAC address */
     uint32_t mx_filter;                  /**< endpoint filter */
     uint32_t mx_endpoint_id;             /**< endpoint ID */
+    bool mx_enabled;                     /**< flag to indicate if endpoint enabled */
     mx_endpoint_t mx_endpoint;           /**< endpoint */
     mx_endpoint_addr_t mx_endpoint_addr; /**< endpoint address */
 #if OMPI_HAVE_THREADS
     ompi_thread_t mx_thread;             /**< thread for progressing outstanding requests */
-    bool mx_thread_run;                  /**< flag to indicate thread status */
 #endif
 };
 typedef struct mca_ptl_mx_module_t mca_ptl_mx_module_t;

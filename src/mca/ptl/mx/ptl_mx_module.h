@@ -83,5 +83,8 @@ do {                                                                            
     }                                                                               \
 } while(0)
 
+void mca_ptl_mx_enable(void);
+void mca_ptl_mx_disable(void);
+
 #endif
 

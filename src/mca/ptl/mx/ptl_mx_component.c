@@ -200,10 +200,10 @@ int mca_ptl_mx_component_control(int param, void* value, size_t size)
 {
     switch(param) {
         case MCA_PTL_ENABLE:
-            if(*(int*)value)
-                ;  /* enable forwarding */
-            else
-                ;  /* disable forwarding */
+            if(*(int*)value) {
+                mca_ptl_mx_enable();
+            } else
+                mca_ptl_mx_disable();
             break;
         default:
             break;
