@@ -191,7 +191,7 @@ elif test "$enable_mpi_threads" = "no" ; then
     OMPI_ENABLE_MPI_THREADS=0
 else
     # they want MPI threads.  Make sure we have threads
-    if "$THREAD_TYPE" != "none" ; then
+    if test "$THREAD_TYPE" != "none" ; then
         OMPI_ENABLE_MPI_THREADS=1
         enable_mpi_threads="yes"
     else
