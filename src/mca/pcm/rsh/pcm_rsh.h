@@ -64,6 +64,7 @@ extern "C" {
         int ignore_stderr;
         char* rsh_agent;
         int constraints;
+        unsigned int delay_time;
     };
     typedef struct mca_pcm_rsh_module_t mca_pcm_rsh_module_t;
 

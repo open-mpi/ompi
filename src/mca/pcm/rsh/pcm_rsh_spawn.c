@@ -84,6 +84,7 @@ mca_pcm_rsh_spawn_procs(struct mca_pcm_base_module_1_0_0_t* me_super,
     int global_start_vpid = 0;
     int num_procs = 0;
     int tmp_count;
+    unsigned int sleep_time;
 
     OBJ_CONSTRUCT(&launch, ompi_list_t);
     OBJ_CONSTRUCT(&done, ompi_list_t);
@@ -162,6 +163,12 @@ mca_pcm_rsh_spawn_procs(struct mca_pcm_base_module_1_0_0_t* me_super,
 
                 /* copy the list over to the done part */
                 ompi_list_join(&done, ompi_list_get_end(&done), &launch);
+
+                /* delay before the next start */
+                sleep_time = me->delay_time;
+                while (sleep_time > 0) {
+                    sleep_time = sleep(sleep_time);
+                }
             }
 
             /* put the list back where we found it... */
