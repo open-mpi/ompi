@@ -501,7 +501,12 @@ mca_ptl_gm_recv_frag_match( struct mca_ptl_gm_module_t *ptl,
                                     &(recv_frag->frag_recv),
                                     &(recv_frag->frag_recv.frag_base.frag_header.hdr_match) );
     if( matched ) {
+        size_t length = recv_frag->frag_recv.frag_base.frag_size;
 	/* get some memory and copy the data inside. We can then release the receive buffer */
+        char* ptr = (char*)malloc( sizeof(char) * length );
+        recv_frag->have_allocated_buffer = true;
+        memcpy( ptr, recv_frag->frag_recv.frag_base.frag_addr, length );
+        recv_frag->frag_recv.frag_base.frag_addr = ptr;
         return NULL;
     }
     return recv_frag;
