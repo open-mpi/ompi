@@ -348,7 +348,7 @@ mca_ptl_elan_matched (mca_ptl_base_module_t * ptl,
     request = frag->frag_request;
     recv_frag = (mca_ptl_elan_recv_frag_t * ) frag;
 
-#if 1 
+#if 0 
     /* XXX: If to change in PML and PTL/base
      * Two places to setting the frag_peer after match
      * teg_recvreq.c:157 or ptl_base_match.c:131 
