@@ -51,22 +51,19 @@ int main(int argc, char **argv)
       exit(1);
     } 
 
-    /* check wether or not we are seed */
+    /* setup environment for rte */
     seed = getenv("OMPI_DAEMON_SEED");
+    setenv("OMPI_MCA_pcmclient_env_num_procs", "2", 1);
+    setenv("OMPI_MCA_pcmclient_env_vpid_start", "0", 1);
+    setenv("OMPI_MCA_pcmclient_env_cellid", "0", 1);
+    setenv("OMPI_MCA_pcmclient_env_jobid", "0", 1);
     if(seed == NULL || atoi(seed) != 0) {
         ompi_process_info.seed = true;
-        /* setup the environment for cofs pcm */
-        setenv("OMPI_MCA_pcm_cofs_cellid", "0", 1);
-        setenv("OMPI_MCA_pcm_cofs_jobid", "0", 1);
-        setenv("OMPI_MCA_pcm_cofs_procid", "0", 1);
+        setenv("OMPI_MCA_pcmclient_env_procid", "0", 1);
     } else {
         ompi_process_info.seed = false;
-        /* setup the environment for cofs pcm */
-        setenv("OMPI_MCA_pcm_cofs_cellid", "0", 1);
-        setenv("OMPI_MCA_pcm_cofs_jobid", "0", 1);
-        setenv("OMPI_MCA_pcm_cofs_procid", "1", 1);
+        setenv("OMPI_MCA_pcmclient_env_procid", "1", 1);
     }
-    setenv("OMPI_MCA_pcm_cofs_num_procs", "2", 1);
     /* require tcp oob */
     setenv("OMPI_MCA_oob_base_include", "tcp", 1);
 
@@ -101,6 +98,7 @@ int main(int argc, char **argv)
 
     /* if daemon seed - just wait for requests */
     if(ompi_process_info.seed) {
+#if 0
         /* wait on child to exit */
         int pid = exec_client(argc, argv);
         while(true) {
@@ -109,6 +107,10 @@ int main(int argc, char **argv)
                 break;
             ompi_event_loop(OMPI_EVLOOP_NONBLOCK);
         }
+#else
+        fprintf(stderr, "OMPI_MCA_oob_base_seed=%s", mca_oob_get_contact_info());
+        ompi_event_loop(0);
+#endif
     } else {
         run_test();
     }

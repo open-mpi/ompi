@@ -17,6 +17,7 @@
 #include "mca/llm/base/base.h"
 #include "mca/oob/oob.h"
 #include "mca/ns/base/base.h"
+#include "mca/gpr/base/base.h"
 #include "util/proc_info.h"
 #include "util/session_dir.h"
 #include "util/sys_info.h"
@@ -162,12 +163,28 @@ int ompi_rte_init(bool *allow_multi_user_threads, bool *have_hidden_threads)
   if (OMPI_SUCCESS != (ret = mca_oob_base_init(&user_threads, 
                                                &hidden_threads))) {
     /* JMS show_help */
-    printf("show_help: ompi_rte_init failed in oob_base_init\n");
+    printf("show_help: ompi_rte_init failed in mca_oob_base_init()\n");
     return ret;
   }
   *allow_multi_user_threads &= user_threads;
   *have_hidden_threads |= hidden_threads;
 
+  /*
+   * Registry 
+   */
+  if (OMPI_SUCCESS != (ret = mca_gpr_base_open())) {
+    /* JMS show_help */
+    printf("show_help: ompi_rte_init failed in mca_gpr_base_open()\n");
+    return ret;
+  }
+  if (OMPI_SUCCESS != (ret = mca_gpr_base_select(&user_threads, 
+                                               &hidden_threads))) {
+    /* JMS show_help */
+    printf("show_help: ompi_rte_init failed in mca_gpr_base_select()\n");
+    return ret;
+  }
+  *allow_multi_user_threads &= user_threads;
+  *have_hidden_threads |= hidden_threads;
 
   /*
    * Fill in the various important structures
@@ -198,13 +215,19 @@ int ompi_rte_init(bool *allow_multi_user_threads, bool *have_hidden_threads)
 
 
   /*
-   * Call back into NS/GPR to allow them to do any final initialization
-   * (e.g. register callbacks w/ OOB).
+   * Call back into NS/GPR/OOB to allow them to do any final initialization
+   * (e.g. register callbacks w/ OOB, put contact info in register).
   */
   if (OMPI_SUCCESS != (ret = ompi_name_server.init())) {
       printf("show_help: ompi_rte_init failed in ompi_name_server.init()\n");
       return ret;
   }
+
+  if (OMPI_SUCCESS != (ret = mca_oob_base_register())) {
+      printf("show_help: ompi_rte_init failed in mca_oob_base_register()\n");
+      return ret;
+  }
+
 
   /* 
    * All done 

@@ -8,6 +8,8 @@
 #include <arpa/inet.h>
 #include "util/output.h"
 #include "mca/oob/tcp/oob_tcp_peer.h"
+#include "mca/gpr/base/base.h"
+#include "mca/gpr/gpr.h"
 
 
 static int  mca_oob_tcp_peer_start_connect(mca_oob_tcp_peer_t* peer);
@@ -163,12 +165,6 @@ mca_oob_tcp_peer_t * mca_oob_tcp_peer_lookup(ompi_process_name_t* name, bool get
     peer->peer_recv_msg = NULL;
     peer->peer_send_msg = NULL;
     peer->peer_retries = 0;
-    /******
-     * need to add the peer's address to the structure
-     ******/
-    peer->peer_addr.sin_family = AF_INET;
-    peer->peer_addr.sin_port = htons(5000+peer->peer_name.vpid);
-    peer->peer_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
 
     if(OMPI_SUCCESS != ompi_rb_tree_insert(&mca_oob_tcp_component.tcp_peer_tree, &peer->peer_name, peer)) {
         MCA_OOB_TCP_PEER_RETURN(peer);
@@ -778,12 +774,32 @@ int mca_oob_tcp_peer_name_lookup(mca_oob_tcp_peer_t* peer)
         peer->peer_addr = mca_oob_tcp_component.tcp_seed_addr;
         return OMPI_SUCCESS;
     } else {
-        peer->peer_addr.sin_family = AF_INET;
-        peer->peer_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
-        peer->peer_addr.sin_port = htons(5000+peer->peer_name.vpid);
-    }
+        ompi_registry_value_t *item;
+        ompi_list_t* items;
+        char *keys[3];
+        char *uri = NULL;
 
-    /* insert code to resolve name via registry */
-    return OMPI_ERROR;
+        /* lookup the name in the registry */
+        keys[0] = "tcp";
+        keys[1] = ompi_name_server.get_proc_name_string(&peer->peer_name);
+        keys[2] = NULL;
+        items = ompi_registry.get(OMPI_REGISTRY_AND, "oob", keys);
+        if(items == NULL || ompi_list_get_size(items) == 0)
+            return OMPI_ERR_UNREACH;
+
+        /* unpack the results into a uri string */
+        item = (ompi_registry_value_t*)ompi_list_remove_first(items);
+        if((uri = item->object) == NULL) 
+            return OMPI_ERR_UNREACH;
+
+        /* validate the result */
+        if(mca_oob_tcp_parse_uri(uri, &peer->peer_addr) != OMPI_SUCCESS) {
+            OBJ_RELEASE(item);
+            return OMPI_ERR_UNREACH;
+        }
+        OBJ_RELEASE(item);
+        return OMPI_SUCCESS;
+    }
 }
+
 

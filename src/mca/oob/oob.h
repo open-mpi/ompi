@@ -136,9 +136,15 @@ typedef int (*mca_oob_base_module_recv_nb_fn_t)(
     void* cbdata);
 
 /**
- * OOB finalize function
+ * Hook function called by mca_oob_base_register to allow
+ * the oob component a chance to register contact information
  */
-typedef int (*mca_oob_base_module_finalize_fn_t)(mca_oob_t*);
+typedef int (*mca_oob_base_module_init_fn_t)(void);
+
+/**
+ * Cleanup during finalize.
+ */
+typedef int (*mca_oob_base_module_fini_fn_t)(void);
 
 /**
  * OOB Module
@@ -150,7 +156,8 @@ struct mca_oob_1_0_0_t {
     mca_oob_base_module_recv_fn_t      oob_recv;
     mca_oob_base_module_send_nb_fn_t   oob_send_nb;
     mca_oob_base_module_recv_nb_fn_t   oob_recv_nb;
-    mca_oob_base_module_finalize_fn_t  oob_finalize;
+    mca_oob_base_module_init_fn_t      oob_init;
+    mca_oob_base_module_fini_fn_t      oob_fini;
 };
 
 /**
@@ -221,6 +228,7 @@ extern "C" {
 #endif
     int mca_oob_base_open(void);
     int mca_oob_base_init(bool *allow_multi_user_threads, bool *have_hidden_threads);
+    int mca_oob_base_register(void);
     int mca_oob_base_close(void);
 #if defined(c_plusplus) || defined(__cplusplus)
 }

@@ -22,7 +22,7 @@ int mca_oob_base_close(void)
        item != NULL;
        item =  ompi_list_remove_first(&mca_oob_base_modules)) {
     mca_oob_base_info_t* base = (mca_oob_base_info_t *) item;
-    base->oob_module->oob_finalize(base->oob_module);
+    base->oob_module->oob_fini();
   }
 
   /* Close all remaining available modules (may be one if this is a

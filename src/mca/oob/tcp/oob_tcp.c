@@ -12,6 +12,9 @@
 #include "util/output.h"
 #include "util/if.h"
 #include "mca/oob/tcp/oob_tcp.h"
+#include "mca/ns/ns.h"
+#include "mca/gpr/base/base.h"
+#include "mca/gpr/gpr.h"
 
 
 static int  mca_oob_tcp_create_listen(void);
@@ -27,16 +30,16 @@ mca_oob_tcp_component_t mca_oob_tcp_component = {
     {
         MCA_OOB_BASE_VERSION_1_0_0,
         "tcp", /* MCA module name */
-        1,  /* MCA module major version */
-        0,  /* MCA module minor version */
-        0,  /* MCA module release version */
-        mca_oob_tcp_open,  /* module open */
-        mca_oob_tcp_close /* module close */
+        1,  /* MCA component major version */
+        0,  /* MCA component minor version */
+        0,  /* MCA component release version */
+        mca_oob_tcp_component_open,  /* component open */
+        mca_oob_tcp_component_close /* component close */
     },
     {
         false /* checkpoint / restart */
     },
-    mca_oob_tcp_init    /* module init */
+    mca_oob_tcp_component_init 
   }
 };
 
@@ -47,7 +50,8 @@ static mca_oob_t mca_oob_tcp = {
     mca_oob_tcp_recv,
     mca_oob_tcp_send_nb,
     mca_oob_tcp_recv_nb,
-    mca_oob_tcp_finalize
+    mca_oob_tcp_init,
+    mca_oob_tcp_fini,
 };
 
 
@@ -80,7 +84,7 @@ static inline char* mca_oob_tcp_param_register_str(
 /*
  * Initialize global variables used w/in this module.
  */
-int mca_oob_tcp_open(void)
+int mca_oob_tcp_component_open(void)
 {
     OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_peer_list,  ompi_list_t);
     OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_peer_tree,  ompi_rb_tree_t);
@@ -108,7 +112,7 @@ int mca_oob_tcp_open(void)
  * Cleanup of global variables used by this module.
  */
 
-int mca_oob_tcp_close(void)
+int mca_oob_tcp_component_close(void)
 {
     OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_peer_list);
     OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_peer_tree);
@@ -174,11 +178,10 @@ static int mca_oob_tcp_create_listen(void)
             errno);
     }
 
-    /* bind to all addresses and dynamically assigned port */
     memset(&inaddr, 0, sizeof(inaddr));
     inaddr.sin_family = AF_INET;
     inaddr.sin_addr.s_addr = INADDR_ANY;
-    inaddr.sin_port = htons(5000+mca_oob_name_self.vpid);
+    inaddr.sin_port = 0;
 
     if(bind(mca_oob_tcp_component.tcp_listen_sd, (struct sockaddr*)&inaddr, sizeof(inaddr)) < 0) {
         ompi_output(0,"mca_oob_tcp_create_listen: bind() failed with errno=%d", errno);
@@ -278,11 +281,11 @@ static void mca_oob_tcp_recv_handler(int sd, short flags, void* user)
 }
 
 /*
- * Module initialization.
+ * Component initialization - create a module.
  * (1) initialize static resources
  * (2) create listen socket
  */
-mca_oob_t* mca_oob_tcp_init(bool *allow_multi_user_threads, bool *have_hidden_threads)
+mca_oob_t* mca_oob_tcp_component_init(bool *allow_multi_user_threads, bool *have_hidden_threads)
 {
     /* initialize data structures */
     ompi_rb_tree_init(&mca_oob_tcp_component.tcp_peer_tree, (ompi_rb_tree_comp_fn_t)mca_oob_tcp_process_name_compare);
@@ -303,7 +306,6 @@ mca_oob_t* mca_oob_tcp_init(bool *allow_multi_user_threads, bool *have_hidden_th
         8,  /* increment to grow by */
         NULL); /* use default allocator */
 
-#if 0
     /* intialize event library */
     memset(&mca_oob_tcp_component.tcp_recv_event, 0, sizeof(ompi_event_t));
     memset(&mca_oob_tcp_component.tcp_send_event, 0, sizeof(ompi_event_t));
@@ -318,16 +320,36 @@ mca_oob_t* mca_oob_tcp_init(bool *allow_multi_user_threads, bool *have_hidden_th
         return NULL;
     }
     return &mca_oob_tcp;
-#else
-    return NULL;
-#endif
 }
 
+/*
+ * Setup contact information in the registry.
+ */
+int mca_oob_tcp_init(void)
+{
+    char *keys[3];
+    char *addr;
+    int rc;
+
+    /* put contact info in registry */
+    keys[0] = "tcp";
+    keys[1] = ompi_name_server.get_proc_name_string(&mca_oob_name_self);
+    keys[2] = NULL;
+
+    addr = mca_oob_tcp_get_addr();
+    rc = ompi_registry.put(OMPI_REGISTRY_OVERWRITE, "oob", keys, addr, strlen(addr)+1);
+    free(addr);
+    if(rc != OMPI_SUCCESS) {
+        ompi_output(0, "mca_oob_tcp_init: unable to contact registry.");
+        return rc;
+    }
+    return OMPI_SUCCESS;
+}
 
 /*
  * Module cleanup.
  */
-int mca_oob_tcp_finalize(mca_oob_t* oob)
+int mca_oob_tcp_fini(void)
 {
     mca_oob_tcp_peer_t * peer;
  
@@ -407,7 +429,7 @@ char* mca_oob_tcp_get_addr(void)
 * Parse a URI string into an IP address and port number.
 */
 
-static int mca_oob_tcp_parse_uri(const char* uri, struct sockaddr_in* inaddr)
+int mca_oob_tcp_parse_uri(const char* uri, struct sockaddr_in* inaddr)
 {
     char* tmp = strdup(uri);
     char* ptr = tmp + 6;
