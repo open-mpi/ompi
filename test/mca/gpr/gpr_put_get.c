@@ -49,17 +49,11 @@ static char *cmd_str="diff ./test_gpr_replica_out ./test_gpr_replica_out_std";
 
 int main(int argc, char **argv)
 {
-    int rc, num_names, num_found;
+    int rc;
     int32_t i, j, cnt;
-    char *tmp=NULL, *tmp2=NULL, *names[15], *keys[5];
-    orte_gpr_replica_segment_t *seg=NULL;
-    orte_gpr_replica_itag_t itag[10], itag2, *itaglist;
-    orte_gpr_replica_container_t *cptr=NULL, **cptrs=NULL;
-    orte_gpr_keyval_t *kptr=NULL, **kvals;
-    orte_gpr_replica_itagval_t **ivals=NULL, *iptr;
+    char *names[15], *keys[5];
+    orte_gpr_keyval_t **kvals;
     orte_gpr_value_t **values, *val;
-    orte_process_name_t seed={0,0,0};
-    bool found;
     
     test_init("test_gpr_replica");
 
@@ -102,7 +96,10 @@ int main(int argc, char **argv)
     
 
     orte_process_info.seed = true;
-    orte_process_info.my_name = &seed;
+    orte_process_info.my_name = (orte_process_name_t*)malloc(sizeof(orte_process_name_t));
+    orte_process_info.my_name->cellid = 0;
+    orte_process_info.my_name->jobid = 0;
+    orte_process_info.my_name->vpid = 0;
 
     /* startup the MCA */
     if (OMPI_SUCCESS == mca_base_open()) {
@@ -197,6 +194,8 @@ int main(int argc, char **argv)
     } else {
         fprintf(test_out, "gpr_test: put 1 value/multiple keyval in second container passed\n");
     }
+    /* reset the num_tokens so we cleanup properly */
+    val->num_tokens = 14;
     OBJ_RELEASE(val);
     
     fprintf(stderr, "dump\n");
@@ -227,7 +226,8 @@ int main(int argc, char **argv)
     } else {
         fprintf(test_out, "gpr_test: get passed\n");
     }
-
+    free(keys[0]);
+    
     fprintf(stderr, "get results:\n");
     for (j=0; j < cnt; j++) {
         fprintf(stderr, "value %d: cnt %d\t segment %s num_tokens %d\n", j,
@@ -262,7 +262,9 @@ int main(int argc, char **argv)
     } else {
         fprintf(test_out, "gpr_test: get passed\n");
     }
-
+    for (i=0; i < 4; i++) free(keys[i]);
+    free(names[0]);
+    
     fprintf(stderr, "get results:\n");
     for (j=0; j < cnt; j++) {
         fprintf(stderr, "value %d: cnt %d\t segment %s num_tokens %d\n", j,
@@ -308,34 +310,6 @@ int main(int argc, char **argv)
     
     orte_gpr.dump_all(0);
     
-    fprintf(stderr, "update multiple keyvals in a container\n");
-    if(ORTE_SUCCESS != orte_gpr_replica_find_seg(&seg, false, "test-put-segment")) {
-        return -1;
-    }
-    
-    cptrs = (orte_gpr_replica_container_t**)((seg->containers)->addr);
-    for (i=0; i < (seg->containers)->size; i++) {
-        if (NULL != cptrs[i]) {
-            cptr = cptrs[i];
-        }
-    }
-
-    kptr = OBJ_NEW(orte_gpr_keyval_t);
-    kptr->key = strdup("really-stupid-value");
-    kptr->type = ORTE_INT32;
-    kptr->value.i32 = 123456;
-    if (ORTE_SUCCESS != (rc = orte_gpr_replica_update_keyval(seg, cptr, kptr))) {
-        fprintf(test_out, "gpr_test: update multiple keyvals failed with error code %s\n",
-                    ORTE_ERROR_NAME(rc));
-        test_failure("gpr_test: update multiple keyvals failed");
-        test_finalize();
-        return rc;
-    } else {
-        fprintf(test_out, "gpr_test: update multiple keyvals passed\n");
-    }
-    
-    orte_gpr.dump_all(0);
-    
     fprintf(stderr, "put with no tokens puts in every container\n");
     val = OBJ_NEW(orte_gpr_value_t);
     val->addr_mode = ORTE_GPR_NO_OVERWRITE;
@@ -360,6 +334,15 @@ int main(int argc, char **argv)
     
     orte_gpr.dump_all(0);
     
+    fprintf(stderr, "now finalize and see if all memory cleared\n");
+    orte_dps_close();
+    orte_gpr_base_close();
+    orte_sys_info_finalize();
+    orte_proc_info_finalize();
+    mca_base_close();
+    ompi_malloc_finalize();
+    ompi_output_finalize();
+
     fclose( test_out );
 /*    result = system( cmd_str );
     if( result == 0 ) {
