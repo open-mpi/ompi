@@ -72,7 +72,7 @@ int gpr_proxy_delete_segment(char *segment)
 
 int gpr_proxy_put(ompi_registry_mode_t mode, char *segment,
 		  char **tokens, ompi_registry_object_t *object,
-		  int size)
+		  ompi_registry_object_size_t size)
 {
     ompi_buffer_t cmd;
     ompi_buffer_t answer;
@@ -218,7 +218,7 @@ int gpr_proxy_delete_object(ompi_registry_mode_t mode,
     }
 
     if ((OMPI_SUCCESS != ompi_unpack(answer, &command, 1, MCA_GPR_OOB_PACK_CMD))
-	|| (MCA_GPR_GET_CMD != command)) {
+	|| (MCA_GPR_DELETE_OBJECT_CMD != command)) {
 	ompi_buffer_free(answer);
 	goto CLEANUP;
     }
@@ -315,7 +315,8 @@ ompi_list_t* gpr_proxy_index(char *segment)
 }
 
 
-int gpr_proxy_subscribe(ompi_process_name_t *caller, ompi_registry_mode_t mode,
+int gpr_proxy_subscribe(ompi_process_name_t *subscriber, int tag,
+			ompi_registry_mode_t mode,
 			ompi_registry_notify_action_t action,
 			char *segment, char **tokens)
 {
@@ -323,12 +324,103 @@ int gpr_proxy_subscribe(ompi_process_name_t *caller, ompi_registry_mode_t mode,
 }
 
 
-int gpr_proxy_unsubscribe(ompi_process_name_t *caller, ompi_registry_mode_t mode,
+int gpr_proxy_unsubscribe(ompi_process_name_t *subscriber, ompi_registry_mode_t mode,
 			  char *segment, char **tokens)
 {
     return OMPI_ERR_NOT_IMPLEMENTED;
 }
 
+int gpr_proxy_synchro(ompi_process_name_t *subscriber, int tag,
+		      ompi_registry_mode_t mode,
+		      char *segment, char **tokens, int num)
+{
+    ompi_buffer_t cmd;
+    ompi_buffer_t answer;
+    mca_gpr_cmd_flag_t command;
+    char **tokptr;
+    int recv_tag, i;
+    int32_t num_tokens, response;
+
+    /* need to protect against errors */
+    if (NULL == segment || NULL == tokens || NULL == *tokens) {
+	return OMPI_ERROR;
+    }
+
+    command = MCA_GPR_SYNCHRO_CMD;
+    recv_tag = MCA_OOB_TAG_GPR;
+
+    if (OMPI_SUCCESS != ompi_buffer_init(&cmd, 0)) { /* got a problem */
+	return OMPI_ERROR;
+    }
+
+    if (OMPI_SUCCESS != ompi_pack(cmd, &command, 1, MCA_GPR_OOB_PACK_CMD)) {
+	goto CLEANUP;
+    }
+
+    response = (int32_t)tag;
+    if (OMPI_SUCCESS != ompi_pack(cmd, &response, 1, OMPI_INT32)) {
+	goto CLEANUP;
+    }
+
+    if (OMPI_SUCCESS != ompi_pack(cmd, &mode, 1, MCA_GPR_OOB_PACK_MODE)) {
+	goto CLEANUP;
+    }
+
+    if (OMPI_SUCCESS != ompi_pack_string(cmd, segment)) {
+	goto CLEANUP;
+    }
+
+    /* compute number of tokens */
+    tokptr = tokens;
+    while (NULL != *tokptr) {
+	num_tokens++;
+	tokptr++;
+    }
+
+    if (OMPI_SUCCESS != ompi_pack(cmd, &num_tokens, 1, OMPI_INT32)) {
+	goto CLEANUP;
+    }
+
+    tokptr = tokens;
+    for (i=0; i<num_tokens; i++) {  /* pack the tokens */
+	if (OMPI_SUCCESS != ompi_pack_string(cmd, *tokptr)) {
+	    goto CLEANUP;
+	}
+	tokptr++;
+    }
+
+    response = (int32_t)num;
+    if (OMPI_SUCCESS != ompi_pack(cmd, &response, 1, OMPI_INT32)) {
+	goto CLEANUP;
+    }
+
+    if (0 > mca_oob_send_packed(mca_gpr_my_replica, cmd, MCA_OOB_TAG_GPR, 0)) {
+	goto CLEANUP;
+    }
+
+    if (0 > mca_oob_recv_packed(mca_gpr_my_replica, &answer, &recv_tag)) {
+	goto CLEANUP;
+    }
+
+    if ((OMPI_SUCCESS != ompi_unpack(answer, &command, 1, MCA_GPR_OOB_PACK_CMD))
+	|| (MCA_GPR_SYNCHRO_CMD != command)) {
+	ompi_buffer_free(answer);
+	goto CLEANUP;
+    }
+
+    if (OMPI_SUCCESS != ompi_unpack(answer, &response, 1, OMPI_INT32)) {
+	ompi_buffer_free(answer);
+	return OMPI_ERROR;
+    } else {
+	ompi_buffer_free(answer);
+	return OMPI_SUCCESS;
+    }
+
+ CLEANUP:
+    ompi_buffer_free(cmd);
+    return OMPI_ERROR;
+
+}
 
 ompi_list_t* gpr_proxy_get(ompi_registry_mode_t mode, char *segment, char **tokens)
 {

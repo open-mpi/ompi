@@ -57,6 +57,7 @@ int gpr_replica_put(ompi_registry_mode_t mode, char *segment,
     mca_gpr_registry_segment_t *seg;
     mca_gpr_registry_core_t *entry_ptr;
     ompi_registry_mode_t put_mode;
+    mca_gpr_synchro_list_t *synchro;
     int return_code;
 
 
@@ -100,7 +101,7 @@ int gpr_replica_put(ompi_registry_mode_t mode, char *segment,
     for (entry_ptr = (mca_gpr_registry_core_t*)ompi_list_get_first(&seg->registry_entries);
 	 entry_ptr != (mca_gpr_registry_core_t*)ompi_list_get_end(&seg->registry_entries);
 	 entry_ptr = (mca_gpr_registry_core_t*)ompi_list_get_next(entry_ptr)) {
-	if (gpr_replica_check_key_list(put_mode, keys, entry_ptr)) { /* found existing entry - overwrite if mode set, else error */
+	if (gpr_replica_check_key_list(put_mode, keys, &entry_ptr->keys)) { /* found existing entry - overwrite if mode set, else error */
 	    if (put_mode) {  /* overwrite enabled */
 		free(entry_ptr->object);
 		entry_ptr->object_size = size;
@@ -130,6 +131,18 @@ int gpr_replica_put(ompi_registry_mode_t mode, char *segment,
     ompi_list_append(&seg->registry_entries, &entry_ptr->item);
 
     return_code = OMPI_SUCCESS;
+
+    /* update synchro list and check for trigger conditions */
+    for (synchro = (mca_gpr_synchro_list_t*)ompi_list_get_first(&seg->synchros);
+	 synchro != (mca_gpr_synchro_list_t*)ompi_list_get_end(&seg->synchros);
+	 synchro = (mca_gpr_synchro_list_t*)ompi_list_get_next(synchro)) {
+	if (gpr_replica_check_key_list(synchro->mode, keys, &synchro->keys)) {
+	    synchro->present = synchro->present + 1;
+	}
+	if (synchro->present >= synchro->trigger) {
+	    gpr_replica_notify(&synchro->subscribers, OMPI_REGISTRY_NOTIFY_SYNCHRO);
+	}
+    }
 
 
  CLEANUP:
@@ -182,7 +195,7 @@ int gpr_replica_delete_object(ompi_registry_mode_t mode,
 	 reg = (mca_gpr_registry_core_t*)ompi_list_get_next(reg)) {
 
 	/* for each registry entry, check the key list */
-	if (gpr_replica_check_key_list(mode, keys, reg)) { /* found the key(s) on the list */
+	if (gpr_replica_check_key_list(mode, keys, &reg->keys)) { /* found the key(s) on the list */
 	    prev = (mca_gpr_registry_core_t*)ompi_list_get_prev(reg);
 	    ompi_list_remove_item(&seg->registry_entries, &reg->item);
 	    reg = prev;
@@ -229,17 +242,65 @@ ompi_list_t* gpr_replica_index(char *segment)
     return answer;
 }
 
-int gpr_replica_subscribe(ompi_process_name_t *caller, ompi_registry_mode_t mode,
+int gpr_replica_subscribe(ompi_process_name_t *subscriber, int tag,
+			  ompi_registry_mode_t mode,
 			  ompi_registry_notify_action_t action,
 			  char *segment, char **tokens)
 {
     return OMPI_ERR_NOT_IMPLEMENTED;
 }
 
-int gpr_replica_unsubscribe(ompi_process_name_t *caller, ompi_registry_mode_t mode,
+int gpr_replica_unsubscribe(ompi_process_name_t *subscriber,
+			    ompi_registry_mode_t mode,
 			    char *segment, char **tokens)
 {
     return OMPI_ERR_NOT_IMPLEMENTED;
+}
+
+int gpr_replica_synchro(ompi_process_name_t *subscriber, int tag,
+			ompi_registry_mode_t mode,
+			char *segment, char **tokens, int num)
+{
+    mca_gpr_registry_segment_t *seg;
+    mca_gpr_synchro_list_t *synch;
+    mca_gpr_subscriber_list_t *subs;
+    char **tokptr;
+    mca_gpr_keylist_t *keyptr;
+    int i;
+
+    /* protect against errors */
+    if (NULL == segment || NULL == tokens || NULL == *tokens || 0 > num) {
+	return OMPI_ERROR;
+    }
+
+    seg = gpr_replica_find_seg(segment);
+    if (NULL == seg) { /* couldn't find segment */
+	return OMPI_ERROR;
+    }
+
+    synch = OBJ_NEW(mca_gpr_synchro_list_t);
+
+    subs = OBJ_NEW(mca_gpr_subscriber_list_t);
+    subs->subscriber = subscriber;
+    subs->tag = tag;
+    ompi_list_append(&synch->subscribers, &subs->item);
+
+    /* store key values of tokens, defining them if needed */
+    for (i=i, tokptr=tokens; NULL != tokptr && NULL != *tokptr; i++, tokptr++) {
+	keyptr = OBJ_NEW(mca_gpr_keylist_t);
+	keyptr->key = gpr_replica_get_key(segment, *tokptr);
+	if (MCA_GPR_REPLICA_KEY_MAX == keyptr->key) {
+	    keyptr->key = gpr_replica_define_key(segment, *tokptr);
+	}
+	ompi_list_append(&synch->keys, &keyptr->item);
+    }
+
+    synch->mode = mode;
+    synch->trigger = num;
+    synch->present = 0;
+    ompi_list_append(&seg->synchros, &synch->item);
+
+    return OMPI_SUCCESS;
 }
 
 ompi_list_t* gpr_replica_get(ompi_registry_mode_t mode,
@@ -286,7 +347,7 @@ ompi_list_t* gpr_replica_get(ompi_registry_mode_t mode,
 	 reg = (mca_gpr_registry_core_t*)ompi_list_get_next(reg)) {
 
 	/* for each registry entry, check the key list */
-	if (gpr_replica_check_key_list(mode, keys, reg)) { /* found the key(s) on the list */
+	if (gpr_replica_check_key_list(mode, keys, &reg->keys)) { /* found the key(s) on the list */
 	    ans = OBJ_NEW(ompi_registry_value_t);
 	    ans->object_size = reg->object_size;
 	    ans->object = (ompi_registry_object_t*)malloc(ans->object_size);

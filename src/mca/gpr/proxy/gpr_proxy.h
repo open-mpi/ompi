@@ -43,7 +43,7 @@ extern ompi_process_name_t *mca_gpr_my_replica;
  */
 int gpr_proxy_put(ompi_registry_mode_t mode, char *segment,
 		  char **tokens, ompi_registry_object_t *object,
-		  int size);
+		  ompi_registry_object_size_t size);
 
 /*
  * Implementation of delete()
@@ -60,16 +60,23 @@ ompi_list_t* gpr_proxy_index(char *segment);
 /*
  * Implementation of subscribe()
  */
-int gpr_proxy_subscribe(ompi_process_name_t *caller, ompi_registry_mode_t mode,
+int gpr_proxy_subscribe(ompi_process_name_t *subscriber, int tag,
+			ompi_registry_mode_t mode,
 			ompi_registry_notify_action_t action,
 			char *segment, char **tokens);
 
 /*
  * Implementation of unsubscribe()
  */
-int gpr_proxy_unsubscribe(ompi_process_name_t *caller, ompi_registry_mode_t mode,
+int gpr_proxy_unsubscribe(ompi_process_name_t *subscriber, ompi_registry_mode_t mode,
 			  char *segment, char **tokens);
 
+/*
+ * Implementation of synchro()
+ */
+int gpr_proxy_synchro(ompi_process_name_t *subscriber, int tag,
+		      ompi_registry_mode_t mode,
+		      char *segment, char **tokens, int num);
 /*
  * Implementation of get()
  */

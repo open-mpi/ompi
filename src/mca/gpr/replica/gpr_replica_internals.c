@@ -334,7 +334,7 @@ int gpr_replica_empty_segment(mca_gpr_registry_segment_t *seg)
 /*
  * A mode of "NONE" or "OVERWRITE" defaults to "XAND" behavior
  */
-bool gpr_replica_check_key_list(ompi_registry_mode_t mode, ompi_list_t *key_list, mca_gpr_registry_core_t *entry)
+bool gpr_replica_check_key_list(ompi_registry_mode_t mode, ompi_list_t *key_list, ompi_list_t *entry_keys)
 {
     mca_gpr_keylist_t *keyptr;
     mca_gpr_keytable_t *key;
@@ -347,7 +347,7 @@ bool gpr_replica_check_key_list(ompi_registry_mode_t mode, ompi_list_t *key_list
     }
 
     num_keys_search = ompi_list_get_size(key_list);
-    num_keys_entry = ompi_list_get_size(&entry->keys);
+    num_keys_entry = ompi_list_get_size(entry_keys);
 
     /* take care of trivial cases that don't require search */
     if ((OMPI_REGISTRY_XAND & mode) &&
@@ -363,8 +363,8 @@ bool gpr_replica_check_key_list(ompi_registry_mode_t mode, ompi_list_t *key_list
     /* okay, have to search for remaining possibilities */
     num_found = 0;
     exclusive = true;
-    for (keyptr = (mca_gpr_keylist_t*)ompi_list_get_first(&entry->keys);
-	 keyptr != (mca_gpr_keylist_t*)ompi_list_get_end(&entry->keys);
+    for (keyptr = (mca_gpr_keylist_t*)ompi_list_get_first(entry_keys);
+	 keyptr != (mca_gpr_keylist_t*)ompi_list_get_end(entry_keys);
 	 keyptr = (mca_gpr_keylist_t*)ompi_list_get_next(keyptr)) {
 	no_match = true;
 	for (key = (mca_gpr_keytable_t*)ompi_list_get_first(key_list);
