@@ -45,8 +45,8 @@ OMPI_COMP_EXPORT extern int mca_coll_self_priority_param;
   int mca_coll_self_init_query(bool *allow_multi_user_threads,
                                 bool *have_hidden_threads);
   const struct mca_coll_base_module_1_0_0_t *
-    mca_coll_self_comm_query(struct ompi_communicator_t *comm, int *priority);
-  int mca_coll_self_comm_unquery(struct ompi_communicator_t *comm);
+    mca_coll_self_comm_query(struct ompi_communicator_t *comm, int *priority,
+                             struct mca_coll_base_comm_t **data);
 
   const struct mca_coll_base_module_1_0_0_t *
     mca_coll_self_module_init(struct ompi_communicator_t *comm);
