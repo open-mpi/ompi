@@ -27,5 +27,12 @@
  * containing the key-value pairs
  */
 int MPI_Info_get_nkeys(MPI_Info info, int *nkeys) {
+
+    if (NULL == info){
+        printf ("Invalid MPI_Info handle passed\n");
+        return MPI_ERR_ARG;
+    }
+    *nkeys = (int) lam_list_get_size(&(info->super));
+
     return MPI_SUCCESS;
 }
