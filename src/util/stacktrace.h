@@ -10,6 +10,8 @@
  * Additional copyrights may follow
  * 
  * $HEADER$
+ *
+ * @file
  */
 
 #ifndef OMPI_STACKTRACE_H

@@ -15,6 +15,11 @@
 #include "ompi_config.h"
 #include "include/constants.h"
 
+#include <stdio.h>
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
 #ifdef HAVE_EXECINFO_H
 #include <execinfo.h>
 #endif
@@ -62,6 +67,7 @@ static void ompi_show_stackframe (int signo, siginfo_t * info, void * p)
     int size = sizeof (print_buffer);
     int ret;
     char * str="";
+    char eof_msg[] = "*** End of error message ***\n";
 
     /*
      * Yes, we are doing printf inside a signal-handler.
@@ -204,41 +210,46 @@ static void ompi_show_stackframe (int signo, siginfo_t * info, void * p)
     case SIGFPE: 
     case SIGSEGV: 
     case SIGBUS:
-    {
-      ret = snprintf (tmp, size, "Failing at addr:%p\n",
-		      info->si_addr);
-      size -= ret;
-      tmp += ret;
-      break;
-    }
+        {
+            ret = snprintf (tmp, size, "Failing at addr:%p\n",
+                            info->si_addr);
+            size -= ret;
+            tmp += ret;
+            break;
+        }
     case SIGCHLD: {
-      ret = snprintf (tmp, size, "si_pid:%d si_uid:%d si_status:%d\n",
-                      info->si_pid, info->si_uid, info->si_status);
-      size -= ret;
-      tmp += ret;
-      break;
+        ret = snprintf (tmp, size, "si_pid:%d si_uid:%d si_status:%d\n",
+                        info->si_pid, info->si_uid, info->si_status);
+        size -= ret;
+        tmp += ret;
+        break;
     }
 #ifdef SIGPOLL
     case SIGPOLL: {
-      ret = snprintf (tmp, size, "si_band:%ld si_fd:%d\n",
-                      info->si_band, info->si_fd);
-      size -= ret;
-      tmp += ret;
-      break;
+        ret = snprintf (tmp, size, "si_band:%ld si_fd:%d\n",
+                        info->si_band, info->si_fd);
+        size -= ret;
+        tmp += ret;
+        break;
     }
 #endif
     }
-   
-    printf ("%s", print_buffer);
-    fflush(stdout);
+
+    write(1, print_buffer, size);
+    fflush(stderr);
 
 #ifdef __GLIBC__
     trace_size = backtrace (trace, 32);
     messages = backtrace_symbols (trace, trace_size);
 
-    for (i = 0; i < trace_size; i++)
-      printf ("[%d] func:%s\n", i, messages[i]);
+    for (i = 0; i < trace_size; i++) {
+        fprintf(stderr, "[%d] func:%s\n", i, messages[i]);
+        fflush(stderr);
+    }
 #endif
+
+    write(1, eof_msg, sizeof(eof_msg));
+    fflush(stderr);
 }
 
 #endif /* WIN32 */
@@ -283,25 +294,23 @@ int ompi_util_register_stackhandlers (void)
       int ret;
 
       sig = strtol (tmp, &next, 10);
-      /*
-      printf ("ompi_util_register_stackhandlers: sig:%d tmp:%p next:%p "
-              "tmp:[%s] next:[%s] _NSIG:%d\n",
-	      sig, tmp, next, tmp, next, _NSIG);
-      */
 
       /*
        *  If there is no sensible number in the string, exit.
        *  Similarly for any number which is not in the signal-number range
        */
-      if (((0 == sig) && (tmp == next)) || (0 > sig) || (_NSIG <= sig))
+      if (((0 == sig) && (tmp == next)) || (0 > sig) || (_NSIG <= sig)) {
 	 return OMPI_ERR_BAD_PARAM;
+      }
 
-      if ((next == NULL) || ((*next != ',') && (*next != '\0')))
+      if ((next == NULL) || ((*next != ',') && (*next != '\0'))) {
 	 return OMPI_ERR_BAD_PARAM;
+      }
 
       ret = sigaction (sig, &act, NULL);
-      if (ret != 0)
+      if (ret != 0) {
         return OMPI_ERR_IN_ERRNO;
+      }
     }
 #endif /* WIN32 */
     return OMPI_SUCCESS;
