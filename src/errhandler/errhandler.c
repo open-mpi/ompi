@@ -25,18 +25,17 @@ static void lam_errhandler_construct(lam_errhandler_t *eh);
 static void lam_errhandler_destruct(lam_errhandler_t *eh);
 
 
-static lam_class_t lam_errhandler_t_class = {
-    "lam_errhandler_t",
-    OBJ_CLASS(lam_object_t),
-    (lam_construct_t) lam_errhandler_construct,
-    (lam_destruct_t) lam_errhandler_destruct
-};
+/*
+ * Class instance
+ */
+OBJ_CLASS_INSTANCE(lam_errhandler_t, lam_object_t, lam_errhandler_construct,
+                   lam_errhandler_destruct);
 
 
 /*
  * MPI_ERRHANDLER_NULL
  */
-static lam_errhandler_t errhandler_null = {
+lam_errhandler_t lam_mpi_errhandler_null = {
     { NULL, 0 },
 
     "MPI_ERRHANDLER_NULL",
@@ -45,13 +44,12 @@ static lam_errhandler_t errhandler_null = {
     LAM_ERRHANDLER_TYPE_COMM,
     { NULL }
 };
-lam_errhandler_t *lam_mpi_errhandler_null = &errhandler_null;
 
 
 /*
  * MPI_ERRORS_ARE_FATAL
  */
-static lam_errhandler_t errors_are_fatal = {
+lam_errhandler_t lam_mpi_errors_are_fatal = {
     { NULL, 0 },
 
     "MPI_ERRORS_ARE_FATAL",
@@ -61,13 +59,12 @@ static lam_errhandler_t errors_are_fatal = {
     { lam_mpi_errors_are_fatal_handler },
     -1
 };
-lam_errhandler_t *lam_mpi_errors_are_fatal = &errors_are_fatal;
 
 
 /*
  * MPI_ERRORS_RETURN
  */
-static lam_errhandler_t errors_return = {
+lam_errhandler_t errors_return = {
     { NULL, 0 },
 
     "MPI_ERRORS_ARE_RETURN",
@@ -77,7 +74,6 @@ static lam_errhandler_t errors_return = {
     { lam_mpi_errors_return_handler },
     -1
 };
-lam_errhandler_t *lam_mpi_errors_return = &errors_return;
 
 
 /*
@@ -97,7 +93,7 @@ int lam_errhandler_init(void)
   /* Add MPI_ERRHANDLER_NULL to table */
 
   ret_val = lam_pointer_array_add(lam_errhandler_f_to_c_table,
-                                  &errhandler_null);
+                                  &lam_mpi_errhandler_null);
   if (-1 == ret_val){
     return LAM_ERROR;
   }
@@ -107,12 +103,12 @@ int lam_errhandler_init(void)
   if (LAM_ERRHANDLER_NULL_FORTRAN != ret_val) {
     return LAM_ERROR;
   };
-  errhandler_null.eh_f_to_c_index = ret_val;
+  lam_mpi_errhandler_null.eh_f_to_c_index = ret_val;
   
   /* Add MPI_ERRORS_ARE_FATAL to table */
 
   ret_val = lam_pointer_array_add(lam_errhandler_f_to_c_table,
-                                  &errors_are_fatal);
+                                  &lam_mpi_errors_are_fatal);
   if (-1 == ret_val){
     return LAM_ERROR;
   }
@@ -123,12 +119,12 @@ int lam_errhandler_init(void)
   if (LAM_ERRORS_ARE_FATAL_FORTRAN != ret_val) {
     return LAM_ERROR;
   };
-  errors_are_fatal.eh_f_to_c_index = ret_val;
+  lam_mpi_errors_are_fatal.eh_f_to_c_index = ret_val;
   
   /* Add MPI_ERRORS_RETURN to table */
 
   ret_val = lam_pointer_array_add(lam_errhandler_f_to_c_table,
-                                  &errors_return);
+                                  &lam_mpi_errors_return);
   if (-1 == ret_val){
     return LAM_ERROR;
   }
@@ -138,7 +134,7 @@ int lam_errhandler_init(void)
   if (LAM_ERRORS_RETURN_FORTRAN != ret_val) {
     return LAM_ERROR;
   };
-  errors_return.eh_f_to_c_index = ret_val;
+  lam_mpi_errors_return.eh_f_to_c_index = ret_val;
   
   /* All done */
 
