@@ -5,23 +5,31 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-noinst_HEADERS	= \
-		communicator.h \
-		datatype.h \
-		group.h \
-		lam_constants.h \
-		lam.h \
-		lam_stdint.h \
-		lam_types.h \
-		proc.h \
-		totalview.h
+headers = \
+	communicator.h \
+	datatype.h \
+	group.h \
+	lam_constants.h \
+	lam.h \
+	lam_stdint.h \
+	lam_types.h \
+	proc.h \
+	totalview.h
 
-include_HEADERS	= \
-		lam_config.h \
-		lam_config_bottom.h \
-		lam_stdint.h \
-		mpi.h \
-		mpif.h
+include_HEADERS = \
+	lam_config.h \
+	lam_config_bottom.h \
+	mpi.h \
+	mpif.h
+
+# Conditionally install the header files
+
+if WANT_INSTALL_HEADERS
+lamdir = $(includedir)/lam
+lam_HEADERS = $(headers)
+else
+lamdir = $(includedir)
+endif
 
 # Add a hook to run *after* the file lam_config.h has been installed
 # out to the target location.  It changes the pesky PACKAGE_* macros

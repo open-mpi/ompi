@@ -9,24 +9,35 @@ include $(top_srcdir)/config/Makefile.options
 # into the profile directory.
 
 if COMPILE_PROFILING_SEPARATELY
-profile_dir		= profile
-profile_lib		= profile/libmpi_f77_profile.la
+profile_dir = profile
+profile_lib = profile/libmpi_f77_profile.la
 else
-profile_dir		=
-profile_lib		=
+profile_dir =
+profile_lib =
 endif
 
-SUBDIRS			= $(profile_dir)
-DIST_SUBDIRS		= profile
+SUBDIRS = $(profile_dir)
+DIST_SUBDIRS = profile
 
-noinst_LTLIBRARIES	= libmpi_f77.la
+noinst_LTLIBRARIES = libmpi_f77.la
 
-libmpi_f77_la_SOURCES	= \
-			bindings.h \
-			comm_get_name_f.c \
-			comm_set_name_f.c \
-			init_f.c \
-			finalize_f.c \
-			prototypes.h
+headers = \
+	bindings.h \
+	prototypes.h
+
+libmpi_f77_la_SOURCES = \
+	comm_get_name_f.c \
+	comm_set_name_f.c \
+	init_f.c \
+	finalize_f.c
 
 libmpi_f77_la_LIBADD	= $(profile_lib)
+
+# Conditionally install the header files
+
+if WANT_INSTALL_HEADERS
+lamdir = $(includedir)/lam/mpi/f77
+lam_HEADERS = $(headers)
+else
+lamdir = $(includedir)
+endif
