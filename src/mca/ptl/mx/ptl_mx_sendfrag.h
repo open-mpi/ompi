@@ -24,7 +24,7 @@ struct mca_ptl_mx_send_frag_t {
    mx_request_t frag_request;
    mx_segment_t frag_segments[2];
    size_t frag_segment_count;
-   uint32_t frag_progress;
+   int32_t frag_progress;
 };
 typedef struct mca_ptl_mx_send_frag_t mca_ptl_mx_send_frag_t;
 
@@ -79,7 +79,7 @@ static inline void MCA_PTL_MX_SEND_FRAG_PROGRESS(mca_ptl_mx_send_frag_t* frag)
 {
    mca_pml_base_send_request_t* request = frag->frag_send.frag_request;
    bool frag_ack;
-   uint32_t frag_progress;
+   int32_t frag_progress;
 
     /* if this is an ack - simply return to pool */
     if(request == NULL) {

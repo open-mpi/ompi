@@ -77,6 +77,7 @@ static inline void MCA_PTL_MX_RECV_FRAG_FRAG(mca_ptl_mx_recv_frag_t* frag)
         max_data = iov.iov_len;
         ompi_convertor_unpack( &frag->frag_recv.frag_base.frag_convertor,
                                &iov, &iov_count, &max_data, &free_after );
+        frag->frag_recv.frag_base.frag_size = max_data;
     }
                                                                                                           
     /* progress the request */
