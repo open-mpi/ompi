@@ -6,6 +6,7 @@
 
 #include "mpi.h"
 #include "mpi/c/bindings.h"
+#include "mpi/f77/fint_2_int.h"
 #include "communicator/communicator.h"
 #include "errhandler/errhandler.h"
 #include "file/file.h"
@@ -26,11 +27,9 @@ MPI_Fint MPI_File_c2f(MPI_File file)
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (ompi_file_invalid(file)) {
-            return (MPI_Fint) OMPI_ERRHANDLER_INVOKE(MPI_FILE_NULL, 
-                                                     MPI_ERR_FILE,
-                                                     FUNC_NAME);
+            file = MPI_FILE_NULL;
         }
     }
     
-    return (MPI_Fint) file->f_f_to_c_index;
+    return OMPI_INT_2_FINT(file->f_f_to_c_index);
 }

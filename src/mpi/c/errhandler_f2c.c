@@ -6,6 +6,7 @@
 
 #include "mpi.h"
 #include "mpi/c/bindings.h"
+#include "mpi/f77/fint_2_int.h"
 #include "errhandler/errhandler.h"
 #include "communicator/communicator.h"
 
@@ -22,7 +23,7 @@ static const char FUNC_NAME[] = "MPI_Errhandler_f2c";
 
 MPI_Errhandler MPI_Errhandler_f2c(MPI_Fint errhandler_f)
 {
-    size_t eh_index = (size_t) errhandler_f;
+    int eh_index = OMPI_FINT_2_INT(errhandler_f);
 
     /* Error checking */
 

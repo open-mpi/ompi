@@ -6,6 +6,7 @@
 
 #include "mpi.h"
 #include "mpi/c/bindings.h"
+#include "mpi/f77/fint_2_int.h"
 #include "errhandler/errhandler.h"
 #include "communicator/communicator.h"
 
@@ -22,17 +23,13 @@ static const char FUNC_NAME[] = "MPI_Comm_c2f";
 
 MPI_Fint MPI_Comm_c2f(MPI_Comm comm) 
 {
-    ompi_communicator_t *cptr=(ompi_communicator_t *)comm;
-
     if ( MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-        
-    /* mapping an invalid handle to a null handle */
-	/* not invoking an error handler */
-        if ( ompi_comm_invalid (cptr)) {
-			cptr = (ompi_communicator_t *) MPI_COMM_NULL;
-		}
+
+        if (ompi_comm_invalid (comm)) {
+            comm = MPI_COMM_NULL;
+        }
     }
 
-    return ((MPI_Fint) comm->c_f_to_c_index);
+    return OMPI_INT_2_FINT(comm->c_f_to_c_index);
 }

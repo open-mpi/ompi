@@ -2,10 +2,10 @@
  * $HEADER$
  */
 #include "ompi_config.h"
-#include <stdio.h>
 
 #include "mpi.h"
 #include "mpi/c/bindings.h"
+#include "mpi/f77/fint_2_int.h"
 #include "errhandler/errhandler.h"
 #include "communicator/communicator.h"
 #include "datatype/datatype.h"
@@ -23,7 +23,7 @@ static const char FUNC_NAME[] = "MPI_Type_f2c";
 
 MPI_Datatype MPI_Type_f2c(MPI_Fint datatype)
 {
-    size_t datatype_index = (size_t) datatype;
+    int datatype_index = OMPI_FINT_2_INT(datatype);
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);

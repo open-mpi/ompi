@@ -1,10 +1,5 @@
-
 /*
  * $HEADER$
- */
-
-/**
- * Utility functions to manage fortran <-> c opaque object translation
  */
 
 #include "ompi_config.h"
@@ -13,22 +8,24 @@
 #include <stdio.h>
 #include <assert.h>
 
+#include <limits.h>
+#define OMPI_FORTRAN_HANDLE_MAX INT_MAX
+
 #include "include/constants.h"
 #include "class/ompi_pointer_array.h"
 #include "util/output.h"
 
-static void ompi_pointer_array_construct(ompi_pointer_array_t *);
-static void ompi_pointer_array_destruct(ompi_pointer_array_t *);
 enum { TABLE_INIT = 1, TABLE_GROW = 2 };
 
-ompi_class_t ompi_pointer_array_t_class = {
-    "ompi_pointer_array_t",
-    OBJ_CLASS(ompi_object_t),
-    (ompi_construct_t) ompi_pointer_array_construct,
-    (ompi_destruct_t) ompi_pointer_array_destruct
-};
+static void ompi_pointer_array_construct(ompi_pointer_array_t *);
+static void ompi_pointer_array_destruct(ompi_pointer_array_t *);
+static bool grow_table(ompi_pointer_array_t *table, size_t soft, size_t hard);
 
-/**
+OBJ_CLASS_INSTANCE(ompi_pointer_array_t, ompi_object_t,
+                   ompi_pointer_array_construct,
+                   ompi_pointer_array_destruct);
+
+/*
  * ompi_pointer_array constructor
  */
 void ompi_pointer_array_construct(ompi_pointer_array_t *array)
@@ -40,17 +37,17 @@ void ompi_pointer_array_construct(ompi_pointer_array_t *array)
     array->addr = 0;
 }
 
-/**
+/*
  * ompi_pointer_array destructor
  */
-void ompi_pointer_array_destruct(ompi_pointer_array_t *array){
-
+void ompi_pointer_array_destruct(ompi_pointer_array_t *array)
+{
     /* free table */
-    if( NULL != array->addr)
+    if( NULL != array->addr) {
         free(array->addr);
+    }
 
     OBJ_DESTRUCT(&array->lock);
-    return;
 }
 
 /**
@@ -61,11 +58,11 @@ void ompi_pointer_array_destruct(ompi_pointer_array_t *array){
  *
  * @return Array index where ptr is inserted or OMPI_ERROR if it fails
  */
-size_t ompi_pointer_array_add(ompi_pointer_array_t *table, void *ptr)
+int ompi_pointer_array_add(ompi_pointer_array_t *table, void *ptr)
 {
     void **p;
-    size_t i;
-    size_t index;
+    int i;
+    int index;
 
     if (0) {
         ompi_output(0,"ompi_pointer_array_add:  IN:  "
@@ -89,10 +86,10 @@ size_t ompi_pointer_array_add(ompi_pointer_array_t *table, void *ptr)
 	    ompi_output(0,"ompi_pointer_array_add:  INIT: table %p\n", table);
         }
 
-	p = (void **)malloc(TABLE_INIT * sizeof(void *));
+	p = (void **) malloc(TABLE_INIT * sizeof(void *));
 	if (p == NULL) {
-        OMPI_THREAD_UNLOCK(&(table->lock));
-        return OMPI_ERROR;
+            OMPI_THREAD_UNLOCK(&(table->lock));
+            return OMPI_ERROR;
 	}
 	table->lowest_free = 0;
 	table->number_free = TABLE_INIT;
@@ -104,26 +101,12 @@ size_t ompi_pointer_array_add(ompi_pointer_array_t *table, void *ptr)
 
     } else if (table->number_free == 0) {
 
-        /*
-         * grow table
-         */
+        /* need to grow table */
 
-        if (0) {
-            ompi_output(0,"ompi_pointer_array_add:  GROW: table %p growing %d -> %d\n",
-                    table, table->size, table->size * TABLE_GROW);
-        }
-
-	p = (void **)realloc(table->addr, TABLE_GROW * table->size * sizeof(void *));
-	if (p == NULL) {
-        OMPI_THREAD_UNLOCK(&(table->lock));
-	    return OMPI_ERROR;
-	}
-	table->lowest_free  = table->size;
-	table->number_free += (TABLE_GROW - 1) * table->size;
-	table->size *= TABLE_GROW;
-	table->addr = p;
-        for (i = table->lowest_free; i < table->size; i++) {
-            table->addr[i] = NULL;
+        if (!grow_table(table, table->size * TABLE_GROW, 
+                        OMPI_FORTRAN_HANDLE_MAX)) {
+            OMPI_THREAD_UNLOCK(&(table->lock));
+            return OMPI_ERR_OUT_OF_RESOURCE;
         }
     }
 
@@ -163,7 +146,6 @@ size_t ompi_pointer_array_add(ompi_pointer_array_t *table, void *ptr)
     }
 
     OMPI_THREAD_UNLOCK(&(table->lock));
-
     return index;
 }
 
@@ -178,8 +160,8 @@ size_t ompi_pointer_array_add(ompi_pointer_array_t *table, void *ptr)
  *
  * Assumption: NULL element is free element.
  */
-int ompi_pointer_array_set_item(ompi_pointer_array_t *table, size_t index,
-        void * value)
+int ompi_pointer_array_set_item(ompi_pointer_array_t *table, int index,
+                                void * value)
 {
     assert(table != NULL);
 
@@ -192,20 +174,14 @@ int ompi_pointer_array_set_item(ompi_pointer_array_t *table, size_t index,
 #endif
 
     /* expand table if required to set a specific index */
+
     OMPI_THREAD_LOCK(&(table->lock));
-    if(table->size <= index) {
-        size_t i, new_size = (((index / TABLE_GROW) + 1) * TABLE_GROW);
-	void *p = realloc(table->addr, new_size * sizeof(void *));
-	if (p == NULL) {
+    if (table->size <= index) {
+        if (!grow_table(table, ((index / TABLE_GROW) + 1) * TABLE_GROW,
+                        index)) {
             OMPI_THREAD_UNLOCK(&(table->lock));
 	    return OMPI_ERROR;
-	}
-	table->number_free += new_size - table->size;
-	table->addr = (void **) p;
-        for (i = table->size; i < new_size; i++) {
-            table->addr[i] = NULL;
         }
-	table->size = new_size;
     }
 
     /* 
@@ -224,7 +200,7 @@ int ompi_pointer_array_set_item(ompi_pointer_array_t *table, size_t index,
 	    table->number_free--;
 	    /* Reset lowest_free if required */
 	    if ( index == table->lowest_free ) {
-		size_t i;
+		int i;
             
 		table->lowest_free=table->size;
 		for ( i=index; i<table->size; i++) {
@@ -248,7 +224,7 @@ int ompi_pointer_array_set_item(ompi_pointer_array_t *table, size_t index,
 	else {
 	    /* Reset lowest_free if required */
 	    if ( index == table->lowest_free ) {
-		size_t i;
+		int i;
             
 		table->lowest_free=table->size;
 		for ( i=index; i<table->size; i++) {
@@ -288,11 +264,9 @@ int ompi_pointer_array_set_item(ompi_pointer_array_t *table, size_t index,
  * In contrary to array_set, this function does not allow to overwrite 
  * a value, unless the previous value is NULL ( equiv. to free ).
  */
-int ompi_pointer_array_test_and_set_item (ompi_pointer_array_t *table, size_t index,
-                                         void *value)
+bool ompi_pointer_array_test_and_set_item (ompi_pointer_array_t *table, 
+                                           int index, void *value)
 {
-    int flag=true;
-
     assert(table != NULL);
     assert(index >= 0);
 
@@ -308,24 +282,18 @@ int ompi_pointer_array_test_and_set_item (ompi_pointer_array_t *table, size_t in
     OMPI_THREAD_LOCK(&(table->lock));
     if ( index < table->size && table->addr[index] != NULL ) {
         /* This element is already in use */
-        flag = false;
         OMPI_THREAD_UNLOCK(&(table->lock));
-        return flag;
+        return false;
     }
 
-    if(table->size <= index) {
-        size_t i, new_size = (((index / TABLE_GROW) + 1) * TABLE_GROW);
-	void *p = realloc(table->addr, new_size * sizeof(void *));
-	if (p == NULL) {
+    /* Do we need to grow the table? */
+
+    if (table->size <= index) {
+        if (!grow_table(table, (((index / TABLE_GROW) + 1) * TABLE_GROW),
+                        index)) {
             OMPI_THREAD_UNLOCK(&(table->lock));
-	    return OMPI_ERROR;
-	}
-	table->number_free += new_size - table->size;
-	table->addr = (void **)p;
-        for (i = table->size; i < new_size; i++) {
-            table->addr[i] = NULL;
+            return false;
         }
-	table->size = new_size;
     }
 
     /* 
@@ -335,7 +303,7 @@ int ompi_pointer_array_test_and_set_item (ompi_pointer_array_t *table, size_t in
     table->number_free--;
     /* Reset lowest_free if required */
     if ( index == table->lowest_free ) {
-        size_t i;
+        int i;
 
 	table->lowest_free = table->size;
         for ( i=index; i<table->size; i++) {
@@ -355,5 +323,49 @@ int ompi_pointer_array_test_and_set_item (ompi_pointer_array_t *table, size_t in
 #endif
 
     OMPI_THREAD_UNLOCK(&(table->lock));
-    return flag;
+    return true;
+}
+
+
+static bool grow_table(ompi_pointer_array_t *table, size_t soft, size_t hard)
+{
+    size_t new_size;
+    int i, new_size_int;
+    void *p;
+
+    /* Ensure that we have room to grow -- stay less than
+       OMPI_FORTRAN_HANDLE_MAX.  Note that OMPI_FORTRAN_HANDLE_MAX
+       is min(INT_MAX, fortran INTEGER max), so it's guaranteed to
+       fit within a [signed] int. */
+    
+    if (table->size >= OMPI_FORTRAN_HANDLE_MAX) {
+        return false;
+    }
+    if (soft > OMPI_FORTRAN_HANDLE_MAX) {
+        if (hard > OMPI_FORTRAN_HANDLE_MAX) {
+            return false;
+        } else {
+            new_size = hard;
+        }
+    } else {
+        new_size = soft;
+    }
+    
+    p = (void **) realloc(table->addr, new_size * sizeof(void *));
+    if (p == NULL) {
+        return false;
+    }
+    
+    /* We've already established (above) that the arithimetic
+       below will be less than OMPI_FORTRAN_HANDLE_MAX */
+    
+    new_size_int = (int) new_size;
+    table->number_free += new_size_int - table->size;
+    table->addr = p;
+    for (i = table->size; i < new_size_int; ++i) {
+        table->addr[i] = NULL;
+    }
+    table->size = new_size_int;
+
+    return true;
 }

@@ -6,6 +6,7 @@
 
 #include "mpi.h"
 #include "mpi/c/bindings.h"
+#include "mpi/f77/fint_2_int.h"
 #include "communicator/communicator.h"
 #include "errhandler/errhandler.h"
 
@@ -22,11 +23,11 @@ static const char FUNC_NAME[] = "MPI_Win_c2f";
 
 MPI_Fint MPI_Win_c2f(MPI_Win win) 
 {
-  if (MPI_PARAM_CHECK) {
-    OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-  }
+    if (MPI_PARAM_CHECK) {
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+    }
 
-  /* This function is not yet implemented */
+    /* This function is not yet implemented */
 
-  return (MPI_Fint) OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER, FUNC_NAME);
+    return (MPI_Fint) OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER, FUNC_NAME);
 }

@@ -6,6 +6,7 @@
 
 #include "mpi.h"
 #include "mpi/c/bindings.h"
+#include "mpi/f77/fint_2_int.h"
 #include "group/group.h"
 #include "errhandler/errhandler.h"
 #include "communicator/communicator.h"
@@ -21,24 +22,15 @@
 static const char FUNC_NAME[] = "MPI_Group_c2f";
 
 
-MPI_Fint MPI_Group_c2f(MPI_Group group) {
-
-    /* local variables */
-    ompi_group_t *group_c;
-
-    /* error checking */
-    if( MPI_PARAM_CHECK ) {
+MPI_Fint MPI_Group_c2f(MPI_Group group) 
+{
+    if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
-	    /* mapping an invalid handle to a null handle */
-	    /* not invoking an error handler */
-
         if( (NULL == group) ) {
-			group = MPI_GROUP_NULL;
+            group = MPI_GROUP_NULL;
         }
     }
 
-    group_c=(ompi_group_t *)group;
-
-    return (MPI_Fint) (group_c->grp_f_to_c_index) ;
+    return OMPI_INT_2_FINT(group->grp_f_to_c_index) ;
 }

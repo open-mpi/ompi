@@ -6,6 +6,7 @@
 
 #include "mpi.h"
 #include "mpi/c/bindings.h"
+#include "mpi/f77/fint_2_int.h"
 #include "class/ompi_list.h"
 #include "info/info.h"
 #include "errhandler/errhandler.h"
@@ -30,7 +31,7 @@ static const char FUNC_NAME[] = "MPI_Info_f2c";
  */
 MPI_Info MPI_Info_f2c(MPI_Fint info) 
 {
-    size_t info_index = (size_t) info;
+    int info_index = OMPI_FINT_2_INT(info);
 
     /* check the arguments */
 

@@ -2,10 +2,10 @@
  * $HEADER$
  */
 #include "ompi_config.h"
-#include <stdio.h>
 
 #include "mpi.h"
 #include "mpi/c/bindings.h"
+#include "mpi/f77/fint_2_int.h"
 #include "op/op.h"
 #include "errhandler/errhandler.h"
 #include "communicator/communicator.h"
@@ -23,7 +23,7 @@ static const char FUNC_NAME[] = "MPI_Op_f2c";
 
 MPI_Op MPI_Op_f2c(MPI_Fint op_f)
 {
-    size_t op_index = (size_t) op_f;
+    int op_index = OMPI_FINT_2_INT(op_f);
 
     /* Error checking */
 

@@ -6,6 +6,7 @@
 
 #include "mpi.h"
 #include "mpi/c/bindings.h"
+#include "mpi/f77/fint_2_int.h"
 #include "communicator/communicator.h"
 #include "errhandler/errhandler.h"
 #include "file/file.h"
@@ -23,7 +24,7 @@ static const char FUNC_NAME[] = "MPI_File_f2c";
 
 MPI_File MPI_File_f2c(MPI_Fint file_f) 
 {
-    size_t file_index = (size_t) file_f;
+    int file_index = OMPI_FINT_2_INT(file_f);
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);

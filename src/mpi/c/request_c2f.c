@@ -6,6 +6,7 @@
 
 #include "mpi.h"
 #include "mpi/c/bindings.h"
+#include "mpi/f77/fint_2_int.h"
 #include "request/request.h"
 #include "errhandler/errhandler.h"
 #include "communicator/communicator.h"
@@ -23,12 +24,8 @@ static const char FUNC_NAME[] = "MPI_Request_f2c";
 
 MPI_Fint MPI_Request_c2f(MPI_Request request) 
 {
-    /* error checking */
-    if( MPI_PARAM_CHECK ) {
+    if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-
-        /* mapping an invalid handle to a null handle */
-        /* not invoking an error handler */
 
         if (NULL == request) {
             request = MPI_REQUEST_NULL;
@@ -48,10 +45,10 @@ MPI_Fint MPI_Request_c2f(MPI_Request request)
        fortran integer.
     */
 
-    if (-1 == request->req_f_to_c_index) {
+    if (MPI_UNDEFINED == request->req_f_to_c_index) {
         request->req_f_to_c_index = 
             ompi_pointer_array_add(&ompi_request_f_to_c_table, request);
     }
 
-    return (MPI_Fint) (request->req_f_to_c_index) ;
+    return OMPI_INT_2_FINT(request->req_f_to_c_index) ;
 }

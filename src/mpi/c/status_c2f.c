@@ -6,6 +6,7 @@
 
 #include "mpi.h"
 #include "mpi/c/bindings.h"
+#include "mpi/f77/fint_2_int.h"
 #include "mpi/f77/constants.h"
 #include "communicator/communicator.h"
 #include "errhandler/errhandler.h"
@@ -36,13 +37,10 @@ int MPI_Status_c2f(MPI_Status *c_status, MPI_Fint *f_status)
         }
     }
 
-    /* We can't use OMPI_INT_2_FINT here because of some complications
-       with include files.  :-( So just do the casting manually. */
-
-    f_status[0] = (MPI_Fint) c_status->MPI_SOURCE;
-    f_status[1] = (MPI_Fint) c_status->MPI_TAG;
-    f_status[2] = (MPI_Fint) c_status->MPI_ERROR;
-    f_status[3] = (MPI_Fint) c_status->_count;
+    f_status[0] = OMPI_INT_2_FINT(c_status->MPI_SOURCE);
+    f_status[1] = OMPI_INT_2_FINT(c_status->MPI_TAG);
+    f_status[2] = OMPI_INT_2_FINT(c_status->MPI_ERROR);
+    f_status[3] = OMPI_INT_2_FINT(c_status->_count);
 
     return MPI_SUCCESS;
 }

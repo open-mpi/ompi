@@ -96,8 +96,8 @@ typedef struct ompi_request_t ompi_request_t;
     do { \
         (request)->req_state = OMPI_REQUEST_INACTIVE; \
         (request)->req_complete = false; \
-	    (request)->req_f_to_c_index = -1; \
-    } while(0); 
+        (request)->req_f_to_c_index = MPI_UNDEFINED; \
+    } while (0); 
 
 /**
  * Finalize a request.  This is a macro to avoid function call
@@ -113,9 +113,10 @@ typedef struct ompi_request_t ompi_request_t;
 #define OMPI_REQUEST_FINI(request) \
     do { \
         (request)->req_state = OMPI_REQUEST_INVALID; \
-        if (-1 != (request)->req_f_to_c_index) { \
+        if (MPI_UNDEFINED != (request)->req_f_to_c_index) { \
             ompi_pointer_array_set_item(&ompi_request_f_to_c_table, \
                                         (request)->req_f_to_c_index, NULL); \
+            (request)->req_f_to_c_index = MPI_UNDEFINED; \
         } \
     } while (0); 
 
