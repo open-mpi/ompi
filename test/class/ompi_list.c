@@ -28,7 +28,6 @@ int main(int argc, char **argv)
     test_init("ompi_list_t");
 
     /* initialize list */
-    ompi_list_set_size(&list,0Xdeadbeaf);
     OBJ_CONSTRUCT(&list, ompi_list_t);
 
     /* check length of list */

@@ -62,11 +62,6 @@ static inline size_t ompi_list_get_size(ompi_list_t* list)
     return list->ompi_list_length;
 }
 
-static inline void ompi_list_set_size(ompi_list_t* list, size_t size)
-{
-    list->ompi_list_length=size;
-}
-
 /* 
  * Returns first item on list, but does not remove it from the list. 
  */
