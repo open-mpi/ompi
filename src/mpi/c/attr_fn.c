@@ -20,17 +20,17 @@ int MPI_TYPE_NULL_DELETE_FN( MPI_Datatype datatype, int type_keyval,
 
 int MPI_TYPE_NULL_COPY_FN( MPI_Datatype datatype, int type_keyval, void* extra_state,
                            void* attribute_val_in, void* attribute_val_out,
-                           void* flag )
+                           int* flag )
 {
-   *(int*) flag = 0;
+   *flag = 0;
    return MPI_SUCCESS;
 }
 
 int MPI_TYPE_DUP_FN( MPI_Datatype datatype, int type_keyval, void* extra_state,
                      void* attribute_val_in, void* attribute_val_out,
-                     void* flag )
+                     int* flag )
 {
-   *(int*) flag = 1;
+   *flag = 1;
    *(void**)attribute_val_out = attribute_val_in;
    return MPI_SUCCESS;
 }
@@ -44,17 +44,17 @@ int MPI_WIN_NULL_DELETE_FN( MPI_Win window, int win_keyval,
 
 int MPI_WIN_NULL_COPY_FN( MPI_Win window, int win_keyval, void* extra_state,
                           void* attribute_val_in, void* attribute_val_out,
-                          void* flag )
+                          int* flag )
 {
-   *(int*) flag= 0;
+   *flag= 0;
    return MPI_SUCCESS;
 }
 
 int MPI_WIN_DUP_FN( MPI_Win window, int win_keyval, void* extra_state,
                     void* attribute_val_in, void* attribute_val_out,
-                    void* flag )
+                    int* flag )
 {
-   *(int*) flag = 1;
+   *flag = 1;
    *(void**)attribute_val_out = attribute_val_in;
    return MPI_SUCCESS;
 }
@@ -68,17 +68,17 @@ int MPI_COMM_NULL_DELETE_FN( MPI_Comm comm, int comm_keyval,
 
 int MPI_COMM_NULL_COPY_FN( MPI_Comm comm, int comm_keyval, void* extra_state,
                            void* attribute_val_in, void* attribute_val_out,
-                           void* flag )
+                           int* flag )
 {
-   *(int*) flag= 0;
+   *flag= 0;
    return MPI_SUCCESS;
 }
 
 int MPI_COMM_DUP_FN( MPI_Comm comm, int comm_keyval, void* extra_state,
                      void* attribute_val_in, void* attribute_val_out,
-                     void* flag )
+                     int* flag )
 {
-   *(int*) flag = 1;
+   *flag = 1;
    *(void**)attribute_val_out = attribute_val_in;
    return MPI_SUCCESS;
 }
@@ -92,17 +92,17 @@ int MPI_NULL_DELETE_FN( MPI_Comm comm, int comm_keyval,
 
 int MPI_NULL_COPY_FN( MPI_Comm comm, int comm_keyval, void* extra_state,
                       void* attribute_val_in, void* attribute_val_out,
-                    void* flag )
+                      int* flag )
 {
-   *(int*) flag= 0;
+   *flag= 0;
    return MPI_SUCCESS;
 }
 
 int MPI_DUP_FN( MPI_Comm comm, int comm_keyval, void* extra_state,
                 void* attribute_val_in, void* attribute_val_out,
-                void* flag )
+                int* flag )
 {
-   *(int*) flag = 1;
+   *flag = 1;
    *(void**)attribute_val_out = attribute_val_in;
    return MPI_SUCCESS;
 }
