@@ -67,6 +67,7 @@ int mca_pml_teg_send_request_schedule(mca_pml_base_send_request_t* req)
 {
     ompi_proc_t *proc = ompi_comm_peer_lookup(req->req_base.req_comm, req->req_base.req_peer);
     mca_pml_proc_t* proc_pml = proc->proc_pml;
+    int send_count = 0;
 
     /* allocate remaining bytes to PTLs */
     size_t bytes_remaining = req->req_bytes_packed - req->req_offset;
@@ -100,12 +101,13 @@ int mca_pml_teg_send_request_schedule(mca_pml_base_send_request_t* req)
 
         rc = ptl->ptl_put(ptl, ptl_proc->ptl_peer, req, req->req_offset, bytes_to_frag, 0);
         if(rc == OMPI_SUCCESS) {
+            send_count++;
             bytes_remaining = req->req_bytes_packed - req->req_offset;
         }
     }
 
-    /* unable to complete send - signal request failed */
-    if(bytes_remaining > 0) {
+    /* unable to complete send - queue for later */
+    if(send_count == 0) {
         OMPI_THREAD_LOCK(&mca_pml_teg.teg_lock);
         ompi_list_append(&mca_pml_teg.teg_send_pending, (ompi_list_item_t*)req);
         OMPI_THREAD_UNLOCK(&mca_pml_teg.teg_lock);
@@ -130,9 +132,8 @@ void mca_pml_teg_send_request_progress(
     mca_pml_base_send_request_t* req,
     size_t bytes_sent)
 {
-    bool first_frag;
+    bool schedule = false;
     OMPI_THREAD_LOCK(&ompi_request_lock);
-    first_frag = (req->req_bytes_sent == 0 && req->req_bytes_packed > 0);
     req->req_bytes_sent += bytes_sent;
     if (req->req_bytes_sent >= req->req_bytes_packed) {
         req->req_base.req_pml_complete = true;
@@ -148,19 +149,20 @@ void mca_pml_teg_send_request_progress(
         } else if (req->req_base.req_free_called) {
             MCA_PML_TEG_FREE((ompi_request_t**)&req);
         } 
-        /* dont try and schedule if done */
-        first_frag = false;
     } 
+    /* test to see if we have scheduled the entire request */
+    if (req->req_offset < req->req_bytes_packed)
+        schedule = true;
     OMPI_THREAD_UNLOCK(&ompi_request_lock);
 
-    /* if first fragment - schedule remaining fragments */
-    if(first_frag == true) {
+    /* schedule remaining fragments of this request */
+    if(schedule) {
         mca_pml_teg_send_request_schedule(req);
     }
 
     /* check for pending requests that need to be progressed */
     while(ompi_list_get_size(&mca_pml_teg.teg_send_pending) != 0) {
-        OMPI_THREAD_LOCK(&mca_pml_teg.teg_lock); 
+        OMPI_THREAD_LOCK(&mca_pml_teg.teg_lock);
         req = (mca_pml_base_send_request_t*)ompi_list_remove_first(&mca_pml_teg.teg_send_pending);
         OMPI_THREAD_UNLOCK(&mca_pml_teg.teg_lock);
         if(req == NULL)
