@@ -11,6 +11,7 @@
 #include "include/constants.h"
 #include "util/output.h"
 #include "util/sys_info.h"
+#include "util/proc_info.h"
 #include "mca/pcm/pcm.h"
 #include "mpool_sm.h"
 #include "mpool_sm_mmap.h"
@@ -35,7 +36,8 @@ static mca_mpool_sm_mmap_t* mca_mpool_sm_mmap_open(char* path)
         struct timespec ts;
         fd = open(path, O_CREAT|O_RDWR, 0000); 
         if(fd < 0 && errno != EACCES) {
-            ompi_output(0, "mca_ptl_sm_mmap_open: open failed with errno=%d\n", errno);
+            ompi_output(0, 
+            "mca_ptl_sm_mmap_open: open %s failed with errno=%d\n", path, errno);
             return NULL;
         }
         ts.tv_sec = 0; 
@@ -72,12 +74,18 @@ mca_mpool_sm_mmap_t* mca_mpool_sm_mmap_init(size_t size)
     mca_mpool_sm_mmap_t* map;
     char path[PATH_MAX];
 
-    sprintf(path, "%s/mmap.%s", ompi_system_info.session_dir, ompi_system_info.nodename);
+    sprintf(path, "%s/mmap.%s", ompi_process_info.job_session_dir, ompi_system_info.nodename);
+    /* debug */
+    fprintf(stderr," open %s \n",path);
+    fflush(stderr);
+    /* end debug */
     fd = open(path, O_CREAT|O_RDWR, 0000); 
     if(fd < 0) {
         if(errno == EACCES)
             return mca_mpool_sm_mmap_open(path);
-        ompi_output(0, "mca_mpool_sm_mmap_init: open failed with errno=%d\n", errno);
+        ompi_output(0, 
+        "mca_mpool_sm_mmap_init: open %s failed with errno=%d\n", 
+        path,errno);
         return NULL;
     }
 
