@@ -19,7 +19,7 @@
  * will be closed and unloaded.  The selected modules will be returned
  * to the caller in a lam_list_t.
  */
-int mca_ptl_base_select(lam_list_t *selected)
+int mca_ptl_base_select(void)
 {
   int i, num_ptls;
   bool allow_multi_user_threads, have_hidden_threads;
@@ -85,7 +85,7 @@ int mca_ptl_base_select(lam_list_t *selected)
 
   /* Finished querying all modules.  Check for the bozo case. */
 
-  if (0 == lam_list_get_size(selected)) {
+  if (0 == lam_list_get_size(&mca_ptl_base_modules_initialized)) {
     /* JMS Replace with show_help */
     lam_abort(1, "No ptl module available.  This shouldn't happen.");
   }
