@@ -163,7 +163,7 @@ LAM_C_WEAK_SYMBOLS
 #   separate directory.
 
 if test "$WANT_WEAK_SYMBOLS" = "0"; then
-    LAM_C_HAVE_WEAK_SYMBOLS=1
+    LAM_C_HAVE_WEAK_SYMBOLS=0
 fi
 if test "$WANT_MPI_PROFILING" = "1"; then
     if test "$LAM_C_HAVE_WEAK_SYMBOLS" = "1"; then
@@ -174,6 +174,25 @@ if test "$WANT_MPI_PROFILING" = "1"; then
 else
     LAM_PROFILING_COMPILE_SEPARATELY=0
 fi
+#
+# There are 2 layers to the MPI Language binidings
+# One layer generates MPI_* bindings. The other layer
+# generates PMPI_* bindings. The following conditions
+# determine whether each (or both) these layers are 
+# built.
+# 1. MPI_* bindings are needed if:
+#	- Profiling is not required
+#   - Profiling is required but weak symbols are not
+#	  supported
+# 2. PMPI_* bindings are needed if profiling is required.
+# Hence we define 2 AM_CONDITIONALs which tell us whether
+# each of these layers need to be built or NOT
+#
+AM_CONDITIONAL(WANT_MPI_BINDINGS_LAYER,
+	test "$WANT_MPI_PROFILING" = 0 -o "$LAM_PROFILING_COMPILE_SEPARATELY" = 1)
+
+AM_CONDITIONAL(WANT_PMPI_BINDINGS_LAYER,
+	test "$WANT_MPI_PROFILING" = 1)
 AM_CONDITIONAL(COMPILE_PROFILING_SEPARATELY, 
     test "$LAM_PROFILING_COMPILE_SEPARATELY" = 1)
 AC_DEFINE_UNQUOTED(LAM_WANT_MPI_PROFILING, $WANT_MPI_PROFILING,
