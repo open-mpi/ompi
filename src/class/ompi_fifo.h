@@ -57,6 +57,10 @@ struct ompi_fifo_t {
     /* pointer to tail (read) ompi_cb_fifo_t structure */
     volatile ompi_cb_fifo_wrapper_t *tail;
 
+    /* locks for thread synchronization */
+    ompi_lock_t head_lock;
+    ompi_lock_t tail_lock;
+
 };
 
 typedef struct ompi_fifo_t ompi_fifo_t;
@@ -131,6 +135,8 @@ static inline int ompi_fifo_init(int size_of_cb_fifo, int lazy_free_freq,
     fifo->head->cb_overflow=false;  /* no attempt to overflow the queue */
     fifo->head->fifo_allocator=memory_allocator; /* set pointer to memory
                                               allocation functions */
+    ompi_atomic_unlock(&(fifo->head_lock));
+    ompi_atomic_unlock(&(fifo->tail_lock));
 
     /* set the tail */
     fifo->tail=fifo->head;
