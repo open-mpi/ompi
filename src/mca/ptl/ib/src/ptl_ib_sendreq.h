@@ -18,8 +18,10 @@ OBJ_CLASS_DECLARATION(mca_ptl_ib_send_request_t);
  * fragment on every send request.
  */
 struct mca_ptl_ib_send_request_t {
-       mca_pml_base_send_request_t super;
-       mca_ptl_ib_send_frag_t req_frag; /* first fragment */
+       mca_pml_base_send_request_t          super;
+
+       mca_ptl_ib_send_frag_t               *req_frag; 
+       /* first fragment */
 };
 typedef struct mca_ptl_ib_send_request_t mca_ptl_ib_send_request_t;
 

@@ -20,12 +20,10 @@ OBJ_CLASS_INSTANCE(mca_ptl_ib_send_frag_t,
 
 static void mca_ptl_ib_send_frag_construct(mca_ptl_ib_send_frag_t* frag)
 {
-    D_PRINT("\n");
 }
 
 static void mca_ptl_ib_send_frag_destruct(mca_ptl_ib_send_frag_t* frag)
 {
-    D_PRINT("\n");
 }
 
 int mca_ptl_ib_send_frag_init(mca_ptl_ib_send_frag_t* sendfrag,
@@ -35,14 +33,16 @@ int mca_ptl_ib_send_frag_init(mca_ptl_ib_send_frag_t* sendfrag,
         size_t* size,
         int flags)
 {
-    /* message header */
     size_t size_in = *size;
     size_t size_out;
+    mca_ptl_base_header_t *hdr;
+    struct iovec iov;
+    int header_length;
 
     D_PRINT("");
-#if 0
 
-    mca_ptl_base_header_t* hdr = &sendfrag->frag_header;
+    /* Start of the IB buffer */
+    hdr = (mca_ptl_base_header_t *) &sendfrag->ib_buf.buf[0];
 
     if(offset == 0) { 
         hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_MATCH;
@@ -59,6 +59,9 @@ int mca_ptl_ib_send_frag_init(mca_ptl_ib_send_frag_t* sendfrag,
         hdr->hdr_match.hdr_tag = sendreq->req_base.req_tag;
         hdr->hdr_match.hdr_msg_length = sendreq->req_bytes_packed;
         hdr->hdr_match.hdr_msg_seq = sendreq->req_base.req_sequence;
+
+        header_length = sizeof(mca_ptl_base_match_header_t);
+
     } else {
         hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_FRAG;
         hdr->hdr_common.hdr_flags = flags;
@@ -68,6 +71,8 @@ int mca_ptl_ib_send_frag_init(mca_ptl_ib_send_frag_t* sendfrag,
         hdr->hdr_frag.hdr_src_ptr.lval = 0; /* for VALGRIND/PURIFY - REPLACE WITH MACRO */
         hdr->hdr_frag.hdr_src_ptr.pval = sendfrag;
         hdr->hdr_frag.hdr_dst_ptr = sendreq->req_peer_match;
+
+        header_length = sizeof(mca_ptl_base_frag_header_t);
     }
 
     /* initialize convertor */
@@ -84,7 +89,7 @@ int mca_ptl_ib_send_frag_init(mca_ptl_ib_send_frag_t* sendfrag,
             convertor = &sendreq->req_convertor;
         } else {
 
-            convertor = &sendfrag->frag_convertor;
+            convertor = &sendfrag->frag_send.frag_base.frag_convertor;
             ompi_convertor_copy(&sendreq->req_convertor, convertor);
             ompi_convertor_init_for_send(
                     convertor,
@@ -100,33 +105,72 @@ int mca_ptl_ib_send_frag_init(mca_ptl_ib_send_frag_t* sendfrag,
          * into users buffer - otherwise will return an allocated buffer 
          * that holds the packed data
          */
-        sendfrag->frag_vec[1].iov_base = NULL;
-        sendfrag->frag_vec[1].iov_len = size_in;
-        if((rc = ompi_convertor_pack(convertor, &sendfrag->frag_vec[1], 1)) < 0)
+        iov.iov_base = &sendfrag->ib_buf.buf[header_length];
+        iov.iov_len = size_in;
+
+        if((rc = ompi_convertor_pack(convertor, 
+                        &iov, 1)) 
+                < 0) {
+
+            ompi_output(0, "Unable to pack data");
+
             return OMPI_ERROR;
+        }
 
         /* adjust size and request offset to reflect actual 
          * number of bytes packed by convertor */
-        size_out = sendfrag->frag_vec[1].iov_len;
+        size_out = iov.iov_len;
     } else {
         size_out = size_in;
     }
+
     hdr->hdr_frag.hdr_frag_length = size_out;
 
     /* fragment state */
-    sendfrag->frag_owner = &ptl_peer->peer_ptl->super;
+    sendfrag->frag_send.frag_base.frag_owner = 
+        &ptl_peer->peer_module->super;
     sendfrag->frag_send.frag_request = sendreq;
-    sendfrag->frag_send.frag_base.frag_addr = sendfrag->frag_vec[1].iov_base;
+
+    sendfrag->frag_send.frag_base.frag_addr = iov.iov_base;
     sendfrag->frag_send.frag_base.frag_size = size_out;
 
-    sendfrag->frag_peer = ptl_peer;
-    sendfrag->frag_vec_ptr = sendfrag->frag_vec;
-    sendfrag->frag_vec_cnt = (size_out == 0) ? 1 : 2;
-    sendfrag->frag_vec[0].iov_base = (ompi_iov_base_ptr_t)hdr;
-    sendfrag->frag_vec[0].iov_len = sizeof(mca_ptl_base_header_t);
+    sendfrag->frag_send.frag_base.frag_peer = ptl_peer;
     sendfrag->frag_progressed = 0;
+
     *size = size_out;
-#endif
+
 
     return OMPI_SUCCESS;
+}
+
+/*
+ * Allocate a IB send descriptor
+ *
+ */
+mca_ptl_ib_send_frag_t* mca_ptl_ib_alloc_send_frag(
+        mca_ptl_base_module_t* ptl,
+        mca_pml_base_send_request_t* request)
+{
+    ompi_free_list_t *flist;
+    ompi_list_item_t *item;
+    mca_ptl_ib_send_frag_t *ib_send_frag;
+
+    D_PRINT("");
+
+    flist = &((mca_ptl_ib_module_t *)ptl)->send_free;
+
+    item = ompi_list_remove_first(&((flist)->super));
+
+    while(NULL == item) {
+        mca_ptl_tstamp_t tstamp = 0;
+
+        D_PRINT("Gone one NULL descriptor ... trying again");
+
+        ptl->ptl_component->ptlm_progress (tstamp);
+        item = ompi_list_remove_first (&((flist)->super));
+    }
+
+    ib_send_frag = (mca_ptl_ib_send_frag_t *)item;
+
+    return ib_send_frag;
 }

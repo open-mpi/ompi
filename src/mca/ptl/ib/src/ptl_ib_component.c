@@ -236,8 +236,21 @@ mca_ptl_base_module_t** mca_ptl_ib_component_init(int *num_ptl_modules,
                 != OMPI_SUCCESS) {
             return NULL;
         }
-        DUMP_IB_STATE(ib_modules[i].ib_state);
 
+        /* Find a better place for this */
+        OBJ_CONSTRUCT(&(ib_modules[i].send_free), ompi_free_list_t);
+
+        OBJ_CONSTRUCT(&(ib_modules[i].recv_free), ompi_free_list_t);
+
+        ompi_free_list_init(&(ib_modules[i].send_free),
+                sizeof(mca_ptl_ib_send_frag_t),
+                OBJ_CLASS(mca_ptl_ib_send_frag_t),
+                mca_ptl_ib_component.ib_free_list_num,
+                mca_ptl_ib_component.ib_free_list_max,
+                mca_ptl_ib_component.ib_free_list_inc,
+                NULL);
+
+        DUMP_IB_STATE(ib_modules[i].ib_state);
     }
 
     /* Post OOB receives */
