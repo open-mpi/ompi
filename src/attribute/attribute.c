@@ -90,10 +90,11 @@ static void ompi_attrkey_item_destruct(ompi_attrkey_item_t *item);
  * ompi_attribute_entry_t classes
  */
 
-OBJ_CLASS_INSTANCE(ompi_attrkey_item_t, 
-		   ompi_object_t,
-		   ompi_attrkey_item_construct,
-		   ompi_attrkey_item_destruct);
+struct ompi_attrkey_item_t_class;
+static OBJ_CLASS_INSTANCE(ompi_attrkey_item_t, 
+                          ompi_object_t,
+                          ompi_attrkey_item_construct,
+                          ompi_attrkey_item_destruct);
 
 
 /* 
