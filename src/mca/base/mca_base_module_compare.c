@@ -26,8 +26,6 @@ int mca_base_module_compare_priority(
   mca_base_module_priority_list_item_t *a,  
   mca_base_module_priority_list_item_t *b)
 {
-  int val;
-
   /* First, compare the priorties */
 
   if (a->mpli_priority > b->mpli_priority)
@@ -37,6 +35,7 @@ int mca_base_module_compare_priority(
   else 
     return mca_base_module_compare(a->mpli_module, b->mpli_module);
 }
+
 
 int mca_base_module_compare(mca_base_module_t* aa, mca_base_module_t* bb)
 {

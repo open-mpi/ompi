@@ -179,7 +179,6 @@ size_t lam_pointer_array_add(lam_pointer_array_t *table, void *ptr)
 int lam_pointer_array_set_item(lam_pointer_array_t *table, size_t index,
         void * value)
 {
-    int return_value;
     assert(table != NULL);
 
 #if 0

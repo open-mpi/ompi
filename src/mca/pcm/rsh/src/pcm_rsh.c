@@ -47,7 +47,7 @@ mca_pcm_rsh_handle_new(lam_job_handle_t parent)
   new_handle = (char*) malloc(handle_len);
   if (new_handle == NULL) return new_handle;
 
-  snprintf(new_handle, handle_len, "%s_%s_%d_%d", handle_base, hostname, 
+  snprintf(new_handle, handle_len, "%s_%s_%d_%lu", handle_base, hostname, 
            mypid, handle_count++);
   return new_handle;
 }
