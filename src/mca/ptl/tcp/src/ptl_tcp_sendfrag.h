@@ -95,8 +95,10 @@ static inline void mca_ptl_tcp_send_frag_progress(mca_ptl_tcp_send_frag_t* frag)
             /* the first fragment is allocated with the request, 
              * all others need to be returned to free list  
              */ 
-            if(frag->frag_send.frag_base.frag_header.hdr_frag.hdr_frag_offset != 0) 
+            if(request->req_cached == false || 
+               frag->frag_send.frag_base.frag_header.hdr_frag.hdr_frag_offset != 0) {
                 mca_ptl_tcp_send_frag_return(frag->frag_send.frag_base.frag_owner, frag); 
+            }
         } 
     }
 } 
