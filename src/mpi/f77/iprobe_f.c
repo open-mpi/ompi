@@ -52,5 +52,5 @@ void mpi_iprobe_f(MPI_Fint *source, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *fla
 
     c_comm = MPI_Comm_f2c (*comm);
 
-    *ierr = MPI_Iprobe(*source, *tag, c_comm, flag, (MPI_Status*) *status);
+    *ierr = MPI_Iprobe(*source, *tag, c_comm, flag, (MPI_Status*)status);
 }
