@@ -44,7 +44,7 @@ extern bool ompi_mpi_param_check;
 /*
  * Do we have <stdint.h>?
  */
-#if HAVE_STDINT_H
+#ifdef HAVE_STDINT_H
 #include <stdint.h>
 #else
 #include "ompi_stdint.h"
