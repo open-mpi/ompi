@@ -9,6 +9,7 @@ include $(top_ompi_srcdir)/config/Makefile.options
 sources = \
 	oob_tcp.c \
     oob_tcp.h \
+    oob_tcp_hdr.h \
 	oob_tcp_msg.c \
     oob_tcp_msg.h \
 	oob_tcp_peer.c \
