@@ -282,23 +282,28 @@ ompi_mutex_t orte_gpr_mutex;
  */
 int orte_gpr_base_open(void)
 {
+    int param, value;
 
-  /* Open up all available components */
+    /* Debugging / verbose output */
+    
+    param = mca_base_param_register_int("gpr", "base", "verbose",
+                                        NULL, 0);
+    mca_base_param_lookup_int(param, &value);
+    if (value != 0) {
+        orte_gpr_base_output = ompi_output_open(NULL);
+    } else {
+        orte_gpr_base_output = -1;
+    }
 
-  if (OMPI_SUCCESS != 
-      mca_base_components_open("gpr", 0, mca_gpr_base_static_components, 
-                            &orte_gpr_base_components_available)) {
-    return ORTE_ERROR;
-  }
+    /* Open up all available components */
 
-  /* setup output for debug messages */
-  if (!ompi_output_init) {  /* can't open output */
-      return ORTE_ERROR;
-  }
+    if (OMPI_SUCCESS != 
+        mca_base_components_open("gpr", 0, mca_gpr_base_static_components, 
+                                 &orte_gpr_base_components_available)) {
+        return ORTE_ERROR;
+    }
 
-  orte_gpr_base_output = ompi_output_open(NULL);
-
-  /* All done */
-
-  return ORTE_SUCCESS;
+    /* All done */
+    
+    return ORTE_SUCCESS;
 }
