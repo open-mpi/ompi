@@ -303,7 +303,7 @@ for type in $found_types; do
 
 `cat $outfile.extern`
 
-const mca_base_module_t *mca_${type}_static_modules[[]] = {
+const mca_base_module_t *mca_${type}_base_static_modules[[]] = {
 `cat $outfile.struct`
   NULL
 };
