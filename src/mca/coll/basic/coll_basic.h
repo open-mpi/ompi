@@ -19,6 +19,7 @@
  */
 
 extern const mca_coll_base_component_1_0_0_t mca_coll_basic_component;
+extern int mca_coll_basic_priority_param;
 
 
 /*

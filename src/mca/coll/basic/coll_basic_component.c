@@ -23,6 +23,16 @@ const char *mca_coll_basic_component_version_string =
   "Open MPI basic collective MCA component version " MCA_coll_basic_FULL_VERSION;
 
 /*
+ * Global variable
+ */
+int mca_coll_basic_priority_param = -1;
+
+/*
+ * Local function
+ */
+static int basic_open(void);
+
+/*
  * Instantiate the public struct with all of our public information
  * and pointers to our public functions in it
  */
@@ -47,7 +57,7 @@ const mca_coll_base_component_1_0_0_t mca_coll_basic_component = {
 
     /* Component open and close functions */
 
-    NULL,
+    basic_open,
     NULL
   },
 
@@ -65,3 +75,14 @@ const mca_coll_base_component_1_0_0_t mca_coll_basic_component = {
   mca_coll_basic_comm_query,
   NULL
 };
+
+
+static int basic_open(void)
+{
+    /* Use a low priority, but allow other components to be lower */
+    
+    mca_coll_basic_priority_param = 
+        mca_base_param_register_int("coll", "basic", "priority", NULL, 10);
+
+    return OMPI_SUCCESS;
+}
