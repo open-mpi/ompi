@@ -23,6 +23,7 @@ libmem_la_SOURCES = \
 	allocator.c \
 	free_list.c \
 	free_lists.c \
+        malloc.c \
 	mem_globals.c \
 	mem_pool.c \
 	seg_list.c \
