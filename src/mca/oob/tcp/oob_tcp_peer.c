@@ -384,7 +384,7 @@ static void mca_oob_tcp_peer_connected(mca_oob_tcp_peer_t* peer)
  */
 void mca_oob_tcp_peer_close(mca_oob_tcp_peer_t* peer)
 {
-    if(mca_oob_tcp_component.tcp_debug > 1) {
+    if(mca_oob_tcp_component.tcp_debug >= 2) {
         ompi_output(0, "[%d,%d,%d] closing peer [%d,%d,%d] sd %d state %d\n",
             OMPI_NAME_ARGS(mca_oob_name_self),
             OMPI_NAME_ARGS(peer->peer_name),
@@ -648,9 +648,11 @@ static void mca_oob_tcp_peer_send_handler(int sd, short flags, void* user)
         break;
     case MCA_OOB_TCP_CONNECTED:
         {
-        do {
+        while(peer->peer_send_msg != NULL) {
+
             /* complete the current send */
             mca_oob_tcp_msg_t* msg = peer->peer_send_msg;
+            ompi_list_item_t item1 = *(ompi_list_item_t*)peer;
             if(mca_oob_tcp_msg_send_handler(msg, peer)) {
                 mca_oob_tcp_msg_complete(msg, &peer->peer_name);
             } else {
@@ -660,7 +662,7 @@ static void mca_oob_tcp_peer_send_handler(int sd, short flags, void* user)
             /* if current completed - progress any pending sends */
             peer->peer_send_msg = (mca_oob_tcp_msg_t*)
                 ompi_list_remove_first(&peer->peer_send_queue);
-        } while (NULL != peer->peer_send_msg);
+        }
         
         /* if nothing else to do unregister for send event notifications */
         if(NULL == peer->peer_send_msg) {
