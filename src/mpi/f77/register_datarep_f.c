@@ -30,7 +30,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_REGISTER_DATAREP,
                            pmpi_register_datarep_,
                            pmpi_register_datarep__,
                            pmpi_register_datarep_f,
-                           (char *datarep, MPI_Fint *read_conversion_fn, MPI_Fint *write_conversion_fn, MPI_Fint *dtype_file_extent_fn, char *extra_state, MPI_Fint *ierr),
+                           (char *datarep, void *read_conversion_fn, void *write_conversion_fn, void *dtype_file_extent_fn, char *extra_state, MPI_Fint *ierr),
                            (datarep, read_conversion_fn, write_conversion_fn, dtype_file_extent_fn, extra_state, ierr) )
 #endif
 
@@ -47,7 +47,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_REGISTER_DATAREP,
                            mpi_register_datarep_,
                            mpi_register_datarep__,
                            mpi_register_datarep_f,
-                           (char *datarep, MPI_Fint *read_conversion_fn, MPI_Fint *write_conversion_fn, MPI_Fint *dtype_file_extent_fn, char *extra_state, MPI_Fint *ierr),
+                           (char *datarep, void *read_conversion_fn, void *write_conversion_fn, void *dtype_file_extent_fn, char *extra_state, MPI_Fint *ierr),
                            (datarep, read_conversion_fn, write_conversion_fn, dtype_file_extent_fn, extra_state, ierr) )
 #endif
 
@@ -56,9 +56,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_REGISTER_DATAREP,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-void mpi_register_datarep_f(char *datarep, MPI_Fint *read_conversion_fn,
-			    MPI_Fint *write_conversion_fn,
-			    MPI_Fint *dtype_file_extent_fn, char *extra_state,
+void mpi_register_datarep_f(char *datarep, void *read_conversion_fn,
+			    void *write_conversion_fn,
+			    void *dtype_file_extent_fn, char *extra_state,
 			    MPI_Fint *ierr)
 {
     *ierr = OMPI_INT_2_FINT(MPI_Register_datarep(datarep,
