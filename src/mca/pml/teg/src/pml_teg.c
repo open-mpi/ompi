@@ -270,7 +270,11 @@ int mca_pml_teg_add_procs(ompi_proc_t** procs, size_t nprocs)
              * save/create ptl extension for use by pml
              */
             proc_ptl->ptl_base = ptl->ptl_base;
-            if(NULL == proc_ptl->ptl_base && ptl->ptl_cache_bytes > 0) {
+            if (NULL == proc_ptl->ptl_base && 
+                ptl->ptl_cache_bytes > 0 &&
+                NULL != ptl->ptl_request_init &&
+                NULL != ptl->ptl_request_fini) {
+
                 mca_pml_base_ptl_t* ptl_base = OBJ_NEW(mca_pml_base_ptl_t);
                 ptl_base->ptl = ptl;
                 ptl_base->ptl_cache_size = ptl->ptl_cache_size;
@@ -281,20 +285,8 @@ int mca_pml_teg_add_procs(ompi_proc_t** procs, size_t nprocs)
              * fragments - if not add it.
              */
             if(ptl->ptl_latency == latency) {
-                size_t f_index;
-                size_t f_size = mca_ptl_array_get_size(&proc_pml->proc_ptl_first);
-                for(f_index=0; f_index < f_size; f_index++) {
-                    struct mca_ptl_proc_t* existing_proc = mca_ptl_array_get_index(&proc_pml->proc_ptl_first, f_index);
-                    if(existing_proc->ptl == ptl) {
-                        *existing_proc = *proc_ptl; /* update existing definition */
-                        break;
-                    }
-                }
-                /* not found add a new entry */
-                if(f_index == f_size) {
-                    struct mca_ptl_proc_t* proc_new = mca_ptl_array_insert(&proc_pml->proc_ptl_first);
-                    *proc_new = *proc_ptl;
-                }
+                struct mca_ptl_proc_t* proc_new = mca_ptl_array_insert(&proc_pml->proc_ptl_first);
+                *proc_new = *proc_ptl;
             }
         
         }
@@ -330,7 +322,7 @@ int mca_pml_teg_del_procs(ompi_proc_t** procs, size_t nprocs)
             /* remove this from next array so that we dont call it twice w/ 
              * the same address pointer
              */
-            f_size = mca_ptl_array_get_size(&proc_pml->proc_ptl_first);
+            n_size = mca_ptl_array_get_size(&proc_pml->proc_ptl_first);
             for(n_index = 0; n_index < n_size; n_index++) {
                 mca_ptl_proc_t* next_proc = mca_ptl_array_get_index(&proc_pml->proc_ptl_next, n_index);
                 if(next_proc->ptl == ptl) {
