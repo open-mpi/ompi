@@ -242,7 +242,6 @@ mca_gpr_base_module_t *mca_gpr_replica_init(bool *allow_multi_user_threads, bool
 
     if (ompi_process_info.seed) {
 
-	ompi_output(mca_gpr_base_output, "entered replica_init");
 
 	/* Return a module (choose an arbitrary, positive priority --
 	   it's only relevant compared to other ns components).  If
@@ -267,11 +266,8 @@ mca_gpr_base_module_t *mca_gpr_replica_init(bool *allow_multi_user_threads, bool
 	/* define the "universe" segment */
 	response = gpr_replica_define_segment("universe");
 	if (0 > response) { /* got error code */
-	    ompi_output(mca_gpr_base_output, "registry_init(error): could not create universe segment\n");
 	    exit(response);
 	}
-
-	ompi_output(mca_gpr_base_output, "issuing receive");
 
 	/* issue the non-blocking receive */
 /*       	mca_oob_recv_packed_nb(MCA_OOB_NAME_ANY, MCA_OOB_TAG_GPR, 0, mca_gpr_replica_recv, NULL); */
