@@ -217,13 +217,6 @@ int mca_ptl_gm_peer_send( mca_ptl_gm_peer_t *ptl_peer,
 
     /* At this point the header is already filled up with informations as a match header */
     if( (flags & MCA_PTL_FLAGS_ACK) || (0 == offset) ) {
-        hdr->hdr_common.hdr_flags = flags;
-        hdr->hdr_match.hdr_contextid  = sendreq->req_base.req_comm->c_contextid;
-        hdr->hdr_match.hdr_src        = sendreq->req_base.req_comm->c_my_rank;
-        hdr->hdr_match.hdr_dst        = sendreq->req_base.req_peer;
-        hdr->hdr_match.hdr_tag        = sendreq->req_base.req_tag;
-        hdr->hdr_match.hdr_msg_length = sendreq->req_bytes_packed;
-        hdr->hdr_match.hdr_msg_seq    = sendreq->req_base.req_sequence;
 	if( flags & MCA_PTL_FLAGS_ACK ) {
 	    header_length = sizeof(mca_ptl_base_rendezvous_header_t);
 	    hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_RNDV;
@@ -231,21 +224,17 @@ int mca_ptl_gm_peer_send( mca_ptl_gm_peer_t *ptl_peer,
 	    hdr->hdr_rndv.hdr_src_ptr.lval = 0;
 	    hdr->hdr_rndv.hdr_src_ptr.pval = fragment;
 	} else {
-	    hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_MATCH;
 	    header_length = sizeof(mca_ptl_base_match_header_t);
 	}
     } else {
 	header_length = sizeof(mca_ptl_base_frag_header_t);
 	hdr->hdr_frag.hdr_common.hdr_type  = MCA_PTL_HDR_TYPE_FRAG;
-	hdr->hdr_frag.hdr_common.hdr_flags = flags;
 	hdr->hdr_frag.hdr_frag_length      = size_in;
 	hdr->hdr_frag.hdr_frag_offset      = offset;
 	hdr->hdr_frag.hdr_src_ptr.lval     = 0; /* for VALGRIND/PURIFY - REPLACE WITH MACRO */
 	hdr->hdr_frag.hdr_src_ptr.pval     = fragment;
 	hdr->hdr_frag.hdr_dst_ptr          = sendreq->req_peer_match;
     }
-
-    iov.iov_len = 0;  /* nothing yet */
 
     if( size_in > 0 ) {
         /* first fragment (eager send) and first fragment of long protocol
@@ -279,9 +268,16 @@ int mca_ptl_gm_peer_send( mca_ptl_gm_peer_t *ptl_peer,
 
 	fragment->send_frag.frag_base.frag_addr = ((char*)fragment->send_buf) + header_length;
 	fragment->send_frag.frag_base.frag_size = max_data;
+
+	/* must update the offset after actual fragment size is determined
+	 * before attempting to send the fragment
+	 */
+	mca_pml_base_send_request_offset( sendreq,
+					  fragment->send_frag.frag_base.frag_size );
     } else {
 	fragment->send_frag.frag_base.frag_addr = NULL;
 	fragment->send_frag.frag_base.frag_size = 0;
+	iov.iov_len = 0;  /* no data will be transmitted */
     }
     
     /* adjust size and request offset to reflect actual number of bytes
@@ -289,12 +285,6 @@ int mca_ptl_gm_peer_send( mca_ptl_gm_peer_t *ptl_peer,
      */
     size_out = iov.iov_len + header_length;
     
-    /* must update the offset after actual fragment size is determined
-     * before attempting to send the fragment
-     */
-    mca_pml_base_send_request_offset( sendreq,
-				      fragment->send_frag.frag_base.frag_size );
-
     /* Send the first fragment */
     gm_send_to_peer_with_callback( ptl_peer->peer_ptl->gm_port, fragment->send_buf, 
 				   GM_SIZE, size_out, GM_LOW_PRIORITY, ptl_peer->local_id,

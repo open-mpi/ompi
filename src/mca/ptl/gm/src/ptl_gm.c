@@ -393,17 +393,17 @@ mca_ptl_gm_matched( mca_ptl_base_module_t * ptl,
     
         ompi_convertor_copy( peer->peer_proc->proc_ompi->proc_convertor,
                              &frag->frag_base.frag_convertor);
-        ompi_convertor_init_for_recv( &frag->frag_base.frag_convertor,
-                                      0,
+        ompi_convertor_init_for_recv( &frag->frag_base.frag_convertor, 0,
                                       request->req_base.req_datatype,
                                       request->req_base.req_count,
                                       request->req_base.req_addr,
-                                      0  /* TO DO which offset ? */, NULL );
+                                      0, NULL );
         out_size = 1;
         max_data = iov.iov_len;
         rc = ompi_convertor_unpack( &frag->frag_base.frag_convertor, &(iov),
                                     &out_size, &max_data, &freeAfter );
         assert( rc >= 0 );
+        recv_frag->frag_bytes_processed += max_data;
     }
     
     /* update progress*/
