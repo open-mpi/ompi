@@ -1,13 +1,10 @@
 /*
- *  ctchannel.c
- *  LAM-MPI
- *
- *  Created by Rob Aulwes on Tue Dec 23 2003.
- *  Copyright (c) 2003 __MyCompanyName__. All rights reserved.
- *
+ * $HEADER$
  */
 
-#include "runtime/ctnetwork/ctchannel.h"
+#include <string.h>
+
+#include "lam/ctnetwork/ctchannel.h"
 
 #define CHANNEL_CLS(chnl)       ((lam_ctchannel_class_t *)(OBJECT(chnl)->obj_class))
 
@@ -107,7 +104,7 @@ void lam_tcpch_init(lam_tcp_chnl_t *channel)
 {
     SUPER_INIT(channel, lam_tcp_channel_cls.cls_parent);
     channel->tcp_sockfd = 0;
-    bzero(&(channel->tcp_addr), sizeof(channel->tcp_addr));
+    memset(&(channel->tcp_addr), 0, sizeof(channel->tcp_addr));
     channel->tcp_blocking = 0;
 }
 
@@ -120,7 +117,7 @@ void lam_tcpch_destroy(lam_tcp_chnl_t *channel)
 uint32_t lam_tcpch_send(lam_tcp_chnl_t *channel, const uint8_t *data, 
                         uint32_t data_len, uint32_t *bytes_sent)
 {
-    uint32_t        ret = CT_CHNL_OK;
+    uint32_t        ret = CT_CHNL_ERR_OK;
     
     return ret;
 }
@@ -128,7 +125,7 @@ uint32_t lam_tcpch_send(lam_tcp_chnl_t *channel, const uint8_t *data,
 uint32_t lam_tcpch_recv(lam_tcp_chnl_t *channel, const uint8_t *buffer, 
                         uint32_t buff_len, uint32_t *bytes_recvd)
 {
-    uint32_t        ret = CT_CHNL_OK;
+    uint32_t        ret = CT_CHNL_ERR_OK;
     
     return ret;
 }
@@ -136,7 +133,7 @@ uint32_t lam_tcpch_recv(lam_tcp_chnl_t *channel, const uint8_t *buffer,
 
 uint32_t lam_tcpch_get_msg(lam_tcp_chnl_t *channel, lam_ctmsg_t **msg)
 {
-    uint32_t        ret = CT_CHNL_OK;
+    uint32_t        ret = CT_CHNL_ERR_OK;
     
     return ret;
 }
@@ -145,7 +142,7 @@ uint32_t lam_tcpch_get_msg(lam_tcp_chnl_t *channel, lam_ctmsg_t **msg)
 uint32_t lam_tcpch_get_packed_msg(lam_tcp_chnl_t *channel, const uint8_t **buffer, 
                                   uint32_t *bytes_recvd)
 {
-    uint32_t        ret = CT_CHNL_OK;
+    uint32_t        ret = CT_CHNL_ERR_OK;
     
     return ret;
 }
@@ -153,7 +150,7 @@ uint32_t lam_tcpch_get_packed_msg(lam_tcp_chnl_t *channel, const uint8_t **buffe
 
 uint32_t lam_tcpch_send_msg(lam_tcp_chnl_t *channel, lam_ctmsg_t *msg)
 {
-    uint32_t        ret = CT_CHNL_OK;
+    uint32_t        ret = CT_CHNL_ERR_OK;
     
     return ret;
 }
@@ -163,7 +160,7 @@ uint32_t lam_tcpch_send_packed_msg(lam_tcp_chnl_t *channel,
                                    const uint8_t *packed_msg, 
                                    uint32_t msg_len)
 {
-    uint32_t        ret = CT_CHNL_OK;
+    uint32_t        ret = CT_CHNL_ERR_OK;
     
     return ret;
 }

@@ -5,7 +5,7 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-noinst_LTLIBRARY = libctnetwork.la
+noinst_LTLIBRARIES = libctnetwork.la
 
 libctnetwork_la_SOURCES = \
         ctchannel.c \

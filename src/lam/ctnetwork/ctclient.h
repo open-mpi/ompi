@@ -2,8 +2,8 @@
  * $HEADER$
  */
 
-#ifndef CT_CLIENT_H
-#define CT_CLIENT_H
+#ifndef LAM_CT_CLIENT_H
+#define LAM_CT_CLIENT_H
 
-#endif  /* CT_CLIENT_H */
+#endif  /* LAM_CT_CLIENT_H */
 
