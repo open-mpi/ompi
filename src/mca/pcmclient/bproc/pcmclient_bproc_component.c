@@ -76,6 +76,7 @@ ompi_process_name_t *mca_pcmclient_bproc_procs = NULL;
 static int param_base_proc_name;
 static int param_num_procs;
 static int param_proc_index;
+static int param_rank_offset;
 
 int
 mca_pcmclient_bproc_open(void)
@@ -89,7 +90,9 @@ mca_pcmclient_bproc_open(void)
     param_proc_index =
         mca_base_param_register_int("pcmclient", "bproc",
                                     "proc_index", NULL, -1);
-
+    param_rank_offset =
+        mca_base_param_register_int("pcmclient", "bproc",
+                                    "rank_offset", NULL, -1);
 
     return OMPI_SUCCESS;
 }
@@ -115,17 +118,30 @@ mca_pcmclient_bproc_init(int *priority,
     *allow_multiple_user_threads = true;
     *have_hidden_threads = false;
     
-    /* get our bproc rank first - no point in doing anything else if
-     * we aren't running under bproc.
+    /* get our index in the proc array.  Do this first, since it is a
+     * test of whether we are in a BProc environment or not
+     *
+     * Use BPROC_RANK, the index in the call to bproc_vexecmove()
+     * plus the rank_offset field to find our rank in the spawn call,
+     * which is our index in the generated proc array (since more
+     * than one call to vexecmove may have been required to start
+     * this job.
      *
      * Not all versions of bproc support the BPROC_RANK feature of
      * vexecmove.  In these cases, we don't do vexecmoves, but
-     * instead do a linear startup setting the MCA param.  Need to
-     * look both places.
+     * instead set set an MCA param containing the proc index (no
+     * offset computation needed)
      */
     tmp = getenv("BPROC_RANK");
     if (NULL != tmp) {
-        mca_pcmclient_bproc_proc_index = atoi(tmp);
+        int rank_offset, bproc_rank;
+
+        bproc_rank = atoi(tmp);
+        free(tmp);
+        mca_base_param_lookup_int(param_rank_offset, &rank_offset);
+        if (rank_offset < 0) return NULL;
+
+        mca_pcmclient_bproc_proc_index = bproc_rank + rank_offset;
     } else {
         mca_base_param_lookup_int(param_proc_index,
                                   &mca_pcmclient_bproc_proc_index);
