@@ -81,34 +81,34 @@ int mca_ptl_tcp_send_frag_init(
 static inline void mca_ptl_tcp_send_frag_progress(mca_ptl_tcp_send_frag_t* frag) 
 { 
     mca_pml_base_send_request_t* request = frag->frag_send.frag_request; 
+    bool frag_ack;
 
     /* if this is an ack - simply return to pool */ 
     if(request == NULL) { 
         mca_ptl_tcp_send_frag_return(frag->frag_send.frag_base.frag_owner, frag); 
+        return;
+    }
 
-    /* otherwise, if the message has been sent, and an ack has already been 
-     * received, go ahead and update the request status 
+    /* Done when: 
+     * (1) ack is not required and send completes 
+     * (2) ack is received and send has completed 
      */ 
-    } else if (frag->frag_vec_cnt == 0 &&  
-         ((frag->frag_send.frag_base.frag_header.hdr_common.hdr_flags & MCA_PTL_FLAGS_ACK) == 0 || 
-          mca_pml_base_send_request_matched(request))) { 
+    frag_ack = (frag->frag_send.frag_base.frag_header. 
+        hdr_common.hdr_flags & MCA_PTL_FLAGS_ACK) ? true : false; 
+    if(frag_ack == false || ompi_atomic_add_32(&frag->frag_progressed,1) == 2) {
 
-        /* make sure this only happens once in threaded case */ 
-        if(ompi_atomic_cmpset(&frag->frag_progressed, 0, 1) == 1) {
+        /* update request status */ 
+        frag->frag_send.frag_base.frag_owner->ptl_send_progress(
+            frag->frag_send.frag_base.frag_owner, 
+            request, 
+            frag->frag_send.frag_base.frag_size); 
 
-            /* update request status */ 
-            frag->frag_send.frag_base.frag_owner->ptl_send_progress(
-                frag->frag_send.frag_base.frag_owner, 
-                request, 
-                frag->frag_send.frag_base.frag_size); 
-
-            /* the first fragment is allocated with the request, 
-             * all others need to be returned to free list  
-             */ 
-            if(request->req_cached == false || 
-               frag->frag_send.frag_base.frag_header.hdr_frag.hdr_frag_offset != 0) {
-                mca_ptl_tcp_send_frag_return(frag->frag_send.frag_base.frag_owner, frag); 
-            }
+        /* the first fragment is allocated with the request, 
+         * all others need to be returned to free list  
+         */ 
+        if (request->req_cached == false || 
+            frag->frag_send.frag_base.frag_header.hdr_frag.hdr_frag_offset != 0) {
+            mca_ptl_tcp_send_frag_return(frag->frag_send.frag_base.frag_owner, frag); 
         } 
     }
 } 
