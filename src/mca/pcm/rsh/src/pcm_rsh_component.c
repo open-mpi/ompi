@@ -64,7 +64,7 @@ ompi_output_stream_t mca_pcm_rsh_output_stream = {
     false, /* lds_want_syslog */
     0,     /* lds_syslog_priority */
     NULL,  /* lds_syslog_ident */
-    "pcm_rsh: ", /* lds_prefix */
+    "pcm: rsh: ", /* lds_prefix */
     true,  /* lds_want_stdout */
     false, /* lds_want_stderr */
     true,  /* lds_want_file */
@@ -157,12 +157,12 @@ mca_pcm_rsh_init(int *priority,
     *allow_multi_user_threads = true;
     *have_hidden_threads = false;
 
-    ompi_output_verbose(10, mca_pcm_rsh_output, "start llm selection");
     ret = mca_llm_base_select("pcm", &mca_pcm_rsh_llm,
                               allow_multi_user_threads,
                               have_hidden_threads);
     if (OMPI_SUCCESS != ret) {
         /* well, that can't be good.  guess we can't run */
+        ompi_output_verbose(5, mca_pcm_rsh_output, "select: no llm found");
         return NULL;
     }
 
@@ -171,8 +171,6 @@ mca_pcm_rsh_init(int *priority,
         mca_pcm_rsh_llm.llm_allocate_resources;
     mca_pcm_rsh_1_0_0.pcm_deallocate_resources = 
         mca_pcm_rsh_llm.llm_deallocate_resources;
-
-    ompi_output_verbose(10, mca_pcm_rsh_output, "stop llm selection");
 
     /* DO SOME PARAM "FIXING" */
     /* BWB - remove param fixing before 1.0 */

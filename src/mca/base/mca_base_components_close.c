@@ -36,13 +36,15 @@ int mca_base_components_close(int output_id,
 
       if (NULL != component->mca_close_component) {
         component->mca_close_component();
-        ompi_output_verbose(10, output_id, "close: component %s closed",
+        ompi_output_verbose(10, output_id, 
+                            "mca: base: close: component %s closed",
                            component->mca_component_name);
       }
 
       /* Unload */
 
-      ompi_output_verbose(10, output_id, "close: unloading component %s",
+      ompi_output_verbose(10, output_id, 
+                          "mca: base: close: unloading component %s",
                          component->mca_component_name);
       mca_base_component_repository_release((mca_base_component_t *) component);
     }

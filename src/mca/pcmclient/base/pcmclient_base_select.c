@@ -33,8 +33,8 @@ int mca_pcmclient_base_select(bool *allow_multi_user_threads,
   mca_pcmclient_base_module_t *module, *best_module;
   extern ompi_list_t mca_pcmclient_base_components_available;
 
-  ompi_output_verbose(100, mca_pcmclient_base_output,
-                      "mca_pcmclient_base_select started");
+  ompi_output_verbose(10, mca_pcmclient_base_output,
+                      "pcmclient: base: select: started selection code");
 
   /* Traverse the list of available components; call their init
      functions. */
@@ -48,20 +48,22 @@ int mca_pcmclient_base_select(bool *allow_multi_user_threads,
     component = (mca_pcmclient_base_component_t *) cli->cli_component;
 
     ompi_output_verbose(10, mca_pcmclient_base_output, 
-                       "select: initializing %s component %s",
+                       "pcmclient: base: select: initializing %s component %s",
                        component->pcmclient_version.mca_type_name,
                        component->pcmclient_version.mca_component_name);
     if (NULL == component->pcmclient_init) {
       ompi_output_verbose(10, mca_pcmclient_base_output,
-                         "select: no init function; ignoring component");
+                         "pcmclient: base: select: no init function; "
+                          "ignoring component");
     } else {
       module = component->pcmclient_init(&priority, &user_threads, &hidden_threads);
       if (NULL == module) {
         ompi_output_verbose(10, mca_pcmclient_base_output,
-                           "select: init returned failure");
+                           "pcmclient: base: select: init returned failure");
       } else {
         ompi_output_verbose(10, mca_pcmclient_base_output,
-                           "select: init returned priority %d", priority);
+                           "pcmclient: base: select: init returned priority %d",
+                            priority);
         if (priority > best_priority) {
           best_priority = priority;
           best_user_threads = user_threads;
@@ -77,7 +79,7 @@ int mca_pcmclient_base_select(bool *allow_multi_user_threads,
 
   if (NULL == best_component) {
     /* JMS Replace with show_help */
-    ompi_abort(1, "No PCMCLIENT component available.  This shouldn't happen.");
+    ompi_abort(1, "No pcmclient component available.  This shouldn't happen.");
   } 
 
   /* Finalize all non-selected components */
@@ -100,7 +102,7 @@ int mca_pcmclient_base_select(bool *allow_multi_user_threads,
 
         component->pcmclient_finalize();
         ompi_output_verbose(10, mca_pcmclient_base_output, 
-                           "select: component %s finalized",
+                           "pcmclient: base: select: component %s finalized",
                            component->pcmclient_version.mca_component_name);
       }
     }
@@ -110,8 +112,9 @@ int mca_pcmclient_base_select(bool *allow_multi_user_threads,
      available list all unselected components.  The available list will
      contain only the selected component. */
 
-  mca_base_components_close(mca_pcmclient_base_output, &mca_pcmclient_base_components_available, 
-                         (mca_base_component_t *) best_component);
+  mca_base_components_close(mca_pcmclient_base_output,
+                            &mca_pcmclient_base_components_available, 
+                            (mca_base_component_t *) best_component);
 
   /* Save the winner */
 
@@ -119,9 +122,12 @@ int mca_pcmclient_base_select(bool *allow_multi_user_threads,
   mca_pcmclient = *best_module;
   *allow_multi_user_threads = best_user_threads;
   *have_hidden_threads = best_hidden_threads;
-  ompi_output_verbose(10, mca_pcmclient_base_output, 
-                     "select: component %s initialized",
+  ompi_output_verbose(5, mca_pcmclient_base_output, 
+                     "pcmclient: base: select: component %s initialized",
                      mca_pcmclient_base_selected_component.pcmclient_version.mca_component_name);
+
+  ompi_output_verbose(10, mca_pcmclient_base_output,
+                      "pcmclient: base: select: completed");
 
   /* All done */
 

@@ -33,8 +33,8 @@ int mca_pcm_base_select(bool *allow_multi_user_threads,
   mca_pcm_base_module_t *module, *best_module;
   extern ompi_list_t mca_pcm_base_components_available;
 
-  ompi_output_verbose(100, mca_pcm_base_output,
-                      "mca_pcm_base_select started");
+  ompi_output_verbose(10, mca_pcm_base_output,
+                      "pcm: base: select: starting selection code");
 
   /* Traverse the list of available components; call their init
      functions. */
@@ -48,20 +48,22 @@ int mca_pcm_base_select(bool *allow_multi_user_threads,
     component = (mca_pcm_base_component_t *) cli->cli_component;
 
     ompi_output_verbose(10, mca_pcm_base_output, 
-                       "select: initializing %s component %s",
+                       "pcm: base: select: initializing %s component %s",
                        component->pcm_version.mca_type_name,
                        component->pcm_version.mca_component_name);
     if (NULL == component->pcm_init) {
       ompi_output_verbose(10, mca_pcm_base_output,
-                         "select: no init function; ignoring component");
+                         "pcm: base: select: "
+                          "no init function; ignoring component");
     } else {
       module = component->pcm_init(&priority, &user_threads, &hidden_threads);
       if (NULL == module) {
         ompi_output_verbose(10, mca_pcm_base_output,
-                           "select: init returned failure");
+                           "pcm: base: select: init returned failure");
       } else {
         ompi_output_verbose(10, mca_pcm_base_output,
-                           "select: init returned priority %d", priority);
+                           "pcm: base: select: init returned priority %d", 
+                            priority);
         if (priority > best_priority) {
           best_priority = priority;
           best_user_threads = user_threads;
@@ -100,7 +102,7 @@ int mca_pcm_base_select(bool *allow_multi_user_threads,
 
         component->pcm_finalize();
         ompi_output_verbose(10, mca_pcm_base_output, 
-                           "select: component %s finalized",
+                           "pcm: base: select: component %s finalized",
                            component->pcm_version.mca_component_name);
       }
     }
@@ -110,8 +112,9 @@ int mca_pcm_base_select(bool *allow_multi_user_threads,
      available list all unselected components.  The available list will
      contain only the selected component. */
 
-  mca_base_components_close(mca_pcm_base_output, &mca_pcm_base_components_available, 
-                         (mca_base_component_t *) best_component);
+  mca_base_components_close(mca_pcm_base_output, 
+                            &mca_pcm_base_components_available, 
+                            (mca_base_component_t *) best_component);
 
   /* Save the winner */
 
@@ -119,10 +122,12 @@ int mca_pcm_base_select(bool *allow_multi_user_threads,
   mca_pcm = *best_module;
   *allow_multi_user_threads = best_user_threads;
   *have_hidden_threads = best_hidden_threads;
-  ompi_output_verbose(10, mca_pcm_base_output, 
-                     "select: component %s initialized",
+  ompi_output_verbose(5, mca_pcm_base_output, 
+                     "pcm: base: select: component %s selected and initialized",
                       best_component->pcm_version.mca_component_name);
-  
+
+  ompi_output_verbose(10, mca_pcm_base_output,
+                      "pcm: base: select: completed");
   /* All done */
 
   return OMPI_SUCCESS;

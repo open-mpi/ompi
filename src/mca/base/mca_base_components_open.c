@@ -63,7 +63,7 @@ int mca_base_components_open(const char *type_name, int output_id,
   if (output_id != 0) {
     ompi_output_set_verbosity(output_id, verbose_level);
   }
-  ompi_output_verbose(10, output_id, "open: Looking for components");
+  ompi_output_verbose(10, output_id, "mca: base: open: Looking for components");
 
   /* Find and load all available components */
 
@@ -163,13 +163,14 @@ static int open_components(const char *type_name, int output_id,
 
   if (NULL == requested_component_names) {
     ompi_output_verbose(10, output_id,
-                        "open: looking for any %s components", type_name);
+                        "mca: base: open: "
+                        "looking for any %s components", type_name);
   } else {
     ompi_output_verbose(10, output_id,
-                        "open: looking for specific %s components:", 
+                        "mca: base: open: looking for specific %s components:", 
                         type_name);
     for (i = 0; NULL != requested_component_names[i]; ++i) {
-      ompi_output_verbose(10, output_id, "open:   %s", 
+      ompi_output_verbose(10, output_id, "mca: base: open:   %s", 
                           requested_component_names[i]);
     }
   }
@@ -202,24 +203,28 @@ static int open_components(const char *type_name, int output_id,
 
     if (acceptable) {
       opened = called_open = false;
-      ompi_output_verbose(10, output_id, "open: found loaded component %s",
+      ompi_output_verbose(10, output_id, 
+                          "mca: base: open: found loaded component %s",
                           component->mca_component_name);
       
       if (NULL == component->mca_open_component) {
         opened = true; 
         ompi_output_verbose(10, output_id, 
-                            "open: component %s has no open function",
+                            "mca: base: open: "
+                            "component %s has no open function",
                             component->mca_component_name);
       } else {
         called_open = true;
         if (MCA_SUCCESS == component->mca_open_component()) {
           opened = true;
           ompi_output_verbose(10, output_id, 
-                              "open: component %s open function successful",
+                              "mca: base: open: "
+                              "component %s open function successful",
                               component->mca_component_name);
         } else {
           ompi_output_verbose(10, output_id, 
-                              "open: component %s open function failed",
+                              "mca: base: open: "
+                              "component %s open function failed",
                               component->mca_component_name);
         }
       }
@@ -232,13 +237,13 @@ static int open_components(const char *type_name, int output_id,
             component->mca_close_component();
           }
           ompi_output_verbose(10, output_id, 
-                              "open: component %s closed",
+                              "mca: base: open: component %s closed",
                               component->mca_component_name);
           called_open = false;
         }
         mca_base_component_repository_release(component);
         ompi_output_verbose(10, output_id, 
-                            "open: component %s unloaded", 
+                            "mca: base: open: component %s unloaded", 
                             component->mca_component_name);
       }
 
