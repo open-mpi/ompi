@@ -18,11 +18,11 @@
  * functions
  */
 
-ompi_process_id_t ns_base_create_cellid(void)
+mca_ns_base_cellid_t ns_base_create_cellid(void)
 {
     ompi_ns_msg_buffer_t cmd, *answer;
     struct iovec msg;
-    ompi_process_id_t cell;
+    mca_ns_base_cellid_t cell;
 
     cmd.command = OMPI_NS_CREATE_CELLID;
     cmd.buflen = 0;
@@ -40,18 +40,18 @@ ompi_process_id_t ns_base_create_cellid(void)
 	}
 
     answer = (ompi_ns_msg_buffer_t*)msg.iov_base;
-    cell = (ompi_process_id_t)answer->buf;
+    cell = (mca_ns_base_cellid_t)answer->buf;
     return cell;
 }
 
-ompi_process_id_t ns_base_create_jobid(void)
+mca_ns_base_jobid_t ns_base_create_jobid(void)
 {
   /* JMS fill in here */
   return 0;
 }
 
 
-ompi_process_id_t ns_base_reserve_range(ompi_process_id_t job, ompi_process_id_t range)
+mca_ns_base_vpid_t ns_base_reserve_range(mca_ns_base_jobid_t job, mca_ns_base_vpid_t range)
 {
   /* JMS fill in here */
   return 0;
