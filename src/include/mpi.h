@@ -5,6 +5,8 @@
 #ifndef LAM_MPI_H
 #define LAM_MPI_H
 
+#include "lam_config.h"
+
 #define MPI_SUCCESS 0
 #define MPI_MAX_OBJECT_NAME 64
 
@@ -21,5 +23,11 @@ extern MPI_Comm MPI_COMM_SELF;
 extern MPI_Datatype MPI_TYPE_NULL;
 
 int MPI_Comm_set_name(MPI_Comm comm, char *name);
+
+#if LAM_WANT_MPI_PROFILING
+
+int PMPI_Comm_set_name(MPI_Comm comm, char *name);
+
+#endif
 
 #endif /* LAM_MPI_H */
