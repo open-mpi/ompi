@@ -27,8 +27,8 @@ sinclude(../../../../../config/cxx_find_template_repository.m4)
 sinclude(../../../../../config/cxx_find_template_parameters.m4)
 
 dnl
-dnl This will be replaced with sinclude(configure.stub) if it exists
-dnl for that module, or a blank line if it does not.
+dnl This will be replaced with s_i_n_c_l_u_d_e(configure.stub) if it
+dnl exists for that module, or a blank line if it does not.
 dnl
 
 @CONFIGURE_STUB_SINCLUDE@
