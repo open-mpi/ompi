@@ -28,7 +28,6 @@
 #include "class/ompi_value_array.h"
 #include "util/printf.h"
 #include "mca/base/mca_base_param.h"
-#include "mca/base/mca_base_param_internal.h"
 #include "tools/ompi_info/ompi_info.h"
 
 using namespace std;
@@ -114,103 +113,106 @@ void ompi_info::do_params(bool want_all, bool want_internal)
 void ompi_info::show_mca_params(const string& type, const string& component, 
                                 const string& param, bool want_internal)
 {
-  size_t i, size;
-  char *value_string, empty[] = "\0";
-  string message, content;
-  mca_base_param_t *item;
-  int value_int;
+    ompi_list_t *info;
+    ompi_list_item_t *i;
+    mca_base_param_info_t *p;
+    char *value_string, empty[] = "\0";
+    string message, content;
+    int value_int;
 
-  size = ompi_value_array_get_size(&mca_base_params);
-  if (0 == size) {
-    return;
-  }
+    mca_base_param_dump(&info, want_internal);
+    for (i = ompi_list_get_first(info); i != ompi_list_get_last(info);
+         i = ompi_list_get_next(i)) {
+        p = (mca_base_param_info_t*) i;
+        
+        if (type == p->mbpp_type_name) {
+            if (component == component_all || 
+                NULL == p->mbpp_component_name ||
+                (NULL != p->mbpp_component_name &&
+                 component == p->mbpp_component_name)) {
+                if (param == param_all || param == p->mbpp_param_name) {
 
-  for (i = 0; i < size; ++i) {
-    item = &(OMPI_VALUE_ARRAY_GET_ITEM(&mca_base_params, mca_base_param_t, i));
-    if (type == item->mbp_type_name &&
-        (!item->mbp_internal || want_internal)) {
-      if (component == component_all || 
-          NULL == item->mbp_component_name ||
-          (NULL != item->mbp_component_name &&
-           component == item->mbp_component_name)) {
-        if (param == param_all || param == item->mbp_param_name) {
+                    // Make a string for the default value.  Invoke a
+                    // lookup because it may transform the string
+                    // ("~/" -> "<home dir>/") or get the value from
+                    // the environment, a file, etc.
 
-          // Make a string for the default value.  Invoke a lookup
-          // because it may transform the string ("~/" -> "<home
-          // dir>/") or get the value from the
-          // environment, a file, etc.
+                    if (MCA_BASE_PARAM_TYPE_STRING == p->mbpp_type) {
+                        mca_base_param_lookup_string(p->mbpp_index,
+                                                     &value_string);
 
-          if (MCA_BASE_PARAM_TYPE_STRING == item->mbp_type) {
-            mca_base_param_lookup_string(i, &value_string);
+                        // Can't let the string be NULL because we
+                        // assign it to a std::string, below
 
-            // Can't let the string be NULL because we assign it to a
-            // std::string, below
-
-            if (NULL == value_string) {
-              value_string = empty;
+                        if (NULL == value_string) {
+                            value_string = empty;
+                        }
+                    } else {
+                        mca_base_param_lookup_int(p->mbpp_index, &value_int);
+                        asprintf(&value_string, "%d", value_int);
+                    }
+                    content = value_string;
+                    
+                    // Build up the strings to output.
+                    
+                    if (pretty) {
+                        message = "MCA ";
+                        message += p->mbpp_type_name;
+                        
+                        // Put in the real, full name (which may be
+                        // different than the categorization).
+                        
+                        content = (p->mbpp_env_var_name != NULL) ?
+                            "parameter \"" : "information \"";
+                        content += p->mbpp_full_name;
+                        content += (p->mbpp_env_var_name != NULL) ?
+                            "\" (default: " : "\" (value: ";
+                        
+                        if (strlen(value_string) == 0)
+                            content += "<none>)";
+                        else {
+                            content += "\"";
+                            content += value_string;
+                            content += "\")";
+                        }
+                        
+                        out(message, message, content);
+                    } else {
+                        message = "mca:";
+                        message += p->mbpp_type_name;
+                        message += ":";
+                        
+                        if (p->mbpp_component_name != NULL) {
+                            message += p->mbpp_component_name;
+                        } else {
+                            message += "base";
+                        }
+                        message += (p->mbpp_env_var_name != NULL) ?
+                            ":param:" : ":info:";
+                        
+                        // Put in the real, full name (which may be
+                        // different than the categorization).
+                        
+                        message += p->mbpp_full_name;
+                        
+                        content = value_string;
+                        
+                        out(message, message, content);
+                    }
+                    
+                    // If we allocated the string, then free it
+                    
+                    if (value_string != empty) {
+                        free(value_string);
+                    }
+                }
             }
-          } else {
-            mca_base_param_lookup_int(i, &value_int);
-            asprintf(&value_string, "%d", value_int);
-          }
-          content = value_string;
-
-          // Build up the strings to output.
-
-          if (pretty) {
-            message = "MCA ";
-            message += item->mbp_type_name;
-
-            // Put in the real, full name (which may be different than
-            // the categorization).
-
-            content = (item->mbp_env_var_name != NULL) ?
-              "parameter \"" : "information \"";
-            content += item->mbp_full_name;
-            content += (item->mbp_env_var_name != NULL) ?
-              "\" (default: " : "\" (value: ";
-
-            if (strlen(value_string) == 0)
-              content += "<none>)";
-            else {
-              content += "\"";
-              content += value_string;
-              content += "\")";
-            }
-
-            out(message, message, content);
-          } else {
-            message = "mca:";
-            message += item->mbp_type_name;
-            message += ":";
-
-            if (item->mbp_component_name != NULL) {
-              message += item->mbp_component_name;
-            } else {
-              message += "base";
-            }
-            message += (item->mbp_env_var_name != NULL) ?
-              ":param:" : ":info:";
-
-            // Put in the real, full name (which may be different than
-            // the categorization).
-
-            message += item->mbp_full_name;
-
-            content = value_string;
-
-            out(message, message, content);
-          }
-
-          // If we allocated the string, then free it
-
-          if (value_string != empty) {
-            free(value_string);
-          }
         }
-      }
     }
-  }
+
+    /* Release the memory */
+
+    mca_base_param_dump_release(info);
 }
 
 

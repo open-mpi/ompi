@@ -57,7 +57,56 @@
 #include "mpi.h"
 
 #include "class/ompi_value_array.h"
+#include "class/ompi_list.h"
 #include "class/ompi_hash_table.h"
+
+/**
+ * The types of MCA parameters.
+ */
+typedef enum {
+    /** The parameter is of type integer. */
+    MCA_BASE_PARAM_TYPE_INT,
+    /** The parameter is of type string. */
+    MCA_BASE_PARAM_TYPE_STRING,
+    
+    /** Maximum parameter type. */
+    MCA_BASE_PARAM_TYPE_MAX
+} mca_base_param_type_t;
+
+
+/**
+ * Struct for holding name/type info.  Used in mca_base_param_dump(),
+ * below.
+ */
+struct mca_base_param_info_t {
+    /** So that we can be in a list */
+    ompi_list_item_t super;
+
+    /** Index of this parameter */
+    int mbpp_index;
+    /** String name of the type of the parameter */
+    char *mbpp_type_name;
+    /** String name of the component of the parameter */
+    char *mbpp_component_name;
+    /** String name of the parameter of the parameter */
+    char *mbpp_param_name;
+    /** Enum indicating the back-end type of the parameter */
+    mca_base_param_type_t mbpp_type;
+
+    /** JMS To be removed? */
+    char *mbpp_env_var_name;
+    /** JMS To be removed? */
+    char *mbpp_full_name;
+};
+/**
+ * Convenience typedef
+ */
+typedef struct mca_base_param_info_t mca_base_param_info_t;
+/**
+ * Make a real object for the info
+ */
+OBJ_CLASS_DECLARATION(mca_base_param_info_t);
+
 
 /*
  * Global functions for MCA
@@ -75,7 +124,7 @@ extern "C" {
      * invoked internally (by mca_base_open()) and is only documented
      * here for completeness.
      */
-OMPI_DECLSPEC int mca_base_param_init(void);
+    OMPI_DECLSPEC int mca_base_param_init(void);
 
     /**
      * Register an integer MCA parameter.
@@ -119,11 +168,11 @@ OMPI_DECLSPEC int mca_base_param_init(void);
      * returned, but the default value will be changed to reflect the
      * last registration.
      */
-OMPI_DECLSPEC int mca_base_param_register_int(const char *type_name, 
-                                    const char *component_name,
-                                    const char *param_name, 
-                                    const char *mca_param_name,
-                                    int default_value);
+    OMPI_DECLSPEC int mca_base_param_register_int(const char *type_name, 
+                                                  const char *component_name,
+                                                  const char *param_name, 
+                                                  const char *mca_param_name,
+                                                  int default_value);
     
     /**
      * Register a string MCA parameter.
@@ -147,11 +196,11 @@ OMPI_DECLSPEC int mca_base_param_register_int(const char *type_name,
      * associated string default value (which is allowed to be NULL).
      * See mca_base_param_register_int() for all other details.
      */
-OMPI_DECLSPEC int mca_base_param_register_string(const char *type_name, 
-                                       const char *component_name,
-                                       const char *param_name, 
-                                       const char *mca_param_name,
-                                       const char *default_value);
+    OMPI_DECLSPEC int mca_base_param_register_string(const char *type_name, 
+                                                     const char *component_name,
+                                                     const char *param_name, 
+                                                     const char *mca_param_name,
+                                                     const char *default_value);
 
     /**
      * Associate a communicator/datatype/window keyval with an MCA
@@ -176,7 +225,7 @@ OMPI_DECLSPEC int mca_base_param_register_string(const char *type_name,
      * versions will cross reference and attempt to find parameter
      * values on attributes.
      */
-OMPI_DECLSPEC int mca_base_param_kv_associate(size_t index, int keyval);
+    OMPI_DECLSPEC int mca_base_param_kv_associate(int index, int keyval);
 
     /**
      * Look up an integer MCA parameter.
@@ -194,7 +243,7 @@ OMPI_DECLSPEC int mca_base_param_kv_associate(size_t index, int keyval);
      * The value of a specific MCA parameter can be looked up using the
      * return value from mca_base_param_register_int().
      */
-OMPI_DECLSPEC int mca_base_param_lookup_int(int index, int *value);
+    OMPI_DECLSPEC int mca_base_param_lookup_int(int index, int *value);
     
     /**
      * Look up an integer MCA parameter, to include looking in
@@ -216,9 +265,9 @@ OMPI_DECLSPEC int mca_base_param_lookup_int(int index, int *value);
      * value.  The function mca_base_param_kv_associate() must have been
      * called first to associate a keyval with the index.
      */
-OMPI_DECLSPEC int mca_base_param_kv_lookup_int(int index,
-                                     struct ompi_hash_table_t *attrs, 
-                                     int *value);
+    OMPI_DECLSPEC int mca_base_param_kv_lookup_int(int index,
+                                                   struct ompi_hash_table_t *attrs, 
+                                                   int *value);
     
     /**
      * Look up a string MCA parameter.
@@ -236,7 +285,7 @@ OMPI_DECLSPEC int mca_base_param_kv_lookup_int(int index,
      * The value of a specific MCA parameter can be looked up using the
      * return value from mca_base_param_register_string().
      */
-OMPI_DECLSPEC int mca_base_param_lookup_string(int index, char **value);
+    OMPI_DECLSPEC int mca_base_param_lookup_string(int index, char **value);
 
     /**
      * Look up a string MCA parameter, to include looking in attributes.
@@ -257,9 +306,60 @@ OMPI_DECLSPEC int mca_base_param_lookup_string(int index, char **value);
      * parameter value.  The function mca_base_param_kv_associate() must
      * have been called first to associate a keyval with the index.
      */
-OMPI_DECLSPEC int mca_base_param_kv_lookup_string(int index, 
-                                        struct ompi_hash_table_t *attrs, 
-                                        char **value);
+    OMPI_DECLSPEC int mca_base_param_kv_lookup_string(int index, 
+                                                      struct ompi_hash_table_t *attrs, 
+                                                      char **value);
+
+    /**
+     * Sets an "override" value for an integer MCA parameter.
+     *
+     * @param index[in] Index of MCA parameter to set
+     * @param value[in] The integer value to set
+     *
+     * @retval OMPI_ERROR If the parameter was not found.
+     * @retval OMPI_SUCCESS Upon success.
+     *
+     * This function sets an integer value on the MCA parmeter
+     * indicated by the index value index.  This value will be used in
+     * lieu of any other value from any other MCA source (environment
+     * variable, file, etc.) until the value is unset with
+     * mca_base_param_unset().
+     */
+    OMPI_DECLSPEC int mca_base_param_set_int(int index, int value);
+
+    /**
+     * Sets an "override" value for an string MCA parameter.
+     *
+     * @param index[in] Index of MCA parameter to set
+     * @param value[in] The string value to set
+     *
+     * @retval OMPI_ERROR If the parameter was not found.
+     * @retval OMPI_SUCCESS Upon success.
+     *
+     * This function sets a string value on the MCA parmeter
+     * indicated by the index value index.  This value will be used in
+     * lieu of any other value from any other MCA source (environment
+     * variable, file, etc.) until the value is unset with
+     * mca_base_param_unset().  
+     *
+     * The string is copied by value; the string buffer does not
+     * become "owned" by the parameter subsystem.
+     */
+    OMPI_DECLSPEC int mca_base_param_set_string(int index, char *value);
+
+    /**
+     * Unset a parameter that was previously set by
+     * mca_base_param_set_int() or mca_base_param_set_string().
+     *
+     * @param index[in] Index of MCA parameter to set
+     *
+     * @retval OMPI_ERROR If the parameter was not found.
+     * @retval OMPI_SUCCESS Upon success.
+     *
+     * Resets previous value that was set (if any) on the given MCA
+     * parameter.
+     */
+    OMPI_DECLSPEC int mca_base_param_unset(int index);
 
     /**
      * Find the index for an MCA parameter based on its names.
@@ -280,8 +380,9 @@ OMPI_DECLSPEC int mca_base_param_kv_lookup_string(int index,
      * can be used with mca_base_param_lookup_int() and
      * mca_base_param_lookup_string().
      */
-OMPI_DECLSPEC int mca_base_param_find(const char *type, const char *component, 
-                            const char *param);
+    OMPI_DECLSPEC int mca_base_param_find(const char *type, 
+                                          const char *component, 
+                                          const char *param);
 
     /**
      * Set the "internal" flag on an MCA parameter to true or false.
@@ -302,8 +403,53 @@ OMPI_DECLSPEC int mca_base_param_find(const char *type, const char *component,
      * MPI_INIT (at least, they're not displayed by default), thus
      * keeping them away from prying user eyes.
      */
-OMPI_DECLSPEC int mca_base_param_set_internal(size_t index, bool internal);
-    
+    OMPI_DECLSPEC int mca_base_param_set_internal(int index, bool internal);
+
+    /**
+     * Obtain a list of all the MCA parameters currently defined as
+     * well as their types.  
+     *
+     * @param info[out] An ompi_list_t of mca_base_param_info_t
+     * instances.
+     * @param internal[in] Whether to include the internal parameters
+     * or not.
+     *
+     * @retval OMPI_SUCCESS Upon success.
+     * @retval OMPI_ERROR Upon failure.
+     *
+     * This function is used to obtain a list of all the currently
+     * registered MCA parameters along with their associated types
+     * (currently: string or integer).  The results from this function
+     * can be used to repeatedly invoke mca_base_param_lookup_int()
+     * and/or mca_base_param_lookup_string() to obtain a comprehensive
+     * list of all MCA parameters and their current values.
+     *
+     * Releasing the list, and all the items in the list, is a
+     * relatively complicated process.  Use the companion function
+     * mca_base_param_dump_release() when finished with the returned
+     * info list to release all associated memory.
+     */
+    OMPI_DECLSPEC int mca_base_param_dump(ompi_list_t **info, bool internal);
+
+    /**
+     * Release the memory associated with the info list returned from
+     * mca_base_param_dump().
+     *
+     * @param info[in/out] An ompi_list_t previously returned from
+     * mca_base_param_dump().
+     *
+     * @retval OMPI_SUCCESS Upon success.
+     * @retval OMPI_ERROR Upon failure.
+     * 
+     * This function is intended to be used to free the info list
+     * returned from mca_base_param_dump().  There are a bunch of
+     * strings and other associated memory in the list making it
+     * cumbersome for the caller to free it all properly.  Hence, once
+     * the caller is finished with the info list, invoke this
+     * function and all memory associated with the list will be freed.
+     */
+    OMPI_DECLSPEC int mca_base_param_dump_release(ompi_list_t *info);
+
     /**
      * Shut down the MCA parameter system (normally only invoked by the
      * MCA framework itself).
@@ -318,11 +464,8 @@ OMPI_DECLSPEC int mca_base_param_set_internal(size_t index, bool internal);
      * when the process is shutting down (e.g., during MPI_FINALIZE).  It
      * is only documented here for completeness.
      */
-OMPI_DECLSPEC int mca_base_param_finalize(void);
+    OMPI_DECLSPEC int mca_base_param_finalize(void);
 
-OMPI_DECLSPEC extern ompi_value_array_t mca_base_params;
-OMPI_DECLSPEC extern ompi_list_t mca_base_param_file_values;
-    
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
