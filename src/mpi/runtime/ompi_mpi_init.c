@@ -41,6 +41,7 @@
 #include "mca/io/base/base.h"
 #include "mca/oob/base/base.h"
 #include "mca/ns/base/base.h"
+#include "mca/gpr/base/base.h"
 
 #include "runtime/runtime.h"
 
@@ -67,7 +68,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     ompi_proc_t** procs;
     size_t nprocs;
     char *error, *jobid_str, *procid_str;
-    char *universe;
+    char *universe, *contact_info;
     pid_t pid;
 
     /* Become an OMPI process */
@@ -199,10 +200,20 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
      *  Register my process info with my replica. Note that this must be done
      *  after the rte init is completed.
      */
-    if (OMPI_SUCCESS != (ret = ompi_rte_register())) {
+    contact_info = mca_oob_get_contact_info();
+    ompi_rte_get_peers(NULL, &nprocs);
+    if (OMPI_SUCCESS != (ret = ompi_registry.rte_register(contact_info, nprocs,
+							  ompi_rte_all_procs_registered, NULL,
+							  ompi_rte_all_procs_unregistered, NULL))) {
         error = "ompi_rte_init: failed in ompi_rte_register()\n";
         goto error;
     } 
+
+    /* wait for all procs to have registered so we can be sure to get everyone's contact info */
+    if (OMPI_SUCCESS != (ret = ompi_rte_monitor_procs_registered())) {
+	error = "ompi_rte_init: failed to see all procs register\n";
+	goto error;
+    }
 
     /* Once we've joined the RTE, see if any MCA parameters were
        passed to the MPI level */
