@@ -3,6 +3,7 @@
 
                                                                                                                
 void mca_pml_teg_recv_request_progress(
+    struct mca_ptl_t* ptl,
     mca_ptl_base_recv_request_t* req,
     mca_ptl_base_recv_frag_t* frag)
 {
