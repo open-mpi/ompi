@@ -4,9 +4,9 @@
 
 #include <string.h>
 
-#include "include/mpi.h"
-#include "include/communicator.h"
-#include "include/totalview.h"
+#include "mpi.h"
+#include "communicator.h"
+#include "totalview.h"
 
 
 int
