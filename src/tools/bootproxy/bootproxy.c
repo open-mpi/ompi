@@ -233,19 +233,13 @@ main(int argc, char *argv[])
     /* launch processes, and do the right cleanup things */
     num_running_procs = 0;
     for (i = 0 ; i < opts.num_fork_procs ; ++i) {
-        /* BWB - XXX - fix me.  This sleep is here because the
-           registry in mpirun can't keep up if you launch a large number
-           of processes all at once.  And with this loop, it really is
-           basically all at once.  15 seems to be a good balance for a
-           hack.  I was able to launch 30 procs on a 2.0Ghz G5 this way,
-           so that should cover us for now */
-        if (i % 15 == 0) sleep(1);
         pid = fork();
         if (pid < 0) {
             /* error :( */
+            orig_errno = errno;
             ompi_show_help("help-bootproxy.txt", "could-not-fork",
                            true, sched->argv[0], strerror(errno));
-            exit(errno);
+            break;
         } else if (pid == 0) {
             /* child */
 
@@ -281,10 +275,26 @@ main(int argc, char *argv[])
                 started_pids[i] = pid;
                 num_running_procs++;
             }
+            if (pid == waitpid(pid, &status, WNOHANG)) {
+                /* well, that aborted quickly.  we should to */
+                break;
+            }
         }
     }
 
     OBJ_RELEASE(sched);
+
+    /* if we didn't launch everyone locally, cleanup */
+    if (num_running_procs != opts.num_fork_procs) {
+        for (i = 0 ; i < num_running_procs ; ++i) {
+            kill(started_pids[i], SIGTERM);
+            ret = waitpid(started_pids[i], &status, WNOHANG);
+            if (ret != started_pids[i]) {
+                sleep(1);
+                kill(started_pids[i], SIGKILL);
+            }
+        }
+    }
 
     status = 0;
 
