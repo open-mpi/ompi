@@ -162,7 +162,7 @@ static inline int32_t ompi_atomic_add_32(volatile int32_t *addr, int delta)
 
 #if !defined(OMPI_ARCHITECTURE_DEFINE_ATOMIC_SUB_32)
 static inline int32_t ompi_atomic_sub_32(volatile int32_t *addr, int delta)
-
+{
    int32_t oldval;
    
    do {
