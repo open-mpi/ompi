@@ -34,7 +34,7 @@ else
     WANT_MEM_DEBUG=0
 fi
 #################### Early development override ####################
-if test "$WANT_MEM_DEBUG" = "0" -a -z "$enable_mem_zero" -a -d .svn; then
+if test "$WANT_MEM_DEBUG" = "0" -a -z "$enable_mem_debug" -a -d .svn; then
     WANT_MEM_DEBUG=1
     echo "--> developer override: enable mem profiling by default"
 fi
@@ -58,7 +58,7 @@ else
     WANT_MEM_PROFILE=0
 fi
 #################### Early development override ####################
-if test "$WANT_MEM_PROFILE" = "0" -a -z "$enable_mem_zero" -a -d .svn; then
+if test "$WANT_MEM_PROFILE" = "0" -a -z "$enable_mem_profile" -a -d .svn; then
     WANT_MEM_PROFILE=1
     echo "--> developer override: enable mem profiling by default"
 fi
