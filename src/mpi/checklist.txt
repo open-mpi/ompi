@@ -151,8 +151,8 @@ MPI_Free_mem
 MPI_Gather                      DONE 
 MPI_Gatherv                     Jeff
 MPI_Get_address                 DONE
-MPI_Get_count                   Ginger
-MPI_Get_elements                Ginger
+MPI_Get_count                   Done
+MPI_Get_elements                Done
 MPI_Get
 MPI_Get_processor_name          Edgar
 MPI_Get_version
@@ -209,8 +209,8 @@ MPI_Op_create                   DONE
 MPI_Open_port                   Edgar
 MPI_Op_f2c                      DONE
 MPI_Op_free                     DONE
-MPI_Pack_external               Ginger
-MPI_Pack_external_size          Ginger
+MPI_Pack_external               DONE
+MPI_Pack_external_size          DONE
 MPI_Pack                        DONE
 MPI_Pack_size                   DONE
 MPI_Pcontrol
@@ -251,18 +251,18 @@ MPI_Test_cancelled              Ginger
 MPI_Testsome                    Ginger
 MPI_Topo_test                   Anju
 MPI_Type_c2f                    Ginger
-MPI_Type_commit			Ginger
+MPI_Type_commit			DONE
 MPI_Type_contiguous		Ginger
 MPI_Type_create_darray		Ginger
-MPI_Type_create_f90_complex	Ginger
-MPI_Type_create_f90_integer	Ginger
-MPI_Type_create_f90_real	Ginger
+MPI_Type_create_f90_complex	DONE
+MPI_Type_create_f90_integer	DONE
+MPI_Type_create_f90_real	DONE
 MPI_Type_create_hindexed	Ginger
 MPI_Type_create_hvector		Ginger
 MPI_Type_create_keyval          Vishal
 MPI_Type_create_indexed_block	Ginger
 MPI_Type_create_struct		Ginger
-MPI_Type_create_subarray	Ginger
+MPI_Type_create_subarray	DONE
 MPI_Type_create_resized 	Ginger
 MPI_Type_delete_attr            Vishal
 MPI_Type_dup			Ginger
@@ -272,9 +272,9 @@ MPI_Type_free_keyval            Vishal
 MPI_Type_f2c			Ginger
 MPI_Type_get_attr               Vishal
 MPI_Type_get_contents		Ginger
-MPI_Type_get_envelope		Ginger
+MPI_Type_get_envelope		DONE
 MPI_Type_get_extent		Ginger
-MPI_Type_get_name		Ginger
+MPI_Type_get_name		DONE
 MPI_Type_get_true_extent	Ginger
 MPI_Type_hindexed		Ginger
 MPI_Type_hvector		Ginger
@@ -283,13 +283,13 @@ MPI_Type_lb			Ginger
 MPI_Type_match_size		Ginger
 MPI_Type_set_attr               Vishal
 MPI_Type_set_name
-MPI_Type_size			Ginger
-MPI_Type_struct			Ginger
+MPI_Type_size			DONE
+MPI_Type_struct			DONE
 MPI_Type_ub			Ginger
-MPI_Type_vector			Ginger
+MPI_Type_vector			DONE
 MPI_Unpack			DONE
 MPI_Unpublish_name              Edgar
-MPI_Unpack_external 		Ginger
+MPI_Unpack_external 		DONE
 MPI_Waitall                     Ginger
 MPI_Waitany                     Ginger
 MPI_Wait                        Ginger
