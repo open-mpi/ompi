@@ -26,6 +26,7 @@
 #include "mca/ns/base/base.h"
 #include "mpi/runtime/params.h"
 #include "communicator/communicator.h"
+#include "group/group.h"
 #include "attribute/attribute.h"
 
 /*
@@ -71,6 +72,7 @@ int ompi_comm_init(void)
     group->grp_proc_count    = size;
     group->grp_flags        |= OMPI_GROUP_INTRINSIC;
     ompi_set_group_rank(group, ompi_proc_local());
+    ompi_group_increment_proc_count (group);
     OBJ_RETAIN(group); /* bump reference count for remote reference */
 
     ompi_mpi_comm_world.c_contextid    = 0;
@@ -299,10 +301,13 @@ static void ompi_comm_destruct(ompi_communicator_t* comm)
 
     /* Release the collective module */
 
-    mca_coll_base_comm_unselect(comm);
+    if ( MPI_COMM_NULL != comm ) {
+	mca_coll_base_comm_unselect(comm);
+    }
 
     /*  Check if the communicator is a topology */
-    if (OMPI_COMM_IS_CART(comm) || OMPI_COMM_IS_GRAPH(comm)) {
+    if ( MPI_COMM_NULL != comm && 
+	 (OMPI_COMM_IS_CART(comm) || OMPI_COMM_IS_GRAPH(comm))) {
 
         /* check and free individual things */
         
@@ -333,18 +338,31 @@ static void ompi_comm_destruct(ompi_communicator_t* comm)
 
     comm->c_topo_component = NULL;
 
+    /* Tell the PML that this communicator is done.
+       mca_pml.pml_add_comm() was called explicitly in
+       ompi_comm_init() when setting up COMM_WORLD and COMM_SELF; it's
+       called in ompi_comm_set() for all others.  This means that all
+       communicators must be destroyed before the PML shuts down. */
+
+    if ( MPI_COMM_NULL != comm ) {
+	mca_pml.pml_del_comm (comm);
+    }
+    
+
     /* Release topology information */
     mca_topo_base_comm_unselect(comm);
 
     if (NULL != comm->c_local_group) {
+	ompi_group_decrement_proc_count (comm->c_local_group);
         OBJ_RELEASE ( comm->c_local_group );
         comm->c_local_group = NULL;
-        if (OMPI_COMM_IS_INTRA(comm) ) {
-            comm->c_remote_group = NULL;
-        }
     }
-    
+
+    /* the reference count is always popped up for the 
+       remote group (even for intra-comms), so we have to 
+       decrement it again in all cases. */
     if (NULL != comm->c_remote_group) {
+	ompi_group_decrement_proc_count (comm->c_remote_group);
         OBJ_RELEASE ( comm->c_remote_group );
         comm->c_remote_group = NULL;
     }

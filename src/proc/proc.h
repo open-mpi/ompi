@@ -49,6 +49,11 @@ OMPI_DECLSPEC extern ompi_proc_t* ompi_proc_local_proc;
 int ompi_proc_init(void);
 
 /**
+ * Release the processes at the end of the application
+ */
+int ompi_proc_finalize(void);
+
+/**
  * Returns the list of proc instances associated with this job.
  */
 ompi_proc_t** ompi_proc_world(size_t* size);

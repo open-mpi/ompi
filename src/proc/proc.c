@@ -99,6 +99,24 @@ int ompi_proc_init(void)
     return OMPI_SUCCESS;
 }
 
+int ompi_proc_finalize (void)
+{
+    ompi_proc_t *proc, *nextproc, *endproc;
+
+    proc      = (ompi_proc_t*)ompi_list_get_first(&ompi_proc_list);
+    nextproc  = (ompi_proc_t*)ompi_list_get_next(proc);
+    endproc   = (ompi_proc_t*)ompi_list_get_end(&ompi_proc_list);
+
+    OBJ_RELEASE(proc);
+    while ( nextproc != endproc ) {
+	proc = nextproc;
+	nextproc = (ompi_proc_t *)ompi_list_get_next(proc);
+	OBJ_RELEASE(proc);
+    }
+    OBJ_DESTRUCT(&ompi_proc_list);
+
+    return OMPI_SUCCESS;
+}
 
 ompi_proc_t** ompi_proc_world(size_t *size)
 {

@@ -261,8 +261,10 @@ ompi_process_name_t *ompi_comm_get_rport (ompi_process_name_t *port, int send_fi
         rport = &(rproc->proc_name);
 
     }
-    if(isnew)
+    if (isnew) {
         mca_pml.pml_add_procs(&rproc, 1);
+    }
+
     return rport;
 }
 
@@ -427,8 +429,6 @@ int ompi_comm_start_processes (char *command, char **argv, int maxprocs,
 int ompi_comm_dyn_init (void)
 {
     uint32_t jobid;
-    size_t size;
-    ompi_proc_t **myproc=NULL;
     char *envvarname=NULL, *port_name=NULL;
     char *oob_port=NULL;
     int tag, root=0, send_first=1;
@@ -438,8 +438,13 @@ int ompi_comm_dyn_init (void)
     ompi_errhandler_t *errhandler = NULL;
 
     /* get jobid */
-    myproc = ompi_proc_self(&size);
-    jobid = ompi_name_server.get_jobid(&(myproc[0]->proc_name));
+    /* JMS: Previous was using ompi_proc_self() here, which
+       incremented the refcount.  That would be fine, but we would
+       have to OBJ_RELEASE it as well.  The global
+       ompi_proc_local_proc seemed to have been created for exactly
+       this kind of purpose, so I took the liberty of using it. */
+    jobid = ompi_name_server.get_jobid(&(ompi_proc_local_proc->proc_name));
+
 
     /* check for appropriate env variable */
     asprintf(&envvarname, "OMPI_PARENT_PORT_%u", jobid);
