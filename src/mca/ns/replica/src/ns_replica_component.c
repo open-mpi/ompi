@@ -18,6 +18,7 @@
 #include "ompi_config.h"
 
 #include "include/constants.h"
+#include "threads/mutex.h"
 #include "util/proc_info.h"
 #include "util/output.h"
 #include "mca/mca.h"
@@ -102,6 +103,7 @@ mca_ns_base_cellid_t mca_ns_replica_last_used_cellid;
 mca_ns_base_jobid_t mca_ns_replica_last_used_jobid;
 ompi_list_t mca_ns_replica_name_tracker;
 int mca_ns_replica_debug;
+ompi_mutex_t mca_ns_replica_mutex;
 
 /*
  * don't really need this function - could just put NULL in the above structure

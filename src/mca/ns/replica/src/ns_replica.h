@@ -9,6 +9,7 @@
 #include "ompi_config.h"
 #include "include/types.h"
 #include "include/constants.h"
+#include "threads/mutex.h"
 #include "class/ompi_list.h"
 #include "mca/oob/oob.h"
 #include "mca/ns/ns.h"
@@ -34,6 +35,7 @@ extern mca_ns_base_cellid_t mca_ns_replica_last_used_cellid;
 extern mca_ns_base_jobid_t mca_ns_replica_last_used_jobid;
 extern ompi_list_t mca_ns_replica_name_tracker;
 extern int mca_ns_replica_debug;
+extern ompi_mutex_t mca_ns_replica_mutex;
 
 /*
  * Module open / close

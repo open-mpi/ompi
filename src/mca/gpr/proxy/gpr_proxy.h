@@ -10,6 +10,9 @@
 #include "ompi_config.h"
 #include "include/types.h"
 #include "include/constants.h"
+
+#include "threads/mutex.h"
+
 #include "class/ompi_list.h"
 #include "mca/gpr/base/base.h"
 
@@ -40,6 +43,7 @@ extern ompi_list_t mca_gpr_proxy_notify_request_tracker;
 extern mca_gpr_notify_id_t mca_gpr_proxy_last_notify_id_tag;
 extern ompi_list_t mca_gpr_proxy_free_notify_id_tags;
 extern int mca_gpr_proxy_debug;
+extern ompi_mutex_t mca_gpr_proxy_mutex;
 
 /*
  * Implementation of delete_segment().

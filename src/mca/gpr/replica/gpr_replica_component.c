@@ -16,6 +16,9 @@
 #include <time.h>
 
 #include "include/constants.h"
+
+#include "threads/mutex.h"
+
 #include "util/proc_info.h"
 #include "util/output.h"
 #include "util/pack.h"
@@ -79,6 +82,8 @@ ompi_list_t mca_gpr_replica_notify_request_tracker;
 mca_gpr_notify_id_t mca_gpr_replica_last_notify_id_tag;
 ompi_list_t mca_gpr_replica_free_notify_id_tags;
 int mca_gpr_replica_debug;
+ompi_mutex_t mca_gpr_replica_component_mutex;
+ompi_mutex_t mca_gpr_replica_mutex, mca_gpr_replica_internals_mutex;
 
 
 /* constructor - used to initialize state of keytable instance */
@@ -324,6 +329,11 @@ mca_gpr_base_module_t *mca_gpr_replica_init(bool *allow_multi_user_threads, bool
 	*allow_multi_user_threads = true;
 	*have_hidden_threads = false;
 
+	/* setup the thread locks */
+	OBJ_CONSTRUCT(&mca_gpr_replica_component_mutex, ompi_mutex_t);
+	OBJ_CONSTRUCT(&mca_gpr_replica_internals_mutex, ompi_mutex_t);
+	OBJ_CONSTRUCT(&mca_gpr_replica_mutex, ompi_mutex_t);
+
 	/* initialize the registry head */
 	OBJ_CONSTRUCT(&mca_gpr_replica_head.registry, ompi_list_t);
 
@@ -350,10 +360,10 @@ mca_gpr_base_module_t *mca_gpr_replica_init(bool *allow_multi_user_threads, bool
 	}
 
  	/* issue the non-blocking receive */ 
-	    rc = mca_oob_recv_packed_nb(MCA_OOB_NAME_ANY, MCA_OOB_TAG_GPR, 0, mca_gpr_replica_recv, NULL);
-	    if(rc != OMPI_SUCCESS && rc != OMPI_ERR_NOT_IMPLEMENTED) { 
-		return NULL;
-	    }
+	rc = mca_oob_recv_packed_nb(MCA_OOB_NAME_ANY, MCA_OOB_TAG_GPR, 0, mca_gpr_replica_recv, NULL);
+	if(rc != OMPI_SUCCESS && rc != OMPI_ERR_NOT_IMPLEMENTED) { 
+	    return NULL;
+	}
 
 	if (mca_gpr_replica_debug) {
 	    ompi_output(0, "nb receive setup");
@@ -377,44 +387,44 @@ int mca_gpr_replica_finalize(void)
 	ompi_output(0, "finalizing gpr replica");
     }
 
-/*     mca_gpr_replica_segment_t *seg; */
-/*     mca_gpr_replica_keytable_t *kt; */
-/*     mca_gpr_replica_keylist_t *kl; */
-/*     mca_gpr_notify_request_tracker_t *tk; */
-/*     mca_gpr_idtag_list_t *id; */
+    /*     mca_gpr_replica_segment_t *seg; */
+    /*     mca_gpr_replica_keytable_t *kt; */
+    /*     mca_gpr_replica_keylist_t *kl; */
+    /*     mca_gpr_notify_request_tracker_t *tk; */
+    /*     mca_gpr_idtag_list_t *id; */
 
-/*     /\* free all storage, but only if this component was initialized *\/ */
+    /*     /\* free all storage, but only if this component was initialized *\/ */
 
-/*     if (initialized) { */
+    /*     if (initialized) { */
 
-/* 	while (NULL != (seg = (mca_gpr_replica_segment_t*)ompi_list_remove_first(&mca_gpr_replica_head.registry))) { */
-/* 	    OBJ_RELEASE(seg); */
-/* 	} */
-/* 	OBJ_DESTRUCT(&mca_gpr_replica_head.registry); */
+    /* 	while (NULL != (seg = (mca_gpr_replica_segment_t*)ompi_list_remove_first(&mca_gpr_replica_head.registry))) { */
+    /* 	    OBJ_RELEASE(seg); */
+    /* 	} */
+    /* 	OBJ_DESTRUCT(&mca_gpr_replica_head.registry); */
 
-/* 	while (NULL != (kt = (mca_gpr_replica_keytable_t*)ompi_list_remove_first(&mca_gpr_replica_head.segment_dict))) { */
-/* 	    OBJ_RELEASE(kt); */
-/* 	} */
-/* 	OBJ_DESTRUCT(&mca_gpr_replica_head.segment_dict); */
+    /* 	while (NULL != (kt = (mca_gpr_replica_keytable_t*)ompi_list_remove_first(&mca_gpr_replica_head.segment_dict))) { */
+    /* 	    OBJ_RELEASE(kt); */
+    /* 	} */
+    /* 	OBJ_DESTRUCT(&mca_gpr_replica_head.segment_dict); */
 
-/* 	while (NULL != (kl = (mca_gpr_replica_keylist_t*)ompi_list_remove_first(&mca_gpr_replica_head.freekeys))) { */
-/* 	    OBJ_RELEASE(kl); */
-/* 	} */
-/* 	OBJ_DESTRUCT(&mca_gpr_replica_head.freekeys); */
-
-
-/* 	while (NULL != (tk = (mca_gpr_notify_request_tracker_t*)ompi_list_remove_first(&mca_gpr_replica_notify_request_tracker))) { */
-/* 	    OBJ_RELEASE(tk); */
-/* 	} */
-/* 	OBJ_DESTRUCT(&mca_gpr_replica_notify_request_tracker); */
+    /* 	while (NULL != (kl = (mca_gpr_replica_keylist_t*)ompi_list_remove_first(&mca_gpr_replica_head.freekeys))) { */
+    /* 	    OBJ_RELEASE(kl); */
+    /* 	} */
+    /* 	OBJ_DESTRUCT(&mca_gpr_replica_head.freekeys); */
 
 
-/* 	while (NULL != (id = (mca_gpr_idtag_list_t*)ompi_list_remove_first(&mca_gpr_replica_free_notify_id_tags))) { */
-/* 	    OBJ_RELEASE(id); */
-/* 	} */
-/* 	OBJ_DESTRUCT(&mca_gpr_replica_free_notify_id_tags); */
-/* 	initialized = false; */
-/*     } */
+    /* 	while (NULL != (tk = (mca_gpr_notify_request_tracker_t*)ompi_list_remove_first(&mca_gpr_replica_notify_request_tracker))) { */
+    /* 	    OBJ_RELEASE(tk); */
+    /* 	} */
+    /* 	OBJ_DESTRUCT(&mca_gpr_replica_notify_request_tracker); */
+
+
+    /* 	while (NULL != (id = (mca_gpr_idtag_list_t*)ompi_list_remove_first(&mca_gpr_replica_free_notify_id_tags))) { */
+    /* 	    OBJ_RELEASE(id); */
+    /* 	} */
+    /* 	OBJ_DESTRUCT(&mca_gpr_replica_free_notify_id_tags); */
+    /* 	initialized = false; */
+    /*     } */
 
     /* All done */
 
@@ -733,6 +743,9 @@ void mca_gpr_replica_recv(int status, ompi_process_name_t* sender,
 	    goto RETURN_ERROR;
 	}
 
+	/*******   LOCK    *****/
+	OMPI_THREAD_LOCK(&mca_gpr_replica_component_mutex);
+
 	/* enter request on notify tracking system */
 	trackptr = OBJ_NEW(mca_gpr_notify_request_tracker_t);
 	trackptr->requestor = ompi_name_server.copy_process_name(sender);
@@ -747,6 +760,9 @@ void mca_gpr_replica_recv(int status, ompi_process_name_t* sender,
 	    trackptr->id_tag = ptr_free_id->id_tag;
 	}
 	ompi_list_append(&mca_gpr_replica_notify_request_tracker, &trackptr->item);
+
+	OMPI_THREAD_UNLOCK(&mca_gpr_replica_component_mutex);
+	/******     UNLOCK     ******/
 
 	response = (int32_t)gpr_replica_construct_trigger(OMPI_REGISTRY_SYNCHRO_MODE_NONE, action,
 							  mode, segment, tokens,
@@ -806,6 +822,11 @@ void mca_gpr_replica_recv(int status, ompi_process_name_t* sender,
 					    segment, tokens, 0);
 
 	if (MCA_GPR_NOTIFY_ID_MAX != id_tag) {  /* removed trigger successfully */
+
+
+	    /*******   LOCK    *****/
+	    OMPI_THREAD_LOCK(&mca_gpr_replica_component_mutex);
+
 	    /* find request on replica notify tracking system */
 	    for (trackptr = (mca_gpr_notify_request_tracker_t*)ompi_list_get_first(&mca_gpr_replica_notify_request_tracker);
 		 trackptr != (mca_gpr_notify_request_tracker_t*)ompi_list_get_end(&mca_gpr_replica_notify_request_tracker) &&
@@ -828,6 +849,10 @@ void mca_gpr_replica_recv(int status, ompi_process_name_t* sender,
 		ompi_list_append(&mca_gpr_replica_free_notify_id_tags, &ptr_free_id->item);
 		/* release tracker item */
 		OBJ_RELEASE(trackptr);
+
+		OMPI_THREAD_UNLOCK(&mca_gpr_replica_component_mutex);
+		/******     UNLOCK     ******/
+
 	    }
 	} else {
 	    response = (int32_t)MCA_GPR_NOTIFY_ID_MAX;
@@ -895,8 +920,20 @@ void mca_gpr_replica_recv(int status, ompi_process_name_t* sender,
 	    goto RETURN_ERROR;
 	}
 
+
+	/*******   LOCK    *****/
+	OMPI_THREAD_LOCK(&mca_gpr_replica_component_mutex);
+
 	/* enter request on notify tracking system */
 	trackptr = OBJ_NEW(mca_gpr_notify_request_tracker_t);
+	if (mca_gpr_replica_debug) {
+	    if (NULL != sender) {
+		ompi_output(0, "gpr_replica_recv: received synchro req from [%d,%d,%d]", sender->cellid,
+			    sender->jobid, sender->vpid);
+	    } else {
+		ompi_output(0, "gpr_replica_recv: received synchro req from NULL");
+	    }
+	}
 	trackptr->requestor = ompi_name_server.copy_process_name(sender);
 	trackptr->req_tag = id_tag;
 	trackptr->callback = NULL;
@@ -910,13 +947,16 @@ void mca_gpr_replica_recv(int status, ompi_process_name_t* sender,
 	}
 	ompi_list_append(&mca_gpr_replica_notify_request_tracker, &trackptr->item);
 
+	OMPI_THREAD_UNLOCK(&mca_gpr_replica_component_mutex);
+	/******     UNLOCK     ******/
+
 	if(NULL != gpr_replica_construct_trigger(synchro_mode, OMPI_REGISTRY_NOTIFY_NONE,
-							  mode, segment, tokens,
-							  trigger, trackptr->id_tag)) {
-        response = OMPI_SUCCESS;
-    } else {
-        response = OMPI_ERROR;
-    }
+						 mode, segment, tokens,
+						 trigger, trackptr->id_tag)) {
+	    response = OMPI_SUCCESS;
+	} else {
+	    response = OMPI_ERROR;
+	}
 
 	if (OMPI_SUCCESS != ompi_pack(answer, &command, 1, MCA_GPR_OOB_PACK_CMD)) {
 	    goto RETURN_ERROR;
@@ -979,6 +1019,10 @@ void mca_gpr_replica_recv(int status, ompi_process_name_t* sender,
 					    segment, tokens, trigger);
 
 	if (MCA_GPR_NOTIFY_ID_MAX != id_tag) {  /* removed trigger successfully */
+
+	    /*******   LOCK    *****/
+	    OMPI_THREAD_LOCK(&mca_gpr_replica_component_mutex);
+
 	    /* find request on replica notify tracking system */
 	    for (trackptr = (mca_gpr_notify_request_tracker_t*)ompi_list_get_first(&mca_gpr_replica_notify_request_tracker);
 		 trackptr != (mca_gpr_notify_request_tracker_t*)ompi_list_get_end(&mca_gpr_replica_notify_request_tracker) &&
@@ -1001,6 +1045,10 @@ void mca_gpr_replica_recv(int status, ompi_process_name_t* sender,
 		ompi_list_append(&mca_gpr_replica_free_notify_id_tags, &ptr_free_id->item);
 		/* release tracker item */
 		OBJ_RELEASE(trackptr);
+
+		OMPI_THREAD_UNLOCK(&mca_gpr_replica_component_mutex);
+		/******     UNLOCK     ******/
+
 	    }
 	} else {
 	    response = (int32_t)MCA_GPR_NOTIFY_ID_MAX;
@@ -1021,6 +1069,10 @@ void mca_gpr_replica_recv(int status, ompi_process_name_t* sender,
 
 	/*****     TEST INTERNALS     *****/
     } else if (MCA_GPR_TEST_INTERNALS_CMD == command) {
+
+
+	/*******   LOCK    *****/
+	OMPI_THREAD_LOCK(&mca_gpr_replica_component_mutex);
 
 	if ((OMPI_SUCCESS != ompi_unpack(buffer, &test_level, 1, OMPI_INT32)) ||
 	    (0 > test_level)) {
@@ -1053,8 +1105,11 @@ void mca_gpr_replica_recv(int status, ompi_process_name_t* sender,
 	if (0 > mca_oob_send_packed(sender, answer, tag, 0)) {
 	    /* RHC -- not sure what to do if the return send fails */
 	}
+	OMPI_THREAD_UNLOCK(&mca_gpr_replica_component_mutex);
+	/******     UNLOCK     ******/
+
  
-	/****    UNRECOGNIZED    ****/
+	/****    UNRECOGNIZED COMMAND   ****/
     } else {  /* got an unrecognized command */
     RETURN_ERROR:
 	ompi_buffer_init(&error_answer, 8);
@@ -1123,8 +1178,8 @@ void gpr_replica_remote_notify(ompi_process_name_t *recipient, int recipient_tag
 	    if (OMPI_SUCCESS != ompi_pack(msg, regval->object, regval->object_size, OMPI_BYTE)) {
 		return;
 	    }
-        /* TSW - should we add */ 
-        /* OBJ_RELEASE(regval); */
+	    /* TSW - should we add */ 
+	    /* OBJ_RELEASE(regval); */
 	}
     }
     if (OMPI_SUCCESS != ompi_pack(msg, &message->num_tokens, 1, OMPI_INT32)) {

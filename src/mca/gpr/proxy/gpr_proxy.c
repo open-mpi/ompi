@@ -9,6 +9,8 @@
 
 #include <string.h>
 
+#include "threads/mutex.h"
+
 #include "util/output.h"
 #include "util/proc_info.h"
 
@@ -408,6 +410,8 @@ int gpr_proxy_subscribe(ompi_registry_mode_t mode,
 	}
     }
 
+    OMPI_THREAD_LOCK(&mca_gpr_proxy_mutex);
+
     /* store callback function and user_tag in local list for lookup */
     /* generate id_tag to send to replica to identify lookup entry */
     trackptr = OBJ_NEW(mca_gpr_notify_request_tracker_t);
@@ -450,6 +454,7 @@ int gpr_proxy_subscribe(ompi_registry_mode_t mode,
     ompi_list_append(&mca_gpr_proxy_notify_request_tracker, &trackptr->item);
     ompi_buffer_free(answer);
     ompi_buffer_free(cmd);
+    OMPI_THREAD_UNLOCK(&mca_gpr_proxy_mutex);
     return OMPI_SUCCESS;
 
  CLEANUP:
@@ -458,6 +463,7 @@ int gpr_proxy_subscribe(ompi_registry_mode_t mode,
 	OBJ_RELEASE(trackptr);
     }
     ompi_buffer_free(cmd);
+    OMPI_THREAD_UNLOCK(&mca_gpr_proxy_mutex);
     return OMPI_ERROR;
 }
 
@@ -552,6 +558,7 @@ int gpr_proxy_unsubscribe(ompi_registry_mode_t mode,
 	goto CLEANUP;
     }
 
+    OMPI_THREAD_LOCK(&mca_gpr_proxy_mutex);
     /* locate corresponding entry on proxy tracker list and remove it */
     for (trackptr = (mca_gpr_notify_request_tracker_t*)ompi_list_get_first(&mca_gpr_proxy_notify_request_tracker);
 	 trackptr != (mca_gpr_notify_request_tracker_t*)ompi_list_get_end(&mca_gpr_proxy_notify_request_tracker) &&
@@ -570,10 +577,12 @@ int gpr_proxy_unsubscribe(ompi_registry_mode_t mode,
     OBJ_RELEASE(trackptr);
     ompi_buffer_free(answer);
     ompi_buffer_free(cmd);
+    OMPI_THREAD_UNLOCK(&mca_gpr_proxy_mutex);
     return OMPI_SUCCESS;
 
  CLEANUP:
     ompi_buffer_free(cmd);
+    OMPI_THREAD_UNLOCK(&mca_gpr_proxy_mutex);
     return OMPI_ERROR;
 }
 
@@ -655,6 +664,7 @@ int gpr_proxy_synchro(ompi_registry_synchro_mode_t synchro_mode,
 	goto CLEANUP;
     }
 
+    OMPI_THREAD_LOCK(&mca_gpr_proxy_mutex);
     /* store callback function and user_tag in local list for lookup */
     /* generate id_tag to send to replica to identify lookup entry */
     trackptr = OBJ_NEW(mca_gpr_notify_request_tracker_t);
@@ -697,6 +707,7 @@ int gpr_proxy_synchro(ompi_registry_synchro_mode_t synchro_mode,
     ompi_list_append(&mca_gpr_proxy_notify_request_tracker, &trackptr->item);
     ompi_buffer_free(answer);
     ompi_buffer_free(cmd);
+    OMPI_THREAD_UNLOCK(&mca_gpr_proxy_mutex);
     return OMPI_SUCCESS;
 
  CLEANUP:
@@ -705,6 +716,7 @@ int gpr_proxy_synchro(ompi_registry_synchro_mode_t synchro_mode,
 	OBJ_RELEASE(trackptr);
     }
     ompi_buffer_free(cmd);
+    OMPI_THREAD_UNLOCK(&mca_gpr_proxy_mutex);
     return OMPI_ERROR;
 
 }
@@ -805,6 +817,7 @@ int gpr_proxy_cancel_synchro(ompi_registry_synchro_mode_t synchro_mode,
 	goto CLEANUP;
     }
 
+    OMPI_THREAD_LOCK(&mca_gpr_proxy_mutex);
     /* locate corresponding entry on proxy tracker list and remove it */
     for (trackptr = (mca_gpr_notify_request_tracker_t*)ompi_list_get_first(&mca_gpr_proxy_notify_request_tracker);
 	 trackptr != (mca_gpr_notify_request_tracker_t*)ompi_list_get_end(&mca_gpr_proxy_notify_request_tracker) &&
@@ -823,10 +836,12 @@ int gpr_proxy_cancel_synchro(ompi_registry_synchro_mode_t synchro_mode,
     OBJ_RELEASE(trackptr);
     ompi_buffer_free(answer);
     ompi_buffer_free(cmd);
+    OMPI_THREAD_UNLOCK(&mca_gpr_proxy_mutex);
     return OMPI_SUCCESS;
 
  CLEANUP:
     ompi_buffer_free(cmd);
+    OMPI_THREAD_UNLOCK(&mca_gpr_proxy_mutex);
     return OMPI_ERROR;
 }
 
