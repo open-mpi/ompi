@@ -6,7 +6,7 @@
 #include "ompi_config.h"
 
 #include "mca/pcm/pcm.h"
-#include "types.h"
+#include "include/types.h"
 
 #include <sys/types.h>
 

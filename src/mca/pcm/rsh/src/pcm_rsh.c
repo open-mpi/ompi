@@ -8,7 +8,7 @@
 
 #include "mca/pcm/pcm.h"
 #include "mca/pcm/rsh/src/pcm_rsh.h"
-#include "types.h"
+#include "include/types.h"
 
 #include <stdio.h>
 #include <sys/types.h>
