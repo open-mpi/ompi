@@ -240,6 +240,8 @@ LAM_SETUP_F90
 # System-specific tests
 ##################################
 
+lam_show_title "System-specific tests"
+
 # all: endian
 # all: SYSV semaphores
 # all: SYSV shared memory

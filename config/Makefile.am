@@ -11,6 +11,7 @@ EXTRA_DIST		= \
 			cxx_find_template_repository.m4 \
 			cxx_find_exception_flags.m4 \
 			cxx_have_exceptions.m4 \
+            lam_case_sensitive_fs_setup.m4 \
 			lam_check_optflags.m4 \
 			lam_configure_options.m4 \
 			lam_functions.m4 \
