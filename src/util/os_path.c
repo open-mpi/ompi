@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <libgen.h>
 #include <sys/param.h>
+#include <stdlib.h>
 
 #include "include/constants.h"
 #include "util/os_path.h"
