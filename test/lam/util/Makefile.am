@@ -15,6 +15,9 @@ lam_argv_LDADD = \
         $(top_builddir)/src/lam/mem/malloc.lo \
         $(top_builddir)/src/lam/util/output.lo \
         $(top_builddir)/src/lam/threads/mutex.lo \
+        $(top_builddir)/src/lam/threads/mutex_pthread.lo \
+        $(top_builddir)/src/lam/threads/mutex_spinlock.lo \
+        $(top_builddir)/src/lam/threads/mutex_spinwait.lo \
         $(top_builddir)/test/support/libsupport.la 
 lam_argv_DEPENDENCIES = $(lam_argv_LDADD)
 
