@@ -25,7 +25,4 @@ sinclude(config/lam_setup_f90.m4)
 
 #
 # Contributed tests
-# JMS This needs to be removed
 #
-
-sinclude(config/ax_create_stdint_h.m4)
