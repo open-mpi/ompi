@@ -26,11 +26,11 @@ int ompi_request_wait_any(
 #if OMPI_HAVE_THREADS
     int c;
 #endif
-    size_t i, num_requests_null_inactive;
+    size_t i=0, num_requests_null_inactive=0;
     int rc = OMPI_SUCCESS;
     int completed = -1;
-    ompi_request_t **rptr;
-    ompi_request_t *request;
+    ompi_request_t **rptr=NULL;
+    ompi_request_t *request=NULL;
 
 #if OMPI_HAVE_THREADS
     /* poll for completion */

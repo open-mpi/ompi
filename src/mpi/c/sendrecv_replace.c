@@ -92,12 +92,12 @@ int MPI_Sendrecv_replace(void * buf, int count, MPI_Datatype datatype,
         /* setup a buffer for recv */
         ompi_convertor_get_packed_size(&convertor, &packed_size);
         if(packed_size > sizeof(recv_data)) {
-            iov.iov_base = malloc(packed_size);
+            iov.iov_base = (caddr_t)malloc(packed_size);
             if(iov.iov_base == NULL) {
                 OMPI_ERRHANDLER_RETURN(OMPI_ERR_OUT_OF_RESOURCE, comm, MPI_ERR_BUFFER, FUNC_NAME);
             } 
         } else {
-            iov.iov_base = recv_data;
+            iov.iov_base = (caddr_t)recv_data;
         }
 
         /* recv into temporary buffer */

@@ -201,14 +201,14 @@ internal_need_profile(mca_pcm_rsh_module_t *me,
                       mca_llm_base_hostfile_node_t *start_node,
                       int stderr_is_error, bool *needs_profile)
 {
-    struct passwd *p;
+    struct passwd *p=NULL;
     char shellpath[PRS_BUFSIZE];
     char** cmdv = NULL;
     char *cmd0 = NULL;
     int cmdc = 0;
     char *printable = NULL;
     char *username = NULL;
-    int ret;
+    int ret=0;
 
     /*
      * Figure out if we need to source the .profile on the other side.
@@ -463,7 +463,8 @@ proc_cleanup:
         mca_pcm_base_job_list_add_job_info(me->jobs,
                                            jobid, pid, my_start_vpid,
                                            my_start_vpid + num_procs - 1);
-        ret = mca_pcm_base_kill_register(me, jobid, my_start_vpid,
+        ret = mca_pcm_base_kill_register((mca_pcm_base_module_t*)me,
+        								   jobid, my_start_vpid,
                                          my_start_vpid + num_procs - 1);
         if (ret != OMPI_SUCCESS) goto cleanup;
         ret = ompi_rte_wait_cb(pid, internal_wait_cb, me);
@@ -504,7 +505,7 @@ internal_wait_cb(pid_t pid, int status, void *data)
     mca_ns_base_vpid_t lower = 0;
     mca_ns_base_vpid_t i = 0;
     int ret;
-    char *proc_name;
+    ompi_process_name_t *proc_name;
     mca_pcm_rsh_module_t *me = (mca_pcm_rsh_module_t*) data;
     ompi_rte_process_status_t proc_status;
 
@@ -528,5 +529,5 @@ internal_wait_cb(pid_t pid, int status, void *data)
         free(proc_name);
     }
 
-    mca_pcm_base_kill_unregister(me, jobid, lower, upper);
+    mca_pcm_base_kill_unregister((mca_pcm_base_module_t*)me, jobid, lower, upper);
 }

@@ -37,11 +37,11 @@ int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
                          MPI_Comm bridge_comm, int remote_leader,
                          int tag, MPI_Comm *newintercomm) 
 {
-    int local_size, local_rank;
-    int lleader, rleader;
-    ompi_communicator_t *newcomp;
+    int local_size=0, local_rank=0;
+    int lleader=0, rleader=0;
+    ompi_communicator_t *newcomp=NULL;
     ompi_proc_t **rprocs=NULL;
-    int rc, rsize;
+    int rc=0, rsize=0;
 
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME); 

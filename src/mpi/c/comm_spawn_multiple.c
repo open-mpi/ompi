@@ -37,9 +37,9 @@ int MPI_Comm_spawn_multiple(int count, char **array_of_commands, char ***array_o
                             int root, MPI_Comm comm, MPI_Comm *intercomm,
                             int *array_of_errcodes) 
 {
-    int i, rc, rank, tag;
+    int i=0, rc=0, rank=0, tag=0;
     int totalnumprocs=0;
-    ompi_communicator_t *newcomp;
+    ompi_communicator_t *newcomp=NULL;
     int send_first=0; /* they are contacting us first */
 
     if ( MPI_PARAM_CHECK ) {
