@@ -158,7 +158,7 @@ prebuild:
                 > "${topdir}/src/util/show_help_lex.c" 2>/dev/null
 	@echo -n "Copying static-components.h to the right directories ......"
 	@for dirs in ${STATIC_LIBS}; do \
-        (dir=mca/$${dirs}/base; comp_name=$${dirs}_static-components.h; cp ${topdir}/src/win32/generated_include/$${comp_name} $${dir}/static-components.h;); \
+        (dir="mca/$${dirs}/base"; comp_name="$${dirs}_static-components.h"; cp "${topdir}/src/win32/generated_include/$${comp_name}" "$${dir}/static-components.h";); \
      done
 	@echo "done"
 
