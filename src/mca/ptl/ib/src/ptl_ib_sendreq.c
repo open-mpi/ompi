@@ -14,7 +14,7 @@ OBJ_CLASS_INSTANCE(mca_ptl_ib_send_request_t,
 
 void mca_ptl_ib_send_request_construct(mca_ptl_ib_send_request_t* request)
 {
-    D_PRINT("\n");
+    A_PRINT("Request Construct");
     request->req_frag = NULL;
 
     /*

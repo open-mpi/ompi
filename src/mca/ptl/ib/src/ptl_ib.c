@@ -31,7 +31,7 @@ mca_ptl_ib_module_t mca_ptl_ib_module = {
         mca_ptl_ib_del_procs,
         mca_ptl_ib_finalize,
         mca_ptl_ib_send,
-        mca_ptl_ib_send,
+        mca_ptl_ib_put,
         NULL,
         mca_ptl_ib_matched,
         mca_ptl_ib_request_init,
@@ -39,6 +39,66 @@ mca_ptl_ib_module_t mca_ptl_ib_module = {
     }
 };
 
+/*
+ * 1. RDMA local buffer to remote buffer address.
+ * 2. Generate a FIN
+ */
+
+int mca_ptl_ib_put( struct mca_ptl_base_module_t* ptl,
+    struct mca_ptl_base_peer_t* ptl_peer,
+    struct mca_pml_base_send_request_t* req, size_t offset,
+    size_t size, int flags)
+{
+    int rc;
+    mca_ptl_ib_send_frag_t *send_frag, *send_frag_fin;
+    mca_ptl_ib_state_t *ib_state;
+    mca_ptl_ib_peer_conn_t *peer_conn;
+    void *local_addr, *remote_addr;
+    VAPI_rkey_t rkey;
+
+    /* RDMA the data over to the peer */
+    send_frag = mca_ptl_ib_alloc_send_frag(ptl, req);
+
+    if(NULL == send_frag) {
+        ompi_output(0, "Unable to allocate send descriptor");
+        return OMPI_ERROR;
+    }
+
+    A_PRINT("IB put to %p, rkey : %d", 
+            req->req_peer_addr.pval,
+            *(VAPI_rkey_t *)(((mca_ptl_ib_send_request_t *)req)->req_buf));
+
+    ib_state = ((mca_ptl_ib_module_t *)ptl)->ib_state;
+    peer_conn = ((mca_ptl_ib_peer_t *)ptl_peer)->peer_conn;
+    local_addr = (void*) ((char*) req->req_base.req_addr + offset);
+    remote_addr = (void*) req->req_peer_addr.pval;
+    rkey = *(VAPI_rkey_t *)(((mca_ptl_ib_send_request_t *)req)->req_buf);
+
+    rc = mca_ptl_ib_rdma_write(ib_state, peer_conn,
+            &send_frag->ib_buf, local_addr, size, remote_addr, rkey);
+
+    if(rc != OMPI_SUCCESS) {
+        return OMPI_ERROR;
+    }
+
+    /* Send FIN to receiver */
+    send_frag_fin = mca_ptl_ib_alloc_send_frag(ptl, req);
+
+    if(NULL == send_frag_fin) {
+        ompi_output(0, "Unable to allocate send descriptor");
+        return OMPI_ERROR;
+    }
+    rc = mca_ptl_ib_put_frag_init(send_frag_fin, ptl_peer,
+            req, offset, &size, flags);
+    if(rc != OMPI_SUCCESS) {
+        return rc;
+    }
+
+    /* Update offset */
+    req->req_offset += size;
+
+    return OMPI_SUCCESS;
+}
 
 int mca_ptl_ib_add_procs(struct mca_ptl_base_module_t* base_module, 
         size_t nprocs, struct ompi_proc_t **ompi_procs, 
@@ -131,6 +191,7 @@ int mca_ptl_ib_request_init( struct mca_ptl_base_module_t* ptl,
 
         ib_send_req = (mca_ptl_ib_send_request_t *) request;
         ib_send_req->req_frag = ib_send_frag;
+        memset(ib_send_req->req_buf, 7, 8);
     }
 
     return OMPI_SUCCESS;
@@ -165,12 +226,12 @@ int mca_ptl_ib_send( struct mca_ptl_base_module_t* ptl,
             ((mca_ptl_ib_send_request_t*)sendreq)->req_frag;
     } else {
 
-        /* TODO: Implementation for messages > frag size */
-        ompi_list_item_t* item;
-        OMPI_FREE_LIST_GET(&mca_ptl_ib_component.ib_send_frags, item, rc);
+        /* Implementation for messages > frag size */
+        sendfrag = mca_ptl_ib_alloc_send_frag(ptl,
+                sendreq);
 
-        if(NULL == (sendfrag = (mca_ptl_ib_send_frag_t*)item)) {
-            return rc;
+        if(NULL == sendfrag) {
+            ompi_output(0,"Unable to allocate send fragment");
         }
     }
 
@@ -189,6 +250,84 @@ int mca_ptl_ib_send( struct mca_ptl_base_module_t* ptl,
     return rc;
 }
 
+
+static void mca_ptl_ib_start_ack(mca_ptl_base_module_t *module,
+        mca_ptl_ib_send_frag_t *send_frag,
+        mca_ptl_ib_recv_frag_t *recv_frag)
+{
+    mca_ptl_base_header_t *hdr;
+    mca_pml_base_recv_request_t *request;
+    mca_ptl_ib_peer_t *ib_peer;
+    ib_buffer_t *ib_buf;
+    int recv_len;
+    int len_to_reg, len_added = 0;
+    void *addr_to_reg, *ack_buf;
+
+    A_PRINT("");
+
+    /* Header starts at beginning of registered
+     * buffer space */
+
+    hdr = (mca_ptl_base_header_t *)
+        &send_frag->ib_buf.buf[0];
+
+    request = recv_frag->super.frag_request;
+
+    /* Amount of data we have already received */
+    recv_len = 
+        recv_frag->super.frag_base.frag_header.hdr_frag.hdr_frag_length;
+
+    hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_ACK;
+    hdr->hdr_common.hdr_flags = 0;
+    hdr->hdr_common.hdr_size = sizeof(mca_ptl_base_ack_header_t);
+
+    /* Remote side send descriptor */
+    hdr->hdr_ack.hdr_src_ptr =
+        recv_frag->super.frag_base.frag_header.hdr_frag.hdr_src_ptr;
+
+    /* Matched request from recv side */
+    hdr->hdr_ack.hdr_dst_match.lval = 0;
+    hdr->hdr_ack.hdr_dst_match.pval = request;
+
+    hdr->hdr_ack.hdr_dst_addr.lval = 0;
+
+    addr_to_reg = (void*)((char*)request->req_base.req_addr + recv_len);
+    hdr->hdr_ack.hdr_dst_addr.pval = addr_to_reg;
+
+    len_to_reg = request->req_bytes_packed - recv_len;
+    hdr->hdr_ack.hdr_dst_size = len_to_reg;
+
+    A_PRINT("Dest addr : %p, RDMA Len : %d",
+            hdr->hdr_ack.hdr_dst_addr.pval,
+            hdr->hdr_ack.hdr_dst_size);
+
+    ack_buf = (void*) ((char*) (&send_frag->ib_buf.buf[0]) + 
+        sizeof(mca_ptl_base_ack_header_t));
+
+    /* Prepare ACK packet with IB specific stuff */
+    mca_ptl_ib_prepare_ack(((mca_ptl_ib_module_t *)module)->ib_state,
+            addr_to_reg, len_to_reg,
+            ack_buf, &len_added);
+
+    /* Send it right away! */
+    ib_peer = (mca_ptl_ib_peer_t *)
+        recv_frag->super.frag_base.frag_peer;
+
+    ib_buf = &send_frag->ib_buf;
+
+    IB_SET_SEND_DESC_LEN(ib_buf,
+            (sizeof(mca_ptl_base_ack_header_t) + len_added));
+
+    mca_ptl_ib_post_send(((mca_ptl_ib_module_t *)module)->ib_state,
+            ib_peer->peer_conn, 
+            &send_frag->ib_buf, send_frag);
+
+    /* fragment state */
+    send_frag->frag_send.frag_base.frag_owner = module;
+    send_frag->frag_send.frag_base.frag_peer = recv_frag->super.frag_base.frag_peer;
+    send_frag->frag_send.frag_base.frag_addr = NULL;
+    send_frag->frag_send.frag_base.frag_size = 0;
+}
 
 /*
  *  A posted receive has been matched - if required send an
@@ -210,7 +349,18 @@ void mca_ptl_ib_matched(mca_ptl_base_module_t* module,
     D_PRINT("Matched frag\n");
 
     if (header->hdr_common.hdr_flags & MCA_PTL_FLAGS_ACK_MATCHED) {
-        D_PRINT("Doh, I cannot send an ack!\n");
+        mca_ptl_ib_send_frag_t *send_frag;
+
+        send_frag = mca_ptl_ib_alloc_send_frag(module, NULL);
+
+        if(NULL == send_frag) {
+            ompi_output(0, "Cannot get send descriptor");
+        } else {
+            mca_ptl_ib_start_ack(module, send_frag, recv_frag);
+        }
+
+        /* Basic ACK scheme */
+        A_PRINT("Doh, I cannot send an ack!\n");
     }
 
     /* Process the fragment */

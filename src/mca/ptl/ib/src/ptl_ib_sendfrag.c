@@ -53,7 +53,10 @@ int mca_ptl_ib_send_frag_init(mca_ptl_ib_send_frag_t* sendfrag,
         hdr->hdr_frag.hdr_frag_offset = offset; 
         hdr->hdr_frag.hdr_frag_seq = 0;
         hdr->hdr_frag.hdr_src_ptr.lval = 0; /* for VALGRIND/PURIFY - REPLACE WITH MACRO */
+
+        /* Ptr to send frag, so incoming ACK can locate the frag */
         hdr->hdr_frag.hdr_src_ptr.pval = sendfrag;
+
         hdr->hdr_frag.hdr_dst_ptr.lval = 0;
         hdr->hdr_match.hdr_contextid = sendreq->req_base.req_comm->c_contextid;
         hdr->hdr_match.hdr_src = sendreq->req_base.req_comm->c_my_rank;
@@ -65,6 +68,7 @@ int mca_ptl_ib_send_frag_init(mca_ptl_ib_send_frag_t* sendfrag,
         header_length = sizeof(mca_ptl_base_match_header_t);
 
     } else {
+
         hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_FRAG;
         hdr->hdr_common.hdr_flags = flags;
         hdr->hdr_common.hdr_size = sizeof(mca_ptl_base_frag_header_t);
@@ -216,15 +220,39 @@ int mca_ptl_ib_register_send_frags(mca_ptl_base_module_t *ptl)
 
         rc = mca_ptl_ib_register_mem(ib_state->nic, ib_state->ptag,
                 (void*) ib_buf_ptr->buf, 
-                4096, &ib_buf_ptr->hndl);
+                MCA_PTL_IB_FIRST_FRAG_SIZE,
+                &ib_buf_ptr->hndl);
         if(rc != OMPI_SUCCESS) {
             return OMPI_ERROR;
         }
 
-        IB_PREPARE_SEND_DESC(ib_buf_ptr, 0, 4096);
+        IB_PREPARE_SEND_DESC(ib_buf_ptr, 0, 
+                MCA_PTL_IB_FIRST_FRAG_SIZE);
     }
 
     return OMPI_SUCCESS;
+}
+
+/*
+ * Process RDMA Write completions
+ *
+ * Just return send fragment to free list
+ */
+
+void mca_ptl_ib_process_rdma_w_comp(mca_ptl_base_module_t *module,
+        void* comp_addr)
+{
+    mca_ptl_ib_send_frag_t *sendfrag;
+    ompi_free_list_t *flist;
+
+    sendfrag = (mca_ptl_ib_send_frag_t *) comp_addr;
+
+    flist = &(sendfrag->
+            frag_send.frag_base.frag_peer->
+            peer_module->send_free);
+
+    OMPI_FREE_LIST_RETURN(flist, 
+            ((ompi_list_item_t *) sendfrag));
 }
 
 /*
@@ -233,19 +261,113 @@ int mca_ptl_ib_register_send_frags(mca_ptl_base_module_t *ptl)
  */
 
 void mca_ptl_ib_process_send_comp(mca_ptl_base_module_t *module, 
-        void* addr, ompi_free_list_t *flist)
+        void* addr)
 {
     mca_ptl_ib_send_frag_t *sendfrag;
     mca_ptl_base_header_t *header;
+    mca_pml_base_send_request_t *req;
+    ompi_free_list_t *flist;
 
-    sendfrag = (mca_ptl_ib_send_frag_t *) (unsigned int) addr;
+    sendfrag = (mca_ptl_ib_send_frag_t *) addr;
     header = (mca_ptl_base_header_t *) sendfrag->ib_buf.buf;
 
-    module->ptl_send_progress(module,
-            sendfrag->frag_send.frag_request,
-            header->hdr_frag.hdr_frag_length);
+    req = (mca_pml_base_send_request_t *) 
+        sendfrag->frag_send.frag_request;
 
-    /* Return sendfrag to free list */
+    flist = &(sendfrag->
+            frag_send.frag_base.frag_peer->
+            peer_module->send_free);
 
-    OMPI_FREE_LIST_RETURN(flist, ((ompi_list_item_t *) sendfrag));
+    if(header->hdr_common.hdr_type == MCA_PTL_HDR_TYPE_ACK) {
+        /* Is this an ack descriptor ? */
+        A_PRINT("Completion of send_ack");
+
+        OMPI_FREE_LIST_RETURN(flist, 
+                ((ompi_list_item_t *) sendfrag));
+    } else if(NULL == req) {
+        /* An ack descriptor ? Don't know what to do! */
+        OMPI_FREE_LIST_RETURN(flist, 
+                ((ompi_list_item_t *) sendfrag));
+    } else if (0 == (header->hdr_common.hdr_flags 
+                & MCA_PTL_FLAGS_ACK_MATCHED)
+            || mca_pml_base_send_request_matched(req)) {
+
+        module->ptl_send_progress(module,
+                sendfrag->frag_send.frag_request,
+                header->hdr_frag.hdr_frag_length);
+        /* Return sendfrag to free list */
+
+        OMPI_FREE_LIST_RETURN(flist, 
+                ((ompi_list_item_t *) sendfrag));
+    } else {
+        /* Not going to call progress on this send,
+         * and not free-ing descriptor */
+        A_PRINT("Why should I return sendfrag?");
+    }
+}
+
+int mca_ptl_ib_put_frag_init(mca_ptl_ib_send_frag_t *sendfrag, 
+        mca_ptl_base_peer_t *ptl_peer,
+        mca_pml_base_send_request_t *req, 
+        size_t offset, size_t *size, int flags)
+{
+    int rc;
+    int size_in, size_out;
+    mca_ptl_base_header_t *hdr;
+
+    size_in = *size;
+
+    hdr = (mca_ptl_base_header_t *)
+        &sendfrag->ib_buf.buf[0];
+
+    hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_FIN;
+    hdr->hdr_common.hdr_flags = flags;
+    hdr->hdr_common.hdr_size = sizeof(mca_ptl_base_frag_header_t);
+    hdr->hdr_frag.hdr_frag_offset = offset;
+    hdr->hdr_frag.hdr_frag_seq = 0;
+    hdr->hdr_frag.hdr_src_ptr.lval = 0;
+    hdr->hdr_frag.hdr_src_ptr.pval = sendfrag;
+    hdr->hdr_frag.hdr_dst_ptr = req->req_peer_match;
+    hdr->hdr_frag.hdr_frag_length = size_in;
+
+    if(size_in > 0 && 0) {
+        struct iovec iov;
+        ompi_convertor_t *convertor;
+
+        if( offset <= mca_ptl_ib_module.super.ptl_first_frag_size) {
+            convertor = &req->req_convertor;
+        } else {
+            convertor = &sendfrag->frag_send.frag_base.frag_convertor;
+            ompi_convertor_copy(&req->req_convertor, convertor);
+            ompi_convertor_init_for_send(
+                    convertor,
+                    0,
+                    req->req_base.req_datatype,
+                    req->req_base.req_count,
+                    req->req_base.req_addr,
+                    offset);
+        }
+        iov.iov_base = &sendfrag->ib_buf.buf[sizeof(mca_ptl_base_frag_header_t)];
+        iov.iov_len  = size_in;
+
+        rc = ompi_convertor_pack(convertor, &iov, 1);
+        if (rc < 0) {
+            ompi_output (0, "[%s:%d] Unable to pack data\n",
+                    __FILE__, __LINE__);
+            return;
+        }
+        size_out = iov.iov_len;
+    } else {
+        size_out = size_in;
+    }
+
+    *size = size_out;
+    hdr->hdr_frag.hdr_frag_length = size_out;
+
+    A_PRINT("size_in : %d", size_in);
+
+    IB_SET_SEND_DESC_LEN((&sendfrag->ib_buf),
+            (sizeof(mca_ptl_base_frag_header_t) + size_in));
+
+    return OMPI_SUCCESS;
 }

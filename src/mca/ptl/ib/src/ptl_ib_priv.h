@@ -8,6 +8,8 @@
 #define NUM_IB_SEND_BUF             (10)
 #define NUM_IB_RECV_BUF             (10)
 
+#define MCA_PTL_IB_FIRST_FRAG_SIZE  (4096)
+
 struct mca_ptl_ib_state_t {
     VAPI_hca_id_t                   hca_id;     
     /* ID of HCA */
@@ -40,6 +42,7 @@ typedef enum {
     IB_COMP_ERROR,
     IB_COMP_RECV,
     IB_COMP_SEND,
+    IB_COMP_RDMA_W,
     IB_COMP_NOTHING
 } IB_comp_t;
 
@@ -80,7 +83,7 @@ struct ib_buffer_t {
     vapi_memhandle_t                hndl;
     /* Buffer handle */
 
-    char                            buf[4096];
+    char                            buf[MCA_PTL_IB_FIRST_FRAG_SIZE];
     /* Buffer space */
 
     VAPI_qp_hndl_t                  qp_hndl;
@@ -153,7 +156,7 @@ typedef struct mca_ptl_ib_peer_conn_t mca_ptl_ib_peer_conn_t;
         (MT_virt_addr_t) ib_buf_ptr;                                \
     ib_buf_ptr->desc.rr.sg_lst_len = 1;                             \
     ib_buf_ptr->desc.rr.sg_lst_p = &ib_buf_ptr->desc.sg_entry;      \
-    ib_buf_ptr->desc.sg_entry.len = 4096;                           \
+    ib_buf_ptr->desc.sg_entry.len = MCA_PTL_IB_FIRST_FRAG_SIZE;     \
     ib_buf_ptr->desc.sg_entry.lkey = ib_buf_ptr->hndl.lkey;         \
     ib_buf_ptr->desc.sg_entry.addr = (VAPI_virt_addr_t)             \
         (MT_virt_addr_t) ib_buf_ptr->buf;                           \
@@ -187,6 +190,24 @@ typedef struct mca_ptl_ib_peer_conn_t mca_ptl_ib_peer_conn_t;
     ib_buf_ptr->desc.sg_entry.len = msg_len;                        \
 }
 
+#define IB_PREPARE_RDMA_W_DESC(ib_buf_ptr, qp,                      \
+        msg_len, user_buf, local_key, remote_key, remote_buf) {     \
+    ib_buf_ptr->desc.sr.comp_type = VAPI_SIGNALED;                  \
+    ib_buf_ptr->desc.sr.opcode = VAPI_RDMA_WRITE;                   \
+    ib_buf_ptr->desc.sr.remote_qkey = 0;                            \
+    ib_buf_ptr->desc.sr.remote_qp = qp;                             \
+    ib_buf_ptr->desc.sr.id = (VAPI_virt_addr_t)                     \
+        (MT_virt_addr_t) ib_buf_ptr;                                \
+    ib_buf_ptr->desc.sr.sg_lst_len = 1;                             \
+    ib_buf_ptr->desc.sr.sg_lst_p = &ib_buf_ptr->desc.sg_entry;      \
+    ib_buf_ptr->desc.sg_entry.len = msg_len;                        \
+    ib_buf_ptr->desc.sg_entry.lkey = local_key;                     \
+    ib_buf_ptr->desc.sg_entry.addr = (VAPI_virt_addr_t)             \
+        (MT_virt_addr_t) user_buf;                                  \
+    ib_buf_ptr->desc.sr.remote_addr = remote_buf;                   \
+    ib_buf_ptr->desc.sr.r_key = remote_key;                         \
+}
+
 
 int mca_ptl_ib_init_module(mca_ptl_ib_state_t*, int);
 int mca_ptl_ib_get_num_hcas(uint32_t*);
@@ -202,5 +223,7 @@ void mca_ptl_ib_drain_network(VAPI_hca_hndl_t nic,
         VAPI_cq_hndl_t cq_hndl, int* comp_type, void** comp_addr);
 void mca_ptl_ib_buffer_repost(VAPI_hca_hndl_t nic,
         void* addr);
-
+void mca_ptl_ib_prepare_ack(mca_ptl_ib_state_t *ib_state,
+        void* addr_to_reg, int len_to_reg,
+        void* ack_buf, int* len_added);
 #endif  /* MCA_PTL_IB_PRIV_H */

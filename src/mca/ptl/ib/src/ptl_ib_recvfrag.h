@@ -4,6 +4,8 @@
 #include "mca/ptl/ptl.h"
 #include "mca/ptl/base/ptl_base_recvfrag.h"
 
+#define MCA_PTL_IB_UNEX_BUF_SIZE    (4096)
+
 OBJ_CLASS_DECLARATION(mca_ptl_ib_recv_frag_t);
 
 /**
@@ -12,7 +14,7 @@ OBJ_CLASS_DECLARATION(mca_ptl_ib_recv_frag_t);
 struct mca_ptl_ib_recv_frag_t {
     mca_ptl_base_recv_frag_t        super; 
     /**< base receive fragment descriptor */
-    char                            unex_buf[4096];
+    char                            unex_buf[MCA_PTL_IB_UNEX_BUF_SIZE];
     /**< Unexpected buffer */
 };
 typedef struct mca_ptl_ib_recv_frag_t mca_ptl_ib_recv_frag_t;
