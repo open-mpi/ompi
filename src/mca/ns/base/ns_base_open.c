@@ -26,6 +26,11 @@ mca_ns_t ompi_name_server;
 ompi_list_t mca_ns_base_modules_available;
 mca_ns_base_module_t mca_ns_base_selected_module;
 
+OBJ_CLASS_INSTANCE(
+		   ompi_process_name_t,  /* type name */
+		   ompi_object_t,        /* parent "class" */
+		   NULL,                 /* no constructor */
+                   NULL);                /* no destructor */
 
 /**
  * Function for finding and opening either all MCA modules, or the one
