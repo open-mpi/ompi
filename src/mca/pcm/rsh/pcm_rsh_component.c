@@ -65,7 +65,7 @@ static int mca_pcm_rsh_param_ignore_stderr;
 static int mca_pcm_rsh_param_priority;
 static int mca_pcm_rsh_param_agent;
 static int mca_pcm_rsh_param_delay_time;
-
+static int mca_pcm_rsh_param_debug_callback;
 
 int
 mca_pcm_rsh_component_open(void)
@@ -86,6 +86,9 @@ mca_pcm_rsh_component_open(void)
 
   mca_pcm_rsh_param_delay_time =
     mca_base_param_register_int("pcm", "rsh", "delay", NULL, 0);
+
+  mca_pcm_rsh_param_debug_callback = 
+    mca_base_param_register_int("pcm", "rsh", "debug_callback", NULL, 0);
 
   return OMPI_SUCCESS;
 }
@@ -123,6 +126,13 @@ mca_pcm_rsh_init(int *priority,
                                  &(me->rsh_agent));
     mca_base_param_lookup_int(mca_pcm_rsh_param_delay_time,
                               (int*)&(me->delay_time));
+    mca_base_param_lookup_int(mca_pcm_rsh_param_debug_callback, 
+                              &ret);
+    if (ret != 0) {
+        me->debug_callback = true;
+    } else {
+        me->debug_callback = false;
+    }
 
     ret = mca_llm_base_select("rsh", &(me->llm), have_threads);
 

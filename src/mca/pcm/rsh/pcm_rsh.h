@@ -75,6 +75,7 @@ extern "C" {
         char* rsh_agent;
         int constraints;
         unsigned int delay_time;
+    	bool debug_callback;
     };
     typedef struct mca_pcm_rsh_module_t mca_pcm_rsh_module_t;
 
