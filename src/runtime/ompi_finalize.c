@@ -7,7 +7,6 @@
 #include "include/constants.h"
 #include "runtime/runtime.h"
 #include "util/output.h"
-#include "mem/malloc.h"
 
 
 int ompi_finalize(void)

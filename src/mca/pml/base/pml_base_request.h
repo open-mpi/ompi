@@ -7,7 +7,7 @@
 #ifndef MCA_PML_BASE_REQUEST_H
 #define MCA_PML_BASE_REQUEST_H
 
-#include "mem/free_list.h"
+#include "class/ompi_free_list.h"
 #include "request/request.h"
 #include "datatype/datatype.h"
 #include "communicator/communicator.h"

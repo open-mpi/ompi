@@ -8,7 +8,7 @@
 #ifndef PTL_SELF_H_HAS_BEEN_INCLUDED
 #define PTL_SELF_H_HAS_BEEN_INCLUDED
 
-#include "mem/free_list.h"
+#include "class/ompi_free_list.h"
 #include "event/event.h"
 #include "mca/pml/pml.h"
 #include "mca/ptl/ptl.h"

@@ -10,7 +10,7 @@
 
 #include "threads/thread.h"
 #include "threads/condition.h"
-#include "mem/free_list.h"
+#include "class/ompi_free_list.h"
 #include "util/cmd_line.h"
 #include "request/request.h"
 #include "mca/pml/pml.h"

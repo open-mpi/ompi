@@ -19,7 +19,6 @@ SUBDIRS = \
         info \
         class \
         mca \
-        mem \
         mpi \
         op \
         os \
@@ -46,7 +45,6 @@ libmpi_la_LIBADD = \
         info/libinfo.la \
         class/liblfc.la \
         mca/libmca.la \
-        mem/libmem.la \
         mpi/libmpi_bindings.la \
         op/libop.la \
         proc/libproc.la \

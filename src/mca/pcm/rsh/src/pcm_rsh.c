@@ -8,7 +8,6 @@
 
 #include "mca/pcm/pcm.h"
 #include "mca/pcm/rsh/src/pcm_rsh.h"
-#include "mem/malloc.h"
 #include "types.h"
 
 #include <stdio.h>

@@ -8,7 +8,7 @@
 
 #include "constants.h"
 #include "types.h"
-#include "mem/malloc.h"
+#include "util/malloc.h"
 #include "class/ompi_list.h"
 #include "mca/mca.h"
 #include "mca/base/mca_base_param.h"

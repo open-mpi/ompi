@@ -780,7 +780,6 @@ AC_CONFIG_FILES([
 
     src/ctnetwork/Makefile
     src/class/Makefile
-    src/mem/Makefile
     src/os/Makefile
     src/os/cygwin/Makefile
     src/os/darwin/Makefile
@@ -830,16 +829,18 @@ AC_CONFIG_FILES([
     src/mca/allocator/base/Makefile
     src/mca/coll/Makefile
     src/mca/coll/base/Makefile
-    src/mca/topo/Makefile
-    src/mca/topo/base/Makefile
     src/mca/io/Makefile
     src/mca/io/base/Makefile
+    src/mca/mpool/Makefile
+    src/mca/mpool/base/Makefile
     src/mca/one/Makefile
     src/mca/one/base/Makefile
     src/mca/pml/Makefile
     src/mca/pml/base/Makefile
     src/mca/ptl/Makefile
     src/mca/ptl/base/Makefile
+    src/mca/topo/Makefile
+    src/mca/topo/base/Makefile
     src/mca/gpr/Makefile
 
     src/mpi/Makefile

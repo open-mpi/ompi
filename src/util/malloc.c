@@ -6,7 +6,7 @@
 
 #include <stdlib.h>
 
-#include "mem/malloc.h"
+#include "util/malloc.h"
 #include "util/output.h"
 
 
