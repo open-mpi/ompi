@@ -1,6 +1,15 @@
 This file contains information on merging the branches/tim tree into the
 trunk.
 
+UPDATE MERGE 4:
+
+  svn merge -r4933:4937 svn+ssh://svn.open-mpi.org/l/svn/ompi/branches/tim .
+
+U  src/runtime/orte_restart.c
+U  src/mca/pls/bproc_seed/pls_bproc_seed.c
+U  etc/openmpi-default-hostfile
+
+
 UPDATE MERGE 3:
 
   svn merge -r4922:4933 svn+ssh://svn.open-mpi.org/l/svn/ompi/branches/tim .
