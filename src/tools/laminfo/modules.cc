@@ -75,6 +75,7 @@ void laminfo::open_modules()
   // Open all modules
 
   mca_base_open();
+  module_map["base"] = NULL;
 
   mca_pcm_base_open();
   module_map["pcm"] = &mca_pcm_base_modules_available;
@@ -95,12 +96,16 @@ void laminfo::open_modules()
   // io module opening not implemented yet
   mca_io_base_open();
   module_map["io"] = &mca_io_base_modules_available;
+#else
+  module_map["io"] = NULL;
 #endif
 
 #if 0
   // one module opening not implemented yet
   mca_one_base_open();
   module_map["one"] = &mca_one_base_modules_available;
+#else
+  module_map["one"] = NULL;
 #endif
 
   // pml module opening not implemented yet
@@ -115,6 +120,8 @@ void laminfo::open_modules()
   // topo module opening not implemented yet
   mca_topo_base_open();
   module_map["topo"] = &mca_topo_base_modules_available;
+#else
+  module_map["topo"] = NULL;
 #endif
 
   // All done
