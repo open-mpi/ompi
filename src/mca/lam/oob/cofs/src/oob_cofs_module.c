@@ -63,6 +63,10 @@ mca_oob_cofs_query(int *priority)
 struct mca_oob_1_0_0*
 mca_oob_cofs_init(void)
 {
+  /*
+   * BWB - fix me, make register the "right" way...
+   */
+  
   return NULL;
 }
 

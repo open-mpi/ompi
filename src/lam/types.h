@@ -29,5 +29,11 @@ typedef struct lam_fd_set_t lam_fd_set_t;
 #define LAM_FD_CLR(fd,fds)   FD_CLR((fd),(fd_set*)(fds))
 #define LAM_FD_ISSET(fd,fds) FD_ISSET((fd),(fd_set*)(fds))
 
+/*
+ * handle to describe a parallel job
+ */
+typedef char* lam_job_handle_t;
+
+
 #endif
 
