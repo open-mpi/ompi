@@ -37,6 +37,7 @@ struct mca_pml_teg_t {
     int teg_free_list_max; /* maximum size of free list */
     int teg_free_list_inc; /* number of elements to grow free list */
     lam_free_list_t teg_recv_requests;
+    mca_ptl_base_sequence_t teg_recv_sequence;
 };
 typedef struct mca_pml_teg_t mca_pml_teg_t; 
 

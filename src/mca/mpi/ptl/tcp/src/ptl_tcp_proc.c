@@ -1,6 +1,7 @@
 /*
  * $HEADER$
  */
+#include "lam/atomic.h"
 #include "lam/lfc/hash_table.h"
 #include "mca/lam/base/mca_base_module_exchange.h"
 #include "ptl_tcp.h"
@@ -26,7 +27,7 @@ mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_self = 0;
 void mca_ptl_tcp_proc_init(mca_ptl_tcp_proc_t* proc)
 {
     static int inited = 0;
-    if(inited++ == 0) {
+    if(fetchNset(&inited, 1) == 0) {
         lam_list_init(&mca_ptl_tcp_procs);
         lam_mutex_init(&mca_ptl_tcp_proc_mutex);
     }

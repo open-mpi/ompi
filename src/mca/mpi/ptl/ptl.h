@@ -116,7 +116,7 @@ typedef int (*mca_ptl_base_request_alloc_fn_t)(
     struct mca_ptl_base_send_request_t** request
 );
 
-typedef int (*mca_ptl_base_request_return_fn_t)(
+typedef void (*mca_ptl_base_request_return_fn_t)(
     struct mca_ptl_t* ptl, 
     struct mca_ptl_base_send_request_t* request
 );

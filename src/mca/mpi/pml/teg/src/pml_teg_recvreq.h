@@ -19,8 +19,9 @@ static inline mca_ptl_base_recv_request_t* mca_pml_teg_recv_request_alloc(int *r
     return (mca_ptl_base_recv_request_t*)lam_free_list_get(&mca_pml_teg.teg_recv_requests, rc);
 }
 
-static void mca_pml_teg_recv_request_return(mca_ptl_base_recv_request_t* request)
+static inline void mca_pml_teg_recv_request_return(mca_ptl_base_recv_request_t* request)
 {
+    request->super.req_status = MCA_PML_STATUS_INVALID;
     lam_free_list_return(&mca_pml_teg.teg_recv_requests, (lam_list_item_t*)request);
 }
 

@@ -25,21 +25,24 @@ struct mca_pml_comm_t {
     lam_mutex_t *c_matching_lock;
 
     /* unexpected fragments queues */
-    lam_list_t *unexpected_frags;
+    lam_list_t *c_unexpected_frags;
     /* these locks are needed to avoid a probe interfering with a match
      */
-    lam_mutex_t *unexpected_frags_lock;
+    lam_mutex_t *c_unexpected_frags_lock;
 
     /* out-of-order fragments queues */
-    lam_list_t *frags_cant_match;
+    lam_list_t *c_frags_cant_match;
 
     /* queues of unmatched specific (source process specified) receives
      * sorted by source process */
-    lam_list_t *specific_receives;
+    lam_list_t *c_specific_receives;
 
     /* queue of unmatched wild (source process not specified) receives
      * */
-    lam_list_t wild_receives;
+    lam_list_t c_wild_receives;
+
+    /* protect access to wild receives */
+    lam_mutex_t c_wild_lock;
 };
 typedef struct mca_pml_comm_t mca_pml_comm_t;
 

@@ -19,6 +19,9 @@ typedef struct {
 
 void mca_ptl_base_recv_request_init(mca_ptl_base_recv_request_t*);
 void mca_ptl_base_recv_request_destroy(mca_ptl_base_recv_request_t*);
+int mca_ptl_base_recv_request_match_wild(mca_ptl_base_recv_request_t*);
+int mca_ptl_base_recv_request_match_specific(mca_ptl_base_recv_request_t*);
+
 
 static inline void mca_ptl_base_recv_request_reinit(
     mca_ptl_base_recv_request_t *request,
@@ -38,6 +41,7 @@ static inline void mca_ptl_base_recv_request_reinit(
     request->super.req_tag = tag;
     request->super.req_communicator = comm;
     request->super.req_type = MCA_PML_REQUEST_RECV;
+    request->super.req_status = MCA_PML_STATUS_INITED;
     request->super.req_persistent = persistent;
     request->super.req_mpi_done = false;
     request->super.req_pml_layer_done = false;

@@ -38,7 +38,9 @@ struct mca_ptl_base_send_request_t {
     /* queue of fragments that are waiting to be acknowledged */
     mca_ptl_base_queue_t req_unacked_frags;
     /* PTL that allocated this descriptor */
-    struct mca_ptl_proc_t* req_owner;
+    struct mca_ptl_t* req_owner;
+    /* PTL peer instance that will be used for first fragment */
+    struct mca_ptl_peer_t* req_peer;
 };
 typedef struct mca_ptl_base_send_request_t mca_ptl_base_send_request_t;
 
@@ -71,6 +73,7 @@ static inline void mca_ptl_base_send_request_reinit(
     request->super.req_tag = tag; 
     request->super.req_communicator = comm; 
     request->super.req_type = MCA_PML_REQUEST_SEND; 
+    request->super.req_status = MCA_PML_STATUS_INITED; 
     request->super.req_persistent = persistent; 
     request->super.req_mpi_done = false; 
     request->super.req_pml_layer_done = false; 
