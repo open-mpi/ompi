@@ -17,6 +17,7 @@ headers = \
     if.h \
     output.h \
     path.h \
+    sys_info.h \
     strncpy.h
 
 libutil_la_SOURCES = \
@@ -27,6 +28,7 @@ libutil_la_SOURCES = \
     if.c \
     output.c \
     path.c \
+    sys_info.c \
     strncpy.c
 
 # Conditionally install the header files
