@@ -60,7 +60,8 @@ int mca_pml_teg_isend(void *buf,
                                    datatype,
                                    dst, tag, comm, sendmode, false);
 
-    if ((rc = mca_pml_teg_send_request_start(sendreq)) != OMPI_SUCCESS)
+    MCA_PML_TEG_SEND_REQUEST_START(sendreq, rc);
+    if (rc != OMPI_SUCCESS)
         return rc;
     *request = (ompi_request_t *) sendreq;
     return OMPI_SUCCESS;
@@ -90,7 +91,8 @@ int mca_pml_teg_send(void *buf,
                                    datatype,
                                    dst, tag, comm, sendmode, false);
 
-    if ((rc = mca_pml_teg_send_request_start(sendreq)) != OMPI_SUCCESS) {
+    MCA_PML_TEG_SEND_REQUEST_START(sendreq, rc);
+    if (rc != OMPI_SUCCESS) {
         MCA_PML_TEG_FREE((ompi_request_t **) & sendreq);
         return rc;
     }
