@@ -25,8 +25,8 @@ Start the given program using Open MPI
 [mpirun:allocate-resources]
 %s was unable to allocate enough resources to start your application.
 This might be a transient error (too many nodes in the cluster were
-unavailable at the time of the request) or a permenant error (you
-requsted more nodes than exist in your cluster).
+unavailable at the time of the request) or a permanent error (you
+requested more nodes than exist in your cluster).
 
 While probably only useful to Open MPI developers, the error returned
 was %d.
@@ -41,7 +41,7 @@ detailed usage guide.
 made to clean up all processes that did start.  The error returned was
 %d.
 [mpirun:proc-reg-failed]
-All proccess started by %s failed to reach MPI_Init().  This is a
+All processes started by %s failed to reach MPI_Init().  This is a
 fatal error, and not much information is available at this time as to
 why the processes didn't start.  It is possible that an error message
 describing the problem has already been printed above.
