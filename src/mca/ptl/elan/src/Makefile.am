@@ -5,11 +5,18 @@
 
 include $(top_ompi_srcdir)/config/Makefile.options
 
-AM_CPPFLAGS =  \
-        -I$(top_ompi_builddir)/src/include \
-        -I$(top_ompi_srcdir)/src \
-        -I$(top_ompi_srcdir)/src/include \
-        -lelan -lelanctrl -lrms -lrmscall -lelan4 
+
+# FIXME: to make the path to qsnet2libs a configure option
+
+AM_CPPFLAGS = -I$(top_ompi_builddir)/src/include \
+        -I$(top_ompi_srcdir)/src -I$(top_ompi_srcdir)/src/include  \
+	-I/usr/lib/qsnet/elan4/include \
+	-I/home/1/yuw/elan/qsnet2libs-1.6.4-1/include \
+	-I/home/1/yuw/elan/qsnet2libs-1.6.4-1/elan4lib/include \
+	-I/home/1/yuw/elan/qsnet2libs-1.6.4-1/elan4lib/elan4 \
+	-I/home/1/yuw/elan/qsnet2libs-1.6.4-1/elan4lib/common 
+
+AM_LDFLAGS = -lelan -lelanctrl -lrms -lrmscall -lelan4
 
 noinst_LTLIBRARIES = libmca_ptl_elan.la
 libmca_ptl_elan_la_SOURCES = \

@@ -85,40 +85,7 @@ mca_ptl_elan_recv_frag_send_ack (mca_ptl_elan_recv_frag_t * frag);
 static inline void
 mca_ptl_elan_send_frag_progress (mca_ptl_elan_send_frag_t * frag)
 {
-    mca_ptl_base_send_request_t *request = frag->super.frag_request;
-
-    /* if this is an ack - simply return to pool */
-    if (request == NULL) {
-        mca_ptl_elan_send_frag_return (frag->super.super.frag_owner, frag);
-
-    } else if (frag->frag_vec_cnt == 0 &&
-               ((frag->super.super.frag_header.hdr_common.hdr_flags
-                 & MCA_PTL_FLAGS_ACK_MATCHED) == 0 ||
-                mca_ptl_base_send_request_matched (request))) {
-
-        /* otherwise, if the message has been sent, and an ack has 
-         * already been received, go ahead and update the request status 
-         */
-
-        /* make sure this only happens once in threaded case */
-        if (ompi_using_threads ()
-            && fetchNset (&frag->frag_progressed, 1) == 1) {
-            return;
-        } else {
-            frag->frag_progressed = 1;
-        }
-
-        /* update request status */
-        frag->super.super.frag_owner->ptl_send_progress (request,
-                                                         &frag->super);
-
-        /* the first fragment is allocated with the request, 
-         * all others need to be returned to free list  
-         */
-        if (frag->super.super.frag_header.hdr_frag.hdr_frag_offset != 0)
-            mca_ptl_elan_send_frag_return (frag->super.super.frag_owner,
-                                           frag);
-    }
+    return;
 }
 
 static inline void

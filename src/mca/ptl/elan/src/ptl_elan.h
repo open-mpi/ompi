@@ -17,63 +17,64 @@
 
 #define MCA_PTL_ELAN_STATISTICS 0
 
-#include "elan/elan.h"
-#include "elan/init.h"
-#include "rms/rmscall.h"
-#include "elan4/library.h"
+#include "elan.h"
+#include "init.h"
+
+struct mca_ptl_elan_state_t;
+
+extern struct mca_ptl_elan_state_t mca_ptl_elan_global_state;
+
+/**
+ * ELAN PTL Interface
+ */
+struct mca_ptl_elan_t {
+
+    /**< The elan progress related interface */
+    mca_ptl_t   super;          /**< base PTL interface */
+
+    /**< The following are elan-related control structures */
+    ELAN_RAIL   *elan_rail;     /**< Pointer to this Rail */
+    ELAN_CTX    *elan_ctx;      /**< Elan ctx of this rail */
+
+    int         ptl_ni_local;   /**< PTL NI local rank */
+    int         ptl_ni_total;   /**< PTL NI total */
+
+    int         elan_sten_size; /**< sten packet len */
+    int         elan_rdma_size; /**< qdma packet length */
+    int         elan_qdma_size; /**< qdma packet length */
+
+    int         sten_total;     /**< total sten descriptors */
+    int         rdma_total;     /**< total rdma descriptors */
+    int         qdma_total;     /**< total rdma descriptors */
+                                
+    int         sten_num;       /**< num of outstanding sten packets */
+    int         rdma_num;       /**< num of outstanding rdma packets */
+    int         qdma_num;       /**< num of outstanding rdma packets */
+                                
+    int         max_num_dmas;   /**< total rdma descriptors */
+                                
+    ompi_list_t elan_stens;     /**< used elan sten descriptors*/
+    ompi_list_t elan_dmas;      /**< used elan dma descriptors*/
+    ompi_list_t elan_rdmas;     /**< used elan rdma descriptors */
+    ompi_list_t elan_frags;     /**< used elan fragments */
+
+    ompi_free_list_t elan_dmas_free;   /**< free elan dma descriptors*/
+    ompi_free_list_t elan_stens_free;  /**< free elan sten descriptors*/
+    ompi_free_list_t elan_rdmas_free;  /**< free elan rdma descriptors */
+    ompi_free_list_t elan_frags_free;  /**< free elan rdma fragments */
+
+#if MCA_PTL_ELAN_STATISTICS        /* some statistics */
+    size_t      ptl_bytes_sent;
+    size_t      ptl_bytes_recv;
+#endif
+
+};
+typedef struct mca_ptl_elan_t mca_ptl_elan_t;
+extern mca_ptl_elan_t mca_ptl_elan;
 
 /**
  * ELAN PTL module.
  */
-
-struct mca_ptl_elan_state_t {
-
-    /* User configurable parameters */
-
-    char        *elan_version;   /**< Version of the elan library */
-    uint64_t     elan_debug;     /**< elan debug tracing output */
-    uint64_t     elan_traced;    /**< elan TRACE output */
-    uint64_t     elan_flags;
-    FILE        *elan_debugfile; /* Debug output file handle      */
-    int          elan_signalnum;
-
-    size_t       main_size;   /**< size of Main memory allocator heap */
-    size_t       elan_size;   /**< size of Elan memory allocator heap */
-    void        *main_base;   /**< Main memory allocator heap base */
-    void        *elan_base;   /**< Elan memory allocator heap base */
-
-    /* other state parameters */
-
-    int          elan_attached;    /**< 0 until elan_attach() called */
-    unsigned int elan_vp;          /**< elan vpid, not ompi vpid */
-    unsigned int elan_nvp;         /**< total # of elan vpid */
-    int         *elan_localvps;    /**< mapping of localId to elan vp */
-    int          elan_localid;   /**< # of local elan vpids */
-    int          elan_numlocals;   /**< # of local elan vpids */
-    int          elan_maxlocals;   /**< maximum # of local elan vpids */
-    int          elan_nrails;      /**< # of rails elan vpids */
-    int          elan_rmsid;       /**< rms resource id */
-    long         elan_pagesize;
-    pid_t        elan_pid;
-
-    /* TODO:
-     *   Even though the elan threads are not utilized for now. 
-     *   We provide memory/state control structures for later extensions.
-     *   A simple type casting of ELAN_ESTATE can bring
-     *   the complete structure of the ELAN_EPRIVSATE.
-     */
-    ELAN_LOCATION    elan_myloc;
-    void            *elan_cap;    /**< job capability */
-    void            *elan_estate; /**< Elan state of the 0th rail */
-                  
-    ELAN_CTX        *elan_ctx;    /**< Elan ctx of the 0th rail */
-    ELAN_RAIL      **elan_rail;   /**< Rail control struct for all rails */
-    struct ompi_elan_rail_t ** all_rails;   /**< all rails */
-    ELAN4_COOKIEPOOL *elan_cpool;
-    ELAN_ESTATE **all_estates; /**< elan (priv)states of all rails */
-};
-typedef struct mca_ptl_elan_state_t mca_ptl_elan_state_t;
-
 struct mca_ptl_elan_module_1_0_0_t {
 
     mca_ptl_base_module_1_0_0_t super;       /**< base PTL module */
@@ -87,7 +88,6 @@ struct mca_ptl_elan_module_1_0_0_t {
      * although libelan already provides one. We do not need
      * all that tport, group structures.
      */
-    struct mca_ptl_elan_state_t *elan_state;  /**< elan state */
     struct mca_ptl_elan_t **elan_ptls;  /**< array of available PTLs */
     size_t elan_num_ptls;               /**< number of ptls activated */
 
@@ -150,56 +150,6 @@ extern int  mca_ptl_elan_module_control (int param,
  * ELAN module progress.
  */
 extern int  mca_ptl_elan_module_progress (mca_ptl_tstamp_t tstamp);
-
-/**
- * ELAN PTL Interface
- */
-struct mca_ptl_elan_t {
-
-	/**< The elan progress related interface */
-
-    mca_ptl_t   super;          /**< base PTL interface */
-
-	/**< The following are elan-related control structures */
-
-    ELAN_RAIL   *elan_rail;     /**< Pointer to this Rail */
-    ELAN_CTX    *elan_ctx;      /**< Elan ctx of this rail */
-
-    int         ptl_ni_local;   /**< PTL NI local rank */
-    int         ptl_ni_total;   /**< PTL NI total */
-
-    int         elan_sten_size; /**< sten packet len */
-    int         elan_rdma_size; /**< qdma packet length */
-    int         elan_qdma_size; /**< qdma packet length */
-
-    int         sten_total;     /**< total sten descriptors */
-    int         rdma_total;     /**< total rdma descriptors */
-    int         qdma_total;     /**< total rdma descriptors */
-                                
-    int         sten_num;       /**< num of outstanding sten packets */
-    int         rdma_num;       /**< num of outstanding rdma packets */
-    int         qdma_num;       /**< num of outstanding rdma packets */
-                                
-    int         max_num_dmas;   /**< total rdma descriptors */
-                                
-    ompi_list_t elan_stens;     /**< used elan sten descriptors*/
-    ompi_list_t elan_dmas;      /**< used elan dma descriptors*/
-    ompi_list_t elan_rdmas;     /**< used elan rdma descriptors */
-    ompi_list_t elan_frags;     /**< used elan fragments */
-
-    ompi_free_list_t elan_dmas_free;   /**< free elan dma descriptors*/
-    ompi_free_list_t elan_stens_free;  /**< free elan sten descriptors*/
-    ompi_free_list_t elan_rdmas_free;  /**< free elan rdma descriptors */
-    ompi_free_list_t elan_frags_free;  /**< free elan rdma fragments */
-
-#if MCA_PTL_ELAN_STATISTICS        /* some statistics */
-    size_t      ptl_bytes_sent;
-    size_t      ptl_bytes_recv;
-#endif
-
-};
-typedef struct mca_ptl_elan_t mca_ptl_elan_t;
-extern mca_ptl_elan_t mca_ptl_elan;
 
 /**
  * Cleanup any resources held by the PTL.

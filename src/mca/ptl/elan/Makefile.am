@@ -6,11 +6,13 @@
 
 include $(top_ompi_srcdir)/config/Makefile.options
 
-AM_CFLAGS = \
-        -I$(top_ompi_builddir)/src/include \
-        -I$(top_ompi_srcdir)/src \
-        -I$(top_ompi_srcdir)/src/include \
-        -lelan -lelanctrl -lrms -lrmscall -lelan4 
+AM_CPPFLAGS = -I$(top_ompi_builddir)/src/include \
+        -I$(top_ompi_srcdir)/src -I$(top_ompi_srcdir)/src/include  \
+	-I/usr/lib/qsnet/elan4/include \
+	-I/home/1/yuw/elan/qsnet2libs-1.6.4-1/include \
+	-I/home/1/yuw/elan/qsnet2libs-1.6.4-1/elan4lib/include \
+	-I/home/1/yuw/elan/qsnet2libs-1.6.4-1/elan4lib/elan4 \
+	-I/home/1/yuw/elan/qsnet2libs-1.6.4-1/elan4lib/common 
 
 SUBDIRS = src
 
@@ -34,9 +36,12 @@ mca_ptl_elan_la_SOURCES =
 mca_ptl_elan_la_LIBADD = \
         src/libmca_ptl_elan.la \
         $(LIBOMPI_LA)
-mca_ptl_elan_la_LDFLAGS = -module -avoid-version
+mca_ptl_elan_la_LDFLAGS = -module -avoid-version \
+    -lelan -lelanctrl -lrms -lrmscall -lelan4
+
 
 noinst_LTLIBRARIES = $(module_noinst)
 libmca_ptl_elan_la_SOURCES =
 libmca_ptl_elan_la_LIBADD = src/libmca_ptl_elan.la
-libmca_ptl_elan_la_LDFLAGS = -module -avoid-version
+libmca_ptl_elan_la_LDFLAGS = -module -avoid-version \
+    -lelan -lelanctrl -lrms -lrmscall -lelan4
