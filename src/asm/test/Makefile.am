@@ -46,34 +46,34 @@ atomic_barrier_LDADD = ../libasm.la
 atomic_spinlock_serial_SOURCES = \
 	atomic_spinlock_serial.c \
 	atomic_spinlock.c
-atomic_spinlock_serial_LDADD = ../libasm.la
+atomic_spinlock_serial_LDADD = ../libasm.la $(libs)
 
 atomic_spinlock_2_SOURCES = \
 	atomic_spinlock_2.c \
 	atomic_spinlock.c
-atomic_spinlock_2_LDADD = ../libasm.la
+atomic_spinlock_2_LDADD = ../libasm.la $(libs)
 
 atomic_spinlock_5_SOURCES = \
 	atomic_spinlock_5.c \
 	atomic_spinlock.c
-atomic_spinlock_5_LDADD = ../libasm.la
+atomic_spinlock_5_LDADD = ../libasm.la $(libs)
 
 atomic_spinlock_8_SOURCES = \
 	atomic_spinlock_8.c \
 	atomic_spinlock.c
-atomic_spinlock_8_LDADD = ../libasm.la
+atomic_spinlock_8_LDADD = ../libasm.la $(libs)
 
 ######################################################################
 
 atomic_cmpset_32_serial_SOURCES = atomic_cmpset_32_serial.c
-atomic_cmpset_32_serial_LDADD = ../libasm.la
+atomic_cmpset_32_serial_LDADD = ../libasm.la $(libs)
 
 ######################################################################
 
 atomic_cmpset_64_serial_SOURCES = atomic_cmpset_64_serial.c
-atomic_cmpset_64_serial_LDADD = ../libasm.la
+atomic_cmpset_64_serial_LDADD = ../libasm.la $(libs)
 
 ######################################################################
 
 atomic_test_SOURCES = atomic-test.c
-atomic_test_LDADD = ../libasm.la
+atomic_test_LDADD = ../libasm.la $(libs)
