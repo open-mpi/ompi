@@ -123,7 +123,7 @@ static inline void mca_ptl_tcp_recv_frag_progress(mca_ptl_tcp_recv_frag_t* frag)
             if(frag->frag_ack_pending == false) {
                 mca_ptl_tcp_recv_frag_return(frag->super.super.frag_owner, frag);
             }
-        }
+        } 
     }
 }
 

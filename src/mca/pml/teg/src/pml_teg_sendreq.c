@@ -47,7 +47,7 @@ void mca_pml_teg_send_request_schedule(mca_ptl_base_send_request_t* req)
          * previously assigned)
          */
         else {
-            bytes_to_frag = ptl_proc->ptl_weight * req->req_bytes_msg;
+            bytes_to_frag = (ptl_proc->ptl_weight * req->req_bytes_msg) / 100;
             if(bytes_to_frag > bytes_remaining)
                 bytes_to_frag = bytes_remaining;
         }

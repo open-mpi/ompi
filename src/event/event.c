@@ -132,7 +132,12 @@ struct lam_event_list lam_signalqueue;
 struct lam_event_list lam_eventqueue;
 static struct timeval lam_event_tv;
 lam_mutex_t lam_event_lock;
+#if LAM_HAVE_THREADS
 lam_thread_t lam_event_thread;
+lam_event_t lam_event_pipe_event;
+int lam_event_pipe[2];
+int lam_event_pipe_signalled;
+#endif
 
 static int
 compare(struct lam_event *a, struct lam_event *b)
@@ -155,6 +160,17 @@ static void* lam_event_run(lam_object_t* arg)
     return NULL;
 }
 
+
+#if LAM_HAVE_THREADS
+static void lam_event_pipe_handler(int sd, short flags, void* user)
+{
+    unsigned char byte;
+    if(read(sd, &byte, 1) != 1) {
+        lam_output(0, "lam_event_pipe: read failed with: errno=%d\n", errno);
+        lam_event_del(&lam_event_pipe_event);
+    }
+}
+#endif
 
 
 int
@@ -189,6 +205,21 @@ lam_event_init(void)
         errx(1, "%s: no event mechanism available", __func__);
 
 #if LAM_HAVE_THREADS
+    if(pipe(lam_event_pipe) != 0) {
+        lam_output(0, "lam_event_init: pipe() failed with errno=%d\n", errno);
+        return LAM_ERROR;
+    }
+
+    lam_event_pipe_signalled = 1;
+    lam_event_set(
+        &lam_event_pipe_event,
+         lam_event_pipe[0],
+         LAM_EV_READ|LAM_EV_PERSIST,
+         lam_event_pipe_handler,
+         0);
+    lam_event_add_i(&lam_event_pipe_event, 0);
+    lam_event_pipe_signalled = 0;
+
     /* spin up a thread to dispatch events */
     OBJ_CONSTRUCT(&lam_event_thread, lam_thread_t);
     lam_event_thread.t_run = lam_event_run;
@@ -251,6 +282,7 @@ lam_event_loop(int flags)
     /* Calculate the initial events that we are waiting for */
     if (lam_evsel->recalc(lam_evbase, 0) == -1) {
         lam_output(0, "lam_event_loop: lam_evsel->recalc() failed.");
+        lam_mutex_unlock(&lam_event_lock);
         return (-1);
     }
 
@@ -263,6 +295,7 @@ lam_event_loop(int flags)
                 if (res == -1) {
                     lam_output(0, "lam_event_loop: lam_event_sigcb() failed.");
                     errno = EINTR;
+                    lam_mutex_unlock(&lam_event_lock);
                     return (-1);
                 }
             }
@@ -286,9 +319,16 @@ lam_event_loop(int flags)
         else
             timerclear(&tv);
         
+#if LAM_HAVE_THREADS
+        lam_event_pipe_signalled = 0;
+#endif
         res = lam_evsel->dispatch(lam_evbase, &tv);
+#if LAM_HAVE_THREADS
+        lam_event_pipe_signalled = 1;
+#endif
         if (res == -1) {
             lam_output(0, "lam_event_loop: lam_evesel->dispatch() failed.");
+            lam_mutex_unlock(&lam_event_lock);
             return (-1);
         }
 
@@ -298,11 +338,12 @@ lam_event_loop(int flags)
             lam_event_process_active();
             if (flags & LAM_EVLOOP_ONCE)
                 done = 1;
-        } else if (flags & LAM_EVLOOP_NONBLOCK)
+        } else if (flags & (LAM_EVLOOP_NONBLOCK|LAM_EVLOOP_ONCE))
             done = 1;
 
         if (lam_evsel->recalc(lam_evbase, 0) == -1) {
             lam_output(0, "lam_event_loop: lam_evesel->recalc() failed.");
+            lam_mutex_unlock(&lam_event_lock);
             return (-1);
         }
     }
@@ -365,7 +406,7 @@ lam_event_add_i(struct lam_event *ev, struct timeval *tv)
          ev->ev_callback));
 
     assert(!(ev->ev_flags & ~LAM_EVLIST_ALL));
-
+    
     if (tv != NULL) {
         struct timeval now;
 
@@ -407,6 +448,15 @@ lam_event_add_i(struct lam_event *ev, struct timeval *tv)
         lam_event_queue_insert(ev, LAM_EVLIST_SIGNAL);
         return (lam_evsel->add(lam_evbase, ev));
     }
+
+#if LAM_HAVE_THREADS
+    if(lam_event_pipe_signalled == 0) {
+        unsigned char byte = 0;
+        if(write(lam_event_pipe[1], &byte, 1) != 1)
+            lam_output(0, "lam_event_add: write() to lam_event_pipe[1] failed with errno=%d\n", errno);
+        lam_event_pipe_signalled++;
+    }
+#endif
     return (0);
 }
 
@@ -446,6 +496,15 @@ int lam_event_del_i(struct lam_event *ev)
         lam_event_queue_remove(ev, LAM_EVLIST_SIGNAL);
         return (lam_evsel->del(lam_evbase, ev));
     }
+
+#if LAM_HAVE_THREADS
+    if(lam_event_pipe_signalled == 0) {
+        unsigned char byte = 0;
+        if(write(lam_event_pipe[1], &byte, 1) != 1)
+            lam_output(0, "lam_event_add: write() to lam_event_pipe[1] failed with errno=%d\n", errno);
+        lam_event_pipe_signalled++;
+    }
+#endif
     return (0);
 }
 
@@ -454,6 +513,7 @@ int lam_event_del(struct lam_event *ev)
     int rc;
     lam_mutex_lock(&lam_event_lock);
     rc = lam_event_del_i(ev);
+
     lam_mutex_unlock(&lam_event_lock);
     return rc;
 }

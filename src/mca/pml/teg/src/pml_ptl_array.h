@@ -18,7 +18,7 @@ extern lam_class_t mca_pml_teg_ptl_array_t_class;
  * that can be used to reach the process.
  */
 struct mca_ptl_proc_t {
-    double ptl_weight;                    /**< PTL weight for scheduling */
+    int ptl_weight;                       /**< PTL weight for scheduling */
     struct mca_ptl_base_peer_t* ptl_peer; /**< PTL addressing info */
     mca_ptl_t *ptl;                       /**< PTL implementation */
 };

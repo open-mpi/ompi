@@ -124,7 +124,6 @@ void mca_ptl_tcp_recv_frag_return(struct mca_ptl_t* ptl, struct mca_ptl_tcp_recv
 
 void mca_ptl_tcp_send_frag_return(struct mca_ptl_t* ptl, struct mca_ptl_tcp_send_frag_t* frag)
 {
-    /* OBJ_DESTRUCT(&frag->super.super.frag_convertor); */
     if(lam_list_get_size(&mca_ptl_tcp_module.tcp_pending_acks)) {
         mca_ptl_tcp_recv_frag_t* pending;
         THREAD_LOCK(&mca_ptl_tcp_module.tcp_lock);

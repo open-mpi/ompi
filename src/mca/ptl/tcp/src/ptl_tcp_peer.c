@@ -7,6 +7,9 @@
 #include <sys/errno.h>
 #include <sys/types.h>
 #include <sys/fcntl.h>
+#include <netinet/tcp.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include "types.h"
 #include "mca/ptl/base/ptl_base_sendreq.h"
 #include "ptl_tcp.h"
@@ -57,6 +60,59 @@ static void mca_ptl_tcp_peer_construct(mca_ptl_base_peer_t* ptl_peer)
 }
 
 
+/*
+ * diagnostics
+ */
+
+static void mca_ptl_tcp_peer_dump(mca_ptl_base_peer_t* ptl_peer, const char* msg)
+{
+    char src[64];
+    char dst[64];
+    char buff[255];
+    int sndbuf,rcvbuf,nodelay,flags;
+    struct sockaddr_in inaddr;
+    lam_socklen_t optlen;
+    lam_socklen_t addrlen = sizeof(struct sockaddr_in);
+
+    getsockname(ptl_peer->peer_sd, (struct sockaddr*)&inaddr, &addrlen);
+    sprintf(src, "%s", inet_ntoa(inaddr.sin_addr));
+    getpeername(ptl_peer->peer_sd, (struct sockaddr*)&inaddr, &addrlen);
+    sprintf(dst, "%s", inet_ntoa(inaddr.sin_addr));
+
+    if((flags = fcntl(ptl_peer->peer_sd, F_GETFL, 0)) < 0) {
+        lam_output(0, "mca_ptl_tcp_peer_connect: fcntl(F_GETFL) failed with errno=%d\n", errno);
+    }
+
+#if defined(SO_SNDBUF)
+    optlen = sizeof(sndbuf);
+    if(getsockopt(ptl_peer->peer_sd, SOL_SOCKET, SO_SNDBUF, (char *)&sndbuf, &optlen) < 0) {
+        lam_output(0, "mca_ptl_tcp_peer_dump: SO_SNDBUF option: errno %d\n", errno);
+    }
+#else
+    sndbuf = -1;
+#endif
+#if defined(SO_RCVBUF)
+    optlen = sizeof(rcvbuf);
+    if(getsockopt(ptl_peer->peer_sd, SOL_SOCKET, SO_RCVBUF, (char *)&rcvbuf, &optlen) < 0) {
+        lam_output(0, "mca_ptl_tcp_peer_dump: SO_RCVBUF option: errno %d\n", errno);
+    }
+#else
+    rcvbuf = -1;
+#endif
+#if defined(TCP_NODELAY)
+    optlen = sizeof(nodelay);
+    if(getsockopt(ptl_peer->peer_sd, IPPROTO_TCP, TCP_NODELAY, &nodelay, &optlen) < 0) {
+        lam_output(0, "mca_ptl_tcp_peer_dump: TCP_NODELAY option: errno %d\n", errno);
+    }
+#else
+    nodelay = 0;
+#endif
+
+    sprintf(buff, "%s: %s - %s nodelay %d sndbuf %d rcvbuf %d flags %08x\n", 
+        msg, src, dst, nodelay, sndbuf, rcvbuf, flags);
+    lam_output(0, buff);
+}
+
 static inline void mca_ptl_tcp_peer_event_init(mca_ptl_base_peer_t* ptl_peer, int sd)
 {
     lam_event_set(
@@ -105,9 +161,9 @@ int mca_ptl_tcp_peer_send(mca_ptl_base_peer_t* ptl_peer, mca_ptl_tcp_send_frag_t
         rc = LAM_ERR_UNREACH;
         break;
     case MCA_PTL_TCP_CONNECTED:
-        if (NULL != ptl_peer->peer_send_frag) 
+        if (NULL != ptl_peer->peer_send_frag) {
             lam_list_append(&ptl_peer->peer_frags, (lam_list_item_t*)frag);
-        else {
+        } else {
             if(mca_ptl_tcp_send_frag_handler(frag, ptl_peer->peer_sd)) {
                 mca_ptl_tcp_send_frag_progress(frag);
             } else {
@@ -197,6 +253,9 @@ bool mca_ptl_tcp_peer_accept(mca_ptl_base_peer_t* ptl_peer, struct sockaddr_in* 
             mca_ptl_tcp_peer_event_init(ptl_peer, sd);
             lam_event_add(&ptl_peer->peer_recv_event, 0);
             mca_ptl_tcp_peer_connected(ptl_peer);
+#if LAM_ENABLE_DEBUG
+            mca_ptl_tcp_peer_dump(ptl_peer, "accepted");
+#endif
             THREAD_UNLOCK(&ptl_peer->peer_send_lock);
             PROGRESS_THREAD_UNLOCK(&ptl_peer->peer_recv_lock);
             return true;
@@ -233,30 +292,6 @@ void mca_ptl_tcp_peer_close(mca_ptl_base_peer_t* ptl_peer)
 static void mca_ptl_tcp_peer_connected(mca_ptl_base_peer_t* ptl_peer)
 {
     /* setup socket options */
-    int optval = 1;
-    lam_socklen_t optlen = sizeof(optval);
-
-#if defined(TCP_NODELAY)
-   optval = 1;
-   if(setsockopt(sd, IPPROTO_TCP, TCP_NODELAY, &optval, optlen) < 0) {
-       lam_output(0, "mca_ptl_tcp_peer_connected: setsockopt(TCP_NODELAY) failed with errno=%d\n", errno);
-   }
-#endif
-#if defined(TCP_NODELACK)
-   optval = 1;
-   if(setsockopt(sd, IPPROTO_TCP, TCP_NODELACK, &optval, optlen) < 0) {
-       lam_output(0, "mca_ptl_tcp_peer_connected: setsockopt(TCP_NODELACK) failed with errno=%d\n", errno);
-   }
-#endif
-#if 0
-#if defined(TCP_QUICKACK)
-   optval = 1;
-   if(setsockopt(sd, IPPROTO_TCP, TCP_QUICKACK, &optval, optlen) < 0) {
-       lam_output(0, "mca_ptl_tcp_peer_connected: setsockopt(TCP_QUICKACK) failed with errno=%d\n", errno);
-   }
-#endif
-#endif
-
     ptl_peer->peer_state = MCA_PTL_TCP_CONNECTED;
     ptl_peer->peer_retries = 0;
     if(lam_list_get_size(&ptl_peer->peer_frags) > 0) {
@@ -339,7 +374,38 @@ static int mca_ptl_tcp_peer_recv_connect_ack(mca_ptl_base_peer_t* ptl_peer)
 
     /* connected */
     mca_ptl_tcp_peer_connected(ptl_peer);
+#if LAM_ENABLE_DEBUG
+    mca_ptl_tcp_peer_dump(ptl_peer, "connected");
+#endif
     return LAM_SUCCESS;
+}
+
+
+void mca_ptl_tcp_set_socket_options(int sd)
+{
+    int optval;
+#if defined(SO_SNDBUF)
+    if(setsockopt(sd, SOL_SOCKET, SO_SNDBUF, (char *)&mca_ptl_tcp_module.tcp_sndbuf, sizeof(int)) < 0) {
+        lam_output(0, "mca_ptl_tcp_set_socket_options: SO_SNDBUF option: errno %d\n", errno);
+    }
+#endif
+#if defined(SO_RCVBUF)
+    if(setsockopt(sd, SOL_SOCKET, SO_RCVBUF, (char *)&mca_ptl_tcp_module.tcp_rcvbuf, sizeof(int)) < 0) {
+        lam_output(0, "mca_ptl_tcp_set_socket_options: SO_RCVBUF option: errno %d\n", errno);
+    }
+#endif
+#if defined(TCP_NODELAY)
+    optval = 1;
+    if(setsockopt(sd, IPPROTO_TCP, TCP_NODELAY, &optval, sizeof(optval)) < 0) {
+        lam_output(0, "mca_ptl_tcp_set_socket_options: setsockopt(TCP_NODELAY) failed with errno=%d\n", errno);
+    }
+#endif
+#if defined(TCP_NODELACK)
+    optval = 1;
+    if(setsockopt(sd, IPPROTO_TCP, TCP_NODELACK, &optval, sizeof(optval)) < 0) {
+        lam_output(0, "mca_ptl_tcp_set_socket_options: setsockopt(TCP_NODELACK) failed with errno=%d\n", errno);
+    }
+#endif
 }
 
 
@@ -362,6 +428,9 @@ static int mca_ptl_tcp_peer_start_connect(mca_ptl_base_peer_t* ptl_peer)
         ptl_peer->peer_retries++;
         return LAM_ERR_UNREACH;
     }
+
+    /* setup socket buffer sizes */
+    mca_ptl_tcp_set_socket_options(ptl_peer->peer_sd);
 
     /* setup event callbacks */
     mca_ptl_tcp_peer_event_init(ptl_peer, ptl_peer->peer_sd);
@@ -505,8 +574,9 @@ static void mca_ptl_tcp_peer_send_handler(int sd, short flags, void* user)
         /* complete the current send */
         do {
             mca_ptl_tcp_send_frag_t* frag = ptl_peer->peer_send_frag;
-            if(mca_ptl_tcp_send_frag_handler(frag, ptl_peer->peer_sd) == false)
+            if(mca_ptl_tcp_send_frag_handler(frag, ptl_peer->peer_sd) == false) {
                 break;
+            }
 
             /* if required - update request status and release fragment */
             mca_ptl_tcp_send_frag_progress(frag);

@@ -20,8 +20,8 @@ void mca_pml_teg_recv_request_progress(
         if(mca_pml_teg.teg_request_waiting) {
 #if MCA_PML_TEG_STATISTICS
             mca_pml_teg.teg_condition_broadcasts++;
-            lam_condition_broadcast(&mca_pml_teg.teg_request_cond);
 #endif
+            lam_condition_broadcast(&mca_pml_teg.teg_request_cond);
         }
     }
     lam_mutex_unlock(&mca_pml_teg.teg_request_lock);
