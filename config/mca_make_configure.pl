@@ -360,7 +360,7 @@ sub make_template {
     # the right include path for the M4 files
 
     $search = "\@M4DIR\@";
-    $replace = ($config_params{PARAM_WANT_COMPLE_EXTERNAL} == 0) ?
+    $replace = ($config_params{PARAM_WANT_COMPILE_EXTERNAL} == 1) ?
         $config_params{PARAM_CONFIG_AUX_DIR} : "../../../../config";
     $template =~ s/$search/$replace/g;
 
