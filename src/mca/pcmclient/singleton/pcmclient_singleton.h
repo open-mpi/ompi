@@ -24,6 +24,7 @@ int mca_pcmclient_singleton_finalize(void);
 /*
  * "Action" functions
  */
+int mca_pcmclient_singleton_init_cleanup(void);
 int mca_pcmclient_singleton_get_peers(ompi_process_name_t **peers, size_t *npeers);
 ompi_process_name_t* mca_pcmclient_singleton_get_self(void);
 

@@ -26,8 +26,13 @@ libruntime_la_SOURCES = \
     ompi_progress.c \
     ompi_rte_finalize.c \
     ompi_rte_init.c \
+    ompi_rte_init_cleanup.c \
     ompi_rte_llm.c \
     ompi_rte_monitor.c \
+    ompi_rte_job_startup.c \
+    ompi_rte_job_shutdown.c \
+    ompi_rte_wait_startup_shutdown_msg.c \
+    ompi_rte_process_status.c \
     ompi_rte_cmd_line_setup.c \
     ompi_vm_register.c \
     universe_exists.c \

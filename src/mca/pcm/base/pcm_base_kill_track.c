@@ -274,7 +274,7 @@ mca_pcm_base_kill_send_job_msg(mca_ns_base_jobid_t jobid,
     /*
      * Get the contact data
      */
-    keys[0] = ns_base_convert_jobid_to_string(jobid);
+    keys[0] = mca_ns_base_convert_jobid_to_string(jobid);
     keys[1] = NULL;
 
     snprintf(segment, 256, KILLJOB_SEGMENT_STRING);
@@ -306,12 +306,12 @@ mca_pcm_base_kill_send_job_msg(mca_ns_base_jobid_t jobid,
         if (ret != OMPI_SUCCESS) {
             printf("ompi_unpack returned %d\n", ret);
         }
-        printf("lower: %s\n", ns_base_get_proc_name_string(&proc_name));
+        printf("lower: %s\n", mca_ns_base_get_proc_name_string(&proc_name));
         ompi_unpack(buf, &proc_name, 1, OMPI_NAME);
-        printf("upper: %s\n", ns_base_get_proc_name_string(&proc_name));
+        printf("upper: %s\n", mca_ns_base_get_proc_name_string(&proc_name));
         /* get the contact name */
         ompi_unpack(buf, &proc_name, 1, OMPI_NAME);
-        printf("contact: %s\n", ns_base_get_proc_name_string(&proc_name));
+        printf("contact: %s\n", mca_ns_base_get_proc_name_string(&proc_name));
 
 
         /* free the buffer and start over for packing */
@@ -377,8 +377,8 @@ mca_pcm_base_kill_register(mca_pcm_base_module_t* pcm,
     ompi_pack(buf, ompi_rte_get_self(), 1, OMPI_NAME);
 
     /* fill out the keys */
-    keys[0] = ns_base_get_jobid_string(&low);
-    keys[1] = ns_base_get_vpid_string(&low);
+    keys[0] = mca_ns_base_get_jobid_string(&low);
+    keys[1] = mca_ns_base_get_vpid_string(&low);
     keys[2] = NULL;
 
     snprintf(segment, 256, KILLJOB_SEGMENT_STRING);

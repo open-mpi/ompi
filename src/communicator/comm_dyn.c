@@ -24,6 +24,7 @@
 #include "mca/pcm/base/base.h"
 #include "mca/pml/pml.h"
 #include "mca/ns/base/base.h"
+#include "mca/gpr/base/base.h"
 
 #include "mca/pml/pml.h"
 #include "mca/oob/base/base.h"
@@ -269,7 +270,7 @@ int ompi_comm_start_processes (char *command, char **argv, int maxprocs,
     ompi_list_t schedlist;
     char *tmp, *envvarname, *segment, *my_contact_info;
     char cwd[MAXPATHLEN];
-    int rc;
+    ompi_registry_notify_id_t rc_tag;
     
     /* parse the info object */
     /* check potentially for: 
@@ -368,16 +369,17 @@ int ompi_comm_start_processes (char *command, char **argv, int maxprocs,
      * register to monitor the startup and shutdown processes
      */
     /* setup segment for this job */
-    asprintf(&segment, "ompi-job-%d", new_jobid);
+    asprintf(&segment, "%s-%s", OMPI_RTE_JOB_STATUS_SEGMENT,
+	     ompi_name_server.convert_jobid_to_string(new_jobid));
 
     /* register a synchro on the segment so we get notified when everyone registers */
-    rc = ompi_registry.synchro(
-	 OMPI_REGISTRY_SYNCHRO_MODE_LEVEL|OMPI_REGISTRY_SYNCHRO_MODE_ONE_SHOT,
-	 OMPI_REGISTRY_OR,
-	 segment,
-	 NULL,
-	 maxprocs,
-	 ompi_rte_all_procs_registered, NULL);
+    rc_tag = ompi_registry.synchro(
+	     OMPI_REGISTRY_SYNCHRO_MODE_LEVEL|OMPI_REGISTRY_SYNCHRO_MODE_ONE_SHOT,
+	     OMPI_REGISTRY_OR,
+	     segment,
+	     NULL,
+	     maxprocs,
+	     ompi_rte_all_procs_registered, NULL);
 
 
     /*
@@ -393,7 +395,11 @@ int ompi_comm_start_processes (char *command, char **argv, int maxprocs,
 	return MPI_ERR_SPAWN;
     }  
 
-   
+    /*
+     * tell processes okay to start by sending startup msg
+     */
+    ompi_rte_job_startup(new_jobid);
+
     /*
      * Clean up
      */

@@ -496,6 +496,7 @@ internal_wait_cb(pid_t pid, int status, void *data)
     int ret;
     char *proc_name;
     mca_pcm_rsh_module_t *me = (mca_pcm_rsh_module_t*) data;
+    ompi_rte_process_status_t proc_status;
 
     ompi_output_verbose(10, mca_pcm_base_output, 
                         "process %d exited with status %d", pid, status);
@@ -509,11 +510,12 @@ internal_wait_cb(pid_t pid, int status, void *data)
     }
 
     /* unregister all the procs */
+    proc_status.status_key = OMPI_PROC_KILLED;
+    proc_status.exit_code = (ompi_exit_code_t)status;
     for (i = lower ; i <= upper ; ++i) {
-        proc_name = 
-            ns_base_get_proc_name_string(
-                             ns_base_create_process_name(0, jobid, i));
-        ompi_registry.rte_unregister(proc_name);
+        proc_name = mca_ns_base_create_process_name(0, jobid, i);
+        ompi_rte_set_process_status(&proc_status, proc_name);
+        free(proc_name);
     }
 
     mca_pcm_base_kill_unregister(me, jobid, lower, upper);

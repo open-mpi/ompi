@@ -209,8 +209,8 @@ static void mca_base_modex_registry_callback(
         void* bptr;
         int32_t bsize;
         bool isnew = false;
-                                                                                                       
-        /* transfer ownership of registry object to buffer and unpack */
+ 
+	/* transfer ownership of registry object to buffer and unpack */
         ompi_buffer_init_preallocated(&buffer, value->object, value->object_size);
         value->object = NULL;
         value->object_size = 0;
@@ -220,7 +220,9 @@ static void mca_base_modex_registry_callback(
          * Lookup the process.
          */
         ompi_unpack(buffer, &proc_name, 1, OMPI_NAME);
+
         proc = ompi_proc_find_and_add(&proc_name, &isnew);
+
         if(NULL == proc)
             continue;
         if(isnew) {
@@ -248,6 +250,7 @@ static void mca_base_modex_registry_callback(
          */
 
         ompi_unpack_string(buffer, &component_name_version);
+
         if(sscanf(component_name_version, "%[^-]-%[^-]-%d-%d", 
             component.mca_type_name,
             component.mca_component_name,
@@ -305,8 +308,8 @@ static void mca_base_modex_registry_callback(
 
 static int mca_base_modex_subscribe(ompi_process_name_t* name)
 {
-    int rc;
-    char segment[32];
+    ompi_registry_notify_id_t rctag;
+    char *segment;
     ompi_list_item_t* item;
     mca_base_modex_subscription_t* subscription;
 
@@ -324,18 +327,22 @@ static int mca_base_modex_subscribe(ompi_process_name_t* name)
     OMPI_UNLOCK(&mca_base_modex_lock);
 
     /* otherwise - subscribe */
-    sprintf(segment, "modex-%X", name->jobid);
-    rc = ompi_registry.subscribe(
+    asprintf(&segment, "%s-%s", OMPI_RTE_MODEX_SEGMENT, mca_ns_base_get_jobid_string(name));
+    rctag = ompi_registry.subscribe(
         OMPI_REGISTRY_OR,
         OMPI_REGISTRY_NOTIFY_ADD_ENTRY|OMPI_REGISTRY_NOTIFY_DELETE_ENTRY|
-        OMPI_REGISTRY_NOTIFY_MODIFICATION|OMPI_REGISTRY_NOTIFY_PRE_EXISTING,
+        OMPI_REGISTRY_NOTIFY_MODIFICATION|
+	OMPI_REGISTRY_NOTIFY_ON_STARTUP|OMPI_REGISTRY_NOTIFY_INCLUDE_STARTUP_DATA|
+	OMPI_REGISTRY_NOTIFY_ON_SHUTDOWN,
         segment,
         NULL,
         mca_base_modex_registry_callback,
         NULL);
-    if(rc != OMPI_SUCCESS) {
+    if(rctag == OMPI_REGISTRY_NOTIFY_ID_MAX) {
         ompi_output(0, "mca_base_modex_exchange: "
-            "ompi_registry.subscribe failed with return code %d\n", rc);
+		    "ompi_registry.subscribe failed with return code %d\n", (int)rctag);
+	free(segment);
+	return OMPI_ERROR;
     }
 
     /* add this jobid to our list of subscriptions */
@@ -344,7 +351,8 @@ static int mca_base_modex_subscribe(ompi_process_name_t* name)
     subscription->jobid = name->jobid;
     ompi_list_append(&mca_base_modex_subscriptions, &subscription->item);
     OMPI_UNLOCK(&mca_base_modex_lock);
-    return rc;
+    free(segment);
+    return OMPI_SUCCESS;
 }
 
 
@@ -360,15 +368,15 @@ int mca_base_modex_send(
     const void *data, 
     size_t size)
 {
-    char segment[32];
-    char component_name_version[256];
+    char *segment;
+    char *component_name_version;
     char *keys[3];
     ompi_buffer_t buffer;
     void* bptr;
     int bsize;
     int rc;
 
-    sprintf(component_name_version, "%s-%s-%d-%d", 
+    asprintf(&component_name_version, "%s-%s-%d-%d", 
         source_component->mca_type_name,
         source_component->mca_component_name,
         source_component->mca_component_major_version,
@@ -378,20 +386,22 @@ int mca_base_modex_send(
     keys[1] = component_name_version;
     keys[2] = NULL;
 
-    ompi_buffer_init(&buffer, size+256);
+    ompi_buffer_init(&buffer, 0);
     ompi_pack(buffer, ompi_rte_get_self(), 1, OMPI_NAME);
     ompi_pack_string(buffer, component_name_version);
     ompi_pack(buffer, &size, 1, OMPI_INT32);
     ompi_pack(buffer, (void*)data, size, OMPI_BYTE);
     ompi_buffer_get(buffer, &bptr, &bsize);
 
-    sprintf(segment, "modex-%X", mca_oob_name_self.jobid);
+    asprintf(&segment, "%s-%s", OMPI_RTE_MODEX_SEGMENT, mca_ns_base_get_jobid_string(&mca_oob_name_self));
     rc = ompi_registry.put(
         OMPI_REGISTRY_OVERWRITE, 
         segment,
         keys,
         (ompi_registry_object_t)bptr,
         (ompi_registry_object_size_t)bsize);
+    free(segment);
+    free(component_name_version);
     return rc;
 }
 

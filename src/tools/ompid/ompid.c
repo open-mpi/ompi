@@ -58,8 +58,8 @@ int main(int argc, char *argv[])
     bool allow_multi_user_threads   = false;
     bool have_hidden_threads  = false;
     char *enviro_val, *contact_file;
-    char *filenm, *contact_info;
-   size_t nprocs;
+    char *filenm, *segment;
+    ompi_rte_process_status_t my_status;
 
     /*
      * Intialize the Open MPI environment
@@ -157,22 +157,42 @@ int main(int argc, char *argv[])
         return ret;
     }
 
-    /*
-     *  Register my process info with my replica. Note that this must be done
-     *  after the rte init is completed.
+    /* start recording the compound command that starts us up */
+    ompi_registry.begin_compound_cmd();
+
+    /* Finish setting up the RTE - contains commands
+     * that need to be inside the compound command
      */
-    contact_info = mca_oob_get_contact_info();
-    ompi_rte_get_peers(NULL, &nprocs);
-    if (OMPI_SUCCESS != (ret = ompi_registry.rte_register(contact_info, nprocs,
-							  ompi_rte_all_procs_registered, NULL,
-							  ompi_rte_all_procs_unregistered, NULL))) {
-        ompi_output(0, "ompi_rte_init: failed in ompi_rte_register");;
+    if (OMPI_SUCCESS != (ret = ompi_rte_init_cleanup())) {
+	printf("ompi_rte_init_cleanup failed\n");
+	return ret;
+    }
+
+    /*
+     *  Set my process status to "starting". Note that this must be done
+     *  after the rte init is completed.
+     *
+     *  Ensure we own the job status segment first
+     */
+    asprintf(&segment, "%s-%s", OMPI_RTE_JOB_STATUS_SEGMENT,
+	     ompi_name_server.get_jobid_string(ompi_rte_get_self()));
+    ompi_registry.assume_ownership(segment);
+
+    my_status.status_key = OMPI_PROC_STARTING;
+    my_status.exit_code = 0;
+    if (OMPI_SUCCESS != (ret = ompi_rte_set_process_status(&my_status, ompi_rte_get_self()))) {
+        printf("ompid: failed in ompi_rte_set_process_status()\n");
         return ret;
     } 
 
-    /* wait for all the daemons to have registered so we can be sure to get everyone's contact info */
-    if (OMPI_SUCCESS != (ret = ompi_rte_monitor_procs_registered())) {
-	ompi_output(0, "ompi_rte_init: failed to see all procs register");
+    /* execute the compound command - no return data requested
+    *  we'll get it all from the startup message
+    */
+    ompi_registry.exec_compound_cmd(OMPI_REGISTRY_NO_RETURN_REQUESTED);
+
+    /* wait to receive startup message and info distributed */
+    if (OMPI_SUCCESS != (ret = ompi_rte_wait_startup_msg())) {
+	printf("ompid: failed to see all procs register\n");
 	return ret;
     }
 

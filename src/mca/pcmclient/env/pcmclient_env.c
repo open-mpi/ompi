@@ -22,6 +22,12 @@ OMPI_COMP_EXPORT extern int mca_pcmclient_env_num_procs;
 OMPI_COMP_EXPORT extern int mca_pcmclient_env_procid;
 OMPI_COMP_EXPORT extern ompi_process_name_t *mca_pcmclient_env_procs;
 
+int
+mca_pcmclient_env_init_cleanup(void)
+{
+    return OMPI_SUCCESS;
+}
+
 
 int 
 mca_pcmclient_env_get_peers(ompi_process_name_t **procs, 

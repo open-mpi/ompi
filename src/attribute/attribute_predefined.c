@@ -53,13 +53,33 @@ static int attr_impi_host_color = 0;
 
 int ompi_attr_create_predefined(void)
 {
+    ompi_registry_notify_id_t rc;
+
+     rc = ompi_registry.subscribe(
+         OMPI_REGISTRY_OR,
+	 OMPI_REGISTRY_NOTIFY_ON_STARTUP|OMPI_REGISTRY_NOTIFY_INCLUDE_STARTUP_DATA,
+         OMPI_RTE_VM_STATUS_SEGMENT,
+         NULL,
+         ompi_attr_create_predefined_callback,
+         NULL);
+     if(rc == OMPI_REGISTRY_NOTIFY_ID_MAX) {
+         ompi_output(0, "ompi_attr_create_predefined: subscribe failed");
+         return OMPI_ERROR;
+     }
+     return OMPI_SUCCESS;
+}
+
+
+void ompi_attr_create_predefined_callback(
+	ompi_registry_notify_message_t *msg,
+	void *cbdata)
+{
     int num, err;
-    ompi_list_t *universe;
     ompi_list_item_t *item;
     ompi_registry_value_t *reg_value;
     ompi_buffer_t buffer;
     char *bogus;
-    ompi_process_name_t *name;
+    ompi_process_name_t name;
 
     /* Set some default values */
 
@@ -77,14 +97,22 @@ int ompi_attr_create_predefined(void)
        where the master is supposed to SPAWN the other processes.
        Perhaps need some integration with the LLM here...?  [shrug] */
 
-    universe = ompi_registry.get(OMPI_REGISTRY_OR, "ompi-vm", NULL);
+    /* RHC: Needed to change this code so it wouldn't issue a registry.get
+     * during the compound command phase of mpi_init. Since all you need
+     * is to have the data prior to dtypes etc., and since this function
+     * is called right before we send the compound command, I've changed
+     * it to a subscription and a callback function. This allows you to
+     * get the data AFTER the compound command executes. Nothing else
+     * happens in-between anyway, so this shouldn't cause a problem.
+     */
+
     attr_universe_size = 0;
-    if (0 == ompi_list_get_size(universe)) {
+    if (0 == ompi_list_get_size(&msg->data)) {
         attr_universe_size = ompi_comm_size(MPI_COMM_WORLD);
     } else {
-        for (item = ompi_list_remove_first(universe);
+        for (item = ompi_list_remove_first(&msg->data);
              NULL != item;
-             item = ompi_list_remove_first(universe)) {
+             item = ompi_list_remove_first(&msg->data)) {
             reg_value = (ompi_registry_value_t *) item;
             buffer = (ompi_buffer_t) reg_value->object;
             
@@ -94,7 +122,7 @@ int ompi_attr_create_predefined(void)
             
             /* Process name */
             ompi_unpack(buffer, &name, 1, OMPI_NAME);
-            free(name);
+            free(&name);
             
             /* OOB contact info */
             ompi_unpack_string(buffer, &bogus);
@@ -109,7 +137,7 @@ int ompi_attr_create_predefined(void)
             OBJ_RELEASE(item);
         }
     }
-    OBJ_RELEASE(universe);
+    OBJ_RELEASE(msg);
 
     /* DO NOT CHANGE THE ORDER OF CREATING THESE KEYVALS!  This order
        strictly adheres to the order in mpi.h.  If you change the
@@ -144,10 +172,10 @@ int ompi_attr_create_predefined(void)
                                    &attr_impi_host_color)) ||
 #endif
         0) {
-        return err;
+        return;
     }
 
-    return OMPI_SUCCESS;
+    return;
 }
 
 

@@ -44,6 +44,7 @@ OMPI_COMP_EXPORT mca_pcmclient_base_component_1_0_0_t mca_pcmclient_seed_compone
 
 
 struct mca_pcmclient_base_module_1_0_0_t mca_pcmclient_seed_1_0_0 = {
+    mca_pcmclient_seed_init_cleanup,
     mca_pcmclient_seed_get_self,
     mca_pcmclient_seed_get_peers,
 };

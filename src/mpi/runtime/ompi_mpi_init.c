@@ -26,7 +26,6 @@
 #include "threads/thread.h"
 
 #include "mca/base/base.h"
-#include "mca/base/base.h"
 #include "mca/allocator/base/base.h"
 #include "mca/allocator/allocator.h"
 #include "mca/mpool/base/base.h"
@@ -41,6 +40,7 @@
 #include "mca/topo/base/base.h"
 #include "mca/io/io.h"
 #include "mca/io/base/base.h"
+#include "mca/oob/oob.h"
 #include "mca/oob/base/base.h"
 #include "mca/ns/base/base.h"
 #include "mca/gpr/base/base.h"
@@ -68,9 +68,10 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     bool allow_multi_user_threads;
     bool have_hidden_threads;
     ompi_proc_t** procs;
+    ompi_rte_process_status_t my_status;
     size_t nprocs;
     char *error = NULL;
-    char *contact_info;
+    char *segment, *jobid_string;
 
     /* Become an OMPI process */
 
@@ -94,22 +95,14 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 	goto error;
     }
 
-    /*
-     *  Register my process info with my replica. Note that this must be done
-     *  after the rte init is completed.
-     */
-    contact_info = mca_oob_get_contact_info();
-    ompi_rte_get_peers(NULL, &nprocs);
-    if (OMPI_SUCCESS != (ret = ompi_registry.rte_register(contact_info, nprocs,
-							  ompi_rte_all_procs_registered, NULL,
-							  ompi_rte_all_procs_unregistered, NULL))) {
-        error = "ompi_rte_init: failed in ompi_rte_register()\n";
-        goto error;
-    } 
+    /* start recording the compound command that starts us up */
+    ompi_registry.begin_compound_cmd();
 
-    /* wait for all procs to have registered so we can be sure to get everyone's contact info */
-    if (OMPI_SUCCESS != (ret = ompi_rte_monitor_procs_registered())) {
-	error = "ompi_rte_init: failed to see all procs register\n";
+    /* Finish setting up the RTE - contains commands
+     * that need to be inside the compound command
+     */
+    if (OMPI_SUCCESS != (ret = ompi_rte_init_cleanup())) {
+	error = "ompi_rte_init_cleanup failed";
 	goto error;
     }
 
@@ -253,6 +246,44 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         goto error;
     }
 
+    /*
+     *  Set my process status to "starting". Note that this must be done
+     *  after the rte init is completed.
+     *
+     *  Ensure we own the job status and the oob segments first
+     */
+    jobid_string = ompi_name_server.get_jobid_string(ompi_rte_get_self());
+    asprintf(&segment, "%s-%s", OMPI_RTE_JOB_STATUS_SEGMENT, jobid_string);
+    ompi_registry.assume_ownership(segment);
+    free(segment);
+
+    asprintf(&segment, "%s-%s", OMPI_RTE_OOB_SEGMENT, jobid_string);
+    ompi_registry.assume_ownership(segment);
+    free(segment);
+
+    my_status.status_key = OMPI_PROC_STARTING;
+    my_status.exit_code = 0;
+    if (OMPI_SUCCESS != (ret = ompi_rte_set_process_status(&my_status, ompi_rte_get_self()))) {
+        error = "ompi_mpi_init: failed in ompi_rte_set_process_status()\n";
+        goto error;
+    } 
+
+    /* execute the compound command - no return data requested
+    *  we'll get it all from the startup message
+    */
+    ompi_registry.exec_compound_cmd(OMPI_REGISTRY_NO_RETURN_REQUESTED);
+
+    /* wait to receive startup message and info distributed */
+    if (OMPI_SUCCESS != (ret = ompi_rte_wait_startup_msg())) {
+	error = "ompi_rte_init: failed to see all procs register\n";
+	goto error;
+    }
+
+    if (ompi_rte_debug_flag) {
+	ompi_output(0, "[%d,%d,%d] process startup message received",
+		    OMPI_NAME_ARGS(*ompi_rte_get_self()));
+    }
+
     /* add all ompi_proc_t's to PML */
     if (NULL == (procs = ompi_proc_world(&nprocs))) {
         error = "ompi_proc_world() failed";
@@ -327,5 +358,11 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 
     ompi_mpi_initialized = true;
     ompi_mpi_finalized = false;
+
+    if (ompi_rte_debug_flag) {
+	ompi_output(0, "[%d,%d,%d] ompi_mpi_init completed",
+		    OMPI_NAME_ARGS(*ompi_rte_get_self()));
+    }
+
     return MPI_SUCCESS;
 }

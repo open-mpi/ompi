@@ -26,8 +26,8 @@ mca_pcm_rsh_kill_proc(struct mca_pcm_base_module_1_0_0_t* me_super,
 
     if (0 != (OMPI_RTE_SPAWN_HIGH_QOS & me->constraints)) {
         pid = mca_pcm_base_job_list_get_starter(me->jobs,
-                                                ns_base_get_jobid(name),
-                                                ns_base_get_vpid(name),
+                                                mca_ns_base_get_jobid(name),
+                                                mca_ns_base_get_vpid(name),
                                                 false);
         if (pid <= 0) return errno;
 

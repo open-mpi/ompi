@@ -55,7 +55,8 @@ int mca_oob_tcp_recv(
             iov[0].iov_base = msg->msg_rwbuf;
             iov[0].iov_len = msg->msg_hdr.msg_size;
             msg->msg_rwbuf = NULL;
- 
+            rc = msg->msg_hdr.msg_size;
+
         } else {
 
             /* if we are just doing peek, return bytes without dequeing message */
@@ -167,7 +168,8 @@ int mca_oob_tcp_recv_nb(
             iov[0].iov_base = msg->msg_rwbuf;
             iov[0].iov_len = msg->msg_hdr.msg_size;
             msg->msg_rwbuf = NULL;
- 
+            rc = msg->msg_hdr.msg_size;
+
         } else {
 
             /* if we are just doing peek, return bytes without dequeing message */
@@ -189,7 +191,7 @@ int mca_oob_tcp_recv_nb(
         OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_match_lock);
         cbfunc(rc, &msg->msg_peer, iov, count, msg->msg_hdr.msg_tag, cbdata);
         MCA_OOB_TCP_MSG_RETURN(msg);
-        return 0;
+        return rc;
     }
 
     /* the message has not already been received. So we add it to the receive queue */
@@ -258,8 +260,8 @@ int mca_oob_tcp_recv_cancel(
         mca_oob_tcp_msg_t* msg = (mca_oob_tcp_msg_t*)item;
         next = ompi_list_get_next(item);
 
-        if((0 == mca_oob_tcp_process_name_compare(name,MCA_OOB_NAME_ANY) ||
-           (0 == mca_oob_tcp_process_name_compare(&msg->msg_peer,name)))) {
+        if((0 == ompi_name_server.compare(OMPI_NS_CMP_ALL, name,MCA_OOB_NAME_ANY) ||
+	    (0 == ompi_name_server.compare(OMPI_NS_CMP_ALL, &msg->msg_peer,name)))) {
             if (tag == MCA_OOB_TAG_ANY || msg->msg_hdr.msg_tag == tag) {
                 ompi_list_remove_item(&mca_oob_tcp_component.tcp_msg_post, &msg->super);
                 MCA_OOB_TCP_MSG_RETURN(msg);

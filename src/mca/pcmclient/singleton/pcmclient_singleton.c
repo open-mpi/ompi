@@ -4,12 +4,6 @@
 
 
 #include "ompi_config.h"
-#include "mca/pcmclient/pcmclient.h"
-#include "mca/pcmclient/singleton/pcmclient_singleton.h"
-#include "mca/oob/base/base.h"
-#include "include/types.h"
-#include "include/constants.h"
-#include "mca/ns/ns.h"
 
 #include <stdio.h>
 #ifdef HAVE_SYS_TYPES_H
@@ -20,6 +14,16 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+
+#include "mca/pcmclient/pcmclient.h"
+#include "mca/pcmclient/singleton/pcmclient_singleton.h"
+#include "mca/oob/base/base.h"
+#include "include/types.h"
+#include "include/constants.h"
+#include "mca/ns/ns.h"
+#include "mca/gpr/gpr.h"
+#include "mca/gpr/base/base.h"
+#include "runtime/runtime.h"
 
 OMPI_COMP_EXPORT extern ompi_process_name_t *mca_pcmclient_singleton_procs;
 
@@ -38,6 +42,61 @@ init_proclist(void)
     mca_pcmclient_singleton_procs[0].cellid =  MCA_NS_BASE_CELLID_MAX;
     mca_pcmclient_singleton_procs[0].jobid = MCA_NS_BASE_JOBID_MAX;
     mca_pcmclient_singleton_procs[0].vpid = MCA_NS_BASE_VPID_MAX;
+    return OMPI_SUCCESS;
+}
+
+static void
+proc_registered_cb(ompi_registry_notify_message_t *match, 
+                   void *cbdata)
+{
+    ompi_rte_job_startup(mca_pcmclient_singleton_procs[0].jobid);
+}
+
+static void
+proc_unregistered_cb(ompi_registry_notify_message_t *match, 
+                   void *cbdata)
+{
+    ompi_rte_job_shutdown(mca_pcmclient_singleton_procs[0].jobid);
+}
+
+int
+mca_pcmclient_singleton_init_cleanup(void)
+{
+    int ret;
+    char *segment;
+    ompi_registry_notify_id_t rc_tag;
+
+    if (NULL == mca_pcmclient_singleton_procs) {
+        ret = init_proclist();
+        if (OMPI_SUCCESS != ret) return ret;
+    }
+
+    /* register syncro for when we register (the compound command has
+       started executing).  At this point, do the broadcast code */
+
+    /* setup segment for this job */
+    asprintf(&segment, "%s-%s", OMPI_RTE_JOB_STATUS_SEGMENT,
+	     ompi_name_server.convert_jobid_to_string(mca_pcmclient_singleton_procs[0].jobid));
+
+    /* register a synchro on the segment so we get notified for startup */
+    rc_tag = ompi_registry.synchro(
+	     OMPI_REGISTRY_SYNCHRO_MODE_LEVEL|OMPI_REGISTRY_SYNCHRO_MODE_ONE_SHOT,
+	     OMPI_REGISTRY_OR,
+	     segment,
+	     NULL,
+             1,
+	     proc_registered_cb, NULL);
+
+    /* register a synchro on the segment so we get notified on shutdown */
+    rc_tag = ompi_registry.synchro(
+	     OMPI_REGISTRY_SYNCHRO_MODE_DESCENDING|OMPI_REGISTRY_SYNCHRO_MODE_ONE_SHOT,
+	     OMPI_REGISTRY_OR,
+	     segment,
+	     NULL,
+	     0,
+	     proc_unregistered_cb, NULL);
+
+
     return OMPI_SUCCESS;
 }
 

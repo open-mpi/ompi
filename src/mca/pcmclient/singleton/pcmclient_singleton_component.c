@@ -44,6 +44,7 @@ OMPI_COMP_EXPORT mca_pcmclient_base_component_1_0_0_t mca_pcmclient_singleton_co
 
 
 OMPI_COMP_EXPORT struct mca_pcmclient_base_module_1_0_0_t mca_pcmclient_singleton_1_0_0 = {
+    mca_pcmclient_singleton_init_cleanup,
     mca_pcmclient_singleton_get_self,
     mca_pcmclient_singleton_get_peers,
 };

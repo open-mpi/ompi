@@ -28,6 +28,15 @@
 #include "runtime/runtime_types.h"
 
 
+struct mca_pcmclient_base_module_1_0_0_t;
+typedef struct mca_pcmclient_base_module_1_0_0_t mca_pcmclient_base_module_1_0_0_t;
+typedef struct mca_pcmclient_base_module_1_0_0_t mca_pcmclient_base_module_t;
+
+struct mca_pcmclient_base_component_1_0_0_t;
+typedef struct mca_pcmclient_base_component_1_0_0_t mca_pcmclient_base_component_1_0_0_t;
+typedef mca_pcmclient_base_component_1_0_0_t mca_pcmclient_base_component_t;
+
+
 /*
  * MCA component management functions
  */
@@ -47,7 +56,7 @@
  * @param have_hidden_threads (OUT) Whether this module needs to start
  *                       a background thread for operation.
  */
-typedef struct mca_pcmclient_base_module_1_0_0_t* 
+typedef mca_pcmclient_base_module_t* 
 (*mca_pcmclient_base_component_init_fn_t)(int *priority, 
                                           bool *allow_multiple_user_threads,
                                           bool *have_hidden_threads);
@@ -76,8 +85,6 @@ struct mca_pcmclient_base_component_1_0_0_t {
   mca_pcmclient_base_component_init_fn_t pcmclient_init;
   mca_pcmclient_base_component_finalize_fn_t pcmclient_finalize;
 };
-typedef struct mca_pcmclient_base_component_1_0_0_t mca_pcmclient_base_component_1_0_0_t;
-typedef mca_pcmclient_base_component_1_0_0_t mca_pcmclient_base_component_t;
 
 
 /*
@@ -85,11 +92,21 @@ typedef mca_pcmclient_base_component_1_0_0_t mca_pcmclient_base_component_t;
  */
 
 /**
+ * Finish initialization
+ *
+ * Perform any local registration / cleanup necessary during RTE
+ * initialization, but after the OOB / GPR / etc have started
+ * execution
+ */
+typedef int
+(*mca_pcmclient_base_module_init_cleanup_fn_t)(void);
+
+/**
  * Get my name
  *
  * @return my name
  */
-typedef ompi_process_name_t* 
+typedef ompi_process_name_t * 
 (*mca_pcmclient_base_module_get_self_fn_t)(void);
 
 
@@ -111,11 +128,10 @@ typedef int
  * pointers to the calling interface. 
  */
 struct mca_pcmclient_base_module_1_0_0_t {
+    mca_pcmclient_base_module_init_cleanup_fn_t pcmclient_init_cleanup;
     mca_pcmclient_base_module_get_self_fn_t pcmclient_get_self;
     mca_pcmclient_base_module_get_peers_fn_t pcmclient_get_peers;
 };
-typedef struct mca_pcmclient_base_module_1_0_0_t mca_pcmclient_base_module_1_0_0_t;
-typedef struct mca_pcmclient_base_module_1_0_0_t mca_pcmclient_base_module_t;
 
 
 /**

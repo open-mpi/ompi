@@ -4,6 +4,34 @@
 #include "ompi_config.h"
 #include "mca/oob/tcp/oob_tcp.h"
 
+static int mca_oob_tcp_send_self(
+    mca_oob_tcp_peer_t* peer,
+    mca_oob_tcp_msg_t* msg,
+    struct iovec* iov, 
+    int count)
+{
+    unsigned char *ptr;
+    int size = 0;
+    int rc;
+
+    for(rc = 0; rc < count; rc++) {
+        size += iov[rc].iov_len;
+    }
+    msg->msg_rwbuf = malloc(size);
+    if(NULL == msg->msg_rwbuf) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    ptr = msg->msg_rwbuf;
+    for(rc = 0; rc < count; rc++) {
+        memcpy(ptr, iov[rc].iov_base, iov[rc].iov_len);
+        ptr += iov[rc].iov_len;
+    }
+    msg->msg_hdr.msg_size = size;
+    mca_oob_tcp_msg_recv_complete(msg, peer);
+    return size;
+}
+
 /*
  * Similiar to unix writev(2).
  *
@@ -32,6 +60,7 @@ int mca_oob_tcp_send(
             OMPI_NAME_ARGS(peer->peer_name),
             tag);
     }
+
     if(NULL == peer)
         return OMPI_ERR_UNREACH;
 
@@ -51,7 +80,6 @@ int mca_oob_tcp_send(
     msg->msg_hdr.msg_tag = tag;
     msg->msg_hdr.msg_src = mca_oob_name_self;
     msg->msg_hdr.msg_dst = *name;
-    MCA_OOB_TCP_HDR_HTON(&msg->msg_hdr);
 
     /* create one additional iovect that will hold the header */
     msg->msg_type = MCA_OOB_TCP_POSTED;
@@ -60,7 +88,7 @@ int mca_oob_tcp_send(
     msg->msg_uiov = iov;
     msg->msg_ucnt = count;
     msg->msg_rwiov = mca_oob_tcp_msg_iov_alloc(msg, count+1);
-    msg->msg_rwiov[0].iov_base = &msg->msg_hdr;
+    msg->msg_rwiov[0].iov_base = (void*)&msg->msg_hdr;
     msg->msg_rwiov[0].iov_len = sizeof(msg->msg_hdr);
     msg->msg_rwptr = msg->msg_rwiov;
     msg->msg_rwcnt = msg->msg_rwnum = count + 1;
@@ -71,6 +99,11 @@ int mca_oob_tcp_send(
     msg->msg_complete = false;
     msg->msg_peer = peer->peer_name;
     
+    if (0 == mca_oob_tcp_process_name_compare(name, MCA_OOB_NAME_SELF)) {  /* local delivery */
+        return mca_oob_tcp_send_self(peer,msg,iov,count);
+    }
+
+    MCA_OOB_TCP_HDR_HTON(&msg->msg_hdr);
     rc = mca_oob_tcp_peer_send(peer, msg);
     if(rc != OMPI_SUCCESS) {
         MCA_OOB_TCP_MSG_RETURN(msg);
@@ -130,7 +163,6 @@ int mca_oob_tcp_send_nb(
     msg->msg_hdr.msg_tag = tag;
     msg->msg_hdr.msg_src = mca_oob_name_self;
     msg->msg_hdr.msg_dst = *name;
-    MCA_OOB_TCP_HDR_HTON(&msg->msg_hdr);
 
     /* create one additional iovect that will hold the size of the message */
     msg->msg_type = MCA_OOB_TCP_POSTED;
@@ -139,7 +171,7 @@ int mca_oob_tcp_send_nb(
     msg->msg_uiov = iov;
     msg->msg_ucnt = count;
     msg->msg_rwiov = mca_oob_tcp_msg_iov_alloc(msg,count+1);
-    msg->msg_rwiov[0].iov_base = &msg->msg_hdr;
+    msg->msg_rwiov[0].iov_base = (void*)&msg->msg_hdr;
     msg->msg_rwiov[0].iov_len = sizeof(msg->msg_hdr);
     msg->msg_rwptr = msg->msg_rwiov;
     msg->msg_rwcnt = msg->msg_rwnum = count + 1;
@@ -150,6 +182,11 @@ int mca_oob_tcp_send_nb(
     msg->msg_complete = false;
     msg->msg_peer = peer->peer_name;
     
+    if (0 == mca_oob_tcp_process_name_compare(name, MCA_OOB_NAME_SELF)) {  /* local delivery */
+        return mca_oob_tcp_send_self(peer,msg,iov,count);
+    }
+
+    MCA_OOB_TCP_HDR_HTON(&msg->msg_hdr);
     rc = mca_oob_tcp_peer_send(peer, msg);
     if(rc != OMPI_SUCCESS) {
         MCA_OOB_TCP_MSG_RETURN(msg);

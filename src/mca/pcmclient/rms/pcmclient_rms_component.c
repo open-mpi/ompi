@@ -44,6 +44,7 @@ mca_pcmclient_base_component_1_0_0_t mca_pcmclient_rms_component = {
 
 
 struct mca_pcmclient_base_module_1_0_0_t mca_pcmclient_rms_1_0_0 = {
+    mca_pcmclient_rms_init_cleanup,
     mca_pcmclient_rms_get_self,
     mca_pcmclient_rms_get_peers,
 };
