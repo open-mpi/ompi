@@ -653,6 +653,7 @@ AC_CONFIG_FILES([
     src/mca/mpi/topo/base/Makefile
 
     src/tools/Makefile
+    src/tools/laminfo/Makefile
     src/tools/mpirun/Makefile
     src/tools/wrappers/Makefile
 
