@@ -241,9 +241,9 @@ enum {
 #define MPI_ERR_UNSUPPORTED_DATAREP   51
 #define MPI_ERR_UNSUPPORTED_OPERATION 52
 #define MPI_ERR_WIN                   53
+#define MPI_ERR_LASTCODE              54
 
 #define MPI_ERR_SYSRESOURCE          -2
-#define MPI_ERR_LASTCODE              -1
 
 
 /*
