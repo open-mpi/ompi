@@ -115,8 +115,6 @@ else
     AC_MSG_RESULT([no])
     WANT_MPI_F77=0
 fi
-AC_DEFINE_UNQUOTED(LAM_ENABLE_MPI_F77, $WANT_MPI_F77,
-    [Whether we want the MPI f77 bindings or not])
 
 #
 # MPI profiling
@@ -152,8 +150,6 @@ else
     AC_MSG_RESULT([no])
     WANT_MPI_F90=0
 fi
-AC_DEFINE_UNQUOTED(LAM_ENABLE_MPI_F90, $WANT_MPI_F90,
-    [Whether we want the MPI f90 bindings or not])
 
 #
 # Do we want -llam/-lmpi, or just -lmpi?

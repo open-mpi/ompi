@@ -13,9 +13,13 @@ lam_show_subtitle "Fortran 90/95 compiler"
 if test "$enable_fortran" = "no"; then
     AC_MSG_WARN([*** Fortran disabled by user])
     LAM_WANT_F90=0
+    FC=none
+    BASEF90=none
 elif test "$enable_f90" = "no"; then
     AC_MSG_WARN([*** Fortran 90/95 disabled by user])
     LAM_WANT_F90=0
+    FC=none
+    BASEF90=none
 else
 
     #
@@ -29,21 +33,27 @@ else
 
     lam_fflags_save="$FFLAGS"
     AC_PROG_FC
-    AC_DEFINE_UNQUOTED(LAM_F90, "$FC", [LAM underlying F90 compiler])
     FFLAGS="$lam_fflags_save"
     if test -z "$FC"; then
         AC_MSG_WARN([*** Could not find Fortran 90/95 compiler])
         LAM_WANT_F90=0
+        FC=none
+        BASEF90=none
     elif test "$FC" = "$F77"; then
         AC_MSG_WARN([*** Found same compiler for Fortran 77 and 90/95.])
         AC_MSG_WARN([*** Assuming no Fortran 90/95 compiler; disabling])
         AC_MSG_WARN([*** Fortran 90 MPI bindings.])
         LAM_WANT_F90=0
+        FC=none
+        BASEF90=none
     else
         LAM_WANT_F90=1
         BASEF90="`basename $FC`"
     fi
 fi
 
+AC_DEFINE_UNQUOTED(LAM_ENABLE_MPI_F90, $LAM_WANT_F90,
+    [Whether we want the MPI f90 bindings or not])
+AC_DEFINE_UNQUOTED(LAM_F90, "$FC", [LAM underlying F90 compiler])
 AM_CONDITIONAL(BUILD_MPI_F90, test "$LAM_WANT_F90" = "1")
 ])
