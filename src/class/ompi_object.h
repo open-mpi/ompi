@@ -103,11 +103,7 @@
 #include <assert.h>
 #include <stdlib.h>
 
-#ifdef WIN32
-#include <windows.h>
-#else
 #include "include/sys/atomic.h"
-#endif
 
 /*
  * BEGIN_C_DECLS should be used at the beginning of your declarations,

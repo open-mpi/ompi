@@ -25,12 +25,6 @@
 #endif
 
 
-#if defined(__GNUC__) || defined (WIN32)
-#define STATIC_INLINE static inline
-#else
-#define STATIC_INLINE
-#endif
-
 /**
  * Volatile lock object (with optional padding).
  */
