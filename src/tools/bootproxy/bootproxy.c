@@ -60,6 +60,8 @@ main(int argc, char *argv[])
     ompi_list_t pid_list;
     pid_item_t *pid_list_item;
     ompi_list_item_t *list_item;
+    int orig_errno;
+    char *dotted_command;
 
     ompi_init(argc, argv);
 
@@ -169,9 +171,18 @@ main(int argc, char *argv[])
             }
 
             execvp(sched->argv[0], sched->argv);
+            /* BWB - fix me - do real path search stuff */
+            orig_errno = errno;
+            asprintf(&dotted_command, "./%s", sched->argv[0]);
+            execvp(dotted_command, sched->argv);
+            if (ENOENT == errno || ELOOP == errno) {
+                /* if we could have found something, use our errno.
+                   otherwisse, use the non-hack errno */
+                orig_errno = errno;
+            } 
             ompi_show_help("help-bootproxy.txt", "could-not-exec",
                            true, sched->argv[0], sched->cwd, 
-                           strerror(errno));
+                           strerror(orig_errno));
             exit(errno);
         } else {
             /* parent */
