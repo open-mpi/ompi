@@ -25,15 +25,15 @@ int MPI_Attr_put(MPI_Comm comm, int keyval, void *attribute_val)
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-	if (MPI_COMM_NULL == comm) {
-	    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
-					 FUNC_NAME);
-	}
+        if (MPI_COMM_NULL == comm) {
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
+                                          FUNC_NAME);
+        }
     }
-
+    
     ret = ompi_attr_set(COMM_ATTR, comm, &comm->c_keyhash, 
                         keyval, attribute_val, false, true);
-
+    
     OMPI_ERRHANDLER_RETURN(ret, comm, MPI_ERR_OTHER, FUNC_NAME);  
 }
 
