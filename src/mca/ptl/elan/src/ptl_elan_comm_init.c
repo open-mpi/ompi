@@ -57,7 +57,6 @@ ompi_init_elan_queue_events (mca_ptl_elan_module_t * ptl,
 	    (2*sizeof (E4_Event32) + ELAN_BLOCK_SIZE), elan_align);
 #else
     elan_size  = OMPI_PTL_ELAN_ALIGNUP (sizeof (E4_Event32), elan_align);
-
 #endif
 
     OBJ_CONSTRUCT(&flist->fl_lock, ompi_mutex_t);
