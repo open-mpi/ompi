@@ -48,7 +48,7 @@ MPI_Cartdim_get
 MPI_Close_port
 MPI_Comm_accept
 MPI_Comm_c2f
-MPI_Comm_call_errhandler    Jeff
+MPI_Comm_call_errhandler    DONE
 MPI_Comm_compare            Edgar
 MPI_Comm_connect
 MPI_Comm_create_errhandler  DONE
@@ -78,9 +78,9 @@ MPI_Comm_spawn_multiple
 MPI_Comm_split              Edgar
 MPI_Comm_test_inter         Edgar
 MPI_Dims_create
-MPI_Errhandler_c2f
+MPI_Errhandler_c2f          DONE
 MPI_Errhandler_create       DONE
-MPI_Errhandler_f2c
+MPI_Errhandler_f2c          DONE
 MPI_Errhandler_free         DONE
 MPI_Errhandler_get          DONE
 MPI_Errhandler_set          DONE
