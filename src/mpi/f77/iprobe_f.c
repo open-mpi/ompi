@@ -37,7 +37,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_IPROBE,
                            mpi_iprobe_,
                            mpi_iprobe__,
                            mpi_iprobe_f,
-                           (MPI_Fint *source, MPI_Fint *tag, MPI_Comm *comm, MPI_Fint *flag, MPI_Fint *status, MPI_Fint *ierr),
+                           (MPI_Fint *source, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *flag, MPI_Fint *status, MPI_Fint *ierr),
                            (source, tag, comm, flag, status, ierr) )
 #endif
 
