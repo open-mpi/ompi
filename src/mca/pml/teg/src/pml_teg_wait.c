@@ -5,7 +5,7 @@
 
 
 int mca_pml_teg_wait(
-    int count,
+    size_t count,
     lam_request_t** request,
     int *index,
     lam_status_public_t* status)
@@ -60,7 +60,7 @@ int mca_pml_teg_wait(
 
 
 int mca_pml_teg_wait_all(
-    int count,
+    size_t count,
     lam_request_t** requests,
     lam_status_public_t* statuses)
 {

@@ -1,5 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 
+#include <string.h>
 #include "datatype.h"
 
 int lam_ddt_duplicate( dt_desc_t* oldType, dt_desc_t** newType )

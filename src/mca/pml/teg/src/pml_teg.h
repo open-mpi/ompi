@@ -181,14 +181,14 @@ extern int mca_pml_teg_test(
 );
 
 extern int mca_pml_teg_wait(
-    int count,
+    size_t count,
     lam_request_t** request,
     int *index,
     lam_status_public_t* status
 );
 
-extern int mca_pml_teg_waitall(
-    int count,
+extern int mca_pml_teg_wait_all(
+    size_t count,
     lam_request_t** request,
     lam_status_public_t* status
 );

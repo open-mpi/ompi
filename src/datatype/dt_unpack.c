@@ -3,6 +3,13 @@
 #include "datatype.h"
 #include "datatype_internal.h"
 
+
+static int convertor_unpack_homogeneous( convertor_t* pConv, struct iovec* iov, unsigned int out_size );
+static int convertor_unpack_general( convertor_t* pConvertor,
+                                     struct iovec* pInputv,
+                                     unsigned int inputCount );
+
+
 void dump_stack( dt_stack_t* pStack, int stack_pos, dt_elem_desc_t* pDesc, char* name )
 {
    printf( "\nStack %p stack_pos %d name %s\n", pStack, stack_pos, name );
@@ -154,7 +161,7 @@ static int convertor_unpack_general( convertor_t* pConvertor,
    return 0;
 }
 
-int convertor_unpack_homogeneous( convertor_t* pConv, struct iovec* iov, unsigned int out_size )
+static int convertor_unpack_homogeneous( convertor_t* pConv, struct iovec* iov, unsigned int out_size )
 {
    dt_stack_t* pStack;   /* pointer to the position on the stack */
    int pos_desc;         /* actual position in the description of the derived datatype */
@@ -297,7 +304,7 @@ int lam_convertor_unpack( convertor_t* pConvertor,
    if( (pInput >= pOutput) && (pInput < (pOutput + pConvertor->count * (pData->ub - pData->lb))) ) {
       return 1;
    }
-   return convertor_progress( pConvertor, pInputv, inputCount );
+   return lam_convertor_progress( pConvertor, pInputv, inputCount );
 }
 
 /* Return value:
@@ -409,7 +416,7 @@ conversion_fct_t copy_functions[DT_MAX_PREDEFINED] = {
 /* Should we supply buffers to the convertor or can we use directly
  * the user buffer ?
  */
-int convertor_need_buffers( convertor_t* pConvertor )
+int lam_convertor_need_buffers( convertor_t* pConvertor )
 {
    if( pConvertor->flags & DT_FLAG_CONTIGUOUS ) return 0;
    return 1;
