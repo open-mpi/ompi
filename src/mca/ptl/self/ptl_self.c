@@ -141,56 +141,58 @@ void mca_ptl_self_matched( mca_ptl_base_module_t* ptl,
         frag->frag_base.frag_header.hdr_frag.hdr_src_ptr.pval;
     mca_pml_base_recv_request_t* recvreq = frag->frag_request;
 
-    /* Did you have the same datatype or not ? If yes we can use an optimized version
-     * for the copy function, if not we have to use a temporary buffer to pack/unpack
-     * 
-     * Note that if this is a buffered send - the data has already been packed into
-     * a contigous buffer and the convertor on the send request initialized to point
-     * into this buffer.
-     */
-    if( sendreq->req_send.req_base.req_datatype == recvreq->req_base.req_datatype &&
-        sendreq->req_send.req_send_mode != MCA_PML_BASE_SEND_BUFFERED) {
-        ompi_ddt_copy_content_same_ddt( 
-            recvreq->req_base.req_datatype, 
-            recvreq->req_base.req_count,
-            recvreq->req_base.req_addr, 
-            sendreq->req_send.req_base.req_addr );
-    } else {
-        ompi_convertor_t *pSendConvertor, *pRecvConvertor;
-        struct iovec iov[1];
-        int completed, freeAfter, length;
-	unsigned int max_data, iov_count;
-        char* buf;
-        
-        /* We use a temporary buffer as it look to be faster on much architectures */
-        length = 64 * 1024;
-        buf = malloc( length * sizeof(char) );
-
-        ompi_convertor_init_for_recv( 
-            &frag->frag_base.frag_convertor, 
-            0, 
-            recvreq->req_base.req_datatype, 
-            recvreq->req_base.req_count, 
-            recvreq->req_base.req_addr, 0, NULL );
-        pSendConvertor = &(sendreq->req_send.req_convertor);
-        pRecvConvertor = &(frag->frag_base.frag_convertor);
-        completed = 0;
-	freeAfter = 0;
-        while( !completed ) {
-            iov[0].iov_base = buf;
-            iov[0].iov_len = length;
-            iov_count = 1;
-	    max_data = length;
-            completed |= ompi_convertor_pack( pSendConvertor, iov, &iov_count,
-					      &max_data, &freeAfter );
-            assert( freeAfter == 0 );
-            completed |= ompi_convertor_unpack( pRecvConvertor, iov, &iov_count,
-						&max_data, &freeAfter );
-            assert( freeAfter == 0 );
+    if( (recvreq->req_base.req_count != 0) &&
+        (sendreq->req_send.req_base.req_count != 0) ) {
+        /* Did you have the same datatype or not ? If yes we can use an optimized version
+         * for the copy function, if not we have to use a temporary buffer to pack/unpack
+         * 
+         * Note that if this is a buffered send - the data has already been packed into
+         * a contigous buffer and the convertor on the send request initialized to point
+         * into this buffer.
+         */
+        if( sendreq->req_send.req_base.req_datatype == recvreq->req_base.req_datatype &&
+            sendreq->req_send.req_send_mode != MCA_PML_BASE_SEND_BUFFERED) {
+            ompi_ddt_copy_content_same_ddt( recvreq->req_base.req_datatype, 
+                                            recvreq->req_base.req_count,
+                                            recvreq->req_base.req_addr, 
+                                            sendreq->req_send.req_base.req_addr );
+        } else {
+            ompi_convertor_t *pSendConvertor, *pRecvConvertor;
+            struct iovec iov[1];
+            int completed, freeAfter, length;
+            unsigned int max_data, iov_count;
+            char* buf;
+            
+            /* We use a temporary buffer as it look to be faster on much architectures */
+            length = 64 * 1024;
+            buf = malloc( length * sizeof(char) );
+            
+            ompi_convertor_init_for_recv( &frag->frag_base.frag_convertor, 
+                                          0, 
+                                          recvreq->req_base.req_datatype, 
+                                          recvreq->req_base.req_count, 
+                                          recvreq->req_base.req_addr, 0, NULL );
+            pSendConvertor = &(sendreq->req_send.req_convertor);
+            pRecvConvertor = &(frag->frag_base.frag_convertor);
+            completed = 0;
+            freeAfter = 0;
+            while( !completed ) {
+                iov[0].iov_base = buf;
+                iov[0].iov_len = length;
+                iov_count = 1;
+                max_data = length;
+                completed |= ompi_convertor_pack( pSendConvertor, iov, &iov_count,
+                                                  &max_data, &freeAfter );
+                assert( freeAfter == 0 );
+                completed |= ompi_convertor_unpack( pRecvConvertor, iov, &iov_count,
+                                                    &max_data, &freeAfter );
+                assert( freeAfter == 0 );
+            }
+            free( buf );
         }
-	free( buf );
     }
-    ptl->ptl_send_progress( ptl, &sendreq->req_send, sendreq->req_send.req_bytes_packed );
+    ptl->ptl_send_progress( ptl, &sendreq->req_send,
+                            sendreq->req_send.req_bytes_packed );
     ptl->ptl_recv_progress( ptl, 
 			    recvreq, 
 			    frag->frag_base.frag_header.hdr_frag.hdr_frag_length,
