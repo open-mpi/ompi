@@ -6,11 +6,11 @@
 
 #include "ompi_config.h"
 
-#include "constants.h"
+#include "include/constants.h"
 #include "mca/mca.h"
 #include "mca/oob/oob.h"
 #include "mca/oob/cofs/src/oob_cofs.h"
-#include "types.h"
+#include "include/types.h"
 
 #include <stdio.h>
 #include <stdlib.h>
