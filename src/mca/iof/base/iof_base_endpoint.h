@@ -113,5 +113,15 @@ int mca_iof_base_endpoint_ack(
     mca_iof_base_endpoint_t* endpoint,
     uint32_t seq);
 
+/**
+ * Check for pending I/O
+ */
+
+static inline bool mca_iof_base_endpoint_pending(
+    mca_iof_base_endpoint_t* endpoint)
+{
+    return ompi_list_get_size(&endpoint->ep_frags) || (endpoint->ep_seq != endpoint->ep_ack);
+}
+
 #endif
 

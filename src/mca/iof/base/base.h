@@ -38,6 +38,7 @@ struct mca_iof_base_t {
    ompi_list_t          iof_endpoints;
    ompi_mutex_t         iof_lock;
    ompi_condition_t     iof_condition;
+   size_t               iof_waiting;
    ompi_free_list_t     iof_fragments;
    size_t               iof_window_size;
    ompi_process_name_t* iof_service;
@@ -49,6 +50,7 @@ typedef struct mca_iof_base_t mca_iof_base_t;
 int mca_iof_base_open(void);
 int mca_iof_base_close(void);
 int mca_iof_base_select(bool* allow_multi_user_threads, bool* have_hidden_threads);
+int mca_iof_base_flush(void);
 
 
 extern mca_iof_base_t mca_iof_base;
