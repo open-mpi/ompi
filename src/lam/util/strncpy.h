@@ -10,6 +10,9 @@
 /*
  * Use lam_strncpy() instead of strncpy()
  */
+#if defined(strncpy)
+#undef strncpy
+#endif
 #define strncpy lam_strncpy
 
 
