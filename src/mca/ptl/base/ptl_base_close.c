@@ -20,9 +20,9 @@ int mca_ptl_base_close(void)
 
   /* Finalize all the ptl components and free their list items */
 
-  for (item = ompi_list_remove_first(&mca_ptl_base_components_initialized);
+  for (item = ompi_list_remove_first(&mca_ptl_base_modules_initialized);
        NULL != item; 
-       item = ompi_list_remove_first(&mca_ptl_base_components_initialized)) {
+       item = ompi_list_remove_first(&mca_ptl_base_modules_initialized)) {
     sm = (mca_ptl_base_selected_module_t *) item;
 
     /* Blatently ignore the return code (what would we do to recover,
@@ -33,11 +33,13 @@ int mca_ptl_base_close(void)
     free(sm);
   }
 
-  /* Close all remaining available components (may be one if this is a
+  /* Close all remaining opened components (may be one if this is a
      OMPI RTE program, or [possibly] multiple if this is ompi_info) */
 
-  mca_base_components_close(mca_ptl_base_output, 
-                            &mca_ptl_base_components_available, NULL);
+  if (0 != ompi_list_get_size(&mca_ptl_base_components_opened)) {
+    mca_base_components_close(mca_ptl_base_output, 
+                              &mca_ptl_base_components_opened, NULL);
+  }
 
   /* All done */
 

@@ -43,7 +43,7 @@ extern "C" {
  * Globals
  */
 extern int mca_ptl_base_output;
-extern ompi_list_t mca_ptl_base_components_available;
-extern ompi_list_t mca_ptl_base_components_initialized;
+extern ompi_list_t mca_ptl_base_components_opened;
+extern ompi_list_t mca_ptl_base_modules_initialized;
 
 #endif /* MCA_PTL_BASE_H */

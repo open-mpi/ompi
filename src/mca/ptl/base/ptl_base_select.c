@@ -30,12 +30,12 @@ int mca_ptl_base_select(bool *allow_multi_user_threads,
   mca_ptl_base_module_t **modules;
   mca_ptl_base_selected_module_t *sm;
 
-  /* Traverse the list of available modules; call their init
+  /* Traverse the list of opened modules; call their init
      functions. */
 
-  for (item = ompi_list_get_first(&mca_ptl_base_components_available);
-       ompi_list_get_end(&mca_ptl_base_components_available) != item;
-       item = ompi_list_get_next(item)) {
+  for (item = ompi_list_remove_first(&mca_ptl_base_components_opened);
+       NULL != item;
+       item = ompi_list_remove_first(&mca_ptl_base_components_opened)) {
     cli = (mca_base_component_list_item_t *) item;
     component = (mca_ptl_base_component_t *) cli->cli_component;
 
@@ -48,9 +48,10 @@ int mca_ptl_base_select(bool *allow_multi_user_threads,
                          "select: no init function; ignoring component");
     } else {
       modules = component->ptlm_init(&num_ptls, &user_threads,
-                                  &hidden_threads);
+                                     &hidden_threads);
 
-      /* If the component didn't initialize, unload it */
+      /* If the component didn't initialize, remove it from the opened
+         list and remove it from the component repository */
 
       if (NULL == modules) {
         ompi_output_verbose(10, mca_ptl_base_output,
@@ -79,7 +80,7 @@ int mca_ptl_base_select(bool *allow_multi_user_threads,
           OBJ_CONSTRUCT(sm, ompi_list_item_t);
           sm->pbsm_component = component;
           sm->pbsm_module = modules[i];
-          ompi_list_append(&mca_ptl_base_components_initialized,
+          ompi_list_append(&mca_ptl_base_modules_initialized,
                           (ompi_list_item_t*) sm);
         }
         free(modules);
@@ -89,7 +90,7 @@ int mca_ptl_base_select(bool *allow_multi_user_threads,
 
   /* Finished querying all components.  Check for the bozo case. */
 
-  if (0 == ompi_list_get_size(&mca_ptl_base_components_initialized)) {
+  if (0 == ompi_list_get_size(&mca_ptl_base_modules_initialized)) {
     /* JMS Replace with show_help */
     ompi_abort(1, "No ptl components available.  This shouldn't happen.");
   }
