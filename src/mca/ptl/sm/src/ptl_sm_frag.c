@@ -39,6 +39,9 @@ static void mca_ptl_sm_first_frag_construct(mca_ptl_sm_frag_t* frag)
 
     /* set the buffer length */
     frag->buff_length=(size_t)mca_ptl_sm_component.first_fragment_size;
+    
+    /* set local rank */
+    frag->queue_index=mca_ptl_sm_component.my_smp_rank;
 
     /* set buffer pointer */
     ptr=((char *)frag)+sizeof(mca_ptl_sm_frag_t)+
@@ -69,6 +72,9 @@ static void mca_ptl_sm_second_frag_construct(mca_ptl_sm_frag_t* frag)
 
     /* set the buffer length */
     frag->buff_length=(size_t)mca_ptl_sm_component.max_fragment_size;
+
+    /* set local rank */
+    frag->queue_index=mca_ptl_sm_component.my_smp_rank;
 
     /* set buffer pointer */
     ptr=((char *)frag)+sizeof(mca_ptl_sm_frag_t)+

@@ -29,6 +29,8 @@ OBJ_CLASS_DECLARATION(mca_ptl_sm_second_frag_t);
 struct mca_ptl_sm_frag_t {
     mca_ptl_base_recv_frag_t super; /**< base receive fragment descriptor */
     size_t buff_length;   /**< size of buffer */
+    int queue_index;      /**< local process index, cached for fast
+                            acking */
     void *buff;           /**< pointer to buffer */
     void *buff_offset_from_segment_base;   /**< pointer to buffer,
                                              relative to base of the

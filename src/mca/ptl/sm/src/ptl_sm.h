@@ -43,8 +43,8 @@ struct mca_ptl_sm_component_t {
     int sm_second_frag_free_list_num;       /**< initial size of free lists */
     int sm_second_frag_free_list_max;       /**< maximum size of free lists */
     int sm_second_frag_free_list_inc;       /**< number of elements to alloc when growing free lists */
-    int sm_max_procs;                      /**< upper limit on the number of processes using the shared memory pool */
-    int sm_extra_procs;                  /**< number of extra procs to allow */
+    size_t sm_max_procs;                      /**< upper limit on the number of processes using the shared memory pool */
+    size_t sm_extra_procs;                  /**< number of extra procs to allow */
     char* sm_mpool_name;                  /**< name of shared memory pool module */
     mca_mpool_base_module_t* sm_mpool; /**< shared memory pool */
     void* sm_mpool_base;                  /**< base address of shared memory pool */
@@ -68,7 +68,7 @@ struct mca_ptl_sm_component_t {
     size_t cb_lazy_free_freq; /**< frequency of lazy free */
     size_t sm_offset;        /**< offset to be applied to shared memory
                               addresses */
-    int num_smp_procs;      /**< current number of smp procs on this
+    size_t num_smp_procs;      /**< current number of smp procs on this
                               host */
     int my_smp_rank;    /**< My SMP process rank.  Used for accessing
                          *   SMP specfic data structures. */
@@ -130,6 +130,9 @@ struct mca_ptl_sm_t {
     ompi_free_list_t sm_first_frags_to_progress;  /**< list of first
                                                     fragments that are
                                                     awaiting resources */
+    ompi_mutex_t sm_pending_ack_lock;
+    ompi_list_t sm_pending_ack; /* list of fragmnent that need to be
+                                   acked */
 };
 typedef struct mca_ptl_sm_t mca_ptl_sm_t;
 

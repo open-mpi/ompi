@@ -69,8 +69,8 @@ int mca_ptl_sm_add_procs(
     struct mca_ptl_base_peer_t **peers,
     ompi_bitmap_t* reachability)
 {
-    int i,j,proc,return_code=OMPI_SUCCESS;
-    size_t size,len,my_len,n_local_procs,n_to_allocate;
+    int return_code=OMPI_SUCCESS;
+    size_t i,j,proc,size,len,my_len,n_local_procs,n_to_allocate;
     mca_ptl_sm_exchange_t **sm_proc_info;
     ompi_proc_t* my_proc; /* pointer to caller's proc structure */
     mca_ptl_sm_t *ptl_sm;
@@ -607,13 +607,97 @@ int mca_ptl_sm_send_continue(
 }
 
 /*
- *  A posted receive has been matched - process the fragment
- *  and then ack.
+ *  A posted receive has been matched:
+ *    - deliver data to user buffers
+ *    - update receive request data
+ *    - ack
+ *
+ *  fragment lists are NOT manipulated.
  */
 
 void mca_ptl_sm_matched(
     mca_ptl_base_module_t* ptl,
     mca_ptl_base_recv_frag_t* frag)
 {
+    mca_pml_base_recv_request_t* recv_desc;
+    mca_ptl_sm_frag_t *sm_frag_desc;
+    mca_ptl_base_match_header_t* header;
+    struct iovec iov; 
+    ompi_convertor_t frag_convertor;
+    ompi_proc_t *proc;
+    int  free_after,my_local_smp_rank,peer_local_smp_rank, return_status;
+    unsigned int iov_count, max_data;
+    ompi_fifo_t *send_fifo;
+    char *sm_frag_desc_rel_to_base;
 
+
+    /* copy data from shared memory buffer to user buffer */
+    /* get pointer to the matched receive descriptor */
+    recv_desc = frag->frag_request;
+    sm_frag_desc = (mca_ptl_sm_frag_t *)frag;
+
+    /* copy, only if there is data to copy */
+    if( 0 <  sm_frag_desc->super.frag_base.frag_size ) {
+        header = &((frag)->frag_base.frag_header.hdr_match);
+ 
+        /* 
+         * Initialize convertor and use it to unpack data  
+         */ 
+        proc = ompi_comm_peer_lookup(recv_desc->req_base.req_comm,
+                    recv_desc->req_base.req_peer); 
+        /* write over converter set on the send side */
+        ompi_convertor_copy(proc->proc_convertor,
+                &frag_convertor); 
+        ompi_convertor_init_for_recv( 
+                &frag_convertor,                   /* convertor */ 
+                0,                                 /* flags */ 
+                recv_desc->req_base.req_datatype,  /* datatype */ 
+                recv_desc->req_base.req_count,     /* count elements */ 
+                recv_desc->req_base.req_addr,      /* users buffer */ 
+                header->hdr_frag.hdr_frag_offset,  /* offset in bytes into packed buffer */ 
+                NULL );                            /* dont allocate memory */
+                
+        /* convert address relative to segment base to virtual address */
+        iov.iov_base = (void *)( (char *)sm_frag_desc->
+                buff_offset_from_segment_base+
+                mca_ptl_sm_component.sm_offset);
+        iov.iov_len = sm_frag_desc->super.frag_base.frag_size;
+        iov_count = 1;
+        max_data = iov.iov_len;
+        ompi_convertor_unpack( &frag_convertor,
+                &iov, &iov_count, &max_data, &free_after ); 
+    }
+
+    /* update receive request information */
+    frag->frag_base.frag_owner->ptl_recv_progress(
+            ptl,
+            recv_desc, 
+            sm_frag_desc->super.frag_base.frag_size,
+            max_data);
+
+    /* ack - ack recycles shared memory fragment resources, so
+     *       don't agragate */
+    my_local_smp_rank=mca_ptl_sm_component.my_smp_rank;
+    peer_local_smp_rank=sm_frag_desc->queue_index;
+    send_fifo=&(mca_ptl_sm_component.fifo
+            [my_local_smp_rank][peer_local_smp_rank]);
+    /* change address to be relative to offset from base of shared
+     *   memory segment */
+    sm_frag_desc_rel_to_base= (char *) ( (char *)sm_frag_desc -
+            mca_ptl_sm_component.sm_offset );
+    return_status=ompi_fifo_write_to_head(
+            sm_frag_desc_rel_to_base,
+            send_fifo, mca_ptl_sm_component.sm_mpool,
+            mca_ptl_sm_component.sm_offset);
+
+    /* if can't ack, put on list for later delivery */
+    if( OMPI_SUCCESS != return_status ) {
+        OMPI_THREAD_LOCK(&(mca_ptl_sm.sm_pending_ack_lock));
+        ompi_list_append(&(mca_ptl_sm.sm_pending_ack),
+                (ompi_list_item_t *)sm_frag_desc);
+        OMPI_THREAD_UNLOCK(&(mca_ptl_sm.sm_pending_ack_lock));
+    }
+
+    /* return */
+    return;
 }
