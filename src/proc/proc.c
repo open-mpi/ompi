@@ -93,7 +93,8 @@ int ompi_proc_init(void)
 
 ompi_proc_t** ompi_proc_world(size_t *size)
 {
-    ompi_proc_t **procs = malloc(ompi_list_get_size(&ompi_proc_list) * sizeof(ompi_proc_t*));
+    ompi_proc_t **procs = 
+        (ompi_proc_t**) malloc(ompi_list_get_size(&ompi_proc_list) * sizeof(ompi_proc_t*));
     ompi_proc_t *proc;
     size_t count = 0;
 
@@ -116,7 +117,8 @@ ompi_proc_t** ompi_proc_world(size_t *size)
 
 ompi_proc_t** ompi_proc_all(size_t* size)
 {
-    ompi_proc_t **procs = malloc(ompi_list_get_size(&ompi_proc_list) * sizeof(ompi_proc_t*));
+    ompi_proc_t **procs = 
+        (ompi_proc_t**) malloc(ompi_list_get_size(&ompi_proc_list) * sizeof(ompi_proc_t*));
     ompi_proc_t *proc;
     size_t count = 0;
 
@@ -138,7 +140,7 @@ ompi_proc_t** ompi_proc_all(size_t* size)
 
 ompi_proc_t** ompi_proc_self(size_t* size)
 {
-    ompi_proc_t **procs = malloc(sizeof(ompi_proc_t*));
+    ompi_proc_t **procs = (ompi_proc_t**) malloc(sizeof(ompi_proc_t*));
     if(NULL == procs)
         return NULL;
     OBJ_RETAIN(ompi_proc_local_proc);
