@@ -9,7 +9,7 @@ include $(top_srcdir)/config/Makefile.options
 # the base first).  common_mpi must be second, however, because
 # modules under there may be statically linked to other modules.
 
-SUBDIRS = base common_mpi coll io one pml ptl topo
+SUBDIRS = base common_mpi coll io one pml ptl 
 
 # Library
 
