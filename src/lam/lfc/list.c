@@ -9,7 +9,7 @@
  */
 
 
-lam_class_info_t  lam_list_item_cls = {"lam_list_link_item_t", &lam_object_cls, 
+lam_class_info_t  lam_list_item_cls = {"lam_list_item_t", &lam_object_cls, 
     (class_init_t) lam_list_item_init, (class_destroy_t)lam_obj_destroy};
 lam_class_info_t  lam_list_cls = {"lam_list_t", &lam_object_cls,
     (class_init_t)lam_list_init, (class_destroy_t)lam_list_destroy};
@@ -24,7 +24,7 @@ lam_class_info_t  lam_list_cls = {"lam_list_t", &lam_object_cls,
 void lam_list_item_init(lam_list_item_t *item)
 {
     SUPER_INIT(item, lam_list_item_cls.cls_parent);
-    item->lam_list_next = item->lam_list_prev = 0;
+    item->lam_list_next = item->lam_list_prev = NULL;
     item->lam_list_type = 0;
 }
 
@@ -38,13 +38,14 @@ void lam_list_item_init(lam_list_item_t *item)
 void lam_list_init(lam_list_t *list)
 {
     SUPER_INIT(list, lam_list_cls.cls_parent);
-    list->lam_list_head.lam_list_next=&(list->lam_list_tail);
-    list->lam_list_head.lam_list_prev=(lam_list_item_t *)NULL;
-    list->lam_list_tail.lam_list_prev=(lam_list_item_t *)NULL;
-    list->lam_list_tail.lam_list_prev=&(list->lam_list_head);
+    list->lam_list_head.lam_list_prev = NULL;
+    list->lam_list_head.lam_list_next = &list->lam_list_tail;
+    list->lam_list_tail.lam_list_prev = &list->lam_list_head;
+    list->lam_list_tail.lam_list_next = NULL;
     list->lam_list_type = 0;
     list->lam_list_length = 0;
 }
+
 
 void lam_list_destroy(lam_list_t *list)
 {
@@ -52,7 +53,6 @@ void lam_list_destroy(lam_list_t *list)
     lam_list_init(list);
     SUPER_DESTROY(list, lam_list_cls.cls_parent);
 }
-
 
     
 /**
@@ -65,7 +65,6 @@ void lam_list_destroy(lam_list_t *list)
  */
 void lam_list_append(lam_list_t *list, lam_list_item_t *item)
 {
-
     /* set new element's previous pointer */
     item->lam_list_prev=list->lam_list_tail.lam_list_prev;
 
@@ -148,6 +147,9 @@ lam_list_item_t *lam_list_remove_first(lam_list_t *list)
     if ( 0 == list->lam_list_length )
         return (lam_list_item_t *)NULL;
     
+    /* reset list length counter */
+    list->lam_list_length--;
+
     /* get pointer to first element on the list */
     item = list->lam_list_head.lam_list_next;
 

@@ -34,8 +34,14 @@ typedef struct lam_list_item
     struct lam_list_item   *lam_list_prev;
 } lam_list_item_t;
 
-void lam_list_item_init(lam_list_item_t *item);
-void lam_list_item_destroy(lam_list_item_t *item);
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
+  void lam_list_item_init(lam_list_item_t *item);
+  void lam_list_item_destroy(lam_list_item_t *item);
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 #define lam_list_get_next(item) \
     ((item) ? (((lam_list_item_t*)(item))->lam_list_next) : 0)
@@ -54,13 +60,19 @@ typedef struct lam_list
     lam_object_t        super;
     lam_list_item_t     lam_list_head;
     lam_list_item_t     lam_list_tail;
-    lam_list_type_t      lam_list_type;
+    lam_list_type_t     lam_list_type;
     volatile size_t     lam_list_length;
 } lam_list_t;
 
 
-void lam_list_init(lam_list_t *list);
-void lam_list_destroy(lam_list_t *list);
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
+  void lam_list_init(lam_list_t *list);
+  void lam_list_destroy(lam_list_t *list);
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 /*
  * Inlined accessor functions
@@ -100,6 +112,14 @@ static inline lam_list_item_t* lam_list_get_first(lam_list_t* list)
 static inline lam_list_item_t* lam_list_get_last(lam_list_t* list)
 {
     return list->lam_list_tail.lam_list_prev;
+}
+
+/* 
+ * Returns beginning of list, an invalid list entry.
+ */
+static inline lam_list_item_t* lam_list_get_begin(lam_list_t* list)
+{
+    return &(list->lam_list_head);
 }
 
 /* 
@@ -152,42 +172,47 @@ static inline lam_list_item_t *lam_list_remove_item
     return item->lam_list_prev;
 }
 
-/* 
- * Adds item to the end of the list but does not retain item. 
- */
-void lam_list_append(lam_list_t *list, lam_list_item_t *item);
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
+  /* 
+   * Adds item to the end of the list but does not retain item. 
+   */
+  void lam_list_append(lam_list_t *list, lam_list_item_t *item);
 
 
-/*
- * Remove item from the list.
- */
-lam_list_item_t* lam_list_remove(lam_list_t *list, lam_list_item_t *item);
+  /*
+   * Remove item from the list.
+   */
+  lam_list_item_t* lam_list_remove(lam_list_t *list, lam_list_item_t *item);
 
-/* Adds item to list at index and retains item. 
-    Returns 1 if successful, 0 otherwise.
-    0 <= idx < length_m
-    Example: if idx = 2 and list = item1->item2->item3->item4, then
-    after insert, list = item1->item2->item->item3->item4
-*/
-int lam_list_insert(lam_list_t *list, lam_list_item_t *item, long long idx);
-
-
-/* 
- * Adds item to the front of the list and retains item. 
- */
-
-void lam_list_prepend(lam_list_t *list, lam_list_item_t *item);
+  /* Adds item to list at index and retains item. 
+     Returns 1 if successful, 0 otherwise.
+     0 <= idx < length_m
+     Example: if idx = 2 and list = item1->item2->item3->item4, then
+     after insert, list = item1->item2->item->item3->item4
+  */
+  int lam_list_insert(lam_list_t *list, lam_list_item_t *item, long long idx);
 
 
-/*   
- *  Removes and returns first item on list.
- */
-lam_list_item_t *lam_list_remove_first(lam_list_t *list);
+  /* 
+   * Adds item to the front of the list and retains item. 
+   */
+  void lam_list_prepend(lam_list_t *list, lam_list_item_t *item);
 
 
-/*   
- *  Removes and returns last item on list.
- */
-lam_list_item_t *lam_list_remove_last(lam_list_t *list);
+  /*   
+   *  Removes and returns first item on list.
+   */
+  lam_list_item_t *lam_list_remove_first(lam_list_t *list);
+
+
+  /*   
+   *  Removes and returns last item on list.
+   */
+  lam_list_item_t *lam_list_remove_last(lam_list_t *list);
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 #endif /* LAM_LIST_H */
