@@ -132,7 +132,7 @@ struct lam_eventop {
 	int (*dispatch)(void *, struct timeval *);
 };
 
-#define LAM_TIMEOUT_DEFAULT	{1, 0}
+#define LAM_TIMEOUT_DEFAULT	{0, 100000}
 #define LAM_EVLOOP_ONCE		0x01
 #define LAM_EVLOOP_NONBLOCK	0x02
 
