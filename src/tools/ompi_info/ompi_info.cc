@@ -122,6 +122,7 @@ int main(int argc, char *argv[])
   ompi_info::mca_types.push_back("common");
   ompi_info::mca_types.push_back("gpr");
   ompi_info::mca_types.push_back("io");
+  ompi_info::mca_types.push_back("llm");
   ompi_info::mca_types.push_back("mpool");
   ompi_info::mca_types.push_back("ns");
   ompi_info::mca_types.push_back("one");
@@ -176,6 +177,7 @@ int main(int argc, char *argv[])
     ompi_info::show_component_version("common", component_all, ver_full, type_all);
     ompi_info::show_component_version("gpr", component_all, ver_full, type_all);
     ompi_info::show_component_version("io", component_all, ver_full, type_all);
+    ompi_info::show_component_version("llm", component_all, ver_full, type_all);
     ompi_info::show_component_version("mpool", component_all, ver_full, type_all);
     ompi_info::show_component_version("ns", component_all, ver_full, type_all);
     ompi_info::show_component_version("one", component_all, ver_full, type_all);

@@ -15,6 +15,8 @@
 #include "mca/allocator/base/base.h"
 #include "mca/mpool/mpool.h"
 #include "mca/mpool/base/base.h"
+#include "mca/llm/llm.h"
+#include "mca/llm/base/base.h"
 #include "mca/pcm/pcm.h"
 #include "mca/pcm/base/base.h"
 #include "mca/oob/oob.h"
@@ -104,6 +106,9 @@ void ompi_info::open_components()
 #else
   component_map["gpr"] = NULL;
 #endif
+
+  mca_llm_base_open();
+  component_map["llm"] = &mca_llm_base_components_available;
 
 #if 0
   // io component opening not implemented yet
