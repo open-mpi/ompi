@@ -273,7 +273,7 @@ int init_random_upper_matrix( unsigned int N, double* mat )
             mat++;
         }
     }
-    return 0;  
+    return OMPI_SUCCESS;  
 }
 
 int check_diag_matrix( unsigned int N, double* mat1, double* mat2 )
@@ -287,12 +287,12 @@ int check_diag_matrix( unsigned int N, double* mat1, double* mat2 )
          if( *mat1 != *mat2 ) {
             printf( "error in position (%d, %d) expect %f and find %f\n",
                     i, j, *mat1, *mat2 );
-            return -1;
+            return OMPI_ERROR;
          }
          mat1++; mat2++;
       }
    }
-   return 0;
+   return OMPI_SUCCESS;
 }
 
 dt_desc_t* upper_matrix( unsigned int mat_size )
@@ -544,7 +544,7 @@ int local_copy_ddt_count( dt_desc_t* pdt, int count )
    free( psrc );
 
    OBJ_RELEASE( pdt ); assert( pdt == NULL );
-   return 0;
+   return OMPI_SUCCESS;
 }
 int main( int argc, char* argv[] )
 {
@@ -608,5 +608,5 @@ int main( int argc, char* argv[] )
    /* clean-ups all data allocations */
    ompi_ddt_finalize();
 
-   return 0;
+   return OMPI_SUCCESS;
 }

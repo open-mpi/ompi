@@ -61,5 +61,5 @@ int ompi_ddt_create_resized( dt_desc_t* oldType, long lb, long extent, dt_desc_t
     ompi_ddt_duplicate( oldType, newType );
     (*newType)->lb = lb;
     (*newType)->ub = lb + extent;
-    return 0;
+    return OMPI_SUCCESS;
 }

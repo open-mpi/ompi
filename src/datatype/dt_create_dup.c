@@ -20,7 +20,7 @@ int ompi_ddt_duplicate( dt_desc_t* oldType, dt_desc_t** newType )
     pdt->args = NULL;
     /* TODO: if the data was commited update the opt_desc field */
     *newType = pdt;
-    return 0;
+    return OMPI_SUCCESS;
 }
 
 int ompi_ddt_create_contiguous( int count, dt_desc_t* oldType, dt_desc_t** newType )
@@ -28,5 +28,5 @@ int ompi_ddt_create_contiguous( int count, dt_desc_t* oldType, dt_desc_t** newTy
    dt_desc_t* pdt = ompi_ddt_create( oldType->desc.used + 2 );
    ompi_ddt_add( pdt, oldType, count, 0, (oldType->ub - oldType->lb) );
    *newType = pdt;
-   return 0;
+   return OMPI_SUCCESS;
 }

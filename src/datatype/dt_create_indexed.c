@@ -29,7 +29,7 @@ int ompi_ddt_create_indexed( int count, int* pBlockLength, int* pDisp,
     ompi_ddt_add( pdt, oldType, dLength, disp * extent, extent );
 
     *newType = pdt;
-    return 0;
+    return OMPI_SUCCESS;
 }
 
 int ompi_ddt_create_hindexed( int count, int* pBlockLength, long* pDisp,
@@ -59,7 +59,7 @@ int ompi_ddt_create_hindexed( int count, int* pBlockLength, long* pDisp,
    ompi_ddt_add( pdt, oldType, dLength, disp, extent );
 
    *newType = pdt;
-   return 0;
+   return OMPI_SUCCESS;
 }
 
 int ompi_ddt_create_indexed_block( int count, int bLength, int* pDisp,
@@ -88,5 +88,5 @@ int ompi_ddt_create_indexed_block( int count, int bLength, int* pDisp,
    ompi_ddt_add( pdt, oldType, dLength, disp * extent, extent );
 
    *newType = pdt;
-   return 0;
+   return OMPI_SUCCESS;
 }

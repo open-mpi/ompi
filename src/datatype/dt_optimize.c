@@ -153,7 +153,7 @@ int ompi_ddt_optimize_short( dt_desc_t* pData, int count, dt_type_desc_t* pTypeD
    pElemDesc->type = DT_UNAVAILABLE;
    /* cleanup the stack */
    pTypeDesc->used = nbElems;
-   return 0;
+   return OMPI_SUCCESS;
 }
 
 #define PRINT_MEMCPY( DST, SRC, LENGTH ) \
@@ -274,7 +274,7 @@ static int ompi_ddt_unroll( dt_desc_t* pData, int count )
       pos_desc++;  /* advance to the next data */
    }
    PRINT_MEMCPY( pDestBuf, (char*)lastDisp, lastLength );
-   return 0;
+   return OMPI_SUCCESS;
 }
 
 int ompi_ddt_commit( dt_desc_t** data )
@@ -282,7 +282,7 @@ int ompi_ddt_commit( dt_desc_t** data )
     dt_desc_t* pData = (dt_desc_t*)*data;
     dt_elem_desc_t* pLast = &(pData->desc.desc[pData->desc.used]);
 
-    if( pData->flags & DT_FLAG_COMMITED ) return -1;
+    if( pData->flags & DT_FLAG_COMMITED ) return OMPI_SUCCESS;
     pData->flags |= DT_FLAG_COMMITED;
 
     /* let's add a fake element at the end just to avoid useless comparaisons
@@ -307,5 +307,5 @@ int ompi_ddt_commit( dt_desc_t** data )
         pLast->disp   = pData->ub - pData->lb;
         pLast->extent = pData->size;
     }
-    return 0;
+    return OMPI_SUCCESS;
 }

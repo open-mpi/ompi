@@ -12,5 +12,5 @@ int ompi_ddt_destroy( dt_desc_t** dt )
 
    OBJ_RELEASE( pData );
    *dt = NULL;
-   return 0;
+   return OMPI_SUCCESS;
 }

@@ -53,12 +53,12 @@ int ompi_create_stack_with_pos_general( ompi_convertor_t* pConvertor,
         pConvertor->pStack[1].count = pElems->count;
         pConvertor->pStack[1].disp = pElems->disp;
         pConvertor->pStack[1].end_loop = pConvertor->pStack[0].end_loop;
-        return 0;
+        return OMPI_SUCCESS;
     }
     /* if the convertor continue from the last position
      * there is nothing to do.
      */
-    if( pConvertor->bConverted == starting_point ) return 0;
+    if( pConvertor->bConverted == starting_point ) return OMPI_SUCCESS;
 
     remoteLength = (int*)alloca( sizeof(int) * pConvertor->pDesc->btypes[DT_LOOP] );
     pStack = pConvertor->pStack;
@@ -126,13 +126,13 @@ int ompi_create_stack_with_pos_general( ompi_convertor_t* pConvertor,
                         totalDisp + pElems->disp + cnt * pElems->extent,
                         pos_desc );
             pConvertor->bConverted += (starting_point - resting_place);
-            return 0;
+            return OMPI_SUCCESS;
         }
         pos_desc++;  /* advance to the next data */
         pElems++;
     }
 
-    return 0;
+    return OMPI_SUCCESS;
 }
 
 /* This function works for homogeneous architectures. As we keep
@@ -176,12 +176,12 @@ int ompi_create_stack_with_pos( ompi_convertor_t* pConvertor,
         pConvertor->pStack[1].end_loop = pConvertor->pStack[0].end_loop;
 	pConvertor->converted = 0;
 	pConvertor->bConverted = 0;
-        return 0;
+        return OMPI_SUCCESS;
     }
     /* if the convertor continue from the last position
      * there is nothing to do.
      */
-    if( pConvertor->bConverted == starting_point ) return 0;
+    if( pConvertor->bConverted == starting_point ) return OMPI_SUCCESS;
     if( pConvertor->flags & DT_FLAG_CONTIGUOUS ) {
         int cnt;
 
@@ -205,7 +205,7 @@ int ompi_create_stack_with_pos( ompi_convertor_t* pConvertor,
         pConvertor->pStack[1].disp = pElems->disp + cnt;
         pConvertor->pStack[1].end_loop = pConvertor->pStack[0].end_loop;
 	pConvertor->bConverted = starting_point;
-        return 0;
+        return OMPI_SUCCESS;
     }
     remoteLength = (int*)alloca( sizeof(int) * pConvertor->pDesc->btypes[DT_LOOP] );
     pStack = pConvertor->pStack;
@@ -273,11 +273,11 @@ int ompi_create_stack_with_pos( ompi_convertor_t* pConvertor,
                         totalDisp + pElems->disp + cnt * pElems->extent,
                         pos_desc );
             pConvertor->bConverted += (starting_point - resting_place);
-            return 0;
+            return OMPI_SUCCESS;
         }
         pos_desc++;  /* advance to the next data */
         pElems++;
     }
 
-    return 0;
+    return OMPI_SUCCESS;
 }
