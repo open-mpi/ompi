@@ -279,8 +279,7 @@ orte_gpr_base_dump_notify_data(data,0);
                     char *ptr;
                     void* bytes = NULL;
                     size_t cnt;
-                    uint32_t num_bytes;
-                    size_t size_t_num_bytes;
+                    size_t num_bytes;
                     if(strcmp(keyval[j]->key,"modex") != 0)
                         continue;
 
@@ -321,7 +320,7 @@ orte_gpr_base_dump_notify_data(data,0);
                     }
                     cnt = 1;
                     if (ORTE_SUCCESS != (rc = orte_dps.unpack(&buffer, 
-                        &num_bytes, &cnt, ORTE_UINT32))) {
+                        &num_bytes, &cnt, ORTE_SIZE))) {
                         ORTE_ERROR_LOG(rc);
                         continue;
                     }
@@ -332,8 +331,7 @@ orte_gpr_base_dump_notify_data(data,0);
                             continue;
                         }
                     }
-                    size_t_num_bytes = num_bytes;
-                    if (ORTE_SUCCESS != (rc = orte_dps.unpack(&buffer, bytes, &size_t_num_bytes, ORTE_BYTE))) {
+                    if (ORTE_SUCCESS != (rc = orte_dps.unpack(&buffer, bytes, &num_bytes, ORTE_BYTE))) {
                         ORTE_ERROR_LOG(rc);
                         continue;
                     }
@@ -599,7 +597,7 @@ int mca_base_modex_send(
     if (ORTE_SUCCESS != (rc = orte_dps.pack(&buffer, &source_component->mca_component_minor_version, 1, ORTE_INT32))) {
         goto cleanup;
     }
-    if (ORTE_SUCCESS != (rc = orte_dps.pack(&buffer, &size, 1, ORTE_UINT32))) {
+    if (ORTE_SUCCESS != (rc = orte_dps.pack(&buffer, &size, 1, ORTE_SIZE))) {
         goto cleanup;
     }
     if (ORTE_SUCCESS != (rc = orte_dps.pack(&buffer, (void*)data, size, ORTE_BYTE))) {
