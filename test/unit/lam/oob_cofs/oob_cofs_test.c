@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 int
 main(int argc, char* argv[])
@@ -66,7 +67,7 @@ main(int argc, char* argv[])
       exit(1);
     }
     printf("%d %d: %s\n", source_vpid, source_tag, source_data);
-    lam_free(source_data);
+    free(source_data);
   }
 
   printf("#\n# Finished\n#\n");
