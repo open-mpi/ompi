@@ -300,10 +300,9 @@ mca_ptl_gm_init_sendrecv (mca_ptl_gm_module_t * ptl)
     }
     for (i = 0; i < ptl->num_send_tokens; i++) {
 	OMPI_FREE_LIST_RETURN( &(ptl->gm_send_frags), (ompi_list_item_t *)sfragment );
-	sfragment->send_buf = ptl->gm_send_dma_memory;
+	sfragment->send_buf = (char*)ptl->gm_send_dma_memory + i * GM_BUF_SIZE;
 	DO_DEBUG( printf( "%3d : gm register sendreq %p with GM buffer %p\n", i,
                           (void*)sfragment, (void*)sfragment->send_buf ) );
-	ptl->gm_send_dma_memory = ((char *)ptl->gm_send_dma_memory) + GM_BUF_SIZE;
 	sfragment++;
     }
     A_PRINT( ("recv_tokens = %d send_tokens = %d, allocted free lis = %d\n",
@@ -343,10 +342,9 @@ mca_ptl_gm_init_sendrecv (mca_ptl_gm_module_t * ptl)
 	OMPI_FREE_LIST_RETURN( &(ptl->gm_recv_frags_free), (ompi_list_item_t *)free_rfragment );
 	free_rfragment++;
 
-	gm_provide_receive_buffer( ptl->gm_port, ptl->gm_recv_dma_memory,
+	gm_provide_receive_buffer( ptl->gm_port, ptl->gm_recv_dma_memory + i * GM_BUF_SIZE,
 				   GM_SIZE, GM_LOW_PRIORITY );
 	DO_DEBUG(printf( "%3d : gm register GM receive buffer %p\n", i, (void*)ptl->gm_recv_dma_memory ) );
-	ptl->gm_recv_dma_memory = ((char *)ptl->gm_recv_dma_memory) + GM_BUF_SIZE;
     }
 
     OBJ_CONSTRUCT( &(ptl->gm_pending_acks), ompi_list_t );
