@@ -3,11 +3,10 @@
  */
 #include "lam_config.h"
 #include <stdio.h>
-#include <string.h>
 
 #include "mpi.h"
-#include "mpi/c/bindings.h"
 #include "runtime/runtime.h"
+#include "mpi/c/bindings.h"
 #include "communicator/communicator.h"
 
 #if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILING_DEFINES
@@ -22,7 +21,8 @@ int MPI_Comm_dup(MPI_Comm comm, MPI_Comm *newcomm) {
     
     /* local variables */
     lam_communicator_t *comp, *newcomp;
-    int rc;
+    int rsize, mode;
+    lam_proc_t **rprocs;
     
     /* argument checking */
     if ( MPI_PARAM_CHECK ) {
@@ -40,53 +40,35 @@ int MPI_Comm_dup(MPI_Comm comm, MPI_Comm *newcomm) {
     }
 
     comp = (lam_communicator_t *) comm;
-    /* This routine allocates an element, allocates the according groups,
-       sets the f2c handle and increases the reference counters of
-       comm, group and remote_group */
-    newcomp = lam_comm_allocate (comp->c_local_group->grp_proc_count, 
-                                 comp->c_remote_group->grp_proc_count );
-
-    /* copy local group */
-    newcomp->c_local_group->grp_my_rank = comp->c_local_group->grp_my_rank;
-    memcpy (newcomp->c_local_group->grp_proc_pointers, 
-            comp->c_local_group->grp_proc_pointers, 
-            comp->c_local_group->grp_proc_count * sizeof(lam_proc_t *));
-    lam_group_increment_proc_count(newcomp->c_local_group);
-
-    if ( comp->c_flags & LAM_COMM_INTER ) {
-        /* copy remote group */
-        memcpy (newcomp->c_remote_group->grp_proc_pointers, 
-                comp->c_remote_group->grp_proc_pointers, 
-                comp->c_remote_group->grp_proc_count * sizeof(lam_proc_t *));
-        lam_group_increment_proc_count(newcomp->c_remote_group);
-
-        /* Get new context id */
-        newcomp->c_contextid = lam_comm_nextcid (comm, LAM_COMM_INTER_INTER);
+    if ( LAM_COMM_IS_INTER ( comp ) ){
+        rsize  = comp->c_remote_group->grp_proc_count;
+        rprocs = comp->c_remote_group->grp_proc_pointers;
+        mode   = LAM_COMM_INTER_INTER;
     }
     else {
-        /* Get new context id */
-        newcomp->c_contextid = lam_comm_nextcid (comm, LAM_COMM_INTRA_INTRA);
+        rsize  = 0;
+        rprocs = NULL;
+        mode   = LAM_COMM_INTRA_INTRA;
     }
 
-    /* other fields */
-    newcomp->c_my_rank = comp->c_my_rank;
-    newcomp->c_flags   = comp->c_flags;
-    
+    newcomp = lam_comm_set ( mode,                                   /* mode */
+                             comp,                                   /* old comm */
+                             NULL,                                   /* bridge comm */
+                             comp->c_local_group->grp_proc_count,    /* local_size */
+                             comp->c_local_group->grp_proc_pointers, /* local_procs*/
+                             rsize,                                  /* remote_size */
+                             rprocs,                                 /* remote_procs */
+                             comp->c_keyhash,                        /* attrs */
+                             comp->error_handler,                    /* error handler */
+                             NULL,                      /* coll module, to be modified */
+                             NULL,                      /* topo module, to be modified */
+                             MPI_UNDEFINED,                          /* local leader */
+                             MPI_UNDEFINED                           /* remote leader */
+                             );
 
-    /* Copy topology information */
+    if ( newcomp == MPI_COMM_NULL ) 
+        LAM_ERRHANDLER_INVOKE (comm, MPI_ERR_INTERN, "MPI_Comm_dup");
 
-
-    /* Copy error handler */
-    newcomp->error_handler = comp->error_handler;
-    OBJ_RETAIN ( comp->error_handler );
-
-    /* Copy attributes */
-    rc = lam_attr_copy_all ( COMM_ATTR, comp, newcomp );
-    if ( rc != LAM_SUCCESS ) {
-        lam_comm_free ( (MPI_Comm *)newcomp );
-        return LAM_ERRHANDLER_INVOKE ( comm, rc, "MPI_Comm_dup");
-    }
-
-    *newcomm = (MPI_Comm) newcomp;
-    return MPI_SUCCESS;
+    *newcomm = newcomp;
+    return ( MPI_SUCCESS );
 }

@@ -30,10 +30,6 @@ int MPI_Comm_free(MPI_Comm *comm) {
                                          "MPI_Comm_free");
     }
     
-    /* Call attribute delete functions */
-    
-    /* free the object */
-
     lam_comm_free ( comm ); 
     
     *comm = MPI_COMM_NULL;
