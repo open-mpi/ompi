@@ -30,8 +30,10 @@ int mca_oob_tcp_recv(
     if(NULL != msg) {
 
         /* if we are just doing peek, return bytes without dequeing message */
-        if(msg->msg_rc < 0) 
+        if(msg->msg_rc < 0)  {
+            OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_match_lock);
             return msg->msg_rc;
+        }
 
         rc = mca_oob_tcp_msg_copy(msg, iov, count);
         if(rc >= 0 && MCA_OOB_TRUNC & flags) {
