@@ -15,6 +15,7 @@
 #include <unistd.h>
 #include <netdb.h>
 #include <sys/param.h>
+#include <errno.h>
 
 #include "runtime/runtime.h"
 #include "util/output.h"
@@ -221,7 +222,6 @@ const string laminfo::type_all = "all";
 const string laminfo::type_lam = "lam";
 const string laminfo::type_base = "base";
 laminfo::type_vector_t laminfo::mca_types;
-
 
 int main(int argc, char *argv[])
 {
