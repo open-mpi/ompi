@@ -20,6 +20,9 @@
  * includes
  */
 #include "orte_config.h"
+
+#include <string.h>
+
 #include "include/orte_constants.h"
 #include "include/orte_types.h"
 

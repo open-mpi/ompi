@@ -105,7 +105,7 @@ void ompi_progress(void)
     ompi_atomic_unlock(&progress_lock);
 #endif  /* OMPI_HAVE_THREAD_SUPPORT */
 
-#if 1
+#if 0
     /* TSW - disable this until can validate that it doesn't impact SMP
      * performance
     */

@@ -21,6 +21,8 @@
  */
 #include "orte_config.h"
 
+#include <string.h>
+
 #include "include/orte_schema.h"
 
 #include "mca/errmgr/errmgr.h"
