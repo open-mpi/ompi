@@ -51,9 +51,9 @@ struct mca_ptl_gm_component_t {
     uint32_t    gm_max_port_number;      /**< maximum number of ports by board */
     uint32_t    gm_max_boards_number;    /**< maximum number of boards on the node */
     uint32_t    gm_max_rdma_frag_size;   /**< maximum fragment size used to transfer data over RDMA */
-    uint32_t    gm_max_eager_fragments;  /**< number of fragments before the rendez-vous protocol. If the
-                                          **< size of the message is less than this number multiplied by
-                                          **< the size of the first fragment then GM use a eager protocol.
+    uint32_t    gm_max_eager_size;       /**< number of bytes before the rendez-vous protocol. If the
+                                          **< size of the message is less than this number then GM 
+                                          **< use a eager protocol.
                                           */
     char*       gm_port_name;            /**< the name used to get the port */
 
