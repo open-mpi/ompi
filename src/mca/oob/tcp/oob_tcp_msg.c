@@ -24,11 +24,6 @@ static bool mca_oob_tcp_msg_recv(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* pee
 static void mca_oob_tcp_msg_data(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* peer);
 static void mca_oob_tcp_msg_ping(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* peer);
 
-#define IMPORTANT_WINDOWS_COMMENT() \ 
-            /* In windows, many of the socket functions return an EWOULDBLOCK instead of \
-               things like EAGAIN, EINPROGRESS, etc. It has been verified that this will \
-               not conflict with other error codes that are returned by these functions \
-               under UNIX/Linux environments */
 
 OBJ_CLASS_INSTANCE(
     mca_oob_tcp_msg_t,
@@ -174,7 +169,10 @@ bool mca_oob_tcp_msg_send_handler(mca_oob_tcp_msg_t* msg, struct mca_oob_tcp_pee
         if(rc < 0) {
             if(ompi_socket_errno == EINTR)
                 continue;
-            IMPORTANT_WINDOWS_COMMENT();
+            /* In windows, many of the socket functions return an EWOULDBLOCK instead of \
+               things like EAGAIN, EINPROGRESS, etc. It has been verified that this will \
+               not conflict with other error codes that are returned by these functions \
+               under UNIX/Linux environments */
             else if (ompi_socket_errno == EAGAIN || ompi_socket_errno == EWOULDBLOCK)
                 return false;
             else {
@@ -265,7 +263,10 @@ static bool mca_oob_tcp_msg_recv(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* pee
         if(rc < 0) {
             if(ompi_socket_errno == EINTR)
                 continue;
-            IMPORTANT_WINDOWS_COMMENT();
+            /* In windows, many of the socket functions return an EWOULDBLOCK instead of \
+               things like EAGAIN, EINPROGRESS, etc. It has been verified that this will \
+               not conflict with other error codes that are returned by these functions \
+               under UNIX/Linux environments */
             else if (ompi_socket_errno == EAGAIN || ompi_socket_errno == EWOULDBLOCK)
                 return false;
             else {
