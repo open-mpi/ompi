@@ -12,7 +12,7 @@
 #include "ompi_config.h"
 #include "util/sys_info.h"
 #include "support.h"
-#include "../src/util/pack.h"
+#include "../src/util/bufpack.h"
 #include "../src/include/constants.h"
 
 /* used for debugging */
