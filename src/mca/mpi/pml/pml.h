@@ -14,8 +14,8 @@
  * PML module functions
  */
 
-typedef int (*mca_pml_query_fn_t)(int *priority);
-typedef struct mca_pml_1_0_0 * (*mca_pml_init_1_0_0_fn_t)(
+typedef int (*mca_pml_query_fn_t)(int *priority, int *min_thread, int* max_thread);
+typedef struct mca_pml_1_0_0_t * (*mca_pml_init_1_0_0_fn_t)(
     struct lam_proc_t **procs, 
     int nprocs, 
     int *max_tag, 

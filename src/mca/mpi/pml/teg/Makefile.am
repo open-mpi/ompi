@@ -20,4 +20,3 @@ libteg_la_SOURCES = \
         ptl_array.c \
 	teg.c
 	
-
