@@ -144,13 +144,13 @@ struct ompi_eventop {
 #define OMPI_EVLOOP_NONBLOCK	0x02
 
 
-int ompi_event_init(void);
-int ompi_event_fini(void);
-int ompi_event_dispatch(void);
-int ompi_event_loop(int);
-int ompi_event_enable(void);
-int ompi_event_disable(void);
-bool ompi_event_progress_thread(void);
+OMPI_DECLSPEC int ompi_event_init(void);
+OMPI_DECLSPEC int ompi_event_fini(void);
+OMPI_DECLSPEC int ompi_event_dispatch(void);
+OMPI_DECLSPEC int ompi_event_loop(int);
+OMPI_DECLSPEC int ompi_event_enable(void);
+OMPI_DECLSPEC int ompi_event_disable(void);
+OMPI_DECLSPEC bool ompi_event_progress_thread(void);
 
 #define ompi_evtimer_add(ev, tv)		ompi_event_add(ev, tv)
 #define ompi_evtimer_set(ev, cb, arg)	ompi_event_set(ev, -1, 0, cb, arg)
@@ -172,9 +172,10 @@ bool ompi_event_progress_thread(void);
 #define ompi_signal_initialized(ev)	((ev)->ev_flags & OMPI_EVLIST_INIT)
 
 /* for internal use only */
-int   ompi_event_add_i(struct ompi_event *, struct timeval *);
-int   ompi_event_del_i(struct ompi_event *);
-void  ompi_event_active_i(struct ompi_event*, int, short);
+OMPI_DECLSPEC int   ompi_event_add_i(struct ompi_event *, struct timeval *);
+OMPI_DECLSPEC int   ompi_event_del_i(struct ompi_event *);
+OMPI_DECLSPEC void  ompi_event_active_i(struct ompi_event*, int, short);
+OMPI_DECLSPEC extern ompi_mutex_t ompi_event_lock;
 
 /* public functions */
 static inline void
@@ -228,7 +229,6 @@ ompi_event_del(struct ompi_event *ev)
 static inline void 
 ompi_event_active(struct ompi_event* ev, int res, short ncalls)
 {
-    extern ompi_mutex_t ompi_event_lock;
     if(ompi_using_threads()) {
         ompi_mutex_lock(&ompi_event_lock);
         ompi_event_active_i(ev, res, ncalls);
