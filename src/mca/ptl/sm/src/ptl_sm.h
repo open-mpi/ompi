@@ -16,12 +16,18 @@
 #include "mca/ptl/ptl.h"
 #include "mca/mpool/mpool.h"
 #include "mca/common/sm/common_sm_mmap.h"
+#include "class/ompi_fifo.h"
 
 /*
  * Shared Memory resource managment
  */
 struct mca_ptl_sm_module_resource_t {
+    /* base control structures */
     mca_common_sm_file_header_t segment_header;
+
+    /* fifo queues - offsets relative to the base of the share memory
+     * segment will be stored here */
+    volatile ompi_fifo_t **fifo;
 };
 typedef struct mca_ptl_sm_module_resource_t mca_ptl_sm_module_resource_t;
 extern mca_ptl_sm_module_resource_t mca_ptl_sm_module_resource;
@@ -35,6 +41,7 @@ struct mca_ptl_sm_component_t {
     int sm_free_list_max;                 /**< maximum size of free lists */
     int sm_free_list_inc;                 /**< number of elements to alloc when growing free lists */
     int sm_max_procs;                     /**< upper limit on the number of processes using the shared memory pool */
+    int sm_extra_procs;                  /**< number of extra procs to allow */
     char* sm_mpool_name;                  /**< name of shared memory pool module */
     mca_mpool_base_module_t* sm_mpool; /**< shared memory pool */
     void* sm_mpool_base;                  /**< base address of shared memory pool */
@@ -46,6 +53,14 @@ struct mca_ptl_sm_component_t {
                                             to coordinate resource usage */
     mca_common_sm_mmap_t *mmap_file;     /**< description of mmap'ed
                                            file */
+    mca_ptl_sm_module_resource_t *sm_ctl_header;  /* control header in
+                                                     shared memory */
+    size_t sm_offset;        /**< offset to be applied to shared memory
+                              addresses */
+    int num_smp_procs;      /**< current number of smp procs on this
+                              host */
+    int my_smp_rank;    /**< My SMP process rank.  Used for accessing
+                         *   SMP specfic data structures. */
 };
 typedef struct mca_ptl_sm_component_t mca_ptl_sm_component_t;
 extern mca_ptl_sm_component_t mca_ptl_sm_component;
@@ -95,10 +110,6 @@ extern int mca_ptl_sm_component_progress(
  */
 struct mca_ptl_sm_t {
     mca_ptl_base_module_t  super;       /**< base PTL interface */
-    int num_smp_procs;      /**< current number of smp procs on this
-                              host */
-    int my_smp_rank;    /**< My SMP process rank.  Used for accessing
-                         *   SMP specfic data structures. */
 };
 typedef struct mca_ptl_sm_t mca_ptl_sm_t;
 

@@ -41,7 +41,7 @@ static int mca_ptl_sm_component_exchange(void);
  */
 
 mca_ptl_sm_component_t mca_ptl_sm_component = {
-    {
+    {  /* super is being filled in */
         /* First, the mca_base_component_t struct containing meta information
           about the component itself */
         {
@@ -65,7 +65,7 @@ mca_ptl_sm_component_t mca_ptl_sm_component = {
         mca_ptl_sm_component_init,  
         mca_ptl_sm_component_control,
         mca_ptl_sm_component_progress,
-    }
+    }  /* end super */
 };
 
 
@@ -112,6 +112,10 @@ int mca_ptl_sm_component_open(void)
         mca_ptl_sm_param_register_int("max_procs", -1);
     mca_ptl_sm_component.sm_mpool_name =
         mca_ptl_sm_param_register_string("mpool", "sm");
+
+    /* default number of extra procs to allow for future growth */
+    mca_ptl_sm_component.sm_extra_procs =
+        mca_ptl_sm_param_register_int("sm_extra_procs", 2);
 
     /* initialize objects */
     OBJ_CONSTRUCT(&mca_ptl_sm_component.sm_lock, ompi_mutex_t);
@@ -189,8 +193,8 @@ mca_ptl_base_module_t** mca_ptl_sm_component_init(
 
     /* initialize some PTL data */
     /* start with no SM procs */
-    mca_ptl_sm.num_smp_procs=0;
-    mca_ptl_sm.my_smp_rank=-1;
+    mca_ptl_sm_component.num_smp_procs=0;
+    mca_ptl_sm_component.my_smp_rank=-1;
 
     return ptls;
 }
