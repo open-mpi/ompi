@@ -37,7 +37,7 @@ else
 
     if test "$OMPI_SVN_VERSION" != "0"; then
         if test -d .svn; then
-            ver=`svnversion .`
+            ver="r`svnversion .`"
         else
             ver="svn`date '+%m%d%Y'`"
         fi
@@ -73,7 +73,7 @@ case "$option" in
 	echo $OMPI_SVN_VERSION
 	;;
     --all)
-        echo ${OMPI_VERSION}:${OMPI_MAJOR_VERSION}:${OMPI_MINOR_VERSION}:${OMPI_RELEASE_VERSION}:${OMPI_ALPHA_VERSION}:${OMPI_BETA_VERSION}:${OMPI_SVN_VERSION}
+        echo ${OMPI_VERSION} ${OMPI_MAJOR_VERSION} ${OMPI_MINOR_VERSION} ${OMPI_RELEASE_VERSION} ${OMPI_ALPHA_VERSION} ${OMPI_BETA_VERSION} ${OMPI_SVN_VERSION}
         ;;
     -h|--help)
 	cat <<EOF
