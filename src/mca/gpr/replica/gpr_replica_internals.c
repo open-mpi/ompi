@@ -483,13 +483,13 @@ mca_gpr_notify_id_t gpr_replica_remove_trigger(ompi_registry_synchro_mode_t sync
 					       ompi_registry_mode_t addr_mode,
 					       char *segment, char **tokens, int trigger)
 {
-    mca_gpr_replica_segment_t *seg;
-    mca_gpr_replica_trigger_list_t *trig;
-    mca_gpr_notify_id_t id_tag;
-    char **tokptr;
-    mca_gpr_replica_key_t *keys, *keyptr, *kptr;
-    int i, num_tokens;
-    bool found, mismatch;
+    mca_gpr_replica_segment_t *seg=NULL;
+    mca_gpr_replica_trigger_list_t *trig=NULL;
+    mca_gpr_notify_id_t id_tag=0;
+    char **tokptr=NULL;
+    mca_gpr_replica_key_t *keys=NULL, *keyptr=NULL, *kptr=NULL;
+    int i=0, num_tokens=0;
+    bool found=false, mismatch=false;
 
     seg = gpr_replica_find_seg(false, segment);
     if (NULL == seg) { /* couldn't find segment */
