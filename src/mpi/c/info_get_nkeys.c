@@ -8,6 +8,8 @@
 #include "mpi/c/bindings.h"
 #include "lfc/lam_list.h"
 #include "info/info.h"
+#include "errhandler/errhandler.h"
+#include "communicator/communicator.h"
 
 #if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILING_DEFINES
 #pragma weak MPI_Info_get_nkeys = PMPI_Info_get_nkeys
@@ -33,9 +35,11 @@
 int MPI_Info_get_nkeys(MPI_Info info, int *nkeys) {
     int err;
 
-    if (NULL == info){
-        printf ("Invalid MPI_Info handle passed\n");
-        return MPI_ERR_ARG;
+    if (MPI_PARAM_CHECK) {
+        if (NULL == info){
+            return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
+                                         "MPI_Info_nkeys");
+        }
     }
     err = lam_info_get_nkeys(info, nkeys);
 

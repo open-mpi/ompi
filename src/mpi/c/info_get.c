@@ -11,6 +11,8 @@
 #include "util/strncpy.h"
 #include <stdlib.h>
 #include <string.h>
+#include "errhandler/errhandler.h"
+#include "communicator/communicator.h"
 
 #if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILING_DEFINES
 #pragma weak MPI_Info_get = PMPI_Info_get
@@ -48,15 +50,17 @@ int MPI_Info_get(MPI_Info info, char *key, int valuelen,
      * having the "key" associated with it and then populate the
      * necessary structures.
      */
-    if (NULL == info){
-        printf ("Invalid MPI_Info handle passed\n");
-        return MPI_ERR_ARG;
-    }
+    if (MPI_PARAM_CHECK) {
+        if (NULL == info || NULL == key || 0 > valuelen){
+            return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
+                                         "MPI_Info_get");
+        }
 
-    key_length = (key) ? strlen (key) : 0;
-    if ( (0 == key_length) || (MPI_MAX_INFO_KEY <= key_length)) {
-        printf ("The key passed to MPI_INFO_SET is too long\n");
-        return MPI_ERR_INFO_KEY;
+        key_length = (key) ? strlen (key) : 0;
+        if ( (0 == key_length) || (MPI_MAX_INFO_KEY <= key_length)) {
+            return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INFO_KEY,
+                                         "MPI_Info_get");
+        }
     }
 
     err = lam_info_get (info, key, valuelen, value, flag);

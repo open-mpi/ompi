@@ -8,6 +8,8 @@
 #include "mpi/c/bindings.h"
 #include "lfc/lam_list.h"
 #include "info/info.h"
+#include "errhandler/errhandler.h"
+#include "communicator/communicator.h"
 
 #if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILING_DEFINES
 #pragma weak MPI_Info_c2f = PMPI_Info_c2f
@@ -27,5 +29,14 @@
  * fortran handle to the same MPI_INFO object.
  */
 MPI_Fint MPI_Info_c2f(MPI_Info info) {
-    return (MPI_Fint)0;
+
+    /* check the arguments */
+    if (MPI_PARAM_CHECK) {
+        if (NULL == info) {
+            return (MPI_Fint) LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, 
+                    "MPI_Info_c2f");
+        }
+    }
+    /* return the index */
+    return (MPI_Fint)(info->i_fhandle);
 }

@@ -10,6 +10,7 @@
 #include "mpi.h"
 #include "util/strncpy.h"
 #include "lfc/lam_list.h"
+#include "lfc/lam_pointer_array.h"
 #include "include/lam.h"
 
 
@@ -38,6 +39,11 @@ struct lam_info_entry_t {
 typedef struct lam_info_entry_t lam_info_entry_t;
 
 /**
+ * Table for Fortran <-> C translation table
+ */ 
+extern lam_pointer_array_t *lam_info_f_to_c_table;
+
+/**
  * Some declarations needed to use OBJ_NEW and OBJ_DESTRUCT macros
  */
 extern lam_class_t lam_info_t_class;
@@ -46,6 +52,8 @@ extern lam_class_t lam_info_entry_t_class;
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
+int lam_info_init(void);
+int lam_info_finalize(void);
 void lam_info_construct(lam_info_t *info);
 void lam_info_destruct(lam_info_t *info);
 
