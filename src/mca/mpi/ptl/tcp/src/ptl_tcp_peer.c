@@ -7,6 +7,7 @@
 #include <sys/types.h>
 #include <sys/fcntl.h>
 #include "lam/types.h"
+#include "mca/mpi/ptl/base/ptl_base_sendreq.h"
 #include "ptl_tcp.h"
 #include "ptl_tcp_addr.h"
 #include "ptl_tcp_peer.h"
@@ -47,7 +48,7 @@ static void mca_ptl_tcp_peer_construct(mca_ptl_base_peer_t* ptl_peer)
     ptl_peer->peer_state = MCA_PTL_TCP_CLOSED;
     ptl_peer->peer_retries = 0;
     OBJ_CONSTRUCT(&ptl_peer->peer_frags, lam_list_t);
-    OBJ_CONSTRUCT(&ptl_peer->peer_lock, lam_mutex_t);
+    OBJ_CONSTRUCT(&ptl_peer->peer_lock,  lam_mutex_t);
 }
 
 
@@ -102,13 +103,12 @@ int mca_ptl_tcp_peer_send(mca_ptl_base_peer_t* ptl_peer, mca_ptl_tcp_send_frag_t
         if (NULL != ptl_peer->peer_send_frag) 
             lam_list_append(&ptl_peer->peer_frags, (lam_list_item_t*)frag);
         else {
-            if(mca_ptl_tcp_send_frag_handler(frag, ptl_peer->peer_sd) == false) {
+            mca_ptl_base_send_request_t* send_request = frag->super.frag_request;
+            if(mca_ptl_tcp_send_frag_handler(frag, ptl_peer->peer_sd)) {
+                mca_ptl_tcp_send_frag_progress(frag);
+            } else {
                 ptl_peer->peer_send_frag = frag;
-                lam_event_add(&mca_ptl_tcp_module.tcp_send_event, 0);
-            /* special case for acks */
-            } else if (NULL != frag->super.frag_request) {
-                ptl_peer->peer_ptl->super.ptl_send_progress(frag->super.frag_request, &frag->super);
-                lam_free_list_return(&mca_ptl_tcp_module.tcp_send_frags, (lam_list_item_t*)frag);
+                lam_event_add(&ptl_peer->peer_send_event, 0);
             }
         }
         break;
@@ -116,6 +116,7 @@ int mca_ptl_tcp_peer_send(mca_ptl_base_peer_t* ptl_peer, mca_ptl_tcp_send_frag_t
     THREAD_UNLOCK(&ptl_peer->peer_lock);
     return rc;
 }
+
 
 
 /*
@@ -443,7 +444,7 @@ static void mca_ptl_tcp_peer_recv_handler(int sd, short flags, void* user)
                 THREAD_UNLOCK(&ptl_peer->peer_lock);
                 return;
             }
-            mca_ptl_tcp_recv_frag_reinit(recv_frag, ptl_peer);
+            mca_ptl_tcp_recv_frag_init(recv_frag, ptl_peer);
         }
 
         /* check for completion of non-blocking recv on the current fragment */
@@ -482,10 +483,12 @@ static void mca_ptl_tcp_peer_send_handler(int sd, short flags, void* user)
         /* complete the current send */
         mca_ptl_t *ptl = (mca_ptl_t*)ptl_peer->peer_ptl;
         do {
-            mca_ptl_tcp_send_frag_t* send_frag = ptl_peer->peer_send_frag;
-            if(mca_ptl_tcp_send_frag_handler(send_frag, ptl_peer->peer_sd) == false)
+            mca_ptl_tcp_send_frag_t* frag = ptl_peer->peer_send_frag;
+            if(mca_ptl_tcp_send_frag_handler(frag, ptl_peer->peer_sd) == false)
                 break;
-            ptl->ptl_send_progress(send_frag->super.frag_request, &send_frag->super);
+
+            /* if required - update request status and release fragment */
+            mca_ptl_tcp_send_frag_progress(frag);
 
             /* progress any pending sends */
             ptl_peer->peer_send_frag = (mca_ptl_tcp_send_frag_t*)

@@ -8,7 +8,7 @@ void mca_pml_teg_recv_request_progress(
 {
     lam_mutex_lock(&mca_pml_teg.teg_request_lock);
     req->req_bytes_recvd += frag->super.frag_size;
-    if (req->req_bytes_recvd >= req->super.req_status.MPI_LENGTH) {
+    if (req->req_bytes_recvd >= req->super.req_status._count) {
         req->super.req_mpi_done = true;
         if(mca_pml_teg.teg_request_waiting) {
             lam_condition_broadcast(&mca_pml_teg.teg_request_cond);

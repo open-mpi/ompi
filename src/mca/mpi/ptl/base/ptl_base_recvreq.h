@@ -26,7 +26,7 @@ void mca_ptl_base_recv_request_match_wild(mca_ptl_base_recv_request_t*);
 void mca_ptl_base_recv_request_match_specific(mca_ptl_base_recv_request_t*);
 
 
-static inline void mca_ptl_base_recv_request_reinit(
+static inline void mca_ptl_base_recv_request_init(
     mca_ptl_base_recv_request_t *request,
     void *addr,
     size_t length,

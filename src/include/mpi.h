@@ -40,7 +40,7 @@ struct lam_status_public_t {
   int MPI_SOURCE;
   int MPI_TAG;
   int MPI_ERROR;
-  int MPI_LENGTH;
+  int _count;
 };
 typedef struct lam_status_public_t lam_status_public_t;
 

@@ -44,7 +44,7 @@ struct mca_ptl_base_peer_t {
     mca_ptl_tcp_recv_frag_t*   peer_recv_frag;
     mca_ptl_tcp_state_t        peer_state;
     size_t                     peer_retries;
-    lam_list_t                 peer_frags;
+    lam_list_t                 peer_frags;   /* list of pending frags to send */
     lam_mutex_t                peer_lock;
     lam_event_t                peer_send_event;
     lam_event_t                peer_recv_event;

@@ -70,7 +70,7 @@ static inline int mca_ptl_base_recv_frag_match(
             mca_ptl_base_recv_frag_init(frag);
             
             /* notify ptl of match */
-            ptl->ptl_recv(ptl, frag);
+            ptl->ptl_recv(ptl, frag, &frag->frag_request->super.req_status);
 
             /* process any additional fragments that arrived out of order */
             frag = (mca_ptl_base_recv_frag_t*)lam_list_remove_first(&matched_frags);

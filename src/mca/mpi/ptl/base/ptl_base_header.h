@@ -13,7 +13,7 @@
 #define MCA_PTL_HDR_TYPE_ACK    2
 #define MCA_PTL_HDR_TYPE_NACK   3
 
-#define MCA_PTL_FLAGS_ACK_IMMEDIATE   1
+#define MCA_PTL_FLAGS_ACK_MATCHED     1
 #define MCA_PTL_FLAGS_ACK_AGGREGATE   2
 
 
@@ -101,9 +101,5 @@ union mca_ptl_base_header_t {
 };
 typedef union mca_ptl_base_header_t mca_ptl_base_header_t;
 
-
-#define hdr_type   hdr_common.hdr_type
-#define hdr_flags  hdr_common.hdr_flags
-#define hdr_size   hdr_common.hdr_size
 
 #endif

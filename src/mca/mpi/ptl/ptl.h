@@ -138,12 +138,14 @@ typedef int (*mca_ptl_base_send_fn_t)(
     struct mca_ptl_t* ptl, 
     struct mca_ptl_base_peer_t* ptl_base_peer, 
     struct mca_ptl_base_send_request_t* send_request,
-    size_t size
+    size_t size,
+    int flags
 );
 
 typedef void (*mca_ptl_base_recv_fn_t)(
     struct mca_ptl_t* ptl, 
-    struct mca_ptl_base_recv_frag_t* recv_frag
+    struct mca_ptl_base_recv_frag_t* recv_frag,
+    struct lam_status_public_t* recv_status
 );
 
 typedef int (*mca_ptl_base_match_fn_t)(
