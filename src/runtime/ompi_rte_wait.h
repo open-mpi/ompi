@@ -27,6 +27,8 @@
 #include <sys/types.h>
 #endif
 
+#ifndef WIN32
+
 /** typedef for callback function used in \c ompi_rte_wait_cb */
 typedef void (*ompi_rte_wait_fn_t)(pid_t wpid, int status, void *data);
 
@@ -82,5 +84,5 @@ int ompi_rte_wait_init(void);
  */
 int ompi_rte_wait_finalize(void);
 
-
-#endif
+#endif /* #ifndef WIN32 */
+#endif /* #ifndef OMPI_RTE_WAIT_H */
