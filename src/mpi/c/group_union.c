@@ -54,7 +54,7 @@ int MPI_Group_union(MPI_Group group1, MPI_Group group2, MPI_Group *new_group)
         found_in_group = 0;
         for (proc1 = 0; proc1 < group1_pointer->grp_proc_count; proc1++) {
             proc1_pointer = group1_pointer->grp_proc_pointers[proc1];
-            if (proc2_pointer == proc2_pointer) {
+            if (proc1_pointer == proc2_pointer) {
                 /* proc2 is in group1 - don't double count */
                 found_in_group = 1;
                 break;
@@ -92,7 +92,7 @@ int MPI_Group_union(MPI_Group group1, MPI_Group group2, MPI_Group *new_group)
         found_in_group = 0;
         for (proc1 = 0; proc1 < group1_pointer->grp_proc_count; proc1++) {
             proc1_pointer = group1_pointer->grp_proc_pointers[proc1];
-            if (proc2_pointer == proc2_pointer) {
+            if (proc1_pointer == proc2_pointer) {
                 /* proc2 is in group1 - don't double count */
                 found_in_group = 1;
                 break;
@@ -112,7 +112,7 @@ int MPI_Group_union(MPI_Group group1, MPI_Group group2, MPI_Group *new_group)
 
     /* find my rank */
     my_group_rank = group1_pointer->grp_my_rank;
-    if (MPI_PROC_NULL == my_group_rank) {
+    if (MPI_UNDEFINED == my_group_rank) {
         my_group_rank = group2_pointer->grp_my_rank;
         my_proc_pointer = group2_pointer->grp_proc_pointers[my_group_rank];
     } else {

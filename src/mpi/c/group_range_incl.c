@@ -137,13 +137,11 @@ int MPI_Group_range_incl(MPI_Group group, int n_triplets, int ranges[][3],
     }
 
     /* fill in group list */
-    index=0;
     for (proc = 0; proc < group_pointer->grp_proc_count; proc++) {
         /* if value >= 0, include in the list */
         if (0 <= elements_int_list[proc] ) {
-            new_group_pointer->grp_proc_pointers[index] =
+            new_group_pointer->grp_proc_pointers[elements_int_list[proc]] =
                 group_pointer->grp_proc_pointers[proc];
-            index++;
         }
     } /* end of proc loop */
 

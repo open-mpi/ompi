@@ -29,18 +29,12 @@ int MPI_Group_free(MPI_Group *group)
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_GROUP,
                         "MPI_Group_free");
         }
+
     }
 
     l_group = (ompi_group_t *) *group;
-
-    /* check to see if group may be freed */
-    if( false == l_group->grp_ok_to_free ) {
-        return MPI_ERR_GROUP;
-    }
-
     OBJ_RELEASE(l_group);
 
     *group = MPI_GROUP_NULL;
-
     return MPI_SUCCESS;
 }

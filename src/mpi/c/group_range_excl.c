@@ -143,10 +143,10 @@ int MPI_Group_range_excl(MPI_Group group, int n_triplets, int ranges[][3],
     index=0;
     for (proc = 0; proc < group_pointer->grp_proc_count; proc++) {
         /* if value == -1, include in the list */
-        if (0 < elements_int_list[proc] ) {
+        if (0 > elements_int_list[proc] ) {
             new_group_pointer->grp_proc_pointers[index] =
                             group_pointer->grp_proc_pointers[proc];
-            index++;
+        index++;
         }
     } /* end of proc loop */
 
