@@ -8,6 +8,16 @@
 static volatile int count = 0;
 
 
+#if !OMPI_HAVE_THREAD_SUPPORT
+
+int main(int argc, char *argv[])
+{
+    printf("OMPI was compiled without thread support -- skipping this test\n");
+    return 77;
+}
+
+#else
+
 static void* thr1_run(ompi_object_t* obj)
 {
     ompi_atomic_add(&count, 1);
@@ -50,5 +60,4 @@ int main(int argc, char** argv)
     return test_finalize();
 }
 
-
-
+#endif /* OMPI_HAVE_THREAD_SUPPORT */
