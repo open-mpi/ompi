@@ -197,7 +197,7 @@ int ompi_convertor_create_stack_with_pos_general( ompi_convertor_t* pConvertor,
                 resting_place -= (cnt * ompi_ddt_basicDatatypes[type]->size);
                 PUSH_STACK( pStack, pConvertor->stack_pos, pos_desc, 
                             pElems->count - cnt,
-                            pElems->disp + cnt * pElems->extent,
+                            pStack->disp + pElems->disp + cnt * pElems->extent,
                             pos_desc );
                 pConvertor->bConverted = starting_point - resting_place;
                 return OMPI_SUCCESS;
