@@ -84,9 +84,9 @@ mca_ptl_gm_proc_create (mca_ptl_gm_module_t * ptl, ompi_proc_t * ompi_proc)
 
     ptl_proc = mca_ptl_gm_proc_lookup_ompi (ompi_proc);
     if (ptl_proc != NULL)
-    {
-       return ptl_proc;
-    }
+        {
+            return ptl_proc;
+        }
 
 
     /* only gm ptl opened */
@@ -126,8 +126,7 @@ mca_ptl_gm_proc_create (mca_ptl_gm_module_t * ptl, ompi_proc_t * ompi_proc)
         return NULL;
     }
 
-     if(NULL == mca_ptl_gm_component.gm_local && ompi_proc ==
-ompi_proc_local() )
+    if(NULL == mca_ptl_gm_component.gm_local && ompi_proc == ompi_proc_local() )
         mca_ptl_gm_component.gm_local = ptl_proc;
 
     return ptl_proc;

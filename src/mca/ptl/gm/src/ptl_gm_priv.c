@@ -167,8 +167,6 @@ void ptl_gm_ctrl_frag(struct mca_ptl_gm_module_t *ptl,
 
 }
 
-
-
 mca_ptl_gm_recv_frag_t* ptl_gm_data_frag( struct mca_ptl_gm_module_t *ptl,
                                           gm_recv_event_t* event )
 {
@@ -201,14 +199,12 @@ mca_ptl_gm_recv_frag_t* ptl_gm_data_frag( struct mca_ptl_gm_module_t *ptl,
                                  &recv_frag->frag_recv.frag_base.frag_header.hdr_match,
                                  &(recv_frag->frag_recv),
                                  NULL );
-
-
-    if (!matched) {
-        ompi_output(0,"matching receive not yet posted\n");
-        return recv_frag;
+    if( matched ) {
+        mca_ptl_gm_matched( &(ptl->super), &(recv_frag->frag_recv) );
+        return NULL;
     }
-    /* this one was matched => nothing more to do */
-    return NULL;
+    ompi_output(0,"matching receive not yet posted\n");
+    return recv_frag;
 }
 
 
@@ -249,7 +245,6 @@ int mca_ptl_gm_incoming_recv (mca_ptl_gm_component_t * gm_comp)
 
     for( i = 0; i< gm_comp->gm_num_ptl_modules; i++) {
         ptl = gm_comp->gm_ptl_modules[i];
-
         event = gm_receive(ptl->my_port);
 
         switch (gm_ntohc(event->recv.type)) {
@@ -269,6 +264,8 @@ int mca_ptl_gm_incoming_recv (mca_ptl_gm_component_t * gm_comp)
                 /* mark the fragment as having pending buffers */
                 frag->have_allocated_buffer = true;
             }
+            gm_provide_receive_buffer( ptl->my_port, gm_ntohp(event->recv.message),
+                                       GM_SIZE, GM_LOW_PRIORITY );
             break;
         case GM_NO_RECV_EVENT:
             break;
@@ -277,9 +274,6 @@ int mca_ptl_gm_incoming_recv (mca_ptl_gm_component_t * gm_comp)
             gm_unknown(ptl->my_port, event);
 
         }
-        /* Alway repost the message */
-        gm_provide_receive_buffer( ptl->my_port, gm_ntohp(event->recv.message),
-                                   GM_SIZE, GM_LOW_PRIORITY );
     }  
     return 0;
 }
