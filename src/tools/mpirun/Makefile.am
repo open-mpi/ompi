@@ -6,11 +6,18 @@ include $(top_srcdir)/config/Makefile.options
 
 libs = $(top_builddir)/src/libmpi.la
 
-bin_PROGRAMS = \
-        mpirun2
+bin_PROGRAMS = mpirun
 
-mpirun2_SOURCES = \
-        mpirun2.c 
+mpirun_SOURCES = \
+        mpirun.c 
 
-mpirun2_LDADD = $(libs) 
-mpirun2_DEPENDENCIES = $(mpirun2_LDADD)
+mpirun_LDADD = $(libs) 
+mpirun_DEPENDENCIES = $(mpirun_LDADD)
+
+# JMS Temporary hack for those who can't help themselves from typing
+# "mpirun2" :-)
+install-exec-hook:
+	(cd $(DESTDIR)$(bindir); rm -f mpirun2; ln -s mpirun mpirun2)
+
+uninstall-local:
+	rm -f $(DESTDIR)$(bindir)/mpirun2
