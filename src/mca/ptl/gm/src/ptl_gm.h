@@ -219,6 +219,9 @@ extern "C" {
     extern char* gm_get_local_buffer( void );
     extern void gm_release_local_buffer( char* ptr );
 
+    union mca_ptl_base_header_t;
+    void mca_ptl_gm_dump_header( char* str, union mca_ptl_base_header_t* hdr );
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

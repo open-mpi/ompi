@@ -64,33 +64,28 @@ mca_ptl_gm_alloc_send_frag( struct mca_ptl_gm_module_t* ptl,
 			    struct mca_pml_base_send_request_t* sendreq )
 {
     ompi_list_item_t* item;
-    mca_ptl_gm_send_frag_t* sendfrag;
+    mca_ptl_gm_send_frag_t* frag;
     int32_t rc;
 
     /* first get a gm_send_frag */
     OMPI_FREE_LIST_GET( &(ptl->gm_send_frags), item, rc );
-    sendfrag = (mca_ptl_gm_send_frag_t*)item;
+    frag = (mca_ptl_gm_send_frag_t*)item;
     /* And then get some DMA memory to put the data */
     OMPI_FREE_LIST_WAIT( &(ptl->gm_send_dma_frags), item, rc );
     ompi_atomic_sub( &(ptl->num_send_tokens), 1 );
     assert( ptl->num_send_tokens >= 0 );
-    sendfrag->send_buf = (void*)item;
+    frag->send_buf = (void*)item;
 
-    sendfrag->frag_send.frag_request         = sendreq;
-    sendfrag->frag_send.frag_base.frag_owner = (struct mca_ptl_base_module_t*)ptl;
-    sendfrag->frag_send.frag_base.frag_addr  = sendreq->req_base.req_addr;
-    sendfrag->frag_bytes_processed           = 0;
-    sendfrag->frag_bytes_validated           = 0;
-    sendfrag->status                         = -1;
-    sendfrag->type                           = PUT;
+    frag->frag_send.frag_request         = sendreq;
+    frag->frag_send.frag_base.frag_owner = (struct mca_ptl_base_module_t*)ptl;
+    frag->frag_send.frag_base.frag_addr  = sendreq->req_base.req_addr;
+    frag->frag_bytes_processed           = 0;
+    frag->frag_bytes_validated           = 0;
+    frag->status                         = -1;
+    frag->type                           = PUT;
+    ompi_ptl_gm_init_pipeline( &(frag->pipeline) );
     
-    return sendfrag;
-}
-
-int mca_ptl_gm_send_frag_done( mca_ptl_gm_send_frag_t* frag,
-                               mca_pml_base_send_request_t* req )
-{
-    return OMPI_SUCCESS;
+    return frag;
 }
 
 int mca_ptl_gm_put_frag_init( struct mca_ptl_gm_send_frag_t** putfrag,
