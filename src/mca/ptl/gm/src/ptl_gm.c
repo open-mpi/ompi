@@ -136,6 +136,18 @@ mca_ptl_gm_finalize (struct mca_ptl_base_module_t *base_ptl)
     uint32_t index;
     mca_ptl_gm_module_t* ptl = (mca_ptl_gm_module_t*)base_ptl;
 
+    for( index = 0; index < mca_ptl_gm_component.gm_num_ptl_modules; index++ ) {
+	if( mca_ptl_gm_component.gm_ptl_modules[index] == ptl ) {
+	    mca_ptl_gm_component.gm_ptl_modules[index] = NULL;
+            break;
+	}
+    }
+
+    if( index == mca_ptl_gm_component.gm_num_ptl_modules ) {
+        ompi_output( 0, "%p is not a GM PTL !!!\n", (void*)base_ptl );
+        return OMPI_ERROR;
+    }
+
     /* we should do the same things as in the init step in reverse order.
      * First we shutdown all threads if there are any.
      */
@@ -147,18 +159,47 @@ mca_ptl_gm_finalize (struct mca_ptl_base_module_t *base_ptl)
 	ompi_thread_join( &(ptl->thread), &thread_return );
     }
 #endif  /* OMPI_HAVE_POSIX_THREADS */
-    for( index = 0; index < mca_ptl_gm_component.gm_num_ptl_modules; index++ ) {
-	if( mca_ptl_gm_component.gm_ptl_modules[index] == ptl ) {
-	    mca_ptl_gm_component.gm_ptl_modules[index] = NULL;
-	    OMPI_OUTPUT((0, "GM ptl %p succesfully finalized\n", (void*)ptl));
-	}
+
+    /* Closing each port require several steps. As there is no way to cancel all 
+     * already posted messages we start by unregistering all memory and then close
+     * the port. After we can release all internal data.
+     */
+    if( ptl->gm_send_dma_memory != NULL ) {
+        gm_dma_free( ptl->gm_port, ptl->gm_send_dma_memory );
+        ptl->gm_send_dma_memory = NULL;
     }
 
-    /* based on the fact that the port 0 is reserved, we can use ZERO
-     * to mark a port as unused.
-     */
-    if( 0 != ptl->gm_port ) gm_close( ptl->gm_port );
-    ptl->gm_port = 0;
+    if( ptl->gm_recv_dma_memory != NULL ) {
+        gm_dma_free( ptl->gm_port, ptl->gm_recv_dma_memory );
+        ptl->gm_recv_dma_memory = NULL;
+    }
+
+    /* Now close the port if one is open */
+    if( ptl->gm_port != NULL ) {
+        gm_close( ptl->gm_port );
+        ptl->gm_port = NULL;
+    }
+
+    /* And now release all internal ressources. */
+    OBJ_DESTRUCT( &(ptl->gm_send_frags) );
+    if( ptl->gm_send_fragments != NULL ) {
+        free( ptl->gm_send_fragments );
+        ptl->gm_send_fragments = NULL;
+    }
+
+    OBJ_DESTRUCT( &(ptl->gm_recv_frags_free) );
+    if( ptl->gm_recv_fragments != NULL ) {
+        free( ptl->gm_recv_fragments );
+        ptl->gm_recv_fragments = NULL;
+    }
+
+    /* These are supposed to be empty by now */
+    OBJ_DESTRUCT( &(ptl->gm_send_frags_queue) );
+    OBJ_DESTRUCT( &(ptl->gm_pending_acks) );
+    OBJ_DESTRUCT( &(ptl->gm_recv_outstanding_queue) );
+
+    /* And finally release the PTL itself */
+    OMPI_OUTPUT((0, "GM ptl %p succesfully finalized\n", (void*)ptl));
     free( ptl );
 
     return OMPI_SUCCESS;
@@ -224,21 +265,21 @@ mca_ptl_gm_send (struct mca_ptl_base_module_t *ptl,
     gm_ptl = (mca_ptl_gm_module_t *)ptl;
     sendfrag = mca_ptl_gm_alloc_send_frag( gm_ptl, sendreq );
     if (NULL == sendfrag) {
-	ompi_output(0,"[%s:%d] Unable to allocate a gm send frag\n",
-		    __FILE__, __LINE__);
+	ompi_output( 0,"[%s:%d] Unable to allocate a gm send frag\n",
+                     __FILE__, __LINE__ );
 	return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
     ((struct mca_ptl_gm_send_request_t *)sendreq)->req_frag = sendfrag;
     ((struct mca_ptl_gm_send_request_t *)sendreq)->need_ack = flags;
     
-    rc = mca_ptl_gm_send_frag_init( sendfrag, (mca_ptl_gm_peer_t*)ptl_peer, sendreq, offset, &size, flags );
-    
     /* initiate the send */
     gm_ptl_peer = (mca_ptl_gm_peer_t *)ptl_peer;
+    rc = mca_ptl_gm_send_frag_init( sendfrag, gm_ptl_peer, sendreq, offset, &size, flags );
     rc = mca_ptl_gm_peer_send( gm_ptl_peer, sendfrag, sendreq, offset, &size, flags );
 
     ompi_atomic_sub( &(gm_ptl->num_send_tokens), 1 );
+    assert( gm_ptl->num_send_tokens >= 0 );
     sendreq->req_offset += size;
     return OMPI_SUCCESS;
 }
@@ -388,17 +429,16 @@ mca_ptl_gm_matched( mca_ptl_base_module_t * ptl,
 	unsigned int max_data, out_size;
 	int freeAfter;
 	
-	proc = ompi_comm_peer_lookup(request->req_base.req_comm,
-				     request->req_base.req_peer);
+	proc = ompi_comm_peer_lookup( request->req_base.req_comm,
+                                      header->hdr_match.hdr_src );
 	ompi_convertor_copy(proc->proc_convertor,
 			    &frag->frag_base.frag_convertor);
-	ompi_convertor_init_for_recv(
-				     &frag->frag_base.frag_convertor,
-				     0,
-				     request->req_base.req_datatype,
-				     request->req_base.req_count,
-				     request->req_base.req_addr,
-				     header->hdr_frag.hdr_frag_offset, NULL );
+	ompi_convertor_init_for_recv( &frag->frag_base.frag_convertor,
+                                      0,
+                                      request->req_base.req_datatype,
+                                      request->req_base.req_count,
+                                      request->req_base.req_addr,
+                                      header->hdr_frag.hdr_frag_offset, NULL );
 	out_size = 1;
 	max_data = iov.iov_len;
 	rc = ompi_convertor_unpack( &frag->frag_base.frag_convertor, &(iov),
@@ -418,10 +458,6 @@ mca_ptl_gm_matched( mca_ptl_base_module_t * ptl,
     }
     
     /* return to free list   */
-    gm_ptl = (mca_ptl_gm_module_t *)ptl;
     OMPI_FREE_LIST_RETURN( &(gm_ptl->gm_recv_frags_free),
 			   (ompi_list_item_t*)((mca_ptl_gm_recv_frag_t*)frag) );
 }
-
-
-

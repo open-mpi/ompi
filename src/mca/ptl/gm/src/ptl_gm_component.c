@@ -40,8 +40,6 @@ mca_ptl_gm_component_t mca_ptl_gm_component = {
     }
 };
 
-static bool mca_ptl_gm_component_initialized = false;
-
 /*
  * utility routines for parameter registration
  */
@@ -118,6 +116,16 @@ mca_ptl_gm_component_open(void)
  */
 int mca_ptl_gm_component_close (void)
 {
+    uint32_t index;
+    mca_ptl_base_module_t* ptl;
+
+    for( index = 0; index < mca_ptl_gm_component.gm_num_ptl_modules; index++ ) {
+        ptl = (mca_ptl_base_module_t*)mca_ptl_gm_component.gm_ptl_modules[index];
+        if( NULL != ptl )
+            ptl->ptl_finalize( ptl );
+    }
+    mca_ptl_gm_component.gm_num_ptl_modules = 0;
+
     if (NULL != mca_ptl_gm_component.gm_ptl_modules)
         free (mca_ptl_gm_component.gm_ptl_modules);
 
@@ -144,7 +152,7 @@ mca_ptl_gm_create( mca_ptl_gm_module_t** pptl )
     }
     
     /* copy the basic informations in the new PTL */
-    memcpy (ptl, &mca_ptl_gm_module, sizeof (mca_ptl_gm_module));
+    memcpy (ptl, &mca_ptl_gm_module, sizeof(mca_ptl_gm_module_t) );
 #if OMPI_HAVE_POSIX_THREADS
     ptl->thread.t_handle = (pthread_t)-1;
 #endif  /* OMPI_HAVE_POSIX_THREADS */
@@ -260,13 +268,14 @@ static inline int
 mca_ptl_gm_init_sendrecv (mca_ptl_gm_module_t * ptl)
 {
     uint32_t i;
-    void *gm_send_reg_memory , *gm_recv_reg_memory;
     mca_ptl_gm_send_frag_t *sfragment;
     mca_ptl_gm_recv_frag_t *free_rfragment;
 
     ptl->num_send_tokens = gm_num_send_tokens (ptl->gm_port);
+    ptl->max_send_tokens = ptl->num_send_tokens;
     ptl->num_send_tokens -= PTL_GM_ADMIN_SEND_TOKENS;
     ptl->num_recv_tokens = gm_num_receive_tokens (ptl->gm_port);
+    ptl->max_recv_tokens = ptl->num_recv_tokens;
     ptl->num_recv_tokens -= PTL_GM_ADMIN_RECV_TOKENS;
 
     /****************SEND****************************/
@@ -281,19 +290,20 @@ mca_ptl_gm_init_sendrecv (mca_ptl_gm_module_t * ptl)
 
     /* allocate the elements */
     sfragment = (mca_ptl_gm_send_frag_t *)calloc( ptl->num_send_tokens, sizeof(mca_ptl_gm_send_frag_t) );
-
+    ptl->gm_send_fragments = sfragment;
     /* allocate the registered memory */
-    gm_send_reg_memory = gm_dma_malloc( ptl->gm_port,
-					(GM_BUF_SIZE * ptl->num_send_tokens) + GM_PAGE_LEN );
-    if( NULL == gm_send_reg_memory ) {
+    ptl->gm_send_dma_memory = gm_dma_malloc( ptl->gm_port,
+                                             (GM_BUF_SIZE * ptl->num_send_tokens) + GM_PAGE_LEN );
+    if( NULL == ptl->gm_send_dma_memory ) {
 	ompi_output( 0, "unable to allocate registered memory\n" );
 	return OMPI_ERR_OUT_OF_RESOURCE;
     }
     for (i = 0; i < ptl->num_send_tokens; i++) {
 	OMPI_FREE_LIST_RETURN( &(ptl->gm_send_frags), (ompi_list_item_t *)sfragment );
-	sfragment->send_buf = gm_send_reg_memory;
-	printf( "%3d : gm register sendreq %p with GM buffer %p\n", i, (void*)sfragment, (void*)sfragment->send_buf );
-	gm_send_reg_memory = ((char *)gm_send_reg_memory) + GM_BUF_SIZE;
+	sfragment->send_buf = ptl->gm_send_dma_memory;
+	DO_DEBUG( printf( "%3d : gm register sendreq %p with GM buffer %p\n", i,
+                          (void*)sfragment, (void*)sfragment->send_buf ) );
+	ptl->gm_send_dma_memory = ((char *)ptl->gm_send_dma_memory) + GM_BUF_SIZE;
 	sfragment++;
     }
     A_PRINT( ("recv_tokens = %d send_tokens = %d, allocted free lis = %d\n",
@@ -311,19 +321,20 @@ mca_ptl_gm_init_sendrecv (mca_ptl_gm_module_t * ptl)
     /* construct the list of recv fragments free */
     OBJ_CONSTRUCT (&(ptl->gm_recv_frags_free), ompi_free_list_t);
   
-    ompi_free_list_init (&(ptl->gm_recv_frags_free),
+    ompi_free_list_init( &(ptl->gm_recv_frags_free),
 			 sizeof (mca_ptl_gm_recv_frag_t),
 			 OBJ_CLASS (mca_ptl_gm_recv_frag_t),
-			 ptl->num_recv_tokens,ptl->num_recv_tokens, 1, NULL); 
+			 ptl->num_recv_tokens,ptl->num_recv_tokens, 1, NULL );
  
-    /*allocate the elements */
+    /* allocate the elements */
     free_rfragment = (mca_ptl_gm_recv_frag_t *)
 	calloc( ptl->num_recv_tokens, sizeof(mca_ptl_gm_recv_frag_t) );
+    ptl->gm_recv_fragments = free_rfragment;
 
     /*allocate the registered memory */
-    gm_recv_reg_memory =
-	gm_dma_malloc (ptl->gm_port, (GM_BUF_SIZE * ptl->num_recv_tokens) + GM_PAGE_LEN );
-    if( NULL == gm_recv_reg_memory ) {
+    ptl->gm_recv_dma_memory =
+	gm_dma_malloc( ptl->gm_port, (GM_BUF_SIZE * ptl->num_recv_tokens) + GM_PAGE_LEN );
+    if( NULL == ptl->gm_recv_dma_memory ) {
 	ompi_output( 0, "unable to allocate registered memory for receive\n" );
 	return OMPI_ERR_OUT_OF_RESOURCE;
     }
@@ -332,11 +343,13 @@ mca_ptl_gm_init_sendrecv (mca_ptl_gm_module_t * ptl)
 	OMPI_FREE_LIST_RETURN( &(ptl->gm_recv_frags_free), (ompi_list_item_t *)free_rfragment );
 	free_rfragment++;
 
-	gm_provide_receive_buffer( ptl->gm_port, gm_recv_reg_memory,
+	gm_provide_receive_buffer( ptl->gm_port, ptl->gm_recv_dma_memory,
 				   GM_SIZE, GM_LOW_PRIORITY );
-	printf( "%3d : gm register GM receive buffer %p\n", i, (void*)gm_recv_reg_memory );
-	gm_recv_reg_memory = ((char *)gm_recv_reg_memory) + GM_BUF_SIZE;
+	DO_DEBUG(printf( "%3d : gm register GM receive buffer %p\n", i, (void*)ptl->gm_recv_dma_memory ) );
+	ptl->gm_recv_dma_memory = ((char *)ptl->gm_recv_dma_memory) + GM_BUF_SIZE;
     }
+
+    OBJ_CONSTRUCT( &(ptl->gm_pending_acks), ompi_list_t );
 
     return OMPI_SUCCESS;
 }
@@ -438,6 +451,7 @@ mca_ptl_gm_component_init (int *num_ptl_modules,
     memcpy (ptls, mca_ptl_gm_component.gm_ptl_modules,
             mca_ptl_gm_component.gm_num_ptl_modules * sizeof(mca_ptl_gm_module_t *));
     *num_ptl_modules = mca_ptl_gm_component.gm_num_ptl_modules;
+
     return ptls;
 }
 
@@ -455,16 +469,21 @@ mca_ptl_gm_component_control (int param, void *value, size_t size)
 /*
  *  GM module progress.
  */
+
 int
 mca_ptl_gm_component_progress (mca_ptl_tstamp_t tstamp)
 {
-    int rc;
-    /* XXX: Do all the following inside a dispatcher, either in this routine
-     *      or mca_ptl_gm_incoming_recv()
-     *  i) check the send queue to see if any pending send can proceed 
-     *  ii) check for recieve and , call ptl_match to send it to the upper level
-     *  BTW, ptl_matched is invoked inside ptl_match() via PML.
-     */
-     rc = mca_ptl_gm_incoming_recv(&mca_ptl_gm_component);
-     return OMPI_SUCCESS;
+    uint32_t i;
+    gm_recv_event_t *event;
+    mca_ptl_gm_module_t *ptl;
+
+    for( i = 0; i < mca_ptl_gm_component.gm_num_ptl_modules; i++) {
+        ptl = mca_ptl_gm_component.gm_ptl_modules[i];
+        event = gm_receive(ptl->gm_port);
+        /* If there are no receive events just skip the function call */
+        if( GM_NO_RECV_EVENT != gm_ntohc(event->recv.type) ) {
+            mca_ptl_gm_analyze_recv_event( ptl, event );
+        }
+    }
+    return OMPI_SUCCESS;
 }

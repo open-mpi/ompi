@@ -12,6 +12,9 @@ struct mca_ptl_gm_peer_t;
 
 #define  PTL_GM_DBG_FLAG (PTL_GM_DBG_NONE)
 
+/*#define DO_DEBUG(inst)  inst*/
+#define DO_DEBUG(inst)
+
 #define  GM_DBG(flag, args...)                                 \
 do {                                                           \
     if (PTL_GM_DBG_FLAG & flag) {                              \
@@ -31,12 +34,7 @@ do {                                                           \
 #define A_PRINT(fmt, args...)
 #endif
 
-struct mca_ptl_gm_recv_frag_t* ptl_gm_handle_recv( struct mca_ptl_gm_module_t *ptl,
-						   gm_recv_event_t* event );
-
 int mca_ptl_gm_analyze_recv_event( struct mca_ptl_gm_module_t* ptl, gm_recv_event_t* event );
-
-int mca_ptl_gm_incoming_recv( struct mca_ptl_gm_component_t * gm_comp );
 
 void mca_ptl_gm_outstanding_recv( struct mca_ptl_gm_module_t *ptl);
 

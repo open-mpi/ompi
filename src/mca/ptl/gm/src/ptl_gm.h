@@ -40,6 +40,7 @@ struct mca_ptl_gm_component_t {
     int         gm_max_boards_number;    /**< maximum number of boards on the node */
     int         gm_max_rdma_frag_size;   /**< maximum fragment size used to transfer data over RDMA */
     char*       gm_port_name;            /**< the name used to get the port */
+
     struct mca_ptl_gm_proc_t* gm_local;
     ompi_list_t gm_procs;
     ompi_list_t gm_send_req;
@@ -63,6 +64,10 @@ struct mca_ptl_gm_module_t {
     unsigned int num_recv_tokens;
     unsigned int max_send_tokens;
     unsigned int max_recv_tokens;
+    void*        gm_send_dma_memory; /**< pointer to the send DMA registered memory attached to the PTL */
+    void*        gm_recv_dma_memory; /**< pointer to the recv DMA registered memory attached to the PTL */
+    struct mca_ptl_gm_send_frag_t* gm_send_fragments;
+    struct mca_ptl_gm_recv_frag_t* gm_recv_fragments;
 
     ompi_free_list_t gm_send_frags;
     ompi_free_list_t gm_recv_frags_free;
