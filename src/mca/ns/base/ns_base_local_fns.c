@@ -18,8 +18,8 @@
  * functions
  */
 
-ompi_process_name_t* ns_base_create_process_name(ompi_process_id_t cell,
-		             ompi_process_id_t job, ompi_process_id_t vpid)
+ompi_process_name_t* ns_base_create_process_name(mca_ns_base_cellid_t cell,
+		             mca_ns_base_jobid_t job, mca_ns_base_vpid_t vpid)
 {
     ompi_process_name_t *newname;
 
@@ -115,7 +115,7 @@ char* ns_base_get_cellid_string(const ompi_process_name_t* name)
 }
 
 
-ompi_process_id_t ns_base_get_vpid(const ompi_process_name_t* name)
+mca_ns_base_vpid_t ns_base_get_vpid(const ompi_process_name_t* name)
 {
     if (NULL == name) { /* got an error */
 	return(OMPI_NAME_SERVICE_MAX);
@@ -125,7 +125,7 @@ ompi_process_id_t ns_base_get_vpid(const ompi_process_name_t* name)
 }
 
 
-ompi_process_id_t ns_base_get_jobid(const ompi_process_name_t* name)
+mca_ns_base_jobid_t ns_base_get_jobid(const ompi_process_name_t* name)
 {
     if (NULL == name) { /* got an error */
 	return(OMPI_NAME_SERVICE_MAX);
@@ -134,7 +134,7 @@ ompi_process_id_t ns_base_get_jobid(const ompi_process_name_t* name)
     return(name->jobid);
 }
 
-ompi_process_id_t ns_base_get_cellid(const ompi_process_name_t* name)
+mca_ns_base_cellid_t ns_base_get_cellid(const ompi_process_name_t* name)
 {
     if (NULL == name) { /* got an error */
 	return(OMPI_NAME_SERVICE_MAX);

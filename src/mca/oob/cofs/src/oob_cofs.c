@@ -20,7 +20,7 @@
 #include <string.h>
 #include <unistd.h>
 
-static int do_recv(ompi_process_id_t jobid, ompi_process_id_t procid, const struct iovec* iov, int count, int flags);
+static int do_recv(mca_ns_base_jobid_t jobid, mca_ns_base_vpid_t procid, const struct iovec* iov, int count, int flags);
 
 /**
 *  Similiar to unix send(2).
@@ -131,7 +131,7 @@ mca_oob_cofs_recv_nb(
 
 
 static char*
-find_match(ompi_process_id_t jobid, ompi_process_id_t procid)
+find_match(mca_ns_base_jobid_t jobid, mca_ns_base_vpid_t procid)
 {
   DIR* dir;
   struct dirent *ent;
@@ -184,7 +184,7 @@ find_match(ompi_process_id_t jobid, ompi_process_id_t procid)
 
 
 static int 
-do_recv(ompi_process_id_t jobid, ompi_process_id_t procid, const struct iovec* iov, int count, int flags)
+do_recv(mca_ns_base_jobid_t jobid, mca_ns_base_vpid_t procid, const struct iovec* iov, int count, int flags)
 {
   char *fname;
   char full_fname[OMPI_PATH_MAX];

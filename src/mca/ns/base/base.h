@@ -31,9 +31,9 @@ extern "C" {
      * Base functions that are common to all implementations - can be overridden
      */
 
-    ompi_process_name_t* ns_base_create_process_name(ompi_process_id_t cell,
-						     ompi_process_id_t job,
-						     ompi_process_id_t vpid);
+    ompi_process_name_t* ns_base_create_process_name(mca_ns_base_cellid_t cell,
+						     mca_ns_base_jobid_t job,
+						     mca_ns_base_vpid_t vpid);
 
     char* ns_base_get_proc_name_string(const ompi_process_name_t* name);
 
@@ -43,21 +43,21 @@ extern "C" {
 
     char* ns_base_get_cellid_string(const ompi_process_name_t* name);
 
-    ompi_process_id_t ns_base_get_vpid(const ompi_process_name_t* name);
+    mca_ns_base_vpid_t ns_base_get_vpid(const ompi_process_name_t* name);
 
-    ompi_process_id_t ns_base_get_jobid(const ompi_process_name_t* name);
+    mca_ns_base_jobid_t ns_base_get_jobid(const ompi_process_name_t* name);
 
-    ompi_process_id_t ns_base_get_cellid(const ompi_process_name_t* name);
+    mca_ns_base_cellid_t ns_base_get_cellid(const ompi_process_name_t* name);
 
     int ns_base_compare(ompi_ns_cmp_bitmask_t fields,
 			const ompi_process_name_t* name1,
 			const ompi_process_name_t* name2);
 
-    ompi_process_id_t ns_base_create_cellid(void);
+    mca_ns_base_cellid_t ns_base_create_cellid(void);
 
-    ompi_process_id_t ns_base_create_jobid(void);
+    mca_ns_base_jobid_t ns_base_create_jobid(void);
 
-    ompi_process_id_t ns_base_reserve_range(ompi_process_id_t job, ompi_process_id_t range);
+    mca_ns_base_vpid_t ns_base_reserve_range(mca_ns_base_jobid_t job, mca_ns_base_vpid_t range);
 
     int ns_base_free_name(ompi_process_name_t* name);
 

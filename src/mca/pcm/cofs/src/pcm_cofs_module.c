@@ -80,8 +80,8 @@ mca_pcm_cofs_init(int *priority, bool *allow_multi_user_threads,
                   bool *have_hidden_threads)
 {
     int i,value;
-    ompi_process_id_t cellid;
-    ompi_process_id_t jobid;
+    mca_ns_base_cellid_t cellid;
+    mca_ns_base_jobid_t jobid;
 
     *priority = 1;
     *allow_multi_user_threads = true;

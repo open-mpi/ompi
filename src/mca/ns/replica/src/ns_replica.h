@@ -21,8 +21,8 @@
  */
 struct mca_ns_replica_name_tracker_t {
     ompi_list_item_t item;  /**< Allows this item to be placed on a list */
-    ompi_process_id_t job;  /**< Job id */
-    ompi_process_id_t last_used_vpid;      /**< Tracks the vpid last given out */
+    mca_ns_base_jobid_t job;  /**< Job id */
+    mca_ns_base_vpid_t last_used_vpid;      /**< Tracks the vpid last given out */
 };
 typedef struct mca_ns_replica_name_tracker_t mca_ns_replica_name_tracker_t;
 
@@ -31,8 +31,8 @@ OBJ_CLASS_DECLARATION(mca_ns_replica_name_tracker_t);
 /*
  * globals needed within component
  */
-extern ompi_process_id_t mca_ns_replica_last_used_cellid;
-extern ompi_process_id_t mca_ns_replica_last_used_jobid;
+extern mca_ns_base_cellid_t mca_ns_replica_last_used_cellid;
+extern mca_ns_base_jobid_t mca_ns_replica_last_used_jobid;
 extern ompi_list_t mca_ns_replica_name_tracker;
 
 /*
@@ -59,27 +59,27 @@ mca_oob_callback_fn_t mca_ns_replica_recv(int status, const ompi_process_name_t 
 /*
  * Implementation of create_cellid().
  */
-ompi_process_id_t ns_replica_create_cellid(void);
+mca_ns_base_cellid_t ns_replica_create_cellid(void);
 
 /*
  * Implementation of create_jobid().
  */
-ompi_process_id_t ns_replica_create_jobid(void);
+mca_ns_base_jobid_t ns_replica_create_jobid(void);
 
 /*
  * Implementation of create_process_name()
  */
 ompi_process_name_t* ns_replica_create_process_name(
-			    ompi_process_id_t cell,
-			    ompi_process_id_t job,
-			    ompi_process_id_t vpid);
+			    mca_ns_base_cellid_t cell,
+			    mca_ns_base_jobid_t job,
+			    mca_ns_base_vpid_t vpid);
 
 /*
  * Implementation of reserve_range()
  */
-ompi_process_id_t ns_replica_reserve_range(
-					   ompi_process_id_t job,
-					   ompi_process_id_t range);
+mca_ns_base_vpid_t ns_replica_reserve_range(
+                                       mca_ns_base_jobid_t job,
+                                       mca_ns_base_vpid_t range);
 
 /*
  * Implementation of free_name()
@@ -109,17 +109,17 @@ char* ns_replica_get_cellid_string(const ompi_process_name_t* name);
 /*
  * Implementation of get_vpid()
  */
-ompi_process_id_t ns_replica_get_vpid(const ompi_process_name_t* name);
+mca_ns_base_vpid_t ns_replica_get_vpid(const ompi_process_name_t* name);
 
 /*
  * Implementation of get_jobid()
  */
-ompi_process_id_t ns_replica_get_jobid(const ompi_process_name_t* name);
+mca_ns_base_jobid_t ns_replica_get_jobid(const ompi_process_name_t* name);
 
 /*
  * Implementation of get_cellid()
  */
-ompi_process_id_t ns_replica_get_cellid(const ompi_process_name_t* name);
+mca_ns_base_cellid_t ns_replica_get_cellid(const ompi_process_name_t* name);
 
 /*
  * Implementation of compare()

@@ -94,8 +94,8 @@ OBJ_CLASS_INSTANCE(
 /*
  * globals needed within replica component
  */
-ompi_process_id_t mca_ns_replica_last_used_cellid;
-ompi_process_id_t mca_ns_replica_last_used_jobid;
+mca_ns_base_cellid_t mca_ns_replica_last_used_cellid;
+mca_ns_base_jobid_t mca_ns_replica_last_used_jobid;
 ompi_list_t mca_ns_replica_name_tracker;
 
 /*
@@ -173,7 +173,7 @@ mca_oob_callback_fn_t mca_ns_replica_recv(int status, const ompi_process_name_t 
 					  void *cbdata)
 {
     ompi_ns_msg_buffer_t *cmd, answer;
-    ompi_process_id_t tmp1;
+    mca_ns_base_cellid_t tmp1;
     struct iovec reply;
     int i;
 

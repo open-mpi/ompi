@@ -44,13 +44,16 @@
 /*
  * general typedefs & structures
  */
-typedef uint32_t ompi_process_id_t;  /**< Set the allowed range for id's in each space */
+/**< Set the allowed range for ids in each space */
+typedef uint32_t mca_ns_base_jobid_t;
+typedef uint32_t mca_ns_base_cellid_t;
+typedef uint32_t mca_ns_base_vpid_t;
 typedef uint8_t ompi_ns_cmp_bitmask_t;  /**< Bit mask for comparing process names */
 
 struct ompi_process_name_t {
-    ompi_process_id_t cellid;  /**< Cell number */
-    ompi_process_id_t jobid; /**< Job number */
-    ompi_process_id_t vpid;  /**< Process number */
+    mca_ns_base_cellid_t cellid;  /**< Cell number */
+    mca_ns_base_jobid_t jobid; /**< Job number */
+    mca_ns_base_vpid_t vpid;  /**< Process number */
 };
 typedef struct ompi_process_name_t ompi_process_name_t;
 
@@ -100,7 +103,7 @@ typedef struct ompi_ns_msg_buffer_t ompi_ns_msg_buffer_t;
  * new_cellid = ompi_name_server.create_cellid()
  * @endcode
  */
-typedef ompi_process_id_t (*mca_ns_create_cellid_fn_t)(void);
+typedef mca_ns_base_cellid_t (*mca_ns_create_cellid_fn_t)(void);
 
 /**
  * Create a new job id.
@@ -123,7 +126,7 @@ typedef ompi_process_id_t (*mca_ns_create_cellid_fn_t)(void);
  * new_jobid = ompi_name_server.create_jobid()
  * @endcode
  */
-typedef ompi_process_id_t (*mca_ns_create_jobid_fn_t)(void);
+typedef mca_ns_base_jobid_t (*mca_ns_create_jobid_fn_t)(void);
 
 /**
  * Obtain a single new process name.
@@ -149,7 +152,7 @@ typedef ompi_process_id_t (*mca_ns_create_jobid_fn_t)(void);
  * new_name = ompi_name_server.create_process_name(cell, job, vpid);
  * @endcode
  */
-typedef ompi_process_name_t* (*mca_ns_create_proc_name_fn_t)(ompi_process_id_t cell, ompi_process_id_t job, ompi_process_id_t vpid);
+typedef ompi_process_name_t* (*mca_ns_create_proc_name_fn_t)(mca_ns_base_cellid_t cell, mca_ns_base_jobid_t job, mca_ns_base_vpid_t vpid);
 
 
 /**
@@ -171,7 +174,7 @@ typedef ompi_process_name_t* (*mca_ns_create_proc_name_fn_t)(ompi_process_id_t c
  * starting_procid = ompi_name_server.reserve_range(jobid, range)
  * @endcode
  */
-typedef ompi_process_id_t (*mca_ns_reserve_range_fn_t)(ompi_process_id_t job, ompi_process_id_t range);
+typedef mca_ns_base_vpid_t (*mca_ns_reserve_range_fn_t)(mca_ns_base_jobid_t job, mca_ns_base_vpid_t range);
 
 
 /**
@@ -301,7 +304,7 @@ typedef char* (*mca_ns_get_cellid_string_fn_t)(const ompi_process_name_t *name);
  * vpid = ompi_name_server.get_vpid(&name)
  * @endcode
  */
-typedef ompi_process_id_t (*mca_ns_get_vpid_fn_t)(const ompi_process_name_t *name);
+typedef mca_ns_base_vpid_t (*mca_ns_get_vpid_fn_t)(const ompi_process_name_t *name);
 
 /**
  * Get the job id as an ompi_process_id_t value.
@@ -318,7 +321,7 @@ typedef ompi_process_id_t (*mca_ns_get_vpid_fn_t)(const ompi_process_name_t *nam
  * jobid = ompi_name_server.get_jobid(&name)
  * @endcode
  */
-typedef ompi_process_id_t (*mca_ns_get_jobid_fn_t)(const ompi_process_name_t *name);
+typedef mca_ns_base_jobid_t (*mca_ns_get_jobid_fn_t)(const ompi_process_name_t *name);
 
 /**
  * Get the cell id as an ompi_process_id_t value.
@@ -335,7 +338,7 @@ typedef ompi_process_id_t (*mca_ns_get_jobid_fn_t)(const ompi_process_name_t *na
  * cellid = ompi_name_server.get_cellid(&name)
  * @endcode
  */
-typedef ompi_process_id_t (*mca_ns_get_cellid_fn_t)(const ompi_process_name_t *name);
+typedef mca_ns_base_cellid_t (*mca_ns_get_cellid_fn_t)(const ompi_process_name_t *name);
 
 /**
  * Compare two name values.
