@@ -124,3 +124,16 @@ libmpi_la_LIBADD = \
         threads/libthreads.la \
         util/libutil.la
 libmpi_la_DEPENDENCIES = $(libmpi_la_LIBADD)
+
+# Conditionally install the header files
+
+# This is somewhat of a hack -- libltdl is installed by libtoolize,
+# and us installing the header here is slightly less kludgey than
+# hacking their Makefile.am.
+
+if WANT_INSTALL_HEADERS
+ompidir = $(includedir)/openmpi/libltdl
+ompi_HEADERS = libltdl/ltdl.h
+else
+ompidir = $(includedir)
+endif
