@@ -29,6 +29,15 @@ struct lam_communicator_t {
     /* Attributes */
 
     /* Topology information */
+    int c_cube_dim; /**< Inscribing cube dimension */
+    int c_topo_type; /**< Topology type */
+    int c_topo_nprocs; /**< Number of processes */
+    int c_topo_ndims; /**< Number of cart dimensions */
+    int c_topo_nedges; /**< Graph edges */
+    int *c_topo_dims; /**< Cart dimensions */
+    int *c_topo_coords; /**< Cart coordinates */
+    int *c_topo_index; /**< Graph indices */
+    int *c_topo_edges; /**< Graph edges */
 
     /* Error handling */
 
