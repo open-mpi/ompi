@@ -96,6 +96,7 @@ libmpi_la_LIBADD = \
         mca/allocator/base/libmca_allocator_base.la $(MCA_allocator_STATIC_LTLIBS) \
         mca/coll/base/libmca_coll_base.la $(MCA_coll_STATIC_LTLIBS) \
         $(MCA_common_STATIC_LTLIBS) \
+        mca/gpr/base/libmca_gpr_base.la $(MCA_gpr_STATIC_LTLIBS) \
         mca/io/base/libmca_io_base.la $(MCA_coll_STATIC_LTLIBS) \
         mca/llm/base/libmca_llm_base.la $(MCA_llm_STATIC_LTLIBS) \
         mca/mpool/base/libmca_mpool_base.la $(MCA_mpool_STATIC_LTLIBS) \
