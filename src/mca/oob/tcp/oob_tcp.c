@@ -121,7 +121,8 @@ static mca_oob_t mca_oob_tcp = {
     mca_oob_tcp_init,
     mca_oob_tcp_fini,
     mca_oob_tcp_addr_pack,
-    mca_oob_tcp_registry_callback
+    mca_oob_tcp_registry_callback,
+    mca_oob_xcast
 };
 
 
@@ -562,6 +563,7 @@ int mca_oob_tcp_resolve(mca_oob_tcp_peer_t* peer)
         	OMPI_REGISTRY_OR,
         	OMPI_REGISTRY_NOTIFY_ADD_ENTRY|OMPI_REGISTRY_NOTIFY_DELETE_ENTRY|
         	OMPI_REGISTRY_NOTIFY_MODIFICATION|
+        OMPI_REGISTRY_NOTIFY_PRE_EXISTING |
 	 	OMPI_REGISTRY_NOTIFY_ON_STARTUP|OMPI_REGISTRY_NOTIFY_INCLUDE_STARTUP_DATA|
 	 	OMPI_REGISTRY_NOTIFY_ON_SHUTDOWN|OMPI_REGISTRY_NOTIFY_INCLUDE_SHUTDOWN_DATA,
         	segment,

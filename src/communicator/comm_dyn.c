@@ -393,7 +393,8 @@ int ompi_comm_start_processes (char *command, char **argv, int maxprocs,
 	     NULL,
 	     maxprocs,
 	     ompi_rte_all_procs_registered, NULL);
-	
+         
+	free(segment);
     /*
      * spawn procs
      */

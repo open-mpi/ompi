@@ -55,10 +55,7 @@ int mca_oob_xcast(
         for (ptr = (ompi_name_server_namelist_t*)ompi_list_get_first(peers);
 	     ptr != (ompi_name_server_namelist_t*)ompi_list_get_end(peers);
 	     ptr = (ompi_name_server_namelist_t*)ompi_list_get_next(ptr)) {
-           ompi_output(0, "[%d,%d,%d] xcasting message of size %d to [%d,%d,%d]",
-                OMPI_NAME_ARGS(*root), (int)buf_size, OMPI_NAME_ARGS(*(ptr->name)));
             rc = mca_oob_send_packed(ptr->name, buffer, tag, 0);
-            ompi_output(0, "\tsend complete with return code %d", (int)rc);
             if(rc < 0) {
                 return rc;
             }
@@ -66,7 +63,6 @@ int mca_oob_xcast(
     } else {
         ompi_buffer_t rbuf;
         int rc = mca_oob_recv_packed(MCA_OOB_NAME_ANY, &rbuf, &tag);
-        ompi_output(0, "[%d,%d,%d] received xcast", OMPI_NAME_ARGS(*ompi_rte_get_self()));
         if(rc < 0) {
             return rc;
         }
