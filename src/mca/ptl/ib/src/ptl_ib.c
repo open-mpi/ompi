@@ -59,14 +59,17 @@ int mca_ptl_ib_add_procs(
     struct mca_ptl_base_peer_t** peers, 
     ompi_bitmap_t* reachable)
 {
-    int i, rc;
-    fprintf(stderr,"[%s:%d] %s\n",
-            __FILE__, __LINE__, __func__);
+    int i;
+    struct ompi_proc_t* ompi_proc;
+    mca_ptl_ib_proc_t* ptl_proc;
+    mca_ptl_base_peer_t* ptl_peer;
+
+    D_PRINT("Adding %d procs\n", nprocs);
 
     for(i = 0; i < nprocs; i++) {
-        struct ompi_proc_t* ompi_proc = ompi_procs[i];
-        mca_ptl_ib_proc_t* ptl_proc = mca_ptl_ib_proc_create(ompi_proc);
-        mca_ptl_base_peer_t* ptl_peer;
+
+        ompi_proc = ompi_procs[i];
+        ptl_proc = mca_ptl_ib_proc_create(ompi_proc);
 
         if(NULL == ptl_proc) {
             return OMPI_ERR_OUT_OF_RESOURCE;

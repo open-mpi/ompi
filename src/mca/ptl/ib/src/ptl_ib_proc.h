@@ -9,9 +9,6 @@
 #include "ptl_ib_addr.h"
 #include "ptl_ib_peer.h"
 
-/*
-extern ompi_class_t mca_ptl_ib_proc_t_class;
-*/
 OBJ_CLASS_DECLARATION(mca_ptl_ib_proc_t);
 
 /**
@@ -30,7 +27,7 @@ struct mca_ptl_ib_proc_t {
     ompi_process_name_t proc_guid;           
     /**< globally unique identifier for the process */
 
-    struct mca_ptl_ib_ud_addr_t *proc_addrs;   
+    struct mca_ptl_ib_ud_addr_t* proc_addrs;   
     /**< array of addresses published by peer */
 
     size_t proc_addr_count;                  

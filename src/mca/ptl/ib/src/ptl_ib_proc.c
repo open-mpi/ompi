@@ -45,9 +45,6 @@ mca_ptl_ib_proc_t* mca_ptl_ib_proc_create(ompi_proc_t* ompi_proc)
 
     mca_ptl_ib_proc_t* ptl_proc = NULL;
 
-    fprintf(stderr,"[%s:%d] %s\n",
-            __FILE__, __LINE__, __func__);
-
     /*
     mca_ptl_ib_proc_t* ptl_proc = 
         mca_ptl_ib_proc_lookup_ompi(ompi_proc);
@@ -58,11 +55,14 @@ mca_ptl_ib_proc_t* mca_ptl_ib_proc_create(ompi_proc_t* ompi_proc)
     */
 
     ptl_proc = OBJ_NEW(mca_ptl_ib_proc_t);
+
     ptl_proc->proc_ompi = ompi_proc;
 
     /* build a unique identifier (of arbitrary
      * size) to represent the proc */
     ptl_proc->proc_guid = ompi_proc->proc_name;
+
+    D_PRINT("Creating proc for %d\n", ompi_proc->proc_name.vpid);
 
     /* lookup ib parameters exported by
      * this proc */
@@ -96,6 +96,8 @@ mca_ptl_ib_proc_t* mca_ptl_ib_proc_create(ompi_proc_t* ompi_proc)
         OBJ_RELEASE(ptl_proc);
         return NULL;
     }
+
+    D_PRINT("returning from proc_create\n");
 
     return ptl_proc;
 }

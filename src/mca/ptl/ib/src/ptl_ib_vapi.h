@@ -23,18 +23,15 @@
  * vapi_ret : The value which was returned from the last VAPI call
  * func_name : The VAPI function which was called
  */
-#define MCA_PTL_IB_VAPI_RET(ret, vapi_ret, func_name) {             \
-    if(vapi_ret != VAPI_OK) {                                       \
-        ompi_output(0,"[%s:%d]", __FILE__, __LINE__);               \
-        ompi_output(0,"%s : %s",func_name,VAPI_strerror(vapi_ret)); \
-        return ret;                                                 \
-    }                                                               \
+#define MCA_PTL_IB_VAPI_RET(vapi_ret, func_name) {                  \
+    ompi_output(0,"[%s:%d] ", __FILE__, __LINE__);                  \
+    ompi_output(0,"%s : %s",func_name,VAPI_strerror(vapi_ret));     \
 }
 
 /* Debug Print */
 #if 1
 #define D_PRINT(fmt, args...) {                                     \
-    fprintf(stderr, "[%s:%d]", __FILE__, __LINE__);                 \
+    fprintf(stderr, "[%s:%d:%s] ", __FILE__, __LINE__, __func__);   \
     fprintf(stderr, fmt, ## args);                                  \
     fflush(stderr);                                                 \
 }
