@@ -49,7 +49,7 @@ inline void *lam_malloc(size_t size, int debug_level, char *file, int line)
     }
     addr = malloc(size);
     if (debug_level > 0) {
-        if (addr == NULL) {
+        if (NULL == addr) {
 #if 0
           /* JMS Replace with logging output */
             lam_set_file_line(file, line);
@@ -74,7 +74,7 @@ inline void *lam_malloc(size_t size, int debug_level, char *file, int line)
  */
 inline void lam_free(void *addr, int debug_level, char *file, int line)
 {
-    if (debug_level > 1 && addr == NULL) {
+    if (debug_level > 1 && NULL == addr) {
 #if 0
           /* JMS Replace with logging output */
         lam_set_file_line(file, line);
