@@ -14,7 +14,7 @@
  * If we're in C, bring in the bool type and true/false constants.
  */
 #ifndef __cplusplus
-#ifdef HAVE_STDBOOL_H
+#if OMPI_USE_STDBOOL_H
 #include <stdbool.h>
 #else
 typedef enum { false, true } bool;
