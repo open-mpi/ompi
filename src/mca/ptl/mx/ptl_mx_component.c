@@ -91,9 +91,11 @@ int mca_ptl_mx_component_open(void)
 
     /* register MX module parameters */
     mca_ptl_mx_component.mx_filter =
-        (uint32_t)mca_ptl_mx_param_register_int("filter", 0xdeadbeef);
+        (uint32_t)mca_ptl_mx_param_register_int("filter", 0x12345);
     mca_ptl_mx_component.mx_prepost =
-        mca_ptl_mx_param_register_int("prepost", 16);
+        mca_ptl_mx_param_register_int("prepost", 1);
+    mca_ptl_mx_component.mx_debug =
+        mca_ptl_mx_param_register_int("debug", 0);
     mca_ptl_mx_component.mx_free_list_num =
         mca_ptl_mx_param_register_int("free_list_num", 256);
     mca_ptl_mx_component.mx_free_list_max =
@@ -117,6 +119,7 @@ int mca_ptl_mx_component_open(void)
 
 int mca_ptl_mx_component_close(void)
 {
+    mx_finalize();
     if (mca_ptl_mx_component.mx_send_frags.fl_num_allocated != 
         mca_ptl_mx_component.mx_send_frags.super.ompi_list_length) {
         ompi_output(0, "mx send frags: %d allocated %d returned\n",
@@ -232,7 +235,7 @@ int mca_ptl_mx_component_progress(mca_ptl_tstamp_t tstamp)
             return OMPI_ERROR;
         }
         if(mx_result > 0) {
-            mca_ptl_mx_progress(ptl, mx_request);
+            MCA_PTL_MX_PROGRESS(ptl, mx_request);
         }
     }
     return OMPI_SUCCESS;

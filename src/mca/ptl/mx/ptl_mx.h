@@ -25,6 +25,7 @@ struct mca_ptl_mx_component_t {
     int mx_free_list_max;                  /**< maximum size of free lists */
     int mx_free_list_inc;                  /**< number of elements to growing free lists by */
     int mx_prepost;                        /**< number of preposted recvs */
+    int mx_debug;                          /**< debug level */
     uint32_t mx_filter;                    /**< filter assigned to application */
     uint32_t mx_num_ptls;                  /**< number of MX NICs available to app */
     struct mca_ptl_mx_module_t** mx_ptls;  /**< array of available PTL moduless */
@@ -307,6 +308,29 @@ extern void mca_ptl_mx_matched(
  */
 
 extern int mca_ptl_mx_send(
+    struct mca_ptl_base_module_t* ptl,
+    struct mca_ptl_base_peer_t* ptl_peer,
+    struct mca_pml_base_send_request_t*,
+    size_t offset,
+    size_t size,
+    int flags
+);
+
+
+/**
+ * PML->PTL Continue sending fragments of a large message.
+ *
+ * @param ptl (IN)               PTL instance
+ * @param ptl_base_peer (IN)     PTL peer addressing
+ * @param request (IN)           Send request
+ * @param offset                 Current offset into packed/contiguous buffer.
+ * @param size (IN)              Number of bytes PML is requesting PTL to deliver,
+ * @param flags (IN)             Flags that should be passed to the peer via the message header.
+ * @param request (OUT)          OMPI_SUCCESS if the PTL was able to queue one or more fragments
+ *
+ */
+
+extern int mca_ptl_mx_send_continue(
     struct mca_ptl_base_module_t* ptl,
     struct mca_ptl_base_peer_t* ptl_peer,
     struct mca_pml_base_send_request_t*,

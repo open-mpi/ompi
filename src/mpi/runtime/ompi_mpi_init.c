@@ -308,6 +308,10 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         goto error;
     }
 
+#if OMPI_HAVE_THREADS == 0
+    ompi_progress_events(OMPI_EVLOOP_NONBLOCK);
+#endif
+
  error:
     if (ret != OMPI_SUCCESS) {
         ompi_show_help("help-mpi-runtime",

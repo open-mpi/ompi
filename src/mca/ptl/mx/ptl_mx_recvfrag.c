@@ -22,6 +22,9 @@ OBJ_CLASS_INSTANCE(
 
 static void mca_ptl_mx_recv_frag_construct(mca_ptl_mx_recv_frag_t* frag)
 {
+    /* one time initialization */
+    frag->frag_segments[0].segment_ptr = &frag->frag_recv.frag_base.frag_header;
+    frag->frag_segments[0].segment_length = sizeof(frag->frag_recv.frag_base.frag_header);
 }
 
 
