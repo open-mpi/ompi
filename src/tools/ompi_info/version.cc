@@ -77,7 +77,7 @@ void ompi_info::do_version(bool want_all, ompi_cmd_line_t *cmd_line)
       arg1 = ompi_cmd_line_get_param(cmd_line, "version", i, 0);
       scope = ompi_cmd_line_get_param(cmd_line, "version", i, 1);
 
-      // Version of OMPI/MPI
+      // Version of Open MPI
  
       if (type_ompi == arg1) {
         show_ompi_version(scope);
@@ -103,11 +103,11 @@ void ompi_info::do_version(bool want_all, ompi_cmd_line_t *cmd_line)
 
 
 //
-// Show the version of OMPI/MPI
+// Show the version of Open MPI
 //
 void ompi_info::show_ompi_version(const string& scope)
 {
-  out("OMPI/MPI", "version:" + type_ompi, 
+  out("Open MPI", "version:" + type_ompi, 
       make_version_str(scope, 
                        OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION, 
                        OMPI_RELEASE_VERSION, 

@@ -2,7 +2,7 @@
 #
 # $HEADER$
 #
-# This script is run on developer copies of OMPI/MPI -- *not*
+# This script is run on developer copies of Open MPI -- *not*
 # distribution tarballs.
 
 
@@ -693,7 +693,7 @@ echo "[Checking] prerequisites"
 if test ! -d .svn ; then
     cat <<EOF
 
-This doesn't look like a developer copy of OMPI/MPI.  You probably do not
+This doesn't look like a developer copy of Open MPI.  You probably do not
 want to run autogen.sh - it is normally not needed for a release source
 tree.  Giving you 5 seconds to reconsider and kill me.
 

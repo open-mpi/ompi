@@ -72,8 +72,9 @@ if test "$OMPI_WANT_CS_FS" = "0"; then
 NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE
 *******************************************************************************
 
-Because OMPI/MPI is being installed on a non-case sensitive file system, the
-C++ wrapper compiler will be named mpic++ instead of the traditional mpiCC.
+Because Open MPI is being installed on a non-case sensitive file
+system, the C++ wrapper compiler will be named mpic++ instead of the
+traditional mpiCC.
 
 Please update any makefiles appropriately.
 

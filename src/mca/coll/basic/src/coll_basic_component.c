@@ -19,7 +19,7 @@
  * Public string showing the coll ompi_basic component version number
  */
 const char *mca_coll_basic_component_version_string =
-  "OMPI/MPI basic collective MCA component version " MCA_coll_basic_FULL_VERSION;
+  "Open MPI basic collective MCA component version " MCA_coll_basic_FULL_VERSION;
 
 /*
  * Instantiate the public struct with all of our public information

@@ -3,7 +3,7 @@
  *
  * This file is included at the bottom of ompi_config.h, and is
  * therefore a) after all the #define's that were output from
- * configure, and b) included in most/all files in OMPI/MPI.
+ * configure, and b) included in most/all files in Open MPI.
  *
  * Since this file is *only* ever included by ompi_config.h, and
  * ompi_config.h already has #ifndef/#endif protection, there is no
