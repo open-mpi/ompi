@@ -23,6 +23,7 @@
 #include "ptl_ib_proc.h"
 #include "ptl_ib_sendfrag.h"
 #include "ptl_ib_priv.h"
+#include "ptl_ib_memory.h"
 
 static void mca_ptl_ib_send_frag_construct(mca_ptl_ib_send_frag_t* frag);
 static void mca_ptl_ib_send_frag_destruct(mca_ptl_ib_send_frag_t* frag);
@@ -250,6 +251,14 @@ int mca_ptl_ib_register_send_frags(mca_ptl_base_module_t *ptl)
 void mca_ptl_ib_process_rdma_w_comp(mca_ptl_base_module_t *module,
         void* comp_addr)
 {
+    mca_ptl_ib_module_t *ib_module = (mca_ptl_ib_module_t *)module;
+    mca_ptl_ib_send_frag_t *sendfrag = (mca_ptl_ib_send_frag_t *) comp_addr;
+    
+    /* deregister memory region for RDMA write */
+    mca_ptl_ib_deregister_mem_with_registry(ib_module->ib_state,
+        (void *)(unsigned long)(sendfrag->ib_buf.desc.sg_entry.addr),
+        (size_t)(sendfrag->ib_buf.desc.sg_entry.len));
+    
 #if 0
     mca_ptl_ib_send_frag_t *sendfrag;
     ompi_free_list_t *flist;
@@ -339,20 +348,22 @@ int mca_ptl_ib_put_frag_init(mca_ptl_ib_send_frag_t *sendfrag,
 {
     int rc;
     int size_in, size_out;
-    mca_ptl_base_header_t *hdr;
+    mca_ptl_ib_fin_header_t *hdr;
 
     size_in = *size;
 
-    hdr = (mca_ptl_base_header_t *)
+    hdr = (mca_ptl_ib_fin_header_t *)
         &sendfrag->ib_buf.buf[0];
 
-    hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_FIN;
-    hdr->hdr_common.hdr_flags = flags;
-    hdr->hdr_frag.hdr_frag_offset = offset;
-    hdr->hdr_frag.hdr_src_ptr.lval = 0;
-    hdr->hdr_frag.hdr_src_ptr.pval = sendfrag;
-    hdr->hdr_frag.hdr_dst_ptr = req->req_peer_match;
-    hdr->hdr_frag.hdr_frag_length = size_in;
+    hdr->frag_hdr.hdr_common.hdr_type = MCA_PTL_HDR_TYPE_FIN;
+    hdr->frag_hdr.hdr_common.hdr_flags = flags;
+    hdr->frag_hdr.hdr_frag_offset = offset;
+    hdr->frag_hdr.hdr_src_ptr.lval = 0;
+    hdr->frag_hdr.hdr_src_ptr.pval = sendfrag;
+    hdr->frag_hdr.hdr_dst_ptr = req->req_peer_match;
+    hdr->frag_hdr.hdr_frag_length = size_in;
+    hdr->mr_addr.lval = req->req_peer_addr.lval;
+    hdr->mr_size = req->req_peer_size;
 
     if(size_in > 0 && 0) {
         struct iovec iov;
@@ -373,7 +384,7 @@ int mca_ptl_ib_put_frag_init(mca_ptl_ib_send_frag_t *sendfrag,
 					  offset,
 					  NULL );
         }
-        iov.iov_base = &sendfrag->ib_buf.buf[sizeof(mca_ptl_base_frag_header_t)];
+        iov.iov_base = &sendfrag->ib_buf.buf[sizeof(mca_ptl_ib_fin_header_t)];
         iov.iov_len  = size_in;
 	iov_count = 1;
 	max_data = size_in;
@@ -390,10 +401,10 @@ int mca_ptl_ib_put_frag_init(mca_ptl_ib_send_frag_t *sendfrag,
     }
 
     *size = size_out;
-    hdr->hdr_frag.hdr_frag_length = size_out;
+    hdr->frag_hdr.hdr_frag_length = size_out;
 
     IB_SET_SEND_DESC_LEN((&sendfrag->ib_buf),
-            (sizeof(mca_ptl_base_frag_header_t)));
+            (sizeof(mca_ptl_ib_fin_header_t)));
 
     /* fragment state */
     sendfrag->frag_send.frag_base.frag_owner = 
@@ -401,7 +412,7 @@ int mca_ptl_ib_put_frag_init(mca_ptl_ib_send_frag_t *sendfrag,
     sendfrag->frag_send.frag_request = req;
 
     sendfrag->frag_send.frag_base.frag_addr = 
-        &sendfrag->ib_buf.buf[sizeof(mca_ptl_base_frag_header_t)];
+        &sendfrag->ib_buf.buf[sizeof(mca_ptl_ib_fin_header_t)];
 
     sendfrag->frag_send.frag_base.frag_size = size_out;
 
