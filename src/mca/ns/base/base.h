@@ -19,13 +19,10 @@
 /*
  * Global functions for MCA overall collective open and close
  */
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
-    int mca_ns_base_open(void);
-    int mca_ns_base_select(bool *allow_multi_user_threads,
-			    bool *have_hidden_threads);
-    int mca_ns_base_close(void);
+int mca_ns_base_open(void);
+int mca_ns_base_select(bool *allow_multi_user_threads,
+		       bool *have_hidden_threads);
+int mca_ns_base_close(void);
 
 /*
  * Base functions that are common to all implementations - can be overridden
@@ -51,10 +48,6 @@ ompi_process_id_t ns_base_get_cellid(const ompi_process_name_t* name);
 int ns_base_compare(ompi_ns_cmp_bitmask_t fields,
                     const ompi_process_name_t* name1,
                     const ompi_process_name_t* name2);
-
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
 
 
 /*
