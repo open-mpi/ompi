@@ -8,6 +8,7 @@
 
 #include "include/constants.h"
 #include "runtime/runtime.h"
+#include "event/event.h"
 #include "util/output.h"
 #include "util/proc_info.h"
 #include "threads/mutex.h"
@@ -29,11 +30,14 @@
 int ompi_rte_finalize(void)
 {
   ompi_rte_unregister();
-  mca_oob_base_close();
+
+  /* cleanup the event processing thread first - before doing any other cleanup */
+  ompi_event_fini();
   mca_pcm_base_close();
   mca_llm_base_close();
   mca_pcmclient_base_close();
   mca_ns_base_close();
+  mca_oob_base_close();
 
   ompi_session_dir_finalize();
 

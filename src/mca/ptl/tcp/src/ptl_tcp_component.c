@@ -173,7 +173,7 @@ int mca_ptl_tcp_component_close(void)
         ompi_event_del(&mca_ptl_tcp_component.tcp_recv_event);
         close(mca_ptl_tcp_component.tcp_listen_sd);
     }
-    return ompi_event_fini();
+    return OMPI_SUCCESS;
 }
 
 
@@ -386,15 +386,6 @@ mca_ptl_base_module_t** mca_ptl_tcp_component_init(int *num_ptl_modules,
     *num_ptl_modules = 0;
     *allow_multi_user_threads = true;
     *have_hidden_threads = OMPI_HAVE_THREADS;
-
-    /* need to set ompi_using_threads() as ompi_event_init() will spawn a thread if supported */
-    if(OMPI_HAVE_THREADS)
-        ompi_set_using_threads(true);
-
-    if((rc = ompi_event_init()) != OMPI_SUCCESS) {
-        ompi_output(0, "mca_ptl_tcp_component_init: unable to initialize event dispatch thread: %d\n", rc);
-        return NULL;
-    }
 
     ompi_free_list_init(&mca_ptl_tcp_component.tcp_send_frags, 
         sizeof(mca_ptl_tcp_send_frag_t),
