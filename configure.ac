@@ -1381,6 +1381,7 @@ AC_CONFIG_FILES([
     src/include/sys/ia64/Makefile
     src/include/sys/powerpc/Makefile
     src/include/sys/sparc64/Makefile
+    src/include/sys/win32/Makefile
 
     src/class/Makefile
     src/runtime/Makefile
