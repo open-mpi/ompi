@@ -136,6 +136,10 @@ int ompi_mpi_finalize(void)
   if (OMPI_SUCCESS != (ret = mca_base_close())) {
     return ret;
   }
+      
+  if (OMPI_SUCCESS != (ret = ompi_common_cmd_line_finalize())) {
+    return ret;
+  }
 
   /* Leave OMPI land */
 
