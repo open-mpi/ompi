@@ -131,7 +131,19 @@ int ompi_rte_init_stage2(bool *allow_multi_user_threads, bool *have_hidden_threa
     /* session directory */
     jobid_str = ompi_name_server.get_jobid_string(ompi_process_info.name);
     procid_str = ompi_name_server.get_vpid_string(ompi_process_info.name);
-    if (OMPI_ERROR == ompi_session_dir(true,
+ 
+    if (ompi_rte_debug_flag) {
+	ompi_output(0, "[%d,%d,%d] setting up session dir with", ompi_process_info.name->cellid, ompi_process_info.name->jobid, ompi_process_info.name->vpid);
+	if (NULL != ompi_process_info.tmpdir_base) {
+	    ompi_output(0, "\ttmpdir %s", ompi_process_info.tmpdir_base);
+	}
+	ompi_output(0, "\tuniverse %s", ompi_process_info.my_universe);
+	ompi_output(0, "\tuser %s", ompi_system_info.user);
+	ompi_output(0, "\thost %s", ompi_system_info.nodename);
+	ompi_output(0, "\tjobid %s", jobid_str);
+	ompi_output(0, "\tprocid %s", procid_str);
+    }
+   if (OMPI_ERROR == ompi_session_dir(true,
 				       ompi_process_info.tmpdir_base,
 				       ompi_system_info.user,
 				       ompi_system_info.nodename, NULL, 

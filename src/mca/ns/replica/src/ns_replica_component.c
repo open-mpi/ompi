@@ -127,10 +127,10 @@ int mca_ns_replica_close(void)
 
 mca_ns_base_module_t* mca_ns_replica_init(bool *allow_multi_user_threads, bool *have_hidden_threads, int *priority)
 {
-    /* If we're the seed, then we want to be selected, so do all the
+    /* If we are to host a replica, then we want to be selected, so do all the
        setup and return the module */
 
-    if (ompi_process_info.seed) {
+    if (NULL == ompi_process_info.ns_replica) {
 
       int rc;
       mca_ns_replica_last_used_cellid = 0;

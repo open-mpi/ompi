@@ -89,10 +89,10 @@ int mca_oob_tcp_process_name_compare(const ompi_process_name_t* n1, const ompi_p
 char* mca_oob_tcp_get_addr(void);
 
 /**
- *  Set address for the seed.
+ *  Setup cached addresses for the peers.
  */
 
-int mca_oob_tcp_set_seed(const char*);
+int mca_oob_tcp_set_addr(const ompi_process_name_t*, const char*);
 
 /**
  *  Similiar to unix writev(2).
@@ -203,13 +203,12 @@ struct mca_oob_tcp_component_t {
     mca_oob_base_component_1_0_0_t super;  /**< base OOB component */
     int                tcp_listen_sd;        /**< listen socket for incoming connection requests */
     unsigned short     tcp_listen_port;      /**< listen port */
-    struct sockaddr_in tcp_seed_addr;        /**< uri string of tcp peer address */
     ompi_list_t        tcp_subscriptions;    /**< list of registry subscriptions */
     ompi_list_t        tcp_peer_list;        /**< list of peers sorted in mru order */
     ompi_rb_tree_t     tcp_peer_tree;        /**< tree of peers sorted by name */
     ompi_rb_tree_t     tcp_peer_names;       /**< cache of peer contact info sorted by name */
     ompi_free_list_t   tcp_peer_free;        /**< free list of peers */
-    size_t             tcp_peer_limit;       /**< max size of tcp peer cache */
+    int                tcp_peer_limit;       /**< max size of tcp peer cache */
     int                tcp_peer_retries;     /**< max number of retries before declaring peer gone */
     ompi_free_list_t   tcp_msgs;             /**< free list of messages */
     ompi_event_t       tcp_send_event;       /**< event structure for sends */

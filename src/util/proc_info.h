@@ -14,6 +14,10 @@
 #include "mca/ns/ns.h"
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Process information structure
  *
@@ -31,6 +35,8 @@ struct ompi_proc_info_t {
     pid_t pid;             /**< Local process ID for this process */
     ompi_process_name_t *name;  /**< Process name structure */
     bool seed;             /**< Indicate whether or not this is seed daemon */
+    ompi_process_name_t *ns_replica;       /**< Name of my name server replica (NULL=>me) */
+    ompi_process_name_t *gpr_replica;      /**< Name of my registry replica (NULL=>me) */
     char *my_universe;     /**< Name of the universe to which this process belongs */
     char *tmpdir_base;    /**< Base directory of the session dir tree */
     char *top_session_dir;   /**< Top-most directory of the session tree */
@@ -82,3 +88,7 @@ extern ompi_proc_info_t ompi_process_info;
  */
 
 int ompi_proc_info(void);
+
+#ifdef __cplusplus
+}
+#endif

@@ -22,6 +22,8 @@ ompi_proc_info_t ompi_process_info = {
     /*  .pid =                  */   0,
     /*  .name =                 */   NULL,
     /*  .seed =                 */   false,
+    /*  .ns_replica =           */   NULL,
+    /*  .gpr_replica =          */   NULL,
     /*  .my_universe            */   "default-universe",
     /*  .tmpdir_base =          */   NULL,
     /*  .top_session_dir =      */   NULL,

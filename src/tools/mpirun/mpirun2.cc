@@ -11,6 +11,8 @@
 #include "mca/pcm/base/base.h"
 #include "runtime/runtime.h"
 #include "mca/base/base.h"
+#include "util/argv.h"
+#include "mca/oob/base/base.h"
 #include "util/cmd_line.h"
 #include "include/constants.h"
 
@@ -44,6 +46,7 @@ main(int argc, char *argv[])
     int num_procs = 1;
     ompi_rte_node_schedule_t *sched;
     char cwd[MAXPATHLEN];
+    char *my_contact_info, *tmp;
 
     /*
      * Intialize our Open MPI environment
@@ -70,7 +73,7 @@ main(int argc, char *argv[])
     ompi_cmd_line_make_opt3(cmd_line, 'n', "np", "np", 1,
                             "Number of processes to start");
     ompi_cmd_line_make_opt3(cmd_line, '\0', "hostfile", "hostfile", 1,
-                           "Host description file");
+			    "Host description file");
 
     if (OMPI_SUCCESS != ompi_cmd_line_parse(cmd_line, true, argc, argv) ||
         ompi_cmd_line_is_taken(cmd_line, "help") || 
@@ -96,7 +99,8 @@ main(int argc, char *argv[])
      * 
      */
     ompi_process_info.seed = true;
-    setenv("OMPI_MCA_oob_base_include", "tcp", 1);
+    ompi_process_info.ns_replica = NULL;
+    ompi_process_info.gpr_replica = NULL;
 
     /*
      * Start the Open MPI Run Time Environment
@@ -113,6 +117,9 @@ main(int argc, char *argv[])
         printf("show_help: ompi_rte_init failed\n");
         return ret;
     }
+
+    /* init proc info - assigns name, among other things */
+    ompi_proc_info();
 
     /*
      *  Prep for starting a new job
@@ -136,6 +143,14 @@ main(int argc, char *argv[])
     sched = OBJ_NEW(ompi_rte_node_schedule_t);
     ompi_list_append(&schedlist, (ompi_list_item_t*) sched);
     ompi_cmd_line_get_tail(cmd_line, &(sched->argc), &(sched->argv));
+    /* set initial contact info */
+    my_contact_info = mca_oob_get_contact_info();
+    ompi_argv_append(&(sched->argc), &(sched->argv), "-initcontact");
+    ompi_argv_append(&(sched->argc), &(sched->argv), my_contact_info);
+    ompi_argv_append(&(sched->argc), &(sched->argv), "-nsreplica");
+    ompi_argv_append(&(sched->argc), &(sched->argv), my_contact_info);
+    ompi_argv_append(&(sched->argc), &(sched->argv), "-gprreplica");
+    ompi_argv_append(&(sched->argc), &(sched->argv), my_contact_info);
     mca_pcm_base_build_base_env(environ, &(sched->env));
     getcwd(cwd, MAXPATHLEN);
     sched->cwd = strdup(cwd);

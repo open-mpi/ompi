@@ -16,30 +16,27 @@
 #include "util/sys_info.h"
 #include "util/proc_info.h"
 
+#include "mca/ns/base/base.h"
+
 #include "runtime/runtime.h"
 
 void ompi_rte_parse_daemon_cmd_line(ompi_cmd_line_t *cmd_line)
 {
+
+    /* see if I'm the seed */
+    if (ompi_cmd_line_is_taken(cmd_line, "seed")) {
+	ompi_process_info.seed = true;
+	ompi_process_info.name = ns_base_create_process_name(0,0,0);
+    } else {
+	ompi_process_info.seed = false;
+	ompi_process_info.name = NULL;
+    }
 
     /* see if I'm a probe */
     if (ompi_cmd_line_is_taken(cmd_line, "probe")) {
 	ompi_universe_info.probe = true;
     } else {
 	ompi_universe_info.probe = false;
-    }
-
-    /* should I start a name server replica? */
-    if (ompi_cmd_line_is_taken(cmd_line, "nameserver")) {
-	ompi_universe_info.ns_replica = true;
-    } else {
-	ompi_universe_info.ns_replica = false;
-    }
-
-    /* should I start a registry replica? */
-    if (ompi_cmd_line_is_taken(cmd_line, "registry")) {
-	ompi_universe_info.gpr_replica = true;
-    } else {
-	ompi_universe_info.gpr_replica = false;
     }
 
     /* get desired universe scope, if specified */

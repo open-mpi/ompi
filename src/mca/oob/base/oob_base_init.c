@@ -34,29 +34,38 @@ OBJ_CLASS_INSTANCE(
     NULL
 );
 
-ompi_process_name_t mca_oob_name_seed = { 0, 0, 0 };
-ompi_process_name_t mca_oob_name_self = { MCA_NS_BASE_CELLID_MAX, MCA_NS_BASE_JOBID_MAX, MCA_NS_BASE_VPID_MAX };
+ompi_process_name_t mca_oob_name_self  = { MCA_NS_BASE_CELLID_MAX, MCA_NS_BASE_JOBID_MAX, MCA_NS_BASE_VPID_MAX };
 ompi_process_name_t mca_oob_name_any  = { MCA_NS_BASE_CELLID_MAX, MCA_NS_BASE_JOBID_MAX, MCA_NS_BASE_VPID_MAX };
 
 /**
  * Parse contact info string into process name and list of uri strings.
  */
 
-static int mca_oob_base_parse_contact_info(
-    char* contact_info,
+int mca_oob_parse_contact_info(
+    const char* contact_info,
     ompi_process_name_t* name,
     char*** uri)
 {
+    ompi_process_name_t* proc_name;
+
     /* parse the process name */
+    char* cinfo = strdup(contact_info);
     char* ptr = strchr(contact_info, ';');
-    if(NULL == ptr)
+    if(NULL == ptr) {
+        free(cinfo);
         return OMPI_ERR_BAD_PARAM;
+    }
     *ptr = '\0';
     ptr++;
-    *name = *ns_base_convert_string_to_process_name(contact_info);
+    proc_name = ns_base_convert_string_to_process_name(contact_info);
+    *name = *proc_name;
+    free(proc_name);
 
-    /* parse the remainder of the string into an array of uris */
-    *uri = ompi_argv_split(ptr, ';');
+    if (NULL != uri) {
+	/* parse the remainder of the string into an array of uris */
+	*uri = ompi_argv_split(ptr, ';');
+    }
+    free(cinfo);
     return OMPI_SUCCESS;
 }
 
@@ -74,9 +83,6 @@ int mca_oob_base_init(bool *user_threads, bool *hidden_threads)
     mca_oob_base_component_t *component;
     mca_oob_t *module;
     extern ompi_list_t mca_oob_base_components;
-    int i, id;
-    char* seed;
-    char** uri = NULL;
     mca_oob_t *s_module = NULL;
     bool s_user_threads;
     bool s_hidden_threads;
@@ -84,21 +90,6 @@ int mca_oob_base_init(bool *user_threads, bool *hidden_threads)
 
     char** include = ompi_argv_split(mca_oob_base_include, ',');
     char** exclude = ompi_argv_split(mca_oob_base_exclude, ',');
-
-    /* setup seed daemons name and address */
-    id = mca_base_param_register_string("oob","base","seed",NULL,NULL);
-    mca_base_param_lookup_string(id,&seed);
-    if(seed == NULL) {
-        /* we are seed daemon */
-        mca_oob_name_seed = mca_oob_name_self;
-    } else {
-        /* resolve name of seed daemon */
-        mca_oob_base_parse_contact_info(seed,&mca_oob_name_seed, &uri);
-        if(NULL == uri || NULL == *uri) {
-            ompi_output(0, "mca_oob_base_init: unable to parse seed contact info.");
-            return OMPI_ERROR; 
-        }
-    }
 
     /* Traverse the list of available modules; call their init functions. */
     for (item = ompi_list_get_first(&mca_oob_base_components);
@@ -154,16 +145,6 @@ int mca_oob_base_init(bool *user_threads, bool *hidden_threads)
                 inited->oob_module = module;
                 ompi_list_append(&mca_oob_base_modules, &inited->super);
 
-                /* lookup contact info for this component */
-                if(NULL != uri) {
-                    for(i=0; NULL != uri[i]; i++) {
-                       if(strncmp(uri[i], component->oob_base.mca_component_name, 
-                          strlen(component->oob_base.mca_component_name)) == 0) { 
-                          module->oob_set_seed(uri[i]);
-                       }
-                    }
-                }
-
                 /* setup highest priority oob channel */
                 if(priority > s_priority) {
                     s_priority = priority;
@@ -174,10 +155,6 @@ int mca_oob_base_init(bool *user_threads, bool *hidden_threads)
             }
         }
     }
-    if(uri != NULL) {
-        ompi_argv_free(uri);
-    }
-
     /* set the global variable to point to the first initialize module */
     if(s_module == NULL) {
       ompi_output(0, "mca_oob_base_init: no OOB modules available\n");
@@ -221,23 +198,32 @@ char* mca_oob_get_contact_info()
 *  @param  seed  
 */
                                                                                                              
-int mca_oob_set_contact_info(const char* seed)
+int mca_oob_set_contact_info(const char* contact_info)
 {
-    /* TSW - fix this - currently just stuff the parameter in the environment */
-    setenv("OMPI_MCA_oob_base_seed", seed, 1);
+    ompi_process_name_t name;
+    char** uri;
+    char** ptr;
+    int rc = mca_oob_parse_contact_info(contact_info, &name, &uri);
+    if(rc != OMPI_SUCCESS)
+        return rc;
+
+    for(ptr = uri; ptr != NULL && *ptr != NULL; ptr++) {
+        ompi_list_item_t* item;
+        for (item =  ompi_list_get_first(&mca_oob_base_modules);
+             item != ompi_list_get_end(&mca_oob_base_modules);
+             item =  ompi_list_get_next(item)) {
+            mca_oob_base_info_t* base = (mca_oob_base_info_t *) item;
+            if (strncmp(base->oob_component->oob_base.mca_component_name, *ptr,
+                strlen(base->oob_component->oob_base.mca_component_name)) == 0)
+                base->oob_module->oob_set_addr(&name, *ptr);
+        }
+    }
+
+    if(uri != NULL) {
+        ompi_argv_free(uri);
+    }
     return OMPI_SUCCESS;
 }
-                                                                                  
-
-/**
- * Are we or do we know how to get to the seed.
- */
-
-bool mca_oob_has_seed(void)
-{
-    return (getenv("OMPI_MCA_oob_base_seed") != NULL || ompi_process_info.seed);
-}
-
 
 /**
 * Called to request the selected oob components to
@@ -250,10 +236,6 @@ int mca_oob_base_module_init(void)
 
   /* setup self to point to actual process name */
   mca_oob_name_self = *mca_pcmclient.pcmclient_get_self();
-  if(ompi_process_info.seed) {
-      char* seed = mca_oob_get_contact_info();
-      mca_oob_set_contact_info(seed);
-  }
 
   /* Initialize all modules after oob/gpr/ns have initialized */
   for (item =  ompi_list_get_first(&mca_oob_base_modules);
@@ -265,4 +247,3 @@ int mca_oob_base_module_init(void)
   }
   return OMPI_SUCCESS;
 }
-

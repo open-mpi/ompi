@@ -57,15 +57,15 @@ void ompi_rte_cmd_line_setup(ompi_cmd_line_t *cmd_line)
 			    '\0', "hostfile", "hostfile", 1,
 			   "Hostfile for this universe");
 
-    ompi_cmd_line_make_opt3(cmd_line,  /* read in ompi_rte_parse_daemon_cmd_line */
-			    '\0', "nameserver", "nameserver", 0,
-			   "Setup a name server replica");
-
-    ompi_cmd_line_make_opt3(cmd_line,  /* read in ompi_rte_parse_daemon_cmd_line */
-			    '\0', "registry", "registry", 0,
-			   "Setup a GPR replica");
-
     ompi_cmd_line_make_opt3(cmd_line,  /* read in ompi_rte_parse_cmd_line */
 			    '\0', "initcontact", "initcontact", 1,
 			    "Initial oob contact info");
+
+    ompi_cmd_line_make_opt3(cmd_line,  /* read in ompi_rte_parse_cmd_line */
+			    '\0', "nsreplica", "nsreplica", 1,
+			    "OOB contact info for name server replica assigned to this process");
+
+    ompi_cmd_line_make_opt3(cmd_line,  /* read in ompi_rte_parse_cmd_line */
+			    '\0', "gprreplica", "gprreplica", 1,
+			    "OOB contact info for GPR replica assigned to this process");
 }

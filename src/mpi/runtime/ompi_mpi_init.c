@@ -39,6 +39,10 @@
 #include "mca/topo/base/base.h"
 #include "mca/io/io.h"
 #include "mca/io/base/base.h"
+#include "mca/oob/base/base.h"
+#include "mca/ns/base/base.h"
+
+#include "runtime/runtime.h"
 
 
 /*
@@ -60,6 +64,8 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     bool have_hidden_threads;
     ompi_proc_t** procs;
     size_t nprocs;
+    ompi_cmd_line_t *cmd_line=NULL;
+    char *contact=NULL, **tmp, *nsreplica=NULL, *gprreplica=NULL;
     char *error;
 
     /* Save command line parameters */
@@ -86,10 +92,52 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     /* Join the run-time environment */
     allow_multi_user_threads = true;
     have_hidden_threads = false;
-    if ((OMPI_SUCCESS != (ret = ompi_rte_init_stage1(&allow_multi_user_threads,
-						    &have_hidden_threads))) ||
-       (OMPI_SUCCESS != (ret = ompi_rte_init_stage2(&allow_multi_user_threads,
-						    &have_hidden_threads)))) {
+    if (OMPI_SUCCESS != (ret = ompi_rte_init_stage1(&allow_multi_user_threads,
+						    &have_hidden_threads))) {
+	return ret;
+    }
+
+    /* setup rte command line arguments */
+    cmd_line = OBJ_NEW(ompi_cmd_line_t);
+    ompi_rte_cmd_line_setup(cmd_line);
+
+    /* parse the rte command line arguments */
+    if (OMPI_SUCCESS != ompi_cmd_line_parse(cmd_line, true, argc, argv)) {
+	exit(ret);
+    }
+
+    if (ompi_cmd_line_is_taken(cmd_line, "initcontact")) {
+	if (NULL == (contact = ompi_cmd_line_get_param(cmd_line, "initcontact", 0, 0))) {
+	    return OMPI_ERROR;
+	}
+	mca_oob_set_contact_info(contact);
+    }
+
+    if (ompi_cmd_line_is_taken(cmd_line, "nsreplica")) {
+	if (NULL == (nsreplica = ompi_cmd_line_get_param(cmd_line, "nsreplica", 0, 0))) {
+	    return OMPI_ERROR;
+	}
+	mca_oob_set_contact_info(nsreplica);
+	ompi_process_info.ns_replica = ns_base_create_process_name(0,0,0);  /* allocate a space */
+        mca_oob_parse_contact_info(nsreplica, ompi_process_info.ns_replica, NULL);
+    } else {
+	ompi_process_info.ns_replica = NULL;
+    }
+
+    if (ompi_cmd_line_is_taken(cmd_line, "gprreplica")) {
+	if (NULL == (gprreplica = ompi_cmd_line_get_param(cmd_line, "gprreplica", 0, 0))) {
+	    return OMPI_ERROR;
+	}
+	mca_oob_set_contact_info(gprreplica);
+	ompi_process_info.gpr_replica = ns_base_create_process_name(0,0,0);  /* allocate a space */
+	mca_oob_parse_contact_info(gprreplica, ompi_process_info.gpr_replica, NULL);
+    } else {
+	ompi_process_info.gpr_replica = NULL;
+    }
+
+    /* start the rest of the rte */
+      if (OMPI_SUCCESS != (ret = ompi_rte_init_stage2(&allow_multi_user_threads,
+						    &have_hidden_threads))) {
         error = "mca_rte_init() failed";
         goto error;
     }
