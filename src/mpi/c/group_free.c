@@ -14,24 +14,26 @@
 
 int MPI_Group_free(MPI_Group *group)
 {
-    /* local variables */
     int proc;
     lam_group_t *l_group;
 
     /* check to make sure we don't free GROUP_EMPTY or GROUP_NULL */
-    if( MPI_PARAM_CHECK ) {
-        if( (MPI_GROUP_NULL == group) || (MPI_GROUP_EMPTY == group ) ) {
+    if (MPI_PARAM_CHECK) {
+        if ((MPI_GROUP_NULL == *group) || (MPI_GROUP_EMPTY == *group)) {
             return MPI_ERR_GROUP;
         }
     }
 
-    l_group=(lam_group_t *)group;
+    l_group = (lam_group_t *) *group;
 
     /* decrement proc reference count */
-    for(proc=0 ; proc < l_group->grp_proc_count ; proc++ ) {
+    for (proc = 0; proc < l_group->grp_proc_count; proc++) {
         OBJ_RELEASE(l_group->grp_proc_pointers[proc]);
     }
 
-    OBJ_RELEASE(group);
+    OBJ_RELEASE(l_group);
+
+    *group = MPI_GROUP_NULL;
+
     return MPI_SUCCESS;
 }
