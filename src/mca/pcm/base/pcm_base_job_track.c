@@ -287,7 +287,7 @@ mca_pcm_base_job_list_get_all_starters(mca_pcm_base_job_list_t *me,
              pid_item != ompi_list_get_end(jobs_entry->pids) ;
              pid_item = ompi_list_get_next(pid_item)) {
             pids_entry = (mca_pcm_base_pids_t*) pid_item;
-            (*pids)[i] = pids_entry->starter;
+            (*pids)[i++] = pids_entry->starter;
         }
     }
 
