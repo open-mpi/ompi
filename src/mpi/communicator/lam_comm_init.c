@@ -50,7 +50,7 @@ lam_class_t  lam_communicator_t_class = {
  */
 int lam_comm_link_function(void)
 {
-    return 0;
+  return LAM_SUCCESS;
 }
 
 /*
@@ -86,5 +86,7 @@ int lam_comm_init(void)
     lam_mpi_comm_self.c_my_rank = group->grp_my_rank;
     lam_mpi_comm_self.c_local_group = group;
     lam_mpi_comm_self.c_remote_group = group;
+
+    return LAM_SUCCESS;
 }
 
