@@ -181,7 +181,7 @@
 
       <!-- ARGUMENT : string -->
       <arg name="string" intent="in">
-        <type kind="ptr" >
+        <type kind="ptr" alias="len">
           <indirect depth="1" kind="pointer">
             <type kind="int" ikind="char" >
             </type>
@@ -1769,7 +1769,7 @@
       </arg>
 
       <!-- ARGUMENT : erhandler -->
-      <arg name="erhandler" intent="out">
+      <arg name="erhandler" intent="out" alias="errhandler">
         <type kind="ptr" >
           <indirect depth="1" kind="pointer">
             <type kind="usertype" usertype="MPI_Errhandler" >
@@ -1798,7 +1798,7 @@
 
       <!-- ARGUMENT : comm_name -->
       <arg name="comm_name" intent="out">
-        <type kind="ptr" >
+        <type kind="ptr" alias="name_len">
           <indirect depth="1" kind="pointer">
             <type kind="int" ikind="char" >
             </type>
@@ -2005,8 +2005,9 @@
       </arg>
 
       <!-- ARGUMENT : comm_name -->
+
       <arg name="comm_name" intent="in">
-        <type kind="ptr" >
+        <type kind="ptr" alias="name_len">
           <indirect depth="1" kind="pointer">
             <type kind="int" ikind="char" >
             </type>
@@ -2606,7 +2607,7 @@
     <method name="MPI_File_get_errhandler" kind="final">
 
       <!-- ARGUMENT : file -->
-      <arg name="file" intent="in">
+      <arg name="file" intent="in" alias="fh">
         <type kind="usertype" usertype="MPI_File" >
         </type>
       </arg>
@@ -3888,7 +3889,7 @@
     <method name="MPI_File_set_errhandler" kind="final">
 
       <!-- ARGUMENT : file -->
-      <arg name="file" intent="in">
+      <arg name="file" intent="in" alias="fh">
         <type kind="usertype" usertype="MPI_File" >
         </type>
       </arg>
@@ -5166,7 +5167,7 @@
       </arg>
 
       <!-- ARGUMENT : newrank -->
-      <arg name="newrank" intent="out">
+      <arg name="newrank" intent="out" alias="nrank">
         <type kind="ptr" >
           <indirect depth="1" kind="pointer">
             <type kind="int" ikind="int" >
@@ -6334,7 +6335,7 @@
       </arg>
 
       <!-- ARGUMENT : newintercomm -->
-      <arg name="newintercomm" intent="out">
+      <arg name="newintercomm" intent="out" alias="newintracomm">
         <type kind="ptr" >
           <indirect depth="1" kind="pointer">
             <type kind="usertype" usertype="MPI_Comm" >
@@ -9992,7 +9993,7 @@
 
       <!-- ARGUMENT : type_name -->
       <arg name="type_name" intent="in">
-        <type kind="ptr" >
+        <type kind="ptr" alias="name_len">
           <indirect depth="1" kind="pointer">
             <type kind="int" ikind="char" >
             </type>
@@ -11040,7 +11041,7 @@
 
       <!-- ARGUMENT : win_name -->
       <arg name="win_name" intent="in">
-        <type kind="ptr" >
+        <type kind="ptr" alias="name_len">
           <indirect depth="1" kind="pointer">
             <type kind="int" ikind="char" >
             </type>
