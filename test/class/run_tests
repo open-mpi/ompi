@@ -51,10 +51,19 @@ else
     case "ompi_list":
       ./$target
       breaksw
-    case "help"    
-    default     
+    case "help"   
       echo "correct use: "
-      echo "    run_tests    (to run all class tests)"
+      echo "    run_tests help (this message)"
+      echo "    run_tests all   (to run all class tests)"
+      echo "or  run_tests with any combination of the following: "
+      echo  "       <ompi_bimmap | ompi_hash_table | onpi_list | "
+      echo "         ompi_pointer_array | ompi_rb_tree | ompi_value_array>"
+      break  
+    default     
+      echo "There is no program <$target> to run"
+      echo "correct use: "
+      echo "    run_tests help (this message)"
+      echo "    run_tests all   (to run all class tests)"
       echo "or  run_tests with any combination of the following: "
       echo  "       <ompi_bimmap | ompi_hash_table | onpi_list | "
       echo "         ompi_pointer_array | ompi_rb_tree | ompi_value_array>"
