@@ -470,7 +470,6 @@ mca_ptl_gm_matched( mca_ptl_base_module_t * ptl,
     ptl->ptl_recv_progress( ptl, request, bytes_recv, bytes_recv ); 
     
     /* Now update the status of the fragment */
-    ((mca_ptl_gm_recv_frag_t*)frag)->matched = true;
     if( ((mca_ptl_gm_recv_frag_t*)frag)->have_allocated_buffer == true ) {
         free( ((mca_ptl_gm_recv_frag_t*)frag)->frag_recv.frag_base.frag_addr);
         ((mca_ptl_gm_recv_frag_t*)frag)->have_allocated_buffer = false;
