@@ -53,8 +53,20 @@ extern bool ompi_mpi_param_check;
 
 /*
  * Do we want memory debugging?
+ *
+ * A few scenarios:
+ *
+ * 1. In the OMPI C library: we want these defines in all cases
+ * 2. In the OMPI C++ bindings: we do not want them
+ * 3. In the OMPI C++ executables: we do want them
+ *
+ * So for 1, everyone must include <ompi_config.h> first.  For 2, the
+ * C++ bindings will never include <ompi_config.h> -- they will only
+ * include <mpi.h>, which includes <ompi_config.h>, but after
+ * OMPI_MPI_H is defined.  For 3, it's the same as 1 -- just include
+ * <ompi_config.h> first.
  */
-#if OMPI_ENABLE_MEM_DEBUG && defined(OMPI_BUILDING) && OMPI_BUILDING
+#if OMPI_ENABLE_MEM_DEBUG && defined(OMPI_BUILDING) && OMPI_BUILDING && !defined(OMPI_MPI_H)
 
 /* It is safe to include util/malloc.h here because a) it will only
    happen when we are building OMPI and therefore have a full OMPI
