@@ -30,7 +30,6 @@ int lam_datatype_copy(void *dst,
             (*memcpy_fn)(dst, src, count * d->d_extent, csum);
         } else {
             lam_datavec_t *dv = d->d_datavec;
-            size_t datavec_size = d->d_datavec_size;
             unsigned char *p = ((unsigned char *) dst);
             unsigned char *q = ((unsigned char *) src);
             size_t i, j;

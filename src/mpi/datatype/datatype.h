@@ -442,12 +442,10 @@ static inline void *lam_memcpy(void *dst, const void *src, size_t size,
     return memcpy(dst, src, size);
 }
 
-#if 0
 uint32_t lam_crc32(const void *restrict buffer, size_t size,
 		   uint32_t initial_crc);
 uint32_t lam_sum32(const void *restrict buffer, size_t size,
 		   uint32_t initial_crc);
-#endif
 
 /**
  * Copy data from one buffer to another and calculate a 32-bit checksum
@@ -470,5 +468,17 @@ uint32_t lam_sum32(const void *restrict buffer, size_t size,
  * @return         the original value of dst
  */
 
+int lam_datatype_create(int combiner,
+                        int nintegers,
+                        int integers[],
+                        int naddresses,
+                        ssize_t addresses[],
+                        int ntypes,
+                        lam_datatype_t *types[],
+                        lam_datatype_t **newtype);
+
+int lam_datatype_delete(lam_datatype_t *type);
+
+void *lam_memcpy_alt(void *dst, const void *src, size_t size, void *dummy);
 
 #endif				/* LAM_DATATYPE_H_INCLUDED */
