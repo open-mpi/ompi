@@ -15,6 +15,7 @@
 typedef struct lam_communicator_t *MPI_Comm;
 typedef struct lam_group_t *MPI_Group;
 typedef struct lam_datatype_t *MPI_Datatype;
+typedef struct lam_op_t *MPI_Op;
 
 extern MPI_Comm MPI_COMM_NULL;
 extern MPI_Comm MPI_COMM_WORLD;
