@@ -105,11 +105,13 @@ do {                                                           \
 #define  OMPI_PTL_ELAN_ALIGNUP(x,a)  (((unsigned int)(x) + ((a)-1)) & (-(a)))
 
 #if (QSNETLIBS_VERSION_CODE <= QSNETLIBS_VERSION(1,6,6))
-#define OMPI_PTL_ELAN_ALLOC_CMDQ(ctx, alloc, size, bits, params) \
-	elan4_alloc_cmdq (ctx, alloc, size, bits, params)
+#define OMPI_PTL_ELAN_ALLOC_CMDQ elan4_alloc_cmdq 
+#define OMPI_PTL_ELAN_PROBE_CMDQ elan4_probe_cmdq
 #else
 #define OMPI_PTL_ELAN_ALLOC_CMDQ(ctx, alloc, size, bits, params) \
 	elan4_alloc_cmdq (ctx, size, bits, params)
+#define OMPI_PTL_ELAN_PROBE_CMDQ(ctx, alloc, maxcmds, flags) \
+	elan4_probe_cmdq (ctx, maxcmds, flags)
 #endif
 
 #define OMPI_PTL_ELAN_CHECK_UNEX(value, unexp, errno, output)  \
