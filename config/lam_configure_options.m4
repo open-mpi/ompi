@@ -7,28 +7,28 @@ AC_DEFUN([LAM_CONFIGURE_OPTIONS],[
 lam_show_subtitle "Configuration options"
 
 #
-# "Purify" clean
+# Memory debugging
 #
 
-AC_MSG_CHECKING([whether to enable memory zeroing])
-AC_ARG_ENABLE(mem-zero, 
-    AC_HELP_STRING([--enable-mem-zero],
-                   [enable memory zeroing for memory-checking debuggers (debugging only) (default: disabled)]))
-if test "$enable_mem_zero" = "yes"; then
+AC_MSG_CHECKING([whether to debug memory usage])
+AC_ARG_ENABLE(mem-debug, 
+    AC_HELP_STRING([--enable-mem-debug],
+                   [enable memory debugging (debugging only) (default: disabled)]))
+if test "$enable_mem_debug" = "yes"; then
     AC_MSG_RESULT([yes])
-    WANT_MEM_ZERO=1
+    WANT_MEM_DEBUG=1
 else
     AC_MSG_RESULT([no])
-    WANT_MEM_ZERO=0
+    WANT_MEM_DEBUG=0
 fi
 #################### Early development override ####################
-if test "$WANT_MEM_ZERO" = "0" -a -z "$enable_mem_zero" -a -d CVS; then
-    WANT_MEM_ZERO=1
-    echo "--> developer override: enable mem zeroing by default"
+if test "$WANT_MEM_DEBUG" = "0" -a -z "$enable_mem_zero" -a -d CVS; then
+    WANT_MEM_DEBUG=1
+    echo "--> developer override: enable mem profiling by default"
 fi
 #################### Early development override ####################
-AC_DEFINE_UNQUOTED(LAM_ENABLE_MEM_ZERO, $WANT_MEM_ZERO,
-    [Whether we want the LAM_MEM_ZERO macro to memset or not])
+AC_DEFINE_UNQUOTED(LAM_ENABLE_MEM_DEBUG, $WANT_MEM_DEBUG,
+    [Whether we want the memory profiling or not])
 
 #
 # Memory profiling
