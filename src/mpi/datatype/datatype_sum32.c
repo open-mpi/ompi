@@ -4,7 +4,7 @@
 
 /** @file
  *
- * 32-bit checksum support
+ * 32-bit checksum implementation
  */
 
 #include <stdlib.h>
@@ -16,7 +16,7 @@
 /*
  * Generate a 32-bit checksum for a buffer
  */
-uint32_t lam_sum32(const void *restrict buffer, size_t size)
+uint32_t lam_sum32(const void *buffer, size_t size)
 {
     return 0;
 }
@@ -25,8 +25,8 @@ uint32_t lam_sum32(const void *restrict buffer, size_t size)
 /*
  * Copy data from one buffer to another and calculate a 32-bit checksum
  */
-void *lam_memcpy_sum32(void *restrict dst,
-		       const void *restrict src,
+void *lam_memcpy_sum32(void *dst,
+		       const void *src,
 		       size_t size, lam_memcpy_state_t *state)
 {
     uint32_t *restrict p = (uint32_t *) dst;
@@ -46,7 +46,7 @@ void *lam_memcpy_sum32(void *restrict dst,
     csumlenresidue = (csumlen > size) ? (csumlen - size) : 0;
     temp = state->partial_int;
 
-    if (LAM_IS_32BIT_ALIGNED(p) && LAM_IS_32BIT_ALIGNED(q)) {
+    if (lam_aligned32(p) && lam_aligned32(q)) {
 	if (state->partial_size) {
 	    /* do we have enough data to fill out the partial word? */
 	    if (size >= (sizeof(uint32_t) - state->partial_size)) {
@@ -93,14 +93,14 @@ void *lam_memcpy_sum32(void *restrict dst,
 	    }
 	    state->partial_int = 0;
 	    state->partial_size = 0;
-	    if (LAM_IS_32BIT_ALIGNED(size) && (csumlenresidue == 0)) {
+	    if (lam_aligned32((void *) size) && (csumlenresidue == 0)) {
 		state->sum = csum;
 		return dst;
 	    } else {
 		size -= i * sizeof(uint32_t);
 	    }
 	}
-    } else if (LAM_IS_32BIT_ALIGNED(q)) {
+    } else if (lam_aligned32(q)) {
 	if (state->partial_size) {
 	    /* do we have enough data to fill out the partial word? */
 	    if (size >= (sizeof(uint32_t) - state->partial_size)) {
@@ -119,7 +119,7 @@ void *lam_memcpy_sum32(void *restrict dst,
 		 * now we have an unaligned source and an unknown
 		 * alignment for our destination
 		 */
-		if (LAM_IS_32BIT_ALIGNED(p)) {
+		if (lam_aligned32(p)) {
 		    size_t numLongs = size / sizeof(uint32_t);
 		    for (i = 0; i < numLongs; i++) {
 			memcpy(&temp, q, sizeof(temp));
@@ -160,7 +160,7 @@ void *lam_memcpy_sum32(void *restrict dst,
 	    state->partial_int = 0;
 	    state->partial_size = 0;
 	}
-    } else if (LAM_IS_32BIT_ALIGNED(p)) {
+    } else if (lam_aligned32(p)) {
 	if (state->partial_size) {
 	    /* do we have enough data to fill out the partial word? */
 	    if (size >= (sizeof(uint32_t) - state->partial_size)) {
@@ -179,7 +179,7 @@ void *lam_memcpy_sum32(void *restrict dst,
 		 * now we have a source of unknown alignment and a
 		 * unaligned destination
 		 */
-		if (LAM_IS_32BIT_ALIGNED(q)) {
+		if (lam_aligned32(q)) {
 		    for (; size >= sizeof(*q); size -= sizeof(*q)) {
 			temp = *q++;
 			csum += temp;
@@ -239,7 +239,7 @@ void *lam_memcpy_sum32(void *restrict dst,
 		 * now we have an unknown alignment for our source and
 		 * destination
 		 */
-		if (LAM_IS_32BIT_ALIGNED(q) && LAM_IS_32BIT_ALIGNED(p)) {
+		if (lam_aligned32(q) && lam_aligned32(p)) {
 		    size_t numLongs = size / sizeof(uint32_t);
 		    for (i = 0; i < numLongs; i++) {
 			csum += *q;
@@ -385,7 +385,7 @@ void *lam_memcpy_sum32(void *restrict dst,
 	    state->partial_size = 0;
 	    state->partial_int = 0;
 	}
-	if (LAM_IS_32BIT_ALIGNED(q)) {
+	if (lam_aligned32(q)) {
 	    for (i = 0; i < csumlenresidue / sizeof(uint32_t); i++) {
 		csum += *q++;
 	    }

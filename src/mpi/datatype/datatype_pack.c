@@ -66,7 +66,7 @@ int lam_datatype_packer(lam_pack_state_t *state,
         lam_datavec_t *dv;
 
         ptr = (unsigned char *) typebuf
-            + state->type_index * d->extent,
+            + state->type_index * d->extent
             + state->repeat_index * dv->repeat_offset;
         b = (unsigned char *) buf + state->packed_offset;
         bufsize -= state->packed_offset;
@@ -115,6 +115,7 @@ int lam_datatype_packer(lam_pack_state_t *state,
                 return LAM_DATATYPE_PACK_INCOMPLETE;
             }
         }
+
     }
 
     return LAM_DATATYPE_PACK_COMPLETE;

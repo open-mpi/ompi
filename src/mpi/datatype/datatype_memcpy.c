@@ -21,7 +21,7 @@ void *lam_memcpy_alt(void *dst, const void *src, size_t size,
     assert(dst);
     assert(src);
 
-    if (LAM_IS_32BIT_ALIGNED(src) && LAM_IS_32BIT_ALIGNED(dst)) {
+    if (lam_aligned32((void *) src) && lam_aligned32(dst)) {
         uint32_t *restrict p = (uint32_t *) dst;
         uint32_t *restrict q = (uint32_t *) src;
         uint32_t i;

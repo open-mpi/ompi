@@ -16,7 +16,7 @@ int lam_datatype_copy(void *dst,
                       size_t count,
                       lam_datatype_t *d,
                       lam_memcpy_fn_t *memcpy_fn,
-                      lam_memcpy_state_t *csum)
+                      lam_memcpy_state_t *memcpy_state)
 {
     int status;
 
@@ -28,9 +28,9 @@ int lam_datatype_copy(void *dst,
 
     if (LAM_SUCCESS == status) {
         if (NULL == d) {
-            (*memcpy_fn)(dst, src, count, csum);
+            (*memcpy_fn)(dst, src, count, memcpy_state);
         } else if (LAM_DATATYPE_STATE_CONTIGUOUS & d->flags) {
-            (*memcpy_fn)(dst, src, count * d->extent, csum);
+            (*memcpy_fn)(dst, src, count * d->extent, memcpy_state);
         } else {
             lam_datavec_t *dv = d->datavec;
             unsigned char *p = (unsigned char *) dst;
@@ -38,12 +38,12 @@ int lam_datatype_copy(void *dst,
             size_t i, j;
 
             while (count--) {
-                for (j = 0; j < dv->nrepeat; j++) {
-                    for (i = 0; i < d->datavec_size; i++) {
+                for (i = 0; i < d->datavec_size; i++) {
+                    for (j = 0; j < dv->nrepeat; j++) {
                         (*memcpy_fn)(p + dv->element[i].offset,
                                      q + dv->element[i].offset,
                                      dv->element[i].size,
-                                     csum);
+                                     memcpy_state);
                     }
                     p += dv->repeat_offset;
                     q += dv->repeat_offset;

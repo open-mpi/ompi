@@ -14,6 +14,7 @@ headers = \
 
 libmpi_datatype_la_SOURCES = \
         $(headers) \
+	datatype.c \
 	datatype_copy.c \
 	datatype_crc32.c \
 	datatype_create.c \

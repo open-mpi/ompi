@@ -28,41 +28,6 @@
 
 #include "mpi.h"
 
-/* macros *************************************************************/
-
-/**
- * Test 32-bit alignment of an address
- *
- * @param address   An address
- * @return          true if the address is 32-bit aligned
- */
-#define LAM_IS_32BIT_ALIGNED(addr) \
-    (((uint32_t) addr & (uint32_t) 3) == (uint32_t) 0 ? true : false)
-
-/**
- * Test 64-bit alignment of an address
- *
- * @param address   An address
- * @return          true if the address is 32-bit aligned
- */
-#define LAM_IS_64BIT_ALIGNED(addr) \
-    (((uint64_t) addr & (uint64_t) 7) == (uint64_t) 0 ? true : false)
-
-
-/* typedefs ***********************************************************/
-
-typedef struct lam_checksum_t lam_checksum_t;
-typedef struct lam_datatype_t lam_datatype_t;
-typedef struct lam_datavec_element_t lam_datavec_element_t;
-typedef struct lam_datavec_t lam_datavec_t;
-typedef struct lam_dataxdr_t lam_dataxdr_t;
-typedef struct lam_pack_state_t lam_pack_state_t;
-typedef struct lam_memcpy_state_t lam_memcpy_state_t;
-
-/* Function prototype for a generalized memcpy() */
-typedef void *(lam_memcpy_fn_t) (void *restrict dst,
-                                 const void *restrict src,
-                                 size_t size, lam_memcpy_state_t *check);
 
 /* enums **************************************************************/
 
@@ -122,18 +87,23 @@ enum lam_datatype_kind_t {
 typedef enum lam_datatype_state_t lam_datatype_state_t;
 typedef enum lam_datatype_kind_t lam_datatype_kind_t;
 
-/* structs ************************************************************/
+
+/* types **************************************************************/
+
+typedef struct lam_datatype_t lam_datatype_t;
+typedef struct lam_datavec_element_t lam_datavec_element_t;
+typedef struct lam_datavec_t lam_datavec_t;
+typedef struct lam_dataxdr_t lam_dataxdr_t;
+typedef struct lam_pack_state_t lam_pack_state_t;
+typedef struct lam_memcpy_state_t lam_memcpy_state_t;
 
 /**
- * State of incremental memcpy with checksum or CRC
+ * Function prototype for a generalized memcpy()
  */
-struct lam_memcpy_state_t {
-    size_t size;           /**< total size in bytes of the object being checksummed / CRCed */
-    size_t partial_size;   /**< size of non- uint32_t to be carried over to next call */
-    uint32_t partial_int;  /**< value of non- uint32_t to be carried over to next call */
-    uint32_t sum;          /**< current value of the CRC or checksum */
-    bool first_call;       /**< is this the first call for this checksum/CRC? */
-};
+typedef void *(lam_memcpy_fn_t) (void *restrict dst,
+                                 const void *restrict src,
+                                 size_t size, lam_memcpy_state_t *check);
+
 
 /**
  * Internal representation of MPI datatype
@@ -172,6 +142,8 @@ struct lam_datatype_t {
     } creator;
 };
 
+OBJ_CLASS_DECLARATION(lam_datatype_t);
+
 
 /**
  * An optimized representation of noncontiguous data used by packing
@@ -205,6 +177,18 @@ struct lam_dataxdr_element_t {
 
 
 /**
+ * State of incremental memcpy with checksum or CRC
+ */
+struct lam_memcpy_state_t {
+    size_t size;           /**< total size in bytes of the object being checksummed / CRCed */
+    size_t partial_size;   /**< size of non- uint32_t to be carried over to next call */
+    uint32_t partial_int;  /**< value of non- uint32_t to be carried over to next call */
+    uint32_t sum;          /**< current value of the CRC or checksum */
+    bool first_call;       /**< is this the first call for this checksum/CRC? */
+};
+
+
+/**
  * Pack state
  *
  * Structure to store the state of an incremental pack/unpack of a
@@ -221,19 +205,53 @@ struct lam_pack_state_t {
 
 /* interface **********************************************************/
 
+BEGIN_C_DECLS
+
 /**
- * Checksum (the contents of) an array of data types
+ * Test 32-bit alignment of an address
+ *
+ * @param address   An address
+ * @return          true if the address is 32-bit aligned
+ */
+static inline bool lam_aligned32(void *addr)
+{
+    if (((uintptr_t) addr & (uintptr_t) 3) == (uintptr_t) 0) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+
+/**
+ * Test 64-bit alignment of an address
+ *
+ * @param address   An address
+ * @return          true if the address is 64-bit aligned
+ */
+static inline bool lam_aligned64(void *addr)
+{
+    if (((uintptr_t) addr & (uintptr_t) 7) == (uintptr_t) 0) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+
+/**
+ * Return a 32-bit checksum of (the contents of) an array of data
+ * types
  *
  * @param addr          Data type array
  * @param count         Size of array
  * @param datatype      Datatype descriptor
- * @param checksum      Checksum
- * @return              0 on success, -1 on error
+ * @return              Checksum
  */
-int lam_datatype_checksum(const void *addr,
-                          size_t count,
-                          lam_datatype_t *datatype,
-                          lam_checksum_t *checksum);
+uint32_t lam_datatype_sum32(const void *addr,
+                            size_t count,
+                            lam_datatype_t *datatype);
+
 
 /**
  * Copy (the contents of) an array of data types
@@ -404,7 +422,8 @@ int lam_datatype_gather_iovec(lam_pack_state_t *state,
                               const void *typebuf,
                               size_t ntype,
                               lam_datatype_t *datatype,
-                              lam_checksum_t *checksum);
+                              lam_memcpy_fn_t *memcpy_fn,
+                              lam_memcpy_state_t *);
 
 /**
  * Incrementally generate an iovec for scattering from a packed array
@@ -509,7 +528,7 @@ void *lam_memcpy_alt(void *dst, const void *src, size_t size,
  * Generate a 32-bit for a data buffer starting from a given CRC
  * value.
  */
-uint32_t lam_crc32(const void *restrict buffer, size_t size,
+uint32_t lam_crc32(const void *buffer, size_t size,
                    uint32_t initial_crc);
 
 
@@ -523,7 +542,7 @@ uint32_t lam_crc32(const void *restrict buffer, size_t size,
  * Generate a 32-bit for a data buffer starting from a given CRC
  * value.
  */
-uint32_t lam_sum32(const void *restrict buffer, size_t size);
+uint32_t lam_sum32(const void *buffer, size_t size);
 
 
 /**
@@ -540,9 +559,10 @@ uint32_t lam_sum32(const void *restrict buffer, size_t size);
  * used as the starting value of the CRC.  The final CRC is placed
  * back in state->sum.
  */
-void *lam_memcpy_crc32(void *restrict dst,
-                       const void *restrict src,
-                       size_t size, lam_memcpy_state_t *check);
+void *lam_memcpy_crc32(void *dst,
+                       const void *src,
+                       size_t size,
+                       lam_memcpy_state_t *check);
 
 
 /**
@@ -561,9 +581,10 @@ void *lam_memcpy_crc32(void *restrict dst,
  * allow proper handling of checksumming contiguous or noncontiguous
  * buffers via multiple calls of bcopy_csum() - Mitch
  */
-void *lam_memcpy_sum32(void *restrict dst,
-                       const void *restrict src,
-                       size_t size, lam_memcpy_state_t *check);
+void *lam_memcpy_sum32(void *dst,
+                       const void *src,
+                       size_t size,
+                       lam_memcpy_state_t *check);
 
 
 /**
@@ -575,9 +596,10 @@ void *lam_memcpy_sum32(void *restrict dst,
  * @param state    pointer to a memcpy with checksum/CRC state structure
  * @return         the original value of dst
  */
-void *lam_memcpy_sum64(void *restrict dst,
-                       const void *restrict src,
-                       size_t size, lam_memcpy_state_t *check);
+void *lam_memcpy_sum64(void *dst,
+                       const void *src,
+                       size_t size,
+                       lam_memcpy_state_t *check);
 
 
 /**
@@ -618,6 +640,6 @@ int lam_datatype_create(int combiner,
  */
 int lam_datatype_delete(lam_datatype_t *type);
 
-
+END_C_DECLS
 
 #endif                          /* LAM_DATATYPE_H_INCLUDED */
