@@ -190,8 +190,12 @@ do { \
     /*printf( "memcpy dest = %p src = %p length = %d\n", (void*)(DST), (void*)(SRC), (int)(BLENGTH) );*/ \
     memcpy( (DST), (SRC), (BLENGTH) ); }
 
+#if defined(DO_INTENSIVE_DEBUGGING)
 #define OMPI_DDT_SAFEGUARD_POINTER( ACTPTR, LENGTH, INITPTR, PDATA, COUNT ) \
     ompi_ddt_safeguard_pointer( (ACTPTR), (LENGTH), (INITPTR), (PDATA), (COUNT) )
+#else
+#define OMPI_DDT_SAFEGUARD_POINTER( ACTPTR, LENGTH, INITPTR, PDATA, COUNT )
+#endif  /* DO_INTENSIVE_DEBUGGING */
 
 static inline void ompi_ddt_safeguard_pointer( void* actual_ptr, int length,
                                                void* initial_ptr,
@@ -268,35 +272,36 @@ int ompi_convertor_create_stack_with_pos_contig( ompi_convertor_t* pConvertor,
     ompi_datatype_t* pData = pConvertor->pDesc;
     dt_elem_desc_t* pElems;
     uint32_t count;
-    int32_t index;
     long extent;
 
     pStack = pConvertor->pStack;
 
-    pStack->count    = pConvertor->count;
-    pStack->index    = -1;
+    pStack[0].count    = pConvertor->count;
+    pStack[0].index    = -1;
     if( pData->opt_desc.desc != NULL ) {
         pElems = pData->opt_desc.desc;
-        pStack->end_loop = pData->opt_desc.used;
+        pStack[0].end_loop = pData->opt_desc.used;
     } else {
         pElems = pData->desc.desc;
-        pStack->end_loop = pData->desc.used;
+        pStack[0].end_loop = pData->desc.used;
     }
 
     /* Special case for contiguous datatypes */
     count = starting_point / pData->size;
     extent = pData->ub - pData->lb;
     
-    pStack->disp = count * extent;
-    
-    pStack->count -= count;
-    count = starting_point - count * pData->size;  /* number of bytes after the loop */
-    pStack[1].index    = 0;
-    pStack[1].count    = pElems[count].count - count;
-    pStack[1].end_loop = pStack->end_loop;
-    
-    pStack[1].disp     = pStack->disp  /* the total displacement depending on the already done elements  */
-        + pData->size - count;         /* everything from the beginig of this loop */
+    pStack[0].disp = count * extent;
+    pStack[0].count -= count;
+
+    /* now compute the number of pending bytes */
+    count = starting_point - count * pData->size;
+    pStack[1].index    = 0;  /* useless */
+    pStack[1].count    = pData->size - count;
+    pStack[1].end_loop = 0;  /* useless */
+    /* we save the currecnt displacement starting from the begining
+     * of this data.
+     */
+    pStack[1].disp     = count;
 
     pConvertor->bConverted = starting_point;
     pConvertor->stack_pos = 1;
