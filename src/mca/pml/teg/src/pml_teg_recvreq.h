@@ -54,10 +54,12 @@ static inline int mca_pml_teg_recv_request_start(mca_ptl_base_recv_request_t* re
  *  Update status of a recv request based on the completion status of 
  *  the receive fragment.
  *
+ *  @param ptl (IN)      The PTL pointer.
  *  @param request (IN)  Receive request.
  *  @param frag (IN)     Receive fragment.
  */
 void mca_pml_teg_recv_request_progress(
+    struct mca_ptl_t* ptl,
     mca_ptl_base_recv_request_t* request,
     mca_ptl_base_recv_frag_t* frag
 );
