@@ -28,6 +28,7 @@ int MPI_Comm_spawn(char *command, char **argv, int maxprocs, MPI_Info info,
     int rank, rc, tag, i;
     int send_first=0; /* we wait to be contacted */
     ompi_communicator_t *newcomp;
+    char port_name[MPI_MAX_PORT_NAME];
  
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -65,10 +66,6 @@ int MPI_Comm_spawn(char *command, char **argv, int maxprocs, MPI_Info info,
                return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG,
                                              FUNC_NAME);
          }
-         if ( NULL == argv ) {
-               return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG,
-                                             FUNC_NAME);
-         }
          if ( 0 > maxprocs ) {
                return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG,
                                              FUNC_NAME);
@@ -77,34 +74,17 @@ int MPI_Comm_spawn(char *command, char **argv, int maxprocs, MPI_Info info,
    }
 
 
-   if ( rank == root && MPI_INFO_NULL != info ) {
-       /* parse the info object */
-       
-       /* check potentially for: 
-          - "host": desired host where to spawn the processes
-          - "arch": desired architecture
-          - "wdir": directory, where executable can be found
-          - "path": list of directories where to look for the executable
-          - "file": filename, where additional information is provided.
-          - "soft": see page 92 of MPI-2.
-       */
-
-       /* map potentially MPI_ARGV_NULL to the value required by the start-cmd */
-       /* start processes. if number of processes started != maxprocs 
-          return MPI_ERR_SPAWN.*/
-
-       /* publish your name. this should be based on the jobid of the 
-          children, to support the scenario of having several
-          spawns of non-interleaving communicators working */
-       
-       /* rc = ompi_comm_namepublish (service_name, port_name ); */
+   if ( rank == root ) {
+       /* Open a port. The port_name is passed as an environment variable
+	  to the children. */
+       ompi_open_port (port_name);
+       ompi_comm_start_processes (command, argv, maxprocs, info, port_name);
    }
-
+   
+   
    rc = ompi_comm_connect_accept (comm, root, NULL, send_first, &newcomp, tag);
 
-   if ( rank == root ) {
-       /* unpublish name */
-   }
+   /* close the port again. Nothing has to be done for that at the moment.*/
 
    /* set error codes */
     if (MPI_ERRCODES_IGNORE != array_of_errcodes) {

@@ -30,19 +30,13 @@ int MPI_Comm_get_parent(MPI_Comm *parent)
                                           FUNC_NAME);
         }
     }
+
     /*
      * ompi_mpi_comm_parent is MPI_COMM_NULL, in case this 
      * world has not been spawned by another MPI job. 
      * This is also the return value required by MPI-2.
-
-     * check whether ompi_mpi_comm_parent has been disconnected.
-       if it has not been 
-         *parent = &ompi_mpi_comm_parent;
-       else
-       *parent  = &ompi_mpi_comm_null;
      */
 
-    /* This function is not yet implemented */
-
-    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INTERN, FUNC_NAME);
+     *parent = &ompi_mpi_comm_parent;
+     return MPI_SUCCESS;
 }

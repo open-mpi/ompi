@@ -392,6 +392,15 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         goto error;
     }
 
+    /* new very last step: check whether we have been spawned or not.
+       We introduce that at the very end, since we need collectives,
+       datatypes, ptls etc. up and running here....
+    */
+    if (OMPI_SUCCESS != (ret = ompi_comm_dyn_init())) {
+        error = "ompi_comm_dyn_init() failed";
+        goto error;
+    }
+
  error:
     if (ret != OMPI_SUCCESS) {
         ompi_show_help("help-mpi-runtime",

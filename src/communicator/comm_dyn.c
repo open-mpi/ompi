@@ -10,17 +10,22 @@
 
 #include "communicator/communicator.h"
 #include "datatype/datatype.h"
+#include "errhandler/errhandler.h"
 #include "proc/proc.h"
 #include "threads/mutex.h"
 #include "util/bit_ops.h"
 #include "util/bufpack.h"
+#include "util/argv.h"
 #include "include/constants.h"
-#include "mca/pcm/pcm.h"
+#include "mca/pcm/base/base.h"
 #include "mca/pml/pml.h"
 #include "mca/ns/base/base.h"
 
 #include "mca/pml/pml.h"
 #include "mca/oob/base/base.h"
+
+#include "runtime/runtime.h"
+
 
 int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
                                ompi_process_name_t *port, int send_first,
@@ -238,4 +243,186 @@ ompi_process_name_t *ompi_comm_get_rport (ompi_process_name_t *port, int send_fi
     }
     
     return rport;
+}
+
+
+int ompi_comm_start_processes (char *command, char **argv, int maxprocs, 
+			       MPI_Info info,  char *port_name )
+{
+    mca_ns_base_jobid_t new_jobid;
+    ompi_rte_node_schedule_t *sched;
+    ompi_rte_spawn_handle_t *spawn_handle;
+    ompi_list_t *nodelist=NULL;
+    ompi_list_t schedlist;
+    char *tmp, *envvarname, *segment, *my_contact_info;
+    char cwd[MAXPATHLEN];
+    int rc;
+    
+    /* parse the info object */
+    /* check potentially for: 
+       - "host": desired host where to spawn the processes
+       - "arch": desired architecture
+       - "wdir": directory, where executable can be found
+       - "path": list of directories where to look for the executable
+       - "file": filename, where additional information is provided.
+       - "soft": see page 92 of MPI-2.
+    */
+
+    /* get the jobid for the new processes */
+    new_jobid = ompi_name_server.create_jobid();
+
+    /* get the spawn handle to start spawning stuff */
+    spawn_handle = ompi_rte_get_spawn_handle(OMPI_RTE_SPAWN_HIGH_QOS, true);
+
+    /* BWB - fix jobid, procs, and nodes */
+    nodelist = ompi_rte_allocate_resources(spawn_handle, new_jobid, 0, maxprocs);
+    if (NULL == nodelist) {
+	/* BWB show_help */
+	printf("show_help: ompi_rte_allocate_resources failed\n");
+	return -1;
+    }
+    
+    /*
+     * Process mapping
+     */
+    OBJ_CONSTRUCT(&schedlist,  ompi_list_t);
+    sched = OBJ_NEW(ompi_rte_node_schedule_t);
+    ompi_list_append(&schedlist, (ompi_list_item_t*) sched);
+    /*  ompi_cmd_line_get_tail(cmd_line, &(sched->argc), &(sched->argv)); */
+    ompi_argv_append (&(sched->argc), &(sched->argv), command);
+    
+    if (argv != MPI_ARGV_NULL ) {
+	int i=0;
+	char *arg=argv[i];
+	
+	while ( arg!=NULL ) {
+	    ompi_argv_append(&(sched->argc), &(sched->argv), arg);
+	    arg = argv[++i];
+	} 
+    }
+
+    /*
+     * build environment to be passed
+     */
+    mca_pcm_base_build_base_env(environ, &(sched->envc), &(sched->env));
+
+    /* set initial contact info */
+    my_contact_info = strdup(ompi_universe_info.ns_replica);
+
+    asprintf(&tmp, "OMPI_MCA_ns_base_replica=%s", my_contact_info);
+    ompi_argv_append(&(sched->envc), &(sched->env), tmp);
+    free(tmp);
+
+    asprintf(&tmp, "OMPI_MCA_gpr_base_replica=%s", my_contact_info);
+    ompi_argv_append(&(sched->envc), &(sched->env), tmp);
+    free(tmp);
+
+    if (NULL != ompi_universe_info.name) {
+	asprintf(&tmp, "OMPI_universe_name=%s", ompi_universe_info.name);
+	ompi_argv_append(&(sched->envc), &(sched->env), tmp);
+	free(tmp);
+    }
+
+    /* Add environment variable with the contact information for the 
+       child processes */
+    asprintf(&envvarname, "OMPI_PARENT_PORT_%u", new_jobid);
+    asprintf(&tmp, "%s=%s", envvarname, port_name);
+    ompi_argv_append(&(sched->envc), &(sched->env), tmp);
+    free(tmp);
+    free(envvarname);
+    
+    getcwd(cwd, MAXPATHLEN);
+    sched->cwd = strdup(cwd);
+    sched->nodelist = nodelist;
+
+    if (sched->argc == 0) {
+	printf("no app to start\n");
+	return MPI_ERR_ARG;
+    }
+
+
+    /*
+     * register to monitor the startup and shutdown processes
+     */
+    /* setup segment for this job */
+    asprintf(&segment, "ompi-job-%d", new_jobid);
+
+    /* register a synchro on the segment so we get notified when everyone registers */
+    rc = ompi_registry.synchro(
+	 OMPI_REGISTRY_SYNCHRO_MODE_LEVEL|OMPI_REGISTRY_SYNCHRO_MODE_ONE_SHOT,
+	 OMPI_REGISTRY_OR,
+	 segment,
+	 NULL,
+	 maxprocs,
+	 ompi_rte_all_procs_registered, NULL);
+
+
+    /*
+     * spawn procs
+     */
+    if (OMPI_SUCCESS != ompi_rte_spawn_procs(spawn_handle, new_jobid, &schedlist)) {
+	printf("show_help: woops!  we didn't spawn :( \n");
+	return MPI_ERR_SPAWN;
+    }
+    
+    if (OMPI_SUCCESS != ompi_rte_monitor_procs_registered()) {
+	printf("procs didn't all register - returning an error\n");
+	return MPI_ERR_SPAWN;
+    }  
+
+   
+    /*
+     * Clean up
+     */
+    if (NULL != nodelist) ompi_rte_deallocate_resources(spawn_handle, 
+							new_jobid, nodelist);
+    if (NULL != spawn_handle) OBJ_RELEASE(spawn_handle); 
+    OBJ_DESTRUCT(&schedlist);
+
+    return OMPI_SUCCESS;
+}
+			       
+
+int ompi_comm_dyn_init (void)
+{
+    uint32_t jobid;
+    size_t size;
+    ompi_proc_t **myproc=NULL;
+    char *envvarname, *port_name=NULL;
+    char *oob_port=NULL;
+    int tag, root=0, send_first=1;
+    ompi_communicator_t *newcomm;
+    ompi_process_name_t *port_proc_name=NULL;
+
+    /* get jobid */
+    myproc = ompi_proc_self(&size);
+    jobid = ompi_name_server.get_jobid(&(myproc[0]->proc_name));
+
+    /* check for appropriate env variable */
+    asprintf(&envvarname, "OMPI_PARENT_PORT_%u", jobid);
+    port_name = getenv(envvarname);
+    free (envvarname);
+    
+    /* if env-variable is set, parse port and call comm_connect_accept */
+    if (NULL != port_name ) {
+	/* we have been spawned */
+	oob_port = ompi_parse_port (port_name, &tag);
+	port_proc_name = ompi_name_server.convert_string_to_process_name(oob_port);
+	ompi_comm_connect_accept (MPI_COMM_WORLD, root, port_proc_name,  
+				  send_first, &newcomm, tag );
+	/* Set the parent communicator */
+	ompi_mpi_comm_parent = newcomm;
+
+	/* originally, we set comm_parent to comm_null (in comm_init),
+	 * now we have to decrease the reference counters to the according
+	 * objects 
+	 */
+/*	OBJ_RELEASE(&ompi_mpi_comm_null);
+	OBJ_RELEASE(&ompi_mpi_group_null);
+	OBJ_RELEASE(&ompi_mpi_group_null);
+	OBJ_RELEASE(&ompi_mpi_errors_are_fatal);
+*/
+    }
+    
+    return OMPI_SUCCESS;
 }
