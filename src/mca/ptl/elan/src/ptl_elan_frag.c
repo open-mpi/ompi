@@ -179,12 +179,6 @@ mca_ptl_elan_send_desc_done (
     ptl = ((ompi_ptl_elan_qdma_desc_t *)desc->desc)->ptl;
     header = &desc->frag_base.frag_header;
 
-    LOG_PRINT(PTL_ELAN_DEBUG_MAC,
-	    "[comp send] type %d flag %d size %d\n",
-	    header->hdr_common.hdr_type,
-	    header->hdr_common.hdr_flags,
-	    header->hdr_common.hdr_size);
-
     if(NULL == req) { /* An ack descriptor */
 	OMPI_FREE_LIST_RETURN (&ptl->queue->tx_desc_free,
 		(ompi_list_item_t *) desc);
@@ -194,23 +188,10 @@ mca_ptl_elan_send_desc_done (
 		& MCA_PTL_FLAGS_ACK_MATCHED)
 	    || mca_pml_base_send_request_matched(req)) {
 
-	LOG_PRINT(PTL_ELAN_DEBUG_ACK,
-		"returning req %p mpi_done %d pml_done %d \n", 
-		req, 
-		req->req_base.req_mpi_done,
-		req->req_base.req_pml_done);
-
-
 	if(fetchNset (&desc->frag_progressed, 1) == 0) {
 	    ptl->super.ptl_send_progress(ptl, req, 
 		    header->hdr_frag.hdr_frag_length);
 	}
-
-	LOG_PRINT(PTL_ELAN_DEBUG_ACK,
-		"returning req %p mpi_done %d pml_done %d \n", 
-		req, 
-		req->req_base.req_mpi_done,
-		req->req_base.req_pml_done);
 
 	/* Return a frag or if not cached, or it is a follow up */ 
 	if (

@@ -305,6 +305,10 @@ mca_ptl_elan_put (struct mca_ptl_base_module_t *ptl,
 	    (struct mca_ptl_elan_peer_t *)ptl_peer,
 	    sendreq, offset, &size, flags);
 
+    /* XXX: It is very important to update offset,
+     *      otherwise, you stuck */
+    sendreq->req_offset += size;
+
     /* Update all the sends until the put is done */
     END_FUNC(PTL_ELAN_DEBUG_PUT);
     return rc;

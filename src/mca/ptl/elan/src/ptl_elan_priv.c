@@ -716,11 +716,10 @@ mca_ptl_elan_update_desc (mca_ptl_elan_component_t * emp)
 	    if (rc) {
 		struct ompi_ptl_elan_base_desc_t *basic;
 
-                /* Remove the desc, update the request, put back to free list */
+                /* Remove the desc, update the request, return to free list */
                 frag = (mca_ptl_elan_send_frag_t *)
                     ompi_list_remove_first (&ptl->send_frags);
 		basic = (ompi_ptl_elan_qdma_desc_t*)frag->desc;
-
  		mca_ptl_elan_send_desc_done (frag, basic->req);
 		INITEVENT_WORD (ctx, basic->elan_event, &basic->main_doneWord);
 		RESETEVENT_WORD (&basic->main_doneWord);

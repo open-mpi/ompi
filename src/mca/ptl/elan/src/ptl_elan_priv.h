@@ -336,7 +336,6 @@ int         mca_ptl_elan_wait_desc(mca_ptl_elan_send_frag_t *desc);
 /* control, synchronization and state prototypes */
 int         mca_ptl_elan_drain_recv(mca_ptl_elan_component_t *emp);
 int         mca_ptl_elan_update_desc(mca_ptl_elan_component_t *emp);
-int         mca_ptl_elan_update_putget(mca_ptl_elan_component_t * emp);
 /**
  * utility routines for parameter registration
  */
