@@ -19,7 +19,7 @@
  * @retval MPI_SUCCESS
  */
 
-int topo_base_graph_neighbors (MPI_Comm comm,
+int mca_topo_base_graph_neighbors (MPI_Comm comm,
                                int rank,
                                int maxneighbors,
                                int *neighbors){
@@ -30,11 +30,11 @@ int topo_base_graph_neighbors (MPI_Comm comm,
     /*
      * Fill the neighbours.
      */
-     nnbrs = comm->c_topo_comm->mtc_index[rank];
-     p = comm->c_topo_comm->mtc_edges;
+     nnbrs = comm->c_topo_comm->mtc_dims_or_index[rank];
+     p = comm->c_topo_comm->mtc_periods_or_edges;
 
      if (rank > 0) {
-        i = comm->c_topo_comm->mtc_index[rank - 1];
+        i = comm->c_topo_comm->mtc_dims_or_index[rank - 1];
         nnbrs -= i;
         p += i;
      }

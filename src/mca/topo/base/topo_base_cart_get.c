@@ -21,7 +21,7 @@
  *
  * @retval MPI_SUCCESS
  */
-int topo_base_cart_get (MPI_Comm comm,
+int mca_topo_base_cart_get (MPI_Comm comm,
                         int maxdims,
                         int *dims,
                         int *periods,
@@ -30,9 +30,11 @@ int topo_base_cart_get (MPI_Comm comm,
     int *d;
     int *c;
 
-    d = comm->c_topo_comm->mtc_dims;
+    d = comm->c_topo_comm->mtc_dims_or_index;
     c = comm->c_topo_comm->mtc_coords;
-    for (i = 0; (i < comm->c_topo_comm->mtc_ndims) && (i < maxdims); ++i) {
+
+    for (i = 0; (i < comm->c_topo_comm->mtc_ndims_or_nnodes) && (i < maxdims); ++i) {
+         
         if (*d > 0) {
             *dims++ = *d++;
             *periods++ = 0;

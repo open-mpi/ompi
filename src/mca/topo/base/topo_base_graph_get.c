@@ -19,25 +19,31 @@
  * @retval MPI_SUCCESS
  */                 
 
-int topo_base_graph_get (MPI_Comm comm,
+int mca_topo_base_graph_get (MPI_Comm comm,
                          int maxindex,
                          int maxedges,
                          int *index,
                          int *edges){
     int i;
     int *p;
+    int nprocs = ompi_comm_size(comm);
 
     /*
      * Fill the nodes and edges arrays.
      */
-     p = comm->c_topo_comm->mtc_index;
-     for (i = 0; (i < comm->c_topo_comm->mtc_nprocs) && (i < maxindex); ++i, ++p) {
+     p = comm->c_topo_comm->mtc_dims_or_index;
+     for (i = 0; (i < nprocs) && (i < maxindex); ++i, ++p) {
          *index++ = *p;
       }
 
-      p = comm->c_topo_comm->mtc_edges;
-      for (i = 0; (i < comm->c_topo_comm->mtc_nedges) && (i < maxedges); ++i, ++p) {
+      p = comm->c_topo_comm->mtc_periods_or_edges;
+
+      for (i = 0; 
+          (i < comm->c_topo_comm->mtc_dims_or_index[nprocs-1]) && (i < maxedges); 
+          ++i, ++p) {
+          
          *edges++ = *p;
+
       }
 
       return MPI_SUCCESS;

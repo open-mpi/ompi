@@ -25,7 +25,7 @@
  * @retval MPI_ERR_COMM
  * @retval MPI_ERR_ARG
  */                  
-int topo_base_cart_shift (MPI_Comm comm,
+int mca_topo_base_cart_shift (MPI_Comm comm,
                           int direction,
                           int disp,
                           int *rank_source,
@@ -42,9 +42,8 @@ int topo_base_cart_shift (MPI_Comm comm,
    /*
     * Handle the trivial case.
     */
-#if 0
     ord = ompi_comm_rank(comm);
-#endif 
+
     if (disp == 0) {
         *rank_dest = *rank_source = ord;
         return MPI_SUCCESS;
@@ -52,9 +51,9 @@ int topo_base_cart_shift (MPI_Comm comm,
    /*
     * Compute the rank factor and ordinate.
     */
-    factor = comm->c_topo_comm->mtc_nprocs;
-    p = comm->c_topo_comm->mtc_dims;
-    for (i = 0; (i < comm->c_topo_comm->mtc_ndims) && (i <= direction); ++i, ++p) {
+    factor = ompi_comm_size(comm);
+    p = comm->c_topo_comm->mtc_dims_or_index;
+    for (i = 0; (i < comm->c_topo_comm->mtc_ndims_or_nnodes) && (i <= direction); ++i, ++p) {
         if ((thisdirection = *p) > 0) {
             thisperiod = 0;
         } else {
@@ -79,9 +78,7 @@ int topo_base_cart_shift (MPI_Comm comm,
     } else {
        destord %= thisdirection;
        if (destord < 0) destord += thisdirection;
-#if 0
        *rank_dest = ompi_comm_rank(comm);
-#endif
        *rank_dest += ((destord - ord) * factor);
     }
     if ( ((srcord < 0) || (srcord >= thisdirection)) && (!thisperiod) ) {
@@ -89,9 +86,7 @@ int topo_base_cart_shift (MPI_Comm comm,
     } else {
        srcord %= thisdirection;
        if (srcord < 0) srcord += thisdirection;
-#if 0
        *rank_dest = ompi_comm_rank(comm);
-#endif
        *rank_dest += ((srcord - ord) * factor);
     }
 

@@ -5,6 +5,8 @@
 
 #include <stdio.h>
 
+#include "util/output.h"
+#include "class/ompi_list.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
 #include "mca/topo/base/base.h"
@@ -20,26 +22,39 @@
  * Global variables
  */
 int mca_topo_base_output = -1;
-ompi_list_t mca_topo_base_modules_available;
+int mca_topo_base_param = -1;
+
+ompi_list_t mca_topo_base_modules_opened;
+
 mca_topo_base_module_t mca_topo_base_selected_module;
 mca_topo_t mca_topo;
 
+bool mca_topo_base_modules_opened_valid = false;
+
 /**
- * Functions for finding and opening either all the MCA topo modules, or
+ * Function for finding and opening either all the MCA topo modules, or
  * the one that specifically requested via a MCA parameter.
  */
 int mca_topo_base_open(void) {
-    /*
-     * Open up all available modules 
-     */
-    if (OMPI_SUCCESS !=
-           mca_base_modules_open("topo", 0, mca_topo_base_static_modules,
-                                 &mca_topo_base_modules_available)) {
+
+     
+     /* Open the topo framework output stream */
+     mca_topo_base_output = ompi_output_open(NULL);
+
+     /* Open up all available modules  */
+     if (OMPI_SUCCESS !=
+         mca_base_modules_open("topo", mca_topo_base_output, 
+                               mca_topo_base_static_modules,
+                               &mca_topo_base_modules_opened)) {
         return OMPI_ERROR;
     }
-    /*
-     * All done
-     */ 
+         
+    mca_topo_base_modules_opened_valid = true;
+    
+    /* Find the index of the "topo" param for selection */
+    mca_topo_base_param = mca_base_param_find("topo", "base", NULL);
+
+     /* All done */
 
     return OMPI_SUCCESS;
 }

@@ -19,12 +19,12 @@
  * @retval MPI_ERR_COMM
  * @retval MPI_ERR_ARG
  */
-int topo_base_graphdims_get (MPI_Comm comm,
+int mca_topo_base_graphdims_get (MPI_Comm comm,
                               int *nodes,
                               int *nedges){
 
-    *nodes = comm->c_topo_comm->mtc_nprocs;
-    *nedges = comm->c_topo_comm->mtc_nedges;
+    *nodes = ompi_comm_size(comm);
+    *nedges = comm->c_topo_comm->mtc_dims_or_index[*nodes -1]; 
 
     return MPI_SUCCESS;
 }

@@ -21,10 +21,11 @@
  * @retval MPI_ERR_TOPOLOGY
  * @retval MPI_ERR_COMM
  */                
-int topo_base_cart_sub (MPI_Comm comm,
+int mca_topo_base_cart_sub (MPI_Comm comm,
                         int *remain_dims,
                         MPI_Comm *new_comm){
-     MPI_Comm newcomm;
+
+     struct ompi_communicator_t *temp_comm;
      int errcode;
      int colour;
      int key;
@@ -33,12 +34,14 @@ int topo_base_cart_sub (MPI_Comm comm,
      int rank;
      int ndim;
      int dim;
-     int allfalse;
+     bool allfalse;
      int i;
      int *d;
      int *c;
      int *r;
      int *p;
+
+     *new_comm = MPI_COMM_NULL;
 
     /*
      * Compute colour and key used in splitting the communicator.
@@ -46,10 +49,10 @@ int topo_base_cart_sub (MPI_Comm comm,
      colour = key = 0;
      colfactor = keyfactor = 1;
      ndim = 0;
-     allfalse = 0;
+     allfalse = false;
 
-     i = comm->c_topo_comm->mtc_ndims - 1;
-     d = comm->c_topo_comm->mtc_dims + i;
+     i = comm->c_topo_comm->mtc_ndims_or_nnodes - 1;
+     d = comm->c_topo_comm->mtc_dims_or_index + i;
      c = comm->c_topo_comm->mtc_coords + i;
      r = remain_dims + i;
 
@@ -70,62 +73,59 @@ int topo_base_cart_sub (MPI_Comm comm,
      * have a communicator unless you're in it).
      */
      if (ndim == 0) {
-#if 0
-        ompi_comm_rank (comm, &colour);
-#endif
+        colour = ompi_comm_rank (comm);
         ndim = 1;
-        allfalse = 1;
+        allfalse = true;
      }
     /*
      * Split the communicator.
      */
-#if 0
-     errcode = ompi_comm_split (comm, colour, key, new_comm);
-#endif
+     errcode = ompi_comm_split (comm, colour, key, &temp_comm);
      if (errcode != MPI_SUCCESS) {
         return errcode;
      }
     /*
      * Fill the communicator with topology information.
      */
-     newcomm = *new_comm;
-     if (newcomm != MPI_COMM_NULL) {
-        newcomm->c_topo_comm->mtc_type = MPI_CART;
-        newcomm->c_topo_comm->mtc_nprocs = keyfactor;
-        newcomm->c_topo_comm->mtc_ndims = ndim;
-        newcomm->c_topo_comm->mtc_dims = (int *)
-        malloc((unsigned) 2 * ndim * sizeof(int));
-        if (newcomm->c_topo_comm->mtc_dims == 0) {
+     if (temp_comm != MPI_COMM_NULL) {
+        
+        temp_comm->c_topo_comm->mtc_ndims_or_nnodes = ndim;
+        temp_comm->c_topo_comm->mtc_dims_or_index = (int *)
+                                            malloc((unsigned) 2 * ndim * sizeof(int));
+        
+        if (NULL == temp_comm->c_topo_comm->mtc_dims_or_index) {
+            OBJ_RELEASE(temp_comm);
             return MPI_ERR_OTHER;
         }
-        newcomm->c_topo_comm->mtc_coords = newcomm->c_topo_comm->mtc_dims + ndim;
+        temp_comm->c_topo_comm->mtc_coords = temp_comm->c_topo_comm->mtc_dims_or_index + ndim;
         if (!allfalse) {
-           p = newcomm->c_topo_comm->mtc_dims;
-           d = comm->c_topo_comm->mtc_dims;
+           p = temp_comm->c_topo_comm->mtc_dims_or_index;
+           d = comm->c_topo_comm->mtc_dims_or_index;
            r = remain_dims;
-           for (i = 0; i < comm->c_topo_comm->mtc_ndims; ++i, ++d, ++r) {
+           for (i = 0; i < comm->c_topo_comm->mtc_ndims_or_nnodes; ++i, ++d, ++r) {
              if (*r) {
                  *p++ = *d;
               }
            }
            } else {
-             newcomm->c_topo_comm->mtc_dims[0] = 1;
+             temp_comm->c_topo_comm->mtc_dims_or_index[0] = 1;
            }
           /*
            * Compute the caller's coordinates.
            */
-#if 0
-          errcode = ompi_comm_rank (newcomm, &rank);
-#endif
-          if (errcode != MPI_SUCCESS) {
+          rank = ompi_comm_rank (temp_comm);
+          if (MPI_SUCCESS != errcode) {
+             OBJ_RELEASE(temp_comm);
              return errcode;
           }
-          errcode = newcomm->c_topo.topo_cart_coords (newcomm, rank,
-                             ndim, newcomm->c_topo_comm->mtc_coords);
-          if (errcode != MPI_SUCCESS) {
+          errcode = temp_comm->c_topo->topo_cart_coords (temp_comm, rank,
+                             ndim, temp_comm->c_topo_comm->mtc_coords);
+          if (MPI_SUCCESS != errcode) {
+             OBJ_RELEASE(temp_comm);
              return errcode;
           }
       }
 
-   return MPI_SUCCESS;
+      *new_comm = temp_comm;
+      return MPI_SUCCESS;
 }
