@@ -32,6 +32,7 @@ struct mca_ptl_elan_peer_t {
 
     struct mca_ptl_elan_t*      peer_ptl; 
     struct mca_ptl_elan_proc_t* peer_proc; 
+    struct mca_ptl_elan_addr_t* peer_addr;        /**< address of peer */
 
     int     resending;   /* A resending stage, no more new dma's */
     int     num_resend;  /* How many times I have retried */

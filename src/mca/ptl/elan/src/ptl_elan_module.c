@@ -58,6 +58,31 @@ static mca_ptl_elan_module_1_0_0_t *elan_mp = &mca_ptl_elan_module;
 static int      mca_ptl_elan_module_initialized = 0;
 
 /*
+ *  some elan vp information to the the global registery
+ */
+static int mca_ptl_elan_module_register (mca_ptl_elan_module_1_0_0_t  *emp)
+{
+     int rc;
+     size_t i;
+     size_t size;
+         
+     mca_ptl_elan_addr_t *addrs = (mca_ptl_elan_addr_t*)malloc(size);
+
+     size = emp->elan_num_ptls * sizeof(mca_ptl_elan_addr_t);
+
+     for(i=0; i<emp->elan_num_ptls; i++) {
+         mca_ptl_elan_t * ptl = emp->elan_ptls[i];
+         addrs[i].elan_vp    = ptl->elan_vp;
+         addrs[i].addr_inuse = 0;
+     }
+
+     rc = mca_base_modex_send(&emp->super.ptlm_version, addrs, size);
+     free(addrs);
+     return rc;
+}
+
+
+/*
  *  Called by MCA framework to open the module, registers
  *  module parameters.
  */
@@ -207,19 +232,17 @@ mca_ptl_elan_module_init (int *num_ptls,
     }
 
     /* 
-     * (mca_ptl_elan_module_exchange () != OMPI_SUCCESS)
-     *
-     * No need to publish parameters with the MCA framework
-     *
-     * This is called only by those processes who have elan.
-     * So it does not qualify to be a global call.
-     * Since the processes has elan support can already communicate 
-     * over elan, there is no need for a oob_based exchange.
+     * we need to publish some information for elan.
      */
+    if (OMPI_SUCCESS != mca_ptl_elan_module_register(&mca_ptl_elan_module)) {
+        ompi_output(0, 
+                "[%s:%d] error in malloc for elan PTL references\n",
+                __FILE__, __LINE__);
+        return OMPI_ERROR;
+    }
 
     ptls = (mca_ptl_t **) malloc (elan_mp->elan_num_ptls *
-                                       sizeof (mca_ptl_elan_t *));
-
+            sizeof (mca_ptl_elan_t *));
     if (NULL == ptls) {
 	ompi_output(0, 
 		"[%s:%d] error in malloc for elan PTL references\n",
@@ -227,10 +250,7 @@ mca_ptl_elan_module_init (int *num_ptls,
         return NULL;
     }
 
-    /* FIXME: 
-     * Why use memcopy to create two instances of the same 
-     * structures, do they need to be defined them as constants,
-     * will coherency on two replicas be a potential problem? */
+    /* Will coherency on two replicas be a potential problem? */
     memcpy (ptls, elan_mp->elan_ptls,
             elan_mp->elan_num_ptls * sizeof (mca_ptl_elan_t *));
     *num_ptls = elan_mp->elan_num_ptls;
@@ -249,13 +269,18 @@ mca_ptl_elan_module_control (int param,
                              size_t size)
 {
     switch (param) {
+#if 0
     case MCA_PTL_ENABLE:
         if (*(int *) value) {
+            /* Trying to trigger the thread progress engine,
+             * Here the elan PTL does not have this capability 
+             * for now. So we skip this function. */
             ompi_event_add (&elan_mp->elan_recv_event, 0);
         } else {
             ompi_event_del (&elan_mp->elan_recv_event);
         }
         break;
+#endif
     default:
         break;
     }
