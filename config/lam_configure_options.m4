@@ -88,10 +88,10 @@ AC_ARG_ENABLE(single-lib,
                    [those who use the MPI wrapper compilers (mpicc, mpif77, etc.) do not care about this option.  This option is *only* if you insist on using underlying compilers to compile MPI applications and only want to have -lmpi as your $LIBS) (default: disabled)]))
 if test "$enable_single_lib" != "yes"; then
     AC_MSG_RESULT([no])
-    WANT_SINGLE_MPI_LIBRARY=1
+    WANT_SINGLE_MPI_LIBRARY=0
 else
     AC_MSG_RESULT([no])
-    WANT_SINGLE_MPI_LIBRARY=0
+    WANT_SINGLE_MPI_LIBRARY=1
 fi
 AM_CONDITIONAL(WANT_SINGLE_MPI_LIBRARY, test "$WANT_SINGLE_MPI_LIBRARY" = 1)
 
