@@ -52,7 +52,7 @@ int mca_ns_replica_finalize(void);
  */
 
 void mca_ns_replica_recv(int status, ompi_process_name_t* sender,
-			 ompi_buffer_t* buffer, int tag,
+			 ompi_buffer_t* buffer, int* tag,
 			 void* cbdata);
 
 /*

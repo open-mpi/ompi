@@ -179,7 +179,7 @@ int mca_ns_replica_finalize(void)
 }
 
 void mca_ns_replica_recv(int status, ompi_process_name_t* sender,
-			 ompi_buffer_t* buffer, int tag,
+			 ompi_buffer_t* buffer, int* tag,
 			 void* cbdata)
 {
     ompi_buffer_t *answer, *error_answer;
@@ -204,7 +204,7 @@ void mca_ns_replica_recv(int status, ompi_process_name_t* sender,
 	if (OMPI_SUCCESS != ompi_pack(answer, (void*)&cell, 1, MCA_NS_OOB_PACK_CELLID)) {
 	    goto RETURN_ERROR;
 	}
-	if (0 > mca_oob_send_packed(sender, answer, tag, 0)) {
+	if (0 > mca_oob_send_packed(sender, answer, *tag, 0)) {
 	    /* RHC -- not sure what to do if the return send fails */
 	}
     } else if (MCA_NS_CREATE_JOBID_CMD == command) {   /* got command to create jobid */
@@ -215,7 +215,7 @@ void mca_ns_replica_recv(int status, ompi_process_name_t* sender,
 	if (OMPI_SUCCESS != ompi_pack(answer, (void*)&job, 1, MCA_NS_OOB_PACK_JOBID)) {
 	    goto RETURN_ERROR;
 	}
-	if (0 > mca_oob_send_packed(sender, answer, tag, 0)) {
+	if (0 > mca_oob_send_packed(sender, answer, *tag, 0)) {
 	    /* RHC -- not sure what to do if the return send fails */
 	}
     } else if (MCA_NS_RESERVE_RANGE_CMD == command) {  /* got command to reserve vpid range */
@@ -235,7 +235,7 @@ void mca_ns_replica_recv(int status, ompi_process_name_t* sender,
 	if (OMPI_SUCCESS != ompi_pack(answer, (void*)&vpid, 1, MCA_NS_OOB_PACK_VPID)) {
 	    goto RETURN_ERROR;
 	}
-	if (0 > mca_oob_send_packed(sender, answer, tag, 0)) {
+	if (0 > mca_oob_send_packed(sender, answer, *tag, 0)) {
 	    /* RHC -- not sure what to do if the return send fails */
 	}
     } else {  /* got an unrecognized command */
@@ -244,7 +244,7 @@ void mca_ns_replica_recv(int status, ompi_process_name_t* sender,
 	ompi_buffer_init(error_answer, 0);
 	command = MCA_NS_ERROR;
 	ompi_pack(error_answer, (void*)&command, 1, MCA_NS_OOB_PACK_CMD);
-	mca_oob_send_packed(sender, error_answer, tag, 0);
+	mca_oob_send_packed(sender, error_answer, *tag, 0);
     }
 
     ompi_buffer_free(*buffer);
