@@ -64,9 +64,7 @@ int mca_ptl_ib_send_frag_init(mca_ptl_ib_send_frag_t* sendfrag,
     if(offset == 0) { 
         hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_MATCH;
         hdr->hdr_common.hdr_flags = flags;
-        hdr->hdr_common.hdr_size = sizeof(mca_ptl_base_match_header_t);
         hdr->hdr_frag.hdr_frag_offset = offset; 
-        hdr->hdr_frag.hdr_frag_seq = 0;
         hdr->hdr_frag.hdr_src_ptr.lval = 0; /* for VALGRIND/PURIFY - REPLACE WITH MACRO */
 
         /* Ptr to send frag, so incoming ACK can locate the frag */
@@ -86,9 +84,7 @@ int mca_ptl_ib_send_frag_init(mca_ptl_ib_send_frag_t* sendfrag,
 
         hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_FRAG;
         hdr->hdr_common.hdr_flags = flags;
-        hdr->hdr_common.hdr_size = sizeof(mca_ptl_base_frag_header_t);
         hdr->hdr_frag.hdr_frag_offset = offset; 
-        hdr->hdr_frag.hdr_frag_seq = 0;
         hdr->hdr_frag.hdr_src_ptr.lval = 0; /* for VALGRIND/PURIFY - REPLACE WITH MACRO */
         hdr->hdr_frag.hdr_src_ptr.pval = sendfrag;
         hdr->hdr_frag.hdr_dst_ptr = sendreq->req_peer_match;
@@ -350,9 +346,7 @@ int mca_ptl_ib_put_frag_init(mca_ptl_ib_send_frag_t *sendfrag,
 
     hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_FIN;
     hdr->hdr_common.hdr_flags = flags;
-    hdr->hdr_common.hdr_size = sizeof(mca_ptl_base_frag_header_t);
     hdr->hdr_frag.hdr_frag_offset = offset;
-    hdr->hdr_frag.hdr_frag_seq = 0;
     hdr->hdr_frag.hdr_src_ptr.lval = 0;
     hdr->hdr_frag.hdr_src_ptr.pval = sendfrag;
     hdr->hdr_frag.hdr_dst_ptr = req->req_peer_match;
