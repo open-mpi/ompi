@@ -20,8 +20,7 @@
 
 #include "mca/pcm/base/static-components.h"
 
-
-void
+static void
 signal_cb(int fd, short event, void *arg)
 {
     struct ompi_event *signal = arg;
@@ -49,7 +48,8 @@ int mca_pcm_base_open(void)
     struct ompi_event *signal_int;
     signal_int = malloc(sizeof(struct ompi_event));
 
-    /* Initalize one event */
+    /* Initalize one event (only after the event library was initialized) */
+    ompi_event_init();
     ompi_event_set(signal_int, SIGHUP, OMPI_EV_SIGNAL|OMPI_EV_PERSIST, signal_cb,
                    signal_int);
 
