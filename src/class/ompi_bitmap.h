@@ -24,14 +24,6 @@
 #include "include/types.h"
 #include "class/ompi_object.h"
 
-/* VPS: Just to compile right now, has to move later on */
-
-#define OMPI_ERR_SYSRESOURCE -1
-#define OMPI_INVALID_BIT -1
-#define OMPI_ERR_ARG -2
-
-extern ompi_class_t ompi_bitmap_t_class;
-
 struct ompi_bitmap_t {
     ompi_object_t super; /**< Subclass of ompi_object_t */
     unsigned char *bitmap; /**< The actual bitmap array of characters */
@@ -43,6 +35,9 @@ struct ompi_bitmap_t {
 };
 
 typedef struct ompi_bitmap_t ompi_bitmap_t;
+
+OBJ_CLASS_DECLARATION(ompi_bitmap_t);
+
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -71,7 +66,7 @@ int ompi_bitmap_init (ompi_bitmap_t *bm, size_t size);
  * @return OMPI error code or success
  *
  */
-int ompi_bitmap_set_bit(ompi_bitmap_t *bm, int bit); 
+int ompi_bitmap_set_bit(ompi_bitmap_t *bm, size_t bit); 
 
 
 /**
@@ -83,7 +78,7 @@ int ompi_bitmap_set_bit(ompi_bitmap_t *bm, int bit);
  * @return OMPI error code if the bit is out of range, else success
  *
  */
-int ompi_bitmap_clear_bit(ompi_bitmap_t *bm, int bit);
+int ompi_bitmap_clear_bit(ompi_bitmap_t *bm, size_t bit);
 
 
 /**
@@ -96,16 +91,19 @@ int ompi_bitmap_clear_bit(ompi_bitmap_t *bm, int bit);
   *         0 if the bit is not set
   *
   */
-int ompi_bitmap_is_set_bit(ompi_bitmap_t *bm, int bit);
+int ompi_bitmap_is_set_bit(ompi_bitmap_t *bm, size_t bit);
 
 
 /**
  * Find the first clear bit in the bitmap and set it
  *
  * @param  bitmap     The input bitmap (IN)
- * @return bit number The bit number of the first unset bit
+ * @param  position   Position of the first clear bit (OUT)
+
+ * @return err        OMPI_SUCCESS on success
  */
-int ompi_bitmap_find_and_set_first_unset_bit(ompi_bitmap_t *bm); 
+int ompi_bitmap_find_and_set_first_unset_bit(ompi_bitmap_t *bm, 
+                                             size_t *position); 
 
 
 /**
@@ -135,7 +133,10 @@ int ompi_bitmap_set_all_bits(ompi_bitmap_t *bm);
  * @return OMPI error code if bm is NULL
  *
  */
-size_t ompi_bitmap_size (ompi_bitmap_t *bm);
+static inline size_t ompi_bitmap_size(ompi_bitmap_t *bm)
+{
+    return (NULL == bm) ? 0 : bm->legal_numbits;
+}
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
