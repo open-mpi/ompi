@@ -268,7 +268,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     /* save the resulting thread levels */
 
     ompi_mpi_thread_requested = requested;
-    *provided = ompi_mpi_thread_provided;
+    ompi_mpi_thread_provided = *provided;
     ompi_mpi_thread_multiple = (ompi_mpi_thread_provided == 
                                 MPI_THREAD_MULTIPLE);
 
