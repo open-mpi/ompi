@@ -8,6 +8,7 @@ SUBDIRS = \
 	allocator \
         coll \
         common \
+        gpr \
         io \
         mpool \
 	llm \
@@ -19,6 +20,3 @@ SUBDIRS = \
         pml \
         ptl \
         topo
-# JMS Temporary hack to make "make dist" function properly; directories 
-# mentioned here will eventually be moved into SUBDIRS
-DIST_SUBDIRS = $(SUBDIRS) gpr
