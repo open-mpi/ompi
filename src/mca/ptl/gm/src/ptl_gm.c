@@ -46,7 +46,7 @@ mca_ptl_gm_module_t mca_ptl_gm_module = {
 	mca_ptl_gm_add_procs,
 	mca_ptl_gm_del_procs,
 	mca_ptl_gm_finalize,
-	mca_ptl_gm_send, 
+	mca_ptl_gm_peer_send,
 	mca_ptl_gm_put,
 	mca_ptl_gm_get,
 	mca_ptl_gm_matched,
@@ -260,6 +260,7 @@ mca_ptl_gm_request_fini (struct mca_ptl_base_module_t *ptl,
     OBJ_DESTRUCT(request+1);
 }
 
+#if 0
 int
 mca_ptl_gm_send (struct mca_ptl_base_module_t *ptl,
                  struct mca_ptl_base_peer_t *ptl_peer,
@@ -289,6 +290,7 @@ mca_ptl_gm_send (struct mca_ptl_base_module_t *ptl,
     
     return OMPI_SUCCESS;
 }
+#endif  /* 0 */
 
 /*
  *  Initiate a put

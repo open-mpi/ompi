@@ -392,14 +392,17 @@ mca_ptl_gm_init( mca_ptl_gm_component_t * gm )
     uint32_t save_counter;
 
     /* let's try to find if GM is available */
-    if( GM_SUCCESS != gm_init() )
+    if( GM_SUCCESS != gm_init() ) {
+        ompi_output( 0, "[%s:%d] error in initializing the gm library\n", __FILE__, __LINE__ );
 	return OMPI_ERR_OUT_OF_RESOURCE;
-
+    }
     /* First discover all available boards. For each board we will create a unique PTL */
     mca_ptl_gm_component.gm_ptl_modules = calloc( mca_ptl_gm_component.gm_max_ptl_modules,
 						  sizeof (mca_ptl_gm_module_t *));
-    if (NULL == mca_ptl_gm_component.gm_ptl_modules)
+    if (NULL == mca_ptl_gm_component.gm_ptl_modules) {
+        ompi_output( 0, "[%s:%d] error in initializing the gm PTL's.\n", __FILE__, __LINE__ );
         return OMPI_ERR_OUT_OF_RESOURCE;
+    }
 
     mca_ptl_gm_component.gm_num_ptl_modules = 
 	mca_ptl_gm_discover_boards( mca_ptl_gm_component.gm_ptl_modules,
@@ -461,8 +464,8 @@ mca_ptl_gm_component_init (int *num_ptl_modules,
 #endif  /* OMPI_HAVE_POSIX_THREADS */
 
     if (OMPI_SUCCESS != mca_ptl_gm_init (&mca_ptl_gm_component)) {
-        ompi_output( 0, "[%s:%d] error in initializing gm state and PTL's.\n",
-                     __FILE__, __LINE__ );
+        ompi_output( 0, "[%s:%d] error in initializing gm state and PTL's. (%d PTL's)\n",
+                     __FILE__, __LINE__, mca_ptl_gm_component.gm_num_ptl_modules );
         return NULL;
     }
 
