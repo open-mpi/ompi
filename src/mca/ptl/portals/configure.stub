@@ -87,7 +87,7 @@ AC_DEFUN([MCA_CONFIGURE_STUB],[
     AC_MSG_CHECKING([if possible to link Portals application])
     LIBS="$LIBS $PORTALS_LIBS"
     LDFLAGS="$LDFLAGS $EXTRA_LDFLAGS"
-    AC_LINK_IFELSE([AC_LANG_PROGRAM([], [int i; PtlInit(&i);])],
+    AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <portals3.h>], [int i; PtlInit(&i);])],
     	           [AC_MSG_RESULT([yes])],
 		   [AC_MSG_RESULT([no])
 		    AC_MSG_ERROR([Can not link with Portals libraries])])
