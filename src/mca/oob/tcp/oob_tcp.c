@@ -185,6 +185,10 @@ int mca_oob_tcp_component_open(void)
         mca_oob_tcp_param_register_int("peer_retries", 60);
     mca_oob_tcp_component.tcp_debug =
         mca_oob_tcp_param_register_int("debug", 1);
+    mca_oob_tcp_component.tcp_include =
+        mca_oob_tcp_param_register_str("include", NULL);
+    mca_oob_tcp_component.tcp_exclude =
+        mca_oob_tcp_param_register_str("exclude", NULL);
 
     /* initialize state */
     mca_oob_tcp_component.tcp_listen_sd = -1;
@@ -741,6 +745,14 @@ char* mca_oob_tcp_get_addr(void)
 
     for(i=ompi_ifbegin(); i>0; i=ompi_ifnext(i)) {
         struct sockaddr_in addr;
+        char name[32];
+        ompi_ifindextoname(i, name, sizeof(name));
+        if (mca_oob_tcp_component.tcp_include != NULL &&
+            strstr(mca_oob_tcp_component.tcp_include,name) == NULL)
+            continue;
+        if (mca_oob_tcp_component.tcp_exclude != NULL &&
+            strstr(mca_oob_tcp_component.tcp_exclude,name) != NULL)
+            continue;
         ompi_ifindextoaddr(i, (struct sockaddr*)&addr, sizeof(addr));
         if(ompi_ifcount() > 1 && addr.sin_addr.s_addr == inet_addr("127.0.0.1"))
             continue;
