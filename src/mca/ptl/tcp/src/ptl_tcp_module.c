@@ -55,7 +55,9 @@ mca_ptl_tcp_module_1_0_0_t mca_ptl_tcp_module = {
     false
     },
 
-    mca_ptl_tcp_module_init   /* module init */
+    mca_ptl_tcp_module_init,  
+    mca_ptl_tcp_module_control,
+    mca_ptl_tcp_module_progress,
     }
 };
 
@@ -135,6 +137,25 @@ int mca_ptl_tcp_module_open(void)
 
 int mca_ptl_tcp_module_close(void)
 {
+    if (mca_ptl_tcp_module.tcp_send_requests.fl_num_allocated != 
+        mca_ptl_tcp_module.tcp_send_requests.super.lam_list_length) {
+        lam_output(0, "tcp send requests: %d allocated %d returned\n",
+            mca_ptl_tcp_module.tcp_send_requests.fl_num_allocated != 
+            mca_ptl_tcp_module.tcp_send_requests.super.lam_list_length);
+    }
+    if (mca_ptl_tcp_module.tcp_send_frags.fl_num_allocated != 
+        mca_ptl_tcp_module.tcp_send_frags.super.lam_list_length) {
+        lam_output(0, "tcp send frags: %d allocated %d returned\n",
+            mca_ptl_tcp_module.tcp_send_frags.fl_num_allocated != 
+            mca_ptl_tcp_module.tcp_send_frags.super.lam_list_length);
+    }
+    if (mca_ptl_tcp_module.tcp_recv_frags.fl_num_allocated != 
+        mca_ptl_tcp_module.tcp_recv_frags.super.lam_list_length) {
+        lam_output(0, "tcp recv frags: %d allocated %d returned\n",
+            mca_ptl_tcp_module.tcp_recv_frags.fl_num_allocated != 
+            mca_ptl_tcp_module.tcp_recv_frags.super.lam_list_length);
+    }
+
     free(mca_ptl_tcp_module.tcp_if_include);
     free(mca_ptl_tcp_module.tcp_if_exclude);
     if (NULL != mca_ptl_tcp_module.tcp_ptls)
@@ -202,11 +223,14 @@ static int mca_ptl_tcp_module_create_instances(void)
         if(if_index < 0) {
             lam_output(0,"mca_ptl_tcp_module_init: invalid interface \"%s\"", if_name);
         } else {
+            lam_output(0,"interface: %s\n", if_name);
             mca_ptl_tcp_create(if_index);
         }
         argv++;
     }
     lam_argv_free(include);
+    if(mca_ptl_tcp_module.tcp_num_ptls)
+        return LAM_SUCCESS;
 
     /* if the interface list was not specified by the user, create 
      * a PTL for each interface that was not excluded.
@@ -224,8 +248,10 @@ static int mca_ptl_tcp_module_create_instances(void)
             argv++;
         }
         /* if this interface was not found in the excluded list - create a PTL */
-        if(argv == 0 || *argv == 0)
+        if(argv == 0 || *argv == 0) {
+            lam_output(0,"interface: %s\n", if_name);
             mca_ptl_tcp_create(if_index);
+        }
     }
     lam_argv_free(exclude);
     return LAM_SUCCESS;
@@ -292,7 +318,6 @@ static int mca_ptl_tcp_module_create_listen(void)
         LAM_EV_READ|LAM_EV_PERSIST, 
         mca_ptl_tcp_module_recv_handler, 
         0);
-    lam_event_add(&mca_ptl_tcp_module.tcp_recv_event, 0);
     return LAM_SUCCESS;
 }
 
@@ -386,6 +411,37 @@ mca_ptl_t** mca_ptl_tcp_module_init(int *num_ptls,
     *num_ptls = mca_ptl_tcp_module.tcp_num_ptls;
     return ptls;
 }
+
+/*
+ *  TCP module control
+ */
+
+int mca_ptl_tcp_module_control(int param, void* value, size_t size)
+{
+    switch(param) {
+        case MCA_PTL_ENABLE:
+            if(*(int*)value)
+                lam_event_add(&mca_ptl_tcp_module.tcp_recv_event, 0);
+            else
+                lam_event_del(&mca_ptl_tcp_module.tcp_recv_event);
+            break;
+        default:
+            break;
+    }
+    return LAM_SUCCESS;
+}
+
+
+/*
+ *  TCP module progress.
+ */
+
+int mca_ptl_tcp_module_progress(mca_ptl_tstamp_t tstamp)
+{
+    lam_event_loop(LAM_EVLOOP_ONCE);
+    return LAM_SUCCESS;
+}
+
 
 /*
  *  Called by mca_ptl_tcp_module_recv() when the TCP listen

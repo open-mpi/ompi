@@ -78,6 +78,22 @@ extern mca_ptl_t** mca_ptl_tcp_module_init(
 );
 
 /**
+ * TCP module control.
+ */
+extern int mca_ptl_tcp_module_control(
+    int param,
+    void* value,
+    size_t size
+);
+
+/**
+ * TCP module progress.
+ */
+extern int mca_ptl_tcp_module_progress(
+   mca_ptl_tstamp_t tstamp
+);
+
+/**
  * TCP PTL Interface
  */
 struct mca_ptl_tcp_t {

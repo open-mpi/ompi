@@ -71,6 +71,12 @@ int mca_pml_teg_module_open(void)
     teg_null->req_status.MPI_ERROR = LAM_SUCCESS;
     teg_null->req_status._count = 0;
 
+#if MCA_PML_TEG_STATISTICS
+    mca_pml_teg.teg_waits = 0;
+    mca_pml_teg.teg_condition_waits = 0;
+    mca_pml_teg.teg_condition_broadcasts = 0;
+#endif
+
     mca_pml_teg.teg_free_list_num =
         mca_pml_teg_param_register_int("free_list_num", 256);
     mca_pml_teg.teg_free_list_max =
@@ -85,6 +91,22 @@ int mca_pml_teg_module_open(void)
 
 int mca_pml_teg_module_close(void)
 {
+#if MCA_PML_TEG_STATISTICS
+    lam_output(0, "mca_pml_teg.teg_waits = %d\n", 
+        mca_pml_teg.teg_waits);
+    lam_output(0, "mca_pml_teg.teg_condition_waits = %d\n", 
+        mca_pml_teg.teg_condition_waits);
+    lam_output(0, "mca_pml_teg.teg_condition_broadcast = %d\n", 
+        mca_pml_teg.teg_condition_broadcasts);
+#endif
+
+    if (mca_pml_teg.teg_recv_requests.fl_num_allocated !=
+        mca_pml_teg.teg_recv_requests.super.lam_list_length) {
+        lam_output(0, "teg recv requests: %d allocated %d returned\n",
+            mca_pml_teg.teg_recv_requests.fl_num_allocated,
+            mca_pml_teg.teg_recv_requests.super.lam_list_length);
+    }
+
     if(NULL != mca_pml_teg.teg_ptl_modules)
         free(mca_pml_teg.teg_ptl_modules);
     if(NULL != mca_pml_teg.teg_ptls)

@@ -221,8 +221,10 @@ bool mca_ptl_tcp_proc_accept(mca_ptl_tcp_proc_t* ptl_proc, struct sockaddr_in* a
     THREAD_LOCK(&ptl_proc->proc_lock);
     for(i=0; i<ptl_proc->proc_peer_count; i++) {
         mca_ptl_base_peer_t* ptl_peer = ptl_proc->proc_peers[i];
-        if(mca_ptl_tcp_peer_accept(ptl_peer, addr, sd))
+        if(mca_ptl_tcp_peer_accept(ptl_peer, addr, sd)) {
+            THREAD_UNLOCK(&ptl_proc->proc_lock);
             return true;
+        }
     }
     THREAD_UNLOCK(&ptl_proc->proc_lock);
     return false;

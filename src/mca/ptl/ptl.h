@@ -144,9 +144,13 @@ struct mca_ptl_base_recv_frag_t;
 struct mca_ptl_base_send_frag_t;
 struct mca_ptl_base_match_header_t;
 
-typedef uint64_t mca_ptl_base_sequence_t;
-typedef uint64_t mca_ptl_base_tstamp_t;
-typedef lam_list_t mca_ptl_base_queue_t;
+typedef uint64_t mca_ptl_sequence_t;
+typedef uint64_t mca_ptl_tstamp_t;
+typedef lam_list_t mca_ptl_queue_t;
+
+typedef enum { 
+    MCA_PTL_ENABLE 
+} mca_ptl_control_t;
                                                                                                             
 /*
  *  PTL module interface functions and datatype.
@@ -179,6 +183,33 @@ typedef struct mca_ptl_t** (*mca_ptl_base_module_init_fn_t)(
     bool *have_hidden_threads
 );
 
+
+/**
+ * MCA->PTL Called to dynamically change a module parameter.
+ *
+ * @param flag (IN)   Parameter to change.
+ * @param value (IN)  Optional parameter value.
+ *
+ * @return           LAM_SUCCESS or error code on failure.
+ */
+typedef int (*mca_ptl_base_module_control_fn_t)(
+    int param,
+    void* value,
+    size_t size
+);
+
+
+/**
+ * MCA->PTL Called to progress outstanding requests for
+ * non-threaded polling environments.
+ *
+ * @param tstamp     Current time.
+ * @return           LAM_SUCCESS or error code on failure.
+ */
+typedef int (*mca_ptl_base_module_progress_fn_t)(
+    mca_ptl_tstamp_t tstamp
+);
+
                                                                                                             
 /**
  *  PTL module descriptor. Contains module version information
@@ -189,6 +220,8 @@ struct mca_ptl_base_module_1_0_0_t {
   mca_base_module_t ptlm_version;
   mca_base_module_data_1_0_0_t ptlm_data;
   mca_ptl_base_module_init_fn_t ptlm_init;
+  mca_ptl_base_module_control_fn_t ptlm_control;
+  mca_ptl_base_module_progress_fn_t ptlm_progress;
 };
 typedef struct mca_ptl_base_module_1_0_0_t mca_ptl_base_module_1_0_0_t;
 typedef struct mca_ptl_base_module_1_0_0_t mca_ptl_base_module_t;

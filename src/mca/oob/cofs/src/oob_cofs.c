@@ -75,6 +75,7 @@ mca_oob_cofs_recv(lam_job_handle_t job_handle, int vpid, int* tag,
   blocking_recv_posted = 1;
   while (ret == LAM_ERR_WOULD_BLOCK) {
     ret = do_recv(job_handle, vpid, tag, data, data_len);
+    sleep(1);
   }
   blocking_recv_posted = 0;
   return ret;

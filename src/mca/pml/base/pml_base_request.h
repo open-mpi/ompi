@@ -36,7 +36,7 @@ struct mca_pml_base_request_t {
     int32_t req_tag;                      /**< user defined tag */
     lam_communicator_t *req_comm;         /**< communicator pointer */
     lam_proc_t* req_proc;                 /**< peer process */
-    mca_ptl_base_sequence_t req_sequence; /**< sequence number for MPI pt-2-pt ordering */
+    mca_ptl_sequence_t req_sequence;      /**< sequence number for MPI pt-2-pt ordering */
     lam_datatype_t *req_datatype;         /**< pointer to data type */
     mca_pml_base_request_type_t req_type; /**< MPI request type - used for test */
     lam_status_public_t req_status;       /**< completion status */

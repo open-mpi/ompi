@@ -4,8 +4,7 @@
 
 int mca_pml_teg_progress(void)
 {
-#if 0
-    mca_ptl_base_tstamp_t tstamp;
+    mca_ptl_tstamp_t tstamp = 0;
     size_t i;
 
     /*
@@ -13,7 +12,6 @@ int mca_pml_teg_progress(void)
      */
     for(i=0; i<mca_pml_teg.teg_num_ptl_modules; i++)
         mca_pml_teg.teg_ptl_modules[i]->ptlm_progress(tstamp);
-#endif
     return LAM_SUCCESS;
 }
 

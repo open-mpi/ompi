@@ -17,6 +17,7 @@
 #include "mca/pml/base/pml_base_request.h"
 #include "mca/ptl/ptl.h"
 
+#define MCA_PML_TEG_STATISTICS 1
 
 /**
  * TEG PML Interface
@@ -41,6 +42,12 @@ struct mca_pml_teg_t {
 
     /* free list of recv requests */
     lam_free_list_t teg_recv_requests;
+
+#if MCA_PML_TEG_STATISTICS
+    long teg_waits;
+    long teg_condition_waits;
+    long teg_condition_broadcasts;
+#endif
 
     /* request completion */
     lam_mutex_t teg_request_lock;
@@ -98,6 +105,14 @@ extern int mca_pml_teg_del_procs(
 extern int mca_pml_teg_add_ptls(
     lam_list_t *ptls
 );
+
+extern int mca_pml_teg_control(
+    int param,
+    void *size,
+    size_t value
+);
+
+extern int mca_pml_teg_progress(void);
 
 extern int mca_pml_teg_isend_init(
     void *buf,

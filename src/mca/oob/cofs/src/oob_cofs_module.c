@@ -91,22 +91,6 @@ mca_oob_cofs_init(int *priority, bool *allow_multi_user_threads,
   }
 
   /*
-   * See if we can write in our directory...
-   */
-  tmp = malloc(strlen(mca_oob_cofs_comm_loc) + 5);
-  if (tmp == NULL) return NULL;
-  sprintf(tmp, "%s/me", mca_oob_cofs_comm_loc);
-  fp = fopen(tmp, "w");
-  if (fp == NULL) {
-    printf("oob_cofs can not write in communication dir\n");
-    free(tmp);
-    return NULL;
-  }
-  fclose(fp);
-  unlink(tmp);
-  free(tmp);
-
-  /*
    * BWB - fix me, make register the "right" way...
    */
   /* find our vpid */
@@ -116,6 +100,22 @@ mca_oob_cofs_init(int *priority, bool *allow_multi_user_threads,
     return NULL;
   }
   mca_oob_cofs_my_vpid = atoi(tmp);
+
+  /*
+   * See if we can write in our directory...
+   */
+  tmp = malloc(strlen(mca_oob_cofs_comm_loc) + 5);
+  if (tmp == NULL) return NULL;
+  sprintf(tmp, "%s/oob.%d", mca_oob_cofs_comm_loc, mca_oob_cofs_my_vpid);
+  fp = fopen(tmp, "w");
+  if (fp == NULL) {
+    printf("oob_cofs can not write in communication dir\n");
+    free(tmp);
+    return NULL;
+  }
+  fclose(fp);
+  unlink(tmp);
+  free(tmp);
 
   mca_oob_cofs_serial = 0;
   

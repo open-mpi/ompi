@@ -122,8 +122,7 @@ int lam_mpi_init(int argc, char **argv, int requested, int *provided)
         default */
 
      mca_base_param_lookup_int(param, &value);
-     /* lam_mpi_param_check = (bool) value; */
-     lam_mpi_param_check = false;
+     lam_mpi_param_check = (bool) value; 
 
      /* do module exchange */
      if (LAM_SUCCESS != (ret = mca_base_modex_exchange())) {
@@ -138,6 +137,11 @@ int lam_mpi_init(int argc, char **argv, int requested, int *provided)
          return ret;
      }
      free(procs);
+
+     /* start PTL's */
+     param = 1;
+     if (LAM_SUCCESS != (ret = mca_pml.pml_control(MCA_PTL_ENABLE, &param, sizeof(param))))
+         return ret;
 
      /* save the resulting thread levels */
 

@@ -236,7 +236,7 @@ int mca_base_modex_exchange(void)
             rc = mca_oob.oob_send(
                 proc->proc_job, 
                 proc->proc_vpid, 
-                MCA_OOB_ANY_TAG, 
+                0, 
                 self_module->module_data, 
                 self_module->module_data_size);
             if(rc != LAM_SUCCESS) {
@@ -255,7 +255,7 @@ int mca_base_modex_exchange(void)
         for(i=0; i<nprocs; i++) {
             lam_proc_t *proc = procs[i];
             mca_base_modex_module_t* proc_module;
-            int tag = MCA_OOB_ANY_TAG;
+            int tag = 0;
             int rc;
 
             if(proc == self) 
