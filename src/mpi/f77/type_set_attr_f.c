@@ -48,5 +48,11 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_SET_ATTR,
 
 void mpi_type_set_attr_f(MPI_Fint *type, MPI_Fint *type_keyval, char *attr_val, MPI_Fint *ierr)
 {
+    MPI_Datatype c_type = MPI_Type_f2c( *type );
+
+    *ierr = MPI_Type_set_attr( c_type, *type_keyval, attr_val );
+
+    if (*ierr == MPI_SUCCESS)
+        *type = MPI_Type_c2f( c_type );
 
 }

@@ -48,5 +48,10 @@ OMPI_GENERATE_F77_BINDINGS (MPI_REQUEST_GET_STATUS,
 
 void mpi_request_get_status_f(MPI_Fint *request, MPI_Fint *flag, MPI_Fint *status, MPI_Fint *ierr)
 {
+    MPI_Status c_status;
+    MPI_Request c_req = MPI_Request_f2c( *request ); 
 
+    *ierr = MPI_Request_get_status( c_req, flag, &c_status );
+
+    MPI_Status_c2f( &c_status, status );
 }

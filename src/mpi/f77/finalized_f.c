@@ -48,5 +48,5 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FINALIZED,
 
 void mpi_finalized_f(MPI_Fint *flag, MPI_Fint *ierr)
 {
-
+    *ierr = MPI_Finalized(flag);
 }
