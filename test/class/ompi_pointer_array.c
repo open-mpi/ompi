@@ -34,8 +34,8 @@ static void test(bool thread_usage){
     ompi_pointer_array_t *array;
     char *test_value;
     char **test_data;
-    size_t len_test_data,i,test_len_in_array,error_cnt;
-    size_t ele_index;
+    int len_test_data,i,test_len_in_array,error_cnt;
+    int ele_index;
     int use_threads,error_code;
 
     /* initialize thread levels */

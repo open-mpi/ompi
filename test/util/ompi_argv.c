@@ -219,7 +219,7 @@ static bool test3(void)
 
 static bool test4(void)
 {
-  int i, count;
+  size_t i, count;
   char *a = strdup("the quick  brown fox jumped over  the lazy  dog a_really_long_argument_to_force_a_long_copy_zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz");
   char **b;
   char *start;

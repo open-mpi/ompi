@@ -33,7 +33,7 @@
 
 int main(int argc, char **argv)
 {
-    int i;
+    uint64_t i;
     uint64_t count;
 
     ompi_value_array_t array;
