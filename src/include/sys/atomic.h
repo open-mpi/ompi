@@ -403,16 +403,14 @@ enum {
 
 static inline int ompi_atomic_trylock(ompi_lock_t *lock)
 {
-    return ompi_atomic_cmpset_acq(&lock->u.lock,
-                                  OMPI_ATOMIC_UNLOCKED,
-                                  OMPI_ATOMIC_LOCKED);
+   return ompi_atomic_cmpset_acq( &(lock->u.lock),
+                                  OMPI_ATOMIC_UNLOCKED, OMPI_ATOMIC_LOCKED);
 }
 
 static inline void ompi_atomic_lock(ompi_lock_t *lock)
 {
-   while( !ompi_atomic_cmpset_acq(&lock->u.lock,
-                                  OMPI_ATOMIC_UNLOCKED,
-                                  OMPI_ATOMIC_LOCKED) ) {
+   while( !ompi_atomic_cmpset_acq( &(lock->u.lock),
+                                  OMPI_ATOMIC_UNLOCKED, OMPI_ATOMIC_LOCKED) ) {
       while (lock->u.lock == OMPI_ATOMIC_LOCKED) {
          /* spin */ ;
       }
@@ -421,9 +419,8 @@ static inline void ompi_atomic_lock(ompi_lock_t *lock)
 
 static inline void ompi_atomic_unlock(ompi_lock_t *lock)
 {
-   ompi_atomic_cmpset_rel(&lock->u.lock,
-                          OMPI_ATOMIC_LOCKED,
-                          OMPI_ATOMIC_UNLOCKED);
+   ompi_atomic_cmpset_rel( &(lock->u.lock),
+                           OMPI_ATOMIC_LOCKED, OMPI_ATOMIC_UNLOCKED);
 }
 #endif /* OMPI_HAVE_ATOMIC || OMPI_HAVE_ATOMIC_WIN32 */
 
