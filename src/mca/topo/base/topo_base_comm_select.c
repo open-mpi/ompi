@@ -60,6 +60,10 @@ int mca_topo_base_comm_select (struct ompi_communicator_t *comm,
     int best_priority; 
     char name[MPI_MAX_OBJECT_NAME+32];
     ompi_list_item_t *item; 
+    ompi_list_item_t *next_item; 
+    mca_base_component_priority_list_item_t *selectable_item;
+    char *names, **name_array;
+    int num_names;
     mca_base_component_priority_list_item_t *cpli;
     mca_topo_base_component_t *component; 
     mca_topo_base_component_t *preferred_component = NULL; 
@@ -67,8 +71,11 @@ int mca_topo_base_comm_select (struct ompi_communicator_t *comm,
     mca_topo_base_module_t *module; 
     ompi_list_t queried;
     queried_module_t *om;
+    ompi_list_t *selectable;
     char *str;
     int err;
+    int i;
+    bool was_selectable_constructed = false;
 
     /* Announce */
 
@@ -82,7 +89,8 @@ int mca_topo_base_comm_select (struct ompi_communicator_t *comm,
                         "topo:base:comm_select: new communicator: %s",
                         name);
 
-  /* Check and see if a preferred component was provided. If it was
+
+    /* Check and see if a preferred component was provided. If it was
      provided then it should be used (if possible) */
 
     if (NULL != preferred) {
@@ -132,12 +140,75 @@ int mca_topo_base_comm_select (struct ompi_communicator_t *comm,
      * use that for this communicator
      */ 
 
+    /* Check if anything was requested by means on the name parameters */
+    names = NULL;
+    mca_base_param_lookup_string (mca_topo_base_param, &names);
+
+    if (NULL != names && 0 < strlen(names)) {
+        name_array = ompi_argv_split (names, ',');
+        num_names = ompi_argv_count (name_array);
+
+        ompi_output_verbose(10, mca_topo_base_output,
+                            "topo:base:comm_Select: Checking all available module");
+
+        /* since there are somethings which the mca requested through the 
+           if the intersection is NULL, then we barf saying that the requested
+           modules are not being available */
+
+        selectable = OBJ_NEW(ompi_list_t);
+        was_selectable_constructed = true;
+        
+        /* go through the compoents_available list and check against the names
+         * to see whether this can be added or not */
+
+        for (item = ompi_list_get_first(&mca_topo_base_components_available);
+            item != ompi_list_get_end(&mca_topo_base_components_available);
+            item = ompi_list_get_next(item)) {
+            /* convert the ompi_list_item_t returned into the proper type */
+            cpli = (mca_base_component_priority_list_item_t *) item;
+            component = (mca_topo_base_component_t *) cpli->cpli_component;
+            ompi_output_verbose(10, mca_topo_base_output,
+                                "select: initialising %s component %s",
+                                component->topom_version.mca_type_name,
+                                component->topom_version.mca_component_name);
+
+            /* check if this name is present in the mca_base_params */
+            for (i=0; i < num_names; i++) {
+                if (0 == strcmp(name_array[i], component->topom_version.mca_component_name)) {
+                    /* this is present, and should be added o the selectable list */
+
+                    /* We need to create a seperate object to initialise this list with
+                     * since we cannot have the same item in 2 lists */
+
+                    selectable_item = OBJ_NEW (mca_base_component_priority_list_item_t);
+                    *selectable_item = *cpli;
+                    ompi_list_append (selectable, (ompi_list_item_t *)selectable_item);
+                    break;
+                }
+            }
+        }
+        
+        /* check for a NULL intersection between the available list and the 
+         * list which was asked for */
+
+        if (0 == ompi_list_get_size(selectable)) {
+            was_selectable_constructed = true;
+            OBJ_RELEASE (selectable);
+            ompi_output_verbose (10, mca_topo_base_output,
+                                 "topo:base:comm_select: preferred modules were not available");
+            return OMPI_ERROR;
+        }
+    } else { /* if there was no name_array, then we need to simply initialize 
+                selectable to mca_topo_base_components_available */
+        selectable = &mca_topo_base_components_available;
+    }
+
     best_component = NULL;
     best_priority = -1;
     OBJ_CONSTRUCT(&queried, ompi_list_t);
 
-    for (item = ompi_list_get_first(&mca_topo_base_components_available);
-         item != ompi_list_get_end(&mca_topo_base_components_available);
+    for (item = ompi_list_get_first(selectable);
+         item != ompi_list_get_end(selectable);
          item = ompi_list_get_next(item)) {
        /*
         * convert the ompi_list_item_t returned into the proper type
@@ -196,6 +267,25 @@ int mca_topo_base_comm_select (struct ompi_communicator_t *comm,
            } /* end else of if (NULL == module) */
        } /* end else of if (NULL == component->topom_init) */
     } /* end for ... end of traversal */
+
+    /* We have to remove empty out the selectable list if the selectable 
+     * list was constructed as a duplicate and not as a pointer to the
+     * mca_base_components_available list. So, check and destroy */
+
+    if (was_selectable_constructed) {
+
+        /* remove all the items first */
+        for (item = ompi_list_get_first(&mca_topo_base_components_available);
+             item != ompi_list_get_end(&mca_topo_base_components_available);
+             item = next_item) {
+             next_item = ompi_list_get_next(item);
+             OBJ_RELEASE (item);
+        }
+                
+        /* release the list itself */
+        OBJ_RELEASE (selectable);
+        was_selectable_constructed = false;
+    }
 
     /*
      * Now we have alist of components which successfully returned
