@@ -400,6 +400,13 @@ OMPI_SETUP_F90
 
 ompi_show_title "Header file tests"
 
+AC_CHECK_HEADERS([alloca.h aio.h arpa/inet.h dirent.h dlfcn.h \
+    inttypes.h libgen.h net/if.h netdb.h netinet/in.h netinet/tcp.h \
+    poll.h pthread.h pwd.h sched.h stdint.h strings.h stropts.h \
+    sys/ipc.h sys/mman.h sys/resource.h sys/select.h sys/socket.h \
+    sys/statvfs.h sys/time.h sys/uio.h sys/utsname.h sys/wait.h \
+    syslog.h termios.h ulimit.h unistd.h])
+
 # snprintf declaration
 # gethostname declaration
 # headers:
@@ -409,8 +416,6 @@ ompi_show_title "Header file tests"
 # SA_RESTART in signal.h
 # sa_len in struct sockaddr
 # union semun in sys/sem.h
-AC_CHECK_HEADERS([alloca.h sys/select.h strings.h])
-AC_CHECK_HEADERS([stdbool.h], [have_stdbool_h=1], [have_stdbool_h=0])
 
 # Note that sometimes we have <stdbool.h>, but it doesn't work (e.g.,
 # have both Portland and GNU installed; using pgcc will find GNU's
@@ -423,7 +428,7 @@ AC_CHECK_HEADERS([stdbool.h], [have_stdbool_h=1], [have_stdbool_h=0])
 # the macro HAVE_STDBOOL_H from the result of AC_CHECK_HEADERS,
 # above).  If we do have it, then check to see if it actually works.
 # Define OMPI_USE_STDBOOL_H as approrpaite.
-
+AC_CHECK_HEADERS([stdbool.h], [have_stdbool_h=1], [have_stdbool_h=0])
 AC_MSG_CHECKING([if <stdbool.h> works])
 if test "$have_stdbool_h" = "1"; then
     AC_COMPILE_IFELSE(AC_LANG_PROGRAM([[
