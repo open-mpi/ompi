@@ -65,9 +65,10 @@ int ompi_request_init(void)
     ompi_request_null.req_fini = ompi_request_null_free;
     ompi_request_null.req_free = ompi_request_null_free;
     ompi_request_null.req_cancel = ompi_request_null_cancel;
+    ompi_request_null.req_f_to_c_index = 
+        ompi_pointer_array_add(&ompi_request_f_to_c_table, &ompi_request_null);
 
-    if (0 != ompi_pointer_array_add(&ompi_request_f_to_c_table, 
-                                    MPI_REQUEST_NULL)) {
+    if (0 != ompi_request_null.req_f_to_c_index) {
         return OMPI_ERR_REQUEST;
     }
     return OMPI_SUCCESS;
