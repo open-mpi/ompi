@@ -31,6 +31,6 @@ int MPI_Attr_get(MPI_Comm comm, int keyval, void *attribute_val, int *flag)
     }
         
     ret = ompi_attr_get(comm->c_keyhash, keyval, attribute_val, flag);
-    
+    OMPI_ERRHANDLER_RETURN(ret, comm, ret, FUNC_NAME);
 }
 
