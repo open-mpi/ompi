@@ -222,28 +222,182 @@ int mca_io_romio_File_get_view(MPI_File fh, MPI_Offset *disp, MPI_Datatype *etyp
 
 
 
-int mca_io_romio_File_get_type_extent(MPI_File fh, MPI_Datatype datatype, 
-                                     MPI_Aint *extent){ }
+int mca_io_romio_File_get_type_extent(MPI_File fh, MPI_Datatype datatype, MPI_Aint *extent){ 
+    int ret;
+    mca_io_romio_MPI_File romio_fh;
+    mca_io_romio_file_t *mca_romio_fh;  
+
+    /* extract the ROMIO file handle: */
+    mca_romio_fh = (mca_io_romio_file_t *) fh;
+    romio_fh = mca_romio_fh->romio_fh;
+
+    THREAD_LOCK(&mca_io_romio_mutex);
+    ret=mca_io_romio_MPI_File_get_type_extent(romio_fh,datatype,extent);
+    THREAD_UNLOCK(&mca_io_romio_mutex);
+  
+    return ret;
+}
 
 
-int mca_io_romio_File_set_atomicity(MPI_File fh, int flag){ }
-int mca_io_romio_File_get_atomicity(MPI_File fh, int *flag){ }
-int mca_io_romio_File_sync(MPI_File fh){ }
+int mca_io_romio_File_set_atomicity(MPI_File fh, int flag){ 
+    int ret;
+    mca_io_romio_MPI_File romio_fh;
+    mca_io_romio_file_t *mca_romio_fh;  
+
+    /* extract the ROMIO file handle: */
+    mca_romio_fh = (mca_io_romio_file_t *) fh;
+    romio_fh = mca_romio_fh->romio_fh;
+
+    THREAD_LOCK(&mca_io_romio_mutex);
+    ret=mca_io_romio_MPI_File_set_atomicity(romio_fh,flag);
+    THREAD_UNLOCK(&mca_io_romio_mutex);
+  
+    return ret;
+}
+
+int mca_io_romio_File_get_atomicity(MPI_File fh, int *flag){ 
+    int ret;
+    mca_io_romio_MPI_File romio_fh;
+    mca_io_romio_file_t *mca_romio_fh;  
+
+    /* extract the ROMIO file handle: */
+    mca_romio_fh = (mca_io_romio_file_t *) fh;
+    romio_fh = mca_romio_fh->romio_fh;
+
+    THREAD_LOCK(&mca_io_romio_mutex);
+    ret=mca_io_romio_MPI_File_get_atomicity(romio_fh,flag);
+    THREAD_UNLOCK(&mca_io_romio_mutex);
+  
+    return ret;
+}
+
+int mca_io_romio_File_sync(MPI_File fh){ 
+    int ret;
+    mca_io_romio_MPI_File romio_fh;
+    mca_io_romio_file_t *mca_romio_fh;  
+
+    /* extract the ROMIO file handle: */
+    mca_romio_fh = (mca_io_romio_file_t *) fh;
+    romio_fh = mca_romio_fh->romio_fh;
+
+    THREAD_LOCK(&mca_io_romio_mutex);
+    ret=mca_io_romio_MPI_File_sync(romio_fh);
+    THREAD_UNLOCK(&mca_io_romio_mutex);
+  
+    return ret;
+}
 
 
 
 
 
-int mca_io_romio_File_seek_shared(MPI_File fh, MPI_Offset offset, int whence){ }
-int mca_io_romio_File_get_position_shared(MPI_File fh, MPI_Offset *offset){ }
+int mca_io_romio_File_seek_shared(MPI_File fh, MPI_Offset offset, int whence){ 
+    int ret;
+    mca_io_romio_MPI_File romio_fh;
+    mca_io_romio_file_t *mca_romio_fh;  
 
-int mca_io_romio_File_seek(MPI_File fh, MPI_Offset offset, int whence){ }
-int mca_io_romio_File_get_position(MPI_File fh, MPI_Offset *offset){ }
-int mca_io_romio_File_get_byte_offset(MPI_File fh, MPI_Offset offset, 
-                                     MPI_Offset *disp){ }
+    /* extract the ROMIO file handle: */
+    mca_romio_fh = (mca_io_romio_file_t *) fh;
+    romio_fh = mca_romio_fh->romio_fh;
+
+    THREAD_LOCK(&mca_io_romio_mutex);
+    ret=mca_io_romio_MPI_File_seek_shared(romio_fh, offset, whence);
+    THREAD_UNLOCK(&mca_io_romio_mutex);
+  
+    return ret;
+}
+int mca_io_romio_File_get_position_shared(MPI_File fh, MPI_Offset *offset){ 
+    int ret;
+    mca_io_romio_MPI_File romio_fh;
+    mca_io_romio_file_t *mca_romio_fh;  
+
+    /* extract the ROMIO file handle: */
+    mca_romio_fh = (mca_io_romio_file_t *) fh;
+    romio_fh = mca_romio_fh->romio_fh;
+
+    THREAD_LOCK(&mca_io_romio_mutex);
+    ret=mca_io_romio_MPI_File_get_position_shared(romio_fh,offset);
+    THREAD_UNLOCK(&mca_io_romio_mutex);
+  
+    return ret;
+}
+
+int mca_io_romio_File_seek(MPI_File fh, MPI_Offset offset, int whence){ 
+    int ret;
+    mca_io_romio_MPI_File romio_fh;
+    mca_io_romio_file_t *mca_romio_fh;  
+
+    /* extract the ROMIO file handle: */
+    mca_romio_fh = (mca_io_romio_file_t *) fh;
+    romio_fh = mca_romio_fh->romio_fh;
+
+    THREAD_LOCK(&mca_io_romio_mutex);
+    ret=mca_io_romio_MPI_File_seek(romio_fh,offset,whence);
+    THREAD_UNLOCK(&mca_io_romio_mutex);
+  
+    return ret;
+}
+int mca_io_romio_File_get_position(MPI_File fh, MPI_Offset *offset){ 
+    int ret;
+    mca_io_romio_MPI_File romio_fh;
+    mca_io_romio_file_t *mca_romio_fh;  
+
+    /* extract the ROMIO file handle: */
+    mca_romio_fh = (mca_io_romio_file_t *) fh;
+    romio_fh = mca_romio_fh->romio_fh;
+
+    THREAD_LOCK(&mca_io_romio_mutex);
+    ret=mca_io_romio_MPI_File_get_position(romio_fh,offset);
+    THREAD_UNLOCK(&mca_io_romio_mutex);
+  
+    return ret;
+}
+int mca_io_romio_File_get_byte_offset(MPI_File fh, MPI_Offset offset, MPI_Offset *disp){ 
+    int ret;
+    mca_io_romio_MPI_File romio_fh;
+    mca_io_romio_file_t *mca_romio_fh;  
+
+    /* extract the ROMIO file handle: */
+    mca_romio_fh = (mca_io_romio_file_t *) fh;
+    romio_fh = mca_romio_fh->romio_fh;
+
+    THREAD_LOCK(&mca_io_romio_mutex);
+    ret=mca_io_romio_MPI_File_get_byte_offset(romio_fh,offset,disp);
+    THREAD_UNLOCK(&mca_io_romio_mutex);
+  
+    return ret;
+}
 
 
-int mca_io_romio_File_set_errhandler(MPI_File fh, MPI_Errhandler eh){ }
-int mca_io_romio_File_get_errhandler(MPI_File fh, MPI_Errhandler *eh ){ }
+int mca_io_romio_File_set_errhandler(MPI_File fh, MPI_Errhandler eh){ 
+    int ret;
+    mca_io_romio_MPI_File romio_fh;
+    mca_io_romio_file_t *mca_romio_fh;  
+
+    /* extract the ROMIO file handle: */
+    mca_romio_fh = (mca_io_romio_file_t *) fh;
+    romio_fh = mca_romio_fh->romio_fh;
+
+    THREAD_LOCK(&mca_io_romio_mutex);
+    ret=mca_io_romio_MPI_File_set_errhandler(romio_fh,eh);
+    THREAD_UNLOCK(&mca_io_romio_mutex);
+  
+    return ret;
+}
+int mca_io_romio_File_get_errhandler(MPI_File fh, MPI_Errhandler *eh ){ 
+    int ret;
+    mca_io_romio_MPI_File romio_fh;
+    mca_io_romio_file_t *mca_romio_fh;  
+
+    /* extract the ROMIO file handle: */
+    mca_romio_fh = (mca_io_romio_file_t *) fh;
+    romio_fh = mca_romio_fh->romio_fh;
+
+    THREAD_LOCK(&mca_io_romio_mutex);
+    ret=mca_io_romio_File_get_errhandler(romio_fh,eh );
+    THREAD_UNLOCK(&mca_io_romio_mutex);
+  
+    return ret;
+}
 
 
