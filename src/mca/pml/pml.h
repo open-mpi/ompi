@@ -82,7 +82,7 @@ typedef int (*mca_pml_base_progress_fn_t)(void);
 typedef int (*mca_pml_base_irecv_init_fn_t)(
     void *buf,
     size_t count,
-    struct lam_datatype_t *datatype,
+    lam_datatype_t *datatype,
     int src,
     int tag,
     struct lam_communicator_t* comm,
@@ -92,7 +92,7 @@ typedef int (*mca_pml_base_irecv_init_fn_t)(
 typedef int (*mca_pml_base_irecv_fn_t)(
     void *buf,
     size_t count,
-    struct lam_datatype_t *datatype,
+    lam_datatype_t *datatype,
     int src,
     int tag,
     struct lam_communicator_t* comm,
@@ -102,7 +102,7 @@ typedef int (*mca_pml_base_irecv_fn_t)(
 typedef int (*mca_pml_base_recv_fn_t)(
     void *buf,
     size_t count,
-    struct lam_datatype_t *datatype,
+    lam_datatype_t *datatype,
     int src,
     int tag,
     struct lam_communicator_t* comm,
@@ -112,7 +112,7 @@ typedef int (*mca_pml_base_recv_fn_t)(
 typedef int (*mca_pml_base_isend_init_fn_t)(
     void *buf,
     size_t count,
-    struct lam_datatype_t *datatype,
+    lam_datatype_t *datatype,
     int dst,
     int tag,
     mca_pml_base_send_mode_t mode,
@@ -123,7 +123,7 @@ typedef int (*mca_pml_base_isend_init_fn_t)(
 typedef int (*mca_pml_base_isend_fn_t)(
     void *buf,
     size_t count,
-    struct lam_datatype_t *datatype,
+    lam_datatype_t *datatype,
     int dst,
     int tag,
     mca_pml_base_send_mode_t mode,
@@ -134,7 +134,7 @@ typedef int (*mca_pml_base_isend_fn_t)(
 typedef int (*mca_pml_base_send_fn_t)(
     void *buf,
     size_t count,
-    struct lam_datatype_t *datatype,
+    lam_datatype_t *datatype,
     int dst,
     int tag,
     mca_pml_base_send_mode_t mode,

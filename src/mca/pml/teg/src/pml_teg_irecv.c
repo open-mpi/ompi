@@ -4,7 +4,7 @@
 int mca_pml_teg_irecv_init(
     void *addr,
     size_t length,
-    struct lam_datatype_t *datatype,
+    lam_datatype_t *datatype,
     int src,
     int tag,
     struct lam_communicator_t* comm,
@@ -32,7 +32,7 @@ int mca_pml_teg_irecv_init(
 int mca_pml_teg_irecv(
     void *addr,
     size_t length,
-    struct lam_datatype_t *datatype,
+    lam_datatype_t *datatype,
     int src,
     int tag,
     struct lam_communicator_t* comm,
@@ -70,7 +70,7 @@ int mca_pml_teg_irecv(
 int mca_pml_teg_recv(
     void *addr,
     size_t length,
-    struct lam_datatype_t *datatype,
+    lam_datatype_t *datatype,
     int src,
     int tag,
     struct lam_communicator_t* comm,
