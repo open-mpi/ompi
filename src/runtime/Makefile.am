@@ -15,7 +15,8 @@ headers = \
     runtime.h \
     runtime_types.h \
     runtime_internal.h \
-    ompi_progress.h
+    ompi_progress.h \
+    ompi_rte_wait.h
 
 libruntime_la_SOURCES = \
 	$(headers) \
@@ -35,7 +36,8 @@ libruntime_la_SOURCES = \
     ompi_rte_parse_environ.c \
     ompi_rte_parse_cmd_line.c \
     ompi_rte_parse_daemon_cmd_line.c \
-    ompi_rte_pcm.c
+    ompi_rte_pcm.c \
+    ompi_rte_wait.c
 
 # Conditionally install the header files
 
