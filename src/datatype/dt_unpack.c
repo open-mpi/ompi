@@ -352,6 +352,7 @@ static int ompi_convertor_unpack_homogeneous_contig( ompi_convertor_t* pConv,
     }
     iov[0].iov_len = bConverted;
     pConv->bConverted += bConverted;
+    *max_data = bConverted;
 
     return (pConv->bConverted == (pData->size * pConv->count));
 }
