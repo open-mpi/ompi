@@ -190,6 +190,7 @@ int mca_ns_replica_finalize(void)
 
   /* All done */
 
+  mca_oob_recv_cancel(MCA_OOB_NAME_ANY, MCA_OOB_TAG_NS);
   return OMPI_SUCCESS;
 }
 

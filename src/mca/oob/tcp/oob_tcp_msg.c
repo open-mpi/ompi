@@ -102,7 +102,6 @@ int mca_oob_tcp_msg_timedwait(mca_oob_tcp_msg_t* msg, int* rc, struct timespec* 
         gettimeofday(&tv,NULL);
     }
     OMPI_THREAD_UNLOCK(&msg->msg_lock);
-
 #else
     /* wait for message to complete */
     while(msg->msg_complete == false &&
@@ -384,9 +383,16 @@ static void mca_oob_tcp_msg_data(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* pee
         } else {
             MCA_OOB_TCP_MSG_RETURN(msg);
         }
+        mca_oob_tcp_component.tcp_match_count++;
         OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_match_lock);
+
         mca_oob_tcp_msg_complete(post, &peer->peer_name);
-                                                                                                                          
+
+        OMPI_THREAD_LOCK(&mca_oob_tcp_component.tcp_match_lock);
+        if(--mca_oob_tcp_component.tcp_match_count == 0)
+            ompi_condition_signal(&mca_oob_tcp_component.tcp_match_cond);
+        OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_match_lock);
+
     } else {
         ompi_list_append(&mca_oob_tcp_component.tcp_msg_recv, (ompi_list_item_t*)msg);
         OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_match_lock);

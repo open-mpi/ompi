@@ -38,6 +38,7 @@ struct mca_ptl_tcp_component_t {
     ompi_free_list_t tcp_recv_frags;       /**< free list of tcp recv fragments */
     ompi_list_t tcp_procs;                 /**< list of tcp proc structures */
     ompi_list_t tcp_pending_acks;          /**< list of pending acks - retry as sends complete */
+    ompi_list_t tcp_events;                /**< list of pending events */
     struct mca_ptl_tcp_proc_t* tcp_local;  /**< the tcp proc instance corresponding to the local process */
     ompi_event_t tcp_send_event;           /**< event structure for sends */
     ompi_event_t tcp_recv_event;           /**< event structure for recvs */

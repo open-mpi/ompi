@@ -366,6 +366,18 @@ int mca_oob_recv_nb(
     void* cbdata);
 
 /**
+* Routine to cancel pending non-blocking recvs.
+*
+* @param peer (IN)    Opaque name of peer process or MCA_OOB_NAME_ANY for wildcard receive.
+* @param tag (IN)     User defined tag for matching send/recv.
+* @return             OMPI error code (<0) on error or number of bytes actually received.
+*/
+
+int mca_oob_recv_cancel(
+    ompi_process_name_t* peer, 
+    int tag);
+
+/**
 * Non-blocking version of mca_oob_recv_packed().
 *
 * @param peer (IN)    Opaque name of peer process or MCA_OOB_NAME_ANY for wildcard receive.

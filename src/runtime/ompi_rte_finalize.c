@@ -38,6 +38,7 @@ int ompi_rte_finalize(void)
   mca_ns_base_close();
   mca_gpr_base_close();
   mca_oob_base_close();
+  ompi_event_fini();
 
   ompi_rte_internal_fini_spawn();
   ompi_session_dir_finalize();

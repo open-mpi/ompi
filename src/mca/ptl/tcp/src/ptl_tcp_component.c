@@ -29,6 +29,41 @@
 #include "ptl_tcp_sendreq.h"
 
 
+/*
+ * Data structure for accepting connections.
+ */
+
+struct mca_ptl_tcp_event_t {
+    ompi_list_item_t item;
+    ompi_event_t event;
+};
+typedef struct mca_ptl_tcp_event_t mca_ptl_tcp_event_t;
+
+static void mca_ptl_tcp_event_construct(mca_ptl_tcp_event_t* event)
+{
+    OMPI_THREAD_LOCK(&mca_ptl_tcp_component.tcp_lock);
+    ompi_list_append(&mca_ptl_tcp_component.tcp_events, &event->item);
+    OMPI_THREAD_UNLOCK(&mca_ptl_tcp_component.tcp_lock);
+}
+
+static void mca_ptl_tcp_event_destruct(mca_ptl_tcp_event_t* event)
+{
+    OMPI_THREAD_LOCK(&mca_ptl_tcp_component.tcp_lock);
+    ompi_list_remove_item(&mca_ptl_tcp_component.tcp_events, &event->item);
+    OMPI_THREAD_UNLOCK(&mca_ptl_tcp_component.tcp_lock);
+}
+
+OBJ_CLASS_INSTANCE(
+    mca_ptl_tcp_event_t,
+    ompi_list_item_t,
+    mca_ptl_tcp_event_construct,
+    mca_ptl_tcp_event_destruct);
+
+
+/*
+ * The PTL TCP component
+ */
+
 mca_ptl_tcp_component_t mca_ptl_tcp_component = {
     {
       /* First, the mca_base_module_t struct containing meta
@@ -60,7 +95,6 @@ mca_ptl_tcp_component_t mca_ptl_tcp_component = {
       mca_ptl_tcp_component_progress,
     }
 };
-
 
 /*
  * functions for receiving event callbacks
@@ -109,6 +143,7 @@ int mca_ptl_tcp_component_open(void)
     OBJ_CONSTRUCT(&mca_ptl_tcp_component.tcp_lock, ompi_mutex_t);
     OBJ_CONSTRUCT(&mca_ptl_tcp_component.tcp_procs, ompi_list_t);
     OBJ_CONSTRUCT(&mca_ptl_tcp_component.tcp_pending_acks, ompi_list_t);
+    OBJ_CONSTRUCT(&mca_ptl_tcp_component.tcp_events, ompi_list_t);
     OBJ_CONSTRUCT(&mca_ptl_tcp_component.tcp_send_frags, ompi_free_list_t);
     OBJ_CONSTRUCT(&mca_ptl_tcp_component.tcp_recv_frags, ompi_free_list_t);
 
@@ -145,6 +180,7 @@ int mca_ptl_tcp_component_open(void)
 
 int mca_ptl_tcp_component_close(void)
 {
+    ompi_list_item_t* item;
     if (mca_ptl_tcp_component.tcp_send_frags.fl_num_allocated != 
         mca_ptl_tcp_component.tcp_send_frags.super.ompi_list_length) {
         ompi_output(0, "tcp send frags: %d allocated %d returned\n",
@@ -165,16 +201,30 @@ int mca_ptl_tcp_component_close(void)
     if (NULL != mca_ptl_tcp_component.tcp_ptl_modules)
         free(mca_ptl_tcp_component.tcp_ptl_modules);
  
-    OBJ_DESTRUCT(&mca_ptl_tcp_component.tcp_procs);
-    OBJ_DESTRUCT(&mca_ptl_tcp_component.tcp_send_frags);
-    OBJ_DESTRUCT(&mca_ptl_tcp_component.tcp_recv_frags);
-    OBJ_DESTRUCT(&mca_ptl_tcp_component.tcp_lock);
-
     if (mca_ptl_tcp_component.tcp_listen_sd >= 0) {
         ompi_event_del(&mca_ptl_tcp_component.tcp_recv_event);
         close(mca_ptl_tcp_component.tcp_listen_sd);
         mca_ptl_tcp_component.tcp_listen_sd = -1;
     }
+
+    /* cleanup any pending events */
+    OMPI_THREAD_LOCK(&mca_ptl_tcp_component.tcp_lock);
+    for(item =  ompi_list_remove_first(&mca_ptl_tcp_component.tcp_events);
+        item != NULL; 
+        item =  ompi_list_remove_first(&mca_ptl_tcp_component.tcp_events)) {
+        mca_ptl_tcp_event_t* event = (mca_ptl_tcp_event_t*)item;
+        ompi_event_del(&event->event);
+        OBJ_RELEASE(event);
+    }
+    OMPI_THREAD_UNLOCK(&mca_ptl_tcp_component.tcp_lock);
+
+    /* release resources */
+    OBJ_DESTRUCT(&mca_ptl_tcp_component.tcp_procs);
+    OBJ_DESTRUCT(&mca_ptl_tcp_component.tcp_pending_acks);
+    OBJ_DESTRUCT(&mca_ptl_tcp_component.tcp_events);
+    OBJ_DESTRUCT(&mca_ptl_tcp_component.tcp_send_frags);
+    OBJ_DESTRUCT(&mca_ptl_tcp_component.tcp_recv_frags);
+    OBJ_DESTRUCT(&mca_ptl_tcp_component.tcp_lock);
     return OMPI_SUCCESS;
 }
 
@@ -467,7 +517,7 @@ static void mca_ptl_tcp_component_accept(void)
     while(true) {
         ompi_socklen_t addrlen = sizeof(struct sockaddr_in);
         struct sockaddr_in addr;
-        ompi_event_t* event;
+        mca_ptl_tcp_event_t *event;
         int sd = accept(mca_ptl_tcp_component.tcp_listen_sd, (struct sockaddr*)&addr, &addrlen);
         if(sd < 0) {
             if(errno == EINTR)
@@ -479,9 +529,10 @@ static void mca_ptl_tcp_component_accept(void)
         mca_ptl_tcp_set_socket_options(sd);
 
         /* wait for receipt of peers process identifier to complete this connection */
-        event = malloc(sizeof(ompi_event_t));
-        ompi_event_set(event, sd, OMPI_EV_READ, mca_ptl_tcp_component_recv_handler, event);
-        ompi_event_add(event, 0);
+         
+        event = OBJ_NEW(mca_ptl_tcp_event_t);
+        ompi_event_set(&event->event, sd, OMPI_EV_READ, mca_ptl_tcp_component_recv_handler, event);
+        ompi_event_add(&event->event, 0);
     }
 }
 
@@ -497,13 +548,14 @@ static void mca_ptl_tcp_component_recv_handler(int sd, short flags, void* user)
     int retval;
     mca_ptl_tcp_proc_t* ptl_proc;
     ompi_socklen_t addr_len = sizeof(addr);
+    mca_ptl_tcp_event_t *event = user;
 
     /* accept new connections on the listen socket */
     if(mca_ptl_tcp_component.tcp_listen_sd == sd) {
         mca_ptl_tcp_component_accept();
         return;
     }
-    free(user);
+    OBJ_RELEASE(event);
 
     /* recv the process identifier */
     retval = recv(sd, &guid, sizeof(guid), 0);

@@ -50,6 +50,8 @@ static void mca_oob_tcp_peer_construct(mca_oob_tcp_peer_t* peer)
 { 
     OBJ_CONSTRUCT(&(peer->peer_send_queue), ompi_list_t);
     OBJ_CONSTRUCT(&(peer->peer_lock), ompi_mutex_t);
+    memset(&peer->peer_send_event, 0, sizeof(peer->peer_send_event));
+    memset(&peer->peer_recv_event, 0, sizeof(peer->peer_recv_event));
     memset(&peer->peer_timer_event, 0, sizeof(peer->peer_timer_event));
     ompi_evtimer_set(&peer->peer_timer_event, mca_oob_tcp_peer_timer_handler, peer);
 }
@@ -417,7 +419,7 @@ void mca_oob_tcp_peer_close(mca_oob_tcp_peer_t* peer)
         peer->peer_send_msg = NULL;
     }
 
-    if (peer->peer_state != MCA_OOB_TCP_CLOSED && peer->peer_sd >= 0) {
+    if (peer->peer_sd >= 0) {
         ompi_event_del(&peer->peer_recv_event);
         ompi_event_del(&peer->peer_send_event);
         close(peer->peer_sd);

@@ -48,6 +48,7 @@ mca_oob_t mca_oob_cofs = {
   mca_oob_cofs_recv,
   mca_oob_cofs_send_nb,
   mca_oob_cofs_recv_nb,
+  mca_oob_cofs_recv_cancel,
   mca_oob_cofs_module_init,
   mca_oob_cofs_module_fini
 };
@@ -72,6 +73,12 @@ int mca_oob_cofs_ping(const ompi_process_name_t* name, const struct timeval* ts)
 {
     return OMPI_SUCCESS;
 }
+
+int mca_oob_cofs_recv_cancel(ompi_process_name_t* name, int tag)
+{
+    return OMPI_SUCCESS;
+}
+
 
 
 mca_oob_t* mca_oob_cofs_init(int* priority, bool *allow_multi_user_threads, bool *have_hidden_threads)
