@@ -10,4 +10,5 @@ libmca_ptl_ib_la_SOURCES = \
 	ptl_ib.h \
 	ptl_ib_component.c \
 	ptl_ib_priv.c \
-	ptl_ib_proc.c
+	ptl_ib_proc.c \
+	ptl_ib_peer.c
