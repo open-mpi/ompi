@@ -70,9 +70,7 @@ struct mca_ptl_elan_component_t {
     struct mca_ptl_elan_module_t **elan_ptl_modules;  /**< array of available PTL modules */
     struct mca_ptl_elan_proc_t *elan_local; 
     ompi_mutex_t elan_lock;             /**< lock for module state */
-
     ompi_list_t  elan_procs;            /**< elan proc's */
-
     ompi_list_t  elan_send_frags;       /**< outstanding send/put/get */
     ompi_list_t  elan_recv_frags;       /**< outstanding recv's */
     ompi_list_t  elan_pending_acks;     /**< recv's with ack to send */

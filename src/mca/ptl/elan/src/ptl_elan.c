@@ -11,6 +11,7 @@
 #include "mca/ptl/base/ptl_base_sendfrag.h"
 #include "mca/pml/base/pml_base_sendreq.h"
 #include "mca/pml/base/pml_base_recvreq.h"
+#include "mca/pml/teg/src/pml_teg_proc.h"
 #include "mca/ptl/base/ptl_base_recvfrag.h"
 #include "mca/base/mca_base_module_exchange.h"
 #include "ptl_elan.h"
@@ -170,9 +171,9 @@ mca_ptl_elan_req_init (struct mca_ptl_base_module_t *ptl,
 {
     mca_ptl_elan_send_frag_t *desc;
 
-    START_FUNC();
+    START_FUNC(PTL_ELAN_DEBUG_NONE);
 
-    desc = mca_ptl_elan_alloc_send_desc(ptl, request, 0);
+    desc = mca_ptl_elan_alloc_send_desc(ptl, request, MCA_PTL_ELAN_DESC_QDMA);
     if (NULL == desc) {
         ompi_output(0,
                 "[%s:%d] Unable to allocate an elan send descriptors \n", 
@@ -184,7 +185,7 @@ mca_ptl_elan_req_init (struct mca_ptl_base_module_t *ptl,
     }
     desc->desc->desc_status = MCA_PTL_ELAN_DESC_CACHED;
 
-    END_FUNC();
+    END_FUNC(PTL_ELAN_DEBUG_NONE);
     return OMPI_SUCCESS;
 }
 
@@ -242,9 +243,10 @@ mca_ptl_elan_isend (struct mca_ptl_base_module_t *ptl,
      *   PML extract an request from PTL component and then use this
      *   a request to ask for a fragment
      *   Is it too deep across stacks to get a request and 
-     *   correspondingly multiple LOCKS to go through*/
+     *   correspondingly multiple LOCKS to go through
+     */
 
-    START_FUNC();
+    START_FUNC(PTL_ELAN_DEBUG_NONE);
 
     if (offset == 0) { /* The first fragment uses a cached desc */
         desc = ((mca_ptl_elan_send_request_t*)sendreq)->req_frag;
@@ -267,7 +269,7 @@ mca_ptl_elan_isend (struct mca_ptl_base_module_t *ptl,
     /* Update offset */
     sendreq->req_offset += size;
 
-    END_FUNC();
+    END_FUNC(PTL_ELAN_DEBUG_NONE);
     return rc;
 }
 
@@ -286,12 +288,25 @@ mca_ptl_elan_put (struct mca_ptl_base_module_t *ptl,
     int rc = OMPI_SUCCESS;
     mca_ptl_elan_send_frag_t *desc;
 
+
+    /* PML still utilize this interface the same as a send option.
+     * So we need to generate a QDMA to the remote side for completion
+     * notification */
+
     /* XXX: 
      *    Since the address passed down from PML does not provide 
      *    elan information, so there needs to be a change 
      */
 
-    START_FUNC();
+    START_FUNC(PTL_ELAN_DEBUG_PUT);
+
+    if (PTL_ELAN_DEBUG_FLAG & PTL_ELAN_DEBUG_PUT) {
+	char hostname[32]; gethostname(hostname, 32);    
+	fprintf(stderr, "[%s:%s:%d] ptl %p ptl_peer %p req %p offset %d"
+		" size %d flags %d \n",     
+	    hostname, __FUNCTION__, __LINE__,
+	    ptl, ptl_peer, sendreq, offset, size, flags);           
+    }
 
     desc = mca_ptl_elan_alloc_send_desc(ptl, sendreq, MCA_PTL_ELAN_DESC_PUT);
     if (NULL == desc) {
@@ -305,7 +320,7 @@ mca_ptl_elan_put (struct mca_ptl_base_module_t *ptl,
 	    sendreq, offset, &size, flags);
 
     /* Update all the sends until the put is done */
-    END_FUNC();
+    END_FUNC(PTL_ELAN_DEBUG_NONE);
     return rc;
 }
 
@@ -331,7 +346,7 @@ mca_ptl_elan_get (struct mca_ptl_base_module_t *ptl,
      *    elan information, so there needs to be a change 
      */
 
-    START_FUNC();
+    START_FUNC(PTL_ELAN_DEBUG_NONE);
 
     desc = mca_ptl_elan_alloc_send_desc(ptl, sendreq, MCA_PTL_ELAN_DESC_GET);
     if (NULL == desc) {
@@ -345,7 +360,7 @@ mca_ptl_elan_get (struct mca_ptl_base_module_t *ptl,
 	    sendreq, offset, &size, flags);
 
     /* Update all the sends until the put is done */
-    END_FUNC();
+    END_FUNC(PTL_ELAN_DEBUG_NONE);
 #endif
     return rc;
 }
@@ -370,13 +385,34 @@ mca_ptl_elan_matched (mca_ptl_base_module_t * ptl,
     request = frag->frag_request;
     recv_frag = (mca_ptl_elan_recv_frag_t * ) frag;
 
+#if 1 
+    /* XXX: If to change in PML and PTL/base
+     * Two places to setting the frag_peer after match
+     * teg_recvreq.c:157 or ptl_base_match.c:131 
+     */
+
+    /* Makeup for setting up peer information 
+       for elan's connectionless nature */
+    {
+	mca_pml_proc_t* proc;
+	mca_ptl_proc_t* ptl_proc;
+
+	proc = mca_pml_teg_proc_lookup_remote(request->req_base.req_comm, 
+		header->hdr_match.hdr_src);
+
+	THREAD_SCOPED_LOCK(&proc->proc_lock, 
+		(ptl_proc = mca_ptl_array_get_next(&proc->proc_ptl_first))); 
+	frag->frag_base.frag_peer = ptl_proc->ptl_peer;
+    }
+#endif
+
     if (header->hdr_common.hdr_flags & MCA_PTL_FLAGS_ACK_MATCHED) 
 #if 1 /* Basic ACK scheme following TCP cases */
     {
 	mca_ptl_elan_send_frag_t *desc;
 
 	/* Get a frag desc and allocate a send desc */
-	desc = mca_ptl_elan_alloc_send_desc(ptl, NULL, 0);
+	desc = mca_ptl_elan_alloc_send_desc(ptl, NULL, MCA_PTL_ELAN_DESC_QDMA);
 
 	if (NULL == desc) {
 	    ompi_output(0,

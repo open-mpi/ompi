@@ -24,7 +24,7 @@ ompi_mca_ptl_elan_setup (mca_ptl_elan_state_t * ems)
     mca_ptl_elan_component_t *emp;
     int         rail_count;
 
-    START_FUNC();
+    START_FUNC(PTL_ELAN_DEBUG_NONE);
 
     rail_count = ems->elan_nrails;
     emp = ems->elan_component;
@@ -94,7 +94,7 @@ ompi_mca_ptl_elan_setup (mca_ptl_elan_state_t * ems)
         return OMPI_ERROR;
     }
 
-    END_FUNC();
+    END_FUNC(PTL_ELAN_DEBUG_NONE);
     return (OMPI_SUCCESS);
 }
 
@@ -248,12 +248,6 @@ ompi_module_elan_close_procs (mca_ptl_elan_component_t * emp,
     /* TODO: find the ones that are still there and free them */
 }
 
-static void
-ompi_init_elan_queue_events (ompi_ptl_elan_queue_ctrl_t * queue)
-{
-
-}
-
 ELAN_SLEEP *
 ompi_init_elan_sleepdesc (mca_ptl_elan_state_t * ems,
                           RAIL * rail)
@@ -316,7 +310,7 @@ ompi_mca_ptl_elan_init (mca_ptl_elan_component_t * emp)
 
     mca_ptl_elan_state_t *ems;
 
-    START_FUNC();
+    START_FUNC(PTL_ELAN_DEBUG_NONE);
 
     ems = &mca_ptl_elan_global_state;
 
@@ -534,7 +528,7 @@ ompi_mca_ptl_elan_init (mca_ptl_elan_component_t * emp)
         return OMPI_ERROR;
     }
 
-    END_FUNC();
+    END_FUNC(PTL_ELAN_DEBUG_NONE);
     return (OMPI_SUCCESS);
 }
 

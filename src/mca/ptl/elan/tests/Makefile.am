@@ -12,7 +12,7 @@ AM_CPPFLAGS = -I$(top_ompi_builddir)/src/include  \
 
 LDFLAGS += -L$(prefix)/lib -L../src/.libs 
 
-EXECS = qsnet_init qsnet_qdma qsnet_rdma mpitest
+EXECS = qsnet_init qsnet_qdma qsnet_rdma mpitest lat
 
 units: $(EXECS)
 
@@ -27,6 +27,9 @@ qsnet_rdma: qsnet_rdma.c
 
 mpitest: mpi_test.c
 	${HOME}/installs/openmpi/bin/mpicc -g -o mpitest mpi_test.c 
+
+lat: % : %.c
+	${HOME}/installs/openmpi/bin/mpicc -g -o lat lat.c
 
 clean:
 	-rm -rf $(EXECS) 

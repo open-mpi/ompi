@@ -90,14 +90,14 @@ mca_ptl_elan_alloc_send_desc (struct mca_ptl_base_module_t *ptl_ptr,
     ompi_list_item_t *item;
     mca_ptl_elan_send_frag_t *desc;
 
-    START_FUNC();
+    START_FUNC(PTL_ELAN_DEBUG_NONE);
 
     /* For now, bind to queue DMA directly */
-    if (MCA_PTL_ELAN_DESC_QDMA) {
+    if (MCA_PTL_ELAN_DESC_QDMA == desc_type) {
         flist = &(((mca_ptl_elan_module_t *) ptl_ptr)->queue)->tx_desc_free;
-    } else if (MCA_PTL_ELAN_DESC_PUT) {
+    } else if (MCA_PTL_ELAN_DESC_PUT == desc_type) {
         flist = &(((mca_ptl_elan_module_t *) ptl_ptr)->putget)->put_desc_free;
-    } else if (MCA_PTL_ELAN_DESC_GET) {
+    } else if (MCA_PTL_ELAN_DESC_GET == desc_type) {
 	/*struct mca_ptl_elan_peer_t *peer;*/
         flist = &(((mca_ptl_elan_module_t *) ptl_ptr)->putget)->get_desc_free;
     } else {
@@ -143,7 +143,7 @@ mca_ptl_elan_alloc_send_desc (struct mca_ptl_base_module_t *ptl_ptr,
 
     desc->desc->desc_type = desc_type;
 
-    END_FUNC();
+    END_FUNC(PTL_ELAN_DEBUG_NONE);
     return desc;
 }
 
@@ -166,6 +166,16 @@ mca_ptl_elan_send_desc_done (
     ptl = ((ompi_ptl_elan_qdma_desc_t *)desc->desc)->ptl;
     header = &desc->frag_base.frag_header;
     queue = ptl->queue;
+
+    if (PTL_ELAN_DEBUG_FLAG & PTL_ELAN_DEBUG_SEND) {
+	char hostname[32];
+	gethostname(hostname, 32);
+
+	fprintf(stderr, "req %p flag %d, length %d\n", 
+		req, 
+		header->hdr_common.hdr_flags,
+		header->hdr_frag.hdr_frag_length);
+    }
 
     if(NULL == req) { /* An ack descriptor */
 	OMPI_FREE_LIST_RETURN (&queue->tx_desc_free,
