@@ -39,10 +39,6 @@ struct mca_io_base_module_1_0_0_t {
 typedef struct mca_io_base_module_1_0_0_t mca_io_base_module_1_0_0_t;
 
 
-//TODO:
-//remove when added to LAM:
-typedef long long MPI_Offset;
-
 //
 // add typedefs for all MPI-IO functions to io.h
 // add prototypes for all MPI-IO functions to io_romio.h
