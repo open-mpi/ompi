@@ -483,6 +483,10 @@ ompi_wrap_exec_sv(const ompi_sv_t& sv)
   } else {
     free(tmp);
     ret = ompi_few(av, &status);
+    status = WIFEXITED(status) ? WEXITSTATUS(status) : 
+        (WIFSIGNALED(status) ? WTERMSIG(status) :
+         (WIFSTOPPED(status) ? WSTOPSIG(status) : 255));
+
     if (0 != ret && 0 != errno && fl_want_show_error) {
       perror(cmd_name.c_str());
     }
