@@ -462,6 +462,7 @@ ompi_list_t* gpr_proxy_get(ompi_registry_mode_t mode, char *segment, char **toke
 
     /* compute number of tokens */
     tokptr = tokens;
+    num_tokens = 0;
     while (NULL != *tokptr) {
 	num_tokens++;
 	tokptr++;
