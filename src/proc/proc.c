@@ -1,9 +1,15 @@
+/*
+ * $HEADER
+ */
+
 #include <string.h>
+
 #include "threads/mutex.h"
 #include "util/output.h"
 #include "proc/proc.h"
 #include "mca/pcm/pcm.h"
 #include "mca/oob/oob.h"
+#include "mca/ns/base/base.h"
 
 
 static ompi_list_t  ompi_proc_list;
@@ -138,15 +144,16 @@ ompi_proc_t** ompi_proc_self(size_t* size)
 ompi_proc_t * ompi_proc_find ( const ompi_process_name_t * name )
 {
     ompi_proc_t *proc;
+    ompi_ns_cmp_bitmask_t mask;
 
     /* return the proc-struct which matches this jobid+process id */
+
+    mask = OMPI_NS_CMP_CELLID | OMPI_NS_CMP_JOBID | OMPI_NS_CMP_VPID;
     OMPI_THREAD_LOCK(&ompi_proc_lock);
     for(proc =  (ompi_proc_t*)ompi_list_get_first(&ompi_proc_list); 
         proc != (ompi_proc_t*)ompi_list_get_end(&ompi_proc_list);
         proc =  (ompi_proc_t*)ompi_list_get_next(proc)) {
-        if( proc->proc_name.cellid == name->cellid &&
-            proc->proc_name.jobid == name->jobid &&
-            proc->proc_name.procid == name->procid )
+        if (0 == ompi_name_server.compare(mask, &proc->proc_name, name))
             { 
                 break;
             }

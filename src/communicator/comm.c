@@ -15,6 +15,7 @@
 #include "mca/pml/pml.h"
 #include "mca/coll/coll.h"
 #include "mca/coll/base/base.h"
+#include "mca/ns/base/base.h"
 
 #include "mca/pml/pml.h"
 #include "mca/ptl/ptl.h"
@@ -681,6 +682,7 @@ int ompi_comm_determine_first ( ompi_communicator_t *intercomm, int high )
     int flag, rhigh;
     int local_rank, rc;
     ompi_proc_t *lvpid, *rvpid;
+    ompi_ns_cmp_bitmask_t mask;
 
     lvpid = intercomm->c_local_group->grp_proc_pointers[0];
     rvpid = intercomm->c_remote_group->grp_proc_pointers[0];
@@ -689,7 +691,9 @@ int ompi_comm_determine_first ( ompi_communicator_t *intercomm, int high )
     /*
      * determine maximal high value over the intercomm
      */
-    if ( lvpid->proc_name.procid > rvpid->proc_name.procid ) {
+    mask = OMPI_NS_CMP_CELLID | OMPI_NS_CMP_JOBID | OMPI_NS_CMP_VPID;
+    if ( ompi_name_server.compare(mask, &lvpid->proc_name,
+                                  &rvpid->proc_name) < 0 ) {
         if ( 0 == local_rank  ) {
             rc = intercomm->c_coll.coll_bcast(&high, 1, MPI_INT, MPI_ROOT,
                                               intercomm );
