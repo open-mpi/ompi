@@ -18,11 +18,12 @@
 /*
  * the list of peers
  */
-ompi_list_t mca_oob_tcp_peer_list;
+extern ompi_list_t mca_oob_tcp_peer_list;
+
 /*
  * the tree of peers
  */
-ompi_rb_tree_t mca_oob_tcp_peer_tree;
+extern ompi_rb_tree_t mca_oob_tcp_peer_tree;
 
 
 #if defined(c_plusplus) || defined(__cplusplus)
