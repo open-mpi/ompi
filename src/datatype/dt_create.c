@@ -168,8 +168,8 @@ DUMP_TYPE( long, long )
 DUMP_TYPE( double, double )
 DUMP_TYPE( long_long, long long )
 DUMP_TYPE( long_double, long double )
-DUMP_TYPE( complex_float, complex_float_t )
-DUMP_TYPE( complex_double, complex_double_t )
+DUMP_TYPE( complex_float, lam_complex_float_t )
+DUMP_TYPE( complex_double, lam_complex_double_t )
 
 static lam_convertor_t* pDumpConv = NULL;
 
