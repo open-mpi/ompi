@@ -14,6 +14,7 @@ noinst_LTLIBRARIES = libruntime.la
 headers = \
     runtime.h \
     runtime_types.h \
+    runtime_internal.h \
     ompi_progress.h
 
 libruntime_la_SOURCES = \
