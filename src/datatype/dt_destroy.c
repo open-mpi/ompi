@@ -7,10 +7,10 @@ int lam_ddt_destroy( dt_desc_t** dt )
 {
    dt_desc_t* pData = *dt;
 
-   if( !(pData->flags & DT_FLAG_FOREVER) )
+   if( pData->flags & DT_FLAG_FOREVER )
       return LAM_ERROR;
 
    OBJ_RELEASE( pData );
-
+   *dt = NULL;
    return 0;
 }
