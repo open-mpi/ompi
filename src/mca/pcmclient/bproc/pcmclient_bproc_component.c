@@ -137,7 +137,6 @@ mca_pcmclient_bproc_init(int *priority,
         int rank_offset, bproc_rank;
 
         bproc_rank = atoi(tmp);
-        free(tmp);
         mca_base_param_lookup_int(param_rank_offset, &rank_offset);
         if (rank_offset < 0) return NULL;
 
