@@ -33,7 +33,7 @@ typedef struct mca_ptl_elan_send_frag_t mca_ptl_elan_send_frag_t;
  *  ELAN received fragment derived type.
  */
 struct mca_ptl_elan_recv_frag_t {
-    mca_ptl_base_recv_frag_t frag_base; 
+    mca_ptl_base_recv_frag_t frag_recv; 
     size_t          frag_hdr_cnt;  
     size_t          frag_msg_cnt; 
     int             frag_progressed;

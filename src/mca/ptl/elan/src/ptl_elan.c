@@ -42,7 +42,7 @@ mca_ptl_elan_t mca_ptl_elan = {
         mca_ptl_elan_get,
         mca_ptl_elan_matched,
         mca_ptl_elan_req_init,
-        mca_ptl_elan_req_fini,
+        mca_ptl_elan_req_fini
     }
 };
 
@@ -164,27 +164,25 @@ int
 mca_ptl_elan_req_init (struct mca_ptl_t *ptl,
                        struct mca_pml_base_send_request_t *request)
 {
-    int         rc = OMPI_SUCCESS;
     mca_ptl_elan_send_frag_t *sd;
     mca_ptl_elan_send_request_t * elan_req;
 
     START_FUNC();
 
-    /*OBJ_CONSTRUCT (request, mca_pml_base_send_request_t);*/
     sd = mca_ptl_elan_alloc_send_desc(ptl, request);
     if (NULL == sd) {
         ompi_output(0,
                 "[%s:%d] Unable to allocate an elan send descriptors \n", 
                 __FILE__, __LINE__);
-	rc = OMPI_ERR_OUT_OF_RESOURCE;
+	return OMPI_ERR_OUT_OF_RESOURCE; 
     } else {
 	/* XXX: Hope PML never writes into the fragment */
-	(mca_ptl_elan_send_request_t *request)->req_frag = sd;
+	((mca_ptl_elan_send_request_t *)request)->req_frag = sd;
     }
     sd->desc->desc_status = MCA_PTL_ELAN_DESC_CACHED;
 
     END_FUNC();
-    return rc;
+    return OMPI_SUCCESS;
 }
 
 void
@@ -193,10 +191,12 @@ mca_ptl_elan_req_fini (struct mca_ptl_t *ptl,
 {
     /* XXX: Lock to be added */
     ompi_ptl_elan_queue_ctrl_t *queue;
-    queue = (struct mca_ptl_elan_t * ptl)->queue;
+    mca_ptl_elan_send_frag_t    *desc;
+
+    queue = ((struct mca_ptl_elan_t * )ptl)->queue;
 
     /* return the fragment and update the status */
-    desc = (mca_ptl_elan_send_request_t *) request->req_frag;
+    desc = ((mca_ptl_elan_send_request_t *) request)->req_frag;
     OMPI_FREE_LIST_RETURN (&queue->tx_desc_free, (ompi_list_item_t *) desc);
     desc->desc->desc_status = MCA_PTL_ELAN_DESC_LOCAL;
     return;
@@ -243,19 +243,20 @@ mca_ptl_elan_isend (struct mca_ptl_t *ptl,
 
     START_FUNC();
 
-    if (offset == 0) /* The first fragment uses a cached desc */
+    if (offset == 0) { /* The first fragment uses a cached desc */
         sd = ((mca_ptl_elan_send_request_t*)sendreq)->req_frag;
     } else {
 
 	/* Get a frag desc and allocate a send desc */
 	ompi_free_list_t * frag_list;
+	ompi_list_item_t * item;
 
 	frag_list = &mca_ptl_elan_module.elan_send_frags_free;
 
 	/* More sendfrag then descritpors, no need to block */
 	ompi_mutex_lock(&frag_list->fl_lock);
-	item = ompi_list_remove_first (&((flist)->super));
-	ompi_mutex_unlock(&flist->fl_lock);
+	item = ompi_list_remove_first (&((frag_list)->super));
+	ompi_mutex_unlock(&frag_list->fl_lock);
         OMPI_PTL_ELAN_CHECK_UNEX (item, NULL, OMPI_ERROR, 0);
 
 	sd = mca_ptl_elan_alloc_send_desc(ptl, sendreq);
@@ -329,7 +330,7 @@ mca_ptl_elan_matched (mca_ptl_t * ptl,
     request = frag->frag_request;
 
     /* Process the fragment */
-    set = fetchNset (&(mca_ptl_elan_recv_frag_t *)frag->frag_progressed, 1);
+    set = fetchNset (&((mca_ptl_elan_recv_frag_t *)frag)->frag_progressed, 1);
 
     if (!set) {
 
@@ -339,7 +340,7 @@ mca_ptl_elan_matched (mca_ptl_t * ptl,
 	 * But in ELAN cases, we save the data into an unex buffer
 	 * if the recv descriptor is not posted (for too long) (TODO).
 	 * We then need to copy from unex_buffer to application buffer */
-	if(header->hdr_frag_length > 0) {
+	if(header->hdr_frag.hdr_frag_length > 0) {
 
 	    struct iovec iov; 
 	    ompi_proc_t *proc;
@@ -377,8 +378,11 @@ mca_ptl_elan_matched (mca_ptl_t * ptl,
 	     */
 	 }
 
-	frag->frag_base.frag_owner->ptl_recv_progress 
-	    (frag->frag_base.frag_owner, request, frag->frag_base.frag_size);
+	frag->frag_base.frag_owner->ptl_recv_progress (
+                frag->frag_base.frag_owner, 
+                request, 
+                frag->frag_base.frag_size, 
+                frag->frag_base.frag_size);
 
 	/* FIXME: 
 	 * To support the required ACK, do not return
