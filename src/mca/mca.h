@@ -5,6 +5,7 @@
 #ifndef LAM_MCA_H
 #define LAM_MCA_H
 
+#include "mpi.h"
 #include "lam/util/cmd_line.h"
 #include "lam/lfc/array.h"
 
@@ -12,7 +13,7 @@
  * Types for each function
  */
 
-typedef int (*mca_open_module_fn_t)(lam_cmd_lint_t *cmd);
+typedef int (*mca_open_module_fn_t)(lam_cmd_line_t *cmd);
 typedef int (*mca_close_module_fn_t)(void);
 typedef int (*mca_mpi_init_callback_fn_t)(void);
 

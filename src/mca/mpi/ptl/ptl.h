@@ -31,9 +31,9 @@ typedef int (*mca_ptl_progress_fn_t)(mca_time_t);
  */
 
 typedef struct mca_ptl_module_1_0_0 {
-  mca_1_0_0_t mp_meta_info;
-  mca_ptl_query_fn_t mp_query;
-  mca_ptl_init_1_0_0_fn_t mp_init;
+  mca_1_0_0_t super;
+  mca_ptl_query_fn_t ptlm_query;
+  mca_ptl_init_1_0_0_fn_t ptlm_init;
 } mca_ptl_module_1_0_0_t;
 
 /*
