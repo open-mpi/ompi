@@ -32,6 +32,7 @@
 /*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
 
 #include "lam/base/object.h"
+#include "lam_constants.h"
 
 typedef int     affinity_t;
 
