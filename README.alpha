@@ -22,7 +22,7 @@ this release is to get the Open MPI software onto other people's
 machines and see what creative ways you can come up with to break it,
 and to send us your comments and suggestions.
 
-Let me stress the following points:
+However, we want to stress the following points:
 
 - This is an *alpha* quality release.  We're quite aware that there
   are several things still broken (but report them anyway!).
@@ -34,7 +34,7 @@ Let me stress the following points:
 
 - Since the competition in the HPC community is rather fierce, please
   do not redistribute this software without our permission.  Also,
-  please do not publish any results (good or bad) because, as I
+  please do not publish any results (good or bad) because, as
   mentioned above, this is pre-release software and we still have
   performance tuning to do.
 
@@ -42,10 +42,9 @@ Let me stress the following points:
 
 You have probably downloaded this tarball from
 http://www.open-mpi.org/nightly/.  This directory is updated at least
-once a day around 3am US/Indiana time (assuming that there is new code
+once a day around 2am US/Indiana time (assuming that there is new code
 to release).  It may be updated more frequently if a critical bug fix
-is reported and fixed -- we can make a new tarball and put it in the
-/nightly/ directory.
+is reported and fixed.
 
 The best way to report bugs, send comments, or ask questions is to
 sign up on the devel@open-mpi.org mailing list:
@@ -65,6 +64,10 @@ mainly in the following areas:
 - Support for MX needs performance tuning
 - Support for TCP needs performance tuning
 - Support for shared memory is not fully debugged
+  --> If this becomes a problem during your testing, run the
+      following:
+          shell$ rm -f <prefix>/lib/openmpi/*sm*
+      where <prefix> is the directory where you installed Open MPI.
 - Striping MPI messages across multiple networks is supported (and
   happens automatically when multiple networks are available), but
   needs performance tuning
