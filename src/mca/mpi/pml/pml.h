@@ -108,8 +108,8 @@ extern "C" {
  * Public variables
  */
 
-extern lam_list_t *mca_base_opened;
-extern lam_list_t *mca_base_available;
+extern lam_list_t *mca_pml_base_opened;
+extern lam_list_t *mca_pml_base_available;
 
 /*
  * Global instance of array of pointers to lam_ssi_rpi_t.  Will
