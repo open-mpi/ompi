@@ -25,10 +25,11 @@ static const char FUNC_NAME[] = "MPI_Comm_connect";
 int MPI_Comm_connect(char *port_name, MPI_Info info, int root,
                      MPI_Comm comm, MPI_Comm *newcomm) 
 {
-    int rank,  rc;
-    int send_first=1; /* yes, we are the active part in this game */
+    int rank, tag, rc;
+    int send_first=1;   /* yes, we are the active part in this game */
     ompi_communicator_t *newcomp=MPI_COMM_NULL;
-    ompi_process_name_t *port_proc_name;
+    ompi_process_name_t *port_proc_name=NULL;
+    char *tmp_port=NULL;
 
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -73,15 +74,18 @@ int MPI_Comm_connect(char *port_name, MPI_Info info, int root,
     
     /* 
      * translate the port_name string into the according process_name_t 
-     * structure. This functionality is currently missing from ns.
+     * structure. 
      */ 
-    port_proc_name = ompi_name_server.convert_string_to_process_name(port_name);
+    tmp_port = ompi_parse_port (port_name, &tag);
+    port_proc_name = ompi_name_server.convert_string_to_process_name(tmp_port);
     if ( NULL == port_proc_name ) {
         *newcomm = MPI_COMM_NULL;
         return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_PORT, FUNC_NAME);
     }
+    free (tmp_port);
+
     rc = ompi_comm_connect_accept (comm, root, port_proc_name, send_first,
-                                   &newcomp);
+                                   &newcomp, tag);
     
     *newcomm = newcomp;
     OMPI_ERRHANDLER_RETURN(rc, comm, rc, FUNC_NAME);

@@ -26,7 +26,7 @@ int MPI_Comm_spawn_multiple(int count, char **array_of_commands, char ***array_o
                             int root, MPI_Comm comm, MPI_Comm *intercomm,
                             int *array_of_errcodes) 
 {
-    int i, rc, rank;
+    int i, rc, rank, tag;
     int totalnumprocs=0;
     ompi_communicator_t *newcomp;
     int send_first=0; /* they are contacting us first */
@@ -132,7 +132,7 @@ int MPI_Comm_spawn_multiple(int count, char **array_of_commands, char ***array_o
        /* rc = ompi_comm_namepublish (service_name, port_name ); */
    }
 
-   rc = ompi_comm_connect_accept (comm, root, NULL, send_first, &newcomp);
+   rc = ompi_comm_connect_accept (comm, root, NULL, send_first, &newcomp, tag);
 
    if ( rank == root ) {
        /* unpublish name */
