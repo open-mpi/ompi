@@ -20,10 +20,17 @@ AC_ARG_ENABLE(mca-dso,
     AC_HELP_STRING([--enable-mca-dso=LIST],
 		   [comma-separated list of types and/or type-component pairs that will be built as run-time loadable modules (as opposed to statically linked in), if supported on this platform.  The default is to build all components as DSOs; the --disable-mca-dso[=LIST] form can be used to disable building all or some types/components as DSOs]))
 
-if test -z "$enable_mca_dso" -o "$enable_mca_dso" = "yes"; then
+# First, check to see if we're only building static libraries.  If so,
+# then override everything and only build components as static
+# libraries.
+
+if test "$enable_shared" = "no"; then
+    DSO_all=0
+    msg=none
+elif test -z "$enable_mca_dso" -o "$enable_mca_dso" = "yes"; then
     DSO_all=1
     msg=all
-elif test "$with_modules" = "no"; then
+elif test "$enable_mca_dso" = "no"; then
     DSO_all=0
     msg=none
 else
@@ -40,6 +47,10 @@ else
 fi
 AC_MSG_RESULT([$msg])
 unset msg
+if test "$enable_shared" = "no"; then
+    AC_MSG_WARN([*** Shared libraries have been disabled (--disable-shared])
+    AC_MSG_WARN([*** Building MCA components as DSOs automatically disabled])
+fi
 
 # The list of MCA types (it's fixed)
 
