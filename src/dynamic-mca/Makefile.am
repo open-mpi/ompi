@@ -10,6 +10,7 @@ SUBDIRS = \
         common \
         io \
         mpool \
+        ns \
         one \
         oob \
         pcm \
@@ -18,4 +19,4 @@ SUBDIRS = \
         topo
 # JMS Temporary hack to make "make dist" function properly; directories 
 # mentioned here will eventually be moved into SUBDIRS
-DIST_SUBDIRS = $(SUBDIRS) gpr ns
+DIST_SUBDIRS = $(SUBDIRS) gpr

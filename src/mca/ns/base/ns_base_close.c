@@ -14,11 +14,17 @@
 
 int mca_ns_base_close(void)
 {
-  /* Close all remaining available modules (may be one if this is a
+  /* If we have a selected component and module, then finalize it */
+
+  if (mca_ns_base_selected) {
+    mca_ns_base_selected_component.ns_finalize();
+  }
+
+  /* Close all remaining available components (may be one if this is a
      OMPI RTE program, or [possibly] multiple if this is ompi_info) */
 
   mca_base_modules_close(mca_ns_base_output, 
-                         &mca_ns_base_modules_available, NULL);
+                         &mca_ns_base_components_available, NULL);
 
   /* All done */
 
