@@ -74,7 +74,8 @@ MPI::Comm::Create_keyval(MPI::Comm::_MPI2CPP_COPYATTRFN_* comm_copy_attr_fn,
                          void* extra_state)
 {
     int keyval;
-    (void)MPI_Keyval_create(copy_attr_intercept, delete_attr_intercept,
+    (void)MPI_Keyval_create(ompi_mpi_cxx_copy_attr_intercept, 
+                            ompi_mpi_cxx_delete_attr_intercept,
                             &keyval, extra_state);
     key_pair_t* copy_and_delete = 
         new key_pair_t(comm_copy_attr_fn, comm_delete_attr_fn); 

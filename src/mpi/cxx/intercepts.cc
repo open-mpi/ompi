@@ -8,7 +8,7 @@
 #include <stdio.h>
 
 extern "C" 
-void throw_excptn_fctn(MPI_Comm *, int *errcode, ...)
+void ompi_mpi_cxx_throw_excptn_fctn(MPI_Comm *, int *errcode, ...)
 {
 #if OMPI_HAVE_CXX_EXCEPTION_SUPPORT
     throw(MPI::Exception(*errcode));
@@ -31,8 +31,7 @@ ompi_mutex_t *MPI::Comm::mpi_err_map_mutex = NULL;
 ompi_mutex_t *MPI::Comm::key_fn_map_mutex = NULL;
 
 extern "C"
-void
-errhandler_intercept(MPI_Comm *mpi_comm, int *err, ...)
+void ompi_mpi_cxx_errhandler_intercept(MPI_Comm *mpi_comm, int *err, ...)
 {
   MPI::Comm* comm = MPI::Comm::mpi_err_map[*mpi_comm];
   if (comm && comm->my_errhandler) {
@@ -46,7 +45,8 @@ errhandler_intercept(MPI_Comm *mpi_comm, int *err, ...)
 MPI::Op* MPI::Intracomm::current_op;
 
 extern "C" void
-op_intercept(void *invec, void *outvec, int *len, MPI_Datatype *datatype)
+ompi_mpi_cxx_op_intercept(void *invec, void *outvec, int *len, 
+                          MPI_Datatype *datatype)
 {
   MPI::Op* op = MPI::Intracomm::current_op;
   MPI::Datatype thedata = *datatype;
@@ -62,9 +62,9 @@ op_intercept(void *invec, void *outvec, int *len, MPI_Datatype *datatype)
 }
 
 extern "C" int
-copy_attr_intercept(MPI_Comm oldcomm, int keyval, 
-		    void *extra_state, void *attribute_val_in, 
-		    void *attribute_val_out, int *flag)
+ompi_mpi_cxx_copy_attr_intercept(MPI_Comm oldcomm, int keyval, 
+                                 void *extra_state, void *attribute_val_in, 
+                                 void *attribute_val_out, int *flag)
 {
   int ret = 0;
   MPI::Comm::key_pair_t* copy_and_delete = 
@@ -116,8 +116,8 @@ copy_attr_intercept(MPI_Comm oldcomm, int keyval,
 }
 
 extern "C" int
-delete_attr_intercept(MPI_Comm comm, int keyval, 
-		      void *attribute_val, void *extra_state)
+ompi_mpi_cxx_delete_attr_intercept(MPI_Comm comm, int keyval, 
+                                   void *attribute_val, void *extra_state)
 {
   int ret = 0;
 

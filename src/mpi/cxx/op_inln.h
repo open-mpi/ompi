@@ -95,7 +95,7 @@ MPI::Op::operator MPI_Op () const { return mpi_op; }
 inline void
 MPI::Op::Init(MPI::User_function *func, bool commute)
 {
-  (void)MPI_Op_create(op_intercept , (int) commute, &mpi_op);
+  (void)MPI_Op_create(ompi_mpi_cxx_op_intercept , (int) commute, &mpi_op);
   op_user_function = (User_function*)func;
 }
 

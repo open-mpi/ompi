@@ -27,28 +27,29 @@ struct ompi_mutex_t;
 
 //JGS: this is used for implementing user functions for MPI::Op
 extern "C" void
-op_intercept(void *invec, void *outvec, int *len, MPI_Datatype *datatype);
+ompi_mpi_cxx_op_intercept(void *invec, void *outvec, int *len, 
+                          MPI_Datatype *datatype);
 
 //JGS: this is used as the MPI_Handler_function for
 // the mpi_errhandler in ERRORS_THROW_EXCEPTIONS
 extern "C" void
-throw_excptn_fctn(MPI_Comm* comm, int* errcode, ...);
+ompi_mpi_cxx_throw_excptn_fctn(MPI_Comm* comm, int* errcode, ...);
 
 extern "C" void
-errhandler_intercept(MPI_Comm * mpi_comm, int * err, ...);
+ompi_mpi_cxx_errhandler_intercept(MPI_Comm * mpi_comm, int * err, ...);
 
 
 //used for attr intercept functions
 enum CommType { eIntracomm, eIntercomm, eCartcomm, eGraphcomm};
 
 extern "C" int
-copy_attr_intercept(MPI_Comm oldcomm, int keyval, 
-		    void *extra_state, void *attribute_val_in, 
-		    void *attribute_val_out, int *flag);
+ompi_mpi_cxx_copy_attr_intercept(MPI_Comm oldcomm, int keyval, 
+                                 void *extra_state, void *attribute_val_in, 
+                                 void *attribute_val_out, int *flag);
 
 extern "C" int
-delete_attr_intercept(MPI_Comm comm, int keyval, 
-		      void *attribute_val, void *extra_state);
+ompi_mpi_cxx_delete_attr_intercept(MPI_Comm comm, int keyval, 
+                                   void *attribute_val, void *extra_state);
 
 
 #if 0 /* OMPI_ENABLE_MPI_PROFILING */
