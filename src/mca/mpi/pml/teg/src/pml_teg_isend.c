@@ -7,7 +7,6 @@
 #include "pml_teg_sendreq.h"
 
 
-
 int mca_pml_teg_isend_init(
     void *buf,
     size_t size,
@@ -19,13 +18,12 @@ int mca_pml_teg_isend_init(
     lam_communicator_t* comm,
     lam_request_t **request)
 {
-    int rc;
-    mca_pml_base_send_request_t* sendreq;
-    mca_pml_proc_t *proc = mca_pml_teg_proc_lookup_remote(comm,dst);
-    if((rc = mca_pml_teg_send_request_alloc(proc, &sendreq)) != LAM_SUCCESS)
+    mca_ptl_base_send_request_t* sendreq;
+    int rc = mca_pml_teg_send_request_alloc(comm,dst,&sendreq);
+    if(rc != LAM_SUCCESS)
         return rc;
-
-    mca_pml_base_send_request_rinit(
+ 
+    mca_ptl_base_send_request_rinit(
         sendreq,
         buf,
         size,
@@ -34,9 +32,9 @@ int mca_pml_teg_isend_init(
         tag,
         comm,
         sendmode,
-        persistent
+        false
         );
-
+         
     *request = (lam_request_t*)sendreq;
     return LAM_SUCCESS;
 }
@@ -52,13 +50,12 @@ int mca_pml_teg_isend(
     lam_communicator_t* comm,
     lam_request_t **request)
 {
-    int rc;
-    mca_pml_base_send_request_t* sendreq;
-    mca_pml_proc_t* proc = mca_pml_teg_proc_lookup_remote(comm,dst);
-    if((rc = mca_pml_teg_send_request_alloc(proc, &sendreq)) != LAM_SUCCESS)
+    mca_ptl_base_send_request_t* sendreq;
+    int rc = mca_pml_teg_send_request_alloc(comm,dst,&sendreq);
+    if(rc != LAM_SUCCESS)
         return rc;
 
-    mca_pml_base_send_request_rinit(
+    mca_ptl_base_send_request_rinit(
         sendreq,
         buf,
         size,

@@ -1,3 +1,8 @@
+/** @file 
+ *
+ *  
+ */
+
 /*
  * $HEADER$
  */
@@ -12,19 +17,22 @@
 #include "mca/mpi/ptl/ptl.h"
 
 
-/*
+/**
  * TEG PML Interface
  */
 
 struct mca_pml_teg_t {
-    mca_pml_t super;
+    mca_pml_t super; /**< comment */
 
     /* available ptls */
+    mca_ptl_base_module_t **teg_ptl_modules;
+    size_t teg_num_ptl_modules;
+
     mca_ptl_t** teg_ptls;
     size_t teg_num_ptls;
 
-    /* incomplete posted sends */
-    lam_list_t  teg_incomplete_sends;
+    lam_list_t  teg_incomplete_sends; 
+    lam_list_t  teg_pending_acks;
     lam_mutex_t teg_lock;
 };
 typedef struct mca_pml_teg_t mca_pml_teg_t;
@@ -40,12 +48,12 @@ extern mca_pml_base_module_1_0_0_t mca_pml_teg_module_1_0_0_0;
 
 
 extern int mca_pml_teg_open(
-    lam_cmd_line_t*
+    lam_cmd_line_t* cmd_line
 );
 
 extern int mca_pml_teg_close(void);
 
-extern mca_pml_1_0_0_t* mca_pml_teg_init(
+extern mca_pml_t* mca_pml_teg_init(
     int *priority, 
     int *max_tag, 
     int *max_cid

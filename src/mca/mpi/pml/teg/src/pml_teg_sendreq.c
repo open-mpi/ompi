@@ -10,39 +10,17 @@
 #include "pml_teg_sendreq.h"
 
 
-int mca_pml_teg_send_request_alloc(mca_pml_proc_t* proc, mca_pml_base_send_request_t** sendreq)
-{
-    return LAM_SUCCESS;
-}
 
-
-/*
- *  Start a send request by calling the scheduler to stripe
- *  the message across available PTLs. If the scheduler cannot 
- *  fragment the entire message due to resource constraints,
- *  queue for later delivery.
- */
-
-int mca_pml_teg_send_request_start(mca_pml_base_send_request_t* req)
-{
-    bool complete;
-    int rc = mca_pml_teg_send_request_schedule(req, &complete);
-    if(rc != LAM_SUCCESS)
-        return rc;
-    if(complete == false) {
-        THREAD_LOCK(&mca_pml_teg.teg_lock);
-        lam_list_append(&mca_pml_teg.teg_incomplete_sends, (lam_list_item_t*)req);
-        THREAD_UNLOCK(&mca_pml_teg.teg_lock);
-    }
-    return LAM_SUCCESS;
-}
-
-
-/*
- *  Schedule message delivery across potentially multiple PTLs. Use
- *  two seperate PTL pools. One for the first fragment (low latency)
- *  and a second for the remaining fragments (high bandwidth). Note that
- *  the same PTL could exist in both pools. 
+/**
+ *  Schedule message delivery across potentially multiple PTLs. 
+ *
+ *  @param request (IN)    Request to schedule
+ *  @param complete (OUT)  Completion status
+ *  @return status         Error status
+ *
+ *  The scheduler uses two seperate PTL pools. One for the first fragment 
+ *  (low latency) and a second for the remaining fragments (high bandwidth). 
+ *  Note that the same PTL could exist in both pools. 
  *
  *  If the first fragment cannot be scheduled due to a resource constraint,
  *  the entire message is queued for later delivery by the progress engine. 
@@ -52,11 +30,14 @@ int mca_pml_teg_send_request_start(mca_pml_base_send_request_t* req)
  *
  */
 
-int mca_pml_teg_send_request_schedule(mca_pml_base_send_request_t* req, bool* complete)
+int mca_pml_teg_send_request_schedule(mca_ptl_base_send_request_t* req, bool* complete)
 {
+#if 0
     lam_proc_t *proc = lam_comm_lookup_peer(req->super.req_communicator, req->super.req_peer);
     mca_pml_proc_t* proc_pml = proc->proc_pml;
 
+    /* start the first fragment */
+    if(lam
 
     /* allocate remaining bytes to PTLs */
     size_t bytes_remaining = req->req_length - req->req_bytes_fragmented;
@@ -91,6 +72,7 @@ int mca_pml_teg_send_request_schedule(mca_pml_base_send_request_t* req, bool* co
         bytes_remaining = req->req_length = req->req_bytes_fragmented;
     }
     *complete = (req->req_length == req->req_bytes_fragmented);
+#endif
     return LAM_SUCCESS;
 }
 
@@ -103,10 +85,10 @@ int mca_pml_teg_send_request_schedule(mca_pml_base_send_request_t* req, bool* co
 int mca_pml_teg_send_request_progress(void)
 {
     THREAD_LOCK(&mca_pml_teg.teg_lock);
-    mca_pml_base_send_request_t* req;
-    for(req =  (mca_pml_base_send_request_t*)lam_list_get_first(&mca_pml_teg.teg_incomplete_sends); 
-        req != (mca_pml_base_send_request_t*)lam_list_get_end(&mca_pml_teg.teg_incomplete_sends);
-        req =  (mca_pml_base_send_request_t*)lam_list_get_next(req)) {
+    mca_ptl_base_send_request_t* req;
+    for(req =  (mca_ptl_base_send_request_t*)lam_list_get_first(&mca_pml_teg.teg_incomplete_sends); 
+        req != (mca_ptl_base_send_request_t*)lam_list_get_end(&mca_pml_teg.teg_incomplete_sends);
+        req =  (mca_ptl_base_send_request_t*)lam_list_get_next(req)) {
 
         bool complete;
         int rc = mca_pml_teg_send_request_schedule(req, &complete);
@@ -115,7 +97,7 @@ int mca_pml_teg_send_request_progress(void)
              return rc;
         }
         if(complete) {
-            req = (mca_pml_base_send_request_t*)lam_list_remove(
+            req = (mca_ptl_base_send_request_t*)lam_list_remove(
                 &mca_pml_teg.teg_incomplete_sends, (lam_list_item_t*)req);
         }
     }
