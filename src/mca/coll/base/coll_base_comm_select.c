@@ -171,7 +171,7 @@ int mca_coll_base_comm_select(ompi_communicator_t *comm,
      in the MCA parameter; parse them and check them all */
 
   else if (NULL != names && 0 < strlen(names)) {
-    name_array = ompi_argv_split("names", ',');
+    name_array = ompi_argv_split(names, ',');
     num_names = ompi_argv_count(name_array);
 
     ompi_output_verbose(10, mca_coll_base_output, 
