@@ -33,11 +33,25 @@ static const char FUNC_NAME[] = "MPI_Type_match_size";
 
 int MPI_Type_match_size(int typeclass, int size, MPI_Datatype *type)
 {
-  if (MPI_PARAM_CHECK) {
-    OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-  }
+    if (MPI_PARAM_CHECK) {
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+    }
 
-  /* This function is not yet implemented */
+    switch( typeclass ) {
+    case MPI_TYPECLASS_REAL:
+        *type = (MPI_Datatype)ompi_ddt_match_size( size, DT_FLAG_DATA_FLOAT, DT_FLAG_DATA_C );
+        break;
+    case MPI_TYPECLASS_INTEGER:
+        *type = (MPI_Datatype)ompi_ddt_match_size( size, DT_FLAG_DATA_INT, DT_FLAG_DATA_C );
+        break;
+    case MPI_TYPECLASS_COMPLEX:
+        *type = (MPI_Datatype)ompi_ddt_match_size( size, DT_FLAG_DATA_COMPLEX, DT_FLAG_DATA_C );
+        break;
+    default:
+        *type = &ompi_mpi_datatype_null;
+    }
+    if( *type != &ompi_mpi_datatype_null ) 
+        return MPI_SUCCESS;
 
-  return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INTERN, FUNC_NAME);
+    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
 }
