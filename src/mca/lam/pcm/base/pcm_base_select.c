@@ -29,7 +29,7 @@ int mca_pcm_base_select(bool *allow_multi_user_threads,
   lam_list_item_t *item;
   mca_base_module_list_item_t *mli;
   mca_pcm_base_module_t *module, *best_module;
-  mca_pcm_t *actions;
+  mca_pcm_t *actions, *best_actions;
   extern lam_list_t mca_pcm_base_modules_available;
 
   /* Traverse the list of available modules; call their init
@@ -51,8 +51,8 @@ int mca_pcm_base_select(bool *allow_multi_user_threads,
       lam_output_verbose(10, mca_pcm_base_output,
                          "select: no init function; ignoring module");
     } else {
-      if (MCA_SUCCESS != module->pcmm_init(&priority, &user_threads, 
-                                           &hidden_threads)) {
+      actions = module->pcmm_init(&priority, &user_threads, &hidden_threads);
+      if (NULL == actions) {
         lam_output_verbose(10, mca_pcm_base_output,
                            "select: init returned failure");
       } else {
@@ -63,6 +63,7 @@ int mca_pcm_base_select(bool *allow_multi_user_threads,
           best_user_threads = user_threads;
           best_hidden_threads = hidden_threads;
           best_module = module;
+          best_actions = actions;
         }
       }
     }
@@ -111,7 +112,7 @@ int mca_pcm_base_select(bool *allow_multi_user_threads,
   /* Save the winner */
 
   mca_pcm_base_selected_module = *best_module;
-  mca_pcm = *actions;
+  mca_pcm = *best_actions;
   *allow_multi_user_threads = best_user_threads;
   *have_hidden_threads = best_hidden_threads;
   lam_output_verbose(10, mca_pcm_base_output, 

@@ -30,7 +30,7 @@ int mca_oob_base_select(bool *allow_multi_user_threads,
   lam_list_item_t *item;
   mca_base_module_list_item_t *mli;
   mca_oob_base_module_t *module, *best_module;
-  mca_oob_t *actions;
+  mca_oob_t *actions, *best_actions;
   extern lam_list_t mca_oob_base_modules_available;
 
   /* Traverse the list of available modules; call their init
@@ -52,8 +52,8 @@ int mca_oob_base_select(bool *allow_multi_user_threads,
       lam_output_verbose(10, mca_oob_base_output,
                          "select: no init function; ignoring module");
     } else {
-      if (MCA_SUCCESS != module->oobm_init(&priority, &user_threads, 
-                                           &hidden_threads)) {
+      actions = module->oobm_init(&priority, &user_threads, &hidden_threads);
+      if (NULL == actions) {
         lam_output_verbose(10, mca_oob_base_output,
                            "select: init returned failure");
       } else {
@@ -64,6 +64,7 @@ int mca_oob_base_select(bool *allow_multi_user_threads,
           best_user_threads = user_threads;
           best_hidden_threads = hidden_threads;
           best_module = module;
+          best_actions = actions;
         }
       }
     }
@@ -112,7 +113,7 @@ int mca_oob_base_select(bool *allow_multi_user_threads,
   /* Save the winner */
 
   mca_oob_base_selected_module = *best_module;
-  mca_oob = *actions;
+  mca_oob = *best_actions;
   *allow_multi_user_threads = best_user_threads;
   *have_hidden_threads = best_hidden_threads;
   lam_output_verbose(10, mca_oob_base_output, 

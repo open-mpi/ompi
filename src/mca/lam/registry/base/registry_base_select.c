@@ -30,7 +30,7 @@ int mca_registry_base_select(bool *allow_multi_user_threads,
   lam_list_item_t *item;
   mca_base_module_list_item_t *mli;
   mca_registry_base_module_t *module, *best_module;
-  mca_registry_t *actions;
+  mca_registry_t *actions, *best_actions;
   extern lam_list_t mca_registry_base_modules_available;
 
   /* Traverse the list of available modules; call their init
@@ -52,8 +52,9 @@ int mca_registry_base_select(bool *allow_multi_user_threads,
       lam_output_verbose(10, mca_registry_base_output,
                          "select: no init function; ignoring module");
     } else {
-      if (MCA_SUCCESS != module->registrym_init(&priority, &user_threads, 
-                                           &hidden_threads)) {
+      actions = module->registrym_init(&priority, &user_threads, 
+                                       &hidden_threads);
+      if (NULL == actions) {
         lam_output_verbose(10, mca_registry_base_output,
                            "select: init returned failure");
       } else {
@@ -64,6 +65,7 @@ int mca_registry_base_select(bool *allow_multi_user_threads,
           best_user_threads = user_threads;
           best_hidden_threads = hidden_threads;
           best_module = module;
+          best_actions = actions;
         }
       }
     }
@@ -106,13 +108,14 @@ int mca_registry_base_select(bool *allow_multi_user_threads,
      available list all unselected modules.  The available list will
      contain only the selected module. */
 
-  mca_base_modules_close(mca_registry_base_output, &mca_registry_base_modules_available, 
+  mca_base_modules_close(mca_registry_base_output,
+                         &mca_registry_base_modules_available, 
                          (mca_base_module_t *) best_module);
 
   /* Save the winner */
 
   mca_registry_base_selected_module = *best_module;
-  mca_registry = *actions;
+  mca_registry = *best_actions;
   *allow_multi_user_threads = best_user_threads;
   *have_hidden_threads = best_hidden_threads;
   lam_output_verbose(10, mca_registry_base_output, 
