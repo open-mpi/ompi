@@ -64,7 +64,7 @@ extern mca_ptl_self_component_t mca_ptl_self_component;
 
 int mca_ptl_self_add_proc(struct mca_ptl_base_module_t* ptl, size_t nprocs, struct ompi_proc_t **ompi_proc, struct mca_ptl_base_peer_t** peer_ret, ompi_bitmap_t* reachable)
 {
-    int i, count;
+    size_t i, count;
 
     mca_ptl_self_component.self_local = ompi_proc_local();
 
