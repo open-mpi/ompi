@@ -6,6 +6,9 @@
 
 #include "mpi.h"
 #include "mpi/c/bindings.h"
+#include "request/request.h"
+#include "errhandler/errhandler.h"
+#include "communicator/communicator.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Request_c2f = PMPI_Request_c2f
@@ -16,5 +19,20 @@
 #endif
 
 MPI_Fint MPI_Request_c2f(MPI_Request request) {
-    return (MPI_Fint)0;
+    /* local variables */
+    ompi_request_t *request_c;
+
+    /* error checking */
+    if( MPI_PARAM_CHECK ) {
+        /* check for MPI_REQUEST_NULL */
+        if( (NULL == request) ) {
+            return (MPI_Fint) 
+                OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_REQUEST,
+                        "MPI_Request_c2f");
+        }
+    }
+
+    request_c=(ompi_request_t *)request;
+
+    return (MPI_Fint) (request_c->req_f_to_c_index) ;
 }
