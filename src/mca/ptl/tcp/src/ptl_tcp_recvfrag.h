@@ -95,9 +95,9 @@ static inline void mca_ptl_tcp_recv_frag_matched(mca_ptl_tcp_recv_frag_t* frag)
 	    frag->frag_recv.frag_base.frag_size = header->hdr_frag_length;
         if(header->hdr_frag_offset + frag->frag_recv.frag_base.frag_size > request->req_bytes_packed) {
             if(header->hdr_frag_offset > request->req_bytes_packed)
-                frag->frag_size = 0;
+                frag->frag_recv.frag_base.frag_size = 0;
             else
-                frag->frag_size = request->req_bytes_packed - header->hdr_frag_offset;
+                frag->frag_recv.frag_base.frag_size = request->req_bytes_packed - header->hdr_frag_offset;
         }
     }
 }
