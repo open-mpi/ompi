@@ -493,4 +493,7 @@ internal_wait_cb(pid_t pid, int status, void *data)
         ompi_registry.rte_unregister(test);
     }
 #endif
+
+    /* bwb - fix me - should only remove this range */
+    mca_pcm_base_remove_job(jobid);
 }
