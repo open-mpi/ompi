@@ -32,23 +32,27 @@ CPPFLAGS="$CPPFLAGS -DLAM_BUILDING=1"
 # Do we want debugging?
 
 if test "$WANT_DEBUG" = "1"; then
-    if test "$GCC" = "yes"; then
-	add="-g -Wall -Wundef -Wno-long-long"
-	add="$add -Wmissing-prototypes -Wstrict-prototypes"
+    CFLAGS="$CFLAGS -g"
+    LAM_UNIQ(CFLAGS)
+    AC_MSG_WARN([$add has been added to CFLAGS (--enable-debug)])
+    unset add
+fi
 
-        # see if -Wno-long-double works...
-        CFLAGS_orig="$CFLAGS"
-        CFLAGS="$CFLAGS -Wno-long-double"
-        AC_TRY_COMPILE([], [], add="$add -Wno-long-double")
-        CFLAGS="$CFLAGS_orig"
+if test -d CVS -a "$GCC" = "yes" -a "$WANT_PICKY_COMPILER" = 1; then
+    add="-Wall -Wundef -Wno-long-long"
+    add="$add -Wmissing-prototypes -Wstrict-prototypes"
 
-        add="$add -Werror-implicit-function-declaration "
-    else
-	add="-g"
-    fi
+    # see if -Wno-long-double works...
+    CFLAGS_orig="$CFLAGS"
+    CFLAGS="$CFLAGS -Wno-long-double"
+    AC_TRY_COMPILE([], [], add="$add -Wno-long-double")
+    CFLAGS="$CFLAGS_orig"
+
+    add="$add -Werror-implicit-function-declaration "
+
     CFLAGS="$CFLAGS $add"
     LAM_UNIQ(CFLAGS)
-    AC_MSG_WARN([$add has been added to CFLAGS (--with-debug)])
+    AC_MSG_WARN([$add has been added to CFLAGS (developer copy)])
     unset add
 fi
 
