@@ -29,7 +29,7 @@
 #include "runtime/runtime.h"
 
 
-static struct timeval ompi_rte_ping_wait = {5, 0};
+static struct timeval ompi_rte_ping_wait = {2, 0};
 
 
 int ompi_rte_universe_exists()
@@ -40,51 +40,48 @@ int ompi_rte_universe_exists()
     bool ns_found=false, gpr_found=false, ping_success=false;
 
     /* if both ns_replica and gpr_replica were provided, check for contact with them */
-    if (NULL != ompi_universe_info.ns_replica && NULL != ompi_universe_info.gpr_replica) {
-	mca_oob_parse_contact_info(ompi_universe_info.ns_replica, &proc, NULL);
-	/* ping to verify ns_replica alive */
-	if (OMPI_SUCCESS != mca_oob_ping(&proc, &ompi_rte_ping_wait)) {
-	    if (ompi_rte_debug_flag) {
-		ompi_output(0, "univ_exists: ns_replica ping failed");
-	    }
-	    free(ompi_universe_info.ns_replica);
-	    if (NULL != ompi_process_info.ns_replica) {
-		free(ompi_process_info.ns_replica);
-		ompi_process_info.ns_replica = NULL;
-	    }
-	} else {  /* name server found, now try gpr */
-	    ns_found = true;
-	    if (NULL != ompi_process_info.ns_replica) {
-		free(ompi_process_info.ns_replica);
-		ompi_process_info.ns_replica = NULL;
-	    }
-	    ompi_process_info.ns_replica = ns_base_copy_process_name(&proc);
-	}
-
-	mca_oob_parse_contact_info(ompi_universe_info.gpr_replica, &proc, NULL);
-	/* ping to verify gpr_replica alive */
-	if (OMPI_SUCCESS != mca_oob_ping(&proc, &ompi_rte_ping_wait)) {
-	    if (ompi_rte_debug_flag) {
-		ompi_output(0, "univ_exists: gpr_replica ping failed");
-	    }
-	    free(ompi_universe_info.gpr_replica);
-	    if (NULL != ompi_process_info.gpr_replica) {
-		free(ompi_process_info.gpr_replica);
-		ompi_process_info.gpr_replica = NULL;
-	    }
-	} else { 
-	    if (NULL != ompi_process_info.gpr_replica) {
-		free(ompi_process_info.gpr_replica);
-		ompi_process_info.gpr_replica = NULL;
-	    }
-	    ompi_process_info.gpr_replica = ns_base_copy_process_name(&proc);
-	    gpr_found = true;
-	}
-
-	if (ns_found && gpr_found) { /* success on both counts - report it */
-	    return OMPI_SUCCESS;
-	}
+    if (NULL != ompi_process_info.ns_replica && NULL != ompi_process_info.gpr_replica) {
+	return OMPI_SUCCESS;
     }
+
+/* 	/\* ping to verify ns_replica alive *\/ */
+/* 	if (OMPI_SUCCESS != mca_oob_ping(ompi_process_info.ns_replica, &ompi_rte_ping_wait)) { */
+/* 	    if (ompi_rte_debug_flag) { */
+/* 		ompi_output(0, "univ_exists: ns_replica ping failed"); */
+/* 	    } */
+/* 	    free(ompi_universe_info.ns_replica); */
+/* 	    if (NULL != ompi_process_info.ns_replica) { */
+/* 		free(ompi_process_info.ns_replica); */
+/* 		ompi_process_info.ns_replica = NULL; */
+/* 	    } */
+/* 	} else {  /\* name server found *\/ */
+/* 	    ns_found = true; */
+/* 	} */
+/* 	/\* next check gpr - first see if it's the same as ns. if so, don't bother *\/ */
+
+/* 	if (0 != ns_base_compare(OMPI_NS_CMP_ALL, ompi_process_info.ns_replica, */
+/* 				 ompi_process_info.gpr_replica)) { */
+/* 	    /\* ping to verify gpr_replica alive *\/ */
+/* 	    if (OMPI_SUCCESS != mca_oob_ping(ompi_process_info.gpr_replica, &ompi_rte_ping_wait)) { */
+/* 		if (ompi_rte_debug_flag) { */
+/* 		    ompi_output(0, "univ_exists: gpr_replica ping failed"); */
+/* 		} */
+/* 		free(ompi_universe_info.gpr_replica); */
+/* 		if (NULL != ompi_process_info.gpr_replica) { */
+/* 		    free(ompi_process_info.gpr_replica); */
+/* 		    ompi_process_info.gpr_replica = NULL; */
+/* 		} */
+/* 	    } else {  */
+/* 		gpr_found = true; */
+/* 	    } */
+/* 	} else { /\* the same - no point in checking *\/ */
+/* 	    gpr_found = ns_found; */
+/* 	} */
+
+/* 	if (ns_found && gpr_found) { /\* success on both counts - report it *\/ */
+/* 	    return OMPI_SUCCESS; */
+/* 	} */
+/*     } */
 
     /* if we are missing one or both, we need to get the missing info. first check
      * to see if seed_contact_info already provided. if so, then contact that daemon
