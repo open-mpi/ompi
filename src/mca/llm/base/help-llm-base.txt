@@ -1,0 +1,12 @@
+# -*- text -*-
+#
+# $HEADER$
+#
+# This is the US/English general help file for Open MPI.
+#
+[select:no-module-found]
+Open MPI was unable to find a resource allocation (llmn) component for
+your environment.  The usual causes for this are an incomplete
+installation of Open MPI or a batch scheduler being unexpectedly
+unavailable.  In either case, you might want to check with your local
+system administrator.

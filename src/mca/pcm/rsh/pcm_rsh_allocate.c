@@ -20,7 +20,7 @@ mca_pcm_rsh_allocate_resources(struct mca_pcm_base_module_1_0_0_t* me_super,
 {
     mca_pcm_rsh_module_t *me = (mca_pcm_rsh_module_t*) me_super;
 
-    return me->llm.llm_allocate_resources(jobid, nodes, procs);
+    return me->llm->llm_allocate_resources(me->llm, jobid, nodes, procs);
 }
 
 
@@ -31,5 +31,5 @@ mca_pcm_rsh_deallocate_resources(struct mca_pcm_base_module_1_0_0_t* me_super,
 {
     mca_pcm_rsh_module_t *me = (mca_pcm_rsh_module_t*) me_super;
 
-    return me->llm.llm_deallocate_resources(jobid, nodelist);
+    return me->llm->llm_deallocate_resources(me->llm, jobid, nodelist);
 }

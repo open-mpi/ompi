@@ -25,7 +25,7 @@ extern "C" {
 #endif
   int mca_llm_base_open(void);
   int mca_llm_base_select(const char *active_pcm,
-                          mca_llm_base_module_t *selected, 
+                          mca_llm_base_module_t **selected, 
                           bool have_threads);
   int mca_llm_base_close(void);
 #if defined(c_plusplus) || defined(__cplusplus)
@@ -37,6 +37,5 @@ extern "C" {
  */
 extern int mca_llm_base_output;
 extern ompi_list_t mca_llm_base_components_available;
-extern mca_llm_base_component_t mca_llm_base_selected_component;
 
 #endif /* MCA_LLM_BASE_H */

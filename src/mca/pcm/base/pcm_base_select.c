@@ -44,7 +44,7 @@ insert_module(ompi_list_t *avail_modules, avail_module_t *module)
 
 
 /**
- * Function for selecting one module from all those that are
+ * Function for selecting useable modules from all those that are
  * available.
  *
  * Call the init function on all available modules and get their
@@ -154,6 +154,9 @@ mca_pcm_base_select(bool have_threads,
 
     OBJ_DESTRUCT(&unused_module_list);
     OBJ_DESTRUCT(&avail_module_list);
+
+    ompi_output_verbose(10, mca_pcm_base_output,
+                        "pcm: base: select: ending select code");
 
     return OMPI_SUCCESS;
 }

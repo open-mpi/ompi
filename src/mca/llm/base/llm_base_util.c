@@ -45,7 +45,6 @@ get_allocation_for_size(int count, ompi_list_t *nodelist)
 
     /* no joy... make one and put it in the list */
     node = OBJ_NEW(ompi_rte_node_allocation_t);
-    printf("setting node's count as: %d\n", count);
     node->count = count;
     ompi_list_append(nodelist, (ompi_list_item_t*) node);
 

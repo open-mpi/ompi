@@ -25,8 +25,8 @@
  */
 int mca_llm_base_output = 0;
 ompi_list_t mca_llm_base_components_available;
-mca_llm_base_component_t mca_llm_base_selected_component;
 
+/* mutex for the host file parsing code in the base */
 ompi_mutex_t mca_llm_base_parse_mutex;
 
 /* give us a way to hook in for base unit tests */
@@ -43,13 +43,15 @@ mca_llm_base_setup(void)
  */
 int mca_llm_base_open(void)
 {
+    int ret;
+
     mca_llm_base_setup();
 
   /* Open up all available components */
   if (OMPI_SUCCESS != 
-      mca_base_components_open("llm", 0, mca_llm_base_static_components, 
-                               &mca_llm_base_components_available)) {
-    return OMPI_ERROR;
+      (ret = mca_base_components_open("llm", 0, mca_llm_base_static_components, 
+                                      &mca_llm_base_components_available))) {
+    return ret;
   }
 
   /* All done */

@@ -45,9 +45,12 @@ const mca_llm_base_component_1_0_0_t mca_llm_hostfile_component = {
 
   /* Initialization / shutdown functions */
   mca_llm_hostfile_component_init,
-  mca_llm_hostfile_component_finalize
 };
 
+/*
+ * component variables handles
+ */
+static int mca_llm_hostfile_param_filename;
 
 int
 mca_llm_hostfile_component_open(void)
@@ -55,13 +58,11 @@ mca_llm_hostfile_component_open(void)
     char *default_path = ompi_os_path(false, OMPI_SYSCONFDIR, 
                                       "llm_hostfile", NULL);
 
-    int id = mca_base_param_register_string("llm",
-                                            "hostfile",
-                                            "hostfile",
-                                            NULL,
-                                            default_path);
-    mca_base_param_lookup_string(id, &mca_llm_hostfile_filename);
-
+    mca_llm_hostfile_param_filename = mca_base_param_register_string("llm",
+                                                                     "hostfile",
+                                                                     "hostfile",
+                                                                     NULL,
+                                                                     default_path);
     if (NULL != default_path) free(default_path);
 
     return OMPI_SUCCESS;
@@ -71,9 +72,43 @@ mca_llm_hostfile_component_open(void)
 int
 mca_llm_hostfile_component_close(void)
 {
-    if (NULL != mca_llm_hostfile_filename) {
-        free(mca_llm_hostfile_filename);
-    }
     return OMPI_SUCCESS;
 }
 
+
+struct mca_llm_base_module_1_0_0_t* 
+mca_llm_hostfile_component_init(const char *active_pcm,
+                                bool have_threads,
+                                int *priority)
+{
+    mca_llm_hostfile_module_t *me;
+    
+    me = malloc(sizeof(mca_llm_hostfile_module_t));
+    if (NULL == me) return NULL;
+
+    *priority = 1;
+
+    /* fill in params */
+    mca_base_param_lookup_string(mca_llm_hostfile_param_filename,
+                                 &(me->hostfile_filename));
+
+    me->super.llm_allocate_resources = mca_llm_hostfile_allocate_resources;
+    me->super.llm_deallocate_resources = mca_llm_hostfile_deallocate_resources;
+    me->super.llm_finalize = mca_llm_hostfile_finalize;
+
+    return (mca_llm_base_module_t*) me;
+}
+
+
+int
+mca_llm_hostfile_finalize(mca_llm_base_module_t *me_base)
+{
+    mca_llm_hostfile_module_t *me = (mca_llm_hostfile_module_t*) me_base;
+
+    if (NULL == me) return OMPI_ERR_BAD_PARAM;
+
+    if (NULL != me->hostfile_filename) free(me->hostfile_filename);
+    free(me);
+    
+    return OMPI_SUCCESS;
+}

@@ -170,9 +170,14 @@ mca_pcm_rsh_init(int *priority,
 int
 mca_pcm_rsh_finalize(struct mca_pcm_base_module_1_0_0_t* me_super)
 {
-    mca_pcm_rsh_module_t *me = (mca_pcm_rsh_module_t*) me_super;
+    mca_pcm_rsh_module_t *me;
+
+    if (me_super == NULL) return OMPI_ERR_BAD_PARAM;
+
+    me = (mca_pcm_rsh_module_t*) me_super;
 
     if (me != NULL) {
+        me->llm->llm_finalize(me->llm);
         if (NULL != me->rsh_agent) free(me->rsh_agent);
         free(me);
     }
