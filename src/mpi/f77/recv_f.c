@@ -53,6 +53,6 @@ void mpi_recv_f(char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *source
 
     c_comm = MPI_Comm_f2c (*comm);
 
-    *ierr = MPI_Recv(buf, *count, c_type, *source, *tag, c_comm, 
-                     (MPI_Status*) *status);
+    *ierr = MPI_Recv( buf, *count, c_type, *source, *tag, c_comm,
+                      (MPI_Status*)status );
 }

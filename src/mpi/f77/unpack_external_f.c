@@ -51,6 +51,6 @@ void mpi_unpack_external_f (char *datarep, char *inbuf, MPI_Fint *insize, MPI_Fi
     MPI_Datatype c_type;
     c_type = MPI_Type_f2c(*datatype);
 
-    *ierr = MPI_Unpack_external(datarep, inbuf, *insize, (MPI_Aint *)*position,
+    *ierr = MPI_Unpack_external(datarep, inbuf, *insize, (MPI_Aint *)position,
                                 outbuf, *outcount, c_type);
 }

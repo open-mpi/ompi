@@ -55,5 +55,5 @@ void mpi_sendrecv_replace_f(char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_
 
     *ierr = MPI_Sendrecv_replace(buf, *count, c_type,  *dest, 
                                  *sendtag, *source, *recvtag, c_comm, 
-                                 (MPI_Status*)*status);
+                                 (MPI_Status*)status);
 }
