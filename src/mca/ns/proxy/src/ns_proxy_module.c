@@ -50,11 +50,11 @@ mca_ns_base_component_t mca_ns_proxy_module = {
  * setup the function pointers for the module
  */
 static mca_ns_t mca_ns_proxy = {
-    ns_proxy_create_cellid,
-    ns_proxy_create_jobid,
+    ns_base_create_cellid,
+    ns_base_create_jobid,
     ns_base_create_process_name,
-    ns_proxy_reserve_range,
-    ns_proxy_free_name,
+    ns_base_reserve_range,
+    ns_base_free_name,
     ns_base_get_proc_name_string,
     ns_base_get_vpid_string,
     ns_base_get_jobid_string,
@@ -73,7 +73,6 @@ static bool initialized = false;
 /*
  * globals needed within proxy component
  */
-ompi_process_name_t mca_ns_my_replica;
 
 
 /*
