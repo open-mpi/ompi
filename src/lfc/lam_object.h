@@ -73,8 +73,8 @@
  *   OBJ_RELEASE(sally);
  *   OBJ_RELEASE(sally);
  * @endcode
- * When the reference count reaches zero, the class's "fini" method
- * is run and the memory is freed.
+ * When the reference count reaches zero, the class's destructor, and
+ * those of its parents, are run and the memory is freed.
  *
  * N.B. There is no explicit free/delete method for dynamic objects in
  * this model.

@@ -29,7 +29,7 @@ liblfc_la_SOURCES = \
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-lamdir = $(includedir)/lam/lfc
+lamdir = $(includedir)/lfc
 lam_HEADERS = $(headers)
 else
 lamdir = $(includedir)
