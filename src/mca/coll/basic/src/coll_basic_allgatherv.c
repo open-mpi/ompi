@@ -61,13 +61,13 @@ int mca_coll_basic_allgatherv_inter(void *sbuf, int scount,
     int size, rsize;
     int err;
     int *scounts=NULL;
-    MPI_Aint *sdisps=NULL;
+    int *sdisps=NULL;
     
     rsize = ompi_comm_remote_size (comm);
     size  = ompi_comm_size (comm);
 
-    scounts = (int *) calloc(rsize, sizeof(int) );
-    sdisps = (MPI_Aint *) calloc (rsize, sizeof(MPI_Aint));
+    scounts = (int *) calloc (rsize, sizeof(int) );
+    sdisps  = (int *) calloc (rsize, sizeof(int));
     if ( NULL == scounts || NULL == sdisps ) {
         return err;
     }
