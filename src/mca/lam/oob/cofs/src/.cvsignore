@@ -1,9 +1,0 @@
-.deps
-.libs
-Makefile
-Makefile.in
-*.lo
-libmca_oob_cofs.la
-oob_cofs_config.h
-oob_cofs_config.h.in
-stamp-h1

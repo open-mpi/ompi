@@ -1,7 +1,0 @@
-Makefile
-Makefile.in
-*.lo
-.deps
-.libs
-lam_condition
-lam_thread

@@ -1,7 +1,0 @@
-Makefile
-event-fifo
-event-test
-event.fifo
-signal-test
-time-test
-*.o

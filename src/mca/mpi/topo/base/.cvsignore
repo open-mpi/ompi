@@ -1,7 +1,0 @@
-Makefile
-Makefile.in
-.deps
-*.lo
-*.la
-.libs
-static-modules.h

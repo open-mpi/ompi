@@ -1,6 +1,0 @@
-Makefile.in
-Makefile
-.deps
-.libs
-.gdb_history
-oob_cofs_test
