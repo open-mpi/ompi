@@ -6,6 +6,7 @@
 #define LAM_COMMUNICATOR_H
 
 #include "lam/stdint.h"
+#include "lam/lfc/lam_object.h"
 #include "lam/threads/mutex.h"
 #include "lam/util/output.h"
 #include "mpi.h"
@@ -13,18 +14,18 @@
 #include "mca/mpi/coll/coll.h"
 
 
+extern lam_class_t lam_communicator_t_class;
+
+
 struct lam_communicator_t {
+    lam_object_t c_base;
     char c_name[MPI_MAX_OBJECT_NAME];
     uint32_t c_contextid;
-    int c_refcount;
-    int c_flags;
-    size_t c_rank; /* local rank */
+    int c_my_rank;
 
     lam_group_t *c_local_group;
     lam_group_t *c_remote_group;
   
-    /* Queues */
-
     /* Attributes */
 
     /* Topology information */
@@ -60,7 +61,7 @@ static inline lam_communicator_t *lam_comm_lookup(uint32_t cid)
     return lam_mpi_comm_array[cid]; 
 }
 
-static inline lam_proc_t* lam_comm_lookup_peer(lam_communicator_t* comm, size_t peer_id)
+static inline lam_proc_t* lam_comm_lookup_peer(lam_communicator_t* comm, int peer_id)
 {
 #if LAM_ENABLE_DEBUG
     if(peer_id >= comm->c_remote_group->grp_proc_count) {
@@ -75,8 +76,8 @@ static inline lam_proc_t* lam_comm_lookup_peer(lam_communicator_t* comm, size_t 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
-  int lam_comm_init(lam_communicator_t *comm);
-  int lam_comm_link_function(void);
+    int lam_comm_init(void);
+    int lam_comm_link_function(void);
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

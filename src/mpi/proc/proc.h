@@ -30,13 +30,33 @@ struct lam_proc_t {
 typedef struct lam_proc_t lam_proc_t;
 
 
-void  lam_proc_construct(lam_proc_t*);
-void  lam_proc_destruct(lam_proc_t*);
+/**
+ * Query the run-time environment and build list of available proc instances.
+ */
+int lam_proc_init(void);
 
+/**
+ * Returns the list of proc instances associated with this job.
+ */
+lam_proc_t** lam_proc_world(size_t* size);
+
+/**
+ * Returns the list of all known proc instances.
+ */
+lam_proc_t** lam_proc_all(size_t* size);
+
+/**
+ * Returns a list (of one) proc instances.
+ */
+lam_proc_t** lam_proc_self(size_t* size);
+
+/**
+ * Returns the proc instance corresponding to the local proc.
+ */
 static inline lam_proc_t* lam_proc_local(void) 
 {
-    extern lam_proc_t* lam_proc_self;
-    return lam_proc_self;
+    extern lam_proc_t* lam_proc_local_proc;
+    return lam_proc_local_proc;
 }
 
 #endif /* LAM_PROC */

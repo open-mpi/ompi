@@ -55,7 +55,7 @@ void mca_ptl_tcp_send_frag_reinit(
         hdr->hdr_frag.hdr_src_ptr.pval = sendfrag;
         hdr->hdr_frag.hdr_dst_ptr.pval = 0;
         hdr->hdr_match.hdr_contextid = sendreq->super.req_communicator->c_contextid;
-        hdr->hdr_match.hdr_src_rank = sendreq->super.req_communicator->c_rank;
+        hdr->hdr_match.hdr_src_rank = sendreq->super.req_communicator->c_my_rank;
         hdr->hdr_match.hdr_dst_rank = sendreq->super.req_peer;
         hdr->hdr_match.hdr_user_tag = sendreq->super.req_tag;
         hdr->hdr_match.hdr_msg_length = sendreq->req_length;

@@ -5,13 +5,14 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-SUBDIRS = communicator datatype info interface proc request runtime
+SUBDIRS = communicator datatype group info interface proc request runtime
 
 noinst_LTLIBRARIES = libmpi_convenience.la
 
 sources = \
         communicator/libmpi_communicator.la \
         datatype/libmpi_datatype.la \
+        group/libmpi_group.la \
         info/libmpi_info.la \
         interface/libmpi_interface.la \
         proc/libmpi_proc.la \

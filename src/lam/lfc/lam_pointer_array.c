@@ -23,21 +23,26 @@ lam_class_t lam_pointer_array_t_class = {
     (lam_construct_t) lam_pointer_array_construct,
     (lam_destruct_t) lam_pointer_array_destruct
 };
+
 /**
  * lam_pointer_array constructor
  */
-void lam_pointer_array_construct(lam_pointer_array_t *new_pointer_array){
+void lam_pointer_array_construct(lam_pointer_array_t *array){
 
-    /* return */
-    return;
+    lam_mutex_init(&array->lock);
+    array->lowest_free = 0;
+    array->number_free = 0;
+    array->size = 0;
+    array->addr = 0;
 }
 
 /**
  * lam_pointer_array destructor
  */
-void lam_pointer_array_destruct(lam_pointer_array_t *pointer_array){
+void lam_pointer_array_destruct(lam_pointer_array_t *array){
 
     /* return */
+    lam_mutex_destroy(&array->lock);
     return;
 }
 
