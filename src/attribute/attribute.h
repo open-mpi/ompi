@@ -22,6 +22,7 @@
 #include "datatype/datatype.h"
 #include "win/win.h"
 
+#define ATTR_HASH_SIZE 10
 
 /* *******************************************************************  */
 /* VPS: These to be moved into mpi.h or mpisys.h later on. This is
@@ -46,6 +47,22 @@ enum lam_attribute_type_t{
 
 typedef enum lam_attribute_type_t lam_attribute_type_t;
 
+/* Union to take care of proper casting of the function pointers
+   passed from the front end functions depending on the type. This
+   will avoid casting function pointers to void*  */
+
+union lam_attribute_fn_ptr_union_t {
+    MPI_Comm_delete_attr_function *attr_communicator_delete_fn;
+    MPI_Type_delete_attr_function *attr_datatype_delete_fn;
+    MPI_Win_delete_attr_function *attr_win_delete_fn;
+    
+    MPI_Comm_copy_attr_function *attr_communicator_copy_fn;
+    MPI_Type_copy_attr_function *attr_datatype_copy_fn;
+    MPI_Win_copy_attr_function *attr_win_copy_fn;
+};
+
+typedef union lam_attribute_fn_ptr_union_t lam_attribute_fn_ptr_union_t;
+
 
 struct lam_attrkey_t {
     lam_hash_table_t super; /**< hash table pointer which will contain
@@ -63,8 +80,10 @@ struct lam_attrkey_item_t {
 				       copy/delete attribute functions
 				       properly and error checking */
     int attr_flag; /**< flag field to denote if its predefined  */
-    void *copy_attr_fn; /**< Copy function for the attribute */
-    void *delete_attr_fn; /**< Delete function for the attribute */
+    lam_attribute_fn_ptr_union_t copy_attr_fn; /**< Copy function for the 
+					     attribute */
+    lam_attribute_fn_ptr_union_t delete_attr_fn; /**< Delete function for the
+					       attribute */
     void *extra_state; /**< Extra state of the attribute */
     int key; /**< Keep a track of which key this item belongs to, so that
 		the key can be deleted when this object is destroyed */
@@ -79,6 +98,24 @@ typedef struct lam_attrkey_item_t lam_attrkey_item_t;
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
+
+/** 
+ * Convenient way to initialize the attribute hash table per MPI-Object 
+ */
+
+static inline
+int lam_attr_hash_init(lam_hash_table_t **keyhash)
+{
+   *keyhash = OBJ_NEW(lam_hash_table_t);
+    if (NULL == keyhash) {
+	fprintf(stderr, "Error while creating the local attribute list\n");
+	return MPI_ERR_SYSRESOURCE;
+    }
+    if (lam_hash_table_init(*keyhash, ATTR_HASH_SIZE) != LAM_SUCCESS)
+	return MPI_ERR_SYSRESOURCE;
+  
+    return MPI_SUCCESS;
+}
 
 /**
  * Initialize the main attribute hash that stores the key and meta data
@@ -99,8 +136,8 @@ void lam_attr_destroy(void);
  * Create a new key for use by attribute of Comm/Win/Datatype
  *
  * @param type           Type of attribute (COMM/WIN/DTYPE) (IN)
- * @param copy_attr_fn   Function pointer to be used in order to copy the
- *                       attribute (IN)
+ * @param copy_attr_fn   Union variable containing the function pointer
+ *                       to be used in order to copy the attribute (IN)
  * @param delete_attr_fn Function pointer to be used for deleting the 
  *                       attribute (IN)
  * @param key            The newly created key is returned here (OUT)
@@ -116,13 +153,19 @@ void lam_attr_destroy(void);
  * functions, with predefined argument set to 1. 
  * END OF NOTE
  *
+ * NOTE: For the function pointers, you need to create a variable of the 
+ * union type "lam_attribute_fn_ptr_union_t" and assign the proper field.
+ * to be passed into this function
+ * END OF NOTE
+ *
  * @return LAM return code
 
  *
  */
 
 int lam_attr_create_keyval(lam_attribute_type_t type, 
-			   void *copy_attr_fn, void *delete_attr_fn,
+			   lam_attribute_fn_ptr_union_t copy_attr_fn, 
+			   lam_attribute_fn_ptr_union_t delete_attr_fn,
 			   int *key, void *extra_state, int predefined);
 
 /**
@@ -138,6 +181,7 @@ int lam_attr_free_keyval(lam_attribute_type_t type, int *key, int predefined);
  * Set an attribute on the comm/win/datatype
  * @param type           Type of attribute (COMM/WIN/DTYPE) (IN)
  * @param object         The actual Comm/Win/Datatype object (IN)
+ * @param keyhash        The attribute hash table hanging on the object(IN)
  * @param key            Key val for the attribute (IN)
  * @param attribute      The actual attribute pointer (IN)
  * @param predefined     Whether the key is predefined or not 0/1 (IN)
@@ -146,20 +190,21 @@ int lam_attr_free_keyval(lam_attribute_type_t type, int *key, int predefined);
  */
 
 int lam_attr_set(lam_attribute_type_t type, void *object, 
+		 lam_hash_table_t *keyhash,
 		 int key, void *attribute, int predefined);
 
 /**
  * Get an attribute on the comm/win/datatype
- * @param type           Type of attribute (COMM/WIN/DTYPE) (IN)
- * @param object         The actual Comm/Win/Datatype object (IN)
+ * @param keyhash        The attribute hash table hanging on the object(IN)
  * @param key            Key val for the attribute (IN)
- * @param attribute      The actual attribute pointer (OUTxb)
- * @param predefined     Whether the key is predefined or not 0/1 (IN)
+ * @param attribute      The actual attribute pointer (OUT)
+ * @param flag           Flag whether an attribute is associated 
+ *                       with the key (OUT)
  * @return LAM error code
  *
  */
 
-int lam_attr_get(lam_attribute_type_t type, void *object, int key, 
+int lam_attr_get(lam_hash_table_t *keyhash, int key, 
 		 void *attribute, int *flag);
 
 
@@ -167,13 +212,15 @@ int lam_attr_get(lam_attribute_type_t type, void *object, int key,
  * Delete an attribute on the comm/win/datatype
  * @param type           Type of attribute (COMM/WIN/DTYPE) (IN)
  * @param object         The actual Comm/Win/Datatype object (IN)
+ * @param keyhash        The attribute hash table hanging on the object(IN)
  * @param key            Key val for the attribute (IN)
- * @param flag           Whether the attribute was found or not (OUT)
+ * @param predefined     Whether the key is predefined or not 0/1 (IN)
  * @return LAM error code
  *
  */
 
-int lam_attr_delete(lam_attribute_type_t type, void *object, int key,
+int lam_attr_delete(lam_attribute_type_t type, void *object, 
+		    lam_hash_table_t *keyhash , int key,
 		    int predefined);
 
 
@@ -184,12 +231,14 @@ int lam_attr_delete(lam_attribute_type_t type, void *object, int key,
  * @param type         Type of attribute (COMM/WIN/DTYPE) (IN)
  * @param old_object   The old COMM/WIN/DTYPE object (IN)
  * @param new_object   The new COMM/WIN/DTYPE object (IN)
+ * @param keyhash        The attribute hash table hanging on the object(IN)
  * @return LAM error code
  *
  */
 
 int lam_attr_copy_all(lam_attribute_type_t type, void *old_object, 
-		      void *new_object);
+		      void *new_object, lam_hash_table_t *oldkeyhash,
+		      lam_hash_table_t *newkeyhash);
 
 
 /** 
@@ -197,11 +246,13 @@ int lam_attr_copy_all(lam_attribute_type_t type, void *old_object,
  * object in one shot
  * @param type         Type of attribute (COMM/WIN/DTYPE) (IN)
  * @param object       The COMM/WIN/DTYPE object (IN)
+ * @param keyhash        The attribute hash table hanging on the object(IN)
  * @return LAM error code
  *
  */
 
-int lam_attr_delete_all(lam_attribute_type_t type, void *object);
+int lam_attr_delete_all(lam_attribute_type_t type, void *object, 
+			lam_hash_table_t *keyhash);
 
 
 #if defined(c_plusplus) || defined(__cplusplus)
