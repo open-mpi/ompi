@@ -11,7 +11,7 @@
 # Init autoconf
 
 AC_INIT(./src/mpi/interface/c/init.c)
-AC_PREREQ(2.52)
+AC_PREREQ(2.58)
 AC_CONFIG_AUX_DIR(./config)
 
 # Get the version of LAM that we are installing
