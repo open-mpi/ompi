@@ -17,7 +17,6 @@
 #include <unistd.h>
 #include <string.h>
 #include "include/constants.h"
-#include "errhandler/errhandler.h"
 #include "class/ompi_object.h"
 #include "class/ompi_hash_table.h"
 #include "class/ompi_pointer_array.h"
@@ -28,7 +27,7 @@ extern ompi_pointer_array_t *ompi_datatype_f_to_c_table;
 /* if there are more basic datatypes than the number of bytes in the int type
  * the bdt_used field of the data description struct should be changed to long.
  */
-#define DT_MAX_PREDEFINED  0x2B
+#define DT_MAX_PREDEFINED  0x2A
 
 #define DT_INCREASE_STACK  32
 
@@ -107,7 +106,6 @@ static inline int ompi_ddt_is_overlapped( ompi_datatype_t* type )
 static inline int ompi_ddt_is_acceptable_for_one_sided( ompi_datatype_t* type )
 { return (type->flags & DT_FLAG_ONE_SIDED); }
 void ompi_ddt_dump( dt_desc_t* pData );
-void ompi_ddt_dump_complete( dt_desc_t* pData );
 /* data creation functions */
 int ompi_ddt_duplicate( dt_desc_t* oldType, dt_desc_t** newType );
 int ompi_ddt_create_contiguous( int count, dt_desc_t* oldType, dt_desc_t** newType );
@@ -164,32 +162,34 @@ typedef struct __dt_stack dt_stack_t;
 typedef struct ompi_convertor_t ompi_convertor_t;
 typedef int (*convertor_advance_fct_t)( ompi_convertor_t* pConvertor,
                                         struct iovec* pInputv,
-                                        unsigned int inputCount );
+                                        unsigned int* inputCount,
+                                        unsigned int* max_data,
+                                        int* freeAfter );
+typedef void*(*memalloc_fct_t)( unsigned int* pLength );
 
-/* and now the convertor stuff */
 struct ompi_convertor_t {
-    ompi_object_t super;    /**< basic superclass */
-    dt_desc_t* pDesc;
-    long remoteArch;
-    dt_stack_t* pStack;
+    ompi_object_t           super;    /**< basic superclass */
+    dt_desc_t*              pDesc;
+    u_int32_t               remoteArch;
+    dt_stack_t*             pStack;
     /* the convertor functions pointer */
     /* the local stack for the actual conversion */
-    int32_t   converted;   /* the number of already converted elements */
-    int32_t   bConverted;  /* the size of already converted elements in bytes */
-    u_int32_t flags;
-    u_int32_t count;
-    u_int32_t stack_pos;
-    char*     pBaseBuf;
-    u_int32_t available_space;
-    void*     freebuf;
+    int32_t                 converted;   /* the number of already converted elements */
+    int32_t                 bConverted;  /* the size of already converted elements in bytes */
+    u_int32_t               flags;
+    u_int32_t               count;
+    u_int32_t               stack_pos;
+    char*                   pBaseBuf;
+    u_int32_t               available_space;
     convertor_advance_fct_t fAdvance;
-    conversion_fct_t* pFunctions;
+    memalloc_fct_t          memAlloc_fn;
+    conversion_fct_t*       pFunctions;
 };
 OBJ_CLASS_DECLARATION( ompi_convertor_t );
 
-/* some convertor flags */
-#define ompi_convertor_progress( PCONV, IOVEC, COUNT ) \
-  (PCONV)->fAdvance( (PCONV), (IOVEC), (COUNT) );
+#define ompi_convertor_progress( PCONV, IOVEC, COUNT, PLENGTH, FDSET )	\
+    (PCONV)->fAdvance( (PCONV), (IOVEC), (COUNT), (PLENGTH), (FDSET) );
+
 
 /* and finally the convertor functions */
 ompi_convertor_t* ompi_convertor_create( int remote_arch, int mode );
@@ -197,30 +197,46 @@ ompi_convertor_t* ompi_convertor_get_copy( ompi_convertor_t* pConvertor );
 int ompi_convertor_copy( ompi_convertor_t* pSrcConv, ompi_convertor_t* pDestConv );
 int ompi_convertor_init_for_send( ompi_convertor_t* pConv, unsigned int flags,
                                  dt_desc_t* pData, int count,
-                                 void* pUserBuf, int local_starting_point );
+				  void* pUserBuf, int local_starting_point,
+				  memalloc_fct_t allocfn );
 int ompi_convertor_init_for_recv( ompi_convertor_t* pConv, unsigned int flags,
                                  dt_desc_t* pData, int count,
-                                 void* pUserBuf, int remote_starting_point );
+				  void* pUserBuf, int remote_starting_point,
+				  memalloc_fct_t allocfn );
 int ompi_convertor_need_buffers( ompi_convertor_t* pConvertor );
-int ompi_convertor_pack( ompi_convertor_t* pConv, struct iovec* in, unsigned int in_size );
-int ompi_convertor_unpack( ompi_convertor_t* pConv, struct iovec* out, unsigned int out_size );
+int ompi_convertor_unpack( ompi_convertor_t* pConv,
+			   struct iovec* out,
+			   unsigned int* out_size,
+			   unsigned int* max_data,
+			   int* freeAfter );
+int ompi_convertor_pack( ompi_convertor_t* pConv, 
+			 struct iovec* in, 
+			 unsigned int* in_size,
+			 unsigned int* max_data,
+			 int* freeAfter );
 int ompi_convertor_get_packed_size( ompi_convertor_t* pConv, int* pSize );
 int ompi_convertor_get_unpacked_size( ompi_convertor_t* pConv, int* pSize );
-int ompi_create_stack_with_pos( ompi_convertor_t* pConv,
-                               int local_starting_point,
-                               int* local_sizes );
+int ompi_convertor_create_stack_with_pos( ompi_convertor_t* pConvertor,
+					  int starting_point, int* sizes );
 
 /* temporary function prototypes. They should move in other place later. */
 int ompi_ddt_get_args( dt_desc_t* pData, int which,
                       int * ci, int * i,
-                      int * ca, MPI_Aint * a,
-                      int * cd, MPI_Datatype * d, int * type);
+                      int * ca, long* a,
+                      int * cd, ompi_datatype_t** d, int * type);
 int ompi_ddt_set_args( dt_desc_t* pData,
                       int ci, int ** i, 
-                      int ca, MPI_Aint* a,
-                      int cd, MPI_Datatype* d,int type);
-int ompi_ddt_sndrcv(void *sbuf, int scount, MPI_Datatype sdtype, void *rbuf,
-		 int rcount, MPI_Datatype rdtype, int tag, MPI_Comm comm);
+                      int ca, long* a,
+                      int cd, ompi_datatype_t** d,int type);
+int ompi_ddt_sndrcv( void *sbuf, int scount, ompi_datatype_t* sdtype, void *rbuf,
+		     int rcount, ompi_datatype_t* rdtype, int tag, MPI_Comm comm);
+
+static inline
+void* allocate_memory_for_ddt( unsigned int* pSize )
+{
+    if( *pSize == 0 ) return NULL;
+    return malloc( *pSize );
+}
 
 #endif  /* DATATYPE_H_HAS_BEEN_INCLUDED */
 

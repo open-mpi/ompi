@@ -14,13 +14,15 @@
  * the second is the internal representation using extents
  * the last is the representation used for send operations
  */
-int ompi_ddt_add( dt_desc_t* pdtBase, dt_desc_t* pdtAdd, unsigned int count, long disp, long extent )
+int ompi_ddt_add( dt_desc_t* pdtBase, dt_desc_t* pdtAdd, 
+		  unsigned int count, long disp, long extent )
 {
    int newLength, place_needed = 0, i;
    short localFlags = 0;  /* no specific options yet */
    dt_elem_desc_t *pLast, *pLoop = NULL;
    long lb, ub;
 
+   if( count == 0 ) return 0;  /* that was fast :) */
    /* the extent should be always be positive. So a negative
     * value here have a special meaning ie. default extent as
     * computed by ub - lb
@@ -32,7 +34,7 @@ int ompi_ddt_add( dt_desc_t* pdtBase, dt_desc_t* pdtAdd, unsigned int count, lon
    if( (pdtAdd->flags & DT_FLAG_BASIC) == DT_FLAG_BASIC ) {
       place_needed = 1;
       /* handle special cases for DT_LB and DT_UB */
-      if( pdtAdd == &(basicDatatypes[DT_LB]) ) {
+      if( pdtAdd == basicDatatypes[DT_LB] ) {
          pdtBase->bdt_used |= (1<< DT_LB);
          if( pdtBase->flags & DT_FLAG_USER_LB ) {
             pdtBase->lb = LMIN( pdtBase->lb, disp );
@@ -41,7 +43,7 @@ int ompi_ddt_add( dt_desc_t* pdtBase, dt_desc_t* pdtAdd, unsigned int count, lon
             pdtBase->flags |= DT_FLAG_USER_LB;
          }
          return OMPI_SUCCESS;
-      } else if( pdtAdd == &(basicDatatypes[DT_UB]) ) {
+      } else if( pdtAdd == basicDatatypes[DT_UB] ) {
          pdtBase->bdt_used |= (1<< DT_UB);
          if( pdtBase->flags & DT_FLAG_USER_UB ) {
             pdtBase->ub = LMAX( pdtBase->ub, disp );
@@ -79,8 +81,8 @@ int ompi_ddt_add( dt_desc_t* pdtBase, dt_desc_t* pdtAdd, unsigned int count, lon
       pLast->extent = extent;
       pdtBase->desc.used++;
       pdtBase->btypes[pdtAdd->id] += count;
-      pLast->flags  = pdtAdd->flags ^ (DT_FLAG_FOREVER | DT_FLAG_COMMITED);
-      if( extent != pdtAdd->size )
+      pLast->flags  = pdtAdd->flags & ~(DT_FLAG_FOREVER | DT_FLAG_COMMITED | DT_FLAG_CONTIGUOUS);
+      if( extent == pdtAdd->size )
          pLast->flags |= DT_FLAG_CONTIGUOUS;
    } else {
       /* now we add a complex datatype */
@@ -89,7 +91,7 @@ int ompi_ddt_add( dt_desc_t* pdtBase, dt_desc_t* pdtAdd, unsigned int count, lon
       }
       /* keep trace of the total number of basic datatypes in the datatype definition */
       pdtBase->btypes[DT_LOOP] += pdtAdd->btypes[DT_LOOP];
-      for( i = 3; i < DT_END_LOOP; i++ )
+      for( i = 3; i < DT_MAX_PREDEFINED; i++ )
          if( pdtAdd->btypes[i] != 0 ) pdtBase->btypes[i] += (count * pdtAdd->btypes[i]);
       pdtBase->btypes[DT_END_LOOP] += pdtAdd->btypes[DT_END_LOOP];
 

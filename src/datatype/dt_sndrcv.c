@@ -51,8 +51,8 @@ int ompi_ddt_sndrcv(void *sbuf, int scount, MPI_Datatype sdtype, void *rbuf,
 
     else if (rdtype == MPI_PACKED) {
         local_convertor = OBJ_NEW(ompi_convertor_t);
-        ompi_convertor_init_for_send(local_convertor, 0, sdtype,
-                                     scount, NULL, 0);
+        ompi_convertor_init_for_send( local_convertor, 0, sdtype,
+				      scount, NULL, 0, NULL );
         err = ompi_convertor_get_packed_size(local_convertor, &size);
         OBJ_RELEASE(local_convertor);
         if (OMPI_SUCCESS != err) {
@@ -72,7 +72,7 @@ int ompi_ddt_sndrcv(void *sbuf, int scount, MPI_Datatype sdtype, void *rbuf,
     else if (sdtype == MPI_PACKED) {
         local_convertor = OBJ_NEW(ompi_convertor_t);
         ompi_convertor_init_for_send(local_convertor, 0, rdtype,
-                                     rcount, NULL, 0);
+                                     rcount, NULL, 0, NULL );
         err = ompi_convertor_get_packed_size(local_convertor, &size);
         OBJ_RELEASE(local_convertor);
         if (OMPI_SUCCESS != err) {
