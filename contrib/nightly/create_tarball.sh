@@ -190,7 +190,7 @@ for ext in gz bz2; do
     count="`ls openmpi*.tar.$ext | wc -l | awk '{ print $1 }'`"
     if test "`expr $count \> $max_snapshots`" = "1"; then
         num_old="`expr $count - $max_snapshots`"
-        old="`ls -rt openmpi*.tar.$ext | head -$num_old`"
+        old="`ls -rt openmpi*.tar.$ext | head -n $num_old`"
         rm -f $old
     fi
 done

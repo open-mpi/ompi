@@ -17,7 +17,6 @@
 #
 
 use strict;
-use Data::Dumper;
 use Getopt::Long;
 
 # Filenames of libraries to look through
@@ -215,7 +214,7 @@ my @libdir_arg;
 my @lib_arg;
 my @compdir_arg;
 my @comp_arg;
-my $prefix_arg;
+my @prefix_arg;
 my $email_arg;
 my $delete_arg;
 
@@ -225,7 +224,7 @@ my $ok = Getopt::Long::GetOptions("libdir|l=s" => \@libdir_arg,
                                   "lib=s" => \@lib_arg,
                                   "compdir|c=s" => \@compdir_arg,
                                   "comp=s" => \@comp_arg,
-                                  "prefix|p=s" => \$prefix_arg,
+                                  "prefix|p=s" => \@prefix_arg,
                                   "email|e=s" => \$email_arg,
                                   "delete" => \$delete_arg,
                                   );
@@ -237,7 +236,7 @@ if (!$email_arg) {
 }
 if ($#libdir_arg < 0 && $#lib_arg < 0 &&
     $#compdir_arg < 0 && $#comp_arg < 0 &&
-    !$prefix_arg) {
+    $#prefix_arg < 0) {
     die "Nothing to do!";
 }
 
@@ -250,9 +249,11 @@ die "Could not find mail program; aborting in despair\n"
 # Look for libraries
 
 my @libs;
-if ($prefix_arg) {
-    push(@libdir_arg, "$prefix_arg/lib")
-         if (-d "$prefix_arg/lib");
+if ($#prefix_arg >= 0) {
+    foreach my $prefix (@prefix_arg) {
+        push(@libdir_arg, "$prefix/lib")
+            if (-d "$prefix/lib");
+    }
 }
 if ($#libdir_arg >= 0) {
     my $found = find_libs(@libdir_arg);
@@ -268,9 +269,11 @@ my $bad_libsymbols = check_libs(@libs);
 # Look for components
 
 my @comps;
-if ($prefix_arg) {
-    push(@compdir_arg, "$prefix_arg/lib/openmpi")
-         if (-d "$prefix_arg/lib/openmpi");
+if ($#prefix_arg >= 0) {
+    foreach my $prefix (@prefix_arg) {
+        push(@compdir_arg, "$prefix/lib/openmpi")
+            if (-d "$prefix/lib/openmpi");
+    }
 }
 if ($#compdir_arg >= 0) {
     my $found = find_comps(@compdir_arg);
@@ -317,8 +320,8 @@ if ($delete_arg) {
     foreach my $file (@compdir_arg) {
         system("rm -rf $file >/dev/null 2>/dev/null");
     }
-    if ($prefix_arg) {
-        system("rm -rf $prefix_arg >/dev/null 2>/dev/null");
+    foreach my $file (@prefix_arg) {
+        system("rm -rf $file >/dev/null 2>/dev/null");
     }
 }
 
