@@ -155,7 +155,7 @@ AC_MSG_CHECKING([if want to enable weak symbol support])
 AC_ARG_ENABLE(weak-symbols,
     AC_HELP_STRING([--enable-weak-symbols],
                    [use weak symbols, if available (default: enabled)]))
-if test "$enable_weak-symbols" != "no"; then
+if test "$enable_weak_symbols" != "no"; then
     AC_MSG_RESULT([yes])
     WANT_WEAK_SYMBOLS=1
 else
@@ -174,19 +174,18 @@ fi
 #
 # Do we want deprecated executable names ?
 # 
-WANT_DEN=yes
 AC_MSG_CHECKING(if want deprecated executable names)
 AC_ARG_ENABLE(deprecated-executable-names,
-    AC_HELP_STRING([--disable-deprecated-executable-names],
-        [do not make sym links to deprecated LAM executables
-         (e.g., hcc, hcp, hf77, hf90, wipe)]),
-    [if test "$enableval" = "yes"; then
-    WANT_DEN=yes
-    else
-    WANT_DEN=no
-    fi])
-AM_CONDITIONAL(WANT_DEPRECATED_EXECUTABLE_NAMES, test "$WANT_DEN" = "yes")
-AC_MSG_RESULT([$WANT_DEN])
+    AC_HELP_STRING([--disable-deprecated-executable-names], [do not make sym links to deprecated LAM executables (e.g., hcc, hcp, hf77, wipe) (default: enabled)]))
+if test "$enable_deprecated_executable_names" != "no"; then
+    AC_MSG_RESULT([yes])
+    WANT_DEN=1
+else
+    AC_MSG_RESULT([no])
+    WANT_DEN=0
+fi
+
+AM_CONDITIONAL(WANT_DEPRECATED_EXECUTABLE_NAMES, test "$WANT_DEN" = "1")
 
 #
 ])
