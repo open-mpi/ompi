@@ -36,13 +36,14 @@ struct mca_ptl_tcp_component_t {
     size_t tcp_max_ptl_modules;            /**< maximum number of ptls - available kernel ifs */
     int tcp_listen_sd;                     /**< listen socket for incoming connection requests */
     unsigned short tcp_listen_port;        /**< listen port */
-    char* tcp_if_include;                  /**< comma seperated list of interface to include */
-    char* tcp_if_exclude;                  /**< comma seperated list of interface to exclude */
-    int   tcp_free_list_num;               /**< initial size of free lists */
-    int   tcp_free_list_max;               /**< maximum size of free lists */
-    int   tcp_free_list_inc;               /**< number of elements to alloc when growing free lists */
-    int   tcp_sndbuf;                      /**< socket sndbuf size */
-    int   tcp_rcvbuf;                      /**< socket rcvbuf size */
+    char*  tcp_if_include;                 /**< comma seperated list of interface to include */
+    char*  tcp_if_exclude;                 /**< comma seperated list of interface to exclude */
+    int    tcp_free_list_num;              /**< initial size of free lists */
+    int    tcp_free_list_max;              /**< maximum size of free lists */
+    int    tcp_free_list_inc;              /**< number of elements to alloc when growing free lists */
+    int    tcp_sndbuf;                     /**< socket sndbuf size */
+    int    tcp_rcvbuf;                     /**< socket rcvbuf size */
+    size_t tcp_frag_size;                  /**< buffer limit for the TCP PTL */
     ompi_free_list_t tcp_send_frags;       /**< free list of tcp send fragments */
     ompi_free_list_t tcp_recv_frags;       /**< free list of tcp recv fragments */
     ompi_hash_table_t tcp_procs;           /**< hash table of tcp proc structures */
