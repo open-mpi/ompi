@@ -7,6 +7,8 @@
 #include "mpi.h"
 #include "mpi/c/bindings.h"
 #include "group/group.h"
+#include "errhandler/errhandler.h"
+#include "communicator/communicator.h"
 
 #if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILING_DEFINES
 #pragma weak MPI_Group_difference = PMPI_Group_difference
@@ -16,20 +18,21 @@ int MPI_Group_difference(MPI_Group group1, MPI_Group group2,
                          MPI_Group *new_group) {
 
     /* local varibles */
-    int return_value, new_group_size, proc1, proc2, found_in_group2, cnt;
+    int new_group_size, proc1, proc2, found_in_group2, cnt;
     int my_group_rank;
     lam_group_t *group1_pointer, *group2_pointer, *new_group_pointer;
     lam_proc_t *proc1_pointer, *proc2_pointer, *my_proc_pointer;
 
     /* error checking */
     if( MPI_PARAM_CHECK ) {
-        if( (MPI_GROUP_NULL == group1) || (MPI_GROUP_NULL == group1) ) {
-            return MPI_ERR_GROUP;
+        if( (MPI_GROUP_NULL == group1) || (MPI_GROUP_NULL == group2) ||
+                (NULL == group1) || (NULL == group2) ) {
+            return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_GROUP,
+                    "MPI_Group_difference");
         }
     }
 
 
-    return_value=MPI_SUCCESS;
     group1_pointer=(lam_group_t *)group1;
     group2_pointer=(lam_group_t *)group2;
 
@@ -60,7 +63,8 @@ int MPI_Group_difference(MPI_Group group1, MPI_Group group2,
     /* allocate a new lam_group_t structure */
     new_group_pointer=lam_group_allocate(new_group_size);
     if( NULL == new_group_pointer ) {
-        return MPI_ERR_GROUP;
+        return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_GROUP,
+                "MPI_Group_difference - II");
     }
 
     /* fill in group list */
@@ -96,5 +100,5 @@ int MPI_Group_difference(MPI_Group group1, MPI_Group group2,
 
     *new_group = (MPI_Group)new_group_pointer;
 
-    return return_value;
+    return MPI_SUCCESS;
 }
