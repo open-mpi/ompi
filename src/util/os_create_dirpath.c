@@ -74,7 +74,9 @@ int ompi_os_create_dirpath(const char *path, const mode_t mode)
 	    free(bottom_up);
 	    return(OMPI_ERROR);
 	}
-	strcpy(bottom_up, dirname(bottom_up)); /* "pop" the directory tree */
+	tmp = strdup(bottom_up);
+	strcpy(bottom_up, dirname(tmp)); /* "pop" the directory tree */
+	free(tmp);
    }
 
     free(pth);
