@@ -8,7 +8,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/test/support -DOMPI_ENABLE_DEBUG_OVERRIDE=1
 
 noinst_PROGRAMS = \
 	test_ns_replica \
-    test_ns_proxy
+	test_ns_proxy
 
 test_ns_replica_SOURCES = test_ns_replica.c
 test_ns_replica_LDADD = \

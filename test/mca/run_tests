@@ -24,22 +24,21 @@
 umask 007
 
 if ("x$1" == "x") then
-  cd gpr; ./run_tests all;
-  cd llm; ./run_tests all;
-#  cd ../ns;  ./run_tests all;
-  cd ../oob; ./run_tests all;
-  cd ../pcm; ./run_tests all;
-  cd ..;
+  cd gpr; ./run_tests all; cd ..;
+  cd llm; ./run_tests all; cd ..;
+#  cd ../ns;  ./run_tests all; cd ..;
+  cd ../oob; ./run_tests all; cd ..;
+  cd ../pcm; ./run_tests all; cd ..;
 else
 
   foreach target ($argv)
     switch ($target)
     case "all":
-      cd llm; ./run_tests all;
-#      cd ../ns;  ./run_tests all;
-      cd ../oob; ./run_tests all;
-      cd ../pcm; ./run_tests all;
-      cd ..;
+      cd gpr; ./run_tests all; cd ..;
+      cd llm; ./run_tests all; cd ..;
+#      cd ../ns;  ./run_tests all; cd ..;
+      cd ../oob; ./run_tests all; cd ..;
+      cd ../pcm; ./run_tests all; cd ..;
       breaksw
     case "gpr":
     case "llm":
@@ -50,8 +49,7 @@ else
       ./run_tests;
       cd ..;
       breaksw
-    case "help":
-      echo "correct use: "
+    case "help":      echo "correct use: "
       echo "    run_tests help (this message)"
       echo "    run_tests all  (to run all mca tests)"
       echo "or  run_tests <llm | ns | oob | pcm>"
