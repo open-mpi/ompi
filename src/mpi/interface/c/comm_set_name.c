@@ -7,7 +7,7 @@
 #include <string.h>
 
 #include "mpi.h"
-#include "mpi/c/bindings.h"
+#include "mpi/interface/c/bindings.h"
 #include "lam/util/strncpy.h"
 #include "lam/communicator.h"
 #include "lam/totalview.h"

@@ -10,7 +10,7 @@
 
 # Init autoconf
 
-AC_INIT(./src/mpi/c/init.c)
+AC_INIT(./src/mpi/interface/c/init.c)
 AC_PREREQ(2.52)
 AC_CONFIG_AUX_DIR(./config)
 
@@ -416,12 +416,15 @@ AC_CONFIG_FILES([
     src/lam/util/Makefile
 
     src/mpi/Makefile
-    src/mpi/c/Makefile
-    src/mpi/c/profile/Makefile
-    src/mpi/cxx/Makefile
-    src/mpi/f77/Makefile
-    src/mpi/f77/profile/Makefile
-    src/mpi/f90/Makefile
+    src/mpi/communicator/Makefile
+    src/mpi/datatype/Makefile
+    src/mpi/interface/Makefile
+    src/mpi/interface/c/Makefile
+    src/mpi/interface/c/profile/Makefile
+    src/mpi/interface/cxx/Makefile
+    src/mpi/interface/f77/Makefile
+    src/mpi/interface/f77/profile/Makefile
+    src/mpi/interface/f90/Makefile
 
     src/mca/Makefile
     src/mca/common/Makefile

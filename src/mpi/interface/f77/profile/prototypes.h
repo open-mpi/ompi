@@ -49,6 +49,6 @@
 /*
  * Now include the real prototypes.  Magic.  :-)
  */
-#include "mpi/f77/prototypes.h"
+#include "mpi/interface/f77/prototypes.h"
 
 #endif /* LAM_F77_PROTOTYPES_PROFILING_H */

@@ -7,6 +7,7 @@
 #include <stdio.h>
 
 #include "mpi.h"
+#include "mpi/interface/c/bindings.h"
 
 #if LAM_WANT_MPI_PROFILING && LAM_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_Free_mem = MPI_Free_mem
@@ -15,7 +16,7 @@
 
 int MPI_Free_mem(void *baseptr)
 {
-  if (baseptr == NULL) {
+  if (NULL == baseptr) {
     /* Return error on MPI_COMM_WORLD */
   }
 

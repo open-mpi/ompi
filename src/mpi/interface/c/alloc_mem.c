@@ -7,7 +7,7 @@
 #include <stdio.h>
 
 #include "mpi.h"
-#include "mpi/c/bindings.h"
+#include "mpi/interface/c/bindings.h"
 
 #if LAM_WANT_MPI_PROFILING && LAM_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_Alloc_mem = MPI_Alloc_mem
@@ -19,7 +19,7 @@ int MPI_Alloc_mem(MPI_Aint size, MPI_Info info, void *baseptr)
   if (size < 0) {
     /* Return error on MPI_COMM_WORLD */
   }
-  if (baseptr == NULL) {
+  if (NULL == baseptr) {
     /* Return error on MPI_COMM_WORLD */
   }
 

@@ -5,23 +5,7 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-# See if configure found a valid f77 compiler
-
-if BUILD_MPI_F77
-f77_lib = f77/libmpi_f77.la
-else
-f77_lib =
-endif
-
-# See if configure found a valid f90/f95 compiler
-
-if BUILD_MPI_F90
-f90_lib =
-else
-f90_lib =
-endif
-
-SUBDIRS = c cxx f77 f90
+SUBDIRS = communicator datatype interface
 
 # If the --enable-single-library flag was given to configure, then the
 # user wants to merge liblam and libmpi into a single big, honkin'
@@ -39,7 +23,11 @@ endif
 lib_LTLIBRARIES = $(install_lib)
 noinst_LTLIBRARIES = $(convenience_lib)
 
-sources = c/libmpi_c.la $(f77_lib) $(f90_lib)
+# To be added shortly
+#        communicator/libmpi_communicator.la \
+sources = \
+        datatype/libmpi_datatype.la \
+        interface/libmpi_interface.la
 
 libmpi_la_SOURCES =
 libmpi_la_LIBADD = $(sources)

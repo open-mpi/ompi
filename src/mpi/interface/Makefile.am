@@ -23,26 +23,7 @@ endif
 
 SUBDIRS = c cxx f77 f90
 
-# If the --enable-single-library flag was given to configure, then the
-# user wants to merge liblam and libmpi into a single big, honkin'
-# libmpi.  So the libmpi in this directory should be a convenience
-# (noinst) library.  Otherwise, it should be installed into lib.
+noinst_LTLIBRARIES = libmpi_interface.la
 
-if WANT_SINGLE_MPI_LIBRARY
-install_lib =
-convenience_lib = libmpi_convenience.la
-else
-install_lib = libmpi.la
-convenience_lib =
-endif
-
-lib_LTLIBRARIES = $(install_lib)
-noinst_LTLIBRARIES = $(convenience_lib)
-
-sources = c/libmpi_c.la $(f77_lib) $(f90_lib)
-
-libmpi_la_SOURCES =
-libmpi_la_LIBADD = $(sources)
-
-libmpi_convenience_la_SOURCES =
-libmpi_convenience_la_LIBADD = $(sources)
+libmpi_interface_la_SOURCES =
+libmpi_interface_la_LIBADD = c/libmpi_c.la $(f77_lib) $(f90_lib)
