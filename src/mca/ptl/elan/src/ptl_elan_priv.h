@@ -27,7 +27,6 @@
 #include "ptl_elan.h"
 #include "ptl_elan_proc.h"
 #include "ptl_elan_frag.h"
-#include "ptl_elan_req.h"
 
 #define _TRACK_MALLOC 0
 
@@ -73,6 +72,15 @@
 
 #endif
 
+enum {
+    /* the first four bits for type */
+    MCA_PTL_ELAN_DESC_NULL   = 0x00,
+    MCA_PTL_ELAN_DESC_QDMA   = 0x01,
+    MCA_PTL_ELAN_DESC_PUTGET = 0x02,
+    /* next first four bits for status */
+    MCA_PTL_ELAN_DESC_LOCAL  = 0x10,
+    MCA_PTL_ELAN_DESC_CACHED = 0x20
+};
 
 /**
  * Structure used to publish elan information to peers.
@@ -112,6 +120,17 @@ typedef struct {
 } ompi_elan_event_t;
 
 /**
+ * ELAN send request derived type. The send request contains 
+ * the base send request and a point to the elan fragment descriptor
+ */
+struct mca_ptl_elan_send_request_t {
+    mca_pml_base_send_request_t super;
+    mca_ptl_elan_desc_item_t *req_frag; 
+};
+typedef struct mca_ptl_elan_send_request_t mca_ptl_elan_send_request_t;
+
+
+/**
  * ELAN descriptor for send
  */
 #define ELAN_BASE_DESC_FIELDS  \
@@ -143,6 +162,7 @@ struct ompi_ptl_elan_qdma_desc_t {
 
     uint8_t         buff[INPUT_QUEUE_MAX];        /**< queue data */
     /* 8 byte aligned */
+    ompi_convertor_t frag_convertor; /**< datatype convertor */
 };
 typedef struct ompi_ptl_elan_qdma_desc_t ompi_ptl_elan_qdma_desc_t;
 
@@ -246,7 +266,7 @@ int         mca_ptl_elan_start_desc(mca_ptl_elan_desc_item_t *desc,
 		  struct mca_ptl_elan_peer_t *ptl_peer,
                   struct mca_pml_base_send_request_t *sendreq,
                   size_t offset,
-                  size_t size,
+                  size_t *size,
                   int flags);
 
 int         mca_ptl_elan_poll_desc(mca_ptl_elan_desc_item_t *desc);
