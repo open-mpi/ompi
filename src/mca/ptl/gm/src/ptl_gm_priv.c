@@ -105,7 +105,7 @@ int mca_ptl_gm_receiver_advance_pipeline( mca_ptl_gm_recv_frag_t* frag, int only
 		get_line->local_memory.pval, get_line->length,
 		GM_LOW_PRIORITY, peer->local_id, peer->port_number, mca_ptl_gm_get_callback, frag );
 	get_line->flags ^= PTL_GM_PIPELINE_REMOTE;
-	DO_DEBUG( count += sprintf( buffer + count, " start get %d (%d)", get_line->length, frag->pipeline.pos_transfert ); );
+	DO_DEBUG( count += sprintf( buffer + count, " start get %lld (%d)", get_line->length, frag->pipeline.pos_transfert ); );
 	frag->pipeline.pos_transfert = (frag->pipeline.pos_transfert + 1) % GM_PIPELINE_DEPTH;
     } else if( 1 == onlyifget ) return OMPI_SUCCESS;
 
@@ -129,7 +129,7 @@ int mca_ptl_gm_receiver_advance_pipeline( mca_ptl_gm_recv_frag_t* frag, int only
 			 reg_line->length, reg_line->offset );
 	    return OMPI_ERROR;
 	}
-	DO_DEBUG( count += sprintf( buffer + count, " start register %d (%d)", reg_line->length, frag->pipeline.pos_register ); );
+	DO_DEBUG( count += sprintf( buffer + count, " start register %lld (%d)", reg_line->length, frag->pipeline.pos_register ); );
 	reg_line->flags |= PTL_GM_PIPELINE_REGISTER;
 	frag->frag_bytes_processed += reg_line->length;
 	frag->pipeline.pos_register = (frag->pipeline.pos_register + 1) % GM_PIPELINE_DEPTH;
@@ -149,7 +149,7 @@ int mca_ptl_gm_receiver_advance_pipeline( mca_ptl_gm_recv_frag_t* frag, int only
         dereg_line->flags ^= (PTL_GM_PIPELINE_DEREGISTER|PTL_GM_PIPELINE_REGISTER);
         assert( dereg_line->flags == 0 );
         frag->frag_bytes_validated += dereg_line->length;
-	DO_DEBUG( count += sprintf( buffer + count, " start deregister %d (%d)", dereg_line->length, frag->pipeline.pos_deregister ); )
+	DO_DEBUG( count += sprintf( buffer + count, " start deregister %lld (%d)", dereg_line->length, frag->pipeline.pos_deregister ); )
 	frag->pipeline.pos_deregister = (frag->pipeline.pos_deregister + 1) % GM_PIPELINE_DEPTH;
     }
 
@@ -202,7 +202,7 @@ int mca_ptl_gm_sender_advance_pipeline( mca_ptl_gm_send_frag_t* frag )
 	
 	send_line->flags ^= PTL_GM_PIPELINE_REMOTE;
 	frag->pipeline.pos_transfert = (frag->pipeline.pos_transfert + 1) % GM_PIPELINE_DEPTH;
-	DO_DEBUG( count += sprintf( buffer + count, " send new fragment %d", send_line->length ); )
+	DO_DEBUG( count += sprintf( buffer + count, " send new fragment %lld", send_line->length ); )
     }
     
     /* deregister previous segment */
@@ -218,7 +218,7 @@ int mca_ptl_gm_sender_advance_pipeline( mca_ptl_gm_send_frag_t* frag )
 	assert( dereg_line->flags == 0 );
         frag->frag_bytes_validated += dereg_line->length;
 	frag->pipeline.pos_deregister = (frag->pipeline.pos_deregister + 1) % GM_PIPELINE_DEPTH;
-	DO_DEBUG( count += sprintf( buffer + count, " start deregister %d", dereg_line->length ); )
+	DO_DEBUG( count += sprintf( buffer + count, " start deregister %lld", dereg_line->length ); )
     }
 
     /* register next segment */
@@ -246,7 +246,7 @@ int mca_ptl_gm_sender_advance_pipeline( mca_ptl_gm_send_frag_t* frag )
 	    reg_line->flags |= PTL_GM_PIPELINE_TRANSFERT;
 	    frag->frag_bytes_processed += reg_line->length;
 	    frag->pipeline.pos_register = (frag->pipeline.pos_register + 1) % GM_PIPELINE_DEPTH;
-	    DO_DEBUG( count += sprintf( buffer + count, " start register %d", reg_line->length ); )
+	    DO_DEBUG( count += sprintf( buffer + count, " start register %lld", reg_line->length ); )
 	}
     }
     
@@ -373,7 +373,7 @@ int mca_ptl_gm_peer_send_continue( mca_ptl_gm_peer_t *ptl_peer,
     }
     pipeline->flags  = PTL_GM_PIPELINE_TRANSFERT;
     fragment->frag_bytes_processed += pipeline->length;
-    DO_DEBUG( ompi_output( 0, "sender %p start register %d (%d)", fragment, pipeline->length, fragment->pipeline.pos_register ); );
+    DO_DEBUG( ompi_output( 0, "sender %p start register %lld (%d)", fragment, pipeline->length, fragment->pipeline.pos_register ); );
     fragment->pipeline.pos_register = (fragment->pipeline.pos_register + 1) % GM_PIPELINE_DEPTH;
     return OMPI_SUCCESS;
     /* Now we are waiting for the ack message. Meanwhile we can register the sender first piece
@@ -631,7 +631,8 @@ static void mca_ptl_gm_get_callback( struct gm_port *port, void * context, gm_st
 	peer->get_started = false;
 	/* mark the memory as being ready to be deregistered */
 	frag->pipeline.lines[frag->pipeline.pos_deregister].flags |= PTL_GM_PIPELINE_DEREGISTER;
-	DO_DEBUG( ompi_output( 0, "receiver from get_callback" ); )
+	DO_DEBUG( ompi_output( 0, "receiver %p get_callback processed %lld validated %lld",
+			       frag, frag->frag_bytes_processed, frag->frag_bytes_validated ); )
 	mca_ptl_gm_receiver_advance_pipeline( frag, 0 );
         break;
     case GM_SEND_TIMED_OUT:
@@ -735,7 +736,7 @@ mca_ptl_gm_recv_frag_frag( struct mca_ptl_gm_module_t* ptl,
 	    pipeline->offset = hdr->hdr_frag.hdr_frag_offset;
 	    pipeline->flags |= PTL_GM_PIPELINE_REGISTER;
 	    frag->frag_bytes_processed += pipeline->length;
-	    DO_DEBUG( ompi_output( 0, "receiver %p start register %d (%d)\n", frag, pipeline->length, frag->pipeline.pos_register ); );
+	    DO_DEBUG( ompi_output( 0, "receiver %p start register %lld (%d)\n", frag, pipeline->length, frag->pipeline.pos_register ); );
 	    frag->pipeline.pos_register = (frag->pipeline.pos_register + 1) % GM_PIPELINE_DEPTH;
 	} else {
 	    /* There is a kind of rendez-vous protocol used internally by the GM driver. If the amount of data
