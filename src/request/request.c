@@ -77,10 +77,10 @@ int ompi_request_init(void)
 
 int ompi_request_finalize(void)
 {
-    OBJ_DESTRUCT(&ompi_request_f_to_c_table);
-    OBJ_DESTRUCT(&ompi_request_lock);
-    OBJ_DESTRUCT(&ompi_request_cond);
     OBJ_DESTRUCT(&ompi_request_null);
+    OBJ_DESTRUCT(&ompi_request_cond);
+    OBJ_DESTRUCT(&ompi_request_lock);
+    OBJ_DESTRUCT(&ompi_request_f_to_c_table);
     return OMPI_SUCCESS;
 }
 
