@@ -22,13 +22,6 @@
 #define PATHENVSEP  ':'
 #endif
 
-/**
- * Directory seperator
- */
-
-#define STRDIR '/'
-#define STRSDIR "/"
-
 static void     path_env_load(char *path, int *pargc, char ***pargv);
 static char     *path_access(char *fname, char *path, int mode);
 static char     *list_env_get(char *var, char **list);
@@ -61,7 +54,7 @@ lam_path_findv(char *fname, char **pathv, int mode, char **envv)
     /*
      * If absolute path is given, return it without searching.
      */
-    if (STRDIR == *fname) {
+    if ('/' == *fname) {
         return(path_access(fname, "", mode));
     }
     /*
@@ -78,19 +71,19 @@ lam_path_findv(char *fname, char **pathv, int mode, char **envv)
          * Replace environment variable at the head of the string.
          */
         if ('$' == *pathv[i]) {
-            delimit = strchr(pathv[i], STRDIR);
+            delimit = strchr(pathv[i], '/');
             if (delimit) {
                 *delimit = '\0';
             }
             env = list_env_get(pathv[i]+1, envv);
             if (delimit) {
-                *delimit = STRDIR;
+                *delimit = '/';
             }
             if (env) {
                 if (!delimit) {
                     fullpath = path_access(fname, env, mode);
                 } else {
-                    pfix = LAM_MALLOC((unsigned) strlen(env) + strlen(delimit) + 1);
+                    pfix = LAM_MALLOC(strlen(env) + strlen(delimit) + 1);
                     if (NULL == pfix){
                         return(0);
                     }
@@ -232,14 +225,14 @@ path_access(char *fname, char *path, int mode)
     /*
      * Allocate space for the full pathname.
      */
-    fullpath = LAM_MALLOC((unsigned) strlen(path) + strlen(fname) + 2);
+    fullpath = LAM_MALLOC(strlen(path) + strlen(fname) + 2);
     if (NULL == fullpath){
         return(0);
     }
 
     if (strlen(path) > 0) {
         strcpy(fullpath, path);
-        strcat(fullpath, STRSDIR);
+        strcat(fullpath, "/");
         strcat(fullpath, fname);
     } else {
         strcpy(fullpath, fname);
