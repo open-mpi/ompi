@@ -37,7 +37,7 @@ extern "C" {
   /* LAM: Conform to LAM's header file scheme -- specify the full
      include path from "src/".  Also, config.h is a terrible
      unqualified name for a header file.  :-) */
-#include "event/config.h"
+#include "lam_config.h"
 #endif
 
 #ifdef HAVE_SYS_TIME_H
