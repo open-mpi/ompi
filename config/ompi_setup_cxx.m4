@@ -40,7 +40,7 @@ if test "$GCC" = "yes" -a "$WANT_PICKY_COMPILER" = 1; then
 
     CXXFLAGS="$CXXFLAGS $add"
     OMPI_UNIQ(CXXFLAGS)
-    AC_MSG_WARN([$add has been added to CXXFLAGS (developer copy)])
+    AC_MSG_WARN([$add has been added to CXXFLAGS (--enable-picky)])
     unset add
 fi
 

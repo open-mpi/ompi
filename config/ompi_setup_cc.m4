@@ -53,7 +53,7 @@ if test "$GCC" = "yes" -a "$WANT_PICKY_COMPILER" = 1; then
 
     CFLAGS="$CFLAGS $add"
     OMPI_UNIQ(CFLAGS)
-    AC_MSG_WARN([$add has been added to CFLAGS (developer copy)])
+    AC_MSG_WARN([$add has been added to CFLAGS (--enable-picky)])
     unset add
 fi
 
