@@ -25,7 +25,7 @@
 #ifndef OMPI_CONFIG_BOTTOM_H 
 #define OMPI_CONFIG_BOTTOM_H
  
-#if defined(WIN32) && defined(OMPI_BUILDING)
+#if defined(WIN32) && defined(OMPI_BUILDING) && OMPI_BUILDING
 #include "win32/win_compat.h"
 #define OMPI_COMP_EXPORT __declspec(dllexport)
 #endif
@@ -201,17 +201,15 @@ typedef struct {
   ompi_fortran_dblprec_t imag;
 } ompi_fortran_dblcomplex_t;
 
+
 /*
- * printf functions for portability
+ * printf functions for portability (only when building Open MPI)
  */
 
+#if defined(OMPI_BUILDING) && OMPI_BUILDING
 #if !defined(HAVE_VASPRINTF) || !defined(HAVE_VSNPRINTF)
 #include <stdarg.h>
 #include <stdlib.h>
-#endif
-
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
 #endif
 
 #if !defined(HAVE_ASPRINTF) || !defined(HAVE_SNPRINTF) || !defined(HAVE_VASPRINTF) || !defined(HAVE_VSNPRINTF)
@@ -233,6 +231,8 @@ extern "C" {
 #ifndef HAVE_VSNPRINTF
 # define vsnprintf ompi_vsnprintf
 #endif
+#endif
+
 
 /*
  * Define INADDR_NONE if we don't have it.  Solaris is the only system
@@ -242,13 +242,10 @@ extern "C" {
  * So just #define it to -1 here if it doesn't already exist.
  */
 
-#ifndef INADDR_NONE
+#if defined(OMPI_BUILDING) && OMPI_BUILDING && !defined(INADDR_NONE)
 #define INADDR_NONE -1
 #endif
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
 
 /*
  * Define __func__-preprocessor directive if the compiler does not
@@ -258,7 +255,7 @@ extern "C" {
  * printf-style debugging).
  */
 
-#if !HAVE_DECL___FUNC__
+#if defined(OMPI_BUILDING) && OMPI_BUILDING && defined(HAVE_DECL___FUNC__) && !HAVE_DECL___FUNC__
 #define __func__ __FILE__
 #endif
 
