@@ -17,12 +17,18 @@ extern lam_class_info_t mca_pml_base_request_cls;
 
 /* MPI request status */
 typedef enum {
-    LAM_STATUS_INVALID = 1,
-    LAM_STATUS_INITED = 2,
-    LAM_STATUS_INCOMPLETE = 3,
-    LAM_STATUS_COMPLETE = 4,
-    LAM_STATUS_INACTIVE = 5
+    MCA_PML_STATUS_INVALID = 1,
+    MCA_PML_STATUS_INITED = 2,
+    MCA_PML_STATUS_INCOMPLETE = 3,
+    MCA_PML_STATUS_COMPLETE = 4,
+    MCA_PML_STATUS_INACTIVE = 5
 } mca_pml_base_request_status_t;
+
+
+typedef enum {
+    MCA_PML_REQUEST_SEND,
+    MCA_PML_REQUEST_RECV
+} mca_pml_base_request_type_t;
 
 
 /* MPI pml (point-to-point) request */
@@ -37,10 +43,10 @@ typedef struct {
   lam_communicator_t *req_communicator;
   /* pointer to data type */
   lam_datatype_t *req_datatype;
+  /* MPI request type - used for test */
+   mca_pml_base_request_type_t req_type;
   /* MPI request status */
   mca_pml_base_request_status_t req_status;
-  /* type of message - standard,buffered,synchronous,ready,recv */
-  mca_pml_base_request_type_t req_type;
   /* persistence indicating if the this is a persistent request */
   bool req_persistent;
   /* flag indicating if MPI is done with this request called */

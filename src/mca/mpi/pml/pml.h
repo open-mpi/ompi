@@ -35,12 +35,11 @@ typedef uint64_t mca_pml_base_tstamp_t;
 typedef lam_list_t mca_pml_base_queue_t;
 
 typedef enum {
-    MCA_PML_BASE_REQUEST_TYPE_RECV,
-    MCA_PML_BASE_REQUEST_TYPE_SEND_STANDARD,
-    MCA_PML_BASE_REQUEST_TYPE_SEND_BUFFERED,
-    MCA_PML_BASE_REQUEST_TYPE_SEND_SYNCHRONOUS,
-    MCA_PML_BASE_REQUEST_TYPE_SEND_READY
-} mca_pml_base_request_type_t;
+    MCA_PML_BASE_SEND_STANDARD,
+    MCA_PML_BASE_SEND_BUFFERED,
+    MCA_PML_BASE_SEND_SYNCHRONOUS,
+    MCA_PML_BASE_SEND_READY
+} mca_pml_base_send_type_t;
 
 
 /*
@@ -56,7 +55,7 @@ typedef int (*mca_pml_base_isend_fn_t)(
     int dest,
     int tag,
     struct lam_communicator_t* comm,
-    mca_pml_base_request_type_t req_type,
+    mca_pml_base_send_type_t type,
     struct lam_request_t **request
 );
 

@@ -13,7 +13,7 @@ int mca_pml_teg_isend(
     int dest,
     int tag,
     lam_communicator_t* comm,
-    mca_pml_base_request_type_t req_type,
+    mca_pml_base_send_type_t req_type,
     lam_request_t **request)
 {
     int rc;
