@@ -15,7 +15,7 @@
 
 # Specific to this module
 
-PARAM_INIT_FILE=coll_demo.c
+PARAM_INIT_FILE=coll_demo_component.c
 PARAM_CONFIG_HEADER_FILE=coll_demo_config.h
 PARAM_CONFIG_FILES="Makefile"
 PARAM_CONFIG_AUX_DIR=config
