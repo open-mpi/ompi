@@ -33,10 +33,11 @@ int mca_ptl_base_select(bool *allow_multi_user_threads,
   /* Traverse the list of opened modules; call their init
      functions. */
 
-  for (item  = ompi_list_get_first(&mca_ptl_base_components_opened);
-       item != ompi_list_get_end(&mca_ptl_base_components_opened);
-       item  = ompi_list_get_next(item)) {
+  item  = ompi_list_get_first(&mca_ptl_base_components_opened);
+  while(item != ompi_list_get_end(&mca_ptl_base_components_opened)) {
+    ompi_list_item_t *next = ompi_list_get_next(item);
     cli = (mca_base_component_list_item_t *) item;
+
     component = (mca_ptl_base_component_t *) cli->cli_component;
 
     ompi_output_verbose(10, mca_ptl_base_output, 
@@ -56,11 +57,12 @@ int mca_ptl_base_select(bool *allow_multi_user_threads,
       if (NULL == modules) {
         ompi_output_verbose(10, mca_ptl_base_output,
                            "select: init returned failure");
-
-        mca_base_component_repository_release((mca_base_component_t *) component);
         ompi_output_verbose(10, mca_ptl_base_output,
                             "select: module %s unloaded",
                             component->ptlm_version.mca_component_name);
+
+        mca_base_component_repository_release((mca_base_component_t *) component);
+        ompi_list_remove_item(&mca_ptl_base_components_opened, item);
       } 
 
       /* Otherwise, it initialized properly.  Save it. */
@@ -86,6 +88,7 @@ int mca_ptl_base_select(bool *allow_multi_user_threads,
         free(modules);
       }
     }
+    item = next;
   }
 
   /* Finished querying all components.  Check for the bozo case. */
