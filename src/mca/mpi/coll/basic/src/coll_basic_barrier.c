@@ -20,6 +20,7 @@
  */
 int mca_coll_basic_barrier_lin(MPI_Comm comm)
 {
+#if 0
   int size;
   int rank;
   int err;
@@ -77,6 +78,7 @@ int mca_coll_basic_barrier_lin(MPI_Comm comm)
 #endif
     }
   }
+#endif /* 0 */
 
   /* All done */
 
@@ -94,6 +96,7 @@ int mca_coll_basic_barrier_lin(MPI_Comm comm)
 int
 mca_coll_basic_barrier_log(MPI_Comm comm)
 {
+#if 0
   int size;
   int rank;
   int peer;
@@ -171,6 +174,7 @@ mca_coll_basic_barrier_log(MPI_Comm comm)
 #endif
     }
   }
+#endif /* 0 */
 
   /* All done */
 

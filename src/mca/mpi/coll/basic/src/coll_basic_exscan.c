@@ -24,6 +24,7 @@
 int mca_coll_basic_exscan(void *sbuf, void *rbuf, int count,
                           MPI_Datatype dtype, MPI_Op op, MPI_Comm comm)
 {
+#if 0
   int size;
   int rank;
   int err;
@@ -35,7 +36,6 @@ int mca_coll_basic_exscan(void *sbuf, void *rbuf, int count,
   MPI_Comm_rank(comm, &rank);
   MPI_Comm_size(comm, &size);
 
-#if 0
   /* JMS: Need to replace lots things in this file: lam_dt* stuff with
      lam_datatype_*() functions.  Also need to replace lots of
      MPI_Send/MPI_Recv with negative tags and PML entry points. */
@@ -157,12 +157,12 @@ int mca_coll_basic_exscan(void *sbuf, void *rbuf, int count,
       return err;
     }
   }
-#endif
   
   if (NULL != gathered_buffer)
     LAM_FREE(gathered_buffer);
   if (NULL != tmpbuf)
     LAM_FREE(tmpbuf);
+#endif /* 0 */
 
   /* All done */
 
