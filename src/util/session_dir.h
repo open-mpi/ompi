@@ -129,3 +129,5 @@ int ompi_session_dir(bool create, char *prefix, char *user, char *hostid,
  *                properly cleaned up.
  */
 int ompi_session_dir_finalize(void);
+
+int ompi_clean_dir(char *pathname);

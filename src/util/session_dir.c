@@ -17,6 +17,9 @@
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <unistd.h>
+#include <errno.h>
+#include <dirent.h>
 
 /*
 #include <sys/socket.h>
@@ -168,12 +171,12 @@ int ompi_session_dir(bool create, char *prefix, char *user, char *hostid, char *
 
  COMPLETE:
     if (create) {
-	if (proc) {
+	if (NULL != proc) {
             ompi_process_info.proc_session_dir = strdup(fulldirpath);
 	    fulldirpath = dirname(fulldirpath);
         }
 
-	if (job) {
+	if (NULL != job) {
             ompi_process_info.job_session_dir = strdup(fulldirpath);
 	    fulldirpath = dirname(fulldirpath);
         }
@@ -209,8 +212,58 @@ int ompi_session_dir(bool create, char *prefix, char *user, char *hostid, char *
 int
 ompi_session_dir_finalize()
 {
-    /* BWB - fix me, fix me, fix me */
-    printf("WARNING: session directory not removed - "
-           "function not implemented\n");
+    if (OMPI_SUCCESS != ompi_clean_dir(ompi_process_info.proc_session_dir)) {
+	return OMPI_ERROR; /* should have been able to at least clear my own */
+    }
+
+    if (OMPI_SUCCESS != ompi_clean_dir(ompi_process_info.job_session_dir)) {
+	return OMPI_SUCCESS; /* need new error condition - could be okay not to clear */
+    }
+
+    if (OMPI_SUCCESS != ompi_clean_dir(ompi_process_info.universe_session_dir)) {
+	return OMPI_SUCCESS;
+    }
+
     return OMPI_SUCCESS;
+}
+
+int
+ompi_clean_dir(char *pathname)
+{
+    DIR *dp;
+    struct dirent *ep;
+    char *filenm;
+
+    if (NULL != pathname) {  /* protect against error */
+	dp = opendir(pathname);
+	if (NULL != dp) {
+	    while ((ep = readdir(dp))) {
+		if ((0 != strcmp(ep->d_name, ".")) &&
+		    (0 != strcmp(ep->d_name, "..")) &&
+		    (DT_DIR != ep->d_type)) {
+		    filenm = ompi_os_path(true, pathname, ep->d_name, NULL);
+		    if (!unlink(filenm)) {
+			if (ENOENT == errno) { /* file doesn't exist - race condition */
+			    /* ignore this */
+			} else if (EBUSY == errno) {  /* someone using it */
+			    /* left in for diag purposes - should print something */
+			    /* otherwise, normally just report error */
+			} else {  /* no idea what to do - punt */
+			    return OMPI_ERROR;
+			}
+		    }
+		}
+	    }
+	    if (!rmdir(pathname)) { /* error */
+		if (EEXIST == errno || ENOTEMPTY == errno) { /* not empty */
+		} else if (ENOENT == errno || EBUSY == errno) {  /* doesn't exist or busy - race condition */
+		    /* put in diagnostic message for now */
+		} else {  /* no idea */
+		}
+	    }
+	    return OMPI_SUCCESS;
+	}
+	return OMPI_ERROR;
+    }
+    return OMPI_ERROR;
 }
