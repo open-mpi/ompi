@@ -4,6 +4,7 @@
 
 
 #include "ompi_config.h"
+#include "pcm-seed-version.h"
 
 #include "include/constants.h"
 #include "include/types.h"
@@ -26,9 +27,9 @@ mca_pcm_base_component_1_0_0_t mca_pcm_seed_component = {
     MCA_PCM_BASE_VERSION_1_0_0,
 
     "seed", /* MCA component name */
-    1,  /* MCA component major version */
-    0,  /* MCA component minor version */
-    0,  /* MCA component release version */
+    MCA_pcm_seed_MAJOR_VERSION,  /* MCA component major version */
+    MCA_pcm_seed_MINOR_VERSION,  /* MCA component minor version */
+    MCA_pcm_seed_RELEASE_VERSION,  /* MCA component release version */
     mca_pcm_seed_open,  /* component open */
     mca_pcm_seed_close /* component close */
   },
