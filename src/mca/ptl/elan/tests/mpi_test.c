@@ -5,8 +5,12 @@
 int main (int argc, char ** argv)
 {
     int proc, nproc;
+
     /* Get some environmental variables set for Open MPI, OOB */
     env_init_for_elan();
+
+    proc = 0;
+    /*while (proc < 1) ;*/
 
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &proc);
