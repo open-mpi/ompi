@@ -14,6 +14,7 @@
 #include <string.h>
 
 #include "include/constants.h"
+#include "util/output.h"
 #include "util/sys_info.h"
 #include "util/proc_info.h"
 #include "util/os_path.h"
@@ -28,24 +29,29 @@
 
 
 
-int ompi_rte_universe_exists(char *host, char *name, char *tmpdir, char *oob_contact_info)
+int ompi_rte_local_universe_exists()
 {
     char *contact_file;
-    int32_t command, recv_tag;
     int ret;
     ompi_process_name_t seed={0,0,0};
 
     /* does universe already exist on specified host? Check session directory to see */
     /* don't know how to handle remote host yet - only cover localhost */
 
-    if (0 != strncmp(host, ompi_system_info.nodename, strlen(ompi_system_info.nodename))) { /* remote host specified */
-	fprintf(stderr, "remote hosts not currently supported\n");
+    if (0 != strncmp(ompi_universe_info.host, ompi_system_info.nodename, strlen(ompi_system_info.nodename))) { /* remote host specified */
+	ompi_output(0, "remote hosts not supported");
 	return OMPI_ERR_NOT_IMPLEMENTED;
     }
 
     /* check to see if local universe already exists */
-    if (OMPI_SUCCESS == ompi_session_dir(false, tmpdir, ompi_system_info.user, ompi_system_info.nodename, NULL,
-					 name, NULL, NULL)) { /* found */
+    if (OMPI_SUCCESS == ompi_session_dir(false,
+					 ompi_process_info.tmpdir_base,
+					 ompi_system_info.user,
+					 ompi_system_info.nodename,
+					 NULL,
+					 ompi_universe_info.name,
+					 NULL,
+					 NULL)) { /* found */
 	/* check for "contact-info" file. if present, read it in. */
 	contact_file = ompi_os_path(false, ompi_process_info.universe_session_dir,
 				    "universe-setup.txt", NULL);
@@ -55,13 +61,16 @@ int ompi_rte_universe_exists(char *host, char *name, char *tmpdir, char *oob_con
 	}
 
 	if (!ompi_universe_info.persistence ||   /* not persistent... */
-	    (0 == strncmp(ompi_universe_info.scope, "local", strlen("local")))) {  /* ...or no connection allowed */
+	    (0 == strncmp(ompi_universe_info.scope, "exclusive", strlen("exclusive")))) {  /* ...or no connection allowed */
+	    /* also need to check "local" and that we did not specify the exact
+	     * matching universe name
+	     */
 	    return OMPI_ERR_NO_CONNECTION_ALLOWED;
 	}
 
 	/* if persistent, set contact info... */
 	if (OMPI_SUCCESS != mca_oob_set_contact_info(ompi_universe_info.oob_contact_info)) { /* set contact info */
-	    fprintf(stderr, "error setting oob contact info - please report error to bugs@open-mpi.org\n");
+	    ompi_output(0, "error setting oob contact info - please report error to bugs@open-mpi.org\n");
 	    return OMPI_ERR_FATAL;
 	}
 
@@ -74,4 +83,6 @@ int ompi_rte_universe_exists(char *host, char *name, char *tmpdir, char *oob_con
 	ompi_process_info.my_universe = strdup(ompi_universe_info.name);
 	return OMPI_SUCCESS;
     }
+
+    return OMPI_ERR_NOT_FOUND;
 }

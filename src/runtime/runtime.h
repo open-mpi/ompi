@@ -40,7 +40,10 @@ extern "C" {
 	pid_t pid;
 	bool persistence;
 	char *scope;
+	bool probe;
 	bool silent_mode;
+        bool ns_replica;
+        bool gpr_replica;
 	bool web_server;
 	char *socket_contact_info;
 	char *oob_contact_info;
@@ -246,18 +249,29 @@ extern "C" {
     /**
      * Parse the rte command line for options
      *
-     * Parses the specified command line for rte/seed daemon specific options.
+     * Parses the specified command line for rte specific options.
      * Fills the relevant global structures with the information obtained.
      *
      * @param cmd_line Command line to be parsed.
      * @retval None
      */
-    void ompi_rte_parse_seed_cmd_line(ompi_cmd_line_t *cmd_line);
+    void ompi_rte_parse_cmd_line(ompi_cmd_line_t *cmd_line);
+
+    /**
+     * Parse the rte command line for daemon-specific options
+     *
+     * Parses the specified command line for rte daemon-specific options.
+     * Fills the relevant global structures with the information obtained.
+     *
+     * @param cmd_line Command line to be parsed.
+     * @retval None
+     */
+    void ompi_rte_parse_daemon_cmd_line(ompi_cmd_line_t *cmd_line);
 
     /**
      * Check for universe existence
      *
-     * Checks to see if a specified universe exists. If so, attempts
+     * Checks to see if a specified universe exists on the local host. If so, attempts
      * to connect to verify that the universe is accepting connections.
      *
      * @param None Reads everything from the process_info and system_info
@@ -272,8 +286,7 @@ extern "C" {
      * @retval OMPI_CONNECTION_REFUSED Universe found and contact made, but
      * universe refused to allow connection.
      */
-    int ompi_rte_universe_exists(char *host, char *name, char *tmpdir,
-				 char *oob_contact_inf);
+    int ompi_rte_local_universe_exists(void);
 
 #ifdef __cplusplus
 }
