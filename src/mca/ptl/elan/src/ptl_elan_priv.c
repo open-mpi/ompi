@@ -27,8 +27,6 @@ mca_ptl_elan_data_frag (struct mca_ptl_elan_module_t *ptl,
     bool        matched; 
     int         rc = OMPI_SUCCESS;
 
-    START_FUNC(PTL_ELAN_DEBUG_RECV);
-
     OMPI_FREE_LIST_GET (&mca_ptl_elan_component.elan_recv_frags_free, 
                         item, rc);
 
@@ -97,7 +95,6 @@ mca_ptl_elan_data_frag (struct mca_ptl_elan_module_t *ptl,
         recv_frag->frag_recv.frag_is_buffered = true;
         recv_frag->frag_recv.frag_base.frag_addr = recv_frag->unex_buff;
     } 
-    END_FUNC(PTL_ELAN_DEBUG_RECV);
 }
 
 static void
@@ -106,7 +103,6 @@ mca_ptl_elan_last_frag (struct mca_ptl_elan_module_t *ptl,
 {
     mca_pml_base_recv_request_t *request; 
 
-    START_FUNC(PTL_ELAN_DEBUG_RECV);
     request = (mca_pml_base_recv_request_t*) hdr->hdr_frag.hdr_dst_ptr.pval; 
     /*pml_req->req_peer_match;*/
 
@@ -121,7 +117,6 @@ mca_ptl_elan_last_frag (struct mca_ptl_elan_module_t *ptl,
 	    hdr->hdr_frag.hdr_frag_length,
 	    hdr->hdr_frag.hdr_frag_length);
 
-    END_FUNC(PTL_ELAN_DEBUG_RECV);
 }
 
 static void
@@ -131,7 +126,6 @@ mca_ptl_elan_last_frag_ack (struct mca_ptl_elan_module_t *ptl,
      mca_ptl_elan_send_frag_t* desc;
      mca_pml_base_send_request_t* req;
 
-     START_FUNC(PTL_ELAN_DEBUG_ACK);
  
      LOG_PRINT(PTL_ELAN_DEBUG_ACK, "desc %p \n",
 		header->hdr_ack.hdr_src_ptr.pval);
@@ -171,7 +165,6 @@ mca_ptl_elan_last_frag_ack (struct mca_ptl_elan_module_t *ptl,
 		ptl->queue->tx_desc_free.super.ompi_list_length);
     }
 
-    END_FUNC(PTL_ELAN_DEBUG_RECV);
 }
 
 static void
@@ -188,8 +181,6 @@ mca_ptl_elan_ctrl_frag (struct mca_ptl_elan_module_t *ptl,
      mca_ptl_elan_send_frag_t* desc;
      mca_pml_base_send_request_t* req;
 
-     START_FUNC(PTL_ELAN_DEBUG_ACK);
- 
      desc = (mca_ptl_elan_send_frag_t*) header->hdr_ack.hdr_src_ptr.pval;
      req  = (mca_pml_base_send_request_t *) desc->desc->req;
 
@@ -206,7 +197,6 @@ mca_ptl_elan_ctrl_frag (struct mca_ptl_elan_module_t *ptl,
      /* XXX: This sort of synchronized fragment release will lead
       * to race conditions, also see the note insize the follwoing routine */
      mca_ptl_elan_send_desc_done (desc, req); 
-     END_FUNC(PTL_ELAN_DEBUG_ACK);
 }
 
 static void
@@ -227,7 +217,6 @@ mca_ptl_elan_init_qdma_desc (struct mca_ptl_elan_send_frag_t *frag,
     mca_ptl_base_header_t *hdr;
     struct ompi_ptl_elan_qdma_desc_t * desc;
     ELAN4_CTX  *ctx;
-    START_FUNC(PTL_ELAN_DEBUG_SEND);
 
     desc   = (ompi_ptl_elan_qdma_desc_t *)frag->desc;
     destvp = ptl_peer->peer_vp;
@@ -377,7 +366,6 @@ mca_ptl_elan_init_qdma_desc (struct mca_ptl_elan_send_frag_t *frag,
 
     /* Make main memory coherent with IO domain (IA64) */
     MEMBAR_VISIBLE ();
-    END_FUNC(PTL_ELAN_DEBUG_SEND);
 }
 
 static void
@@ -397,8 +385,6 @@ mca_ptl_elan_init_put_desc (struct mca_ptl_elan_send_frag_t *frag,
     ELAN4_CTX   *ctx;
     struct ompi_ptl_elan_putget_desc_t * desc;
     mca_ptl_base_header_t *hdr;
-
-    START_FUNC((PTL_ELAN_DEBUG_PUT | PTL_ELAN_DEBUG_GET));
 
     hdr = &frag->frag_base.frag_header;
     desc   = (ompi_ptl_elan_putget_desc_t *)frag->desc;
@@ -558,7 +544,6 @@ mca_ptl_elan_init_put_desc (struct mca_ptl_elan_send_frag_t *frag,
 
     /* Make main memory coherent with IO domain (IA64) */
     MEMBAR_VISIBLE ();
-    END_FUNC(PTL_ELAN_DEBUG_SEND);
 }
 
 #if OMPI_PTL_ELAN_ENABLE_GET
@@ -579,8 +564,6 @@ mca_ptl_elan_init_get_desc (mca_ptl_elan_module_t *ptl,
     struct ompi_ptl_elan_putget_desc_t * desc;
     mca_ptl_base_header_t *recv_header;
     struct mca_ptl_elan_peer_t *ptl_peer;
-
-    START_FUNC(PTL_ELAN_DEBUG_GET);
 
     ctx  =  ptl->ptl_elan_ctx;
     recv_header= &recv_frag->frag_recv.frag_base.frag_header;
@@ -692,7 +675,6 @@ mca_ptl_elan_init_get_desc (mca_ptl_elan_module_t *ptl,
 	    destvp, hdr->hdr_common.hdr_type,
 	    hdr->hdr_common.hdr_flags,
 	    hdr->hdr_common.hdr_size);
-    END_FUNC(PTL_ELAN_DEBUG_GET);
 }
 #endif /* End of OMPI_PTL_ELAN_ENABLE_GET */
 
@@ -707,8 +689,6 @@ mca_ptl_elan_wait_queue(mca_ptl_elan_module_t * ptl,
     ELAN4_CTX  *ctx; 
     ADDR_SDRAM  ready;
     EVENT_WORD *readyWord; 
-
-    START_FUNC(PTL_ELAN_DEBUG_THREAD);
 
     rail  = (RAIL *)ptl->ptl_elan_rail;
     ctx   = ptl->ptl_elan_ctx;
@@ -751,7 +731,6 @@ mca_ptl_elan_wait_queue(mca_ptl_elan_module_t * ptl,
 	rail->r_sleepDescs = es;
 	OMPI_UNLOCK(&mca_ptl_elan_component.elan_lock);
     }
-    END_FUNC(PTL_ELAN_DEBUG_THREAD);
     return 0xdeadbeef;
 }
 
@@ -767,7 +746,6 @@ mca_ptl_elan_start_get (mca_ptl_elan_send_frag_t * frag,
     mca_ptl_elan_module_t *ptl;
     struct ompi_ptl_elan_putget_desc_t *gdesc;
 
-    START_FUNC(PTL_ELAN_DEBUG_GET);
     ptl = ptl_peer->peer_ptl;
     gdesc = (ompi_ptl_elan_putget_desc_t *)frag->desc;
     mca_ptl_elan_init_get_desc (ptl, frag, ptl_peer, 
@@ -794,7 +772,6 @@ mca_ptl_elan_start_get (mca_ptl_elan_send_frag_t * frag,
     frag->frag_base.frag_size = *size; 
     frag->frag_progressed     = 0;
 
-    END_FUNC(PTL_ELAN_DEBUG_GET);
     return OMPI_SUCCESS;
 }
 #endif /* End of OMPI_PTL_ELAN_ENABLE_GET && HAVE_GET_INTERFACE */
@@ -810,8 +787,6 @@ mca_ptl_elan_start_desc (mca_ptl_elan_send_frag_t * frag,
     mca_ptl_elan_module_t *ptl;
 
     ptl = ptl_peer->peer_ptl;
-
-    START_FUNC(PTL_ELAN_DEBUG_SEND);
 
     if (frag->desc->desc_type == MCA_PTL_ELAN_DESC_QDMA) {
         struct ompi_ptl_elan_qdma_desc_t *qdma;
@@ -850,7 +825,6 @@ mca_ptl_elan_start_desc (mca_ptl_elan_send_frag_t * frag,
     frag->frag_progressed  = 0;
     frag->frag_ack_pending = 0; /* this is ack for internal elan */
 
-    END_FUNC(PTL_ELAN_DEBUG_SEND);
     return OMPI_SUCCESS;
 }
 
@@ -868,8 +842,6 @@ mca_ptl_elan_get_with_ack ( mca_ptl_base_module_t * ptl,
     int    destvp;
     int    flags;
     size_t remain_len, recv_len;
-
-    START_FUNC(PTL_ELAN_DEBUG_ACK);
 
     flags = 0; /* XXX: No special flags for get */
     elan_ptl = (mca_ptl_elan_module_t *) ptl;
@@ -929,7 +901,6 @@ mca_ptl_elan_get_with_ack ( mca_ptl_base_module_t * ptl,
 	       	hdr->hdr_ack.hdr_dst_size,
 		remain_len);
 
-    END_FUNC(PTL_ELAN_DEBUG_ACK);
     return OMPI_SUCCESS;
 }
 #endif  /* End of OMPI_PTL_ELAN_ENABLE_GET */
@@ -948,8 +919,6 @@ mca_ptl_elan_start_ack ( mca_ptl_base_module_t * ptl,
 
     int recv_len;
     int destvp;
-
-    START_FUNC(PTL_ELAN_DEBUG_ACK);
 
     destvp = ((mca_ptl_elan_peer_t *)
 	    recv_frag->frag_recv.frag_base.frag_peer)->peer_vp;
@@ -1038,7 +1007,6 @@ mca_ptl_elan_start_ack ( mca_ptl_base_module_t * ptl,
     desc->frag_progressed     = 0;
     desc->desc->desc_status   = MCA_PTL_ELAN_DESC_LOCAL;
 
-    END_FUNC(PTL_ELAN_DEBUG_ACK);
     return OMPI_SUCCESS;
 }
 
@@ -1050,7 +1018,6 @@ mca_ptl_elan_drain_recv (struct mca_ptl_elan_module_t *ptl)
     ELAN_CTX   *ctx;
     int         rc;
 
-    START_FUNC(PTL_ELAN_DEBUG_NONE);
     queue = ptl->queue;
     rxq   = queue->rxq;
     ctx   = ptl->ptl_elan_ctx;
@@ -1071,7 +1038,6 @@ ptl_elan_recv_comp:
 	if (header->hdr_common.hdr_type == MCA_PTL_HDR_TYPE_STOP) {
 	    /* XXX: release the lock and quit the thread */
 	    OMPI_UNLOCK (&queue->rx_lock);
-	    END_FUNC(PTL_ELAN_DEBUG_THREAD);
 	    return OMPI_SUCCESS;
 	} 
 #endif
@@ -1131,7 +1097,6 @@ ptl_elan_recv_comp:
     goto ptl_elan_recv_comp;
 #endif
 
-    END_FUNC(PTL_ELAN_DEBUG_NONE);
     return OMPI_SUCCESS;
 }
 
@@ -1146,7 +1111,6 @@ mca_ptl_elan_update_desc (struct mca_ptl_elan_module_t *ptl)
 
     ompi_ptl_elan_recv_queue_t *rxq;
 
-    START_FUNC(PTL_ELAN_DEBUG_THREAD);
     comp = ptl->comp;
     ctx  = ptl->ptl_elan_ctx;
     rxq  = comp->rxq;
@@ -1171,7 +1135,6 @@ ptl_elan_send_comp:
 	if (header->hdr_common.hdr_type == MCA_PTL_HDR_TYPE_STOP) {
 	    /* XXX: release the lock and quit the thread */
 	    OMPI_UNLOCK (&comp->rx_lock);
-	    END_FUNC(PTL_ELAN_DEBUG_THREAD);
 	    return OMPI_SUCCESS;
 	}
 #endif
@@ -1225,7 +1188,7 @@ ptl_elan_send_comp:
 #if OMPI_PTL_ELAN_THREADING
     goto ptl_elan_send_comp;
 #endif
-    END_FUNC(PTL_ELAN_DEBUG_THREAD);
+
 #else
     ctx  = ptl->ptl_elan_ctx;
     while (ompi_list_get_size (&ptl->send_frags) > 0) {

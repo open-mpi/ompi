@@ -53,25 +53,6 @@
 #define  PTL_ELAN_DEBUG_CHAIN   (0x800)
 
 #define  PTL_ELAN_DEBUG_FLAG   (PTL_ELAN_DEBUG_NONE)
-//(PTL_ELAN_DEBUG_GET|PTL_ELAN_DEBUG_PUT|PTL_ELAN_DEBUG_RECV)
-
-#define START_FUNC(flag)                                       \
-do {                                                           \
-    if (PTL_ELAN_DEBUG_FLAG & flag) {                          \
-	char *rms_rank = getenv("RMS_RANK");                   \
-	fprintf(stderr, "[proc%s:%s:%d] Entering...\n",        \
-		rms_rank, __FUNCTION__, __LINE__);             \
-    }                                                          \
-} while (0) 
-
-#define END_FUNC(flag)                                         \
-do {                                                           \
-    if (PTL_ELAN_DEBUG_FLAG & flag) {                          \
-	char *rms_rank = getenv("RMS_RANK");                   \
-	fprintf(stderr, "[proc%s:%s:%d] Completes \n",         \
-		rms_rank, __FUNCTION__, __LINE__);             \
-    }                                                          \
-} while (0)
 
 #define  LOG_PRINT(flag, args...)                              \
 do {                                                           \

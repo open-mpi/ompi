@@ -95,8 +95,6 @@ mca_ptl_elan_alloc_desc (struct mca_ptl_base_module_t *ptl_ptr,
     ompi_list_item_t *item = NULL;
     mca_ptl_elan_send_frag_t *desc;
 
-    START_FUNC(PTL_ELAN_DEBUG_SEND);
-
     /* TODO: Dynamically bind a base request to PUT/GET/QDMA/STEN */
     if (MCA_PTL_ELAN_DESC_QDMA == desc_type) {
         flist = &(((mca_ptl_elan_module_t *) ptl_ptr)->queue)->tx_desc_free;
@@ -139,7 +137,6 @@ mca_ptl_elan_alloc_desc (struct mca_ptl_base_module_t *ptl_ptr,
     desc->desc->desc_type = desc_type;
     LOG_PRINT(PTL_ELAN_DEBUG_SEND, "Got frag %p desc %d type %d\n", 
 	    desc, desc->desc, desc_type);
-    END_FUNC(PTL_ELAN_DEBUG_SEND);
     return desc;
 }
 
@@ -158,8 +155,6 @@ mca_ptl_elan_send_desc_done (
     mca_ptl_elan_module_t *ptl;
     mca_ptl_base_header_t *header;
  
-    START_FUNC(PTL_ELAN_DEBUG_SEND);
-
     ptl = ((ompi_ptl_elan_qdma_desc_t *)frag->desc)->ptl;
     header = &frag->frag_base.frag_header;
 
@@ -176,7 +171,6 @@ mca_ptl_elan_send_desc_done (
 		->chain_event->ev_Params[1], 8);
 	OMPI_FREE_LIST_RETURN (&ptl->putget->get_desc_free,
 	       	(ompi_list_item_t *) frag);
-	END_FUNC(PTL_ELAN_DEBUG_SEND);
 	return;
     }
 #endif
@@ -253,7 +247,6 @@ mca_ptl_elan_send_desc_done (
 		    (ompi_list_item_t *) frag);
     } 
 #endif
-    END_FUNC(PTL_ELAN_DEBUG_SEND);
 }
  
 void 
