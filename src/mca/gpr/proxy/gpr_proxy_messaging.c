@@ -27,22 +27,11 @@ void mca_gpr_proxy_deliver_notify_msg(ompi_registry_notify_action_t state,
     int namelen;
     mca_gpr_proxy_notify_request_tracker_t *trackptr;
 
-    if (mca_gpr_proxy_debug) {
-	if (OMPI_REGISTRY_NOTIFY_ON_STARTUP == state) {
-	ompi_output(0, "[%d,%d,%d] special delivery of startup msg",
-		    OMPI_NAME_ARGS(*ompi_rte_get_self()));
-	} else {
-	ompi_output(0, "[%d,%d,%d] special delivery of shutdown msg",
-		    OMPI_NAME_ARGS(*ompi_rte_get_self()));
-	}
-    }
-
 	/* don't deliver messages with zero data in them */
 	if (0 < ompi_list_get_size(&message->data)) {
 		
 	    /* protect system from threadlock */
-	    if ((OMPI_REGISTRY_NOTIFY_ON_STARTUP & state) ||
-		(OMPI_REGISTRY_NOTIFY_ON_SHUTDOWN & state)) {
+	    if (OMPI_REGISTRY_NOTIFY_ON_STARTUP & state) {
 	
 			OMPI_THREAD_LOCK(&mca_gpr_proxy_mutex);
 		
@@ -60,6 +49,7 @@ void mca_gpr_proxy_deliver_notify_msg(ompi_registry_notify_action_t state,
 					return;
 			    }
 			}
+             OMPI_THREAD_UNLOCK(&mca_gpr_proxy_mutex);
     		}
 	}
     OBJ_RELEASE(message);

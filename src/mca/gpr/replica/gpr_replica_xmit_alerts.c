@@ -69,7 +69,7 @@ ompi_buffer_t mca_gpr_replica_get_startup_msg(mca_ns_base_jobid_t jobid,
 
     OMPI_THREAD_LOCK(&mca_gpr_replica_mutex);
 
-    msg = mca_gpr_replica_construct_startup_shutdown_msg_nl(OMPI_STARTUP_DETECTED, jobid, recipients);
+    msg = mca_gpr_replica_construct_startup_msg_nl(jobid, recipients);
 
     OMPI_THREAD_UNLOCK(&mca_gpr_replica_mutex);
 
@@ -78,30 +78,8 @@ ompi_buffer_t mca_gpr_replica_get_startup_msg(mca_ns_base_jobid_t jobid,
 
 
 ompi_buffer_t
-mca_gpr_replica_get_shutdown_msg(mca_ns_base_jobid_t jobid,
-			         ompi_list_t *recipients)
-{
-    ompi_buffer_t msg;
-
-    if (mca_gpr_replica_debug) {
-	ompi_output(0, "[%d,%d,%d] entered get_shutdown_msg",
-		    OMPI_NAME_ARGS(*ompi_rte_get_self()));
-    }
-
-    OMPI_THREAD_LOCK(&mca_gpr_replica_mutex);
-
-    msg = mca_gpr_replica_construct_startup_shutdown_msg_nl(OMPI_SHUTDOWN_DETECTED, jobid, recipients);
-
-    OMPI_THREAD_UNLOCK(&mca_gpr_replica_mutex);
-
-    return msg;
-}
-
-
-ompi_buffer_t
-mca_gpr_replica_construct_startup_shutdown_msg_nl(int mode,
-						  mca_ns_base_jobid_t jobid,
-						  ompi_list_t *recipients)
+mca_gpr_replica_construct_startup_msg_nl(mca_ns_base_jobid_t jobid,
+						               ompi_list_t *recipients)
 {
     mca_gpr_replica_segment_t *seg=NULL, *proc_stat_seg;
     mca_gpr_replica_key_t *keys;
@@ -121,7 +99,7 @@ mca_gpr_replica_construct_startup_shutdown_msg_nl(int mode,
     size_t bufsize;
 
     if (mca_gpr_replica_debug) {
-	ompi_output(0, "[%d,%d,%d] entered construct_startup_shutdown_msg for job %d",
+	ompi_output(0, "[%d,%d,%d] entered construct_startup_msg for job %d",
 		    OMPI_NAME_ARGS(*ompi_rte_get_self()), (int)jobid);
     }
 
@@ -157,13 +135,11 @@ mca_gpr_replica_construct_startup_shutdown_msg_nl(int mode,
 		 ) {
 		next_trig = (mca_gpr_replica_trigger_list_t*)ompi_list_get_next(trig);
 
-		if (((OMPI_REGISTRY_NOTIFY_ON_STARTUP & trig->action) && (OMPI_STARTUP_DETECTED == mode)) ||
-		    ((OMPI_REGISTRY_NOTIFY_ON_SHUTDOWN & trig->action) && (OMPI_SHUTDOWN_DETECTED == mode))) {
+		if (OMPI_REGISTRY_NOTIFY_ON_STARTUP & trig->action) {
 
 		    /* see if data is requested - only one trig has to ask for it */
-		    if (((OMPI_REGISTRY_NOTIFY_INCLUDE_STARTUP_DATA & trig->action) && (OMPI_STARTUP_DETECTED == mode)) ||
-			((OMPI_REGISTRY_NOTIFY_INCLUDE_SHUTDOWN_DATA & trig->action) && (OMPI_SHUTDOWN_DETECTED == mode))) {
-			include_data = true;
+		    if (OMPI_REGISTRY_NOTIFY_INCLUDE_STARTUP_DATA & trig->action) {
+				include_data = true;
 		    }
 
 		    /***** if notify_one_shot is set, need to remove subscription from system */
@@ -247,7 +223,7 @@ mca_gpr_replica_construct_startup_shutdown_msg_nl(int mode,
 
 	if (mca_gpr_replica_debug) {
 	    ompi_buffer_size(msg, &bufsize);
-	    ompi_output(0, "[%d,%d,%d] built startup_shutdown_msg of length %d with %d recipients",
+	    ompi_output(0, "[%d,%d,%d] built startup_msg of length %d with %d recipients",
 			OMPI_NAME_ARGS(*ompi_rte_get_self()), bufsize, (int)ompi_list_get_size(recipients));
 	    for (peer = (ompi_name_server_namelist_t*)ompi_list_get_first(recipients);
 		 peer != (ompi_name_server_namelist_t*)ompi_list_get_end(recipients);

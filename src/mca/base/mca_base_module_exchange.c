@@ -230,7 +230,7 @@ static void mca_base_modex_registry_callback(
          * Lookup the process.
          */
         ompi_unpack(buffer, &proc_name, 1, OMPI_NAME);
-
+        
         proc = ompi_proc_find_and_add(&proc_name, &isnew);
 
         if(NULL == proc)
@@ -310,6 +310,7 @@ static void mca_base_modex_registry_callback(
         mca_pml.pml_add_procs(new_procs, new_proc_count);
         free(new_procs);
     }
+    
 }
 
 /**

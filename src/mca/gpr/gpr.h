@@ -80,7 +80,6 @@ typedef uint32_t ompi_registry_notify_id_t;
 #define OMPI_REGISTRY_SYNCHRO_MODE_CONTINUOUS  (uint16_t)0x0020   /**< Notify whenever conditions are met */
 #define OMPI_REGISTRY_SYNCHRO_MODE_ONE_SHOT    (uint16_t)0x0040   /**< Fire once, then terminate synchro command */
 #define OMPI_REGISTRY_SYNCHRO_MODE_STARTUP     (uint16_t)0x0080   /**< Indicates associated with application startup */
-#define OMPI_REGISTRY_SYNCHRO_MODE_SHUTDOWN    (uint16_t)0x0100   /**< Indicates associated with application shutdown */
 
 typedef uint16_t ompi_registry_synchro_mode_t;
 
@@ -433,28 +432,6 @@ typedef void (*mca_gpr_base_module_triggers_inactive_fn_t)(mca_ns_base_jobid_t j
  */
 typedef ompi_buffer_t (*mca_gpr_base_module_get_startup_msg_fn_t)(mca_ns_base_jobid_t jobid,
 								  ompi_list_t *recipients);
-
-/*
- * Get the job shutdown message.
- * Upon completing, each process waits for a final synchronizing message to arrive. This ensures
- * that process all exit together and prevents, for example, "hangs" as one process tries to talk
- * to another that has completed. Not much data should need to be shared during this operation, but
- * this function provides an entry point in case something is identified.
- *
- * @param jobid The id of the job being shutdown.
- * @param recipients A list of process names for the recipients - the input parameter
- * is a pointer to the list; the function returns the list in that location.
- *
- * @retval msg A packed buffer containing the required information. At the moment, this will be an
- * empty buffer as no information has yet been identified.
- *
- * @code
- * msg_buffer = ompi_registry.get_shutdown_msg(jobid, recipients);
- * @endcode
- *
- */
-typedef ompi_buffer_t (*mca_gpr_base_module_get_shutdown_msg_fn_t)(mca_ns_base_jobid_t jobid,
-								   ompi_list_t *recipients);
 
 /* Cleanup a job from the registry
  * Remove all references to a given job from the registry. This includes removing
@@ -853,7 +830,6 @@ struct mca_gpr_base_module_1_0_0_t {
     mca_gpr_base_module_triggers_active_fn_t triggers_active;
     mca_gpr_base_module_triggers_inactive_fn_t triggers_inactive;
     mca_gpr_base_module_get_startup_msg_fn_t get_startup_msg;
-    mca_gpr_base_module_get_shutdown_msg_fn_t get_shutdown_msg;
     mca_gpr_base_module_cleanup_job_fn_t cleanup_job;
     mca_gpr_base_module_cleanup_proc_fn_t cleanup_process;
     mca_gpr_base_module_deliver_notify_msg_fn_t deliver_notify_msg;

@@ -468,11 +468,6 @@ struct ompi_communicator_t {
     ompi_comm_disconnect_obj *ompi_comm_disconnect_init (ompi_communicator_t *comm);
     void ompi_comm_disconnect_waitall (int count, ompi_comm_disconnect_obj **objs );
 
-	/* this routine provides a callback function for terminating spawned
-	 * processes. It should be removed at some point in the future.
-	 */
-	 void ompi_comm_shutdown_cbfunc(ompi_registry_notify_message_t* match, void* cbdata);
-	 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

@@ -31,7 +31,7 @@ int mca_gpr_base_unpack_synchro(ompi_buffer_t buffer, ompi_registry_notify_id_t 
     mca_gpr_cmd_flag_t command;
 
     if ((OMPI_SUCCESS != ompi_unpack(buffer, &command, 1, MCA_GPR_OOB_PACK_CMD))
-	|| (MCA_GPR_SUBSCRIBE_CMD != command)) {
+	|| (MCA_GPR_SYNCHRO_CMD != command)) {
 	return OMPI_ERROR;
     }
 
@@ -49,7 +49,7 @@ int mca_gpr_base_unpack_cancel_synchro(ompi_buffer_t buffer)
     int32_t response;
 
     if ((OMPI_SUCCESS != ompi_unpack(buffer, &command, 1, MCA_GPR_OOB_PACK_CMD))
-	|| (MCA_GPR_UNSUBSCRIBE_CMD != command)) {
+	|| (MCA_GPR_CANCEL_SYNCHRO_CMD != command)) {
 	return OMPI_ERROR;
     }
 

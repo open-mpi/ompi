@@ -44,7 +44,7 @@
 #define OMPI_RTE_VM_STATUS_SEGMENT      "ompi-vm-status"
 #define OMPI_RTE_CELL_STATUS_SEGMENT    "ompi-cell-status"
 #define OMPI_RTE_SCHED_SEGMENT          "ompi-sched"
-#define OMPI_RTE_MODEX_SEGMENT          "ompi_modex"
+#define OMPI_RTE_MODEX_SEGMENT          "ompi-modex"
 
 /* constants for spawn constraints */
 
@@ -352,12 +352,6 @@ OMPI_DECLSPEC   ompi_rte_vm_status_t *ompi_rte_unpack_vm_status(ompi_registry_va
      */
 
 OMPI_DECLSPEC    int ompi_rte_wait_startup_msg(void);
-
-    /**
-     * Hold for shutdown message to arrive, then decode it.
-     */
-
-OMPI_DECLSPEC    int ompi_rte_wait_shutdown_msg(void);
 
     /**
      * Change state as processes complete registration/unregistration

@@ -52,6 +52,8 @@ int ompi_mpi_finalize(void)
 {
     int ret;
     ompi_rte_process_status_t my_status;
+    int my_rank;
+    mca_ns_base_jobid_t my_jobid;
 
     ompi_mpi_finalized = true;
 #if OMPI_HAVE_THREADS == 0
@@ -62,7 +64,8 @@ int ompi_mpi_finalize(void)
     ompi_registry.begin_compound_cmd();
 
     /* Set process status to "terminating"*/
-    my_status.rank = mca_ns_base_get_vpid(ompi_rte_get_self());
+ 	my_rank = ompi_comm_rank(&ompi_mpi_comm_world);
+    my_status.rank = (int32_t)my_rank;
     my_status.local_pid = (int32_t)ompi_process_info.pid;
     my_status.nodename = strdup(ompi_system_info.nodename);
     my_status.status_key = OMPI_PROC_TERMINATING;
@@ -72,18 +75,22 @@ int ompi_mpi_finalize(void)
     }
 
     /* execute the compound command - no return data requested
-     * we'll get it through the shutdown message
      */
     ompi_registry.exec_compound_cmd(OMPI_REGISTRY_NO_RETURN_REQUESTED);
 
     /* wait for all processes to reach same state */
-    if (OMPI_SUCCESS != (ret = ompi_rte_wait_shutdown_msg())) {
-	if (ompi_rte_debug_flag) {
-	    ompi_output(0, "mpi_finalize: gave up waiting for other processes to complete");
-	}
-    }
-
+	mca_oob_barrier();
  
+ 	/* need the following code to cleanup the job in the registry.
+ 	 * once the state-of-health monitoring system is available, we will
+ 	 * have that system perform this function. until then, we will have the
+ 	 * rank 0 process do it.
+ 	 */
+ 	 if (0 == my_rank) {
+ 	 	my_jobid = ompi_name_server.get_jobid(ompi_rte_get_self());
+ 	 	ompi_rte_job_shutdown(my_jobid);
+ 	 }
+ 	 
     /* Shut down any bindings-specific issues: C++, F77, F90 (may or
        may not be necessary...?) */
 

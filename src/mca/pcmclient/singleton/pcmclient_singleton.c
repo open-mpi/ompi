@@ -31,7 +31,6 @@
 #include "include/types.h"
 #include "include/constants.h"
 #include "mca/ns/ns.h"
-#include "mca/gpr/gpr.h"
 #include "mca/gpr/base/base.h"
 #include "runtime/runtime.h"
 
@@ -62,12 +61,6 @@ proc_registered_cb(ompi_registry_notify_message_t *match,
     ompi_rte_job_startup(mca_pcmclient_singleton_procs[0].jobid);
 }
 
-static void
-proc_unregistered_cb(ompi_registry_notify_message_t *match, 
-                   void *cbdata)
-{
-    ompi_rte_job_shutdown(mca_pcmclient_singleton_procs[0].jobid);
-}
 
 int
 mca_pcmclient_singleton_init_cleanup(void)
@@ -97,17 +90,6 @@ mca_pcmclient_singleton_init_cleanup(void)
 	     NULL,
              1,
 	     proc_registered_cb, NULL);
-
-    /* register a synchro on the segment so we get notified on shutdown */
-    rc_tag = ompi_registry.synchro(
-	     OMPI_REGISTRY_SYNCHRO_MODE_DESCENDING|OMPI_REGISTRY_SYNCHRO_MODE_ONE_SHOT|
-	     OMPI_REGISTRY_SYNCHRO_MODE_SHUTDOWN,
-	     OMPI_REGISTRY_OR,
-	     segment,
-	     NULL,
-	     0,
-	     proc_unregistered_cb, NULL);
-
 
     return OMPI_SUCCESS;
 }

@@ -45,9 +45,10 @@ void mca_gpr_replica_deliver_notify_msg(ompi_registry_notify_action_t state,
 			    seg = trackptr->segptr;
 			    if ((trackptr->action & state) &&
 				(0 == strncmp(message->segment, seg->name, namelen))) {
-					/* process request - callback function responsible for releasing memory */
-					trackptr->callback(message, trackptr->user_tag);
-					return;
+                      OMPI_THREAD_UNLOCK(&mca_gpr_replica_mutex);
+                      /* process request - callback function responsible for releasing memory */
+			         trackptr->callback(message, trackptr->user_tag);
+            			 return;
 			    }
 			}
 		

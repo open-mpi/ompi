@@ -38,37 +38,37 @@ mca_gpr_proxy_synchro(ompi_registry_synchro_mode_t synchro_mode,
 
 
     if (mca_gpr_proxy_compound_cmd_mode) {
-	if (OMPI_SUCCESS != mca_gpr_base_pack_synchro(mca_gpr_proxy_compound_cmd,
-						      synchro_mode,
-						      mode, segment, tokens, trigger)) {
-	    return OMPI_REGISTRY_NOTIFY_ID_MAX;
-	}
-
-	OMPI_THREAD_LOCK(&mca_gpr_proxy_mutex);
-	/* store callback function and user_tag in local list for lookup */
-	/* generate id_tag to send to replica to identify lookup entry */
-
-	idtag = mca_gpr_proxy_enter_notify_request(segment, OMPI_REGISTRY_NOTIFY_NONE, cb_func, user_tag);
-
-	OMPI_THREAD_UNLOCK(&mca_gpr_proxy_mutex);
-
-	if (OMPI_SUCCESS != ompi_pack(mca_gpr_proxy_compound_cmd, &idtag, 1, OMPI_INT32)) {
-	    mca_gpr_proxy_remove_notify_request(idtag);
-	    return OMPI_REGISTRY_NOTIFY_ID_MAX;
-	}
-
-	return idtag;
+        	if (OMPI_SUCCESS != mca_gpr_base_pack_synchro(mca_gpr_proxy_compound_cmd,
+        						      synchro_mode,
+        						      mode, segment, tokens, trigger)) {
+        	    return OMPI_REGISTRY_NOTIFY_ID_MAX;
+        	}
+        
+        	OMPI_THREAD_LOCK(&mca_gpr_proxy_mutex);
+        	/* store callback function and user_tag in local list for lookup */
+        	/* generate id_tag to send to replica to identify lookup entry */
+        
+        	idtag = mca_gpr_proxy_enter_notify_request(segment, OMPI_REGISTRY_NOTIFY_NONE, cb_func, user_tag);
+        
+        	OMPI_THREAD_UNLOCK(&mca_gpr_proxy_mutex);
+        
+        	if (OMPI_SUCCESS != ompi_pack(mca_gpr_proxy_compound_cmd, &idtag, 1, OMPI_INT32)) {
+        	    mca_gpr_proxy_remove_notify_request(idtag);
+        	    return OMPI_REGISTRY_NOTIFY_ID_MAX;
+        	}
+        
+        	return idtag;
     }
 
 
     if (OMPI_SUCCESS != ompi_buffer_init(&cmd, 0)) { /* got a problem */
-	return OMPI_REGISTRY_NOTIFY_ID_MAX;
+        	return OMPI_REGISTRY_NOTIFY_ID_MAX;
     }
 
     response = OMPI_REGISTRY_NOTIFY_ID_MAX;
 
     if (OMPI_SUCCESS != mca_gpr_base_pack_synchro(cmd, synchro_mode, mode, segment, tokens, trigger)) {
-	goto CLEANUP;
+        	goto CLEANUP;
     }
 
     OMPI_THREAD_LOCK(&mca_gpr_proxy_mutex);
@@ -80,28 +80,28 @@ mca_gpr_proxy_synchro(ompi_registry_synchro_mode_t synchro_mode,
     OMPI_THREAD_UNLOCK(&mca_gpr_proxy_mutex);
 
     if (OMPI_SUCCESS != ompi_pack(cmd, &idtag, 1, OMPI_INT32)) {
-	goto CLEANUP;
+        	goto CLEANUP;
     }
 
     if (0 > mca_oob_send_packed(mca_gpr_my_replica, cmd, MCA_OOB_TAG_GPR, 0)) {
-	goto CLEANUP;
+        	goto CLEANUP;
     }
  
     if (0 > mca_oob_recv_packed(mca_gpr_my_replica, &answer, &recv_tag)) {
-	goto CLEANUP;
+        	goto CLEANUP;
     }
 
     if (OMPI_SUCCESS != mca_gpr_base_unpack_synchro(answer, &remote_idtag)) {  /* error on replica */
 
-	OMPI_THREAD_LOCK(&mca_gpr_proxy_mutex);
-	mca_gpr_proxy_remove_notify_request(idtag);
-	OMPI_THREAD_UNLOCK(&mca_gpr_proxy_mutex);
-
-	response = OMPI_REGISTRY_NOTIFY_ID_MAX;
+        	OMPI_THREAD_LOCK(&mca_gpr_proxy_mutex);
+        	mca_gpr_proxy_remove_notify_request(idtag);
+        	OMPI_THREAD_UNLOCK(&mca_gpr_proxy_mutex);
+        
+        	response = OMPI_REGISTRY_NOTIFY_ID_MAX;
 
     } else {
-	response = idtag;
-	mca_gpr_proxy_set_remote_idtag(idtag, remote_idtag);
+        	response = idtag;
+        	mca_gpr_proxy_set_remote_idtag(idtag, remote_idtag);
     }
 
     ompi_buffer_free(answer);

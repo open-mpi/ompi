@@ -74,7 +74,6 @@ static mca_gpr_base_module_t mca_gpr_replica = {
     mca_gpr_replica_triggers_active,
     mca_gpr_replica_triggers_inactive,
     mca_gpr_replica_get_startup_msg,
-    mca_gpr_replica_get_shutdown_msg,
     mca_gpr_replica_cleanup_job,
     mca_gpr_replica_cleanup_proc,
     mca_gpr_replica_deliver_notify_msg
