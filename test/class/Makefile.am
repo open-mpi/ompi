@@ -9,6 +9,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/test/support -DOMPI_ENABLE_DEBUG_OVERRIDE=1
 noinst_PROGRAMS = \
 	ompi_bitmap \
 	ompi_circular_buffer_fifo \
+	ompi_fifo \
 	ompi_hash_table \
 	ompi_list \
 	ompi_value_array \
@@ -33,6 +34,13 @@ ompi_circular_buffer_fifo_LDADD = \
         $(top_builddir)/test/support/libsupport.la \
         $(top_builddir)/src/util/libutil.la
 ompi_circular_buffer_fifo_DEPENDENCIES = $(ompi_circular_buffer_fifo_LDADD)
+
+ompi_fifo_SOURCES = ompi_fifo.c 
+ompi_fifo_LDADD = \
+        $(top_builddir)/src/threads/mutex_spinlock.lo \
+        $(top_builddir)/test/support/libsupport.la \
+        $(top_builddir)/src/util/libutil.la
+ompi_fifo_DEPENDENCIES = $(ompi_fifo_LDADD)
 
 ompi_list_SOURCES = ompi_list.c 
 ompi_list_LDADD = \
