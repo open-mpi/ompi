@@ -205,7 +205,7 @@ AC_DEFUN([LAM_INTL_POSIX_THREADS_PLAIN_FC], [
 #
 # Fortran compiler
 #
-if test "$lam_pthread_f77_success" = "0" -a "$WANT_MPI_F77" = "1"; then
+if test "$lam_pthread_f77_success" = "0" -a "$LAM_WANT_F77_BINDINGS" = "1"; then
   AC_MSG_CHECKING([if F77 compiler and POSIX threads work as is])
   if test "$HAVE_POSIX_THREADS" = "1" ; then
     run_this_test=1
@@ -324,7 +324,7 @@ AC_DEFUN([LAM_INTL_POSIX_THREADS_SPECIAL_FLAGS_FC], [
 #
 # Fortran compiler
 #
-if test "$lam_pthread_f77_success" = "0" -a "$WANT_MPI_F77" = "1"; then
+if test "$lam_pthread_f77_success" = "0" -a "$LAM_WANT_F77_BINDINGS" = "1"; then
   for pf in $pflags; do
     AC_MSG_CHECKING([if F77 compiler and POSIX threads work with $pf])
     FFLAGS="$orig_FFLAGS $pf"
@@ -500,7 +500,7 @@ AC_DEFUN([LAM_INTL_POSIX_THREADS_LIBS_FC],[
 #
 # Fortran compiler
 #
-if test "$lam_pthread_f77_success" = "0" -a "$WANT_MPI_F77" = "1"; then
+if test "$lam_pthread_f77_success" = "0" -a "$LAM_WANT_F77_BINDINGS" = "1"; then
   if test ! "$lam_pthread_c_success" = "0" -a ! "$PTHREAD_LIBS" = "" ; then
     AC_MSG_CHECKING([if F77 compiler and POSIX threads work with $PTHREAD_LIBS])
     LIBS="$orig_LIBS $PTHREAD_LIBS"
@@ -610,7 +610,7 @@ CXXCPPFLAGS="$orig_CXXCPPFLAGS"
 LDFLAGS="$orig_LDFLAGS"
 LIBS="$orig_LIBS"
 
-if test "$WANT_MPI_F77" != "1"; then
+if test "$LAM_WANT_F77_BINDINGS" != "1"; then
   lam_pthread_f77_success=1
 fi
 

@@ -82,7 +82,6 @@ NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE
 *******************************************************************************
 
 EOF
-	sleep 5
 fi
 
 # Clean up

@@ -17,7 +17,7 @@ main(int argc, char *argv[])
   // and pass in just a few arguments to customize for the language of
   // this wrapper compiler.
 
-#if !LAM_ENABLE_MPI_F90
+#if !LAM_WANT_F90_BINDINGS
 #if 0
   show_help("hf90", "no-fortran-support", NULL);
 #endif
@@ -31,6 +31,6 @@ main(int argc, char *argv[])
 
   return lam_wrap_engine(argc, argv,
 			 str_vec, LAM_F90, false, false,
-			 WRAPPER_EXTRA_FFLAGS);
+			 WRAPPER_EXTRA_FCFLAGS);
 #endif
 }
