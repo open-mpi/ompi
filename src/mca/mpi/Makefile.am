@@ -11,10 +11,6 @@ include $(top_srcdir)/config/Makefile.options
 
 SUBDIRS = base common_mpi coll io one pml ptl topo
 
-# Source code files
-
-headers = mpi.h
-
 # Library
 
 noinst_LTLIBRARIES = libmca_mpi_convenience.la
@@ -25,12 +21,3 @@ libmca_mpi_convenience_la_LIBADD = \
         pml/libmca_mpi_pml.la \
         ptl/libmca_mpi_ptl.la
 libmca_mpi_convenience_la_DEPENDENCIES = $(libmca_mpi_convenience_la_LIBADD)
-
-# Conditionally install the header files
-
-if WANT_INSTALL_HEADERS
-lamdir = $(includedir)/lam/mca/mpi
-lam_HEADERS = $(headers)
-else
-lamdir = $(includedir)
-endif
