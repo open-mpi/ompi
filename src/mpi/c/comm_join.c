@@ -31,7 +31,7 @@ static int ompi_socket_recv (int fd, char *buf, int len );
 
 int MPI_Comm_join(int fd, MPI_Comm *intercomm) 
 {
-    int rc;
+    int rc, tag;
     size_t size;
     uint32_t len, rlen;
     int send_first;
@@ -87,7 +87,7 @@ int MPI_Comm_join(int fd, MPI_Comm *intercomm)
     }
 
     rc = ompi_comm_connect_accept (MPI_COMM_SELF, 0, port_proc_name,
-                                   send_first, &newcomp);
+                                   send_first, &newcomp, tag);
     
     
     free ( name );

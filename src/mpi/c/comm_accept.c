@@ -24,9 +24,10 @@ static const char FUNC_NAME[] = "MPI_Comm_accept";
 int MPI_Comm_accept(char *port_name, MPI_Info info, int root,
                     MPI_Comm comm, MPI_Comm *newcomm) 
 {
-    int rank, rc;
+    int rank, tag, rc;
     int send_first=0; /*wrong, we receive first */
     ompi_communicator_t *newcomp=MPI_COMM_NULL;
+    char *tmp_port=NULL;
 
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -71,10 +72,11 @@ int MPI_Comm_accept(char *port_name, MPI_Info info, int root,
     
     /*
      * Our own port_name is not of interest here, so we pass in NULL.
-     * The two leaders will figure this out later.
+     * The two leaders will figure this out later. However, we need the tag.
      */
-       
-    rc = ompi_comm_connect_accept (comm, root, NULL, send_first, &newcomp);
+    tmp_port = ompi_parse_port(port_name, &tag);
+    free (tmp_port);
+    rc = ompi_comm_connect_accept (comm, root, NULL, send_first, &newcomp, tag);
 
     *newcomm = newcomp;
     OMPI_ERRHANDLER_RETURN(rc, comm, rc, FUNC_NAME );

@@ -25,10 +25,8 @@ static const char FUNC_NAME[] = "MPI_Open_port";
 
 int MPI_Open_port(MPI_Info info, char *port_name) 
 {
-    ompi_proc_t **myproc=NULL;
-    char *name=NULL;
-    size_t size;
-
+    int rc;
+    
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME); 
 
@@ -53,17 +51,6 @@ int MPI_Open_port(MPI_Info info, char *port_name)
         */
     }
 
-    /* The port_name is equal to the OOB-contact information. 
-       No real port has to be open, since OOB always accepts new 
-       connections (e.g. has a pending accept).
-    */
-  
-    myproc = ompi_proc_self (&size);
-    name = ompi_name_server.get_proc_name_string (&(myproc[0]->proc_name));
-    strncpy (port_name, name, MPI_MAX_PORT_NAME);
-
-    free ( myproc );
-    free ( name );
-    
-    return MPI_SUCCESS;
+    rc = ompi_open_port(port_name);
+    OMPI_ERRHANDLER_RETURN(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
 }
