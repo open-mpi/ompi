@@ -6,7 +6,8 @@
 
 #include "lam/ctnetwork/ctchannel.h"
 
-#define CHANNEL_CLS(chnl)       ((lam_ctchannel_class_t *)(OBJECT(chnl)->obj_class))
+#define CHANNEL_CLS(chnl) \
+    ((lam_ctchannel_class_t *)(((lam_object_t *) chnl)->obj_class))
 
 lam_ctchannel_class_t   lam_ct_channel_t_class_info = {
     {
