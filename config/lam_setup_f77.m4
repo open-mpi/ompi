@@ -29,13 +29,14 @@ else
 
     lam_fflags_save="$FFLAGS"
     AC_PROG_F77
+    AC_DEFINE_UNQUOTED(LAM_F77, "$F77", [LAM underlying F77 compiler])
     FFLAGS="$lam_fflags_save"
     if test -z "$F77"; then
-	AC_MSG_WARN([*** Could not find Fortran 77 compiler])
-	LAM_WANT_F77=0
+	    AC_MSG_WARN([*** Could not find Fortran 77 compiler])
+	    LAM_WANT_F77=0
     else
-	LAM_WANT_F77=1
-	BASEF77="`basename $F77`"
+	    LAM_WANT_F77=1
+	    BASEF77="`basename $F77`"
     fi
 fi
 
