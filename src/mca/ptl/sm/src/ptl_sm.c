@@ -17,7 +17,7 @@
 #include "util/sys_info.h"
 #include "mca/ptl/sm/src/ptl_sm_peer.h"
 #include "mca/mpool/sm/mpool_sm.h"
-
+#include "util/proc_info.h"
 
 mca_ptl_sm_t mca_ptl_sm = {
     {
@@ -44,6 +44,9 @@ mca_ptl_sm_t mca_ptl_sm = {
     }
 };
 
+/* track information needed to synchronise a Shared Memory PTL module */
+mca_ptl_sm_module_resource_t mca_ptl_sm_module_resource;
+
 
 int mca_ptl_sm_add_procs(
     struct mca_ptl_base_module_t* ptl, 
@@ -58,6 +61,12 @@ int mca_ptl_sm_add_procs(
     ompi_proc_t* my_proc; /* pointer to caller's proc structure */
     mca_ptl_sm_t *ptl_sm;
     bool threads;
+    char file_name[PATH_MAX];
+
+    /* debug */
+    fprintf(stderr," mca_ptlsm_add_procs \n");
+    fflush(stderr);
+    /* end debug */
 
     /* initialize the shared memory pool */
     /*mca_mpool_component_lookup("sm"); */
@@ -149,6 +158,33 @@ int mca_ptl_sm_add_procs(
         if(NULL != peers[proc] ) {
             peers[proc]->my_smp_rank=ptl_sm->my_smp_rank;
         }
+    }
+
+    /* Allocate Shared Memory PTL process coordination
+     * data structure.  This will reside in shared memory */
+
+    /* Create backing file */
+    memset(&(file_name[0]),0,PATH_MAX);
+    if( (strlen(ompi_process_info.job_session_dir) +
+            strlen(ompi_system_info.nodename)+
+            /* length of fixed-string name part */
+            23 ) >= PATH_MAX ) {
+            ompi_output(0, "mca_ptl_sm_add_procs: name of backing file too long \n");
+            return_code=OMPI_ERROR;
+            goto CLEANUP;
+    }
+    sprintf(&(file_name[0]),"%s/shared_mem_ptl_module.%s",
+            ompi_process_info.job_session_dir,
+            ompi_system_info.nodename);
+    size=sizeof(mca_ptl_sm_module_resource_t);
+    if(NULL == 
+            (mca_mpool_sm_component.sm_mmap = 
+             mca_mpool_sm_mmap_init(size, &(file_name[0]),
+                 sizeof(mca_ptl_sm_module_resource_t), 8 ))) 
+    {
+        ompi_output(0, "mca_ptl_sm_add_procs: unable to create shared memory PTL coordinating strucure\n");
+        return_code=OMPI_ERROR;
+        goto CLEANUP;
     }
 
     /* Allocate a fixed size pointer array for the 2-D Shared memory queues. 

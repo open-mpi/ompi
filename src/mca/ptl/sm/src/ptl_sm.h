@@ -15,6 +15,16 @@
 #include "mca/pml/pml.h"
 #include "mca/ptl/ptl.h"
 #include "mca/mpool/mpool.h"
+#include "mca/mpool/sm/mpool_sm_mmap.h"
+
+/*
+ * Shared Memory resource managment
+ */
+struct mca_ptl_sm_module_resource_t {
+    mca_mpool_sm_segment_t segment_header;
+};
+typedef struct mca_ptl_sm_module_resource_t mca_ptl_sm_module_resource_t;
+extern mca_ptl_sm_module_resource_t mca_ptl_sm_module_resource;
 
 /**
  * Shared Memory (SM) PTL module.
