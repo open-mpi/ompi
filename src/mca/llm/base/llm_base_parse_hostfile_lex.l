@@ -1,6 +1,8 @@
 %{ /* -*- C -*- */
 
 #include <stdio.h>
+#include <unistd.h>
+
 #include "mca/llm/base/llm_base_parse_hostfile_lex.h"
 
 /*
