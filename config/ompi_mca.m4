@@ -55,7 +55,7 @@ fi
 # The list of MCA types (it's fixed)
 
 AC_MSG_CHECKING([for MCA types])
-found_types="allocator coll common gpr io llm mpool ns one oob op pcm pml ptl topo"
+found_types="common allocator coll gpr io llm mpool ns one oob op pcm pml ptl topo"
 AC_MSG_RESULT([$found_types])
 
 # Get the list of all the non-configure MCA components that were found by
@@ -79,9 +79,14 @@ for type in $found_types; do
 
     # Ensure that the directory where the #include file is to live
     # exists.  Need to do this for VPATH builds, because the directory
-    # may not exist yet.
+    # may not exist yet.  For the "common" type, it's not really a
+    # component, so it doesn't have a base.
 
-    outdir=src/mca/$type/base
+    if test "$type" = "common"; then
+        outdir=src/mca/common
+    else
+        outdir=src/mca/$type/base
+    fi
     total_dir="."
     for dir_part in `IFS='/\\'; set X $outdir; shift; echo "$[@]"`; do
 	total_dir=$total_dir/$dir_part
@@ -101,13 +106,13 @@ for type in $found_types; do
 	AC_MSG_ERROR([cannot create $total_dir])
     done
 
-    # Remove any previous generated #include files
+    # Remove any previous generated #include files.
 
     outfile=$outdir/static-components.h
     rm -f $outfile $outfile.struct $outfile.extern \
-	$outfile.all $outfile.static $outfile.dyanmic
+       $outfile.all $outfile.static $outfile.dyanmic
     touch $outfile.struct $outfile.extern \
-	$outfile.all $outfile.static $outfile.dso
+       $outfile.all $outfile.static $outfile.dso
 
     # Manual conversion of $type to its generic name (e.g., crmpi->cr,
     # crompi->cr).
@@ -205,9 +210,11 @@ for type in $found_types; do
     rm -f $outfile $outfile.all $outfile.static $outfile.dso
 
     # Create the final .h file that will be included in the type's
-    # top-level glue.  This lists all the static components.
+    # top-level glue.  This lists all the static components.  We don't
+    # need to do this for "common".
 
-    cat > $outfile <<EOF
+    if test "$type" != "common"; then
+        cat > $outfile <<EOF
 /*
  * \$HEADER\$
  */
@@ -219,6 +226,7 @@ const mca_base_component_t *mca_${type}_base_static_components[[]] = {
   NULL
 };
 EOF
+    fi
     rm -f $outfile.struct $outfile.extern 
 
     # Save the results for the Makefile.am's.  Note the whacky shell

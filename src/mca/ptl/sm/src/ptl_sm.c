@@ -13,10 +13,11 @@
 #include "mca/ptl/base/ptl_base_sendfrag.h"
 #include "mca/ptl/base/ptl_base_recvfrag.h"
 #include "mca/base/mca_base_module_exchange.h"
+#include "mca/common/sm/common_sm_mmap.h"
 #include "ptl_sm.h"
 #include "util/sys_info.h"
 #include "mca/ptl/sm/src/ptl_sm_peer.h"
-#include "mca/mpool/sm/mpool_sm.h"
+#include "mca/common/sm/common_sm_mmap.h"
 #include "util/proc_info.h"
 
 mca_ptl_sm_t mca_ptl_sm = {
@@ -178,8 +179,8 @@ int mca_ptl_sm_add_procs(
             ompi_system_info.nodename);
     size=sizeof(mca_ptl_sm_module_resource_t);
     if(NULL == 
-            (mca_mpool_sm_component.sm_mmap = 
-             mca_mpool_sm_mmap_init(size, &(file_name[0]),
+            (mca_common_sm_mmap = 
+             mca_common_sm_mmap_init(size, &(file_name[0]),
                  sizeof(mca_ptl_sm_module_resource_t), 8 ))) 
     {
         ompi_output(0, "mca_ptl_sm_add_procs: unable to create shared memory PTL coordinating strucure\n");

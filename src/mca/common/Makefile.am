@@ -4,6 +4,11 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-EXTRA_DIST = README
+SUBDIRS = $(MCA_common_STATIC_SUBDIRS)
+DIST_SUBDIRS = $(MCA_common_ALL_SUBDIRS)
 
-SUBDIRS = base
+noinst_LTLIBRARIES = libmca_common.la
+libmca_common_la_SOURCES =
+libmca_common_la_LIBADD = $(MCA_common_STATIC_LTLIBS)
+libmca_common_la_DEPENDENCIES = $(libmca_common_la_LIBADD)
+

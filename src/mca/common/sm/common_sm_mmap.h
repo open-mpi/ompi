@@ -1,29 +1,29 @@
-#ifndef _MPOOL_SM_MMAP_H_
-#define _MPOOL_SM_MMAP_H_
+#ifndef _COMMON_SM_MMAP_H_
+#define _COMMON_SM_MMAP_H_
 
 #include "class/ompi_object.h"
 #include "os/atomic.h"
 #include "class/ompi_list.h"
 
-struct mca_mpool_sm_segment_t {
+struct mca_common_sm_segment_t {
     ompi_lock_data_t seg_lock;
     volatile bool seg_inited;
     size_t seg_offset;
     size_t seg_size;
 };
-typedef struct mca_mpool_sm_segment_t mca_mpool_sm_segment_t;
+typedef struct mca_common_sm_segment_t mca_common_sm_segment_t;
 
 
-struct mca_mpool_sm_mmap_t {
+struct mca_common_sm_mmap_t {
     ompi_list_item_t map_item;
-    mca_mpool_sm_segment_t* map_seg;
+    mca_common_sm_segment_t* map_seg;
     unsigned char  *map_addr;
     size_t map_size;
     char map_path[PATH_MAX];
 };
-typedef struct mca_mpool_sm_mmap_t mca_mpool_sm_mmap_t;
+typedef struct mca_common_sm_mmap_t mca_common_sm_mmap_t;
 
-OBJ_CLASS_DECLARATION(mca_mpool_sm_mmap_t);
+OBJ_CLASS_DECLARATION(mca_common_sm_mmap_t);
 
 
 /**
@@ -38,17 +38,23 @@ OBJ_CLASS_DECLARATION(mca_mpool_sm_mmap_t);
  *
  *  @param size_ctl_structure  size of the control structure at
  *                             the head of the file. The control structure
- *                             is assumed to have mca_mpool_sm_segment_t
+ *                             is assumed to have mca_common_sm_segment_t
  *                             as its first segment (IN)
  *
  *  @param data_set_alignment  alignment of the data segment.  this
  *                             follows the control structure (IN)
  */
 
-mca_mpool_sm_mmap_t* mca_mpool_sm_mmap_init(size_t size, char *file_name,
+mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
                 size_t size_ctl_structure, size_t data_seg_alignment);
-void* mca_mpool_sm_mmap_alloc(size_t* size);
-void  mca_mpool_sm_mmap_free(void* addr);
+void* mca_common_sm_mmap_alloc(size_t* size);
+void  mca_common_sm_mmap_free(void* addr);
+
+/*
+ * Instance that is shared between components that use shared memory
+ */
+
+extern mca_common_sm_mmap_t *mca_common_sm_mmap;
 
 
 #endif

@@ -7,7 +7,7 @@
 #include "mca/base/mca_base_param.h"
 #include "mca/allocator/base/base.h"
 #include "mpool_sm.h"
-#include "mpool_sm_mmap.h"
+#include "mca/common/sm/common_sm_mmap.h"
 #include "util/proc_info.h"
 #include "util/sys_info.h"
 
@@ -119,9 +119,9 @@ mca_mpool_sm_init(bool *allow_multi_user_threads)
             ompi_process_info.job_session_dir,
             ompi_system_info.nodename);
     if(NULL == 
-            (mca_mpool_sm_component.sm_mmap = 
-             mca_mpool_sm_mmap_init(mca_mpool_sm_component.sm_size,
-                 &(file_name[0]),sizeof(mca_mpool_sm_segment_t), 8 )
+            (mca_common_sm_mmap = 
+             mca_common_sm_mmap_init(mca_mpool_sm_component.sm_size,
+                 &(file_name[0]),sizeof(mca_common_sm_segment_t), 8 )
              )) 
     {
         ompi_output(0, "mca_mpool_sm_init: unable to create shared memory mapping");
@@ -131,7 +131,7 @@ mca_mpool_sm_init(bool *allow_multi_user_threads)
     /* setup allocator */
     mca_mpool_sm_component.sm_allocator = allocator_component->allocator_init(
         allow_multi_user_threads,
-        mca_mpool_sm_mmap_alloc,
+        mca_common_sm_mmap_alloc,
         NULL
         );
     if(NULL == mca_mpool_sm_component.sm_allocator) {
