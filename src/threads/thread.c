@@ -8,6 +8,16 @@
 #include "threads/thread.h"
 
 
+static void ompi_thread_construct(ompi_thread_t *t);
+
+OBJ_CLASS_INSTANCE(ompi_thread_t,
+                   ompi_object_t,
+                   ompi_thread_construct, NULL);
+
+
+/*
+ * Constructor
+ */
 static void ompi_thread_construct(ompi_thread_t *t)
 {
     t->t_run = 0;
@@ -15,25 +25,17 @@ static void ompi_thread_construct(ompi_thread_t *t)
     t->t_handle = (HANDLE) -1;
 #elif OMPI_HAVE_POSIX_THREADS
     t->t_handle = (pthread_t) -1;
+#elif OMPI_HAVE_SOLARIS_THREADS
+    t->t_handle = (thread_t) -1;
 #endif
 }
 
 
-static void ompi_thread_destruct(ompi_thread_t *t)
-{
-}
+#if defined(WIN32)
 
-
-OBJ_CLASS_INSTANCE(ompi_thread_t,
-                   ompi_object_t,
-                   ompi_thread_construct,
-                   ompi_thread_destruct);
-
-
-
-#ifdef __WINDOWS__
-
-#error Windows code is untested
+/************************************************************************
+ * Windows threads
+ ************************************************************************/
 
 int ompi_thread_start(ompi_thread_t *t)
 {
@@ -77,8 +79,27 @@ int ompi_thread_join(ompi_thread_t *t, void **thr_return)
 }
 
 
+bool ompi_thread_self_compare(ompi_thread_t *t)
+{
+#error Need Windows thread_self() function
+}
+
+
+ompi_thread_t *ompi_thread_get_self(void)
+{
+    ompi_thread_t *t = OBJ_NEW(ompi_thread_t);
+#error Need Windows thread_self() function
+    t->t_handle = ....something....
+    return NULL;
+}
+
+
+
 #elif OMPI_HAVE_POSIX_THREADS
 
+/************************************************************************
+ * POSIX threads
+ ************************************************************************/
 
 int ompi_thread_start(ompi_thread_t *t)
 {
@@ -102,12 +123,70 @@ int ompi_thread_join(ompi_thread_t *t, void **thr_return)
     return (rc == 0) ? OMPI_SUCCESS : OMPI_ERROR;
 }
 
-bool ompi_thread_self(ompi_thread_t *t)
+
+bool ompi_thread_self_compare(ompi_thread_t *t)
 {
     return t->t_handle == pthread_self();
 }
 
+
+ompi_thread_t *ompi_thread_get_self(void)
+{
+    ompi_thread_t *t = OBJ_NEW(ompi_thread_t);
+    t->t_handle = pthread_self();
+    return t;
+}
+
+
+#elif OMPI_HAVE_SOLARIS_THREADS
+
+/************************************************************************
+ * Solaris threads
+ ************************************************************************/
+
 #else
+
+int ompi_thread_start(ompi_thread_t *t)
+{
+    int rc;
+
+    if (OMPI_ENABLE_DEBUG) {
+        if (NULL == t->t_run || t->t_handle != (pthread_t) -1) {
+            return OMPI_ERR_BAD_PARAM;
+        }
+    }
+
+    rc = thr_create(NULL, 0, (void*(*)(void*)) t->t_run, t, NULL,
+                    &t->t_handle);
+
+    return (rc == 0) ? OMPI_SUCCESS : OMPI_ERROR;
+}
+
+
+int ompi_thread_join(ompi_thread_t *t, void **thr_return)
+{
+    int rc = thread_join(t->t_handle, NULL, thr_return);
+    return (rc == 0) ? OMPI_SUCCESS : OMPI_ERROR;
+}
+
+
+bool ompi_thread_self_compare(ompi_thread_t *t)
+{
+    return t->t_handle == thr_self();
+}
+
+
+ompi_thread_t *ompi_thread_get_self(void)
+{
+    ompi_thread_t *t = OBJ_NEW(ompi_thread_t);
+    t->t_handle = thr_self();
+    return t;
+}
+
+
+/************************************************************************
+ * No thread support
+ ************************************************************************/
 
 
 int ompi_thread_start(ompi_thread_t *t)
@@ -121,9 +200,16 @@ int ompi_thread_join(ompi_thread_t *t, void **thr_return)
     return OMPI_ERROR;
 }
 
-bool ompi_thread_self(ompi_thread_t *t)
+
+bool ompi_thread_self_compare(ompi_thread_t *t)
 {
     return true;
 }
+
+ompi_thread_t *ompi_thread_get_self(void)
+{
+    return NULL;
+}
+
 
 #endif

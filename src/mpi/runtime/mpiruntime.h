@@ -16,25 +16,26 @@
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
-    /* forward type declarations */
+    /** forward type declaration */
     struct ompi_communicator_t;
+    /** forward type declaration */
+    struct ompi_thread_t;
 
-/*
- * Global variables and symbols for the MPI layer
- */
+    /* Global variables and symbols for the MPI layer */
 
-/** Is mpi initialized? */
-OMPI_DECLSPEC extern bool ompi_mpi_initialized;
-/** Has mpi been finalized? */
-OMPI_DECLSPEC extern bool ompi_mpi_finalized;
+    /** Is mpi initialized? */
+    OMPI_DECLSPEC extern bool ompi_mpi_initialized;
+    /** Has mpi been finalized? */
+    OMPI_DECLSPEC extern bool ompi_mpi_finalized;
 
-/** Do we have multiple threads? */
-OMPI_DECLSPEC extern bool ompi_mpi_thread_multiple;
-/** Thread level requested to \c MPI_Init_thread() */
-OMPI_DECLSPEC extern int ompi_mpi_thread_requested;
-/** Thread level provided by Open MPI */
-OMPI_DECLSPEC extern int ompi_mpi_thread_provided;
-
+    /** Do we have multiple threads? */
+    OMPI_DECLSPEC extern bool ompi_mpi_thread_multiple;
+    /** Thread level requested to \c MPI_Init_thread() */
+    OMPI_DECLSPEC extern int ompi_mpi_thread_requested;
+    /** Thread level provided by Open MPI */
+    OMPI_DECLSPEC extern int ompi_mpi_thread_provided;
+    /** Identifier of the main thread */
+    OMPI_DECLSPEC extern struct ompi_thread_t *ompi_mpi_main_thread;
 
 
   /**
@@ -73,7 +74,6 @@ OMPI_DECLSPEC extern int ompi_mpi_thread_provided;
      */
     int ompi_mpi_abort(struct ompi_communicator_t* comm,
                        int errcode, bool kill_remote_of_intercomm);
-
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

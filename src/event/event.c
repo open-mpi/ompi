@@ -144,7 +144,7 @@ static int ompi_event_pipe_signalled;
 bool ompi_event_progress_thread(void)
 {
 #if OMPI_HAVE_THREADS
-    return ompi_thread_self(&ompi_event_thread);
+    return ompi_thread_self_compare(&ompi_event_thread);
 #else
     return false;
 #endif
