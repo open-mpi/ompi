@@ -71,7 +71,7 @@ send_error_mail() {
             cat "$file" >> "$outfile"
         fi
     done
-    Mail -s "$fail_subject" "$email_arg" < "$outfile"
+    $mail -s "$fail_subject" "$email_arg" < "$outfile"
     rm -f "$outfile"
 }
 
@@ -82,6 +82,8 @@ die() {
 Creating the nightly tarball ended in error:
 
 $msg
+
+Host:   `hostname`
 EOF
     send_error_mail
     exit 1
@@ -108,6 +110,7 @@ do_command() {
 ERROR: Command returned a non-zero exist status
        $cmd
 
+Host:      `hostname`
 Start time: $start_time
 End time:   `date`
 
@@ -124,6 +127,42 @@ EOF
     fi
     rm -f "$logfile"
 }
+
+find_exec() {
+    var=$1
+    shift
+
+    am_done=
+    while test -z "$am_done"; do
+        prog=$1
+        shift
+
+        if test -z "$prog"; then
+            am_done=1
+        else
+            not_found="`which $prog 2>&1 | egrep '^no'`"
+            if test -z "$not_found"; then
+                str="$var=$prog"
+                eval $str
+                am_done=1
+            fi
+        fi
+    done
+}
+
+# Find a mail program
+find_exec mail Mail mailx mail
+if test -z "$mail"; then
+    echo "Could not find mail program; aborting in despair"
+    exit 1
+fi
+
+# figure out what download command to use
+find_exec download wget lynx curl
+if test -z "$download"; then
+    echo "cannot find downloading program -- aborting in despair"
+    exit 1
+fi
 
 # move into the scratch directory, and ensure we have an absolute path
 # for it
@@ -144,20 +183,6 @@ for dir in downloads logs; do
         mkdir $dir
     fi
 done
-
-# figure out what download command to use
-which wget > /dev/null 2>&1
-if test "$?" = "0"; then
-    download="wget"
-else
-    which lynx > /dev/null 2>&1
-    if test "$?" = "0"; then
-        download="lynx --download"
-    else
-        die "Cannot find wget or lynx to download the tarball -- aborting"
-    fi
-fi
-echo
 
 # get the latest snapshot version number
 cd downloads
@@ -184,6 +209,7 @@ fi
 
 # verify the checksums
 md5_file="`grep $version.tar.gz $md5_checksums`"
+find_exec md5sum md5sum
 if test -z "$md5_file"; then
     echo "WARNING: could not find md5sum in checksum file!"
     echo "WARNING: proceeding anyway..."
@@ -364,7 +390,7 @@ for ext in gz; do
 done
 
 # send success mail
-Mail -s "$success_subject" "$email_arg" <<EOF
+$mail -s "$success_subject" "$email_arg" <<EOF
 Building nightly snapshot SVN tarball was a success.
 
 Snapshot:   $version
