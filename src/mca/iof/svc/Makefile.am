@@ -36,10 +36,10 @@ svc_SOURCES = \
     iof_svc_component.c \
     iof_svc_proxy.h \
     iof_svc_proxy.c \
-    iof_svc_publish.h \
-    iof_svc_publish.c \
-    iof_svc_subscript.h \
-    iof_svc_subscript.c
+    iof_svc_pub.h \
+    iof_svc_pub.c \
+    iof_svc_sub.h \
+    iof_svc_sub.c
 
 mcacomponentdir = $(libdir)/openmpi
 mcacomponent_LTLIBRARIES = $(component_install)

@@ -24,8 +24,8 @@
 #include "mca/iof/base/base.h"
 #include "mca/iof/base/iof_base_endpoint.h"
 #include "iof_svc.h"
-#include "iof_svc_publish.h"
-#include "iof_svc_subscript.h"
+#include "iof_svc_pub.h"
+#include "iof_svc_sub.h"
 
 
 orte_iof_base_module_t orte_iof_svc_module = {
@@ -71,7 +71,7 @@ int orte_iof_svc_publish(
 
     /* publish endpoint */
     if(mode == ORTE_IOF_SINK) {
-        rc = orte_iof_svc_publish_create(
+        rc = orte_iof_svc_pub_create(
             name,
             ORTE_RML_NAME_SELF,
             ORTE_NS_CMP_ALL,
@@ -97,7 +97,7 @@ int orte_iof_svc_unpublish(
     orte_iof_base_tag_t tag)
 {
     int rc;
-    rc = orte_iof_svc_publish_delete(
+    rc = orte_iof_svc_pub_delete(
         name,
         ORTE_RML_NAME_SELF,
         mask,
@@ -134,7 +134,7 @@ int orte_iof_svc_push(
     int rc;
 
     /* setup a subscription */
-    rc = orte_iof_svc_subscript_create(
+    rc = orte_iof_svc_sub_create(
         ORTE_RML_NAME_SELF,
         ORTE_NS_CMP_ALL,
         dst_tag,
@@ -182,7 +182,7 @@ int orte_iof_svc_pull(
         return rc;
 
     /* create a subscription */
-    rc = orte_iof_svc_subscript_create(
+    rc = orte_iof_svc_sub_create(
         src_name,
         src_mask,
         src_tag,

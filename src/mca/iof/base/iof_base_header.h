@@ -72,6 +72,7 @@ typedef struct orte_iof_base_common_header_t orte_iof_base_common_header_t;
 struct orte_iof_base_msg_header_t {
     orte_iof_base_common_header_t hdr_common;
     orte_process_name_t msg_src;
+    orte_process_name_t msg_proxy;
     int32_t  msg_tag;
     uint32_t msg_seq;
     uint32_t msg_len;
@@ -81,6 +82,7 @@ typedef struct orte_iof_base_msg_header_t orte_iof_base_msg_header_t;
 #define ORTE_IOF_BASE_HDR_MSG_NTOH(h) \
     ORTE_IOF_BASE_HDR_CMN_NTOH((h).hdr_common); \
     ORTE_PROCESS_NAME_NTOH((h).msg_src); \
+    ORTE_PROCESS_NAME_NTOH((h).msg_proxy); \
     (h).msg_tag = ntohl((h).msg_tag); \
     (h).msg_seq = ntohl((h).msg_seq); \
     (h).msg_len = ntohl((h).msg_len);
@@ -88,6 +90,7 @@ typedef struct orte_iof_base_msg_header_t orte_iof_base_msg_header_t;
 #define ORTE_IOF_BASE_HDR_MSG_HTON(h) \
     ORTE_IOF_BASE_HDR_CMN_HTON((h).hdr_common); \
     ORTE_PROCESS_NAME_HTON((h).msg_src); \
+    ORTE_PROCESS_NAME_HTON((h).msg_proxy); \
     (h).msg_tag = htonl((h).msg_tag); \
     (h).msg_seq = htonl((h).msg_seq); \
     (h).msg_len = htonl((h).msg_len);

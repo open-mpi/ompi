@@ -26,6 +26,7 @@
 #include "mca/iof/iof.h"
 #include "mca/iof/base/base.h"
 #include "mca/iof/base/iof_base_endpoint.h"
+#include "mca/errmgr/errmgr.h"
 #include "iof_proxy.h"
 #include "iof_proxy_svc.h"
 
@@ -71,7 +72,7 @@ int orte_iof_proxy_publish(
     /* publish to server */
     if(mode == ORTE_IOF_SINK) {
         rc = orte_iof_proxy_svc_publish(name,tag);
-        if(rc != OMPI_SUCCESS)
+        if(rc != ORTE_SUCCESS)
             return rc;
     }
 
@@ -144,7 +145,7 @@ int orte_iof_proxy_push(
         dst_mask,
         dst_tag
         );
-    if(rc != OMPI_SUCCESS)
+    if(rc != ORTE_SUCCESS)
         return rc;
                                                                                                              
     /* setup a local endpoint to reflect registration */
@@ -178,13 +179,24 @@ int orte_iof_proxy_pull(
     int rc;
     rc = orte_iof_base_endpoint_create(
         ORTE_RML_NAME_SELF,
-        ORTE_IOF_SOURCE,
+        ORTE_IOF_SINK,
         src_tag,
         fd);
-    if(rc != OMPI_SUCCESS)
+    if(rc != ORTE_SUCCESS) {
+        ORTE_ERROR_LOG(rc);
         return rc;
+    } 
 
-    /* send a subscription message to the server */
+    /* publish this endpoint */
+    rc = orte_iof_proxy_svc_publish(
+        ORTE_RML_NAME_SELF,
+        src_tag);
+    if(rc != ORTE_SUCCESS) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
+    /* subscribe to peer */
     rc = orte_iof_proxy_svc_subscribe(
         src_name,
         src_mask,
@@ -192,6 +204,11 @@ int orte_iof_proxy_pull(
         ORTE_RML_NAME_SELF,
         ORTE_NS_CMP_ALL,
         src_tag);
+    if(rc != ORTE_SUCCESS) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
     return rc;
 }
 
@@ -205,7 +222,7 @@ int orte_iof_proxy_buffer(
     orte_iof_base_tag_t src_tag,
     size_t buffer_size)
 {
-    return OMPI_ERROR;
+    return ORTE_ERROR;
 }
 
 
@@ -253,6 +270,6 @@ int orte_iof_proxy_unsubscribe(
         src_tag);
 
     /* remove local callback */
-    return OMPI_ERROR;
+    return ORTE_ERROR;
 }
 

@@ -5,10 +5,11 @@
 #include "mca/iof/base/iof_base_header.h"
 #include "mca/iof/base/iof_base_endpoint.h"
 #include "mca/iof/base/iof_base_fragment.h"
+#include "mca/errmgr/errmgr.h"
 #include "iof_svc.h"
 #include "iof_svc_proxy.h"
-#include "iof_svc_publish.h"
-#include "iof_svc_subscript.h"
+#include "iof_svc_pub.h"
+#include "iof_svc_sub.h"
 
 
 static void orte_iof_svc_proxy_msg(const orte_process_name_t*, orte_iof_base_msg_header_t*, unsigned char*);
@@ -43,7 +44,7 @@ void orte_iof_svc_proxy_recv(
     orte_iof_base_header_t* hdr = (orte_iof_base_header_t*)iov[0].iov_base;
 
     if(status < 0) {
-        ompi_output(0, "orte_iof_svc_recv: receive failed with status: %d", status);
+        ORTE_ERROR_LOG(status);
         goto done;
     }
 
@@ -93,15 +94,16 @@ done:
         orte_iof_svc_proxy_recv,
         NULL
     );
-    if(rc != OMPI_SUCCESS) {
-        ompi_output(0, "orte_iof_svc_proxy_recv: unable to post non-blocking recv");
-        return;
+    if(rc < 0) {
+        ORTE_ERROR_LOG(rc);
     }
 }
 
 
 /**
- *
+ * Receive a data message. Check the subscription list for a match
+ * on the source - and on matches forward to any published endpoints
+ * that match the subscriptions destination.
  */
 
 static void orte_iof_svc_proxy_msg(
@@ -119,7 +121,7 @@ static void orte_iof_svc_proxy_msg(
     for(item  = ompi_list_get_first(&mca_iof_svc_component.svc_subscribed);
         item != ompi_list_get_end(&mca_iof_svc_component.svc_subscribed);
         item =  ompi_list_get_next(item)) {
-        orte_iof_svc_subscript_t* sub = (orte_iof_svc_subscript_t*)item;
+        orte_iof_svc_sub_t* sub = (orte_iof_svc_sub_t*)item;
 
         /* tags match */
         if(sub->src_tag != hdr->msg_tag && hdr->msg_tag != ORTE_IOF_ANY)
@@ -131,28 +133,123 @@ static void orte_iof_svc_proxy_msg(
                 ompi_output(0, "[%d,%d,%d] orte_iof_svc_proxy_msg: tag %d sequence %d\n",
                     ORTE_NAME_ARGS(&sub->src_name),hdr->msg_tag,hdr->msg_seq);
             }
-            orte_iof_svc_subscript_forward(sub,src,hdr,data);
+            orte_iof_svc_sub_forward(sub,src,hdr,data);
         }
     }
     OMPI_THREAD_UNLOCK(&mca_iof_svc_component.svc_lock);
 }
 
 /**
- * 
+ *
+ */
+static void orte_iof_svc_ack_send_cb(
+    int status,
+    orte_process_name_t* peer,
+    struct iovec* msg,
+    int count,
+    orte_rml_tag_t tag,
+    void* cbdata)
+{
+    orte_iof_base_frag_t* frag = (orte_iof_base_frag_t*)cbdata;
+    ORTE_IOF_BASE_FRAG_RETURN(frag);
+    if(status < 0) {
+        ORTE_ERROR_LOG(status);
+    }
+}
+                                                                                                                    
+
+/**
+ *  Received an acknowledgment from an endpoint - forward on
+ *  towards the source if all other endpoints have also
+ *  acknowledged the data.
  */
 
 static void orte_iof_svc_proxy_ack(
     const orte_process_name_t* src,
     orte_iof_base_msg_header_t* hdr)
 {
+    ompi_list_item_t *s_item;
+    uint32_t seq_min = hdr->msg_seq + hdr->msg_len;
+
     if(mca_iof_svc_component.svc_debug > 1) {
         ompi_output(0, "orte_iof_svc_proxy_ack");
     }
+
+    /* for each of the subscriptions that match the source of the data:
+     * (1) find all forwarding entries that match the source of the ack
+     * (2) update their sequence number
+     * (3) find the minimum sequence number across all endpoints 
+    */
+     
+    OMPI_THREAD_LOCK(&mca_iof_svc_component.svc_lock);
+    for(s_item =  ompi_list_get_first(&mca_iof_svc_component.svc_subscribed);
+        s_item != ompi_list_get_end(&mca_iof_svc_component.svc_subscribed);
+        s_item =  ompi_list_get_next(s_item)) {
+
+        orte_iof_svc_sub_t* sub = (orte_iof_svc_sub_t*)s_item;
+        ompi_list_item_t *f_item;
+
+        if (orte_ns.compare(sub->src_mask,&sub->src_name,&hdr->msg_src) != 0 ||
+            sub->src_tag != hdr->msg_tag) {
+            continue;
+        }
+
+        /* look for this endpoint in the forwarding table */
+        for(f_item =  ompi_list_get_first(&sub->sub_forward);
+            f_item != ompi_list_get_end(&sub->sub_forward);
+            f_item =  ompi_list_get_next(f_item)) {
+            orte_iof_svc_fwd_t* fwd = (orte_iof_svc_fwd_t*)f_item;
+            orte_iof_svc_pub_t* pub = fwd->fwd_pub;
+            if (orte_ns.compare(pub->pub_mask,&pub->pub_name,src) == 0) {
+                ompi_hash_table_set_proc(&fwd->fwd_seq,
+                    &hdr->msg_src,(void*)(hdr->msg_seq+hdr->msg_len));
+            } else {
+                uint32_t seq = (uint32_t)ompi_hash_table_get_proc(
+                    &fwd->fwd_seq,&hdr->msg_src);
+                if(seq < seq_min) {
+                    seq_min = seq;
+                }
+            }
+        }
+    }
+    OMPI_THREAD_UNLOCK(&mca_iof_svc_component.svc_lock);
+
+    /* if all endpoints have acknowledged up to this sequence number 
+     * forward ack on to the source
+    */
+    if(seq_min == hdr->msg_seq+hdr->msg_len) {
+        orte_iof_base_frag_t* frag;
+        int rc;
+
+        ORTE_IOF_BASE_FRAG_ALLOC(frag,rc);
+        if(NULL == frag) {
+            ORTE_ERROR_LOG(rc);
+            return;
+        }
+
+        frag->frag_hdr.hdr_msg = *hdr;
+        frag->frag_iov[0].iov_base = &frag->frag_hdr;
+        frag->frag_iov[0].iov_len = sizeof(frag->frag_hdr);
+        ORTE_IOF_BASE_HDR_MSG_HTON(frag->frag_hdr.hdr_msg);
+
+        rc = orte_rml.send_nb(
+            &hdr->msg_proxy,
+            frag->frag_iov,
+            1,
+            ORTE_RML_TAG_IOF_SVC,
+            0,
+            orte_iof_svc_ack_send_cb,
+            frag);
+        if(rc < 0) {
+            ORTE_ERROR_LOG(rc);
+        }
+    }
 }
 
-
 /**
- *
+ *  Create an entry to represent the published endpoint. This
+ *  also checks to see if the endpoint matches any pending
+ *  subscriptions.
  */
 
 static void orte_iof_svc_proxy_pub(
@@ -164,13 +261,13 @@ static void orte_iof_svc_proxy_pub(
         ompi_output(0, "orte_iof_svc_proxy_pub");
     }
 
-    rc = orte_iof_svc_publish_create(
+    rc = orte_iof_svc_pub_create(
         &hdr->pub_name,
         &hdr->pub_proxy,
         hdr->pub_mask,
         hdr->pub_tag);
     if(rc != OMPI_SUCCESS) {
-        ompi_output(0, "orte_iof_svc_pub: orte_iof_svc_publish_create failed with status=%d\n", rc);
+        ORTE_ERROR_LOG(rc);
     }
 }
 
@@ -187,18 +284,20 @@ static void orte_iof_svc_proxy_unpub(
         ompi_output(0, "orte_iof_svc_proxy_unpub");
     }
 
-    rc = orte_iof_svc_publish_delete(
+    rc = orte_iof_svc_pub_delete(
         &hdr->pub_name,
         &hdr->pub_proxy,
         hdr->pub_mask,
         hdr->pub_tag);
     if(rc != OMPI_SUCCESS) {
-        ompi_output(0, "orte_iof_svc_proxy_unpub: orte_iof_svc_publish_delete failed with status=%d\n", rc);
+        ORTE_ERROR_LOG(rc);
     }
 }
 
 /**
- *
+ * Create a subscription entry. A subscription entry
+ * determines the set of source(s) that will forward
+ * to any matching published endpoints.
  */
 
 static void orte_iof_svc_proxy_sub(
@@ -210,7 +309,7 @@ static void orte_iof_svc_proxy_sub(
         ompi_output(0, "orte_iof_svc_proxy_sub");
     }
 
-    rc = orte_iof_svc_subscript_create(
+    rc = orte_iof_svc_sub_create(
         &hdr->src_name,
         hdr->src_mask,
         hdr->src_tag,
@@ -218,12 +317,12 @@ static void orte_iof_svc_proxy_sub(
         hdr->dst_mask,
         hdr->dst_tag);
     if(rc != OMPI_SUCCESS) {
-        ompi_output(0, "orte_iof_svc_proxy_sub: orte_iof_svc_subcript_create failed with status=%d\n", rc);
+        ORTE_ERROR_LOG(rc);
     }
 }
 
 /**
- *
+ * Remove a subscription.
  */
 
 static void orte_iof_svc_proxy_unsub(
@@ -235,7 +334,7 @@ static void orte_iof_svc_proxy_unsub(
         ompi_output(0, "orte_iof_svc_proxy_unsub");
     }
 
-    rc = orte_iof_svc_subscript_delete(
+    rc = orte_iof_svc_sub_delete(
         &hdr->src_name,
         hdr->src_mask,
         hdr->src_tag,
@@ -243,7 +342,7 @@ static void orte_iof_svc_proxy_unsub(
         hdr->dst_mask,
         hdr->dst_tag);
     if(rc != OMPI_SUCCESS) {
-        ompi_output(0, "orte_iof_svc_proxy_unsub: orte_iof_svc_subcript_delete failed with status=%d\n", rc);
+        ORTE_ERROR_LOG(rc);
     }
 }
 

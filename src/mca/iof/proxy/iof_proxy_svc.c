@@ -5,6 +5,7 @@
 #include "mca/iof/base/base.h"
 #include "mca/iof/base/iof_base_header.h"
 #include "mca/iof/base/iof_base_endpoint.h"
+#include "mca/errmgr/errmgr.h"
 #include "iof_proxy.h"
 #include "iof_proxy_svc.h"
 
@@ -54,7 +55,7 @@ int orte_iof_proxy_svc_publish(
         ORTE_RML_TAG_IOF_SVC,
         0);
     if(rc < 0) {
-        ompi_output(0, "orte_iof_proxy_svc_publish: orte_rml.send() failed with status=%d\n", rc);
+        ORTE_ERROR_LOG(rc);
         return rc;
     }
     return OMPI_SUCCESS;
@@ -92,7 +93,7 @@ int orte_iof_proxy_svc_unpublish(
         ORTE_RML_TAG_IOF_SVC,
         0);
     if(rc < 0) {
-        ompi_output(0, "orte_iof_proxy_svc_unpublish: orte_rml.send() failed with status=%d\n", rc);
+        ORTE_ERROR_LOG(rc);
         return rc;
     }
     return OMPI_SUCCESS;
@@ -137,7 +138,7 @@ int orte_iof_proxy_svc_subscribe(
         ORTE_RML_TAG_IOF_SVC,
         0);
     if(rc < 0) {
-        ompi_output(0, "orte_iof_proxy_svc_subscribe: orte_rml.send() failed with status=%d\n", rc);
+        ORTE_ERROR_LOG(rc);
         return rc;
     }
     return OMPI_SUCCESS;
@@ -180,7 +181,7 @@ int orte_iof_proxy_svc_unsubscribe(
         ORTE_RML_TAG_IOF_SVC,
         0);
     if(rc < 0) {
-        ompi_output(0, "orte_iof_proxy_svc_unsubscribe: orte_rml.send() failed with status=%d\n", rc);
+        ORTE_ERROR_LOG(rc);
         return rc;
     }
     return OMPI_SUCCESS;
@@ -202,6 +203,10 @@ void orte_iof_proxy_svc_recv(
 {
     orte_iof_base_header_t* hdr = (orte_iof_base_header_t*)msg->iov_base;
     int rc;
+    if(NULL == msg->iov_base) {
+        ompi_output(0, "orte_iof_proxy_svc_recv: invalid message\n");
+        return;
+    }
 
     switch(hdr->hdr_common.hdr_type) {
         case ORTE_IOF_BASE_HDR_MSG:
@@ -231,7 +236,7 @@ void orte_iof_proxy_svc_recv(
         NULL
     );
     if(rc != OMPI_SUCCESS) {
-        ompi_output(0, "orte_iof_proxy_svc_recv: unable to post non-blocking recv");
+        ORTE_ERROR_LOG(rc);
         return;
     }
 }
