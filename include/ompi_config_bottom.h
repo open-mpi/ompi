@@ -212,6 +212,10 @@ typedef struct {
 extern "C" {
 #endif
 
+#if !defined(HAVE_ASPRINTF) || !defined(HAVE_SNPRINTF) || !defined(HAVE_VASPRINTF) || !defined(HAVE_VSNPRINTF)
+#include "util/printf.h"
+#endif
+
 #ifndef HAVE_ASPRINTF
 # define asprintf ompi_asprintf
 #endif

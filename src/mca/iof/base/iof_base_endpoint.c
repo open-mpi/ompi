@@ -8,8 +8,8 @@
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
-#ifdef HAVE_SYS_FCNTL_H
-#include <sys/fcntl.h>
+#ifdef HAVE_FCNTL_H
+#include <fcntl.h>
 #endif
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>

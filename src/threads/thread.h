@@ -18,9 +18,9 @@
 #ifdef WIN32
 #include <windows.h>
 #elif OMPI_HAVE_POSIX_THREADS
-#ifdef HAVE_PTHREAD_H
 #include <pthread.h>
-#endif
+#elif OMPI_HAVE_SOLARIS_THREADS
+#include <thread.h>
 #endif
 
 #include "class/ompi_object.h"

@@ -19,7 +19,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <sys/param.h>
-#include <sys/fcntl.h>
+#include <fcntl.h>
 #include <sys/types.h>
 #include <sys/time.h>
 
