@@ -16,7 +16,6 @@
 
 #include "ompi_config.h"
 
-
 #include "mpi/f77/bindings.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
@@ -74,10 +73,10 @@ void mpi_allgatherv_f(char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype,
     OMPI_ARRAY_FINT_2_INT(recvcounts, size);
     OMPI_ARRAY_FINT_2_INT(displs, size);
 
-    *ierr = OMPI_INT_2_FINT(MPI_Allgatherv(sendbuf, 
+    *ierr = OMPI_INT_2_FINT(MPI_Allgatherv(sendbuf,
 					   OMPI_FINT_2_INT(*sendcount),
-					   c_sendtype, 
-					   recvbuf, 
+					   c_sendtype,
+					   recvbuf,
 					   OMPI_ARRAY_NAME_CONVERT(recvcounts),
 					   OMPI_ARRAY_NAME_CONVERT(displs),
 					   c_recvtype, c_comm));

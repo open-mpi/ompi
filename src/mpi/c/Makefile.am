@@ -52,9 +52,7 @@ headers = bindings.h
 #
 
 libmpi_c_la_SOURCES = \
-        attr_fn.c \
-        wtick.c \
-        wtime.c 
+        attr_fn.c
 
 #
 # libmpi_c_mpi.la is only built in some cases (see above)

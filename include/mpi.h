@@ -1084,8 +1084,31 @@ OMPI_DECLSPEC  int MPI_Win_test(MPI_Win win, int *flag);
 OMPI_DECLSPEC  int MPI_Win_unlock(int rank, MPI_Win win);
 OMPI_DECLSPEC  int MPI_Win_wait(MPI_Win win);
 #endif
-OMPI_DECLSPEC  double MPI_Wtick(void);
-OMPI_DECLSPEC  double MPI_Wtime(void);
+
+/* These 2 functions will shortly became macros, giving access to the high performance
+ * timers available on the specific architecture. Until then we let them here. 
+ * Beware: We dont have profiling interface for these 2 functions.
+ */
+#ifdef HAVE_SYS_TIME_H
+#include <sys/time.h>
+#endif
+#include <stdio.h>
+
+static inline double MPI_Wtick(void)
+{
+    return (double)0.000001;
+}
+
+static inline double MPI_Wtime(void)
+{
+    struct timeval tv;
+    double wtime;
+    gettimeofday(&tv, NULL);
+    wtime = tv.tv_sec;
+    wtime += (double)tv.tv_usec / 1000000.0;
+    return wtime;
+}
+
 
   /*
    * Profiling MPI API

@@ -325,7 +325,7 @@ mca_ptl_gm_matched( mca_ptl_base_module_t * ptl,
     mca_ptl_gm_module_t *gm_ptl;
     mca_ptl_gm_recv_frag_t *recv_frag;
     mca_ptl_gm_peer_t* peer;
-    struct iovec iov = { NULL, 0};
+    struct iovec iov = { NULL, 0 };
 	
     gm_ptl = (mca_ptl_gm_module_t *)ptl;
     request = frag->frag_request;
@@ -333,19 +333,18 @@ mca_ptl_gm_matched( mca_ptl_base_module_t * ptl,
     peer = (mca_ptl_gm_peer_t*)recv_frag->frag_recv.frag_base.frag_peer;
 
     if( frag->frag_base.frag_header.hdr_common.hdr_flags & MCA_PTL_FLAGS_ACK ) {  /* need to send an ack back */
-	ompi_list_item_t *item;
+        ompi_list_item_t *item;
 
-	OMPI_FREE_LIST_TRY_GET( &(gm_ptl->gm_send_dma_frags), item );
-        
+        OMPI_FREE_LIST_TRY_GET( &(gm_ptl->gm_send_dma_frags), item );
         if( NULL == item ) {
             ompi_output(0,"[%s:%d] unable to alloc a gm fragment\n", __FILE__,__LINE__);
             OMPI_THREAD_LOCK (&mca_ptl_gm_component.gm_lock);
             ompi_list_append (&mca_ptl_gm_module.gm_pending_acks, (ompi_list_item_t *)frag);
             OMPI_THREAD_UNLOCK (&mca_ptl_gm_component.gm_lock);
         } else {
-	    ompi_atomic_sub( &(gm_ptl->num_send_tokens), 1 );
-	    assert( gm_ptl->num_send_tokens >= 0 );
-	    hdr = (mca_ptl_base_header_t*)item;
+            ompi_atomic_sub( &(gm_ptl->num_send_tokens), 1 );
+            assert( gm_ptl->num_send_tokens >= 0 );
+            hdr = (mca_ptl_base_header_t*)item;
 
 	    hdr->hdr_ack.hdr_common.hdr_type = MCA_PTL_HDR_TYPE_ACK;
 	    hdr->hdr_ack.hdr_common.hdr_flags = 0;
@@ -370,12 +369,12 @@ mca_ptl_gm_matched( mca_ptl_base_module_t * ptl,
         unsigned int max_data, out_size;
         int freeAfter;
 
-	iov.iov_len = mca_ptl_gm_component.gm_segment_size - sizeof(mca_ptl_base_rendezvous_header_t);
-	if( frag->frag_base.frag_size < iov.iov_len ) {
-	    iov.iov_len = frag->frag_base.frag_size;
-	}
-	/* Here we expect that frag_addr is the begin of the buffer header included */
-	iov.iov_base = frag->frag_base.frag_addr;
+        iov.iov_len = mca_ptl_gm_component.gm_segment_size - sizeof(mca_ptl_base_rendezvous_header_t);
+        if( frag->frag_base.frag_size < iov.iov_len ) {
+            iov.iov_len = frag->frag_base.frag_size;
+        }
+        /* Here we expect that frag_addr is the begin of the buffer header included */
+        iov.iov_base = frag->frag_base.frag_addr;
     
         ompi_convertor_copy( peer->peer_proc->proc_ompi->proc_convertor,
                              &frag->frag_base.frag_convertor );

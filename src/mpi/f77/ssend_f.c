@@ -16,8 +16,8 @@
 
 #include "ompi_config.h"
 
-#include "mpi.h"
 #include "mpi/f77/bindings.h"
+#include "mpi/f77/constants.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_SSEND = mpi_ssend_f
@@ -60,12 +60,12 @@ void mpi_ssend_f(char *buf, MPI_Fint *count, MPI_Fint *datatype,
 		 MPI_Fint *dest, MPI_Fint *tag,
 		 MPI_Fint *comm, MPI_Fint *ierr)
 {
-    MPI_Datatype c_type = MPI_Type_f2c(*datatype);
-    MPI_Comm c_comm;
+   MPI_Datatype c_type = MPI_Type_f2c(*datatype);
+   MPI_Comm c_comm;
 
-    c_comm = MPI_Comm_f2c (*comm);
+   c_comm = MPI_Comm_f2c (*comm);
 
-    *ierr = OMPI_INT_2_FINT(MPI_Ssend(buf, OMPI_FINT_2_INT(*count),
-				      c_type, OMPI_FINT_2_INT(*dest),
-				      OMPI_FINT_2_INT(*tag), c_comm));
+   *ierr = OMPI_INT_2_FINT(MPI_Ssend(OMPI_ADDR(buf), OMPI_FINT_2_INT(*count),
+                                     c_type, OMPI_FINT_2_INT(*dest),
+                                     OMPI_FINT_2_INT(*tag), c_comm));
 }

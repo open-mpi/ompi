@@ -16,7 +16,6 @@
 
 #include "ompi_config.h"
 
-#include "mpi.h"
 #include "mpi/f77/bindings.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
@@ -30,7 +29,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_CREATE_ERRHANDLER,
                            pmpi_win_create_errhandler_,
                            pmpi_win_create_errhandler__,
                            pmpi_win_create_errhandler_f,
-                           (void *function, MPI_Fint *errhandler, MPI_Fint *ierr),
+                           (ompi_errhandler_fortran_handler_fn_t* function, MPI_Fint *errhandler, MPI_Fint *ierr),
                            (function, errhandler, ierr) )
 #endif
 
@@ -47,7 +46,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WIN_CREATE_ERRHANDLER,
                            mpi_win_create_errhandler_,
                            mpi_win_create_errhandler__,
                            mpi_win_create_errhandler_f,
-                           (void *function, MPI_Fint *errhandler, MPI_Fint *ierr),
+                           (ompi_errhandler_fortran_handler_fn_t* function, MPI_Fint *errhandler, MPI_Fint *ierr),
                            (function, errhandler, ierr) )
 #endif
 
@@ -56,7 +55,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WIN_CREATE_ERRHANDLER,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-void mpi_win_create_errhandler_f(void *function, 
+void mpi_win_create_errhandler_f(ompi_errhandler_fortran_handler_fn_t* function, 
 				 MPI_Fint *errhandler, MPI_Fint *ierr)
 {
     MPI_Errhandler c_errhandler;

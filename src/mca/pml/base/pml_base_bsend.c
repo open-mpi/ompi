@@ -268,7 +268,7 @@ int mca_pml_base_bsend_request_start(ompi_request_t* request)
 
 /*
  *  Request completed - free buffer and decrement pending count 
- */                                                                                                        
+ */
 int mca_pml_base_bsend_request_fini(ompi_request_t* request)
 {
     mca_pml_base_send_request_t* sendreq = (mca_pml_base_send_request_t*)request;

@@ -192,8 +192,11 @@ void mca_ptl_tcp_request_fini(struct mca_ptl_base_module_t* ptl, struct mca_pml_
 
 void mca_ptl_tcp_recv_frag_return(struct mca_ptl_base_module_t* ptl, struct mca_ptl_tcp_recv_frag_t* frag)
 {
-    if(frag->frag_recv.frag_is_buffered) 
+    if(frag->frag_recv.frag_is_buffered) {
         free(frag->frag_recv.frag_base.frag_addr);
+        frag->frag_recv.frag_is_buffered = false;
+        frag->frag_recv.frag_base.frag_addr = NULL;
+    }
     OMPI_FREE_LIST_RETURN(&mca_ptl_tcp_component.tcp_recv_frags, (ompi_list_item_t*)frag);
 }
 

@@ -87,6 +87,7 @@ static inline int mca_pml_teg_recv_request_start(mca_pml_base_recv_request_t* re
     request->req_base.req_ompi.req_complete = false;
     request->req_base.req_ompi.req_state = OMPI_REQUEST_ACTIVE;
     request->req_base.req_ompi.req_status.MPI_ERROR = OMPI_SUCCESS;
+    request->req_base.req_ompi.req_status._cancelled = 0;
 
     /* attempt to match posted recv */
     if(request->req_base.req_peer == OMPI_ANY_SOURCE) {

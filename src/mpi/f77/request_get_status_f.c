@@ -16,8 +16,8 @@
 
 #include "ompi_config.h"
 
-#include "mpi.h"
 #include "mpi/f77/bindings.h"
+#include "mpi/f77/constants.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_REQUEST_GET_STATUS = mpi_request_get_status_f
@@ -63,10 +63,17 @@ void mpi_request_get_status_f(MPI_Fint *request, MPI_Fint *flag,
     MPI_Request c_req = MPI_Request_f2c( *request ); 
     OMPI_SINGLE_NAME_DECL(flag);
 
-    *ierr = OMPI_INT_2_FINT(MPI_Request_get_status(c_req, 
-						   OMPI_SINGLE_NAME_CONVERT(flag),
-						   &c_status));
+    /* This seems silly, but someone will do it */
 
-    OMPI_SINGLE_INT_2_FINT(flag);
-    MPI_Status_c2f( &c_status, status );
+    if (OMPI_IS_FORTRAN_STATUS_IGNORE(status)) {
+        *flag = OMPI_INT_2_FINT(0);
+        *ierr = OMPI_INT_2_FINT(MPI_SUCCESS);
+    } else {
+        *ierr = OMPI_INT_2_FINT(MPI_Request_get_status(c_req, 
+                                                       OMPI_SINGLE_NAME_CONVERT(flag),
+                                                       &c_status));
+        
+        OMPI_SINGLE_INT_2_FINT(flag);
+        MPI_Status_c2f( &c_status, status );
+    }
 }

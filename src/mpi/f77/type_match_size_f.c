@@ -16,7 +16,6 @@
 
 #include "ompi_config.h"
 
-#include "mpi.h"
 #include "mpi/f77/bindings.h"
 #include "mpi/f77/constants.h"
 #include "datatype/datatype.h"

@@ -25,12 +25,33 @@ extern "C" {
 #endif
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_grequest_t);
 
+/*
+ * Fortran types for the generalized request functions.
+ */
+typedef void (MPI_F_Grequest_query_function)(void* extra_state, MPI_Status* status, int* ierr );
+typedef void (MPI_F_Grequest_free_function)( void* extra_state, int* err );
+typedef void (MPI_F_Grequest_cancel_function)( void* extra_state, int* complete, int* ierr );
+
+typedef union {
+    MPI_Grequest_query_function*   c_query;
+    MPI_F_Grequest_query_function* f_query;
+} MPI_Grequest_query_fct_t;
+
+typedef union {
+    MPI_Grequest_free_function*   c_free;
+    MPI_F_Grequest_free_function* f_free;
+} MPI_Grequest_free_fct_t;
+
+typedef union {
+    MPI_Grequest_cancel_function*   c_cancel;
+    MPI_F_Grequest_cancel_function* f_cancel;
+} MPI_Grequest_cancel_fct_t;
 
 struct ompi_grequest_t {
     ompi_request_t greq_base;
-    MPI_Grequest_query_function *greq_query;
-    MPI_Grequest_free_function *greq_free;
-    MPI_Grequest_cancel_function *greq_cancel;
+    MPI_Grequest_query_fct_t greq_query;
+    MPI_Grequest_free_fct_t greq_free;
+    MPI_Grequest_cancel_fct_t greq_cancel;
     void *greq_state;
 };
 typedef struct ompi_grequest_t ompi_grequest_t;

@@ -19,11 +19,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "mpi.h"
-#include "util/argv.h"
 #include "mpi/f77/bindings.h"
 #include "mpi/f77/constants.h"
 #include "mpi/f77/strings.h"
+#include "util/argv.h"
 
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER

@@ -72,10 +72,8 @@ int mca_pml_teg_isend(void *buf,
                                    comm, sendmode, false);
 
     MCA_PML_TEG_SEND_REQUEST_START(sendreq, rc);
-    if (rc != OMPI_SUCCESS)
-        return rc;
     *request = (ompi_request_t *) sendreq;
-    return OMPI_SUCCESS;
+    return rc;
 }
 
 

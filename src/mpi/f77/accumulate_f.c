@@ -66,7 +66,7 @@ void mpi_accumulate_f(char *origin_addr, MPI_Fint *origin_count,
     MPI_Win c_win = MPI_Win_f2c(*win);
     MPI_Op c_op = MPI_Op_f2c(*op);
 
-    *ierr = OMPI_INT_2_FINT(MPI_Accumulate(origin_addr, 
+    *ierr = OMPI_INT_2_FINT(MPI_Accumulate(OMPI_ADDR(origin_addr), 
 					   OMPI_FINT_2_INT(*origin_count),
 					   c_origin_datatype, 
 					   OMPI_FINT_2_INT(*target_rank),

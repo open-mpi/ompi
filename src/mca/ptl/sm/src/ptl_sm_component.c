@@ -213,7 +213,7 @@ int mca_ptl_sm_component_close(void)
 
 #if OMPI_ENABLE_PROGRESS_THREADS == 1
     /* close/cleanup fifo create for event notification */
-    if(mca_ptl_sm_component.sm_fifo_fd >= 0) {
+    if(mca_ptl_sm_component.sm_fifo_fd > 0) {
         /* write a done message down the pipe */
         unsigned char cmd = DONE;
         if( write(mca_ptl_sm_component.sm_fifo_fd,&cmd,sizeof(cmd)) != 

@@ -16,7 +16,6 @@
 
 #include "ompi_config.h"
 
-#include "mpi.h"
 #include "mpi/f77/bindings.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
@@ -30,7 +29,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GREQUEST_START,
                            pmpi_grequest_start_,
                            pmpi_grequest_start__,
                            pmpi_grequest_start_f,
-                           (void *query_fn, void *free_fn, void *cancel_fn, char *extra_state, MPI_Fint *request, MPI_Fint *ierr),
+                           (MPI_F_Grequest_query_function* query_fn, MPI_F_Grequest_free_function* free_fn, MPI_F_Grequest_cancel_function* cancel_fn, char *extra_state, MPI_Fint *request, MPI_Fint *ierr),
                            (query_fn, free_fn, cancel_fn, extra_state, request, ierr) )
 #endif
 
@@ -47,7 +46,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GREQUEST_START,
                            mpi_grequest_start_,
                            mpi_grequest_start__,
                            mpi_grequest_start_f,
-                           (void *query_fn, void *free_fn, void *cancel_fn, char *extra_state, MPI_Fint *request, MPI_Fint *ierr),
+                           (MPI_F_Grequest_query_function* query_fn, MPI_F_Grequest_free_function* free_fn, MPI_F_Grequest_cancel_function* cancel_fn, char *extra_state, MPI_Fint *request, MPI_Fint *ierr),
                            (query_fn, free_fn, cancel_fn, extra_state, request, ierr) )
 #endif
 
@@ -56,8 +55,10 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GREQUEST_START,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-void mpi_grequest_start_f(void *query_fn, void *free_fn,
-			  void *cancel_fn, char *extra_state,
+void mpi_grequest_start_f(MPI_F_Grequest_query_function* query_fn,
+                          MPI_F_Grequest_free_function* free_fn,
+			  MPI_F_Grequest_cancel_function* cancel_fn,
+                          char *extra_state,
 			  MPI_Fint *request, MPI_Fint *ierr)
 {
     MPI_Request c_req;

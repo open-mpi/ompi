@@ -29,7 +29,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_ERRHANDLER_CREATE,
                            pmpi_errhandler_create_,
                            pmpi_errhandler_create__,
                            pmpi_errhandler_create_f,
-                           (void *function, MPI_Fint *errhandler, MPI_Fint *ierr),
+                           (ompi_errhandler_fortran_handler_fn_t* function, MPI_Fint *errhandler, MPI_Fint *ierr),
                            (function, errhandler, ierr) )
 #endif
 
@@ -46,7 +46,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_ERRHANDLER_CREATE,
                            mpi_errhandler_create_,
                            mpi_errhandler_create__,
                            mpi_errhandler_create_f,
-                           (void *function, MPI_Fint *errhandler, MPI_Fint *ierr),
+                           (ompi_errhandler_fortran_handler_fn_t* function, MPI_Fint *errhandler, MPI_Fint *ierr),
                            (function, errhandler, ierr) )
 #endif
 
@@ -55,7 +55,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_ERRHANDLER_CREATE,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-void mpi_errhandler_create_f(void *function, 
+void mpi_errhandler_create_f(ompi_errhandler_fortran_handler_fn_t* function, 
 			     MPI_Fint *errhandler, MPI_Fint *ierr)
 {
     MPI_Errhandler c_errhandler;

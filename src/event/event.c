@@ -207,7 +207,7 @@ static int ompi_timeout_next(struct timeval *tv)
 } 
 #endif
 
-
+#if OMPI_ENABLE_PROGRESS_THREADS
 /* run loop for dispatch thread */
 static void* ompi_event_run(ompi_object_t* arg)
 {
@@ -230,7 +230,7 @@ static void* ompi_event_run(ompi_object_t* arg)
 #endif
     return NULL;
 }
-
+#endif  /* OMPI_ENABLE_PROGRESS_THREADS */
 
 #if OMPI_ENABLE_PROGRESS_THREADS
 static void ompi_event_pipe_handler(int sd, short flags, void* user)

@@ -19,7 +19,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "mpi.h"
 #include "mpi/f77/bindings.h"
 #include "mpi/f77/constants.h"
 #include "errhandler/errhandler.h"
@@ -95,7 +94,7 @@ void mpi_testall_f(MPI_Fint *count, MPI_Fint *array_of_requests, MPI_Fint *flag,
             array_of_requests[i] = c_req[i]->req_f_to_c_index;
             if (!OMPI_IS_FORTRAN_STATUSES_IGNORE(array_of_statuses) &&
                 !OMPI_IS_FORTRAN_STATUS_IGNORE(&array_of_statuses[i])) {
-                MPI_Status_c2f(&c_status[i], &array_of_statuses[i * 4]);
+                MPI_Status_c2f(&c_status[i], &array_of_statuses[i * (sizeof(MPI_Status) / sizeof(int))]);
             }
         }
     }

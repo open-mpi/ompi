@@ -16,8 +16,8 @@
 
 #include "ompi_config.h"
 
-#include "errhandler/errhandler.h"
 #include "mpi/f77/bindings.h"
+#include "errhandler/errhandler.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_COMM_SET_ERRHANDLER = mpi_comm_set_errhandler_f

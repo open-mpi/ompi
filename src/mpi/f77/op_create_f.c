@@ -16,8 +16,6 @@
 
 #include "ompi_config.h"
 
-#include "mpi.h"
-#include "op/op.h"
 #include "mpi/f77/bindings.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
@@ -31,7 +29,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_OP_CREATE,
                            pmpi_op_create_,
                            pmpi_op_create__,
                            pmpi_op_create_f,
-                           (void *function, MPI_Fint *commute, MPI_Fint *op, MPI_Fint *ierr),
+                           (ompi_op_fortran_handler_fn_t* function, MPI_Fint *commute, MPI_Fint *op, MPI_Fint *ierr),
                            (function, commute, op, ierr) )
 #endif
 
@@ -48,7 +46,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_OP_CREATE,
                            mpi_op_create_,
                            mpi_op_create__,
                            mpi_op_create_f,
-                           (void *function, MPI_Fint *commute, MPI_Fint *op, MPI_Fint *ierr),
+                           (ompi_op_fortran_handler_fn_t* function, MPI_Fint *commute, MPI_Fint *op, MPI_Fint *ierr),
                            (function, commute, op, ierr) )
 #endif
 
@@ -57,7 +55,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_OP_CREATE,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-void mpi_op_create_f(void *function, MPI_Fint *commute,
+void mpi_op_create_f(ompi_op_fortran_handler_fn_t* function, MPI_Fint *commute,
 		     MPI_Fint *op, MPI_Fint *ierr)
 {
     MPI_Op c_op;

@@ -36,6 +36,8 @@ static const char FUNC_NAME[] = "MPI_Status_c2f";
 
 int MPI_Status_c2f(MPI_Status *c_status, MPI_Fint *f_status) 
 {
+    int i, *c_ints;
+    
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
@@ -49,10 +51,16 @@ int MPI_Status_c2f(MPI_Status *c_status, MPI_Fint *f_status)
         }
     }
 
+    c_ints = (int*)c_status;
+    for( i = 0; i < (int)(sizeof(MPI_Status) / sizeof(int)); i++ )
+        f_status[i] = OMPI_INT_2_FINT(c_ints[i]);
+
+    /*
     f_status[0] = OMPI_INT_2_FINT(c_status->MPI_SOURCE);
     f_status[1] = OMPI_INT_2_FINT(c_status->MPI_TAG);
     f_status[2] = OMPI_INT_2_FINT(c_status->MPI_ERROR);
     f_status[3] = OMPI_INT_2_FINT(c_status->_count);
-
+    f_status[4] = OMPI_INT_2_FINT(c_status->_cancelled);
+    */
     return MPI_SUCCESS;
 }
