@@ -11,7 +11,7 @@ include $(top_srcdir)/config/Makefile.options
 # replaces all MPI_* symbols with PMPI_* symbols. In this directory
 # we definately need it to be 1.
 #
-AM_CPPFLAGS = -DOMPI_PROFILE_LAYER=1
+AM_CPPFLAGS = -DOMPI_PROFILE_LAYER=1 -DOMPI_COMPILING_F77_WRAPPERS=1
 #
 # This build needs to go through only if profiling is required.
 # Further, this build HAS to go through if profiling is required.
@@ -308,9 +308,7 @@ nodist_libmpi_f77_pmpi_la_SOURCES = \
         pwin_start_f.c \
         pwin_test_f.c \
         pwin_unlock_f.c \
-        pwin_wait_f.c \
-        pwtick_f.c \
-        pwtime_f.c 
+        pwin_wait_f.c
 #
 # Sym link in the sources from the real MPI directory
 #

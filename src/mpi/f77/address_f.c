@@ -43,7 +43,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_ADDRESS,
 
 
 #if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
-#include "mpi/c/profile/defines.h"
+#include "mpi/f77/profile/defines.h"
 #endif
 
 void mpi_address_f(char *location, MPI_Fint *address, MPI_Fint *ierr)

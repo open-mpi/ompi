@@ -43,7 +43,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_ADD_ERROR_CLASS,
 
 
 #if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
-#include "mpi/c/profile/defines.h"
+#include "mpi/f77/profile/defines.h"
 #endif
 
 void mpi_add_error_class_f(MPI_Fint *errorclass, MPI_Fint *ierr)

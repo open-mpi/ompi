@@ -43,7 +43,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_READ_ORDERED_END,
 
 
 #if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
-#include "mpi/c/profile/defines.h"
+#include "mpi/f77/profile/defines.h"
 #endif
 
 void mpi_file_read_ordered_end_f(MPI_Fint *fh, char *buf, MPI_Fint *status, MPI_Fint *ierr)

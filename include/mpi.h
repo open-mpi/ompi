@@ -283,30 +283,73 @@ enum {
 #define MPI_STATUS_IGNORE ((MPI_Status *) 0)
 #define MPI_STATUSES_IGNORE ((MPI_Status *) 0)
 
-int MPI_TYPE_NULL_DELETE_FN( MPI_Datatype datatype, int type_keyval,
-                             void* attribute_val_out, void* flag );
-int MPI_TYPE_NULL_COPY_FN( MPI_Datatype datatype, int type_keyval, void* extra_state,
-                           void* attribute_val_in, void* attribute_val_out, int* flag );
-int MPI_TYPE_DUP_FN( MPI_Datatype datatype, int type_keyval, void* extra_state,
-                     void* attribute_val_in, void* attribute_val_out, int* flag );
-int MPI_COMM_NULL_DELETE_FN( MPI_Comm comm, int comm_keyval,
-                             void* attribute_val_out, void* flag );
-int MPI_COMM_NULL_COPY_FN( MPI_Comm comm, int comm_keyval, void* extra_state,
-                           void* attribute_val_in, void* attribute_val_out, int* flag );
-int MPI_COMM_DUP_FN( MPI_Comm comm, int comm_keyval, void* extra_state,
-                     void* attribute_val_in, void* attribute_val_out, int* flag );
-int MPI_NULL_DELETE_FN( MPI_Comm comm, int comm_keyval,
-                        void* attribute_val_out, void* flag );
-int MPI_NULL_COPY_FN( MPI_Comm comm, int comm_keyval, void* extra_state,
-                      void* attribute_val_in, void* attribute_val_out, int* flag );
-int MPI_DUP_FN( MPI_Comm comm, int comm_keyval, void* extra_state,
-                void* attribute_val_in, void* attribute_val_out, int* flag );
-int MPI_WIN_NULL_DELETE_FN( MPI_Win window, int win_keyval,
-                            void* attribute_val_out, void* flag );
-int MPI_WIN_NULL_COPY_FN( MPI_Win window, int win_keyval, void* extra_state,
-                          void* attribute_val_in, void* attribute_val_out, int* flag );
-int MPI_WIN_DUP_FN( MPI_Win window, int win_keyval, void* extra_state,
-                    void* attribute_val_in, void* attribute_val_out, int* flag );
+/* MPI-2 specifies that the name "MPI_TYPE_NULL_DELETE_FN" (and all
+   related friends) must be accessible in C, C++, and Fortran. This is
+   unworkable if the back-end Fortran compiler uses all caps for its
+   linker symbol convention -- it results in two functions with
+   different signatures that have the same name (i.e., both C and
+   Fortran use the symbol MPI_TYPE_NULL_DELETE_FN).  So we have to
+   #define the C names to be something else, so that they names are
+   *accessed* through MPI_TYPE_NULL_DELETE_FN, but their actual symbol
+   name is different.
+
+   However, this file is included when the fortran wrapper functions
+   are compiled in Open MPI, so we do *not* want these #defines in
+   this case (i.e., we need the Fortran wrapper function to be
+   compiled as MPI_TYPE_NULL_DELETE_FN).  So add some #if kinds of
+   protection for this case. */
+
+#if !defined(OMPI_COMPILING_F77_WRAPPERS)
+#define MPI_NULL_DELETE_FN OMPI_C_MPI_NULL_DELETE_FN
+#define MPI_NULL_COPY_FN OMPI_C_MPI_NULL_COPY_FN
+#define MPI_DUP_FN OMPI_C_MPI_DUP_FN
+
+#define MPI_TYPE_NULL_DELETE_FN OMPI_C_MPI_TYPE_NULL_DELETE_FN
+#define MPI_TYPE_NULL_COPY_FN OMPI_C_MPI_TYPE_NULL_COPY_FN
+#define MPI_TYPE_DUP_FN OMPI_C_MPI_TYPE_DUP_FN
+
+#define MPI_COMM_NULL_DELETE_FN OMPI_C_MPI_COMM_NULL_DELETE_FN
+#define MPI_COMM_NULL_COPY_FN OMPI_C_MPI_COMM_NULL_COPY_FN
+#define MPI_COMM_DUP_FN OMPI_C_MPI_COMM_DUP_FN
+
+#define MPI_WIN_NULL_DELETE_FN OMPI_C_MPI_WIN_NULL_DELETE_FN
+#define MPI_WIN_NULL_COPY_FN OMPI_C_MPI_WIN_NULL_COPY_FN
+#define MPI_WIN_DUP_FN OMPI_C_MPI_WIN_DUP_FN
+#endif
+
+int OMPI_C_MPI_TYPE_NULL_DELETE_FN( MPI_Datatype datatype, int type_keyval,
+                                    void* attribute_val_out, void* flag );
+int OMPI_C_MPI_TYPE_NULL_COPY_FN( MPI_Datatype datatype, int type_keyval, 
+                                  void* extra_state,
+                                  void* attribute_val_in, 
+                                  void* attribute_val_out, int* flag );
+int OMPI_C_MPI_TYPE_DUP_FN( MPI_Datatype datatype, int type_keyval, 
+                            void* extra_state, void* attribute_val_in, 
+                            void* attribute_val_out, int* flag );
+int OMPI_C_MPI_COMM_NULL_DELETE_FN( MPI_Comm comm, int comm_keyval,
+                                    void* attribute_val_out, void* flag );
+int OMPI_C_MPI_COMM_NULL_COPY_FN( MPI_Comm comm, int comm_keyval, 
+                                  void* extra_state, void* attribute_val_in,
+                                  void* attribute_val_out, int* flag );
+int OMPI_C_MPI_COMM_DUP_FN( MPI_Comm comm, int comm_keyval, void* extra_state,
+                            void* attribute_val_in, void* attribute_val_out,
+                            int* flag );
+int OMPI_C_MPI_NULL_DELETE_FN( MPI_Comm comm, int comm_keyval,
+                               void* attribute_val_out, void* flag );
+int OMPI_C_MPI_NULL_COPY_FN( MPI_Comm comm, int comm_keyval, void* extra_state,
+                             void* attribute_val_in, void* attribute_val_out,
+                             int* flag );
+int OMPI_C_MPI_DUP_FN( MPI_Comm comm, int comm_keyval, void* extra_state,
+                       void* attribute_val_in, void* attribute_val_out,
+                       int* flag );
+int OMPI_C_MPI_WIN_NULL_DELETE_FN( MPI_Win window, int win_keyval,
+                                   void* attribute_val_out, void* flag );
+int OMPI_C_MPI_WIN_NULL_COPY_FN( MPI_Win window, int win_keyval, 
+                                 void* extra_state, void* attribute_val_in,
+                                 void* attribute_val_out, int* flag );
+int OMPI_C_MPI_WIN_DUP_FN( MPI_Win window, int win_keyval, void* extra_state,
+                           void* attribute_val_in, void* attribute_val_out,
+                           int* flag );
 
 /*
  * External variables

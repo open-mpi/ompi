@@ -43,7 +43,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_WRITE_AT_ALL_BEGIN,
 
 
 #if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
-#include "mpi/c/profile/defines.h"
+#include "mpi/f77/profile/defines.h"
 #endif
 
 void mpi_file_write_at_all_begin_f(MPI_Fint *fh, MPI_Fint *offset, char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *ierr)

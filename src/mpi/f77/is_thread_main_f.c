@@ -43,7 +43,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_IS_THREAD_MAIN,
 
 
 #if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
-#include "mpi/c/profile/defines.h"
+#include "mpi/f77/profile/defines.h"
 #endif
 
 void mpi_is_thread_main_f(MPI_Fint *flag, MPI_Fint *ierr)

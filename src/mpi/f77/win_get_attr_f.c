@@ -43,7 +43,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WIN_GET_ATTR,
 
 
 #if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
-#include "mpi/c/profile/defines.h"
+#include "mpi/f77/profile/defines.h"
 #endif
 
 void mpi_win_get_attr_f(MPI_Fint *win, MPI_Fint *win_keyval, char *attribute_val, MPI_Fint *flag, MPI_Fint *ierr)
