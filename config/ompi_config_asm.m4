@@ -651,7 +651,7 @@ case "${host}" in
     mips-*)
         # Should really find some way to make sure that we are on
         # a MIPS III machine (r4000 and later)
-        ompi_cv_asm_arch="MIPS3"
+        ompi_cv_asm_arch="MIPS"
         OMPI_ASM_SUPPORT_64BIT=1
         OMPI_GCC_INLINE_ASSIGN='"or %0,[$]0,[$]0" : "=&r"(ret)'
     ;;

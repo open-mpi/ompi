@@ -15,15 +15,13 @@
 #ifndef OMPI_SYS_ARCH_ATOMIC_H
 #define OMPI_SYS_ARCH_ATOMIC_H 1
 
-/*
- * On powerpc ...
- */
 
 #if OMPI_WANT_SMP_LOCKS
 
-#define MB() 
-#define RMB()
-#define WMB()
+/* BWB - FIX ME! */
+#define MB() __asm__ __volatile__("sync": : :"memory")
+#define RMB() __asm__ __volatile__("sync": : :"memory")
+#define WMB() __asm__ __volatile__("sync": : :"memory")
 #define SMP_SYNC "sync"
 
 #else
@@ -41,10 +39,10 @@
  * Define constants for MIPS
  *
  *********************************************************************/
-#define OMPI_HAVE_ATOMIC_MEM_BARRIER 0
+#define OMPI_HAVE_ATOMIC_MEM_BARRIER 1
 
-#define OMPI_HAVE_ATOMIC_CMPSET_32 0
-#define OMPI_HAVE_ATOMIC_CMPSET_64 0
+#define OMPI_HAVE_ATOMIC_CMPSET_32 1
+#define OMPI_HAVE_ATOMIC_CMPSET_64 1
 
 
 /**********************************************************************
@@ -87,21 +85,23 @@ static inline int ompi_atomic_cmpset_32(volatile int32_t *addr,
                                         int32_t oldval, int32_t newval)
 {
     int32_t ret;
+    int32_t tmp;
 
    __asm__ __volatile__ ("\t"
                          ".set noreorder        \n"
                          "retry:                \n\t"
                          "ll     %0, %2         \n\t" /* load *addr into ret */
                          "bne    %0, %3, done   \n\t" /* done if oldval != ret */
-                         "or     %0, 0, %4      \n\t" /* ret = newval */
-                         "sc     %0, %2         \n\t" /* store ret in *addr */
+                         "or     %5, %4, 0      \n\t" /* ret = newval */
+                         "sc     %5, %2         \n\t" /* store ret in *addr */
                          /* note: ret will be 0 if failed, 1 if succeeded */
+			 "bne    %5, 1, retry   \n\t"
                          "done:                 \n\t"
                          ".set reorder          \n"
-                         : "=&r" (ret), "=m" (*addr)
-                         : "r" (addr), "r" (oldval), "r" (newval), "m" (*addr)
+                         : "=&r"(ret), "=m"(*addr)
+                         : "m"(*addr), "r"(oldval), "r"(newval), "r"(tmp)
                          : "cc", "memory");
-   return (int) ret;
+   return (ret == oldval);
 }
 
 
@@ -134,21 +134,25 @@ static inline int ompi_atomic_cmpset_64(volatile int64_t *addr,
                                         int64_t oldval, int64_t newval)
 {
     int64_t ret;
+    int64_t tmp;
 
    __asm__ __volatile__ ("\t"
                          ".set noreorder        \n"
                          "retry:                \n\t"
-                         "ll     %0, %2         \n\t" /* load *addr into ret */
+                         "lld    %0, %2         \n\t" /* load *addr into ret */
                          "bne    %0, %3, done   \n\t" /* done if oldval != ret */
-                         "or     %0, 0, %4      \n\t" /* ret = newval */
-                         "sc     %0, %2         \n\t" /* store ret in *addr */
+                         "or     %5, %4, 0      \n\t" /* tmp = newval */
+                         "scd    %5, %2         \n\t" /* store tmp in *addr */
                          /* note: ret will be 0 if failed, 1 if succeeded */
+			 "bne    %5, 1, retry   \n"
                          "done:                 \n\t"
                          ".set reorder          \n"
                          : "=&r" (ret), "=m" (*addr)
-                         : "r" (addr), "r" (oldval), "r" (newval), "m" (*addr)
+                         : "m" (*addr), "r" (oldval), "r" (newval),
+			   "r"(tmp)
                          : "cc", "memory");
-   return (int) ret;
+
+   return (ret == oldval);
 }
 
 

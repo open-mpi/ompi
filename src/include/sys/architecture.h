@@ -31,7 +31,7 @@
 #define OMPI_SPARC          0060
 #define OMPI_SPARCV9_32     0061
 #define OMPI_SPARCV9_64     0062
-#define OMPI_MIPS3          0070
+#define OMPI_MIPS           0070
 
 /* Formats */
 #define OMPI_DEFAULT        1000  /* standard for given architecture */
