@@ -46,6 +46,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_BUFFER_DETACH,
 #include "mpi/f77/profile/defines.h"
 #endif
 
+OMPI_EXPORT
 void mpi_buffer_detach_f(char *buffer, MPI_Fint *size, MPI_Fint *ierr)
 {
     OMPI_SINGLE_NAME_DECL(size);

@@ -35,6 +35,7 @@ static const char FUNC_NAME[] = "MPI_Info_get_nthkey";
  *   @retval MPI_ERR_INFO
  *   @retval MPI_ERR_INFO_KEY
  */
+OMPI_EXPORT
 int MPI_Info_get_nthkey(MPI_Info info, int n, char *key) 
 {
     int nkeys;

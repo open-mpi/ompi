@@ -46,6 +46,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_CREATE_INDEXED_BLOCK,
 #include "mpi/f77/profile/defines.h"
 #endif
 
+OMPI_EXPORT
 void mpi_type_create_indexed_block_f(MPI_Fint *count, MPI_Fint *blocklength,
 				     MPI_Fint *array_of_displacements, 
 				     MPI_Fint *oldtype, MPI_Fint *newtype,

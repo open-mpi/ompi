@@ -27,6 +27,7 @@
 static const char FUNC_NAME[] = "MPI_Abort";
 
 
+OMPI_EXPORT
 int MPI_Abort(MPI_Comm comm, int errorcode) 
 {
     mca_ns_base_jobid_t jobid;

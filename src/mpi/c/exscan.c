@@ -22,6 +22,7 @@
 static const char FUNC_NAME[] = "MPI_Exscan";
 
 
+OMPI_EXPORT
 int MPI_Exscan(void *sendbuf, void *recvbuf, int count,
                MPI_Datatype datatype, MPI_Op op, MPI_Comm comm) 
 {

@@ -46,6 +46,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TOPO_TEST,
 #include "mpi/f77/profile/defines.h"
 #endif
 
+OMPI_EXPORT
 void mpi_topo_test_f(MPI_Fint *comm, MPI_Fint *status, MPI_Fint *ierr)
 {
     MPI_Comm c_comm;

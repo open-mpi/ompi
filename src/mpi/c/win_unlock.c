@@ -20,6 +20,7 @@
 static const char FUNC_NAME[] = "MPI_Win_unlock";
 
 
+OMPI_EXPORT
 int MPI_Win_unlock(int rank, MPI_Win win) 
 {
   if (MPI_PARAM_CHECK) {

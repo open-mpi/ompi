@@ -21,6 +21,7 @@
 static const char FUNC_NAME[] = "MPI_Type_match_size";
 
 
+OMPI_EXPORT
 int MPI_Type_match_size(int typeclass, int size, MPI_Datatype *type)
 {
   if (MPI_PARAM_CHECK) {

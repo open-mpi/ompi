@@ -46,6 +46,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_UNPACK,
 #include "mpi/f77/profile/defines.h"
 #endif
 
+OMPI_EXPORT
 void mpi_unpack_f(char *inbuf, MPI_Fint *insize, MPI_Fint *position,
 		  char *outbuf, MPI_Fint *outcount, MPI_Fint *datatype,
 		  MPI_Fint *comm, MPI_Fint *ierr)

@@ -46,6 +46,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_UB,
 #include "mpi/f77/profile/defines.h"
 #endif
 
+OMPI_EXPORT
 void mpi_type_ub_f(MPI_Fint *mtype, MPI_Fint *ub, MPI_Fint *ierr)
 {
     MPI_Datatype c_mtype = MPI_Type_f2c(*mtype);

@@ -20,6 +20,7 @@
 static const char FUNC_NAME[] = "MPI_Bcast";
 
 
+OMPI_EXPORT
 int MPI_Bcast(void *buffer, int count, MPI_Datatype datatype,
               int root, MPI_Comm comm)
 {

@@ -21,6 +21,7 @@
 static const char FUNC_NAME[] = "MPI_File_get_group";
 
 
+OMPI_EXPORT
 int MPI_File_get_group(MPI_File fh, MPI_Group *group)
 {
     int rc;

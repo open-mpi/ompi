@@ -21,6 +21,7 @@
 static const char FUNC_NAME[] = "MPI_Testall";
 
 
+OMPI_EXPORT
 int MPI_Testall(int count, MPI_Request requests[], int *flag,
                 MPI_Status statuses[]) 
 {

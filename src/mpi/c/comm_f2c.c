@@ -20,6 +20,7 @@
 static const char FUNC_NAME[] = "MPI_Comm_f2c";
 
 
+OMPI_EXPORT
 MPI_Comm MPI_Comm_f2c(MPI_Fint comm) 
 {
     size_t o_index= (size_t) comm;

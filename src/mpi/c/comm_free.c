@@ -19,6 +19,7 @@
 static const char FUNC_NAME[] = "MPI_Comm_free";
 
 
+OMPI_EXPORT
 int MPI_Comm_free(MPI_Comm *comm) {
     
     if ( MPI_PARAM_CHECK ) {

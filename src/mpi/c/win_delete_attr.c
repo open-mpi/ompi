@@ -19,6 +19,7 @@
 static const char FUNC_NAME[] = "MPI_Win_delete_attr";
 
 
+OMPI_EXPORT
 int MPI_Win_delete_attr(MPI_Win win, int win_keyval) 
 {
     int ret; 

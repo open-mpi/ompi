@@ -20,6 +20,7 @@
 static const char FUNC_NAME[] = "MPI_Win_set_name";
 
 
+OMPI_EXPORT
 int MPI_Win_set_name(MPI_Win win, char *win_name) 
 {
   if (MPI_PARAM_CHECK) {

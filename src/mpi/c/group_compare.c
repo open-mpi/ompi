@@ -21,6 +21,7 @@
 static const char FUNC_NAME[] = "MPI_Group_compare";
 
 
+OMPI_EXPORT
 int MPI_Group_compare(MPI_Group group1, MPI_Group group2, int *result) {
 
     /* local variables */

@@ -21,6 +21,7 @@
 static const char FUNC_NAME[] = "MPI_Group_free";
 
 
+OMPI_EXPORT
 int MPI_Group_free(MPI_Group *group)
 {
     ompi_group_t *l_group;

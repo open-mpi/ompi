@@ -20,6 +20,7 @@
 static const char FUNC_NAME[] = "MPI_Group_f2c";
 
 
+OMPI_EXPORT
 MPI_Group MPI_Group_f2c(MPI_Fint group_f)
 {
     /* local variables */

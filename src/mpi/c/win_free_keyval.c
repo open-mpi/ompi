@@ -19,6 +19,7 @@
 static const char FUNC_NAME[] = "MPI_Win_free_keyval";
 
 
+OMPI_EXPORT
 int MPI_Win_free_keyval(int *win_keyval) 
 {
     int ret;

@@ -20,6 +20,7 @@
 static const char FUNC_NAME[] = "MPI_Status_c2f";
 
 
+OMPI_EXPORT
 int MPI_Status_c2f(MPI_Status *c_status, MPI_Fint *f_status) 
 {
   if (MPI_PARAM_CHECK) {

@@ -23,6 +23,7 @@
 static const char FUNC_NAME[] = "MPI_File_delete";
 
 
+OMPI_EXPORT
 int MPI_File_delete(char *filename, MPI_Info info) 
 {
     int rc;

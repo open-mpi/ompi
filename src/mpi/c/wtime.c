@@ -17,6 +17,7 @@
 #endif
 
 
+OMPI_EXPORT
 double MPI_Wtime(void) 
 {
     struct timeval tv;

@@ -33,6 +33,7 @@ static const char FUNC_NAME[] = "MPI_Info_create";
  * When an MPI_Info object is not being used, it should be freed using
  * MPI_Info_free
  */
+OMPI_EXPORT
 int MPI_Info_create(MPI_Info *info) 
 {
     if (MPI_PARAM_CHECK) {

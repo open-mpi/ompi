@@ -21,6 +21,7 @@
 static const char FUNC_NAME[] = "MPI_Group_size";
 
 
+OMPI_EXPORT
 int MPI_Group_size(MPI_Group group, int *size) 
 {
     /* error checking */

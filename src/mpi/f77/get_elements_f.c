@@ -46,6 +46,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GET_ELEMENTS,
 #include "mpi/f77/profile/defines.h"
 #endif
 
+OMPI_EXPORT
 void mpi_get_elements_f(MPI_Fint *status, MPI_Fint *datatype, MPI_Fint *count, MPI_Fint *ierr)
 {
     MPI_Datatype c_type = MPI_Type_f2c(*datatype);

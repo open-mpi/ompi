@@ -46,6 +46,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_IS_THREAD_MAIN,
 #include "mpi/f77/profile/defines.h"
 #endif
 
+OMPI_EXPORT
 void mpi_is_thread_main_f(MPI_Fint *flag, MPI_Fint *ierr)
 {
     OMPI_SINGLE_NAME_DECL(flag);

@@ -42,6 +42,7 @@ static const char FUNC_NAME[] = "MPI_Info_get_valuelen";
  *   character.  If the 'key' is not found on 'info', 'valuelen' is left 
  *   alone.
  */
+OMPI_EXPORT
 int MPI_Info_get_valuelen(MPI_Info info, char *key, int *valuelen,
                           int *flag) 
 {

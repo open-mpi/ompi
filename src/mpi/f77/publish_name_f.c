@@ -46,6 +46,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_PUBLISH_NAME,
 #include "mpi/f77/profile/defines.h"
 #endif
 
+OMPI_EXPORT
 void mpi_publish_name_f(char *service_name, MPI_Fint *info,
 			char *port_name, MPI_Fint *ierr)
 {

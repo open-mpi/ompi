@@ -46,6 +46,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_CREATE_F90_REAL,
 #include "mpi/f77/profile/defines.h"
 #endif
 
+OMPI_EXPORT
 void mpi_type_create_f90_real_f(MPI_Fint *p, MPI_Fint *r,
 				MPI_Fint *newtype, MPI_Fint *ierr)
 {

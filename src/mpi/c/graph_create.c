@@ -21,6 +21,7 @@
 static const char FUNC_NAME[] = "MPI_Graph_create";
 
 
+OMPI_EXPORT
 int MPI_Graph_create(MPI_Comm old_comm, int nnodes, int *index,
                      int *edges, int reorder, MPI_Comm *comm_graph) 
 {

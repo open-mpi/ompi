@@ -46,6 +46,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_BUFFER_ATTACH,
 #include "mpi/f77/profile/defines.h"
 #endif
 
+OMPI_EXPORT
 void mpi_buffer_attach_f(char *buffer, MPI_Fint *size, MPI_Fint *ierr)
 {
   *ierr = OMPI_INT_2_FINT(MPI_Buffer_attach(buffer, 

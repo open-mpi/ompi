@@ -23,6 +23,7 @@
 static const char FUNC_NAME[] = "MPI_Init";
 
 
+OMPI_EXPORT
 int MPI_Init(int *argc, char ***argv)
 {
   int err;

@@ -21,6 +21,7 @@
 static const char FUNC_NAME[] = "MPI_Error_string";
 
 
+OMPI_EXPORT
 int MPI_Error_string(int errorcode, char *string, int *resultlen) 
 {
     char *tmpstring;

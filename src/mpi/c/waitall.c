@@ -19,6 +19,7 @@
 static const char FUNC_NAME[] = "MPI_Waitall";
 
 
+OMPI_EXPORT
 int MPI_Waitall(int count, MPI_Request *requests, MPI_Status *statuses) 
 {
     int rc;

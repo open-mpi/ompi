@@ -20,6 +20,7 @@
 static const char FUNC_NAME[] = "MPI_Win_get_group";
 
 
+OMPI_EXPORT
 int MPI_Win_get_group(MPI_Win win, MPI_Group *group) 
 {
   if (MPI_PARAM_CHECK) {

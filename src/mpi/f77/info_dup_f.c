@@ -46,6 +46,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_INFO_DUP,
 #include "mpi/f77/profile/defines.h"
 #endif
 
+OMPI_EXPORT
 void mpi_info_dup_f(MPI_Fint *info, MPI_Fint *newinfo, MPI_Fint *ierr)
 {
     MPI_Info c_info, c_new_info;

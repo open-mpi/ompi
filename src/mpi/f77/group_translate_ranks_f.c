@@ -47,6 +47,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GROUP_TRANSLATE_RANKS,
 #include "mpi/f77/profile/defines.h"
 #endif
 
+OMPI_EXPORT
 void mpi_group_translate_ranks_f(MPI_Fint *group1, MPI_Fint *n, 
 				  MPI_Fint *ranks1, MPI_Fint *group2,
 				  MPI_Fint *ranks2, MPI_Fint *ierr)

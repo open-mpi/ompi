@@ -21,6 +21,7 @@
 static const char FUNC_NAME[] = "MPI_Address";
 
 
+OMPI_EXPORT
 int MPI_Address(void *location, MPI_Aint *address)
 {
     if( MPI_PARAM_CHECK ) {

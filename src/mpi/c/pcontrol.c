@@ -20,6 +20,7 @@
 static const char FUNC_NAME[] = "MPI_Pcontrol";
 
 
+OMPI_EXPORT
 int MPI_Pcontrol(const int level, ...) 
 {
   if (MPI_PARAM_CHECK) {

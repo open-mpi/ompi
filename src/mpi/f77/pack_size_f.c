@@ -46,6 +46,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_PACK_SIZE,
 #include "mpi/f77/profile/defines.h"
 #endif
 
+OMPI_EXPORT
 void mpi_pack_size_f(MPI_Fint *incount, MPI_Fint *datatype, 
 		     MPI_Fint *comm, MPI_Fint *size, MPI_Fint *ierr)
 {

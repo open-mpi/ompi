@@ -21,6 +21,7 @@
 static const char FUNC_NAME[] = "MPI_Type_free";
 
 
+OMPI_EXPORT
 int MPI_Type_free(MPI_Datatype *type)
 {
    int rc;

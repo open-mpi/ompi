@@ -46,6 +46,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_IRSEND,
 #include "mpi/f77/profile/defines.h"
 #endif
 
+OMPI_EXPORT
 void mpi_irsend_f(char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *dest, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *request, MPI_Fint *ierr)
 {
     MPI_Datatype c_type = MPI_Type_f2c(*datatype);

@@ -21,6 +21,7 @@
 static const char FUNC_NAME[] = "MPI_Request_f2c";
 
 
+OMPI_EXPORT
 MPI_Request MPI_Request_f2c(MPI_Fint request) 
 {
     size_t request_index;

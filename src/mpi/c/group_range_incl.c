@@ -21,6 +21,7 @@
 static const char FUNC_NAME[] = "MPI_Group_range_incl";
 
 
+OMPI_EXPORT
 int MPI_Group_range_incl(MPI_Group group, int n_triplets, int ranges[][3],
                          MPI_Group *new_group) 
 {

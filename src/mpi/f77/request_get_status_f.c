@@ -46,6 +46,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_REQUEST_GET_STATUS,
 #include "mpi/f77/profile/defines.h"
 #endif
 
+OMPI_EXPORT
 void mpi_request_get_status_f(MPI_Fint *request, MPI_Fint *flag,
 			      MPI_Fint *status, MPI_Fint *ierr)
 {

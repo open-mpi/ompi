@@ -45,6 +45,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_CANCEL,
 #include "mpi/f77/profile/defines.h"
 #endif
 
+OMPI_EXPORT
 void mpi_cancel_f(MPI_Fint *request, MPI_Fint *ierr)
 {
     MPI_Request c_req = MPI_Request_f2c(*request);

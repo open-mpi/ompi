@@ -46,6 +46,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_DELETE,
 #include "mpi/f77/profile/defines.h"
 #endif
 
+OMPI_EXPORT
 void mpi_file_delete_f(char *filename, MPI_Fint *info, MPI_Fint *ierr)
 {
     MPI_Info c_info;

@@ -22,6 +22,7 @@
 static const char FUNC_NAME[] = "MPI_Unpack";
 
 
+OMPI_EXPORT
 int MPI_Unpack(void *inbuf, int insize, int *position,
                void *outbuf, int outcount, MPI_Datatype datatype,
                MPI_Comm comm) 

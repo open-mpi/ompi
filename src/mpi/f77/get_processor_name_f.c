@@ -46,6 +46,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GET_PROCESSOR_NAME,
 #include "mpi/f77/profile/defines.h"
 #endif
 
+OMPI_EXPORT
 void mpi_get_processor_name_f(char *name, MPI_Fint *resultlen, MPI_Fint *ierr)
 {
     OMPI_SINGLE_NAME_DECL(resultlen);

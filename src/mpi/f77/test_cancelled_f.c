@@ -46,6 +46,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TEST_CANCELLED,
 #include "mpi/f77/profile/defines.h"
 #endif
 
+OMPI_EXPORT
 void mpi_test_cancelled_f(MPI_Fint *status, MPI_Fint *flag, MPI_Fint *ierr)
 {
     MPI_Status c_status;

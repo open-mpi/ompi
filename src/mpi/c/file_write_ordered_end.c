@@ -21,6 +21,7 @@
 static const char FUNC_NAME[] = "MPI_File_write_ordered_end";
 
 
+OMPI_EXPORT
 int MPI_File_write_ordered_end(MPI_File fh, void *buf, MPI_Status *status)
 {
     int rc;

@@ -46,6 +46,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FINALIZED,
 #include "mpi/f77/profile/defines.h"
 #endif
 
+OMPI_EXPORT
 void mpi_finalized_f(MPI_Fint *flag, MPI_Fint *ierr)
 {
     OMPI_SINGLE_NAME_DECL(flag);

@@ -20,6 +20,7 @@
 static const char FUNC_NAME[] = "MPI_Errhandler_f2c";
 
 
+OMPI_EXPORT
 MPI_Errhandler MPI_Errhandler_f2c(MPI_Fint errhandler_f)
 {
     size_t eh_index = (size_t) errhandler_f;

@@ -24,6 +24,7 @@
 static const char FUNC_NAME[] = "MPI_Comm_get_name";
 
 
+OMPI_EXPORT
 int MPI_Comm_get_name(MPI_Comm comm, char *name, int *length)  
 {
 

@@ -52,6 +52,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_GET_CONTENTS,
 static const char FUNC_NAME[] = "MPI_TYPE_GET_CONTENTS";
 
 
+OMPI_EXPORT
 void mpi_type_get_contents_f(MPI_Fint *mtype, MPI_Fint *max_integers,
 			     MPI_Fint *max_addresses, MPI_Fint *max_datatypes,
 			     MPI_Fint *array_of_integers, 

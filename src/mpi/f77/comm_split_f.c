@@ -46,6 +46,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_SPLIT,
 #include "mpi/f77/profile/defines.h"
 #endif
 
+OMPI_EXPORT
 void mpi_comm_split_f(MPI_Fint *comm, MPI_Fint *color, MPI_Fint *key,
 		      MPI_Fint *newcomm, MPI_Fint *ierr)
 {

@@ -46,6 +46,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_BCAST,
 #include "mpi/f77/profile/defines.h"
 #endif
 
+OMPI_EXPORT
 void mpi_bcast_f(char *buffer, MPI_Fint *count, MPI_Fint *datatype, 
 		 MPI_Fint *root, MPI_Fint *comm, MPI_Fint *ierr)
 {

@@ -46,6 +46,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_SEEK_SHARED,
 #include "mpi/f77/profile/defines.h"
 #endif
 
+OMPI_EXPORT
 void mpi_file_seek_shared_f(MPI_Fint *fh, MPI_Fint *offset, 
 			    MPI_Fint *whence, MPI_Fint *ierr)
 {    

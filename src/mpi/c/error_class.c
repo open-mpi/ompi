@@ -20,6 +20,7 @@
 static const char FUNC_NAME[] = "MPI_Error_class";
 
 
+OMPI_EXPORT
 int MPI_Error_class(int errorcode, int *errorclass) 
 {
     if ( MPI_PARAM_CHECK ) {

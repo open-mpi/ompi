@@ -46,6 +46,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_CREATE_SUBARRAY,
 #include "mpi/f77/profile/defines.h"
 #endif
 
+OMPI_EXPORT
 void mpi_type_create_subarray_f(MPI_Fint *ndims, MPI_Fint *size_array,
 				MPI_Fint *subsize_array, 
 				MPI_Fint *start_array, MPI_Fint *order,

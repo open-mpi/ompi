@@ -46,6 +46,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_FREE,
 #include "mpi/f77/profile/defines.h"
 #endif
 
+OMPI_EXPORT
 void mpi_type_free_f(MPI_Fint *type, MPI_Fint *ierr)
 {
     MPI_Datatype c_type;

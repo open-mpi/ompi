@@ -21,6 +21,7 @@
 static const char FUNC_NAME[] = "MPI_File_get_position_shared";
 
 
+OMPI_EXPORT
 int MPI_File_get_position_shared(MPI_File fh, MPI_Offset *offset)
 {
     int rc;

@@ -46,6 +46,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WIN_LOCK,
 #include "mpi/f77/profile/defines.h"
 #endif
 
+OMPI_EXPORT
 void mpi_win_lock_f(MPI_Fint *lock_type, MPI_Fint *rank,
 		    MPI_Fint *assert, MPI_Fint *win, MPI_Fint *ierr)
 {

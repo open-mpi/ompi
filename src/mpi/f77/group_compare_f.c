@@ -49,6 +49,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GROUP_COMPARE,
 #include "mpi/f77/profile/defines.h"
 #endif
 
+OMPI_EXPORT
 void mpi_group_compare_f(MPI_Fint *group1, MPI_Fint *group2,
                          MPI_Fint *result, MPI_Fint *ierr)
 {

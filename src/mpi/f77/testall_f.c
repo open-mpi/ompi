@@ -52,6 +52,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TESTALL,
 static const char FUNC_NAME[] = "MPI_TESTALL";
 
 
+OMPI_EXPORT
 void mpi_testall_f(MPI_Fint *count, MPI_Fint *array_of_requests, MPI_Fint *flag, MPI_Fint *array_of_statuses, MPI_Fint *ierr)
 {
     MPI_Request *c_req;

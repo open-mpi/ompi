@@ -22,6 +22,7 @@
 static const char FUNC_NAME[] = "MPI_File_read_at_all_begin";
 
 
+OMPI_EXPORT
 int MPI_File_read_at_all_begin(MPI_File fh, MPI_Offset offset, void *buf,
                                int count, MPI_Datatype datatype)
 {

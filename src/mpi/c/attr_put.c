@@ -19,6 +19,7 @@
 
 static const char FUNC_NAME[] = "MPI_Attr_put";
 
+OMPI_EXPORT
 int MPI_Attr_put(MPI_Comm comm, int keyval, void *attribute_val) 
 {
     int ret;

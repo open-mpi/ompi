@@ -46,6 +46,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_GET_ENVELOPE,
 #include "mpi/f77/profile/defines.h"
 #endif
 
+OMPI_EXPORT
 void mpi_type_get_envelope_f(MPI_Fint *type, MPI_Fint *num_integers,
 			     MPI_Fint *num_addresses, 
 			     MPI_Fint *num_datatypes, MPI_Fint *combiner,

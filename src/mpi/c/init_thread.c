@@ -21,6 +21,7 @@
 static const char FUNC_NAME[] = "MPI_Init_thread";
 
 
+OMPI_EXPORT
 int MPI_Init_thread(int *argc, char ***argv, int required,
                     int *provided) 
 {

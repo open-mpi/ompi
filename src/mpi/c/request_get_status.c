@@ -20,6 +20,7 @@
 static const char FUNC_NAME[] = "MPI_Request_get_status";
 
 
+OMPI_EXPORT
 int MPI_Request_get_status(MPI_Request request, int *flag,
                            MPI_Status *status) 
 {

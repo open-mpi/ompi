@@ -19,6 +19,7 @@
 static const char FUNC_NAME[] = "MPI_Comm_test_inter";
 
 
+OMPI_EXPORT
 int MPI_Comm_test_inter(MPI_Comm comm, int *flag) {
 
     if ( MPI_PARAM_CHECK ) {

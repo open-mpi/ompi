@@ -19,6 +19,7 @@
 static const char FUNC_NAME[] = "MPI_Type_set_attr";
 
 
+OMPI_EXPORT
 int MPI_Type_set_attr (MPI_Datatype type,
                        int type_keyval,
                        void *attribute_val)

@@ -22,6 +22,7 @@
 static const char FUNC_NAME[] = "MPI_File_write_shared";
 
 
+OMPI_EXPORT
 int MPI_File_write_shared(MPI_File fh, void *buf, int count,
                           MPI_Datatype datatype, MPI_Status *status)
 {

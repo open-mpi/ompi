@@ -46,6 +46,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_PCONTROL,
 #include "mpi/f77/profile/defines.h"
 #endif
 
+OMPI_EXPORT
 void mpi_pcontrol_f(MPI_Fint *level)
 {
     MPI_Pcontrol(OMPI_FINT_2_INT(*level));
