@@ -50,7 +50,7 @@ static inline int ompi_atomic_cmpset_32( volatile int32_t *addr,
                                         int32_t oldval, int32_t newval)
 {
     unsigned long prev;
-    __asm__ __volatile__(SMPLOCK "cmpxchgl %k1,%2"
+    __asm__ __volatile__(SMPLOCK "cmpxchgl %1,%2"
                          : "=a"(prev)
                          : "q"(newval), "m"(*addr), "0"(oldval)
                          : "cc", "memory");
