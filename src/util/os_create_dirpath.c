@@ -16,7 +16,7 @@
 
 int ompi_os_create_dirpath(const char *path, const mode_t mode)
 {
-    char *pth, *bottom_up;
+    char *pth, *bottom_up, *tmp;
     struct stat buf;
 
     if (NULL == path) { /* protect ourselves from errors */
@@ -58,7 +58,9 @@ int ompi_os_create_dirpath(const char *path, const mode_t mode)
     while (strcmp(pth, ".") != 0 && stat(pth, &buf) != 0) { /* see if directory exists, or if we've reached the top */
 	strcat(bottom_up, basename(pth));  /* doesn't exist yet, so save this name */
 	strcat(bottom_up, ompi_system_info.path_sep);
-	strcpy(pth, dirname(pth)); /* "pop" the directory tree */
+	tmp = strdup(pth);
+	strcpy(pth, dirname(tmp)); /* "pop" the directory tree */
+	free(tmp);
     }
 
     /* okay, ready to build from the top down */
