@@ -283,10 +283,17 @@ mca_ptl_gm_init_sendrecv (mca_ptl_gm_module_t * ptl)
     OBJ_CONSTRUCT (&(ptl->gm_send_frags), ompi_free_list_t);
     OBJ_CONSTRUCT (&(ptl->gm_send_frags_queue), ompi_list_t);
 
-    ompi_free_list_init (&(ptl->gm_send_frags),
+    /* We need a free list just to handle the send fragment that we provide.
+     * This free list does not have the right to allocate any new item
+     * as they should have a DMA buffer attach to them.
+     */
+    ompi_free_list_init( &(ptl->gm_send_frags),
 			 sizeof (mca_ptl_gm_send_frag_t),
 			 OBJ_CLASS (mca_ptl_gm_send_frag_t),
-			 ptl->num_send_tokens, ptl->num_send_tokens, 1, NULL); /* not using mpool */
+			 0,  /* do not allocate any items I'll provide them */
+                         0,  /* maximum number of list allocated elements will be zero */
+                         0,
+                         NULL ); /* not using mpool */
 
     /* allocate the elements */
     sfragment = (mca_ptl_gm_send_frag_t *)calloc( ptl->num_send_tokens, sizeof(mca_ptl_gm_send_frag_t) );
@@ -323,7 +330,10 @@ mca_ptl_gm_init_sendrecv (mca_ptl_gm_module_t * ptl)
     ompi_free_list_init( &(ptl->gm_recv_frags_free),
 			 sizeof (mca_ptl_gm_recv_frag_t),
 			 OBJ_CLASS (mca_ptl_gm_recv_frag_t),
-			 ptl->num_recv_tokens,ptl->num_recv_tokens, 1, NULL );
+			 0,  /* by default I will provide all items */
+                         ptl->num_recv_tokens * 10,  /* the maximum number of items in the free list */
+                         ptl->num_recv_tokens,  /* if it need to allocate some more */
+                         NULL );
  
     /* allocate the elements */
     free_rfragment = (mca_ptl_gm_recv_frag_t *)
