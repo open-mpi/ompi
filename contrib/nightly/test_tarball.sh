@@ -383,14 +383,18 @@ if test -z "$config_arg" -o ! -f "$config_arg"; then
 fi
 if test "$do_default" = "1"; then
     dir="$root/default"
-    echo "default" >> "$config_list"
+    echo "[default]" >> "$config_list"
     try_build "$dir" "$dir/install" "CFLAGS=-g" ""
 elif test -f "$config_arg"; then
     len="`wc -l $config_arg | awk '{ print $1 }'`"
     i=1
     while test "`expr $i \<= $len`" = "1"; do
         config="`head -$i $config_arg | tail -1`"
-        echo "$config" >> "$config_list"
+        if test -n "$config"; then
+            echo "$config" >> "$config_list"
+        else
+            echo "[default]" >> "$config_list"
+        fi
         dir="$root/config-$i"
         try_build "$dir" "$dir/install" "$config"
         i="`expr $i + 1`"
