@@ -226,24 +226,26 @@ mca_pcm_base_data_store_get_job_pids(mca_pcm_base_data_store_t *me,
 				     bool remove)
 {
   ompi_pointer_array_t *array;
-  int i;
+  size_t array_len, i;
 
   array = mca_pcm_base_data_store_get_job_data(me, jobid, remove);
   if (NULL == array) return errno;
 
-  *len = ompi_pointer_array_get_size(array);
-  if (0 == *len) {
+  array_len = ompi_pointer_array_get_size(array);
+  if (0 == array_len) {
       *pids = NULL;
   } else {
-      *pids = malloc(sizeof(pid_t) * *len);
+      *pids = malloc(sizeof(pid_t) * array_len);
       if (NULL == *pids) return OMPI_ERR_OUT_OF_RESOURCE;
   }
 
-  for (i = 0 ; i < (int) *len ; ++i) {
+  for (i = 0, *len = 0 ; i < array_len ; ++i) {
     mca_pcm_base_data_store_pid_t *data = 
       (mca_pcm_base_data_store_pid_t*) ompi_pointer_array_get_item(array, i);
 
-    (*pids)[i] = data->pid;
+    if (NULL == data) continue;
+
+    (*pids)[(*len)++] = data->pid;
     OBJ_RELEASE(data);
   }
 
@@ -262,24 +264,26 @@ mca_pcm_base_data_store_get_all_pids(mca_pcm_base_data_store_t *me,
 				     bool remove)
 {
   ompi_pointer_array_t *array;
-  int i = 0;
+  size_t array_len, i;
 
   array = mca_pcm_base_data_store_get_all_data(me, remove);
   if (NULL == array) return errno;
 
-  *len = ompi_pointer_array_get_size(array);
-  if (0 == *len) {
+  array_len = ompi_pointer_array_get_size(array);
+  if (0 == array_len) {
       *pids = NULL;
   } else {
-      *pids = malloc(sizeof(pid_t) * *len);
+      *pids = malloc(sizeof(pid_t) * array_len);
       if (NULL == *pids) return OMPI_ERR_OUT_OF_RESOURCE;
   }
 
-  for (i = 0 ; i < (int) *len ; ++i) {
+  for (i = 0, *len = 0 ; i < array_len ; ++i) {
     mca_pcm_base_data_store_pid_t *data = 
       (mca_pcm_base_data_store_pid_t*) ompi_pointer_array_get_item(array, i);
 
-    (*pids)[i] = data->pid;
+    if (NULL == data) continue;
+
+    (*pids)[(*len)++] = data->pid;
     OBJ_RELEASE(data);
   }
 
@@ -301,21 +305,22 @@ mca_pcm_base_data_store_get_procs(mca_pcm_base_data_store_t *me,
 				  bool remove)
 {
   ompi_pointer_array_t *array;
+  size_t array_len, i;
   ompi_process_name_t *name;
-  int i = 0;
 
   array = mca_pcm_base_data_store_search(me, mca_pcm_base_data_store_procs_search,
 					 &pid, remove);
   if (NULL == array) return errno;
   
-  *procs_len = ompi_pointer_array_get_size(array);
-  if (0 != *procs_len) {
-      *procs = malloc(sizeof(ompi_process_name_t*) * *procs_len);
+  array_len = ompi_pointer_array_get_size(array);
+  if (0 != array_len) {
+      *procs = malloc(sizeof(ompi_process_name_t*) * array_len);
       if (NULL == *procs) return OMPI_ERR_OUT_OF_RESOURCE;
 
-      for (i = 0 ; i < (int) *procs_len ; ++i) {
+      for (i = 0, *procs_len = 0 ; i < array_len ; ++i) {
           name = (ompi_process_name_t*) ompi_pointer_array_get_item(array, i);
-          (*procs)[i] = name;
+          if (NULL == name) continue;
+          (*procs)[(*procs_len)++] = name;
       }
   } else {
       *procs = NULL;
