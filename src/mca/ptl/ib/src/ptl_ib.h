@@ -127,6 +127,17 @@ typedef struct mca_ptl_ib_module_t mca_ptl_ib_module_t;
 extern mca_ptl_ib_module_t mca_ptl_ib_module;
 
 /**
+ * IB FIN header
+ */
+typedef struct mca_ptl_ib_fin_header_t mca_ptl_ib_fin_header_t;
+
+struct mca_ptl_ib_fin_header_t {
+    mca_ptl_base_frag_header_t frag_hdr;
+    ompi_ptr_t mr_addr;
+    uint64_t mr_size;
+};
+
+/**
  * Register IB component parameters with the MCA framework
  */
 extern int mca_ptl_ib_component_open(void);

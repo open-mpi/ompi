@@ -20,6 +20,7 @@
 #include "ptl_ib_peer.h"
 #include "ptl_ib_recvfrag.h"
 #include "ptl_ib_sendfrag.h"
+#include "ptl_ib_memory.h"
 
 static void mca_ptl_ib_recv_frag_construct(mca_ptl_ib_recv_frag_t* frag);
 static void mca_ptl_ib_recv_frag_destruct(mca_ptl_ib_recv_frag_t* frag);
@@ -108,7 +109,7 @@ static void mca_ptl_ib_data_frag(mca_ptl_base_module_t *module,
     if (!matched) {
         /* Oh my GOD
          * !!! */
-        //ompi_output(0, "Can't match buffer. Mama is unhappy\n");
+        /* ompi_output(0, "Can't match buffer. Mama is unhappy\n"); */
         memcpy (recv_frag->unex_buf,
                 (char *) header + sizeof (mca_ptl_base_header_t),
                 header->hdr_frag.hdr_frag_length);
@@ -151,8 +152,16 @@ static void mca_ptl_ib_ctrl_frag(mca_ptl_base_module_t *module,
 static void mca_ptl_ib_last_frag(mca_ptl_base_module_t *module,
         mca_ptl_base_header_t *hdr)
 {
+    mca_ptl_ib_fin_header_t *fin_hdr = (mca_ptl_ib_fin_header_t *)hdr;
     mca_pml_base_recv_request_t *request;
     request = (mca_pml_base_recv_request_t*) hdr->hdr_frag.hdr_dst_ptr.pval;
+
+    /* deregister memory if this is the last fragment */
+    if ((request->req_bytes_received + hdr->hdr_frag.hdr_frag_length) >= 
+        request->req_bytes_packed) {
+        mca_ptl_ib_deregister_mem_with_registry(((mca_ptl_ib_module_t *)module)->ib_state,
+            fin_hdr->mr_addr.pval, (size_t)fin_hdr->mr_size);
+    }
 
     module->ptl_recv_progress (
             module,

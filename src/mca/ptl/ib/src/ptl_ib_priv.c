@@ -18,6 +18,7 @@
 #include "ptl_ib_vapi.h"
 #include "ptl_ib_priv.h"
 #include "ptl_ib.h"
+#include "ptl_ib_memory.h"
 
 /*
  * Asynchronous event handler to detect unforseen
@@ -635,21 +636,19 @@ void mca_ptl_ib_prepare_ack(mca_ptl_ib_state_t *ib_state,
         void* addr_to_reg, int len_to_reg,
         void* ack_buf, int* len_added)
 {
-    int rc;
-    vapi_memhandle_t memhandle;
+    mca_ptl_ib_mem_registry_info_t *info = 
+        mca_ptl_ib_register_mem_with_registry(ib_state, 
+            addr_to_reg, (size_t)len_to_reg);
 
-    rc =  mca_ptl_ib_register_mem(ib_state->nic, ib_state->ptag,
-            addr_to_reg, len_to_reg, &memhandle);
-
-    if(rc != OMPI_SUCCESS) {
+    if(NULL == info) {
         ompi_output(0, "Error in registering");
     }
 
-    A_PRINT("Sending Remote key : %d", memhandle.rkey);
+    A_PRINT("Sending Remote key : %d", info->reply.r_key);
 
-    memcpy(ack_buf,(void*) &memhandle.rkey, sizeof(VAPI_rkey_t));
+    memcpy(ack_buf,(void*) &(info->reply.r_key), sizeof(VAPI_rkey_t));
 
-    *len_added = sizeof(VAPI_lkey_t);
+    *len_added = sizeof(VAPI_rkey_t);
 }
 
 int mca_ptl_ib_rdma_write(mca_ptl_ib_state_t *ib_state,
@@ -658,28 +657,18 @@ int mca_ptl_ib_rdma_write(mca_ptl_ib_state_t *ib_state,
         VAPI_rkey_t remote_key, void* id_buf)
 {
     VAPI_ret_t ret;
-    VAPI_mrw_t mr_in, mr_out;
-    vapi_memhandle_t mem_handle;
 
-    /* Register local application buffer */
-    mr_in.acl = VAPI_EN_LOCAL_WRITE | VAPI_EN_REMOTE_WRITE;
-    mr_in.l_key = 0;
-    mr_in.r_key = 0;
-    mr_in.pd_hndl = ib_state->ptag;
-    mr_in.size = send_len;
-    mr_in.start = (VAPI_virt_addr_t) (MT_virt_addr_t) send_buf;
-    mr_in.type = VAPI_MR;
+    mca_ptl_ib_mem_registry_info_t *info = 
+        mca_ptl_ib_register_mem_with_registry(ib_state, 
+            send_buf, send_len);
 
-    ret = VAPI_register_mr(ib_state->nic, &mr_in, 
-            &mem_handle.hndl, &mr_out);
-    if(VAPI_OK != ret) {
-        MCA_PTL_IB_VAPI_RET(ret, "VAPI_register_mr");
+    if (NULL == info) {
         return OMPI_ERROR;
     }
 
     /* Prepare descriptor */
     IB_PREPARE_RDMA_W_DESC(ib_buf, (peer_conn->rres->qp_num),
-            send_len, send_buf, (mr_out.l_key), remote_key, 
+            send_len, send_buf, (info->reply.l_key), remote_key, 
             id_buf, remote_buf);
 
     ret = VAPI_post_sr(ib_state->nic,
