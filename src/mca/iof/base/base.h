@@ -22,6 +22,8 @@
 
 #include "ompi_config.h"
 #include "include/ompi.h"
+#include "class/ompi_free_list.h"
+#include "threads/condition.h"
 #include "mca/mca.h"
 #include "mca/iof/iof.h"
 
@@ -30,12 +32,26 @@ extern "C" {
 #endif
 
 
+struct mca_iof_base_t {
+   int                  iof_output;
+   ompi_list_t          iof_components_opened;
+   ompi_list_t          iof_endpoints;
+   ompi_mutex_t         iof_lock;
+   ompi_condition_t     iof_condition;
+   ompi_free_list_t     iof_fragments;
+   size_t               iof_window_size;
+   ompi_process_name_t* iof_service;
+};
+typedef struct mca_iof_base_t mca_iof_base_t;
+
+
+
 int mca_iof_base_open(void);
 int mca_iof_base_close(void);
-int mca_iof_base_select(bool* allow_multi_user_threads);
+int mca_iof_base_select(bool* allow_multi_user_threads, bool* have_hidden_threads);
 
-extern int mca_iof_base_output;
-extern ompi_list_t mca_iof_base_components_opened;
+
+extern mca_iof_base_t mca_iof_base;
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

@@ -15,26 +15,25 @@
 #include "ompi_config.h"
 #include "util/proc_info.h"
 #include "util/output.h"
-#include "runtime/ompi_progress.h"
-#include "mca/oob/base/base.h"
 #include "mca/base/base.h"
 #include "mca/base/mca_base_param.h"
-#include "mca/iof/base/iof_base_endpoint.h"
-#include "iof_proxy.h"
-#include "iof_proxy_svc.h"
+#include "mca/oob/oob.h"
+#include "iof_svc.h"
+#include "iof_svc_proxy.h"
 
 /*
  * Local functions
  */
-static int mca_iof_proxy_open(void);
-static int mca_iof_proxy_close(void);
-static mca_iof_base_module_t* mca_iof_proxy_init(
+static int mca_iof_svc_open(void);
+static int mca_iof_svc_close(void);
+
+static mca_iof_base_module_t* mca_iof_svc_init(
     int* priority, 
     bool *allow_multi_user_threads,
     bool *have_hidden_threads);
 
 
-mca_iof_proxy_component_t mca_iof_proxy_component = {
+mca_iof_svc_component_t mca_iof_svc_component = {
     {
       /* First, the mca_base_component_t struct containing meta
          information about the component itself */
@@ -45,12 +44,12 @@ mca_iof_proxy_component_t mca_iof_proxy_component = {
 
         MCA_IOF_BASE_VERSION_1_0_0,
 
-        "proxy", /* MCA component name */
+        "svc", /* MCA component name */
         1,  /* MCA component major version */
         0,  /* MCA component minor version */
         0,  /* MCA component release version */
-        mca_iof_proxy_open,  /* component open  */
-        mca_iof_proxy_close  /* component close */
+        mca_iof_svc_open,  /* component open  */
+        mca_iof_svc_close  /* component close */
       },
 
       /* Next the MCA v1.0.0 component meta data */
@@ -59,25 +58,25 @@ mca_iof_proxy_component_t mca_iof_proxy_component = {
         false
       },
 
-      mca_iof_proxy_init
+      mca_iof_svc_init
     }
 };
 
-static char* mca_iof_proxy_param_register_string(
+static char* mca_iof_svc_param_register_string(
     const char* param_name,
     const char* default_value)
 {
     char *param_value;
-    int id = mca_base_param_register_string("iof","proxy",param_name,NULL,default_value);
+    int id = mca_base_param_register_string("iof","svc",param_name,NULL,default_value);
     mca_base_param_lookup_string(id, &param_value);
     return param_value;
 }
 
-static  int mca_iof_proxy_param_register_int(
+static  int mca_iof_svc_param_register_int(
     const char* param_name,
     int default_value)
 {
-    int id = mca_base_param_register_int("iof","proxy",param_name,NULL,default_value);
+    int id = mca_base_param_register_int("iof","svc",param_name,NULL,default_value);
     int param_value = default_value;
     mca_base_param_lookup_int(id,&param_value);
     return param_value;
@@ -87,51 +86,61 @@ static  int mca_iof_proxy_param_register_int(
 /**
   * component open/close/init function
   */
-static int mca_iof_proxy_open(void)
+static int mca_iof_svc_open(void)
 {
-    mca_iof_proxy_component.proxy_debug = mca_iof_proxy_param_register_int("debug",1);
+    mca_iof_svc_component.svc_debug = mca_iof_svc_param_register_int("debug", 1);
+    OBJ_CONSTRUCT(&mca_iof_svc_component.svc_subscribed, ompi_list_t);
+    OBJ_CONSTRUCT(&mca_iof_svc_component.svc_published, ompi_list_t);
+    OBJ_CONSTRUCT(&mca_iof_svc_component.svc_lock, ompi_mutex_t);
     return OMPI_SUCCESS;
 }
 
 
+static int mca_iof_svc_close(void)
+{
+    ompi_list_item_t* item;
+    OMPI_THREAD_LOCK(&mca_iof_svc_component.svc_lock);
+    while((item = ompi_list_remove_first(&mca_iof_svc_component.svc_subscribed)) != NULL) {
+        OBJ_RELEASE(item);
+    }
+    while((item = ompi_list_remove_first(&mca_iof_svc_component.svc_published)) != NULL) {
+        OBJ_RELEASE(item);
+    }
+    OMPI_THREAD_UNLOCK(&mca_iof_svc_component.svc_lock);
+    mca_oob_recv_cancel(MCA_OOB_NAME_ANY, MCA_OOB_TAG_IOF_SVC);
+}
+
+
+
+
 static mca_iof_base_module_t* 
-mca_iof_proxy_init(int* priority, bool *allow_multi_user_threads, bool *have_hidden_threads)
+mca_iof_svc_init(int* priority, bool *allow_multi_user_threads, bool *have_hidden_threads)
 {
     int rc;
-    if(ompi_process_info.seed == true)
+    if(ompi_process_info.seed == false)
         return NULL;
 
     *priority = 1;
     *allow_multi_user_threads = true;
     *have_hidden_threads = false;
 
-    /* post receive with oob */
-    mca_iof_proxy_component.proxy_iov[0].iov_base = NULL;
-    mca_iof_proxy_component.proxy_iov[0].iov_len = 0;
+    /* post non-blocking recv */
+    mca_iof_svc_component.svc_iov[0].iov_base = NULL;
+    mca_iof_svc_component.svc_iov[0].iov_len = 0;
 
     rc = mca_oob_recv_nb(
         MCA_OOB_NAME_ANY,
-        mca_iof_proxy_component.proxy_iov,
+        mca_iof_svc_component.svc_iov,
         1,
         MCA_OOB_TAG_IOF_SVC,
         MCA_OOB_ALLOC,
-        mca_iof_proxy_svc_recv,
+        mca_iof_svc_proxy_recv,
         NULL
     );
     if(rc != OMPI_SUCCESS) {
-        ompi_output(0, "mca_iof_proxy_init: unable to post non-blocking recv");
+        ompi_output(0, "mca_iof_svc_init: unable to post non-blocking recv");
         return NULL;
     }
-    return &mca_iof_proxy_module;
+    return &mca_iof_svc_module;
 }
-
-/**
- *
- */
-
-static int mca_iof_proxy_close(void)
-{
-    return mca_oob_recv_cancel(MCA_OOB_NAME_ANY, MCA_OOB_TAG_IOF_SVC);
-}
-
 
