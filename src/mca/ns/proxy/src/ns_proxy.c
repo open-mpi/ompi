@@ -117,7 +117,8 @@ mca_ns_base_jobid_t mca_ns_proxy_create_jobid(void)
 }
 
 
-mca_ns_base_vpid_t mca_ns_proxy_reserve_range(mca_ns_base_jobid_t job, mca_ns_base_vpid_t range)
+mca_ns_base_vpid_t
+mca_ns_proxy_reserve_range(mca_ns_base_jobid_t job, mca_ns_base_vpid_t range)
 {
     ompi_buffer_t cmd;
     mca_ns_base_vpid_t starting_vpid;
@@ -164,5 +165,52 @@ mca_ns_base_vpid_t mca_ns_proxy_reserve_range(mca_ns_base_jobid_t job, mca_ns_ba
     } else {
 	ompi_buffer_free(answer);
 	return starting_vpid;
+    }
+}
+
+mca_ns_base_vpid_t
+mca_ns_proxy_get_allocated_vpids(mca_ns_base_jobid_t job)
+{
+    ompi_buffer_t cmd;
+    mca_ns_base_vpid_t vpid;
+    ompi_buffer_t answer;
+    mca_ns_cmd_flag_t command;
+    int recv_tag;
+
+    command = MCA_NS_GET_ALLOC_VPIDS_CMD;
+    recv_tag = MCA_OOB_TAG_NS;
+
+    if (OMPI_SUCCESS != ompi_buffer_init(&cmd, 0)) { /* got a problem */
+        return OMPI_ERROR;
+    }
+
+    if (OMPI_SUCCESS != ompi_pack(cmd, (void*)&command, 1, MCA_NS_OOB_PACK_CMD)) { /* got a problem */
+        return OMPI_ERROR;
+    }
+
+    if (OMPI_SUCCESS != ompi_pack(cmd, (void*)&job, 1, MCA_NS_OOB_PACK_JOBID)) { /* got a problem */
+        return OMPI_ERROR;
+    }
+
+    if (0 > mca_oob_send_packed(mca_ns_my_replica, cmd, MCA_OOB_TAG_NS, 0)) {
+        return MCA_NS_BASE_VPID_MAX;
+    }
+
+    if (0 > mca_oob_recv_packed(mca_ns_my_replica, &answer, &recv_tag)) {
+        return MCA_NS_BASE_VPID_MAX;
+    }
+
+    if ((OMPI_SUCCESS != ompi_unpack(answer, &command, 1, MCA_NS_OOB_PACK_CMD))
+        || (MCA_NS_GET_ALLOC_VPIDS_CMD != command)) {
+        ompi_buffer_free(answer);
+        return MCA_NS_BASE_VPID_MAX;
+    }
+
+    if (OMPI_SUCCESS != ompi_unpack(answer, &vpid, 1, MCA_NS_OOB_PACK_VPID)) {
+        ompi_buffer_free(answer);
+        return MCA_NS_BASE_VPID_MAX;
+    } else {
+        ompi_buffer_free(answer);
+        return vpid;
     }
 }

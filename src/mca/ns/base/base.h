@@ -106,12 +106,6 @@ OMPI_DECLSPEC    int mca_ns_base_pack_jobid(void *dest, void *src, int n);
 
 OMPI_DECLSPEC    int mca_ns_base_unpack_jobid(void *dest, void *src, int n);
 
-OMPI_DECLSPEC    mca_ns_base_cellid_t mca_ns_base_create_cellid(void);
-
-OMPI_DECLSPEC    mca_ns_base_jobid_t mca_ns_base_create_jobid(void);
-
-OMPI_DECLSPEC    mca_ns_base_vpid_t mca_ns_base_reserve_range(mca_ns_base_jobid_t job, mca_ns_base_vpid_t range);
-
 OMPI_DECLSPEC    int mca_ns_base_free_name(ompi_process_name_t* name);
 
 OMPI_DECLSPEC    mca_ns_base_cellid_t mca_ns_base_create_cellid_not_available(void);
@@ -123,6 +117,7 @@ OMPI_DECLSPEC    mca_ns_base_vpid_t mca_ns_base_get_vpid_range_not_available(mca
 
 OMPI_DECLSPEC    mca_ns_base_vpid_t mca_ns_base_derive_vpid(mca_ns_base_vpid_t base_vpid, int offset);
 
+OMPI_DECLSPEC    mca_ns_base_vpid_t mca_ns_base_get_allocated_vpids_not_available(mca_ns_base_jobid_t jobid);
 
 /*
  * globals that might be needed

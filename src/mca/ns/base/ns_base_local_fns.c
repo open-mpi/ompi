@@ -58,6 +58,11 @@ mca_ns_base_get_vpid_range_not_available(mca_ns_base_jobid_t job,
     return MCA_NS_BASE_VPID_MAX;
 }
 
+mca_ns_base_vpid_t
+mca_ns_base_get_allocated_vpids_not_available(mca_ns_base_jobid_t jobid)
+{
+    return MCA_NS_BASE_VPID_MAX;
+}
 
 /*
  * functions

@@ -63,8 +63,7 @@
 #define MCA_NS_CREATE_CELLID_CMD   0x01
 #define MCA_NS_CREATE_JOBID_CMD    0x02
 #define MCA_NS_RESERVE_RANGE_CMD   0x04
-#define MCA_NS_FREE_NAME_CMD       0x08
-#define MCA_NS_GET_MY_CELLID_CMD   0x10
+#define MCA_NS_GET_ALLOC_VPIDS_CMD 0x08
 #define MCA_NS_ERROR               0xff
 
 
@@ -99,19 +98,6 @@ struct ompi_process_name_t {
     mca_ns_base_vpid_t vpid;  /**< Process number */
 };
 typedef struct ompi_process_name_t ompi_process_name_t;
-
-
-/*
- * define the command names/ids for use in OOB buffers.
- * only needed for remotely executed commands.
- */
-#define OMPI_NS_CREATE_CELLID     0x01
-#define OMPI_NS_CREATE_JOBID      0x02
-#define OMPI_NS_RESERVE_RANGE     0x04
-#define OMPI_NS_FREE_NAME         0x08
-#define OMPI_NS_GET_MY_CELLID     0x10
-
-typedef uint8_t ompi_ns_cmd_bitmask_t;
 
 
 /*
@@ -700,7 +686,24 @@ typedef int (*mca_ns_base_module_pack_jobid_fn_t)(void *dest, void *src, int n);
  */
 typedef int (*mca_ns_base_module_unpack_jobid_fn_t)(void *dest, void *src, int n);
 
-
+/*
+ * Report what vpid's have been allocated
+ * Given a jobid, return the end of the currently allocated vpid range. It is assumed
+ * that all vpids up to and including the returned value have been allocated. However,
+ * the name server cannot guarantee that any or all of these vpids are actually in
+ * operation or have been "spawned".
+ * 
+ * @param jobid The jobid for which the vpid information is requested.
+ * @retval vpid The last vpid that was allocated. Since vpids are allocated on a
+ * contiguous basis starting at zero, the caller can assume that all vpids less than
+ * and including this number have been allocated.
+ * @retval MCA_NS_BASE_VPID_MAX Error condition - value could not be returned for some reason.
+ * 
+ * @code
+ * vpid = ompi_name_server.allocated_vpids(jobid)
+ * @endcode
+ */
+typedef mca_ns_base_vpid_t (*mca_ns_base_module_get_allocated_vpids_fn_t)(mca_ns_base_jobid_t jobid);
 
 /*
  * Ver 1.0.0
@@ -735,6 +738,7 @@ struct mca_ns_base_module_1_0_0_t {
     mca_ns_base_module_pack_jobid_fn_t pack_jobid;
     mca_ns_base_module_unpack_jobid_fn_t unpack_jobid;
     mca_ns_base_module_derive_vpid_fn_t derive_vpid;
+    mca_ns_base_module_get_allocated_vpids_fn_t get_allocated_vpids;
 };
 
 typedef struct mca_ns_base_module_1_0_0_t mca_ns_base_module_1_0_0_t;
