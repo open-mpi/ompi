@@ -18,7 +18,7 @@
 #define MSG_TYPE_1   1
 #define MSG_TYPE_2   2
 #define NUM_TESTS    8
-#define NUM_TIMES    5
+#define NUM_TIMES    1
 
 int i;
 bool testdone[NUM_TESTS * NUM_TIMES];

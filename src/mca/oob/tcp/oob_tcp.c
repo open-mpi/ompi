@@ -245,7 +245,6 @@ static void mca_oob_tcp_recv_handler(int sd, short flags, void* user)
         close(sd);
         return;
     }
-
     /* is the peer instance willing to accept this connection */
     if(mca_oob_tcp_peer_accept(peer, sd) == false) {
         ompi_output(0, "mca_oob_tcp_recv_handler: peer instance not willing to accept connection.");
@@ -306,22 +305,28 @@ mca_oob_t* mca_oob_tcp_init(bool *allow_multi_user_threads, bool *have_hidden_th
  */
 int mca_oob_tcp_finalize(void)
 {
-    /* TODO: need to cleanup all peers - check for pending send/recvs. etc. */
+    int optval;
     mca_oob_tcp_peer_t * peer;
-    while(NULL != (peer = (mca_oob_tcp_peer_t *) 
-        ompi_list_remove_first(&mca_oob_tcp_component.tcp_peer_list))) {
-        OMPI_THREAD_LOCK(&peer->peer_lock);
-        mca_oob_tcp_peer_close(peer);
-        OMPI_THREAD_UNLOCK(&peer->peer_lock);
-        OBJ_DESTRUCT(peer);
-    }
     if (mca_oob_tcp_component.tcp_listen_sd >= 0) {
+        optval = 1;
+        if(setsockopt(mca_oob_tcp_component.tcp_listen_sd, SOL_SOCKET, 
+                      SO_REUSEADDR, &optval, sizeof(optval)) < 0) {
+            ompi_output(0,
+                "mca_oob_tcp_finalize: setsockopt(SO_REUSEADDR) failed with errno=%d\n",
+                 errno);
+        }
         ompi_event_del(&mca_oob_tcp_component.tcp_recv_event);
         if(0 != close(mca_oob_tcp_component.tcp_listen_sd)) {
             ompi_output(0, "mca_oob_tcp_finalize: error closing listen socket. errno=%d", errno);
         }
     }
+    /* TODO: need to cleanup all peers - check for pending send/recvs. etc. */
+    while(NULL != (peer = (mca_oob_tcp_peer_t *) 
+        ompi_list_remove_first(&mca_oob_tcp_component.tcp_peer_list))) {
+        OBJ_DESTRUCT(peer);
+    }
     ompi_event_fini();
+ 
     return OMPI_SUCCESS;
 }
 
