@@ -253,15 +253,17 @@ static bool test7(void)
 
   /* check a NULL pointer first -- should return 0 */
 
-  if (lam_argv_len(NULL) != (size_t) 0)
+  if (lam_argv_len(NULL) != (size_t) 0) {
     return false;
+  }
 
   /* now check a real string */
   /* size should be (sizeof(char **) + (sizeof(char) + sizeof('\0') +
      sizeof(char*)) * 3) */
 
-  if (lam_argv_len(a) != a_len)
+  if (lam_argv_len(a) != a_len) {
     return false;
+  }
 
   /* All done */
 
@@ -277,18 +279,22 @@ static bool test8(void)
 
   /* bozo case */
 
-  if (NULL != lam_argv_copy(NULL))
+  if (NULL != lam_argv_copy(NULL)) {
     return false;
+  }
 
   /* dup the a array and compare it (array length, contents, etc.) */
 
   b = lam_argv_copy(a);
 
-  if (lam_argv_count(a) != lam_argv_count(b))
+  if (lam_argv_count(a) != lam_argv_count(b)) {
     return false;
-  for (i = 0; a[i] != NULL; ++i)
-    if (strcmp(a[i], b[i]) != 0)
+  }
+  for (i = 0; a[i] != NULL; ++i) {
+    if (0 != strcmp(a[i], b[i])) {
       return false;
+    }
+  }
 
   /* All done */
 
