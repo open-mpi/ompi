@@ -10,6 +10,8 @@
 
 */
 
+#include "ompi_config.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -17,7 +19,6 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
-#include "ompi_config.h"
 #include "support.h"
 
 #include "include/constants.h"
@@ -103,6 +104,7 @@ int main(int argc, char **argv)
 
     /* if daemon seed - just wait for requests */
     if(ompi_process_info.seed) {
+#if 1
         /* wait on child to exit */
         int pid = exec_client(argc, argv);
         while(true) {
@@ -111,6 +113,10 @@ int main(int argc, char **argv)
                 break;
             ompi_event_loop(OMPI_EVLOOP_NONBLOCK);
         }
+#else
+        fprintf(stderr, "setenv OMPI_MCA_oob_base_seed %s\n", mca_oob_get_contact_info());
+        ompi_event_loop(0);
+#endif
         return(0);
     } else {
         return run_test();
