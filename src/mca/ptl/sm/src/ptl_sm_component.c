@@ -9,6 +9,7 @@
 #include <sys/mman.h>
 
 #include "include/constants.h"
+#include "include/sys/cache.h"
 #include "event/event.h"
 #include "util/if.h"
 #include "util/argv.h"
@@ -112,6 +113,11 @@ int mca_ptl_sm_component_open(void)
         mca_ptl_sm_param_register_int("max_procs", -1);
     mca_ptl_sm_component.sm_mpool_name =
         mca_ptl_sm_param_register_string("mpool", "sm");
+    mca_ptl_sm_component.fragment_size =
+        mca_ptl_sm_param_register_int("fragment_size", 8192);
+    mca_ptl_sm_component.fragment_alignment =
+        mca_ptl_sm_param_register_int("fragment_alignment",
+                CACHE_LINE_SIZE);
 
     /* default number of extra procs to allow for future growth */
     mca_ptl_sm_component.sm_extra_procs =
@@ -120,8 +126,7 @@ int mca_ptl_sm_component_open(void)
     /* initialize objects */
     OBJ_CONSTRUCT(&mca_ptl_sm_component.sm_lock, ompi_mutex_t);
     OBJ_CONSTRUCT(&mca_ptl_sm_component.sm_send_requests, ompi_free_list_t);
-    OBJ_CONSTRUCT(&mca_ptl_sm_component.sm_send_frags, ompi_free_list_t);
-    OBJ_CONSTRUCT(&mca_ptl_sm_component.sm_recv_frags, ompi_free_list_t);
+    OBJ_CONSTRUCT(&mca_ptl_sm_component.sm_frags, ompi_free_list_t);
    
     return OMPI_SUCCESS;
 }
@@ -135,8 +140,7 @@ int mca_ptl_sm_component_close(void)
 {
     OBJ_DESTRUCT(&mca_ptl_sm_component.sm_lock);
     OBJ_DESTRUCT(&mca_ptl_sm_component.sm_send_requests);
-    OBJ_DESTRUCT(&mca_ptl_sm_component.sm_send_frags);
-    OBJ_DESTRUCT(&mca_ptl_sm_component.sm_recv_frags);
+    OBJ_DESTRUCT(&mca_ptl_sm_component.sm_frags);
     return OMPI_SUCCESS;
 }
 
@@ -150,7 +154,7 @@ mca_ptl_base_module_t** mca_ptl_sm_component_init(
     bool *have_hidden_threads)
 {
     mca_ptl_base_module_t **ptls = NULL;
-    mca_mpool_base_component_t *sm_mpool_component; /* RLG */
+    size_t length;
 
     *num_ptls = 0;
     *allow_multi_user_threads = true;
@@ -162,7 +166,7 @@ mca_ptl_base_module_t** mca_ptl_sm_component_init(
 
     mca_ptl_sm_component.sm_mpool_base = mca_ptl_sm_component.sm_mpool->mpool_base();
 
-    /* initialize free lists */
+    /* initialize send descriptor free list */
     ompi_free_list_init(&mca_ptl_sm_component.sm_send_requests, 
         sizeof(mca_ptl_sm_send_request_t),
         OBJ_CLASS(mca_ptl_sm_send_request_t),
@@ -171,9 +175,15 @@ mca_ptl_base_module_t** mca_ptl_sm_component_init(
         mca_ptl_sm_component.sm_free_list_inc,
         mca_ptl_sm_component.sm_mpool); /* use shared-memory pool */
 
-    ompi_free_list_init(&mca_ptl_sm_component.sm_recv_frags, 
-        sizeof(mca_ptl_sm_recv_frag_t),
-        OBJ_CLASS(mca_ptl_sm_recv_frag_t),
+    /* initialize fragment descriptor free list */
+
+    /* allocation will be for the fragment descriptor, payload buffer,
+     * and padding to ensure proper alignment can be acheived */
+    length=sizeof(mca_ptl_sm_frag_t)+mca_ptl_sm_component.fragment_alignment+
+        mca_ptl_sm_component.fragment_size;
+
+    ompi_free_list_init(&mca_ptl_sm_component.sm_frags, length,
+        OBJ_CLASS(mca_ptl_sm_frag_t),
         mca_ptl_sm_component.sm_free_list_num,
         mca_ptl_sm_component.sm_free_list_max,
         mca_ptl_sm_component.sm_free_list_inc,

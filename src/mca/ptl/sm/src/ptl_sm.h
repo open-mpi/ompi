@@ -46,8 +46,9 @@ struct mca_ptl_sm_component_t {
     mca_mpool_base_module_t* sm_mpool; /**< shared memory pool */
     void* sm_mpool_base;                  /**< base address of shared memory pool */
     ompi_free_list_t sm_send_requests;    /**< free list of sm send requests -- sendreq + sendfrag */
-    ompi_free_list_t sm_send_frags;       /**< free list of sm send fragments */
-    ompi_free_list_t sm_recv_frags;       /**< free list of sm recv fragments */
+    ompi_free_list_t sm_frags;       /**< free list of sm recv fragments */
+    size_t fragment_size;            /**< fragment size */
+    size_t fragment_alignment;       /**< fragment alignment */
     ompi_mutex_t sm_lock;
     char* sm_resouce_ctl_file;     /**< name of shared memory file used 
                                             to coordinate resource usage */

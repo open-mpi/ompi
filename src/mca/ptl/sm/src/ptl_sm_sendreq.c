@@ -24,7 +24,7 @@ OBJ_CLASS_INSTANCE(
 
 void mca_ptl_sm_send_request_construct(mca_ptl_sm_send_request_t* request)
 {
-    OBJ_CONSTRUCT(&request->req_frag, mca_ptl_sm_send_frag_t);
+    OBJ_CONSTRUCT(&request->req_frag, mca_ptl_sm_frag_t);
 }
 
 
