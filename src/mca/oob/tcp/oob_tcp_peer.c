@@ -148,13 +148,26 @@ mca_oob_tcp_peer_t * mca_oob_tcp_peer_lookup(const ompi_process_name_t* name)
 {
     int rc;
     mca_oob_tcp_peer_t * peer, *old;
+    ompi_list_item_t* item;
 
     OMPI_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
-    peer = (mca_oob_tcp_peer_t*)ompi_rb_tree_find(&mca_oob_tcp_component.tcp_peer_tree,
-           (ompi_process_name_t *)  name);
-    if(NULL != peer) {
+    peer = (mca_oob_tcp_peer_t*)ompi_rb_tree_find(
+       &mca_oob_tcp_component.tcp_peer_tree,
+       (ompi_process_name_t *)name);
+    if(NULL != peer && memcmp(&peer->peer_name,name,sizeof(peer->peer_name)) == 0) {
         OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
         return peer;
+    }
+
+    /* search the peer list - if we find it here this is a bug in the tree */
+    for(item =  ompi_list_get_first(&mca_oob_tcp_component.tcp_peer_list);
+        item != ompi_list_get_end(&mca_oob_tcp_component.tcp_peer_list);
+        item =  ompi_list_get_next(item)) {
+        peer = (mca_oob_tcp_peer_t*)item;
+        if (memcmp(&peer->peer_name, name, sizeof(peer->peer_name)) == 0) {
+            OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
+            return peer;
+        }
     }
 
     /* allocate from free list */
@@ -384,10 +397,11 @@ static void mca_oob_tcp_peer_connected(mca_oob_tcp_peer_t* peer)
  */
 void mca_oob_tcp_peer_close(mca_oob_tcp_peer_t* peer)
 {
-    if(mca_oob_tcp_component.tcp_debug >= 2) {
-        ompi_output(0, "[%d,%d,%d] closing peer [%d,%d,%d] sd %d state %d\n",
+    if(mca_oob_tcp_component.tcp_debug > 2) {
+        ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_peer_close(%p) sd %d state %d\n",
             OMPI_NAME_ARGS(mca_oob_name_self),
             OMPI_NAME_ARGS(peer->peer_name),
+            peer,
             peer->peer_sd,
             peer->peer_state);
     }
@@ -444,6 +458,7 @@ static int mca_oob_tcp_peer_recv_connect_ack(mca_oob_tcp_peer_t* peer)
 {
     ompi_process_name_t guid[2];
     if((mca_oob_tcp_peer_recv_blocking(peer, guid, sizeof(guid))) != sizeof(guid)) {
+        mca_oob_tcp_peer_close(peer);
         return OMPI_ERR_UNREACH;
     }
     OMPI_PROCESS_NAME_NTOH(guid[0]);
@@ -451,7 +466,7 @@ static int mca_oob_tcp_peer_recv_connect_ack(mca_oob_tcp_peer_t* peer)
                                                                                                             
     /* compare the peers name to the expected value */
     if(memcmp(&peer->peer_name, &guid[0], sizeof(ompi_process_name_t)) != 0) {
-        ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_peer_connect: "
+        ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_peer_recv_connect_ack: "
             "received unexpected process identifier [%d,%d,%d]\n",
             OMPI_NAME_ARGS(mca_oob_name_self),
             OMPI_NAME_ARGS(peer->peer_name),
@@ -472,6 +487,7 @@ static int mca_oob_tcp_peer_recv_connect_ack(mca_oob_tcp_peer_t* peer)
     }
     return OMPI_SUCCESS;
 }
+
 
 /*
  * A blocking recv on a non-blocking socket. Used to receive the small amount of connection
@@ -624,8 +640,8 @@ static void mca_oob_tcp_peer_recv_handler(int sd, short flags, void* user)
         default: 
         {
             ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_peer_recv_handler: invalid socket state(%d)", 
-                    mca_oob_name_self.cellid, mca_oob_name_self.jobid, mca_oob_name_self.vpid, 
-                    peer->peer_name.cellid, peer->peer_name.jobid, peer->peer_name.vpid,
+                    OMPI_NAME_ARGS(mca_oob_name_self),
+                    OMPI_NAME_ARGS(peer->peer_name),
                     peer->peer_state);
             mca_oob_tcp_peer_close(peer);
             break;
@@ -727,7 +743,7 @@ static void mca_oob_tcp_peer_dump(mca_oob_tcp_peer_t* peer, const char* msg)
 #else
     nodelay = 0;
 #endif
-                                                                                                            
+
     sprintf(buff, "[%d,%d,%d]-[%d,%d,%d] %s: %s - %s nodelay %d sndbuf %d rcvbuf %d flags %08x\n",
         OMPI_NAME_ARGS(mca_oob_name_self),
         OMPI_NAME_ARGS(peer->peer_name),
@@ -755,7 +771,10 @@ bool mca_oob_tcp_peer_accept(mca_oob_tcp_peer_t* peer, int sd)
         mca_oob_tcp_peer_event_init(peer);
 
         if(mca_oob_tcp_peer_send_connect_ack(peer) != OMPI_SUCCESS) {
-            ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_peer_accept: mca_oob_tcp_peer_send_blocking failed\n");
+            ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_peer_accept: "
+                "mca_oob_tcp_peer_send_connect_ack failed\n",
+                OMPI_NAME_ARGS(mca_oob_name_self),
+                OMPI_NAME_ARGS(peer->peer_name));
             mca_oob_tcp_peer_close(peer);
             OMPI_THREAD_UNLOCK(&peer->peer_lock);
             return false;
