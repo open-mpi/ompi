@@ -6,8 +6,7 @@
 #include "util/output.h"
 #include "threads/thread.h"
 #include "ptl_mx.h"
-#include "ptl_mx_recvfrag.h"
-#include "ptl_mx_sendfrag.h"
+#include "ptl_mx_module.h"
 #include "ptl_mx_peer.h"
 
 
@@ -104,9 +103,9 @@ int mca_ptl_mx_component_open(void)
     mca_ptl_mx_module.super.ptl_exclusivity =
         mca_ptl_mx_param_register_int("exclusivity", 0);
     mca_ptl_mx_module.super.ptl_first_frag_size =
-        mca_ptl_mx_param_register_int("first_frag_size", 64*1024);
+        mca_ptl_mx_param_register_int("first_frag_size", 32*1024);
     mca_ptl_mx_module.super.ptl_min_frag_size = 
-        mca_ptl_mx_param_register_int("min_frag_size", 64*1024);
+        mca_ptl_mx_param_register_int("min_frag_size", 32*1024);
     mca_ptl_mx_module.super.ptl_max_frag_size =
         mca_ptl_mx_param_register_int("max_frag_size", -1);
     return OMPI_SUCCESS;
@@ -215,6 +214,27 @@ int mca_ptl_mx_component_control(int param, void* value, size_t size)
 
 int mca_ptl_mx_component_progress(mca_ptl_tstamp_t tstamp)
 {
+    size_t i;
+    for(i=0; i<mca_ptl_mx_component.mx_num_ptls; i++) {
+        mca_ptl_mx_module_t* ptl = mca_ptl_mx_component.mx_ptls[i];
+        mx_request_t mx_request;
+        mx_return_t mx_return;
+        uint32_t mx_result;
+
+        /* poll for completion */
+        mx_return = mx_ipeek(
+            ptl->mx_endpoint,
+            &mx_request,
+            &mx_result);
+        if(mx_return != MX_SUCCESS) {
+            ompi_output(0, "mca_ptl_mx_component_progress: mx_ipeek() failed with status %d\n",
+                mx_return);
+            return OMPI_ERROR;
+        }
+        if(mx_result > 0) {
+            mca_ptl_mx_progress(ptl, mx_request);
+        }
+    }
     return OMPI_SUCCESS;
 }
 
