@@ -47,6 +47,8 @@ int mca_oob_tcp_open(void)
     OBJ_CONSTRUCT(&mca_oob_tcp_module.tcp_peer_free, ompi_free_list_t);
     OBJ_CONSTRUCT(&mca_oob_tcp_module.tcp_lock,      ompi_mutex_t);
     OBJ_CONSTRUCT(&mca_oob_tcp_module.tcp_condition, ompi_condition_t);
+    OBJ_CONSTRUCT(&mca_oob_tcp_module.tcp_post_recv, ompi_list_t);
+    OBJ_CONSTRUCT(&mca_oob_tcp_module.tcp_msg_recv, ompi_list_t);
 #endif
     return OMPI_SUCCESS;
 }
@@ -64,6 +66,8 @@ int mca_oob_tcp_close(void)
     OBJ_DESTRUCT(&mca_oob_tcp_module.tcp_peer_free);
     OBJ_DESTRUCT(&mca_oob_tcp_module.tcp_condition);
     OBJ_DESTRUCT(&mca_oob_tcp_module.tcp_lock);
+    OBJ_DESTRUCT(&mca_oob_tcp_module.tcp_post_recv);
+    OBJ_DESTRUCT(&mca_oob_tcp_module.tcp_msg_recv);
 #endif
     return OMPI_SUCCESS;
 }
@@ -114,8 +118,8 @@ struct mca_oob_1_0_0_t* mca_oob_tcp_init(bool *allow_multi_user_threads,
 
 int mca_oob_tcp_finalize(void)
 {
-    OBJ_DESTRUCT(&mca_oob_tcp_module.tcp_peer_list);
-    OBJ_DESTRUCT(&mca_oob_tcp_module.tcp_peer_tree);
+    /* probably want to try to finish all sends and recieves here
+     * before we return */
     return OMPI_SUCCESS;
 }
 
