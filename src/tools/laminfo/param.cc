@@ -312,8 +312,6 @@ void laminfo::do_config(bool want_all)
   out("Fortran77 compiler", "compiler:f77:command", LAM_F77);
   out("Fortran90 compiler", "compiler:f90:command", LAM_F90);
 
-#ifdef LAM_SIZEOF_FORTRAN_INT
-
   if (want_all) {
     out("Fort integer size", "compiler:fortran:sizeof:integer", 
         LAM_SIZEOF_FORTRAN_INT);
@@ -339,8 +337,6 @@ void laminfo::do_config(bool want_all)
         "compiler:fortran:align:double_complex", 
         LAM_ALIGNMENT_FORTRAN_REAL);
   }
-
-#endif LAM_SIZEOF_FORTRAN_INT
 
   out("C profiling", "option:profiling:c", cprofiling);
   out("C++ profiling", "option:profiling:cxx", cxxprofiling);
