@@ -138,9 +138,10 @@ static void ompi_group_destruct(ompi_group_t *group)
     int proc;
     
     /* decrement proc reference count */
-    for (proc = 0; proc < group->grp_proc_count; proc++) {
+/*    for (proc = 0; proc < group->grp_proc_count; proc++) {
         OBJ_RELEASE(group->grp_proc_pointers[proc]);
     }
+*/
     /* release thegrp_proc_pointers memory */
     if (NULL != group->grp_proc_pointers)
         free(group->grp_proc_pointers);

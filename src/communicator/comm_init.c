@@ -73,7 +73,6 @@ int ompi_comm_init(void)
     group->grp_flags        |= OMPI_GROUP_INTRINSIC;
     ompi_set_group_rank(group, ompi_proc_local());
     ompi_group_increment_proc_count (group);
-    OBJ_RETAIN(group); /* bump reference count for remote reference */
 
     ompi_mpi_comm_world.c_contextid    = 0;
     ompi_mpi_comm_world.c_f_to_c_index = 0;
@@ -104,7 +103,6 @@ int ompi_comm_init(void)
     group->grp_my_rank       = 0;
     group->grp_proc_count    = size;
     group->grp_flags        |= OMPI_GROUP_INTRINSIC;
-    OBJ_RETAIN(group); /* bump reference count for remote reference */
 
     ompi_mpi_comm_self.c_contextid    = 1;
     ompi_mpi_comm_self.c_f_to_c_index = 1;
@@ -130,7 +128,6 @@ int ompi_comm_init(void)
     ompi_mpi_comm_null.c_local_group  = &ompi_mpi_group_null;
     ompi_mpi_comm_null.c_remote_group = &ompi_mpi_group_null;
     OBJ_RETAIN(&ompi_mpi_group_null); 
-    OBJ_RETAIN(&ompi_mpi_group_null); 
 
     ompi_mpi_comm_null.c_contextid    = 2;
     ompi_mpi_comm_null.c_f_to_c_index = 2;
@@ -147,7 +144,6 @@ int ompi_comm_init(void)
     /* Initialize the parent communicator to MPI_COMM_NULL */
     ompi_mpi_comm_parent = &ompi_mpi_comm_null;
     OBJ_RETAIN(&ompi_mpi_comm_null);
-    OBJ_RETAIN(&ompi_mpi_group_null);
     OBJ_RETAIN(&ompi_mpi_group_null);
     OBJ_RETAIN(&ompi_mpi_errors_are_fatal);
 
@@ -198,22 +194,13 @@ int ompi_comm_finalize(void)
     ompi_comm_dyn_finalize();
 
     /* Destroy all predefined communicators */    
-    ompi_mpi_comm_world.c_local_group->grp_flags = 0;
-    ompi_mpi_comm_world.c_flags = 0;
     OBJ_DESTRUCT( &ompi_mpi_comm_world );
-
-    ompi_mpi_comm_self.c_local_group->grp_flags = 0;
-    ompi_mpi_comm_self.c_flags = 0;
     OBJ_DESTRUCT( &ompi_mpi_comm_self );
 
     if( ompi_mpi_comm_parent != &ompi_mpi_comm_null ) {
-       ompi_mpi_comm_parent->c_local_group->grp_flags = 0;
-       ompi_mpi_comm_parent->c_flags = 0;
        OBJ_DESTRUCT (&ompi_mpi_comm_parent);
     }
 
-    ompi_mpi_comm_null.c_local_group->grp_flags = 0;
-    ompi_mpi_comm_null.c_flags = 0;
     OBJ_DESTRUCT( &ompi_mpi_comm_null );
 
     /* Check whether we have some communicators left */
@@ -356,11 +343,11 @@ static void ompi_comm_destruct(ompi_communicator_t* comm)
 	ompi_group_decrement_proc_count (comm->c_local_group);
         OBJ_RELEASE ( comm->c_local_group );
         comm->c_local_group = NULL;
+	if ( OMPI_COMM_IS_INTRA(comm) ) {
+	    comm->c_remote_group = NULL;
+	}
     }
 
-    /* the reference count is always popped up for the 
-       remote group (even for intra-comms), so we have to 
-       decrement it again in all cases. */
     if (NULL != comm->c_remote_group) {
 	ompi_group_decrement_proc_count (comm->c_remote_group);
         OBJ_RELEASE ( comm->c_remote_group );

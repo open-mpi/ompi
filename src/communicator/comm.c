@@ -197,8 +197,11 @@ int ompi_comm_set ( ompi_communicator_t *newcomm,
 */
 int ompi_comm_group ( ompi_communicator_t* comm, ompi_group_t **group )
 {
-    /* increment proc reference counters */
+    /* increment reference counters for the group */
     OBJ_RETAIN(comm->c_local_group);
+
+    /* increase also the reference counter for the procs */
+    ompi_group_increment_proc_count(comm->c_local_group);
 
     *group = comm->c_local_group;
     return OMPI_SUCCESS;
