@@ -22,6 +22,7 @@ static const char FUNC_NAME[] = "MPI_Test_cancelled";
 
 int MPI_Test_cancelled(MPI_Status *status, int *flag) 
 {
+  int rc = MPI_SUCCESS;
   if (MPI_PARAM_CHECK) {
     OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
     if (NULL == flag || NULL == status) {
@@ -29,10 +30,7 @@ int MPI_Test_cancelled(MPI_Status *status, int *flag)
     }
   }
 
-  /* JMS clearly something else needs to be done here... */
   *flag = 0;
-
-  /* This function is not yet implemented */
-
-  return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER, FUNC_NAME);
+  return rc;
 }
+
