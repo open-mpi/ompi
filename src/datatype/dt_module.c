@@ -270,29 +270,52 @@ int ompi_ddt_init( void )
      * in the mpif.h file. Any modification here should be reflected there !!!
      */ 
     /* Start to populate the f2c index translation table */
-    ompi_pointer_array_add( ompi_datatype_f_to_c_table, &ompi_mpi_datatype_null );
-    ompi_pointer_array_add( ompi_datatype_f_to_c_table, &ompi_mpi_byte );
-    ompi_pointer_array_add( ompi_datatype_f_to_c_table, &ompi_mpi_packed );
-    ompi_pointer_array_add( ompi_datatype_f_to_c_table, &ompi_mpi_ub );
-    ompi_pointer_array_add( ompi_datatype_f_to_c_table, &ompi_mpi_lb );
-    ompi_pointer_array_add( ompi_datatype_f_to_c_table, &ompi_mpi_character );
-    ompi_pointer_array_add( ompi_datatype_f_to_c_table, &ompi_mpi_logic );
-    ompi_pointer_array_add( ompi_datatype_f_to_c_table, &ompi_mpi_integer );
-    ompi_pointer_array_add( ompi_datatype_f_to_c_table, &ompi_mpi_char );
-    ompi_pointer_array_add( ompi_datatype_f_to_c_table, &ompi_mpi_short );
-    ompi_pointer_array_add( ompi_datatype_f_to_c_table, &ompi_mpi_int );
-    ompi_pointer_array_add( ompi_datatype_f_to_c_table, &ompi_mpi_long_long );
-    ompi_pointer_array_add( ompi_datatype_f_to_c_table, &ompi_mpi_real );
-    ompi_pointer_array_add( ompi_datatype_f_to_c_table, &ompi_mpi_real );
-    ompi_pointer_array_add( ompi_datatype_f_to_c_table, &ompi_mpi_real );
-    ompi_pointer_array_add( ompi_datatype_f_to_c_table, &ompi_mpi_double );
-    ompi_pointer_array_add( ompi_datatype_f_to_c_table, &ompi_mpi_long_double );
-    ompi_pointer_array_add( ompi_datatype_f_to_c_table, &ompi_mpi_dblprec );
-    ompi_pointer_array_add( ompi_datatype_f_to_c_table, &ompi_mpi_cplex );
-    ompi_pointer_array_add( ompi_datatype_f_to_c_table, &ompi_mpi_dblcplex );
-    ompi_pointer_array_add( ompi_datatype_f_to_c_table, &ompi_mpi_2real );
-    ompi_pointer_array_add( ompi_datatype_f_to_c_table, &ompi_mpi_2dblcplex );
-    ompi_pointer_array_add( ompi_datatype_f_to_c_table, &ompi_mpi_2integer );
+    ompi_mpi_datatype_null.d_f_to_c_index = 
+        ompi_pointer_array_add( ompi_datatype_f_to_c_table, &ompi_mpi_datatype_null );
+    ompi_mpi_byte.d_f_to_c_index =
+        ompi_pointer_array_add( ompi_datatype_f_to_c_table, &ompi_mpi_byte );
+    ompi_mpi_packed.d_f_to_c_index =
+        ompi_pointer_array_add( ompi_datatype_f_to_c_table, &ompi_mpi_packed );
+    ompi_mpi_ub.d_f_to_c_index =
+        ompi_pointer_array_add( ompi_datatype_f_to_c_table, &ompi_mpi_ub );
+    ompi_mpi_lb.d_f_to_c_index =
+        ompi_pointer_array_add( ompi_datatype_f_to_c_table, &ompi_mpi_lb );
+    ompi_mpi_character.d_f_to_c_index =
+        ompi_pointer_array_add( ompi_datatype_f_to_c_table, &ompi_mpi_character );
+    ompi_mpi_logic.d_f_to_c_index =
+        ompi_pointer_array_add( ompi_datatype_f_to_c_table, &ompi_mpi_logic );
+    ompi_mpi_integer.d_f_to_c_index = 
+        ompi_pointer_array_add( ompi_datatype_f_to_c_table, &ompi_mpi_integer );
+    ompi_mpi_char.d_f_to_c_index =
+        ompi_pointer_array_add( ompi_datatype_f_to_c_table, &ompi_mpi_char );
+    ompi_mpi_short.d_f_to_c_index =
+        ompi_pointer_array_add( ompi_datatype_f_to_c_table, &ompi_mpi_short );
+    ompi_mpi_int.d_f_to_c_index =
+        ompi_pointer_array_add( ompi_datatype_f_to_c_table, &ompi_mpi_int );
+    ompi_mpi_long_long.d_f_to_c_index =
+        ompi_pointer_array_add( ompi_datatype_f_to_c_table, &ompi_mpi_long_long );
+    ompi_mpi_real.d_f_to_c_index =
+        ompi_pointer_array_add( ompi_datatype_f_to_c_table, &ompi_mpi_real );
+    ompi_mpi_real.d_f_to_c_index =
+        ompi_pointer_array_add( ompi_datatype_f_to_c_table, &ompi_mpi_real );
+    ompi_mpi_real.d_f_to_c_index =
+        ompi_pointer_array_add( ompi_datatype_f_to_c_table, &ompi_mpi_real );
+    ompi_mpi_double.d_f_to_c_index =
+        ompi_pointer_array_add( ompi_datatype_f_to_c_table, &ompi_mpi_double );
+    ompi_mpi_long_double.d_f_to_c_index =
+        ompi_pointer_array_add( ompi_datatype_f_to_c_table, &ompi_mpi_long_double );
+    ompi_mpi_dblprec.d_f_to_c_index =
+        ompi_pointer_array_add( ompi_datatype_f_to_c_table, &ompi_mpi_dblprec );
+    ompi_mpi_cplex.d_f_to_c_index =
+        ompi_pointer_array_add( ompi_datatype_f_to_c_table, &ompi_mpi_cplex );
+    ompi_mpi_dblcplex.d_f_to_c_index =
+        ompi_pointer_array_add( ompi_datatype_f_to_c_table, &ompi_mpi_dblcplex );
+    ompi_mpi_2real.d_f_to_c_index =
+        ompi_pointer_array_add( ompi_datatype_f_to_c_table, &ompi_mpi_2real );
+    ompi_mpi_2dblcplex.d_f_to_c_index =
+        ompi_pointer_array_add( ompi_datatype_f_to_c_table, &ompi_mpi_2dblcplex );
+    ompi_mpi_2integer.d_f_to_c_index =
+        ompi_pointer_array_add( ompi_datatype_f_to_c_table, &ompi_mpi_2integer );
 
     return OMPI_SUCCESS;
 }
