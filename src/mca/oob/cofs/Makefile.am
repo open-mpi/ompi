@@ -19,7 +19,7 @@ if LAM_BUILD_oob_cofs_LOADABLE_MODULE
 module_noinst = 
 module_install = mca_oob_cofs.la
 else
-module_noinst = libmca_lam_oob_cofs.la
+module_noinst = libmca_oob_cofs.la
 module_install =
 endif
 
@@ -32,6 +32,6 @@ mca_oob_cofs_la_LIBADD = \
 mca_oob_cofs_la_LDFLAGS = -module -avoid-version
 
 noinst_LTLIBRARIES = $(module_noinst)
-libmca_lam_oob_cofs_la_SOURCES =
-libmca_lam_oob_cofs_la_LIBADD = src/libmca_oob_cofs.la
-libmca_lam_oob_cofs_la_LDFLAGS = -module -avoid-version
+libmca_oob_cofs_la_SOURCES =
+libmca_oob_cofs_la_LIBADD = src/libmca_oob_cofs.la
+libmca_oob_cofs_la_LDFLAGS = -module -avoid-version

@@ -18,7 +18,7 @@ if LAM_BUILD_pml_teg_LOADABLE_MODULE
 module_noinst =
 module_install = mca_pml_teg.la
 else
-module_noinst = libmca_mpi_pml_teg.la
+module_noinst = libmca_pml_teg.la
 module_install =
 endif
 
@@ -31,6 +31,6 @@ mca_pml_teg_la_LIBADD = \
 mca_pml_teg_la_LDFLAGS = -module -avoid-version
 
 noinst_LTLIBRARIES = $(module_noinst)
-libmca_mpi_pml_teg_la_SOURCES =
-libmca_mpi_pml_teg_la_LIBADD = src/libmca_pml_teg.la
-libmca_mpi_pml_teg_la_LDFLAGS = -module -avoid-version
+libmca_pml_teg_la_SOURCES =
+libmca_pml_teg_la_LIBADD = src/libmca_pml_teg.la
+libmca_pml_teg_la_LDFLAGS = -module -avoid-version

@@ -18,7 +18,7 @@ if LAM_BUILD_ptl_tcp_LOADABLE_MODULE
 module_noinst =
 module_install = mca_ptl_tcp.la
 else
-module_noinst = libmca_mpi_ptl_tcp.la
+module_noinst = libmca_ptl_tcp.la
 module_install =
 endif
 
@@ -31,6 +31,6 @@ mca_ptl_tcp_la_LIBADD = \
 mca_ptl_tcp_la_LDFLAGS = -module -avoid-version
 
 noinst_LTLIBRARIES = $(module_noinst)
-libmca_mpi_ptl_tcp_la_SOURCES =
-libmca_mpi_ptl_tcp_la_LIBADD = src/libmca_ptl_tcp.la
-libmca_mpi_ptl_tcp_la_LDFLAGS = -module -avoid-version
+libmca_ptl_tcp_la_SOURCES =
+libmca_ptl_tcp_la_LIBADD = src/libmca_ptl_tcp.la
+libmca_ptl_tcp_la_LDFLAGS = -module -avoid-version

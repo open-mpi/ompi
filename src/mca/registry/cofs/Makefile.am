@@ -19,7 +19,7 @@ if LAM_BUILD_registry_cofs_LOADABLE_MODULE
 module_noinst =
 module_install = mca_registry_cofs.la
 else
-module_noinst = libmca_lam_registry_cofs.la
+module_noinst = libmca_registry_cofs.la
 module_install =
 endif
 
@@ -32,6 +32,6 @@ mca_registry_cofs_la_LIBADD = \
 mca_registry_cofs_la_LDFLAGS = -module -avoid-version
 
 noinst_LTLIBRARIES = $(module_noinst)
-libmca_lam_registry_cofs_la_SOURCES =
-libmca_lam_registry_cofs_la_LIBADD = src/libmca_registry_cofs.la
-libmca_lam_registry_cofs_la_LDFLAGS = -module -avoid-version
+libmca_registry_cofs_la_SOURCES =
+libmca_registry_cofs_la_LIBADD = src/libmca_registry_cofs.la
+libmca_registry_cofs_la_LDFLAGS = -module -avoid-version
