@@ -85,7 +85,7 @@ static inline struct mca_ptl_base_peer_t* mca_pml_teg_proc_lookup_remote_peer(
     int rank, 
     struct mca_ptl_base_module_t* ptl)
 {
-    ompi_proc_t* proc = comm->c_local_group->grp_proc_pointers[rank];
+    ompi_proc_t* proc = comm->c_remote_group->grp_proc_pointers[rank];
     mca_pml_proc_t* proc_pml = proc->proc_pml;
     size_t i, size = mca_ptl_array_get_size(&proc_pml->proc_ptl_first);
     mca_ptl_proc_t* proc_ptl = proc_pml->proc_ptl_first.ptl_procs;
