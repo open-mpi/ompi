@@ -19,6 +19,8 @@ libruntime_la_SOURCES = \
         lam_abort.c \
         lam_finalize.c \
         lam_init.c \
+        lam_mpi_init.c \
+        lam_mpi_finalize.c \
         lam_rte_finalize.c \
         lam_rte_init.c
 
