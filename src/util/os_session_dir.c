@@ -65,7 +65,6 @@ char *ompi_find_session_dir(bool create, char *prefix)
     if (NULL != prefix) {
 	tmpprefix = strdup(ompi_os_path(false, prefix, sessions, NULL)); /* make sure it's an absolute pathname */
 	if (OMPI_SUCCESS == ompi_check_dir(create, tmpprefix)) { /* check for existence and access, or create it */
-	    free(sessions);
 	    return(tmpprefix);
 	}
 	else {
@@ -78,7 +77,6 @@ char *ompi_find_session_dir(bool create, char *prefix)
 	tmpprefix = strdup(ompi_os_path(false, tmp, sessions, NULL));
 	if (OMPI_SUCCESS == ompi_check_dir(create, tmpprefix)) { /* check for existence and access, or create it */
 	    free(tmp);
-	    free(sessions);
 	    return(tmpprefix);
 	}
     }
@@ -94,7 +92,6 @@ char *ompi_find_session_dir(bool create, char *prefix)
 	tmpprefix = strdup(ompi_os_path(false, tmp, sessions, NULL));
 	if (OMPI_SUCCESS == ompi_check_dir(create, tmpprefix)) { /* check for existence and access, or create it */
 	    free(tmp);
-	    free(sessions);
 	    return(tmpprefix);
 	}
     }
@@ -110,7 +107,6 @@ char *ompi_find_session_dir(bool create, char *prefix)
 	tmpprefix = strdup(ompi_os_path(false, tmp, sessions, NULL));
 	if (OMPI_SUCCESS == ompi_check_dir(create, tmpprefix)) { /* check for existence and access, or create it */
 	    free(tmp);
-	    free(sessions);
 	    return(tmpprefix);
 	}
     }
@@ -125,7 +121,6 @@ char *ompi_find_session_dir(bool create, char *prefix)
     tmpprefix = strdup(ompi_os_path(false, tmp, sessions, NULL));
     if (OMPI_SUCCESS == ompi_check_dir(create, tmpprefix)) { /* check for existence and access, or create it */
 	free(tmp);
-	free(sessions);
 	return(tmpprefix);
     }
 
@@ -135,9 +130,6 @@ char *ompi_find_session_dir(bool create, char *prefix)
     }
     if (tmpprefix != NULL) {
         free(tmpprefix);
-    }
-    if (sessions != NULL) {
-        free(sessions);
     }
     return(NULL);
 }
