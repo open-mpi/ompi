@@ -175,7 +175,7 @@ for type in $found_types; do
                     want_component=1
 	        fi
             fi
-            if test "$want_component" == "1" ; then
+            if test "$want_component" = "1" ; then
                 ompi_show_subtitle "MCA component $type:$m (no configure script)"
 
                 # Remove any possible sym link in the mca-dynamic tree
@@ -228,7 +228,7 @@ for type in $found_types; do
                     want_component=1
 	        fi
             fi
-            if test "$want_component" == "1" ; then
+            if test "$want_component" = "1" ; then
                 ompi_show_subtitle "MCA component $type:$m (need to configure)"
 
                 # We found one!

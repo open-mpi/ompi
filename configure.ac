@@ -696,36 +696,36 @@ if test "$OMPI_SIZEOF_F90_COMPLEX32" != "32" ; then
     OMPI_HAVE_F90_COMPLEX32=0
 fi
 
-if test "$OMPI_HAVE_F90_INTEGER1" == "1" ; then
+if test "$OMPI_HAVE_F90_INTEGER1" = "1" ; then
     OMPI_FORTRAN_LKINDS="${OMPI_FORTRAN_LKINDS}1 "
     OMPI_FORTRAN_IKINDS="${OMPI_FORTRAN_IKINDS}1 "
 fi
-if test "$OMPI_HAVE_F90_INTEGER2" == "1" ; then
+if test "$OMPI_HAVE_F90_INTEGER2" = "1" ; then
     OMPI_FORTRAN_LKINDS="${OMPI_FORTRAN_LKINDS}2 "
     OMPI_FORTRAN_IKINDS="${OMPI_FORTRAN_IKINDS}2 "
 fi
-if test "$OMPI_HAVE_F90_INTEGER4" == "1" ; then
+if test "$OMPI_HAVE_F90_INTEGER4" = "1" ; then
     OMPI_FORTRAN_LKINDS="${OMPI_FORTRAN_LKINDS}4 "
     OMPI_FORTRAN_IKINDS="${OMPI_FORTRAN_IKINDS}4 "
 fi
-if test "$OMPI_HAVE_F90_INTEGER8" == "1" ; then
+if test "$OMPI_HAVE_F90_INTEGER8" = "1" ; then
     OMPI_FORTRAN_LKINDS="${OMPI_FORTRAN_LKINDS}8 "
     OMPI_FORTRAN_IKINDS="${OMPI_FORTRAN_IKINDS}8 "
 fi
-if test "$OMPI_HAVE_F90_INTEGER16" == "1" ; then
+if test "$OMPI_HAVE_F90_INTEGER16" = "1" ; then
     OMPI_FORTRAN_LKINDS="${OMPI_FORTRAN_LKINDS}16 "
     OMPI_FORTRAN_IKINDS="${OMPI_FORTRAN_IKINDS}16 "
 fi
 
-if test "$OMPI_HAVE_F90_REAL4" == "1" ; then
+if test "$OMPI_HAVE_F90_REAL4" = "1" ; then
     OMPI_FORTRAN_RKINDS="${OMPI_FORTRAN_RKINDS}4 "
     OMPI_FORTRAN_CKINDS="${OMPI_FORTRAN_CKINDS}4 "
 fi
-if test "$OMPI_HAVE_F90_REAL8" == "1" ; then
+if test "$OMPI_HAVE_F90_REAL8" = "1" ; then
     OMPI_FORTRAN_RKINDS="${OMPI_FORTRAN_RKINDS}8 "
     OMPI_FORTRAN_CKINDS="${OMPI_FORTRAN_CKINDS}8 "
 fi
-if test "$OMPI_HAVE_F90_REAL16" == "1" ; then
+if test "$OMPI_HAVE_F90_REAL16" = "1" ; then
     OMPI_FORTRAN_RKINDS="${OMPI_FORTRAN_RKINDS}16 "
     OMPI_FORTRAN_CKINDS="${OMPI_FORTRAN_CKINDS}16 "
 fi
@@ -1002,35 +1002,35 @@ AC_DEFINE_UNQUOTED(ompi_fortran_dblprec_t, $MPI_FORTRAN_DBLPREC_TYPE,
 MPI_OFFSET_TYPE="not found"
 MPI_OFFSET_DATATYPE="not found"
 AC_MSG_CHECKING([checking for type of MPI_Offset])
-if test "$ac_cv_type_int64_t" == "yes"; then
+if test "$ac_cv_type_int64_t" = "yes"; then
 	MPI_OFFSET_TYPE=int64_t
         # Need to figure out MPI_OFFSET_DATATYPE below
         MPI_OFFSET_SIZE=8
-elif test "$ac_cv_type_long_long" == "yes" -a "$ac_cv_sizeof_long_long" == 8; then
+elif test "$ac_cv_type_long_long" = "yes" -a "$ac_cv_sizeof_long_long" = 8; then
 	MPI_OFFSET_TYPE="long long"
         MPI_OFFSET_DATATYPE=MPI_LONG_LONG
         MPI_OFFSET_SIZE=8
-elif test "$ac_cv_type_long" == "yes" -a "$ac_cv_sizeof_long" == 8; then
+elif test "$ac_cv_type_long" = "yes" -a "$ac_cv_sizeof_long" = 8; then
 	MPI_OFFSET_TYPE="long"
         MPI_OFFSET_DATATYPE=MPI_LONG
         MPI_OFFSET_SIZE=8
-elif test "ac_cv_sizeof_int" == 8; then
+elif test "ac_cv_sizeof_int" = 8; then
 	MPI_OFFSET_TYPE=int
         MPI_OFFSET_DATATYPE=MPI_INT
         MPI_OFFSET_SIZE=8
-elif test "$ac_cv_type_int32_t" == "yes"; then
+elif test "$ac_cv_type_int32_t" = "yes"; then
 	MPI_OFFSET_TYPE=int32_t
         # Need to figure out MPI_OFFSET_DATATYPE below
         MPI_OFFSET_SIZE=4
-elif test "$ac_cv_type_long_long" == "yes" -a "$ac_cv_sizeof_long_long" == 4; then
+elif test "$ac_cv_type_long_long" = "yes" -a "$ac_cv_sizeof_long_long" = 4; then
 	MPI_OFFSET_TYPE="long long"
         MPI_OFFSET_DATATYPE=MPI_LONG_LONG
         MPI_OFFSET_SIZE=4
-elif test "$ac_cv_type_long" == "yes" -a "$ac_cv_sizeof_long" == 4; then
+elif test "$ac_cv_type_long" = "yes" -a "$ac_cv_sizeof_long" = 4; then
 	MPI_OFFSET_TYPE="long"
         MPI_OFFSET_DATATYPE=MPI_LONG
         MPI_OFFSET_SIZE=4
-elif test "ac_cv_sizeof_int" == 4; then
+elif test "ac_cv_sizeof_int" = 4; then
 	MPI_OFFSET_TYPE=int
         MPI_OFFSET_DATATYPE=MPI_INT
         MPI_OFFSET_SIZE=4
@@ -1052,19 +1052,19 @@ AC_MSG_CHECKING([checking for an MPI datatype for MPI_Offset])
 if test "$MPI_OFFSET_DATATYPE" = "not found"; then
     echo mpi_offset_type is "$MPI_OFFSET_TYPE"
     if test "$MPI_OFFSET_TYPE" = "int64_t"; then
-        if test "$ac_cv_type_long_long" == "yes" -a "$ac_cv_sizeof_long_long" == 8; then
+        if test "$ac_cv_type_long_long" = "yes" -a "$ac_cv_sizeof_long_long" = 8; then
             MPI_OFFSET_DATATYPE=MPI_LONG_LONG
-        elif test "$ac_cv_type_long" == "yes" -a "$ac_cv_sizeof_long" == 8; then
+        elif test "$ac_cv_type_long" = "yes" -a "$ac_cv_sizeof_long" = 8; then
             MPI_OFFSET_DATATYPE=MPI_LONG
-        elif test "ac_cv_sizeof_int" == 8; then
+        elif test "ac_cv_sizeof_int" = 8; then
             MPI_OFFSET_DATATYPE=MPI_INT
         fi
     elif test "$MPI_OFFSET_TYPE" = "int32_t"; then
-        if test "$ac_cv_type_long_long" == "yes" -a "$ac_cv_sizeof_long_long" == 4; then
+        if test "$ac_cv_type_long_long" = "yes" -a "$ac_cv_sizeof_long_long" = 4; then
             MPI_OFFSET_DATATYPE=MPI_LONG_LONG
-        elif test "$ac_cv_type_long" == "yes" -a "$ac_cv_sizeof_long" == 4; then
+        elif test "$ac_cv_type_long" = "yes" -a "$ac_cv_sizeof_long" = 4; then
             MPI_OFFSET_DATATYPE=MPI_LONG
-        elif test "ac_cv_sizeof_int" == 4; then
+        elif test "ac_cv_sizeof_int" = 4; then
             MPI_OFFSET_DATATYPE=MPI_INT
         fi
     fi
