@@ -7,7 +7,7 @@
 
 #include "support.h"
 
-#include "atomic.h"
+#include "include/atomic.h"
 
 /* default options */
 
@@ -21,10 +21,12 @@ uint32_t val32;
 uint32_t old32;
 uint32_t new32;
 
+#ifdef ENABLE_64_BIT
 volatile uint64_t vol64;
 uint64_t val64;
 uint64_t old64;
 uint64_t new64;
+#endif
 
 volatile int volint;
 int valint;
@@ -41,12 +43,18 @@ static void help(void)
     printf("Usage: threadtest [flags]\n"
            "\n"
            "   Flags may be any of\n"
+#ifdef ENABLE_64_BIT
            "      -l                do 64-bit tests\n"
+#endif
            "      -r NREPS          number of repetitions\n"
            "      -t NTRHEADS       number of threads\n"
            "      -v                verbose output\n"
            "      -h                print this info\n" "\n"
            "   Numbers may be postfixed with 'k' or 'm'\n\n");
+
+#ifndef ENABLE_64_BIT
+    printf("   64-bit tests are not enabled in this build of the tests\n\n");
+#endif
 
     exit(EXIT_SUCCESS);
 }
@@ -107,9 +115,11 @@ void *thread_main(void *arg)
 
     for (i = 0; i < nreps; i++) {
         ompi_atomic_add_32(&val32, 5);
+#ifdef ENABLE_64_BIT
         if (enable_64_bit_tests) {
             ompi_atomic_add_64(&val64, 5);
         }
+#endif
         ompi_atomic_add_int(&valint, 5);
     }
 
@@ -133,7 +143,11 @@ int main(int argc, char *argv[])
             help();
             break;
         case 'l':
+#ifdef ENABLE_64_BIT
             enable_64_bit_tests = 1;
+#else
+	    usage();
+#endif
             break;
         case 'r':
             if ((nreps = str2size(optarg)) <= 0) {
@@ -190,6 +204,7 @@ int main(int argc, char *argv[])
 
     /* -- cmpset 64-bit tests -- */
 
+#ifdef ENABLE_64_BIT
     if (enable_64_bit_tests) {
         vol64 = 42, old64 = 42, new64 = 50;
         test_verify("atomic", ompi_atomic_cmpset_64(&vol64, old64, new64) == 1);
@@ -215,7 +230,7 @@ int main(int argc, char *argv[])
         test_verify("atomic", ompi_atomic_cmpset_rel_64(&vol64, old64, new64) == 0);
         test_verify("atomic", vol64 == 42);
     }
-
+#endif
     /* -- cmpset int tests -- */
 
     volint = 42, oldint = 42, newint = 50;
@@ -276,13 +291,13 @@ int main(int argc, char *argv[])
     test_verify("atomic", (42 + 5) == val32);
 
     /* -- add_64 tests -- */
-
+#ifdef ENABLE_64_BIT
     if (enable_64_bit_tests) {
         val64 = 42;
         test_verify("atomic", ompi_atomic_add_64(&val64, 5) == (42 + 5));
         test_verify("atomic", (42 + 5) == val64);
     }
-
+#endif
     /* -- add_int tests -- */
 
     valint = 42;
@@ -293,7 +308,9 @@ int main(int argc, char *argv[])
     /* threaded tests */
 
     val32 = 0;
+#ifdef ENABLE_64_BIT
     val64 = 0ul;
+#endif
     valint = 0;
 
     /* -- create the thread set -- */
@@ -324,9 +341,11 @@ int main(int argc, char *argv[])
     free(th);
 
     test_verify("atomic", val32 == (5 * nthreads * nreps));
+#ifdef ENABLE_64_BIT
     if (enable_64_bit_tests) {
         test_verify("atomic", val64 == (5 * nthreads * nreps));
     }
+#endif
     test_verify("atomic", valint == (5 * nthreads * nreps));
 
     return test_finalize();
