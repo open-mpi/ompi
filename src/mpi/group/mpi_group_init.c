@@ -138,7 +138,7 @@ int lam_group_init(void)
         return LAM_ERROR;
     };
     /* make sure that MPI_GROUP_NULL is in location in the table */
-    if( LAM_GROUP_NULL_FORTRAN == ret_val ){
+    if( LAM_GROUP_NULL_FORTRAN != ret_val ){
         return LAM_ERROR;
     };
     lam_mpi_group_null.grp_f_to_c_index=ret_val;
