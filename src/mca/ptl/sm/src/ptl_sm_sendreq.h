@@ -31,6 +31,13 @@ struct mca_ptl_sm_send_request_t {
 };
 typedef struct mca_ptl_sm_send_request_t mca_ptl_sm_send_request_t;
 
+/**
+ *  int
+ *  mca_ptl_sm_send_request_init(mca_ptl_base_module_request_init_fn_t*
+ *  request)
+ */
+int mca_ptl_sm_send_request_init(mca_ptl_base_module_request_init_fn_t*
+        request);
 
 #endif
 

@@ -28,7 +28,7 @@ static void mca_ptl_sm_frag_construct(mca_ptl_sm_frag_t* frag)
     char *ptr;
 
     /* set the buffer length */
-    frag->buff_length=(size_t)mca_ptl_sm_component.fragment_size;
+    frag->buff_length=(size_t)mca_ptl_sm_component.first_fragment_size;
 
     /* set buffer pointer */
     ptr=((char *)frag)+sizeof(mca_ptl_sm_frag_t)+

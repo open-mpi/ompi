@@ -24,13 +24,15 @@
 #include "mca/common/sm/common_sm_mmap.h"
 #include "util/proc_info.h"
 #include "util/printf.h"
+#include "mca/ptl/sm/src/ptl_sm_sendreq.h"
 
 mca_ptl_sm_t mca_ptl_sm = {
     {
     &mca_ptl_sm_component.super,
     5, /* number of elements in the send descriptor cache: RLG - this is
         garbage, need to fix. */
-    5, /* size needs for the cache: RLG - this is garbage, need to fix.  */
+    sizeof(mca_ptl_sm_send_request_t), /* size of shared memory send
+                                           descriptor */
     1, /* ptl_exclusivity */
     0, /* ptl_latency */
     0, /* ptl_andwidth */
@@ -44,8 +46,8 @@ mca_ptl_sm_t mca_ptl_sm = {
     mca_ptl_sm_send,
     mca_ptl_sm_send, /* function */
     NULL,
-    mca_ptl_sm_matched,
-    NULL, /* mca_ptl_sm_request_alloc, RLG - need to fix, arg list has changed */
+    mca_ptl_sm_matched, /* function called after match is made */
+    mca_ptl_sm_send_request_init, /* initialization routine */
     mca_ptl_sm_request_return
     }
 };
