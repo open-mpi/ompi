@@ -501,6 +501,7 @@ return (OMPI_SUCCESS);
     switch(type) {
         case OMPI_BYTE:
             memcpy(dest, src, n);
+			break;
         case OMPI_PACKED:
             return OMPI_ERROR;
         case OMPI_INT16:
@@ -535,4 +536,105 @@ return (OMPI_SUCCESS);
 
     return OMPI_SUCCESS;
 }
+
+
+
+/* 
+ * fuctions to handle strings, which use the length arguments differently to normal pack routines
+ *
+ * @param buffer the destination for the packed data
+ * @param str pointer to start of NULL terminated string
+ * 
+ * @retval OMPI_SUCCESS
+ * @retval OMPI_ERROR
+ *
+ */
+
+ int ompi_pack_string (ompi_buffer_t buffer, char *str)
+ {
+ uint32_t op_size=0;	
+ int rc;
+
+ if (!str) {
+ 	return OMPI_ERROR;
+ }
+
+ if (!buffer) { return (OMPI_ERROR); }
+
+ op_size = (uint32_t) strlen (str);
+
+ /* a packed string consists of a packed length, and the non terminated string */
+ rc = ompi_pack(buffer, (void*) &op_size, 1, OMPI_INT32);
+
+ if (OMPI_ERROR==rc) { return (rc); }
+
+ if (op_size>0) {
+ 	rc = ompi_pack(buffer, (void*) str, op_size, OMPI_BYTE);
+ }
+
+ return (rc);
+ }
+
+/**
+ * This function unpacks a string from the buffer. This routine ALLOCATES memory
+ * for this string. Allocating means users DO NOT need to define max string lengths for any 
+ * strings they pass (allowing the use of unrestricted naming in the GPR f.e.)
+ * if this string is zero length we return a NULL pointer
+ *
+ * @param buffer the source of the packed string data
+ * @param pointer to a character pointer of the unpacked string or NULL for zero length
+ * string
+ * @param type the type of the data to unpack
+ * 
+ * @retval number of characters unpacked (INCLUDING the NULL character)
+ *         If this value is '0' this indicates an empty string was passed.
+ * @retval OMPI_ERROR
+ *
+ */
+
+ int ompi_unpack_string(ompi_buffer_t buffer, char ** str)
+ {
+ char *inptr;
+ uint32_t inlen=0;
+ uint32_t outlen=0;	/* always inlen+1 I hope */
+ int rc;
+
+ if (!str) {
+ 	return OMPI_ERROR;
+ }
+
+ if (!buffer) { return (OMPI_ERROR); }
+
+ /* first unpack the length of the packed string */
+
+ rc = ompi_unpack (buffer, (void*) &inlen, 1, OMPI_INT32);
+
+ if (OMPI_ERROR==rc) { return (rc); }
+
+ if (!inlen) { /* if we have a zero length string... set str pointer to NULL and return 0 length */
+ 	*str = NULL;
+	return (0);
+ }
+ else {
+ 	outlen = inlen +1;
+ }
+ 
+ /* no zero length string, so allocate memory for it */
+ inptr = (char*) calloc (outlen, 1);
+
+ if (!inptr) { return (OMPI_ERROR); }
+
+ /* have memory, unpack as byte, null terminate and then return */
+ rc = ompi_unpack (buffer, (void*) inptr, inlen, OMPI_BYTE);
+
+ if (OMPI_ERROR==rc) { return (rc); }
+
+ inptr[inlen] = '\0'; /* NULL terminate */
+
+ *str = (char*) inptr;	/* copy the string over */
+
+ return (outlen);
+ }
+
+
 

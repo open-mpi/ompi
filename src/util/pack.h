@@ -160,6 +160,38 @@ extern "C" {
     int ompi_unpack(ompi_buffer_t buffer, void * dest, size_t n, ompi_pack_type_t type);
 
 
+/* 
+ * fuctions to handle strings, which use the length arguments different
+ *
+ * @param buffer the destination for the packed data
+ * @param str pointer to start of NULL terminated string
+ * 
+ * @retval OMPI_SUCCESS
+ * @retval OMPI_ERROR
+ *
+ */
+
+	int ompi_pack_string (ompi_buffer_t buffer, char *str);
+
+/**
+ * This function unpacks a string from the buffer. This routine ALLOCATES memory
+ * for this string. Allocating means users DO NOT need to define max string lengths for any 
+ * strings they pass (allowing the use of unrestricted naming in the GPR f.e.)
+ * if this string is zero length we return a NULL pointer
+ *
+ * @param buffer the source of the packed string data
+ * @param pointer to a character pointer of the unpacked string or NULL for zero length string
+ * @param type the type of the data to unpack
+ * 
+ * @retval number of characters unpacked (INCLUDING the NULL character)
+ *         If this value is '0' this indicates an empty string was passed.
+ * @retval OMPI_ERROR
+ *
+ */
+    int ompi_unpack_string(ompi_buffer_t buffer, char ** str);
+
+
+
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
