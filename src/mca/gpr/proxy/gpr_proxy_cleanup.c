@@ -60,6 +60,10 @@ void mca_gpr_proxy_cleanup_proc(bool purge, ompi_process_name_t *proc)
 	return;
     }
 
+    if (mca_gpr_proxy_debug) {
+        ompi_output(0, "[%d,%d,%d] cleanup_process: function entered for proc [%d,%d,%d]",
+            OMPI_NAME_ARGS(*ompi_rte_get_self()), OMPI_NAME_ARGS(*proc));
+    }
 
     if (OMPI_SUCCESS != ompi_buffer_init(&cmd, 0)) { /* got a problem */
 	return;
