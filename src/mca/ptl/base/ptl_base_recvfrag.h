@@ -50,12 +50,12 @@ static inline bool mca_ptl_base_recv_frag_match(
         /*
          * Initialize request status.
          */
-        request->req_bytes_msg = header->hdr_msg_length;
+        request->req_bytes_packed = header->hdr_msg_length;
         request->super.req_peer = header->hdr_src;
         request->super.req_tag = header->hdr_tag;
 
         /* notify ptl of match */
-        ptl->ptl_recv(ptl, frag);
+        ptl->ptl_matched(ptl, frag);
 
         /* process any additional fragments that arrived out of order */
         frag = (mca_ptl_base_recv_frag_t*)lam_list_remove_first(&matched_frags);

@@ -106,9 +106,9 @@
  * When a header of this type is received, to minimize latency the PTL should call the 
  * ptl_match() method as soon as entire header is available, potentially prior to receiving
  * any data associated with the first fragment. If a match is made, the PML will call
- * the ptl_recv() method of the fragments PTL. 
+ * the ptl_matched() method of the fragments PTL. 
  *
- * The ptl_recv() method should generate, if required, an ack to the source process. An
+ * The ptl_matched() method should generate, if required, an ack to the source process. An
  * ack is required if the MCA_PTL_FLAGS_ACK_MATCHED bit is set by the source in the initial 
  * message header.  The ack should contain a pointer to the matched request, along 
  * with the pointer to the orignal send fragment contained in the initial message header. 
@@ -152,6 +152,12 @@ typedef enum {
     MCA_PTL_ENABLE 
 } mca_ptl_control_t;
                                                                                                             
+/**
+ * PTL flags 
+ */
+#define MCA_PTL_PUT 1 
+#define MCA_PTL_GET 2
+
 /*
  *  PTL module interface functions and datatype.
  */
@@ -319,49 +325,59 @@ typedef void (*mca_ptl_base_request_return_fn_t)(
 );
 
 /**
- * PML->PTL Initiate a send of the specified size.
+ * PML->PTL Initiate a send/put to the peer.
  *
  * @param ptl (IN)               PTL instance
  * @param ptl_base_peer (IN)     PTL peer addressing
- * @param send_request (IN/OUT)  Send request (allocated by PML via mca_ptl_base_request_alloc_fn_t)
- * @param size (IN)              Number of bytes PML is requesting PTL to deliver
+ * @param request (IN)           Send request 
+ * @param offset                 Current offset into packed/contiguous buffer.
+ * @param size (IN/OUT)          Number of bytes PML is requesting PTL to deliver, 
+ *                               PTL returns number of bytes sucessfully fragmented
  * @param flags (IN)             Flags that should be passed to the peer via the message header.
  * @param request (OUT)          LAM_SUCCESS if the PTL was able to queue one or more fragments
  *
- * When multiple PTLs are available, a single request (that is large enough)
- * will be split across the available PTLs. The PML scheduler will determine
- * the percentage given to a PTL based on the bandwidth provided by the transport
- * and its current resource usage. The size parameter to the send function indicates 
- * the number of bytes the PML is requesting the PTL to send. The PTL may choose
- * to send 0->size bytes based on available resources. 
+ * The PML implements a rendevouz protocol, with up to the PTL defined threshold
+ * bytes of the message sent in eager send mode. On receipt of an acknowledgment
+ * from the peer, the PML will schedule the remaining fragments. If the PTL supports
+ * RDMA functionality, these subsequent transfers may use RDMA put semantics.
  *
- * The current offset into the users buffer is passed into the send function
- * via the req_offset member of the send request parameter. The send function
- * must update req_offset with the actual number of bytes the PTL is able to
- * fragment for delivery.
+ * If the PTL is unable to fragment the requested size, possibly due to resource
+ * constraints or datatype alighnment/offset, it should return the number of bytes 
+ * actually fragmented in the size parameter.
  */
-typedef int (*mca_ptl_base_send_fn_t)(
+typedef int (*mca_ptl_base_put_fn_t)(
     struct mca_ptl_t* ptl, 
     struct mca_ptl_base_peer_t* ptl_base_peer, 
-    struct mca_ptl_base_send_request_t* send_request,
-    size_t size,
+    struct mca_ptl_base_send_request_t* request,
+    size_t offset,
+    size_t *size,
     int flags
 );
 
 /**
- * PML->PTL Notification that a receive fragment has been matched.
+ * PML->PTL Initiate a get from a peer.
  *
- * @param ptl (IN)          PTL instance
- * @param recv_frag (IN)    Receive fragment
+ * @param ptl (IN)               PTL instance
+ * @param ptl_base_peer (IN)     PTL peer addressing
+ * @param request (IN)           Recv request 
+ * @param offset                 Current offset into packed/contiguous buffer.
+ * @param size (IN/OUT)          Number of bytes PML is requesting PTL to pull from peer, 
+ *                               PTL returns number of bytes sucessfully fragmented.
+ * @param flags (IN)             
+ * @param request (OUT)          LAM_SUCCESS if the PTL was able to queue one or more fragments
  *
- * A fragment may be matched either when a new receive is posted,
- * or on receipt of a fragment from the network. In either case,
- * the PML will downcall into the PTL to provide a notification 
- * that the match was made.
+ * Initiate an RDMA get request to pull data from the peer. This is initiated
+ * at the receiver side when a request is matched if the PTL indicates that it
+ * supports RDMA get semantics.
  */
-typedef void (*mca_ptl_base_recv_fn_t)(
+
+typedef int (*mca_ptl_base_get_fn_t)(
     struct mca_ptl_t* ptl, 
-    struct mca_ptl_base_recv_frag_t* recv_frag
+    struct mca_ptl_base_peer_t* ptl_base_peer, 
+    struct mca_ptl_base_recv_request_t* request,
+    size_t offset,
+    size_t *size,
+    int flags
 );
 
 /**
@@ -385,6 +401,21 @@ typedef void (*mca_ptl_base_recv_fn_t)(
 typedef bool (*mca_ptl_base_match_fn_t)(
     struct mca_ptl_base_recv_frag_t* recv_frag,
     struct mca_ptl_base_match_header_t* header
+);
+
+
+/**
+ * PML->PTL Notification from the PML to the PTL that a receive has 
+ * been posted and matched against the indicated fragment.
+ *
+ * @param ptl (IN)       PTL instance
+ * @param recv_frag      Matched fragment
+ *
+ */
+
+typedef void (*mca_ptl_base_matched_fn_t)(
+    struct mca_ptl_t* ptl, 
+    struct mca_ptl_base_recv_frag_t* request
 );
 
 /**
@@ -424,13 +455,15 @@ struct mca_ptl_t {
     uint32_t    ptl_exclusivity;       /**< indicates this PTL should be used exclusively */
     uint32_t    ptl_latency;           /**< relative ranking of latency used to prioritize ptls */
     uint32_t    ptl_bandwidth;         /**< bandwidth (Mbytes/sec) supported by each endpoint */
+    uint32_t    ptl_flags;             /**< flags (put/get...) */
 
     /* PML->PTL function table */
     mca_ptl_base_add_proc_fn_t         ptl_add_proc;
     mca_ptl_base_del_proc_fn_t         ptl_del_proc;
     mca_ptl_base_finalize_fn_t         ptl_finalize;
-    mca_ptl_base_send_fn_t             ptl_send;
-    mca_ptl_base_recv_fn_t             ptl_recv;
+    mca_ptl_base_put_fn_t              ptl_put;
+    mca_ptl_base_get_fn_t              ptl_get;
+    mca_ptl_base_matched_fn_t          ptl_matched;
     mca_ptl_base_request_alloc_fn_t    ptl_request_alloc;
     mca_ptl_base_request_return_fn_t   ptl_request_return;
 

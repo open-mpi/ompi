@@ -24,13 +24,14 @@ struct mca_ptl_base_send_frag_t;
 struct mca_ptl_base_send_request_t {
     mca_pml_base_request_t super; /** base request type - common data structure for use by wait/test */
     size_t req_offset; /**< number of bytes that have already been assigned to a fragment */
-    size_t req_frags; /**< number of fragments that have been allocated */
-    size_t req_bytes_msg; /**< packed size of a message given the datatype and count */
+    size_t req_bytes_packed; /**< packed size of a message given the datatype and count */
     size_t req_bytes_sent; /**< number of bytes that have been sent */
     mca_pml_base_send_mode_t req_send_mode; /**< type of send */
     struct mca_ptl_t* req_owner; /**< PTL that allocated this descriptor */
     struct mca_ptl_base_peer_t* req_peer; /**< PTL peer instance that will be used for first fragment */
-    lam_ptr_t req_peer_request; /**< matched receive at peer */
+    lam_ptr_t req_peer_match; /**< matched receive at peer */
+    lam_ptr_t req_peer_addr;
+    size_t req_peer_size;
     lam_convertor_t req_convertor; /**< convertor that describes this datatype */
 };
 typedef struct mca_ptl_base_send_request_t mca_ptl_base_send_request_t;
@@ -62,10 +63,11 @@ typedef struct mca_ptl_base_send_request_t mca_ptl_base_send_request_t;
     persistent) \
 { \
     request->req_offset = 0; \
-    request->req_frags = 0; \
     request->req_bytes_sent = 0; \
     request->req_send_mode = mode; \
-    request->req_peer_request.lval = 0; \
+    request->req_peer_match.lval = 0; \
+    request->req_peer_addr.lval = 0; \
+    request->req_peer_size = 0; \
     request->super.req_sequence = mca_pml_ptl_comm_send_sequence(comm->c_pml_comm, peer); \
     request->super.req_addr = addr; \
     request->super.req_count = count; \
@@ -91,9 +93,9 @@ typedef struct mca_ptl_base_send_request_t mca_ptl_base_send_request_t;
             request->super.req_addr, \
             0); \
         lam_convertor_get_packed_size(&request->req_convertor, &packed_size); \
-        request->req_bytes_msg = packed_size; \
+        request->req_bytes_packed = packed_size; \
     } else { \
-        request->req_bytes_msg = 0; \
+        request->req_bytes_packed = 0; \
     } \
 }
 
@@ -107,7 +109,7 @@ typedef struct mca_ptl_base_send_request_t mca_ptl_base_send_request_t;
 static inline bool mca_ptl_base_send_request_matched(
     mca_ptl_base_send_request_t* request)
 {
-    return (NULL != request->req_peer_request.pval);
+    return (NULL != request->req_peer_match.pval);
 }
 
 #endif

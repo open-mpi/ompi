@@ -49,16 +49,20 @@ int mca_ptl_tcp_send_frag_init(
     mca_ptl_tcp_send_frag_t* sendfrag,
     mca_ptl_base_peer_t* ptl_peer,
     mca_ptl_base_send_request_t* sendreq,
-    size_t size,
+    size_t offset,
+    size_t* size,
     int flags)
 {
     /* message header */
+    size_t size_in = *size;
+    size_t size_out;
+
     mca_ptl_base_header_t* hdr = &sendfrag->frag_header;
-    if(sendreq->req_frags == 0) {
+    if(offset == 0) {
         hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_MATCH;
         hdr->hdr_common.hdr_flags = flags;
         hdr->hdr_common.hdr_size = sizeof(mca_ptl_base_match_header_t);
-        hdr->hdr_frag.hdr_frag_offset = sendreq->req_offset;
+        hdr->hdr_frag.hdr_frag_offset = offset;
         hdr->hdr_frag.hdr_frag_seq = 0;
         hdr->hdr_frag.hdr_src_ptr.lval = 0; /* for VALGRIND/PURIFY - REPLACE WITH MACRO */
         hdr->hdr_frag.hdr_src_ptr.pval = sendfrag;
@@ -67,21 +71,21 @@ int mca_ptl_tcp_send_frag_init(
         hdr->hdr_match.hdr_src = sendreq->super.req_comm->c_my_rank;
         hdr->hdr_match.hdr_dst = sendreq->super.req_peer;
         hdr->hdr_match.hdr_tag = sendreq->super.req_tag;
-        hdr->hdr_match.hdr_msg_length = sendreq->req_bytes_msg;
+        hdr->hdr_match.hdr_msg_length = sendreq->req_bytes_packed;
         hdr->hdr_match.hdr_msg_seq = sendreq->super.req_sequence;
     } else {
         hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_FRAG;
         hdr->hdr_common.hdr_flags = flags;
         hdr->hdr_common.hdr_size = sizeof(mca_ptl_base_frag_header_t);
-        hdr->hdr_frag.hdr_frag_offset = sendreq->req_offset;
+        hdr->hdr_frag.hdr_frag_offset = offset;
         hdr->hdr_frag.hdr_frag_seq = 0;
         hdr->hdr_frag.hdr_src_ptr.lval = 0; /* for VALGRIND/PURIFY - REPLACE WITH MACRO */
         hdr->hdr_frag.hdr_src_ptr.pval = sendfrag;
-        hdr->hdr_frag.hdr_dst_ptr = sendreq->req_peer_request;
+        hdr->hdr_frag.hdr_dst_ptr = sendreq->req_peer_match;
     }
 
     /* initialize convertor */
-    if(size > 0) {
+    if(size_in > 0) {
        lam_convertor_t *convertor;
        int rc;
 
@@ -89,7 +93,7 @@ int mca_ptl_tcp_send_frag_init(
          * can use the convertor initialized on the request, remaining fragments
          * must copy/reinit the convertor as the transfer could be in parallel.
          */
-        if( sendreq->req_frags < 2 ) {
+        if( offset <= mca_ptl_tcp.super.ptl_first_frag_size ) {
             convertor = &sendreq->req_convertor;
         } else {
 
@@ -101,7 +105,7 @@ int mca_ptl_tcp_send_frag_init(
                 sendreq->super.req_datatype,
                 sendreq->super.req_count,
                 sendreq->super.req_addr,
-                sendreq->req_offset);
+                offset);
         }
 
         /* if data is contigous convertor will return an offset
@@ -109,29 +113,30 @@ int mca_ptl_tcp_send_frag_init(
          * that holds the packed data
          */
         sendfrag->frag_vec[1].iov_base = NULL;
-        sendfrag->frag_vec[1].iov_len = size;
+        sendfrag->frag_vec[1].iov_len = size_in;
         if((rc = lam_convertor_pack(convertor, &sendfrag->frag_vec[1], 1)) < 0)
             return LAM_ERROR;
 
         /* adjust size and request offset to reflect actual number of bytes packed by convertor */
-        size = sendfrag->frag_vec[1].iov_len;
-        sendreq->req_offset += size;
+        size_out = sendfrag->frag_vec[1].iov_len;
+    } else {
+        size_out = size_in;
     }
-    hdr->hdr_frag.hdr_frag_length = size;
-    sendreq->req_frags++;
+    hdr->hdr_frag.hdr_frag_length = size_out;
 
     /* fragment state */
     sendfrag->frag_owner = &ptl_peer->peer_ptl->super;
     sendfrag->super.frag_request = sendreq;
     sendfrag->super.super.frag_addr = sendfrag->frag_vec[1].iov_base;
-    sendfrag->super.super.frag_size = size;
+    sendfrag->super.super.frag_size = size_out;
 
     sendfrag->frag_peer = ptl_peer;
     sendfrag->frag_vec_ptr = sendfrag->frag_vec;
-    sendfrag->frag_vec_cnt = (size == 0) ? 1 : 2;
+    sendfrag->frag_vec_cnt = (size_out == 0) ? 1 : 2;
     sendfrag->frag_vec[0].iov_base = (lam_iov_base_ptr_t)hdr;
     sendfrag->frag_vec[0].iov_len = sizeof(mca_ptl_base_header_t);
     sendfrag->frag_progressed = 0;
+    *size = size_out;
     return LAM_SUCCESS;
 }
 

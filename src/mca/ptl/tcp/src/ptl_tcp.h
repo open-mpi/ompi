@@ -191,7 +191,7 @@ extern void mca_ptl_tcp_request_return(
  * @param recv_frag (IN)    Receive fragment
  *
  */
-extern void mca_ptl_tcp_recv(
+extern void mca_ptl_tcp_matched(
     struct mca_ptl_t* ptl,
     struct mca_ptl_base_recv_frag_t* frag
 );
@@ -210,7 +210,8 @@ extern int mca_ptl_tcp_send(
     struct mca_ptl_t* ptl,
     struct mca_ptl_base_peer_t* ptl_peer,
     struct mca_ptl_base_send_request_t*,
-    size_t size,
+    size_t offset,
+    size_t *size,
     int flags
 );
 

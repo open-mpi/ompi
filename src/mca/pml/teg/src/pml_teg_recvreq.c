@@ -9,7 +9,7 @@ void mca_pml_teg_recv_request_progress(
     THREAD_LOCK(&mca_pml_teg.teg_request_lock);
     req->req_bytes_delivered += frag->super.frag_size;
     req->req_bytes_received += frag->super.frag_header.hdr_frag.hdr_frag_length;
-    if (req->req_bytes_received >= req->req_bytes_msg) {
+    if (req->req_bytes_received >= req->req_bytes_packed) {
         /* initialize request status */
         req->super.req_status.MPI_SOURCE = req->super.req_peer;
         req->super.req_status.MPI_TAG = req->super.req_tag;

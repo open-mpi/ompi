@@ -374,8 +374,7 @@ static inline void lam_obj_run_destructors(lam_object_t *object)
  * @param cls           Pointer to the class descriptor of this object
  * @return              Pointer to the object 
  */
-static inline lam_object_t *lam_obj_new(size_t size,
-                                        lam_class_t *cls)
+static inline lam_object_t *lam_obj_new(size_t size, lam_class_t *cls)
 {
     lam_object_t *object;
 

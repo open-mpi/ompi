@@ -182,7 +182,6 @@ static int mca_ptl_tcp_create(int if_index, const char* if_name)
 {
     mca_ptl_tcp_t* ptl = malloc(sizeof(mca_ptl_tcp_t));
     char param[256];
-    char *value;
     if(NULL == ptl)
         return LAM_ERR_OUT_OF_RESOURCE;
     memcpy(ptl, &mca_ptl_tcp, sizeof(mca_ptl_tcp));

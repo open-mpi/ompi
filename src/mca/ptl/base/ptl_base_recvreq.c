@@ -56,7 +56,7 @@ void mca_ptl_base_recv_request_match_specific(mca_ptl_base_recv_request_t* reque
         (frag = mca_ptl_base_recv_request_match_specific_proc(request, req_peer)) != NULL) {
         mca_ptl_t* ptl = frag->super.frag_owner;
         THREAD_UNLOCK(&pml_comm->c_matching_lock);
-        ptl->ptl_recv(ptl, frag);
+        ptl->ptl_matched(ptl, frag);
         return; /* match found */
     }
 
@@ -102,7 +102,7 @@ void mca_ptl_base_recv_request_match_wild(mca_ptl_base_recv_request_t* request)
         if ((frag = mca_ptl_base_recv_request_match_specific_proc(request, proc)) != NULL) {
             mca_ptl_t* ptl = frag->super.frag_owner;
             THREAD_UNLOCK(&pml_comm->c_matching_lock);
-            ptl->ptl_recv(ptl, frag);
+            ptl->ptl_matched(ptl, frag);
             return; /* match found */
         }
     } 
@@ -141,7 +141,7 @@ static mca_ptl_base_recv_frag_t* mca_ptl_base_recv_request_match_specific_proc(
                 continue;
             }
             lam_list_remove_item(unexpected_frags, (lam_list_item_t*)frag);
-            request->req_bytes_msg = header->hdr_msg_length;
+            request->req_bytes_packed = header->hdr_msg_length;
             request->super.req_tag = header->hdr_tag;
             request->super.req_peer = header->hdr_src;
             frag->frag_request = request;
