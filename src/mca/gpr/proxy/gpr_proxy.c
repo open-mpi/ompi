@@ -455,11 +455,12 @@ int gpr_proxy_synchro(ompi_registry_synchro_mode_t synchro_mode,
     return OMPI_SUCCESS;
 
  CLEANUP:
-    if (NULL != trackptr) {
+/*    if (NULL != trackptr) {
 	ptr_free_id = OBJ_NEW(mca_gpr_idtag_list_t);
 	ptr_free_id->id_tag = trackptr->id_tag;
 	ompi_list_append(&mca_gpr_proxy_free_notify_id_tags, &ptr_free_id->item);
     }
+*/
     ompi_buffer_free(cmd);
     return OMPI_ERROR;
 
