@@ -71,6 +71,7 @@ static void mca_ptl_ib_data_frag(mca_ptl_base_module_t *module,
     int rc;
     ompi_list_item_t *item;
     mca_ptl_ib_recv_frag_t *recv_frag;
+    mca_ptl_base_rendezvous_header_t *rendezvous_hdr = (mca_ptl_base_rendezvous_header_t *)header;
 
     OMPI_FREE_LIST_GET(&mca_ptl_ib_component.ib_recv_frags,
             item, rc);
@@ -97,7 +98,7 @@ static void mca_ptl_ib_data_frag(mca_ptl_base_module_t *module,
      * default */
     recv_frag->super.frag_base.frag_addr =
         (char *) header + sizeof (mca_ptl_base_header_t);
-    recv_frag->super.frag_base.frag_size = header->hdr_frag.hdr_frag_length;
+    recv_frag->super.frag_base.frag_size = header->hdr_rndv.hdr_frag_length;
 
     /* match with preposted
      * requests */
@@ -112,7 +113,7 @@ static void mca_ptl_ib_data_frag(mca_ptl_base_module_t *module,
         /* ompi_output(0, "Can't match buffer. Mama is unhappy\n"); */
         memcpy (recv_frag->unex_buf,
                 (char *) header + sizeof (mca_ptl_base_header_t),
-                header->hdr_frag.hdr_frag_length);
+                header->hdr_rndv.hdr_frag_length);
         recv_frag->super.frag_is_buffered = true; 
         recv_frag->super.frag_base.frag_addr = recv_frag->unex_buf;
 
