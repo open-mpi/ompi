@@ -58,7 +58,18 @@ int mca_io_romio_module_close(void)
 
 
 
-mca_io_1_0_0_t fp;
+mca_io_1_0_0_t romio_actions = {
+ mca_io_romio_File_open,
+ mca_io_romio_File_close,
+ mca_io_romio_File_delete,
+ mca_io_romio_File_set_size,
+ mca_io_romio_File_preallocate,
+ mca_io_romio_File_get_size,
+ mca_io_romio_File_get_group,
+ mca_io_romio_File_get_amode,    
+ mca_io_romio_File_set_info,
+ mca_io_romio_File_get_info
+};
 
 mca_io_1_0_0_t* mca_io_romio_module_init(int* priority, int* min_thread, int* max_thread)
 {
@@ -67,18 +78,8 @@ mca_io_1_0_0_t* mca_io_romio_module_init(int* priority, int* min_thread, int* ma
     *min_thread = MPI_THREAD_SINGLE;
     *max_thread = MPI_THREAD_SERIALIZED;
 
-    fp.io_File_open         = mca_io_romio_File_open;
-    fp.io_File_close        = mca_io_romio_File_close;
-    fp.io_File_delete       = mca_io_romio_File_delete;
-    fp.io_File_set_size     = mca_io_romio_File_set_size;
-    fp.io_File_preallocate  = mca_io_romio_File_preallocate;
-    fp.io_File_get_size     = mca_io_romio_File_get_size;
-    fp.io_File_get_group    = mca_io_romio_File_get_group;
-    fp.io_File_get_amode    = mca_io_romio_File_get_amode;    
-    fp.io_File_set_info     = mca_io_romio_File_set_info;
-    fp.io_File_get_info     = mca_io_romio_File_get_info;
 
 
-    return &fp;  
+    return &romio_actions;
 
 }
