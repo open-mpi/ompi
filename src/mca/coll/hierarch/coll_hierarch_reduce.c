@@ -43,19 +43,3 @@ int mca_coll_hierarch_reduce_intra(void *sbuf, void *rbuf, int count,
 }
 
 
-/*
- *	reduce_log_inter
- *
- *	Function:	- reduction using O(N) algorithm
- *	Accepts:	- same as MPI_Reduce()
- *	Returns:	- MPI_SUCCESS or error code
- */
-int mca_coll_hierarch_reduce_inter(void *sbuf, void *rbuf, int count,
-                               struct ompi_datatype_t *dtype, 
-                               struct ompi_op_t *op,
-                               int root, struct ompi_communicator_t *comm)
-{
-  ompi_output_verbose(10, mca_coll_base_output, "In hierarch reduce_inter");
-  return comm->c_coll_basic_module->coll_reduce(sbuf, rbuf, count, dtype,
-                                                op, root, comm);
-}
