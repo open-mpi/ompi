@@ -8,7 +8,7 @@
 /*
  * local functions
  */
-static int mca_base_yyerror(void);
+static int finish_parsing(void) ;
 static int mca_base_yywrap(void);
 
 /*
@@ -17,6 +17,9 @@ static int mca_base_yywrap(void);
 int mca_base_yynewlines = 1;
 bool mca_base_parse_done = false;
 char *mca_base_string = NULL;
+
+#define yyterminate() \
+  return finish_parsing()
 
 %}
 
@@ -42,12 +45,18 @@ CHAR        [A-Za-z0-9_\-\.]
 %%
 
 
-static int mca_base_yyerror(void)
+/*
+ * This cleans up at the end of the parse (since, in this case, we
+ * always parse the entire file) and prevents a memory leak.
+ */
+static int finish_parsing(void) 
 {
-    printf("%d: Invalid input (%s)\n", mca_base_yynewlines, mca_base_yytext);
-    return MCA_BASE_PARSE_ERROR;
+    if (NULL != YY_CURRENT_BUFFER) {
+        yy_delete_buffer(YY_CURRENT_BUFFER); 
+        YY_CURRENT_BUFFER = NULL;
+    }
+    return YY_NULL;
 }
-
 
 static int mca_base_yywrap(void)
 {

@@ -15,6 +15,7 @@
 #include "group/group.h"
 #include "info/info.h"
 #include "util/common_cmd_line.h"
+#include "util/show_help.h"
 #include "errhandler/errhandler.h"
 #include "errhandler/errcode.h"
 #include "errhandler/errclass.h"
@@ -59,29 +60,27 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     bool have_hidden_threads;
     ompi_proc_t** procs;
     size_t nprocs;
+    char *error;
 
     /* Save command line parameters */
 
     if (OMPI_SUCCESS != (ret = ompi_common_cmd_line_init(argc, argv))) {
-        /* JMS show_help */
-        printf("show_help: ompi_mpi_init failed in ompi_common_cmd_line_init\n");
-        return ret;
+        error = "ompi_common_cmd_line_init() failed";
+        goto error;
     }
 
     /* Become a OMPI process */
 
     if (OMPI_SUCCESS != (ret = ompi_init(argc, argv))) {
-        /* JMS show_help */
-        printf("show_help: ompi_mpi_init failed in ompi_init\n");
-        return ret;
+        error = "ompi_init() failed";
+        goto error;
     }
 
     /* Open up the MCA */
 
     if (OMPI_SUCCESS != (ret = mca_base_open())) {
-        /* JMS show_help */
-        printf("show_help: ompi_mpi_init failed in mca_base_open\n");
-        return ret;
+        error = "mca_base_open() failed";
+        goto error;
     }
 
     /* Join the run-time environment */
@@ -91,63 +90,53 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 						    &have_hidden_threads))) ||
        (OMPI_SUCCESS != (ret = ompi_rte_init_stage2(&allow_multi_user_threads,
 						    &have_hidden_threads)))) {
-        /* JMS show_help */
-        printf("show_help: ompi_mpi_init failed in mca_rte_init\n");
-        return ret;
+        error = "mca_rte_init() failed";
+        goto error;
     }
 
     /* Once we've joined the RTE, see if any MCA parameters were
        passed to the MPI level */
 
     if (OMPI_SUCCESS != (ret = ompi_mpi_register_params())) {
-        /* JMS show_help */
-        printf("show_help: ompi_mpi_init failed in mca_mpi_register_params\n");
-        return ret;
+        error = "mca_mpi_register_params() failed";
+        goto error;
     }
 
     /* initialize ompi procs */
     if (OMPI_SUCCESS != (ret = ompi_proc_init())) {
-        /* JMS show_help */
-        printf("show_help: ompi_mpi_init failed in mca_proc_init\n");
-        return ret;
+        error = "mca_proc_init() failed";
+        goto error;
     }
 
     /* Open up relevant MCA modules. */
 
     if (OMPI_SUCCESS != (ret = mca_allocator_base_open())) {
-        /* JMS show_help */
-        printf("show_help: ompi_mpi_init failed in mca_allocator_base_open\n");
-        return ret;
+        error = "mca_allocator_base_open() failed";
+        goto error;
     }
     if (OMPI_SUCCESS != (ret = mca_mpool_base_open())) {
-        /* JMS show_help */
-        printf("show_help: ompi_mpi_init failed in mca_mpool_base_open\n");
-        return ret;
+        error = "mca_mpool_base_open() failed";
+        goto error;
     }
     if (OMPI_SUCCESS != (ret = mca_pml_base_open())) {
-        /* JMS show_help */
-        printf("show_help: ompi_mpi_init failed in mca_pml_base_open\n");
-        return ret;
+        error = "mca_pml_base_open() failed";
+        goto error;
     }
     if (OMPI_SUCCESS != (ret = mca_ptl_base_open())) {
-        /* JMS show_help */
-        printf("show_help: ompi_mpi_init failed in mca_ptl_base_open\n");
-        return ret;
+        error = "mca_ptl_base_open() failed";
+        goto error;
     }
     if (OMPI_SUCCESS != (ret = mca_coll_base_open())) {
-        /* JMS show_help */
-        printf("show_help: ompi_mpi_init failed in mca_coll_base_open\n");
-        return ret;
+        error = "mca_coll_base_open() failed";
+        goto error;
     }
     if (OMPI_SUCCESS != (ret = mca_topo_base_open())) {
-        /* JMS show_help */
-        printf("show_help: ompi_mpi_init failed in mca_topo_base_open\n");
-        return ret;
+        error = "mca_topo_base_open() failed";
+        goto error;
     }
     if (OMPI_SUCCESS != (ret = mca_io_base_open())) {
-        /* JMS show_help */
-        printf("show_help: ompi_mpi_init failed in mca_io_base_open\n");
-        return ret;
+        error = "mca_io_base_open() failed";
+        goto error;
     }
 
     /* Select which pml, ptl, and coll modules to use, and determine the
@@ -158,118 +147,102 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
                                                    allow_multi_user_threads,
                                                    have_hidden_threads, 
                                                    provided))) {
-        /* JMS show_help */
-        printf("show_help: ompi_mpi_init failed in mca_base_init_select_modules\n");
-        return ret;
+        error = "mca_base_init_select_components() failed";
+        goto error;
     }
 
-     /* initialize info */
-     if (OMPI_SUCCESS != (ret = ompi_info_init())) {
-     /* JMS show_help */
-         printf("show_help: ompi_mpi_init failed in ompi_info_init\n");
-         return ret;
-     }
-     /* initialize error handlers */
-     if (OMPI_SUCCESS != (ret = ompi_errhandler_init())) {
-         /* JMS show_help */
-         printf("show_help: ompi_mpi_init failed in ompi_errhandler_init\n");
-         return ret;
-     }
+    /* initialize info */
+    if (OMPI_SUCCESS != (ret = ompi_info_init())) {
+        error = "ompi_info_init() failed";
+        goto error;
+    }
+    /* initialize error handlers */
+    if (OMPI_SUCCESS != (ret = ompi_errhandler_init())) {
+        error = "ompi_errhandler_init() failed";
+        goto error;
+    }
 
-     /* initialize error codes */
-     if (OMPI_SUCCESS != (ret = ompi_mpi_errcode_init())) {
-         /* JMS show_help */
-         printf("show_help: ompi_mpi_init failed in ompi_errcode_init\n");
-         return ret;
-     }
+    /* initialize error codes */
+    if (OMPI_SUCCESS != (ret = ompi_mpi_errcode_init())) {
+        error = "ompi_mpi_errcode_init() failed";
+        goto error;
+    }
 
-     /* initialize error classes */
-     if (OMPI_SUCCESS != (ret = ompi_errclass_init())) {
-         /* JMS show_help */
-         printf("show_help: ompi_mpi_init failed in ompi_errclass_init\n");
-         return ret;
-     }
-
-     /* initialize internal error codes */
-     if (OMPI_SUCCESS != (ret = ompi_errcode_intern_init())) {
-         /* JMS show_help */
-         printf("show_help: ompi_mpi_init failed in ompi_errcode_internal_init\n");
-         return ret;
-     }
+    /* initialize error classes */
+    if (OMPI_SUCCESS != (ret = ompi_errclass_init())) {
+        error = "ompi_errclass_init() failed";
+        goto error;
+    }
+    
+    /* initialize internal error codes */
+    if (OMPI_SUCCESS != (ret = ompi_errcode_intern_init())) {
+        error = "ompi_errcode_intern_init() failed";
+        goto error;
+    }
      
-     /* initialize groups  */
-     if (OMPI_SUCCESS != (ret = ompi_group_init())) {
-         /* JMS show_help */
-         printf("show_help: ompi_mpi_init failed in ompi_group_init\n");
-         return ret;
-     }
+    /* initialize groups  */
+    if (OMPI_SUCCESS != (ret = ompi_group_init())) {
+        error = "ompi_group_init() failed";
+        goto error;
+    }
 
-     /* initialize attribute meta-data structure for comm/win/dtype */
-     if (OMPI_SUCCESS != (ret = ompi_attr_init())) {
-         /* JMS show_help */
-         printf("show_help: ompi_mpi_init failed in ompi_attr_init\n");
-	 return ret;
-     }
+    /* initialize attribute meta-data structure for comm/win/dtype */
+    if (OMPI_SUCCESS != (ret = ompi_attr_init())) {
+        error = "ompi_attr_init() failed";
+        goto error;
+    }
 
-     /* initialize communicators */
-     if (OMPI_SUCCESS != (ret = ompi_comm_init())) {
-         /* JMS show_help */
-         printf("show_help: ompi_mpi_init failed in ompi_comm_init\n");
-         return ret;
-     }
+    /* initialize communicators */
+    if (OMPI_SUCCESS != (ret = ompi_comm_init())) {
+        error = "ompi_comm_init() failed";
+        goto error;
+    }
 
-     /* initialize datatypes */
-     if (OMPI_SUCCESS != (ret = ompi_ddt_init())) {
-         /* JMS show_help */
-         printf("show_help: ompi_mpi_init failed in ompi_ddt_init\n");
-         return ret;
-     }
+    /* initialize datatypes */
+    if (OMPI_SUCCESS != (ret = ompi_ddt_init())) {
+        error = "ompi_ddt_init() failed";
+        goto error;
+    }
 
-     /* initialize ops */
-     if (OMPI_SUCCESS != (ret = ompi_op_init())) {
-         /* JMS show_help */
-         printf("show_help: ompi_mpi_init failed in ompi_op_init\n");
-         return ret;
-     }
+    /* initialize ops */
+    if (OMPI_SUCCESS != (ret = ompi_op_init())) {
+        error = "ompi_op_init() failed";
+        goto error;
+    }
 
-     /* initialize file handles */
-     if (OMPI_SUCCESS != (ret = ompi_file_init())) {
-         /* JMS show_help */
-         printf("show_help: ompi_mpi_init failed in ompi_file_init\n");
-         return ret;
-     }
+    /* initialize file handles */
+    if (OMPI_SUCCESS != (ret = ompi_file_init())) {
+        error = "ompi_file_init() failed";
+        goto error;
+    }
 
-     /* do module exchange */
-     if (OMPI_SUCCESS != (ret = mca_base_modex_exchange())) {
-         /* JMS show_help */
-         printf("show_help: ompi_mpi_init failed in mca_base_modex_exchange\n");
-         return ret;
-     }
+    /* do module exchange */
+    if (OMPI_SUCCESS != (ret = mca_base_modex_exchange())) {
+        error = "ompi_base_modex_exchange() failed";
+        goto error;
+    }
 
-     /* add all ompi_proc_t's to PML */
-     if (NULL == (procs = ompi_proc_world(&nprocs))) {
-         /* JMS show_help */
-         printf("show_help: ompi_mpi_init failed in NULL proc world!\n");
-         return OMPI_ERROR;
-     }
-     if (OMPI_SUCCESS != (ret = mca_pml.pml_add_procs(procs, nprocs))) {
-         /* JMS show_help */
-         printf("show_help: ompi_mpi_init failed in pml_add_procs!\n");
-         free(procs);
-         return ret;
-     }
-     free(procs);
+    /* add all ompi_proc_t's to PML */
+    if (NULL == (procs = ompi_proc_world(&nprocs))) {
+        error = "ompi_proc_world() failed";
+        goto error;
+    }
+    if (OMPI_SUCCESS != (ret = mca_pml.pml_add_procs(procs, nprocs))) {
+        free(procs);
+        error = "PML add procs failed";
+        goto error;
+    }
+    free(procs);
 
-     /* start PTL's */
-     param = 1;
-     if (OMPI_SUCCESS != 
-         (ret = mca_pml.pml_control(MCA_PTL_ENABLE, &param, sizeof(param)))) {
-         /* JMS show_help */
-         printf("show_help: ompi_mpi_init failed in pml_control!\n");
-         return ret;
-     }
+    /* start PTL's */
+    param = 1;
+    if (OMPI_SUCCESS != 
+        (ret = mca_pml.pml_control(MCA_PTL_ENABLE, &param, sizeof(param)))) {
+        error = "PML control failed";
+        goto error;
+    }
 
-     /* save the resulting thread levels */
+    /* save the resulting thread levels */
 
     ompi_mpi_thread_requested = requested;
     *provided = ompi_mpi_thread_provided;
@@ -278,25 +251,32 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 
     /* Init coll for the comms */
 
-    if (OMPI_ERROR == mca_coll_base_comm_select(MPI_COMM_SELF, NULL)) {
-         /* JMS show_help */
-         printf("show_help: ompi_mpi_init failed in mca_coll_base_comm_select SELF!\n");
-	return OMPI_ERROR;
+    if (OMPI_SUCCESS != 
+        (ret = mca_coll_base_comm_select(MPI_COMM_SELF, NULL))) {
+        error = "mca_coll_base_comm_select(MPI_COMM_SELF) failed";
+        goto error;
     }
 
-    if (OMPI_ERROR == mca_coll_base_comm_select(MPI_COMM_WORLD, NULL)) {
-         /* JMS show_help */
-         printf("show_help: ompi_mpi_init failed in mca_coll_base_comm_select WORLD!\n");
-	return OMPI_ERROR;
+    if (OMPI_SUCCESS !=
+        (ret = mca_coll_base_comm_select(MPI_COMM_WORLD, NULL))) {
+        error = "mca_coll_base_comm_select(MPI_COMM_WORLD) failed";
+        goto error;
     }
 
     /* Wait for everyone to initialize */
 
     if (MPI_SUCCESS != (ret = 
                         MPI_COMM_WORLD->c_coll.coll_barrier(MPI_COMM_WORLD))) {
-         /* JMS show_help */
-         printf("show_help: ompi_mpi_init failed in WORLD barrier!\n");
-	return ret;
+        error = "Barrier over MPI_COMM_WORLD failed";
+        goto error;
+    }
+
+ error:
+    if (ret != OMPI_SUCCESS) {
+        ompi_show_help("help-mpi-runtime",
+                       "mpi_init:startup:internal-failure", true,
+                       "MPI_INIT", "MPI_INIT", error, ret);
+        return ret;
     }
 
     /* All done */

@@ -15,6 +15,8 @@ LEX_OUTPUT_ROOT = lex.mca_base_yy
 
 noinst_LTLIBRARIES = libmca_base.la
 
+pkgdata_DATA = help-mca-base.txt
+
 # Source code files
 
 headers = \

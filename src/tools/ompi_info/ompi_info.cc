@@ -40,6 +40,7 @@ const string ompi_info::type_ompi = "ompi";
 const string ompi_info::type_base = "base";
 ompi_info::type_vector_t ompi_info::mca_types;
 
+
 int main(int argc, char *argv[])
 {
   int ret = 0;
