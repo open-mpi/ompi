@@ -113,8 +113,10 @@ int mca_ptl_sm_component_open(void)
         mca_ptl_sm_param_register_int("max_procs", -1);
     mca_ptl_sm_component.sm_mpool_name =
         mca_ptl_sm_param_register_string("mpool", "sm");
-    mca_ptl_sm_component.fragment_size =
-        mca_ptl_sm_param_register_int("fragment_size", 8192);
+    mca_ptl_sm_component.first_fragment_size =
+        mca_ptl_sm_param_register_int("first_fragment_size", 1024);
+    mca_ptl_sm_component.max_fragment_size =
+        mca_ptl_sm_param_register_int("max_fragment_size", 8*1024);
     mca_ptl_sm_component.fragment_alignment =
         mca_ptl_sm_param_register_int("fragment_alignment",
                 CACHE_LINE_SIZE);
@@ -166,21 +168,12 @@ mca_ptl_base_module_t** mca_ptl_sm_component_init(
 
     mca_ptl_sm_component.sm_mpool_base = mca_ptl_sm_component.sm_mpool->mpool_base();
 
-    /* initialize send descriptor free list */
-    ompi_free_list_init(&mca_ptl_sm_component.sm_send_requests, 
-        sizeof(mca_ptl_sm_send_request_t),
-        OBJ_CLASS(mca_ptl_sm_send_request_t),
-        mca_ptl_sm_component.sm_free_list_num,
-        mca_ptl_sm_component.sm_free_list_max,
-        mca_ptl_sm_component.sm_free_list_inc,
-        mca_ptl_sm_component.sm_mpool); /* use shared-memory pool */
-
     /* initialize fragment descriptor free list */
 
     /* allocation will be for the fragment descriptor, payload buffer,
      * and padding to ensure proper alignment can be acheived */
     length=sizeof(mca_ptl_sm_frag_t)+mca_ptl_sm_component.fragment_alignment+
-        mca_ptl_sm_component.fragment_size;
+        mca_ptl_sm_component.first_fragment_size;
 
     ompi_free_list_init(&mca_ptl_sm_component.sm_frags, length,
         OBJ_CLASS(mca_ptl_sm_frag_t),
