@@ -87,9 +87,9 @@ static int ompi_process_name_compare(ompi_process_name_t* n1, ompi_process_name_
        return -1;
    else if(n1->jobid > n2->jobid)
        return 1;
-   else if(n1->procid < n2->procid)
+   else if(n1->vpid < n2->vpid)
        return -1;
-   else if(n1->procid > n2->procid)
+   else if(n1->vpid > n2->vpid)
        return 1;
    return(0);
 } 
