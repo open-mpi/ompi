@@ -27,6 +27,7 @@ struct mca_ptl_sm_module_1_0_0_t {
     int sm_free_list_num;                /**< initial size of free lists */
     int sm_free_list_max;                /**< maximum size of free lists */
     int sm_free_list_inc;                /**< number of elements to alloc when growing free lists */
+    int sm_max_procs;                    /**< upper limit on the number of processes using the shared memory pool */
     void* sm_base_addr;                  /**< base address of mmaped region */
     ompi_free_list_t sm_send_requests;    /**< free list of sm send requests -- sendreq + sendfrag */
     ompi_free_list_t sm_send_frags;       /**< free list of sm send fragments */
@@ -193,6 +194,16 @@ extern int mca_ptl_sm_send(
     size_t *size,
     int flags
 );
+
+/**
+ * Data structure used to hold information that will be exchanged with
+ * all other procs at startup.  !!!!! This is only temporary, until the
+ * registry is complete
+ */
+#define MCA_PTL_SM_MAX_HOSTNAME_LEN  128
+typedef struct mca_ptl_sm_exchange{
+    char host_name[MCA_PTL_SM_MAX_HOSTNAME_LEN];
+}mca_ptl_sm_exchange_t;
 
 #endif
 
