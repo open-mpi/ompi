@@ -31,6 +31,9 @@ mpitest: mpi_test.c
 check: % : %.c
 	${HOME}/installs/openmpi/bin/mpicc -g -o $@ check.c
 
+bw: % : %.c
+	${HOME}/installs/openmpi/bin/mpicc -g -o bw bw.c
+
 lat: % : %.c
 	${HOME}/installs/openmpi/bin/mpicc -g -o lat lat.c
 
