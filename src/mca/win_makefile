@@ -5,8 +5,7 @@
 # time to compile a component, so just adding this to the svn repository 
 #
 
-# this is hardcoded for now. but will change shortly
-topdir = C:\cygwin\home\pkambadu\ompi-new
+topdir = `echo $(CURDIR) | sed 's/^\//C:\/cygwin\//g' | sed 's/\/src\/mca//g'`
 gen_base = ${topdir}/src/win32/generated_include
 copy_base = ${topdir}/src/mca/
 

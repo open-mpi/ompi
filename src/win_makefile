@@ -5,8 +5,7 @@
 # time to compile a component, so just adding this to the svn repository 
 #
 
-# this is hardcoded for now. but will change shortly
-topdir = C:\cygwin\home\pkambadu\ompi-new
+topdir = `echo $(CURDIR) | sed 's/^\//C:\/cygwin\//g' | sed 's/\/src//g'`
 
 # list of components to build with the c compiler
 C_SUBDIRS =  \
