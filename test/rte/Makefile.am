@@ -4,8 +4,8 @@
 #
 
 include $(top_srcdir)/config/Makefile.options
-
 AM_CPPFLAGS = \
+            -I$(top_srcdir)/test/support \
             -DLAM_PREFIX="\"$(prefix)\"" \
             -DLAM_BINDIR="\"$(bindir)\"" \
             -DLAM_LIBDIR="\"$(libdir)\"" \
@@ -24,6 +24,7 @@ openmpi_SOURCES = \
 
 openmpi_LDADD = \
        $(top_builddir)/src/mca/pcm/base/pcm_base_open.lo \
+       $(top_builddir)/test/support/libsupport.la \
        $(top_builddir)/src/libmpi.la
 
 openmpi_DFLAGS = $(LIBMPI_EXTRA_LDFLAGS) $(LIBLAM_EXTRA_LDFLAGS)
