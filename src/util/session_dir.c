@@ -439,28 +439,50 @@ orte_dir_empty(char *pathname)
     DIR *dp;
     struct dirent *ep;
     char *filenm;
-    bool empty;
+#ifndef HAVE_STRUCT_DIRENT_D_TYPE 
+    int ret;
+    struct stat buf;
+#endif
 
-    empty = true;
-
-    if (NULL != pathname) {  /* protect against error */
-	dp = opendir(pathname);
-	if (NULL != dp) {
-	    while ((ep = readdir(dp))) {
-		if ((0 != strcmp(ep->d_name, ".")) &&
-		    (0 != strcmp(ep->d_name, "..")) &&
-		    (DT_DIR != ep->d_type) &&
-		    (0 != strncmp(ep->d_name, "output-", strlen("output-"))) &&
-		    (0 != strcmp(ep->d_name, "universe-setup.txt"))) {
-		    filenm = orte_os_path(false, pathname, ep->d_name, NULL);
-		    unlink(filenm);
-		}
-	    }
-	    closedir(dp);
-	}
+    if (NULL == pathname) {  /* protect against error */
+        return;
     }
+
+    dp = opendir(pathname);
+    if (NULL == dp) {
+        return;
+    }
+
+    while (NULL != (ep = readdir(dp)) ) {
+        /* skip:
+         *  - . and ..
+         *  - directories
+         *  - files starting with "output-"
+         *  - universe contact (universe-setup.txt)
+         */
+        if ((0 != strcmp(ep->d_name, ".")) &&
+            (0 != strcmp(ep->d_name, "..")) &&
+            (0 != strncmp(ep->d_name, "output-", strlen("output-"))) &&
+            (0 != strcmp(ep->d_name, "universe-setup.txt"))) {
+
+            filenm = orte_os_path(false, pathname, ep->d_name, NULL);
+
+            /* make sure it's not a directory */
+#ifdef HAVE_STRUCT_DIRENT_D_TYPE
+            if (DT_DIR == ep->d_type) {
+                continue;
+            }
+#else /* have dirent.d_type */
+            ret = stat(filenm, &buf);
+            if (ret < 0 || S_ISDIR(buf.st_mode)) {
+                continue;
+            }
+#endif /* have dirent.d_type */
+            unlink(filenm);
+        }
+    }
+    closedir(dp);
 #else
-    bool empty = false;
     char search_path[MAX_PATH];
     HANDLE file;
     WIN32_FIND_DATA file_data;

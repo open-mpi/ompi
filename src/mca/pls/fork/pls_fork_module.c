@@ -21,11 +21,13 @@
  */
 
 #include "ompi_config.h"
+
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <signal.h>
 
 #include "include/orte_constants.h"
 #include "event/event.h"

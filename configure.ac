@@ -949,12 +949,6 @@ AC_CHECK_HEADERS([alloca.h aio.h arpa/inet.h dirent.h dlfcn.h execinfo.h \
     syslog.h termios.h ulimit.h unistd.h sys/param.h sys/tree.h sys/queue.h \
     sys/sockio.h])
 
-# snprintf declaration
-# gethostname declaration
-# headers:
-#   stropts.h grh.h netinet/tcp.h sys/select.h sys/resource.h pty.h util.h
-#   rpc/types.h rpc/xdr.h sched.h strings.h
-
 # SA_RESTART in signal.h
 AC_MSG_CHECKING([if SA_RESTART defined in signal.h])
 AC_EGREP_CPP(yes, [
@@ -975,7 +969,9 @@ AC_DEFINE_UNQUOTED(OMPI_HAVE_SA_LEN, $VALUE,
     [Whether we have the sa_len struct in <sys/socket.h> or not])
 AC_MSG_RESULT([$MSG])
 
-# union semun in sys/sem.h
+AC_CHECK_MEMBERS([struct dirent.d_type], [], [], [
+#include <sys/types.h>
+#include <dirent.h>])
 
 # Note that sometimes we have <stdbool.h>, but it doesn't work (e.g.,
 # have both Portland and GNU installed; using pgcc will find GNU's
