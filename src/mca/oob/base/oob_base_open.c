@@ -6,7 +6,7 @@
 
 #include "mca/mca.h"
 #include "mca/base/base.h"
-#include "mca/oob/base/base.h"
+#include "mca/oob/oob.h"
 
 
 /*

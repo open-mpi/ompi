@@ -1,5 +1,6 @@
 #include "mca/oob/oob.h"
 #include "mca/oob/base/base.h"
+#include <string.h>
 #include <netinet/in.h>
 
 struct mca_oob_base_cb_data_t {
@@ -52,7 +53,7 @@ static void mca_oob_base_recv_cb(int status, const ompi_process_name_t* peer,
 /*
  * Non-blocking version of mca_oob_recv_nb().
  *
- * @param peer (IN)    Opaque name of peer process or MCA_OOB_BASE_ANY for wildcard receive.
+ * @param peer (IN)    Opaque name of peer process or MCA_OOB_NAME_ANY for wildcard receive.
  * @param msg (IN)     Array of iovecs describing user buffers and lengths.
  * @param count (IN)   Number of elements in iovec array.
  * @param flags (IN)   May be MCA_OOB_PEEK to return up to size bytes of msg w/out removing it from the queue,
@@ -69,7 +70,7 @@ int mca_oob_recv_nb(ompi_process_name_t* peer, const struct iovec* msg, int coun
 /*
  * Non-blocking version of mca_oob_recv_ntoh().
  *
- * @param peer (IN/OUT) Opaque name of peer process or MCA_OOB_BASE_ANY for wildcard receive.
+ * @param peer (IN/OUT) Opaque name of peer process or MCA_OOB_NAME_ANY for wildcard receive.
  * @param msg (IN)      Array of iovecs describing user buffers and lengths.
  * @param types (IN)    Parallel array to iovecs describing data type of each iovec element.
  * @param count (IN)    Number of elements in iovec array.

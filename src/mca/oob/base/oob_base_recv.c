@@ -6,7 +6,7 @@
 /*
 * Similiar to unix recv(2)
 *
-* @param peer (IN)    Opaque name of peer process or MCA_OOB_BASE_ANY for wildcard receive.
+* @param peer (IN)    Opaque name of peer process or MCA_OOB_NAME_ANY for wildcard receive.
 * @param msg (IN)     Array of iovecs describing user buffers and lengths.
 * @param types (IN)   Parallel array to iovecs describing data type of each iovec element.
 * @param count (IN)   Number of elements in iovec array.
@@ -23,7 +23,7 @@ int mca_oob_recv(ompi_process_name_t* peer, const struct iovec *msg, int count, 
 /*
  * Receive data and convert (if required) to host byte order.
  *
- * @param peer (IN)    Opaque name of peer process or MCA_OOB_BASE_ANY for wildcard receive.
+ * @param peer (IN)    Opaque name of peer process or MCA_OOB_NAME_ANY for wildcard receive.
  * @param msg (IN)     Array of iovecs describing user buffers and lengths.
  * @param types (IN)   Parallel array to iovecs describing data type of each iovec element.
  * @param count (IN)   Number of elements in iovec array.

@@ -287,6 +287,8 @@ mca_oob_t* mca_oob_tcp_init(bool *allow_multi_user_threads, bool *have_hidden_th
 
 #if 0
     /* intialize event library */
+    memset(&mca_oob_tcp_component.tcp_recv_event, 0, sizeof(ompi_event_t));
+    memset(&mca_oob_tcp_component.tcp_send_event, 0, sizeof(ompi_event_t));
     if(ompi_event_init() != OMPI_SUCCESS) {
         ompi_output(0, "mca_oob_tcp_init: unable to initialize event library\n");
         return NULL;
@@ -316,6 +318,7 @@ int mca_oob_tcp_finalize(void)
         mca_oob_tcp_peer_close(peer);
         OBJ_DESTRUCT(peer);
     }
+    ompi_event_fini();
     return OMPI_SUCCESS;
 }
 
