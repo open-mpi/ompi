@@ -5,21 +5,25 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-SUBDIRS = attribute communicator datatype group info interface proc request runtime win
+# See if configure found a valid f77 compiler
 
-noinst_LTLIBRARIES = libmpi_convenience.la
+if BUILD_MPI_F77
+f77_lib = f77/libmpi_f77.la
+else
+f77_lib =
+endif
 
-sources = \
-	attribute/libmpi_attribute.la \
-        communicator/libmpi_communicator.la \
-        datatype/libmpi_datatype.la \
-        group/libmpi_group.la \
-        info/libmpi_info.la \
-        interface/libmpi_interface.la \
-        proc/libmpi_proc.la \
-        request/libmpi_request.la \
-        runtime/libmpi_runtime.la \
-	win/libmpi_win.la
+# See if configure found a valid f90/f95 compiler
 
-libmpi_convenience_la_SOURCES =
-libmpi_convenience_la_LIBADD = $(sources)
+if BUILD_MPI_F90
+f90_lib =
+else
+f90_lib =
+endif
+
+SUBDIRS = c cxx f77 f90
+
+noinst_LTLIBRARIES = libmpi_interface.la
+
+libmpi_interface_la_SOURCES =
+libmpi_interface_la_LIBADD = c/libmpi_c.la $(f77_lib) $(f90_lib)
