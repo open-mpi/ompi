@@ -470,9 +470,11 @@ static int do_open(int output_id, lam_output_stream_t *lds)
 
     /* Setup the filename and open flags */
 
-#if NEED_TO_IMPLEMENT_SESSION_DIRECTORY
+#if 0
     filename = lam_get_tmpdir();
 #else
+    lam_output(0, "WARNING: need to implement session dir (%s, %d)\n",
+               __FILE__, __LINE__);
     filename = malloc(256);
     strcpy(filename, "/tmp");
 #endif

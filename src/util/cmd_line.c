@@ -796,7 +796,7 @@ static int split_shorts(lam_cmd_line_t *cmd, bool ignore_unknown)
   argc = 0;
   argv = NULL;
   changed = false;
-  if (cmd->lcl_argv > 0) {
+  if (cmd->lcl_argc > 0) {
     lam_argv_append(&argc, &argv, cmd->lcl_argv[0]);
   }
   for (i = 1; i < cmd->lcl_argc; ) {
