@@ -1,0 +1,12 @@
+# -*- shell-script -*-
+#
+# $HEADER$
+#
+
+#
+# Main function.  This will be invoked in the middle of the templated
+# configure script.
+#
+AC_DEFUN([MCA_CONFIGURE_STUB],[
+   AC_MSG_ERROR([Anju needs to fill me in])
+])dnl
