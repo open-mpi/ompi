@@ -63,7 +63,7 @@ int main(int argc, char *argv[])
     exit(ret);
   }
   ompi_cmd_line_make_opt(cmd_line, 'v', "version", 2, 
-                        "Show version of OMPI/MPI or a module");
+                        "Show version of OMPI/MPI or a component");
   ompi_cmd_line_make_opt(cmd_line, '\0', "param", 2, 
                         "Show MCA parameters");
   ompi_cmd_line_make_opt(cmd_line, '\0', "path", 1, 
@@ -169,27 +169,27 @@ int main(int argc, char *argv[])
     ompi_info::show_path(path_prefix, OMPI_PREFIX);
     ompi_info::do_arch(cmd_line);
     ompi_info::do_config(false);
-    ompi_info::open_modules();
-    ompi_info::show_module_version("base", module_all, ver_full, type_all);
-    ompi_info::show_module_version("allocator", module_all, ver_full, type_all);
-    ompi_info::show_module_version("coll", module_all, ver_full, type_all);
-    ompi_info::show_module_version("common", module_all, ver_full, type_all);
-    ompi_info::show_module_version("gpr", module_all, ver_full, type_all);
-    ompi_info::show_module_version("io", module_all, ver_full, type_all);
-    ompi_info::show_module_version("mpool", module_all, ver_full, type_all);
-    ompi_info::show_module_version("ns", module_all, ver_full, type_all);
-    ompi_info::show_module_version("one", module_all, ver_full, type_all);
-    ompi_info::show_module_version("oob", module_all, ver_full, type_all);
-    ompi_info::show_module_version("op", module_all, ver_full, type_all);
-    ompi_info::show_module_version("pcm", module_all, ver_full, type_all);
-    ompi_info::show_module_version("pml", module_all, ver_full, type_all);
-    ompi_info::show_module_version("ptl", module_all, ver_full, type_all);
-    ompi_info::show_module_version("topo", module_all, ver_full, type_all);
+    ompi_info::open_components();
+    ompi_info::show_component_version("base", component_all, ver_full, type_all);
+    ompi_info::show_component_version("allocator", component_all, ver_full, type_all);
+    ompi_info::show_component_version("coll", component_all, ver_full, type_all);
+    ompi_info::show_component_version("common", component_all, ver_full, type_all);
+    ompi_info::show_component_version("gpr", component_all, ver_full, type_all);
+    ompi_info::show_component_version("io", component_all, ver_full, type_all);
+    ompi_info::show_component_version("mpool", component_all, ver_full, type_all);
+    ompi_info::show_component_version("ns", component_all, ver_full, type_all);
+    ompi_info::show_component_version("one", component_all, ver_full, type_all);
+    ompi_info::show_component_version("oob", component_all, ver_full, type_all);
+    ompi_info::show_component_version("op", component_all, ver_full, type_all);
+    ompi_info::show_component_version("pcm", component_all, ver_full, type_all);
+    ompi_info::show_component_version("pml", component_all, ver_full, type_all);
+    ompi_info::show_component_version("ptl", component_all, ver_full, type_all);
+    ompi_info::show_component_version("topo", component_all, ver_full, type_all);
   }
 
   // All done
 
-  ompi_info::close_modules();
+  ompi_info::close_components();
   ompi_cmd_line_free(cmd_line);
   mca_base_close();
   ompi_finalize();

@@ -44,8 +44,8 @@ namespace ompi_info {
 
   void do_version(bool want_all, ompi_cmd_line_t *cmd_line);
   void show_ompi_version(const std::string& scope);
-  void show_module_version(const std::string& type_name, 
-                           const std::string& module_name,
+  void show_component_version(const std::string& type_name, 
+                           const std::string& component_name,
                            const std::string& scope, 
                            const std::string& ver_type);
 
@@ -53,7 +53,7 @@ namespace ompi_info {
   // Parameter/configuration-related functions
   //
 
-  extern std::string module_all;
+  extern std::string component_all;
   extern std::string param_all;
 
   extern std::string path_prefix;
@@ -64,7 +64,7 @@ namespace ompi_info {
   extern std::string path_sysconfdir;
 
   void do_params();
-  void show_mca_params(const std::string& type, const std::string& module, 
+  void show_mca_params(const std::string& type, const std::string& component, 
                        const std::string& param);
 
   void do_path(bool want_all, ompi_cmd_line_t *cmd_line);
@@ -84,15 +84,15 @@ namespace ompi_info {
            const std::string& value);
 
   //
-  // Module-related functions
+  // Component-related functions
   //
 
-  typedef std::map<std::string, ompi_list_t *> module_map_t;
+  typedef std::map<std::string, ompi_list_t *> component_map_t;
 
-  extern module_map_t module_map;
+  extern component_map_t component_map;
 
-  void open_modules();
-  void close_modules();
+  void open_components();
+  void close_components();
 
 }
 
