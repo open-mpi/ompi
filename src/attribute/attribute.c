@@ -7,7 +7,7 @@
 #include "include/constants.h"
 
 /**
- * Macros - Lots of them!
+ * Macros
  */
 
 #define ATTR_TABLE_SIZE 10
@@ -16,6 +16,9 @@
    here */
 
 #define MPI_DATATYPE_NULL_COPY_FN MPI_TYPE_NULL_COPY_FN
+#define attr_communicator_f c_f_to_c_index
+#define attr_datatype_f d_f_to_c_index
+#define attr_win_f w_f_to_c_index
 
 #define CREATE_KEY() ompi_bitmap_find_and_set_first_unset_bit(key_bitmap)
 
@@ -27,18 +30,33 @@
    MPI_SUCCESS */
 
 #define DELETE_ATTR_OBJECT(type, attribute) \
-    if ((err = (*((key_item->delete_attr_fn).attr_##type##_delete_fn)) \
-                                    ((ompi_##type##_t *)object, \
-				    key, attribute, \
-				    key_item->extra_state)) != MPI_SUCCESS) {\
-	return err;\
+    if((key_item->attr_flag & OMPI_KEYVAL_F77)) { \
+        (*((key_item->delete_attr_fn).attr_F_delete_fn)) \
+                            (&(((ompi_##type##_t *)object)->attr_##type##_f), \
+			    &key, (int *) &attribute, \
+			    (int *) &key_item->extra_state, &err); \
+    } else { \
+        if ((err = (*((key_item->delete_attr_fn).attr_##type##_delete_fn)) \
+                            ((ompi_##type##_t *)object, \
+			    key, attribute, \
+			    key_item->extra_state)) != MPI_SUCCESS) {\
+	    return err;\
+        } \
     }
 
 #define COPY_ATTR_OBJECT(type, old_object, hash_value) \
-    if ((err = (*((hash_value->copy_attr_fn).attr_##type##_copy_fn)) \
-          ((ompi_##type##_t *)old_object, key, hash_value->extra_state, \
-            old_attr, &new_attr, &flag)) != MPI_SUCCESS) { \
-        return err; \
+    if((hash_value->attr_flag & OMPI_KEYVAL_F77)) { \
+        (*((hash_value->copy_attr_fn).attr_F_copy_fn)) \
+                   (&(((ompi_##type##_t *)old_object)->attr_##type##_f),\
+		    (int *) &key, (int *) &hash_value->extra_state, \
+		    (int *) &old_attr, \
+		    (int *) &new_attr, &flag, &err); \
+    } else { \
+        if ((err = (*((hash_value->copy_attr_fn).attr_##type##_copy_fn)) \
+              ((ompi_##type##_t *)old_object, key, hash_value->extra_state, \
+               old_attr, &new_attr, &flag)) != MPI_SUCCESS) { \
+           return err; \
+        }\
     }
 
 
@@ -84,7 +102,6 @@ static ompi_bitmap_t *key_bitmap;
 static void 
 ompi_attribute_construct(ompi_attrkey_t *attribute) 
 {
-    attribute->a_fhandle = -1;
     OBJ_CONSTRUCT(&(attribute->super), ompi_hash_table_t);
 }
 
@@ -123,7 +140,7 @@ ompi_attrkey_item_destruct(ompi_attrkey_item_t *item)
  */
 
 int 
-ompi_attr_init(void)
+ompi_attr_init()
 {
     attr_hash = OBJ_NEW(ompi_attrkey_t);
     if (NULL == attr_hash) {
@@ -147,7 +164,7 @@ ompi_attr_init(void)
  */
 
 void 
-ompi_attr_destroy(void)
+ompi_attr_destroy()
 {
     OBJ_RELEASE(attr_hash);
     OBJ_RELEASE(key_bitmap);
@@ -156,9 +173,9 @@ ompi_attr_destroy(void)
 
 int 
 ompi_attr_create_keyval(ompi_attribute_type_t type,
-		       ompi_attribute_fn_ptr_union_t copy_attr_fn,
-		       ompi_attribute_fn_ptr_union_t delete_attr_fn,
-		       int *key, void *extra_state, int predefined)
+			ompi_attribute_fn_ptr_union_t copy_attr_fn,
+			ompi_attribute_fn_ptr_union_t delete_attr_fn,
+			int *key, void *extra_state, int flags)
 {
     ompi_attrkey_item_t *attr;
     int ret;
@@ -190,7 +207,7 @@ ompi_attr_create_keyval(ompi_attribute_type_t type,
     attr->extra_state = extra_state;
     attr->attr_type = type;
     attr->key = *key;
-    attr->attr_flag = (1 == predefined) ? OMPI_PREDEFINED : 0;
+    attr->attr_flag = flags;
 
     /* Bump up the reference count, since we want the object to be
        destroyed only when free_keyval is called and not when all
@@ -220,8 +237,8 @@ ompi_attr_free_keyval(ompi_attribute_type_t type, int *key, int predefined)
 	ompi_hash_table_get_value_uint32(&attr_hash->super, *key);
   
     if ((NULL == key_item) || (key_item->attr_type != type) ||
-	((!predefined) && (key_item->attr_flag & OMPI_PREDEFINED)))
-	return MPI_INVALID_ATTR_KEYVAL;
+	((!predefined) && (key_item->attr_flag & OMPI_KEYVAL_PREDEFINED)))
+	return OMPI_ERR_BAD_PARAM;
 
     /* Not releasing the object here, it will be done in MPI_*_attr_delete */
 
@@ -257,8 +274,8 @@ ompi_attr_delete(ompi_attribute_type_t type, void *object,
 	ompi_hash_table_get_value_uint32(&attr_hash->super, key);
   
     if ((NULL == key_item) || (key_item->attr_type!= type) ||
-	((!predefined) && (key_item->attr_flag & OMPI_PREDEFINED)))
-	return MPI_INVALID_ATTR_KEYVAL;
+	((!predefined) && (key_item->attr_flag & OMPI_KEYVAL_PREDEFINED)))
+	return OMPI_ERR_BAD_PARAM;
 
     /* Check if the key is valid for the communicator/window/dtype. If
        yes, then delete the attribute and key entry from the CWD hash */
@@ -321,9 +338,9 @@ ompi_attr_set(ompi_attribute_type_t type, void *object,
     /* If key not found */
 
     if ((NULL == key_item) || (key_item->attr_type != type) ||
-	((!predefined) && (key_item->attr_flag & OMPI_PREDEFINED))) {
+	((!predefined) && (key_item->attr_flag & OMPI_KEYVAL_PREDEFINED))) {
 	fprintf(stderr, "ompi_attribute: ompi_attr_set: key not found \n");
-	return MPI_INVALID_ATTR_KEYVAL;
+	return OMPI_ERR_BAD_PARAM;
     }
 
     /* Now see if the key is present in the CWD object. If so, delete
