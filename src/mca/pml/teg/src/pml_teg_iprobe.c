@@ -27,17 +27,16 @@ int mca_pml_teg_iprobe(int src,
     mca_pml_base_recv_request_t recvreq;
     recvreq.req_base.req_ompi.req_type = OMPI_REQUEST_PML;
     recvreq.req_base.req_type = MCA_PML_REQUEST_IPROBE;
-    MCA_PML_BASE_RECV_REQUEST_INIT(&recvreq, NULL, 0, NULL, src, tag, comm, true);
+    MCA_PML_BASE_RECV_REQUEST_INIT(&recvreq, NULL, 0, &ompi_mpi_char, src, tag, comm, true);
 
-    if ((rc = mca_pml_teg_recv_request_start(&recvreq)) != OMPI_SUCCESS) {
-        OBJ_DESTRUCT(&recvreq);
-        return rc;
+    if ((rc = mca_pml_teg_recv_request_start(&recvreq)) == OMPI_SUCCESS) {
+        if ((*matched = recvreq.req_base.req_ompi.req_complete) == true
+            && (NULL != status)) {
+            *status = recvreq.req_base.req_ompi.req_status;
+        }
     }
-    if ((*matched = recvreq.req_base.req_ompi.req_complete) == true
-        && (NULL != status)) {
-        *status = recvreq.req_base.req_ompi.req_status;
-    }
-    return OMPI_SUCCESS;
+    MCA_PML_BASE_RECV_REQUEST_RETURN( &recvreq );
+    return rc;
 }
 
 
@@ -50,10 +49,10 @@ int mca_pml_teg_probe(int src,
     mca_pml_base_recv_request_t recvreq;
     recvreq.req_base.req_ompi.req_type = OMPI_REQUEST_PML;
     recvreq.req_base.req_type = MCA_PML_REQUEST_PROBE;
-    MCA_PML_BASE_RECV_REQUEST_INIT(&recvreq, NULL, 0, NULL, src, tag, comm, true);
+    MCA_PML_BASE_RECV_REQUEST_INIT(&recvreq, NULL, 0, &ompi_mpi_char, src, tag, comm, true);
 
     if ((rc = mca_pml_teg_recv_request_start(&recvreq)) != OMPI_SUCCESS) {
-        OBJ_DESTRUCT(&recvreq);
+        MCA_PML_BASE_RECV_REQUEST_RETURN( &recvreq );
         return rc;
     }
 
@@ -77,6 +76,7 @@ int mca_pml_teg_probe(int src,
     if (NULL != status) {
         *status = recvreq.req_base.req_ompi.req_status;
     }
+    MCA_PML_BASE_RECV_REQUEST_RETURN( &recvreq );
     return OMPI_SUCCESS;
 }
 
