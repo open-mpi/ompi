@@ -194,31 +194,34 @@ int mca_gpr_replica_finalize(void);
 
 int gpr_replica_delete_segment(char *segment);
 
-int gpr_replica_put(ompi_registry_mode_t mode, char *segment,
+int gpr_replica_put(ompi_registry_mode_t addr_mode, char *segment,
 		    char **tokens, ompi_registry_object_t object,
 		    ompi_registry_object_size_t size);
 
-int gpr_replica_delete_object(ompi_registry_mode_t mode,
+int gpr_replica_delete_object(ompi_registry_mode_t addr_mode,
 			      char *segment, char **tokens);
 
 ompi_list_t* gpr_replica_index(char *segment);
 
-int gpr_replica_subscribe(ompi_registry_mode_t mode,
+int gpr_replica_subscribe(ompi_registry_mode_t addr_mode,
 			  ompi_registry_notify_action_t action,
 			  char *segment, char **tokens,
 			  ompi_registry_notify_cb_fn_t cb_func, void *user_tag);
 
-int gpr_replica_unsubscribe(ompi_registry_mode_t mode,
+int gpr_replica_unsubscribe(ompi_registry_mode_t addr_mode,
 			    ompi_registry_notify_action_t action,
-			    char *segment, char **tokens,
-			    ompi_registry_notify_cb_fn_t cb_func, void *user_tag);
+			    char *segment, char **tokens);
 
 int gpr_replica_synchro(ompi_registry_synchro_mode_t synchro_mode,
-			ompi_registry_mode_t mode,
+			ompi_registry_mode_t addr_mode,
 			char *segment, char **tokens, int trigger,
 			ompi_registry_notify_cb_fn_t cb_func, void *user_tag);
 
-ompi_list_t* gpr_replica_get(ompi_registry_mode_t mode,
+int gpr_replica_cancel_synchro(ompi_registry_synchro_mode_t synchro_mode,
+			       ompi_registry_mode_t addr_mode,
+			       char *segment, char **tokens, int trigger);
+
+ompi_list_t* gpr_replica_get(ompi_registry_mode_t addr_mode,
 			     char *segment, char **tokens);
 
 ompi_list_t* gpr_replica_test_internals(int level);

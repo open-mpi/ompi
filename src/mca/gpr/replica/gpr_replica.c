@@ -322,13 +322,42 @@ int gpr_replica_subscribe(ompi_registry_mode_t addr_mode,
     }
 }
 
-int gpr_replica_unsubscribe(ompi_registry_mode_t mode,
+int gpr_replica_unsubscribe(ompi_registry_mode_t addr_mode,
 			    ompi_registry_notify_action_t action,
-			    char *segment, char **tokens,
-			    ompi_registry_notify_cb_fn_t cb_func, void *user_tag)
+			    char *segment, char **tokens)
 {
-    return OMPI_ERR_NOT_IMPLEMENTED;
+    mca_gpr_notify_request_tracker_t *trackptr;
+    mca_gpr_notify_id_t id_tag;
+
+    /* protect against errors */
+    if (NULL == segment) {
+	return OMPI_ERROR;
+    }
+
+    /* find trigger on replica - return id_tag */
+    if (MCA_GPR_NOTIFY_ID_MAX == (id_tag = gpr_replica_remove_trigger(OMPI_REGISTRY_SYNCHRO_MODE_NONE, action,
+									  addr_mode, segment, tokens, 0))) {
+	return OMPI_ERROR;
+    }
+
+    /* find request on notify tracking system */
+    for (trackptr = (mca_gpr_notify_request_tracker_t*)ompi_list_get_first(&mca_gpr_replica_notify_request_tracker);
+	 trackptr != (mca_gpr_notify_request_tracker_t*)ompi_list_get_end(&mca_gpr_replica_notify_request_tracker) &&
+	     trackptr->id_tag != id_tag;
+	 trackptr = (mca_gpr_notify_request_tracker_t*)ompi_list_get_next(trackptr));
+
+    /* ...and remove it */
+    if (trackptr != (mca_gpr_notify_request_tracker_t*)ompi_list_get_end(&mca_gpr_replica_notify_request_tracker)) {
+	ompi_list_remove_item(&mca_gpr_replica_notify_request_tracker, &trackptr->item);
+	OBJ_RELEASE(trackptr);
+
+	return OMPI_SUCCESS;
+    }
+
+    /* if we get here, then couldn't find request */
+    return OMPI_ERROR;
 }
+
 
 int gpr_replica_synchro(ompi_registry_synchro_mode_t synchro_mode,
 			ompi_registry_mode_t addr_mode,
@@ -369,17 +398,53 @@ int gpr_replica_synchro(ompi_registry_synchro_mode_t synchro_mode,
     }
 }
 
+int gpr_replica_cancel_synchro(ompi_registry_synchro_mode_t synchro_mode,
+			       ompi_registry_mode_t addr_mode,
+			       char *segment, char **tokens, int trigger)
+{
+    mca_gpr_notify_request_tracker_t *trackptr;
+    mca_gpr_notify_id_t id_tag;
+
+    /* protect against errors */
+    if (NULL == segment || 0 > trigger) {
+	return OMPI_ERROR;
+    }
+
+    /* find trigger on replica - return id_tag */
+    if (MCA_GPR_NOTIFY_ID_MAX == (id_tag = gpr_replica_remove_trigger(synchro_mode, OMPI_REGISTRY_NOTIFY_NONE,
+									  addr_mode, segment, tokens, trigger))) {
+	return OMPI_ERROR;
+    }
+
+    /* find request on notify tracking system */
+    for (trackptr = (mca_gpr_notify_request_tracker_t*)ompi_list_get_first(&mca_gpr_replica_notify_request_tracker);
+	 trackptr != (mca_gpr_notify_request_tracker_t*)ompi_list_get_end(&mca_gpr_replica_notify_request_tracker) &&
+	     trackptr->id_tag != id_tag;
+	 trackptr = (mca_gpr_notify_request_tracker_t*)ompi_list_get_next(trackptr));
+
+    /* ...and remove it */
+    if (trackptr != (mca_gpr_notify_request_tracker_t*)ompi_list_get_end(&mca_gpr_replica_notify_request_tracker)) {
+	ompi_list_remove_item(&mca_gpr_replica_notify_request_tracker, &trackptr->item);
+	OBJ_RELEASE(trackptr);
+
+	return OMPI_SUCCESS;
+    }
+
+    /* if we get here, then couldn't find request */
+    return OMPI_ERROR;
+}
+
 ompi_list_t* gpr_replica_get(ompi_registry_mode_t addr_mode,
 			     char *segment, char **tokens)
 {
-    mca_gpr_replica_segment_t *seg;
-    ompi_list_t *answer;
-    ompi_registry_value_t *ans;
-    mca_gpr_replica_key_t *keys, *key2;
-    ompi_list_t *keylist;
-    mca_gpr_replica_keytable_t *keyptr;
-    mca_gpr_replica_core_t *reg;
-    int num_tokens;
+    mca_gpr_replica_segment_t *seg=NULL;
+    ompi_list_t *answer=NULL;
+    ompi_registry_value_t *ans=NULL;
+    mca_gpr_replica_key_t *keys=NULL, *key2=NULL;
+    ompi_list_t *keylist=NULL;
+    mca_gpr_replica_keytable_t *keyptr=NULL;
+    mca_gpr_replica_core_t *reg=NULL;
+    int num_tokens=0;
 
     answer = OBJ_NEW(ompi_list_t);
 

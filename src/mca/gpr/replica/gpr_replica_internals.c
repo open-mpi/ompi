@@ -466,6 +466,83 @@ int gpr_replica_construct_trigger(ompi_registry_synchro_mode_t synchro_mode,
 
 }
 
+mca_gpr_notify_id_t gpr_replica_remove_trigger(ompi_registry_synchro_mode_t synchro_mode,
+					       ompi_registry_notify_action_t action,
+					       ompi_registry_mode_t addr_mode,
+					       char *segment, char **tokens, int trigger)
+{
+    mca_gpr_replica_segment_t *seg;
+    mca_gpr_replica_trigger_list_t *trig;
+    mca_gpr_notify_id_t id_tag;
+    char **tokptr;
+    mca_gpr_replica_key_t *keys, *keyptr, *kptr;
+    int i, num_tokens;
+    bool found, mismatch;
+
+    seg = gpr_replica_find_seg(false, segment);
+    if (NULL == seg) { /* couldn't find segment */
+	return MCA_GPR_NOTIFY_ID_MAX;
+    }
+
+    found = false;
+    num_tokens = 0;
+
+    if (NULL != tokens) {  /* tokens provided */
+
+	/* count number of tokens */
+	tokptr = tokens;
+	num_tokens = 0;
+	while (NULL != tokptr && NULL != *tokptr) {
+	    num_tokens++;
+	    tokptr++;
+	}
+	keys = (mca_gpr_replica_key_t*)malloc(num_tokens*sizeof(mca_gpr_replica_key_t));
+	keyptr = keys;
+	/* store key values of tokens - any undefined means error */
+	for (i=0, tokptr=tokens; NULL != tokptr && NULL != *tokptr; i++, tokptr++) {
+	    *keyptr = gpr_replica_get_key(segment, *tokptr);
+	    if (MCA_GPR_REPLICA_KEY_MAX == *keyptr) {
+		goto CLEANUP;
+	    }
+	    keyptr++;
+	}
+    }
+
+    /* search segment's trigger list for specified trigger event */
+    for (trig = (mca_gpr_replica_trigger_list_t*)ompi_list_get_first(&seg->triggers);
+	 trig != (mca_gpr_replica_trigger_list_t*)ompi_list_get_end(&seg->triggers) && !found;
+	 trig = (mca_gpr_replica_trigger_list_t*)ompi_list_get_next(trig)) {
+	if (trig->synch_mode == synchro_mode &&
+	    trig->action == action &&
+	    trig->addr_mode == addr_mode &&
+	    trig->trigger == trigger &&
+	    trig->num_keys == num_tokens) {  /* all else matches - check keys */
+	    mismatch = false;
+	    for (i=0, keyptr=keys, kptr=trig->keys; i < num_tokens && !mismatch; i++, keyptr++, kptr++) {
+		if (*keyptr != *kptr) {
+		    mismatch = true;
+		}
+	    }
+	    if (!mismatch) {
+		found = true;
+	    }
+	}
+    }
+
+ CLEANUP:
+    if (NULL != keys) {
+	free(keys);
+    }
+
+    if (found) {
+	id_tag = trig->id_tag;
+	ompi_list_remove_item(&seg->triggers, &trig->item);
+	OBJ_RELEASE(trig);
+	return id_tag;
+    }
+
+    return MCA_GPR_NOTIFY_ID_MAX;
+}
 
 ompi_registry_notify_message_t *gpr_replica_construct_notify_message(ompi_registry_mode_t addr_mode, char *segment, char **tokens)
 {
