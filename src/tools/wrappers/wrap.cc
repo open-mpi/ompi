@@ -376,13 +376,11 @@ lam_wrap_build_libs(bool want_cxx_libs, lam_sv_t& libs)
     libs.push_back("-llamf77mpi");
 #endif
 #endif
+
   // Next comes the MPI library
-#if WANT_SINGLE_MPI_LIBRARY
+
   libs.push_back("-lmpi");
-#else
-  libs.push_back("-lmpi");
-  libs.push_back("-llam");
-#endif
+
   // Finally, any system libraries
 #if 0
 #if LAM_WANT_ROMIO && HAVE_LIBAIO
