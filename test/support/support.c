@@ -84,7 +84,8 @@ int test_finalize(void)
     return_value=1;
 
     if( lam_n_tests == lam_n_success) {
-        fprintf(stderr," SUPPORT :: LAM Test Passed :: %s \n",lam_description);
+        fprintf(stderr," SUPPORT :: LAM Test Passed :: %s %d tests \n",
+                lam_description,lam_n_tests);
         fflush(stderr);
     } else {
         fprintf(stderr," SUPPORT :: LAM Test failed :: %s :: %d of %d failed\n"
