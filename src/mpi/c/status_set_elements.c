@@ -23,11 +23,20 @@ static const char FUNC_NAME[] = "MPI_Status_set_elements";
 int MPI_Status_set_elements(MPI_Status *status, MPI_Datatype datatype,
                             int count) 
 {
-  if (MPI_PARAM_CHECK) {
-    OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-  }
+    int rc = MPI_SUCCESS;
 
-  /* This function is not yet implemented */
+    if (MPI_PARAM_CHECK) {
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+        if (NULL == datatype || MPI_DATATYPE_NULL == datatype) {
+            rc = MPI_ERR_TYPE;
+        } else if (count < 0) {
+            rc = MPI_ERR_COUNT;
+        }
+        OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
+    }
 
-  return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER, FUNC_NAME);
+    if (status != MPI_STATUS_IGNORE) {
+        status->_count = count;
+    }
+    OMPI_ERRHANDLER_RETURN(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
 }
