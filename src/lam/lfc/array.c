@@ -27,6 +27,7 @@
  * GNU Lesser General Public License for more details.
  */
 /*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
+#include <string.h>
 #include "lam/base/array.h"
 
 lam_class_info_t array_cls = {"lam_array_t", &object_cls, 
