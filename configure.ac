@@ -962,11 +962,12 @@ AC_CONFIG_FILES([
 
     src/tools/Makefile
     src/tools/bootproxy/Makefile
-    src/tools/ompid/Makefile
-    src/tools/ompi_info/Makefile
+    src/tools/console/Makefile
     src/tools/mpirun/Makefile
-    src/tools/wrappers/Makefile
+    src/tools/ompi_info/Makefile
+    src/tools/ompid/Makefile
     src/tools/openmpi/Makefile
+    src/tools/wrappers/Makefile
 
     test/Makefile
     test/include/Makefile
