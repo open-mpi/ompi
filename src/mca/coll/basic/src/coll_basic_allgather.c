@@ -25,15 +25,12 @@ int mca_coll_basic_allgather(void *sbuf, int scount,
                              int rcount, MPI_Datatype rdtype, 
                              MPI_Comm comm)
 {
-#if 1
-  return LAM_ERR_NOT_IMPLEMENTED;
-#else
   int size;
   int err;
-
+  
   /* Gather and broadcast. */
 
-  MPI_Comm_size(comm, &size);
+  size = lam_comm_size(comm);
 
   err = comm->c_coll.coll_gather_intra(sbuf, scount, sdtype, rbuf, rcount, 
                                        rdtype, 0, comm);
@@ -43,5 +40,4 @@ int mca_coll_basic_allgather(void *sbuf, int scount,
   err = comm->c_coll.coll_bcast_intra(rbuf, rcount * size, rdtype, 
                                       0, comm);
   return err;
-#endif
 }
