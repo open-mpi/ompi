@@ -83,16 +83,21 @@ am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 mkinstalldirs = $(mkdir_p)
 CONFIG_HEADER = $(top_builddir)/include/ompi_config.h
 CONFIG_CLEAN_FILES = ptl-prof-version.h.template
-am__installdirs = "$(DESTDIR)$(mcamoduledir)"
-mcamoduleLTLIBRARIES_INSTALL = $(INSTALL)
-LTLIBRARIES = $(mcamodule_LTLIBRARIES) $(noinst_LTLIBRARIES)
-libmca_ptl_prof_la_DEPENDENCIES = src/libmca_ptl_prof.la
-am_libmca_ptl_prof_la_OBJECTS =
+am__installdirs = "$(DESTDIR)$(mcacomponentdir)"
+mcacomponentLTLIBRARIES_INSTALL = $(INSTALL)
+LTLIBRARIES = $(mcacomponent_LTLIBRARIES) $(noinst_LTLIBRARIES)
+libmca_ptl_prof_la_DEPENDENCIES =
+am__objects_1 = ptl_prof.lo ptl_prof_component.lo
+am_libmca_ptl_prof_la_OBJECTS = $(am__objects_1)
 libmca_ptl_prof_la_OBJECTS = $(am_libmca_ptl_prof_la_OBJECTS)
-mca_ptl_prof_la_DEPENDENCIES = src/libmca_ptl_prof.la
-am_mca_ptl_prof_la_OBJECTS =
+mca_ptl_prof_la_DEPENDENCIES =
+am_mca_ptl_prof_la_OBJECTS = $(am__objects_1)
 mca_ptl_prof_la_OBJECTS = $(am_mca_ptl_prof_la_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/include
+depcomp = $(SHELL) $(top_srcdir)/./config/depcomp
+am__depfiles_maybe = depfiles
+DEP_FILES = ./$(DEPDIR)/ptl_prof.Plo \
+	./$(DEPDIR)/ptl_prof_component.Plo
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 LTCOMPILE = $(LIBTOOL) --mode=compile $(CC) $(DEFS) \
@@ -104,15 +109,8 @@ LINK = $(LIBTOOL) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 SOURCES = $(libmca_ptl_prof_la_SOURCES) $(mca_ptl_prof_la_SOURCES)
 DIST_SOURCES = $(libmca_ptl_prof_la_SOURCES) \
 	$(mca_ptl_prof_la_SOURCES)
-RECURSIVE_TARGETS = all-recursive check-recursive dvi-recursive \
-	html-recursive info-recursive install-data-recursive \
-	install-exec-recursive install-info-recursive \
-	install-recursive installcheck-recursive installdirs-recursive \
-	pdf-recursive ps-recursive uninstall-info-recursive \
-	uninstall-recursive
 ETAGS = etags
 CTAGS = ctags
-DIST_SUBDIRS = $(SUBDIRS)
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ACLOCAL = ${SHELL} /home/bosilca/ompi/config/missing --run aclocal-1.8
 AMDEP_FALSE = #
@@ -383,31 +381,37 @@ sysconfdir = ${prefix}/etc
 target_alias = 
 top_ompi_builddir = /home/bosilca/ompi
 top_ompi_srcdir = /home/bosilca/ompi
-SUBDIRS = src
 EXTRA_DIST = VERSION
-#module_noinst = libmca_ptl_prof.la
 
 # According to the MCA spec, we have to make the output library here
 # in the top-level directory, and it has to be named
 # libompi_ssi_coll_ompi_basic.la
-module_noinst = 
-#module_install = 
-module_install = mca_ptl_prof.la
-mcamoduledir = $(libdir)/ompi
-mcamodule_LTLIBRARIES = $(module_install)
-mca_ptl_prof_la_SOURCES = 
-mca_ptl_prof_la_LIBADD = \
-        src/libmca_ptl_prof.la \
-        $(LIBOMPI_LA)
+AM_CPPFLAGS = \
+        -I$(top_ompi_builddir)/src/include \
+        -I$(top_ompi_builddir)/src/ompi/event \
+        -I$(top_ompi_srcdir)/src \
+        -I$(top_ompi_srcdir)/src/include
 
+prof_la_SOURCES = ptl_prof.c ptl_prof.h \
+        ptl_prof_component.c
+
+#component_noinst = libmca_ptl_prof.la
+component_noinst = 
+#component_install = 
+component_install = mca_ptl_prof.la
+mcacomponentdir = $(libdir)/openmpi
+mcacomponent_LTLIBRARIES = $(component_install)
+mca_ptl_prof_la_SOURCES = $(prof_la_SOURCES)
+mca_ptl_prof_la_LIBADD = $(LIBOMPI_LA)
 mca_ptl_prof_la_LDFLAGS = -module -avoid-version
-noinst_LTLIBRARIES = $(module_noinst)
-libmca_ptl_prof_la_SOURCES = 
-libmca_ptl_prof_la_LIBADD = src/libmca_ptl_prof.la
+noinst_LTLIBRARIES = $(component_noinst)
+libmca_ptl_prof_la_SOURCES = $(prof_la_SOURCES)
+libmca_ptl_prof_la_LIBADD = 
 libmca_ptl_prof_la_LDFLAGS = -module -avoid-version
-all: all-recursive
+all: all-am
 
 .SUFFIXES:
+.SUFFIXES: .c .lo .o .obj
 $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
@@ -439,28 +443,28 @@ $(ACLOCAL_M4):  $(am__aclocal_m4_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 ptl-prof-version.h.template: $(top_builddir)/config.status $(srcdir)/ptl-prof-version.h.template.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
-install-mcamoduleLTLIBRARIES: $(mcamodule_LTLIBRARIES)
+install-mcacomponentLTLIBRARIES: $(mcacomponent_LTLIBRARIES)
 	@$(NORMAL_INSTALL)
-	test -z "$(mcamoduledir)" || $(mkdir_p) "$(DESTDIR)$(mcamoduledir)"
-	@list='$(mcamodule_LTLIBRARIES)'; for p in $$list; do \
+	test -z "$(mcacomponentdir)" || $(mkdir_p) "$(DESTDIR)$(mcacomponentdir)"
+	@list='$(mcacomponent_LTLIBRARIES)'; for p in $$list; do \
 	  if test -f $$p; then \
 	    f="`echo $$p | sed -e 's|^.*/||'`"; \
-	    echo " $(LIBTOOL) --mode=install $(mcamoduleLTLIBRARIES_INSTALL) $(INSTALL_STRIP_FLAG) '$$p' '$(DESTDIR)$(mcamoduledir)/$$f'"; \
-	    $(LIBTOOL) --mode=install $(mcamoduleLTLIBRARIES_INSTALL) $(INSTALL_STRIP_FLAG) "$$p" "$(DESTDIR)$(mcamoduledir)/$$f"; \
+	    echo " $(LIBTOOL) --mode=install $(mcacomponentLTLIBRARIES_INSTALL) $(INSTALL_STRIP_FLAG) '$$p' '$(DESTDIR)$(mcacomponentdir)/$$f'"; \
+	    $(LIBTOOL) --mode=install $(mcacomponentLTLIBRARIES_INSTALL) $(INSTALL_STRIP_FLAG) "$$p" "$(DESTDIR)$(mcacomponentdir)/$$f"; \
 	  else :; fi; \
 	done
 
-uninstall-mcamoduleLTLIBRARIES:
+uninstall-mcacomponentLTLIBRARIES:
 	@$(NORMAL_UNINSTALL)
-	@list='$(mcamodule_LTLIBRARIES)'; for p in $$list; do \
+	@list='$(mcacomponent_LTLIBRARIES)'; for p in $$list; do \
 	    p="`echo $$p | sed -e 's|^.*/||'`"; \
-	  echo " $(LIBTOOL) --mode=uninstall rm -f '$(DESTDIR)$(mcamoduledir)/$$p'"; \
-	  $(LIBTOOL) --mode=uninstall rm -f "$(DESTDIR)$(mcamoduledir)/$$p"; \
+	  echo " $(LIBTOOL) --mode=uninstall rm -f '$(DESTDIR)$(mcacomponentdir)/$$p'"; \
+	  $(LIBTOOL) --mode=uninstall rm -f "$(DESTDIR)$(mcacomponentdir)/$$p"; \
 	done
 
-clean-mcamoduleLTLIBRARIES:
-	-test -z "$(mcamodule_LTLIBRARIES)" || rm -f $(mcamodule_LTLIBRARIES)
-	@list='$(mcamodule_LTLIBRARIES)'; for p in $$list; do \
+clean-mcacomponentLTLIBRARIES:
+	-test -z "$(mcacomponent_LTLIBRARIES)" || rm -f $(mcacomponent_LTLIBRARIES)
+	@list='$(mcacomponent_LTLIBRARIES)'; for p in $$list; do \
 	  dir="`echo $$p | sed -e 's|/[^/]*$$||'`"; \
 	  test "$$dir" != "$$p" || dir=.; \
 	  echo "rm -f \"$${dir}/so_locations\""; \
@@ -478,13 +482,40 @@ clean-noinstLTLIBRARIES:
 libmca_ptl_prof.la: $(libmca_ptl_prof_la_OBJECTS) $(libmca_ptl_prof_la_DEPENDENCIES) 
 	$(LINK)  $(libmca_ptl_prof_la_LDFLAGS) $(libmca_ptl_prof_la_OBJECTS) $(libmca_ptl_prof_la_LIBADD) $(LIBS)
 mca_ptl_prof.la: $(mca_ptl_prof_la_OBJECTS) $(mca_ptl_prof_la_DEPENDENCIES) 
-	$(LINK) -rpath $(mcamoduledir) $(mca_ptl_prof_la_LDFLAGS) $(mca_ptl_prof_la_OBJECTS) $(mca_ptl_prof_la_LIBADD) $(LIBS)
+	$(LINK) -rpath $(mcacomponentdir) $(mca_ptl_prof_la_LDFLAGS) $(mca_ptl_prof_la_OBJECTS) $(mca_ptl_prof_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
 
 distclean-compile:
 	-rm -f *.tab.c
+
+include ./$(DEPDIR)/ptl_prof.Plo
+include ./$(DEPDIR)/ptl_prof_component.Plo
+
+.c.o:
+	if $(COMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \
+	then mv -f "$(DEPDIR)/$*.Tpo" "$(DEPDIR)/$*.Po"; else rm -f "$(DEPDIR)/$*.Tpo"; exit 1; fi
+#	source='$<' object='$@' libtool=no \
+#	depfile='$(DEPDIR)/$*.Po' tmpdepfile='$(DEPDIR)/$*.TPo' \
+#	$(CCDEPMODE) $(depcomp) \
+#	$(COMPILE) -c $<
+
+.c.obj:
+	if $(COMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ `$(CYGPATH_W) '$<'`; \
+	then mv -f "$(DEPDIR)/$*.Tpo" "$(DEPDIR)/$*.Po"; else rm -f "$(DEPDIR)/$*.Tpo"; exit 1; fi
+#	source='$<' object='$@' libtool=no \
+#	depfile='$(DEPDIR)/$*.Po' tmpdepfile='$(DEPDIR)/$*.TPo' \
+#	$(CCDEPMODE) $(depcomp) \
+#	$(COMPILE) -c `$(CYGPATH_W) '$<'`
+
+.c.lo:
+	if $(LTCOMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \
+	then mv -f "$(DEPDIR)/$*.Tpo" "$(DEPDIR)/$*.Plo"; else rm -f "$(DEPDIR)/$*.Tpo"; exit 1; fi
+#	source='$<' object='$@' libtool=yes \
+#	depfile='$(DEPDIR)/$*.Plo' tmpdepfile='$(DEPDIR)/$*.TPlo' \
+#	$(CCDEPMODE) $(depcomp) \
+#	$(LTCOMPILE) -c -o $@ $<
 
 mostlyclean-libtool:
 	-rm -f *.lo
@@ -496,65 +527,6 @@ distclean-libtool:
 	-rm -f libtool
 uninstall-info-am:
 
-# This directory's subdirectories are mostly independent; you can cd
-# into them and run `make' without going through this Makefile.
-# To change the values of `make' variables: instead of editing Makefiles,
-# (1) if the variable is set in `config.status', edit `config.status'
-#     (which will cause the Makefiles to be regenerated when you run `make');
-# (2) otherwise, pass the desired values on the `make' command line.
-$(RECURSIVE_TARGETS):
-	@set fnord $$MAKEFLAGS; amf=$$2; \
-	dot_seen=no; \
-	target=`echo $@ | sed s/-recursive//`; \
-	list='$(SUBDIRS)'; for subdir in $$list; do \
-	  echo "Making $$target in $$subdir"; \
-	  if test "$$subdir" = "."; then \
-	    dot_seen=yes; \
-	    local_target="$$target-am"; \
-	  else \
-	    local_target="$$target"; \
-	  fi; \
-	  (cd $$subdir && $(MAKE) $(AM_MAKEFLAGS) $$local_target) \
-	   || case "$$amf" in *=*) exit 1;; *k*) fail=yes;; *) exit 1;; esac; \
-	done; \
-	if test "$$dot_seen" = "no"; then \
-	  $(MAKE) $(AM_MAKEFLAGS) "$$target-am" || exit 1; \
-	fi; test -z "$$fail"
-
-mostlyclean-recursive clean-recursive distclean-recursive \
-maintainer-clean-recursive:
-	@set fnord $$MAKEFLAGS; amf=$$2; \
-	dot_seen=no; \
-	case "$@" in \
-	  distclean-* | maintainer-clean-*) list='$(DIST_SUBDIRS)' ;; \
-	  *) list='$(SUBDIRS)' ;; \
-	esac; \
-	rev=''; for subdir in $$list; do \
-	  if test "$$subdir" = "."; then :; else \
-	    rev="$$subdir $$rev"; \
-	  fi; \
-	done; \
-	rev="$$rev ."; \
-	target=`echo $@ | sed s/-recursive//`; \
-	for subdir in $$rev; do \
-	  echo "Making $$target in $$subdir"; \
-	  if test "$$subdir" = "."; then \
-	    local_target="$$target-am"; \
-	  else \
-	    local_target="$$target"; \
-	  fi; \
-	  (cd $$subdir && $(MAKE) $(AM_MAKEFLAGS) $$local_target) \
-	   || case "$$amf" in *=*) exit 1;; *k*) fail=yes;; *) exit 1;; esac; \
-	done && test -z "$$fail"
-tags-recursive:
-	list='$(SUBDIRS)'; for subdir in $$list; do \
-	  test "$$subdir" = . || (cd $$subdir && $(MAKE) $(AM_MAKEFLAGS) tags); \
-	done
-ctags-recursive:
-	list='$(SUBDIRS)'; for subdir in $$list; do \
-	  test "$$subdir" = . || (cd $$subdir && $(MAKE) $(AM_MAKEFLAGS) ctags); \
-	done
-
 ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)
 	list='$(SOURCES) $(HEADERS) $(LISP) $(TAGS_FILES)'; \
 	unique=`for i in $$list; do \
@@ -565,23 +537,10 @@ ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)
 	mkid -fID $$unique
 tags: TAGS
 
-TAGS: tags-recursive $(HEADERS) $(SOURCES)  $(TAGS_DEPENDENCIES) \
+TAGS:  $(HEADERS) $(SOURCES)  $(TAGS_DEPENDENCIES) \
 		$(TAGS_FILES) $(LISP)
 	tags=; \
 	here=`pwd`; \
-	if ($(ETAGS) --etags-include --version) >/dev/null 2>&1; then \
-	  include_option=--etags-include; \
-	  empty_fix=.; \
-	else \
-	  include_option=--include; \
-	  empty_fix=; \
-	fi; \
-	list='$(SUBDIRS)'; for subdir in $$list; do \
-	  if test "$$subdir" = .; then :; else \
-	    test ! -f $$subdir/TAGS || \
-	      tags="$$tags $$include_option=$$here/$$subdir/TAGS"; \
-	  fi; \
-	done; \
 	list='$(SOURCES) $(HEADERS)  $(LISP) $(TAGS_FILES)'; \
 	unique=`for i in $$list; do \
 	    if test -f "$$i"; then echo $$i; else echo $(srcdir)/$$i; fi; \
@@ -594,7 +553,7 @@ TAGS: tags-recursive $(HEADERS) $(SOURCES)  $(TAGS_DEPENDENCIES) \
 	    $$tags $$unique; \
 	fi
 ctags: CTAGS
-CTAGS: ctags-recursive $(HEADERS) $(SOURCES)  $(TAGS_DEPENDENCIES) \
+CTAGS:  $(HEADERS) $(SOURCES)  $(TAGS_DEPENDENCIES) \
 		$(TAGS_FILES) $(LISP)
 	tags=; \
 	here=`pwd`; \
@@ -643,36 +602,22 @@ distdir: $(DISTFILES)
 	    || exit 1; \
 	  fi; \
 	done
-	list='$(SUBDIRS)'; for subdir in $$list; do \
-	  if test "$$subdir" = .; then :; else \
-	    test -d "$(distdir)/$$subdir" \
-	    || mkdir "$(distdir)/$$subdir" \
-	    || exit 1; \
-	    (cd $$subdir && \
-	      $(MAKE) $(AM_MAKEFLAGS) \
-	        top_distdir="../$(top_distdir)" \
-	        distdir="../$(distdir)/$$subdir" \
-	        distdir) \
-	      || exit 1; \
-	  fi; \
-	done
 check-am: all-am
-check: check-recursive
+check: check-am
 all-am: Makefile $(LTLIBRARIES)
-installdirs: installdirs-recursive
-installdirs-am:
-	for dir in "$(DESTDIR)$(mcamoduledir)"; do \
+installdirs:
+	for dir in "$(DESTDIR)$(mcacomponentdir)"; do \
 	  test -z "$$dir" || $(mkdir_p) "$$dir"; \
 	done
-install: install-recursive
-install-exec: install-exec-recursive
-install-data: install-data-recursive
-uninstall: uninstall-recursive
+install: install-am
+install-exec: install-exec-am
+install-data: install-data-am
+uninstall: uninstall-am
 
 install-am: all-am
 	@$(MAKE) $(AM_MAKEFLAGS) install-exec-am install-data-am
 
-installcheck: installcheck-recursive
+installcheck: installcheck-am
 install-strip:
 	$(MAKE) $(AM_MAKEFLAGS) INSTALL_PROGRAM="$(INSTALL_STRIP_PROGRAM)" \
 	  install_sh_PROGRAM="$(INSTALL_STRIP_PROGRAM)" INSTALL_STRIP_FLAG=-s \
@@ -689,72 +634,70 @@ distclean-generic:
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
-clean: clean-recursive
+clean: clean-am
 
-clean-am: clean-generic clean-libtool clean-mcamoduleLTLIBRARIES \
+clean-am: clean-generic clean-libtool clean-mcacomponentLTLIBRARIES \
 	clean-noinstLTLIBRARIES mostlyclean-am
 
-distclean: distclean-recursive
+distclean: distclean-am
+	-rm -rf ./$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-libtool distclean-tags
 
-dvi: dvi-recursive
+dvi: dvi-am
 
 dvi-am:
 
-html: html-recursive
+html: html-am
 
-info: info-recursive
+info: info-am
 
 info-am:
 
-install-data-am: install-mcamoduleLTLIBRARIES
+install-data-am: install-mcacomponentLTLIBRARIES
 
 install-exec-am:
 
-install-info: install-info-recursive
+install-info: install-info-am
 
 install-man:
 
 installcheck-am:
 
-maintainer-clean: maintainer-clean-recursive
+maintainer-clean: maintainer-clean-am
+	-rm -rf ./$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 
-mostlyclean: mostlyclean-recursive
+mostlyclean: mostlyclean-am
 
 mostlyclean-am: mostlyclean-compile mostlyclean-generic \
 	mostlyclean-libtool
 
-pdf: pdf-recursive
+pdf: pdf-am
 
 pdf-am:
 
-ps: ps-recursive
+ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-info-am uninstall-mcamoduleLTLIBRARIES
+uninstall-am: uninstall-info-am uninstall-mcacomponentLTLIBRARIES
 
-uninstall-info: uninstall-info-recursive
-
-.PHONY: $(RECURSIVE_TARGETS) CTAGS GTAGS all all-am check check-am \
-	clean clean-generic clean-libtool clean-mcamoduleLTLIBRARIES \
-	clean-noinstLTLIBRARIES clean-recursive ctags ctags-recursive \
-	distclean distclean-compile distclean-generic \
-	distclean-libtool distclean-recursive distclean-tags distdir \
-	dvi dvi-am html html-am info info-am install install-am \
+.PHONY: CTAGS GTAGS all all-am check check-am clean clean-generic \
+	clean-libtool clean-mcacomponentLTLIBRARIES \
+	clean-noinstLTLIBRARIES ctags distclean distclean-compile \
+	distclean-generic distclean-libtool distclean-tags distdir dvi \
+	dvi-am html html-am info info-am install install-am \
 	install-data install-data-am install-exec install-exec-am \
 	install-info install-info-am install-man \
-	install-mcamoduleLTLIBRARIES install-strip installcheck \
-	installcheck-am installdirs installdirs-am maintainer-clean \
-	maintainer-clean-generic maintainer-clean-recursive \
-	mostlyclean mostlyclean-compile mostlyclean-generic \
-	mostlyclean-libtool mostlyclean-recursive pdf pdf-am ps ps-am \
-	tags tags-recursive uninstall uninstall-am uninstall-info-am \
-	uninstall-mcamoduleLTLIBRARIES
+	install-mcacomponentLTLIBRARIES install-strip installcheck \
+	installcheck-am installdirs maintainer-clean \
+	maintainer-clean-generic mostlyclean mostlyclean-compile \
+	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
+	tags uninstall uninstall-am uninstall-info-am \
+	uninstall-mcacomponentLTLIBRARIES
 
 
 include $(top_ompi_srcdir)/config/Makefile.options

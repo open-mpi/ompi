@@ -6,32 +6,37 @@
 
 include $(top_ompi_srcdir)/config/Makefile.options
 
-SUBDIRS = src
-
 EXTRA_DIST = VERSION
 
 # According to the MCA spec, we have to make the output library here
 # in the top-level directory, and it has to be named
 # libompi_ssi_coll_ompi_basic.la
 
+AM_CPPFLAGS = \
+        -I$(top_ompi_builddir)/src/include \
+        -I$(top_ompi_builddir)/src/ompi/event \
+        -I$(top_ompi_srcdir)/src \
+        -I$(top_ompi_srcdir)/src/include
+
+prof_la_SOURCES = ptl_prof.c ptl_prof.h \
+        ptl_prof_component.c
+
 if OMPI_BUILD_ptl_prof_DSO
-module_noinst =
-module_install = mca_ptl_prof.la
+component_noinst =
+component_install = mca_ptl_prof.la
 else
-module_noinst = libmca_ptl_prof.la
-module_install =
+component_noinst = libmca_ptl_prof.la
+component_install =
 endif
 
-mcamoduledir = $(libdir)/ompi
-mcamodule_LTLIBRARIES = $(module_install)
-mca_ptl_prof_la_SOURCES = 
-mca_ptl_prof_la_LIBADD = \
-        src/libmca_ptl_prof.la \
-        $(LIBOMPI_LA)
+mcacomponentdir = $(libdir)/openmpi
+mcacomponent_LTLIBRARIES = $(component_install)
+mca_ptl_prof_la_SOURCES = $(prof_la_SOURCES)
+mca_ptl_prof_la_LIBADD = $(LIBOMPI_LA)
 mca_ptl_prof_la_LDFLAGS = -module -avoid-version
 
-noinst_LTLIBRARIES = $(module_noinst)
-libmca_ptl_prof_la_SOURCES =
-libmca_ptl_prof_la_LIBADD = src/libmca_ptl_prof.la
+noinst_LTLIBRARIES = $(component_noinst)
+libmca_ptl_prof_la_SOURCES = $(prof_la_SOURCES)
+libmca_ptl_prof_la_LIBADD = 
 libmca_ptl_prof_la_LDFLAGS = -module -avoid-version
 
