@@ -26,14 +26,16 @@
 
 struct ompi_mutex_t {
     ompi_object_t super;
+#if defined(OMPI_HAVE_POSIX_THREADS)
     pthread_mutex_t m_lock_pthread;
+#endif
     ompi_lock_t m_lock_atomic;
 };
 
 OBJ_CLASS_DECLARATION(ompi_mutex_t);
 
 
-#if defined(OMPI_HAVE_ATOMIC) && defined(OMPI_HAVE_POSIX_THREADS)
+#if OMPI_HAVE_ATOMIC  && OMPI_HAVE_POSIX_THREADS 
 
 /*
  * ompi_mutex_*        implemented using pthreads
@@ -72,7 +74,7 @@ static inline void ompi_mutex_atomic_unlock(ompi_mutex_t *m)
 }
 
 
-#elif defined(OMPI_HAVE_POSIX_THREADS)
+#elif OMPI_HAVE_POSIX_THREADS
 
 /*
  * ompi_mutex_* and ompi_mutex_atomic_* implemented using pthreads
@@ -110,7 +112,7 @@ static inline void ompi_mutex_atomic_unlock(ompi_mutex_t *m)
 }
 
 
-#elif defined(OMPI_HAVE_ATOMIC)
+#elif OMPI_HAVE_ATOMIC
 
 /*
  * ompi_mutex_* and ompi_mutex_atomic_* implemented using atomic
