@@ -25,12 +25,4 @@ mpirun_SOURCES = \
         mpirun.c 
 
 mpirun_LDADD = $(libs) 
-mpirun_DEPENDENCIES = $(mpirun_LDADD)
-
-# JMS Temporary hack for those who can't help themselves from typing
-# "mpirun2" :-)
-install-exec-hook:
-	(cd $(DESTDIR)$(bindir); rm -f mpirun2; ln -s mpirun mpirun2)
-
-uninstall-local:
-	rm -f $(DESTDIR)$(bindir)/mpirun2
+mpirun_DEPENDENCIES = $(libs)

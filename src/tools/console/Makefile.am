@@ -23,7 +23,7 @@ ompiconsole_SOURCES = \
         ompiconsole.c 
 
 ompiconsole_LDADD = $(libs) 
-ompiconsole_DEPENDENCIES = $(ompiconsole_LDADD)
+ompiconsole_DEPENDENCIES = $(libs)
 
 clean-local:
 	test -z "$(OMPI_CXX_TEMPLATE_REPOSITORY)" || $(RM) -rf $(OMPI_CXX_TEMPLATE_REPOSITORY)
