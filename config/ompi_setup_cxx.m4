@@ -48,7 +48,7 @@ int i = 3;
     fi
 else
     # We never thought that this was GXX to begin with
-    msg=not applicable
+    msg="not applicable"
     TRULY_GXX=no
 fi
 AC_MSG_RESULT([$msg])
