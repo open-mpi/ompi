@@ -8,9 +8,9 @@ static void mca_pml_ptl_comm_construct(mca_pml_comm_t* comm);
 static void mca_pml_ptl_comm_destruct(mca_pml_comm_t* comm);
 
 
-lam_class_info_t mca_pml_comm_t_class_info = {
+lam_class_t mca_pml_comm_t_class = {
     "mca_pml_comm_t",
-    CLASS_INFO(lam_object_t),
+    OBJ_CLASS(lam_object_t),
     (lam_construct_t)mca_pml_ptl_comm_construct,
     (lam_destruct_t)mca_pml_ptl_comm_destruct
 };
@@ -18,7 +18,6 @@ lam_class_info_t mca_pml_comm_t_class_info = {
 
 static void mca_pml_ptl_comm_construct(mca_pml_comm_t* comm)
 {
-    OBJ_CONSTRUCT_SUPER(comm, lam_object_t);
     OBJ_CONSTRUCT(&comm->c_wild_receives, lam_list_t);
     lam_mutex_init(&comm->c_wild_lock);
 }
@@ -33,7 +32,6 @@ static void mca_pml_ptl_comm_destruct(mca_pml_comm_t* comm)
     free(comm->c_frags_cant_match);
     free(comm->c_specific_receives);
     OBJ_DESTRUCT(&comm->c_wild_receives);
-    OBJ_DESTRUCT_SUPER(comm, lam_object_t);
 }
 
 

@@ -14,8 +14,8 @@
  *
  */
 
-extern lam_class_info_t   lam_list_item_t_class_info;
-extern lam_class_info_t   lam_list_t_class_info;
+extern lam_class_t   lam_list_item_t_class;
+extern lam_class_t   lam_list_t_class;
 typedef int               lam_list_type_t;
 
 

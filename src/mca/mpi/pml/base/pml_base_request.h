@@ -11,7 +11,7 @@
 #include "mpi/datatype/datatype.h"
 #include "mpi/communicator/communicator.h"
 
-extern lam_class_info_t mca_pml_base_request_t_class_info;
+extern lam_class_t mca_pml_base_request_t_class;
 
 /* MPI request status */
 typedef enum {

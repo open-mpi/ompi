@@ -101,7 +101,7 @@ mca_pml_t* mca_pml_teg_module_init(int* priority,
     lam_free_list_init(
         &mca_pml_teg.teg_recv_requests,
         sizeof(mca_ptl_base_recv_request_t),
-        CLASS_INFO(mca_ptl_base_recv_request_t), 
+        OBJ_CLASS(mca_ptl_base_recv_request_t), 
         mca_pml_teg.teg_free_list_num,
         mca_pml_teg.teg_free_list_max,
         mca_pml_teg.teg_free_list_inc,

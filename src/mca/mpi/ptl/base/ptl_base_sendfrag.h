@@ -7,7 +7,7 @@
 #include "mca/mpi/ptl/ptl.h"
 #include "mca/mpi/ptl/base/ptl_base_fragment.h"
 
-extern lam_class_info_t mca_ptl_base_send_frag_t_class_info;
+extern lam_class_t mca_ptl_base_send_frag_t_class;
 
 
 struct mca_ptl_base_send_frag_t {

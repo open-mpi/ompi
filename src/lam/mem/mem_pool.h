@@ -46,10 +46,10 @@ typedef struct lam_mem_pool
 } lam_mem_pool_t;
 
 /* process-private mem pool class */
-extern lam_class_info_t lam_mem_pool_t_class_info;
+extern lam_class_t lam_mem_pool_t_class;
 
 /* process-shared mem pool class */
-extern lam_class_info_t shmem_pool_t_class_info;
+extern lam_class_t shmem_pool_t_class;
 
 void lam_mp_construct(lam_mem_pool_t *pool);
 void lam_mp_shared_construct(lam_mem_pool_t *pool);
@@ -121,7 +121,7 @@ typedef struct lam_fixed_mpool
     int                 fmp_apply_affinity;
 } lam_fixed_mpool_t;
 
-extern lam_class_info_t lam_fixed_mpool_t_class_info;
+extern lam_class_t lam_fixed_mpool_t_class;
 
 void lam_fmp_construct(lam_fixed_mpool_t *pool);
 void lam_fmp_destruct(lam_fixed_mpool_t *pool);

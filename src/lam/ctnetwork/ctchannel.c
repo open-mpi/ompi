@@ -12,7 +12,6 @@
 
 static void lam_cth_construct(lam_ctchannel_t *channel)
 {
-    OBJ_CONSTRUCT_SUPER(channel, lam_object_t);
     channel->cth_status = CT_CHNL_CLOSED;
     channel->cth_id = 0;
     channel->cth_timeout_secs = 0;
@@ -21,14 +20,13 @@ static void lam_cth_construct(lam_ctchannel_t *channel)
 
 static void lam_cth_construct(lam_ctchannel_t *channel)
 {
-    OBJ_DESTRUCT_SUPER(channel, lam_object_t);
 }
 
 
-lam_ctchannel_class_t lam_ct_channel_t_class_info = {
+lam_ctchannel_class_t lam_ct_channel_t_class = {
     {
         "lam_ct_channel_t",
-        CLASS_INFO(lam_object_t),
+        OBJ_CLASS(lam_object_t),
         (lam_construct_t) lam_cth_construct,
         (lam_destruct_t) lam_object_destruct
     },
@@ -105,7 +103,6 @@ uint32_t lam_cth_send_packed_msg(lam_ctchannel_t *channel,
 
 static void lam_tcpch_construct(lam_tcp_chnl_t *channel)
 {
-    OBJ_CONSTRUCT_SUPER(channel, lam_object_t);
     channel->tcp_sockfd = 0;
     memset(&(channel->tcp_addr), 0, sizeof(channel->tcp_addr));
     channel->tcp_blocking = 0;
@@ -114,14 +111,13 @@ static void lam_tcpch_construct(lam_tcp_chnl_t *channel)
 
 static void lam_tcpch_destruct(lam_tcp_chnl_t *channel)
 {
-    OBJ_DESTRUCT_SUPER(channel, lam_ct_channel_t);
 }
 
 
-lam_ctchannel_class_t lam_tcp_chnl_t_class_info = {
+lam_ctchannel_class_t lam_tcp_chnl_t_class = {
     {
         "lam_tcp_chnl_t",
-        CLASS_INFO(lam_ctchannel_t),
+        OBJ_CLASS(lam_ctchannel_t),
         (lam_construct_t) lam_tcpch_construct,
         (lam_destruct_t) lam_tcpch_destruct
     },

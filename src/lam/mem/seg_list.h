@@ -22,7 +22,7 @@ struct lam_seg_list_t
 };
 typedef struct lam_seg_list_t lam_seg_list_t;
 
-extern lam_class_info_t     lam_seg_list_t_class_info;
+extern lam_class_t     lam_seg_list_t_class;
 
 void lam_sgl_construct(lam_seg_list_t *slist);
 void lam_sgl_destruct(lam_seg_list_t *slist);

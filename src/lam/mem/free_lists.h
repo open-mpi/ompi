@@ -33,7 +33,7 @@ struct lam_free_lists_t
     int                 fl_enforce_affinity;
     lam_affinity_t     *fl_affinity;            /* array of lam_affinity_t */
     int                 fl_threshold_grow;
-    lam_class_info_t   *fl_elt_cls;   /* this will be used to create new free list elements. */
+    lam_class_t   *fl_elt_cls;   /* this will be used to create new free list elements. */
     lam_mutex_t         fl_lock;
     
     /* for mem profiling */
@@ -49,7 +49,7 @@ struct lam_free_lists_t
 typedef struct lam_free_lists_t lam_free_lists_t;
 
 
-extern lam_class_info_t lam_free_lists_t_class_info;
+extern lam_class_t lam_free_lists_t_class;
 
 void lam_free_lists_construct(lam_free_lists_t *flist);
 void lam_free_lists_destruct(lam_free_lists_t *flist);

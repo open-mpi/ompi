@@ -25,7 +25,7 @@ typedef char *(*lam_ctl_isa_neighbor_fn_t)(struct lam_ctnode *, uint32_t);
 
 typedef struct lam_ctnode_class
 {
-    lam_class_info_t    super;
+    lam_class_t    super;
     lam_ctl_label_for_link_fn_t *ctl_label_for_link;
     lam_ctl_isa_neighbor_fn_t *ctl_isa_neighbor;
 } lam_ctnode_class_t;
@@ -40,7 +40,7 @@ typedef struct lam_ctnode_class
  */
 
 
-extern lam_ctnode_class_t     hypercube_t_class_info;
+extern lam_ctnode_class_t     hypercube_t_class;
 
 
 
@@ -153,6 +153,6 @@ typedef struct lam_hcube
     unsigned int    hc_hsize;           /* hc_hsize = log2(# nodes in network) */
 } lam_hcube_t;
 
-extern lam_class_info_t     hcube_t_class_info;
+extern lam_class_t     hcube_t_class;
 
 #endif  /* LAM_CT_NODE_H */

@@ -9,7 +9,7 @@
 #include "lam/lfc/lam_list.h"
 
 
-extern lam_class_info_t lam_proc_t_class_info;
+extern lam_class_t lam_proc_t_class;
 
 
 struct lam_proc_t {

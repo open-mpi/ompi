@@ -6,17 +6,17 @@
 #include "lam/mem/malloc.h"
 
 
-lam_class_info_t lam_ct_ctrl_t_class_info = {
+lam_class_t lam_ct_ctrl_t_class = {
     "lam_ct_ctrl_t",
-    CLASS_INFO(lam_object_t),
+    OBJ_CLASS(lam_object_t),
     (lam_construct_t) lam_ctc_construct,
     (lam_destruct_t) lam_ctc_destruct
 };
 
 
-lam_class_info_t lam_ctmsg_t_class_info = {
+lam_class_t lam_ctmsg_t_class = {
     "lam_ctmsg_t",
-    CLASS_INFO(lam_object_t),
+    OBJ_CLASS(lam_object_t),
     (lam_construct_t) lam_ctm_construct,
     (lam_destruct_t) lam_ctm_destruct
 };
@@ -27,8 +27,6 @@ static const uint32_t ctrl_alloc_len = sizeof(lam_ct_ctrl_t) -
 
 void lam_ctc_construct(lam_ct_ctrl_t *ctrl)
 {
-    OBJ_CONSTRUCT_SUPER(ctrl, lam_object_t);
-
     ctrl->ctc_is_user_msg = 0;
     ctrl->ctc_routing_type = LAM_CT_PT2PT;
     ctrl->ctc_sender = 0;
@@ -44,7 +42,6 @@ void lam_ctc_construct(lam_ct_ctrl_t *ctrl)
 void lam_ctc_destruct(lam_ct_ctrl_t *ctrl)
 {
     lam_free(ctrl->ctc_info);
-    OBJ_DESTRUCT_SUPER(ctrl, lam_object_t);
 }
 
 
@@ -200,7 +197,6 @@ void lam_pk_ctc_set_info(uint8_t *buffer, uint8_t *info)
 
 void lam_ctm_construct(lam_ctmsg_t *msg)
 {
-    OBJ_CONSTRUCT_SUPER(msg, lam_object_t);
     msg->ctm_ctrl = OBJ_NEW(lam_ct_ctrl_t);
     msg->ctm_len = 0;
     msg->ctm_data = 0;
@@ -213,7 +209,6 @@ void lam_ctm_destruct(lam_ctmsg_t *msg)
         lam_free(msg->ctm_data);
     }
     OBJECT_RELEASE(msg->ctm_ctrl);
-    OBJ_DESTRUCT_SUPER(msg, lam_object_t);
 }
 
 lam_ctmsg_t *lam_ctm_create_with(int is_user_msg, int routing_type,

@@ -81,13 +81,13 @@ struct kqop {
 } kqueueop;
 
 static void *kq_init	(void);
-static int kq_add	(void *, struct event *);
-static int kq_del	(void *, struct event *);
+static int kq_add	(void *, struct lam_event *);
+static int kq_del	(void *, struct lam_event *);
 static int kq_recalc	(void *, int);
 static int kq_dispatch	(void *, struct timeval *);
 static int kq_insert	(struct kqop *, struct kevent *);
 
-const struct eventop kqops = {
+const struct lam_eventop lam_kqops = {
 	"kqueue",
 	kq_init,
 	kq_add,
@@ -96,8 +96,8 @@ const struct eventop kqops = {
 	kq_dispatch
 };
 
-void *
-static kq_init(void)
+static void *
+kq_init(void)
 {
 	int kq;
 
@@ -193,7 +193,7 @@ kq_dispatch(void *arg, struct timeval *tv)
 	struct kqop *kqop = arg;
 	struct kevent *changes = kqop->changes;
 	struct kevent *events = kqop->events;
-	struct event *ev;
+	struct lam_event *ev;
 	struct timespec ts;
 	int i, res;
 
@@ -233,26 +233,26 @@ kq_dispatch(void *arg, struct timeval *tv)
 			return (-1);
 		}
 
-		ev = (struct event *)events[i].udata;
+		ev = (struct lam_event *)events[i].udata;
 
 		if (events[i].filter == EVFILT_READ) {
-			which |= EV_READ;
+			which |= LAM_EV_READ;
 		} else if (events[i].filter == EVFILT_WRITE) {
-			which |= EV_WRITE;
+			which |= LAM_EV_WRITE;
 		} else if (events[i].filter == EVFILT_SIGNAL) {
-			which |= EV_SIGNAL;
+			which |= LAM_EV_SIGNAL;
 		}
 
 		if (!which)
 			continue;
 
-		if (!(ev->ev_events & EV_PERSIST)) {
+		if (!(ev->ev_events & LAM_EV_PERSIST)) {
 			ev->ev_flags &= ~EVLIST_X_KQINKERNEL;
-			event_del(ev);
+			lam_event_del(ev);
 		}
 
-		event_active(ev, which,
-		    ev->ev_events & EV_SIGNAL ? events[i].data : 1);
+		lam_event_active(ev, which,
+		    ev->ev_events & LAM_EV_SIGNAL ? events[i].data : 1);
 	}
 
 	return (0);
@@ -260,21 +260,21 @@ kq_dispatch(void *arg, struct timeval *tv)
 
 
 static int
-kq_add(void *arg, struct event *ev)
+kq_add(void *arg, struct lam_event *ev)
 {
 	struct kqop *kqop = arg;
 	struct kevent kev;
 
-	if (ev->ev_events & EV_SIGNAL) {
-		int nsignal = EVENT_SIGNAL(ev);
+	if (ev->ev_events & LAM_EV_SIGNAL) {
+		int nsignal = LAM_EVENT_SIGNAL(ev);
 
  		memset(&kev, 0, sizeof(kev));
 		kev.ident = nsignal;
 		kev.filter = EVFILT_SIGNAL;
 		kev.flags = EV_ADD;
-		if (!(ev->ev_events & EV_PERSIST))
+		if (!(ev->ev_events & LAM_EV_PERSIST))
 			kev.flags |= EV_ONESHOT;
-		kev.udata = INTPTR(ev);
+		kev.udata = (void *) INTPTR(ev);
 		
 		if (kq_insert(kqop, &kev) == -1)
 			return (-1);
@@ -286,14 +286,14 @@ kq_add(void *arg, struct event *ev)
 		return (0);
 	}
 
-	if (ev->ev_events & EV_READ) {
+	if (ev->ev_events & LAM_EV_READ) {
  		memset(&kev, 0, sizeof(kev));
 		kev.ident = ev->ev_fd;
 		kev.filter = EVFILT_READ;
 		kev.flags = EV_ADD;
-		if (!(ev->ev_events & EV_PERSIST))
+		if (!(ev->ev_events & LAM_EV_PERSIST))
 			kev.flags |= EV_ONESHOT;
-		kev.udata = INTPTR(ev);
+		kev.udata = (void *) INTPTR(ev);
 		
 		if (kq_insert(kqop, &kev) == -1)
 			return (-1);
@@ -301,14 +301,14 @@ kq_add(void *arg, struct event *ev)
 		ev->ev_flags |= EVLIST_X_KQINKERNEL;
 	}
 
-	if (ev->ev_events & EV_WRITE) {
+	if (ev->ev_events & LAM_EV_WRITE) {
  		memset(&kev, 0, sizeof(kev));
 		kev.ident = ev->ev_fd;
 		kev.filter = EVFILT_WRITE;
 		kev.flags = EV_ADD;
-		if (!(ev->ev_events & EV_PERSIST))
+		if (!(ev->ev_events & LAM_EV_PERSIST))
 			kev.flags |= EV_ONESHOT;
-		kev.udata = INTPTR(ev);
+		kev.udata = (void *) INTPTR(ev);
 		
 		if (kq_insert(kqop, &kev) == -1)
 			return (-1);
@@ -320,7 +320,7 @@ kq_add(void *arg, struct event *ev)
 }
 
 static int
-kq_del(void *arg, struct event *ev)
+kq_del(void *arg, struct lam_event *ev)
 {
 	struct kqop *kqop = arg;
 	struct kevent kev;
@@ -328,8 +328,8 @@ kq_del(void *arg, struct event *ev)
 	if (!(ev->ev_flags & EVLIST_X_KQINKERNEL))
 		return (0);
 
-	if (ev->ev_events & EV_SIGNAL) {
-		int nsignal = EVENT_SIGNAL(ev);
+	if (ev->ev_events & LAM_EV_SIGNAL) {
+		int nsignal = LAM_EVENT_SIGNAL(ev);
 
  		memset(&kev, 0, sizeof(kev));
 		kev.ident = (int)signal;
@@ -346,7 +346,7 @@ kq_del(void *arg, struct event *ev)
 		return (0);
 	}
 
-	if (ev->ev_events & EV_READ) {
+	if (ev->ev_events & LAM_EV_READ) {
  		memset(&kev, 0, sizeof(kev));
 		kev.ident = ev->ev_fd;
 		kev.filter = EVFILT_READ;
@@ -358,7 +358,7 @@ kq_del(void *arg, struct event *ev)
 		ev->ev_flags &= ~EVLIST_X_KQINKERNEL;
 	}
 
-	if (ev->ev_events & EV_WRITE) {
+	if (ev->ev_events & LAM_EV_WRITE) {
  		memset(&kev, 0, sizeof(kev));
 		kev.ident = ev->ev_fd;
 		kev.filter = EVFILT_WRITE;

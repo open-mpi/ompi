@@ -10,7 +10,7 @@
  *  specific to the PML. 
  */
 
-extern lam_class_info_t mca_pml_comm_t_class_info;
+extern lam_class_t mca_pml_comm_t_class;
 
 struct mca_pml_comm_t {
     lam_object_t super;

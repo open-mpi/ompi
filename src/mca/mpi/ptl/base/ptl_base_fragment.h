@@ -11,7 +11,7 @@
 #include "mca/mpi/ptl/base/ptl_base_header.h"
 
 
-extern lam_class_info_t mca_ptl_base_frag_t_class_info;
+extern lam_class_t mca_ptl_base_frag_t_class;
 
 struct mca_ptl_base_frag_t {
     lam_list_item_t super;
