@@ -4,7 +4,7 @@
 #include "datatype_internal.h"
 
 /* other fields starting after bdt_used (index of DT_LOOP should be ONE) */
-#define EMPTY_DATA(NAME) NULL, -1, "MPI_" # NAME, {0, 0, NULL}, {0, 0, NULL}, NULL, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
+#define EMPTY_DATA(NAME) NULL, 0, "MPI_" # NAME, {0, 0, NULL}, {0, 0, NULL}, NULL, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
 #define BASEOBJ_DATA { OBJ_CLASS(ompi_datatype_t), 1 }
 #define INIT_BASIC_DATA( TYPE, ALIGN, NAME )                             \
     { BASEOBJ_DATA, sizeof(TYPE), 0, sizeof(TYPE), ALIGN,               \
@@ -199,13 +199,6 @@ int ompi_ddt_init( void )
 {
     int i;
 
-    /* Create the f2c translation table */
-    ompi_datatype_f_to_c_table = OBJ_NEW(ompi_pointer_array_t);
-    if (NULL == ompi_datatype_f_to_c_table) {
-        return OMPI_ERROR;
-    }
-    
-
     for( i = 0; i < DT_MAX_PREDEFINED; i++ ) {
         basicDatatypes[i].desc.desc = (dt_elem_desc_t*)malloc(sizeof(dt_elem_desc_t));
         basicDatatypes[i].desc.desc->flags  = DT_FLAG_BASIC | DT_FLAG_CONTIGUOUS;
@@ -218,6 +211,12 @@ int ompi_ddt_init( void )
         basicDatatypes[i].btypes[i]         = 1;
     }
 
+    /* Create the f2c translation table */
+    ompi_datatype_f_to_c_table = OBJ_NEW(ompi_pointer_array_t);
+    if (NULL == ompi_datatype_f_to_c_table) {
+        return OMPI_ERROR;
+    }
+    
     /* the 2 complex datatypes (float and double) */
     DECLARE_MPI2_COMPOSED_STRUCT_DDT( ompi_mpi_cplex, DT_COMPLEX_FLOAT, "MPI_COMPLEX", float, float, DT_FLOAT, DT_FLOAT );
     DECLARE_MPI2_COMPOSED_STRUCT_DDT( ompi_mpi_dblcplex, DT_COMPLEX_DOUBLE, "MPI_DOUBLE_COMPLEX", double, double, DT_DOUBLE, DT_DOUBLE );
