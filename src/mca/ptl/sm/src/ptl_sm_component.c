@@ -41,34 +41,29 @@ static int mca_ptl_sm_component_exchange(void);
 
 mca_ptl_sm_component_t mca_ptl_sm_component = {
     {
-    /* First, the mca_base_component_t struct containing meta information
-       about the component itself */
-                                                                                                                            
-    {
-    /* Indicate that we are a pml v1.0.0 component (which also implies a
-       specific MCA version) */
-                                                                                                                            
-    MCA_PTL_BASE_VERSION_1_0_0,
-                                                                                                                            
-    "sm", /* MCA component name */
-    1,  /* MCA component major version */
-    0,  /* MCA component minor version */
-    0,  /* MCA component release version */
-    mca_ptl_sm_component_open,  /* component open */
-    mca_ptl_sm_component_close  /* component close */
-    },
-                                                                                                                            
-    /* Next the MCA v1.0.0 component meta data */
-                                                                                                                            
-    {
-    /* Whether the component is checkpointable or not */
-                                                                                                                            
-    false
-    },
+        /* First, the mca_base_component_t struct containing meta information
+          about the component itself */
+        {
+            /* Indicate that we are a pml v1.0.0 component (which also implies a
+               specific MCA version) */
+            MCA_PTL_BASE_VERSION_1_0_0,
+            "sm", /* MCA component name */
+            1,  /* MCA component major version */
+            0,  /* MCA component minor version */
+            0,  /* MCA component release version */
+            mca_ptl_sm_component_open,  /* component open */
+            mca_ptl_sm_component_close  /* component close */
+        },
 
-    mca_ptl_sm_component_init,  
-    mca_ptl_sm_component_control,
-    mca_ptl_sm_component_progress,
+        /* Next the MCA v1.0.0 component meta data */
+        {
+            /* Whether the component is checkpointable or not */
+            false
+        },
+
+        mca_ptl_sm_component_init,  
+        mca_ptl_sm_component_control,
+        mca_ptl_sm_component_progress,
     }
 };
 
