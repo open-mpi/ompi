@@ -87,7 +87,7 @@ OBJ_CLASS_DECLARATION(mca_ptl_mx_send_frag_t);
 do { \
     mca_pml_base_send_request_t* request = frag->frag_send.frag_request; \
     bool frag_ack; \
- \
+    \
     /* if this is an ack - simply return to pool */ \
     if(request == NULL) { \
         MCA_PTL_MX_SEND_FRAG_RETURN(frag); \

@@ -276,7 +276,7 @@ int mca_ptl_mx_send(
             MCA_PTL_BASE_FRAG_HDR_HTON(hdr->hdr_frag);
         }
     }
- 
+
     /* fragment state */
     sendfrag->frag_send.frag_base.frag_owner = &ptl_peer->peer_ptl->super;
     sendfrag->frag_send.frag_request = sendreq;
