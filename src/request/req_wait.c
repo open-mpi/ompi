@@ -102,11 +102,10 @@ int ompi_request_wait_all(
 
     rptr = requests;
     for (i = 0; i < count; i++) {
-        request = *rptr;
+        request = *rptr++;
         if (request->req_complete == true) {
             completed++;
         }
-        rptr++;
     }
 
     /* if all requests have not completed -- defer acquiring lock
@@ -124,7 +123,7 @@ int ompi_request_wait_all(
             completed = 0;
             rptr = requests;
             for (i = 0; i < count; i++) {
-                request = *rptr;
+                request = *rptr++;
                 if (request->req_complete == true) {
                     completed++;
                     continue;
