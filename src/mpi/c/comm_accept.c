@@ -49,7 +49,7 @@ int MPI_Comm_accept(char *port_name, MPI_Info info, int root,
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COMM,
                                           FUNC_NAME);
         }
-        if ( 0 > root || ompi_comm_size(comm) < root ) {
+        if ( (0 > root) || (ompi_comm_size(comm) <= root) ) {
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, 
                                           FUNC_NAME);
         }

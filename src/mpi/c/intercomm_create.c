@@ -65,24 +65,24 @@ int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
     rleader = remote_leader;
 
     if ( MPI_PARAM_CHECK ) {
-        if ( 0 > local_leader || local_leader > local_size ) 
+        if ( (0 > local_leader) || (local_leader >= local_size) ) 
             return OMPI_ERRHANDLER_INVOKE ( local_comm, MPI_ERR_ARG, 
                                             FUNC_NAME);
 
         /* remember that the remote_leader and bridge_comm arguments
            just have to be valid at the local_leader */
         if ( local_rank == local_leader ) {
-            if ( MPI_COMM_NULL == bridge_comm || ompi_comm_invalid ( bridge_comm) ||
-                 bridge_comm->c_flags & OMPI_COMM_INTER ) {
+            if ( (MPI_COMM_NULL == bridge_comm) || ompi_comm_invalid ( bridge_comm ) ||
+                 (bridge_comm->c_flags & OMPI_COMM_INTER) ) {
                 return OMPI_ERRHANDLER_INVOKE ( local_comm, MPI_ERR_COMM, 
                                                 FUNC_NAME);
             }            
-
-            if ( remote_leader < 0 || remote_leader > ompi_comm_size(bridge_comm)) {
-                return OMPI_ERRHANDLER_INVOKE ( local_comm, MPI_ERR_ARG,
-                                                FUNC_NAME);
-            }
         } /* if ( local_rank == local_leader ) */
+
+        if ( (remote_leader < 0) || (remote_leader >= ompi_comm_size(bridge_comm))) {
+            return OMPI_ERRHANDLER_INVOKE ( local_comm, MPI_ERR_ARG,
+                                            FUNC_NAME);
+        }
     }
 
     if ( local_rank == local_leader ) {

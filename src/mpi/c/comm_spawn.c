@@ -52,7 +52,7 @@ int MPI_Comm_spawn(char *command, char **argv, int maxprocs, MPI_Info info,
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COMM,
                                           FUNC_NAME);
         }
-        if ( 0 > root || ompi_comm_size(comm) < root ) {
+        if ( (0 > root) || (ompi_comm_size(comm) <= root) ) {
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, 
                                           FUNC_NAME);
         }
