@@ -37,8 +37,16 @@ mca_ptl_gm_send_frag_destruct (mca_ptl_gm_send_frag_t * frag)
 {
 }
 
-/*XXX : take care of multi threading*/
-
+/* It's not yet clear for me what's the best solution here. Block until we
+ * get a free request or allocate a new one. The fist case allow us to never
+ * take care of the gm allocated DMA buffer as all send fragments already have
+ * one attached, but it can stop the application progression. The second case
+ * require special cases: we should set the data in the header inside the fragment
+ * and later when we get some free fragments with DMA memory attached we should
+ * put the header back there, and send it.
+ *
+ * I will implement the first case and add the second one in my TODO list.
+ */
 mca_ptl_gm_send_frag_t *
 mca_ptl_gm_alloc_send_frag( struct mca_ptl_gm_module_t *ptl,
 			    struct mca_pml_base_send_request_t * sendreq )
@@ -46,25 +54,23 @@ mca_ptl_gm_alloc_send_frag( struct mca_ptl_gm_module_t *ptl,
 
     ompi_free_list_t *flist;
     ompi_list_item_t *item;
-    mca_ptl_gm_send_frag_t *frag;
-    mca_ptl_tstamp_t tstamp = 0;
+    mca_ptl_gm_send_frag_t *sendfrag;
+    int32_t rc;
 
     flist = &(ptl->gm_send_frags);
 
-    item = ompi_list_remove_first( &(flist->super) );
- 
-    while(NULL == item) {
-	A_PRINT("888888888888888888888888 calling progress to allocate send frag\n");
-	((mca_ptl_base_module_t*)ptl)->ptl_component->ptlm_progress(tstamp);
-	item = ompi_list_remove_first( &(flist->super) );
-    }
+    OMPI_FREE_LIST_WAIT( &(ptl->gm_send_frags), item, rc );
 
-    frag = (mca_ptl_gm_send_frag_t *)item;
-    frag->req = (struct mca_pml_base_send_request_t *)sendreq;
-    GM_DBG( PTL_GM_DBG_COMM, "request is %p\t, frag->req = %p\n", (void*)sendreq, (void*)frag->req );
-    frag->type =  0;
+    sendfrag = (mca_ptl_gm_send_frag_t *)item;
+    sendfrag->req = (struct mca_pml_base_send_request_t *)sendreq;
+    GM_DBG( PTL_GM_DBG_COMM, "request is %p\t, frag->req = %p\n", (void*)sendreq, (void*)sendfrag->req );
+    sendfrag->status        = -1;
+    sendfrag->type          = -1;
+    sendfrag->wait_for_ack  =  0;
+    sendfrag->put_sent      = -1;
+    sendfrag->send_complete = -1;
     
-    return frag;
+    return sendfrag;
 }
 
 
