@@ -8,7 +8,7 @@
 #include <sys/errno.h>
 #include <sys/mman.h>
 
-#include "constants.h"
+#include "include/constants.h"
 #include "util/output.h"
 #include "util/sys_info.h"
 #include "mca/pcm/pcm.h"
