@@ -126,7 +126,8 @@ void mca_oob_tcp_peer_close(mca_oob_tcp_peer_t* peer);
 void mca_oob_tcp_peer_resolved(mca_oob_tcp_peer_t* peer, mca_oob_tcp_addr_t* addr);
 
 /*
- *
+ * Send the process identifier to the peer - so that 
+ * temporary names can be updated to actuals.
  */
 int mca_oob_tcp_peer_send_ident(mca_oob_tcp_peer_t* peer);
 
