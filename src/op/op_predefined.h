@@ -143,4 +143,8 @@ extern "C" {
   OMPI_OP_HANDLER_COMPLEX(replace);
   OMPI_OP_HANDLER_BYTE(replace);
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
+
 #endif /* OMPI_OP_PREDEFINED_H */
