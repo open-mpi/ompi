@@ -26,7 +26,9 @@ AM_CPPFLAGS = \
 SUBDIRS = compat
 
 EXTRA_DIST = err.c event.h evsignal.h event.3 kqueue.c \
-	epoll_sub.c epoll.c select.c rtsig.c poll.c signal.c
+	epoll_sub.c epoll.c select.c rtsig.c poll.c signal.c \
+	WIN32-Code/config.h WIN32-Code/misc.c \
+	WIN32-Code/misc.h  WIN32-Code/win32.c
 
 # OMPI: This causes problems
 junk = \
