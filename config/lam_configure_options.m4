@@ -104,6 +104,7 @@ fi
 AC_DEFINE_UNQUOTED(LAM_ENABLE_DEBUG, $WANT_DEBUG,
     [Whether we want developer-level debugging code or not])
 
+
 #
 # Fortran 77
 #
@@ -114,11 +115,12 @@ AC_ARG_ENABLE(f77,
                    [enable f77 MPI bindings (default: enabled)]))
 if test "$enable_f77" != "no"; then
     AC_MSG_RESULT([yes])
-    WANT_MPI_F77=1
+    LAM_WANT_F77_BINDINGS=1
 else
     AC_MSG_RESULT([no])
-    WANT_MPI_F77=0
+    LAM_WANT_F77_BINDINGS=0
 fi
+
 
 #
 # Fortran 90
@@ -127,14 +129,15 @@ fi
 AC_MSG_CHECKING([if want Fortran 90 bindings])
 AC_ARG_ENABLE(f90, 
     AC_HELP_STRING([--enable-f90],
-                   [enable f90 MPI bindings (default: enabled)]))
-if test "$enable_f90" != "no"; then
-    AC_MSG_RESULT([yes])
-    WANT_MPI_F90=1
-else
+                   [enable f90 MPI bindings (default: disabled)]))
+if test "$enable_f90" != "yes"; then
     AC_MSG_RESULT([no])
-    WANT_MPI_F90=0
+    LAM_WANT_F90_BINDINGS=0
+else
+    AC_MSG_RESULT([yes])
+    LAM_WANT_F90_BINDINGS=1
 fi
+
 
 #
 # MPI profiling

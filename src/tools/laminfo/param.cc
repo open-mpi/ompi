@@ -262,8 +262,8 @@ void laminfo::do_arch(lam_cmd_line_t *cmd_line)
 //
 void laminfo::do_config(bool want_all)
 {
-  const string f77(LAM_ENABLE_MPI_F77 ? "yes" : "no");
-  const string f90(LAM_ENABLE_MPI_F90 ? "yes" : "no");
+  const string f77(LAM_WANT_F77_BINDINGS ? "yes" : "no");
+  const string f90(LAM_WANT_F90_BINDINGS ? "yes" : "no");
   const string sthreads(LAM_HAVE_SOLARIS_THREADS ? "yes" : "no");
   const string pthreads(LAM_HAVE_POSIX_THREADS ? "yes" : "no");
   const string memprofile(LAM_ENABLE_MEM_PROFILE ? "yes" : "no");
@@ -271,9 +271,9 @@ void laminfo::do_config(bool want_all)
   const string debug(LAM_ENABLE_DEBUG ? "yes" : "no");
   const string cprofiling(LAM_ENABLE_MPI_PROFILING ? "yes" : "no");
   const string cxxprofiling(LAM_ENABLE_MPI_PROFILING ? "yes" : "no");
-  const string f77profiling((LAM_ENABLE_MPI_PROFILING && LAM_ENABLE_MPI_F77) ?
+  const string f77profiling((LAM_ENABLE_MPI_PROFILING && LAM_WANT_F77_BINDINGS) ?
                           "yes" : "no");
-  const string f90profiling((LAM_ENABLE_MPI_PROFILING && LAM_ENABLE_MPI_F90) ?
+  const string f90profiling((LAM_ENABLE_MPI_PROFILING && LAM_WANT_F90_BINDINGS) ?
                           "yes" : "no");
   const string cxxexceptions(LAM_HAVE_CXX_EXCEPTION_SUPPORT ? "yes" : "no");
   int lam_mpi_param_check = 3;

@@ -125,6 +125,7 @@ AM_ENABLE_STATIC
 ############################################################################
 # Check for compilers and preprocessors
 ############################################################################
+lam_show_title "Compiler and preprocessor tests"
 
 ##################################
 # C compiler characteristics
@@ -275,7 +276,7 @@ fi
 # If we want fortran support, then get the sizes and alignments of all
 # the rest of the fortran types
 
-if test "$F77" != "none" -a "$WANT_MPI_F77" = "1"; then
+if test "$LAM_WANT_F77_BINDINGS" = "1" ; then
     # INTEGER is already done, per above
     LAM_F77_GET_SIZEOF(REAL, LAM_SIZEOF_FORTRAN_REAL)
     LAM_F77_GET_SIZEOF(DOUBLE PRECISION, LAM_SIZEOF_FORTRAN_DBLPREC)
@@ -315,31 +316,7 @@ AC_DEFINE_UNQUOTED(LAM_ALIGNMENT_FORTRAN_DBLCOMPLEX,
     $LAM_ALIGNMENT_FORTRAN_DBLCOMPLEX,
     [Size of fortran double complex])
 
-#
-# There are 2 layers to the MPI f77 layer. The only extra thing
-# that determine f77 bindings is that fortran can be disabled by
-# user. In such cases, we need to not build the target at all.
-# One layer generates MPI_f77* bindings. The other layer
-# generates PMPI_f77* bindings. The following conditions
-# determine whether each (or both) these layers are 
-# built.
-# Superceeding clause:
-#   - fortran77 bindings should be enabled, else everything is 
-#     disabled
-# 1. MPI_f77* bindings are needed if:
-#	- Profiling is not required
-#   - Profiling is required but weak symbols are not
-#	  supported
-# 2. PMPI_* bindings are needed if profiling is required.
-# Hence we define 2 AM_CONDITIONALs which tell us whether
-# each of these layers need to be built or NOT
-#
-AM_CONDITIONAL(WANT_MPI_F77_BINDINGS_LAYER,
-    test "$WANT_MPI_PROFILING" = 0 -o "$LAM_PROFILING_COMPILE_SEPARATELY" = 1 -a "$WANT_MPI_F77" = 1)
-AM_CONDITIONAL(WANT_PMPI_F77_BINDINGS_LAYER,
-	test "$WANT_MPI_F77" = 1 -a "$WANT_MPI_PROFILING" = 1)
-AM_CONDITIONAL(COMPILE_PROFILING_SEPARATELY, 
-    test "$LAM_PROFILING_COMPILE_SEPARATELY" = 1)
+
 #
 # Fortran 90 setup
 #
@@ -365,6 +342,8 @@ LAM_SETUP_F90
 ##################################
 # Libraries
 ##################################
+
+lam_show_title "Library and Function tests"
 
 # -lsocket
 # -lnsl
@@ -503,6 +482,7 @@ LIBS="$LIBS $THREAD_LIBS"
 WRAPPER_EXTRA_CFLAGS="$WRAPPER_EXTRA_CFLAGS $THREAD_CFLAGS"
 WRAPPER_EXTRA_CXXFLAGS="$WRAPPER_EXTRA_CXXFLAGS $THREAD_CXXFLAGS"
 WRAPPER_EXTRA_FFLAGS="$WRAPPER_EXTRA_FFLAGS $THREAD_FFLAGS"
+WRAPPER_EXTRA_FCFLAGS="$WRAPPER_EXTRA_FCFLAGS $THREAD_FFLAGS"
 WRAPPER_EXTRA_LDFLAGS="$WRAPPER_EXTRA_LDFLAGS $THREAD_LDFLAGS"
 WRAPPER_EXTRA_LIBS="$WRAPPER_EXTRA_LIBS $THREAD_LIBS"
 
@@ -679,6 +659,16 @@ AC_DEFINE_UNQUOTED(WRAPPER_EXTRA_FFLAGS, "$WRAPPER_EXTRA_FFLAGS",
 AC_MSG_RESULT([$WRAPPER_EXTRA_FFLAGS])
 
 #
+# WRAPPER_EXTRA_FCFLAGS
+#
+AC_MSG_CHECKING([for mpif77/mpif90 FCFLAGS])
+LAM_UNIQ(WRAPPER_EXTRA_FCFLAGS)
+AC_SUBST(WRAPPER_EXTRA_FCFLAGS)
+AC_DEFINE_UNQUOTED(WRAPPER_EXTRA_FCFLAGS, "$WRAPPER_EXTRA_FCFLAGS",
+    [Additional FCFLAGS to pass through the wrapper compilers])
+AC_MSG_RESULT([$WRAPPER_EXTRA_FCFLAGS])
+
+#
 # WRAPPER_EXTRA_LDFLAGS
 #
 AC_MSG_CHECKING([for wrapper compiler LDFLAGS])
@@ -707,6 +697,7 @@ AC_SUBST(CPPFLAGS)
 AC_SUBST(CXXFLAGS)
 AC_SUBST(CXXCPPFLAGS)
 AC_SUBST(FFLAGS)
+AC_SUBST(FCFLAGS)
 
 
 ############################################################################

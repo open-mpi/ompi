@@ -149,7 +149,7 @@ fi
 
 
 AC_DEFUN([LAM_CONFIG_SOLARIS_THREADS_FC], [
-if test "$LAM_WANT_FORTRAN" = "1"; then
+if test "$LAM_WANT_F77_BINDINGS" = "1"; then
     if test "$BASEFC" = "f77"; then
         STHREAD_FFLAGS="-mt"
         style="Workshop/Forte"
@@ -208,7 +208,7 @@ AC_PROVIDE_IFELSE([AC_PROG_CXX],
                   [LAM_CONFIG_SOLARIS_THREADS_CXX],
                   [lam_sthread_cxx_success=1])
 
-AC_PROVIDE_IFELSE([LAM_PROG_F77], 
+AC_PROVIDE_IFELSE([AC_PROG_F77], 
                   [LAM_CONFIG_SOLARIS_THREADS_FC],
                   [lam_sthread_f77_success=1])
 

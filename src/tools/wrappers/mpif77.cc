@@ -17,7 +17,7 @@ main(int argc, char *argv[])
   // and pass in just a few arguments to customize for the language of
   // this wrapper compiler.
 
-#if !LAM_ENABLE_MPI_F77
+#if !LAM_WANT_F77_BINDINGS
 #if 0
   show_help("hf77", "no-fortran-support", NULL);
 #endif
