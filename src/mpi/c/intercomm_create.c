@@ -102,28 +102,36 @@ int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
 
     rprocs = ompi_comm_get_rprocs ( local_comm, bridge_comm, local_leader,
                                    remote_leader, tag, rsize );
-    newcomp = ompi_comm_set ( OMPI_COMM_INTRA_INTER,                         /* mode */
-                             local_comm,                                   /* old comm */
-                             bridge_comm,                                  /* bridge comm */
-                             local_comm->c_local_group->grp_proc_count,    /* local_size */
-                             local_comm->c_local_group->grp_proc_pointers, /* local_procs*/
-                             rsize,                                        /* remote_size */
-                             rprocs,                                       /* remote_procs */
-                             NULL,                                         /* attrs */
-                             local_comm->error_handler,                    /* error handler*/
-                             NULL,                                         /* coll module */
-                             NULL,                                         /* topo mpodule */
-                             local_leader,                                 /* local leader */
-                             remote_leader                                 /* remote leader */
-                             );
+    newcomp = ompi_comm_set ( local_comm,                                   /* old comm */
+                              local_comm->c_local_group->grp_proc_count,    /* local_size */
+                              local_comm->c_local_group->grp_proc_pointers, /* local_procs*/
+                              rsize,                                        /* remote_size */
+                              rprocs,                                       /* remote_procs */
+                              NULL,                                         /* attrs */
+                              local_comm->error_handler,                    /* error handler*/
+                              NULL,                                         /* coll module */
+                              NULL                                          /* topo mpodule */
+                              );
 
     if ( newcomp == MPI_COMM_NULL ) {
         return OMPI_ERRHANDLER_INVOKE (local_comm, MPI_ERR_INTERN, "MPI_Intercomm_create");
     }
 
+    /* Determine context id. It is identical to f_2_c_handle */
+    rc = ompi_comm_nextcid ( newcomp,                /* new comm */ 
+                             local_comm,             /* old comm */
+                             bridge_comm,            /* bridge comm */
+                             local_leader,           /* local leader */
+                             remote_leader,          /* remote_leader */
+                             OMPI_COMM_INTRA_INTER); /* mode */
  err_exit:
     if ( NULL == rprocs ) {
         free ( rprocs );
+    }
+    if ( OMPI_SUCCESS != rc ) {
+        *newintercomm = MPI_COMM_NULL;
+        return OMPI_ERRHANDLER_INVOKE(local_comm, MPI_ERR_INTERN,
+                                      "MPI_Intercom_create");
     }
 
     *newintercomm = newcomp;

@@ -28,6 +28,7 @@ int MPI_Intercomm_merge(MPI_Comm intercomm, int high,
     int local_rank;
     int first;
     int total_size;
+    int rc=MPI_SUCCESS;
 
     if ( MPI_PARAM_CHECK ) {
         if ( ompi_mpi_finalized ) 
@@ -67,27 +68,41 @@ int MPI_Intercomm_merge(MPI_Comm intercomm, int high,
                  local_size * sizeof(ompi_proc_t *));
     }
 
-    newcomp = ompi_comm_set ( OMPI_COMM_INTER_INTRA,     /* mode */
-                             intercomm,                /* old comm */
-                             NULL,                     /* bridge comm */
-                             total_size,               /* local_size */
-                             procs,                    /* local_procs*/
-                             0,                        /* remote_size */
-                             NULL,                     /* remote_procs */
-                             NULL,                     /* attrs */
-                             intercomm->error_handler, /* error handler*/
-                             NULL,                     /* coll module */
-                             NULL,                     /* topo mpodule */
-                             MPI_UNDEFINED,            /* local leader */
-                             MPI_UNDEFINED             /* remote leader */
-                             );
+    newcomp = ompi_comm_set ( intercomm,                /* old comm */
+                              total_size,               /* local_size */
+                              procs,                    /* local_procs*/
+                              0,                        /* remote_size */
+                              NULL,                     /* remote_procs */
+                              NULL,                     /* attrs */
+                              intercomm->error_handler, /* error handler*/
+                              NULL,                     /* coll module */
+                              NULL                      /* topo mpodule */
+                              );
 
     if ( newcomp == MPI_COMM_NULL ) {
-        return OMPI_ERRHANDLER_INVOKE (intercomm, MPI_ERR_INTERN, "MPI_Intercomm_merge");
+        return OMPI_ERRHANDLER_INVOKE (intercomm, MPI_ERR_INTERN, 
+                                       "MPI_Intercomm_merge");
     }
 
+    /* Determine context id. It is identical to f_2_c_handle */
+    rc = ompi_comm_nextcid ( newcomp,                /* new comm */ 
+                             intercomm,              /* old comm */
+                             NULL,                   /* bridge comm */
+                             MPI_UNDEFINED,          /* local leader */
+                             MPI_UNDEFINED,          /* remote_leader */
+                             OMPI_COMM_INTER_INTRA); /* mode */
+    if ( OMPI_SUCCESS != rc ) {
+        goto exit;
+    }
+
+ exit:
     if ( NULL != procs ) {
         free ( procs );
+    }
+    if ( OMPI_SUCCESS != rc ) {
+        *newcomm = MPI_COMM_NULL;
+        return OMPI_ERRHANDLER_INVOKE(intercomm, MPI_ERR_INTERN,
+                                      "MPI_Intercom_merge");
     }
 
     *newcomm = newcomp;

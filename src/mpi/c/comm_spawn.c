@@ -23,6 +23,7 @@ int MPI_Comm_spawn(char *command, char **argv, int maxprocs, MPI_Info info,
                     int *array_of_errcodes) 
 {
     int rank;
+    int i;
     
     if ( MPI_PARAM_CHECK ) {
         if ( ompi_mpi_finalized )
@@ -76,7 +77,8 @@ int MPI_Comm_spawn(char *command, char **argv, int maxprocs, MPI_Info info,
        */
 
        /* map potentially MPI_ARGV_NULL to the value required by the start-cmd */
-       /* start processes */
+       /* start processes. if number of processes started != maxprocs 
+          return MPI_ERR_SPAWN.*/
        /* publish your name */
        /* accept connection from other group.
           Root in the new application is rank 0 in their COMM_WORLD ? */
@@ -94,7 +96,13 @@ int MPI_Comm_spawn(char *command, char **argv, int maxprocs, MPI_Info info,
       to enable the usage of fast communication devices
       between the two worlds ? */
 
-   /* set array of errorcodes */
+   /* set error codes 
+   if (MPI_ERRCODES_IGNORE != array_of_errcodes) {
+       for ( i=0; i < maxprocs; i++ ) {
+           array_of_errcodes[i]=MPI_SUCCESS;
+       }
+   }
+   */
 
     return MPI_SUCCESS;
 }
