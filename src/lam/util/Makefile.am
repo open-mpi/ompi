@@ -10,20 +10,20 @@ noinst_LTLIBRARIES = libutil.la
 # Source code files
 
 headers = \
-	argv.h \
-	lam_log.h \
-	malloc.h \
+    argv.h \
+    lam_log.h \
+    malloc.h \
     path.h \
-	reactor.h \
-	strncpy.h
+    reactor.h \
+    strncpy.h
 
 libutil_la_SOURCES = \
-	$(headers) \
-	argv.c \
-	lam_log.c \
+    $(headers) \
+    argv.c \
+    lam_log.c \
     path.c \
-	reactor.c \
-	strncpy.c
+    reactor.c \
+    strncpy.c
 
 # Conditionally install the header files
 
