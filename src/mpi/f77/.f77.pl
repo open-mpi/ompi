@@ -14,12 +14,13 @@ open(MPIF_H, "> .mpif.h") || print "could not open mpif.h \n";
 while (<MPI_H>) {
     if (!/c2f|f2c/) { #c2f functions are not needed
         $_ = lc($_);   
+        s/\bconst\b//g; # consts are not a part of fortran bindings
+        s/void\s*\*+/char /g; # replaces void * and void ** parameters
+        s/void//g; #these are for void arguments
         s/^\s+//; # trim leading whitespace
         s/\s+/ /g; # trim whitespace within text
         s/\s+$/\n/; # trim trailing whitespace
-        /(.*[^;])\n/ && ($_ = $1); # remove multi-line function declarations
-        s/void\s*\*+/char \*/g; # replaces void * and void ** parameters
-        s/void//g; #these are for void arguments
+        /(.*[^;])\n/ && ($_ = $1." "); # remove multi-line function declarations
         print MPIF_H;
     }
 }
@@ -37,17 +38,24 @@ while (<MPIF_H>) {
     s/^int{1,1}/void/; #makes the return type of the functions as void if it was int before
     
     # this loop replaces mpi_comm, mpi_datatype etc with MPI_Fint * 
-    while (/\w+\w+\(.*mpi_.*/){
-        s/(\w+\w+\(.*)mpi_\w+/$1MPI_Fint/;
-    }
+    #while (/\w+\w+\(.*mpi_.*/){
+    #s/(\w+\w+\(.*)mpi_\w+/$1MPI_Fint/g;
+    s/, +/,/g;
+    s/\( +/\(/g;
+    1 while s/(?<=[\(,\t])mpi_\w+/MPI_Fint/g;
+    #}
     s/\bint\b/MPI_Fint/g; #this removes all int's and replaces them with MPI_Fints
     s/\*+//g; #remove all pointers and pointers to pointers
     s/\[//g; #remove all array notations
     s/\]//g; #remove all array notations
+    # s/ +/ /g; # trim whitespace within text
     s/,\s+/,/g; # remove all spaces after commas, this is for future preparation
     s/(\w+)\s(\w+)([,\)])/$1 \*$2$3/g; #make all parameters pointers
-    s/\)/,MPI_Fint *ierr\)/; #additional argument required for all fortran functions
-    
+    s/(\w+)\)/$1,MPI_Fint *ierr\)/; #additional argument required for all fortran functions
+    s/\(\)/\(MPI_Fint *ierr\)/; #additional argument required for all fortran functions
+    s/,/, /g;
+    s/,\s*\.\.\.//g; # this is to handle mpi_pcontrol    
+
     print TEMP_H;
 }
 
@@ -125,7 +133,7 @@ $header =
 "#ifndef LAM_F77_PROTOTYPES_MPI_H
 #define LAM_F77_PROTOTYPES_MPI_H
 /*
- * $HEADER$
+ * \$HEADER\$
  * This file prototypes all MPI fortran functions in all four fortran
  * symbol conventions as well as all the internal real LAM wrapper
  * functions (different from any of the four fortran symbol
@@ -161,7 +169,7 @@ while (<MPIF_F_H>) {
 }
 print proto $endif;
 
-print proto "/*This is the all lower case prototypes*/\n\n";
+print proto "/*These are the all lower case prototypes*/\n\n";
 
 while (<MPIF_H>) {
     print proto;
@@ -173,7 +181,7 @@ while (<MPIF__H>) {
     print proto;
 }
 
-print proto "/*This is the cdouble underscore prototypes*/\n\n";
+print proto "/*This is the double underscore prototypes*/\n\n";
 
 while (<MPIF___H>) {
     print proto;
@@ -193,8 +201,6 @@ close(MPIF___H);
 close(MPIF_F_H);
 close(mpif_h);
 close(proto);
-
-#system("rm .mpif.h .mpif_f.h .mpif_.h .mpif__.h .MPIF.h");
 
 #
 # Now we have the prototype ready, all we need to do is generate the files. For this, we need to 
@@ -369,7 +375,7 @@ while (<MPIF___H>) {
 print proto "/*This is the all upper case prototypes*/\n\n";
 
 while (<mpif_h>) {
-    (/^(\w+\s)(mpi_\w+)(.*)/) && ($_ = $1."p".$2.$3."\n"); 
+    (/^(\w+\s)(MPI_\w+)(.*)/) && ($_ = $1."P".$2.$3."\n"); 
     print proto;
 }
 
@@ -410,4 +416,4 @@ close(PMPI_H);
     
 system("mv prototypes_pmpi.h profile/prototypes_pmpi.h");
 system("mv defines.h profile/defines.h");
-system("rm -rf .mpif_f.h .mpif.h .mpif_.h .mpif__.h MPIF.h");
+# system("rm -rf .mpif_f.h .mpif.h .mpif_.h .mpif__.h MPIF.h");
