@@ -84,3 +84,61 @@ int orte_proc_info(void)
 
     return ORTE_SUCCESS;
 }
+
+
+int orte_proc_info_finalize(void)
+{
+    if (NULL != orte_process_info.my_name) {
+        free(orte_process_info.my_name);
+    }
+    
+    if (NULL != orte_process_info.ns_replica_uri) {
+        free(orte_process_info.ns_replica_uri);
+    }
+    
+    if (NULL != orte_process_info.gpr_replica_uri) {
+        free(orte_process_info.gpr_replica_uri);
+    }
+    
+    if (NULL != orte_process_info.ns_replica) {
+        free(orte_process_info.ns_replica);
+    }
+    
+    if (NULL != orte_process_info.gpr_replica) {
+        free(orte_process_info.gpr_replica);
+    }
+ 
+     if (NULL != orte_process_info.tmpdir_base) {
+        free(orte_process_info.tmpdir_base);
+    }
+    
+    if (NULL != orte_process_info.top_session_dir) {
+        free(orte_process_info.top_session_dir);
+    }
+ 
+     if (NULL != orte_process_info.universe_session_dir) {
+        free(orte_process_info.universe_session_dir);
+    }
+    
+    if (NULL != orte_process_info.job_session_dir) {
+        free(orte_process_info.job_session_dir);
+    }
+    
+    if (NULL != orte_process_info.proc_session_dir) {
+        free(orte_process_info.proc_session_dir);
+    }
+    
+    if (NULL != orte_process_info.sock_stdin) {
+        free(orte_process_info.sock_stdin);
+    }
+    
+     if (NULL != orte_process_info.sock_stdout) {
+        free(orte_process_info.sock_stdout);
+    }
+    
+   if (NULL != orte_process_info.sock_stderr) {
+        free(orte_process_info.sock_stderr);
+    }
+
+    return ORTE_SUCCESS;
+}

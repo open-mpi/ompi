@@ -1,0 +1,52 @@
+Undecided timing:
+-----------------
+
+- if an MPI process fails (e.g., it seg faults), it causes orterun to
+  hang.  This is with the rsh pls.
+
+- if the daemon is not found or fails to start, orterun will hang.  No
+  indication is given to the users that something went wrong.
+
+- $prefix/etc/hosts vs. $prefix/etc/openmpi-default-hostfile
+
+
+Pre-milestone:
+--------------
+
+- singleton mpi doesn't work
+
+
+Post-milestone:
+---------------
+
+- ras_base_alloc: doesn't allow for oversubscribing like this:
+
+  eddie: cpu=2
+  vogon: cpu=2 max-slots=4
+  mpirun -np 6 uptime
+
+  It barfs because it tries to evenly divide the remaining unallocated
+  procs across all nodes (i.e., 1 each on eddie/vogon) rather than
+  seeing that vogon can take the remaining 2.
+
+- Jeff: TM needs to be re-written to use daemons (can't hog TM
+  connection forever) 
+
+- Jeff: make the mapper be able to handle app->map_data
+
+- Jeff: add function callback in cmd_line_t stuff
+
+- Jeff: does cmd_line_t need to *get* MCA params if a command line
+  param is not taken but an MCA param is available?
+  - consider empty string problem...
+
+- ?: Friendlier error messages (e.g., if no nodes -- need something
+  meaningful to tell the user)
+
+- ?: Populate orte_finalize()
+
+- Ralph: compare and set function in GPR
+
+- Jeff: collapse MCA params from 3 names to 1 name
+
+- ?: Apply LANL copyright to trunk (post all merging activity)

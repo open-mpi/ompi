@@ -90,7 +90,12 @@ CLEANUP:
     }
     free(tokens);
     
-    if (NULL != values) OBJ_RELEASE(values);
+    if (NULL != values) {
+        for (i=0; i < cnt; i++) {
+            OBJ_RELEASE(values[i]);
+        }
+        free(values);
+    }
     
     return rc;
 }

@@ -114,8 +114,11 @@ ompi_cmd_line_init_t cmd_line_init[] = {
       "Number of processes to run" },
 
     /* Set a hostfile */
-    { "hostfile", NULL, NULL, '\0', NULL, "hostfile", 1,
-      &orterun_globals.num_procs, OMPI_CMD_LINE_TYPE_INT,
+    { "rds", "hostfile", "path", '\0', "hostfile", "hostfile", 1,
+      NULL, OMPI_CMD_LINE_TYPE_STRING,
+      "Provide a hostfile" },
+    { "rds", "hostfile", "path", '\0', "machinefile", "machinefile", 1,
+      NULL, OMPI_CMD_LINE_TYPE_STRING,
       "Provide a hostfile" },
 
     /* Don't wait for the process to finish before exiting */

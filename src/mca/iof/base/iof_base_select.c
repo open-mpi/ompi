@@ -100,7 +100,7 @@ int orte_iof_base_select(void)
     /* setup reference to selected module */
     if (NULL != selected_module) {
         orte_iof = *selected_module;
-        orte_iof_base.iof_component_selected = true;
+        orte_iof_base.iof_flush = true;
         return ORTE_SUCCESS;
     }
 

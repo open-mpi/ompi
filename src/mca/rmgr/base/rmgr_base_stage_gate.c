@@ -131,7 +131,7 @@ int orte_rmgr_base_proc_stage_gate_init(orte_jobid_t job)
     trig.tokens = (char**)malloc(sizeof(char*));
     if (NULL == trig.tokens) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        OBJ_DESTRUCT(&value);
+        OBJ_DESTRUCT(&sub);
         OBJ_DESTRUCT(&trig);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
@@ -141,21 +141,21 @@ int orte_rmgr_base_proc_stage_gate_init(orte_jobid_t job)
     trig.keyvals = (orte_gpr_keyval_t**)malloc(2*sizeof(orte_gpr_keyval_t*));
     if (NULL == trig.keyvals) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        OBJ_DESTRUCT(&value);
+        OBJ_DESTRUCT(&sub);
         OBJ_DESTRUCT(&trig);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
     trig.keyvals[0] = OBJ_NEW(orte_gpr_keyval_t);
     if (NULL == trig.keyvals[0]) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        OBJ_DESTRUCT(&value);
+        OBJ_DESTRUCT(&sub);
         OBJ_DESTRUCT(&trig);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
     trig.keyvals[1] = OBJ_NEW(orte_gpr_keyval_t);
     if (NULL == trig.keyvals[1]) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        OBJ_DESTRUCT(&value);
+        OBJ_DESTRUCT(&sub);
         OBJ_DESTRUCT(&trig);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
@@ -167,7 +167,7 @@ int orte_rmgr_base_proc_stage_gate_init(orte_jobid_t job)
     trig.keyvals[0]->key = strdup(ORTE_JOB_SLOTS_KEY);
     if (NULL == trig.keyvals[0]->key) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        OBJ_DESTRUCT(&value);
+        OBJ_DESTRUCT(&sub);
         OBJ_DESTRUCT(&trig);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
@@ -188,7 +188,7 @@ int orte_rmgr_base_proc_stage_gate_init(orte_jobid_t job)
         trig.keyvals[1]->key = strdup(keys[i]);
         if (NULL == trig.keyvals[1]->key) {
             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-            OBJ_DESTRUCT(&value);
+            OBJ_DESTRUCT(&sub);
             OBJ_DESTRUCT(&trig);
             return ORTE_ERR_OUT_OF_RESOURCE;
         }
@@ -232,21 +232,21 @@ int orte_rmgr_base_proc_stage_gate_init(orte_jobid_t job)
     trig.keyvals = (orte_gpr_keyval_t**)malloc(sizeof(orte_gpr_keyval_t**));
     if (NULL == trig.keyvals) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        OBJ_DESTRUCT(&value);
+        OBJ_DESTRUCT(&sub);
         OBJ_DESTRUCT(&trig);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
     trig.keyvals[0] = OBJ_NEW(orte_gpr_keyval_t);
     if (NULL == trig.keyvals[0]) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        OBJ_DESTRUCT(&value);
+        OBJ_DESTRUCT(&sub);
         OBJ_DESTRUCT(&trig);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
     trig.keyvals[0]->key = strdup(ORTE_PROC_NUM_ABORTED);
     if (NULL == trig.keyvals[0]->key) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        OBJ_DESTRUCT(&value);
+        OBJ_DESTRUCT(&sub);
         OBJ_DESTRUCT(&trig);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
@@ -499,6 +499,55 @@ int orte_rmgr_base_proc_stage_gate_subscribe(orte_jobid_t job, orte_gpr_notify_c
          free(trig.keyvals[1]->key);
          trig.keyvals[1]->key = NULL;
     }
+    
+    /* Now do the abort trigger */
+    sub.keys[0] = strdup(ORTE_PROC_NUM_ABORTED);
+    if (NULL == sub.keys[0]) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        OBJ_DESTRUCT(&sub);
+        OBJ_DESTRUCT(&trig);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    OBJ_RELEASE(trig.keyvals[0]);
+    OBJ_RELEASE(trig.keyvals[1]);
+    free(trig.keyvals);
+    trig.cnt = 1;
+    trig.keyvals = (orte_gpr_keyval_t**)malloc(sizeof(orte_gpr_keyval_t**));
+    if (NULL == trig.keyvals) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        OBJ_DESTRUCT(&sub);
+        OBJ_DESTRUCT(&trig);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    trig.keyvals[0] = OBJ_NEW(orte_gpr_keyval_t);
+    if (NULL == trig.keyvals[0]) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        OBJ_DESTRUCT(&sub);
+        OBJ_DESTRUCT(&trig);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    trig.keyvals[0]->key = strdup(ORTE_PROC_NUM_ABORTED);
+    if (NULL == trig.keyvals[0]->key) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        OBJ_DESTRUCT(&sub);
+        OBJ_DESTRUCT(&trig);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    trig.keyvals[0]->type = ORTE_INT32;
+    trig.keyvals[0]->value.i32 = 1;  /* trigger on the first process that aborts */
+
+    subs = &sub;
+    trigs = &trig;
+    rc = orte_gpr.subscribe(
+         ORTE_GPR_TRIG_ALL_AT,
+         1, &subs,
+         1, &trigs,
+         &rc);
+
+     if (ORTE_SUCCESS != rc) {
+         ORTE_ERROR_LOG(rc);
+     }
+     
     OBJ_DESTRUCT(&sub);
     OBJ_DESTRUCT(&trig);
     return ORTE_SUCCESS;

@@ -53,7 +53,13 @@ count              { orte_rds_hostfile_value.sval = yytext;
                      return ORTE_RDS_HOSTFILE_COUNT; }
 slots              { orte_rds_hostfile_value.sval = yytext; 
                      return ORTE_RDS_HOSTFILE_SLOTS; }
-slots-max          { orte_rds_hostfile_value.sval = yytext; 
+"slots-max"        { orte_rds_hostfile_value.sval = yytext; 
+                     return ORTE_RDS_HOSTFILE_SLOTS_MAX; }
+slots_max          { orte_rds_hostfile_value.sval = yytext; 
+                     return ORTE_RDS_HOSTFILE_SLOTS_MAX; }
+"max-slots"        { orte_rds_hostfile_value.sval = yytext; 
+                     return ORTE_RDS_HOSTFILE_SLOTS_MAX; }
+max_slots          { orte_rds_hostfile_value.sval = yytext; 
                      return ORTE_RDS_HOSTFILE_SLOTS_MAX; }
 
 [0-9]+             { orte_rds_hostfile_value.ival = atol(yytext); 
@@ -62,7 +68,7 @@ slots-max          { orte_rds_hostfile_value.sval = yytext;
 [A-Za-z0-9_\-\.]*  { orte_rds_hostfile_value.sval = yytext; 
                      return ORTE_RDS_HOSTFILE_STRING; }
 
-.	               { orte_rds_hostfile_value.sval = yytext; 
+.                  { orte_rds_hostfile_value.sval = yytext; 
                      return ORTE_RDS_HOSTFILE_ERROR; }
 
 %%

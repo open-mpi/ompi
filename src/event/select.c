@@ -215,6 +215,29 @@ select_dispatch(void *arg, struct timeval *tv)
 #endif
 
 	if (res == -1) {
+        if (errno == EBADF) {
+            /* poll each of the file descriptors individually to determine  
+             * which is bad 
+            */
+            for (ev = TAILQ_FIRST(&ompi_eventqueue); ev != NULL; ev = next) {
+                next = TAILQ_NEXT(ev, ev_next);
+
+                tv->tv_sec = 0;
+                tv->tv_usec = 0;
+	            memset(sop->event_readset, 0, sop->event_fdsz);
+	            memset(sop->event_writeset, 0, sop->event_fdsz);
+		        if (ev->ev_events & OMPI_EV_WRITE)
+			        FD_SET(ev->ev_fd, sop->event_writeset);
+		        if (ev->ev_events & OMPI_EV_READ)
+			        FD_SET(ev->ev_fd, sop->event_readset);
+	            res = select(sop->event_fds + 1, sop->event_readset, 
+	                  sop->event_writeset, NULL, tv);
+                if(res < 0) {
+                    ompi_output(0, "bad file descriptor: %d\n", ev->ev_fd);
+                    ompi_event_del_i(ev);
+                }
+            }
+        }
 		if (errno != EINTR) {
             ompi_output(0, "select failed with errno=%d\n", errno);
 		    return (-1);

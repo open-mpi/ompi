@@ -26,6 +26,9 @@
 #include "mca/iof/base/base.h"
 #include "mca/rmgr/base/base.h"
 #include "util/session_dir.h"
+#include "util/sys_info.h"
+#include "util/proc_info.h"
+#include "util/univ_info.h"
 
 /**
  * Leave ORTE.
@@ -52,6 +55,11 @@ int orte_finalize(void)
     orte_session_dir_finalize();
 #endif
 
+    /* clean out the global structures */
+    orte_sys_info_finalize();
+    orte_proc_info_finalize();
+    orte_univ_info_finalize();
+    
     ompi_malloc_finalize();
 
     return ORTE_SUCCESS;

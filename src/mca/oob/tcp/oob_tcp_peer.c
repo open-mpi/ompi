@@ -284,7 +284,7 @@ static int mca_oob_tcp_peer_start_connect(mca_oob_tcp_peer_t* peer)
             ORTE_NAME_ARGS(orte_process_info.my_name),
             ORTE_NAME_ARGS(&(peer->peer_name)),
             ompi_socket_errno);
-        mca_oob_tcp_peer_close(peer);
+        mca_oob_tcp_peer_shutdown(peer);
         ompi_evtimer_add(&peer->peer_timer_event, &tv);
         return OMPI_ERR_UNREACH;
     }
@@ -316,10 +316,11 @@ static int mca_oob_tcp_peer_start_connect(mca_oob_tcp_peer_t* peer)
         return rc;
     }
 
-    if(mca_oob_tcp_component.tcp_debug > 2) {
-        ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_peer_start_connect: connecting to: %s:%d\n",
+    if(mca_oob_tcp_component.tcp_debug > 0) {
+        ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_peer_start_connect: connecting port %d to: %s:%d\n",
             ORTE_NAME_ARGS(orte_process_info.my_name),
             ORTE_NAME_ARGS(&(peer->peer_name)),
+            ntohs(mca_oob_tcp_component.tcp_listen_port),
             inet_ntoa(inaddr.sin_addr),
             ntohs(inaddr.sin_port));
     }
@@ -382,16 +383,14 @@ static void mca_oob_tcp_peer_complete_connect(mca_oob_tcp_peer_t* peer)
     if(so_error == EINPROGRESS) {
         ompi_event_add(&peer->peer_send_event, 0);
         return;
-    } else if (so_error == ECONNREFUSED) {
+    } else if (so_error == ECONNREFUSED || so_error == ETIMEDOUT) {
         struct timeval tv = { 1,0 };
         ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_peer_complete_connect: "
-            "connection refused - retrying\n", 
+            "connection failed (errno=%d) - retrying (pid=%d)\n", 
             ORTE_NAME_ARGS(orte_process_info.my_name),
-            ORTE_NAME_ARGS(&(peer->peer_name)));
-        mca_oob_tcp_peer_close(peer);
-        if(peer->peer_retries > mca_oob_tcp_component.tcp_peer_retries) {
-           return;
-        }
+            ORTE_NAME_ARGS(&(peer->peer_name)),
+            so_error, getpid());
+        mca_oob_tcp_peer_shutdown(peer);
         ompi_evtimer_add(&peer->peer_timer_event, &tv);
         return;
     } else if(so_error != 0) {
@@ -438,7 +437,7 @@ static void mca_oob_tcp_peer_connected(mca_oob_tcp_peer_t* peer)
  */
 void mca_oob_tcp_peer_close(mca_oob_tcp_peer_t* peer)
 {
-    if(mca_oob_tcp_component.tcp_debug > 2) {
+    if(mca_oob_tcp_component.tcp_debug > 0) {
         ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_peer_close(%p) sd %d state %d\n",
             ORTE_NAME_ARGS(orte_process_info.my_name),
             ORTE_NAME_ARGS(&(peer->peer_name)),
@@ -537,7 +536,7 @@ static int mca_oob_tcp_peer_recv_connect_ack(mca_oob_tcp_peer_t* peer)
 
     /* connected */
     mca_oob_tcp_peer_connected(peer);
-    if(mca_oob_tcp_component.tcp_debug > 2) {
+    if(mca_oob_tcp_component.tcp_debug > 0) {
         mca_oob_tcp_peer_dump(peer, "connected");
     }
     return OMPI_SUCCESS;
@@ -557,7 +556,7 @@ static int mca_oob_tcp_peer_recv_blocking(mca_oob_tcp_peer_t* peer, void* data, 
 
         /* remote closed connection */
         if(retval == 0) {
-            if(mca_oob_tcp_component.tcp_debug > 3) {
+            if(mca_oob_tcp_component.tcp_debug > 0) {
                 ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_peer_recv_blocking: "
                     "peer closed connection: peer state %d",
                     ORTE_NAME_ARGS(orte_process_info.my_name),
@@ -841,7 +840,7 @@ bool mca_oob_tcp_peer_accept(mca_oob_tcp_peer_t* peer, int sd)
 
         mca_oob_tcp_peer_connected(peer);
         ompi_event_add(&peer->peer_recv_event, 0);
-        if(mca_oob_tcp_component.tcp_debug > 2) {
+        if(mca_oob_tcp_component.tcp_debug > 0) {
             mca_oob_tcp_peer_dump(peer, "accepted");
         }
         OMPI_THREAD_UNLOCK(&peer->peer_lock);
@@ -875,6 +874,7 @@ static void mca_oob_tcp_peer_timer_handler(int sd, short flags, void* user)
 {
     /* start the connection to the peer */
     mca_oob_tcp_peer_t* peer = (mca_oob_tcp_peer_t*)user;
+    ompi_output(0, "mca_oob_tcp_peer_timer_handler\n");
     OMPI_THREAD_LOCK(&peer->peer_lock);
     if(peer->peer_state == MCA_OOB_TCP_CLOSED)
         mca_oob_tcp_peer_start_connect(peer);

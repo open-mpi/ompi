@@ -90,6 +90,18 @@ OMPI_DECLSPEC extern orte_sys_info_t orte_system_info;
  */
 OMPI_DECLSPEC int orte_sys_info(void);
 
+/*
+ * \internal
+ * 
+ * Free any memory held in the system_info structure
+ * 
+ * Called from \c orte_finalize
+ * 
+ * @retval ORTE_SUCCESS If all values successfully released
+ * @retval ORTE_ERROR If any problems occur
+ */
+OMPI_DECLSPEC int orte_sys_info_finalize(void);
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

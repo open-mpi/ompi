@@ -137,7 +137,13 @@ int orte_pls_rsh_component_open(void)
     param = orte_pls_rsh_param_register_string("agent","ssh");
     mca_pls_rsh_component.argv = ompi_argv_split(param, ' ');
     mca_pls_rsh_component.argc = ompi_argv_count(mca_pls_rsh_component.argv);
-    return (mca_pls_rsh_component.argc > 0) ? ORTE_SUCCESS : ORTE_ERR_BAD_PARAM;
+    if (mca_pls_rsh_component.argc > 0) {
+        mca_pls_rsh_component.path = strdup(mca_pls_rsh_component.argv[0]);
+        return ORTE_SUCCESS;
+    } else {
+        mca_pls_rsh_component.path = NULL;
+        return ORTE_ERR_BAD_PARAM;
+    }
 }
 
 
@@ -170,7 +176,10 @@ int orte_pls_rsh_component_close(void)
 
     OBJ_DESTRUCT(&mca_pls_rsh_component.lock);
     OBJ_DESTRUCT(&mca_pls_rsh_component.cond);
-    ompi_argv_free(mca_pls_rsh_component.argv);
+    if(NULL != mca_pls_rsh_component.argv)
+        ompi_argv_free(mca_pls_rsh_component.argv);
+    if(NULL != mca_pls_rsh_component.path)
+        free(mca_pls_rsh_component.path);
     return ORTE_SUCCESS;
 }
 

@@ -105,6 +105,7 @@ OMPI_DECLSPEC extern orte_proc_info_t orte_process_info;
 
 OMPI_DECLSPEC int orte_proc_info(void);
 
+OMPI_DECLSPEC int orte_proc_info_finalize(void);
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

@@ -159,7 +159,6 @@ int mca_base_param_register_int(const char *type_name,
                                 int default_value)
 {
   mca_base_param_storage_t storage;
-  mca_base_param_find(type_name,component_name,param_name);
 
   storage.intval = default_value;
   return param_register(type_name, component_name, param_name, mca_param_name,
@@ -177,7 +176,6 @@ int mca_base_param_register_string(const char *type_name,
                                    const char *default_value)
 {
   mca_base_param_storage_t storage;
-  mca_base_param_find(type_name,component_name,param_name);
 
   if (NULL != default_value) {
     storage.stringval = (char *) default_value;
