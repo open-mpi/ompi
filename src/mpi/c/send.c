@@ -34,15 +34,12 @@ int MPI_Send(void *buf, int count, MPI_Datatype type, int dest,
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (ompi_comm_invalid(comm)) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, FUNC_NAME);
-        } else if (count < 0) {
-            rc = MPI_ERR_COUNT;
-        } else if (type == MPI_DATATYPE_NULL) {
-            rc = MPI_ERR_TYPE;
         } else if (tag < 0 || tag > MPI_TAG_UB_VALUE) {
             rc = MPI_ERR_TAG;
         } else if (ompi_comm_peer_invalid(comm, dest)) {
             rc = MPI_ERR_RANK;
-        }
+        } else
+           OMPI_CHECK_DATATYPE_FOR_SEND( rc, type, count );
         OMPI_ERRHANDLER_CHECK(rc, comm, rc, FUNC_NAME);
     }
 
