@@ -2,48 +2,83 @@
  * $HEADER$
  */
 
-/** @file **/
+/**
+ * @file 
+ *
+ * Run-time MCA parameter registration and lookup.
+ */
 
 #ifndef OMPI_MCA_BASE_PARAM_H
 #define OMPI_MCA_BASE_PARAM_H
 
 #include "mpi.h"
 
-/*
- * Types for MCA parameters
+/**
+ * \internal
+ *
+ * Types for MCA parameters.
  */
-
 typedef union {
   int intval;
+  /**< Integer value */
   char *stringval;
+  /**< String value */
 } mca_base_param_storage_t;
 
+/**
+ * Special name used to indicate that this is an "info" value.
+ */
 #define MCA_BASE_PARAM_INFO ((void*) -1)
 
 
-/*
+/**
+ * \internal
+ *
  * The following types are really in this public .h file so that
  * ompi_info can see them.  No one else should use them!
  */
 typedef enum {
   MCA_BASE_PARAM_TYPE_INT,
+  /**< The parameter is of type integer. */
   MCA_BASE_PARAM_TYPE_STRING,
+  /**< The parameter is of type string. */
 
   MCA_BASE_PARAM_TYPE_MAX
+  /**< Maximum parameter type. */
 } mca_base_param_type_t;
 
+/**
+ * \internal
+ *
+ * Entry for holding the information about an MCA parameter and its
+ * default value.
+ */
 struct mca_base_param_t {
   mca_base_param_type_t mbp_type;
+  /**< Enum indicating the type of the parameter (integer or string) */
   char *mbp_type_name;
+  /**< String of the type name, or NULL */
   char *mbp_module_name;
+  /**< String of the component name */
   char *mbp_param_name;
+  /**< String of the parameter name */
   char *mbp_full_name;
+  /**< Full parameter name, in case it is not
+     <type>_<component>_<param> */
 
   int mbp_keyval;
+  /**< Keyval value for MPI attribute parameters */
   char *mbp_env_var_name;
+  /**< Environment variable name */
 
   mca_base_param_storage_t mbp_default_value;
+  /**< Default value of the parameter */
 };
+/**
+ * \internal
+ *
+ * Convenience typedef.
+ */
 typedef struct mca_base_param_t mca_base_param_t;
 
 
@@ -81,6 +116,7 @@ extern "C" {
                                   const char *param_name, 
                                   const char *mca_param_name,
                                   int default_value);
+
   /**
    * Register a string MCA parameter.
    *
@@ -109,6 +145,7 @@ extern "C" {
                                      const char *param_name, 
                                      const char *mca_param_name,
                                      const char *default_value);
+
   /**
    * Look up an integer MCA parameter.
    *
@@ -126,6 +163,7 @@ extern "C" {
    * return value from mca_base_param_register_int().
    */
   int mca_base_param_lookup_int(int index, int *value);
+
   /**
    * Look up a string MCA parameter.
    *
@@ -143,6 +181,7 @@ extern "C" {
    * return value from mca_base_param_register_string().
    */
   int mca_base_param_lookup_string(int index, char **value);
+
   /**
    * Find the index for an MCA parameter based on its names.
    *
@@ -164,6 +203,7 @@ extern "C" {
    */
   int mca_base_param_find(const char *type, const char *module, 
                           const char *param);
+
   /**
    * Shut down the MCA parameter system (normally only invoked by the
    * MCA framework itself).
