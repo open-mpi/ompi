@@ -12,12 +12,17 @@ static void *malloc_noalign(size_t size, size_t dummy) {
     return malloc(size);
 }
 
+size_t offset;
+static void *malloc_base_addr(void){
+        return (void *)offset;
+}
+
 #include "class/ompi_circular_buffer_fifo.h"
 
 /* simple allocator for some simple tests */
 mca_mpool_base_module_t pool = {
     NULL, /* component structure */
-    NULL, /* mca_mpool_base_module_address_fn_t */
+    malloc_base_addr, /* mca_mpool_base_module_address_fn_t */
     malloc_noalign, /* mca_mpool_base_module_alloc_fn_t */
     realloc, /* ca_mpool_base_module_realloc_fn_t */
     free, /*mca_mpool_base_module_free_fn_t  */
@@ -39,6 +44,7 @@ int main(int argc, char **argv) {
     size_of_fifo=atoi(argv[1]);
     lazy_free=atoi(argv[2]);
     loop_cnt=atoi(argv[3]);
+    offset=atol(argv[4]);
 
     /* init result tracking */
     test_init("ompi_circular_buffer_fifo");
@@ -56,7 +62,8 @@ int main(int argc, char **argv) {
 	/* populate fifo */
     error_cnt=0;
 	for( i=0 ; i < ompi_cb_fifo_size(&fifo); i++ ) {
-		return_status=ompi_cb_fifo_write_to_head((void *)(i+5),&fifo);
+		return_status=ompi_cb_fifo_write_to_head((void *)(i+5),&fifo,
+                (size_t)pool.mpool_base());
 		if( OMPI_CB_ERROR == return_status ) {
 	   		test_failure(" ompi_cb_fifo_write_to_head\n");
             error_cnt++;
@@ -69,7 +76,8 @@ int main(int argc, char **argv) {
 	/* try an over-fill the queue */
     error_cnt=0;
 	for( i=0 ; i < 3 ; i++ ) {
-		return_status=ompi_cb_fifo_write_to_head((void *)i,&fifo);
+		return_status=ompi_cb_fifo_write_to_head((void *)i,&fifo,
+                (size_t)pool.mpool_base());
 		if( OMPI_CB_ERROR != return_status ) {
 	   		test_failure(" ompi_cb_fifo_write_to_head :: over-fill queue\n");
             error_cnt++;
@@ -82,7 +90,8 @@ int main(int argc, char **argv) {
 	/* pop items off the queue */
     error_cnt=0;
 	for( i=0 ; i < ompi_cb_fifo_size(&fifo); i++ ) {
-		ptr=ompi_cb_fifo_read_from_tail(&fifo,0,&queue_empty);
+		ptr=ompi_cb_fifo_read_from_tail(&fifo,0,&queue_empty,
+                (size_t)pool.mpool_base());
 		if( (void *)(i+5) != ptr ) {
 	   		test_failure(" ompi_cb_fifo_read_from_tail\n");
             error_cnt++;
@@ -126,7 +135,7 @@ int main(int argc, char **argv) {
 	/* populate fifo */
     error_cnt=0;
 	for( i=0 ; i < ompi_cb_fifo_size(&fifo); i++ ) {
-		return_status=ompi_cb_fifo_get_slot(&fifo);
+		return_status=ompi_cb_fifo_get_slot(&fifo,(size_t)pool.mpool_base());
 		if( OMPI_CB_ERROR == return_status ) {
 	   		test_failure(" ompi_cb_fifo_get_slot \n");
             error_cnt++;
@@ -139,7 +148,7 @@ int main(int argc, char **argv) {
 	/* try an over-fill the queue */
     error_cnt=0;
 	for( i=0 ; i < 3 ; i++ ) {
-		return_status=ompi_cb_fifo_get_slot (&fifo);
+		return_status=ompi_cb_fifo_get_slot(&fifo,(size_t)pool.mpool_base());
 		if( OMPI_CB_ERROR != return_status ) {
 	   		test_failure(" ompi_cb_fifo_get_slot :: over-fill queue\n");
             error_cnt++;
@@ -153,7 +162,8 @@ int main(int argc, char **argv) {
      * them now */
     error_cnt=0;
 	for( i=0 ; i < ompi_cb_fifo_size(&fifo); i++ ) {
-		return_status=ompi_cb_fifo_write_to_slot(i,(void *)(i+5),&fifo);
+		return_status=ompi_cb_fifo_write_to_slot(i,(void *)(i+5),&fifo,
+                (size_t)pool.mpool_base());
 		if( OMPI_CB_ERROR == return_status ) {
 	   		test_failure(" ompi_cb_fifo_write_to_slot \n");
             error_cnt++;
@@ -166,7 +176,8 @@ int main(int argc, char **argv) {
 	/* pop items off the queue */
     error_cnt=0;
 	for( i=0 ; i < ompi_cb_fifo_size(&fifo); i++ ) {
-		ptr=ompi_cb_fifo_read_from_tail(&fifo,0,&queue_empty);
+		ptr=ompi_cb_fifo_read_from_tail(&fifo,0,&queue_empty,
+                (size_t)pool.mpool_base());
 		if( (void *)(i+5) != ptr ) {
 	   		test_failure(" ompi_cb_fifo_read_from_tail\n");
             error_cnt++;
@@ -200,7 +211,8 @@ int main(int argc, char **argv) {
 	for( i=0 ; i < ompi_cb_fifo_size(&fifo)*loop_cnt ; i++ ) {
 
         /* populate fifo */
-		return_status=ompi_cb_fifo_get_slot(&fifo);
+		return_status=ompi_cb_fifo_get_slot(&fifo,
+                (size_t)pool.mpool_base());
 		if( OMPI_CB_ERROR == return_status ) {
 	   		test_failure(" ompi_cb_fifo_get_slot \n");
             error_cnt++;
@@ -208,7 +220,7 @@ int main(int argc, char **argv) {
 
         /* write to the slot */
 		return_status=ompi_cb_fifo_write_to_slot(i%(ompi_cb_fifo_size(&fifo)),
-                (void *)(i+5),&fifo);
+                (void *)(i+5),&fifo, (size_t)pool.mpool_base());
 		if( OMPI_CB_ERROR == return_status ) {
 	   		test_failure(" ompi_cb_fifo_write_to_slot \n");
             error_cnt++;
@@ -218,9 +230,11 @@ int main(int argc, char **argv) {
         if( (i % ompi_cb_fifo_size(&fifo) ) ==
                 ompi_cb_fifo_size(&fifo)/2  ) {
             /* force a flush */
-            ptr=ompi_cb_fifo_read_from_tail(&fifo,1,&queue_empty);
+            ptr=ompi_cb_fifo_read_from_tail(&fifo,1,&queue_empty,
+                    (size_t)pool.mpool_base());
         } else {
-            ptr=ompi_cb_fifo_read_from_tail(&fifo,0,&queue_empty);
+            ptr=ompi_cb_fifo_read_from_tail(&fifo,0,&queue_empty,
+                    (size_t)pool.mpool_base());
         }
 		if( (void *)(i+5) != ptr ) {
 	   		test_failure(" ompi_cb_fifo_read_from_tail\n");
