@@ -15,6 +15,78 @@
 #include "ptl_elan_frag.h"
 #include "ptl_elan_priv.h"
 
+/* Initialize an ack descriptor and queue it to the command queue */
+int
+mca_ptl_elan_start_ack ( mca_ptl_base_module_t * ptl, 
+			 mca_ptl_elan_send_frag_t * desc,
+			 mca_ptl_elan_recv_frag_t * recv_frag)
+{
+    struct ompi_ptl_elan_qdma_desc_t *qdma;
+    mca_ptl_base_header_t *hdr;
+    mca_pml_base_recv_request_t* request;
+
+
+    START_FUNC();
+
+    desc->desc->desc_type = MCA_PTL_ELAN_DESC_QDMA; 
+    qdma = (ompi_ptl_elan_qdma_desc_t *)desc->desc;
+
+    hdr = (mca_ptl_base_header_t *) & desc->buff[0];
+
+    request = recv_frag->frag_recv.frag_request;
+
+    hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_ACK;
+    hdr->hdr_common.hdr_flags = 0;
+    hdr->hdr_common.hdr_size = sizeof(mca_ptl_base_ack_header_t);
+
+    hdr->hdr_ack.hdr_src_ptr = 
+	recv_frag->frag_recv.frag_base.frag_header.hdr_frag.hdr_src_ptr;
+    hdr->hdr_ack.hdr_dst_match.lval = 0; 
+    hdr->hdr_ack.hdr_dst_match.pval = request;
+    hdr->hdr_ack.hdr_dst_addr.lval = 0; 
+    hdr->hdr_ack.hdr_dst_addr.pval = request->req_base.req_addr;
+    hdr->hdr_ack.hdr_dst_size = request->req_bytes_packed;
+
+    hdr->hdr_frag.hdr_frag_length = sizeof(mca_ptl_base_ack_header_t);
+
+    /* Filling up QDMA descriptor */
+    qdma->main_dma.dma_srcAddr = MAIN2ELAN (desc->rail->r_ctx,
+					    &desc->buff[0]);
+
+    /* XXX: Hardcoded DMA retry count */
+    qdma->main_dma.dma_typeSize = E4_DMA_TYPE_SIZE ((header_length +
+						     size_out),
+						    DMA_DataTypeByte,
+						DMA_QueueWrite, 16);
+    qdma->main_dma.dma_cookie = elan4_local_cookie (ptl->queue->tx_cpool, 
+		E4_COOKIE_TYPE_LOCAL_DMA, destvp);
+    qdma->main_dma.dma_vproc = ((mca_ptl_elan_peer_t *)
+	 recv_frag->frag_recv.frag_base.frag_peer)->peer_vp;
+
+    /* Make main memory coherent with IO domain (IA64) */
+    MEMBAR_VISIBLE ();
+
+    elan4_run_dma_cmd (ptl->queue->tx_cmdq, (DMA *) & qdma->main_dma);
+
+    /*ptl->queue->tx_cmdq->cmdq_flush */
+    elan4_flush_cmdq_reorder (ptl->queue->tx_cmdq);
+
+    /* Insert desc into the list of outstanding DMA's */
+    ompi_list_append (&ptl->queue->tx_desc, (ompi_list_item_t *) desc);
+
+    /* fragment state */
+    desc->desc->req = NULL;
+    desc->frag_base.frag_owner = ptl;
+    desc->frag_base.frag_peer = recv_frag->frag_recv.frag_base.frag_peer; 
+    desc->frag_base.frag_addr = NULL;
+    desc->frag_base.frag_size = 0;
+    desc->frag_progressed     = 0;
+    desc->desc->desc_status   = MCA_PTL_ELAN_DESC_LOCAL;
+
+    END_FUNC();
+    return OMPI_SUCCESS;
+}
+
 static void
 mca_ptl_elan_init_qdma_desc (struct ompi_ptl_elan_qdma_desc_t *desc,
                              mca_ptl_elan_module_t * ptl,
@@ -137,7 +209,6 @@ mca_ptl_elan_init_qdma_desc (struct ompi_ptl_elan_qdma_desc_t *desc,
     END_FUNC();
 }
 
-
 int
 mca_ptl_elan_start_desc (mca_ptl_elan_send_frag_t * desc,
 			 struct mca_ptl_elan_peer_t *ptl_peer,
@@ -156,7 +227,7 @@ mca_ptl_elan_start_desc (mca_ptl_elan_send_frag_t * desc,
         qdma = (ompi_ptl_elan_qdma_desc_t *)desc->desc;
         ptl = qdma->ptl;
 	
-        mca_ptl_elan_init_qdma_desc (qdma, ptl, ptl_peer, sendreq, 
+        mca_ptl_elan_init_qdma_ack (qdma, ptl, ptl_peer, sendreq, 
 		offset, size, flags);
 
         elan4_run_dma_cmd (ptl->queue->tx_cmdq, (DMA *) & qdma->main_dma);
