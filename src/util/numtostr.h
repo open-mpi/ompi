@@ -1,6 +1,9 @@
 /*
  * $HEADER$
  */
+/**
+ * @file
+ */
 
 #ifndef OMPI_NUMTOSTR_UTIL
 #define OMPI_NUMTOSTR_UTIL
@@ -12,7 +15,7 @@
  *  @param num (IN)      Input number
  *  @return              String containing number (NULL on failure)
  */
-char* ltostr(long num);
+char* ompi_ltostr(long num);
 
 
 /**
@@ -22,6 +25,6 @@ char* ltostr(long num);
  * @param num (IN)       Input number
  * @return               String containing number (NULL on failure)
  */
-char* dtostr(double num);
+char* ompi_dtostr(double num);
 
 #endif /* OMPI_NUMTOSTR_UTIL */

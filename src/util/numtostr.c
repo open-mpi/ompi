@@ -10,7 +10,7 @@
 
 
 char*
-ltostr(long num)
+ompi_ltostr(long num)
 {
     /* waste a little bit of space, but always have a big enough buffer */
     int buflen = sizeof(long) * 8;
@@ -31,7 +31,7 @@ ltostr(long num)
 
 
 char*
-dtostr(double num)
+ompi_dtostr(double num)
 {
     /* waste a little bit of space, but always have a big enough buffer */
     int buflen = sizeof(long) * 8;
