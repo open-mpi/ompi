@@ -10,7 +10,6 @@
 
 #include "lam_config.h"
 #include "lam/stdint.h"
-#include "lam/types.h"
 
 /*
  *  Increase FD_SETSIZE
