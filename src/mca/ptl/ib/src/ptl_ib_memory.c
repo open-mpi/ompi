@@ -142,7 +142,7 @@ mca_ptl_ib_mem_registry_info_t *mca_ptl_ib_mem_registry_register(
         /* create new entry and register memory region */
         item = (ompi_list_item_t *)info;
         OMPI_FREE_LIST_GET(&(registry->info_free_list), item, rc);
-        if (info == (mca_ptl_ib_mem_registry_info_t *)NULL) {
+        if (OMPI_SUCCESS != rc) {
             /* error - return null pointer */
             return info;
         }
@@ -165,15 +165,58 @@ mca_ptl_ib_mem_registry_info_t *mca_ptl_ib_mem_registry_register(
                     item = (ompi_list_item_t *)info;
                     OMPI_FREE_LIST_RETURN(&(registry->info_free_list), item);
                     info = NULL;
+                    return info;
                 }
             }
         } while ((VAPI_OK != vapi_result) && (NULL != info));
+        /* insert a reference to this information into the red/black tree */
+        rc = ompi_rb_tree_insert(&(registry->rb_tree), &(info->reply), info);
+        /* aargh! what do we do if the tree insert fails... */
+        mca_ptl_ib_mem_registry_insert_hint(registry, &(info->reply), info);
     }
     else {
         (info->ref_cnt)++;
     }
     
     return info;
+}
+
+mca_ptl_ib_mem_registry_info_t *mca_ptl_ib_register_mem_with_registry(
+    mca_ptl_ib_state_t *ib_state,
+    void *addr, size_t len)
+{
+    mca_ptl_ib_mem_registry_info_t *info;
+    VAPI_mr_t mr;
+
+    mr.acl = VAPI_EN_LOCAL_WRITE | VAPI_EN_REMOTE_WRITE;
+    mr.l_key = 0;
+    mr.r_key = 0;
+    mr.pd_hndl = ib_state->ptag;
+    mr.size = len;
+    mr.start = (VAPI_virt_addr_t) (MT_virt_addr_t) addr;
+    mr.type = VAPI_MR;
+
+    info = mca_ptl_ib_mem_registry_register(&(ib_state->mem_registry),&mr);
+    return info;
+}
+
+int mca_ptl_ib_deregister_mem_with_registry(
+    mca_ptl_ib_state_t *ib_state,
+    void *addr, size_t len)
+{
+    VAPI_mr_t mr;
+    int rc;
+
+    mr.acl = VAPI_EN_LOCAL_WRITE | VAPI_EN_REMOTE_WRITE;
+    mr.l_key = 0;
+    mr.r_key = 0;
+    mr.pd_hndl = ib_state->ptag;
+    mr.size = len;
+    mr.start = (VAPI_virt_addr_t) (MT_virt_addr_t) addr;
+    mr.type = VAPI_MR;
+
+    rc =  mca_ptl_ib_mem_registry_deregister(&(ib_state->mem_registry),&mr);
+    return rc;
 }
 
 static int mca_ptl_ib_mem_registry_real_deregister(
