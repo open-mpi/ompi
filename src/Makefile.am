@@ -32,3 +32,12 @@ libmpi_la_LIBADD = $(libmpi_sources)
 
 liblam_la_SOURCES =
 liblam_la_LIBADD = $(liblam_sources)
+
+# Shortcut frequently used by developers -- NOT to be used by
+# end-users!!
+
+libs:
+	cd lam && $(MAKE) all && cd ../mpi && $(MAKE) all && cd .. && $(MAKE) $(install_libs)
+
+libs-install: libs
+	$(MAKE) install-exec-am
