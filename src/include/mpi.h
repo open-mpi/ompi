@@ -23,25 +23,26 @@
  */
 typedef long MPI_Aint;
 typedef int MPI_Fint;
-typedef struct lam_communicator *MPI_Comm;
-typedef struct lam_datatype *MPI_Datatype;
-typedef struct lam_errhandler *MPI_Errhandler;
-typedef struct lam_file *MPI_File;
-typedef struct lam_group *MPI_Group;
-typedef struct lam_info *MPI_Info;
-typedef struct lam_op *MPI_Op;
-typedef struct lam_request *MPI_Request;
-typedef struct lam_status_public MPI_Status;
-typedef struct lam_win *MPI_Win;
+typedef struct lam_communicator_t *MPI_Comm;
+typedef struct lam_datatype_t *MPI_Datatype;
+typedef struct lam_errhandler_t *MPI_Errhandler;
+typedef struct lam_file_t *MPI_File;
+typedef struct lam_group_t *MPI_Group;
+typedef struct lam_info_t *MPI_Info;
+typedef struct lam_op_t *MPI_Op;
+typedef struct lam_request_t *MPI_Request;
+typedef struct lam_status_public_t MPI_Status;
+typedef struct lam_win_t *MPI_Win;
 
 /*
  * MPI_Status
  */
-typedef struct lam_status_public { 
+struct lam_status_public_t { 
   int MPI_SOURCE;
   int MPI_TAG;
   int MPI_ERROR;
-} lam_status_public_t;
+};
+struct lam_status_public_t lam_status_public_t;
 
 /*
  * User typedefs
