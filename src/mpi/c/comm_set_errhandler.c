@@ -31,7 +31,8 @@ int MPI_Comm_set_errhandler(MPI_Comm comm, MPI_Errhandler errhandler)
                                     FUNC_NAME);
     } else if (NULL == errhandler ||
                MPI_ERRHANDLER_NULL == errhandler ||
-               OMPI_ERRHANDLER_TYPE_COMM != errhandler->eh_mpi_object_type) {
+               ( OMPI_ERRHANDLER_TYPE_COMM != errhandler->eh_mpi_object_type &&
+		 OMPI_ERRHANDLER_TYPE_PREDEFINED != errhandler->eh_mpi_object_type) ) {
       return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG,
                                     FUNC_NAME);
     }
