@@ -24,6 +24,8 @@ OBJ_CLASS_DECLARATION(mca_ptl_sm_frag_t);
  */
 struct mca_ptl_sm_frag_t {
     mca_ptl_base_recv_frag_t super; /**< base receive fragment descriptor */
+    size_t buff_length;   /**< size of buffer */
+    void *buff;           /**< pointer to buffer */
 };
 typedef struct mca_ptl_sm_frag_t mca_ptl_sm_frag_t;
 
