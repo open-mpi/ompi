@@ -505,80 +505,73 @@ static inline int ompi_fifo_write_to_slot_same_base_addr(cb_slot_t *slot,
  * @returncode Slot index to which data is written
  *
  */
-/*
 static inline int ompi_fifo_write_to_head_same_base_addr(void *data, 
         ompi_fifo_t *fifo, mca_mpool_base_module_t *fifo_allocator)
-*/
-#define ompi_fifo_write_to_head_same_base_addr(data,                \
-        fifo, fifo_allocator)                                       \
-({                                                                  \
-    int error_code=OMPI_SUCCESS;                                    \
-    size_t len_to_allocate;                                         \
-    ompi_cb_fifo_wrapper_t *next_ff;                                \
-    bool available;                                                 \
-                                                                    \
-    /* attempt to write data to head ompi_fifo_cb_fifo_t */         \
-    error_code=ompi_cb_fifo_write_to_head_same_base_addr(data,      \
-            (ompi_cb_fifo_t *)&(fifo->head->cb_fifo));              \
-    if( OMPI_CB_ERROR == error_code ) {                             \
-        /*                                                          \
-         * queue is full                                            \
-         */                                                         \
-                                                                    \
-        /* mark queue as overflown */                               \
-        fifo->head->cb_overflow=true;                               \
-                                                                    \
-        /* see if next queue is available - while the next queue    \
-         * has not been emptied, it will be marked as overflowen*/  \
-        next_ff=(ompi_cb_fifo_wrapper_t *)fifo->head->next_fifo_wrapper; \
-        available=!(next_ff->cb_overflow);                          \
-                                                                    \
-        /* if next queue not available, allocate new queue */       \
-        if( !available ) {                                          \
-                                                                    \
-            /* allocate head ompi_cb_fifo_t structure */            \
-            len_to_allocate=sizeof(ompi_cb_fifo_wrapper_t);         \
-            next_ff=fifo_allocator->mpool_alloc                     \
-                (len_to_allocate,CACHE_LINE_SIZE);                  \
-            if ( NULL == next_ff) {                                 \
-                return OMPI_ERR_OUT_OF_RESOURCE;                    \
-            }                                                       \
-                                                                    \
-            /* initialize the circular buffer fifo head structure */ \
-            error_code=ompi_cb_fifo_init_same_base_addr(            \
-                    fifo->head->cb_fifo.size,                       \
-                    fifo->head->cb_fifo.lazy_free_frequency,        \
-                    fifo->head->cb_fifo.fifo_memory_locality_index, \
-                    fifo->head->cb_fifo.head_memory_locality_index, \
-                    fifo->head->cb_fifo.tail_memory_locality_index, \
-                    &(next_ff->cb_fifo),                            \
-                    fifo_allocator);                                \
-            if ( OMPI_SUCCESS != error_code ) {                     \
-                return error_code;                                  \
-            }                                                       \
-                                                                    \
-            /* finish new element initialization */                 \
-            next_ff->next_fifo_wrapper=fifo->head->next_fifo_wrapper;  /* only one  \
-                                                                element in the  \
-                                                                link list */ \
-            next_ff->cb_overflow=false;  /* no attempt to overflow the queue */ \
-        }                                                           \
-                                                                    \
-        /* reset head pointer */                                    \
-        fifo->head->next_fifo_wrapper=next_ff;                      \
-        fifo->head=next_ff;                                         \
-                                                                    \
-        /* write data to new head structure */                      \
-        error_code=ompi_cb_fifo_write_to_head_same_base_addr(data,  \
-                (ompi_cb_fifo_t *)&(fifo->head->cb_fifo));          \
-        if( OMPI_CB_ERROR == error_code ) {                         \
-            return error_code;                                      \
-        }                                                           \
-    }                                                               \
-                                                                    \
-    /* return */                                                    \
-    error_code;                                                     \
-})                                                                  \
+{
+    int error_code=OMPI_SUCCESS;
+    size_t len_to_allocate;
+    ompi_cb_fifo_wrapper_t *next_ff;
+    bool available;
+
+    /* attempt to write data to head ompi_fifo_cb_fifo_t */
+    error_code=ompi_cb_fifo_write_to_head_same_base_addr(data,
+            (ompi_cb_fifo_t *)&(fifo->head->cb_fifo));
+    if( OMPI_CB_ERROR == error_code ) {
+        /*
+         * queue is full
+         */
+
+        /* mark queue as overflown */
+        fifo->head->cb_overflow=true;
+
+        /* see if next queue is available - while the next queue
+         * has not been emptied, it will be marked as overflowen*/
+        next_ff=(ompi_cb_fifo_wrapper_t *)fifo->head->next_fifo_wrapper;
+        available=!(next_ff->cb_overflow);
+
+        /* if next queue not available, allocate new queue */
+        if( !available ) {
+
+            /* allocate head ompi_cb_fifo_t structure */
+            len_to_allocate=sizeof(ompi_cb_fifo_wrapper_t);
+            next_ff=fifo_allocator->mpool_alloc
+                (len_to_allocate,CACHE_LINE_SIZE);
+            if ( NULL == next_ff) {
+                return OMPI_ERR_OUT_OF_RESOURCE;
+            }
+
+            /* initialize the circular buffer fifo head structure */
+            error_code=ompi_cb_fifo_init_same_base_addr(
+                    fifo->head->cb_fifo.size,
+                    fifo->head->cb_fifo.lazy_free_frequency,
+                    fifo->head->cb_fifo.fifo_memory_locality_index,
+                    fifo->head->cb_fifo.head_memory_locality_index,
+                    fifo->head->cb_fifo.tail_memory_locality_index,
+                    &(next_ff->cb_fifo),
+                    fifo_allocator);
+            if ( OMPI_SUCCESS != error_code ) {
+                return error_code;
+            }
+
+            /* finish new element initialization */
+            next_ff->next_fifo_wrapper=fifo->head->next_fifo_wrapper;  /* only one element in the link list */
+            next_ff->cb_overflow=false;  /* no attempt to overflow the queue */
+        }
+
+        /* reset head pointer */
+        fifo->head->next_fifo_wrapper=next_ff;
+        fifo->head=next_ff;
+
+        /* write data to new head structure */
+        error_code=ompi_cb_fifo_write_to_head_same_base_addr(data,
+                (ompi_cb_fifo_t *)&(fifo->head->cb_fifo));
+        if( OMPI_CB_ERROR == error_code ) {
+            return error_code;
+        }
+    }
+
+    return error_code;
+}
 
 
 /**
@@ -674,32 +667,29 @@ static inline cb_slot_t ompi_fifo_get_slot_same_base_addr(ompi_fifo_t *fifo,
  * @returncode Pointer - OMPI_CB_FREE indicates no data to read
  *
  */
-/*
-static inline void *ompi_fifo_read_from_tail_same_base_addr(
-        ompi_fifo_t *fifo)
-*/
-#define ompi_fifo_read_from_tail_same_base_addr( fifo ) \
-({ \
-    /* local parameters */ \
-    void *return_value; \
-    bool queue_empty,flush_entries_read; \
-    ompi_cb_fifo_t *cb_fifo; \
- \
-    /* get next element */ \
-    cb_fifo=(ompi_cb_fifo_t *)&(fifo->tail->cb_fifo); \
-    flush_entries_read=fifo->tail->cb_overflow; \
-    return_value=ompi_cb_fifo_read_from_tail_same_base_addr(cb_fifo, \
-            flush_entries_read,&queue_empty); \
- \
-    /* check to see if need to move on to next cb_fifo in the link list */ \
-    if( queue_empty ) { \
-        /* queue_emptied - move on to next element in fifo */ \
-        fifo->tail->cb_overflow=false; \
-        fifo->tail=fifo->tail->next_fifo_wrapper; \
-    } \
- \
-    /* return */ \
-    return_value; \
-})
+static inline
+void *ompi_fifo_read_from_tail_same_base_addr( ompi_fifo_t *fifo)
+{
+    /* local parameters */
+    void *return_value;
+    bool queue_empty, flush_entries_read;
+    ompi_cb_fifo_t *cb_fifo;
+
+    /* get next element */
+    cb_fifo=(ompi_cb_fifo_t *)&(fifo->tail->cb_fifo);
+    flush_entries_read=fifo->tail->cb_overflow;
+    return_value = ompi_cb_fifo_read_from_tail_same_base_addr( cb_fifo,
+							       flush_entries_read,
+							       &queue_empty);
+
+    /* check to see if need to move on to next cb_fifo in the link list */
+    if( queue_empty ) {
+        /* queue_emptied - move on to next element in fifo */
+        fifo->tail->cb_overflow=false;
+        fifo->tail=fifo->tail->next_fifo_wrapper;
+    }
+
+    return return_value;
+}
 
 #endif				/* !_OMPI_FIFO */

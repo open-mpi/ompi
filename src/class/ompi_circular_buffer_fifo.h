@@ -676,66 +676,59 @@ static inline int ompi_cb_fifo_get_slot_same_base_addr(ompi_cb_fifo_t *fifo)
  * @returncode Slot index to which data is written
  *
  */
-/*
 static inline void *ompi_cb_fifo_read_from_tail_same_base_addr(
         ompi_cb_fifo_t *fifo,
         bool flush_entries_read, bool *queue_empty)
-*/
-#define ompi_cb_fifo_read_from_tail_same_base_addr(fifo, \
-        flush_entries_read,  queue_empty) \
-({ \
-    int index = 0,clearIndex, i; \
-    volatile void **q_ptr; \
-    ompi_cb_fifo_ctl_t *h_ptr, *t_ptr; \
-    void *read_from_tail = (void *)OMPI_CB_ERROR; \
- \
-    *queue_empty=false; \
- \
-    h_ptr=fifo->head; \
-    t_ptr=fifo->tail; \
-    q_ptr=fifo->queue; \
- \
-    /* check to see that the data is valid */ \
-    if ((q_ptr[t_ptr->fifo_index] == OMPI_CB_FREE) || \
-            (q_ptr[t_ptr->fifo_index] == OMPI_CB_RESERVED))  \
-    { \
-         read_from_tail=(void *)OMPI_CB_FREE; \
-         goto CLEANUP; \
-    } \
- \
-    /* set return data */ \
-    index = t_ptr->fifo_index; \
-    read_from_tail = (void *)q_ptr[index]; \
-    t_ptr->num_to_clear++; \
- \
-    /* increment counter for later lazy free */ \
-    (t_ptr->fifo_index)++; \
-    (t_ptr->fifo_index) &= fifo->mask; \
- \
-    /* check to see if time to do a lazy free of queue slots */ \
-    if ( (t_ptr->num_to_clear == fifo->lazy_free_frequency) || \
-            flush_entries_read ) { \
-        clearIndex = index - t_ptr->num_to_clear + 1; \
-        clearIndex &= fifo->mask; \
-         \
-        for (i = 0; i < t_ptr->num_to_clear; i++) { \
-            q_ptr[clearIndex] = OMPI_CB_FREE; \
-            clearIndex++; \
-            clearIndex &= fifo->mask; \
-        } \
-        t_ptr->num_to_clear = 0; \
- \
-        /* check to see if queue is empty */ \
-        if( flush_entries_read &&  \
-                (t_ptr->fifo_index == h_ptr->fifo_index) ) { \
-            *queue_empty=true; \
-        } \
-    } \
- \
- \
-CLEANUP: \
-    /* return */ \
-    read_from_tail; \
-})
+{
+    int index = 0,clearIndex, i;
+    volatile void **q_ptr;
+    ompi_cb_fifo_ctl_t *h_ptr, *t_ptr;
+    void *read_from_tail = (void *)OMPI_CB_ERROR;
+
+    *queue_empty=false;
+
+    h_ptr=fifo->head;
+    t_ptr=fifo->tail;
+    q_ptr=fifo->queue;
+
+    /* check to see that the data is valid */
+    if ((q_ptr[t_ptr->fifo_index] == OMPI_CB_FREE) ||
+            (q_ptr[t_ptr->fifo_index] == OMPI_CB_RESERVED)) {
+         read_from_tail=(void *)OMPI_CB_FREE;
+         goto CLEANUP;
+    }
+
+    /* set return data */
+    index = t_ptr->fifo_index;
+    read_from_tail = (void *)q_ptr[index];
+    t_ptr->num_to_clear++;
+
+    /* increment counter for later lazy free */
+    (t_ptr->fifo_index)++;
+    (t_ptr->fifo_index) &= fifo->mask;
+
+    /* check to see if time to do a lazy free of queue slots */
+    if ( (t_ptr->num_to_clear == fifo->lazy_free_frequency) ||
+            flush_entries_read ) {
+        clearIndex = index - t_ptr->num_to_clear + 1;
+        clearIndex &= fifo->mask;
+
+        for (i = 0; i < t_ptr->num_to_clear; i++) {
+            q_ptr[clearIndex] = OMPI_CB_FREE;
+            clearIndex++;
+            clearIndex &= fifo->mask;
+        }
+        t_ptr->num_to_clear = 0;
+
+        /* check to see if queue is empty */
+        if( flush_entries_read &&
+                (t_ptr->fifo_index == h_ptr->fifo_index) ) {
+            *queue_empty=true;
+        }
+    }
+
+CLEANUP:
+    return read_from_tail;
+}
 
 #endif				/* !_OMPI_CIRCULAR_BUFFER_FIFO */
