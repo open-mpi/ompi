@@ -5,7 +5,6 @@
 #ifndef LAM_COMMUNICATOR_H
 #define LAM_COMMUNICATOR_H
 
-#include "stdint.h"
 #include "lfc/lam_object.h"
 #include "threads/mutex.h"
 #include "util/output.h"

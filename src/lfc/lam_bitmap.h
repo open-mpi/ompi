@@ -15,7 +15,6 @@
 #include <string.h>
 
 #include "lam_config.h"
-#include "stdint.h"
 #include "types.h"
 #include "lfc/lam_object.h"
 

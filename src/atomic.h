@@ -17,7 +17,6 @@
 #define LAM_ATOMIC_H 1
 
 #include "lam_config.h"
-#include "stdint.h"
 
 /*
  * prototypes (we may not implement all of this interface)
