@@ -12,6 +12,11 @@
 #include "ptl_mx_recvfrag.h"
 #include "ptl_mx_sendfrag.h"
 
+
+/**
+ *  Post a receive for short messages (<32 K)
+ */
+                                                                                                  
 #define MCA_PTL_MX_POST(ptl) \
 do { \
     mca_ptl_mx_recv_frag_t *frag; \
@@ -42,11 +47,11 @@ do { \
         frag, \
         &frag->frag_request); \
     if(mx_return != MX_SUCCESS) { \
-        ompi_output(0, "mca_ptl_mx_match: mx_irecv() failed with status=%dn", mx_return); MCA_PTL_MX_RECV_FRAG_RETURN(frag); \
+        ompi_output(0, "mca_ptl_mx_match: mx_irecv() failed with status=%dn", mx_return); \
+        MCA_PTL_MX_RECV_FRAG_RETURN(frag); \
     } \
 } while(0)
                                                                                                           
-
 
 /**
  *  Routine to process complete request(s).
