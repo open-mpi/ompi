@@ -118,7 +118,7 @@ void lam_ddt_dump( dt_desc_t* data )
     printf( "Datatype %p size %d align %d id %d length %d used %d\n\
    true_lb %ld true_ub %ld (true_extent %ld) lb %ld ub %ld (extent %ld)\n\
    nbElems %d loops %d flags %X (",
-            pData, pData->size, pData->align, pData->id, pData->desc.length, pData->desc.used,
+            (void*)pData, pData->size, pData->align, pData->id, pData->desc.length, pData->desc.used,
             pData->true_lb, pData->true_ub, pData->true_ub - pData->true_lb,
             pData->lb, pData->ub, pData->ub - pData->lb,
             pData->nbElems, pData->btypes[DT_LOOP], pData->flags );
@@ -161,16 +161,16 @@ void lam_ddt_dump( dt_desc_t* data )
         return res * count;                                             \
     }
 
-DUMP_TYPE( char, char );
-DUMP_TYPE( short, short );
-DUMP_TYPE( int, int );
-DUMP_TYPE( float, float );
-DUMP_TYPE( long, long );
-DUMP_TYPE( double, double );
-DUMP_TYPE( long_long, long long );
-DUMP_TYPE( long_double, long double );
-DUMP_TYPE( complex_float, complex_float_t );
-DUMP_TYPE( complex_double, complex_double_t );
+DUMP_TYPE( char, char )
+DUMP_TYPE( short, short )
+DUMP_TYPE( int, int )
+DUMP_TYPE( float, float )
+DUMP_TYPE( long, long )
+DUMP_TYPE( double, double )
+DUMP_TYPE( long_long, long long )
+DUMP_TYPE( long_double, long double )
+DUMP_TYPE( complex_float, complex_float_t )
+DUMP_TYPE( complex_double, complex_double_t )
 
 static lam_convertor_t* pDumpConv = NULL;
 
@@ -200,7 +200,7 @@ void lam_ddt_dump_complete( dt_desc_t* data )
     printf( "Datatype %p size %d align %d id %d length %d used %d\n\
    true_lb %ld true_ub %ld (true_extent %ld) lb %ld ub %ld (extent %ld)\n\
    nbElems %d loops %d flags %X (",
-            pData, pData->size, pData->align, pData->id, pData->desc.length, pData->desc.used,
+            (void*)pData, pData->size, pData->align, pData->id, pData->desc.length, pData->desc.used,
             pData->true_lb, pData->true_ub, pData->true_ub - pData->true_lb,
             pData->lb, pData->ub, pData->ub - pData->lb,
             pData->nbElems, pData->btypes[DT_LOOP], pData->flags );

@@ -1,6 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 
 #include "datatype.h"
+#include "datatype_internal.h"
 
 /* This function should never be called directly. It's called by the dt_decrease_ref
  * when the number of references on the data reach ZERO.

@@ -10,7 +10,7 @@ static int convertor_unpack_general( lam_convertor_t* pConvertor,
 
 void dump_stack( dt_stack_t* pStack, int stack_pos, dt_elem_desc_t* pDesc, char* name )
 {
-   printf( "\nStack %p stack_pos %d name %s\n", pStack, stack_pos, name );
+   printf( "\nStack %p stack_pos %d name %s\n", (void*)pStack, stack_pos, name );
    for( ;stack_pos >= 0; stack_pos-- ) {
       printf( "%d: pos %d count %d disp %ld end_loop %d ", stack_pos, pStack[stack_pos].index,
               pStack[stack_pos].count, pStack[stack_pos].disp, pStack[stack_pos].end_loop );
@@ -351,16 +351,16 @@ static int copy_##TYPENAME( unsigned int count, \
    return res * count; \
 }
 
-COPY_TYPE( char, char );
-COPY_TYPE( short, short );
-COPY_TYPE( int, int );
-COPY_TYPE( float, float );
-COPY_TYPE( long, long );
+COPY_TYPE( char, char )
+COPY_TYPE( short, short )
+COPY_TYPE( int, int )
+COPY_TYPE( float, float )
+COPY_TYPE( long, long )
 /*COPY_TYPE( double, double );*/
-COPY_TYPE( long_long, long long );
-COPY_TYPE( long_double, long double );
-COPY_TYPE( complex_float, complex_float_t );
-COPY_TYPE( complex_double, complex_double_t );
+COPY_TYPE( long_long, long long )
+COPY_TYPE( long_double, long double )
+COPY_TYPE( complex_float, complex_float_t )
+COPY_TYPE( complex_double, complex_double_t )
 
 static int copy_double( unsigned int count,
                         char* from, unsigned int from_len, long from_extent,
