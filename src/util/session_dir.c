@@ -118,28 +118,44 @@ int ompi_session_dir(bool create, char *prefix, char *user, char *hostid, char *
 	}
     }
 
-    if (NULL != prefix) {  /* if a prefix is specified, this is the only place we look */
-	fulldirpath = strdup(ompi_os_path(false, prefix, sessions, NULL)); /* make sure it's an absolute pathname */
+    if (NULL != prefix) {  /* if a prefix is specified, start looking here */
+	tmp = strdup(prefix);
+	fulldirpath = strdup(ompi_os_path(false, tmp, sessions, NULL)); /* make sure it's an absolute pathname */
 	if (OMPI_SUCCESS == ompi_check_dir(create, fulldirpath)) { /* check for existence and access, or create it */
 	    return_code = OMPI_SUCCESS;
 	    goto COMPLETE;
 	}
-	else {
-	    return_code = OMPI_ERROR;
-	    goto CLEANUP; /* user specified location, but we can't access it nor create it */
-	}
-    }
+   }
  
     /* no prefix was specified, so check other options in order */
-    if (NULL != getenv("OMPI_PREFIX_ENV")) {
+    if (NULL != getenv("OMPI_PREFIX_ENV")) {  /* we have prefix enviro var - try that next */
 	tmp = strdup(getenv("OMPI_PREFIX_ENV"));
+	fulldirpath = strdup(ompi_os_path(false, tmp, sessions, NULL));
+	if (OMPI_SUCCESS == ompi_check_dir(create, fulldirpath)) { /* check for existence and access, or create it */
+	    return_code = OMPI_SUCCESS;
+	    goto COMPLETE;
+	}
     } else if (NULL != getenv("TMPDIR")) {
 	tmp = strdup(getenv("TMPDIR"));
+	fulldirpath = strdup(ompi_os_path(false, tmp, sessions, NULL));
+	if (OMPI_SUCCESS == ompi_check_dir(create, fulldirpath)) { /* check for existence and access, or create it */
+	    return_code = OMPI_SUCCESS;
+	    goto COMPLETE;
+	}
     } else if (NULL != getenv("TMP")) {
 	tmp = strdup(getenv("TMP"));
+	fulldirpath = strdup(ompi_os_path(false, tmp, sessions, NULL));
+	if (OMPI_SUCCESS == ompi_check_dir(create, fulldirpath)) { /* check for existence and access, or create it */
+	    return_code = OMPI_SUCCESS;
+	    goto COMPLETE;
+	}
     } else {
 	tmp = strdup(OMPI_DEFAULT_TMPDIR);
-    }
+	fulldirpath = strdup(ompi_os_path(false, tmp, sessions, NULL));
+	if (OMPI_SUCCESS == ompi_check_dir(create, fulldirpath)) { /* check for existence and access, or create it */
+	    return_code = OMPI_SUCCESS;
+	    goto COMPLETE;
+	}    }
 
     fulldirpath = strdup(ompi_os_path(false, tmp, sessions, NULL));
     if (OMPI_SUCCESS == ompi_check_dir(create, fulldirpath)) { /* check for existence and access, or create it */
@@ -151,20 +167,19 @@ int ompi_session_dir(bool create, char *prefix, char *user, char *hostid, char *
     }
 
  COMPLETE:
-    if (proc) {
-	if (create) {
-            ompi_process_info.proc_session_dir = strdup(fulldirpath);
-        }
-	fulldirpath = dirname(fulldirpath);
-    }
-    if (job) {
-        if (create) {
-            ompi_process_info.job_session_dir = strdup(fulldirpath);
-        }
-	fulldirpath = dirname(fulldirpath);
-    }
     if (create) {
+	if (proc) {
+            ompi_process_info.proc_session_dir = strdup(fulldirpath);
+	    fulldirpath = dirname(fulldirpath);
+        }
+
+	if (job) {
+            ompi_process_info.job_session_dir = strdup(fulldirpath);
+	    fulldirpath = dirname(fulldirpath);
+        }
+
         ompi_process_info.universe_session_dir = strdup(fulldirpath);
+	ompi_process_info.tmpdir_base = strdup(tmp);
     }
 
  CLEANUP:

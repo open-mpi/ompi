@@ -85,154 +85,161 @@
  */
 int ompi_rte_init(bool *allow_multi_user_threads, bool *have_hidden_threads)
 {
-  int ret;
-  bool user_threads, hidden_threads;
-  char *jobid_str=NULL, *procid_str=NULL;
+    int ret;
+    bool user_threads, hidden_threads;
+    char *jobid_str=NULL, *procid_str=NULL;
 
-  *allow_multi_user_threads = true;
-  *have_hidden_threads = false;
+    *allow_multi_user_threads = true;
+    *have_hidden_threads = false;
 
-  /*
-   * Name Server
-   */
-  if (OMPI_SUCCESS != (ret = mca_ns_base_open())) {
-    /* JMS show_help */
-    printf("show_help: ompi_rte_init failed in ns_base_open\n");
-    return ret;
-  }
-  if (OMPI_SUCCESS != (ret = mca_ns_base_select(&user_threads,
-                                                &hidden_threads))) {
-    /* JMS show_help */
-    printf("show_help: ompi_rte_init failed in ns_base_select\n");
-    return ret;
-  }
-  *allow_multi_user_threads &= user_threads;
-  *have_hidden_threads |= hidden_threads;
+    ompi_output(0, "entered rte_init - starting name server");
+    /*
+     * Name Server
+     */
+    if (OMPI_SUCCESS != (ret = mca_ns_base_open())) {
+	/* JMS show_help */
+	printf("show_help: ompi_rte_init failed in ns_base_open\n");
+	return ret;
+    }
+    if (OMPI_SUCCESS != (ret = mca_ns_base_select(&user_threads,
+						  &hidden_threads))) {
+	/* JMS show_help */
+	printf("show_help: ompi_rte_init failed in ns_base_select\n");
+	return ret;
+    }
+    *allow_multi_user_threads &= user_threads;
+    *have_hidden_threads |= hidden_threads;
 
-  /*
-   * Process Control and Monitoring Client
-   */
-  if (OMPI_SUCCESS != (ret = mca_pcmclient_base_open())) {
-    /* JMS show_help */
-    printf("show_help: ompi_rte_init failed in pcmclient_base_open\n");
-    return ret;
-  }
-  if (OMPI_SUCCESS != (ret = mca_pcmclient_base_select(&user_threads, 
-                                                       &hidden_threads))) {
-    printf("show_help: ompi_rte_init failed in pcmclient_base_select\n");
-    /* JMS show_help */
-    return ret;
-  }
-  *allow_multi_user_threads &= user_threads;
-  *have_hidden_threads |= hidden_threads;
+    ompi_output(0, "starting pcm-client");
+    /*
+     * Process Control and Monitoring Client
+     */
+    if (OMPI_SUCCESS != (ret = mca_pcmclient_base_open())) {
+	/* JMS show_help */
+	printf("show_help: ompi_rte_init failed in pcmclient_base_open\n");
+	return ret;
+    }
+    if (OMPI_SUCCESS != (ret = mca_pcmclient_base_select(&user_threads, 
+							 &hidden_threads))) {
+	printf("show_help: ompi_rte_init failed in pcmclient_base_select\n");
+	/* JMS show_help */
+	return ret;
+    }
+    *allow_multi_user_threads &= user_threads;
+    *have_hidden_threads |= hidden_threads;
 
-  /*
-   * Allocation code - open only.  pcm will init if needed
-   */
-  if (OMPI_SUCCESS != (ret = mca_llm_base_open())) {
-    /* JMS show_help */
-    printf("show_help: ompi_rte_init failed in llm_base_open\n");
-    return ret;
-  }
+    ompi_output(0, "starting llm");
 
-  /*
-   * Process Control and Monitoring
-   */
-  if (OMPI_SUCCESS != (ret = mca_pcm_base_open())) {
-    /* JMS show_help */
-    printf("show_help: ompi_rte_init failed in pcm_base_open\n");
-    return ret;
-  }
-  if (OMPI_SUCCESS != (ret = mca_pcm_base_select(&user_threads, 
-                                                 &hidden_threads))) {
-    printf("show_help: ompi_rte_init failed in pcm_base_select\n");
-    /* JMS show_help */
-    return ret;
-  }
-  *allow_multi_user_threads &= user_threads;
-  *have_hidden_threads |= hidden_threads;
+    /*
+     * Allocation code - open only.  pcm will init if needed
+     */
+    if (OMPI_SUCCESS != (ret = mca_llm_base_open())) {
+	/* JMS show_help */
+	printf("show_help: ompi_rte_init failed in llm_base_open\n");
+	return ret;
+    }
 
-  /*
-   * Out of Band Messaging
-   */
-  if (OMPI_SUCCESS != (ret = mca_oob_base_open())) {
-    /* JMS show_help */
-    printf("show_help: ompi_rte_init failed in oob_base_open\n");
-    return ret;
-  }
-  if (OMPI_SUCCESS != (ret = mca_oob_base_init(&user_threads, 
-                                               &hidden_threads))) {
-    /* JMS show_help */
-    printf("show_help: ompi_rte_init failed in mca_oob_base_init()\n");
-    return ret;
-  }
-  *allow_multi_user_threads &= user_threads;
-  *have_hidden_threads |= hidden_threads;
+    ompi_output(0, "starting pcm");
 
-  /*
-   * Registry 
-   */
-  if (OMPI_SUCCESS != (ret = mca_gpr_base_open())) {
-    /* JMS show_help */
-    printf("show_help: ompi_rte_init failed in mca_gpr_base_open()\n");
-    return ret;
-  }
-  if (OMPI_SUCCESS != (ret = mca_gpr_base_select(&user_threads, 
-                                               &hidden_threads))) {
-    /* JMS show_help */
-    printf("show_help: ompi_rte_init failed in mca_gpr_base_select()\n");
-    return ret;
-  }
-  *allow_multi_user_threads &= user_threads;
-  *have_hidden_threads |= hidden_threads;
+    /*
+     * Process Control and Monitoring
+     */
+    if (OMPI_SUCCESS != (ret = mca_pcm_base_open())) {
+	/* JMS show_help */
+	printf("show_help: ompi_rte_init failed in pcm_base_open\n");
+	return ret;
+    }
+    if (OMPI_SUCCESS != (ret = mca_pcm_base_select(&user_threads, 
+						   &hidden_threads))) {
+	printf("show_help: ompi_rte_init failed in pcm_base_select\n");
+	/* JMS show_help */
+	return ret;
+    }
+    *allow_multi_user_threads &= user_threads;
+    *have_hidden_threads |= hidden_threads;
 
-  /*
-   * Fill in the various important structures
-   */
-  /* proc structure startup */
-  ompi_proc_info();  
+    ompi_output(0, "starting oob");
 
-  /* universe name */
-  /* BWB - fix me fix me fix me */
+    /*
+     * Out of Band Messaging
+     */
+    if (OMPI_SUCCESS != (ret = mca_oob_base_open())) {
+	/* JMS show_help */
+	printf("show_help: ompi_rte_init failed in oob_base_open\n");
+	return ret;
+    }
+    if (OMPI_SUCCESS != (ret = mca_oob_base_init(&user_threads, 
+						 &hidden_threads))) {
+	/* JMS show_help */
+	printf("show_help: ompi_rte_init failed in mca_oob_base_init()\n");
+	return ret;
+    }
+    *allow_multi_user_threads &= user_threads;
+    *have_hidden_threads |= hidden_threads;
 
-  /* session directory */
-  if(0 > asprintf(&jobid_str, "%-d", ompi_process_info.name->jobid)) {
-      return OMPI_ERROR;
-  }
+    ompi_output(0, "starting gpr");
 
-  if(0 > asprintf(&procid_str, "%-d", ompi_process_info.name->vpid)) {
-      if (jobid_str != NULL) free(jobid_str);
-      return OMPI_ERROR;
-  }
+    /*
+     * Registry 
+     */
+    if (OMPI_SUCCESS != (ret = mca_gpr_base_open())) {
+	/* JMS show_help */
+	printf("show_help: ompi_rte_init failed in mca_gpr_base_open()\n");
+	return ret;
+    }
+    if (OMPI_SUCCESS != (ret = mca_gpr_base_select(&user_threads, 
+						   &hidden_threads))) {
+	/* JMS show_help */
+	printf("show_help: ompi_rte_init failed in mca_gpr_base_select()\n");
+	return ret;
+    }
+    *allow_multi_user_threads &= user_threads;
+    *have_hidden_threads |= hidden_threads;
 
-  if (OMPI_ERROR == ompi_session_dir(true, NULL, ompi_system_info.user, 
-                                     ompi_system_info.nodename, NULL, 
-                                     "bOb", jobid_str, procid_str)) {
-      if (jobid_str != NULL) free(jobid_str);
-      if (procid_str != NULL) free(procid_str);
-      return OMPI_ERROR;
-  }
+    ompi_output(0, "calling proc_info");
 
+    /*
+     * Fill in the various important structures
+     */
+    /* proc structure startup */
+    ompi_proc_info();  
 
-  /*
-   * Call back into NS/GPR/OOB to allow them to do any final initialization
-   * (e.g. register callbacks w/ OOB, put contact info in register).
-  */
-  if (OMPI_SUCCESS != (ret = ompi_name_server.init())) {
-      printf("show_help: ompi_rte_init failed in ompi_name_server.init()\n");
-      return ret;
-  }
+    ompi_output(0, "doing session_dir");
 
-  if (OMPI_SUCCESS != (ret = mca_oob_base_register())) {
-      printf("show_help: ompi_rte_init failed in mca_oob_base_register()\n");
-      return ret;
-  }
+    /* session directory */
+    jobid_str = ompi_name_server.get_jobid_string(ompi_process_info.name);
+    procid_str = ompi_name_server.get_vpid_string(ompi_process_info.name);
+    if (OMPI_ERROR == ompi_session_dir(true,
+				       ompi_process_info.tmpdir_base,
+				       ompi_system_info.user,
+				       ompi_system_info.nodename, NULL, 
+				       ompi_process_info.my_universe,
+				       jobid_str, procid_str)) {
+	if (jobid_str != NULL) free(jobid_str);
+	if (procid_str != NULL) free(procid_str);
+	return OMPI_ERROR;
+    }
 
 
-  /* 
-   * All done 
-   */
-  return OMPI_SUCCESS;
+    /*
+     * Call back into NS/GPR/OOB to allow them to do any final initialization
+     * (e.g. register callbacks w/ OOB, put contact info in register).
+     */
+ /*    if (OMPI_SUCCESS != (ret = ompi_name_server.init())) { */
+/* 	printf("show_help: ompi_rte_init failed in ompi_name_server.init()\n"); */
+/* 	return ret; */
+/*     } */
+
+/*     if (OMPI_SUCCESS != (ret = mca_oob_base_register())) { */
+/* 	printf("show_help: ompi_rte_init failed in mca_oob_base_register()\n"); */
+/* 	return ret; */
+/*     } */
+
+
+    /* 
+     * All done 
+     */
+    return OMPI_SUCCESS;
 }
 
 

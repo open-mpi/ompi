@@ -30,6 +30,7 @@ headers = \
     os_create_dirpath.h \
     pow2.h \
     session_dir.h \
+    daemon_init.h \
     strncpy.h
 
 libutil_la_SOURCES = \
@@ -52,6 +53,7 @@ libutil_la_SOURCES = \
     os_create_dirpath.c \
     pow2.c \
     session_dir.c \
+    daemon_init.c \
     strncpy.c
 
 # Conditionally install the header files
