@@ -725,7 +725,7 @@ ompi_registry_notify_message_t *gpr_replica_construct_notify_message(ompi_regist
     return msg;
 }
 
-void gpr_replica_process_triggers(char *segment,
+bool gpr_replica_process_triggers(char *segment,
 				  mca_gpr_replica_trigger_list_t *trig,
 				  ompi_registry_notify_message_t *message)
 {
@@ -743,14 +743,13 @@ void gpr_replica_process_triggers(char *segment,
 
     /* protect against errors */
     if (NULL == message || NULL == segment) {
-	return;
+	return true;
     }
 
-    /* OMPI_THREAD_LOCK(&mca_gpr_replica_internals_mutex); */
 
     seg = gpr_replica_find_seg(false, segment);
     if (NULL == seg) { /* couldn't find segment */
-	return;
+	return true;
     }
 
     if (mca_gpr_replica_debug) {
@@ -773,7 +772,7 @@ void gpr_replica_process_triggers(char *segment,
     if (!found) {  /* didn't find request */
 	ompi_output(0, "Notification error - request not found");
 	/* OMPI_THREAD_UNLOCK(&mca_gpr_replica_internals_mutex); */
-	return;
+	return true;
     }
 
     /* process request */
@@ -822,6 +821,8 @@ void gpr_replica_process_triggers(char *segment,
 	ompi_output(0, "[%d,%d,%d] gpr replica-process_trig: complete", ompi_process_info.name->cellid,
 		    ompi_process_info.name->jobid, ompi_process_info.name->vpid);
     }
+
+    return false;
 
     /* OMPI_THREAD_UNLOCK(&mca_gpr_replica_internals_mutex); */
 

@@ -85,7 +85,7 @@ mca_gpr_replica_trigger_list_t *gpr_replica_construct_trigger(ompi_registry_sync
 ompi_registry_notify_message_t *gpr_replica_construct_notify_message(ompi_registry_mode_t addr_mode,
 								     char *segment, char **tokens);
 
-void gpr_replica_process_triggers(char *segment,
+bool gpr_replica_process_triggers(char *segment,
 				  mca_gpr_replica_trigger_list_t *trig,
 				  ompi_registry_notify_message_t *message);
 
