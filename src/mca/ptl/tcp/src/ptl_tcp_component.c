@@ -49,7 +49,7 @@
 #include "ptl_tcp_sendfrag.h"
 #include "ptl_tcp_sendreq.h"
 
-#define IMPORTANT_WINDOWS_COMMENT() \ 
+#define IMPORTANT_WINDOWS_COMMENT() \
             /* In windows, many of the socket functions return an EWOULDBLOCK instead of \
                things like EAGAIN, EINPROGRESS, etc. It has been verified that this will \
                not conflict with other error codes that are returned by these functions \
@@ -576,9 +576,9 @@ static void mca_ptl_tcp_component_accept(void)
         mca_ptl_tcp_event_t *event;
         int sd = accept(mca_ptl_tcp_component.tcp_listen_sd, (struct sockaddr*)&addr, &addrlen);
         if(sd < 0) {
+            IMPORTANT_WINDOWS_COMMENT();
             if(ompi_socket_errno == EINTR)
                 continue;
-            IMPORTANT_WINDOWS_COMMENT();
             if(ompi_socket_errno != EAGAIN || ompi_socket_errno != EWOULDBLOCK)
                 ompi_output(0, "mca_ptl_tcp_component_accept: accept() failed with errno %d.", ompi_socket_errno);
             return;
