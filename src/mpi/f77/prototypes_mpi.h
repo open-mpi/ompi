@@ -1292,7 +1292,7 @@ void MPI_COMM_CALL_ERRHANDLER(MPI_Fint *comm, MPI_Fint *errorcode, MPI_Fint *ier
 void MPI_COMM_COMPARE(MPI_Fint *comm1, MPI_Fint *comm2, MPI_Fint *result, MPI_Fint *ierr);
 void MPI_COMM_CONNECT(char *port_name, MPI_Fint *info, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *newcomm, MPI_Fint *ierr);
 void MPI_COMM_CREATE_ERRHANDLER(ompi_errhandler_fortran_handler_fn_t *function, MPI_Fint *errhandler, MPI_Fint *ierr);
-void MPI_COMM_CREATE_KEYVAL(MPI_F_copy_function* comm_copy_attr_fn, MPI_F_copy_function* comm_delete_attr_fn, MPI_Fint *comm_keyval, MPI_Fint *extra_state, MPI_Fint *ierr);
+void MPI_COMM_CREATE_KEYVAL(MPI_F_copy_function* comm_copy_attr_fn, MPI_F_delete_function* comm_delete_attr_fn, MPI_Fint *comm_keyval, MPI_Fint *extra_state, MPI_Fint *ierr);
 void MPI_COMM_CREATE(MPI_Fint *comm, MPI_Fint *group, MPI_Fint *newcomm, MPI_Fint *ierr);
 void MPI_COMM_DELETE_ATTR(MPI_Fint *comm, MPI_Fint *comm_keyval, MPI_Fint *ierr);
 void MPI_COMM_DISCONNECT(MPI_Fint *comm, MPI_Fint *ierr);
@@ -1482,7 +1482,7 @@ void MPI_TYPE_CREATE_F90_INTEGER(MPI_Fint *r, MPI_Fint *newtype, MPI_Fint *ierr)
 void MPI_TYPE_CREATE_F90_REAL(MPI_Fint *p, MPI_Fint *r, MPI_Fint *newtype, MPI_Fint *ierr);
 void MPI_TYPE_CREATE_HINDEXED(MPI_Fint *count, MPI_Fint *array_of_blocklengths, MPI_Fint *array_of_displacements, MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr);
 void MPI_TYPE_CREATE_HVECTOR(MPI_Fint *count, MPI_Fint *blocklength, MPI_Fint *stride, MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr);
-void MPI_TYPE_CREATE_KEYVAL(MPI_F_copy_function* type_copy_attr_fn, MPI_F_copy_function* type_delete_attr_fn, MPI_Fint *type_keyval, MPI_Fint *extra_state, MPI_Fint *ierr);
+void MPI_TYPE_CREATE_KEYVAL(MPI_F_copy_function* type_copy_attr_fn, MPI_F_delete_function* type_delete_attr_fn, MPI_Fint *type_keyval, MPI_Fint *extra_state, MPI_Fint *ierr);
 void MPI_TYPE_CREATE_INDEXED_BLOCK(MPI_Fint *count, MPI_Fint *blocklength, MPI_Fint *array_of_displacements, MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr);
 void MPI_TYPE_CREATE_STRUCT(MPI_Fint *count, MPI_Fint *array_of_block_lengths, MPI_Fint *array_of_displacements, MPI_Fint *array_of_types, MPI_Fint *newtype, MPI_Fint *ierr);
 void MPI_TYPE_CREATE_SUBARRAY(MPI_Fint *ndims, MPI_Fint *size_array, MPI_Fint *subsize_array, MPI_Fint *start_array, MPI_Fint *order, MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr);
@@ -1520,7 +1520,7 @@ void MPI_WIN_CALL_ERRHANDLER(MPI_Fint *win, MPI_Fint *errorcode, MPI_Fint *ierr)
 void MPI_WIN_COMPLETE(MPI_Fint *win, MPI_Fint *ierr);
 void MPI_WIN_CREATE(char *base, MPI_Fint *size, MPI_Fint *disp_unit, MPI_Fint *info, MPI_Fint *comm, MPI_Fint *win, MPI_Fint *ierr);
 void MPI_WIN_CREATE_ERRHANDLER(ompi_errhandler_fortran_handler_fn_t* function, MPI_Fint *errhandler, MPI_Fint *ierr);
-void MPI_WIN_CREATE_KEYVAL(MPI_F_copy_function* win_copy_attr_fn, MPI_F_copy_function* win_delete_attr_fn, MPI_Fint *win_keyval, MPI_Fint *extra_state, MPI_Fint *ierr);
+void MPI_WIN_CREATE_KEYVAL(MPI_F_copy_function* win_copy_attr_fn, MPI_F_delete_function* win_delete_attr_fn, MPI_Fint *win_keyval, MPI_Fint *extra_state, MPI_Fint *ierr);
 void MPI_WIN_DELETE_ATTR(MPI_Fint *win, MPI_Fint *win_keyval, MPI_Fint *ierr);
 void MPI_WIN_FENCE(MPI_Fint *assert, MPI_Fint *win, MPI_Fint *ierr);
 void MPI_WIN_FREE(MPI_Fint *win, MPI_Fint *ierr);

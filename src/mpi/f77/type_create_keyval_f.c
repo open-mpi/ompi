@@ -30,7 +30,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_CREATE_KEYVAL,
                            pmpi_type_create_keyval_,
                            pmpi_type_create_keyval__,
                            pmpi_type_create_keyval_f,
-                           (MPI_F_copy_function* type_copy_attr_fn, MPI_F_delete_function* type_delete_attr_fn, MPI_Fint *type_keyval, char *extra_state, MPI_Fint *ierr),
+                           (MPI_F_copy_function* type_copy_attr_fn, MPI_F_delete_function* type_delete_attr_fn, MPI_Fint *type_keyval, MPI_Fint *extra_state, MPI_Fint *ierr),
                            (type_copy_attr_fn, type_delete_attr_fn, type_keyval, extra_state, ierr) )
 #endif
 

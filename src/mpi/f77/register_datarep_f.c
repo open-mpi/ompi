@@ -29,7 +29,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_REGISTER_DATAREP,
                            pmpi_register_datarep_,
                            pmpi_register_datarep__,
                            pmpi_register_datarep_f,
-                           (char *datarep, void *read_conversion_fn, void *write_conversion_fn, void *dtype_file_extent_fn, char *extra_state, MPI_Fint *ierr),
+                           (char *datarep, void *read_conversion_fn, void *write_conversion_fn, void *dtype_file_extent_fn, MPI_Fint *extra_state, MPI_Fint *ierr),
                            (datarep, read_conversion_fn, write_conversion_fn, dtype_file_extent_fn, extra_state, ierr) )
 #endif
 

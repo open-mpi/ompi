@@ -46,7 +46,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GREQUEST_START,
                            mpi_grequest_start_,
                            mpi_grequest_start__,
                            mpi_grequest_start_f,
-                           (MPI_F_Grequest_query_function* query_fn, MPI_F_Grequest_free_function* free_fn, MPI_F_Grequest_cancel_function* cancel_fn, char *extra_state, MPI_Fint *request, MPI_Fint *ierr),
+                           (MPI_F_Grequest_query_function* query_fn, MPI_F_Grequest_free_function* free_fn, MPI_F_Grequest_cancel_function* cancel_fn, MPI_Fint *extra_state, MPI_Fint *request, MPI_Fint *ierr),
                            (query_fn, free_fn, cancel_fn, extra_state, request, ierr) )
 #endif
 
