@@ -4,6 +4,7 @@
 
 #include "lam_config.h"
 #include "lam/mem/free_lists.h"
+#include "lam/runtime/runtime.h"
 #include "lam/util/output.h"
 #include "lam/os/numa.h"
 #include "lam/os/lam_system.h"
@@ -179,12 +180,7 @@ int lam_free_lists_init_with(
                    flist->fl_nlists);
     if ( !flist->fl_free_lists )
     {
-      lam_output(0, "Error: Out of memory");
-#if NEED_TO_IMPLEMENT_LAM_EXIT
-      lam_exit(1);
-#else
-      exit(1);
-#endif      
+      lam_abort(1, "Error: Out of memory");
     }
  
     /* run constructors */
@@ -206,12 +202,7 @@ int lam_free_lists_init_with(
         }
         
         if (!flist->fl_free_lists[list]) {
-          lam_output(0, "Error: Out of memory");
-#if NEED_TO_IMPLEMENT_LAM_EXIT
-          lam_exit(1);
-#else
-          exit(1);
-#endif      
+          lam_abort(1, "Error: Out of memory");
         }
 
         STATIC_INIT(flist->fl_free_lists[list], &lam_seg_list_cls);
@@ -231,12 +222,7 @@ int lam_free_lists_init_with(
         flist->fl_affinity = (affinity_t *)malloc(sizeof(affinity_t) *
                                     flist->fl_nlists);
         if ( !flist->fl_affinity ) {
-          lam_output(0, "Error: Out of memory");
-#if NEED_TO_IMPLEMENT_LAM_EXIT
-          lam_exit(1);
-#else
-          exit(1);
-#endif      
+          lam_abort(1, "Error: Out of memory");
         }
 
         /* copy policies in */
@@ -258,13 +244,8 @@ int lam_free_lists_init_with(
             {
                 if (lam_free_lists_create_more_elts(flist, pool) != LAM_SUCCESS)
                 {
-                  lam_output(0, "Error: Setting up initial private "
-                             "free list for %s.\n", flist->fl_description);
-#if NEED_TO_IMPLEMENT_LAM_EXIT
-                  lam_exit(1);
-#else
-                  exit(1);
-#endif      
+                  lam_abort(1, "Error: Setting up initial private "
+                            "free list for %s.\n", flist->fl_description);
                 }
             }
             
@@ -273,13 +254,8 @@ int lam_free_lists_init_with(
         else
         {
             /* only 1 process should be initializing the list */
-            lam_output(0, "Error: Setting up initial private free "
-                       "list %d for %s.\n", pool, flist->fl_description);
-#if NEED_TO_IMPLEMENT_LAM_EXIT
-            lam_exit(1);
-#else
-            exit(1);
-#endif      
+            lam_abort(1, "Error: Setting up initial private free "
+                      "list %d for %s.\n", pool, flist->fl_description);
         }
     }   
     
