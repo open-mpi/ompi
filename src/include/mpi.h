@@ -475,10 +475,6 @@ extern "C" {
                               int *array_of_errcodes);
   int MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm);
   int MPI_Comm_test_inter(MPI_Comm comm, int *flag);
-  /* 
-   * Anju:
-   * Here ends the alphabet C
-   */
   int MPI_Dims_create(int nnodes, int ndims, int *dims);
   MPI_Fint MPI_Errhandler_c2f(MPI_Errhandler errhandler);
   int MPI_Errhandler_create(MPI_Handler_function *function, 
@@ -491,10 +487,6 @@ extern "C" {
   int MPI_Error_string(int errorcode, char *string, int *resultlen);
   int MPI_Exscan(void *sendbuf, void *recvbuf, int count, 
                  MPI_Datatype datatype, MPI_Op op, MPI_Comm comm);
-  /*
-   * Anju:
-   * All file functions go here
-   */
   MPI_Fint MPI_File_c2f(MPI_File file);
   MPI_File MPI_File_f2c(MPI_Fint file);
   int MPI_File_call_errhandler(MPI_File fh, int errorcode);
@@ -705,7 +697,7 @@ extern "C" {
                    int *outcount, int array_of_indices, 
                    MPI_Status array_of_statuses);
   int MPI_Topo_test(MPI_Comm comm, int *status);
-  MPI_Fint MPI_Type_c2f(MPI_Datatype);
+  MPI_Fint MPI_Type_c2f(MPI_Datatype datatype);
   int MPI_Type_commit(MPI_Datatype *type);
   int MPI_Type_contiguous(int count, MPI_Datatype oldtype, 
                           MPI_Datatype *newtype);
@@ -745,7 +737,7 @@ extern "C" {
   int MPI_Type_extent(MPI_Datatype type, MPI_Aint *extent);
   int MPI_Type_free(MPI_Datatype *type);
   int MPI_Type_free_keyval(int *type_keyval);
-  MPI_Datatype MPI_Type_f2c(MPI_Fint);
+  MPI_Datatype MPI_Type_f2c(MPI_Fint datatype);
   int MPI_Type_get_attr(MPI_Datatype type, int type_keyval, 
                         void *attribute_val, int *flag);
   int MPI_Type_get_contents(MPI_Datatype mtype, int max_integers, 
@@ -1136,7 +1128,7 @@ extern "C" {
                    int *outcount, int array_of_indices, 
                    MPI_Status array_of_statuses);
   int PMPI_Topo_test(MPI_Comm comm, int *status);
-  MPI_Fint PMPI_Type_c2f(MPI_Datatype);
+  MPI_Fint PMPI_Type_c2f(MPI_Datatype datatype);
   int PMPI_Type_commit(MPI_Datatype *type);
   int PMPI_Type_contiguous(int count, MPI_Datatype oldtype, 
                           MPI_Datatype *newtype);
@@ -1176,7 +1168,7 @@ extern "C" {
   int PMPI_Type_extent(MPI_Datatype type, MPI_Aint *extent);
   int PMPI_Type_free(MPI_Datatype *type);
   int PMPI_Type_free_keyval(int *type_keyval);
-  MPI_Datatype PMPI_Type_f2c(MPI_Fint);
+  MPI_Datatype PMPI_Type_f2c(MPI_Fint datatype);
   int PMPI_Type_get_attr(MPI_Datatype type, int type_keyval, 
                         void *attribute_val, int *flag);
   int PMPI_Type_get_contents(MPI_Datatype mtype, int max_integers, 
