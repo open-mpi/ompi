@@ -392,20 +392,20 @@ static int open_module(module_file_item_t *target_file,
 
   mitem->mli_module = module_struct;
   lam_list_append(found_modules, (lam_list_item_t *) mitem);
-  mca_base_module_registry_retain(target_file->type, module_handle, 
-                                  module_struct);
+  mca_base_module_repository_retain(target_file->type, module_handle, 
+                                    module_struct);
 
   /* Now that that's all done, link all the dependencies in to this
-     module's registry entry */
+     module's repository entry */
 
   for (cur = lam_list_remove_first(&dependencies);
        NULL != cur;
        cur = lam_list_remove_first(&dependencies)) {
     ditem = (dependency_item_t *) cur;
-    mca_base_module_registry_link(target_file->type,
-                                  target_file->name,
-                                  ditem->di_module_file_item->type,
-                                  ditem->di_module_file_item->name);
+    mca_base_module_repository_link(target_file->type,
+                                    target_file->name,
+                                    ditem->di_module_file_item->type,
+                                    ditem->di_module_file_item->name);
     free(ditem);
   }
   OBJ_DESTRUCT(&dependencies);
