@@ -74,8 +74,10 @@ int MPI_Comm_accept(char *port_name, MPI_Info info, int root,
      * Our own port_name is not of interest here, so we pass in NULL.
      * The two leaders will figure this out later. However, we need the tag.
      */
-    tmp_port = ompi_parse_port(port_name, &tag);
-    free (tmp_port);
+    if ( rank == root ) {
+	tmp_port = ompi_parse_port(port_name, &tag);
+	free (tmp_port);
+    }
     rc = ompi_comm_connect_accept (comm, root, NULL, send_first, &newcomp, tag);
 
     *newcomm = newcomp;
