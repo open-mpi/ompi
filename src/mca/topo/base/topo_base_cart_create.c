@@ -40,6 +40,7 @@ int mca_topo_base_cart_create (mca_topo_base_comm_t *topo_data,
    int i;
    int *p;
    int *coords = topo_data->mtc_coords;
+   int dummy_rank;
 
    nprocs = 1;
    p = topo_data->mtc_dims_or_index;
@@ -78,14 +79,15 @@ int mca_topo_base_cart_create (mca_topo_base_comm_t *topo_data,
    /* Have to replace this with the actual function body itself */
    p = topo_data->mtc_dims_or_index;
    coords =  topo_data->mtc_coords;
+   dummy_rank = *new_rank;
 
    for (i=0; 
-        (i < topo_data->mtc_ndims_or_nnodes); 
+        (i < topo_data->mtc_ndims_or_nnodes && i < ndims); 
         ++i, ++p) {
         dim = (*p > 0) ? *p : -(*p);
         nprocs /= dim;
-        *coords++ = *new_rank / nprocs;
-        *new_rank %= nprocs;
+        *coords++ = dummy_rank / nprocs;
+        dummy_rank %= nprocs;
     }
 
    /* end here */

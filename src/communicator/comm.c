@@ -58,6 +58,8 @@ static int ompi_comm_allgather_emulate_intra (void* inbuf, int incount, MPI_Data
                                               MPI_Datatype outtype, 
                                               ompi_communicator_t *comm);
 
+static int ompi_comm_copy_topo (ompi_communicator_t *oldcomm, 
+                                 ompi_communicator_t *newcomm);
 
 /**********************************************************************/
 /**********************************************************************/
@@ -79,6 +81,7 @@ int ompi_comm_set ( ompi_communicator_t *newcomm,
 {
     ompi_proc_t *my_gpointer;
     int my_grank;
+    int ret;
 
     /* Set local_group information */
     memcpy ( newcomm->c_local_group->grp_proc_pointers, 
@@ -111,7 +114,7 @@ int ompi_comm_set ( ompi_communicator_t *newcomm,
     
     if ( NULL != topocomponent ) {
         /*
-         * This functions is never used o determine the topology
+         * This functions is never used to determine the topology
          * component. The topology component is determined only by the
          * ompi_cart_create and ompi_comm_create functions. Have to
          * see what ahppens during MPI_Comm_dup though. During this
@@ -121,10 +124,39 @@ int ompi_comm_set ( ompi_communicator_t *newcomm,
          * communicator into this communicator. This probably is
          * another function in this file.
          */ 
+        
         if (OMPI_COMM_IS_CART ( oldcomm ) )
             newcomm->c_flags |= OMPI_COMM_CART;
         if (OMPI_COMM_IS_GRAPH ( oldcomm ) ) 
             newcomm->c_flags |= OMPI_COMM_GRAPH;
+
+        /*
+         * Now I have to set the information on the topology from the previous
+         * communicator
+         */ 
+
+        /* allocate the data for the common good */
+        newcomm->c_topo_comm = malloc(sizeof(mca_topo_base_comm_t));
+
+        if (NULL == newcomm->c_topo_comm) {
+            OBJ_RELEASE(newcomm);
+            return OMPI_ERROR;
+        }
+
+        if (OMPI_SUCCESS != (ret = mca_topo_base_comm_select (newcomm, 
+                                   oldcomm->c_topo_component))) {
+            free(newcomm->c_topo_comm); 
+            OBJ_RELEASE(newcomm);
+            return ret;
+        }
+
+        /*
+         * Should copy over the information from the previous communicator
+         */
+         if (OMPI_SUCCESS != (ret = ompi_comm_copy_topo (oldcomm, newcomm))) {
+             OBJ_RELEASE(newcomm);
+             return ret;
+         }
     }
 
     /* Copy attributes and call according copy functions, 
@@ -472,7 +504,7 @@ int ompi_comm_split ( ompi_communicator_t* comm, int color, int key,
                          rprocs,             /* remote_procs */
                          NULL,               /* attrs */
                          comm->error_handler,/* error handler */
-                         NULL                /* topo component */
+                         (mca_base_component_t *)comm->c_topo_component  /* topo component */
                          );
     if ( OMPI_SUCCESS != rc  ) {
         goto exit;
@@ -1203,6 +1235,61 @@ static int ompi_comm_fill_rest (ompi_communicator_t *comm,
     if (OMPI_SUCCESS != (ret = mca_pml.pml_add_comm(comm))) {
         /* some error has happened */
         return ret;
+    }
+
+    return OMPI_SUCCESS;
+}
+
+static int ompi_comm_copy_topo (ompi_communicator_t *oldcomm, 
+                                 ompi_communicator_t *newcomm) {
+
+
+    int index = 
+    
+    (oldcomm->c_topo_comm->mtc_dims_or_index[oldcomm->c_topo_comm->mtc_ndims_or_nnodes-1] > 0)? 
+    oldcomm->c_topo_comm->mtc_dims_or_index[oldcomm->c_topo_comm->mtc_ndims_or_nnodes-1] : 
+    -oldcomm->c_topo_comm->mtc_dims_or_index[oldcomm->c_topo_comm->mtc_ndims_or_nnodes-1]; 
+                
+    /* pointers for the rest of the information have been set up .... simply
+       allocate enough space and copy all the information from the previous one */
+
+    newcomm->c_topo_comm->mtc_ndims_or_nnodes = oldcomm->c_topo_comm->mtc_ndims_or_nnodes;
+    newcomm->c_topo_comm->mtc_reorder = oldcomm->c_topo_comm->mtc_reorder;
+
+    newcomm->c_topo_comm->mtc_dims_or_index = malloc(sizeof(int)*
+                                                     newcomm->c_topo_comm->mtc_ndims_or_nnodes);   
+
+    if (NULL == newcomm->c_topo_comm->mtc_dims_or_index) {
+        return OMPI_ERROR;
+    }
+
+    memcpy (newcomm->c_topo_comm->mtc_dims_or_index, 
+            oldcomm->c_topo_comm->mtc_dims_or_index ,
+            newcomm->c_topo_comm->mtc_ndims_or_nnodes * sizeof(int));
+
+    newcomm->c_topo_comm->mtc_periods_or_edges =
+                 malloc (sizeof(int)*index);
+    if (NULL == newcomm->c_topo_comm->mtc_periods_or_edges) {
+        return OMPI_ERROR;
+    }
+
+    memcpy (newcomm->c_topo_comm->mtc_periods_or_edges, 
+            oldcomm->c_topo_comm->mtc_periods_or_edges, 
+            sizeof(int) * index );
+
+    if (OMPI_COMM_IS_CART(oldcomm)) {
+        newcomm->c_topo_comm->mtc_coords = malloc(sizeof(int)*
+                                                  newcomm->c_topo_comm->mtc_ndims_or_nnodes);   
+
+        if (NULL == newcomm->c_topo_comm->mtc_coords) {
+            return OMPI_ERROR;
+        }
+
+        memcpy (newcomm->c_topo_comm->mtc_coords,
+                oldcomm->c_topo_comm->mtc_coords,
+                sizeof(int) * newcomm->c_topo_comm->mtc_ndims_or_nnodes);
+    } else {
+        newcomm->c_topo_comm->mtc_coords = NULL;
     }
 
     return OMPI_SUCCESS;
