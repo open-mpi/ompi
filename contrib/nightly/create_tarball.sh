@@ -51,7 +51,7 @@ send_error_mail() {
         len="`wc -l $file | awk '{ print $1}'`"
         if test "`expr $len \> $max_log_len`" = "1"; then
             echo "[... previous lines snipped ...]" >> "$outfile"
-            tail -$max_log_len "$file" >> "$outfile"
+            tail -n $max_log_len "$file" >> "$outfile"
         else
             cat "$file" >> "$outfile"
         fi
