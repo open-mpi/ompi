@@ -19,7 +19,7 @@ int MPI_Ssend(void *buf, int count, MPI_Datatype type, int dest, int tag, MPI_Co
     if (dest == MPI_PROC_NULL) {
         return MPI_SUCCESS;
     }
-                                                                                                                        
+
     if ( MPI_PARAM_CHECK ) {
         int rc = MPI_SUCCESS;
         if (lam_mpi_finalized) {
@@ -41,7 +41,7 @@ int MPI_Ssend(void *buf, int count, MPI_Datatype type, int dest, int tag, MPI_Co
             return rc;
         }
     }
-                                                                                                                        
+
     return mca_pml.pml_send(buf, count, type, dest, tag, MCA_PML_BASE_SEND_SYNCHRONOUS, comm);
 }
 
