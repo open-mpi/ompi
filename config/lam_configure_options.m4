@@ -2,8 +2,6 @@ dnl -*- shell-script -*-
 dnl
 dnl $HEADER$
 dnl
-dnl $Id: lam_configure_options.m4,v 1.2 2004/01/07 08:31:32 jsquyres Exp $
-dnl
 
 AC_DEFUN(LAM_CONFIGURE_OPTIONS,[
 lam_show_subtitle "Configuration options"

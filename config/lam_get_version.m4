@@ -2,8 +2,6 @@ dnl -*- shell-script -*-
 dnl
 dnl $HEADER$
 dnl
-dnl $Id: lam_get_version.m4,v 1.2 2004/01/07 07:47:13 jsquyres Exp $
-dnl
 
 AC_DEFUN(LAM_GET_VERSION,[
 gv_glv_dir="$1"

@@ -2,8 +2,6 @@
 #
 # $HEADER$
 #
-# $Id: Makefile.am,v 1.2 2004/01/07 07:44:54 jsquyres Exp $
-#
 
 include $(top_srcdir)/config/Makefile.options
 

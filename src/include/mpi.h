@@ -1,7 +1,5 @@
 /*
  * $HEADER$
- * 
- * $Id: mpi.h,v 1.5 2004/01/07 08:32:16 jsquyres Exp $
  */
 
 #ifndef LAM_MPI_H

@@ -2,8 +2,6 @@ dnl -*- shell-script -*-
 dnl
 dnl $HEADER$
 dnl
-dnl $Id: lam_setup_cc.m4,v 1.2 2004/01/07 08:31:09 jsquyres Exp $
-dnl
 
 AC_DEFUN(LAM_SETUP_CC,[
 

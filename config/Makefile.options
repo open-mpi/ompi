@@ -2,7 +2,5 @@
 #
 # $HEADER$
 #
-# $Id: Makefile.options,v 1.2 2004/01/07 07:45:59 jsquyres Exp $
-#
 
 AUTOMAKE_OPTIONS	= foreign dist-bzip2

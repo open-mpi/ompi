@@ -2,8 +2,6 @@ dnl -*- shell-script -*-
 dnl
 dnl $HEADER$
 dnl
-dnl $Id: lam_check_optflags.m4,v 1.1 2004/01/07 07:41:42 jsquyres Exp $
-dnl
 
 AC_DEFUN(LAM_CHECK_OPTFLAGS,[
 
