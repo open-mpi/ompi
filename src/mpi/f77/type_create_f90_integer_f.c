@@ -48,5 +48,10 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_CREATE_F90_INTEGER,
 
 void mpi_type_create_f90_integer_f(MPI_Fint *r, MPI_Fint *newtype, MPI_Fint *ierr)
 {
+    MPI_Datatype c_new = MPI_Type_f2c(*newtype);
 
+    *ierr = MPI_Type_create_f90_integer( *r, &c_new);
+
+    if (*ierr == MPI_SUCCESS)
+      *newtype = MPI_Type_c2f(c_new);
 }

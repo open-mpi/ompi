@@ -48,5 +48,17 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_CREATE_SUBARRAY,
 
 void mpi_type_create_subarray_f(MPI_Fint *ndims, MPI_Fint *size_array, MPI_Fint *subsize_array, MPI_Fint *start_array, MPI_Fint *order, MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr)
 {
+    MPI_Datatype c_old;
+    MPI_Datatype c_new;
 
+    c_old = MPI_Type_f2c(*oldtype);
+
+    *ierr = MPI_Type_create_subarray(*ndims,
+                                     size_array,
+                                     subsize_array,
+                                     start_array,
+                                     *order, c_old, &c_new);
+
+    if (*ierr == MPI_SUCCESS) 
+        *newtype = MPI_Type_c2f(c_new);
 }
