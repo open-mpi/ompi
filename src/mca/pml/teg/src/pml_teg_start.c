@@ -37,7 +37,9 @@ int mca_pml_teg_start(size_t count, ompi_request_t** requests)
 
         switch(pml_request->req_ompi.req_state) {
             case OMPI_REQUEST_INACTIVE:
-                break;
+                if(pml_request->req_pml_complete == true)
+                    break;
+                /* otherwise fall through */
             case OMPI_REQUEST_ACTIVE: {
             
                 ompi_request_t *request;

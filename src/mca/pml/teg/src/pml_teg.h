@@ -223,7 +223,7 @@ OMPI_COMP_EXPORT extern int mca_pml_teg_start(
     if(pml_request->req_persistent) { \
        if(pml_request->req_free_called) { \
            MCA_PML_TEG_FREE(request); \
-       } else if (pml_request->req_pml_complete) { \
+       } else { \
            pml_request->req_ompi.req_state = OMPI_REQUEST_INACTIVE; \
        } \
     } else { \
