@@ -134,12 +134,35 @@ LAM_SETUP_CC
 # check for some types
 # check for type sizes
 # check for type alignments
-# check for c99 features
 
 AC_C_INLINE
 AC_CHECK_HEADERS(stdbool.h)
+LAM_C_WEAK_SYMBOLS
 # JMS This macro will be re-written by Dave for licensing reasons
 AX_CREATE_STDINT_H([src/include/lam_stdint.h])
+
+# If we want the profiling layer:
+# - If the C compiler has weak symbols, use those.
+# - If not, then set to compile the code again with #define's in a
+#   separate directory.
+
+if test "$WANT_WEAK_SYMBOLS" = "0"; then
+    LAM_C_HAVE_WEAK_SYMBOLS=1
+fi
+if test "$WANT_MPI_PROFILING" = "1"; then
+    if test "$LAM_C_HAVE_WEAK_SYMBOLS" = "1"; then
+	LAM_PROFILING_COMPILE_SEPARATELY=0
+    else
+	LAM_PROFILING_COMPILE_SEPARATELY=1
+    fi
+else
+    LAM_PROFILING_COMPILE_SEPARATELY=1
+fi
+AM_CONDITIONAL(COMPILE_PROFILING_SEPARATELY, test "$LAM_PROFILING_COMPILE_SEPARATELY" = 1)
+AC_DEFINE_UNQUOTED(LAM_WANT_MPI_PROFILING, $WANT_MPI_PROFILING,
+   [Whether we want MPI profiling or not])
+AC_DEFINE_UNQUOTED(LAM_HAVE_WEAK_SYMBOLS, $LAM_C_HAVE_WEAK_SYMBOLS,
+   [Wehther we have weak symbols or not])
 
 
 ##################################
@@ -160,23 +183,8 @@ LAM_SETUP_CXX
 # Fortran
 ##################################
 
-if test "$with_fortran" != "yes"; then
-    lam_show_subtitle "Fortran Compiler -- skipped" 
-    LAM_WANT_FORTRAN=1
-else
-    lam_show_subtitle "Fortran Compiler"
-    LAM_WANT_FORTRAN=0
-fi
-
-if test "$LAM_WANT_FORTRAN" = "1"; then
-    # fortran linking style (necessary?)
-    # check for types
-    # check for type sizes
-    # check for type alignments
-    true
-fi
-
-AM_CONDITIONAL(WANT_FORTRAN, test "$LAM_WANT_FORTRAN" = "1")
+LAM_SETUP_F77
+LAM_SETUP_F90
 
 
 ##################################
