@@ -147,29 +147,31 @@ int orte_dps_unpack_nobuffer(void *dst, void *src, size_t num_vals,
     int rc;
     size_t i;
     size_t n;
+	size_t elementsize; /* size in bytes of an unpacked element */
+	char* srcptr; /* temp moving source pointer */
     uint16_t * d16;
     uint32_t * d32;
-    uint16_t * s16;
-    uint32_t * s32;
+    uint16_t tmp_16;
+    uint32_t tmp_32;
     uint8_t* bool_src;
     bool *bool_dst;
     char **dstr;
     orte_process_name_t* dn;
-    orte_process_name_t* sn;
+    orte_process_name_t tmp_procname;
     orte_byte_object_t* dbyteptr;
     orte_gpr_keyval_t **keyval;
     orte_gpr_value_t **values;
 	orte_app_context_t **app_context;
 	orte_app_context_map_t **app_context_map;
     uint32_t len;
-    char *str, *sstr;
-    void *sptr;
+    char *str;
     orte_gpr_subscription_t **subs;
     orte_gpr_notify_data_t **data;
 
     /* defaults */
     rc = ORTE_SUCCESS;
     *num_bytes = 0;
+	elementsize = 1024*1024*1024; /* instant memory fault on error */
     
     switch(type) {
        
@@ -195,18 +197,22 @@ int orte_dps_unpack_nobuffer(void *dst, void *src, size_t num_vals,
         case ORTE_INT16:
         case ORTE_UINT16:
        
-            if(num_vals * sizeof(uint16_t) > *mem_left) {
+            srcptr = (char *) src;
+            d16 = (uint16_t *) dst;
+			elementsize = sizeof (uint16_t);
+
+            if(num_vals * elementsize > *mem_left) {
                 num_vals = *mem_left / sizeof(uint16_t);
                 rc = ORTE_UNPACK_READ_PAST_END_OF_BUFFER;
             }
-            s16 = (uint16_t *) src;
-            d16 = (uint16_t *) dst;
+
             for(i=0; i<num_vals; i++) {
+			    memcpy ((char*)&tmp_16, srcptr, elementsize);
                 /* convert the network order to host order */
-                *d16 = ntohs(*s16);
-                 d16++; s16++;
+                *d16 = ntohs(tmp_16);
+                 d16++; srcptr+=elementsize;
             }
-            *num_bytes = num_vals * sizeof(uint16_t);
+            *num_bytes = num_vals * elementsize;
             break;
             
         case ORTE_VPID:
@@ -216,18 +222,22 @@ int orte_dps_unpack_nobuffer(void *dst, void *src, size_t num_vals,
         case ORTE_INT32:
         case ORTE_UINT32:
 
-            if(num_vals * sizeof(uint32_t) > *mem_left) {
+            srcptr = (char *) src;
+            d32 = (uint32_t *) dst;
+			elementsize = sizeof (uint32_t);
+
+            if(num_vals * elementsize > *mem_left) {
                 num_vals = *mem_left / sizeof(uint32_t);
                 rc = ORTE_UNPACK_READ_PAST_END_OF_BUFFER;
             }
-            s32 = (uint32_t *) src;
-            d32 = (uint32_t *) dst;
+
             for(i=0; i<num_vals; i++) {
+			    memcpy ((char*)&tmp_32, srcptr, elementsize);
                 /* convert the network order to host order */
-                *d32 = ntohl(*s32);
-                 d32++; s32++;
+                *d32 = ntohl(tmp_32);
+                 d32++; srcptr+=elementsize;
             }
-            *num_bytes = num_vals * sizeof(uint32_t);
+            *num_bytes = num_vals * elementsize;
             break;
         
         case ORTE_INT64:
@@ -264,26 +274,29 @@ int orte_dps_unpack_nobuffer(void *dst, void *src, size_t num_vals,
         case ORTE_STRING:
  
             dstr = (char**)dst;
-            sstr = (char *) src;
+            srcptr = (char *) src;
+			elementsize = sizeof (uint32_t);
             for(i=0; i<num_vals; i++) {
-                if(*mem_left < sizeof(uint32_t)) {
+				/* unpack length of string first */
+                if(*mem_left < elementsize) {
                     return ORTE_UNPACK_READ_PAST_END_OF_BUFFER;
                 }
-                d32 = (uint32_t*)sstr;
-                len = ntohl(*d32);
-                d32++;
-                sstr= (char*)d32;
-                *num_bytes += sizeof(uint32_t);
-                *mem_left -= sizeof(uint32_t);
+			    memcpy ((char*)&tmp_32, srcptr, elementsize);
+                len = ntohl(tmp_32);
+                srcptr += elementsize;
+                *num_bytes += elementsize;
+                *mem_left -= elementsize;
+
+				/* now unpack string */
                 if(*mem_left < len) {
                     return ORTE_UNPACK_READ_PAST_END_OF_BUFFER;
                 }
                 if(NULL == (str = malloc(len+1)))
                     return ORTE_ERR_OUT_OF_RESOURCE;
-                memcpy(str,sstr,len);
+                memcpy(str, srcptr, len);
                 str[len] = '\0';
                 dstr[i] = str;
-                sstr = (char*)(sstr + len);
+                srcptr += len;
                 *mem_left -= len;
                 *num_bytes += len;
             }
@@ -293,37 +306,42 @@ int orte_dps_unpack_nobuffer(void *dst, void *src, size_t num_vals,
         case ORTE_NAME:
 
             dn = (orte_process_name_t*) dst;
-            sn = (orte_process_name_t*) src;
+			srcptr = (char *) src;
+			elementsize = sizeof (orte_process_name_t);
             for (i=0; i<num_vals; i++) {
-                dn->cellid = ntohl(sn->cellid);
-                dn->jobid = ntohl(sn->jobid);
-                dn->vpid = ntohl(sn->vpid);
-                dn++; sn++;
+				memcpy ((char*) &tmp_procname, srcptr, elementsize); 
+                dn->cellid = ntohl(tmp_procname.cellid);
+                dn->jobid = ntohl(tmp_procname.jobid);
+                dn->vpid = ntohl(tmp_procname.vpid);
+                dn++; srcptr+=elementsize;
             }
-            *num_bytes = num_vals * sizeof(orte_process_name_t);
+            *num_bytes = num_vals * elementsize;
             break;
         
         case ORTE_BYTE_OBJECT:
  
             dbyteptr = (orte_byte_object_t*)dst;
-            sptr = src; /* iterate from start of buffer */
+            srcptr = (char*) src; /* iterate from start of buffer */
+			elementsize = sizeof (uint32_t);
             for(i=0; i<num_vals; i++) {
-                if(*mem_left < sizeof(uint32_t)) {
+				/* unpack object size in bytes first */
+                if(*mem_left < elementsize) {
                     return ORTE_UNPACK_READ_PAST_END_OF_BUFFER;
                 }
-                d32 = (uint32_t*)sptr;
-                dbyteptr->size = (size_t)ntohl(*d32);
-                d32++;
-                sptr = (void*)d32;
-                *mem_left -= sizeof(uint32_t);
-                *num_bytes += sizeof(uint32_t);
+			    memcpy ((char*)&tmp_32, srcptr, elementsize);
+                dbyteptr->size = ntohl(tmp_32);
+                srcptr += elementsize;
+                *num_bytes += elementsize;
+                *mem_left -= elementsize;
+
                 if(*mem_left < dbyteptr->size) {
                     return ORTE_UNPACK_READ_PAST_END_OF_BUFFER;
                 }
-                if(NULL == (dbyteptr->bytes = malloc(dbyteptr->size)))
+                if(NULL == (dbyteptr->bytes = malloc(dbyteptr->size))) {
                     return ORTE_ERR_OUT_OF_RESOURCE;
-                memcpy(dbyteptr->bytes,sptr,dbyteptr->size);
-                sptr = (void*)((uint8_t*)sptr + dbyteptr->size);
+				}
+                memcpy(dbyteptr->bytes, srcptr, dbyteptr->size);
+                srcptr += dbyteptr->size;
                 *mem_left -= dbyteptr->size;
                 *num_bytes += dbyteptr->size;
                 dbyteptr++;
