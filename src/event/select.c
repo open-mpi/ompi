@@ -27,6 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "lam_config.h"
+#include "util/output.h"
 
 #include <sys/types.h>
 #ifdef HAVE_SYS_TIME_H
@@ -202,7 +203,8 @@ select_dispatch(void *arg, struct timeval *tv)
 			if (!(ev->ev_events & LAM_EV_PERSIST))
 				lam_event_del_i(ev);
 			lam_event_active_i(ev, res, 1);
-		} else if (ev->ev_fd > maxfd)
+		} 
+                if (ev->ev_fd > maxfd)
 			maxfd = ev->ev_fd;
 	}
 

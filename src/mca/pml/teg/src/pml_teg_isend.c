@@ -51,8 +51,10 @@ int mca_pml_teg_isend(
     lam_request_t **request)
 {
     int rc;
-
     mca_ptl_base_send_request_t* sendreq = mca_pml_teg_send_request_alloc(comm,dst,&rc);
+#if MCA_PML_TEG_STATISTICS
+    mca_pml_teg.teg_isends++;
+#endif
     if(rc != LAM_SUCCESS)
         return rc;
     mca_ptl_base_send_request_init(
@@ -85,6 +87,9 @@ int mca_pml_teg_send(
 {
     int rc, index;
     mca_ptl_base_send_request_t* sendreq = mca_pml_teg_send_request_alloc(comm,dst,&rc);
+#if MCA_PML_TEG_STATISTICS
+    mca_pml_teg.teg_sends++;
+#endif
     if(rc != LAM_SUCCESS)
         return rc;
 

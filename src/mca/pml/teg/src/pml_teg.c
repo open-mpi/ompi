@@ -137,7 +137,7 @@ int mca_pml_teg_add_procs(lam_proc_t** procs, size_t nprocs)
     size_t p;
     for(p=0; p<nprocs; p++) {
         lam_proc_t *proc = procs[p];
-        uint64_t total_bandwidth = 0;
+        double total_bandwidth = 0;
         uint32_t latency = 0;
         size_t n_index, p_index; 
         size_t n_size;
@@ -207,10 +207,12 @@ int mca_pml_teg_add_procs(lam_proc_t** procs, size_t nprocs)
         for(n_index = 0; n_index < n_size; n_index++) {
             struct mca_ptl_proc_t* ptl_proc = mca_ptl_array_get_index(&proc_pml->proc_ptl_next, n_index);
             struct mca_ptl_t *ptl = ptl_proc->ptl;
+            double weight;
             if(ptl->ptl_bandwidth)
-                ptl_proc->ptl_weight = total_bandwidth / ptl_proc->ptl->ptl_bandwidth;
+                weight = total_bandwidth / ptl_proc->ptl->ptl_bandwidth;
             else
-                ptl_proc->ptl_weight = 1.0 / n_size;
+                weight = 1.0 / n_size;
+            ptl_proc->ptl_weight = (int)(weight * 100);
 
             /* check to see if this ptl is already in the array of ptls used for first
              * fragments - if not add it.

@@ -41,6 +41,9 @@ int mca_pml_teg_irecv(
     int rc;
 
     mca_ptl_base_recv_request_t *recvreq = mca_pml_teg_recv_request_alloc(&rc);
+#if MCA_PML_TEG_STATISTICS
+    mca_pml_teg.teg_irecvs++;
+#endif
     if(NULL == recvreq)
         return rc;
 
@@ -74,6 +77,9 @@ int mca_pml_teg_recv(
 {
     int rc, index;
     mca_ptl_base_recv_request_t *recvreq = mca_pml_teg_recv_request_alloc(&rc);
+#if MCA_PML_TEG_STATISTICS
+    mca_pml_teg.teg_recvs++;
+#endif
     if(NULL == recvreq)
         return rc;
     

@@ -86,9 +86,8 @@ static bool mca_ptl_tcp_recv_frag_header(mca_ptl_tcp_recv_frag_t* frag, int sd, 
 {
     /* non-blocking read - continue if interrupted, otherwise wait until data available */
     unsigned char* ptr = (unsigned char*)&frag->frag_header;
-    int cnt = -1;
-    while(cnt < 0) {
-        cnt = recv(sd, ptr + frag->frag_hdr_cnt, size - frag->frag_hdr_cnt, 0);
+    while(frag->frag_hdr_cnt < size) {
+        int cnt = recv(sd, ptr + frag->frag_hdr_cnt, size - frag->frag_hdr_cnt, 0);
         if(cnt == 0) {
             mca_ptl_tcp_peer_close(frag->frag_peer);
             lam_free_list_return(&mca_ptl_tcp_module.tcp_recv_frags, (lam_list_item_t*)frag);
@@ -99,6 +98,7 @@ static bool mca_ptl_tcp_recv_frag_header(mca_ptl_tcp_recv_frag_t* frag, int sd, 
             case EINTR:
                 continue;
             case EWOULDBLOCK:
+                /* lam_output(0, "mca_ptl_tcp_recv_frag_header: EWOULDBLOCK\n"); */
                 return false;
             default:
                 lam_output(0, "mca_ptl_tcp_recv_frag_header: recv() failed with errno=%d", errno);
@@ -107,11 +107,12 @@ static bool mca_ptl_tcp_recv_frag_header(mca_ptl_tcp_recv_frag_t* frag, int sd, 
                 return false;
             }
         }
-    frag->frag_hdr_cnt += cnt;
+       frag->frag_hdr_cnt += cnt;
+#if MCA_PTL_TCP_STATISTICS
+       ((mca_ptl_tcp_t*)frag->frag_owner)->ptl_bytes_recv += cnt;
+#endif
     }
-
-    /* is the entire common header available? */
-    return (frag->frag_hdr_cnt == size);
+    return true;
 }
 
 
@@ -196,9 +197,8 @@ static bool mca_ptl_tcp_recv_frag_frag(mca_ptl_tcp_recv_frag_t* frag, int sd)
 
 static bool mca_ptl_tcp_recv_frag_data(mca_ptl_tcp_recv_frag_t* frag, int sd)
 {
-    int cnt = -1;
-    while(cnt < 0) {
-        cnt = recv(sd, (unsigned char*)frag->super.super.frag_addr+frag->frag_msg_cnt,  
+    while(frag->frag_msg_cnt < frag->super.super.frag_size) {
+        int cnt = recv(sd, (unsigned char*)frag->super.super.frag_addr+frag->frag_msg_cnt,  
             frag->super.super.frag_size-frag->frag_msg_cnt, 0);
         if(cnt == 0) {
             mca_ptl_tcp_peer_close(frag->frag_peer);
@@ -218,9 +218,12 @@ static bool mca_ptl_tcp_recv_frag_data(mca_ptl_tcp_recv_frag_t* frag, int sd)
                 return false;
             }
         }
+        frag->frag_msg_cnt += cnt;
+#if MCA_PTL_TCP_STATISTICS
+        ((mca_ptl_tcp_t*)frag->frag_owner)->ptl_bytes_recv += cnt;
+#endif
     }
-    frag->frag_msg_cnt += cnt;
-    return (frag->frag_msg_cnt >= frag->super.super.frag_size);
+    return true;
 }
 
 
@@ -231,10 +234,9 @@ static bool mca_ptl_tcp_recv_frag_data(mca_ptl_tcp_recv_frag_t* frag, int sd)
 
 static bool mca_ptl_tcp_recv_frag_discard(mca_ptl_tcp_recv_frag_t* frag, int sd)
 {
-    int cnt = -1;
-    while(cnt < 0) {
+    while(frag->frag_msg_cnt < frag->frag_header.hdr_frag.hdr_frag_length) {
         void *rbuf = malloc(frag->frag_header.hdr_frag.hdr_frag_length - frag->frag_msg_cnt);
-        cnt = recv(sd, rbuf, frag->frag_header.hdr_frag.hdr_frag_length - frag->frag_msg_cnt, 0);
+        int cnt = recv(sd, rbuf, frag->frag_header.hdr_frag.hdr_frag_length - frag->frag_msg_cnt, 0);
         free(rbuf);
         if(cnt == 0) {
             mca_ptl_tcp_peer_close(frag->frag_peer);
@@ -246,6 +248,7 @@ static bool mca_ptl_tcp_recv_frag_discard(mca_ptl_tcp_recv_frag_t* frag, int sd)
             case EINTR:
                 continue;
             case EWOULDBLOCK:
+                /* lam_output(0, "mca_ptl_tcp_recv_frag_discard: EWOULDBLOCK\n"); */
                 return false;
             default:
                 lam_output(0, "mca_ptl_tcp_recv_frag_discard: recv() failed with errno=%d", errno);
@@ -254,8 +257,11 @@ static bool mca_ptl_tcp_recv_frag_discard(mca_ptl_tcp_recv_frag_t* frag, int sd)
                 return false;
             }
         }
+        frag->frag_msg_cnt += cnt;
+#if MCA_PTL_TCP_STATISTICS
+        ((mca_ptl_tcp_t*)frag->frag_owner)->ptl_bytes_recv += cnt;
+#endif
     }
-    frag->frag_msg_cnt += cnt;
-    return (frag->frag_msg_cnt >= frag->frag_header.hdr_frag.hdr_frag_length);
+    return true;
 }
 

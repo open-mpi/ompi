@@ -15,6 +15,7 @@
 #include "mca/pml/pml.h"
 #include "mca/ptl/ptl.h"
 
+#define MCA_PTL_TCP_STATISTICS 0
 
 /**
  * TCP PTL module.
@@ -31,6 +32,8 @@ struct mca_ptl_tcp_module_1_0_0_t {
     int   tcp_free_list_num;              /**< initial size of free lists */
     int   tcp_free_list_max;              /**< maximum size of free lists */
     int   tcp_free_list_inc;              /**< number of elements to alloc when growing free lists */
+    int   tcp_sndbuf;                     /**< socket sndbuf size */
+    int   tcp_rcvbuf;                     /**< socket rcvbuf size */
     lam_free_list_t tcp_send_requests;    /**< free list of tcp send requests -- sendreq + sendfrag */
     lam_free_list_t tcp_send_frags;       /**< free list of tcp send fragments */
     lam_free_list_t tcp_recv_frags;       /**< free list of tcp recv fragments */
@@ -101,6 +104,11 @@ struct mca_ptl_tcp_t {
     int                ptl_ifindex; /**< PTL interface index */
     struct sockaddr_in ptl_ifaddr;  /**< PTL interface address */
     struct sockaddr_in ptl_ifmask;  /**< PTL interface netmask */
+#if MCA_PTL_TCP_STATISTICS
+    size_t ptl_bytes_sent;
+    size_t ptl_bytes_recv;
+    size_t ptl_send_handler;
+#endif
 };
 typedef struct mca_ptl_tcp_t mca_ptl_tcp_t;
 

@@ -123,6 +123,10 @@ int mca_ptl_tcp_module_open(void)
         mca_ptl_tcp_param_register_int("free_list_max", -1);
     mca_ptl_tcp_module.tcp_free_list_inc =
         mca_ptl_tcp_param_register_int("free_list_inc", 256);
+    mca_ptl_tcp_module.tcp_sndbuf =
+        mca_ptl_tcp_param_register_int("sndbuf", 128*1024);
+    mca_ptl_tcp_module.tcp_rcvbuf =
+        mca_ptl_tcp_param_register_int("rcvbuf", 128*1024);
     mca_ptl_tcp.super.ptl_exclusivity =
         mca_ptl_tcp_param_register_int("exclusivity", 0);
     mca_ptl_tcp.super.ptl_first_frag_size =
@@ -184,6 +188,11 @@ static int mca_ptl_tcp_create(int if_index)
                                                                                                                                 
     /* initialize the ptl */
     ptl->ptl_ifindex = if_index;
+#if MCA_PTL_TCP_STATISTICS
+    ptl->ptl_bytes_recv = 0;
+    ptl->ptl_bytes_sent = 0;
+    ptl->ptl_send_handler = 0;
+#endif
     lam_ifindextoaddr(if_index, (struct sockaddr*)&ptl->ptl_ifaddr, sizeof(ptl->ptl_ifaddr));
     lam_ifindextomask(if_index, (struct sockaddr*)&ptl->ptl_ifmask, sizeof(ptl->ptl_ifmask));
     return LAM_SUCCESS;
@@ -463,6 +472,7 @@ static void mca_ptl_tcp_module_accept(void)
                 lam_output(0, "mca_ptl_tcp_module_accept: accept() failed with errno %d.", errno);
             return;
         }
+        mca_ptl_tcp_set_socket_options(sd);
 
         /* wait for receipt of peers process identifier to complete this connection */
         event = malloc(sizeof(lam_event_t));
@@ -521,6 +531,16 @@ static void mca_ptl_tcp_module_recv_handler(int sd, short flags, void* user)
         return;
     }
 
+    /* now set socket up to be non-blocking */
+    if((flags = fcntl(sd, F_GETFL, 0)) < 0) {
+        lam_output(0, "mca_ptl_tcp_module_recv_handler: fcntl(F_GETFL) failed with errno=%d", errno);
+    } else {
+        flags |= O_NONBLOCK;
+        if(fcntl(sd, F_SETFL, flags) < 0) {
+            lam_output(0, "mca_ptl_tcp_module_recv_handler: fcntl(F_SETFL) failed with errno=%d", errno);
+        }
+    }
+   
     /* lookup the corresponding process */
     ptl_proc = mca_ptl_tcp_proc_lookup(guid, size);
     if(NULL == ptl_proc) {

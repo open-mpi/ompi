@@ -73,6 +73,10 @@ int mca_pml_teg_module_open(void)
 
 #if MCA_PML_TEG_STATISTICS
     mca_pml_teg.teg_waits = 0;
+    mca_pml_teg.teg_sends = 0;
+    mca_pml_teg.teg_recvs = 0;
+    mca_pml_teg.teg_isends = 0;
+    mca_pml_teg.teg_irecvs = 0;
     mca_pml_teg.teg_condition_waits = 0;
     mca_pml_teg.teg_condition_broadcasts = 0;
 #endif
@@ -91,9 +95,17 @@ int mca_pml_teg_module_open(void)
 
 int mca_pml_teg_module_close(void)
 {
-#if MCA_PML_TEG_STATISTICS
+#if MCA_PML_TEG_STATISTICS && LAM_ENABLE_DEBUG
     lam_output(0, "mca_pml_teg.teg_waits = %d\n", 
         mca_pml_teg.teg_waits);
+    lam_output(0, "mca_pml_teg.teg_sends = %d\n", 
+        mca_pml_teg.teg_sends);
+    lam_output(0, "mca_pml_teg.teg_recvs = %d\n", 
+        mca_pml_teg.teg_recvs);
+    lam_output(0, "mca_pml_teg.teg_isends = %d\n", 
+        mca_pml_teg.teg_isends);
+    lam_output(0, "mca_pml_teg.teg_irecvs = %d\n", 
+        mca_pml_teg.teg_irecvs);
     lam_output(0, "mca_pml_teg.teg_condition_waits = %d\n", 
         mca_pml_teg.teg_condition_waits);
     lam_output(0, "mca_pml_teg.teg_condition_broadcast = %d\n", 
