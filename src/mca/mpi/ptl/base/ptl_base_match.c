@@ -15,6 +15,7 @@
 #include "mca/mpi/pml/base/pml_base_comm.h"
 #include "lam/lfc/list.h"
 #include "mca/mpi/ptl/base/ptl_base_match.h"
+#include "mca/mpi/pml/pml.h"
 
 /**
  * RCS/CTS receive side matching
@@ -245,63 +246,48 @@ mca_pml_base_recv_request_t *check_wild_receives_for_match(
     /* local parameters */
     mca_pml_base_recv_request_t *return_match;
     mca_pml_base_recv_request_t *wild_recv;
-    int frag_user_tag;
+    int frag_user_tag,recv_user_tag;
 
     /* initialization */
     return_match=(mca_pml_base_recv_request_t *)NULL;
     frag_user_tag=frag_header->hdr_base.hdr_user_tag;
 
-#if (0)
     /*
-     * Loop over the wild irecvs.
-     * wild_receives
+     * Loop over the wild irecvs - no need to lock, the upper level
+     * locking is protecting from having other threads trying to
+     * change this list.
      */
     for(wild_recv = (mca_pml_base_recv_request_t *) 
             lam_list_get_first(&(pml_comm->wild_receives));
-            privateQueues.PostedWildRecv.begin();
-         wild_recv !=
-             (RecvDesc_t *) privateQueues.PostedWildRecv.end();
-         wild_recv = (RecvDesc_t *) wild_recv->next) {
-        // sanity check
-        assert(wild_recv->WhichQueue == POSTEDWILDIRECV);
+            wild_recv != (mca_pml_base_recv_request_t *)
+            lam_list_get_end(&(pml_comm->wild_receives));
+            wild_recv = (mca_pml_base_recv_request_t *) 
+            ((lam_list_item_t *)wild_recv)->lam_list_next) {
 
-        //
-        // If we have a match...
-        //
-        int PostedIrecvTag = wild_recv->posted_m.tag_m;
-        if ((FragUserTag == PostedIrecvTag) ||
-            (PostedIrecvTag == ULM_ANY_TAG)) {
-            if (PostedIrecvTag == ULM_ANY_TAG && FragUserTag < 0) {
-                continue;
-            }
-            //
-            // fill in received data information
-            //
-            wild_recv->isendSeq_m = rec->isendSeq_m;
-            wild_recv->reslts_m.length_m = rec->msgLength_m;
-            wild_recv->reslts_m.peer_m = rec->srcProcID_m;
-            wild_recv->reslts_m.tag_m = rec->tag_m;
-            //
-            // Mark that this is the matching irecv, and go
-            // to process it.
-            //
+        recv_user_tag = wild_recv->super.req_tag;
+        if ( 
+                /* exact tag match */
+                (frag_user_tag == recv_user_tag) ||
+                /* wild tag match - negative tags (except for
+                 * LAM_ANY_TAG) are reserved for internal use, and will
+                 * not be matched with LAM_ANY_TAG */
+                ( (recv_user_tag == LAM_ANY_TAG) && (0 <= frag_user_tag) )  )
+
+        {
+            /*
+             * Mark that this is the matching irecv, and go to process it.
+             */
             return_match = wild_recv;
 
-            // remove this irecv from the postd wild ireceive list
-            privateQueues.PostedWildRecv.RemoveLinkNoLock(wild_recv);
+            /* remove this irecv from the postd wild ireceive list */
+            lam_list_remove_item(&(pml_comm->wild_receives),
+                    (lam_list_item_t *)wild_recv);
 
-            //  add this descriptor to the matched wild ireceive list
-            wild_recv->WhichQueue = WILDMATCHEDIRECV;
-            privateQueues.MatchedRecv[rec->srcProcID_m]->
-                Append(wild_recv);
-
-            // exit the loop
+            /* found match - no need to continue */
             break;
         }
     }
     //
-
-#endif /* if(0) */
 
     return return_match;
 }

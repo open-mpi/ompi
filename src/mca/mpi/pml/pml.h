@@ -13,6 +13,7 @@
 #include "mpi/datatype/datatype.h"
 #include "mpi/request/request.h"
 #include "mca/mca.h"
+#include "mpi.h" /* needed for MPI_ANY_TAG */
 
 
 /*
@@ -43,6 +44,8 @@ typedef enum {
 struct mca_pml_base_status_t {
 };
 typedef struct mca_pml_base_status_t mca_pml_base_status_t;
+
+#define LAM_ANY_TAG MPI_ANY_TAG
 
 
 /*
