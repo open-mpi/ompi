@@ -13,9 +13,11 @@
 #include "lam/threads/mutex_spinlock.h"
 #endif
 
-extern bool lam_uses_threads;
-
-static inline bool lam_use_threads(void) { return lam_uses_threads; }
+static inline bool lam_use_threads(void) 
+{ 
+    extern bool lam_uses_threads;
+    return lam_uses_threads; 
+}
 
 /*
  * Lock macros
