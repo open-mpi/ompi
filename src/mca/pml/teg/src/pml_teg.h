@@ -228,7 +228,7 @@ extern int mca_pml_teg_start(
 { \
     mca_pml_base_request_t* pml_request = *(mca_pml_base_request_t**)(request); \
     pml_request->req_free_called = true; \
-    if(pml_request->req_pml_complete == true) \
+    if( pml_request->req_pml_complete == true) \
     { \
         OMPI_REQUEST_FINI(*(request)); \
         switch(pml_request->req_type) { \
@@ -251,7 +251,7 @@ extern int mca_pml_teg_start(
             break; \
         } \
     } \
-    *(request) = NULL; \
+    *(request) = MPI_REQUEST_NULL; \
 }
 
 #endif

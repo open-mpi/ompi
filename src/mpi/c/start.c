@@ -30,6 +30,12 @@ int MPI_Start(MPI_Request *request)
         }
         OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
     }
-    return mca_pml.pml_start(1, request);
+
+    switch((*request)->req_type) {
+    case OMPI_REQUEST_PML:
+        return mca_pml.pml_start(1, request);
+    default:
+        return OMPI_SUCCESS;
+    }
 }
 

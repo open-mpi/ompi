@@ -19,6 +19,9 @@ extern ompi_class_t mca_pml_base_send_request_t_class;
  */
 struct mca_pml_base_send_request_t {
     mca_pml_base_request_t req_base;         /** base request type - common data structure for use by wait/test */
+    void *req_addr;                          /**< pointer to send buffer - may not be application buffer */
+    size_t req_count;                        /**< number of elements in send buffer */
+    ompi_datatype_t* req_datatype;           /**< pointer to datatype */
     size_t req_offset;                       /**< number of bytes that have already been assigned to a fragment */
     size_t req_bytes_packed;                 /**< packed size of a message given the datatype and count */
     size_t req_bytes_sent;                   /**< number of bytes that have been sent */
@@ -47,6 +50,9 @@ typedef struct mca_pml_base_send_request_t mca_pml_base_send_request_t;
  * @param comm (IN)        Communicator
  * @param mode (IN)        Send mode (STANDARD,BUFFERED,SYNCHRONOUS,READY)
  * @param persistent (IN)  Is request persistent.
+ *
+ * Performa any one-time initialization. Note that per-use initialization
+ * is done in the send request start routine.
  */
 
 #define MCA_PML_BASE_SEND_REQUEST_INIT( request,                          \
@@ -63,12 +69,10 @@ typedef struct mca_pml_base_send_request_t mca_pml_base_send_request_t;
       OBJ_RETAIN(comm);                                                   \
                                                                           \
       OMPI_REQUEST_INIT(&(request)->req_base.req_ompi);                   \
-      request->req_offset = 0;                                            \
-      request->req_bytes_sent = 0;                                        \
+      request->req_addr = addr;                                           \
+      request->req_count = count;                                         \
+      request->req_datatype = datatype;                                   \
       request->req_send_mode = mode;                                      \
-      request->req_peer_match.lval = 0;                                   \
-      request->req_peer_addr.lval = 0;                                    \
-      request->req_peer_size = 0;                                         \
       request->req_base.req_addr = addr;                                  \
       request->req_base.req_count = count;                                \
       request->req_base.req_datatype = datatype;                          \

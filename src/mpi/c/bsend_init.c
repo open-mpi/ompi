@@ -25,6 +25,7 @@ int MPI_Bsend_init(void *buf, int count, MPI_Datatype type,
 {
     int rc;
     if (dest == MPI_PROC_NULL) {
+        *request = MPI_REQUEST_NULL;
         return MPI_SUCCESS;
     }
     
@@ -52,8 +53,10 @@ int MPI_Bsend_init(void *buf, int count, MPI_Datatype type,
         goto error_return;
 
     rc = mca_pml_base_bsend_request_init(*request, true);
-    if(OMPI_SUCCESS != rc)
+    if(OMPI_SUCCESS != rc) {
+        ompi_request_free(request);
         goto error_return;
+    }
 
 error_return:
     OMPI_ERRHANDLER_RETURN(rc, comm, rc, FUNC_NAME);

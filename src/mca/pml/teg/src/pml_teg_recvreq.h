@@ -65,7 +65,14 @@ void mca_pml_teg_recv_request_match_specific(mca_pml_base_recv_request_t* reques
  */
 static inline int mca_pml_teg_recv_request_start(mca_pml_base_recv_request_t* request)
 {
+    /* init/re-init the request */
+    request->req_bytes_received = 0;
+    request->req_bytes_delivered = 0;
+    request->req_base.req_pml_complete = false;
+    request->req_base.req_ompi.req_complete = false;
     request->req_base.req_ompi.req_state = OMPI_REQUEST_ACTIVE;
+
+    /* attempt to match posted recv */
     if(request->req_base.req_peer == OMPI_ANY_SOURCE) {
         mca_pml_teg_recv_request_match_wild(request);
     } else {

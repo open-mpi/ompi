@@ -150,12 +150,12 @@ void mca_ptl_self_matched( mca_ptl_base_module_t* ptl,
          * a contigous buffer and the convertor on the send request initialized to point
          * into this buffer.
          */
-        if( sendreq->req_send.req_base.req_datatype == recvreq->req_base.req_datatype &&
-            sendreq->req_send.req_send_mode != MCA_PML_BASE_SEND_BUFFERED) {
+        if( sendreq->req_send.req_datatype == recvreq->req_base.req_datatype ) {
             ompi_ddt_copy_content_same_ddt( recvreq->req_base.req_datatype, 
-                                            recvreq->req_base.req_count,
+                                            recvreq->req_base.req_count > sendreq->req_send.req_count ?
+                                            sendreq->req_send.req_count : recvreq->req_base.req_count,
                                             recvreq->req_base.req_addr, 
-                                            sendreq->req_send.req_base.req_addr );
+                                            sendreq->req_send.req_addr );
         } else {
             ompi_convertor_t *pSendConvertor, *pRecvConvertor;
             struct iovec iov[1];

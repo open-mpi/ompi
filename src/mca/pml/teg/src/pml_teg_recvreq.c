@@ -14,11 +14,18 @@ static mca_ptl_base_recv_frag_t* mca_pml_teg_recv_request_match_specific_proc(
     mca_pml_base_recv_request_t* request, int proc);
 
 
-static int mca_pml_teg_recv_request_free(struct ompi_request_t* request)
+static int mca_pml_teg_recv_request_fini(struct ompi_request_t** request)
 {
-    MCA_PML_TEG_FINI(&request);
+    MCA_PML_TEG_FINI(request);
     return OMPI_SUCCESS;
 }
+
+static int mca_pml_teg_recv_request_free(struct ompi_request_t** request)
+{
+    MCA_PML_TEG_FREE(request);
+    return OMPI_SUCCESS;
+}
+
 
 static int mca_pml_teg_recv_request_cancel(struct ompi_request_t* request, int complete)
 {
@@ -29,6 +36,7 @@ static void mca_pml_teg_recv_request_construct(mca_pml_base_recv_request_t* requ
 {
     request->req_base.req_type = MCA_PML_REQUEST_RECV;
     request->req_base.req_ompi.req_query = NULL;
+    request->req_base.req_ompi.req_fini = mca_pml_teg_recv_request_fini;
     request->req_base.req_ompi.req_free = mca_pml_teg_recv_request_free;
     request->req_base.req_ompi.req_cancel = mca_pml_teg_recv_request_cancel;
 }

@@ -58,20 +58,22 @@ void * mca_allocator_bucket_alloc(mca_allocator_base_module_t * mem,
                                   size_t size)
 {
     mca_allocator_bucket_t * mem_options = (mca_allocator_bucket_t *) mem;
-    int bucket_num = 0;
     /* initialize for the later bit shifts */
-    size_t bucket_size = 1;
+    int bucket_num = 0;
+    size_t bucket_size = MCA_ALLOCATOR_BUCKET_1_SIZE;
     size_t allocated_size;
     mca_allocator_bucket_chunk_header_t * chunk;
     mca_allocator_bucket_chunk_header_t * first_chunk;
     mca_allocator_bucket_segment_head_t * segment_header;
     /* add the size of the header into the amount we need to request */
     size += sizeof(mca_allocator_bucket_chunk_header_t);
+
     /* figure out which bucket it will come from. */
-    while(size > MCA_ALLOCATOR_BUCKET_1_SIZE) {
-        size >>= 1;
+    while(size > bucket_size) {
         bucket_num++;
+        bucket_size <<= 1;
     }
+
     /* now that we know what bucket it will come from, we must get the lock */
     OMPI_THREAD_LOCK(&(mem_options->buckets[bucket_num].lock));
     /* see if there is already a free chunk */
@@ -82,11 +84,10 @@ void * mca_allocator_bucket_alloc(mca_allocator_base_module_t * mem,
         /* go past the header */
         chunk += 1; 
         /*release the lock */
-	OMPI_THREAD_UNLOCK(&(mem_options->buckets[bucket_num].lock));
+	    OMPI_THREAD_UNLOCK(&(mem_options->buckets[bucket_num].lock));
         return((void *) chunk);
     }
     /* figure out the size of bucket we need */
-    bucket_size <<= (bucket_num + MCA_ALLOCATOR_BUCKET_1_BITSHIFTS);
     allocated_size = bucket_size;
     /* we have to add in the size of the segment header into the 
      * amount we need to request */

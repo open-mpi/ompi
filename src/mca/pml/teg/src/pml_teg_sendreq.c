@@ -15,12 +15,17 @@
 
 
                                                                                                          
-static int mca_pml_teg_send_request_free(struct ompi_request_t* request)
+static int mca_pml_teg_send_request_fini(struct ompi_request_t** request)
 {
-    MCA_PML_TEG_FINI(&request);
+    MCA_PML_TEG_FINI(request);
     return OMPI_SUCCESS;
 }
 
+static int mca_pml_teg_send_request_free(struct ompi_request_t** request)
+{
+    MCA_PML_TEG_FREE(request);
+    return OMPI_SUCCESS;
+}
 
 static int mca_pml_teg_send_request_cancel(struct ompi_request_t* request, int complete)
 {
@@ -32,6 +37,7 @@ static void mca_pml_teg_send_request_construct(mca_pml_base_send_request_t* req)
 {
     req->req_base.req_type = MCA_PML_REQUEST_SEND;
     req->req_base.req_ompi.req_query = NULL;
+    req->req_base.req_ompi.req_fini = mca_pml_teg_send_request_fini;
     req->req_base.req_ompi.req_free = mca_pml_teg_send_request_free;
     req->req_base.req_ompi.req_cancel = mca_pml_teg_send_request_cancel;
 }
@@ -140,7 +146,7 @@ void mca_pml_teg_send_request_progress(
             }
         } else if (req->req_base.req_free_called) {
             MCA_PML_TEG_FREE((ompi_request_t**)&req);
-        }
+        } 
         OMPI_THREAD_UNLOCK(&ompi_request_lock);
 
         /* check for pending requests that need to be progressed */

@@ -29,10 +29,8 @@ OBJ_CLASS_DECLARATION(mca_pml_teg_send_request_t);
     mca_ptl_proc_t* ptl_proc;                                              \
     mca_pml_base_ptl_t* ptl_base;                                          \
                                                                            \
-    /*OMPI_THREAD_SCOPED_LOCK(&proc->proc_lock,*/                          \
-    /*(ptl_proc = mca_ptl_array_get_next(&proc->proc_ptl_first)));*/       \
     OMPI_THREAD_SCOPED_LOCK(&proc->proc_lock,                              \
-          (ptl_proc = mca_ptl_array_get_index(&proc->proc_ptl_first, 0))); \
+       (ptl_proc = mca_ptl_array_get_next(&proc->proc_ptl_first)));        \
     ptl_base = ptl_proc->ptl_base;                                         \
     /*                                                                     \
      * check to see if there is a cache of send requests associated with   \
@@ -114,14 +112,27 @@ static inline int mca_pml_teg_send_request_start(
 {
     mca_ptl_base_module_t* ptl = req->req_ptl;
     size_t first_fragment_size = ptl->ptl_first_frag_size;
-    size_t offset = req->req_offset;
     int flags, rc;
 
-    /* initialize request state and message sequence number */
+    /* init/reinit request - do this here instead of init 
+     * as a persistent request may be reused, and there is
+     * no additional cost
+    */
+    req->req_offset = 0;
+    req->req_bytes_sent = 0;
+    req->req_peer_match.lval = 0;
+    req->req_peer_addr.lval = 0;
+    req->req_peer_size = 0;
+    req->req_base.req_pml_complete = false;
+    req->req_base.req_ompi.req_complete = false;
     req->req_base.req_ompi.req_state = OMPI_REQUEST_ACTIVE;
     req->req_base.req_sequence = mca_pml_ptl_comm_send_sequence(
-        req->req_base.req_comm->c_pml_comm,
-        req->req_base.req_peer);
+        req->req_base.req_comm->c_pml_comm, req->req_base.req_peer);
+ 
+    /* handle buffered send */
+    if(req->req_send_mode == MCA_PML_BASE_SEND_BUFFERED) {
+        mca_pml_base_bsend_request_start(&req->req_base.req_ompi);
+    }
 
     /* start the first fragment */
     if(first_fragment_size == 0 || req->req_bytes_packed <= first_fragment_size) {
@@ -132,7 +143,7 @@ static inline int mca_pml_teg_send_request_start(
         /* require match for first fragment of a multi-fragment */
         flags = MCA_PTL_FLAGS_ACK_MATCHED;
     }
-    rc = ptl->ptl_send(ptl, req->req_peer, req, offset, first_fragment_size, flags);
+    rc = ptl->ptl_send(ptl, req->req_peer, req, 0, first_fragment_size, flags);
     if(rc != OMPI_SUCCESS)
         return rc;
     return OMPI_SUCCESS;

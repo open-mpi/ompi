@@ -25,6 +25,7 @@ int MPI_Irsend(void *buf, int count, MPI_Datatype type, int dest,
 {
     int rc;
     if (dest == MPI_PROC_NULL) {
+        *request = MPI_REQUEST_NULL;
         return MPI_SUCCESS;
     }
 

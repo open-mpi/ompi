@@ -30,9 +30,6 @@ int MPI_Request_free(MPI_Request *request)
         goto error_return;
       }
     }
-    if( *request == NULL ) {
-        return MPI_SUCCESS;
-    }
     rc = ompi_request_free(request);
 
 error_return:

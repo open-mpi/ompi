@@ -15,7 +15,6 @@ int ompi_request_test(
     int *completed, 
     ompi_status_public_t * status)
 {
-    int rc;
     size_t i;
     ompi_request_t **rptr;
     ompi_request_t *request;
@@ -32,11 +31,7 @@ int ompi_request_test(
             if (MPI_STATUS_IGNORE != status) {
                 *status = request->req_status;
             }
-            rc = request->req_free(request);
-            if(rc != OMPI_SUCCESS)
-                return rc;
-            *rptr = MPI_REQUEST_NULL;
-            return OMPI_SUCCESS;
+            return request->req_fini(rptr);
         }
         rptr++;
     }
@@ -83,21 +78,20 @@ int ompi_request_test_all(
             int rc;
             request  = *rptr;
             statuses[i] = request->req_status;
-            rc = request->req_free(request);
+            rc = request->req_fini(rptr);
             if(rc != OMPI_SUCCESS)
                 return rc;
-            *rptr = MPI_REQUEST_NULL;
             rptr++;
         }
     } else {
         /* free request if required */
         rptr = requests;
         for (i = 0; i < count; i++) {
-            ompi_request_t *request = *rptr;
-            int rc = request->req_free(request);
+            int rc;
+            request = *rptr;
+            rc = request->req_fini(rptr);
             if(rc != OMPI_SUCCESS)
                 return rc;
-            *rptr = MPI_REQUEST_NULL;
             rptr++;
         }
     }

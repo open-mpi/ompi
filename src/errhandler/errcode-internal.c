@@ -32,6 +32,8 @@ ompi_errcode_intern_t ompi_err_would_block;
 ompi_errcode_intern_t ompi_err_in_errno;
 ompi_errcode_intern_t ompi_err_unreach;
 ompi_errcode_intern_t ompi_err_not_found;
+ompi_errcode_intern_t ompi_err_request;
+ompi_errcode_intern_t ompi_err_buffer;
 
 static void ompi_errcode_intern_construct(ompi_errcode_intern_t* errcode);
 static void ompi_errcode_intern_destruct(ompi_errcode_intern_t* errcode);
@@ -183,6 +185,22 @@ int ompi_errcode_intern_init (void)
     ompi_pointer_array_set_item(&ompi_errcodes_intern, ompi_err_not_found.index, 
                                 &ompi_err_not_found);
 
+    OBJ_CONSTRUCT(&ompi_err_buffer, ompi_errcode_intern_t);
+    ompi_err_buffer.code = OMPI_ERR_BUFFER;
+    ompi_err_buffer.mpi_code = MPI_ERR_BUFFER;
+    ompi_err_buffer.index = pos++;
+    strcpy(ompi_err_buffer.errstring, "OMPI_ERR_BUFFER");
+    ompi_pointer_array_set_item(&ompi_errcodes_intern, ompi_err_buffer.index, 
+                                &ompi_err_buffer);
+
+    OBJ_CONSTRUCT(&ompi_err_request, ompi_errcode_intern_t);
+    ompi_err_request.code = OMPI_ERR_REQUEST;
+    ompi_err_request.mpi_code = MPI_ERR_REQUEST;
+    ompi_err_request.index = pos++;
+    strcpy(ompi_err_request.errstring, "OMPI_ERR_REQUEST");
+    ompi_pointer_array_set_item(&ompi_errcodes_intern, ompi_err_request.index, 
+                                &ompi_err_request);
+
     ompi_errcode_intern_lastused=pos;
     return OMPI_SUCCESS;
 }
@@ -207,6 +225,8 @@ int ompi_errcode_intern_finalize(void)
     OBJ_DESTRUCT(&ompi_err_in_errno);
     OBJ_DESTRUCT(&ompi_err_unreach);
     OBJ_DESTRUCT(&ompi_err_not_found);
+    OBJ_DESTRUCT(&ompi_err_buffer);
+    OBJ_DESTRUCT(&ompi_err_request);
 
     OBJ_DESTRUCT(&ompi_errcodes_intern);
     return OMPI_SUCCESS;

@@ -45,7 +45,7 @@ struct mca_allocator_base_module_t* mca_allocator_bucket_module_init(
     allocator->super.alc_alloc =  mca_allocator_bucket_alloc_wrapper;
     allocator->super.alc_realloc = mca_allocator_bucket_realloc;
     allocator->super.alc_free =  mca_allocator_bucket_free;
-    allocator->super.alc_return = mca_allocator_bucket_cleanup;
+    allocator->super.alc_compact = mca_allocator_bucket_cleanup;
     allocator->super.alc_finalize = mca_allocator_bucket_finalize;
 
     return((mca_allocator_base_module_t *) allocator);
