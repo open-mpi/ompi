@@ -221,13 +221,17 @@
  * @param object        Pointer to the object
  * @param type          The object type
  */
-#define OBJ_CONSTRUCT(object, type)                                     \
+
+#define OBJ_CONSTRUCT(object, type) \
+    OBJ_CONSTRUCT_INTERNAL(object, OBJ_CLASS(type))
+
+#define OBJ_CONSTRUCT_INTERNAL(object, type)                            \
     do {                                                                \
-        if (0 == OBJ_CLASS(type)->cls_initialized) {                    \
-            lam_class_initialize(OBJ_CLASS(type));                      \
+        if (0 == (type)->cls_initialized) {                             \
+            lam_class_initialize((type));                               \
         }                                                               \
         if (object) {                                                   \
-            ((lam_object_t *) (object))->obj_class = OBJ_CLASS(type);   \
+            ((lam_object_t *) (object))->obj_class = (type);            \
             ((lam_object_t *) (object))->obj_reference_count = 1;       \
             lam_obj_run_constructors((lam_object_t *) (object));        \
         }                                                               \
