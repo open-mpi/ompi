@@ -1,0 +1,34 @@
+#! /bin/csh -f
+#  Name
+#  ====
+#  run for mca llm base tests
+
+# Arguements
+# ==========
+# 
+# test_list  =  no args runs all tests
+#              or
+#               parse_hostfile runs ompi llm base parse_hostfile tests
+
+# Usage
+#
+# =====
+# To invoke this script, enter either
+#     run 
+# with no arguments to run all tests, or
+#     run <test_name>
+
+umask 007
+
+if ("x$1" == "x") then
+  ./parse_hostfile;
+else if ("$1" == "parse_hostfile") then
+  ./parse_hostfile;
+else
+  echo "correct use: "
+  echo "    run    (to run all class tests)"
+  echo "or  run < parse_hostfile >"
+  exit -1
+endif
+
+
