@@ -21,7 +21,9 @@ libs = $(top_builddir)/src/libmpi.la
 bin_PROGRAMS = openmpi
 openmpi_SOURCES = \
         openmpi.h \
+        ompi_init.h \
         os_session_dir.c \
+        ompi_init.c \
         openmpi.c 
 
 openmpi_LDADD = \
