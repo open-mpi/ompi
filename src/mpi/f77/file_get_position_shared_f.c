@@ -46,7 +46,13 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_GET_POSITION_SHARED,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-void mpi_file_get_position_shared_f(MPI_Fint *fh, MPI_Fint *offset, MPI_Fint *ierr)
+void mpi_file_get_position_shared_f(MPI_Fint *fh, MPI_Fint *offset,
+				    MPI_Fint *ierr)
 {
-  /* This function not yet implemented */
+    MPI_File c_fh = MPI_File_f2c(*fh);
+    MPI_Offset c_offset;
+
+    *ierr = OMPI_INT_2_FINT(MPI_File_get_position_shared(c_fh, 
+							 &c_offset));
+    *offset = (MPI_Fint) c_offset;
 }

@@ -46,7 +46,18 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_GET_VIEW,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-void mpi_file_get_view_f(MPI_Fint *fh, MPI_Fint *disp, MPI_Fint *etype, MPI_Fint *filetype, char *datarep, MPI_Fint *ierr)
+void mpi_file_get_view_f(MPI_Fint *fh, MPI_Fint *disp, 
+			 MPI_Fint *etype, MPI_Fint *filetype, 
+			 char *datarep, MPI_Fint *ierr)
 {
-  /* This function not yet implemented */
+    MPI_File c_fh = MPI_File_f2c(*fh);
+    MPI_Datatype c_etype, c_filetype;
+    MPI_Offset c_disp;
+
+    *ierr = OMPI_INT_2_FINT(MPI_File_get_view(c_fh, &c_disp, &c_etype, 
+					      &c_filetype, datarep));
+
+    *disp = (MPI_Fint) c_disp;
+    *etype = MPI_Type_c2f(c_etype);
+    *filetype = MPI_Type_c2f(c_filetype);
 }
