@@ -150,7 +150,7 @@ static void show_module_version(const string& type_name,
 
   modules = module_map[type_name];
   for (item = lam_list_get_first(modules);
-       lam_list_get_last(modules) != item;
+       lam_list_get_end(modules) != item;
        item = lam_list_get_next(item)) {
     module = (mca_base_module_t *) item;
     if (want_all_modules || module->mca_module_name == module_name) {

@@ -11,6 +11,7 @@
 #include <string.h>
 
 #include "mca/lam/base/base.h"
+#include "mca/lam/pcm/pcm.h"
 #include "tools/laminfo/laminfo.h"
 
 using namespace std;
@@ -52,7 +53,7 @@ void laminfo::open_modules()
   // not by value.
 
   for (i = 0; i < mca_types.size(); ++i) {
-    env = "LAM_MPI_mca_" + mca_types[i];
+    env = "LAM_MPI_MCA_" + mca_types[i];
     if (NULL != getenv(env.c_str())) {
       env += "=";
       target = strdup(env.c_str());
@@ -64,11 +65,8 @@ void laminfo::open_modules()
 
   mca_base_open();
 
-#if 0
-  // pcm module opening not implemented yet
-  mca_pcm_open();
-  module_map("pcm") = mca_pcm_base_module_list;
-#endif
+  mca_pcm_base_open();
+  module_map["pcm"] = &mca_pcm_base_modules_available;
 
 #if 0
   // oob module opening not implemented yet
@@ -127,6 +125,7 @@ void laminfo::open_modules()
 void laminfo::close_modules()
 {
   if (opened_modules) {
+    mca_pcm_base_close();
 #if 0
     mca_crmpi_base_close();
     mca_coll_base_close();
