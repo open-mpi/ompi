@@ -9,31 +9,14 @@
  * Macros - Lots of them!
  */
 
-
 #define ATTR_TABLE_SIZE 10
 
-/* This is done so that I can have a conssitent interface to my macros
+/* This is done so that I can have a consistent interface to my macros
    here */
 
 #define MPI_DATATYPE_NULL_COPY_FN MPI_TYPE_NULL_COPY_FN
-#define lam_c_t lam_communicator_t *
-#define lam_d_t lam_datatype_t *
-#define lam_w_t lam_win_t *
-
-#define MPI_c_delete_attr_function MPI_Comm_delete_attr_function
-#define MPI_d_delete_attr_function MPI_Type_delete_attr_function
-#define MPI_w_delete_attr_function MPI_Win_delete_attr_function
-
-#define MPI_c_copy_attr_function MPI_Comm_copy_attr_function
-#define MPI_d_copy_attr_function MPI_Type_copy_attr_function
-#define MPI_w_copy_attr_function MPI_Win_copy_attr_function
-
-#define CAST_HANDLE(object, type) (lam_##type##_t) object
-
-#define KEYHASH(type) ((lam_##type##_t)object)->type##_keyhash
 
 #define CREATE_KEY() lam_bitmap_find_and_set_first_unset_bit(key_bitmap)
-
 
 #define FREE_KEY(key) lam_bitmap_clear_bit(key_bitmap, (key))
 
@@ -42,46 +25,25 @@
    MPI-standard it should be a valid function that returns
    MPI_SUCCESS */
 
-
-#define DELETE_ATTR_OBJECT(type, caps_type, attr) \
-    if ((err = (*((MPI_##type##_delete_attr_function *) \
-	   (key_item->delete_attr_fn)))((lam_##type##_t)object, \
-				    key, attr, \
+#define DELETE_ATTR_OBJECT(type, attribute) \
+    if ((err = (*((key_item->delete_attr_fn).attr_##type##_delete_fn)) \
+                                    ((lam_##type##_t *)object, \
+				    key, attribute, \
 				    key_item->extra_state)) != MPI_SUCCESS) {\
 	return err;\
     }
 
 #define COPY_ATTR_OBJECT(type, old_object, hash_value) \
-    if ((err = (*(MPI_##type##_copy_attr_function *) (hash_value->copy_attr_fn)) \
-          ((lam_##type##_t)old_object, key, hash_value->extra_state, \
-            old_attr, new_attr, &flag)) != MPI_SUCCESS) { \
+    if ((err = (*((hash_value->copy_attr_fn).attr_##type##_copy_fn)) \
+          ((lam_##type##_t *)old_object, key, hash_value->extra_state, \
+            old_attr, &new_attr, &flag)) != MPI_SUCCESS) { \
         return err; \
     }
 
 
-#define GET_ATTR(type) \
-    lam_hash_table_get_value_uint32(((lam_##type##_t)object)->type##_keyhash, key);
-
-
-#define SET_ATTR(type, attribute) \
-    ret = lam_hash_table_set_value_uint32(((lam_##type##_t)object)->type##_keyhash,\
-                                            key, \
-                                            attribute); \
-    if (ret != LAM_SUCCESS) \
-        return ret; 
-
-
-#define REMOVE_ATTR_ENTRY(type) \
-    ret = lam_hash_table_remove_value_uint32(((lam_##type##_t)object)->type##_keyhash,\
-                                               key);\
-    if (ret != LAM_SUCCESS) \
-        return ret;
-
-
 /* 
- * Static functions
+ * Static 
  */
-
 static void lam_attribute_construct(lam_attrkey_t *attribute);
 static void lam_attribute_destruct(lam_attrkey_t *attribute);
 static void lam_attrkey_item_construct(lam_attrkey_item_t *item);
@@ -122,12 +84,14 @@ static void
 lam_attribute_construct(lam_attrkey_t *attribute) 
 {
     attribute->a_fhandle = -1;
+    OBJ_CONSTRUCT(&(attribute->super), lam_hash_table_t);
 }
 
 
 static void 
 lam_attribute_destruct(lam_attrkey_t *attribute) 
 {
+    OBJ_DESTRUCT(&(attribute->super));
 }
 
 /*
@@ -137,7 +101,8 @@ lam_attribute_destruct(lam_attrkey_t *attribute)
 static void
 lam_attrkey_item_construct(lam_attrkey_item_t *item) 
 {
-    memset((void *)item, 0, sizeof(lam_attrkey_item_t));
+    memset(&(item->attr_type), 0, 
+	   sizeof(lam_attrkey_item_t) - sizeof(lam_object_t));
 }
 
 
@@ -184,16 +149,23 @@ void
 lam_attr_destroy()
 {
     OBJ_RELEASE(attr_hash);
+    OBJ_RELEASE(key_bitmap);
 }
   
 
 int 
 lam_attr_create_keyval(lam_attribute_type_t type,
-		       void *copy_attr_fn, void *delete_attr_fn,
+		       lam_attribute_fn_ptr_union_t copy_attr_fn,
+		       lam_attribute_fn_ptr_union_t delete_attr_fn,
 		       int *key, void *extra_state, int predefined)
 {
     lam_attrkey_item_t *attr;
     int ret;
+
+    /* Protect against the user calling lam_attr_destroy and then
+       calling any of the functions which use it  */
+    if (NULL == attr_hash)
+	return MPI_ERR_INTERN;
 
     /* Allocate space for the list item */
 
@@ -236,6 +208,11 @@ lam_attr_free_keyval(lam_attribute_type_t type, int *key, int predefined)
 {
     lam_attrkey_item_t *key_item;
 
+    /* Protect against the user calling lam_attr_destroy and then
+       calling any of the functions which use it  */
+    if (NULL == attr_hash)
+	return MPI_ERR_INTERN;
+
     /* Find the key-value pair */
 
     key_item = (lam_attrkey_item_t*) 
@@ -260,12 +237,18 @@ lam_attr_free_keyval(lam_attribute_type_t type, int *key, int predefined)
 
 
 int 
-lam_attr_delete(lam_attribute_type_t type, void *object, int key,
+lam_attr_delete(lam_attribute_type_t type, void *object, 
+		lam_hash_table_t *keyhash, int key,
 		int predefined) 
 {
     lam_attrkey_item_t *key_item;
     int ret, err;
     void *attr;
+
+    /* Protect against the user calling lam_attr_destroy and then
+       calling any of the functions which use it  */
+    if (NULL == attr_hash)
+	return MPI_ERR_INTERN;
 
     /* Check if the key is valid in the key-attribute hash */
 
@@ -278,25 +261,22 @@ lam_attr_delete(lam_attribute_type_t type, void *object, int key,
 
     /* Check if the key is valid for the communicator/window/dtype. If
        yes, then delete the attribute and key entry from the CWD hash */
-  
+
+    attr = lam_hash_table_get_value_uint32(keyhash, key);
+
     switch(type) {
   
     case COMM_ATTR:
-	attr = GET_ATTR(c);
-	DELETE_ATTR_OBJECT(c, COMM, attr);
-	REMOVE_ATTR_ENTRY(c);
+
+	DELETE_ATTR_OBJECT(communicator, attr);
 	break;
 
     case WIN_ATTR:
-	attr = GET_ATTR(w);
-	DELETE_ATTR_OBJECT(w, WIN, attr);
-	REMOVE_ATTR_ENTRY(w);
+	DELETE_ATTR_OBJECT(win, attr);
 	break;
 
     case TYPE_ATTR:
-	attr = GET_ATTR(d);
-	DELETE_ATTR_OBJECT(d, TYPE, attr);
-	REMOVE_ATTR_ENTRY(d);
+	DELETE_ATTR_OBJECT(datatype, attr);
 	break;
 
     default:
@@ -305,6 +285,11 @@ lam_attr_delete(lam_attribute_type_t type, void *object, int key,
 	assert(0);
     }
 
+    ret = lam_hash_table_remove_value_uint32(keyhash, key);
+    if (ret != LAM_SUCCESS) {
+        return ret; 
+    }
+    
     /* Decrement the ref count for the key, and if ref count is 0,
        remove the key (the destructor deletes the key implicitly for
        this object */
@@ -315,14 +300,19 @@ lam_attr_delete(lam_attribute_type_t type, void *object, int key,
 
 
 int
-lam_attr_set(lam_attribute_type_t type, void *object, int key, void *attribute,
+lam_attr_set(lam_attribute_type_t type, void *object, 
+	     lam_hash_table_t *keyhash, int key, void *attribute,
 	     int predefined)
-
 {
     lam_attrkey_item_t *key_item;
     int ret, err;
     void *oldattr;
     int had_old = 0;
+
+    /* Protect against the user calling lam_attr_destroy and then
+       calling any of the functions which use it  */
+    if (NULL == attr_hash)
+	return MPI_ERR_INTERN;
 
     key_item = (lam_attrkey_item_t *) 
 	lam_hash_table_get_value_uint32(&(attr_hash->super), key);
@@ -337,90 +327,77 @@ lam_attr_set(lam_attribute_type_t type, void *object, int key, void *attribute,
 
     /* Now see if the key is present in the CWD object. If so, delete
        the old attribute in the key */
-  
-    switch(type) {
+    oldattr = lam_hash_table_get_value_uint32(keyhash, key);
+
+    if (oldattr != NULL) {
+	
+	switch(type) {
     
-    case COMM_ATTR:
-	oldattr = GET_ATTR(c);
-	if (oldattr != NULL) {
-	    DELETE_ATTR_OBJECT(c, COMM, oldattr);
-	    had_old = 1;
+	case COMM_ATTR:
+	    DELETE_ATTR_OBJECT(communicator, oldattr);
+	    break;
+
+	case WIN_ATTR:
+	    DELETE_ATTR_OBJECT(win, oldattr);
+	    break;
+
+	case TYPE_ATTR:	    
+	    DELETE_ATTR_OBJECT(datatype, oldattr);
+	    break;
+
+	default:
+	    fprintf(stderr, "lam_attribute: lam_attr_set: Invalid type -- "
+		    " Should be one of COMM/WIN/TYPE \n");
+	    assert(0);
 	}
-	SET_ATTR(c, attribute);
-	break;
-      
-    case WIN_ATTR:
-	oldattr = GET_ATTR(w);
-	if (oldattr != NULL) {
-	    DELETE_ATTR_OBJECT(w, WIN, oldattr);
-	    had_old = 1;
-	}
-	SET_ATTR(w, attribute);
-	break;
-    
-    case TYPE_ATTR:
-	oldattr = GET_ATTR(d);
-	if (oldattr != NULL) {
-	    DELETE_ATTR_OBJECT(d, TYPE, oldattr);
-	    had_old = 1;
-	}
-	SET_ATTR(d, attribute);
-	break;
-      
-    default:
-	fprintf(stderr, "lam_attribute: lam_attr_set: Invalid type -- "
-		" Should be one of COMM/WIN/TYPE \n");
-	assert(0);
+	had_old = 1;
     }
-    
+
+    ret = lam_hash_table_set_value_uint32(keyhash, key, attribute); 
+    if (ret != LAM_SUCCESS) {
+	return ret; 
+    }
+
     /* Increase the reference count of the object, only if there was no
        old atribute/no old entry in the CWD */
 
-    if (!had_old)
+    if (!had_old) {
 	OBJ_RETAIN(key_item);
+    }
     return MPI_SUCCESS;
 }
 
 
 int
-lam_attr_get(lam_attribute_type_t type, void *object, int key, void *attribute,
+lam_attr_get(lam_hash_table_t *keyhash, int key, void *attribute,
 	     int *flag)
 {
-    /* VPS: I dont think you really need to check if the key is present
-       in the main hash or not. If it is present in the CWD hash, then
-       that means its a valid key. There should be no way that a key is
-       existing in CWD and not in the main hash if things are done
-       properly in the back-end */
-
     void *attr;
+    lam_attrkey_item_t *key_item;
 
-    switch (type) {
+    /* According to MPI specs, the call is invalid if key is not
+       present in the main hash at all. If no attribute is associated
+       with the key, then the call is valid and returns FALSE in the
+       flag argument */
 
-    case COMM_ATTR:
-	attr = GET_ATTR(c);
-	break;
-    
-    case WIN_ATTR:
-	attr = GET_ATTR(w);
-	break;
+    key_item = (lam_attrkey_item_t *) 
+	lam_hash_table_get_value_uint32(&(attr_hash->super), key);
 
-    case TYPE_ATTR:
-	attr = GET_ATTR(d);
-	break;
-
-    default:
-	fprintf(stderr, "lam_attribute: lam_attr_set: Invalid type -- "
-		" Should be one of COMM/WIN/TYPE \n");
-	assert(0);
+    if (NULL == key_item) {
+	return MPI_KEYVAL_INVALID;
     }
-  
-    if (NULL == attr)
+
+    attr = lam_hash_table_get_value_uint32(keyhash, key);
+
+    if (NULL == attr) {
 	*flag = 0;
+    } else {
 
-    /* VPS: Put Fortran stuff here too */
-
-    *((void **) attribute) = attr;
-    *flag = 1;
+	/* VPS: Put Fortran stuff here too */
+	
+	*((void **) attribute) = attr;
+	*flag = 1;
+    }
     return MPI_SUCCESS;
 }
 
@@ -429,7 +406,8 @@ lam_attr_get(lam_attribute_type_t type, void *object, int key, void *attribute,
    logic could work here  */
 int
 lam_attr_copy_all(lam_attribute_type_t type, void *old_object, 
-		  void *new_object)
+		  void *new_object, lam_hash_table_t *oldkeyhash,
+		  lam_hash_table_t *newkeyhash)
 {
     int ret;
     int err;
@@ -437,18 +415,15 @@ lam_attr_copy_all(lam_attribute_type_t type, void *old_object,
     int flag;
     void *node, *in_node, *old_attr, *new_attr;
     lam_attrkey_item_t *hash_value;
-    void *object = old_object; /* For consistent interface to
-				  KEYHASH. I know whis is a bad way,
-				  but was being lazy to change all
-				  calls to KEYHASH with an ardditional
-				  argument */
 
-    switch (type) {
+    /* Protect against the user calling lam_attr_destroy and then
+       calling any of the functions which use it  */
+    if (NULL == attr_hash)
+	return MPI_ERR_INTERN;
 
-    case COMM_ATTR:
 	/* Get the first key-attr in the CWD hash */
-	ret = lam_hash_table_get_first_key_uint32(KEYHASH(c), &key, old_attr,
-						  node);
+	ret = lam_hash_table_get_first_key_uint32(oldkeyhash, &key, &old_attr,
+						  &node);
 
 	/* While we still have some key-attr pair in the CWD hash */
 	while (ret != LAM_ERROR) {
@@ -462,137 +437,88 @@ lam_attr_copy_all(lam_attribute_type_t type, void *old_object,
 
 	    assert (hash_value != NULL);
 	    
-	    /* Now call the copy_attr_fn */
-	    COPY_ATTR_OBJECT(c, CAST_HANDLE(old_object, c), 
-			     hash_value);
 
-	    /* Hang this off the new CWD object */
-	    lam_attr_set(COMM_ATTR, new_object, key, new_attr, 1);
+	    switch (type) {
 
-	    ret = lam_hash_table_get_next_key_uint32(KEYHASH(c), &key, 
-						     old_attr, in_node, node);
-	}
-	break;
+	    case COMM_ATTR:
+		/* Now call the copy_attr_fn */
+		COPY_ATTR_OBJECT(communicator, old_object, hash_value);
 
-    case TYPE_ATTR:
-	ret = lam_hash_table_get_first_key_uint32(KEYHASH(d), &key, old_attr,
-						  node);
-	while (ret != LAM_ERROR) {
-	    in_node = node;
-	    hash_value = (lam_attrkey_item_t *)
-		lam_hash_table_get_value_uint32(&(attr_hash->super), key);
-
-	    assert (hash_value != NULL);
+		break;
 	    
-	    /* Now call the copy_attr_fn */
-	    COPY_ATTR_OBJECT(d, CAST_HANDLE(old_object, d), hash_value);
-
-	    /* Hang this off the new CWD object */
-	    lam_attr_set(TYPE_ATTR, new_object, key, new_attr, 1);
-
-	    ret = lam_hash_table_get_next_key_uint32(KEYHASH(d), &key, 
-						     old_attr, in_node, node);
-	}
-	break;
-
-    case WIN_ATTR:
-	ret = lam_hash_table_get_first_key_uint32(KEYHASH(w), &key, old_attr,
-						  node);
-	while (ret != LAM_ERROR) {
-	    in_node = node;
-	    hash_value = (lam_attrkey_item_t *)
-		lam_hash_table_get_value_uint32(&(attr_hash->super), key);
-
-	    assert (hash_value != NULL);
+	    case TYPE_ATTR:
 	    
-	    /* Now call the copy_attr_fn */
-	    COPY_ATTR_OBJECT(w, CAST_HANDLE(old_object, w), hash_value);
+		/* Now call the copy_attr_fn */
+		COPY_ATTR_OBJECT(datatype, old_object, hash_value);
+
+		break;
+
+	    case WIN_ATTR:
+	    
+		/* Now call the copy_attr_fn */
+		COPY_ATTR_OBJECT(win, old_object, hash_value);
+	    
+		break;
+	    }
 
 	    /* Hang this off the new CWD object */
-	    lam_attr_set(WIN_ATTR, new_object, key, new_attr, 1);
+	    
+	    /* VPS: predefined is set to 1, so that no comparison is
+	       done for prdefined at all and it just falls off the
+	       error checking loop in attr_set  */
 
-	    ret = lam_hash_table_get_next_key_uint32(KEYHASH(w), &key, 
-						     old_attr, in_node, node);
+	    /* VPS: we pass the address of new_attr in here, I am
+	       assuming that new_attr should have actually been a
+	       double pointer in the copy fn, but since its a pointer
+	       in that MPI specs, we need to pass *new_attr here  */
+	    lam_attr_set(type, new_object, newkeyhash, key, 
+			  new_attr, 1);
+
+	    
+	    ret = lam_hash_table_get_next_key_uint32(oldkeyhash, &key, 
+						     &old_attr, in_node, 
+						     &node);
 	}
-	break;
-    }
-    return MPI_SUCCESS;
+	return MPI_SUCCESS;
 }
 
 
 int
-lam_attr_delete_all(lam_attribute_type_t type, void *object)
+lam_attr_delete_all(lam_attribute_type_t type, void *object, 
+		    lam_hash_table_t *keyhash)
 {
     int ret;
-    uint32_t key;
+    uint32_t key, oldkey;
     void *node, *in_node, *old_attr;
     lam_attrkey_item_t *hash_value;
 
-
-    switch (type) {
-    case COMM_ATTR:
+    /* Protect against the user calling lam_attr_destroy and then
+       calling any of the functions which use it  */
+    if (NULL == attr_hash)
+	return MPI_ERR_INTERN;
 	
-	/* Get the first key in local CWD hash  */
-	ret = lam_hash_table_get_first_key_uint32(KEYHASH(c), &key, old_attr,
-						  node);
-	while (ret != LAM_ERROR) {
-	    in_node = node;
-	    hash_value = (lam_attrkey_item_t *)
-		lam_hash_table_get_value_uint32(&(attr_hash->super), key);
+    /* Get the first key in local CWD hash  */
+    ret = lam_hash_table_get_first_key_uint32(keyhash,
+					      &key, &old_attr,
+					      &node);
+    while (ret != LAM_ERROR) {
 
-	    assert (hash_value != NULL);
-	    
-	    /* Now delete this attribute */
+	/* Save this node info for deletion, before we move onto the
+	   next node */
 
-	    lam_attr_delete(type, object, key, 1);
+	in_node = node;
+	oldkey = key;
+	
+	/* Move to the next node */
 
-	    ret = lam_hash_table_get_next_key_uint32(KEYHASH(c), &key, 
-						     old_attr, in_node, node);
-	}
+	ret = lam_hash_table_get_next_key_uint32(keyhash,
+						 &key, &old_attr, 
+						 in_node, &node);
+	/* Now delete this attribute */
 
-	break;
+	lam_attr_delete(type, object, keyhash, oldkey, 1);
 
-    case TYPE_ATTR:
-
-	/* Get the first key in local CWD hash  */
-	ret = lam_hash_table_get_first_key_uint32(KEYHASH(d), &key, old_attr,
-						  node);
-	while (ret != LAM_ERROR) {
-	    in_node = node;
-	    hash_value = (lam_attrkey_item_t *)
-		lam_hash_table_get_value_uint32(&(attr_hash->super), key);
-
-	    assert (hash_value != NULL);
-	    
-	    /* Now delete this attribute */
-
-	    lam_attr_delete(type, object, key, 1);
-
-	    ret = lam_hash_table_get_next_key_uint32(KEYHASH(d), &key, 
-						     old_attr, in_node, node);
-	}
-	break;
-
-    case WIN_ATTR:
-
-	/* Get the first key in local CWD hash  */
-	ret = lam_hash_table_get_first_key_uint32(KEYHASH(w), &key, old_attr,
-						  node);
-	while (ret != LAM_ERROR) {
-	    in_node = node;
-	    hash_value = (lam_attrkey_item_t *)
-		lam_hash_table_get_value_uint32(&(attr_hash->super), key);
-
-	    assert (hash_value != NULL);
-	    
-	    /* Now delete this attribute */
-
-	    lam_attr_delete(type, object, key, 1);
-
-	    ret = lam_hash_table_get_next_key_uint32(KEYHASH(w), &key, 
-						     old_attr, in_node, node);
-	}
-	break;
     }
+	
     return MPI_SUCCESS;
 }
