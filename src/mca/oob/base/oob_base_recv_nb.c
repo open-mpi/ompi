@@ -14,7 +14,7 @@
  * @param cbdata (IN)  User data that is passed to callback function.
  * @return             OMPI error code (<0) on error or number of bytes actually received.
  */
-int mca_oob_recv_nb(ompi_process_name_t* peer, struct iovec* msg, int count, int tag, int flags,
+int mca_oob_recv_nb(ompi_process_name_t* peer, struct iovec* msg, int count, int* tag, int flags,
                     mca_oob_callback_fn_t cbfunc, void* cbdata)
 {
     return(mca_oob.oob_recv_nb(peer, msg, count, tag, flags, cbfunc, cbdata));
