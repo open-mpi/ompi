@@ -33,6 +33,7 @@ void lam_proc_construct(lam_proc_t* proc)
     proc->proc_pml = NULL;
     proc->proc_modex = NULL;
     proc->proc_arch = 0;
+    OBJ_CONSTRUCT(&proc->proc_lock, lam_mutex_t);
 
     /* FIX - need to determine remote process architecture */
     proc->proc_convertor = lam_convertor_create(0, 0);
@@ -48,6 +49,7 @@ void lam_proc_destruct(lam_proc_t* proc)
     THREAD_LOCK(&lam_proc_lock);
     lam_list_remove_item(&lam_proc_list, (lam_list_item_t*)proc);
     THREAD_UNLOCK(&lam_proc_lock);
+    OBJ_DESTRUCT(&proc->proc_lock);
 }
 
 

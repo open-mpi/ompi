@@ -8,6 +8,7 @@
 #include "include/types.h"
 #include "lfc/lam_list.h"
 #include "datatype/datatype.h"
+#include "threads/mutex.h"
 
 
 extern lam_class_t lam_proc_t_class;
@@ -21,12 +22,9 @@ struct lam_proc_t {
     struct mca_base_modex_t*  proc_modex;  /* MCA module exchange data */
     int                       proc_arch;
     lam_convertor_t*          proc_convertor;
+    lam_mutex_t               proc_lock;
 
   /* JMS: need to have the following information:
-
-     - endian info
-     - type size info
-     - peer parallel job id
      - how am i [mpi] connected (bitmap): spawn (parent/child), 
                                           connect, accept, joint
   */
