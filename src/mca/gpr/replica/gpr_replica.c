@@ -145,7 +145,51 @@ int gpr_replica_put(ompi_registry_mode_t mode, char *segment,
 int gpr_replica_delete_object(ompi_registry_mode_t mode,
 			      char *segment, char **tokens)
 {
-    return 0;
+    mca_gpr_registry_core_t *reg, *prev;
+    mca_gpr_keytable_t *keyptr;
+    ompi_list_t *keys;
+    mca_gpr_registry_segment_t *seg;
+
+    /* protect against errors */
+    if (NULL == segment || NULL == tokens || NULL == *tokens) {
+	return OMPI_ERROR;
+    }
+
+    /* find the specified segment */
+    seg = gpr_replica_find_seg(segment);
+    if (NULL == seg) {  /* segment not found */
+	return OMPI_ERROR;
+    }
+
+    /* convert tokens to list of keys */
+    keys = gpr_replica_get_key_list(segment, tokens);
+    if (0 == ompi_list_get_size(keys)) {
+	return OMPI_ERROR;
+    }
+
+    /* traverse the list to find undefined tokens - error if found */
+    for (keyptr = (mca_gpr_keytable_t*)ompi_list_get_first(keys);
+	 keyptr != (mca_gpr_keytable_t*)ompi_list_get_end(keys);
+	 keyptr = (mca_gpr_keytable_t*)ompi_list_get_next(keyptr)) {
+	if (MCA_GPR_REPLICA_KEY_MAX == keyptr->key) { /* unknown token */
+	    return OMPI_ERROR;
+	}
+    }
+
+    /* traverse the segment's registry, looking for matching tokens per the specified mode */
+    for (reg = (mca_gpr_registry_core_t*)ompi_list_get_first(&seg->registry_entries);
+	 reg != (mca_gpr_registry_core_t*)ompi_list_get_end(&seg->registry_entries);
+	 reg = (mca_gpr_registry_core_t*)ompi_list_get_next(reg)) {
+
+	/* for each registry entry, check the key list */
+	if (gpr_replica_check_key_list(mode, keys, reg)) { /* found the key(s) on the list */
+	    prev = (mca_gpr_registry_core_t*)ompi_list_get_prev(reg);
+	    ompi_list_remove_item(&seg->registry_entries, &reg->item);
+	    reg = prev;
+	}
+    }
+
+    return OMPI_SUCCESS;
 }
 
 ompi_list_t* gpr_replica_index(char *segment)
@@ -165,7 +209,21 @@ ompi_list_t* gpr_replica_index(char *segment)
 	    ans->token = strdup(ptr->token);
 	    ompi_list_append(answer, &ans->item);
 	}
-    } else {
+    } else {  /* want index of specific segment */
+	/* find the specified segment */
+	seg = gpr_replica_find_seg(segment);
+	if (NULL == seg) {  /* segment not found */
+	    return answer;
+	}
+	/* got segment - now find specified token-key pair in that dictionary */
+	for (ptr = (mca_gpr_keytable_t*)ompi_list_get_first(&seg->keytable);
+	     ptr != (mca_gpr_keytable_t*)ompi_list_get_end(&seg->keytable);
+	     ptr = (mca_gpr_keytable_t*)ompi_list_get_next(ptr)) {
+	    ans = OBJ_NEW(ompi_registry_index_value_t);
+	    ans->token = strdup(ptr->token);
+	    ompi_list_append(answer, &ans->item);
+	}
+
     }
 
     return answer;
