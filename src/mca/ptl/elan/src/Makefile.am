@@ -9,6 +9,7 @@ AM_CPPFLAGS =  \
         -I$(top_ompi_builddir)/src/include \
         -I$(top_ompi_srcdir)/src \
         -I$(top_ompi_srcdir)/src/include
+        -lelan -lelanctrl -lrms -lrmscall -lelan4 
 
 noinst_LTLIBRARIES = libmca_ptl_elan.la
 libmca_ptl_elan_la_SOURCES = \
