@@ -110,8 +110,10 @@ ompi_progress_finalize(void)
     ompi_atomic_lock(&progress_lock);
 #endif
 
-    free(callbacks);
-    callbacks = NULL;
+    if (NULL != callbacks) {
+        free(callbacks);
+        callbacks = NULL;
+    }
     callbacks_len = 0;
     callbacks_size = 0;
 
