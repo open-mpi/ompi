@@ -11,10 +11,7 @@
 struct ompi_universe_t {
     char *name;
     char *host;
-    char *user_name;
-    uid_t user_id;
-    pid_t pid;
-    char *session_file;
+    char *uid;
     bool persistence;
     bool silent_mode;
     bool script_mode;
@@ -22,6 +19,8 @@ struct ompi_universe_t {
     bool console_connected;
 };
 typedef struct ompi_universe_t ompi_universe_t;
+
+extern ompi_universe_t ompi_universe;
 
 #ifndef MAXHOSTNAMELEN
 #define MAXHOSTNAMELEN 256

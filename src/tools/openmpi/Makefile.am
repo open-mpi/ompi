@@ -25,14 +25,18 @@ openmpi_SOURCES = \
         openmpi.h \
         openmpi.c 
 
-old_sources = ompi_init.h ompi_init.c
-
 openmpi_LDADD = \
         $(libs) \
         $(LIBMPI_EXTRA_LIBS) \
         $(LIBOMPI_EXTRA_LIBS) \
         $(top_builddir)/src/util/os_path.lo \
         $(top_builddir)/src/util/os_create_dirpath.lo \
+        $(top_builddir)/src/util/session_dir.lo \
+        $(top_builddir)/src/util/proc_info.lo \
+        $(top_builddir)/src/util/cmd_line.lo \
+        $(top_builddir)/src/util/common_cmd_line.lo \
+        $(top_builddir)/src/runtime/universe_init.lo \
+        $(top_builddir)/src/runtime/universe_connect.lo \
         $(top_builddir)/src/util/sys_info.lo
 
 openmpi_DFLAGS = $(LIBMPI_EXTRA_LDFLAGS) $(LIBOMPI_EXTRA_LDFLAGS)
