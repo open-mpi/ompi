@@ -11,6 +11,8 @@
 
 #include "ompi_config.h"
 
+#include <string.h>
+
 #include "include/constants.h"
 #include "util/sys_info.h"
 #include "util/proc_info.h"

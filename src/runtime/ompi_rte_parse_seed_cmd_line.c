@@ -9,6 +9,8 @@
  */
 #include "ompi_config.h"
 
+#include <string.h>
+
 #include "util/cmd_line.h"
 #include "util/sys_info.h"
 #include "util/proc_info.h"
