@@ -120,6 +120,12 @@ int mca_oob_set_contact_info(const char*);
 int mca_oob_ping(ompi_process_name_t* name, struct timeval* tv);
 
 /**
+ *  A barrier across all processes w/in the same job.
+ */
+
+int mca_oob_barrier(void);
+
+/**
 *  Extract from the contact info the peer process identifier.
 *
 *  @param  cinfo (IN)   The contact information of the peer process.

@@ -15,6 +15,7 @@
 #include "mca/pcmclient/base/base.h"
 #include "mca/oob/oob.h"
 #include "mca/ns/base/base.h"
+#include "mca/pml/pml.h"
 
 
 static ompi_list_t  ompi_proc_list;
@@ -176,7 +177,6 @@ ompi_proc_t * ompi_proc_find_and_add ( const ompi_process_name_t * name )
     ompi_ns_cmp_bitmask_t mask;
 
     /* return the proc-struct which matches this jobid+process id */
-
     mask = OMPI_NS_CMP_CELLID | OMPI_NS_CMP_JOBID | OMPI_NS_CMP_VPID;
     OMPI_THREAD_LOCK(&ompi_proc_lock);
     for(proc =  (ompi_proc_t*)ompi_list_get_first(&ompi_proc_list); 
@@ -184,17 +184,20 @@ ompi_proc_t * ompi_proc_find_and_add ( const ompi_process_name_t * name )
         proc =  (ompi_proc_t*)ompi_list_get_next(proc)) {
         if (0 == ompi_name_server.compare(mask, &proc->proc_name, name))
             { 
-		rproc = proc;
+                rproc = proc;
                 break;
             }
     }
+    OMPI_THREAD_UNLOCK(&ompi_proc_lock);
 
     if ( NULL == rproc ) {
-	ompi_proc_t *tproc = OBJ_NEW(ompi_proc_t);
-	rproc = tproc;
-	rproc->proc_name = *name;
+	    ompi_proc_t *tproc = OBJ_NEW(ompi_proc_t);
+	    rproc = tproc;
+	    rproc->proc_name = *name;
+
+        /* downcall into pml to notify ptls of new proc */
+        mca_pml.pml_add_procs(&rproc,1);
     }
-    OMPI_THREAD_UNLOCK(&ompi_proc_lock);
     return rproc;
 }
 
