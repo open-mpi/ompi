@@ -55,7 +55,7 @@ ompi_show_subtitle "Initialization, setup"
 # VERSION macors
 #
 
-AM_INIT_AUTOMAKE(ompi, $OMPI_VERSION, 'no')
+AM_INIT_AUTOMAKE(openmpi, $OMPI_VERSION, 'no')
 
 OMPI_TOP_BUILDDIR="`pwd`"
 AC_SUBST(OMPI_TOP_BUILDDIR)
