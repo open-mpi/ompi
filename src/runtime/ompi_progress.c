@@ -13,6 +13,7 @@
  */
 
 #include "ompi_config.h"
+#include <sched.h>
 #include "event/event.h"
 #include "mca/pml/pml.h"
 #include "runtime/ompi_progress.h"
@@ -31,10 +32,12 @@ void ompi_progress(void)
 {
     /* progress any outstanding communications */
     int events = 0;
+#if OMPI_HAVE_THREADS == 0
     if(ompi_progress_event_flag != 0)
        events += ompi_event_loop(ompi_progress_event_flag);
+#endif
     events += mca_pml.pml_progress();
-                                                                                                               
+
 #if 0
     /* TSW - disable this until can validate that it doesn't impact SMP
      * performance
