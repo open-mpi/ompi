@@ -222,10 +222,10 @@ main(int argc, char *argv[])
     /*
      *  Register my process info with my replica.
      */
-    if (OMPI_SUCCESS != (ret = ompi_rte_register())) {
-	ompi_output(0, "ompi_rte_init: failed in ompi_rte_register()\n");
-	return ret;
-    }
+/*     if (OMPI_SUCCESS != (ret = ompi_rte_register())) { */
+/* 	ompi_output(0, "ompi_rte_init: failed in ompi_rte_register()\n"); */
+/* 	return ret; */
+/*     } */
  
     /* finalize the rte startup */
     if (OMPI_SUCCESS != (ret = ompi_rte_init_finalstage(&multi_thread,

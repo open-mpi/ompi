@@ -180,6 +180,7 @@ extern ompi_list_t mca_gpr_replica_notify_request_tracker;
 extern mca_gpr_notify_id_t mca_gpr_replica_last_notify_id_tag;
 extern ompi_list_t mca_gpr_replica_free_notify_id_tags;
 extern int mca_gpr_replica_debug;
+extern ompi_mutex_t mca_gpr_replica_mutex, mca_gpr_replica_internals_mutex;
 
 /*
  * Module open / close

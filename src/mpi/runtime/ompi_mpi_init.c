@@ -156,10 +156,10 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     /*
      *  Register my process info with my replica.
      */
-    if (OMPI_SUCCESS != (ret = ompi_rte_register())) {
-	error = "ompi_rte_init: failed in ompi_rte_register()\n";
-	goto error;
-    }
+/*     if (OMPI_SUCCESS != (ret = ompi_rte_register())) { */
+/* 	error = "ompi_rte_init: failed in ompi_rte_register()\n"; */
+/* 	goto error; */
+/*     } */
 
 
     /* finalize the rte startup */

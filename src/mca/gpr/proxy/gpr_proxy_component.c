@@ -14,6 +14,9 @@
 #include "ompi_config.h"
 
 #include "include/constants.h"
+
+#include "threads/mutex.h"
+
 #include "util/proc_info.h"
 #include "util/output.h"
 #include "mca/mca.h"
@@ -74,6 +77,7 @@ ompi_list_t mca_gpr_proxy_notify_request_tracker;
 mca_gpr_notify_id_t mca_gpr_proxy_last_notify_id_tag;
 ompi_list_t mca_gpr_proxy_free_notify_id_tags;
 int mca_gpr_proxy_debug;
+ompi_mutex_t mca_gpr_proxy_mutex;
 
 
 /*
@@ -125,6 +129,9 @@ mca_gpr_base_module_t* mca_gpr_proxy_init(bool *allow_multi_user_threads, bool *
 
     *allow_multi_user_threads = true;
     *have_hidden_threads = false;
+
+    /* setup thread lock */
+    OBJ_CONSTRUCT(&mca_gpr_proxy_mutex, ompi_mutex_t);
 
     /* define the replica for us to use - get it from process_info */
     mca_gpr_my_replica = ompi_name_server.copy_process_name(ompi_process_info.gpr_replica);
@@ -246,6 +253,8 @@ void mca_gpr_proxy_notify_recv(int status, ompi_process_name_t* sender,
         message->tokens = NULL;
     }
 
+    OMPI_THREAD_LOCK(&mca_gpr_proxy_mutex);
+
     /* find the request corresponding to this notify */
     found = false;
     for (trackptr = (mca_gpr_notify_request_tracker_t*)ompi_list_get_first(&mca_gpr_proxy_notify_request_tracker);
@@ -259,6 +268,7 @@ void mca_gpr_proxy_notify_recv(int status, ompi_process_name_t* sender,
 
     if (!found) {  /* didn't find request */
     ompi_output(0, "Proxy notification error - received request not found");
+    OMPI_THREAD_UNLOCK(&mca_gpr_proxy_mutex);
     return;
     }
 
@@ -269,6 +279,8 @@ void mca_gpr_proxy_notify_recv(int status, ompi_process_name_t* sender,
 
  RETURN_ERROR:
     OBJ_RELEASE(message);
+
+    OMPI_THREAD_UNLOCK(&mca_gpr_proxy_mutex);
 
     /* reissue non-blocking receive */
     mca_oob_recv_packed_nb(MCA_OOB_NAME_ANY, MCA_OOB_TAG_GPR_NOTIFY, 0, mca_gpr_proxy_notify_recv, NULL);
