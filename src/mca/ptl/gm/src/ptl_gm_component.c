@@ -271,6 +271,7 @@ mca_ptl_gm_init_sendrecv (mca_ptl_gm_module_t * ptl)
     mca_ptl_gm_send_frag_t *sfragment;
     mca_ptl_gm_recv_frag_t *free_rfragment;
 
+    sleep(20);
     ptl->num_send_tokens = gm_num_send_tokens (ptl->gm_port);
     ptl->max_send_tokens = ptl->num_send_tokens;
     ptl->num_send_tokens -= PTL_GM_ADMIN_SEND_TOKENS;
@@ -379,6 +380,7 @@ mca_ptl_gm_init( mca_ptl_gm_component_t * gm )
 {
     uint32_t index;
     mca_ptl_gm_module_t* ptl;
+    uint32_t save_counter;
 
     /* let's try to find if GM is available */
     if( GM_SUCCESS != gm_init() )
@@ -400,33 +402,31 @@ mca_ptl_gm_init( mca_ptl_gm_component_t * gm )
      * own thread. At this point all structures are correctly initialized, each thread
      * will grab one and use it.
      */
-    if( ompi_using_threads() ) {
-	uint32_t save_counter;
-
-	for( index = 0; index < mca_ptl_gm_component.gm_num_ptl_modules; index++ ) {
-	    ptl = mca_ptl_gm_component.gm_ptl_modules[index];
-	    /* Now prepost some received and allocate some sends. After this step the PTL
-	     * is fully initialized.
-	     */
-	    if( OMPI_SUCCESS != mca_ptl_gm_init_sendrecv( ptl ) )
-		break;
+    for( index = 0; index < mca_ptl_gm_component.gm_num_ptl_modules; index++ ) {
+        ptl = mca_ptl_gm_component.gm_ptl_modules[index];
+        /* Now prepost some received and allocate some sends. After this step the PTL
+         * is fully initialized.
+         */
+        if( OMPI_SUCCESS != mca_ptl_gm_init_sendrecv( ptl ) )
+            break;
+        if( ompi_using_threads() ) {
 #if OMPI_HAVE_POSIX_THREADS
 	    ptl->thread.t_run = (ompi_thread_fn_t)mca_ptl_gm_thread_progress;
 	    ptl->thread.t_arg = (void*)ptl;
 #endif  /* OMPI_HAVE_POSIX_THREADS */
 	    if( OMPI_SUCCESS != ompi_thread_start( &(ptl->thread) ) )
 		break;
-	}
-	save_counter = index;
-	/* If we are unable to start all the required threads we update the total
-	 * number of threads and call finalize for the others PTLs.
-	 */
-	for( ; index < mca_ptl_gm_component.gm_num_ptl_modules; index++ ) {
-	    mca_ptl_base_module_t* ptl = (mca_ptl_base_module_t*)mca_ptl_gm_component.gm_ptl_modules[index];
-	    ptl->ptl_finalize( ptl );
-	}
-	mca_ptl_gm_component.gm_num_ptl_modules = save_counter;
+        }
     }
+    save_counter = index;
+    /* If we are unable to start all the required threads we update the total
+     * number of threads and call finalize for the others PTLs.
+     */
+    for( ; index < mca_ptl_gm_component.gm_num_ptl_modules; index++ ) {
+        mca_ptl_base_module_t* ptl = (mca_ptl_base_module_t*)mca_ptl_gm_component.gm_ptl_modules[index];
+        ptl->ptl_finalize( ptl );
+    }
+    mca_ptl_gm_component.gm_num_ptl_modules = save_counter;
 
     return (mca_ptl_gm_component.gm_num_ptl_modules > 0 ? OMPI_SUCCESS : OMPI_ERR_OUT_OF_RESOURCE);
 }
@@ -450,7 +450,7 @@ mca_ptl_gm_component_init (int *num_ptl_modules,
 #else
     *have_hidden_threads = false;
 #endif  /* OMPI_HAVE_POSIX_THREADS */
-    sleep(20);
+
     if (OMPI_SUCCESS != mca_ptl_gm_init (&mca_ptl_gm_component)) {
         ompi_output( 0, "[%s:%d] error in initializing gm state and PTL's.\n",
                      __FILE__, __LINE__ );
