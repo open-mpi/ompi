@@ -28,6 +28,7 @@ lam_commdir=""
 #
 ######################################################################
 args_err=1
+
 for i ; do
     case "${i}" in
         -test)
@@ -52,6 +53,14 @@ for i ; do
             shift
             lam_commdir="${1}"
             shift
+            ;;
+        -x)
+            shift
+            name="${1}"
+            shift
+            val="${1}"
+            shift
+            export "${name}"="${val}"
             ;;
         -pwd)
             shift
