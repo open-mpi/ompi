@@ -30,6 +30,10 @@ int gpr_replica_delete_segment(char *segment)
 {
     mca_gpr_replica_segment_t *seg;
 
+    if (mca_gpr_replica_debug) {
+	ompi_output(0, "gpr replica: delete_segment entered");
+    }
+
     seg = gpr_replica_find_seg(true, segment);
 
     if (NULL == seg) {  /* couldn't locate segment */
@@ -60,11 +64,22 @@ int gpr_replica_put(ompi_registry_mode_t addr_mode, char *segment,
     mca_gpr_replica_key_t *keys, *key2;
 
 
+    if (mca_gpr_replica_debug) {
+	ompi_output(0, "gpr replica: put entered");
+    }
+
     /* protect ourselves against errors */
     if (NULL == segment || NULL == object || 0 == size || NULL == tokens || NULL == *tokens) {
+	if (mca_gpr_replica_debug) {
+	    ompi_output(0, "gpr replica: error in input - put rejected");
+	}
 	return OMPI_ERROR;
     }
-    put_mode = addr_mode & OMPI_REGISTRY_OVERWRITE;  /* only overwrite permission mode flag allowed */
+
+    /* ignore addressing mode - all tokens are used
+     * only overwrite permission mode flag has any affect
+     */
+    put_mode = addr_mode & OMPI_REGISTRY_OVERWRITE;
 
     /* find the segment */
     seg = gpr_replica_find_seg(true, segment);
@@ -183,6 +198,10 @@ int gpr_replica_delete_object(ompi_registry_mode_t addr_mode,
     mca_gpr_replica_trigger_list_t *trig;
     ompi_registry_notify_message_t *notify_msg;
 
+    if (mca_gpr_replica_debug) {
+	ompi_output(0, "gpr replica: delete_object entered");
+    }
+
     keys = NULL;
     return_code = OMPI_ERROR;
 
@@ -284,6 +303,10 @@ ompi_list_t* gpr_replica_index(char *segment)
     mca_gpr_replica_segment_t *seg;
     ompi_registry_index_value_t *ans;
 
+    if (mca_gpr_replica_debug) {
+	ompi_output(0, "gpr replica: index entered");
+    }
+
     answer = OBJ_NEW(ompi_list_t);
 
     if (NULL == segment) { /* looking for index of global registry */
@@ -323,6 +346,10 @@ int gpr_replica_subscribe(ompi_registry_mode_t addr_mode,
     mca_gpr_idtag_list_t *ptr_free_id;
     mca_gpr_replica_trigger_list_t *trig;
     ompi_registry_notify_message_t *notify_msg;
+
+    if (mca_gpr_replica_debug) {
+	ompi_output(0, "gpr replica: subscribe entered");
+    }
 
     /* protect against errors */
     if (NULL == segment) {
@@ -369,6 +396,10 @@ int gpr_replica_unsubscribe(ompi_registry_mode_t addr_mode,
     mca_gpr_notify_request_tracker_t *trackptr;
     mca_gpr_notify_id_t id_tag;
 
+    if (mca_gpr_replica_debug) {
+	ompi_output(0, "gpr replica: unsubscribe entered");
+    }
+
     /* protect against errors */
     if (NULL == segment) {
 	return OMPI_ERROR;
@@ -408,6 +439,10 @@ int gpr_replica_synchro(ompi_registry_synchro_mode_t synchro_mode,
     mca_gpr_idtag_list_t *ptr_free_id;
     mca_gpr_replica_trigger_list_t *trig;
     ompi_registry_notify_message_t *notify_msg;
+
+    if (mca_gpr_replica_debug) {
+	ompi_output(0, "gpr replica: synchro entered");
+    }
 
     /* protect against errors */
     if (NULL == segment || 0 > trigger) {
@@ -457,6 +492,10 @@ int gpr_replica_cancel_synchro(ompi_registry_synchro_mode_t synchro_mode,
     mca_gpr_notify_request_tracker_t *trackptr;
     mca_gpr_notify_id_t id_tag;
 
+    if (mca_gpr_replica_debug) {
+	ompi_output(0, "gpr replica: cancel_synchro entered");
+    }
+
     /* protect against errors */
     if (NULL == segment || 0 > trigger) {
 	return OMPI_ERROR;
@@ -497,6 +536,10 @@ ompi_list_t* gpr_replica_get(ompi_registry_mode_t addr_mode,
     mca_gpr_replica_keytable_t *keyptr=NULL;
     mca_gpr_replica_core_t *reg=NULL;
     int num_tokens=0;
+
+    if (mca_gpr_replica_debug) {
+	ompi_output(0, "gpr replica: get entered");
+    }
 
     answer = OBJ_NEW(ompi_list_t);
 

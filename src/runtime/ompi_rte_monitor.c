@@ -50,7 +50,11 @@ int ompi_rte_register(void)
         keys[1] = NULL;
         free(jobid);
 
-        /* setup packed buffer of proc info - may expand as needed */
+     if (ompi_rte_debug_flag) {
+	ompi_output(0, "rte_register: entered for proc %s", keys[0]);
+    }
+
+       /* setup packed buffer of proc info - may expand as needed */
         ompi_buffer_init(&buffer, 128);
         ompi_pack(buffer, &ompi_process_info.pid, 1, OMPI_INT32);
         ompi_pack_string(buffer, ompi_system_info.nodename);
@@ -58,7 +62,13 @@ int ompi_rte_register(void)
         /* peek the buffer and resulting size */
         ompi_buffer_get(buffer, &addr, &size);
 
-        rc = ompi_registry.put(OMPI_REGISTRY_OVERWRITE, segment, keys, addr, size);
+        rc = ompi_registry.put(OMPI_REGISTRY_XAND | OMPI_REGISTRY_OVERWRITE,
+			       segment, keys, addr, size);
+
+	if (ompi_rte_debug_flag) {
+	    ompi_output(0, "rte_register: %s %d", keys[0], rc);
+	}
+
         ompi_buffer_free(buffer);
         return rc;
     }
@@ -86,7 +96,7 @@ int ompi_rte_unregister(void)
         keys[0] = ompi_name_server.get_proc_name_string(ompi_process_info.name);
         keys[1] = NULL;
         
-        rc = ompi_registry.delete_object(OMPI_REGISTRY_OVERWRITE, segment, keys);
+        rc = ompi_registry.delete_object(OMPI_REGISTRY_XAND, segment, keys);
         free(keys[0]);
         return rc;
     }
