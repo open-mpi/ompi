@@ -29,27 +29,27 @@ int lam_datatype_copy(void *dst,
     if (LAM_SUCCESS == status) {
         if (NULL == d) {
             (*memcpy_fn)(dst, src, count, csum);
-        } else if (LAM_DATATYPE_STATE_CONTIGUOUS & d->d_flags) {
-            (*memcpy_fn)(dst, src, count * d->d_extent, csum);
+        } else if (LAM_DATATYPE_STATE_CONTIGUOUS & d->flags) {
+            (*memcpy_fn)(dst, src, count * d->extent, csum);
         } else {
-            lam_datavec_t *dv = d->d_datavec;
-            unsigned char *p = ((unsigned char *) dst);
-            unsigned char *q = ((unsigned char *) src);
+            lam_datavec_t *dv = d->datavec;
+            unsigned char *p = (unsigned char *) dst;
+            unsigned char *q = (unsigned char *) src;
             size_t i, j;
 
             while (count--) {
-                for (i = 0; i < d->d_datavec_size; i++) {
-                    for (j = 0; j < dv->dv_nrepeat; i++) {
-                        (*memcpy_fn)(p + dv->dv_element[i].dve_offset,
-                                     q + dv->dv_element[i].dve_offset,
-                                     dv->dv_element[i].dve_size,
+                for (j = 0; j < dv->nrepeat; j++) {
+                    for (i = 0; i < d->datavec_size; i++) {
+                        (*memcpy_fn)(p + dv->element[i].offset,
+                                     q + dv->element[i].offset,
+                                     dv->element[i].size,
                                      csum);
                     }
-                    p += dv->dv_repeat_offset;
-                    q += dv->dv_repeat_offset;
+                    p += dv->repeat_offset;
+                    q += dv->repeat_offset;
                 }
-                p += d->d_extent;
-                q += d->d_extent;
+                p += d->extent;
+                q += d->extent;
             }
         }
     }

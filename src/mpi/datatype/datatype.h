@@ -79,6 +79,18 @@ enum lam_datatype_state_t {
 };
 
 
+enum {
+    LAM_DATATYPE_PACK = 0,
+    LAM_DATATYPE_UNPACK,
+    LAM_DATATYPE_PACK_COMPLETE = 0,
+    LAM_DATATYPE_PACK_INCOMPLETE,
+    TYPE_PACK_INCOMPLETE_VECTOR,
+    TYPE_PACK_INCOMPLETE_DATAVEC_REPEAT,
+    TYPE_PACK_INCOMPLETE_DATAVEC_ELEMENT,
+    TYPE_PACK_ERROR = -1
+};
+
+
 /**
  * Enumeration of datatype creation functions
  */
@@ -127,26 +139,26 @@ struct lam_memcpy_state_t {
  */
 struct lam_datatype_t {
 
-    lam_object_t d_super;             /**< object super class */
-    char d_name[MPI_MAX_OBJECT_NAME]; /**< object name */
-    int d_flags;                      /**< bit flags */
+    lam_object_t super;             /**< object super class */
+    char name[MPI_MAX_OBJECT_NAME]; /**< object name */
+    int flags;                      /**< bit flags */
 
     /* cached information */
 
-    ssize_t d_lower_bound;
-    size_t d_extent;
-    size_t d_packed_size;         /**< size in bytes, ignoring gaps */
-    int d_nbasic;                 /**< number of basic elements */
+    ssize_t lower_bound;
+    size_t extent;
+    size_t packed_size;         /**< size in bytes, ignoring gaps */
+    int nbasic;                 /**< number of basic elements */
 
     /* optimized representation */
 
-    size_t d_datavec_size;        /**< size of optimized representation */
-    lam_datavec_t *d_datavec;     /**< optimized representation (may be null) */
+    size_t datavec_size;        /**< size of optimized representation */
+    lam_datavec_t *datavec;     /**< optimized representation (may be null) */
 
     /* XDR representation */
 
-    size_t d_dataxdr_size;        /**< size of XDR representation */
-    lam_dataxdr_t *d_dataxdr;     /**< XDR representation (may be null) */
+    size_t dataxdr_size;        /**< size of XDR representation */
+    lam_dataxdr_t *dataxdr;     /**< XDR representation (may be null) */
 
     /* full representation (c.f. MPI_Type_create_struct) */
 
@@ -156,7 +168,7 @@ struct lam_datatype_t {
         int *c_blocklengths;      /**< number of elements in each block */
         MPI_Aint *c_offset;       /**< stride/displacement as appropriate */
         lam_datatype_t **c_types; /**< array of types (array) */
-    } d_creator;
+    } creator;
 };
 
 
@@ -165,10 +177,10 @@ struct lam_datatype_t {
  * routines
  */
 struct lam_datavec_t {
-    size_t dv_nrepeat;
-    ssize_t dv_repeat_offset;
-    size_t dv_nelement;
-    lam_datavec_element_t *dv_element;
+    size_t nrepeat;
+    ssize_t repeat_offset;
+    size_t nelement;
+    lam_datavec_element_t *element;
 };
 
 
@@ -176,9 +188,9 @@ struct lam_datavec_t {
  * An element of a data type in optimized form
  */
 struct lam_datavec_element_t {
-    size_t dve_size;                /**< size in bytes of element */
-    ssize_t dve_offset;             /**< offset from start of data type */
-    ssize_t dve_seq_offset;         /**< offset from start of packed data type */
+    size_t size;            /**< size in bytes of element */
+    ssize_t offset;         /**< offset from start of data type */
+    ssize_t seq_offset;     /**< offset from start of packed data type */
 };
 
 
@@ -187,7 +199,22 @@ struct lam_datavec_element_t {
  */
 struct lam_dataxdr_element_t {
     /* to be done */
-    void *x_xdrs;                 /**< XDR stream */
+    void *xdrs;             /**< XDR stream */
+};
+
+
+/**
+ * Pack state
+ *
+ * Structure to store the state of an incremental pack/unpack of a
+ * datatype.
+ */
+struct lam_pack_state_t {
+    size_t type_index;     /**< current index of datatype */
+    size_t repeat_index;   /**< current index of datavec repeat */
+    size_t element_index;  /**< current index of datavec element */
+    size_t datavec_offset; /**< current offset into datavec element */
+    size_t packed_offset;  /**< current offset into packed buffer */
 };
 
 
@@ -248,53 +275,13 @@ int lam_datatype_convert(void *dst,
 
 
 /**
- * Pack state
+ * Incrementally pack or unpack a buffer to/from an array of
+ * datatypes.
  *
- * Structure to store the state of an incremental pack/unpack of a
- * datatype.
- */
-struct lam_pack_state_t {
-    size_t current_offset_packed;  /**< current offset into packed buffer */
-    size_t current_type;           /**< current index of datatype */
-    size_t current_repeat;         /**< current index of datavec repeat */
-    size_t current_element;        /**< current index of datavec element */
-    size_t current_offset_datavec; /**< current offset into datavec element */
-};
-
-
-/**
- * Incrementally pack an array of datatypes into a buffer
+ * DO NOT USE THIS FUNCTION DIRECTLY: lam_datatype_pack or
+ * lam_datatype_unpack instead.
  *
- * @param state         current state of the incremental pack/unpack
- * @param buf           buffer to pack into/unpack from
- * @param bufsize       size of buffer
- * @param typebuf       array of types
- * @param ntype         size of type array
- * @param datatype      type descriptor
- * @param memcpy_fn     pointer to memcpy function
- * @param check         pointer to checksum
- * @return              0 if complete, non-zero otherwise
- *
- * Incrementally copy data type arrays to/from a packed buffer by
- * iterating over the type and type_map until we finish or run out of
- * room.
- *
- * The state (all members) should be initialized to 0 before the first
- * call.
- */
-int lam_datatype_pack(lam_pack_state_t *state,
-                      void *buf,
-                      size_t bufsize,
-                      const void *typebuf,
-                      size_t ntype,
-                      lam_datatype_t *datatype,
-                      lam_memcpy_fn_t *memcpy_fn,
-                      lam_memcpy_state_t *check);
-
-
-/**
- * Incrementally unpack a buffer to an array of datatypes
- *
+ * @param direction     0 for pack , non-zero for unpack
  * @param state         current state of the incremental pack/unpack
  * @param typebuf       array of types
  * @param ntype         size of type array
@@ -312,15 +299,59 @@ int lam_datatype_pack(lam_pack_state_t *state,
  * The state (all members) should be initialized to 0 before the first
  * call.
  */
-int lam_datatype_unpack(lam_pack_state_t *state,
+int lam_datatype_packer(lam_pack_state_t *state,
+                        void *buf,
+                        size_t bufsize,
                         void *typebuf,
                         size_t ntype,
-                        const void *buf,
-                        size_t bufsize,
                         lam_datatype_t *datatype,
                         lam_memcpy_fn_t *memcpy_fn,
-                        lam_memcpy_state_t *check);
+                        lam_memcpy_state_t *check,
+                        int pack_direction);
 
+
+/**
+ * Incrementally pack a buffer from an array of datatypes.
+ *
+ * The arguments for this function are the same as for
+ * lam_datatype_packer except that the last argument (pack_direction)
+ * is not required.
+ */
+static inline int lam_datatype_pack(lam_pack_state_t *state,
+                                    void *buf,
+                                    size_t bufsize,
+                                    const void *typebuf,
+                                    size_t ntype,
+                                    lam_datatype_t *datatype,
+                                    lam_memcpy_fn_t *memcpy_fn,
+                                    lam_memcpy_state_t *check)
+{
+    return lam_datatype_packer(state, buf, bufsize, (void *) typebuf,
+                               ntype, datatype, memcpy_fn, check,
+                               LAM_DATATYPE_PACK);
+}
+
+
+/**
+ * Incrementally unpack a buffer to an array of datatypes.
+ *
+ * The arguments for this function are the same as for
+ * lam_datatype_packer except that the last argument (pack_direction)
+ * is not required.
+ */
+static inline int lam_datatype_unpack(lam_pack_state_t *state,
+                                      const void *buf,
+                                      size_t bufsize,
+                                      void *typebuf,
+                                      size_t ntype,
+                                      lam_datatype_t *datatype,
+                                      lam_memcpy_fn_t *memcpy_fn,
+                                      lam_memcpy_state_t *check)
+{
+    return lam_datatype_packer(state, (void *) buf, bufsize, typebuf,
+                               ntype, datatype, memcpy_fn, check,
+                               LAM_DATATYPE_UNPACK);
+}
 /**
  * Incrementally generate an iovec for gathering from an array of
  * datatypes
@@ -427,6 +458,7 @@ static inline void *lam_memcpy(void *dst, const void *src, size_t size,
 {
     return memcpy(dst, src, size);
 }
+
 
 /**
  * An alternative version of memcpy that may out-perform the system
