@@ -148,7 +148,10 @@ mca_ptl_elan_finalize (struct mca_ptl_base_module_t *ptl)
     struct mca_ptl_elan_module_t *elan_ptl;
 
     START_FUNC(PTL_ELAN_DEBUG_FIN);
-#if 0
+
+    /* FIXME: move from ptl_elan_component_close()
+       all the ptl_elan_finalize related code here */
+#if 0  
     elan_ptl = (struct mca_ptl_elan_module_t *) ptl;
 
     /* XXX: Free all the lists, etc, hanged over PTL 

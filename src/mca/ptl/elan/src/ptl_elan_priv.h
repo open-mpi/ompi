@@ -52,8 +52,7 @@
 #define  PTL_ELAN_DEBUG_GET     (0x400)
 #define  PTL_ELAN_DEBUG_CHAIN   (0x800)
 
-#define  PTL_ELAN_DEBUG_FLAG \
-     (PTL_ELAN_DEBUG_FIN | PTL_ELAN_DEBUG_THREAD)
+#define  PTL_ELAN_DEBUG_FLAG (PTL_ELAN_DEBUG_NONE)
 
 #define START_FUNC(flag)                                       \
 do {                                                           \
@@ -83,22 +82,13 @@ do {                                                           \
     }                                                          \
 } while (0)
 
-/* PTL_ELAN related MACROS, expose some as configurable options if needed */
-#define  OMPI_PTL_ELAN_ENABLE_GET    (0)
-#define  OMPI_PTL_ELAN_COMP_QUEUE    (1) 
-#define  OMPI_PTL_ELAN_THREADING      \
-    (OMPI_PTL_ELAN_COMP_QUEUE && OMPI_HAVE_POSIX_THREADS)
-
 #define  OMPI_PTL_ELAN_MAX_QSIZE     (2048)
 #define  OMPI_PTL_ELAN_MAX_QSLOTS    (128)
 #define  OMPI_PTL_ELAN_LOST_QSLOTS   (1)
 
 #define  OMPI_PTL_ELAN_MAX_QDESCS    (128)
-#define  OMPI_PTL_ELAN_NUM_QDESCS    (2)
-#define  OMPI_PTL_ELAN_QDMA_RETRY    (16)
-
 #define  OMPI_PTL_ELAN_MAX_PUTGET    (32)
-#define  OMPI_PTL_ELAN_NUM_PUTGET    (1)
+#define  OMPI_PTL_ELAN_QDMA_RETRY    (16)
 #define  OMPI_PTL_ELAN_MAX_PGDESC    (8)
 
 #define  OMPI_PTL_ELAN_FASTPATH      (0x1)
@@ -106,6 +96,15 @@ do {                                                           \
 #define  OMPI_PTL_ELAN_GET_MAX(a,b)  ((a>b)? a:b)
 #define  OMPI_PTL_ELAN_GET_MIN(a,b)  ((a<b)? a:b)
 #define  OMPI_PTL_ELAN_ALIGNUP(x,a)  (((unsigned int)(x) + ((a)-1)) & (-(a)))
+
+/* XXX: Potentially configurable parameters */
+#define  OMPI_PTL_ELAN_NUM_QDESCS    (16)
+#define  OMPI_PTL_ELAN_NUM_PUTGET    (8)
+
+#define  OMPI_PTL_ELAN_ENABLE_GET    (1)
+#define  OMPI_PTL_ELAN_COMP_QUEUE    (0) 
+#define  OMPI_PTL_ELAN_THREADING      \
+    (OMPI_PTL_ELAN_COMP_QUEUE && OMPI_HAVE_POSIX_THREADS)
 
 #if (QSNETLIBS_VERSION_CODE <= QSNETLIBS_VERSION(1,6,6))
 #define OMPI_PTL_ELAN_ALLOC_CMDQ elan4_alloc_cmdq 
