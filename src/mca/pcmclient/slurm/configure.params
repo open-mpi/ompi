@@ -1,0 +1,9 @@
+# -*- shell-script -*-
+#
+# $HEADER$
+#
+
+# Specific to this module
+
+PARAM_INIT_FILE=pcmclient_slurm_component.c
+PARAM_CONFIG_FILES="Makefile"
