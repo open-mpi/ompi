@@ -6,11 +6,29 @@
 
 #include "mpi.h"
 #include "mpi/interface/c/bindings.h"
+#include "lam/lfc/list.h"
+#include "mpi/info/info.h"
 
 #if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILING_DEFINES
 #pragma weak MPI_Info_get_valuelen = PMPI_Info_get_valuelen
 #endif
 
+/**
+ *   MPI_Info_get_valuelen - Get the length of a value for a given key in an 'M
+ *
+ *   @param info - info object (handle)
+ *   @param key - null-terminated character string of the index key
+ *   @param valuelen - length of the value associated with 'key' (integer)
+ *   @param flag - true (1) if 'key' defined on 'info', false (0) if not
+ *   (logical)
+ *
+ *   @retval MPI_SUCCESS
+ *   @retval MPI_ERR_ARG
+ *   @retval MPI_ERR_INFO_KEY
+ *
+ *   The length returned in C and C++ does not include the end-of-string
+ *   character.  If the 'key' is not found on 'info', 'valuelen' is left alone.
+ */
 int MPI_Info_get_valuelen(MPI_Info info, char *key, int *valuelen,
                           int *flag) {
     return MPI_SUCCESS;
