@@ -46,33 +46,32 @@ typedef struct mca_pml_base_recv_request_t mca_pml_base_recv_request_t;
  * @param comm (IN)          Communicator.
  * @param persistent (IN)    Is this a ersistent request.
  */
-#define MCA_PML_BASE_RECV_REQUEST_INIT(                   \
-    request,                                              \
-    addr,                                                 \
-    count,                                                \
-    datatype,                                             \
-    src,                                                  \
-    tag,                                                  \
-    comm,                                                 \
-    persistent)                                           \
-{                                                         \
-    /* increment reference count on communicator */       \
-    OBJ_RETAIN(comm);                                     \
-                                                          \
-    OMPI_REQUEST_INIT(&(request)->req_base.req_ompi);     \
-    (request)->req_bytes_packed = 0;                      \
-    (request)->req_base.req_sequence = 0;                 \
-    (request)->req_base.req_addr = addr;                  \
-    (request)->req_base.req_count = count;                \
-    (request)->req_base.req_datatype = datatype;          \
-    (request)->req_base.req_peer = src;                   \
-    (request)->req_base.req_tag = tag;                    \
-    (request)->req_base.req_comm = comm;                  \
-    (request)->req_base.req_proc = NULL;                  \
-    (request)->req_base.req_persistent = persistent;      \
-    (request)->req_base.req_pml_complete = false;         \
-    (request)->req_base.req_free_called = false;          \
-                                                          \
+#define MCA_PML_BASE_RECV_REQUEST_INIT(                                  \
+    request,                                                             \
+    addr,                                                                \
+    count,                                                               \
+    datatype,                                                            \
+    src,                                                                 \
+    tag,                                                                 \
+    comm,                                                                \
+    persistent)                                                          \
+{                                                                        \
+    /* increment reference count on communicator */                      \
+    OBJ_RETAIN(comm);                                                    \
+                                                                         \
+    OMPI_REQUEST_INIT(&(request)->req_base.req_ompi);                    \
+    (request)->req_bytes_packed = 0;                                     \
+    (request)->req_base.req_sequence = 0;                                \
+    (request)->req_base.req_addr = addr;                                 \
+    (request)->req_base.req_count = count;                               \
+    (request)->req_base.req_datatype = datatype;                         \
+    (request)->req_base.req_peer = src;                                  \
+    (request)->req_base.req_tag = tag;                                   \
+    (request)->req_base.req_comm = comm;                                 \
+    (request)->req_base.req_proc = NULL;                                 \
+    (request)->req_base.req_persistent = persistent;                     \
+    (request)->req_base.req_pml_complete = (persistent ? true : false);  \
+    (request)->req_base.req_free_called = false;                         \
 }
 
 #if defined(c_plusplus) || defined(__cplusplus)
