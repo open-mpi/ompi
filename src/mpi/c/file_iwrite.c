@@ -68,6 +68,10 @@ int MPI_File_iwrite(MPI_File fh, void *buf, int count, MPI_Datatype
     case MCA_IO_BASE_V_1_0_0:
         rc = fh->f_io_selected_module.v1_0_0.
             io_module_file_iwrite(fh, buf, count, datatype, io_request);
+        if (MPI_SUCCESS == rc) {
+            ++ompi_progress_pending_io_reqs;
+            (*request)->req_state = OMPI_REQUEST_ACTIVE;
+        }
         break;
 
     default:

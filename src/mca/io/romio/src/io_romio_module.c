@@ -20,12 +20,6 @@
 
 
 /*
- * Global ROMIO mutex because ROMIO is not thread safe
- */
-ompi_mutex_t mca_io_romio_mutex;
-
-
-/*
  * Global function that does not need to be prototyped in a header
  * because ROMIO just expects this function to exist
  */
@@ -34,30 +28,20 @@ int MPIR_Status_set_bytes(ompi_status_public_t *status,
 
 
 /*
- * Private functions
- */
-static int io_romio_request_init(mca_io_base_modules_t *module_union,
-                                 mca_io_base_request_t *request);
-
-
-/*
  * The ROMIO module operations
  */
 mca_io_base_module_1_0_0_t mca_io_romio_module = {
 
-    /* Max number of requests in the request cache */
+    /* Once-per-process request init / finalize functions */
 
-    32,
-
-    /* Additional number of bytes required for this component's
-       requests */
-
-    sizeof(mca_io_romio_request_t) - sizeof(mca_io_base_request_t),
-
-    /* Request init / finalize functions */
-
-    io_romio_request_init,
     NULL,
+    NULL,
+
+    /* Finalize, free, cancel */
+
+    mca_io_romio_request_fini,
+    mca_io_romio_request_free,
+    mca_io_romio_request_cancel,
 
     /* Back end to MPI API calls (pretty much a 1-to-1 mapping) */
 
@@ -121,11 +105,7 @@ mca_io_base_module_1_0_0_t mca_io_romio_module = {
     /* Sync/atomic IO operations */
     mca_io_romio_file_set_atomicity,
     mca_io_romio_file_get_atomicity,
-    mca_io_romio_file_sync,
-
-    /* The following two are not add-on for MPI-IO implementations */
-    mca_io_romio_test,
-    mca_io_romio_wait
+    mca_io_romio_file_sync
 };
 
 
@@ -139,15 +119,4 @@ int MPIR_Status_set_bytes(ompi_status_public_t *status,
 {
     MPI_Status_set_elements(status, datatype, nbytes);
     return MPI_SUCCESS;
-}
-
-
-/*
- * One-time initialization of an MPI_Request for this module
- */
-static int io_romio_request_init(mca_io_base_modules_t *module_union,
-                                 mca_io_base_request_t *request)
-{
-    request->req_ver = MCA_IO_BASE_V_1_0_0;
-    return OMPI_SUCCESS;
 }

@@ -28,6 +28,7 @@
 #include "mca/base/base.h"
 #include "mca/io/io.h"
 #include "mca/io/base/base.h"
+#include "mca/io/base/io_base_request.h"
 
 
 /*
@@ -199,6 +200,7 @@ int mca_io_base_file_select(ompi_file_t *file,
     /* Save the pointers of the selected module on the ompi_file_t */
 
     file->f_io_version = selected.ai_version;
+    file->f_io_selected_component = selected.ai_component;
     file->f_io_selected_module = selected.ai_module;
     file->f_io_selected_data = selected.ai_module_data;
 
@@ -207,7 +209,12 @@ int mca_io_base_file_select(ompi_file_t *file,
     if (OMPI_SUCCESS != (err = module_init(file))) {
         return err;
     }
-    
+
+    /* Add the component to the list of components that the io
+       framework is maintaining */
+
+    mca_io_base_component_add(&selected.ai_component);
+
     /* Announce the winner */
   
     ompi_output_verbose(10, mca_io_base_output,
@@ -219,11 +226,11 @@ int mca_io_base_file_select(ompi_file_t *file,
 
 
 /*
- * For each module in the list, if it is in the list of names (or the
- * list of names is NULL), then check and see if it wants to run, and
- * do the resulting priority comparison.  Make a list of modules to be
- * only those who returned that they want to run, and put them in
- * priority order.
+ * For each component in the list, if it is in the list of names (or
+ * the list of names is NULL), then check and see if it wants to run,
+ * and do the resulting priority comparison.  Make a list of
+ * (component, module) tuples (of type avail_io_t) to be only those
+ * who returned that they want to run, and put them in priority order.
  */
 static ompi_list_t *check_components(ompi_list_t *components, 
                                      ompi_file_t *file, 

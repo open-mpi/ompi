@@ -25,6 +25,7 @@
 #include "mca/base/base.h"
 #include "mca/io/io.h"
 #include "mca/io/base/base.h"
+#include "mca/io/base/io_base_request.h"
 
 
 /*
@@ -32,7 +33,6 @@
  */
 bool mca_io_base_components_available_valid = false;
 ompi_list_t mca_io_base_components_available;
-const mca_io_base_component_1_0_0_t *mca_io_base_basic_component = NULL;
 
 
 /*
@@ -59,6 +59,7 @@ static int init_query_1_0_0(const mca_base_component_t *ls,
 int mca_io_base_find_available(bool *allow_multi_user_threads,
                                bool *have_hidden_threads)
 {
+    int err;
     mca_base_component_priority_list_item_t *entry;
     ompi_list_item_t *p;
     const mca_base_component_t *component;
@@ -112,6 +113,12 @@ int mca_io_base_find_available(bool *allow_multi_user_threads,
     
     OBJ_DESTRUCT(&mca_io_base_components_opened);
     mca_io_base_components_opened_valid = false;
+
+    /* Setup the freelist */
+
+    if (OMPI_SUCCESS != (err = mca_io_base_request_create_freelist())) {
+        return err;
+    }
 
     /* All done */
 

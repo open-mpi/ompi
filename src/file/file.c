@@ -82,9 +82,6 @@ int ompi_file_open(struct ompi_communicator_t *comm, char *filename,
     int ret;
     ompi_file_t *file;
 
-    /* JMS: This is problematic -- need this to be as large as ROMIO
-       needs to to be, or we need an additional pointer to hang stuff
-       off :-( */
     file = OBJ_NEW(ompi_file_t);
     if (NULL == file) {
         return OMPI_ERR_OUT_OF_RESOURCE;
@@ -132,6 +129,8 @@ int ompi_file_open(struct ompi_communicator_t *comm, char *filename,
 int ompi_file_close(ompi_file_t **file) 
 {
     (*file)->f_flags |= OMPI_FILE_ISCLOSED;
+    mca_io_base_component_del(&((*file)->f_io_selected_component));
+    mca_io_base_request_return(*file);
     OBJ_RELEASE(*file);
     *file = MPI_FILE_NULL;
 
@@ -241,6 +240,9 @@ static void file_constructor(ompi_file_t *file)
            sizeof(file->f_io_selected_module));
     file->f_io_selected_data = NULL;
 
+    /* Construct the io request freelist */
+    OBJ_CONSTRUCT(&file->f_io_requests, ompi_list_t);
+
     /* If the user doesn't want us to ever free it, then add an extra
        RETAIN here */
 
@@ -296,6 +298,10 @@ static void file_destructor(ompi_file_t *file)
         file->f_info = NULL;
 #endif
     }
+
+    /* Destruct the io request freelist */
+
+    OBJ_DESTRUCT(&file->f_io_requests);
 
     /* Reset the f_to_c table entry */
 

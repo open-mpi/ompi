@@ -16,6 +16,7 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
+#include "class/ompi_free_list.h"
 #include "util/output.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
@@ -56,6 +57,20 @@ int mca_io_base_open(void)
 
     mca_io_base_output = ompi_output_open(NULL);
 
+    /* Create some parameters */
+
+    if (0 >
+        mca_base_param_register_int("io", "base", "freelist_initial_size",
+                                    "", 16) ||
+        0 >
+        mca_base_param_register_int("io", "base", "freelist_max_size",
+                                    "", 64) ||
+        0 >
+        mca_base_param_register_int("io", "base", "freelist_increment",
+                                    "", 16)) {
+        return OMPI_ERROR;
+    }
+
     /* Open up all available components */
 
     if (OMPI_SUCCESS != 
@@ -69,7 +84,11 @@ int mca_io_base_open(void)
     /* Find the index of the MCA "io" param for selection */
     
     mca_io_base_param = mca_base_param_find("io", "base", NULL);
-    
+
+    /* Initialize some io framework resrouces */
+
+    mca_io_base_component_init();
+
     /* All done */
     
     return OMPI_SUCCESS;

@@ -17,7 +17,6 @@
 #include "communicator/communicator.h"
 #include "info/info.h"
 #include "file/file.h"
-#include "request/request.h"
 
 #include "io_romio.h"
 
@@ -29,7 +28,7 @@ mca_io_romio_file_open (ompi_communicator_t *comm,
                         ompi_info_t *info,
                         ompi_file_t *fh)
 {
-    int         ret;
+    int ret;
     mca_io_romio_data_t *data;
 
     data = (mca_io_romio_data_t *) fh->f_io_selected_data;
@@ -45,7 +44,7 @@ mca_io_romio_file_open (ompi_communicator_t *comm,
 int
 mca_io_romio_file_close (ompi_file_t *fh)
 {
-    int         ret;
+    int ret;
     mca_io_romio_data_t *data;
 
     data = (mca_io_romio_data_t *) fh->f_io_selected_data;
@@ -62,7 +61,7 @@ int
 mca_io_romio_file_set_size (ompi_file_t *fh,
                             MPI_Offset size)
 {
-    int         ret;
+    int ret;
     mca_io_romio_data_t *data;
 
     data = (mca_io_romio_data_t *) fh->f_io_selected_data;
@@ -77,7 +76,7 @@ int
 mca_io_romio_file_preallocate (ompi_file_t *fh,
                                MPI_Offset size)
 {
-    int         ret;
+    int ret;
     mca_io_romio_data_t *data;
 
     data = (mca_io_romio_data_t *) fh->f_io_selected_data;
@@ -93,7 +92,7 @@ int
 mca_io_romio_file_get_size (ompi_file_t *fh,
                             MPI_Offset * size)
 {
-    int         ret;
+    int ret;
     mca_io_romio_data_t *data;
 
     data = (mca_io_romio_data_t *) fh->f_io_selected_data;
@@ -109,7 +108,7 @@ int
 mca_io_romio_file_get_amode (ompi_file_t *fh,
                              int *amode)
 {
-    int         ret;
+    int ret;
     mca_io_romio_data_t *data;
 
     data = (mca_io_romio_data_t *) fh->f_io_selected_data;
@@ -125,7 +124,7 @@ int
 mca_io_romio_file_set_info (ompi_file_t *fh,
                             ompi_info_t *info)
 {
-    int         ret;
+    int ret;
     mca_io_romio_data_t *data;
 
     data = (mca_io_romio_data_t *) fh->f_io_selected_data;
@@ -141,7 +140,7 @@ int
 mca_io_romio_file_get_info (ompi_file_t *fh,
                             ompi_info_t ** info_used)
 {
-    int         ret;
+    int ret;
     mca_io_romio_data_t *data;
 
     data = (mca_io_romio_data_t *) fh->f_io_selected_data;
@@ -161,7 +160,7 @@ mca_io_romio_file_set_view (ompi_file_t *fh,
                             char *datarep,
                             ompi_info_t *info)
 {
-    int         ret;
+    int ret;
     mca_io_romio_data_t *data;
 
     data = (mca_io_romio_data_t *) fh->f_io_selected_data;
@@ -182,7 +181,7 @@ mca_io_romio_file_get_view (ompi_file_t *fh,
                             ompi_datatype_t ** filetype,
                             char *datarep)
 {
-    int         ret;
+    int ret;
     mca_io_romio_data_t *data;
 
     data = (mca_io_romio_data_t *) fh->f_io_selected_data;
@@ -202,7 +201,7 @@ mca_io_romio_file_get_type_extent (ompi_file_t *fh,
                                    ompi_datatype_t *datatype,
                                    MPI_Aint * extent)
 {
-    int         ret;
+    int ret;
     mca_io_romio_data_t *data;
 
     data = (mca_io_romio_data_t *) fh->f_io_selected_data;
@@ -219,7 +218,7 @@ int
 mca_io_romio_file_set_atomicity (ompi_file_t *fh,
                                  int flag)
 {
-    int         ret;
+    int ret;
     mca_io_romio_data_t *data;
 
     data = (mca_io_romio_data_t *) fh->f_io_selected_data;
@@ -234,7 +233,7 @@ int
 mca_io_romio_file_get_atomicity (ompi_file_t *fh,
                                  int *flag)
 {
-    int         ret;
+    int ret;
     mca_io_romio_data_t *data;
 
     data = (mca_io_romio_data_t *) fh->f_io_selected_data;
@@ -248,7 +247,7 @@ mca_io_romio_file_get_atomicity (ompi_file_t *fh,
 int
 mca_io_romio_file_sync (ompi_file_t *fh)
 {
-    int         ret;
+    int ret;
     mca_io_romio_data_t *data;
 
     data = (mca_io_romio_data_t *) fh->f_io_selected_data;
@@ -265,7 +264,7 @@ mca_io_romio_file_seek_shared (ompi_file_t *fh,
                                MPI_Offset offset,
                                int whence)
 {
-    int         ret;
+    int ret;
     mca_io_romio_data_t *data;
 
     data = (mca_io_romio_data_t *) fh->f_io_selected_data;
@@ -281,7 +280,7 @@ int
 mca_io_romio_file_get_position_shared (ompi_file_t *fh,
                                        MPI_Offset * offset)
 {
-    int         ret;
+    int ret;
     mca_io_romio_data_t *data;
 
     data = (mca_io_romio_data_t *) fh->f_io_selected_data;
@@ -298,7 +297,7 @@ mca_io_romio_file_seek (ompi_file_t *fh,
                         MPI_Offset offset,
                         int whence)
 {
-    int         ret;
+    int ret;
     mca_io_romio_data_t *data;
 
     data = (mca_io_romio_data_t *) fh->f_io_selected_data;
@@ -314,7 +313,7 @@ int
 mca_io_romio_file_get_position (ompi_file_t *fh,
                                 MPI_Offset * offset)
 {
-    int         ret;
+    int ret;
     mca_io_romio_data_t *data;
 
     data = (mca_io_romio_data_t *) fh->f_io_selected_data;
@@ -331,7 +330,7 @@ mca_io_romio_file_get_byte_offset (ompi_file_t *fh,
                                    MPI_Offset offset,
                                    MPI_Offset * disp)
 {
-    int         ret;
+    int ret;
     mca_io_romio_data_t *data;
 
     data = (mca_io_romio_data_t *) fh->f_io_selected_data;

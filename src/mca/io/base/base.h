@@ -25,6 +25,7 @@
 
 #include "mpi.h"
 #include "class/ompi_list.h"
+#include "class/ompi_free_list.h"
 #include "mca/io/io.h"
 
 
@@ -55,7 +56,7 @@ extern "C" {
      * public interface member -- and is only mentioned here for
      * completeness.
      */
-OMPI_DECLSPEC int mca_io_base_open(void);
+    OMPI_DECLSPEC int mca_io_base_open(void);
 
     /**
      * Create list of available io components.
@@ -82,8 +83,8 @@ OMPI_DECLSPEC int mca_io_base_open(void);
      * functions -- it is not considered a public interface member --
      * and is only mentioned here for completeness.
      */
-OMPI_DECLSPEC int mca_io_base_find_available(bool *allow_multi_user_threads, 
-                                   bool *have_hidden_threads);
+    OMPI_DECLSPEC int mca_io_base_find_available(bool *allow_multi_user_threads, 
+                                                 bool *have_hidden_threads);
     
     /**
      * Select an available component for a new file handle.
@@ -135,8 +136,8 @@ OMPI_DECLSPEC int mca_io_base_find_available(bool *allow_multi_user_threads,
      * file handle, or no component was selected and an error is
      * returned up the stack.
      */
-OMPI_DECLSPEC int mca_io_base_file_select(struct ompi_file_t *file,
-                                struct mca_base_component_t *preferred);
+    OMPI_DECLSPEC int mca_io_base_file_select(struct ompi_file_t *file,
+                                              struct mca_base_component_t *preferred);
 
     /**
      * Finalize a io component on a specific file handle.
@@ -158,7 +159,7 @@ OMPI_DECLSPEC int mca_io_base_file_select(struct ompi_file_t *file,
      * mca_io_base_select(), as result of this function, other
      * file handles may also be destroyed.
      */
-OMPI_DECLSPEC int mca_io_base_file_unselect(struct ompi_file_t *file);
+    OMPI_DECLSPEC int mca_io_base_file_unselect(struct ompi_file_t *file);
 
     /**
      * Invoke a back-end component to delete a file.
@@ -172,7 +173,80 @@ OMPI_DECLSPEC int mca_io_base_file_unselect(struct ompi_file_t *file);
      * the available components (rather than some pre-selected
      * module).  See io.h for details.
      */
-OMPI_DECLSPEC int mca_io_base_delete(char *filename, struct ompi_info_t *info);
+    OMPI_DECLSPEC int mca_io_base_delete(char *filename, 
+                                         struct ompi_info_t *info);
+
+    /**
+     * Initialize the components-in-use list.
+     *
+     * @returns OMPI_SUCCESS Always
+     *
+     * Creates resources associated with the io framework's
+     * currently-in-use list.
+     */
+    OMPI_DECLSPEC int mca_io_base_component_init(void);
+
+    /**
+     * Add a comoponent to the io framework's currently-in-use list,
+     * or increase its refcount if it's already in the list.
+     *
+     * @param comp The component being added (union)
+     *
+     * Add a component to the list of components that is monitored
+     * every time we go to make progress on asynchronous requests.  If
+     * the component is already in the list, its reference count will
+     * be increases.  
+     *
+     * For asynchronous progress, ompi_progress() will call
+     * mca_io_base_progress(), which will go down the list of active
+     * io components and call their progress() function.
+     *
+     * Since components on this list are refcounted; they must be
+     * removed with mca_io_base_component_del() for each time that
+     * they are added with mca_io_base_component_add().  Once their
+     * refcount reaches 0, they are removed from the list and will not
+     * be called for asynchronous progress.
+     *
+     * This function is protected by a mutex; it is safe to call this
+     * function from multiple threads simultaneously.
+     */
+    OMPI_DECLSPEC int mca_io_base_component_add(mca_io_base_components_t *comp);
+
+    /**
+     * Decrease the refcount of a component in the io framework's
+     * currently-in-use list.
+     *
+     * @param comp The component to be [potentially] removed from the
+     * currently-in-use list.
+     *
+     * Find a component in the currently-in-use list and decrease its
+     * refcount.  If its refcount goes to 0, it will be removed from
+     * the list and will not be polled for asynchonous progress.
+     *
+     * This function is protected by a mutex; it is safe to call this
+     * function from multiple threads simultaneously.
+     */
+    OMPI_DECLSPEC int mca_io_base_component_del(mca_io_base_components_t *comp);
+
+    /**
+     * Return all the cached requests on an MPI_File to the global IO
+     * request freelist.
+     *
+     * @param file MPI_File to flush the cache
+     *
+     * 
+     */
+    OMPI_DECLSPEC void mca_io_base_request_return(struct ompi_file_t *file);
+
+    /**
+     * Shut down the component list
+     *
+     * @returns OMPI_SUCCESS Always
+     *
+     * Destroys resources associated with the io framework's
+     * currently-in-use list.
+     */
+    OMPI_DECLSPEC int mca_io_base_component_finalize(void);
 
     /**
      * Shut down the io MCA framework.
@@ -185,7 +259,7 @@ OMPI_DECLSPEC int mca_io_base_delete(char *filename, struct ompi_info_t *info);
      *
      * It must be the last function invoked on the io MCA framework.
      */
-OMPI_DECLSPEC int mca_io_base_close(void);
+    OMPI_DECLSPEC int mca_io_base_close(void);
 
 
 /*
@@ -225,6 +299,15 @@ OMPI_DECLSPEC extern bool mca_io_base_components_available_valid;
  * process.
  */
 OMPI_DECLSPEC extern ompi_list_t mca_io_base_components_available;
+/**
+ * Indicator as to whether the freelist of IO requests is valid or
+ * not.
+ */
+OMPI_DECLSPEC extern bool mca_io_base_requests_valid;
+/**
+ * Free list of IO requests
+ */
+OMPI_DECLSPEC extern ompi_free_list_t mca_io_base_requests;
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

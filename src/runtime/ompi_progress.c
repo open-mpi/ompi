@@ -16,29 +16,50 @@
 #include <sched.h>
 #include "event/event.h"
 #include "mca/pml/pml.h"
+#include "mca/io/io.h"
 #include "runtime/ompi_progress.h"
 
-                                                                                                                
+
 static int ompi_progress_event_flag = OMPI_EVLOOP_ONCE;
-                                                                                                               
+int ompi_progress_pending_io_reqs = false;
+
+
 void ompi_progress_events(int flag)
 {
-#if 0
+#if 1
     if(flag != 0 || ompi_progress_event_flag == OMPI_EVLOOP_ONCE) {
         ompi_progress_event_flag = flag;
     }
 #endif
 }
-                                                                                                               
+
+
 void ompi_progress(void)
 {
     /* progress any outstanding communications */
-    int events = 0;
+    int ret, events = 0;
 #if OMPI_HAVE_THREADS == 0
-    if(ompi_progress_event_flag != 0)
-       events += ompi_event_loop(ompi_progress_event_flag);
+    if (ompi_progress_event_flag != 0) {
+        ret = ompi_event_loop(ompi_progress_event_flag);
+        if (ret > 0) {
+            events += ret;
+        }
+    }
 #endif
-    events += mca_pml.pml_progress();
+    ret = mca_pml.pml_progress();
+    if (ret > 0) {
+        events += ret;
+    }
+
+    /* Progress IO requests, if there are any */
+
+    if (ompi_progress_pending_io_reqs > 0) {
+        ret = mca_io_base_progress();
+        if (ret > 0) {
+            events += ret;
+            ompi_progress_pending_io_reqs -= ret;
+        }
+    }
 
 #if 0
     /* TSW - disable this until can validate that it doesn't impact SMP
@@ -50,8 +71,9 @@ void ompi_progress(void)
      * the processor is oversubscribed - this will result in a best-case
      * latency equivalent to the time-slice.
     */
-    if(events == 0)
+    if(events == 0) {
         sched_yield();
+    }
 #endif
 }
 

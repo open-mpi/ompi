@@ -81,6 +81,9 @@ mca_io_romio_file_iread_at (ompi_file_t *fh,
     ret =
         ROMIO_PREFIX(MPI_File_iread_at) (data->romio_fh, offset, buf, count,
                                         datatype, &req->romio_rq);
+    if (MPI_SUCCESS == ret) {
+        MCA_IO_ROMIO_REQUEST_ADD(request);
+    }
     OMPI_THREAD_UNLOCK (&mca_io_romio_mutex);
 
     return ret;
@@ -146,6 +149,9 @@ mca_io_romio_file_iread (ompi_file_t *fh,
     ret =
         ROMIO_PREFIX(MPI_File_iread) (data->romio_fh, buf, count, datatype,
                                      &req->romio_rq);
+    if (MPI_SUCCESS == ret) {
+        MCA_IO_ROMIO_REQUEST_ADD(request);
+    }
     OMPI_THREAD_UNLOCK (&mca_io_romio_mutex);
 
     return ret;
@@ -190,6 +196,9 @@ mca_io_romio_file_iread_shared (ompi_file_t *fh,
     ret =
         ROMIO_PREFIX(MPI_File_iread_shared) (data->romio_fh, buf, count, 
                                              datatype, &req->romio_rq);
+    if (MPI_SUCCESS == ret) {
+        MCA_IO_ROMIO_REQUEST_ADD(request);
+    }
     OMPI_THREAD_UNLOCK (&mca_io_romio_mutex);
 
     return ret;
