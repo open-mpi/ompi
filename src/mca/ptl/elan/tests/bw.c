@@ -20,7 +20,7 @@ main (int argc,
       char *argv[])
 {
     int         myid, numprocs, i, j;
-    int         size, loop, win, page_size;
+    int         min=0, max=0, size=0, loop, win, page_size;
     struct timeval t_start, t_end;
     char        *s_buf, *r_buf;
 
@@ -34,24 +34,24 @@ main (int argc,
     MPI_Comm_size (MPI_COMM_WORLD, &numprocs);
     MPI_Comm_rank (MPI_COMM_WORLD, &myid);
 
-    if (argc < 3) {
-        fprintf (stderr, "Usage: %s loop win size\n", argv[0]);
+    if (argc < 5) {
+        fprintf (stderr, "Usage: %s loop win min max \n", argv[0]);
         MPI_Finalize ();
         return 0;
     }
-    size= atoi (argv[3]);
+    max = atoi (argv[4]);
+    min = atoi (argv[3]);
     win = atoi (argv[2]);
     loop= atoi (argv[1]);
     page_size = getpagesize ();
 
-    for (i = 0; i < size; i++) {
+    for (i = 0; i < max ; i++) {
         s_buf[i] = 'a';
         r_buf[i] = 'b';
     }
 
-    /*MPI_Barrier (MPI_COMM_WORLD);*/
-
-    for (i = 0; i < loop + skip; i++) {
+    for (size = min; size <= max ; size = (size==0) ? 1 : 2*size) {
+      for (i = 0; i < loop + skip; i++) {
 	if (myid == 0) {
 	    /* Start time */
 	    if ( i == skip )
@@ -71,19 +71,19 @@ main (int argc,
 	    MPI_Waitall (win, request, tmp_stat);
 	    MPI_Send (s_buf, 4, MPI_CHAR, 0, 101, MPI_COMM_WORLD);
 	}
-	/*MPI_Barrier (MPI_COMM_WORLD);*/
-    }
+      }
 
-    if (myid == 0) {
-        double      latency;
-	gettimeofday (&t_end, 0);
-	latency = ((1.0e6 * t_end.tv_sec + t_end.tv_usec) 
-		- (1.0e6 * t_start.tv_sec + t_start.tv_usec)) 
-	    / (loop * win);
-        fprintf (stdout, "%8d  %8.2f\n", size, size / latency);
-        fflush (stdout);
+	if (myid == 0) {
+	    double      latency;
+	    gettimeofday (&t_end, 0);
+	    latency = ((1.0e6 * t_end.tv_sec + t_end.tv_usec) 
+		    - (1.0e6 * t_start.tv_sec + t_start.tv_usec)) 
+		/ (loop * win);
+	    fprintf (stdout, "%8d  %8.2f\n", size, size / latency);
+	    fflush (stdout);
+	}
+      MPI_Barrier (MPI_COMM_WORLD);
     }
-
     MPI_Finalize ();
     return 0;
 }
