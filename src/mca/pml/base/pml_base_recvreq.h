@@ -58,6 +58,7 @@ typedef struct mca_pml_base_recv_request_t mca_pml_base_recv_request_t;
 {                                                                        \
     /* increment reference count on communicator */                      \
     OBJ_RETAIN(comm);                                                    \
+    OBJ_RETAIN(datatype);                                                \
                                                                          \
     OMPI_REQUEST_INIT(&(request)->req_base.req_ompi);                    \
     (request)->req_bytes_packed = 0;                                     \
@@ -73,6 +74,18 @@ typedef struct mca_pml_base_recv_request_t mca_pml_base_recv_request_t;
     (request)->req_base.req_pml_complete = (persistent ? true : false);  \
     (request)->req_base.req_free_called = false;                         \
 }
+
+/** 
+ *  Return a receive request. Handle the release of the communicator and the
+ *  attached datatype.
+ *
+ *  @param request (IN)     Receive request.
+ */
+#define MCA_PML_BASE_RECV_REQUEST_RETURN( request )      \
+    do {                                                 \
+        OBJ_RELEASE( (request)->req_base.req_comm);      \
+        OBJ_RELEASE( (request)->req_base.req_datatype ); \
+    } while (0)
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

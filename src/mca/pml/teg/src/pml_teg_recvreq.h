@@ -36,23 +36,23 @@ OBJ_CLASS_DECLARATION(mca_pml_teg_recv_request_t);
  *  @param rc (OUT)  OMPI_SUCCESS or error status on failure.
  *  @return          Receive request.
  */
-#define MCA_PML_TEG_RECV_REQUEST_ALLOC(recvreq, rc)                  \
-    {                                                                \
-    ompi_list_item_t* item;                                          \
-    OMPI_FREE_LIST_GET(&mca_pml_teg.teg_recv_requests, item, rc);    \
-    recvreq = (mca_pml_base_recv_request_t*)item;                    \
-    }
+#define MCA_PML_TEG_RECV_REQUEST_ALLOC(recvreq, rc)                   \
+    do {                                                              \
+        ompi_list_item_t* item;                                       \
+        OMPI_FREE_LIST_GET(&mca_pml_teg.teg_recv_requests, item, rc); \
+        recvreq = (mca_pml_base_recv_request_t*)item;                 \
+    } while(0)
 
 /**
  *  Return a recv request to the modules free list.
  *
  *  @param request (IN)  Receive request.
  */
-#define MCA_PML_TEG_RECV_REQUEST_RETURN(request)                                        \
-    {                                                                                   \
-    OBJ_RELEASE((request)->req_base.req_comm);                                            \
-    OMPI_FREE_LIST_RETURN(&mca_pml_teg.teg_recv_requests, (ompi_list_item_t*)request);  \
-    }
+#define MCA_PML_TEG_RECV_REQUEST_RETURN(request)                                           \
+    do {                                                                                   \
+        MCA_PML_BASE_RECV_REQUEST_RETURN( request );                                       \
+        OMPI_FREE_LIST_RETURN(&mca_pml_teg.teg_recv_requests, (ompi_list_item_t*)request); \
+    } while(0)
 
 /**
  * Attempt to match the request against the unexpected fragment list
