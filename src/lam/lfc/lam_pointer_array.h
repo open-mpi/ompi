@@ -2,8 +2,8 @@
  * $HEADER$
  */
 
-#ifndef _MPI_F2C_TABLE
-#define _MPI_F2C_TABLE
+#ifndef _LAM_POINTER_ARRAY
+#define _LAM_POINTER_ARRAY
 
 
 #include "lam/threads/mutex.h"
@@ -19,7 +19,7 @@ typedef struct lam_pointer_array_t lam_pointer_array_t;
 struct lam_pointer_array_t {
     /* synchronization object */
     lam_mutex_t lock;
-    /* index of lowest free element */
+    /* inde_ of lowest free element */
     size_t lowest_free;
     /* number of fee elements in the list */
     size_t number_free;
@@ -28,6 +28,7 @@ struct lam_pointer_array_t {
     /* pointer to array of pointers */
     void **addr;
 };
+
 
 /**
  * Add a pointer to the array (Grow the array, if need be)
@@ -62,4 +63,4 @@ int lam_pointer_array_set_item(lam_pointer_array_t *array,
  */
 void *lam_pointer_array_get_item(lam_pointer_array_t *array, size_t index);
 
-#endif /* _MPI_F2C_TABLE */
+#endif /* _LAM_POINTER_ARRAY*/
