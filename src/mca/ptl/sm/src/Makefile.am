@@ -38,15 +38,21 @@ libmca_ptl_sm_la_LIBADD = \
 	librecompile.la \
         $(top_ompi_builddir)/src/mca/common/sm/libmca_common_sm.la
 libmca_ptl_sm_la_SOURCES = \
-	ptl_sm.c \
-	ptl_sm.h \
-	ptl_sm_component.c \
-	ptl_sm_frag.h \
-	ptl_sm_frag.c \
-	ptl_sm_send.c \
-	ptl_sm_sendreq.c \
-	ptl_sm_sendfrag.c \
-	ptl_sm_recvfrag.c
+        ptl_sm.c \
+        ptl_sm.h \
+        ptl_sm_address.h \
+        ptl_sm_component.c \
+        ptl_sm_frag.h \
+        ptl_sm_frag.c \
+        ptl_sm_peer.h \
+        ptl_sm_recvfrag.h \
+        ptl_sm_recvfrag.c \
+        ptl_sm_send.c \
+        ptl_sm_sendreq.c \
+        ptl_sm_sendreq.h \
+        ptl_sm_sendfrag.c \
+        ptl_sm_sendfrag.h
+
 libmca_ptl_sm_la_DEPENDENCIES = librecompile.la
 
 nodist_librecompile_la_SOURCES = \
