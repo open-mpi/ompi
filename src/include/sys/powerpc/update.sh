@@ -25,8 +25,9 @@ cat > $CFILE<<EOF
 #define static
 #define inline
 #define OMPI_GCC_INLINE_ASSEMBLY 1
-#define OMPI_POWERPC_SUPPORT_64BIT 0
 #include "atomic.h"
 EOF
 
-gcc -DHAVE_SMP -I. -S $CFILE -o atomic.s
+gcc -mcpu=970 -DOMPI_POWERPC_SUPPORT_64BIT=1 -I. -S $CFILE -o atomic-32-64.s
+gcc -DOMPI_POWERPC_SUPPORT_64BIT=0 -I. -S $CFILE -o atomic-32.s
+gcc -m64 -DOMPI_POWERPC_SUPPORT_64BIT=1 -I. -S $CFILE -o atomic-64.s

@@ -74,127 +74,6 @@ static bool already_done = false;
 
 #define DEFAULT_NUMBER_INTERFACES 10
 
-#ifndef WIN32
-static int old_ompi_ifinit(void)
-{
-    char buff[1024];
-    char *ptr;
-    struct ifconf ifconf;
-    int sd;
-    ifconf.ifc_len = sizeof(buff);
-    ifconf.ifc_buf = buff;
-
-    if (already_done) {
-        return OMPI_SUCCESS;
-    }
-    already_done = true;
-
-    if((sd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-        ompi_output(0, "ompi_ifinit: socket() failed with errno=%d\n", errno);
-        return OMPI_ERROR;
-    }
-
-    if(ioctl(sd, SIOCGIFCONF, &ifconf) < 0) {
-        ompi_output(0, "ompi_ifinit: ioctl(SIOCGIFCONF) failed with errno=%d", errno);
-        close(sd);
-        return OMPI_ERROR;
-    }
-    OBJ_CONSTRUCT(&ompi_if_list, ompi_list_t);
-
-    for(ptr = buff; ptr < buff + ifconf.ifc_len; ) {
-        struct ifreq* ifr = (struct ifreq*)ptr;
-        ompi_if_t intf;
-        ompi_if_t *intf_ptr;
-
-        OBJ_CONSTRUCT(&intf, ompi_list_item_t);
-
-#if defined(__APPLE__)
-        ptr += (sizeof(ifr->ifr_name) + 
-               MAX(sizeof(struct sockaddr),ifr->ifr_addr.sa_len));
-#else
-#if 0
-        switch(ifr->ifr_addr.sa_family) {
-        case AF_INET6:
-            ptr += sizeof(ifr->ifr_name) + sizeof(struct sockaddr_in6);
-            break;
-        case AF_INET:
-        default:
-            ptr += sizeof(ifr->ifr_name) + sizeof(struct sockaddr);
-            break;
-        }
-#else
-
-	/* Jeff/George/Graham fix.  According to LAM/MPI and FT-MPI
-	   and /usr/include/linux/if.h, you should really be advancing
-	   by sizeof(struct ifreq) -- sizeof(ifr->ifr_name) +
-	   sizeof(struct sockaddr) may be smaller than sizeof(struct
-	   ifreq).  More specifically, the second element of struct
-	   ifreq may be a union, of which struct sockaddr is only one
-	   element (and may not be the smallest). */
-
-	ptr += sizeof(struct ifreq);
-#endif
-#endif
-        if(ifr->ifr_addr.sa_family != AF_INET)
-            continue;
-
-        if(ioctl(sd, SIOCGIFFLAGS, ifr) < 0) {
-            ompi_output(0, "ompi_ifinit: ioctl(SIOCGIFFLAGS) failed with errno=%d", errno);
-            continue;
-        }
-        if ((ifr->ifr_flags & IFF_UP) == 0) 
-            continue;
-#if 0
-        if ((ifr->ifr_flags & IFF_LOOPBACK) != 0)
-            continue;
-#endif
-                                                                                
-        strcpy(intf.if_name, ifr->ifr_name);
-        intf.if_flags = ifr->ifr_flags;
-
-#if defined(__APPLE__)
-        intf.if_index = ompi_list_get_size(&ompi_if_list)+1;
-#else
-        if(ioctl(sd, SIOCGIFINDEX, ifr) < 0) {
-            ompi_output(0,"ompi_ifinit: ioctl(SIOCGIFINDEX) failed with errno=%d", errno);
-            continue;
-        }
-#if defined(ifr_ifindex)
-        intf.if_index = ifr->ifr_ifindex;
-#elif defined(ifr_index)
-        intf.if_index = ifr->ifr_index;
-#else
-        intf.if_index = -1;
-#endif
-#endif /* __APPLE__ */
-
-        if(ioctl(sd, SIOCGIFADDR, ifr) < 0) {
-            ompi_output(0, "ompi_ifinit: ioctl(SIOCGIFADDR) failed with errno=%d", errno);
-            break;
-        }
-        if(ifr->ifr_addr.sa_family != AF_INET) 
-            continue;
-
-        memcpy(&intf.if_addr, &ifr->ifr_addr, sizeof(intf.if_addr));
-        if(ioctl(sd, SIOCGIFNETMASK, ifr) < 0) {
-            ompi_output(0, "ompi_ifinit: ioctl(SIOCGIFNETMASK) failed with errno=%d", errno);
-            continue;
-        }
-        memcpy(&intf.if_mask, &ifr->ifr_addr, sizeof(intf.if_mask));
-
-        intf_ptr = (ompi_if_t*) malloc(sizeof(ompi_if_t));
-        if(intf_ptr == 0) {
-            ompi_output(0, "ompi_ifinit: unable to allocated %d bytes\n", sizeof(ompi_if_t));
-            return OMPI_ERR_OUT_OF_RESOURCE;
-        }
-        memcpy(intf_ptr, &intf, sizeof(intf));
-        ompi_list_append(&ompi_if_list, (ompi_list_item_t*)intf_ptr);
-    }
-    close(sd);
-    return OMPI_SUCCESS;
-}
-#endif
-
 /*
  *  Discover the list of configured interfaces. Don't care about any
  *  interfaces that are not up or are local loopbacks.
@@ -208,11 +87,6 @@ static int ompi_ifinit(void)
     char *ptr;
     struct ifconf ifconf;
     int ifc_len;
-
-    /* BWB - remove once this code is better tested */
-    if (NULL != getenv("OMPI_orig_if")) {
-        return old_ompi_ifinit();
-    }
 
     if (already_done) {
         return OMPI_SUCCESS;
