@@ -61,7 +61,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_CREATE_KEYVAL,
 void mpi_comm_create_keyval_f(MPI_F_copy_function* comm_copy_attr_fn,
 			      MPI_F_delete_function* comm_delete_attr_fn,
 			      MPI_Fint *comm_keyval,
-			      char *extra_state, MPI_Fint *ierr)
+			      MPI_Fint *extra_state, MPI_Fint *ierr)
 {
     int ret, c_err;
     ompi_attribute_fn_ptr_union_t copy_fn;
