@@ -41,7 +41,8 @@ int mca_io_romio_Wait(MPI_Request *request, MPI_Status *status){
     THREAD_LOCK(&mca_io_romio_mutex);
     ret=mca_io_romio_MPIO_Wait(&romio_rq, status);
     THREAD_UNLOCK(&mca_io_romio_mutex);
-  
+    
+    LAM_FREE(*request);  
     return ret;
 }
 

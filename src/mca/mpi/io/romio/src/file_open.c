@@ -16,12 +16,13 @@ int mca_io_romio_File_open(MPI_Comm comm, char *filename, int amode,
     mca_io_romio_MPI_File romio_fh;
     mca_io_romio_file_t *mca_romio_fh;  
 
+    /* create a new lam_file_t */
     mca_romio_fh = LAM_MALLOC(sizeof(mca_io_romio_file_t));
     (*fh) = (lam_file_t *) mca_romio_fh;
-
     strncpy((*fh)->f_name,filename,MPI_MAX_OBJECT_NAME);
+    (*fh)->lam_io_version=LAM_IO_1_0_0;
+    (*fh)->mca_io_functions.f_io=romio_actions;
 
-    
     romio_fh = mca_romio_fh->romio_fh;
 
     THREAD_LOCK(&mca_io_romio_mutex);
