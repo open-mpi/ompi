@@ -42,12 +42,16 @@ struct module_file_item_t {
 };
 typedef struct module_file_item_t module_file_item_t;
 
+OBJ_CLASS_INSTANCE(module_file_item_t, ompi_list_item_t, NULL, NULL);
+
 struct dependency_item_t {
   ompi_list_item_t super;
 
   module_file_item_t *di_module_file_item;
 };
 typedef struct dependency_item_t dependency_item_t;
+
+OBJ_CLASS_INSTANCE(dependency_item_t, ompi_list_item_t, NULL, NULL);
 
 struct ltfn_data_holder_t {
   char type[MCA_BASE_MAX_TYPE_NAME_LEN];
@@ -144,11 +148,11 @@ static void find_dyn_modules(const char *path, const char *type_name,
 
   if (NULL == name) {
     params.name[0] = '\0';
-    ompi_output_verbose(0, 40, " looking for all dynamic %s MCA modules", 
+    ompi_output_verbose(40, 0, " looking for all dynamic %s MCA modules", 
                        type_name, NULL);
   } else {
     strcpy(params.name, name);
-    ompi_output_verbose(0, 40,
+    ompi_output_verbose(40, 0,
                        " looking for dynamic %s MCA module named \"%s\"",
                        type_name, name, NULL);
   }
@@ -195,19 +199,18 @@ static void find_dyn_modules(const char *path, const char *type_name,
        ompi_list_get_end(&found_files) != cur;
        cur = ompi_list_get_next(cur)) {
     file = (module_file_item_t *) cur;
-    if (UNVISITED == file->status)
+    if (UNVISITED == file->status) {
       open_module(file, found_modules);
+    }
   }
 
   /* So now we have a final list of loaded modules.  We can free all
      the file information. */
-
-  for (cur = ompi_list_get_first(&found_files); 
-       ompi_list_get_end(&found_files) != cur; ) {
-    file = (module_file_item_t *) cur;
-    cur = ompi_list_get_next(cur);
-    free(file);
-    ompi_list_remove_first(&found_files);
+  
+  for (cur = ompi_list_remove_first(&found_files); 
+       NULL != cur;
+       cur = ompi_list_remove_first(&found_files)) {
+    OBJ_RELEASE(cur);
   }
 
   /* All done */
@@ -215,10 +218,7 @@ static void find_dyn_modules(const char *path, const char *type_name,
   if (NULL != param) {
     free(param);
   }
-  /* JMS This list memory management may change */
-#if 0
-  ompi_list_destruct(&found_files);
-#endif
+  OBJ_DESTRUCT(&found_files);
   free(path_to_use);
 }
 
@@ -265,11 +265,10 @@ static int save_filename(const char *filename, lt_ptr data)
 
   /* Save all the info and put it in the list of found modules */
 
-  module_file = malloc(sizeof(module_file_item_t));
+  module_file = OBJ_NEW(module_file_item_t);
   if (NULL == module_file) {
     return OMPI_ERR_OUT_OF_RESOURCE;
   }
-  OBJ_CONSTRUCT(module_file, ompi_list_item_t);
   strcpy(module_file->type, params->type);
   strcpy(module_file->name, basename + prefix_len);
   strcpy(module_file->basename, basename);
@@ -299,14 +298,14 @@ static int open_module(module_file_item_t *target_file,
   mca_base_module_list_item_t *mitem;
   dependency_item_t *ditem;
 
-  ompi_output_verbose(0, 40, " examining dyanmic %s MCA module \"%s\"",
+  ompi_output_verbose(40, 0, " examining dyanmic %s MCA module \"%s\"",
                      target_file->type, target_file->name, NULL);
-  ompi_output_verbose(0, 40, " %s", target_file->filename, NULL);
+  ompi_output_verbose(40, 0, " %s", target_file->filename, NULL);
 
   /* Was this module already loaded (e.g., via dependency)? */
 
   if (LOADED == target_file->status) {
-    ompi_output_verbose(0, 40, " already loaded (ignored)", NULL);
+    ompi_output_verbose(40, 0, " already loaded (ignored)", NULL);
     return OMPI_SUCCESS;
   }
 
@@ -322,7 +321,7 @@ static int open_module(module_file_item_t *target_file,
     mitem = (mca_base_module_list_item_t *) cur;
     if (0 == strcmp(mitem->mli_module->mca_type_name, target_file->type) &&
         0 == strcmp(mitem->mli_module->mca_module_name, target_file->name)) {
-      ompi_output_verbose(0, 40, " already loaded (ignored)", NULL);
+      ompi_output_verbose(40, 0, " already loaded (ignored)", NULL);
       target_file->status = FAILED_TO_LOAD;
       return OMPI_ERR_BAD_PARAM;
     }
@@ -343,7 +342,7 @@ static int open_module(module_file_item_t *target_file,
 
   module_handle = lt_dlopenext(target_file->filename);
   if (NULL == module_handle) {
-    ompi_output_verbose(0, 40, " unable to open: %s (ignored)", 
+    ompi_output_verbose(40, 0, " unable to open: %s (ignored)", 
                        lt_dlerror(), NULL);
     target_file->status = FAILED_TO_LOAD;
     free_dependency_list(&dependencies);
@@ -376,7 +375,7 @@ static int open_module(module_file_item_t *target_file,
 
   module_struct = lt_dlsym(module_handle, struct_name);
   if (NULL == module_struct) {
-    ompi_output_verbose(0, 40, " \"%s\" does not appear to be a valid "
+    ompi_output_verbose(40, 0, " \"%s\" does not appear to be a valid "
                        "%s MCA dynamic module (ignored)", 
                        target_file->basename, target_file->type, NULL);
     free(mitem);
@@ -406,11 +405,11 @@ static int open_module(module_file_item_t *target_file,
                                     target_file->name,
                                     ditem->di_module_file_item->type,
                                     ditem->di_module_file_item->name);
-    free(ditem);
+    OBJ_RELEASE(ditem);
   }
   OBJ_DESTRUCT(&dependencies);
 
-  ompi_output_verbose(0, 40, " opened dynamic %s MCA module \"%s\"",
+  ompi_output_verbose(40, 0, " opened dynamic %s MCA module \"%s\"",
                      target_file->type, target_file->name, NULL);
   target_file->status = LOADED;
     
@@ -456,7 +455,7 @@ static int check_ompi_info(module_file_item_t *target_file,
      them.  Return failure upon the first module that fails to
      load. */
 
-  ompi_output_verbose(0, 40, " opening ompi_info file: %s", depname, NULL);
+  ompi_output_verbose(40, 0, " opening ompi_info file: %s", depname, NULL);
   while (NULL != fgets(buffer, BUFSIZ, fp)) {
 
     /* Perl chomp */
@@ -498,7 +497,7 @@ static int check_ompi_info(module_file_item_t *target_file,
       }
     }
   }
-  ompi_output_verbose(0, 40, " ompi_info file closed (%s)", 
+  ompi_output_verbose(40, 0, " ompi_info file closed (%s)", 
                      target_file->basename, NULL);
 
   /* All done -- all depenencies satisfied */
@@ -560,7 +559,7 @@ static int check_dependency(char *line, module_file_item_t *target_file,
     /* Catch the bozo dependency on itself */
 
     else if (mitem == target_file) {
-      ompi_output_verbose(0, 40,
+      ompi_output_verbose(40, 0,
                          " module depends on itself (ignored dependency)", 
                          NULL);
       happiness = true;
@@ -571,7 +570,7 @@ static int check_dependency(char *line, module_file_item_t *target_file,
        dependency sub-tree) */
 
     else if (LOADED == mitem->status) {
-      ompi_output_verbose(0, 40, " dependency has already been loaded (%s)",
+      ompi_output_verbose(40, 0, " dependency has already been loaded (%s)",
                          mitem->basename, NULL);
       happiness = true;
       break;
@@ -582,7 +581,7 @@ static int check_dependency(char *line, module_file_item_t *target_file,
        dependencies. */
 
     else if (FAILED_TO_LOAD == mitem->status) {
-      ompi_output_verbose(0, 40, " dependency previously failed to load (%s)",
+      ompi_output_verbose(40, 0, " dependency previously failed to load (%s)",
                          mitem->basename, NULL);
       break;
     }
@@ -590,7 +589,7 @@ static int check_dependency(char *line, module_file_item_t *target_file,
     /* If we hit a cycle, return badness */
 
     else if (CHECKING_CYCLE == mitem->status) {
-      ompi_output_verbose(0, 40, " found cycle! (%s)",
+      ompi_output_verbose(40, 0, " found cycle! (%s)",
                          mitem->basename, NULL);
       break;
     }
@@ -599,12 +598,12 @@ static int check_dependency(char *line, module_file_item_t *target_file,
        to load it. */
 
     else if (UNVISITED == mitem->status) {
-      ompi_output_verbose(0, 40, " loading dependency (%s)",
+      ompi_output_verbose(40, 0, " loading dependency (%s)",
                          mitem->basename, NULL);
       if (OMPI_SUCCESS == open_module(target_file, found_modules)) {
         happiness = true;
       } else {
-        ompi_output_verbose(0, 40, " dependency failed to load (%s)",
+        ompi_output_verbose(40, 0, " dependency failed to load (%s)",
                            mitem->basename, NULL);
       }
       break;
@@ -621,13 +620,12 @@ static int check_dependency(char *line, module_file_item_t *target_file,
   /* The dependency loaded properly.  Increment its refcount so that
      it doesn't get unloaded before we get unloaded. */
 
-  ditem = malloc(sizeof(dependency_item_t));
+  ditem = OBJ_NEW(dependency_item_t);
   if (NULL == ditem) {
     return OMPI_ERR_OUT_OF_RESOURCE;
   }
-  cur = (ompi_list_item_t *) ditem;
-  OBJ_CONSTRUCT(cur, ompi_list_item_t);
-  ompi_list_append(dependencies, cur);
+  ditem->di_module_file_item = mitem;
+  ompi_list_append(dependencies, (ompi_list_item_t*) ditem);
   
   /* All done -- all depenencies satisfied */
 
@@ -645,7 +643,7 @@ static void free_dependency_list(ompi_list_t *dependencies)
   for (item = ompi_list_remove_first(dependencies);
        NULL != item;
        item = ompi_list_remove_first(dependencies)) {
-    free(item);
+    OBJ_RELEASE(item);
   }
   OBJ_DESTRUCT(dependencies);
 }
