@@ -6,6 +6,8 @@
 #define LAM_WIN_H
 
 
+#include "mpi.h"
+#include "errhandler/errhandler.h"
 #include "lfc/lam_object.h"
 #include "lfc/lam_hash_table.h"
 
