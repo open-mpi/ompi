@@ -13,7 +13,6 @@ AM_CPPFLAGS = \
 noinst_LTLIBRARIES = libmca_io_romio.la
 libmca_io_romio_la_SOURCES = \
 	io_romio.h \
-	io_romio_conv.h \
 	io_romio_component.c \
 	io_romio_file_open.c \
 	io_romio_file_read.c \

@@ -5,7 +5,9 @@
 include $(top_ompi_srcdir)/config/Makefile.options
 
 SUBDIRS = include adio mpi-io 
-DIST_SUBDIRS = $(SUBDIRS) doc test
+DIST_SUBDIRS = $(SUBDIRS) doc
+
+EXTRA_DIST = README COPYRIGHT README_OMPI
 
 noinst_LTLIBRARIES = libromio_dist.la 
 libromio_dist_la_SOURCES = 

@@ -16,7 +16,7 @@ if OMPI_BUILD_io_romio_DSO
 component_noinst =
 component_install = mca_io_romio.la
 else
-component_noinst = libmca_mpi_io_romio.la
+component_noinst = libmca_io_romio.la
 component_install =
 endif
 
@@ -29,6 +29,6 @@ mca_io_romio_la_LIBADD = $(libs)
 mca_io_romio_la_LDFLAGS = -module -avoid-version
 
 noinst_LTLIBRARIES = $(component_noinst)
-libmca_mpi_io_romio_la_SOURCES =
-libmca_mpi_io_romio_la_LIBADD = $(libs)
-libmca_mpi_io_romio_la_LDFLAGS = -module -avoid-version
+libmca_io_romio_la_SOURCES =
+libmca_io_romio_la_LIBADD = $(libs)
+libmca_io_romio_la_LDFLAGS = -module -avoid-version
