@@ -1,0 +1,38 @@
+#! /bin/csh -f
+#  Name
+#  ====
+#  run script for mca pcm tests
+
+# Arguements
+# ==========
+# 
+# test_list  =  no args runs all tests
+#              or
+#               base runs ompi pcm base tests
+
+# Usage
+#
+# =====
+# To invoke this script, enter either
+#     run_tests 
+# with no arguments to run all tests, or
+#     run_tests <test_name>
+
+umask 007
+
+if ("x$1" == "x") then
+  cd base;
+  ./run_tests;
+  cd ..;
+else if ("$1" == "base") then
+  cd base;
+  ./run_tests;
+  cd ..;
+else
+  echo "correct use: "
+  echo "    run_tests    (to run all mca pcm tests)"
+  echo "or  run_tests < base >"
+  exit -1
+endif
+
+
