@@ -190,7 +190,11 @@ static void file_constructor(ompi_file_t *file)
        be changed by invoking MPI_FILE_SET_ERRHANDLER on
        MPI_FILE_NULL). */
 
-    file->error_handler = ompi_mpi_file_null.error_handler;
+    if (file != &ompi_mpi_file_null) {
+        file->error_handler = ompi_mpi_file_null.error_handler;
+    } else {
+        file->error_handler = &ompi_mpi_errors_return;
+    }
     OBJ_RETAIN(file->error_handler);
 
     /* Initialize the module */
