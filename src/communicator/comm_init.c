@@ -50,7 +50,7 @@ int ompi_comm_init(void)
     group->grp_proc_pointers = ompi_proc_world(&size);
     group->grp_my_rank       = ompi_proc_local()->proc_vpid ;
     group->grp_proc_count    = size;
-    group->grp_ok_to_free    = false;
+    group->grp_flags        |= OMPI_GROUP_INTRINSIC;
     OBJ_RETAIN(group); /* bump reference count for remote reference */
 
     ompi_mpi_comm_world.c_contextid    = 0;
@@ -67,6 +67,7 @@ int ompi_comm_init(void)
     strncpy (ompi_mpi_comm_world.c_name, "MPI_COMM_WORLD", 
              strlen("MPI_COMM_WORLD")+1 );
     ompi_mpi_comm_world.c_flags |= OMPI_COMM_NAMEISSET;
+    ompi_mpi_comm_world.c_flags |= OMPI_COMM_INTRINSIC;
     ompi_attr_hash_init(&ompi_mpi_comm_world.c_keyhash);
 
     /* VPS: Remove this later */
@@ -88,7 +89,7 @@ int ompi_comm_init(void)
     group->grp_proc_pointers = ompi_proc_self(&size);
     group->grp_my_rank       = 0;
     group->grp_proc_count    = size;
-    group->grp_ok_to_free    = false;
+    group->grp_flags        |= OMPI_GROUP_INTRINSIC;
     OBJ_RETAIN(group); /* bump reference count for remote reference */
 
     ompi_mpi_comm_self.c_contextid    = 1;
@@ -103,6 +104,7 @@ int ompi_comm_init(void)
 
     strncpy(ompi_mpi_comm_self.c_name,"MPI_COMM_SELF",strlen("MPI_COMM_SELF")+1);
     ompi_mpi_comm_self.c_flags |= OMPI_COMM_NAMEISSET;
+    ompi_mpi_comm_self.c_flags |= OMPI_COMM_INTRINSIC;
     ompi_attr_hash_init(&ompi_mpi_comm_self.c_keyhash);
     
     /* VPS: Remove this later */
@@ -120,24 +122,22 @@ int ompi_comm_init(void)
 
     /* Setup MPI_COMM_NULL */
     OBJ_CONSTRUCT(&ompi_mpi_comm_null, ompi_communicator_t);
-    group = OBJ_NEW(ompi_group_t);
-    group->grp_proc_pointers = NULL;
-    group->grp_my_rank       = MPI_PROC_NULL;
-    group->grp_proc_count    = 0;
-    group->grp_ok_to_free    = false; 
-    OBJ_RETAIN(group); /* bump reference count for remote reference */
+    ompi_mpi_comm_null.c_local_group  = &ompi_mpi_group_null;
+    ompi_mpi_comm_null.c_remote_group = &ompi_mpi_group_null;
+    OBJ_RETAIN(&ompi_mpi_group_null); 
+    OBJ_RETAIN(&ompi_mpi_group_null); 
 
     ompi_mpi_comm_null.c_contextid    = 2;
     ompi_mpi_comm_null.c_f_to_c_index = 2;
     ompi_mpi_comm_null.c_my_rank      = MPI_PROC_NULL;
-    ompi_mpi_comm_null.c_local_group  = group;
-    ompi_mpi_comm_null.c_remote_group = group;
+
     ompi_mpi_comm_null.error_handler  = &ompi_mpi_errors_are_fatal;
     OBJ_RETAIN( &ompi_mpi_errors_are_fatal );
     ompi_pointer_array_set_item (&ompi_mpi_communicators, 2, &ompi_mpi_comm_null);
 
     strncpy(ompi_mpi_comm_null.c_name,"MPI_COMM_NULL",strlen("MPI_COMM_NULL")+1);
     ompi_mpi_comm_null.c_flags |= OMPI_COMM_NAMEISSET;
+    ompi_mpi_comm_null.c_flags |= OMPI_COMM_INTRINSIC;
 
     /* VPS: Remove this later */
     ompi_mpi_comm_null.bcast_lin_reqs = NULL;
@@ -178,9 +178,15 @@ ompi_communicator_t *ompi_comm_allocate ( int local_size, int remote_size )
 
 int ompi_comm_finalize(void) 
 {
-    /* Destroy all predefined communicators */
+    /* Destroy all predefined communicators */    
     OBJ_DESTRUCT( &ompi_mpi_comm_null );
+    
+    ompi_mpi_comm_world.c_local_group->grp_flags = 0;
+    ompi_mpi_comm_world.c_flags = 0;
     OBJ_DESTRUCT( &ompi_mpi_comm_world );
+
+    ompi_mpi_comm_self.c_local_group->grp_flags = 0;
+    ompi_mpi_comm_self.c_flags = 0;
     OBJ_DESTRUCT( &ompi_mpi_comm_self );
 
     OBJ_DESTRUCT (&ompi_mpi_communicators);
