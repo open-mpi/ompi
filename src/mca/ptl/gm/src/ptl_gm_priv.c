@@ -212,9 +212,23 @@ int mca_ptl_gm_peer_send_continue( mca_ptl_gm_peer_t *ptl_peer,
     return OMPI_SUCCESS;
 }
 
-/* At this point the header is already filled up with informations for matching.
- * Now depending on the quantity of data that have to be transfered and on the flags
- * we will add more informations on the header.
+static void send_match_callback( struct gm_port* port, void* context, gm_status_t status )
+{
+    mca_ptl_gm_module_t* gm_ptl;
+    mca_ptl_base_header_t* header = (mca_ptl_base_header_t*)context;
+
+    gm_ptl = (mca_ptl_gm_module_t*)((long)header->hdr_rndv.hdr_frag_length);
+
+    OMPI_FREE_LIST_RETURN( &(gm_ptl->gm_send_dma_frags), ((ompi_list_item_t*)header) );
+    /* release the send token */
+    ompi_atomic_add( &(gm_ptl->num_send_tokens), 1 );
+}
+
+/* This function is used for the initial send. For small size messages the data will be attached
+ * to the header, when for long size messages we will setup a rendez-vous protocol. We dont need
+ * to fill a fragment description here as all that we need is the request pointer. In same time
+ * even if we fill a fragment it will be lost as soon as we get the answer from the remote node
+ * and we will be unable to reuse any informations stored inside (like the convertor).
  */
 int mca_ptl_gm_peer_send( struct mca_ptl_base_module_t* ptl,
                           struct mca_ptl_base_peer_t* ptl_base_peer,
@@ -230,61 +244,34 @@ int mca_ptl_gm_peer_send( struct mca_ptl_base_module_t* ptl,
     ompi_convertor_t *convertor = NULL;
     int rc, freeAfter;
     unsigned int in_size, max_data = 0;
-    mca_ptl_gm_send_frag_t *fragment;
     mca_ptl_gm_peer_t* ptl_peer = (mca_ptl_gm_peer_t*)ptl_base_peer;
+    ompi_list_item_t *item;
+    char* sendbuf;
 
-    fragment = mca_ptl_gm_alloc_send_frag( (mca_ptl_gm_module_t*)ptl, sendreq );
-    if( NULL == fragment ) {
-        ompi_output( 0,"[%s:%d] Unable to allocate a gm send frag\n",
-                     __FILE__, __LINE__ );
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
+    OMPI_FREE_LIST_WAIT( &(((mca_ptl_gm_module_t*)ptl)->gm_send_dma_frags), item, rc );
+    ompi_atomic_sub( &(((mca_ptl_gm_module_t*)ptl)->num_send_tokens), 1 );
+    sendbuf = (char*)item;
 
-    hdr = (mca_ptl_base_header_t*)fragment->send_buf;
+    hdr = (mca_ptl_base_header_t*)item;
     size_in = size;
 
-    fragment->send_frag.frag_base.frag_peer = ptl_base_peer;
-
-    if( (flags & MCA_PTL_FLAGS_ACK) || (0 == offset) ) {
-        /* At this point the header is already filled up with informations as a match header */
-        (void)mca_ptl_gm_init_header_match( fragment, sendreq, flags );
-	if( flags & MCA_PTL_FLAGS_ACK ) {
-	    header_length = sizeof(mca_ptl_base_rendezvous_header_t);
-	    hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_RNDV;
-	    hdr->hdr_rndv.hdr_frag_length = size_in;
-	    hdr->hdr_rndv.hdr_src_ptr.lval = 0;
-	    hdr->hdr_rndv.hdr_src_ptr.pval = fragment;
-	} else {
-	    header_length = sizeof(mca_ptl_base_match_header_t);
-	}
-    } else {
-	header_length = sizeof(mca_ptl_base_frag_header_t);
-	hdr->hdr_frag.hdr_common.hdr_type  = MCA_PTL_HDR_TYPE_FRAG;
-        hdr->hdr_frag.hdr_common.hdr_flags = flags;
-	hdr->hdr_frag.hdr_frag_length      = size_in;
-	hdr->hdr_frag.hdr_frag_offset      = offset;
-	hdr->hdr_frag.hdr_src_ptr.lval     = 0; /* for VALGRIND/PURIFY - REPLACE WITH MACRO */
-	hdr->hdr_frag.hdr_src_ptr.pval     = fragment;
-	hdr->hdr_frag.hdr_dst_ptr          = sendreq->req_peer_match;
-    }
+    /* Populate the header with the match informations */
+    (void)mca_ptl_gm_init_header_match( hdr, sendreq, flags );
+    header_length = sizeof(mca_ptl_base_rendezvous_header_t);
+    hdr->hdr_rndv.hdr_frag_length = (uint64_t)((long)ptl);
+    hdr->hdr_rndv.hdr_src_ptr.lval = 0L;
+    hdr->hdr_rndv.hdr_src_ptr.pval = sendreq;
+    hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_RNDV;
 
     if( size_in > 0 ) {
-        /* first fragment (eager send) and first fragment of long protocol
-         * can use the convertor initialized on the request. The remaining
-         * fragments must copy/reinit the convertor.
-         */
-        if( offset <= mca_ptl_gm_module.super.ptl_first_frag_size ) {
-            convertor = &sendreq->req_convertor;
-        } else {
-            convertor = &(fragment->send_frag.frag_base.frag_convertor);
-            ompi_convertor_copy(&sendreq->req_convertor, convertor);
-            ompi_convertor_init_for_send( convertor,
-                                          0,
-                                          sendreq->req_base.req_datatype,
-                                          sendreq->req_base.req_count,
-                                          sendreq->req_base.req_addr,
-                                          offset, NULL );
-        }
+	convertor = &sendreq->req_convertor;
+	/*ompi_convertor_init_for_send( convertor,
+	  0,
+	  sendreq->req_base.req_datatype,
+	  sendreq->req_base.req_count,
+	  sendreq->req_base.req_addr,
+	  offset, NULL );
+	*/
 
 	if( (size_in + header_length) <= GM_BUF_SIZE ) 
 	    iov.iov_len = size_in;
@@ -292,23 +279,18 @@ int mca_ptl_gm_peer_send( struct mca_ptl_base_module_t* ptl,
 	    iov.iov_len = GM_BUF_SIZE - header_length;
 	
 	/* copy the data to the registered buffer */
-	iov.iov_base = ((char*)fragment->send_buf) + header_length;
+	iov.iov_base = ((char*)hdr) + header_length;
 	max_data = iov.iov_len;
 	in_size = 1;
 	if((rc = ompi_convertor_pack(convertor, &(iov), &in_size, &max_data, &freeAfter)) < 0)
 	    return OMPI_ERROR;
 
-	fragment->send_frag.frag_base.frag_addr = ((char*)fragment->send_buf) + header_length;
-	fragment->send_frag.frag_base.frag_size = max_data;
 
 	/* must update the offset after actual fragment size is determined
 	 * before attempting to send the fragment
 	 */
-	mca_pml_base_send_request_offset( sendreq,
-					  fragment->send_frag.frag_base.frag_size );
+	mca_pml_base_send_request_offset( sendreq, max_data );
     } else {
-	fragment->send_frag.frag_base.frag_addr = NULL;
-	fragment->send_frag.frag_base.frag_size = 0;
 	iov.iov_len = 0;  /* no data will be transmitted */
     }
     
@@ -318,14 +300,14 @@ int mca_ptl_gm_peer_send( struct mca_ptl_base_module_t* ptl,
     size_out = iov.iov_len + header_length;
     
     /* Send the first fragment */
-    gm_send_to_peer_with_callback( ptl_peer->peer_ptl->gm_port, fragment->send_buf, 
+    gm_send_to_peer_with_callback( ptl_peer->peer_ptl->gm_port, hdr,
 				   GM_SIZE, size_out, GM_LOW_PRIORITY, ptl_peer->local_id,
-				   send_callback, (void *)fragment );
-    fragment->frag_bytes_processed = size_out - header_length;
+				   send_match_callback, (void *)hdr );
+
     if( !(flags & MCA_PTL_FLAGS_ACK) ) {
 	ptl_peer->peer_ptl->super.ptl_send_progress( (mca_ptl_base_module_t*)ptl_peer->peer_ptl,
-						     fragment->send_frag.frag_request,
-						     size_out );
+						     sendreq,
+						     max_data );
     }
 
     return OMPI_SUCCESS;
@@ -436,36 +418,46 @@ void send_callback( struct gm_port *port, void * context, gm_status_t status )
     }
 }
 
-static void ptl_gm_ctrl_frag(struct mca_ptl_gm_module_t *ptl, mca_ptl_base_header_t * header)
+static mca_ptl_gm_recv_frag_t*
+mca_ptl_gm_ctrl_frag( struct mca_ptl_gm_module_t *ptl,
+		      mca_ptl_base_header_t * header )
 {
-    mca_ptl_gm_send_frag_t * frag;
     mca_pml_base_send_request_t *req;
   
     if( MCA_PTL_HDR_TYPE_ACK == header->hdr_common.hdr_type ) {
-	frag = (mca_ptl_gm_send_frag_t*)(header->hdr_ack.hdr_src_ptr.pval);
-	/* update the fragment header with the most up2date informations */
-	frag->send_frag.frag_base.frag_header.hdr_ack.hdr_dst_match = header->hdr_ack.hdr_dst_match;
-	req = frag->send_frag.frag_request;
-	assert(req != NULL);
-	req->req_peer_match = header->hdr_ack.hdr_dst_match;
-	req->req_peer_addr = header->hdr_ack.hdr_dst_addr;
-	req->req_peer_size = header->hdr_ack.hdr_dst_size;
-	frag->wait_for_ack = 0;
-	
-	if( (req->req_peer_size != 0) && (req->req_peer_addr.pval == NULL) ) {
-	    ptl->super.ptl_send_progress( (mca_ptl_base_module_t*)ptl,
-					  frag->send_frag.frag_request,
-					  frag->send_frag.frag_base.frag_size ); 
-	    OMPI_FREE_LIST_RETURN(&(ptl->gm_send_frags), (ompi_list_item_t *)frag);
-	} else {
-	    if( header->hdr_common.hdr_flags & PTL_FLAG_GM_HAS_FRAGMENT ) {
-		frag->send_frag.frag_base.frag_header.hdr_common.hdr_flags |= PTL_FLAG_GM_HAS_FRAGMENT;
+	if( header->hdr_common.hdr_flags & PTL_FLAG_GM_HAS_FRAGMENT ) {
+	    mca_ptl_gm_send_frag_t* frag = (mca_ptl_gm_send_frag_t*)(header->hdr_ack.hdr_src_ptr.pval);
+	    /* update the fragment header with the most up2date informations */
+	    frag->send_frag.frag_base.frag_header.hdr_ack.hdr_dst_match = header->hdr_ack.hdr_dst_match;
+	    req = frag->send_frag.frag_request;
+	    assert(req != NULL);
+	    req->req_peer_match = header->hdr_ack.hdr_dst_match;
+	    req->req_peer_addr  = header->hdr_ack.hdr_dst_addr;
+	    req->req_peer_size  = header->hdr_ack.hdr_dst_size;
+	    frag->wait_for_ack  = 0;
+	    
+	    if( (req->req_peer_size != 0) && (req->req_peer_addr.pval == NULL) ) {
+		ptl->super.ptl_send_progress( (mca_ptl_base_module_t*)ptl,
+					      req, frag->send_frag.frag_base.frag_size ); 
+		OMPI_FREE_LIST_RETURN( &(ptl->gm_send_frags), (ompi_list_item_t *)frag );
+	    } else {
+		if( header->hdr_common.hdr_flags & PTL_FLAG_GM_HAS_FRAGMENT ) {
+		    frag->send_frag.frag_base.frag_header.hdr_common.hdr_flags |= PTL_FLAG_GM_HAS_FRAGMENT;
+		}
 	    }
+	} else {  /* initial reply to a rendez-vous request */
+	    req = (mca_pml_base_send_request_t*)(header->hdr_ack.hdr_src_ptr.pval);
+	    req->req_peer_match = header->hdr_ack.hdr_dst_match;
+            req->req_peer_addr  = header->hdr_ack.hdr_dst_addr;
+            req->req_peer_size  = header->hdr_ack.hdr_dst_size;
+	    ptl->super.ptl_send_progress( (mca_ptl_base_module_t*)ptl,
+					  req, req->req_offset );
 	}
     } else if( MCA_PTL_HDR_TYPE_NACK == header->hdr_common.hdr_type ) {
     } else {
 	OMPI_OUTPUT((0, "Unkonwn header type in ptl_gm_ctrl_frag\n"));
     }
+    return NULL;
 }
 
 /* We get a RNDV header in two situations:
@@ -475,29 +467,25 @@ static void ptl_gm_ctrl_frag(struct mca_ptl_gm_module_t *ptl, mca_ptl_base_heade
  */
 static mca_ptl_gm_recv_frag_t*
 mca_ptl_gm_recv_frag_match( struct mca_ptl_gm_module_t *ptl,
-			    gm_recv_event_t* event )
+			    mca_ptl_base_header_t* hdr )
 {
     mca_ptl_gm_recv_frag_t* recv_frag;
     bool matched;
-    mca_ptl_base_header_t* hdr;
     size_t length;
 
-    hdr = (mca_ptl_base_header_t*)gm_ntohp(event->recv.buffer);
-    
     /* allocate a receive fragment */
     recv_frag = mca_ptl_gm_alloc_recv_frag( (struct mca_ptl_base_module_t*)ptl );
 
     if( MCA_PTL_HDR_TYPE_MATCH == hdr->hdr_rndv.hdr_match.hdr_common.hdr_type ) {
         recv_frag->frag_recv.frag_base.frag_addr =
             (char*)hdr + sizeof(mca_ptl_base_match_header_t);
-	recv_frag->frag_recv.frag_base.frag_size = hdr->hdr_rndv.hdr_match.hdr_msg_length;
     } else {
         assert( MCA_PTL_HDR_TYPE_RNDV == hdr->hdr_rndv.hdr_match.hdr_common.hdr_type );
         recv_frag->frag_recv.frag_base.frag_addr =
             (char*)hdr + sizeof(mca_ptl_base_rendezvous_header_t);
-	recv_frag->frag_recv.frag_base.frag_size = hdr->hdr_rndv.hdr_frag_length;
     }
-    
+    recv_frag->frag_recv.frag_base.frag_size = hdr->hdr_rndv.hdr_match.hdr_msg_length;
+
     recv_frag->frag_recv.frag_is_buffered = false;
     recv_frag->have_allocated_buffer = false;
     recv_frag->frag_offset = 0;  /* initial fragment */
@@ -508,8 +496,10 @@ mca_ptl_gm_recv_frag_match( struct mca_ptl_gm_module_t *ptl,
                                     &(recv_frag->frag_recv.frag_base.frag_header.hdr_match) );
     if( true == matched ) return NULL;  /* done and fragment already removed */
 
-    length = recv_frag->frag_recv.frag_base.frag_size;
-        
+    length = GM_BUF_SIZE - sizeof(mca_ptl_base_rendezvous_header_t);
+    if( recv_frag->frag_recv.frag_base.frag_size < length ) {
+	length = recv_frag->frag_recv.frag_base.frag_size;
+    }
     /* get some memory and copy the data inside. We can then release the receive buffer */
     if( 0 != length ) {
         char* ptr = (char*)gm_get_local_buffer();
@@ -598,17 +588,14 @@ static void mca_ptl_gm_get_callback( struct gm_port *port, void * context, gm_st
 
 static mca_ptl_gm_recv_frag_t*
 mca_ptl_gm_recv_frag_frag( struct mca_ptl_gm_module_t *ptl,
-                           gm_recv_event_t* event )
+			   mca_ptl_base_header_t *hdr )
 {
     mca_pml_base_recv_request_t *request;
     ompi_convertor_t local_convertor, *convertor;
-    mca_ptl_base_header_t *hdr;
     struct iovec iov;
     uint32_t iov_count, max_data;
     int32_t freeAfter, rc;
     mca_ptl_gm_recv_frag_t* recv_frag;
-
-    hdr = (mca_ptl_base_header_t *)gm_ntohp(event->recv.buffer);
 
     if( hdr->hdr_common.hdr_flags & PTL_FLAG_GM_HAS_FRAGMENT ) {
 	recv_frag = (mca_ptl_gm_recv_frag_t*)hdr->hdr_frag.hdr_dst_ptr.pval;
@@ -694,13 +681,11 @@ mca_ptl_gm_recv_frag_frag( struct mca_ptl_gm_module_t *ptl,
 
 static mca_ptl_gm_recv_frag_t*
 mca_ptl_gm_recv_frag_fin( struct mca_ptl_gm_module_t *ptl,
-			  gm_recv_event_t* event )
+			  mca_ptl_base_header_t *hdr )
 {
     mca_ptl_gm_send_frag_t* frag;
-    mca_ptl_base_header_t *hdr;
     gm_status_t status;
 
-    hdr = (mca_ptl_base_header_t *)gm_ntohp(event->recv.buffer);
     frag = (mca_ptl_gm_send_frag_t*)hdr->hdr_ack.hdr_src_ptr.pval;
 
     ptl->super.ptl_send_progress( (mca_ptl_base_module_t*)ptl,
@@ -745,59 +730,62 @@ void mca_ptl_gm_outstanding_recv( struct mca_ptl_gm_module_t *ptl )
     }
 } 
 
-static inline
-mca_ptl_gm_recv_frag_t* ptl_gm_handle_recv( struct mca_ptl_gm_module_t *ptl, gm_recv_event_t* event )
-{
-    mca_ptl_gm_recv_frag_t* frag = NULL;
-    mca_ptl_base_header_t *header;
-    
-    header = (mca_ptl_base_header_t *)gm_ntohp(event->recv.buffer);
-    
-    switch(header->hdr_common.hdr_type) {
-    case MCA_PTL_HDR_TYPE_MATCH:
-    case MCA_PTL_HDR_TYPE_RNDV:
-	frag = mca_ptl_gm_recv_frag_match( ptl, event );
-	break;
-    case MCA_PTL_HDR_TYPE_FIN:
-	frag = mca_ptl_gm_recv_frag_fin( ptl, event );
-	break;
-    case MCA_PTL_HDR_TYPE_FRAG:
-        frag = mca_ptl_gm_recv_frag_frag( ptl, event );
-        break;
-	
-    case MCA_PTL_HDR_TYPE_ACK:
-    case MCA_PTL_HDR_TYPE_NACK:
-        ptl_gm_ctrl_frag( ptl, header );
-        break;
-    default:
-        ompi_output( 0, "[%s:%d] unexpected frag type %d\n",
-		     __FILE__, __LINE__, header->hdr_common.hdr_type );
-        break;
-    }
-    return frag;
-}
+typedef mca_ptl_gm_recv_frag_t* (frag_management_fct_t)( struct mca_ptl_gm_module_t *ptl,
+							 mca_ptl_base_header_t *hdr );
+frag_management_fct_t* frag_management_fct[MCA_PTL_HDR_TYPE_MAX] = {
+    NULL,
+    mca_ptl_gm_recv_frag_match,
+    mca_ptl_gm_recv_frag_match,
+    mca_ptl_gm_recv_frag_frag,
+    mca_ptl_gm_ctrl_frag,
+    mca_ptl_gm_ctrl_frag,
+    NULL,
+    mca_ptl_gm_recv_frag_fin,
+    NULL };
 
 int mca_ptl_gm_analyze_recv_event( struct mca_ptl_gm_module_t* ptl, gm_recv_event_t* event )
 {
-    void * mesg;
     mca_ptl_gm_recv_frag_t * frag;
-    
+    mca_ptl_base_header_t *header = NULL, *release_buf;
+    frag_management_fct_t* function;
+
+    release_buf = (mca_ptl_base_header_t *)gm_ntohp(event->recv.buffer);
+
     switch (gm_ntohc(event->recv.type)) {
+    case GM_FAST_RECV_EVENT:
+    case GM_FAST_PEER_RECV_EVENT:
+    case GM_FAST_HIGH_RECV_EVENT:
+    case GM_FAST_HIGH_PEER_RECV_EVENT:
+	header = (mca_ptl_base_header_t *)gm_ntohp(event->recv.message);
+	goto have_event;
     case GM_RECV_EVENT:
     case GM_PEER_RECV_EVENT:
     case GM_HIGH_RECV_EVENT:
     case GM_HIGH_PEER_RECV_EVENT:
-	mesg = gm_ntohp(event->recv.buffer);
-	frag = ptl_gm_handle_recv( ptl, event );
-	gm_provide_receive_buffer( ptl->gm_port, mesg, GM_SIZE, GM_LOW_PRIORITY );
-	break;
+	header = release_buf;
+	goto have_event;
     case GM_NO_RECV_EVENT:
 	break;
 	
     default:
 	gm_unknown(ptl->gm_port, event);
-	
     }
-    
+    return 0;
+
+ have_event:
+    if( header->hdr_common.hdr_type >= MCA_PTL_HDR_TYPE_MAX ) {
+	ompi_output( 0, "[%s:%d] unexpected frag type %d\n",
+		     __FILE__, __LINE__, header->hdr_common.hdr_type );
+    } else {
+	function = frag_management_fct[header->hdr_common.hdr_type];
+	if( NULL == function ) {
+	    ompi_output( 0, "[%s:%d] NOT yet implemented function for the header type %d\n",
+			 __FILE__, __LINE__, header->hdr_common.hdr_type );
+	} else {
+	    frag = function( ptl, header );
+	}
+    }
+    gm_provide_receive_buffer( ptl->gm_port, release_buf, GM_SIZE, GM_LOW_PRIORITY );
+
     return 0;
 }

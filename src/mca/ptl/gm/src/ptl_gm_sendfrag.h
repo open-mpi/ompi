@@ -121,12 +121,10 @@ extern "C" {
 }
 
     static inline int
-    mca_ptl_gm_init_header_match( struct mca_ptl_gm_send_frag_t* sendfrag,
+    mca_ptl_gm_init_header_match( mca_ptl_base_header_t *hdr,
                                   struct mca_pml_base_send_request_t * sendreq,
                                   int flags )
     {
-        mca_ptl_base_header_t *hdr = (mca_ptl_base_header_t *)sendfrag->send_buf;
-        
         hdr->hdr_common.hdr_flags = flags;
         hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_MATCH;
         
@@ -136,7 +134,6 @@ extern "C" {
         hdr->hdr_match.hdr_tag        = sendreq->req_base.req_tag;
         hdr->hdr_match.hdr_msg_length = sendreq->req_bytes_packed;
         hdr->hdr_match.hdr_msg_seq    = sendreq->req_base.req_sequence;
-        sendfrag->type = MATCH;
 
         return OMPI_SUCCESS;
     }
