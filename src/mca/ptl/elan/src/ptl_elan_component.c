@@ -134,6 +134,13 @@ mca_ptl_elan_component_open (void)
 int
 mca_ptl_elan_component_close (void)
 {
+    START_FUNC (PTL_ELAN_DEBUG_FIN);
+#if OMPI_PTL_ELAN_THREADING
+    if ((mca_ptl_elan_thread_close(elan_mp)) != OMPI_SUCCESS) {
+        ompi_output(0, "unable to close asynchronous threads\n");
+    }
+#endif
+
     if (mca_ptl_elan_component_initialized) {
 
 	/* cleanup the proc, ptl, and the module */
@@ -160,8 +167,8 @@ mca_ptl_elan_component_close (void)
     if (elan_mp->elan_recv_frags_free.fl_num_allocated !=
         elan_mp->elan_recv_frags_free.super.ompi_list_length) {
         ompi_output (0, 
-		     "[%s:%d] recv_frags : %d allocated %d returned\n",
-		     __FILE__, __LINE__,
+		     "[proc%s:%s:%d] recv_frags : %d allocated %d returned\n",
+		     getenv("RMS_RANK"), __FILE__, __LINE__,
                      elan_mp->elan_recv_frags_free.fl_num_allocated,
                      elan_mp->elan_recv_frags_free.super.ompi_list_length);
     }
@@ -169,6 +176,7 @@ mca_ptl_elan_component_close (void)
 
     /* Destruct other structures */
     OBJ_DESTRUCT (&elan_mp->elan_lock);
+    END_FUNC (PTL_ELAN_DEBUG_FIN);
 
     return OMPI_SUCCESS;
 }

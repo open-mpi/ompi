@@ -670,14 +670,14 @@ mca_ptl_elan_thread_close (mca_ptl_elan_component_t * emp)
 	hdr = (mca_ptl_base_header_t *) desc->mesg;
 	hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_STOP;
 	hdr->hdr_common.hdr_flags = 0; /* XXX: to change if needed */
-	hdr->hdr_common.hdr_size = sizeof (mca_ptl_base_header_t);
+	hdr->hdr_common.hdr_size  = sizeof (mca_ptl_base_header_t);
 
 	INITEVENT_WORD (ctx, desc->elan_event, &desc->main_doneWord);
 	RESETEVENT_WORD (&desc->main_doneWord);
 	PRIMEEVENT_WORD (ctx, desc->elan_event, 2);
 
         /* Initialize some of the dma structures */
-	desc->main_dma.dma_srcEvent = SDRAM2ELAN (ctx, desc->elan_event);
+	desc->main_dma.dma_srcEvent = 0; //SDRAM2ELAN (ctx, desc->elan_event);
 	desc->main_dma.dma_dstEvent = SDRAM2ELAN (ctx, ptl->queue->input);
 	desc->main_dma.dma_dstAddr  = 0x0ULL;
 	desc->main_dma.dma_srcAddr  = MAIN2ELAN (ctx, hdr);
@@ -704,12 +704,13 @@ mca_ptl_elan_thread_close (mca_ptl_elan_component_t * emp)
     /* Join all threads */
     for (i = 0; i < num_rails; i ++) {
 	ompi_ptl_elan_thread_t * tsend, *trecv;
+	int *ptr = (int *)malloc(sizeof(int));
 
 	tsend = emp->send_threads[i];
 	trecv = emp->recv_threads[i];
 
-        ompi_thread_join(&tsend->thread, NULL);
-        ompi_thread_join(&trecv->thread, NULL);
+        ompi_thread_join(&tsend->thread, &ptr);
+        ompi_thread_join(&trecv->thread, &ptr);
     }
 
     END_FUNC(PTL_ELAN_DEBUG_FIN);

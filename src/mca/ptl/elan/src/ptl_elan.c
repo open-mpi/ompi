@@ -147,6 +147,8 @@ mca_ptl_elan_finalize (struct mca_ptl_base_module_t *ptl)
     int         rail_index;
     struct mca_ptl_elan_module_t *elan_ptl;
 
+    START_FUNC(PTL_ELAN_DEBUG_FIN);
+#if 0
     elan_ptl = (struct mca_ptl_elan_module_t *) ptl;
 
     /* XXX: Free all the lists, etc, hanged over PTL 
@@ -157,7 +159,9 @@ mca_ptl_elan_finalize (struct mca_ptl_base_module_t *ptl)
     /* Record the missing of this entry */
     mca_ptl_elan_component.modules[rail_index] = NULL;
     mca_ptl_elan_component.num_modules--;
+#endif
 
+    END_FUNC(PTL_ELAN_DEBUG_FIN);
     return OMPI_SUCCESS;
 }
 
@@ -246,12 +250,6 @@ mca_ptl_elan_isend (struct mca_ptl_base_module_t *ptl,
      */
 
     START_FUNC(PTL_ELAN_DEBUG_SEND);
-
-    {
-	/* FIXME: YUW, remove this block */
-	fprintf(stderr, "[proc%s:%s:%d] here \n", 
-		getenv("RMS_RANK"), __FILE__, __LINE__);
-    }
 
     if (offset == 0) { /* The first fragment uses a cached desc */
         desc = ((mca_ptl_elan_send_request_t*)sendreq)->req_frag;

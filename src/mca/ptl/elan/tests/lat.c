@@ -1,5 +1,7 @@
 
 #include <stdio.h>
+#include <sys/types.h>
+#include <unistd.h>
 #include <math.h>
 #include <sys/time.h>
 #include "mpi.h"
@@ -82,7 +84,7 @@ main (int argc, char *argv[])
     }
     gettimeofday (&t_end, 0);
 
-    fprintf(stderr, "[proc%d:%s:%d] done with pingpong\n",
+    fprintf(stderr, "[proc%d:%s:%d] pingpong\n",
 	    myid, __FUNCTION__, __LINE__);
     fflush(stderr);
  
@@ -94,6 +96,8 @@ main (int argc, char *argv[])
 		size, latency);
 	fflush(stdout);
     }
+
     MPI_Finalize ();
+
     return 0;
 }
