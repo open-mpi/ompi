@@ -55,7 +55,7 @@ static bool opened_components = false;
 // Open all MCA components so that they can register their MCA
 // parameters.  Take a shotgun approach here and indiscriminately open
 // all components -- don't be selective.  To this end, we need to clear
-// out the environment of all OMPI_MPI_mca_<type> variables to ensure
+// out the environment of all OMPI_MCA_<type> variables to ensure
 // that the open algorithms don't try to only open one component.
 //
 void ompi_info::open_components()
@@ -72,7 +72,7 @@ void ompi_info::open_components()
   // not by value.
 
   for (i = 0; i < mca_types.size(); ++i) {
-    env = "OMPI_MPI_MCA_" + mca_types[i];
+    env = "OMPI_MCA_" + mca_types[i];
     if (NULL != getenv(env.c_str())) {
       env += "=";
       target = strdup(env.c_str());

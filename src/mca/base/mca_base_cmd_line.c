@@ -59,7 +59,7 @@ int mca_base_cmd_line_process_args(ompi_cmd_line_t *cmd)
     return OMPI_SUCCESS;
 
   /* Loop through all the -mca args that we've gotten and make env
-     vars of the form OMPI_MPI_MCA_*=value.  This is a memory leak, but
+     vars of the form OMPI_MCA_*=value.  This is a memory leak, but
      that's how putenv works.  :-( */
 
   for (i = 0; NULL != mca_param_argv[i]; ++i) {
