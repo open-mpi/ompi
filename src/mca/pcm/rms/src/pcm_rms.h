@@ -45,7 +45,6 @@ extern "C" {
     ompi_list_t* mca_pcm_rms_allocate_resources(struct mca_pcm_base_module_1_0_0_t* me,
                                                 mca_ns_base_jobid_t jobid,
                                                 int nodes, int procs);
-    bool mca_pcm_rms_can_spawn(struct mca_pcm_base_module_1_0_0_t* me);
     int mca_pcm_rms_spawn_procs(struct mca_pcm_base_module_1_0_0_t* me,
                                 mca_ns_base_jobid_t jobid, ompi_list_t *schedule_list);
     int mca_pcm_rms_kill_proc(struct mca_pcm_base_module_1_0_0_t* me,

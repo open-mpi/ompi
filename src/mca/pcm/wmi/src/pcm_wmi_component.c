@@ -45,7 +45,6 @@ mca_pcm_base_component_1_0_0_t mca_pcm_wmi_component = {
 
 struct mca_pcm_base_module_1_0_0_t mca_pcm_wmi_1_0_0 = {
     mca_pcm_wmi_allocate_resources,
-    mca_pcm_wmi_can_spawn,
     mca_pcm_wmi_spawn_procs,
     mca_pcm_wmi_kill_proc,
     mca_pcm_wmi_kill_job,

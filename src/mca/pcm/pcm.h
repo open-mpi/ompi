@@ -191,19 +191,6 @@ typedef ompi_list_t*
                                         int procs);
 
 
-/** 
- * This tells you whether the pcm module is capable of spawning new
- * processes or not during a run
- *
- * @param me (IN)    Pointer to the module struct
- *
- * @return True/False
- */
-
-typedef bool
-(*mca_pcm_base_can_spawn_fn_t)(struct mca_pcm_base_module_1_0_0_t* me);
-
-
 /**
  * Spawn a job
  *
@@ -283,7 +270,6 @@ typedef int
  */
 struct mca_pcm_base_module_1_0_0_t {
     mca_pcm_base_allocate_resources_fn_t pcm_allocate_resources;
-    mca_pcm_base_can_spawn_fn_t pcm_can_spawn;
     mca_pcm_base_spawn_procs_fn_t pcm_spawn_procs;
     mca_pcm_base_kill_proc_fn_t pcm_kill_proc;
     mca_pcm_base_kill_job_fn_t pcm_kill_job;

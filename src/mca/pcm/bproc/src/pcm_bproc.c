@@ -21,13 +21,6 @@ mca_pcm_bproc_allocate_resources(struct mca_pcm_base_module_1_0_0_t* me,
 }
 
 
-bool
-mca_pcm_bproc_can_spawn(struct mca_pcm_base_module_1_0_0_t* me)
-{
-    return true;
-}
-
-
 int
 mca_pcm_bproc_spawn_procs(struct mca_pcm_base_module_1_0_0_t* me,
                         mca_ns_base_jobid_t jobid, ompi_list_t *schedlist)

@@ -150,7 +150,6 @@ mca_pcm_rms_init(int *priority,
     if (NULL == me) return NULL;
 
     me->pcm_allocate_resources = mca_pcm_rms_allocate_resources;
-    me->pcm_can_spawn = mca_pcm_rms_can_spawn;
     me->pcm_spawn_procs = mca_pcm_rms_spawn_procs;
     me->pcm_kill_proc = mca_pcm_rms_kill_proc;
     me->pcm_kill_job = mca_pcm_rms_kill_job;

@@ -16,11 +16,12 @@ extern mca_pcm_base_module_t *mca_pcm;
 bool
 ompi_rte_can_spawn(void)
 {
-    if (NULL == mca_pcm->pcm_can_spawn) {
+    if (NULL == mca_pcm) {
         return OMPI_ERROR;
     }
 
-    return mca_pcm->pcm_can_spawn(mca_pcm);
+    /* BWB - fix me, fix me, fix me */
+    return true;
 }
 
 
