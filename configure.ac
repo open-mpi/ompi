@@ -855,14 +855,15 @@ AC_CONFIG_FILES([
     src/mca/mpool/base/Makefile
     src/mca/one/Makefile
     src/mca/one/base/Makefile
-    src/mca/ns/Makefile
-    src/mca/ns/base/Makefile
     src/mca/pml/Makefile
     src/mca/pml/base/Makefile
     src/mca/ptl/Makefile
     src/mca/ptl/base/Makefile
     src/mca/topo/Makefile
     src/mca/topo/base/Makefile
+    src/mca/ns/Makefile
+    src/mca/ns/base/Makefile
+    src/mca/ns/replica/Makefile
 
     src/dynamic-mca/common/Makefile
 
@@ -893,6 +894,8 @@ AC_CONFIG_FILES([
     src/tools/ompi_info/Makefile
     src/tools/mpirun/Makefile
     src/tools/wrappers/Makefile
+    src/tools/openmpi/Makefile
+
 
     test/Makefile
     test/include/Makefile
@@ -901,5 +904,6 @@ AC_CONFIG_FILES([
     test/threads/Makefile
     test/util/Makefile
     test/rte/Makefile
+    test/ns/Makefile
 ])
 AC_OUTPUT
