@@ -33,7 +33,7 @@
 #include "util/numtostr.h"
 #include "mca/ns/base/base.h"
 #include "util/proc_info.h"
-
+#include "util/show_help.h"
 
 /*
  * Internal constants
@@ -240,13 +240,14 @@ internal_need_profile(mca_pcm_rsh_module_t *me,
                                   sizeof(shellpath) - 1, 
                                   stderr_is_error)) {
             if (errno == EFAULT) {
-                /* BWB - show_help */
-                printf("show_help: something on stderr: %s %s %s",
-                       start_node->hostname, cmd0, printable);
+                ompi_show_help("help-mca-pcm-rsh.txt",
+                               "spawn:stderr-output", true, 
+                               cmd0, start_node->hostname, printable,
+                               strerror(errno));
             } else {
-                /* BWB - show_help */
-                printf("show_help: fail to rsh: %s %s %s",
-                       start_node->hostname, cmd0, printable);
+                ompi_show_help("help-mca-pcm-rsh.txt",
+                               "spawn:rsh-failed", true,
+                               cmd0, printable);
             }
 
             ret = OMPI_ERROR;
@@ -336,7 +337,7 @@ internal_spawn_proc(mca_pcm_rsh_module_t *me,
 
     /* add the start of .profile thing if required */
     if (needs_profile) {
-        ompi_argv_append(&cmdc, &cmdv, "( ! [ -e ./.profile] || . ./.profile;");
+        ompi_argv_append(&cmdc, &cmdv, "( ! [ -e ./.profile ] || . ./.profile;");
     }
 
     /* build the command to start */
@@ -405,22 +406,24 @@ internal_spawn_proc(mca_pcm_rsh_module_t *me,
 
     } else {
         /* parent */
-        if (close(kidstdin[0])) {
-            kill(pid, SIGTERM);
-            ret = OMPI_ERROR;
-            goto proc_cleanup;
-        }
+        close(kidstdin[0]);
 
         /* send our stuff down the wire */
         fp = fdopen(kidstdin[1], "a");
         if (fp == NULL) { 
-            /* BWB - fix me */
-            perror("fdopen"); 
-            abort();
+            ompi_show_help("help-mca-pcm-rsh.txt",
+                           "spawn:application-send", true,
+                           strerror(errno));
+            ret = OMPI_ERROR;
+            kill(pid, SIGTERM);
+            goto proc_cleanup;
         }
         ret = mca_pcm_base_send_schedule(fp, jobid, sched, start_node->count);
         fclose(fp);
         if (OMPI_SUCCESS != ret) {
+            ompi_show_help("help-mca-pcm-rsh.txt",
+                           "spawn:application-send", true,
+                           strerror(errno));
             kill(pid, SIGTERM);
             goto proc_cleanup;
         }
@@ -470,27 +473,26 @@ internal_wait_cb(pid_t pid, int status, void *data)
     mca_ns_base_vpid_t lower = 0;
     mca_ns_base_vpid_t i = 0;
     int ret;
-    char *test;
-    ompi_process_name_t *proc_name;
+    char *proc_name;
 
-    printf("pcm_rsh was notified that process %d exited with status %d\n",
-           pid, status);
+    ompi_output_verbose(10, mca_pcm_rsh_output, 
+                        "process %d exited with status %d", pid, status);
 
     ret = mca_pcm_base_get_job_info(pid, &jobid, &lower, &upper);
     if (ret != OMPI_SUCCESS) {
-        printf("Unfortunately, we could not find the associated job info\n");
-    } else {
-        printf("  It appears that this starter was assocated with jobid %d\n"
-               "  vpids %d to %d\n\n",
-               jobid, lower, upper);
+        ompi_show_help("help-mca-pcm-rsh.txt",
+                       "spawn:no-process-record", true, pid, status);
+        return;
     }
 
     /* unregister all the procs */
     for (i = lower ; i <= upper ; ++i) {
-        test = ns_base_get_proc_name_string(ns_base_create_process_name(0, jobid, i));
-        ompi_registry.rte_unregister(test);
+        proc_name = 
+            ns_base_get_proc_name_string(
+                             ns_base_create_process_name(0, jobid, i));
+        ompi_registry.rte_unregister(proc_name);
     }
 
-    /* bwb - fix me - should only remove this range */
+    /* BWB - fix me - should only remove this range */
     mca_pcm_base_remove_job(jobid);
 }
