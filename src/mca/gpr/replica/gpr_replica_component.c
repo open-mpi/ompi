@@ -317,8 +317,10 @@ void mca_gpr_replica_recv(int status, ompi_process_name_t* sender,
     ompi_registry_notify_action_t action;
     ompi_registry_value_t *regval;
     ompi_list_t *returned_list;
+    ompi_registry_internal_test_results_t *testval;
+    ompi_registry_index_value_t *indexval;
     char **tokens, **tokptr;
-    int32_t num_tokens, level, i;
+    int32_t num_tokens, test_level, i;
     mca_gpr_cmd_flag_t command;
     char *segment;
     int32_t response;
@@ -336,7 +338,7 @@ void mca_gpr_replica_recv(int status, ompi_process_name_t* sender,
 	    goto RETURN_ERROR;
 	}
 
-	response = (int16_t)ompi_registry.delete_segment(segment);
+	response = (int32_t)ompi_registry.delete_segment(segment);
 
 	if (OMPI_SUCCESS != ompi_pack(answer, &command, 1, MCA_GPR_OOB_PACK_CMD)) {
 	    goto RETURN_ERROR;
@@ -370,7 +372,7 @@ void mca_gpr_replica_recv(int status, ompi_process_name_t* sender,
 	    }
 	    tokptr++;
 	}
-    *tokptr = NULL;
+	*tokptr = NULL;
 
 	if (OMPI_SUCCESS != ompi_unpack(buffer, &object_size, 1, MCA_GPR_OOB_PACK_OBJECT_SIZE)) {
 	    goto RETURN_ERROR;
@@ -407,7 +409,7 @@ void mca_gpr_replica_recv(int status, ompi_process_name_t* sender,
 	    goto RETURN_ERROR;
 	}
 
-	tokens = (char**)malloc(num_tokens*sizeof(char*));
+	tokens = (char**)malloc((num_tokens+1)*sizeof(char*));
 	tokptr = tokens;
 	for (i=0; i<num_tokens; i++) {
 	    if (0 > ompi_unpack_string(buffer, tokptr)) {
@@ -415,7 +417,7 @@ void mca_gpr_replica_recv(int status, ompi_process_name_t* sender,
 	    }
 	    tokptr++;
 	}
-
+	*tokptr = NULL;
 
 	returned_list = ompi_registry.get(mode, segment, tokens);
 
@@ -443,6 +445,123 @@ void mca_gpr_replica_recv(int status, ompi_process_name_t* sender,
 	if (0 > mca_oob_send_packed(sender, answer, tag, 0)) {
 	    /* RHC -- not sure what to do if the return send fails */
 	}
+    } else if (MCA_GPR_DELETE_OBJECT_CMD == command) {
+
+	if (OMPI_SUCCESS != ompi_unpack(buffer, &mode, 1, MCA_GPR_OOB_PACK_MODE)) {
+	    goto RETURN_ERROR;
+	}
+
+	if (0 > ompi_unpack_string(buffer, &segment)) {
+	    goto RETURN_ERROR;
+	}
+
+	if (OMPI_SUCCESS != ompi_unpack(buffer, &num_tokens, 1, OMPI_INT32)) {
+	    goto RETURN_ERROR;
+	}
+
+	tokens = (char**)malloc((num_tokens+1)*sizeof(char*));
+	tokptr = tokens;
+	for (i=0; i<num_tokens; i++) {
+	    if (0 > ompi_unpack_string(buffer, tokptr)) {
+		goto RETURN_ERROR;
+	    }
+	    tokptr++;
+	}
+	*tokptr = NULL;
+
+	response = (int32_t)ompi_registry.delete_object(mode, segment, tokens);
+
+	if (OMPI_SUCCESS != ompi_pack(answer, &command, 1, MCA_GPR_OOB_PACK_CMD)) {
+	    goto RETURN_ERROR;
+	}
+
+	if (OMPI_SUCCESS != ompi_pack(answer, &response, 1, OMPI_INT32)) {
+	    goto RETURN_ERROR;
+	}
+
+	if (0 > mca_oob_send_packed(sender, answer, tag, 0)) {
+	    /* RHC -- not sure what to do if the return send fails */
+	}
+
+    } else if (MCA_GPR_INDEX_CMD == command) {
+
+	if (OMPI_SUCCESS != ompi_unpack(buffer, &mode, 1, MCA_GPR_OOB_PACK_MODE)) {
+	    goto RETURN_ERROR;
+	}
+
+	if (0 == mode) {  /* only want dict of segments */
+	    segment = NULL;
+	} else {
+	    if (0 > ompi_unpack_string(buffer, &segment)) {
+		goto RETURN_ERROR;
+	    }
+	}
+
+	returned_list = ompi_registry.index(segment);
+
+	if (OMPI_SUCCESS != ompi_pack(answer, &command, 1, MCA_GPR_OOB_PACK_CMD)) {
+	    goto RETURN_ERROR;
+	}
+
+	response = (int32_t)ompi_list_get_size(returned_list);
+	if (OMPI_SUCCESS != ompi_pack(answer, &response, 1, OMPI_INT32)) {
+	    goto RETURN_ERROR;
+	}
+
+	if (0 < response) { /* don't send anything else back if the list is empty */
+	    for (indexval = (ompi_registry_index_value_t*)ompi_list_get_first(returned_list);
+		 indexval != (ompi_registry_index_value_t*)ompi_list_get_end(returned_list);
+		 indexval = (ompi_registry_index_value_t*)ompi_list_get_next(indexval)) {  /* traverse the list */
+		if (OMPI_SUCCESS != ompi_pack_string(answer, indexval->token)) {
+		    goto RETURN_ERROR;
+		}
+	    }
+	}
+
+	if (0 > mca_oob_send_packed(sender, answer, tag, 0)) {
+	    /* RHC -- not sure what to do if the return send fails */
+	}
+
+    } else if (MCA_GPR_SUBSCRIBE_CMD == command) {
+	action = OMPI_REGISTRY_NOTIFY_ALL;
+	goto RETURN_ERROR;
+    } else if (MCA_GPR_UNSUBSCRIBE_CMD == command) {
+	goto RETURN_ERROR;
+    } else if (MCA_GPR_TEST_INTERNALS_CMD == command) {
+
+	if ((OMPI_SUCCESS != ompi_unpack(buffer, &test_level, 1, OMPI_INT32)) ||
+	    (0 > test_level)) {
+	    goto RETURN_ERROR;
+	}
+
+	returned_list = gpr_replica_test_internals(test_level);
+
+	if (OMPI_SUCCESS != ompi_pack(answer, &command, 1, MCA_GPR_OOB_PACK_CMD)) {
+	    goto RETURN_ERROR;
+	}
+
+	response = (int32_t)ompi_list_get_size(returned_list);
+	if (OMPI_SUCCESS != ompi_pack(answer, &response, 1, OMPI_INT32)) {
+	    goto RETURN_ERROR;
+	}
+
+	if (0 < response) { /* don't send anything else back if the list is empty */
+	    for (testval = (ompi_registry_internal_test_results_t*)ompi_list_get_first(returned_list);
+		 testval != (ompi_registry_internal_test_results_t*)ompi_list_get_end(returned_list);
+		 testval = (ompi_registry_internal_test_results_t*)ompi_list_get_next(testval)) {  /* traverse the list */
+		if (OMPI_SUCCESS != ompi_pack_string(answer, testval->test)) {
+		    goto RETURN_ERROR;
+		}
+		if (OMPI_SUCCESS != ompi_pack_string(answer, testval->message)) {
+		    goto RETURN_ERROR;
+		}
+	    }
+	}
+	if (0 > mca_oob_send_packed(sender, answer, tag, 0)) {
+	    /* RHC -- not sure what to do if the return send fails */
+	}
+ 
+
     } else {  /* got an unrecognized command */
     RETURN_ERROR:
 	ompi_buffer_init(&error_answer, 8);
@@ -453,6 +572,7 @@ void mca_gpr_replica_recv(int status, ompi_process_name_t* sender,
     }
 
     ompi_buffer_free(answer);
+    ompi_buffer_free(buffer);
 
     /* reissue the non-blocking receive */
     mca_oob_recv_packed_nb(MCA_OOB_NAME_ANY, MCA_OOB_TAG_GPR, 0, mca_gpr_replica_recv, NULL);
