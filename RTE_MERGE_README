@@ -1,6 +1,36 @@
 This file contains information on merging the branches/tim tree into the
 trunk.
 
+UPDATE MERGE 3:
+
+  svn merge -r4922:4933 svn+ssh://svn.open-mpi.org/l/svn/ompi/branches/tim .
+
+U  src/runtime/orte_finalize.c
+U  src/runtime/orte_restart.c
+U  src/tools/orterun/orterun.c
+U  src/mca/oob/tcp/oob_tcp.c
+U  src/mca/gpr/replica/communications/gpr_replica_remote_msg.c
+U  src/mca/gpr/replica/gpr_replica_component.c
+U  src/mca/gpr/replica/functional_layer/gpr_replica_put_get_fn.c
+U  src/mca/gpr/replica/functional_layer/gpr_replica_messaging_fn.c
+U  src/mca/gpr/base/gpr_base_open.c
+U  src/mca/rds/hostfile/rds_hostfile.c
+U  src/mca/rds/hostfile/rds_hostfile_component.c
+U  src/mca/pls/rsh/pls_rsh_module.c
+U  src/mca/ptl/gm/src/ptl_gm_priv.c
+U  src/mca/ptl/gm/src/ptl_gm.c
+U  src/mca/ptl/gm/src/ptl_gm_component.c
+U  src/mca/ptl/gm/src/ptl_gm_proc.c
+U  src/mca/ptl/gm/src/Makefile.am
+U  src/mca/ptl/gm/src/ptl_gm_sendfrag.c
+D  src/mca/ptl/gm/src/ptl_gm_req.h
+D  src/mca/ptl/gm/src/ptl_gm_req.c
+U  src/mca/rmgr/base/rmgr_base_context.c
+U  src/util/session_dir.c
+U  etc/Makefile.am
+U  ISSUES
+
+
 UPDATE MERGE 2:
 
   svn merge -r4892:4922 svn+ssh://svn.open-mpi.org/l/svn/ompi/branches/tim .

@@ -38,3 +38,7 @@ install-data-local:
 	    $(INSTALL_DATA) $$d$$file $(DESTDIR)$(sysconfdir)/$$f; \
 	  fi; \
 	done
+	@ if test ! -r $(DESTDIR)$(sysconfdir)/hosts && test ! -h $(DESTDIR)$(sysconfdir)/hosts ; then \
+            echo "Creating hosts symlink" ; \
+	    ( cd $(DESTDIR)$(sysconfdir) ; ln -s openmpi-default-hostfile hosts ) \
+          fi

@@ -96,6 +96,7 @@ static void orte_gpr_replica_get_list_destructor(orte_gpr_replica_get_list_t* pt
     while (NULL != (iptr = (orte_gpr_replica_ival_list_t*)ompi_list_remove_first(ptr->ival_list))) {
         OBJ_RELEASE(iptr);
     }
+    OBJ_RELEASE(ptr->ival_list);
 
 }
 
@@ -242,7 +243,7 @@ int orte_gpr_replica_get_fn(orte_gpr_addr_mode_t addr_mode,
                             orte_gpr_replica_itag_t *keytags, int num_keys,
                             int *cnt, orte_gpr_value_t ***values)
 {
-    ompi_list_t *get_list;
+    ompi_list_t get_list;
     orte_gpr_replica_get_list_t *gptr;
     orte_gpr_replica_ival_list_t *ival_list;
     orte_gpr_replica_container_t **cptr, *cptr2;
@@ -282,11 +283,7 @@ int orte_gpr_replica_get_fn(orte_gpr_addr_mode_t addr_mode,
     }
 
     /* initialize the list of findings */
-    get_list = OBJ_NEW(ompi_list_t);
-    if (NULL == get_list) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
+    OBJ_CONSTRUCT(&get_list, ompi_list_t);
     *cnt = 0;
     *values = NULL;
     tokmode = 0x004f & addr_mode;
@@ -302,12 +299,13 @@ int orte_gpr_replica_get_fn(orte_gpr_addr_mode_t addr_mode,
     if (ORTE_SUCCESS != (rc = orte_gpr_replica_find_containers(&num_found, seg, tokmode,
                                     tokentags, num_tokens))) {
         ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&get_list);
         return rc;
     }
     
     /* if nothing found, then can return */
     if (0 == num_found) {
-        OBJ_RELEASE(get_list);
+        OBJ_DESTRUCT(&get_list);
         return ORTE_SUCCESS;
     }
     
@@ -336,7 +334,7 @@ int orte_gpr_replica_get_fn(orte_gpr_addr_mode_t addr_mode,
                     ompi_list_append(gptr->ival_list, &ival_list->item);
                 }
             }
-            ompi_list_append(get_list, &gptr->item);
+            ompi_list_append(&get_list, &gptr->item);
             (*cnt)++; /* update number of containers that had something found */
         }
     }
@@ -354,7 +352,7 @@ int orte_gpr_replica_get_fn(orte_gpr_addr_mode_t addr_mode,
         goto CLEANUP;
     }
     for (i=0; i < *cnt; i++) {
-        gptr = (orte_gpr_replica_get_list_t*)ompi_list_remove_first(get_list);
+        gptr = (orte_gpr_replica_get_list_t*)ompi_list_remove_first(&get_list);
         if (NULL == gptr) {
             rc = ORTE_ERROR;
             goto CLEANUP;
@@ -414,10 +412,10 @@ int orte_gpr_replica_get_fn(orte_gpr_addr_mode_t addr_mode,
 
 CLEANUP:
     
-    while (NULL != (gptr = (orte_gpr_replica_get_list_t*)ompi_list_remove_first(get_list))) {
+    while (NULL != (gptr = (orte_gpr_replica_get_list_t*)ompi_list_remove_first(&get_list))) {
         OBJ_RELEASE(gptr);
     }
-    OBJ_RELEASE(get_list);
+    OBJ_DESTRUCT(&get_list);
     
     if (orte_gpr_replica_globals.debug) {
         	ompi_output(0, "[%d,%d,%d] gpr replica-get: finished search", ORTE_NAME_ARGS(orte_process_info.my_name));

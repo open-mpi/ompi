@@ -26,7 +26,6 @@
 #include "mca/ptl/base/ptl_base_header.h"
 #include "ptl_gm.h"
 #include "ptl_gm_proc.h"
-#include "ptl_gm_req.h"
 #include "ptl_gm_peer.h"
 #include "ptl_gm_priv.h"
 #include "ptl_gm_sendfrag.h"
@@ -109,7 +108,7 @@ mca_ptl_gm_add_procs (struct mca_ptl_base_module_t *ptl,
                                          &lid)) {
                 ompi_output( 0, "[%s:%d] error in converting global to local id \n", 
 			     __FILE__, __LINE__ );
-
+                return OMPI_ERR_BAD_PARAM;
             }
             ptl_peer->local_id = lid;
             ptl_proc->peer_arr[ptl_proc->proc_peer_count] = ptl_peer;
@@ -354,9 +353,14 @@ mca_ptl_gm_matched( mca_ptl_base_module_t * ptl,
 	    hdr->hdr_ack.hdr_dst_addr.lval = 0L;
 	    hdr->hdr_ack.hdr_dst_addr.pval = frag;
 	    hdr->hdr_ack.hdr_dst_size = request->req_bytes_packed;
-	    gm_send_to_peer_with_callback( ((mca_ptl_gm_module_t*)ptl)->gm_port, hdr,
-					   GM_SIZE, sizeof(mca_ptl_base_ack_header_t), GM_LOW_PRIORITY,
-					   peer->local_id, mca_ptl_gm_basic_ack_callback, (void *)hdr );
+
+	    gm_send_with_callback( ((mca_ptl_gm_module_t*)ptl)->gm_port, hdr,
+                                   GM_SIZE, sizeof(mca_ptl_base_ack_header_t),
+                                   GM_LOW_PRIORITY,
+                                   peer->local_id,
+                                   peer->port_number,
+                                   mca_ptl_gm_basic_ack_callback,
+                                   (void *)hdr );
         }
     }
     

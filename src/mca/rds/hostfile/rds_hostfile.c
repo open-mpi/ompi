@@ -220,6 +220,9 @@ static int orte_rds_hostfile_query(void)
         goto cleanup;
     }
 
+    if (NULL != mca_rds_hostfile_component.path) {
+        free(mca_rds_hostfile_component.path);
+    }
     rc = mca_base_param_find("rds", "hostfile", "path");
     mca_base_param_lookup_string(rc, &mca_rds_hostfile_component.path);
     rc = orte_rds_hostfile_parse(mca_rds_hostfile_component.path, &existing, &updates);

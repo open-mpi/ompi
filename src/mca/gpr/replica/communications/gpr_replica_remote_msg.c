@@ -75,6 +75,5 @@ int orte_gpr_replica_remote_notify(orte_process_name_t *recipient, orte_gpr_noti
 
     OBJ_DESTRUCT(&msg);
 
-    OBJ_RELEASE(message);
     return ORTE_SUCCESS;
 }

@@ -217,6 +217,7 @@ int orte_rmgr_base_get_job_slots(orte_jobid_t jobid, size_t* proc_slots)
         &num_values,
         &values
         );
+
     if(rc != ORTE_SUCCESS) {
         free(segment);
         return rc;
@@ -224,9 +225,11 @@ int orte_rmgr_base_get_job_slots(orte_jobid_t jobid, size_t* proc_slots)
 
     if(0 == num_values) {
         *proc_slots = 0;
+        free(segment);
         return ORTE_SUCCESS;
     }
     if(1 != num_values || values[0]->cnt != 1) {
+        free(segment);
         return ORTE_ERR_NOT_FOUND;
     }
     *proc_slots = values[0]->keyvals[0]->value.ui32;

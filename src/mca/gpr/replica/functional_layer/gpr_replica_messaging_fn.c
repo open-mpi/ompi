@@ -74,8 +74,7 @@ int orte_gpr_replica_process_callbacks(void)
                     }
                 }
             } 
-            cb->message->data = NULL;
-    	   } else {  /* remote request - send message back */
+    	} else {  /* remote request - send message back */
     	       if (orte_gpr_replica_globals.debug) {
     		      ompi_output(0, "process_callbacks: remote to [%d,%d,%d]",
                         ORTE_NAME_ARGS(cb->requestor));
@@ -93,7 +92,7 @@ CLEANUP:
             OBJ_RELEASE(trig);
         }
         
-    	    OBJ_RELEASE(cb);
+	    OBJ_RELEASE(cb);
     }
 
     return ORTE_SUCCESS;
