@@ -315,7 +315,9 @@ int mca_oob_tcp_finalize(void)
     mca_oob_tcp_peer_t * peer;
     while(NULL != (peer = (mca_oob_tcp_peer_t *) 
         ompi_list_remove_first(&mca_oob_tcp_component.tcp_peer_list))) {
+        OMPI_THREAD_LOCK(&peer->peer_lock);
         mca_oob_tcp_peer_close(peer);
+        OMPI_THREAD_UNLOCK(&peer->peer_lock);
         OBJ_DESTRUCT(peer);
     }
     ompi_event_fini();
