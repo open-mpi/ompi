@@ -108,27 +108,34 @@ typedef int (*mca_oob_base_module_recv_nb_fn_t)(
     mca_oob_callback_fn_t cbfunc,
     void* cbdata);
 
-/*
+/**
  * OOB Module
  */
-
 struct mca_oob_1_0_0_t {
     mca_oob_base_module_send_fn_t     oob_send;
     mca_oob_base_module_recv_fn_t     oob_recv;
     mca_oob_base_module_send_nb_fn_t  oob_send_nb;
     mca_oob_base_module_recv_nb_fn_t  oob_recv_nb;
 };
+/**
+ * Convenience Typedef
+ */
 typedef struct mca_oob_1_0_0_t mca_oob_1_0_0_t;
+/**
+ * Convenience typedef
+ */
 typedef struct mca_oob_1_0_0_t mca_oob_t;
 
 /**
  * OOB Component
  */
-
 typedef mca_oob_t* (*mca_oob_base_component_init_fn_t)(
     bool *allow_multi_user_threads,
     bool *have_hidden_threads);
 
+/**
+ * OOB finalize function
+ */
 typedef int (*mca_oob_base_component_finalize_fn_t)(void);
 
 /**
@@ -141,11 +148,17 @@ struct mca_oob_base_component_1_0_0_t {
    mca_oob_base_component_init_fn_t oob_init;
    mca_oob_base_component_finalize_fn_t oob_finalize;
 };
+/**
+ * Convenience Typedef
+ */
 typedef struct mca_oob_base_component_1_0_0_t mca_oob_base_component_1_0_0_t;
+/**
+ * Convenience Typedef
+ */
 typedef mca_oob_base_component_1_0_0_t mca_oob_base_component_t;
 
 
-/*
+/**
  * Macro for use in components that are of type oob v1.0.0
  */
 #define MCA_OOB_BASE_VERSION_1_0_0 \
@@ -168,6 +181,9 @@ struct mca_oob_base_info_t {
   mca_oob_base_component_t *oob_component;
   mca_oob_t *oob_module;
 };
+/**
+ * Convenience Typedef
+ */
 typedef struct mca_oob_base_info_t mca_oob_base_info_t;
 
 /**
@@ -185,37 +201,6 @@ extern "C" {
     int mca_oob_base_open(void);
     int mca_oob_base_init(bool *allow_multi_user_threads, bool *have_hidden_threads);
     int mca_oob_base_close(void);
-
-/*
- * functions for pack and unpack routines
- */
-/**
- * This function packs the passed data according to the type enum.
- *
- * @param dest the destination for the packed data
- * @param src the source of the data
- * @param n the number of elements in the src
- * @param type the type of data 
- *
- * @retval OMPI_SUCCESS
- * @retval OMPI_ERROR
- */
-    int mca_oob_base_pack(void * dest, void * src, size_t n, mca_oob_base_type_t type);
-
-/**
- * This function unpacks the passed data according to the type enum.
- *
- * @param dest the destination for the unpacked data
- * @param src the source of the packed data
- * @param n the number of elements in the src
- * @param type the type of the data to unpack
- * 
- * @retval OMPI_SUCCESS
- * @retval OMPI_ERROR
- */
-    int mca_oob_base_unpack(void * dest, void * src, size_t n, mca_oob_base_type_t type);
-
-
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

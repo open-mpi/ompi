@@ -46,6 +46,9 @@ struct mca_oob_tcp_peer_t {
     mca_oob_tcp_msg_t *peer_send_msg; /**< current send in progress */
     mca_oob_tcp_msg_t *peer_recv_msg; /**< current recv in progress */
 };
+/**
+ * Convenience Typedef
+ */
 typedef struct mca_oob_tcp_peer_t mca_oob_tcp_peer_t;
 
 /*

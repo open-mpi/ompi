@@ -27,7 +27,7 @@ static void mca_oob_tcp_msg_destruct(mca_oob_tcp_msg_t* msg)
 }
 
 
-/**
+/*
  *  Wait for a msg to complete.
  *  @param  msg (IN)   Message to wait on.
  *  @param  rc (OUT)   Return code (number of bytes read on success or error code on failure).
@@ -50,7 +50,7 @@ int mca_oob_tcp_msg_wait(mca_oob_tcp_msg_t* msg, int* rc)
     return OMPI_SUCCESS;
 }
 
-/**
+/*
  *  Signal that a message has completed.
  *  @param  msg (IN)   Message to wait on.
  *  @param peer (IN) the peer of the message
@@ -113,7 +113,7 @@ bool mca_oob_tcp_msg_send_handler(mca_oob_tcp_msg_t* msg, struct mca_oob_tcp_pee
     }
 }
 
-/**
+/*
  * Receives message data.
  * @param msg the message to be recieved into
  * @param peer the peer to recieve from
@@ -154,7 +154,7 @@ bool mca_oob_tcp_msg_recv_handler(mca_oob_tcp_msg_t* msg, struct mca_oob_tcp_pee
     }
 }
 
-/**
+/*
  *  Called to copy the results of a message into user supplied iovec array.
  *  @param  msg (IN)   Message send that is in progress.
  *  @param  iov (IN)   Iovec array of user supplied buffers.
@@ -195,7 +195,7 @@ int mca_oob_tcp_msg_copy(mca_oob_tcp_msg_t* msg, const struct iovec* iov, int co
     return rc;
 }
 
-/**
+/*
  *  Match name to a message that has been received asynchronously (unexpected).
  *
  *  @param  name (IN)  Name associated with peer or wildcard to match first posted recv.
@@ -221,7 +221,7 @@ mca_oob_tcp_msg_t* mca_oob_tcp_msg_match_recv(const ompi_process_name_t* name, i
     return NULL;
 }
 
-/**
+/*
  *  Match name to a posted recv request.
  *
  *  @param  name (IN)  Name associated with peer or wildcard to match first posted recv.

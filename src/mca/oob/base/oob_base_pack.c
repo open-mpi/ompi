@@ -2,8 +2,8 @@
  * $HEADER$
  */
 
-/** @file **/
-/**
+/** @file
+ *
  * The pack and unpack routines for the oob
  */
 #include "mca/oob/base/base.h"

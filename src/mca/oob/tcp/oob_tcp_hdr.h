@@ -9,7 +9,7 @@
 #ifndef _MCA_OOB_TCP_HDR_H_
 #define _MCA_OOB_TCP_HDR_H_
 
-/*
+/**
  * Header used by tcp oob protocol.
  */
 struct mca_oob_tcp_hdr_t {
@@ -18,10 +18,16 @@ struct mca_oob_tcp_hdr_t {
 };
 typedef struct mca_oob_tcp_hdr_t mca_oob_tcp_hdr_t;
 
+/**
+ * Convert the message header to host byte order
+ */
 #define MCA_OOB_TCP_HDR_NTOHL(h) \
     ntohl(h->msg_size); \
     ntohl(h->msg_tag);
 
+/**
+ * Convert the message header to network byte order
+ */
 #define MCA_OOB_TCP_HDR_HTONL(h) \
     htonl(h->msg_size); \
     htonl(h->msg_tag);

@@ -21,14 +21,25 @@ extern ompi_process_name_t mca_oob_name_any;
 extern ompi_process_name_t mca_oob_name_seed;
 extern ompi_process_name_t mca_oob_name_self;
 
+/**
+ * The wildcard for recieves from any peer.
+ */
 #define MCA_OOB_NAME_ANY  &mca_oob_name_any
+/**
+ * The process name of the seed deamon
+ */
 #define MCA_OOB_NAME_SEED &mca_oob_name_seed
+/**
+ * Process name of self
+ */
 #define MCA_OOB_NAME_SELF &mca_oob_name_self
 
 /*
  * Other constants
  */
-
+/**
+ * Recieve from any tag.
+ */
 #define MCA_OOB_TAG_ANY 0
 
 /*
@@ -54,9 +65,9 @@ typedef enum {
 *   int size = mca_oob_recv(name, 0, 0, MSG_OOB_PEEK|MSG_OOB_TRUNC);
 */
 
-#define MCA_OOB_PEEK  0x01   /* flag to oob_recv to allow caller to peek a portion of the next available
+#define MCA_OOB_PEEK  0x01   /**< flag to oob_recv to allow caller to peek a portion of the next available
                               * message w/out removing the message from the queue.  */
-#define MCA_OOB_TRUNC 0x02   /* flag to oob_recv to return the actual size of the message even if the receive
+#define MCA_OOB_TRUNC 0x02   /**< flag to oob_recv to return the actual size of the message even if the receive
                                 buffer is smaller than the number of bytes available */
 
 #if defined(c_plusplus) || defined(__cplusplus)
