@@ -197,28 +197,26 @@ OMPI_DECLSPEC ompi_convertor_t* ompi_convertor_create( int remote_arch, int mode
 OMPI_DECLSPEC ompi_convertor_t* ompi_convertor_get_copy( ompi_convertor_t* pConvertor );
 OMPI_DECLSPEC int ompi_convertor_copy( ompi_convertor_t* pSrcConv, ompi_convertor_t* pDestConv );
 OMPI_DECLSPEC int ompi_convertor_init_for_send( ompi_convertor_t* pConv, unsigned int flags,
-                                 dt_desc_t* pData, int count,
-				  void* pUserBuf, int local_starting_point,
-				  memalloc_fct_t allocfn );
+                                                dt_desc_t* pData, int count,
+                                                void* pUserBuf, int local_starting_point,
+                                                memalloc_fct_t allocfn );
 OMPI_DECLSPEC int ompi_convertor_init_for_recv( ompi_convertor_t* pConv, unsigned int flags,
-                                 dt_desc_t* pData, int count,
-				  void* pUserBuf, int remote_starting_point,
-				  memalloc_fct_t allocfn );
+                                                dt_desc_t* pData, int count,
+                                                void* pUserBuf, int remote_starting_point,
+                                                memalloc_fct_t allocfn );
 OMPI_DECLSPEC int ompi_convertor_need_buffers( ompi_convertor_t* pConvertor );
 OMPI_DECLSPEC int ompi_convertor_unpack( ompi_convertor_t* pConv,
-			   struct iovec* out,
-			   unsigned int* out_size,
-			   unsigned int* max_data,
-			   int* freeAfter );
+                                         struct iovec* out,
+                                         unsigned int* out_size,
+                                         unsigned int* max_data,
+                                         int* freeAfter );
 OMPI_DECLSPEC int ompi_convertor_pack( ompi_convertor_t* pConv, 
-			 struct iovec* in, 
-			 unsigned int* in_size,
-			 unsigned int* max_data,
-			 int* freeAfter );
+                                       struct iovec* in, 
+                                       unsigned int* in_size,
+                                       unsigned int* max_data,
+                                       int* freeAfter );
 OMPI_DECLSPEC int ompi_convertor_get_packed_size( ompi_convertor_t* pConv, unsigned int* pSize );
 OMPI_DECLSPEC int ompi_convertor_get_unpacked_size( ompi_convertor_t* pConv, unsigned int* pSize );
-OMPI_DECLSPEC int ompi_convertor_create_stack_with_pos( ompi_convertor_t* pConvertor,
-					  int starting_point, int* sizes );
 
 /* temporary function prototypes. They should move in other place later. */
 OMPI_DECLSPEC int ompi_ddt_get_args( dt_desc_t* pData, int which,

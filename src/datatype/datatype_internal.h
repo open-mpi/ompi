@@ -258,6 +258,51 @@ static inline int GET_FIRST_NON_LOOP( dt_elem_desc_t* _pElem )
     return index;
 }
 
+int ompi_convertor_create_stack_with_pos_general( ompi_convertor_t* pConvertor,
+                                                  int starting_point, int* sizes );
+static inline
+int ompi_convertor_create_stack_with_pos_contig( ompi_convertor_t* pConvertor,
+                                                 int starting_point, int* sizes )
+{
+    dt_stack_t* pStack;   /* pointer to the position on the stack */
+    ompi_datatype_t* pData = pConvertor->pDesc;
+    dt_elem_desc_t* pElems;
+    uint32_t count;
+    int32_t index;
+    long extent;
+
+    pStack = pConvertor->pStack;
+
+    pStack->count    = pConvertor->count;
+    pStack->index    = -1;
+    if( pData->opt_desc.desc != NULL ) {
+        pElems = pData->opt_desc.desc;
+        pStack->end_loop = pData->opt_desc.used;
+    } else {
+        pElems = pData->desc.desc;
+        pStack->end_loop = pData->desc.used;
+    }
+
+    /* Special case for contiguous datatypes */
+    count = starting_point / pData->size;
+    extent = pData->ub - pData->lb;
+    
+    pStack->disp = count * extent;
+    
+    pStack->count -= count;
+    count = starting_point - count * pData->size;  /* number of bytes after the loop */
+    pStack[1].index    = 0;
+    pStack[1].count    = pElems[count].count - count;
+    pStack[1].end_loop = pStack->end_loop;
+    
+    pStack[1].disp     = pStack->disp  /* the total displacement depending on the already done elements  */
+        + pData->size - count;         /* everything from the beginig of this loop */
+
+    pConvertor->bConverted = starting_point;
+    pConvertor->stack_pos = 1;
+    return OMPI_SUCCESS;
+}
+
 static inline
 int ompi_convertor_create_stack_at_begining( ompi_convertor_t* pConvertor, int* sizes )
 {

@@ -634,7 +634,7 @@ int ompi_convertor_init_for_recv( ompi_convertor_t* pConv, uint32_t flags,
         pConv->fAdvance = ompi_convertor_unpack_homogeneous_contig;
     }
     if( starting_point != 0 )
-        return ompi_convertor_create_stack_with_pos( pConv, starting_point, ompi_ddt_local_sizes );
+        return ompi_convertor_create_stack_with_pos_general( pConv, starting_point, ompi_ddt_local_sizes );
     return ompi_convertor_create_stack_at_begining( pConv, ompi_ddt_local_sizes );
 }
 
