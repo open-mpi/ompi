@@ -5,3 +5,22 @@
 include $(top_srcdir)/config/Makefile.options
 
 SUBDIRS = lam mpi common 
+
+# Source code files
+
+headers = \
+	mca.h \
+	mca_pml.h \
+	mca_ptl.h
+
+# Conditionally install the header files
+
+if WANT_INSTALL_HEADERS
+lamdir = $(includedir)/lam/mca
+lam_HEADERS = $(headers)
+else
+lamdir = $(includedir)
+endif
+
+
+
