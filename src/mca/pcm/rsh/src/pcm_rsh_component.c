@@ -64,7 +64,7 @@ ompi_output_stream_t mca_pcm_rsh_output_stream = {
     false, /* lds_want_syslog */
     0,     /* lds_syslog_priority */
     NULL,  /* lds_syslog_ident */
-    "pcm_rsh", /* lds_prefix */
+    "pcm_rsh: ", /* lds_prefix */
     true,  /* lds_want_stdout */
     false, /* lds_want_stderr */
     true,  /* lds_want_file */
@@ -76,7 +76,6 @@ ompi_output_stream_t mca_pcm_rsh_output_stream = {
 /*
  * Module variables handles
  */
-static int mca_pcm_rsh_param_no_n;
 static int mca_pcm_rsh_param_no_profile;
 static int mca_pcm_rsh_param_fast;
 static int mca_pcm_rsh_param_ignore_stderr;
@@ -87,14 +86,18 @@ static int mca_pcm_rsh_param_debug;
 /*
  * Module variables
  */
-int mca_pcm_rsh_no_n;
+/* should we avoid running .profile, even if the shell says we should */
 int mca_pcm_rsh_no_profile;
+/* should we assume same shell on remote as locally? */
 int mca_pcm_rsh_fast;
+/* should we ignore things on stderr? */
 int mca_pcm_rsh_ignore_stderr;
+/* how should we fire procs up on the remote side? */
 char *mca_pcm_rsh_agent;
 
 int mca_pcm_rsh_output = 0;
-mca_llm_base_module_t mca_pcm_rsh_llm;
+
+static mca_llm_base_module_t mca_pcm_rsh_llm;
 
 int
 mca_pcm_rsh_component_open(void)
@@ -106,8 +109,6 @@ mca_pcm_rsh_component_open(void)
       mca_base_param_register_string("pcm", "rsh", "agent", NULL, 
 				      "ssh");
 
-  mca_pcm_rsh_param_no_n =
-    mca_base_param_register_int("pcm", "rsh", "no_n", NULL, 0);
   mca_pcm_rsh_param_no_profile =
     mca_base_param_register_int("pcm", "rsh", "no_profile", NULL, 0);
   mca_pcm_rsh_param_fast =
@@ -143,8 +144,6 @@ mca_pcm_rsh_init(int *priority,
 
     mca_base_param_lookup_int(mca_pcm_rsh_param_priority, priority);
  
-    mca_base_param_lookup_int(mca_pcm_rsh_param_no_n, 
-			      &mca_pcm_rsh_no_n);
     mca_base_param_lookup_int(mca_pcm_rsh_param_no_profile, 
 			      &mca_pcm_rsh_no_profile);
     mca_base_param_lookup_int(mca_pcm_rsh_param_fast, 
@@ -186,6 +185,10 @@ mca_pcm_rsh_finalize(void)
         ompi_output_close(mca_pcm_rsh_output);
     }
 
+    if (NULL == mca_pcm_rsh_1_0_0.pcm_allocate_resources) {
+        mca_pcm_rsh_1_0_0.pcm_allocate_resources = NULL;
+        mca_pcm_rsh_1_0_0.pcm_deallocate_resources = NULL;
+    }
+
     return OMPI_SUCCESS;
 }
-
