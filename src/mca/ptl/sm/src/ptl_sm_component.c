@@ -250,7 +250,7 @@ mca_ptl_base_module_t** mca_ptl_sm_component_init(
 
     /* lookup shared memory pool */
     mca_ptl_sm_component.sm_mpool =
-        mca_mpool_module_lookup(mca_ptl_sm_component.sm_mpool_name);
+        mca_mpool_base_module_lookup(mca_ptl_sm_component.sm_mpool_name);
 
     mca_ptl_sm_component.sm_mpool_base = mca_ptl_sm_component.sm_mpool->mpool_base();
 

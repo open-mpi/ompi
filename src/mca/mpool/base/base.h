@@ -43,8 +43,8 @@ OBJ_CLASS_DECLARATION(mca_mpool_base_selected_module_t);
 OMPI_DECLSPEC int mca_mpool_base_open(void);
 OMPI_DECLSPEC int mca_mpool_base_init(bool *allow_multi_user_threads);
 OMPI_DECLSPEC int mca_mpool_base_close(void);
-OMPI_DECLSPEC mca_mpool_base_component_t* mca_mpool_component_lookup(const char* name);
-OMPI_DECLSPEC mca_mpool_base_module_t* mca_mpool_module_lookup(const char* name);
+OMPI_DECLSPEC mca_mpool_base_component_t* mca_mpool_base_component_lookup(const char* name);
+OMPI_DECLSPEC mca_mpool_base_module_t* mca_mpool_base_module_lookup(const char* name);
 
 
 /*
