@@ -777,7 +777,7 @@ static int32_t mca_gpr_replica_recv_delete_object_cmd(ompi_buffer_t buffer)
     OMPI_THREAD_LOCK(&mca_gpr_replica_mutex);
 
      /* locate the segment */
-    seg = mca_gpr_replica_find_seg(false, segment, ompi_name_server.get_jobid(ompi_rte_get_self()));
+    seg = mca_gpr_replica_find_seg(false, segment, MCA_NS_BASE_JOBID_MAX);
     if (NULL == seg) {
 	OMPI_THREAD_UNLOCK(&mca_gpr_replica_mutex);
 	return OMPI_ERROR;
@@ -868,6 +868,7 @@ static ompi_registry_notify_id_t mca_gpr_replica_recv_subscribe_cmd(ompi_process
     int num_keys=0;
     int32_t num_tokens=0, response=(int32_t)OMPI_ERROR;
     int i=0;
+    mca_ns_base_jobid_t owning_jobid;
 
     return_tag = OMPI_REGISTRY_NOTIFY_ID_MAX;
 
@@ -905,13 +906,19 @@ static ompi_registry_notify_id_t mca_gpr_replica_recv_subscribe_cmd(ompi_process
 	goto RETURN_ERROR;
     }
 
+    if (NULL != sender) {
+        owning_jobid = ompi_name_server.get_jobid(sender);
+    } else {
+        owning_jobid = ompi_name_server.get_jobid(ompi_rte_get_self());
+    }
+
     /*******   LOCK    *****/
     OMPI_THREAD_LOCK(&mca_gpr_replica_mutex);
 
-    seg = mca_gpr_replica_find_seg(true, segment, ompi_name_server.get_jobid(ompi_rte_get_self()));
+    seg = mca_gpr_replica_find_seg(true, segment, owning_jobid);
     if (NULL == seg) { /* segment couldn't be found */
-	OMPI_THREAD_UNLOCK(&mca_gpr_replica_mutex);
-	goto RETURN_ERROR;
+        	OMPI_THREAD_UNLOCK(&mca_gpr_replica_mutex);
+        	goto RETURN_ERROR;
     }
 
     /* convert tokens to keys */
@@ -928,14 +935,14 @@ static ompi_registry_notify_id_t mca_gpr_replica_recv_subscribe_cmd(ompi_process
 		local_idtag1 = mca_gpr_replica_enter_notify_request(seg, action, sender, id_tag, NULL, NULL);
 	
 		response = (int32_t)mca_gpr_replica_subscribe_nl(mode, action, seg, keys, num_keys,
-								 local_idtag1);
+								 local_idtag1, owning_jobid);
 		if (OMPI_SUCCESS == response) {
 		    return_tag = local_idtag1;
 		}
 
     } else {  /* local sender - id_tag is for local notify tracking system*/
 		response = (int32_t)mca_gpr_replica_subscribe_nl(mode, action, seg,
-								 keys, num_keys, id_tag);
+								 keys, num_keys, id_tag, owning_jobid);
 		if (OMPI_SUCCESS == response) {
 		    return_tag = id_tag;
 		}
@@ -998,6 +1005,7 @@ static ompi_registry_notify_id_t mca_gpr_replica_recv_synchro_cmd(ompi_process_n
     int num_keys=0;
     int32_t num_tokens=0, response=(int32_t)OMPI_ERROR, synchro_mode=0, trigger=0;
     int i=0;
+    mca_ns_base_jobid_t owning_jobid;
 
     return_tag = OMPI_REGISTRY_NOTIFY_ID_MAX;
 
@@ -1043,41 +1051,47 @@ static ompi_registry_notify_id_t mca_gpr_replica_recv_synchro_cmd(ompi_process_n
 	goto RETURN_ERROR;
     }
 
+    if (NULL != sender) {
+        owning_jobid = ompi_name_server.get_jobid(sender);
+    } else {
+        owning_jobid = ompi_name_server.get_jobid(ompi_rte_get_self());
+    }
 
     /*******   LOCK    *****/
     OMPI_THREAD_LOCK(&mca_gpr_replica_mutex);
 
-    seg = mca_gpr_replica_find_seg(true, segment, ompi_name_server.get_jobid(ompi_rte_get_self()));
+    seg = mca_gpr_replica_find_seg(true, segment, owning_jobid);
     if (NULL == seg) { /* segment couldn't be found */
-	OMPI_THREAD_UNLOCK(&mca_gpr_replica_mutex);
-	goto RETURN_ERROR;
+       OMPI_THREAD_UNLOCK(&mca_gpr_replica_mutex);
+          goto RETURN_ERROR;
     }
-
+    
     /* convert tokens to keys */
     keys = mca_gpr_replica_get_key_list(seg, tokens, &num_keys);
-
+    
     if (NULL != sender) {  /* remote sender */
 
-	/* enter request on local notify tracking system */
-	local_idtag1 = mca_gpr_replica_enter_notify_request(seg,
-							    OMPI_REGISTRY_NOTIFY_NONE, sender,
-							    id_tag, NULL, NULL);
-
-	response = (int32_t)mca_gpr_replica_synchro_nl(synchro_mode,
-						       mode, seg, keys, num_keys,
-						       trigger, local_idtag1);
-
-	if (OMPI_SUCCESS == response) {
-	    return_tag = local_idtag1;
-	}
-
+        	/* enter request on local notify tracking system */
+        	local_idtag1 = mca_gpr_replica_enter_notify_request(seg,
+        							    OMPI_REGISTRY_NOTIFY_NONE, sender,
+        							    id_tag, NULL, NULL);
+        
+        	response = (int32_t)mca_gpr_replica_synchro_nl(synchro_mode,
+        						       mode, seg, keys, num_keys,
+        						       trigger, local_idtag1, owning_jobid);
+        
+        	if (OMPI_SUCCESS == response) {
+        	    return_tag = local_idtag1;
+        	}
+        
     } else {  /* local sender - id_tag already on local notify tracking system */
-	response = (int32_t)mca_gpr_replica_synchro_nl(synchro_mode,
-						       mode, seg, keys, num_keys,
-						       trigger, id_tag);
-	if (OMPI_SUCCESS == response) {
-	    return_tag = id_tag;
-	}
+
+        	response = (int32_t)mca_gpr_replica_synchro_nl(synchro_mode,
+        						       mode, seg, keys, num_keys,
+        						       trigger, id_tag, owning_jobid);
+        	if (OMPI_SUCCESS == response) {
+        	    return_tag = id_tag;
+        	}
     }
 
     mca_gpr_replica_check_synchros(seg);

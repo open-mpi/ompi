@@ -104,7 +104,8 @@ mca_gpr_replica_trigger_list_t
 				   mca_gpr_replica_key_t *keys,
 				   int num_keys,
 				   int trigger,
-				   ompi_registry_notify_id_t id_tag);
+				   ompi_registry_notify_id_t id_tag,
+                    mca_ns_base_jobid_t owning_jobid);
 
 ompi_registry_notify_message_t
 *mca_gpr_replica_construct_notify_message(mca_gpr_replica_segment_t *seg,

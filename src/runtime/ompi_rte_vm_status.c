@@ -108,9 +108,6 @@ ompi_rte_vm_status_t
     
     /* transfer ownership of registry object to buffer and unpack */
     ompi_buffer_init_preallocated(&buffer, value->object, value->object_size);
-    value->object = NULL;
-    value->object_size = 0;
-    OBJ_RELEASE(value);
     
     ompi_unpack(buffer, &stat_ptr->cell, 1, OMPI_CELLID);
     ompi_unpack_string(buffer, &stat_ptr->nodename);
