@@ -403,6 +403,20 @@ process_dir() {
     pd_ompi_topdir="$2"
     pd_cur_dir="`pwd`"
 
+    # Convert to absolutes
+
+    if test -d "$pd_dir"; then
+        cd "$pd_dir"
+        pd_abs_dir="`pwd`"
+        cd "$pd_cur_dir"
+    fi
+
+    if test -d "$pd_ompi_topdir"; then
+        cd "$pd_ompi_topdir"
+        pd_ompi_topdir="`pwd`"
+        cd "$pd_cur_dir"
+    fi
+
     if test -d "$pd_dir"; then
 	cd "$pd_dir"
 
@@ -422,7 +436,7 @@ EOF
 ***   `pwd`
 
 EOF
-	elif test "$pd_dir" != "." -a -x autogen.sh; then
+	elif test "$pd_abs_dir" != "$pd_ompi_topdir" -a -x autogen.sh; then
 	    cat <<EOF
 
 *** Found custom autogen.sh file in:
@@ -531,7 +545,7 @@ EOF
 
                     # Get all the version numbers
 
-                    pd_get_ver="../../../../config/ompi_get_version.sh"
+                    pd_get_ver="$pd_ompi_topdir/config/ompi_get_version.sh"
                     pd_ver="`sh $pd_get_ver $PARAM_VERSION_FILE --all`"
                     pd_ver_full="`echo $pd_ver | awk '{ print $1 }'`"
                     pd_ver_major="`echo $pd_ver | awk '{ print $2 }'`"
@@ -620,7 +634,7 @@ dnl we don't distrub any dependencies.
 AC_CONFIG_COMMANDS([${pd_component_type}-${pd_component_name}],
 [if test -f "$pd_ver_header"; then
   diff "$pd_ver_header" "$pd_ver_header.template" > /dev/null 2>&1
-  if test "$?" != 0; then
+  if test "\$?" != "0"; then
     cp "$pd_ver_header.template" "$pd_ver_header"
     echo "config.status: regenerating $pd_ver_header"
   else
@@ -629,7 +643,8 @@ AC_CONFIG_COMMANDS([${pd_component_type}-${pd_component_name}],
 else
   cp "$pd_ver_header.template" "$pd_ver_header"
   echo "config.status: creating $pd_ver_header"
-fi])
+fi
+rm $pd_ver_header.template])
 
 EOF
                 fi
