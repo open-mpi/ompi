@@ -259,8 +259,6 @@ mca_ptl_gm_send (struct mca_ptl_base_module_t *ptl,
     mca_ptl_gm_module_t * gm_ptl;
     int rc;
 
-    GM_DBG(PTL_GM_DBG_COMM,"INSIDE PTL GM SEND\n");
-
     gm_ptl = (mca_ptl_gm_module_t *)ptl;
     sendfrag = mca_ptl_gm_alloc_send_frag( gm_ptl, sendreq );
     if (NULL == sendfrag) {
@@ -312,7 +310,6 @@ mca_ptl_gm_put (struct mca_ptl_base_module_t *ptl,
    }
 
    putfrag = mca_ptl_gm_alloc_send_frag( gm_ptl, sendreq ); /*alloc_put_frag */
-   A_PRINT(" INSIDE PTL PUT,request is %p frag is %p\n",sendreq,putfrag);
     
    putfrag->registered_buf = (void *)buffer_ptr;
    putfrag->peer = (mca_ptl_gm_peer_t *)ptl_peer;
@@ -331,11 +328,9 @@ mca_ptl_gm_put (struct mca_ptl_base_module_t *ptl,
    gm_ptl->num_send_tokens--;
    sendreq->req_offset += size; 
    
-#if 1
    rc = mca_ptl_gm_peer_send (putfrag->peer,putfrag,sendreq,
 			      offset,&size,flags);
    assert(rc == 0);
-#endif
    
    return OMPI_SUCCESS;
 }
@@ -374,16 +369,14 @@ mca_ptl_gm_matched( mca_ptl_base_module_t * ptl,
 
     header = &frag->frag_base.frag_header;
     request = frag->frag_request;
-    A_PRINT("inside match, the matched request is %p\n", request);
     gm_ptl = (mca_ptl_gm_module_t *)ptl;
 
     if (header->hdr_common.hdr_flags & MCA_PTL_FLAGS_ACK) {
 	/* need to send an ack back */
-	recv_frag = (mca_ptl_gm_recv_frag_t *) frag;
-	A_PRINT("the recv_frag inside matched is %p\n",recv_frag);
+	recv_frag = (mca_ptl_gm_recv_frag_t *)frag;
 	
 	ack = mca_ptl_gm_alloc_send_frag( gm_ptl, NULL );
-	if (NULL == ack) {
+	if( NULL == ack ) {
 	    ompi_output(0,"[%s:%d] unable to alloc a gm fragment\n",
 			__FILE__,__LINE__);
 	    OMPI_THREAD_LOCK (&mca_ptl_gm_component.gm_lock);
@@ -399,19 +392,19 @@ mca_ptl_gm_matched( mca_ptl_base_module_t * ptl,
 	    buffer_ptr += bytes_recv;
 	    status = gm_register_memory(gm_ptl->gm_port, buffer_ptr, bytes_reg);
 	    recv_frag->registered_buf = buffer_ptr;
-	    A_PRINT("Receiver: register addr: %p, bytes: %d\n",buffer_ptr,bytes_reg);
 	    
 	    if(GM_SUCCESS != status) {
 		ompi_output(0,"[%s:%d] Unable to register memory\n",__FILE__,__LINE__);
 	    }
 	    
 	    /* send the registered memory information, send recv request * ptr */
-	    rc1 = mca_ptl_gm_send_ack_init (ack, gm_ptl, (mca_ptl_gm_peer_t *)
-					    (recv_frag->frag_recv.frag_base.frag_peer), recv_frag, buffer_ptr, bytes_reg);
+	    rc1 = mca_ptl_gm_send_ack_init( ack, gm_ptl, 
+                                            (mca_ptl_gm_peer_t *)(recv_frag->frag_recv.frag_base.frag_peer),
+                                            recv_frag, buffer_ptr, bytes_reg );
 	    
 	    /*TO DO : put the registered memory in pin-down cache */
-	    mca_ptl_gm_peer_send ( (mca_ptl_gm_peer_t *) (ack->send_frag.frag_base.frag_peer),
-				   ack,srequest,0,&size,0 );
+	    mca_ptl_gm_peer_send( (mca_ptl_gm_peer_t *) (ack->send_frag.frag_base.frag_peer),
+                                  ack, srequest, 0, &size, 0 );
 	    gm_ptl->num_send_tokens--;
 	}
     }
@@ -441,7 +434,6 @@ mca_ptl_gm_matched( mca_ptl_base_module_t * ptl,
 	rc = ompi_convertor_unpack( &frag->frag_base.frag_convertor, &(iov),
 				    &out_size, &max_data, &freeAfter );
 	assert( rc >= 0 );
-	A_PRINT("in matched: bytes received is %d\n", bytes_recv);
     }
     
     /* update progress*/   
@@ -450,7 +442,7 @@ mca_ptl_gm_matched( mca_ptl_base_module_t * ptl,
     /* Now update the status of the fragment */
     ((mca_ptl_gm_recv_frag_t*)frag)->matched = true;
     if( ((mca_ptl_gm_recv_frag_t*)frag)->have_allocated_buffer == true ) {
-	free( recv_frag->frag_recv.frag_base.frag_addr);
+	free( ((mca_ptl_gm_recv_frag_t*)frag)->frag_recv.frag_base.frag_addr);
 	((mca_ptl_gm_recv_frag_t*)frag)->have_allocated_buffer = false;
     }
     

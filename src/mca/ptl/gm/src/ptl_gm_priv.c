@@ -54,7 +54,6 @@ int mca_ptl_gm_peer_send( mca_ptl_gm_peer_t *ptl_peer,
 
     header = (mca_ptl_base_header_t*)fragment->send_buf;
     header_length = sizeof(mca_ptl_base_match_header_t);
-    A_PRINT("peer send (could be ack) : headerlen is %d \n", header_length);
     size_in = *size;
   
     if( (size_in + header_length) <= GM_BUF_SIZE ) 
@@ -102,10 +101,6 @@ int mca_ptl_gm_peer_send( mca_ptl_gm_peer_t *ptl_peer,
      */
     size_out = iov.iov_len + header_length;
   
-    A_PRINT( "peer_send request is %p\t, frag->req = %p, fragment is %p,size is %d, send_frag is %p\n",
-	     sendreq, fragment->req, fragment, size_out,
-	     ((mca_ptl_base_header_t *)header)->hdr_ack.hdr_src_ptr);
- 
     DO_DEBUG( printf( "send pointer %p SIZE %d length %lu\n",
                       (void*)fragment->send_buf, GM_BUF_SIZE, size_out ) );
 
@@ -122,19 +117,27 @@ int mca_ptl_gm_peer_send( mca_ptl_gm_peer_t *ptl_peer,
                                    send_callback, (void *)fragment );
     if( size_out <= GM_BUF_SIZE ) {
         /* small message. All data went out */
+        /* ompi_request_complete(sendreq); */
         ptl_peer->peer_ptl->super.ptl_send_progress( (mca_ptl_base_module_t*)ptl_peer->peer_ptl,
                                                      fragment->send_frag.frag_request,
                                                      iov.iov_len );
+
         /*gm_send_with_callback( ptl_peer->peer_ptl->gm_port, fragment->send_buf, 
           GM_SIZE, size_out, GM_LOW_PRIORITY, ptl_peer->local_id,
           ptl_peer->port_number, send_callback, (void *)fragment );*/
         *size = iov.iov_len;
     } else if( size_in <= (5 * GM_BUF_SIZE) ) {  /* eager message */
+        ompi_list_item_t* item;
+        mca_ptl_gm_eager_header_t* header;
+
         while( size_out < size_in ) {
-            ompi_list_item_t* item;
-            mca_ptl_gm_eager_header_t* header;
-            
             OMPI_FREE_LIST_WAIT( &(ptl_peer->peer_ptl->gm_send_dma_frags), item, rc );
+
+            header = (mca_ptl_gm_eager_header_t*)item;
+            header->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_FRAG;
+            header->hdr_common.hdr_flags = 0;
+            header->hdr_src_ptr.pval = fragment;
+
             iov.iov_base = (char*)header + sizeof(mca_ptl_gm_eager_header_t);
             iov.iov_len = GM_BUF_SIZE - sizeof(mca_ptl_gm_eager_header_t);
             max_data = iov.iov_len;
@@ -144,10 +147,6 @@ int mca_ptl_gm_peer_send( mca_ptl_gm_peer_t *ptl_peer,
                 return OMPI_ERROR;
 
             size_out += iov.iov_len;
-            header = (mca_ptl_gm_eager_header_t*)item;
-            header->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_FRAG;
-            header->hdr_common.hdr_flags = 0;
-            header->hdr_src_ptr.pval = fragment;
 
             gm_send_to_peer_with_callback( ptl_peer->peer_ptl->gm_port, header,
                                            GM_SIZE, size_out, GM_LOW_PRIORITY, ptl_peer->local_id,
@@ -160,7 +159,6 @@ int mca_ptl_gm_peer_send( mca_ptl_gm_peer_t *ptl_peer,
         
     }
 
-    A_PRINT("inside peer send : bytes sent is %d\n",*size);
     return OMPI_SUCCESS;
 }
 
@@ -179,13 +177,9 @@ void put_callback(struct gm_port *port,void * context, gm_status_t status)
     ptl = (mca_ptl_gm_module_t *)putfrag->ptl;
     send_req = putfrag->req;
 
-    A_PRINT("ENTERING PUT CALLBACK\n");
-
     switch  (status) {
     case GM_SUCCESS:
         /* local put completed, mark put as complete */
-   
-        GM_DBG(PTL_GM_DBG_COMM,"PUTCALLBACK WITH CASE GM_SUCCESS\n");
         ompi_atomic_add( &(ptl->num_send_tokens), 1 );
         putfrag->put_sent = 1;
 
@@ -203,9 +197,7 @@ void put_callback(struct gm_port *port,void * context, gm_status_t status)
 
        if(GM_SUCCESS != status) {
     	   ompi_output(0," unpinning memory failed\n");
-       } else {
-    	   GM_DBG(PTL_GM_DBG_COMM, " unpinning %d bytes of memory  success\n",bytes2);
-       }    
+       }
        break;
 
     case GM_SEND_TIMED_OUT:
@@ -277,15 +269,12 @@ void send_callback( struct gm_port *port, void * context, gm_status_t status )
             }
             break;
         case MCA_PTL_HDR_TYPE_ACK:
-	    A_PRINT("send callback: Completion of send_ack, sent frag is %p\n", frag);
             /* return the DMA memory */
 	    OMPI_FREE_LIST_RETURN(&(ptl->gm_send_dma_frags), ((ompi_list_item_t *)frag->send_buf));
             frag->send_buf = NULL;
 	    OMPI_FREE_LIST_RETURN(&(ptl->gm_send_frags), ((ompi_list_item_t *) frag));
             break;
         case MCA_PTL_HDR_TYPE_FIN:
-	    A_PRINT("send callback : Completion of fin, bytes complete = %d\n",
-                    header->hdr_ack.hdr_dst_size);
 	    ptl->super.ptl_send_progress( (mca_ptl_base_module_t*)ptl, frag->send_frag.frag_request, 
 					  header->hdr_ack.hdr_dst_size);
 	    
@@ -298,7 +287,6 @@ void send_callback( struct gm_port *port, void * context, gm_status_t status )
 	    /* Not going to call progress on this send,
 	     * and not free-ing descriptor */
 	    frag->send_complete = 1;
-	    A_PRINT("send callback : match required but not yet recv ack sendfrag is %p\n",frag);
         }
 	break;
 	
@@ -314,8 +302,6 @@ void send_callback( struct gm_port *port, void * context, gm_status_t status )
         ompi_output(0, "[%s:%d] error in message completion\n",__FILE__,__LINE__);
         break;
     }
-    
-    A_PRINT("RETURNING FROM SEND_CALLBACK\n");
 }
 
 static void ptl_gm_ctrl_frag(struct mca_ptl_gm_module_t *ptl, mca_ptl_base_header_t * header)
@@ -328,10 +314,7 @@ static void ptl_gm_ctrl_frag(struct mca_ptl_gm_module_t *ptl, mca_ptl_base_heade
     int status;
   
     if(header->hdr_common.hdr_type == MCA_PTL_HDR_TYPE_ACK) {
-	A_PRINT( "ack header is %d, frag_ptr is %p\n", header->hdr_common.hdr_size,
-		 header->hdr_ack.hdr_src_ptr.pval);
 	frag = (mca_ptl_gm_send_frag_t *)(header->hdr_ack.hdr_src_ptr.pval);
-	A_PRINT("inside ACK, corresp frag pointer  %p\n",frag);
 	req = (mca_pml_base_send_request_t *) frag->req;
 	assert(req != NULL);
 	req->req_peer_match.pval = header->hdr_ack.hdr_dst_match.pval;
@@ -346,22 +329,14 @@ static void ptl_gm_ctrl_frag(struct mca_ptl_gm_module_t *ptl, mca_ptl_base_heade
 					  frag->send_frag.frag_request,bytes); 
             
 	    OMPI_FREE_LIST_RETURN(&(ptl->gm_send_frags), (ompi_list_item_t *)frag);
-	    A_PRINT( "inside ACK,returning frag pointer  %p, request is %p, bytes is %d\n",
-		     frag, frag->send_frag.frag_request, header->hdr_frag.hdr_frag_length );
 	}
     } else if(header->hdr_common.hdr_type == MCA_PTL_HDR_TYPE_FIN) {
-	GM_DBG(PTL_GM_DBG_COMM,"CASE: HDR_TYPE_FIN\n");
-	request = (mca_pml_base_recv_request_t*)
-	    header->hdr_ack.hdr_dst_match.pval;
+	request = (mca_pml_base_recv_request_t*)header->hdr_ack.hdr_dst_match.pval;
 	/* call receive progress and indicate the recv has been completed  */
-	
-	GM_DBG( PTL_GM_DBG_COMM,"Calling recv_progress with bytes = %ld\n",
-                (long)header->hdr_ack.hdr_dst_size );
-	ptl->super.ptl_recv_progress (
-				      (mca_ptl_base_module_t *) ptl,
-				      request , 
-				      header->hdr_ack.hdr_dst_size,
-				      header->hdr_ack.hdr_dst_size);
+	ptl->super.ptl_recv_progress( (mca_ptl_base_module_t *) ptl,
+                                      request , 
+                                      header->hdr_ack.hdr_dst_size,
+                                      header->hdr_ack.hdr_dst_size );
 	/* deregister the memory */
 	bytes = header->hdr_ack.hdr_dst_size;
 	reg_buf =(char *) header->hdr_ack.hdr_dst_addr.pval; 
@@ -369,8 +344,6 @@ static void ptl_gm_ctrl_frag(struct mca_ptl_gm_module_t *ptl, mca_ptl_base_heade
 	
 	if(GM_SUCCESS != status) {
 	    ompi_output(0," unpinning memory failed\n");
-	} else {
-	    GM_DBG(PTL_GM_DBG_COMM, "unpinning memory success,addr:%p,bytes:%d\n",reg_buf,bytes);
 	}
     } else {
 	OMPI_OUTPUT((0, "Unkonwn header type in ptl_gm_ctrl_frag\n"));
@@ -389,7 +362,6 @@ mca_ptl_gm_recv_frag_match( struct mca_ptl_gm_module_t *ptl,
     
     /* allocate a receive fragment */
     recv_frag = mca_ptl_gm_alloc_recv_frag( (struct mca_ptl_base_module_t*)ptl );
-    A_PRINT("the allocate drecv fragment is %p\n", recv_frag);
     
     recv_frag->frag_recv.frag_base.frag_owner = (struct mca_ptl_base_module_t*)ptl;
     recv_frag->frag_recv.frag_base.frag_peer = NULL;
@@ -416,10 +388,6 @@ mca_ptl_gm_recv_frag_match( struct mca_ptl_gm_module_t *ptl,
     if( matched ) {
         return NULL;
     }
-    
-    GM_DBG(PTL_GM_DBG_COMM,
-	   "matching receive not yet posted get tag %d comm %d source %d\n",
-	   header->hdr_match.hdr_tag, header->hdr_match.hdr_contextid, header->hdr_match.hdr_src );
     return recv_frag;
 }
 
@@ -435,7 +403,6 @@ mca_ptl_gm_recv_frag_frag( struct mca_ptl_gm_module_t *ptl,
 
     /* allocate a receive fragment */
     recv_frag = mca_ptl_gm_alloc_recv_frag( (struct mca_ptl_base_module_t*)ptl );
-    A_PRINT("the allocate drecv fragment is %p\n", recv_frag);
 
     recv_frag->frag_recv.frag_base.frag_owner = (struct mca_ptl_base_module_t*)ptl;
     recv_frag->frag_recv.frag_base.frag_peer = NULL;
@@ -461,10 +428,6 @@ mca_ptl_gm_recv_frag_frag( struct mca_ptl_gm_module_t *ptl,
     if( matched ) {
         return NULL;
     }
-
-    GM_DBG(PTL_GM_DBG_COMM,
-           "matching receive not yet posted get tag %d comm %d source %d\n",
-           header->hdr_match.hdr_tag, header->hdr_match.hdr_contextid, header->hdr_match.hdr_src );
     return recv_frag;
 }
 
@@ -481,12 +444,9 @@ void mca_ptl_gm_outstanding_recv( struct mca_ptl_gm_module_t *ptl )
 	    ompi_list_remove_first( (ompi_list_t *)&(ptl->gm_recv_outstanding_queue) );
 	
 	
-        GM_DBG(PTL_GM_DBG_COMM," the frag size to be matched is %ld\n",frag->frag_recv.frag_base.frag_size);
         matched = ptl->super.ptl_match( &(ptl->super),
 					&(frag->frag_recv),
 					&(frag->frag_recv.frag_base.frag_header.hdr_match) );
-	
-        GM_DBG(PTL_GM_DBG_COMM,"the value of matched is %d\n", matched);
 	
         if(!matched) {
 	    ompi_list_append((ompi_list_t *)&(ptl->gm_recv_outstanding_queue),
@@ -540,8 +500,6 @@ int mca_ptl_gm_analyze_recv_event( struct mca_ptl_gm_module_t* ptl, gm_recv_even
     case GM_HIGH_PEER_RECV_EVENT:
 	mesg = gm_ntohp(event->recv.buffer);
 	frag = ptl_gm_handle_recv( ptl, event );
-	GM_DBG(PTL_GM_DBG_COMM,"FINISHED HANDLING INCOMING EVENT\n");
-	
 	if( (frag != NULL) && !(frag->matched) ) {
 	    /* allocate temporary buffer: temporary until the fragment will be finally matched */
 	    char* buffer = malloc( GM_BUF_SIZE );
