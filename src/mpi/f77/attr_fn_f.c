@@ -12,29 +12,29 @@
 #include "win/win.h"
 #include "communicator/communicator.h"
 
-void mpi_type_null_delete_fn_f( MPI_Datatype datatype, int* type_keyval,
+void mpi_type_null_delete_fn_f( MPI_Fint* type, int* type_keyval,
                                 void* attribute_val_out, int* flag, int* ierr );
-void mpi_type_null_copy_fn_f( MPI_Datatype datatype, int* type_keyval, void* extra_state,
+void mpi_type_null_copy_fn_f( MPI_Fint* type, int* type_keyval, void* extra_state,
                               void* attribute_val_in, void* attribute_val_out, int* flag, int* ierr );
-void mpi_type_dup_fn_f( MPI_Datatype datatype, int* type_keyval, void* extra_state,
+void mpi_type_dup_fn_f( MPI_Fint* type, int* type_keyval, void* extra_state,
                         void* attribute_val_in, void* attribute_val_out, int* flag, int* ierr );
-void mpi_win_dup_fn_f( MPI_Win window, int* win_keyval, void* extra_state,
+void mpi_win_dup_fn_f( MPI_Fint* window, int* win_keyval, void* extra_state,
                        void* attribute_val_in, void* attribute_val_out, int* flag, int* ierr );
-void mpi_win_null_copy_fn_f( MPI_Win window, int* win_keyval, void* extra_state,
+void mpi_win_null_copy_fn_f( MPI_Fint* window, int* win_keyval, void* extra_state,
                              void* attribute_val_in, void* attribute_val_out, int* flag, int* ierr );
-void mpi_win_null_delete_fn_f( MPI_Win window, int* win_keyval,
+void mpi_win_null_delete_fn_f( MPI_Fint* window, int* win_keyval,
                                void* attribute_val_out, int* flag, int* ierr );
-void mpi_null_delete_fn_f( MPI_Comm comm, int* comm_keyval,
+void mpi_null_delete_fn_f( MPI_Fint* comm, int* comm_keyval,
                            void* attribute_val_out, int* flag, int* ierr );
-void mpi_null_copy_fn_f( MPI_Comm comm, int* comm_keyval, void* extra_state,
+void mpi_null_copy_fn_f( MPI_Fint* comm, int* comm_keyval, void* extra_state,
                          void* attribute_val_in, void* attribute_val_out, int* flag, int* ierr );
-void mpi_dup_fn_f( MPI_Comm comm, int* comm_keyval, void* extra_state,
+void mpi_dup_fn_f( MPI_Fint* comm, int* comm_keyval, void* extra_state,
                    void* attribute_val_in, void* attribute_val_out, int* flag, int* ierr );
-void mpi_comm_null_delete_fn_f( MPI_Comm comm, int* comm_keyval,
+void mpi_comm_null_delete_fn_f( MPI_Fint* comm, int* comm_keyval,
                                 void* attribute_val_out, int* flag, int* ierr );
-void mpi_comm_null_copy_fn_f( MPI_Comm comm, int* comm_keyval, void* extra_state,
+void mpi_comm_null_copy_fn_f( MPI_Fint* comm, int* comm_keyval, void* extra_state,
                               void* attribute_val_in, void* attribute_val_out, int* flag, int* ierr );
-void mpi_comm_dup_fn_f( MPI_Comm comm, int* comm_keyval, void* extra_state,
+void mpi_comm_dup_fn_f( MPI_Fint* comm, int* comm_keyval, void* extra_state,
                         void* attribute_val_in, void* attribute_val_out, int* flag, int* ierr );
 
 #if OMPI_HAVE_WEAK_SYMBOLS
@@ -88,85 +88,109 @@ void mpi_comm_dup_fn_f( MPI_Comm comm, int* comm_keyval, void* extra_state,
 #pragma weak mpi_dup_fn__ = mpi_dup_fn_f
 
 #else
-
+#warning Still to be done
 #endif
 
-void mpi_type_null_delete_fn_f( MPI_Datatype datatype, int* type_keyval,
+void mpi_type_null_delete_fn_f( MPI_Fint* type, int* type_keyval,
                                 void* attribute_val_out, int* flag, int* ierr )
 {
-   *ierr = MPI_TYPE_NULL_DELETE_FN( datatype, *type_keyval, attribute_val_out, flag );
+   MPI_Datatype c_type = MPI_Type_f2c(*type);
+
+   *ierr = MPI_TYPE_NULL_DELETE_FN( c_type, *type_keyval, attribute_val_out, flag );
 }
 
-void mpi_type_null_copy_fn_f( MPI_Datatype datatype, int* type_keyval, void* extra_state,
+void mpi_type_null_copy_fn_f( MPI_Fint* type, int* type_keyval, void* extra_state,
                               void* attribute_val_in, void* attribute_val_out, int* flag, int* ierr )
 {
-   *ierr = MPI_TYPE_NULL_COPY_FN( datatype, *type_keyval, extra_state,
+   MPI_Datatype c_type = MPI_Type_f2c(*type);
+
+   *ierr = MPI_TYPE_NULL_COPY_FN( c_type, *type_keyval, extra_state,
                                   attribute_val_in, attribute_val_out, flag );
 }
 
-void mpi_type_dup_fn_f( MPI_Datatype datatype, int* type_keyval, void* extra_state,
+void mpi_type_dup_fn_f( MPI_Fint* type, int* type_keyval, void* extra_state,
                         void* attribute_val_in, void* attribute_val_out, int* flag, int* ierr )
 {
-   *ierr = MPI_TYPE_DUP_FN(datatype, *type_keyval, extra_state,
+   MPI_Datatype c_type = MPI_Type_f2c(*type);
+
+   *ierr = MPI_TYPE_DUP_FN( c_type, *type_keyval, extra_state,
                             attribute_val_in, attribute_val_out, flag );
 }
 
-void mpi_comm_null_delete_fn_f( MPI_Comm comm, int* comm_keyval,
+void mpi_comm_null_delete_fn_f( MPI_Fint* comm, int* comm_keyval,
                                 void* attribute_val_out, int* flag, int* ierr )
 {
-   *ierr = MPI_COMM_NULL_DELETE_FN( comm, *comm_keyval, attribute_val_out, flag );
+   MPI_Comm c_comm = MPI_Comm_f2c( *comm );
+
+   *ierr = MPI_COMM_NULL_DELETE_FN( c_comm, *comm_keyval, attribute_val_out, flag );
 }
 
-void mpi_comm_null_copy_fn_f( MPI_Comm comm, int* comm_keyval, void* extra_state,
+void mpi_comm_null_copy_fn_f( MPI_Fint* comm, int* comm_keyval, void* extra_state,
                               void* attribute_val_in, void* attribute_val_out, int* flag, int* ierr )
 {
-   *ierr = MPI_COMM_NULL_COPY_FN( comm, *comm_keyval, extra_state,
+   MPI_Comm c_comm = MPI_Comm_f2c( *comm );
+
+   *ierr = MPI_COMM_NULL_COPY_FN( c_comm, *comm_keyval, extra_state,
                                   attribute_val_in, attribute_val_out, flag );
 }
 
-void mpi_comm_dup_fn_f( MPI_Comm comm, int* comm_keyval, void* extra_state,
+void mpi_comm_dup_fn_f( MPI_Fint* comm, int* comm_keyval, void* extra_state,
                         void* attribute_val_in, void* attribute_val_out, int* flag, int* ierr )
 {
-   *ierr = MPI_COMM_DUP_FN( comm, *comm_keyval, extra_state,
+   MPI_Comm c_comm = MPI_Comm_f2c( *comm );
+
+   *ierr = MPI_COMM_DUP_FN( c_comm, *comm_keyval, extra_state,
                             attribute_val_in, attribute_val_out, flag );
 }
 
-void mpi_null_delete_fn_f( MPI_Comm comm, int* comm_keyval,
+void mpi_null_delete_fn_f( MPI_Fint* comm, int* comm_keyval,
                            void* attribute_val_out, int* flag, int* ierr )
 {
-   *ierr = MPI_NULL_DELETE_FN( comm, *comm_keyval, attribute_val_out, flag );
+   MPI_Comm c_comm = MPI_Comm_f2c( *comm );
+
+   *ierr = MPI_NULL_DELETE_FN( c_comm, *comm_keyval, attribute_val_out, flag );
 }
 
-void mpi_null_copy_fn_f( MPI_Comm comm, int* comm_keyval, void* extra_state,
+void mpi_null_copy_fn_f( MPI_Fint* comm, int* comm_keyval, void* extra_state,
                          void* attribute_val_in, void* attribute_val_out, int* flag, int* ierr )
 {
-   *ierr = MPI_NULL_COPY_FN( comm, *comm_keyval, extra_state,
+   MPI_Comm c_comm = MPI_Comm_f2c( *comm );
+
+   *ierr = MPI_NULL_COPY_FN( c_comm, *comm_keyval, extra_state,
                              attribute_val_in, attribute_val_out, flag );
 }
 
-void mpi_dup_fn_f( MPI_Comm comm, int* comm_keyval, void* extra_state,
+void mpi_dup_fn_f( MPI_Fint* comm, int* comm_keyval, void* extra_state,
                    void* attribute_val_in, void* attribute_val_out, int* flag, int* ierr )
 {
-   *ierr = MPI_DUP_FN( comm, *comm_keyval, extra_state,
+   MPI_Comm c_comm = MPI_Comm_f2c( *comm );
+
+   *ierr = MPI_DUP_FN( c_comm, *comm_keyval, extra_state,
                        attribute_val_in, attribute_val_out, flag );
 }
 
-void mpi_win_null_delete_fn_f( MPI_Win window, int* win_keyval,
+void mpi_win_null_delete_fn_f( MPI_Fint* window, int* win_keyval,
                                void* attribute_val_out, int* flag, int* ierr )
 {
-   *ierr = MPI_WIN_NULL_DELETE_FN( window, *win_keyval, attribute_val_out, flag );
+   MPI_Win c_window = MPI_Win_f2c( *window );
+
+   *ierr = MPI_WIN_NULL_DELETE_FN( c_window, *win_keyval, attribute_val_out, flag );
 }
 
-void mpi_win_null_copy_fn_f( MPI_Win window, int* win_keyval, void* extra_state,
+void mpi_win_null_copy_fn_f( MPI_Fint* window, int* win_keyval, void* extra_state,
                              void* attribute_val_in, void* attribute_val_out, int* flag, int* ierr )
 {
-   *ierr = MPI_WIN_NULL_COPY_FN( window, *win_keyval, extra_state,
+   MPI_Win c_window = MPI_Win_f2c( *window );
+
+   *ierr = MPI_WIN_NULL_COPY_FN( c_window, *win_keyval, extra_state,
                                  attribute_val_in, attribute_val_out, flag );
 }
 
-void mpi_win_dup_fn_f( MPI_Win window, int* win_keyval, void* extra_state,
+void mpi_win_dup_fn_f( MPI_Fint* window, int* win_keyval, void* extra_state,
                        void* attribute_val_in, void* attribute_val_out, int* flag, int* ierr )
 {
-   *ierr = MPI_WIN_DUP_FN( window, *win_keyval, extra_state,
+   MPI_Win c_window = MPI_Win_f2c( *window );
+
+   *ierr = MPI_WIN_DUP_FN( c_window, *win_keyval, extra_state,
                            attribute_val_in, attribute_val_out, flag );
 }
