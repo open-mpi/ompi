@@ -8,207 +8,207 @@
 extern "C" {
 #endif
 // return  codes
-extern const int SUCCESS;
-extern const int ERR_BUFFER;
-extern const int ERR_COUNT;
-extern const int ERR_TYPE;
-extern const int ERR_TAG ;
-extern const int ERR_COMM;
-extern const int ERR_RANK;
-extern const int ERR_REQUEST;
-extern const int ERR_ROOT;
-extern const int ERR_GROUP;
-extern const int ERR_OP;
-extern const int ERR_TOPOLOGY;
-extern const int ERR_DIMS;
-extern const int ERR_ARG;
-extern const int ERR_UNKNOWN;
-extern const int ERR_TRUNCATE;
-extern const int ERR_OTHER;
-extern const int ERR_INTERN;
-extern const int ERR_PENDING;
-extern const int ERR_IN_STATUS;
-extern const int ERR_LASTCODE;
+OMPI_DECLSPEC extern const int SUCCESS;
+OMPI_DECLSPEC extern const int ERR_BUFFER;
+OMPI_DECLSPEC extern const int ERR_COUNT;
+OMPI_DECLSPEC extern const int ERR_TYPE;
+OMPI_DECLSPEC extern const int ERR_TAG ;
+OMPI_DECLSPEC extern const int ERR_COMM;
+OMPI_DECLSPEC extern const int ERR_RANK;
+OMPI_DECLSPEC extern const int ERR_REQUEST;
+OMPI_DECLSPEC extern const int ERR_ROOT;
+OMPI_DECLSPEC extern const int ERR_GROUP;
+OMPI_DECLSPEC extern const int ERR_OP;
+OMPI_DECLSPEC extern const int ERR_TOPOLOGY;
+OMPI_DECLSPEC extern const int ERR_DIMS;
+OMPI_DECLSPEC extern const int ERR_ARG;
+OMPI_DECLSPEC extern const int ERR_UNKNOWN;
+OMPI_DECLSPEC extern const int ERR_TRUNCATE;
+OMPI_DECLSPEC extern const int ERR_OTHER;
+OMPI_DECLSPEC extern const int ERR_INTERN;
+OMPI_DECLSPEC extern const int ERR_PENDING;
+OMPI_DECLSPEC extern const int ERR_IN_STATUS;
+OMPI_DECLSPEC extern const int ERR_LASTCODE;
 
-extern const int ERR_BASE;
-extern const int ERR_INFO_VALUE;
-extern const int ERR_INFO_KEY;
-extern const int ERR_INFO_NOKEY;
-extern const int ERR_KEYVAL;
-extern const int ERR_NAME;
-extern const int ERR_NO_MEM;
-extern const int ERR_SERVICE;
-extern const int ERR_SPAWN;
-extern const int ERR_WIN;
+OMPI_DECLSPEC extern const int ERR_BASE;
+OMPI_DECLSPEC extern const int ERR_INFO_VALUE;
+OMPI_DECLSPEC extern const int ERR_INFO_KEY;
+OMPI_DECLSPEC extern const int ERR_INFO_NOKEY;
+OMPI_DECLSPEC extern const int ERR_KEYVAL;
+OMPI_DECLSPEC extern const int ERR_NAME;
+OMPI_DECLSPEC extern const int ERR_NO_MEM;
+OMPI_DECLSPEC extern const int ERR_SERVICE;
+OMPI_DECLSPEC extern const int ERR_SPAWN;
+OMPI_DECLSPEC extern const int ERR_WIN;
 
 
 // assorted constants
-extern const void* BOTTOM;
-extern const int PROC_NULL;
-extern const int ANY_SOURCE;
-extern const int ANY_TAG;
-extern const int UNDEFINED;
-extern const int BSEND_OVERHEAD;
-extern const int KEYVAL_INVALID;
+OMPI_DECLSPEC extern const void* BOTTOM;
+OMPI_DECLSPEC extern const int PROC_NULL;
+OMPI_DECLSPEC extern const int ANY_SOURCE;
+OMPI_DECLSPEC extern const int ANY_TAG;
+OMPI_DECLSPEC extern const int UNDEFINED;
+OMPI_DECLSPEC extern const int BSEND_OVERHEAD;
+OMPI_DECLSPEC extern const int KEYVAL_INVALID;
 
 // error-handling specifiers
-extern const Errhandler  ERRORS_ARE_FATAL;
-extern const Errhandler  ERRORS_RETURN;
-extern const Errhandler  ERRORS_THROW_EXCEPTIONS;
+OMPI_DECLSPEC extern const Errhandler  ERRORS_ARE_FATAL;
+OMPI_DECLSPEC extern const Errhandler  ERRORS_RETURN;
+OMPI_DECLSPEC extern const Errhandler  ERRORS_THROW_EXCEPTIONS;
 
 // maximum sizes for strings
-extern const int MAX_PROCESSOR_NAME;
-extern const int MAX_ERROR_STRING;
-extern const int MAX_INFO_KEY;
-extern const int MAX_INFO_VAL;
-extern const int MAX_PORT_NAME;
-extern const int MAX_OBJECT_NAME;
+OMPI_DECLSPEC extern const int MAX_PROCESSOR_NAME;
+OMPI_DECLSPEC extern const int MAX_ERROR_STRING;
+OMPI_DECLSPEC extern const int MAX_INFO_KEY;
+OMPI_DECLSPEC extern const int MAX_INFO_VAL;
+OMPI_DECLSPEC extern const int MAX_PORT_NAME;
+OMPI_DECLSPEC extern const int MAX_OBJECT_NAME;
 
 // elementary datatypes (C / C++)
-extern const Datatype CHAR;
-extern const Datatype SHORT;          
-extern const Datatype INT;            
-extern const Datatype LONG;
-extern const Datatype SIGNED_CHAR;
-extern const Datatype UNSIGNED_CHAR;
-extern const Datatype UNSIGNED_SHORT; 
-extern const Datatype UNSIGNED;       
-extern const Datatype UNSIGNED_LONG;  
-extern const Datatype FLOAT;
-extern const Datatype DOUBLE;
-extern const Datatype LONG_DOUBLE;
-extern const Datatype BYTE;
-extern const Datatype PACKED;
-extern const Datatype WCHAR;
+OMPI_DECLSPEC extern const Datatype CHAR;
+OMPI_DECLSPEC extern const Datatype SHORT;          
+OMPI_DECLSPEC extern const Datatype INT;            
+OMPI_DECLSPEC extern const Datatype LONG;
+OMPI_DECLSPEC extern const Datatype SIGNED_CHAR;
+OMPI_DECLSPEC extern const Datatype UNSIGNED_CHAR;
+OMPI_DECLSPEC extern const Datatype UNSIGNED_SHORT; 
+OMPI_DECLSPEC extern const Datatype UNSIGNED;       
+OMPI_DECLSPEC extern const Datatype UNSIGNED_LONG;  
+OMPI_DECLSPEC extern const Datatype FLOAT;
+OMPI_DECLSPEC extern const Datatype DOUBLE;
+OMPI_DECLSPEC extern const Datatype LONG_DOUBLE;
+OMPI_DECLSPEC extern const Datatype BYTE;
+OMPI_DECLSPEC extern const Datatype PACKED;
+OMPI_DECLSPEC extern const Datatype WCHAR;
 
 // datatypes for reductions functions (C / C++)
-extern const Datatype FLOAT_INT;
-extern const Datatype DOUBLE_INT;
-extern const Datatype LONG_INT;
-extern const Datatype TWOINT;
-extern const Datatype SHORT_INT;
-extern const Datatype LONG_DOUBLE_INT;
+OMPI_DECLSPEC extern const Datatype FLOAT_INT;
+OMPI_DECLSPEC extern const Datatype DOUBLE_INT;
+OMPI_DECLSPEC extern const Datatype LONG_INT;
+OMPI_DECLSPEC extern const Datatype TWOINT;
+OMPI_DECLSPEC extern const Datatype SHORT_INT;
+OMPI_DECLSPEC extern const Datatype LONG_DOUBLE_INT;
 
 // elementary datatype (Fortran)
-extern const Datatype INTEGER;
-extern const Datatype REAL;
-extern const Datatype DOUBLE_PRECISION;
-extern const Datatype F_COMPLEX;
-extern const Datatype LOGICAL;
-extern const Datatype CHARACTER;
+OMPI_DECLSPEC extern const Datatype INTEGER;
+OMPI_DECLSPEC extern const Datatype REAL;
+OMPI_DECLSPEC extern const Datatype DOUBLE_PRECISION;
+OMPI_DECLSPEC extern const Datatype F_COMPLEX;
+OMPI_DECLSPEC extern const Datatype LOGICAL;
+OMPI_DECLSPEC extern const Datatype CHARACTER;
 
 // datatype for reduction functions (Fortran)
-extern const Datatype TWOREAL;
-extern const Datatype TWODOUBLE_PRECISION;
-extern const Datatype TWOINTEGER;
+OMPI_DECLSPEC extern const Datatype TWOREAL;
+OMPI_DECLSPEC extern const Datatype TWODOUBLE_PRECISION;
+OMPI_DECLSPEC extern const Datatype TWOINTEGER;
 
 // optional datatypes (Fortran)
-extern const Datatype INTEGER1;
-extern const Datatype INTEGER2;
-extern const Datatype INTEGER4;
-extern const Datatype REAL2;
-extern const Datatype REAL4;
-extern const Datatype REAL8;
+OMPI_DECLSPEC extern const Datatype INTEGER1;
+OMPI_DECLSPEC extern const Datatype INTEGER2;
+OMPI_DECLSPEC extern const Datatype INTEGER4;
+OMPI_DECLSPEC extern const Datatype REAL2;
+OMPI_DECLSPEC extern const Datatype REAL4;
+OMPI_DECLSPEC extern const Datatype REAL8;
 
 // optional datatype (C / C++)
-extern const Datatype LONG_LONG;
-extern const Datatype UNSIGNED_LONG_LONG;
+OMPI_DECLSPEC extern const Datatype LONG_LONG;
+OMPI_DECLSPEC extern const Datatype UNSIGNED_LONG_LONG;
 
 // c++ types
-extern const Datatype BOOL;
-extern const Datatype COMPLEX;
-extern const Datatype DOUBLE_COMPLEX;
-extern const Datatype LONG_DOUBLE_COMPLEX;
+OMPI_DECLSPEC extern const Datatype BOOL;
+OMPI_DECLSPEC extern const Datatype COMPLEX;
+OMPI_DECLSPEC extern const Datatype DOUBLE_COMPLEX;
+OMPI_DECLSPEC extern const Datatype LONG_DOUBLE_COMPLEX;
 
 // special datatypes for contstruction of derived datatypes
-extern const Datatype UB;
-extern const Datatype LB;
+OMPI_DECLSPEC extern const Datatype UB;
+OMPI_DECLSPEC extern const Datatype LB;
 
 // datatype decoding constants
-extern const int COMBINER_NAMED;
-extern const int COMBINER_DUP;
-extern const int COMBINER_CONTIGUOUS;
-extern const int COMBINER_VECTOR;
-extern const int COMBINER_HVECTOR_INTEGER;
-extern const int COMBINER_HVECTOR;
-extern const int COMBINER_INDEXED;
-extern const int COMBINER_HINDEXED_INTEGER;
-extern const int COMBINER_HINDEXED;
-extern const int COMBINER_INDEXED_BLOCK;
-extern const int COMBINER_STRUCT_INTEGER;
-extern const int COMBINER_STRUCT;
-extern const int COMBINER_SUBARRAY;
-extern const int COMBINER_DARRAY;
-extern const int COMBINER_F90_REAL;
-extern const int COMBINER_F90_COMPLEX;
-extern const int COMBINER_F90_INTEGER;
-extern const int COMBINER_RESIZED;
+OMPI_DECLSPEC extern const int COMBINER_NAMED;
+OMPI_DECLSPEC extern const int COMBINER_DUP;
+OMPI_DECLSPEC extern const int COMBINER_CONTIGUOUS;
+OMPI_DECLSPEC extern const int COMBINER_VECTOR;
+OMPI_DECLSPEC extern const int COMBINER_HVECTOR_INTEGER;
+OMPI_DECLSPEC extern const int COMBINER_HVECTOR;
+OMPI_DECLSPEC extern const int COMBINER_INDEXED;
+OMPI_DECLSPEC extern const int COMBINER_HINDEXED_INTEGER;
+OMPI_DECLSPEC extern const int COMBINER_HINDEXED;
+OMPI_DECLSPEC extern const int COMBINER_INDEXED_BLOCK;
+OMPI_DECLSPEC extern const int COMBINER_STRUCT_INTEGER;
+OMPI_DECLSPEC extern const int COMBINER_STRUCT;
+OMPI_DECLSPEC extern const int COMBINER_SUBARRAY;
+OMPI_DECLSPEC extern const int COMBINER_DARRAY;
+OMPI_DECLSPEC extern const int COMBINER_F90_REAL;
+OMPI_DECLSPEC extern const int COMBINER_F90_COMPLEX;
+OMPI_DECLSPEC extern const int COMBINER_F90_INTEGER;
+OMPI_DECLSPEC extern const int COMBINER_RESIZED;
 
 // thread constants
-extern const int THREAD_SINGLE;
-extern const int THREAD_FUNNELED;
-extern const int THREAD_SERIALIZED;
-extern const int THREAD_MULTIPLE;
+OMPI_DECLSPEC extern const int THREAD_SINGLE;
+OMPI_DECLSPEC extern const int THREAD_FUNNELED;
+OMPI_DECLSPEC extern const int THREAD_SERIALIZED;
+OMPI_DECLSPEC extern const int THREAD_MULTIPLE;
 
 // reserved communicators
 // JGS these can not be const because Set_errhandler is not const
-extern Intracomm COMM_WORLD;
-extern Intracomm COMM_SELF;
+OMPI_DECLSPEC extern Intracomm COMM_WORLD;
+OMPI_DECLSPEC extern Intracomm COMM_SELF;
 
 // results of communicator and group comparisons
-extern const int IDENT;
-extern const int CONGRUENT;
-extern const int SIMILAR;
-extern const int UNEQUAL;
+OMPI_DECLSPEC extern const int IDENT;
+OMPI_DECLSPEC extern const int CONGRUENT;
+OMPI_DECLSPEC extern const int SIMILAR;
+OMPI_DECLSPEC extern const int UNEQUAL;
 
 // environmental inquiry keys
-extern const int TAG_UB;
-extern const int IO;
-extern const int HOST;
-extern const int WTIME_IS_GLOBAL;
-extern const int UNIVERSE_SIZE;
-extern const int APPNUM;
-extern const int WIN_BASE;
-extern const int WIN_SIZE;
-extern const int WIN_DISP_UNIT;
+OMPI_DECLSPEC extern const int TAG_UB;
+OMPI_DECLSPEC extern const int IO;
+OMPI_DECLSPEC extern const int HOST;
+OMPI_DECLSPEC extern const int WTIME_IS_GLOBAL;
+OMPI_DECLSPEC extern const int UNIVERSE_SIZE;
+OMPI_DECLSPEC extern const int APPNUM;
+OMPI_DECLSPEC extern const int WIN_BASE;
+OMPI_DECLSPEC extern const int WIN_SIZE;
+OMPI_DECLSPEC extern const int WIN_DISP_UNIT;
 
 // collective operations
-extern const Op MAX;
-extern const Op MIN;
-extern const Op SUM;
-extern const Op PROD;
-extern const Op MAXLOC;
-extern const Op MINLOC;
-extern const Op BAND;
-extern const Op BOR;
-extern const Op BXOR;
-extern const Op LAND;
-extern const Op LOR;
-extern const Op LXOR;
-extern const Op REPLACE;
+OMPI_DECLSPEC extern const Op MAX;
+OMPI_DECLSPEC extern const Op MIN;
+OMPI_DECLSPEC extern const Op SUM;
+OMPI_DECLSPEC extern const Op PROD;
+OMPI_DECLSPEC extern const Op MAXLOC;
+OMPI_DECLSPEC extern const Op MINLOC;
+OMPI_DECLSPEC extern const Op BAND;
+OMPI_DECLSPEC extern const Op BOR;
+OMPI_DECLSPEC extern const Op BXOR;
+OMPI_DECLSPEC extern const Op LAND;
+OMPI_DECLSPEC extern const Op LOR;
+OMPI_DECLSPEC extern const Op LXOR;
+OMPI_DECLSPEC extern const Op REPLACE;
 
 // null handles
-extern const Group        GROUP_NULL;
-extern const Win          WIN_NULL;
-extern const Info         INFO_NULL;
-//extern const Comm         COMM_NULL;
-//extern const MPI_Comm     COMM_NULL;
-extern Comm_Null          COMM_NULL;
-extern const Datatype     DATATYPE_NULL;
-extern Request            REQUEST_NULL;
-extern const Op           OP_NULL;
-extern const Errhandler   ERRHANDLER_NULL;  
+OMPI_DECLSPEC extern const Group        GROUP_NULL;
+OMPI_DECLSPEC extern const Win          WIN_NULL;
+OMPI_DECLSPEC extern const Info         INFO_NULL;
+//OMPI_DECLSPEC extern const Comm         COMM_NULL;
+//OMPI_DECLSPEC extern const MPI_Comm     COMM_NULL;
+OMPI_DECLSPEC extern Comm_Null          COMM_NULL;
+OMPI_DECLSPEC extern const Datatype     DATATYPE_NULL;
+OMPI_DECLSPEC extern Request            REQUEST_NULL;
+OMPI_DECLSPEC extern const Op           OP_NULL;
+OMPI_DECLSPEC extern const Errhandler   ERRHANDLER_NULL;  
 
 // constants specifying empty or ignored input
-extern const char**       ARGV_NULL;
-extern const char***      ARGVS_NULL;
+OMPI_DECLSPEC extern const char**       ARGV_NULL;
+OMPI_DECLSPEC extern const char***      ARGVS_NULL;
 
 // empty group
-extern const Group  GROUP_EMPTY;
+OMPI_DECLSPEC extern const Group  GROUP_EMPTY;
 
 // topologies
-extern const int GRAPH;
-extern const int CART;
+OMPI_DECLSPEC extern const int GRAPH;
+OMPI_DECLSPEC extern const int CART;
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

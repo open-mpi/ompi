@@ -30,20 +30,20 @@ typedef struct mca_ptl_base_selected_module_t mca_ptl_base_selected_module_t;
  * Global functions for MCA: overall PTL open and close
  */
 
-  int mca_ptl_base_open(void);
-  int mca_ptl_base_select(bool *allow_multi_user_threads, 
+OMPI_DECLSPEC  int mca_ptl_base_open(void);
+OMPI_DECLSPEC  int mca_ptl_base_select(bool *allow_multi_user_threads, 
                           bool *have_hidden_threads);
-  int mca_ptl_base_close(void);
+OMPI_DECLSPEC  int mca_ptl_base_close(void);
 
 
 /*
  * Globals
  */
-extern int mca_ptl_base_output;
-extern char* mca_ptl_base_include;
-extern char* mca_ptl_base_exclude;
-extern ompi_list_t mca_ptl_base_components_opened;
-extern ompi_list_t mca_ptl_base_modules_initialized;
+OMPI_DECLSPEC extern int mca_ptl_base_output;
+OMPI_DECLSPEC extern char* mca_ptl_base_include;
+OMPI_DECLSPEC extern char* mca_ptl_base_exclude;
+OMPI_DECLSPEC extern ompi_list_t mca_ptl_base_components_opened;
+OMPI_DECLSPEC extern ompi_list_t mca_ptl_base_modules_initialized;
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

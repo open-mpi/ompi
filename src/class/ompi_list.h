@@ -39,13 +39,13 @@ extern "C" {
  *
  * The class for the list container.
  */
-OBJ_CLASS_DECLARATION(ompi_list_t);
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_list_t);
 /**
  * \internal
  *
  * Base class for items that are put in list (ompi_list_t) containers.
  */
-OBJ_CLASS_DECLARATION(ompi_list_item_t);
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_list_item_t);
 
 
 /**

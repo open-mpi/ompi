@@ -15,11 +15,8 @@
  * On Windows, base everything on InterlockedExchange().
  */
 
-#error Windows code is untested
-
-#include <windows.h>
-
 #include "class/ompi_object.h"
+#include "include/sys/atomic.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -29,7 +26,7 @@ struct ompi_mutex_t {
     volatile LONG m_lock;
 };
 
-OBJ_CLASS_DECLARATION(ompi_mutex_t);
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_mutex_t);
 
 
 static inline int ompi_mutex_trylock(ompi_mutex_t *m)

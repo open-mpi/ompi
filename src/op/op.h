@@ -216,83 +216,83 @@ typedef struct ompi_op_t ompi_op_t;
  * extra lookup, and that lookup is way cheaper than the function call
  * to invoke the reduction operation, it seemed like the best idea.
  */
-extern int ompi_op_ddt_map[DT_MAX_PREDEFINED];
+OMPI_DECLSPEC extern int ompi_op_ddt_map[DT_MAX_PREDEFINED];
 
 /**
  * Global variable for MPI_OP_NULL
  */
-extern ompi_op_t ompi_mpi_op_null;
+OMPI_DECLSPEC extern ompi_op_t ompi_mpi_op_null;
 
 /**
  * Global variable for MPI_MAX
  */
-extern ompi_op_t ompi_mpi_op_max;
+OMPI_DECLSPEC extern ompi_op_t ompi_mpi_op_max;
 
 /**
  * Global variable for MPI_MIN
  */
-extern ompi_op_t ompi_mpi_op_min;
+OMPI_DECLSPEC extern ompi_op_t ompi_mpi_op_min;
 
 /**
  * Global variable for MPI_SUM
  */
-extern ompi_op_t ompi_mpi_op_sum;
+OMPI_DECLSPEC extern ompi_op_t ompi_mpi_op_sum;
 
 /**
  * Global variable for MPI_PROD
  */
-extern ompi_op_t ompi_mpi_op_prod;
+OMPI_DECLSPEC extern ompi_op_t ompi_mpi_op_prod;
 
 /**
  * Global variable for MPI_LAND
  */
-extern ompi_op_t ompi_mpi_op_land;
+OMPI_DECLSPEC extern ompi_op_t ompi_mpi_op_land;
 
 /**
  * Global variable for MPI_BAND
  */
-extern ompi_op_t ompi_mpi_op_band;
+OMPI_DECLSPEC extern ompi_op_t ompi_mpi_op_band;
 
 /**
  * Global variable for MPI_LOR
  */
-extern ompi_op_t ompi_mpi_op_lor;
+OMPI_DECLSPEC extern ompi_op_t ompi_mpi_op_lor;
 
 /**
  * Global variable for MPI_BOR
  */
-extern ompi_op_t ompi_mpi_op_bor;
+OMPI_DECLSPEC extern ompi_op_t ompi_mpi_op_bor;
 
 /**
  * Global variable for MPI_LXOR
  */
-extern ompi_op_t ompi_mpi_op_lxor;
+OMPI_DECLSPEC extern ompi_op_t ompi_mpi_op_lxor;
 
 /**
  * Global variable for MPI_BXOR
  */
-extern ompi_op_t ompi_mpi_op_bxor;
+OMPI_DECLSPEC extern ompi_op_t ompi_mpi_op_bxor;
 
 /**
  * Global variable for MPI_MAXLOC
  */
-extern ompi_op_t ompi_mpi_op_maxloc;
+OMPI_DECLSPEC extern ompi_op_t ompi_mpi_op_maxloc;
 
 /**
  * Global variable for MPI_MINLOC
  */
-extern ompi_op_t ompi_mpi_op_minloc;
+OMPI_DECLSPEC extern ompi_op_t ompi_mpi_op_minloc;
 
 /**
  * Global variable for MPI_REPLACE
  */
-extern ompi_op_t ompi_mpi_op_replace;
+OMPI_DECLSPEC extern ompi_op_t ompi_mpi_op_replace;
 
 
 /**
  * Table for Fortran <-> C op handle conversion
  */
-extern ompi_pointer_array_t *ompi_op_f_to_c_table;
+OMPI_DECLSPEC extern ompi_pointer_array_t *ompi_op_f_to_c_table;
 
 
 #if defined(c_plusplus) || defined(__cplusplus)

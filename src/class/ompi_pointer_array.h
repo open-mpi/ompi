@@ -15,7 +15,7 @@ extern "C" {
  * typedefs
  */
 typedef struct ompi_pointer_array_t ompi_pointer_array_t;
-extern ompi_class_t ompi_pointer_array_t_class;
+OMPI_DECLSPEC extern ompi_class_t ompi_pointer_array_t_class;
 
 /*
  * dynamic pointer array

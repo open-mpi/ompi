@@ -103,7 +103,7 @@
 #include <assert.h>
 #include <stdlib.h>
 
-#ifdef __WINDOWS__
+#ifdef WIN32
 #include <windows.h>
 #else
 #include "include/sys/atomic.h"
@@ -120,8 +120,8 @@
 # define BEGIN_C_DECLS extern "C" {
 # define END_C_DECLS }
 #else
-# define BEGIN_C_DECLS          /* empty */
-# define END_C_DECLS            /* empty */
+#define BEGIN_C_DECLS          /* empty */
+#define END_C_DECLS            /* empty */
 #endif
 
 
@@ -293,12 +293,12 @@ struct ompi_object_t {
     volatile int obj_reference_count;   /**< reference count */
 };
 
-OBJ_CLASS_DECLARATION(ompi_object_t);
+BEGIN_C_DECLS
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_object_t);
 
 
 /* declarations *******************************************************/
 
-BEGIN_C_DECLS
 /**
  * Lazy initialization of class descriptor.
  *
@@ -307,7 +307,7 @@ BEGIN_C_DECLS
  *
  * @param class    Pointer to class descriptor
  */
-void ompi_class_initialize(ompi_class_t *);
+OMPI_DECLSPEC void ompi_class_initialize(ompi_class_t *);
 
 END_C_DECLS
 /**
@@ -405,7 +405,7 @@ static inline ompi_object_t *ompi_obj_new(size_t size, ompi_class_t * cls)
  */
 static inline int ompi_obj_update(ompi_object_t *object, int inc)
 {
-#ifdef __WINDOWS__
+#ifdef WIN32
 
     int newval;
     LONG volatile *addr;

@@ -21,7 +21,7 @@
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
-extern ompi_class_t ompi_communicator_t_class;
+OMPI_DECLSPEC extern ompi_class_t ompi_communicator_t_class;
 
 #define OMPI_COMM_INTER     0x00000001
 #define OMPI_COMM_CART      0x00000002
@@ -58,7 +58,7 @@ extern ompi_class_t ompi_communicator_t_class;
 #define OMPI_COMM_CID_INTRA_BRIDGE 0x00000080
 #define OMPI_COMM_CID_INTRA_OOB    0x00000100
 
-extern ompi_pointer_array_t ompi_mpi_communicators; 
+OMPI_DECLSPEC extern ompi_pointer_array_t ompi_mpi_communicators; 
 
 struct ompi_communicator_t {
     ompi_object_t              c_base; 
@@ -129,7 +129,7 @@ struct ompi_communicator_t {
     /**< Allow the basic module to cache data on the communicator */
 };
 typedef struct ompi_communicator_t ompi_communicator_t;
-extern ompi_communicator_t *ompi_mpi_comm_parent;
+OMPI_DECLSPEC extern ompi_communicator_t *ompi_mpi_comm_parent;
 
 
 /**
@@ -175,7 +175,7 @@ static inline int ompi_comm_remote_size(ompi_communicator_t* comm)
 static inline ompi_communicator_t *ompi_comm_lookup(uint32_t cid) 
 { 
     /* array of pointers to communicators, indexed by context ID */
-    extern ompi_pointer_array_t ompi_mpi_communicators;
+    OMPI_DECLSPEC extern ompi_pointer_array_t ompi_mpi_communicators;
     return (ompi_communicator_t*)ompi_pointer_array_get_item(&ompi_mpi_communicators, cid);
 }
 

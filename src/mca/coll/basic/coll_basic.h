@@ -21,8 +21,8 @@ extern "C" {
  * Globally exported variable
  */
 
-extern const mca_coll_base_component_1_0_0_t mca_coll_basic_component;
-extern int mca_coll_basic_priority_param;
+OMPI_COMP_EXPORT extern const mca_coll_base_component_1_0_0_t mca_coll_basic_component;
+OMPI_COMP_EXPORT extern int mca_coll_basic_priority_param;
 
 
 /*

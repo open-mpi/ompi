@@ -4,8 +4,8 @@
  *
  */
 
-#include "ompi_config.h"
 
+#include "ompi_config.h"
 #include "pcm_wmi.h"
 #include "include/constants.h"
 #include "include/types.h"
@@ -19,7 +19,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 
 /*
  * Struct of function pointers and all that to let us be initialized

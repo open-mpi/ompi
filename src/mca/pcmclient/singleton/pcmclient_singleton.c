@@ -2,8 +2,8 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
 
+#include "ompi_config.h"
 #include "mca/pcmclient/pcmclient.h"
 #include "mca/pcmclient/singleton/pcmclient_singleton.h"
 #include "mca/oob/base/base.h"
@@ -12,12 +12,16 @@
 #include "mca/ns/ns.h"
 
 #include <stdio.h>
+#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
-#include <sys/errno.h>
+#endif
+#include <errno.h>
 #include <string.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 
-extern ompi_process_name_t *mca_pcmclient_singleton_procs;
+OMPI_COMP_EXPORT extern ompi_process_name_t *mca_pcmclient_singleton_procs;
 
 static
 int

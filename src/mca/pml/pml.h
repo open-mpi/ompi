@@ -475,7 +475,7 @@ struct mca_pml_base_module_1_0_0_t {
 };
 typedef struct mca_pml_base_module_1_0_0_t mca_pml_base_module_1_0_0_t;
 typedef mca_pml_base_module_1_0_0_t mca_pml_base_module_t;
-extern mca_pml_base_module_t mca_pml;
+OMPI_DECLSPEC extern mca_pml_base_module_t mca_pml;
 
 /*
  * Macro for use in components that are of type pml v1.0.0

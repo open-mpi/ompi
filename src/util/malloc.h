@@ -7,6 +7,7 @@
 #ifndef OMPI_MALLOC_H
 #define OMPI_MALLOC_H
 
+#include "ompi_config.h"
 #include <stdlib.h>
 
 /*
@@ -37,7 +38,7 @@ extern "C" {
    * This function is invoked as part of ompi_finalize() to shut down the
    * output stream for malloc debug messages.
    */
-  void ompi_malloc_init(void);
+void ompi_malloc_init(void);
 
   /**
    * Initialize malloc debug output.
@@ -53,7 +54,7 @@ extern "C" {
    * malloc debug level set by ompi_malloc_debug() -- will be displayed
    * unless this function is invoked first.
    */
-  void ompi_malloc_finalize(void);
+void ompi_malloc_finalize(void);
 
   /**
    * \internal
@@ -68,7 +69,7 @@ extern "C" {
    * This function is only used when --enable-mem-debug was specified to
    * configure (or by default if you're building in a SVN checkout).
    */
-  void *ompi_malloc(size_t size, char *file, int line);
+void *ompi_malloc(size_t size, char *file, int line);
 
   /**
    * \internal
@@ -84,7 +85,7 @@ extern "C" {
    * This function is only used when --enable-mem-debug was specified to
    * configure (or by default if you're building in a SVN checkout).
    */
-  void *ompi_calloc(size_t nmembers, size_t size, char *file, int line);
+void *ompi_calloc(size_t nmembers, size_t size, char *file, int line);
 
   /**
    * \internal
@@ -100,7 +101,7 @@ extern "C" {
    * This function is only used when --enable-mem-debug was specified to
    * configure (or by default if you're building in a SVN checkout).
    */
-  void *ompi_realloc(void *ptr, size_t size, char *file, int line);
+void *ompi_realloc(void *ptr, size_t size, char *file, int line);
 
   /**
    * \internal
@@ -116,13 +117,13 @@ extern "C" {
    * to configure (or by default if you're building in a SVN
    * checkout).
    */
-  void ompi_free(void *addr, char *file, int line);
+void ompi_free(void *addr, char *file, int line);
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
 
-extern int ompi_malloc_debug_level;
-extern int ompi_malloc_output;
+OMPI_DECLSPEC extern int ompi_malloc_debug_level;
+OMPI_DECLSPEC extern int ompi_malloc_output;
 
 static inline void ompi_malloc_debug(int level);
 

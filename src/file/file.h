@@ -78,13 +78,13 @@ typedef struct ompi_file_t ompi_file_t;
 /**
  * Back-end instances for MPI_FILE_NULL
  */
-extern ompi_file_t  ompi_mpi_file_null;
+OMPI_DECLSPEC extern ompi_file_t  ompi_mpi_file_null;
 
 
 /**
  * Fortran to C conversion table
  */
-extern ompi_pointer_array_t ompi_file_f_to_c_table;
+OMPI_DECLSPEC extern ompi_pointer_array_t ompi_file_f_to_c_table;
 
 
 

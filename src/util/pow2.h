@@ -4,6 +4,8 @@
 
 #ifndef OMPI_POW2_H
 #define OMPI_POW2_H
+
+#include "ompi_config.h"
 	
 /**
  *  This routine takes in an interger, and returns the nearest
@@ -14,6 +16,6 @@
  *  @returnvalue power of 2 integer same or greater than the input
  *               parameter.
  */
-int ompi_round_up_to_nearest_pow2(int input_integer);
+OMPI_DECLSPEC int ompi_round_up_to_nearest_pow2(int input_integer);
 
 #endif /* OMPI_POW2_H */

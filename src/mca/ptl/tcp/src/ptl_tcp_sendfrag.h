@@ -7,10 +7,16 @@
 #ifndef MCA_PTL_TCP_SEND_FRAG_H
 #define MCA_PTL_TCP_SEND_FRAG_H
 
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
 #include "ompi_config.h"
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
+#ifdef HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif
 #include "include/sys/atomic.h"
 #include "mca/pml/base/pml_base_sendreq.h"
 #include "mca/ptl/base/ptl_base_sendfrag.h"

@@ -10,6 +10,7 @@
  *
  */
 
+#include "ompi_config.h"
 
 #ifdef HAVE_SYS_UTSNAME_H
 #include <sys/utsname.h>
@@ -54,7 +55,7 @@ struct ompi_sys_info_t {
 };
 typedef struct ompi_sys_info_t ompi_sys_info_t;
 
-extern ompi_sys_info_t ompi_system_info;
+OMPI_DECLSPEC extern ompi_sys_info_t ompi_system_info;
 
 
 /**
@@ -70,4 +71,4 @@ extern ompi_sys_info_t ompi_system_info;
  * @retval OMPI_SUCCESS If values are successfully determined.
  * @retval OMPI_ERROR If the system does not provide the requested information.
  */
-int ompi_sys_info(void);
+OMPI_DECLSPEC int ompi_sys_info(void);

@@ -32,6 +32,7 @@
  *	@(#)time.h	8.2 (Berkeley) 7/10/94
  */
 
+#ifndef OMPI_TIME_H
 #ifndef _SYS_TIME_H_
 #define _SYS_TIME_H_
 
@@ -163,3 +164,4 @@ struct clockinfo {
 /* --- stuff got cut here - niels --- */
 
 #endif /* !_SYS_TIME_H_ */
+#endif /* !OMPI_TIME_H */

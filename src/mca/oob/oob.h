@@ -226,7 +226,8 @@ typedef mca_oob_base_component_1_0_0_t mca_oob_base_component_t;
  * This is the first module on the list. This is here temporarily
  * to make things work
  */
-extern mca_oob_t mca_oob;
+
+OMPI_DECLSPEC extern mca_oob_t mca_oob;
 
 /**
  * associate a component and a module that belongs to it
@@ -259,11 +260,11 @@ OBJ_CLASS_DECLARATION(mca_oob_base_info_t);
 /*
  * Global struct holding the selected module's function pointers
  */
-extern int mca_oob_base_output;
-extern char* mca_oob_base_include;
-extern char* mca_oob_base_exclude;
-extern ompi_list_t mca_oob_base_components;
-extern ompi_list_t mca_oob_base_modules;
+OMPI_DECLSPEC extern int mca_oob_base_output;
+OMPI_DECLSPEC extern char* mca_oob_base_include;
+OMPI_DECLSPEC extern char* mca_oob_base_exclude;
+OMPI_DECLSPEC extern ompi_list_t mca_oob_base_components;
+OMPI_DECLSPEC extern ompi_list_t mca_oob_base_modules;
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

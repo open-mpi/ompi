@@ -15,7 +15,9 @@
 #include "include/types.h"
 #include "class/ompi_list.h"
 
+#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
+#endif
 
 #ifndef MCA_PCM_WMI_H_
 #define MCA_PCM_WMI_H_

@@ -1,8 +1,8 @@
 /*
  * $HEADER$
  */
-#include "ompi_config.h"
 
+#include "ompi_config.h"
 #include <stdio.h>
 
 #include "util/output.h"
@@ -16,7 +16,11 @@
  * statements and the definition of an array of pointers to each component's
  * public mca_base_component_t struct.
  */
+#ifdef WIN32
+    const mca_base_component_t *mca_topo_base_static_components[] = {NULL};
+#else 
 #include "mca/topo/base/static-components.h"
+#endif
 
 /*
  * Global variables

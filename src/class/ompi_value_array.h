@@ -14,14 +14,14 @@
 #include "util/output.h"
 #endif
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
 /*
  *  @file  Array of elements maintained by value.
  */
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 
-extern ompi_class_t ompi_value_array_t_class;
+OMPI_DECLSPEC extern ompi_class_t ompi_value_array_t_class;
 
 
 struct ompi_value_array_t

@@ -23,17 +23,17 @@
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
-  int mca_llm_base_open(void);
-  int mca_llm_base_select(const char *active_pcm,
+OMPI_DECLSPEC  int mca_llm_base_open(void);
+OMPI_DECLSPEC int mca_llm_base_select(const char *active_pcm,
                           mca_llm_base_module_t **selected, 
                           bool have_threads);
-  int mca_llm_base_close(void);
+OMPI_DECLSPEC int mca_llm_base_close(void);
 
 /*
  * Globals
  */
-extern int mca_llm_base_output;
-extern ompi_list_t mca_llm_base_components_available;
+OMPI_DECLSPEC extern int mca_llm_base_output;
+OMPI_DECLSPEC extern ompi_list_t mca_llm_base_components_available;
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

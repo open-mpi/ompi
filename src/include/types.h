@@ -5,6 +5,8 @@
 #ifndef OMPI_TYPES_H
 #define OMPI_TYPES_H
 
+#include "ompi_config.h"
+
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
@@ -14,8 +16,8 @@
 #ifdef HAVE_SYS_SELECT_H
 #include <sys/select.h>
 #endif
-#include "ompi_config.h"
 
+#ifndef WIN32
 /*
  *  Increase FD_SETSIZE
  */
@@ -41,6 +43,17 @@ typedef struct ompi_fd_set_t ompi_fd_set_t;
 #define OMPI_FD_SET(fd,fds)   FD_SET((fd),(fd_set*)(fds))
 #define OMPI_FD_CLR(fd,fds)   FD_CLR((fd),(fd_set*)(fds))
 #define OMPI_FD_ISSET(fd,fds) FD_ISSET((fd),(fd_set*)(fds))
+
+#else /* if we are on windows */
+    
+typedef fd_set ompi_fd_set_t;
+#define OMPI_FD_ZERO(fds)     FD_ZERO((fds))
+#define OMPI_FD_SET(fd,fds)   FD_SET((fd),(fds))
+#define OMPI_FD_CLR(fd,fds)   FD_CLR((fd),(fds))
+#define OMPI_FD_ISSET(fd,fds) FD_ISSET((fd),(fds))
+
+#endif /* wIN32 */
+    
 
 /*
  * handle to describe a parallel job

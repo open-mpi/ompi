@@ -23,11 +23,17 @@
  * be done.
  **/
 
+#ifndef OMPI_OS_CREATE_DIRPATH_H
+#define OMPI_SHOW_HELP_H
+
+#include "ompi_config.h"
 #include <stdio.h>
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
+#ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
+#endif
 
 /**
  * @param path A pointer to a string that contains the path name to be built.
@@ -39,4 +45,6 @@
  * specified access permissions.
  */
 
-int ompi_os_create_dirpath(const char *path, const mode_t mode);
+OMPI_DECLSPEC int ompi_os_create_dirpath(const char *path, const mode_t mode);
+
+#endif

@@ -38,16 +38,16 @@ mca_ns_base_cellid_t ns_replica_create_cellid(void)
 
 mca_ns_base_jobid_t ns_replica_create_jobid(void)
 {
-    mca_ns_replica_name_tracker_t *new;
+    mca_ns_replica_name_tracker_t *new_nt;
 
     OMPI_THREAD_LOCK(&mca_ns_replica_mutex);
 
     if ((MCA_NS_BASE_JOBID_MAX-2) >= mca_ns_replica_last_used_jobid) {
 	mca_ns_replica_last_used_jobid = mca_ns_replica_last_used_jobid + 1;
-	new = OBJ_NEW(mca_ns_replica_name_tracker_t);
-	new->job = mca_ns_replica_last_used_jobid;
-	new->last_used_vpid = 0;
-	ompi_list_append(&mca_ns_replica_name_tracker, &new->item);
+	new_nt = OBJ_NEW(mca_ns_replica_name_tracker_t);
+	new_nt->job = mca_ns_replica_last_used_jobid;
+	new_nt->last_used_vpid = 0;
+	ompi_list_append(&mca_ns_replica_name_tracker, &new_nt->item);
 	OMPI_THREAD_UNLOCK(&mca_ns_replica_mutex);
 	return(mca_ns_replica_last_used_jobid);
     } else {

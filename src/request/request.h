@@ -23,7 +23,7 @@ extern "C" {
 /**
  * Request class
  */
-OBJ_CLASS_DECLARATION(ompi_request_t);
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_request_t);
 
 /**
  * Enum inidicating the type of the request
@@ -122,12 +122,12 @@ typedef struct ompi_request_t ompi_request_t;
 /**
  * Globals used for tracking requests and request completion.
  */
-extern ompi_pointer_array_t  ompi_request_f_to_c_table;
-extern volatile int          ompi_request_waiting;
-extern ompi_mutex_t          ompi_request_lock;
-extern ompi_condition_t      ompi_request_cond;
-extern int                   ompi_request_poll_iterations;
-extern ompi_request_t        ompi_request_null;
+OMPI_DECLSPEC extern ompi_pointer_array_t  ompi_request_f_to_c_table;
+OMPI_DECLSPEC extern volatile int          ompi_request_waiting;
+OMPI_DECLSPEC extern ompi_mutex_t          ompi_request_lock;
+OMPI_DECLSPEC extern ompi_condition_t      ompi_request_cond;
+OMPI_DECLSPEC extern int                   ompi_request_poll_iterations;
+OMPI_DECLSPEC extern ompi_request_t        ompi_request_null;
 
 
 
@@ -135,13 +135,13 @@ extern ompi_request_t        ompi_request_null;
  * Initialize the MPI_Request subsystem; invoked during MPI_INIT.
  */
 
-int ompi_request_init(void);
+OMPI_DECLSPEC int ompi_request_init(void);
 
 /**
  * Shut down the MPI_Request subsystem; invoked during MPI_FINALIZE.
  */
 
-int ompi_request_finalize(void);
+OMPI_DECLSPEC int ompi_request_finalize(void);
 
 
 /**
@@ -161,7 +161,7 @@ static inline int ompi_request_cancel(ompi_request_t* request)
  *  wake any thread pending on the request.
  */
 
-int ompi_request_complete(ompi_request_t* request);
+OMPI_DECLSPEC int ompi_request_complete(ompi_request_t* request);
 
 /**
  * Free a request.
@@ -188,7 +188,7 @@ static inline int ompi_request_free(ompi_request_t** request)
  * request handle at index set to NULL.
  */
 
-int ompi_request_test(
+OMPI_DECLSPEC int ompi_request_test(
     size_t count,
     ompi_request_t ** requests,
     int *index,
@@ -211,7 +211,7 @@ int ompi_request_test(
  * have completed.
  */
 
-int ompi_request_test_all(
+OMPI_DECLSPEC int ompi_request_test_all(
     size_t count,
     ompi_request_t ** requests,
     int *completed,
@@ -293,7 +293,7 @@ static inline int ompi_request_wait(
  *
  */
 
-int ompi_request_wait_any(
+OMPI_DECLSPEC int ompi_request_wait_any(
     size_t count,
     ompi_request_t ** requests,
     int *index,
@@ -309,7 +309,7 @@ int ompi_request_wait_any(
  *
  */
 
-int ompi_request_wait_all(
+OMPI_DECLSPEC int ompi_request_wait_all(
     size_t count,
     ompi_request_t ** requests,
     ompi_status_public_t * statuses);

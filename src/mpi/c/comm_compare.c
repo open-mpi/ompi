@@ -23,14 +23,14 @@ int MPI_Comm_compare(MPI_Comm comm1, MPI_Comm comm2, int *result) {
 
     /* local variables */
     ompi_communicator_t *comp1, *comp2;
-    ompi_group_t *grp1, *grp2;
+    ompi_group_t *group1, *group2;
     int size1, size2, rsize1, rsize2;
     int lresult, rresult=MPI_CONGRUENT;
-    int sameranks = 1;
-    int sameorder = 1;
+    int sameranks=1;
+    int sameorder=1;
     int i, j;
     int found = 0;
-    
+
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
@@ -70,10 +70,10 @@ int MPI_Comm_compare(MPI_Comm comm1, MPI_Comm comm2, int *result) {
     /* Compare local groups */
     /* we need to check whether the communicators contain
        the same processes and in the same order */
-    grp1 = (ompi_group_t *)comp1->c_local_group;
-    grp2 = (ompi_group_t *)comp2->c_local_group;
+   group1 = (ompi_group_t *)comp1->c_local_group;
+   group2 = (ompi_group_t *)comp2->c_local_group;
     for ( i = 0; i < size1; i++ ) {
-        if ( grp1->grp_proc_pointers[i] != grp2->grp_proc_pointers[i]) {
+        if ( group1->grp_proc_pointers[i] != group2->grp_proc_pointers[i]) {
             sameorder = 0;
             break;
         }
@@ -82,7 +82,7 @@ int MPI_Comm_compare(MPI_Comm comm1, MPI_Comm comm2, int *result) {
     for ( i = 0; i < size1; i++ ) {
         found = 0;
         for ( j = 0; j < size2; j++ ) {
-            if ( grp1->grp_proc_pointers[i] == grp2->grp_proc_pointers[j]) {
+            if ( group1->grp_proc_pointers[i] == group2->grp_proc_pointers[j]) {
                 found = 1;
                 break;
             }
@@ -107,10 +107,10 @@ int MPI_Comm_compare(MPI_Comm comm1, MPI_Comm comm2, int *result) {
            the same processes and in the same order */
         sameranks = sameorder = 1;
 
-        grp1 = (ompi_group_t *)comp1->c_remote_group;
-        grp2 = (ompi_group_t *)comp2->c_remote_group;
+        group1 = (ompi_group_t *)comp1->c_remote_group;
+        group2 = (ompi_group_t *)comp2->c_remote_group;
         for ( i = 0; i < rsize1; i++ ) {
-            if ( grp1->grp_proc_pointers[i] != grp2->grp_proc_pointers[i]) {
+            if ( group1->grp_proc_pointers[i] != group2->grp_proc_pointers[i]) {
                 sameorder = 0;
                 break;
             }
@@ -119,7 +119,7 @@ int MPI_Comm_compare(MPI_Comm comm1, MPI_Comm comm2, int *result) {
         for ( i = 0; i < rsize1; i++ ) {
             found = 0;
             for ( j = 0; j < rsize2; j++ ) {
-                if ( grp1->grp_proc_pointers[i] == grp2->grp_proc_pointers[j]) {
+                if ( group1->grp_proc_pointers[i] == group2->grp_proc_pointers[j]) {
                     found = 1;
                     break;
                 }

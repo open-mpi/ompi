@@ -59,24 +59,24 @@ typedef struct ompi_info_entry_t ompi_info_entry_t;
 /**
  * Table for Fortran <-> C translation table
  */ 
-extern ompi_pointer_array_t ompi_info_f_to_c_table;
+OMPI_DECLSPEC extern ompi_pointer_array_t ompi_info_f_to_c_table;
 
 /**
  * Global instance for MPI_INFO_NULL
  */
-extern ompi_info_t ompi_mpi_info_null;
+OMPI_DECLSPEC extern ompi_info_t ompi_mpi_info_null;
 
 /**
  * \internal
  * Some declarations needed to use OBJ_NEW and OBJ_DESTRUCT macros
  */
-OBJ_CLASS_DECLARATION(ompi_info_t);
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_info_t);
 
 /**
  * \internal
  * Some declarations needed to use OBJ_NEW and OBJ_DESTRUCT macros
  */
-OBJ_CLASS_DECLARATION(ompi_info_entry_t);
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_info_entry_t);
 
 
 #if defined(c_plusplus) || defined(__cplusplus)

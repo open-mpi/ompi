@@ -11,7 +11,7 @@
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
-OBJ_CLASS_DECLARATION(ompi_grequest_t);
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_grequest_t);
 
 
 struct ompi_grequest_t {
@@ -28,7 +28,7 @@ typedef struct ompi_grequest_t ompi_grequest_t;
  * Start a generalized request.
  */
 
-int ompi_grequest_start(
+OMPI_DECLSPEC int ompi_grequest_start(
     MPI_Grequest_query_function *gquery,
     MPI_Grequest_free_function *gfree,
     MPI_Grequest_cancel_function *gcancel,
@@ -38,10 +38,9 @@ int ompi_grequest_start(
 /*
  * Mark a generalized request as complete.
  */
-int ompi_grequest_complete(ompi_grequest_t*);
+OMPI_DECLSPEC int ompi_grequest_complete(ompi_grequest_t*);
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
 
 #endif
-

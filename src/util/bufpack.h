@@ -18,6 +18,7 @@
 
 #ifndef _OMPI_PACK_H_
 #define _OMPI_PACK_H_
+#include "ompi_config.h"
 
 /*
  * Other constants
@@ -61,7 +62,7 @@ extern "C" {
  * 
  */
 
-    int ompi_buffer_init (ompi_buffer_t *buffer, size_t reqinitsize);
+OMPI_DECLSPEC int ompi_buffer_init (ompi_buffer_t *buffer, size_t reqinitsize);
 
 
 /**
@@ -84,7 +85,7 @@ extern "C" {
  * 
  */
 
-    int ompi_buffer_init_preallocated (ompi_buffer_t *buffer, void *usermemory, size_t usermemorylen);
+OMPI_DECLSPEC int ompi_buffer_init_preallocated (ompi_buffer_t *buffer, void *usermemory, size_t usermemorylen);
 
 /** 
  * This function gets the size of packed data in a ompi_buffer
@@ -97,7 +98,7 @@ extern "C" {
  *
  */
 
-    int ompi_buffer_size (ompi_buffer_t buffer, size_t *size);
+OMPI_DECLSPEC int ompi_buffer_size (ompi_buffer_t buffer, size_t *size);
 
 /** 
  * This function gets the base/data/from ptrs of data in an ompi_buffer
@@ -112,7 +113,7 @@ extern "C" {
  *
  */
 
-    int ompi_buffer_get_ptrs (ompi_buffer_t buffer,
+OMPI_DECLSPEC int ompi_buffer_get_ptrs (ompi_buffer_t buffer,
                 void**  baseptr, void**  dataptr, void**  fromptr);
 
 
@@ -123,7 +124,7 @@ extern "C" {
  *
  */
 
-   int ompi_buffer_get(ompi_buffer_t buffer, void** base, int* size);
+OMPI_DECLSPEC int ompi_buffer_get(ompi_buffer_t buffer, void** base, int* size);
 
 /**
  * This function frees a given buffer
@@ -136,7 +137,7 @@ extern "C" {
  *
  */
 
-    int ompi_buffer_free (ompi_buffer_t buffer);
+OMPI_DECLSPEC int ompi_buffer_free (ompi_buffer_t buffer);
 
         
 
@@ -154,7 +155,7 @@ extern "C" {
  * @retval OMPI_SUCCESS
  * @retval OMPI_ERROR
  */
-    int ompi_pack(ompi_buffer_t buffer, void * src, size_t n, ompi_pack_type_t type);
+OMPI_DECLSPEC int ompi_pack(ompi_buffer_t buffer, void * src, size_t n, ompi_pack_type_t type);
 
 /**
  * This function unpacks the passed data according to the type enum.
@@ -167,7 +168,7 @@ extern "C" {
  * @retval OMPI_SUCCESS
  * @retval OMPI_ERROR
  */
-    int ompi_unpack(ompi_buffer_t buffer, void * dest, size_t n, ompi_pack_type_t type);
+OMPI_DECLSPEC int ompi_unpack(ompi_buffer_t buffer, void * dest, size_t n, ompi_pack_type_t type);
 
 
 /* 
@@ -181,7 +182,7 @@ extern "C" {
  *
  */
 
-	int ompi_pack_string (ompi_buffer_t buffer, char *str);
+OMPI_DECLSPEC int ompi_pack_string (ompi_buffer_t buffer, char *str);
 
 /**
  * This function unpacks a string from the buffer. This routine ALLOCATES memory
@@ -198,7 +199,7 @@ extern "C" {
  * @retval OMPI_ERROR
  *
  */
-    int ompi_unpack_string(ompi_buffer_t buffer, char ** str);
+OMPI_DECLSPEC int ompi_unpack_string(ompi_buffer_t buffer, char ** str);
 
 
 

@@ -12,7 +12,7 @@
 bool ompi_uses_threads = (bool) OMPI_HAVE_THREADS;
 
 
-#ifdef __WINDOWS__
+#ifdef WIN32
 
 #include <windows.h>
 

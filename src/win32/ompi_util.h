@@ -27,11 +27,6 @@ static __inline char *basename(char *path) {
     return NULL;
 }
 
-static __inline int strcasecmp(char *s1, char *s2) {
-
-    return strncasecmp (s1, s2, strlen(s1));
-}
-
 static __inline int strncasecmp (char *s1, char *s2, int n) {
 
     int ret;
@@ -46,5 +41,11 @@ static __inline int strncasecmp (char *s1, char *s2, int n) {
 
     return ret;
 }
+
+static __inline int strcasecmp(char *s1, char *s2) {
+
+    return strncasecmp (s1, s2, (int)strlen(s1));
+}
+
     
 #endif

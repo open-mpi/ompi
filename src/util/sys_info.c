@@ -37,10 +37,19 @@ ompi_sys_info_t ompi_system_info = {
 int ompi_sys_info(void)
 {
     struct utsname sys_info;
-    char *path_name, sep[2];
-    struct passwd *pwdent;
+    char *path_name;
 
-    if (ompi_system_info.init) {
+#ifndef WIN32
+	struct passwd *pwdent;
+	char sep[2];
+#else
+    #define INFO_BUF_SIZE 32768
+    TCHAR info_buf[INFO_BUF_SIZE];
+    DWORD info_buf_length = INFO_BUF_SIZE;
+	char sep[] = "\\0";
+#endif
+
+	if (ompi_system_info.init) {
 	return OMPI_SUCCESS;
     }
 
@@ -74,6 +83,7 @@ int ompi_sys_info(void)
         ompi_system_info.machine = strdup(sys_info.machine);
     }
 
+#ifndef WIN32
     if (NULL != (path_name = getcwd(NULL, 0))) {
         if (strlen(path_name) > 1) {
             sep[0] = path_name[strlen(path_name)-strlen(basename(path_name))-1];
@@ -84,13 +94,28 @@ int ompi_sys_info(void)
         sep[1] = '\0';
         ompi_system_info.path_sep = strdup(sep);
     }
+#else
+    /* we can hardcode windows path seperator to be "\" */
+    ompi_system_info.path_sep = strdup(sep);
+#endif
 
-    /* get the name of the user */
-    if ((pwdent = getpwuid(getuid())) != 0) {
-	ompi_system_info.user = strdup(pwdent->pw_name);
+
+
+
+	/* get the name of the user */
+#ifndef WIN32
+	if ((pwdent = getpwuid(getuid())) != 0) {
+	    ompi_system_info.user = strdup(pwdent->pw_name);
     } else {
-	ompi_system_info.user = strdup("unknown");
+	    ompi_system_info.user = strdup("unknown");
     }
+#else 
+    if (!GetUserName(info_buf, &info_buf_length)) {
+	    ompi_system_info.user = strdup("unknown");
+    } else {
+	    ompi_system_info.user = strdup(info_buf);
+    }
+#endif
 
     /* set the init flag */
     ompi_system_info.init = true;  /* only indicates that we have been through here once - still have to test for NULL values */

@@ -2,14 +2,26 @@
  * $HEADER$
  */
 #include "ompi_config.h"
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #include <fcntl.h>
+#ifdef HAVE_SYS_UIO_H
 #include <sys/uio.h>
+#endif
+#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
-#include <sys/errno.h>
+#endif
+#include <errno.h>
+#ifdef HAVE_NETINET_TCP_H
 #include <netinet/tcp.h>
+#endif
+#ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
+#endif
+#ifdef HAVE_ARPA_INET_H
 #include <arpa/inet.h>
+#endif
 #include "util/output.h"
 #include "mca/gpr/base/base.h"
 #include "mca/gpr/gpr.h"

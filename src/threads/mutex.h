@@ -5,9 +5,7 @@
 #ifndef  OMPI_MUTEX_H
 #define  OMPI_MUTEX_H 1
 
-#ifdef HAVE_CONFIG_H
 #include "ompi_config.h"
-#endif
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
@@ -18,6 +16,10 @@ extern "C" {
  *
  * Functions for locking of critical sections.
  */
+/*
+ * declaring this here so that CL does not complain
+ */ 
+OMPI_DECLSPEC extern bool ompi_uses_threads;
 
 /**
  * Opaque mutex object
@@ -113,7 +115,6 @@ static inline void ompi_mutex_atomic_unlock(ompi_mutex_t *mutex);
  */
 static inline bool ompi_using_threads(void)
 {
-    extern bool ompi_uses_threads;
     return ompi_uses_threads;
 }
 
@@ -136,7 +137,6 @@ static inline bool ompi_using_threads(void)
  */
 static inline bool ompi_set_using_threads(bool have)
 {
-    extern bool ompi_uses_threads;
 #if OMPI_HAVE_THREADS
     ompi_uses_threads = have;
 #else
@@ -260,8 +260,7 @@ static inline bool ompi_set_using_threads(bool have)
 }
 #endif
 
-#ifdef __WINDOWS__
-#error Windows code is untested
+#ifdef WIN32
 #include "mutex_windows.h"
 #else
 #include "mutex_unix.h"

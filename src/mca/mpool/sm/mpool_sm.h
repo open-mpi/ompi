@@ -25,8 +25,8 @@ struct mca_mpool_sm_component_t {
 };
 typedef struct mca_mpool_sm_component_t mca_mpool_sm_component_t;
 
-extern mca_mpool_sm_component_t mca_mpool_sm_component;
-extern mca_mpool_base_module_t mca_mpool_sm_module;
+OMPI_COMP_EXPORT extern mca_mpool_sm_component_t mca_mpool_sm_component;
+OMPI_COMP_EXPORT extern mca_mpool_base_module_t mca_mpool_sm_module;
 
 /*
  *  Returns base address of shared memory mapping.

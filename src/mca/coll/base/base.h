@@ -51,7 +51,7 @@ extern "C" {
    * public interface member -- and is only mentioned here for
    * completeness.
    */
-  int mca_coll_base_open(void);
+OMPI_DECLSPEC int mca_coll_base_open(void);
 
   /**
    * Create list of available coll components.
@@ -78,7 +78,7 @@ extern "C" {
    * functions -- it is not considered a public interface member --
    * and is only mentioned here for completeness.
    */
-  int mca_coll_base_find_available(bool *allow_multi_user_threads, 
+OMPI_DECLSPEC int mca_coll_base_find_available(bool *allow_multi_user_threads, 
                                    bool *have_hidden_threads);
 
   /**
@@ -137,7 +137,7 @@ extern "C" {
    * communicator creation functions may be re-entered (albiet with
    * different arguments).
    */
-  int mca_coll_base_comm_select(struct ompi_communicator_t *comm,
+OMPI_DECLSPEC int mca_coll_base_comm_select(struct ompi_communicator_t *comm,
                                 struct mca_base_component_t *preferred);
 
   /**
@@ -161,7 +161,7 @@ extern "C" {
    * mca_coll_base_select(), as result of this function, other
    * communicators may also be destroyed.
    */
-  int mca_coll_base_comm_unselect(struct ompi_communicator_t *comm);
+OMPI_DECLSPEC int mca_coll_base_comm_unselect(struct ompi_communicator_t *comm);
 
   /**
    * Finalize the coll usage on a communicator.
@@ -170,7 +170,7 @@ extern "C" {
    *
    * @retval OMPI_SUCCESS Always.
    */
-  int mca_coll_base_comm_finalize(struct ompi_communicator_t *comm);
+OMPI_DECLSPEC int mca_coll_base_comm_finalize(struct ompi_communicator_t *comm);
 
   /**
    * Shut down the coll MCA framework.
@@ -183,7 +183,7 @@ extern "C" {
    *
    * It must be the last function invoked on the coll MCA framework.
    */
-  int mca_coll_base_close(void);
+OMPI_DECLSPEC  int mca_coll_base_close(void);
 
 
 /*
@@ -194,56 +194,56 @@ extern "C" {
  * Index number from the "coll" MCA parameter, created when the coll
  * framework is initialized and used during scope selection.
  */
-extern int mca_coll_base_param;
+OMPI_DECLSPEC extern int mca_coll_base_param;
 /**
  * Coll framework debugging stream ID used with ompi_output() and
  * ompi_output_verbose().
  */
-extern int mca_coll_base_output;
+OMPI_DECLSPEC extern int mca_coll_base_output;
 
 /**
  * JMS should this move to the basic component?
  */
-extern int mca_coll_base_crossover;
+OMPI_DECLSPEC extern int mca_coll_base_crossover;
 /**
  * JMS should this move to the basic component?
  */
-extern int mca_coll_base_associative;
+OMPI_DECLSPEC extern int mca_coll_base_associative;
 /**
  * JMS should this move to the basic component?
  */
-extern int mca_coll_base_reduce_crossover;
+OMPI_DECLSPEC extern int mca_coll_base_reduce_crossover;
 /**
  * JMS should this move to the basic component?
  */
-extern int mca_coll_base_bcast_collmaxlin;
+OMPI_DECLSPEC extern int mca_coll_base_bcast_collmaxlin;
 /**
  * JMS should this move to the basic component?
  */
-extern int mca_coll_base_bcast_collmaxdim;
+OMPI_DECLSPEC extern int mca_coll_base_bcast_collmaxdim;
 
 /**
  * Indicator as to whether the list of opened coll components is valid or
  * not.
  */
-extern bool mca_coll_base_components_opened_valid;
+OMPI_DECLSPEC extern bool mca_coll_base_components_opened_valid;
 /**
  * List of all opened components; created when the coll framework is
  * initialized and destroyed when we reduce the list to all available
  * coll components.
  */
-extern ompi_list_t mca_coll_base_components_opened;
+OMPI_DECLSPEC extern ompi_list_t mca_coll_base_components_opened;
 /**
  * Indicator as to whether the list of available coll components is valid
  * or not.
  */
-extern bool mca_coll_base_components_available_valid;
+OMPI_DECLSPEC extern bool mca_coll_base_components_available_valid;
 /**
  * List of all available components; created by reducing the list of open
  * components to all those who indicate that they may run during this
  * process.
  */
-extern ompi_list_t mca_coll_base_components_available;
+OMPI_DECLSPEC extern ompi_list_t mca_coll_base_components_available;
 
 /**
  * Pointer to the "basic" component so that it can be found easily
@@ -251,7 +251,7 @@ extern ompi_list_t mca_coll_base_components_available;
  * common denominator between all coll components and may be used
  * interchangably).
  */
-extern const mca_coll_base_component_1_0_0_t *mca_coll_base_basic_component;
+OMPI_DECLSPEC extern const mca_coll_base_component_1_0_0_t *mca_coll_base_basic_component;
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

@@ -61,26 +61,26 @@ struct mca_pml_teg_t {
 };
 typedef struct mca_pml_teg_t mca_pml_teg_t; 
 
-extern mca_pml_teg_t mca_pml_teg;
+OMPI_COMP_EXPORT extern mca_pml_teg_t mca_pml_teg;
 
 
 /*
  * PML module functions.
  */
 
-extern mca_pml_base_component_1_0_0_t mca_pml_teg_component;
+OMPI_COMP_EXPORT extern mca_pml_base_component_1_0_0_t mca_pml_teg_component;
 
 
-extern int mca_pml_teg_component_open(void);
-extern int mca_pml_teg_component_close(void);
+OMPI_COMP_EXPORT extern int mca_pml_teg_component_open(void);
+OMPI_COMP_EXPORT extern int mca_pml_teg_component_close(void);
 
-extern mca_pml_base_module_t* mca_pml_teg_component_init(
+OMPI_COMP_EXPORT extern mca_pml_base_module_t* mca_pml_teg_component_init(
     int *priority, 
     bool *allow_multi_user_threads,
     bool *have_hidden_threads
 );
 
-extern int mca_pml_teg_component_fini(void);
+OMPI_COMP_EXPORT extern int mca_pml_teg_component_fini(void);
 
 
 
@@ -88,37 +88,37 @@ extern int mca_pml_teg_component_fini(void);
  * PML interface functions.
  */
 
-extern int mca_pml_teg_add_comm(
+OMPI_COMP_EXPORT extern int mca_pml_teg_add_comm(
     struct ompi_communicator_t* comm
 );
 
-extern int mca_pml_teg_del_comm(
+OMPI_COMP_EXPORT extern int mca_pml_teg_del_comm(
     struct ompi_communicator_t* comm
 );
 
-extern int mca_pml_teg_add_procs(
+OMPI_COMP_EXPORT extern int mca_pml_teg_add_procs(
     struct ompi_proc_t **procs,
     size_t nprocs
 );
 
-extern int mca_pml_teg_del_procs(
+OMPI_COMP_EXPORT extern int mca_pml_teg_del_procs(
     struct ompi_proc_t **procs,
     size_t nprocs
 );
 
-extern int mca_pml_teg_add_ptls(
+OMPI_COMP_EXPORT extern int mca_pml_teg_add_ptls(
     ompi_list_t *ptls
 );
 
-extern int mca_pml_teg_control(
+OMPI_COMP_EXPORT extern int mca_pml_teg_control(
     int param,
     void *size,
     size_t value
 );
 
-extern int mca_pml_teg_progress(void);
+OMPI_COMP_EXPORT extern int mca_pml_teg_progress(void);
 
-extern int mca_pml_teg_iprobe(
+OMPI_COMP_EXPORT extern int mca_pml_teg_iprobe(
     int dst,
     int tag,
     struct ompi_communicator_t* comm,
@@ -126,24 +126,24 @@ extern int mca_pml_teg_iprobe(
     ompi_status_public_t* status
 );
 
-extern int mca_pml_teg_probe(
+OMPI_COMP_EXPORT extern int mca_pml_teg_probe(
     int dst,
     int tag,
     struct ompi_communicator_t* comm,
     ompi_status_public_t* status
 );
 
-extern int mca_pml_teg_cancel(
+OMPI_COMP_EXPORT extern int mca_pml_teg_cancel(
     ompi_request_t* request
 );
 
-extern int mca_pml_teg_cancelled(
+OMPI_COMP_EXPORT extern int mca_pml_teg_cancelled(
     ompi_request_t* request,
     int *flag
 );
 
 
-extern int mca_pml_teg_isend_init(
+OMPI_COMP_EXPORT extern int mca_pml_teg_isend_init(
     void *buf,
     size_t count,
     ompi_datatype_t *datatype,
@@ -154,7 +154,7 @@ extern int mca_pml_teg_isend_init(
     struct ompi_request_t **request
 );
 
-extern int mca_pml_teg_isend(
+OMPI_COMP_EXPORT extern int mca_pml_teg_isend(
     void *buf,
     size_t count,
     ompi_datatype_t *datatype,
@@ -165,7 +165,7 @@ extern int mca_pml_teg_isend(
     struct ompi_request_t **request
 );
 
-extern int mca_pml_teg_send(
+OMPI_COMP_EXPORT extern int mca_pml_teg_send(
     void *buf,
     size_t count,
     ompi_datatype_t *datatype,
@@ -175,7 +175,7 @@ extern int mca_pml_teg_send(
     struct ompi_communicator_t* comm
 );
 
-extern int mca_pml_teg_irecv_init(
+OMPI_COMP_EXPORT extern int mca_pml_teg_irecv_init(
     void *buf,
     size_t count,
     ompi_datatype_t *datatype,
@@ -185,7 +185,7 @@ extern int mca_pml_teg_irecv_init(
     struct ompi_request_t **request
 );
 
-extern int mca_pml_teg_irecv(
+OMPI_COMP_EXPORT extern int mca_pml_teg_irecv(
     void *buf,
     size_t count,
     ompi_datatype_t *datatype,
@@ -195,7 +195,7 @@ extern int mca_pml_teg_irecv(
     struct ompi_request_t **request
 );
 
-extern int mca_pml_teg_recv(
+OMPI_COMP_EXPORT extern int mca_pml_teg_recv(
     void *buf,
     size_t count,
     ompi_datatype_t *datatype,
@@ -205,9 +205,9 @@ extern int mca_pml_teg_recv(
     ompi_status_public_t* status
 );
 
-extern int mca_pml_teg_progress(void);
+OMPI_COMP_EXPORT extern int mca_pml_teg_progress(void);
 
-extern int mca_pml_teg_start(
+OMPI_COMP_EXPORT extern int mca_pml_teg_start(
     size_t count,
     ompi_request_t** requests
 );

@@ -6,9 +6,9 @@ $HEADER$
 #define OMPI_TIME_H
 
 #ifdef WIN32
-#   define WIN32_LEAN_AND_MEAN
-#   include<windows.h>
-#   undef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#include<windows.h>
+#undef WIN32_LEAN_AND_MEAN
 #endif
 
 #define DST_NONE    0   /* not on dst */
@@ -23,64 +23,92 @@ $HEADER$
 (ts)->tv_sec = (tv)->tv_sec;    \
 (ts)->tv_nsec = (tv)->tv_usec * 1000;
 
-# define TIMESPEC_TO_TIMEVAL(tv, ts) \
+#define TIMESPEC_TO_TIMEVAL(tv, ts) \
 (tv)->tv_sec = (ts)->tv_sec;  \
 (tv)->tv_usec = (ts)->tv_nsec / 1000;
 
 
 /* some more utility functions */
 /* Operations on timevals. */
+#ifndef timerclear
 #define timerclear(tvp)     (tvp)->tv_sec = (tvp)->tv_usec = 0
+#endif
+
+#ifndef timerisset
 #define timerisset(tvp)     ((tvp)->tv_sec || (tvp)->tv_usec)
+#endif
+
+#ifndef timercmp
 #define timercmp(tvp, uvp, cmp)                     \
-(((tvp)->tv_sec == (uvp)->tv_sec) ?             \
-((tvp)->tv_usec cmp (uvp)->tv_usec) :           \
-((tvp)->tv_sec cmp (uvp)->tv_sec))
+    (((tvp)->tv_sec == (uvp)->tv_sec) ?             \
+    ((tvp)->tv_usec cmp (uvp)->tv_usec) :           \
+    ((tvp)->tv_sec cmp (uvp)->tv_sec))
+#endif
+
+#ifndef timeradd
 #define timeradd(tvp, uvp, vvp)                     \
-do {                                \
-(vvp)->tv_sec = (tvp)->tv_sec + (uvp)->tv_sec;      \
-(vvp)->tv_usec = (tvp)->tv_usec + (uvp)->tv_usec;   \
-if ((vvp)->tv_usec >= 1000000) {            \
-(vvp)->tv_sec++;                \
-(vvp)->tv_usec -= 1000000;          \
-}                           \
-} while (0)
+    do {                                \
+    (vvp)->tv_sec = (tvp)->tv_sec + (uvp)->tv_sec;      \
+    (vvp)->tv_usec = (tvp)->tv_usec + (uvp)->tv_usec;   \
+    if ((vvp)->tv_usec >= 1000000) {            \
+        (vvp)->tv_sec++;                \
+        (vvp)->tv_usec -= 1000000;          \
+        }                           \
+    } while (0)
+#endif
+    
+#ifndef timersub
 #define timersub(tvp, uvp, vvp)                     \
-do {                                \
-(vvp)->tv_sec = (tvp)->tv_sec - (uvp)->tv_sec;      \
-(vvp)->tv_usec = (tvp)->tv_usec - (uvp)->tv_usec;   \
-if ((vvp)->tv_usec < 0) {               \
-(vvp)->tv_sec--;                \
-(vvp)->tv_usec += 1000000;          \
-}                           \
-} while (0)
+    do {                                \
+    (vvp)->tv_sec = (tvp)->tv_sec - (uvp)->tv_sec;      \
+    (vvp)->tv_usec = (tvp)->tv_usec - (uvp)->tv_usec;   \
+    if ((vvp)->tv_usec < 0) {               \
+    (vvp)->tv_sec--;                \
+    (vvp)->tv_usec += 1000000;          \
+    }                           \
+    } while (0)
+#endif
 
 /* Operations on timespecs. */
-#define timespecclear(tsp)      (tsp)->tv_sec = (tsp)->tv_nsec = 0
-#define timespecisset(tsp)      ((tsp)->tv_sec || (tsp)->tv_nsec)
-#define timespeccmp(tsp, usp, cmp)                  \
-(((tsp)->tv_sec == (usp)->tv_sec) ?             \
-((tsp)->tv_nsec cmp (usp)->tv_nsec) :           \
-((tsp)->tv_sec cmp (usp)->tv_sec))
-#define timespecadd(tsp, usp, vsp)                  \
-do {                                \
-(vsp)->tv_sec = (tsp)->tv_sec + (usp)->tv_sec;      \
-(vsp)->tv_nsec = (tsp)->tv_nsec + (usp)->tv_nsec;   \
-if ((vsp)->tv_nsec >= 1000000000L) {            \
-(vsp)->tv_sec++;                \
-(vsp)->tv_nsec -= 1000000000L;          \
-}                           \
-} while (0)
-#define timespecsub(tsp, usp, vsp)                  \
-do {                                \
-(vsp)->tv_sec = (tsp)->tv_sec - (usp)->tv_sec;      \
-(vsp)->tv_nsec = (tsp)->tv_nsec - (usp)->tv_nsec;   \
-if ((vsp)->tv_nsec < 0) {               \
-(vsp)->tv_sec--;                \
-(vsp)->tv_nsec += 1000000000L;          \
-}                           \
-} while (0)
 
+#ifndef timespecclear
+#define timespecclear(tsp)      (tsp)->tv_sec = (tsp)->tv_nsec = 0
+#endif
+
+#ifndef timespecisset
+#define timespecisset(tsp)      ((tsp)->tv_sec || (tsp)->tv_nsec)
+#endif
+
+#ifndef timespeccmp
+#define timespeccmp(tsp, usp, cmp)                  \
+    (((tsp)->tv_sec == (usp)->tv_sec) ?             \
+    ((tsp)->tv_nsec cmp (usp)->tv_nsec) :           \
+    ((tsp)->tv_sec cmp (usp)->tv_sec))
+#endif
+
+#ifndef timespecadd
+#define timespecadd(tsp, usp, vsp)                  \
+    do {                                \
+    (vsp)->tv_sec = (tsp)->tv_sec + (usp)->tv_sec;      \
+    (vsp)->tv_nsec = (tsp)->tv_nsec + (usp)->tv_nsec;   \
+    if ((vsp)->tv_nsec >= 1000000000L) {            \
+    (vsp)->tv_sec++;                \
+    (vsp)->tv_nsec -= 1000000000L;          \
+    }                           \
+    } while (0)
+#endif
+
+#ifndef timespecsub
+#define timespecsub(tsp, usp, vsp)                  \
+    do {                                \
+    (vsp)->tv_sec = (tsp)->tv_sec - (usp)->tv_sec;      \
+    (vsp)->tv_nsec = (tsp)->tv_nsec - (usp)->tv_nsec;   \
+    if ((vsp)->tv_nsec < 0) {               \
+    (vsp)->tv_sec--;                \
+    (vsp)->tv_nsec += 1000000000L;          \
+    }                           \
+    } while (0)
+#endif
 
 /*
  * Names of the interval timers, and structure

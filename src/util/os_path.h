@@ -24,6 +24,7 @@
  *
  */
 
+#include "ompi_config.h"
 #include <stdio.h>
 #include <stdarg.h>
 
@@ -42,4 +43,4 @@
  * appropriate to the local operating system. The path_name string has been malloc'd
  * and therefore the user is responsible for free'ing the field.
 */
-char *ompi_os_path(bool relative, ...);
+OMPI_DECLSPEC char *ompi_os_path(bool relative, ...);

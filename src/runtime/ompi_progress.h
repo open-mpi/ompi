@@ -3,7 +3,7 @@
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
-extern void ompi_progress(void);
+OMPI_DECLSPEC extern void ompi_progress(void);
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

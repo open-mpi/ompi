@@ -4,7 +4,7 @@
 
 #include "ompi_config.h"
 #include "util/numtostr.h"
-
+#include "util/printf.h"
 #include <stdio.h>
 #include <stdlib.h>
 

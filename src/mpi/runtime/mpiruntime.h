@@ -21,16 +21,16 @@ extern "C" {
  */
 
 /** Is mpi initialized? */
-extern bool ompi_mpi_initialized;
+OMPI_DECLSPEC extern bool ompi_mpi_initialized;
 /** Has mpi been finalized? */
-extern bool ompi_mpi_finalized;
+OMPI_DECLSPEC extern bool ompi_mpi_finalized;
 
 /** Do we have multiple threads? */
-extern bool ompi_mpi_thread_multiple;
+OMPI_DECLSPEC extern bool ompi_mpi_thread_multiple;
 /** Thread level requested to \c MPI_Init_thread() */
-extern int ompi_mpi_thread_requested;
+OMPI_DECLSPEC extern int ompi_mpi_thread_requested;
 /** Thread level provided by Open MPI */
-extern int ompi_mpi_thread_provided;
+OMPI_DECLSPEC extern int ompi_mpi_thread_provided;
 
 
 

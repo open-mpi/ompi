@@ -14,7 +14,7 @@
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
-extern ompi_class_t mca_pml_ptl_comm_t_class;
+OMPI_DECLSPEC extern ompi_class_t mca_pml_ptl_comm_t_class;
 
 /**
  *  Cached on ompi_communicator_t to hold queues/state
@@ -42,7 +42,7 @@ typedef struct mca_pml_comm_t mca_pml_ptl_comm_t;
  * @return        OMPI_SUCCESS or error status on failure.
  */
 
-extern int mca_pml_ptl_comm_init_size(mca_pml_ptl_comm_t* comm, size_t size);
+OMPI_DECLSPEC extern int mca_pml_ptl_comm_init_size(mca_pml_ptl_comm_t* comm, size_t size);
 
 /**
  * Obtain the next sequence number (MPI) for a given destination rank.

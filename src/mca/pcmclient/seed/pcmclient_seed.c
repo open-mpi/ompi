@@ -2,17 +2,21 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
 
+#include "ompi_config.h"
 #include "mca/pcmclient/pcmclient.h"
 #include "mca/pcmclient/seed/pcmclient_seed.h"
 #include "include/types.h"
 #include "include/constants.h"
 
 #include <stdio.h>
+#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
+#endif
 #include <string.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 
 
 static ompi_process_name_t peers[] = {

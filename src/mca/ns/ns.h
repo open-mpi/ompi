@@ -20,7 +20,9 @@
 
 #include "ompi_config.h"
 
+#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
+#endif
 #include <limits.h>
 
 #include "include/types.h"
@@ -33,6 +35,7 @@
 /*
  * useful defines for bit-masks
  */
+
 #define OMPI_NS_CMP_CELLID     0x01
 #define OMPI_NS_CMP_JOBID      0x02
 #define OMPI_NS_CMP_VPID       0x04

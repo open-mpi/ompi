@@ -10,7 +10,9 @@
 #define _MCA_OOB_TCP_PEER_H_
 
 #include "ompi_config.h"
+#ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
+#endif
 #include <string.h>
 
 #include "class/ompi_list.h"

@@ -2,12 +2,14 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
 
+#include "ompi_config.h"
 #include "include/constants.h"
 #include "mca/oob/oob.h"
 #include "mca/oob/base/base.h"
+#ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
+#endif
 #include <string.h>
 #include "util/bufpack.h"
 

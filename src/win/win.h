@@ -36,7 +36,7 @@ struct ompi_win_t {
 };
 typedef struct ompi_win_t ompi_win_t;
 
-OBJ_CLASS_DECLARATION(ompi_win_t);
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_win_t);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

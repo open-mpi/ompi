@@ -80,7 +80,7 @@ struct ompi_comm_reg_t{
     uint32_t           cid;
 };
 typedef struct ompi_comm_reg_t ompi_comm_reg_t;
-OBJ_CLASS_DECLARATION(ompi_comm_reg_t);
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_comm_reg_t);
 
 static void ompi_comm_reg_constructor(ompi_comm_reg_t *regcom);
 static void ompi_comm_reg_destructor(ompi_comm_reg_t *regcom);

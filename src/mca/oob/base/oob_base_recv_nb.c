@@ -2,14 +2,15 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
 
+#include "ompi_config.h"
 #include "include/constants.h"
 #include "mca/oob/oob.h"
 #include "mca/oob/base/base.h"
 #include <string.h>
+#ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
-
+#endif
 
 /*
  * Internal type to handle non-blocking packed receive.

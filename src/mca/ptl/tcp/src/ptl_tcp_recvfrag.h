@@ -8,11 +8,17 @@
 #ifndef MCA_PTL_TCP_RECV_FRAG_H
 #define MCA_PTL_TCP_RECV_FRAG_H
 
-#include <string.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
 #include "ompi_config.h"
+#include <string.h>
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
+#ifdef HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif
 #include "include/sys/atomic.h"
 #include "mca/ptl/base/ptl_base_recvfrag.h"
 #include "ptl_tcp_peer.h"

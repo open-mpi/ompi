@@ -11,8 +11,9 @@
 
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
-#   include <windows.h>
+#include <windows.h>
 #undef WIN32_LEAN_AND_MEAN
+#endif
 
 /* other utility header files */
 #include <cderr.h>
@@ -33,17 +34,25 @@
 #include "win32/ompi_time.h"
 #include "win32/ompi_utsname.h"
 #include "win32/ompi_util.h"
+#include "win32/ompi_misc.h"
 
 #define MAXPATHLEN MAX_PATH
 #define MAXHOSTNAMELEN MAX_PATH
 typedef unsigned short mode_t;
-typedef unsigned long size_t;
 typedef long ssize_t;
-#define OMPI_WINDOWS 
 
 /* Anju: some random #defines which I know offhand, but need to configure it */
 #define OMPI_ALIGNMENT_CXX_BOOL OMPI_ALIGNMENT_INT
 #define SIZEOF_BOOL SIZEOF_INT
 #define __func__ __FUNCTION__
- 
+
+#ifdef OMPI_BUILDING_LIBRARY
+#define OMPI_DECLSPEC __declspec(dllexport)
+#else
+#define OMPI_DECLSPEC __declspec(dllimport)
+#endif
+#define OMPI_COMP_EXPORT __declspec(dllexport)
+#define OMPI_WINDOWS
+#define UINT32_MAX _UI32_MAX
+
 #endif /* compat */

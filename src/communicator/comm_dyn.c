@@ -27,7 +27,7 @@
 #include "mca/oob/base/base.h"
 
 #include "runtime/runtime.h"
-
+#include "util/printf.h"
 extern char **environ;
 
 int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,

@@ -36,7 +36,7 @@ typedef struct mca_coll_base_module_comm_t {
  * Globally exported variables
  */
 
-extern const mca_coll_base_component_1_0_0_t mca_coll_sm_component;
+OMPI_DECLSPEC extern const mca_coll_base_component_1_0_0_t mca_coll_sm_component;
 
 
     /*

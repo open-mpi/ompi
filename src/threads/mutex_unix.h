@@ -37,7 +37,7 @@ struct ompi_mutex_t {
     ompi_lock_t m_lock_atomic;
 };
 
-OBJ_CLASS_DECLARATION(ompi_mutex_t);
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_mutex_t);
 
 
 #if OMPI_HAVE_ATOMIC  && OMPI_HAVE_POSIX_THREADS 

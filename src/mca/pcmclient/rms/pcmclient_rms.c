@@ -2,17 +2,21 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
 
+#include "ompi_config.h"
 #include "mca/pcmclient/pcmclient.h"
 #include "mca/pcmclient/rms/pcmclient_rms.h"
 #include "include/types.h"
 #include "include/constants.h"
 
 #include <stdio.h>
+#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
+#endif
 #include <string.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 
 extern int mca_pcmclient_rms_num_procs;
 extern int mca_pcmclient_rms_procid;

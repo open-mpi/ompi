@@ -53,7 +53,7 @@ struct mca_llm_base_hostfile_data_t {
 /** shorten ompi_rte_base_hostfile_data_t declarations */
 typedef struct mca_llm_base_hostfile_data_t mca_llm_base_hostfile_data_t;
 /** create the required instance information */
-OBJ_CLASS_DECLARATION(mca_llm_base_hostfile_data_t);
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_llm_base_hostfile_data_t);
 
 
 #if defined(c_plusplus) || defined(__cplusplus)
@@ -64,7 +64,7 @@ extern "C" {
      * unit tests or mca_llm_base_open.  In other words, you probably
      * don't want to call this function.
     */ 
-    void mca_llm_base_setup(void);
+    OMPI_DECLSPEC void mca_llm_base_setup(void);
 
 
     /**
@@ -73,7 +73,7 @@ extern "C" {
      * \return ompi_list_t containing a list of
      *         mca_llm_base_hostfile_node_t information.
      */
-    ompi_list_t *mca_llm_base_parse_hostfile(const char* filename);
+    OMPI_DECLSPEC ompi_list_t *mca_llm_base_parse_hostfile(const char* filename);
 
 
     /**
@@ -86,7 +86,7 @@ extern "C" {
      * \note If the same key is used with different values, the hosts
      * are considered different.
      */
-    int mca_llm_base_collapse_resources(ompi_list_t *hostlist);
+    OMPI_DECLSPEC int mca_llm_base_collapse_resources(ompi_list_t *hostlist);
 
 
     /**
@@ -96,7 +96,7 @@ extern "C" {
      * \param hostlist An ompi_list_t containing
      *                 mca_llm_base_hostfile_node_t instances.
      */
-    int mca_llm_base_map_resources(int nodes,
+    OMPI_DECLSPEC int mca_llm_base_map_resources(int nodes,
                                    int procs,
                                    ompi_list_t *hostlist);
 
@@ -106,12 +106,12 @@ extern "C" {
      * mca_llm_base_hostfile_node_t instances and wrap it in an
      * ompi_node_allocation_t list.
      */
-    ompi_list_t *mca_llm_base_create_node_allocation(ompi_list_t *hostlist);
+    OMPI_DECLSPEC ompi_list_t *mca_llm_base_create_node_allocation(ompi_list_t *hostlist);
 
     /**
      * free a list of mca_llm_base_hostfile_node_t instances
      */
-    void mca_llm_base_deallocate(ompi_list_t *hostlist);
+    OMPI_DECLSPEC void mca_llm_base_deallocate(ompi_list_t *hostlist);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
@@ -120,6 +120,6 @@ extern "C" {
 /**
  * Mutex wrapping the \code mca_llm_base_parse_hostfile function.
  */
-extern ompi_mutex_t mca_llm_base_parse_mutex;
+OMPI_DECLSPEC extern ompi_mutex_t mca_llm_base_parse_mutex;
 
 #endif
