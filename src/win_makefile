@@ -69,6 +69,15 @@ C_SUBDIRS =  \
 EXTRA_DIRS = 
 
 #
+# Files included by the dist that we don't want to compile
+#
+EXCLUDE_FILES = dt_arch.c dt_external32.c \
+                dt_match_size.c epoll.c \
+                epoll_sub.c kqueue.c \
+                llm_base_parse_hostfile_lex.c \
+                misc.c poll.c rtsig.c signal.c stacktrace.c
+
+#
 # A small function to extract the list of all files in these directories
 #
 SOURCE_FILES = $(foreach dir, ${C_SUBDIRS}, $(wildcard ${dir}/*.[c]))
@@ -153,7 +162,7 @@ ADDLIBS = \
 .c.obj:
 	$(CXX) $(CXXFLAGS) $*.c
 
-all: prebuild libmpi
+all: libmpi
 
 prebuild:
 	@echo "Creating mca_base_parse_paramfile_lex.c"
@@ -170,6 +179,9 @@ prebuild:
      done
 	@for dirs in ${C_SUBDIRS}; do \
 	    (echo "Entering $${dirs}"; cd $$dirs; if test -f .compile_files; then (more .compile_files| xargs -i'{}' ln -f '{}' ${topdir}/src/Debug/'{}'); else (ls *.c 2>/dev/null | xargs -i'{}' ln -f '{}' ${topdir}/src/Debug/'{}'); fi); \
+	done
+	@for file in ${EXCLUDE_FILES}; do \
+		(echo "Removing $${file}"; cd ${topdir}/src/Debug/; rm -f $${file}); \
 	done
 	@echo "done"
 
