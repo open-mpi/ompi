@@ -1,4 +1,3 @@
-# -*- makefile -*-
 #
 # $HEADER$
 #
@@ -32,4 +31,4 @@ EXTRA_DIST = \
         ompi_setup_cxx.m4 \
         ompi_setup_f77.m4 \
         ompi_setup_f90.m4 \
-        mca_no_configure_modules.m4
+        mca_no_configure_components.m4
