@@ -22,7 +22,10 @@ libmca_mpi_coll_base_la_SOURCES = \
         topo_base_graph_dims_get.c \
         topo_base_graph_get.c \
         topo_base_graph_neighbors.c \
-        topo_base_graph_neighbors_count.c
+        topo_base_graph_neighbors_count.c \
+        topo_base_open.c \
+        topo_base_close.c \
+        topo_base_select.c
 
 # Conditionally install the header files
 
