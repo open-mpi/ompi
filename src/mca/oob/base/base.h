@@ -220,7 +220,7 @@ typedef void (*mca_oob_callback_fn_t)(
     ompi_process_name_t* peer, 
     struct iovec* msg, 
     int count,
-    int tag,
+    int* tag,
     void* cbdata);
 
 /**
@@ -240,7 +240,7 @@ typedef void (*mca_oob_callback_packed_fn_t)(
     ompi_process_name_t* peer, 
     ompi_buffer_t* buffer,
     int count,
-    int tag,
+    int* tag,
     void* cbdata);
 
 /**
@@ -290,7 +290,7 @@ int mca_oob_recv_nb(
     ompi_process_name_t* peer, 
     struct iovec* msg,  
     int count, 
-    int tag,
+    int* tag,
     int flags, 
     mca_oob_callback_fn_t cbfunc,
     void* cbdata);
