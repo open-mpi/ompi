@@ -20,10 +20,6 @@
 #include "ptl_elan_frag.h"
 #include "ptl_elan_priv.h"
 
-#if 0
-#elif defined(ABC)
-#endif
-
 /* XXX: There must be multiple PTL's. This could be the template */
 mca_ptl_elan_module_t mca_ptl_elan_module = {
     {
@@ -288,7 +284,6 @@ mca_ptl_elan_put (struct mca_ptl_base_module_t *ptl,
     int rc = OMPI_SUCCESS;
     mca_ptl_elan_send_frag_t *desc;
 
-
     /* PML still utilize this interface the same as a send option.
      * So we need to generate a QDMA to the remote side for completion
      * notification */
@@ -312,7 +307,7 @@ mca_ptl_elan_put (struct mca_ptl_base_module_t *ptl,
 	    sendreq, offset, &size, flags);
 
     /* Update all the sends until the put is done */
-    END_FUNC(PTL_ELAN_DEBUG_NONE);
+    END_FUNC(PTL_ELAN_DEBUG_PUT);
     return rc;
 }
 
@@ -330,30 +325,6 @@ mca_ptl_elan_get (struct mca_ptl_base_module_t *ptl,
                   int flags)
 {
     int rc = OMPI_SUCCESS;
-#if 0
-    mca_ptl_elan_send_frag_t *desc;
-
-    /* XXX: 
-     *    Since the address passed down from PML does not provide 
-     *    elan information, so there needs to be a change 
-     */
-
-    START_FUNC(PTL_ELAN_DEBUG_NONE);
-
-    desc = mca_ptl_elan_alloc_send_desc(ptl, sendreq, MCA_PTL_ELAN_DESC_GET);
-    if (NULL == desc) {
-	ompi_output(0,
-		"[%s:%d] Unable to allocate an elan send descriptors \n", 
-		__FILE__, __LINE__);
-    }
-
-    rc = mca_ptl_elan_start_desc(desc, 
-	    (struct mca_ptl_elan_peer_t *)ptl_peer,
-	    sendreq, offset, &size, flags);
-
-    /* Update all the sends until the put is done */
-    END_FUNC(PTL_ELAN_DEBUG_NONE);
-#endif
     return rc;
 }
 
@@ -399,8 +370,9 @@ mca_ptl_elan_matched (mca_ptl_base_module_t * ptl,
 #endif
 
     if (header->hdr_common.hdr_flags & MCA_PTL_FLAGS_ACK_MATCHED) 
-#if 1 /* Basic ACK scheme following TCP cases */
+#if 1 
     {
+	/* Basic ACK scheme following TCP cases */
 	mca_ptl_elan_send_frag_t *desc;
 
 	/* Get a frag desc and allocate a send desc */

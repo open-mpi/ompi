@@ -9,14 +9,6 @@
 #include "ptl_elan.h"
 #include "ptl_elan_priv.h"
 
-#define PUTGET_THROTTLE	           (32)
-#define ELAN_PTL_FASTPATH	   (0x1)
-#define ELAN_QUEUE_MAX             (INPUT_QUEUE_MAX)
-#define ELAN_QUEUE_LOST_SLOTS      (1)
-#define SLOT_ALIGN                 (128)
-#define MAX(a,b)                   ((a>b)? a:b)
-#define ALIGNUP(x,a)	           (((unsigned int)(x) + ((a)-1)) & (-(a)))
-
 #define OMPI_PTL_ELAN_CTRL_LIST(flist, init_num, inc_num, max_num) \
 do {                                                               \
     OBJ_CONSTRUCT (flist, ompi_free_list_t);                       \
@@ -47,7 +39,7 @@ ompi_init_elan_queue_events (mca_ptl_elan_module_t * ptl,
     ompi_ptl_elan_qdma_desc_t *desc;
     E4_Event *elan_ptr;
 
-    START_FUNC(PTL_ELAN_DEBUG_NONE);
+    START_FUNC(PTL_ELAN_DEBUG_INIT);
 
     rail = (RAIL *) ptl->ptl_elan_rail;
     ctx = (ELAN4_CTX *) ptl->ptl_elan_ctx;
@@ -58,8 +50,8 @@ ompi_init_elan_queue_events (mca_ptl_elan_module_t * ptl,
 
     flist = &queue->tx_desc_free;
 
-    main_align = MAX (sizeof (void *), 8);
-    elan_align = MAX (sizeof (int *), ELAN_BLOCK_ALIGN);
+    main_align = GET_MAX (sizeof (void *), 8);
+    elan_align = GET_MAX (sizeof (int *), ELAN_BLOCK_ALIGN);
     main_size = ALIGNUP (sizeof (ompi_ptl_elan_qdma_desc_t), main_align);
     elan_size = ALIGNUP (sizeof (E4_Event), elan_align);
 
@@ -113,7 +105,7 @@ ompi_init_elan_queue_events (mca_ptl_elan_module_t * ptl,
     }
     flist->fl_num_allocated += flist->fl_num_per_alloc;
 
-    END_FUNC(PTL_ELAN_DEBUG_NONE);
+    END_FUNC(PTL_ELAN_DEBUG_INIT);
     return OMPI_SUCCESS;
 }
 
@@ -199,10 +191,10 @@ ompi_ptl_elan_init_putget_ctrl (mca_ptl_elan_module_t * ptl,
     ompi_free_list_t *put_list, *get_list;
     ompi_ptl_elan_putget_desc_t *put_desc, *get_desc;
 
-    START_FUNC(PTL_ELAN_DEBUG_NONE);
+    START_FUNC(PTL_ELAN_DEBUG_INIT);
 
-    main_align = MAX (sizeof (void *), ELAN_ALIGN);
-    elan_align = MAX (sizeof (int *), ELAN_BLOCK_ALIGN);
+    main_align = GET_MAX (sizeof (void *), ELAN_ALIGN);
+    elan_align = GET_MAX (sizeof (int *), ELAN_BLOCK_ALIGN);
     main_size  = ALIGNUP(sizeof(ompi_ptl_elan_putget_desc_t), main_align);
 
     /* Contain elan_event, chain_event and a chain_buff */
@@ -254,7 +246,7 @@ ompi_ptl_elan_init_putget_ctrl (mca_ptl_elan_module_t * ptl,
     OMPI_ELAN_PUTGET_GROW(ctx, get_list, frag, get_desc, elan_ptr, 
 	    main_size, elan_size, 0);
                                                                       
-    END_FUNC(PTL_ELAN_DEBUG_NONE);
+    END_FUNC (PTL_ELAN_DEBUG_INIT);
     return OMPI_SUCCESS;
 }
 
@@ -278,7 +270,7 @@ ompi_init_elan_qdma (mca_ptl_elan_component_t * emp,
     ELAN4_CTX  *ctx;
     struct mca_ptl_elan_module_t *ptl;
 
-    START_FUNC(PTL_ELAN_DEBUG_NONE);
+    START_FUNC(PTL_ELAN_DEBUG_INIT);
 
     /* Init the Transmit Queue structure */
     for (i = 0; i < num_rails; i++) {
@@ -390,13 +382,13 @@ ompi_init_elan_qdma (mca_ptl_elan_component_t * emp,
         OBJ_CONSTRUCT (&queue->rx_lock, ompi_mutex_t);
     }
 
-    END_FUNC(PTL_ELAN_DEBUG_NONE);
+    END_FUNC(PTL_ELAN_DEBUG_INIT);
     return (OMPI_SUCCESS);
 }
 
 int
 ompi_init_elan_putget (mca_ptl_elan_component_t * emp,
-                     int num_rails)
+                       int num_rails)
 {
     int         i;
     int         nslots = 128;
@@ -405,7 +397,7 @@ ompi_init_elan_putget (mca_ptl_elan_component_t * emp,
     ELAN4_CTX  *ctx;
     struct mca_ptl_elan_module_t *ptl;
 
-    START_FUNC(PTL_ELAN_DEBUG_NONE);
+    START_FUNC(PTL_ELAN_DEBUG_INIT);
 
     /* Init the Transmit Queue structure */
     for (i = 0; i < num_rails; i++) {
@@ -469,7 +461,7 @@ ompi_init_elan_putget (mca_ptl_elan_component_t * emp,
        	ompi_ptl_elan_init_putget_ctrl (ptl, rail, putget, 0, 2, 32);
     }
 
-    END_FUNC(PTL_ELAN_DEBUG_NONE);
+    END_FUNC(PTL_ELAN_DEBUG_INIT);
  
     return (OMPI_SUCCESS);
 }
