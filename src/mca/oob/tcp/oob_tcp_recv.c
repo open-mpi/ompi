@@ -62,7 +62,7 @@ int mca_oob_tcp_recv(
             if(NULL == iov || 0 == count) {
                 return OMPI_ERR_BAD_PARAM;
             }
-            iov[0].iov_base = msg->msg_rwbuf;
+            iov[0].iov_base = (ompi_iov_base_ptr_t)msg->msg_rwbuf;
             iov[0].iov_len = msg->msg_hdr.msg_size;
             msg->msg_rwbuf = NULL;
             rc = msg->msg_hdr.msg_size;
@@ -175,7 +175,7 @@ int mca_oob_tcp_recv_nb(
                 OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_match_lock);
                 return OMPI_ERR_BAD_PARAM;
             }
-            iov[0].iov_base = msg->msg_rwbuf;
+            iov[0].iov_base = (ompi_iov_base_ptr_t)msg->msg_rwbuf;
             iov[0].iov_len = msg->msg_hdr.msg_size;
             msg->msg_rwbuf = NULL;
             rc = msg->msg_hdr.msg_size;

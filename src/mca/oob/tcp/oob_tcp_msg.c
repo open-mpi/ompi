@@ -189,7 +189,7 @@ bool mca_oob_tcp_msg_send_handler(mca_oob_tcp_msg_t* msg, struct mca_oob_tcp_pee
         do {/* while there is still more iovecs to write */
             if(rc < (int)msg->msg_rwptr->iov_len) {
                 msg->msg_rwptr->iov_len -= rc;
-                msg->msg_rwptr->iov_base = (void *) ((char *) msg->msg_rwptr->iov_base + rc);
+                msg->msg_rwptr->iov_base = (ompi_iov_base_ptr_t)((char *) msg->msg_rwptr->iov_base + rc);
                 break;
             } else {
                 rc -= msg->msg_rwptr->iov_len;
@@ -229,7 +229,7 @@ bool mca_oob_tcp_msg_recv_handler(mca_oob_tcp_msg_t* msg, struct mca_oob_tcp_pee
                  mca_oob_tcp_peer_close(peer);
                  return false;
              }
-             msg->msg_rwiov[1].iov_base = msg->msg_rwbuf;
+             msg->msg_rwiov[1].iov_base = (ompi_iov_base_ptr_t)msg->msg_rwbuf;
              msg->msg_rwiov[1].iov_len = msg->msg_hdr.msg_size;
              msg->msg_rwnum = 1;
         }
@@ -291,7 +291,7 @@ static bool mca_oob_tcp_msg_recv(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* pee
         do {
             if(rc < (int)msg->msg_rwptr->iov_len) {
                 msg->msg_rwptr->iov_len -= rc;
-                msg->msg_rwptr->iov_base = (void *) ((char *) msg->msg_rwptr->iov_base + rc);
+                msg->msg_rwptr->iov_base = (ompi_iov_base_ptr_t)((char *) msg->msg_rwptr->iov_base + rc);
                 break;
             } else {
                 rc -= msg->msg_rwptr->iov_len;
@@ -384,7 +384,7 @@ static void mca_oob_tcp_msg_data(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* pee
                 /* first iovec of recv message contains the header -
                  * subsequent contain user data
                 */
-                post->msg_uiov[0].iov_base = msg->msg_rwbuf;
+                post->msg_uiov[0].iov_base = (ompi_iov_base_ptr_t)msg->msg_rwbuf;
                 post->msg_uiov[0].iov_len = msg->msg_hdr.msg_size;
 		post->msg_rc = msg->msg_hdr.msg_size;
                 msg->msg_rwbuf = NULL;

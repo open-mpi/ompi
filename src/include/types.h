@@ -89,7 +89,7 @@ typedef union {
  * handle differences in iovec
  */
 
-#if defined(__APPLE__)
+#if defined(__APPLE__) || defined(WIN32)
 typedef char* ompi_iov_base_ptr_t;
 #else
 typedef void* ompi_iov_base_ptr_t;

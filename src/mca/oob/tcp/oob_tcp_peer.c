@@ -651,11 +651,11 @@ static void mca_oob_tcp_peer_recv_handler(int sd, short flags, void* user)
                 msg->msg_peer = peer->peer_name;
                 msg->msg_rwiov = mca_oob_tcp_msg_iov_alloc(msg,2);
                 msg->msg_rwbuf = NULL;
-                msg->msg_rwiov->iov_base = msg->msg_rwbuf;
+                msg->msg_rwiov->iov_base = (ompi_iov_base_ptr_t)msg->msg_rwbuf;
                 msg->msg_rwiov->iov_len = 1;
                 msg->msg_rwcnt = msg->msg_rwnum = 1;
                 msg->msg_rwptr = msg->msg_rwiov;
-                msg->msg_rwiov[0].iov_base = (void*)&msg->msg_hdr;
+                msg->msg_rwiov[0].iov_base = (ompi_iov_base_ptr_t)&msg->msg_hdr;
                 msg->msg_rwiov[0].iov_len = sizeof(msg->msg_hdr);
                 peer->peer_recv_msg = msg;
             }

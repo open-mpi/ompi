@@ -132,7 +132,10 @@ ompi_list_t* mca_gpr_proxy_exec_compound_cmd(bool return_requested)
 
     OMPI_THREAD_UNLOCK(&mca_gpr_proxy_wait_for_compound_mutex);
 
-    return OMPI_SUCCESS;
+    /* TODO: Fix this. The function returns an ompi_list_t * according to definition, 
+       but actually is returning an int. Temporarily casted it to (ompi_list_t *), but 
+       should be fixed in the long run */
+    return (ompi_list_t *)OMPI_SUCCESS;
 }
 
 

@@ -613,7 +613,7 @@ static int32_t mca_gpr_replica_recv_put_cmd(ompi_buffer_t buffer)
 	goto RETURN_ERROR;
     }
 
-    object = (ompi_registry_object_t)malloc(object_size);
+    object = (ompi_registry_object_t *)malloc(object_size);
     if (OMPI_SUCCESS != ompi_unpack(buffer, object, object_size, OMPI_BYTE)) {
 	goto RETURN_ERROR;
     }
@@ -1196,7 +1196,7 @@ static void mca_gpr_replica_recv_get_startup_msg_cmd(ompi_buffer_t buffer, ompi_
         if (0 < num_objects) {
             for (i=0; i < num_objects; i++) {
                 ompi_unpack(msg, &data_obj_size, 1, MCA_GPR_OOB_PACK_OBJECT_SIZE);
-                data_object = (ompi_registry_object_t)malloc(data_obj_size);
+                data_object = (ompi_registry_object_t *)malloc(data_obj_size);
                 ompi_unpack(msg, data_object, data_obj_size, OMPI_BYTE);
                 ompi_pack(answer, &data_obj_size, 1, MCA_GPR_OOB_PACK_OBJECT_SIZE);
                 ompi_pack(answer, data_object, data_obj_size, OMPI_BYTE);
