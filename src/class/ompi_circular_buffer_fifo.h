@@ -291,10 +291,13 @@ static inline int ompi_cb_fifo_get_slot(ompi_cb_fifo_t *fifo) {
  *
  * @param fifo Pointer to data structure defining this fifo (IN)
  *
+ * @param flush_entries_read force the lazy free to happen (IN)
+ *
  * @returncode Slot index to which data is written
  *
  */
-static inline void *ompi_cb_fifo_read_from_tail(ompi_cb_fifo_t *fifo) 
+static inline void *ompi_cb_fifo_read_from_tail(ompi_cb_fifo_t *fifo,
+        bool flush_entries_read) 
 {
     int index = 0,clearIndex, i;
     void *read_from_tail = (void *)OMPI_CB_ERROR;
@@ -312,7 +315,8 @@ static inline void *ompi_cb_fifo_read_from_tail(ompi_cb_fifo_t *fifo)
     fifo->tail->num_to_clear++;
 
     /* check to see if time to do a lazy free of queue slots */
-    if (fifo->tail->num_to_clear == fifo->lazy_free_frequency) {
+    if ( (fifo->tail->num_to_clear == fifo->lazy_free_frequency) ||
+            flush_entries_read ) {
         clearIndex = index - fifo->lazy_free_frequency + 1;
         clearIndex &= fifo->mask;
         
