@@ -664,27 +664,32 @@ static inline cb_slot_t ompi_fifo_get_slot_same_base_addr(ompi_fifo_t *fifo,
  * @returncode Pointer - OMPI_CB_FREE indicates no data to read
  *
  */
+/*
 static inline void *ompi_fifo_read_from_tail_same_base_addr(
         ompi_fifo_t *fifo)
-{
-    /* local parameters */
-    void *return_value;
-    bool queue_empty;
-
-    /* get next element */
-    return_value=ompi_cb_fifo_read_from_tail_same_base_addr(
-            (ompi_cb_fifo_t *)&(fifo->tail->cb_fifo),
-            fifo->tail->cb_overflow,&queue_empty);
-
-    /* check to see if need to move on to next cb_fifo in the link list */
-    if( queue_empty ) {
-        /* queue_emptied - move on to next element in fifo */
-        fifo->tail->cb_overflow=false;
-        fifo->tail=fifo->tail->next_fifo_wrapper;
-    }
-
-    /* return */
-    return return_value;
-}
+*/
+#define ompi_fifo_read_from_tail_same_base_addr( fifo ) \
+({ \
+    /* local parameters */ \
+    void *return_value; \
+    bool queue_empty,flush_entries_read; \
+    ompi_cb_fifo_t *cb_fifo; \
+ \
+    /* get next element */ \
+    cb_fifo=(ompi_cb_fifo_t *)&(fifo->tail->cb_fifo); \
+    flush_entries_read=fifo->tail->cb_overflow; \
+    return_value=ompi_cb_fifo_read_from_tail_same_base_addr(cb_fifo, \
+            flush_entries_read,&queue_empty); \
+ \
+    /* check to see if need to move on to next cb_fifo in the link list */ \
+    if( queue_empty ) { \
+        /* queue_emptied - move on to next element in fifo */ \
+        fifo->tail->cb_overflow=false; \
+        fifo->tail=fifo->tail->next_fifo_wrapper; \
+    } \
+ \
+    /* return */ \
+    return_value; \
+})
 
 #endif				/* !_OMPI_FIFO */
