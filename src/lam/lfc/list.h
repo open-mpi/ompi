@@ -50,8 +50,8 @@ void lam_list_item_destroy(lam_list_item_t *item);
 typedef struct lam_list
 {
     lam_object_t        super;
-    lam_list_item_t     *lam_list_head;
-    lam_list_item_t     *lam_list_tail;
+    lam_list_item_t     lam_list_head;
+    lam_list_item_t     lam_list_tail;
     lam_list_type_t      lam_list_type;
     volatile size_t     lam_list_length;
 } lam_list_t;
@@ -77,6 +77,11 @@ static inline void lam_list_set_type(lam_list_t* list, lam_list_type_t type)
 static inline size_t lam_list_get_size(lam_list_t* list)
 {
     return list->lam_list_length;
+}
+
+static inline void lam_list_set_size(lam_list_t* list, size_t size)
+{
+    list->lam_list_length=size;
 }
 
 
@@ -115,14 +120,6 @@ void lam_list_append(lam_list_t *list, lam_list_item_t *item);
  * Remove item from the list.
  */
 lam_list_item_t* lam_list_remove(lam_list_t *list, lam_list_item_t *item);
-
-
-/* 
- * Removes all items in list and sets each
- * item's next and prev pointer to 0. 
- */
-void lam_list_empty_list(lam_list_t *list);
-
 
 /* Adds item to list at index and retains item. 
     Returns 1 if successful, 0 otherwise.
