@@ -51,6 +51,20 @@ extern "C" {
                                          mca_ns_base_jobid_t jobid,
                                          ompi_list_t *nodelist);
 
+    /*
+     * Job management code
+     */
+    void mca_pcm_rms_job_list_init(void);
+    void mca_pcm_rms_job_list_fini(void);
+
+    int mca_pcm_rms_add_started_pids(mca_ns_base_jobid_t jobid, pid_t child_pid,
+                         mca_ns_base_vpid_t lower, mca_ns_base_vpid_t upper);
+    pid_t mca_pcm_rms_get_started_pid(mca_ns_base_jobid_t jobid, mca_ns_base_vpid_t vpid,
+                          bool remove_started_pid);
+    int mca_pcm_rms_get_started_pid_list(mca_ns_base_jobid_t jobid, pid_t **pids, size_t *len,
+                             bool remove_started_pids);
+    int mca_pcm_rms_remove_job(mca_ns_base_jobid_t jobid);
+
     struct mca_pcm_rms_pids_t {
         ompi_list_item_t super;
         mca_ns_base_vpid_t lower;
