@@ -59,7 +59,6 @@ extern "C" {
      */
     struct mca_ptl_gm_send_frag_t {
         mca_ptl_base_send_frag_t send_frag; /**< base send fragment descriptor */
-        struct mca_pml_base_send_request_t *req;
         void* send_buf;
         ompi_ptr_t* registered_buf;
 	
@@ -74,7 +73,6 @@ extern "C" {
     
     struct mca_ptl_gm_recv_frag_t {
         mca_ptl_base_recv_frag_t frag_recv;
-	struct mca_pml_base_recv_request_t* req;
         size_t frag_bytes_processed;
 	size_t frag_offset;
         volatile int frag_progressed;
@@ -112,7 +110,7 @@ extern "C" {
 { \
     item = NULL; \
     if(ompi_using_threads()) { \
-        if( ompi_atomic_trylock(&((fl)->fl_lock)) ) { \
+        if( ompi_mutex_trylock( &((fl)->fl_lock)) ) { \
             /* We get the lock. Now let's remove one of the elements */ \
             item = ompi_list_remove_first(&((fl)->super)); \
             ompi_mutex_unlock(&((fl)->fl_lock)); \
