@@ -635,118 +635,96 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
                                      int tag,
                                      int rsize)
 {
-    int rc, i, count[2];
+
+    MPI_Request req;
+    int rc;
     int local_rank, local_size;
     ompi_proc_t **rprocs=NULL;
+    char *namebuf=NULL, *rnamebuf=NULL;
+    int len, rlen;
     
-    typedef struct _tmp_pname {
-        uint32_t vpid;
-        uint32_t jobid;
-        uint32_t cellid;
-    } tmp_pname;
-    tmp_pname *lnames=NULL, *rnames=NULL;
-    ompi_process_name_t rprocname;
-
-    MPI_Datatype ntype=MPI_DATATYPE_NULL, btype, intype[2];
-    MPI_Aint extent, addr[2];
-
     local_rank = ompi_comm_rank (local_comm);
-    local_size = ompi_comm_size (local_comm);
-
-    rnames = (tmp_pname *)    malloc(rsize * sizeof (tmp_pname));
-    rprocs = (ompi_proc_t **) malloc(rsize * sizeof(ompi_proc_t *));
-    if (NULL == rprocs || NULL == rnames) {
-        rc = OMPI_ERR_OUT_OF_RESOURCE;
-        goto err_exit;
-    }
-    
-    /* generate a derived datatype describing tmp_pname */
-    btype = MPI_UNSIGNED;
-    ompi_ddt_type_extent (btype,  &extent);
-    if ( extent != 4 ) {
-        btype = MPI_UNSIGNED_SHORT;
-        ompi_ddt_type_extent ( btype, &extent);
-        if ( 4 != extent ) {
-            btype = MPI_UNSIGNED_LONG;
-            ompi_ddt_type_extent ( btype, &extent);
-        }
-    }
-    
-    addr[0]   = 0;
-    addr[1]   = ( ((char *)&rnames[1]) - ((char *)&rnames[0]));
-    intype[0] = btype;
-    intype[1] = MPI_UB;
-    count[0]  = 3;
-    count[1]  = 1;
-    ompi_ddt_create_struct (2, count, addr, intype, &ntype );
-    ompi_ddt_commit (&ntype);
+    local_size = ompi_comm_size (local_comm);    
 
     if (local_rank == local_leader) {
-        MPI_Request req;
-
-        lnames=(tmp_pname *) malloc (local_size*sizeof(tmp_pname));
-        if ( NULL == lnames ) {
-            rc = OMPI_ERR_OUT_OF_RESOURCE;
+        rc = ompi_proc_get_namebuf_by_proc(local_comm->c_local_group->grp_proc_pointers,
+                                           local_size, &namebuf, &len);
+        if ( OMPI_SUCCESS != rc ) {
             goto err_exit;
         }
 
-        /* generate name list */
-        for ( i = 0; i < local_size; i++ ){
-            lnames[i].vpid   = PROC[i]->proc_name.vpid;
-            lnames[i].jobid  = PROC[i]->proc_name.jobid;
-            lnames[i].cellid = PROC[i]->proc_name.cellid;
-        }
-        
-        /* local leader exchange group sizes and vpid lists */
-        rc = mca_pml.pml_irecv (rnames, rsize, ntype, remote_leader, tag,
+        /* send the remote_leader the length of the buffer */
+        rc = mca_pml.pml_irecv (&rlen, 1, MPI_INT, remote_leader, tag,
                                 bridge_comm, &req );
-        if ( rc != MPI_SUCCESS ) {
+        if ( OMPI_SUCCESS != rc ) {
             goto err_exit;
         }
-        rc = mca_pml.pml_send (lnames, local_size, ntype, remote_leader, tag, 
+        rc = mca_pml.pml_send (&len, 1, MPI_INT, remote_leader, tag, 
                                MCA_PML_BASE_SEND_STANDARD, bridge_comm );
-        if ( rc != MPI_SUCCESS ) {
+        if ( OMPI_SUCCESS != rc ) {
             goto err_exit;
         }
         rc = mca_pml.pml_wait_all ( 1, &req, MPI_STATUS_IGNORE );
-        if ( rc != MPI_SUCCESS ) {
+        if ( OMPI_SUCCESS != rc ) {
             goto err_exit;
         }
+        
     }
-
-    rc = local_comm->c_coll.coll_bcast( rnames, rsize, ntype, 
+    
+    /* broadcast buffer length to all processes in local_comm */
+    rc = local_comm->c_coll.coll_bcast( &rlen, 1, MPI_INT, 
                                         local_leader, local_comm );
-    if ( rc != MPI_SUCCESS ) {
+    if ( OMPI_SUCCESS != rc ) {
         goto err_exit;
     }
     
-    for ( i = 0; i < rsize; i++ ) {
-        rprocname.vpid   = rnames[i].vpid;
-        rprocname.cellid = rnames[i].cellid;
-        rprocname.jobid  = rnames[i].jobid;
-        
-       /* ompi_proc_find should be used here, it 
-          seems however not to work at the moment.
-          Will have to be fixed later.
-       */
-        rprocs[i] = ompi_proc_find (&rprocname );
+    /* Allocate temporary buffer */
+    rnamebuf = (char *) malloc ( rlen );
+    if ( NULL == rnamebuf ) {
+        rc = OMPI_ERR_OUT_OF_RESOURCE;
+        goto err_exit;
     }
 
- err_exit:
-    if ( NULL != lnames ) {
-        free ( lnames );
+    if ( local_rank == local_leader ) {
+        /* local leader exchange name lists */
+        rc = mca_pml.pml_irecv (rnamebuf, rlen, MPI_BYTE, remote_leader, tag,
+                                bridge_comm, &req );
+        if ( OMPI_SUCCESS != rc ) {
+            goto err_exit;
+        }
+        rc = mca_pml.pml_send (namebuf, len, MPI_BYTE, remote_leader, tag, 
+                               MCA_PML_BASE_SEND_STANDARD, bridge_comm );
+        if ( OMPI_SUCCESS != rc ) {
+            goto err_exit;
+        }
+        rc = mca_pml.pml_wait_all ( 1, &req, MPI_STATUS_IGNORE );
+        if ( OMPI_SUCCESS != rc ) {
+            goto err_exit;
+        }
+
+        ompi_proc_namebuf_returnbuf ( namebuf );
     }
-    if ( NULL != rnames) {
-        free ( rnames );
+
+    /* broadcast name list to all proceses in local_comm */
+    rc = local_comm->c_coll.coll_bcast( rnamebuf, rlen, MPI_BYTE, 
+                                        local_leader, local_comm );
+    if ( OMPI_SUCCESS != rc ) {
+        goto err_exit;
+    }
+    
+    /* decode the names into a proc-list */
+    rc = ompi_proc_get_proclist (rnamebuf, rlen, rsize, &rprocs );
+    
+ err_exit:
+    if ( NULL != rnamebuf) {
+        free ( rnamebuf );
     }
     /* rprocs has to be freed in the level above (i.e. intercomm_create ) */
-    if ( ntype != MPI_DATATYPE_NULL ) {
-        ompi_ddt_destroy ( &ntype );
-    }
+
     if ( OMPI_SUCCESS !=rc ) {
         printf("%d: Error in ompi_get_rprocs\n", local_rank);
         if ( NULL != rprocs ) {
-            free ( rprocs);
+            free ( rprocs );
             rprocs=NULL;
         }
     }
@@ -761,31 +739,30 @@ int ompi_comm_determine_first ( ompi_communicator_t *intercomm, int high )
     int flag, rhigh;
     int rank, rsize;
     int *rcounts;
-    MPI_Aint *rdisps;
+    int *rdisps;
     int scount=0;
-    int *sbuf;
     int rc;
+    ompi_proc_t *ourproc, *theirproc;
 
     rank = ompi_comm_rank        (intercomm);
     rsize= ompi_comm_remote_size (intercomm);
     
-    rdisps  = (MPI_Aint *) calloc ( rsize, sizeof(MPI_Aint));
-    rcounts = (int *)      calloc ( rsize, sizeof(int));
+    rdisps  = (int *) calloc ( rsize, sizeof(int));
+    rcounts = (int *) calloc ( rsize, sizeof(int));
     if ( NULL == rdisps || NULL == rcounts ){
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
     
     rcounts[0] = 1;
-    sbuf       = &high;
     if ( 0 == rank ) {
         scount = 1;
     }
     
-    rc = intercomm->c_coll.coll_allgatherv(sbuf, scount, MPI_INT,
+    rc = intercomm->c_coll.coll_allgatherv(&high, scount, MPI_INT,
                                            &rhigh, rcounts, rdisps,
                                            MPI_INT, intercomm);
     if ( rc != OMPI_SUCCESS ) {
-        flag = -1;
+        flag = MPI_UNDEFINED;
     }
 
     if ( NULL != rdisps ) {
@@ -802,16 +779,33 @@ int ompi_comm_determine_first ( ompi_communicator_t *intercomm, int high )
     else if ( !high && rhigh ) {
         flag = false;
     }
-#if 0 
     else {
-        if ( lvpid > rvpid ) {
+        ourproc   = intercomm->c_local_group->grp_proc_pointers[0];
+        theirproc = intercomm->c_remote_group->grp_proc_pointers[0];
+
+        /* Later we should use something like name_service.compare().
+           I will have to check, whether it returns a reasonable and 
+           identical value on both sides of the group.
+           For the moment I am just comparing the vpids and jobids
+        */
+        if ( ourproc->proc_name.vpid > theirproc->proc_name.vpid ) {
             flag = true;
+        }
+        else if ( ourproc->proc_name.vpid == theirproc->proc_name.vpid ) {
+            /* it is impossible to have identical vpids and jobids, so 
+               I do not have to compare for == here ) 
+            */
+            if ( ourproc->proc_name.jobid > theirproc->proc_name.jobid ) {
+                flag = true;
+            }
+            else {
+                flag = false;
+            }
         }
         else {
             flag = false;
         }
     }
-#endif
 
     return flag;
 }
