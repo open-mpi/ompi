@@ -50,11 +50,10 @@ lam_group_t lam_mpi_group_null = {
  *
  * @return Pointer to new group structure
  */
-lam_group_t *group_allocate(int group_size)
+lam_group_t *lam_group_allocate(int group_size)
 {
     /* local variables */
     lam_group_t *new_group;
-    int ret_val;
 
     /* create new group group element */
     new_group=OBJ_NEW(lam_group_t);
@@ -103,7 +102,7 @@ void lam_group_increment_proc_count(lam_group_t *group) {
 /**
  * group constructor
  */
-void lam_group_construct(lam_group_t *new_group)
+static void lam_group_construct(lam_group_t *new_group)
 {
     int ret_val;
 
@@ -118,7 +117,7 @@ void lam_group_construct(lam_group_t *new_group)
 /**
  * group destructor
  */
-void lam_group_destruct(lam_group_t *group)
+static void lam_group_destruct(lam_group_t *group)
 {
     /* release thegrp_proc_pointers memory */
     if( NULL != group->grp_proc_pointers )
@@ -144,7 +143,6 @@ int lam_group_init(void)
 {
     /* local variables */
     int return_value,ret_val;
-    lam_group_t *new_group_pointer;
 
     return_value=LAM_SUCCESS;
 

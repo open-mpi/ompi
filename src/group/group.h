@@ -48,7 +48,7 @@ extern lam_pointer_array_t *lam_group_f_to_c_table;
  *
  * @return Pointer to new group structure
  */
-lam_group_t *group_allocate(int group_size);
+lam_group_t *lam_group_allocate(int group_size);
 
 /*
  * increment the reference count of the proc structures
