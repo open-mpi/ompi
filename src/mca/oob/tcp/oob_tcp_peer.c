@@ -302,7 +302,7 @@ static int mca_oob_tcp_peer_start_connect(mca_oob_tcp_peer_t* peer)
     /* start the connect - will likely fail with EINPROGRESS */
     if(connect(peer->peer_sd, (struct sockaddr*)&inaddr, sizeof(inaddr)) < 0) {
         /* non-blocking so wait for completion */
-        if(ompi_errno == EINPROGRESS) {
+        if(ompi_errno == EINPROGRESS || ompi_errno == EWOULDBLOCK) {
             ompi_event_add(&peer->peer_send_event, 0);
             return OMPI_SUCCESS;
         }
