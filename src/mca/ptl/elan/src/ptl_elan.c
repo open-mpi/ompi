@@ -43,7 +43,10 @@ mca_ptl_elan_module_t mca_ptl_elan_module = {
         mca_ptl_elan_get,
         mca_ptl_elan_matched,
         mca_ptl_elan_req_init,
-        mca_ptl_elan_req_fini
+        mca_ptl_elan_req_fini,
+        NULL,
+        NULL,
+        NULL
     }
 };
 
