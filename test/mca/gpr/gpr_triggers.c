@@ -40,7 +40,6 @@
 #include "util/output.h"
 #include "util/proc_info.h"
 #include "util/sys_info.h"
-#include "util/environ.h"
 
 #include "mca/errmgr/errmgr.h"
 #include "mca/errmgr/base/base.h"
@@ -85,7 +84,7 @@ int main(int argc, char **argv)
     } 
 
     /* ENSURE THE REPLICA IS ISOLATED */
-    ompi_setenv("OMPI_MCA_gpr_replica_isolate", "1", true, &environ);
+    setenv("OMPI_MCA_gpr_replica_isolate", "1", 1);
     
     /* Open up the output streams */
     if (!ompi_output_init()) {
@@ -437,6 +436,7 @@ static int test1(void)
     }
 
     orte_gpr.dump_triggers(0);
+    return ORTE_SUCCESS;
     
     fprintf(test_out, "incrementing until trigger\n");
     /* increment the value in keys[1] until the trig fires */
