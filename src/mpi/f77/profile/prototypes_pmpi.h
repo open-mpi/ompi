@@ -300,8 +300,8 @@ void pmpi_win_start_f(MPI_Fint *group, MPI_Fint *assert, MPI_Fint *win, MPI_Fint
 void pmpi_win_test_f(MPI_Fint *win, MPI_Fint *flag, MPI_Fint *ierr);
 void pmpi_win_unlock_f(MPI_Fint *rank, MPI_Fint *win, MPI_Fint *ierr);
 void pmpi_win_wait_f(MPI_Fint *win, MPI_Fint *ierr);
-double pmpi_wtick_f(MPI_Fint *ierr);
-double pmpi_wtime_f(MPI_Fint *ierr);
+double *pmpi_wtick_f(void);
+double *pmpi_wtime_f(void);
 /*This is the all lower case prototypes*/
 
 void pmpi_abort(MPI_Fint *comm, MPI_Fint *errorcode, MPI_Fint *ierr);
@@ -587,8 +587,8 @@ void pmpi_win_start(MPI_Fint *group, MPI_Fint *assert, MPI_Fint *win, MPI_Fint *
 void pmpi_win_test(MPI_Fint *win, MPI_Fint *flag, MPI_Fint *ierr);
 void pmpi_win_unlock(MPI_Fint *rank, MPI_Fint *win, MPI_Fint *ierr);
 void pmpi_win_wait(MPI_Fint *win, MPI_Fint *ierr);
-double pmpi_wtick(MPI_Fint *ierr);
-double pmpi_wtime(MPI_Fint *ierr);
+double *pmpi_wtick(void);
+double *pmpi_wtime(void);
 /*This is the single underscore prototypes*/
 
 void pmpi_abort_(MPI_Fint *comm, MPI_Fint *errorcode, MPI_Fint *ierr);
@@ -874,8 +874,8 @@ void pmpi_win_start_(MPI_Fint *group, MPI_Fint *assert, MPI_Fint *win, MPI_Fint 
 void pmpi_win_test_(MPI_Fint *win, MPI_Fint *flag, MPI_Fint *ierr);
 void pmpi_win_unlock_(MPI_Fint *rank, MPI_Fint *win, MPI_Fint *ierr);
 void pmpi_win_wait_(MPI_Fint *win, MPI_Fint *ierr);
-double pmpi_wtick_(MPI_Fint *ierr);
-double pmpi_wtime_(MPI_Fint *ierr);
+double *pmpi_wtick_(void);
+double *pmpi_wtime_(void);
 /*This is the double underscore prototypes*/
 
 void pmpi_abort__(MPI_Fint *comm, MPI_Fint *errorcode, MPI_Fint *ierr);
@@ -1161,8 +1161,8 @@ void pmpi_win_start__(MPI_Fint *group, MPI_Fint *assert, MPI_Fint *win, MPI_Fint
 void pmpi_win_test__(MPI_Fint *win, MPI_Fint *flag, MPI_Fint *ierr);
 void pmpi_win_unlock__(MPI_Fint *rank, MPI_Fint *win, MPI_Fint *ierr);
 void pmpi_win_wait__(MPI_Fint *win, MPI_Fint *ierr);
-double pmpi_wtick__(MPI_Fint *ierr);
-double pmpi_wtime__(MPI_Fint *ierr);
+double *pmpi_wtick__(void);
+double *pmpi_wtime__(void);
 /*This is the all upper case prototypes*/
 
 void PMPI_ABORT(MPI_Fint *comm, MPI_Fint *errorcode, MPI_Fint *ierr);
@@ -1448,7 +1448,7 @@ void PMPI_WIN_START(MPI_Fint *group, MPI_Fint *assert, MPI_Fint *win, MPI_Fint *
 void PMPI_WIN_TEST(MPI_Fint *win, MPI_Fint *flag, MPI_Fint *ierr);
 void PMPI_WIN_UNLOCK(MPI_Fint *rank, MPI_Fint *win, MPI_Fint *ierr);
 void PMPI_WIN_WAIT(MPI_Fint *win, MPI_Fint *ierr);
-double PMPI_WTICK(MPI_Fint *ierr);
-double PMPI_WTIME(MPI_Fint *ierr);
+double *PMPI_WTICK(void);
+double *PMPI_WTIME(void);
 #endif
 

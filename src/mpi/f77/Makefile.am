@@ -345,7 +345,9 @@ libmpi_f77_mpi_la_SOURCES = \
         win_start_f.c \
         win_test_f.c \
         win_unlock_f.c \
-        win_wait_f.c 
+        win_wait_f.c \
+        wtick_f.c \
+        wtime_f.c
 #
 EXTRA_DIST = $(libmpi_f77_mpi_la_SOURCES)
 #
