@@ -148,8 +148,8 @@ if (-f "$component_topdir/VERSION") {
 # PARAM_VAR_PREFIX: calculate
 
 $config_params{$config_param_names{PVARPREFIX}} = 
-    "MCA_" . uc($config_values{"MCA_TYPE"}) .
-    "_" . uc($config_values{"MCA_COMPONENT_NAME"});
+    "MCA_" . $config_values{"MCA_TYPE"} .
+    "_" . $config_values{"MCA_COMPONENT_NAME"};
 
 # PARAM_AM_NAME: calculate
 
@@ -331,18 +331,16 @@ sub make_template {
 
     # Transform the template
 
-    print "--> Filling in the template...\n";
-    foreach my $key (sort keys(%config_values)) {
-        $search = "@" . $key . "@";
-        $template =~ s/$search/$config_values{$key}/g;
-    }
-    foreach my $key (sort keys(%config_param_names)) {
-        next if ($key eq "PC" || $key eq "PCXX");
+    # If there's a PARAM_VERSION_FILE, then ensure that configure is
+    # set to write it out
 
-        $search = "@" . $config_param_names{$key} . "@";
-        $template =~ 
-            s/$search/$config_params{$config_param_names{$key}}/g;
+    $search = "\@WRITE_VERSION_HEADER_TEMPLATE\@";
+    if ($config_params{PARAM_VERSION_FILE} ne "") {
+        $replace = "AC_CONFIG_FILES([\@MCA_TYPE\@-\@MCA_COMPONENT_NAME\@-version.h.template])";
+    } else {
+        $replace = "";
     }
+    $template =~ s/$search/$replace/g;
 
     # If we want C or C++, substitute in the right setup macros
 
@@ -363,6 +361,24 @@ sub make_template {
     $replace = ($config_params{PARAM_WANT_COMPILE_EXTERNAL} == 1) ?
         $config_params{PARAM_CONFIG_AUX_DIR} : "../../../../config";
     $template =~ s/$search/$replace/g;
+
+    # Do all the parameters.  This is done last so that any of the
+    # above can use paramter values in their values, and expect to
+    # have their respective values substituted in (i.e., a [semi]
+    # recursive substitution).
+
+    print "--> Filling in the template...\n";
+    foreach my $key (sort keys(%config_values)) {
+        $search = "@" . $key . "@";
+        $template =~ s/$search/$config_values{$key}/g;
+    }
+    foreach my $key (sort keys(%config_param_names)) {
+        next if ($key eq "PC" || $key eq "PCXX");
+
+        $search = "@" . $config_param_names{$key} . "@";
+        $template =~ 
+            s/$search/$config_params{$config_param_names{$key}}/g;
+    }
 
     # Write it out
 
