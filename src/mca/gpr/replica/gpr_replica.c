@@ -146,6 +146,7 @@ int gpr_replica_put_nl(ompi_registry_mode_t addr_mode, char *segment,
 	    /* found existing entry - overwrite if mode set, else error */
 	    if (put_mode) {  /* overwrite enabled */
 		free(entry_ptr->object);
+		entry_ptr->object = NULL;
 		entry_ptr->object_size = size;
 		entry_ptr->object = (ompi_registry_object_t)malloc(size);
 		memcpy(entry_ptr->object, object, size);
@@ -346,6 +347,7 @@ int gpr_replica_delete_object_nl(ompi_registry_mode_t addr_mode,
 
     if (NULL != keys) {
 	free(keys);
+	keys = NULL;
     }
 
     return return_code;
@@ -748,6 +750,7 @@ ompi_list_t* gpr_replica_get_nl(ompi_registry_mode_t addr_mode,
 
     if (NULL != keys) {
 	free(keys);
+	keys = NULL;
     }
 
     if (mca_gpr_replica_debug) {

@@ -648,6 +648,7 @@ mca_gpr_notify_id_t gpr_replica_remove_trigger(ompi_registry_synchro_mode_t sync
  CLEANUP:
     if (NULL != keys) {
 	free(keys);
+	keys = NULL;
     }
 
     if (found) {
@@ -789,11 +790,14 @@ bool gpr_replica_process_triggers(char *segment,
 	}
 	for (i=0, tokptr=message->tokens; i < message->num_tokens; i++, tokptr++) {
 	    free(*tokptr);
+	    *tokptr = NULL;
 	}
-	if(NULL != message->tokens) {
+	if (NULL != message->tokens) {
 	    free(message->tokens);
+	    message->tokens = NULL;
 	}
 	free(message);
+	message = NULL;
 	if (mca_gpr_replica_debug) {
 	    ompi_output(0, "[%d,%d,%d] gpr replica-process_trig: data released", ompi_process_info.name->cellid,
 			ompi_process_info.name->jobid, ompi_process_info.name->vpid);
