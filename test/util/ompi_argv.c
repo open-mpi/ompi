@@ -19,6 +19,8 @@ static bool test5(void);
 static bool test6(void);
 static bool test7(void);
 static bool test8(void);
+static bool test9(void);
+static bool test10(void);
 
 
 int main(int argc, char* argv[])
@@ -50,6 +52,17 @@ int main(int argc, char* argv[])
   if( test8() ) test_success();
   else test_failure("test8 argv test failed");
 
+  if (test9()) {
+      test_success();
+  } else {
+      test_failure("test9 argv test failed");
+  }
+  
+  if (test10()) {
+      test_success();
+  } else {
+      test_failure("test10 argv test failed");
+  }
   
   /* All done */
   test_finalize();
@@ -92,6 +105,7 @@ static bool test1(void)
       return false;
     }
   }
+  ompi_argv_free(argv);
 
   return true;
 }
@@ -135,6 +149,11 @@ static bool test2(void)
     }
   }
 
+  ompi_argv_free(argv);
+  for (i = 0; b[i] != NULL; ++i) {
+    free(b[i]);
+  }
+
   return true;
 }
 
@@ -166,9 +185,12 @@ static bool test3(void)
   /* Do the same thing but guarantee that the copied array was from
      the heap and was freed before we call ompi_argv_free(). */
 
+  argc = 0;
+  argv = NULL;
   for (i = 0; a[i] != NULL; ++i) {
     b[i] = strdup(a[i]);
   }
+  b[i] = NULL;
   for (i = 0; b[i] != NULL; ++i) {
     if (ompi_argv_append(&argc, &argv, b[i]) != OMPI_SUCCESS) {
       return false;
@@ -323,4 +345,285 @@ static bool test8(void)
 
   ompi_argv_free(b);
   return true;
+}
+
+
+static bool test9(void)
+{
+    char **a = NULL;
+    int argc;
+
+    /* bozo cases */
+    
+    if (OMPI_SUCCESS != ompi_argv_delete(NULL, 0, 0)) {
+        return false;
+    } 
+
+    a = NULL;
+    argc = 0;
+    ompi_argv_append(&argc, &a, "foo");
+    if (OMPI_SUCCESS != ompi_argv_delete(a, 7, 1) ||
+        1 != ompi_argv_count(a)) {
+        return false;
+    } 
+    ompi_argv_free(a);
+
+    a = NULL;
+    argc = 0;
+    ompi_argv_append(&argc, &a, "foo");
+    if (OMPI_SUCCESS != ompi_argv_delete(a, 0, 0) ||
+        1 != ompi_argv_count(a)) {
+        return false;
+    }
+    ompi_argv_free(a);
+
+    /* now some real tests */
+    /* delete 1 off the top */
+
+    a = NULL;
+    argc = 0;
+    ompi_argv_append(&argc, &a, "a");
+    ompi_argv_append(&argc, &a, "b");
+    ompi_argv_append(&argc, &a, "c");
+    ompi_argv_append(&argc, &a, "d");
+    ompi_argv_append(&argc, &a, "e");
+    ompi_argv_append(&argc, &a, "f");
+    if (OMPI_SUCCESS != ompi_argv_delete(a, 0, 1) ||
+        5 != ompi_argv_count(a) ||
+        0 != strcmp(a[0], "b") ||
+        0 != strcmp(a[1], "c") ||
+        0 != strcmp(a[2], "d") ||
+        0 != strcmp(a[3], "e") ||
+        0 != strcmp(a[4], "f")) {
+        return false;
+    }
+    ompi_argv_free(a);
+
+    /* delete 2 off the top */
+
+    a = NULL;
+    argc = 0;
+    ompi_argv_append(&argc, &a, "a");
+    ompi_argv_append(&argc, &a, "b");
+    ompi_argv_append(&argc, &a, "c");
+    ompi_argv_append(&argc, &a, "d");
+    ompi_argv_append(&argc, &a, "e");
+    ompi_argv_append(&argc, &a, "f");
+    if (OMPI_SUCCESS != ompi_argv_delete(a, 0, 2) ||
+        4 != ompi_argv_count(a) ||
+        0 != strcmp(a[0], "c") ||
+        0 != strcmp(a[1], "d") ||
+        0 != strcmp(a[2], "e") ||
+        0 != strcmp(a[3], "f")) {
+        return false;
+    }
+    ompi_argv_free(a);
+
+    /* delete 1 in the middle */
+
+    a = NULL;
+    argc = 0;
+    ompi_argv_append(&argc, &a, "a");
+    ompi_argv_append(&argc, &a, "b");
+    ompi_argv_append(&argc, &a, "c");
+    ompi_argv_append(&argc, &a, "d");
+    ompi_argv_append(&argc, &a, "e");
+    ompi_argv_append(&argc, &a, "f");
+    if (OMPI_SUCCESS != ompi_argv_delete(a, 1, 1) ||
+        5 != ompi_argv_count(a) ||
+        0 != strcmp(a[0], "a") ||
+        0 != strcmp(a[1], "c") ||
+        0 != strcmp(a[2], "d") ||
+        0 != strcmp(a[3], "e") ||
+        0 != strcmp(a[4], "f")) {
+        return false;
+    }
+    ompi_argv_free(a);
+
+    /* delete 2 in the middle */
+
+    a = NULL;
+    argc = 0;
+    ompi_argv_append(&argc, &a, "a");
+    ompi_argv_append(&argc, &a, "b");
+    ompi_argv_append(&argc, &a, "c");
+    ompi_argv_append(&argc, &a, "d");
+    ompi_argv_append(&argc, &a, "e");
+    ompi_argv_append(&argc, &a, "f");
+    if (OMPI_SUCCESS != ompi_argv_delete(a, 1, 2) ||
+        4 != ompi_argv_count(a) ||
+        0 != strcmp(a[0], "a") ||
+        0 != strcmp(a[1], "d") ||
+        0 != strcmp(a[2], "e") ||
+        0 != strcmp(a[3], "f")) {
+        return false;
+    }
+    ompi_argv_free(a);
+
+    /* delete everything from the top */
+
+    a = NULL;
+    argc = 0;
+    ompi_argv_append(&argc, &a, "a");
+    ompi_argv_append(&argc, &a, "b");
+    if (OMPI_SUCCESS != ompi_argv_delete(a, 0, 99) ||
+        0 != ompi_argv_count(a)) {
+        return false;
+    }
+    ompi_argv_free(a);
+
+    /* delete everything from the middle */
+
+    a = NULL;
+    argc = 0;
+    ompi_argv_append(&argc, &a, "a");
+    ompi_argv_append(&argc, &a, "b");
+    if (OMPI_SUCCESS != ompi_argv_delete(a, 1, 99) ||
+        1 != ompi_argv_count(a) ||
+        0 != strcmp(a[0], "a")) {
+        return false;
+    }
+    ompi_argv_free(a);
+
+    /* All done */
+
+    return true;
+}
+
+
+static bool test10(void)
+{
+    char **orig;
+    char **insert;
+    int o, i;
+
+    /* bozo cases */
+    
+    orig = NULL;
+    o = 0;
+    insert = NULL;
+    i = 0;
+    ompi_argv_append(&i, &insert, "insert a");
+    if (OMPI_SUCCESS == ompi_argv_insert(NULL, 0, insert)) {
+        return false;
+    } 
+    ompi_argv_append(&o, &orig, "orig a");
+    if (OMPI_SUCCESS != ompi_argv_insert(&orig, 0, NULL)) {
+        return false;
+    } 
+    if (OMPI_SUCCESS == ompi_argv_insert(&orig, -1, insert)) {
+        return false;
+    } 
+    ompi_argv_free(orig);
+    ompi_argv_free(insert);
+
+    /* append to the end */
+
+    orig = NULL;
+    o = 0;
+    insert = NULL;
+    i = 0;
+    ompi_argv_append(&i, &insert, "insert a");
+    ompi_argv_append(&i, &insert, "insert b");
+    ompi_argv_append(&i, &insert, "insert c");
+    ompi_argv_append(&o, &orig, "orig a");
+    ompi_argv_append(&o, &orig, "orig b");
+    ompi_argv_append(&o, &orig, "orig c");
+    if (OMPI_SUCCESS != ompi_argv_insert(&orig, 99, insert) ||
+        6 != ompi_argv_count(orig) ||
+        0 != strcmp(orig[0], "orig a") ||
+        0 != strcmp(orig[1], "orig b") ||
+        0 != strcmp(orig[2], "orig c") ||
+        0 != strcmp(orig[3], "insert a") ||
+        0 != strcmp(orig[4], "insert b") ||
+        0 != strcmp(orig[5], "insert c")) {
+        return false;
+    }
+    ompi_argv_free(orig);
+    ompi_argv_free(insert);
+
+    /* insert at the beginning */
+
+    orig = NULL;
+    o = 0;
+    insert = NULL;
+    i = 0;
+    ompi_argv_append(&i, &insert, "insert a");
+    ompi_argv_append(&i, &insert, "insert b");
+    ompi_argv_append(&i, &insert, "insert c");
+    ompi_argv_append(&o, &orig, "orig a");
+    ompi_argv_append(&o, &orig, "orig b");
+    ompi_argv_append(&o, &orig, "orig c");
+    if (OMPI_SUCCESS != ompi_argv_insert(&orig, 0, insert) ||
+        6 != ompi_argv_count(orig) ||
+        0 != strcmp(orig[3], "orig a") ||
+        0 != strcmp(orig[4], "orig b") ||
+        0 != strcmp(orig[5], "orig c") ||
+        0 != strcmp(orig[0], "insert a") ||
+        0 != strcmp(orig[1], "insert b") ||
+        0 != strcmp(orig[2], "insert c")) {
+        return false;
+    }
+    ompi_argv_free(orig);
+    ompi_argv_free(insert);
+
+    /* insert in the middle */
+
+    orig = NULL;
+    o = 0;
+    insert = NULL;
+    i = 0;
+    ompi_argv_append(&i, &insert, "insert a");
+    ompi_argv_append(&i, &insert, "insert b");
+    ompi_argv_append(&i, &insert, "insert c");
+    ompi_argv_append(&o, &orig, "orig a");
+    ompi_argv_append(&o, &orig, "orig b");
+    ompi_argv_append(&o, &orig, "orig c");
+    if (OMPI_SUCCESS != ompi_argv_insert(&orig, 1, insert) ||
+        6 != ompi_argv_count(orig) ||
+        0 != strcmp(orig[0], "orig a") ||
+        0 != strcmp(orig[4], "orig b") ||
+        0 != strcmp(orig[5], "orig c") ||
+        0 != strcmp(orig[1], "insert a") ||
+        0 != strcmp(orig[2], "insert b") ||
+        0 != strcmp(orig[3], "insert c")) {
+        return false;
+    }
+    ompi_argv_free(orig);
+    ompi_argv_free(insert);
+
+    /* insert in the middle */
+
+    orig = NULL;
+    o = 0;
+    insert = NULL;
+    i = 0;
+    ompi_argv_append(&i, &insert, "insert a");
+    ompi_argv_append(&i, &insert, "insert b");
+    ompi_argv_append(&i, &insert, "insert c");
+    ompi_argv_append(&o, &orig, "orig a");
+    ompi_argv_append(&o, &orig, "orig b");
+    ompi_argv_append(&o, &orig, "orig c");
+    ompi_argv_append(&o, &orig, "orig d");
+    ompi_argv_append(&o, &orig, "orig e");
+    ompi_argv_append(&o, &orig, "orig f");
+    if (OMPI_SUCCESS != ompi_argv_insert(&orig, 1, insert) ||
+        9 != ompi_argv_count(orig) ||
+        0 != strcmp(orig[0], "orig a") ||
+        0 != strcmp(orig[4], "orig b") ||
+        0 != strcmp(orig[5], "orig c") ||
+        0 != strcmp(orig[6], "orig d") ||
+        0 != strcmp(orig[7], "orig e") ||
+        0 != strcmp(orig[8], "orig f") ||
+        0 != strcmp(orig[1], "insert a") ||
+        0 != strcmp(orig[2], "insert b") ||
+        0 != strcmp(orig[3], "insert c")) {
+        return false;
+    }
+    ompi_argv_free(orig);
+    ompi_argv_free(insert);
+
+    /* All done */
+
+    return true;
 }

@@ -252,3 +252,100 @@ char **ompi_argv_copy(char **argv)
 
   return dupv;
 }
+
+
+int ompi_argv_delete(char **argv, int start, int num_to_delete)
+{
+    int i;
+    int count;
+    int suffix_count;
+
+    /* Check for the bozo cases */
+
+    count = ompi_argv_count(argv);
+    if (NULL == argv || start > count || 0 == num_to_delete) {
+        return OMPI_SUCCESS;
+    } else if (start < 0 || num_to_delete < 0) {
+        return OMPI_ERR_BAD_PARAM;
+    }
+
+    /* Ok, we have some tokens to delete.  Calculate the new length of
+       the argv array. */
+
+    suffix_count = count - (start + num_to_delete);
+    if (suffix_count < 0) {
+        suffix_count = 0;
+    }
+
+    /* Free all items that are being deleted */
+
+    for (i = start; i < count && i < start + num_to_delete; ++i) {
+        free(argv[i]);
+    }
+
+    /* Copy the suffix over the deleted items */
+
+    for (i = start; i < start + suffix_count; ++i) {
+        argv[i] = argv[i + num_to_delete];
+    }
+
+    /* Add the trailing NULL */
+
+    argv[i] = NULL;
+
+    return OMPI_SUCCESS;
+}
+
+
+int ompi_argv_insert(char ***target, int start, char **source)
+{
+    int i, source_count, target_count;
+    int suffix_count;
+
+    /* Check for the bozo cases */
+    
+    if (NULL == target || NULL == *target || start < 0) {
+        return OMPI_ERR_BAD_PARAM;
+    } else if (NULL == source) {
+        return OMPI_SUCCESS;
+    }
+
+    /* Easy case: appending to the end */
+
+    target_count = ompi_argv_count(*target);
+    source_count = ompi_argv_count(source);
+    if (start > target_count) {
+        for (i = 0; i < source_count; ++i) {
+            ompi_argv_append(&target_count, target, source[i]);
+        }
+    }
+
+    /* Harder: insertting into the middle */
+
+    else {
+
+        /* Alloc out new space */
+
+        *target = realloc(*target, 
+                          sizeof(char *) * (target_count + source_count + 1));
+
+        /* Move suffix items down to the end */
+
+        suffix_count = target_count - start;
+        for (i = suffix_count - 1; i >= 0; --i) {
+            (*target)[start + source_count + i] =
+                (*target)[start + i];
+        }
+        (*target)[start + suffix_count + source_count] = NULL;
+
+        /* Strdup in the source argv */
+
+        for (i = start; i < start + source_count; ++i) {
+            (*target)[i] = strdup(source[i - start]);
+        }
+    }
+
+    /* All done */
+
+    return OMPI_SUCCESS;
+}

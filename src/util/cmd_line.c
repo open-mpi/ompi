@@ -88,12 +88,12 @@ static char special_empty_token[] = {
  * Private functions
  */
 static void free_parse_results(ompi_cmd_line_t *cmd);
-static int split_shorts(ompi_cmd_line_t *cmd, bool ignore_unknown);
+static int split_shorts(ompi_cmd_line_t *cmd,
+                        char *token, char **args, 
+                        int *output_argc, char ***output_argv, 
+                        int *num_args_used, bool ignore_unknown);
 static cmd_line_option_t *find_option(ompi_cmd_line_t *cmd, 
                                       const char *option_name);
-static void suck_params(ompi_cmd_line_t *cmd, cmd_line_option_t *option,
-                        int *argc, char ***argv,
-                        char *token, int *i);
 
 
 /*
@@ -170,6 +170,9 @@ int ompi_cmd_line_parse(ompi_cmd_line_t *cmd, bool ignore_unknown,
     cmd_line_param_t *param;
     bool is_unknown;
     bool is_option;
+    char **shortsv;
+    int shortsc;
+    int num_args_used;
 
     /* Bozo check */
 
@@ -189,13 +192,6 @@ int ompi_cmd_line_parse(ompi_cmd_line_t *cmd, bool ignore_unknown,
 
     cmd->lcl_argc = argc;
     cmd->lcl_argv = ompi_argv_copy(argv);
-
-    /* Split groups of multiple short names into individual tokens */
-
-    if (OMPI_SUCCESS != (ret = split_shorts(cmd, ignore_unknown))) {
-        ompi_mutex_unlock(&cmd->lcl_mutex);
-        return ret;
-    }
 
     /* Now traverse the easy-to-parse sequence of tokens.  Note that
        incrementing i must happen elsehwere; it can't be the third
@@ -236,13 +232,45 @@ int ompi_cmd_line_parse(ompi_cmd_line_t *cmd, bool ignore_unknown,
             option = find_option(cmd, cmd->lcl_argv[i] + 2);
         }
 
-        /* Nope, this must be a short name (and, as a result of
-           split_shorts(), above, we know that there's only one short
-           name in this token) */
+        /* It could be a short name.  Is it? */
 
         else {
-            is_option = true;
             option = find_option(cmd, cmd->lcl_argv[i] + 1);
+
+            /* If we didn't find it, try to split it into shorts.  If
+               we find the short option, replace lcl_argv[i] and
+               insert the rest into lcl_argv starting after position
+               i.  If we don't find the short option, don't do
+               anything to lcl_argv so that it can fall through to the
+               error condition, below. */
+
+            if (NULL == option) {
+                shortsv = NULL;
+                shortsc = 0;
+                ret = split_shorts(cmd, cmd->lcl_argv[i] + 1, 
+                                   &(cmd->lcl_argv[i + 1]),
+                                   &shortsc, &shortsv, 
+                                   &num_args_used, ignore_unknown);
+                if (OMPI_SUCCESS == ret) {
+                    option = find_option(cmd, shortsv[0] + 1);
+
+                    if (NULL != option) {
+                        ompi_argv_delete(cmd->lcl_argv, i,
+                                         1 + num_args_used);
+                        ompi_argv_insert(&cmd->lcl_argv, i, shortsv);
+                        cmd->lcl_argc = ompi_argv_count(cmd->lcl_argv);
+                    } else {
+                        is_unknown = true;
+                    }
+                    ompi_argv_free(shortsv);
+                } else {
+                    is_unknown = true;
+                }
+            }
+
+            if (NULL != option) {
+                is_option = true;
+            }
         }
 
         /* If we figured out above that this is an option, handle it */
@@ -716,160 +744,62 @@ static void free_parse_results(ompi_cmd_line_t *cmd)
 
 
 /*
- * Look for collections of short names and split them into individual
- * short options.  Ensure to differentiate them from "single dash"
- * names.
+ * Traverse a token and split it into individual letter options (the
+ * token has already been certified to not be a long name and not be a
+ * short name).  Ensure to differentiate the resulting options from
+ * "single dash" names.
  */
-static int split_shorts(ompi_cmd_line_t *cmd, bool ignore_unknown)
+static int split_shorts(ompi_cmd_line_t *cmd, char *token, char **args, 
+                        int *output_argc, char ***output_argv, 
+                        int *num_args_used, bool ignore_unknown)
 {
-    int i, j, k, len;
-    int argc;
-    char **argv;
-    char *token;
-    bool changed;
-    char new_token[3];
+    int i, j, len;
     cmd_line_option_t *option;
+    char fake_token[3];
+    int num_args;
 
-    /* Traverse all the tokens looking for "-multiple_letters".  Note
-       that incrementing i must happen elsehwere; it can't be the
-       third clause in the "if" statement. */
+    /* Setup that we didn't use any of the args */
 
-    argc = 0;
-    argv = NULL;
-    changed = false;
-    if (cmd->lcl_argc > 0) {
-        ompi_argv_append(&argc, &argv, cmd->lcl_argv[0]);
-    }
-    for (i = 1; i < cmd->lcl_argc; ) {
-        token = cmd->lcl_argv[i];
-        len = strlen(token);
+    num_args = ompi_argv_count(args);
+    *num_args_used = 0;
 
-        /* If we hit the special "--" token, copy the rest into the
-           new argv */
+    /* Traverse the token */
 
-        if (0 == strcmp(token, "--")) {
-            while (i < cmd->lcl_argc) {
-                ompi_argv_append(&argc, &argv, cmd->lcl_argv[i]);
-                ++i;
-            }
-        }
+    len = strlen(token);
+    fake_token[0] = '-';
+    fake_token[2] = '\0';
+    for (i = 0; i < len; ++i) {
+        fake_token[1] = token[i];
+        option = find_option(cmd, fake_token + 1);
 
-        /* If it's a long name, find its option and copy that many
-           parmeters into the new argv */
+        /* If we don't find the option, either return an error or pass
+           it through unmodified to the new argv */
 
-        else if (0 == strncmp(token, "--", 2)) {
-            option = find_option(cmd, token + 2);
-
-            /* If we don't find the option, either return an error or
-               pass it through unmodified to the new argv */
-
-            if (NULL == option) {
-                ++i;
-                if (!ignore_unknown) {
-                    ompi_output(0, "Unrecognized option: '%s'", token);
-                    return OMPI_ERR_BAD_PARAM;
-                } else {
-                    ompi_argv_append(&argc, &argv, new_token);
-                }
-            } 
-
-            /* If we do find the option, copy it and all of its
-               parameters to the output args.  If we run out of
-               paramters (i.e., no more tokens in the original argv),
-               that error will be handled at a higher level) */
-
-            else {
-                suck_params(cmd, option, &argc, &argv, token, &i);
-            }
-        }
-
-        /* If it's a bunch of short names, handle them */
-
-        else if ('-' == token[0] && len >= 2 && '-' != token[1]) {
-            changed = true;
-
-            /* See if this is a "single-dash" name.  If we find it,
-               treat it just like finding a --long name above: copy it
-               and all of its parameters to the output args.  If we
-               run out of paramters (i.e., no more tokens in the
-               original argv), that error will be handled at a higher
-               level) */
-
-            option = find_option(cmd, token + 1);
-            if (NULL != option) {
-                suck_params(cmd, option, &argc, &argv, token, &i);
-            }
-
-            /* Nope, it must be one or more short names */
-
-            else {
-                ++i;
-                for (j = 1; j < len; ++j) {
-                    new_token[0] = '-';
-                    new_token[1] = token[j];
-                    new_token[2] = '\0';
-
-                    option = find_option(cmd, new_token + 1);
-
-                    /* If we don't find the option, either return an
-                       error or pass it through unmodified to the new
-                       argv */
-
-                    if (NULL == option) {
-                        if (!ignore_unknown) {
-                            ompi_output(0, "Unrecognized option: '-%c'",
-                                        token[j]);
-                            return OMPI_ERR_BAD_PARAM;
-                        } else {
-                            ompi_argv_append(&argc, &argv, new_token);
-                        }
-                    } 
-
-                    /* If we do find the option, copy it and all of
-                       its parameters to the output args.  If we run
-                       out of paramters (i.e., no more tokens in the
-                       original argv), that error will be handled at a
-                       higher level) */
-
-                    else {
-                        ompi_argv_append(&argc, &argv, new_token);
-                        for (k = 0; k < option->clo_num_params; ++k) {
-                            if (i < cmd->lcl_argc) {
-                                ompi_argv_append(&argc, &argv,
-                                                 cmd->lcl_argv[i]);
-                                ++i;
-                            } else {
-                                ompi_argv_append(&argc, &argv, 
-                                                 special_empty_token);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        /* It's unrecognized */
-
-        else {
+        if (NULL == option) {
             if (!ignore_unknown) {
-                ompi_output(0, "Unrecognized option: '%s'", token);
                 return OMPI_ERR_BAD_PARAM;
             } else {
-                ompi_argv_append(&argc, &argv, token);
-                ++i;
+                ompi_argv_append(output_argc, output_argv, fake_token);
             }
-        }
-    }
+        } 
 
-    /* If we changed anything, then replace the argc/argv on cmd */
+        /* If we do find the option, copy it and all of its parameters
+           to the output args.  If we run out of paramters (i.e., no
+           more tokens in the original argv), that error will be
+           handled at a higher level) */
 
-    if (changed) {
-        ompi_argv_free(cmd->lcl_argv);
-        cmd->lcl_argc = argc;
-        cmd->lcl_argv = argv;
-    } else {
-        if (NULL != argv) {
-            ompi_argv_free(argv);
+        else {
+            ompi_argv_append(output_argc, output_argv, fake_token);
+            for (j = 0; j < option->clo_num_params; ++j) {
+                if (*num_args_used < num_args) {
+                    ompi_argv_append(output_argc, output_argv,
+                                     args[*num_args_used]);
+                    ++(*num_args_used);
+                } else {
+                    ompi_argv_append(output_argc, output_argv, 
+                                     special_empty_token);
+                }
+            }
         }
     }
 
@@ -906,23 +836,4 @@ static cmd_line_option_t *find_option(ompi_cmd_line_t *cmd,
     /* Not found */
     
     return NULL;
-}
-
-
-static void suck_params(ompi_cmd_line_t *cmd, cmd_line_option_t *option,
-                        int *argc, char ***argv,
-                        char *token, int *i)
-{
-    int k;
-
-    ompi_argv_append(argc, argv, token);
-    ++(*i);
-
-    for (k = 0; k < option->clo_num_params; ++k, ++(*i)) {
-        if ((*i) < cmd->lcl_argc) {
-            ompi_argv_append(argc, argv, cmd->lcl_argv[*i]);
-        } else {
-            ompi_argv_append(argc, argv, special_empty_token);
-        }
-    }
 }
