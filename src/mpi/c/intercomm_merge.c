@@ -31,9 +31,7 @@ int MPI_Intercomm_merge(MPI_Comm intercomm, int high,
     int rc=MPI_SUCCESS;
 
     if ( MPI_PARAM_CHECK ) {
-        if ( ompi_mpi_finalized ) 
-            return OMPI_ERRHANDLER_INVOKE ( MPI_COMM_WORLD, MPI_ERR_INTERN,
-                                           "MPI_Intercomm_merge");
+        OMPI_ERR_INIT_FINALIZE; 
 
         if ( MPI_COMM_NULL == intercomm || ompi_comm_invalid ( intercomm ) ||
              !( intercomm->c_flags & OMPI_COMM_INTER ) ) 

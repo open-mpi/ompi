@@ -29,6 +29,8 @@ int MPI_Group_difference(MPI_Group group1, MPI_Group group2,
 
     /* error checking */
     if( MPI_PARAM_CHECK ) {
+        OMPI_ERR_INIT_FINALIZE; 
+
         if( (MPI_GROUP_NULL == group1) || (MPI_GROUP_NULL == group2) ||
                 (NULL == group1) || (NULL == group2) ) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_GROUP,

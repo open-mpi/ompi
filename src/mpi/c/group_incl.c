@@ -28,6 +28,7 @@ int MPI_Group_incl(MPI_Group group, int n, int *ranks, MPI_Group *new_group)
     group_pointer = (ompi_group_t *)group;
 
     if( MPI_PARAM_CHECK ) {
+        OMPI_ERR_INIT_FINALIZE; 
 
         /* verify that group is valid group */
         if ( (MPI_GROUP_NULL == group) || ( NULL == group) 

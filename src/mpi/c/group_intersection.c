@@ -27,11 +27,15 @@ int MPI_Group_intersection(MPI_Group group1, MPI_Group group2,
     ompi_group_t *group1_pointer, *group2_pointer, *new_group_pointer;
     ompi_proc_t *proc1_pointer, *proc2_pointer, *my_proc_pointer;
 
-    /* verify that groups are valid */
-    if ( (MPI_GROUP_NULL == group1) || (MPI_GROUP_NULL == group2) ||
-            ( NULL == group1) || (NULL == group2) ) {
+    if ( MPI_PARAM_CHECK ) {
+        OMPI_ERR_INIT_FINALIZE; 
+
+        /* verify that groups are valid */
+        if ( (MPI_GROUP_NULL == group1) || (MPI_GROUP_NULL == group2) ||
+             ( NULL == group1) || (NULL == group2) ) {
         return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_GROUP,
-                        "MPI_Group_intersection");
+                                      "MPI_Group_intersection");
+        }
     }
 
     group1_pointer=(ompi_group_t *)group1;

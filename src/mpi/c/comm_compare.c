@@ -30,9 +30,7 @@ int MPI_Comm_compare(MPI_Comm comm1, MPI_Comm comm2, int *result) {
     int found = 0;
     
     if ( MPI_PARAM_CHECK ) {
-        if ( ompi_mpi_finalized )
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INTERN, 
-                                         "MPI_Comm_compare");
+        OMPI_ERR_INIT_FINALIZE; 
 
         if ( MPI_COMM_NULL == comm1 || MPI_COMM_NULL == comm2 || 
              ompi_comm_invalid ( comm1 ) || ompi_comm_invalid (comm2) )

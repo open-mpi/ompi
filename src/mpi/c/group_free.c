@@ -24,6 +24,8 @@ int MPI_Group_free(MPI_Group *group)
 
     /* check to make sure we don't free GROUP_EMPTY or GROUP_NULL */
     if (MPI_PARAM_CHECK) {
+        OMPI_ERR_INIT_FINALIZE; 
+
         if ((MPI_GROUP_NULL == *group) || (MPI_GROUP_EMPTY == *group) ||
                 (NULL == *group) ) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_GROUP,

@@ -21,9 +21,8 @@
 int MPI_Open_port(MPI_Info info, char *port_name) 
 {
     if ( MPI_PARAM_CHECK ) {
-        if ( ompi_mpi_finalized )
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INTERN, 
-                                          "MPI_Open_port");
+        OMPI_ERR_INIT_FINALIZE; 
+
         if ( NULL == port_name )
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, 
                                           "MPI_Open_port");

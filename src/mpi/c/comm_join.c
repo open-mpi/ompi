@@ -27,9 +27,8 @@ int MPI_Comm_join(int fd, MPI_Comm *intercomm)
     comp = (ompi_communicator_t *)MPI_COMM_SELF;
 
     if ( MPI_PARAM_CHECK ) {
-        if ( ompi_mpi_finalized )
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INTERN, 
-                                          "MPI_Comm_join");
+        OMPI_ERR_INIT_FINALIZE; 
+
         if ( NULL == intercomm ) 
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, 
                                           "MPI_Comm_join");  
