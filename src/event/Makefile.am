@@ -37,6 +37,16 @@ noinst_LTLIBRARIES = libevent.la
 objects = $(OMPI_LIBEVENT_SOURCES:.c=.lo)
 
 # OMPI: Changed to libevent_la_*
-libevent_la_SOURCES = event.c event.h
+headers = event.h
+
+libevent_la_SOURCES = event.c $(headers)
 libevent_la_LIBADD = $(objects)
 libevent_la_DEPENDENCIES = $(objects)
+
+
+if WANT_INSTALL_HEADERS
+ompidir = $(includedir)/openmpi/event
+ompi_HEADERS = $(headers)
+else
+ompidir = $(includedir)
+endif
