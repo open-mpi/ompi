@@ -27,14 +27,9 @@ int mca_topo_unity_graph_map (MPI_Comm comm,
                               int *edges,
                               int *newrank)
 {
-    int errcode;
     int myrank;
 
     myrank = ompi_comm_rank(comm);
-    if (OMPI_SUCCESS != errcode) {
-        return OMPI_ERROR;
-    }
-
     *newrank = 
         ((0 > myrank) || (myrank >= nnodes)) ? MPI_UNDEFINED : myrank;
     
