@@ -49,7 +49,6 @@ static int init_query_1_0_0(const mca_base_component_t *ls,
 int mca_io_base_find_available(bool *allow_multi_user_threads,
                                bool *have_hidden_threads)
 {
-    bool found = false;
     mca_base_component_priority_list_item_t *entry;
     ompi_list_item_t *p;
     const mca_base_component_t *component;
@@ -62,8 +61,7 @@ int mca_io_base_find_available(bool *allow_multi_user_threads,
     /* The list of components that we should check has already been
        established in mca_io_base_open. */
   
-    for (found = false, 
-             p = ompi_list_remove_first(&mca_io_base_components_opened);
+    for (p = ompi_list_remove_first(&mca_io_base_components_opened);
          p != NULL;
          p = ompi_list_remove_first(&mca_io_base_components_opened)) {
         component = ((mca_base_component_list_item_t *) p)->cli_component;
@@ -85,10 +83,6 @@ int mca_io_base_find_available(bool *allow_multi_user_threads,
       
             ompi_list_append(&mca_io_base_components_available, 
                              (ompi_list_item_t *) entry);
-
-            /* We found something :-) */
-
-            found = true;
         } else {
       
             /* If the component doesn't want to run, then close it.
