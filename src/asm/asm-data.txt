@@ -24,4 +24,5 @@ AMD64	.text-.globl-:--.L-@-1-0-1-0	amd64-linux
 IA32	.text-.globl-:--.L-@-1-0-1-0	ia32-linux
 POWERPC32	.text-.globl-:-_-L--0-1-1-0	powerpc32-osx
 POWERPC32	.text-.globl-:-_-L--0-1-1-1	powerpc32-64-osx
+POWERPC32	.text-.globl-:--.L-@-1-1-0-0	powerpc32-linux
 POWERPC64	.text-.globl-:-_-L--0-1-1-1	powerpc64-osx
