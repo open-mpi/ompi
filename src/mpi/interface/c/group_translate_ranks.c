@@ -27,7 +27,11 @@ int MPI_Group_translate_ranks(MPI_Group group1, int n_ranks, int *ranks1,
         if( (MPI_GROUP_NULL == group1) || (MPI_GROUP_NULL == group2 ) ) {
             return MPI_ERR_GROUP;
         }
-        if( n_ranks > group1_pointer->grp_proc_count ){
+        if( (n_ranks > group1_pointer->grp_proc_count) ||
+                ( 0 >= n_ranks ) ){
+            return MPI_ERR_GROUP;
+        }
+        if( (NULL == ranks1) || (NULL == ranks2 ) ) {
             return MPI_ERR_GROUP;
         }
     }

@@ -15,21 +15,17 @@
 int MPI_Group_incl(MPI_Group group, int n, int *ranks, MPI_Group *new_group) 
 {
     /* local variables */
-    int return_value,proc;
+    int return_value,proc,my_group_rank;
     lam_group_t *group_pointer, *new_group_pointer;
+    lam_proc_t *my_proc_pointer;
 
     return_value = MPI_SUCCESS;
     group_pointer = (lam_group_t *)group;
 
     if( MPI_PARAM_CHECK ) {
-        /* including anything of the empty group is still the empty group */
-        if ((group == MPI_GROUP_EMPTY) || (n == 0)) {
-            *new_group = MPI_GROUP_EMPTY;
-            return return_value;
-        }
 
         /* verify that group is valid group */
-        if ( NULL == group || NULL == ranks ) {
+        if ( MPI_GROUP_NULL == group || NULL == ranks ) {
             return MPI_ERR_GROUP;
         }
 
@@ -59,17 +55,13 @@ int MPI_Group_incl(MPI_Group group, int n, int *ranks, MPI_Group *new_group)
 
     }                           /* end proc loop */
 
+    /* increment proc reference counters */
+    lam_group_increment_proc_count(new_group_pointer);
+
     /* find my rank */
-    new_group_pointer->grp_my_rank = MPI_PROC_NULL;
-    if( MPI_PROC_NULL != group_pointer->grp_my_rank) {
-        for ( proc=0 ; proc < n ; proc++ ){
-            if( new_group_pointer->grp_proc_pointers[proc] == 
-                    group_pointer->grp_proc_pointers
-                    [group_pointer->grp_my_rank]){
-                new_group_pointer->grp_my_rank = proc;
-            }
-        }
-    }
+    my_group_rank=group_pointer->grp_my_rank;
+    my_proc_pointer=group_pointer->grp_proc_pointers[my_group_rank];
+    lam_set_group_rank(new_group_pointer,my_proc_pointer);
 
     *new_group = (MPI_Group)new_group_pointer;
 

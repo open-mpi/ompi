@@ -21,22 +21,17 @@ int MPI_Group_difference(MPI_Group group1, MPI_Group group2,
     lam_group_t *group1_pointer, *group2_pointer, *new_group_pointer;
     lam_proc_t *proc1_pointer, *proc2_pointer, *my_proc_pointer;
 
+    /* error checking */
+    if( MPI_PARAM_CHECK ) {
+        if( (MPI_GROUP_NULL == group1) || (MPI_GROUP_NULL == group1) ) {
+            return MPI_ERR_GROUP;
+        }
+    }
+
+
     return_value=MPI_SUCCESS;
     group1_pointer=(lam_group_t *)group1;
     group2_pointer=(lam_group_t *)group2;
-
-    /* the difference of an empty group and anything is an empty group */
-    if (MPI_GROUP_EMPTY == group1 ) {
-        *new_group = MPI_GROUP_EMPTY;
-        return MPI_SUCCESS;
-    }
-
-    /* the difference of a group with the empty group is the group itself */
-    if (MPI_GROUP_EMPTY == group2 ) {
-        *new_group=group1;
-        OBJ_RETAIN(group1_pointer);
-        return MPI_SUCCESS;
-    }
 
     /*
      * form union
@@ -61,11 +56,6 @@ int MPI_Group_difference(MPI_Group group1, MPI_Group group2,
             continue;
         new_group_size++;
     }  /* end proc loop */
-
-    if (new_group_size == 0) {
-        *new_group = MPI_GROUP_EMPTY;
-        return MPI_SUCCESS;
-    }
 
     /* allocate a new lam_group_t structure */
     new_group_pointer=group_allocate(new_group_size);
@@ -95,6 +85,9 @@ int MPI_Group_difference(MPI_Group group1, MPI_Group group2,
 
         cnt++;
     }  /* end proc loop */
+
+    /* increment proc reference counters */
+    lam_group_increment_proc_count(new_group_pointer);
 
     /* find my rank */
     my_group_rank=group1_pointer->grp_my_rank;
