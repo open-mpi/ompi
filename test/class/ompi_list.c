@@ -40,7 +40,11 @@ int main(int argc, char **argv)
 
     /* check set_size/get_size */
     tmp_list_size=4;
+    /*
+     *** there is no ompi_list_set_size ***
     ompi_list_set_size(&list,tmp_list_size);
+    */
+    /*
     list_size=ompi_list_get_size(&list);
     if( list_size == tmp_list_size ) {
         test_success();
@@ -48,7 +52,8 @@ int main(int argc, char **argv)
         test_failure(" ompi_list_set_size/ompi_list_get_size");
     }
     ompi_list_set_size(&list,0);
-    
+    */
+
     /* create test elements */
     size_elements=4;
     elements=(test_data_t *)malloc(sizeof(test_data_t)*size_elements);
