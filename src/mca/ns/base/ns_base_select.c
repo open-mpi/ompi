@@ -17,9 +17,8 @@
  * Function for selecting one module from all those that are
  * available.
  *
- * Call the init function on all available modules and get their
- * priorities.  Select the module with the highest priority.  All
- * other modules will be closed and unloaded.
+ * Decide whether or not to be a replica, then call appropriate
+ * component to init module.
  */
 int mca_ns_base_select(bool *allow_multi_user_threads, 
                         bool *have_hidden_threads)
