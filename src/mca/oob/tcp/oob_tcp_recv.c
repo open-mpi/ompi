@@ -152,13 +152,16 @@ int mca_oob_tcp_recv_nb(
     msg = mca_oob_tcp_msg_match_recv(peer, tag);
     if(NULL != msg) {
 
-        if(msg->msg_rc < 0) 
-            return msg->msg_rc;
+        if(msg->msg_rc < 0)  {
+            OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_match_lock);
+            return msg->msg_rc; 
+        }
 
         /* if we are returning an allocated buffer - just take it from the message */
         if(flags & MCA_OOB_ALLOC) {
 
             if(NULL == iov || 0 == count) {
+                OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_match_lock);
                 return OMPI_ERR_BAD_PARAM;
             }
             iov[0].iov_base = msg->msg_rwbuf;
