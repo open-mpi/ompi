@@ -7,6 +7,7 @@
 #include <stdio.h>
 
 #include "mpi.h"
+#include "errhandler/errhandler.h"
 #include "mpi/f77/bindings.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
@@ -55,4 +56,7 @@ void mpi_errhandler_set_f(MPI_Fint *comm, MPI_Fint *errhandler, MPI_Fint *ierr)
     c_errhandler = MPI_Errhandler_f2c(*errhandler);
 
     *ierr = OMPI_INT_2_FINT(MPI_Errhandler_set(c_comm, c_errhandler));
+    if (MPI_SUCCESS == *ierr) {
+        c_errhandler->eh_fortran_function = true;
+    }
 }
