@@ -20,8 +20,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_INIT_THREAD,
                            pmpi_init_thread_,
                            pmpi_init_thread__,
                            pmpi_init_thread_f,
-                           (MPI_Fint *argc, char *argv, MPI_Fint *required, MPI_Fint *provided, MPI_Fint *ierr),
-                           (argc, argv, required, provided, ierr) )
+                           (MPI_Fint *required, MPI_Fint *provided, MPI_Fint *ierr),
+                           (required, provided, ierr) )
 #endif
 
 #if OMPI_HAVE_WEAK_SYMBOLS
@@ -37,8 +37,8 @@ OMPI_GENERATE_F77_BINDINGS (MPI_INIT_THREAD,
                            mpi_init_thread_,
                            mpi_init_thread__,
                            mpi_init_thread_f,
-                           (MPI_Fint *argc, char *argv, MPI_Fint *required, MPI_Fint *provided, MPI_Fint *ierr),
-                           (argc, argv, required, provided, ierr) )
+                           (MPI_Fint *required, MPI_Fint *provided, MPI_Fint *ierr),
+                           (required, provided, ierr) )
 #endif
 
 
@@ -46,7 +46,10 @@ OMPI_GENERATE_F77_BINDINGS (MPI_INIT_THREAD,
 #include "mpi/c/profile/defines.h"
 #endif
 
-void mpi_init_thread_f(MPI_Fint *argc, char *argv, MPI_Fint *required, MPI_Fint *provided, MPI_Fint *ierr)
+void mpi_init_thread_f( MPI_Fint *required, MPI_Fint *provided, MPI_Fint *ierr )
 {
+    int argc = 0;
+    char** argv = NULL;
 
+    *ierr = MPI_Init_thread( &argc, &argv, *required, provided );
 }

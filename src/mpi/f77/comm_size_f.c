@@ -48,5 +48,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_SIZE,
 
 void mpi_comm_size_f(MPI_Fint *comm, MPI_Fint *size, MPI_Fint *ierr)
 {
+    MPI_Comm c_comm = MPI_Comm_f2c( *comm );
 
+    *ierr = MPI_Comm_size( c_comm, size );
 }

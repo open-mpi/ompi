@@ -20,8 +20,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_INIT,
                            pmpi_init_,
                            pmpi_init__,
                            pmpi_init_f,
-                           (MPI_Fint *argc, char *argv, MPI_Fint *ierr),
-                           (argc, argv, ierr) )
+                           (MPI_Fint *ierr),
+                           (ierr) )
 #endif
 
 #if OMPI_HAVE_WEAK_SYMBOLS
@@ -37,8 +37,8 @@ OMPI_GENERATE_F77_BINDINGS (MPI_INIT,
                            mpi_init_,
                            mpi_init__,
                            mpi_init_f,
-                           (MPI_Fint *argc, char *argv, MPI_Fint *ierr),
-                           (argc, argv, ierr) )
+                           (MPI_Fint *ierr),
+                           (ierr) )
 #endif
 
 
@@ -46,7 +46,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_INIT,
 #include "mpi/c/profile/defines.h"
 #endif
 
-void mpi_init_f(MPI_Fint *argc, char *argv, MPI_Fint *ierr)
+void mpi_init_f( MPI_Fint *ierr )
 {
-
+    int argc = 0;
+	char **argv = NULL;
+    *ierr = MPI_Init( &argc, &argv );
 }
