@@ -21,6 +21,7 @@ typedef enum { false, true } bool;
 #endif
 #endif
 
+
 /*
  * Maximum size of a filename path.
  */
@@ -46,6 +47,8 @@ extern bool lam_mpi_param_check;
  */
 #if HAVE_STDINT_H
 #include <stdint.h>
+#else
+#include "lam_stdint.h"
 #endif
 
 /*
