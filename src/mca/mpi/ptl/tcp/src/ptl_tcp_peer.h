@@ -10,7 +10,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include "lam/lfc/lam_list.h"
-#include "lam/util/reactor.h"
+#include "lam/event/event.h"
 #include "mca/mpi/pml/pml.h"
 #include "mca/mpi/ptl/ptl.h"
 #include "ptl_tcp_recvfrag.h"
@@ -46,6 +46,8 @@ struct mca_ptl_base_peer_t {
     size_t                     peer_retries;
     lam_list_t                 peer_frags;
     lam_mutex_t                peer_lock;
+    lam_event_t                peer_send_event;
+    lam_event_t                peer_recv_event;
 };
 typedef struct mca_ptl_base_peer_t mca_ptl_base_peer_t;
 

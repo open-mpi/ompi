@@ -28,10 +28,3 @@ static void mca_ptl_base_send_request_destruct(mca_ptl_base_send_request_t* req)
     OBJ_DESTRUCT_SUPER(&req->req_unacked_frags, mca_pml_base_request_t);
 }
 
-void mca_ptl_base_send_request_progress(
-    mca_ptl_base_send_request_t* req, 
-    mca_ptl_base_send_frag_t* frag)
-{
-}
-
-

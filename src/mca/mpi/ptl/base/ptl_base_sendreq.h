@@ -48,12 +48,6 @@ struct mca_ptl_base_send_request_t {
 typedef struct mca_ptl_base_send_request_t mca_ptl_base_send_request_t;
 
 
-void mca_ptl_base_send_request_progress(
-    mca_ptl_base_send_request_t* request, 
-    struct mca_ptl_base_send_frag_t* frag
-);
-
-
 static inline void mca_ptl_base_send_request_reinit(
     mca_ptl_base_send_request_t *request, 
     void *addr, 

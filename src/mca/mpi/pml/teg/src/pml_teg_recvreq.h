@@ -42,6 +42,11 @@ static inline int mca_pml_teg_recv_request_start(mca_ptl_base_recv_request_t* re
     return LAM_SUCCESS;
 }
 
+void mca_pml_teg_recv_request_progress(
+    mca_ptl_base_recv_request_t* recv_request,
+    mca_ptl_base_recv_frag_t* recv_frag
+);
+
 
 #endif
 

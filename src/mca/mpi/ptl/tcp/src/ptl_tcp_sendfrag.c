@@ -100,7 +100,7 @@ void mca_ptl_tcp_send_frag_reinit(
 
 /*
  * The socket is setup as non-blocking, writes are handled asynchronously,
- * with callbacks from the reactor when the socket is ready for writes.
+ * with event callbacks when the socket is ready for writes.
  */
 
 bool mca_ptl_tcp_send_frag_handler(mca_ptl_tcp_send_frag_t* frag, int sd)

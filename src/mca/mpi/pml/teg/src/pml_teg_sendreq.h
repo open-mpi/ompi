@@ -56,6 +56,10 @@ static inline int mca_pml_teg_send_request_start(
     return LAM_SUCCESS;
 }
 
+void mca_pml_teg_send_request_progress(
+    mca_ptl_base_send_request_t* send_request,
+    mca_ptl_base_send_frag_t* send_frag
+);
 
 #endif
 

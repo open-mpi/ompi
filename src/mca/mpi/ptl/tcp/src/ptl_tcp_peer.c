@@ -18,9 +18,8 @@ static void mca_ptl_tcp_peer_destruct(mca_ptl_base_peer_t* ptl_peer);
 static int  mca_ptl_tcp_peer_start_connect(mca_ptl_base_peer_t*);
 static void mca_ptl_tcp_peer_close_i(mca_ptl_base_peer_t*);
 static void mca_ptl_tcp_peer_connected(mca_ptl_base_peer_t*);
-static void mca_ptl_tcp_peer_recv_handler(mca_ptl_base_peer_t*, int sd);
-static void mca_ptl_tcp_peer_send_handler(mca_ptl_base_peer_t*, int sd);
-static void mca_ptl_tcp_peer_except_handler(mca_ptl_base_peer_t*, int sd);
+static void mca_ptl_tcp_peer_recv_handler(int sd, short flags, void* user);
+static void mca_ptl_tcp_peer_send_handler(int sd, short flags, void* user);
 
 
 lam_class_info_t  mca_ptl_tcp_peer_t_class_info = {
@@ -29,14 +28,6 @@ lam_class_info_t  mca_ptl_tcp_peer_t_class_info = {
     (lam_construct_t)mca_ptl_tcp_peer_construct, 
     (lam_destruct_t)mca_ptl_tcp_peer_destruct
 };
-
-
-static lam_reactor_listener_t mca_ptl_tcp_peer_listener = {
-     (lam_rl_recv_handler_fn_t)mca_ptl_tcp_peer_recv_handler,
-     (lam_rl_send_handler_fn_t)mca_ptl_tcp_peer_send_handler,
-     (lam_rl_except_handler_fn_t)mca_ptl_tcp_peer_except_handler
-};
-
 
 /*
  * Initialize state of the peer instance.
@@ -51,6 +42,8 @@ static void mca_ptl_tcp_peer_construct(mca_ptl_base_peer_t* ptl_peer)
     ptl_peer->peer_sd = -1;
     ptl_peer->peer_send_frag = 0;
     ptl_peer->peer_recv_frag = 0;
+    ptl_peer->peer_send_event.ev_flags = 0;
+    ptl_peer->peer_recv_event.ev_flags = 0;
     ptl_peer->peer_state = MCA_PTL_TCP_CLOSED;
     ptl_peer->peer_retries = 0;
     OBJ_CONSTRUCT(&ptl_peer->peer_frags, lam_list_t);
@@ -96,12 +89,7 @@ int mca_ptl_tcp_peer_send(mca_ptl_base_peer_t* ptl_peer, mca_ptl_tcp_send_frag_t
         else {
             if(mca_ptl_tcp_send_frag_handler(frag, ptl_peer->peer_sd) == false) {
                 ptl_peer->peer_send_frag = frag;
-                rc = lam_reactor_insert(
-                    &mca_ptl_tcp_module.tcp_reactor,
-                     ptl_peer->peer_sd,
-                     &mca_ptl_tcp_peer_listener,
-                     ptl_peer,
-                     LAM_REACTOR_NOTIFY_SEND);
+                lam_event_add(&mca_ptl_tcp_module.tcp_send_event, 0);
             }
         }
         break;
@@ -155,7 +143,7 @@ void mca_ptl_tcp_peer_close(mca_ptl_base_peer_t* ptl_peer)
 }
 
 /*
- * Remove the socket descriptor from the reactor, close it,
+ * Remove any event registrations associated with the socket
  * and update the peer state to reflect the connection has
  * been closed.
  */
@@ -163,10 +151,8 @@ void mca_ptl_tcp_peer_close(mca_ptl_base_peer_t* ptl_peer)
 static void mca_ptl_tcp_peer_close_i(mca_ptl_base_peer_t* ptl_peer)
 {
     if(ptl_peer->peer_sd >= 0) {
-        lam_reactor_remove(
-            &mca_ptl_tcp_module.tcp_reactor,
-             ptl_peer->peer_sd,
-             LAM_REACTOR_NOTIFY_ALL);
+        lam_event_del(&ptl_peer->peer_recv_event);
+        lam_event_del(&ptl_peer->peer_send_event);
         close(ptl_peer->peer_sd);
         ptl_peer->peer_sd = -1;
     }
@@ -180,20 +166,27 @@ static void mca_ptl_tcp_peer_close_i(mca_ptl_base_peer_t* ptl_peer)
 
 static void mca_ptl_tcp_peer_connected(mca_ptl_base_peer_t* ptl_peer)
 {
-    int flags = LAM_REACTOR_NOTIFY_RECV|LAM_REACTOR_NOTIFY_EXCEPT;
     ptl_peer->peer_state = MCA_PTL_TCP_CONNECTED;
     ptl_peer->peer_retries = 0;
     if(lam_list_get_size(&ptl_peer->peer_frags) > 0) {
         if(NULL == ptl_peer->peer_send_frag)
-            ptl_peer->peer_send_frag = (mca_ptl_tcp_send_frag_t*)lam_list_remove_first(&ptl_peer->peer_frags);
-        flags |= LAM_REACTOR_NOTIFY_SEND;
+            ptl_peer->peer_send_frag = (mca_ptl_tcp_send_frag_t*)
+                lam_list_remove_first(&ptl_peer->peer_frags);
+        lam_event_add(&ptl_peer->peer_send_event, 0);
     }
-    lam_reactor_insert(
-        &mca_ptl_tcp_module.tcp_reactor,
-        ptl_peer->peer_sd,
-        &mca_ptl_tcp_peer_listener,
-        ptl_peer,
-        flags);
+    lam_event_set(
+        &ptl_peer->peer_recv_event, 
+        ptl_peer->peer_sd, 
+        LAM_EV_READ|LAM_EV_PERSIST, 
+        mca_ptl_tcp_peer_recv_handler,
+        ptl_peer);
+    lam_event_set(
+        &ptl_peer->peer_send_event, 
+        ptl_peer->peer_sd, 
+        LAM_EV_WRITE|LAM_EV_PERSIST, 
+        mca_ptl_tcp_peer_send_handler,
+        ptl_peer);
+    lam_event_add(&ptl_peer->peer_recv_event, 0);
 }
 
 
@@ -313,8 +306,8 @@ static int mca_ptl_tcp_peer_send_connect_ack(mca_ptl_base_peer_t* ptl_peer)
 
 /*
  *  Start a connection to the peer. This will likely not complete,
- *  as the socket is set to non-blocking, so register with the reactor
- *  for notification of connect completion. On connection we send
+ *  as the socket is set to non-blocking, so register for event
+ *  notification of connect completion. On connection we send
  *  our globally unique process identifier to the peer and wait for
  *  the peers response.
  */
@@ -344,12 +337,7 @@ static int mca_ptl_tcp_peer_start_connect(mca_ptl_base_peer_t* ptl_peer)
         /* non-blocking so wait for completion */
         if(errno == EINPROGRESS) {
             ptl_peer->peer_state = MCA_PTL_TCP_CONNECTING;
-            rc = lam_reactor_insert(
-                &mca_ptl_tcp_module.tcp_reactor,
-                ptl_peer->peer_sd,
-                &mca_ptl_tcp_peer_listener,
-                ptl_peer,
-                LAM_REACTOR_NOTIFY_SEND|LAM_REACTOR_NOTIFY_EXCEPT);
+            lam_event_add(&ptl_peer->peer_send_event, 0);
             return rc;
         }
         mca_ptl_tcp_peer_close_i(ptl_peer);
@@ -360,12 +348,7 @@ static int mca_ptl_tcp_peer_start_connect(mca_ptl_base_peer_t* ptl_peer)
     /* send our globally unique process identifier to the peer */
     if((rc = mca_ptl_tcp_peer_send_connect_ack(ptl_peer)) == LAM_SUCCESS) {
         ptl_peer->peer_state = MCA_PTL_TCP_CONNECT_ACK;
-        rc = lam_reactor_insert(
-            &mca_ptl_tcp_module.tcp_reactor,
-            ptl_peer->peer_sd,
-            &mca_ptl_tcp_peer_listener,
-            ptl_peer,
-            LAM_REACTOR_NOTIFY_RECV|LAM_REACTOR_NOTIFY_EXCEPT);
+        lam_event_add(&ptl_peer->peer_recv_event, 0);
     } else {
         mca_ptl_tcp_peer_close_i(ptl_peer);
     }
@@ -385,7 +368,7 @@ static void mca_ptl_tcp_peer_complete_connect(mca_ptl_base_peer_t* ptl_peer)
     lam_socklen_t so_length = sizeof(so_error);
 
     /* unregister from receiving event notifications */
-    lam_reactor_remove(&mca_ptl_tcp_module.tcp_reactor, ptl_peer->peer_sd, LAM_REACTOR_NOTIFY_ALL);
+    lam_event_del(&ptl_peer->peer_send_event);
 
     /* check connect completion status */
     if(getsockopt(ptl_peer->peer_sd, SOL_SOCKET, SO_ERROR, &so_error, &so_length) < 0) {
@@ -394,12 +377,7 @@ static void mca_ptl_tcp_peer_complete_connect(mca_ptl_base_peer_t* ptl_peer)
         return;
     }
     if(so_error == EINPROGRESS) {
-        lam_reactor_insert(
-            &mca_ptl_tcp_module.tcp_reactor,
-            ptl_peer->peer_sd,
-            &mca_ptl_tcp_peer_listener,
-            ptl_peer,
-            LAM_REACTOR_NOTIFY_SEND|LAM_REACTOR_NOTIFY_EXCEPT);
+        lam_event_add(&ptl_peer->peer_send_event, 0);
         return;
     }
     if(so_error != 0) {
@@ -410,12 +388,7 @@ static void mca_ptl_tcp_peer_complete_connect(mca_ptl_base_peer_t* ptl_peer)
 
     if(mca_ptl_tcp_peer_send_connect_ack(ptl_peer) == LAM_SUCCESS) {
         ptl_peer->peer_state = MCA_PTL_TCP_CONNECT_ACK;
-        lam_reactor_insert(
-            &mca_ptl_tcp_module.tcp_reactor,
-            ptl_peer->peer_sd,
-            &mca_ptl_tcp_peer_listener,
-            ptl_peer,
-            LAM_REACTOR_NOTIFY_RECV|LAM_REACTOR_NOTIFY_EXCEPT);
+        lam_event_add(&ptl_peer->peer_recv_event, 0);
     } else {
         mca_ptl_tcp_peer_close_i(ptl_peer);
     }
@@ -427,8 +400,9 @@ static void mca_ptl_tcp_peer_complete_connect(mca_ptl_base_peer_t* ptl_peer)
  * of the socket and take the appropriate action.
  */
 
-static void mca_ptl_tcp_peer_recv_handler(mca_ptl_base_peer_t* ptl_peer, int sd)
+static void mca_ptl_tcp_peer_recv_handler(int sd, short flags, void* user)
 {
+    mca_ptl_base_peer_t* ptl_peer = user;
     THREAD_LOCK(&ptl_peer->peer_lock);
     switch(ptl_peer->peer_state) {
     case MCA_PTL_TCP_CONNECT_ACK:
@@ -472,8 +446,9 @@ static void mca_ptl_tcp_peer_recv_handler(mca_ptl_base_peer_t* ptl_peer, int sd)
  * of the socket and take the appropriate action.
  */
 
-static void mca_ptl_tcp_peer_send_handler(mca_ptl_base_peer_t* ptl_peer, int sd)
+static void mca_ptl_tcp_peer_send_handler(int sd, short flags, void* user)
 {
+    mca_ptl_tcp_peer_t* ptl_peer = user;
     THREAD_LOCK(&ptl_peer->peer_lock);
     switch(ptl_peer->peer_state) {
     case MCA_PTL_TCP_CONNECTING:
@@ -491,27 +466,17 @@ static void mca_ptl_tcp_peer_send_handler(mca_ptl_base_peer_t* ptl_peer, int sd)
 
         /* if nothing else to do unregister for send event notifications */
         if(NULL == ptl_peer->peer_send_frag) {
-            lam_reactor_remove(&mca_ptl_tcp_module.tcp_reactor, sd, LAM_REACTOR_NOTIFY_SEND);
+            lam_event_del(&ptl_peer->peer_send_event);
         }
         break;
     default:
         lam_output(0, "mca_ptl_tcp_peer_send_handler: invalid connection state (%d)", 
             ptl_peer->peer_state);
-        lam_reactor_remove(&mca_ptl_tcp_module.tcp_reactor, sd, LAM_REACTOR_NOTIFY_SEND);
+        lam_event_del(&ptl_peer->peer_send_event);
         break;
     }
     THREAD_UNLOCK(&ptl_peer->peer_lock);
 }
 
-
-/*
- * A file descriptor is in an erroneous state. Close the connection
- * and update the peers state.
- */
-static void mca_ptl_tcp_peer_except_handler(mca_ptl_base_peer_t* ptl_peer, int sd)
-{
-    lam_output(0, "mca_ptl_tcp_peer_except_handler: closing connection");
-    mca_ptl_tcp_peer_close_i(ptl_peer);
-}
 
 

@@ -144,11 +144,3 @@ static bool mca_ptl_base_recv_request_match_specific_proc(mca_ptl_base_recv_requ
     return false;
 }
 
-
-void mca_ptl_base_recv_request_progress(
-    mca_ptl_base_recv_request_t* request, 
-    mca_ptl_base_recv_frag_t* frag)
-{
-
-}
-

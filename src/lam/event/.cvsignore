@@ -10,3 +10,4 @@ stamp-h1
 .libs
 event.lo
 libevent.la
+libtool
