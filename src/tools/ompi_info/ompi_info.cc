@@ -191,22 +191,13 @@ int main(int argc, char *argv[])
     ompi_info::do_arch(cmd_line);
     ompi_info::do_config(false);
     ompi_info::open_components();
-    ompi_info::show_component_version("base", component_all, ver_full, type_all);
-    ompi_info::show_component_version("allocator", component_all, ver_full, type_all);
-    ompi_info::show_component_version("coll", component_all, ver_full, type_all);
-    ompi_info::show_component_version("gpr", component_all, ver_full, type_all);
-    ompi_info::show_component_version("io", component_all, ver_full, type_all);
-    ompi_info::show_component_version("llm", component_all, ver_full, type_all);
-    ompi_info::show_component_version("mpool", component_all, ver_full, type_all);
-    ompi_info::show_component_version("ns", component_all, ver_full, type_all);
-    ompi_info::show_component_version("one", component_all, ver_full, type_all);
-    ompi_info::show_component_version("oob", component_all, ver_full, type_all);
-    ompi_info::show_component_version("op", component_all, ver_full, type_all);
-    ompi_info::show_component_version("pcm", component_all, ver_full, type_all);
-    ompi_info::show_component_version("pcmclient", component_all, ver_full, type_all);
-    ompi_info::show_component_version("pml", component_all, ver_full, type_all);
-    ompi_info::show_component_version("ptl", component_all, ver_full, type_all);
-    ompi_info::show_component_version("topo", component_all, ver_full, type_all);
+    for (ompi_info::type_vector_t::size_type i = 0; 
+         i < mca_types.size(); ++i) {
+        if ("mpi" != mca_types[i]) {
+            ompi_info::show_component_version(mca_types[i], component_all, 
+                                              ver_full, type_all);
+        }
+    }
   }
 
   // All done
