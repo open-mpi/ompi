@@ -5,11 +5,11 @@
 include $(top_srcdir)/config/Makefile.options
 
 SUBDIRS = \
+	allocator \
         base \
         coll \
         common \
         io \
-	mem \
         one \
         oob \
         pcm \
@@ -28,9 +28,9 @@ noinst_LTLIBRARIES = libmca.la
 
 libmca_la_SOURCES =
 libmca_la_LIBADD = \
+        allocator/libmca_allocator.la \
         base/libmca_base.la \
         coll/libmca_coll.la \
-	mem/libmca_mem.la \
         oob/libmca_oob.la \
         pcm/libmca_pcm.la \
         pml/libmca_pml.la \
