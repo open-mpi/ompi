@@ -30,6 +30,7 @@
 #include "mca/gpr/base/base.h"
 #include "gpr_replica.h"
 #include "gpr_replica_internals.h"
+#include "runtime/runtime.h"
 
 
 int gpr_replica_delete_segment(char *segment)
@@ -48,8 +49,8 @@ int gpr_replica_delete_segment_nl(char *segment)
     mca_gpr_replica_segment_t *seg;
 
     if (mca_gpr_replica_debug) {
-	ompi_output(0, "[%d,%d,%d] gpr replica: delete_segment entered", ompi_process_info.name->cellid,
-		    ompi_process_info.name->jobid, ompi_process_info.name->vpid);
+	ompi_output(0, "[%d,%d,%d] gpr replica: delete_segment entered", ompi_rte_get_self()->cellid,
+		    ompi_rte_get_self()->jobid, ompi_rte_get_self()->vpid);
     }
 
     seg = gpr_replica_find_seg(true, segment);
@@ -96,16 +97,16 @@ int gpr_replica_put_nl(ompi_registry_mode_t addr_mode, char *segment,
 
     if (mca_gpr_replica_debug) {
 	ompi_output(0, "[%d,%d,%d] gpr replica: put entered on segment %s 1st token %s",
-		    ompi_process_info.name->cellid, ompi_process_info.name->jobid,
-		    ompi_process_info.name->vpid, segment, *tokens);
+		    ompi_rte_get_self()->cellid, ompi_rte_get_self()->jobid,
+		    ompi_rte_get_self()->vpid, segment, *tokens);
     }
 
     /* protect ourselves against errors */
     if (NULL == segment || NULL == object || 0 == size || NULL == tokens || NULL == *tokens) {
 	if (mca_gpr_replica_debug) {
 	    ompi_output(0, "[%d,%d,%d] gpr replica: error in input - put rejected",
-			ompi_process_info.name->cellid, ompi_process_info.name->jobid,
-			ompi_process_info.name->vpid);
+			ompi_rte_get_self()->cellid, ompi_rte_get_self()->jobid,
+			ompi_rte_get_self()->vpid);
 	}
 	return OMPI_ERROR;
     }
@@ -218,8 +219,8 @@ int gpr_replica_put_nl(ompi_registry_mode_t addr_mode, char *segment,
 	OBJ_RELEASE(keylist);
     }
     if (mca_gpr_replica_debug) {
-	ompi_output(0, "[%d,%d,%d] gpr replica-put: complete", ompi_process_info.name->cellid,
-		    ompi_process_info.name->jobid, ompi_process_info.name->vpid);
+	ompi_output(0, "[%d,%d,%d] gpr replica-put: complete", ompi_rte_get_self()->cellid,
+		    ompi_rte_get_self()->jobid, ompi_rte_get_self()->vpid);
     }
 
     return return_code;
@@ -252,8 +253,8 @@ int gpr_replica_delete_object_nl(ompi_registry_mode_t addr_mode,
 
     if (mca_gpr_replica_debug) {
 	ompi_output(0, "[%d,%d,%d] gpr replica: delete_object entered: segment 1st token",
-		    ompi_process_info.name->cellid, ompi_process_info.name->jobid,
-		    ompi_process_info.name->vpid, segment, *tokens);
+		    ompi_rte_get_self()->cellid, ompi_rte_get_self()->jobid,
+		    ompi_rte_get_self()->vpid, segment, *tokens);
     }
 
     keys = NULL;
@@ -375,8 +376,8 @@ ompi_list_t* gpr_replica_index_nl(char *segment)
     ompi_registry_index_value_t *ans;
 
     if (mca_gpr_replica_debug) {
-	ompi_output(0, "[%d,%d,%d] gpr replica: index entered segment: %s", ompi_process_info.name->cellid,
-		    ompi_process_info.name->jobid, ompi_process_info.name->vpid, segment);
+	ompi_output(0, "[%d,%d,%d] gpr replica: index entered segment: %s", ompi_rte_get_self()->cellid,
+		    ompi_rte_get_self()->jobid, ompi_rte_get_self()->vpid, segment);
     }
 
     answer = OBJ_NEW(ompi_list_t);
@@ -440,8 +441,8 @@ int gpr_replica_subscribe_nl(ompi_registry_mode_t addr_mode,
 
     if (mca_gpr_replica_debug) {
 	ompi_output(0, "[%d,%d,%d] gpr replica: subscribe entered: segment %s 1st token %s",
-		    ompi_process_info.name->cellid, ompi_process_info.name->jobid,
-		    ompi_process_info.name->vpid, segment, tokens ? *tokens : "");
+		    ompi_rte_get_self()->cellid, ompi_rte_get_self()->jobid,
+		    ompi_rte_get_self()->vpid, segment, tokens ? *tokens : "");
     }
 
     /* protect against errors */
@@ -493,8 +494,8 @@ mca_gpr_notify_id_t gpr_replica_unsubscribe_nl(ompi_registry_mode_t addr_mode,
 
     if (mca_gpr_replica_debug) {
 	ompi_output(0, "[%d,%d,%d] gpr replica: unsubscribe entered: segment %s 1st token %s",
-		    ompi_process_info.name->cellid, ompi_process_info.name->jobid,
-		    ompi_process_info.name->vpid, segment, *tokens);
+		    ompi_rte_get_self()->cellid, ompi_rte_get_self()->jobid,
+		    ompi_rte_get_self()->vpid, segment, *tokens);
     }
 
     /* protect against errors */
@@ -550,8 +551,8 @@ int gpr_replica_synchro_nl(ompi_registry_synchro_mode_t synchro_mode,
 
     if (mca_gpr_replica_debug) {
 	ompi_output(0, "[%d,%d,%d] gpr replica: synchro entered on segment %s trigger %d",
-		    ompi_process_info.name->cellid, ompi_process_info.name->jobid,
-		    ompi_process_info.name->vpid, segment, trigger);
+		    ompi_rte_get_self()->cellid, ompi_rte_get_self()->jobid,
+		    ompi_rte_get_self()->vpid, segment, trigger);
     }
 
     /* protect against errors */
@@ -603,8 +604,8 @@ mca_gpr_notify_id_t gpr_replica_cancel_synchro_nl(ompi_registry_synchro_mode_t s
 
     if (mca_gpr_replica_debug) {
 	ompi_output(0, "[%d,%d,%d] gpr replica: cancel_synchro entered: segment %s 1st token %s",
-		    ompi_process_info.name->cellid, ompi_process_info.name->jobid,
-		    ompi_process_info.name->vpid, segment, *tokens);
+		    ompi_rte_get_self()->cellid, ompi_rte_get_self()->jobid,
+		    ompi_rte_get_self()->vpid, segment, *tokens);
     }
 
     /* protect against errors */
@@ -772,8 +773,8 @@ ompi_list_t* gpr_replica_get_nl(ompi_registry_mode_t addr_mode,
     int num_tokens=0;
 
     if (mca_gpr_replica_debug) {
-	ompi_output(0, "[%d,%d,%d] gpr replica: get entered", ompi_process_info.name->cellid,
-		    ompi_process_info.name->jobid, ompi_process_info.name->vpid);
+	ompi_output(0, "[%d,%d,%d] gpr replica: get entered", ompi_rte_get_self()->cellid,
+		    ompi_rte_get_self()->jobid, ompi_rte_get_self()->vpid);
     }
 
     answer = OBJ_NEW(ompi_list_t);
@@ -789,8 +790,8 @@ ompi_list_t* gpr_replica_get_nl(ompi_registry_mode_t addr_mode,
 	return answer;
     }
     if (mca_gpr_replica_debug) {
-	ompi_output(0, "[%d,%d,%d] gpr replica-get: segment found", ompi_process_info.name->cellid,
-		    ompi_process_info.name->jobid, ompi_process_info.name->vpid);
+	ompi_output(0, "[%d,%d,%d] gpr replica-get: segment found", ompi_rte_get_self()->cellid,
+		    ompi_rte_get_self()->jobid, ompi_rte_get_self()->vpid);
     }
 
     if (NULL == tokens) { /* wildcard case - return everything */
@@ -819,8 +820,8 @@ ompi_list_t* gpr_replica_get_nl(ompi_registry_mode_t addr_mode,
 	}
     }
     if (mca_gpr_replica_debug) {
-	ompi_output(0, "[%d,%d,%d] gpr replica-get: got keylist", ompi_process_info.name->cellid,
-		    ompi_process_info.name->jobid, ompi_process_info.name->vpid);
+	ompi_output(0, "[%d,%d,%d] gpr replica-get: got keylist", ompi_rte_get_self()->cellid,
+		    ompi_rte_get_self()->jobid, ompi_rte_get_self()->vpid);
     }
 
     /* traverse the segment's registry, looking for matching tokens per the specified mode */
@@ -839,8 +840,8 @@ ompi_list_t* gpr_replica_get_nl(ompi_registry_mode_t addr_mode,
 	}
     }
     if (mca_gpr_replica_debug) {
-	ompi_output(0, "[%d,%d,%d] gpr replica-get: finished search", ompi_process_info.name->cellid,
-		    ompi_process_info.name->jobid, ompi_process_info.name->vpid);
+	ompi_output(0, "[%d,%d,%d] gpr replica-get: finished search", ompi_rte_get_self()->cellid,
+		    ompi_rte_get_self()->jobid, ompi_rte_get_self()->vpid);
     }
 
  CLEANUP:
@@ -854,8 +855,8 @@ ompi_list_t* gpr_replica_get_nl(ompi_registry_mode_t addr_mode,
     }
 
     if (mca_gpr_replica_debug) {
-	ompi_output(0, "[%d,%d,%d] gpr replica-get: leaving", ompi_process_info.name->cellid,
-		    ompi_process_info.name->jobid, ompi_process_info.name->vpid);
+	ompi_output(0, "[%d,%d,%d] gpr replica-get: leaving", ompi_rte_get_self()->cellid,
+		    ompi_rte_get_self()->jobid, ompi_rte_get_self()->vpid);
     }
     return answer;
 }

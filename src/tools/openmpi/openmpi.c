@@ -65,11 +65,6 @@ int main(int argc, char **argv)
         return ret;
     }
 
-    /* give myself default bootstrap name */
-    ompi_process_info.name = ns_base_create_process_name(MCA_NS_BASE_CELLID_MAX,
-							 MCA_NS_BASE_JOBID_MAX,
-							 MCA_NS_BASE_VPID_MAX);
-
     /* setup to read common command line options that span all Open MPI programs */
     cmd_line = OBJ_NEW(ompi_cmd_line_t);
 

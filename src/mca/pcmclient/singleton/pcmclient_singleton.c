@@ -9,6 +9,7 @@
 #include "mca/oob/base/base.h"
 #include "include/types.h"
 #include "include/constants.h"
+#include "mca/ns/ns.h"
 
 #include <stdio.h>
 #include <sys/types.h>
@@ -29,8 +30,10 @@ init_proclist(void)
         (ompi_process_name_t*) malloc(sizeof(ompi_process_name_t));
     if (NULL == mca_pcmclient_singleton_procs) return OMPI_ERROR;
 
-    /* the oob has already assigned a unique name to the process */
-    mca_pcmclient_singleton_procs[0] = mca_oob_name_self;
+    /* assign illegal name - someone will repair later */
+    mca_pcmclient_singleton_procs[0].cellid =  MCA_NS_BASE_CELLID_MAX;
+    mca_pcmclient_singleton_procs[0].jobid = MCA_NS_BASE_JOBID_MAX;
+    mca_pcmclient_singleton_procs[0].vpid = MCA_NS_BASE_VPID_MAX;
     return OMPI_SUCCESS;
 }
 

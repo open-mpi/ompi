@@ -187,19 +187,19 @@ int main(int argc, char *argv[])
 
 	if (OMPI_SUCCESS != (ret = ompi_write_universe_setup_file(contact_file))) {
 	    if (ompi_daemon_debug) {
-		ompi_output(0, "[%d,%d,%d] ompid: couldn't write setup file", ompi_process_info.name->cellid,
-			    ompi_process_info.name->jobid, ompi_process_info.name->vpid);
+		ompi_output(0, "[%d,%d,%d] ompid: couldn't write setup file", ompi_rte_get_self()->cellid,
+			    ompi_rte_get_self()->jobid, ompi_rte_get_self()->vpid);
 	    }
 	} else if (ompi_daemon_debug) {
-	    ompi_output(0, "[%d,%d,%d] ompid: wrote setup file", ompi_process_info.name->cellid,
-			ompi_process_info.name->jobid, ompi_process_info.name->vpid);
+	    ompi_output(0, "[%d,%d,%d] ompid: wrote setup file", ompi_rte_get_self()->cellid,
+			ompi_rte_get_self()->jobid, ompi_rte_get_self()->vpid);
 	}
     }
 
 
     if (ompi_daemon_debug) {
-	ompi_output(0, "[%d,%d,%d] ompid: registering", ompi_process_info.name->cellid,
-		    ompi_process_info.name->jobid, ompi_process_info.name->vpid);
+	ompi_output(0, "[%d,%d,%d] ompid: registering", ompi_rte_get_self()->cellid,
+		    ompi_rte_get_self()->jobid, ompi_rte_get_self()->vpid);
     }
 
 
@@ -207,8 +207,8 @@ int main(int argc, char *argv[])
     ompi_vm_register();
 
     if (ompi_daemon_debug) {
-	ompi_output(0, "[%d,%d,%d] ompid: issuing callback", ompi_process_info.name->cellid,
-		    ompi_process_info.name->jobid, ompi_process_info.name->vpid);
+	ompi_output(0, "[%d,%d,%d] ompid: issuing callback", ompi_rte_get_self()->cellid,
+		    ompi_rte_get_self()->jobid, ompi_rte_get_self()->vpid);
     }
 
      /* register the daemon main callback function */
@@ -223,8 +223,8 @@ int main(int argc, char *argv[])
      */
 
     if (ompi_daemon_debug) {
-	ompi_output(0, "[%d,%d,%d] ompid: setting up event monitor", ompi_process_info.name->cellid,
-		    ompi_process_info.name->jobid, ompi_process_info.name->vpid);
+	ompi_output(0, "[%d,%d,%d] ompid: setting up event monitor", ompi_rte_get_self()->cellid,
+		    ompi_rte_get_self()->jobid, ompi_rte_get_self()->vpid);
     }
 
      /* setup and enter the event monitor */
@@ -237,8 +237,8 @@ int main(int argc, char *argv[])
     OMPI_THREAD_UNLOCK(&ompi_daemon_mutex);
 
     if (ompi_daemon_debug) {
-	ompi_output(0, "[%d,%d,%d] ompid: mutex cleared - finalizing", ompi_process_info.name->cellid,
-		    ompi_process_info.name->jobid, ompi_process_info.name->vpid);
+	ompi_output(0, "[%d,%d,%d] ompid: mutex cleared - finalizing", ompi_rte_get_self()->cellid,
+		    ompi_rte_get_self()->jobid, ompi_rte_get_self()->vpid);
     }
 
     /* if i'm the seed, remove the universe-setup file */
@@ -253,8 +253,8 @@ int main(int argc, char *argv[])
     ompi_finalize();
 
     if (ompi_daemon_debug) {
-	ompi_output(0, "[%d,%d,%d] ompid: done - exiting", ompi_process_info.name->cellid,
-		    ompi_process_info.name->jobid, ompi_process_info.name->vpid);
+	ompi_output(0, "[%d,%d,%d] ompid: done - exiting", ompi_rte_get_self()->cellid,
+		    ompi_rte_get_self()->jobid, ompi_rte_get_self()->vpid);
     }
 
     exit(0);
@@ -272,8 +272,8 @@ static void ompi_daemon_recv(int status, ompi_process_name_t* sender,
     OMPI_THREAD_LOCK(&ompi_daemon_mutex);
 
     if (ompi_daemon_debug) {
-	ompi_output(0, "[%d,%d,%d] ompid: received message", ompi_process_info.name->cellid,
-		    ompi_process_info.name->jobid, ompi_process_info.name->vpid);
+	ompi_output(0, "[%d,%d,%d] ompid: received message", ompi_rte_get_self()->cellid,
+		    ompi_rte_get_self()->jobid, ompi_rte_get_self()->vpid);
     }
 
     if (OMPI_SUCCESS != ompi_buffer_init(&answer, 0)) {

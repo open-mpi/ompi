@@ -122,6 +122,7 @@ int ompi_rte_init(ompi_cmd_line_t *cmd_line, bool *allow_multi_user_threads, boo
     mca_ns_base_jobid_t jobid;
     mca_ns_base_vpid_t vpid;
     ompi_process_name_t illegal_name={MCA_NS_BASE_CELLID_MAX, MCA_NS_BASE_JOBID_MAX, MCA_NS_BASE_VPID_MAX};
+    ompi_process_name_t *new_name;
 
     *allow_multi_user_threads = true;
     *have_hidden_threads = false;
@@ -183,7 +184,7 @@ int ompi_rte_init(ompi_cmd_line_t *cmd_line, bool *allow_multi_user_threads, boo
 	return ret;
     }
 
-    printname("pcmclient");
+    printname("component open");
 
     /*
      * Process Control and Monitoring Client -
@@ -201,18 +202,6 @@ int ompi_rte_init(ompi_cmd_line_t *cmd_line, bool *allow_multi_user_threads, boo
     *have_hidden_threads |= hidden_threads;
 
     printname("pcm_select");
-
-    /* Initialize the name - set to value provided by enviro, if available */
-    if (NULL != ompi_process_info.name) {  /* should NOT have been previously set */
-	free(ompi_process_info.name);
-	ompi_process_info.name = NULL;
-    }
-
-    if (NULL != ompi_rte_get_self()) {  /* name set in environment - nonsingleton - record name */
-	ompi_process_info.name = ompi_rte_get_self();
-    }
-
-    printname("get_self");
 
     /* complete setup of OOB */
     if (OMPI_SUCCESS != (ret = mca_oob_base_init(&user_threads, 
@@ -347,28 +336,36 @@ int ompi_rte_init(ompi_cmd_line_t *cmd_line, bool *allow_multi_user_threads, boo
     printname("gpr_select");
 
     /*****    SET MY NAME IF NOT ALREADY PROVIDED IN ENVIRONMENT   *****/
-    if (NULL == ompi_process_info.name ||
-	(0 == ompi_name_server.compare(OMPI_NS_CMP_ALL, ompi_process_info.name, &illegal_name))) {  /* name not previously set */
-	if (ompi_process_info.seed || NULL == ompi_process_info.ns_replica) { /* seed or singleton - couldn't join existing univ */
-	    if (NULL != ompi_process_info.name) {
-		free(ompi_process_info.name);
-	    }
-	    ompi_process_info.name = ompi_name_server.create_process_name(0,0,0);
+    if (0 == ompi_name_server.compare(OMPI_NS_CMP_ALL, 
+                                      ompi_rte_get_self(), 
+                                      &illegal_name)) {
+        /* name not previously set */
+	if (ompi_process_info.seed || NULL == ompi_process_info.ns_replica) {
+            /* seed or singleton - couldn't join existing univ */
+            new_name = ompi_name_server.create_process_name(0,0,0);
+	    *ompi_rte_get_self() = *new_name;
+            free(new_name);
 	    printname("singleton/seed");
-	} else {  /* not seed or singleton - name server exists elsewhere - get a name for me */
+	} else {  
+            /* not seed or singleton - name server exists elsewhere - get a name for me */
 	    jobid = ompi_name_server.create_jobid();
 	    vpid = ompi_name_server.reserve_range(jobid, 1);
-	    ompi_process_info.name = ompi_name_server.create_process_name(0, jobid, vpid);
+            new_name = ompi_name_server.create_process_name(0, jobid, vpid);
+	    *ompi_rte_get_self() = *new_name;
+            free(new_name);
 	    printname("name_server_provided");
 	}
     }
 
     /* setup my session directory */
-    jobid_str = ompi_name_server.get_jobid_string(ompi_process_info.name);
-    procid_str = ompi_name_server.get_vpid_string(ompi_process_info.name);
+    jobid_str = ompi_name_server.get_jobid_string(ompi_rte_get_self());
+    procid_str = ompi_name_server.get_vpid_string(ompi_rte_get_self());
  
     if (ompi_rte_debug_flag) {
-	ompi_output(0, "[%d,%d,%d] setting up session dir with", ompi_process_info.name->cellid, ompi_process_info.name->jobid, ompi_process_info.name->vpid);
+	ompi_output(0, "[%d,%d,%d] setting up session dir with",
+                    ompi_rte_get_self()->cellid, 
+                    ompi_rte_get_self()->jobid, 
+                    ompi_rte_get_self()->vpid);
 	if (NULL != ompi_process_info.tmpdir_base) {
 	    ompi_output(0, "\ttmpdir %s", ompi_process_info.tmpdir_base);
 	}
@@ -408,10 +405,10 @@ int ompi_rte_init(ompi_cmd_line_t *cmd_line, bool *allow_multi_user_threads, boo
 static void printname(char *loc)
 {
     if (ompi_rte_debug_flag) {
-	if (NULL == ompi_process_info.name) {
+	if (NULL == ompi_rte_get_self()) {
 	    ompi_output(0, "My name after %s has NOT been set", loc);
 	} else {
-	    ompi_output(0, "My name after %s is [%d,%d,%d]", loc, OMPI_NAME_ARGS(*ompi_process_info.name));
+	    ompi_output(0, "My name after %s is [%d,%d,%d]", loc, OMPI_NAME_ARGS(*ompi_rte_get_self()));
 	}
     }
 }

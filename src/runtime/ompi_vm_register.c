@@ -38,7 +38,7 @@ int ompi_vm_register(void)
 	goto ERROR;
     }
 
-    if (OMPI_SUCCESS != ompi_pack(buffer, ompi_process_info.name, 1, OMPI_NAME)) {
+    if (OMPI_SUCCESS != ompi_pack(buffer, ompi_rte_get_self(), 1, OMPI_NAME)) {
 	ret_code = OMPI_ERROR;
 	goto ERROR;
     }
@@ -62,7 +62,7 @@ int ompi_vm_register(void)
 	goto ERROR;
     }
 
-    keys[0] = ompi_name_server.get_proc_name_string(ompi_process_info.name);
+    keys[0] = ompi_name_server.get_proc_name_string(ompi_rte_get_self());
     keys[1] = NULL;
 
     ret_code = ompi_registry.put(OMPI_REGISTRY_XAND, "ompi-vm", keys, buffer, sizeof(buffer));

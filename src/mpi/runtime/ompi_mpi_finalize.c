@@ -46,7 +46,7 @@ int ompi_mpi_finalize(void)
 
   /* unregister process */
   if (OMPI_SUCCESS != (ret = ompi_registry.rte_unregister(
-			     ns_base_get_proc_name_string(ompi_process_info.name)))) {
+			     ns_base_get_proc_name_string(ompi_rte_get_self())))) {
       return ret;
   }
 

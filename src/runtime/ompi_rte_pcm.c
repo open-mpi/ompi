@@ -51,7 +51,7 @@ ompi_rte_get_spawn_handle(int criteria, bool have_threads)
     /* BWB - long term, this has to go.  But for now, here we are */
     if (0 != (OMPI_RTE_SPAWN_MULTI_CELL & criteria)) {
         printf("ompi_rte_get_spawn_handle: warning: multi-cell support "
-               "implemented.  Removing criteria.\n");
+               "not implemented.  Removing criteria.\n");
         criteria ^= OMPI_RTE_SPAWN_MULTI_CELL;
     }
     

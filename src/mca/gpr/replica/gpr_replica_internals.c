@@ -29,6 +29,7 @@
 #include "mca/gpr/base/base.h"
 #include "gpr_replica.h"
 #include "gpr_replica_internals.h"
+#include "runtime/runtime.h"
 
 
 /*
@@ -680,8 +681,8 @@ ompi_registry_notify_message_t *gpr_replica_construct_notify_message(ompi_regist
 
     OBJ_RELEASE(reg_entries);
     if (mca_gpr_replica_debug) {
-	ompi_output(0, "[%d,%d,%d] gpr replica-construct_notify: msg built", ompi_process_info.name->cellid,
-		    ompi_process_info.name->jobid, ompi_process_info.name->vpid);
+	ompi_output(0, "[%d,%d,%d] gpr replica-construct_notify: msg built", ompi_rte_get_self()->cellid,
+		    ompi_rte_get_self()->jobid, ompi_rte_get_self()->vpid);
     }
 
     return msg;
@@ -697,8 +698,8 @@ bool gpr_replica_process_triggers(char *segment,
     mca_gpr_replica_callbacks_t *cb;
 
     if (mca_gpr_replica_debug) {
-	ompi_output(0, "[%d,%d,%d] gpr replica: process_trig entered", ompi_process_info.name->cellid,
-		    ompi_process_info.name->jobid, ompi_process_info.name->vpid);
+	ompi_output(0, "[%d,%d,%d] gpr replica: process_trig entered", ompi_rte_get_self()->cellid,
+		    ompi_rte_get_self()->jobid, ompi_rte_get_self()->vpid);
     }
 
     /* protect against errors */
@@ -713,8 +714,8 @@ bool gpr_replica_process_triggers(char *segment,
     }
 
     if (mca_gpr_replica_debug) {
-	ompi_output(0, "[%d,%d,%d] gpr replica-process_trig: segment found", ompi_process_info.name->cellid,
-		    ompi_process_info.name->jobid, ompi_process_info.name->vpid);
+	ompi_output(0, "[%d,%d,%d] gpr replica-process_trig: segment found", ompi_rte_get_self()->cellid,
+		    ompi_rte_get_self()->jobid, ompi_rte_get_self()->vpid);
     }
 
 
@@ -759,8 +760,8 @@ bool gpr_replica_process_triggers(char *segment,
 	OBJ_RELEASE(trig);
     }
     if (mca_gpr_replica_debug) {
-	ompi_output(0, "[%d,%d,%d] gpr replica-process_trig: complete", ompi_process_info.name->cellid,
-		    ompi_process_info.name->jobid, ompi_process_info.name->vpid);
+	ompi_output(0, "[%d,%d,%d] gpr replica-process_trig: complete", ompi_rte_get_self()->cellid,
+		    ompi_rte_get_self()->jobid, ompi_rte_get_self()->vpid);
     }
 
     return false;

@@ -18,6 +18,7 @@
 #include "mca/mca.h"
 #include "mca/gpr/base/base.h"
 #include "gpr_proxy.h"
+#include "runtime/runtime.h"
 
 /**
  * globals
@@ -143,8 +144,8 @@ int gpr_proxy_put(ompi_registry_mode_t mode, char *segment,
     }
 
     if (mca_gpr_proxy_debug) {
-	ompi_output(0, "[%d,%d,%d] gpr_proxy_put: initiating send", ompi_process_info.name->cellid,
-		    ompi_process_info.name->jobid, ompi_process_info.name->vpid);
+	ompi_output(0, "[%d,%d,%d] gpr_proxy_put: initiating send", ompi_rte_get_self()->cellid,
+		    ompi_rte_get_self()->jobid, ompi_rte_get_self()->vpid);
 	if (NULL == mca_gpr_my_replica) {
 	    ompi_output(0, "\tBAD REPLICA");
 	}
@@ -158,8 +159,8 @@ int gpr_proxy_put(ompi_registry_mode_t mode, char *segment,
     }
 
     if (mca_gpr_proxy_debug) {
-	ompi_output(0, "[%d,%d,%d] gpr_proxy_put: send complete", ompi_process_info.name->cellid,
-		    ompi_process_info.name->jobid, ompi_process_info.name->vpid);
+	ompi_output(0, "[%d,%d,%d] gpr_proxy_put: send complete", ompi_rte_get_self()->cellid,
+		    ompi_rte_get_self()->jobid, ompi_rte_get_self()->vpid);
     }
 
     if (0 > mca_oob_recv_packed(mca_gpr_my_replica, &answer, &recv_tag)) {
@@ -195,7 +196,7 @@ int gpr_proxy_delete_object(ompi_registry_mode_t mode,
 
     if (mca_gpr_proxy_debug) {
 	    ompi_output(0, "[%d,%d,%d] gpr_proxy_delete_object", 
-            ompi_process_info.name->cellid, ompi_process_info.name->jobid, ompi_process_info.name->vpid);
+            ompi_rte_get_self()->cellid, ompi_rte_get_self()->jobid, ompi_rte_get_self()->vpid);
     }
 
     /* need to protect against errors */
@@ -244,7 +245,7 @@ int gpr_proxy_delete_object(ompi_registry_mode_t mode,
 
     if (mca_gpr_proxy_debug) {
 	    ompi_output(0, "[%d,%d,%d] gpr_proxy_delete_object: calling mca_oob_send_packed", 
-            ompi_process_info.name->cellid, ompi_process_info.name->jobid, ompi_process_info.name->vpid);
+            ompi_rte_get_self()->cellid, ompi_rte_get_self()->jobid, ompi_rte_get_self()->vpid);
     }
 
     if (0 > mca_oob_send_packed(mca_gpr_my_replica, cmd, MCA_OOB_TAG_GPR, 0)) {
@@ -253,7 +254,7 @@ int gpr_proxy_delete_object(ompi_registry_mode_t mode,
 
     if (mca_gpr_proxy_debug) {
 	    ompi_output(0, "[%d,%d,%d] gpr_proxy_delete_object: calling mca_oob_recv_packed", 
-            ompi_process_info.name->cellid, ompi_process_info.name->jobid, ompi_process_info.name->vpid);
+            ompi_rte_get_self()->cellid, ompi_rte_get_self()->jobid, ompi_rte_get_self()->vpid);
     }
 
     if (0 > mca_oob_recv_packed(mca_gpr_my_replica, &answer, &recv_tag)) {
@@ -262,7 +263,7 @@ int gpr_proxy_delete_object(ompi_registry_mode_t mode,
 
     if (mca_gpr_proxy_debug) {
 	    ompi_output(0, "[%d,%d,%d] gpr_proxy_delete_object: mca_oob_recv_packed returned", 
-            ompi_process_info.name->cellid, ompi_process_info.name->jobid, ompi_process_info.name->vpid);
+            ompi_rte_get_self()->cellid, ompi_rte_get_self()->jobid, ompi_rte_get_self()->vpid);
     }
 
 
@@ -276,13 +277,13 @@ int gpr_proxy_delete_object(ompi_registry_mode_t mode,
 	    ompi_buffer_free(answer);
         if (mca_gpr_proxy_debug) {
 	        ompi_output(0, "[%d,%d,%d] gpr_proxy_delete_object: unable to unpack response", 
-                ompi_process_info.name->cellid, ompi_process_info.name->jobid, ompi_process_info.name->vpid);
+                ompi_rte_get_self()->cellid, ompi_rte_get_self()->jobid, ompi_rte_get_self()->vpid);
         }
 	    return OMPI_ERROR;
     } else {
         if (mca_gpr_proxy_debug) {
 	        ompi_output(0, "[%d,%d,%d] gpr_proxy_delete_object: returning with status %d", 
-                ompi_process_info.name->cellid, ompi_process_info.name->jobid, ompi_process_info.name->vpid, response);
+                ompi_rte_get_self()->cellid, ompi_rte_get_self()->jobid, ompi_rte_get_self()->vpid, response);
         }
 	    ompi_buffer_free(answer);
 	    return (int)response;
@@ -291,7 +292,7 @@ int gpr_proxy_delete_object(ompi_registry_mode_t mode,
  CLEANUP:
     if (mca_gpr_proxy_debug) {
 	   ompi_output(0, "[%d,%d,%d] gpr_proxy_delete_object: cleanup\n",
-           ompi_process_info.name->cellid, ompi_process_info.name->jobid, ompi_process_info.name->vpid);
+           ompi_rte_get_self()->cellid, ompi_rte_get_self()->jobid, ompi_rte_get_self()->vpid);
     }
     ompi_buffer_free(cmd);
     return OMPI_ERROR;

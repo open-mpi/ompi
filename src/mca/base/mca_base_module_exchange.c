@@ -17,6 +17,7 @@
 #include "mca/ns/ns.h"
 #include "mca/ns/base/base.h"
 #include "mca/base/mca_base_module_exchange.h"
+#include "runtime/runtime.h"
 
 /**
  *
@@ -354,12 +355,12 @@ int mca_base_modex_send(
         source_component->mca_component_major_version,
         source_component->mca_component_minor_version);
 
-    keys[0] = ompi_name_server.get_proc_name_string(ompi_process_info.name);
+    keys[0] = ompi_name_server.get_proc_name_string(ompi_rte_get_self());
     keys[1] = component_name_version;
     keys[2] = NULL;
 
     ompi_buffer_init(&buffer, size+256);
-    ompi_pack(buffer, ompi_process_info.name, 1, OMPI_NAME);
+    ompi_pack(buffer, ompi_rte_get_self(), 1, OMPI_NAME);
     ompi_pack_string(buffer, component_name_version);
     ompi_pack(buffer, &size, 1, OMPI_INT32);
     ompi_pack(buffer, (void*)data, size, OMPI_BYTE);
@@ -439,7 +440,7 @@ int mca_base_modex_recv(
 
 int mca_base_modex_exchange(void)
 {
-    return mca_base_modex_subscribe(ompi_process_info.name);
+    return mca_base_modex_subscribe(ompi_rte_get_self());
 }
 
 
