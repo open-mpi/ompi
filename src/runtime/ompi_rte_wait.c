@@ -247,8 +247,7 @@ ompi_rte_waitpid(pid_t wpid, int *status, int options)
     OMPI_THREAD_UNLOCK(&mutex);
     return ret;
 #else
-    printf ("function not implemented in windows yet: 
-             file %s, line %d\n", __FILE__, __LINE__);
+    printf ("function not implemented in windows yet: file %s, line %d\n", __FILE__, __LINE__);
     abort();
 #endif
 }
@@ -271,8 +270,7 @@ ompi_rte_wait_cb(pid_t wpid, ompi_rte_wait_fn_t callback, void *data)
 
     return ret;
 #else
-    printf ("function not implemented in windows yet: 
-             file %s, line %d\n", __FILE__, __LINE__);
+    printf ("function not implemented in windows yet: file %s, line %d\n", __FILE__, __LINE__);
     abort();
 #endif
 }
@@ -290,8 +288,7 @@ ompi_rte_wait_signal_callback(int fd, short event, void *arg)
     do_waitall(0);
     OMPI_THREAD_UNLOCK(&mutex);
 #else
-    printf ("function not implemented in windows yet: 
-             file %s, line %d\n", __FILE__, __LINE__);
+    printf ("function not implemented in windows yet: file %s, line %d\n", __FILE__, __LINE__);
     abort();
 #endif
 }
@@ -315,8 +312,7 @@ blk_waitpid_cb(pid_t wpid, int status, void *data)
     wp_data->done = 1;
     ompi_condition_broadcast(wp_data->cond);
 #else
-    printf ("function not implemented in windows yet: 
-             file %s, line %d\n", __FILE__, __LINE__);
+    printf ("function not implemented in windows yet: file %s, line %d\n", __FILE__, __LINE__);
     abort();
 #endif
 }
@@ -352,8 +348,7 @@ find_pending_pid(pid_t pid, bool create)
 
     return NULL;
 #else
-    printf ("function not implemented in windows yet: 
-             file %s, line %d\n", __FILE__, __LINE__);
+    printf ("function not implemented in windows yet: file %s, line %d\n", __FILE__, __LINE__);
     abort();
 #endif
 }
@@ -390,8 +385,7 @@ find_waiting_cb(pid_t pid, bool create)
 
     return NULL;
 #else
-    printf ("function not implemented in windows yet: 
-             file %s, line %d\n", __FILE__, __LINE__);
+    printf ("function not implemented in windows yet: file %s, line %d\n", __FILE__, __LINE__);
     abort();
 #endif
 }
@@ -422,8 +416,7 @@ do_waitall(int options)
         trigger_callback(reg_cb, pending);
     }
 #else
-    printf ("function not implemented in windows yet: 
-             file %s, line %d\n", __FILE__, __LINE__);
+    printf ("function not implemented in windows yet: file %s, line %d\n", __FILE__, __LINE__);
     abort();
 #endif
 }
@@ -439,8 +432,7 @@ trigger_callback(registered_cb_item_t *cb, pending_pids_item_t *pending)
     ompi_list_remove_item(&pending_pids, (ompi_list_item_t*) pending);
     ompi_list_remove_item(&registered_cb, (ompi_list_item_t*) cb);
 #else
-    printf ("function not implemented in windows yet: 
-             file %s, line %d\n", __FILE__, __LINE__);
+    printf ("function not implemented in windows yet: file %s, line %d\n", __FILE__, __LINE__);
     abort();
 #endif
 }
@@ -470,8 +462,7 @@ register_callback(pid_t pid, ompi_rte_wait_fn_t callback, void *data)
 
     return OMPI_SUCCESS;
 #else
-    printf ("function not implemented in windows yet: 
-             file %s, line %d\n", __FILE__, __LINE__);
+    printf ("function not implemented in windows yet: file %s, line %d\n", __FILE__, __LINE__);
     abort();
 #endif
 }
@@ -505,8 +496,7 @@ register_sig_event(void)
  cleanup:
     OMPI_THREAD_UNLOCK(&ev_reg_mutex);
 #else
-    printf ("function not implemented in windows yet: 
-             file %s, line %d\n", __FILE__, __LINE__);
+    printf ("function not implemented in windows yet: file %s, line %d\n", __FILE__, __LINE__);
     abort();
 #endif
 }
