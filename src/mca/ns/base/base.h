@@ -25,6 +25,16 @@
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
+    /** List of names for general use
+     */
+    struct ompi_name_server_namelist_t {
+	ompi_list_item_t item;     /**< Allows this item to be placed on a list */
+	ompi_process_name_t *name;  /**< Name of a process */
+    };
+    typedef struct ompi_name_server_namelist_t ompi_name_server_namelist_t;
+
+    OBJ_CLASS_DECLARATION(ompi_name_server_namelist_t);
+
     int mca_ns_base_open(void);
     int mca_ns_base_select(bool *allow_multi_user_threads,
 			   bool *have_hidden_threads);
@@ -49,6 +59,8 @@ extern "C" {
     char* ns_base_get_vpid_string(const ompi_process_name_t* name);
 
     char* ns_base_get_jobid_string(const ompi_process_name_t* name);
+
+    char* ns_base_convert_jobid_to_string(const mca_ns_base_jobid_t jobid);
 
     char* ns_base_get_cellid_string(const ompi_process_name_t* name);
 

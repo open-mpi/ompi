@@ -188,6 +188,18 @@ char* ns_base_get_jobid_string(const ompi_process_name_t* name)
 }
 
 
+char* ns_base_convert_jobid_to_string(const mca_ns_base_jobid_t jobid)
+{
+    char *jobid_string;
+
+    if (0 > asprintf(&jobid_string, "%0X", jobid)) {
+	return NULL;
+    }
+
+    return jobid_string;
+}
+
+
 char* ns_base_get_cellid_string(const ompi_process_name_t* name)
 {
     char *name_string;

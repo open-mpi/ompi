@@ -35,6 +35,29 @@ ompi_list_t mca_ns_base_components_available;
 mca_ns_base_component_t mca_ns_base_selected_component;
 
 
+/* constructor - used to initialize namelist instance */
+static void ompi_name_server_namelist_construct(ompi_name_server_namelist_t* list)
+{
+    list->name = NULL;
+}
+
+/* destructor - used to free any resources held by instance */
+static void ompi_name_server_namelist_destructor(ompi_name_server_namelist_t* list)
+{
+    if (NULL != list->name) {
+	free(list->name);
+    }
+}
+
+/* define instance of ompi_class_t */
+OBJ_CLASS_INSTANCE(
+		   ompi_name_server_namelist_t,              /* type name */
+		   ompi_list_item_t,                        /* parent "class" name */
+		   ompi_name_server_namelist_construct,    /* constructor */
+		   ompi_name_server_namelist_destructor);  /* destructor */
+
+
+
 /**
  * Function for finding and opening either all MCA components, or the one
  * that was specifically requested via a MCA parameter.
