@@ -55,10 +55,10 @@ do { \
 #define FREE_ARGS(PDATA) \
 if( (PDATA)->args != NULL ) free( (PDATA)->args );
 
-int ompi_ddt_set_args( ompi_datatype_t* pData,
-                      int ci, int ** i, 
-                      int ca, MPI_Aint* a,
-                      int cd, MPI_Datatype* d,int type)
+int32_t ompi_ddt_set_args( ompi_datatype_t* pData,
+                           int32_t ci, int32_t** i, 
+                           int32_t ca, MPI_Aint* a,
+                           int32_t cd, MPI_Datatype* d, int32_t type)
 {
    int pos;
    ompi_ddt_args_t* pArgs;
@@ -172,10 +172,10 @@ int ompi_ddt_set_args( ompi_datatype_t* pData,
    return MPI_SUCCESS;
 }
 
-int ompi_ddt_get_args( const ompi_datatype_t* pData, int which,
-                      int * ci, int * i,
-                      int * ca, MPI_Aint * a,
-                      int * cd, MPI_Datatype * d, int * type)
+int32_t ompi_ddt_get_args( const ompi_datatype_t* pData, int32_t which,
+                           int32_t* ci, int32_t* i,
+                           int32_t* ca, MPI_Aint* a,
+                           int32_t* cd, MPI_Datatype* d, int32_t* type)
 {
    ompi_ddt_args_t* pArgs = pData->args;
 

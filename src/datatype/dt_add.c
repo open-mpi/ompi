@@ -31,8 +31,8 @@
  * be sure that the pdtBase datatype is correctly initialized with all fields
  * set to ZERO if it's a empty datatype.
  */
-int ompi_ddt_add( dt_desc_t* pdtBase, const dt_desc_t* pdtAdd, 
-		  unsigned int count, long disp, long extent )
+int32_t ompi_ddt_add( dt_desc_t* pdtBase, const dt_desc_t* pdtAdd, 
+                      uint32_t count, long disp, long extent )
 {
     uint32_t newLength, place_needed = 0, i;
     short localFlags = 0;  /* no specific options yet */
@@ -97,11 +97,8 @@ int ompi_ddt_add( dt_desc_t* pdtBase, const dt_desc_t* pdtAdd,
     newLength = pdtBase->desc.used + place_needed;
     if( newLength > pdtBase->desc.length ) {
         newLength = ((newLength / DT_INCREASE_STACK) + 1 ) * DT_INCREASE_STACK;
-        printf( "increase the size of the data desc array from %d to %d (old ptr = %p ",
-                pdtBase->desc.length, newLength, (void*)pdtBase->desc.desc );
         pdtBase->desc.desc   = (dt_elem_desc_t*)realloc( pdtBase->desc.desc,
                                                          sizeof(dt_elem_desc_t) * newLength );
-        printf( "new ptr = %p\n", (void*)pdtBase->desc.desc );
         pdtBase->desc.length = newLength;
     }
     pLast = &(pdtBase->desc.desc[pdtBase->desc.used]);

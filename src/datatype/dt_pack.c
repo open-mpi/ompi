@@ -730,13 +730,13 @@ ompi_convertor_pack_no_conv_contig_with_gaps( ompi_convertor_t* pConv,
 }
 
 extern int ompi_ddt_local_sizes[DT_MAX_PREDEFINED];
-int ompi_convertor_init_for_send( ompi_convertor_t* pConv,
-				  uint32_t flags,
-				  const dt_desc_t* datatype,
-				  int count,
-				  const void* pUserBuf,
-				  int starting_pos,
-				  memalloc_fct_t allocfn )
+int32_t ompi_convertor_init_for_send( ompi_convertor_t* pConv,
+				      uint32_t flags,
+				      const dt_desc_t* datatype,
+				      int32_t count,
+				      const void* pUserBuf,
+				      int32_t starting_pos,
+				      memalloc_fct_t allocfn )
 {
     if( !(datatype->flags & DT_FLAG_COMMITED) ) {
         /* this datatype is improper for conversion. Commit it first */
@@ -766,7 +766,7 @@ int ompi_convertor_init_for_send( ompi_convertor_t* pConv,
     return ompi_convertor_create_stack_at_begining( pConv, ompi_ddt_local_sizes );
 }
 
-ompi_convertor_t* ompi_convertor_create( int remote_arch, int mode )
+ompi_convertor_t* ompi_convertor_create( int32_t remote_arch, int32_t mode )
 {
    ompi_convertor_t* pConv = OBJ_NEW(ompi_convertor_t);
 
@@ -796,9 +796,9 @@ static void ompi_convertor_destruct( ompi_convertor_t* pConv )
 OBJ_CLASS_INSTANCE(ompi_convertor_t, ompi_object_t, ompi_convertor_construct, ompi_convertor_destruct );
 
 /* Actually we suppose that we can only do receiver side conversion */
-int ompi_convertor_get_packed_size( const ompi_convertor_t* pConv, uint32_t* pSize )
+int32_t ompi_convertor_get_packed_size( const ompi_convertor_t* pConv, uint32_t* pSize )
 {
-   int ddt_size = 0;
+   int32_t ddt_size = 0;
 
    if( ompi_ddt_type_size( pConv->pDesc, &ddt_size ) != 0 )
       return OMPI_ERROR;
@@ -807,7 +807,7 @@ int ompi_convertor_get_packed_size( const ompi_convertor_t* pConv, uint32_t* pSi
    return OMPI_SUCCESS;
 }
 
-int ompi_convertor_get_unpacked_size( const ompi_convertor_t* pConv, uint32_t* pSize )
+int32_t ompi_convertor_get_unpacked_size( const ompi_convertor_t* pConv, uint32_t* pSize )
 {
    int i;
    dt_desc_t* pData = pConv->pDesc;

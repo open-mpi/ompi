@@ -34,8 +34,8 @@
  *			- communicator
  *	Returns:	- MPI_SUCCESS or error code
  */
-int ompi_ddt_sndrcv( void *sbuf, int scount, const ompi_datatype_t* sdtype,
-                     void *rbuf, int rcount, const ompi_datatype_t* rdtype)
+int32_t ompi_ddt_sndrcv( void *sbuf, int32_t scount, const ompi_datatype_t* sdtype,
+                         void *rbuf, int32_t rcount, const ompi_datatype_t* rdtype)
 {
    int err;
    ompi_convertor_t *send_convertor, *recv_convertor;

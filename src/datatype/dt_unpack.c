@@ -596,17 +596,17 @@ conversion_fct_t ompi_ddt_copy_functions[DT_MAX_PREDEFINED] = {
 /* Should we supply buffers to the convertor or can we use directly
  * the user buffer ?
  */
-int ompi_convertor_need_buffers( ompi_convertor_t* pConvertor )
+int32_t ompi_convertor_need_buffers( ompi_convertor_t* pConvertor )
 {
     if( pConvertor->flags & DT_FLAG_CONTIGUOUS ) return 0;
     return 1;
 }
 
 extern int ompi_ddt_local_sizes[DT_MAX_PREDEFINED];
-int ompi_convertor_init_for_recv( ompi_convertor_t* pConv, uint32_t flags,
-				  const dt_desc_t* datatype, int count,
-				  const void* pUserBuf, int starting_point,
-				  memalloc_fct_t allocfn )
+int32_t ompi_convertor_init_for_recv( ompi_convertor_t* pConv, uint32_t flags,
+				      const dt_desc_t* datatype, int32_t count,
+				      const void* pUserBuf, int32_t starting_point,
+				      memalloc_fct_t allocfn )
 {
     if( !(datatype->flags & DT_FLAG_COMMITED) ) {
         /* this datatype is improper for conversion. Commit it first */
@@ -640,7 +640,7 @@ int ompi_convertor_init_for_recv( ompi_convertor_t* pConv, uint32_t flags,
  *   positive = number of basic elements inside
  *   negative = some error occurs
  */
-int ompi_ddt_get_element_count( const dt_desc_t* datatype, int iSize )
+int32_t ompi_ddt_get_element_count( const dt_desc_t* datatype, int32_t iSize )
 {
     dt_stack_t* pStack;   /* pointer to the position on the stack */
     uint32_t pos_desc;    /* actual position in the description of the derived datatype */
@@ -704,8 +704,8 @@ int ompi_ddt_get_element_count( const dt_desc_t* datatype, int iSize )
     return nbElems;
 }
 
-int ompi_ddt_copy_content_same_ddt( const dt_desc_t* datatype, int count,
-                                    char* pDestBuf, const char* pSrcBuf )
+int32_t ompi_ddt_copy_content_same_ddt( const dt_desc_t* datatype, int32_t count,
+                                        char* pDestBuf, const char* pSrcBuf )
 {
     dt_stack_t* pStack;   /* pointer to the position on the stack */
     int pos_desc;         /* actual position in the description of the derived datatype */

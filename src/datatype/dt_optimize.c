@@ -44,8 +44,8 @@ do { \
   nbElems++; \
 } while(0)
 
-int ompi_ddt_optimize_short( dt_desc_t* pData, int count, 
-			     dt_type_desc_t* pTypeDesc )
+int32_t ompi_ddt_optimize_short( dt_desc_t* pData, int32_t count, 
+			         dt_type_desc_t* pTypeDesc )
 {
     dt_elem_desc_t* pElemDesc;
     long lastDisp = 0;
@@ -290,7 +290,7 @@ static int ompi_ddt_unroll( dt_desc_t* pData, int count )
 }
 #endif  /* COMPILE_USELSS_CODE */
 
-int ompi_ddt_commit( dt_desc_t** data )
+int32_t ompi_ddt_commit( dt_desc_t** data )
 {
     dt_desc_t* pData = (dt_desc_t*)*data;
     dt_endloop_desc_t* pLast = (dt_endloop_desc_t*)&(pData->desc.desc[pData->desc.used]);

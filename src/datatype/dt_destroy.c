@@ -17,7 +17,7 @@
 #include "datatype/datatype.h"
 #include "datatype/datatype_internal.h"
 
-int ompi_ddt_destroy( dt_desc_t** dt )
+int32_t ompi_ddt_destroy( dt_desc_t** dt )
 {
    dt_desc_t* pData = *dt;
 

@@ -277,7 +277,7 @@ int ompi_ddt_local_sizes[DT_MAX_PREDEFINED];
         strncpy( (PDATA)->name, MPIDDTNAME, MPI_MAX_OBJECT_NAME );      \
     } while(0)
 
-int ompi_ddt_init( void )
+int32_t ompi_ddt_init( void )
 {
     int i;
 
@@ -463,7 +463,7 @@ int ompi_ddt_init( void )
     return OMPI_SUCCESS;
 }
 
-int ompi_ddt_finalize( void )
+int32_t ompi_ddt_finalize( void )
 {
     int i;
 
@@ -545,15 +545,15 @@ static int __dump_data_desc( dt_elem_desc_t* pDesc, int nbElems, char* ptr )
         if( pDesc->type == DT_LOOP )
             index += sprintf( ptr + index, "%15s %d times the next %d elements extent %d\n",
                               ompi_ddt_basicDatatypes[pDesc->type]->name,
-                              pDesc->count, (int)pDesc->disp, pDesc->extent );
+                              (int)pDesc->count, (int)pDesc->disp, (int)pDesc->extent );
 	else if( pDesc->type == DT_END_LOOP )
 	    index += sprintf( ptr + index, "%15s prev %d elements total true extent %d size of data %d\n",
                               ompi_ddt_basicDatatypes[pDesc->type]->name,
-                              pDesc->count, (int)pDesc->disp, pDesc->extent );
+                              (int)pDesc->count, (int)pDesc->disp, (int)pDesc->extent );
         else
             index += sprintf( ptr + index, "%15s count %d disp 0x%lx (%ld) extent %d\n",
                               ompi_ddt_basicDatatypes[pDesc->type]->name,
-                              pDesc->count, pDesc->disp, pDesc->disp, pDesc->extent );
+                              (int)pDesc->count, pDesc->disp, pDesc->disp, (int)pDesc->extent );
         pDesc++;
     }
     return index;
@@ -582,10 +582,10 @@ void ompi_ddt_dump( const dt_desc_t* pData )
     index += sprintf( buffer, "Datatype %p size %ld align %d id %d length %d used %d\n\
    true_lb %ld true_ub %ld (true_extent %ld) lb %ld ub %ld (extent %ld)\n \
    nbElems %d loops %d flags %X (",
-                 (void*)pData, pData->size, pData->align, pData->id, pData->desc.length, pData->desc.used,
+                 (void*)pData, pData->size, (int)pData->align, pData->id, (int)pData->desc.length, (int)pData->desc.used,
                  pData->true_lb, pData->true_ub, pData->true_ub - pData->true_lb,
                  pData->lb, pData->ub, pData->ub - pData->lb,
-                 pData->nbElems, pData->btypes[DT_LOOP], pData->flags );
+                 (int)pData->nbElems, (int)pData->btypes[DT_LOOP], (int)pData->flags );
     /* dump the flags */
     if( pData->flags == DT_FLAG_BASIC ) index += sprintf( buffer + index, "basic datatype " );
     else {

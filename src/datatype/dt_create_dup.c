@@ -17,7 +17,7 @@
 #include "datatype/datatype.h"
 #include "datatype/datatype_internal.h"
 
-int ompi_ddt_duplicate( const dt_desc_t* oldType, dt_desc_t** newType )
+int32_t ompi_ddt_duplicate( const dt_desc_t* oldType, dt_desc_t** newType )
 {
     dt_desc_t* pdt = ompi_ddt_create( oldType->desc.used );
     void* temp = pdt->desc.desc; /* temporary copy of the desc pointer */
@@ -38,8 +38,8 @@ int ompi_ddt_duplicate( const dt_desc_t* oldType, dt_desc_t** newType )
     return OMPI_SUCCESS;
 }
 
-int ompi_ddt_create_contiguous( int count, const dt_desc_t* oldType, 
-				dt_desc_t** newType )
+int32_t ompi_ddt_create_contiguous( int count, const dt_desc_t* oldType, 
+				    dt_desc_t** newType )
 {
    dt_desc_t* pdt = ompi_ddt_create( oldType->desc.used + 2 );
    ompi_ddt_add( pdt, oldType, count, 0, (oldType->ub - oldType->lb) );

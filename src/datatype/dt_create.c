@@ -70,7 +70,7 @@ static void __destroy_ddt_struct( dt_desc_t* pData )
 
 OBJ_CLASS_INSTANCE(ompi_datatype_t, ompi_object_t, __get_free_dt_struct, __destroy_ddt_struct );
 
-dt_desc_t* ompi_ddt_create( int expectedSize )
+dt_desc_t* ompi_ddt_create( int32_t expectedSize )
 {
     dt_desc_t* pdt = (dt_desc_t*)OBJ_NEW(ompi_datatype_t);
 
@@ -82,7 +82,7 @@ dt_desc_t* ompi_ddt_create( int expectedSize )
     return pdt;
 }
 
-int ompi_ddt_create_resized( const dt_desc_t* oldType, long lb, long extent, dt_desc_t** newType )
+int32_t ompi_ddt_create_resized( const dt_desc_t* oldType, long lb, long extent, dt_desc_t** newType )
 {
     ompi_ddt_duplicate( oldType, newType );
     (*newType)->lb = lb;
