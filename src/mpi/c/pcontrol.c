@@ -26,8 +26,8 @@ int MPI_Pcontrol(const int level, ...)
     OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
   }
 
-  /* This function is not yet implemented */
+  /* There's nothing to do here */
 
-  return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER, FUNC_NAME);
+  return MPI_SUCCESS;
 }
 
