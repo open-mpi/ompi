@@ -17,7 +17,7 @@
 int ompi_ddt_add( dt_desc_t* pdtBase, dt_desc_t* pdtAdd, unsigned int count, long disp, long extent )
 {
    int newLength, place_needed = 0, i;
-   short localFlags;
+   short localFlags = 0;  /* no specific options yet */
    dt_elem_desc_t *pLast, *pLoop = NULL;
    long lb, ub;
 
