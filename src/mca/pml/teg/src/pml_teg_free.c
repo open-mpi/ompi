@@ -24,6 +24,8 @@ int mca_pml_teg_free(lam_request_t** request)
             lam_free_list_return(&mca_pml_teg.teg_recv_requests, (lam_list_item_t*)pml_request);
             break;
             }
+        default:
+            break;
         }
     }
     *request = NULL;
