@@ -91,6 +91,25 @@ struct __dt_stack {
     long disp;
 };
 
+/* These 2 typedefs are the same as the dt_elem_desc_t except
+ * for the name of the fields.
+ */
+typedef struct __dt_loop_desc {
+      u_int16_t flags;  /**< flags for the record */
+      u_int16_t type;   /**< the basic data type id */
+      u_int32_t count;  /**< number of elements */
+      long      disp;   /**< displacement of the first element */
+      u_int32_t extent; /**< extent of each element */
+} dt_loop_desc_t;
+
+typedef struct __dt_endloop_desc {
+      u_int16_t flags;  /**< flags for the record */
+      u_int16_t type;   /**< the basic data type id */
+      u_int32_t count;  /**< number of elements */
+      long      disp;   /**< displacement of the first element */
+      u_int32_t extent; /**< extent of each element */
+} dt_endloop_desc_t;
+
 /* keep the last 16 bits free for data flags */
 #define CONVERTOR_USELESS          0x00010000
 #define CONVERTOR_RECV             0x00020000
@@ -104,12 +123,12 @@ struct __dt_stack {
 typedef struct {
       float r;
       float i;
-} complex_float_t;
+} lam_complex_float_t;
 
 typedef struct {
       double r;
       double i;
-} complex_double_t;
+} lam_complex_double_t;
 
 extern dt_desc_t basicDatatypes[DT_MAX_PREDEFINED];
 

@@ -390,8 +390,8 @@ COPY_TYPE( long, long )
 /*COPY_TYPE( double, double );*/
 COPY_TYPE( long_long, long long )
 COPY_TYPE( long_double, long double )
-COPY_TYPE( complex_float, complex_float_t )
-COPY_TYPE( complex_double, complex_double_t )
+COPY_TYPE( complex_float, lam_complex_float_t )
+COPY_TYPE( complex_double, lam_complex_double_t )
 
 static int copy_double( unsigned int count,
                         char* from, unsigned int from_len, long from_extent,
