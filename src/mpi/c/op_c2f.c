@@ -6,6 +6,9 @@
 
 #include "mpi.h"
 #include "mpi/c/bindings.h"
+#include "op/op.h"
+#include "errhandler/errhandler.h"
+#include "communicator/communicator.h"
 
 #if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILING_DEFINES
 #pragma weak MPI_Op_c2f = PMPI_Op_c2f
@@ -15,6 +18,19 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
-MPI_Fint MPI_Op_c2f(MPI_Op op) {
-    return (MPI_Fint)0;
+MPI_Fint MPI_Op_c2f(MPI_Op op) 
+{
+  /* Error checking */
+
+  if (MPI_PARAM_CHECK) {
+    if (NULL == op ||
+        MPI_OP_NULL == op) {
+      return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
+                                   "MPI_Op_c2f");
+    }
+  }
+
+  /* All done */
+
+  return (MPI_Fint) op->o_f_to_c_index;
 }

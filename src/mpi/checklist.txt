@@ -204,11 +204,11 @@ MPI_Is_thread_main
 MPI_Keyval_create
 MPI_Keyval_free
 MPI_Lookup_name
-MPI_Op_c2f
-MPI_Op_create
+MPI_Op_c2f                  DONE
+MPI_Op_create               DONE     
 MPI_Open_port
-MPI_Op_f2c
-MPI_Op_free
+MPI_Op_f2c                  DONE
+MPI_Op_free                 DONE
 MPI_Pack_external		George
 MPI_Pack_external_size		George
 MPI_Pack			George
