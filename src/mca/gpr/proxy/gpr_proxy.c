@@ -87,7 +87,7 @@ int gpr_proxy_put(ompi_registry_mode_t mode, char *segment,
     char **tokptr;
     int recv_tag, i, ret;
     int32_t num_tokens, object_size;
-    int16_t response;
+    int32_t response;
 
     if (mca_gpr_proxy_debug) {
 	ompi_output(0, "gpr_proxy_put: entered for segment %s 1st token %s", segment, *tokens);
