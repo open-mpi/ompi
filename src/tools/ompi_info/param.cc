@@ -59,7 +59,7 @@ string ompi_info::path_sysconfdir = "sysconfdir";
 extern ompi_value_array_t mca_base_params;
 
 
-void ompi_info::do_params(bool want_all)
+void ompi_info::do_params(bool want_all, bool want_internal)
 {
   unsigned int count;
   string type, component;
@@ -84,7 +84,7 @@ void ompi_info::do_params(bool want_all)
 
   if (want_all) {
     for (i = 0; i < mca_types.size(); ++i) {
-      show_mca_params(mca_types[i], component_all, param_all);
+      show_mca_params(mca_types[i], component_all, param_all, want_internal);
     }
   } else {
     for (i = 0; i < count; ++i) {
@@ -105,14 +105,14 @@ void ompi_info::do_params(bool want_all)
         exit(1);
       }
 
-      show_mca_params(type, component, param_all);
+      show_mca_params(type, component, param_all, want_internal);
     }
   }
 }
 
 
 void ompi_info::show_mca_params(const string& type, const string& component, 
-                              const string& param)
+                                const string& param, bool want_internal)
 {
   size_t i, size;
   char *value_string, empty[] = "\0";
@@ -127,7 +127,8 @@ void ompi_info::show_mca_params(const string& type, const string& component,
 
   for (i = 0; i < size; ++i) {
     item = &(OMPI_VALUE_ARRAY_GET_ITEM(&mca_base_params, mca_base_param_t, i));
-    if (type == item->mbp_type_name) {
+    if (type == item->mbp_type_name &&
+        (!item->mbp_internal || want_internal)) {
       if (component == component_all || 
           NULL == item->mbp_component_name ||
           (NULL != item->mbp_component_name &&

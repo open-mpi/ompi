@@ -80,26 +80,28 @@ int main(int argc, char *argv[])
     exit(ret);
   }
   ompi_cmd_line_make_opt(cmd_line, 'v', "version", 2, 
-                        "Show version of Open MPI or a component");
+                         "Show version of Open MPI or a component");
   ompi_cmd_line_make_opt(cmd_line, '\0', "param", 2, 
-                        "Show MCA parameters");
+                         "Show MCA parameters");
+  ompi_cmd_line_make_opt(cmd_line, '\0', "internal", 0, 
+                         "Show internal MCA parameters (not meant to be modified by users");
   ompi_cmd_line_make_opt(cmd_line, '\0', "path", 1, 
-                        "Show paths that Open MPI was configured with");
+                         "Show paths that Open MPI was configured with");
   ompi_cmd_line_make_opt(cmd_line, '\0', "arch", 0, 
-                        "Show architecture Open MPI was compiled on");
+                         "Show architecture Open MPI was compiled on");
   ompi_cmd_line_make_opt(cmd_line, 'c', "config", 0, 
-                        "Show configuration options");
+                         "Show configuration options");
   ompi_cmd_line_make_opt(cmd_line, 'h', "help", 0, 
-                        "Show this help message");
+                         "Show this help message");
   ompi_cmd_line_make_opt(cmd_line, '\0', "pretty", 0, 
-                        "Display output in 'prettyprint' format (default)");
+                         "Display output in 'prettyprint' format (default)");
   ompi_cmd_line_make_opt(cmd_line, '\0', "parsable", 0, 
-                        "Display output in parsable format");
+                         "Display output in parsable format");
   ompi_cmd_line_make_opt(cmd_line, '\0', "hostname", 0, 
-                        "Show the hostname that Open MPI was configured "
-                        "and built on");
+                         "Show the hostname that Open MPI was configured "
+                         "and built on");
   ompi_cmd_line_make_opt(cmd_line, 'a', "all", 0, 
-                        "Show all configuration options and MCA parameters");
+                         "Show all configuration options and MCA parameters");
 
   // Call some useless functions in order to guarantee to link in some
   // global variables.  Only check the return value so that the
@@ -177,7 +179,7 @@ int main(int argc, char *argv[])
     acted = true;
   }
   if (want_all || ompi_cmd_line_is_taken(cmd_line, "param")) {
-    do_params(want_all);
+    do_params(want_all, ompi_cmd_line_is_taken(cmd_line, "internal"));
     acted = true;
   }
 
