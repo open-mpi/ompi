@@ -337,7 +337,7 @@ int orte_gpr_replica_add_values(orte_gpr_notify_data_t **data,
             for (j=0; j < values[i]->num_tokens; j++) {
                 ompi_output(0, "\ttoken num: %d\tToken: %s", j, values[i]->tokens[j]);
             }
-            ompi_output(0, "\tGot %d keyals:", values[i]->cnt);
+            ompi_output(0, "\tGot %d keyvals:", values[i]->cnt);
 /*            for (j=0; j < values[i]->cnt; j++) {
                 ompi_output(0, "\tValue num: %d\tKey: %s", j, (values[i]->keyvals[j])->key);
                 orte_gpr_base_dump_keyval_value(values[i]->keyvals[j], 0);

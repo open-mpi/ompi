@@ -265,12 +265,13 @@ static void orte_gpr_replica_counter_construct(orte_gpr_replica_counter_t* cntr)
     cntr->seg = NULL;
     cntr->cptr = NULL;
     cntr->iptr = NULL;
-    cntr->trigger_level = 0;
+    OBJ_CONSTRUCT(&(cntr->trigger_level), orte_gpr_replica_itagval_t);
 }
 
 /* destructor - used to free any resources held by instance */
-static void orte_gpr_replica_counter_destructor(orte_gpr_replica_counter_t* targ)
+static void orte_gpr_replica_counter_destructor(orte_gpr_replica_counter_t* cntr)
 {
+    OBJ_DESTRUCT(&(cntr->trigger_level));
 }
 
 /* define instance of ompi_class_t */

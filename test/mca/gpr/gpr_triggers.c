@@ -60,21 +60,16 @@ static void test_cbfunc2(orte_gpr_notify_data_t *data, void *user_tag);
 static void test_cbfunc3(orte_gpr_notify_data_t *data, void *user_tag);
 static void test_cbfunc4(orte_gpr_notify_data_t *data, void *user_tag);
 static void test_cbfunc5(orte_gpr_notify_data_t *data, void *user_tag);
+static void test_cbfunc6(orte_gpr_notify_data_t *data, void *user_tag);
+
+static int test1(void);
+static int test2(void);
 
 
 int main(int argc, char **argv)
 {
-    int rc, num_names, num_found;
-    int i, j, cnt, ret;
-    orte_gpr_value_t *values, value, trig, *trigs;
-    orte_gpr_subscription_t *subscriptions[5];
-    orte_gpr_notify_id_t sub[5];
-    char* keys[] = {
-        /* changes to this ordering need to be reflected in code below */
-        "setpoint",
-        "counter",
-    };
-
+    int rc=0;
+    
     test_init("test_gpr_replica_trigs");
 
     if (getenv("TEST_WRITE_TO_FILE") != NULL) {
@@ -93,7 +88,7 @@ int main(int argc, char **argv)
     
     /* Open up the output streams */
     if (!ompi_output_init()) {
-        return OMPI_ERROR;
+        exit(1);
     }
                                                                                                                    
     /* 
@@ -105,13 +100,13 @@ int main(int argc, char **argv)
     ompi_malloc_init();
 
     /* Ensure the system_info structure is instantiated and initialized */
-    if (ORTE_SUCCESS != (ret = orte_sys_info())) {
-        return ret;
+    if (ORTE_SUCCESS != orte_sys_info()) {
+        exit(1);
     }
 
     /* Ensure the process info structure is instantiated and initialized */
-    if (ORTE_SUCCESS != (ret = orte_proc_info())) {
-        return ret;
+    if (ORTE_SUCCESS != orte_proc_info()) {
+        exit(1);
     }
     
     orte_process_info.seed = true;
@@ -152,6 +147,59 @@ int main(int argc, char **argv)
         exit (1);
     }
     
+    /* test triggers that compare two counters to each other */
+    if (ORTE_SUCCESS == test1()) {
+        fprintf(test_out, "triggers: compare two counters successful\n");
+    } else {
+        fprintf(test_out, "triggers: compare two counters failed\n");
+        rc = 1;
+    }
+    
+    /* test triggers that fire at a level */
+    if (ORTE_SUCCESS == test2()) {
+        fprintf(test_out, "triggers: trigger at level successful\n");
+    } else {
+        fprintf(test_out, "triggers: trigger at level failed\n");
+        rc = 1;
+    }
+    
+    /* cleanup and finalize */
+    orte_dps_close();
+    orte_gpr_base_close();
+    orte_sys_info_finalize();
+    orte_proc_info_finalize();
+    mca_base_close();
+    ompi_malloc_finalize();
+    ompi_output_finalize();
+    
+
+    fclose( test_out );
+/*    result = system( cmd_str );
+    if( result == 0 ) {
+        test_success();
+    }
+    else {
+      test_failure( "test_gpr_replica failed");
+    }
+*/
+    test_finalize();
+    unlink("test_gpr_replica_out");
+
+    return rc;
+}
+
+static int test1(void) 
+{
+    int rc, i;
+    orte_gpr_value_t *values, value, trig, *trigs;
+    orte_gpr_subscription_t *subscriptions[5];
+    orte_gpr_notify_id_t sub[5];
+    char* keys[] = {
+        /* changes to this ordering need to be reflected in code below */
+        "setpoint",
+        "counter",
+    };
+
     /* setup a pair of counters on the registry - one is the actual
      * counter, and the other will hold the end condition when the
      * trigger(s) should fire
@@ -428,29 +476,162 @@ int main(int argc, char **argv)
     orte_gpr.dump_all(0);
     OBJ_DESTRUCT(&value);
     
-    orte_dps_close();
-    orte_gpr_base_close();
-    orte_sys_info_finalize();
-    orte_proc_info_finalize();
-    mca_base_close();
-    ompi_malloc_finalize();
-    ompi_output_finalize();
-    
-
-    fclose( test_out );
-/*    result = system( cmd_str );
-    if( result == 0 ) {
-        test_success();
-    }
-    else {
-      test_failure( "test_gpr_replica failed");
-    }
-*/
-    test_finalize();
-    unlink("test_gpr_replica_out");
-
-    return(0);
+    return ORTE_SUCCESS;
 }
+
+int test2(void)
+{
+    int rc, i;
+    orte_gpr_value_t *values, value, trig, *trigs;
+    orte_gpr_subscription_t *subscription;
+    orte_gpr_notify_id_t sub;
+
+    /* setup a counter on the registry that the trigger will later refer
+     * to when defining the level at which to fire
+     */
+    OBJ_CONSTRUCT(&value, orte_gpr_value_t);
+    value.addr_mode = ORTE_GPR_TOKENS_XAND | ORTE_GPR_KEYS_OR;
+    value.segment = strdup("test-segment");
+    value.tokens = (char**)malloc(sizeof(char*));
+    if (NULL == value.tokens) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        OBJ_DESTRUCT(&value);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    value.tokens[0] = strdup("test-level-trigger");
+    value.num_tokens = 1;
+    value.cnt = 1;
+    value.keyvals = (orte_gpr_keyval_t**)malloc(sizeof(orte_gpr_keyval_t*));
+    if (NULL == value.keyvals) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        OBJ_DESTRUCT(&value);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    value.keyvals[0] = OBJ_NEW(orte_gpr_keyval_t);
+    if (NULL == value.keyvals[0]) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        OBJ_DESTRUCT(&value);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    value.keyvals[0]->key = strdup("level-counter");
+    value.keyvals[0]->type = ORTE_UINT32;
+    value.keyvals[0]->value.ui32 = 0;
+    
+    values = &value;
+    
+    fprintf(test_out, "putting level test counter on registry\n");
+    
+    /* put the counters on the registry */
+    if (ORTE_SUCCESS != (rc = orte_gpr.put(1, &values))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&value);
+        return rc;
+    }
+    OBJ_DESTRUCT(&value); /* clean up */
+    
+    /* setup a subscription that defines a set of data that is to be
+     * returned to the corresponding callback function
+     */
+    subscription = OBJ_NEW(orte_gpr_subscription_t);
+    subscription->addr_mode = ORTE_GPR_TOKENS_OR;
+    subscription->segment = strdup("test-segment");
+    subscription->user_tag = NULL;
+    /* ask for the stupid-value-one data from the first
+     * container ONLY
+     */
+    subscription->num_tokens = 2;
+    subscription->tokens = (char**)malloc(2*sizeof(char*));
+    for (i=0; i < 2; i++) {
+        asprintf(&(subscription->tokens[i]), "dummy%d", i);
+    }
+    subscription->num_keys = 1;
+    subscription->keys =(char**)malloc(sizeof(char*));
+    subscription->keys[0] = strdup("stupid-value-one");
+    subscription->cbfunc = test_cbfunc6;
+
+    /* setup the trigger information - want trigger to fire when
+     * a specific counter reaches a specified value
+     */
+    OBJ_CONSTRUCT(&trig, orte_gpr_value_t);
+    trig.addr_mode = ORTE_GPR_TOKENS_XAND;
+    trig.segment = strdup("test-segment");
+    trig.tokens = (char**)malloc(sizeof(char*));
+    if (NULL == trig.tokens) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        OBJ_RELEASE(subscription);
+        OBJ_DESTRUCT(&trig);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    trig.tokens[0] = strdup("test-level-trigger");
+    trig.num_tokens = 1;
+    trig.cnt = 1;
+    trig.keyvals = (orte_gpr_keyval_t**)malloc(sizeof(orte_gpr_keyval_t*));
+    trig.keyvals[0] = OBJ_NEW(orte_gpr_keyval_t);
+    trig.keyvals[0]->key = strdup("level-counter");
+    trig.keyvals[0]->type = ORTE_INT32;
+    trig.keyvals[0]->value.i32 = 2;
+
+   fprintf(test_out, "setting level trigger\n");
+   
+   trigs = &trig;
+   
+   /* enter subscription */
+   rc = orte_gpr.subscribe(
+         ORTE_GPR_TRIG_AT_LEVEL | ORTE_GPR_TRIG_MONITOR_ONLY,
+         1, &subscription,
+         1, &trigs,
+         &sub);
+
+    orte_gpr.dump_triggers(0);
+    
+    /* cleanup */
+    OBJ_RELEASE(subscription);
+    OBJ_DESTRUCT(&trig);
+    
+    fprintf(test_out, "incrementing until level trigger\n");
+    /* increment the value in the counter until the trig fires */
+    OBJ_CONSTRUCT(&value, orte_gpr_value_t);
+    value.addr_mode = ORTE_GPR_TOKENS_XAND | ORTE_GPR_KEYS_OR;
+    value.segment = strdup("test-segment");
+    value.tokens = (char**)malloc(sizeof(char*));
+    if (NULL == value.tokens) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        OBJ_DESTRUCT(&value);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    value.tokens[0] = strdup("test-level-trigger");
+    value.num_tokens = 1;
+    value.keyvals = (orte_gpr_keyval_t**)malloc(sizeof(orte_gpr_keyval_t*));
+    if (NULL == value.keyvals) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        OBJ_DESTRUCT(&value);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    value.cnt = 1;
+    value.keyvals[0] = OBJ_NEW(orte_gpr_keyval_t);
+    if (NULL == value.keyvals[0]) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        OBJ_DESTRUCT(&value);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    value.keyvals[0]->key = strdup("level-counter");
+    value.keyvals[0]->type = ORTE_NULL;
+    
+    for (i=0; i < 10; i++) {
+        fprintf(test_out, "\tincrement level-counter\n");
+        if (ORTE_SUCCESS != (rc = orte_gpr.increment_value(&value))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_DESTRUCT(&value);
+            return rc;
+        }
+    }
+
+    orte_gpr.dump_all(0);
+    OBJ_DESTRUCT(&value);
+    
+    return ORTE_SUCCESS;
+}
+
 
 void test_cbfunc1(orte_gpr_notify_data_t *data, void *tag)
 {
@@ -483,6 +664,13 @@ void test_cbfunc4(orte_gpr_notify_data_t *data, void *tag)
 void test_cbfunc5(orte_gpr_notify_data_t *data, void *tag)
 {
     fprintf(test_out, "\n\n\nTRIGGER FIRED AND RECEIVED AT CALLBACK 5\n");
+    
+    orte_gpr.dump_notify_data(data, 0);
+}
+
+void test_cbfunc6(orte_gpr_notify_data_t *data, void *tag)
+{
+    fprintf(test_out, "\n\n\nTRIGGER FIRED AND RECEIVED AT CALLBACK 6\n");
     
     orte_gpr.dump_notify_data(data, 0);
 }

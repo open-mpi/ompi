@@ -208,7 +208,9 @@ int orte_gpr_replica_subscribe_fn(orte_gpr_notify_action_t action, int num_subs,
                     cntr->seg = seg;
                     cntr->cptr = cptr2;
                     cntr->iptr = iptr;
-                    if (ORTE_SUCCESS != (rc = orte_gpr_replica_get_value((void*)(&(cntr->trigger_level)), iptr))) {
+                    cntr->trigger_level.type = (trigs[j]->keyvals[i])->type;
+                    if (ORTE_SUCCESS != (rc = orte_gpr_replica_xfer_payload(&(cntr->trigger_level.value),
+                            &((trigs[j]->keyvals[i])->value), (trigs[j]->keyvals[i])->type))) {
                         ORTE_ERROR_LOG(rc);
                         goto CLEANUP;
                     }
@@ -251,7 +253,9 @@ int orte_gpr_replica_subscribe_fn(orte_gpr_notify_action_t action, int num_subs,
                                 cntr->seg = seg;
                                 cntr->cptr = cptr[k];
                                 cntr->iptr = iptr;
-                                if (ORTE_SUCCESS != (rc = orte_gpr_replica_get_value((void*)(&(cntr->trigger_level)), iptr))) {
+                                cntr->trigger_level.type = (trigs[j]->keyvals[i])->type;
+                                if (ORTE_SUCCESS != (rc = orte_gpr_replica_xfer_payload(&(cntr->trigger_level.value),
+                                        &((trigs[j]->keyvals[i])->value), (trigs[j]->keyvals[i])->type))) {
                                     ORTE_ERROR_LOG(rc);
                                     goto CLEANUP;
                                 }
