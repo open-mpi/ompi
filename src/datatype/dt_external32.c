@@ -13,9 +13,9 @@
  * $HEADER$
  */
 #include "ompi_config.h"
-#include "datatype.h"
-#include "datatype_internal.h"
-#include "dt_arch.h"
+#include "datatype/datatype.h"
+#include "datatype/datatype_internal.h"
+#include "datatype/dt_arch.h"
 
 /* From the MPI standard. external32 use the following types:
  *   Type Length
