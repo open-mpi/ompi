@@ -230,7 +230,9 @@ static void mca_base_modex_registry_callback(
          * Lookup the process.
          */
         ompi_unpack(buffer, &proc_name, 1, OMPI_NAME);
-        
+ ompi_output(0, "[%d,%d,%d] yahoo! modex processing data for proc [%d,%d,%d]",
+    OMPI_NAME_ARGS(*ompi_rte_get_self()), OMPI_NAME_ARGS(proc_name));
+           
         proc = ompi_proc_find_and_add(&proc_name, &isnew);
 
         if(NULL == proc)
@@ -337,9 +339,6 @@ static int mca_base_modex_subscribe(ompi_process_name_t* name)
     }
     OMPI_UNLOCK(&mca_base_modex_lock);
 
-ompi_output(0, "[%d,%d,%d] modex_subscribe for [%d,%d,%d]",
-    OMPI_NAME_ARGS(*ompi_rte_get_self()), OMPI_NAME_ARGS(*name));
- 
     /* otherwise - subscribe */
     asprintf(&segment, "%s-%s", OMPI_RTE_MODEX_SEGMENT, mca_ns_base_get_jobid_string(name));
     rctag = ompi_registry.subscribe(
@@ -454,8 +453,6 @@ int mca_base_modex_recv(
         OMPI_THREAD_UNLOCK(&proc->proc_lock);
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
-
-ompi_output(0, "[%d,%d,%d] modex_recv: waiting for data", OMPI_NAME_ARGS(*ompi_rte_get_self()));
 
     /* wait until data is available */
     while(modex_module->module_data_avail == false) {

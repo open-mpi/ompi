@@ -59,10 +59,12 @@ ompi_rte_decode_startup_msg(int status, ompi_process_name_t *peer,
     ompi_registry_object_t *data_object;
     ompi_registry_object_size_t data_obj_size;
     int32_t num_objects, i;
+    size_t buf_size;
 
     if (ompi_rte_debug_flag) {
-		ompi_output(0, "[%d,%d,%d] decoding startup msg",
-		    OMPI_NAME_ARGS(*ompi_rte_get_self()));
+        ompi_buffer_size(msg, &buf_size);
+		ompi_output(0, "[%d,%d,%d] decoding startup msg of length %d",
+		    OMPI_NAME_ARGS(*ompi_rte_get_self()), (int)buf_size);
     }
 
     while (0 < ompi_unpack_string(msg, &segment)) {

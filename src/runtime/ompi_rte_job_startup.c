@@ -37,6 +37,7 @@ int ompi_rte_job_startup(mca_ns_base_jobid_t jobid)
     ompi_name_server_namelist_t *ptr;
     ompi_rte_process_status_t *proc_status;
     int num_procs;
+    size_t buf_size;
 
     if (ompi_rte_debug_flag) {
         	ompi_output(0, "[%d,%d,%d] entered rte_job_startup for job %d",
@@ -49,8 +50,9 @@ int ompi_rte_job_startup(mca_ns_base_jobid_t jobid)
     ompi_registry.triggers_active(jobid);
 
     if (ompi_rte_debug_flag) {
-        	ompi_output(0, "[%d,%d,%d] rte_job_startup: sending startup message to %d recipients",
-        		    OMPI_NAME_ARGS(*ompi_rte_get_self()),
+        ompi_buffer_size(startup_msg, &buf_size);
+        	ompi_output(0, "[%d,%d,%d] rte_job_startup: sending startup message of size %d to %d recipients",
+        		    OMPI_NAME_ARGS(*ompi_rte_get_self()), (int)buf_size,
         		    ompi_list_get_size(recipients));
     }
 
