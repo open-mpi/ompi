@@ -25,7 +25,7 @@ void lam_sgl_init(lam_seg_list_t *slist)
 
 void lam_sgl_destroy(lam_seg_list_t *slist)
 {
-    lam_list_empty_list(&(slist->sgl_list));
+    lam_list_destroy(&(slist->sgl_list));
     SUPER_DESTROY(slist, lam_seg_list_cls.cls_parent);
 }
 
