@@ -233,7 +233,7 @@ EOF
         # timestamp changed on $outfile_real (similar to the way AC
         # handles AC_CONFIG_HEADER files).
 
-        diff $outfile $outfile_real 2>&1 > /dev/null
+        diff $outfile $outfile_real > /dev/null 2>&1
         if test "$?" != "0"; then
             mv $outfile $outfile_real
         else
