@@ -75,6 +75,11 @@ int ompi_comm_init(void)
              strlen("MPI_COMM_WORLD")+1 );
     ompi_mpi_comm_world.c_flags |= OMPI_COMM_NAMEISSET;
     ompi_mpi_comm_world.c_flags |= OMPI_COMM_INTRINSIC;
+
+    /* We have to create a hash (although it is legal to leave this
+       filed NULL -- the attribute accessor functions will intepret
+       this as "there are no attributes cached on this object")
+       because MPI_COMM_WORLD has some predefined attributes. */
     ompi_attr_hash_init(&ompi_mpi_comm_world.c_keyhash);
 
     /* Setup MPI_COMM_SELF */
@@ -99,7 +104,11 @@ int ompi_comm_init(void)
     strncpy(ompi_mpi_comm_self.c_name,"MPI_COMM_SELF",strlen("MPI_COMM_SELF")+1);
     ompi_mpi_comm_self.c_flags |= OMPI_COMM_NAMEISSET;
     ompi_mpi_comm_self.c_flags |= OMPI_COMM_INTRINSIC;
-    ompi_attr_hash_init(&ompi_mpi_comm_self.c_keyhash);
+
+    /* We can set MPI_COMM_SELF's keyhash to NULL because it has no
+       predefined attributes.  If a user defines an attribute on
+       MPI_COMM_SELF, the keyhash will automatically be created. */
+    ompi_mpi_comm_self.c_keyhash = NULL;
     
     /* Setup MPI_COMM_NULL */
     OBJ_CONSTRUCT(&ompi_mpi_comm_null, ompi_communicator_t);
@@ -247,6 +256,10 @@ static void ompi_comm_construct(ompi_communicator_t* comm)
     comm->c_topo_component = NULL;
     comm->c_topo_comm    = NULL; 
     comm->c_topo_module  = NULL;
+
+    /* A keyhash will be created if/when an attribute is cached on
+       this communiucator */
+    comm->c_keyhash = NULL;
 
 #if OMPI_ENABLE_DEBUG
     memset (&(comm->c_coll), 0, sizeof(mca_coll_base_module_1_0_0_t));

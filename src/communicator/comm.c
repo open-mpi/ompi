@@ -159,11 +159,15 @@ int ompi_comm_set ( ompi_communicator_t *newcomm,
          }
     }
 
-    /* Copy attributes and call according copy functions, 
-       if required */
-    ompi_attr_hash_init(&newcomm->c_keyhash);
-    if ( NULL != attr ) {
-        ompi_attr_copy_all (COMM_ATTR, oldcomm, newcomm, attr, newcomm->c_keyhash);
+    /* Copy attributes and call according copy functions, if
+       required */
+
+    if (NULL != oldcomm->c_keyhash) {
+        if (NULL != attr) {
+            ompi_attr_hash_init(&newcomm->c_keyhash);
+            ompi_attr_copy_all (COMM_ATTR, oldcomm, newcomm, attr, 
+                                newcomm->c_keyhash);
+        }
     }
 
     /* Initialize the PML stuff in the newcomm  */
@@ -674,8 +678,10 @@ int ompi_comm_free ( ompi_communicator_t **comm )
 {
 
     /* Release attributes */
-    ompi_attr_delete_all ( COMM_ATTR, (*comm), (*comm)->c_keyhash );
-    OBJ_RELEASE((*comm)->c_keyhash);
+    if (NULL != (*comm)->c_keyhash) {
+        ompi_attr_delete_all ( COMM_ATTR, (*comm), (*comm)->c_keyhash );
+        OBJ_RELEASE((*comm)->c_keyhash);
+    }
 
     /* Release the communicator */
     OBJ_RELEASE ( (*comm) );
@@ -1220,9 +1226,6 @@ static int ompi_comm_fill_rest (ompi_communicator_t *comm,
 
     /* determine the cube dimensions */
     comm->c_cube_dim = ompi_cube_dim(comm->c_local_group->grp_proc_count);
-
-    /* copy attributes and call according copy functions */
-    ompi_attr_hash_init(&comm->c_keyhash);
 
     /* initialize PML stuff on the communicator */
     if (OMPI_SUCCESS != (ret = mca_pml.pml_add_comm(comm))) {
