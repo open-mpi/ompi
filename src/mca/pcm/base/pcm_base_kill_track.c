@@ -52,8 +52,8 @@ static OBJ_CLASS_INSTANCE(mca_pcm_base_kill_item_t,
 /*
  * Global data
  */
-ompi_list_t job_list;
-ompi_mutex_t mutex;
+static ompi_list_t job_list;
+static ompi_mutex_t mutex;
 
 static mca_pcm_base_kill_item_t*
 get_kill_item(mca_ns_base_jobid_t jobid)
