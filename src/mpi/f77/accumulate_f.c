@@ -46,7 +46,22 @@ OMPI_GENERATE_F77_BINDINGS (MPI_ACCUMULATE,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-void mpi_accumulate_f(char *origin_addr, MPI_Fint *origin_count, MPI_Fint *origin_datatype, MPI_Fint *target_rank, MPI_Fint *target_disp, MPI_Fint *target_count, MPI_Fint *target_datatype, MPI_Fint *op, MPI_Fint *win, MPI_Fint *ierr)
+void mpi_accumulate_f(char *origin_addr, MPI_Fint *origin_count,
+		      MPI_Fint *origin_datatype, MPI_Fint *target_rank,
+		      MPI_Fint *target_disp, MPI_Fint *target_count,
+		      MPI_Fint *target_datatype, MPI_Fint *op, MPI_Fint *win,
+		      MPI_Fint *ierr)
 {
-  /* This function not yet implemented */
+    MPI_Datatype c_origin_datatype = MPI_Type_f2c(*origin_datatype);
+    MPI_Datatype c_target_datatype = MPI_Type_f2c(*target_datatype);
+    MPI_Win c_win = MPI_Win_f2c(*win);
+    MPI_Op c_op = MPI_Op_f2c(*op);
+
+    *ierr = OMPI_INT_2_FINT(MPI_Accumulate(origin_addr, 
+					   OMPI_FINT_2_INT(*origin_count),
+					   c_origin_datatype, 
+					   OMPI_FINT_2_INT(*target_rank),
+					   (MPI_Aint) *target_disp,
+					   OMPI_FINT_2_INT(*target_count),
+					   c_target_datatype, c_op, c_win));
 }
