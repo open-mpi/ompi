@@ -98,8 +98,8 @@ typedef int (*mca_coll_scatterv_fn_t)(void *sbuf, int *scounts,
  * Ver 1.0.0
  */
 
-typedef struct mca_coll_module_1_0_0_t {
-  mca_1_0_0_t super;
+struct mca_coll_module_1_0_0_t {
+  mca_module_1_0_0_t super;
 
   /* Initialization / querying functions */
 
@@ -209,7 +209,7 @@ extern "C" {
    * query/init functionality, prototype this function here.
    */
 
-  const mca_coll_1_0_0_t *
+  const mca_coll_module_1_0_0_t *
     mca_coll_basic_query(MPI_Comm comm, int *priority);
 #if defined(c_plusplus) || defined(__cplusplus)
 }
