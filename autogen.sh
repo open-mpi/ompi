@@ -134,6 +134,7 @@ find_app() {
         if check_version $min_version $version ; then
             eval "lam_${app_name}=\"${i}\""
             found=1
+            break
         fi
     done
 
