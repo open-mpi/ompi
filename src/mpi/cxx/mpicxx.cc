@@ -98,25 +98,25 @@ const Datatype LONG_DOUBLE_INT(MPI_LONG_DOUBLE);
 
 #if OMPI_WANT_F77_BINDINGS
 // elementary datatype (Fortran)
-const Datatype INTEGER(ompi_mpi_integer);
-const Datatype REAL(ompi_mpi_real);
-const Datatype DOUBLE_PRECISION(ompi_mpi_dblprec);
-const Datatype F_COMPLEX(ompi_mpi_cplex);
-const Datatype LOGICAL(ompi_mpi_logic);
-const Datatype CHARACTER(ompi_mpi_character);
+const Datatype REAL(&ompi_mpi_real);
+const Datatype INTEGER(&ompi_mpi_integer);
+const Datatype DOUBLE_PRECISION(&ompi_mpi_dblprec);
+const Datatype F_COMPLEX(&ompi_mpi_cplex);
+const Datatype LOGICAL(&ompi_mpi_logic);
+const Datatype CHARACTER(&ompi_mpi_character);
 
 // datatype for reduction functions (Fortran)
-const Datatype TWOREAL(ompi_mpi_2real);
-const Datatype TWODOUBLE_PRECISION(ompi_mpi_2dblprec);
-const Datatype TWOINTEGER(ompi_mpi_2integer);
+const Datatype TWOREAL(&ompi_mpi_2real);
+const Datatype TWODOUBLE_PRECISION(&ompi_mpi_2dblprec);
+const Datatype TWOINTEGER(&ompi_mpi_2integer);
 
 // optional datatypes (Fortran)
-const Datatype INTEGER2(ompi_mpi_integer);
-const Datatype REAL2(ompi_mpi_real);
-const Datatype INTEGER1(ompi_mpi_char);
-const Datatype INTEGER4(ompi_mpi_short);
-const Datatype REAL4(ompi_mpi_real);
-const Datatype REAL8(ompi_mpi_double);
+const Datatype INTEGER2(&ompi_mpi_integer);
+const Datatype REAL2(&ompi_mpi_real);
+const Datatype INTEGER1(&ompi_mpi_char);
+const Datatype INTEGER4(&ompi_mpi_short);
+const Datatype REAL4(&ompi_mpi_real);
+const Datatype REAL8(&ompi_mpi_double);
 
 #endif // OMPI_WANT_f77_BINDINGS
 
