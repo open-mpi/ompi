@@ -20,6 +20,7 @@ mca_ptl_tcp_t mca_ptl_tcp = {
     0, /* ptl_latency */
     0, /* ptl_andwidth */
     mca_ptl_tcp_add_proc,
+    mca_ptl_tcp_del_proc,
     mca_ptl_tcp_fini,
     mca_ptl_tcp_send,
     mca_ptl_tcp_request_alloc

@@ -77,6 +77,12 @@ extern int mca_ptl_tcp_add_proc(
     struct mca_ptl_addr_t** addr
 );
 
+extern int mca_ptl_tcp_del_proc(
+    struct mca_ptl_t* ptl,
+    struct lam_proc_t *procs,
+    struct mca_ptl_addr_t* addr
+);
+
 extern int mca_ptl_tcp_request_alloc(
     struct mca_ptl_t* ptl,
     struct mca_ptl_base_send_request_t**

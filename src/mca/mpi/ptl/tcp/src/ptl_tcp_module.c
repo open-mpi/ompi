@@ -135,10 +135,8 @@ static int mca_ptl_tcp_module_create_instances(void)
     /* allocate memory for ptls */
     mca_ptl_tcp_module.tcp_max_ptls = if_count;
     mca_ptl_tcp_module.tcp_ptls = (mca_ptl_tcp_t**)LAM_MALLOC(if_count * sizeof(mca_ptl_tcp_t*));
-    if(NULL == mca_ptl_tcp_module.tcp_ptls) {
-        lam_output(0, "mca_ptl_tcp: unable to initialize module");
-        return LAM_ERROR;
-    }
+    if(NULL == mca_ptl_tcp_module.tcp_ptls)
+        return LAM_ERR_OUT_OF_RESOURCE;
 
     /* if the user specified an interface list - use these only */
     argv = include = lam_argv_split(mca_ptl_tcp_module.tcp_if_include,'\'');
