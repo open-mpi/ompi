@@ -10,7 +10,7 @@ AM_CPPFLAGS = -I$(top_ompi_builddir)/src/include \
 	-I$(top_ompi_srcdir)/src -I$(top_ompi_srcdir)/src/include  \
 	-I/usr/lib/qsnet/elan4/include 
 
-SUBDIRS = src tests
+SUBDIRS = src 
 
 EXTRA_DIST = VERSION
 
