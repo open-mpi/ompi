@@ -277,7 +277,7 @@ static void dump_aborted_procs(orte_jobid_t jobid)
     }
 
     rc = orte_gpr.get(
-        ORTE_GPR_KEYS_AND|ORTE_GPR_TOKENS_OR,
+        ORTE_GPR_KEYS_OR|ORTE_GPR_TOKENS_OR,
         segment,
         NULL,
         keys,
