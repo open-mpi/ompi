@@ -1091,6 +1091,8 @@ AC_CONFIG_FILES([
     src/mca/pcmclient/base/Makefile
     src/mca/llm/Makefile
     src/mca/llm/base/Makefile
+    src/mca/soh/Makefile
+    src/mca/soh/base/Makefile
     src/mca/svc/Makefile
     src/mca/svc/base/Makefile
 
