@@ -42,8 +42,6 @@
 #include "elan/sys/misc_sys.h"
 #include "elan/sys/init_sys.h"
 
-int elan4_block_inputter (ELAN4_CTX *ctx, unsigned blocked);
-
 struct ompi_elan_railtable_t {
     int        rt_nrails;  
     int        rt_rail;   
@@ -73,14 +71,22 @@ struct ompi_elan_rail_t {
 };
 typedef struct ompi_elan_rail_t ompi_elan_rail_t;
 
-
 /* Initialization and finalization routines */
 int ompi_mca_ptl_elan_init (mca_ptl_elan_module_1_0_0_t *mp);
 int ompi_mca_ptl_elan_setup (mca_ptl_elan_module_1_0_0_t *mp);
 int ompi_mca_ptl_elan_fin (mca_ptl_elan_module_1_0_0_t *mp);
+/* Accessory functions to deallocate the memory */
+void elan_state_close(struct mca_ptl_elan_state_t *);
+void elan_ptls_close(struct mca_ptl_elan_t **, size_t elan_num_ptls);
+void elan_localproc_close(struct mca_ptl_elan_proc_t *); 
 
 /* communication prototypes */
 
 /* control, synchronization and state prototypes */
+
+/* Just to get rid of a warning from elan4 libraies,
+ * Many more needed but who cares. */
+int elan4_block_inputter (ELAN4_CTX *ctx, unsigned blocked);
+
 
 #endif

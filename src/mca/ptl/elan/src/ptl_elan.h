@@ -10,18 +10,13 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include "mem/free_list.h"
+#include "class/ompi_free_list.h"
 #include "event/event.h"
 #include "mca/pml/pml.h"
 #include "mca/ptl/ptl.h"
 
 #define MCA_PTL_ELAN_STATISTICS 0
 
-/*#define __ELAN__*/
-/*#define __elan4__*/
-
-/*#include "elan/sys/misc_sys.h"*/
-/*#include "elan/sys/init_sys.h"*/
 #include "elan/elan.h"
 #include "elan/init.h"
 #include "rms/rmscall.h"
@@ -68,11 +63,11 @@ struct mca_ptl_elan_state_t {
      *   the complete structure of the ELAN_EPRIVSATE.
      */
     ELAN_LOCATION    elan_myloc;
-    void         *elan_cap;    /**< job capability */
-    void         *elan_estate; /**< Elan state of the 0th rail */
-
-    ELAN_CTX     *elan_ctx;    /**< Elan ctx of the 0th rail */
-    ELAN_RAIL   **elan_rail;   /**< Rail control struct for all rails */
+    void            *elan_cap;    /**< job capability */
+    void            *elan_estate; /**< Elan state of the 0th rail */
+                  
+    ELAN_CTX        *elan_ctx;    /**< Elan ctx of the 0th rail */
+    ELAN_RAIL      **elan_rail;   /**< Rail control struct for all rails */
     struct ompi_elan_rail_t ** all_rails;   /**< all rails */
     ELAN4_COOKIEPOOL *elan_cpool;
     ELAN_ESTATE **all_estates; /**< elan (priv)states of all rails */
@@ -83,8 +78,6 @@ struct mca_ptl_elan_module_1_0_0_t {
 
     mca_ptl_base_module_1_0_0_t super;       /**< base PTL module */
 
-    /* These parameters does not provided good freedom,
-     * It does not hurt to skip them */
     int   elan_free_list_num;     /**< initial size of free lists */
     int   elan_free_list_max;     /**< maximum size of free lists */
     int   elan_free_list_inc;     /**< # to alloc when growing lists */
@@ -101,13 +94,17 @@ struct mca_ptl_elan_module_1_0_0_t {
     ompi_list_t elan_reqs;        /**< all elan requests */
     ompi_list_t elan_prog_events; /**< events in progress */
     ompi_list_t elan_comp_events; /**< events completed, but to reclaim */
+    ompi_list_t  elan_procs;       /**< elan proc's */
+    ompi_list_t  elan_pending_acks;  
 
     ompi_free_list_t elan_events_free;/**< free events */
     ompi_free_list_t elan_reqs_free;  /**< all elan requests */
 
     ompi_event_t elan_send_event;  /**< event structure for sends */
     ompi_event_t elan_recv_event;  /**< event structure for recvs */
-    ompi_list_t  elan_procs;       /**< elan proc's */
+
+    struct mca_ptl_elan_proc_t *elan_local; 
+
     ompi_mutex_t elan_lock;        /**< lock for module state */
 };
 typedef struct mca_ptl_elan_module_1_0_0_t mca_ptl_elan_module_1_0_0_t;
