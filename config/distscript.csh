@@ -18,13 +18,19 @@
 set srcdir="`pwd`"
 set distdir="$srcdir/$1"
 set OMPI_VERSION="$2"
+set OMPI_SVN_VERSION="$3"
 
-if (-z "$distdir") then
+if ("$distdir" == "") then
     echo "Must supply relative distdir as argv[1] -- aborting"
     exit 1
-elif (-z "$OMPI_VERSION") then
+elif ("$OMPI_VERSION" == "") then
     echo "Must supply version as argv[2] -- aborting"
     exit 1
+endif
+
+set svn_r=
+if (-d .svn) then
+    set svn_r="`svnversion .`"
 endif
 
 set start=`date`
@@ -32,6 +38,7 @@ cat <<EOF
  
 Creating Open MPI distribution
 In directory: `pwd`
+Version: $OMPI_VERSION
 Started: $start
  
 EOF
@@ -49,6 +56,19 @@ if (! -d "$distdir") then
 endif
 cd "$distdir"
 echo "*** Now in distdir: $distdir"
+
+#
+# See if we need VERSION.svn
+#
+
+if ("$svn_r" != "") then
+    sed -e 's/^svn_r=.*/svn_r='$svn_r'/' VERSION > version.new
+    cp version.new VERSION
+    rm -f version.new
+    echo "*** Updated VERSION file with SVN r number"
+else
+    echo "*** Did NOT updated VERSION file with SVN r number"
+endif
 
 #
 # Get the latest config.guess and config.sub from ftp.gnu.org

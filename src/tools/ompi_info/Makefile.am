@@ -39,7 +39,8 @@ AM_CPPFLAGS = \
             -DOMPI_RELEASE_VERSION=@OMPI_RELEASE_VERSION@ \
             -DOMPI_ALPHA_VERSION=@OMPI_ALPHA_VERSION@ \
             -DOMPI_BETA_VERSION=@OMPI_BETA_VERSION@ \
-            -DOMPI_SVN_VERSION=\"@OMPI_SVN_VERSION@\" \
+            -DOMPI_WANT_SVN=\"@OMPI_WANT_SVN@\" \
+            -DOMPI_SVN_R=\"@OMPI_SVN_R@\" \
             -DOMPI_VERSION=\"@OMPI_VERSION@\"
 
 libs = $(top_builddir)/src/libmpi.la
