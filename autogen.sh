@@ -467,7 +467,7 @@ done
 echo "[Checking] prerequisites"
 
 # sanity check to make sure user isn't being stupid
-if test ! -d CVS ; then
+if test ! -d CVS -a ! -d .svn ; then
     cat <<EOF
 
 This doesn't look like a developer copy of LAM/MPI.  You probably do not
