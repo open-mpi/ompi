@@ -103,7 +103,11 @@ mca_coll_sm_comm_query(struct ompi_communicator_t *comm, int *priority,
 
     /* JMS ... */
 
+#if 1
+    return NULL;
+#else
     return &module;
+#endif
 }
 
 
