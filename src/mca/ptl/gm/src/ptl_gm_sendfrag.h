@@ -20,6 +20,12 @@
 /*#include "ptl_gm_priv.h"*/
 #include "ptl_gm_peer.h"
 
+
+#define MATCH 0
+#define FRAG 1
+#define ACK 2
+#define PUT 3 
+
 OBJ_CLASS_DECLARATION (mca_ptl_gm_send_frag_t);
 OBJ_CLASS_DECLARATION (mca_ptl_gm_recv_frag_t);
 
@@ -80,13 +86,6 @@ int mca_ptl_gm_send_ack_init(
     struct mca_ptl_gm_recv_frag_t* frag,
     char * buffer,
     int size);
-
-/*  int mca_ptl_gm_send_fini_init(
-    mca_ptl_gm_send_frag_t* fini,
-    mca_ptl_gm_module_t *ptl,
-    mca_ptl_gm_peer_t* ptl_peer,
-    mca_pml_base_send_request_t * sendreq);
-  */  
 
 int
  mca_ptl_gm_put_frag_init( mca_ptl_gm_send_frag_t* sendfrag,

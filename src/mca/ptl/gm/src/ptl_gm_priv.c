@@ -23,8 +23,6 @@
 #include "ptl_gm_sendfrag.h"
 #include "ptl_gm_priv.h"
 
-#define DEBUG 0
-
 int mca_ptl_gm_peer_put(mca_ptl_gm_peer_t *ptl_peer,
                         mca_ptl_gm_send_frag_t *fragment, 
                         struct mca_pml_base_send_request_t *sendreq, 
@@ -58,7 +56,7 @@ int mca_ptl_gm_peer_send(mca_ptl_gm_peer_t *ptl_peer,
                         size_t *size, 
                         int flags) 
 {
-    struct iovec outvec[1];
+    struct iovec outvec;
     size_t size_in,size_out;
     int header_length;
     mca_ptl_base_frag_header_t* header;
@@ -68,12 +66,12 @@ int mca_ptl_gm_peer_send(mca_ptl_gm_peer_t *ptl_peer,
 
     size_in = *size;
   
-    outvec[0].iov_base = (char*)fragment->send_buf;
+    outvec.iov_base = (char*)fragment->send_buf;
    
      if( (size_in + header_length) <= GM_SEND_BUF_SIZE ) 
-            outvec[0].iov_len = size_in;
+            outvec.iov_len = size_in;
     else
-            outvec[0].iov_len = GM_SEND_BUF_SIZE - header_length;
+            outvec.iov_len = GM_SEND_BUF_SIZE - header_length;
 
 
     if(size_in > 0) {
@@ -107,17 +105,18 @@ int mca_ptl_gm_peer_send(mca_ptl_gm_peer_t *ptl_peer,
         /*XXX: need to add the header */
 
         /*copy the data to the registered buffer*/
-        outvec[0].iov_base = ((char*)fragment->send_buf) + header_length;
+        outvec.iov_base = ((char*)fragment->send_buf) + header_length;
 
-        if((rc = ompi_convertor_pack(convertor, &(outvec[0]), 1)) < 0)
+        if((rc = ompi_convertor_pack(convertor, &(outvec), 1)) < 0)
             return OMPI_ERROR;
     }
     /* update the fields */
-    outvec[0].iov_len += header_length;
-    outvec[0].iov_base = fragment->send_buf;
+    outvec.iov_len += header_length;
+    outvec.iov_base = fragment->send_buf;
+
     /* adjust size and request offset to reflect actual number of bytes
      * packed by convertor */
-    size_out = outvec[0].iov_len;
+    size_out = outvec.iov_len;
    
     /* initiate the gm send */
     gm_send_with_callback( ptl_peer->peer_ptl->my_port, fragment->send_buf, 
@@ -126,11 +125,11 @@ int mca_ptl_gm_peer_send(mca_ptl_gm_peer_t *ptl_peer,
 
     fragment->send_frag.frag_base.frag_owner = &ptl_peer->peer_ptl->super;
     fragment->send_frag.frag_base.frag_peer = (struct mca_ptl_base_peer_t*)ptl_peer;
-    fragment->send_frag.frag_base.frag_addr = outvec[0].iov_base;
+    fragment->send_frag.frag_base.frag_addr = outvec.iov_base;
     fragment->send_frag.frag_base.frag_size = size_out; 
 
-    return (size_out - header_length);
-    /*return OMPI_SUCCESS;*/
+    *size = (size_out - header_length);
+    return OMPI_SUCCESS;
 }
 
 
@@ -151,20 +150,13 @@ void put_callback(struct gm_port *port,void * context, gm_status_t status)
 
     bytes = putfrag->send_frag.frag_base.frag_size; 
 
-    #if DEBUG
-    printf("ENTERING PUT CALLBACK\n");
-    fflush(stdout);
-    #endif
+    GM_DBG(PTL_GM_DBG_COMM,"ENTERING PUT CALLBACK\n");
 
     switch  (status) {
     case GM_SUCCESS:
         /* local put completed, mark put as complete */
    
-       #if DEBUG
-        printf("PUTCALLBACK WITH CASE GM_SUCCESS\n");
-        fflush(stdout);
-       #endif
-        
+        GM_DBG(PTL_GM_DBG_COMM,"PUTCALLBACK WITH CASE GM_SUCCESS\n");
         ptl->num_send_tokens++;
         putfrag->put_sent = 1;
 
@@ -172,26 +164,18 @@ void put_callback(struct gm_port *port,void * context, gm_status_t status)
 
         rc = mca_ptl_gm_peer_send (putfrag->peer,putfrag,send_req,
                                 offset,&size,flags);
- 
-    #if DEBUG 
-        printf("after issuing the put completion the request offset = %d\n",send_req->req_offset);
-        fflush(stdout);
-    #endif
+        assert(rc == 0);
+        GM_DBG(PTL_GM_DBG_COMM,"FINISHED SENDING FIN\n");
+        GM_DBG(PTL_GM_DBG_COMM,"after issuing the put completion the request offset = %d\n",send_req->req_offset);
 
         /* deregister the user memory */
        status = gm_deregister_memory(ptl->my_port, (char *)(putfrag->registered_buf), bytes);
 
-       if(GM_SUCCESS != status)
-       {
-        #if DEBUG 
-           ompi_output(0," unpinning memory failed\n");
-        #endif
-       }
-        else
-       {
-        #if DEBUG 
-           ompi_output(0," unpinning %d bytes of memory success\n",bytes);
-        #endif
+       if(GM_SUCCESS != status) {
+	   ompi_output(0," unpinning memory failed\n");
+       } 
+       else {
+	   GM_DBG(PTL_GM_DBG_COMM, " unpinning %d bytes of memory success\n",bytes);
        }    
        break;
 
@@ -228,7 +212,7 @@ void send_callback(struct gm_port *port,void * context, gm_status_t status)
     header = (mca_ptl_base_header_t*)frag->send_buf;
     header_length = ((mca_ptl_base_header_t*)header)->hdr_common.hdr_size;
    
-    if (frag->type == 1)
+    if (frag->type == PUT)
     {
        bytes =  header->hdr_ack.hdr_dst_size;
     }
@@ -242,34 +226,23 @@ void send_callback(struct gm_port *port,void * context, gm_status_t status)
               frag->wait_for_ack = 1;
     }
 
-
     switch  (status) {
     case GM_SUCCESS:
 
         /* send completed, can reuse the user buffer */
-        #if DEBUG
-            printf("SENDCALLBACK WITH CASE GM_SUCCESS\n");
-            fflush(stdout);
-        #endif
+       	GM_DBG(PTL_GM_DBG_COMM,
+	       	"SENDCALLBACK WITH CASE GM_SUCCESS: frag->wait_for_ack = %d\n",
+	       	frag->wait_for_ack);
 
         ptl->num_send_tokens++;
         frag->send_complete = 1;
 
-        if (frag->wait_for_ack == 0 && (gm_send_req != NULL))
-        {
-           #if DEBUG
-                printf("inside send callback  : calling send progress bytes = %d\n",bytes);
-                fflush(stdout);                                                         
-          #endif      
-          ptl->super.ptl_send_progress( (mca_ptl_base_module_t*)ptl,
-                                                 gm_send_req, bytes );
-       
+        if ((frag->wait_for_ack == 0) && (gm_send_req != NULL)) {
+	    GM_DBG(PTL_GM_DBG_COMM,"inside send callback  : calling send progress bytes = %d\n",bytes);
+	    ptl->super.ptl_send_progress( (mca_ptl_base_module_t*)ptl,
+		    gm_send_req, bytes );
         }
-
         OMPI_FREE_LIST_RETURN(&(ptl->gm_send_frags), (ompi_list_item_t *)frag);
-        /*list = (ompi_list_t *)(&(ptl->gm_send_frags_queue));*/
-        /*ompi_list_remove_first(list);*/
-
         break;
 
     case GM_SEND_TIMED_OUT:
@@ -285,6 +258,8 @@ void send_callback(struct gm_port *port,void * context, gm_status_t status)
                     "[%s:%d] error in message completion\n",__FILE__,__LINE__);
         break;
     }
+
+    GM_DBG(PTL_GM_DBG_COMM,"RETURNING FROM SEND_CALLBACK\n");
 }
 
 
@@ -302,6 +277,7 @@ void ptl_gm_ctrl_frag(struct mca_ptl_gm_module_t *ptl,
    {
     frag = (mca_ptl_gm_send_frag_t *)header->hdr_ack.hdr_src_ptr.pval;
     req = (mca_pml_base_send_request_t *) frag->req;
+    assert(req != NULL);
     req->req_peer_match.pval = header->hdr_ack.hdr_dst_match.pval;
     req->req_peer_addr.pval = header->hdr_ack.hdr_dst_addr.pval;
     req->req_peer_size = header->hdr_ack.hdr_dst_size;
@@ -325,14 +301,13 @@ void ptl_gm_ctrl_frag(struct mca_ptl_gm_module_t *ptl,
    if(header->hdr_common.hdr_type == MCA_PTL_HDR_TYPE_FIN)
    {
 
+     GM_DBG(PTL_GM_DBG_COMM,"CASE: HDR_TYPE_FIN\n");
+
      request = (mca_pml_base_recv_request_t*)
                                 header->hdr_ack.hdr_dst_match.pval;
      /* call receive progress and indicate the recv has been completed  */
     
-       #if DEBUG
-        printf("Calling recv_progress with bytes = %d\n",header->hdr_ack.hdr_dst_size);
-        fflush(stdout);
-       #endif
+        GM_DBG(PTL_GM_DBG_COMM,"Calling recv_progress with bytes = %d\n",header->hdr_ack.hdr_dst_size);
         ptl->super.ptl_recv_progress (
                             (mca_ptl_base_module_t *) ptl,
                             request , 
@@ -344,33 +319,26 @@ void ptl_gm_ctrl_frag(struct mca_ptl_gm_module_t *ptl,
        status = gm_deregister_memory(ptl->my_port, reg_buf, 
                                  bytes);
 
-       if(GM_SUCCESS != status)
-       {
-        #if DEBUG
+       if(GM_SUCCESS != status) {
            ompi_output(0," unpinning memory failed\n");
-        #endif
-       }
-        else
-       {
-        #if DEBUG
-         ompi_output(0,"unpinning memory success,addr:%p,bytes:%d\n",reg_buf,bytes);
-        #endif
+       } else {
+	   GM_DBG(PTL_GM_DBG_COMM, 
+		 "unpinning memory success,addr:%p,bytes:%d\n",reg_buf,bytes);
        }
 
-    #if 0
+#if 0
       /*return the recv fragment to the free list */
-        OMPI_FREE_LIST_RETURN(&(((mca_ptl_gm_module_t
-            *)ptl)->gm_recv_frags_free), (ompi_list_item_t *)recv_frag);
+       OMPI_FREE_LIST_RETURN(
+	       &(((mca_ptl_gm_module_t *)ptl)->gm_recv_frags_free), 
+	       (ompi_list_item_t *)recv_frag);
 
      /* free the associated buffer */
        if(recv_frag->have_allocated == true)
-          free(recv_frag->frag_recv.frag_base.frag_add GM_SEND_BUF_SIZE);
-   #endif
-
+          free(recv_frag->frag_recv.frag_base.frag_add * GM_SEND_BUF_SIZE);
+#endif
    }
 
  /* XXX: will handle NACK later */
-
 }
 
 mca_ptl_gm_recv_frag_t* ptl_gm_data_frag( struct mca_ptl_gm_module_t *ptl,
@@ -381,9 +349,9 @@ mca_ptl_gm_recv_frag_t* ptl_gm_data_frag( struct mca_ptl_gm_module_t *ptl,
     mca_ptl_base_header_t *header;
 
     header = (mca_ptl_base_header_t *)gm_ntohp(event->recv.buffer);
-
-    recv_frag = mca_ptl_gm_alloc_recv_frag( (struct mca_ptl_base_module_t*)ptl );
+  
     /* allocate a receive fragment */
+    recv_frag = mca_ptl_gm_alloc_recv_frag( (struct mca_ptl_base_module_t*)ptl );
    
     recv_frag->frag_recv.frag_base.frag_owner = (struct mca_ptl_base_module_t*)ptl;
     recv_frag->frag_recv.frag_base.frag_peer = NULL;
@@ -395,8 +363,8 @@ mca_ptl_gm_recv_frag_t* ptl_gm_data_frag( struct mca_ptl_gm_module_t *ptl,
     recv_frag->frag_progressed = 0;
    
     recv_frag->frag_recv.frag_base.frag_header = *header;
-
     recv_frag->frag_recv.frag_base.frag_addr = header;
+    /* + sizeof(mca_ptl_base_header_t);*/ /* XXX: bug */
     recv_frag->frag_recv.frag_base.frag_size = gm_ntohl(event->recv.length);
 
     recv_frag->matched = false;
@@ -409,10 +377,9 @@ mca_ptl_gm_recv_frag_t* ptl_gm_data_frag( struct mca_ptl_gm_module_t *ptl,
     if( matched ) {
         return NULL;
     }
-  #if DEBUG
-    ompi_output( 0,"matching receive not yet posted get tag %d comm %d source %d\n",
-                 header->hdr_match.hdr_tag, header->hdr_match.hdr_contextid, header->hdr_match.hdr_src );
- #endif
+    GM_DBG(PTL_GM_DBG_COMM,
+	    "matching receive not yet posted get tag %d comm %d source %d\n",
+	    header->hdr_match.hdr_tag, header->hdr_match.hdr_contextid, header->hdr_match.hdr_src );
     return recv_frag;
 }
 
@@ -460,28 +427,21 @@ void mca_ptl_gm_outstanding_recv(mca_ptl_gm_module_t *ptl)
                 ompi_list_remove_first( (ompi_list_t *)&(ptl->gm_recv_outstanding_queue) );
 
 
-        printf(" the frag size to be matched is %d\n",frag->frag_recv.frag_base.frag_size);
-        fflush(stdout);
+        GM_DBG(PTL_GM_DBG_COMM," the frag size to be matched is %d\n",frag->frag_recv.frag_base.frag_size);
         matched = ptl->super.ptl_match( &(ptl->super),
                                     &(frag->frag_recv),
                                    &(frag->frag_recv.frag_base.frag_header.hdr_match) );
           
-        printf("the value of matched is %d\n", matched);
-        fflush(stdout);
+        GM_DBG(PTL_GM_DBG_COMM,"the value of matched is %d\n", matched);
   
-        if(!matched)
-        {
+        if(!matched) {
            ompi_list_append((ompi_list_t *)&(ptl->gm_recv_outstanding_queue),
                       (ompi_list_item_t *) frag);
-        }
-        else
-        {
+        } else {
            /* if allocated buffer, free the buffer */
- 
            /* return the recv descriptor to the free list */
            OMPI_FREE_LIST_RETURN(&(ptl->gm_recv_frags_free), (ompi_list_item_t *)frag);   
         }  
-
     }
 
 } 
@@ -505,13 +465,21 @@ int mca_ptl_gm_incoming_recv (mca_ptl_gm_component_t * gm_comp)
         case GM_HIGH_PEER_RECV_EVENT:
             mesg = gm_ntohp(event->recv.buffer);
             frag = ptl_gm_handle_recv( ptl, event );
+            GM_DBG(PTL_GM_DBG_COMM,"FINISHED HANDLING INCOMING EVENT\n");
+
             if( (frag != NULL) && !(frag->matched) ) {
                 /* allocate temporary buffer: temporary until the fragment will be finally matched */
                 char* buffer = malloc( GM_SEND_BUF_SIZE );
+                if (NULL == buffer)
+                {
+                  ompi_output(0, "[%s:%d] error in allocating memory \n",
+                                                        __FILE__, __LINE__);
+
+                }
                 /* copy the data from the registered buffer to the newly allocated one */
                 memcpy( buffer, mesg, gm_ntohl(event->recv.length) );
                 /* associate the buffer with the unexpected fragment */
-                frag->frag_recv.frag_base.frag_addr = buffer;
+                frag->frag_recv.frag_base.frag_addr = (void *)buffer;
                 /* mark the fragment as having pending buffers */
                 frag->have_allocated_buffer = true;
 
@@ -534,9 +502,6 @@ int mca_ptl_gm_incoming_recv (mca_ptl_gm_component_t * gm_comp)
             gm_unknown(ptl->my_port, event);
 
         }
-        /* process the outstanding frags in the queue */
-       /*mca_ptl_gm_outstanding_recv(ptl); */
-        
 
     }  
     return 0;

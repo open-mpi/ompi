@@ -11,10 +11,22 @@
 
 /* maintain list of registered buffers for send and receive */
 
-/*struct reg_buf {*/
-    /*void       *start;           pointer to registered memory */
-    /*int         length;*/
-/*};*/
+#define  PTL_GM_FIRST_FRAG_SIZE (1<<14)
+#define  PTL_GM_DBG_NONE    (0x000)
+#define  PTL_GM_DBG_INIT    (0x001)
+#define  PTL_GM_DBG_COMM    (0x002)
+
+#define  PTL_GM_DBG_FLAG (PTL_GM_DBG_NONE)
+
+#define  GM_DBG(flag, args...)                                 \
+do {                                                           \
+    if (PTL_GM_DBG_FLAG & flag) {                              \
+	char hostname[32]; gethostname(hostname, 32);          \
+	fprintf(stderr, "[%s:%s:%d] ",                         \
+		hostname, __FUNCTION__, __LINE__);             \
+	fprintf(stderr, args);                                 \
+    }                                                          \
+} while (0)
 
 
 void ptl_gm_ctrl_frag(struct mca_ptl_gm_module_t *ptl,

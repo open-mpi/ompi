@@ -111,7 +111,8 @@ mca_ptl_gm_component_open (void)
 
     /* register GM component parameters */
     mca_ptl_gm_module.super.ptl_first_frag_size =
-        mca_ptl_gm_param_register_int ("first_frag_size", ((16 * 1024) - 64));
+        mca_ptl_gm_param_register_int ("first_frag_size", 
+		((PTL_GM_FIRST_FRAG_SIZE) - 64));
     mca_ptl_gm_module.super.ptl_min_frag_size =
         mca_ptl_gm_param_register_int ("min_frag_size", 1<<16);
     mca_ptl_gm_module.super.ptl_max_frag_size =
@@ -231,7 +232,7 @@ ompi_mca_ptl_gm_init (mca_ptl_gm_component_t * gm)
         /* open the first available gm port for this board  */
         board_no = i;
         for (port_no = 2; port_no < MAX_GM_PORTS; port_no++) { 
-	    printf ("about to call open port\n");
+	    GM_DBG(PTL_GM_DBG_COMM,"about to call open port\n");
 	    if (port_no == 3) continue;
 	    /* port 0,1,3 reserved  */
 	    status = gm_open (&(ptl->my_port), board_no, 
@@ -338,8 +339,7 @@ ompi_mca_ptl_gm_init_sendrecv (mca_ptl_gm_component_t * gm)
         ompi_free_list_init (&(ptl->gm_recv_frags_free),
                              sizeof (mca_ptl_gm_recv_frag_t),
                              OBJ_CLASS (mca_ptl_gm_recv_frag_t),
-                             ptl->num_recv_tokens,ptl->num_recv_tokens, 1, NULL); /* not using mpool */
-        
+                             ptl->num_recv_tokens,ptl->num_recv_tokens, 1, NULL); 
  
         /*allocate the elements */
         free_rfragment = (mca_ptl_gm_recv_frag_t *)
@@ -435,21 +435,16 @@ mca_ptl_gm_component_control (int param, void *value, size_t size)
 /*
  *  GM module progress.
  */
-
 int
 mca_ptl_gm_component_progress (mca_ptl_tstamp_t tstamp)
 {
     int rc;
-    /* check the send queue to see if any pending send can proceed */
-    /* check for receive and , call ptl_match to send it to the upper
-       level */
+    /* XXX: Do all the following inside a dispatcher, either in this routine
+     *      or mca_ptl_gm_incoming_recv(), YUW
+     * i) check the send queue to see if any pending send can proceed 
+     * ii) check for recieve and , call ptl_match to send it to the upper level
+     * BTW, ptl_matced is invoked inside ptl_match() via PML.
+     */
      rc = mca_ptl_gm_incoming_recv(&mca_ptl_gm_component);
-
     return OMPI_SUCCESS;
-
-    /* check the send queue to see if any pending send can proceed */
-    /* check for recieve and , call ptl_match to send it to the upper
-       level */
-    /* in case matched, do the appropriate queuing. */
-
 }
