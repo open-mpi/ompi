@@ -12,7 +12,7 @@ include $(top_srcdir)/config/Makefile.options
 # we definately need it to be 1.
 #
 AM_CPPFLAGS	= -DLAM_PROFILING_DEFINES=1
-		
+
 #
 # This build needs to go through only if profiling is required.
 # Further, this build HAS to go through if profiling is required.
@@ -34,7 +34,9 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
                 pcomm_set_name.c \
                 pfinalize.c \
                 pfree_mem.c \
-                pinit.c \
+                pinit.c
+
+bogus_stuff = \
                 ptype_commit.c \
                 ptype_contiguous.c \
                 ptype_create_darray.c \
