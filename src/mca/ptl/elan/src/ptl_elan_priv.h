@@ -97,4 +97,34 @@ int ompi_mca_ptl_elan_finalize (mca_ptl_elan_module_1_0_0_t * emp);
  * Many more needed but who cares. */
 int elan4_block_inputter (ELAN4_CTX *ctx, unsigned blocked);
 
+/**
+ * utility routines for parameter registration
+ */
+static inline char *
+mca_ptl_elan_param_register_string (const char *param_name,
+                                    const char *default_value)
+{
+    int         id;
+    char       *param_value;
+
+    id = mca_base_param_register_string ("ptl", "elan", param_name, NULL,
+                                         default_value);
+    mca_base_param_lookup_string (id, &param_value);
+    return param_value;
+}
+
+static inline int
+mca_ptl_elan_param_register_int (const char *param_name,
+                                 int default_value)
+{
+    int         id;
+    int         param_value;
+
+    param_value = default_value;
+    id = mca_base_param_register_int ("ptl", "elan", param_name, NULL,
+                                      default_value);
+    mca_base_param_lookup_int (id, &param_value);
+    return param_value;
+}
+
 #endif

@@ -214,7 +214,7 @@ mca_ptl_elan_module_init (int *num_ptls,
     /* open basic elan device */
     if (OMPI_SUCCESS != ompi_mca_ptl_elan_init(&mca_ptl_elan_module)) {
 	ompi_output(0, 
-		"[%s:%d] error in initializing elan module state and PTL's.\n",
+		"[%s:%d] error in initializing elan state and PTL's.\n",
 		__FILE__, __LINE__);
         return NULL;
     }

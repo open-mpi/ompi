@@ -147,7 +147,7 @@ ompi_mca_ptl_elan_init (mca_ptl_elan_module_1_0_0_t * emp)
         if (NULL == (rail = ems->all_rails[i] =
                      (RAIL *) malloc (sizeof (RAIL)))) {
             ompi_output (0,
-                         "[%s:%d] error in allocating memory for all_rails[i]\n",
+                         "[%s:%d] error in malloc for all_rails[i]\n",
                          __FILE__, __LINE__);
             return OMPI_ERROR;
         }
