@@ -79,6 +79,12 @@ ompi_datatype_t basicDatatypes[DT_MAX_PREDEFINED] = {
     INIT_BASIC_TYPE( DT_UNAVAILABLE, UNAVAILABLE )
 };
 
+static ompi_datatype_t hide_datatype_null = 
+         { BASEOBJ_DATA, 0, 0, 0, 0,
+           0, 0, DT_FLAG_BASIC, 0, 1,
+           ((long long)0), EMPTY_DATA(DATATYPE_NULL) };
+
+ompi_datatype_t* ompi_mpi_datatype_null = &hide_datatype_null;
 ompi_datatype_t* ompi_mpi_char = basicDatatypes + DT_CHAR;
 ompi_datatype_t* ompi_mpi_byte = basicDatatypes + DT_BYTE;
 ompi_datatype_t* ompi_mpi_int = basicDatatypes + DT_INT;

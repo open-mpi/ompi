@@ -273,7 +273,6 @@ enum {
  */
 #define MPI_GROUP_NULL (&ompi_mpi_group_null)
 #define MPI_COMM_NULL (&ompi_mpi_comm_null)
-#define MPI_DATATYPE_NULL ((MPI_Datatype) 0)
 #define MPI_REQUEST_NULL ((MPI_Request) 0)
 #define MPI_OP_NULL (&ompi_mpi_op_null)
 #define MPI_ERRHANDLER_NULL (&ompi_mpi_errhandler_null)
@@ -336,7 +335,7 @@ extern struct ompi_datatype_t *ompi_mpi_long_double;
 extern struct ompi_datatype_t *ompi_mpi_cplex, *ompi_mpi_packed;
 extern struct ompi_datatype_t *ompi_mpi_unsigned_char;
 extern struct ompi_datatype_t *ompi_mpi_unsigned_short;
-extern struct ompi_datatype_t *ompi_mpi_unsigned;
+extern struct ompi_datatype_t *ompi_mpi_unsigned, *ompi_mpi_datatype_null;
 extern struct ompi_datatype_t *ompi_mpi_unsigned_long;
 extern struct ompi_datatype_t *ompi_mpi_ub, *ompi_mpi_lb;
 extern struct ompi_datatype_t *ompi_mpi_float_int, *ompi_mpi_double_int;
@@ -382,6 +381,7 @@ extern MPI_Fint *MPI_F_STATUSES_IGNORE;
 #define MPI_MINLOC (&ompi_mpi_op_minloc)
 #define MPI_REPLACE (&ompi_mpi_op_replace)
 
+#define MPI_DATATYPE_NULL (ompi_mpi_datatype_null)
 #define MPI_BYTE (ompi_mpi_byte)
 #define MPI_PACKED (ompi_mpi_packed)
 #define MPI_CHAR (ompi_mpi_char)
