@@ -22,13 +22,14 @@ C_SUBDIRS = \
 # list of components to build with the cpp compiler
 # (because of the problem with OBJ_CLASS_INSTANCE)
 CPP_SUBDIRS = \
+        ptl/tcp/src \
+        oob/tcp/ \
+        pml/teg/src \
         ns/replica/src 
 
 #list of components that are not working as yet
 CPP_EXCLUDE = \
-        pml/teg/src \
         ptl/tcp/src \
-        oob/tcp/ \
         pcm/wmi
 
 CC = cl
@@ -42,6 +43,8 @@ INCL = \
 CFLAGS = \
         /DWIN32 \
         /DOMPI_SYSCONFDIR \
+        /nologo \
+        /Fo"Debug" \
         /c 
 
 CPPFLAGS = \
@@ -49,17 +52,34 @@ CPPFLAGS = \
         /DOMPI_SYSCONFDIR \
         /c \
         /TP \
+        /nologo \
         /EHsc
 
 # link with ompi.lib to resolve external symbols
 OMPILIB = \
-        "${topdir}/vcproj/ompi/Debug/ompi.lib"
+        "${topdir}/src/libmpi.lib"
 
 LINK = link
 
 LINKFLAGS = \
         /DLL \
-        /DEFAULTLIB:${OMPILIB}
+        /DEFAULTLIB:${OMPILIB} \
+        /nologo
+
+ADDLIBS = \
+        ws2_32.lib \
+        kernel32.lib \
+        user32.lib \
+        gdi32.lib \
+        winspool.lib \
+        comdlg32.lib \
+        advapi32.lib \
+        shell32.lib \
+        ole32.lib \
+        oleaut32.lib \
+        uuid.lib \
+        odbc32.lib \
+        odbccp32.lib
 
 all: \
     clibs \
@@ -67,12 +87,12 @@ all: \
 
 clibs: ${C_SUBDIRS}
 	@for dirs in ${C_SUBDIRS}; do \
-	    (echo "Entering $$dirs"; cd $$dirs; ${CC} ${CFLAGS} ${INCL} *.c; ${LINK} ${LINKFLAGS} *.obj); \
+	    (echo "Entering $${dirs}"; cd $$dirs; ${CC} ${CFLAGS} ${INCL} *.c; ${LINK} ${LINKFLAGS} ${ADDLIBS} *.obj); \
 	done
 
 cpplibs: ${CPP_SUBDIRS}
 	@for dirs in ${CPP_SUBDIRS}; do \
-	    (echo "Entering $$dirs"; cd $$dirs; ${CC} ${CPPFLAGS} ${INCL} *.c; ${LINK} ${LINKFLAGS} *.obj); \
+	    (echo "Entering $${dirs}"; cd $$dirs; ${CC} ${CPPFLAGS} ${INCL} *.c; ${LINK} ${LINKFLAGS} ${ADDLIBS} *.obj); \
 	done
 
 .PHONY: clean
@@ -81,6 +101,6 @@ clean:
 	@for dirs in ${C_SUBDIRS}; do \
 	    (echo "Entering $$dirs"; cd $$dirs; rm -rf *.lib *.obj *.exp;); \
 	done
-	@for dirs in ${C_PPSUBDIRS}; do \
+	@for dirs in ${CPP_SUBDIRS}; do \
 	    (echo "Entering $$dirs"; cd $$dirs; rm -rf *.lib *.obj *.exp;); \
 	done

@@ -84,8 +84,8 @@ int mca_pml_teg_add_ptls(ompi_list_t *ptls)
     size_t cache_bytes = 0;
     mca_pml_teg.teg_num_ptl_modules = 0;
     mca_pml_teg.teg_num_ptl_components = 0;
-    mca_pml_teg.teg_ptl_modules = malloc(sizeof(mca_ptl_base_module_t*) * num_ptls);
-    mca_pml_teg.teg_ptl_components = malloc(sizeof(mca_ptl_base_component_t*) * num_ptls);
+    mca_pml_teg.teg_ptl_modules = (mca_ptl_base_module_t **)malloc(sizeof(mca_ptl_base_module_t*) * num_ptls);
+    mca_pml_teg.teg_ptl_components = (mca_ptl_base_component_t **)malloc(sizeof(mca_ptl_base_component_t*) * num_ptls);
     if (NULL == mca_pml_teg.teg_ptl_modules || NULL == mca_pml_teg.teg_ptl_components) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
@@ -191,7 +191,7 @@ int mca_pml_teg_add_procs(ompi_proc_t** procs, size_t nprocs)
     }
     
     /* attempt to add all procs to each ptl */
-    ptl_peers = malloc(nprocs * sizeof(struct mca_ptl_base_peer_t*));
+    ptl_peers = (mca_ptl_base_peer_t **)malloc(nprocs * sizeof(struct mca_ptl_base_peer_t*));
     for(p_index = 0; p_index < mca_pml_teg.teg_num_ptl_modules; p_index++) {
         mca_ptl_base_module_t* ptl = mca_pml_teg.teg_ptl_modules[p_index];
 

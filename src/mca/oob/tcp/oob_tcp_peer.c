@@ -255,10 +255,10 @@ static int mca_oob_tcp_peer_start_connect(mca_oob_tcp_peer_t* peer)
     if (peer->peer_sd < 0) {
         struct timeval tv = { 1,0 };
         ompi_output(0, 
-            "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_peer_start_connect: socket() failed with errno=%d\n",
+            "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_peer_start_connect: socket() failed with ompi_errno=%d\n",
             OMPI_NAME_ARGS(mca_oob_name_self),
             OMPI_NAME_ARGS(peer->peer_name),
-            errno);
+            ompi_errno);
         mca_oob_tcp_peer_close(peer);
         ompi_evtimer_add(&peer->peer_timer_event, &tv);
         return OMPI_ERR_UNREACH;
@@ -269,17 +269,17 @@ static int mca_oob_tcp_peer_start_connect(mca_oob_tcp_peer_t* peer)
 
     /* setup the socket as non-blocking */
     if((flags = fcntl(peer->peer_sd, F_GETFL, 0)) < 0) {
-        ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_peer_connect: fcntl(F_GETFL) failed with errno=%d\n", 
+        ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_peer_connect: fcntl(F_GETFL) failed with ompi_errno=%d\n", 
             OMPI_NAME_ARGS(mca_oob_name_self),
             OMPI_NAME_ARGS(peer->peer_name),
-            errno);
+            ompi_errno);
     } else {
        flags |= O_NONBLOCK;
         if(fcntl(peer->peer_sd, F_SETFL, flags) < 0)
-            ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_peer_connect: fcntl(F_SETFL) failed with errno=%d\n", 
+            ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_peer_connect: fcntl(F_SETFL) failed with ompi_errno=%d\n", 
                 OMPI_NAME_ARGS(mca_oob_name_self),
                 OMPI_NAME_ARGS(peer->peer_name),
-                errno);
+                ompi_errno);
     }
 
     /* pick an address in round-robin fashion from the list exported by the peer */
@@ -302,14 +302,14 @@ static int mca_oob_tcp_peer_start_connect(mca_oob_tcp_peer_t* peer)
     /* start the connect - will likely fail with EINPROGRESS */
     if(connect(peer->peer_sd, (struct sockaddr*)&inaddr, sizeof(inaddr)) < 0) {
         /* non-blocking so wait for completion */
-        if(errno == EINPROGRESS) {
+        if(ompi_errno == EINPROGRESS) {
             ompi_event_add(&peer->peer_send_event, 0);
             return OMPI_SUCCESS;
         }
-        ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_peer_start_connect: connect failed with errno=%d",
+        ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_peer_start_connect: connect failed with ompi_errno=%d",
             OMPI_NAME_ARGS(mca_oob_name_self),
             OMPI_NAME_ARGS(peer->peer_name),
-            errno);
+            ompi_errno);
         mca_oob_tcp_peer_close(peer);
         return OMPI_ERR_UNREACH;
     }
@@ -321,7 +321,7 @@ static int mca_oob_tcp_peer_start_connect(mca_oob_tcp_peer_t* peer)
     } else {
         ompi_output(0, 
             "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_peer_start_connect: "
-            "mca_oob_tcp_peer_send_connect_ack failed with errno=%d",
+            "mca_oob_tcp_peer_send_connect_ack failed with ompi_errno=%d",
             OMPI_NAME_ARGS(mca_oob_name_self),
             OMPI_NAME_ARGS(peer->peer_name),
             rc);
@@ -345,11 +345,11 @@ static void mca_oob_tcp_peer_complete_connect(mca_oob_tcp_peer_t* peer)
     ompi_event_del(&peer->peer_send_event);
 
     /* check connect completion status */
-    if(getsockopt(peer->peer_sd, SOL_SOCKET, SO_ERROR, &so_error, &so_length) < 0) {
-        ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_peer_complete_connect: getsockopt() failed with errno=%d\n", 
+    if(getsockopt(peer->peer_sd, SOL_SOCKET, SO_ERROR, (char *)&so_error, &so_length) < 0) {
+        ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_peer_complete_connect: getsockopt() failed with ompi_errno=%d\n", 
             OMPI_NAME_ARGS(mca_oob_name_self),
             OMPI_NAME_ARGS(peer->peer_name),
-            errno);
+            ompi_errno);
         mca_oob_tcp_peer_close(peer);
         return;
     }
@@ -369,7 +369,7 @@ static void mca_oob_tcp_peer_complete_connect(mca_oob_tcp_peer_t* peer)
         ompi_evtimer_add(&peer->peer_timer_event, &tv);
         return;
     } else if(so_error != 0) {
-        ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_peer_complete_connect: connect() failed with errno=%d\n", 
+        ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_peer_complete_connect: connect() failed with ompi_errno=%d\n", 
             OMPI_NAME_ARGS(mca_oob_name_self),
             OMPI_NAME_ARGS(peer->peer_name),
             so_error);
@@ -513,7 +513,7 @@ static int mca_oob_tcp_peer_recv_blocking(mca_oob_tcp_peer_t* peer, void* data, 
     unsigned char* ptr = (unsigned char*)data;
     size_t cnt = 0;
     while(cnt < size) {
-        int retval = recv(peer->peer_sd, ptr+cnt, size-cnt, 0);
+        int retval = recv(peer->peer_sd,(char *)ptr+cnt, size-cnt, 0);
 
         /* remote closed connection */
         if(retval == 0) {
@@ -530,11 +530,11 @@ static int mca_oob_tcp_peer_recv_blocking(mca_oob_tcp_peer_t* peer, void* data, 
 
         /* socket is non-blocking so handle errors */
         if(retval < 0) {
-            if(errno != EINTR && errno != EAGAIN && errno != EWOULDBLOCK) {
-                ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_peer_recv_blocking: recv() failed with errno=%d\n",
+            if(ompi_errno != EINTR && ompi_errno != EAGAIN && ompi_errno != EWOULDBLOCK) {
+                ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_peer_recv_blocking: recv() failed with ompi_errno=%d\n",
                     OMPI_NAME_ARGS(mca_oob_name_self),
                     OMPI_NAME_ARGS(peer->peer_name),
-                    errno);
+                    ompi_errno);
                 mca_oob_tcp_peer_close(peer);
                 return -1;
             }
@@ -554,13 +554,13 @@ static int mca_oob_tcp_peer_send_blocking(mca_oob_tcp_peer_t* peer, void* data, 
     unsigned char* ptr = (unsigned char*)data;
     size_t cnt = 0;
     while(cnt < size) {
-        int retval = send(peer->peer_sd, ptr+cnt, size-cnt, 0);
+        int retval = send(peer->peer_sd, (char *)ptr+cnt, size-cnt, 0);
         if(retval < 0) {
-            if(errno != EINTR && errno != EAGAIN && errno != EWOULDBLOCK) {
-                ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_peer_send_blocking: send() failed with errno=%d\n",
+            if(ompi_errno != EINTR && ompi_errno != EAGAIN && ompi_errno != EWOULDBLOCK) {
+                ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_peer_send_blocking: send() failed with ompi_errno=%d\n",
                     OMPI_NAME_ARGS(mca_oob_name_self),
                     OMPI_NAME_ARGS(peer->peer_name),
-                    errno);
+                    ompi_errno);
                 mca_oob_tcp_peer_close(peer);
                 return -1;
             }
@@ -606,7 +606,7 @@ static void mca_oob_tcp_peer_recv_ident(mca_oob_tcp_peer_t* peer, mca_oob_tcp_hd
 
 static void mca_oob_tcp_peer_recv_handler(int sd, short flags, void* user)
 {
-    mca_oob_tcp_peer_t* peer = user;
+    mca_oob_tcp_peer_t* peer = (mca_oob_tcp_peer_t *)user;
     OMPI_THREAD_LOCK(&peer->peer_lock);
     switch(peer->peer_state) {
         case MCA_OOB_TCP_CONNECT_ACK: 
@@ -671,7 +671,7 @@ static void mca_oob_tcp_peer_recv_handler(int sd, short flags, void* user)
  */
 static void mca_oob_tcp_peer_send_handler(int sd, short flags, void* user)
 {
-    mca_oob_tcp_peer_t* peer = user;
+    mca_oob_tcp_peer_t* peer = (mca_oob_tcp_peer_t *)user;
     OMPI_THREAD_LOCK(&peer->peer_lock);
     switch(peer->peer_state) {
     case MCA_OOB_TCP_CONNECTING:
@@ -731,13 +731,13 @@ static void mca_oob_tcp_peer_dump(mca_oob_tcp_peer_t* peer, const char* msg)
     sprintf(dst, "%s", inet_ntoa(inaddr.sin_addr));
                                                                                                             
     if((flags = fcntl(peer->peer_sd, F_GETFL, 0)) < 0) {
-        ompi_output(0, "mca_oob_tcp_peer_dump: fcntl(F_GETFL) failed with errno=%d\n", errno);
+        ompi_output(0, "mca_oob_tcp_peer_dump: fcntl(F_GETFL) failed with ompi_errno=%d\n", ompi_errno);
     }
                                                                                                             
 #if defined(SO_SNDBUF)
     optlen = sizeof(sndbuf);
     if(getsockopt(peer->peer_sd, SOL_SOCKET, SO_SNDBUF, (char *)&sndbuf, &optlen) < 0) {
-        ompi_output(0, "mca_oob_tcp_peer_dump: SO_SNDBUF option: errno %d\n", errno);
+        ompi_output(0, "mca_oob_tcp_peer_dump: SO_SNDBUF option: ompi_errno %d\n", ompi_errno);
     }
 #else
     sndbuf = -1;
@@ -745,15 +745,15 @@ static void mca_oob_tcp_peer_dump(mca_oob_tcp_peer_t* peer, const char* msg)
 #if defined(SO_RCVBUF)
     optlen = sizeof(rcvbuf);
     if(getsockopt(peer->peer_sd, SOL_SOCKET, SO_RCVBUF, (char *)&rcvbuf, &optlen) < 0) {
-        ompi_output(0, "mca_oob_tcp_peer_dump: SO_RCVBUF option: errno %d\n", errno);
+        ompi_output(0, "mca_oob_tcp_peer_dump: SO_RCVBUF option: ompi_errno %d\n", ompi_errno);
     }
 #else
     rcvbuf = -1;
 #endif
 #if defined(TCP_NODELAY)
     optlen = sizeof(nodelay);
-    if(getsockopt(peer->peer_sd, IPPROTO_TCP, TCP_NODELAY, &nodelay, &optlen) < 0) {
-        ompi_output(0, "mca_oob_tcp_peer_dump: TCP_NODELAY option: errno %d\n", errno);
+    if(getsockopt(peer->peer_sd, IPPROTO_TCP, TCP_NODELAY, (char *)&nodelay, &optlen) < 0) {
+        ompi_output(0, "mca_oob_tcp_peer_dump: TCP_NODELAY option: ompi_errno %d\n", ompi_errno);
     }
 #else
     nodelay = 0;

@@ -8,7 +8,7 @@
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
-#include <sys/errno.h>
+#include <errno.h>
 #include "include/types.h"
 #include "datatype/datatype.h"
 #include "mca/pml/base/pml_base_sendreq.h"

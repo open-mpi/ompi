@@ -13,6 +13,9 @@
 #ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
 #endif
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 
 /**
  *  Lookup an interface by name and return its primary address.
@@ -85,6 +88,9 @@ OMPI_DECLSPEC int ompi_ifindextoaddr(int if_index, struct sockaddr*, int);
  *  @param size (IN)      Interface address buffer size
  */
 OMPI_DECLSPEC int ompi_ifindextomask(int if_index, struct sockaddr*, int);
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 #endif
 

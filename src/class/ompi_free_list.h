@@ -47,7 +47,7 @@ typedef struct ompi_free_list_t ompi_free_list_t;
  * @param mpool                    Optional memory pool for allocation.s
  */
  
-int ompi_free_list_init(
+OMPI_DECLSPEC int ompi_free_list_init(
     ompi_free_list_t *free_list, 
     size_t element_size,
     ompi_class_t* element_class,
@@ -56,7 +56,7 @@ int ompi_free_list_init(
     int num_elements_per_alloc,
     mca_mpool_base_module_t*);
 
-int ompi_free_list_grow(ompi_free_list_t* flist, size_t num_elements);
+OMPI_DECLSPEC int ompi_free_list_grow(ompi_free_list_t* flist, size_t num_elements);
     
 /**
  * Attemp to obtain an item from a free list. 

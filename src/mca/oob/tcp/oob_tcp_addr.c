@@ -76,7 +76,7 @@ mca_oob_tcp_addr_t* mca_oob_tcp_addr_unpack(ompi_buffer_t buffer)
     ompi_unpack(buffer, &addr->addr_name, 1, OMPI_NAME);
     ompi_unpack(buffer, &addr->addr_count, 1, OMPI_INT32);
     if(addr->addr_count != 0) {
-        addr->addr_inet = malloc(sizeof(struct sockaddr_in) * addr->addr_count);
+        addr->addr_inet = (sockaddr_in *)malloc(sizeof(struct sockaddr_in) * addr->addr_count);
         if(NULL == addr->addr_inet) {
              OBJ_RELEASE(addr);
              return NULL;
@@ -103,10 +103,10 @@ int mca_oob_tcp_addr_insert(mca_oob_tcp_addr_t* addr, const struct sockaddr_in* 
 {
     if(addr->addr_alloc == 0) {
         addr->addr_alloc = 2;
-        addr->addr_inet = malloc(addr->addr_alloc * sizeof(struct sockaddr_in));
+        addr->addr_inet = (sockaddr_in *)malloc(addr->addr_alloc * sizeof(struct sockaddr_in));
     } else if(addr->addr_count == addr->addr_alloc) {
         addr->addr_alloc <<= 1;
-        addr->addr_inet = realloc(addr->addr_inet, addr->addr_alloc * sizeof(struct sockaddr_in));
+        addr->addr_inet = (sockaddr_in *)realloc(addr->addr_inet, addr->addr_alloc * sizeof(struct sockaddr_in));
     }
     if(NULL == addr->addr_inet)
         return OMPI_ERR_OUT_OF_RESOURCE;

@@ -36,7 +36,7 @@ int mca_ptl_array_reserve(mca_ptl_array_t* array, size_t size)
     if(array->ptl_reserve >= size)
         return OMPI_SUCCESS;
     
-    procs = realloc(array->ptl_procs, sizeof(mca_ptl_proc_t)*size);
+    procs = (mca_ptl_proc_t *)realloc(array->ptl_procs, sizeof(mca_ptl_proc_t)*size);
     if(NULL == procs)
         return OMPI_ERR_OUT_OF_RESOURCE;
     array->ptl_procs = procs;

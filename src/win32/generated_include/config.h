@@ -144,6 +144,7 @@
 
 /* Define to 1 if you have the <unistd.h> header file. */
 /* #undef HAVE_UNISTD_H */
+#define HAVE_UNISTD_H 0
 
 /* Define if the OS needs help to load dependent libraries for dlopen(). */
 #define LTDL_DLOPEN_DEPLIBS 1

@@ -20,7 +20,10 @@ C_SUBDIRS =  \
         file \
         group \
         info \
+        util \
         mpi/c \
+        mpi/runtime \
+        threads \
         op \
         proc \
         request \
@@ -69,10 +72,11 @@ CFLAGS = \
         /DOMPI_PKGLIBDIR \
         /DOMPI_SYSCONFDIR \
         /DOMPI_BUILDING_LIBRARY \
+        /DOMPI_PKGDATADIR \
         /D_WINDLL \
         /EHsc \
         /MLd \
-        /W0 \
+        /W3 \
         /Wp64 \
         /ZI \
         /TC \
@@ -84,6 +88,27 @@ CFLAGS = \
         /nologo \
         /c
 
+LINK = link
+
+LINKFLAGS = \
+        /DLL \
+        /IMPLIB:libmpi.lib\
+        /nologo
+
+ADDLIBS = \
+        ws2_32.lib \
+        kernel32.lib \
+        user32.lib \
+        gdi32.lib \
+        winspool.lib \
+        comdlg32.lib \
+        advapi32.lib \
+        shell32.lib \
+        ole32.lib \
+        oleaut32.lib \
+        uuid.lib \
+        odbc32.lib \
+        odbccp32.lib 
 all: clibs
 
 temp:
@@ -104,6 +129,9 @@ clibs: prebuild ${FILES}
 	@for dirs in ${C_SUBDIRS}; do \
 	    (echo "Entering $${dirs}"; cd $$dirs; if test -f .compile_files; then (more .compile_files| xargs -i'{}' ${CC} ${CFLAGS} ${INCL} '{}'); else (ls *.c 2>/dev/null | xargs -i'{}' ${CC} ${CFLAGS} ${INCL} '{}'); fi); \
 	done
+
+libmpi:
+	${LINK} ${LINKFLAGS} ${ADDLIBS} Debug/*.obj
 
 .PHONY: clean
 
