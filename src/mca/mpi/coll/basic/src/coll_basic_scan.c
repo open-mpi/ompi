@@ -8,7 +8,6 @@
 #include <stdio.h>
 
 #include "lam/constants.h"
-#include "lam/mem/malloc.h"
 #include "mpi.h"
 #include "mca/mpi/coll/coll.h"
 #include "coll_basic.h"
@@ -75,7 +74,7 @@ int mca_coll_basic_scan(void *sbuf, void *rbuf, int count,
 			 count, dtype, BLKMPISCAN, comm);
       if (MPI_SUCCESS != err) {
 	if (NULL != tmpbuf)
-	  LAM_FREE(tmpbuf);
+	  free(tmpbuf);
 	return err;
       }
 #endif
@@ -99,7 +98,7 @@ int mca_coll_basic_scan(void *sbuf, void *rbuf, int count,
 
     if (MPI_SUCCESS != err) {
       if (NULL != tmpbuf)
-	LAM_FREE(tmpbuf);
+	free(tmpbuf);
       return err;
     }
 
@@ -113,7 +112,7 @@ int mca_coll_basic_scan(void *sbuf, void *rbuf, int count,
 #endif
 
     if (NULL != tmpbuf)
-      LAM_FREE(tmpbuf);
+      free(tmpbuf);
   }
 
   /* Send result to next process. */

@@ -7,6 +7,7 @@
 
 #include "lam/stdint.h"
 #include "lam/threads/mutex.h"
+#include "lam/util/output.h"
 #include "mpi.h"
 #include "mpi/group/group.h"
 #include "mca/mpi/coll/coll.h"
@@ -51,7 +52,7 @@ static inline lam_communicator_t *lam_comm_lookup(uint32_t cid)
     extern lam_communicator_t **lam_mpi_comm_array;
 #ifdef LAM_ENABLE_DEBUG
     extern uint32_t lam_mpi_comm_array_size;
-    if(cid >= lam_mpi_comm_array_size) {
+    if (cid >= lam_mpi_comm_array_size) {
         lam_output(0, "lam_comm_lookup: invalid communicator index (%d)", cid);
         return (lam_communicator_t *) NULL;
     }

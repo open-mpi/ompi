@@ -30,7 +30,7 @@ int mca_ptl_base_close(void)
        anymore) */
 
     sm->pbsm_actions->ptl_finalize(sm->pbsm_actions);
-    LAM_FREE(sm);
+    free(sm);
   }
 
   /* Close all remaining available modules (may be one if this is a

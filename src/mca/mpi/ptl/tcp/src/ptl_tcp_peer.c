@@ -270,12 +270,12 @@ static int mca_ptl_tcp_peer_recv_connect_ack(mca_ptl_base_peer_t* ptl_peer)
     if(mca_ptl_tcp_peer_recv_blocking(ptl_peer, &size_n, sizeof(size_n)) != size_n)
         return LAM_ERR_UNREACH;
     size_h = ntohl(size_n);
-    guid = LAM_MALLOC(size_h);
+    guid = malloc(size_h);
     if(NULL == guid)
         return LAM_ERR_OUT_OF_RESOURCE;
 
     if(mca_ptl_tcp_peer_recv_blocking(ptl_peer, guid, size_h) != size_h) {
-        LAM_FREE(guid);
+        free(guid);
         return LAM_ERR_UNREACH;
     }
 

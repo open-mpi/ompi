@@ -38,13 +38,13 @@ void lam_info_destroy(lam_info_t *info) {
  */
 void lam_info_entry_init(lam_info_entry_t *entry) {
     SUPER_INIT(entry, lam_list_item_cls.cls_parent);
-    LAM_MEM_ZERO (entry->ie_key);
+    memset(entry->ie_key, 0, sizeof(entry->ie_key));
     entry->ie_key[MPI_MAX_INFO_KEY] = 0;
 }
 
 void lam_info_entry_destroy(lam_info_entry_t *entry) {
     SUPER_DESTROY(entry, lam_list_item_cls.cls_parent);
     if (NULL != entry->ie_value) {
-        LAM_FREE(entry->ie_value);
+      free(entry->ie_value);
     }
 }

@@ -47,9 +47,9 @@ int mca_coll_basic_alltoallw(void *sbuf, int *scounts, int *sdisps,
 
   nreqs = 2 * (size - 1);
   if (nreqs > 0) {
-    req = (MPI_Request *) LAM_MALLOC(nreqs * sizeof(MPI_Request));
+    req = malloc(nreqs * sizeof(MPI_Request));
     if (NULL == req) {
-      LAM_FREE(req);
+      free(req);
       return ENOMEM;
     }
   } else {
@@ -119,7 +119,7 @@ int mca_coll_basic_alltoallw(void *sbuf, int *scounts, int *sdisps,
 
   err = MPI_Startall(nreqs, req);
   if (MPI_SUCCESS != err) {
-    LAM_FREE(req);
+    free(req);
     return err;
   }
 
@@ -127,7 +127,7 @@ int mca_coll_basic_alltoallw(void *sbuf, int *scounts, int *sdisps,
 
   err = MPI_Waitall(nreqs, req, MPI_STATUSES_IGNORE);
   if (MPI_SUCCESS != err) {
-    LAM_FREE(req);
+    free(req);
     return err;
   }
 
@@ -136,13 +136,13 @@ int mca_coll_basic_alltoallw(void *sbuf, int *scounts, int *sdisps,
   for (i = 0, preq = req; i < nreqs; ++i, ++preq) {
     err = MPI_Request_free(preq);
     if (MPI_SUCCESS != err) {
-      LAM_FREE(req);
+      free(req);
       return err;
     }
   }
 
   /* All done */
 
-  LAM_FREE(req);
+  free(req);
   return MPI_SUCCESS;
 }

@@ -49,7 +49,7 @@ lam_argv_append(int *argc, char ***argv, const char *arg)
   /* Create new argv. */
 
   if (NULL == *argv) {
-    *argv = LAM_MALLOC(2 * sizeof(char *));
+    *argv = malloc(2 * sizeof(char *));
     if (NULL == *argv)
       return LAM_ERROR;
     *argc = 0;
@@ -67,7 +67,7 @@ lam_argv_append(int *argc, char ***argv, const char *arg)
 
   /* Set the newest element to point to a copy of the arg string */
 
-  (*argv)[*argc] = LAM_MALLOC(strlen(arg) + 1);
+  (*argv)[*argc] = malloc(strlen(arg) + 1);
   if (NULL == (*argv)[*argc])
     return LAM_ERROR;
 
@@ -100,10 +100,10 @@ lam_argv_free(char **argv)
     return;
 
   for (p = argv; NULL != *p; ++p) {
-    LAM_FREE(*p);
+    free(*p);
   }
 
-  LAM_FREE(argv);
+  free(argv);
 }
 
 
@@ -156,7 +156,7 @@ lam_argv_split(const char *src_string, int delimiter)
     /* long argument, malloc buffer, copy and add */
 
     else if (arglen > (ARGSIZE - 1)) {
-      argtemp = LAM_MALLOC(arglen + 1);
+      argtemp = malloc(arglen + 1);
       if (NULL == argtemp)
 	return NULL;
 
@@ -164,11 +164,11 @@ lam_argv_split(const char *src_string, int delimiter)
       argtemp[arglen] = '\0';
 
       if (LAM_ERROR == lam_argv_append(&argc, &argv, argtemp)) {
-	LAM_FREE(argtemp);
+	free(argtemp);
 	return NULL;
       }
 
-      LAM_FREE(argtemp);
+      free(argtemp);
     }
 
     /* short argument, copy to buffer and add */
@@ -250,7 +250,7 @@ lam_argv_join(char **argv, int delimiter)
 
   /* Allocate the string. */
 
-  if (NULL == (str = LAM_MALLOC(str_len)))
+  if (NULL == (str = malloc(str_len)))
     return NULL;
 
   /* Loop filling in the string. */

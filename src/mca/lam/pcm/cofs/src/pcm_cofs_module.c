@@ -136,18 +136,18 @@ mca_pcm_cofs_init(int *priority, bool *allow_multi_user_threads,
   /*
    * See if we can write in our directory...
    */
-  tmp = LAM_MALLOC(strlen(mca_pcm_cofs_comm_loc) + 5);
+  tmp = malloc(strlen(mca_pcm_cofs_comm_loc) + 5);
   if (tmp == NULL) return NULL;
   sprintf(tmp, "%s/me", mca_pcm_cofs_comm_loc);
   fp = fopen(tmp, "w");
   if (fp == NULL) {
     printf("pcm_cofs can not write in communication dir\n");
-    LAM_FREE(tmp);
+    free(tmp);
     return NULL;
   }
   fclose(fp);
   unlink(tmp);
-  LAM_FREE(tmp);
+  free(tmp);
 
   /*
    * BWB - fix me, make register the "right" way...
@@ -179,7 +179,7 @@ int
 mca_pcm_cofs_finalize(void)
 {
   if (mca_pcm_cofs_procs != NULL) {
-    LAM_FREE(mca_pcm_cofs_procs);
+    free(mca_pcm_cofs_procs);
     mca_pcm_cofs_procs = NULL;
     mca_pcm_cofs_nprocs = 0;
   }

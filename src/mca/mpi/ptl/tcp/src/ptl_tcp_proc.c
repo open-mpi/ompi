@@ -48,9 +48,9 @@ void mca_ptl_tcp_proc_destroy(mca_ptl_tcp_proc_t* proc)
 
     /* release resources */
     if(NULL != proc->proc_peers) 
-        LAM_FREE(proc->proc_peers);
+        free(proc->proc_peers);
     if(NULL != proc->proc_guid)
-        LAM_FREE(proc->proc_guid);
+        free(proc->proc_guid);
     SUPER_DESTROY(proc, &lam_list_item_cls);
 }
 
@@ -77,7 +77,7 @@ mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_create(lam_proc_t* lam_proc)
 
     /* build a unique identifier (of arbitrary size) to represent the proc */
     ptl_proc->proc_guid_size = size + sizeof(uint32_t);
-    ptl_proc->proc_guid = LAM_MALLOC(ptl_proc->proc_guid_size);
+    ptl_proc->proc_guid = malloc(ptl_proc->proc_guid_size);
     if(ptl_proc->proc_guid == 0) {
         OBJ_RELEASE(ptl_proc);
         return 0;
@@ -105,7 +105,7 @@ mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_create(lam_proc_t* lam_proc)
 
     /* allocate space for peer array - one for each exported address */
     ptl_proc->proc_peers = (mca_ptl_base_peer_t**)
-        LAM_MALLOC(ptl_proc->proc_addr_count * sizeof(mca_ptl_base_peer_t*));
+        malloc(ptl_proc->proc_addr_count * sizeof(mca_ptl_base_peer_t*));
     if(NULL == ptl_proc->proc_peers) {
         OBJ_RELEASE(ptl_proc);
         return NULL;

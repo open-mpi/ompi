@@ -26,7 +26,7 @@ int mca_mpi_alloc_mem(MPI_Aint size, MPI_Info info, void *baseptr)
 
   /* Do the alloc */
 
-  temp = LAM_MALLOC(size);
+  temp = malloc(size);
   if (NULL == temp)
     return LAM_ERROR;
 
@@ -40,7 +40,7 @@ int mca_mpi_alloc_mem(MPI_Aint size, MPI_Info info, void *baseptr)
 int mca_mpi_free_mem(void *baseptr)
 {
   if (NULL != baseptr)
-    LAM_FREE(baseptr);
+    free(baseptr);
 
   return MPI_SUCCESS;
 }

@@ -3,7 +3,6 @@
  */
 
 #include "mpi.h"
-#include "lam/mem/malloc.h"
 #include "mca/mpi/pml/pml.h"
 #include "mca/mpi/ptl/ptl.h"
 #include "mca/lam/base/mca_base_param.h"
@@ -74,9 +73,9 @@ int mca_pml_teg_module_open(void)
 int mca_pml_teg_module_close(void)
 {
     if(NULL != mca_pml_teg.teg_ptl_modules)
-        LAM_FREE(mca_pml_teg.teg_ptl_modules);
+        free(mca_pml_teg.teg_ptl_modules);
     if(NULL != mca_pml_teg.teg_ptls)
-        LAM_FREE(mca_pml_teg.teg_ptls);
+        free(mca_pml_teg.teg_ptls);
     STATIC_DESTROY(mca_pml_teg.teg_recv_requests);
     STATIC_DESTROY(mca_pml_teg.teg_procs);
     return LAM_SUCCESS;

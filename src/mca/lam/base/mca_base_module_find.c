@@ -102,7 +102,7 @@ int mca_base_module_find(const char *directory, const char *type,
 
   lam_list_init(found_modules);
   for (i = 0; NULL != static_modules[i]; ++i) {
-    mli = LAM_MALLOC(sizeof(mca_base_module_list_item_t));
+    mli = malloc(sizeof(mca_base_module_list_item_t));
     if (NULL == mli) {
       return LAM_ERR_OUT_OF_RESOURCE;
     }
@@ -206,20 +206,20 @@ static void find_dyn_modules(const char *path, const char *type_name,
        lam_list_get_end(&found_files) != cur; ) {
     file = (module_file_item_t *) cur;
     cur = lam_list_get_next(cur);
-    LAM_FREE(file);
+    free(file);
     lam_list_remove_first(&found_files);
   }
 
   /* All done */
 
   if (NULL != param) {
-    LAM_FREE(param);
+    free(param);
   }
   /* JMS This list memory management may change */
 #if 0
   lam_list_destroy(&found_files);
 #endif
-  LAM_FREE(path_to_use);
+  free(path_to_use);
 }
 
 
@@ -243,7 +243,7 @@ static int save_filename(const char *filename, lt_ptr data)
   if (NULL != params->name) {
     len += strlen(params->name);
   }
-  prefix = LAM_MALLOC(len);
+  prefix = malloc(len);
   snprintf(prefix, len, module_template, params->type);
   prefix_len = strlen(prefix);
   if (NULL != params->name) {
@@ -259,13 +259,13 @@ static int save_filename(const char *filename, lt_ptr data)
   }
 
   if (0 != strncmp(basename, prefix, total_len)) {
-    LAM_FREE(prefix);
+    free(prefix);
     return 0;
   }
 
   /* Save all the info and put it in the list of found modules */
 
-  module_file = LAM_MALLOC(sizeof(module_file_item_t));
+  module_file = malloc(sizeof(module_file_item_t));
   if (NULL == module_file) {
     return LAM_ERR_OUT_OF_RESOURCE;
   }
@@ -279,7 +279,7 @@ static int save_filename(const char *filename, lt_ptr data)
 
   /* All done */
 
-  LAM_FREE(prefix);
+  free(prefix);
   return 0;
 }
 
@@ -354,7 +354,7 @@ static int open_module(module_file_item_t *target_file,
      Malloc out enough space for it. */
 
   len = strlen(target_file->type) + strlen(target_file->name) + 32;
-  struct_name = LAM_MALLOC(len);
+  struct_name = malloc(len);
   if (NULL == struct_name) {
     lt_dlclose(module_handle);
     target_file->status = FAILED_TO_LOAD;
@@ -364,9 +364,9 @@ static int open_module(module_file_item_t *target_file,
   snprintf(struct_name, len, "mca_%s_%s_module", target_file->type,
            target_file->name);
 
-  mitem = LAM_MALLOC(sizeof(mca_base_module_list_item_t));
+  mitem = malloc(sizeof(mca_base_module_list_item_t));
   if (NULL == mitem) {
-    LAM_FREE(struct_name);
+    free(struct_name);
     lt_dlclose(module_handle);
     target_file->status = FAILED_TO_LOAD;
     free_dependency_list(&dependencies);
@@ -379,8 +379,8 @@ static int open_module(module_file_item_t *target_file,
     lam_output_verbose(0, 40, " \"%s\" does not appear to be a valid "
                        "%s MCA dynamic module (ignored)", 
                        target_file->basename, target_file->type, NULL);
-    LAM_FREE(mitem);
-    LAM_FREE(struct_name);
+    free(mitem);
+    free(struct_name);
     lt_dlclose(module_handle);
     target_file->status = FAILED_TO_LOAD;
     free_dependency_list(&dependencies);
@@ -406,7 +406,7 @@ static int open_module(module_file_item_t *target_file,
                                   target_file->name,
                                   ditem->di_module_file_item->type,
                                   ditem->di_module_file_item->name);
-    LAM_FREE(ditem);
+    free(ditem);
   }
   lam_list_destroy(&dependencies);
 
@@ -416,7 +416,7 @@ static int open_module(module_file_item_t *target_file,
     
   /* All done */
     
-  LAM_FREE(struct_name);
+  free(struct_name);
   return LAM_SUCCESS;
 }
 
@@ -439,7 +439,7 @@ static int check_laminfo(module_file_item_t *target_file,
   /* Form the filename */
 
   len = strlen(target_file->filename) + strlen(laminfo_suffix) + 16;
-  depname = LAM_MALLOC(len);
+  depname = malloc(len);
   if (NULL == depname)
     return LAM_ERR_OUT_OF_RESOURCE;
   snprintf(depname, len, "%s%s", target_file->filename, laminfo_suffix);
@@ -448,7 +448,7 @@ static int check_laminfo(module_file_item_t *target_file,
      there are no dependencies). */
 
   if (NULL == (fp = fopen(depname, "r"))) {
-    LAM_FREE(depname);
+    free(depname);
     return 0;
   }
 
@@ -484,7 +484,7 @@ static int check_laminfo(module_file_item_t *target_file,
                                           target_file, dependencies, 
                                           found_modules)) {
         fclose(fp);
-        LAM_FREE(depname);
+        free(depname);
 
         /* We can leave any successfully loaded dependencies; we might
            need them again later.  But free the dependency list for
@@ -504,7 +504,7 @@ static int check_laminfo(module_file_item_t *target_file,
   /* All done -- all depenencies satisfied */
 
   fclose(fp);
-  LAM_FREE(depname);
+  free(depname);
   return 0;
 }
 
@@ -621,7 +621,7 @@ static int check_dependency(char *line, module_file_item_t *target_file,
   /* The dependency loaded properly.  Increment its refcount so that
      it doesn't get unloaded before we get unloaded. */
 
-  ditem = LAM_MALLOC(sizeof(dependency_item_t));
+  ditem = malloc(sizeof(dependency_item_t));
   if (NULL == ditem) {
     return LAM_ERR_OUT_OF_RESOURCE;
   }
@@ -645,7 +645,7 @@ static void free_dependency_list(lam_list_t *dependencies)
   for (item = lam_list_remove_first(dependencies);
        NULL != item;
        item = lam_list_remove_first(dependencies)) {
-    LAM_FREE(item);
+    free(item);
   }
   lam_list_destroy(dependencies);
 }

@@ -6,7 +6,6 @@
 #include "mpi/file/file.h"
 #include "io_romio.h"
 #include "mpi/request/request.h"
-#include "lam/mem/malloc.h"
 #include <string.h>
 
 
@@ -23,7 +22,7 @@ int mca_io_romio_Test(MPI_Request *request, int *flag, MPI_Status *status){
     THREAD_LOCK(&mca_io_romio_mutex);
     ret=mca_io_romio_MPIO_Test(&romio_rq, flag,status);
     if (*flag) {
-        LAM_FREE(*request);  
+        free(*request);  
         *request = MPI_REQUEST_NULL;
     }
     THREAD_UNLOCK(&mca_io_romio_mutex);
@@ -46,7 +45,7 @@ int mca_io_romio_Wait(MPI_Request *request, MPI_Status *status){
     ret=mca_io_romio_MPIO_Wait(&romio_rq, status);
     THREAD_UNLOCK(&mca_io_romio_mutex);
     
-    LAM_FREE(*request);  
+    free(*request);  
     *request = MPI_REQUEST_NULL;
     return ret;
 }

@@ -52,7 +52,7 @@ int lam_free_list_grow(lam_free_list_t* flist, size_t num_elements)
     if (NULL != flist->fl_allocator)
         ptr = (unsigned char*)lam_allocator_alloc(flist->fl_allocator, num_elements * flist->fl_elem_size);
     else
-        ptr = (unsigned char*)LAM_MALLOC(num_elements * flist->fl_elem_size);
+        ptr = malloc(num_elements * flist->fl_elem_size);
     if(NULL == ptr)
         return LAM_ERR_TEMP_OUT_OF_RESOURCE;
 

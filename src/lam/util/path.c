@@ -83,14 +83,14 @@ lam_path_findv(char *fname, char **pathv, int mode, char **envv)
                 if (!delimit) {
                     fullpath = path_access(fname, env, mode);
                 } else {
-                    pfix = LAM_MALLOC(strlen(env) + strlen(delimit) + 1);
+                    pfix = malloc(strlen(env) + strlen(delimit) + 1);
                     if (NULL == pfix){
                         return(0);
                     }
                     strcpy(pfix, env);
                     strcat(pfix, delimit);
                     fullpath = path_access(fname, pfix, mode);
-                    LAM_FREE(pfix);
+                    free(pfix);
                 }
             }
         }
@@ -164,7 +164,7 @@ lam_path_env_findv(char *fname, int mode, char **envv, char *wrkdir)
     for (i = 0; i < dirc; ++i) {
         if ((0 == strcmp(dirv[i], ".")) && wrkdir) {
             found_dot = 1;
-            LAM_FREE(dirv[i]);
+            free(dirv[i]);
             dirv[i] = strdup(wrkdir);
             if (NULL == dirv[i]){
                  return(0);
@@ -225,7 +225,7 @@ path_access(char *fname, char *path, int mode)
     /*
      * Allocate space for the full pathname.
      */
-    fullpath = LAM_MALLOC(strlen(path) + strlen(fname) + 2);
+    fullpath = malloc(strlen(path) + strlen(fname) + 2);
     if (NULL == fullpath){
         return(0);
     }
@@ -242,7 +242,7 @@ path_access(char *fname, char *path, int mode)
      * Then check the permissions.
      */
     if (access(fullpath, mode)) {
-        LAM_FREE(fullpath);
+        free(fullpath);
         fullpath = 0;
     }
 

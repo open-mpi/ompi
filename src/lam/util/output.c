@@ -17,7 +17,6 @@
 #include <unistd.h>
 
 #include "lam/constants.h"
-#include "lam/mem/malloc.h"
 #include "lam/util/output.h"
 #include "lam/threads/mutex.h"
 
@@ -286,7 +285,7 @@ void lam_output_close(int output_id)
   /* Somewhat of a hack to free up the temp_str */
 
   if (NULL != temp_str) {
-    LAM_FREE(temp_str);
+    free(temp_str);
     temp_str = NULL;
     temp_str_len = 0;
   }
@@ -474,7 +473,7 @@ static int do_open(int output_id, lam_output_stream_t *lds)
 #if NEED_TO_IMPLEMENT_SESSION_DIRECTORY
     filename = lam_get_tmpdir();
 #else
-    filename = LAM_MALLOC(256);
+    filename = malloc(256);
     strcpy(filename, "/tmp");
 #endif
     strcat(filename, "/lam-");
@@ -501,7 +500,7 @@ static int do_open(int output_id, lam_output_stream_t *lds)
        problems */
 
     fcntl(info[i].ldi_fd, F_SETFD, 1);
-    LAM_FREE(filename);
+    free(filename);
   }
 
   return i;
@@ -528,15 +527,15 @@ static void free_descriptor(int output_id)
     /* If we strduped a prefix, suffix, or syslog ident, free it */
 
     if (NULL != ldi->ldi_prefix)
-      LAM_FREE(ldi->ldi_prefix);
+      free(ldi->ldi_prefix);
     ldi->ldi_prefix = NULL;
 
     if (NULL != ldi->ldi_file_suffix)
-      LAM_FREE(ldi->ldi_file_suffix);
+      free(ldi->ldi_file_suffix);
     ldi->ldi_file_suffix = NULL;
 
     if (NULL != ldi->ldi_syslog_ident)
-      LAM_FREE(ldi->ldi_syslog_ident);
+      free(ldi->ldi_syslog_ident);
     ldi->ldi_syslog_ident = NULL;
   }  
 }
@@ -579,7 +578,7 @@ static void output(int output_id, char *format, va_list arglist)
       total_len += strlen(ldi->ldi_prefix);
     if (temp_str_len < total_len + want_newline) {
       if (NULL != temp_str)
-	LAM_FREE(temp_str);
+	free(temp_str);
       temp_str = malloc(total_len * 2);
       temp_str_len = total_len * 2;
     }
@@ -620,7 +619,7 @@ static void output(int output_id, char *format, va_list arglist)
       write(ldi->ldi_fd, temp_str, total_len);
     THREAD_UNLOCK(&mutex);
 
-    LAM_FREE(str);
+    free(str);
   }  
 }
 
@@ -787,7 +786,7 @@ static char *lam_vsnprintf(char *format, va_list arglist)
   /* Wasn't that simple?  Now malloc out a string and do the final
      formatting into that string. */
   
-  sarg = LAM_MALLOC(len);
+  sarg = malloc(len);
   vsprintf(sarg, format, arglist2);
 
   /* Return the new string */

@@ -133,7 +133,7 @@ static int lam_ifinit(void)
         }
         memcpy(&intf.if_mask, &ifr->ifr_addr, sizeof(intf.if_mask));
 
-        intf_ptr = (lam_if_t*)LAM_MALLOC(sizeof(lam_if_t));
+        intf_ptr = malloc(sizeof(lam_if_t));
         if(intf_ptr == 0) {
             lam_output(0, "lam_ifinit: unable to allocated %d bytes\n", sizeof(lam_if_t));
             return LAM_ERR_OUT_OF_RESOURCE;

@@ -45,14 +45,14 @@ int mca_base_modules_close(int output_id, lam_list_t *modules_available,
       lam_output_verbose(10, output_id, "close: module %s unloaded",
                          module->mca_module_name);
     }
-    LAM_FREE(mli);
+    free(mli);
   }
 
   /* Re-add the skipped module to the available list (see above
      comment) */
 
   if (NULL != skip) {
-    mli = LAM_MALLOC(sizeof(mca_base_module_list_item_t));
+    mli = malloc(sizeof(mca_base_module_list_item_t));
     if (NULL == mli) {
       return LAM_ERR_OUT_OF_RESOURCE;
     }

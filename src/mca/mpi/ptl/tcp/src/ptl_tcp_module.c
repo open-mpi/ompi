@@ -8,7 +8,6 @@
 #include "lam/util/if.h"
 #include "lam/util/argv.h"
 #include "lam/util/output.h"
-#include "lam/mem/malloc.h"
 #include "mca/mpi/pml/pml.h"
 #include "mca/mpi/ptl/ptl.h"
 #include "mca/mpi/ptl/base/ptl_base_sendreq.h"
@@ -133,10 +132,10 @@ int mca_ptl_tcp_module_open(void)
 
 int mca_ptl_tcp_module_close(void)
 {
-    LAM_FREE(mca_ptl_tcp_module.tcp_if_include);
-    LAM_FREE(mca_ptl_tcp_module.tcp_if_exclude);
+    free(mca_ptl_tcp_module.tcp_if_include);
+    free(mca_ptl_tcp_module.tcp_if_exclude);
     if (NULL != mca_ptl_tcp_module.tcp_ptls)
-        LAM_FREE(mca_ptl_tcp_module.tcp_ptls);
+        free(mca_ptl_tcp_module.tcp_ptls);
  
     STATIC_DESTROY(mca_ptl_tcp_module.tcp_reactor);
     STATIC_DESTROY(mca_ptl_tcp_module.tcp_procs);
@@ -168,7 +167,7 @@ static int mca_ptl_tcp_module_create_instances(void)
 
     /* allocate memory for ptls */
     mca_ptl_tcp_module.tcp_max_ptls = if_count;
-    mca_ptl_tcp_module.tcp_ptls = (mca_ptl_tcp_t**)LAM_MALLOC(if_count * sizeof(mca_ptl_tcp_t*));
+    mca_ptl_tcp_module.tcp_ptls = malloc(if_count * sizeof(mca_ptl_tcp_t*));
     if(NULL == mca_ptl_tcp_module.tcp_ptls)
         return LAM_ERR_OUT_OF_RESOURCE;
 
@@ -260,7 +259,7 @@ static int mca_ptl_tcp_module_create_listen(void)
 static int mca_ptl_tcp_module_exchange(void)
 {
      size_t i;
-     mca_ptl_tcp_addr_t *addrs = (mca_ptl_tcp_addr_t*)LAM_MALLOC
+     mca_ptl_tcp_addr_t *addrs = malloc
          (mca_ptl_tcp_module.tcp_num_ptls * sizeof(mca_ptl_tcp_addr_t));
      for(i=0; i<mca_ptl_tcp_module.tcp_num_ptls; i++) {
          mca_ptl_tcp_t* ptl = mca_ptl_tcp_module.tcp_ptls[i];
@@ -270,7 +269,7 @@ static int mca_ptl_tcp_module_exchange(void)
      }
      int rc =  mca_base_modex_send(&mca_ptl_tcp_module.super.ptlm_version,
          addrs, sizeof(mca_ptl_tcp_t),mca_ptl_tcp_module.tcp_num_ptls);
-     LAM_FREE(addrs);
+     free(addrs);
      return rc;
 }
 
@@ -408,7 +407,7 @@ static void mca_ptl_tcp_module_recv_handler(void* user, int sd)
 
     /* recv the identifier */
     size = ntohl(size);
-    guid = LAM_MALLOC(size);
+    guid = malloc(size);
     if(guid == 0) {
         close(sd);
         return;
