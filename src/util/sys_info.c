@@ -14,6 +14,7 @@
 
 ompi_sys_info_t ompi_system_info = {
                  /* .init =        */     false,
+		 /* .pid =         */     0,
                  /* .sysname =     */     NULL,
 	         /* .nodename =    */     NULL,
                  /* .release =     */     NULL,
