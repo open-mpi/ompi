@@ -7,6 +7,7 @@
 #include "lam/constants.h"
 #include "lam/runtime/runtime.h"
 #include "mpi.h"
+#include "mpi/group/group.h"
 #include "mpi/runtime/runtime.h"
 #include "mca/lam/base/base.h"
 #include "mca/mpi/ptl/ptl.h"
@@ -48,6 +49,11 @@ int lam_mpi_finalize(void)
   }
 
   /* Leave LAM */
+
+  /* free group resources */
+  if (LAM_SUCCESS != (ret = lam_group_finalize())) {
+      return ret;
+  }
 
   if (LAM_SUCCESS != (ret = lam_finalize())) {
     return ret;
