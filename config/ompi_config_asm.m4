@@ -139,7 +139,7 @@ AC_DEFUN([OMPI_CHECK_ASM_GSYM],[
     AC_MSG_CHECKING([prefix for global symbol labels])
     ompi_cv_asm_gsym="none"
 
-    for sym in "_" "" ; do
+    for sym in "_" "" "." ; do
         asm_result=0
         echo "configure: trying $sym" >& AC_FD_CC
 cat > conftest_c.c <<EOF
@@ -653,15 +653,28 @@ AC_DEFINE_UNQUOTED([OMPI_ASM_SUPPORT_64BIT],
                    [Whether we can do 64bit assembly operations or not.  Should not be used outside of the assembly header files])
 AC_SUBST([OMPI_ASM_SUPPORT_64BIT])
 
+#
+# figure out if we need any special function start / stop code
+#
+case $host_os in
+    aix*)
+        ompi_asm_arch_config="aix"
+    ;;
+    *)
+        ompi_asm_arch_config="default"
+    ;;
+esac
+
+
 # now that we know our architecture, try to inline assemble
 OMPI_CHECK_INLINE_GCC([$OMPI_GCC_INLINE_ASSIGN])
 OMPI_CHECK_INLINE_DEC
 OMPI_CHECK_INLINE_XLC
 
 # format:
-#   text-global-label_suffix-gsym-lsym-type-size-align_log-ppc_r_reg-64_bit
-
-asm_format="${ompi_cv_asm_text}-${ompi_cv_asm_global}"
+#   config_file-text-global-label_suffix-gsym-lsym-type-size-align_log-ppc_r_reg-64_bit
+asm_format="${ompi_asm_arch_config}"
+asm_format="${asm_format}-${ompi_cv_asm_text}-${ompi_cv_asm_global}"
 asm_format="${asm_format}-${ompi_cv_asm_label_suffix}-${ompi_cv_asm_gsym}"
 asm_format="${asm_format}-${ompi_cv_asm_lsym}"
 asm_format="${asm_format}-${ompi_cv_asm_type}-${ompi_cv_asm_size}"
@@ -708,7 +721,7 @@ AC_DEFUN([OMPI_ASM_FIND_FILE], [
     # see if we have a pre-built one already
     AC_MSG_CHECKING([for pre-built assembly file])
     ompi_cv_asm_file=""
-    if grep "$ompi_cv_asm_arch.*$ompi_cv_asm_format" "${top_ompi_srcdir}/src/asm/asm-data.txt" >conftest.out 2>&1 ; then
+    if grep "$ompi_cv_asm_arch" "${top_ompi_srcdir}/src/asm/asm-data.txt" | grep -F "$ompi_cv_asm_format" >conftest.out 2>&1 ; then
         ompi_cv_asm_file="`cut -f3 conftest.out`"
         if test ! "$ompi_cv_asm_file" = "" ; then
             ompi_cv_asm_file="atomic-${ompi_cv_asm_file}.s"

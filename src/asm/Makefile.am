@@ -51,7 +51,9 @@ noinst_LTLIBRARIES = libasm.la
 EXTRA_DIST	= \
 	asm-data.txt \
 	generate-asm.pl \
-	generate-all-asm.sh \
+	generate-all-asm.pl \
+	base/aix.conf \
+	base/default.conf \
 	base/AMD64.asm \
 	base/IA32.asm \
 	base/POWERPC32.asm \
@@ -72,4 +74,4 @@ maintainer-clean-local:
 #
 dist-hook:
 	mkdir ${distdir}/generated
-	sh generate-all-asm.sh "$(PERL)" "$(srcdir)" "$(distdir)"
+	$(PERL) generate-all-asm.pl "$(PERL)" "$(srcdir)" "$(distdir)"

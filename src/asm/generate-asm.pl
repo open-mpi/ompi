@@ -15,22 +15,35 @@ open(INPUT, "$basedir/$asmarch.asm") ||
     die "Could not open $basedir/$asmarch.asm: $!\n";
 open(OUTPUT, ">$output") || die "Could not open $output: $1\n";
 
-my $TEXT = "";
-my $GLOBAL = "";
-my $SUFFIX = "";
-my $GSYM = "";
-my $LSYM = "";
-my $TYPE = "";
-my $SIZE = 0;
-my $ALIGN_LOG = 0;
-my $DEL_R_REG = 0;
-my $IS64BIT = 0;
+$CONFIG = "default";
+$TEXT = "";
+$GLOBAL = "";
+$SUFFIX = "";
+$GSYM = "";
+$LSYM = "";
+$TYPE = "";
+$SIZE = 0;
+$ALIGN_LOG = 0;
+$DEL_R_REG = 0;
+$IS64BIT = 0;
 
-($TEXT, $GLOBAL, $SUFFIX, $GSYM, $LSYM, $TYPE, $SIZE, $ALIGN_LOG, $DEL_R_REG, $IS64BIT) = (
-    $asmformat =~ /(.*)\-(.*)\-(.*)\-(.*)\-(.*)\-(.*)\-(.*)\-(.*)\-(.*)\-(.*)/);
+($CONFIG, $TEXT, $GLOBAL, $SUFFIX, $GSYM, $LSYM, $TYPE, $SIZE, $ALIGN_LOG, $DEL_R_REG, $IS64BIT) = (
+    $asmformat =~ /(.*)\-(.*)\-(.*)\-(.*)\-(.*)\-(.*)\-(.*)\-(.*)\-(.*)\-(.*)\-(.*)/);
+
+if (0) {
+print "CONFIG: $CONFIG\n";
+print "TEXT: $TEXT\n";
+print "GLOBAL: $GLOBAL\n";
+print "SUFFIX: $SUFFIX\n";
+print "GSYM: $GSYM\n";
+print "LSYM: $LSYM\n";
+}
 
 my $current_func = "";
 my $delete = 0;
+
+# load our configuration
+do "$basedir/$CONFIG.conf" or die "Could not open config file $basedir/$CONFIG.conf: $!\n";
 
 while (<INPUT>) {
     s/TEXT/$TEXT/g;
@@ -41,22 +54,18 @@ while (<INPUT>) {
         s/r([0-9][0-9]?)/$1/g;
     }
 
+    if (/START_FILE/) {
+        $_ = start_file();
+    }
+
     if (/START_FUNC\((.*)\)/) {
         $current_func = $1;
-        $_ = "\t$GLOBAL $GSYM$current_func\n";
-        if (! $TYPE eq "") { 
-            $_ .= "\t.type $current_func, $TYPE" . "function\n";
-        }
-        $_ .= "$GSYM$current_func$SUFFIX\n";
+        $_ = start_func($current_func);
     }
 
     if (/END_FUNC\((.*)\)/) {
-        s/END_FUNC\((.*)\)//g;
-        if ($SIZE != 0) {
-            $_ = "\t.size $current_func, .-$current_func\n";
-        } else {
-            chomp;
-        }
+        $current_func = $1;
+        $_ = end_func($current_func);
     }
 
     if ($ALIGN_LOG == 0) {

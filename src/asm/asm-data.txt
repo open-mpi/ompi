@@ -19,10 +19,13 @@
 # FORMAT:
 # ARCHITECTURE	ASSEMBLY FORMAT			BASE FILENAME
 #
+# Assembly Format field:
+#   config_file-text-global-label_suffix-gsym-lsym-type-size-align_log-ppc_r_reg-64_bit
 
-AMD64	.text-.globl-:--.L-@-1-0-1-0	amd64-linux
-IA32	.text-.globl-:--.L-@-1-0-1-0	ia32-linux
-POWERPC32	.text-.globl-:-_-L--0-1-1-0	powerpc32-osx
-POWERPC32	.text-.globl-:-_-L--0-1-1-1	powerpc32-64-osx
-POWERPC32	.text-.globl-:--.L-@-1-1-0-0	powerpc32-linux
-POWERPC64	.text-.globl-:-_-L--0-1-1-1	powerpc64-osx
+AMD64	default-.text-.globl-:--.L-@-1-0-1-0	amd64-linux
+IA32	default-.text-.globl-:--.L-@-1-0-1-0	ia32-linux
+POWERPC32	default-.text-.globl-:-_-L--0-1-1-0	powerpc32-osx
+POWERPC32	default-.text-.globl-:-_-L--0-1-1-1	powerpc32-64-osx
+POWERPC32	default-.text-.globl-:--.L-@-1-1-0-0	powerpc32-linux
+POWERPC32	aix-.csect .text[PR]-.globl-:-.-L--0-0-0-0	powerpc32-aix
+POWERPC64	default-.text-.globl-:-_-L--0-1-1-1	powerpc64-osx
