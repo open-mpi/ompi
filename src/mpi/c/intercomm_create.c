@@ -122,7 +122,9 @@ int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
                              bridge_comm,                 /* bridge comm */
                              &lleader,                    /* local leader */
                              &rleader,                    /* remote_leader */
-                             OMPI_COMM_CID_INTRA_BRIDGE); /* mode */
+                             OMPI_COMM_CID_INTRA_BRIDGE,  /* mode */
+                             -1 );                        /* send_first */
+
     if ( MPI_SUCCESS != rc ) {
         goto err_exit;
     }
@@ -135,9 +137,22 @@ int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
                          rprocs,                                       /* remote_procs */
                          NULL,                                         /* attrs */
                          local_comm->error_handler,                    /* error handler*/
-                         NULL,                                         /* coll module */
                          NULL                                          /* topo mpodule */
                          );
+    if ( MPI_SUCCESS != rc ) {
+        goto err_exit;
+    }
+
+    /* activate comm and init coll-module */
+    rc = ompi_comm_activate ( newcomp,                     /* new comm */ 
+                              local_comm,                  /* old comm */
+                              bridge_comm,                 /* bridge comm */
+                              &lleader,                    /* local leader */
+                              &rleader,                    /* remote_leader */
+                              OMPI_COMM_CID_INTRA_BRIDGE,  /* mode */
+                              -1,                          /* send_first */
+                              NULL );                      /* coll component */
+
     if ( MPI_SUCCESS != rc ) {
         goto err_exit;
     }
