@@ -6,7 +6,10 @@
 #
 
 topdir = `echo $(CURDIR) | sed 's/^\//C:\/cygwin\//g' | sed 's/\/src//g'`
-install-dir = "C:\cygwin\home\pkambadu\local"
+install-dir = ${prefix}
+pkgdatadir = ${prefix}/share
+sysconfdir = ${prefix}/etc
+pkglibdir = ${prefix}/lib
 
 # list of components to build with the c compiler
 C_SUBDIRS =  \
@@ -66,13 +69,11 @@ INCL = \
 
 CFLAGS = \
         /DWIN32 \
-        /DOMPI_SYSCONFDIR \
+        /DOMPI_SYSCONFDIR="\"${sysconfdir}\"" \
+        /DOMPI_PKGLIBDIR="\"${pkglibdir}\"" \
+        /DOMPI_PKGDATADIR="\"${pkgdatadir}\"" \
         /DHAVE_CONFIG_H \
-        /DOMPI_PKGDATA_DIR \
-        /DOMPI_PKGLIBDIR \
-        /DOMPI_SYSCONFDIR \
         /DOMPI_BUILDING_LIBRARY \
-        /DOMPI_PKGDATADIR \
         /D_WINDLL \
         /EHsc \
         /MLd \
@@ -113,9 +114,6 @@ ADDLIBS = \
 
 all: clibs libmpi
 
-temp:
-	@echo ${FILES}
-
 prebuild:
 	@echo "Creating mca_base_parse_paramfile_lex.c"
 	@/usr/bin/flex -t -Pmca_base_yy "${topdir}/src/mca/base/mca_base_parse_paramfile_lex.l" \
@@ -146,6 +144,7 @@ install:
                                     ${install-dir}/include/ompi_config.h 
 	@install -c ${topdir}/include/mpi.h ${install-dir}/include/mpi.h
 	@install -c ${topdir}/include/ompi_stdint.h ${install-dir}/include/ompi_stdint.h
+	@install -c ${topdir}/src/win32/win_compat.h/ ${install-dir}/include/win32/win_compat.h
 
 .PHONY: clean
 

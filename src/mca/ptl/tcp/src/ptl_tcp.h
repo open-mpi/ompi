@@ -7,6 +7,7 @@
 #ifndef MCA_PTL_TCP_H
 #define MCA_PTL_TCP_H
 
+#include "ompi_config.h"
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
@@ -58,7 +59,7 @@ typedef struct mca_ptl_tcp_component_t mca_ptl_tcp_component_t;
 struct mca_ptl_tcp_recv_frag_t;
 struct mca_ptl_tcp_send_frag_t;
 
-extern mca_ptl_tcp_component_t mca_ptl_tcp_component;
+OMPI_COMP_EXPORT extern mca_ptl_tcp_component_t mca_ptl_tcp_component;
 
 /**
  * Register TCP module parameters with the MCA framework

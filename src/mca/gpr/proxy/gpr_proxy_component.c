@@ -29,7 +29,7 @@
 /*
  * Struct of function pointers that need to be initialized
  */
-mca_gpr_base_component_t mca_gpr_proxy_component = {
+OMPI_COMP_EXPORT mca_gpr_base_component_t mca_gpr_proxy_component = {
     {
 	MCA_GPR_BASE_VERSION_1_0_0,
 

@@ -9,6 +9,7 @@
 #ifndef MCA_TOPO_UNTIY_H
 #define MCA_TOPO_UNTIY_H
 
+#include "ompi_config.h"
 #include "threads/condition.h"
 #include "class/ompi_free_list.h"
 #include "util/cmd_line.h"
@@ -20,7 +21,7 @@
  * version information and the four functions (see below) which
  * are needed for this module to function with the MCA framework
  */
-OMPI_COMP_EXPORT extern const struct mca_topo_base_module_1_0_0_t mca_topo_unity_module;
+//OMPI_COMP_EXPORT extern struct mca_topo_base_module_1_0_0_t mca_topo_unity_module;
 
 
 /*

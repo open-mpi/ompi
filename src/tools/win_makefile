@@ -6,6 +6,10 @@
 #
 
 topdir = `echo $(CURDIR) | sed 's/^\//C:\/cygwin\//g' | sed 's/\/src\/tools//g'`
+install_dir = ${prefix}
+libdir = ${prefix}/lib
+bindir = ${prefix}/bin
+incdir = ${prefix}/include
 
 # list of components to build with the c compiler
 C_SUBDIRS = \
@@ -27,43 +31,43 @@ INCL = \
 
 CFLAGS = \
         /DWIN32 \
-        /DOMPI_SYSCONFDIR \
+        /DOMPI_SYSCONFDIR="\"${prefix}/share\"" \
         /nologo \
         /c 
 
 CPPFLAGS = \
         /DWIN32 \
-        /DOMPI_SYSCONFDIR \
+        /DOMPI_SYSCONFDIR="\"${prefix}/share\"" \
         /c \
         /TP \
         /nologo \
         /EHsc
 
 ADD_INCL = \
-        /DOMPI_WANT_F90_BINDINGS "" \
-        /DOMPI_WANT_F90_BINDINGS  ""\
-        /DOMPI_CONFIGURE_USER  ""\
-        /DOMPI_CONFIGURE_DATE "" \
-        /DOMPI_CONFIGURE_HOST "" \
-        /DOMPI_F90 "" \
-        /DOMPI_WANT_F90_BINDINGS "" \
-        /DOMPI_BUILD_CFLAGS "" \
-        /DOMPI_BUILD_CXXFLAGS "" \
-        /DOMPI_BUILD_FFLAGS "" \
-        /DOMPI_BUILD_FCFLAGS "" \
-        /DOMPI_BUILD_LDFLAGS "" \
-        /DOMPI_BUILD_LIBS "" \
-        /DOMPI_MAJOR_VERSION "" \
-        /DOMPI_MINOR_VERSION  ""\
-        /DOMPI_RELEASE_VERSION "" \
-        /DOMPI_ALPHA_VERSION "" \
-        /DOMPI_BETA_VERSION "" \
-        /DOMPI_SVN_VERSION "" \
-        /DOMPI_PREFIX "" \
-        /DOMPI_BINDIR "" \
-        /DOMPI_LIBDIR "" \
-        /DOMPI_INCDIR "" \
-        /DOMPI_PKGLIBDIR
+        /DOMPI_WANT_F90_BINDINGS="\"not implemented\"" \
+        /DOMPI_WANT_F90_BINDINGS="\"not implemented\"" \
+        /DOMPI_CONFIGURE_USER="\"not implemented\"" \
+        /DOMPI_CONFIGURE_DATE="\"not implemented\"" \
+        /DOMPI_CONFIGURE_HOST="\"not implemented\"" \
+        /DOMPI_F90="\"not implemented\"" \
+        /DOMPI_WANT_F90_BINDINGS="\"not implemented\"" \
+        /DOMPI_BUILD_CFLAGS="\"not implemented\"" \
+        /DOMPI_BUILD_CXXFLAGS="\"not implemented\"" \
+        /DOMPI_BUILD_FFLAGS="\"not implemented\"" \
+        /DOMPI_BUILD_FCFLAGS="\"not implemented\"" \
+        /DOMPI_BUILD_LDFLAGS="\"not implemented\"" \
+        /DOMPI_BUILD_LIBS="\"not implemented\"" \
+        /DOMPI_MAJOR_VERSION="\"not implemented\"" \
+        /DOMPI_MINOR_VERSION="\"not implemented\"" \
+        /DOMPI_RELEASE_VERSION="\"not implemented\"" \
+        /DOMPI_ALPHA_VERSION="\"not implemented\"" \
+        /DOMPI_BETA_VERSION="\"not implemented\"" \
+        /DOMPI_SVN_VERSION="\"not implemented\"" \
+        /DOMPI_PREFIX="\"${prefix}\"" \
+        /DOMPI_BINDIR="\"${bindir}\"" \
+        /DOMPI_LIBDIR="\"${libdir}\"" \
+        /DOMPI_INCDIR="\"${incdir}\"" \
+        /DOMPI_PKGLIBDIR="\"${libdir}\"" 
 
 
 # link with ompi.lib to resolve external symbols
@@ -88,6 +92,11 @@ clibs: ${C_SUBDIRS}
 cpplibs: ${CPP_SUBDIRS}
 	@for dirs in ${CPP_SUBDIRS}; do \
 	    (echo "Entering $$dirs"; cd $$dirs; ${CC} ${CPPFLAGS} ${INCL} ${ADD_INCL} *.cc; ${LINK} ${LINKFLAGS} *.obj); \
+	done
+
+install:
+	@for dirs in ${CPP_SUBDIRS}; do \
+	    (${CC} ${CPPFLAGS} ${INCL} ${ADD_INCL} *.cc; ${LINK} ${LINKFLAGS} *.obj); \
 	done
 
 .PHONY: clean
