@@ -32,25 +32,28 @@ lam_class_info_t free_list_cls = {"lam_free_list_t", &lam_object_cls,
 void lam_frl_init(lam_free_list_t *flist)
 {
     SUPER_INIT(flist, free_list_cls.cls_parent);
-    lam_mtx_init(&flist->fl_lock);
-    flist->fl_pool = 0;
-    flist->fl_elt_cls = 0;
-    flist->fl_description = 0;
-    flist->fl_free_lists = 0;
+    lam_mtutex_init(&flist->fl_lock);
+    flist->fl_pool = NULL;
+    flist->fl_elt_cls = NULL;
+    flist->fl_description = NULL;
+    flist->fl_free_lists = NULL;
     flist->fl_is_shared = 0;
     flist->fl_nlists = 0;
     flist->fl_elt_per_chunk = 0;
     flist->fl_elt_size = 0;
     flist->fl_retry_more_resources = 0;
     flist->fl_enforce_affinity = 0;
-    flist->fl_affinity = 0;
+    flist->fl_affinity = NULL;
     flist->fl_threshold_grow = 0;
-    flist->fl_elt_out = 0;
-    flist->fl_elt_max = 0;
-    flist->fl_elt_sum = 0;
-    flist->fl_nevents = 0;
-    flist->fl_chunks_req= 0;
-    flist->fl_chunks_returned = 0;
+
+#if LAM_ENABLE_DEBUG
+    flist->fl_elt_out = NULL;
+    flist->fl_elt_max = NULL;
+    flist->fl_elt_sum = NULL;
+    flist->fl_nevents = NULL;
+    flist->fl_chunks_req = NULL;
+    flist->fl_chunks_returned = NULL;
+#endif
 }
 
 
@@ -64,7 +67,8 @@ void lam_frl_destroy(lam_free_list_t *flist)
     
     if ( flist->fl_affinity )
         free(flist->fl_affinity);
-    
+
+#if LAM_ENABLE_DEBUG    
     if ( flist->fl_elt_out )
         free(flist->fl_elt_out);
     
@@ -82,6 +86,7 @@ void lam_frl_destroy(lam_free_list_t *flist)
     
     if ( flist->fl_chunks_returned )
         free(flist->fl_chunks_returned);
+#endif
     
     SUPER_DESTROY(flist, free_list_cls.cls_parent);
 }
@@ -310,12 +315,10 @@ static void *lam_frl_get_mem_chunk(lam_free_list_t *flist, int index, size_t *le
     /* check to make sure that the amount to add to the list does not 
        exceed the amount allowed */
     sz_to_add = lam_mp_get_chunk_size(flist->fl_pool);
-    
-    /* need to add option to configure */
-    if (OPT_MEMPROFILE)
-    {
-        flist->fl_chunks_req[index]++;
-    }
+
+#if LAM_ENABLE_DEBUG
+    flist->fl_chunks_req[index]++;
+#endif
     
     if (index >= flist->fl_nlists)
     {
@@ -370,10 +373,9 @@ static void *lam_frl_get_mem_chunk(lam_free_list_t *flist, int index, size_t *le
        this far in the code. */
     lam_sgl_set_consec_fail(flist->fl_free_lists[index], 0);
     
-    if (OPT_MEMPROFILE)
-    {
-        flist->fl_chunks_returned[index]++;
-    }
+#if LAM_ENABLE_DEBUG
+    flist->fl_chunks_returned[index]++;
+#endif
 
     return chunk;
 }
@@ -382,12 +384,16 @@ static void *lam_frl_get_mem_chunk(lam_free_list_t *flist, int index, size_t *le
 
 static lam_flist_elt_t *lam_flr_request_elt(lam_free_list_t *flist, int pool_idx)
 {
+#if ROB_HASNT_FINISHED_THIS_YET
     lam_dbl_list_t      *seg_list = &(flist->fl_free_lists[pool_idx]->sgl_list);
     volatile lam_flist_elt_t *elt = lam_dbl_get_last(seg_list);
     
     if ( elt )
         lam_sgl_set_consec_fail(seg_list, 0);
     return elt;
+#else
+    return NULL;
+#endif
 }
 
 
@@ -452,8 +458,9 @@ static int lam_frl_create_more_elts(lam_free_list_t *flist, int pool_idx)
 
 lam_flist_elt_t *lam_frl_get_elt(lam_free_list_t *flist, int index, int *error)
 {
+#if ROB_HASNT_FINISHED_THIS_YET
     int         error;
-    volatile    lam_flist_elt_t *elem = 0;
+    volatile    lam_flist_elt_t *elem = NULL;
     
     elem = lam_flr_request_elt(flist, index);
     
@@ -486,31 +493,37 @@ lam_flist_elt_t *lam_frl_get_elt(lam_free_list_t *flist, int index, int *error)
             return 0;
         }
     }
-    if ( OPT_MEMPROFILE )
+#if LAM_ENABLE_DEBUG
+    flist->fl_elt_out[index]++;
+    flist->fl_elt_sum[index] += flist->fl_elt_out[index];
+    flist->fl_nevents[index]++;
+    if (flist->fl_elt_max[index] < flist->fl_elt_out[index])
     {
-        flist->fl_elt_out[index]++;
-        flist->fl_elt_sum[index] += flist->fl_elt_out[index];
-        flist->fl_nevents[index]++;
-        if (flist->fl_elt_max[index] < flist->fl_elt_out[index])
-        {
-            flist->fl_elt_max[index] = flist->fl_elt_out[index];
-        }
+        flist->fl_elt_max[index] = flist->fl_elt_out[index];
     }
+#endif
     
     return elem;
+#else
+    return NULL;
+#endif
 }
 
 int lam_frl_return_elt(lam_free_list_t *flist, int index, lam_flist_elt_t *item)
 {
+#if ROB_HASNT_FINISHED_THIS_YET
     mb();
     lam_dbl_append(&(flist->fl_free_lists[index]->sgl_list), item);
     mb();
     
-    if ( OPT_MEMPROFILE ) {
-        flist->fl_elt_out[index]--;
-    }
+#if LAM_ENABLE_DEBUG
+    flist->fl_elt_out[index]--;
+#endif
     
     return LAM_SUCCESS;
+#else
+    return LAM_ERROR;
+#endif
 }
 
 
