@@ -33,8 +33,8 @@ int topo_base_cart_create (MPI_Comm old_comm,
    MPI_Comm newcomm;
 #if 0
    MPI_Group newgroup;
-   int rank;
 #endif
+   int rank;
    int size;
    int nprocs;
    int err;
@@ -123,10 +123,8 @@ int topo_base_cart_create (MPI_Comm old_comm,
            return err;
        }
 
-#if 0
-       err = lam_cart_coords (newcomm, rank,
+       err = newcomm->c_topo.topo_cart_coords (newcomm, rank,
                              ndims, newcomm->c_topo_comm->mtc_coords);
-#endif
        if (err != MPI_SUCCESS) {
            return err;
        }
