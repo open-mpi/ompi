@@ -28,6 +28,7 @@ static mca_mpool_sm_mmap_t* mca_mpool_sm_mmap_open(char* path)
     mca_mpool_sm_mmap_t* map;
     mca_mpool_sm_segment_t* seg;
     int fd = -1;
+    struct stat sbuf;
 
     while(fd < 0) {
         struct timespec ts;
@@ -41,8 +42,13 @@ static mca_mpool_sm_mmap_t* mca_mpool_sm_mmap_open(char* path)
         nanosleep(&ts,NULL);
     }
 
+    if(fstat(fd, &sbuf) != 0) {
+        ompi_output(0, "mca_mpool_sm_mmap_open: fstat failed with errno=%d\n", errno);
+        return NULL;
+    }
+
     /* map the file and initialize segment state */
-    seg = mmap(NULL, mca_mpool_sm_module.sm_min_size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
+    seg = mmap(NULL, sbuf.st_size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
     if(NULL == seg) {
         ompi_output(0, "mca_mpool_sm_mmap_open: mmap failed with errno=%d\n", errno);
         return NULL;
@@ -69,7 +75,7 @@ mca_mpool_sm_mmap_t* mca_mpool_sm_mmap_init(size_t size)
 
     gethostname(hostname, sizeof(hostname));
     sprintf(path, "/tmp/%s.%s.%d", hostname, job_handle, 
-        ompi_list_get_size(&mca_mpool_sm_module.sm_mmap)+1);
+        ompi_list_get_size(&mca_mpool_sm_module.sm_mmaps)+1);
     fd = open(path, O_CREAT|O_RDWR, 0000); 
     if(fd < 0) {
         if(errno == EACCES)
@@ -79,7 +85,7 @@ mca_mpool_sm_mmap_t* mca_mpool_sm_mmap_init(size_t size)
     }
 
     /* truncate the file to the requested size */
-    if(ftruncate(fd, mca_mpool_sm_module.sm_min_size) != 0) {
+    if(ftruncate(fd, size) != 0) {
         ompi_output(0, "mca_mpool_sm_mmap_init: ftruncate failed with errno=%d\n", errno);
         return NULL;
     }
@@ -115,7 +121,6 @@ mca_mpool_sm_mmap_t* mca_mpool_sm_mmap_init(size_t size)
 
 void* mca_mpool_sm_mmap_alloc(size_t* size)
 {
-#if 0
     mca_mpool_sm_mmap_t* map = mca_mpool_sm_module.sm_mmap;
     mca_mpool_sm_segment_t* seg = map->map_seg;
     void* addr;
@@ -124,13 +129,10 @@ void* mca_mpool_sm_mmap_alloc(size_t* size)
     if(seg->seg_offset + *size > seg->seg_size) {
         addr = NULL;
     } else {
-        addr = map->sm_addr + seg->seg_offset;
+        addr = map->map_addr + seg->seg_offset;
         seg->seg_offset += *size;
     }
     spinunlock(&seg->seg_lock);
     return addr;
-#else
-    return NULL;
-#endif
 }
 

@@ -1,5 +1,9 @@
+#include "util/output.h"
+#include "mca/base/base.h"
 #include "mca/base/mca_base_param.h"
-#include "mca/mpool/sm/mpool_sm.h"
+#include "mca/allocator/base/base.h"
+#include "mpool_sm.h"
+#include "mpool_sm_mmap.h"
 
 
 mca_mpool_sm_component_t mca_mpool_sm_module = {
@@ -83,6 +87,41 @@ int mca_mpool_sm_close(void)
 
 mca_mpool_t* mca_mpool_sm_init(bool *allow_multi_user_threads)
 {
+    mca_allocator_base_module_t* allocator_component = mca_allocator_component_lookup(
+        mca_mpool_sm_module.sm_allocator_name);
+
+    /* if specified allocator cannout be loaded - look for an alternative */
+    if(NULL == allocator_component) {
+        if(ompi_list_get_size(&mca_allocator_base_components) == 0) {
+            mca_base_module_list_item_t* item = (mca_base_module_list_item_t*)
+                ompi_list_get_first(&mca_allocator_base_components);
+            allocator_component = (mca_allocator_base_module_t*)item->mli_module;
+            ompi_output(0, "mca_mpool_sm_init: unable to locate allocator: %s - using %s\n",
+                mca_mpool_sm_module.sm_allocator_name, allocator_component->allocator_version.mca_module_name);
+        } else {
+            ompi_output(0, "mca_mpool_sm_init: unable to locate allocator: %s\n",
+                mca_mpool_sm_module.sm_allocator_name);
+            return NULL;
+        }
+    }
+    
+    /* create initial shared memory mapping */
+    if(NULL == (mca_mpool_sm_module.sm_mmap = mca_mpool_sm_mmap_init(mca_mpool_sm_module.sm_min_size))) {
+        ompi_output(0, "mca_mpool_sm_init: unable to create shared memory mapping");
+        return NULL;
+    }
+    ompi_list_append(&mca_mpool_sm_module.sm_mmaps, &mca_mpool_sm_module.sm_mmap);
+
+    /* setup allocator */
+    mca_mpool_sm_module.sm_allocator = allocator_component->allocator_init(
+        allow_multi_user_threads,
+        mca_mpool_sm_mmap_alloc,
+        NULL
+        );
+    if(NULL == mca_mpool_sm_module.sm_allocator) {
+        ompi_output(0, "mca_mpool_sm_init: unable to initialize allocator");
+        return NULL;
+    }
     return NULL;
 }
 
