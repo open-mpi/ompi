@@ -51,7 +51,7 @@ int mca_oob_tcp_msg_wait(mca_oob_tcp_msg_t* msg, int* rc)
             int rc;
             OMPI_THREAD_UNLOCK(&msg->msg_lock);
             rc = ompi_event_loop(OMPI_EVLOOP_ONCE);
-            assert(rc == 0);
+            assert(rc >= 0);
             OMPI_THREAD_LOCK(&msg->msg_lock);
         } else {
            ompi_condition_wait(&msg->msg_condition, &msg->msg_lock);
@@ -95,7 +95,7 @@ int mca_oob_tcp_msg_timedwait(mca_oob_tcp_msg_t* msg, int* rc, struct timespec* 
             int rc;
             OMPI_THREAD_UNLOCK(&msg->msg_lock);
             rc = ompi_event_loop(OMPI_EVLOOP_ONCE);
-            assert(rc == 0);
+            assert(rc >= 0);
             OMPI_THREAD_LOCK(&msg->msg_lock);
         } else {
            ompi_condition_timedwait(&msg->msg_condition, &msg->msg_lock, abstime);

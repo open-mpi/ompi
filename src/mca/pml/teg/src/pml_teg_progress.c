@@ -12,6 +12,7 @@ int mca_pml_teg_progress(void)
 {
     mca_ptl_tstamp_t tstamp = 0;
     size_t i;
+    int count;
 
     /*
      * Progress each of the PTL modules
@@ -19,7 +20,10 @@ int mca_pml_teg_progress(void)
     for(i=0; i<mca_pml_teg.teg_num_ptl_components; i++) {
         mca_ptl_base_component_progress_fn_t progress = mca_pml_teg.teg_ptl_components[i]->ptlm_progress;
         if(NULL != progress) {
-            progress(tstamp);
+            int rc = progress(tstamp);
+            if(rc < 0)
+                return rc;
+            count += rc;
         }
     }
     return OMPI_SUCCESS;

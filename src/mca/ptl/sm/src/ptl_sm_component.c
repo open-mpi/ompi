@@ -263,7 +263,7 @@ int mca_ptl_sm_component_control(int param, void* value, size_t size)
 int mca_ptl_sm_component_progress(mca_ptl_tstamp_t tstamp)
 {
     /* local variables */
-    int my_local_smp_rank, proc, return_status;
+    int my_local_smp_rank, proc;
     unsigned int peer_local_smp_rank ;
     mca_ptl_sm_frag_t *header_ptr;
     volatile ompi_fifo_t *send_fifo;
@@ -271,6 +271,7 @@ int mca_ptl_sm_component_progress(mca_ptl_tstamp_t tstamp)
     mca_ptl_base_match_header_t *matching_header;
     mca_pml_base_send_request_t *base_send_req;
     ompi_list_item_t *item;
+    int return_status = 0;
 
     my_local_smp_rank=mca_ptl_sm_component.my_smp_rank;
 
@@ -321,6 +322,7 @@ int mca_ptl_sm_component_progress(mca_ptl_tstamp_t tstamp)
         }
 
         /* figure out what type of message this is */
+        return_status++;
         switch
             (header_ptr->super.frag_base.frag_header.hdr_common.hdr_type)
             {
@@ -430,6 +432,7 @@ int mca_ptl_sm_component_progress(mca_ptl_tstamp_t tstamp)
 
 
         /* figure out what type of message this is */
+        return_status++;
         switch
             (header_ptr->super.frag_base.frag_header.hdr_common.hdr_type)
             {
@@ -506,7 +509,7 @@ int mca_ptl_sm_component_progress(mca_ptl_tstamp_t tstamp)
          *   on a different list */
         item = ompi_list_remove_first(&(mca_ptl_sm_component.sm_pending_ack));
         while ( item != ompi_list_get_end(&(mca_ptl_sm_component.sm_pending_ack)) ) {
-
+            int rc;
             /* get fragment pointer */
             header_ptr = (mca_ptl_sm_frag_t *)item;
 
@@ -516,11 +519,11 @@ int mca_ptl_sm_component_progress(mca_ptl_tstamp_t tstamp)
 
             /* fragment already marked as an ack */
 
-            return_status=ompi_fifo_write_to_head_same_base_addr(header_ptr,
+            rc=ompi_fifo_write_to_head_same_base_addr(header_ptr,
                     send_fifo, mca_ptl_sm_component.sm_mpool);
 
             /* if ack failed, break */
-            if( 0 > return_status ) {
+            if( 0 > rc ) {
                 /* put the descriptor back on the list */
                 ompi_list_prepend(&(mca_ptl_sm_component.sm_pending_ack),item);
                 break;
@@ -534,7 +537,7 @@ int mca_ptl_sm_component_progress(mca_ptl_tstamp_t tstamp)
         OMPI_THREAD_UNLOCK(&(mca_ptl_sm_component.sm_pending_ack_lock));
     }
 
-    return OMPI_SUCCESS;
+    return return_status;
 }
 
 

@@ -225,6 +225,7 @@ int mca_ptl_mx_component_control(int param, void* value, size_t size)
 
 int mca_ptl_mx_component_progress(mca_ptl_tstamp_t tstamp)
 {
+    int num_progressed = 0;
     size_t i;
     for(i=0; i<mca_ptl_mx_component.mx_num_ptls; i++) {
         mca_ptl_mx_module_t* ptl = mca_ptl_mx_component.mx_ptls[i];
@@ -251,7 +252,7 @@ int mca_ptl_mx_component_progress(mca_ptl_tstamp_t tstamp)
         if(mx_result == 0) {
             continue;
         }
-
+       
         mx_return = mx_test(
             ptl->mx_endpoint,
             &mx_request,
@@ -263,6 +264,7 @@ int mca_ptl_mx_component_progress(mca_ptl_tstamp_t tstamp)
              ompi_output(0, "mca_ptl_mx_progress: mx_test() failed with status=%dn",
                 mx_return);
         }
+        num_progressed++;
 #else
         /* pre-post receive */
         if(ptl->mx_recvs_posted == 0) {
@@ -283,8 +285,9 @@ int mca_ptl_mx_component_progress(mca_ptl_tstamp_t tstamp)
         if(mx_result > 0) {
             MCA_PTL_MX_PROGRESS(ptl, mx_status);
         } 
+        num_progressed++;
 #endif
     }
-    return OMPI_SUCCESS;
+    return num_progressed;
 }
 
