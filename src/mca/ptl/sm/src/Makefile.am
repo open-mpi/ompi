@@ -65,6 +65,6 @@ librecompile_la_CPPFLAGS = -DSM_COMMON_BASE_ADDR
 #
 ptl_sm_send_alternate.c:
 	if test ! -f $@; then \
-		ln -s ptl_sm_send.c $@; \
+		ln -sf $(srcdir)/ptl_sm_send.c $@; \
 	fi
 
