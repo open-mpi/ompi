@@ -888,9 +888,10 @@ AC_CONFIG_FILES([
     src/mca/pcm/base/Makefile
     src/mca/pcmclient/Makefile
     src/mca/pcmclient/base/Makefile
-
     src/mca/llm/Makefile
     src/mca/llm/base/Makefile
+    src/mca/svc/Makefile
+    src/mca/svc/base/Makefile
 
     src/mca/allocator/Makefile
     src/mca/allocator/base/Makefile
@@ -908,8 +909,6 @@ AC_CONFIG_FILES([
     src/mca/pml/base/Makefile
     src/mca/ptl/Makefile
     src/mca/ptl/base/Makefile
-    src/mca/svc/Makefile
-    src/mca/svc/base/Makefile
     src/mca/topo/Makefile
     src/mca/topo/base/Makefile
     src/mca/ns/Makefile
@@ -921,6 +920,7 @@ AC_CONFIG_FILES([
     src/dynamic-mca/pcm/Makefile
     src/dynamic-mca/pcmclient/Makefile
     src/dynamic-mca/llm/Makefile
+    src/dynamic-mca/svc/Makefile
 
     src/dynamic-mca/Makefile
     src/dynamic-mca/allocator/Makefile
