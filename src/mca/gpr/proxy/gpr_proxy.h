@@ -75,14 +75,16 @@ int gpr_proxy_subscribe(ompi_registry_mode_t mode,
 
 int gpr_proxy_unsubscribe(ompi_registry_mode_t mode,
 			  ompi_registry_notify_action_t action,
-			  char *segment, char **tokens,
-			  ompi_registry_notify_cb_fn_t cb_func, void *user_tag);
+			  char *segment, char **tokens);
 
 int gpr_proxy_synchro(ompi_registry_synchro_mode_t synchro_mode,
 		      ompi_registry_mode_t mode,
 		      char *segment, char **tokens, int trigger,
 		      ompi_registry_notify_cb_fn_t cb_func, void *user_tag);
 
+int gpr_proxy_cancel_synchro(ompi_registry_synchro_mode_t synchro_mode,
+			     ompi_registry_mode_t addr_mode,
+			     char *segment, char **tokens, int trigger);
 /*
  * Implementation of get()
  */

@@ -59,6 +59,7 @@ static mca_gpr_base_module_t mca_gpr_replica = {
     gpr_replica_subscribe,
     gpr_replica_unsubscribe,
     gpr_replica_synchro,
+    gpr_replica_cancel_synchro,
     gpr_replica_delete_object,
     gpr_replica_index,
     gpr_replica_test_internals
@@ -656,12 +657,149 @@ void mca_gpr_replica_recv(int status, ompi_process_name_t* sender,
 
 	/*****     SUBSCRIBE     *****/
     } else if (MCA_GPR_SUBSCRIBE_CMD == command) {
-	action = OMPI_REGISTRY_NOTIFY_ALL;
-	goto RETURN_ERROR;
+
+	if (OMPI_SUCCESS != ompi_unpack(buffer, &mode, 1, MCA_GPR_OOB_PACK_MODE)) {
+	    goto RETURN_ERROR;
+	}
+
+	if (OMPI_SUCCESS != ompi_unpack(buffer, &action, 1, MCA_GPR_OOB_PACK_ACTION)) {
+	    goto RETURN_ERROR;
+	}
+
+	if (0 > ompi_unpack_string(buffer, &segment)) {
+	    goto RETURN_ERROR;
+	}
+
+	if (OMPI_SUCCESS != ompi_unpack(buffer, &num_tokens, 1, OMPI_INT32)) {
+	    goto RETURN_ERROR;
+	}
+
+	if (0 < num_tokens) {  /* tokens provided */ 
+	    tokens = (char**)malloc((num_tokens+1)*sizeof(char*));
+	    tokptr = tokens;
+	    for (i=0; i<num_tokens; i++) {
+		if (0 > ompi_unpack_string(buffer, tokptr)) {
+		    goto RETURN_ERROR;
+		}
+		tokptr++;
+	    }
+	    *tokptr = NULL;
+	} else {  /* no tokens provided - wildcard case */
+	    tokens = NULL;
+	}
+
+	if (OMPI_SUCCESS != ompi_unpack(buffer, &id_tag, 1, OMPI_INT32)) {
+	    goto RETURN_ERROR;
+	}
+
+	/* enter request on notify tracking system */
+	trackptr = OBJ_NEW(mca_gpr_notify_request_tracker_t);
+	trackptr->requestor = ompi_name_server.copy_process_name(sender);
+	trackptr->req_tag = id_tag;
+	trackptr->callback = NULL;
+	trackptr->user_tag = NULL;
+	if (ompi_list_is_empty(&mca_gpr_replica_free_notify_id_tags)) {
+	    trackptr->id_tag = mca_gpr_replica_last_notify_id_tag;
+	    mca_gpr_replica_last_notify_id_tag++;
+	} else {
+	    ptr_free_id = (mca_gpr_idtag_list_t*)ompi_list_remove_first(&mca_gpr_replica_free_notify_id_tags);
+	    trackptr->id_tag = ptr_free_id->id_tag;
+	}
+	ompi_list_append(&mca_gpr_replica_notify_request_tracker, &trackptr->item);
+
+	response = (int32_t)gpr_replica_construct_trigger(OMPI_REGISTRY_SYNCHRO_MODE_NONE, action,
+							  mode, segment, tokens,
+							  0, trackptr->id_tag);
+
+	if (OMPI_SUCCESS != ompi_pack(answer, &command, 1, MCA_GPR_OOB_PACK_CMD)) {
+	    goto RETURN_ERROR;
+	}
+
+	if (OMPI_SUCCESS != ompi_pack(answer, &response, 1, OMPI_INT32)) {
+	    goto RETURN_ERROR;
+	}
+
+	if (0 > mca_oob_send_packed(sender, answer, tag, 0)) {
+	    /* RHC -- not sure what to do if the return send fails */
+	}
+
 
 	/*****     UNSUBSCRIBE     *****/
     } else if (MCA_GPR_UNSUBSCRIBE_CMD == command) {
-	goto RETURN_ERROR;
+
+	if (OMPI_SUCCESS != ompi_unpack(buffer, &mode, 1, MCA_GPR_OOB_PACK_MODE)) {
+	    goto RETURN_ERROR;
+	}
+
+	if (OMPI_SUCCESS != ompi_unpack(buffer, &action, 1, MCA_GPR_OOB_PACK_ACTION)) {
+	    goto RETURN_ERROR;
+	}
+
+	if (0 > ompi_unpack_string(buffer, &segment)) {
+	    goto RETURN_ERROR;
+	}
+
+	if (OMPI_SUCCESS != ompi_unpack(buffer, &num_tokens, 1, OMPI_INT32)) {
+	    goto RETURN_ERROR;
+	}
+
+	if (0 < num_tokens) {  /* tokens provided */ 
+	    tokens = (char**)malloc((num_tokens+1)*sizeof(char*));
+	    tokptr = tokens;
+	    for (i=0; i<num_tokens; i++) {
+		if (0 > ompi_unpack_string(buffer, tokptr)) {
+		    goto RETURN_ERROR;
+		}
+		tokptr++;
+	    }
+	    *tokptr = NULL;
+	} else {  /* no tokens provided - wildcard case */
+	    tokens = NULL;
+	}
+
+	id_tag = gpr_replica_remove_trigger(OMPI_REGISTRY_SYNCHRO_MODE_NONE, action, mode,
+					    segment, tokens, 0);
+
+	if (MCA_GPR_NOTIFY_ID_MAX != id_tag) {  /* removed trigger successfully */
+	    /* find request on replica notify tracking system */
+	    for (trackptr = (mca_gpr_notify_request_tracker_t*)ompi_list_get_first(&mca_gpr_replica_notify_request_tracker);
+		 trackptr != (mca_gpr_notify_request_tracker_t*)ompi_list_get_end(&mca_gpr_replica_notify_request_tracker) &&
+		     trackptr->id_tag != id_tag;
+		 trackptr = (mca_gpr_notify_request_tracker_t*)ompi_list_get_next(trackptr));
+
+	    if (trackptr != (mca_gpr_notify_request_tracker_t*)ompi_list_get_end(&mca_gpr_replica_notify_request_tracker)) {
+
+		/* ...pack the remote id tag to send back to proxy */
+		response = (int32_t)trackptr->req_tag;
+		if (OMPI_SUCCESS != ompi_pack(answer, &response, 1, OMPI_INT32)) {
+		    goto RETURN_ERROR;
+		}
+
+		/* ...and remove it */
+		ompi_list_remove_item(&mca_gpr_replica_notify_request_tracker, &trackptr->item);
+		/* put id tag on free list */
+		ptr_free_id = OBJ_NEW(mca_gpr_idtag_list_t);
+		ptr_free_id->id_tag = trackptr->id_tag;
+		ompi_list_append(&mca_gpr_replica_free_notify_id_tags, &ptr_free_id->item);
+		/* release tracker item */
+		OBJ_RELEASE(trackptr);
+	    }
+	} else {
+	    response = (int32_t)MCA_GPR_NOTIFY_ID_MAX;
+	}
+
+	if (OMPI_SUCCESS != ompi_pack(answer, &command, 1, MCA_GPR_OOB_PACK_CMD)) {
+	    goto RETURN_ERROR;
+	}
+
+	if (OMPI_SUCCESS != ompi_pack(answer, &response, 1, OMPI_INT32)) {
+	    goto RETURN_ERROR;
+	}
+
+	if (0 > mca_oob_send_packed(sender, answer, tag, 0)) {
+	    /* RHC -- not sure what to do if the return send fails */
+	}
+
 
 	/*****     SYNCHRO     *****/
     } else if (MCA_GPR_SYNCHRO_CMD == command) {
@@ -737,6 +875,91 @@ void mca_gpr_replica_recv(int status, ompi_process_name_t* sender,
 	if (0 > mca_oob_send_packed(sender, answer, tag, 0)) {
 	    /* RHC -- not sure what to do if the return send fails */
 	}
+
+	/*****     CANCEL SYNCHRO    *****/
+    } else if (MCA_GPR_CANCEL_SYNCHRO_CMD == command) {
+
+	if (OMPI_SUCCESS != ompi_unpack(buffer, &synchro_mode, 1, OMPI_INT32)) {
+	    goto RETURN_ERROR;
+	}
+
+	if (OMPI_REGISTRY_SYNCHRO_MODE_NONE == synchro_mode) {
+	    goto RETURN_ERROR;
+	}
+
+	if (OMPI_SUCCESS != ompi_unpack(buffer, &mode, 1, MCA_GPR_OOB_PACK_MODE)) {
+	    goto RETURN_ERROR;
+	}
+
+	if (0 > ompi_unpack_string(buffer, &segment)) {
+	    goto RETURN_ERROR;
+	}
+
+	if (OMPI_SUCCESS != ompi_unpack(buffer, &num_tokens, 1, OMPI_INT32)) {
+	    goto RETURN_ERROR;
+	}
+
+	if (0 < num_tokens) {  /* tokens provided */ 
+	    tokens = (char**)malloc((num_tokens+1)*sizeof(char*));
+	    tokptr = tokens;
+	    for (i=0; i<num_tokens; i++) {
+		if (0 > ompi_unpack_string(buffer, tokptr)) {
+		    goto RETURN_ERROR;
+		}
+		tokptr++;
+	    }
+	    *tokptr = NULL;
+	} else {  /* no tokens provided - wildcard case, just count entries on segment */
+	    tokens = NULL;
+	}
+
+	if (OMPI_SUCCESS != ompi_unpack(buffer, &trigger, 1, OMPI_INT32)) {
+	    goto RETURN_ERROR;
+	}
+
+	id_tag = gpr_replica_remove_trigger(synchro_mode, OMPI_REGISTRY_NOTIFY_NONE, mode,
+					    segment, tokens, trigger);
+
+	if (MCA_GPR_NOTIFY_ID_MAX != id_tag) {  /* removed trigger successfully */
+	    /* find request on replica notify tracking system */
+	    for (trackptr = (mca_gpr_notify_request_tracker_t*)ompi_list_get_first(&mca_gpr_replica_notify_request_tracker);
+		 trackptr != (mca_gpr_notify_request_tracker_t*)ompi_list_get_end(&mca_gpr_replica_notify_request_tracker) &&
+		     trackptr->id_tag != id_tag;
+		 trackptr = (mca_gpr_notify_request_tracker_t*)ompi_list_get_next(trackptr));
+
+	    if (trackptr != (mca_gpr_notify_request_tracker_t*)ompi_list_get_end(&mca_gpr_replica_notify_request_tracker)) {
+
+		/* ...pack the remote id tag to send back to proxy */
+		response = (int32_t)trackptr->req_tag;
+		if (OMPI_SUCCESS != ompi_pack(answer, &response, 1, OMPI_INT32)) {
+		    goto RETURN_ERROR;
+		}
+
+		/* ...and remove it */
+		ompi_list_remove_item(&mca_gpr_replica_notify_request_tracker, &trackptr->item);
+		/* put id tag on free list */
+		ptr_free_id = OBJ_NEW(mca_gpr_idtag_list_t);
+		ptr_free_id->id_tag = trackptr->id_tag;
+		ompi_list_append(&mca_gpr_replica_free_notify_id_tags, &ptr_free_id->item);
+		/* release tracker item */
+		OBJ_RELEASE(trackptr);
+	    }
+	} else {
+	    response = (int32_t)MCA_GPR_NOTIFY_ID_MAX;
+	}
+
+	if (OMPI_SUCCESS != ompi_pack(answer, &command, 1, MCA_GPR_OOB_PACK_CMD)) {
+	    goto RETURN_ERROR;
+	}
+
+	if (OMPI_SUCCESS != ompi_pack(answer, &response, 1, OMPI_INT32)) {
+	    goto RETURN_ERROR;
+	}
+
+	if (0 > mca_oob_send_packed(sender, answer, tag, 0)) {
+	    /* RHC -- not sure what to do if the return send fails */
+	}
+
 
 	/*****     TEST INTERNALS     *****/
     } else if (MCA_GPR_TEST_INTERNALS_CMD == command) {
