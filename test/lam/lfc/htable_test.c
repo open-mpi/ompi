@@ -7,7 +7,25 @@
 #include "lam/lfc/object.h"
 #include "lam/lfc/hash_table.h"
 
-char *keys[] = {
+char *num_keys[] = {
+    "1234", "1234",
+    "5678", "5678",
+    "12450", "12450",
+    "45623", "45623",
+    NULL
+};
+
+
+char *str_keys[] = {
+    "foo", "bar",
+    "2", "this cow jumped over the moon",
+    "this is another key", "this is another value",
+    "key key", "value value",
+    NULL
+};
+
+
+char *perm_keys[] = {
     "abcdef", "abcdef",
     "bcdefa", "bcdefa",
     "cdefab", "cdefab",
@@ -21,43 +39,70 @@ char *keys[] = {
     NULL
 };
 
+void validate_table(lam_fast_hash_t *table, char *keys[],
+                    int is_numeric_keys)
+{
+    int         j;
+    const char  *val;
+    
+    for ( j = 0; keys[j]; j += 2)
+    {
+        if ( 1 == is_numeric_keys )
+            val = lam_fh_get_value_for_ikey(table, atoi(keys[j]));
+        else
+            val = lam_fh_get_value_for_skey(table, keys[j]);
+        
+        test_verify(keys[j+1], val);
+    }
+    test_verify_int(j/2, lam_fh_count(table));
+}
+
 void test_htable(lam_fast_hash_t *table)
 {
-    char        *skey1 = "foo";
+    char        *skey1 = "foo", *skey2 = "2";
     int         ikey1 = 2, j;
     
-    printf("Testing simple adds...\n");
-    printf("Adding (key = %s, value = bar)\n", skey1);
-    lam_fh_set_value_for_skey(table, "bar", skey1);
+    printf("\nTesting integer keys...\n");
+    for ( j = 0; num_keys[j]; j += 2)
+    {
+        lam_fh_set_value_for_ikey(table, num_keys[j+1], 
+                                  atoi(num_keys[j]));
+        
+    }
+    validate_table(table, num_keys, 1);
     
-    printf("Adding (key = 2, value = this cow jumped over the moon)\n");
-    lam_fh_set_value_for_ikey(table, "this cow jumped over the moon", ikey1);
-    
-    printf("Table contains %d items\n", lam_fh_count(table));
-    
-    printf("Value for key %s is %s\n", skey1,
-           lam_fh_get_value_for_skey(table, skey1));
-    
-    printf("Value for key %d is %s\n", ikey1,
-           lam_fh_get_value_for_ikey(table, ikey1));
-    
+    /* remove all values for next test */
     lam_fh_remove_all(table);
-    printf("\nRemoved all table items (size = %d)...\n",
-           lam_fh_count(table));
-
+    test_verify_int(0, lam_fh_count(table));
+    
+    printf("\nTesting string keys...\n");
+    for ( j = 0; str_keys[j]; j += 2)
+    {
+        lam_fh_set_value_for_skey(table, str_keys[j+1], 
+                                  str_keys[j]);
+        
+    }
+    validate_table(table, str_keys, 0);
+    
+    /* remove all values for next test */
+    lam_fh_remove_all(table);
+    test_verify_int(0, lam_fh_count(table));
+    
+    
     printf("\nTesting collision resolution...\n");
-    for ( j = 0; keys[j]; j += 2)
+    /* All of the string keys in keys array should
+        have the same hash value. */
+    for ( j = 0; perm_keys[j]; j += 2)
     {
-        lam_fh_set_value_for_skey(table, keys[j+1], keys[j]);
+        lam_fh_set_value_for_skey(table, perm_keys[j+1], perm_keys[j]);
     }
 
-    printf("Table contents: \n");
-    for ( j = 0; keys[j]; j += 2)
-    {
-        printf("value for key %s is %s\n",
-               keys[j], lam_fh_get_value_for_skey(table, keys[j]));
-    }
-
+    validate_table(table, perm_keys, 0);
+    
+    /* remove all values for next test */
+    lam_fh_remove_all(table);
+    test_verify_int(0, lam_fh_count(table));
+    
     printf("\n\n");
 }
 
