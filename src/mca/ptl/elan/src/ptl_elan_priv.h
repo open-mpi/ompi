@@ -48,9 +48,9 @@
             }                                                          \
 	} while (0)
 
-#define CHECK_ELAN 0
+#define CHECK_ELAN 1
 
-#if CHECK_ELAN
+#if CHECK_ELAN && 0
 #define START_FUNC()                                         \
     do {                                                     \
 	char hostname[32]; gethostname(hostname, 32);        \
