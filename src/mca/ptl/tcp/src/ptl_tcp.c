@@ -24,7 +24,7 @@
 mca_ptl_tcp_module_t mca_ptl_tcp_module = {
     {
     &mca_ptl_tcp_component.super,
-    1, /* max size of request cache */
+    16, /* max size of request cache */
     sizeof(mca_ptl_tcp_send_frag_t), /* bytes required by ptl for a request */
     0, /* max size of first fragment */
     0, /* min fragment size */
