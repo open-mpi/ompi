@@ -31,11 +31,19 @@ extern lam_class_t lam_communicator_t_class;
 #define LAM_COMM_IS_CART(comm) ((comm)->c_flags & LAM_COMM_CART)
 #define LAM_COMM_IS_GRAPH(comm) ((comm)->c_flags & LAM_COMM_GRAPH)
 
-/* modes reqquired for accquiring the new comm-id */
+/** 
+ * Modes reqquired for accquiring the new comm-id.
+ * The first (INTER/INTRA) indicates whether the
+ * input comm was an inter/intra-comm, the second
+ * whether the new communicator will be an inter/intra 
+ *comm
+ */
 #define LAM_COMM_INTRA_INTRA 0x00000020
 #define LAM_COMM_INTRA_INTER 0x00000040
 #define LAM_COMM_INTER_INTRA 0x00000080
 #define LAM_COMM_INTER_INTER 0x00000100
+
+extern lam_pointer_array_t lam_mpi_communicators; 
 
 struct lam_communicator_t {
     lam_object_t               c_base; 
@@ -89,8 +97,12 @@ typedef struct lam_communicator_t lam_communicator_t;
  */
 static inline int lam_comm_invalid(lam_communicator_t* comm)
 {
-    return false;
+    if ( comm->c_flags & LAM_COMM_ISFREED ) 
+        return true;
+    else
+        return false;
 }
+
 /**
  * rank w/in the communicator
  */
@@ -211,19 +223,63 @@ extern "C" {
 
     /**
      * allocate new communicator ID
+     * @param comm:       original comm
+     * @param bridgecomm: bridge comm for intercomm_create
      * @param mode: combination of input and output communicator
      *              LAM_COMM_INTRA_INTRA, LAM_COMM_INTRA_INTER,
      *              LAM_COMM_INTER_INTRA, LAM_COMM_INTER_INTER
      *
      * This routine has to be thread safe in the final version.
      */
-    int lam_comm_nextcid (lam_communicator_t* comm, int mode);
+    int lam_comm_nextcid ( lam_communicator_t* comm, 
+                           lam_communicator_t* bridgecomm, 
+                           int local_leader, 
+                           int remote_leader, 
+                           int mode);
 
 
     /**
      * shut down the communicator infrastructure.
      */
     int lam_comm_finalize (void);
+
+    /**
+     * This is THE routine, where all the communicator stuff
+     * is really set.
+     */
+    lam_communicator_t* lam_comm_set ( int mode,
+                                       lam_communicator_t* oldcomm,
+                                       lam_communicator_t* bridgecomm,
+                                       int local_size, 
+                                       lam_proc_t **local_procs,
+                                       int remote_size,
+                                       lam_proc_t **remote_procs,
+                                       lam_hash_table_t *attr,
+                                       lam_errhandler_t *errh, 
+                                       mca_base_module_t *collmodule, 
+                                       mca_base_module_t *topomodule, 
+                                       int local_leader,
+                                       int remote_leader);
+    /**
+     * This is a short-hand routine used in intercomm_create.
+     * The routine makes sure, that all processes have afterwards
+     * a list of lam_proc_t pointers for the remote group.
+     */
+    lam_proc_t **lam_comm_get_rprocs ( lam_communicator_t *local_comm, 
+                                       lam_communicator_t *bridge_comm, 
+                                       int local_leader,
+                                       int remote_leader,
+                                       int tag,
+                                       int rsize);
+
+    /**
+     * This is a routine determining whether the local or the
+     * remote group will be first in the new intra-comm.
+     * Just used from within MPI_Intercomm_merge.
+     */
+    int lam_comm_determine_first ( lam_communicator_t *intercomm,
+                                   int high );
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
