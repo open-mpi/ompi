@@ -329,7 +329,7 @@ EOF
         cat > hello.cc <<EOF
 #include <mpi.h>
 int main(int argc, char* argv[]) {
-  MPI::nit(argc, argv);
+  MPI::Init(argc, argv);
   MPI::Finalize();
   return 0;
 }
