@@ -7,11 +7,11 @@
 
 #include "mpi.h"
 
-typedef struct lam_op {
+struct lam_op_t {
    char o_name[MPI_MAX_OBJECT_NAME];
 
   /* ...more stuff... */
-} lam_op_t;
-
+};
+typedef struct lam_op_t lam_op_t;
 
 #endif /* LAM_OP_H */
