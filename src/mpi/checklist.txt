@@ -17,13 +17,13 @@ MPI_WIN_DUP_FN
 
 MPI_Abort
 MPI_Accumulate 
-MPI_Add_error_class
-MPI_Add_error_code
-MPI_Add_error_string
+MPI_Add_error_class             n.n
+MPI_Add_error_code              n.n
+MPI_Add_error_string            n.n
 MPI_Address                     DONE
 MPI_Allgather                   DONE
 MPI_Allgatherv                  Jeff
-MPI_Alloc_mem
+MPI_Alloc_mem                   Tim P.
 MPI_Allreduce                   Jeff
 MPI_Alltoall                    DONE
 MPI_Alltoallv                   Jeff
@@ -85,8 +85,8 @@ MPI_Errhandler_f2c              DONE
 MPI_Errhandler_free             DONE
 MPI_Errhandler_get              DONE
 MPI_Errhandler_set              DONE
-MPI_Error_class                 
-MPI_Error_string                
+MPI_Error_class                 n.n 
+MPI_Error_string                n.n
 MPI_Exscan                      Jeff
 MPI_File_c2f
 MPI_File_f2c
@@ -146,8 +146,8 @@ MPI_File_set_atomicity
 MPI_File_get_atomicity
 MPI_File_sync
 MPI_Finalize                    DONE
-MPI_Finalized
-MPI_Free_mem
+MPI_Finalized                   Ginger
+MPI_Free_mem                    Tim P.
 MPI_Gather                      DONE 
 MPI_Gatherv                     Jeff
 MPI_Get_address                 DONE
@@ -155,7 +155,7 @@ MPI_Get_count                   Done
 MPI_Get_elements                Done
 MPI_Get
 MPI_Get_processor_name          Edgar
-MPI_Get_version
+MPI_Get_version                 Ginger
 MPI_Graph_create                Anju
 MPI_Graph_get                   Anju
 MPI_Graph_map                   Anju
@@ -191,8 +191,8 @@ MPI_Info_get_nthkey             Anju
 MPI_Info_get_valuelen           Anju
 MPI_Info_set                    Anju
 MPI_Init                        DONE
-MPI_Initialized
-MPI_Init_thread
+MPI_Initialized                 Ginger
+MPI_Init_thread                 Ginger
 MPI_Intercomm_create            Edgar
 MPI_Intercomm_merge             Edgar
 MPI_Iprobe                      C & F77 done
@@ -213,7 +213,7 @@ MPI_Pack_external               DONE
 MPI_Pack_external_size          DONE
 MPI_Pack                        DONE
 MPI_Pack_size                   DONE
-MPI_Pcontrol
+MPI_Pcontrol                    Ginger
 MPI_Probe                       C & F77 done
 MPI_Publish_name                Edgar
 MPI_Put
@@ -222,7 +222,7 @@ MPI_Recv_init                   C & F77 done
 MPI_Recv                        C & F77 done
 MPI_Reduce                      Jeff
 MPI_Reduce_scatter              Jeff
-MPI_Register_datarep
+MPI_Register_datarep            George
 MPI_Request_c2f                 Ginger
 MPI_Request_f2c                 Ginger
 MPI_Request_free                Ginger
@@ -282,7 +282,7 @@ MPI_Type_indexed		Ginger
 MPI_Type_lb			Ginger
 MPI_Type_match_size		Ginger
 MPI_Type_set_attr               Vishal
-MPI_Type_set_name
+MPI_Type_set_name               George
 MPI_Type_size			DONE
 MPI_Type_struct			DONE
 MPI_Type_ub			Ginger
@@ -319,4 +319,4 @@ MPI_Win_test
 MPI_Win_unlock
 MPI_Win_wait
 MPI_Wtick                       DONE [sort of]
-MPI_Wtime
+MPI_Wtime	                George
