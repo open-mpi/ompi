@@ -10,6 +10,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include "os/atomic.h"
 #include "lam_config.h"
 #include "mca/ptl/base/ptl_base_sendreq.h"
 #include "mca/ptl/base/ptl_base_sendfrag.h"
@@ -40,6 +41,17 @@ typedef struct mca_ptl_tcp_send_frag_t mca_ptl_tcp_send_frag_t;
 bool mca_ptl_tcp_send_frag_handler(mca_ptl_tcp_send_frag_t*, int sd);
 
 
+/**
+ * Initialize a fragment descriptor.
+ *
+ * frag (IN)      Fragment
+ * peer (IN)      PTL peer addressing information 
+ * request (IN)   Send request
+ * offset (IN)    Current offset into packed buffer
+ * size (IN/OUT)  Requested size / actual size returned
+ * flags (IN)
+ */
+
 int mca_ptl_tcp_send_frag_init(
     mca_ptl_tcp_send_frag_t*, 
     struct mca_ptl_base_peer_t*, 
@@ -49,7 +61,7 @@ int mca_ptl_tcp_send_frag_init(
     int flags);
 
 
-/*
+/**
  * For fragments that require an acknowledgment, this routine will be called
  * twice, once when the send completes, and again when the acknowledgment is 
  * returned. Only the last caller should update the request status, so we
@@ -72,21 +84,18 @@ static inline void mca_ptl_tcp_send_frag_progress(mca_ptl_tcp_send_frag_t* frag)
           mca_ptl_base_send_request_matched(request))) { 
 
         /* make sure this only happens once in threaded case */ 
-        if (lam_using_threads() && fetchNset(&frag->frag_progressed, 1) == 1) {
-            return;
-        } else {
-            frag->frag_progressed = 1;
-        }
+        if(fetchNset(&frag->frag_progressed,1) == 0) {
 
-        /* update request status */ 
-        frag->super.super.frag_owner->ptl_send_progress(request, &frag->super); 
+            /* update request status */ 
+            frag->super.super.frag_owner->ptl_send_progress(request, &frag->super); 
 
-        /* the first fragment is allocated with the request, 
-         * all others need to be returned to free list  
-         */ 
-        if(frag->super.super.frag_header.hdr_frag.hdr_frag_offset != 0) 
-            mca_ptl_tcp_send_frag_return(frag->super.super.frag_owner, frag); 
-    } 
+            /* the first fragment is allocated with the request, 
+             * all others need to be returned to free list  
+             */ 
+            if(frag->super.super.frag_header.hdr_frag.hdr_frag_offset != 0) 
+                mca_ptl_tcp_send_frag_return(frag->super.super.frag_owner, frag); 
+        } 
+    }
 } 
 
 

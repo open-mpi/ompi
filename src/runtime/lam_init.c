@@ -106,10 +106,6 @@ int lam_init(int argc, char *argv[])
 
   lam_malloc_init();
 
-  /* Initialize event handling */
-
-  lam_event_init();
-
   /* Other things that we'll probably need:
 
      - session directory setup

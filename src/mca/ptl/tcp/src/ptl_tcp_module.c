@@ -139,6 +139,10 @@ int mca_ptl_tcp_module_open(void)
     return LAM_SUCCESS;
 }
 
+/*
+ * module cleanup - sanity checking of queue lengths
+ */
+
 int mca_ptl_tcp_module_close(void)
 {
     if (mca_ptl_tcp_module.tcp_send_requests.fl_num_allocated != 
@@ -211,8 +215,6 @@ static int mca_ptl_tcp_create(int if_index, const char* if_name)
 #endif
     return LAM_SUCCESS;
 }
-                                                                                                                                
-                                                                                                                                
 
 /*
  * Create a TCP PTL instance for either:
@@ -382,6 +384,10 @@ mca_ptl_t** mca_ptl_tcp_module_init(int *num_ptls,
     *num_ptls = 0;
     *allow_multi_user_threads = true;
     *have_hidden_threads = LAM_HAVE_THREADS;
+
+    /* need to set lam_using_threads() as lam_event_init() will spawn a thread if supported */
+    if(LAM_HAVE_THREADS)
+        lam_set_using_threads(true);
 
     if((rc = lam_event_init()) != LAM_SUCCESS) {
         lam_output(0, "mca_ptl_tcp_module_init: unable to initialize event dispatch thread: %d\n", rc);

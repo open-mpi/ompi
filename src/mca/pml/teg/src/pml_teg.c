@@ -135,6 +135,14 @@ int mca_pml_teg_control(int param, void* value, size_t size)
 int mca_pml_teg_add_procs(lam_proc_t** procs, size_t nprocs)
 {
     size_t p;
+    lam_bitmap_t reachable;
+    int rc;
+
+    OBJ_CONSTRUCT(&reachable, lam_bitmap_t);
+    rc = lam_bitmap_init(&reachable, 1);
+    if(LAM_SUCCESS != rc)
+        return rc;
+
     for(p=0; p<nprocs; p++) {
         lam_proc_t *proc = procs[p];
         double total_bandwidth = 0;
@@ -163,14 +171,19 @@ int mca_pml_teg_add_procs(lam_proc_t** procs, size_t nprocs)
         /* attempt to add the proc to each ptl */
         for(p_index = 0; p_index < mca_pml_teg.teg_num_ptls; p_index++) {
             mca_ptl_t* ptl = mca_pml_teg.teg_ptls[p_index];
+            struct mca_ptl_base_peer_t* ptl_peer;
+
+            lam_bitmap_clear_all_bits(&reachable);
  
             /* if the ptl can reach the destination proc it will return 
              * addressing information that will be cached on the proc, if it
              * cannot reach the proc - but another peer
              */
-            struct mca_ptl_base_peer_t* ptl_peer;
-            int rc = ptl->ptl_add_proc(ptl, proc, &ptl_peer);
-            if(rc == LAM_SUCCESS) {
+            rc = ptl->ptl_add_procs(ptl, 1, &proc, &ptl_peer, &reachable);
+            if(LAM_SUCCESS != rc)
+                return rc;
+
+            if(lam_bitmap_is_set_bit(&reachable, 0)) {
 
                 /* cache the ptl on the proc */
                 mca_ptl_proc_t* ptl_proc  = mca_ptl_array_insert(&proc_pml->proc_ptl_next);
@@ -248,6 +261,7 @@ int mca_pml_teg_add_procs(lam_proc_t** procs, size_t nprocs)
 int mca_pml_teg_del_procs(lam_proc_t** procs, size_t nprocs)
 {
     size_t p;
+    int rc;
     for(p = 0; p < nprocs; p++) {
         lam_proc_t *proc = procs[p];
         mca_pml_proc_t* proc_pml = proc->proc_pml;
@@ -260,7 +274,9 @@ int mca_pml_teg_del_procs(lam_proc_t** procs, size_t nprocs)
             mca_ptl_proc_t* ptl_proc = mca_ptl_array_get_index(&proc_pml->proc_ptl_first, f_index);
             mca_ptl_t* ptl = ptl_proc->ptl;
             
-            ptl->ptl_del_proc(ptl,proc,ptl_proc->ptl_peer);
+            rc = ptl->ptl_del_procs(ptl,1,&proc,&ptl_proc->ptl_peer);
+            if(LAM_SUCCESS != rc)
+                return rc;
 
             /* remove this from next array so that we dont call it twice w/ 
              * the same address pointer
@@ -280,8 +296,11 @@ int mca_pml_teg_del_procs(lam_proc_t** procs, size_t nprocs)
         for(n_index = 0; n_index < n_size; n_index++) {
             mca_ptl_proc_t* ptl_proc = mca_ptl_array_get_index(&proc_pml->proc_ptl_first, n_index);
             mca_ptl_t* ptl = ptl_proc->ptl;
-            if (ptl != 0)
-                ptl->ptl_del_proc(ptl,proc,ptl_proc->ptl_peer);
+            if (ptl != 0) {
+                rc = ptl->ptl_del_procs(ptl,1,&proc,&ptl_proc->ptl_peer);
+                if(LAM_SUCCESS != rc)
+                    return rc;
+            }
         }
         
         /* do any required cleanup */

@@ -131,16 +131,20 @@ extern int mca_ptl_tcp_finalize(
  * PML->PTL notification of change in the process list.
  * 
  * @param ptl (IN)
- * @param proc (IN)  
- * @param peer (OUT)
+ * @param nprocs (IN)     Number of processes
+ * @param procs (IN)      Set of processes
+ * @param peers (OUT)     Set of (optional) peer addressing info.
+ * @param peers (IN/OUT)  Set of processes that are reachable via this PTL.
  * @return     LAM_SUCCESS or error status on failure.
  * 
  */
 
-extern int mca_ptl_tcp_add_proc(
+extern int mca_ptl_tcp_add_procs(
     struct mca_ptl_t* ptl,
-    struct lam_proc_t *proc,
-    struct mca_ptl_base_peer_t** peer
+    size_t nprocs,
+    struct lam_proc_t **procs,
+    struct mca_ptl_base_peer_t** peers,
+    lam_bitmap_t* reachable
 );
 
                                                                                                                
@@ -148,15 +152,17 @@ extern int mca_ptl_tcp_add_proc(
  * PML->PTL notification of change in the process list.
  *
  * @param ptl (IN)     PTL instance
- * @param proc (IN)    Peer process
- * @param peer (IN)    Peer addressing information.
+ * @param nproc (IN)   Number of processes.
+ * @param procs (IN)   Set of processes.
+ * @param peers (IN)   Set of peer data structures.
  * @return             Status indicating if cleanup was successful
  *
  */
-extern int mca_ptl_tcp_del_proc(
+extern int mca_ptl_tcp_del_procs(
     struct mca_ptl_t* ptl,
-    struct lam_proc_t *procs,
-    struct mca_ptl_base_peer_t* addr
+    size_t nprocs,
+    struct lam_proc_t **procs,
+    struct mca_ptl_base_peer_t** peers
 );
 
 /**
@@ -211,7 +217,7 @@ extern int mca_ptl_tcp_send(
     struct mca_ptl_base_peer_t* ptl_peer,
     struct mca_ptl_base_send_request_t*,
     size_t offset,
-    size_t *size,
+    size_t size,
     int flags
 );
 

@@ -30,15 +30,27 @@ lam_class_t  mca_ptl_tcp_recv_frag_t_class = {
 };
                                                                                                            
 
+/*
+ * TCP fragment constructor
+ */
+
 static void mca_ptl_tcp_recv_frag_construct(mca_ptl_tcp_recv_frag_t* frag)
 {
 }
 
 
+/*
+ * TCP fragment destructor
+ */
+
 static void mca_ptl_tcp_recv_frag_destruct(mca_ptl_tcp_recv_frag_t* frag)
 {
 }
 
+
+/*
+ * Initialize a TCP receive fragment for a specific peer.
+ */
 
 void mca_ptl_tcp_recv_frag_init(mca_ptl_tcp_recv_frag_t* frag, mca_ptl_base_peer_t* peer)
 {
@@ -54,6 +66,10 @@ void mca_ptl_tcp_recv_frag_init(mca_ptl_tcp_recv_frag_t* frag, mca_ptl_base_peer
     frag->frag_progressed = 0;
 }
                                                                                                                 
+/*
+ * Callback from event library when socket has data available
+ * for receive.
+ */
 
 bool mca_ptl_tcp_recv_frag_handler(mca_ptl_tcp_recv_frag_t* frag, int sd)
 {
@@ -77,6 +93,9 @@ bool mca_ptl_tcp_recv_frag_handler(mca_ptl_tcp_recv_frag_t* frag, int sd)
     }
 }
 
+/*
+ * Receive fragment header 
+ */
 
 static bool mca_ptl_tcp_recv_frag_header(mca_ptl_tcp_recv_frag_t* frag, int sd, size_t size)
 {
@@ -112,6 +131,10 @@ static bool mca_ptl_tcp_recv_frag_header(mca_ptl_tcp_recv_frag_t* frag, int sd, 
 }
 
 
+/*
+ * Receive and process an ack.
+ */
+
 static bool mca_ptl_tcp_recv_frag_ack(mca_ptl_tcp_recv_frag_t* frag, int sd)
 {
     mca_ptl_tcp_send_frag_t* sendfrag;
@@ -124,6 +147,10 @@ static bool mca_ptl_tcp_recv_frag_ack(mca_ptl_tcp_recv_frag_t* frag, int sd)
     return true;
 }
 
+
+/*
+ * Receive and process a match request - first fragment.
+ */
 
 static bool mca_ptl_tcp_recv_frag_match(mca_ptl_tcp_recv_frag_t* frag, int sd)
 {
@@ -161,6 +188,10 @@ static bool mca_ptl_tcp_recv_frag_match(mca_ptl_tcp_recv_frag_t* frag, int sd)
     return true;
 }
 
+
+/*
+ * Receive and process 2nd+ fragments of a multi-fragment message.
+ */
 
 static bool mca_ptl_tcp_recv_frag_frag(mca_ptl_tcp_recv_frag_t* frag, int sd)
 {

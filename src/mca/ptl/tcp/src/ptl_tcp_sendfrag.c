@@ -29,6 +29,9 @@ lam_class_t  mca_ptl_tcp_send_frag_t_class = {
     (lam_destruct_t)mca_ptl_tcp_send_frag_destruct
 };
                                                                                                            
+/*
+ * Placeholders for send fragment constructor/destructors.
+ */
 
 static void mca_ptl_tcp_send_frag_construct(mca_ptl_tcp_send_frag_t* frag)
 {

@@ -87,7 +87,7 @@ int mca_pml_teg_send(
     mca_pml_base_send_mode_t sendmode,
     lam_communicator_t* comm)
 {
-    int rc, index;
+    int rc;
     mca_ptl_base_send_request_t* sendreq;
     MCA_PML_TEG_SEND_REQUEST_ALLOC(comm,dst,sendreq,rc);
 #if MCA_PML_TEG_STATISTICS

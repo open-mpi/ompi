@@ -255,12 +255,14 @@ typedef int (*mca_ptl_base_finalize_fn_t)(
 /**
  * PML->PTL notification of change in the process list. 
  *
- * @param ptl (IN)     PTL instance
- * @param proc (IN)    Peer process
- * @param peer (OUT)   Peer addressing information.
- * @return             Status indicates wether PTL is reachable.
+ * @param ptl (IN)            PTL instance
+ * @param nprocs (IN)         Number of processes
+ * @param procs (IN)          Set of processes
+ * @param peer (OUT)          Set of (optional) mca_ptl_base_peer_t instances returned by PTL.
+ * @param reachable (IN/OUT)  Bitmask indicating set of peer processes that are reachable by this PTL.
+ * @return                    LAM_SUCCESS or error status on failure.
  *
- * The mca_ptl_base_add_proc_fn_t() is called by the PML to determine
+ * The mca_ptl_base_add_procs_fn_t() is called by the PML to determine
  * the set of PTLs that should be used to reach the specified process.
  * A return value of LAM_SUCCESS indicates the PTL should be added to the
  * set used to reach the proc. The peers addressing information may be 
@@ -268,28 +270,32 @@ typedef int (*mca_ptl_base_finalize_fn_t)(
  * The PTL may optionally return a pointer to a mca_ptl_base_peer_t data 
  * structure, to cache peer addressing or connection information.
  */
-typedef int (*mca_ptl_base_add_proc_fn_t)(
+typedef int (*mca_ptl_base_add_procs_fn_t)(
     struct mca_ptl_t* ptl, 
-    struct lam_proc_t* proc, 
-    struct mca_ptl_base_peer_t** peer
+    size_t nprocs,
+    struct lam_proc_t** procs, 
+    struct mca_ptl_base_peer_t** peer,
+    lam_bitmap_t* reachable
 );
 
 /**
  * PML->PTL notification of change in the process list.
  *
  * @param ptl (IN)     PTL instance
- * @param proc (IN)    Peer process
- * @param peer (IN)    Peer addressing information.
+ * @param nprocs (IN)  Number of processes
+ * @param proc (IN)    Set of processes
+ * @param peer (IN)    Set of peer addressing information.
  * @return             Status indicating if cleanup was successful
  *
  * If the process list shrinks, the PML will notify the PTL of the
  * change. Peer addressing information cached by the PML is provided
  * for cleanup by the PTL.
  */
-typedef int (*mca_ptl_base_del_proc_fn_t)(
+typedef int (*mca_ptl_base_del_procs_fn_t)(
     struct mca_ptl_t* ptl, 
-    struct lam_proc_t* proc, 
-    struct mca_ptl_base_peer_t*
+    size_t nprocs,
+    struct lam_proc_t** procs, 
+    struct mca_ptl_base_peer_t**
 );
 
 /**
@@ -350,7 +356,7 @@ typedef int (*mca_ptl_base_put_fn_t)(
     struct mca_ptl_base_peer_t* ptl_base_peer, 
     struct mca_ptl_base_send_request_t* request,
     size_t offset,
-    size_t *size,
+    size_t size,
     int flags
 );
 
@@ -376,7 +382,7 @@ typedef int (*mca_ptl_base_get_fn_t)(
     struct mca_ptl_base_peer_t* ptl_base_peer, 
     struct mca_ptl_base_recv_request_t* request,
     size_t offset,
-    size_t *size,
+    size_t size,
     int flags
 );
 
@@ -458,8 +464,8 @@ struct mca_ptl_t {
     uint32_t    ptl_flags;             /**< flags (put/get...) */
 
     /* PML->PTL function table */
-    mca_ptl_base_add_proc_fn_t         ptl_add_proc;
-    mca_ptl_base_del_proc_fn_t         ptl_del_proc;
+    mca_ptl_base_add_procs_fn_t        ptl_add_procs;
+    mca_ptl_base_del_procs_fn_t        ptl_del_procs;
     mca_ptl_base_finalize_fn_t         ptl_finalize;
     mca_ptl_base_put_fn_t              ptl_put;
     mca_ptl_base_get_fn_t              ptl_get;

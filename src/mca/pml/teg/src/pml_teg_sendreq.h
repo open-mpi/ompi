@@ -42,6 +42,7 @@ static inline int mca_pml_teg_send_request_start(
 {
     mca_ptl_t* ptl = req->req_owner;
     size_t first_fragment_size = ptl->ptl_first_frag_size;
+    size_t offset = req->req_offset;
     int flags, rc;
 
     /* start the first fragment */
@@ -54,10 +55,9 @@ static inline int mca_pml_teg_send_request_start(
         flags = MCA_PTL_FLAGS_ACK_MATCHED;
     }
 
-    rc = ptl->ptl_put(ptl, req->req_peer, req, 0, &first_fragment_size, flags);
+    rc = ptl->ptl_put(ptl, req->req_peer, req, offset, first_fragment_size, flags);
     if(rc != LAM_SUCCESS)
         return rc;
-    req->req_offset += first_fragment_size;
     return LAM_SUCCESS;
 }
 

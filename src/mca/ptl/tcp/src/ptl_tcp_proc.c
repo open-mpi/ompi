@@ -23,6 +23,10 @@ lam_class_t  mca_ptl_tcp_proc_t_class = {
 };
  
 
+/**
+ * Initialize tcp proc instance 
+ */
+
 void mca_ptl_tcp_proc_construct(mca_ptl_tcp_proc_t* proc)
 {
     proc->proc_lam = 0;
@@ -38,6 +42,10 @@ void mca_ptl_tcp_proc_construct(mca_ptl_tcp_proc_t* proc)
     THREAD_UNLOCK(&mca_ptl_tcp_module.tcp_lock);
 }
 
+
+/*
+ * Cleanup tcp proc instance
+ */
 
 void mca_ptl_tcp_proc_destruct(mca_ptl_tcp_proc_t* proc)
 {
