@@ -149,12 +149,12 @@ int ompi_ddt_optimize_short( dt_desc_t* pData, int count,
       /* now here we have a basic datatype */
       type = pData->desc.desc[pos_desc].type;
       if( (lastDisp + lastLength) == (totalDisp + pData->desc.desc[pos_desc].disp) ) {
-         lastLength += pData->desc.desc[pos_desc].count * basicDatatypes[type]->size;
+         lastLength += pData->desc.desc[pos_desc].count * ompi_ddt_basicDatatypes[type]->size;
       } else {
          if( lastLength != 0 )
             SAVE_DESC( pElemDesc, lastDisp, lastLength );
          lastDisp = totalDisp + pData->desc.desc[pos_desc].disp;
-         lastLength = pData->desc.desc[pos_desc].count * basicDatatypes[type]->size;
+         lastLength = pData->desc.desc[pos_desc].count * ompi_ddt_basicDatatypes[type]->size;
       }
       pos_desc++;  /* advance to the next data */
    }
@@ -273,13 +273,13 @@ static int ompi_ddt_unroll( dt_desc_t* pData, int count )
       /* now here we have a basic datatype */
       type = pElems[pos_desc].type;
       if( (lastDisp + lastLength) == (pStack->disp + pElems[pos_desc].disp) ) {
-         lastLength += pElems[pos_desc].count * basicDatatypes[type]->size;
+         lastLength += pElems[pos_desc].count * ompi_ddt_basicDatatypes[type]->size;
       } else {
          PRINT_MEMCPY( pDestBuf, (char*)lastDisp, lastLength );
          pDestBuf += lastLength;
          bConverted += lastLength;
          lastDisp = pStack->disp + pElems[pos_desc].disp;
-         lastLength = pElems[pos_desc].count * basicDatatypes[type]->size;
+         lastLength = pElems[pos_desc].count * ompi_ddt_basicDatatypes[type]->size;
       }
       pos_desc++;  /* advance to the next data */
    }

@@ -130,7 +130,7 @@ typedef struct {
     long double i;
 } ompi_complex_long_double_t;
 
-extern ompi_datatype_t* basicDatatypes[DT_MAX_PREDEFINED];
+extern ompi_datatype_t* ompi_ddt_basicDatatypes[];
 
 /* macros to play with the flags */
 #define REMOVE_FLAG( INT_VALUE, FLAG )  (INT_VALUE) = (INT_VALUE) ^ (FLAG)
