@@ -11,6 +11,10 @@
 #pragma weak MPI_Type_struct = PMPI_Type_struct
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int
 MPI_Type_struct(int count,
                 int array_of_blocklengths[],

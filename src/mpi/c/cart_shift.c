@@ -11,6 +11,10 @@
 #pragma weak MPI_Cart_shift = PMPI_Cart_shift
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int MPI_Cart_shift(MPI_Comm comm, int direction, int disp,
                    int *rank_source, int *rank_dest) {
     return MPI_SUCCESS;

@@ -13,6 +13,10 @@
 #pragma weak MPI_Errhandler_c2f = PMPI_Errhandler_c2f
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 
 MPI_Fint MPI_Errhandler_c2f(MPI_Errhandler errhandler)
 {

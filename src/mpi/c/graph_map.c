@@ -11,6 +11,10 @@
 #pragma weak MPI_Graph_map = PMPI_Graph_map
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int MPI_Graph_map(MPI_Comm comm, int nnodes, int *index, int *edges,
                   int *newrank) {
     return MPI_SUCCESS;

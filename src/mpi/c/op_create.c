@@ -11,6 +11,10 @@
 #pragma weak MPI_Op_create = PMPI_Op_create
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int MPI_Op_create(MPI_User_function *function, int commute,
                   MPI_Op *op) {
     return MPI_SUCCESS;

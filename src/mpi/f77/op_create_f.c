@@ -41,6 +41,11 @@ LAM_GENERATE_F77_BINDINGS (MPI_OP_CREATE,
                            (function, commute, op, ierr) )
 #endif
 
+
+#if LAM_PROFILE_LAYER && ! LAM_HAVE_WEAK_SYMBOLS
+#include "mpi/c/profile/defines.h"
+#endif
+
 void mpi_op_create_f(MPI_Fint *function, MPI_Fint *commute, MPI_Fint *op, MPI_Fint *ierr)
 {
 

@@ -12,6 +12,10 @@
 #pragma weak MPI_Finalize = PMPI_Finalize
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 
 int MPI_Finalize(void)
 {

@@ -11,6 +11,10 @@
 #pragma weak MPI_Reduce_scatter = PMPI_Reduce_scatter
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int MPI_Reduce_scatter(void *sendbuf, void *recvbuf, int *recvcounts,
                        MPI_Datatype datatype, MPI_Op op, MPI_Comm comm) {
     return MPI_SUCCESS;

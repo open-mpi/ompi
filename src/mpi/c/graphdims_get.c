@@ -11,6 +11,10 @@
 #pragma weak MPI_Graphdims_get = PMPI_Graphdims_get
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int MPI_Graphdims_get(MPI_Comm comm, int *nnodes, int *nedges) {
     return MPI_SUCCESS;
 }

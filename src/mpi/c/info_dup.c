@@ -13,6 +13,10 @@
 #pragma weak MPI_Info_dup = PMPI_Info_dup
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 /**
  *   MPI_Info_dup - Duplicate an 'MPI_Info' object
  *

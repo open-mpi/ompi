@@ -36,8 +36,4 @@
 #include "mpi/f77/prototypes_mpi.h"
 #include "mpi/f77/profile/prototypes_pmpi.h"
 
-#if LAM_PROFILE_LAYER && ! LAM_HAVE_WEAK_SYMBOLS
-#include "mpi/f77/profile/defines.h"
-#endif
-
 #endif /* LAM_F77_BINDINGS_H */

@@ -41,6 +41,11 @@ LAM_GENERATE_F77_BINDINGS (MPI_FILE_GET_GROUP,
                            (fh, group, ierr) )
 #endif
 
+
+#if LAM_PROFILE_LAYER && ! LAM_HAVE_WEAK_SYMBOLS
+#include "mpi/c/profile/defines.h"
+#endif
+
 void mpi_file_get_group_f(MPI_Fint *fh, MPI_Fint *group, MPI_Fint *ierr)
 {
 

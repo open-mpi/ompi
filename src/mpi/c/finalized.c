@@ -11,6 +11,10 @@
 #pragma weak MPI_Finalized = PMPI_Finalized
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int MPI_Finalized(int *flag) {
     return MPI_SUCCESS;
 }

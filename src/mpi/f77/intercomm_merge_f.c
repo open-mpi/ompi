@@ -41,6 +41,11 @@ LAM_GENERATE_F77_BINDINGS (MPI_INTERCOMM_MERGE,
                            (intercomm, high, newintercomm, ierr) )
 #endif
 
+
+#if LAM_PROFILE_LAYER && ! LAM_HAVE_WEAK_SYMBOLS
+#include "mpi/c/profile/defines.h"
+#endif
+
 void mpi_intercomm_merge_f(MPI_Fint *intercomm, MPI_Fint *high, MPI_Fint *newintercomm, MPI_Fint *ierr)
 {
 

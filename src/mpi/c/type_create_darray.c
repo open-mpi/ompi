@@ -11,6 +11,10 @@
 #pragma weak MPI_Type_create_darray = PMPI_Type_create_darray
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int
 MPI_Type_create_darray(int size,
                        int rank,

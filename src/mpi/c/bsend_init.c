@@ -13,6 +13,10 @@
 #pragma weak MPI_Bsend_init = PMPI_Bsend_init
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int MPI_Bsend_init(void *buf, int count, MPI_Datatype type,
                    int dest, int tag, MPI_Comm comm, MPI_Request *request) 
 {

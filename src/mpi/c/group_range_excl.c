@@ -14,6 +14,10 @@
 #pragma weak MPI_Group_range_excl = PMPI_Group_range_excl
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int MPI_Group_range_excl(MPI_Group group, int n_triplets, int ranges[][3],
                          MPI_Group *new_group) {
 

@@ -11,6 +11,10 @@
 #pragma weak MPI_File_get_position = PMPI_File_get_position
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int MPI_File_get_position(MPI_File fh, MPI_Offset *offset) {
     return MPI_SUCCESS;
 }

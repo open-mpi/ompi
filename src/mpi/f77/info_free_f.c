@@ -41,6 +41,11 @@ LAM_GENERATE_F77_BINDINGS (MPI_INFO_FREE,
                            (info, ierr) )
 #endif
 
+
+#if LAM_PROFILE_LAYER && ! LAM_HAVE_WEAK_SYMBOLS
+#include "mpi/c/profile/defines.h"
+#endif
+
 void mpi_info_free_f(MPI_Fint *info, MPI_Fint *ierr)
 {
 

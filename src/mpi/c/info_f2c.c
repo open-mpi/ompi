@@ -13,6 +13,10 @@
 #pragma weak MPI_Info_f2c = PMPI_Info_f2c
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 /**
  * Converts the MPI_Fint info into a valid C MPI_Info handle
  *

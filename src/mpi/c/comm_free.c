@@ -13,6 +13,10 @@
 #pragma weak MPI_Comm_free = PMPI_Comm_free
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int MPI_Comm_free(MPI_Comm *comm) {
     
     if ( MPI_PARAM_CHECK ) {

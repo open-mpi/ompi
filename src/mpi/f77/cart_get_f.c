@@ -41,6 +41,11 @@ LAM_GENERATE_F77_BINDINGS (MPI_CART_GET,
                            (comm, maxdims, dims, periods, coords, ierr) )
 #endif
 
+
+#if LAM_PROFILE_LAYER && ! LAM_HAVE_WEAK_SYMBOLS
+#include "mpi/c/profile/defines.h"
+#endif
+
 void mpi_cart_get_f(MPI_Fint *comm, MPI_Fint *maxdims, MPI_Fint *dims, MPI_Fint *periods, MPI_Fint *coords, MPI_Fint *ierr)
 {
 

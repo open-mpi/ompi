@@ -14,6 +14,10 @@
 #pragma weak MPI_Group_translate_ranks = PMPI_Group_translate_ranks
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int MPI_Group_translate_ranks(MPI_Group group1, int n_ranks, int *ranks1,
                               MPI_Group group2, int *ranks2) {
 

@@ -14,6 +14,10 @@
 #pragma weak MPI_Intercomm_create = PMPI_Intercomm_create
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
                          MPI_Comm bridge_comm, int remote_leader,
                          int tag, MPI_Comm *newintercomm) {

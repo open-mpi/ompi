@@ -15,6 +15,10 @@
 #pragma weak MPI_Type_create_resized = PMPI_Type_create_resized
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 static char FUNC_NAME[] = "MPI_Type_create_resized";
 
 int

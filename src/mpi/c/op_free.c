@@ -11,6 +11,10 @@
 #pragma weak MPI_Op_free = PMPI_Op_free
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int MPI_Op_free(MPI_Op *op) {
     return MPI_SUCCESS;
 }

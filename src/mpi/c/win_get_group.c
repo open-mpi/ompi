@@ -11,6 +11,10 @@
 #pragma weak MPI_Win_get_group = PMPI_Win_get_group
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int MPI_Win_get_group(MPI_Win win, MPI_Group *group) {
     return MPI_SUCCESS;
 }

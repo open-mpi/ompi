@@ -11,6 +11,10 @@
 #pragma weak MPI_File_set_atomicity = PMPI_File_set_atomicity
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int MPI_File_set_atomicity(MPI_File fh, int flag) {
     return MPI_SUCCESS;
 }

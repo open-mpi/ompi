@@ -41,6 +41,11 @@ LAM_GENERATE_F77_BINDINGS (MPI_GRAPHDIMS_GET,
                            (comm, nnodes, nedges, ierr) )
 #endif
 
+
+#if LAM_PROFILE_LAYER && ! LAM_HAVE_WEAK_SYMBOLS
+#include "mpi/c/profile/defines.h"
+#endif
+
 void mpi_graphdims_get_f(MPI_Fint *comm, MPI_Fint *nnodes, MPI_Fint *nedges, MPI_Fint *ierr)
 {
 

@@ -11,6 +11,10 @@
 #pragma weak MPI_Errhandler_create = PMPI_Errhandler_create
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int MPI_Errhandler_create(MPI_Handler_function *function,
                           MPI_Errhandler *errhandler)
 {

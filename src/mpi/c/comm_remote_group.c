@@ -15,6 +15,10 @@
 #pragma weak MPI_Comm_remote_group = PMPI_Comm_remote_group
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 
 int MPI_Comm_remote_group(MPI_Comm comm, MPI_Group *group) {
     

@@ -11,6 +11,10 @@
 #pragma weak MPI_Status_f2c = PMPI_Status_f2c
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int MPI_Status_f2c(MPI_Fint *f_status, MPI_Status *c_status) {
     return MPI_SUCCESS;
 }

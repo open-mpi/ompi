@@ -11,6 +11,10 @@
 #pragma weak MPI_Pack_size = PMPI_Pack_size
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int MPI_Pack_size(int incount, MPI_Datatype datatype, MPI_Comm comm,
                   int *size) {
     return MPI_SUCCESS;

@@ -11,6 +11,10 @@
 #pragma weak MPI_Cart_rank = PMPI_Cart_rank
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 
 int MPI_Cart_rank(MPI_Comm comm, int *coords, int *rank) {
     return MPI_SUCCESS;

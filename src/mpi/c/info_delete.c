@@ -15,6 +15,10 @@
 #pragma weak MPI_Info_delete = PMPI_Info_delete
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 /**
  * Delete a (key,value) pair from "info"
  *

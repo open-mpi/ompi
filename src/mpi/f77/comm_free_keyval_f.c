@@ -41,6 +41,11 @@ LAM_GENERATE_F77_BINDINGS (MPI_COMM_FREE_KEYVAL,
                            (comm_keyval, ierr) )
 #endif
 
+
+#if LAM_PROFILE_LAYER && ! LAM_HAVE_WEAK_SYMBOLS
+#include "mpi/c/profile/defines.h"
+#endif
+
 void mpi_comm_free_keyval_f(MPI_Fint *comm_keyval, MPI_Fint *ierr)
 {
 

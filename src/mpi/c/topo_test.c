@@ -13,6 +13,10 @@
 #pragma weak MPI_Topo_test = PMPI_Topo_test
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int MPI_Topo_test(MPI_Comm comm, int *status) 
 {
 

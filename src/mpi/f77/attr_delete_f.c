@@ -41,6 +41,11 @@ LAM_GENERATE_F77_BINDINGS (MPI_ATTR_DELETE,
                            (comm, keyval, ierr) )
 #endif
 
+
+#if LAM_PROFILE_LAYER && ! LAM_HAVE_WEAK_SYMBOLS
+#include "mpi/c/profile/defines.h"
+#endif
+
 void mpi_attr_delete_f(MPI_Fint *comm, MPI_Fint *keyval, MPI_Fint *ierr)
 {
 

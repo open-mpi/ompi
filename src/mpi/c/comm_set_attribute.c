@@ -12,6 +12,10 @@
 #pragma weak MPI_Comm_set_attribute = PMPI_Comm_set_attribute
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int MPI_Comm_set_attr(MPI_Comm comm, int comm_keyval, void *attribute_val) 
 {
     int ret;

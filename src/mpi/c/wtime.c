@@ -12,6 +12,10 @@
 #pragma weak MPI_Wtime = PMPI_Wtime
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 double MPI_Wtime(void) {
     struct timeval tv;
     double wtime;

@@ -11,6 +11,10 @@
 #pragma weak MPI_Barrier = PMPI_Barrier
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int MPI_Barrier(MPI_Comm comm) {
     return MPI_SUCCESS;
 }

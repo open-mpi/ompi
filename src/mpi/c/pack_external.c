@@ -11,6 +11,10 @@
 #pragma weak MPI_Pack_external = PMPI_Pack_external
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int MPI_Pack_external(char *datarep, void *inbuf, int incount,
                       MPI_Datatype datatype, void *outbuf,
                       MPI_Aint outsize, MPI_Aint *position) {

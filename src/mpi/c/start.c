@@ -14,6 +14,10 @@
 #pragma weak MPI_Start = PMPI_Start
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int MPI_Start(MPI_Request *request) 
 {
     if ( MPI_PARAM_CHECK ) {

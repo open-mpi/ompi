@@ -12,6 +12,10 @@
 #pragma weak MPI_Keyval_create = PMPI_Keyval_create
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int MPI_Keyval_create(MPI_Copy_function *copy_attr_fn,
                       MPI_Delete_function *delete_attr_fn,
                       int *keyval, void *extra_state) 

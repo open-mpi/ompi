@@ -11,6 +11,10 @@
 #pragma weak MPI_Request_get_status = PMPI_Request_get_status
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int MPI_Request_get_status(MPI_Request request, int *flag,
                            MPI_Status *status) {
     return MPI_SUCCESS;

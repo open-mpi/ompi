@@ -41,6 +41,11 @@ LAM_GENERATE_F77_BINDINGS (MPI_GROUP_DIFFERENCE,
                            (group1, group2, newgroup, ierr) )
 #endif
 
+
+#if LAM_PROFILE_LAYER && ! LAM_HAVE_WEAK_SYMBOLS
+#include "mpi/c/profile/defines.h"
+#endif
+
 void mpi_group_difference_f(MPI_Fint *group1, MPI_Fint *group2, MPI_Fint *newgroup, MPI_Fint *ierr)
 {
 

@@ -41,6 +41,11 @@ LAM_GENERATE_F77_BINDINGS (MPI_COMM_COMPARE,
                            (comm1, comm2, result, ierr) )
 #endif
 
+
+#if LAM_PROFILE_LAYER && ! LAM_HAVE_WEAK_SYMBOLS
+#include "mpi/c/profile/defines.h"
+#endif
+
 void mpi_comm_compare_f(MPI_Fint *comm1, MPI_Fint *comm2, MPI_Fint *result, MPI_Fint *ierr)
 {
 

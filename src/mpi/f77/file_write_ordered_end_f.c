@@ -41,6 +41,11 @@ LAM_GENERATE_F77_BINDINGS (MPI_FILE_WRITE_ORDERED_END,
                            (fh, buf, status, ierr) )
 #endif
 
+
+#if LAM_PROFILE_LAYER && ! LAM_HAVE_WEAK_SYMBOLS
+#include "mpi/c/profile/defines.h"
+#endif
+
 void mpi_file_write_ordered_end_f(MPI_Fint *fh, char *buf, MPI_Fint *status, MPI_Fint *ierr)
 {
 

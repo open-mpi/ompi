@@ -11,6 +11,10 @@
 #pragma weak MPI_Type_c2f = PMPI_Type_c2f
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 MPI_Fint MPI_Type_c2f(MPI_Datatype datatype) {
     return (MPI_Fint)0;
 }

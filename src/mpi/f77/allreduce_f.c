@@ -41,6 +41,11 @@ LAM_GENERATE_F77_BINDINGS (MPI_ALLREDUCE,
                            (sendbuf, recvbuf, count, datatype, op, comm, ierr) )
 #endif
 
+
+#if LAM_PROFILE_LAYER && ! LAM_HAVE_WEAK_SYMBOLS
+#include "mpi/c/profile/defines.h"
+#endif
+
 void mpi_allreduce_f(char *sendbuf, char *recvbuf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *op, MPI_Fint *comm, MPI_Fint *ierr)
 {
 

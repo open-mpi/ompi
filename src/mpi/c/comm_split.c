@@ -13,6 +13,10 @@
 #pragma weak MPI_Comm_split = PMPI_Comm_split
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm) {
 
     int rc;

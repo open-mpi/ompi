@@ -11,6 +11,10 @@
 #pragma weak MPI_Type_extent = PMPI_Type_extent
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int
 MPI_Type_extent(MPI_Datatype type, MPI_Aint *extent)
 {

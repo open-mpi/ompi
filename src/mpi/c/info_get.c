@@ -16,6 +16,10 @@
 #pragma weak MPI_Info_get = PMPI_Info_get
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 /**
  *   MPI_Info_get - Get a (key, value) pair from an 'MPI_Info' object
  *

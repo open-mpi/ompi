@@ -14,6 +14,10 @@
 #pragma weak MPI_Win_set_errhandler = PMPI_Win_set_errhandler
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int MPI_Win_set_errhandler(MPI_Win win, MPI_Errhandler errhandler) {
   /* Error checking */
 

@@ -11,6 +11,10 @@
 #pragma weak MPI_File_get_info = PMPI_File_get_info
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int MPI_File_get_info(MPI_File fh, MPI_Info *info_used) {
     return MPI_SUCCESS;
 }

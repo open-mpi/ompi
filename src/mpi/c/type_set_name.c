@@ -13,6 +13,10 @@
 #pragma weak MPI_Type_set_name = PMPI_Type_set_name
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int
 MPI_Type_set_name (MPI_Datatype type, char *type_name)
 {

@@ -14,6 +14,10 @@
 #pragma weak MPI_Init = PMPI_Init
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 
 int MPI_Init(int *argc, char ***argv)
 {

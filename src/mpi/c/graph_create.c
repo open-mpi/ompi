@@ -11,6 +11,10 @@
 #pragma weak MPI_Graph_create = PMPI_Graph_create
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int MPI_Graph_create(MPI_Comm comm_old, int nnodes, int *index,
                      int *edges, int reorder, MPI_Comm *comm_graph) {
     return MPI_SUCCESS;

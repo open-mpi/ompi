@@ -13,6 +13,10 @@
 #pragma weak MPI_Info_create = PMPI_Info_create
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 /**
  * Create a new info object 
  *

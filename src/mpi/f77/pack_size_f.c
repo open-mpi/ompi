@@ -41,6 +41,11 @@ LAM_GENERATE_F77_BINDINGS (MPI_PACK_SIZE,
                            (incount, datatype, comm, size, ierr) )
 #endif
 
+
+#if LAM_PROFILE_LAYER && ! LAM_HAVE_WEAK_SYMBOLS
+#include "mpi/c/profile/defines.h"
+#endif
+
 void mpi_pack_size_f(MPI_Fint *incount, MPI_Fint *datatype, MPI_Fint *comm, MPI_Fint *size, MPI_Fint *ierr)
 {
 

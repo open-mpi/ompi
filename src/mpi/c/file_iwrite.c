@@ -11,6 +11,10 @@
 #pragma weak MPI_File_iwrite = PMPI_File_iwrite
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int MPI_File_iwrite(MPI_File fh, void *buf, int count, MPI_Datatype
 		                    datatype, MPI_Request *request) {
     return MPI_SUCCESS;

@@ -15,6 +15,10 @@
 #pragma weak MPI_Type_indexed = PMPI_Type_indexed
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 static char FUNC_NAME[] = "MPI_Type_indexed";
 
 int

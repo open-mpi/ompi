@@ -13,6 +13,10 @@
 #pragma weak MPI_Waitall = PMPI_Waitall
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 
 int MPI_Waitall(int count, MPI_Request *requests, MPI_Status *statuses) 
 {

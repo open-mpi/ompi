@@ -17,6 +17,10 @@
 #pragma weak MPI_Comm_set_name = PMPI_Comm_set_name
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int MPI_Comm_set_name(MPI_Comm comm, char *name) {
 
     lam_communicator_t* comp;
@@ -49,6 +53,10 @@ int MPI_Comm_set_name(MPI_Comm comm, char *name) {
   /* Force TotalView DLL to take note of this name setting */
 
   ++lam_tv_comm_sequence_number;
+#endif
+
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
 #endif
 
   /* -- Thread safety exit -- */

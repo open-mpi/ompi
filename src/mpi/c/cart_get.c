@@ -11,6 +11,10 @@
 #pragma weak MPI_Cart_get = PMPI_Cart_get
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int MPI_Cart_get(MPI_Comm comm, int maxdims, int *dims,
                  int *periods, int *coords) {
     return MPI_SUCCESS;

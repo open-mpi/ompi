@@ -41,6 +41,11 @@ LAM_GENERATE_F77_BINDINGS (MPI_INTERCOMM_CREATE,
                            (local_comm, local_leader, bridge_comm, remote_leader, tag, newintercomm, ierr) )
 #endif
 
+
+#if LAM_PROFILE_LAYER && ! LAM_HAVE_WEAK_SYMBOLS
+#include "mpi/c/profile/defines.h"
+#endif
+
 void mpi_intercomm_create_f(MPI_Fint *local_comm, MPI_Fint *local_leader, MPI_Fint *bridge_comm, MPI_Fint *remote_leader, MPI_Fint *tag, MPI_Fint *newintercomm, MPI_Fint *ierr)
 {
 

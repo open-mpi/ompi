@@ -41,6 +41,11 @@ LAM_GENERATE_F77_BINDINGS (MPI_COMM_JOIN,
                            (fd, intercomm, ierr) )
 #endif
 
+
+#if LAM_PROFILE_LAYER && ! LAM_HAVE_WEAK_SYMBOLS
+#include "mpi/c/profile/defines.h"
+#endif
+
 void mpi_comm_join_f(MPI_Fint *fd, MPI_Fint *intercomm, MPI_Fint *ierr)
 {
 

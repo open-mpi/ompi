@@ -11,6 +11,10 @@
 #pragma weak MPI_Exscan = PMPI_Exscan
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int MPI_Exscan(void *sendbuf, void *recvbuf, int count,
 		       MPI_Datatype datatype, MPI_Op op, MPI_Comm comm) {
     return MPI_SUCCESS;

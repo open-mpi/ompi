@@ -41,6 +41,11 @@ LAM_GENERATE_F77_BINDINGS (MPI_CART_CREATE,
                            (old_comm, ndims, dims, periods, redorder, comm_cart, ierr) )
 #endif
 
+
+#if LAM_PROFILE_LAYER && ! LAM_HAVE_WEAK_SYMBOLS
+#include "mpi/c/profile/defines.h"
+#endif
+
 void mpi_cart_create_f(MPI_Fint *old_comm, MPI_Fint *ndims, MPI_Fint *dims, MPI_Fint *periods, MPI_Fint *redorder, MPI_Fint *comm_cart, MPI_Fint *ierr)
 {
 

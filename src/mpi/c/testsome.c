@@ -13,6 +13,10 @@
 #pragma weak MPI_Testsome = PMPI_Testsome
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int MPI_Testsome(int incount, MPI_Request requests[],
                  int *outcount, int indices[],
                  MPI_Status statuses[]) 

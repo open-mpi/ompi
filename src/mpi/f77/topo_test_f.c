@@ -41,6 +41,11 @@ LAM_GENERATE_F77_BINDINGS (MPI_TOPO_TEST,
                            (comm, status, ierr) )
 #endif
 
+
+#if LAM_PROFILE_LAYER && ! LAM_HAVE_WEAK_SYMBOLS
+#include "mpi/c/profile/defines.h"
+#endif
+
 void mpi_topo_test_f(MPI_Fint *comm, MPI_Fint *status, MPI_Fint *ierr)
 {
 

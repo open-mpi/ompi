@@ -11,6 +11,10 @@
 #pragma weak MPI_Op_f2c = PMPI_Op_f2c
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 MPI_Op MPI_Op_f2c(MPI_Fint op) {
     return (MPI_Op)0;
 }

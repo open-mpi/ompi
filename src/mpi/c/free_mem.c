@@ -13,6 +13,10 @@
 #pragma weak MPI_Free_mem = PMPI_Free_mem
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 
 int MPI_Free_mem(void *baseptr)
 {

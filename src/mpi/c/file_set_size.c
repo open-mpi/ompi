@@ -11,6 +11,10 @@
 #pragma weak MPI_File_set_size = PMPI_File_set_size
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 int MPI_File_set_size(MPI_File fh, MPI_Offset size) {
     return MPI_SUCCESS;
 }

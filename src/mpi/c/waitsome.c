@@ -14,6 +14,10 @@
 #pragma weak MPI_Waitsome = PMPI_Waitsome
 #endif
 
+#if LAM_PROFILING_DEFINES
+#include "mpi/c/profile/defines.h"
+#endif
+
 
 int MPI_Waitsome(int incount, MPI_Request *requests,
                  int *outcount, int *indices,
