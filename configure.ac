@@ -790,6 +790,13 @@ AC_CONFIG_FILES([
 
     src/Makefile
     src/include/Makefile
+    src/include/sys/Makefile
+    src/include/sys/alpha/Makefile
+    src/include/sys/amd64/Makefile
+    src/include/sys/ia32/Makefile
+    src/include/sys/ia64/Makefile
+    src/include/sys/powerpc/Makefile
+    src/include/sys/sparc64/Makefile
 
     src/ctnetwork/Makefile
     src/class/Makefile
@@ -840,19 +847,22 @@ AC_CONFIG_FILES([
     src/mca/allocator/base/Makefile
     src/mca/coll/Makefile
     src/mca/coll/base/Makefile
+    src/mca/gpr/Makefile
+    src/mca/gpr/base/Makefile
     src/mca/io/Makefile
     src/mca/io/base/Makefile
     src/mca/mpool/Makefile
     src/mca/mpool/base/Makefile
     src/mca/one/Makefile
     src/mca/one/base/Makefile
+    src/mca/ns/Makefile
+    src/mca/ns/base/Makefile
     src/mca/pml/Makefile
     src/mca/pml/base/Makefile
     src/mca/ptl/Makefile
     src/mca/ptl/base/Makefile
     src/mca/topo/Makefile
     src/mca/topo/base/Makefile
-    src/mca/gpr/Makefile
 
     src/dynamic-mca/common/Makefile
 
@@ -862,13 +872,14 @@ AC_CONFIG_FILES([
     src/dynamic-mca/Makefile
     src/dynamic-mca/allocator/Makefile
     src/dynamic-mca/coll/Makefile
+    src/dynamic-mca/gpr/Makefile
     src/dynamic-mca/io/Makefile
     src/dynamic-mca/mpool/Makefile
     src/dynamic-mca/one/Makefile
+    src/dynamic-mca/ns/Makefile
     src/dynamic-mca/pml/Makefile
     src/dynamic-mca/ptl/Makefile
     src/dynamic-mca/topo/Makefile
-    src/dynamic-mca/gpr/Makefile
 
     src/mpi/Makefile
     src/mpi/c/Makefile

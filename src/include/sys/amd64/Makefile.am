@@ -4,19 +4,12 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-SUBDIRS = sys
-
-headers = \
-        atomic.h \
-        constants.h \
-        ompi.h \
-        totalview.h \
-        types.h
+headers = atomic.h
 
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/include
+ompidir = $(includedir)/openmpi/include/sys/amd64
 ompi_HEADERS = $(headers)
 else
 ompidir = $(includedir)
