@@ -12,6 +12,7 @@
 
 /* global variables, instantiated in global.c  */
 extern lam_mutex_t mca_io_romio_mutex;
+extern mca_io_1_0_0_t romio_actions;
 
 
 /* 
