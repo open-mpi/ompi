@@ -78,14 +78,14 @@ ompi_thread_t *ompi_mpi_main_thread = NULL;
 int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 {
     int ret, param;
-    bool allow_multi_user_threads;
-    bool have_hidden_threads;
-    bool compound_cmd=false;
     ompi_proc_t** procs;
     size_t nprocs;
     char *error = NULL;
+    bool compound_cmd = false;
     
-    /* Join the run-time environment - do the things that don't hit the registry */
+    /* Join the run-time environment - do the things that don't hit
+       the registry */
+
     if (ORTE_SUCCESS != (ret = orte_init_stage1())) {
         error = "ompi_mpi_init: orte_init_stage1 failed";
 	    goto error;
@@ -171,10 +171,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
        final thread level */
 
     if (OMPI_SUCCESS != 
-	(ret = mca_base_init_select_components(requested, 
-					       allow_multi_user_threads,
-					       have_hidden_threads, 
-					       provided))) {
+	(ret = mca_base_init_select_components(requested, provided))) {
         error = "mca_base_init_select_components() failed";
         goto error;
     }
@@ -387,7 +384,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     /* All done */
 
     ompi_mpi_initialized = true;
-    ompi_mpi_finalized = false;
 
     if (orte_debug_flag) {
 	ompi_output(0, "[%d,%d,%d] ompi_mpi_init completed",

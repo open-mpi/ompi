@@ -39,11 +39,15 @@
  *
  * The contents of this function will likely be replaced 
  */
-int mca_base_init_select_components(int requested, 
-                                    bool allow_multi_user_threads,
-                                    bool have_hidden_threads, int *provided)
+int mca_base_init_select_components(int requested, int *provided)
 {
   bool user_threads, hidden_threads;
+  bool user_cumulative, hidden_cumulative;
+
+  /* Set initial values */
+
+  user_cumulative = true;
+  hidden_cumulative = false;
 
   /* Make final lists of available modules (i.e., call the query/init
      functions and see if they return happiness).  For pml, there will
@@ -53,7 +57,7 @@ int mca_base_init_select_components(int requested,
   if (OMPI_SUCCESS != mca_mpool_base_init(&user_threads)) {
     return OMPI_ERROR;
   }
-  allow_multi_user_threads &= user_threads;
+  user_cumulative &= user_threads;
 
   /* JMS: At some point, we'll need to feed it the thread level to
      ensure to pick one high enough (e.g., if we need CR) */
@@ -61,24 +65,24 @@ int mca_base_init_select_components(int requested,
   user_threads = true;
   hidden_threads = false;
   if (OMPI_SUCCESS != mca_pml_base_select(&mca_pml, 
-                                         &user_threads, &hidden_threads)) {
+                                          &user_threads, &hidden_threads)) {
     return OMPI_ERROR;
   }
-  allow_multi_user_threads &= user_threads;
-  have_hidden_threads |= hidden_threads;
+  user_cumulative &= user_threads;
+  hidden_cumulative |= hidden_threads;
 
   if (OMPI_SUCCESS != mca_ptl_base_select(&user_threads, &hidden_threads)) {
     return OMPI_ERROR;
   }
-  allow_multi_user_threads &= user_threads;
-  have_hidden_threads |= hidden_threads;
+  user_cumulative &= user_threads;
+  hidden_cumulative |= hidden_threads;
 
   if (OMPI_SUCCESS != mca_coll_base_find_available(&user_threads, 
                                                    &hidden_threads)) {
     return OMPI_ERROR;
   }
-  allow_multi_user_threads &= user_threads;
-  have_hidden_threads |= hidden_threads;
+  user_cumulative &= user_threads;
+  hidden_cumulative |= hidden_threads;
 
   /* io and topo components are selected later, because the io framework is
      opened lazily (at the first MPI_File_* function invocation). */
@@ -89,7 +93,7 @@ int mca_base_init_select_components(int requested,
   /* JMS ...Do more here with the thread level, etc.... */
 
   *provided = requested;
-  if (have_hidden_threads) {
+  if (hidden_cumulative) {
       ompi_set_using_threads(true);
   }
 
