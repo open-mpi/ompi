@@ -33,11 +33,11 @@ MPI_Attr_get                    Vishal
 MPI_Attr_put                    Vishal
 MPI_Barrier                     DONE
 MPI_Bcast                       DONE
-MPI_Bsend                       Ginger
-MPI_Bsend_init                  Ginger
-MPI_Buffer_attach               Ginger
-MPI_Buffer_detach               Ginger
-MPI_Cancel                      Ginger
+MPI_Bsend                       C & F77 done
+MPI_Bsend_init                  C & F77 done
+MPI_Buffer_attach               C & F77 done
+MPI_Buffer_detach               C & F77 done
+MPI_Cancel                      C & F77 done
 MPI_Cart_coords                 Anju
 MPI_Cart_create                 Anju
 MPI_Cart_get                    Anju
@@ -164,21 +164,21 @@ MPI_Graph_neighbors             Anju
 MPI_Graphdims_get               Anju
 MPI_Grequest_complete
 MPI_Grequest_start
-MPI_Group_c2f                   Rich
-MPI_Group_compare               Rich
-MPI_Group_difference            Rich
-MPI_Group_excl                  DONE
-MPI_Group_f2c                   Rich
-MPI_Group_free                  Rich
-MPI_Group_incl                  Rich
-MPI_Group_intersection          Rich
-MPI_Group_range_excl            Rich
-MPI_Group_range_incl            Rich
-MPI_Group_rank                  Rich
-MPI_Group_size                  Rich
-MPI_Group_translate_ranks       Rich
-MPI_Group_union                 Rich
-MPI_Ibsend                      Ginger
+MPI_Group_c2f                   C & F77 done
+MPI_Group_compare               C & F77 done
+MPI_Group_difference            C & F77 done
+MPI_Group_excl                  C & F77 done
+MPI_Group_f2c                   C & F77 done
+MPI_Group_free                  C & F77 done
+MPI_Group_incl                  C & F77 done
+MPI_Group_intersection          C & F77 done
+MPI_Group_range_excl            C & F77 done
+MPI_Group_range_incl            C & F77 done
+MPI_Group_rank                  C & F77 done
+MPI_Group_size                  C & F77 done
+MPI_Group_translate_ranks       C & F77 done
+MPI_Group_union                 C & F77 done
+MPI_Ibsend                      C & F77 done
 MPI_Info_c2f                    Anju
 MPI_Info_create                 Anju
 MPI_Info_delete                 Anju
@@ -195,11 +195,11 @@ MPI_Initialized
 MPI_Init_thread
 MPI_Intercomm_create            Edgar
 MPI_Intercomm_merge             Edgar
-MPI_Iprobe                      Ginger
-MPI_Irecv                       Ginger
-MPI_Irsend                      Ginger
-MPI_Isend                       Ginger
-MPI_Issend                      Ginger
+MPI_Iprobe                      C & F77 done
+MPI_Irecv                       C & F77 done
+MPI_Irsend                      C & F77 done
+MPI_Isend                       C & F77 done
+MPI_Issend                      C & F77 done
 MPI_Is_thread_main              Ginger
 MPI_Keyval_create               Vishal
 MPI_Keyval_free                 Vishal
@@ -214,12 +214,12 @@ MPI_Pack_external_size          Ginger
 MPI_Pack                        DONE
 MPI_Pack_size                   DONE
 MPI_Pcontrol
-MPI_Probe                       Ginger
+MPI_Probe                       C & F77 done
 MPI_Publish_name
 MPI_Put
-MPI_Query_thread                Ginger
-MPI_Recv_init                   Ginger
-MPI_Recv                        Ginger
+MPI_Query_thread                C & F77 done
+MPI_Recv_init                   C & F77 done
+MPI_Recv                        C & F77 done
 MPI_Reduce                      Jeff
 MPI_Reduce_scatter              Jeff
 MPI_Register_datarep
@@ -227,19 +227,19 @@ MPI_Request_c2f                 Ginger
 MPI_Request_f2c                 Ginger
 MPI_Request_free                Ginger
 MPI_Request_get_status          Ginger
-MPI_Rsend                       Ginger
-MPI_Rsend_init                  Ginger
+MPI_Rsend                       C & F77 done
+MPI_Rsend_init                  C & F77 done
 MPI_Scan                        Jeff
 MPI_Scatter                     Jeff
 MPI_Scatterv                    Jeff
-MPI_Send_init                   Ginger
-MPI_Send                        Ginger
-MPI_Sendrecv                    Ginger
-MPI_Sendrecv_replace            Ginger
-MPI_Ssend_init                  Ginger
-MPI_Ssend                       Ginger
-MPI_Start                       Ginger
-MPI_Startall                    Ginger
+MPI_Send_init                   C & F77 done
+MPI_Send                        C & F77 done
+MPI_Sendrecv                    C & F77 done
+MPI_Sendrecv_replace            C & F77 done
+MPI_Ssend_init                  C & F77 done
+MPI_Ssend                       C & F77 done
+MPI_Start                       C & F77 done
+MPI_Startall                    C & F77 done
 MPI_Status_c2f                  Ginger
 MPI_Status_f2c                  Ginger
 MPI_Status_set_cancelled        Ginger
