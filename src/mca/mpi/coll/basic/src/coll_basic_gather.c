@@ -3,7 +3,7 @@
  */
 
 #include "lam_config.h"
-#include "coll_basic_config.h"
+#include "coll_basic.h"
 
 #include "lam/constants.h"
 #include "mpi.h"
