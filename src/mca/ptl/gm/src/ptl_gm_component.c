@@ -117,7 +117,7 @@ mca_ptl_gm_component_open(void)
     mca_ptl_gm_component.gm_eager_limit = 
         mca_ptl_gm_param_register_int( "eager_limit", 32 * mca_ptl_gm_component.gm_segment_size );
     mca_ptl_gm_component.gm_rdma_frag_size =
-        mca_ptl_gm_param_register_int ("rdma_frag_size", 1024 * 1024);
+        mca_ptl_gm_param_register_int ("rdma_frag_size", 512 * 1024);
     
     mca_ptl_gm_component.gm_free_list_num =
         mca_ptl_gm_param_register_int ("free_list_num", 256);
