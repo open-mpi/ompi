@@ -53,6 +53,10 @@ int ompi_rte_universe_exists()
 	    }
 	} else {  /* name server found, now try gpr */
 	    ns_found = true;
+	    if (NULL != ompi_process_info.ns_replica) {
+		free(ompi_process_info.ns_replica);
+	    }
+	    ompi_process_info.ns_replica = ns_base_copy_process_name(&proc);
 	}
 
 	mca_oob_parse_contact_info(ompi_universe_info.gpr_replica, &proc, NULL);
@@ -66,6 +70,10 @@ int ompi_rte_universe_exists()
 		free(ompi_process_info.gpr_replica);
 	    }
 	} else { 
+	    if (NULL != ompi_process_info.gpr_replica) {
+		free(ompi_process_info.gpr_replica);
+	    }
+	    ompi_process_info.gpr_replica = ns_base_copy_process_name(&proc);
 	    gpr_found = true;
 	}
 
@@ -155,11 +163,8 @@ int ompi_rte_universe_exists()
 
 	/* ...and ping to verify it's alive */
 	ping_success = false;
-	for (i=0; i<5 && !ping_success; i++) {
-	    ompi_output(0, "univ_exists: attempting ping number %d", i);
-	    if (OMPI_SUCCESS == mca_oob_ping(&proc, &ompi_rte_ping_wait)) {
-		ping_success = true;
-	    }
+	if (OMPI_SUCCESS == mca_oob_ping(&proc, &ompi_rte_ping_wait)) {
+	    ping_success = true;
 	}
 	if (!ping_success) {
 	    if (ompi_rte_debug_flag) {
@@ -172,6 +177,9 @@ int ompi_rte_universe_exists()
 	ompi_process_info.my_universe = strdup(ompi_universe_info.name);
 	ompi_process_info.ns_replica = ns_base_copy_process_name(&proc);
 	ompi_process_info.gpr_replica = ns_base_copy_process_name(&proc);
+
+	ompi_universe_info.ns_replica = strdup(ompi_universe_info.seed_contact_info);
+	ompi_universe_info.gpr_replica = strdup(ompi_universe_info.seed_contact_info);
 
 	/* request ns_replica and gpr_replica info for this process
 	 * only request info required - check ns_found/gpr_found
