@@ -1,19 +1,14 @@
 /*
- * Copyright (c) 2003 The Trustees of Indiana University.  
- *                    All rights reserved.
+ * $HEADER$
  * 
- * This file is part of the CMPI software package.  For license
- * information, see the LICENSE file in the top level directory of the
- * CMPI source distribution.
- * 
- * $Id: comm_set_name.c,v 1.2 2003/11/22 16:57:54 jsquyres Exp $
+ * $Id: comm_set_name.c,v 1.3 2004/01/07 08:08:59 jsquyres Exp $
  */
 
 #include <string.h>
 
-#include <mpi.h>
-#include <communicator.h>
-#include <totalview.h>
+#include "include/mpi.h"
+#include "include/communicator.h"
+#include "include/totalview.h"
 
 
 int
@@ -38,7 +33,7 @@ MPI_Comm_set_name(MPI_Comm comm, char *name)
   
   /* Force TotalView DLL to take note of this name setting */
 
-  ++cmpi_tv_comm_sequence_number;
+  ++lam_tv_comm_sequence_number;
 
   /* -- Thread safety exit -- */
   
