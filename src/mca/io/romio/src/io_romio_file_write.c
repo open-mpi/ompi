@@ -73,7 +73,7 @@ mca_io_romio_file_iwrite_at (ompi_file_t *fh,
                              ompi_datatype_t *datatype,
                              mca_io_base_request_t * request)
 {
-    int         ret;
+    int ret, flag;
     mca_io_romio_data_t *data;
     mca_io_romio_request_t *req;
 
@@ -142,7 +142,7 @@ mca_io_romio_file_iwrite (ompi_file_t *fh,
                           ompi_datatype_t *datatype,
                           mca_io_base_request_t * request)
 {
-    int ret;
+    int ret, flag;
     mca_io_romio_data_t *data;
     mca_io_romio_request_t *req;
 
@@ -188,7 +188,7 @@ mca_io_romio_file_iwrite_shared (ompi_file_t *fh,
                                  ompi_datatype_t *datatype,
                                  mca_io_base_request_t * request)
 {
-    int         ret;
+    int ret, flag;
     mca_io_romio_data_t *data;
     mca_io_romio_request_t *req;
 

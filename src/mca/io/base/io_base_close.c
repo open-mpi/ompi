@@ -21,10 +21,14 @@
 #include "mca/base/base.h"
 #include "mca/io/io.h"
 #include "mca/io/base/base.h"
+#include "mca/io/base/io_base_request.h"
 
 
 int mca_io_base_close(void)
 {
+    /* stop the progress engine */
+    mca_io_base_request_progress_fini();
+
     /* Destroy the freelist */
 
     if (mca_io_base_requests_valid) {

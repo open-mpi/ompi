@@ -18,12 +18,11 @@
 #endif
 #include "event/event.h"
 #include "mca/pml/pml.h"
-#include "mca/io/io.h"
+#include "mca/io/base/io_base_request.h"
 #include "runtime/ompi_progress.h"
 
 
 static int ompi_progress_event_flag = OMPI_EVLOOP_ONCE;
-int ompi_progress_pending_io_reqs = 0;
 
 
 void ompi_progress_events(int flag)
@@ -35,7 +34,7 @@ void ompi_progress_events(int flag)
 void ompi_progress(void)
 {
     /* progress any outstanding communications */
-    int ret, temp, events = 0;
+    int ret, events = 0;
 #if OMPI_HAVE_THREADS == 0
     if (ompi_progress_event_flag != 0) {
         ret = ompi_event_loop(ompi_progress_event_flag);
@@ -50,11 +49,9 @@ void ompi_progress(void)
     }
 
     /* Progress IO requests, if there are any */
-
-    if (ompi_progress_pending_io_reqs > 0) {
-        temp = ompi_progress_pending_io_reqs;
-        mca_io_base_progress(&ompi_progress_pending_io_reqs);
-        events += (temp - ompi_progress_pending_io_reqs);
+    ret = mca_io_base_request_progress();
+    if (ret > 0) {
+        events += ret;
     }
 
 #if 1

@@ -42,12 +42,6 @@ union mca_io_base_modules_t;
 
 
 /**
- * External progress function; invoked from ompi_progress()
- */
-int mca_io_base_progress(int *num_requests);
-
-
-/**
  * Version of IO component interface that we're using.  
  *
  * The IO component is being designed to ensure that it can
@@ -102,7 +96,7 @@ typedef int (*mca_io_base_component_file_delete_unselect_fn_t)
     (char *filename, struct ompi_info_t *info,
      struct mca_io_base_delete_t *private_data);
 
-typedef int (*mca_io_base_component_progress_fn_t)(int *num_pending);
+typedef int (*mca_io_base_component_progress_fn_t)(void);
 
 /* IO component version and interface functions. */
 struct mca_io_base_component_1_0_0_t {

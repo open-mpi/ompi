@@ -41,7 +41,7 @@ static int delete_query(char *filename, struct ompi_info_t *info,
                         bool *usable, int *priorty);
 static int delete_select(char *filename, struct ompi_info_t *info,
                          struct mca_io_base_delete_t *private_data);
-static int progress(int *count);
+static int progress(void);
 
 /*
  * Private variables
@@ -238,39 +238,53 @@ static int delete_select(char *filename, struct ompi_info_t *info,
 }
 
 
-static int progress(int *count)
+static int progress()
 {
     ompi_list_item_t *item, *next;
-    int ret, flag;
+    int ret, flag, count;
     ROMIO_PREFIX(MPIO_Request) romio_rq;
+    mca_io_base_request_t *ioreq;
 
     /* Troll through all pending requests and try to progress them.
        If a request finishes, remove it from the list. */
 
-    *count = 0;
+    count = 0;
     OMPI_THREAD_LOCK (&mca_io_romio_mutex);
     for (item = ompi_list_get_first(&mca_io_romio_pending_requests);
          item != ompi_list_get_end(&mca_io_romio_pending_requests); 
          item = next) {
         next = ompi_list_get_next(item);
 
+        ioreq = (mca_io_base_request_t*) item;
         romio_rq = ((mca_io_romio_request_t *) item)->romio_rq;
         ret = ROMIO_PREFIX(MPIO_Test)(&romio_rq, &flag, 
                                       &(((ompi_request_t *) item)->req_status));
         if (ret < 0) {
+            OMPI_THREAD_UNLOCK (&mca_io_romio_mutex);
             return ret;
         } else if (1 == flag) {
-            ++(*count);
+            ++count;
+            /* mark as complete (and make sure to wake up any waiters */
             ompi_request_complete((ompi_request_t*) item);
-            OMPI_REQUEST_FINI((ompi_request_t*) item);
+            /* we're done, so remove us from the pending list */
             ompi_list_remove_item(&mca_io_romio_pending_requests, item);
-            mca_io_base_request_free(((mca_io_base_request_t *) item)->req_file,
-                                     (mca_io_base_request_t *) item);
+            mca_io_base_request_progress_del();
+            /* if the request has been freed already, the user isn't
+             * going to call test or wait on us, so we need to do it
+             * here
+             */
+            if (ioreq->free_called) {
+                ret = ioreq->super.req_fini((ompi_request_t**) &ioreq);
+                if (OMPI_SUCCESS != ret) {
+                    OMPI_THREAD_UNLOCK(&mca_io_romio_mutex);
+                    return ret;
+                }
+            }
         }
     }
     OMPI_THREAD_UNLOCK (&mca_io_romio_mutex);
 
     /* Return how many requests completed */
 
-    return OMPI_SUCCESS;
+    return count;
 }
