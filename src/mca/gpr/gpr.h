@@ -47,6 +47,9 @@
 
 /** Define the mode bit-masks for registry operations.
  */
+/** None
+ */
+#define OMPI_REGISTRY_NONE            0x0000
 /** Overwrite permission */
 #define OMPI_REGISTRY_OVERWRITE       0x0001
 /** AND tokens together for search results */

@@ -35,10 +35,16 @@ int main(int argc, char **argv)
     ompi_list_t *test_list, *internal_tests;
     ompi_registry_index_value_t *ptr;
     ompi_registry_internal_test_results_t *ptri;
+    ompi_registry_object_t *test_buffer;
+    uint8_t *test_buf;
+    ompi_registry_object_size_t input_size;
+    ompi_registry_mode_t mode;
     bool multi, hidden;
     int i, j;
+    bool success;
     char *tmp;
-    int result; /* result from system call */
+    char name[30], *name2[30];
+    int result, put_test; /* result from system call */
 
     test_init("test_gpr_replica");
 
@@ -112,7 +118,7 @@ int main(int argc, char **argv)
 
     /* check internals */
     internal_tests = ompi_registry.test_internals(1);
-    if (0 == ompi_list_get_size(internal_tests)) { /* should have been something in dictionary */
+    if (0 == ompi_list_get_size(internal_tests)) { /* should have been something in list */
 	fprintf(test_out, "internal tests failed\n");
 	test_failure("test_gpr_replica internal_tests failed\n");
 	test_finalize();
@@ -128,6 +134,71 @@ int main(int argc, char **argv)
 	test_success();
     }
 
+    /* test the put function */
+    success = true;
+    input_size = 10000;
+    test_buffer = (ompi_registry_object_t*)malloc(input_size);
+    test_buf = (uint8_t*)test_buffer;
+    for (i=0; i<input_size; i++) {
+	*test_buf = i % 256;
+	test_buf++;
+    }
+    for (i=0; i<5 && success; i++) {
+	sprintf(name, "test-def-seg%d", i);
+	for (j=0; j<10 && success; j++) {
+ 	    asprintf(&name2[j], "test-key%d", j);
+	}
+	name2[j] = NULL;
+	if (OMPI_SUCCESS != ompi_registry.put(OMPI_REGISTRY_NONE, name,
+					      name2, test_buffer, input_size)) {
+	    fprintf(test_out, "put test failed for segment %s\n", name);
+	    for (j=0; j<10; j++) {
+		fprintf(test_out, "\t%s\n", name2[j]);
+	    }
+	    success = false;
+	}
+    }
+    if (success) {
+	fprintf(test_out, "put test: success\n");
+	test_success();
+    } else {
+	fprintf(test_out, "put test failed\n");
+	test_failure("test_gpr_replica put_test failed\n");
+	test_finalize();
+	exit(1);
+    }
+
+    /* test the put overwrite function */
+    for (i=0; i<5 && success; i++) {
+	sprintf(name, "test-def-seg%d", i);
+	for (j=0; j<10 && success; j++) {
+ 	    asprintf(&name2[j], "test-key%d", j);
+	}
+	name2[j] = NULL;
+	if (10 %  i) {
+	    mode = OMPI_REGISTRY_OVERWRITE;
+	} else {
+	    mode = OMPI_REGISTRY_NONE;
+	}
+	put_test = ompi_registry.put(mode, name, name2, test_buffer, input_size);
+	if ((OMPI_REGISTRY_OVERWRITE == mode && OMPI_SUCCESS != put_test) ||
+	    (OMPI_REGISTRY_NONE == mode && OMPI_SUCCESS == put_test)) {
+	    fprintf(test_out, "put test failed for segment %s\n", name);
+	    for (j=0; j<10; j++) {
+		fprintf(test_out, "\t%s\n", name2[j]);
+	    }
+	    success = false;
+	}
+    }
+    if (success) {
+	fprintf(test_out, "put overwrite test: success\n");
+	test_success();
+    } else {
+	fprintf(test_out, "put overwrite test failed\n");
+	test_failure("test_gpr_replica put_test failed\n");
+	test_finalize();
+	exit(1);
+    }
 
     /* check the universe segment - should have a key value of "1" */
 

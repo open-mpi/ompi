@@ -20,6 +20,7 @@
 
 #include "ompi_config.h"
 #include "include/constants.h"
+#include "util/output.h"
 #include "mca/gpr/base/base.h"
 #include "gpr_replica.h"
 #include "gpr_replica_internals.h"
@@ -69,19 +70,29 @@ int gpr_replica_put(ompi_registry_mode_t mode, char *segment,
 {
     ompi_list_t *keys;
     mca_gpr_keytable_t *keyptr;
+    mca_gpr_keylist_t *new_keyptr;
     mca_gpr_registry_segment_t *seg;
+    mca_gpr_registry_core_t *entry_ptr;
+    ompi_registry_mode_t put_mode;
     int return_code;
+    char **token;
+
 
     /* protect ourselves against errors */
     if (NULL == segment || NULL == object || 0 == size || NULL == tokens) {
 	return OMPI_ERROR;
     }
+    put_mode = mode & OMPI_REGISTRY_OVERWRITE;  /* only overwrite permission mode flag allowed */
+
+
+    token = tokens;
 
     /* convert tokens to list of keys */
     keys = gpr_replica_get_key_list(segment, tokens);
-    if (NULL == keys) {
+    if (0 >= ompi_list_get_size(keys)) {
 	return OMPI_ERROR;
     }
+
     /* traverse the list to find undefined tokens - get new keys for them */
     for (keyptr = (mca_gpr_keytable_t*)ompi_list_get_first(keys);
 	 keyptr != (mca_gpr_keytable_t*)ompi_list_get_end(keys);
@@ -99,9 +110,44 @@ int gpr_replica_put(ompi_registry_mode_t mode, char *segment,
     }
 
     /* see if specified entry already exists */
+    for (entry_ptr = (mca_gpr_registry_core_t*)ompi_list_get_first(&seg->registry_entries);
+	 entry_ptr != (mca_gpr_registry_core_t*)ompi_list_get_end(&seg->registry_entries);
+	 entry_ptr = (mca_gpr_registry_core_t*)ompi_list_get_next(entry_ptr)) {
+	if (gpr_replica_check_key_list(put_mode, keys, entry_ptr)) { /* found existing entry - overwrite if mode set, else error */
+	    if (put_mode) {  /* overwrite enabled */
+		free(entry_ptr->object);
+		entry_ptr->object_size = size;
+		entry_ptr->object = (ompi_registry_object_t*)malloc(size);
+		memcpy(entry_ptr->object, object, size);
+		return_code = OMPI_SUCCESS;
+		goto CLEANUP;
+	    } else {
+		return_code = OMPI_ERROR;
+		goto CLEANUP;
+	    }
+	}
+    }
+
+    /* no existing entry - create new one */
+    entry_ptr = OBJ_NEW(mca_gpr_registry_core_t);
+    for (keyptr = (mca_gpr_keytable_t*)ompi_list_get_first(keys);
+	 keyptr != (mca_gpr_keytable_t*)ompi_list_get_end(keys);
+	 keyptr = (mca_gpr_keytable_t*)ompi_list_get_next(keyptr)) {
+	new_keyptr = OBJ_NEW(mca_gpr_keylist_t);
+	new_keyptr->key = keyptr->key;
+	ompi_list_append(&entry_ptr->keys, &new_keyptr->item);
+    }
+    entry_ptr->object_size = size;
+    entry_ptr->object = (ompi_registry_object_t*)malloc(size);
+    memcpy(entry_ptr->object, object, size);
+    ompi_list_append(&seg->registry_entries, &entry_ptr->item);
+
 
  CLEANUP:
     /* release list of keys */
+    while (NULL != (keyptr = (mca_gpr_keytable_t*)ompi_list_remove_last(keys))) {
+	OBJ_DESTRUCT(keyptr);
+    }
 
     return return_code;
 }
@@ -193,20 +239,12 @@ ompi_list_t* gpr_replica_get(ompi_registry_mode_t mode,
 	 reg = (mca_gpr_registry_core_t*)ompi_list_get_next(reg)) {
 
 	/* for each registry entry, check the key list */
-	for (keyptr = (mca_gpr_keytable_t*)ompi_list_get_first(&reg->keys);
-	     keyptr != (mca_gpr_keytable_t*)ompi_list_get_end(&reg->keys);
-	     keyptr = (mca_gpr_keytable_t*)ompi_list_get_next(keyptr)) {
-	    if (gpr_replica_check_key_list(keys, keyptr->key)) { /* found the key on the list */
-		if (OMPI_REGISTRY_OR == mode) {  /* just needed to find one - add entry to list */
-		    ans = OBJ_NEW(ompi_registry_value_t);
-		    ans->object_size = reg->object_size;
-		    ans->object = (ompi_buffer_t*)malloc(ans->object_size);
-		    memcpy(ans->object, reg->object, ans->object_size);
-		    ompi_list_append(answer, &ans->item);
-		}
-	    } else if (OMPI_REGISTRY_XAND == mode || OMPI_REGISTRY_XOR == mode) { /* key not on the list */
-		break; /* don't include entry if mode was exclusive */
-	    }
+	if (gpr_replica_check_key_list(mode, keys, reg)) { /* found the key(s) on the list */
+	    ans = OBJ_NEW(ompi_registry_value_t);
+	    ans->object_size = reg->object_size;
+	    ans->object = (ompi_buffer_t*)malloc(ans->object_size);
+	    memcpy(ans->object, reg->object, ans->object_size);
+	    ompi_list_append(answer, &ans->item);
 	}
     }
 
