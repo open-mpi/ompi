@@ -14,7 +14,8 @@
 # 
 # $HEADER$
 #
-# This script is used to make a nightly snapshot tarball of Open MPI.
+# This script is used to take a nightly snapshot tarball of Open MPI
+# and try building it.
 #
 # $1: scratch root
 # $2: e-mail address for destination
