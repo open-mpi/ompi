@@ -111,6 +111,7 @@ libmpi_la_LIBADD = \
         runtime/libruntime.la \
         threads/libthreads.la \
         util/libutil.la
+libmpi_la_DEPENDENCIES = $(libmpi_la_LIBADD)
 
 not_implemented_yet =\
         ctnetwork/libctnetwork.la \
