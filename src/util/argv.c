@@ -80,7 +80,7 @@ char **ompi_argv_split(const char *src_string, int delimiter)
   int argc = 0;
   size_t arglen;
 
-  while (*src_string) {
+  while (src_string && *src_string) {
     p = src_string;
     arglen = 0;
 
