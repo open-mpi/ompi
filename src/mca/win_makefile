@@ -22,7 +22,7 @@ topdir := $(shell cygpath -m $(CURDIR))/../..
 gen_base = ${topdir}/src/win32/generated_include
 copy_base = ${topdir}/src/mca/
 prefix = ${topdir}/src/Debug
-installdir = ${prefix}/lib
+installdir = ${topdir}/src/Debug/lib
 
 # list of components to build with the c compiler
 C_SUBDIRS = \
@@ -67,16 +67,12 @@ CFLAGS = \
         /DHAVE_CONFIG_H \
         /DOMPI_SYSCONFDIR="\"${installdir}/share\"" \
         /EHsc \
-        /MLd \
+        /ML \
         /W0 \
         /Wp64 \
-        /ZI \
-        /Zi \
         /TC \
         /D_MBCS \
-        /Gm \
-        /Od \
-        /LDd \
+        /LD\
         /nologo \
         /c
 
@@ -87,19 +83,18 @@ CPPFLAGS = \
         /DHAVE_CONFIG_H \
         /DOMPI_SYSCONFDIR="\"${installdir}/share\"" \
         /EHsc \
-        /MLd \
+        /ML \
         /W0 \
         /Wp64 \
-        /ZI \
-        /Zi \
         /D_MBCS \
-        /Gm \
-        /Od \
-        /LDd \
+        /LD \
         /nologo \
         /c
 
 # link with ompi.lib to resolve external symbols
+#OMPILIB = \
+        "${topdir}/vcproj/ompi/Debug/libmpi.lib"
+
 OMPILIB = \
         "${topdir}/src/libmpi.lib"
 

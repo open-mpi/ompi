@@ -99,16 +99,11 @@ CFLAGS = \
         /DHAVE_CONFIG_H \
         /D_WINDLL \
         /EHsc \
-        /MLd \
+        /ML \
         /W0 \
         /Wp64 \
-        /ZI \
-        /Zi \
         /TC \
         /D_MBCS \
-        /Gm \
-        /Od \
-        /LDd \
         /Fo"${topdir}/src/Debug/" \
         /nologo \
         /c
@@ -134,6 +129,8 @@ LINK = link
 
 LINKFLAGS = \
         /DLL \
+        /OPT:NOICF \
+        /OPT:NOREF \
         /IMPLIB:libmpi.lib\
         /nologo \
         /OUT:libmpi.dll
