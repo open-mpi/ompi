@@ -311,3 +311,7 @@ if ($delete_arg) {
         system("rm -rf $prefix_arg >/dev/null 2>/dev/null");
     }
 }
+
+# All done
+
+exit(0);
