@@ -30,6 +30,11 @@
 #define ACK 2
 #define PUT 3 
 
+#define PTL_GM_PIPELINE_EMPTY       0x01
+#define PTL_GM_PIPELINE_REGISTER    0x02
+#define PTL_GM_PIPELINE_SEND        0x04
+#define PTL_GM_PIPELINE_DEREGISTER  0x08
+
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
@@ -53,6 +58,8 @@ extern "C" {
     typedef struct mca_ptl_gm_frag_header_t mca_ptl_gm_frag_header_t;
 
     struct mca_ptl_gm_pipeline_info_t {
+	uint32_t flags;
+	uint32_t hdr_flags;
 	uint64_t offset;
 	uint64_t length;
 	ompi_ptr_t local_memory;
@@ -73,10 +80,10 @@ extern "C" {
         uint64_t frag_bytes_processed;  /**< data sended so far */
 	uint64_t frag_bytes_validated;  /**< amount of data for which we receive an ack */
 	uint64_t frag_offset;           /**< initial offset of the fragment as specified by the upper level */
+	mca_ptl_gm_pipeline_info_t pipeline[3];  /**< storing the information about the status of the pipeline
+						  *   for long messages. */
         int      status;
-        int      type;
-        int      wait_for_ack; 
-        int      put_sent;
+        uint32_t type;
     };
     typedef struct mca_ptl_gm_send_frag_t mca_ptl_gm_send_frag_t;
     
@@ -85,13 +92,11 @@ extern "C" {
         uint64_t     frag_bytes_processed;
 	uint64_t     frag_bytes_validated;  /**< amount of data for which we receive an ack */
 	uint64_t     frag_offset;
-        volatile int frag_progressed;
-        void*        alloc_recv_buffer;
-        void*        registered_buf;
-        bool         frag_ack_pending;
+	mca_ptl_gm_pipeline_info_t pipeline[3];  /**< storing the information about the status of the pipeline
+						  *   for long messages. */
+	uint32_t     type;
         bool         matched;
         bool         have_allocated_buffer;
-        bool         have_registered_buffer;
         ompi_ptr_t   remote_registered_memory;
     };
     typedef struct mca_ptl_gm_recv_frag_t mca_ptl_gm_recv_frag_t;
@@ -100,13 +105,6 @@ extern "C" {
     mca_ptl_gm_alloc_send_frag ( struct mca_ptl_gm_module_t* ptl,
                                  struct mca_pml_base_send_request_t* sendreq );
     
-    int mca_ptl_gm_send_ack_init( struct mca_ptl_gm_send_frag_t* ack,
-                                  struct mca_ptl_gm_module_t *ptl,
-                                  struct mca_ptl_gm_peer_t* ptl_peer,
-                                  struct mca_ptl_gm_recv_frag_t* frag,
-                                  char* buffer,
-                                  int size );
-
     int
     mca_ptl_gm_put_frag_init( struct mca_ptl_gm_send_frag_t* sendfrag,
                               struct mca_ptl_gm_peer_t * ptl_peer,

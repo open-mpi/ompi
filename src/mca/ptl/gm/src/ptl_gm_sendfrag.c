@@ -82,8 +82,6 @@ mca_ptl_gm_alloc_send_frag( struct mca_ptl_gm_module_t *ptl,
     sendfrag->frag_bytes_validated           = 0;
     sendfrag->status                         = -1;
     sendfrag->type                           = -1;
-    sendfrag->wait_for_ack                   =  0;
-    sendfrag->put_sent                       = -1;
     
     return sendfrag;
 }
@@ -91,40 +89,6 @@ mca_ptl_gm_alloc_send_frag( struct mca_ptl_gm_module_t *ptl,
 int mca_ptl_gm_send_frag_done( mca_ptl_gm_send_frag_t * frag,
                                mca_pml_base_send_request_t * req )
 {
-    return OMPI_SUCCESS;
-}
-
-int mca_ptl_gm_send_ack_init( struct mca_ptl_gm_send_frag_t* ack,
-                              struct mca_ptl_gm_module_t *ptl,
-                              struct mca_ptl_gm_peer_t* ptl_peer,
-                              struct mca_ptl_gm_recv_frag_t* frag,
-                              char * buffer,
-                              int size )
-{
-    mca_ptl_base_ack_header_t * hdr;
-
-    hdr = (mca_ptl_base_ack_header_t*)ack->send_buf;
-
-    hdr->hdr_common.hdr_type  = MCA_PTL_HDR_TYPE_ACK;
-    hdr->hdr_common.hdr_flags = 0;
-    hdr->hdr_src_ptr.pval     = frag->frag_recv.frag_base.frag_header.hdr_frag.hdr_src_ptr.pval;
-    hdr->hdr_dst_match.lval   = 0;
-    hdr->hdr_dst_match.pval   = frag;
-    hdr->hdr_dst_addr.lval    = 0; /*we are filling both p and val of dest address */
-    hdr->hdr_dst_addr.pval    = (void *)buffer;
-    hdr->hdr_dst_size         = size;
-
-    ack->send_frag.frag_request = NULL;
-    ack->send_frag.frag_base.frag_peer  = (struct mca_ptl_base_peer_t *)ptl_peer;
-    ack->send_frag.frag_base.frag_owner = (mca_ptl_base_module_t *)ptl;
-    ack->send_frag.frag_base.frag_addr  = NULL;
-    ack->send_frag.frag_base.frag_size  = 0;
-    ack->status       = 1; /* was able to register memory */
-    ack->wait_for_ack = 0;
-    ack->type         = ACK;
-    ack->status       = -1;
-    ack->put_sent     = -1;
-
     return OMPI_SUCCESS;
 }
 
@@ -157,8 +121,6 @@ int mca_ptl_gm_put_frag_init( struct mca_ptl_gm_send_frag_t* putfrag,
     }
 
     putfrag->status                         = -1;
-    putfrag->wait_for_ack                   = 0;
-    putfrag->put_sent                       = 0;
     putfrag->type                           = PUT;
 
     return OMPI_SUCCESS; 

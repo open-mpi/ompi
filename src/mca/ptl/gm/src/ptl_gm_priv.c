@@ -338,48 +338,6 @@ int mca_ptl_gm_peer_send( struct mca_ptl_base_module_t* ptl,
     return OMPI_SUCCESS;
 }
 
-void put_callback(struct gm_port *port,void * context, gm_status_t status)
-{
-    mca_ptl_gm_module_t *ptl;
-    mca_ptl_gm_send_frag_t *putfrag;
-    mca_pml_base_send_request_t *send_req;
-    mca_ptl_base_header_t* header;
-    int bytes2;
-
-    putfrag = (mca_ptl_gm_send_frag_t *)context;
-    header = (mca_ptl_base_header_t*)putfrag->send_buf;
-    bytes2 = header->hdr_ack.hdr_dst_size;
-    ptl = (mca_ptl_gm_module_t*)putfrag->send_frag.frag_base.frag_owner;
-    send_req = putfrag->send_frag.frag_request;
-
-    switch  (status) {
-    case GM_SUCCESS:
-        /* local put completed, mark put as complete */
-        ompi_atomic_add( &(ptl->num_send_tokens), 1 );
-        putfrag->put_sent = 1;
-
-        /* deregister the user memory */
-       status = gm_deregister_memory(ptl->gm_port, (char *)(putfrag->registered_buf), bytes2);
-       if( GM_SUCCESS != status ) {
-    	   ompi_output( 0,"unpinning memory from put (%p, %d) failed\n",
-			(char*)(putfrag->registered_buf), bytes2 );
-       }
-       break;
-
-    case GM_SEND_TIMED_OUT:
-        /* need to take care of retransmission */
-        break;
-
-    case GM_SEND_DROPPED:
-        /* need to handle this case */
-        break;
-
-    default:
-        ompi_output(0, "[%s:%d] error in message completion\n",__FILE__,__LINE__);
-        break;
-    }
-}
-
 void send_callback( struct gm_port *port, void * context, gm_status_t status )
 {
     mca_ptl_gm_module_t *ptl;
@@ -460,7 +418,6 @@ mca_ptl_gm_ctrl_frag( struct mca_ptl_gm_module_t *ptl,
 	    req->req_peer_match = header->hdr_ack.hdr_dst_match;
 	    req->req_peer_addr  = header->hdr_ack.hdr_dst_addr;
 	    req->req_peer_size  = header->hdr_ack.hdr_dst_size;
-	    frag->wait_for_ack  = 0;
 	    
 	    if( (req->req_peer_size != 0) && (req->req_peer_addr.pval == NULL) ) {
 		ptl->super.ptl_send_progress( (mca_ptl_base_module_t*)ptl,
@@ -511,10 +468,8 @@ mca_ptl_gm_recv_frag_match( struct mca_ptl_gm_module_t *ptl,
             (char*)hdr + sizeof(mca_ptl_base_rendezvous_header_t);
     }
     recv_frag->frag_recv.frag_base.frag_size = hdr->hdr_rndv.hdr_match.hdr_msg_length;
-
     recv_frag->frag_recv.frag_is_buffered = false;
     recv_frag->have_allocated_buffer = false;
-    recv_frag->frag_offset = 0;  /* initial fragment */
 
     recv_frag->frag_recv.frag_base.frag_header.hdr_rndv = hdr->hdr_rndv;
     matched = ptl->super.ptl_match( &(ptl->super),
@@ -539,9 +494,6 @@ mca_ptl_gm_recv_frag_match( struct mca_ptl_gm_module_t *ptl,
         recv_frag->frag_recv.frag_base.frag_addr = NULL;
     }
     recv_frag->matched = false;
-    recv_frag->frag_ack_pending = false;
-    recv_frag->frag_progressed = 0;
-    recv_frag->frag_bytes_processed = 0;
     
     return recv_frag;
 }
