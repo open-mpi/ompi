@@ -417,6 +417,19 @@ static inline int ompi_obj_update(ompi_object_t *object, int inc)
     return object->obj_reference_count;
 }
 
+
+/**
+ * Shut down the class system and release all memory
+ *
+ * This function should be invoked as the ABSOLUTE LAST function to
+ * use the class subsystem.  It frees all associated memory with ALL
+ * classes, rendering all of them inoperable.  It is here so that
+ * tools like valgrind and purify don't report still-reachable memory
+ * upon process termination.
+ */
+int ompi_class_finalize(void);
+
+
 /**********************************************************************/
 
 #endif                          /* OMPI_OBJECT_H */
