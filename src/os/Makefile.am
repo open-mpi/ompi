@@ -8,9 +8,7 @@ include $(top_srcdir)/config/Makefile.options
 SUBDIRS = cygwin darwin irix linux tru64
 
 headers = \
-	atomic.h \
-	ompi_system.h \
-	numa.h
+	atomic.h
 
 # Conditionally install the header files
 

@@ -7,8 +7,7 @@ include $(top_srcdir)/config/Makefile.options
 
 headers = \
 	atomic.h \
-	lock.s \
-	smp_dev_params.h
+	lock.s
 
 # Conditionally install the header files
 

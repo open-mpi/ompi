@@ -6,9 +6,7 @@
 include $(top_srcdir)/config/Makefile.options
 
 headers = \
-	atomic.h \
-	smp_dev_params.h \
-	ulm_os.h
+	atomic.h
 
 # Conditionally install the header files
 
