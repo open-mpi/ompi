@@ -26,32 +26,42 @@
 #endif
 
 /*
- * If we're in C, bring in the bool type and true/false constants.
+ * If we're in C, we may need to bring in the bool type and true/false
+ * constants.  OMPI_NEED_C_BOOL will be true if the compiler either
+ * needs <stdbool.h> or doesn't define the bool type at all.
  */
-#if !defined(__cplusplus) 
-#ifdef WIN32
-#define bool BOOL
-#define false FALSE
-#define true TRUE
-#elif OMPI_USE_STDBOOL_H
-/* If we're using <stdbool.h>, there is an implicit assumption that
-   the C++ bool is the same size and has the same alignment. */
-#include <stdbool.h>
-#else
-/* We need to create a bool type and ensure that it's the same size /
-   alignment as the C++ bool size / alignment */
-#define false 0
-#define true 1
-#if SIZEOF_BOOL == SIZEOF_CHAR && OMPI_ALIGNMENT_CXX_BOOL == OMPI_ALIGNMENT_CHAR
+#ifndef __cplusplus
+#    if OMPI_NEED_C_BOOL
+#        if OMPI_USE_STDBOOL_H
+             /* If we're using <stdbool.h>, there is an implicit
+                assumption that the C++ bool is the same size and has
+                the same alignment. */
+#            include <stdbool.h>
+#        elif defined(WIN32)
+#            define bool BOOL
+#            define false FALSE
+#            define true TRUE
+#        else
+             /* We need to create a bool type and ensure that it's the
+                same size / alignment as the C++ bool size /
+                alignment */
+#            define false 0
+#            define true 1
+#            if SIZEOF_BOOL == SIZEOF_CHAR && OMPI_ALIGNMENT_CXX_BOOL == OMPI_ALIGNMENT_CHAR
 typedef bool char
-#elif SIZEOF_BOOL == SIZEOF_SHORT && OMPI_ALIGNMENT_CXX_BOOL == OMPI_ALIGNMENT_SHORT
+#            elif SIZEOF_BOOL == SIZEOF_SHORT && OMPI_ALIGNMENT_CXX_BOOL == OMPI_ALIGNMENT_SHORT
 typedef bool short
-#elif SIZEOF_BOOL == SIZEOF_INT && OMPI_ALIGNMENT_CXX_BOOL == OMPI_ALIGNMENT_INT
+#            elif SIZEOF_BOOL == SIZEOF_INT && OMPI_ALIGNMENT_CXX_BOOL == OMPI_ALIGNMENT_INT
 typedef bool int
-#else
-#error Cannot find a C type that corresponds to the size and alignment of C++ bool!
-#endif
-#endif
+#            elif SIZEOF_BOOL == SIZEOF_LONG && OMPI_ALIGNMENT_CXX_BOOL == OMPI_ALIGNMENT_LONG
+typedef bool long
+#            elif defined(SIZEOF_LONG_LONG) && defined(OMPI_ALIGNMENT_LONG) && SIZEOF_BOOL == SIZEOF_LONG && OMPI_ALIGNMENT_CXX_BOOL == OMPI_ALIGNMENT_LONG
+typedef bool long long
+#            else
+#                error Cannot find a C type that corresponds to the size and alignment of C++ bool!
+#            endif
+#        endif
+#    endif
 #endif
 
 /*

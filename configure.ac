@@ -180,6 +180,20 @@ fi
 OMPI_C_GET_ALIGNMENT(void *, OMPI_ALIGNMENT_VOID_P)
 
 #
+# Does the C compiler native support "bool"? (i.e., without
+# <stdbool.h> or any other help)
+#
+
+AC_MSG_CHECKING(for C bool type)
+AC_COMPILE_IFELSE(AC_LANG_PROGRAM([[
+AC_INCLUDES_DEFAULT]],
+[[bool bar, foo = true; bar = foo;]]),
+[OMPI_NEED_C_BOOL=0 MSG=yes],[OMPI_NEED_C_BOOL=1 MSG=no])
+AC_DEFINE_UNQUOTED(OMPI_NEED_C_BOOL, $OMPI_NEED_C_BOOL,
+    [Whether the C compiler supports "bool" without any other help (such as <stdbool.h>)])
+AC_MSG_RESULT([$MSG])
+
+#
 # Check for other compiler characteristics
 #
 
