@@ -40,8 +40,8 @@ typedef struct lam_info_entry_t lam_info_entry_t;
 /**
  * Some declarations needed to use OBJ_NEW and OBJ_DESTRUCT macros
  */
-extern lam_class_info_t lam_info_t_class_info;
-extern lam_class_info_t lam_info_entry_t_class_info;
+extern lam_class_t lam_info_t_class;
+extern lam_class_t lam_info_entry_t_class;
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

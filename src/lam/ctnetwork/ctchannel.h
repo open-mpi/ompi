@@ -77,7 +77,7 @@ typedef uint32_t (*lam_cth_send_packed_msg_fn_t)(struct lam_ctchannel *,
 
 typedef struct lam_ctchannel_class
 {
-  lam_class_info_t    super;
+  lam_class_t    super;
   /* return: error code args: (channel, data, data length, bytes sent) */
   lam_cth_send_fn_t *send;
     
@@ -98,7 +98,7 @@ typedef struct lam_ctchannel_class
 } lam_ctchannel_class_t;
 
 
-extern lam_ctchannel_class_t    lam_ct_channel_t_class_info;
+extern lam_ctchannel_class_t    lam_ct_channel_t_class;
 
 typedef struct lam_ctchannel
 {
@@ -187,7 +187,7 @@ typedef struct lam_tcp_channel
     int                 tcp_blocking;
 } lam_tcp_chnl_t;
 
-extern lam_ctchannel_class_t   lam_tcp_chnl_t_class_info;
+extern lam_ctchannel_class_t   lam_tcp_chnl_t_class;
 
 uint32_t lam_tcpch_send(lam_tcp_chnl_t *channel, const uint8_t *data, 
                       uint32_t data_len, uint32_t *bytes_sent);

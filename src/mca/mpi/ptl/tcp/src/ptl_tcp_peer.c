@@ -22,9 +22,9 @@ static void mca_ptl_tcp_peer_recv_handler(int sd, short flags, void* user);
 static void mca_ptl_tcp_peer_send_handler(int sd, short flags, void* user);
 
 
-lam_class_info_t  mca_ptl_tcp_peer_t_class_info = {
+lam_class_t  mca_ptl_tcp_peer_t_class = {
     "mca_tcp_ptl_peer_t", 
-    CLASS_INFO(lam_list_item_t),
+    OBJ_CLASS(lam_list_item_t),
     (lam_construct_t)mca_ptl_tcp_peer_construct, 
     (lam_destruct_t)mca_ptl_tcp_peer_destruct
 };
@@ -35,7 +35,6 @@ lam_class_info_t  mca_ptl_tcp_peer_t_class_info = {
 
 static void mca_ptl_tcp_peer_construct(mca_ptl_base_peer_t* ptl_peer)
 {
-    OBJ_CONSTRUCT_SUPER(ptl_peer, lam_list_item_t);
     ptl_peer->peer_ptl = 0;
     ptl_peer->peer_proc = 0;
     ptl_peer->peer_addr = 0;
@@ -59,7 +58,6 @@ static void mca_ptl_tcp_peer_destruct(mca_ptl_base_peer_t* ptl_peer)
 {
     mca_ptl_tcp_proc_remove(ptl_peer->peer_proc, ptl_peer);
     mca_ptl_tcp_peer_close_i(ptl_peer);
-    OBJ_DESTRUCT_SUPER(ptl_peer, lam_list_item_t);
 }
 
 

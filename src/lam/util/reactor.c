@@ -23,16 +23,16 @@ const int LAM_REACTOR_NOTIFY_ALL = 7;
 #define MAX_DESCRIPTOR_POOL_SIZE 256
 
                                                                             
-lam_class_info_t lam_reactor_t_class_info = {
+lam_class_t lam_reactor_t_class = {
     "lam_reactor_t", 
-    CLASS_INFO(lam_object_t), 
+    OBJ_CLASS(lam_object_t), 
     (lam_construct_t)lam_reactor_construct,
     (lam_destruct_t)lam_reactor_destruct
 };
 
-lam_class_info_t lam_reactor_descriptor_t_class_info = {
+lam_class_t lam_reactor_descriptor_t_class = {
     "lam_reactor_descriptor_t", 
-    CLASS_INFO(lam_list_item_t), 
+    OBJ_CLASS(lam_list_item_t), 
     (lam_construct_t)lam_reactor_descriptor_construct,
     (lam_destruct_t)lam_reactor_descriptor_destruct
 };
@@ -40,13 +40,11 @@ lam_class_info_t lam_reactor_descriptor_t_class_info = {
 
 void lam_reactor_descriptor_construct(lam_reactor_descriptor_t* rd)
 {
-    OBJ_CONSTRUCT_SUPER(rd, lam_list_item_t);
 }
 
 
 void lam_reactor_descriptor_destruct(lam_reactor_descriptor_t* rd)
 {
-    OBJ_DESTRUCT_SUPER(rd, lam_object_t);
 }
 
 
@@ -72,8 +70,6 @@ static inline lam_reactor_descriptor_t* lam_reactor_get_descriptor(lam_reactor_t
 
 void lam_reactor_construct(lam_reactor_t* r)
 { 
-    OBJ_CONSTRUCT_SUPER(r, lam_object_t);
-
     lam_mutex_init(&r->r_mutex);
     OBJ_CONSTRUCT(&r->r_active, lam_list_t);
     OBJ_CONSTRUCT(&r->r_free, lam_list_t);
@@ -97,7 +93,6 @@ void lam_reactor_destruct(lam_reactor_t* r)
     OBJ_DESTRUCT(&r->r_free);
     OBJ_DESTRUCT(&r->r_pending);
     OBJ_DESTRUCT(&r->r_hash);
-    OBJ_DESTRUCT_SUPER(r, lam_object_t);
 }
 
 

@@ -28,7 +28,7 @@
  *     ...
  *   };
  *
- *   extern lam_class_info_t sally_t_class;
+ *   extern lam_class_t sally_t_class;
  * @endcode
  * All classes must have a parent.
  * 
@@ -36,9 +36,9 @@
  * this class, and should be the name of the class with "_class"
  * appended:
  * @code
- *   lam_class_info_t sally_t_class = {
+ *   lam_class_t sally_t_class = {
  *     "sally_t",
- *     CLASS_INFO(parent_t),  // pointer to parent_t_class
+ *     OBJ_CLASS(parent_t),  // pointer to parent_t_class
  *     sally_construct,
  *     sally_destruct
  *   };
@@ -122,7 +122,7 @@
 /* typedefs ***********************************************************/
 
 typedef struct lam_object_t lam_object_t;
-typedef struct lam_class_info_t lam_class_info_t;
+typedef struct lam_class_t lam_class_t;
 typedef void (*lam_construct_t) (lam_object_t *);
 typedef void (*lam_destruct_t) (lam_object_t *);
 
@@ -135,9 +135,9 @@ typedef void (*lam_destruct_t) (lam_object_t *);
  * There should be a single instance of this descriptor for each class
  * definition.
  */
-struct lam_class_info_t {
+struct lam_class_t {
     const char *cls_name;          /**< symbolic name for class */
-    lam_class_info_t *cls_parent;       /**< parent class descriptor */
+    lam_class_t *cls_parent;       /**< parent class descriptor */
     lam_construct_t cls_construct; /**< class constructor */
     lam_destruct_t cls_destruct;   /**< class destructor */
     int cls_initialized;           /**< is class initialized */
@@ -155,8 +155,8 @@ struct lam_class_info_t {
  * This is special and does not follow the pattern for other classes.
  */
 struct lam_object_t {
-    lam_class_info_t *obj_class_info;  /**< class descriptor */
-    int obj_reference_count;           /**< reference count */
+    lam_class_t *obj_class;        /**< class descriptor */
+    int obj_reference_count;       /**< reference count */
 };
 
 
@@ -169,7 +169,7 @@ struct lam_object_t {
  * @param type  Name of class
  * @return      Pointer to class descriptor
  */
-#define CLASS_INFO(type)     (&(type ## _class_info))
+#define OBJ_CLASS(type)     (&(type ## _class))
 
 
 /**
@@ -181,7 +181,7 @@ struct lam_object_t {
  * @param DESTRUCTOR    Pointer to destructor
  * @return              Static initializer string
  */
-#define CLASS_INITIALIZE(NAME, PARENT, CONSTRUCTOR, DESTRUCTOR) \
+#define OBJ_CLASS_INIT(NAME, PARENT, CONSTRUCTOR, DESTRUCTOR)   \
     { NAME, PARENT, CONSTRUCTOR, DESTRUCTOR, 0, 0, NULL, NULL }
 
 
@@ -193,7 +193,7 @@ struct lam_object_t {
  * @return              Pointer to the object 
  */
 #define OBJ_NEW(type)                                   \
-    ((type *) lam_obj_new(sizeof(type), CLASS_INFO(type)))
+    ((type *) lam_obj_new(sizeof(type), OBJ_CLASS(type)))
 
 
 /**
@@ -232,11 +232,11 @@ struct lam_object_t {
  */
 #define OBJ_CONSTRUCT(object, type)                                     \
     do {                                                                \
-        if (0 == CLASS_INFO(type)->cls_initialized) {                   \
-            lam_class_initialize(CLASS_INFO(type));                     \
+        if (0 == OBJ_CLASS(type)->cls_initialized) {                    \
+            lam_class_initialize(OBJ_CLASS(type));                      \
         }                                                               \
         if (object) {                                                   \
-            ((lam_object_t *) object)->obj_class_info = CLASS_INFO(type); \
+            ((lam_object_t *) object)->obj_class = OBJ_CLASS(type);     \
             ((lam_object_t *) object)->obj_reference_count = 1;         \
             lam_obj_run_constructors((lam_object_t *) object);          \
         }                                                               \
@@ -256,15 +256,11 @@ struct lam_object_t {
     } while (0)
 
 
-#define OBJ_CONSTRUCT_SUPER(A, B)
-#define OBJ_DESTRUCT_SUPER(A, B)
-
-
 /* declarations *******************************************************/
 
 BEGIN_C_DECLS
 
-extern lam_class_info_t lam_object_t_class_info;
+extern lam_class_t lam_object_t_class;
 
 /**
  * Lazy initialization of class descriptor.
@@ -274,7 +270,7 @@ extern lam_class_info_t lam_object_t_class_info;
  *
  * @param class    Pointer to class descriptor
  */
-void lam_class_initialize(lam_class_info_t *);
+void lam_class_initialize(lam_class_t *);
 
 END_C_DECLS
 
@@ -292,13 +288,13 @@ END_C_DECLS
  */
 static inline void lam_obj_run_constructors(lam_object_t *object)
 {
-    lam_class_info_t *cls;
+    lam_class_t *cls;
     int i;
 
     assert(NULL != object);
-    assert(NULL != object->obj_class_info);
+    assert(NULL != object->obj_class);
 
-    cls = object->obj_class_info;
+    cls = object->obj_class;
     for (i = cls->cls_depth - 1; i >= 0; i--) {
         if (cls->cls_construct_array[i]) {
             (cls->cls_construct_array[i])(object);
@@ -317,13 +313,13 @@ static inline void lam_obj_run_constructors(lam_object_t *object)
  */
 static inline void lam_obj_run_destructors(lam_object_t *object)
 {
-    lam_class_info_t *cls;
+    lam_class_t *cls;
     int i;
 
     assert(NULL != object);
-    assert(NULL != object->obj_class_info);
+    assert(NULL != object->obj_class);
 
-    cls = object->obj_class_info;
+    cls = object->obj_class;
     for (i = 0; i < cls->cls_depth; i++) {
         if (cls->cls_destruct_array[i]) {
             (cls->cls_destruct_array[i])(object);
@@ -343,7 +339,7 @@ static inline void lam_obj_run_destructors(lam_object_t *object)
  * @return              Pointer to the object 
  */
 static inline lam_object_t *lam_obj_new(size_t size,
-                                        lam_class_info_t *cls)
+                                        lam_class_t *cls)
 {
     lam_object_t *object;
 
@@ -351,7 +347,7 @@ static inline lam_object_t *lam_obj_new(size_t size,
 
     object = (lam_object_t *) malloc(size);
     if (NULL != object) {
-	object->obj_class_info = cls;
+	object->obj_class = cls;
         object->obj_reference_count = 1;
         lam_obj_run_constructors(object);
     }
@@ -377,7 +373,7 @@ static inline int fetchNadd(volatile int *addr, int inc);
 static inline void lam_obj_retain(lam_object_t *object)
 {
     assert(NULL != object);
-    assert(NULL != object->obj_class_info);
+    assert(NULL != object->obj_class);
 
     fetchNadd(&(object->obj_reference_count), 1);
 
@@ -397,10 +393,10 @@ static inline void lam_obj_retain(lam_object_t *object)
 static inline void lam_obj_release(lam_object_t *object)
 {
     assert(NULL != object);
-    assert(NULL != object->obj_class_info);
+    assert(NULL != object->obj_class);
 
     if (fetchNadd(&object->obj_reference_count, -1) == 1) {
-	object->obj_class_info->cls_destruct(object);
+	object->obj_class->cls_destruct(object);
 	free(object);
     }
 }

@@ -32,9 +32,9 @@ static int lam_free_lists_mem_pool_construct(lam_free_lists_t *flist, int nlists
                       long default_min_pages_per_list, long default_pages_per_list,
                       long max_pages_per_list, ssize_t max_mem_in_pool);
 
-lam_class_info_t lam_free_lists_t_class_info = {
+lam_class_t lam_free_lists_t_class = {
     "lam_free_lists_t",
-    CLASS_INFO(lam_object_t), 
+    OBJ_CLASS(lam_object_t), 
     (lam_construct_t) lam_free_lists_construct,
     (lam_destruct_t) lam_free_lists_destruct
 };
@@ -42,7 +42,6 @@ lam_class_info_t lam_free_lists_t_class_info = {
 
 void lam_free_lists_construct(lam_free_lists_t *flist)
 {
-    OBJ_CONSTRUCT_SUPER(flist, lam_object_t);
     lam_mutex_init(&flist->fl_lock);
     flist->fl_pool = NULL;
     flist->fl_elt_cls = NULL;
@@ -98,8 +97,6 @@ void lam_free_lists_destruct(lam_free_lists_t *flist)
     if ( flist->fl_chunks_returned )
         free(flist->fl_chunks_returned);
 #endif
-    
-    OBJ_DESTRUCT_SUPER(flist, lam_object_t);
 }
 
 
@@ -455,9 +452,9 @@ static int lam_free_lists_create_more_elts(lam_free_lists_t *flist, int pool_idx
     for (desc = 0; desc < flist->fl_elt_per_chunk; desc++)
     {
         /* bypass OBJ_CONSTRUCT() in this case (generic types) */
-        ((lam_object_t *) current_loc)->obj_class_info = flist->fl_elt_cls;
+        ((lam_object_t *) current_loc)->obj_class = flist->fl_elt_cls;
         ((lam_object_t *) current_loc)
-            ->obj_class_info->cls_construct((lam_object_t *) current_loc);
+            ->obj_class->cls_construct((lam_object_t *) current_loc);
         current_loc += flist->fl_elt_size;
     }
     

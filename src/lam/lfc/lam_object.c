@@ -18,7 +18,7 @@
  * special, since be mark it as already initialized, with no parent
  * and no constructor or desctructor
  */
-lam_class_info_t lam_object_t_class_info = {
+lam_class_t lam_object_t_class = {
     "lam_object_t", /* name */
     NULL,           /* parent class */
     NULL,           /* constructor */
@@ -33,9 +33,9 @@ lam_class_info_t lam_object_t_class_info = {
 /*
  * Lazy initialization of class descriptor.
  */
-void lam_class_initialize(lam_class_info_t *class)
+void lam_class_initialize(lam_class_t *class)
 {
-    lam_class_info_t *c;
+    lam_class_t *c;
     int i;
 
     assert(class);

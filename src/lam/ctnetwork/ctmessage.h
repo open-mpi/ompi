@@ -14,8 +14,8 @@
  *
  */
 
-extern lam_class_info_t     lam_ct_ctrl_t_class_info;
-extern lam_class_info_t     lam_ctmsg_t_class_info;
+extern lam_class_t     lam_ct_ctrl_t_class;
+extern lam_class_t     lam_ctmsg_t_class;
 
 /*
  *

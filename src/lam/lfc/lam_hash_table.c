@@ -21,9 +21,9 @@ static void lam_hash_table_construct(lam_hash_table_t* ht);
 static void lam_hash_table_destruct(lam_hash_table_t* ht);
 
 
-lam_class_info_t lam_hash_table_t_class_info = {
+lam_class_t lam_hash_table_t_class = {
     "lam_hash_table_t", 
-    CLASS_INFO(lam_object_t),
+    OBJ_CLASS(lam_object_t),
     (lam_construct_t)lam_hash_table_construct,
     (lam_destruct_t)lam_hash_table_destruct
 };
@@ -32,7 +32,6 @@ lam_class_info_t lam_hash_table_t_class_info = {
 
 static void lam_hash_table_construct(lam_hash_table_t* ht)
 {
-    OBJ_CONSTRUCT_SUPER(ht, lam_object_t);
     OBJ_CONSTRUCT(&ht->ht_nodes, lam_list_t);
     ht->ht_table = NULL;
     ht->ht_table_size = 0;
@@ -49,7 +48,6 @@ static void lam_hash_table_destruct(lam_hash_table_t* ht)
     if(NULL != ht->ht_table)
         free(ht->ht_table);
     OBJ_DESTRUCT(&ht->ht_nodes);
-    OBJ_DESTRUCT_SUPER(ht, lam_object_t);
 }
 
 
@@ -106,17 +104,15 @@ typedef struct lam_uint32_hash_node_t lam_uint32_hash_node_t;
 
 static void lam_uint32_hash_node_construct(lam_uint32_hash_node_t* hn)
 {
-    OBJ_CONSTRUCT_SUPER(hn, lam_list_item_t);
 }
 
 static void lam_uint32_hash_node_destruct(lam_uint32_hash_node_t* hn)
 {
-    OBJ_DESTRUCT_SUPER(hn, lam_list_item_t);
 }
 
-static lam_class_info_t lam_uint32_hash_node_t_class_info = {
+static lam_class_t lam_uint32_hash_node_t_class = {
     "lam_uint32_hash_node_t", 
-    &lam_list_item_t_class_info, 
+    &lam_list_item_t_class, 
     (lam_construct_t)lam_uint32_hash_node_construct,
     (lam_destruct_t)lam_uint32_hash_node_destruct
 };
@@ -217,17 +213,15 @@ typedef struct lam_uint64_hash_node_t lam_uint64_hash_node_t;
 
 static void lam_uint64_hash_node_construct(lam_uint64_hash_node_t* hn)
 {
-    OBJ_CONSTRUCT_SUPER(hn, lam_list_item_t);
 }
 
 static void lam_uint64_hash_node_destruct(lam_uint64_hash_node_t* hn)
 {
-    OBJ_DESTRUCT_SUPER(hn, lam_list_item_t);
 }
 
-static lam_class_info_t lam_uint64_hash_node_t_class_info = {
+static lam_class_t lam_uint64_hash_node_t_class = {
     "lam_uint64_hash_node_t", 
-    CLASS_INFO(lam_list_item_t),
+    OBJ_CLASS(lam_list_item_t),
     (lam_construct_t)lam_uint64_hash_node_construct,
     (lam_destruct_t)lam_uint64_hash_node_destruct
 };
@@ -330,7 +324,6 @@ typedef struct lam_ptr_hash_node_t lam_ptr_hash_node_t;
 
 static void lam_ptr_hash_node_construct(lam_ptr_hash_node_t* hn)
 {
-    OBJ_CONSTRUCT_SUPER(hn, lam_list_item_t);
     hn->hn_key_size = 0;
     hn->hn_key = NULL;
     hn->hn_value = NULL;
@@ -338,14 +331,13 @@ static void lam_ptr_hash_node_construct(lam_ptr_hash_node_t* hn)
 
 static void lam_ptr_hash_node_destruct(lam_ptr_hash_node_t* hn)
 {
-    OBJ_DESTRUCT_SUPER(hn, lam_list_item_t);
     if(NULL != hn->hn_key)
         free(hn->hn_key);
 }
 
-static lam_class_info_t lam_ptr_hash_node_t_class_info = {
+static lam_class_t lam_ptr_hash_node_t_class = {
     "lam_ptr_hash_node_t", 
-    CLASS_INFO(lam_list_item_t),
+    OBJ_CLASS(lam_list_item_t),
     (lam_construct_t)lam_ptr_hash_node_construct,
     (lam_destruct_t)lam_ptr_hash_node_destruct
 };

@@ -13,7 +13,7 @@
 #include "mca/mpi/ptl/base/ptl_base_sendfrag.h"
 #include "ptl_tcp.h"
 
-extern lam_class_info_t mca_ptl_tcp_send_frag_t_class_info;
+extern lam_class_t mca_ptl_tcp_send_frag_t_class;
 
 
 struct mca_ptl_tcp_send_frag_t {

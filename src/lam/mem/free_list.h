@@ -11,7 +11,7 @@
 #include "lam/mem/seg_list.h"
 #include "lam/mem/mem_pool.h"
 
-extern lam_class_info_t lam_free_list_t_class_info;
+extern lam_class_t lam_free_list_t_class;
 
 
 struct lam_free_list_t
@@ -21,7 +21,7 @@ struct lam_free_list_t
     int fl_num_allocated;
     int fl_num_per_alloc;
     size_t fl_elem_size;
-    lam_class_info_t* fl_elem_class;
+    lam_class_t* fl_elem_class;
     lam_allocator_t* fl_allocator;
     lam_mutex_t fl_lock;
 };
@@ -31,7 +31,7 @@ typedef struct lam_free_list_t lam_free_list_t;
 int lam_free_list_init(
     lam_free_list_t *flist, 
     size_t element_size,
-    lam_class_info_t* element_class,
+    lam_class_t* element_class,
     int num_elements_to_alloc,
     int max_elements_to_alloc,
     int num_elements_per_alloc,

@@ -11,9 +11,9 @@ static void mca_ptl_base_recv_frag_construct(mca_ptl_base_recv_frag_t* frag);
 static void mca_ptl_base_recv_frag_destruct(mca_ptl_base_recv_frag_t* frag);
 
 
-lam_class_info_t mca_ptl_base_recv_frag_t_class_info = { 
+lam_class_t mca_ptl_base_recv_frag_t_class = { 
     "mca_ptl_base_recv_frag_t", 
-    CLASS_INFO(mca_ptl_base_frag_t),
+    OBJ_CLASS(mca_ptl_base_frag_t),
     (lam_construct_t) mca_ptl_base_recv_frag_construct, 
     (lam_destruct_t) mca_ptl_base_recv_frag_destruct 
 };
@@ -21,11 +21,9 @@ lam_class_info_t mca_ptl_base_recv_frag_t_class_info = {
 
 void mca_ptl_base_recv_frag_construct(mca_ptl_base_recv_frag_t* frag)
 {
-    OBJ_CONSTRUCT_SUPER(frag, mca_ptl_base_frag_t);
 }
 
 void mca_ptl_base_recv_frag_destruct(mca_ptl_base_recv_frag_t* frag)
 {
-    OBJ_DESTRUCT_SUPER(frag, mca_ptl_base_frag_t);
 }
 

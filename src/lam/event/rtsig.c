@@ -119,13 +119,13 @@ activate(struct event *ev, int flags)
     event_active(ev, flags, 1);
 }
 
-void *rtsig_init(void);
-int rtsig_add(void *, struct event *);
-int rtsig_del(void *, struct event *);
-int rtsig_recalc(void *, int);
-int rtsig_dispatch(void *, struct timeval *);
+static void *rtsig_init(void);
+static int rtsig_add(void *, struct event *);
+static int rtsig_del(void *, struct event *);
+static int rtsig_recalc(void *, int);
+static int rtsig_dispatch(void *, struct timeval *);
 
-struct eventop rtsigops = {
+struct lam_eventop rtsigops = {
     "rtsig",
     rtsig_init,
     rtsig_add,
@@ -134,7 +134,7 @@ struct eventop rtsigops = {
     rtsig_dispatch
 };
 
-void *
+static void *
 rtsig_init(void)
 {
 	struct rtsigop *op;
@@ -168,7 +168,7 @@ rtsig_init(void)
 	return (op);
 }
 
-int
+static int
 rtsig_add(void *arg, struct event *ev)
 {
 	struct rtsigop *op = (struct rtsigop *) arg;
@@ -222,7 +222,7 @@ rtsig_add(void *arg, struct event *ev)
 	return (-1);
 }
 
-int
+static int
 rtsig_del(void *arg, struct event *ev)
 {
 	struct rtsigop *op = (struct rtsigop *) arg;
@@ -250,13 +250,13 @@ rtsig_del(void *arg, struct event *ev)
 	return (0);
 }
 
-int
+static int
 rtsig_recalc(void *arg, int max)
 {
     return (0);
 }
 
-int
+static int
 rtsig_dispatch(void *arg, struct timeval *tv)
 {
 	struct rtsigop *op = (struct rtsigop *) arg;

@@ -14,9 +14,9 @@ static void mca_ptl_tcp_proc_construct(mca_ptl_tcp_proc_t* proc);
 static void mca_ptl_tcp_proc_destruct(mca_ptl_tcp_proc_t* proc);
 static mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_lookup_lam(lam_proc_t* lam_proc);
 
-lam_class_info_t  mca_ptl_tcp_proc_t_class_info = {
+lam_class_t  mca_ptl_tcp_proc_t_class = {
     "mca_ptl_tcp_proc_t",
-    CLASS_INFO(lam_list_item_t),
+    OBJ_CLASS(lam_list_item_t),
     (lam_construct_t)mca_ptl_tcp_proc_construct,
     (lam_destruct_t)mca_ptl_tcp_proc_destruct
 };
@@ -24,7 +24,6 @@ lam_class_info_t  mca_ptl_tcp_proc_t_class_info = {
 
 void mca_ptl_tcp_proc_construct(mca_ptl_tcp_proc_t* proc)
 {
-    OBJ_CONSTRUCT_SUPER(proc, lam_list_item_t);
     proc->proc_lam = 0;
     proc->proc_addrs = 0;
     proc->proc_addr_count = 0;
@@ -51,7 +50,6 @@ void mca_ptl_tcp_proc_destruct(mca_ptl_tcp_proc_t* proc)
         free(proc->proc_peers);
     if(NULL != proc->proc_guid)
         free(proc->proc_guid);
-    OBJ_DESTRUCT_SUPER(proc, lam_list_item_t);
 }
 
 

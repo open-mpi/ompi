@@ -8,7 +8,7 @@
 #include "mca/mpi/ptl/ptl.h"
 #include "mca/mpi/pml/base/pml_base_request.h"
 
-extern lam_class_info_t mca_ptl_base_recv_request_t_class_info;;
+extern lam_class_t mca_ptl_base_recv_request_t_class;;
 struct mca_ptl_base_recv_frag_t;
 
 

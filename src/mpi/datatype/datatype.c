@@ -9,9 +9,9 @@
 #include "lam_config.h"
 #include "lam/datatype.h"
 
-lam_class_info_t lam_datatype_t_class_info = {
+lam_class_t lam_datatype_t_class = {
     "lam_datatype_t",
-    CLASS_INFO(lam_dbl_item_t),
+    OBJ_CLASS(lam_dbl_item_t),
     (lam_construct_t) lam_p2p_cdi_construct,
     (lam_destruct_t) lam_p2p_cdi_destruct
 };

@@ -15,8 +15,8 @@ extern const int LAM_REACTOR_NOTIFY_RECV;
 extern const int LAM_REACTOR_NOTIFY_SEND;
 extern const int LAM_REACTOR_NOTIFY_EXCEPT;
 
-extern lam_class_info_t lam_reactor_t_class_info;
-extern lam_class_info_t lam_reactor_descriptor_t_class_info;
+extern lam_class_t lam_reactor_t_class;
+extern lam_class_t lam_reactor_descriptor_t_class;
 
 
 /*

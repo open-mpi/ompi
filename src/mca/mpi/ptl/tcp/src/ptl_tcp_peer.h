@@ -51,7 +51,7 @@ struct mca_ptl_base_peer_t {
 };
 typedef struct mca_ptl_base_peer_t mca_ptl_base_peer_t;
 
-extern lam_class_info_t mca_ptl_tcp_peer_t_class_info;
+extern lam_class_t mca_ptl_tcp_peer_t_class;
 typedef struct mca_ptl_base_peer_t mca_ptl_tcp_peer_t;
 
 void mca_ptl_tcp_peer_close(mca_ptl_base_peer_t*);

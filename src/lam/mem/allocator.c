@@ -10,7 +10,6 @@ void lam_allocator_default_free(lam_allocator_t *allocator, void *base_ptr);
 
 static void lam_allocator_construct(lam_allocator_t *allocator)
 {
-    OBJ_CONSTRUCT_SUPER(allocator, lam_object_t);
     allocator->alc_alloc_fn = lam_allocator_malloc;
     allocator->alc_free_fn = lam_allocator_free;
     allocator->alc_is_shared = 0;
@@ -22,12 +21,11 @@ static void lam_allocator_construct(lam_allocator_t *allocator)
 
 static void lam_allocator_destruct(lam_allocator_t *allocator)
 {
-    OBJ_DESTRUCT_SUPER(allocator, lam_object_t);
 }
 
-lam_class_info_t lam_allocator_t_class_info = {
+lam_class_t lam_allocator_t_class = {
     "lam_allocator_t",
-    CLASS_INFO(lam_object_t), 
+    OBJ_CLASS(lam_object_t), 
     (lam_construct_t) lam_allocator_construct,
     (lam_destruct_t) lam_allocator_destruct
 };

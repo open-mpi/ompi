@@ -18,7 +18,7 @@
  *  @file  Array of elements maintained by value.
  */
 
-extern lam_class_info_t lam_value_array_t_class_info;
+extern lam_class_t lam_value_array_t_class;
 
 
 struct lam_value_array_t

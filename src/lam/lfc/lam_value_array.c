@@ -7,7 +7,6 @@
 
 static void lam_value_array_construct(lam_value_array_t* array)
 {
-    OBJ_CONSTRUCT_SUPER(array, lam_object_t);
     array->array_items = NULL;
     array->array_size = 0;
     array->array_item_sizeof = 0;
@@ -18,12 +17,11 @@ static void lam_value_array_destruct(lam_value_array_t* array)
 {
     if (NULL != array->array_items)
         free(array->array_items);
-    OBJ_DESTRUCT_SUPER(array, lam_object_t);
 }
 
-lam_class_info_t lam_value_array_t_class_info = {
+lam_class_t lam_value_array_t_class = {
     "lam_value_array_t",
-     CLASS_INFO(lam_object_t),
+     OBJ_CLASS(lam_object_t),
      (lam_construct_t)lam_value_array_construct,
      (lam_destruct_t)lam_value_array_destruct
 };

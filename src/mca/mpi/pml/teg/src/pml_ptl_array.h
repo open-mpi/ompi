@@ -8,7 +8,7 @@
 #include "lam/util/output.h"
 #include "mca/mpi/ptl/ptl.h"
 
-extern lam_class_info_t mca_ptl_array_t_class_info;
+extern lam_class_t mca_ptl_array_t_class;
 
 struct mca_ptl_proc_t {
     double ptl_weight;               /* PTL weight for scheduling */
