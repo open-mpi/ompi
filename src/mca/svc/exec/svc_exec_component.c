@@ -1,7 +1,8 @@
 #include "svc_exec.h"
 
 
-mca_svc_base_component_t mca_svc_exec_component = {
+mca_svc_exec_component_t mca_svc_exec_component = {
+    {
       /* First, the mca_base_module_t struct containing meta
          information about the module itself */
       {
@@ -27,8 +28,22 @@ mca_svc_base_component_t mca_svc_exec_component = {
       },
                                                                                                                   
       mca_svc_exec_component_init
+    },
+    0 /* exec_debug */
 };
 
+/**
+ * Utility function to register parameters
+ */
+static inline int mca_svc_exec_param_register_int(
+    const char* param_name,
+    int default_value)
+{
+    int id = mca_base_param_register_int("svc","exec",param_name,NULL,default_value);
+    int param_value = default_value;
+    mca_base_param_lookup_int(id,&param_value);
+    return param_value;
+}
 
 /**
  *
@@ -36,6 +51,8 @@ mca_svc_base_component_t mca_svc_exec_component = {
 
 int mca_svc_exec_component_open(void)
 {
+    mca_svc_exec_component.exec_debug =
+        mca_svc_exec_param_register_int("debug", 0);
     return OMPI_SUCCESS;
 }
 
