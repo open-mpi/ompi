@@ -67,6 +67,7 @@ struct mca_oob_1_0_0_t*
 mca_oob_cofs_init(int *priority, bool *allow_multi_user_threads,
                   bool *have_hidden_threads)
 {
+  int len;
   char *tmp;
   FILE *fp;
 
@@ -104,9 +105,10 @@ mca_oob_cofs_init(int *priority, bool *allow_multi_user_threads,
   /*
    * See if we can write in our directory...
    */
-  tmp = malloc(strlen(mca_oob_cofs_comm_loc) + 5);
+  len = strlen(mca_oob_cofs_comm_loc) + 32;
+  tmp = malloc(len);
   if (tmp == NULL) return NULL;
-  sprintf(tmp, "%s/oob.%d", mca_oob_cofs_comm_loc, mca_oob_cofs_my_vpid);
+  snprintf(tmp, len, "%s/oob.%d", mca_oob_cofs_comm_loc, mca_oob_cofs_my_vpid);
   fp = fopen(tmp, "w");
   if (fp == NULL) {
     printf("oob_cofs can not write in communication dir\n");
