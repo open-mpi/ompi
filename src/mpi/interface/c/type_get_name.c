@@ -7,8 +7,8 @@
 #include "mpi.h"
 #include "mpi/interface/c/bindings.h"
 
-#if LAM_WANT_MPI_PROFILING && LAM_HAVE_WEAK_SYMBOLS
-#pragma weak PMPI_Type_get_name = MPI_Type_get_name
+#if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILING_DEFINES
+#pragma weak MPI_Type_get_name = PMPI_Type_get_name
 #endif
 
 int
