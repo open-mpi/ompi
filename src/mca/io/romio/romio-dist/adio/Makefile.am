@@ -97,7 +97,7 @@ SUBDIRS = common include \
         $(PVFS_DIR) $(SFS_DIR) $(TESTFS_DIR) $(UFS_DIR) $(XFS_DIR)
 DIST_SUBDIRS = common include \
         ad_hfs ad_nfs ad_ntfs ad_pfs ad_piofs ad_pvfs \
-        ad_sfs ad_testfs ad_ufs ad_xfs include
+        ad_sfs ad_testfs ad_ufs ad_xfs
 
 # Library
 noinst_LTLIBRARIES = libadio.la
