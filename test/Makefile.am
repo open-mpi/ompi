@@ -14,7 +14,4 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-SUBDIRS		= support class util threads mca rte
-# JMS Temporary hack to make "make dist" work.  The directories mentioned
-# here will eventually moved into SUBDIRS.
-DIST_SUBDIRS = $(SUBDIRS) include 
+SUBDIRS = support util class rte dps mca runtime

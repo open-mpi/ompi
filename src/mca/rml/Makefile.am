@@ -20,7 +20,8 @@ DIST_SUBDIRS = base $(MCA_rml_ALL_SUBDIRS)
 
 # Source code files
 
-headers = rml.h
+headers = rml.h \
+	rml_types.h
 
 # Conditionally install the header files
 

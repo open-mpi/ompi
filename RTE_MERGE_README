@@ -1,6 +1,55 @@
 This file contains information on merging the branches/tim tree into the
 trunk.
 
+UPDATE MERGE 5:
+
+  svn merge -r4937:4943 svn+ssh://svn.open-mpi.org/l/svn/ompi/branches/tim .
+U  test/mca/Makefile.am
+D         test/mca/pcm/run_tests
+D         test/mca/pcm/Makefile.am
+D         test/mca/pcm/base/test1_out_std
+D         test/mca/pcm/base/sched_comm.c
+D         test/mca/pcm/base/test2_out_std
+D         test/mca/pcm/base/run_tests
+D         test/mca/pcm/base/build_env.c
+D         test/mca/pcm/base/Makefile.am
+D         test/mca/pcm/base
+D         test/mca/pcm
+D  test/mca/pcm
+D         test/mca/llm/run_tests
+D         test/mca/llm/Makefile.am
+D         test/mca/llm/base/testfile
+D         test/mca/llm/base/test1_out_std
+D         test/mca/llm/base/test2_out_std
+D         test/mca/llm/base/run_tests
+D         test/mca/llm/base/parse_hostfile.c
+D         test/mca/llm/base/Makefile.am
+D         test/mca/llm/base
+D         test/mca/llm
+D  test/mca/llm
+U  test/Makefile.am
+D         test/include/run_tests
+D         test/include/Makefile.am
+D         test/include/atomic.c
+D         test/include
+D  test/include
+U  include/Makefile.am
+U  src/mca/oob/Makefile.am
+U  src/mca/ns/base/Makefile.am
+U  src/mca/rmaps/base/Makefile.am
+U  src/mca/ras/base/Makefile.am
+U  src/mca/gpr/Makefile.am
+U  src/mca/soh/Makefile.am
+U  src/mca/rml/oob/Makefile.am
+U  src/mca/rml/Makefile.am
+D  src/mca/pls/bproc_seed/pls_bproc_seed_config.h
+D  src/mca/pls/bproc_proxy/pls_bproc_proxy_config.h
+U  src/mca/ptl/gm/src/Makefile.am
+Skipped missing target: 'src/mca/ptl/gm/src/ptl_gm_addr.h'
+C  configure.ac
+U  Makefile.am
+
+
 UPDATE MERGE 4:
 
   svn merge -r4933:4937 svn+ssh://svn.open-mpi.org/l/svn/ompi/branches/tim .

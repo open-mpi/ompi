@@ -17,6 +17,7 @@
 include $(top_ompi_srcdir)/config/Makefile.options
 
 sources = \
+    rml_oob.h \
     rml_oob.c \
     rml_oob_component.c
 
