@@ -18,7 +18,6 @@ headers = \
 
 liblfc_la_SOURCES = \
 	$(headers) \
-	array.c \
 	lam_hash_table.c \
 	lam_list.c \
 	lam_object.c \
