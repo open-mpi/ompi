@@ -264,8 +264,9 @@ int mca_base_param_finalize(void)
 
   if (initialized) {
     array = (mca_base_param_t**) lam_arr_get_c_array(&mca_base_params, &size);
-    for (i = 0; i < size; ++i)
+    for (i = 0; i < size; ++i) {
       param_free(array[i]);
+    }
 
     lam_arr_destroy(&mca_base_params);
     initialized = false;
@@ -283,7 +284,7 @@ static int param_register(const char *type_name, const char *module_name,
                           mca_base_param_storage_t *default_value)
 {
   size_t i, len;
-  mca_base_param_t param, **array;
+  mca_base_param_t *param, **array;
 
   /* Initialize the array if it has never been initialized */
 
@@ -295,118 +296,134 @@ static int param_register(const char *type_name, const char *module_name,
   /* Create a parameter entry.  If a keyval is to be used, it will be
      registered elsewhere.  We simply assign -1 here. */
 
-  param.mbp_type = type;
-  param.mbp_keyval = -1;
+  param = LAM_MALLOC(sizeof(mca_base_param_t));
+  if (NULL == param) {
+    return LAM_ERR_OUT_OF_RESOURCE;
+  }
+  lam_arr_item_init((lam_array_item_t *) param);
+  param->mbp_type = type;
+  param->mbp_keyval = -1;
 
-  param.mbp_type_name = strdup(type_name);
-  if (NULL == param.mbp_type_name)
+  param->mbp_type_name = strdup(type_name);
+  if (NULL == param->mbp_type_name) {
     return LAM_ERROR;
+  }
   if (NULL != module_name) {
-    param.mbp_module_name = strdup(module_name);
-    if (NULL == param.mbp_module_name) {
-      LAM_FREE(param.mbp_type_name);
+    param->mbp_module_name = strdup(module_name);
+    if (NULL == param->mbp_module_name) {
+      LAM_FREE(param->mbp_type_name);
       return LAM_ERROR;
     }
-  } else
-    param.mbp_module_name = NULL;
+  } else {
+    param->mbp_module_name = NULL;
+  }
   if (param_name != NULL) {
-    param.mbp_param_name = strdup(param_name);
-    if (NULL == param.mbp_param_name) {
-      LAM_FREE(param.mbp_type_name);
-      LAM_FREE(param.mbp_module_name);
+    param->mbp_param_name = strdup(param_name);
+    if (NULL == param->mbp_param_name) {
+      LAM_FREE(param->mbp_type_name);
+      LAM_FREE(param->mbp_module_name);
       return LAM_ERROR;
     }
-  } else
-    param.mbp_param_name = NULL;
+  } else {
+    param->mbp_param_name = NULL;
+  }
 
   /* The full parameter name may have been specified by the caller.
      If it was, use that (only for backwards compatability).
      Otherwise, derive it from the type, module, and parameter
      name. */
 
-  param.mbp_env_var_name = NULL;
+  param->mbp_env_var_name = NULL;
   if (MCA_BASE_PARAM_INFO != mca_param_name && NULL != mca_param_name) {
-    param.mbp_full_name = strdup(mca_param_name);
+    param->mbp_full_name = strdup(mca_param_name);
   } else {
     len = 16 + strlen(type_name);
 
-    if (NULL != module_name)
-      len += strlen(module_name);
-    if (NULL != param_name)
-      len += strlen(param_name);
-
-    param.mbp_full_name = LAM_MALLOC(len);
-    if (NULL != param.mbp_full_name) {
-      LAM_FREE(param.mbp_type_name);
-      LAM_FREE(param.mbp_module_name);
-      LAM_FREE(param.mbp_param_name);
-      return LAM_ERROR;
-    }
-    strncpy(param.mbp_full_name, type_name, len);
-
     if (NULL != module_name) {
-      strcat(param.mbp_full_name, "_");
-      strcat(param.mbp_full_name, module_name);
+      len += strlen(module_name);
     }
     if (NULL != param_name) {
-      strcat(param.mbp_full_name, "_");
-      strcat(param.mbp_full_name, param_name);
+      len += strlen(param_name);
+    }
+
+    param->mbp_full_name = LAM_MALLOC(len);
+    if (NULL != param->mbp_full_name) {
+      LAM_FREE(param->mbp_type_name);
+      LAM_FREE(param->mbp_module_name);
+      LAM_FREE(param->mbp_param_name);
+      return LAM_ERROR;
+    }
+    strncpy(param->mbp_full_name, type_name, len);
+
+    if (NULL != module_name) {
+      strcat(param->mbp_full_name, "_");
+      strcat(param->mbp_full_name, module_name);
+    }
+    if (NULL != param_name) {
+      strcat(param->mbp_full_name, "_");
+      strcat(param->mbp_full_name, param_name);
     }
   }
 
   /* If mca_param_name isn't MCA_BASE_PARAM_INFO, then it's a
-     lookup-able value.  So amcagn the environment variable name as
+     lookup-able value.  So alloc the environment variable name as
      well. */
 
   if (MCA_BASE_PARAM_INFO != mca_param_name) {
-    len = strlen(param.mbp_full_name) + strlen(mca_prefix) + 16;
-    param.mbp_env_var_name = LAM_MALLOC(len);
-    if (NULL == param.mbp_env_var_name) {
-      LAM_FREE(param.mbp_full_name);
-      LAM_FREE(param.mbp_type_name);
-      LAM_FREE(param.mbp_module_name);
-      LAM_FREE(param.mbp_param_name);
+    len = strlen(param->mbp_full_name) + strlen(mca_prefix) + 16;
+    param->mbp_env_var_name = LAM_MALLOC(len);
+    if (NULL == param->mbp_env_var_name) {
+      LAM_FREE(param->mbp_full_name);
+      LAM_FREE(param->mbp_type_name);
+      LAM_FREE(param->mbp_module_name);
+      LAM_FREE(param->mbp_param_name);
       return LAM_ERROR;
     }
-    snprintf(param.mbp_env_var_name, len, "%s%s", mca_prefix, 
-             param.mbp_full_name);
+    snprintf(param->mbp_env_var_name, len, "%s%s", mca_prefix, 
+             param->mbp_full_name);
   }
 
   /* Figure out the default value */
 
   if (NULL != default_value) {
-    if (MCA_BASE_PARAM_TYPE_STRING == param.mbp_type &&
-        NULL != default_value->stringval)
-      param.mbp_default_value.stringval = strdup(default_value->stringval);
-    else
-      param.mbp_default_value = *default_value;
-  } else
-    memset(&param.mbp_default_value, 0, sizeof(param.mbp_default_value));
+    if (MCA_BASE_PARAM_TYPE_STRING == param->mbp_type &&
+        NULL != default_value->stringval) {
+      param->mbp_default_value.stringval = strdup(default_value->stringval);
+    } else {
+      param->mbp_default_value = *default_value;
+    }
+  } else {
+    memset(&param->mbp_default_value, 0, sizeof(param->mbp_default_value));
+  }
 
   /* See if this entry is already in the Array */
 
   array = (mca_base_param_t**) lam_arr_get_c_array(&mca_base_params, &len);
-  for (i = 0; i < len; ++i)
-    if (param_compare(&param, array[i]) == 0) {
+  for (i = 0; i < len; ++i) {
+    if (0 == param_compare(&param, array[i])) {
 
       /* Copy in the new default value to the old entry */
 
       if (MCA_BASE_PARAM_TYPE_STRING == array[i]->mbp_type &&
-          NULL != array[i]->mbp_default_value.stringval)
+          NULL != array[i]->mbp_default_value.stringval) {
         LAM_FREE(array[i]->mbp_default_value.stringval);
-      if (MCA_BASE_PARAM_TYPE_STRING == param.mbp_type &&
-          NULL != param.mbp_default_value.stringval)
+      }
+      if (MCA_BASE_PARAM_TYPE_STRING == param->mbp_type &&
+          NULL != param->mbp_default_value.stringval) {
         array[i]->mbp_default_value.stringval =
-          strdup(param.mbp_default_value.stringval);
+          strdup(param->mbp_default_value.stringval);
+      }
 
-      param_free(&param);
+      param_free(param);
       return i;
     }
+  }
 
   /* Add it to the array */
 
-  if (!lam_arr_append_item(&mca_base_params, (lam_object_t*) &param))
+  if (!lam_arr_append_item(&mca_base_params, (lam_object_t*) param)) {
     return LAM_ERROR;
+  }
   return lam_arr_get_size(&mca_base_params) - 1;
 }
 
@@ -426,28 +443,36 @@ static bool param_lookup(int index, mca_base_param_storage_t *storage)
 {
   size_t size;
   char *env;
-  mca_base_param_t *p;
+  mca_base_param_t **array, *p;
 
   /* Lookup the index and see if it's valid */
 
-  if (!initialized)
+  if (!initialized) {
     return false;
-  if (lam_arr_get_size(&mca_base_params) < index)
+  }
+  if (lam_arr_get_size(&mca_base_params) < index) {
     return false;
+  }
+  array = (mca_base_param_t **) lam_arr_get_c_array(&mca_base_params, 
+                                                    &size);
+  p = array[index];
+#if 0
   p = ((mca_base_param_t*) lam_arr_get_c_array(&mca_base_params, 
                                                &size)) + index;
+#endif
 
   /* We either don't have a keyval or didn't find it.  So look in the
      environment. */
 
   if (NULL != p->mbp_env_var_name &&
       NULL != (env = getenv(p->mbp_env_var_name))) {
-    if (MCA_BASE_PARAM_TYPE_INT == p->mbp_type)
+    if (MCA_BASE_PARAM_TYPE_INT == p->mbp_type) {
       storage->intval = atoi(env);
-    else if (MCA_BASE_PARAM_TYPE_STRING == p->mbp_type)
+    } else if (MCA_BASE_PARAM_TYPE_STRING == p->mbp_type) {
       storage->stringval = strdup(env);
-    else
+    } else {
       return false;
+    }
 
     return true;
   }
@@ -484,17 +509,24 @@ static int param_compare(const void *a, const void *b)
 
 static void param_free(mca_base_param_t *p)
 {
-  if (NULL != p->mbp_type_name)
+  if (NULL != p->mbp_type_name) {
     LAM_FREE(p->mbp_type_name);
-  if (NULL != p->mbp_module_name)
+  }
+  if (NULL != p->mbp_module_name) {
     LAM_FREE(p->mbp_module_name);
-  if (NULL != p->mbp_param_name)
+  }
+  if (NULL != p->mbp_param_name) {
     LAM_FREE(p->mbp_param_name);
-  if (NULL != p->mbp_env_var_name)
+  }
+  if (NULL != p->mbp_env_var_name) {
     LAM_FREE(p->mbp_env_var_name);
-  if (NULL != p->mbp_full_name)
+  }
+  if (NULL != p->mbp_full_name) {
     LAM_FREE(p->mbp_full_name);
+  }
   if (MCA_BASE_PARAM_TYPE_STRING == p->mbp_type &&
-      NULL != p->mbp_default_value.stringval)
+      NULL != p->mbp_default_value.stringval) {
     LAM_FREE(p->mbp_default_value.stringval);
+  }
+  LAM_FREE(p);
 }
