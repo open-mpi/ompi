@@ -61,13 +61,13 @@ AC_DEFINE_UNQUOTED(OMPI_ENABLE_MEM_PROFILE, $WANT_MEM_PROFILE,
 AC_MSG_CHECKING([if want developer-level compiler pickyness])
 AC_ARG_ENABLE(picky, 
     AC_HELP_STRING([--enable-picky],
-                   [enable developer-level compiler pickyness (not for general MPI users!) (default: enabled)]))
+                   [enable developer-level compiler pickyness when building Open MPI (default: disabled)]))
 if test "$enable_picky" = "yes"; then
-    AC_MSG_RESULT([no])
-    WANT_PICKY_COMPILER=0
-else
     AC_MSG_RESULT([yes])
     WANT_PICKY_COMPILER=1
+else
+    AC_MSG_RESULT([no])
+    WANT_PICKY_COMPILER=0
 fi
 #################### Early development override ####################
 if test "$WANT_PICKY_COMPILER" = "0" -a -z "$enable_picky" -a -d .svn; then
@@ -227,12 +227,12 @@ AC_MSG_CHECKING([if want to install OMPI header files])
 AC_ARG_WITH(devel-headers,
     AC_HELP_STRING([--with-devel-headers],
                    [normal MPI users/applications do not need this (mpi.h and mpif.h are ALWAYS installed).  Developer headers are only necessary for MCA module authors (default: disabled).]))
-if test "$with_devel_headers" != "yes"; then
-    AC_MSG_RESULT([no])
-    WANT_INSTALL_HEADERS=0
-else
+if test "$with_devel_headers" = "yes"; then
     AC_MSG_RESULT([yes])
     WANT_INSTALL_HEADERS=1
+else
+    AC_MSG_RESULT([no])
+    WANT_INSTALL_HEADERS=0
 fi
 AM_CONDITIONAL(WANT_INSTALL_HEADERS, test "$WANT_INSTALL_HEADERS" = 1)
 
