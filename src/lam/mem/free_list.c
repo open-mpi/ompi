@@ -199,7 +199,7 @@ int lam_frl_init_with(
         if (!flist->fl_free_lists[list])
             lam_exit((-1, "Error: Out of memory\n"));
 
-        STATIC_INIT(flist->fl_free_lists[list], &seg_list_cls);
+        STATIC_INIT(flist->fl_free_lists[list], &lam_seg_list_cls);
         
         lam_sgl_set_min_bytes_pushed(flist->fl_free_lists[list],
                                      initial_mem_per_list);
