@@ -39,7 +39,7 @@ int MPI_Comm_join(int fd, MPI_Comm *intercomm)
     
     /* sendrecv OOB-name (port-name) through the socket connection.
        Need to determine somehow how to avoid a potential deadlock
-       here. *o/
+       here. */
     /* if proc unknown, set up the proc-structure */
 
     /* setup the intercomm-structure using ompi_comm_set (); */
