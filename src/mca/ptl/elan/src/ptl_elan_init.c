@@ -157,8 +157,6 @@ ompi_elan_attach_network (mca_ptl_elan_state_t * ems)
         /* Allocate a cookie pool for the thread processor 
          * and copy to sdram */
         rail->r_cpool = elan4_allocCookiePool (rail->r_ctx, ems->elan_vp);
-        ((ELAN_EPRIVSTATE *) rail->r_estate)->tcookie =
-            rail->r_cpool->cp_cookie;
     }
 
     loc = elan_vp2location (ems->elan_vp, ems->elan_cap);
@@ -287,7 +285,10 @@ ompi_init_elan_sleepdesc (mca_ptl_elan_state_t * ems,
     OMPI_PTL_ELAN_CHECK_UNEX (es->es_cmdBlk, 0, NULL, 0);
 
     /*Allocate a pair of command queues for blocking waits with */
-    es->es_cmdq = elan4_alloc_cmdq (rail->r_ctx, rail->r_alloc,
+    es->es_cmdq = elan4_alloc_cmdq (rail->r_ctx, 
+#if QSNETLIBS_VERSION_CODE <= QSNETLIBS_VERSION(1,6,4)
+				    rail->r_alloc,
+#endif
                                     CQ_Size1K,
                                     CQ_WriteEnableBit |
                                     CQ_WaitEventEnableBit, NULL);
@@ -296,8 +297,13 @@ ompi_init_elan_sleepdesc (mca_ptl_elan_state_t * ems,
     /* This command queue used to fire the IRQ via 
        a cmd port copy event */
     es->es_ecmdq = elan4_alloc_cmdq (rail->r_ctx, 
-	    rail->r_alloc, CQ_Size1K, /* CQ_EnableAllBits, */
-	    CQ_WriteEnableBit | CQ_InterruptEnableBit, NULL);
+#if QSNETLIBS_VERSION_CODE <= QSNETLIBS_VERSION(1,6,4)
+				    rail->r_alloc,
+#endif
+				    CQ_Size1K, /* CQ_EnableAllBits, */
+				    CQ_WriteEnableBit 
+				    | CQ_InterruptEnableBit, 
+				    NULL);
     OMPI_PTL_ELAN_CHECK_UNEX (es->es_ecmdq, NULL, NULL, 0);
     es->es_next = NULL;
 
@@ -454,7 +460,9 @@ ompi_mca_ptl_elan_init (mca_ptl_elan_component_t * emp)
 
         /* Allocate a command port for non sten functions etc */
         rail->r_cmdq = elan4_alloc_cmdq (rail->r_ctx,
-                                         rail->r_alloc,
+#if QSNETLIBS_VERSION_CODE <= QSNETLIBS_VERSION(1,6,4)
+					 rail->r_alloc,
+#endif
                                          CQ_Size8K,
                                          CQ_ModifyEnableBit |
                                          CQ_WriteEnableBit |
@@ -464,8 +472,12 @@ ompi_mca_ptl_elan_init (mca_ptl_elan_component_t * emp)
         OMPI_PTL_ELAN_CHECK_UNEX (rail->r_cmdq, NULL, OMPI_ERROR, 0);
 
         /* Allocate a command port for thread rescheduling etc */
-        rail->r_ecmdq = elan4_alloc_cmdq (rail->r_ctx, rail->r_alloc,
-                                          CQ_Size8K, CQ_EnableAllBits,
+        rail->r_ecmdq = elan4_alloc_cmdq (rail->r_ctx, 
+#if QSNETLIBS_VERSION_CODE <= QSNETLIBS_VERSION(1,6,4)
+					  rail->r_alloc,
+#endif
+                                          CQ_Size8K, 
+					  CQ_EnableAllBits,
                                           NULL);
         OMPI_PTL_ELAN_CHECK_UNEX (rail->r_ecmdq, NULL, OMPI_ERROR, 0);
 

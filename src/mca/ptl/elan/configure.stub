@@ -9,6 +9,23 @@
 #
 AC_DEFUN([MCA_CONFIGURE_STUB],[
 
+    AC_ARG_WITH(ptl-elan-qsnet-headers, 
+        AC_HELP_STRING([--with-ptl-elan-qsnet-headers=DIR],
+                       [The path to qsnet header files, default /usr ]))
+
+    EXTRA_CPPFLAGS=
+    if test -n "$with_ptl_elan_qsnet_headers"; then
+	EXTRA_CPPFLAGS="-I$with_ptl_elan_qsnet_headers/include/"
+    else
+	EXTRA_CPPFLAGS="-I/usr/include/"
+	AC_MSG_WARN([*** Warning: using default qsnet header path /usr/include])
+    fi
+
+    # See if we can find a sample kernel header
+    CPPFLAGS="$EXTRA_CPPFLAGS $CPPFLAGS "
+    AC_CHECK_HEADERS([qsnet/autoconf.h],,
+	[AC_MSG_ERROR([*** Cannot find qsnet header files, e.g., autoconf.h])])
+
     # Look for a bunch of libraries; abort if we don't have them
     PTL_ELAN_LIBS="$LIBS"
     pairs="rmscall:rms_getcap elan:elan_init elan4:elan4_init"
@@ -53,7 +70,7 @@ AC_DEFUN([MCA_CONFIGURE_STUB],[
         AC_MSG_WARN([*** Need path to qsnet2 library source; please use --with-ptl-elan-qs2netlibsrc=/path/to/qsnet2/source])
         AC_MSG_ERROR([Cannot continue])
     else
-	CPPFLAGS="-I${QSNET2SRC}/include -I${QSNET2SRC}/elan4lib/include -I${QSNET2SRC}/elan4lib/elan4 -I${QSNET2SRC}/elan4lib/common"
+	CPPFLAGS="$CPPFLAGS -I${QSNET2SRC}/include -I${QSNET2SRC}/elan4lib/include -I${QSNET2SRC}/elan4lib/elan4 -I${QSNET2SRC}/elan4lib/common"
     fi
 
     AC_SUBST(LIBS)

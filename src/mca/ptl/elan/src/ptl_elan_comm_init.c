@@ -388,7 +388,10 @@ ompi_init_elan_qdma (mca_ptl_elan_component_t * emp,
         RESETEVENT_WORD (&rxq->qr_doneWord);
         PRIMEEVENT_WORD (ctx, (EVENT *) rxq->qr_elanDone, 1);
 
-        rxq->qr_cmdq = elan4_alloc_cmdq (ctx, rail->r_alloc,
+        rxq->qr_cmdq = elan4_alloc_cmdq (ctx, 
+#if QSNETLIBS_VERSION_CODE <= QSNETLIBS_VERSION(1,6,4)
+					 rail->r_alloc,
+#endif
                                          CQ_Size1K,
                                          CQ_WriteEnableBit |
                                          CQ_WaitEventEnableBit, NULL);
@@ -424,7 +427,9 @@ ompi_init_elan_qdma (mca_ptl_elan_component_t * emp,
         OMPI_PTL_ELAN_CHECK_UNEX (queue->input, NULL, OMPI_ERROR, 0);
 
         queue->tx_cmdq = elan4_alloc_cmdq (ctx,
+#if QSNETLIBS_VERSION_CODE <= QSNETLIBS_VERSION(1,6,4)
                                            rail->r_alloc,
+#endif
                                            CQ_Size8K,
                                            CQ_WriteEnableBit |
                                            CQ_DmaStartEnableBit |
@@ -495,7 +500,10 @@ ompi_init_elan_qdma (mca_ptl_elan_component_t * emp,
         RESETEVENT_WORD (&rxq->qr_doneWord);
         PRIMEEVENT_WORD (ctx, (EVENT *) rxq->qr_elanDone, 1);
 
-        rxq->qr_cmdq = elan4_alloc_cmdq (ctx, rail->r_alloc,
+        rxq->qr_cmdq = elan4_alloc_cmdq (ctx, 
+#if QSNETLIBS_VERSION_CODE <= QSNETLIBS_VERSION(1,6,4)
+					  rail->r_alloc,
+#endif
                                          CQ_Size1K,
                                          CQ_WriteEnableBit |
                                          CQ_WaitEventEnableBit, NULL);
@@ -549,10 +557,16 @@ ompi_init_elan_putget (mca_ptl_elan_component_t * emp,
 	/* construct the lock variable */
         OBJ_CONSTRUCT (&putget->pg_lock, ompi_mutex_t);
 
-	cqp = elan4_probe_cmdq(ctx, rail->r_alloc, 0x10, CQ_AutoCtrlFlowOn);
+	cqp = elan4_probe_cmdq(ctx, 
+#if QSNETLIBS_VERSION_CODE <= QSNETLIBS_VERSION(1,6,4)
+		rail->r_alloc, 
+#endif
+		0x10, CQ_AutoCtrlFlowOn);
 
 	putget->put_cmdq = elan4_alloc_cmdq(ctx,
+#if QSNETLIBS_VERSION_CODE <= QSNETLIBS_VERSION(1,6,4)
 			rail->r_alloc, 
+#endif
 			CQ_Size8K, 
 			CQ_WriteEnableBit | 
 			CQ_DmaStartEnableBit | 
@@ -561,7 +575,9 @@ ompi_init_elan_putget (mca_ptl_elan_component_t * emp,
         OMPI_PTL_ELAN_CHECK_UNEX (putget->put_cmdq, NULL, OMPI_ERROR, 0);
 
 	putget->get_cmdq = elan4_alloc_cmdq(ctx,
-			rail->r_alloc,
+#if QSNETLIBS_VERSION_CODE <= QSNETLIBS_VERSION(1,6,4)
+		        rail->r_alloc,
+#endif
 			CQ_Size8K, 
 			CQ_WriteEnableBit | 
 			CQ_STENEnableBit | 
