@@ -97,10 +97,10 @@ mca_pcm_rms_component_open(void)
         mca_base_param_register_int("pcm", "rms", "debug", NULL, 100);
 
   mca_pcm_rms_param_priority =
-    mca_base_param_register_int("pcm", "rms", "priority", NULL, 0);
+    mca_base_param_register_int("pcm", "rms", "priority", NULL, 5);
 
   mca_pcm_rms_param_use_ns =
-    mca_base_param_register_int("pcm", "rms", "use_ns", NULL, 0);
+    mca_base_param_register_int("pcm", "rms", "use_ns", NULL, 1);
 
   mca_pcm_rms_job_list_init();
 
