@@ -48,6 +48,10 @@ int mca_pml_teg_isend(void *buf,
 {
     int rc;
     mca_pml_base_send_request_t *sendreq;
+    /* debug */
+    fprintf(stderr," teg_isend called \n");
+    fflush(stderr);
+    /* end debug */
     MCA_PML_TEG_SEND_REQUEST_ALLOC(comm, dst, sendreq, rc);
 #if MCA_PML_TEG_STATISTICS
     mca_pml_teg.teg_isends++;
@@ -83,6 +87,10 @@ int mca_pml_teg_send(void *buf,
 #endif
     if (rc != OMPI_SUCCESS)
         return rc;
+    /* debug */
+    fprintf(stderr," teg_send called \n");
+    fflush(stderr);
+    /* end debug */
 
     MCA_PML_BASE_SEND_REQUEST_INIT(sendreq,
                                    buf,
@@ -90,6 +98,12 @@ int mca_pml_teg_send(void *buf,
                                    datatype,
                                    dst, tag, comm, sendmode, false);
 
+    /* debug */
+    fprintf(stderr," teg_send called %s  %s \n",
+            &(sendreq->req_ptl->ptl_component->ptlm_version.mca_type_name[0]),
+            &(sendreq->req_ptl->ptl_component->ptlm_version.mca_component_name[0]));
+    fflush(stderr);
+    /* end debug */
     if ((rc = mca_pml_teg_send_request_start(sendreq)) != OMPI_SUCCESS) {
         MCA_PML_TEG_FREE((ompi_request_t **) & sendreq);
         return rc;

@@ -158,6 +158,11 @@ int mca_ptl_sm_component_open(void)
     OBJ_CONSTRUCT(&mca_ptl_sm.sm_second_frags, ompi_free_list_t);
     OBJ_CONSTRUCT(&mca_ptl_sm.sm_pending_ack_lock, ompi_mutex_t);
     OBJ_CONSTRUCT(&mca_ptl_sm.sm_pending_ack, ompi_list_t);
+
+    /* debug */
+    fprintf(stderr," at end of open \n");
+    fflush(stderr);
+    /* end debug */
    
     return OMPI_SUCCESS;
 }
@@ -232,6 +237,10 @@ mca_ptl_base_module_t** mca_ptl_sm_component_init(
 
     /* set flag indicating ptl not inited */
     mca_ptl_sm.ptl_inited=false;
+    /* debug */
+    fprintf(stderr," at end of init \n");
+    fflush(stderr);
+    /* end debug */
 
     return ptls;
 }
@@ -323,6 +332,11 @@ int mca_ptl_sm_component_progress(mca_ptl_tstamp_t tstamp)
          * memory address, to a true virtual address */
         header_ptr = (mca_ptl_sm_frag_t *)( (char *)header_ptr+
                 mca_ptl_sm_component.sm_offset);
+        /* debug */
+        fprintf(stderr," recv :: got it %d from %d \n",
+                my_local_smp_rank,peer_local_smp_rank);
+        fflush(stderr);
+        /* end debug */
 
         /* figure out what type of message this is */
         switch
