@@ -25,15 +25,16 @@ ompi_pointer_array_t ompi_mpi_communicators;
 ompi_communicator_t  ompi_mpi_comm_world;
 ompi_communicator_t  ompi_mpi_comm_self;
 ompi_communicator_t  ompi_mpi_comm_null;
+ompi_communicator_t  *ompi_mpi_comm_parent;
 
 static void ompi_comm_construct(ompi_communicator_t* comm);
 static void ompi_comm_destruct(ompi_communicator_t* comm);
 
-OBJ_CLASS_INSTANCE(ompi_communicator_t, ompi_object_t,ompi_comm_construct, ompi_comm_destruct );
+OBJ_CLASS_INSTANCE(ompi_communicator_t,ompi_object_t,ompi_comm_construct,ompi_comm_destruct);
 
 
 /*
- * Initialize comm world/self/null.
+ * Initialize comm world/self/null/parent.
  */
 int ompi_comm_init(void)
 {
@@ -142,6 +143,13 @@ int ompi_comm_init(void)
     /* VPS: Remove this later */
     ompi_mpi_comm_null.bcast_lin_reqs = NULL;
     ompi_mpi_comm_null.bcast_log_reqs = NULL;
+
+    /* Initialize the parent communicator to MPI_COMM_NULL */
+    ompi_mpi_comm_parent = &ompi_mpi_comm_null;
+    OBJ_RETAIN(&ompi_mpi_comm_null);
+    OBJ_RETAIN(&ompi_mpi_group_null);
+    OBJ_RETAIN(&ompi_mpi_group_null);
+    OBJ_RETAIN(&ompi_mpi_errors_are_fatal);
 
     return OMPI_SUCCESS;
 }

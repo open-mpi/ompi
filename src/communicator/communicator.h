@@ -92,6 +92,7 @@ struct ompi_communicator_t {
 
 };
 typedef struct ompi_communicator_t ompi_communicator_t;
+extern ompi_communicator_t *ompi_mpi_comm_parent;
 
 
 /**
@@ -225,7 +226,8 @@ extern "C" {
 
     /**
      * allocate new communicator ID
-     * @param comm:       original comm
+     * @param newcomm:    pointer to the new communicator
+     * @param oldcomm:    original comm
      * @param bridgecomm: bridge comm for intercomm_create
      * @param mode: combination of input and output communicator
      *              OMPI_COMM_INTRA_INTRA, OMPI_COMM_INTRA_INTER,
@@ -233,12 +235,13 @@ extern "C" {
      *
      * This routine has to be thread safe in the final version.
      */
-    int ompi_comm_nextcid ( ompi_communicator_t* comm, 
-                           ompi_communicator_t* bridgecomm, 
-                           int local_leader, 
-                           int remote_leader, 
-                           int mode);
-
+    int ompi_comm_nextcid ( ompi_communicator_t* newcomm, 
+                            ompi_communicator_t* oldcomm, 
+                            ompi_communicator_t* bridgecomm, 
+                            int local_leader, 
+                            int remote_leader, 
+                            int mode);
+    
 
     /**
      * shut down the communicator infrastructure.
@@ -249,19 +252,15 @@ extern "C" {
      * This is THE routine, where all the communicator stuff
      * is really set.
      */
-    ompi_communicator_t* ompi_comm_set ( int mode,
-                                       ompi_communicator_t* oldcomm,
-                                       ompi_communicator_t* bridgecomm,
-                                       int local_size, 
-                                       ompi_proc_t **local_procs,
-                                       int remote_size,
-                                       ompi_proc_t **remote_procs,
-                                       ompi_hash_table_t *attr,
-                                       ompi_errhandler_t *errh, 
-                                       mca_base_module_t *collmodule, 
-                                       mca_base_module_t *topomodule, 
-                                       int local_leader,
-                                       int remote_leader);
+    ompi_communicator_t* ompi_comm_set ( ompi_communicator_t* oldcomm,
+                                         int local_size, 
+                                         ompi_proc_t **local_procs,
+                                         int remote_size,
+                                         ompi_proc_t **remote_procs,
+                                         ompi_hash_table_t *attr,
+                                         ompi_errhandler_t *errh, 
+                                         mca_base_module_t *collmodule, 
+                                         mca_base_module_t *topomodule );
     /**
      * This is a short-hand routine used in intercomm_create.
      * The routine makes sure, that all processes have afterwards

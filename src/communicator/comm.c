@@ -51,20 +51,15 @@ static int ompi_comm_allgather_emulate_intra (void* inbuf, int incount, MPI_Data
  * This is the function setting all elements of a communicator.
  * All other routines are just used to determine these elements.
  */   
-ompi_communicator_t * ompi_comm_set ( int mode,
-                                    ompi_communicator_t* oldcomm,
-                                    ompi_communicator_t* bridgecomm,
-                                    int local_size, 
-                                    ompi_proc_t **local_procs,
-                                    int remote_size,
-                                    ompi_proc_t **remote_procs,
-                                    ompi_hash_table_t *attr,
-                                    ompi_errhandler_t *errh,
-                                    mca_base_module_t *collmodule,
-                                    mca_base_module_t *topomodule, 
-                                    int local_leader,
-                                    int remote_leader
-                                    )
+ompi_communicator_t * ompi_comm_set ( ompi_communicator_t* oldcomm,
+                                      int local_size, 
+                                      ompi_proc_t **local_procs,
+                                      int remote_size,
+                                      ompi_proc_t **remote_procs,
+                                      ompi_hash_table_t *attr,
+                                      ompi_errhandler_t *errh,
+                                      mca_base_module_t *collmodule,
+                                      mca_base_module_t *topomodule )
 {
     ompi_communicator_t *newcomm;
     ompi_proc_t *my_gpointer;
@@ -92,21 +87,6 @@ ompi_communicator_t * ompi_comm_set ( int mode,
         ompi_group_increment_proc_count(newcomm->c_remote_group);
         newcomm->c_flags |= OMPI_COMM_INTER;
     }
-
-    /* Determine context id. It is identical to f_2_c_handle */
-#ifdef HAVE_COLLECTIVES
-    newcomm->c_contextid = ompi_comm_nextcid ( oldcomm, 
-                                              bridgecomm, 
-                                              local_leader, 
-                                              remote_leader, 
-                                              mode );    
-#else
-    /* just for now */
-    newcomm->c_contextid = oldcomm->c_contextid + 10;
-    ompi_pointer_array_set_item ( &ompi_mpi_communicators, newcomm->c_contextid,
-                                 newcomm );
-#endif
-    newcomm->c_f_to_c_index = newcomm->c_contextid;
 
     /* Set error handler */
     newcomm->error_handler = errh;
@@ -257,23 +237,30 @@ int ompi_comm_create ( ompi_communicator_t *comm, ompi_group_t *group,
         mode = OMPI_COMM_INTRA_INTRA;
     }
 
-    newcomp = ompi_comm_set ( mode,                     /* mode */
-                             comm,                     /* old comm */
-                             NULL,                     /* bridge comm */
-                             group->grp_proc_count,    /* local_size */
-                             group->grp_proc_pointers, /* local_procs*/
-                             rsize,                    /* remote_size */
-                             rprocs,                   /* remote_procs */
-                             NULL,                     /* attrs */
-                             comm->error_handler,      /* error handler */
-                             NULL,                     /* coll module */
-                             NULL,                     /* topo module */
-                             MPI_UNDEFINED,            /* local leader */
-                             MPI_UNDEFINED             /* remote leader */
-                             );
+    newcomp = ompi_comm_set ( comm,                     /* old comm */
+                              group->grp_proc_count,    /* local_size */
+                              group->grp_proc_pointers, /* local_procs*/
+                              rsize,                    /* remote_size */
+                              rprocs,                   /* remote_procs */
+                              NULL,                     /* attrs */
+                              comm->error_handler,      /* error handler */
+                              NULL,                     /* coll module */
+                              NULL                      /* topo module */
+                              );
 
-    if ( newcomp == MPI_COMM_NULL ) {
+    if ( MPI_COMM_NULL == newcomp ) {
         rc = MPI_ERR_INTERN;
+        goto exit;
+    }
+
+    /* Determine context id. It is identical to f_2_c_handle */
+    rc = ompi_comm_nextcid ( newcomp,       /* new communicator */ 
+                             comm,          /* old comm */
+                             NULL,          /* bridge comm */
+                             MPI_UNDEFINED, /* local leader */
+                             MPI_UNDEFINED, /* remote_leader */
+                             mode );        /* mode */
+    if ( OMPI_SUCCESS != rc ) {
         goto exit;
     }
 
@@ -463,21 +450,31 @@ int ompi_comm_split ( ompi_communicator_t* comm, int color, int key,
     /* Step 3: set up the communicator                           */
     /* --------------------------------------------------------- */
     /* Create the communicator finally */
-    newcomp = ompi_comm_set ( mode,               /* mode */
-                             comm,               /* old comm */
-                             NULL,               /* bridge comm */
-                             my_size,            /* local_size */
-                             procs,              /* local_procs*/
-                             my_rsize,           /* remote_size */
-                             rprocs,             /* remote_procs */
-                             NULL,               /* attrs */
-                             comm->error_handler,/* error handler */
-                             NULL,               /* coll module */
-                             NULL,               /* topo module */
-                             MPI_UNDEFINED,      /* local leader */
-                             MPI_UNDEFINED       /* remote leader */
-                             );
-    if ( MPI_COMM_NULL == newcomp ) rc = MPI_ERR_INTERN;
+    newcomp = ompi_comm_set ( comm,               /* old comm */
+                              my_size,            /* local_size */
+                              procs,              /* local_procs*/
+                              my_rsize,           /* remote_size */
+                              rprocs,             /* remote_procs */
+                              NULL,               /* attrs */
+                              comm->error_handler,/* error handler */
+                              NULL,               /* coll module */
+                              NULL                /* topo module */
+                              );
+    if ( MPI_COMM_NULL == newcomp ) {
+        rc = MPI_ERR_INTERN;
+        goto exit;
+    }
+
+    /* Determine context id. It is identical to f_2_c_handle */
+    rc = ompi_comm_nextcid ( newcomp,       /* new communicator */ 
+                             comm,          /* old comm */
+                             NULL,          /* bridge comm */
+                             MPI_UNDEFINED, /* local leader */
+                             MPI_UNDEFINED, /* remote_leader */
+                             mode );        /* mode */
+    if ( OMPI_SUCCESS != rc ) {
+        goto exit;
+    }
 
  exit:
     if ( NULL != results ) {
