@@ -180,11 +180,6 @@ AC_DEFINE_UNQUOTED(LAM_WANT_MPI_PROFILING, $WANT_MPI_PROFILING,
 AC_DEFINE_UNQUOTED(LAM_HAVE_WEAK_SYMBOLS, $LAM_C_HAVE_WEAK_SYMBOLS,
     [Wehther we have weak symbols or not])
 
-#################################
-# FILE SYSTEM CASE SENSITIVENESS
-#################################
-
-LAM_CASE_SENSITIVE_FS_SETUP
 
 ##################################
 # C++ compiler characteristics
@@ -255,7 +250,12 @@ LAM_SETUP_F90
 # all: sizeof struct stat members
 # all: type of getsockopt optlen
 # all: type of recvfrom optlen
-# all: file system case sensitivity
+
+#################################
+# File system case sensitivity
+#################################
+
+LAM_CASE_SENSITIVE_FS_SETUP
 
 # AIX: FIONBIO in sys/ioctl.h
 # glibc: memcpy
