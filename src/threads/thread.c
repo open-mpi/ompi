@@ -144,8 +144,6 @@ ompi_thread_t *ompi_thread_get_self(void)
  * Solaris threads
  ************************************************************************/
 
-#else
-
 int ompi_thread_start(ompi_thread_t *t)
 {
     int rc;
@@ -184,10 +182,11 @@ ompi_thread_t *ompi_thread_get_self(void)
 }
 
 
+#else
+
 /************************************************************************
  * No thread support
  ************************************************************************/
-
 
 int ompi_thread_start(ompi_thread_t *t)
 {
