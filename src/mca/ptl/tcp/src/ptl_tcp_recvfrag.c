@@ -123,7 +123,7 @@ static bool mca_ptl_tcp_recv_frag_ack(mca_ptl_tcp_recv_frag_t* frag, int sd)
     sendreq = sendfrag->super.frag_request;
     sendreq->req_peer_request = frag->frag_header.hdr_ack.hdr_dst_ptr;
     sendfrag->frag_owner->ptl_send_progress(sendreq, &sendfrag->super);
-    /* don't return first fragment - it is returned along with the request */
+    mca_ptl_tcp_recv_frag_return(frag->frag_owner, frag);
     return true;
 }
 

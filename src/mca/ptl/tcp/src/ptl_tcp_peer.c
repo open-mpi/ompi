@@ -232,6 +232,31 @@ void mca_ptl_tcp_peer_close(mca_ptl_base_peer_t* ptl_peer)
 
 static void mca_ptl_tcp_peer_connected(mca_ptl_base_peer_t* ptl_peer)
 {
+    /* setup socket options */
+    int optval = 1;
+    lam_socklen_t optlen = sizeof(optval);
+
+#if defined(TCP_NODELAY)
+   optval = 1;
+   if(setsockopt(sd, IPPROTO_TCP, TCP_NODELAY, &optval, optlen) < 0) {
+       lam_output(0, "mca_ptl_tcp_peer_connected: setsockopt(TCP_NODELAY) failed with errno=%d\n", errno);
+   }
+#endif
+#if defined(TCP_NODELACK)
+   optval = 1;
+   if(setsockopt(sd, IPPROTO_TCP, TCP_NODELACK, &optval, optlen) < 0) {
+       lam_output(0, "mca_ptl_tcp_peer_connected: setsockopt(TCP_NODELACK) failed with errno=%d\n", errno);
+   }
+#endif
+#if 0
+#if defined(TCP_QUICKACK)
+   optval = 1;
+   if(setsockopt(sd, IPPROTO_TCP, TCP_QUICKACK, &optval, optlen) < 0) {
+       lam_output(0, "mca_ptl_tcp_peer_connected: setsockopt(TCP_QUICKACK) failed with errno=%d\n", errno);
+   }
+#endif
+#endif
+
     ptl_peer->peer_state = MCA_PTL_TCP_CONNECTED;
     ptl_peer->peer_retries = 0;
     if(lam_list_get_size(&ptl_peer->peer_frags) > 0) {
