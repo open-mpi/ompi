@@ -9,7 +9,6 @@
 #include "mpi.h"
 #include "mpi/f77/bindings.h"
 
-
 #if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILE_LAYER
 #pragma weak PMPI_FINALIZE = mpi_finalize_f
 #pragma weak pmpi_finalize = mpi_finalize_f
@@ -17,12 +16,12 @@
 #pragma weak pmpi_finalize__ = mpi_finalize_f
 #elif LAM_PROFILE_LAYER
 LAM_GENERATE_F77_BINDINGS (PMPI_FINALIZE,
-            pmpi_finalize,
-            pmpi_finalize_,
-            pmpi_finalize__,
-            pmpi_finalize_f,
-            (MPI_Fint *ierror),
-            (ierror))
+                           pmpi_finalize,
+                           pmpi_finalize_,
+                           pmpi_finalize__,
+                           pmpi_finalize_f,
+                           (MPI_Fint *ierr),
+                           (ierr) )
 #endif
 
 #if LAM_HAVE_WEAK_SYMBOLS
@@ -32,19 +31,17 @@ LAM_GENERATE_F77_BINDINGS (PMPI_FINALIZE,
 #pragma weak mpi_finalize__ = mpi_finalize_f
 #endif
 
-#if ! LAM_PROFILE_LAYER && ! LAM_HAVE_WEAK_SYMBOLS
+#if ! LAM_HAVE_WEAK_SYMBOLS && ! LAM_PROFILE_LAYER
 LAM_GENERATE_F77_BINDINGS (MPI_FINALIZE,
-            mpi_finalize,
-            mpi_finalize_,
-            mpi_finalize__,
-            mpi_finalize_f,
-            (MPI_Fint *ierror),
-            (ierror))
+                           mpi_finalize,
+                           mpi_finalize_,
+                           mpi_finalize__,
+                           mpi_finalize_f,
+                           (MPI_Fint *ierr),
+                           (ierr) )
 #endif
-    
 
-void
-mpi_finalize_f(MPI_Fint *ierror)
+void mpi_finalize_f(MPI_Fint *ierr)
 {
-  *ierror = MPI_Finalize();
+
 }
