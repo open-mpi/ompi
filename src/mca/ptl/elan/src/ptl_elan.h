@@ -56,7 +56,6 @@ extern mca_ptl_elan_module_t mca_ptl_elan_module;
  * ELAN PTL module.
  */
 struct mca_ptl_elan_component_t {
-
     mca_ptl_base_component_t super; /**< base PTL component */
     size_t          num_modules;    /**< number of ptls activated */
     size_t          free_list_num;    /**< min number of list items */
@@ -67,11 +66,14 @@ struct mca_ptl_elan_component_t {
      * although libelan already provides one. We do not need
      * all those tport, group, atomic, shmem and NIC threads support.
      */
-    struct mca_ptl_elan_state_t   *elan_ctrl; 
-    struct mca_ptl_elan_proc_t    *elan_local; 
-    struct mca_ptl_elan_module_t **modules; /**< available PTL modules */
-    ompi_mutex_t elan_lock;                 /**< lock for module state */
-    ompi_list_t  elan_procs;                /**< elan proc's */
+    struct mca_ptl_elan_state_t    *elan_ctrl; 
+    struct mca_ptl_elan_proc_t     *elan_local; 
+    struct mca_ptl_elan_module_t  **modules; /**< available PTL modules */
+    struct ompi_ptl_elan_thread_t **recv_threads; /**< send-related threads */
+    struct ompi_ptl_elan_thread_t **send_threads; /**< recv-related threads*/
+
+    ompi_mutex_t elan_lock;                  /**< lock for module state */
+    ompi_list_t  elan_procs;                 /**< elan proc's */
     ompi_free_list_t elan_recv_frags_free;
 };
 typedef struct mca_ptl_elan_component_t mca_ptl_elan_component_t;

@@ -84,7 +84,7 @@ do {                                                           \
 /* PTL_ELAN related MACROS, expose some as configurable options if needed */
 #define  OMPI_PTL_ELAN_ENABLE_GET    (1)
 #define  OMPI_PTL_ELAN_COMP_QUEUE    (0) 
-#define  OMPI_PTL_ELAN_THREADING     (1) 
+#define  OMPI_PTL_ELAN_THREADING     (1 || OMPI_HAVE_POSIX_THREADS )
 
 #define  OMPI_PTL_ELAN_MAX_QSIZE     (2048)
 #define  OMPI_PTL_ELAN_MAX_QSLOTS    (128)
@@ -132,6 +132,13 @@ enum {
     MCA_PTL_ELAN_DESC_LOCAL  = 0x10,
     MCA_PTL_ELAN_DESC_CACHED = 0x20
 };
+
+struct ompi_ptl_elan_thread_t
+{
+    ompi_thread_t thread;
+    mca_ptl_elan_module_t *ptl;
+};
+typedef struct ompi_ptl_elan_thread_t ompi_ptl_elan_thread_t;
 
 /**
  * Structure used to publish elan information to peers.
@@ -202,7 +209,7 @@ typedef struct ompi_ptl_elan_comp_queue_t ompi_ptl_elan_comp_queue_t;
     E4_Addr           *comp_pad;                             \
     E4_Addr            comp_srcAddr;                         \
     E4_Addr            comp_dstAddr;                         \
-    /* 8 byte aligned */                                     \
+    /* 8 byte aligned */
 
 struct ompi_ptl_elan_base_desc_t {
     ELAN_BASE_DESC_FIELDS 
@@ -351,27 +358,27 @@ int         ompi_init_elan_stat (mca_ptl_elan_component_t * emp,
                                  int num_rails);
 
 /* communication prototypes */
-int         mca_ptl_elan_start_desc(
-		  mca_ptl_elan_send_frag_t *desc,
-		  struct mca_ptl_elan_peer_t *ptl_peer,
-                  struct mca_pml_base_send_request_t *sendreq,
-                  size_t offset,
-                  size_t *size,
-                  int flags);
+int         mca_ptl_elan_start_desc(mca_ptl_elan_send_frag_t *desc,
+				    mca_ptl_elan_peer_t *ptl_peer,
+				    mca_pml_base_send_request_t *sendreq,
+				    size_t offset,
+				    size_t *size,
+				    int flags);
 
-int         mca_ptl_elan_start_ack ( mca_ptl_base_module_t * ptl, 
-			 mca_ptl_elan_send_frag_t * desc,
-			 mca_ptl_elan_recv_frag_t * recv_frag);
+int         mca_ptl_elan_start_ack (mca_ptl_base_module_t * ptl, 
+				    mca_ptl_elan_send_frag_t * desc,
+				    mca_ptl_elan_recv_frag_t * recv_frag);
+
 int         mca_ptl_elan_get_with_ack (mca_ptl_base_module_t * ptl, 
-			   mca_ptl_elan_send_frag_t * frag,
-			   mca_ptl_elan_recv_frag_t * recv_frag);
+				       mca_ptl_elan_send_frag_t * frag,
+				       mca_ptl_elan_recv_frag_t * recv_frag);
 
 int         mca_ptl_elan_poll_desc(mca_ptl_elan_send_frag_t *desc);
 int         mca_ptl_elan_wait_desc(mca_ptl_elan_send_frag_t *desc);
 
 /* control, synchronization and state prototypes */
-int         mca_ptl_elan_drain_recv(mca_ptl_elan_component_t *emp);
-int         mca_ptl_elan_update_desc(mca_ptl_elan_component_t *emp);
+int         mca_ptl_elan_drain_recv(mca_ptl_elan_module_t  * ptl);
+int         mca_ptl_elan_update_desc(mca_ptl_elan_module_t * ptl); 
 
 int
 mca_ptl_elan_start_get (mca_ptl_elan_send_frag_t * frag,

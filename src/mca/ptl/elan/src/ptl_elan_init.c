@@ -592,40 +592,76 @@ mca_ptl_elan_state_finalize (mca_ptl_elan_component_t * emp)
 }
 
 #if OMPI_PTL_ELAN_THREADING
+
 /* XXX: 
  * Create threads per PTL and have them up running, 
  * Blocking on the completion queues */
 int
 mca_ptl_elan_thread_init (mca_ptl_elan_component_t * emp)
 {
-    int     num_rails;
-    mca_ptl_elan_state_t *ems;
+    int     i, num_rails;
 
     START_FUNC(PTL_ELAN_DEBUG_INIT);
+    num_rails = emp->num_modules;
 
-    ems = &mca_ptl_elan_global_state;
-    num_rails = ems->elan_nrails;
+    /*struct ompi_ptl_elan_thread_t **threads; */
+    emp->send_threads = (struct ompi_ptl_elan_thread_t **)
+	malloc (num_rails * sizeof(struct ompi_ptl_elan_thread_t*));
+    emp->recv_threads = (struct ompi_ptl_elan_thread_t **)
+	malloc (num_rails * sizeof(struct ompi_ptl_elan_thread_t*));
+
+    for (i = 0; i < num_rails; i ++) {
+	ompi_ptl_elan_thread_t * t;
+
+	/* XXX: 
+	 * For now, there is a thread for send also.
+	 * Later to be combined with the receiving thread */
+	t = (struct ompi_ptl_elan_thread_t *)
+	    malloc (sizeof(struct ompi_ptl_elan_thread_t));
+	OBJ_CONSTRUCT(&t->thread, ompi_thread_t);
+	t->thread.t_run = (ompi_thread_fn_t) mca_ptl_elan_update_desc;
+	t->ptl = emp->modules[i];
+	pthread_create(&t->thread.t_handle, NULL, 
+			(void *)t->thread.t_run, (void*)t->ptl);
+	emp->send_threads[i] = t;
+
+	t = (struct ompi_ptl_elan_thread_t *)
+	    malloc (sizeof(struct ompi_ptl_elan_thread_t));
+	OBJ_CONSTRUCT(&t->thread, ompi_thread_t);
+	t->thread.t_run = (ompi_thread_fn_t) mca_ptl_elan_drain_recv;
+	t->ptl = emp->modules[i];
+	pthread_create(&t->thread.t_handle, NULL, 
+			(void *)t->thread.t_run, (void*)t->ptl);
+	emp->recv_threads[i] = t;
+    }
 
     END_FUNC(PTL_ELAN_DEBUG_INIT);
     return (OMPI_SUCCESS);
 }
-
 
 /* XXX: 
  * Send signal/interrupt(s) to threads and wait for them to join */
 int
 mca_ptl_elan_thread_close (mca_ptl_elan_component_t * emp)
 {
-    int     num_rails;
-    mca_ptl_elan_state_t *ems;
+    int     i, num_rails;
 
     START_FUNC(PTL_ELAN_DEBUG_FIN);
+    num_rails = emp->num_modules;
 
-    ems = &mca_ptl_elan_global_state;
-    num_rails = ems->elan_nrails;
+    for (i = 0; i < num_rails; i ++) {
+	ompi_ptl_elan_thread_t * tsend, *trecv;
+
+	tsend = emp->send_threads[i];
+	trecv = emp->recv_threads[i];
+
+	/* FIXME: Generate a QUEUE DMA to each thread */
+
+        ompi_thread_join(&tsend->thread, NULL);
+        ompi_thread_join(&trecv->thread, NULL);
+    }
 
     END_FUNC(PTL_ELAN_DEBUG_FIN);
     return (OMPI_SUCCESS);
 }
 #endif /* End of OMPI_PTL_ELAN_THREADING */
-

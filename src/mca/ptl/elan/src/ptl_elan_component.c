@@ -271,14 +271,23 @@ mca_ptl_elan_component_control (int param,
     return OMPI_SUCCESS;
 }
 
-
 /* TODO: to support event-based module progress later.  */
 int
 mca_ptl_elan_component_progress (mca_ptl_tstamp_t tstamp)
 {
+    int         i, no_ptls;
+
     START_FUNC (PTL_ELAN_DEBUG_NONE);
-    mca_ptl_elan_drain_recv(elan_mp);
-    mca_ptl_elan_update_desc(elan_mp);
+
+    no_ptls = elan_mp->num_modules;
+
+    /* Iterate over all the PTL input Queues */
+    for (i = 0; i < no_ptls; i++) {
+	mca_ptl_elan_drain_recv(elan_mp->modules[i]);
+	mca_ptl_elan_update_desc(elan_mp->modules[i]);
+    }
+
     END_FUNC (PTL_ELAN_DEBUG_NONE);
     return OMPI_SUCCESS;
 }
+
