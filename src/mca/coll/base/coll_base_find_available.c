@@ -52,6 +52,7 @@ int mca_coll_base_find_available(bool *allow_multi_user_threads,
   bool found = false;
   mca_base_component_priority_list_item_t *entry;
   ompi_list_item_t *p;
+  const mca_base_module_t *component;
 
   /* Initialize the list */
 
@@ -65,22 +66,20 @@ int mca_coll_base_find_available(bool *allow_multi_user_threads,
          p = ompi_list_remove_first(&mca_coll_base_components_opened);
        p != NULL;
        p = ompi_list_remove_first(&mca_coll_base_components_opened)) {
-
-    entry = OBJ_NEW(mca_base_component_priority_list_item_t);
-    entry->cpli_component = ((mca_base_module_list_item_t *) p)->mli_module;
+    component = ((mca_base_module_list_item_t *) p)->mli_module;
 
     /* Call a subroutine to do the work, because the component may
        represent different versions of the coll MCA. */
     
-    if (init_query(entry->cpli_component, entry) == 0) {
+    if (OMPI_SUCCESS == init_query(component, entry)) {
       
       /* Is this the basic component?  If so, save it, because it's
          special.  Keep it off the available list -- we'll use it
          specially in the selection process. */
 
-      if (0 == strcmp(entry->cpli_component->mca_module_name, "basic")) {
+      if (0 == strcmp(component->mca_module_name, "basic")) {
         mca_coll_base_basic_component = 
-          (mca_coll_base_module_1_0_0_t *) entry->cpli_component;
+          (mca_coll_base_module_1_0_0_t *) component;
       }
 
       /* Otherwise, save the results in the list.  The priority isn't
@@ -91,6 +90,8 @@ int mca_coll_base_find_available(bool *allow_multi_user_threads,
          level for this process. */
       
       else {
+        entry = OBJ_NEW(mca_base_component_priority_list_item_t);
+        entry->cpli_component = component;
         entry->cpli_priority = 0;
         ompi_list_append(&mca_coll_base_components_available, 
                          (ompi_list_item_t *) entry);
@@ -105,13 +106,12 @@ int mca_coll_base_find_available(bool *allow_multi_user_threads,
          already had its close() method invoked; now close it out of
          the DSO repository (if it's there). */
       
-      mca_base_module_repository_release(entry->cpli_component);
-      OBJ_RELEASE(entry);
+      mca_base_module_repository_release(component);
     }
 
     /* Free the entry from the "opened" list */
 
-    free(p);
+    OBJ_RELEASE(p);
   }
 
   /* The opened list is now no longer useful and we can free it */
@@ -154,9 +154,9 @@ static int init_query(const mca_base_module_t *m,
   /* This component has already been successfully opened.  So now query
      it. */
 
-  if (m->mca_type_major_version == 1 &&
-      m->mca_type_minor_version == 0 &&
-      m->mca_type_release_version == 0) {
+  if (1 == m->mca_type_major_version &&
+      0 == m->mca_type_minor_version &&
+      0 == m->mca_type_release_version) {
     ret = init_query_1_0_0(m, entry);
   } else {
     /* Unrecognized coll API version */
@@ -172,7 +172,7 @@ static int init_query(const mca_base_module_t *m,
 
   /* Query done -- look at the return value to see what happened */
 
-  if (ret != 0) {
+  if (OMPI_SUCCESS != ret) {
     ompi_output_verbose(10, mca_coll_base_output, 
                         "coll:find_available: coll component %s is not available", 
                         m->mca_module_name);
