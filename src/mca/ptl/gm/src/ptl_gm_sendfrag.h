@@ -46,11 +46,19 @@ extern "C" {
     /* specific header for GM rendezvous protocol. It will be filled up by the sender
      * and should be ab;e to hold a pointer to the last registered memory location.
      */
-    struct mca_ptl_gm_rdv_header_t {
+    struct mca_ptl_gm_frag_header_t {
         mca_ptl_base_frag_header_t hdr_frag;
         ompi_ptr_t                 registered_memory;
     };
-    typedef struct mca_ptl_gm_rdv_header_t mca_ptl_gm_rdv_header_t;
+    typedef struct mca_ptl_gm_frag_header_t mca_ptl_gm_frag_header_t;
+
+    struct mca_ptl_gm_pipeline_info_t {
+	uint64_t offset;
+	uint64_t length;
+	ompi_ptr_t local_memory;
+	ompi_ptr_t remote_memory;
+    };
+    typedef struct mca_ptl_gm_pipeline_info_t mca_ptl_gm_pipeline_info_t;
 
     struct mca_ptl_gm_peer_t;
 
