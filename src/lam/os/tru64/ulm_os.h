@@ -2,9 +2,11 @@
  * $HEADER$
  */
 
-// ulm_os.h  - This file contains IRIX OS dependent definitions.
+/*
+ * ulm_os.h  - This file contains IRIX OS dependent definitions.
+ */
 
-// memory page size
+/* memory page size */
 
 #define LOG2PAGESIZE 13
 #define SMPPAGESIZE (1 << LOG2PAGESIZE)
@@ -15,7 +17,7 @@
 
 #define CACHE_ALIGNMENT 64
 
-// if cxx is invoked with -model ansi -accept restrict_keyword
+/* if cxx is invoked with -model ansi -accept restrict_keyword */
 #ifdef __MODEL_ANSI
 #define RESTRICT_MACRO	__restrict
 #else

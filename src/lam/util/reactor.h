@@ -18,11 +18,12 @@ extern const int LAM_NOTIFY_EXCEPT;
 extern lam_class_info_t lam_reactor_cls;
 
 
-//
-//  Utilizes select() to provide callbacks when an event (e.g. readable,writeable,exception)
-//  occurs on a designated descriptor.  Objects interested in receiving callbacks must implement
-//  the lam_reactor_listener_t interface.
-//
+/*
+ * Utilizes select() to provide callbacks when an event
+ * (e.g. readable,writeable,exception) occurs on a designated
+ * descriptor.  Objects interested in receiving callbacks must
+ * implement the lam_reactor_listener_t interface.
+ */
 
 typedef struct _lam_reactor_listener {
     void *rl_user_data;

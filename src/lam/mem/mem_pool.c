@@ -158,7 +158,7 @@ int lam_mp_init_with(lam_mem_pool_t *pool, uint64_t pool_size,
         pool->mp_chunks[chunk].chd_base_ptr = ptr;
         ptr += chunk_size;
     }
-    // set next available chunk
+    /* set next available chunk */
     pool->mp_next_avail_chunk = 0;
     
     return 1;
@@ -174,10 +174,10 @@ void *lam_mp_request_chunk(lam_mem_pool_t *pool, int pool_index)
     size_t      to_alloc;
     int         desc;
     
-    // grab lock on pool
+    /* grab lock on pool */
     lam_mtx_lock(&(pool->mp_lock));
     
-    // Have we used all the allocated memory ?
+    /* Have we used all the allocated memory? */
     if ( pool->mp_next_avail_chunk == pool->mp_num_chunks )
     {
         
@@ -223,7 +223,7 @@ void *lam_mp_request_chunk(lam_mem_pool_t *pool, int pool_index)
             return chunk;
         }
         
-        // reset pool chunk counter
+        /* reset pool chunk counter */
         pool->mp_num_chunks++;
     }
     
@@ -370,7 +370,7 @@ int lam_fmp_init_with(lam_fixed_mpool_t *pool, ssize_t initial_allocation,
         pool->fmp_segments[pool_idx][0].ms_length = initial_allocation;
         pool->fmp_segments[pool_idx][0].ms_mem_available = initial_allocation;
         
-        // update the number of elements in use
+        /* update the number of elements in use */
         pool->fmp_n_segments[pool_idx] = 1;
         
     }                       /* end pool loop */

@@ -176,10 +176,12 @@ bool lam_reactor_remove(lam_reactor_t* r, int sd, lam_reactor_listener_t* rl, in
 
 void lam_reactor_dispatch(lam_reactor_t* r, int cnt, lam_fd_set_t* rset, lam_fd_set_t* sset, lam_fd_set_t* eset)
 {
-    // walk through the active list w/out holding lock, as this thread
-    // is the only one that modifies the active list. however, note
-    // that the descriptor flags could have been cleared in a callback,
-    // so check that the flag is still set before invoking the callbacks
+    /*
+     * walk through the active list w/out holding lock, as this thread
+     * is the only one that modifies the active list. however, note
+     * that the descriptor flags could have been cleared in a callback,
+     * so check that the flag is still set before invoking the callbacks
+     */
 
     lam_reactor_descriptor_t *descriptor;
     for(descriptor =  (lam_reactor_descriptor_t*)lam_dbl_get_first(&r->r_active);
@@ -208,7 +210,7 @@ void lam_reactor_dispatch(lam_reactor_t* r, int cnt, lam_fd_set_t* rset, lam_fd_
         return;
     }
 
-    // cleanup any pending deletes while holding the lock
+    /* cleanup any pending deletes while holding the lock */
     descriptor = (lam_reactor_descriptor_t*)lam_dbl_get_first(&r->r_active);
     while(descriptor != 0) {
         lam_reactor_descriptor_t* next = (lam_reactor_descriptor_t*)lam_dbl_get_next(&r->r_active);
@@ -225,7 +227,7 @@ void lam_reactor_dispatch(lam_reactor_t* r, int cnt, lam_fd_set_t* rset, lam_fd_
         descriptor = next;
     } 
 
-    // add any other pending inserts/deletes
+    /* add any other pending inserts/deletes */
     while(lam_dbl_get_size(&r->r_pending)) {
         lam_reactor_descriptor_t* descriptor = (lam_reactor_descriptor_t*)lam_dbl_remove_first(&r->r_pending);
         if(descriptor->rd_flags == 0) {
