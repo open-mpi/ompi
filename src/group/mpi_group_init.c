@@ -120,6 +120,11 @@ static void ompi_group_construct(ompi_group_t *new_group)
 {
     int ret_val;
 
+    /* Note that we do *NOT* increase the refcount on all the included
+       procs here because that is handled at a different level (e.g.,
+       the proc counts are not decreased during the desstructor,
+       either). */
+
     /* assign entry in fortran <-> c translation array */
     ret_val = ompi_pointer_array_add(ompi_group_f_to_c_table, new_group);
     new_group->grp_f_to_c_index = ret_val;
@@ -135,13 +140,11 @@ static void ompi_group_construct(ompi_group_t *new_group)
  */
 static void ompi_group_destruct(ompi_group_t *group)
 {
-    int proc;
-    
-    /* decrement proc reference count */
-/*    for (proc = 0; proc < group->grp_proc_count; proc++) {
-        OBJ_RELEASE(group->grp_proc_pointers[proc]);
-    }
-*/
+    /* Note that we do *NOT* decrease the refcount on all the included
+       procs here because that is handled at a different level (e.g.,
+       the proc counts are not increased during the constructor,
+       either). */
+
     /* release thegrp_proc_pointers memory */
     if (NULL != group->grp_proc_pointers)
         free(group->grp_proc_pointers);
