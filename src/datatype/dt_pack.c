@@ -585,8 +585,8 @@ ompi_convertor_pack_no_conv_contig( ompi_convertor_t* pConv,
     for( iov_count = 0; iov_count < (*out_size); iov_count++ ) {
         if( iov[iov_count].iov_base == NULL ) {
             iov[iov_count].iov_base = pSrc;
-            if( (pConv->bConverted + iov[iov_count].iov_len) > length )
-                iov[iov_count].iov_len = length - pConv->bConverted;
+            if( iov[iov_count].iov_len > length )
+                iov[iov_count].iov_len = length;
         } else {
             /* contiguous data just memcpy the smallest data in the user buffer */
             iov[iov_count].iov_len = IMIN( iov[iov_count].iov_len, length );

@@ -55,12 +55,10 @@ int ompi_convertor_create_stack_with_pos_general( ompi_convertor_t* pConvertor,
     if( starting_point == 0 ) {
         return ompi_convertor_create_stack_at_begining( pConvertor, sizes );
     }
-    /* if the convertor continue from the last position
-     * there is nothing to do.
-     */
+    /* if the convertor continue from the last position there is nothing to do. */
     if( pConvertor->bConverted == (unsigned long)starting_point ) return OMPI_SUCCESS;
 
-    /* do we provide more place than necessary for the data ? */
+    /* do we start after the end of the data ? */
     if( starting_point >= (int)(pConvertor->count * pData->size) ) {
         pConvertor->bConverted = pConvertor->count * pData->size;
         return OMPI_SUCCESS;
@@ -105,7 +103,7 @@ int ompi_convertor_create_stack_with_pos_general( ompi_convertor_t* pConvertor,
                 pStack[1].disp     = pStack->disp + starting_point;
             } else {  /* each is contiguous but there are gaps inbetween */
                 pStack[1].disp = pStack->disp /* original place */
-                    + cnt * extent            /* the completed elements with their extent */
+                    + pStack->count * extent  /* the completed elements with their extent */ /* TODO check */
                     + pStack[1].count;        /* what we complete from the last begining of the data */
             }
             pConvertor->bConverted = starting_point;
