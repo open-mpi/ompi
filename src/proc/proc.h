@@ -68,6 +68,12 @@ ompi_proc_t * ompi_proc_find ( const ompi_process_name_t* name );
 
 
 /**
+ * Returns the proc instance for a given name. If process is not known,
+ * we add it to the process list.
+*/
+ompi_proc_t * ompi_proc_find_and_add ( const ompi_process_name_t* name );
+
+/**
  * INPUT: ompi_proc_t **proclist : list of process pointers
  * INPUT: int proclistsize       : lenght of the proclist array
  * IN/OUT: ompi_buffer_t *buf    : an ompi_buffer containing the packed names
