@@ -23,6 +23,8 @@
 
 #include "ompi_config.h"
 
+#include <errno.h>
+
 #include "util/proc_info.h"
 #include "util/sys_info.h"
 
@@ -37,11 +39,21 @@ ompi_rte_process_status_t *ompi_rte_get_process_status(ompi_process_name_t *proc
     ompi_rte_process_status_t *stat_ptr;
     ompi_list_t *returned_list;
 
-    /* setup tokens and segments for this job */
-    asprintf(&segment, "%s-%s", OMPI_RTE_JOB_STATUS_SEGMENT, ompi_name_server.get_jobid_string(proc));
+    if (NULL == proc) { 
+        errno = OMPI_ERR_BAD_PARAM;
+        return NULL;
+    }
 
+    /* setup tokens and segments for this job */
     tokens[0] = ompi_name_server.get_proc_name_string(proc);
     tokens[1] = NULL;
+
+    if (NULL == tokens[0]) {
+        errno = OMPI_ERR_BAD_PARAM;
+        return NULL;
+    }
+
+    asprintf(&segment, "%s-%s", OMPI_RTE_JOB_STATUS_SEGMENT, ompi_name_server.get_jobid_string(proc));
 
     returned_list = ompi_registry.get(OMPI_REGISTRY_XAND, segment, tokens);
 
@@ -51,7 +63,7 @@ ompi_rte_process_status_t *ompi_rte_get_process_status(ompi_process_name_t *proc
     if (NULL != (value = (ompi_registry_value_t*)ompi_list_remove_first(returned_list))) {
 	stat_ptr = ompi_rte_unpack_process_status(value);
 
-    return stat_ptr;
+        return stat_ptr;
     }
 
     return NULL;
