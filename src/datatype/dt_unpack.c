@@ -568,9 +568,33 @@ int ompi_ddt_copy_content_same_ddt( dt_desc_t* pData, int count,
    dt_elem_desc_t* pElems;
 
    if( (pData->flags & DT_FLAG_BASIC) == DT_FLAG_BASIC ) {
-      /* basic datatype with count */
-      MEMCPY( pDestBuf, pSrcBuf, pData->size * count );
-      return 0;
+       /* basic datatype with count */
+       pSrcBuf += pData->true_lb;
+       pDestBuf += pData->true_lb;
+       if( (pData->true_ub - pData->true_lb) == pData->size ) {
+           /* all the data is contiguous in the memory */
+           if( pData->size * count < (512*1024) ) {
+               MEMCPY( pDestBuf, pSrcBuf, pData->size * count );
+           } else {
+               type = 512 * 1024;
+               lastLength = count * pData->size;
+               while( lastLength > 0 ) {
+                   if( type > lastLength ) type = lastLength;
+                   MEMCPY( pDestBuf, pSrcBuf, type );
+                   pDestBuf += type;
+                   pSrcBuf += type;
+                   lastLength -= type;
+               }
+           }
+       } else {
+           /* there are gaps between elements */
+           for( type = 0; type < count; type++ ) {
+               MEMCPY( pDestBuf, pSrcBuf, pData->size );
+               pDestBuf += pData->size;
+               pSrcBuf += (pData->ub - pData->lb);
+           }
+       }
+       return 0;
    }
 
    pStack = alloca( sizeof(dt_stack_t) * (pData->btypes[DT_LOOP]+1) );
@@ -593,18 +617,19 @@ int ompi_ddt_copy_content_same_ddt( dt_desc_t* pData, int count,
          pStack->index, pStack->count );
 
   next_loop:
-   while( pos_desc < pStack->end_loop ) {
+   while( pos_desc >= 0 ) {
       if( pElems[pos_desc].type == DT_END_LOOP ) { /* end of the current loop */
          if( --(pStack->count) == 0 ) { /* end of loop */
             pStack--;
             if( --stack_pos == -1 ) break;
-         } else
-            pos_desc = pStack->index;
-         if( pos_desc == -1 )
-            pStack->disp += (pData->ub - pData->lb);
-         else
-            pStack->disp += pElems[pos_desc].extent;
-         pos_desc++;
+         } else {
+             pos_desc = pStack->index;
+             if( pos_desc == -1 )
+                 pStack->disp += (pData->ub - pData->lb);
+             else
+                 pStack->disp += pElems[pos_desc].extent;
+             pos_desc++;
+         }
          goto next_loop;
       }
       if( pElems[pos_desc].type == DT_LOOP ) {
@@ -628,7 +653,8 @@ int ompi_ddt_copy_content_same_ddt( dt_desc_t* pData, int count,
       pos_desc++;  /* advance to the next data */
    }
 
-   MEMCPY( pDestBuf + lastDisp, pSrcBuf + lastDisp, lastLength );
+   if( lastLength != 0 )
+       MEMCPY( pDestBuf + lastDisp, pSrcBuf + lastDisp, lastLength );
    /* cleanup the stack */
    return 0;
 }
