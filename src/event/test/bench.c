@@ -88,7 +88,7 @@ run_once(void)
 		ompi_event_add(&events[i], NULL);
 	}
 
-	ompi_event_loop(OMPI_EVLOOP_ONCE | OMPI_EVLOOP_NONBLOCK);
+	ompi_event_loop(OMPI_EVLOOP_ONCE | OMPI_EVLOOP_NONBOMPI_LOCK);
 
 	fired = 0;
 	space = num_pipes / num_active;
@@ -101,7 +101,7 @@ run_once(void)
 	{ int xcount = 0;
 	gettimeofday(&ts, NULL);
 	do {
-		ompi_event_loop(OMPI_EVLOOP_ONCE | OMPI_EVLOOP_NONBLOCK);
+		ompi_event_loop(OMPI_EVLOOP_ONCE | OMPI_EVLOOP_NONBOMPI_LOCK);
 		xcount++;
 	} while (count != fired);
 	gettimeofday(&te, NULL);

@@ -9,7 +9,7 @@
  * Lock structure
  */
 
-enum { LOCK_UNLOCKED = 1 };
+enum { OMPI_LOCK_OMPI_UNLOCKED = 1 };
 
 typedef struct {
   union {
@@ -121,7 +121,7 @@ inline int fetchNset(volatile int *addr, int setValue)
  */
 inline void spinunlock(ompi_lock_data_t *lockData)
 {
-    lockData->data.lockData_m = LOCK_UNLOCKED;
+    lockData->data.lockData_m = OMPI_LOCK_OMPI_UNLOCKED;
 }
 
 inline unsigned long long fetchNaddLong(bigAtomicUnsignedInt *addr,
@@ -167,7 +167,7 @@ inline void setBigAtomicUnsignedInt(bigAtomicUnsignedInt *addr,
                                            unsigned long long value)
 {
     addr->data = value;
-    addr->lock.data.lockData_m = LOCK_UNLOCKED;
+    addr->lock.data.lockData_m = OMPI_LOCK_OMPI_UNLOCKED;
 }
 
 #endif /* LINUX_IA64_ATOMIC_H_INCLUDED */

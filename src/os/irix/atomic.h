@@ -15,7 +15,7 @@ typedef volatile unsigned long long bigAtomicUnsignedInt;
 /*
  * Lock structure
  */
-enum { LOCK_UNLOCKED = 0 };
+enum { OMPI_LOCK_OMPI_UNLOCKED = 0 };
 
 typedef struct {
     union {
@@ -28,7 +28,7 @@ CDECL_BEGIN
 
 static inline void spinunlock(ompi_lock_data_t *ctlData_m)
 {
-    ctlData_m->data.lockData_m = LOCK_UNLOCKED;
+    ctlData_m->data.lockData_m = OMPI_LOCK_OMPI_UNLOCKED;
 }
 
 void spinlock(ompi_lock_data_t *);

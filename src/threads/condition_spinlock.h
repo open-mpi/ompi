@@ -1,8 +1,8 @@
 /* 
  * $HEADER$
  */
-#ifndef OMPI_CONDITION_SPINLOCK_H
-#define OMPI_CONDITION_SPINLOCK_H
+#ifndef OMPI_CONDITION_SPINOMPI_LOCK_H
+#define OMPI_CONDITION_SPINOMPI_LOCK_H
 
 #include "threads/condition.h"
 #include "threads/mutex.h"

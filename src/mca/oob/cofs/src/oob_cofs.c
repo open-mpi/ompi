@@ -71,9 +71,9 @@ int
 mca_oob_cofs_recv(ompi_job_handle_t job_handle, int vpid, int* tag,
                   void** data, size_t* data_len)
 {
-  int ret = OMPI_ERR_WOULD_BLOCK;
+  int ret = OMPI_ERR_WOULD_BOMPI_LOCK;
   blocking_recv_posted = 1;
-  while (ret == OMPI_ERR_WOULD_BLOCK) {
+  while (ret == OMPI_ERR_WOULD_BOMPI_LOCK) {
     ret = do_recv(job_handle, vpid, tag, data, data_len);
     sleep(1);
   }
@@ -87,7 +87,7 @@ mca_oob_cofs_recv_nb(ompi_job_handle_t job_handle, int vpid, int* tag,
                      void** data, size_t* data_len)
 {
   if (blocking_recv_posted != 0) {
-    return OMPI_ERR_WOULD_BLOCK;
+    return OMPI_ERR_WOULD_BOMPI_LOCK;
   }
 
   return do_recv(job_handle, vpid, tag, data, data_len);
@@ -173,7 +173,7 @@ do_recv(ompi_job_handle_t job_handle, int vpid, int* tag,
 
   fname = find_match(job_handle, vpid, tag);
   if (fname == NULL) {
-    return OMPI_ERR_WOULD_BLOCK;
+    return OMPI_ERR_WOULD_BOMPI_LOCK;
   }
   snprintf(full_fname, OMPI_PATH_MAX, "%s/%s", mca_oob_cofs_comm_loc, fname);
   free(fname);

@@ -65,9 +65,9 @@
  * macros
  */
 
-#define ATOMIC_LOCK_INIT(LOCKPTR)  spinunlock(LOCKPTR)
-#define ATOMIC_LOCK(LOCKPTR)       spinlock(LOCKPTR)
-#define ATOMIC_UNLOCK(LOCKPTR)     spinunlock(LOCKPTR)
-#define ATOMIC_TRYLOCK(LOCKPTR)    spintrylock(LOCKPTR)
+#define ATOMIC_OMPI_LOCK_INIT(OMPI_LOCKPTR)  spinunlock(OMPI_LOCKPTR)
+#define ATOMIC_OMPI_LOCK(OMPI_LOCKPTR)       spinlock(OMPI_LOCKPTR)
+#define ATOMIC_OMPI_UNLOCK(OMPI_LOCKPTR)     spinunlock(OMPI_LOCKPTR)
+#define ATOMIC_TRYOMPI_LOCK(OMPI_LOCKPTR)    spintrylock(OMPI_LOCKPTR)
 
 #endif /* OMPI_ATOMIC_H_INCLUDED */

@@ -89,7 +89,7 @@ int ompi_ddt_set_args( ompi_datatype_t* pData,
       memcpy( pArgs->i + 1, i, i[0][0] * sizeof(int) );
       break;
       /******************************************************************/
-   case MPI_COMBINER_INDEXED_BLOCK:
+   case MPI_COMBINER_INDEXED_BOMPI_LOCK:
       pArgs->i[0] = i[0][0]; 
       pArgs->i[1] = i[1][0];
       memcpy( pArgs->i + 2, i[2], i[0][0] * sizeof(int) );

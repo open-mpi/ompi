@@ -139,7 +139,7 @@ struct ompi_eventop {
 
 #define OMPI_TIMEOUT_DEFAULT	{10, 0}
 #define OMPI_EVLOOP_ONCE		0x01
-#define OMPI_EVLOOP_NONBLOCK	0x02
+#define OMPI_EVLOOP_NONBOMPI_LOCK	0x02
 
 
 int ompi_event_init(void);
