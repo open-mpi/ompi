@@ -22,14 +22,15 @@ static const char FUNC_NAME[] = "MPI_Win_f2c";
 
 MPI_Win MPI_Win_f2c(MPI_Fint win) 
 {
-  if (MPI_PARAM_CHECK) {
-    OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-  }
+    if (MPI_PARAM_CHECK) {
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+    }
 
-  /* NOTE: Be sure to see the other *f2c functions before implementing
-     this one -- they should all be the same! */
+    /* NOTE: Be sure to see the other *f2c functions before implementing
+       this one -- they should all be the same! */
 
-  /* This function is not yet implemented */
+    /* This function is not yet implemented */
 
-  return (MPI_Win) OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER, FUNC_NAME);
+    (void)OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER, FUNC_NAME);
+    return MPI_WIN_NULL;
 }
