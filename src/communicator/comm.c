@@ -589,11 +589,11 @@ int ompi_comm_free ( ompi_communicator_t **comm )
 {
 
     /* Release attributes */
-    ompi_attr_delete_all ( COMM_ATTR, comm, (*comm)->c_keyhash );
+    ompi_attr_delete_all ( COMM_ATTR, (*comm), (*comm)->c_keyhash );
     OBJ_RELEASE((*comm)->c_keyhash);
 
     /* Release the communicator */
-    OBJ_RELEASE ( *comm );
+    OBJ_RELEASE ( (*comm) );
 
     *comm = MPI_COMM_NULL;
     return OMPI_SUCCESS;
