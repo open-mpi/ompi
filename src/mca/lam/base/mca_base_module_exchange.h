@@ -84,7 +84,7 @@ extern "C" {
    * regardless of pointer sizes or endian bias.
    */
   int mca_base_modex_send(mca_base_module_t *source_module, 
-                          void *buffer, size_t size, int count); 
+                          void *buffer, size_t size, size_t count); 
 
   /**
    * Receive a module-specific buffer from a corresponding MCA module
@@ -121,7 +121,7 @@ extern "C" {
    */
   int mca_base_modex_recv(mca_base_module_t *dest_module,
                           lam_proc_t *source_proc,
-                          void **buffer, size_t *size, int *count); 
+                          void **buffer, size_t *size, size_t *count); 
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
