@@ -662,6 +662,8 @@ AC_CONFIG_FILES([
     test/support/Makefile
     test/lam/Makefile
     test/lam/lfc/Makefile
+    test/mpi/Makefile
+    test/mpi/environment/Makefile
     test/unit/Makefile
     test/unit/lam/Makefile
     test/unit/lam/oob_cofs/Makefile
