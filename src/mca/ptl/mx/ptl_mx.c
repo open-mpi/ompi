@@ -137,6 +137,7 @@ int mca_ptl_mx_send(
 {
     mca_ptl_mx_module_t* mx_ptl = (mca_ptl_mx_module_t*)ptl;
     mca_ptl_mx_send_frag_t* sendfrag;
+    mca_ptl_base_header_t* hdr;
     mx_return_t mx_return;
     int rc;
 
@@ -149,129 +150,27 @@ int mca_ptl_mx_send(
             return rc;
     }
 
-    /* initialize convertor */
-    sendfrag->frag_progress = 0;
-    sendfrag->frag_free = 0;
-    if(size > 0) {
-       ompi_convertor_t *convertor;
-       struct iovec iov;
-       unsigned int iov_count;
-       unsigned int max_data;
-       int rc;
-
-       convertor = &sendfrag->frag_send.frag_base.frag_convertor;
-       ompi_convertor_copy(&sendreq->req_convertor, convertor);
-       ompi_convertor_init_for_send(
-                    convertor,
-                    0,
-                    sendreq->req_datatype,
-                    sendreq->req_count,
-                    sendreq->req_addr,
-                    offset,
-                    mca_ptl_mx_alloc );
-                                                                                                                      
-        /* if data is contigous convertor will return an offset
-         * into users buffer - otherwise will return an allocated buffer
-         * that holds the packed data
-         */
-        iov.iov_base = NULL;
-        iov.iov_len = size;
-        iov_count = 1;
-        max_data = size;
-        if((rc = ompi_convertor_pack(
-            convertor,
-            &iov,
-            &iov_count,
-            &max_data,
-            &(sendfrag->frag_free))) < 0) {
-            return OMPI_ERROR;
-        }
-        /* adjust the freeAfter as the position zero is reserved for the header */
-        sendfrag->frag_free <<= 1;
-        sendfrag->frag_segments[1].segment_ptr = iov.iov_base;
-        sendfrag->frag_segments[1].segment_length = iov.iov_len;
-        sendfrag->frag_segment_count = 1;
-        sendfrag->frag_send.frag_base.frag_addr = iov.iov_base;
-    } else {
-        sendfrag->frag_send.frag_base.frag_addr = NULL;
-        sendfrag->frag_send.frag_base.frag_size = 0;
-        sendfrag->frag_segment_count = 0;
-    }
-
-    /* fragment state */
-    sendfrag->frag_send.frag_base.frag_owner = &ptl_peer->peer_ptl->super;
-    sendfrag->frag_send.frag_request = sendreq;
-    sendfrag->frag_send.frag_base.frag_size = size;
-    sendfrag->frag_send.frag_base.frag_peer = ptl_peer;
-
-    /* must update the offset after actual fragment size is determined 
-     * before attempting to send the fragment
-     */
-    mca_pml_base_send_request_offset(sendreq, size);
-
-    /* start the fragment */
-    mx_return = mx_isend(
-        mx_ptl->mx_endpoint,
-        sendfrag->frag_segments+1,  /* no header - data only */
-        sendfrag->frag_segment_count,
-        ptl_peer->peer_addr,
-        0,
-        sendfrag,
-        &sendfrag->frag_request);
-    if(mx_return != MX_SUCCESS) {
-        ompi_output(0, "mca_ptl_mx_send: mx_isend() failed with return value=%d\n", mx_return);
-        return OMPI_ERROR;
-    }
-    return OMPI_SUCCESS;
-}
-                                                                                                   
-
-/**
- * PML->PTL Initiate a send to the peer.
- *
- * @param ptl (IN)               PTL instance
- * @param ptl_base_peer (IN)     PTL peer addressing
- * @param request (IN)           Send request
- * @param offset                 Current offset into packed/contiguous buffer.
- * @param size (IN)              Number of bytes PML is requesting PTL to deliver,
- * @param flags (IN)             Flags that should be passed to the peer via the message header.
- * @param request (OUT)          OMPI_SUCCESS if the PTL was able to queue one or more fragments
- *
- * Continue sending fragments of a large message to the peer.
- */
-                                                                                                   
-int mca_ptl_mx_send_continue(
-    struct mca_ptl_base_module_t* ptl,
-    struct mca_ptl_base_peer_t* ptl_peer,
-    struct mca_pml_base_send_request_t* sendreq,
-    size_t offset,
-    size_t size,
-    int flags)
-{
-    mca_ptl_mx_module_t* mx_ptl = (mca_ptl_mx_module_t*)ptl;
-    mca_ptl_mx_send_frag_t* sendfrag;
-    mca_ptl_base_header_t* hdr;
-    ompi_ptr_t match;
-    mx_return_t mx_return;
-    int rc;
-
-    /* allocate fragment */
-    MCA_PTL_MX_SEND_FRAG_ALLOC(sendfrag, rc);
-    if(rc != OMPI_SUCCESS) {
-        return rc;
-    }
-
     /* setup message header */
     hdr = &sendfrag->frag_send.frag_base.frag_header;
-    hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_FRAG;
+    hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_MATCH;
     hdr->hdr_common.hdr_flags = flags;
     hdr->hdr_common.hdr_size = sizeof(mca_ptl_base_match_header_t);
     hdr->hdr_frag.hdr_frag_offset = offset;
     hdr->hdr_frag.hdr_frag_seq = 0;
     hdr->hdr_frag.hdr_src_ptr.lval = 0; /* for VALGRIND/PURIFY - REPLACE WITH MACRO */
     hdr->hdr_frag.hdr_src_ptr.pval = sendfrag;
-    hdr->hdr_frag.hdr_dst_ptr = sendreq->req_peer_match;
- 
+    hdr->hdr_frag.hdr_dst_ptr.lval = 0;
+    hdr->hdr_match.hdr_contextid = sendreq->req_base.req_comm->c_contextid;
+    hdr->hdr_match.hdr_src = sendreq->req_base.req_comm->c_my_rank;
+    hdr->hdr_match.hdr_dst = sendreq->req_base.req_peer;
+    hdr->hdr_match.hdr_tag = sendreq->req_base.req_tag;
+    hdr->hdr_match.hdr_msg_length = sendreq->req_bytes_packed;
+    hdr->hdr_match.hdr_msg_seq = sendreq->req_base.req_sequence;
+
+    /* setup iovec */
+    sendfrag->frag_segments[0].segment_ptr = hdr;
+    sendfrag->frag_segments[0].segment_length = sizeof(mca_ptl_base_header_t);
+
     /* initialize convertor */
     sendfrag->frag_progress = 0;
     sendfrag->frag_free = 0;
@@ -321,18 +220,122 @@ int mca_ptl_mx_send_continue(
         sendfrag->frag_segment_count = 1;
     }
     hdr->hdr_frag.hdr_frag_length = size;
-
+    
+    /* convert header to network byte order if required */
+    if(ptl_peer->peer_byte_swap) {
+        hdr->hdr_common.hdr_flags |= MCA_PTL_FLAGS_NBO;
+        MCA_PTL_BASE_MATCH_HDR_HTON(hdr->hdr_match);
+    }
+ 
     /* fragment state */
     sendfrag->frag_send.frag_base.frag_owner = &ptl_peer->peer_ptl->super;
     sendfrag->frag_send.frag_request = sendreq;
     sendfrag->frag_send.frag_base.frag_size = size;
     sendfrag->frag_send.frag_base.frag_peer = ptl_peer;
 
-    /* convert header to network byte order if required */
-    if(ptl_peer->peer_byte_swap) {
-        hdr->hdr_common.hdr_flags |= MCA_PTL_FLAGS_NBO;
-        MCA_PTL_BASE_FRAG_HDR_HTON(hdr->hdr_frag);
+    /* must update the offset after actual fragment size is determined 
+     * before attempting to send the fragment
+     */
+    mca_pml_base_send_request_offset(sendreq, size);
+
+    /* start the fragment */
+    mx_return = mx_isend(
+        mx_ptl->mx_endpoint,
+        sendfrag->frag_segments,  
+        sendfrag->frag_segment_count,
+        ptl_peer->peer_addr,
+        0,
+        sendfrag,
+        &sendfrag->frag_request);
+    if(mx_return != MX_SUCCESS) {
+        ompi_output(0, "mca_ptl_mx_send: mx_isend() failed with return value=%d\n", mx_return);
+        return OMPI_ERROR;
     }
+    return OMPI_SUCCESS;
+}
+                                                                                                   
+
+/**
+ * PML->PTL Initiate a send to the peer.
+ *
+ * @param ptl (IN)               PTL instance
+ * @param ptl_base_peer (IN)     PTL peer addressing
+ * @param request (IN)           Send request
+ * @param offset                 Current offset into packed/contiguous buffer.
+ * @param size (IN)              Number of bytes PML is requesting PTL to deliver,
+ * @param flags (IN)             Flags that should be passed to the peer via the message header.
+ * @param request (OUT)          OMPI_SUCCESS if the PTL was able to queue one or more fragments
+ *
+ * Continue sending fragments of a large message to the peer.
+ */
+                                                                                                   
+int mca_ptl_mx_send_continue(
+    struct mca_ptl_base_module_t* ptl,
+    struct mca_ptl_base_peer_t* ptl_peer,
+    struct mca_pml_base_send_request_t* sendreq,
+    size_t offset,
+    size_t size,
+    int flags)
+{
+    mca_ptl_mx_module_t* mx_ptl = (mca_ptl_mx_module_t*)ptl;
+    mca_ptl_mx_send_frag_t* sendfrag;
+    mx_return_t mx_return;
+    ompi_ptr_t match;
+    ompi_convertor_t *convertor;
+    struct iovec iov;
+    unsigned int iov_count;
+    unsigned int max_data;
+    int rc;
+
+    /* allocate fragment */
+    MCA_PTL_MX_SEND_FRAG_ALLOC(sendfrag, rc);
+    if(rc != OMPI_SUCCESS) {
+        return rc;
+    }
+    sendfrag->frag_free = 0;
+
+    /* initialize convertor */
+    convertor = &sendfrag->frag_send.frag_base.frag_convertor;
+    ompi_convertor_copy(&sendreq->req_convertor, convertor);
+    ompi_convertor_init_for_send(
+        convertor,
+        0,
+        sendreq->req_datatype,
+        sendreq->req_count,
+        sendreq->req_addr,
+        offset,
+        mca_ptl_mx_alloc );
+                                                                                                                      
+    /* if data is contigous convertor will return an offset
+     * into users buffer - otherwise will return an allocated buffer
+     * that holds the packed data
+     */
+    iov.iov_base = NULL;
+    iov.iov_len = size;
+    iov_count = 1;
+    max_data = size;
+    if((rc = ompi_convertor_pack(
+        convertor,
+        &iov,
+        &iov_count,
+        &max_data,
+        &(sendfrag->frag_free))) < 0) {
+        return OMPI_ERROR;
+    }
+
+    /* adjust the freeAfter as the position zero is reserved for the header */
+    sendfrag->frag_free <<= 1;
+    sendfrag->frag_segments[1].segment_ptr = iov.iov_base;
+    sendfrag->frag_segments[1].segment_length = iov.iov_len;
+    sendfrag->frag_segment_count = 1;
+    sendfrag->frag_send.frag_base.frag_addr = iov.iov_base;
+
+    /* fragment state */
+    sendfrag->frag_send.frag_base.frag_owner = &ptl_peer->peer_ptl->super;
+    sendfrag->frag_send.frag_request = sendreq;
+    sendfrag->frag_send.frag_base.frag_size = size;
+    sendfrag->frag_send.frag_base.frag_peer = ptl_peer;
+    sendfrag->frag_progress = 0;
 
     /* must update the offset after actual fragment size is determined 
      * before attempting to send the fragment
@@ -344,8 +347,8 @@ int mca_ptl_mx_send_continue(
     match.sval.lval = offset;
     mx_return = mx_isend(
         mx_ptl->mx_endpoint,
-        sendfrag->frag_segments,
-        sendfrag->frag_segment_count,
+        sendfrag->frag_segments+1,
+        1,
         sendfrag->frag_send.frag_base.frag_peer->peer_addr,
         match.lval,
         sendfrag,
@@ -402,7 +405,7 @@ void mca_ptl_mx_matched(
         } else {
             mx_return_t mx_return;
             MCA_PTL_MX_SEND_FRAG_INIT_ACK(ack, ptl, mx_frag);
-            if(ack->frag_send.frag_base.frag_peer->peer_byte_swap) {
+            if(hdr->hdr_common.hdr_flags & MCA_PTL_FLAGS_NBO) {
                 MCA_PTL_BASE_ACK_HDR_HTON(ack->frag_send.frag_base.frag_header.hdr_ack);
             }
 
