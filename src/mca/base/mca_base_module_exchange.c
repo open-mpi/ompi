@@ -230,9 +230,6 @@ static void mca_base_modex_registry_callback(
          * Lookup the process.
          */
         ompi_unpack(buffer, &proc_name, 1, OMPI_NAME);
- ompi_output(0, "[%d,%d,%d] yahoo! modex processing data for proc [%d,%d,%d]",
-    OMPI_NAME_ARGS(*ompi_rte_get_self()), OMPI_NAME_ARGS(proc_name));
-           
         proc = ompi_proc_find_and_add(&proc_name, &isnew);
 
         if(NULL == proc)
