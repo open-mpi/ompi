@@ -21,7 +21,23 @@
 #define OMPI_COMM_CID_TAG 1011
 #define OMPI_MAX_COMM 32768
 
+#ifndef HAVE_COLLECTIVES
+int ompi_comm_nextcid ( ompi_communicator_t* newcomm, 
+                        ompi_communicator_t* comm, 
+                        ompi_communicator_t* bridgecomm, 
+                        int local_leader,
+                        int remote_leader,
+                        int mode )
+{
+    /* set the according values to the newcomm */
+    newcomm->c_contextid = comm->c_contextid + 10;
+    ompi_pointer_array_set_item (&ompi_mpi_communicators, 
+                                 newcomm->c_contextid, 
+                                 newcomm);
 
+    return ( MPI_SUCCESS );
+}
+#else
 /**
  * These functions make sure, that we determine the global result over 
  * an intra communicators (simple), an inter-communicator and a
@@ -50,11 +66,12 @@ static int ompi_comm_allreduce_intra ( int *inbuf, int* outbuf, int count,
                                       int local_leader, int remote_ledaer );
 
 
-int ompi_comm_nextcid ( ompi_communicator_t* comm, 
-                       ompi_communicator_t* bridgecomm, 
-                       int local_leader,
-                       int remote_leader,
-                       int mode )
+int ompi_comm_nextcid ( ompi_communicator_t* newcomm, 
+                        ompi_communicator_t* comm, 
+                        ompi_communicator_t* bridgecomm, 
+                        int local_leader,
+                        int remote_leader,
+                        int mode )
 {
 
     int nextlocal_cid;
@@ -127,7 +144,11 @@ int ompi_comm_nextcid ( ompi_communicator_t* comm,
         }
     }
     
-    return (nextcid);
+    /* set the according values to the newcomm */
+    newcomm->c_contextid = nextcid;
+    ompi_pointer_array_set_item (&ompi_mpi_communicators, nextcid, newcomm);
+    
+    return (MPI_SUCCESS);
 }
 
 /********************************************************************************/
@@ -353,4 +374,4 @@ static int ompi_comm_allreduce_emulate_inter (int *inbuf, int *outbuf, int count
     return (rc);
 }
 
-
+#endif
