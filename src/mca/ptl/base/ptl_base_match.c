@@ -351,7 +351,7 @@ bool mca_ptl_base_match(
     OMPI_THREAD_LOCK(&pml_comm->c_matching_lock);
 
     /* get sequence number of next message that can be processed */
-    next_msg_seq_expected = *((pml_comm->c_next_msg_seq)+frag_src);
+    next_msg_seq_expected = (uint16_t)*((pml_comm->c_next_msg_seq)+frag_src);
     if (frag_msg_seq == next_msg_seq_expected) {
 
         /*
