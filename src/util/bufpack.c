@@ -374,10 +374,11 @@ return (OMPI_SUCCESS);
     int ompi_pack(ompi_buffer_t buffer, void * src, size_t n, ompi_pack_type_t type)
 {
     int rc;
-    size_t i;
+    size_t i, pack_type_size;
     void *dest;
     ompi_buffer_internal_t* bptr;
     size_t op_size=0;
+    uint8_t  * d8;
     uint16_t * d16;
     uint32_t * d32;
     uint16_t * s16;
@@ -391,6 +392,9 @@ return (OMPI_SUCCESS);
 
     dest = bptr->data_ptr;	/* get location in buffer */
 
+    /* calculate pack_type size */
+    pack_type_size = sizeof(ompi_pack_type_t);
+    
     /* calculate op_size data size */
     switch(type) {
         case OMPI_BYTE:
@@ -436,6 +440,9 @@ return (OMPI_SUCCESS);
             return OMPI_ERROR;
     }
 
+    /* add in storage needed for type information */
+    op_size += pack_type_size;
+    
     if (op_size > bptr->space) { /* need to expand the buffer */
     	rc =  ompi_buffer_extend (bptr, (op_size - bptr->space));
 	if (OMPI_ERROR==rc) { return (rc); }
@@ -445,6 +452,31 @@ return (OMPI_SUCCESS);
     	dest = bptr->data_ptr;	/* get location in buffer */
     } 
     
+    /* store the pack data type */
+    switch(pack_type_size) {
+        case 1:
+            d8 = (uint8_t *) dest;
+            *d8 = type;
+            d8++;
+            dest = (void *) d8;
+            break;
+        case 2:
+            d16 = (uint16_t *) dest;
+            *d16 = htons(type);
+            d16 += 2;
+            dest = (void *) d16;
+            break;
+        case 4:
+            d32 = (uint32_t *) dest;
+            *d32 = htonl(type);
+            d32 += 4;
+            dest = (void *) d32;
+            break;
+        default:
+            return OMPI_ERROR;
+    }
+    
+    /* pack the data */
     switch(type) {
         case OMPI_BYTE:
         case OMPI_INT8:
@@ -453,9 +485,11 @@ return (OMPI_SUCCESS);
         case OMPI_EXIT_CODE:
             memcpy(dest, src, n);
             break;
+            
         case OMPI_PACKED:
             memcpy(dest, src, op_size);
             break;
+            
         case OMPI_INT16:
             d16 = (uint16_t *) dest;
             s16 = (uint16_t *) src;
@@ -464,6 +498,7 @@ return (OMPI_SUCCESS);
                 d16[i] = htons(s16[i]);
             }
             break;
+            
         case OMPI_INT32:
     	    d32 = (uint32_t *) dest;
             s32 = (uint32_t *) src;
@@ -472,19 +507,24 @@ return (OMPI_SUCCESS);
                 d32[i] = htonl(s32[i]);
             }
             break;
+            
         case OMPI_STRING:
             strncpy((char*) dest, (char*) src, n);
             *((char *) dest + n - 1) = '\0';
             break;
+            
         case OMPI_JOBID:
 	       mca_ns_base_pack_jobid(dest, src, n);
 	       break;
+        
         case OMPI_CELLID:
             mca_ns_base_pack_cellid(dest, src, n);
             break;
+            
         case OMPI_NAME:
 	       mca_ns_base_pack_name(dest, src, n);
             break;
+            
         default:
             return OMPI_ERROR;
     }
@@ -514,10 +554,12 @@ return (OMPI_SUCCESS);
 int
 ompi_unpack(ompi_buffer_t buffer, void * dest, size_t n, ompi_pack_type_t type)
 {
-    size_t i;
+    size_t i, pack_type_size;
     void *src;
     ompi_buffer_internal_t* bptr;
     size_t op_size=0;
+    ompi_pack_type_t packed_type;
+    uint8_t  * s8;
     uint16_t * d16;
     uint32_t * d32;
     uint16_t * s16;
@@ -530,6 +572,9 @@ ompi_unpack(ompi_buffer_t buffer, void * dest, size_t n, ompi_pack_type_t type)
 
     src = bptr->from_ptr;	/* get location in buffer */
 
+    /* calculate the pack type size */
+    pack_type_size = sizeof(ompi_pack_type_t);
+    
     /* calculate op_size data size */
     switch(type) {
         case OMPI_BYTE:
@@ -563,6 +608,9 @@ ompi_unpack(ompi_buffer_t buffer, void * dest, size_t n, ompi_pack_type_t type)
             return OMPI_ERROR;
     }
 
+    /* add in the pack_type storage size */
+    op_size += pack_type_size;
+    
     /* now we need to do a TRUNCATION buffer check... */
     /* as this is used by user level OMPI users this should be nicer */
     /* i.e. attempt to unpack as much as possible */
@@ -573,18 +621,73 @@ ompi_unpack(ompi_buffer_t buffer, void * dest, size_t n, ompi_pack_type_t type)
 	return (OMPI_ERROR); /* for tonight */
     }
 
+    /* retrieve the pack data type */
+    switch(pack_type_size) {
+        case 1:
+            s8 = (uint8_t *) src;
+            packed_type = *s8;
+            s8++;
+            src = (void *) s8;
+            break;
+        case 2:
+            s16 = (uint16_t *) src;
+            packed_type = ntohs(*s16);
+            s16 += 2;
+            src = (void *) s16;
+            break;
+        case 4:
+            s32 = (uint32_t *) src;
+            packed_type = ntohl(*s32);
+            s32 += 4;
+            src = (void *) s32;
+            break;
+        default:
+            return OMPI_ERROR;
+    }
 
     switch(type) {
         case OMPI_BYTE:
-        case OMPI_INT8:
-        case OMPI_NODE_STATE:
-        case OMPI_PROCESS_STATUS:
-        case OMPI_EXIT_CODE:
+            if (OMPI_BYTE != packed_type) {
+                return OMPI_PACK_MISMATCH;
+            }
             memcpy(dest, src, n);
-	    break;
+            break;
+            
+        case OMPI_INT8:
+            if (OMPI_INT8 != packed_type) {
+                return OMPI_PACK_MISMATCH;
+            }
+            memcpy(dest, src, n);
+            break;
+            
+        case OMPI_NODE_STATE:
+            if (OMPI_NODE_STATE != packed_type) {
+                return OMPI_PACK_MISMATCH;
+            }
+            memcpy(dest, src, n);
+            break;
+            
+        case OMPI_PROCESS_STATUS:
+            if (OMPI_PROCESS_STATUS != packed_type) {
+                return OMPI_PACK_MISMATCH;
+            }
+            memcpy(dest, src, n);
+            break;
+            
+        case OMPI_EXIT_CODE:
+            if (OMPI_EXIT_CODE != packed_type) {
+                return OMPI_PACK_MISMATCH;
+            }
+            memcpy(dest, src, n);
+	       break;
+        
         case OMPI_PACKED:
             return OMPI_ERROR;
+
         case OMPI_INT16:
+            if (OMPI_INT16 != packed_type) {
+                return OMPI_PACK_MISMATCH;
+            }
             d16 = (uint16_t *) dest;
             s16 = (uint16_t *) src;
             for (i=0;i<n;i++) {
@@ -592,7 +695,11 @@ ompi_unpack(ompi_buffer_t buffer, void * dest, size_t n, ompi_pack_type_t type)
                 d16[i] = ntohs(s16[i]);
             }
             break;
+            
         case OMPI_INT32:
+            if (OMPI_INT32 != packed_type) {
+                return OMPI_PACK_MISMATCH;
+            }
             d32 = (uint32_t *) dest;
             s32 = (uint32_t *) src;
             for (i=0;i<n;i++) {
@@ -600,19 +707,36 @@ ompi_unpack(ompi_buffer_t buffer, void * dest, size_t n, ompi_pack_type_t type)
                 d32[i] = ntohl(s32[i]);
             }
             break;
+            
         case OMPI_STRING:
+            if (OMPI_STRING != packed_type) {
+                return OMPI_PACK_MISMATCH;
+            }
             strncpy((char*) dest, (char*) src, n);
             *((char *) dest + n - 1) = '\0';
             break;
+            
         case OMPI_JOBID:
+            if (OMPI_JOBID != packed_type) {
+                return OMPI_PACK_MISMATCH;
+            }
 	       mca_ns_base_unpack_jobid(dest, src, n);
 	       break;
+        
         case OMPI_CELLID:
+            if (OMPI_CELLID != packed_type) {
+                return OMPI_PACK_MISMATCH;
+            }
             mca_ns_base_unpack_cellid(dest, src, n);
             break;
+            
         case OMPI_NAME:
+            if (OMPI_NAME != packed_type) {
+                return OMPI_PACK_MISMATCH;
+            }
 	        mca_ns_base_unpack_name(dest, src, n);
             break;
+            
         default:
             return OMPI_ERROR;
     }

@@ -53,7 +53,8 @@ enum {
     OMPI_NODE_UP = -33,
     OMPI_NODE_DOWN = -34,
     OMPI_NODE_BOOTING = -35,
-    OMPI_NODE_ERROR = -36
+    OMPI_NODE_ERROR = -36,
+    OMPI_PACK_MISMATCH = -37
 };
 
 #endif /* OMPI_CONSTANTS_H */
