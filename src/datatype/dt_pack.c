@@ -781,16 +781,16 @@ int ompi_convertor_init_for_send( ompi_convertor_t* pConv,
     pConv->fAdvance = ompi_convertor_pack_general;
     pConv->fAdvance = ompi_convertor_pack_homogeneous_with_memcpy;
     if( datatype->flags & DT_FLAG_CONTIGUOUS ) {
-	pConv->flags |= DT_FLAG_CONTIGUOUS;
+        pConv->flags |= DT_FLAG_CONTIGUOUS;
         if( (datatype->ub - datatype->lb) == (long)datatype->size )
             pConv->fAdvance = ompi_convertor_pack_no_conv_contig;
         else
             pConv->fAdvance = ompi_convertor_pack_no_conv_contig_with_gaps;
-	return ompi_convertor_create_stack_with_pos_contig( pConv, starting_pos, ompi_ddt_local_sizes );
+        return ompi_convertor_create_stack_with_pos_contig( pConv, starting_pos, ompi_ddt_local_sizes );
     }
     pConv->fAdvance = ompi_convertor_pack_no_conversion;
     if( starting_pos != 0 ) {
-	return ompi_convertor_create_stack_with_pos_general( pConv, starting_pos, ompi_ddt_local_sizes );
+        return ompi_convertor_create_stack_with_pos_general( pConv, starting_pos, ompi_ddt_local_sizes );
     }
     return ompi_convertor_create_stack_at_begining( pConv, ompi_ddt_local_sizes );
 }
