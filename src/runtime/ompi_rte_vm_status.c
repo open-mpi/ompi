@@ -133,7 +133,7 @@ ompi_rte_vm_status_t
     return stat_ptr;
 }
 
-int ompi_vm_register(void)
+int ompi_rte_vm_register(void)
 {
     ompi_rte_vm_status_t status;
     

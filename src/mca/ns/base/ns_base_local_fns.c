@@ -35,6 +35,30 @@
  * globals
  */
 
+
+/*
+ * "not available" functions
+ */
+mca_ns_base_cellid_t
+mca_ns_base_create_cellid_not_available(void)
+{
+    return MCA_NS_BASE_CELLID_MAX;
+}
+
+mca_ns_base_jobid_t
+mca_ns_base_create_jobid_not_available(void)
+{
+    return MCA_NS_BASE_JOBID_MAX;
+}
+
+mca_ns_base_vpid_t
+mca_ns_base_get_vpid_range_not_available(mca_ns_base_jobid_t job,
+                                         mca_ns_base_vpid_t range)
+{
+    return MCA_NS_BASE_VPID_MAX;
+}
+
+
 /*
  * functions
  */
