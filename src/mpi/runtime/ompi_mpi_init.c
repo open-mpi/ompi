@@ -22,6 +22,7 @@
 #include "op/op.h"
 #include "file/file.h"
 #include "attribute/attribute.h"
+#include "threads/thread.h"
 
 #include "mca/base/base.h"
 #include "mca/base/base.h"
@@ -56,6 +57,8 @@ bool ompi_mpi_finalized = false;
 bool ompi_mpi_thread_multiple = false;
 int ompi_mpi_thread_requested = MPI_THREAD_SINGLE;
 int ompi_mpi_thread_provided = MPI_THREAD_SINGLE;
+
+ompi_thread_t *ompi_mpi_main_thread = NULL;
 
 
 int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
@@ -275,6 +278,11 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     ompi_mpi_thread_provided = *provided;
     ompi_mpi_thread_multiple = (ompi_mpi_thread_provided == 
                                 MPI_THREAD_MULTIPLE);
+#if OMPI_HAVE_THREADS
+    ompi_mpi_main_thread = ompi_thread_get_self();
+#else
+    ompi_mpi_main_thread = NULL;
+#endif    
 
     /* Init coll for the comms */
 
