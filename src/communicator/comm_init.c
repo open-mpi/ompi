@@ -145,6 +145,7 @@ ompi_communicator_t *ompi_comm_allocate ( int local_size, int remote_size )
          * we can always use the remote group 
          */
         new_comm->c_remote_group = new_comm->c_local_group;
+        OBJ_RETAIN(new_comm->c_remote_group);
     }
 
     /* fill in the inscribing hyper-cube dimensions */
@@ -227,9 +228,9 @@ static void ompi_comm_destruct(ompi_communicator_t* comm)
 
     /* reset the ompi_comm_f_to_c_table entry */
     if ( NULL != ompi_pointer_array_get_item ( &ompi_mpi_communicators,
-                                              comm->c_f_to_c_index )) {
+                                               comm->c_f_to_c_index )) {
         ompi_pointer_array_set_item ( &ompi_mpi_communicators,
-                                     comm->c_f_to_c_index, NULL);
+                                      comm->c_f_to_c_index, NULL);
     }
 
 
