@@ -97,10 +97,8 @@ static int lam_ifinit(void)
         }
         if ((ifr->ifr_flags & IFF_UP) == 0) 
             continue;
-#if 0
         if ((ifr->ifr_flags & IFF_LOOPBACK) != 0)
             continue;
-#endif
                                                                                 
         strcpy(intf.if_name, ifr->ifr_name);
         intf.if_flags = ifr->ifr_flags;
