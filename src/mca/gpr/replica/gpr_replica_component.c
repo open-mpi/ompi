@@ -53,7 +53,7 @@ static mca_gpr_base_module_t mca_gpr_replica = {
     gpr_replica_delete_segment,
     gpr_replica_subscribe,
     gpr_replica_unsubscribe,
-    gpr_replica_delete
+    gpr_replica_delete_object
 };
 
 /*

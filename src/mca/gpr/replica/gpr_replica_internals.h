@@ -31,7 +31,7 @@ mca_gpr_replica_key_t gpr_replica_get_key(char *segment, char *token);
  * the function adds the token to the segment dictionary, thus defining a new segment name.
  *
  * @retval key Unsigned long integer value corresponding to the specified token within the specified segment.
- * @retval -1 Indicates that the entry could not be created.
+ * @retval 0 Indicates that the entry could not be created.
  */
 mca_gpr_replica_key_t gpr_replica_define_key(char *segment, char *token);
 
@@ -66,3 +66,4 @@ mca_gpr_registry_segment_t *gpr_replica_find_seg(char *segment);
 
 mca_gpr_keytable_t *gpr_replica_find_dict_entry(char *segment, char *token);
 
+int gpr_replica_empty_segment(mca_gpr_registry_segment_t *seg);
