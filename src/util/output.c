@@ -47,7 +47,6 @@ static ompi_output_stream_t verbose = {
 static int do_open(int output_id, ompi_output_stream_t *lds);
 static void free_descriptor(int output_id);
 static void output(int output_id, char *format, va_list arglist);
-static char *ompi_vsnprintf(char *format, va_list arglist);
 
 
 /*
@@ -486,7 +485,7 @@ static void output(int output_id, char *format, va_list arglist)
     /* Make the formatted string */
 
     OMPI_THREAD_LOCK(&mutex);
-    str = ompi_vsnprintf(format, arglist);
+    vasprintf(&str, format, arglist);
     total_len = len = strlen(str);
     if ('\n' != str[len - 1]) {
       want_newline = true;
@@ -545,175 +544,4 @@ static void output(int output_id, char *format, va_list arglist)
 
     free(str);
   }  
-}
-
-
-/* 
- * ompi_vsnprintf
- *
- * Make a good guess about how long a printf-style varags formatted
- * string will be once all the % escapes are filled in.  We don't
- * handle every % escape here, but we handle enough, and then add a
- * fudge factor in at the end.  When we have that, alloc out a buffer
- * and snprintf into it.  The whole reason for this routine is because
- * we can't count on vsnprintf to be on every system.  :-( Ok, it's
- * not exactly the same as vsnprintf, but it's in the same spirit, so
- * it's ok to use a derrivative of the name...  
- */
-static char *ompi_vsnprintf(char *format, va_list arglist)
-{
-  int i, len;
-  char *sarg;
-  int iarg;
-  long larg;
-  double darg;
-  float farg;
-
-  /* Important: keep a copy of the original arglist because when we
-     traverse through the original arglist, it has internal state that
-     knows where it is in the list of args.  At the end of this
-     routine, we'll need the whole list in order to call vsprintf(),
-     and there doesn't appear to be a way to "rewind" a va_alist. 
-
-     Copy order taken from Autoconf docs
-  */
-  va_list arglist2;
-#if OMPI_HAVE_VA_COPY
-  va_copy(arglist2, arglist);
-#elif OMPI_HAVE_UNDERSCORE_VA_COPY
-  __va_copy(arglist2, arglist);
-#else
-  memcpy (&arglist2, &arglist, sizeof(va_list));
-#endif
-
-  /* Start off with a fudge factor of 128 to handle the % escapes that
-     we aren't calculating here */
-
-  len = strlen(format) + 128;
-  for (i = 0; i < strlen(format); ++i) {
-    if ('%' == format[i] && i + 1 < strlen(format) && '%' != format[i + 1]) {
-      ++i;
-      switch(format[i]) {
-      case 's':
-	sarg = va_arg(arglist, char*);
-	/* If there's an arg, get the strlen, otherwise we'll use (null) */
-	if (NULL != sarg)
-	  len += strlen(sarg);
-	else
-	  len += 5;
-	break;
-	
-      case 'd':
-      case 'i':
-	iarg = va_arg(arglist, int);
-	/* Alloc for minus sign */
-	if (iarg < 0)
-	  ++len;
-	/* Now get the log10 */
-	do {
-	  ++len;
-	  iarg /= 10;
-	} while (0 != iarg);
-	break;
-	
-      case 'x':
-      case 'X':
-	iarg = va_arg(arglist, int);
-	/* Now get the log16 */
-	do {
-	  ++len;
-	  iarg /= 16;
-	} while (0 != iarg);
-	break;
-	
-      case 'f':
-	farg = va_arg(arglist, int);
-	/* Alloc for minus sign */
-	if (farg < 0) {
-	  ++len;
-	  farg = -farg;
-	}
-	/* Alloc for 3 decimal places + '.' */
-	len += 4;
-	/* Now get the log10 */
-	do {
-	  ++len;
-	  farg /= 10.0;
-	} while (0 != farg);
-	break;
-	
-      case 'g':
-	darg = va_arg(arglist, int);
-	/* Alloc for minus sign */
-	if (darg < 0) {
-	  ++len;
-	  darg = -darg;
-	}
-	/* Alloc for 3 decimal places + '.' */
-	len += 4;
-	/* Now get the log10 */
-	do {
-	    ++len;
-	    darg /= 10.0;
-	} while (0 != darg);
-	break;
-	
-      case 'l':
-	/* Get %ld %lx %lX %lf */
-	if (i + 1 < strlen(format)) {
-	  ++i;
-	  switch(format[i]) {
-	  case 'x':
-	  case 'X':
-	    larg = va_arg(arglist, int);
-	    /* Now get the log16 */
-	    do {
-	      ++len;
-	      larg /= 16;
-	    } while (0 != larg);
-	    break;
-	    
-	  case 'f':
-	    darg = va_arg(arglist, int);
-	    /* Alloc for minus sign */
-	    if (darg < 0) {
-	      ++len;
-	      darg = -darg;
-	    }
-	    /* Alloc for 3 decimal places + '.' */
-	    len += 4;
-	    /* Now get the log10 */
-	    do {
-	      ++len;
-	      darg /= 10.0;
-	    } while (0 != darg);
-	    break;
-	    
-	  case 'd':
-	  default:
-	    larg = va_arg(arglist, int);
-	    /* Now get the log10 */
-	    do {
-	      ++len;
-	      larg /= 10;
-	    } while (0 != larg);
-	    break;
-	  }
-	}
-	
-      default:
-	break;
-      }
-    }
-  }
-
-  /* Wasn't that simple?  Now malloc out a string and do the final
-     formatting into that string. */
-  
-  sarg = malloc(len);
-  vsprintf(sarg, format, arglist2);
-
-  /* Return the new string */
-
-  return sarg;
 }
