@@ -43,6 +43,27 @@ int ompi_mpi_finalize(void)
 
   ompi_mpi_finalized = true;
 
+  /* unregister process */
+  if (OMPI_SUCCESS != (ret = ompi_registry.rte_unregister(
+			     ns_base_get_proc_name_string(ompi_process_info.name)))) {
+      return ret;
+  }
+
+  /* wait for all processes to reach same state */
+  if (OMPI_SUCCESS != (ret = ompi_rte_monitor_procs_unregistered())) {
+      if (ompi_rte_debug_flag) {
+	  ompi_output(0, "mpi_finalize: gave up waiting for other processes to complete");
+      }
+  }
+
+  /* shutdown communications */
+  if (OMPI_SUCCESS != (ret = mca_ptl_base_close())) {
+    return ret;
+  }
+  if (OMPI_SUCCESS != (ret = mca_pml_base_close())) {
+    return ret;
+  }
+
   /* Shut down any bindings-specific issues: C++, F77, F90 (may or
      may not be necessary...?) */
 
@@ -120,27 +141,6 @@ int ompi_mpi_finalize(void)
     return ret;
   }
   if (OMPI_SUCCESS != (ret = mca_coll_base_close())) {
-    return ret;
-  }
-
-  /* unregister process */
-  if (OMPI_SUCCESS != (ret = ompi_registry.rte_unregister(
-			     ns_base_get_proc_name_string(ompi_process_info.name)))) {
-      return ret;
-  }
-
-  /* wait for all processes to reach same state */
-  if (OMPI_SUCCESS != (ret = ompi_rte_monitor_procs_unregistered())) {
-      if (ompi_rte_debug_flag) {
-	  ompi_output(0, "mpi_finalize: gave up waiting for other processes to complete");
-      }
-  }
-
-  /* cleanup */
-  if (OMPI_SUCCESS != (ret = mca_ptl_base_close())) {
-    return ret;
-  }
-  if (OMPI_SUCCESS != (ret = mca_pml_base_close())) {
     return ret;
   }
 
