@@ -451,8 +451,6 @@ void mca_gpr_replica_recv(int status, ompi_process_name_t* sender,
     if (OMPI_SUCCESS != ompi_unpack(buffer, &command, 1, MCA_GPR_OOB_PACK_CMD)) {
 	goto RETURN_ERROR;
     }
-    fprintf(stderr, "gpr_replica_recv: [%d,%d,%d] tag %d cmd %d\n", 
-        sender->cellid,sender->jobid,sender->vpid,tag,command);
 
     /******    DELETE SEGMENT    *****/
     if (MCA_GPR_DELETE_SEGMENT_CMD == command) {   /* got command to delete a segment */

@@ -593,7 +593,11 @@ ompi_registry_notify_message_t *gpr_replica_construct_notify_message(ompi_regist
 
     msg = OBJ_NEW(ompi_registry_notify_message_t);
     msg->num_tokens = num_tokens;
-    msg->tokens = (char**)malloc(num_tokens*(sizeof(char*)));
+    if(num_tokens) {
+        msg->tokens = (char**)malloc(num_tokens*(sizeof(char*)));
+    } else {
+        msg->tokens = NULL;
+    }
     tokptr = tokens;
     tokptr2 = msg->tokens;
     for (i=0, tokptr=tokens, tokptr2=msg->tokens;
@@ -663,7 +667,9 @@ void gpr_replica_process_triggers(char *segment,
 	for (i=0, tokptr=message->tokens; i < message->num_tokens; i++, tokptr++) {
 	    free(*tokptr);
 	}
-	free(message->tokens);
+    if(NULL != message->tokens) {
+	    free(message->tokens);
+    }
 	free(message);
 
     } else {  /* remote request - send message back */

@@ -138,14 +138,14 @@ int gpr_replica_put(ompi_registry_mode_t addr_mode, char *segment,
 	            && (MCA_GPR_REPLICA_TRIGGER_BELOW_LEVEL == trig->above_below)) ||
 	    (OMPI_REGISTRY_SYNCHRO_MODE_LEVEL & trig->synch_mode && trig->count == trig->trigger) ||
 	    (OMPI_REGISTRY_SYNCHRO_MODE_GT_EQUAL & trig->synch_mode && trig->count >= trig->trigger)) {
-	    notify_msg = gpr_replica_construct_notify_message(addr_mode, segment, tokens);
+	    notify_msg = gpr_replica_construct_notify_message(addr_mode, segment, trig->keys);
 	    notify_msg->trig_action = OMPI_REGISTRY_NOTIFY_NONE;
 	    notify_msg->trig_synchro = trig->synch_mode;
 	    gpr_replica_process_triggers(segment, trig, notify_msg);
 	} else if ((OMPI_REGISTRY_NOTIFY_ALL & trig->action) ||
 	    (OMPI_REGISTRY_NOTIFY_ADD_ENTRY & trig->action) ||
 	    (OMPI_REGISTRY_NOTIFY_MODIFICATION & trig->action && OMPI_REGISTRY_OVERWRITE & put_mode)) {
-	    notify_msg = gpr_replica_construct_notify_message(addr_mode, segment, tokens);
+	    notify_msg = gpr_replica_construct_notify_message(addr_mode, segment, trig->keys);
 	    notify_msg->trig_action = trig->action;
 	    notify_msg->trig_synchro = OMPI_REGISTRY_SYNCHRO_MODE_NONE;
 	    gpr_replica_process_triggers(segment, trig, notify_msg);
@@ -245,13 +245,13 @@ int gpr_replica_delete_object(ompi_registry_mode_t addr_mode,
 	        && (trig->count <= trig->trigger)
 	        && (MCA_GPR_REPLICA_TRIGGER_ABOVE_LEVEL == trig->above_below)) ||
 	    (OMPI_REGISTRY_SYNCHRO_MODE_LEVEL & trig->synch_mode && trig->count == trig->trigger)) {
-	    notify_msg = gpr_replica_construct_notify_message(addr_mode, segment, tokens);
+	    notify_msg = gpr_replica_construct_notify_message(addr_mode, segment, trig->keys);
 	    notify_msg->trig_action = OMPI_REGISTRY_NOTIFY_NONE;
 	    notify_msg->trig_synchro = trig->synch_mode;
 	    gpr_replica_process_triggers(segment, trig, notify_msg);
 	} else if ((OMPI_REGISTRY_NOTIFY_ALL & trig->action) ||
 	    (OMPI_REGISTRY_NOTIFY_DELETE_ENTRY & trig->action)) {
-	    notify_msg = gpr_replica_construct_notify_message(addr_mode, segment, tokens);
+	    notify_msg = gpr_replica_construct_notify_message(addr_mode, segment, trig->keys);
 	    notify_msg->trig_action = trig->action;
 	    notify_msg->trig_synchro = OMPI_REGISTRY_SYNCHRO_MODE_NONE;
 	    gpr_replica_process_triggers(segment, trig, notify_msg);
@@ -346,7 +346,7 @@ int gpr_replica_subscribe(ompi_registry_mode_t addr_mode,
 	ompi_list_append(&mca_gpr_replica_notify_request_tracker, &trackptr->item);
 
 	if (OMPI_REGISTRY_NOTIFY_PRE_EXISTING & action) {  /* want list of everything there */
-	    notify_msg = gpr_replica_construct_notify_message(addr_mode, segment, tokens);
+	    notify_msg = gpr_replica_construct_notify_message(addr_mode, segment, trig->keys);
 	    notify_msg->trig_action = action;
 	    notify_msg->trig_synchro = OMPI_REGISTRY_SYNCHRO_MODE_NONE;
 	    gpr_replica_process_triggers(segment, trig, notify_msg);
@@ -434,7 +434,7 @@ int gpr_replica_synchro(ompi_registry_synchro_mode_t synchro_mode,
 	if ((OMPI_REGISTRY_SYNCHRO_MODE_GT_EQUAL & synchro_mode && trig->count >= trigger) ||
 	    (OMPI_REGISTRY_SYNCHRO_MODE_LEVEL & synchro_mode && trig->count == trigger) ||
 	    (OMPI_REGISTRY_SYNCHRO_MODE_LT_EQUAL & synchro_mode && trig->count <= trigger)) {
-	    notify_msg = gpr_replica_construct_notify_message(addr_mode, segment, tokens);
+	    notify_msg = gpr_replica_construct_notify_message(addr_mode, segment, trig->keys);
 	    notify_msg->trig_action = OMPI_REGISTRY_NOTIFY_NONE;
 	    notify_msg->trig_synchro = trig->synch_mode;
 	    gpr_replica_process_triggers(segment, trig, notify_msg);
