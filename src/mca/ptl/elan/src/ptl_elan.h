@@ -55,9 +55,10 @@ struct mca_ptl_elan_module_1_0_0_t {
 
     mca_ptl_base_module_1_0_0_t super;       /**< base PTL module */
 
-    int   elan_free_list_num;     /**< initial size of free lists */
-    int   elan_free_list_max;     /**< maximum size of free lists */
-    int   elan_free_list_inc;     /**< # to alloc when growing lists */
+    size_t elan_free_list_num;     /**< initial size of free lists */
+    size_t elan_free_list_max;     /**< maximum size of free lists */
+    size_t elan_free_list_inc;     /**< # to alloc when growing lists */
+    size_t elan_num_ptls;          /**< number of ptls activated */
 
     /* 
      * We create our own simplified structure for managing elan state
@@ -66,16 +67,16 @@ struct mca_ptl_elan_module_1_0_0_t {
      */
     struct mca_ptl_elan_state_t *elan_ctrl; 
     struct mca_ptl_elan_t **elan_ptls;  /**< array of available PTLs */
-    size_t elan_num_ptls;               /**< number of ptls activated */
-
-    ompi_list_t  elan_procs;       /**< elan proc's */
-    ompi_list_t  elan_recv_frags;
-    ompi_list_t  elan_pending_acks;  
-    ompi_free_list_t elan_recv_frags_free;
-
     struct mca_ptl_elan_proc_t *elan_local; 
+    ompi_mutex_t elan_lock;             /**< lock for module state */
 
-    ompi_mutex_t elan_lock;        /**< lock for module state */
+    ompi_list_t  elan_procs;            /**< elan proc's */
+    ompi_list_t  elan_send_frags;
+    ompi_list_t  elan_pending_acks;  
+    ompi_list_t  elan_recv_frags;
+
+    ompi_free_list_t elan_send_frags_free;
+    ompi_free_list_t elan_recv_frags_free;
 };
 typedef struct mca_ptl_elan_module_1_0_0_t mca_ptl_elan_module_1_0_0_t;
 

@@ -15,6 +15,26 @@
 #include "ptl_elan_priv.h"
 
 static void
+mca_ptl_elan_send_frag_construct (mca_ptl_elan_send_frag_t * frag)
+{
+    frag->frag_progressed = 0;
+    frag->desc = 0;
+}
+
+static void
+mca_ptl_elan_send_frag_destruct (mca_ptl_elan_send_frag_t * frag)
+{
+    /* Nothing to do then */
+}
+
+ompi_class_t mca_ptl_elan_send_frag_t_class = {
+    "mca_ptl_elan_send_frag_t",
+    OBJ_CLASS (mca_ptl_base_frag_t),
+    (ompi_construct_t) mca_ptl_elan_send_frag_construct,
+    (ompi_destruct_t) mca_ptl_elan_send_frag_destruct
+};
+
+static void
 mca_ptl_elan_recv_frag_construct (mca_ptl_elan_recv_frag_t * frag)
 {
     frag->frag_hdr_cnt = 0;
@@ -34,8 +54,6 @@ mca_ptl_elan_recv_frag_construct (mca_ptl_elan_recv_frag_t * frag)
 static void
 mca_ptl_elan_recv_frag_destruct (mca_ptl_elan_recv_frag_t * frag)
 {
-    /* Does this destruct free the memory? since OBJ_DESTRUCT,
-     * works only for non-dynamically allocated objects */
     frag->frag_hdr_cnt = 0;
     frag->frag_msg_cnt = 0;
     frag->frag_progressed = 0;
@@ -55,7 +73,7 @@ ompi_class_t mca_ptl_elan_recv_frag_t_class = {
 
 extern mca_ptl_elan_state_t mca_ptl_elan_global_state;
 
-mca_ptl_elan_desc_item_t *
+mca_ptl_elan_send_frag_t *
 mca_ptl_elan_alloc_send_desc (struct mca_ptl_t *ptl_ptr,
                   struct mca_pml_base_send_request_t *sendreq)
 {
@@ -64,7 +82,7 @@ mca_ptl_elan_alloc_send_desc (struct mca_ptl_t *ptl_ptr,
 
     ompi_free_list_t *flist;
     ompi_list_item_t *item;
-    mca_ptl_elan_desc_item_t *desc;
+    mca_ptl_elan_send_frag_t *desc;
 
     START_FUNC();
 
@@ -105,7 +123,7 @@ mca_ptl_elan_alloc_send_desc (struct mca_ptl_t *ptl_ptr,
                 item = ompi_list_remove_first (&((flist)->super));
             }
         }
-        desc = (mca_ptl_elan_desc_item_t *) item; 
+        desc = (mca_ptl_elan_send_frag_t *) item; 
 	desc->desc->desc_type = MCA_PTL_ELAN_QDMA_DESC;
     }
     desc->desc->req = (struct mca_pml_base_send_request_t *)sendreq;

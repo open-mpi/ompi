@@ -21,7 +21,7 @@ ompi_init_elan_queue_events (mca_ptl_elan_t * ptl,
     int         main_align, main_size;
     int         elan_align, elan_size;
 
-    mca_ptl_elan_desc_item_t *desc;
+    mca_ptl_elan_send_frag_t *desc;
 
     RAIL       *rail;
     ELAN4_CTX  *ctx;
@@ -55,8 +55,8 @@ ompi_init_elan_queue_events (mca_ptl_elan_t * ptl,
 
     /* Allocate the elements */
 
-    desc = (mca_ptl_elan_desc_item_t *) 
-        malloc(sizeof(mca_ptl_elan_desc_item_t) * (count + 1));
+    desc = (mca_ptl_elan_send_frag_t *) 
+        malloc(sizeof(mca_ptl_elan_send_frag_t) * (count + 1));
     OMPI_PTL_ELAN_CHECK_UNEX (desc, NULL, OMPI_ERROR, 0);
 
     ptr = (ompi_ptl_elan_qdma_desc_t *) elan4_allocMain (rail->r_alloc,
@@ -158,7 +158,7 @@ ompi_init_elan_qdma (mca_ptl_elan_module_1_0_0_t * emp,
         OMPI_PTL_ELAN_CHECK_UNEX (queue->tx_cmdq, NULL, OMPI_ERROR, 0);
 
         /* 
-         * Elan4 has a rather complicated hierarchical event mechanism.
+         * Elan4 has a hierarchical event mechanism.
          * It is easy to use but nontrivial to manipulate
          * We implement a simpler event control mechanism, which
          * should also provide us the capability to chain event,

@@ -22,19 +22,12 @@ extern ompi_class_t mca_ptl_elan_recv_frag_t_class;
 struct mca_ptl_elan_peer_t;
 struct ompi_ptl_elan_base_desc_t;
 
-struct mca_ptl_elan_desc_item_t {
-#if 0
-   mca_ptl_base_send_frag_t frag_send;  
-   struct iovec *frag_vec_ptr;
-   size_t frag_vec_cnt;
-   struct iovec frag_vec[2];
-   volatile int frag_progressed;
-#endif
-    ompi_list_item_t   super;
-    volatile int       frag_progressed;
+struct mca_ptl_elan_send_frag_t {
+    mca_ptl_base_frag_t frag_base;  
+    volatile int        frag_progressed;
     struct ompi_ptl_elan_base_desc_t *desc;
 };
-typedef struct mca_ptl_elan_desc_item_t mca_ptl_elan_desc_item_t;
+typedef struct mca_ptl_elan_send_frag_t mca_ptl_elan_send_frag_t;
 
 /**
  *  ELAN received fragment derived type.
@@ -54,7 +47,7 @@ struct mca_ptl_elan_recv_frag_t {
 };
 typedef struct mca_ptl_elan_recv_frag_t mca_ptl_elan_recv_frag_t;
 
-mca_ptl_elan_desc_item_t *
+mca_ptl_elan_send_frag_t *
 mca_ptl_elan_alloc_send_desc( struct mca_ptl_t *ptl,
                   struct mca_pml_base_send_request_t *sendreq);
 
@@ -83,6 +76,5 @@ mca_ptl_elan_recv_frag_progress(mca_ptl_elan_recv_frag_t* frag)
     }
 }
 #endif
-
 
 #endif
