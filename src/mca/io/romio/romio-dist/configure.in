@@ -286,7 +286,8 @@ ROMIO_TFFLAGS=""
 NOPROFILE=0
 MPIRUN=""
 FORTRAN_TEST=""
-MAKE=${MAKE:-"make"}
+# Open MPI: This is a Bad Thing to do in Automake-based build systems
+#MAKE=${MAKE:-"make"}
 # foll. needed for f77 test programs
 F77GETARG="call getarg(i,str)"
 F77IARGC="iargc()"
@@ -1675,7 +1676,8 @@ AC_SUBST(MPI_LIB)
 AC_SUBST(F77)
 AC_SUBST(NOF77)
 AC_SUBST(NOPROFILE)
-AC_SUBST(MAKE)
+# Open MPI: This is a Bad Thing to do in Automake-based build systems
+#AC_SUBST(MAKE)
 AC_SUBST(PREFIX)
 AC_SUBST(arch_IRIX)
 AC_SUBST(ROMIO_HOME)
