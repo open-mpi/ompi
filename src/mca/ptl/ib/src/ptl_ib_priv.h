@@ -182,6 +182,12 @@ typedef struct mca_ptl_ib_peer_conn_t mca_ptl_ib_peer_conn_t;
     ib_buf_ptr->desc.sr.id = (VAPI_virt_addr_t)                     \
         (MT_virt_addr_t) addr;                                      \
 }
+
+#define IB_SET_SEND_DESC_LEN(ib_buf_ptr, msg_len) {                 \
+    ib_buf_ptr->desc.sg_entry.len = msg_len;                        \
+}
+
+
 int mca_ptl_ib_init_module(mca_ptl_ib_state_t*, int);
 int mca_ptl_ib_get_num_hcas(uint32_t*);
 int mca_ptl_ib_init_peer(mca_ptl_ib_state_t*, mca_ptl_ib_peer_conn_t*);

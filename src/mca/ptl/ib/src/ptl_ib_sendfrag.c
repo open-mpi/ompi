@@ -122,12 +122,20 @@ int mca_ptl_ib_send_frag_init(mca_ptl_ib_send_frag_t* sendfrag,
         /* adjust size and request offset to reflect actual 
          * number of bytes packed by convertor */
         size_out = iov.iov_len;
+#if 0
         IB_PREPARE_SEND_DESC((&sendfrag->ib_buf), 0, 
                 (header_length + iov.iov_len));
+#endif
+        IB_SET_SEND_DESC_LEN((&sendfrag->ib_buf),
+               (header_length + iov.iov_len));
     } else {
         size_out = size_in;
+#if 0
         IB_PREPARE_SEND_DESC((&sendfrag->ib_buf), 0, 
                 (header_length + size_in));
+#endif
+        IB_SET_SEND_DESC_LEN((&sendfrag->ib_buf),
+               (header_length + size_in));
     }
 
     hdr->hdr_frag.hdr_frag_length = size_out;

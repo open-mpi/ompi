@@ -173,7 +173,7 @@ static void mca_ptl_ib_peer_send_connect_ack(mca_ptl_base_peer_t* peer)
     sendbuf = (char*) malloc(sizeof(char)*50);
 
     if(NULL == sendbuf) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
+        ompi_output(0, "Out of resources");
     }
 
     /* Zero out the send buffer */
@@ -196,12 +196,10 @@ static void mca_ptl_ib_peer_send_connect_ack(mca_ptl_base_peer_t* peer)
             (void*)sendbuf, 50);
 
     if(rc != OMPI_SUCCESS) {
-        return rc;
+        ompi_output(0, "Error in sending connect ack!");
     }
 
     D_PRINT("Sent buffer : %s", sendbuf);
-
-    return OMPI_SUCCESS;
 }
 
 /*
@@ -498,6 +496,7 @@ int mca_ptl_ib_peer_send(mca_ptl_base_peer_t* peer,
             rc = mca_ptl_ib_peer_start_connect(peer);
 
             break;
+
         case MCA_PTL_IB_FAILED:
 
             rc = OMPI_ERR_UNREACH;
