@@ -344,7 +344,6 @@ int lam_convertor_init_for_send( lam_convertor_t* pConv, unsigned int flags,
         pConv->pStack = (dt_stack_t*)malloc(sizeof(dt_stack_t) * (dt->btypes[DT_LOOP] + 2) );
         pConv->stack_pos = 0;  /* just to be sure */
     }
-    lam_create_stack_with_pos( pConv, local_starting_point, local_sizes );
 
     pConv->pBaseBuf = pUserBuf;
     pConv->available_space = count * (dt->ub - dt->lb);
@@ -364,6 +363,7 @@ int lam_convertor_init_for_send( lam_convertor_t* pConv, unsigned int flags,
         free( pConv->freebuf );
         pConv->freebuf = NULL;
     }
+    lam_create_stack_with_pos( pConv, local_starting_point, local_sizes );
     return 0;
 }
 
