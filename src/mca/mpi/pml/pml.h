@@ -49,8 +49,11 @@ typedef struct mca_pml_base_status_t mca_pml_base_status_t;
  * PML interface functions
  */
 
-typedef int (*mca_pml_base_add_procs_fn_t)(struct lam_proc_t **procs, int nprocs);
-typedef int (*mca_pml_base_add_ptls_fn_t)(struct mca_ptl_t **ptls, int nptls);
+typedef int (*mca_pml_base_add_comm_fn_t)(struct lam_communicator_t*);
+typedef int (*mca_pml_base_del_comm_fn_t)(struct lam_communicator_t*);
+typedef int (*mca_pml_base_add_procs_fn_t)(struct lam_proc_t **procs, size_t nprocs);
+typedef int (*mca_pml_base_del_procs_fn_t)(struct lam_proc_t **procs, size_t nprocs);
+typedef int (*mca_pml_base_add_ptls_fn_t)(struct mca_ptl_t **ptls, size_t nptls);
 typedef int (*mca_pml_base_progress_fn_t)(mca_pml_base_tstamp_t);
 
 typedef int (*mca_pml_base_irecv_init_fn_t)(
@@ -131,7 +134,10 @@ typedef struct mca_pml_base_module_1_0_0_t mca_pml_base_module_1_0_0_t;
 
 struct mca_pml_1_0_0_t {
 
+    mca_pml_base_add_comm_fn_t     pml_add_comm;
+    mca_pml_base_del_comm_fn_t     pml_del_comm;
     mca_pml_base_add_procs_fn_t    pml_add_procs;
+    mca_pml_base_del_procs_fn_t    pml_del_procs;
     mca_pml_base_add_ptls_fn_t     pml_add_ptls;
     mca_pml_base_fini_fn_t         pml_fini;
 

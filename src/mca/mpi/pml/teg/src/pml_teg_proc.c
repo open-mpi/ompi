@@ -4,7 +4,7 @@
 
 #include "lam/atomic.h"
 #include "pml_teg_proc.h"
-#include "pml_teg_ptl_array.h"
+#include "pml_ptl_array.h"
 
 lam_class_info_t mca_pml_teg_proc_cls = { 
     "mca_pml_teg_proc_t", 
