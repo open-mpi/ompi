@@ -107,7 +107,17 @@ void lam_attr_destroy(void);
  * @param extra_state    Extra state to hang off/do some special things (IN)
  * @param predefined     Whether this key is should be treated as 
  *                       predefined (IN)
+
+ * NOTE: I have taken the assumption that user cannot modify/delete
+ * any predefined keys or the attributes attached. To accomplish this,
+ * all MPI* calls will have predefined argument set as 0. MPI
+ * implementors who will need to play with the predefined keys and
+ * attributes would call the lam* functions here and not the MPI*
+ * functions, with predefined argument set to 1. 
+ * END OF NOTE
+ *
  * @return LAM return code
+
  *
  */
 
@@ -165,6 +175,34 @@ int lam_attr_get(lam_attribute_type_t type, void *object, int key,
 
 int lam_attr_delete(lam_attribute_type_t type, void *object, int key,
 		    int predefined);
+
+
+/** 
+ * This to be used from functions like MPI_*_DUP inorder to copy all
+ * the attributes from the old Comm/Win/Dtype object to a new
+ * object. 
+ * @param type         Type of attribute (COMM/WIN/DTYPE) (IN)
+ * @param old_object   The old COMM/WIN/DTYPE object (IN)
+ * @param new_object   The new COMM/WIN/DTYPE object (IN)
+ * @return LAM error code
+ *
+ */
+
+int lam_attr_copy_all(lam_attribute_type_t type, void *old_object, 
+		      void *new_object);
+
+
+/** 
+ * This to be used to delete all the attributes from the Comm/Win/Dtype
+ * object in one shot
+ * @param type         Type of attribute (COMM/WIN/DTYPE) (IN)
+ * @param object       The COMM/WIN/DTYPE object (IN)
+ * @return LAM error code
+ *
+ */
+
+int lam_attr_delete_all(lam_attribute_type_t type, void *object);
+
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
