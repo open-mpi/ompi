@@ -104,7 +104,7 @@ sub check_last_version {
 
     print "This version: $new_version\n" if ($debug);
     if (! -f $last_test_version_name) {
-        print "Never tested on this system before\n";
+        print "Never tested on this system before\n" if ($debug);
         return;
     }
 
