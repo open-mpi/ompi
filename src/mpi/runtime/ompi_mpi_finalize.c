@@ -30,6 +30,7 @@
 #include "mca/topo/base/base.h"
 #include "mca/io/io.h"
 #include "mca/io/base/base.h"
+#include "mca/oob/base/base.h"
 
 
 int ompi_mpi_finalize(void)
@@ -117,6 +118,10 @@ int ompi_mpi_finalize(void)
   if (OMPI_SUCCESS != (ret = mca_coll_base_close())) {
     return ret;
   }
+
+  fprintf(stderr, "[%d,%d,%d] ompi_mpi_finalize\n",
+      mca_oob_name_self.cellid,mca_oob_name_self.jobid,mca_oob_name_self.vpid);
+
   if (OMPI_SUCCESS != (ret = mca_ptl_base_close())) {
     return ret;
   }
