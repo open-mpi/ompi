@@ -236,14 +236,14 @@ int orte_dps_buffer_extend(orte_buffer_t *bptr, size_t mem_req)
     int pages;
     void*  newbaseptr;
     int num_pages;
-    float frac_pages;
     ssize_t mdiff;
     size_t  sdiff;          /* difference (increase) in space */
     
     /* how many pages are required */
-    frac_pages = (float)mem_req/(float)orte_dps_page_size;
-    frac_pages = ceilf(frac_pages);
-    num_pages = (int)frac_pages;
+    num_pages = mem_req / orte_dps_page_size;
+    if (0 != mem_req % orte_dps_page_size) {
+        ++num_pages;
+    }
 
     /* push up page count */
     pages = bptr->pages + num_pages;
