@@ -94,7 +94,7 @@ static inline void mca_ptl_tcp_send_frag_progress(mca_ptl_tcp_send_frag_t* frag)
           mca_pml_base_send_request_matched(request))) { 
 
         /* make sure this only happens once in threaded case */ 
-        if(ompi_atomic_fetch_and_set_int(&frag->frag_progressed,1) == 0) {
+        if(ompi_atomic_cmpset(&frag->frag_progressed, 0, 1) == 1) {
 
             /* update request status */ 
             frag->frag_send.frag_base.frag_owner->ptl_send_progress(

@@ -407,34 +407,22 @@ static inline int ompi_obj_update(ompi_object_t *object, int inc)
 {
 #ifdef WIN32
 
-    int newval;
     LONG volatile *addr;
 
     addr = (LONG volatile *) &(object->obj_reference_count);
-    newval = (int) InterlockedExchangeAdd(addr, (LONG) inc) + inc;
+    (void)InterlockedExchangeAdd(addr, (LONG) inc) + inc;
 
 #elif OMPI_HAVE_ATOMIC
 
-    int newval;
-    int oldval;
-    volatile int *addr;
-
-    addr = (volatile int *) &(object->obj_reference_count);
-    do {
-        oldval = *addr;
-        newval = oldval + inc;
-    } while (ompi_atomic_cmpset_int(addr, oldval, newval) == 0);
+    ompi_atomic_add(&(object->obj_reference_count), 1 );
 
 #else
 
-    int newval;
-
     object->obj_reference_count += inc;
-    newval = object->obj_reference_count;
 
 #endif
 
-    return newval;
+    return object->obj_reference_count;
 }
 
 /**********************************************************************/

@@ -128,16 +128,13 @@ static inline bool mca_pml_base_send_request_matched(
  *
  * @param  request (IN)  Send request.
  * @param  offset (IN)   Increment.
- * return                TRUE if an ack/match has been received from peer.
  */
 
 static inline void mca_pml_base_send_request_offset(
     mca_pml_base_send_request_t* request,
     size_t offset)
 {
-    OMPI_THREAD_LOCK(&ompi_request_lock);
-    request->req_offset += offset;
-    OMPI_THREAD_UNLOCK(&ompi_request_lock);
+    ompi_atomic_add( &(request->req_offset), offset );
 }
 
 #if defined(c_plusplus) || defined(__cplusplus)
