@@ -20,8 +20,8 @@ EXTRA_DIST = acconfig.h err.c event.h evsignal.h event.3 kqueue.c \
 	WIN32-Prj/signal_test/signal_test.dsp WIN32-Prj/time_test \
 	WIN32-Prj/time_test/time_test.dsp
 
-# LAM: Changed to libevent.la
-lib_LTLIBRARIES = libevent.la
+# LAM: Changed to noinst and libevent.la
+noinst_LTLIBRARIES = libevent.la
 
 # LAM: Get LIBOBJS and convert them to .lo (vs. .o)
 libobj = @LIBOBJS@
