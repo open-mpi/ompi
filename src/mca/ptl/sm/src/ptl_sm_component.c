@@ -211,9 +211,9 @@ int mca_ptl_sm_component_close(void)
 #if OMPI_HAVE_THREADS == 1
     /* close/cleanup fifo create for event notification */
     if(mca_ptl_sm_component.sm_fifo_fd >= 0) {
-        ompi_event_del(&mca_ptl_sm_component.sm_fifo_event);
         close(mca_ptl_sm_component.sm_fifo_fd);
         unlink(mca_ptl_sm_component.sm_fifo_path);
+        ompi_thread_join(&mca_ptl_sm_component.sm_fifo_thread, NULL);
     }
 #endif
 
@@ -266,13 +266,9 @@ mca_ptl_base_module_t** mca_ptl_sm_component_init(
         return NULL;
     }
 
-    memset(&mca_ptl_sm_component.sm_fifo_event, 0, sizeof(ompi_event_t));
-    ompi_event_set(&mca_ptl_sm_component.sm_fifo_event,
-        mca_ptl_sm_component.sm_fifo_fd,
-        OMPI_EV_READ|OMPI_EV_PERSIST,
-        mca_ptl_sm_component_event_handler,
-        NULL);
-    ompi_event_add(&mca_ptl_sm_component.sm_fifo_event, NULL);
+    OBJ_CONSTRUCT(&mca_ptl_sm_component.sm_fifo_thread, ompi_thread_t);
+    mca_ptl_sm_component.sm_fifo_thread.t_run = mca_ptl_sm_component_event_thread;
+    ompi_thread_start(&mca_ptl_sm_component.sm_fifo_thread);
 #endif
 
     /* allocate the Shared Memory PTL */
@@ -332,15 +328,14 @@ int mca_ptl_sm_component_control(int param, void* value, size_t size)
  */
 
 #if OMPI_HAVE_THREADS == 1
-void mca_ptl_sm_component_event_handler(int sd, short flags, void* user)
+void mca_ptl_sm_component_event_thread(ompi_object_t* thread)
 {
-    unsigned char cmd;
-    int rc;
-    mca_ptl_sm_component_progress(0);
-    if(read(sd, &cmd, sizeof(cmd)) != sizeof(cmd)) {
-        ompi_output(0, "mca_ptl_sm_component_event_handler: read failed, errno=%d\n", 
-            errno);
-        ompi_event_del(&mca_ptl_sm_component.sm_fifo_event);
+    while(1) {
+        unsigned char cmd;
+        if(read(mca_ptl_sm_component.sm_fifo_fd, &cmd, sizeof(cmd)) != sizeof(cmd)) {
+            return;
+        }
+        mca_ptl_sm_component_progress(0);
     }
 }
 #endif
@@ -631,7 +626,6 @@ int mca_ptl_sm_component_progress(mca_ptl_tstamp_t tstamp)
 
         OMPI_THREAD_UNLOCK(&(mca_ptl_sm_component.sm_pending_ack_lock));
     }
-
     return return_status;
 }
 

@@ -125,7 +125,7 @@ struct mca_ptl_sm_component_t {
 #if OMPI_HAVE_THREADS == 1
     char sm_fifo_path[PATH_MAX];   /**< path to fifo used to signal this process */
     int  sm_fifo_fd;               /**< file descriptor corresponding to opened fifo */
-    ompi_event_t sm_fifo_event;    /**< event for callbacks on fifo activity */
+    ompi_thread_t sm_fifo_thread;
 #endif
 };
 typedef struct mca_ptl_sm_component_t mca_ptl_sm_component_t;
@@ -418,7 +418,7 @@ typedef struct mca_ptl_sm_exchange{
 }mca_ptl_sm_exchange_t;
 
 #if OMPI_HAVE_THREADS == 1
-void mca_ptl_sm_component_event_handler(int sd, short flags, void* user);
+void mca_ptl_sm_component_event_thread(ompi_object_t*);
 #endif
                                                                                                               
 #if OMPI_HAVE_THREADS == 1 
