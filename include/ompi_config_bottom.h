@@ -15,9 +15,23 @@
  */
 #ifndef __cplusplus
 #if OMPI_USE_STDBOOL_H
+/* If we're using <stdbool.h>, there is an implicit assumption that
+   the C++ bool is the same size and has the same alignment. */
 #include <stdbool.h>
 #else
-typedef enum { false, true } bool;
+/* We need to create a bool type and ensure that it's the same size /
+   alignment as the C++ bool size / alignment */
+#define false 0
+#define true 1
+#if SIZEOF_BOOL == SIZEOF_CHAR && OMPI_ALIGNMENT_CXX_BOOL == OMPI_ALIGNMENT_CHAR
+typedef bool char
+#elif SIZEOF_BOOL == SIZEOF_SHORT && OMPI_ALIGNMENT_CXX_BOOL == OMPI_ALIGNMENT_SHORT
+typedef bool short
+#elif SIZEOF_BOOL == SIZEOF_INT && OMPI_ALIGNMENT_CXX_BOOL == OMPI_ALIGNMENT_INT
+typedef bool int
+#else
+#error Cannot find a C type that corresponds to the size and alignment of C++ bool!
+#endif
 #endif
 #endif
 
