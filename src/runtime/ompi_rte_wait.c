@@ -17,7 +17,6 @@
 #include "include/constants.h"
 #include "threads/mutex.h"
 #include "threads/condition.h"
-#include "runtime/ompi_progress.h"
 
 
 /*********************************************************************
@@ -215,7 +214,7 @@ ompi_rte_waitpid(pid_t wpid, int *status, int options)
             ompi_condition_timedwait(data->cond, 
                                      cond_mutex, 
                                      &spintime);
-            ompi_progress();
+            ompi_event_loop(OMPI_EVLOOP_NONBLOCK);
         }
         ompi_mutex_unlock(cond_mutex);
 
@@ -428,7 +427,7 @@ register_sig_event(void)
     /* it seems that the event is only added to the queue at the next
        progress call.  So push the event library (might as well push
        the pml/ptl at the same time) */
-    ompi_progress();
+    ompi_event_loop(OMPI_EVLOOP_NONBLOCK);
 
  cleanup:
     OMPI_THREAD_UNLOCK(&ev_reg_mutex);

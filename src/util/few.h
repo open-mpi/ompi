@@ -32,6 +32,11 @@ extern "C" {
  * process exited successfully -- it simply indicates that the child
  * process exited.  The WIF* macros (see waitpid(2)) should be used to
  * examine the status to see hold the child exited.
+ *
+ * \warning This function should not be called if \c ompi_rte_init()
+ *          or \c MPI_Init() have been called.  This function is not
+ *          safe in a multi-threaded environment in which a handler
+ *          for \c SIGCHLD has been registered.
  */
 int ompi_few(char *argv[], int *status);
 

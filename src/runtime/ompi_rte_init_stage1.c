@@ -27,6 +27,7 @@
 
 #include "runtime/runtime.h"
 #include "runtime/runtime_internal.h"
+#include "runtime/ompi_rte_wait.h"
 
 /**
  * Initialze and setup a process in the OMPI RTE.
@@ -136,6 +137,11 @@ int ompi_rte_init_stage1(bool *allow_multi_user_threads, bool *have_hidden_threa
     if (OMPI_SUCCESS != (ret = ompi_rte_internal_init_spawn())) {
 	/* JMS show_help */
 	printf("show_help: ompi_rte_init failed in ompi_rte_internal_init_spawn\n");
+	return ret;
+    }
+    if (OMPI_SUCCESS != (ret = ompi_rte_wait_init())) {
+	/* JMS show_help */
+	printf("show_help: ompi_rte_init failed in ompi_rte_wait_init\n");
 	return ret;
     }
 
