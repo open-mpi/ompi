@@ -296,7 +296,7 @@ enum {
  */
 #define MPI_GROUP_NULL (&ompi_mpi_group_null)
 #define MPI_COMM_NULL (&ompi_mpi_comm_null)
-#define MPI_REQUEST_NULL ((MPI_Request) 0)
+#define MPI_REQUEST_NULL (&ompi_mpi_request_null)
 #define MPI_OP_NULL (&ompi_mpi_op_null)
 #define MPI_ERRHANDLER_NULL (&ompi_mpi_errhandler_null)
 #define MPI_INFO_NULL (&ompi_mpi_info_null)
@@ -390,6 +390,8 @@ extern struct ompi_communicator_t ompi_mpi_comm_null;
 
 extern struct ompi_group_t ompi_mpi_group_empty;
 extern struct ompi_group_t ompi_mpi_group_null;
+
+extern struct ompi_request_t ompi_mpi_request_null;
 
 extern struct ompi_op_t ompi_mpi_op_null;
 extern struct ompi_op_t ompi_mpi_op_max, ompi_mpi_op_min;
