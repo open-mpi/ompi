@@ -93,17 +93,17 @@ mca_pcm_rms_spawn_procs(struct mca_pcm_base_module_1_0_0_t* me,
     ompi_argv_append(&argc, &argv, "prun");
     if (nodes->nodes > 0) {
         /* copy over the number of nodes */
-        num = ltostr(nodes->nodes);
+        num = ompi_ltostr(nodes->nodes);
         ompi_argv_append(&argc, &argv, "-N");
         ompi_argv_append(&argc, &argv, num);
         free(num);
         /* and map to fix how they look at their num procs */
-        num = ltostr(nodes->nodes * nodes->count);
+        num = ompi_ltostr(nodes->nodes * nodes->count);
         ompi_argv_append(&argc, &argv, "-n");
         ompi_argv_append(&argc, &argv, num);
         free(num);
     } else {
-        num = ltostr(nodes->count);
+        num = ompi_ltostr(nodes->count);
         ompi_argv_append(&argc, &argv, "-n");
         ompi_argv_append(&argc, &argv, num);
         free(num);
