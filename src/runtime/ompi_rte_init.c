@@ -3,7 +3,7 @@
  */
 
 /** @file **/
-
+#define _GNU_SOURCE
 #include "ompi_config.h"
 
 #include "include/constants.h"
