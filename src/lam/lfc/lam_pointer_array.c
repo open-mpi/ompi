@@ -14,6 +14,33 @@
 #include "lam/lfc/lam_pointer_array.h"
 #include "lam/util/output.h"
 
+static void lam_pointer_array_construct(lam_pointer_array_t *);
+static void lam_pointer_array_destruct(lam_pointer_array_t *);
+
+lam_class_t lam_pointer_array_t_class = {
+    "lam_pointer_array_t",
+    OBJ_CLASS(lam_object_t),
+    (lam_construct_t) lam_pointer_array_construct,
+    (lam_destruct_t) lam_pointer_array_destruct
+};
+/**
+ * lam_pointer_array constructor
+ */
+void lam_pointer_array_construct(lam_pointer_array_t *new_pointer_array){
+
+    /* return */
+    return;
+}
+
+/**
+ * lam_pointer_array destructor
+ */
+void lam_pointer_array_destruct(lam_pointer_array_t *pointer_array){
+
+    /* return */
+    return;
+}
+
 /**
  * add a pointer to dynamic pointer table
  *

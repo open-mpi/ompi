@@ -5,10 +5,16 @@
 
 include $(top_srcdir)/config/Makefile.options
 
+noinst_LTLIBRARIES = libmpi_group.la
+
 # Source code files
 
 headers = \
         group.h
+
+libmpi_group_la_SOURCES = \
+	$(headers) \
+        mpi_group_init.c
 
 # Conditionally install the header files
 

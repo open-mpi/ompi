@@ -7,16 +7,20 @@
 
 
 #include "lam/threads/mutex.h"
+#include "lam/lfc/lam_object.h"
 
 /*
  * typedefs
  */
 typedef struct lam_pointer_array_t lam_pointer_array_t;
+extern lam_class_t lam_pointer_array_t_class;
 
 /*
  * dynamic pointer array
  */
 struct lam_pointer_array_t {
+    /* base class */
+    lam_object_t super;
     /* synchronization object */
     lam_mutex_t lock;
     /* inde_ of lowest free element */
