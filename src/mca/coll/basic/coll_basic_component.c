@@ -10,6 +10,7 @@
 
 #include "ompi_config.h"
 #include "coll_basic.h"
+#include "mca/coll/basic/coll-basic-version.h"
 
 #include "mpi.h"
 #include "mca/coll/coll.h"

@@ -9,6 +9,7 @@
  */
 
 #include "mca/topo/unity/src/topo_unity.h"
+#include "mca/topo/unity/topo-unity-version.h"
 
 /*
  * Public string showing the topo unity module version number
