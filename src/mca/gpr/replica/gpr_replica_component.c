@@ -327,29 +327,39 @@ mca_gpr_base_module_t *mca_gpr_replica_init(bool *allow_multi_user_threads, bool
 	/* initialize the registry head */
 	OBJ_CONSTRUCT(&mca_gpr_replica_head.registry, ompi_list_t);
 
-	/* ompi_output(0, "registry head setup"); */
+	if (mca_gpr_replica_debug) {
+	    ompi_output(0, "registry head setup");
+	}
 
 	/* initialize the global dictionary for segment id's */
 	OBJ_CONSTRUCT(&mca_gpr_replica_head.segment_dict, ompi_list_t);
 	OBJ_CONSTRUCT(&mca_gpr_replica_head.freekeys, ompi_list_t);
 	mca_gpr_replica_head.lastkey = 0;
 
-	/* ompi_output(0, "global dict setup"); */
+	if (mca_gpr_replica_debug) {
+	    ompi_output(0, "global dict setup");
+	}
 
 	/* initialize the notify request tracker */
 	OBJ_CONSTRUCT(&mca_gpr_replica_notify_request_tracker, ompi_list_t);
 	mca_gpr_replica_last_notify_id_tag = 0;
 	OBJ_CONSTRUCT(&mca_gpr_replica_free_notify_id_tags, ompi_list_t);
 
-	/* ompi_output(0, "req tracker setup"); */
+	if (mca_gpr_replica_debug) {
+	    ompi_output(0, "req tracker setup");
+	}
 
  	/* issue the non-blocking receive */ 
- 	rc = mca_oob_recv_packed_nb(MCA_OOB_NAME_ANY, MCA_OOB_TAG_GPR, 0, mca_gpr_replica_recv, NULL);
- 	if(rc != OMPI_SUCCESS && rc != OMPI_ERR_NOT_IMPLEMENTED) { 
- 	    return NULL;
- 	}
+	if (!mca_gpr_replica_debug) {
+	    rc = mca_oob_recv_packed_nb(MCA_OOB_NAME_ANY, MCA_OOB_TAG_GPR, 0, mca_gpr_replica_recv, NULL);
+	    if(rc != OMPI_SUCCESS && rc != OMPI_ERR_NOT_IMPLEMENTED) { 
+		return NULL;
+	    }
+	}
 
-	/* ompi_output(0, "nb receive setup"); */
+	if (!mca_gpr_replica_debug) {
+	    ompi_output(0, "nb receive setup");
+	}
 
 	/* Return the module */
 
@@ -1040,6 +1050,15 @@ void gpr_replica_remote_notify(ompi_process_name_t *recipient, int recipient_tag
 	return;
     }
 
+    if (OMPI_SUCCESS != ompi_pack(msg, &message->trig_action, 1, MCA_GPR_OOB_PACK_ACTION)) {
+	return;
+    }
+
+    if (OMPI_SUCCESS != ompi_pack(msg, &message->trig_synchro, 1, MCA_GPR_OOB_PACK_SYNCHRO_MODE)) {
+	return;
+    }
+
+    
     num_items = (int32_t)ompi_list_get_size(&message->data);
     if (OMPI_SUCCESS != ompi_pack(msg, &num_items, 1, OMPI_INT32)) {
 	return;

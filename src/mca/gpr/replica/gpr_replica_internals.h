@@ -76,16 +76,16 @@ bool gpr_replica_check_key_list(ompi_registry_mode_t mode,
 
 mca_gpr_replica_segment_t *gpr_replica_define_segment(char *segment);
 
-int gpr_replica_construct_trigger(ompi_registry_synchro_mode_t synchro_mode,
-				  ompi_registry_notify_action_t action,
-				  ompi_registry_mode_t addr_mode,
-				  char *segment, char **tokens, int trigger,
-				  mca_gpr_notify_id_t id_tag);
+mca_gpr_replica_trigger_list_t *gpr_replica_construct_trigger(ompi_registry_synchro_mode_t synchro_mode,
+							      ompi_registry_notify_action_t action,
+							      ompi_registry_mode_t addr_mode,
+							      char *segment, char **tokens, int trigger,
+							      mca_gpr_notify_id_t id_tag);
 
 ompi_registry_notify_message_t *gpr_replica_construct_notify_message(ompi_registry_mode_t addr_mode,
 								     char *segment, char **tokens);
 
-void gpr_replica_process_triggers(mca_gpr_replica_segment_t *seg,
+void gpr_replica_process_triggers(char *segment,
 				  mca_gpr_replica_trigger_list_t *trig,
 				  ompi_registry_notify_message_t *message);
 

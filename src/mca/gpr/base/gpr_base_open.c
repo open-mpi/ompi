@@ -142,6 +142,8 @@ OBJ_CLASS_INSTANCE(
 static void ompi_registry_notify_message_construct(ompi_registry_notify_message_t* msg)
 {
     OBJ_CONSTRUCT(&msg->data, ompi_list_t);
+    msg->trig_action = OMPI_REGISTRY_NOTIFY_NONE;
+    msg->trig_synchro = OMPI_REGISTRY_SYNCHRO_MODE_NONE;
     msg->num_tokens = 0;
     msg->tokens = NULL;
 }
