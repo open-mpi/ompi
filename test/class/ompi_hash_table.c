@@ -23,8 +23,6 @@
 #include "class/ompi_object.h"
 #include "class/ompi_hash_table.h"
 
-#if 0
-
 static FILE *error_out=NULL;
 
 char *num_keys[] = {
@@ -59,18 +57,26 @@ char *perm_keys[] = {
     NULL
 };
 
+typedef union {
+    uint32_t uvalue;
+    void *vvalue;
+} value_t;
+
 static void validate_table(ompi_hash_table_t *table, char *keys[], int is_numeric_keys)
 {
-    int         j;
-    const char  *val;
+    int         j, ret;
+    value_t value;
     
-    for ( j = 0; keys[j]; j += 2)
-    {
-        if ( 1 == is_numeric_keys )
-            val = ompi_hash_table_get_value_uint32(table, atoi(keys[j]));
-        else
-            val = ompi_hash_table_get_value_ptr(table, keys[j], strlen(keys[j]));
-        test_verify_str(keys[j+1], val);
+    for ( j = 0; keys[j]; j += 2) {
+        if ( 1 == is_numeric_keys ) {
+            ret = ompi_hash_table_get_value_uint32(table, atoi(keys[j]),
+                                                   (void**) &value.uvalue);
+        } else {
+            ret = ompi_hash_table_get_value_ptr(table, keys[j], 
+                                                strlen(keys[j]), 
+                                                &value.vvalue);
+        }
+        test_verify_str(keys[j+1], value.vvalue);
     }
     test_verify_int(j/2, ompi_hash_table_get_size(table));
 }
@@ -169,13 +175,4 @@ int main(int argc, char **argv)
 #endif
     
     return test_finalize();
-}
-
-#endif
-
-int
-main(int argc, char *argv[])
-{
-    printf("WARNING: Test disabled because it doesn't compile\n");
-    return 77;
 }
