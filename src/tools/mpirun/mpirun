@@ -149,11 +149,16 @@ do_prep_environ() {
 do_start_proc() {
     local rmt_hostname=$1 ; shift
     local rmt_vpid=$1 ; shift
+    local should_wait=$1 ; shift
     local argv="$*"
     local rmt_boot="${ompi_mydir}/mpiboot"
     local cmd=""
 
-    cmd="ssh ${rmt_hostname} -f -n ${rmt_boot} "
+    cmd="ssh ${rmt_hostname}" 
+    if test "$should_wait" = "0" ; then
+        cmd="${cmd} -f "
+    fi
+    cmd="${cmd} -n ${rmt_boot} "
     cmd="${cmd} -cellid 1 -jobid ${ompi_jobid} -procid ${rmt_vpid}"
     cmd="${cmd} -numprocs ${ompi_numprocs}"
     cmd="${cmd} -pwd ${ompi_cwd} ${ompi_prepped}"
@@ -172,6 +177,7 @@ do_start_proc() {
         cmd="${cmd} -commdir ${OMPI_MCA_oob_cofs_dir}"
     fi
     cmd="${cmd} -- ${argv}"
+    debug_echo "executing: ${cmd}"
     ${cmd}
 }
 
@@ -227,13 +233,17 @@ launch_procs() {
 
     do_prep_environ
 
-    for (( i=0 ; i < ${ompi_numprocs} ; i++)) ; do
-        do_start_proc "${1}" "${i}" "${args}"
+    # do N - 1 procs in the loop not waiting around
+    for (( i=0 ; i < ${ompi_numprocs} - 1 ; i++)) ; do
+        do_start_proc "${1}" "${i}" "0" "${args}"
         shift
         if test -z "${1}" ; then
             set -- ${ompi_hosts}
         fi
     done
+
+    # do the Nth proc and wait around
+    do_start_proc "${1}" "${i}" "1" "${args}"
 }
 
 
