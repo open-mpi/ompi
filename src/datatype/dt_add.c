@@ -119,10 +119,6 @@ int ompi_ddt_add( dt_desc_t* pdtBase, const dt_desc_t* pdtAdd,
          */
         OBJ_RETAIN( pdtAdd );
       
-        /* now we add a complex datatype */
-        if( disp != pdtBase->true_ub ) { /* add the initial gap */
-            if( disp < pdtBase->true_ub ) pdtBase->flags |= DT_FLAG_OVERLAP;
-        }
         /* keep trace of the total number of basic datatypes in the datatype definition */
         pdtBase->btypes[DT_LOOP]     += pdtAdd->btypes[DT_LOOP];
         pdtBase->btypes[DT_END_LOOP] += pdtAdd->btypes[DT_END_LOOP];
@@ -175,6 +171,23 @@ int ompi_ddt_add( dt_desc_t* pdtBase, const dt_desc_t* pdtAdd,
                              disp + pdtAdd->true_lb + 
                              (count - 1) * extent + pdtAdd->true_ub );
 
+    /* Is the data still contiguous ?
+     * The only way for the data to be contiguous is to have the true extent equal to his size.
+     * In other words to avoid having internal gaps between elements. And the datatypes
+     * should ALWAYS follow each other.
+     */
+    if( disp != pdtBase->true_ub ) { /* add the initial gap */
+        if( disp < pdtBase->true_ub ) pdtBase->flags |= DT_FLAG_OVERLAP;
+        UNSET_CONTIGUOUS_FLAG(pdtBase->flags);
+    } else {
+        if( (pdtBase->flags & DT_FLAG_CONTIGUOUS) && (pdtAdd->flags & DT_FLAG_CONTIGUOUS)
+            && (pdtBase->size == (uint32_t)(pdtBase->true_ub - pdtBase->true_lb)) ) {
+            SET_CONTIGUOUS_FLAG(pdtBase->flags);
+        } else {
+            UNSET_CONTIGUOUS_FLAG(pdtBase->flags);
+        }
+    }
+
     /* the lower bound should be inherited from the parents if and only
      * if the USER has explicitly set it. The result lb is the MIN between
      * the all lb + disp if and only if all or nobody flags's contain the LB.
@@ -211,14 +224,6 @@ int ompi_ddt_add( dt_desc_t* pdtBase, const dt_desc_t* pdtAdd,
     pdtBase->lb = lb;
     pdtBase->ub = ub;
     pdtBase->nbElems += (count * pdtAdd->nbElems);
-
-    /* Is the data still contiguous ?
-     * The only way for the data to be contiguous is to have the true extent equal to his size.
-     * In other words to avoid having internal gaps between elements.
-     */
-    if( ((int)pdtBase->size != (pdtBase->true_ub - pdtBase->true_lb)) ||
-        !(pdtBase->flags & DT_FLAG_CONTIGUOUS) || !(pdtAdd->flags & DT_FLAG_CONTIGUOUS) )
-        UNSET_CONTIGUOUS_FLAG(pdtBase->flags);
 
     return OMPI_SUCCESS;
 }
