@@ -25,7 +25,8 @@ enum {
     OMPI_ERR_UNREACH = -15,
     OMPI_ERR_NOT_FOUND = -16,
     OMPI_ERR_BUFFER = -17, /* equivalent to MPI_ERR_BUFFER */
-    OMPI_ERR_REQUEST = -18 /* equivalent to MPI_ERR_REQUEST */
+    OMPI_ERR_REQUEST = -18, /* equivalent to MPI_ERR_REQUEST */
+    OMPI_EXISTS = -19  /* indicates that the specified object already exists */
 };
 
 #endif /* OMPI_CONSTANTS_H */
