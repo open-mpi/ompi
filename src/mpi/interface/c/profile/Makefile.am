@@ -22,10 +22,12 @@ noinst_LTLIBRARIES = $(lib)
 headers = defines.h
 
 nodist_libmpi_c_profile_la_SOURCES = \
+        palloc_mem.c \
 	pcomm_get_name.c \
 	pcomm_set_name.c \
 	pinit.c \
-	pfinalize.c
+	pfinalize.c \
+        pfree_mem.c
 
 # Sym link in the sources from the real MPI directory
 
