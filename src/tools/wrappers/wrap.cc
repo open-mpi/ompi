@@ -403,7 +403,7 @@ ompi_wrap_exec_sv(const ompi_sv_t & sv)
     // the called app returned non-zero or if there was a failure in the
     // exec (like the file not being found).  So we look for the
     // compiler first, just to try to eliminate that case.
-    tmp = ompi_path_env_findv(av[0], 0, environ, NULL);
+    tmp = ompi_path_findv(av[0], 0, environ, NULL);
     if (NULL == tmp) {
 	ompi_show_help("help-wrapper.txt", "no-compiler-found", true,
 		       av[0], NULL);
