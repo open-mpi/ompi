@@ -61,7 +61,10 @@ mca_pcmclient_singleton_get_self(void)
 
     if (NULL == mca_pcmclient_singleton_procs) {
         ret = init_proclist();
-        if (OMPI_SUCCESS != ret) return ret;
+        if (OMPI_SUCCESS != ret) {
+            errno = ret;
+            return NULL;
+        }
     }
 
     return &mca_pcmclient_singleton_procs[0];

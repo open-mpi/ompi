@@ -24,8 +24,6 @@ mca_pcm_base_send_schedule(FILE *fp,
                            int num_procs)
 {
     int i, envc;
-    ompi_list_item_t *node_item;
-    mca_llm_base_hostfile_data_t *node;
 
     fprintf(fp, START_KEY);
     fprintf(fp, "%d\n", PROTOCOL_VERSION);
