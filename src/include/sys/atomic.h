@@ -48,6 +48,16 @@
 #include <sys/types.h>
 #endif
 
+/* do some quick #define cleanup in cases where we are doing
+   testing... */
+#ifdef OMPI_DISABLE_INLINE_ASM
+#undef OMPI_GCC_INLINE_ASSEMBLY
+#define OMPI_GCC_INLINE_ASSEMBLY 0
+#undef OMPI_DEC_INLINE_ASSEMBLY
+#define OMPI_DEC_INLINE_ASSEMBLY 0
+#undef OMPI_XLC_INLINE_ASSEMBLY
+#define OMPI_XLC_INLINE_ASSEMBLY 0
+#endif
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
