@@ -15,7 +15,7 @@ use Getopt::Long;
 
 # Set this to true for additional output; typically only when
 # debugging
-our $debug = 1;
+our $debug = 0;
 
 # download "latest" filename
 my $latest_name = "latest_snapshot.txt";
@@ -611,7 +611,6 @@ my @tarballs = sort(grep { /^openmpi.+gz\$/ && -f "$dir/$_" } readdir(DOWNLOADS)
 closedir(DOWNLOADS);
 my $i = $#tarballs;
 while ($i > $max_snapshots) {
-    print "UNLINKING: $tarballs[$i]\n";
     unlink($tarballs[$i]);
     ++$i;
 }
@@ -619,8 +618,8 @@ while ($i > $max_snapshots) {
 # send success mail
 my $email_subject;
 push(@email_output,
-"Summary of results:
-Building tarball and compiling/linking MPI \"hello world\"
+"SUMMARY OF RESULTS:
+  (Building tarball and compiling/linking MPI \"hello world\")
 --------------------------------------------------------------------------\n");
 foreach my $config (keys(%$results)) {
     my $str;
@@ -642,10 +641,16 @@ push(@email_output,
 
 
 # Include additional details if relevant
+my $header = 0;
 my $displayed = 0;
 foreach my $config (keys(%$results)) {
     my $output = 0;
-    my $str = "Build: " . $config . "
+    my $str;
+
+    $str .= "DETAILED RESULTS (as necessary):\n\n"
+        if (! $header);
+
+    $str .= "Build: " . $config . "
 Config options: " . $results->{$config}->{config} . "
 Result: " . ($results->{$config}->{status} == 0 ?
                      "Success" : "FAILURE") . "\n";
@@ -654,7 +659,7 @@ Result: " . ($results->{$config}->{status} == 0 ?
         $results->{$config}->{stdout} &&
         $#{$results->{$config}->{stdout}} >= 0) {
         push(@email_output, $str);
-        $displayed = $output = 1;
+        $header = $displayed = $output = 1;
 
         push(@email_output, 
 "--Standard output---------------------------------------------------------\n");
@@ -667,7 +672,7 @@ Result: " . ($results->{$config}->{status} == 0 ?
         $#{$results->{$config}->{stderr}} >= 0) {
         push(@email_output, $str)
             if ($output == 0);
-        $displayed = $output = 1;
+        $header = $displayed = $output = 1;
 
         push(@email_output, 
 "--Standard error----------------------------------------------------------\n");
@@ -681,7 +686,7 @@ Result: " . ($results->{$config}->{status} == 0 ?
         $#{$results->{$config}->{make_all_stderr}} >= 0) {
         push(@email_output, $str)
             if ($output == 0);
-        $displayed = $output = 1;
+        $header = $displayed = $output = 1;
 
         push(@email_output, 
 "--\"make all\" standard error---------------------------------------------------\n");
