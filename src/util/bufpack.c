@@ -21,7 +21,7 @@
 #include "class/ompi_object.h"
 #include "mca/ns/ns.h"
 
-#include "pack.h"
+#include "bufpack.h"
 
 typedef struct ompi_buffer_internal_t {
 	 /* first member must be the objects parent */

@@ -12,7 +12,7 @@
 #include "util/sys_info.h"
 #include "util/cmd_line.h"
 #include "util/proc_info.h"
-#include "util/pack.h"
+#include "util/bufpack.h"
 #include "util/session_dir.h"
 #include "util/output.h"
 #include "util/os_path.h"

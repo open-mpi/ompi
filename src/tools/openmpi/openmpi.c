@@ -23,7 +23,7 @@
 #include "util/argv.h"
 #include "util/output.h"
 #include "util/os_path.h"
-#include "util/pack.h"
+#include "util/bufpack.h"
 #include "util/sys_info.h"
 #include "util/cmd_line.h"
 #include "util/proc_info.h"

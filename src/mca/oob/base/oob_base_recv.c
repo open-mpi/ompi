@@ -9,7 +9,7 @@
 #include "mca/oob/base/base.h"
 #include <netinet/in.h>
 #include <string.h>
-#include "util/pack.h"
+#include "util/bufpack.h"
 
 
 /*

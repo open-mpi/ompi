@@ -11,7 +11,7 @@
 #include "mca/mca.h"
 #include "mca/ns/ns.h"
 #include <sys/uio.h>
-#include "util/pack.h"
+#include "util/bufpack.h"
 
 
 /*

@@ -8,7 +8,7 @@
 #include "ompi_config.h"
 #include "include/constants.h"
 #include "mca/mca.h"
-#include "util/pack.h"
+#include "util/bufpack.h"
 #include "mca/oob/base/base.h"
 #include "mca/ns/base/base.h"
 #include "ns_proxy.h"
