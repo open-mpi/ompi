@@ -42,7 +42,7 @@
 #define  PTL_ELAN_DEBUG_INIT    (0x001)
 #define  PTL_ELAN_DEBUG_FIN     (0x002)
 #define  PTL_ELAN_DEBUG_QDESC   (0x004)
-#define  PTL_ELAN_DEBUG_RDESC   (0x008)
+#define  PTL_ELAN_DEBUG_THREAD  (0x008)
 #define  PTL_ELAN_DEBUG_SEND    (0x010)
 #define  PTL_ELAN_DEBUG_RECV    (0x020)
 #define  PTL_ELAN_DEBUG_ACK     (0x040)
@@ -53,7 +53,7 @@
 #define  PTL_ELAN_DEBUG_CHAIN   (0x800)
 
 #define  PTL_ELAN_DEBUG_FLAG \
-(PTL_ELAN_DEBUG_PUT|PTL_ELAN_DEBUG_GET)
+    (PTL_ELAN_DEBUG_FIN | PTL_ELAN_DEBUG_INIT | PTL_ELAN_DEBUG_THREAD)
 
 #define START_FUNC(flag)                                       \
 do {                                                           \
@@ -86,7 +86,8 @@ do {                                                           \
 /* PTL_ELAN related MACROS, expose some as configurable options if needed */
 #define  OMPI_PTL_ELAN_ENABLE_GET    (0)
 #define  OMPI_PTL_ELAN_COMP_QUEUE    (1) 
-#define  OMPI_PTL_ELAN_THREADING     (OMPI_HAVE_POSIX_THREADS)
+#define  OMPI_PTL_ELAN_THREADING      \
+    (OMPI_PTL_ELAN_COMP_QUEUE && OMPI_HAVE_POSIX_THREADS)
 
 #define  OMPI_PTL_ELAN_MAX_QSIZE     (2048)
 #define  OMPI_PTL_ELAN_MAX_QSLOTS    (128)
@@ -377,9 +378,10 @@ int         mca_ptl_elan_get_with_ack (mca_ptl_base_module_t * ptl,
 				       mca_ptl_elan_send_frag_t * frag,
 				       mca_ptl_elan_recv_frag_t * recv_frag);
 
-int         mca_ptl_elan_poll_desc(mca_ptl_elan_send_frag_t *desc);
-int         mca_ptl_elan_wait_desc(mca_ptl_elan_send_frag_t *desc);
-
+int         mca_ptl_elan_poll_queue(ompi_ptl_elan_recv_queue_t *rxq);
+int         mca_ptl_elan_wait_queue(mca_ptl_elan_module_t * ptl,
+				    ompi_ptl_elan_recv_queue_t *rxq, 
+				    long usecs);
 /* control, synchronization and state prototypes */
 int         mca_ptl_elan_drain_recv(mca_ptl_elan_module_t  * ptl);
 int         mca_ptl_elan_update_desc(mca_ptl_elan_module_t * ptl); 
