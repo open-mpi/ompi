@@ -20,17 +20,19 @@
  * Myricom MX PTL component.
  */
 struct mca_ptl_mx_component_t {
-    mca_ptl_base_component_1_0_0_t super;         /**< base PTL component */
-    int    mx_free_list_num;                      /**< initial size of free lists */
-    int    mx_free_list_max;                      /**< maximum size of free lists */
-    int    mx_free_list_inc;                      /**< number of elements to growing free lists by */
-    uint32_t mx_filter;                           /**< filter assigned to application */
-    uint32_t mx_num_ptls;                         /**< number of MX NICs available to app */
-    struct mca_ptl_mx_module_t** mx_ptls;         /**< array of available PTL moduless */
-    ompi_free_list_t mx_send_frags;               /**< free list of mx send fragments */
-    ompi_free_list_t mx_recv_frags;               /**< free list of mx recv fragments */
-    ompi_hash_table_t mx_procs;                   /**< hash table of procs */
-    ompi_mutex_t mx_lock;                         /**< lock for accessing module state */
+    mca_ptl_base_component_1_0_0_t super;  /**< base PTL component */
+    int mx_free_list_num;                  /**< initial size of free lists */
+    int mx_free_list_max;                  /**< maximum size of free lists */
+    int mx_free_list_inc;                  /**< number of elements to growing free lists by */
+    int mx_prepost;                        /**< number of preposted recvs */
+    uint32_t mx_filter;                    /**< filter assigned to application */
+    uint32_t mx_num_ptls;                  /**< number of MX NICs available to app */
+    struct mca_ptl_mx_module_t** mx_ptls;  /**< array of available PTL moduless */
+    ompi_free_list_t mx_send_frags;        /**< free list of mx send fragments */
+    ompi_free_list_t mx_recv_frags;        /**< free list of mx recv fragments */
+    ompi_hash_table_t mx_procs;            /**< hash table of procs */
+    ompi_list_t mx_pending_acks;           /**< queue of pending sends */
+    ompi_mutex_t mx_lock;                  /**< lock for accessing module state */
 };
 
 typedef struct mca_ptl_mx_component_t mca_ptl_mx_component_t;
@@ -122,6 +124,10 @@ struct mca_ptl_mx_module_t {
     uint32_t mx_endpoint_id;             /**< endpoint ID */
     mx_endpoint_t mx_endpoint;           /**< endpoint */
     mx_endpoint_addr_t mx_endpoint_addr; /**< endpoint address */
+#if OMPI_HAVE_THREADS
+    ompi_thread_t mx_thread;             /**< thread for progressing outstanding requests */
+    bool mx_thread_run;                  /**< flag to indicate thread status */
+#endif
 };
 typedef struct mca_ptl_mx_module_t mca_ptl_mx_module_t;
 
@@ -263,7 +269,7 @@ extern void mca_ptl_mx_request_fini(
  * when a matching receive is posted.
  *
  * When this routine is called, the PTL is responsible for generating
- * an acknowledgment to the peer if the MCA_PTL_FLAGS_ACK_MATCHED
+ * an acknowledgment to the peer if the MCA_PTL_FLAGS_ACK
  * bit is set in the original fragment header. Additionally, the PTL
  * is responsible for transferring any data associated with the fragment
  * into the users buffer utilizing the datatype engine, and notifying
@@ -294,7 +300,7 @@ extern void mca_ptl_mx_matched(
  * The PTL is responsible for updating the current data offset (req_offset) in the
  * request to reflect the actual number of bytes fragmented.  This may be less than
  * the requested size, due to resource constraints or datatype alighnment/offset. If
- * an acknowledgment is required, the MCA_PTL_FLAGS_ACK_MATCHED bit will be set in the
+ * an acknowledgment is required, the MCA_PTL_FLAGS_ACK bit will be set in the
  * flags parameter. In this case, the PTL should not call ptl_send_progress() function
  * to indicate completion of the fragment until the ack is received. For all other
  * fragments ptl_send_progress() may be called based on local completion semantics.

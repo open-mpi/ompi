@@ -395,7 +395,7 @@ mca_ptl_elan_matched (mca_ptl_base_module_t * ptl,
     request = frag->frag_request;
     recv_frag = (mca_ptl_elan_recv_frag_t * ) frag;
 
-    if (header->hdr_common.hdr_flags & MCA_PTL_FLAGS_ACK_MATCHED) {
+    if (header->hdr_common.hdr_flags & MCA_PTL_FLAGS_ACK) {
 	int  desc_type ;
 	/* Basic ACK scheme following TCP cases */
 	mca_ptl_elan_send_frag_t *desc;

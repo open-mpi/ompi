@@ -124,7 +124,7 @@
  * the request will be scheduled upon an acknowledgment from the peer 
  * that the request has been matched on the receive side. The PTL receiving
  * the fragment is responsible for generating an acknowledgment when the 
- * MCA_PTL_FLAGS_ACK_MATCHED bit is set in the flags field of the fragment 
+ * MCA_PTL_FLAGS_ACK bit is set in the flags field of the fragment 
  * header. The PTL receiving an ack is responsible for updating the
  * the send request descriptor to point to the matched recv descriptor 
  * and the destination buffer address at the remote process. The address of 
@@ -187,7 +187,7 @@
  * receives if the underlying transport supports scatter/gather operations.
  *
  * The ptl_matched() function should additionally generate, if required, an 
- * ack to the source process. An ack is required if the MCA_PTL_FLAGS_ACK_MATCHED 
+ * ack to the source process. An ack is required if the MCA_PTL_FLAGS_ACK
  * bit is set by the source in the flags field of the initial message header.  
  * As described above, the generated ack should contain a pointer to the matched 
  * receive request, along with the pointer to the destination buffer. 
@@ -481,7 +481,7 @@ typedef void (*mca_ptl_base_module_request_fini_fn_t)(
  * The PTL is responsible for updating the current data offset (req_offset) in the 
  * request to reflect the actual number of bytes fragmented.  This may be less than 
  * the requested size, due to resource constraints or datatype alighnment/offset. If
- * an acknowledgment is required, the MCA_PTL_FLAGS_ACK_MATCHED bit will be set in the
+ * an acknowledgment is required, the MCA_PTL_FLAGS_ACK bit will be set in the
  * flags parameter. In this case, the PTL should not call ptl_send_progress() function
  * to indicate completion of the fragment until the ack is received. For all other 
  * fragments ptl_send_progress() may be called based on local completion semantics.
@@ -592,7 +592,7 @@ typedef bool (*mca_ptl_base_module_match_fn_t)(
  * when a matching receive is posted. 
  *
  * When this routine is called, the PTL is responsible for generating 
- * an acknowledgment to the peer if the MCA_PTL_FLAGS_ACK_MATCHED
+ * an acknowledgment to the peer if the MCA_PTL_FLAGS_ACK
  * bit is set in the original fragment header. Additionally, the PTL
  * is responsible for transferring any data associated with the fragment
  * into the users buffer utilizing the datatype engine, and notifying

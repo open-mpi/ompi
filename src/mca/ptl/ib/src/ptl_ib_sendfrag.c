@@ -301,8 +301,7 @@ void mca_ptl_ib_process_send_comp(mca_ptl_base_module_t *module,
         /* An ack descriptor ? Don't know what to do! */
         OMPI_FREE_LIST_RETURN(flist, 
                 ((ompi_list_item_t *) sendfrag));
-    } else if (0 == (header->hdr_common.hdr_flags 
-                & MCA_PTL_FLAGS_ACK_MATCHED)
+    } else if (0 == (header->hdr_common.hdr_flags & MCA_PTL_FLAGS_ACK)
             || mca_pml_base_send_request_matched(req)) {
 
         module->ptl_send_progress(module,

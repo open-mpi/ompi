@@ -24,8 +24,8 @@
 #define MCA_PTL_HDR_TYPE_FIN    5
 #define MCA_PTL_HDR_TYPE_FIN_ACK 6
 
-#define MCA_PTL_FLAGS_ACK_MATCHED     1
-#define MCA_PTL_FLAGS_ACK_AGGREGATE   2
+#define MCA_PTL_FLAGS_ACK    1  /* is an ack required */
+#define MCA_PTL_FLAGS_NBO    2  /* is the header in network byte order */
 
 
 /*
@@ -99,16 +99,20 @@ struct mca_ptl_base_frag_header_t {
 typedef struct mca_ptl_base_frag_header_t mca_ptl_base_frag_header_t;
 
 #define MCA_PTL_BASE_FRAG_HDR_NTOH(h) \
+    do { \
     MCA_PTL_BASE_COMMON_HDR_NTOH((h).hdr_common); \
     (h).hdr_frag_length = ntohl((h).hdr_frag_length); \
     (h).hdr_frag_offset = ntohl((h).hdr_frag_offset); \
-    (h).hdr_frag_seq = ntoh64((h).hdr_frag_seq)
+    (h).hdr_frag_seq = ntoh64((h).hdr_frag_seq); \
+    } while (0)
 
 #define MCA_PTL_BASE_FRAG_HDR_HTON(h) \
+    do { \
     MCA_PTL_BASE_COMMON_HDR_HTON((h).hdr_common); \
     (h).hdr_frag_length = htonl((h).hdr_frag_length); \
     (h).hdr_frag_offset = htonl((h).hdr_frag_offset); \
-    (h).hdr_frag_seq = hton64((h).hdr_frag_seq) 
+    (h).hdr_frag_seq = hton64((h).hdr_frag_seq); \
+    } while (0)
 
 /**
  *  Header definition for the first fragment, contains the additional
@@ -126,22 +130,26 @@ struct mca_ptl_base_match_header_t {
 typedef struct mca_ptl_base_match_header_t mca_ptl_base_match_header_t;
 
 #define MCA_PTL_BASE_MATCH_HDR_NTOH(h) \
+    do { \
     MCA_PTL_BASE_FRAG_HDR_NTOH((h).hdr_frag); \
     (h).hdr_contextid = ntohl((h).hdr_contextid); \
     (h).hdr_src = ntohl((h).hdr_src); \
     (h).hdr_dst = ntohl((h).hdr_dst); \
     (h).hdr_tag = ntohl((h).hdr_tag); \
     (h).hdr_msg_length = ntohl((h).hdr_msg_length); \
-    (h).hdr_msg_seq = ntoh64((h).hdr_msg_seq)
+    (h).hdr_msg_seq = ntoh64((h).hdr_msg_seq); \
+    } while (0)
 
 #define MCA_PTL_BASE_MATCH_HDR_HTON(h) \
+    do { \
     MCA_PTL_BASE_FRAG_HDR_HTON((h).hdr_frag); \
     (h).hdr_contextid = htonl((h).hdr_contextid); \
     (h).hdr_src = htonl((h).hdr_src); \
     (h).hdr_dst = htonl((h).hdr_dst); \
     (h).hdr_tag = htonl((h).hdr_tag); \
     (h).hdr_msg_length = htonl((h).hdr_msg_length); \
-    (h).hdr_msg_seq = hton64((h).hdr_msg_seq)
+    (h).hdr_msg_seq = hton64((h).hdr_msg_seq); \
+    } while (0) 
     
 
 /**
@@ -158,12 +166,16 @@ struct mca_ptl_base_ack_header_t {
 typedef struct mca_ptl_base_ack_header_t mca_ptl_base_ack_header_t;
 
 #define MCA_PTL_BASE_ACK_HDR_NTOH(h) \
+    do { \
     MCA_PTL_BASE_COMMON_HDR_NTOH(h.hdr_common); \
-    (h).hdr_dst_size = ntohl((h).hdr_dst_size)
+    (h).hdr_dst_size = ntohl((h).hdr_dst_size); \
+    } while (0)
 
 #define MCA_PTL_BASE_ACK_HDR_HTON(h) \
+    do { \
     MCA_PTL_BASE_COMMON_HDR_HTON((h).hdr_common); \
-    (h).hdr_dst_size = htonl((h).hdr_dst_size)
+    (h).hdr_dst_size = htonl((h).hdr_dst_size); \
+    } while (0) 
 
 /**
  * Union of defined header types.
