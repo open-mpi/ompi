@@ -8,4 +8,6 @@ noinst_LTLIBRARIES = libmca_gpr_replica.la
 libmca_gpr_replica_la_SOURCES = \
 	gpr_replica.h \
         gpr_replica.c \
+        gpr_replica_internals.h \
+        gpr_replica_internals.c \
         gpr_replica_component.c

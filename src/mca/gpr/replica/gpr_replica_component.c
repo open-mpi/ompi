@@ -65,18 +65,18 @@ static bool initialized = false;
 /*
  * globals needed within replica component
  */
-ompi_registry_t mca_gpr_head;
+mca_gpr_registry_t mca_gpr_replica_head;
 
 
 /* constructor - used to initialize state of keytable instance */
-static void ompi_keytable_construct(ompi_keytable_t* keytable)
+static void mca_gpr_keytable_construct(mca_gpr_keytable_t* keytable)
 {
     keytable->token = NULL;
     keytable->key = 0;
 }
 
 /* destructor - used to free any resources held by instance */
-static void ompi_keytable_destructor(ompi_keytable_t* keytable)
+static void mca_gpr_keytable_destructor(mca_gpr_keytable_t* keytable)
 {
     if (NULL != keytable->token) {
 	free(keytable->token);
@@ -85,125 +85,130 @@ static void ompi_keytable_destructor(ompi_keytable_t* keytable)
 
 /* define instance of ompi_class_t */
 OBJ_CLASS_INSTANCE(
-		   ompi_keytable_t,  /* type name */
-		   ompi_list_item_t, /* parent "class" name */
-		   ompi_keytable_construct, /* constructor */
-		   ompi_keytable_destructor); /* destructor */
+		   mca_gpr_keytable_t,            /* type name */
+		   ompi_list_item_t,              /* parent "class" name */
+		   mca_gpr_keytable_construct,    /* constructor */
+		   mca_gpr_keytable_destructor);  /* destructor */
 
 
 /* constructor - used to initialize state of keytable instance */
-static void ompi_keylist_construct(ompi_keylist_t* keylist)
+static void mca_gpr_keylist_construct(mca_gpr_keylist_t* keylist)
 {
     keylist->key = 0;
 }
 
 /* destructor - used to free any resources held by instance */
-static void ompi_keylist_destructor(ompi_keylist_t* keylist)
+static void mca_gpr_keylist_destructor(mca_gpr_keylist_t* keylist)
 {
 }
 
 /* define instance of ompi_class_t */
 OBJ_CLASS_INSTANCE(
-		   ompi_keylist_t,  /* type name */
-		   ompi_list_item_t, /* parent "class" name */
-		   ompi_keylist_construct, /* constructor */
-		   ompi_keylist_destructor); /* destructor */
+		   mca_gpr_keylist_t,           /* type name */
+		   ompi_list_item_t,            /* parent "class" name */
+		   mca_gpr_keylist_construct,   /* constructor */
+		   mca_gpr_keylist_destructor); /* destructor */
 
 /* constructor - used to initialize state of keytable instance */
-static void ompi_subscribe_list_construct(ompi_subscribe_list_t* subscriber)
+static void mca_gpr_subscriber_list_construct(mca_gpr_subscriber_list_t* subscriber)
 {
-    subscriber->id = 0;
+    subscriber->subscriber = NULL;
     subscriber->action = 0x00;
 }
 
 /* destructor - used to free any resources held by instance */
-static void ompi_subscribe_list_destructor(ompi_subscribe_list_t* subscriber)
+static void mca_gpr_subscriber_list_destructor(mca_gpr_subscriber_list_t* subscriber)
 {
-}
-
-/* define instance of ompi_class_t */
-OBJ_CLASS_INSTANCE(
-		   ompi_subscribe_list_t,  /* type name */
-		   ompi_list_item_t, /* parent "class" name */
-		   ompi_subscribe_list_construct, /* constructor */
-		   ompi_subscribe_list_destructor); /* destructor */
-
-
-/* constructor - used to initialize state of replica list instance */
-static void ompi_replica_list_construct(ompi_replica_list_t* replica)
-{
-    replica->name = NULL;
-}
-
-/* destructor - used to free any resources held by instance */
-static void ompi_replica_list_destructor(ompi_replica_list_t* replica)
-{
-    if (NULL != replica->name) {
-	free(replica->name);
+    if (NULL != subscriber->subscriber) {
+	free(subscriber->subscriber);
     }
 }
 
 /* define instance of ompi_class_t */
 OBJ_CLASS_INSTANCE(
-		   ompi_replica_list_t,  /* type name */
-		   ompi_list_item_t, /* parent "class" name */
-		   ompi_replica_list_construct, /* constructor */
-		   ompi_replica_list_destructor); /* destructor */
+		   mca_gpr_subscriber_list_t,           /* type name */
+		   ompi_list_item_t,                    /* parent "class" name */
+		   mca_gpr_subscriber_list_construct,   /* constructor */
+		   mca_gpr_subscriber_list_destructor); /* destructor */
+
+
+/* constructor - used to initialize state of replica list instance */
+static void mca_gpr_replica_list_construct(mca_gpr_replica_list_t* replica)
+{
+    replica->replica = NULL;
+}
+
+/* destructor - used to free any resources held by instance */
+static void mca_gpr_replica_list_destructor(mca_gpr_replica_list_t* replica)
+{
+    if (NULL != replica->replica) {
+	free(replica->replica);
+    }
+}
+
+/* define instance of ompi_class_t */
+OBJ_CLASS_INSTANCE(
+		   mca_gpr_replica_list_t,           /* type name */
+		   ompi_list_item_t,                 /* parent "class" name */
+		   mca_gpr_replica_list_construct,   /* constructor */
+		   mca_gpr_replica_list_destructor); /* destructor */
 
 
 
 /* constructor - used to initialize state of registry core instance */
-static void ompi_registry_core_construct(ompi_registry_core_t* reg)
+static void mca_gpr_registry_core_construct(mca_gpr_registry_core_t* reg)
 {
-    reg->object = NULL;
-    reg->object_size = 0;
-    OBJ_CONSTRUCT(&reg->subscriber, ompi_list_t);
     OBJ_CONSTRUCT(&reg->keys, ompi_list_t);
+    reg->object_size = 0;
+    reg->object = NULL;
+    OBJ_CONSTRUCT(&reg->subscriber, ompi_list_t);
+    OBJ_CONSTRUCT(&reg->replicas, ompi_list_t);
 }
 
 /* destructor - used to free any resources held by instance */
-static void ompi_registry_core_destructor(ompi_registry_core_t* reg)
+static void mca_gpr_registry_core_destructor(mca_gpr_registry_core_t* reg)
 {
+    OBJ_DESTRUCT(&reg->keys);
     if (NULL != reg->object) {
 	free(reg->object);
     }
     OBJ_DESTRUCT(&reg->subscriber);
-    OBJ_DESTRUCT(&reg->keys);
+    OBJ_DESTRUCT(&reg->replicas);
 }
 
 /* define instance of ompi_class_t */
 OBJ_CLASS_INSTANCE(
-		   ompi_registry_core_t,  /* type name */
+		   mca_gpr_registry_core_t,  /* type name */
 		   ompi_list_item_t, /* parent "class" name */
-		   ompi_registry_core_construct, /* constructor */
-		   ompi_registry_core_destructor); /* destructor */
+		   mca_gpr_registry_core_construct, /* constructor */
+		   mca_gpr_registry_core_destructor); /* destructor */
 
 
 
 /* constructor - used to initialize state of segment instance */
-static void ompi_registry_segment_construct(ompi_registry_segment_t* seg)
+static void mca_gpr_registry_segment_construct(mca_gpr_registry_segment_t* seg)
 {
-    seg->segment = 0;
+    seg->segment = NULL;
     seg->lastkey = 0;
-    OBJ_CONSTRUCT(&seg->reg_list, ompi_list_t);
+    OBJ_CONSTRUCT(&seg->registry_entries, ompi_list_t);
     OBJ_CONSTRUCT(&seg->keytable, ompi_list_t);
     OBJ_CONSTRUCT(&seg->freekeys, ompi_list_t);
 }
 
 /* destructor - used to free any resources held by instance */
-static void ompi_registry_segment_destructor(ompi_registry_segment_t* seg)
+static void mca_gpr_registry_segment_destructor(mca_gpr_registry_segment_t* seg)
 {
-    OBJ_DESTRUCT(&seg->reg_list);
+    OBJ_DESTRUCT(&seg->registry_entries);
     OBJ_DESTRUCT(&seg->keytable);
     OBJ_DESTRUCT(&seg->freekeys);
 }
 
 /* define instance of ompi_class_t */
 OBJ_CLASS_INSTANCE(
-		   ompi_registry_segment_t,  /* type name */
+		   mca_gpr_registry_segment_t,  /* type name */
 		   ompi_list_item_t, /* parent "class" name */
-		   ompi_registry_segment_construct, /* constructor */
-		   ompi_registry_segment_destructor); /* destructor */
+		   mca_gpr_registry_segment_construct, /* constructor */
+		   mca_gpr_registry_segment_destructor); /* destructor */
 
 
 /*
@@ -246,12 +251,12 @@ mca_gpr_base_module_t *mca_gpr_replica_init(bool *allow_multi_user_threads, bool
 	*have_hidden_threads = false;
 
 	/* initialize the registry head */
-	OBJ_CONSTRUCT(&mca_gpr_head.registry, ompi_list_t);
+	OBJ_CONSTRUCT(&mca_gpr_replica_head.registry, ompi_list_t);
 
 	/* initialize the global dictionary for segment id's */
-	OBJ_CONSTRUCT(&mca_gpr_head.segment_dict, ompi_list_t);
-	OBJ_CONSTRUCT(&mca_gpr_head.freekeys, ompi_list_t);
-	mca_gpr_head.lastkey = 0;
+	OBJ_CONSTRUCT(&mca_gpr_replica_head.segment_dict, ompi_list_t);
+	OBJ_CONSTRUCT(&mca_gpr_replica_head.freekeys, ompi_list_t);
+	mca_gpr_replica_head.lastkey = 0;
 
 	/* define the "universe" segment key */
 	/*	if (0 == gpr_replica_definekey("universe", NULL)) {

@@ -18,7 +18,7 @@
  * @retval key Unsigned long integer value corresponding to the specified token within the specified segment.
  * @retval -1 Indicates that the segment and/or token could not be found.
  */
-mca_gpr_replica_key_t gpr_replica_getkey(char *segment, char *token);
+mca_gpr_replica_key_t gpr_replica_get_key(char *segment, char *token);
 
 /** Add a token to a segment's dictionary.
  * The gpr_replica_definekey() function allows the addition of a new definition to
@@ -33,7 +33,7 @@ mca_gpr_replica_key_t gpr_replica_getkey(char *segment, char *token);
  * @retval key Unsigned long integer value corresponding to the specified token within the specified segment.
  * @retval -1 Indicates that the entry could not be created.
  */
-mca_gpr_replica_key_t gpr_replica_definekey(char *segment, char *token);
+mca_gpr_replica_key_t gpr_replica_define_key(char *segment, char *token);
 
 /** Delete a token from a segment's dictionary.
  * The gpr_replica_deletekey() function allows the removal of a definition from the
@@ -51,7 +51,7 @@ mca_gpr_replica_key_t gpr_replica_definekey(char *segment, char *token);
  * @retval OMPI_ERROR Indicates that the operation failed - most likely caused by specifying
  * a token that did not exist within the specified segment, or a non-existent segment.
  */
-int gpr_replica_deletekey(char *segment, char *token);
+int gpr_replica_delete_key(char *segment, char *token);
 
 /** Find a requested registry segment.
  * The gpr_replica_findseq() function finds the registry segment corresponding to
@@ -62,5 +62,7 @@ int gpr_replica_deletekey(char *segment, char *token);
  * @retval *seg Pointer to the segment
  * @retval NULL Indicates that the specified segment could not be found
  */
-ompi_registry_segment_t *gpr_replica_findseg(char *segment);
+mca_gpr_registry_segment_t *gpr_replica_find_seg(char *segment);
+
+mca_gpr_keytable_t *gpr_replica_find_dict_entry(char *segment, char *token);
 
