@@ -154,7 +154,9 @@ mca_ptl_elan_send_desc_done (
 { 
     mca_ptl_elan_module_t *ptl;
     mca_ptl_base_header_t *header;
+    int dtype;
  
+    dtype = frag->desc->desc_type;
     ptl = ((ompi_ptl_elan_qdma_desc_t *)frag->desc)->ptl;
     header = &frag->frag_base.frag_header;
 
@@ -166,7 +168,7 @@ mca_ptl_elan_send_desc_done (
 		    frag->frag_base.frag_size,
 		    frag->frag_base.frag_size);
 	}
-	elan4_freecq_space (ptl->ptl_elan_ctx,
+	PTL_ELAN4_FREE_QBUFF (ptl->ptl_elan_ctx,
 		((ompi_ptl_elan_putget_desc_t *) frag->desc)
 		->chain_event->ev_Params[1], 8);
 	OMPI_FREE_LIST_RETURN (&ptl->putget->get_desc_free,
@@ -184,9 +186,7 @@ mca_ptl_elan_send_desc_done (
     if(NULL == req) { /* An ack descriptor */
 	OMPI_FREE_LIST_RETURN (&ptl->queue->tx_desc_free,
 		(ompi_list_item_t *) frag);
-    } 
-#if 1   
-    else if (0 == (header->hdr_common.hdr_flags 
+    } else if (0 == (header->hdr_common.hdr_flags 
 		& MCA_PTL_FLAGS_ACK_MATCHED)
 	    || mca_pml_base_send_request_matched(req)) {
 	if(ompi_atomic_fetch_and_set_int (&frag->frag_progressed, 1) == 0) 
@@ -203,7 +203,7 @@ mca_ptl_elan_send_desc_done (
 	    ompi_free_list_t  *flist;
 	    if (frag->desc->desc_type == MCA_PTL_ELAN_DESC_PUT) {
 		flist = &ptl->putget->put_desc_free;
-		elan4_freecq_space (ptl->ptl_elan_ctx,
+		PTL_ELAN4_FREE_QBUFF (ptl->ptl_elan_ctx,
 		       	((ompi_ptl_elan_putget_desc_t *) frag->desc)
 			->chain_event->ev_Params[1], 8);
 	    } else {
@@ -216,37 +216,7 @@ mca_ptl_elan_send_desc_done (
 		    &ptl->queue->tx_desc_free,
 		    ptl->queue->tx_desc_free.super.ompi_list_length);
 	}
-     }
-#else
-    else  {
-	/* XXX: 
-	 * Why the release of this send fragment is dependent 
-	 * on the receiving of an acknowledgement 
-	 * There are two drawbacks,
-	 * a) Send fragment is not immediately returned to the free pool
-	 * b) Some list is needed to hold on this fragment and
-	 *    later on find an time slot to process it.
-	 * c) If ever local completion happens later then the receive
-	 *    of the acknowledgement. The following will happen
-	 *    1) The receiving of an acknoledgement can not immediatly
-	 *    trigger the scheduling the followup fragment since it
-	 *    is dependent on the send fragment to complete.
-	 *    2) Later, the local send completeion cannot trigger 
-	 *       the start of following fragments. As the logic is not there.
-	 */
-
-	if(ompi_atomic_fetch_and_set_int (&frag->frag_progressed, 1) == 0) {
-	    ptl->super.ptl_send_progress(ptl, req, 
-		    header->hdr_frag.hdr_frag_length);
-	}
-
-	/* Return a frag or if not cached, or it is a follow up */ 
-	if((header->hdr_frag.hdr_frag_offset != 0) || (frag->desc->desc_status 
-		    != MCA_PTL_ELAN_DESC_CACHED)) 
-	    OMPI_FREE_LIST_RETURN (&queue->tx_desc_free,
-		    (ompi_list_item_t *) frag);
-    } 
-#endif
+    }
 }
  
 void 

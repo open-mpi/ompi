@@ -21,6 +21,7 @@
 struct mca_ptl_elan_state_t;
 struct ompi_ptl_elan_queue_ctrl_t;
 extern struct mca_ptl_elan_state_t mca_ptl_elan_global_state;
+extern struct ompi_ptl_elan_cmdq_space_t ptl_elan_cmdq_space;
 
 /**
  * ELAN PTL Interface

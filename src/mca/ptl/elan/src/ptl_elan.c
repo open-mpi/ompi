@@ -262,7 +262,8 @@ mca_ptl_elan_isend (struct mca_ptl_base_module_t *ptl,
     }
 
 #if OMPI_PTL_ELAN_ZERO_FFRAG
-    if (size > (OMPI_PTL_ELAN_MAX_QSIZE - sizeof(mca_ptl_base_header_t)))
+    if (sendreq->req_bytes_packed > 
+	    (OMPI_PTL_ELAN_MAX_QSIZE - sizeof(mca_ptl_base_header_t)))
 	size = 0;
 #endif
 
@@ -437,7 +438,10 @@ mca_ptl_elan_matched (mca_ptl_base_module_t * ptl,
 	 * if the recv descriptor is not posted (for too long) (TODO).
 	 * We then need to copy from unex_buffer to application buffer */
 	if (header->hdr_frag.hdr_frag_length > 0) {
-
+#if !OMPI_PTL_ELAN_USE_DTP
+	    memcpy(request->req_base.req_addr,
+		    frag->frag_base.frag_addr, frag->frag_base.frag_size);
+#else
 	    struct iovec iov; 
 	    ompi_proc_t *proc;
 
@@ -458,7 +462,9 @@ mca_ptl_elan_matched (mca_ptl_base_module_t * ptl,
 		    request->req_base.req_addr,        
 		    header->hdr_frag.hdr_frag_offset);  
 	    ompi_convertor_unpack(&frag->frag_base.frag_convertor, &iov, 1); 
+#endif
 	}
+
 	/* XXX: progress the request based on the status of this recv frag
 	 * It is possible to employ a scheduling logic here.
 	 * Then Done with this fragment, i.e., data */
