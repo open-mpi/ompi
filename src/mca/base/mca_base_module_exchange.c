@@ -327,7 +327,8 @@ orte_gpr_base_dump_notify_data(data,0);
                     }
                     if (num_bytes != 0) {
                         if(NULL == (bytes = malloc(num_bytes))) {
-                            ORTE_ERROR_LOG(rc);
+                            ompi_output(0, "Unable to allocate memory (length %d bytes).\n", num_bytes );
+                            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
                             continue;
                         }
                     } 
