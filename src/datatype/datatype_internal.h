@@ -102,17 +102,11 @@ static inline void DUMP( char* fmt, ... )
 #error DT_MAX_PREDEFINED should be updated
 #endif  /* safe check for max predefined datatypes. */
 
-#define DT_INCREASE_STACK  32
+#define DT_INCREASE_STACK     32
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
-struct __dt_stack {
-    int32_t index;    /**< index in the element description */
-    int32_t count;    /**< number of times we still have to do it */
-    int32_t end_loop; /**< for loops the end of the loop, otherwise useless */
-    long    disp;     /**< actual displacement depending on the count field */
-};
 
 /* These 2 typedefs are the same as the dt_elem_desc_t except
  * for the name of the fields.

@@ -760,12 +760,20 @@ int ompi_convertor_init_for_send( ompi_convertor_t* pConv,
     OBJ_RETAIN( datatype );
     if( pConv->pDesc != datatype ) {
         pConv->pDesc = (dt_desc_t*)datatype;
-        if( pConv->pStack != NULL ) free( pConv->pStack );
+        if( pConv->pStack != NULL ) {
+            if( pConv->stack_size > DT_STATIC_STACK_SIZE )
+                free( pConv->pStack );
+        }
         pConv->pStack = NULL;
     }
     
     if( pConv->pStack == NULL ) {
-        pConv->pStack = (dt_stack_t*)malloc(sizeof(dt_stack_t) * (datatype->btypes[DT_LOOP] + 3) );
+        pConv->stack_size = datatype->btypes[DT_LOOP] + 3;
+        if( pConv->stack_size > DT_STATIC_STACK_SIZE ) {
+            pConv->pStack = (dt_stack_t*)malloc(sizeof(dt_stack_t) * pConv->stack_size );
+        } else {
+            pConv->pStack = pConv->static_stack;
+        }
         pConv->stack_pos = 0;  /* just to be sure */
     }
     
@@ -799,50 +807,30 @@ ompi_convertor_t* ompi_convertor_create( int remote_arch, int mode )
 {
    ompi_convertor_t* pConv = OBJ_NEW(ompi_convertor_t);
 
-   pConv->pDesc       = NULL;
-   pConv->pStack      = NULL;
    pConv->remoteArch  = remote_arch;
-   pConv->fAdvance    = NULL;
-   pConv->memAlloc_fn = NULL;
    return pConv;
 }
 
 static void ompi_convertor_construct( ompi_convertor_t* pConv )
 {
-    pConv->pDesc = NULL;
-    pConv->pStack = NULL;
-    pConv->fAdvance = NULL;
+    pConv->pDesc       = NULL;
+    pConv->pStack      = pConv->static_stack;
+    pConv->stack_size  = DT_STATIC_STACK_SIZE;
+    pConv->fAdvance    = NULL;
     pConv->memAlloc_fn = NULL;
 }
 
 static void ompi_convertor_destruct( ompi_convertor_t* pConv )
 {
-   if( pConv->pStack != NULL ) free( pConv->pStack );
-   pConv->pStack = NULL;
-   if( pConv->pDesc != NULL ) OBJ_RELEASE( pConv->pDesc );
-   pConv->pDesc = NULL;
+    if( pConv->stack_size > DT_STATIC_STACK_SIZE ) {
+        free( pConv->pStack );
+    }
+
+    if( pConv->pDesc != NULL ) OBJ_RELEASE( pConv->pDesc );
+    pConv->pDesc = NULL;
 }
 
 OBJ_CLASS_INSTANCE(ompi_convertor_t, ompi_object_t, ompi_convertor_construct, ompi_convertor_destruct );
-
-inline int ompi_convertor_copy( const ompi_convertor_t* pSrcConv, ompi_convertor_t* pDestConv )
-{
-   pDestConv->pDesc           = NULL;
-   pDestConv->remoteArch      = pSrcConv->remoteArch;
-   pDestConv->pStack          = NULL;
-   pDestConv->stack_pos       = 0;
-   pDestConv->available_space = 0;
-   pDestConv->pFunctions      = pSrcConv->pFunctions;
-
-   return OMPI_SUCCESS;
-}
-
-ompi_convertor_t* ompi_convertor_get_copy( const ompi_convertor_t* pConvertor )
-{
-   ompi_convertor_t* pDestConv = OBJ_NEW(ompi_convertor_t);
-   (void)ompi_convertor_copy( pConvertor, pDestConv );
-   return pDestConv;
-}
 
 /* Actually we suppose that we can only do receiver side conversion */
 int ompi_convertor_get_packed_size( const ompi_convertor_t* pConv, uint32_t* pSize )

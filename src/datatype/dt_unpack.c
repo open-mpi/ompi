@@ -613,12 +613,20 @@ int ompi_convertor_init_for_recv( ompi_convertor_t* pConv, uint32_t flags,
     if( pConv->pDesc != datatype ) {
         pConv->pDesc = (dt_desc_t*)datatype;
         pConv->flags = CONVERTOR_RECV;
-        if( pConv->pStack != NULL ) free( pConv->pStack );
+        if( pConv->pStack != NULL ) {
+            if( pConv->stack_size > DT_STATIC_STACK_SIZE )
+                free( pConv->pStack );
+        }
         pConv->pStack = NULL;
     }
     if( pConv->pStack == NULL ) {
-        pConv->pStack = (dt_stack_t*)malloc(sizeof(dt_stack_t) * (datatype->btypes[DT_LOOP] + 3) );
-        pConv->stack_pos = 0;
+        pConv->stack_size = datatype->btypes[DT_LOOP] + 3;
+        if( pConv->stack_size > DT_STATIC_STACK_SIZE ) {
+            pConv->pStack = (dt_stack_t*)malloc(sizeof(dt_stack_t) * pConv->stack_size );
+        } else {
+            pConv->pStack = pConv->static_stack;
+        }
+        pConv->stack_pos = 0;  /* just to be sure */
     }
 
     pConv->flags = CONVERTOR_RECV | CONVERTOR_HOMOGENEOUS;
