@@ -19,7 +19,7 @@
  * On alpha, everything is load-locked, store-conditional...
  */
 
-#ifdef HAVE_SMP
+#if OMPI_WANT_SMP_LOCKS
 
 #define MB()  __asm__ __volatile__ ("mb");
 #define RMB() __asm__ __volatile__ ("mb");
@@ -33,6 +33,25 @@
 
 #endif
 
+
+/**********************************************************************
+ *
+ * Define constants for PowerPC 32
+ *
+ *********************************************************************/
+#define OMPI_HAVE_ATOMIC_MEM_BARRIER 1
+
+#define OMPI_HAVE_ATOMIC_CMPSET_32 1
+
+#define OMPI_HAVE_ATOMIC_CMPSET_64 1
+
+
+/**********************************************************************
+ *
+ * Memory Barriers
+ *
+ *********************************************************************/
+#if OMPI_GCC_INLINE_ASSEMBLY
 
 static inline void ompi_atomic_mb(void)
 {
@@ -51,7 +70,16 @@ static inline void ompi_atomic_wmb(void)
     WMB();
 }
 
-#define OMPI_ARCHITECTURE_DEFINE_ATOMIC_CMPSET_32
+#endif /* OMPI_GCC_INLINE_ASSEMBLY */
+
+
+/**********************************************************************
+ *
+ * Atomic math operations
+ *
+ *********************************************************************/
+#if OMPI_GCC_INLINE_ASSEMBLY
+
 static inline int ompi_atomic_cmpset_32( volatile int32_t *addr,
                                          int32_t oldval, int32_t newval)
 {
@@ -96,7 +124,7 @@ static inline int ompi_atomic_cmpset_rel_32(volatile int32_t *addr,
     return ompi_atomic_cmpset_32(addr, oldval, newval);
 }
 
-#define OMPI_ARCHITECTURE_DEFINE_ATOMIC_CMPSET_64
+
 static inline int ompi_atomic_cmpset_64( volatile int64_t *addr,
                                          int64_t oldval, int64_t newval)
 {
@@ -140,5 +168,9 @@ static inline int ompi_atomic_cmpset_rel_64(volatile int64_t *addr,
     ompi_atomic_wmb();
     return ompi_atomic_cmpset_64(addr, oldval, newval);
 }
+
+
+#endif /* OMPI_GCC_INLINE_ASSEMBLY */
+
 
 #endif /* ! OMPI_SYS_ARCH_ATOMIC_H */

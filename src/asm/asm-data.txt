@@ -1,4 +1,3 @@
-#!/bin/sh
 #
 # Copyright (c) 2004-2005 The Trustees of Indiana University.
 #                         All rights reserved.
@@ -13,20 +12,16 @@
 # $HEADER$
 #
 
-CFILE=/tmp/ompi_atomic_$$.c
+#
+# Database for mapping architecture and assembly format to prebuilt
+# assembly files.
+#
+# FORMAT:
+# ARCHITECTURE	ASSEMBLY FORMAT			BASE FILENAME
+#
 
-trap "/bin/rm -f $CFILE; exit 0" 0 1 2 15
-
-echo Updating atomic.s from atomic.h using gcc
-
-cat > $CFILE<<EOF
-#include <stdlib.h>
-#include <inttypes.h>
-#define static
-#define inline
-#define OMPI_GCC_INLINE_ASSEMBLY 1
-#define OMPI_WANT_SMP_LOCKS 1
-#include "atomic.h"
-EOF
-
-gcc -O1 -I. -S $CFILE -o atomic.s
+AMD64	.text-.globl-:--.L-@-1-0-1-0	amd64-linux
+IA32	.text-.globl-:--.L-@-1-0-1-0	ia32-linux
+POWERPC32	.text-.globl-:-_-L--0-1-1-0	powerpc32-osx
+POWERPC32	.text-.globl-:-_-L--0-1-1-1	powerpc32-64-osx
+POWERPC64	.text-.globl-:-_-L--0-1-1-1	powerpc64-osx

@@ -20,12 +20,29 @@
  */
 
 
-#ifdef HAVE_SMP
+#if OMPI_WANT_SMP_LOCKS
 #define MB() __asm__ __volatile__("": : :"memory")
 #else
 #define MB()
 #endif
 
+
+/**********************************************************************
+ *
+ * Define constants for IA64
+ *
+ *********************************************************************/
+#define OMPI_HAVE_MEM_BARRIER 1
+
+#define OMPI_HAVE_ATOMIC_CMPSET_32
+#define OMPI_HAVE_ATOMIC_CMPSET_64
+
+/**********************************************************************
+ *
+ * Memory Barriers
+ *
+ *********************************************************************/
+#if OMPI_GCC_INLINE_ASSEMBLY
 
 static inline void ompi_atomic_mb(void)
 {
@@ -44,13 +61,23 @@ static inline void ompi_atomic_wmb(void)
     MB();
 }
 
+
+#endif /* OMPI_GCC_INLINE_ASSEMBLY */
+
+
+/**********************************************************************
+ *
+ * Atomic math operations
+ *
+ *********************************************************************/
+#if OMPI_GCC_INLINE_ASSEMBLY
+
 #define ia64_cmpxchg4_acq(ptr, new, old)                 \
 ({                               \
    __u64 ia64_intri_res;                        \
    ia64_intri_res;                           \
 })
 
-#define OMPI_ARCHITECTURE_DEFINE_ATOMIC_CMPSET_32
 static inline int ompi_atomic_cmpset_acq_32( volatile int32_t *addr,
                                              int32_t oldval, int32_t newval)
 {
@@ -76,10 +103,13 @@ static inline int ompi_atomic_cmpset_rel_32( volatile int32_t *addr,
     return ((int32_t)ret == oldval);
 }
 
+#endif /* OMPI_GCC_INLINE_ASSEMBLY */
+
 
 #define ompi_atomic_cmpset_32 ompi_atomic_cmpset_acq_32
 
-#define OMPI_ARCHITECTURE_DEFINE_ATOMIC_CMPSET_64
+#if OMPI_GCC_INLINE_ASSEMBLY
+
 static inline int ompi_atomic_cmpset_acq_64( volatile int64_t *addr,
                                              int64_t oldval, int64_t newval)
 {
@@ -105,6 +135,7 @@ static inline int ompi_atomic_cmpset_rel_64( volatile int64_t *addr,
     return ((int32_t)ret == oldval);
 }
 
+#endif /* OMPI_GCC_INLINE_ASSEMBLY */
 
 #define ompi_atomic_cmpset_64 ompi_atomic_cmpset_acq_64
 

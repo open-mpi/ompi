@@ -50,7 +50,7 @@ struct ompi_mutex_t {
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_mutex_t);
 
 
-#if OMPI_HAVE_ATOMIC  && OMPI_HAVE_POSIX_THREADS 
+#if OMPI_HAVE_ATOMIC_SPINLOCKS && OMPI_HAVE_POSIX_THREADS 
 
 /*
  * ompi_mutex_*        implemented using pthreads
@@ -127,7 +127,7 @@ static inline void ompi_mutex_atomic_unlock(ompi_mutex_t *m)
 }
 
 
-#elif OMPI_HAVE_ATOMIC
+#elif OMPI_HAVE_ATOMIC_SPINLOCKS
 
 /*
  * ompi_mutex_* and ompi_mutex_atomic_* implemented using atomic

@@ -19,8 +19,7 @@
  * On ia32, we use cmpxchg.
  */
 
-
-#ifdef HAVE_SMP
+#if OMPI_WANT_SMP_LOCKS
 #define SMPLOCK "lock; "
 #define MB() __asm__ __volatile__("": : :"memory")
 #else
@@ -28,6 +27,29 @@
 #define MB()
 #endif
 
+
+/**********************************************************************
+ *
+ * Define constants for IA32
+ *
+ *********************************************************************/
+#define OMPI_HAVE_ATOMIC_MEM_BARRIER 1
+
+#define OMPI_HAVE_ATOMIC_CMPSET_32 1
+
+#define OMPI_HAVE_ATOMIC_MATH_32 1
+#define OMPI_HAVE_ATOMIC_ADD_32 1
+#define OMPI_HAVE_ATOMIC_SUB_32 1
+
+#define OMPI_HAVE_ATOMIC_CMPSET_64 1
+
+
+/**********************************************************************
+ *
+ * Memory Barriers
+ *
+ *********************************************************************/
+#if OMPI_GCC_INLINE_ASSEMBLY
 
 static inline void ompi_atomic_mb(void)
 {
@@ -46,7 +68,16 @@ static inline void ompi_atomic_wmb(void)
     MB();
 }
 
-#define OMPI_ARCHITECTURE_DEFINE_ATOMIC_CMPSET_32
+#endif /* OMPI_GCC_INLINE_ASSEMBLY */
+
+
+/**********************************************************************
+ *
+ * Atomic math operations
+ *
+ *********************************************************************/
+#if OMPI_GCC_INLINE_ASSEMBLY
+
 static inline int ompi_atomic_cmpset_32(volatile int32_t *addr,
                                         int32_t oldval,
                                         int32_t newval)
@@ -62,14 +93,17 @@ static inline int ompi_atomic_cmpset_32(volatile int32_t *addr,
    return (int)ret;
 }
 
+#endif /* OMPI_GCC_INLINE_ASSEMBLY */
+
 #define ompi_atomic_cmpset_acq_32 ompi_atomic_cmpset_32
 #define ompi_atomic_cmpset_rel_32 ompi_atomic_cmpset_32
 
-#define OMPI_ARCHITECTURE_DEFINE_ATOMIC_CMPSET_64
-typedef struct {
-   uint32_t lo;
-   uint32_t hi;
-} lwords_t;
+#if OMPI_GCC_INLINE_ASSEMBLY
+
+#ifndef ll_low /* GLIBC provides these somewhere, so protect */
+#define ll_low(x)       *(((unsigned int*)&(x))+0)
+#define ll_high(x)      *(((unsigned int*)&(x))+1)
+#endif
 
 /* On Linux the EBX register is used by the shared libraries
  * to keep the global offset. In same time this register is 
@@ -85,27 +119,28 @@ static inline int ompi_atomic_cmpset_64(volatile int64_t *addr,
     * Compare EDX:EAX with m64. If equal, set ZF and load ECX:EBX into
     * m64. Else, clear ZF and load m64 into EDX:EAX.
     */
-   lwords_t *pold = (lwords_t*)&oldval;
-   lwords_t *pnew = (lwords_t*)&newval;
-   unsigned char realized;
+    unsigned char ret;
 
-   __asm__ __volatile(
-                      "push %%ebx            \n\t"
-                      "movl %4, %%ebx        \n\t"
-                      SMPLOCK "cmpxchg8b %1  \n\t"
-                      "sete      %0          \n\t"
-                      "pop %%ebx             \n\t"
-                      : "=qm" (realized)
-                      : "m"(*((volatile long*)addr)), "a"(pold->lo), "d"(pold->hi),
-                        "r"(pnew->lo), "c"(pnew->hi)
-                      : "cc", "memory" );
-   return realized;
+    __asm__ __volatile__(
+		    "push %%ebx            \n\t"
+                    "movl %4, %%ebx        \n\t"
+		    SMPLOCK "cmpxchg8b (%1)  \n\t"
+		    "sete %0               \n\t"
+		    "pop %%ebx             \n\t"
+		    : "=qm"(ret)
+		    : "D"(addr), "a"(ll_low(oldval)), "d"(ll_high(oldval)),
+		      "r"(ll_low(newval)), "c"(ll_high(newval))
+		    : "cc", "memory");
+    return (int) ret;
 }
+
+#endif /* OMPI_GCC_INLINE_ASSEMBLY */
 
 #define ompi_atomic_cmpset_acq_64 ompi_atomic_cmpset_64
 #define ompi_atomic_cmpset_rel_64 ompi_atomic_cmpset_64
 
-#define OMPI_ARCHITECTURE_DEFINE_ATOMIC_ADD_32
+#if OMPI_GCC_INLINE_ASSEMBLY
+
 /**
  * atomic_add - add integer to atomic variable
  * @i: integer value to add
@@ -122,7 +157,7 @@ static inline int ompi_atomic_add_32(volatile int32_t* v, int i)
    return (*v);  /* should be an atomic operation */
 }
 
-#define OMPI_ARCHITECTURE_DEFINE_ATOMIC_SUB_32
+
 /**
  * atomic_sub - subtract the atomic variable
  * @i: integer value to subtract
@@ -139,5 +174,6 @@ static inline int ompi_atomic_sub_32(volatile int32_t* v, int i)
    return (*v);  /* should be an atomic operation */
 }
 
+#endif /* OMPI_GCC_INLINE_ASSEMBLY */
 
 #endif /* ! OMPI_SYS_ARCH_ATOMIC_H */

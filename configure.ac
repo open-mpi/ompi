@@ -316,6 +316,16 @@ AC_DEFINE_UNQUOTED(OMPI_WANT_CXX_BINDINGS, $WANT_MPI_CXX_SUPPORT,
     
 
 ##################################
+# Assembler Configuration
+##################################
+
+ompi_show_subtitle "Assembler" 
+
+AM_PROG_AS
+OMPI_CONFIG_ASM
+
+
+##################################
 # Fortran
 ##################################
 
@@ -1382,6 +1392,7 @@ AC_CONFIG_FILES([
     src/event/compat/sys/Makefile
 
     src/attribute/Makefile
+    src/asm/Makefile
     src/communicator/Makefile
     src/datatype/Makefile
     src/errhandler/Makefile
