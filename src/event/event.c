@@ -251,8 +251,8 @@ ompi_event_init(void)
          0);
     ompi_event_add_i(&ompi_event_pipe_event, 0);
     ompi_event_pipe_signalled = 0;
-    ompi_event_enable();
 #endif
+    ompi_event_enable();
 
 #if defined(USE_LOG) && defined(USE_DEBUG)
     log_to(stderr);
