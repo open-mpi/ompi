@@ -39,7 +39,7 @@ if test -z "$scratch_root" -o -z "$email" -o -z "$svnroot" \
 fi
 
 # send a mail
-send_mail() {
+send_error_mail() {
     outfile="$scratch_root/output.txt"
     rm -f "$outfile"
     touch "$outfile"
@@ -48,6 +48,18 @@ send_mail() {
     done
     Mail -s "=== CREATE ERROR ===" "$email" < "$outfile"
     rm -f "$outfile"
+}
+
+# send output error message
+die() {
+    msg="$*"
+    cat > "$scratch_root/logs/00_announce.txt" <<EOF
+Creating the nightly tarball ended in error:
+
+$msg
+EOF
+    send_error_mail
+    exit 1
 }
 
 # do the work
@@ -81,8 +93,8 @@ EOF
 Your friendly daemon,
 Cyrador
 EOF
-        send_mail
-        exit 2
+        send_error_mail
+        exit 1
     fi
     rm -f "$logfile"
 }
@@ -92,8 +104,7 @@ if test ! -d "$destdir"; then
     mkdir -p "$destdir"
 fi
 if test ! -d "$destdir"; then
-    echo "Could not cd to dest dir: $destdir"
-    exit 1
+    die "Could not cd to dest dir: $destdir"
 fi
 
 # move into the scratch directory
@@ -101,8 +112,7 @@ if test ! -d "$scratch_root"; then
     mkdir -p "$scratch_root"
 fi
 if test ! -d "$scratch_root"; then
-    echo "Could not cd to scratch root: $scratch_root"
-    exit 1
+    die "Could not cd to scratch root: $scratch_root"
 fi
 cd "$scratch_root"
 
@@ -140,9 +150,14 @@ gz="`/bin/ls openmpi*tar.gz`"
 bz2="`/bin/ls openmpi*tar.bz2`"
 mv $gz $bz2 $destdir
 cd $destdir
-rm -f openmpi-latest.tar.gz openmpi-latest.tar.bz2
-ln -s $gz openmpi-latest.tar.gz
-ln -s $bz2 openmpi-latest.tar.bz2
+
+# make the latest_snapshot.txt file containing the last version
+version="`echo $gz | sed -e 's/openmpi-\(.*\)\.tar\.gz/\1/g'`"
+rm -f latest_snapshot.txt
+echo $version > latest_snapshot.txt
+
+# trim the destdir to $max_snapshots
+# JMS fill in here...
 
 # generate md5 and sha1 sums
 rm -f md5sums.txt sha1sums.txt
@@ -155,14 +170,12 @@ done
 # remove temp dirs
 rm -rf "$scratch_root/logs" "$scratch_root/ompi"
 
-# trim the destdir to $max_snapshots
-# JMS fill in here...
-
 # send success mail
 if test "$want_success_mail" = "1"; then
     Mail -s "Success" "$email" <<EOF
 Creating nightly snapshot SVN tarball a success.
 
+Snapshot:   $version
 Start time: $start_time
 End time:   `date`
 
