@@ -14,6 +14,8 @@ sinclude(config/cxx_find_template_repository.m4)
 sinclude(config/cxx_have_exceptions.m4)
 sinclude(config/cxx_find_exception_flags.m4)
 
+sinclude(config/f77_find_ext_symbol_convention.m4)
+
 sinclude(config/lam_case_sensitive_fs_setup.m4)
 sinclude(config/lam_check_optflags.m4)
 sinclude(config/lam_configure_options.m4)
