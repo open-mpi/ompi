@@ -1,3 +1,5 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
+
 /*
  * $HEADER$
  */
@@ -9,7 +11,7 @@
 #include "pml_teg_recvreq.h"
 #include "mca/ptl/base/ptl_base_comm.h"
 #include "mca/pml/base/pml_base_request.h"
-
+#include "mpi.h"  /* we need at least MPI_UNDEFINED and MPI_REQUEST_NULL */
 
 int mca_pml_teg_wait(size_t count,
                      ompi_request_t ** request,
@@ -19,6 +21,7 @@ int mca_pml_teg_wait(size_t count,
     int c;
 #endif
     int i;
+    int null_requests = 0;
     int completed = -1;
     mca_pml_base_request_t *pml_request = NULL;
 
@@ -27,15 +30,16 @@ int mca_pml_teg_wait(size_t count,
 #endif
 
 #if OMPI_HAVE_THREADS
-
     /* poll for completion */
     ompi_atomic_mb();
     for (c = 0; completed < 0 && c < mca_pml_teg.teg_poll_iterations; c++) {
         for (i = 0; i < count; i++) {
             pml_request = (mca_pml_base_request_t *) request[i];
-            if (pml_request == NULL)
+            if (MPI_REQUEST_NULL == (ompi_request_t*)pml_request) {
+                ++null_requests;
                 continue;
-            if (pml_request->req_mpi_done == true) {
+            }
+            if (true == pml_request->req_mpi_done) {
                 completed = i;
                 break;
             }
@@ -43,18 +47,27 @@ int mca_pml_teg_wait(size_t count,
     }
 #endif
 
-    if (completed < 0) {
+    if ((completed < 0) || (null_requests != count)) {
         /* give up and sleep until completion */
         OMPI_THREAD_LOCK(&mca_pml_teg.teg_request_lock);
         mca_pml_teg.teg_request_waiting++;
         do {
+            null_requests = 0;
             for (i = 0; i < count; i++) {
                 pml_request = (mca_pml_base_request_t *) request[i];
+                if (MPI_REQUEST_NULL == (ompi_request_t*)pml_request) {
+                    ++null_requests;
+                    continue;
+                }
                 if (pml_request->req_mpi_done == true) {
                     completed = i;
                     break;
                 }
             }
+            /* for performance reason I prefer to make the test only once not
+             * on all ifs and whiles around here.
+             */
+            if (null_requests == count) break;
             if (completed < 0) {
 #if MCA_PML_TEG_STATISTICS
                 mca_pml_teg.teg_condition_waits++;
@@ -66,15 +79,20 @@ int mca_pml_teg_wait(size_t count,
         mca_pml_teg.teg_request_waiting--;
         OMPI_THREAD_UNLOCK(&mca_pml_teg.teg_request_lock);
     }
-
-    /* return status */
-    if (NULL != status) {
-        *status = pml_request->req_status;
+    
+    if( null_requests == count ) {
+        *index = MPI_UNDEFINED;
+        *status = mca_pml_teg.teg_request_null.req_status;
+    } else {
+        /* return status */
+        if (MPI_STATUS_IGNORE != status) {
+            *status = pml_request->req_status;
+        }
+        
+        *index = completed;
+        /* return request to pool */
+        MCA_PML_TEG_FINI( &(request[completed]) );
     }
-
-    /* return request to pool */
-    MCA_PML_TEG_FINI(request);
-    *index = completed;
     return OMPI_SUCCESS;
 }
 
@@ -87,7 +105,8 @@ int mca_pml_teg_wait_all(size_t count,
     for (i = 0; i < count; i++) {
         mca_pml_base_request_t *pml_request =
             (mca_pml_base_request_t *) requests[i];
-        if (pml_request == NULL || pml_request->req_mpi_done == true) {
+        if ((MPI_REQUEST_NULL == (ompi_request_t*)pml_request) || 
+            (pml_request->req_mpi_done == true)) {
             completed++;
         }
     }
@@ -107,8 +126,8 @@ int mca_pml_teg_wait_all(size_t count,
             for (i = 0; i < count; i++) {
                 mca_pml_base_request_t *pml_request =
                     (mca_pml_base_request_t *) requests[i];
-                if (pml_request == NULL
-                    || pml_request->req_mpi_done == true) {
+                if ((MPI_REQUEST_NULL == (ompi_request_t*)pml_request) ||
+                    (pml_request->req_mpi_done == true)) {
                     completed++;
                     continue;
                 }
@@ -121,12 +140,12 @@ int mca_pml_teg_wait_all(size_t count,
         OMPI_THREAD_UNLOCK(&mca_pml_teg.teg_request_lock);
     }
 
-    if (NULL != statuses) {
+    if (MPI_STATUSES_IGNORE != statuses) {
         /* fill out status and free request if required */
         for (i = 0; i < count; i++) {
             mca_pml_base_request_t *pml_request =
                 (mca_pml_base_request_t *) requests[i];
-            if (NULL == pml_request) {
+            if (MPI_REQUEST_NULL == (ompi_request_t*)pml_request) {
                 statuses[i] = mca_pml_teg.teg_request_null.req_status;
             } else {
                 statuses[i] = pml_request->req_status;
@@ -138,7 +157,7 @@ int mca_pml_teg_wait_all(size_t count,
         for (i = 0; i < count; i++) {
             mca_pml_base_request_t *pml_request =
                 (mca_pml_base_request_t *) requests[i];
-            if (NULL != pml_request) {
+            if (MPI_REQUEST_NULL != (ompi_request_t*)pml_request) {
                 MCA_PML_TEG_FINI(requests + i);
             }
         }
