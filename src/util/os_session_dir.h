@@ -23,8 +23,7 @@
  * If the <prefix> is not provided by the user, the function searches for a suitable 
  * directory in a specific order, taking the first option that meets the access
  * permission requirement, using: (a) the "OMPI_PREFIX_ENV" environment variable;
- * (b) the "TMPDIR" environment variable; (c) the "TMP" environment variable; and
- * (d) the "HOME" environment variable, appended with a "tmp" directory. If none of
+ * (b) the "TMPDIR" environment variable; and (c) the "TMP" environment variabley. If none of
  * those environmental variables have been defined and/or the function was unable
  * to create a suitable directory within any of them, then the function tries to use a default
  * location of "/tmp", where the "/" represents the top-level directory of the
