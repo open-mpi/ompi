@@ -95,7 +95,7 @@ void lam_arr_remove_all(lam_array_t *arr)
     for ( i = 0; i < arr->arr_size; i++ )
     {
         OBJ_RELEASE(arr->arr_items[i]);
-        arr->arr_items[i] = 0;
+        arr->arr_items[i] = NULL;
     }
     arr->arr_size = 0;
 }
