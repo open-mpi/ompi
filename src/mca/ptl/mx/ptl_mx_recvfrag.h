@@ -62,33 +62,33 @@ do {                                                                       \
  * Process a fragment that completed.
  */
 
-static inline void MCA_PTL_MX_RECV_FRAG_FRAG(mca_ptl_mx_recv_frag_t* frag)
-{
-    /* copy into user space */
-    if(frag->frag_recv.frag_is_buffered) {
-        struct iovec iov;
-        unsigned int iov_count;
-        unsigned int max_data;
-        int free_after;
- 
-        iov.iov_base = frag->frag_recv.frag_base.frag_addr;
-        iov.iov_len = frag->frag_recv.frag_base.frag_size;
-        iov_count = 1;
-        max_data = iov.iov_len;
-        ompi_convertor_unpack( &frag->frag_recv.frag_base.frag_convertor,
-                               &iov, &iov_count, &max_data, &free_after );
-        frag->frag_recv.frag_base.frag_size = max_data;
-    }
-                                                                                                          
-    /* progress the request */
-    frag->frag_recv.frag_base.frag_owner->ptl_recv_progress(
-        frag->frag_recv.frag_base.frag_owner,
-        frag->frag_recv.frag_request,
-        frag->frag_size,
-        frag->frag_recv.frag_base.frag_size);
-
-    MCA_PTL_MX_RECV_FRAG_RETURN(frag);
-}
+#define MCA_PTL_MX_RECV_FRAG_FRAG(frag) \
+do { \
+    /* copy into user space */ \
+    if(frag->frag_recv.frag_is_buffered) { \
+        struct iovec iov; \
+        unsigned int iov_count; \
+        unsigned int max_data; \
+        int free_after; \
+  \
+        iov.iov_base = frag->frag_recv.frag_base.frag_addr; \
+        iov.iov_len = frag->frag_recv.frag_base.frag_size; \
+        iov_count = 1; \
+        max_data = iov.iov_len; \
+        ompi_convertor_unpack( &frag->frag_recv.frag_base.frag_convertor, \
+                               &iov, &iov_count, &max_data, &free_after ); \
+        frag->frag_recv.frag_base.frag_size = max_data; \
+    } \
+ \
+    /* progress the request */ \
+    frag->frag_recv.frag_base.frag_owner->ptl_recv_progress( \
+        frag->frag_recv.frag_base.frag_owner, \
+        frag->frag_recv.frag_request, \
+        frag->frag_size, \
+        frag->frag_recv.frag_base.frag_size); \
+ \
+    MCA_PTL_MX_RECV_FRAG_RETURN(frag); \
+} while(0)
 
 /**
  * Process an acknowledgment.

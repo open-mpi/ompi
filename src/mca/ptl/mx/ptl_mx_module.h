@@ -17,24 +17,9 @@
  *  Routine to process complete request(s).
  */
                                                                                                   
-#define MCA_PTL_MX_PROGRESS(ptl, mx_request)                                        \
+#define MCA_PTL_MX_PROGRESS(ptl, mx_status)                                         \
 do {                                                                                \
-    mx_return_t mx_return;                                                          \
-    mx_status_t mx_status;                                                          \
-    uint32_t mx_result;                                                             \
     mca_ptl_base_frag_t* frag;                                                      \
-                                                                                    \
-    mx_return = mx_test(                                                            \
-        ptl->mx_endpoint,                                                           \
-        &mx_request,                                                                \
-        &mx_status,                                                                 \
-        &mx_result);                                                                \
-    if(mx_return != MX_SUCCESS) {                                                   \
-        ompi_output(0, "mca_ptl_mx_progress: mx_test() failed with status=%dn",     \
-            mx_return);                                                             \
-        break;                                                                      \
-    }                                                                               \
-                                                                                    \
     frag = (mca_ptl_base_frag_t*)mx_status.context;                                 \
     switch(frag->frag_type) {                                                       \
         case MCA_PTL_FRAGMENT_SEND:                                                 \

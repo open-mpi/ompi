@@ -154,8 +154,8 @@ int mca_ptl_mx_send(
     hdr = &sendfrag->frag_send.frag_base.frag_header;
     hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_MATCH;
     hdr->hdr_common.hdr_flags = flags;
-    hdr->hdr_common.hdr_size = sizeof(mca_ptl_base_match_header_t);
     hdr->hdr_frag.hdr_frag_offset = offset;
+    hdr->hdr_common.hdr_size = sizeof(mca_ptl_base_match_header_t);
     hdr->hdr_frag.hdr_frag_seq = 0;
     hdr->hdr_frag.hdr_src_ptr.lval = 0; /* for VALGRIND/PURIFY - REPLACE WITH MACRO */
     hdr->hdr_frag.hdr_src_ptr.pval = sendfrag;
@@ -168,12 +168,10 @@ int mca_ptl_mx_send(
     hdr->hdr_match.hdr_msg_seq = sendreq->req_base.req_sequence;
 
     /* setup iovec */
-    sendfrag->frag_segments[0].segment_ptr = hdr;
-    sendfrag->frag_segments[0].segment_length = sizeof(mca_ptl_base_header_t);
-
-    /* initialize convertor */
     sendfrag->frag_progress = 0;
     sendfrag->frag_free = 0;
+
+    /* initialize convertor */
     if(size > 0) {
        ompi_convertor_t *convertor;
        struct iovec iov;
@@ -210,14 +208,16 @@ int mca_ptl_mx_send(
         }
         sendfrag->frag_segments[1].segment_ptr = iov.iov_base;
         sendfrag->frag_segments[1].segment_length = iov.iov_len;
+        sendfrag->frag_send.frag_base.frag_size = iov.iov_len;
         sendfrag->frag_segment_count = 2;
         sendfrag->frag_send.frag_base.frag_addr = iov.iov_base;
     } else {
         sendfrag->frag_send.frag_base.frag_addr = NULL;
         sendfrag->frag_send.frag_base.frag_size = 0;
         sendfrag->frag_segment_count = 1;
+        ompi_request_complete(&sendreq->req_base.req_ompi);
     }
-    hdr->hdr_frag.hdr_frag_length = size;
+    hdr->hdr_frag.hdr_frag_length = sendfrag->frag_send.frag_base.frag_size;
     
     /* convert header to network byte order if required */
     if(ptl_peer->peer_byte_swap) {
@@ -228,7 +228,6 @@ int mca_ptl_mx_send(
     /* fragment state */
     sendfrag->frag_send.frag_base.frag_owner = &ptl_peer->peer_ptl->super;
     sendfrag->frag_send.frag_request = sendreq;
-    sendfrag->frag_send.frag_base.frag_size = size;
     sendfrag->frag_send.frag_base.frag_peer = ptl_peer;
 
     /* must update the offset after actual fragment size is determined 
