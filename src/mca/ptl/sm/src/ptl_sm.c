@@ -633,12 +633,12 @@ int mca_ptl_sm_send_continue(
             sendreq->req_base.req_addr,
             offset, NULL);
 
-    sm_data_ptr=sm_request->req_frag->buff;
+    sm_data_ptr=send_frag->buff;
     user_data_ptr=sendreq->req_base.req_addr;
 
     /* set up the shared memory iovec */
     address.iov_base=sm_data_ptr;
-    address.iov_len=sm_request->req_frag->buff_length;
+    address.iov_len=send_frag->buff_length;
 
     convertor = &sendreq->req_convertor;
     iov_count=1;
@@ -659,6 +659,8 @@ int mca_ptl_sm_send_continue(
      * at the peer.  Get this value from the first fragment */
     hdr->hdr_frag.hdr_dst_ptr.pval =
         sm_request->req_frag->super.frag_request;
+    /* set offset into the "packed" user send buffer */
+    hdr->hdr_frag.hdr_frag_offset=offset;
     send_frag->super.frag_request=
         ((mca_ptl_base_recv_frag_t *)(sm_request->req_frag))->
         frag_request;
