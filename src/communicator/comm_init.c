@@ -282,17 +282,21 @@ static void ompi_comm_destruct(ompi_communicator_t* comm)
 
             if (NULL != comm->c_topo_comm->mtc_dims_or_index) {
                 free(comm->c_topo_comm->mtc_dims_or_index);
+                comm->c_topo_comm->mtc_dims_or_index = NULL;
             }
         
-            if (NULL != comm->c_topo_comm->mtc_dims_or_index) {
+            if (NULL != comm->c_topo_comm->mtc_periods_or_edges) {
                 free(comm->c_topo_comm->mtc_periods_or_edges);
+                comm->c_topo_comm->mtc_periods_or_edges = NULL;
             }
 
-            if (NULL != comm->c_topo_comm->mtc_dims_or_index) {
+            if (NULL != comm->c_topo_comm->mtc_coords) {
                 free(comm->c_topo_comm->mtc_coords);
+                comm->c_topo_comm->mtc_coords = NULL;
             }
 
             free(comm->c_topo_comm);
+            comm->c_topo_comm = NULL;
         }
 
     }
