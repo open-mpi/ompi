@@ -715,6 +715,7 @@ mca_ptl_elan_drain_recv (mca_ptl_elan_component_t * emp)
             case MCA_PTL_HDR_TYPE_LAST:
                 /* a control fragment for a message */
                 mca_ptl_elan_last_frag (ptl, header);
+		break;
             default:
                 fprintf(stdout, "[%s:%d] unknow fragment type %d\n",
                              __FILE__, __LINE__,
@@ -831,6 +832,9 @@ mca_ptl_elan_update_desc (mca_ptl_elan_component_t * emp)
 	    }
 	} /* end of the while loop */
     } /* end of the for loop */
+
+    /* Have the putget list checking to be in the same function */
+    mca_ptl_elan_update_putget(emp);
 
     END_FUNC(PTL_ELAN_DEBUG_NONE);
     return OMPI_SUCCESS;

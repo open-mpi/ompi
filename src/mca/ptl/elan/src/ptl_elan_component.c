@@ -60,9 +60,10 @@ static mca_ptl_elan_component_t *elan_mp = &mca_ptl_elan_component;
 static bool mca_ptl_elan_component_initialized = false;
 
 /*
- *  some elan vp information to the the global registery
+ *  XXX: Leave it as a routine for possible extension
+ *       some elan vp information to the the global registery
  */
-static int mca_ptl_elan_component_register (mca_ptl_elan_component_t  *emp)
+static int mca_ptl_elan_addr_put (mca_ptl_elan_component_t  *emp)
 {
      int rc;
      size_t i;
@@ -94,27 +95,28 @@ static int mca_ptl_elan_component_register (mca_ptl_elan_component_t  *emp)
 int
 mca_ptl_elan_component_open (void)
 {
-    /* FIXME: register the default super module parameters,
-     *    Some sanity checking is needed to ensure that user 
-     *    would not provide unrealistic parameters.*/
+    int length;
+    int param1, param2, param3;
+
     mca_ptl_elan_module.super.ptl_exclusivity =
         mca_ptl_elan_param_register_int ("exclusivity", 0);
-    mca_ptl_elan_module.super.ptl_first_frag_size =
-        mca_ptl_elan_param_register_int ("first_frag_size", 
-                (PTL_ELAN_INPUT_QUEUE_MAX - sizeof(mca_ptl_base_header_t)));
-    mca_ptl_elan_module.super.ptl_min_frag_size =
-        mca_ptl_elan_param_register_int ("min_frag_size", 
-                (PTL_ELAN_INPUT_QUEUE_MAX - sizeof(mca_ptl_base_header_t)));
-    mca_ptl_elan_module.super.ptl_max_frag_size =
-        mca_ptl_elan_param_register_int ("max_frag_size", 2<<31);
 
-    /* register ELAN module parameters */
-    elan_mp->elan_free_list_num =
-        mca_ptl_elan_param_register_int ("free_list_num", 32);
-    elan_mp->elan_free_list_max =
-        mca_ptl_elan_param_register_int ("free_list_max", 128);
-    elan_mp->elan_free_list_inc =
-        mca_ptl_elan_param_register_int ("free_list_inc", 32);
+    length = PTL_ELAN_INPUT_QUEUE_MAX - sizeof(mca_ptl_base_header_t);
+    param1 = mca_ptl_elan_param_register_int ("first_frag_size", length);
+    param2 = mca_ptl_elan_param_register_int ("min_frag_size", length);
+    param3 = mca_ptl_elan_param_register_int ("max_frag_size", 2<<31);
+
+    /* Correct these if user give violent parameters */
+    mca_ptl_elan_module.super.ptl_first_frag_size = GET_MIN(param1, length);
+    mca_ptl_elan_module.super.ptl_min_frag_size =  GET_MAX(param2, length);
+    mca_ptl_elan_module.super.ptl_max_frag_size =  GET_MIN(param3, 2<<31);
+
+    /* XXX: Do not want to make these configuraable, since they are
+     * very much related to number of outstanding operations in elan4
+     * and therefore flow control */
+    elan_mp->elan_free_list_num = 32;
+    elan_mp->elan_free_list_max = 128;
+    elan_mp->elan_free_list_inc = 32;
 
     /* initialize state */
     elan_mp->elan_ptl_modules = NULL;
@@ -142,8 +144,6 @@ mca_ptl_elan_component_close (void)
 
 	/* cleanup the proc, ptl, and the module */
 	ompi_mca_ptl_elan_finalize (&mca_ptl_elan_component);
-
-	/* XXX: Make sure this is not just an alias pointer */
 	if (elan_mp->elan_local) {
 	    free (elan_mp->elan_local);
 	}
@@ -157,25 +157,23 @@ mca_ptl_elan_component_close (void)
 	}
     }
 
-    if (elan_mp->elan_recv_frags_free.fl_num_allocated !=
-        elan_mp->elan_recv_frags_free.super.ompi_list_length) {
-        ompi_output (0, "[%s:%d] recv_frags : %d allocated %d returned\n",
-		     __FILE__, __LINE__,
-                     elan_mp->elan_recv_frags_free.fl_num_allocated,
-                     elan_mp->elan_recv_frags_free.super.ompi_list_length);
-    }
-
-    /* FIXME: free free_list entries before destructing lists */
-
     /* Free the empty list holders */
     OBJ_DESTRUCT (&(elan_mp->elan_procs));
     OBJ_DESTRUCT (&(elan_mp->elan_pending_acks));
     OBJ_DESTRUCT (&(elan_mp->elan_send_frags));
     OBJ_DESTRUCT (&(elan_mp->elan_recv_frags));
 
-    /* TODO:
+    /* FIXME:
      * We need free all the memory allocated for this list
      * before desctructing this free_list */
+    if (elan_mp->elan_recv_frags_free.fl_num_allocated !=
+        elan_mp->elan_recv_frags_free.super.ompi_list_length) {
+        ompi_output (0, 
+		     "[%s:%d] recv_frags : %d allocated %d returned\n",
+		     __FILE__, __LINE__,
+                     elan_mp->elan_recv_frags_free.fl_num_allocated,
+                     elan_mp->elan_recv_frags_free.super.ompi_list_length);
+    }
     OBJ_DESTRUCT (&(elan_mp->elan_recv_frags_free));
 
     /* Destruct other structures */
@@ -192,23 +190,15 @@ mca_ptl_elan_component_close (void)
  */
 mca_ptl_base_module_t **
 mca_ptl_elan_component_init (int *num_ptl_modules,
-                          bool * allow_multi_user_threads,
-                          bool * have_hidden_threads)
+			     bool * allow_multi_user_threads,
+			     bool * have_hidden_threads)
 {
     mca_ptl_base_module_t **ptls;
  
-    *num_ptl_modules = 0;
-
-    START_FUNC(PTL_ELAN_DEBUG_NONE);
-
-    if (PTL_ELAN_DEBUG_FLAG & PTL_ELAN_DEBUG_INIT) { 
-	char hostname[32]; gethostname(hostname, 32); 
-	fprintf(stderr, "[%s:%s:%d] debugging ...\n",
-		hostname, __FUNCTION__, __LINE__);
-    }
+    START_FUNC(PTL_ELAN_DEBUG_INIT);
 
     /* TODO: support multiple threads */
-
+    *num_ptl_modules = 0;
     *allow_multi_user_threads = true;
     *have_hidden_threads = OMPI_HAVE_THREADS;
 
@@ -227,8 +217,7 @@ mca_ptl_elan_component_init (int *num_ptl_modules,
         return NULL;
     }
 
-    if (OMPI_SUCCESS != 
-	    mca_ptl_elan_component_register(&mca_ptl_elan_component)) {
+    if (OMPI_SUCCESS != mca_ptl_elan_addr_put(&mca_ptl_elan_component)) {
         ompi_output(0, 
                 "[%s:%d] error in registering with Runtime/OOB \n",
                 __FILE__, __LINE__);
@@ -238,9 +227,9 @@ mca_ptl_elan_component_init (int *num_ptl_modules,
     ptls = (mca_ptl_base_module_t **) malloc (elan_mp->elan_num_ptl_modules *
                                               sizeof (mca_ptl_elan_module_t *));
     if (NULL == ptls) {
-	ompi_output(0, 
-		"[%s:%d] error in malloc for elan PTL references\n",
-		__FILE__, __LINE__);
+        ompi_output(0, 
+		"[%s:%d] error in allocating memory \n",
+                __FILE__, __LINE__);
         return NULL;
     }
 
@@ -249,7 +238,7 @@ mca_ptl_elan_component_init (int *num_ptl_modules,
     *num_ptl_modules = elan_mp->elan_num_ptl_modules;
     mca_ptl_elan_component_initialized = true;
 
-    END_FUNC(PTL_ELAN_DEBUG_NONE);
+    END_FUNC(PTL_ELAN_DEBUG_INIT);
     return ptls;
 }
 
@@ -269,15 +258,12 @@ mca_ptl_elan_component_control (int param,
 
 
 /* TODO: to support event-based module progress later.  */
-
-static int times = 0;
 int
 mca_ptl_elan_component_progress (mca_ptl_tstamp_t tstamp)
 {
-    START_FUNC(PTL_ELAN_DEBUG_NONE);
+    START_FUNC (PTL_ELAN_DEBUG_NONE);
     mca_ptl_elan_drain_recv(elan_mp);
     mca_ptl_elan_update_desc(elan_mp);
-    mca_ptl_elan_update_putget(elan_mp);
-    END_FUNC(PTL_ELAN_DEBUG_NONE);
+    END_FUNC (PTL_ELAN_DEBUG_NONE);
     return OMPI_SUCCESS;
 }

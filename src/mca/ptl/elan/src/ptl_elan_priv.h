@@ -55,38 +55,61 @@
 #define  PTL_ELAN_DEBUG_CHAIN (0x800)
 
 /* For now only debug send's */
+#if 1
+#define  PTL_ELAN_DEBUG_FLAG  PTL_ELAN_DEBUG_NONE
+#else
 #define  PTL_ELAN_DEBUG_FLAG  (PTL_ELAN_DEBUG_ACK \
     | PTL_ELAN_DEBUG_SEND | PTL_ELAN_DEBUG_PUT | PTL_ELAN_DEBUG_RECV)
+#endif
 
-#define OMPI_PTL_ELAN_CHECK_UNEX(value, unexp, errno, output)          \
-        do {                                                           \
-            if (value == unexp) {                                      \
-                ompi_output(output,                                    \
-                        "[%s:%d] received unexpect allocated value \n",\
-                        __FILE__, __LINE__);                           \
-                return errno;                                          \
-            }                                                          \
-	} while (0)
+#define  LOG_PRINT(flag, args...)                              \
+do {                                                           \
+    if (PTL_ELAN_DEBUG_FLAG & flag) {                          \
+	char hostname[32]; gethostname(hostname, 32);          \
+	fprintf(stderr, "[%s:%s:%d] ",                         \
+		hostname, __FUNCTION__, __LINE__);             \
+	fprintf(stderr, args);                                 \
+    }                                                          \
+} while (0)
 
-#define START_FUNC(flag)                                     \
-    do {                                                     \
-	if (PTL_ELAN_DEBUG_FLAG & flag) {                    \
-	    char hostname[32]; gethostname(hostname, 32);    \
-	    fprintf(stderr, "[%s:%s:%d] Entering ...\n",     \
-		hostname, __FUNCTION__, __LINE__);           \
-	}                                                    \
-    } while (0) 
+#define OMPI_PTL_ELAN_CHECK_UNEX(value, unexp, errno, output)  \
+do {                                                           \
+    if (value == unexp) {                                      \
+	ompi_output(output,                                    \
+		"[%s:%d] received unexpect allocated value \n",\
+		__FILE__, __LINE__);                           \
+	return errno;                                          \
+    }                                                          \
+} while (0)
 
-#define END_FUNC(flag)                                       \
-    do {                                                     \
-	if (PTL_ELAN_DEBUG_FLAG & flag) {                    \
-	    char hostname[32]; gethostname(hostname, 32);    \
-	    fprintf(stderr, "[%s:%s:%d] Completes ...\n",    \
-		hostname, __FUNCTION__, __LINE__);           \
-	}                                                    \
-    } while (0)
+#define START_FUNC(flag)                                       \
+do {                                                           \
+    if (PTL_ELAN_DEBUG_FLAG & flag) {                          \
+	char hostname[32]; gethostname(hostname, 32);          \
+	fprintf(stderr, "[%s:%s:%d] Entering ...\n",           \
+	    hostname, __FUNCTION__, __LINE__);                 \
+    }                                                          \
+} while (0) 
+
+#define END_FUNC(flag)                                         \
+do {                                                           \
+    if (PTL_ELAN_DEBUG_FLAG & flag) {                          \
+	char hostname[32]; gethostname(hostname, 32);          \
+	fprintf(stderr, "[%s:%s:%d] Completes ...\n",          \
+	    hostname, __FUNCTION__, __LINE__);                 \
+    }                                                          \
+} while (0)
+
 
 #define  PTL_ELAN_INPUT_QUEUE_MAX  (2048)
+
+#define PUTGET_THROTTLE	           (32)
+#define ELAN_PTL_FASTPATH	   (0x1)
+#define ELAN_QUEUE_LOST_SLOTS      (1)
+#define SLOT_ALIGN                 (128)
+#define GET_MAX(a,b)               ((a>b)? a:b)
+#define GET_MIN(a,b)               ((a<b)? a:b)
+#define ALIGNUP(x,a)	           (((unsigned int)(x) + ((a)-1)) & (-(a)))
 
 enum {
     /* the first four bits for type */
