@@ -24,7 +24,7 @@ AC_DEFUN([MCA_CONFIGURE_STUB],[
     if test "$ompi_elan_have_librmscall" = "yes" \
 	-a "$ompi_elan_have_libelan" = "yes" \
 	-a "$ompi_elan_have_libelan4" = "yes"; then
-	PTL_ELAN_LIBS="-lrmscall -lelan -libelan4"
+	PTL_ELAN_LIBS="-lrmscall -lelan -lelan4"
 	ompi_elan_have_elanlibs=yes
     else
 	AC_MSG_NOTICE([Cannot support elan4 without librmscall, 
