@@ -260,7 +260,8 @@ extern "C" {
      *              OMPI_COMM_CID_INTRA_OOB:    2 intracomms, leaders talk
      *                                          through OOB. lleader and rleader
      *                                          are the required contact information.
-     *
+     * @param send_first: to avoid a potential deadlock for 
+     *                    the OOB version.
      * This routine has to be thread safe in the final version.
      */
     int ompi_comm_nextcid ( ompi_communicator_t* newcomm, 
@@ -268,7 +269,8 @@ extern "C" {
                             ompi_communicator_t* bridgecomm, 
                             void* local_leader, 
                             void* remote_leader, 
-                            int mode);
+                            int mode, 
+                            int send_first);
     
 
     /**
@@ -288,7 +290,6 @@ extern "C" {
                         ompi_proc_t **remote_procs,
                         ompi_hash_table_t *attr,
                         ompi_errhandler_t *errh, 
-                        mca_base_component_t *collcomponent, 
                         mca_base_component_t *topocomponent );
     /**
      * This is a short-hand routine used in intercomm_create.
@@ -311,6 +312,16 @@ extern "C" {
                                    int high );
 
 
+    int ompi_comm_activate ( ompi_communicator_t* newcomm, 
+                             ompi_communicator_t* oldcomm, 
+                             ompi_communicator_t* bridgecomm, 
+                             void* local_leader, 
+                             void* remote_leader, 
+                             int mode, 
+                             int send_first,
+                             mca_base_component_t *collcomponent );
+    
+
     /**
      * a simple function to dump the structure
      */
@@ -328,6 +339,28 @@ extern "C" {
 
     /* setting name */
     int ompi_comm_set_name (ompi_communicator_t *comm, char *name );
+
+    /* THE routine for dynamic process management. This routine
+       sets the connection up between two independent applications.
+    */
+    int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
+                                   ompi_process_name_t *port, int send_first,
+                                   ompi_communicator_t **newcomm);
+
+    /* A helper routine for ompi_comm_connect_accept.
+     * This routine is necessary, since in the connect/accept case, the processes
+     * executing the connect operation have the OOB contact information of the
+     * leader of the remote group, however, the processes executing the 
+     * accept get their own port_name = OOB contact information passed in as 
+     * an argument. This is however useless.
+     * 
+     * Therefore, the two root processes exchange this information at this point.
+     *
+     */
+    ompi_process_name_t *ompi_comm_get_rport (ompi_process_name_t *port,
+                                              int send_first, ompi_proc_t *proc);
+    
+
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

@@ -16,9 +16,9 @@
 #include "mca/pml/pml.h"
 #include "mca/coll/coll.h"
 #include "mca/coll/base/base.h"
+#include "mca/oob/oob.h"
 
-
-#define OMPI_COMM_CID_TAG 1011
+#define OMPI_COLL_TAG_ALLREDUCE 31000
 #define OMPI_MAX_COMM 32768
 
 /**
@@ -32,35 +32,40 @@ typedef int ompi_comm_cid_allredfct (int *inbuf, int* outbuf,
                                      int count, ompi_op_t *op, 
                                      ompi_communicator_t *comm,
                                      ompi_communicator_t *bridgecomm, 
-                                     void* lleader, void* rleader );
+                                     void* lleader, void* rleader, 
+                                     int send_first );
 
 static int ompi_comm_allreduce_intra (int *inbuf, int* outbuf, 
                                       int count, ompi_op_t *op, 
                                       ompi_communicator_t *intercomm,
                                       ompi_communicator_t *bridgecomm, 
                                       void* local_leader, 
-                                      void* remote_ledaer );
+                                      void* remote_ledaer,
+                                      int send_first );
 
 static int ompi_comm_allreduce_inter (int *inbuf, int *outbuf, 
                                       int count, ompi_op_t *op, 
                                       ompi_communicator_t *intercomm,
                                       ompi_communicator_t *bridgecomm, 
                                       void* local_leader, 
-                                      void* remote_leader);
+                                      void* remote_leader,
+                                      int send_first );
 
 static int ompi_comm_allreduce_intra_bridge(int *inbuf, int* outbuf, 
                                             int count, ompi_op_t *op, 
                                             ompi_communicator_t *intercomm,
                                             ompi_communicator_t *bridgecomm, 
                                             void* local_leader, 
-                                            void* remote_leader);
+                                            void* remote_leader,
+                                            int send_first);
 
 static int ompi_comm_allreduce_intra_oob (int *inbuf, int* outbuf, 
                                           int count, ompi_op_t *op, 
                                           ompi_communicator_t *intercomm,
                                           ompi_communicator_t *bridgecomm, 
                                           void* local_leader, 
-                                          void* remote_leader);
+                                          void* remote_leader, 
+                                          int send_first );
 
 
 int ompi_comm_nextcid ( ompi_communicator_t* newcomm, 
@@ -68,7 +73,7 @@ int ompi_comm_nextcid ( ompi_communicator_t* newcomm,
                         ompi_communicator_t* bridgecomm, 
                         void* local_leader,
                         void* remote_leader,
-                        int mode )
+                        int mode, int send_first )
 {
 
     int nextlocal_cid;
@@ -96,11 +101,9 @@ int ompi_comm_nextcid ( ompi_communicator_t* newcomm,
         case OMPI_COMM_CID_INTRA_BRIDGE: 
             allredfnct=(ompi_comm_cid_allredfct*)ompi_comm_allreduce_intra_bridge;
             break;
-#if 0 
         case OMPI_COMM_CID_INTRA_OOB: 
             allredfnct=(ompi_comm_cid_allredfct*)ompi_comm_allreduce_intra_oob;
             break;
-#endif
         default: 
             return MPI_UNDEFINED;
             break;
@@ -119,7 +122,7 @@ int ompi_comm_nextcid ( ompi_communicator_t* newcomm,
         }
 
         (allredfnct)(&nextlocal_cid, &nextcid, 1, MPI_MAX, comm, bridgecomm,
-                     local_leader, remote_leader );
+                     local_leader, remote_leader, send_first );
         if (nextcid == nextlocal_cid) {
             response = 1; /* fine with me */
         }
@@ -138,7 +141,7 @@ int ompi_comm_nextcid ( ompi_communicator_t* newcomm,
         }
         
         (allredfnct)(&response, &glresponse, 1, MPI_MIN, comm, bridgecomm,
-                         local_leader, remote_leader );
+                         local_leader, remote_leader, send_first );
         if (glresponse == 1) {
             done = 1;             /* we are done */
             break;
@@ -156,17 +159,88 @@ int ompi_comm_nextcid ( ompi_communicator_t* newcomm,
 /**************************************************************************/
 /**************************************************************************/
 /**************************************************************************/
+/* This routine serves two purposes:
+ * - the allreduce acts as a kind of Barrier,
+ *   which avoids, that we have incoming fragments 
+ *   on the new communicator before everybody has set
+ *   up the comm structure.
+ * - some components (e.g. the collective MagPIe component
+ *   might want to generate new communicators and communicate
+ *   using the new comm. Thus, it can just be called after
+ *   the 'barrier'.
+ *
+ * The reason that this routine is in comm_cid and not in
+ * comm.c is, that this file contains the allreduce implementations
+ * which are required, and thus we avoid having duplicate code...
+ */
+int ompi_comm_activate ( ompi_communicator_t* newcomm, 
+                         ompi_communicator_t* comm, 
+                         ompi_communicator_t* bridgecomm, 
+                         void* local_leader,
+                         void* remote_leader,
+                         int mode, 
+                         int send_first, 
+                         mca_base_component_t *collcomponent )
+{
+    int ok, gok;
+    ompi_comm_cid_allredfct* allredfnct;
+
+    /* Step 1: the barrier, after which it is allowed to 
+     * send messages over the new communicator 
+     */
+    switch (mode) 
+        {
+        case OMPI_COMM_CID_INTRA: 
+            allredfnct=(ompi_comm_cid_allredfct*)ompi_comm_allreduce_intra;
+            break;
+        case OMPI_COMM_CID_INTER:
+            allredfnct=(ompi_comm_cid_allredfct*)ompi_comm_allreduce_inter;
+            break;
+        case OMPI_COMM_CID_INTRA_BRIDGE: 
+            allredfnct=(ompi_comm_cid_allredfct*)ompi_comm_allreduce_intra_bridge;
+            break;
+        case OMPI_COMM_CID_INTRA_OOB: 
+            allredfnct=(ompi_comm_cid_allredfct*)ompi_comm_allreduce_intra_oob;
+            break;
+        default: 
+            return MPI_UNDEFINED;
+            break;
+        }
+
+    (allredfnct)(&ok, &gok, 1, MPI_MIN, comm, bridgecomm,
+                 local_leader, remote_leader, send_first );
+    
+
+    /* Step 2: call all functions, which might use the new communicator
+     * already.
+     */
+
+    /* Initialize the coll components */
+    /* Let the collectives components fight over who will do
+       collective on this new comm.  */
+    if (OMPI_ERROR == mca_coll_base_comm_select(newcomm, collcomponent)) {
+	return OMPI_ERROR;
+    }
+
+    return OMPI_SUCCESS;
+}                         
+
+/**************************************************************************/
+/**************************************************************************/
+/**************************************************************************/
 /* Arguments not used in this implementation:
  *  - bridgecomm
  *  - local_leader
  *  - remote_leader
+ *  - send_first
  */
 static int ompi_comm_allreduce_intra ( int *inbuf, int *outbuf, 
                                        int count, ompi_op_t *op, 
                                        ompi_communicator_t *comm,
                                        ompi_communicator_t *bridgecomm, 
                                        void* local_leader, 
-                                       void* remote_leader )
+                                       void* remote_leader, 
+                                       int send_first )
 {
     return comm->c_coll.coll_allreduce ( inbuf, outbuf, count, MPI_INT, 
                                          op,comm );
@@ -176,13 +250,15 @@ static int ompi_comm_allreduce_intra ( int *inbuf, int *outbuf,
  *  - bridgecomm
  *  - local_leader
  *  - remote_leader
+ *  - send_first
  */
 static int ompi_comm_allreduce_inter ( int *inbuf, int *outbuf, 
                                        int count, ompi_op_t *op, 
                                        ompi_communicator_t *intercomm,
                                        ompi_communicator_t *bridgecomm, 
                                        void* local_leader, 
-                                       void* remote_leader )
+                                       void* remote_leader, 
+                                       int send_first )
 {
     int local_rank, rsize;
     int i, rc;
@@ -228,11 +304,13 @@ static int ompi_comm_allreduce_inter ( int *inbuf, int *outbuf,
         /* local leader exchange their data and determine the overall result
            for both groups */
         rc = mca_pml.pml_irecv (outbuf, count, MPI_INT, 0, 
-                                OMPI_COMM_CID_TAG, intercomm, &req );
+                                OMPI_COLL_TAG_ALLREDUCE
+                                , intercomm, &req );
         if ( OMPI_SUCCESS != rc ) {
             goto exit;
         }
-        rc = mca_pml.pml_send (tmpbuf,count,MPI_INT,0,OMPI_COMM_CID_TAG, 
+        rc = mca_pml.pml_send (tmpbuf, count, MPI_INT, 0,
+                               OMPI_COLL_TAG_ALLREDUCE, 
                                MCA_PML_BASE_SEND_STANDARD, intercomm );
         if ( OMPI_SUCCESS != rc ) {
             goto exit;
@@ -291,13 +369,14 @@ static int ompi_comm_allreduce_inter ( int *inbuf, int *outbuf,
 }
 
 /* Arguments not used in this implementation:
-   all arguments are in use.
-*/
+ * - send_first
+ */
 static int ompi_comm_allreduce_intra_bridge (int *inbuf, int *outbuf, 
                                              int count, ompi_op_t *op, 
                                              ompi_communicator_t *comm,
                                              ompi_communicator_t *bcomm, 
-                                             void* lleader, void* rleader )
+                                             void* lleader, void* rleader,
+                                             int send_first )
 {
     int *tmpbuf=NULL;
     int local_rank;
@@ -330,12 +409,13 @@ static int ompi_comm_allreduce_intra_bridge (int *inbuf, int *outbuf,
         MPI_Request req;
         
         rc = mca_pml.pml_irecv ( outbuf, count, MPI_INT, remote_leader,
-                                 OMPI_COMM_CID_TAG, bcomm, &req );
+                                 OMPI_COLL_TAG_ALLREDUCE, 
+                                 bcomm, &req );
         if ( OMPI_SUCCESS != rc ) {
             goto exit;       
         }
         rc = mca_pml.pml_send (tmpbuf, count, MPI_INT, remote_leader, 
-                               OMPI_COMM_CID_TAG, 
+                               OMPI_COLL_TAG_ALLREDUCE,
                                MCA_PML_BASE_SEND_STANDARD,  bcomm );
         if ( OMPI_SUCCESS != rc ) {
             goto exit;
@@ -379,58 +459,67 @@ static int ompi_comm_allreduce_intra_bridge (int *inbuf, int *outbuf,
     return (rc);
 }
 
-#ifdef HAVE_OOB
 /* Arguments not used in this implementation:
  *    - bridgecomm
  *
- * lleader and rleader are the OOB contact information of the
- * root processes.
+ * lleader is the local rank of root in comm
+ * rleader is the OOB contact information of the
+ * root processes in the other world.
  */
 static int ompi_comm_allreduce_intra_oob (int *inbuf, int *outbuf, 
                                           int count, ompi_op_t *op, 
                                           ompi_communicator_t *comm,
                                           ompi_communicator_t *bridgecomm, 
-                                          void* lleader, void* rleader )
+                                          void* lleader, void* rleader,
+                                          int send_first )
 {
     int *tmpbuf=NULL;
     int i;
     int rc;
-    uint32_t local_leader, remote_leader;
-    uint32_t local_rank;
+    int local_leader, local_rank;
+    ompi_process_name_t *remote_leader=NULL;
     
-    local_leader  = (*((uint32_t*)lleader));
-    remote_leader = (*((uint32_t*)rleader));
+    local_leader  = (*((int*)lleader));
+    remote_leader = (ompi_process_name_t*)rleader;
 
     if ( &ompi_mpi_op_sum != op && &ompi_mpi_op_prod != op &&
          &ompi_mpi_op_max != op && &ompi_mpi_op_min  != op ) {
         return MPI_ERR_OP;
     }
     
-    /* 
-     * To be done: determine my own OOB contact information.
-     *             store it in local_rank.
-     */
-
+    
+    local_rank = ompi_comm_rank ( comm );
     tmpbuf     = (int *) malloc ( count * sizeof(int));
     if ( NULL == tmpbuf ) {
         return MPI_ERR_INTERN;
     }
 
-    /* Intercomm_create */
-    rc = comm->c_coll.coll_allreduce_intra ( inbuf, tmpbuf, count, MPI_INT,
-                                             op, comm );
+    /* comm is an intra-communicator */
+    rc = comm->c_coll.coll_allreduce(inbuf,tmpbuf,count,MPI_INT,op, comm );
     if ( OMPI_SUCCESS != rc ) {
         goto exit;
     }
-
+    
     if (local_rank == local_leader ) {
-        MPI_Request req;
-        MPI_Status status;
+        struct iovec smsg, rmsg;
+        mca_oob_base_type_t otype;
         
-        /* 
-         * To be done:: OOB sendrecv between the two leaders the local 
-         * result.
-         */
+        smsg.iov_base = tmpbuf;
+        smsg.iov_len  = count * sizeof(int);
+        otype         = MCA_OOB_BASE_INT32;
+
+        rmsg.iov_base = outbuf;
+        rmsg.iov_len  = count * sizeof(int);
+
+        if ( send_first ) { 
+            rc = mca_oob_send_hton (remote_leader, &smsg, &otype, 1,0,0);
+            rc = mca_oob_recv_ntoh (remote_leader, &rmsg, &otype, 1,0,0);
+        }
+        else {
+            rc = mca_oob_recv_ntoh (remote_leader, &rmsg, &otype, 1,0,0);
+            rc = mca_oob_send_hton (remote_leader, &smsg, &otype, 1,0,0);
+        }
+
         if ( &ompi_mpi_op_max == op ) {
             for ( i = 0 ; i < count; i++ ) {
                 if (tmpbuf[i] > outbuf[i]) outbuf[i] = tmpbuf[i];
@@ -454,8 +543,8 @@ static int ompi_comm_allreduce_intra_oob (int *inbuf, int *outbuf,
         
     }
     
-    rc = comm->c_coll.coll_bcast_intra ( outbuf, count, MPI_INT, 
-                                         local_leader, comm);
+    rc = comm->c_coll.coll_bcast (outbuf, count, MPI_INT, 
+                                  local_leader, comm);
 
  exit:
     if (NULL != tmpbuf ) {
@@ -464,6 +553,3 @@ static int ompi_comm_allreduce_intra_oob (int *inbuf, int *outbuf,
 
     return (rc);
 }
-
-
-#endif
