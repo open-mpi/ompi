@@ -125,9 +125,9 @@ typedef int (*mca_pml_base_start_fn_t)(
 );
 
 typedef int (*mca_pml_base_test_fn_t)(
-    lam_request_t** request,
-    int count,
-    int *completed
+    lam_request_t* request,
+    bool *completed,
+    lam_status_public_t* status
 );
 
 typedef int (*mca_pml_base_wait_fn_t)(
