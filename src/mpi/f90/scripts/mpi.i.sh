@@ -54,6 +54,46 @@ do
     echo "end subroutine ${proc}"
     echo
   done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(origin_addr, origin_count, origin_datatype, target_rank, target_disp, &
+        target_count, target_datatype, op, win, ierr)"
+    echo "  use mpi_kinds"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: origin_addr"
+    echo "  integer, intent(in) :: origin_count"
+    echo "  integer, intent(in) :: origin_datatype"
+    echo "  integer, intent(in) :: target_rank"
+    echo "  integer(kind=MPI_ADDRESS_KIND), intent(in) :: target_disp"
+    echo "  integer, intent(in) :: target_count"
+    echo "  integer, intent(in) :: target_datatype"
+    echo "  integer, intent(in) :: op"
+    echo "  integer, intent(in) :: win"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(origin_addr, origin_count, origin_datatype, target_rank, target_disp, &
+        target_count, target_datatype, op, win, ierr)"
+    echo "  use mpi_kinds"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: origin_addr"
+    echo "  integer, intent(in) :: origin_count"
+    echo "  integer, intent(in) :: origin_datatype"
+    echo "  integer, intent(in) :: target_rank"
+    echo "  integer(kind=MPI_ADDRESS_KIND), intent(in) :: target_disp"
+    echo "  integer, intent(in) :: target_count"
+    echo "  integer, intent(in) :: target_datatype"
+    echo "  integer, intent(in) :: op"
+    echo "  integer, intent(in) :: win"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
   echo
 done
 echo
@@ -138,6 +178,30 @@ do
     echo "end subroutine ${proc}"
     echo
   done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(location, address, ierr)"
+    echo "  use mpi_kinds"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: location"
+    echo "  integer(kind=MPI_ADDRESS_KIND), intent(out) :: address"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(location, address, ierr)"
+    echo "  use mpi_kinds"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: location"
+    echo "  integer(kind=MPI_ADDRESS_KIND), intent(out) :: address"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
   echo
 done
 echo
@@ -171,6 +235,42 @@ do
     echo "  integer, intent(in) :: sendcount"
     echo "  integer, intent(in) :: sendtype"
     echo "  integer(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(out) :: recvbuf"
+    echo "  integer, intent(in) :: recvcount"
+    echo "  integer, intent(in) :: recvtype"
+    echo "  integer, intent(in) :: comm"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(sendbuf, sendcount, sendtype, recvbuf, recvcount, &
+        recvtype, comm, ierr)"
+    echo "  use mpi_kinds"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: sendbuf"
+    echo "  integer, intent(in) :: sendcount"
+    echo "  integer, intent(in) :: sendtype"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: recvbuf"
+    echo "  integer, intent(in) :: recvcount"
+    echo "  integer, intent(in) :: recvtype"
+    echo "  integer, intent(in) :: comm"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(sendbuf, sendcount, sendtype, recvbuf, recvcount, &
+        recvtype, comm, ierr)"
+    echo "  use mpi_kinds"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: sendbuf"
+    echo "  integer, intent(in) :: sendcount"
+    echo "  integer, intent(in) :: sendtype"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: recvbuf"
     echo "  integer, intent(in) :: recvcount"
     echo "  integer, intent(in) :: recvtype"
     echo "  integer, intent(in) :: comm"
@@ -219,6 +319,44 @@ do
     echo "end subroutine ${proc}"
     echo
   done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(sendbuf, sendcount, sendtype, recvbuf, recvcounts, &
+        displs, recvtype, comm, ierr)"
+    echo "  use mpi_kinds"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: sendbuf"
+    echo "  integer, intent(in) :: sendcount"
+    echo "  integer, intent(in) :: sendtype"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: recvbuf"
+    echo "  integer, dimension(*), intent(in) :: recvcounts"
+    echo "  integer, dimension(*), intent(in) :: displs"
+    echo "  integer, intent(in) :: recvtype"
+    echo "  integer, intent(in) :: comm"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(sendbuf, sendcount, sendtype, recvbuf, recvcounts, &
+        displs, recvtype, comm, ierr)"
+    echo "  use mpi_kinds"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: sendbuf"
+    echo "  integer, intent(in) :: sendcount"
+    echo "  integer, intent(in) :: sendtype"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: recvbuf"
+    echo "  integer, dimension(*), intent(in) :: recvcounts"
+    echo "  integer, dimension(*), intent(in) :: displs"
+    echo "  integer, intent(in) :: recvtype"
+    echo "  integer, intent(in) :: comm"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
   echo
 done
 echo
@@ -236,7 +374,7 @@ echo "subroutine ${proc}(size, info, baseptr, ierr)"
 echo "  use mpi_kinds"
 echo "  integer(kind=MPI_ADDRESS_KIND), intent(in) :: size"
 echo "  integer, intent(in) :: info"
-echo "  integer, intent(out) :: baseptr"
+echo "  integer(kind=MPI_ADDRESS_KIND), intent(out) :: baseptr"
 echo "  integer, intent(out) :: ierr"
 echo "end subroutine ${proc}"
 echo
@@ -268,6 +406,40 @@ do
     echo "  use mpi_kinds"
     echo "  integer(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(in) :: sendbuf"
     echo "  integer(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(out) :: recvbuf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer, intent(in) :: op"
+    echo "  integer, intent(in) :: comm"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(sendbuf, recvbuf, count, datatype, op, &
+        comm, ierr)"
+    echo "  use mpi_kinds"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: sendbuf"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: recvbuf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer, intent(in) :: op"
+    echo "  integer, intent(in) :: comm"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(sendbuf, recvbuf, count, datatype, op, &
+        comm, ierr)"
+    echo "  use mpi_kinds"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: sendbuf"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: recvbuf"
     echo "  integer, intent(in) :: count"
     echo "  integer, intent(in) :: datatype"
     echo "  integer, intent(in) :: op"
@@ -309,6 +481,42 @@ do
     echo "  integer, intent(in) :: sendcount"
     echo "  integer, intent(in) :: sendtype"
     echo "  integer(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(out) :: recvbuf"
+    echo "  integer, intent(in) :: recvcount"
+    echo "  integer, intent(in) :: recvtype"
+    echo "  integer, intent(in) :: comm"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(sendbuf, sendcount, sendtype, recvbuf, recvcount, &
+        recvtype, comm, ierr)"
+    echo "  use mpi_kinds"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: sendbuf"
+    echo "  integer, intent(in) :: sendcount"
+    echo "  integer, intent(in) :: sendtype"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: recvbuf"
+    echo "  integer, intent(in) :: recvcount"
+    echo "  integer, intent(in) :: recvtype"
+    echo "  integer, intent(in) :: comm"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(sendbuf, sendcount, sendtype, recvbuf, recvcount, &
+        recvtype, comm, ierr)"
+    echo "  use mpi_kinds"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: sendbuf"
+    echo "  integer, intent(in) :: sendcount"
+    echo "  integer, intent(in) :: sendtype"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: recvbuf"
     echo "  integer, intent(in) :: recvcount"
     echo "  integer, intent(in) :: recvtype"
     echo "  integer, intent(in) :: comm"
@@ -358,6 +566,46 @@ do
     echo "end subroutine ${proc}"
     echo
   done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(sendbuf, sendcounts, sdispls, sendtype, recvbuf, &
+        recvcounts, rdispls, recvtype, comm, ierr)"
+    echo "  use mpi_kinds"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: sendbuf"
+    echo "  integer, dimension(*), intent(in) :: sendcounts"
+    echo "  integer, dimension(*), intent(in) :: sdispls"
+    echo "  integer, intent(in) :: sendtype"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: recvbuf"
+    echo "  integer, dimension(*), intent(in) :: recvcounts"
+    echo "  integer, dimension(*), intent(in) :: rdispls"
+    echo "  integer, intent(in) :: recvtype"
+    echo "  integer, intent(in) :: comm"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(sendbuf, sendcounts, sdispls, sendtype, recvbuf, &
+        recvcounts, rdispls, recvtype, comm, ierr)"
+    echo "  use mpi_kinds"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: sendbuf"
+    echo "  integer, dimension(*), intent(in) :: sendcounts"
+    echo "  integer, dimension(*), intent(in) :: sdispls"
+    echo "  integer, intent(in) :: sendtype"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: recvbuf"
+    echo "  integer, dimension(*), intent(in) :: recvcounts"
+    echo "  integer, dimension(*), intent(in) :: rdispls"
+    echo "  integer, intent(in) :: recvtype"
+    echo "  integer, intent(in) :: comm"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
   echo
 done
 echo
@@ -392,6 +640,46 @@ do
     echo "  integer, dimension(*), intent(in) :: sdispls"
     echo "  integer, dimension(*), intent(in) :: sendtypes"
     echo "  integer(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(out) :: recvbuf"
+    echo "  integer, dimension(*), intent(in) :: recvcounts"
+    echo "  integer, dimension(*), intent(in) :: rdispls"
+    echo "  integer, dimension(*), intent(in) :: recvtypes"
+    echo "  integer, intent(in) :: comm"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(sendbuf, sendcounts, sdispls, sendtypes, recvbuf, &
+        recvcounts, rdispls, recvtypes, comm, ierr)"
+    echo "  use mpi_kinds"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: sendbuf"
+    echo "  integer, dimension(*), intent(in) :: sendcounts"
+    echo "  integer, dimension(*), intent(in) :: sdispls"
+    echo "  integer, dimension(*), intent(in) :: sendtypes"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: recvbuf"
+    echo "  integer, dimension(*), intent(in) :: recvcounts"
+    echo "  integer, dimension(*), intent(in) :: rdispls"
+    echo "  integer, dimension(*), intent(in) :: recvtypes"
+    echo "  integer, intent(in) :: comm"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(sendbuf, sendcounts, sdispls, sendtypes, recvbuf, &
+        recvcounts, rdispls, recvtypes, comm, ierr)"
+    echo "  use mpi_kinds"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: sendbuf"
+    echo "  integer, dimension(*), intent(in) :: sendcounts"
+    echo "  integer, dimension(*), intent(in) :: sdispls"
+    echo "  integer, dimension(*), intent(in) :: sendtypes"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: recvbuf"
     echo "  integer, dimension(*), intent(in) :: recvcounts"
     echo "  integer, dimension(*), intent(in) :: rdispls"
     echo "  integer, dimension(*), intent(in) :: recvtypes"
@@ -508,6 +796,38 @@ do
     echo "end subroutine ${proc}"
     echo
   done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(buffer, count, datatype, root, comm&
+        , ierr)"
+    echo "  use mpi_kinds"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: buffer"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer, intent(in) :: root"
+    echo "  integer, intent(in) :: comm"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(buffer, count, datatype, root, comm&
+        , ierr)"
+    echo "  use mpi_kinds"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: buffer"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer, intent(in) :: root"
+    echo "  integer, intent(in) :: comm"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
   echo
 done
 echo
@@ -538,6 +858,40 @@ do
         comm, ierr)"
     echo "  use mpi_kinds"
     echo "  integer(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(in) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer, intent(in) :: dest"
+    echo "  integer, intent(in) :: tag"
+    echo "  integer, intent(in) :: comm"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(buf, count, datatype, dest, tag, &
+        comm, ierr)"
+    echo "  use mpi_kinds"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer, intent(in) :: dest"
+    echo "  integer, intent(in) :: tag"
+    echo "  integer, intent(in) :: comm"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(buf, count, datatype, dest, tag, &
+        comm, ierr)"
+    echo "  use mpi_kinds"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: buf"
     echo "  integer, intent(in) :: count"
     echo "  integer, intent(in) :: datatype"
     echo "  integer, intent(in) :: dest"
@@ -587,6 +941,42 @@ do
     echo "end subroutine ${proc}"
     echo
   done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(buf, count, datatype, dest, tag, &
+        comm, request, ierr)"
+    echo "  use mpi_kinds"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer, intent(in) :: dest"
+    echo "  integer, intent(in) :: tag"
+    echo "  integer, intent(in) :: comm"
+    echo "  integer, intent(out) :: request"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(buf, count, datatype, dest, tag, &
+        comm, request, ierr)"
+    echo "  use mpi_kinds"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer, intent(in) :: dest"
+    echo "  integer, intent(in) :: tag"
+    echo "  integer, intent(in) :: comm"
+    echo "  integer, intent(out) :: request"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
   echo
 done
 echo
@@ -621,6 +1011,30 @@ do
     echo "end subroutine ${proc}"
     echo
   done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(buffer, size, ierr)"
+    echo "  use mpi_kinds"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: buffer"
+    echo "  integer, intent(in) :: size"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(buffer, size, ierr)"
+    echo "  use mpi_kinds"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: buffer"
+    echo "  integer, intent(in) :: size"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
   echo
 done
 echo
@@ -650,6 +1064,30 @@ do
     echo "subroutine ${proc}(buffer, size, ierr)"
     echo "  use mpi_kinds"
     echo "  integer(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(out) :: buffer"
+    echo "  integer, intent(out) :: size"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(buffer, size, ierr)"
+    echo "  use mpi_kinds"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: buffer"
+    echo "  integer, intent(out) :: size"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(buffer, size, ierr)"
+    echo "  use mpi_kinds"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: buffer"
     echo "  integer, intent(out) :: size"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
@@ -1000,7 +1438,7 @@ echo "subroutine ${proc}(comm, comm_keyval, attribute_val, flag, ierr)"
 echo "  use mpi_kinds"
 echo "  integer, intent(in) :: comm"
 echo "  integer, intent(in) :: comm_keyval"
-echo "  integer, intent(out) :: attribute_val"
+echo "  integer(kind=MPI_ADDRESS_KIND), intent(out) :: attribute_val"
 echo "  integer, intent(out) :: flag"
 echo "  integer, intent(out) :: ierr"
 echo "end subroutine ${proc}"
@@ -1122,7 +1560,7 @@ echo "subroutine ${proc}(comm, comm_keyval, attribute_val, ierr)"
 echo "  use mpi_kinds"
 echo "  integer, intent(inout) :: comm"
 echo "  integer, intent(in) :: comm_keyval"
-echo "  integer, intent(in) :: attribute_val"
+echo "  integer(kind=MPI_ADDRESS_KIND), intent(in) :: attribute_val"
 echo "  integer, intent(out) :: ierr"
 echo "end subroutine ${proc}"
 echo
@@ -1361,6 +1799,40 @@ do
     echo "  use mpi_kinds"
     echo "  integer(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(in) :: sendbuf"
     echo "  integer(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(out) :: recvbuf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer, intent(in) :: op"
+    echo "  integer, intent(in) :: comm"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(sendbuf, recvbuf, count, datatype, op, &
+        comm, ierr)"
+    echo "  use mpi_kinds"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: sendbuf"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: recvbuf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer, intent(in) :: op"
+    echo "  integer, intent(in) :: comm"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(sendbuf, recvbuf, count, datatype, op, &
+        comm, ierr)"
+    echo "  use mpi_kinds"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: sendbuf"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: recvbuf"
     echo "  integer, intent(in) :: count"
     echo "  integer, intent(in) :: datatype"
     echo "  integer, intent(in) :: op"
@@ -1667,6 +2139,38 @@ do
     echo "end subroutine ${proc}"
     echo
   done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(fh, buf, count, datatype, request&
+        , ierr)"
+    echo "  use mpi_kinds"
+    echo "  integer, intent(inout) :: fh"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer, intent(out) :: request"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(fh, buf, count, datatype, request&
+        , ierr)"
+    echo "  use mpi_kinds"
+    echo "  integer, intent(inout) :: fh"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer, intent(out) :: request"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
   echo
 done
 echo
@@ -1699,6 +2203,40 @@ do
     echo "  integer, intent(in) :: fh"
     echo "  integer(kind=MPI_OFFSET_KIND), intent(in) :: offset"
     echo "  integer(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(out) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer, intent(out) :: request"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(fh, offset, buf, count, datatype, &
+        request, ierr)"
+    echo "  use mpi_kinds"
+    echo "  integer, intent(in) :: fh"
+    echo "  integer(kind=MPI_OFFSET_KIND), intent(in) :: offset"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer, intent(out) :: request"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(fh, offset, buf, count, datatype, &
+        request, ierr)"
+    echo "  use mpi_kinds"
+    echo "  integer, intent(in) :: fh"
+    echo "  integer(kind=MPI_OFFSET_KIND), intent(in) :: offset"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: buf"
     echo "  integer, intent(in) :: count"
     echo "  integer, intent(in) :: datatype"
     echo "  integer, intent(out) :: request"
@@ -1744,6 +2282,38 @@ do
     echo "end subroutine ${proc}"
     echo
   done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(fh, buf, count, datatype, request&
+        , ierr)"
+    echo "  use mpi_kinds"
+    echo "  integer, intent(inout) :: fh"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer, intent(out) :: request"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(fh, buf, count, datatype, request&
+        , ierr)"
+    echo "  use mpi_kinds"
+    echo "  integer, intent(inout) :: fh"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer, intent(out) :: request"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
   echo
 done
 echo
@@ -1775,6 +2345,38 @@ do
     echo "  use mpi_kinds"
     echo "  integer, intent(inout) :: fh"
     echo "  integer(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(in) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer, intent(out) :: request"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(fh, buf, count, datatype, request&
+        , ierr)"
+    echo "  use mpi_kinds"
+    echo "  integer, intent(inout) :: fh"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer, intent(out) :: request"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(fh, buf, count, datatype, request&
+        , ierr)"
+    echo "  use mpi_kinds"
+    echo "  integer, intent(inout) :: fh"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: buf"
     echo "  integer, intent(in) :: count"
     echo "  integer, intent(in) :: datatype"
     echo "  integer, intent(out) :: request"
@@ -1821,6 +2423,40 @@ do
     echo "end subroutine ${proc}"
     echo
   done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(fh, offset, buf, count, datatype, &
+        request, ierr)"
+    echo "  use mpi_kinds"
+    echo "  integer, intent(inout) :: fh"
+    echo "  integer(kind=MPI_OFFSET_KIND), intent(in) :: offset"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer, intent(out) :: request"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(fh, offset, buf, count, datatype, &
+        request, ierr)"
+    echo "  use mpi_kinds"
+    echo "  integer, intent(inout) :: fh"
+    echo "  integer(kind=MPI_OFFSET_KIND), intent(in) :: offset"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer, intent(out) :: request"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
   echo
 done
 echo
@@ -1852,6 +2488,38 @@ do
     echo "  use mpi_kinds"
     echo "  integer, intent(inout) :: fh"
     echo "  integer(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(in) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer, intent(out) :: request"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(fh, buf, count, datatype, request&
+        , ierr)"
+    echo "  use mpi_kinds"
+    echo "  integer, intent(inout) :: fh"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer, intent(out) :: request"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(fh, buf, count, datatype, request&
+        , ierr)"
+    echo "  use mpi_kinds"
+    echo "  integer, intent(inout) :: fh"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: buf"
     echo "  integer, intent(in) :: count"
     echo "  integer, intent(in) :: datatype"
     echo "  integer, intent(out) :: request"
@@ -1935,6 +2603,38 @@ do
     echo "end subroutine ${proc}"
     echo
   done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(fh, buf, count, datatype, status&
+        , ierr)"
+    echo "  use mpi_kinds"
+    echo "  integer, intent(inout) :: fh"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(fh, buf, count, datatype, status&
+        , ierr)"
+    echo "  use mpi_kinds"
+    echo "  integer, intent(inout) :: fh"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
   echo
 done
 echo
@@ -1966,6 +2666,38 @@ do
     echo "  use mpi_kinds"
     echo "  integer, intent(inout) :: fh"
     echo "  integer(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(out) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(fh, buf, count, datatype, status&
+        , ierr)"
+    echo "  use mpi_kinds"
+    echo "  integer, intent(inout) :: fh"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(fh, buf, count, datatype, status&
+        , ierr)"
+    echo "  use mpi_kinds"
+    echo "  integer, intent(inout) :: fh"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: buf"
     echo "  integer, intent(in) :: count"
     echo "  integer, intent(in) :: datatype"
     echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
@@ -2009,6 +2741,34 @@ do
     echo "end subroutine ${proc}"
     echo
   done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(fh, buf, count, datatype, ierr)"
+    echo "  use mpi_kinds"
+    echo "  integer, intent(inout) :: fh"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(fh, buf, count, datatype, ierr)"
+    echo "  use mpi_kinds"
+    echo "  integer, intent(inout) :: fh"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
   echo
 done
 echo
@@ -2039,6 +2799,32 @@ do
     echo "  use mpi_kinds"
     echo "  integer, intent(inout) :: fh"
     echo "  integer(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(out) :: buf"
+    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(fh, buf, status, ierr)"
+    echo "  use mpi_kinds"
+    echo "  integer, intent(inout) :: fh"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: buf"
+    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(fh, buf, status, ierr)"
+    echo "  use mpi_kinds"
+    echo "  integer, intent(inout) :: fh"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: buf"
     echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
@@ -2076,6 +2862,40 @@ do
     echo "  integer, intent(in) :: fh"
     echo "  integer(kind=MPI_OFFSET_KIND), intent(in) :: offset"
     echo "  integer(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(out) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(fh, offset, buf, count, datatype, &
+        status, ierr)"
+    echo "  use mpi_kinds"
+    echo "  integer, intent(in) :: fh"
+    echo "  integer(kind=MPI_OFFSET_KIND), intent(in) :: offset"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(fh, offset, buf, count, datatype, &
+        status, ierr)"
+    echo "  use mpi_kinds"
+    echo "  integer, intent(in) :: fh"
+    echo "  integer(kind=MPI_OFFSET_KIND), intent(in) :: offset"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: buf"
     echo "  integer, intent(in) :: count"
     echo "  integer, intent(in) :: datatype"
     echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
@@ -2122,6 +2942,40 @@ do
     echo "end subroutine ${proc}"
     echo
   done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(fh, offset, buf, count, datatype, &
+        status, ierr)"
+    echo "  use mpi_kinds"
+    echo "  integer, intent(in) :: fh"
+    echo "  integer(kind=MPI_OFFSET_KIND), intent(in) :: offset"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(fh, offset, buf, count, datatype, &
+        status, ierr)"
+    echo "  use mpi_kinds"
+    echo "  integer, intent(in) :: fh"
+    echo "  integer(kind=MPI_OFFSET_KIND), intent(in) :: offset"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
   echo
 done
 echo
@@ -2160,6 +3014,38 @@ do
     echo "end subroutine ${proc}"
     echo
   done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(fh, offset, buf, count, datatype&
+        , ierr)"
+    echo "  use mpi_kinds"
+    echo "  integer, intent(in) :: fh"
+    echo "  integer(kind=MPI_OFFSET_KIND), intent(in) :: offset"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(fh, offset, buf, count, datatype&
+        , ierr)"
+    echo "  use mpi_kinds"
+    echo "  integer, intent(in) :: fh"
+    echo "  integer(kind=MPI_OFFSET_KIND), intent(in) :: offset"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
   echo
 done
 echo
@@ -2190,6 +3076,32 @@ do
     echo "  use mpi_kinds"
     echo "  integer, intent(in) :: fh"
     echo "  integer(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(out) :: buf"
+    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(fh, buf, status, ierr)"
+    echo "  use mpi_kinds"
+    echo "  integer, intent(in) :: fh"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: buf"
+    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(fh, buf, status, ierr)"
+    echo "  use mpi_kinds"
+    echo "  integer, intent(in) :: fh"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: buf"
     echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
@@ -2233,6 +3145,38 @@ do
     echo "end subroutine ${proc}"
     echo
   done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(fh, buf, count, datatype, status&
+        , ierr)"
+    echo "  use mpi_kinds"
+    echo "  integer, intent(inout) :: fh"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(fh, buf, count, datatype, status&
+        , ierr)"
+    echo "  use mpi_kinds"
+    echo "  integer, intent(inout) :: fh"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
   echo
 done
 echo
@@ -2263,6 +3207,34 @@ do
     echo "  use mpi_kinds"
     echo "  integer, intent(inout) :: fh"
     echo "  integer(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(out) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(fh, buf, count, datatype, ierr)"
+    echo "  use mpi_kinds"
+    echo "  integer, intent(inout) :: fh"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(fh, buf, count, datatype, ierr)"
+    echo "  use mpi_kinds"
+    echo "  integer, intent(inout) :: fh"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: buf"
     echo "  integer, intent(in) :: count"
     echo "  integer, intent(in) :: datatype"
     echo "  integer, intent(out) :: ierr"
@@ -2304,6 +3276,32 @@ do
     echo "end subroutine ${proc}"
     echo
   done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(fh, buf, status, ierr)"
+    echo "  use mpi_kinds"
+    echo "  integer, intent(inout) :: fh"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: buf"
+    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(fh, buf, status, ierr)"
+    echo "  use mpi_kinds"
+    echo "  integer, intent(inout) :: fh"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: buf"
+    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
   echo
 done
 echo
@@ -2335,6 +3333,38 @@ do
     echo "  use mpi_kinds"
     echo "  integer, intent(inout) :: fh"
     echo "  integer(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(out) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(fh, buf, count, datatype, status&
+        , ierr)"
+    echo "  use mpi_kinds"
+    echo "  integer, intent(inout) :: fh"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(fh, buf, count, datatype, status&
+        , ierr)"
+    echo "  use mpi_kinds"
+    echo "  integer, intent(inout) :: fh"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: buf"
     echo "  integer, intent(in) :: count"
     echo "  integer, intent(in) :: datatype"
     echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
@@ -2522,6 +3552,38 @@ do
     echo "end subroutine ${proc}"
     echo
   done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(fh, buf, count, datatype, status&
+        , ierr)"
+    echo "  use mpi_kinds"
+    echo "  integer, intent(inout) :: fh"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(fh, buf, count, datatype, status&
+        , ierr)"
+    echo "  use mpi_kinds"
+    echo "  integer, intent(inout) :: fh"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
   echo
 done
 echo
@@ -2553,6 +3615,38 @@ do
     echo "  use mpi_kinds"
     echo "  integer, intent(inout) :: fh"
     echo "  integer(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(in) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(fh, buf, count, datatype, status&
+        , ierr)"
+    echo "  use mpi_kinds"
+    echo "  integer, intent(inout) :: fh"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(fh, buf, count, datatype, status&
+        , ierr)"
+    echo "  use mpi_kinds"
+    echo "  integer, intent(inout) :: fh"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: buf"
     echo "  integer, intent(in) :: count"
     echo "  integer, intent(in) :: datatype"
     echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
@@ -2596,6 +3690,34 @@ do
     echo "end subroutine ${proc}"
     echo
   done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(fh, buf, count, datatype, ierr)"
+    echo "  use mpi_kinds"
+    echo "  integer, intent(inout) :: fh"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(fh, buf, count, datatype, ierr)"
+    echo "  use mpi_kinds"
+    echo "  integer, intent(inout) :: fh"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
   echo
 done
 echo
@@ -2626,6 +3748,32 @@ do
     echo "  use mpi_kinds"
     echo "  integer, intent(inout) :: fh"
     echo "  integer(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(in) :: buf"
+    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(fh, buf, status, ierr)"
+    echo "  use mpi_kinds"
+    echo "  integer, intent(inout) :: fh"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: buf"
+    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(fh, buf, status, ierr)"
+    echo "  use mpi_kinds"
+    echo "  integer, intent(inout) :: fh"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: buf"
     echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
@@ -2663,6 +3811,40 @@ do
     echo "  integer, intent(inout) :: fh"
     echo "  integer(kind=MPI_OFFSET_KIND), intent(in) :: offset"
     echo "  integer(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(in) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(fh, offset, buf, count, datatype, &
+        status, ierr)"
+    echo "  use mpi_kinds"
+    echo "  integer, intent(inout) :: fh"
+    echo "  integer(kind=MPI_OFFSET_KIND), intent(in) :: offset"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(fh, offset, buf, count, datatype, &
+        status, ierr)"
+    echo "  use mpi_kinds"
+    echo "  integer, intent(inout) :: fh"
+    echo "  integer(kind=MPI_OFFSET_KIND), intent(in) :: offset"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: buf"
     echo "  integer, intent(in) :: count"
     echo "  integer, intent(in) :: datatype"
     echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
@@ -2709,6 +3891,40 @@ do
     echo "end subroutine ${proc}"
     echo
   done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(fh, offset, buf, count, datatype, &
+        status, ierr)"
+    echo "  use mpi_kinds"
+    echo "  integer, intent(inout) :: fh"
+    echo "  integer(kind=MPI_OFFSET_KIND), intent(in) :: offset"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(fh, offset, buf, count, datatype, &
+        status, ierr)"
+    echo "  use mpi_kinds"
+    echo "  integer, intent(inout) :: fh"
+    echo "  integer(kind=MPI_OFFSET_KIND), intent(in) :: offset"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
   echo
 done
 echo
@@ -2747,6 +3963,38 @@ do
     echo "end subroutine ${proc}"
     echo
   done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(fh, offset, buf, count, datatype&
+        , ierr)"
+    echo "  use mpi_kinds"
+    echo "  integer, intent(inout) :: fh"
+    echo "  integer(kind=MPI_OFFSET_KIND), intent(in) :: offset"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(fh, offset, buf, count, datatype&
+        , ierr)"
+    echo "  use mpi_kinds"
+    echo "  integer, intent(inout) :: fh"
+    echo "  integer(kind=MPI_OFFSET_KIND), intent(in) :: offset"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
   echo
 done
 echo
@@ -2777,6 +4025,32 @@ do
     echo "  use mpi_kinds"
     echo "  integer, intent(inout) :: fh"
     echo "  integer(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(in) :: buf"
+    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(fh, buf, status, ierr)"
+    echo "  use mpi_kinds"
+    echo "  integer, intent(inout) :: fh"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: buf"
+    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(fh, buf, status, ierr)"
+    echo "  use mpi_kinds"
+    echo "  integer, intent(inout) :: fh"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: buf"
     echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
@@ -2820,6 +4094,38 @@ do
     echo "end subroutine ${proc}"
     echo
   done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(fh, buf, count, datatype, status&
+        , ierr)"
+    echo "  use mpi_kinds"
+    echo "  integer, intent(inout) :: fh"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(fh, buf, count, datatype, status&
+        , ierr)"
+    echo "  use mpi_kinds"
+    echo "  integer, intent(inout) :: fh"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
   echo
 done
 echo
@@ -2850,6 +4156,34 @@ do
     echo "  use mpi_kinds"
     echo "  integer, intent(inout) :: fh"
     echo "  integer(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(in) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(fh, buf, count, datatype, ierr)"
+    echo "  use mpi_kinds"
+    echo "  integer, intent(inout) :: fh"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(fh, buf, count, datatype, ierr)"
+    echo "  use mpi_kinds"
+    echo "  integer, intent(inout) :: fh"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: buf"
     echo "  integer, intent(in) :: count"
     echo "  integer, intent(in) :: datatype"
     echo "  integer, intent(out) :: ierr"
@@ -2891,6 +4225,32 @@ do
     echo "end subroutine ${proc}"
     echo
   done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(fh, buf, status, ierr)"
+    echo "  use mpi_kinds"
+    echo "  integer, intent(inout) :: fh"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: buf"
+    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(fh, buf, status, ierr)"
+    echo "  use mpi_kinds"
+    echo "  integer, intent(inout) :: fh"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: buf"
+    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
   echo
 done
 echo
@@ -2922,6 +4282,38 @@ do
     echo "  use mpi_kinds"
     echo "  integer, intent(inout) :: fh"
     echo "  integer(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(in) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(fh, buf, count, datatype, status&
+        , ierr)"
+    echo "  use mpi_kinds"
+    echo "  integer, intent(inout) :: fh"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(fh, buf, count, datatype, status&
+        , ierr)"
+    echo "  use mpi_kinds"
+    echo "  integer, intent(inout) :: fh"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: buf"
     echo "  integer, intent(in) :: count"
     echo "  integer, intent(in) :: datatype"
     echo "  integer(MPI_STATUS_SIZE), intent(out) :: status"
@@ -2993,6 +4385,28 @@ do
     echo "end subroutine ${proc}"
     echo
   done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(base, ierr)"
+    echo "  use mpi_kinds"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: base"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(base, ierr)"
+    echo "  use mpi_kinds"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: base"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
   echo
 done
 echo
@@ -3026,6 +4440,44 @@ do
     echo "  integer, intent(in) :: sendcount"
     echo "  integer, intent(in) :: sendtype"
     echo "  integer(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(out) :: recvbuf"
+    echo "  integer, intent(in) :: recvcount"
+    echo "  integer, intent(in) :: recvtype"
+    echo "  integer, intent(in) :: root"
+    echo "  integer, intent(in) :: comm"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(sendbuf, sendcount, sendtype, recvbuf, recvcount, &
+        recvtype, root, comm, ierr)"
+    echo "  use mpi_kinds"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: sendbuf"
+    echo "  integer, intent(in) :: sendcount"
+    echo "  integer, intent(in) :: sendtype"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: recvbuf"
+    echo "  integer, intent(in) :: recvcount"
+    echo "  integer, intent(in) :: recvtype"
+    echo "  integer, intent(in) :: root"
+    echo "  integer, intent(in) :: comm"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(sendbuf, sendcount, sendtype, recvbuf, recvcount, &
+        recvtype, root, comm, ierr)"
+    echo "  use mpi_kinds"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: sendbuf"
+    echo "  integer, intent(in) :: sendcount"
+    echo "  integer, intent(in) :: sendtype"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: recvbuf"
     echo "  integer, intent(in) :: recvcount"
     echo "  integer, intent(in) :: recvtype"
     echo "  integer, intent(in) :: root"
@@ -3076,6 +4528,46 @@ do
     echo "end subroutine ${proc}"
     echo
   done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(sendbuf, sendcount, sendtype, recvbuf, recvcounts, &
+        displs, recvtype, root, comm, ierr)"
+    echo "  use mpi_kinds"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: sendbuf"
+    echo "  integer, intent(in) :: sendcount"
+    echo "  integer, intent(in) :: sendtype"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: recvbuf"
+    echo "  integer, dimension(*), intent(in) :: recvcounts"
+    echo "  integer, dimension(*), intent(in) :: displs"
+    echo "  integer, intent(in) :: recvtype"
+    echo "  integer, intent(in) :: root"
+    echo "  integer, intent(in) :: comm"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(sendbuf, sendcount, sendtype, recvbuf, recvcounts, &
+        displs, recvtype, root, comm, ierr)"
+    echo "  use mpi_kinds"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: sendbuf"
+    echo "  integer, intent(in) :: sendcount"
+    echo "  integer, intent(in) :: sendtype"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: recvbuf"
+    echo "  integer, dimension(*), intent(in) :: recvcounts"
+    echo "  integer, dimension(*), intent(in) :: displs"
+    echo "  integer, intent(in) :: recvtype"
+    echo "  integer, intent(in) :: root"
+    echo "  integer, intent(in) :: comm"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
   echo
 done
 echo
@@ -3117,6 +4609,44 @@ do
     echo "end subroutine ${proc}"
     echo
   done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(origin_addr, origin_count, origin_datatype, target_rank, target_disp, &
+        target_count, target_datatype, win, ierr)"
+    echo "  use mpi_kinds"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: origin_addr"
+    echo "  integer, intent(in) :: origin_count"
+    echo "  integer, intent(in) :: origin_datatype"
+    echo "  integer, intent(in) :: target_rank"
+    echo "  integer(kind=MPI_ADDRESS_KIND), intent(in) :: target_disp"
+    echo "  integer, intent(in) :: target_count"
+    echo "  integer, intent(in) :: target_datatype"
+    echo "  integer, intent(in) :: win"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(origin_addr, origin_count, origin_datatype, target_rank, target_disp, &
+        target_count, target_datatype, win, ierr)"
+    echo "  use mpi_kinds"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: origin_addr"
+    echo "  integer, intent(in) :: origin_count"
+    echo "  integer, intent(in) :: origin_datatype"
+    echo "  integer, intent(in) :: target_rank"
+    echo "  integer(kind=MPI_ADDRESS_KIND), intent(in) :: target_disp"
+    echo "  integer, intent(in) :: target_count"
+    echo "  integer, intent(in) :: target_datatype"
+    echo "  integer, intent(in) :: win"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
   echo
 done
 echo
@@ -3146,6 +4676,30 @@ do
     echo "subroutine ${proc}(location, address, ierr)"
     echo "  use mpi_kinds"
     echo "  integer(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(in) :: location"
+    echo "  integer(kind=MPI_ADDRESS_KIND), intent(out) :: address"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(location, address, ierr)"
+    echo "  use mpi_kinds"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: location"
+    echo "  integer(kind=MPI_ADDRESS_KIND), intent(out) :: address"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(location, address, ierr)"
+    echo "  use mpi_kinds"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: location"
     echo "  integer(kind=MPI_ADDRESS_KIND), intent(out) :: address"
     echo "  integer, intent(out) :: ierr"
     echo "end subroutine ${proc}"
@@ -3636,6 +5190,42 @@ do
     echo "end subroutine ${proc}"
     echo
   done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(buf, count, datatype, dest, tag, &
+        comm, request, ierr)"
+    echo "  use mpi_kinds"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer, intent(in) :: dest"
+    echo "  integer, intent(in) :: tag"
+    echo "  integer, intent(in) :: comm"
+    echo "  integer, intent(out) :: request"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(buf, count, datatype, dest, tag, &
+        comm, request, ierr)"
+    echo "  use mpi_kinds"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer, intent(in) :: dest"
+    echo "  integer, intent(in) :: tag"
+    echo "  integer, intent(in) :: comm"
+    echo "  integer, intent(out) :: request"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
   echo
 done
 echo
@@ -3944,6 +5534,42 @@ do
     echo "end subroutine ${proc}"
     echo
   done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(buf, count, datatype, source, tag, &
+        comm, request, ierr)"
+    echo "  use mpi_kinds"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer, intent(in) :: source"
+    echo "  integer, intent(in) :: tag"
+    echo "  integer, intent(in) :: comm"
+    echo "  integer, intent(out) :: request"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(buf, count, datatype, source, tag, &
+        comm, request, ierr)"
+    echo "  use mpi_kinds"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer, intent(in) :: source"
+    echo "  integer, intent(in) :: tag"
+    echo "  integer, intent(in) :: comm"
+    echo "  integer, intent(out) :: request"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
   echo
 done
 echo
@@ -3974,6 +5600,42 @@ do
         comm, request, ierr)"
     echo "  use mpi_kinds"
     echo "  integer(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(in) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer, intent(in) :: dest"
+    echo "  integer, intent(in) :: tag"
+    echo "  integer, intent(in) :: comm"
+    echo "  integer, intent(out) :: request"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(buf, count, datatype, dest, tag, &
+        comm, request, ierr)"
+    echo "  use mpi_kinds"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer, intent(in) :: dest"
+    echo "  integer, intent(in) :: tag"
+    echo "  integer, intent(in) :: comm"
+    echo "  integer, intent(out) :: request"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(buf, count, datatype, dest, tag, &
+        comm, request, ierr)"
+    echo "  use mpi_kinds"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: buf"
     echo "  integer, intent(in) :: count"
     echo "  integer, intent(in) :: datatype"
     echo "  integer, intent(in) :: dest"
@@ -4040,6 +5702,42 @@ do
     echo "end subroutine ${proc}"
     echo
   done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(buf, count, datatype, dest, tag, &
+        comm, request, ierr)"
+    echo "  use mpi_kinds"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer, intent(in) :: dest"
+    echo "  integer, intent(in) :: tag"
+    echo "  integer, intent(in) :: comm"
+    echo "  integer, intent(out) :: request"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(buf, count, datatype, dest, tag, &
+        comm, request, ierr)"
+    echo "  use mpi_kinds"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer, intent(in) :: dest"
+    echo "  integer, intent(in) :: tag"
+    echo "  integer, intent(in) :: comm"
+    echo "  integer, intent(out) :: request"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
   echo
 done
 echo
@@ -4070,6 +5768,42 @@ do
         comm, request, ierr)"
     echo "  use mpi_kinds"
     echo "  integer(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(in) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer, intent(in) :: dest"
+    echo "  integer, intent(in) :: tag"
+    echo "  integer, intent(in) :: comm"
+    echo "  integer, intent(out) :: request"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(buf, count, datatype, dest, tag, &
+        comm, request, ierr)"
+    echo "  use mpi_kinds"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer, intent(in) :: dest"
+    echo "  integer, intent(in) :: tag"
+    echo "  integer, intent(in) :: comm"
+    echo "  integer, intent(out) :: request"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(buf, count, datatype, dest, tag, &
+        comm, request, ierr)"
+    echo "  use mpi_kinds"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: buf"
     echo "  integer, intent(in) :: count"
     echo "  integer, intent(in) :: datatype"
     echo "  integer, intent(in) :: dest"
@@ -4189,6 +5923,42 @@ do
     echo "end subroutine ${proc}"
     echo
   done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(inbuf, incount, datatype, outbuf, outsize, &
+        position, comm, ierr)"
+    echo "  use mpi_kinds"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: inbuf"
+    echo "  integer, intent(in) :: incount"
+    echo "  integer, intent(in) :: datatype"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: outbuf"
+    echo "  integer, intent(out) :: outsize"
+    echo "  integer, intent(inout) :: position"
+    echo "  integer, intent(in) :: comm"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(inbuf, incount, datatype, outbuf, outsize, &
+        position, comm, ierr)"
+    echo "  use mpi_kinds"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: inbuf"
+    echo "  integer, intent(in) :: incount"
+    echo "  integer, intent(in) :: datatype"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: outbuf"
+    echo "  integer, intent(out) :: outsize"
+    echo "  integer, intent(inout) :: position"
+    echo "  integer, intent(in) :: comm"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
   echo
 done
 echo
@@ -4223,6 +5993,42 @@ do
     echo "  integer, intent(in) :: incount"
     echo "  integer, intent(in) :: datatype"
     echo "  integer(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(out) :: outbuf"
+    echo "  integer(kind=MPI_ADDRESS_KIND), intent(in) :: outsize"
+    echo "  integer(kind=MPI_ADDRESS_KIND), intent(inout) :: position"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(datarep, inbuf, incount, datatype, outbuf, &
+        outsize, position, ierr)"
+    echo "  use mpi_kinds"
+    echo "  character(len=*), intent(in) :: datarep"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: inbuf"
+    echo "  integer, intent(in) :: incount"
+    echo "  integer, intent(in) :: datatype"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: outbuf"
+    echo "  integer(kind=MPI_ADDRESS_KIND), intent(in) :: outsize"
+    echo "  integer(kind=MPI_ADDRESS_KIND), intent(inout) :: position"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(datarep, inbuf, incount, datatype, outbuf, &
+        outsize, position, ierr)"
+    echo "  use mpi_kinds"
+    echo "  character(len=*), intent(in) :: datarep"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: inbuf"
+    echo "  integer, intent(in) :: incount"
+    echo "  integer, intent(in) :: datatype"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: outbuf"
     echo "  integer(kind=MPI_ADDRESS_KIND), intent(in) :: outsize"
     echo "  integer(kind=MPI_ADDRESS_KIND), intent(inout) :: position"
     echo "  integer, intent(out) :: ierr"
@@ -4343,6 +6149,44 @@ do
     echo "end subroutine ${proc}"
     echo
   done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(origin_addr, origin_count, origin_datatype, target_rank, target_disp, &
+        target_count, target_datatype, win, ierr)"
+    echo "  use mpi_kinds"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: origin_addr"
+    echo "  integer, intent(in) :: origin_count"
+    echo "  integer, intent(in) :: origin_datatype"
+    echo "  integer, intent(in) :: target_rank"
+    echo "  integer(kind=MPI_ADDRESS_KIND), intent(in) :: target_disp"
+    echo "  integer, intent(in) :: target_count"
+    echo "  integer, intent(in) :: target_datatype"
+    echo "  integer, intent(in) :: win"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(origin_addr, origin_count, origin_datatype, target_rank, target_disp, &
+        target_count, target_datatype, win, ierr)"
+    echo "  use mpi_kinds"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: origin_addr"
+    echo "  integer, intent(in) :: origin_count"
+    echo "  integer, intent(in) :: origin_datatype"
+    echo "  integer, intent(in) :: target_rank"
+    echo "  integer(kind=MPI_ADDRESS_KIND), intent(in) :: target_disp"
+    echo "  integer, intent(in) :: target_count"
+    echo "  integer, intent(in) :: target_datatype"
+    echo "  integer, intent(in) :: win"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
   echo
 done
 echo
@@ -4399,6 +6243,42 @@ do
     echo "end subroutine ${proc}"
     echo
   done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(buf, count, datatype, source, tag, &
+        comm, status, ierr)"
+    echo "  use mpi_kinds"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer, intent(in) :: source"
+    echo "  integer, intent(in) :: tag"
+    echo "  integer, intent(in) :: comm"
+    echo "  integer(MPI_STATUS_SIZE), intent(inout) :: status"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(buf, count, datatype, source, tag, &
+        comm, status, ierr)"
+    echo "  use mpi_kinds"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer, intent(in) :: source"
+    echo "  integer, intent(in) :: tag"
+    echo "  integer, intent(in) :: comm"
+    echo "  integer(MPI_STATUS_SIZE), intent(inout) :: status"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
   echo
 done
 echo
@@ -4429,6 +6309,42 @@ do
         comm, request, ierr)"
     echo "  use mpi_kinds"
     echo "  integer(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(out) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer, intent(in) :: source"
+    echo "  integer, intent(in) :: tag"
+    echo "  integer, intent(in) :: comm"
+    echo "  integer, intent(out) :: request"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(buf, count, datatype, source, tag, &
+        comm, request, ierr)"
+    echo "  use mpi_kinds"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer, intent(in) :: source"
+    echo "  integer, intent(in) :: tag"
+    echo "  integer, intent(in) :: comm"
+    echo "  integer, intent(out) :: request"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(buf, count, datatype, source, tag, &
+        comm, request, ierr)"
+    echo "  use mpi_kinds"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: buf"
     echo "  integer, intent(in) :: count"
     echo "  integer, intent(in) :: datatype"
     echo "  integer, intent(in) :: source"
@@ -4479,6 +6395,42 @@ do
     echo "end subroutine ${proc}"
     echo
   done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(sendbuf, recvbuf, count, datatype, op, &
+        root, comm, ierr)"
+    echo "  use mpi_kinds"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: sendbuf"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: recvbuf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer, intent(in) :: op"
+    echo "  integer, intent(in) :: root"
+    echo "  integer, intent(in) :: comm"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(sendbuf, recvbuf, count, datatype, op, &
+        root, comm, ierr)"
+    echo "  use mpi_kinds"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: sendbuf"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: recvbuf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer, intent(in) :: op"
+    echo "  integer, intent(in) :: root"
+    echo "  integer, intent(in) :: comm"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
   echo
 done
 echo
@@ -4510,6 +6462,40 @@ do
     echo "  use mpi_kinds"
     echo "  integer(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(in) :: sendbuf"
     echo "  integer(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(out) :: recvbuf"
+    echo "  integer, intent(in) :: recvcounts"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer, intent(in) :: op"
+    echo "  integer, intent(in) :: comm"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(sendbuf, recvbuf, recvcounts, datatype, op, &
+        comm, ierr)"
+    echo "  use mpi_kinds"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: sendbuf"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: recvbuf"
+    echo "  integer, intent(in) :: recvcounts"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer, intent(in) :: op"
+    echo "  integer, intent(in) :: comm"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(sendbuf, recvbuf, recvcounts, datatype, op, &
+        comm, ierr)"
+    echo "  use mpi_kinds"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: sendbuf"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: recvbuf"
     echo "  integer, intent(in) :: recvcounts"
     echo "  integer, intent(in) :: datatype"
     echo "  integer, intent(in) :: op"
@@ -4612,6 +6598,40 @@ do
     echo "end subroutine ${proc}"
     echo
   done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(ibuf, count, datatype, dest, tag, &
+        comm, ierr)"
+    echo "  use mpi_kinds"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: ibuf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer, intent(in) :: dest"
+    echo "  integer, intent(in) :: tag"
+    echo "  integer, intent(in) :: comm"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(ibuf, count, datatype, dest, tag, &
+        comm, ierr)"
+    echo "  use mpi_kinds"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: ibuf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer, intent(in) :: dest"
+    echo "  integer, intent(in) :: tag"
+    echo "  integer, intent(in) :: comm"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
   echo
 done
 echo
@@ -4642,6 +6662,42 @@ do
         comm, request, ierr)"
     echo "  use mpi_kinds"
     echo "  integer(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(in) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer, intent(in) :: dest"
+    echo "  integer, intent(in) :: tag"
+    echo "  integer, intent(in) :: comm"
+    echo "  integer, intent(out) :: request"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(buf, count, datatype, dest, tag, &
+        comm, request, ierr)"
+    echo "  use mpi_kinds"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer, intent(in) :: dest"
+    echo "  integer, intent(in) :: tag"
+    echo "  integer, intent(in) :: comm"
+    echo "  integer, intent(out) :: request"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(buf, count, datatype, dest, tag, &
+        comm, request, ierr)"
+    echo "  use mpi_kinds"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: buf"
     echo "  integer, intent(in) :: count"
     echo "  integer, intent(in) :: datatype"
     echo "  integer, intent(in) :: dest"
@@ -4691,6 +6747,40 @@ do
     echo "end subroutine ${proc}"
     echo
   done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(sendbuf, recvbuf, count, datatype, op, &
+        comm, ierr)"
+    echo "  use mpi_kinds"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: sendbuf"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: recvbuf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer, intent(in) :: op"
+    echo "  integer, intent(in) :: comm"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(sendbuf, recvbuf, count, datatype, op, &
+        comm, ierr)"
+    echo "  use mpi_kinds"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: sendbuf"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: recvbuf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer, intent(in) :: op"
+    echo "  integer, intent(in) :: comm"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
   echo
 done
 echo
@@ -4724,6 +6814,44 @@ do
     echo "  integer, intent(in) :: sendcount"
     echo "  integer, intent(in) :: sendtype"
     echo "  integer(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(out) :: recvbuf"
+    echo "  integer, intent(in) :: recvcount"
+    echo "  integer, intent(in) :: recvtype"
+    echo "  integer, intent(in) :: root"
+    echo "  integer, intent(in) :: comm"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(sendbuf, sendcount, sendtype, recvbuf, recvcount, &
+        recvtype, root, comm, ierr)"
+    echo "  use mpi_kinds"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: sendbuf"
+    echo "  integer, intent(in) :: sendcount"
+    echo "  integer, intent(in) :: sendtype"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: recvbuf"
+    echo "  integer, intent(in) :: recvcount"
+    echo "  integer, intent(in) :: recvtype"
+    echo "  integer, intent(in) :: root"
+    echo "  integer, intent(in) :: comm"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(sendbuf, sendcount, sendtype, recvbuf, recvcount, &
+        recvtype, root, comm, ierr)"
+    echo "  use mpi_kinds"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: sendbuf"
+    echo "  integer, intent(in) :: sendcount"
+    echo "  integer, intent(in) :: sendtype"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: recvbuf"
     echo "  integer, intent(in) :: recvcount"
     echo "  integer, intent(in) :: recvtype"
     echo "  integer, intent(in) :: root"
@@ -4774,6 +6902,46 @@ do
     echo "end subroutine ${proc}"
     echo
   done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(sendbuf, sendcounts, displs, sendtype, recvbuf, &
+        recvcount, recvtype, root, comm, ierr)"
+    echo "  use mpi_kinds"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: sendbuf"
+    echo "  integer, intent(in) :: sendcounts"
+    echo "  integer, intent(in) :: displs"
+    echo "  integer, intent(in) :: sendtype"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: recvbuf"
+    echo "  integer, intent(in) :: recvcount"
+    echo "  integer, intent(in) :: recvtype"
+    echo "  integer, intent(in) :: root"
+    echo "  integer, intent(in) :: comm"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(sendbuf, sendcounts, displs, sendtype, recvbuf, &
+        recvcount, recvtype, root, comm, ierr)"
+    echo "  use mpi_kinds"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: sendbuf"
+    echo "  integer, intent(in) :: sendcounts"
+    echo "  integer, intent(in) :: displs"
+    echo "  integer, intent(in) :: sendtype"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: recvbuf"
+    echo "  integer, intent(in) :: recvcount"
+    echo "  integer, intent(in) :: recvtype"
+    echo "  integer, intent(in) :: root"
+    echo "  integer, intent(in) :: comm"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
   echo
 done
 echo
@@ -4813,6 +6981,40 @@ do
     echo "end subroutine ${proc}"
     echo
   done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(buf, count, datatype, dest, tag, &
+        comm, ierr)"
+    echo "  use mpi_kinds"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer, intent(in) :: dest"
+    echo "  integer, intent(in) :: tag"
+    echo "  integer, intent(in) :: comm"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(buf, count, datatype, dest, tag, &
+        comm, ierr)"
+    echo "  use mpi_kinds"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer, intent(in) :: dest"
+    echo "  integer, intent(in) :: tag"
+    echo "  integer, intent(in) :: comm"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
   echo
 done
 echo
@@ -4843,6 +7045,42 @@ do
         comm, request, ierr)"
     echo "  use mpi_kinds"
     echo "  integer(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(in) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer, intent(in) :: dest"
+    echo "  integer, intent(in) :: tag"
+    echo "  integer, intent(in) :: comm"
+    echo "  integer, intent(out) :: request"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(buf, count, datatype, dest, tag, &
+        comm, request, ierr)"
+    echo "  use mpi_kinds"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer, intent(in) :: dest"
+    echo "  integer, intent(in) :: tag"
+    echo "  integer, intent(in) :: comm"
+    echo "  integer, intent(out) :: request"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(buf, count, datatype, dest, tag, &
+        comm, request, ierr)"
+    echo "  use mpi_kinds"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: buf"
     echo "  integer, intent(in) :: count"
     echo "  integer, intent(in) :: datatype"
     echo "  integer, intent(in) :: dest"
@@ -4898,6 +7136,52 @@ do
     echo "end subroutine ${proc}"
     echo
   done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(sendbuf, sendcount, sendtype, dest, sendtag, &
+        recvbuf, recvcount, recvtype, source, recvtag, comm, status, ierr)"
+    echo "  use mpi_kinds"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: sendbuf"
+    echo "  integer, intent(in) :: sendcount"
+    echo "  integer, intent(in) :: sendtype"
+    echo "  integer, intent(in) :: dest"
+    echo "  integer, intent(in) :: sendtag"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: recvbuf"
+    echo "  integer, intent(in) :: recvcount"
+    echo "  integer, intent(in) :: recvtype"
+    echo "  integer, intent(in) :: source"
+    echo "  integer, intent(in) :: recvtag"
+    echo "  integer, intent(in) :: comm"
+    echo "  integer(MPI_STATUS_SIZE), intent(inout) :: status"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(sendbuf, sendcount, sendtype, dest, sendtag, &
+        recvbuf, recvcount, recvtype, source, recvtag, comm, status, ierr)"
+    echo "  use mpi_kinds"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: sendbuf"
+    echo "  integer, intent(in) :: sendcount"
+    echo "  integer, intent(in) :: sendtype"
+    echo "  integer, intent(in) :: dest"
+    echo "  integer, intent(in) :: sendtag"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: recvbuf"
+    echo "  integer, intent(in) :: recvcount"
+    echo "  integer, intent(in) :: recvtype"
+    echo "  integer, intent(in) :: source"
+    echo "  integer, intent(in) :: recvtag"
+    echo "  integer, intent(in) :: comm"
+    echo "  integer(MPI_STATUS_SIZE), intent(inout) :: status"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
   echo
 done
 echo
@@ -4928,6 +7212,46 @@ do
         source, recvtag, comm, status, ierr)"
     echo "  use mpi_kinds"
     echo "  integer(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(inout) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer, intent(in) :: dest"
+    echo "  integer, intent(in) :: sendtag"
+    echo "  integer, intent(in) :: source"
+    echo "  integer, intent(in) :: recvtag"
+    echo "  integer, intent(in) :: comm"
+    echo "  integer(MPI_STATUS_SIZE), intent(inout) :: status"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(buf, count, datatype, dest, sendtag, &
+        source, recvtag, comm, status, ierr)"
+    echo "  use mpi_kinds"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(inout) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer, intent(in) :: dest"
+    echo "  integer, intent(in) :: sendtag"
+    echo "  integer, intent(in) :: source"
+    echo "  integer, intent(in) :: recvtag"
+    echo "  integer, intent(in) :: comm"
+    echo "  integer(MPI_STATUS_SIZE), intent(inout) :: status"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(buf, count, datatype, dest, sendtag, &
+        source, recvtag, comm, status, ierr)"
+    echo "  use mpi_kinds"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(inout) :: buf"
     echo "  integer, intent(in) :: count"
     echo "  integer, intent(in) :: datatype"
     echo "  integer, intent(in) :: dest"
@@ -4974,6 +7298,30 @@ do
     echo "end subroutine ${proc}"
     echo
   done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(x, size, ierr)"
+    echo "  use mpi_kinds"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: x"
+    echo "  integer, intent(out) :: size"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(x, size, ierr)"
+    echo "  use mpi_kinds"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: x"
+    echo "  integer, intent(out) :: size"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
   echo
 done
 echo
@@ -5013,6 +7361,40 @@ do
     echo "end subroutine ${proc}"
     echo
   done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(buf, count, datatype, dest, tag, &
+        comm, ierr)"
+    echo "  use mpi_kinds"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer, intent(in) :: dest"
+    echo "  integer, intent(in) :: tag"
+    echo "  integer, intent(in) :: comm"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(buf, count, datatype, dest, tag, &
+        comm, ierr)"
+    echo "  use mpi_kinds"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer, intent(in) :: dest"
+    echo "  integer, intent(in) :: tag"
+    echo "  integer, intent(in) :: comm"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
   echo
 done
 echo
@@ -5043,6 +7425,42 @@ do
         comm, request, ierr)"
     echo "  use mpi_kinds"
     echo "  integer(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(in) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer, intent(in) :: dest"
+    echo "  integer, intent(in) :: tag"
+    echo "  integer, intent(in) :: comm"
+    echo "  integer, intent(out) :: request"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(buf, count, datatype, dest, tag, &
+        comm, request, ierr)"
+    echo "  use mpi_kinds"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: buf"
+    echo "  integer, intent(in) :: count"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer, intent(in) :: dest"
+    echo "  integer, intent(in) :: tag"
+    echo "  integer, intent(in) :: comm"
+    echo "  integer, intent(out) :: request"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(buf, count, datatype, dest, tag, &
+        comm, request, ierr)"
+    echo "  use mpi_kinds"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: buf"
     echo "  integer, intent(in) :: count"
     echo "  integer, intent(in) :: datatype"
     echo "  integer, intent(in) :: dest"
@@ -5592,7 +8010,7 @@ echo "subroutine ${proc}(type, type_keyval, attribute_val, flag, ierr)"
 echo "  use mpi_kinds"
 echo "  integer, intent(in) :: type"
 echo "  integer, intent(in) :: type_keyval"
-echo "  integer, intent(out) :: attribute_val"
+echo "  integer(kind=MPI_ADDRESS_KIND), intent(out) :: attribute_val"
 echo "  integer, intent(out) :: flag"
 echo "  integer, intent(out) :: ierr"
 echo "end subroutine ${proc}"
@@ -5807,7 +8225,7 @@ echo "subroutine ${proc}(type, type_keyval, attr_val, ierr)"
 echo "  use mpi_kinds"
 echo "  integer, intent(inout) :: type"
 echo "  integer, intent(in) :: type_keyval"
-echo "  integer, intent(in) :: attr_val"
+echo "  integer(kind=MPI_ADDRESS_KIND), intent(in) :: attr_val"
 echo "  integer, intent(out) :: ierr"
 echo "end subroutine ${proc}"
 echo
@@ -5941,6 +8359,42 @@ do
     echo "end subroutine ${proc}"
     echo
   done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(inbuf, insize, position, outbuf, outcount, &
+        datatype, comm, ierr)"
+    echo "  use mpi_kinds"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: inbuf"
+    echo "  integer, intent(in) :: insize"
+    echo "  integer, intent(inout) :: position"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: outbuf"
+    echo "  integer, intent(in) :: outcount"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer, intent(in) :: comm"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(inbuf, insize, position, outbuf, outcount, &
+        datatype, comm, ierr)"
+    echo "  use mpi_kinds"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: inbuf"
+    echo "  integer, intent(in) :: insize"
+    echo "  integer, intent(inout) :: position"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: outbuf"
+    echo "  integer, intent(in) :: outcount"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer, intent(in) :: comm"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
   echo
 done
 echo
@@ -5953,19 +8407,72 @@ procedure='MPI_Unpack_external'
 
 echo "interface ${procedure}"
 echo
-proc="${procedure}"
-echo "subroutine ${proc}(datarep, inbuf, insize, position, outbuf, &
+
+for rank in $ranks
+do
+  case "$rank" in  1)  dim=':'  ;  esac
+  case "$rank" in  2)  dim=':,:'  ;  esac
+  case "$rank" in  3)  dim=':,:,:'  ;  esac
+  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
+  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
+  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
+  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
+
+  for kind in $ikinds
+  do
+    proc="${procedure}${rank}DI${kind}"
+    echo "subroutine ${proc}(datarep, inbuf, insize, position, outbuf, &
         outcount, datatype, ierr)"
-echo "  use mpi_kinds"
-echo "  character(len=*), intent(in) :: datarep"
-echo "  integer, intent(in) :: inbuf"
-echo "  integer(kind=MPI_ADDRESS_KIND), intent(in) :: insize"
-echo "  integer(kind=MPI_ADDRESS_KIND), intent(inout) :: position"
-echo "  integer, intent(out) :: outbuf"
-echo "  integer, intent(in) :: outcount"
-echo "  integer, intent(in) :: datatype"
-echo "  integer, intent(out) :: ierr"
-echo "end subroutine ${proc}"
+    echo "  use mpi_kinds"
+    echo "  character(len=*), intent(in) :: datarep"
+    echo "  integer(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(in) :: inbuf"
+    echo "  integer(kind=MPI_ADDRESS_KIND), intent(in) :: insize"
+    echo "  integer(kind=MPI_ADDRESS_KIND), intent(inout) :: position"
+    echo "  integer(kind=MPI_INTEGER${kind}_KIND), dimension(${dim}), intent(out) :: outbuf"
+    echo "  integer, intent(in) :: outcount"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(datarep, inbuf, insize, position, outbuf, &
+        outcount, datatype, ierr)"
+    echo "  use mpi_kinds"
+    echo "  character(len=*), intent(in) :: datarep"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: inbuf"
+    echo "  integer(kind=MPI_ADDRESS_KIND), intent(in) :: insize"
+    echo "  integer(kind=MPI_ADDRESS_KIND), intent(inout) :: position"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: outbuf"
+    echo "  integer, intent(in) :: outcount"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(datarep, inbuf, insize, position, outbuf, &
+        outcount, datatype, ierr)"
+    echo "  use mpi_kinds"
+    echo "  character(len=*), intent(in) :: datarep"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: inbuf"
+    echo "  integer(kind=MPI_ADDRESS_KIND), intent(in) :: insize"
+    echo "  integer(kind=MPI_ADDRESS_KIND), intent(inout) :: position"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(out) :: outbuf"
+    echo "  integer, intent(in) :: outcount"
+    echo "  integer, intent(in) :: datatype"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+  echo
+done
 echo
 echo "end interface ${procedure}"
 echo
@@ -6111,6 +8618,40 @@ do
     echo "end subroutine ${proc}"
     echo
   done
+
+  for kind in $rkinds
+  do
+    proc="${procedure}${rank}DR${kind}"
+    echo "subroutine ${proc}(base, size, disp_unit, info, comm, &
+        win, ierr)"
+    echo "  use mpi_kinds"
+    echo "  real(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: base"
+    echo "  integer(kind=MPI_ADDRESS_KIND), intent(in) :: size"
+    echo "  integer, intent(in) :: disp_unit"
+    echo "  integer, intent(in) :: info"
+    echo "  integer, intent(in) :: comm"
+    echo "  integer, intent(in) :: win"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
+
+  for kind in $ckinds
+  do
+    proc="${procedure}${rank}DC${kind}"
+    echo "subroutine ${proc}(base, size, disp_unit, info, comm, &
+        win, ierr)"
+    echo "  use mpi_kinds"
+    echo "  complex(kind=MPI_REAL${kind}_KIND), dimension(${dim}), intent(in) :: base"
+    echo "  integer(kind=MPI_ADDRESS_KIND), intent(in) :: size"
+    echo "  integer, intent(in) :: disp_unit"
+    echo "  integer, intent(in) :: info"
+    echo "  integer, intent(in) :: comm"
+    echo "  integer, intent(in) :: win"
+    echo "  integer, intent(out) :: ierr"
+    echo "end subroutine ${proc}"
+    echo
+  done
   echo
 done
 echo
@@ -6230,7 +8771,7 @@ echo "subroutine ${proc}(win, win_keyval, attribute_val, flag, ierr)"
 echo "  use mpi_kinds"
 echo "  integer, intent(in) :: win"
 echo "  integer, intent(in) :: win_keyval"
-echo "  integer, intent(out) :: attribute_val"
+echo "  integer(kind=MPI_ADDRESS_KIND), intent(out) :: attribute_val"
 echo "  integer, intent(out) :: flag"
 echo "  integer, intent(out) :: ierr"
 echo "end subroutine ${proc}"
@@ -6338,7 +8879,7 @@ echo "subroutine ${proc}(win, win_keyval, attribute_val, ierr)"
 echo "  use mpi_kinds"
 echo "  integer, intent(inout) :: win"
 echo "  integer, intent(in) :: win_keyval"
-echo "  integer, intent(in) :: attribute_val"
+echo "  integer(kind=MPI_ADDRESS_KIND), intent(in) :: attribute_val"
 echo "  integer, intent(out) :: ierr"
 echo "end subroutine ${proc}"
 echo
@@ -6636,7 +9177,7 @@ echo "subroutine ${proc}(command, argv, maxprocs, info, root, &
         comm, intercomm, array_of_errcodes, ierr)"
 echo "  use mpi_kinds"
 echo "  character(len=*), intent(in) :: command"
-echo "  character(len=*), intent(in) :: argv"
+echo "  character(len=*), dimension(*), intent(in) :: argv"
 echo "  integer, intent(in) :: maxprocs"
 echo "  integer, intent(in) :: info"
 echo "  integer, intent(in) :: root"
@@ -6660,9 +9201,9 @@ echo "subroutine ${proc}(count, array_of_commands, array_of_argv, array_of_maxpr
         root, comm, intercomm, array_of_errcodes, ierr)"
 echo "  use mpi_kinds"
 echo "  integer, intent(in) :: count"
-echo "  character(len=*), intent(in) :: array_of_commands"
-echo "  character(len=*), intent(in) :: array_of_argv"
-echo "  integer, intent(in) :: array_of_maxprocs"
+echo "  character(len=*), dimension(*), intent(in) :: array_of_commands"
+echo "  character(len=*), dimension(count,*), intent(in) :: array_of_argv"
+echo "  integer, dimension(*), intent(in) :: array_of_maxprocs"
 echo "  integer, dimension(*), intent(in) :: array_of_info"
 echo "  integer, intent(in) :: root"
 echo "  integer, intent(in) :: comm"
