@@ -50,14 +50,14 @@ typedef struct lam_status_public_t lam_status_public_t;
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
-#if __STDC__ || defined(c_plusplus) || defined(__cplusplus)
   typedef int (MPI_Copy_function)(MPI_Comm, int, void *,
-                                void *, void *, int *);
+                                  void *, void *, int *);
   typedef int (MPI_Delete_function)(MPI_Comm, int, void *, void *);
   typedef int (MPI_Datarep_extent_function)(MPI_Datatype, MPI_Aint *,
                                             void *);
   typedef int (MPI_Datarep_conversion_function)(void *, MPI_Datatype, 
-                            int, void *, MPI_Offset, void *);
+                                                int, void *, MPI_Offset,
+                                                void *);
   typedef void (MPI_Comm_errhandler_fn)(MPI_Comm *, int *, ...);
   typedef void (MPI_File_errhandler_fn)(MPI_File *, int *, ...);
   typedef void (MPI_Win_errhandler_fn)(MPI_Win *, int *, ...);
@@ -76,7 +76,6 @@ extern "C" {
   typedef int (MPI_Grequest_query_function)(void *, MPI_Status *);
   typedef int (MPI_Grequest_free_function)(void *);
   typedef int (MPI_Grequest_cancel_function)(void *, int); 
-#endif
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
