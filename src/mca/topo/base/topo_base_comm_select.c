@@ -74,7 +74,7 @@ int mca_topo_base_comm_select (struct ompi_communicator_t *comm,
     queried_module_t *om;
     ompi_list_t *selectable;
     char *str;
-    int err;
+    int err = MPI_SUCCESS;
     int i;
     bool was_selectable_constructed = false;
 
@@ -333,7 +333,7 @@ int mca_topo_base_comm_select (struct ompi_communicator_t *comm,
 
             fill_null_pointers (om->om_module);
             comm->c_topo = om->om_module;
-            err = module->topo_module_init(comm);
+            err = om->om_module->topo_module_init(comm);
 
          } else {
             /*
@@ -356,7 +356,7 @@ int mca_topo_base_comm_select (struct ompi_communicator_t *comm,
     
     ompi_output_verbose(10, mca_topo_base_output,
                        "select: component %s selected",
-                        component->topom_version.mca_component_name);
+                        best_component->topom_version.mca_component_name);
 
     OBJ_DESTRUCT(&queried);
 
