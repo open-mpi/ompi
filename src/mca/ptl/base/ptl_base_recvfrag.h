@@ -28,11 +28,13 @@ typedef struct mca_ptl_base_recv_frag_t mca_ptl_base_recv_frag_t;
 /**
  * Called by the PTL to match attempt a match for new fragments.
  * 
+ * @param ptl (IN)      The PTL pointer
  * @param frag (IN)     Receive fragment descriptor.
  * @param header (IN)   Header corresponding to the receive fragment.
  * @return              OMPI_SUCCESS or error status on failure.
  */
 static inline bool mca_ptl_base_recv_frag_match(
+    struct mca_ptl_t* ptl,
     mca_ptl_base_recv_frag_t* frag, 
     mca_ptl_base_match_header_t* header)
 {
@@ -59,8 +61,8 @@ static inline bool mca_ptl_base_recv_frag_match(
          */
         if(request->super.req_type == MCA_PML_REQUEST_PROBE) {
 
-             ptl->ptl_recv_progress(request, frag);
-             matched = mca_ptl_base_recv_frag_match(frag, header);
+             ptl->ptl_recv_progress(ptl, request, frag);
+             matched = mca_ptl_base_recv_frag_match( ptl, frag, header );
 
         } else {
 

@@ -121,7 +121,7 @@ static inline void mca_ptl_tcp_recv_frag_progress(mca_ptl_tcp_recv_frag_t* frag)
             } 
 
             /* progress the request */ 
-            (frag)->super.super.frag_owner->ptl_recv_progress(request, &(frag)->super); 
+            (frag)->super.super.frag_owner->ptl_recv_progress((frag)->super.super.frag_owner, request, &(frag)->super); 
             if((frag)->frag_ack_pending == false) { 
                 mca_ptl_tcp_recv_frag_return((frag)->super.super.frag_owner, (frag)); 
             }  

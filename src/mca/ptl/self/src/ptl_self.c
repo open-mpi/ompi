@@ -129,7 +129,7 @@ int mca_ptl_self_send(
     req->req_frag.super.frag_owner = &mca_ptl_self;
     req->req_frag.frag_request = NULL;
     req->req_frag.frag_is_buffered = 0;
-    ptl->ptl_match( &(req->req_frag), &(hdr->hdr_match) );
+    ptl->ptl_match( ptl, &(req->req_frag), &(hdr->hdr_match) );
     return OMPI_SUCCESS;
 }
 
@@ -184,6 +184,6 @@ void mca_ptl_self_matched( mca_ptl_t* ptl,
     sendfrag.super.frag_peer = NULL;
     sendfrag.super.frag_addr = NULL;
     sendfrag.super.frag_size = sendreq->super.req_bytes_packed;
-    ptl->ptl_send_progress( &(sendreq->super), &(sendfrag) );
-    ptl->ptl_recv_progress( recvreq, frag );
+    ptl->ptl_send_progress( ptl, &(sendreq->super), &(sendfrag) );
+    ptl->ptl_recv_progress( ptl, recvreq, frag );
 }

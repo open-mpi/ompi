@@ -405,6 +405,7 @@ typedef int (*mca_ptl_base_get_fn_t)(
  * recv fragment so that the match can be made when the receive is posted.
  */
 typedef bool (*mca_ptl_base_match_fn_t)(
+    struct mca_ptl_t* ptl,
     struct mca_ptl_base_recv_frag_t* recv_frag,
     struct mca_ptl_base_match_header_t* header
 );
@@ -428,10 +429,12 @@ typedef void (*mca_ptl_base_matched_fn_t)(
  * PTL->PML Notification from the PTL to the PML that a fragment
  * has completed (e.g. been successfully delivered into users buffer)
  *
+ * @param ptr(IN)             PTL instance
  * @param recv_request (IN)   Receive Request
  * @param recv_frag (IN)      Receive Fragment
  */
 typedef void (*mca_ptl_base_recv_progress_fn_t)(
+    struct mca_ptl_t* ptl,
     struct mca_ptl_base_recv_request_t* recv_request,
     struct mca_ptl_base_recv_frag_t* recv_frag
 );
@@ -440,13 +443,36 @@ typedef void (*mca_ptl_base_recv_progress_fn_t)(
  * PTL->PML Notification from the PTL to the PML that a fragment
  * has completed (e.g. been successfully delivered to peer)
  *
+ * @param ptr(IN)             PTL instance
  * @param send_request (IN)   Send Request
  * @param send_frag (IN)      Send Fragment
  */
 typedef void (*mca_ptl_base_send_progress_fn_t)(
+    struct mca_ptl_t* ptl,
     struct mca_ptl_base_send_request_t* send_request,
     struct mca_ptl_base_send_frag_t* send_frag
 );
+
+/**
+ * PTL function list. They are mainly used for the stack-based approach on the
+ * profilling PTL.
+ */
+struct mca_ptl_functions_t {
+    /* PML->PTL function table */
+    mca_ptl_base_add_procs_fn_t        ptl_add_procs;
+    mca_ptl_base_del_procs_fn_t        ptl_del_procs;
+    mca_ptl_base_finalize_fn_t         ptl_finalize;
+    mca_ptl_base_put_fn_t              ptl_put;
+    mca_ptl_base_get_fn_t              ptl_get;
+    mca_ptl_base_matched_fn_t          ptl_matched;
+    mca_ptl_base_request_alloc_fn_t    ptl_request_alloc;
+    mca_ptl_base_request_return_fn_t   ptl_request_return;
+    /* PTL->PML function table - filled in by PML at init */
+    mca_ptl_base_match_fn_t            ptl_match;
+    mca_ptl_base_send_progress_fn_t    ptl_send_progress;
+    mca_ptl_base_recv_progress_fn_t    ptl_recv_progress;
+};
+typedef struct mca_ptl_functions_t mca_ptl_functions_t;
 
 /**
  * PTL instance interface functions and attributes.
@@ -477,6 +503,9 @@ struct mca_ptl_t {
     mca_ptl_base_match_fn_t            ptl_match;
     mca_ptl_base_send_progress_fn_t    ptl_send_progress;
     mca_ptl_base_recv_progress_fn_t    ptl_recv_progress;
+
+    /* Allow the canibalization of the PTL */
+    struct mca_ptl_t*                  ptl_stack;
 };
 typedef struct mca_ptl_t mca_ptl_t;
 
