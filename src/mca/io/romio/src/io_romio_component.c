@@ -6,6 +6,7 @@
 #include "mpi.h"
 #include "mca/io/io.h"
 #include "io_romio.h"
+#include "io-romio-version.h"
 
 
 /*
@@ -27,6 +28,13 @@ static int delete_select(char *filename, struct ompi_info_t *info,
                          struct mca_io_base_delete_t *private_data);
 
 
+/*
+ * Public string showing the coll ompi_demo component version number
+ */
+const char *mca_io_romio_component_version_string =
+  "OMPI/MPI ROMIO io MCA component version " MCA_io_romio_VERSION;
+
+
 mca_io_base_component_1_0_0_t mca_io_romio_component = {
     /* First, the mca_base_component_t struct containing meta information
        about the component itself */
@@ -35,10 +43,10 @@ mca_io_base_component_1_0_0_t mca_io_romio_component = {
         /* Indicate that we are a io v1.0.0 component (which also implies a
            specific MCA version) */
         MCA_IO_BASE_VERSION_1_0_0,
-        "romio",                   /* MCA component name */
-        1,                         /* MCA component major version */
-        0,                         /* MCA component minor version */
-        0,                         /* MCA component release version */
+        "romio",
+        MCA_io_romio_MAJOR_VERSION,
+        MCA_io_romio_MINOR_VERSION,
+        MCA_io_romio_RELEASE_VERSION,
         NULL,
         NULL
     },

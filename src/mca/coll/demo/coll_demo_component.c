@@ -20,7 +20,7 @@
  * Public string showing the coll ompi_demo component version number
  */
 const char *mca_coll_demo_component_version_string =
-  "OMPI/MPI demo collective MCA component version " MCA_COLL_DEMO_FULL_VERSION;
+  "OMPI/MPI demo collective MCA component version " MCA_coll_demo_VERSION;
 
 /*
  * Global variable
@@ -53,9 +53,9 @@ const mca_coll_base_component_1_0_0_t mca_coll_demo_component = {
     /* Component name and version */
 
     "demo",
-    MCA_COLL_DEMO_MAJOR_VERSION,
-    MCA_COLL_DEMO_MINOR_VERSION,
-    MCA_COLL_DEMO_RELEASE_VERSION,
+    MCA_coll_demo_MAJOR_VERSION,
+    MCA_coll_demo_MINOR_VERSION,
+    MCA_coll_demo_RELEASE_VERSION,
 
     /* Component open and close functions */
 
