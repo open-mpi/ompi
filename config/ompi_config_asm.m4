@@ -628,7 +628,7 @@ case "${host}" in
         else
             AC_MSG_ERROR([Could not determine PowerPC word size: $ac_cv_sizeof_long])
         fi
-        OMPI_GCC_INLINE_ASSIGN='"li %0,0" : "=&r"(ret)'
+        OMPI_GCC_INLINE_ASSIGN='"1: li %0,0" : "=&r"(ret)'
     ;;
 
     sparc-*)
