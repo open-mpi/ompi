@@ -4,6 +4,8 @@ dnl Copyright (c) 2004-2005 The Trustees of Indiana University.
 dnl                         All rights reserved.
 dnl Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
 dnl                         All rights reserved.
+dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+dnl                         University of Stuttgart.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow

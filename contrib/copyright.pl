@@ -4,6 +4,8 @@
 #                         All rights reserved.
 # Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
 #                         All rights reserved.
+# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+#                         University of Stuttgart.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -32,7 +34,10 @@ my $ut = "Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
                         All rights reserved.";
 my $osu = "Copyright (c) 2004 The Ohio State University
                         All rights reserved.";
-my $copy = "$iu\n$ut\n\$COPYRIGHT\$\n\nAdditional copyrights may follow\n\n\$HEADER\$";
+my $hlrs = "Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+                        University of Stuttgart.  All rights reserved.";
+
+my $copy = "$hlrs\n\$COPYRIGHT\$";
 
 sub wanted {
     # Setup
@@ -75,7 +80,7 @@ my $counts;
 my $max_count = -1;
 foreach my $file (sort keys %files_found) {
      open FILE, $file;
-    my @found = grep(/\$HEADER\$/, <FILE>);
+    my @found = grep(/\$COPYRIGHT\$/, <FILE>);
     close(FILE);
     if ($#found >= 0) {
         print "Found file: $file\n";
@@ -84,10 +89,10 @@ foreach my $file (sort keys %files_found) {
         while (<FILE>) {
             chomp;
             my $line = $_;
-            if ($line =~ /\$HEADER\$/) {
+            if ($line =~ /\$COPYRIGHT\$/) {
                 my $prefix = $line;
-                $prefix =~ s/(.+)\$HEADER\$.*$/\1/;
-                if ($prefix ne "\$HEADER\$") {
+                $prefix =~ s/(.+)\$COPYRIGHT\$.*$/\1/;
+                if ($prefix ne "\$COPYRIGHT\$") {
                     my $c = $prefix . $copy;
                     $c =~ s/\n/\n$prefix/g;
                     print FILENEW "$c\n";
