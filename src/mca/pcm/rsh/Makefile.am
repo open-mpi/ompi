@@ -10,6 +10,10 @@ include $(top_ompi_srcdir)/config/Makefile.options
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
 # (for static builds).
 
+EXTRA_DIST = $(pkgdata_DATA)
+
+pkgdata_DATA = help-mca-pcm-rsh.txt
+
 sources = \
 	pcm_rsh.h \
 	pcm_rsh_allocate.c \
