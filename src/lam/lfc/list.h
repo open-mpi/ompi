@@ -120,28 +120,27 @@ static inline lam_list_item_t *lam_list_remove_item
 {
 #ifdef LAM_ENABLE_DEBUG
     lam_list_item_t *item_ptr;
-    int found;
+    bool found;
 #endif
 
 #ifdef LAM_ENABLE_DEBUG
-    found=0;
+    found = false;
 #endif
 
 #ifdef LAM_ENABLE_DEBUG
     /* check to see that the item is in the list */
-    for(item_ptr = lam_list_get_first(list);
+    for (item_ptr = lam_list_get_first(list);
             item_ptr != lam_list_get_end(list);
             item_ptr = item_ptr->lam_list_next) {
-        if( item_ptr == item ) {
-            found=1;
+        if (item_ptr == item) {
+            found = true;
             break;
         }
     }
-    if( 1 != found){
+    if (!found) {
         fprintf(stderr," Warning :: lam_list_remove_item - the item %p is not on the list %p \n",item,list);
         fflush(stderr);
     }
-
 #endif
 
     /* reset next pointer of previous element */
