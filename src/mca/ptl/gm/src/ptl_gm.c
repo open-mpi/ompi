@@ -324,7 +324,6 @@ mca_ptl_gm_matched( mca_ptl_base_module_t * ptl,
         if( NULL == ack ) {
             ompi_output(0,"[%s:%d] unable to alloc a gm fragment\n", __FILE__,__LINE__);
             OMPI_THREAD_LOCK (&mca_ptl_gm_component.gm_lock);
-            recv_frag->frag_ack_pending = true;
             ompi_list_append (&mca_ptl_gm_module.gm_pending_acks, (ompi_list_item_t *)frag);
             OMPI_THREAD_UNLOCK (&mca_ptl_gm_component.gm_lock);
         } else {
