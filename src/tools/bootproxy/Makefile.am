@@ -7,6 +7,10 @@ include $(top_srcdir)/config/Makefile.options
 
 libs = $(top_builddir)/src/libmpi.la 
 
+EXTRA_DIST = $(pkgdata_DATA)
+
+pkgdata_DATA = help-bootproxy.txt
+
 bin_PROGRAMS = mca_pcm_rsh_bootproxy
 
 mca_pcm_rsh_bootproxy_SOURCES = \

@@ -68,7 +68,9 @@ mca_pcm_base_build_base_env(char **in_env, int *envc, char ***out_envp)
     int ret;
 
     for (i = 0 ; in_env[i] != NULL ; ++i) {
-        if (0 == strncmp("OMPI_", in_env[i], strlen("OMPI_"))) {
+        if ((0 == strncmp("OMPI_", in_env[i], strlen("OMPI_"))) &&
+            (0 != strncmp("OMPI_MCA_pcmclient", in_env[i],
+                          strlen("OMPI_MCA_pcmclient")))) {
             ret = ompi_argv_append(envc, &env, in_env[i]);
             if (OMPI_SUCCESS != ret) {
                 ompi_argv_free(env);
