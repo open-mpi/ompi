@@ -29,7 +29,22 @@ noinst_LTLIBRARIES = $(pmpi_lib)
 headers = defines.h
 
 nodist_libmpi_c_pmpi_la_SOURCES = \
+                pabort.c \
+				paccumulate.c \
+				padd_error_class.c \
+				padd_error_code.c \
+				padd_error_string.c \
+				paddress.c \
+				pallgather.c \
+				pallgatherv.c \
 		        palloc_mem.c \
+				pallreduce.c \
+				palltoall.c \
+				palltoallv.c \
+				palltoallw.c \
+				pattr_delete.c \
+				pattr_get.c \
+				pattr_put.c \
                 pcomm_get_name.c \
                 pcomm_set_name.c \
                 pfinalize.c \
