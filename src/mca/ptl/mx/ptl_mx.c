@@ -45,57 +45,6 @@ mca_ptl_mx_module_t mca_ptl_mx_module = {
 
 
 /**
- * PML->PTL notification of addition to the process list.
- *
- * @param ptl (IN)
- * @param nprocs (IN)     Number of processes
- * @param procs (IN)      Set of processes
- * @param peers (OUT)     Set of (optional) peer addressing info.
- * @param peers (IN/OUT)  Set of processes that are reachable via this PTL.
- * @return                OMPI_SUCCESS or error status on failure.
- *
- */
-                                                                                
-int mca_ptl_mx_add_procs(
-    struct mca_ptl_base_module_t* ptl, 
-    size_t nprocs, 
-    struct ompi_proc_t **ompi_proc, 
-    struct mca_ptl_base_peer_t** peer_ret, 
-    ompi_bitmap_t* reachable)
-{
-    size_t i;
-    for( i = 0; i < nprocs; i++ ) {
-    }
-    return OMPI_SUCCESS;
-}
-
-
-/**
- * PML->PTL notification of change in the process list.
- *
- * @param ptl (IN)     PTL instance
- * @param nproc (IN)   Number of processes.
- * @param procs (IN)   Set of processes.
- * @param peers (IN)   Set of peer data structures.
- * @return             Status indicating if cleanup was successful
- *
- */
-
-int mca_ptl_mx_del_procs(
-    struct mca_ptl_base_module_t* ptl, 
-    size_t nprocs, 
-    struct ompi_proc_t **proc, 
-    struct mca_ptl_base_peer_t** ptl_peer)
-{
-    return OMPI_SUCCESS;
-}
-
-int mca_ptl_mx_finalize(struct mca_ptl_base_module_t* ptl)
-{
-    return OMPI_SUCCESS;
-}
-
-/**
  * PML->PTL Initialize a send request for use by the PTL.
  *
  * @param ptl (IN)       PTL instance
@@ -142,6 +91,42 @@ void mca_ptl_mx_request_fini(struct mca_ptl_base_module_t* ptl, mca_pml_base_sen
     OBJ_DESTRUCT(request+1);
 }
 
+
+/**
+ * PML->PTL Initiate a send to the peer.
+ *
+ * @param ptl (IN)               PTL instance
+ * @param ptl_base_peer (IN)     PTL peer addressing
+ * @param request (IN)           Send request
+ * @param offset                 Current offset into packed/contiguous buffer.
+ * @param size (IN)              Number of bytes PML is requesting PTL to deliver,
+ * @param flags (IN)             Flags that should be passed to the peer via the message header.
+ * @param request (OUT)          OMPI_SUCCESS if the PTL was able to queue one or more fragments
+ *
+ * The PML implements a rendevouz protocol, with up to the PTL threshold
+ * (ptl_first_frag_size) bytes of the message sent in eager send mode. The ptl_send()
+ * function is called by the PML to initiate the send of the first message fragment.
+ *
+ * The PTL is responsible for updating the current data offset (req_offset) in the
+ * request to reflect the actual number of bytes fragmented.  This may be less than
+ * the requested size, due to resource constraints or datatype alighnment/offset. If
+ * an acknowledgment is required, the MCA_PTL_FLAGS_ACK_MATCHED bit will be set in the
+ * flags parameter. In this case, the PTL should not call ptl_send_progress() function
+ * to indicate completion of the fragment until the ack is received. For all other
+ * fragments ptl_send_progress() may be called based on local completion semantics.
+ */
+                                                                                                   
+int mca_ptl_mx_send(
+    struct mca_ptl_base_module_t* ptl,
+    struct mca_ptl_base_peer_t* ptl_peer,
+    struct mca_pml_base_send_request_t* sendreq,
+    size_t offset,
+    size_t size,
+    int flags)
+{
+    return OMPI_ERROR;
+}
+                                                                                                   
 
 /**
  * PML->PTL Notification from the PML to the PTL that a receive
