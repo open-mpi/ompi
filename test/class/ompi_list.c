@@ -20,15 +20,17 @@ typedef struct test_data {
 int main(int argc, char **argv)
 {
     /* local variables */
-    ompi_list_t list;
-    size_t list_size;
+    ompi_list_t list, x;
+    size_t list_size, tmp_size_1, tmp_size_2;
     int size_elements,i,indx,error_cnt;
     test_data_t *elements, *ele;
+    ompi_list_item_t *item;
 
     test_init("ompi_list_t");
 
     /* initialize list */
     OBJ_CONSTRUCT(&list, ompi_list_t);
+    OBJ_CONSTRUCT(&x, ompi_list_t);
 
     /* check length of list */
     list_size=ompi_list_get_size(&list);
@@ -36,6 +38,13 @@ int main(int argc, char **argv)
         test_success();
     } else {
         test_failure(" ompi_list_get_size");
+    }
+
+    /* check for empty */
+    if (ompi_list_is_empty(&list)) {
+        test_success();
+    } else {
+        test_failure(" ompi_list_is_empty(empty list)");
     }
 
     /* create test elements */
@@ -55,6 +64,13 @@ int main(int argc, char **argv)
         test_success();
     } else {
         test_failure(" populating list");
+    }
+
+    /* checking for empty on non-empty list */
+    if (!ompi_list_is_empty(&list)) {
+        test_success();
+    } else {
+        test_failure(" ompi_list_is_empty(non-empty list)");
     }
 
     /* check that list is ordered as expected */
@@ -275,6 +291,34 @@ int main(int argc, char **argv)
         test_success();
     } else {
         test_failure(" error in list order - ompi_list_remove_item ");
+    }
+
+    /* test the splice and join functions  */
+    list_size = ompi_list_get_size(&list);
+    for (i = 0, item = ompi_list_get_first(&list) ; 
+         i < list_size / 2 ; ++i, item = ompi_list_get_next(item)) {
+    }
+    ompi_list_splice(&x, ompi_list_get_end(&x),
+                     &list, item, ompi_list_get_end(&list));
+    tmp_size_1 = ompi_list_get_size(&list);
+    tmp_size_2 = ompi_list_get_size(&x);
+    if (tmp_size_1 != i) {
+        test_failure(" error in splice (size of list)");
+    } else if (tmp_size_2 != list_size - tmp_size_1) {
+        test_failure(" error in splice (size of x)");
+    } else {
+        test_success();
+    }
+
+    ompi_list_join(&list, ompi_list_get_end(&list), &x);
+    tmp_size_1 = ompi_list_get_size(&list);
+    tmp_size_2 = ompi_list_get_size(&x);
+    if (tmp_size_1 != list_size) {
+        test_failure(" error in join (size of list)");
+    } else if (tmp_size_2 != 0) {
+        test_failure(" error in join (size of x)");
+    } else {
+        test_success();
     }
 
     return test_finalize();
