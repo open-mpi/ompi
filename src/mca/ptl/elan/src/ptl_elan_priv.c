@@ -623,7 +623,7 @@ mca_ptl_elan_init_get_desc (mca_ptl_elan_module_t *ptl,
     desc->chain_dma.dma_dstEvent = elan4_main2elan (ctx, 
 	    (void *) ptl->queue->input);
 
-    LOG_PRINT(PTL_ELAN_DEBUG_ACK,
+    LOG_PRINT(PTL_ELAN_DEBUG_GET,
 		"remote frag %p local req %p buffer %p size %d len %d\n",
 	       	hdr->hdr_ack.hdr_src_ptr.pval,
 	       	hdr->hdr_ack.hdr_dst_match.pval,
@@ -700,12 +700,12 @@ mca_ptl_elan_init_get_desc (mca_ptl_elan_module_t *ptl,
 	    E4_COOKIE_TYPE_REMOTE_DMA, 
 	    destvp);
     desc->main_dma.dma_vproc = ptl->elan_vp; /* target is self */
-    LOG_PRINT(PTL_ELAN_DEBUG_MAC, 
+    LOG_PRINT(PTL_ELAN_DEBUG_GET, 
 	    "destvp %d type %d flag %d size %d\n", 
 	    destvp, hdr->hdr_common.hdr_type,
 	    hdr->hdr_common.hdr_flags,
 	    hdr->hdr_common.hdr_size);
-    END_FUNC(PTL_ELAN_DEBUG_SEND);
+    END_FUNC(PTL_ELAN_DEBUG_GET);
 }
 #endif /* End of OMPI_PTL_ELAN_ENABLE_GET */
 
@@ -890,7 +890,7 @@ mca_ptl_elan_get_with_ack ( mca_ptl_base_module_t * ptl,
     request  = recv_frag->frag_recv.frag_request;
     destvp   = ((mca_ptl_elan_peer_t *)
 	    recv_frag->frag_recv.frag_base.frag_peer)->peer_vp;
-    frag->desc->desc_type = MCA_PTL_ELAN_DESC_PUT; 
+    frag->desc->desc_type = MCA_PTL_ELAN_DESC_GET; 
     gdesc = (ompi_ptl_elan_putget_desc_t *)frag->desc;
     hdr   = (mca_ptl_base_header_t *) &frag->frag_base.frag_header;
     recv_len = 
@@ -925,7 +925,7 @@ mca_ptl_elan_get_with_ack ( mca_ptl_base_module_t * ptl,
     MEMBAR_DRAIN();
     ompi_list_append (&elan_ptl->send_frags, (ompi_list_item_t *) frag);
 
-    /* XXX: fragment state, remember the recv_frag may be gone */
+    /* XXX: fragment state, remember recv_frag may be gone */
     frag->desc->req = (mca_pml_base_request_t *) request ; /*recv req*/
     frag->desc->desc_status   = MCA_PTL_ELAN_DESC_LOCAL;
     frag->frag_base.frag_owner= ptl;
@@ -935,8 +935,8 @@ mca_ptl_elan_get_with_ack ( mca_ptl_base_module_t * ptl,
     frag->frag_base.frag_size = remain_len;
     frag->frag_progressed     = 0;
 
-    LOG_PRINT(PTL_ELAN_DEBUG_ACK,
-		"remote frag %p local req %p buffer %p size %d len %d\n",
+    LOG_PRINT(PTL_ELAN_DEBUG_GET, "remote frag %p"
+	       " local req %p buffer %p size %d len %d\n",
 	       	hdr->hdr_ack.hdr_src_ptr.pval,
 	       	hdr->hdr_ack.hdr_dst_match.pval,
 	       	hdr->hdr_ack.hdr_dst_addr.pval,
@@ -1186,12 +1186,6 @@ ptl_elan_send_comp:
 
 	header = (mca_ptl_base_header_t *) rxq->qr_fptr;
 
-	LOG_PRINT(PTL_ELAN_DEBUG_MAC,
-		    "[comp...] type %d flag %d size %d\n",
-		    header->hdr_common.hdr_type,
-		    header->hdr_common.hdr_flags,
-		    header->hdr_common.hdr_size);
-
 #if OMPI_PTL_ELAN_THREADING
 	if (header->hdr_common.hdr_type == MCA_PTL_HDR_TYPE_STOP) {
 	    /* XXX: release the lock and quit the thread */
@@ -1211,6 +1205,10 @@ ptl_elan_send_comp:
 	/* XXX: please reset additional chained event for put/get desc */
 	mca_ptl_elan_send_desc_done (frag, 
 		(mca_pml_base_send_request_t *) basic->req);
+
+#if OMPI_PTL_ELAN_COMP_QUEUE
+	elan4_freecq_space (ctx, frag->desc->comp_event->ev_Params[1], 8);
+#endif
 
 	/* Work out the new front pointer */
 	if (rxq->qr_fptr == rxq->qr_top) {

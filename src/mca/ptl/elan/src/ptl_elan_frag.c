@@ -152,7 +152,7 @@ mca_ptl_elan_alloc_recv_desc (struct mca_pml_base_recv_request_t * req)
 
 void 
 mca_ptl_elan_send_desc_done (
-       	mca_ptl_elan_send_frag_t *desc,
+       	mca_ptl_elan_send_frag_t *frag,
        	mca_pml_base_send_request_t *req) 
 { 
     mca_ptl_elan_module_t *ptl;
@@ -160,21 +160,45 @@ mca_ptl_elan_send_desc_done (
  
     START_FUNC(PTL_ELAN_DEBUG_SEND);
 
-    ptl = ((ompi_ptl_elan_qdma_desc_t *)desc->desc)->ptl;
-    header = &desc->frag_base.frag_header;
+    ptl = ((ompi_ptl_elan_qdma_desc_t *)frag->desc)->ptl;
+    header = &frag->frag_base.frag_header;
 
-    LOG_PRINT(PTL_ELAN_DEBUG_SEND, "req %p done frag %p \n", req, desc);
+    if (frag->desc->desc_type == MCA_PTL_ELAN_DESC_GET) {
+	LOG_PRINT(PTL_ELAN_DEBUG_SEND, 
+		"req %p done frag %p desc_status %d desc_type %d length %d\n", 
+		req, frag, frag->desc->desc_status, 
+		frag->desc->desc_type, frag->frag_base.frag_size);
+
+	if(ompi_atomic_fetch_and_set_int (&frag->frag_progressed, 1) == 0) {
+	    ptl->super.ptl_recv_progress(ptl, 
+		    (mca_pml_base_recv_request_t *) req, 
+		    frag->frag_base.frag_size,
+		    frag->frag_base.frag_size);
+	}
+	elan4_freecq_space (ptl->ptl_elan_ctx,
+		((ompi_ptl_elan_putget_desc_t *) frag->desc)
+		->chain_event->ev_Params[1], 8);
+	OMPI_FREE_LIST_RETURN (&ptl->putget->get_desc_free,
+	       	(ompi_list_item_t *) frag);
+	END_FUNC(PTL_ELAN_DEBUG_SEND);
+	return;
+    }
+
+    LOG_PRINT(PTL_ELAN_DEBUG_SEND, 
+	    "req %p done frag %p desc_status %d desc_type %d length %d\n", 
+	    req, frag, frag->desc->desc_status, 
+	    frag->desc->desc_type,
+	    header->hdr_frag.hdr_frag_length);
 
     if(NULL == req) { /* An ack descriptor */
 	OMPI_FREE_LIST_RETURN (&ptl->queue->tx_desc_free,
-		(ompi_list_item_t *) desc);
+		(ompi_list_item_t *) frag);
     } 
 #if 1   
     else if (0 == (header->hdr_common.hdr_flags 
 		& MCA_PTL_FLAGS_ACK_MATCHED)
 	    || mca_pml_base_send_request_matched(req)) {
-
-	if(ompi_atomic_fetch_and_set_int (&desc->frag_progressed, 1) == 0) 
+	if(ompi_atomic_fetch_and_set_int (&frag->frag_progressed, 1) == 0) 
 	{
 	    ptl->super.ptl_send_progress(ptl, req, 
 		    header->hdr_frag.hdr_frag_length);
@@ -182,14 +206,17 @@ mca_ptl_elan_send_desc_done (
 
 	/* Return a frag or if not cached, or it is a follow up */ 
 	if ( /*(header->hdr_frag.hdr_frag_offset != 0) || */
-		(desc->desc->desc_status != MCA_PTL_ELAN_DESC_CACHED)){
-	    if (desc->desc->desc_type == MCA_PTL_ELAN_DESC_PUT) {
-		OMPI_FREE_LIST_RETURN (&ptl->putget->put_desc_free,
-			(ompi_list_item_t *) desc);
+		(frag->desc->desc_status != MCA_PTL_ELAN_DESC_CACHED)){
+	    ompi_free_list_t  *flist;
+	    if (frag->desc->desc_type == MCA_PTL_ELAN_DESC_PUT) {
+		flist = &ptl->putget->put_desc_free;
+		elan4_freecq_space (ptl->ptl_elan_ctx,
+		       	((ompi_ptl_elan_putget_desc_t *) frag->desc)
+			->chain_event->ev_Params[1], 8);
 	    } else {
-		OMPI_FREE_LIST_RETURN (&ptl->queue->tx_desc_free,
-			(ompi_list_item_t *) desc);
+		flist = &ptl->queue->tx_desc_free;
 	    }
+	    OMPI_FREE_LIST_RETURN (flist, (ompi_list_item_t *) frag);
 	} else {
 	    LOG_PRINT(PTL_ELAN_DEBUG_ACK,
 		    "PML will return frag to list %p, length %d\n", 
@@ -217,16 +244,16 @@ mca_ptl_elan_send_desc_done (
 	 *       the start of following fragments. As the logic is not there.
 	 */
 
-	if(ompi_atomic_fetch_and_set_int (&desc->frag_progressed, 1) == 0) {
+	if(ompi_atomic_fetch_and_set_int (&frag->frag_progressed, 1) == 0) {
 	    ptl->super.ptl_send_progress(ptl, req, 
 		    header->hdr_frag.hdr_frag_length);
 	}
 
 	/* Return a frag or if not cached, or it is a follow up */ 
-	if((header->hdr_frag.hdr_frag_offset != 0) || (desc->desc->desc_status 
+	if((header->hdr_frag.hdr_frag_offset != 0) || (frag->desc->desc_status 
 		    != MCA_PTL_ELAN_DESC_CACHED)) 
 	    OMPI_FREE_LIST_RETURN (&queue->tx_desc_free,
-		    (ompi_list_item_t *) desc);
+		    (ompi_list_item_t *) frag);
     } 
 #endif
 

@@ -417,6 +417,8 @@ mca_ptl_elan_matched (mca_ptl_base_module_t * ptl,
 #endif
 	/* Get a frag desc and allocate a send desc */
 	desc = mca_ptl_elan_alloc_desc(ptl, NULL, desc_type);
+	LOG_PRINT(PTL_ELAN_DEBUG_GET, "Get desc %p type %d\n", 
+		    desc, desc->desc->desc_type);
 
 	if (NULL == desc) {
 	    ompi_output(0,
@@ -432,13 +434,14 @@ mca_ptl_elan_matched (mca_ptl_base_module_t * ptl,
 	     *      pay more attention to timing of the release */ 
 #if OMPI_PTL_ELAN_ENABLE_GET
 	    mca_ptl_elan_get_with_ack (ptl, desc, recv_frag);
+	    LOG_PRINT(PTL_ELAN_DEBUG_GET, "Get desc %p type %d\n", 
+		    desc, desc->desc->desc_type);
 #else
 	    mca_ptl_elan_start_ack (ptl, desc, recv_frag);
 #endif
         }
     }
 
-    /* Process the fragment */
     set = ompi_atomic_fetch_and_set_int (
 	    &((mca_ptl_elan_recv_frag_t *)frag)->frag_progressed, 1);
     if (!set) {
