@@ -281,6 +281,10 @@ int mca_ptl_ib_init_module(mca_ptl_ib_state_t *ib_state, int module_num)
         return OMPI_ERROR;
     }
 
+    /* initialize memory region registry */
+    OBJ_CONSTRUCT(&(ib_state->mem_registry), mca_ptl_ib_mem_registry_t);
+    mca_ptl_ib_mem_registry_init(&(ib_state->mem_registry), ib_state);
+
     return OMPI_SUCCESS;
 }
 

@@ -94,7 +94,10 @@ struct mca_ptl_ib_component_t {
     /**< lock for accessing module state */
 
     uint32_t                                ib_num_hcas;
-    /* number of hcas available to the IB component */
+    /**< number of hcas available to the IB component */
+
+    int                                     ib_mem_registry_hints_log_size;
+    /**< log2 size of hints hash array used by memory registry */
 };
 typedef struct mca_ptl_ib_component_t mca_ptl_ib_component_t;
 struct mca_ptl_ib_recv_frag_t;
