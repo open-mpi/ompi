@@ -45,19 +45,19 @@ int mca_pcm_base_select(void)
     module = (mca_pcm_base_module_t *) mli->mli_module;
 
     lam_output_verbose(10, mca_pcm_base_output, 
-                       "select: querying %s module %s",
+                       "select: initializing %s module %s",
                        module->pcmm_version.mca_type_name,
                        module->pcmm_version.mca_module_name);
-    if (NULL == module->pcmm_query) {
+    if (NULL == module->pcmm_init) {
       lam_output_verbose(10, mca_pcm_base_output,
-                         "select: no querying function; ignoring module");
+                         "select: no init function; ignoring module");
     } else {
-      if (MCA_SUCCESS != module->pcmm_query(&priority)) {
+      if (MCA_SUCCESS != module->pcmm_init(&priority)) {
         lam_output_verbose(10, mca_pcm_base_output,
-                           "select: query returned failure");
+                           "select: init returned failure");
       } else {
         lam_output_verbose(10, mca_pcm_base_output,
-                           "select: query returned priority %d", priority);
+                           "select: init returned priority %d", priority);
         if (priority > best_priority) {
           best_priority = priority;
           best_module = module;
@@ -106,13 +106,8 @@ int mca_pcm_base_select(void)
   mca_base_modules_close(mca_pcm_base_output, &mca_pcm_base_modules_available, 
                          (mca_base_module_t *) best_module);
 
-  /* Invoke init on the selected module */
+  /* Save the winner */
 
-  actions = best_module->pcmm_init();
-  if (NULL == actions) {
-    /* JMS replace with show_help */
-    lam_abort(1, "PCM module init function returned NULL.  This shouldn't happen.");
-  }
   mca_pcm_base_selected_module = *best_module;
   mca_pcm = *actions;
   lam_output_verbose(10, mca_pcm_base_output, 

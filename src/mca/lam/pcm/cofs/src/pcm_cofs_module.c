@@ -35,7 +35,6 @@ mca_pcm_base_module_1_0_0_t mca_pcm_cofs_module = {
   {
     false /* checkpoint / restart */
   },
-  mca_pcm_cofs_query,  /* module query */
   mca_pcm_cofs_init,    /* module init */
   mca_pcm_cofs_finalize
 };
@@ -83,9 +82,12 @@ mca_pcm_cofs_close(void)
 }
 
 
-int
-mca_pcm_cofs_query(int *priority)
+struct mca_pcm_1_0_0_t*
+mca_pcm_cofs_init(int *priority)
 {
+  char *tmp;
+  FILE *fp;
+
   char *test_ret;
 
   *priority = 0;
@@ -94,30 +96,20 @@ mca_pcm_cofs_query(int *priority)
   test_ret = getenv("MCA_common_lam_cofs_my_vpid");
   if (test_ret == NULL) {
     printf("COFS PCM will not be running because MCA_common_lam_cofs_my_vpid not set\n");
-    return LAM_ERROR;
+    return NULL;
   }
 
   test_ret = getenv("MCA_common_lam_cofs_job_handle");
   if (test_ret == NULL) {
     printf("COFS PCM will not be running because MCA_common_lam_cofs_job_handle not set\n");
-    return LAM_ERROR;
+    return NULL;
   }
 
   test_ret = getenv("MCA_common_lam_cofs_num_procs");
   if (test_ret == NULL) {
     printf("COFS PCM will not be running because MCA_common_lam_cofs_num_procs not set\n");
-    return LAM_ERROR;
+    return NULL;
   }
-
-  return LAM_SUCCESS;
-}
-
-
-struct mca_pcm_1_0_0_t*
-mca_pcm_cofs_init(void)
-{
-  char *tmp;
-  FILE *fp;
 
   /*
    * BWB - fix me, make register the "right" way...

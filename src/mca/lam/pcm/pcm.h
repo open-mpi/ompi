@@ -87,8 +87,7 @@ typedef struct mca_pcm_proc_t mca_pcm_proc_t;
  * functions every module must provide
  */
 
-typedef int (*mca_pcm_base_query_fn_t)(int *priority);
-typedef struct mca_pcm_1_0_0_t* (*mca_pcm_base_init_fn_t)(void);
+typedef struct mca_pcm_1_0_0_t* (*mca_pcm_base_init_fn_t)(int *priority);
 
   /**
    * \func mca_pcm_query_get_nodes
@@ -377,7 +376,6 @@ struct mca_pcm_base_module_1_0_0_t {
   mca_base_module_t pcmm_version;
   mca_base_module_data_1_0_0_t pcmm_data;
 
-  mca_pcm_base_query_fn_t pcmm_query;
   mca_pcm_base_init_fn_t pcmm_init;
   mca_pcm_base_finalize_fn_t pcmm_finalize;
 };
