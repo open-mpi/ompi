@@ -71,11 +71,24 @@ static inline int lam_group_size(lam_group_t *group){
 /**
  * Get group rank
  *
- * @param group Pointer to lam_group_t structute (IN)
+ * @param group Pointer to lam_group_t structure (IN)
  *
  * @return Group rank
  */
 static inline int lam_group_rank(lam_group_t *group){
     return group->grp_proc_count;
 }
+
+/**
+ * Set group rank in the input group structure
+ *
+ * @param group Group Pointer to lam_group_t structure (IN)
+ * @param proc_pointer Pointer to lam_proc_t structure for process.
+ *                     MPI_PROC_NULL may be used to indicate proc not
+ *                     in group
+ *
+ * @return Error code
+ */
+void lam_set_group_rank(lam_group_t *group, lam_proc_t *proc_pointer);
+
 #endif /* LAM_GROUP_H */

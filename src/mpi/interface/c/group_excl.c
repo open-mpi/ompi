@@ -72,6 +72,7 @@ int MPI_Group_excl(MPI_Group group, int n, int *ranks,
     cnt=0;
     for (proc = 0; proc < n; proc++) {
         found=0;
+        /* check to see if this proc is in the exclusion list */
         for( i_excl=0 ; i_excl < n ; ++i_excl ) {
             excl_proc=ranks[i_excl];
             /* check to see if this proc is within range */
@@ -86,7 +87,8 @@ int MPI_Group_excl(MPI_Group group, int n, int *ranks,
 
         } /* end i_excl loop */
         if( !found ) {
-            new_group_pointer->grp_proc_pointers[cnt] = proc;
+            new_group_pointer->grp_proc_pointers[cnt] =
+                group_pointer->grp_proc_pointers[proc];
             cnt++;
         }
 
