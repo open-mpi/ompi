@@ -35,10 +35,12 @@ MPI_Comm_set_name(MPI_Comm comm, char *name)
   comm->c_name[MPI_MAX_OBJECT_NAME - 1] = 0;
 
   /* -- Tracing information for new communicator name -- */
-  
+
+#if 0  
   /* Force TotalView DLL to take note of this name setting */
 
   ++lam_tv_comm_sequence_number;
+#endif
 
   /* -- Thread safety exit -- */
   
