@@ -2,6 +2,8 @@
  * $HEADER$
  */
 
+/** @file **/
+
 #ifndef LAM_MUTEX_H_
 #define LAM_MUTEX_H_
 
