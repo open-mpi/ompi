@@ -7,7 +7,7 @@
 # information, see the LICENSE file in the top level directory of the
 # LAM/MPI source distribution.
 #
-# $Id: autogen.sh,v 1.3 2003/12/24 01:49:07 brbarret Exp $
+# $Id: autogen.sh,v 1.4 2003/12/28 15:11:48 jsquyres Exp $
 #
 # This script is run on developer copies of LAM/MPI -- *not*
 # distribution tarballs.
@@ -173,6 +173,12 @@ if test "`grep AC_CONFIG_HEADER configure.ac`" != "" -o \
     run_and_check autoheader
 fi
 run_and_check autoconf
+echo "  -- patching configure for broken -c/-o compiler test"
+sed -e 's/chmod -w \./#LAM\/MPI FIX: chmod -w ./' \
+    configure > configure.new
+mv configure.new configure
+chmod a+x configure
+
 run_and_check $libtoolize --automake --copy
 run_and_check automake --foreign -a --copy --include-deps
 	
