@@ -16,7 +16,7 @@
 
 extern bool lam_mpi_initialized;
 extern bool lam_mpi_finalized;
-extern bool lam_mpi_invalid_state;
+extern bool lam_mpi_param_check;
 
 extern bool lam_mpi_thread_multiple;
 extern int lam_mpi_thread_requested;
