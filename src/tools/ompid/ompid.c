@@ -268,7 +268,7 @@ int main(int argc, char *argv[])
 		    ompi_process_info.name->jobid, ompi_process_info.name->vpid);
     }
 
-     /* register the daemon callback function */
+     /* register the daemon main callback function */
     ret = mca_oob_recv_packed_nb(MCA_OOB_NAME_ANY, MCA_OOB_TAG_DAEMON, 0, ompi_daemon_recv, NULL);
     if(ret != OMPI_SUCCESS && ret != OMPI_ERR_NOT_IMPLEMENTED) {
 	ompi_output(0, "daemon callback not registered: error code %d", ret);
