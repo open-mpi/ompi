@@ -149,6 +149,7 @@ mca_coll_basic_alltoallv_inter(void *sbuf, int *scounts, int *sdisps,
   MPI_Aint sndextent;
   MPI_Aint rcvextent;
   ompi_request_t **preq = comm->c_coll_basic_data->mccb_reqs;
+  
 
   /* Initialize. */
 
