@@ -18,8 +18,8 @@
 #endif
 
 
-int MPI_Comm_rank(MPI_Comm comm, int *rank) {
-    
+int MPI_Comm_rank(MPI_Comm comm, int *rank) 
+{
     if ( MPI_PARAM_CHECK ) {
         if ( lam_mpi_finalized )
             return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INTERN, 
