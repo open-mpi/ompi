@@ -5,4 +5,4 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-SUBDIRS		= oob_cofs
+SUBDIRS = oob_cofs util
