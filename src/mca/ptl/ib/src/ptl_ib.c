@@ -14,7 +14,6 @@
 #include "mca/ptl/base/ptl_base_recvfrag.h"
 #include "mca/base/mca_base_module_exchange.h"
 #include "ptl_ib.h"
-//#include "ptl_ib_sendfrag.h"
 
 mca_ptl_ib_module_t mca_ptl_ib_module = {
     {

@@ -507,11 +507,13 @@ int mca_ptl_ib_peer_connect(mca_ptl_ib_state_t *ib_state,
 
 int mca_ptl_ib_post_send(mca_ptl_ib_state_t *ib_state,
         mca_ptl_ib_peer_conn_t *peer_conn, 
-        ib_buffer_t *ib_buf)
+        ib_buffer_t *ib_buf, void* addr)
 {
     VAPI_ret_t ret;
 
     IB_SET_REMOTE_QP_NUM(ib_buf, (peer_conn->rres->qp_num));
+
+    IB_SET_SEND_DESC_ID(ib_buf, addr);
 
     D_PRINT("length : %d", ib_buf->desc.sg_entry.len);
 
@@ -525,4 +527,51 @@ int mca_ptl_ib_post_send(mca_ptl_ib_state_t *ib_state,
     }
     
     return OMPI_SUCCESS;
+}
+
+void mca_ptl_ib_drain_network(VAPI_hca_hndl_t nic,
+        VAPI_cq_hndl_t cq_hndl, int* comp_type, void** comp_addr)
+{
+    VAPI_ret_t ret;
+    VAPI_wc_desc_t comp;
+
+    ret = VAPI_poll_cq(nic, cq_hndl, &comp);
+    if(VAPI_OK == ret) {
+        if(comp.status != VAPI_SUCCESS) {
+            ompi_output(0, "Got error : %s, Vendor code : %d\n",
+                    VAPI_wc_status_sym(comp.status),
+                    comp.vendor_err_syndrome);
+
+            *comp_type = IB_COMP_ERROR;
+            *comp_addr = NULL;
+
+        } else {
+            if(VAPI_CQE_SQ_SEND_DATA == comp.opcode) {
+                D_PRINT("Send completion, id:%d\n",
+                        comp.id);
+
+                *comp_type = IB_COMP_SEND;
+                *comp_addr = (void*) (unsigned int) comp.id;
+
+            }
+            else if(VAPI_CQE_RQ_SEND_DATA == comp.opcode) {
+                D_PRINT("Received message completion len = %d, id : %d\n",
+                        comp.byte_len, comp.id);
+
+                *comp_type = IB_COMP_RECV;
+                *comp_addr = (void*) (unsigned int) comp.id;
+            }
+            else {
+                D_PRINT("Got Unknown completion! Opcode : %d\n", 
+                        comp.opcode);
+
+                *comp_type = IB_COMP_ERROR;
+                *comp_addr = NULL;
+            }
+        }
+    } else {
+        /* No completions from the network */
+        *comp_type = IB_COMP_NOTHING;
+        *comp_addr = NULL;
+    }
 }

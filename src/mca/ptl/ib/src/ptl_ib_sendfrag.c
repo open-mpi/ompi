@@ -42,8 +42,6 @@ int mca_ptl_ib_send_frag_init(mca_ptl_ib_send_frag_t* sendfrag,
     struct iovec iov;
     int header_length;
 
-    D_PRINT("");
-
     /* Start of the IB buffer */
     hdr = (mca_ptl_base_header_t *) &sendfrag->ib_buf.buf[0];
 
@@ -219,4 +217,23 @@ int mca_ptl_ib_register_send_frags(mca_ptl_base_module_t *ptl)
     }
 
     return OMPI_SUCCESS;
+}
+
+/*
+ * Process send completions
+ *
+ */
+
+void mca_ptl_ib_process_send_comp(mca_ptl_base_module_t *module, 
+        void* addr)
+{
+    mca_ptl_ib_send_frag_t *sendfrag;
+    mca_ptl_base_header_t *header;
+
+    sendfrag = (mca_ptl_ib_send_frag_t *) (unsigned int) addr;
+    header = (mca_ptl_base_header_t *) sendfrag->ib_buf.buf;
+
+    module->ptl_send_progress(module,
+            sendfrag->frag_send.frag_request,
+            header->hdr_frag.hdr_frag_length);
 }

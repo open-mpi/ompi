@@ -78,6 +78,8 @@ typedef struct mca_ptl_base_peer_t mca_ptl_ib_peer_t;
 int  mca_ptl_ib_peer_send(mca_ptl_base_peer_t*, mca_ptl_ib_send_frag_t*);
 void mca_ptl_ib_post_oob_recv_nb(void);
 
+void mca_ptl_ib_progress_send_frags(mca_ptl_ib_peer_t*);
+
 #define DUMP_PEER(peer_ptr) {                                       \
     ompi_output(0, "[%s:%d] ", __FILE__, __LINE__);                 \
     ompi_output(0, "Dumping peer state");                           \
