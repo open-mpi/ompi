@@ -18,6 +18,7 @@
 #include "op/op.h"
 #include "file/file.h"
 #include "info/info.h"
+#include "util/proc_info.h"
 #include "runtime/runtime.h"
 
 #include "mca/base/base.h"
@@ -32,6 +33,7 @@
 #include "mca/io/io.h"
 #include "mca/io/base/base.h"
 #include "mca/oob/base/base.h"
+#include "mca/ns/base/base.h"
 
 
 int ompi_mpi_finalize(void)
@@ -121,12 +123,20 @@ int ompi_mpi_finalize(void)
   }
 
   /* unregister process */
-  if (OMPI_SUCCESS != (ret = ompi_rte_unregister())) {
-    return ret;
+  if (OMPI_SUCCESS != (ret = ompi_registry.rte_unregister(
+			     ns_base_get_proc_name_string(ompi_process_info.name)))) {
+      return ret;
+  }
+
+  /* wait for all processes to reach same state */
+  if (OMPI_SUCCESS != (ret = ompi_rte_monitor_procs_unregistered())) {
+      if (ompi_rte_debug_flag) {
+	  ompi_output(0, "mpi_finalize: gave up waiting for other processes to complete");
+      }
   }
 
   /* shutdown event library - note that this needs to
-   * occur before anything that uses the event library 
+   * occur after everything that uses the event library 
    */
   if (OMPI_SUCCESS != (ret = ompi_event_fini())) {
     return ret;
