@@ -198,7 +198,6 @@ static void mca_ptl_mx_match(void* context, uint64_t match_value, int size)
 
     frag->frag_size = size;
     frag->frag_recv.frag_request = request;
-    frag->frag_recv.frag_base.frag_peer = NULL; 
     frag->frag_recv.frag_base.frag_owner = &ptl->super; 
     frag->frag_recv.frag_base.frag_size = frag->frag_size;
     frag->frag_recv.frag_base.frag_header.hdr_common.hdr_type = 
@@ -406,10 +405,13 @@ int mca_ptl_mx_add_procs(
     size_t n;
     for( n = 0; n < nprocs; n++ ) {
         int rc;
-        mca_ptl_mx_proc_t *ptl_proc = mca_ptl_mx_proc_create(procs[n]);
+        mca_ptl_mx_proc_t *ptl_proc;
         mca_ptl_mx_peer_t* ptl_peer;
 
-        if(ptl_proc == NULL)
+        /* Dont let mx register for self */
+        if( proc_self == procs[n] ) continue;
+                                                                                                                 
+        if((ptl_proc = mca_ptl_mx_proc_create(procs[n])) == NULL)
             return OMPI_ERR_OUT_OF_RESOURCE;
 
         /* peer doesn't export enough addresses */

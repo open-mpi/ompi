@@ -75,7 +75,7 @@ do {                                                                       \
 #define MCA_PTL_MX_RECV_FRAG_RNDV(frag, hdr)                               \
 do {                                                                       \
     if(hdr->hdr_common.hdr_flags & MCA_PTL_FLAGS_NBO) {                    \
-         MCA_PTL_BASE_MATCH_HDR_NTOH(hdr->hdr_match);                      \
+         MCA_PTL_BASE_RNDV_HDR_NTOH(hdr->hdr_rndv);                        \
     }                                                                      \
     ptl->super.ptl_match(&ptl->super, &frag->frag_recv, &hdr->hdr_match);  \
 } while(0) 
