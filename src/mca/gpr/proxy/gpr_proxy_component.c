@@ -178,6 +178,7 @@ mca_gpr_base_module_t* mca_gpr_proxy_init(bool *allow_multi_user_threads, bool *
 	/* initialize the registry compound mode */
 	mca_gpr_proxy_compound_cmd_mode = false;
 	mca_gpr_proxy_compound_cmd_waiting = 0;
+	mca_gpr_proxy_compound_cmd = NULL;
 
 	/* define the replica for us to use - get it from process_info */
 	mca_gpr_my_replica = ompi_name_server.copy_process_name(ompi_process_info.gpr_replica);
