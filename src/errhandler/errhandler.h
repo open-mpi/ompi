@@ -124,7 +124,7 @@ extern ompi_pointer_array_t *ompi_errhandler_f_to_c_table;
  * parallel invocation to OMPI_ERRHANDLER_CHECK() and OMPI_ERRHANDLER_RETURN().
  */
 #define OMPI_ERRHANDLER_INVOKE(mpi_object, err_code, message) \
-  ompi_errhandler_invoke((mpi_object) != NULL ? (mpi_object)->error_handler : NULL, \
+  ompi_errhandler_invoke((mpi_object)->error_handler, \
 			 (mpi_object), \
                          (int)(mpi_object)->errhandler_type, \
                          (err_code < 0 ? (ompi_errcode_get_mpi_code(err_code)) : err_code), \
@@ -146,7 +146,7 @@ extern ompi_pointer_array_t *ompi_errhandler_f_to_c_table;
 #define OMPI_ERRHANDLER_CHECK(rc, mpi_object, err_code, message) \
   if (rc != OMPI_SUCCESS) { \
     int __mpi_err_code = (err_code < 0 ? (ompi_errcode_get_mpi_code(err_code)) : err_code); \
-    ompi_errhandler_invoke((mpi_object) != NULL ? (mpi_object)->error_handler : NULL, \
+    ompi_errhandler_invoke((mpi_object)->error_handler, \
 			   (mpi_object), \
                            (int) (mpi_object)->errhandler_type, \
                            (__mpi_err_code), \
@@ -172,7 +172,7 @@ extern ompi_pointer_array_t *ompi_errhandler_f_to_c_table;
 #define OMPI_ERRHANDLER_RETURN(rc, mpi_object, err_code, message) \
   if (rc != OMPI_SUCCESS) { \
     int __mpi_err_code = (err_code < 0 ? (ompi_errcode_get_mpi_code(err_code)) : err_code); \
-    ompi_errhandler_invoke((mpi_object != NULL) ? (mpi_object)->error_handler : NULL, \
+    ompi_errhandler_invoke((mpi_object)->error_handler, \
                            (mpi_object), \
                            (int)(mpi_object)->errhandler_type, \
                            (__mpi_err_code), \
