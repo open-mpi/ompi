@@ -64,7 +64,7 @@ lam_errhandler_t lam_mpi_errors_are_fatal = {
 /*
  * MPI_ERRORS_RETURN
  */
-lam_errhandler_t errors_return = {
+lam_errhandler_t lam_mpi_errors_return = {
     { NULL, 0 },
 
     "MPI_ERRORS_ARE_RETURN",
