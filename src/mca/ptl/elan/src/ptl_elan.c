@@ -311,13 +311,16 @@ mca_ptl_elan_matched (mca_ptl_base_module_t * ptl,
 {
     mca_pml_base_recv_request_t *request; 
     mca_ptl_base_header_t *header;
+    mca_ptl_elan_recv_frag_t * recv_frag;
+
     int     set = 0;
 
     header  = &frag->frag_base.frag_header;
     request = frag->frag_request;
+    recv_frag = (mca_ptl_elan_recv_frag_t * ) frag;
 
     if (header->hdr_common.hdr_flags & MCA_PTL_FLAGS_ACK_MATCHED) 
-#if 1
+#if 1 /* Basic ACK scheme following TCP cases */
     {
 	mca_ptl_elan_send_frag_t *desc;
 
@@ -329,16 +332,12 @@ mca_ptl_elan_matched (mca_ptl_base_module_t * ptl,
 		    "[%s:%d] Unable to allocate an elan send descriptors \n", 
 		    __FILE__, __LINE__);
             OMPI_THREAD_LOCK(&mca_ptl_elan_component.elan_lock);
-	    ((mca_ptl_elan_recv_frag_t *)frag)->frag_ack_pending = true;
+	    recv_frag->frag_ack_pending = true;
             ompi_list_append(&mca_ptl_elan_component.elan_pending_acks, 
 		    (ompi_list_item_t*)frag);
             OMPI_THREAD_UNLOCK(&mca_ptl_elan_component.elan_lock);
 	} else {
-#if 0
-	    mca_ptl_elan_start_desc(desc, 
-		    (struct mca_ptl_elan_peer_t *)ptl_peer,
-		    NULL, offset, &size, flags);
-#endif
+	    mca_ptl_elan_start_ack (ptl, desc, recv_frag);
         }
     }
 #else
@@ -355,7 +354,6 @@ mca_ptl_elan_matched (mca_ptl_base_module_t * ptl,
 	 * d) Consider moving time-consuming tasks to some BH-like 
 	 *    mechanisms.
 	 */
-
     }
 #endif
 
@@ -363,14 +361,13 @@ mca_ptl_elan_matched (mca_ptl_base_module_t * ptl,
     set = fetchNset (&((mca_ptl_elan_recv_frag_t *)frag)->frag_progressed, 1);
 
     if (!set) {
-
 	/* IN TCP case, IO_VEC is first allocated.
 	 * then recv the data, and copy if needed,
 	 *
 	 * But in ELAN cases, we save the data into an unex buffer
 	 * if the recv descriptor is not posted (for too long) (TODO).
 	 * We then need to copy from unex_buffer to application buffer */
-	if(header->hdr_frag.hdr_frag_length > 0) {
+	if (header->hdr_frag.hdr_frag_length > 0) {
 
 	    struct iovec iov; 
 	    ompi_proc_t *proc;
@@ -392,8 +389,7 @@ mca_ptl_elan_matched (mca_ptl_base_module_t * ptl,
 		    request->req_base.req_addr,        
 		    header->hdr_frag.hdr_frag_offset);  
 	    ompi_convertor_unpack(&frag->frag_base.frag_convertor, &iov, 1); 
-	} 
-
+	}
 #if 0
 	 if (header->hdr_common.hdr_flags & MCA_PTL_FLAGS_ACK_MATCHED) {
 	    /* FIXME: Pseudocode, for additional processing of fragments 
@@ -427,7 +423,6 @@ mca_ptl_elan_matched (mca_ptl_base_module_t * ptl,
 	 * Then Done with this fragment, i.e., data */
 	mca_ptl_elan_recv_frag_done (header, frag, request);
 #endif
- 
     }
 }
 
