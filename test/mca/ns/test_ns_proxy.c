@@ -60,14 +60,15 @@ int main(int argc, char **argv)
         setenv("OMPI_MCA_pcm_cofs_jobid", "0", 1);
         setenv("OMPI_MCA_pcm_cofs_procid", "0", 1);
     } else {
+        ompi_process_info.seed = false;
         /* setup the environment for cofs pcm */
-        setenv("OMPI_MCA_oob_base_exclude", "cofs", 1);
         setenv("OMPI_MCA_pcm_cofs_cellid", "0", 1);
         setenv("OMPI_MCA_pcm_cofs_jobid", "0", 1);
         setenv("OMPI_MCA_pcm_cofs_procid", "1", 1);
-        ompi_process_info.seed = false;
     }
     setenv("OMPI_MCA_pcm_cofs_num_procs", "2", 1);
+    /* require tcp oob */
+    setenv("OMPI_MCA_oob_base_include", "tcp", 1);
 
     /* basic ompi init */
     if (OMPI_SUCCESS != ompi_init(argc, argv)) {
