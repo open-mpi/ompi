@@ -37,7 +37,7 @@ static void* atomic_spinlock_start(void* arg)
 {
     struct start_info *data = (struct start_info*) arg;
 
-    return (void*) atomic_spinlock_test(data->lock, data->count,
+    return (void*) (unsigned long) atomic_spinlock_test(data->lock, data->count,
                                         data->tid);
 }
 
@@ -75,7 +75,7 @@ atomic_spinlock_test_th(ompi_lock_t *lock, int count, int id, int thr_count)
             exit(EXIT_FAILURE);
         }
 
-        ret += (int) thread_return;
+        ret += (int) (unsigned long) thread_return;
     }
     free(data);
     free(th);

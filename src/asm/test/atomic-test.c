@@ -125,7 +125,7 @@ static int str2size(char *str)
 
 static void *thread_main(void *arg)
 {
-    int rank = (int) arg;
+    int rank = (int) (unsigned long) arg;
     int i;
 
     verbose("thread-%d: Hello\n", rank);
@@ -142,7 +142,7 @@ static void *thread_main(void *arg)
         ompi_atomic_add(&valint, 5);
     }
 
-    return (void *) (rank + 1000);
+    return (void *) (unsigned long) (rank + 1000);
 }
 
 
@@ -342,7 +342,7 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
     for (tid = 0; tid < nthreads; tid++) {
-        if (pthread_create(&th[tid], NULL, thread_main, (void *) tid) != 0) {
+        if (pthread_create(&th[tid], NULL, thread_main, (void *) (unsigned long) tid) != 0) {
             perror("pthread_create");
             exit(EXIT_FAILURE);
         }
@@ -357,7 +357,7 @@ int main(int argc, char *argv[])
             perror("pthread_join");
             exit(EXIT_FAILURE);
         }
-        verbose("main: thread %d returned %d\n", tid, (int) thread_return);
+        verbose("main: thread %d returned %d\n", tid, (int) (unsigned long) thread_return);
     }
     free(th);
 
