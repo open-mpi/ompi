@@ -14,9 +14,6 @@
 
 #include "ompi_config.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-
 #include "mpi.h"
 #include "mpi/f77/bindings.h"
 #include "mpi/f77/constants.h"
@@ -73,7 +70,7 @@ void mpi_waitall_f(MPI_Fint *count, MPI_Fint *array_of_requests,
     c_req = malloc(OMPI_FINT_2_INT(*count) *
                    (sizeof(MPI_Request) + sizeof(MPI_Status)));
     if (NULL == c_req) {
-        *ierr = OMPI_FINT_2_INT(OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD,
+        *ierr = OMPI_INT_2_FINT(OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD,
                                                        MPI_ERR_NO_MEM,
                                                        FUNC_NAME));
         return;

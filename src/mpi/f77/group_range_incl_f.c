@@ -14,8 +14,6 @@
 
 #include "ompi_config.h"
 
-#include <stdio.h>
-
 #include "mpi.h"
 #include "mpi/f77/bindings.h"
 #include "group/group.h"
