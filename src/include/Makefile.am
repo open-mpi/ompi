@@ -20,7 +20,8 @@ noinst_HEADERS = \
         constants.h \
         ompi.h \
         totalview.h \
-        types.h
+        types.h \
+        ompi_socket_errno.h
 
 # Conditionally install the header files
 
