@@ -253,6 +253,7 @@ static void mca_oob_tcp_recv_handler(int sd, short flags, void* user)
 
     /* is the peer instance willing to accept this connection */
     if(mca_oob_tcp_peer_accept(peer, sd) == false) {
+        ompi_output(0, "mca_oob_tcp_recv_handler: peer instance not willing to accept connection.");
         close(sd);
         return;
     }
@@ -309,6 +310,12 @@ mca_oob_t* mca_oob_tcp_init(bool *allow_multi_user_threads, bool *have_hidden_th
 int mca_oob_tcp_finalize(void)
 {
     /* TODO: need to cleanup all peers - check for pending send/recvs. etc. */
+    mca_oob_tcp_peer_t * peer;
+    while(NULL != (peer = (mca_oob_tcp_peer_t *) 
+        ompi_list_remove_first(&mca_oob_tcp_component.tcp_peer_list))) {
+        mca_oob_tcp_peer_close(peer);
+        OBJ_DESTRUCT(peer);
+    }
     return OMPI_SUCCESS;
 }
 

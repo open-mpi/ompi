@@ -75,6 +75,8 @@ int mca_oob_tcp_recv(
     msg->msg_cbdata = NULL;
     msg->msg_complete = false;
     msg->msg_peer = *peer;
+    msg->msg_rwbuf = NULL;
+    msg->msg_rwiov = NULL;
     ompi_list_append(&mca_oob_tcp_component.tcp_msg_post, (ompi_list_item_t *) msg);
     OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_match_lock);
 
@@ -161,6 +163,8 @@ int mca_oob_tcp_recv_nb(
     msg->msg_cbdata = cbdata;
     msg->msg_complete = false;
     msg->msg_peer = *peer;
+    msg->msg_rwbuf = NULL;
+    msg->msg_rwiov = NULL;
     ompi_list_append(&mca_oob_tcp_component.tcp_msg_post, (ompi_list_item_t *) msg);
     OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_match_lock);
     return 0;

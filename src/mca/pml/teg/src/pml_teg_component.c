@@ -123,9 +123,6 @@ int mca_pml_teg_component_close(void)
     if(NULL != mca_pml_teg.teg_ptl_components) {
         free(mca_pml_teg.teg_ptl_components);
     }
-    if(NULL != mca_pml_teg.teg_ptl_components) {
-        free(mca_pml_teg.teg_ptl_components);
-    }
     OBJ_DESTRUCT(&mca_pml_teg.teg_send_requests);
     OBJ_DESTRUCT(&mca_pml_teg.teg_recv_requests);
     OBJ_DESTRUCT(&mca_pml_teg.teg_procs);
