@@ -24,6 +24,7 @@
 #include "class/ompi_list.h"
 #include "class/ompi_pointer_array.h"
 #include "errhandler/errhandler.h"
+#include "runtime/ompi_progress.h"
 #include "threads/mutex.h"
 #include "threads/condition.h"
                                                                                                                             
@@ -221,6 +222,9 @@ static inline int ompi_request_test(
         return request->req_fini(rptr);
     } else {
         *completed = false;
+#if OMPI_HAVE_THREADS == 0
+        ompi_progress();
+#endif
         return OMPI_SUCCESS;
     }
 }
