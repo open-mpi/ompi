@@ -70,7 +70,7 @@ typedef int (*mca_pml_addprocs_fn_t)(lam_proc_t **procs, int nprocs);
 
 struct mca_pml_module_1_0_0_t {
 
-  mca_1_0_0_t super;
+  mca_module_1_0_0_t super;
   mca_pml_query_fn_t pmlm_query;
   mca_pml_init_1_0_0_fn_t pmlm_init;
 
@@ -128,6 +128,6 @@ extern lam_list_t *mca_pml_base_available;
  * effectively be filled in by configure.
  */
 
-extern const mca_t **mca_pml_modules;
+extern const mca_module_t **mca_pml_modules;
 
 #endif /* LAM_MCA_PML_H */
