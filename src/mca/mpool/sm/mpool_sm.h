@@ -50,16 +50,6 @@ void* mca_mpool_sm_realloc(void* addr, size_t size);
 void mca_mpool_sm_free(void *);
                                                                                                                          
 /**
-  * register memory
-  */
-void mca_mpool_sm_register(void * addr, size_t size, void* user);
-                                                                                                                         
-/**
-  * deregister memory
-  */
-void mca_mpool_sm_deregister(void * addr);
-
-/**
   * component open/close/init function 
   */
 int mca_mpool_sm_open(void);
