@@ -27,7 +27,18 @@ static void __get_free_dt_struct(  dt_desc_t* pData )
     pData->lb              = LONG_MAX;
     pData->ub              = LONG_MIN;
 }
-OBJ_CLASS_INSTANCE(lam_datatype_t, lam_object_t, __get_free_dt_struct, lam_ddt_destroy );
+
+static void __destroy_ddt_struct( dt_desc_t** pData )
+{
+    if( (*pData)->desc.desc != NULL ) free( (*pData)->desc.desc );
+    (*pData)->desc.desc = NULL;
+    if( (*pData)->opt_desc.desc != NULL ) free( (*pData)->opt_desc.desc );
+    (*pData)->opt_desc.desc = NULL;
+    if( (*pData)->args != NULL ) free( (*pData)->args );
+    (*pData)->args = NULL;
+}
+
+OBJ_CLASS_INSTANCE(lam_datatype_t, lam_object_t, __get_free_dt_struct, __destroy_ddt_struct );
 
 dt_desc_t* lam_ddt_create( int expectedSize )
 {
