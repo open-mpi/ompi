@@ -19,4 +19,5 @@ SUBDIRS = \
 	pcmclient \
         pml \
         ptl \
+        svc \
         topo

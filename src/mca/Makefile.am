@@ -20,6 +20,7 @@ SUBDIRS = \
 	pcmclient \
         pml \
         ptl \
+        svc \
         topo
 
 # Source code files
