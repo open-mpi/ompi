@@ -30,6 +30,21 @@
 #include "mpi.h"
 
 
+/* fortran sizes and alignments ***************************************/
+
+extern int lam_sizeof_f77_integer;
+extern int lam_sizeof_f77_real;
+extern int lam_sizeof_f77_dblprec;
+extern int lam_sizeof_f77_complex;
+extern int lam_sizeof_f77_dblcomplex;
+
+extern int lam_alignment_f77_integer;
+extern int lam_alignment_f77_real;
+extern int lam_alignment_f77_dblprec;
+extern int lam_alignment_f77_complex;
+extern int lam_alignment_f77_dblcomplex;
+
+
 /* enums **************************************************************/
 
 /**
