@@ -2,8 +2,8 @@
  * In this test we try using oob to send messages to the same process.
  * to run: mpirun -np 1 -- oob_test_self
  */
-#include <sys/uio.h>
 #include <sys/types.h>
+#include <sys/uio.h>
 #include <unistd.h>
 #include <stdio.h>
 #include "mpi.h"
