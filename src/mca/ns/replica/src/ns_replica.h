@@ -30,9 +30,9 @@ OBJ_CLASS_DECLARATION(ompi_name_tracker_t);
 /*
  * globals needed within component
  */
-extern ompi_process_id_t max_used_cellid;
-extern ompi_process_id_t max_used_jobid;
-extern ompi_name_tracker_t ompi_name_tracker;
+extern ompi_process_id_t last_used_cellid;
+extern ompi_process_id_t last_used_jobid;
+extern ompi_list_t ompi_name_tracker;
 
 /*
  * Module open / close

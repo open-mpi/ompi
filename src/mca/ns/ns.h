@@ -38,7 +38,7 @@
 /*
  * define maximum value for id's in any field
  */
-#define OMPI_NAME_SERVICE_MAX = UINT32_MAX
+#define OMPI_NAME_SERVICE_MAX UINT32_MAX
 
 /*
  * general typedefs & structures
@@ -337,9 +337,7 @@ typedef ompi_process_id_t (*mca_ns_get_cellid_fn_t)(const ompi_process_name_t *n
  * @retval +1 The indicated fields of the first provided name is greater than the same
  * fields of the second provided name.
  *
- * There currently
- * is no error indication that this function failed.
- * Some means of returning a value indicative of an error will be devised in the future.
+ * The function returns a large negative value if there is an error.
  *
  * @code
  * result = ompi_name_server.compare(bit_mask, &name1, &name2)
