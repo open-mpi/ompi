@@ -38,10 +38,10 @@ int mca_base_open(void)
 
   /* Register some params */
 
+  mca_base_param_register_string("base", NULL, "module_path",
+                                 "module_path", NULL);
   param_index = mca_base_param_register_string("base", NULL, "verbose",
                                                "verbose", NULL);
-  param_index = mca_base_param_register_string("base", NULL, "module_path",
-                                               "module_path", NULL);
 
   /* What verbosity level do we want? */
 
