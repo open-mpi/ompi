@@ -3,11 +3,11 @@
 #
 
 include $(top_srcdir)/config/Makefile.options
-                                                                                                    
+
 noinst_LTLIBRARIES = libpmlb.la
-                                                                                                                  
+
 # Source code files
-                                                                                                                  
+
 headers = \
 	fragment.h \
 	header.h \
@@ -22,9 +22,9 @@ libpmlb_la_SOURCES = \
         recvfrag.c \
         request.c \
         sendfrag.c
-                                                                                                                  
+
 # Conditionally install the header files
-                                                                                                                  
+
 if WANT_INSTALL_HEADERS
 lamdir = $(includedir)/mfc/mpi/pml/base
 lam_HEADERS = $(headers)
