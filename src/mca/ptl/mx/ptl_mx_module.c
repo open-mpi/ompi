@@ -8,6 +8,11 @@
 
 static mca_ptl_mx_module_t* mca_ptl_mx_create(uint64_t addr);
 
+static void* mca_ptl_mx_mem_alloc( size_t* size )
+{
+    return malloc(*size);
+}
+
 
 /**
  * Initialize MX PTL modules
@@ -129,6 +134,84 @@ static void* mca_ptl_mx_thread(ompi_object_t *arg)
 #endif
                                         
 /*
+ * Callback on a match.
+ *
+ */
+
+static void mca_ptl_mx_match(void* context, uint64_t match_value, int size)
+{
+    mca_ptl_mx_module_t* ptl = (mca_ptl_mx_module_t*)context;
+    mca_ptl_mx_recv_frag_t *frag;
+    mx_return_t mx_return;
+    int rc;
+
+    MCA_PTL_MX_RECV_FRAG_ALLOC(frag, rc);
+    if(rc != OMPI_SUCCESS) {
+        ompi_output(0, "mca_ptl_mx_match: unable to allocate resources.\n");
+        return;
+    }
+    frag->frag_recv.frag_base.frag_owner = &ptl->super;
+    frag->frag_recv.frag_base.frag_peer = NULL;
+
+    /* first fragment - post a buffer */
+    if(match_value == 0) {
+
+        frag->frag_segment_count = 2;
+        frag->frag_segments[1].segment_ptr = frag->frag_data;
+        frag->frag_segments[1].segment_length = size - sizeof(mca_ptl_base_header_t);
+
+    /* fragment has already been matched */
+    } else {
+
+        mca_pml_base_recv_request_t* request = (mca_pml_base_recv_request_t*)
+            (uint32_t)(match_value >> 32);
+        uint32_t offset = (uint32_t)match_value;
+        ompi_proc_t *proc = ompi_comm_peer_lookup(request->req_base.req_comm,
+            request->req_base.req_ompi.req_status.MPI_SOURCE);
+        ompi_convertor_t* convertor = &frag->frag_recv.frag_base.frag_convertor;
+        frag->frag_recv.frag_base.frag_size = size - sizeof(mca_ptl_base_header_t);
+
+        /* initialize convertor */
+        ompi_convertor_copy(proc->proc_convertor, convertor);
+        ompi_convertor_init_for_recv(
+            convertor,
+            0,                              /* flags */
+            request->req_base.req_datatype, /* datatype */
+            request->req_base.req_count,    /* count elements */
+            request->req_base.req_addr,     /* users buffer */
+            offset,                         /* offset in bytes into packed buffer */
+            mca_ptl_mx_mem_alloc );         /* not allocating memory */
+                                                                                                          
+        /* non-contiguous - allocate buffer for receive */
+        if( 1 == ompi_convertor_need_buffers( convertor )  ||
+            request->req_bytes_packed < offset + frag->frag_recv.frag_base.frag_size) {
+            frag->frag_recv.frag_base.frag_addr = malloc(frag->frag_recv.frag_base.frag_size);
+            frag->frag_recv.frag_is_buffered = true;
+        /* calculate offset into users buffer */
+        } else {
+            frag->frag_recv.frag_base.frag_addr = ((unsigned char*)request->req_base.req_addr) + offset;
+        }
+
+        frag->frag_segments[1].segment_ptr = frag->frag_recv.frag_base.frag_addr;
+        frag->frag_segments[1].segment_length = frag->frag_recv.frag_base.frag_size;
+        frag->frag_segment_count = 2;
+    }
+
+    mx_return = mx_irecv(
+        ptl->mx_endpoint,
+        frag->frag_segments,
+        frag->frag_segment_count,
+        match_value,
+        MX_MATCH_MASK_NONE,
+        frag,
+        &frag->frag_request);
+    if(mx_return != MX_SUCCESS) {
+        ompi_output(0, "mca_ptl_mx_match: mx_irecv() failed with status=%dn", mx_return);
+    }
+}
+
+
+/*
  * Create and intialize an MX PTL module, where each module
  * represents a specific NIC.
  */
@@ -137,7 +220,6 @@ static mca_ptl_mx_module_t* mca_ptl_mx_create(uint64_t addr)
 {
     mca_ptl_mx_module_t* ptl = malloc(sizeof(mca_ptl_mx_module_t));
     mx_return_t status;
-    int i;
     if(NULL == ptl)
         return NULL;
 
@@ -187,15 +269,8 @@ static mca_ptl_mx_module_t* mca_ptl_mx_create(uint64_t addr)
             ptl->mx_filter);
     }
 
-    /* pre-post receive buffers */
-    for(i=0; i<mca_ptl_mx_component.mx_prepost; i++) {
-        int rc;
-        MCA_PTL_MX_POST(ptl, rc);
-        if(rc != OMPI_SUCCESS) {
-            mca_ptl_mx_finalize(&ptl->super);
-            return NULL;
-        }
-    }
+    /* register a callback function for matching */
+    mx_register_match_callback(ptl->mx_endpoint, mca_ptl_mx_match, ptl);
 
 #if OMPI_HAVE_THREADS
     /* create a thread to progress requests */

@@ -13,45 +13,6 @@
 #include "ptl_mx_sendfrag.h"
 
 
-
-/**
- * Prepost recv buffers
- */
-
-#define MCA_PTL_MX_POST(ptl, rc)                                                  \
-do {                                                                              \
-    mca_ptl_mx_recv_frag_t* frag;                                                 \
-    mx_return_t mx_return;                                                        \
-    /* post an additional recv */                                                 \
-    MCA_PTL_MX_RECV_FRAG_ALLOC(frag, rc);                                         \
-    if(rc != OMPI_SUCCESS) {                                                      \
-        ompi_output(0, "mca_ptl_mx_post: unable to allocate recv fragn");         \
-        rc = OMPI_ERR_OUT_OF_RESOURCE;                                            \
-        break;                                                                    \
-    }                                                                             \
-    frag->frag_recv.frag_base.frag_owner = &ptl->super;                           \
-    frag->frag_recv.frag_base.frag_peer = NULL;                                   \
-    frag->frag_segment_count = 2;                                                 \
-    frag->frag_segments[1].segment_ptr = frag->frag_data;                         \
-    frag->frag_segments[1].segment_length = sizeof(frag->frag_data);              \
-                                                                                  \
-    mx_return = mx_irecv(                                                         \
-        ptl->mx_endpoint,                                                         \
-        frag->frag_segments,                                                      \
-        frag->frag_segment_count,                                                 \
-        1,                                                                        \
-        MX_MATCH_MASK_NONE,                                                       \
-        frag,                                                                     \
-        &frag->frag_request);                                                     \
-    if(mx_return != MX_SUCCESS) {                                                 \
-        ompi_output(0, "mca_ptl_mx_post: mx_irecv() failed with status=%dn",      \
-            mx_return);                                                           \
-        rc = OMPI_ERROR;                                                          \
-    }                                                                             \
-    rc = OMPI_SUCCESS;                                                            \
-} while(0)
-
-
 /**
  *  Routine to process complete request(s).
  */
@@ -79,15 +40,7 @@ do {                                                                            
         case MCA_PTL_FRAGMENT_SEND:                                                 \
         {                                                                           \
             mca_ptl_mx_send_frag_t* sendfrag = (mca_ptl_mx_send_frag_t*)frag;       \
-            mca_pml_base_send_request_t* sendreq =                                  \
-                sendfrag->frag_send.frag_request;                                   \
-            bool req_cached = sendreq->req_cached;                                  \
-            ptl->super.ptl_send_progress(                                           \
-                &ptl->super,                                                        \
-                sendreq,                                                            \
-                sendfrag->frag_send.frag_base.frag_size);                           \
-            if(req_cached == false)                                                 \
-                MCA_PTL_MX_SEND_FRAG_RETURN(sendfrag);                              \
+            MCA_PTL_MX_SEND_FRAG_PROGRESS(sendfrag);                                \
             break;                                                                  \
         }                                                                           \
         case MCA_PTL_FRAGMENT_RECV:                                                 \
@@ -100,7 +53,6 @@ do {                                                                            
                 case MCA_PTL_HDR_TYPE_MATCH:                                        \
                 {                                                                   \
                     MCA_PTL_MX_RECV_FRAG_MATCH(recvfrag,hdr);                       \
-                    MCA_PTL_MX_POST(ptl, rc);                                       \
                     break;                                                          \
                 }                                                                   \
                 case MCA_PTL_HDR_TYPE_FRAG:                                         \
@@ -110,8 +62,14 @@ do {                                                                            
                 }                                                                   \
                 case MCA_PTL_HDR_TYPE_ACK:                                          \
                 {                                                                   \
-                    MCA_PTL_MX_RECV_FRAG_ACK(recvfrag,hdr);                         \
-                    MCA_PTL_MX_POST(ptl, rc);                                       \
+                    mca_ptl_mx_send_frag_t* sendfrag;                               \
+                    mca_pml_base_send_request_t* sendreq;                           \
+                    sendfrag = (mca_ptl_mx_send_frag_t*)                            \
+                        hdr->hdr_ack.hdr_src_ptr.pval;                              \
+                    sendreq = sendfrag->frag_send.frag_request;                     \
+                    sendreq->req_peer_match = hdr->hdr_ack.hdr_dst_match;           \
+                    MCA_PTL_MX_SEND_FRAG_PROGRESS(sendfrag);                        \
+                    MCA_PTL_MX_RECV_FRAG_RETURN(recvfrag);                          \
                     break;                                                          \
                 }                                                                   \
             }                                                                       \
