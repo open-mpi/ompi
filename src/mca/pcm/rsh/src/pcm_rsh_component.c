@@ -45,18 +45,6 @@ mca_pcm_base_component_1_0_0_t mca_pcm_rsh_component = {
 };
 
 
-struct mca_pcm_base_module_1_0_0_t mca_pcm_rsh_1_0_0 = {
-    mca_pcm_base_no_unique_name,
-    mca_pcm_rsh_allocate_resources,
-    mca_pcm_rsh_can_spawn,
-    mca_pcm_rsh_spawn_procs,
-    mca_pcm_rsh_kill_proc,
-    mca_pcm_rsh_kill_job,
-    mca_pcm_rsh_deallocate_resources,
-    mca_pcm_rsh_finalize
-};
-
-
 /* need to create output stream to dump in file */
 ompi_output_stream_t mca_pcm_rsh_output_stream = {
     false, /* lds_is_debugging  BWB - change me for release */
@@ -74,7 +62,7 @@ ompi_output_stream_t mca_pcm_rsh_output_stream = {
 
 
 /*
- * Module variables handles
+ * component variables handles
  */
 static int mca_pcm_rsh_param_no_profile;
 static int mca_pcm_rsh_param_fast;
@@ -85,21 +73,11 @@ static int mca_pcm_rsh_param_debug;
 static int mca_pcm_rsh_param_use_ns;
 
 /*
- * Module variables
+ * component variables
  */
-/* should we avoid running .profile, even if the shell says we should */
-int mca_pcm_rsh_no_profile;
-/* should we assume same shell on remote as locally? */
-int mca_pcm_rsh_fast;
-/* should we ignore things on stderr? */
-int mca_pcm_rsh_ignore_stderr;
-/* how should we fire procs up on the remote side? */
-char *mca_pcm_rsh_agent;
-
+/* debugging output stream */
 int mca_pcm_rsh_output = 0;
-int mca_pcm_rsh_use_ns;
 
-mca_llm_base_module_t mca_pcm_rsh_llm;
 
 int
 mca_pcm_rsh_component_open(void)
@@ -118,10 +96,12 @@ mca_pcm_rsh_component_open(void)
   mca_pcm_rsh_param_ignore_stderr =
     mca_base_param_register_int("pcm", "rsh", "ignore_stderr", NULL, 0);
   mca_pcm_rsh_param_use_ns =
-    mca_base_param_register_int("pcm", "rsh", "use_ns", NULL, 0);
+    mca_base_param_register_int("pcm", "rsh", "use_ns", NULL, 1);
 
   mca_pcm_rsh_param_priority =
     mca_base_param_register_int("pcm", "rsh", "priority", NULL, 1);
+
+  mca_pcm_rsh_output = ompi_output_open(&mca_pcm_rsh_output_stream);
 
   return OMPI_SUCCESS;
 }
@@ -130,7 +110,11 @@ mca_pcm_rsh_component_open(void)
 int
 mca_pcm_rsh_component_close(void)
 {
-  return OMPI_SUCCESS;
+    if (mca_pcm_rsh_output > 0) {
+        ompi_output_close(mca_pcm_rsh_output);
+    }
+
+    return OMPI_SUCCESS;
 }
 
 
@@ -142,30 +126,34 @@ mca_pcm_rsh_init(int *priority,
 {
     int debug;
     int ret;
+    mca_pcm_rsh_module_t *me;
 
+    /* do debugging gorp */
     mca_base_param_lookup_int(mca_pcm_rsh_param_debug, &debug);
-    mca_pcm_rsh_output = ompi_output_open(&mca_pcm_rsh_output_stream);
     ompi_output_set_verbosity(mca_pcm_rsh_output, debug);
 
+    /* get our priority */
     mca_base_param_lookup_int(mca_pcm_rsh_param_priority, priority);
- 
+
+    me = malloc(sizeof(mca_pcm_rsh_module_t));
+    if (NULL == me) return NULL;
+
+    /* fill in params */
     mca_base_param_lookup_int(mca_pcm_rsh_param_no_profile, 
-			      &mca_pcm_rsh_no_profile);
+			      &(me->no_profile));
     mca_base_param_lookup_int(mca_pcm_rsh_param_fast, 
-			      &mca_pcm_rsh_fast);
+                              &(me->fast_boot));
     mca_base_param_lookup_int(mca_pcm_rsh_param_ignore_stderr, 
-			      &mca_pcm_rsh_ignore_stderr);
-    mca_base_param_lookup_int(mca_pcm_rsh_param_ignore_stderr, 
-			      &mca_pcm_rsh_ignore_stderr);
+                              &(me->ignore_stderr));
     mca_base_param_lookup_string(mca_pcm_rsh_param_agent,
-                                 &mca_pcm_rsh_agent);
+                                 &(me->rsh_agent));
+    mca_base_param_lookup_int(mca_pcm_rsh_param_use_ns, 
+			      &(me->use_ns));
+
     *allow_multi_user_threads = true;
     *have_hidden_threads = false;
 
-    mca_base_param_lookup_int(mca_pcm_rsh_param_use_ns, 
-			      &mca_pcm_rsh_use_ns);
-
-    ret = mca_llm_base_select("pcm", &mca_pcm_rsh_llm,
+    ret = mca_llm_base_select("pcm", &(me->llm),
                               allow_multi_user_threads,
                               have_hidden_threads);
     if (OMPI_SUCCESS != ret) {
@@ -174,26 +162,41 @@ mca_pcm_rsh_init(int *priority,
         return NULL;
     }
 
+    /*
+     * fill in the function pointers
+     */
+    me->super.pcm_get_unique_name = mca_pcm_base_no_unique_name;
+    me->super.pcm_allocate_resources = mca_pcm_rsh_allocate_resources;
+    me->super.pcm_can_spawn = mca_pcm_rsh_can_spawn;
+    me->super.pcm_spawn_procs = mca_pcm_rsh_spawn_procs;
+    me->super.pcm_kill_proc = mca_pcm_rsh_kill_proc;
+    me->super.pcm_kill_job = mca_pcm_rsh_kill_job;
+    me->super.pcm_deallocate_resources = mca_pcm_rsh_deallocate_resources;
+    me->super.pcm_finalize = mca_pcm_rsh_finalize;
+
     /* DO SOME PARAM "FIXING" */
     /* BWB - remove param fixing before 1.0 */
-    if (0 == mca_pcm_rsh_no_profile) {
+    if (0 == me->no_profile) {
         printf("WARNING: reseting mca_pcm_rsh_no_profile to 1\n");
-        mca_pcm_rsh_no_profile = 1;
+        me->no_profile = 1;
     }
-    if (0 == mca_pcm_rsh_fast) {
+    if (0 == me->fast_boot) {
         printf("WARNING: reseting mca_pcm_rsh_fast to 1\n");
-        mca_pcm_rsh_fast = 1;
+        me->fast_boot = 1;
     }
 
-    return &mca_pcm_rsh_1_0_0;
+    return (mca_pcm_base_module_t*) me;
 }
 
 
 int
-mca_pcm_rsh_finalize(struct mca_pcm_base_module_1_0_0_t* me)
+mca_pcm_rsh_finalize(struct mca_pcm_base_module_1_0_0_t* me_super)
 {
-    if (mca_pcm_rsh_output > 0) {
-        ompi_output_close(mca_pcm_rsh_output);
+    mca_pcm_rsh_module_t *me = (mca_pcm_rsh_module_t*) me_super;
+
+    if (me != NULL) {
+        if (NULL != me->rsh_agent) free(me->rsh_agent);
+        free(me);
     }
 
     return OMPI_SUCCESS;

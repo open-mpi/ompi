@@ -51,25 +51,26 @@ extern "C" {
                                          mca_ns_base_jobid_t jobid,
                                          ompi_list_t *nodelist);
 
+    struct mca_pcm_rsh_module_t {
+        mca_pcm_base_module_t super;
+        mca_llm_base_module_t llm;
+
+        int no_profile;
+        int fast_boot;
+        int ignore_stderr;
+        char* rsh_agent;
+        int use_ns;
+    };
+    typedef struct mca_pcm_rsh_module_t mca_pcm_rsh_module_t;
+
 #ifdef __cplusplus
 }
 #endif
 
 /*
- * Module variables
+ * component variables
  */
-/* should we avoid running .profile, even if the shell says we should */
-extern int mca_pcm_rsh_no_profile;
-/* should we assume same shell on remote as locally? */
-extern int mca_pcm_rsh_fast;
-/* should we ignore things on stderr? */
-extern int mca_pcm_rsh_ignore_stderr;
-/* how should we fire procs up on the remote side? */
-extern char *mca_pcm_rsh_agent;
-
+/* debugging output stream */
 extern int mca_pcm_rsh_output;
-
-extern int mca_pcm_rsh_use_ns;
-extern mca_llm_base_module_t mca_pcm_rsh_llm;
 
 #endif /* MCA_PCM_RSH_H_ */

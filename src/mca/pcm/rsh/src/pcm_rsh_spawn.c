@@ -30,21 +30,18 @@
 #include "util/numtostr.h"
 #include "mca/ns/base/base.h"
 
-#if 1
 #define BOOTAGENT "mca_pcm_rsh_bootproxy"
-#else
-#define BOOTAGENT "cat"
-#endif
 #define PRS_BUFSIZE 1024
 
-static int internal_spawn_proc(mca_ns_base_jobid_t jobid, ompi_rte_node_schedule_t *sched,
+static int internal_spawn_proc(mca_pcm_rsh_module_t *me,
+                               mca_ns_base_jobid_t jobid, ompi_rte_node_schedule_t *sched,
                                ompi_list_t *hostlist, 
                                int my_start_vpid, int global_start_vpid,
                                int num_procs);
 
 
 bool
-mca_pcm_rsh_can_spawn(struct mca_pcm_base_module_1_0_0_t* me)
+mca_pcm_rsh_can_spawn(struct mca_pcm_base_module_1_0_0_t* me_super)
 {
     /* we can always try to rsh some more...  Might not always work as
      * the caller hopes
@@ -54,9 +51,10 @@ mca_pcm_rsh_can_spawn(struct mca_pcm_base_module_1_0_0_t* me)
 
 
 int
-mca_pcm_rsh_spawn_procs(struct mca_pcm_base_module_1_0_0_t* me, 
+mca_pcm_rsh_spawn_procs(struct mca_pcm_base_module_1_0_0_t* me_super, 
                         mca_ns_base_jobid_t jobid, ompi_list_t *schedlist)
 {
+    mca_pcm_rsh_module_t *me = (mca_pcm_rsh_module_t*) me_super;
     ompi_list_item_t *sched_item, *node_item, *host_item;
     ompi_rte_node_schedule_t *sched;
     ompi_rte_node_allocation_t *node;
@@ -93,7 +91,7 @@ mca_pcm_rsh_spawn_procs(struct mca_pcm_base_module_1_0_0_t* me,
     
     /* BWB - make sure vpids are reserved */
     local_start_vpid = 0;
-    if (mca_pcm_rsh_use_ns) {
+    if (me->use_ns) {
         global_start_vpid = (int) ompi_name_server.reserve_range(jobid, num_procs);
     } else {
         global_start_vpid = 0;
@@ -141,7 +139,7 @@ mca_pcm_rsh_spawn_procs(struct mca_pcm_base_module_1_0_0_t* me,
 
                 /* do the launch to the first node in the list, passing
                    him the rest of the list */
-                ret = internal_spawn_proc(jobid, sched, &launch, 
+                ret = internal_spawn_proc(me, jobid, sched, &launch, 
                                           local_start_vpid, global_start_vpid, 
                                           num_procs);
                 if  (OMPI_SUCCESS != ret) {
@@ -173,7 +171,8 @@ mca_pcm_rsh_spawn_procs(struct mca_pcm_base_module_1_0_0_t* me,
 
 
 static int
-internal_need_profile(mca_llm_base_hostfile_node_t *start_node,
+internal_need_profile(mca_pcm_rsh_module_t *me,
+                      mca_llm_base_hostfile_node_t *start_node,
                       int stderr_is_error, bool *needs_profile)
 {
     struct passwd *p;
@@ -190,16 +189,16 @@ internal_need_profile(mca_llm_base_hostfile_node_t *start_node,
      *
      * The following logic is used:
      *
-     * if mca_pcm_rsh_no_profile is 1, don't do profile
-     * if mca_pcm_rsh_fast is 1, remote shell is assumed same as local
+     * if me->no_profile is 1, don't do profile
+     * if me->fast_boot is 1, remote shell is assumed same as local
      * if shell is sh/ksh, run profile, otherwise don't
      */
-    if (1 == mca_pcm_rsh_no_profile) {
+    if (1 == me->no_profile) {
         *needs_profile = false;
         return OMPI_SUCCESS;
     }
 
-    if (1 == mca_pcm_rsh_fast) {
+    if (1 == me->fast_boot) {
         p = getpwuid(getuid());
         if (NULL == p) return OMPI_ERROR;
             
@@ -214,7 +213,7 @@ internal_need_profile(mca_llm_base_hostfile_node_t *start_node,
         /* we have to look at the other side  and get our shell */
         username = mca_pcm_base_get_username(start_node);
 
-        cmdv = ompi_argv_split(mca_pcm_rsh_agent, ' ');
+        cmdv = ompi_argv_split(me->rsh_agent, ' ');
         cmdc = ompi_argv_count(cmdv);
 
         ompi_argv_append(&cmdc, &cmdv, start_node->hostname);
@@ -279,7 +278,8 @@ cleanup:
 
 
 static int
-internal_spawn_proc(mca_ns_base_jobid_t jobid, ompi_rte_node_schedule_t *sched,
+internal_spawn_proc(mca_pcm_rsh_module_t *me,
+                    mca_ns_base_jobid_t jobid, ompi_rte_node_schedule_t *sched,
                     ompi_list_t *hostlist, int my_start_vpid, 
                     int global_start_vpid, int num_procs)
 {
@@ -290,7 +290,7 @@ internal_spawn_proc(mca_ns_base_jobid_t jobid, ompi_rte_node_schedule_t *sched,
     char *cmd0 = NULL;
     int cmdc = 0;
     char *printable = NULL;
-    int stderr_is_error = mca_pcm_rsh_ignore_stderr == 0 ? 1 : 0;
+    int stderr_is_error = me->ignore_stderr == 0 ? 1 : 0;
     char *username = NULL;
     int ret;
     pid_t pid;
@@ -306,7 +306,7 @@ internal_spawn_proc(mca_ns_base_jobid_t jobid, ompi_rte_node_schedule_t *sched,
     /*
      * Check to see if we need to do the .profile thing
      */
-    ret = internal_need_profile(start_node, stderr_is_error,
+    ret = internal_need_profile(me, start_node, stderr_is_error,
                                 &needs_profile);
     if (OMPI_SUCCESS != ret) {
         goto cleanup;
@@ -318,7 +318,7 @@ internal_spawn_proc(mca_ns_base_jobid_t jobid, ompi_rte_node_schedule_t *sched,
      */
 
     /* build up the rsh command part */
-    cmdv = ompi_argv_split(mca_pcm_rsh_agent, ' ');
+    cmdv = ompi_argv_split(me->rsh_agent, ' ');
     cmdc = ompi_argv_count(cmdv);
 
     ompi_argv_append(&cmdc, &cmdv, start_node->hostname);
@@ -335,7 +335,7 @@ internal_spawn_proc(mca_ns_base_jobid_t jobid, ompi_rte_node_schedule_t *sched,
 
     /* build the command to start */
     ompi_argv_append(&cmdc, &cmdv, BOOTAGENT);
-#if 1
+
     /* starting vpid for launchee's procs */
     tmp = ltostr(my_start_vpid);
     ompi_argv_append(&cmdc, &cmdv, "--local_start_vpid");
@@ -353,7 +353,7 @@ internal_spawn_proc(mca_ns_base_jobid_t jobid, ompi_rte_node_schedule_t *sched,
     ompi_argv_append(&cmdc, &cmdv, "--num_procs");
     ompi_argv_append(&cmdc, &cmdv, tmp);
     free(tmp);
-#endif
+
     /* add the end of the .profile thing if required */
     if (needs_profile) {
         ompi_argv_append(&cmdc, &cmdv, ")");
