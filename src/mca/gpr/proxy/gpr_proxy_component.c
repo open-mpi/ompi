@@ -338,7 +338,8 @@ void mca_gpr_proxy_notify_recv(int status, ompi_process_name_t* sender,
     OMPI_THREAD_UNLOCK(&mca_gpr_proxy_mutex);
 
     if (!found) {  /* didn't find request */
-	ompi_output(0, "Proxy notification error - received request not found");
+	ompi_output(0, "[%d,%d,%d] Proxy notification error - received request not found",
+                OMPI_NAME_ARGS(*ompi_rte_get_self()));
 	return;
     }
 

@@ -46,7 +46,8 @@ int mca_gpr_replica_delete_segment(char *segment)
     /* locate the segment */
     seg = mca_gpr_replica_find_seg(false, segment, MCA_NS_BASE_JOBID_MAX);
     if (NULL == seg) {
-	return OMPI_ERROR;
+        OMPI_THREAD_UNLOCK(&mca_gpr_replica_mutex);
+	   return OMPI_ERROR;
     }
 
     mca_gpr_replica_delete_segment_nl(seg);
@@ -86,7 +87,7 @@ int mca_gpr_replica_delete_object(ompi_registry_mode_t addr_mode,
 
     /* protect against errors */
     if (NULL == segment) {
-	return OMPI_ERROR;
+	   return OMPI_ERROR;
     }
 
     if (mca_gpr_replica_compound_cmd_mode) {
@@ -100,7 +101,8 @@ int mca_gpr_replica_delete_object(ompi_registry_mode_t addr_mode,
      /* locate the segment */
     seg = mca_gpr_replica_find_seg(false, segment, ompi_name_server.get_jobid(ompi_rte_get_self()));
     if (NULL == seg) {
-	return OMPI_ERROR;
+        OMPI_THREAD_UNLOCK(&mca_gpr_replica_mutex);
+	   return OMPI_ERROR;
     }
 
     keys = mca_gpr_replica_get_key_list(seg, tokens, &num_keys);
@@ -112,7 +114,7 @@ int mca_gpr_replica_delete_object(ompi_registry_mode_t addr_mode,
     mca_gpr_replica_check_synchros(seg);
 
     if (NULL != keys) {
-	free(keys);
+	   free(keys);
     }
 
     OMPI_THREAD_UNLOCK(&mca_gpr_replica_mutex);
@@ -174,20 +176,21 @@ ompi_list_t* mca_gpr_replica_index(char *segment)
     mca_gpr_replica_segment_t *seg;
 
     if (mca_gpr_replica_compound_cmd_mode) {
-	mca_gpr_base_pack_index(mca_gpr_replica_compound_cmd, segment);
-	return NULL;
+	   mca_gpr_base_pack_index(mca_gpr_replica_compound_cmd, segment);
+	   return NULL;
     }
 
     OMPI_THREAD_LOCK(&mca_gpr_replica_mutex);
 
     if (NULL == segment) {  /* want global level index */
-	seg = NULL;
+	   seg = NULL;
     } else {
-	/* locate the segment */
-	seg = mca_gpr_replica_find_seg(false, segment, MCA_NS_BASE_JOBID_MAX);
-	if (NULL == seg) {
-	    return NULL;
-	}
+	   /* locate the segment */
+	   seg = mca_gpr_replica_find_seg(false, segment, MCA_NS_BASE_JOBID_MAX);
+	   if (NULL == seg) {
+            OMPI_THREAD_UNLOCK(&mca_gpr_replica_mutex);
+	       return NULL;
+	   }
     }
 
     list = mca_gpr_replica_index_nl(seg);
