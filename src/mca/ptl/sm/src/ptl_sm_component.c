@@ -367,9 +367,8 @@ int mca_ptl_sm_component_progress(mca_ptl_tstamp_t tstamp)
                      *   the shared memory buffers */
                     base_send_req=header_ptr->super.frag_base.frag_header.
                         hdr_frag.hdr_src_ptr.pval;
+
                     header_ptr->send_ptl->ptl_send_progress(
-                    /*((mca_ptl_base_recv_frag_t *)header_ptr)->
-                        frag_base.frag_owner->ptl_send_progress(*/
                                 (mca_ptl_base_module_t *)&mca_ptl_sm,
                                 base_send_req,
                                 header_ptr->super.frag_base.frag_size);
@@ -381,7 +380,7 @@ int mca_ptl_sm_component_progress(mca_ptl_tstamp_t tstamp)
                             hdr_frag.hdr_frag_offset ) {
                         OMPI_FREE_LIST_RETURN(&mca_ptl_sm.sm_second_frags,
                                 (ompi_list_item_t *)header_ptr);
-                    }
+                    } 
                     break;
 
                 default:
