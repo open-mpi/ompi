@@ -28,8 +28,6 @@
 # warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU Lesser General Public License for more details.
 #
-# $Id: Makefile.am,v 1.2 2004/01/07 07:54:53 jsquyres Exp $
-#
 
 include $(top_srcdir)/config/Makefile.options
 
@@ -38,7 +36,11 @@ lib_LTLIBRARIES	= liblfc.la
 
 liblfc_la_SOURCES = \
 	array.c \
+	array.h \
 	hash_table.c \
+	hash_table.h \
 	list.c \
-	object.c
+	list.h \
+	object.c \
+	object.h
 

@@ -1,7 +1,5 @@
 /*
  * $HEADER$
- *
- * $Id: argv.h,v 1.1 2004/01/07 08:35:06 jsquyres Exp $
  */
 
 #ifndef LAM_ARGV_H
