@@ -58,4 +58,6 @@ extern char *mca_pcm_rsh_agent;
 
 extern int mca_pcm_rsh_output;
 
+extern int mca_pcm_rsh_use_ns;
+
 #endif /* MCA_PCM_RSH_H_ */
