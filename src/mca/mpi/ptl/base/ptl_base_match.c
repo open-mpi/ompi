@@ -174,7 +174,7 @@ int mca_ptl_base_match(mca_pml_base_reliable_hdr_t *frag_header,
  * @param frag_header Matching data from recived fragment (IN)
  *
  * @param pml_comm Pointer to the communicator structure used for
- * matching purposes.
+ * matching purposes. (IN)
  *
  * @return Matched receive
  *
@@ -193,6 +193,7 @@ mca_pml_base_recv_request_t *mca_ptl_base_check_recieves_for_match
 
     /* initialization */
     return_match=(mca_pml_base_recv_request_t *)NULL;
+
     /*
      * figure out what sort of matching logic to use, if need to
      *   look only at "specific" recieves, or "wild" receives,
@@ -218,6 +219,89 @@ mca_pml_base_recv_request_t *mca_ptl_base_check_recieves_for_match
         return_match = check_specific_and_wild_receives_for_match(frag_header, 
                 pml_comm);
     }
+
+    return return_match;
+}
+
+
+/**
+ * Try and match the incoming message fragment to the list of
+ * "wild" receies
+ *
+ * @param frag_header Matching data from recived fragment (IN)
+ *
+ * @param pml_comm Pointer to the communicator structure used for
+ * matching purposes. (IN)
+ *
+ * @return Matched receive
+ *
+ * This routine assumes that the appropriate matching locks are
+ * set by the upper level routine.
+ */
+mca_pml_base_recv_request_t *check_wild_receives_for_match(
+        mca_pml_base_reliable_hdr_t *frag_header,
+        mca_pml_comm_t *pml_comm)
+{
+    /* local parameters */
+    mca_pml_base_recv_request_t *return_match;
+    mca_pml_base_recv_request_t *wild_recv;
+    int frag_user_tag;
+
+    /* initialization */
+    return_match=(mca_pml_base_recv_request_t *)NULL;
+    frag_user_tag=frag_header->hdr_base.hdr_user_tag;
+
+#if (0)
+    /*
+     * Loop over the wild irecvs.
+     * wild_receives
+     */
+    for(wild_recv = (mca_pml_base_recv_request_t *) 
+            lam_list_get_first(&(pml_comm->wild_receives));
+            privateQueues.PostedWildRecv.begin();
+         wild_recv !=
+             (RecvDesc_t *) privateQueues.PostedWildRecv.end();
+         wild_recv = (RecvDesc_t *) wild_recv->next) {
+        // sanity check
+        assert(wild_recv->WhichQueue == POSTEDWILDIRECV);
+
+        //
+        // If we have a match...
+        //
+        int PostedIrecvTag = wild_recv->posted_m.tag_m;
+        if ((FragUserTag == PostedIrecvTag) ||
+            (PostedIrecvTag == ULM_ANY_TAG)) {
+            if (PostedIrecvTag == ULM_ANY_TAG && FragUserTag < 0) {
+                continue;
+            }
+            //
+            // fill in received data information
+            //
+            wild_recv->isendSeq_m = rec->isendSeq_m;
+            wild_recv->reslts_m.length_m = rec->msgLength_m;
+            wild_recv->reslts_m.peer_m = rec->srcProcID_m;
+            wild_recv->reslts_m.tag_m = rec->tag_m;
+            //
+            // Mark that this is the matching irecv, and go
+            // to process it.
+            //
+            return_match = wild_recv;
+
+            // remove this irecv from the postd wild ireceive list
+            privateQueues.PostedWildRecv.RemoveLinkNoLock(wild_recv);
+
+            //  add this descriptor to the matched wild ireceive list
+            wild_recv->WhichQueue = WILDMATCHEDIRECV;
+            privateQueues.MatchedRecv[rec->srcProcID_m]->
+                Append(wild_recv);
+
+            // exit the loop
+            break;
+        }
+    }
+    //
+
+#endif /* if(0) */
 
     return return_match;
 }
