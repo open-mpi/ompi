@@ -26,6 +26,8 @@
 #include "ptl_elan_req.h"
 #include "ptl_elan_priv.h"
 
+#define UNIT_TESTING 1
+
 mca_ptl_elan_module_1_0_0_t mca_ptl_elan_module = {
     {
         /* Base module information about itself */
@@ -232,12 +234,14 @@ mca_ptl_elan_module_init (int *num_ptls,
         return NULL;
     }
 
+#ifndef UNIT_TESTING
     if (OMPI_SUCCESS != mca_ptl_elan_module_register(&mca_ptl_elan_module)) {
         ompi_output(0, 
-                "[%s:%d] error in malloc for elan PTL references\n",
+                "[%s:%d] error in registering with Runtime/OOB \n",
                 __FILE__, __LINE__);
         return NULL;
     }
+#endif
 
     ptls = (mca_ptl_t **) malloc (elan_mp->elan_num_ptls *
             sizeof (mca_ptl_elan_t *));
