@@ -554,7 +554,7 @@ void ompi_ddt_dump( const dt_desc_t* pData )
     }
     index += __dump_data_desc( pData->desc.desc, pData->desc.used, buffer + index );
     if( pData->opt_desc.desc != NULL ) {
-        index + sprintf( buffer + index, "Optimized description \n" );
+        index += sprintf( buffer + index, "Optimized description \n" );
         index += __dump_data_desc( pData->opt_desc.desc, pData->opt_desc.used, buffer + index );
     }
     buffer[index] = '\0';  /* make sure we end the string with 0 */
