@@ -5,9 +5,8 @@
 
 /** @file 
  *
- *  A hash table that may contain either fixed or arbitrary key values. However,
- *  only one key type may be used in a given table concurrently (e.g. either uint32_t,
- *  uint64_t, or arbitary sized binary keys).
+ *  A hash table that may be indexed with either fixed length (e.g. uint32_t/uint64_t) or arbitrary 
+ *  size binary key values. However, only one key type may be used in a given table concurrently.
  */
 
 #ifndef LAM_HASH_TABLE_H
