@@ -79,9 +79,11 @@ if test "$OMPI_HAVE_RMS" = "1"; then
 # Ok, we have rms support.  Add proper things to the various
 # compiler flags..
 #
-
-    WRAPPER_EXTRA_LDFLAGS="$WRAPPER_EXTRA_LDFLAGS $RMS_LDFLAGS"
-    WRAPPER_EXTRA_LIBS="$WRAPPER_EXTRA_LIBS -lrms -lrmsapi"
+    LIBMPI_EXTRA_LDFLAGS="$RMS_LDFLAGS"
+    LIBMPI_EXTRA_LIBS="-lrms -lrmsapi"
+    WRAPPER_EXTRA_LDFLAGS="$RMS_LDFLAGS"
+    WRAPPER_EXTRA_LIBS="-lrms -lrmsapi"
+    LIBS="$LIBS -lrms -lrmsapi"
 
 else
     AC_MSG_RESULT([no])

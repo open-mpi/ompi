@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <rms/rmsapi.h>
 
 extern char **environ;
 
@@ -125,6 +126,7 @@ mca_pcm_rms_init(int *priority,
 {
     int debug;
     char *prun;
+    int num_cpus;
 
     mca_base_param_lookup_int(mca_pcm_rms_param_debug, &debug);
     mca_pcm_rms_output = ompi_output_open(&mca_pcm_rms_output_stream);
@@ -136,6 +138,9 @@ mca_pcm_rms_init(int *priority,
 
     *allow_multi_user_threads = true;
     *have_hidden_threads = false;
+
+    num_cpus = rms_numCpus(NULL);
+    if (num_cpus <= 0) return NULL;
 
     /* poke around for prun */
     prun = ompi_path_env_findv("prun", X_OK, environ, NULL);
