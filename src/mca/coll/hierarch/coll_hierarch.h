@@ -39,7 +39,17 @@ extern int mca_coll_hierarch_verbose;
 /*
  * Data structure for attaching data to the communicator 
  */
+
+    struct mca_coll_hierarch_topo {
+	int topo_root;
+	int topo_prev;
+	int topo_nextsize;
+	int topo_maxsize;
+	int *topo_next;
+    };
+
     struct mca_coll_base_comm_t {
+	struct ompi_communicator_t   *hier_comm; /* link back to the attached comm */ 
 	struct ompi_communicator_t *hier_llcomm; /* low level communicator */
 	int                   hier_num_lleaders; /* number of local leaders */
 	int                      *hier_lleaders; /* list of local leaders */
@@ -47,9 +57,21 @@ extern int mca_coll_hierarch_verbose;
 	int                     hier_am_lleader; /* am I an lleader? */
 	int                       hier_num_reqs; /* num. of requests */
 	ompi_request_t              **hier_reqs; /* list of requests */
+	struct mca_coll_hierarch_topo hier_topo; /* topology used in the coll ops */
     };
 
 
+
+#define MCA_COLL_HIERARCH_IS_ROOT_LLEADER(_root, _lls, _llsize, _found, _pos) { \
+        int _i;                                                                  \
+        for (_found=0, _pos=_llsize, _i=0; _i<_llsize; _i++) {                  \
+           if ( _lls[_i] == _root )      {                                       \
+               _found = 1;                                                       \
+               _pos = _i;                                                        \
+               break;                                                            \
+           }                                                                     \
+        }                                                                        \
+     }
 
 /*
  * coll API functions

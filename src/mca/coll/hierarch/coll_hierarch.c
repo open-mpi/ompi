@@ -40,6 +40,7 @@
 static void mca_coll_hierarch_checkfor_component (struct ompi_communicator_t *comm,
 						  char *component_name, int *key,
 						  int *done );
+static void mca_coll_hierarch_dump_struct ( struct mca_coll_base_comm_t *c);
 
 /*
  * Linear set of collective algorithms
@@ -129,17 +130,11 @@ mca_coll_hierarch_comm_query(struct ompi_communicator_t *comm, int *priority,
 
     mca_coll_hierarch_checkfor_component ( comm, "sm", &color, &ncount);
  
-#define KNOW_HOW_TO_CALL_ALLGATHER
-#ifdef KNOW_HOW_TO_CALL_ALLGATHER
     comm->c_coll_basic_module->coll_allreduce (&ncount, &maxncount, 1, MPI_INT, 
 					       MPI_MAX, comm );
-
     comm->c_coll_basic_module->coll_allgather (&color, 1, MPI_INT, 
 					       colorarr, 1, MPI_INT, comm );
 
-#else
-    maxncount = ncount;
-#endif
     if ( 1 == maxncount ) {
 	/* 
 	 * this means, no process has a partner to which it can talk with 'sm',
@@ -197,7 +192,7 @@ mca_coll_hierarch_module_init(struct ompi_communicator_t *comm)
         
     data->hier_llcomm   = llcomm;
     data->hier_num_reqs = 2 * size;
-    data->hier_reqs     = (ompi_request_t **) malloc (sizeof(ompi_request_t)*2*size);
+    data->hier_reqs     = (ompi_request_t **) malloc (sizeof(ompi_request_t)*size*2);
     if ( NULL == data->hier_reqs ) {
 	goto exit;
     }
@@ -236,7 +231,9 @@ mca_coll_hierarch_module_init(struct ompi_communicator_t *comm)
     }
     
     data->hier_num_lleaders = c-1;
-    data->hier_lleaders = (int *) malloc ( sizeof(int) * data->hier_num_lleaders);
+    /* we allocate one more element than required to be able to add the 
+       root of an operation to this list */
+    data->hier_lleaders = (int *) malloc ( sizeof(int) * data->hier_num_lleaders + 1);
     if ( NULL == data->hier_lleaders ) {
 	goto exit;
     }
@@ -260,6 +257,7 @@ mca_coll_hierarch_module_init(struct ompi_communicator_t *comm)
 	    if ( NULL != data->hier_lleaders ) {
 		free ( data->hier_lleaders);
 	    }
+
 	    free ( data );
 	}
 	return NULL;
@@ -283,6 +281,9 @@ int mca_coll_hierarch_module_finalize(struct ompi_communicator_t *comm)
     ompi_comm_free (&llcomm);
     free ( data->hier_reqs);
     free ( data->hier_lleaders);
+    if ( NULL != data->hier_topo.topo_next ) {
+	free (data->hier_topo.topo_next);
+    }
     free ( data );
     
     comm->c_coll_selected_data = NULL;
@@ -326,7 +327,7 @@ mca_coll_hierarch_checkfor_component ( struct ompi_communicator_t *comm,
     for ( i=0; i<size; i++ ) {
 	proc = mca_pml_teg_proc_lookup_remote (comm, i);
 
-#ifdef TRY_NEXT_INSTEAD OF FIRST
+#ifdef TRY_NEXT_INSTEAD_OF_FIRST
 	ptl_proc=mca_ptl_array_get_next(&proc->proc_ptl_next);
 	listsize = mca_ptl_array_get_size(&proc->proc_ptl_next);
 #else
@@ -356,9 +357,6 @@ mca_coll_hierarch_checkfor_component ( struct ompi_communicator_t *comm,
 		
 	    /* check for the required component */
 	    if (! strcmp (ptr->ptlm_version.mca_component_name, component_name)){
-#ifdef VERBOSE
-		printf("found component %s for rank %d \n", component_name, i );
-#endif
 		counter++;
 		
 		if (i<firstproc ) {
@@ -369,20 +367,13 @@ mca_coll_hierarch_checkfor_component ( struct ompi_communicator_t *comm,
     }
     
     *ncount = counter; /* true */
-    /* Print the final result */
+    /* final decision */
     if ( counter == 1 ) {
 	/* this is the section indicating, that we are not 
 	   using this component */
 	if ( myrank == -1 ) {
-#ifdef VERBOSE
-	    printf("something really weird has happened!\n");
-#endif
 	}
 	else {
-#ifdef VERBOSE
-	    printf("component  %s is not used to talk to anyone in this comm\n",
-		   component_name );
-#endif
 	    firstproc = MPI_UNDEFINED;
 	}
     }
@@ -390,19 +381,25 @@ mca_coll_hierarch_checkfor_component ( struct ompi_communicator_t *comm,
 	if ( myrank < firstproc ) {
 	    firstproc = myrank;
 	}
-#ifdef VERBOSE
-	if ( counter == size ) {
-	    printf("I can talk to all processes in this comm using %s key=%d\n",
-		   component_name, firstproc );
-	}
-	else {
-	    printf(" I can talk to %d processes in this comm using %s key=%d\n",
-		   counter, component_name, firstproc );
-	}
-#endif
     }
 
     *key = firstproc;
     return;
 }
 
+
+
+static void mca_coll_hierarch_dump_struct ( struct mca_coll_base_comm_t *c)
+{
+    int i;
+
+    printf("Dump of hier-struct for  comm %s cid %u\n", 
+	   c->hier_comm->c_name, c->hier_comm->c_contextid);
+    printf("  no of lleaders %d my_leader %d am_leader %d\n", 
+	   c->hier_num_lleaders, c->hier_my_lleader, c->hier_am_lleader );
+    for (i=0; i<c->hier_num_lleaders; i++ ) {
+	printf("      lleader[%d] = %d\n", i, c->hier_lleaders[i]);
+    }
+
+    return;
+}

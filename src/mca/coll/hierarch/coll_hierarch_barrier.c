@@ -37,15 +37,3 @@ int mca_coll_hierarch_barrier_intra(struct ompi_communicator_t *comm)
 }
 
 
-/*
- *	barrier_inter
- *
- *	Function:	- barrier using O(log(N)) algorithm
- *	Accepts:	- same as MPI_Barrier()
- *	Returns:	- MPI_SUCCESS or error code
- */
-int mca_coll_hierarch_barrier_inter(struct ompi_communicator_t *comm)
-{
-  ompi_output_verbose(10, mca_coll_base_output, "In hierarch barrier_inter");
-  return comm->c_coll_basic_module->coll_barrier(comm);
-}
