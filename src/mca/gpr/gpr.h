@@ -99,6 +99,18 @@ typedef struct ompi_registry_index_value_t ompi_registry_index_value_t;
 
 OBJ_CLASS_DECLARATION(ompi_registry_index_value_t);
 
+/** Return value for test results on internal test
+ */
+struct ompi_registry_internal_test_results_t {
+    ompi_list_item_t item;          /**< Allows this item to be placed on a list */
+    char *test;
+    char *message;
+};
+typedef struct ompi_registry_internal_test_results_t ompi_registry_internal_test_results_t;
+
+OBJ_CLASS_DECLARATION(ompi_registry_internal_test_results_t);
+
+
 /*
  * Component functions that MUST be provided
  */
@@ -120,6 +132,11 @@ typedef int (*mca_gpr_base_module_unsubscribe_fn_t)(ompi_process_name_t* subscri
 						    ompi_registry_mode_t mode,
 						    char *segment, char **tokens);
 
+/*
+ * test interface for internal functions - optional to provide
+ */
+typedef ompi_list_t* (*mca_gpr_base_module_test_internals_fn_t)(int level);
+
 
 /*
  * Ver 1.0.0
@@ -133,6 +150,7 @@ struct mca_gpr_base_module_1_0_0_t {
     mca_gpr_base_module_unsubscribe_fn_t unsubscribe;
     mca_gpr_base_module_delete_fn_t delete_object;
     mca_gpr_base_module_index_fn_t index;
+    mca_gpr_base_module_test_internals_fn_t test_internals;
 };
 typedef struct mca_gpr_base_module_1_0_0_t mca_gpr_base_module_1_0_0_t;
 typedef mca_gpr_base_module_1_0_0_t mca_gpr_base_module_t;

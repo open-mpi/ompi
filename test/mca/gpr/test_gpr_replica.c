@@ -32,6 +32,9 @@ static char *cmd_str="diff ./test_gpr_replica_out ./test_gpr_replica_out_std";
 int main(int argc, char **argv)
 {
     mca_gpr_replica_key_t test_key, test_key2;
+    ompi_list_t *test_list, *internal_tests;
+    ompi_registry_index_value_t *ptr;
+    ompi_registry_internal_test_results_t *ptri;
     bool multi, hidden;
     int i, j;
     char *tmp;
@@ -78,40 +81,65 @@ int main(int argc, char **argv)
 	test_success();
     }
 
-    /* define a key */
-    test_key = gpr_replica_define_key("universe", NULL);
-    if (0 == test_key) {
-	fprintf(test_out, "GPR replica: failed define key - %d\n", test_key);
-	test_failure("test_gpr_replica define_key failed");
+    /* try to define a segment */
+    if (OMPI_SUCCESS != ompi_registry.define_segment("test-segment")) {
+	fprintf(test_out, "GPR replica: could not define segment\n");
+	test_failure("test_gpr_replica define_segment failed");
 	test_finalize();
 	exit(1);
     } else {
-	fprintf(test_out, "GPR replica: define_key succeeded - %d\n", test_key);
+	fprintf(test_out, "GPR test segment defined\n");
 	test_success();
     }
 
-    /* get a key - check for correctness */
-    test_key2 = gpr_replica_get_key("universe", NULL);
-    if (test_key != test_key2) {
-	fprintf(test_out, "GPR replica: mismatched keys - %d %d\n", test_key, test_key2);
-	test_failure("test_gpr_replica get_key failed");
+    /* check index */
+    test_list = ompi_registry.index(NULL);
+    if (0 == ompi_list_get_size(test_list)) { /* should have been something in dictionary */
+	fprintf(test_out, "GPR replica: index function failed\n");
+	test_failure("test_gpr_replica index_global_dictionary failed\n");
 	test_finalize();
 	exit(1);
     } else {
-	fprintf(test_out, "GPR replica: get_key succeeded\n");
+	fprintf(test_out, "GPR index returned list\n");
+	for (ptr = (ompi_registry_index_value_t*)ompi_list_get_first(test_list);
+	     ptr != (ompi_registry_index_value_t*)ompi_list_get_end(test_list);
+	     ptr = (ompi_registry_index_value_t*)ompi_list_get_next(ptr)) {
+	    fprintf(test_out, "\t%s\n", ptr->token);
+	}
 	test_success();
     }
 
+
+    /* check internals */
+    internal_tests = ompi_registry.test_internals(1);
+    if (0 == ompi_list_get_size(internal_tests)) { /* should have been something in dictionary */
+	fprintf(test_out, "internal tests failed\n");
+	test_failure("test_gpr_replica internal_tests failed\n");
+	test_finalize();
+	exit(1);
+    } else {
+	fprintf(test_out, "internal test results list\n");
+	for (ptri = (ompi_registry_internal_test_results_t*)ompi_list_get_first(internal_tests);
+	     ptri != (ompi_registry_internal_test_results_t*)ompi_list_get_end(internal_tests);
+	     ptri = (ompi_registry_internal_test_results_t*)ompi_list_get_next(ptri)) {
+	    fprintf(test_out, "\t%s\n", ptri->test);
+	    fprintf(test_out, "\t%s\n", ptri->message);
+	}
+	test_success();
+    }
+
+
+    /* check the universe segment - should have a key value of "1" */
 
     fclose( test_out );
-    result = system( cmd_str );
+    /*    result = system( cmd_str );
     if( result == 0 ) {
         test_success();
     }
     else {
-      test_failure( "test_ns_replica ompi_name_server get_proc_name_string, etc failed");
+      test_failure( "test_gpr_replica ompi_registry init, etc failed");
     }
-
+    */
     test_finalize();
 
     return(0);

@@ -40,14 +40,11 @@ mca_gpr_registry_segment_t *gpr_replica_find_seg(char *segment)
 	 ptr_seg != (mca_gpr_keytable_t*)ompi_list_get_end(&mca_gpr_replica_head.segment_dict);
 	 ptr_seg = (mca_gpr_keytable_t*)ompi_list_get_next(ptr_seg)) {
 	if (0 == strcmp(segment, ptr_seg->token)) {
-	    fprintf(stderr, "findseg: found segment token %s key %d\n", ptr_seg->token, (int)ptr_seg->key);
 	    /* search mca_gpr_replica_head to find segment */
 	    for (seg=(mca_gpr_registry_segment_t*)ompi_list_get_first(&mca_gpr_replica_head.registry);
 		 seg != (mca_gpr_registry_segment_t*)ompi_list_get_end(&mca_gpr_replica_head.registry);
 		 seg = (mca_gpr_registry_segment_t*)ompi_list_get_next(seg)) {
-		fprintf(stderr, "findseg: checking seg\n");
 		if(seg->segment == ptr_seg->key) {
-		    fprintf(stderr, "findseg: found segment key %d\n", (int)seg->segment);
 		    return(seg);
 		}
 	    }
@@ -312,4 +309,60 @@ int gpr_replica_empty_segment(mca_gpr_registry_segment_t *seg)
 bool gpr_replica_check_key_list(ompi_list_t *key_list, mca_gpr_replica_key_t key)
 {
     return true;
+}
+
+ompi_list_t *gpr_replica_test_internals(int level)
+{
+    ompi_list_t *test_results;
+    ompi_registry_internal_test_results_t *result;
+    char name[30];
+    int i;
+    mca_gpr_replica_key_t segkey;
+    mca_gpr_registry_segment_t *seg;
+
+    test_results = OBJ_NEW(ompi_list_t);
+
+    /* create several test segments */
+    for (i=0; i<5; i++) {
+	sprintf(name, "test-def-seg%d", i);
+	result = OBJ_NEW(ompi_registry_internal_test_results_t);
+	result->test = strdup(name);
+	if (OMPI_SUCCESS != gpr_replica_define_segment(name)) {
+	    result->message = strdup("failed");
+	} else {
+	    result->message = strdup("success");
+	}
+	ompi_list_append(test_results, &result->item);
+    }
+
+    /* check ability to get key for a segment */
+    result = OBJ_NEW(ompi_registry_internal_test_results_t);
+    result->test = strdup("test-get-seg-key");
+    segkey = gpr_replica_get_key(name, NULL);
+    if (MCA_GPR_REPLICA_KEY_MAX == segkey) { /* couldn't find it */
+	asprintf(&result->message, "failed to find segment %s", name);
+    } else {
+	asprintf(&result->message, "success: %d", segkey);
+    }
+    ompi_list_append(test_results, &result->item);
+
+    /* check the ability to find a segment */
+    i = 2;
+    sprintf(name, "test-def-seg%d", i);
+    result = OBJ_NEW(ompi_registry_internal_test_results_t);
+    result->test = strdup("test-find-seg");
+    seg = gpr_replica_find_seg(name);
+    if (NULL == seg) {
+	asprintf(&result->message, "test failed with NULL returned: %s", name);
+    } else {  /* locate key and check it */
+	segkey = gpr_replica_get_key(name, NULL);
+	if (segkey == seg->segment) {
+	    result->message = strdup("success");
+	} else {
+	    asprintf(&result->message, "test failed: key %d seg %d", segkey, seg->segment);
+	}
+    }
+    ompi_list_append(test_results, &result->item);
+
+    return test_results;
 }

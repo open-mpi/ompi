@@ -79,3 +79,11 @@ ompi_list_t* gpr_proxy_get(ompi_registry_mode_t mode, char *segment, char **toke
     return answer;
 }
 
+ompi_list_t* gpr_proxy_test_internals(int level)
+{
+    ompi_list_t *test_results;
+
+    test_results = OBJ_NEW(ompi_list_t);
+
+    return test_results;
+}

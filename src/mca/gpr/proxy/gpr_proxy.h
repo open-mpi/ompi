@@ -81,5 +81,6 @@ int gpr_proxy_unsubscribe(ompi_process_name_t *caller, ompi_registry_mode_t mode
 ompi_list_t* gpr_proxy_get(ompi_registry_mode_t mode,
 			   char *segment, char **tokens);
 
+ompi_list_t* gpr_proxy_test_internals(int level);
 
 #endif

@@ -183,5 +183,6 @@ int gpr_replica_unsubscribe(ompi_process_name_t *caller, ompi_registry_mode_t mo
 			    char *segment, char **tokens);
 ompi_list_t* gpr_replica_get(ompi_registry_mode_t mode,
 			     char *segment, char **tokens);
+ompi_list_t* gpr_replica_test_internals(int level);
 
 #endif
