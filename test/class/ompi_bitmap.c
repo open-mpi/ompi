@@ -16,14 +16,6 @@
     fprintf(error_out, "This is suppossed to throw error \n"); \
     fprintf(error_out, "================================ \n")
 
-#define TEST_AND_REPORT(res,str)   \
-    if( res == 0 ) test_success(); \
-    else test_failure(str);
-
-#define NEG_TEST_AND_REPORT(res,str)   \
-    if( res != 0 ) test_success(); \
-    else test_failure(str);
-
 static void test_bitmap_set(ompi_bitmap_t *bm);
 static void test_bitmap_clear(ompi_bitmap_t *bm);
 static void test_bitmap_is_set(ompi_bitmap_t *bm);
@@ -130,7 +122,7 @@ void test_bitmap_set(ompi_bitmap_t *bm) {
     /* invalid bit */
     PRINT_VALID_ERR;
     result = set_bit(bm, -1);
-    NEG_TEST_AND_REPORT(result,"ompi_bitmap_set_bit");
+    TEST_AND_REPORT(result, ERR_CODE,"ompi_bitmap_set_bit");
 }
 
 
@@ -147,10 +139,10 @@ void test_bitmap_clear(ompi_bitmap_t *bm) {
     /* invalid bit */
     PRINT_VALID_ERR;
     result = clear_bit(bm, -1);
-    NEG_TEST_AND_REPORT(result,"ompi_bitmap_clear_bit");
+    TEST_AND_REPORT(result, ERR_CODE,"ompi_bitmap_clear_bit");
     PRINT_VALID_ERR;
     result = clear_bit(bm, 142);
-    NEG_TEST_AND_REPORT(result,"ompi_bitmap_clear_bit");
+    TEST_AND_REPORT(result, ERR_CODE,"ompi_bitmap_clear_bit");
 }
 
 
@@ -167,13 +159,13 @@ void test_bitmap_is_set(ompi_bitmap_t *bm)
 
     PRINT_VALID_ERR;
     result = is_set_bit(bm, 1122);
-    NEG_TEST_AND_REPORT(result,"ompi_bitmap_is_set_bit");    
+    TEST_AND_REPORT(result,ERR_CODE,"ompi_bitmap_is_set_bit");    
     PRINT_VALID_ERR;
     is_set_bit(bm, -33);
-    NEG_TEST_AND_REPORT(result,"ompi_bitmap_is_set_bit");    
+    TEST_AND_REPORT(result,ERR_CODE,"ompi_bitmap_is_set_bit");    
     PRINT_VALID_ERR;
     is_set_bit(bm, -1);
-    NEG_TEST_AND_REPORT(result,"ompi_bitmap_is_set_bit");    
+    TEST_AND_REPORT(result,ERR_CODE,"ompi_bitmap_is_set_bit");    
 }
 
 
@@ -184,52 +176,52 @@ void test_bitmap_find_and_set(ompi_bitmap_t *bm)
 
     ompi_bitmap_clear_all_bits(bm);
     result = find_and_set(bm, 0);
-    TEST_AND_REPORT(result,"ompi_bitmap_find_and_set_first_unset_bit");    
+    TEST_AND_REPORT(result, 0, "ompi_bitmap_find_and_set_first_unset_bit");    
     result = find_and_set(bm, 1);
-    TEST_AND_REPORT(result,"ompi_bitmap_find_and_set_first_unset_bit");    
+    TEST_AND_REPORT(result, 0, "ompi_bitmap_find_and_set_first_unset_bit");    
     result = find_and_set(bm, 2);
-    TEST_AND_REPORT(result,"ompi_bitmap_find_and_set_first_unset_bit");    
+    TEST_AND_REPORT(result, 0, "ompi_bitmap_find_and_set_first_unset_bit");    
     result = find_and_set(bm, 3);
-    TEST_AND_REPORT(result,"ompi_bitmap_find_and_set_first_unset_bit");    
+    TEST_AND_REPORT(result, 0, "ompi_bitmap_find_and_set_first_unset_bit");    
 
     result = ompi_bitmap_set_bit(bm, 5);
     result = find_and_set(bm, 4);
-    TEST_AND_REPORT(result,"ompi_bitmap_find_and_set_first_unset_bit");    
+    TEST_AND_REPORT(result, 0, "ompi_bitmap_find_and_set_first_unset_bit");    
     
     result = ompi_bitmap_set_bit(bm, 6);
     result = ompi_bitmap_set_bit(bm, 7);
 
     /* Setting beyond a char boundary */
     result = find_and_set(bm, 8);
-    TEST_AND_REPORT(result,"ompi_bitmap_find_and_set_first_unset_bit");    
+    TEST_AND_REPORT(result, 0, "ompi_bitmap_find_and_set_first_unset_bit");    
     ompi_bitmap_set_bit(bm, 9);
     result = find_and_set(bm, 10);
-    TEST_AND_REPORT(result,"ompi_bitmap_find_and_set_first_unset_bit");    
+    TEST_AND_REPORT(result, 0, "ompi_bitmap_find_and_set_first_unset_bit");    
 
     /* Setting beyond the current size of bitmap  */
     ompi_bitmap_set_all_bits(bm);
     bsize = bm->array_size * SIZE_OF_CHAR;
     result = find_and_set(bm, bsize);
-    TEST_AND_REPORT(result,"ompi_bitmap_find_and_set_first_unset_bit");    
+    TEST_AND_REPORT(result, 0, "ompi_bitmap_find_and_set_first_unset_bit");    
 }
 
 void test_bitmap_clear_all(ompi_bitmap_t *bm)
 {
     int result = clear_all(bm);
-    TEST_AND_REPORT(result, " error in ompi_bitmap_clear_all_bits");
+    TEST_AND_REPORT(result, 0, " error in ompi_bitmap_clear_all_bits");
 }
 
 
 void test_bitmap_set_all(ompi_bitmap_t *bm)
 {
     int result = set_all(bm);
-    TEST_AND_REPORT(result, " error in ompi_bitmap_set_ala_bitsl");
+    TEST_AND_REPORT(result, 0, " error in ompi_bitmap_set_ala_bitsl");
 }
 
 void test_bitmap_find_size(ompi_bitmap_t *bm)
 {
     int result = find_size(bm);
-    TEST_AND_REPORT(result, " error in ompi_bitmap_size");
+    TEST_AND_REPORT(result, 0, " error in ompi_bitmap_size");
 }
 
 
