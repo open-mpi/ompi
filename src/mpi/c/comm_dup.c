@@ -21,7 +21,7 @@ int MPI_Comm_dup(MPI_Comm comm, MPI_Comm *newcomm) {
     
     /* local variables */
     ompi_communicator_t *comp, *newcomp;
-    int rsize, mode;
+    int rsize, mode, rc=MPI_SUCCESS;
     ompi_proc_t **rprocs;
     
     /* argument checking */
@@ -51,24 +51,33 @@ int MPI_Comm_dup(MPI_Comm comm, MPI_Comm *newcomm) {
         mode   = OMPI_COMM_INTRA_INTRA;
     }
 
-    newcomp = ompi_comm_set ( mode,                                   /* mode */
-                             comp,                                   /* old comm */
-                             NULL,                                   /* bridge comm */
-                             comp->c_local_group->grp_proc_count,    /* local_size */
-                             comp->c_local_group->grp_proc_pointers, /* local_procs*/
-                             rsize,                                  /* remote_size */
-                             rprocs,                                 /* remote_procs */
-                             comp->c_keyhash,                        /* attrs */
-                             comp->error_handler,                    /* error handler */
-                             NULL,                      /* coll module, to be modified */
-                             NULL,                      /* topo module, to be modified */
-                             MPI_UNDEFINED,                          /* local leader */
-                             MPI_UNDEFINED                           /* remote leader */
+    newcomp = ompi_comm_set ( comp,                                   /* old comm */
+                              comp->c_local_group->grp_proc_count,    /* local_size */
+                              comp->c_local_group->grp_proc_pointers, /* local_procs*/
+                              rsize,                                  /* remote_size */
+                              rprocs,                                 /* remote_procs */
+                              comp->c_keyhash,                        /* attrs */
+                              comp->error_handler,                    /* error handler */
+                              NULL,                              /* coll module,t.b.d */
+                              NULL                              /* topo module, t.b.d */
                              );
 
-    if ( newcomp == MPI_COMM_NULL ) 
+    if ( MPI_COMM_NULL == newcomp ) { 
         OMPI_ERRHANDLER_INVOKE (comm, MPI_ERR_INTERN, "MPI_Comm_dup");
+    }
 
+    /* Determine context id. It is identical to f_2_c_handle */
+    rc = ompi_comm_nextcid ( newcomp,       /* new communicator */ 
+                             comp,          /* old comm */
+                             NULL,          /* bridge comm */
+                             MPI_UNDEFINED, /* local leader */
+                             MPI_UNDEFINED, /* remote_leader */
+                             mode );        /* mode */
+    if ( OMPI_SUCCESS != rc ) {
+        *newcomm = MPI_COMM_NULL;
+        OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_INTERN, "MPI_Comm_dup");
+    }
+    
     *newcomm = newcomp;
     return ( MPI_SUCCESS );
 }
