@@ -25,29 +25,31 @@ extern lam_class_info_t lam_reactor_cls;
  * implement the lam_reactor_listener_t interface.
  */
 
-typedef struct _lam_reactor_listener {
+struct lam_reactor_listener_t {
     void *rl_user_data;
     void (*rl_recv_handler)(struct _lam_reactor_listener*, int sd);
     void (*rl_send_handler)(struct _lam_reactor_listener*, int sd);
     void (*rl_except_handler)(struct _lam_reactor_listener*, int sd);
-} lam_reactor_listener_t;
+};
+typedef struct lam_reactor_listener_t lam_reactor_listener_t;
 
 
-typedef struct _lam_reactor_descriptor {
+typedef struct lam_reactor_descriptor_t {
     lam_list_item_t         rd_base;
     int                     rd;
     volatile int            rd_flags;
     lam_reactor_listener_t *rd_recv;
     lam_reactor_listener_t *rd_send;
     lam_reactor_listener_t *rd_except;
-} lam_reactor_descriptor_t;
+};
+typedef struct lam_reactor_descriptor_t lam_reactor_descriptor_t;
 
 
 void lam_reactor_descriptor_init(lam_reactor_descriptor_t*);
 void lam_reactor_descriptor_destroy(lam_reactor_descriptor_t*);
 
 
-typedef struct _lam_reactor {
+typedef struct lam_reactor_t {
     lam_object_t       r_base;
     lam_mutex_t        r_mutex;
     lam_list_t         r_active;
@@ -60,7 +62,8 @@ typedef struct _lam_reactor {
     lam_fd_set_t       r_send_set;
     lam_fd_set_t       r_recv_set;
     lam_fd_set_t       r_except_set;
-} lam_reactor_t;
+};
+typedef struct lam_reactor_t lam_reactor_t;
 
  
 void lam_reactor_init(lam_reactor_t*);
