@@ -119,7 +119,6 @@ int main(int argc, char *argv[])
 
   ompi_info::mca_types.push_back("allocator");
   ompi_info::mca_types.push_back("coll");
-  ompi_info::mca_types.push_back("common");
   ompi_info::mca_types.push_back("gpr");
   ompi_info::mca_types.push_back("io");
   ompi_info::mca_types.push_back("llm");
@@ -175,7 +174,6 @@ int main(int argc, char *argv[])
     ompi_info::show_component_version("base", component_all, ver_full, type_all);
     ompi_info::show_component_version("allocator", component_all, ver_full, type_all);
     ompi_info::show_component_version("coll", component_all, ver_full, type_all);
-    ompi_info::show_component_version("common", component_all, ver_full, type_all);
     ompi_info::show_component_version("gpr", component_all, ver_full, type_all);
     ompi_info::show_component_version("io", component_all, ver_full, type_all);
     ompi_info::show_component_version("llm", component_all, ver_full, type_all);
