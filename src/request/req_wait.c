@@ -16,7 +16,7 @@ int ompi_request_wait_any(
 #if OMPI_HAVE_THREADS
     int c;
 #endif
-    size_t i, null_requests;
+    size_t i, num_requests_null_inactive;
     int rc = OMPI_SUCCESS;
     int completed = -1;
     ompi_request_t **rptr;
@@ -27,13 +27,13 @@ int ompi_request_wait_any(
     ompi_atomic_mb();
     for (c = 0; completed < 0 && c < ompi_request_poll_iterations; c++) {
         rptr = requests;
-        null_requests = 0;
+        num_requests_null_inactive = 0;
         for (i = 0; i < count; i++, rptr++) {
             request = *rptr;
             /* check for null or completed persistent request */
             if (MPI_REQUEST_NULL == request || 
                 request->req_state == OMPI_REQUEST_INACTIVE) { 
-                if(++null_requests == count)
+                if(++num_requests_null_inactive == count)
                     goto finished;
                 continue;
             }
@@ -50,13 +50,13 @@ int ompi_request_wait_any(
     do {
         ompi_request_waiting++;
         rptr = requests;
-        null_requests = 0;
+        num_requests_null_inactive = 0;
         for (i = 0; i < count; i++, rptr++) {
             request = *rptr;
             /* check for null or completed persistent request */
             if (MPI_REQUEST_NULL == request || 
                 request->req_state == OMPI_REQUEST_INACTIVE) {
-                null_requests++;
+                num_requests_null_inactive++;
                 continue;
             }
             if (request->req_complete == true) {
@@ -64,7 +64,7 @@ int ompi_request_wait_any(
                 break;
             }
         }
-        if(null_requests == count)
+        if(num_requests_null_inactive == count)
             break;
         if (completed < 0) {
             ompi_condition_wait(&ompi_request_cond, &ompi_request_lock);
@@ -75,15 +75,17 @@ int ompi_request_wait_any(
 
 finished:
 
-    if(null_requests == count) {
+    if(num_requests_null_inactive == count) {
         *index = MPI_UNDEFINED;
+        if (MPI_STATUS_IGNORE != status) {
+            *status = ompi_status_empty;
+        }
     } else {
 
         /* return status */
         if (MPI_STATUS_IGNORE != status) {
             *status = request->req_status;
         }
-    
         /* return request to pool */ 
         rc = request->req_fini(rptr);
         *index = completed;
@@ -137,13 +139,18 @@ int ompi_request_wait_all(
         OMPI_THREAD_UNLOCK(&ompi_request_lock);
     }
 
-    if (MPI_STATUS_IGNORE != statuses) {
+    if (MPI_STATUSES_IGNORE != statuses) {
         /* fill out status and free request if required */
         rptr = requests;
         for (i = 0; i < count; i++) {
             int rc;
             request = *rptr;
-            statuses[i] = request->req_status;
+            if(request == MPI_REQUEST_NULL ||
+               request->req_state == OMPI_REQUEST_INACTIVE) {
+                statuses[i] = ompi_status_empty;
+            } else {
+                statuses[i] = request->req_status;
+            }
             rc = request->req_fini(rptr);
             rptr++;
         }
