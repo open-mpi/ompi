@@ -84,7 +84,7 @@ do {                                                           \
 /* PTL_ELAN related MACROS, expose some as configurable options if needed */
 #define  OMPI_PTL_ELAN_ENABLE_GET    (1)
 #define  OMPI_PTL_ELAN_COMP_QUEUE    (0) 
-#define  OMPI_PTL_ELAN_THREADING     (1 || OMPI_HAVE_POSIX_THREADS )
+#define  OMPI_PTL_ELAN_THREADING     (OMPI_HAVE_POSIX_THREADS)
 
 #define  OMPI_PTL_ELAN_MAX_QSIZE     (2048)
 #define  OMPI_PTL_ELAN_MAX_QSLOTS    (128)
@@ -104,7 +104,7 @@ do {                                                           \
 #define  OMPI_PTL_ELAN_GET_MIN(a,b)  ((a<b)? a:b)
 #define  OMPI_PTL_ELAN_ALIGNUP(x,a)  (((unsigned int)(x) + ((a)-1)) & (-(a)))
 
-#if 1 || (QSNETLIBS_VERSION_CODE <= QSNETLIBS_VERSION(1,6,4))
+#if (QSNETLIBS_VERSION_CODE <= QSNETLIBS_VERSION(1,6,6))
 #define OMPI_PTL_ELAN_ALLOC_CMDQ(ctx, alloc, size, bits, params) \
 	elan4_alloc_cmdq (ctx, alloc, size, bits, params)
 #else

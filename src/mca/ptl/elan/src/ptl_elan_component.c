@@ -247,11 +247,13 @@ mca_ptl_elan_component_init (int *num_ptls,
      *    program and exit accordingly, via a signal/interrupt.
      */
 
+#if OMPI_PTL_ELAN_THREADING
     if ((mca_ptl_elan_thread_init(elan_mp)) != OMPI_SUCCESS) {
         ompi_output(0, 
 		"unable to initialize %d asynchronous threads\n",
 		elan_mp->num_modules);
     }
+#endif
 
     END_FUNC(PTL_ELAN_DEBUG_INIT);
     return ptls;
