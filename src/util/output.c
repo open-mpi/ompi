@@ -401,7 +401,7 @@ static int open_file(int i)
 
     dir = ompi_process_info.proc_session_dir;
     if (NULL != dir) {
-        filename = malloc(MAXPATHLEN);
+        filename = (char*) malloc(MAXPATHLEN);
         if (NULL == filename) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
@@ -519,7 +519,7 @@ static void output(int output_id, char *format, va_list arglist)
       if (NULL != temp_str) {
 	free(temp_str);
       }
-      temp_str = malloc(total_len * 2);
+      temp_str = (char*) malloc(total_len * 2);
       temp_str_len = total_len * 2;
     }
     if (NULL != ldi->ldi_prefix) {

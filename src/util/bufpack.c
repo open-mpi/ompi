@@ -352,7 +352,8 @@ return (OMPI_SUCCESS);
  */
     int ompi_pack(ompi_buffer_t buffer, void * src, size_t n, ompi_pack_type_t type)
 {
-    int i, rc;
+    int rc;
+    size_t i;
     void *dest;
     ompi_buffer_internal_t* bptr;
     size_t op_size=0;
@@ -439,7 +440,7 @@ return (OMPI_SUCCESS);
             }
             break;
         case OMPI_STRING:
-            strncpy(dest, src, n);
+            strncpy((char*) dest, (char*) src, n);
             *((char *) dest + n - 1) = '\0';
             break;
         case OMPI_NAME:
@@ -478,9 +479,10 @@ return (OMPI_SUCCESS);
  * @retval OMPI_SUCCESS
  * @retval OMPI_ERROR
  */ 
-    int ompi_unpack(ompi_buffer_t buffer, void * dest, size_t n, ompi_pack_type_t type)
+int
+ompi_unpack(ompi_buffer_t buffer, void * dest, size_t n, ompi_pack_type_t type)
 {
-    int i;
+    size_t i;
     void *src;
     ompi_buffer_internal_t* bptr;
     size_t op_size=0;
@@ -555,7 +557,7 @@ return (OMPI_SUCCESS);
             }
             break;
         case OMPI_STRING:
-            strncpy(dest, src, n);
+            strncpy((char*) dest, (char*) src, n);
             *((char *) dest + n - 1) = '\0';
             break;
         case OMPI_NAME:

@@ -135,7 +135,7 @@ static int ompi_ifinit(void)
         }
         memcpy(&intf.if_mask, &ifr->ifr_addr, sizeof(intf.if_mask));
 
-        intf_ptr = malloc(sizeof(ompi_if_t));
+        intf_ptr = (ompi_if_t*) malloc(sizeof(ompi_if_t));
         if(intf_ptr == 0) {
             ompi_output(0, "ompi_ifinit: unable to allocated %d bytes\n", sizeof(ompi_if_t));
             return OMPI_ERR_OUT_OF_RESOURCE;

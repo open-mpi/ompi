@@ -17,7 +17,7 @@ ompi_ltostr(long num)
     char *buf = NULL;
     int ret = 0;
 
-    buf = malloc(sizeof(char) * buflen);
+    buf = (char*) malloc(sizeof(char) * buflen);
     if (NULL == buf) return NULL;
     
     ret = snprintf(buf, buflen, "%ld", num);
@@ -38,7 +38,7 @@ ompi_dtostr(double num)
     char *buf = NULL;
     int ret = 0;
     
-    buf = malloc(sizeof(char) * buflen);
+    buf = (char*) malloc(sizeof(char) * buflen);
     if (NULL == buf) return NULL;
     
     ret = snprintf(buf, buflen, "%f", num);

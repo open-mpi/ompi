@@ -82,7 +82,7 @@ ompi_path_findv(char *fname, char **pathv, int mode, char **envv)
                 if (!delimit) {
                     fullpath = path_access(fname, env, mode);
                 } else {
-                    pfix = malloc(strlen(env) + strlen(delimit) + 1);
+                    pfix = (char*) malloc(strlen(env) + strlen(delimit) + 1);
                     if (NULL == pfix){
                         return(0);
                     }
@@ -224,7 +224,7 @@ path_access(char *fname, char *path, int mode)
     /*
      * Allocate space for the full pathname.
      */
-    fullpath = malloc(strlen(path) + strlen(fname) + 2);
+    fullpath = (char*) malloc(strlen(path) + strlen(fname) + 2);
     if (NULL == fullpath){
         return(0);
     }

@@ -27,7 +27,7 @@ static int guess_strlen(const char *fmt, va_list ap)
     char *sarg;
     double darg;
     float farg;
-    int i;
+    size_t i;
     int iarg;
     int len;
     long larg;
@@ -192,7 +192,7 @@ int ompi_vasprintf(char **ptr, const char *fmt, va_list ap)
     length = vsprintf(*ptr, fmt, ap);
 
     /* realloc */
-    *ptr = realloc(*ptr, (size_t) length + 1);
+    *ptr = (char*) realloc(*ptr, (size_t) length + 1);
     if (NULL == *ptr) {
         errno = ENOMEM;
         return -1;
