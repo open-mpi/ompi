@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <assert.h>
+#include "test_util.h"
 
 #define MYBUFSIZE (4*1024*1024)
 #define MAX_REQ_NUM 1024
@@ -19,9 +20,12 @@ main (int argc,
 {
     int         myid, numprocs, i;
     int         size, loop, win, page_size;
-    double      t_start = 0.0, t_end = 0.0, t = 0.0;
+    struct timeval t_start, t_end;
     char        s_buf[MYBUFSIZE];
     char        r_buf[MYBUFSIZE];
+
+    /* Get some environmental variables set for Open MPI, OOB */
+    env_init_for_elan();
 
     MPI_Init (&argc, &argv);
     MPI_Comm_size (MPI_COMM_WORLD, &numprocs);
@@ -48,7 +52,7 @@ main (int argc,
 	if (myid == 0) {
 	    /* Start time */
 	    if ( i == skip )
-		t_start = MPI_Wtime ();
+		gettimeofday (&t_start, 0);
 
 	    for (i = 0; i < win; i++) {
 		MPI_Isend (s_buf, size, MPI_CHAR, 1, 100, MPI_COMM_WORLD,
@@ -66,12 +70,14 @@ main (int argc,
 	}
 	MPI_Barrier (MPI_COMM_WORLD);
     }
-    t_end = MPI_Wtime ();
 
     if (myid == 0) {
-        double      tmp;
-        tmp = ((size * 1.0) / 1.0e6) * loop * win;
-        fprintf (stdout, "%8d  %8.2f\n", size, tmp / t);
+        double      latency;
+	gettimeofday (&t_end, 0);
+	latency = ((1.0e6 * t_end.tv_sec + t_end.tv_usec) 
+		- (1.0e6 * t_start.tv_sec + t_start.tv_usec)) 
+	    / (loop * win);
+        fprintf (stdout, "%8d  %8.2f\n", size, size / latency);
         fflush (stdout);
     }
 

@@ -12,7 +12,7 @@ AM_CPPFLAGS = -I$(top_ompi_builddir)/src/include  \
 
 LDFLAGS += -L$(prefix)/lib -L../src/.libs 
 
-EXECS = qsnet_init qsnet_qdma qsnet_rdma mpitest lat check init_elan
+EXECS = qsnet_init qsnet_qdma qsnet_rdma mpitest lat check init_elan bw
 
 units: $(EXECS)
 
