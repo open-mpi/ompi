@@ -106,7 +106,7 @@ typedef struct mca_pcm_1_0_0_t* (*mca_pcm_base_init_fn_t)(void);
    */
 typedef int (*mca_pcm_base_query_get_nodes_fn_t)(lam_pcm_node_t **nodes, 
                                                  size_t *nodes_len, 
-                                                 int available_procs);
+                                                 int *available_procs);
 
 
   /**

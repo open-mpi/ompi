@@ -64,6 +64,7 @@ struct mca_pcm_1_0_0_t mca_pcm_cofs_1_0_0 = {
 
 char mca_pcm_cofs_comm_loc[LAM_PATH_MAX];
 int mca_pcm_cofs_my_vpid;
+char *mca_pcm_cofs_my_handle = NULL;
 
 int
 mca_pcm_cofs_open(lam_cmd_line_t *cmd)

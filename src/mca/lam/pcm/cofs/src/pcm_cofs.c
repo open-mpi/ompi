@@ -17,39 +17,69 @@
 #include <string.h>
 #include <unistd.h>
 
+#define HANDLE_FILE_NAME "pcm_cofs_handle_list"
+
+static int handle_new_count = 0;
+
 int 
 mca_pcm_cofs_query_get_nodes(lam_pcm_node_t ** nodes, size_t * nodes_len,
-			     int available_procs)
+			     int *available_procs)
 {
-  return LAM_ERR_NOT_IMPLEMENTED;
+  *nodes = NULL;
+  *nodes_len = 0;
+  *available_procs = 0;
+  
+  return LAM_ERR_NOT_SUPPORTED;
 }
 
 
 lam_job_handle_t 
 mca_pcm_cofs_handle_new(lam_job_handle_t parent)
 {
-  return NULL;
+  pid_t pid;
+  char *ret;
+  size_t ret_len;
+
+  pid = getpid();
+
+  ret_len = sizeof(pid_t) * 8 + strlen("pcm_cofs") + sizeof(int) * 8 + 5;
+  ret = LAM_MALLOC(ret_len);
+  if (ret == NULL) {
+    return NULL;
+  }
+
+  snprintf(ret, ret_len, "pcm_cofs_%d_%d", (int) pid, handle_new_count);
+  handle_new_count++;
+
+  return ret;
 }
 
 
 lam_job_handle_t 
 mca_pcm_cofs_handle_get(void)
 {
-  return NULL;
+  return mca_pcm_cofs_my_handle;
 }
 
 
 void 
 mca_pcm_cofs_handle_free(lam_job_handle_t * job_handle)
 {
-  
+  if (*job_handle != NULL) {
+    LAM_FREE(*job_handle);
+    *job_handle = NULL;
+  }
 }
 
 
 int 
 mca_pcm_cofs_job_can_spawn(lam_job_handle_t job_handle)
 {
-  return LAM_ERR_NOT_IMPLEMENTED;
+  if (job_handle != NULL) {
+    return LAM_ERR_NOT_SUPPORTED;
+  } else {
+    return LAM_SUCCESS;
+  }
 }
 
 
