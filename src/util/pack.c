@@ -121,7 +121,7 @@ size_t isize = 0;
 	bptr->base_ptr = (void*) malloc (isize); 
 
 	bptr->data_ptr = bptr->base_ptr; /* set the start of the buffer */
-	/* leave from_ptr NULL so we catch an unpack before pack! */
+	bptr->from_ptr = bptr->base_ptr; /* set the unpack start at start */
 
 	/* set counts for size and space */
 	bptr->size = bptr->space = isize;
@@ -365,9 +365,6 @@ return (OMPI_SUCCESS);
     bptr->toend += op_size;
 
     bptr->space -= op_size;
-
-    /* if first pack also set the from_ptr as it is now valid */
-    if (!bptr->from_ptr) bptr->from_ptr = bptr->base_ptr;
 
     return OMPI_SUCCESS;
 }
