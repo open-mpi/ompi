@@ -20,9 +20,8 @@
 #include "ptl_elan_frag.h"
 #include "ptl_elan_priv.h"
 
-
 /* XXX: There must be multiple PTL's. This could be the template */
-mca_ptl_elan_t  mca_ptl_elan = {
+mca_ptl_elan_t mca_ptl_elan = {
     {
         &mca_ptl_elan_module.super,
         0,                         /* ptl_exclusivity */
@@ -45,72 +44,92 @@ mca_ptl_elan_t  mca_ptl_elan = {
     }
 };
 
-int mca_ptl_elan_add_procs (struct mca_ptl_t *ptl,
-	                    size_t nprocs,
-                            struct ompi_proc_t **procs,
-                            struct mca_ptl_base_peer_t **peers,
-			    ompi_bitmap_t* reachable)
+int
+mca_ptl_elan_add_procs (struct mca_ptl_t *ptl,
+                        size_t nprocs,
+                        struct ompi_proc_t **procs,
+                        struct mca_ptl_base_peer_t **peers,
+                        ompi_bitmap_t * reachable)
 {
-    struct ompi_proc_t  *ompi_proc;
+    struct ompi_proc_t *ompi_proc;
     mca_ptl_elan_proc_t *ptl_proc;
     mca_ptl_elan_peer_t *ptl_peer;
 
-    int rc;
-    int i;
+    int         rc;
+    int         i;
 
-    for(i=0; i<nprocs; i++) {
+    for (i = 0; i < nprocs; i++) {
 
-       	ompi_proc = procs[i];
-       	ptl_proc  = mca_ptl_elan_proc_create(ompi_proc);
-	OMPI_PTL_ELAN_CHECK_UNEX(ptl_proc, NULL, OMPI_ERR_OUT_OF_RESOURCE, 0);
+        ompi_proc = procs[i];
+        ptl_proc = mca_ptl_elan_proc_create (ompi_proc);
+
+        if (NULL == ptl_proc) {
+            ompi_output (0,
+                         "[%s:%d] could not create a ptl proc\n",
+                         __FILE__, __LINE__);
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
 
         /* Check to make sure that the peer has at least as many 
-	 * interface addresses exported as we are trying to use. 
-	 * If not, then don't bind this PTL instance to the proc.
+         * interface addresses exported as we are trying to use. 
+         * If not, then don't bind this PTL instance to the proc.
          */
-        OMPI_THREAD_LOCK(&ptl_proc->proc_lock);
+        OMPI_THREAD_LOCK (&ptl_proc->proc_lock);
 
-        if(ptl_proc->proc_addr_count == ptl_proc->proc_peer_count) {
-            OMPI_THREAD_UNLOCK(&ptl_proc->proc_lock);
-	    ompi_output(0, "all peers are taken already\n");
+        if (ptl_proc->proc_addr_count == ptl_proc->proc_peer_count) {
+            OMPI_THREAD_UNLOCK (&ptl_proc->proc_lock);
+            ompi_output (0, "all peers are taken already\n");
             return OMPI_ERR_UNREACH;
         }
 
-        /* The ptl_proc datastructure is shared by all TCP PTL 
-	 * instances that are trying to reach this destination. 
-	 * Cache the peer instance on the ptl_proc.
+        /* The ptl_proc datastructure is shared by all PTL 
+         * instances that are trying to reach this destination. 
+         * Cache the peer instance on the ptl_proc.
          */
-        ptl_peer = OBJ_NEW(mca_ptl_elan_peer_t);
-        if(NULL == ptl_peer) {
-            OMPI_THREAD_UNLOCK(&ptl_proc->proc_lock);
+
+        ptl_peer = OBJ_NEW (mca_ptl_elan_peer_t);
+        if (NULL == ptl_peer) {
+            OMPI_THREAD_UNLOCK (&ptl_proc->proc_lock);
+            ompi_output (0, "[%s:%d] unabled to allocate ptl_peer \n",
+                    __FILE__, __LINE__);
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
-        ptl_peer->peer_ptl = (mca_ptl_elan_t*)ptl;
-        rc = mca_ptl_elan_proc_insert(ptl_proc, ptl_peer);
-        if(rc != OMPI_SUCCESS) {
-            OBJ_RELEASE(ptl_peer);
-            OMPI_THREAD_UNLOCK(&ptl_proc->proc_lock);
+        ptl_peer->peer_ptl = (mca_ptl_elan_t *) ptl;
+
+        rc = mca_ptl_elan_proc_insert (ptl_proc, ptl_peer);
+        if (rc != OMPI_SUCCESS) {
+            OBJ_RELEASE (ptl_peer);
+            OMPI_THREAD_UNLOCK (&ptl_proc->proc_lock);
+            ompi_output (0, "[%s:%d] unabled to insert ptl_peer \n",
+                    __FILE__, __LINE__);
             return rc;
         }
-        ompi_bitmap_set_bit(reachable, i);
-        OMPI_THREAD_UNLOCK(&ptl_proc->proc_lock);
-        peers[i] = ptl_peer;
+        ompi_bitmap_set_bit (reachable, i);
+
+        OMPI_THREAD_UNLOCK (&ptl_proc->proc_lock);
+        peers[i] = (struct mca_ptl_base_peer_t *) ptl_peer;
     }
     return OMPI_SUCCESS;
 }
 
-int mca_ptl_elan_del_procs (struct mca_ptl_t *ptl, 
-			   size_t nprocs,
-			   struct ompi_proc_t ** procs, 
-			   struct mca_ptl_base_peer_t **peers)
+int
+mca_ptl_elan_del_procs (struct mca_ptl_t *ptl,
+                        size_t nprocs,
+                        struct ompi_proc_t **procs,
+                        struct mca_ptl_base_peer_t **peers)
 {
+    int         i;
+    for (i = 0; i < nprocs; i++) {
+        OBJ_RELEASE (peers[i]);
+    }
     return OMPI_SUCCESS;
 }
 
-int mca_ptl_elan_finalize (struct mca_ptl_t *ptl)
+int
+mca_ptl_elan_finalize (struct mca_ptl_t *ptl)
 {
-    int rail_index;
-    struct mca_ptl_elan_t * elan_ptl ;
+    int         rail_index;
+    struct mca_ptl_elan_t *elan_ptl;
 
     elan_ptl = (struct mca_ptl_elan_t *) ptl;
 
@@ -118,59 +137,58 @@ int mca_ptl_elan_finalize (struct mca_ptl_t *ptl)
 
     /* Free the PTL */
     rail_index = elan_ptl->ptl_ni_local;
-    free(elan_ptl);
+    free (elan_ptl);
 
     /* Record the missing of this entry */
     mca_ptl_elan_module.elan_ptls[rail_index] = NULL;
-    mca_ptl_elan_module.elan_num_ptls -- ;
+    mca_ptl_elan_module.elan_num_ptls--;
 
     return OMPI_SUCCESS;
 }
 
-int mca_ptl_elan_req_alloc (struct mca_ptl_t *ptl, 
-        struct mca_pml_base_send_request_t **request)
+int
+mca_ptl_elan_req_alloc (struct mca_ptl_t *ptl,
+                        struct mca_pml_base_send_request_t **request)
 {
-    int       rc = OMPI_SUCCESS;
-    mca_pml_base_send_request_t* sendreq;
-    ompi_list_item_t* item;
+    int         rc = OMPI_SUCCESS;
+    mca_pml_base_send_request_t *sendreq;
+    ompi_list_item_t *item;
 
-#if 0 
-    /* PTL_TCP allocate request from the module
-     * But PTL_ELAN have to allocate from each PTL since
-     * all the descriptors are bound to the PTL related command queue, etc
-     * for their functions.
-     */
-    OMPI_FREE_LIST_GET(&mca_ptl_elan_module.elan_send_requests, item, rc);
+    /* FIXME, Error here, rc is passed in by value 
+     * Which will not bring any output from this allocation request */
+    OMPI_FREE_LIST_GET (&mca_ptl_elan_module.elan_reqs_free, item, rc);
 
-    if(NULL != (sendreq = (mca_pml_base_send_request_t*)item))
+    if (NULL != (sendreq = (mca_pml_base_send_request_t *) item))
         sendreq->req_owner = ptl;
     *request = sendreq;
-#endif 
+
     return rc;
 }
 
 
-void mca_ptl_elan_req_return (struct mca_ptl_t *ptl, 
-        struct mca_pml_base_send_request_t *request)
+void
+mca_ptl_elan_req_return (struct mca_ptl_t *ptl,
+                         struct mca_pml_base_send_request_t *request)
 {
-    /*OBJ_DESTRUCT(&request->req_convertor);*/
-#if 0
-    OMPI_FREE_LIST_RETURN(&mca_ptl_elan_module.elan_send_requests, 
-            (ompi_list_item_t*)request);
-#endif
+    OMPI_FREE_LIST_RETURN (&mca_ptl_elan_module.elan_reqs_free,
+                           (ompi_list_item_t *) request);
     return;
 }
 
 
-void mca_ptl_elan_recv_frag_return (struct mca_ptl_t *ptl,
-                                    struct mca_ptl_elan_recv_frag_t *frag)
+void
+mca_ptl_elan_recv_frag_return (struct mca_ptl_t *ptl,
+                               struct mca_ptl_elan_recv_frag_t *frag)
 {
+    OMPI_FREE_LIST_RETURN(&mca_ptl_elan_module.elan_recv_frags_free, 
+            (ompi_list_item_t*)frag);
     return;
 }
 
 
-void mca_ptl_elan_send_frag_return (struct mca_ptl_t *ptl,
-                                    struct mca_ptl_elan_send_frag_t *frag)
+void
+mca_ptl_elan_send_frag_return (struct mca_ptl_t *ptl,
+                               struct mca_ptl_elan_send_frag_t *frag)
 {
     return;
 }
@@ -179,26 +197,60 @@ void mca_ptl_elan_send_frag_return (struct mca_ptl_t *ptl,
  *  Initiate a put operation. 
  */
 
-int mca_ptl_elan_put (struct mca_ptl_t* ptl, 
-		      struct mca_ptl_base_peer_t* ptl_base_peer, 
-		      struct mca_pml_base_send_request_t* request,
-		      size_t offset,
-		      size_t size,
-		      int flags)
+int
+mca_ptl_elan_put (struct mca_ptl_t *ptl,
+                  struct mca_ptl_base_peer_t *ptl_peer,
+                  struct mca_pml_base_send_request_t *sendreq,
+                  size_t offset,
+                  size_t size,
+                  int flags)
 {
-    return OMPI_SUCCESS;
+    mca_ptl_elan_desc_item_t *sd;
+
+    if (size <= 0) {
+        sendreq->super.req_mpi_done = true;
+        sendreq->super.req_pml_done = true;
+        return OMPI_SUCCESS;
+    }
+
+    /* XXX: fix pml_send?
+     *   Why presenting so many arguments while each of them is already
+     *   contained in the request descriptors,
+     *
+     * XXX: 
+     *   PML extract an request from PTL module and then use this
+     *   a request to ask for a fragment
+     *   Is it too deep across stacks to get a request and 
+     *   correspondingly multiple LOCKS to go through*/
+
+    sd = mca_ptl_elan_alloc_send_desc(sendreq);
+    if (NULL == sd) {
+        ompi_output(0,
+                "[%s:%d] Unable to allocate an elan send descriptors \n", 
+                __FILE__, __LINE__);
+    }
+
+    /* Update offset, in TCP case, this is a must.
+     * XXX: Not sure how it is going to be here */
+    sendreq->req_offset += size;
+    ((struct mca_ptl_elan_send_request_t *)sendreq)->req_frag = sd;
+
+    return mca_ptl_elan_start_desc(
+            ((struct mca_ptl_elan_send_request_t *)sendreq)->desc_type, sd);
 }
 
 /*
- *  Initiate a get. 
+ *  Get routine. We need an interface that provides one more argument,
+ *  describing the source of the data.
  */
 
-int mca_ptl_elan_get (struct mca_ptl_t* ptl, 
-		      struct mca_ptl_base_peer_t* ptl_base_peer, 
-		      struct mca_pml_base_recv_request_t* request,
-		      size_t offset,
-		      size_t size,
-		      int flags)
+int
+mca_ptl_elan_get (struct mca_ptl_t *ptl,
+                  struct mca_ptl_base_peer_t *ptl_base_peer,
+                  struct mca_pml_base_recv_request_t *request,
+                  size_t offset,
+                  size_t size,
+                  int flags)
 {
     return OMPI_SUCCESS;
 }
@@ -208,8 +260,9 @@ int mca_ptl_elan_get (struct mca_ptl_t* ptl,
  *  ack back to the peer and process the fragment.
  */
 
-void mca_ptl_elan_matched (mca_ptl_t * ptl,
-                           mca_ptl_base_recv_frag_t * frag)
+void
+mca_ptl_elan_matched (mca_ptl_t * ptl,
+                      mca_ptl_base_recv_frag_t * frag)
 {
     return;
 }

@@ -9,8 +9,6 @@ AM_CPPFLAGS = -I$(top_ompi_builddir)/src/include \
 	-I$(top_ompi_srcdir)/src -I$(top_ompi_srcdir)/src/include  \
 	-I/usr/lib/qsnet/elan4/include 
 
-#AM_LDFLAGS = -lelan -lelanctrl -lrms -lrmscall -lelan4
-
 noinst_LTLIBRARIES = libmca_ptl_elan.la
 libmca_ptl_elan_la_SOURCES = \
 	elan_config.h \
@@ -25,6 +23,7 @@ libmca_ptl_elan_la_SOURCES = \
 	ptl_elan_proc.c \
 	ptl_elan_module.c \
 	ptl_elan_priv.c \
+	ptl_elan_peer.c \
 	ptl_elan_init.c \
 	ptl_elan_comm_init.c \
 	ptl_elan.c 
