@@ -62,7 +62,6 @@ int MPI_Pack(void *inbuf, int incount, MPI_Datatype datatype,
 			       inbuf, 0, NULL /*never allocate memory*/);
 
   /* Check for truncation */
-
   ompi_convertor_get_packed_size(local_convertor, &size);
   if( (*position + size) > (unsigned int)outsize ) {  /* we can cast as we already checked for < 0 */
     OBJ_RELEASE(local_convertor);
@@ -70,12 +69,10 @@ int MPI_Pack(void *inbuf, int incount, MPI_Datatype datatype,
   }
 
   /* Prepare the iovec with all informations */
-
   invec.iov_base = (char*) outbuf + (*position);
   invec.iov_len = outsize - (*position);
 
   /* Do the actual packing */
-
   iov_count = 1;
   rc = ompi_convertor_pack( local_convertor, &invec, &iov_count,
 			    &size, &freeAfter );
@@ -84,7 +81,6 @@ int MPI_Pack(void *inbuf, int incount, MPI_Datatype datatype,
 
   /* All done.  Note that the convertor returns 1 upon success, not
      OMPI_SUCCESS. */
-    
   OMPI_ERRHANDLER_RETURN((rc == 1) ? OMPI_SUCCESS : OMPI_ERROR,
 			 comm, MPI_ERR_UNKNOWN, FUNC_NAME);
 }
