@@ -5,6 +5,8 @@
 #ifndef LAM_LIST_H
 #define LAM_LIST_H
 
+#include <stdio.h>
+
 #include "lam/lfc/object.h"
 
 /*
@@ -84,13 +86,12 @@ static inline void lam_list_set_size(lam_list_t* list, size_t size)
     list->lam_list_length=size;
 }
 
-
 /* 
  * Returns first item on list, but does not remove it from the list. 
  */
 static inline lam_list_item_t* lam_list_get_first(lam_list_t* list)
 {
-    return 0;
+    return list->lam_list_head.lam_list_next;
 }
 
 /* 
@@ -98,7 +99,7 @@ static inline lam_list_item_t* lam_list_get_first(lam_list_t* list)
  */
 static inline lam_list_item_t* lam_list_get_last(lam_list_t* list)
 {
-    return 0;
+    return list->lam_list_tail.lam_list_prev;
 }
 
 /* 
@@ -106,9 +107,43 @@ static inline lam_list_item_t* lam_list_get_last(lam_list_t* list)
  */
 static inline lam_list_item_t* lam_list_get_end(lam_list_t* list)
 {
-    return 0;
+    return &(list->lam_list_tail);
 }
 
+/*
+ * Removes the specified item from the list
+ */
+static inline void lam_list_remove_item(lam_list_t *list, lam_list_item_t *item){
+#ifdef LAM_ENABLE_DEBUG
+    lam_list_item_t *item_ptr;
+    int found=0;
+#endif
+
+#ifdef LAM_ENABLE_DEBUG
+    /* check to see that the item is in the list */
+    for(item_ptr = lam_list_get_first(list);
+            item_ptr != lam_list_get_end(list);
+            item_ptr = item_ptr->lam_list_next) {
+        if( item_ptr == item ) {
+            found=1;
+            break;
+        }
+    }
+    if( 1 != found){
+        fprintf(stderr," Warning :: lam_list_remove_item - the item %p is not on the list %p \n",item,list);
+        fflush(stderr);
+    }
+
+#endif
+
+    /* reset next pointer of previous element */
+    item->lam_list_prev->lam_list_next=item->lam_list_next;
+
+    /* reset previous pointer of next element */
+    item->lam_list_next->lam_list_prev=item->lam_list_prev;
+
+    return;
+}
 
 /* 
  * Adds item to the end of the list but does not retain item. 
