@@ -33,14 +33,14 @@ lam_class_t shmem_pool_t_class = {
 void lam_mp_construct(lam_mem_pool_t *pool)
 {
     pool->mp_private_alloc = OBJ_NEW(lam_allocator_t);
-    lam_mutex_init(&(pool->mp_lock));
+    OBJ_CONSTRUCT(&pool->mp_lock, lam_mutex_t);
     pool->mp_dev_alloc = NULL;
 }
 
 void lam_mp_shared_construct(lam_mem_pool_t *pool)
 {
     pool->mp_private_alloc = OBJ_NEW(lam_allocator_t);
-    lam_mutex_init(&(pool->mp_lock));
+    OBJ_CONSTRUCT(&pool->mp_lock, lam_mutex_t);
     lam_allocator_set_is_shared(pool->mp_private_alloc, 1);
     lam_allocator_set_mem_prot(pool->mp_private_alloc, MMAP_SHARED_PROT);
     pool->mp_dev_alloc = NULL;    
@@ -51,7 +51,7 @@ void lam_mp_destruct(lam_mem_pool_t *pool)
     if ( pool->mp_dev_alloc )
         OBJ_RELEASE(pool->mp_dev_alloc);
     OBJ_RELEASE(pool->mp_private_alloc);
-
+    OBJ_DESTRUCT(&pool->mp_lock);
 }
 
 int lam_mp_construct_with(lam_mem_pool_t *pool, uint64_t pool_size,

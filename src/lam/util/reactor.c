@@ -70,7 +70,7 @@ static inline lam_reactor_descriptor_t* lam_reactor_get_descriptor(lam_reactor_t
 
 void lam_reactor_construct(lam_reactor_t* r)
 { 
-    lam_mutex_init(&r->r_mutex);
+    OBJ_CONSTRUCT(&r->r_mutex, lam_mutex_t);
     OBJ_CONSTRUCT(&r->r_active, lam_list_t);
     OBJ_CONSTRUCT(&r->r_free, lam_list_t);
     OBJ_CONSTRUCT(&r->r_pending, lam_list_t);
@@ -93,6 +93,7 @@ void lam_reactor_destruct(lam_reactor_t* r)
     OBJ_DESTRUCT(&r->r_free);
     OBJ_DESTRUCT(&r->r_pending);
     OBJ_DESTRUCT(&r->r_hash);
+    OBJ_DESTRUCT(&r->r_mutex);
 }
 
 

@@ -738,6 +738,8 @@ AC_CONFIG_FILES([
     test/support/Makefile
     test/lam/Makefile
     test/lam/lfc/Makefile
+    test/lam/threads/Makefile
+    test/lam/util/Makefile
     test/mpi/Makefile
     test/mpi/environment/Makefile
     test/unit/Makefile

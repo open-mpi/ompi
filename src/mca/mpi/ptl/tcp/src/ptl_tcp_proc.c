@@ -29,7 +29,7 @@ void mca_ptl_tcp_proc_construct(mca_ptl_tcp_proc_t* proc)
     proc->proc_addr_count = 0;
     proc->proc_peers = 0;
     proc->proc_peer_count = 0;
-    lam_mutex_init(&proc->proc_lock);
+    OBJ_CONSTRUCT(&proc->proc_lock, lam_mutex_t);
 
     /* add to list of all proc instance */
     THREAD_LOCK(&mca_ptl_tcp_module.tcp_lock);
@@ -88,18 +88,17 @@ mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_create(lam_proc_t* lam_proc)
         &mca_ptl_tcp_module.super.ptlm_version, 
         lam_proc, 
         (void**)&ptl_proc->proc_addrs, 
-        &size, 
-        &ptl_proc->proc_addr_count);
+        &size);
     if(rc != LAM_SUCCESS) {
         lam_output(0, "mca_ptl_tcp_proc_create: mca_base_modex_recv: failed with return value=%d", rc);
         OBJ_RELEASE(ptl_proc);
         return NULL;
     }
-    if(size != sizeof(mca_ptl_tcp_addr_t)) {
-        lam_output(0, "mca_ptl_tcp_proc_create: mca_base_modex_recv: size %d != %d", 
-            size, sizeof(mca_ptl_tcp_addr_t));
+    if(0 != (size % sizeof(mca_ptl_tcp_addr_t))) {
+        lam_output(0, "mca_ptl_tcp_proc_create: mca_base_modex_recv: invalid size %d\n", size);
         return NULL;
     }
+    ptl_proc->proc_addr_count = size / sizeof(mca_ptl_tcp_addr_t);
 
     /* allocate space for peer array - one for each exported address */
     ptl_proc->proc_peers = (mca_ptl_base_peer_t**)

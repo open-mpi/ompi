@@ -10,6 +10,7 @@
 #ifndef MCA_PML_TEG_H
 #define MCA_PML_TEG_H
 
+#include "lam/threads/condition.h"
 #include "lam/mem/free_list.h"
 #include "lam/util/cmd_line.h"
 #include "mpi/request/request.h"
@@ -32,6 +33,8 @@ struct mca_pml_teg_t {
 
     lam_list_t  teg_procs;
     lam_mutex_t teg_lock;
+    lam_condition_t teg_condition;
+    int teg_reqs_waiting;
 
     int teg_free_list_num; /* initial size of free list */
     int teg_free_list_max; /* maximum size of free list */
@@ -114,6 +117,16 @@ extern int mca_pml_teg_isend(
     struct lam_request_t **request
 );
 
+extern int mca_pml_teg_send(
+    void *buf,
+    size_t size,
+    struct lam_datatype_t *datatype,
+    int dst,
+    int tag,
+    mca_pml_base_send_mode_t mode,
+    struct lam_communicator_t* comm
+);
+
 extern int mca_pml_teg_irecv_init(
     void *buf,
     size_t size,
@@ -133,6 +146,16 @@ extern int mca_pml_teg_irecv(
     int tag,
     struct lam_communicator_t* comm,
     struct lam_request_t **request
+);
+
+extern int mca_pml_teg_recv(
+    void *buf,
+    size_t size,
+    struct lam_datatype_t *datatype,
+    int src,
+    int tag,
+    struct lam_communicator_t* comm,
+    lam_status_public_t* status
 );
 
 extern int mca_pml_teg_progress(void);

@@ -130,6 +130,7 @@ int mca_pml_base_select(mca_pml_t *selected, bool *allow_multi_user_threads,
   /* Save the winner */
 
   mca_pml_base_selected_module = *best_module;
+  mca_pml = *actions;
   *selected = *actions;
   *allow_multi_user_threads = best_user_threads;
   *have_hidden_threads = best_hidden_threads;

@@ -416,7 +416,7 @@ static inline int lam_obj_update(lam_object_t *object, int inc)
     do {
         oldval = *addr;
         newval = oldval + inc;
-    } while (lam_atomic_cmpset_int(addr, oldval, newval) != 0);
+    } while (lam_atomic_cmpset_int(addr, oldval, newval) == 0);
 
     return newval;
 }

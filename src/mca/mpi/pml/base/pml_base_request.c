@@ -14,11 +14,11 @@ lam_class_t mca_pml_base_request_t_class = {
                                                                                                  
 void mca_pml_base_request_construct(mca_pml_base_request_t* req)
 {
-    lam_mutex_init(&req->req_lock);
+    OBJ_CONSTRUCT(&req->req_lock, lam_mutex_t);
 }
 
 void mca_pml_base_request_destruct(mca_pml_base_request_t* req)
 {
-    lam_mutex_destroy(&req->req_lock);
+    OBJ_DESTRUCT(&req->req_lock);
 }
 

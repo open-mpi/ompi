@@ -105,7 +105,7 @@ lam_cmd_line_t *lam_cmd_line_create(void)
      only thread that has this instance), there's no need to lock it
      right now. */
 
-  lam_mutex_init(&cmd->lcl_mutex);
+  OBJ_CONSTRUCT(&cmd->lcl_mutex, lam_mutex_t);
 
   /* Initialize the lists */
 

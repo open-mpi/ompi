@@ -19,7 +19,7 @@ lam_class_t mca_pml_comm_t_class = {
 static void mca_pml_ptl_comm_construct(mca_pml_comm_t* comm)
 {
     OBJ_CONSTRUCT(&comm->c_wild_receives, lam_list_t);
-    lam_mutex_init(&comm->c_wild_lock);
+    OBJ_CONSTRUCT(&comm->c_wild_lock, lam_mutex_t);
 }
 
 static void mca_pml_ptl_comm_destruct(mca_pml_comm_t* comm)
@@ -54,7 +54,7 @@ int mca_pml_ptl_comm_init_size(mca_pml_comm_t* comm, size_t size)
     if(NULL == comm->c_matching_lock)
         return LAM_ERR_OUT_OF_RESOURCE;
     for(i=0; i<size; i++)
-        lam_mutex_init(comm->c_matching_lock+i);
+        OBJ_CONSTRUCT(comm->c_matching_lock+i, lam_mutex_t);
 
     /* unexpected fragments queues */
     comm->c_unexpected_frags = malloc(sizeof(lam_list_t) * size);
@@ -68,7 +68,7 @@ int mca_pml_ptl_comm_init_size(mca_pml_comm_t* comm, size_t size)
     if(NULL == comm->c_unexpected_frags_lock)
         return LAM_ERR_OUT_OF_RESOURCE;
     for(i=0; i<size; i++)
-        lam_mutex_init(comm->c_unexpected_frags_lock+i);
+        OBJ_CONSTRUCT(comm->c_unexpected_frags_lock+i, lam_mutex_t);
 
      /* out-of-order fragments queues */
     comm->c_frags_cant_match = malloc(sizeof(lam_list_t) * size);

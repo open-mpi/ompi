@@ -49,9 +49,11 @@ typedef struct {
     mca_pml_base_request_type_t req_type;
     /* MPI request status */
     mca_pml_base_request_status_t req_status;
-    /* persistence indicating if the this is a persistent request */
+    /* completion status */
+    lam_status_public_t req_status_public;
+    /* flag indicating if the this is a persistent request */
     bool req_persistent;
-    /* flag indicating if MPI is done with this request called */
+    /* flag indicating if MPI is done with this request */
     bool req_mpi_done;
     /* flag indicating if the pt-2-pt layer is done with this request */
     bool req_pml_layer_done;

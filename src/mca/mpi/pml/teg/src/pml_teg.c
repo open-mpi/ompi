@@ -26,8 +26,10 @@ mca_pml_teg_t mca_pml_teg = {
     mca_pml_teg_progress,
     mca_pml_teg_irecv_init,
     mca_pml_teg_irecv,
+    mca_pml_teg_recv,
     mca_pml_teg_isend_init,
     mca_pml_teg_isend,
+    mca_pml_teg_send,
     mca_pml_teg_start,
     mca_pml_teg_test,
     mca_pml_teg_wait,
@@ -121,7 +123,7 @@ int mca_pml_teg_add_procs(lam_proc_t** procs, size_t nprocs)
 
         /* initialize each proc */
         mca_pml_proc_t* proc_pml = proc->proc_pml;
-        if(proc_pml == 0) {
+        if(NULL == proc_pml) {
 
             /* allocate pml specific proc data */
             proc_pml = OBJ_NEW(mca_pml_teg_proc_t);
@@ -256,9 +258,8 @@ int mca_pml_teg_del_procs(lam_proc_t** procs, size_t nprocs)
         }
         
         /* do any required cleanup */
-        mca_pml_teg_proc_destruct(proc_pml);
-        free(proc_pml);
-        proc->proc_pml = 0;
+        OBJ_RELEASE(proc_pml);
+        proc->proc_pml = NULL;
     }
     return LAM_SUCCESS;
 }

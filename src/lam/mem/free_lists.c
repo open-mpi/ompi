@@ -42,7 +42,7 @@ lam_class_t lam_free_lists_t_class = {
 
 void lam_free_lists_construct(lam_free_lists_t *flist)
 {
-    lam_mutex_init(&flist->fl_lock);
+    OBJ_CONSTRUCT(&flist->fl_lock, lam_mutex_t);
     flist->fl_pool = NULL;
     flist->fl_elt_cls = NULL;
     flist->fl_description = NULL;

@@ -45,6 +45,14 @@ struct lam_communicator_t {
 typedef struct lam_communicator_t lam_communicator_t;
 
 
+/**
+ * rank w/in the communicator
+ */
+static inline int lam_comm_rank(lam_communicator_t* comm)
+{
+    return comm->c_my_rank;
+}
+
 /* return pointer to communicator associated with context id cid,
  * No error checking is done*/
 static inline lam_communicator_t *lam_comm_lookup(uint32_t cid) 

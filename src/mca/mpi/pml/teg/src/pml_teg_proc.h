@@ -30,9 +30,6 @@ extern lam_class_t mca_pml_teg_proc_t_class;
 typedef struct mca_pml_proc_t mca_pml_teg_proc_t;
 
 
-void mca_pml_teg_proc_construct(mca_pml_proc_t*);
-void mca_pml_teg_proc_destruct(mca_pml_proc_t*);
-
 static inline mca_pml_proc_t* mca_pml_teg_proc_lookup_local(lam_communicator_t* comm, int rank)
 {
     lam_proc_t* proc = comm->c_local_group->grp_proc_pointers[rank];

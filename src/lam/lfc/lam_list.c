@@ -21,12 +21,12 @@ lam_class_t  lam_list_item_t_class = {
 static void lam_list_construct(lam_list_t*);
 static void lam_list_destruct(lam_list_t*);
 
-lam_class_t  lam_list_t_class = {
-    "lam_list_t",
-    OBJ_CLASS(lam_object_t),
-    (lam_construct_t) lam_list_construct,
-    (lam_destruct_t) lam_list_destruct
-};
+OBJ_CLASS_INSTANCE(
+    lam_list_t,
+    lam_object_t,
+    lam_list_construct,
+    lam_list_destruct
+);
 
 
 /*

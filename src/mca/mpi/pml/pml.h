@@ -97,6 +97,16 @@ typedef int (*mca_pml_base_irecv_fn_t)(
     struct lam_request_t **request
 );
 
+typedef int (*mca_pml_base_recv_fn_t)(
+    void *buf,
+    size_t size,
+    struct lam_datatype_t *datatype,
+    int src,
+    int tag,
+    struct lam_communicator_t* comm,
+    lam_status_public_t* status
+);
+
 typedef int (*mca_pml_base_isend_init_fn_t)(
     void *buf,
     size_t size,
@@ -118,6 +128,16 @@ typedef int (*mca_pml_base_isend_fn_t)(
     mca_pml_base_send_mode_t mode,
     struct lam_communicator_t* comm,
     struct lam_request_t **request
+);
+
+typedef int (*mca_pml_base_send_fn_t)(
+    void *buf,
+    size_t size,
+    struct lam_datatype_t *datatype,
+    int dst,
+    int tag,
+    mca_pml_base_send_mode_t mode,
+    struct lam_communicator_t* comm
 );
 
 typedef int (*mca_pml_base_start_fn_t)(
@@ -153,14 +173,17 @@ struct mca_pml_1_0_0_t {
     /* downcalls from MPI to PML */
     mca_pml_base_irecv_init_fn_t   pml_irecv_init;
     mca_pml_base_irecv_fn_t        pml_irecv;
+    mca_pml_base_recv_fn_t         pml_recv;
     mca_pml_base_isend_init_fn_t   pml_isend_init;
     mca_pml_base_isend_fn_t        pml_isend;
+    mca_pml_base_send_fn_t         pml_send;
     mca_pml_base_start_fn_t        pml_start;
     mca_pml_base_test_fn_t         pml_test;
     mca_pml_base_wait_fn_t         pml_wait;
 };
 typedef struct mca_pml_1_0_0_t mca_pml_1_0_0_t;
 typedef mca_pml_1_0_0_t mca_pml_t;
+extern mca_pml_t mca_pml;
 
 /*
  * Macro for use in modules that are of type pml v1.0.0
