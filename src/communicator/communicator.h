@@ -39,6 +39,10 @@ extern ompi_class_t ompi_communicator_t_class;
 
 #define OMPI_COMM_SET_HIDDEN(comm) ((comm)->c_flags |= OMPI_COMM_HIDDEN)
 
+/* a special tag to recognize an MPI_Comm_join in the comm_connect_accept
+   routine. */
+#define OMPI_COMM_JOIN_TAG  32000
+
 /** 
  * Modes reqquired for accquiring the new comm-id.
  * The first (INTER/INTRA) indicates whether the
