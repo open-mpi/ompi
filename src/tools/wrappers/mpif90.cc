@@ -1,39 +1,56 @@
 //
 // $HEADER$
-//	Function:	- wrapper for fortran program compilation
 //
 
 #include "ompi_config.h"
+#include "util/show_help.h"
 #include "tools/wrappers/ompi_wrap.h"
 
 #include <iostream>
 using namespace std;
 
 
-int main(int argc, char *argv[])
+int
+main(int argc, char *argv[])
 {
-  // The four wrapper compilers are extremely similar.  So similar,
-  // in fact, that they can be parameterized on what is different.
-  // Hence, we call the "wrapper compiler engine" to do all the work,
-  // and pass in just a few arguments to customize for the language of
-  // this wrapper compiler.
+    // The four wrapper compilers are extremely similar.  So similar,
+    // in fact, that they can be parameterized on what is different.
+    // Hence, we call the "wrapper compiler engine" to do all the
+    // work, and pass in just a few arguments to customize for the
+    // language of this wrapper compiler.
 
 #if !OMPI_WANT_F90_BINDINGS
-#if 0
-  show_help("hf90", "no-fortran-support", NULL);
-#endif
-  cerr << "Open MPI was not compiled with f90 support" << endl
-       << "(waiting for show_help for a proper error message)" << endl;
-  return 1;
+    ompi_show_help("help-wrapper.txt", "no-fortran-support", true,
+		   90, "mpif90");
+    return 1;
 #else
-  ompi_sv_t str_vec;
+    ompi_sv_t compiler;
+    ompi_sv_t fcppflags;
+    ompi_sv_t fcflags;
+    ompi_sv_t ldflags;
+    ompi_sv_t libs;
 
-  str_vec.clear();
-  str_vec.push_back("OMPI_MPIF90");
-  str_vec.push_back("OMPI_F90");
+    compiler.clear();
+    compiler.push_back("OMPI_MPIF90");
 
-  return ompi_wrap_engine(argc, argv,
-			 str_vec, OMPI_F90, false, false,
-			 WRAPPER_EXTRA_FCFLAGS);
+    fcppflags.clear();
+    fcppflags.push_back("OMPI_MPIF90_FCPPFLAGS");
+    fcppflags.push_back("OMPI_FCPPFLAGS");
+
+    fcflags.clear();
+    fcflags.push_back("OMPI_MPIF90_FCFLAGS");
+    fcflags.push_back("OMPI_FCFLAGS");
+
+    ldflags.clear();
+    ldflags.push_back("OMPI_MPIF90_LDFLAGS");
+    ldflags.push_back("OMPI_LDFLAGS");
+
+    libs.clear();
+    libs.push_back("OMPI_MPIF90_LIBS");
+    libs.push_back("OMPI_LIBS");
+
+    return ompi_wrap_engine(argc, argv, compiler, fcflags, fcflags,
+			    ldflags, libs, OMPI_F90, WRAPPER_EXTRA_FCFLAGS,
+			    false, true);
 #endif
 }
