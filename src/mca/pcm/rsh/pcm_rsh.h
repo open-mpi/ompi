@@ -69,10 +69,4 @@ extern "C" {
 }
 #endif
 
-/*
- * component variables
- */
-/* debugging output stream */
-extern int mca_pcm_rsh_output;
-
 #endif /* MCA_PCM_RSH_H_ */

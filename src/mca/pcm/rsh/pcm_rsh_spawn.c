@@ -209,10 +209,10 @@ internal_need_profile(mca_pcm_rsh_module_t *me,
         p = getpwuid(getuid());
         if (NULL == p) return OMPI_ERROR;
             
-        ompi_output_verbose(5, mca_pcm_rsh_output, 
+        ompi_output_verbose(5, mca_pcm_base_output, 
                             "fast boot mode - "
                             "assuming same shell on remote nodes");
-        ompi_output_verbose(5, mca_pcm_rsh_output, 
+        ompi_output_verbose(5, mca_pcm_base_output, 
                             "getpwuid: got local shell %s", p->pw_shell);
         strncpy(shellpath, p->pw_shell, PRS_BUFSIZE - 1);
         shellpath[PRS_BUFSIZE - 1] = '\0';
@@ -231,7 +231,7 @@ internal_need_profile(mca_pcm_rsh_module_t *me,
 
         ompi_argv_append(&cmdc, &cmdv, "echo $SHELL");
         printable = ompi_argv_join(cmdv, ' ');
-        ompi_output_verbose(5, mca_pcm_rsh_output,
+        ompi_output_verbose(5, mca_pcm_base_output,
                             "attempting to execute: %s", printable);
 
         cmd0 = strdup(cmdv[0]);
@@ -257,7 +257,7 @@ internal_need_profile(mca_pcm_rsh_module_t *me,
         if ('\n' == shellpath[strlen(shellpath) - 1]) {
             shellpath[strlen(shellpath) - 1] = '\0';
         }
-        ompi_output_verbose(5, mca_pcm_rsh_output,
+        ompi_output_verbose(5, mca_pcm_base_output,
                             "remote shell %s", shellpath);
 
         if (NULL == strstr(p->pw_shell, "csh") &&
@@ -475,7 +475,7 @@ internal_wait_cb(pid_t pid, int status, void *data)
     int ret;
     char *proc_name;
 
-    ompi_output_verbose(10, mca_pcm_rsh_output, 
+    ompi_output_verbose(10, mca_pcm_base_output, 
                         "process %d exited with status %d", pid, status);
 
     ret = mca_pcm_base_get_job_info(pid, &jobid, &lower, &upper);
