@@ -10,7 +10,6 @@ noinst_LTLIBRARIES = libns.la
 # Source code files
 
 headers = \
-    base\base.h \
     ns.h
 
 libns_la_SOURCES = \
