@@ -33,6 +33,6 @@ int MPI_Comm_group(MPI_Comm comm, MPI_Group *group) {
     } /* end if ( MPI_PARAM_CHECK) */
 
     
-   rc = lam_comm_group ( comm, group );
+   rc = lam_comm_group ( (lam_communicator_t*)comm, (lam_group_t**)group );
    LAM_ERRHANDLER_RETURN ( rc, comm, rc, "MPI_Comm_group");
 }

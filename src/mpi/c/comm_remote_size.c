@@ -30,6 +30,6 @@ int MPI_Comm_remote_size(MPI_Comm comm, int *size) {
                                          "MPI_Comm_remote_size");
     }
 
-    *size = lam_comm_remote_size (comm);
+    *size = lam_comm_remote_size ((lam_communicator_t*)comm);
     return MPI_SUCCESS;
 }

@@ -35,6 +35,7 @@ int MPI_Comm_create(MPI_Comm comm, MPI_Group group, MPI_Comm *newcomm) {
                                          "MPI_Comm_create");
     }
 
-    rc = lam_comm_create ( comm, group, newcomm );
+    rc = lam_comm_create ( (lam_communicator_t*)comm, (lam_group_t*)group, 
+                           (lam_communicator_t**)newcomm );
     LAM_ERRHANDLER_RETURN ( rc, comm, rc, "MPI_Comm_create");
 }

@@ -35,6 +35,7 @@ int MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm) {
                                       "MPI_Comm_split");
     }
     
-    rc = lam_comm_split ( comm, color, key, newcomm );
+    rc = lam_comm_split ( (lam_communicator_t*)comm, color, key, 
+                          (lam_communicator_t**)newcomm );
     LAM_ERRHANDLER_RETURN ( rc, comm, rc, "MPI_Comm_split");
 }

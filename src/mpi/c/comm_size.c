@@ -28,6 +28,6 @@ int MPI_Comm_size(MPI_Comm comm, int *size) {
             return LAM_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, "MPI_Comm_size");
     }
 
-    *size = lam_comm_size(comm);
+    *size = lam_comm_size((lam_communicator_t*)comm);
     return MPI_SUCCESS;
 }

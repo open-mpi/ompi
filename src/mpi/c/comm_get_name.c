@@ -19,6 +19,8 @@
 
 int MPI_Comm_get_name(MPI_Comm comm, char *name, int *length)  {
 
+    lam_communicator_t* comp;
+
     if ( MPI_PARAM_CHECK ) {
         if ( lam_mpi_finalized ) 
             return LAM_ERRHANDLER_INVOKE ( MPI_COMM_WORLD, MPI_ERR_INTERN,
@@ -33,10 +35,11 @@ int MPI_Comm_get_name(MPI_Comm comm, char *name, int *length)  {
                                            "MPI_Comm_get_name");
     }
 
+    comp = (lam_communicator_t*) comm;
 
-    if ( comm->c_flags & LAM_COMM_NAMEISSET ) {
-        strncpy ( name, comm->c_name, MPI_MAX_OBJECT_NAME );
-        *length = strlen ( comm->c_name );
+    if ( comp->c_flags & LAM_COMM_NAMEISSET ) {
+        strncpy ( name, comp->c_name, MPI_MAX_OBJECT_NAME );
+        *length = strlen ( comp->c_name );
     }
     else {
         memset ( name, 0, MPI_MAX_OBJECT_NAME );
