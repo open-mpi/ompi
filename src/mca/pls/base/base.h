@@ -39,8 +39,12 @@ extern "C" {
         int pls_output;
         /** List of opened components */
         ompi_list_t pls_opened;
+        /** Whether the list of opened components is valid */
+        bool pls_opened_valid;
         /** Sorted list of available components (highest priority first) */
         ompi_list_t pls_available;
+        /** Whether the list of available components is valid */
+        bool pls_available_valid;
     } orte_pls_base_t;
     
     /**
