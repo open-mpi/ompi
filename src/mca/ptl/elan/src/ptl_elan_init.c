@@ -82,6 +82,9 @@ static int ompi_mca_ptl_elan_setup (mca_ptl_elan_state_t * ems)
         return OMPI_ERROR;
     }
 
+    /* 
+     * XXX: Leave the following later after testing of QDMA is done
+     */
     if (OMPI_SUCCESS != ompi_init_elan_rdma (emp, rail_count)) {
         return OMPI_ERROR;
     }

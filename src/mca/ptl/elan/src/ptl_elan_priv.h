@@ -50,6 +50,15 @@
             }                                                          \
 	} while (0)
 
+/**
+ * Structure used to publish elan information to peers.
+ */
+struct mca_ptl_elan_addr_t {
+    int elan_vp;   /* Right now only elan_vp is needed */
+    int addr_inuse;
+};
+typedef struct mca_ptl_elan_addr_t mca_ptl_elan_addr_t;
+
 struct ompi_ptl_elan_recv_queue_t
 {
     /* Events needs to be aligned */

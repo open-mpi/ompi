@@ -169,10 +169,10 @@ extern int  mca_ptl_elan_finalize (struct mca_ptl_t *ptl);
  * @return     OMPI_SUCCESS or error status on failure.
  */
 extern int  
-mca_ptl_elan_add_proc (struct mca_ptl_t *ptl,
+mca_ptl_elan_add_procs (struct mca_ptl_t *ptl,
 		       size_t nprocs,
-		       struct ompi_proc_t **ompi_proc,
-		       struct mca_ptl_base_peer_t **peer_ret,
+		       struct ompi_proc_t **procs,
+		       struct mca_ptl_base_peer_t **peers,
 		       ompi_bitmap_t* reachable);
 
 /**
@@ -184,10 +184,10 @@ mca_ptl_elan_add_proc (struct mca_ptl_t *ptl,
  * @return             Status indicating if cleanup was successful
  */
 extern int  
-mca_ptl_elan_del_proc (struct mca_ptl_t *ptl, 
+mca_ptl_elan_del_procs (struct mca_ptl_t *ptl, 
 		       size_t nprocs,
 		       struct ompi_proc_t ** procs, 
-		       struct mca_ptl_base_peer_t **ptl_peer);
+		       struct mca_ptl_base_peer_t **peers);
 
 /**
  * PML->PTL Allocate a send request from the PTL modules free list.

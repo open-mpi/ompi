@@ -91,7 +91,7 @@ mca_ptl_elan_send_frag_progress (mca_ptl_elan_send_frag_t * frag)
 static inline void
 mca_ptl_elan_send_frag_init_ack (mca_ptl_elan_send_frag_t * ack,
                                  struct mca_ptl_t *ptl,
-                                 struct mca_ptl_elan_peer_T *ptl_peer,
+                                 struct mca_ptl_elan_peer_t *ptl_peer,
                                  mca_ptl_elan_recv_frag_t * frag)
 {
     return;
