@@ -263,15 +263,22 @@ int ompi_ddt_init( void )
 {
     int i;
 
-    for( i = 0; i < DT_MAX_PREDEFINED; i++ ) {
+    for( i = DT_CHAR; i < DT_MAX_PREDEFINED; i++ ) {
         ompi_datatype_t* datatype = ompi_ddt_basicDatatypes[i];
 
-        datatype->desc.desc         = (dt_elem_desc_t*)malloc(sizeof(dt_elem_desc_t));
-        datatype->desc.desc->flags  = DT_FLAG_BASIC | DT_FLAG_CONTIGUOUS;
-        datatype->desc.desc->type   = i;
-        datatype->desc.desc->count  = 1;
-        datatype->desc.desc->disp   = 0;
-        datatype->desc.desc->extent = datatype->size;
+        datatype->desc.desc         = (dt_elem_desc_t*)malloc(2*sizeof(dt_elem_desc_t));
+        datatype->desc.desc[0].flags  = DT_FLAG_BASIC | DT_FLAG_CONTIGUOUS | DT_FLAG_DATA;
+        datatype->desc.desc[0].type   = i;
+        datatype->desc.desc[0].count  = 1;
+        datatype->desc.desc[0].disp   = 0;
+        datatype->desc.desc[0].extent = datatype->size;
+
+        datatype->desc.desc[1].flags  = 0;
+        datatype->desc.desc[1].type   = DT_END_LOOP;
+        datatype->desc.desc[1].count  = 1;
+        datatype->desc.desc[1].disp   = datatype->ub - datatype->lb;
+        datatype->desc.desc[1].extent = datatype->size;
+
         datatype->desc.length       = 1;
         datatype->desc.used         = 1;
         datatype->btypes[i]         = 1;
