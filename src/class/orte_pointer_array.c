@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
+#include <string.h>
 
 #include "include/orte_constants.h"
 #include "class/orte_pointer_array.h"
