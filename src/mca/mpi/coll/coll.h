@@ -9,17 +9,17 @@
 
 #include "mpi.h"
 #include "mca/mca.h"
-#include "mca/mpi/mpi.h"
+#include "mca/mpi/base/base.h"
 
 
 /*
  * Coll module function typedefs
  */
 
-typedef int (*mca_coll_base_thread_query_fn_t)(int *thread_min, 
-                                               int *thread_max);
+typedef int (*mca_coll_base_init_query_fn_t)(int *thread_min, 
+                                             int *thread_max);
 typedef const struct mca_coll_1_0_0_t *
-  (*mca_coll_base_query_1_0_0_fn_t)(MPI_Comm comm, int *priority);
+  (*mca_coll_base_comm_query_1_0_0_fn_t)(MPI_Comm comm, int *priority);
 
 
 /*
@@ -111,8 +111,8 @@ struct mca_coll_base_module_1_0_0_t {
 
   /* Initialization / querying functions */
 
-  mca_coll_base_thread_query_fn_t collm_thread_query;
-  mca_coll_base_query_1_0_0_fn_t collm_query;
+  mca_coll_base_init_query_fn_t collm_init_query;
+  mca_coll_base_comm_query_1_0_0_fn_t collm_comm_query;
 };
 typedef struct mca_coll_base_module_1_0_0_t mca_coll_base_module_1_0_0_t;
 
@@ -196,6 +196,7 @@ struct mca_coll_1_0_0_t {
   mca_coll_base_scatterv_fn_t coll_scatterv_inter;
 };
 typedef struct mca_coll_1_0_0_t mca_coll_1_0_0_t;
+typedef mca_coll_1_0_0_t mca_coll_t;
 
 
 /*
@@ -207,7 +208,6 @@ typedef struct mca_coll_1_0_0_t mca_coll_1_0_0_t;
   /* coll v1.0 */ \
   "coll", 1, 0, 0
 
-
 /*
  * This function is technically part of the basic module, but since it
  * ships with LAM, and other modules may use the basic module for
@@ -218,7 +218,7 @@ typedef struct mca_coll_1_0_0_t mca_coll_1_0_0_t;
 extern "C" {
 #endif
   const mca_coll_1_0_0_t *
-    mca_coll_basic_query(MPI_Comm comm, int *priority);
+    mca_coll_basic_comm_query(MPI_Comm comm, int *priority);
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
