@@ -116,10 +116,18 @@ int mca_ptl_gm_peer_send( mca_ptl_gm_peer_t *ptl_peer,
     fragment->send_frag.frag_base.frag_size = size_out - header_length;
     fragment->send_frag.frag_request = sendreq;
 
+    ompi_atomic_sub( &(ptl_peer->peer_ptl->num_send_tokens), 1 );
+    assert( ptl_peer->peer_ptl->num_send_tokens >= 0 );
     /* initiate the gm send */
-    gm_send_with_callback( ptl_peer->peer_ptl->gm_port, fragment->send_buf, 
-                           GM_SIZE, size_out, GM_LOW_PRIORITY, ptl_peer->local_id,
-                           ptl_peer->port_number, send_callback, (void *)fragment );
+    gm_send_to_peer_with_callback( ptl_peer->peer_ptl->gm_port, fragment->send_buf, 
+                                   GM_SIZE, size_out, GM_LOW_PRIORITY, ptl_peer->local_id,
+                                   send_callback, (void *)fragment );
+    ptl_peer->peer_ptl->super.ptl_send_progress( (mca_ptl_base_module_t*)ptl_peer->peer_ptl,
+                                                 fragment->send_frag.frag_request,
+                                                 outvec.iov_len );
+    /*gm_send_with_callback( ptl_peer->peer_ptl->gm_port, fragment->send_buf, 
+      GM_SIZE, size_out, GM_LOW_PRIORITY, ptl_peer->local_id,
+      ptl_peer->port_number, send_callback, (void *)fragment );*/
 
     *size = (size_out - header_length);
     A_PRINT("inside peer send : bytes sent is %d\n",*size);
@@ -216,8 +224,8 @@ void send_callback(struct gm_port *port,void * context, gm_status_t status)
 	} else if (0 == (header->hdr_common.hdr_flags & MCA_PTL_FLAGS_ACK)
 		   || mca_pml_base_send_request_matched(gm_send_req)) {
 	    A_PRINT(" send callback : match not required\n");
-	    ptl->super.ptl_send_progress( (mca_ptl_base_module_t*)ptl, frag->send_frag.frag_request,
-					  header->hdr_match.hdr_msg_length);
+	    /*ptl->super.ptl_send_progress( (mca_ptl_base_module_t*)ptl, frag->send_frag.frag_request,
+              header->hdr_match.hdr_msg_length);*/
 	    
 	    /* Return sendfrag to free list */
 	    A_PRINT("Return frag : %p", frag);
