@@ -21,6 +21,9 @@
 
 #include "mca/gpr/base/base.h"
 
+#if defined(c_plusplus) || defined (__cplusplus) 
+extern "C" {
+#endif
 /*
  * Module open / close
  */
@@ -70,6 +73,8 @@ extern ompi_mutex_t mca_gpr_proxy_wait_for_compound_mutex;
 extern ompi_condition_t mca_gpr_proxy_compound_cmd_condition;
 extern int mca_gpr_proxy_compound_cmd_waiting;
 extern bool mca_gpr_proxy_silent_mode;
+
+OMPI_COMP_EXPORT extern mca_gpr_base_component_t mca_gpr_proxy_component;
 
 /*
  * Compound cmd functions
@@ -202,5 +207,9 @@ mca_gpr_proxy_remove_notify_request(ompi_registry_notify_id_t local_idtag);
 
 int mca_gpr_proxy_set_remote_idtag(ompi_registry_notify_id_t local_idtag,
 				   ompi_registry_notify_id_t remote_idtag);
+
+#if defined(c_plusplus) || defined (__cplusplus) 
+}
+#endif
 
 #endif

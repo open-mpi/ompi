@@ -290,10 +290,10 @@ OBJ_CLASS_DECLARATION(mca_oob_base_info_t);
 /*
  * Global functions for MCA overall collective open and close
  */
-    int mca_oob_base_open(void);
-    int mca_oob_base_init(bool *allow_multi_user_threads, bool *have_hidden_threads);
-    int mca_oob_base_module_init(void);
-    int mca_oob_base_close(void);
+OMPI_DECLSPEC int mca_oob_base_open(void);
+OMPI_DECLSPEC int mca_oob_base_init(bool *allow_multi_user_threads, bool *have_hidden_threads);
+OMPI_DECLSPEC int mca_oob_base_module_init(void);
+OMPI_DECLSPEC int mca_oob_base_close(void);
 
 
 /*

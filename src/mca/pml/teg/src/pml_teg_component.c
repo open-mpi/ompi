@@ -92,6 +92,7 @@ int mca_pml_teg_component_open(void)
         mca_pml_teg_param_register_int("free_list_inc", 256);
     mca_pml_teg.teg_poll_iterations =
         mca_pml_teg_param_register_int("poll_iterations", 100000);
+
     return OMPI_SUCCESS;
 }
 

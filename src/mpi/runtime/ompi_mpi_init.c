@@ -126,10 +126,12 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         goto error;
     }
 
+#ifndef WIN32
     if (OMPI_SUCCESS != (ret = ompi_util_register_stackhandlers ())) {
 	error = "util_register_stackhandlers() failed";
 	goto error;
     }
+#endif
 
     /* initialize ompi procs */
     if (OMPI_SUCCESS != (ret = ompi_proc_init())) {

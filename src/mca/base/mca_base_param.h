@@ -56,6 +56,7 @@
 
 #include "mpi.h"
 
+#include "class/ompi_value_array.h"
 #include "class/ompi_hash_table.h"
 
 /*
@@ -319,6 +320,9 @@ OMPI_DECLSPEC int mca_base_param_set_internal(size_t index, bool internal);
      */
 OMPI_DECLSPEC int mca_base_param_finalize(void);
 
+OMPI_DECLSPEC extern ompi_value_array_t mca_base_params;
+OMPI_DECLSPEC extern ompi_list_t mca_base_param_file_values;
+    
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

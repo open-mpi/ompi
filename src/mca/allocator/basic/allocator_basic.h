@@ -149,6 +149,8 @@ mca_allocator_base_module_t* mca_allocator_basic_component_init(
     int mca_allocator_basic_finalize(
         mca_allocator_base_module_t * mem);
 
+OMPI_COMP_EXPORT extern mca_allocator_base_component_t mca_allocator_basic_component;
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
