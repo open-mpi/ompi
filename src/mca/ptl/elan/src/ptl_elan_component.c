@@ -293,8 +293,8 @@ mca_ptl_elan_component_progress (mca_ptl_tstamp_t tstamp)
 
     /* Iterate over all the PTL input Queues */
     for (i = 0; i < no_ptls; i++) {
-	mca_ptl_elan_drain_recv(elan_mp->modules[i]);
 	mca_ptl_elan_update_desc(elan_mp->modules[i]);
+	mca_ptl_elan_drain_recv(elan_mp->modules[i]);
     }
 
     END_FUNC (PTL_ELAN_DEBUG_NONE);

@@ -49,7 +49,7 @@ main (int argc,
         r_buf[i] = 'b';
     }
 
-    MPI_Barrier (MPI_COMM_WORLD);
+    /*MPI_Barrier (MPI_COMM_WORLD);*/
 
     for (i = 0; i < loop + skip; i++) {
 	if (myid == 0) {
@@ -71,7 +71,7 @@ main (int argc,
 	    MPI_Waitall (win, request, tmp_stat);
 	    MPI_Send (s_buf, 4, MPI_CHAR, 0, 101, MPI_COMM_WORLD);
 	}
-	MPI_Barrier (MPI_COMM_WORLD);
+	/*MPI_Barrier (MPI_COMM_WORLD);*/
     }
 
     if (myid == 0) {

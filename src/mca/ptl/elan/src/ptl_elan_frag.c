@@ -94,7 +94,7 @@ mca_ptl_elan_alloc_desc (struct mca_ptl_base_module_t *ptl_ptr,
 {
 
     ompi_free_list_t *flist;
-    ompi_list_item_t *item;
+    ompi_list_item_t *item = NULL;
     mca_ptl_elan_send_frag_t *desc;
 
     START_FUNC(PTL_ELAN_DEBUG_SEND);
@@ -123,9 +123,7 @@ mca_ptl_elan_alloc_desc (struct mca_ptl_base_module_t *ptl_ptr,
 	}
 	ompi_mutex_unlock(&flist->fl_lock);
     } else {
-
 	item = ompi_list_remove_first (&((flist)->super));
-
 	/* XXX: 
 	 * Ouch..., this still does not trigger the progress on 
 	 * PTL's from other modules.  Wait for PML to change.
@@ -164,11 +162,6 @@ mca_ptl_elan_send_desc_done (
     header = &frag->frag_base.frag_header;
 
     if (frag->desc->desc_type == MCA_PTL_ELAN_DESC_GET) {
-	LOG_PRINT(PTL_ELAN_DEBUG_SEND, 
-		"req %p done frag %p desc_status %d desc_type %d length %d\n", 
-		req, frag, frag->desc->desc_status, 
-		frag->desc->desc_type, frag->frag_base.frag_size);
-
 	if(ompi_atomic_fetch_and_set_int (&frag->frag_progressed, 1) == 0) {
 	    ptl->super.ptl_recv_progress(ptl, 
 		    (mca_pml_base_recv_request_t *) req, 
