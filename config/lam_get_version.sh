@@ -1,13 +1,8 @@
 #!/bin/sh
 #
-# Copyright (c) 2003 The Trustees of Indiana University.  
-#                    All rights reserved.
-# 
-# This file is part of the CMMPI software package.  For license
-# information, see the LICENSE file in the top level directory of the
-# LAM source distribution.
+# $HEADER$
 #
-# $Id: lam_get_version.sh,v 1.1 2003/12/22 16:29:11 twoodall Exp $
+# $Id: lam_get_version.sh,v 1.2 2004/01/07 07:47:13 jsquyres Exp $
 #
 # Since we do this in multiple places, it's worth putting in a
 # separate shell script.  Very primitive script to get the version

@@ -1,16 +1,11 @@
 dnl -*- shell-script -*-
 dnl
-dnl Copyright (c) 2003 The Trustees of Indiana University.  
-dnl                    All rights reserved.
-dnl 
-dnl This file is part of the LAM software package.  For license
-dnl information, see the LICENSE file in the top level directory of the
-dnl LAM source distribution.
+dnl $HEADER$
 dnl
-dnl $Id: lam_get_version.m4,v 1.1 2003/12/22 16:29:11 twoodall Exp $
+dnl $Id: lam_get_version.m4,v 1.2 2004/01/07 07:47:13 jsquyres Exp $
 dnl
 
-define(LAM_GET_VERSION,[
+AC_DEFUN(LAM_GET_VERSION,[
 gv_glv_dir="$1"
 gv_ver_file="$2"
 gv_prefix="$3"
