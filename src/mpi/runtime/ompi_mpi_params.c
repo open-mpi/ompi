@@ -7,6 +7,7 @@
 #include "include/constants.h"
 #include "mpi/runtime/mpiruntime.h"
 #include "mpi/runtime/params.h"
+#include "util/output.h"
 #include "mca/base/mca_base_param.h"
 
 
@@ -30,6 +31,8 @@ int ompi_mpi_register_params(void)
     int show_leaks_param;
     int no_free_param;
     int value;
+
+    /* Whether we want MPI API function parameter checking or not */
     
     param_check_param = 
         mca_base_param_register_int("base", "mpi", "param_check", 
@@ -37,6 +40,17 @@ int ompi_mpi_register_params(void)
                                     (int) ompi_mpi_param_check);
     mca_base_param_lookup_int(param_check_param, &value);
     ompi_mpi_param_check = (bool) value;
+    if (ompi_mpi_param_check) {
+        value = 0;
+        if (MPI_PARAM_CHECK) {
+            value = 1;
+        }
+        if (0 == value) {
+            ompi_output(0, "WARNING: MCA parameter mpi_param_check set to true, but parameter");
+            ompi_output(0, "WARNING: has been compiled out of Open MPI.  mpi_param_check value ignored.");
+            ompi_mpi_param_check = false;
+        }
+    }
     
     /* Whether or not to show MPI handle leaks */
     
@@ -47,7 +61,9 @@ int ompi_mpi_register_params(void)
     mca_base_param_lookup_int(show_leaks_param, &value);
     ompi_debug_show_handle_leaks = (bool) value;
     
-    /* Whether or not to free MPI handles */
+    /* Whether or not to free MPI handles.  Useless without run-time
+       param checking, so implicitly set that to true if we don't want
+       to free the handles. */
     
     no_free_param =
         mca_base_param_register_int("base", "mpi", "no_free_handles", 
@@ -55,6 +71,18 @@ int ompi_mpi_register_params(void)
                                     (int) ompi_debug_no_free_handles);
     mca_base_param_lookup_int(no_free_param, &value);
     ompi_debug_no_free_handles = (bool) value;
+    if (ompi_debug_no_free_handles) {
+        ompi_mpi_param_check = true;
+        value = 0;
+        if (MPI_PARAM_CHECK) {
+            value = 1;
+        }
+        if (0 == value) {
+            ompi_output(0, "WARNING: MCA parameter mpi_no_free_handles set to true, but MPI");
+            ompi_output(0, "WARNING: parameter checking has been compiled out of Open MPI.");
+            ompi_output(0, "WARNING: mpi_no_free_handles is therefore only partially effective!");
+        }
+    }
     
     /* All done */
 
