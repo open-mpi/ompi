@@ -56,8 +56,8 @@ extern int mca_pml_teg_module_close(void);
 
 extern mca_pml_t* mca_pml_teg_module_init(
     int *priority, 
-    int *max_tag, 
-    int *max_cid
+    bool *allow_multi_user_threads,
+    bool *have_hidden_threads
 );
 
 
@@ -85,8 +85,7 @@ extern int mca_pml_teg_del_procs(
 );
 
 extern int mca_pml_teg_add_ptls(
-    struct mca_ptl_t **ptls,
-    size_t nptls
+    lam_list_t *ptls
 );
 
 extern int mca_pml_teg_fini(void);

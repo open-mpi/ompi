@@ -19,6 +19,7 @@ typedef struct opened_module_t {
   mca_pml_t *om_actions;
 } opened_module_t;
 
+
 /**
  * Function for selecting one module from all those that are
  * available.
@@ -26,18 +27,17 @@ typedef struct opened_module_t {
  * Call the init function on all available modules and get their
  * priorities.  Select the module with the highest priority.  All
  * other modules will be closed and unloaded.  The selected module
- * will have its initialization function invoked, and all of its
- * function pointers saved.
+ * will have all of its function pointers saved and returned to the
+ * caller.
  */
 int mca_pml_base_select(mca_pml_t *selected)
 {
   int priority, best_priority;
-  int bogus1, bogus2;
+  bool allow_multi_user_threads, have_hidden_threads;
   lam_list_item_t *item;
   mca_base_module_list_item_t *mli;
   mca_pml_base_module_t *module, *best_module;
   mca_pml_t *actions;
-  extern lam_list_t mca_pml_base_modules_available;
   lam_list_t opened;
   opened_module_t *om;  
 
@@ -61,8 +61,8 @@ int mca_pml_base_select(mca_pml_t *selected)
       lam_output_verbose(10, mca_pml_base_output,
                          "select: no init function; ignoring module");
     } else {
-      /* JMS Need to change this to take bools about threads */
-      actions = module->pmlm_init(&priority, &bogus1, &bogus2);
+      actions = module->pmlm_init(&priority, &allow_multi_user_threads,
+                                  &have_hidden_threads);
       if (NULL == actions) {
         lam_output_verbose(10, mca_pml_base_output,
                            "select: init returned failure");
@@ -103,13 +103,13 @@ int mca_pml_base_select(mca_pml_t *selected)
 
       /* Finalize */
 
-      if (NULL != om->om_actions->pml_fini) {
+      if (NULL != om->om_actions->pml_finalize) {
 
         /* Blatently ignore the return code (what would we do to
            recover, anyway?  This module is going away, so errors
            don't matter anymore) */
 
-        om->om_actions->pml_fini();
+        om->om_actions->pml_finalize();
         lam_output_verbose(10, mca_pml_base_output, 
                            "select: module %s not selected / finalized",
                            module->pmlm_version.mca_module_name);
