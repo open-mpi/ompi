@@ -206,7 +206,7 @@ MPI_Info_get_valuelen           Anju
 MPI_Info_set                    Anju
 MPI_Init                        DONE    DONE
 MPI_Initialized                 Ginger
-MPI_Init_thread                         DONE
+MPI_Init_thread                 DONE    DONE
 MPI_Intercomm_create            Edgar
 MPI_Intercomm_merge             Edgar
 MPI_Iprobe                      DONE    DONE
