@@ -11,6 +11,7 @@ headers = \
 	group.h \
 	lam_constants.h \
 	lam.h \
+	lam_atomic.h \
 	lam_stdint.h \
 	lam_types.h \
 	proc.h \
