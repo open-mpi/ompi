@@ -72,7 +72,6 @@ libmpi_f77_la_SOURCES   = \
 
 libmpi_f77_mpi_la_SOURCES = \
         abort_f.c \
-        accumulate_f.c \
         add_error_class_f.c \
         add_error_code_f.c \
         add_error_string_f.c \
@@ -203,7 +202,6 @@ libmpi_f77_mpi_la_SOURCES = \
         get_address_f.c \
         get_count_f.c \
         get_elements_f.c \
-        get_f.c \
         get_processor_name_f.c \
         get_version_f.c \
         graph_create_f.c \
@@ -260,7 +258,6 @@ libmpi_f77_mpi_la_SOURCES = \
         pcontrol_f.c \
         probe_f.c \
         publish_name_f.c \
-        put_f.c \
         query_thread_f.c \
         recv_f.c \
         recv_init_f.c \
@@ -331,7 +328,13 @@ libmpi_f77_mpi_la_SOURCES = \
         waitall_f.c \
         waitany_f.c \
         wait_f.c \
-        waitsome_f.c \
+        waitsome_f.c
+
+if WANT_MPI2_ONE_SIDED
+libmpi_f77_mpi_la_SOURCES += \
+        accumulate_f.c \
+        get_f.c \
+        put_f.c \
         win_call_errhandler_f.c \
         win_complete_f.c \
         win_create_errhandler_f.c \
@@ -354,6 +357,7 @@ libmpi_f77_mpi_la_SOURCES = \
         win_test_f.c \
         win_unlock_f.c \
         win_wait_f.c
+endif
 
 #
 # Conditionally install the header files

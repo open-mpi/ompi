@@ -40,7 +40,6 @@ headers = defines.h
 
 nodist_libmpi_c_pmpi_la_SOURCES = \
         pabort.c \
-        paccumulate.c \
         padd_error_class.c \
         padd_error_code.c \
         padd_error_string.c \
@@ -177,7 +176,6 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         pget_address.c \
         pget_count.c \
         pget_elements.c \
-        pget.c \
         pget_processor_name.c \
         pget_version.c \
         pgraph_create.c \
@@ -240,7 +238,6 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         ppcontrol.c \
         pprobe.c \
         ppublish_name.c \
-        pput.c \
         pquery_thread.c \
         precv_init.c \
         precv.c \
@@ -317,7 +314,13 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         pwait.c \
         pwaitall.c \
         pwaitany.c \
-        pwaitsome.c \
+        pwaitsome.c
+
+if WANT_MPI2_ONE_SIDED
+nodist_libmpi_c_pmpi_la_SOURCES += \
+        paccumulate.c \
+        pget.c \
+        pput.c \
         pwin_c2f.c \
         pwin_call_errhandler.c \
         pwin_complete.c  \
@@ -342,6 +345,7 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         pwin_test.c \
         pwin_unlock.c \
         pwin_wait.c
+endif
 
 #
 # Sym link in the sources from the real MPI directory

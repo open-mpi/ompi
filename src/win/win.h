@@ -25,6 +25,7 @@ extern "C" {
 #endif
 
 
+#if OMPI_WANT_MPI2_ONE_SIDED
 struct ompi_win_t {
   char w_name[MPI_MAX_OBJECT_NAME];
 
@@ -47,6 +48,7 @@ struct ompi_win_t {
 typedef struct ompi_win_t ompi_win_t;
 
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_win_t);
+#endif
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

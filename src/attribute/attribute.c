@@ -330,9 +330,11 @@ ompi_attr_delete(ompi_attribute_type_t type, void *object,
 		DELETE_ATTR_OBJECT(communicator, attr);
 		break;
 		
+#if OMPI_WANT_MPI2_ONE_SIDED
 	    case WIN_ATTR:
 		DELETE_ATTR_OBJECT(win, attr);
 		break;
+#endif
 		
 	    case TYPE_ATTR:
 		DELETE_ATTR_OBJECT(datatype, attr);
@@ -422,9 +424,11 @@ ompi_attr_set(ompi_attribute_type_t type, void *object,
 	    DELETE_ATTR_OBJECT(communicator, oldattr);
 	    break;
 
+#if OMPI_WANT_MPI2_ONE_SIDED
 	case WIN_ATTR:
 	    DELETE_ATTR_OBJECT(win, oldattr);
 	    break;
+#endif
 
 	case TYPE_ATTR:	    
 	    DELETE_ATTR_OBJECT(datatype, oldattr);
@@ -555,10 +559,12 @@ ompi_attr_copy_all(ompi_attribute_type_t type, void *old_object,
             COPY_ATTR_OBJECT(datatype, old_object, hash_value);
             break;
 
+#if OMPI_WANT_MPI2_ONE_SIDED
         case WIN_ATTR:
             /* Now call the copy_attr_fn */
             COPY_ATTR_OBJECT(win, old_object, hash_value);
             break;
+#endif
         }
 
         /* Hang this off the new CWD object */

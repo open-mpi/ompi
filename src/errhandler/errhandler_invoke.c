@@ -25,7 +25,9 @@ int ompi_errhandler_invoke(ompi_errhandler_t *errhandler, void *mpi_object,
 {
     int fortran_handle;
     ompi_communicator_t *comm;
+#if OMPI_WANT_MPI2_ONE_SIDED
     ompi_win_t *win;
+#endif
     ompi_file_t *file;
     
     /* If we got no errorhandler, then just invoke errors_abort */
@@ -47,6 +49,7 @@ int ompi_errhandler_invoke(ompi_errhandler_t *errhandler, void *mpi_object,
 	  }
 	  break;
 
+#if OMPI_WANT_MPI2_ONE_SIDED
 	case OMPI_ERRHANDLER_TYPE_WIN:
 	    win = (ompi_win_t *) mpi_object;
 	    if (errhandler->eh_fortran_function) {
@@ -56,6 +59,7 @@ int ompi_errhandler_invoke(ompi_errhandler_t *errhandler, void *mpi_object,
 		errhandler->eh_win_fn(&win, &err_code, message, NULL);
 	    }
 	    break;
+#endif
 	    
 	case OMPI_ERRHANDLER_TYPE_FILE:
 	    file = (ompi_file_t *) mpi_object;

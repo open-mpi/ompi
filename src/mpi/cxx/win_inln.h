@@ -19,6 +19,7 @@
 // Miscellany
 //
 
+#if OMPI_WANT_MPI2_ONE_SIDED
 
 inline MPI::Errhandler 
 MPI::Win::Create_errhandler(MPI::Win::Errhandler_fn* function)
@@ -268,3 +269,5 @@ typedef int MPI::Win::Delete_attr_function(&win, int win_keyval,
 typedef void MPI::Win::Errhandler_fn(Win &, int *, ... );
 
 #endif
+
+#endif // OMPI_WANT_MPI2_ONE_SIDED

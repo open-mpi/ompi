@@ -204,7 +204,9 @@ const Op REPLACE(MPI_REPLACE);
 
 // null handles
 const Group        GROUP_NULL = MPI_GROUP_NULL;
+#if OMPI_WANT_MPI2_ONE_SIDED
 const Win          WIN_NULL = MPI_WIN_NULL;
+#endif
 const Info         INFO_NULL = MPI_INFO_NULL;
 //const Comm         COMM_NULL = MPI_COMM_NULL;
 //const MPI_Comm          COMM_NULL = MPI_COMM_NULL;

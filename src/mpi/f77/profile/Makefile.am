@@ -40,7 +40,6 @@ headers = \
 
 nodist_libmpi_f77_pmpi_la_SOURCES = \
         pabort_f.c \
-        paccumulate_f.c \
         padd_error_class_f.c \
         padd_error_code_f.c \
         padd_error_string_f.c \
@@ -171,7 +170,6 @@ nodist_libmpi_f77_pmpi_la_SOURCES = \
         pget_address_f.c \
         pget_count_f.c \
         pget_elements_f.c \
-        pget_f.c \
         pget_processor_name_f.c \
         pget_version_f.c \
         pgraph_create_f.c \
@@ -228,7 +226,6 @@ nodist_libmpi_f77_pmpi_la_SOURCES = \
         ppcontrol_f.c \
         pprobe_f.c \
         ppublish_name_f.c \
-        pput_f.c \
         pquery_thread_f.c \
         precv_f.c \
         precv_init_f.c \
@@ -299,7 +296,13 @@ nodist_libmpi_f77_pmpi_la_SOURCES = \
         pwaitall_f.c \
         pwaitany_f.c \
         pwait_f.c \
-        pwaitsome_f.c \
+        pwaitsome_f.c
+
+if WANT_MPI2_ONE_SIDED
+nodist_libmpi_f77_pmpi_la_SOURCES += \
+        paccumulate_f.c \
+        pget_f.c \
+        pput_f.c \
         pwin_call_errhandler_f.c \
         pwin_complete_f.c \
         pwin_create_errhandler_f.c \
@@ -322,6 +325,7 @@ nodist_libmpi_f77_pmpi_la_SOURCES = \
         pwin_test_f.c \
         pwin_unlock_f.c \
         pwin_wait_f.c
+endif
 
 #
 # Sym link in the sources from the real MPI directory
