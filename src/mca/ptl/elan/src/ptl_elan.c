@@ -380,8 +380,7 @@ mca_ptl_elan_get (struct mca_ptl_base_module_t *ptl,
     return rc;
 }
 
-/*
- *  A posted receive has been matched 
+/* A posted receive has been matched 
  *  + Copy the data into user buffer
  *  + Return an ack if need to 
  */
@@ -476,4 +475,3 @@ mca_ptl_elan_matched (mca_ptl_base_module_t * ptl,
 	mca_ptl_elan_recv_frag_done (header, frag, request);
     }
 }
-

@@ -53,7 +53,8 @@
 #define  PTL_ELAN_DEBUG_CHAIN   (0x800)
 
 #define  PTL_ELAN_DEBUG_FLAG \
-    (PTL_ELAN_DEBUG_FIN | PTL_ELAN_DEBUG_INIT | PTL_ELAN_DEBUG_THREAD)
+    (PTL_ELAN_DEBUG_PUT | PTL_ELAN_DEBUG_GET | PTL_ELAN_DEBUG_MAC | \
+     PTL_ELAN_DEBUG_FIN | PTL_ELAN_DEBUG_INIT | PTL_ELAN_DEBUG_THREAD)
 
 #define START_FUNC(flag)                                       \
 do {                                                           \
