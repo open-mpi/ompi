@@ -104,6 +104,7 @@ int mca_io_base_component_add(mca_io_base_components_t *comp)
         }
         ompi_list_append(&components_in_use, (ompi_list_item_t *) citem);
     }
+
     OMPI_THREAD_UNLOCK(&mutex);
 
     /* All done */
@@ -147,6 +148,8 @@ int mca_io_base_component_del(mca_io_base_components_t *comp)
             break;
         }
     }
+
+    OMPI_THREAD_UNLOCK(&mutex);
 
     /* All done */
 
