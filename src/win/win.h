@@ -29,8 +29,8 @@ struct ompi_win_t {
   /* Error handling.  This field does not have the "w_" prefix so that
      the OMPI_ERRHDL_* macros can find it, regardless of whether it's a
      comm, window, or file. */
-
-  ompi_errhandler_t *error_handler;
+    ompi_errhandler_t                    *error_handler;
+    ompi_errhandler_type_t               errhandler_type;
 };
 
 typedef struct ompi_win_t ompi_win_t;

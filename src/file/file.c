@@ -174,6 +174,7 @@ static void file_constructor(ompi_file_t *file)
     file->f_comm = NULL;
     file->f_filename = NULL;
     file->f_amode = 0;
+    file->errhandler_type = OMPI_ERRHANDLER_TYPE_FILE;
 
     /* Initialize flags */
 

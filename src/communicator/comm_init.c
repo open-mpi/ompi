@@ -244,6 +244,7 @@ static void ompi_comm_construct(ompi_communicator_t* comm)
     comm->c_coll_basic_module       = NULL;
     comm->c_coll_basic_data         = NULL;
 
+    comm->errhandler_type           = OMPI_ERRHANDLER_TYPE_COMM;
     return;
 }
 
