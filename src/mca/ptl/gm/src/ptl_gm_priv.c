@@ -103,10 +103,7 @@ int mca_ptl_gm_peer_send( mca_ptl_gm_peer_t *ptl_peer,
         if((rc = ompi_convertor_pack(convertor, &(iov), &in_size, &max_data, &freeAfter)) < 0)
             return OMPI_ERROR;
     }
-
-    if( (header->hdr_common.hdr_type == MCA_PTL_HDR_TYPE_FRAG) ||
-	(header->hdr_common.hdr_type == MCA_PTL_HDR_TYPE_MATCH) )
-	header->hdr_match.hdr_msg_length = iov.iov_len;
+    header->hdr_match.hdr_msg_length = iov.iov_len;
 
     /* adjust size and request offset to reflect actual number of bytes
      * packed by convertor
@@ -176,7 +173,7 @@ int mca_ptl_gm_peer_send( mca_ptl_gm_peer_t *ptl_peer,
          * is easier to implement.
          */
         gm_status_t status;
-        mca_ptl_gm_rdv_header_t* header;
+        mca_ptl_gm_rdv_header_t* header = (mca_ptl_gm_rdv_header_t*)fragment->send_buf;
 
         status = gm_register_memory( ptl_peer->peer_ptl->gm_port,
                                      sendreq->req_base.req_addr,

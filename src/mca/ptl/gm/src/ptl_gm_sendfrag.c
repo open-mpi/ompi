@@ -75,9 +75,10 @@ mca_ptl_gm_alloc_send_frag( struct mca_ptl_gm_module_t *ptl,
     OMPI_FREE_LIST_WAIT( &(ptl->gm_send_frags), item, rc );
     sendfrag = (mca_ptl_gm_send_frag_t *)item;
     /* And then get some DMA memory to put the data */
+    OMPI_FREE_LIST_WAIT( &(ptl->gm_send_dma_frags), item, rc );
     ompi_atomic_sub( &(ptl->num_send_tokens), 1 );
     assert( ptl->num_send_tokens >= 0 );
-    OMPI_FREE_LIST_WAIT( &(ptl->gm_send_dma_frags), item, rc );
+
     sendfrag->send_buf = (void*)item;
 
     sendfrag->req = (struct mca_pml_base_send_request_t *)sendreq;
