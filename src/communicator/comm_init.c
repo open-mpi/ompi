@@ -14,6 +14,7 @@
 #include "mca/pml/pml.h"
 #include "mca/coll/coll.h"
 #include "mca/coll/base/base.h"
+#include "mca/ns/base/base.h"
 
 
 /*
@@ -51,7 +52,7 @@ int ompi_comm_init(void)
     OBJ_CONSTRUCT(&ompi_mpi_comm_world, ompi_communicator_t);
     group = OBJ_NEW(ompi_group_t);
     group->grp_proc_pointers = ompi_proc_world(&size);
-    group->grp_my_rank       = ompi_proc_local()->proc_name.procid;
+    group->grp_my_rank       = ompi_name_server.get_vpid(&(ompi_proc_local()->proc_name));
     group->grp_proc_count    = size;
     group->grp_flags        |= OMPI_GROUP_INTRINSIC;
     OBJ_RETAIN(group); /* bump reference count for remote reference */

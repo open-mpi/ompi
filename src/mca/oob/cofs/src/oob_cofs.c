@@ -9,9 +9,10 @@
 #include <fcntl.h>
 #include "ompi_config.h"
 
+#include "include/types.h"
 #include "mca/oob/oob.h"
 #include "mca/oob/cofs/src/oob_cofs.h"
-#include "include/types.h"
+#include "mca/ns/base/base.h"
 
 #include <stdio.h>
 #include <sys/types.h>
@@ -45,9 +46,13 @@ int mca_oob_cofs_send(
 
   /* create the file and open it... */
   snprintf(msg_file, OMPI_PATH_MAX, "%s/%d_%d_%d_%ld.msg", mca_oob_cofs_comm_loc,
-           mca_oob_base_self.jobid, mca_oob_base_self.procid, peer->procid, (long)mca_oob_cofs_serial);
+           ompi_name_server.get_jobid(&mca_oob_base_self),
+           ompi_name_server.get_vpid(&mca_oob_base_self),
+           ompi_name_server.get_vpid(peer), (long)mca_oob_cofs_serial);
   snprintf(msg_file_tmp, OMPI_PATH_MAX, "%s/.%d_%d_%d_%ld.msg", mca_oob_cofs_comm_loc,
-           mca_oob_base_self.jobid, mca_oob_base_self.procid, peer->procid, (long)mca_oob_cofs_serial);
+           ompi_name_server.get_jobid(&mca_oob_base_self), 
+           ompi_name_server.get_vpid(&mca_oob_base_self), 
+           ompi_name_server.get_vpid(peer), (long)mca_oob_cofs_serial);
 
   fp = fopen(msg_file_tmp, "w");
   if (fp == NULL) {
@@ -101,7 +106,8 @@ mca_oob_cofs_recv(ompi_process_name_t* peer, const struct iovec* iov, int count,
 {
   int ret = OMPI_ERR_WOULD_BLOCK;
   while (ret == OMPI_ERR_WOULD_BLOCK) {
-    ret = do_recv(peer->jobid, peer->procid, iov, count, flags);
+    ret = do_recv(ompi_name_server.get_jobid(peer),
+                  ompi_name_server.get_vpid(peer), iov, count, flags);
     sleep(1);
   }
   return ret;
@@ -153,7 +159,7 @@ find_match(ompi_process_id_t jobid, ompi_process_id_t procid)
     if (tmp_jobid != jobid) {
       continue;
     }
-    if (tmp_myprocid != mca_oob_base_self.procid) {
+    if (tmp_myprocid != ompi_name_server.get_vpid(&mca_oob_base_self)) {
       continue;
     }
     if (tmp_procid != procid) {

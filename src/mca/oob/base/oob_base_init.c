@@ -51,7 +51,7 @@ int mca_oob_base_init(bool *user_threads, bool *hidden_threads)
     /* setup wildcard name */
     mca_oob_base_any.cellid = -1;
     mca_oob_base_any.jobid = -1;
-    mca_oob_base_any.procid = -1;
+    mca_oob_base_any.vpid = -1;
 
     /* Traverse the list of available modules; call their init functions. */
     for (item = ompi_list_get_first(&mca_oob_base_components);

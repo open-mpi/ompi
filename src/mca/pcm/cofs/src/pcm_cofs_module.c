@@ -125,7 +125,7 @@ mca_pcm_cofs_init(int *priority, bool *allow_multi_user_threads,
     for(i=0; i<mca_pcm_cofs_num_procs; i++) {
         mca_pcm_cofs_procs[i].cellid = cellid;
         mca_pcm_cofs_procs[i].jobid = jobid;
-        mca_pcm_cofs_procs[i].procid = i;
+        mca_pcm_cofs_procs[i].vpid = i;
     }
     return &mca_pcm_cofs_1_0_0;
 }

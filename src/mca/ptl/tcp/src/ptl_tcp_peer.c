@@ -10,8 +10,10 @@
 #include <netinet/tcp.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+
 #include "include/types.h"
 #include "mca/pml/base/pml_base_sendreq.h"
+#include "mca/ns/base/base.h"
 #include "ptl_tcp.h"
 #include "ptl_tcp_addr.h"
 #include "ptl_tcp_peer.h"
@@ -237,6 +239,8 @@ bool mca_ptl_tcp_peer_accept(mca_ptl_base_peer_t* ptl_peer, struct sockaddr_in* 
 {
     mca_ptl_tcp_addr_t* ptl_addr;
     mca_ptl_tcp_proc_t* this_proc = mca_ptl_tcp_proc_local();
+    ompi_ns_cmp_bitmask_t mask = OMPI_NS_CMP_CELLID | OMPI_NS_CMP_JOBID | OMPI_NS_CMP_VPID;
+
     OMPI_THREAD_LOCK(&ptl_peer->peer_recv_lock);
     OMPI_THREAD_LOCK(&ptl_peer->peer_send_lock);
     if((ptl_addr = ptl_peer->peer_addr) != NULL  &&
@@ -244,7 +248,9 @@ bool mca_ptl_tcp_peer_accept(mca_ptl_base_peer_t* ptl_peer, struct sockaddr_in* 
         mca_ptl_tcp_proc_t *peer_proc = ptl_peer->peer_proc;
         if((ptl_peer->peer_sd < 0) ||
            (ptl_peer->peer_state != MCA_PTL_TCP_CONNECTED &&
-            peer_proc->proc_ompi->proc_name.procid < this_proc->proc_ompi->proc_name.procid)) {
+            ompi_name_server.compare(mask,
+                                     &peer_proc->proc_ompi->proc_name,
+                                     &this_proc->proc_ompi->proc_name) < 0)) {
             mca_ptl_tcp_peer_close(ptl_peer);
             ptl_peer->peer_sd = sd;
             if(mca_ptl_tcp_peer_send_connect_ack(ptl_peer) != OMPI_SUCCESS) {
