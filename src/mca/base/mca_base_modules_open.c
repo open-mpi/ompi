@@ -47,21 +47,22 @@ int mca_base_modules_open(const char *type_name, int output_id,
   ompi_list_t modules_found;
   char **requested_module_names;
   int param_verbose = -1;
-  int param_type;
+  int param_type = -1;
+  int verbose_level;
 
-  /* Register MCA parameter */
+  /* Register MCA parameters */
 
-  param_verbose = mca_base_param_register_string(type_name, "base", "verbose", 
-                                                 NULL, NULL);
+  param_verbose = mca_base_param_register_int(type_name, "base", 
+                                              "verbose", NULL, 10);
   param_type = mca_base_param_register_string(type_name, "base", NULL, 
-                                                 NULL, NULL);
+                                              type_name, NULL);
 
   /* Setup verbosity for this MCA type */
 
-#if 0
-  mca_base_set_verbose(param_verbose, &lds,
-                       &mca_pcm_verbose, &mca_pcm_did);
-#endif
+  mca_base_param_lookup_int(param_verbose, &verbose_level);
+  if (output_id != 0) {
+    ompi_output_set_verbosity(output_id, verbose_level);
+  }
   ompi_output_verbose(10, output_id, "open: Looking for modules");
 
   /* Find and load all available modules */
