@@ -48,8 +48,7 @@ int ompi_rte_init(bool *allow_multi_user_threads, bool *have_hidden_threads)
     /* JMS show_help */
     return ret;
   }
-  if (OMPI_SUCCESS != (ret = mca_oob_base_select(&user_threads, 
-                                                &hidden_threads))) {
+  if (OMPI_SUCCESS != (ret = mca_oob_base_init(&user_threads, &hidden_threads))) {
     /* JMS show_help */
     return ret;
   }

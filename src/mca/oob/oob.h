@@ -1,108 +1,362 @@
-/* -*- C -*-
- *
+/*
  * $HEADER$
  */
-/** @file **/
-
-/** 
- *  \brief Out of Band Messaging Interface
+/** @file:
  *
- * OMPI/MPI provides a simple point-to-point tagged messaging system
- * intended for out-of-band communication.  This interface should be
- * used minimally in general OMPI code and should not be used
- * explicitly in the MPI layer.  Not all run-time environments provide
- * a sufficient out-of-band messaging system, so some environments may
- * choose not to implement this interface, at the cost of reduced
- * functionality.
- *
- * This interface can be brought up as soon as the process control
- * interface is initiated.  The process control interface is not
- * strictly required, but it is unclear how one could determine the
- * processes' parallel_job_id and vpid without asking the process
- * control interface.  It should not be a requirement of this
- * interface that MPI exist or be properly initialized for a send to
- * complete.  One can possibly envision using a ptl progression engine
- * for out-of-band messaging, but it must not put any MPI requirements
- * on the interface.
- *
- * The out-of-band messaging interface is actually implemented through
- * the oob mca module - details of a particular implementation
- * will be found there.
+ * the oob framework
  */
 
-#ifndef MCA_OOB_H_
-#define MCA_OOB_H_
-
-#include "ompi_config.h"
-
-#include "include/types.h"
+#ifndef _MCA_OOB_H_
+#define _MCA_OOB_H_
 #include "mca/mca.h"
-
+#include "mca/base/base.h"
+#include "mca/ns/ns.h"
+#include <sys/uio.h>
 /*
- * Global constants / types
+ * Address for wildcard receives.
  */
 
-  /* "Special" tags */
-#define MCA_OOB_ANY_TAG      -1
-#define MCA_OOB_REGISTRY_TAG -2
+extern ompi_process_name_t mca_oob_base_any;
+extern ompi_process_name_t mca_oob_base_self;
 
-  /* "Special" vpids */
-#define MCA_OOB_MPIRUN       -1
-
-typedef void (*mca_oob_base_recv_cb_t)(ompi_job_handle_t job_handle, int tag, 
-                                       int vpid, void* data, size_t data_len, int status);
+#define MCA_OOB_BASE_ANY  &mca_oob_base_any
+#define MCA_OOB_BASE_SELF &mca_oob_base_self
 
 
 /*
- * Functions every module instance will have to provide
+ * OOB API 
  */
-typedef struct mca_oob_1_0_0_t*
-  (*mca_oob_base_init_fn_t)(int *priority, bool *allow_multi_user_threads,
-                            bool *have_hidden_threads);
-typedef int (*mca_oob_base_send_fn_t)(ompi_job_handle_t job_handle, int vpid, int tag, 
-                                      void* data, size_t data_len);
-typedef int (*mca_oob_base_recv_fn_t)(ompi_job_handle_t job_handle,  int vpid, int* tag, 
-                                      void** data, size_t* data_len);
-typedef int (*mca_oob_base_recv_nb_fn_t)(ompi_job_handle_t job_handle, int vpid, int* tag,  
-                                         void** data, size_t* data_len);
-typedef int (*mca_oob_base_recv_cb_fn_t)(ompi_job_handle_t job_handle, int vpid, int tag, 
-                                         mca_oob_base_recv_cb_t callback);
-typedef int (*mca_oob_base_finalize_fn_t)(void);
 
+/**
+ * Supported datatypes for conversion operations.
+ */
+typedef enum {
+    MCA_OOB_BASE_BYTE, /**< a byte of data */
+    MCA_OOB_BASE_INT16, /**< a 16 bit integer */
+    MCA_OOB_BASE_INT32, /**< a 32 bit integer */
+    MCA_OOB_BASE_STRING, /**< a NULL terminated string */
+    MCA_OOB_BASE_PACKED /**< already packed data. */
+} mca_oob_base_type_t;
+
+/**
+*   General flags for send/recv
+* 
+*   An example of usage - to determine the size of the next available message w/out receiving it:
+*
+*   int size = mca_oob_recv(name, 0, 0, MSG_OOB_PEEK|MSG_OOB_TRUNC);
+*/
+
+#define MCA_OOB_PEEK  0x01   /* flag to oob_recv to allow caller to peek a portion of the next available
+                              * message w/out removing the message from the queue.  */
+#define MCA_OOB_TRUNC 0x02   /* flag to oob_recv to return the actual size of the message even if the receive
+                                buffer is smaller than the number of bytes available */
+
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
+        
+/**
+*  Similiar to unix send(2).
+*
+* @param peer (IN)   Opaque name of peer process.
+* @param msg (IN)    Array of iovecs describing user buffers and lengths.
+* @param count (IN)  Number of elements in iovec array.
+* @param flags (IN)  Currently unused.
+* @return            OMPI error code (<0) on error number of bytes actually sent.
+*/
+
+int mca_oob_send(
+    const ompi_process_name_t* peer, 
+    const struct iovec *msg, 
+    int count, 
+    int flags);
+
+/**
+* Convert data (if required) to network byte order prior to sending to peer.
+*
+* @param peer (IN)   Opaque name of peer process.
+* @param msg (IN)    Array of iovecs describing user buffers and lengths.
+* @param types (IN)  Parallel array to iovecs describing data type of each iovec element.
+* @param count (IN)  Number of elements in iovec array.
+* @param flags (IN)  Currently unused.
+* @return            OMPI error code (<0) on error number of bytes actually sent.
+*/
+
+int mca_oob_send_hton(
+    const ompi_process_name_t* peer, 
+    const struct iovec *msg, 
+    const mca_oob_base_type_t *types, 
+    int count, 
+    int flags);
+
+
+/**
+* Similiar to unix recv(2)
+*
+* @param peer (IN)    Opaque name of peer process or OOB_NAME_ANY for wildcard receive.
+* @param msg (IN)     Array of iovecs describing user buffers and lengths.
+* @param count (IN)   Number of elements in iovec array.
+* @param flags (IN)   May be OOB_PEEK to return up to the number of bytes provided in the
+*                     iovec array without removing the message from the queue.
+* @return             OMPI error code (<0) on error or number of bytes actually received.
+*/
+
+int mca_oob_recv(ompi_process_name_t* peer, const struct iovec *msg, int count, int flags);
+
+/**
+* Receive data and convert (if required) to host byte order.
+*
+* @param peer (IN)    Opaque name of peer process or OOB_NAME_ANY for wildcard receive.
+* @param msg (IN)     Array of iovecs describing user buffers and lengths.
+* @param types (IN)   Parallel array to iovecs describing data type of each iovec element.
+* @param count (IN)   Number of elements in iovec array.
+* @param flags (IN)   May be OOB_PEEK to return up to the number of bytes provided in the
+*                     iovec array without removing the message from the queue.
+* @return             OMPI error code (<0) on error or number of bytes actually received.
+*/
+
+int mca_oob_recv_ntoh(
+   ompi_process_name_t* peer, 
+   const struct iovec *msg, 
+   const mca_oob_base_type_t *types, 
+   int count, 
+   int flags);
 
 /*
- * Ver 1.0.0
+ * Non-blocking versions of send/recv.
+*/
+
+
+/**
+*  Callback function on send/recv completion.
+*
+*  @param status (IN)  Completion status - equivalent to the return value from blocking send/recv.
+*  @param peer (IN)    Opaque name of peer process.
+*  @param msg (IN)     Array of iovecs describing user buffers and lengths.
+*  @param count (IN)   Number of elements in iovec array.
+*  @param cbdata (IN)  User data.
+*/
+
+typedef void (*mca_oob_callback_fn_t)(
+    int status,
+    const ompi_process_name_t* peer, 
+    const struct iovec* msg, 
+    size_t count,
+    void* cbdata);
+
+/**
+*  Non-blocking version of mca_oob_send().
+*
+*  @param peer (IN)    Opaque name of peer process.
+*  @param msg (IN)     Array of iovecs describing user buffers and lengths.
+*  @param count (IN)   Number of elements in iovec array.
+*  @param flags (IN)   Currently unused.
+*  @param cbfunc (IN)  Callback function on send completion.
+*  @param cbdata (IN)  User data that is passed to callback function.
+*  @return             OMPI error code (<0) on error number of bytes actually sent.
+*
+*/
+
+int mca_oob_send_nb(
+    const ompi_process_name_t* peer, 
+    const struct iovec* msg, 
+    int count, 
+    int flags, 
+    mca_oob_callback_fn_t cbfunc,
+    void* cbdata);
+
+/**
+*  Non-blocking version of mca_oob_send_hton().
+*
+*  @param peer (IN)    Opaque name of peer process.
+*  @param msg (IN)     Array of iovecs describing user buffers and lengths.
+*  @param types (IN)   Parallel array to iovecs describing data type of each iovec element.
+*  @param count (IN)   Number of elements in iovec array.
+*  @param flags (IN)   Currently unused.
+*  @param cbfunc (IN)  Callback function on send completion.
+*  @param cbdata (IN)  User data that is passed to callback function.
+*  @return             OMPI error code (<0) on error number of bytes actually sent.
+*
+*/
+
+int mca_oob_send_hton_nb(
+    const ompi_process_name_t* peer, 
+    const struct iovec* msg, 
+    const mca_oob_base_type_t* types,
+    int count, 
+    int flags, 
+    mca_oob_callback_fn_t cbfunc,
+    void* cbdata);
+
+/**
+* Non-blocking version of mca_oob_recv().
+*
+* @param peer (IN)    Opaque name of peer process or OOB_NAME_ANY for wildcard receive.
+* @param msg (IN)     Array of iovecs describing user buffers and lengths.
+* @param count (IN)   Number of elements in iovec array.
+* @param flags (IN)   May be OOB_PEEK to return up to size bytes of msg w/out removing it from the queue,
+* @param cbfunc (IN)  Callback function on recv completion.
+* @param cbdata (IN)  User data that is passed to callback function.
+* @return             OMPI error code (<0) on error or number of bytes actually received.
+*/
+
+int mca_oob_recv_nb(
+    ompi_process_name_t* peer, 
+    const struct iovec* msg,  
+    int count, 
+    int flags, 
+    mca_oob_callback_fn_t cbfunc,
+    void* cbdata);
+
+/**
+* Non-blocking version of mca_oob_recv_ntoh().
+*
+* @param peer (IN/OUT) Opaque name of peer process or OOB_NAME_ANY for wildcard receive.
+* @param msg (IN)      Array of iovecs describing user buffers and lengths.
+* @param types (IN)    Parallel array to iovecs describing data type of each iovec element.
+* @param count (IN)    Number of elements in iovec array.
+* @param flags (IN)    May be OOB_PEEK to return up to size bytes of msg w/out removing it from the queue,
+* @param cbfunc (IN)   Callback function on recv completion.
+* @param cbdata (IN)   User data that is passed to callback function.
+* @return              OMPI error code (<0) on error or number of bytes actually received.
+*/
+
+int mca_oob_recv_ntoh_nb(
+    ompi_process_name_t* peer, 
+    const struct iovec* msg,  
+    const mca_oob_base_type_t* types,
+    int count, 
+    int flags, 
+    mca_oob_callback_fn_t cbfunc,
+    void* cbdata);
+
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
+/*
+ * OOB Component/Module function prototypes.
  */
-struct mca_oob_base_module_1_0_0_t {
-  mca_base_module_t oobm_version;
-  mca_base_module_data_1_0_0_t oobm_data;
 
-  mca_oob_base_init_fn_t oobm_init;
-  mca_oob_base_finalize_fn_t oobm_finalize;
-};
-typedef struct mca_oob_base_module_1_0_0_t mca_oob_base_module_1_0_0_t;
+/**
+*  Implementation of mca_oob_send().
+*
+*  @param peer (IN)   Opaque name of peer process.
+*  @param msg (IN)    Array of iovecs describing user buffers and lengths.
+*  @param count (IN)  Number of elements in iovec array.
+*  @param flags (IN)  Currently unused.
+*  @return            OMPI error code (<0) on error number of bytes actually sent.
+*/
 
+typedef int (*mca_oob_base_send_fn_t)(
+    const ompi_process_name_t* peer, 
+    const struct iovec *msg, 
+    int count, 
+    int flags);
+
+
+/**
+*  Implementation of mca_oob_recv().
+*
+*  @param peer (IN)    Opaque name of peer process or OOB_NAME_ANY for wildcard receive.
+*  @param msg (IN)     Array of iovecs describing user buffers and lengths.
+*  @param types (IN)   Parallel array to iovecs describing data type of each iovec element.
+*  @param count (IN)   Number of elements in iovec array.
+*  @param flags (IN)   May be OOB_PEEK to return up to the number of bytes provided in the
+*                      iovec array without removing the message from the queue.
+*  @return             OMPI error code (<0) on error or number of bytes actually received.
+*/
+
+typedef int (*mca_oob_base_recv_fn_t)(
+    ompi_process_name_t* peer, 
+    const struct iovec *msg, 
+    int count, 
+    int flags);
+
+/**
+*  Implementation of mca_oob_send_nb().
+*
+*  @param peer (IN)    Opaque name of peer process.
+*  @param msg (IN)     Array of iovecs describing user buffers and lengths.
+*  @param count (IN)   Number of elements in iovec array.
+*  @param flags (IN)   Currently unused.
+*  @param cbfunc (IN)  Callback function on send completion.
+*  @param cbdata (IN)  User data that is passed to callback function.
+*  @return             OMPI error code (<0) on error number of bytes actually sent.
+*
+*/
+
+typedef int (*mca_oob_base_send_nb_fn_t)(
+    const ompi_process_name_t* peer, 
+    const struct iovec* msg, 
+    int count, 
+    int flags, 
+    mca_oob_callback_fn_t cbfunc,
+    void* cbdata);
+
+/**
+* Implementation of mca_oob_recv_nb().
+*
+* @param peer (IN)    Opaque name of peer process or OOB_NAME_ANY for wildcard receive.
+* @param msg (IN)     Array of iovecs describing user buffers and lengths.
+* @param count (IN)   Number of elements in iovec array.
+* @param flags (IN)   May be OOB_PEEK to return up to size bytes of msg w/out removing it from the queue,
+* @param cbfunc (IN)  Callback function on recv completion.
+* @param cbdata (IN)  User data that is passed to callback function.
+* @return             OMPI error code (<0) on error or number of bytes actually received.
+*/
+
+typedef int (*mca_oob_base_recv_nb_fn_t)(
+    ompi_process_name_t* peer, 
+    const struct iovec* msg,  
+    int count, 
+    int flags, 
+    mca_oob_callback_fn_t cbfunc,
+    void* cbdata);
+
+/*
+ * OOB Module
+ */
+                                                                                                         
 struct mca_oob_1_0_0_t {
-  mca_oob_base_send_fn_t oob_send;
-  mca_oob_base_recv_fn_t oob_recv;
-  mca_oob_base_recv_nb_fn_t oob_recv_nb;
-  mca_oob_base_recv_cb_fn_t oob_recv_cb;
+    mca_oob_base_send_fn_t     oob_send; 
+    mca_oob_base_recv_fn_t     oob_recv;
+    mca_oob_base_send_nb_fn_t  oob_send_nb;
+    mca_oob_base_recv_nb_fn_t  oob_recv_nb;
 };
 typedef struct mca_oob_1_0_0_t mca_oob_1_0_0_t;
+typedef struct mca_oob_1_0_0_t mca_oob_t;
 
-typedef mca_oob_base_module_1_0_0_t mca_oob_base_module_t;
-typedef mca_oob_1_0_0_t mca_oob_t;
+/**
+ * OOB Component
+ */
+
+typedef mca_oob_t* (*mca_oob_base_init_fn_t)(
+    bool *allow_multi_user_threads,
+    bool *have_hidden_threads);
+                                                                                                         
+typedef int (*mca_oob_base_finalize_fn_t)(void);
+                                                                                                         
+/**
+ * the standard component data structure
+ */
+struct mca_oob_base_component_1_0_0_t {
+   mca_base_module_t oob_version;
+   mca_base_module_data_1_0_0_t oob_data;
+   mca_oob_base_init_fn_t oob_init;
+   mca_oob_base_finalize_fn_t oob_finalize;
+};
+typedef struct mca_oob_base_component_1_0_0_t mca_oob_base_component_1_0_0_t;
+typedef mca_oob_base_component_1_0_0_t mca_oob_base_component_t;
+
 
 /*
- * Macro for use in modules that are of type coll v1.0.0
+ * Macro for use in components that are of type oob v1.0.0
  */
 #define MCA_OOB_BASE_VERSION_1_0_0 \
-  /* oob v1.0 is chained to MCA v1.0 */ \
+  /* pml v1.0 is chained to MCA v1.0 */ \
   MCA_BASE_VERSION_1_0_0, \
-  /* oob v1.0 */ \
+  /* pml v1.0 */ \
   "oob", 1, 0, 0
 
-extern mca_oob_t mca_oob;
-
-
 #endif
+

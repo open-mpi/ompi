@@ -3,6 +3,7 @@
 #include "util/output.h"
 #include "proc/proc.h"
 #include "mca/pcm/pcm.h"
+#include "mca/oob/oob.h"
 
 
 static ompi_list_t  ompi_proc_list;
@@ -28,8 +29,6 @@ void ompi_proc_construct(ompi_proc_t* proc)
         OBJ_CONSTRUCT(&ompi_proc_lock, ompi_mutex_t);
     }
 
-    proc->proc_job = NULL;
-    proc->proc_vpid = 0;
     proc->proc_pml = NULL;
     proc->proc_modex = NULL;
     proc->proc_arch = 0;
@@ -55,37 +54,27 @@ void ompi_proc_destruct(ompi_proc_t* proc)
 
 int ompi_proc_init(void)
 {
-    mca_pcm_proc_t *procs;
-    mca_pcm_proc_t *local;
-    size_t i, nprocs;
+    ompi_process_name_t *peers;
+    ompi_process_name_t *self;
+    size_t i, npeers;
     int rc;
 
-    if(OMPI_SUCCESS != (rc = mca_pcm.pcm_proc_startup())) {
-        ompi_output(0, "ompi_proc_init: pcm_proc_startup failed with errno=%d", rc);
+    if(OMPI_SUCCESS != (rc = mca_pcm.pcm_peers(&peers, &npeers))) {
+        ompi_output(0, "ompi_proc_init: mca_pcm.pcm_peers failed with errno=%d", rc);
+        return rc;
+    }
+    if(NULL == (self = mca_pcm.pcm_self())) {
+        ompi_output(0, "ompi_proc_init: mca_pcm.pcm_self failed with errno=%d", rc);
         return rc;
     }
 
-    if(NULL == (local = mca_pcm.pcm_proc_get_me())) {
-        ompi_output(0, "ompi_proc_init: unable to determine local proc id");
-        return OMPI_ERROR;
-    }
-
-    if(OMPI_SUCCESS != (rc = mca_pcm.pcm_proc_get_peers(&procs, &nprocs))) {
-        ompi_output(0, "ompi_proc_init: pcm_proc_get_peers failed with errno=%d", rc);
-        return rc;
-    }
-
-    for(i=0; i<nprocs; i++) {
-        ompi_job_handle_t job = procs[i].job_handle;
-        uint32_t vpid = procs[i].vpid;
+    for(i=0; i<npeers; i++) {
         ompi_proc_t *proc = OBJ_NEW(ompi_proc_t);
-        proc->proc_job = strdup(job);
-        proc->proc_vpid = vpid;
-        if(proc->proc_vpid == local->vpid && strcmp(proc->proc_job, local->job_handle) == 0) {
+        proc->proc_name = peers[i];
+        if( peers + i == self ) {
             ompi_proc_local_proc = proc;
         }
     }
-    free(procs);
     return OMPI_SUCCESS;
 }
 
@@ -94,13 +83,9 @@ ompi_proc_t** ompi_proc_world(size_t *size)
 {
     ompi_proc_t **procs = malloc(ompi_list_get_size(&ompi_proc_list) * sizeof(ompi_proc_t*));
     ompi_proc_t *proc;
-    ompi_job_handle_t job;
     size_t count = 0;
 
     if(NULL == procs)
-        return NULL;
-
-    if(NULL == (job = mca_pcm.pcm_handle_get()))
         return NULL;
 
     /* return only the procs that match this jobid */
@@ -108,10 +93,8 @@ ompi_proc_t** ompi_proc_world(size_t *size)
     for(proc =  (ompi_proc_t*)ompi_list_get_first(&ompi_proc_list); 
         proc != (ompi_proc_t*)ompi_list_get_end(&ompi_proc_list);
         proc =  (ompi_proc_t*)ompi_list_get_next(proc)) {
-        if(strcmp(proc->proc_job,job) == 0) { 
-            OBJ_RETAIN(proc);
-            procs[count++] = proc;
-        }
+        /* TSW - FIX */
+        procs[count++] = proc;
     }
     OMPI_THREAD_UNLOCK(&ompi_proc_lock);
     *size = count;
@@ -152,7 +135,7 @@ ompi_proc_t** ompi_proc_self(size_t* size)
     return procs;
 }
 
-ompi_proc_t * ompi_proc_find ( ompi_job_handle_t jobid, uint32_t vpid )
+ompi_proc_t * ompi_proc_find ( const ompi_process_name_t * name )
 {
     ompi_proc_t *proc;
 
@@ -161,8 +144,9 @@ ompi_proc_t * ompi_proc_find ( ompi_job_handle_t jobid, uint32_t vpid )
     for(proc =  (ompi_proc_t*)ompi_list_get_first(&ompi_proc_list); 
         proc != (ompi_proc_t*)ompi_list_get_end(&ompi_proc_list);
         proc =  (ompi_proc_t*)ompi_list_get_next(proc)) {
-        if( (strcmp(proc->proc_job,jobid) == 0) &&
-            (proc->proc_vpid == vpid ) )
+        if( proc->proc_name.cellid == name->cellid &&
+            proc->proc_name.jobid == name->jobid &&
+            proc->proc_name.procid == name->procid )
             { 
                 break;
             }
@@ -170,3 +154,4 @@ ompi_proc_t * ompi_proc_find ( ompi_job_handle_t jobid, uint32_t vpid )
     OMPI_THREAD_UNLOCK(&ompi_proc_lock);
     return proc;
 }
+

@@ -11,6 +11,9 @@
  *
  */
 
+#ifndef MCA_NS_H
+#define MCA_NS_H
+
 /*
  * includes
  */
@@ -26,8 +29,6 @@
 typedef uint32_t ompi_process_id_t;  /**< Set the allowed range for id's in each space */
 
 struct ompi_process_name_t {
-    bool daemon; /**< Boolean indicating if process is a daemon (true) or application process (false) */
-    char *name;  /**< String representation of the process name, expressed in %x.%x.%x format */
     ompi_process_id_t cellid;  /**< Cell number */
     ompi_process_id_t jobid; /**< Job number */
     ompi_process_id_t procid;  /**< Process number */
@@ -127,4 +128,6 @@ ompi_process_id_t ompi_get_jobid(ompi_process_name_t *name);
 char *ompi_get_cellid_string(ompi_process_name_t *name);
 
 ompi_process_id_t ompi_get_cellid(ompi_process_name_t *name);
+
+#endif
 

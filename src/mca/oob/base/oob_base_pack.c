@@ -21,7 +21,7 @@
  * @retval OMPI_SUCCESS
  * @retval OMPI_ERROR
  */
-int mca_oob_base_pack(void * dest, void * src, size_t n, mca_oob_base_types_t type)
+int mca_oob_base_pack(void * dest, void * src, size_t n, mca_oob_base_type_t type)
 {
     int i;
     uint16_t * d16 = (uint16_t *) dest;
@@ -32,7 +32,6 @@ int mca_oob_base_pack(void * dest, void * src, size_t n, mca_oob_base_types_t ty
     switch(type) {
         case MCA_OOB_BASE_BYTE:
         case MCA_OOB_BASE_PACKED:
-        case MCA_OOB_BASE_BYTE_BY_REF:
             memcpy(dest, src, n);
             break;
         case MCA_OOB_BASE_INT16:
@@ -47,13 +46,17 @@ int mca_oob_base_pack(void * dest, void * src, size_t n, mca_oob_base_types_t ty
                 d32[i] = htonl(s32[i]);
             }
             break;
+        case MCA_OOB_BASE_STRING:
+            strncpy(dest, src, n);
+            *((char *) dest + n - 1) = '\0';
+            break;
         default:
             return OMPI_ERROR;
     }
     return OMPI_SUCCESS;
 }
 
-/**
+/*
  * This function unpacks the passed data according to the type enum.
  *
  * @param dest the destination for the unpacked data
@@ -64,7 +67,7 @@ int mca_oob_base_pack(void * dest, void * src, size_t n, mca_oob_base_types_t ty
  * @retval OMPI_SUCCESS
  * @retval OMPI_ERROR
  */
-int mca_oob_base_unpack(void * dest, void * src, size_t n, mca_oob_base_types_t type)
+int mca_oob_base_unpack(void * dest, void * src, size_t n, mca_oob_base_type_t type)
 {
     int i;
     uint16_t * d16 = (uint16_t *) dest;
@@ -75,7 +78,6 @@ int mca_oob_base_unpack(void * dest, void * src, size_t n, mca_oob_base_types_t 
     switch(type) {
         case MCA_OOB_BASE_BYTE:
         case MCA_OOB_BASE_PACKED:
-        case MCA_OOB_BASE_BYTE_BY_REF:
             memcpy(dest, src, n);
             break;
         case MCA_OOB_BASE_INT16:
@@ -90,47 +92,13 @@ int mca_oob_base_unpack(void * dest, void * src, size_t n, mca_oob_base_types_t 
                 d32[i] = ntohl(s32[i]);
             }
             break;
+        case MCA_OOB_BASE_STRING:
+            strncpy(dest, src, n);
+            *((char *) dest + n - 1) = '\0';
+            break;
         default:
             return OMPI_ERROR;
     }
-    return OMPI_SUCCESS;
-}
-
-/*
- * This function packs null terminated strings
- *
- * @param dest the destination for the packed information
- * @param src the source of the information
- * @param maxlen the maximum length available in dest. the string will
- *               be truncated and a NULL added if it is longer then maxlen.
- *
- * @retval OMPI_SUCCESS
- */
-int mca_oob_base_pack_string(void * dest, void * src, size_t maxlen)
-{
-    strncpy(dest, src, maxlen);
-    /* add a null terminator at the end of dest since strncpy doesn't do it for us
-     * if the src is longer than then dest  */
-    *((char *) dest + maxlen - 1) = '\0';
-    return OMPI_SUCCESS;
-}
-
-/*
- * This function unpacks strings
- *
- * @param dest the destination for the packed information
- * @param src the source of the information
- * @param maxlen the maximum length available in dest. the string will
- *               be truncated and a NULL added if it is longer then maxlen.
- *
- * @retval OMPI_SUCCESS
- */
-int mca_oob_base_unpack_string(void * dest, void * src, size_t maxlen)
-{
-    strncpy(dest, src, maxlen);
-    /* add a null terminator at the end of dest since strncpy doesn't do it for us
-     * if the src is longer than then dest  */
-    *((char *) dest + maxlen - 1) = '\0';
     return OMPI_SUCCESS;
 }
 

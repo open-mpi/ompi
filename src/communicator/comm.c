@@ -608,9 +608,10 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
                                    int tag,
                                    int rsize)
 {
+    ompi_proc_t **rprocs = NULL;
+#if 0 /* TSW - fix this */
     int local_rank, local_size;
-    ompi_proc_t **rprocs;
-    ompi_job_handle_t job;
+    ompi_process_id_t jobid;
     uint32_t *rvpids=NULL, *vpids=NULL;
     int rc, i;
     
@@ -629,7 +630,7 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
         MPI_Status status;
         /* generate vpid list */
         for ( i = 0; i < local_size; i++ ){
-            vpids[i] = (uint32_t) local_comm->c_local_group->grp_proc_pointers[i]->proc_vpid;
+            vpids[i] = (uint32_t) local_comm->c_local_group->grp_proc_pointers[i]->proc_name;
         }
         
         
@@ -656,11 +657,6 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
         goto err_exit;
     }
     
-    /* determine according proc-list */
-    if(NULL == (job = mca_pcm.pcm_handle_get())) {
-        return NULL;
-    }
-
     for ( i = 0; i < rsize; i++ ) {
         rprocs[i] = ompi_proc_find ( job, rvpids[i] );
     }
@@ -674,6 +670,7 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
     }
     /* rprocs has to be freed in the level above (i.e. intercomm_create ) */
 
+#endif
 return rprocs;
 }
 /**********************************************************************/
@@ -692,7 +689,7 @@ int ompi_comm_determine_first ( ompi_communicator_t *intercomm, int high )
     /*
      * determine maximal high value over the intercomm
      */
-    if ( lvpid->proc_vpid > rvpid->proc_vpid ) {
+    if ( lvpid->proc_name.procid > rvpid->proc_name.procid ) {
         if ( 0 == local_rank  ) {
             rc = intercomm->c_coll.coll_bcast(&high, 1, MPI_INT, MPI_ROOT,
                                               intercomm );

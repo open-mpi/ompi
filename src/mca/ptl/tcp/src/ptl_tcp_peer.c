@@ -217,10 +217,8 @@ static int mca_ptl_tcp_peer_send_connect_ack(mca_ptl_base_peer_t* ptl_peer)
 {
     /* send process identifier to remote peer */
     mca_ptl_tcp_proc_t* ptl_proc = mca_ptl_tcp_proc_local();
-    uint32_t size_n = htonl(ptl_proc->proc_guid_size);
-    if(mca_ptl_tcp_peer_send_blocking(ptl_peer, &size_n, sizeof(size_n)) != sizeof(size_n) ||
-       mca_ptl_tcp_peer_send_blocking(ptl_peer, ptl_proc->proc_guid, ptl_proc->proc_guid_size) != 
-          ptl_proc->proc_guid_size) {
+    if(mca_ptl_tcp_peer_send_blocking(ptl_peer, &ptl_proc->proc_guid, sizeof(ptl_proc->proc_guid)) != 
+          sizeof(ptl_proc->proc_guid)) {
         return OMPI_ERR_UNREACH;
     }
     return OMPI_SUCCESS;
@@ -246,7 +244,7 @@ bool mca_ptl_tcp_peer_accept(mca_ptl_base_peer_t* ptl_peer, struct sockaddr_in* 
         mca_ptl_tcp_proc_t *peer_proc = ptl_peer->peer_proc;
         if((ptl_peer->peer_sd < 0) ||
            (ptl_peer->peer_state != MCA_PTL_TCP_CONNECTED &&
-            peer_proc->proc_ompi->proc_vpid < this_proc->proc_ompi->proc_vpid)) {
+            peer_proc->proc_ompi->proc_name.procid < this_proc->proc_ompi->proc_name.procid)) {
             mca_ptl_tcp_peer_close(ptl_peer);
             ptl_peer->peer_sd = sd;
             if(mca_ptl_tcp_peer_send_connect_ack(ptl_peer) != OMPI_SUCCESS) {
@@ -352,27 +350,15 @@ static int mca_ptl_tcp_peer_recv_blocking(mca_ptl_base_peer_t* ptl_peer, void* d
 
 static int mca_ptl_tcp_peer_recv_connect_ack(mca_ptl_base_peer_t* ptl_peer)
 {
-    uint32_t size_n, size_h;
-    void* guid;
-    int rc;
+    ompi_process_name_t guid;
     mca_ptl_tcp_proc_t* ptl_proc = ptl_peer->peer_proc;
 
-    if((rc = mca_ptl_tcp_peer_recv_blocking(ptl_peer, &size_n, sizeof(size_n))) != sizeof(size_n)) 
-        return OMPI_ERR_UNREACH;
-    size_h = ntohl(size_n);
-    guid = malloc(size_h);
-    if(NULL == guid) {
-        ompi_output(0, "mca_ptl_tcp_peer_recv_connect_ack: malloc(%d) failed\n", size_h);
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-
-    if((rc = mca_ptl_tcp_peer_recv_blocking(ptl_peer, guid, size_h)) != size_h) {
-        free(guid);
+    if((mca_ptl_tcp_peer_recv_blocking(ptl_peer, &guid, sizeof(ompi_process_name_t))) != sizeof(ompi_process_name_t)) {
         return OMPI_ERR_UNREACH;
     }
 
     /* compare this to the expected values */
-    if(size_h != ptl_proc->proc_guid_size || memcmp(ptl_proc->proc_guid, guid, size_h) != 0) {
+    if(memcmp(&ptl_proc->proc_guid, &guid, sizeof(ompi_process_name_t)) != 0) {
         ompi_output(0, "mca_ptl_tcp_peer_connect: received unexpected process identifier");
         mca_ptl_tcp_peer_close(ptl_peer);
         return OMPI_ERR_UNREACH;

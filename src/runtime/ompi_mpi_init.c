@@ -7,6 +7,7 @@
 #include "include/constants.h"
 #include "runtime/runtime.h"
 #include "util/sys_info.h"
+#include "util/proc_info.h"
 #include "mpi.h"
 #include "runtime/runtime.h"
 #include "communicator/communicator.h"
@@ -62,6 +63,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
        ompi_system_info structure */
 
     ompi_sys_info();
+    ompi_proc_info();
 
     /* Become a OMPI process */
 

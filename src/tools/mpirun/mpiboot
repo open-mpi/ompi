@@ -17,9 +17,10 @@
 # Some basic defaults
 #
 ######################################################################
-ompi_myvpid=""
+ompi_cellid=""
+ompi_jobid=""
+ompi_procid=""
 ompi_numprocs=""
-ompi_jobhandle=""
 ompi_commdir=""
 
 ######################################################################
@@ -34,9 +35,14 @@ for i ; do
         -test)
             exit 0
             ;;
-        -myvpid)
+        -cellid)
             shift
-            ompi_myvpid="${1}"
+            ompi_cellid="${1}"
+            shift
+            ;;
+        -procid)
+            shift
+            ompi_procid="${1}"
             shift
             ;;
         -numprocs)
@@ -44,9 +50,9 @@ for i ; do
             ompi_numprocs="${1}"
             shift
             ;;
-        -jobhandle)
+        -jobid)
             shift
-            ompi_jobhandle="${1}"
+            ompi_jobid="${1}"
             shift
             ;;
         -commdir)
@@ -88,9 +94,10 @@ fi
 # Set the environment
 #
 ######################################################################
-export MCA_common_ompi_cofs_my_vpid="${ompi_myvpid}"
-export MCA_common_ompi_cofs_num_procs="${ompi_numprocs}"
-export MCA_common_ompi_cofs_job_handle="${ompi_jobhandle}"
+export OMPI_MCA_pcm_cofs_cellid="${ompi_cellid}"
+export OMPI_MCA_pcm_cofs_jobid="${ompi_jobid}"
+export OMPI_MCA_pcm_cofs_procid="${ompi_procid}"
+export OMPI_MCA_pcm_cofs_num_procs="${ompi_numprocs}"
 if test ! -z "${ompi_commdir}"; then
     export MCA_common_ompi_cofs_comm_dir="${ompi_commdir}"
 fi

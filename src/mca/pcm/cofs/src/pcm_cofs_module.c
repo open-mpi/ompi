@@ -8,9 +8,11 @@
 
 #include "include/constants.h"
 #include "include/types.h"
+#include "util/output.h"
 #include "mca/mca.h"
 #include "mca/pcm/pcm.h"
 #include "mca/pcm/cofs/src/pcm_cofs.h"
+#include "mca/base/mca_base_param.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -40,39 +42,29 @@ mca_pcm_base_module_1_0_0_t mca_pcm_cofs_module = {
 
 
 struct mca_pcm_1_0_0_t mca_pcm_cofs_1_0_0 = {
-  mca_pcm_cofs_query_get_nodes,
-
-  mca_pcm_cofs_handle_new,
-  mca_pcm_cofs_handle_get,
-  mca_pcm_cofs_handle_free,
-
-  mca_pcm_cofs_job_can_spawn,
-  mca_pcm_cofs_job_set_arguments,
-  mca_pcm_cofs_job_launch_procs,
-  mca_pcm_cofs_job_rendezvous,
-  mca_pcm_cofs_job_wait,
-  mca_pcm_cofs_job_running,
-  mca_pcm_cofs_job_list_running,
-
-  mca_pcm_cofs_proc_startup,
-  mca_pcm_cofs_proc_get_peers,
-  mca_pcm_cofs_proc_get_me,
-  mca_pcm_cofs_proc_get_parent
+  mca_pcm_cofs_get_peers,
+  mca_pcm_cofs_get_self
 };
 
 
 char mca_pcm_cofs_comm_loc[OMPI_PATH_MAX];
-int mca_pcm_cofs_my_vpid = -1;
 char *mca_pcm_cofs_my_handle = NULL;
-mca_pcm_proc_t *mca_pcm_cofs_procs = NULL;
-size_t mca_pcm_cofs_nprocs = 0;
+ompi_process_name_t *mca_pcm_cofs_procs = NULL;
+size_t mca_pcm_cofs_num_procs = 0;
+size_t mca_pcm_cofs_procid = 0;
+static int mca_pcm_cofs_num_procs_param;
+static int mca_pcm_cofs_cellid_param;
+static int mca_pcm_cofs_jobid_param;
+static int mca_pcm_cofs_procid_param;
 
 int
 mca_pcm_cofs_open(void)
 {
-  /* JMS/BWB: Register MCA params in here -- see
-     src/mca/base/mca_base_param.h */
-  return OMPI_SUCCESS;
+   mca_pcm_cofs_num_procs_param = mca_base_param_register_int("pcm","cofs","num_procs",NULL,-1);
+   mca_pcm_cofs_cellid_param = mca_base_param_register_int("pcm","cofs","cellid",NULL,-1);
+   mca_pcm_cofs_jobid_param = mca_base_param_register_int("pcm","cofs","jobid",NULL,-1);
+   mca_pcm_cofs_procid_param = mca_base_param_register_int("pcm","cofs","procid",NULL,-1);
+   return OMPI_SUCCESS;
 }
 
 
@@ -83,94 +75,59 @@ mca_pcm_cofs_close(void)
 }
 
 
-struct mca_pcm_1_0_0_t*
+struct mca_pcm_1_0_0_t *
 mca_pcm_cofs_init(int *priority, bool *allow_multi_user_threads, 
                   bool *have_hidden_threads)
 {
-  char *tmp;
-  FILE *fp;
+    int i,value;
+    ompi_process_id_t cellid;
+    ompi_process_id_t jobid;
 
-  char *test_ret;
+    *priority = 1;
+    *allow_multi_user_threads = true;
+    *have_hidden_threads = false;
 
-  *priority = 1;
-  *allow_multi_user_threads = true;
-  *have_hidden_threads = false;
-
-  /* BWB - remove printfs once things settle down some... */
-  /* JMS: Look in src/mca/base/mca_base_param.h */
-  test_ret = getenv("MCA_common_ompi_cofs_my_vpid");
-  if (test_ret == NULL) {
-    printf("COFS PCM will not be running because MCA_common_ompi_cofs_my_vpid not set\n");
-    return NULL;
-  }
-
-  test_ret = getenv("MCA_common_ompi_cofs_job_handle");
-  if (test_ret == NULL) {
-    printf("COFS PCM will not be running because MCA_common_ompi_cofs_job_handle not set\n");
-    return NULL;
-  }
-
-  test_ret = getenv("MCA_common_ompi_cofs_num_procs");
-  if (test_ret == NULL) {
-    printf("COFS PCM will not be running because MCA_common_ompi_cofs_num_procs not set\n");
-    return NULL;
-  }
-
-  /*
-   * BWB - fix me, make register the "right" way...
-   */
-  tmp = getenv("MCA_common_ompi_cofs_comm_dir");
-  if (tmp == NULL) {
-    /* make it $HOME */
-    tmp = getenv("HOME");
-    if (tmp == NULL) {
-      printf("pcm_cofs can not find communication dir (MCA_common_ompi_cofs_comm_dir)\n");
-      return NULL;
+    /* lookup parameters for local name */
+    mca_base_param_lookup_int(mca_pcm_cofs_num_procs_param, &value);
+    if(value <= 0) {
+        ompi_output(0, "mca_pcm_cofs_init: missing/invalid value for OMPI_MCA_pcm_cofs_num_procs\n");
+        return NULL;
     }
-    snprintf(mca_pcm_cofs_comm_loc, OMPI_PATH_MAX, "%s/cofs", tmp);
-  } else {
-    snprintf(mca_pcm_cofs_comm_loc, OMPI_PATH_MAX, "%s", tmp);
-  }
+    mca_pcm_cofs_num_procs = value;
 
-  /*
-   * BWB - fix me, make register the "right" way...
-   */
-  /* find our vpid */
-  tmp = getenv("MCA_common_ompi_cofs_my_vpid");
-  if (tmp == NULL) {
-    printf("pcm_cofs can not find vpid\n");
-    return NULL;
-  }
-  mca_pcm_cofs_my_vpid = atoi(tmp);
+    mca_base_param_lookup_int(mca_pcm_cofs_cellid_param, &value);
+    if(value < 0) {
+        ompi_output(0, "mca_pcm_cofs_init: missing/invalid value for OMPI_MCA_pcm_cofs_cellid\n");
+        return NULL;
+    }
+    cellid = value;
+                                                                                                                      
+    mca_base_param_lookup_int(mca_pcm_cofs_jobid_param, &value);
+    if(value < 0) {
+        ompi_output(0, "mca_pcm_cofs_init: missing/invalid value for OMPI_MCA_pcm_cofs_jobid\n");
+        return NULL;
+    }
+    jobid = value;
+                                                                                                                      
+    mca_base_param_lookup_int(mca_pcm_cofs_procid_param, &value);
+    if(value < 0) {
+        ompi_output(0, "mca_pcm_cofs_init: missing value for OMPI_MCA_pcm_cofs_procid\n");
+        return NULL;
+    }
+    mca_pcm_cofs_procid = value;
 
-  /*
-   * See if we can write in our directory...
-   */
-  tmp = malloc(strlen(mca_pcm_cofs_comm_loc) + 32);
-  if (tmp == NULL) return NULL;
-  sprintf(tmp, "%s/pcm.%d", mca_pcm_cofs_comm_loc, mca_pcm_cofs_my_vpid);
-  fp = fopen(tmp, "w");
-  if (fp == NULL) {
-    printf("pcm_cofs can not write in communication dir\n");
-    free(tmp);
-    return NULL;
-  }
-  fclose(fp);
-  unlink(tmp);
-  free(tmp);
+    mca_pcm_cofs_procs = (ompi_process_name_t*)malloc(sizeof(ompi_process_name_t) * mca_pcm_cofs_num_procs);
+    if(NULL == mca_pcm_cofs_procs) {
+        ompi_output(0, "mca_pcm_cofs_init: missing value for OMPI_MCA_pcm_cofs_num_procs\n");
+        return NULL;
+    }
 
-  mca_pcm_cofs_my_handle = getenv("MCA_common_ompi_cofs_job_handle");
-
-  mca_pcm_cofs_procs = NULL;
-
-  tmp = getenv("MCA_common_ompi_cofs_num_procs");
-  if (tmp == NULL) {
-    printf("pcm_cofs can not find nprocs\n");
-    return NULL;
-  }
-  mca_pcm_cofs_nprocs = atoi(tmp);
-
-  return &mca_pcm_cofs_1_0_0;
+    for(i=0; i<mca_pcm_cofs_num_procs; i++) {
+        mca_pcm_cofs_procs[i].cellid = cellid;
+        mca_pcm_cofs_procs[i].jobid = jobid;
+        mca_pcm_cofs_procs[i].procid = i;
+    }
+    return &mca_pcm_cofs_1_0_0;
 }
 
 
@@ -180,7 +137,7 @@ mca_pcm_cofs_finalize(void)
   if (mca_pcm_cofs_procs != NULL) {
     free(mca_pcm_cofs_procs);
     mca_pcm_cofs_procs = NULL;
-    mca_pcm_cofs_nprocs = 0;
+    mca_pcm_cofs_num_procs = 0;
   }
 
   return OMPI_SUCCESS;

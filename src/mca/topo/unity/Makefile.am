@@ -1,8 +1,9 @@
+# -*- makefile -*-
 #
 # $HEADER$
 #
 
-# Use the top-level Makefile.options
+# Use the top-level OMPI Makefile.options
 
 include $(top_ompi_srcdir)/config/Makefile.options
 
@@ -10,25 +11,27 @@ SUBDIRS = src
 
 EXTRA_DIST = VERSION
 
-# Make the output library in this directory, and name it either
-# mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
-# (for static builds).
+# According to the MCA spec, we have to make the output library here
+# in the top-level directory, and it has to be named
+# libompi_ssi_topo_ompi_unity.la
 
-if OMPI_BUILD_topo_unity_DSO
-component_noinst =
-component_install = mca_topo_unity.la
+if OMPI_BUILD_topo_unity_LOADABLE_MODULE
+module_noinst =
+module_install = mca_topo_unity.la
 else
-component_noinst = libmca_topo_unity.la
-component_install =
+module_noinst = libmca_topo_unity.la
+module_install =
 endif
 
-mcacomponentdir = $(libdir)/openmpi
-mcacomponent_LTLIBRARIES = $(component_install)
+mcamoduledir = $(libdir)/openmpi
+mcamodule_LTLIBRARIES = $(module_install)
 mca_topo_unity_la_SOURCES =
-mca_topo_unity_la_LIBADD = src/libmca_topo_unity.la $(LIBMPI_LA)
+mca_topo_unity_la_LIBADD = \
+        src/libmca_topo_unity.la \
+        $(LIBMPI_LA)
 mca_topo_unity_la_LDFLAGS = -module -avoid-version
 
-noinst_LTLIBRARIES = $(component_noinst)
+noinst_LTLIBRARIES = $(module_noinst)
 libmca_topo_unity_la_SOURCES =
 libmca_topo_unity_la_LIBADD = src/libmca_topo_unity.la
 libmca_topo_unity_la_LDFLAGS = -module -avoid-version

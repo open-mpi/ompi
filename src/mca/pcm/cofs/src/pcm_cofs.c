@@ -12,191 +12,21 @@
 
 #include <stdio.h>
 #include <sys/types.h>
-#include <dirent.h>
 #include <string.h>
 #include <unistd.h>
 
-#define HANDLE_FILE_NAME "pcm_cofs_handle_list"
-
-static int handle_new_count = 0;
-
 
 int 
-mca_pcm_cofs_query_get_nodes(mca_pcm_rte_node_t **nodes, size_t * nodes_len,
-			     int *available_procs)
+mca_pcm_cofs_get_peers(ompi_process_name_t **procs, size_t *num_procs)
 {
-  *nodes = NULL;
-  *nodes_len = 0;
-  *available_procs = 0;
-  
-  return OMPI_ERR_NOT_SUPPORTED;
-}
-
-
-ompi_job_handle_t 
-mca_pcm_cofs_handle_new(ompi_job_handle_t parent)
-{
-  pid_t pid;
-  char *ret;
-  size_t ret_len;
-
-  /* should really make this a file lookup kind of thing */
-  pid = getpid();
-
-  ret_len = sizeof(pid_t) * 8 + strlen("pcm_cofs_job_handle") + sizeof(int) * 8 + 5;
-  ret = malloc(ret_len);
-  if (ret == NULL) {
-    return NULL;
-  }
-
-  snprintf(ret, ret_len, "pcm_cofs_job_handle_%d_%d", (int) pid, handle_new_count);
-  handle_new_count++;
-
-  return ret;
-}
-
-
-ompi_job_handle_t 
-mca_pcm_cofs_handle_get(void)
-{
-  return mca_pcm_cofs_my_handle;
-}
-
-
-void 
-mca_pcm_cofs_handle_free(ompi_job_handle_t * job_handle)
-{
-  if (*job_handle == mca_pcm_cofs_my_handle) {
-    printf("WARNING: attempting to free static internal job handle!\n");
-    printf("         Did you perhaps try to free the return from handle_get()?\n");
-  } else if (*job_handle != NULL) {
-    free(*job_handle);
-    *job_handle = NULL;
-  }
-}
-
-
-int 
-mca_pcm_cofs_job_can_spawn(ompi_job_handle_t job_handle)
-{
-#if 1
-  /* Currently, have not coded up spawning support.  Need to do
-     so soon */
-  return OMPI_ERR_NOT_SUPPORTED;
-#else
-  if (job_handle != NULL) {
-    return OMPI_ERR_NOT_SUPPORTED;
-  } else {
-    return OMPI_SUCCESS;
-  }
-#endif
-}
-
-
-int 
-mca_pcm_cofs_job_set_arguments(ompi_job_handle_t job_handle,
-			       mca_pcm_control_args_t * opts,
-			       size_t opts_len)
-{
-  /* need to implement, but not needed to get INIT going */
-  return OMPI_ERR_NOT_IMPLEMENTED;
-}
-
-
-int 
-mca_pcm_cofs_job_launch_procs(ompi_job_handle_t job_handle,
-			      mca_pcm_rte_node_t *nodes,
-			      size_t nodes_len, const char *file,
-			      int argc, const char *argv[],
-			      const char *env[])
-{
-  /* need to implement, but not needed to get INIT going */
-  return OMPI_ERR_NOT_IMPLEMENTED;
-}
-
-
-int 
-mca_pcm_cofs_job_rendezvous(ompi_job_handle_t job_handle)
-{
-  /* need to implement, but not needed to get INIT going */
-  return OMPI_ERR_NOT_IMPLEMENTED;
-}
-
-
-int 
-mca_pcm_cofs_job_wait(ompi_job_handle_t job_handle)
-{
-  /* need to implement, but not needed to get INIT going */
-  return OMPI_ERR_NOT_IMPLEMENTED;
-}
-
-
-int 
-mca_pcm_cofs_job_running(ompi_job_handle_t job_handle,
-			 int *running)
-{
-  /* need to implement, but not needed to get INIT going */
-  return OMPI_ERR_NOT_IMPLEMENTED;
-}
-
-
-int 
-mca_pcm_cofs_job_list_running(ompi_job_handle_t ** handles,
-			      size_t handles_len)
-{
-  /* need to implement, but not needed to get INIT going */
-  return OMPI_ERR_NOT_IMPLEMENTED;
-}
-
-
-int 
-mca_pcm_cofs_proc_startup(void)
-{
-  int i;
-
-  if (mca_pcm_cofs_nprocs == 0) {
-    /* well, this really shouldn't happen - we know we have at least ourselves */
-    return OMPI_ERR_FATAL;
-  }
-
-  mca_pcm_cofs_procs = malloc(sizeof(mca_pcm_proc_t) * mca_pcm_cofs_nprocs);
-  if (mca_pcm_cofs_procs == NULL) {
-    return OMPI_ERR_OUT_OF_RESOURCE;
-  }
-
-  for (i = 0 ; i < mca_pcm_cofs_nprocs ; ++i) {
-    /* for now, assume everyone in the same job :( */
-    mca_pcm_cofs_procs[i].job_handle = mca_pcm_cofs_handle_get();
-    mca_pcm_cofs_procs[i].vpid = i;
-  }
-
-  return OMPI_SUCCESS;
-}
-
-
-int 
-mca_pcm_cofs_proc_get_peers(mca_pcm_proc_t **procs, size_t *nprocs)
-{
-  if (mca_pcm_cofs_procs == NULL) {
-    return OMPI_ERROR;
-  }
-
+  *num_procs = mca_pcm_cofs_num_procs;
   *procs = mca_pcm_cofs_procs;
-  *nprocs = mca_pcm_cofs_nprocs;
-
   return OMPI_SUCCESS;
 }
 
 
-mca_pcm_proc_t* 
-mca_pcm_cofs_proc_get_me(void)
+ompi_process_name_t* mca_pcm_cofs_get_self(void)
 {
-  return &(mca_pcm_cofs_procs[mca_pcm_cofs_my_vpid]);
+  return &mca_pcm_cofs_procs[mca_pcm_cofs_procid];
 }
 
-
-int 
-mca_pcm_cofs_proc_get_parent(void)
-{
-  return OMPI_ERR_NOT_IMPLEMENTED;
-}
