@@ -24,7 +24,7 @@ lib_LTLIBRARIES = $(install_lib)
 noinst_LTLIBRARIES = $(convenience_lib)
 
 # To be added shortly
-#        communicator/libmpi_communicator.la \
+#        communicator/libmpi_communicator.la 
 sources = \
         datatype/libmpi_datatype.la \
         interface/libmpi_interface.la

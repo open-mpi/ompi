@@ -23,7 +23,7 @@
 #endif
 
 
-void mpi_free_mem_(char *baseptr, int *ierr)
+void mpi_free_mem_f(char *baseptr, int *ierr)
 {
 #if 0
   /* JMS Need fortran -> C handle lookups, and a safe way to do the
