@@ -238,6 +238,9 @@ mca_ptl_base_module_t** mca_ptl_ib_component_init(int *num_ptl_modules,
         }
 
         /* Find a better place for this */
+        OBJ_CONSTRUCT(&(ib_modules[i].pending_send_frags), ompi_list_t);
+        OBJ_CONSTRUCT(&(ib_modules[i].pending_recv_frags), ompi_list_t);
+
         OBJ_CONSTRUCT(&(ib_modules[i].send_free), ompi_free_list_t);
 
         OBJ_CONSTRUCT(&(ib_modules[i].recv_free), ompi_free_list_t);
@@ -329,6 +332,21 @@ int mca_ptl_ib_component_control(int param, void* value, size_t size)
 
 int mca_ptl_ib_component_progress(mca_ptl_tstamp_t tstamp)
 {
+    uint32_t num_modules, i;
+    mca_ptl_ib_module_t *module;
+
+    num_modules = mca_ptl_ib_component.ib_num_ptl_modules;
+
+    /* Make progress on outstanding sends for
+     * all IB modules */
+    for(i = 0; i < num_modules; i++) {
+
+        module = mca_ptl_ib_component.ib_ptl_modules[i];
+
+        if(!ompi_list_is_empty(&((module)->pending_send_frags))) {
+            D_PRINT("Frag to progress");
+        }
+    }
 #if 0
     VAPI_ret_t ret;
     VAPI_wc_desc_t comp;

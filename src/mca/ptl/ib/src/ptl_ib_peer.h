@@ -50,12 +50,6 @@ struct mca_ptl_base_peer_t {
     struct mca_ptl_ib_proc_t*   peer_proc;
     /**< proc structure corresponding to peer */
 
-    mca_ptl_ib_send_frag_t*     peer_send_frag;
-    /**< current send frag being processed */
-
-    mca_ptl_ib_recv_frag_t*     peer_recv_frag;
-    /**< current recv frag being processed */
-
     mca_ptl_ib_peer_state_t     peer_state;
     /**< current state of the connection */
 
@@ -68,20 +62,11 @@ struct mca_ptl_base_peer_t {
     double                      peer_ts;
     /**< timestamp of when the first connection was attempted */
 
-    ompi_list_t                 peer_frags;
-    /**< list of pending frags to send */
-
     ompi_mutex_t                peer_send_lock;
     /**< lock for concurrent access to peer state */
 
     ompi_mutex_t                peer_recv_lock;
     /**< lock for concurrent access to peer state */
-
-    ompi_event_t                peer_send_event;
-    /**< event for async processing of send frags */
-
-    ompi_event_t                peer_recv_event;
-    /**< event for async processing of recv frags */
 };
 
 typedef struct mca_ptl_base_peer_t mca_ptl_base_peer_t;

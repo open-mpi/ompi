@@ -74,13 +74,8 @@ static void mca_ptl_ib_peer_construct(mca_ptl_base_peer_t* module_peer)
     module_peer->peer_module = 0;
     module_peer->peer_proc = 0;
     module_peer->peer_ts = 0.0;
-    module_peer->peer_send_frag = 0;
-    module_peer->peer_recv_frag = 0;
-    module_peer->peer_send_event.ev_flags = 0;
-    module_peer->peer_recv_event.ev_flags = 0;
     module_peer->peer_state = MCA_PTL_IB_CLOSED;
     module_peer->peer_retries = 0;
-    OBJ_CONSTRUCT(&module_peer->peer_frags, ompi_list_t);
     OBJ_CONSTRUCT(&module_peer->peer_send_lock, ompi_mutex_t);
     OBJ_CONSTRUCT(&module_peer->peer_recv_lock, ompi_mutex_t);
 }
@@ -273,14 +268,6 @@ static int mca_ptl_ib_peer_reply_start_connect(mca_ptl_ib_peer_t *peer,
 static void mca_ptl_ib_peer_connected(mca_ptl_ib_peer_t *peer)
 {
     peer->peer_state = MCA_PTL_IB_CONNECTED;
-
-    if(ompi_list_get_size(&peer->peer_frags) > 0) {
-        if(NULL == peer->peer_send_frag) {
-
-            peer->peer_send_frag = (mca_ptl_ib_send_frag_t *)
-                ompi_list_remove_first(&peer->peer_frags);
-        }
-    }
 }
 
 /*
@@ -414,19 +401,18 @@ int mca_ptl_ib_peer_send(mca_ptl_base_peer_t* peer,
     switch(peer->peer_state) {
         case MCA_PTL_IB_CONNECTING:
 
-            ompi_list_append(&peer->peer_frags, (ompi_list_item_t*)frag);
-
+            ompi_list_append(&peer->peer_module->pending_send_frags, 
+                    (ompi_list_item_t*)frag);
             break;
-            
         case MCA_PTL_IB_CLOSED:
 
             D_PRINT("Connection to peer closed ... connecting ...");
 
-            ompi_list_append(&peer->peer_frags, (ompi_list_item_t*)frag);
+            ompi_list_append(&peer->peer_module->pending_send_frags, 
+                    (ompi_list_item_t*)frag);
 
             rc = mca_ptl_ib_peer_start_connect(peer);
             break;
-
         case MCA_PTL_IB_FAILED:
 
             rc = OMPI_ERR_UNREACH;
@@ -435,27 +421,6 @@ int mca_ptl_ib_peer_send(mca_ptl_base_peer_t* peer,
         case MCA_PTL_IB_CONNECTED:
 
             /* Send the frag off */
-            if(NULL != peer->peer_send_frag) {
-                
-                /* Some other frag is being processed */
-                ompi_list_append(&peer->peer_frags, (ompi_list_item_t*)frag);
-
-            } else {
-
-                /* No other frag is being processed */
-
-                if(1) {
-
-                    D_PRINT("I have to send it now ...");
-
-                } else {
-
-                    /* Set the current frag being processed as
-                     * THIS frag */
-                    peer->peer_send_frag = frag;
-                }
-
-            }
             break;
         default:
             rc = OMPI_ERR_UNREACH;
