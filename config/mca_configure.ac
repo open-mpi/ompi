@@ -47,6 +47,12 @@ ompi_show_subtitle "Initialization, setup"
 
 AM_INIT_AUTOMAKE(@PARAM_AM_NAME@, $@PARAM_VAR_PREFIX@_VERSION, 'no')
 
+#
+# GNU C and autotools are inconsistent about whether this is defined
+# so let's make it true everywhere for now...
+#
+AC_GNU_SOURCE
+
 # Setup the top-level MCA component config.h file
 
 AH_TOP([/* -*- c -*-
