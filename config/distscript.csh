@@ -18,7 +18,7 @@ endif
 set start=`date`
 cat <<EOF
  
-Creating OMPI/MPI distribution
+Creating Open MPI distribution
 In directory: `pwd`
 Started: $start
  
@@ -171,7 +171,7 @@ end
 #
 
 cat <<EOF
-*** OMPI/MPI version $ver distribution created
+*** Open MPI version $ver distribution created
  
 Started: $start
 Ended:   `date`

@@ -21,7 +21,7 @@
  * @param reorder ranking may be reordered (true) or not (false) (logical)
  * @param comm_cart communicator with new cartesian topology (handle)
  *
- * OMPI/MPI currently ignores the 'reorder' flag.
+ * Open MPI currently ignores the 'reorder' flag.
  *
  * @retval MPI_SUCCESS
  */                       

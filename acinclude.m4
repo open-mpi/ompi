@@ -5,7 +5,7 @@ dnl
 
 
 #
-# OMPI/MPI-specific tests
+# Open MPI-specific tests
 #
 
 sinclude(config/c_get_alignment.m4)

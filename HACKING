@@ -13,7 +13,7 @@ This procedure is *ONLY* necessary if you are building from a
 developer's tree.  If you have an Open MPI distribution tarball, this
 procedure is unnecessary -- you can even skip reading this section.
 
-If you are building OMPI/MPI from a developer's tree, you must first
+If you are building Open MPI from a developer's tree, you must first
 install fairly recent versions of the GNU tools Autoconf, Automake,
 and Libtool.  As of this writing, you need at least Autoconf v2.58,
 Automake v1.8.5 (or better), and Libtool v1.5.  You can check what

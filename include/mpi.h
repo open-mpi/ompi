@@ -147,13 +147,13 @@ enum {
   IMPI_HOST_COLOR,
 
   /*
-   * Predefined attribute keyvals, but OMPI-specific
+   * Predefined attribute keyvals, but Open MPI-specific
    */
   OMPI_UNIVERSE_NCPUS,
   OMPI_UNIVERSE_NNODES,
 
   /*
-   * Predefined attribute keyvals, but OMPI/MPI-specific
+   * Predefined attribute keyvals, but Open MPI-specific
    */
   OMPI_MPI_SSI_COLL,
   OMPI_MPI_SSI_COLL_CROSSOVER,

@@ -19,7 +19,7 @@ my %config_values;
 my %config_params;
 
 my $initial_cwd = cwd();
-my $announce_str = "OMPI/MPI MCA component configure generator";
+my $announce_str = "Open MPI MCA component configure generator";
 my %config_param_names = (PIFILE => "PARAM_INIT_FILE",
                           PCFGAUXDIR => "PARAM_CONFIG_AUX_DIR",
                           PC => "PARAM_WANT_C",

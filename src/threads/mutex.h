@@ -35,7 +35,7 @@
  * - if configure determined that we do not have threads, then this
  * value will always be false.
  *
- * - if MPI_INIT is invoked, and the ompi/mpi libraries are [still]
+ * - if MPI_INIT is invoked, and the ompi libraries are [still]
  * single-threaded, this value will be false.
  *
  * - if MPI_INIT_THREAD is invoked with MPI_THREAD_MULTIPLE, we have

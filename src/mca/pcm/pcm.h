@@ -5,9 +5,9 @@
 /** @file **/
 
 /** 
- *  \brief OMPI/MPI Interface for Parallel Job & Process Control (pcm)
+ *  \brief Open MPI Interface for Parallel Job & Process Control (pcm)
  *
- * OMPI/MPI assumes it is running under a fully operational parallel
+ * Open MPI assumes it is running under a fully operational parallel
  * run-time environment (RTE).  This environment may be provided by
  * batch schedulers such as PBS and LSF, single system image tools
  * such as bproc, or specially designed MPI control daemons (the MPICH
@@ -23,7 +23,7 @@
  * capabilities of a particular module, please see the individual
  * module's documentation.
  *
- * A run-time environment suitable for use by OMPI/MPI must provide
+ * A run-time environment suitable for use by Open MPI must provide
  * the following capabilities:
  *
  *  - Remote process startup at job-start time with the ability to:

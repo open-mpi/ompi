@@ -15,7 +15,7 @@
  */
 
 const char *mca_topo_unity_component_version_string = 
-    "OMPI/MPI unity topology MCA component version" MCA_topo_unity_FULL_VERSION;
+    "Open MPI unity topology MCA component version" MCA_topo_unity_FULL_VERSION;
 
 /*
  * *******************************************************************

@@ -63,13 +63,13 @@ int main(int argc, char *argv[])
     exit(ret);
   }
   ompi_cmd_line_make_opt(cmd_line, 'v', "version", 2, 
-                        "Show version of OMPI/MPI or a component");
+                        "Show version of Open MPI or a component");
   ompi_cmd_line_make_opt(cmd_line, '\0', "param", 2, 
                         "Show MCA parameters");
   ompi_cmd_line_make_opt(cmd_line, '\0', "path", 1, 
-                        "Show paths that OMPI/MPI was configured with");
+                        "Show paths that Open MPI was configured with");
   ompi_cmd_line_make_opt(cmd_line, '\0', "arch", 0, 
-                        "Show architecture OMPI/MPI was compiled on");
+                        "Show architecture Open MPI was compiled on");
   ompi_cmd_line_make_opt(cmd_line, 'c', "config", 0, 
                         "Show configuration options");
   ompi_cmd_line_make_opt(cmd_line, 'h', "help", 0, 
@@ -79,7 +79,7 @@ int main(int argc, char *argv[])
   ompi_cmd_line_make_opt(cmd_line, '\0', "parsable", 0, 
                         "Display output in parsable format");
   ompi_cmd_line_make_opt(cmd_line, '\0', "hostname", 0, 
-                        "Show the hostname that OMPI/MPI was configured "
+                        "Show the hostname that Open MPI was configured "
                         "and built on");
   ompi_cmd_line_make_opt(cmd_line, 'a', "all", 0, 
                         "Show all configuration options and MCA parameters");
