@@ -36,21 +36,14 @@ int ompi_rte_register(void)
 {
     ompi_buffer_t buffer;
     char segment[32];
-    char *jobid = ompi_name_server.get_jobid_string(ompi_process_info.name);
     char *keys[2];
     void *addr;
     int rc,size;
 
-    /* protect against error */
-    if (NULL == jobid) {
-	return OMPI_ERROR;
-    }
-
     /* setup keys and segment for this job */
-    sprintf(segment, "job-%s", jobid);
-    keys[0] = ompi_name_server.get_proc_name_string(ompi_process_info.name);
+    sprintf(segment, "job-%u", mca_oob_name_self.jobid);
+    keys[0] = ns_base_get_proc_name_string(ompi_process_info.name);
     keys[1] = NULL;
-    free(jobid);
 
     if (ompi_rte_debug_flag) {
         ompi_output(0, "rte_register: entered for proc %s", keys[0]);
@@ -82,20 +75,12 @@ int ompi_rte_register(void)
 int ompi_rte_unregister(void)
 {
     char segment[32];
-    char *jobid = ompi_name_server.get_jobid_string(ompi_process_info.name);
     char *keys[2];
     int rc;
 
-    /* protect against error */
-    if (NULL == jobid) {
-	return OMPI_ERROR;
-    }
-
     /* setup keys and segment for this job */
-    sprintf(segment, "job-%s", jobid);
-    free(jobid);
-
-    keys[0] = ompi_name_server.get_proc_name_string(ompi_process_info.name);
+    sprintf(segment, "job-%u", mca_oob_name_self.jobid);
+    keys[0] = ns_base_get_proc_name_string(ompi_process_info.name);
     keys[1] = NULL;
         
     rc = ompi_registry.delete_object(OMPI_REGISTRY_XAND, segment, keys);
