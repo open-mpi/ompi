@@ -17,6 +17,12 @@ int mca_pml_base_close(void)
 {
   extern lam_list_t mca_pml_base_modules_available;
 
+  /* Blatently ignore the return code (what would we do to recover,
+     anyway?  This module is going away, so errors don't matter
+     anymore) */
+
+  mca_pml.pml_finalize();
+
   /* Close all remaining available modules (may be one if this is a
      LAM RTE program, or [possibly] multiple if this is laminfo) */
 
