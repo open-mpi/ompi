@@ -108,19 +108,47 @@ typedef struct {
 /*
  * printf functions for portability
  */
+
+#if !defined(HAVE_VASPRINTF) || !defined(HAVE_VSNPRINTF)
+#if __STDC__
+#include <stdarg.h>
+#else
+#ifdef __cplusplus
+#include <stdarg.h>
+#else
+#include <varargs.h>
+#endif
+#endif /* __STDC__ */
+#endif
+
+#if !defined(HAVE_SNPRINTF) || !defined(HAVE_VSNPRINTF)
+#include <stdlib.h>
+#endif
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef HAVE_ASPRINTF
-# include "util/printf.h"
+int ompi_asprintf(char **, const char *, ...);
 # define asprintf ompi_asprintf
 #endif
+
 #ifndef HAVE_SNPRINTF
-# include "util/printf.h"
+int ompi_snprintf(char *, size_t, const char *, ...);
 # define snprintf ompi_snprintf
 #endif
+
 #ifndef HAVE_VASPRINTF
-# include "util/printf.h"
+int ompi_vasprintf(char **, const char *, va_list);
 # define vasprintf ompi_vasprintf
 #endif
+
 #ifndef HAVE_VSNPRINTF
-# include "util/printf.h"
+int ompi_vsnprintf(char *, size_t, const char *, va_list);
 # define vsnprintf ompi_vsnprintf
+#endif
+
+#ifdef __cplusplus
+}
 #endif
